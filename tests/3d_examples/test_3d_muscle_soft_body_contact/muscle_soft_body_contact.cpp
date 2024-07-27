@@ -117,7 +117,7 @@ int main(int ac, char *av[])
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
     //----------------------------------------------------------------------
-    GlobalStaticVariables::physical_time_ = 0.0;
+    physical_time = 0.0;
     sph_system.initializeSystemCellLinkedLists();
     sph_system.initializeSystemConfigurations();
     corrected_configuration.exec();
@@ -142,7 +142,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------
-    while (GlobalStaticVariables::physical_time_ < end_time)
+    while (physical_time < end_time)
     {
         Real integration_time = 0.0;
         while (integration_time < output_period)
@@ -150,7 +150,7 @@ int main(int ac, char *av[])
             if (ite % 50 == 0)
             {
                 std::cout << "N=" << ite << " Time: "
-                          << GlobalStaticVariables::physical_time_ << "	dt: "
+                          << physical_time << "	dt: "
                           << dt << "\n";
                 write_plate_kinetic_energy.writeToFile(ite);
             }
@@ -176,7 +176,7 @@ int main(int ac, char *av[])
             ite++;
             dt = sph_system.getSmallestTimeStepAmongSolidBodies();
             integration_time += dt;
-            GlobalStaticVariables::physical_time_ += dt;
+            physical_time += dt;
 
             myocardium_body.updateCellLinkedList();
             moving_plate.updateCellLinkedList();

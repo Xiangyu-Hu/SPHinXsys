@@ -152,7 +152,7 @@ class DMFBoundaryConditionSetup : public BoundaryConditionSetupInFVM
 
     void applyTopBoundary(size_t ghost_index, size_t index_i) override
     {
-        Real run_time = GlobalStaticVariables::physical_time_;
+        Real run_time = physical_time;
         Real x_1 = 1.0 / 6.0 + run_time * 10.0 / sin(3.14159 / 3.0);
         if (pos_[index_i][1] > tan(3.14159 / 3.0) * (pos_[index_i][0] - x_1))
         {

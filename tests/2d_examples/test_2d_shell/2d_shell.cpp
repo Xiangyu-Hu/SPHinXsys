@@ -91,7 +91,7 @@ class TimeDependentExternalForce : public Gravity
         : Gravity(external_force) {}
     virtual Vecd InducedAcceleration(const Vecd &position) override
     {
-        Real current_time = GlobalStaticVariables::physical_time_;
+        Real current_time = physical_time;
         return current_time < time_to_full_external_force ? current_time * global_acceleration_ / time_to_full_external_force : global_acceleration_;
     }
 };
@@ -153,7 +153,7 @@ int main(int ac, char *av[])
      * From here the time stepping begins.
      * Set the starting time.
      */
-    GlobalStaticVariables::physical_time_ = 0.0;
+    physical_time = 0.0;
     write_states.writeToFile(0);
     write_cylinder_max_displacement.writeToFile(0);
 
@@ -168,7 +168,7 @@ int main(int ac, char *av[])
     /**
      * Main loop
      */
-    while (GlobalStaticVariables::physical_time_ < end_time)
+    while (physical_time < end_time)
     {
         Real integral_time = 0.0;
         while (integral_time < output_period)
@@ -176,7 +176,7 @@ int main(int ac, char *av[])
             if (ite % 100 == 0)
             {
                 std::cout << "N=" << ite << " Time: "
-                          << GlobalStaticVariables::physical_time_ << "	dt: "
+                          << physical_time << "	dt: "
                           << dt << "\n";
             }
             apply_time_dependent_external_force.exec();
@@ -190,7 +190,7 @@ int main(int ac, char *av[])
             ite++;
             dt = computing_time_step_size.exec();
             integral_time += dt;
-            GlobalStaticVariables::physical_time_ += dt;
+            physical_time += dt;
         }
         write_cylinder_max_displacement.writeToFile(ite);
         TickCount t2 = TickCount::now();

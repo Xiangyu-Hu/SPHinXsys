@@ -42,7 +42,7 @@ class MyocardiumActivation
     void update(size_t index_i, Real dt)
     {
         Real voltage = pos0_[index_i][0] <= 0 ? 0.0 : reference_voltage * pos0_[index_i][0] / PL;
-        active_contraction_stress_[index_i] += GlobalStaticVariables::physical_time_ <= 1.0
+        active_contraction_stress_[index_i] += physical_time <= 1.0
                                                    ? linear_active_stress_factor * voltage * dt
                                                    : 0.0;
     };
@@ -97,7 +97,7 @@ int main(int ac, char *av[])
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
     //----------------------------------------------------------------------
-    GlobalStaticVariables::physical_time_ = 0.0;
+    physical_time = 0.0;
     sph_system.initializeSystemCellLinkedLists();
     sph_system.initializeSystemConfigurations();
     corrected_configuration.exec();
@@ -120,7 +120,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------
-    while (GlobalStaticVariables::physical_time_ < end_time)
+    while (physical_time < end_time)
     {
         Real integration_time = 0.0;
         while (integration_time < output_period)
@@ -128,7 +128,7 @@ int main(int ac, char *av[])
             if (ite % 100 == 0)
             {
                 std::cout << "N=" << ite << " Time: "
-                          << GlobalStaticVariables::physical_time_ << "	dt: "
+                          << physical_time << "	dt: "
                           << dt << "\n";
             }
             myocardium_activation.exec(dt);
@@ -139,7 +139,7 @@ int main(int ac, char *av[])
             ite++;
             dt = computing_time_step_size.exec();
             integration_time += dt;
-            GlobalStaticVariables::physical_time_ += dt;
+            physical_time += dt;
         }
 
         TickCount t2 = TickCount::now();

@@ -124,7 +124,7 @@ int main(int ac, char *av[])
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
     //----------------------------------------------------------------------
-    GlobalStaticVariables::physical_time_ = 0.0;
+    physical_time = 0.0;
     wall_boundary_rotation.exec();
     free_cube_rotation.exec();
     sph_system.initializeSystemCellLinkedLists();
@@ -153,7 +153,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------
-    while (GlobalStaticVariables::physical_time_ < end_time)
+    while (physical_time < end_time)
     {
         Real integration_time = 0.0;
         while (integration_time < output_interval)
@@ -164,7 +164,7 @@ int main(int ac, char *av[])
                 if (ite % 100 == 0)
                 {
                     std::cout << "N=" << ite << " Time: "
-                              << GlobalStaticVariables::physical_time_ << "	dt: " << dt
+                              << physical_time << "	dt: " << dt
                               << "\n";
                 }
                 free_cube_update_contact_density.exec();
@@ -179,7 +179,7 @@ int main(int ac, char *av[])
                 dt = free_cube_get_time_step_size.exec();
                 relaxation_time += dt;
                 integration_time += dt;
-                GlobalStaticVariables::physical_time_ += dt;
+                physical_time += dt;
             }
             write_free_cube_displacement.writeToFile(ite);
         }

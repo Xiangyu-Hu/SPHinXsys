@@ -231,7 +231,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------
-    while (GlobalStaticVariables::physical_time_ < end_time)
+    while (physical_time < end_time)
     {
         Real integration_time = 0.0;
         while (integration_time < output_interval)
@@ -242,13 +242,13 @@ int main(int ac, char *av[])
             density_relaxation.exec(dt);
 
             integration_time += dt;
-            GlobalStaticVariables::physical_time_ += dt;
+            physical_time += dt;
             variable_reset_in_boundary_condition.exec();
 
             if (number_of_iterations % screen_output_interval == 0)
             {
                 std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
-                          << GlobalStaticVariables::physical_time_
+                          << physical_time
                           << "	dt = " << dt << "\n";
             }
             number_of_iterations++;

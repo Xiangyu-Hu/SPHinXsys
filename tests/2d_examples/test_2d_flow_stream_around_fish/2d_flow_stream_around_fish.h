@@ -97,7 +97,7 @@ struct FreeStreamVelocity
     Vecd operator()(Vecd &position, Vecd &velocity)
     {
         Vecd target_velocity = Vecd::Zero();
-        Real run_time = GlobalStaticVariables::physical_time_;
+        Real run_time = physical_time;
         target_velocity[0] = run_time < t_ref_ ? 0.5 * u_ref_ * (1.0 - cos(Pi * run_time / t_ref_)) : u_ref_;
         return target_velocity;
     }
@@ -115,7 +115,7 @@ class TimeDependentAcceleration : public Gravity
 
     virtual Vecd InducedAcceleration(const Vecd &position) override
     {
-        Real run_time_ = GlobalStaticVariables::physical_time_;
+        Real run_time_ = physical_time;
         du_ave_dt_ = 0.5 * u_ref_ * (Pi / t_ref_) * sin(Pi * run_time_ / t_ref_);
 
         return run_time_ < t_ref_ ? Vecd(du_ave_dt_, 0.0) : global_acceleration_;
@@ -204,7 +204,7 @@ class ImposingActiveStrain : public solid_dynamics::ElasticDynamicsInitialCondit
             Real wave_number = 2 * Pi / lambda;
             Real hx = -(pow(x, 2) - pow(fish_length, 2)) / pow(fish_length, 2);
             Real start_time = 0.2;
-            Real current_time = GlobalStaticVariables::physical_time_;
+            Real current_time = physical_time;
             Real strength = 1 - exp(-current_time / start_time);
 
             Real phase_shift = y > (cy + bone_thickness / 2) ? 0 : Pi / 2;

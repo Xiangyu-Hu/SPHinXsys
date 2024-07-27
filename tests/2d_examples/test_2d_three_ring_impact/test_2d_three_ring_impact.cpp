@@ -326,7 +326,7 @@ void three_ring_impact(int resolution_factor_l, int resolution_factor_m, int res
     vel_ic_s.exec();
 
     // Simulation
-    GlobalStaticVariables::physical_time_ = 0.0;
+    physical_time = 0.0;
     int ite = 0;
     int ite_output = 0;
     Real output_period = end_time / 100.0;
@@ -335,7 +335,7 @@ void three_ring_impact(int resolution_factor_l, int resolution_factor_m, int res
     const Real dt_ref = std::min({computing_time_step_size_l.exec(), computing_time_step_size_m.exec(), computing_time_step_size_s.exec()});
     auto run_simulation = [&]()
     {
-        while (GlobalStaticVariables::physical_time_ < end_time)
+        while (physical_time < end_time)
         {
             Real integral_time = 0.0;
             while (integral_time < output_period)
@@ -343,7 +343,7 @@ void three_ring_impact(int resolution_factor_l, int resolution_factor_m, int res
                 if (ite % 1000 == 0)
                 {
                     std::cout << "N=" << ite << " Time: "
-                              << GlobalStaticVariables::physical_time_ << "	dt: "
+                              << physical_time << "	dt: "
                               << dt << "\n";
                 }
 
@@ -397,7 +397,7 @@ void three_ring_impact(int resolution_factor_l, int resolution_factor_m, int res
 
                 ++ite;
                 integral_time += dt;
-                GlobalStaticVariables::physical_time_ += dt;
+                physical_time += dt;
 
                 { // checking if any position has become nan
                     check_nan(particles_l);

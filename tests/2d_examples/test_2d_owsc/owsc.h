@@ -335,7 +335,7 @@ class WaveMaking : public BodyPartMotionConstraint
 
     void update(size_t index_i, Real dt = 0.0)
     {
-        Real time = GlobalStaticVariables::physical_time_;
+        Real time = physical_time;
         pos_[index_i] = pos0_[index_i] + getDisplacement(time);
         vel_[index_i] = getVelocity(time);
         acc_[index_i] = getAcceleration(time);

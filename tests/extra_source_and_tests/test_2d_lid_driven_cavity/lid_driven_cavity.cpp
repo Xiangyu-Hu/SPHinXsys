@@ -202,7 +202,7 @@ int main(int ac, char *av[])
     //	First output before the main loop.
     write_fluid_states.writeToFile(0);
     TickCount t1 = TickCount::now();
-    while (GlobalStaticVariables::physical_time_ < end_time)
+    while (physical_time < end_time)
     {
         iteration++;
         TimeInterval tt;
@@ -228,7 +228,7 @@ int main(int ac, char *av[])
             pressure_relaxation.exec(dt);
             density_relaxation.exec(dt);
             relaxation_time += dt;
-            GlobalStaticVariables::physical_time_ += dt;
+            physical_time += dt;
         }
 
         if (iteration % 100 == 0 && iteration != 1)
@@ -238,10 +238,10 @@ int main(int ac, char *av[])
         fluid.updateCellLinkedList();
         fluid_walls_complex.updateConfiguration();
 
-        if (iteration % 100 == 0 || output_counter * output_interval < GlobalStaticVariables::physical_time_)
+        if (iteration % 100 == 0 || output_counter * output_interval < physical_time)
         {
-            std::cout << "Iteration: " << iteration << " | sim time in %: " << GlobalStaticVariables::physical_time_ / end_time * 100
-                      << " | physical time in s: " << GlobalStaticVariables::physical_time_
+            std::cout << "Iteration: " << iteration << " | sim time in %: " << physical_time / end_time * 100
+                      << " | physical time in s: " << physical_time
                       << " | computation time in s: " << tt.seconds() << " | dt_adv: " << Dt_adv << " | dt_visc: " << Dt_visc
                       << " | dt_aco: " << Dt_aco << "\n"
                       << std::flush;
@@ -254,7 +254,7 @@ int main(int ac, char *av[])
             }
         }
 
-        if (output_counter * output_interval < GlobalStaticVariables::physical_time_)
+        if (output_counter * output_interval < physical_time)
         {
             compute_vorticity.exec();
             write_fluid_states.writeToFile();

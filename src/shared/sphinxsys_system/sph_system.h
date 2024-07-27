@@ -104,7 +104,10 @@ class SPHSystem
     DataType *registerSystemVariable(const std::string &name,
                                      DataType initial_value = ZeroData<DataType>::value);
     template <typename DataType>
-    DataType *getSystemVariableByName(const std::string &name);
+    DataType *getSystemVariableDataByName(const std::string &name);
+
+    template <typename DataType>
+    SingularVariable<DataType> &getSystemVariableByName(const std::string &name);
 
   protected:
     friend class IOEnvironment;

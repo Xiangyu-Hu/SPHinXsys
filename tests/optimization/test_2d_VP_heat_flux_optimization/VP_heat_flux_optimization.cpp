@@ -330,7 +330,7 @@ TEST(test_optimization, test_problem4_optimized)
     //----------------------------------------------------------------------
     if (sph_system.RestartStep() != 0)
     {
-        GlobalStaticVariables::physical_time_ = restart_io.readRestartFiles(sph_system.RestartStep());
+        physical_time = restart_io.readRestartFiles(sph_system.RestartStep());
         diffusion_body.updateCellLinkedList();
         diffusion_body_complex.updateConfiguration();
     }

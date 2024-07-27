@@ -262,7 +262,7 @@ int main(int ac, char *av[])
     write_beam_states.writeToFile();
     write_beam_tip_displacement.writeToFile(number_of_iterations);
     // computation loop starts
-    while (GlobalStaticVariables::physical_time_ < end_time)
+    while (physical_time < end_time)
     {
         Real integration_time = 0.0;
         // integrate time (loop) until the next output time
@@ -280,12 +280,12 @@ int main(int ac, char *av[])
                 dt = scaling_factor * computing_time_step_size.exec();
                 relaxation_time += dt;
                 integration_time += dt;
-                GlobalStaticVariables::physical_time_ += dt;
+                physical_time += dt;
 
                 if (number_of_iterations % 100 == 0)
                 {
                     std::cout << "N=" << number_of_iterations << " Time: "
-                              << GlobalStaticVariables::physical_time_ << "	dt: "
+                              << physical_time << "	dt: "
                               << dt << "\n";
                 }
             }

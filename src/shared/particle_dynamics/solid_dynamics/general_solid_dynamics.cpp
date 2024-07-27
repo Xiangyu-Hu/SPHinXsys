@@ -16,7 +16,7 @@ DistributingPointForces::
       pos_(particles_->getVariableDataByName<Vecd>("Position")),
       force_prior_(particles_->getVariableDataByName<Vecd>("ForcePrior")),
       thickness_(particles_->getVariableDataByName<Real>("Thickness")),
-      physical_time_(sph_system_.getSystemVariableByName<Real>("PhysicalTime"))
+      physical_time_(sph_system_.getSystemVariableDataByName<Real>("PhysicalTime"))
 {
     weight_.resize(point_forces_.size());
     for (size_t i = 0; i < point_forces_.size(); i++)

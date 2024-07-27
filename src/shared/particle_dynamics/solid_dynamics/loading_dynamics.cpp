@@ -182,7 +182,7 @@ ForceInBodyRegion::
       mass_(particles_->getVariableDataByName<Real>("Mass")),
       pos0_(particles_->registerSharedVariableFrom<Vecd>("InitialPosition", "Position")),
       force_vector_(Vecd::Zero()), end_time_(end_time),
-      physical_time_(sph_system_.getSystemVariableByName<Real>("PhysicalTime"))
+      physical_time_(sph_system_.getSystemVariableDataByName<Real>("PhysicalTime"))
 {
     Real total_mass_in_region(0);
     for (size_t index_i : body_part.body_part_particles_)
@@ -207,7 +207,7 @@ SurfacePressureFromSource::
       mass_(particles_->getVariableDataByName<Real>("Mass")),
       pressure_over_time_(pressure_over_time),
       is_pressure_applied_(particles_->addUniqueDiscreteVariable<bool>("isPressureApplied", false)),
-      physical_time_(sph_system_.getSystemVariableByName<Real>("PhysicalTime"))
+      physical_time_(sph_system_.getSystemVariableDataByName<Real>("PhysicalTime"))
 {
     BodySurface surface_layer(body_part.getSPHBody());
 

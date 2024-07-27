@@ -379,7 +379,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     if (sph_system.RestartStep() != 0)
     {
-        GlobalStaticVariables::physical_time_ = restart_io.readRestartFiles(sph_system.RestartStep());
+        physical_time = restart_io.readRestartFiles(sph_system.RestartStep());
         water_block.updateCellLinkedList();
         water_block_complex.updateConfiguration();
         cylinder.updateCellLinkedList();
@@ -414,7 +414,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------
-    while (GlobalStaticVariables::physical_time_ < end_time)
+    while (physical_time < end_time)
     {
         Real integration_time = 0.0;
         /** Integrate time (loop) until the next output time. */
@@ -450,7 +450,7 @@ int main(int ac, char *av[])
 
                 relaxation_time += dt;
                 integration_time += dt;
-                GlobalStaticVariables::physical_time_ += dt;
+                physical_time += dt;
             }
             interval_computing_fluid_pressure_relaxation += TickCount::now() - time_instance;
 
@@ -458,7 +458,7 @@ int main(int ac, char *av[])
             if (number_of_iterations % screen_output_interval == 0)
             {
                 std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
-                          << GlobalStaticVariables::physical_time_
+                          << physical_time
                           << "	Dt = " << Dt << "	dt = " << dt << "\n";
 
                 if (number_of_iterations % observation_sample_interval == 0 && number_of_iterations != sph_system.RestartStep())

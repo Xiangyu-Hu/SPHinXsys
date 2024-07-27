@@ -80,7 +80,7 @@ struct FreeStreamVelocity
     Vecd operator()(Vecd &position, Vecd &velocity)
     {
         Vecd target_velocity = Vecd::Zero();
-        Real run_time = GlobalStaticVariables::physical_time_;
+        Real run_time = physical_time;
         target_velocity[0] = run_time < t_ref_ ? 0.5 * u_ref_ * (1.0 - cos(Pi * run_time / t_ref_)) : u_ref_;
         return target_velocity;
     }
@@ -98,7 +98,7 @@ class TimeDependentAcceleration : public Gravity
 
     virtual Vecd InducedAcceleration(const Vecd &position) override
     {
-        Real run_time_ = GlobalStaticVariables::physical_time_;
+        Real run_time_ = physical_time;
         du_ave_dt_ = 0.5 * u_ref_ * (Pi / t_ref_) * sin(Pi * run_time_ / t_ref_);
 
         return run_time_ < t_ref_ ? Vecd(du_ave_dt_, 0.0) : global_acceleration_;

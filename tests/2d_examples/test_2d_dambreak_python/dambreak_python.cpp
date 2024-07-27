@@ -187,7 +187,7 @@ class Environment : public PreSettingCase
         //----------------------------------------------------------------------
         if (sph_system.RestartStep() != 0)
         {
-            GlobalStaticVariables::physical_time_ = restart_io.readRestartFiles(sph_system.RestartStep());
+            physical_time = restart_io.readRestartFiles(sph_system.RestartStep());
             water_block.updateCellLinkedList();
             water_block_complex.updateConfiguration();
             fluid_observer_contact.updateConfiguration();
@@ -215,7 +215,7 @@ class Environment : public PreSettingCase
     {
         /** Set restart number of iterations. */
         size_t number_of_iterations = sph_system.RestartStep();
-        while (GlobalStaticVariables::physical_time_ < End_time)
+        while (physical_time < End_time)
         {
             Real integration_time = 0.0;
             /** Integrate time (loop) until the next output time. */
@@ -238,7 +238,7 @@ class Environment : public PreSettingCase
                     fluid_density_relaxation.exec(acoustic_dt);
                     relaxation_time += acoustic_dt;
                     integration_time += acoustic_dt;
-                    GlobalStaticVariables::physical_time_ += acoustic_dt;
+                    physical_time += acoustic_dt;
                 }
                 interval_computing_fluid_pressure_relaxation += TickCount::now() - time_instance;
 
@@ -246,7 +246,7 @@ class Environment : public PreSettingCase
                 if (number_of_iterations % screen_output_interval == 0)
                 {
                     std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
-                              << GlobalStaticVariables::physical_time_
+                              << physical_time
                               << "	advection_dt = " << advection_dt << "	acoustic_dt = " << acoustic_dt << "\n";
 
                     if (number_of_iterations % observation_sample_interval == 0 && number_of_iterations != sph_system.RestartStep())

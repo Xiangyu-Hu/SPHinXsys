@@ -214,7 +214,7 @@ TEST(test_optimization, test_problem1_non_optimized)
     //----------------------------------------------------------------------
     if (sph_system.RestartStep() != 0)
     {
-        GlobalStaticVariables::physical_time_ = restart_io.readRestartFiles(sph_system.RestartStep());
+        physical_time = restart_io.readRestartFiles(sph_system.RestartStep());
         diffusion_body.updateCellLinkedList();
         diffusion_body_complex.updateConfiguration();
     }
@@ -239,7 +239,7 @@ TEST(test_optimization, test_problem1_non_optimized)
         sph_system.getIOEnvironment().output_folder_ + "/" + "nonopt_temperature.dat";
     std::ofstream out_file_nonopt_temperature(filefullpath_nonopt_temperature.c_str(), std::ios::app);
 
-    while (GlobalStaticVariables::physical_time_ < End_Time)
+    while (physical_time < End_Time)
     {
         dt = get_time_step_size.exec();
         if (ite % 500 == 0)
@@ -250,13 +250,13 @@ TEST(test_optimization, test_problem1_non_optimized)
             current_averaged_temperature = calculate_averaged_temperature.exec();
             out_file_nonopt_temperature << std::fixed << std::setprecision(12) << ite << "   " << current_averaged_temperature << "\n";
 
-            std::cout << "N= " << ite << " Time: " << GlobalStaticVariables::physical_time_ << "	dt: " << dt << "\n";
+            std::cout << "N= " << ite << " Time: " << physical_time << "	dt: " << dt << "\n";
             std::cout << "The averaged temperature is " << calculate_averaged_temperature.exec() << std::endl;
         }
 
         temperature_splitting.exec(dt);
         ite++;
-        GlobalStaticVariables::physical_time_ += dt;
+        physical_time += dt;
 
         if (ite % restart_output_interval == 0)
         {
@@ -267,7 +267,7 @@ TEST(test_optimization, test_problem1_non_optimized)
     TickCount::interval_t tt;
     tt = t4 - t1;
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
-    std::cout << "Total physical time for computation: " << GlobalStaticVariables::physical_time_ << " seconds." << std::endl;
+    std::cout << "Total physical time for computation: " << physical_time << " seconds." << std::endl;
 
     EXPECT_NEAR(587.88, calculate_averaged_temperature.exec(), 0.01);
 }

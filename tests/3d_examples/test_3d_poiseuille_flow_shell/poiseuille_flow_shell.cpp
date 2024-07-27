@@ -290,7 +290,7 @@ void poiseuille_flow(const Real resolution_ref, const Real resolution_shell, con
     //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------
-    while (GlobalStaticVariables::physical_time_ < end_time)
+    while (physical_time < end_time)
     {
         Real integration_time = 0.0;
         /** Integrate time (loop) until the next output time. */
@@ -315,7 +315,7 @@ void poiseuille_flow(const Real resolution_ref, const Real resolution_shell, con
                 density_relaxation.exec(dt);
                 relaxation_time += dt;
                 integration_time += dt;
-                GlobalStaticVariables::physical_time_ += dt;
+                physical_time += dt;
                 emitter_buffer_inflow_condition.exec();
             }
             interval_computing_pressure_relaxation +=
@@ -324,7 +324,7 @@ void poiseuille_flow(const Real resolution_ref, const Real resolution_shell, con
             {
                 std::cout << std::fixed << std::setprecision(9)
                           << "N=" << number_of_iterations
-                          << "	Time = " << GlobalStaticVariables::physical_time_
+                          << "	Time = " << physical_time
                           << "	Dt = " << Dt << "	dt = " << dt << "\n";
             }
             number_of_iterations++;

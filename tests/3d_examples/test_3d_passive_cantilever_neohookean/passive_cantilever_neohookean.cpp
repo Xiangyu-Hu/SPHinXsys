@@ -50,7 +50,7 @@ class TimeDependentGravity : public Gravity
         : Gravity(gravity_vector) {}
     virtual Vecd InducedAcceleration(const Vecd &position) override
     {
-        Real current_time = GlobalStaticVariables::physical_time_;
+        Real current_time = physical_time;
         return current_time < time_to_full_gravity ? current_time * global_acceleration_ / time_to_full_gravity : global_acceleration_;
     }
 };
@@ -107,7 +107,7 @@ int main(int ac, char *av[])
      * From here the time stepping begins.
      * Set the starting time.
      */
-    GlobalStaticVariables::physical_time_ = 0.0;
+    physical_time = 0.0;
     sph_system.initializeSystemCellLinkedLists();
     sph_system.initializeSystemConfigurations();
     corrected_configuration.exec();
@@ -124,7 +124,7 @@ int main(int ac, char *av[])
     /**
      * Main loop
      */
-    while (GlobalStaticVariables::physical_time_ < end_time)
+    while (physical_time < end_time)
     {
         Real integration_time = 0.0;
         while (integration_time < output_period)
@@ -132,7 +132,7 @@ int main(int ac, char *av[])
             if (ite % 100 == 0)
             {
                 std::cout << "N=" << ite << " Time: "
-                          << GlobalStaticVariables::physical_time_ << "	dt: "
+                          << physical_time << "	dt: "
                           << dt << "\n";
             }
 
@@ -146,7 +146,7 @@ int main(int ac, char *av[])
             ite++;
             dt = computing_time_step_size.exec();
             integration_time += dt;
-            GlobalStaticVariables::physical_time_ += dt;
+            physical_time += dt;
         }
         write_displacement.writeToFile(ite);
         TickCount t2 = TickCount::now();

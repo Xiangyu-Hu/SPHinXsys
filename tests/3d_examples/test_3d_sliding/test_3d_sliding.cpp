@@ -167,7 +167,7 @@ void block_sliding(
 
     auto check_disp = [&]()
     {
-        const Vec3d analytical_disp = get_analytical_displacement(GlobalStaticVariables::physical_time_);
+        const Vec3d analytical_disp = get_analytical_displacement(physical_time);
         const Vec3d pos_observer = write_cube_displacement.getObservedQuantity()[0];
         const Vec3d rotated_disp = rotation_inverse * (pos_observer - cube_translation);
         for (int n = 0; n < 3; n++)
@@ -181,7 +181,7 @@ void block_sliding(
     constant_gravity.exec();
 
     // simulation
-    GlobalStaticVariables::physical_time_ = 0.0;
+    physical_time = 0.0;
     int ite = 0;
     int ite_output = 0;
     Real output_period = end_time / 20.0;
@@ -190,7 +190,7 @@ void block_sliding(
     const Real dt_ref = computing_time_step_size.exec();
     auto run_simulation = [&]()
     {
-        while (GlobalStaticVariables::physical_time_ < end_time)
+        while (physical_time < end_time)
         {
             Real integral_time = 0.0;
             while (integral_time < output_period)
@@ -198,7 +198,7 @@ void block_sliding(
                 if (ite % 1000 == 0)
                 {
                     std::cout << "N=" << ite << " Time: "
-                              << GlobalStaticVariables::physical_time_ << "	dt: "
+                              << physical_time << "	dt: "
                               << dt << "\n";
                 }
 
@@ -218,7 +218,7 @@ void block_sliding(
 
                 ++ite;
                 integral_time += dt;
-                GlobalStaticVariables::physical_time_ += dt;
+                physical_time += dt;
             }
 
             ite_output++;

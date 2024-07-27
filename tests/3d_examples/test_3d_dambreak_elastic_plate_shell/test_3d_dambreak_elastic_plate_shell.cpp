@@ -139,7 +139,7 @@ class GateMotionConstraint : public MotionConstraint<SPHBody>
     virtual ~GateMotionConstraint(){};
     void update(size_t index_i, Real dt)
     {
-        Real run_time = GlobalStaticVariables::physical_time_;
+        Real run_time = physical_time;
         Real h_g = -285.115 * run_time * run_time * run_time + 72.305 * run_time * run_time + 0.1463 * run_time;
         pos_[index_i][1] = pos0_[index_i][1] + h_g;
     };
@@ -292,7 +292,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------
-    while (GlobalStaticVariables::physical_time_ < end_time)
+    while (physical_time < end_time)
     {
         Real integration_time = 0.0;
         while (integration_time < output_interval)
@@ -301,18 +301,18 @@ int main(int ac, char *av[])
             update_density_by_summation.exec();
             viscous_acceleration.exec();
 
-            if (GlobalStaticVariables::physical_time_ > contact_time)
+            if (physical_time > contact_time)
                 viscous_force_on_plate.exec();
 
             Real relaxation_time = 0.0;
             while (relaxation_time < Dt)
             {
                 pressure_relaxation.exec(dt);
-                if (GlobalStaticVariables::physical_time_ > contact_time)
+                if (physical_time > contact_time)
                     pressure_force_on_plate.exec();
                 density_relaxation.exec(dt);
 
-                if (GlobalStaticVariables::physical_time_ > contact_time)
+                if (physical_time > contact_time)
                 {
                     /** Solid dynamics time stepping. */
                     Real dt_s_sum = 0.0;
@@ -333,13 +333,13 @@ int main(int ac, char *av[])
                 dt = get_fluid_time_step_size.exec();
                 relaxation_time += dt;
                 integration_time += dt;
-                GlobalStaticVariables::physical_time_ += dt;
+                physical_time += dt;
             }
 
             if (number_of_iterations % screen_output_interval == 0)
             {
                 std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
-                          << GlobalStaticVariables::physical_time_
+                          << physical_time
                           << "	Dt = " << Dt << "	dt = " << dt << "	dt_s = " << dt_s << "\n";
             }
             number_of_iterations++;
@@ -350,12 +350,12 @@ int main(int ac, char *av[])
             }
             water_block.updateCellLinkedList();
 
-            if (GlobalStaticVariables::physical_time_ < gate_moving_time)
+            if (physical_time < gate_moving_time)
             {
                 update_gate_position.exec();
                 gate.updateCellLinkedList();
             }
-            if (GlobalStaticVariables::physical_time_ > contact_time)
+            if (physical_time > contact_time)
             {
                 /** Update normal direction at elastic body surface. */
                 plate_update_normal.exec();
@@ -370,9 +370,9 @@ int main(int ac, char *av[])
             write_displacement_2.writeToFile(number_of_iterations);
         }
         TickCount t2 = TickCount::now();
-        if (GlobalStaticVariables::physical_time_ <= gate_moving_time)
+        if (physical_time <= gate_moving_time)
             gate.setNewlyUpdated();
-        if (GlobalStaticVariables::physical_time_ <= contact_time)
+        if (physical_time <= contact_time)
             plate.setNewlyUpdated();
         write_real_body_states.writeToFile();
         TickCount t3 = TickCount::now();

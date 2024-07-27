@@ -179,7 +179,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Main loop
     //----------------------------------------------------------------------
-    while (GlobalStaticVariables::physical_time_ < end_time)
+    while (physical_time < end_time)
     {
         Real integration_time = 0.0;
         while (integration_time < output_period)
@@ -187,7 +187,7 @@ int main(int ac, char *av[])
             if (ite % 100 == 0)
             {
                 std::cout << "N=" << ite << " Time: "
-                          << GlobalStaticVariables::physical_time_ << "	dt: "
+                          << physical_time << "	dt: "
                           << dt << "\n";
                 write_coil_kinetic_energy.writeToFile(ite);
             }
@@ -204,7 +204,7 @@ int main(int ac, char *av[])
             ite++;
             dt = computing_time_step_size.exec();
             integration_time += dt;
-            GlobalStaticVariables::physical_time_ += dt;
+            physical_time += dt;
 
             // update particle neighbor relations for contact dynamics
             coil.updateCellLinkedList();

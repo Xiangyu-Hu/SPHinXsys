@@ -154,7 +154,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------
-    while (GlobalStaticVariables::physical_time_ < End_Time)
+    while (physical_time < End_Time)
     {
         Real integration_time = 0.0;
         /** Integrate time (loop) until the next output time. */
@@ -176,7 +176,7 @@ int main(int ac, char *av[])
                 granular_density_relaxation.exec(dt);
                 relaxation_time += dt;
                 integration_time += dt;
-                GlobalStaticVariables::physical_time_ += dt;
+                physical_time += dt;
 
                 interval_computing_soil_stress_relaxation += TickCount::now() - time_instance;
 
@@ -184,7 +184,7 @@ int main(int ac, char *av[])
                 if (number_of_iterations % screen_output_interval == 0)
                 {
                     std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << std::setprecision(4) << "	Time = "
-                              << GlobalStaticVariables::physical_time_
+                              << physical_time
                               << std::scientific << "	dt = " << dt << "\n";
 
                     if (number_of_iterations % observation_sample_interval == 0 && number_of_iterations != sph_system.RestartStep())

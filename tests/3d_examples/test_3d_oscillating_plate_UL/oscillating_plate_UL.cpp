@@ -184,9 +184,9 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     if (sph_system.RestartStep() != 0)
     {
-        GlobalStaticVariables::physical_time_ = restart_io.readRestartFiles(sph_system.RestartStep());
+        physical_time = restart_io.readRestartFiles(sph_system.RestartStep());
     }
-    GlobalStaticVariables::physical_time_ = 0.0;
+    physical_time = 0.0;
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
@@ -209,7 +209,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------
-    while (GlobalStaticVariables::physical_time_ < end_time)
+    while (physical_time < end_time)
     {
         Real integration_time = 0.0;
         while (integration_time < output_period)
@@ -228,11 +228,11 @@ int main(int ac, char *av[])
                 number_of_iterations++;
                 relaxation_time += acoustic_dt;
                 integration_time += acoustic_dt;
-                GlobalStaticVariables::physical_time_ += acoustic_dt;
+                physical_time += acoustic_dt;
                 if (number_of_iterations % screen_output_interval == 0)
                 {
                     std::cout << "N=" << number_of_iterations << " Time: "
-                              << GlobalStaticVariables::physical_time_ << "	advection_dt: "
+                              << physical_time << "	advection_dt: "
                               << advection_dt << "	acoustic_dt: "
                               << acoustic_dt << "\n";
                     if (number_of_iterations % restart_output_interval == 0 && number_of_iterations != sph_system.RestartStep())

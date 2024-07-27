@@ -13,7 +13,7 @@ PositionTranslate<DynamicsIdentifier>::
     PositionTranslate(DynamicsIdentifier &identifier, Real start_time, Real end_time, Vecd translation)
     : MotionConstraint<DynamicsIdentifier>(identifier),
       start_time_(start_time), end_time_(end_time),
-      physical_time_(this->sph_system_.getSystemVariableByName<Real>("PhysicalTime")),
+      physical_time_(this->sph_system_.getSystemVariableDataByName<Real>("PhysicalTime")),
       translation_(translation) {}
 //=================================================================================================//
 template <class DynamicsIdentifier>

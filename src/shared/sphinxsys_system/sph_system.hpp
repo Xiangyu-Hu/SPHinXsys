@@ -22,7 +22,7 @@ DataType *SPHSystem::registerSystemVariable(const std::string &name, DataType in
 }
 //=================================================================================================//
 template <typename DataType>
-DataType *SPHSystem::getSystemVariableByName(const std::string &name)
+DataType *SPHSystem::getSystemVariableDataByName(const std::string &name)
 {
     SingularVariable<DataType> *variable =
         findVariableByName<DataType>(all_system_variables_, name);
@@ -34,6 +34,21 @@ DataType *SPHSystem::getSystemVariableByName(const std::string &name)
     }
 
     return variable->ValueAddress();
+}
+//=================================================================================================//
+template <typename DataType>
+SingularVariable<DataType> &SPHSystem::getSystemVariableByName(const std::string &name)
+{
+    SingularVariable<DataType> *variable =
+        findVariableByName<DataType>(all_system_variables_, name);
+
+    if (variable == nullptr)
+    {
+        std::cout << "\nError: the system variable '" << name << "' is not registered!\n";
+        std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+    }
+
+    return *variable;
 }
 //=================================================================================================//
 } // namespace SPH

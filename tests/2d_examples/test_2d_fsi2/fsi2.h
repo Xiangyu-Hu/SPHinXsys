@@ -157,7 +157,7 @@ struct InflowVelocity
     Vecd operator()(Vecd &position, Vecd &velocity)
     {
         Vecd target_velocity = velocity;
-        Real run_time = GlobalStaticVariables::physical_time_;
+        Real run_time = physical_time;
         Real u_ave = run_time < t_ref_ ? 0.5 * u_ref_ * (1.0 - cos(Pi * run_time / t_ref_)) : u_ref_;
         if (aligned_box_.checkInBounds(position))
         {

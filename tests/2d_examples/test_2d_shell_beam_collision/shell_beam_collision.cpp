@@ -250,7 +250,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------
-    while (GlobalStaticVariables::physical_time_ < end_time)
+    while (physical_time < end_time)
     {
         Real integration_time = 0.0;
         while (integration_time < output_interval)
@@ -258,7 +258,7 @@ int main(int ac, char *av[])
             if (ite % 100 == 0)
             {
                 std::cout << "N=" << ite << " Time: "
-                          << GlobalStaticVariables::physical_time_ << "	dt: " << dt << "\n";
+                          << physical_time << "	dt: " << dt << "\n";
                 write_beam_kinetic_energy.writeToFile(ite);
             }
             beam_shell_update_contact_density.exec();
@@ -288,7 +288,7 @@ int main(int ac, char *av[])
             Real dt_free = shell_get_time_step_size.exec();
             dt = dt_free;
             integration_time += dt;
-            GlobalStaticVariables::physical_time_ += dt;
+            physical_time += dt;
         }
         TickCount t2 = TickCount::now();
         body_states_recording.writeToFile(ite);

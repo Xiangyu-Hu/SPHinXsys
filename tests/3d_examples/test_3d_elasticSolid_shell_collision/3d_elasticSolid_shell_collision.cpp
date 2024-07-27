@@ -198,7 +198,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------
-    while (GlobalStaticVariables::physical_time_ < end_time)
+    while (physical_time < end_time)
     {
         Real integration_time = 0.0;
         while (integration_time < output_interval)
@@ -209,7 +209,7 @@ int main(int ac, char *av[])
                 if (ite % 100 == 0)
                 {
                     std::cout << "N=" << ite << " Time: "
-                              << GlobalStaticVariables::physical_time_ << "	dt: " << dt << "\n";
+                              << physical_time << "	dt: " << dt << "\n";
                 }
                 ball_update_contact_density.exec();
                 ball_compute_solid_contact_forces.exec();
@@ -225,7 +225,7 @@ int main(int ac, char *av[])
                 dt = dt_free;
                 relaxation_time += dt;
                 integration_time += dt;
-                GlobalStaticVariables::physical_time_ += dt;
+                physical_time += dt;
             }
 
             write_ball_center_displacement.writeToFile(ite);

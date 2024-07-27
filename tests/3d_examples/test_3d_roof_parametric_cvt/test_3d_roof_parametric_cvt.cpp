@@ -455,7 +455,7 @@ return_data roof_under_self_weight(Real dp, bool cvt = true, int particle_number
      * From here the time stepping begins.
      * Set the starting time.
      */
-    GlobalStaticVariables::physical_time_ = 0.0;
+    physical_time = 0.0;
     int ite = 0;
     Real end_time = 3.0;
     Real output_period = end_time / 100.0;
@@ -467,7 +467,7 @@ return_data roof_under_self_weight(Real dp, bool cvt = true, int particle_number
     Real max_dt = 0.0;
     try
     {
-        while (GlobalStaticVariables::physical_time_ < end_time)
+        while (physical_time < end_time)
         {
             Real integral_time = 0.0;
             while (integral_time < output_period)
@@ -475,7 +475,7 @@ return_data roof_under_self_weight(Real dp, bool cvt = true, int particle_number
                 if (ite % 1000 == 0)
                 {
                     std::cout << "N=" << ite << " Time: "
-                              << GlobalStaticVariables::physical_time_ << "	dt: "
+                              << physical_time << "	dt: "
                               << dt << "\n";
                 }
 
@@ -496,7 +496,7 @@ return_data roof_under_self_weight(Real dp, bool cvt = true, int particle_number
 
                 ++ite;
                 integral_time += dt;
-                GlobalStaticVariables::physical_time_ += dt;
+                physical_time += dt;
 
                 // shell_body.updateCellLinkedList();
 

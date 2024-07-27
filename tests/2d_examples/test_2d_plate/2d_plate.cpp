@@ -158,7 +158,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Main loop of time stepping starts here.
     //----------------------------------------------------------------------
-    while (GlobalStaticVariables::physical_time_ < end_time)
+    while (physical_time < end_time)
     {
         Real integral_time = 0.0;
         while (integral_time < output_period)
@@ -166,7 +166,7 @@ int main(int ac, char *av[])
             if (ite % 1000 == 0)
             {
                 std::cout << "N=" << ite << " Time: "
-                          << GlobalStaticVariables::physical_time_ << "	dt: "
+                          << physical_time << "	dt: "
                           << dt << "\n";
             }
             apply_point_force.exec(dt);
@@ -180,7 +180,7 @@ int main(int ac, char *av[])
             ite++;
             dt = computing_time_step_size.exec();
             integral_time += dt;
-            GlobalStaticVariables::physical_time_ += dt;
+            physical_time += dt;
         }
         write_plate_max_displacement.writeToFile(ite);
         TickCount t2 = TickCount::now();

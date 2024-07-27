@@ -227,7 +227,7 @@ void sphere_compression(int dp_ratio, Real pressure, Real gravity_z)
      * From here the time stepping begins.
      * Set the starting time.
      */
-    GlobalStaticVariables::physical_time_ = 0.0;
+    physical_time = 0.0;
     int ite = 0;
     Real end_time = 0.5; // 1 is better
     Real output_period = end_time / 25.0;
@@ -241,7 +241,7 @@ void sphere_compression(int dp_ratio, Real pressure, Real gravity_z)
     StdVec<Real> time, max_displacement, center_deflection;
     try
     {
-        while (GlobalStaticVariables::physical_time_ < end_time)
+        while (physical_time < end_time)
         {
             Real integral_time = 0.0;
             while (integral_time < output_period)
@@ -249,7 +249,7 @@ void sphere_compression(int dp_ratio, Real pressure, Real gravity_z)
                 if (ite % 1000 == 0)
                 {
                     std::cout << "N=" << ite << " Time: "
-                              << GlobalStaticVariables::physical_time_ << "	dt: "
+                              << physical_time << "	dt: "
                               << dt << "\n";
                 }
 
@@ -276,7 +276,7 @@ void sphere_compression(int dp_ratio, Real pressure, Real gravity_z)
 
                 ++ite;
                 integral_time += dt;
-                GlobalStaticVariables::physical_time_ += dt;
+                physical_time += dt;
 
                 { // checking if any position has become nan
                     Vecd *pos_ = shell_particles->getVariableDataByName<Vecd>("Position");
@@ -290,7 +290,7 @@ void sphere_compression(int dp_ratio, Real pressure, Real gravity_z)
                 vtp_output.writeToFile(ite);
             }
             { // recording - not pushed to GitHub due to lack of matplotlib there
-                time.push_back(GlobalStaticVariables::physical_time_);
+                time.push_back(physical_time);
                 max_displacement.push_back(maximum_displace_norm.exec());
             }
         }

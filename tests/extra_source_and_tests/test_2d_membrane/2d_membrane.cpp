@@ -204,7 +204,7 @@ int main(int ac, char *av[])
     int ite = 0;
     int total_ite = 0;
 
-    GlobalStaticVariables::physical_time_ = 0.0;
+    physical_time = 0.0;
 
     //----------------------------------------------------------------------
     //	Setup computing time-step controls.
@@ -227,14 +227,14 @@ int main(int ac, char *av[])
     write_beam_tip_position.writeToFile(0);
 
     // computation loop starts
-    while (GlobalStaticVariables::physical_time_ < End_Time)
+    while (physical_time < End_Time)
     {
         Real integration_time = 0.0;
         // integrate time (loop) until the next output time
         while (integration_time < D_Time)
         {
             Real Dt = saturation_time_step_size.exec();
-            if (GlobalStaticVariables::physical_time_ < setup_saturation_time_)
+            if (physical_time < setup_saturation_time_)
             {
                 constrain_beam_saturation.exec();
             }
@@ -262,7 +262,7 @@ int main(int ac, char *av[])
                     if (ite % 1000 == 0)
                     {
                         std::cout << "N=" << ite << " Time: "
-                                  << GlobalStaticVariables::physical_time_ << "  Dt:" << Dt << "	dt: "
+                                  << physical_time << "  Dt:" << Dt << "	dt: "
                                   << dt << "  Dt/ dt:" << Dt / dt << "\n";
                     }
                 }
@@ -270,7 +270,7 @@ int main(int ac, char *av[])
                 total_ite++;
                 relaxation_time += dt;
                 integration_time += dt;
-                GlobalStaticVariables::physical_time_ += dt;
+                physical_time += dt;
             }
 
             std::cout << "One Diffusion finishes   "
@@ -291,7 +291,7 @@ int main(int ac, char *av[])
     tt = t4 - t1 - interval;
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds."
               << "  Iterations:  " << ite << std::endl;
-    std::cout << "Total iterations computation:  " << GlobalStaticVariables::physical_time_ / dt
+    std::cout << "Total iterations computation:  " << physical_time / dt
               << "  Total iterations:  " << total_ite << std::endl;
 
     return 0;

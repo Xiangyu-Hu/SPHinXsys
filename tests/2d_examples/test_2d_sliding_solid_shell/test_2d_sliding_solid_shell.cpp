@@ -153,7 +153,7 @@ void run_simulation()
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
     //----------------------------------------------------------------------
-    GlobalStaticVariables::physical_time_ = 0.0;
+    physical_time = 0.0;
     free_cube_rotation.exec();
     sph_system.initializeSystemCellLinkedLists();
     sph_system.initializeSystemConfigurations();
@@ -183,7 +183,7 @@ void run_simulation()
     //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------
-    while (GlobalStaticVariables::physical_time_ < end_time)
+    while (physical_time < end_time)
     {
         Real integration_time = 0.0;
         while (integration_time < output_interval)
@@ -194,7 +194,7 @@ void run_simulation()
                 if (ite % 100 == 0)
                 {
                     std::cout << "N=" << ite << " Time: "
-                              << GlobalStaticVariables::physical_time_ << "	dt: " << dt
+                              << physical_time << "	dt: " << dt
                               << "\n";
                 }
                 free_cube_update_contact_density.exec();
@@ -210,7 +210,7 @@ void run_simulation()
                 dt = free_cube_get_time_step_size.exec();
                 relaxation_time += dt;
                 integration_time += dt;
-                GlobalStaticVariables::physical_time_ += dt;
+                physical_time += dt;
             }
             write_free_cube_displacement.writeToFile(ite);
         }
@@ -226,7 +226,7 @@ void run_simulation()
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
     // gtest
-    const Vec2d analytical_disp = get_analytical_displacement(GlobalStaticVariables::physical_time_);
+    const Vec2d analytical_disp = get_analytical_displacement(physical_time);
     const Vec2d disp = write_free_cube_displacement.getObservedQuantity()[0] - observation_location[0];
     for (int n = 0; n < 2; n++)
         ASSERT_NEAR(abs(disp[n]), abs(analytical_disp[n]), 0.05 * analytical_disp.norm());

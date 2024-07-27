@@ -195,7 +195,7 @@ int main(int ac, char *av[])
      * From here the time stepping begins.
      * Set the starting time.
      */
-    GlobalStaticVariables::physical_time_ = 0.0;
+    physical_time = 0.0;
     write_states.writeToFile(0);
     write_cylinder_max_displacement.writeToFile(0);
 
@@ -210,7 +210,7 @@ int main(int ac, char *av[])
     /**
      * Main loop
      */
-    while (GlobalStaticVariables::physical_time_ < end_time)
+    while (physical_time < end_time)
     {
         Real integral_time = 0.0;
         while (integral_time < output_period)
@@ -218,7 +218,7 @@ int main(int ac, char *av[])
             if (ite % 100 == 0)
             {
                 std::cout << "N=" << ite << " Time: "
-                          << GlobalStaticVariables::physical_time_ << "	dt: "
+                          << physical_time << "	dt: "
                           << dt << "\n";
             }
             stress_relaxation_first_half.exec(dt);
@@ -233,7 +233,7 @@ int main(int ac, char *av[])
             ite++;
             dt = computing_time_step_size.exec();
             integral_time += dt;
-            GlobalStaticVariables::physical_time_ += dt;
+            physical_time += dt;
         }
         write_cylinder_max_displacement.writeToFile(ite);
         TickCount t2 = TickCount::now();

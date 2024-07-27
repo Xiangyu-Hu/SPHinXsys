@@ -119,7 +119,7 @@ class FreeStreamCondition : public fluid_dynamics::FlowVelocityBuffer
     }
     void setupDynamics(Real dt = 0.0) override
     {
-        Real run_time = GlobalStaticVariables::physical_time_;
+        Real run_time = physical_time;
         u_ave_ = run_time < t_ref ? 0.5 * u_ref_ * (1.0 - cos(Pi * run_time / t_ref)) : u_ref_;
     }
 };

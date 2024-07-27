@@ -203,7 +203,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------
-    while (GlobalStaticVariables::physical_time_ < end_time)
+    while (physical_time < end_time)
     {
         Real integration_time = 0.0;
         while (integration_time < output_interval)
@@ -211,7 +211,7 @@ int main(int ac, char *av[])
             if (ite % screen_output_interval == 0)
             {
                 std::cout << "N=" << ite << " Time: "
-                          << GlobalStaticVariables::physical_time_ << "	dt: "
+                          << physical_time << "	dt: "
                           << dt << "\n";
 
                 if (ite != 0 && ite % observation_sample_interval == 0)
@@ -226,7 +226,7 @@ int main(int ac, char *av[])
             ite++;
             dt = cream_get_time_step_size.exec();
             integration_time += dt;
-            GlobalStaticVariables::physical_time_ += dt;
+            physical_time += dt;
         }
         TickCount t2 = TickCount::now();
         body_states_recording.writeToFile();
