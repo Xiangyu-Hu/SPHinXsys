@@ -8,7 +8,7 @@ namespace SPH
 //=================================================================================================//
 template <class ExecutionPolicy>
 ParticleSorting<ExecutionPolicy>::ParticleSorting(RealBody &real_body)
-    : BaseDynamics<void>(real_body),
+    : BaseDynamics<void>(),
       particle_sequence_(real_body), particle_data_sort_(real_body),
       update_sorted_id_(real_body) {}
 //=================================================================================================//

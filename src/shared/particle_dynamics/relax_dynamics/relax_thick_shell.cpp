@@ -23,7 +23,7 @@ void ShellMidSurfaceBounding::update(size_t index_i, Real dt)
 ShellNormalDirectionPrediction::
     ShellNormalDirectionPrediction(BaseInnerRelation &inner_relation,
                                    Real thickness, Real consistency_criterion)
-    : BaseDynamics<void>(inner_relation.getSPHBody()),
+    : BaseDynamics<void>(),
       convergence_criterion_(cos(0.01 * Pi)),
       consistency_criterion_(consistency_criterion),
       normal_prediction_(inner_relation.getSPHBody(), thickness),
@@ -170,7 +170,7 @@ void ShellNormalDirectionPrediction::SmoothingNormal::update(size_t index_i, Rea
 }
 //=================================================================================================//
 ShellRelaxationStep::ShellRelaxationStep(BaseInnerRelation &inner_relation)
-    : BaseDynamics<void>(inner_relation.getSPHBody()),
+    : BaseDynamics<void>(),
       real_body_(DynamicCast<RealBody>(this, inner_relation.getSPHBody())),
       inner_relation_(inner_relation), near_shape_surface_(real_body_),
       relaxation_residue_(inner_relation),

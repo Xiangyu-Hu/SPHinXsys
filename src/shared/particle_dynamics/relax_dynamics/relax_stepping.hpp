@@ -26,7 +26,7 @@ template <class RelaxationResidueType>
 template <typename FirstArg, typename... OtherArgs>
 RelaxationStep<RelaxationResidueType>::
     RelaxationStep(FirstArg &&first_arg, OtherArgs &&...other_args)
-    : BaseDynamics<void>(first_arg.getSPHBody()),
+    : BaseDynamics<void>(),
       real_body_(DynamicCast<RealBody>(this, first_arg.getSPHBody())),
       body_relations_(real_body_.getBodyRelations()),
       relaxation_residue_(first_arg, std::forward<OtherArgs>(other_args)...),

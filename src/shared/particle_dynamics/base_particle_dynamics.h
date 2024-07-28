@@ -53,15 +53,14 @@ template <class ReturnType = void>
 class BaseDynamics
 {
   public:
-    BaseDynamics(SPHBody &sph_body)
-        : sph_body_(sph_body), is_newly_updated_(false){};
+    BaseDynamics() : is_newly_updated_(false){};
     virtual ~BaseDynamics(){};
     bool checkNewlyUpdated() { return is_newly_updated_; };
     void setNotNewlyUpdated() { is_newly_updated_ = false; };
 
-    void setUpdated()
+    void setUpdated(SPHBody &sph_body)
     {
-        sph_body_.setNewlyUpdated();
+        sph_body.setNewlyUpdated();
         is_newly_updated_ = true;
     };
 
@@ -69,7 +68,6 @@ class BaseDynamics
     virtual ReturnType exec(Real dt = 0.0) = 0;
 
   private:
-    SPHBody &sph_body_;
     bool is_newly_updated_;
 };
 

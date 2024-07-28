@@ -34,7 +34,7 @@ void ParticleSequence::update(size_t index_i, Real dt)
 }
 //=================================================================================================//
 ParticleDataSort<ParallelPolicy>::ParticleDataSort(RealBody &real_body)
-    : LocalDynamics(real_body), DataDelegateSimple(real_body), BaseDynamics<void>(real_body),
+    : LocalDynamics(real_body), DataDelegateSimple(real_body), BaseDynamics<void>(),
       sequence_(particles_->getVariableDataByName<UnsignedInt>("Sequence")),
       swap_sortable_particle_data_(particles_), compare_(),
       quick_sort_particle_range_(sequence_, 0, compare_, swap_sortable_particle_data_),
