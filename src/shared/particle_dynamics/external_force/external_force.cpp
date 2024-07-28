@@ -23,7 +23,7 @@ StartupAcceleration::StartupAcceleration(Vecd target_velocity, Real target_time)
 Vecd StartupAcceleration::InducedAcceleration(const Vecd &position, Real physical_time)
 {
     Real time_factor = physical_time / target_time_;
-    Vecd acceleration = 0.5 * Pi * time_factor * sin(Pi * time_factor) * Gravity::InducedAcceleration();
+    Vecd acceleration = 0.5 * Pi * sin(Pi * time_factor) * Gravity::InducedAcceleration();
     return time_factor < 1.0 ? acceleration : Vecd::Zero();
 }
 //=================================================================================================//
