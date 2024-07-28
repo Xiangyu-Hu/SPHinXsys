@@ -44,7 +44,7 @@ class SimpleDynamicsSYCL : public LocalDynamicsType, public BaseDynamics<void>
     SimpleDynamicsSYCL(DynamicsIdentifier &identifier, Args &&...args)
         : LocalDynamicsType(ExecutionPolicy{}, identifier, std::forward<Args>(args)...),
           BaseDynamics<void>(identifier.getSPHBody()),
-          computing_kernel_implementation_(this->computing_kernel_)
+          kernel_implementation_(this->computing_kernel_)
     {
         static_assert(!has_initialize<ComputingKernelType>::value &&
                           !has_interaction<ComputingKernelType>::value,
@@ -56,14 +56,14 @@ class SimpleDynamicsSYCL : public LocalDynamicsType, public BaseDynamics<void>
     {
         this->setUpdated();
         this->setupDynamics(dt);
-        particle_for(computing_kernel_implementation_,
+        particle_for(kernel_implementation_,
                      this->LoopRange(),
                      [&](size_t i, auto &&computing_kernel)
                      { computing_kernel.update(i, dt); });
     };
 
   protected:
-    Implementation<ComputingKernelType, ExecutionPolicy> computing_kernel_implementation_;
+    Implementation<ComputingKernelType, ExecutionPolicy> kernel_implementation_;
 };
 } // namespace SPH
 #endif // DYNAMICS_ALGORITHMS_SYCL_H

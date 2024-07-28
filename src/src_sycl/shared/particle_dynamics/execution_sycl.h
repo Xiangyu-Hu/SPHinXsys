@@ -124,16 +124,16 @@ class Implementation<ComputingKernelType, ParallelDevicePolicy>
   public:
     Implementation() = default;
 
-    explicit Implementation(const ComputingKernelType &computing_kernel)
-        : device_computing_kernel_(computing_kernel, 1) {}
+    explicit Implementation(ComputingKernelType *computing_kernel)
+        : delegated_kernel_(computing_kernel, 1) {}
 
     DeviceComputingKernelType &getBuffer()
     {
-        return device_computing_kernel_;
+        return delegated_kernel_;
     }
 
   private:
-    DeviceComputingKernelType device_computing_kernel_;
+    DeviceComputingKernelType delegated_kernel_;
 };
 } // namespace execution
 } // namespace SPH

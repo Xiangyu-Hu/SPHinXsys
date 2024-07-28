@@ -67,6 +67,9 @@ class BaseLocalDynamics
   protected:
     DynamicsIdentifier &identifier_;
     SPHSystem &sph_system_;
+
+    template <typename... T>
+    class ComputingKernel; /**< Computing kernel for a local dynamics type */
 };
 using LocalDynamics = BaseLocalDynamics<SPHBody>;
 

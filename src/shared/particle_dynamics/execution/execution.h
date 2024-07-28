@@ -32,6 +32,7 @@
 
 #include "execution_policy.h"
 
+#include "base_data_type.h"
 namespace SPH
 {
 namespace execution
@@ -45,17 +46,17 @@ class Implementation<ComputingKernelType, ExecutionPolicy>
   public:
     Implementation() = default;
 
-    template <class... Args>
-    explicit Implementation(const ExecutionPolicy &execution_policy, Args &&...args)
-        : computing_kernel_(std::forward<Args>(args)...) {}
+    explicit Implementation(const ExecutionPolicy &execution_policy,
+                            ComputingKernelType *computing_kernel)
+        : delegated_kernel_(computing_kernel) {}
 
     ComputingKernelType &getBuffer()
     {
-        return computing_kernel_;
+        return delegated_kernel_;
     }
 
   private:
-    ComputingKernelType &computing_kernel_;
+    ComputingKernelType *delegated_kernel_;
 };
 } // namespace execution
 } // namespace SPH

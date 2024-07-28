@@ -40,10 +40,27 @@ class ForcePrior
   protected:
     Vecd *force_prior_, *current_force_, *previous_force_;
 
+    template <>
+    class ComputingKernel<ForcePrior>
+    {
+        Vecd *force_prior_, *current_force_, *previous_force_;
+
+      public:
+        ComputingKernel(BaseParticles *base_particles, const std::string &force_name);
+        void update(size_t index_i, Real dt = 0.0);
+    };
+
   public:
     ForcePrior(BaseParticles *base_particles, const std::string &force_name);
+    template <class ExecutionPolicy>
+    ForcePrior(const ExecutionPolicy &device_policy, BaseParticles *base_particles, const std::string &force_name);
     virtual ~ForcePrior(){};
     void update(size_t index_i, Real dt = 0.0);
+
+    ComputingKernel<ForcePrior> *getComputingKernel() { return &computing_kernel_; }
+
+  protected:
+    ComputingKernel<ForcePrior> computing_kernel_;
 };
 
 template <class GravityType>
