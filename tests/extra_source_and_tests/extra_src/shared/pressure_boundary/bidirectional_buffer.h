@@ -95,8 +95,8 @@ class BidirectionalBuffer
               p_(particles_->getVariableDataByName<Real>("Pressure")),
               previous_surface_indicator_(particles_->getVariableDataByName<int>("PreviousSurfaceIndicator")),
               buffer_particle_indicator_(particles_->getVariableDataByName<int>("BufferParticleIndicator")),
-              target_pressure_(target_pressure),
-              physical_time_(sph_system_.getSystemVariableDataByName<Real>("PhysicalTime"))
+              physical_time_(sph_system_.getSystemVariableDataByName<Real>("PhysicalTime")),
+              target_pressure_(target_pressure)
         {
             particle_buffer_.checkParticlesReserved();
         };
