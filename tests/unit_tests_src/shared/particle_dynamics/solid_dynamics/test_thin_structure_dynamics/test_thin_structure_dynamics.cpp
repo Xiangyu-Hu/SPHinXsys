@@ -99,15 +99,17 @@ class ControlledRotation : public thin_structure_dynamics::ConstrainShellBodyReg
         : ConstrainShellBodyRegion(body_part),
           vel_(particles_->getVariableDataByName<Vecd>("Velocity")),
           angular_vel_(particles_->getVariableDataByName<Vecd>("AngularVelocity")),
-          pos_(particles_->getVariableDataByName<Vecd>("Position")){};
+          pos_(particles_->getVariableDataByName<Vecd>("Position")),
+          physical_time_(sph_system_.getSystemVariableDataByName<Real>("PhysicalTime")){};
     virtual ~ControlledRotation(){};
 
   protected:
     Vecd *vel_, *angular_vel_, *pos_;
+    Real *physical_time_;
     Real rotation_v = Pi;
     void update(size_t index_i, Real dt = 0.0)
     {
-        Real current_time = GlobalStaticVariables::physical_time_;
+        Real current_time = *physical_time_;
         if (current_time <= 0.5)
         {
             vel_[index_i] = Vecd(0.0, -rotation_v * pos_[index_i][2], rotation_v * pos_[index_i][1]);
@@ -172,10 +174,10 @@ int main(int ac, char *av[])
      * From here the time stepping begins.
      * Set the starting time.
      */
-    GlobalStaticVariables::physical_time_ = 0.0;
     write_states.writeToFile(0);
 
     /** Setup physical parameters. */
+    Real &physical_time = *system.getSystemVariableDataByName<Real>("PhysicalTime");
     int ite = 0;
     Real end_time = 1.1;
     Real output_period = end_time / 100.0;
@@ -186,7 +188,7 @@ int main(int ac, char *av[])
     /**
      * Main loop
      */
-    while (GlobalStaticVariables::physical_time_ < end_time)
+    while (physical_time < end_time)
     {
         Real integral_time = 0.0;
         while (integral_time < output_period)
@@ -194,11 +196,11 @@ int main(int ac, char *av[])
             if (ite % 100 == 0)
             {
                 std::cout << "N=" << ite << " Time: "
-                          << GlobalStaticVariables::physical_time_ << "	dt: "
+                          << physical_time << "	dt: "
                           << dt << "\n";
             }
             stress_relaxation_first_half.exec(dt);
-            if (GlobalStaticVariables::physical_time_ > 0.5 && GlobalStaticVariables::physical_time_ < 0.51)
+            if (physical_time > 0.5 && physical_time < 0.51)
             {
                 controlled_rotation.exec();
             }
@@ -207,7 +209,7 @@ int main(int ac, char *av[])
             ite++;
             dt = computing_time_step_size.exec();
             integral_time += dt;
-            GlobalStaticVariables::physical_time_ += dt;
+            physical_time += dt;
         }
         TickCount t2 = TickCount::now();
         write_states.writeToFile();

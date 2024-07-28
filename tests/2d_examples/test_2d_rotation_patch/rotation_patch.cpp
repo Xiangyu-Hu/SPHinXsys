@@ -178,16 +178,17 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Load restart file if necessary.
     //----------------------------------------------------------------------
+    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     if (sph_system.RestartStep() != 0)
     {
-        GlobalStaticVariables::physical_time_ = restart_io.readRestartFiles(sph_system.RestartStep());
+        physical_time = restart_io.readRestartFiles(sph_system.RestartStep());
         water_block.updateCellLinkedList();
         water_body_inner.updateConfiguration();
     }
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
-    size_t number_of_iterations = sph_system.RestartStep();
+    size_t number_of_iterations = 0;
     int screen_output_interval = 100;
     int restart_output_interval = screen_output_interval * 10;
     Real end_time = 8.0;
@@ -208,7 +209,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------
-    while (GlobalStaticVariables::physical_time_ < end_time)
+    while (physical_time < end_time)
     {
         Real integration_time = 0.0;
         /** Integrate time (loop) until the next output time. */
@@ -235,7 +236,7 @@ int main(int ac, char *av[])
                 relaxation_time += acoustic_dt;
                 integration_time += acoustic_dt;
                 inner_ite_dt++;
-                GlobalStaticVariables::physical_time_ += acoustic_dt;
+                physical_time += acoustic_dt;
             }
             interval_computing_fluid_pressure_relaxation += TickCount::now() - time_instance;
 
@@ -243,7 +244,7 @@ int main(int ac, char *av[])
             if (number_of_iterations % screen_output_interval == 0)
             {
                 std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
-                          << GlobalStaticVariables::physical_time_
+                          << physical_time
                           << "	Dt = " << Dt << "	Dt / dt = " << inner_ite_dt << "\n";
 
                 if (number_of_iterations % restart_output_interval == 0)

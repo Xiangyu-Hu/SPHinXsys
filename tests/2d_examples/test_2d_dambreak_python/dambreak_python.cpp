@@ -94,6 +94,7 @@ class PreSettingCase : public Parameter
 class Environment : public PreSettingCase
 {
   protected:
+    SPHSystem &sph_system_;
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -111,7 +112,7 @@ class Environment : public PreSettingCase
     //	Note that there may be data dependence on the sequence of constructions.
     //----------------------------------------------------------------------
     Gravity gravity;
-    SimpleDynamics<GravityForce> constant_gravity;
+    SimpleDynamics<GravityForce<Gravity>> constant_gravity;
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction;
 
     Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> fluid_pressure_relaxation;
@@ -154,6 +155,7 @@ class Environment : public PreSettingCase
   public:
     explicit Environment(int set_restart_step)
         : PreSettingCase(),
+          sph_system_(sph_system),
           water_block_inner(water_block),
           water_wall_contact(water_block, {&wall_boundary}),
           water_block_complex(water_block_inner, water_wall_contact),
@@ -183,16 +185,6 @@ class Environment : public PreSettingCase
         /** set restart step. */
         sph_system.setRestartStep(set_restart_step);
         //----------------------------------------------------------------------
-        //	Load restart file if necessary.
-        //----------------------------------------------------------------------
-        if (sph_system.RestartStep() != 0)
-        {
-            GlobalStaticVariables::physical_time_ = restart_io.readRestartFiles(sph_system.RestartStep());
-            water_block.updateCellLinkedList();
-            water_block_complex.updateConfiguration();
-            fluid_observer_contact.updateConfiguration();
-        }
-        //----------------------------------------------------------------------
         //	First output before the main loop.
         //----------------------------------------------------------------------
         body_states_recording.writeToFile();
@@ -213,9 +205,9 @@ class Environment : public PreSettingCase
     //----------------------------------------------------------------------
     void runCase(Real End_time)
     {
-        /** Set restart number of iterations. */
-        size_t number_of_iterations = sph_system.RestartStep();
-        while (GlobalStaticVariables::physical_time_ < End_time)
+        Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
+        size_t number_of_iterations = 0;
+        while (physical_time < End_time)
         {
             Real integration_time = 0.0;
             /** Integrate time (loop) until the next output time. */
@@ -238,7 +230,7 @@ class Environment : public PreSettingCase
                     fluid_density_relaxation.exec(acoustic_dt);
                     relaxation_time += acoustic_dt;
                     integration_time += acoustic_dt;
-                    GlobalStaticVariables::physical_time_ += acoustic_dt;
+                    physical_time += acoustic_dt;
                 }
                 interval_computing_fluid_pressure_relaxation += TickCount::now() - time_instance;
 
@@ -246,7 +238,7 @@ class Environment : public PreSettingCase
                 if (number_of_iterations % screen_output_interval == 0)
                 {
                     std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
-                              << GlobalStaticVariables::physical_time_
+                              << physical_time
                               << "	advection_dt = " << advection_dt << "	acoustic_dt = " << acoustic_dt << "\n";
 
                     if (number_of_iterations % observation_sample_interval == 0 && number_of_iterations != sph_system.RestartStep())

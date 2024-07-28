@@ -169,7 +169,6 @@ int main(int ac, char *av[])
     RegressionTestTimeAverage<ObservedQuantityRecording<Real>>
         write_beam_stress("VonMisesStress", beam_observer_contact);
     /* time step begins */
-    GlobalStaticVariables::physical_time_ = 0.0;
     sph_system.initializeSystemCellLinkedLists();
     sph_system.initializeSystemConfigurations();
 
@@ -178,6 +177,7 @@ int main(int ac, char *av[])
     write_states.writeToFile(0);
     write_beam_stress.writeToFile(0);
     /** Setup physical parameters. */
+    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     int ite = 0;
     Real output_period = end_time / 200.0;
     Real dt = 0.0;
@@ -188,7 +188,7 @@ int main(int ac, char *av[])
     /**
      * Main loop
      */
-    while (GlobalStaticVariables::physical_time_ < end_time)
+    while (physical_time < end_time)
     {
         Real integration_time = 0.0;
         while (integration_time < output_period)
@@ -196,11 +196,11 @@ int main(int ac, char *av[])
             if (ite % 100 == 0)
             {
                 std::cout << "N=" << ite << " Time: "
-                          << GlobalStaticVariables::physical_time_ << "	dt: "
+                          << physical_time << "	dt: "
                           << dt << "\n";
             }
 
-            pull_force.exec(GlobalStaticVariables::physical_time_);
+            pull_force.exec(physical_time);
 
             /** Stress relaxation and damping. */
             stress_relaxation_first_half.exec(dt);
@@ -212,7 +212,7 @@ int main(int ac, char *av[])
             ite++;
             dt = sph_system.getSmallestTimeStepAmongSolidBodies();
             integration_time += dt;
-            GlobalStaticVariables::physical_time_ += dt;
+            physical_time += dt;
         }
         TickCount t2 = TickCount::now();
         write_beam_stress.writeToFile(ite);

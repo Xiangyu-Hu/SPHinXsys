@@ -51,7 +51,6 @@ class SpringConstrain : public MotionConstraint<BodyPartByParticle>
   public:
     SpringConstrain(BodyPartByParticle &body_part, Real stiffness);
     virtual ~SpringConstrain(){};
-
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
@@ -77,6 +76,7 @@ class PositionSolidBody : public MotionConstraint<SPHBody>
 
   protected:
     Real start_time_, end_time_;
+    Real *physical_time_;
     Vecd pos_0_center_, pos_end_center_, translation_;
     Vecd getDisplacement(size_t index_i, Real dt);
 };
@@ -98,6 +98,7 @@ class PositionScaleSolidBody : public MotionConstraint<SPHBody>
 
   protected:
     Real start_time_, end_time_, end_scale_;
+    Real *physical_time_;
     Vecd pos_0_center_;
     Vecd getDisplacement(size_t index_i, Real dt);
 };
@@ -112,30 +113,16 @@ template <class DynamicsIdentifier>
 class PositionTranslate : public MotionConstraint<DynamicsIdentifier>
 {
   public:
-    PositionTranslate(DynamicsIdentifier &identifier, Real start_time, Real end_time, Vecd translation)
-        : MotionConstraint<DynamicsIdentifier>(identifier),
-          start_time_(start_time), end_time_(end_time), translation_(translation){};
+    PositionTranslate(DynamicsIdentifier &identifier, Real start_time, Real end_time, Vecd translation);
     virtual ~PositionTranslate(){};
-    void update(size_t index_i, Real dt = 0.0)
-    {
-        // only apply in the defined time period
-        if (GlobalStaticVariables::physical_time_ >= start_time_ && GlobalStaticVariables::physical_time_ <= end_time_)
-        {
-            // displacement from the initial position, 0.5x because it's executed twice
-            this->pos_[index_i] += 0.5 * getDisplacement(index_i, dt);
-            this->vel_[index_i] = Vecd::Zero();
-        }
-    };
+    void update(size_t index_i, Real dt = 0.0);
 
   protected:
     Real start_time_, end_time_;
+    Real *physical_time_;
     Vecd translation_;
 
-    Vecd getDisplacement(size_t index_i, Real dt)
-    {
-        return (this->pos0_[index_i] + translation_ - this->pos_[index_i]) * dt /
-               (end_time_ - GlobalStaticVariables::physical_time_);
-    };
+    Vecd getDisplacement(size_t index_i, Real dt);
 };
 using TranslateSolidBody = PositionTranslate<SPHBody>;
 using TranslateSolidBodyPart = PositionTranslate<BodyPartByParticle>;
@@ -153,28 +140,12 @@ class ConstrainSolidBodyMassCenter : public MotionConstraint<SPHBody>
     ReduceDynamics<QuantityMoment<Vecd, SPHBody>> compute_total_momentum_;
 
   protected:
-    virtual void setupDynamics(Real dt = 0.0) override
-    {
-        velocity_correction_ =
-            correction_matrix_ * compute_total_momentum_.exec(dt) / total_mass_;
-    }
+    virtual void setupDynamics(Real dt = 0.0) override;
 
   public:
-    explicit ConstrainSolidBodyMassCenter(SPHBody &sph_body, Vecd constrain_direction = Vecd::Ones())
-        : MotionConstraint<SPHBody>(sph_body), correction_matrix_(Matd::Identity()),
-          compute_total_momentum_(sph_body, "Velocity")
-    {
-        for (int i = 0; i != Dimensions; ++i)
-            correction_matrix_(i, i) = constrain_direction[i];
-        ReduceDynamics<QuantitySummation<Real, SPHBody>> compute_total_mass_(sph_body, "Mass");
-        total_mass_ = compute_total_mass_.exec();
-    }
+    explicit ConstrainSolidBodyMassCenter(SPHBody &sph_body, Vecd constrain_direction = Vecd::Ones());
     virtual ~ConstrainSolidBodyMassCenter(){};
-
-    void update(size_t index_i, Real dt = 0.0)
-    {
-        this->vel_[index_i] -= velocity_correction_;
-    }
+    void update(size_t index_i, Real dt = 0.0);
 };
 
 /**
@@ -185,20 +156,8 @@ template <class DynamicsIdentifier>
 class ConstraintBySimBody : public MotionConstraint<DynamicsIdentifier>
 {
   public:
-    ConstraintBySimBody(DynamicsIdentifier &identifier,
-                        SimTK::MultibodySystem &MBsystem,
-                        SimTK::MobilizedBody &mobod,
-                        SimTK::RungeKuttaMersonIntegrator &integ)
-        : MotionConstraint<DynamicsIdentifier>(identifier),
-          MBsystem_(MBsystem), mobod_(mobod), integ_(integ),
-          n_(this->particles_->template getVariableDataByName<Vecd>("NormalDirection")),
-          n0_(this->particles_->template registerSharedVariableFrom<Vecd>("InitialNormalDirection", "NormalDirection")),
-          acc_(this->particles_->template registerSharedVariable<Vecd>("Acceleration"))
-    {
-        simbody_state_ = &integ_.getState();
-        MBsystem_.realize(*simbody_state_, SimTK::Stage::Acceleration);
-        initial_mobod_origin_location_ = mobod_.getBodyOriginLocation(*simbody_state_);
-    };
+    ConstraintBySimBody(DynamicsIdentifier &identifier, SimTK::MultibodySystem &MBsystem,
+                        SimTK::MobilizedBody &mobod, SimTK::RungeKuttaMersonIntegrator &integ);
     virtual ~ConstraintBySimBody(){};
 
     virtual void setupDynamics(Real dt = 0.0) override
@@ -206,25 +165,7 @@ class ConstraintBySimBody : public MotionConstraint<DynamicsIdentifier>
         simbody_state_ = &integ_.getState();
         MBsystem_.realize(*simbody_state_, SimTK::Stage::Acceleration);
     };
-    void update(size_t index_i, Real dt = 0.0)
-    {
-        /** Change to SimTK::Vector. */
-        SimTKVec3 rr, pos, vel, acc;
-        rr = EigenToSimTK(upgradeToVec3d(this->pos0_[index_i])) - initial_mobod_origin_location_;
-        mobod_.findStationLocationVelocityAndAccelerationInGround(*simbody_state_, rr, pos, vel, acc);
-        /** this is how we calculate the particle position in after transform of MBbody.
-         * const SimTK::Rotation&  R_GB = mobod_.getBodyRotation(simbody_state);
-         * const SimTKVec3&      p_GB = mobod_.getBodyOriginLocation(simbody_state);
-         * const SimTKVec3 r = R_GB * rr; // re-express station vector p_BS in G (15 flops)
-         * base_particle_data_i.pos_  = (p_GB + r);
-         */
-        this->pos_[index_i] = degradeToVecd(SimTKToEigen(pos));
-        this->vel_[index_i] = degradeToVecd(SimTKToEigen(vel));
-        acc_[index_i] = degradeToVecd(SimTKToEigen(acc));
-
-        SimTKVec3 n = (mobod_.getBodyRotation(*simbody_state_) * EigenToSimTK(upgradeToVec3d(n0_[index_i])));
-        n_[index_i] = degradeToVecd(SimTKToEigen(n));
-    };
+    void update(size_t index_i, Real dt = 0.0);
 
   protected:
     SimTK::MultibodySystem &MBsystem_;
@@ -255,38 +196,13 @@ class TotalForceForSimBody
     SimTKVec3 current_mobod_origin_location_;
 
   public:
-    TotalForceForSimBody(DynamicsIdentifier &identifier,
-                         SimTK::MultibodySystem &MBsystem,
-                         SimTK::MobilizedBody &mobod,
-                         SimTK::RungeKuttaMersonIntegrator &integ)
-        : BaseLocalDynamicsReduce<ReduceSum<SimTK::SpatialVec>, DynamicsIdentifier>(identifier),
-          DataDelegateSimple(identifier.getSPHBody()),
-          force_(particles_->registerSharedVariable<Vecd>("Force")),
-          force_prior_(particles_->getVariableDataByName<Vecd>("ForcePrior")),
-          pos_(particles_->getVariableDataByName<Vecd>("Position")),
-          MBsystem_(MBsystem), mobod_(mobod), integ_(integ)
-    {
-        this->quantity_name_ = "TotalForceForSimBody";
-    };
+    TotalForceForSimBody(DynamicsIdentifier &identifier, SimTK::MultibodySystem &MBsystem,
+                         SimTK::MobilizedBody &mobod, SimTK::RungeKuttaMersonIntegrator &integ);
 
     virtual ~TotalForceForSimBody(){};
 
-    virtual void setupDynamics(Real dt = 0.0) override
-    {
-        const SimTK::State *simbody_state = &integ_.getState();
-        MBsystem_.realize(*simbody_state, SimTK::Stage::Acceleration);
-        current_mobod_origin_location_ = mobod_.getBodyOriginLocation(*simbody_state);
-    };
-
-    SimTK::SpatialVec reduce(size_t index_i, Real dt = 0.0)
-    {
-        Vecd force = force_[index_i] + force_prior_[index_i];
-        SimTKVec3 force_from_particle = EigenToSimTK(upgradeToVec3d(force));
-        SimTKVec3 displacement = EigenToSimTK(upgradeToVec3d(pos_[index_i])) - current_mobod_origin_location_;
-        SimTKVec3 torque_from_particle = SimTK::cross(displacement, force_from_particle);
-
-        return SimTK::SpatialVec(torque_from_particle, force_from_particle);
-    };
+    virtual void setupDynamics(Real dt = 0.0) override;
+    SimTK::SpatialVec reduce(size_t index_i, Real dt = 0.0);
 };
 using TotalForceOnBodyForSimBody = TotalForceForSimBody<SPHBody>;
 using TotalForceOnBodyPartForSimBody = TotalForceForSimBody<BodyPartByParticle>;

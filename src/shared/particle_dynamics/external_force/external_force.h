@@ -34,36 +34,39 @@
 
 namespace SPH
 {
-/**
- * @class ExternalForce
- * @brief This class define external forces.
- */
-class ExternalForce
-{
-  public:
-    ExternalForce();
-    virtual ~ExternalForce(){};
-    /** This function can be used for runtime control of external force. */
-    virtual Vecd InducedAcceleration(const Vecd &position = Vecd::Zero()) = 0;
-};
 
-/**
- * @class Gravity
- * @brief The gravity force, derived class of External force.
- */
-class Gravity : public ExternalForce
+class Gravity
 {
   protected:
-    Vecd global_acceleration_;
+    Vecd reference_acceleration_;
     Vecd zero_potential_reference_;
 
   public:
     Gravity(Vecd gravity_vector, Vecd reference_position = Vecd::Zero());
-    virtual ~Gravity(){};
+    ~Gravity(){};
 
-    /** This function can be used for runtime control of external force. */
-    virtual Vecd InducedAcceleration(const Vecd &position = Vecd::Zero()) override;
+    Vecd InducedAcceleration(const Vecd &position = Vecd::Zero(), Real physical_time = 0.0);
     Real getPotential(const Vecd &position);
+};
+
+class StartupAcceleration : public Gravity
+{
+    Real target_time_;
+
+  public:
+    StartupAcceleration(Vecd target_velocity, Real target_time);
+    ~StartupAcceleration(){};
+
+    Vecd InducedAcceleration(const Vecd &position, Real physical_time);
+};
+
+class IncreaseToFullGravity : public Gravity
+{
+    Real time_to_full_gravity_;
+
+  public:
+    explicit IncreaseToFullGravity(Vecd gravity_vector, Real time_to_full_gravity);
+    Vecd InducedAcceleration(const Vecd &position, Real physical_time);
 };
 } // namespace SPH
 #endif // EXTERNAL_FORCE_H

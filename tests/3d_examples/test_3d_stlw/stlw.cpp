@@ -54,7 +54,7 @@ int main(int ac, char *av[])
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
 
     Gravity gravity(Vecd(0.0, 0.0, -gravity_g));
-    SimpleDynamics<GravityForce> constant_gravity_to_fluid(water_block, gravity);
+    SimpleDynamics<GravityForce<Gravity>> constant_gravity_to_fluid(water_block, gravity);
     InteractionWithUpdate<SpatialTemporalFreeSurfaceIndicationComplex> free_stream_surface_indicator(water_block_inner, water_wall_contact);
 
     Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation(water_block_inner, water_wall_contact);
@@ -80,7 +80,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Basic control parameters for time stepping.
     //----------------------------------------------------------------------
-    GlobalStaticVariables::physical_time_ = 0.0;
+    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     int number_of_iterations = 0;
     int screen_output_interval = 1000;
     Real end_time = total_physical_time;
@@ -107,7 +107,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Main loop of time stepping starts here.
     //----------------------------------------------------------------------
-    while (GlobalStaticVariables::physical_time_ < end_time)
+    while (physical_time < end_time)
     {
         Real integral_time = 0.0;
         while (integral_time < output_interval)
@@ -129,14 +129,14 @@ int main(int ac, char *av[])
                 integral_time += dt;
                 total_time += dt;
                 if (total_time >= relax_time)
-                    GlobalStaticVariables::physical_time_ += dt;
+                    physical_time += dt;
             }
 
             if (number_of_iterations % screen_output_interval == 0)
             {
                 std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations
                           << "	Total Time = " << total_time
-                          << "	Physical Time = " << GlobalStaticVariables::physical_time_
+                          << "	Physical Time = " << physical_time
                           << "	Dt = " << Dt << "	dt = " << dt << "\n";
             }
             number_of_iterations++;

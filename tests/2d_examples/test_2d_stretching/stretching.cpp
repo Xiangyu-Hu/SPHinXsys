@@ -282,6 +282,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Setup computing time-step controls.
     //----------------------------------------------------------------------
+    Real &physical_time = *system.getSystemVariableDataByName<Real>("PhysicalTime");
     int ite = 0;
     int Dt_ite = 0;
     Real End_Time = 100.0;
@@ -302,7 +303,7 @@ int main(int ac, char *av[])
     write_displacement.writeToFile(0);
 
     // computation loop starts
-    while (GlobalStaticVariables::physical_time_ < End_Time)
+    while (physical_time < End_Time)
     {
         Real integration_time = 0.0;
         // integrate time (loop) until the next output time
@@ -335,7 +336,7 @@ int main(int ac, char *av[])
                     if (ite % 500 == 0)
                     {
                         std::cout << "N=" << ite << " Time: "
-                                  << GlobalStaticVariables::physical_time_
+                                  << physical_time
                                   << "	Dt: " << Dt << "	dt: " << dt
                                   << "	Dt:dt = " << Dt / dt << "\n";
                     }
@@ -348,7 +349,7 @@ int main(int ac, char *av[])
                 }
                 relaxation_time += dt;
                 integration_time += dt;
-                GlobalStaticVariables::physical_time_ += dt;
+                physical_time += dt;
             }
         }
 
@@ -363,7 +364,7 @@ int main(int ac, char *av[])
     tt = t4 - t1 - interval;
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds."
               << "  Iterations:  " << ite << std::endl;
-    std::cout << "Total iterations computation:  " << GlobalStaticVariables::physical_time_ / dt
+    std::cout << "Total iterations computation:  " << physical_time / dt
               << std::endl;
 
     if (system.GenerateRegressionData())

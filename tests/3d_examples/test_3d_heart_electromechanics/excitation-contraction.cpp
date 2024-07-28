@@ -429,6 +429,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	 Physical parameters for main loop.
     //----------------------------------------------------------------------
+    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     int screen_output_interval = 10;
     int ite = 0;
     int reaction_step = 2;
@@ -443,7 +444,7 @@ int main(int ac, char *av[])
     std::cout << "Main Loop Starts Here : "
               << "\n";
     /** Main loop starts here. */
-    while (GlobalStaticVariables::physical_time_ < end_time)
+    while (physical_time < end_time)
     {
         Real integration_time = 0.0;
         while (integration_time < Ouput_T)
@@ -454,18 +455,18 @@ int main(int ac, char *av[])
                 if (ite % screen_output_interval == 0)
                 {
                     std::cout << std::fixed << std::setprecision(9) << "N=" << ite << "	Time = "
-                              << GlobalStaticVariables::physical_time_
+                              << physical_time
                               << "	dt = " << dt
                               << "	dt_s = " << dt_s << "\n";
                 }
                 /** Apply stimulus excitation. */
-                if (0 <= GlobalStaticVariables::physical_time_ && GlobalStaticVariables::physical_time_ <= 0.5)
+                if (0 <= physical_time && physical_time <= 0.5)
                 {
                     apply_stimulus_s1.exec(dt);
                 }
                 /** Single spiral wave. */
-                // if( 60 <= GlobalStaticVariables::physical_time_
-                // 	&&  GlobalStaticVariables::physical_time_ <= 65)
+                // if( 60 <= physical_time
+                // 	&&  physical_time <= 65)
                 // {
                 // 	apply_stimulus_s2.exec(dt);
                 // }
@@ -507,7 +508,7 @@ int main(int ac, char *av[])
 
                 relaxation_time += dt;
                 integration_time += dt;
-                GlobalStaticVariables::physical_time_ += dt;
+                physical_time += dt;
             }
             write_voltage.writeToFile(ite);
             write_displacement.writeToFile(ite);

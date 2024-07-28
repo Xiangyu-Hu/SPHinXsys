@@ -65,7 +65,7 @@ class GhostCreationFromMesh : public DataDelegateSimple
 //----------------------------------------------------------------------
 //	BoundaryConditionSetupInFVM
 //----------------------------------------------------------------------
-class BoundaryConditionSetupInFVM : public DataDelegateInner
+class BoundaryConditionSetupInFVM : public LocalDynamics, public DataDelegateInner
 {
   public:
     BoundaryConditionSetupInFVM(BaseInnerRelationInFVM &inner_relation, GhostCreationFromMesh &ghost_creation);

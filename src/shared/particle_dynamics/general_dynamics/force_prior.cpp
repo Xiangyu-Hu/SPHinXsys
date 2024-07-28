@@ -18,16 +18,4 @@ void ForcePrior::update(size_t index_i, Real dt)
     previous_force_[index_i] = current_force_[index_i];
 }
 //=================================================================================================//
-GravityForce::GravityForce(SPHBody &sph_body, Gravity &gravity)
-    : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
-      ForcePrior(particles_, "GravityForce"), gravity_(gravity),
-      pos_(particles_->getVariableDataByName<Vecd>("Position")),
-      mass_(particles_->registerSharedVariable<Real>("Mass")) {}
-//=================================================================================================//
-void GravityForce::update(size_t index_i, Real dt)
-{
-    current_force_[index_i] = mass_[index_i] * gravity_.InducedAcceleration(pos_[index_i]);
-    ForcePrior::update(index_i, dt);
-}
-//=================================================================================================//
 } // namespace SPH

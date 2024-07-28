@@ -60,12 +60,13 @@ class BaseLocalDynamics
 {
   public:
     explicit BaseLocalDynamics(DynamicsIdentifier &identifier)
-        : identifier_(identifier){};
+        : identifier_(identifier), sph_system_(identifier.getSPHSystem()){};
     virtual ~BaseLocalDynamics(){};
     DynamicsIdentifier &getDynamicsIdentifier() { return identifier_; };
-    virtual void setupDynamics(Real dt = 0.0) {}; // setup global parameters
+    virtual void setupDynamics(Real dt = 0.0){}; // setup global parameters
   protected:
     DynamicsIdentifier &identifier_;
+    SPHSystem &sph_system_;
 };
 using LocalDynamics = BaseLocalDynamics<SPHBody>;
 
@@ -147,7 +148,7 @@ class ComplexInteraction<LocalDynamicsName<>, CommonParameters...>
   public:
     ComplexInteraction(){};
 
-    void interaction(size_t index_i, Real dt = 0.0) {};
+    void interaction(size_t index_i, Real dt = 0.0){};
 };
 
 template <typename... CommonParameters, template <typename... InteractionTypes> class LocalDynamicsName,

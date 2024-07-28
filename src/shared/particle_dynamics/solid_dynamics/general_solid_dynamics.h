@@ -55,6 +55,7 @@ class DistributingPointForces : public LocalDynamics, public DataDelegateSimple
     Real *thickness_;
     std::vector<Real *> weight_;
     std::vector<Real> sum_of_weight_;
+    Real *physical_time_;
 
     void getWeight();
 

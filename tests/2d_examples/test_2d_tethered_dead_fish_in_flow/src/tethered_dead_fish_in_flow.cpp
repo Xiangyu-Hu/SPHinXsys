@@ -181,11 +181,10 @@ struct InflowVelocity
           aligned_box_(boundary_condition.getAlignedBox()),
           halfsize_(aligned_box_.HalfSize()) {}
 
-    Vecd operator()(Vecd &position, Vecd &velocity)
+    Vecd operator()(Vecd &position, Vecd &velocity, Real current_time)
     {
         Vecd target_velocity = velocity;
-        Real run_time = GlobalStaticVariables::physical_time_;
-        Real u_ave = run_time < t_ref_ ? 0.5 * u_ref_ * (1.0 - cos(Pi * run_time / t_ref_)) : u_ref_;
+        Real u_ave = current_time < t_ref_ ? 0.5 * u_ref_ * (1.0 - cos(Pi * current_time / t_ref_)) : u_ref_;
         target_velocity[0] = 1.5 * u_ave * SMAX(0.0, 1.0 - position[1] * position[1] / halfsize_[1] / halfsize_[1]);
         return target_velocity;
     }
@@ -409,10 +408,7 @@ int main(int ac, char *av[])
     BodyStatesRecordingToVtp write_real_body_states(system);
     ReducedQuantityRecording<QuantitySummation<Vecd>> write_total_pressure_force_from_fluid(fish_body, "PressureForceFromFluid");
     ObservedQuantityRecording<Vecd> write_fish_displacement("Position", fish_observer_contact);
-    /**
-     * Time steeping starts here.
-     */
-    GlobalStaticVariables::physical_time_ = 0.0;
+
     /**
      * Initial periodic boundary condition which copies the particle identifies
      * as extra cell linked list form periodic regions to the corresponding boundaries
@@ -433,6 +429,7 @@ int main(int ac, char *av[])
     /**
      * Time parameters
      */
+    Real &physical_time = *system.getSystemVariableDataByName<Real>("PhysicalTime");
     int number_of_iterations = 0;
     int screen_output_interval = 100;
     Real end_time = 200.0;
@@ -445,7 +442,7 @@ int main(int ac, char *av[])
     /**
      * Main loop starts here.
      */
-    while (GlobalStaticVariables::physical_time_ < end_time)
+    while (physical_time < end_time)
     {
         Real integration_time = 0.0;
         while (integration_time < output_interval)
@@ -492,13 +489,13 @@ int main(int ac, char *av[])
 
                 relaxation_time += dt;
                 integration_time += dt;
-                GlobalStaticVariables::physical_time_ += dt;
+                physical_time += dt;
                 parabolic_inflow.exec();
             }
             if (number_of_iterations % screen_output_interval == 0)
             {
                 std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
-                          << GlobalStaticVariables::physical_time_
+                          << physical_time
                           << "	Dt = " << Dt << "	dt = " << dt << "	dt_s = " << dt_s << "\n";
             }
             number_of_iterations++;

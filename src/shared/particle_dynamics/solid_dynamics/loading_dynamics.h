@@ -171,6 +171,7 @@ class ForceInBodyRegion : public BaseLoadingForce<BodyPartByParticle>
     Vecd *pos0_;
     Vecd force_vector_;
     Real end_time_;
+    Real *physical_time_;
 };
 
 /**
@@ -191,6 +192,7 @@ class SurfacePressureFromSource : public BaseLoadingForce<BodyPartByParticle>
     Real *Vol_, *mass_;
     StdVec<std::array<Real, 2>> pressure_over_time_;
     bool *is_pressure_applied_;
+    Real *physical_time_;
     Real getPressure();
 };
 

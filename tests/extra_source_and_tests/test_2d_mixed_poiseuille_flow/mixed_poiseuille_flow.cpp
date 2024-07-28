@@ -47,7 +47,7 @@ struct LeftInflowPressure
     template <class BoundaryConditionType>
     LeftInflowPressure(BoundaryConditionType &boundary_condition) {}
 
-    Real operator()(Real p)
+    Real operator()(Real p, Real current_time)
     {
         return p;
     }
@@ -58,7 +58,7 @@ struct RightInflowPressure
     template <class BoundaryConditionType>
     RightInflowPressure(BoundaryConditionType &boundary_condition) {}
 
-    Real operator()(Real p)
+    Real operator()(Real p, Real current_time)
     {
         /*constant pressure*/
         Real pressure = Outlet_pressure;
@@ -77,14 +77,13 @@ struct InflowVelocity
     InflowVelocity(BoundaryConditionType &boundary_condition)
         : u_ave(0.0) {}
 
-    Vecd operator()(Vecd &position, Vecd &velocity)
+    Vecd operator()(Vecd &position, Vecd &velocity, Real current_time)
     {
         Vecd target_velocity = Vecd::Zero();
-        Real run_time = GlobalStaticVariables::physical_time_;
 
         u_ave = fabs(Inlet_pressure - Outlet_pressure) * (position[1] + 0.5 * DH) * (position[1] + 0.5 * DH - DH) / (2.0 * mu_f * DL) +
                 (4.0 * fabs(Inlet_pressure - Outlet_pressure) * DH * DH) /
-                    (mu_f * DL * Pi * Pi * Pi) * sin(Pi * (position[1] + 0.5 * DH) / DH) * exp(-(Pi * Pi * mu_f * run_time) / (DH * DH));
+                    (mu_f * DL * Pi * Pi * Pi) * sin(Pi * (position[1] + 0.5 * DH) / DH) * exp(-(Pi * Pi * mu_f * current_time) / (DH * DH));
 
         target_velocity[0] = u_ave;
         target_velocity[1] = 0.0;
@@ -236,7 +235,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
-    size_t number_of_iterations = sph_system.RestartStep();
+    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
+    size_t number_of_iterations = 0;
     int screen_output_interval = 100;
     int observation_sample_interval = screen_output_interval * 2;
     Real end_time = 10.0;   /**< End time. */
@@ -259,7 +259,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------
-    while (GlobalStaticVariables::physical_time_ < end_time)
+    while (physical_time < end_time)
     {
         Real integration_time = 0.0;
         /** Integrate time (loop) until the next output time. */
@@ -285,13 +285,13 @@ int main(int ac, char *av[])
                 density_relaxation.exec(dt);
                 relaxation_time += dt;
                 integration_time += dt;
-                GlobalStaticVariables::physical_time_ += dt;
+                physical_time += dt;
             }
             interval_computing_pressure_relaxation += TickCount::now() - time_instance;
             if (number_of_iterations % screen_output_interval == 0)
             {
                 std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
-                          << GlobalStaticVariables::physical_time_
+                          << physical_time
                           << "	Dt = " << Dt << "	dt = " << dt << "\n";
 
                 if (number_of_iterations % observation_sample_interval == 0 && number_of_iterations != sph_system.RestartStep())

@@ -42,7 +42,7 @@ struct NonPrescribedPressure
     template <class BoundaryConditionType>
     NonPrescribedPressure(BoundaryConditionType &boundary_condition) {}
 
-    Real operator()(Real p)
+    Real operator()(Real p, Real current_time)
     {
         return p;
     }
@@ -95,6 +95,7 @@ class BidirectionalBuffer
               p_(particles_->getVariableDataByName<Real>("Pressure")),
               previous_surface_indicator_(particles_->getVariableDataByName<int>("PreviousSurfaceIndicator")),
               buffer_particle_indicator_(particles_->getVariableDataByName<int>("BufferParticleIndicator")),
+              physical_time_(sph_system_.getSystemVariableDataByName<Real>("PhysicalTime")),
               target_pressure_(target_pressure)
         {
             particle_buffer_.checkParticlesReserved();
@@ -113,7 +114,7 @@ class BidirectionalBuffer
                 /** Periodic bounding. */
                 pos_n_[index_i] = aligned_box_.getUpperPeriodic(pos_n_[index_i]);
                 Real sound_speed = fluid_.getSoundSpeed(rho_n_[index_i]);
-                p_[index_i] = target_pressure_(p_[index_i]);
+                p_[index_i] = target_pressure_(p_[index_i], *physical_time_);
                 rho_n_[index_i] = p_[index_i] / pow(sound_speed, 2.0) + fluid_.ReferenceDensity();
                 previous_surface_indicator_[index_i] = 1;
             }
@@ -128,6 +129,7 @@ class BidirectionalBuffer
         Vecd *pos_n_;
         Real *rho_n_, *p_;
         int *previous_surface_indicator_, *buffer_particle_indicator_;
+        Real *physical_time_;
 
       private:
         TargetPressure &target_pressure_;

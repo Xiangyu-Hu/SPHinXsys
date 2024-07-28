@@ -112,7 +112,7 @@ struct InflowVelocity
           aligned_box_(boundary_condition.getAlignedBox()),
           halfsize_(aligned_box_.HalfSize()) {}
 
-    Vec3d operator()(Vec3d &position, Vec3d &velocity)
+    Vec3d operator()(Vec3d &position, Vec3d &velocity, Real current_time)
     {
         Vec3d target_velocity = Vec3d(0, 0, 0);
         target_velocity[1] = SMAX(2.0 * U_f *
@@ -266,7 +266,8 @@ void poiseuille_flow(const Real resolution_ref, const Real resolution_shell, con
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
-    size_t number_of_iterations = system.RestartStep();
+    Real &physical_time = *system.getSystemVariableDataByName<Real>("PhysicalTime");
+    size_t number_of_iterations = 0;
     int screen_output_interval = 100;
     Real end_time = 2.0;               /**< End time. */
     Real Output_Time = end_time / 100; /**< Time stamps for output of body states. */
@@ -290,7 +291,7 @@ void poiseuille_flow(const Real resolution_ref, const Real resolution_shell, con
     //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------
-    while (GlobalStaticVariables::physical_time_ < end_time)
+    while (physical_time < end_time)
     {
         Real integration_time = 0.0;
         /** Integrate time (loop) until the next output time. */
@@ -315,7 +316,7 @@ void poiseuille_flow(const Real resolution_ref, const Real resolution_shell, con
                 density_relaxation.exec(dt);
                 relaxation_time += dt;
                 integration_time += dt;
-                GlobalStaticVariables::physical_time_ += dt;
+                physical_time += dt;
                 emitter_buffer_inflow_condition.exec();
             }
             interval_computing_pressure_relaxation +=
@@ -324,7 +325,7 @@ void poiseuille_flow(const Real resolution_ref, const Real resolution_shell, con
             {
                 std::cout << std::fixed << std::setprecision(9)
                           << "N=" << number_of_iterations
-                          << "	Time = " << GlobalStaticVariables::physical_time_
+                          << "	Time = " << physical_time
                           << "	Dt = " << Dt << "	dt = " << dt << "\n";
             }
             number_of_iterations++;

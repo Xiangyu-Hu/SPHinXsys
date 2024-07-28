@@ -221,6 +221,7 @@ TEST(test_optimization, test_problem1_optimized)
     //----------------------------------------------------------------------
     //	Setup parameter for optimization control
     //----------------------------------------------------------------------
+    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     int ite = 0;                  /* define the loop of all operations for optimization. */
     int ite_T = 0;                /* define loop index for temperature splitting iteration. */
     int ite_k = 0;                /* define loop index for parameter splitting iteration. */
@@ -309,7 +310,7 @@ TEST(test_optimization, test_problem1_optimized)
     //----------------------------------------------------------------------
     if (sph_system.RestartStep() != 0)
     {
-        GlobalStaticVariables::physical_time_ = restart_io.readRestartFiles(sph_system.RestartStep());
+        physical_time = restart_io.readRestartFiles(sph_system.RestartStep());
         diffusion_body.updateCellLinkedList();
         diffusion_body_complex.updateConfiguration();
     }

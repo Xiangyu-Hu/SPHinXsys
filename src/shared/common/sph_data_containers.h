@@ -72,7 +72,7 @@ typedef DataContainerAssemble<AllocatedData> ParticleData;
 /** Generalized particle variable type*/
 typedef DataContainerAddressAssemble<DiscreteVariable> ParticleVariables;
 /** Generalized particle variable type*/
-typedef DataContainerAddressAssemble<SingularVariable> SingleVariables;
+typedef DataContainerAddressAssemble<SingularVariable> SingularVariables;
 
 /** Generalized mesh data type */
 // template <typename DataType>

@@ -245,7 +245,7 @@ return_data bending_circular_plate(Real dp_ratio)
     // methods
     InnerRelation shell_body_inner(shell_body);
     Gravity constant_gravity(gravity);
-    SimpleDynamics<GravityForce> constant_gravity_force(shell_body, constant_gravity);
+    SimpleDynamics<GravityForce<Gravity>> constant_gravity_force(shell_body, constant_gravity);
     InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration> corrected_configuration(shell_body_inner);
 
     Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationFirstHalf> stress_relaxation_first_half(shell_body_inner, 3, false);
@@ -324,7 +324,7 @@ return_data bending_circular_plate(Real dp_ratio)
      * From here the time stepping begins.
      * Set the starting time.
      */
-    GlobalStaticVariables::physical_time_ = 0.0;
+    Real &physical_time = *system.getSystemVariableDataByName<Real>("PhysicalTime");
     int ite = 0;
     Real end_time = 0.001;
     Real output_period = end_time / 100.0;
@@ -336,7 +336,7 @@ return_data bending_circular_plate(Real dp_ratio)
     Real max_dt = 0.0;
     try
     {
-        while (GlobalStaticVariables::physical_time_ < end_time)
+        while (physical_time < end_time)
         {
             Real integral_time = 0.0;
             while (integral_time < output_period)
@@ -344,7 +344,7 @@ return_data bending_circular_plate(Real dp_ratio)
                 if (ite % 1000 == 0)
                 {
                     std::cout << "N=" << ite << " Time: "
-                              << GlobalStaticVariables::physical_time_ << "	dt: "
+                              << physical_time << "	dt: "
                               << dt << "\n";
                 }
 
@@ -365,7 +365,7 @@ return_data bending_circular_plate(Real dp_ratio)
 
                 ++ite;
                 integral_time += dt;
-                GlobalStaticVariables::physical_time_ += dt;
+                physical_time += dt;
 
                 // shell_body.updateCellLinkedList();
 
