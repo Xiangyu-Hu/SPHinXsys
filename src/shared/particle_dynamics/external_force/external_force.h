@@ -65,8 +65,7 @@ class IncreaseToFullGravity : public Gravity
     Real time_to_full_gravity_;
 
   public:
-    explicit IncreaseToFullGravity(Vecd gravity_vector, Real time_to_full_gravity)
-        : Gravity(gravity_vector), time_to_full_gravity_(time_to_full_gravity) {}
+    explicit IncreaseToFullGravity(Vecd gravity_vector, Real time_to_full_gravity);
     Vecd InducedAcceleration(const Vecd &position, Real physical_time);
 };
 } // namespace SPH

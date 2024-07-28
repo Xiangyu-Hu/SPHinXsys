@@ -23,17 +23,18 @@ StartupAcceleration::StartupAcceleration(Vecd target_velocity, Real target_time)
 Vecd StartupAcceleration::InducedAcceleration(const Vecd &position, Real physical_time)
 {
     Real time_factor = physical_time / target_time_;
-    Real acceleration_factor = 0.5 * Pi * time_factor * sin(Pi * time_factor);
-
-    return time_factor < 1.0 ? Gravity::InducedAcceleration() : Vecd::Zero();
+    Vecd acceleration = 0.5 * Pi * time_factor * sin(Pi * time_factor) * Gravity::InducedAcceleration();
+    return time_factor < 1.0 ? acceleration : Vecd::Zero();
 }
+//=================================================================================================//
+IncreaseToFullGravity::IncreaseToFullGravity(Vecd gravity_vector, Real time_to_full_gravity)
+    : Gravity(gravity_vector), time_to_full_gravity_(time_to_full_gravity) {}
 //=================================================================================================//
 Vecd IncreaseToFullGravity::InducedAcceleration(const Vecd &position, Real physical_time)
 {
     Real time_factor = physical_time / time_to_full_gravity_;
-    Vecd full_gravity = Gravity::InducedAcceleration();
-    return time_factor < 1.0 ? time_factor * full_gravity : full_gravity;
+    Vecd full_acceleration = Gravity::InducedAcceleration();
+    return time_factor < 1.0 ? time_factor * full_acceleration : full_acceleration;
 }
 //=================================================================================================//
 } // namespace SPH
-  //=================================================================================================//
