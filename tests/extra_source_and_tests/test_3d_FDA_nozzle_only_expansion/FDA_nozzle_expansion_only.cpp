@@ -11,13 +11,14 @@
 #include "large_data_containers.h"
 #include "pressure_boundary.h"
 #include "sphinxsys.h"
+#include <chrono>
 #include <cmath>
+#include <ctime>
 #include <filesystem>
 #include <functional>
 #include <gtest/gtest.h>
-#include <ostream>
-
 #include <numbers>
+#include <ostream>
 #include <string>
 #include <vector>
 using namespace SPH;
@@ -276,7 +277,7 @@ struct FDA_nozzle_parameters
     double mu_f = 0.0035; //[N s / m2] from https://arxiv.org/pdf/2204.10566 3.5 mPa s
 
     // fluid flle path
-    fs::path fluid_file_path = "./input/FDA_nozzle_fluid.stl";
+    fs::path fluid_file_path = "./input/Fluid_expansion/Fluid_expansion.stl";
     // wall flle path
     fs::path wall_file_path;
     // total length of fluid
@@ -637,7 +638,7 @@ class RadialObserverContainer
     }
 };
 
-int FDA_nozzle(int ac, char *av[], bool is_TVLCCC, bool no_wallrelaxation, bool is_linearVisc, bool is_refineWall, FDA_nozzle_parameters &params, const double Re = 500, const size_t number_of_axial_observer = 50)
+int FDA_nozzle(int ac, char *av[], std::string additional_output_name, bool is_TVLCCC, bool is_wallrelaxation, bool is_linearVisc, bool is_refineWall, bool is_oldoutlet, FDA_nozzle_parameters &params, const double Re = 500, const size_t number_of_axial_observer = 50)
 {
     // Map to hold each profile accessed by the z-value as a key (obtaining radial velocity)
     std::map<double, AxialVelocityProfile> radial_velocity_profiles;
@@ -686,6 +687,7 @@ int FDA_nozzle(int ac, char *av[], bool is_TVLCCC, bool no_wallrelaxation, bool 
 
     const uint number_of_particles = params.number_of_particles;
     const double resolution_ref = params.thoat_diameter / number_of_particles;
+    const double wall_thickness = 4 * resolution_ref;
     std::cout << "resolution_ref: " << resolution_ref << std::endl;
 
     // const double resolution_wall = resolution_ref;
@@ -698,16 +700,10 @@ int FDA_nozzle(int ac, char *av[], bool is_TVLCCC, bool no_wallrelaxation, bool 
     auto fluid_shape = makeShared<ComplexShape>("fluid");
     fluid_shape->add<TriangleMeshShapeSTL>(params.fluid_file_path, Vec3d::Zero(), scale);
 
-    // Remove contraction part
-    Real remove_length = 0.2;
-    Real half_remove_length = remove_length * 0.5;
-    // Most right side of remove part will be X = - 40 mm
-    Vec3d remove_translate = Vec3d(-40 * scale - half_remove_length, 0., 0.);
-    Real remove_radius = params.inlet_diameter * 0.5 + resolution_ref * 8;
-    fluid_shape->subtract<TriangleMeshShapeCylinder>(SimTK::UnitVec3(1.0, 0.0, 0), remove_radius, half_remove_length, 20, remove_translate);
-
     const double x_min_domain = fluid_shape->getBounds().first_.x();
     const double x_max_domain = fluid_shape->getBounds().second_.x();
+    std::cout << "x_min_domain" << x_min_domain << std::endl;
+    std::cout << "x_max_domain" << x_max_domain << std::endl;
 
     Real boundary_width = 3. * resolution_ref;
     Real half_boundary_width = boundary_width * 0.5;
@@ -718,12 +714,26 @@ int FDA_nozzle(int ac, char *av[], bool is_TVLCCC, bool no_wallrelaxation, bool 
     Vecd left_bidirectional_translation = Vec3d(x_min_domain + half_boundary_width, 0, 0);
     Vecd right_bidirectional_translation = Vec3d(x_max_domain - half_boundary_width, 0, 0);
 
+    Real old_emitter_boundary_width = 20. * resolution_ref;
+    Real half_old_emitter_boundary_width = old_emitter_boundary_width * 0.5;
+    Vecd old_emitter_halfsize = Vec3d(half_old_emitter_boundary_width, params.inlet_diameter * 0.5, params.inlet_diameter * 0.5);
+    Vecd left_old_emitter_translation = Vec3d(x_min_domain + half_old_emitter_boundary_width, 0, 0);
+
+    Real old_boundary_width = 20. * resolution_ref;
+    Real half_old_boundary_width = old_boundary_width * 0.5;
+    Vecd old_buffer_halfsize = Vec3d(half_old_boundary_width, params.inlet_diameter * 0.5, params.inlet_diameter * 0.5);
+    Vecd left_old_buffer_translation = Vec3d(x_min_domain + half_old_boundary_width, 0, 0);
+
     auto wall_shape = makeShared<ComplexShape>("wall");
     wall_shape->add<TriangleMeshShapeSTL>(params.wall_file_path, Vec3d::Zero(), scale);
-    wall_shape->subtract<TriangleMeshShapeCylinder>(SimTK::UnitVec3(1.0, 0.0, 0), remove_radius, half_remove_length, 20, remove_translate);
 
     // SYSTEM
-    SPHSystem sph_system(wall_shape->getBounds(), resolution_ref);
+    BoundingBox bbox = wall_shape->getBounds();
+
+    bbox.first_[0] = x_min_domain;
+    bbox.first_ -= Vec3d::Ones() * wall_thickness;
+    bbox.second_ += Vec3d::Ones() * wall_thickness;
+    SPHSystem sph_system(bbox, resolution_ref);
     /** Tag for run particle relaxation for the initial body fitted distribution. */
     sph_system.setRunParticleRelaxation(true);
 
@@ -731,7 +741,7 @@ int FDA_nozzle(int ac, char *av[], bool is_TVLCCC, bool no_wallrelaxation, bool 
     sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
 
     IOEnvironment in_output(sph_system);
-    in_output.output_folder_ += "_ExpanOnly_";
+    in_output.output_folder_ += "_ExpanOnly_" + additional_output_name;
     if (is_TVLCCC)
         in_output.output_folder_ += "_TVLCCC_";
     else
@@ -744,10 +754,10 @@ int FDA_nozzle(int ac, char *av[], bool is_TVLCCC, bool no_wallrelaxation, bool 
         in_output.output_folder_ += "_refinewall_";
     else
         in_output.output_folder_ += "_Norefinewall_";
-    if (no_wallrelaxation)
-        in_output.output_folder_ += "_NoWallrelaxation_";
-    else
+    if (is_wallrelaxation)
         in_output.output_folder_ += "_Wallrelaxation_";
+    else
+        in_output.output_folder_ += "_NoWallrelaxation_";
     in_output.output_folder_ += std::to_string(params.number_of_particles);
     setup_directory(in_output.output_folder_);
 
@@ -779,7 +789,7 @@ int FDA_nozzle(int ac, char *av[], bool is_TVLCCC, bool no_wallrelaxation, bool 
     //	SPH Particle relaxation section
     //----------------------------------------------------------------------
     /** check whether run particle relaxation for body fitted particle distribution. */
-    if (no_wallrelaxation)
+    if (is_wallrelaxation)
     {
         //----------------------------------------------------------------------
         //	Methods used for particle relaxation.
@@ -843,7 +853,7 @@ int FDA_nozzle(int ac, char *av[], bool is_TVLCCC, bool no_wallrelaxation, bool 
     /** momentum equation. */
     Dynamics1Level<fluid_dynamics::Integration1stHalfCorrectionWithWallRiemann> pressure_relaxation(water_block_inner, water_block_contact);
     /** mass equation. */
-    Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallRiemann> density_relaxation(water_block_inner, water_block_contact);
+    Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallNoRiemann> density_relaxation(water_block_inner, water_block_contact);
     /** Time step size without considering sound wave speed. */
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_max);
     /** Time step size with considering sound wave speed. */
@@ -859,6 +869,8 @@ int FDA_nozzle(int ac, char *av[], bool is_TVLCCC, bool no_wallrelaxation, bool 
         transport_velocity_correction_TVLCCC(water_block_inner, water_block_contact);
     InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionCorrectedComplex<BulkParticles>>
         transport_velocity_correction_TVCCC(water_block_inner, water_block_contact);
+    InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionComplex<BulkParticles>> transport_velocity_correction(water_block_inner, water_block_contact);
+
     //----------------------------------------------------------------------
     //	Set up boundary condition
     //----------------------------------------------------------------------
@@ -878,12 +890,19 @@ int FDA_nozzle(int ac, char *av[], bool is_TVLCCC, bool no_wallrelaxation, bool 
         water_block, makeShared<AlignedBoxShape>(xAxis, Transform(Rotation3d(std::acos(Eigen::Vector3d::UnitX().dot(Vecd(-1, 0, 0))), Vecd(0, -1, 0)), Vecd(right_bidirectional_translation)), bidirectional_buffer_halfsize));
     fluid_dynamics::BidirectionalBuffer<RightInflowPressure> right_emitter_inflow_injection(right_emitter, in_outlet_particle_buffer); /** output parameters */
 
+    BodyAlignedBoxByParticle old_emitter(water_block, makeShared<AlignedBoxShape>(xAxis, Transform(Vec3d(left_old_emitter_translation)), old_emitter_halfsize));
+    SimpleDynamics<fluid_dynamics::EmitterInflowInjection> old_emitter_inflow_injection(old_emitter, in_outlet_particle_buffer);
+    BodyAlignedBoxByCell old_inflow_buffer(
+        water_block, makeShared<AlignedBoxShape>(xAxis, Transform(Vecd(left_old_buffer_translation)), old_buffer_halfsize));
+    SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>> parabolic_inflow(old_inflow_buffer);
+
     /** pressure boundary condition. */
     SimpleDynamics<fluid_dynamics::PressureCondition<LeftInflowPressure>> left_inflow_pressure_condition(left_emitter);
     SimpleDynamics<fluid_dynamics::PressureCondition<RightInflowPressure>> right_inflow_pressure_condition(right_emitter);
     SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>> inflow_velocity_condition(left_emitter);
     /** density correction in pressure-driven flow */
     InteractionWithUpdate<fluid_dynamics::DensitySummationPressureComplex> update_fluid_density(water_block_inner, water_block_contact);
+    InteractionWithUpdate<fluid_dynamics::DensitySummationComplex> update_density_by_summation(water_block_inner, water_block_contact);
 
     //----------------------------------------------------------------------
     //	Observer
@@ -970,8 +989,11 @@ int FDA_nozzle(int ac, char *av[], bool is_TVLCCC, bool no_wallrelaxation, bool 
     sph_system.initializeSystemCellLinkedLists();
     sph_system.initializeSystemConfigurations();
     boundary_indicator.exec();
-    left_emitter_inflow_injection.tag_buffer_particles.exec();
-    right_emitter_inflow_injection.tag_buffer_particles.exec();
+    if (!is_oldoutlet)
+    {
+        left_emitter_inflow_injection.tag_buffer_particles.exec();
+        right_emitter_inflow_injection.tag_buffer_particles.exec();
+    }
     wall_boundary_normal_direction.exec();
     GlobalStaticVariables::physical_time_ = 0.0;
     //----------------------------------------------------------------------
@@ -980,7 +1002,7 @@ int FDA_nozzle(int ac, char *av[], bool is_TVLCCC, bool no_wallrelaxation, bool 
     size_t number_of_iterations = sph_system.RestartStep();
     int screen_output_interval = 100;
     Real end_time = params.end_time; /**< End time. */
-    Real Output_Time = 0.1;          /**< Time stamps for output of body states. */
+    Real Output_Time = 0.00005;      /**< Time stamps for output of body states. */
     Real dt = 0.0;                   /**< Default acoustic time step sizes. */
     //----------------------------------------------------------------------
     //----------------------------------------------------------------------
@@ -1013,18 +1035,26 @@ int FDA_nozzle(int ac, char *av[], bool is_TVLCCC, bool no_wallrelaxation, bool 
             apply_gravity_force.exec();
             time_instance = TickCount::now();
             Real Dt = get_fluid_advection_time_step_size.exec();
-            update_fluid_density.exec();
+            boundary_indicator.exec();
+            if (is_oldoutlet)
+                update_density_by_summation.exec();
+            else
+                update_fluid_density.exec();
             kernel_correction_complex.exec();
             if (is_linearVisc)
                 viscous_acceleration_correction.exec();
             else
                 viscous_acceleration.exec();
 
-            if (is_TVLCCC)
-                transport_velocity_correction_TVLCCC.exec();
+            if (is_oldoutlet)
+                transport_velocity_correction.exec();
             else
-                transport_velocity_correction_TVCCC.exec();
-
+            {
+                if (is_TVLCCC)
+                    transport_velocity_correction_TVLCCC.exec();
+                else
+                    transport_velocity_correction_TVCCC.exec();
+            }
             interval_computing_time_step += TickCount::now() - time_instance;
 
             time_instance = TickCount::now();
@@ -1033,14 +1063,19 @@ int FDA_nozzle(int ac, char *av[], bool is_TVLCCC, bool no_wallrelaxation, bool 
             {
                 dt = SMIN(get_fluid_time_step_size.exec(), Dt - relaxation_time);
                 pressure_relaxation.exec(dt);
-                kernel_summation.exec();
-                left_inflow_pressure_condition.exec(dt);
-                right_inflow_pressure_condition.exec(dt);
-                inflow_velocity_condition.exec();
+                if (!is_oldoutlet)
+                {
+                    kernel_summation.exec();
+                    left_inflow_pressure_condition.exec(dt);
+                    right_inflow_pressure_condition.exec(dt);
+                    inflow_velocity_condition.exec();
+                }
                 density_relaxation.exec(dt);
                 relaxation_time += dt;
                 integration_time += dt;
                 GlobalStaticVariables::physical_time_ += dt;
+                if (is_oldoutlet)
+                    parabolic_inflow.exec();
             }
             interval_computing_pressure_relaxation += TickCount::now() - time_instance;
             if (number_of_iterations % screen_output_interval == 0)
@@ -1054,17 +1089,27 @@ int FDA_nozzle(int ac, char *av[], bool is_TVLCCC, bool no_wallrelaxation, bool 
 
             time_instance = TickCount::now();
 
-            left_emitter_inflow_injection.injection.exec();
-            right_emitter_inflow_injection.injection.exec();
-            left_disposer_outflow_deletion.exec();
-            right_disposer_outflow_deletion.exec();
+            if (!is_oldoutlet)
+            {
+                left_emitter_inflow_injection.injection.exec();
+                right_emitter_inflow_injection.injection.exec();
+            }
+            else
+            {
+                old_emitter_inflow_injection.exec();
+            }
+            // left_disposer_outflow_deletion.exec();
+            // right_disposer_outflow_deletion.exec();
             // water_block.updateCellLinkedListWithParticleSort(100);
             water_block.updateCellLinkedList();
             water_block_complex.updateConfiguration();
             interval_updating_configuration += TickCount::now() - time_instance;
-            boundary_indicator.exec();
-            left_emitter_inflow_injection.tag_buffer_particles.exec();
-            right_emitter_inflow_injection.tag_buffer_particles.exec();
+            // boundary_indicator.exec();
+            if (!is_oldoutlet)
+            {
+                left_emitter_inflow_injection.tag_buffer_particles.exec();
+                right_emitter_inflow_injection.tag_buffer_particles.exec();
+            }
             if (number_of_iterations % convergence_checker_output_interval == 0)
             {
                 axial_velocity_observer_contact.updateConfiguration();
@@ -1120,8 +1165,9 @@ int main(int argc, char *argv[])
 {
     const double Re = 500;
     FDA_nozzle_parameters params;
+
     // std::vector<int> number_of_particles = {10, 15, 20}; // Create a vector with desired particle counts
-    std::vector<int> number_of_particles = {15};
+    std::vector<int> number_of_particles = {10, 15};
 
     for (int particles : number_of_particles) // Loop through each number of particles
     {
@@ -1131,36 +1177,26 @@ int main(int argc, char *argv[])
             size_t np = params.number_of_particles;
             if (np > 20)
                 np = 20;
-            wall_file << "./input/FDA_nozzle_wall_N" << np << ".stl";
+            wall_file << "./input/Fluid_expansion/Wall_expansion_N" << np << ".stl";
             params.wall_file_path = wall_file.str();
         }
         params.end_time = 2.0;
 
         bool is_TVLCCC = false;
-        bool no_wallrelaxation = false;
-        bool is_linearVisc = false;
+        bool is_wallrelaxation = true;
+        bool is_linearVisc = true;
         bool is_refineWall = false;
-        FDA_nozzle(argc, argv, is_TVLCCC, no_wallrelaxation, is_linearVisc, is_refineWall, params, Re); // Call the function with current settings
-        is_TVLCCC = true;
-        no_wallrelaxation = false;
-        is_linearVisc = false;
-        is_refineWall = false;
-        FDA_nozzle(argc, argv, is_TVLCCC, no_wallrelaxation, is_linearVisc, is_refineWall, params, Re); // Call the function with current settings
-        is_TVLCCC = false;
-        no_wallrelaxation = true;
-        is_linearVisc = false;
-        is_refineWall = false;
-        FDA_nozzle(argc, argv, is_TVLCCC, no_wallrelaxation, is_linearVisc, is_refineWall, params, Re); // Call the function with current settings
-        is_TVLCCC = false;
-        no_wallrelaxation = false;
-        is_linearVisc = true;
-        is_refineWall = false;
-        FDA_nozzle(argc, argv, is_TVLCCC, no_wallrelaxation, is_linearVisc, is_refineWall, params, Re); // Call the function with current settings
-        is_TVLCCC = false;
-        no_wallrelaxation = false;
-        is_linearVisc = false;
-        is_refineWall = true;
-        FDA_nozzle(argc, argv, is_TVLCCC, no_wallrelaxation, is_linearVisc, is_refineWall, params, Re); // Call the function with current settings
+        bool is_oldoutlet = true;
+        // Get current time and format it as a string
+        auto now = std::chrono::system_clock::now();
+        std::time_t now_time = std::chrono::system_clock::to_time_t(now);
+        std::stringstream datetime_ss;
+        datetime_ss << std::put_time(std::localtime(&now_time), "%Y%m%d_%H%M%S");
+        std::string datetime = datetime_ss.str();
+
+        std::string additional_output_tag = "_2ndhalfNoRieman_OldOutlet_" + datetime;
+
+        FDA_nozzle(argc, argv, additional_output_tag, is_TVLCCC, is_wallrelaxation, is_linearVisc, is_refineWall, is_oldoutlet, params, Re); // Call the function with current settings
     }
 
     return 0;
