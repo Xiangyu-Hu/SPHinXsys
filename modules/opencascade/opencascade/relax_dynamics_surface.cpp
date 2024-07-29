@@ -11,7 +11,7 @@ namespace relax_dynamics
 {
 //=================================================================================================//
 ShapeSurfaceBounding2::ShapeSurfaceBounding2(RealBody &real_body_)
-    : LocalDynamics(real_body_), DataDelegateSimple(real_body_),
+    : LocalDynamics(real_body_),
       pos_(particles_->getVariableDataByName<Vecd>("Position"))
 {
     shape_ = &real_body_.getInitialShape();
@@ -24,7 +24,7 @@ void ShapeSurfaceBounding2::update(size_t index_i, Real dt)
 //=================================================================================================//
 RelaxationStepInnerFirstHalf::
     RelaxationStepInnerFirstHalf(BaseInnerRelation &inner_relation)
-    : BaseDynamics<void>(inner_relation.getSPHBody()), real_body_(inner_relation.real_body_),
+    : BaseDynamics<void>(), real_body_(inner_relation.real_body_),
       inner_relation_(inner_relation), relaxation_acceleration_inner_(inner_relation) {}
 //=================================================================================================//
 void RelaxationStepInnerFirstHalf::exec(Real dt)
@@ -37,7 +37,7 @@ void RelaxationStepInnerFirstHalf::exec(Real dt)
 //=================================================================================================//
 RelaxationStepInnerSecondHalf::
     RelaxationStepInnerSecondHalf(BaseInnerRelation &inner_relation)
-    : BaseDynamics<void>(inner_relation.getSPHBody()), real_body_(inner_relation.real_body_),
+    : BaseDynamics<void>(), real_body_(inner_relation.real_body_),
       get_time_step_square_(*real_body_), update_particle_position_(*real_body_),
       surface_bounding_(*real_body_)
 {
@@ -52,7 +52,7 @@ void RelaxationStepInnerSecondHalf::exec(Real dt)
 
 //=================================================================================================//
 SurfaceNormalDirection::SurfaceNormalDirection(SPHBody &sph_body)
-    : DataDelegateSimple(sph_body), LocalDynamics(sph_body),
+    : LocalDynamics(sph_body),
       surface_shape_(DynamicCast<SurfaceShape>(this, &sph_body.getInitialShape())),
       pos_(particles_->getVariableDataByName<Vecd>("Position")),
       n_(particles_->registerSharedVariable<Vecd>("NormalDirection")) {}

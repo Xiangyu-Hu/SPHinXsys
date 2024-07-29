@@ -7,7 +7,7 @@ namespace SPH
 //=================================================================================================//
 GhostCreationFromMesh::GhostCreationFromMesh(RealBody &real_body, ANSYSMesh &ansys_mesh,
                                              Ghost<ReserveSizeFactor> &ghost_boundary)
-    : DataDelegateSimple(real_body),
+    : LocalDynamics(real_body),
       ghost_boundary_(ghost_boundary),
       node_coordinates_(ansys_mesh.node_coordinates_),
       mesh_topology_(ansys_mesh.mesh_topology_),

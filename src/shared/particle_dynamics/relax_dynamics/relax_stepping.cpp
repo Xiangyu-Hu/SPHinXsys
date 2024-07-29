@@ -52,7 +52,6 @@ void RelaxationResidue<Contact<>>::interaction(size_t index_i, Real dt)
 //=================================================================================================//
 RelaxationScaling::RelaxationScaling(SPHBody &sph_body)
     : LocalDynamicsReduce<ReduceMax>(sph_body),
-      DataDelegateSimple(sph_body),
       residue_(particles_->getVariableDataByName<Vecd>("ZeroOrderResidue")),
       h_ref_(sph_body.sph_adaptation_->ReferenceSmoothingLength()) {}
 //=================================================================================================//
@@ -67,7 +66,7 @@ Real RelaxationScaling::outputResult(Real reduced_value)
 }
 //=================================================================================================//
 PositionRelaxation::PositionRelaxation(SPHBody &sph_body)
-    : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
+    : LocalDynamics(sph_body),
       sph_adaptation_(sph_body.sph_adaptation_),
       pos_(particles_->getVariableDataByName<Vecd>("Position")),
       residue_(particles_->getVariableDataByName<Vecd>("ZeroOrderResidue")) {}
@@ -79,7 +78,7 @@ void PositionRelaxation::update(size_t index_i, Real dt_square)
 //=================================================================================================//
 UpdateSmoothingLengthRatioByShape::
     UpdateSmoothingLengthRatioByShape(SPHBody &sph_body, Shape &target_shape)
-    : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
+    : LocalDynamics(sph_body),
       h_ratio_(particles_->getVariableDataByName<Real>("SmoothingLengthRatio")),
       Vol_(particles_->getVariableDataByName<Real>("VolumetricMeasure")),
       pos_(particles_->getVariableDataByName<Vecd>("Position")),

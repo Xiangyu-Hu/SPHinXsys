@@ -62,11 +62,11 @@ class WettingFluidBody : public MultiPolygonShape
     }
 };
 
-class WettingFluidBodyInitialCondition : public LocalDynamics, public DataDelegateSimple
+class WettingFluidBodyInitialCondition : public LocalDynamics
 {
   public:
     explicit WettingFluidBodyInitialCondition(SPHBody &sph_body)
-        : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
+        : LocalDynamics(sph_body),
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
           phi_(particles_->registerSharedVariable<Real>("Phi")){};
 
@@ -113,11 +113,11 @@ class WettingWallBody : public MultiPolygonShape
         multi_polygon_.addAPolygon(createInnerWallShape(), ShapeBooleanOps::sub);
     }
 };
-class WettingWallBodyInitialCondition : public LocalDynamics, public DataDelegateSimple
+class WettingWallBodyInitialCondition : public LocalDynamics
 {
   public:
     explicit WettingWallBodyInitialCondition(SPHBody &sph_body)
-        : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
+        : LocalDynamics(sph_body),
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
           phi_(particles_->registerSharedVariable<Real>("Phi")){};
 
@@ -141,11 +141,11 @@ class WettingCylinderBody : public MultiPolygonShape
         multi_polygon_.addACircle(cylinder_center, cylinder_radius, 100, ShapeBooleanOps::add);
     }
 };
-class WettingCylinderBodyInitialCondition : public LocalDynamics, public DataDelegateSimple
+class WettingCylinderBodyInitialCondition : public LocalDynamics
 {
   public:
     explicit WettingCylinderBodyInitialCondition(SPHBody &sph_body)
-        : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
+        : LocalDynamics(sph_body),
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
           phi_(particles_->registerSharedVariable<Real>("Phi")){};
 

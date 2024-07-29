@@ -43,8 +43,7 @@ namespace multi_species_continuum
  * @brief Computing the time step size based on diffusion coefficient and particle smoothing length
  */
 class GetSaturationTimeStepSize
-    : public LocalDynamicsReduce<ReduceMin>,
-      public DataDelegateSimple
+    : public LocalDynamicsReduce<ReduceMin>
 {
   protected:
     PorousMediaSolid &porous_solid_;
@@ -65,7 +64,7 @@ class GetSaturationTimeStepSize
 /**@class MomentumConstraint
  * @brief MomentumConstraint with zero momentum.
  */
-class MomentumConstraint : public BaseLocalDynamics<BodyPartByParticle>, public DataDelegateSimple
+class MomentumConstraint : public BaseLocalDynamics<BodyPartByParticle>
 {
   public:
     explicit MomentumConstraint(BodyPartByParticle &body_part);
@@ -188,12 +187,11 @@ class PorousMediaStressRelaxationSecondHalf
  * @class PorousMediaSaturationDynamicsInitialCondition
  * @brief Set initial condition  in porous media.
  */
-class PorousMediaSaturationDynamicsInitialCondition : public BaseLocalDynamics<BodyPartByParticle>, public DataDelegateSimple
+class PorousMediaSaturationDynamicsInitialCondition : public BaseLocalDynamics<BodyPartByParticle>
 {
   public:
     PorousMediaSaturationDynamicsInitialCondition(BodyPartByParticle &body_part)
         : BaseLocalDynamics<BodyPartByParticle>(body_part),
-          DataDelegateSimple(body_part.getSPHBody()),
           fluid_mass_(particles_->getVariableDataByName<Real>("FluidMass")),
           fluid_saturation_(particles_->getVariableDataByName<Real>("FluidSaturation")),
           total_mass_(particles_->getVariableDataByName<Real>("TotalMass")),

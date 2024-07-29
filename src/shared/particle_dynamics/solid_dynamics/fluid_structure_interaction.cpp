@@ -58,7 +58,7 @@ void ViscousForceFromFluid::interaction(size_t index_i, Real dt)
 //=================================================================================================//
 InitializeDisplacement::
     InitializeDisplacement(SPHBody &sph_body)
-    : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
+    : LocalDynamics(sph_body),
       pos_(particles_->getVariableDataByName<Vecd>("Position")),
       pos_temp_(particles_->registerSharedVariable<Vecd>("TemporaryPosition")) {}
 //=================================================================================================//
@@ -69,7 +69,7 @@ void InitializeDisplacement::update(size_t index_i, Real dt)
 //=================================================================================================//
 UpdateAverageVelocityAndAcceleration::
     UpdateAverageVelocityAndAcceleration(SPHBody &sph_body)
-    : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
+    : LocalDynamics(sph_body),
       pos_(particles_->getVariableDataByName<Vecd>("Position")),
       pos_temp_(particles_->getVariableDataByName<Vecd>("TemporaryPosition")),
       vel_ave_(particles_->getVariableDataByName<Vecd>("AverageVelocity")),

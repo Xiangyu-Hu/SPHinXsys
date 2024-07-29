@@ -134,7 +134,7 @@ ParameterSplittingByPDEWithBoundary<DataType>::
     ParameterSplittingByPDEWithBoundary(BaseInnerRelation &inner_relation,
                                         BaseContactRelation &contact_relation, const std::string &name)
     : ParameterSplittingByPDEInner<DataType>(inner_relation, name),
-      DataDelegateContactOnly(contact_relation)
+      DataDelegateContact(contact_relation)
 {
     const std::string &species_name = this->diffusion_.DiffusionSpeciesName();
     for (size_t k = 0; k != this->contact_particles_.size(); ++k)

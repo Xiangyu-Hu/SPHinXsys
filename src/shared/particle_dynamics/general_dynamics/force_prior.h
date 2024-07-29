@@ -64,7 +64,7 @@ class ForcePrior
 };
 
 template <class GravityType>
-class GravityForce : public LocalDynamics, public DataDelegateSimple, public ForcePrior
+class GravityForce : public LocalDynamics, public ForcePrior
 {
   protected:
     GravityType gravity_;

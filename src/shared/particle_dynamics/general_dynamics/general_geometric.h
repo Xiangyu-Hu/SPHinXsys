@@ -37,7 +37,7 @@ namespace SPH
  * @class NormalDirectionFromBodyShape
  * @brief normal direction at particles
  */
-class NormalDirectionFromBodyShape : public LocalDynamics, public DataDelegateSimple
+class NormalDirectionFromBodyShape : public LocalDynamics
 {
   public:
     explicit NormalDirectionFromBodyShape(SPHBody &sph_body);
@@ -54,7 +54,7 @@ class NormalDirectionFromBodyShape : public LocalDynamics, public DataDelegateSi
  * @class NormalDirectionFromSubShapeAndOp
  * @brief normal direction at particles
  */
-class NormalDirectionFromSubShapeAndOp : public LocalDynamics, public DataDelegateSimple
+class NormalDirectionFromSubShapeAndOp : public LocalDynamics
 {
   public:
     explicit NormalDirectionFromSubShapeAndOp(SPHBody &sph_body, const std::string &shape_name);

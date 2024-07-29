@@ -45,8 +45,7 @@ namespace slender_structure_dynamics
  * @class BarAcousticTimeStepSize
  * @brief Computing the acoustic time step size for bar
  */
-class BarAcousticTimeStepSize : public LocalDynamicsReduce<ReduceMin>,
-                                public DataDelegateSimple
+class BarAcousticTimeStepSize : public LocalDynamicsReduce<ReduceMin>
 {
   protected:
     Real CFL_;
@@ -308,7 +307,7 @@ class BarStressRelaxationSecondHalf : public BaseBarRelaxation
 /**@class ConstrainBarBodyRegion
  * @brief Fix the position and angle of a bar body part.
  */
-class ConstrainBarBodyRegion : public BaseLocalDynamics<BodyPartByParticle>, public DataDelegateSimple
+class ConstrainBarBodyRegion : public BaseLocalDynamics<BodyPartByParticle>
 {
   public:
     ConstrainBarBodyRegion(BodyPartByParticle &body_part);
@@ -324,7 +323,7 @@ class ConstrainBarBodyRegion : public BaseLocalDynamics<BodyPartByParticle>, pub
  * The axis must be 0 or 1.
  * Note that the average values for FSI are prescribed also.
  */
-class ConstrainBarBodyRegionAlongAxis : public BaseLocalDynamics<BodyPartByParticle>, public DataDelegateSimple
+class ConstrainBarBodyRegionAlongAxis : public BaseLocalDynamics<BodyPartByParticle>
 {
   public:
     ConstrainBarBodyRegionAlongAxis(BodyPartByParticle &body_part, int axis);

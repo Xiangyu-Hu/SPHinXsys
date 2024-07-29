@@ -78,7 +78,7 @@ TemperatureSplittingByPDEWithBoundary<DataType>::
     TemperatureSplittingByPDEWithBoundary(BaseInnerRelation &inner_relation,
                                           BaseContactRelation &contact_relation, const std::string &variable_name)
     : TemperatureSplittingByPDEInner<DataType>(inner_relation, variable_name),
-      DataDelegateContactOnly(contact_relation)
+      DataDelegateContact(contact_relation)
 {
     boundary_heat_flux_.resize(this->contact_particles_.size());
     for (size_t k = 0; k != this->contact_particles_.size(); ++k)

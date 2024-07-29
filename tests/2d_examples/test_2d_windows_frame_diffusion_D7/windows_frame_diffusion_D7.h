@@ -378,13 +378,11 @@ namespace SPH
 //----------------------------------------------------------------------
 template <class DynamicsIdentifier>
 class LocalQuantityDefinition
-    : public BaseLocalDynamics<DynamicsIdentifier>,
-      public DataDelegateSimple
+    : public BaseLocalDynamics<DynamicsIdentifier>
 {
   public:
     LocalQuantityDefinition(DynamicsIdentifier &identifier)
-        : BaseLocalDynamics<DynamicsIdentifier>(identifier),
-          DataDelegateSimple(identifier.getSPHBody()){};
+        : BaseLocalDynamics<DynamicsIdentifier>(identifier){};
     virtual ~LocalQuantityDefinition(){};
 };
 
@@ -424,11 +422,11 @@ class LocalConvectionDefinition : public LocalQuantityDefinition<BodyPartByParti
     Real local_convection_;
 };
 
-class DiffusionInitialCondition : public LocalDynamics, public DataDelegateSimple
+class DiffusionInitialCondition : public LocalDynamics
 {
   public:
     explicit DiffusionInitialCondition(SPHBody &sph_body)
-        : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
+        : LocalDynamics(sph_body),
           phi_(particles_->registerSharedVariable<Real>("Phi")){};
 
     void update(size_t index_i, Real dt)
@@ -440,11 +438,11 @@ class DiffusionInitialCondition : public LocalDynamics, public DataDelegateSimpl
     Real *phi_;
 };
 
-class RobinBoundaryDefinition : public LocalDynamics, public DataDelegateSimple
+class RobinBoundaryDefinition : public LocalDynamics
 {
   public:
     explicit RobinBoundaryDefinition(SolidBody &diffusion_body)
-        : LocalDynamics(diffusion_body), DataDelegateSimple(diffusion_body),
+        : LocalDynamics(diffusion_body),
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
           phi_(particles_->registerSharedVariable<Real>("Phi")),
           phi_convection_(particles_->template getVariableDataByName<Real>("PhiConvection")),

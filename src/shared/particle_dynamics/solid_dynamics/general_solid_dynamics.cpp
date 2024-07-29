@@ -9,7 +9,7 @@ DistributingPointForces::
     DistributingPointForces(SPHBody &sph_body, std::vector<Vecd> point_forces,
                             std::vector<Vecd> reference_positions, Real time_to_full_external_force,
                             Real particle_spacing_ref, Real h_spacing_ratio)
-    : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
+    : LocalDynamics(sph_body),
       point_forces_(point_forces), reference_positions_(reference_positions),
       time_to_full_external_force_(time_to_full_external_force),
       particle_spacing_ref_(particle_spacing_ref), h_spacing_ratio_(h_spacing_ratio),

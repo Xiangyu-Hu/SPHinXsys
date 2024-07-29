@@ -54,12 +54,11 @@ class BidirectionalBuffer
   protected:
     TargetPressure target_pressure_;
 
-    class TagBufferParticles : public BaseLocalDynamics<BodyPartByCell>, public DataDelegateSimple
+    class TagBufferParticles : public BaseLocalDynamics<BodyPartByCell>
     {
       public:
         TagBufferParticles(BodyAlignedBoxByCell &aligned_box_part)
             : BaseLocalDynamics<BodyPartByCell>(aligned_box_part),
-              DataDelegateSimple(aligned_box_part.getSPHBody()),
               pos_(particles_->getVariableDataByName<Vecd>("Position")),
               aligned_box_(aligned_box_part.getAlignedBoxShape()),
               buffer_particle_indicator_(particles_->registerSharedVariable<int>("BufferParticleIndicator"))
@@ -79,13 +78,12 @@ class BidirectionalBuffer
         int *buffer_particle_indicator_;
     };
 
-    class Injection : public BaseLocalDynamics<BodyPartByCell>, public DataDelegateSimple
+    class Injection : public BaseLocalDynamics<BodyPartByCell>
     {
       public:
         Injection(BodyAlignedBoxByCell &aligned_box_part, ParticleBuffer<Base> &particle_buffer,
                   TargetPressure &target_pressure)
             : BaseLocalDynamics<BodyPartByCell>(aligned_box_part),
-              DataDelegateSimple(aligned_box_part.getSPHBody()),
               particle_buffer_(particle_buffer),
               aligned_box_(aligned_box_part.getAlignedBoxShape()),
               fluid_(DynamicCast<Fluid>(this, particles_->getBaseMaterial())),

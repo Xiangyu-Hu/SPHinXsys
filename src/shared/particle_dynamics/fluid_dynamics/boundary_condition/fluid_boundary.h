@@ -43,7 +43,7 @@ namespace fluid_dynamics
  * @class BaseFlowBoundaryCondition
  * @brief Base class for all boundary conditions.
  */
-class BaseFlowBoundaryCondition : public BaseLocalDynamics<BodyPartByCell>, public DataDelegateSimple
+class BaseFlowBoundaryCondition : public BaseLocalDynamics<BodyPartByCell>
 {
   public:
     BaseFlowBoundaryCondition(BodyPartByCell &body_part);
@@ -124,7 +124,7 @@ class InflowVelocityCondition : public BaseFlowBoundaryCondition
  *          i.e. x direction in local frame.
  */
 template <typename TargetVelocity>
-class FreeStreamVelocityCorrection : public LocalDynamics, public DataDelegateSimple
+class FreeStreamVelocityCorrection : public LocalDynamics
 {
   protected:
     Transform transform_;
@@ -137,7 +137,7 @@ class FreeStreamVelocityCorrection : public LocalDynamics, public DataDelegateSi
 
   public:
     explicit FreeStreamVelocityCorrection(SPHBody &sph_body, const Transform &transform = Transform())
-        : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
+        : LocalDynamics(sph_body),
           transform_(transform), rho0_(DynamicCast<Fluid>(this, particles_->getBaseMaterial()).ReferenceDensity()),
           rho_sum_(particles_->getVariableDataByName<Real>("DensitySummation")),
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
@@ -187,7 +187,7 @@ class DampingBoundaryCondition : public BaseFlowBoundaryCondition
  * @brief Inflow boundary condition imposed on an emitter, in which pressure and density profile are imposed too.
  * The body part region is required to have parallel lower- and upper-bound surfaces.
  */
-class EmitterInflowCondition : public BaseLocalDynamics<BodyPartByParticle>, public DataDelegateSimple
+class EmitterInflowCondition : public BaseLocalDynamics<BodyPartByParticle>
 {
   public:
     explicit EmitterInflowCondition(BodyAlignedBoxByParticle &aligned_box_part);
@@ -218,7 +218,7 @@ class EmitterInflowCondition : public BaseLocalDynamics<BodyPartByParticle>, pub
  * Note that the axis is at the local coordinate and upper bound direction is
  * the local positive direction.
  */
-class EmitterInflowInjection : public BaseLocalDynamics<BodyPartByParticle>, public DataDelegateSimple
+class EmitterInflowInjection : public BaseLocalDynamics<BodyPartByParticle>
 {
   public:
     EmitterInflowInjection(BodyAlignedBoxByParticle &aligned_box_part, ParticleBuffer<Base> &buffer);
@@ -241,7 +241,7 @@ class EmitterInflowInjection : public BaseLocalDynamics<BodyPartByParticle>, pub
  * @class DisposerOutflowDeletion
  * @brief Delete particles who ruing out the computational domain.
  */
-class DisposerOutflowDeletion : public BaseLocalDynamics<BodyPartByCell>, public DataDelegateSimple
+class DisposerOutflowDeletion : public BaseLocalDynamics<BodyPartByCell>
 {
   public:
     DisposerOutflowDeletion(BodyAlignedBoxByCell &aligned_box_part);

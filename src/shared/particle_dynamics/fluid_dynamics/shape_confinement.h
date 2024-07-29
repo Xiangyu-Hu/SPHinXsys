@@ -42,7 +42,7 @@ namespace fluid_dynamics
  * @class StaticConfinementDensity
  * @brief static confinement condition for density summation
  */
-class StaticConfinementDensity : public BaseLocalDynamics<BodyPartByCell>, public DataDelegateSimple
+class StaticConfinementDensity : public BaseLocalDynamics<BodyPartByCell>
 {
   public:
     StaticConfinementDensity(NearShapeSurface &near_surface);
@@ -60,7 +60,7 @@ class StaticConfinementDensity : public BaseLocalDynamics<BodyPartByCell>, publi
  * @class StaticConfinementIntegration1stHalf
  * @brief static confinement condition for pressure relaxation
  */
-class StaticConfinementIntegration1stHalf : public BaseLocalDynamics<BodyPartByCell>, public DataDelegateSimple
+class StaticConfinementIntegration1stHalf : public BaseLocalDynamics<BodyPartByCell>
 {
   public:
     StaticConfinementIntegration1stHalf(NearShapeSurface &near_surface);
@@ -79,7 +79,7 @@ class StaticConfinementIntegration1stHalf : public BaseLocalDynamics<BodyPartByC
  * @class StaticConfinementIntegration2ndHalf
  * @brief static confinement condition for density relaxation
  */
-class StaticConfinementIntegration2ndHalf : public BaseLocalDynamics<BodyPartByCell>, public DataDelegateSimple
+class StaticConfinementIntegration2ndHalf : public BaseLocalDynamics<BodyPartByCell>
 {
   public:
     StaticConfinementIntegration2ndHalf(NearShapeSurface &near_surface);

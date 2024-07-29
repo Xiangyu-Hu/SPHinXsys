@@ -41,8 +41,7 @@ class SurfaceShape;
 
 namespace relax_dynamics
 {
-class ShapeSurfaceBounding2 : public LocalDynamics,
-                              public DataDelegateSimple
+class ShapeSurfaceBounding2 : public LocalDynamics
 {
   public:
     ShapeSurfaceBounding2(RealBody &real_body_);
@@ -86,7 +85,7 @@ class RelaxationStepInnerSecondHalf : public BaseDynamics<void>
  * @class SurfaceNormalDirection
  * @brief get the normal direction of surface particles.
  */
-class SurfaceNormalDirection : public DataDelegateSimple, public LocalDynamics
+class SurfaceNormalDirection : public LocalDynamics
 {
   public:
     explicit SurfaceNormalDirection(SPHBody &sph_body);

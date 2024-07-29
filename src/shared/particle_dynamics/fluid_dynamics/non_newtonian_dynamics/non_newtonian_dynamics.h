@@ -104,7 +104,7 @@ using Oldroyd_BIntegration2ndHalfWithWall = ComplexInteraction<Oldroyd_BIntegrat
  * @class SRDViscousTimeStepSize
  * @brief Computing the viscous time step size using the SRD viscosity
  */
-class SRDViscousTimeStepSize : public LocalDynamicsReduce<ReduceMax>, public DataDelegateSimple
+class SRDViscousTimeStepSize : public LocalDynamicsReduce<ReduceMax>
 {
   public:
     explicit SRDViscousTimeStepSize(SPHBody &sph_body, Real diffusionCFL = 0.125);
@@ -120,7 +120,7 @@ class SRDViscousTimeStepSize : public LocalDynamicsReduce<ReduceMax>, public Dat
     Real max_viscosity = 1e-12;
 };
 
-class ShearRateDependentViscosity : public LocalDynamics, public DataDelegateSimple
+class ShearRateDependentViscosity : public LocalDynamics
 {
   public:
     explicit ShearRateDependentViscosity(SPHBody &sph_body);

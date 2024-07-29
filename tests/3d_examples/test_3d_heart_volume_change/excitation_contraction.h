@@ -70,12 +70,11 @@ class Heart : public ComplexShape
 using FiberDirectionDiffusionRelaxation =
     DiffusionRelaxationRK2<DiffusionRelaxation<Inner<KernelGradientInner>, IsotropicDiffusion>>;
 /** Imposing diffusion boundary condition */
-class DiffusionBCs : public BaseLocalDynamics<BodyPartByParticle>, public DataDelegateSimple
+class DiffusionBCs : public BaseLocalDynamics<BodyPartByParticle>
 {
   public:
     explicit DiffusionBCs(BodyPartByParticle &body_part, const std::string &species_name)
         : BaseLocalDynamics<BodyPartByParticle>(body_part),
-          DataDelegateSimple(body_part.getSPHBody()),
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
           phi_(particles_->registerSharedVariable<Real>(species_name)){};
     virtual ~DiffusionBCs(){};
@@ -104,7 +103,7 @@ class DiffusionBCs : public BaseLocalDynamics<BodyPartByParticle>, public DataDe
     Real *phi_;
 };
 /** Compute Fiber and Sheet direction after diffusion */
-class ComputeFiberAndSheetDirections : public LocalDynamics, public DataDelegateSimple
+class ComputeFiberAndSheetDirections : public LocalDynamics
 {
   protected:
     LocallyOrthotropicMuscle &muscle_material_;
@@ -115,7 +114,7 @@ class ComputeFiberAndSheetDirections : public LocalDynamics, public DataDelegate
 
   public:
     explicit ComputeFiberAndSheetDirections(SPHBody &sph_body, const std::string &species_name)
-        : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
+        : LocalDynamics(sph_body),
           muscle_material_(DynamicCast<LocallyOrthotropicMuscle>(this, sph_body_.getBaseMaterial())),
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
           phi_(particles_->registerSharedVariable<Real>(species_name))
@@ -177,11 +176,11 @@ class MuscleBaseShapeParameters : public TriangleMeshShapeBrick::ShapeParameters
 };
 
 //	application dependent initial condition
-class ApplyStimulusCurrentSI : public LocalDynamics, public DataDelegateSimple
+class ApplyStimulusCurrentSI : public LocalDynamics
 {
   public:
     explicit ApplyStimulusCurrentSI(SPHBody &sph_body)
-        : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
+        : LocalDynamics(sph_body),
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
           voltage_(particles_->registerSharedVariable<Real>("Voltage")){};
 
@@ -206,11 +205,11 @@ class ApplyStimulusCurrentSI : public LocalDynamics, public DataDelegateSimple
 /**
  * application dependent initial condition
  */
-class ApplyStimulusCurrentSII : public LocalDynamics, public DataDelegateSimple
+class ApplyStimulusCurrentSII : public LocalDynamics
 {
   public:
     explicit ApplyStimulusCurrentSII(SPHBody &sph_body)
-        : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
+        : LocalDynamics(sph_body),
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
           voltage_(particles_->registerSharedVariable<Real>("Voltage")){};
 

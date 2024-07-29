@@ -62,7 +62,7 @@ class TemperatureSplittingByPDEInner
 template <typename DataType>
 class TemperatureSplittingByPDEWithBoundary
     : public TemperatureSplittingByPDEInner<DataType>,
-      public DataDelegateContactOnly
+      public DataDelegateContact
 {
   public:
     TemperatureSplittingByPDEWithBoundary(BaseInnerRelation &inner_relation,

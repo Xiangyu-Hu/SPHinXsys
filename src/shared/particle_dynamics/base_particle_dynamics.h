@@ -37,10 +37,6 @@
 #include "neighborhood.h"
 #include "sph_data_containers.h"
 
-#include <functional>
-
-using namespace std::placeholders;
-
 namespace SPH
 {
 /**
@@ -53,15 +49,14 @@ template <class ReturnType = void>
 class BaseDynamics
 {
   public:
-    BaseDynamics(SPHBody &sph_body)
-        : sph_body_(sph_body), is_newly_updated_(false){};
+    BaseDynamics() : is_newly_updated_(false){};
     virtual ~BaseDynamics(){};
     bool checkNewlyUpdated() { return is_newly_updated_; };
     void setNotNewlyUpdated() { is_newly_updated_ = false; };
 
-    void setUpdated()
+    void setUpdated(SPHBody &sph_body)
     {
-        sph_body_.setNewlyUpdated();
+        sph_body.setNewlyUpdated();
         is_newly_updated_ = true;
     };
 
@@ -69,76 +64,40 @@ class BaseDynamics
     virtual ReturnType exec(Real dt = 0.0) = 0;
 
   private:
-    SPHBody &sph_body_;
     bool is_newly_updated_;
-};
-
-/**
- * @class DataDelegateBase
- * @brief empty base class for mixin template.
- */
-class DataDelegateEmptyBase
-{
-  public:
-    explicit DataDelegateEmptyBase(SPHBody &sph_body){};
-    virtual ~DataDelegateEmptyBase(){};
-};
-
-/**
- * @class DataDelegateSimple
- * @brief prepare data for simple particle dynamics.
- */
-class DataDelegateSimple
-{
-  public:
-    explicit DataDelegateSimple(SPHBody &sph_body)
-        : sph_body_(sph_body),
-          particles_(&sph_body.getBaseParticles()){};
-    virtual ~DataDelegateSimple(){};
-    SPHBody &getSPHBody() { return sph_body_; };
-    BaseParticles *getParticles() { return particles_; };
-
-  protected:
-    SPHBody &sph_body_;
-    BaseParticles *particles_;
 };
 
 /**
  * @class DataDelegateInner
  * @brief prepare data for inner particle dynamics
  */
-template <class BaseDataDelegateType>
-class BaseDataDelegateInner : public BaseDataDelegateType
+class DataDelegateInner
 {
     BaseInnerRelation &inner_relation_;
 
   public:
-    explicit BaseDataDelegateInner(BaseInnerRelation &inner_relation)
-        : BaseDataDelegateType(inner_relation.getSPHBody()),
-          inner_relation_(inner_relation),
+    explicit DataDelegateInner(BaseInnerRelation &inner_relation)
+        : inner_relation_(inner_relation),
           inner_configuration_(inner_relation.inner_configuration_){};
-    virtual ~BaseDataDelegateInner(){};
+    virtual ~DataDelegateInner(){};
     BaseInnerRelation &getBodyRelation() { return inner_relation_; };
 
   protected:
     /** inner configuration of the designated body */
     ParticleConfiguration &inner_configuration_;
 };
-using DataDelegateInner = BaseDataDelegateInner<DataDelegateSimple>;
-using DataDelegateInnerOnly = BaseDataDelegateInner<DataDelegateEmptyBase>;
+
 /**
  * @class DataDelegateContact
  * @brief prepare data for contact particle dynamics
  */
-template <class BaseDataDelegateType>
-class BaseDataDelegateContact : public BaseDataDelegateType
+class DataDelegateContact
 {
     BaseContactRelation &contact_relation_;
 
   public:
-    explicit BaseDataDelegateContact(BaseContactRelation &contact_relation)
-        : BaseDataDelegateType(contact_relation.getSPHBody()),
-          contact_relation_(contact_relation)
+    explicit DataDelegateContact(BaseContactRelation &contact_relation)
+        : contact_relation_(contact_relation)
     {
         RealBodyVector contact_sph_bodies = contact_relation.contact_bodies_;
         for (size_t i = 0; i != contact_sph_bodies.size(); ++i)
@@ -148,7 +107,7 @@ class BaseDataDelegateContact : public BaseDataDelegateType
             contact_configuration_.push_back(&contact_relation.contact_configuration_[i]);
         }
     };
-    virtual ~BaseDataDelegateContact(){};
+    virtual ~DataDelegateContact(){};
     BaseContactRelation &getBodyRelation() { return contact_relation_; };
 
   protected:
@@ -157,10 +116,5 @@ class BaseDataDelegateContact : public BaseDataDelegateType
     /** Configurations for particle interaction between bodies. */
     StdVec<ParticleConfiguration *> contact_configuration_;
 };
-using DataDelegateContact = BaseDataDelegateContact<DataDelegateSimple>;
-/** Required for projection-based operator splitting (implicit) method,
- * the error and parameter need to computed for inner and contact particles together
- * other than can be handled by separately as other explicit methods. */
-using DataDelegateContactOnly = BaseDataDelegateContact<DataDelegateEmptyBase>;
 } // namespace SPH
 #endif // BASE_PARTICLE_DYNAMICS_H

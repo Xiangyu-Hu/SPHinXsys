@@ -39,14 +39,12 @@ namespace SPH
  * @brief  obtained the maximum norm of a variable
  */
 template <typename DataType, typename NormType, class DynamicsIdentifier = SPHBody>
-class VariableNorm : public BaseLocalDynamicsReduce<NormType, DynamicsIdentifier>,
-                     public DataDelegateSimple
+class VariableNorm : public BaseLocalDynamicsReduce<NormType, DynamicsIdentifier>
 {
   public:
     VariableNorm(DynamicsIdentifier &identifier, const std::string &variable_name)
         : BaseLocalDynamicsReduce<NormType, DynamicsIdentifier>(identifier),
-          DataDelegateSimple(identifier.getSPHBody()),
-          variable_(particles_->getVariableDataByName<DataType>(variable_name)){};
+          variable_(this->particles_->template getVariableDataByName<DataType>(variable_name)){};
     virtual ~VariableNorm(){};
     virtual Real outputResult(Real reduced_value) override { return std::sqrt(reduced_value); }
     Real reduce(size_t index_i, Real dt = 0.0) { return getSquaredNorm(variable_[index_i]); };
@@ -64,8 +62,7 @@ class VariableNorm : public BaseLocalDynamicsReduce<NormType, DynamicsIdentifier
  * @class VelocityBoundCheck
  * @brief  check whether particle velocity within a given bound
  */
-class VelocityBoundCheck : public LocalDynamicsReduce<ReduceOR>,
-                           public DataDelegateSimple
+class VelocityBoundCheck : public LocalDynamicsReduce<ReduceOR>
 {
   protected:
     Vecd *vel_;
@@ -83,8 +80,7 @@ class VelocityBoundCheck : public LocalDynamicsReduce<ReduceOR>,
  * @brief 	Get the upper front in an axis direction for a body or body part
  */
 template <class DynamicsIdentifier>
-class UpperFrontInAxisDirection : public BaseLocalDynamicsReduce<ReduceMax, DynamicsIdentifier>,
-                                  public DataDelegateSimple
+class UpperFrontInAxisDirection : public BaseLocalDynamicsReduce<ReduceMax, DynamicsIdentifier>
 {
   protected:
     int axis_;
@@ -93,8 +89,8 @@ class UpperFrontInAxisDirection : public BaseLocalDynamicsReduce<ReduceMax, Dyna
   public:
     explicit UpperFrontInAxisDirection(DynamicsIdentifier &identifier, const std::string &name, int axis = lastAxis)
         : BaseLocalDynamicsReduce<ReduceMax, DynamicsIdentifier>(identifier),
-          DataDelegateSimple(identifier.getSPHBody()), axis_(axis),
-          pos_(particles_->template getVariableDataByName<Vecd>("Position"))
+          axis_(axis),
+          pos_(this->particles_->template getVariableDataByName<Vecd>("Position"))
     {
         this->quantity_name_ = name;
     }
@@ -107,8 +103,7 @@ class UpperFrontInAxisDirection : public BaseLocalDynamicsReduce<ReduceMax, Dyna
  * @class MaximumSpeed
  * @brief Get the maximum particle speed in a SPH body
  */
-class MaximumSpeed : public LocalDynamicsReduce<ReduceMax>,
-                     public DataDelegateSimple
+class MaximumSpeed : public LocalDynamicsReduce<ReduceMax>
 {
   protected:
     Vecd *vel_;
@@ -125,8 +120,7 @@ class MaximumSpeed : public LocalDynamicsReduce<ReduceMax>,
  * @brief	the lower bound of a body by reduced particle positions.
  * 			TODO: a test using this method
  */
-class PositionLowerBound : public LocalDynamicsReduce<ReduceLowerBound>,
-                           public DataDelegateSimple
+class PositionLowerBound : public LocalDynamicsReduce<ReduceLowerBound>
 {
   protected:
     Vecd *pos_;
@@ -143,8 +137,7 @@ class PositionLowerBound : public LocalDynamicsReduce<ReduceLowerBound>,
  * @brief	the upper bound of a body by reduced particle positions.
  * 			TODO: a test using this method
  */
-class PositionUpperBound : public LocalDynamicsReduce<ReduceUpperBound>,
-                           public DataDelegateSimple
+class PositionUpperBound : public LocalDynamicsReduce<ReduceUpperBound>
 {
   protected:
     Vecd *pos_;
@@ -161,13 +154,12 @@ class PositionUpperBound : public LocalDynamicsReduce<ReduceUpperBound>,
  * @brief Compute the summation of  a particle variable in a body
  */
 template <typename DataType, class DynamicsIdentifier = SPHBody>
-class QuantitySummation : public BaseLocalDynamicsReduce<ReduceSum<DataType>, DynamicsIdentifier>,
-                          public DataDelegateSimple
+class QuantitySummation : public BaseLocalDynamicsReduce<ReduceSum<DataType>, DynamicsIdentifier>
 {
   public:
     explicit QuantitySummation(DynamicsIdentifier &identifier, const std::string &variable_name)
         : BaseLocalDynamicsReduce<ReduceSum<DataType>, DynamicsIdentifier>(identifier),
-          DataDelegateSimple(identifier.getSPHBody()),
+
           variable_(this->particles_->template getVariableDataByName<DataType>(variable_name))
     {
         this->quantity_name_ = "Total" + variable_name;
@@ -209,8 +201,7 @@ class QuantityMoment : public QuantitySummation<DataType, DynamicsIdentifier>
 };
 
 class TotalKineticEnergy
-    : public LocalDynamicsReduce<ReduceSum<Real>>,
-      public DataDelegateSimple
+    : public LocalDynamicsReduce<ReduceSum<Real>>
 {
   protected:
     Real *mass_;

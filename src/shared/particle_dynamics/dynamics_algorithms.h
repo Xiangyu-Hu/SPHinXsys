@@ -101,7 +101,7 @@ class SimpleDynamics : public LocalDynamicsType, public BaseDynamics<void>
     template <class DynamicsIdentifier, typename... Args>
     SimpleDynamics(DynamicsIdentifier &identifier, Args &&...args)
         : LocalDynamicsType(identifier, std::forward<Args>(args)...),
-          BaseDynamics<void>(identifier.getSPHBody())
+          BaseDynamics<void>()
     {
         static_assert(!has_initialize<LocalDynamicsType>::value &&
                           !has_interaction<LocalDynamicsType>::value,
@@ -111,7 +111,7 @@ class SimpleDynamics : public LocalDynamicsType, public BaseDynamics<void>
 
     virtual void exec(Real dt = 0.0) override
     {
-        this->setUpdated();
+        this->setUpdated(this->identifier_.getSPHBody());
         this->setupDynamics(dt);
         particle_for(ExecutionPolicy(),
                      this->identifier_.LoopRange(),
@@ -133,7 +133,7 @@ class ReduceDynamics : public LocalDynamicsType,
     template <class DynamicsIdentifier, typename... Args>
     ReduceDynamics(DynamicsIdentifier &identifier, Args &&...args)
         : LocalDynamicsType(identifier, std::forward<Args>(args)...),
-          BaseDynamics<ReturnType>(identifier.getSPHBody()){};
+          BaseDynamics<ReturnType>(){};
     virtual ~ReduceDynamics(){};
 
     std::string QuantityName() { return this->quantity_name_; };
@@ -161,7 +161,7 @@ class BaseInteractionDynamics : public LocalDynamicsType, public BaseDynamics<vo
     template <typename... Args>
     explicit BaseInteractionDynamics(Args &&...args)
         : LocalDynamicsType(std::forward<Args>(args)...),
-          BaseDynamics<void>(this->getSPHBody()){};
+          BaseDynamics<void>(){};
     virtual ~BaseInteractionDynamics(){};
 
     /** pre process such as update ghost state */
@@ -185,7 +185,7 @@ class BaseInteractionDynamics : public LocalDynamicsType, public BaseDynamics<vo
 
     virtual void exec(Real dt = 0.0) override
     {
-        this->setUpdated();
+        this->setUpdated(this->identifier_.getSPHBody());
         this->setupDynamics(dt);
         runInteraction(dt);
     };
@@ -331,7 +331,7 @@ class Dynamics1Level : public InteractionDynamics<LocalDynamicsType, ExecutionPo
 
     virtual void exec(Real dt = 0.0) override
     {
-        this->setUpdated();
+        this->setUpdated(this->identifier_.getSPHBody());
         this->setupDynamics(dt);
 
         particle_for(ExecutionPolicy(),

@@ -41,7 +41,7 @@ namespace SPH
 {
 namespace fluid_dynamics
 {
-class FluidInitialCondition : public LocalDynamics, public DataDelegateSimple
+class FluidInitialCondition : public LocalDynamics
 {
   public:
     explicit FluidInitialCondition(SPHBody &sph_body);
@@ -51,7 +51,7 @@ class FluidInitialCondition : public LocalDynamics, public DataDelegateSimple
     Vecd *pos_, *vel_;
 };
 
-class ContinuumVolumeUpdate : public LocalDynamics, public DataDelegateSimple
+class ContinuumVolumeUpdate : public LocalDynamics
 {
   public:
     explicit ContinuumVolumeUpdate(SPHBody &sph_body);

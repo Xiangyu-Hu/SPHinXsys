@@ -79,11 +79,11 @@ class WallBoundary : public MultiPolygonShape
 //----------------------------------------------------------------------
 //	Application dependent initial condition.
 //----------------------------------------------------------------------
-class DiffusionBodyInitialCondition : public LocalDynamics, public DataDelegateSimple
+class DiffusionBodyInitialCondition : public LocalDynamics
 {
   public:
     explicit DiffusionBodyInitialCondition(SPHBody &sph_body)
-        : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
+        : LocalDynamics(sph_body),
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
           phi_(particles_->registerSharedVariable<Real>("Phi")),
           heat_source_(particles_->registerSharedVariable<Real>("HeatSource")){};
@@ -99,11 +99,11 @@ class DiffusionBodyInitialCondition : public LocalDynamics, public DataDelegateS
     Real *phi_, *heat_source_;
 };
 
-class WallBoundaryInitialCondition : public LocalDynamics, public DataDelegateSimple
+class WallBoundaryInitialCondition : public LocalDynamics
 {
   public:
     explicit WallBoundaryInitialCondition(SPHBody &sph_body)
-        : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
+        : LocalDynamics(sph_body),
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
           phi_(particles_->registerSharedVariable<Real>("Phi")){};
 

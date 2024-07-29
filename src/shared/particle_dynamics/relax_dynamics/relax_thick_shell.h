@@ -48,8 +48,7 @@ namespace relax_dynamics
  * because if level_set_refinement_ratio > particle_spacing_ref_ / (0.05 * thickness_),
  * there will be no level set field.
  */
-class ShellMidSurfaceBounding : public BaseLocalDynamics<BodyPartByCell>,
-                                public DataDelegateSimple
+class ShellMidSurfaceBounding : public BaseLocalDynamics<BodyPartByCell>
 {
   public:
     explicit ShellMidSurfaceBounding(NearShapeSurface &body_part);
@@ -82,7 +81,7 @@ class ShellNormalDirectionPrediction : public BaseDynamics<void>
     virtual void exec(Real dt = 0.0) override;
 
   protected:
-    class NormalPrediction : public DataDelegateSimple, public LocalDynamics
+    class NormalPrediction : public LocalDynamics
     {
         Real thickness_;
         LevelSetShape *level_set_shape_;
@@ -94,8 +93,7 @@ class ShellNormalDirectionPrediction : public BaseDynamics<void>
         void update(size_t index_i, Real dt = 0.0);
     };
 
-    class PredictionConvergenceCheck : public LocalDynamicsReduce<ReduceAND>,
-                                       public DataDelegateSimple
+    class PredictionConvergenceCheck : public LocalDynamicsReduce<ReduceAND>
     {
       protected:
         const Real convergence_criterion_;
@@ -123,8 +121,7 @@ class ShellNormalDirectionPrediction : public BaseDynamics<void>
         int *updated_indicator_; /**> 0 not updated, 1 updated with reliable prediction, 2 updated from a reliable neighbor */
     };
 
-    class ConsistencyUpdatedCheck : public LocalDynamicsReduce<ReduceAND>,
-                                    public DataDelegateSimple
+    class ConsistencyUpdatedCheck : public LocalDynamicsReduce<ReduceAND>
     {
       protected:
         int *updated_indicator_;

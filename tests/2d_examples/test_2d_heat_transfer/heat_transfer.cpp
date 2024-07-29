@@ -95,11 +95,11 @@ class ThermosolidBody : public MultiPolygonShape
 //----------------------------------------------------------------------
 //	Application dependent solid body initial condition
 //----------------------------------------------------------------------
-class ThermosolidBodyInitialCondition : public LocalDynamics, public DataDelegateSimple
+class ThermosolidBodyInitialCondition : public LocalDynamics
 {
   public:
     explicit ThermosolidBodyInitialCondition(SPHBody &sph_body)
-        : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
+        : LocalDynamics(sph_body),
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
           phi_(particles_->registerSharedVariable<Real>("Phi")){};
 
@@ -123,11 +123,11 @@ class ThermosolidBodyInitialCondition : public LocalDynamics, public DataDelegat
 //----------------------------------------------------------------------
 //	Application dependent fluid body initial condition
 //----------------------------------------------------------------------
-class ThermofluidBodyInitialCondition : public LocalDynamics, public DataDelegateSimple
+class ThermofluidBodyInitialCondition : public LocalDynamics
 {
   public:
     explicit ThermofluidBodyInitialCondition(SPHBody &sph_body)
-        : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
+        : LocalDynamics(sph_body),
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
           phi_(particles_->registerSharedVariable<Real>("Phi")){};
 

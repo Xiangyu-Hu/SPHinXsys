@@ -7,8 +7,7 @@ namespace slender_structure_dynamics
 {
 //=================================================================================================//
 BarAcousticTimeStepSize::BarAcousticTimeStepSize(SPHBody &sph_body, Real CFL)
-    : LocalDynamicsReduce<ReduceMin>(sph_body),
-      DataDelegateSimple(sph_body), CFL_(CFL),
+    : LocalDynamicsReduce<ReduceMin>(sph_body), CFL_(CFL),
       elastic_solid_(DynamicCast<ElasticSolid>(this, sph_body.getBaseMaterial())),
       vel_(particles_->getVariableDataByName<Vecd>("Velocity")),
       force_(particles_->getVariableDataByName<Vecd>("Force")),
@@ -290,7 +289,7 @@ void BarStressRelaxationSecondHalf::update(size_t index_i, Real dt)
 //=================================================================================================//
 ConstrainBarBodyRegion::
     ConstrainBarBodyRegion(BodyPartByParticle &body_part)
-    : BaseLocalDynamics<BodyPartByParticle>(body_part), DataDelegateSimple(body_part.getSPHBody()),
+    : BaseLocalDynamics<BodyPartByParticle>(body_part),
       vel_(particles_->getVariableDataByName<Vecd>("Velocity")),
       angular_vel_(particles_->getVariableDataByName<Vecd>("AngularVelocity")),
       angular_b_vel_(particles_->getVariableDataByName<Vecd>("BinormalAngularVelocity")) {}
@@ -303,7 +302,7 @@ void ConstrainBarBodyRegion::update(size_t index_i, Real dt)
 }
 //=================================================================================================//
 ConstrainBarBodyRegionAlongAxis::ConstrainBarBodyRegionAlongAxis(BodyPartByParticle &body_part, int axis)
-    : BaseLocalDynamics<BodyPartByParticle>(body_part), DataDelegateSimple(body_part.getSPHBody()),
+    : BaseLocalDynamics<BodyPartByParticle>(body_part),
       axis_(axis), pos_(particles_->getVariableDataByName<Vecd>("Position")),
       pos0_(particles_->registerSharedVariableFrom<Vecd>("InitialPosition", "Position")),
       vel_(particles_->getVariableDataByName<Vecd>("Velocity")),

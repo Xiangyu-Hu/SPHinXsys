@@ -7,7 +7,6 @@ namespace SPH
 VelocityBoundCheck::
     VelocityBoundCheck(SPHBody &sph_body, Real velocity_bound)
     : LocalDynamicsReduce<ReduceOR>(sph_body),
-      DataDelegateSimple(sph_body),
       vel_(particles_->getVariableDataByName<Vecd>("Velocity")),
       velocity_bound_(velocity_bound) {}
 //=================================================================================================//
@@ -18,7 +17,6 @@ bool VelocityBoundCheck::reduce(size_t index_i, Real dt)
 //=================================================================================================//
 MaximumSpeed::MaximumSpeed(SPHBody &sph_body)
     : LocalDynamicsReduce<ReduceMax>(sph_body),
-      DataDelegateSimple(sph_body),
       vel_(particles_->getVariableDataByName<Vecd>("Velocity"))
 {
     quantity_name_ = "MaximumSpeed";
@@ -31,7 +29,6 @@ Real MaximumSpeed::reduce(size_t index_i, Real dt)
 //=================================================================================================//
 PositionLowerBound::PositionLowerBound(SPHBody &sph_body)
     : LocalDynamicsReduce<ReduceLowerBound>(sph_body),
-      DataDelegateSimple(sph_body),
       pos_(particles_->getVariableDataByName<Vecd>("Position"))
 {
     quantity_name_ = "PositionLowerBound";
@@ -44,7 +41,6 @@ Vecd PositionLowerBound::reduce(size_t index_i, Real dt)
 //=================================================================================================//
 PositionUpperBound::PositionUpperBound(SPHBody &sph_body)
     : LocalDynamicsReduce<ReduceUpperBound>(sph_body),
-      DataDelegateSimple(sph_body),
       pos_(particles_->getVariableDataByName<Vecd>("Position"))
 {
     quantity_name_ = "PositionUpperBound";
@@ -57,7 +53,6 @@ Vecd PositionUpperBound::reduce(size_t index_i, Real dt)
 //=================================================================================================//
 TotalKineticEnergy::TotalKineticEnergy(SPHBody &sph_body)
     : LocalDynamicsReduce<ReduceSum<Real>>(sph_body),
-      DataDelegateSimple(sph_body),
       mass_(particles_->getVariableDataByName<Real>("Mass")),
       vel_(particles_->getVariableDataByName<Vecd>("Velocity"))
 {

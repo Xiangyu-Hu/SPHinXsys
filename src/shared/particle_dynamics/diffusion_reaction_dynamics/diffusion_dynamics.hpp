@@ -15,7 +15,7 @@ namespace SPH
 template <class DiffusionType>
 GetDiffusionTimeStepSize<DiffusionType>::
     GetDiffusionTimeStepSize(SPHBody &sph_body, DiffusionType &diffusion)
-    : BaseDynamics<Real>(sph_body)
+    : BaseDynamics<Real>()
 {
     Real smoothing_length = sph_body.sph_adaptation_->ReferenceSmoothingLength();
     diff_time_step_ = diffusion.getDiffusionTimeStepSize(smoothing_length);
@@ -393,7 +393,7 @@ template <class DiffusionRelaxationType>
 template <typename FirstArg, typename... OtherArgs>
 DiffusionRelaxationRK2<DiffusionRelaxationType>::
     DiffusionRelaxationRK2(FirstArg &first_arg, OtherArgs &&...other_args)
-    : BaseDynamics<void>(first_arg.getSPHBody()),
+    : BaseDynamics<void>(),
       rk2_1st_stage_(first_arg, std::forward<OtherArgs>(other_args)...),
       rk2_2nd_stage_(first_arg, std::forward<OtherArgs>(other_args)...) {}
 //=================================================================================================//

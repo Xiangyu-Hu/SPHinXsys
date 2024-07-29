@@ -8,7 +8,7 @@ namespace thin_structure_dynamics
 {
 //=================================================================================================//
 UpdateShellNormalDirection::UpdateShellNormalDirection(SPHBody &sph_body)
-    : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
+    : LocalDynamics(sph_body),
       n_(particles_->getVariableDataByName<Vecd>("NormalDirection")),
       F_(particles_->getVariableDataByName<Matd>("DeformationGradient")),
       transformation_matrix0_(particles_->getVariableDataByName<Matd>("TransformationMatrix")) {}
@@ -21,7 +21,7 @@ void UpdateShellNormalDirection::update(size_t index_i, Real dt)
 //=================================================================================================//
 ShellAcousticTimeStepSize::ShellAcousticTimeStepSize(SPHBody &sph_body, Real CFL)
     : LocalDynamicsReduce<ReduceMin>(sph_body),
-      DataDelegateSimple(sph_body), CFL_(CFL),
+      CFL_(CFL),
       elastic_solid_(DynamicCast<ElasticSolid>(this, sph_body.getBaseMaterial())),
       vel_(particles_->getVariableDataByName<Vecd>("Velocity")),
       force_(particles_->getVariableDataByName<Vecd>("Force")),
@@ -236,7 +236,6 @@ void ShellStressRelaxationSecondHalf::update(size_t index_i, Real dt)
 ConstrainShellBodyRegion::
     ConstrainShellBodyRegion(BodyPartByParticle &body_part)
     : BaseLocalDynamics<BodyPartByParticle>(body_part),
-      DataDelegateSimple(body_part.getSPHBody()),
       vel_(particles_->getVariableDataByName<Vecd>("Velocity")),
       angular_vel_(particles_->getVariableDataByName<Vecd>("AngularVelocity")) {}
 //=================================================================================================//
@@ -248,7 +247,6 @@ void ConstrainShellBodyRegion::update(size_t index_i, Real dt)
 //=================================================================================================//
 ConstrainShellBodyRegionAlongAxis::ConstrainShellBodyRegionAlongAxis(BodyPartByParticle &body_part, int axis)
     : BaseLocalDynamics<BodyPartByParticle>(body_part),
-      DataDelegateSimple(body_part.getSPHBody()),
       axis_(axis), pos_(particles_->getVariableDataByName<Vecd>("Position")),
       pos0_(particles_->registerSharedVariableFrom<Vecd>("InitialPosition", "Position")),
       vel_(particles_->getVariableDataByName<Vecd>("Velocity")),
@@ -302,7 +300,7 @@ void InitialShellCurvature::update(size_t index_i, Real)
 }
 //=================================================================================================//
 ShellCurvatureUpdate::ShellCurvatureUpdate(SPHBody &sph_body)
-    : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
+    : LocalDynamics(sph_body),
       transformation_matrix0_(particles_->getVariableDataByName<Matd>("TransformationMatrix")),
       F_(particles_->getVariableDataByName<Matd>("DeformationGradient")),
       F_bending_(particles_->getVariableDataByName<Matd>("BendingDeformationGradient")),
