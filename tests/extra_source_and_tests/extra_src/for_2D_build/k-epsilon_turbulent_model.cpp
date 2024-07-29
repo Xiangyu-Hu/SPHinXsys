@@ -110,7 +110,7 @@ namespace fluid_dynamics
 				
 				Real r_ij = inner_neighborhood.r_ij_[n];
 				const Vecd& e_ij = inner_neighborhood.e_ij_[n];
-				
+				Real weight = 0.5 ;
 				if (is_near_wall_P2_[index_i] == 10 && is_near_wall_P1_[index_j] == 1)
 				{
 					//Vecd vel_ps = vel_[index_j] + 0.5 * r_ij * velocity_gradient_[index_j] * e_ij ;
@@ -122,9 +122,12 @@ namespace fluid_dynamics
 					//Vecd vel_diff = velocity_gradient_[index_j] * e_ij;
 					
 					//Real factor_B = B_[index_i].norm() / turbu_B_[index_i].norm();
+					Matd P1 = - (vel_i - vel_[index_j]) * nablaW_ijV_j.transpose();
 					Vecd vel_diff = velocity_gradient_[index_j] * r_ij * e_ij;
+					Matd P2 = - vel_diff * nablaW_ijV_j.transpose();
 					
-					velocity_gradient_[index_i] += - vel_diff * nablaW_ijV_j.transpose();
+					//velocity_gradient_[index_i] += - weight * vel_diff * nablaW_ijV_j.transpose();
+					velocity_gradient_[index_i] +=  ( 1 - weight ) * P1 +  weight* P2;
 				}
 				else
 				{
