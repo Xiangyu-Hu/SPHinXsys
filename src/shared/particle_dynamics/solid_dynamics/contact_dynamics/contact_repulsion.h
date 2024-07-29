@@ -31,7 +31,7 @@
 #define CONTACT_REPULSION_H
 
 #include "base_contact_dynamics.h"
-#include "force_prior.h"
+#include "force_prior.hpp"
 
 namespace SPH
 {

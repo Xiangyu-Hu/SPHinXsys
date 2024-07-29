@@ -35,7 +35,7 @@
 #include "base_general_dynamics.h"
 #include "base_kernel.h"
 #include "elastic_solid.h"
-#include "force_prior.h"
+#include "force_prior.hpp"
 #include "solid_body.h"
 
 namespace SPH
@@ -47,8 +47,7 @@ class BaseLoadingForce : public BaseForcePrior<DynamicsIdentifier>
 {
   public:
     BaseLoadingForce(DynamicsIdentifier &identifier, const std::string &loading_force_name)
-        : BaseLocalDynamics<DynamicsIdentifier>(identifier),
-          BaseForcePrior<DynamicsIdentifier>(identifier, loading_force_name),
+        : BaseForcePrior<DynamicsIdentifier>(identifier, loading_force_name),
           loading_force_(this->particles_->template getVariableDataByName<Vecd>(loading_force_name)){};
     virtual ~BaseLoadingForce(){};
 

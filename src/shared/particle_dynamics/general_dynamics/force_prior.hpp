@@ -10,12 +10,12 @@ template <class DynamicsIdentifier>
 BaseForcePrior<DynamicsIdentifier>::
     BaseForcePrior(DynamicsIdentifier &identifier, const std::string &force_name)
     : BaseLocalDynamics<DynamicsIdentifier>(identifier),
-      force_prior_(base_particles->registerSharedVariable<Vecd>("ForcePrior")),
-      current_force_(base_particles->registerSharedVariable<Vecd>(force_name)),
-      previous_force_(base_particles->registerSharedVariable<Vecd>("Previous" + force_name))
+      force_prior_(this->particles_->template registerSharedVariable<Vecd>("ForcePrior")),
+      current_force_(this->particles_->template registerSharedVariable<Vecd>(force_name)),
+      previous_force_(this->particles_->template registerSharedVariable<Vecd>("Previous" + force_name))
 {
-    base_particles->addVariableToRestart<Vecd>("Previous" + force_name);
-    base_particles->addVariableToSort<Vecd>("Previous" + force_name);
+    this->particles_->template addVariableToRestart<Vecd>("Previous" + force_name);
+    this->particles_->template addVariableToSort<Vecd>("Previous" + force_name);
 }
 //=================================================================================================//
 template <class DynamicsIdentifier>
@@ -27,7 +27,7 @@ void BaseForcePrior<DynamicsIdentifier>::update(size_t index_i, Real dt)
 //=================================================================================================//
 template <class GravityType>
 GravityForce<GravityType>::GravityForce(SPHBody &sph_body, const GravityType &gravity)
-    : ForcePrior(particles_, "GravityForce"), gravity_(gravity),
+    : ForcePrior(sph_body, "GravityForce"), gravity_(gravity),
       pos_(particles_->getVariableDataByName<Vecd>("Position")),
       mass_(particles_->registerSharedVariable<Real>("Mass")),
       physical_time_(sph_system_.getSystemVariableDataByName<Real>("PhysicalTime")) {}
