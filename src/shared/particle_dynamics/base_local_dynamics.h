@@ -54,6 +54,13 @@ class Dynamic;         /**< A dynamic interaction */
 /**
  * @class BaseLocalDynamics
  * @brief The base class for all local particle dynamics.
+ * @details The basic design idea is define local dynamics for local particle operations.
+ * We split a general local dynamics into two parts in respect of functionality:
+ * one is the action on singular data, which is carried within the function setupDynamics,
+ * the other is the action on discrete variables, which will be carried out
+ * by the computing kernel. In the scenarios of offloading computing,
+ * the first function is generally carried on the host and the other on computing device.
+ * We also split the local dynamics into two part in respect of memory management.
  */
 template <class DynamicsIdentifier>
 class BaseLocalDynamics
