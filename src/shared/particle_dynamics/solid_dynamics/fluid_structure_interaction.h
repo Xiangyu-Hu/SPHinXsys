@@ -43,7 +43,7 @@ namespace solid_dynamics
  * @class BaseForceFromFluid
  * @brief Base class for computing the forces from the fluid
  */
-class BaseForceFromFluid : public LocalDynamics, public DataDelegateContact, public ForcePrior
+class BaseForceFromFluid : public ForcePrior, public DataDelegateContact,
 {
   public:
     explicit BaseForceFromFluid(BaseContactRelation &contact_relation, const std::string &force_name);

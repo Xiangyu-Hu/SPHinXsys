@@ -114,7 +114,7 @@ jobs:
         if: ${{ steps.first-try.outcome == 'failure' }}
         run: |
           source /opt/intel/oneapi/setvars.sh --include-intel-llvm        
-          cdbuild/tests/tests_sycl
+          cd build/tests/tests_sycl
           ctest --rerun-failed --output-on-failure --timeout 1000
         continue-on-error: true
 

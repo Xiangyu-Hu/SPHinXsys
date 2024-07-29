@@ -73,7 +73,7 @@ class PullingForce : public solid_dynamics::BaseLoadingForce<BodyPartByParticle>
         Real mean_force_ = getForce(time) * J * area_0_[index_i] * current_normal_norm;
 
         loading_force_[index_i] = mean_force_ * normal;
-        ForcePrior::update(index_i, time);
+        solid_dynamics::BaseLoadingForce<BodyPartByParticle>::update(index_i, time);
     }
 
   protected:

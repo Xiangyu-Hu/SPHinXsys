@@ -52,8 +52,7 @@ void SurfaceTensionStress::interaction(size_t index_i, Real dt)
 }
 //=================================================================================================//
 SurfaceStressForce<Inner<>>::SurfaceStressForce(BaseInnerRelation &inner_relation)
-    : SurfaceStressForce<DataDelegateInner>(inner_relation),
-      ForcePrior(particles_, "SurfaceTensionForce") {}
+    : SurfaceStressForce<DataDelegateInner>(inner_relation) {}
 //=================================================================================================//
 void SurfaceStressForce<Inner<>>::interaction(size_t index_i, Real dt)
 {

@@ -10,7 +10,8 @@ namespace fluid_dynamics
 template <class DataDelegationType>
 template <class BaseRelationType>
 ViscousForce<DataDelegationType>::ViscousForce(BaseRelationType &base_relation)
-    : LocalDynamics(base_relation.getSPHBody()), DataDelegationType(base_relation),
+    : ForcePrior(base_relation.getSPHBody(), "ViscousForce"),
+      DataDelegationType(base_relation),
       rho_(this->particles_->template getVariableDataByName<Real>("Density")),
       mass_(this->particles_->template getVariableDataByName<Real>("Mass")),
       Vol_(this->particles_->template getVariableDataByName<Real>("VolumetricMeasure")),
@@ -22,8 +23,7 @@ template <typename ViscosityType, class KernelCorrectionType>
 ViscousForce<Inner<>, ViscosityType, KernelCorrectionType>::
     ViscousForce(BaseInnerRelation &inner_relation)
     : ViscousForce<DataDelegateInner>(inner_relation),
-      ForcePrior(particles_, "ViscousForce"), mu_(particles_),
-      kernel_correction_(particles_)
+      mu_(particles_), kernel_correction_(particles_)
 {
     static_assert(std::is_base_of<ParticleAverage, ViscosityType>::value,
                   "ParticleAverage is not the base of ViscosityType!");
@@ -53,7 +53,7 @@ void ViscousForce<Inner<>, ViscosityType, KernelCorrectionType>::interaction(siz
 template <typename ViscosityType, class KernelCorrectionType>
 ViscousForce<Inner<AngularConservative>, ViscosityType, KernelCorrectionType>::
     ViscousForce(BaseInnerRelation &inner_relation)
-    : ViscousForce<DataDelegateInner>(inner_relation), ForcePrior(particles_, "ViscousForce"),
+    : ViscousForce<DataDelegateInner>(inner_relation),
       mu_(particles_), kernel_correction_(particles_) {}
 //=================================================================================================//
 template <typename ViscosityType, class KernelCorrectionType>
