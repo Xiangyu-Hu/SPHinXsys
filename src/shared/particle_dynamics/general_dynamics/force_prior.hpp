@@ -8,7 +8,7 @@ namespace SPH
 //=================================================================================================//
 template <class GravityType>
 GravityForce<GravityType>::GravityForce(SPHBody &sph_body, const GravityType &gravity)
-    : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
+    : LocalDynamics(sph_body),
       ForcePrior(particles_, "GravityForce"), gravity_(gravity),
       pos_(particles_->getVariableDataByName<Vecd>("Position")),
       mass_(particles_->registerSharedVariable<Real>("Mass")),

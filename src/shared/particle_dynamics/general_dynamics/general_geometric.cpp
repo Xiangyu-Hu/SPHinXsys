@@ -5,7 +5,7 @@ namespace SPH
 {
 //=============================================================================================//
 NormalDirectionFromBodyShape::NormalDirectionFromBodyShape(SPHBody &sph_body)
-    : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
+    : LocalDynamics(sph_body),
       initial_shape_(sph_body.getInitialShape()),
       pos_(particles_->getVariableDataByName<Vecd>("Position")),
       n_(particles_->registerSharedVariable<Vecd>("NormalDirection")),
@@ -25,7 +25,7 @@ void NormalDirectionFromBodyShape::update(size_t index_i, Real dt)
 //=============================================================================================//
 NormalDirectionFromSubShapeAndOp::
     NormalDirectionFromSubShapeAndOp(SPHBody &sph_body, const std::string &shape_name)
-    : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
+    : LocalDynamics(sph_body),
       shape_and_op_(DynamicCast<ComplexShape>(this, sph_body.getInitialShape()).getSubShapeAndOpByName(shape_name)),
       shape_(shape_and_op_->first),
       switch_sign_(shape_and_op_->second == ShapeBooleanOps::add ? 1.0 : -1.0),

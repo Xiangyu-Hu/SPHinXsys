@@ -38,7 +38,7 @@ namespace SPH
  * @brief Base class for computing the reaction process of all species
  */
 template <class ReactionModelType>
-class BaseReactionRelaxation : public LocalDynamics, public DataDelegateSimple
+class BaseReactionRelaxation : public LocalDynamics
 {
   protected:
     struct UpdateReactionSpecies
@@ -72,7 +72,7 @@ class ReactionRelaxationForward : public BaseReactionRelaxation<ReactionModelTyp
 {
   public:
     template <typename... Args>
-    ReactionRelaxationForward(Args &&... args)
+    ReactionRelaxationForward(Args &&...args)
         : BaseReactionRelaxation<ReactionModelType>(std::forward<Args>(args)...){};
     virtual ~ReactionRelaxationForward(){};
     void update(size_t index_i, Real dt = 0.0) { this->advanceForwardStep(index_i, dt); };
@@ -87,7 +87,7 @@ class ReactionRelaxationBackward : public BaseReactionRelaxation<ReactionModelTy
 {
   public:
     template <typename... Args>
-    ReactionRelaxationBackward(Args &&... args)
+    ReactionRelaxationBackward(Args &&...args)
         : BaseReactionRelaxation<ReactionModelType>(std::forward<Args>(args)...){};
     virtual ~ReactionRelaxationBackward(){};
     void update(size_t index_i, Real dt = 0.0) { this->advanceBackwardStep(index_i, dt); };

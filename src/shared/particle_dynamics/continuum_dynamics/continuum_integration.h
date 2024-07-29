@@ -38,7 +38,7 @@ namespace SPH
 {
 namespace continuum_dynamics
 {
-class ContinuumInitialCondition : public LocalDynamics, public DataDelegateSimple
+class ContinuumInitialCondition : public LocalDynamics
 {
   public:
     explicit ContinuumInitialCondition(SPHBody &sph_body);

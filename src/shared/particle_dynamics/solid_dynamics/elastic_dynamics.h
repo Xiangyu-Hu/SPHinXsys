@@ -46,7 +46,7 @@ namespace solid_dynamics
  * @brief  set initial condition for a solid body with different material
  * This is a abstract class to be override for case specific initial conditions.
  */
-class ElasticDynamicsInitialCondition : public LocalDynamics, public DataDelegateSimple
+class ElasticDynamicsInitialCondition : public LocalDynamics
 {
   public:
     explicit ElasticDynamicsInitialCondition(SPHBody &sph_body);
@@ -60,7 +60,7 @@ class ElasticDynamicsInitialCondition : public LocalDynamics, public DataDelegat
  * @class UpdateElasticNormalDirection
  * @brief update particle normal directions for elastic solid
  */
-class UpdateElasticNormalDirection : public LocalDynamics, public DataDelegateSimple
+class UpdateElasticNormalDirection : public LocalDynamics
 {
   protected:
     Vecd *n_, *n0_;
@@ -80,8 +80,7 @@ class UpdateElasticNormalDirection : public LocalDynamics, public DataDelegateSi
  * @brief Computing the acoustic time step size
  * computing time step size
  */
-class AcousticTimeStepSize : public LocalDynamicsReduce<ReduceMin>,
-                             public DataDelegateSimple
+class AcousticTimeStepSize : public LocalDynamicsReduce<ReduceMin>
 {
   protected:
     Real CFL_;

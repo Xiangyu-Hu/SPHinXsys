@@ -47,8 +47,7 @@ namespace relax_dynamics
  * @brief Randomize the initial particle position
  */
 class RandomizeParticlePosition
-    : public LocalDynamics,
-      public DataDelegateSimple
+    : public LocalDynamics
 {
   protected:
     Vecd *pos_;

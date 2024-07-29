@@ -36,16 +36,13 @@ namespace SPH
 {
 
 template <class DynamicsIdentifier, typename DataType>
-class ConstantConstraint : public BaseLocalDynamics<DynamicsIdentifier>,
-                           public DataDelegateSimple
+class ConstantConstraint : public BaseLocalDynamics<DynamicsIdentifier>
 {
   public:
-    ConstantConstraint(DynamicsIdentifier &identifier,
-                       const std::string &variable_name,
+    ConstantConstraint(DynamicsIdentifier &identifier, const std::string &variable_name,
                        DataType constrained_value)
         : BaseLocalDynamics<DynamicsIdentifier>(identifier),
-          DataDelegateSimple(identifier.getSPHBody()),
-          variable_data_field_(particles_->getVariableDataByName<DataType>(variable_name)),
+          variable_data_field_(this->particles_->template getVariableDataByName<DataType>(variable_name)),
           constrained_value_(constrained_value){};
     virtual ~ConstantConstraint(){};
     void update(size_t index_i, Real dt = 0.0)
@@ -66,8 +63,7 @@ class LevelSetShape;
  * map constrained particles to geometry face and
  * r = r + phi * norm (vector distance to face)
  */
-class ShapeSurfaceBounding : public BaseLocalDynamics<BodyPartByCell>,
-                             public DataDelegateSimple
+class ShapeSurfaceBounding : public BaseLocalDynamics<BodyPartByCell>
 {
   public:
     ShapeSurfaceBounding(NearShapeSurface &body_part);
@@ -89,12 +85,11 @@ class ShapeSurfaceBounding : public BaseLocalDynamics<BodyPartByCell>,
  * 			and before updating particle position.
  */
 template <class DynamicsIdentifier>
-class MotionConstraint : public BaseLocalDynamics<DynamicsIdentifier>, public DataDelegateSimple
+class MotionConstraint : public BaseLocalDynamics<DynamicsIdentifier>
 {
   public:
     explicit MotionConstraint(DynamicsIdentifier &identifier)
         : BaseLocalDynamics<DynamicsIdentifier>(identifier),
-          DataDelegateSimple(identifier.getSPHBody()),
           pos_(this->particles_->template getVariableDataByName<Vecd>("Position")),
           pos0_(this->particles_->template registerSharedVariableFrom<Vecd>("InitialPosition", "Position")),
           vel_(this->particles_->template registerSharedVariable<Vecd>("Velocity")){};

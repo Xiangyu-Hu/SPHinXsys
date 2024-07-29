@@ -6,7 +6,7 @@ namespace SPH
 namespace continuum_dynamics
 {
 ContinuumInitialCondition::ContinuumInitialCondition(SPHBody &sph_body)
-    : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
+    : LocalDynamics(sph_body),
       pos_(particles_->getVariableDataByName<Vecd>("Position")),
       vel_(particles_->registerSharedVariable<Vecd>("Velocity")),
       stress_tensor_3D_(particles_->registerSharedVariable<Mat3d>("StressTensor3D")) {}

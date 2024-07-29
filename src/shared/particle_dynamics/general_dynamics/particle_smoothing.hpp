@@ -38,7 +38,7 @@ void ParticleSmoothing<VariableType>::update(size_t index_i, Real dt)
 template <typename VariableType>
 ParticleSnapshotAverage<VariableType>::
     ParticleSnapshotAverage(SPHBody &sph_body, const std::string &variable_name)
-    : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
+    : LocalDynamics(sph_body),
       target_variable_(particles_->template getVariableDataByName<VariableType>(variable_name)),
       averaged_variable_(particles_->template registerSharedVariable<VariableType>("Averaged" + variable_name))
 {

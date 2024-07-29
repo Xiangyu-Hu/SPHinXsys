@@ -103,11 +103,11 @@ namespace SPH
 //----------------------------------------------------------------------
 //	Case-dependent initial condition.
 //----------------------------------------------------------------------
-class DiffusionInitialCondition : public LocalDynamics, public DataDelegateSimple
+class DiffusionInitialCondition : public LocalDynamics
 {
   public:
     explicit DiffusionInitialCondition(SPHBody &sph_body)
-        : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
+        : LocalDynamics(sph_body),
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
           phi_(particles_->registerSharedVariable<Real>("Phi")){};
 

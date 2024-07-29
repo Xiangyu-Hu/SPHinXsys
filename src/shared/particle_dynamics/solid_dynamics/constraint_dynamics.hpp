@@ -76,10 +76,10 @@ TotalForceForSimBody<DynamicsIdentifier>::
     TotalForceForSimBody(DynamicsIdentifier &identifier, SimTK::MultibodySystem &MBsystem,
                          SimTK::MobilizedBody &mobod, SimTK::RungeKuttaMersonIntegrator &integ)
     : BaseLocalDynamicsReduce<ReduceSum<SimTK::SpatialVec>, DynamicsIdentifier>(identifier),
-      DataDelegateSimple(identifier.getSPHBody()),
-      force_(particles_->registerSharedVariable<Vecd>("Force")),
-      force_prior_(particles_->getVariableDataByName<Vecd>("ForcePrior")),
-      pos_(particles_->getVariableDataByName<Vecd>("Position")),
+
+      force_(this->particles_->template registerSharedVariable<Vecd>("Force")),
+      force_prior_(this->particles_->template getVariableDataByName<Vecd>("ForcePrior")),
+      pos_(this->particles_->template getVariableDataByName<Vecd>("Position")),
       MBsystem_(MBsystem), mobod_(mobod), integ_(integ)
 {
     this->quantity_name_ = "TotalForceForSimBody";

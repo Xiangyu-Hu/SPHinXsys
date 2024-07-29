@@ -23,7 +23,7 @@ void SwapSortableParticleData::operator()(UnsignedInt *a, UnsignedInt *b)
 }
 //=================================================================================================//
 ParticleSequence::ParticleSequence(RealBody &real_body)
-    : LocalDynamics(real_body), DataDelegateSimple(real_body),
+    : LocalDynamics(real_body),
       pos_(particles_->getVariableDataByName<Vecd>("Position")),
       sequence_(particles_->registerSharedVariable<UnsignedInt>("Sequence")),
       cell_linked_list_(real_body.getCellLinkedList()) {}
@@ -34,7 +34,7 @@ void ParticleSequence::update(size_t index_i, Real dt)
 }
 //=================================================================================================//
 ParticleDataSort<ParallelPolicy>::ParticleDataSort(RealBody &real_body)
-    : LocalDynamics(real_body), DataDelegateSimple(real_body), BaseDynamics<void>(),
+    : LocalDynamics(real_body), BaseDynamics<void>(),
       sequence_(particles_->getVariableDataByName<UnsignedInt>("Sequence")),
       swap_sortable_particle_data_(particles_), compare_(),
       quick_sort_particle_range_(sequence_, 0, compare_, swap_sortable_particle_data_),
@@ -51,7 +51,7 @@ void ParticleDataSort<ParallelPolicy>::exec(Real dt)
 }
 //=================================================================================================//
 UpdateSortedID::UpdateSortedID(RealBody &real_body)
-    : LocalDynamics(real_body), DataDelegateSimple(real_body),
+    : LocalDynamics(real_body),
       original_id_(particles_->getVariableDataByName<UnsignedInt>("OriginalID")),
       sorted_id_(particles_->getVariableDataByName<UnsignedInt>("SortedID")) {}
 //=================================================================================================//

@@ -56,7 +56,7 @@ class ParticleSmoothing : public LocalDynamics, public DataDelegateInner
  * @brief TBD.
  */
 template <typename VariableType>
-class ParticleSnapshotAverage : public LocalDynamics, public DataDelegateSimple
+class ParticleSnapshotAverage : public LocalDynamics
 {
   public:
     explicit ParticleSnapshotAverage(SPHBody &sph_body, const std::string &variable_name);

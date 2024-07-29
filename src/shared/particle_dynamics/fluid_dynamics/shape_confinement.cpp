@@ -7,7 +7,6 @@ namespace fluid_dynamics
 //=================================================================================================//
 StaticConfinementDensity::StaticConfinementDensity(NearShapeSurface &near_surface)
     : BaseLocalDynamics<BodyPartByCell>(near_surface),
-      DataDelegateSimple(near_surface.getSPHBody()),
       rho0_(sph_body_.base_material_->ReferenceDensity()),
       inv_sigma0_(1.0 / sph_body_.sph_adaptation_->LatticeNumberDensity()),
       mass_(particles_->getVariableDataByName<Real>("Mass")),
@@ -24,7 +23,6 @@ void StaticConfinementDensity::update(size_t index_i, Real dt)
 //=================================================================================================//
 StaticConfinementIntegration1stHalf::StaticConfinementIntegration1stHalf(NearShapeSurface &near_surface)
     : BaseLocalDynamics<BodyPartByCell>(near_surface),
-      DataDelegateSimple(near_surface.getSPHBody()),
       fluid_(DynamicCast<Fluid>(this, particles_->getBaseMaterial())),
       rho_(particles_->getVariableDataByName<Real>("Density")),
       p_(particles_->getVariableDataByName<Real>("Pressure")),
@@ -43,7 +41,6 @@ void StaticConfinementIntegration1stHalf::update(size_t index_i, Real dt)
 //=================================================================================================//
 StaticConfinementIntegration2ndHalf::StaticConfinementIntegration2ndHalf(NearShapeSurface &near_surface)
     : BaseLocalDynamics<BodyPartByCell>(near_surface),
-      DataDelegateSimple(near_surface.getSPHBody()),
       fluid_(DynamicCast<Fluid>(this, particles_->getBaseMaterial())),
       rho_(particles_->getVariableDataByName<Real>("Density")),
       p_(particles_->getVariableDataByName<Real>("Pressure")),

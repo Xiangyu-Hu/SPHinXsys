@@ -11,7 +11,7 @@ namespace solid_dynamics
 //=================================================================================================//
 AcousticTimeStepSize::AcousticTimeStepSize(SPHBody &sph_body, Real CFL)
     : LocalDynamicsReduce<ReduceMin>(sph_body),
-      DataDelegateSimple(sph_body), CFL_(CFL),
+      CFL_(CFL),
       elastic_solid_(DynamicCast<ElasticSolid>(this, sph_body.getBaseMaterial())),
       vel_(particles_->getVariableDataByName<Vecd>("Velocity")),
       force_(particles_->getVariableDataByName<Vecd>("Force")),
@@ -31,13 +31,11 @@ Real AcousticTimeStepSize::reduce(size_t index_i, Real dt)
 //=================================================================================================//
 ElasticDynamicsInitialCondition::ElasticDynamicsInitialCondition(SPHBody &sph_body)
     : LocalDynamics(sph_body),
-      DataDelegateSimple(sph_body),
       pos_(particles_->getVariableDataByName<Vecd>("Position")),
       vel_(particles_->registerSharedVariable<Vecd>("Velocity")) {}
 //=================================================================================================//
 UpdateElasticNormalDirection::UpdateElasticNormalDirection(SPHBody &sph_body)
     : LocalDynamics(sph_body),
-      DataDelegateSimple(sph_body),
       n_(particles_->getVariableDataByName<Vecd>("NormalDirection")),
       n0_(particles_->registerSharedVariableFrom<Vecd>("InitialNormalDirection", "NormalDirection")),
       phi_(particles_->getVariableDataByName<Real>("SignedDistance")),

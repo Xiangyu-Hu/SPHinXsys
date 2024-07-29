@@ -7,7 +7,6 @@ namespace fluid_dynamics
 //=================================================================================================//
 BaseFlowBoundaryCondition::BaseFlowBoundaryCondition(BodyPartByCell &body_part)
     : BaseLocalDynamics<BodyPartByCell>(body_part),
-      DataDelegateSimple(body_part.getSPHBody()),
       rho_(particles_->getVariableDataByName<Real>("Density")),
       p_(particles_->getVariableDataByName<Real>("Pressure")),
       pos_(particles_->getVariableDataByName<Vecd>("Position")),
@@ -35,7 +34,6 @@ void DampingBoundaryCondition::update(size_t index_i, Real dt)
 EmitterInflowCondition::
     EmitterInflowCondition(BodyAlignedBoxByParticle &aligned_box_part)
     : BaseLocalDynamics<BodyPartByParticle>(aligned_box_part),
-      DataDelegateSimple(aligned_box_part.getSPHBody()),
       fluid_(DynamicCast<Fluid>(this, particles_->getBaseMaterial())),
       sorted_id_(particles_->ParticleSortedIds()),
       pos_(particles_->getVariableDataByName<Vecd>("Position")),
@@ -63,7 +61,6 @@ void EmitterInflowCondition ::update(size_t original_index_i, Real dt)
 EmitterInflowInjection::
     EmitterInflowInjection(BodyAlignedBoxByParticle &aligned_box_part, ParticleBuffer<Base> &buffer)
     : BaseLocalDynamics<BodyPartByParticle>(aligned_box_part),
-      DataDelegateSimple(aligned_box_part.getSPHBody()),
       fluid_(DynamicCast<Fluid>(this, particles_->getBaseMaterial())),
       original_id_(particles_->ParticleOriginalIds()),
       sorted_id_(particles_->ParticleSortedIds()),
@@ -95,7 +92,6 @@ void EmitterInflowInjection::update(size_t original_index_i, Real dt)
 DisposerOutflowDeletion::
     DisposerOutflowDeletion(BodyAlignedBoxByCell &aligned_box_part)
     : BaseLocalDynamics<BodyPartByCell>(aligned_box_part),
-      DataDelegateSimple(aligned_box_part.getSPHBody()),
       pos_(particles_->getVariableDataByName<Vecd>("Position")),
       aligned_box_(aligned_box_part.getAlignedBoxShape()) {}
 //=================================================================================================//

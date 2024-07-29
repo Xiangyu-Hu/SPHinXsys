@@ -14,7 +14,7 @@ namespace SPH
 template <class ReactionModelType>
 BaseReactionRelaxation<ReactionModelType>::
     BaseReactionRelaxation(SPHBody &sph_body, ReactionModelType &reaction_model)
-    : LocalDynamics(sph_body), DataDelegateSimple(sph_body), reaction_model_(reaction_model)
+    : LocalDynamics(sph_body), reaction_model_(reaction_model)
 {
     ReactiveSpeciesNames &species_names = reaction_model.getSpeciesNames();
     for (size_t k = 0; k != NumReactiveSpecies; ++k)

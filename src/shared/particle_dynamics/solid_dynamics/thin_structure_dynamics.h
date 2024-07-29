@@ -45,7 +45,7 @@ namespace thin_structure_dynamics
  * @class UpdateShellNormalDirection
  * @brief update particle normal directions for shell
  */
-class UpdateShellNormalDirection : public LocalDynamics, public DataDelegateSimple
+class UpdateShellNormalDirection : public LocalDynamics
 {
   protected:
     Vecd *n_;
@@ -63,8 +63,7 @@ class UpdateShellNormalDirection : public LocalDynamics, public DataDelegateSimp
  * @class ShellAcousticTimeStepSize
  * @brief Computing the acoustic time step size for shell
  */
-class ShellAcousticTimeStepSize : public LocalDynamicsReduce<ReduceMin>,
-                                  public DataDelegateSimple
+class ShellAcousticTimeStepSize : public LocalDynamicsReduce<ReduceMin>
 {
   protected:
     Real CFL_;
@@ -299,7 +298,7 @@ class ShellStressRelaxationSecondHalf : public BaseShellRelaxation
 /**@class ConstrainShellBodyRegion
  * @brief Fix the position and angle of a shell body part.
  */
-class ConstrainShellBodyRegion : public BaseLocalDynamics<BodyPartByParticle>, public DataDelegateSimple
+class ConstrainShellBodyRegion : public BaseLocalDynamics<BodyPartByParticle>
 {
   public:
     ConstrainShellBodyRegion(BodyPartByParticle &body_part);
@@ -315,7 +314,7 @@ class ConstrainShellBodyRegion : public BaseLocalDynamics<BodyPartByParticle>, p
  * The axis must be 0 or 1.
  * Note that the average values for FSI are prescribed also.
  */
-class ConstrainShellBodyRegionAlongAxis : public BaseLocalDynamics<BodyPartByParticle>, public DataDelegateSimple
+class ConstrainShellBodyRegionAlongAxis : public BaseLocalDynamics<BodyPartByParticle>
 {
   public:
     ConstrainShellBodyRegionAlongAxis(BodyPartByParticle &body_part, int axis);
@@ -359,7 +358,7 @@ class InitialShellCurvature : public LocalDynamics, public DataDelegateInner
  * @class ShellCurvature
  * @brief  Update shell curvature during deformation
  */
-class ShellCurvatureUpdate : public LocalDynamics, public DataDelegateSimple
+class ShellCurvatureUpdate : public LocalDynamics
 {
   public:
     explicit ShellCurvatureUpdate(SPHBody &sph_body);

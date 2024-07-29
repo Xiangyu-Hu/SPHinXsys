@@ -10,7 +10,6 @@ namespace multi_species_continuum
 //=================================================================================================//
 GetSaturationTimeStepSize::GetSaturationTimeStepSize(SPHBody &sph_body)
     : LocalDynamicsReduce<ReduceMin>(sph_body),
-      DataDelegateSimple(sph_body),
       porous_solid_(DynamicCast<PorousMediaSolid>(this, particles_->getBaseMaterial())),
       smoothing_length_(sph_body.sph_adaptation_->ReferenceSmoothingLength()) {}
 //=================================================================================================//
@@ -31,7 +30,7 @@ BasePorousMediaRelaxation::BasePorousMediaRelaxation(BaseInnerRelation &inner_re
 }
 //=================================================================================================//
 MomentumConstraint::MomentumConstraint(BodyPartByParticle &body_part)
-    : BaseLocalDynamics<BodyPartByParticle>(body_part), DataDelegateSimple(body_part.getSPHBody()),
+    : BaseLocalDynamics<BodyPartByParticle>(body_part),
       total_momentum_(particles_->getVariableDataByName<Vecd>("TotalMomentum")) {}
 //=================================================================================================//
 PorousMediaStressRelaxationFirstHalf::

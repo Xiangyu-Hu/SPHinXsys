@@ -83,7 +83,7 @@ class BasePeriodicCondition
      * @class PeriodicBounding
      * @brief Periodic bounding particle position in an axis direction
      */
-    class PeriodicBounding : public LocalDynamics, public DataDelegateSimple, public BaseDynamics<void>
+    class PeriodicBounding : public LocalDynamics, public BaseDynamics<void>
     {
       protected:
         BoundingBox bounding_bounds_;
@@ -108,7 +108,7 @@ class BasePeriodicCondition
       public:
         PeriodicBounding(StdVec<CellLists> &bound_cells_data,
                          RealBody &real_body, PeriodicAlongAxis &periodic_box)
-            : LocalDynamics(real_body), DataDelegateSimple(real_body), BaseDynamics<void>(),
+            : LocalDynamics(real_body), BaseDynamics<void>(),
               bounding_bounds_(periodic_box.getBoundingBox()), axis_(periodic_box.getAxis()),
               periodic_translation_(periodic_box.getPeriodicTranslation()),
               cut_off_radius_max_(real_body.sph_adaptation_->getKernel()->CutOffRadius()),

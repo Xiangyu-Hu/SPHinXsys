@@ -96,11 +96,11 @@ class RobinWallBoundary : public MultiPolygonShape
 //----------------------------------------------------------------------
 //	Application dependent initial condition.
 //----------------------------------------------------------------------
-class DiffusionInitialCondition : public LocalDynamics, public DataDelegateSimple
+class DiffusionInitialCondition : public LocalDynamics
 {
   public:
     explicit DiffusionInitialCondition(SPHBody &sph_body)
-        : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
+        : LocalDynamics(sph_body),
           phi_(particles_->registerSharedVariable<Real>("Phi")){};
 
     void update(size_t index_i, Real dt)
@@ -112,11 +112,11 @@ class DiffusionInitialCondition : public LocalDynamics, public DataDelegateSimpl
     Real *phi_;
 };
 
-class DirichletWallBoundaryInitialCondition : public LocalDynamics, public DataDelegateSimple
+class DirichletWallBoundaryInitialCondition : public LocalDynamics
 {
   public:
     explicit DirichletWallBoundaryInitialCondition(SPHBody &sph_body)
-        : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
+        : LocalDynamics(sph_body),
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
           phi_(particles_->registerSharedVariable<Real>("Phi")){};
 
@@ -139,11 +139,11 @@ class DirichletWallBoundaryInitialCondition : public LocalDynamics, public DataD
     Real *phi_;
 };
 
-class RobinBoundaryDefinition : public LocalDynamics, public DataDelegateSimple
+class RobinBoundaryDefinition : public LocalDynamics
 {
   public:
     explicit RobinBoundaryDefinition(SPHBody &sph_body)
-        : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
+        : LocalDynamics(sph_body),
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
           phi_(particles_->registerSharedVariable<Real>("Phi")),
           phi_convection_(particles_->template getVariableDataByName<Real>("PhiConvection")),

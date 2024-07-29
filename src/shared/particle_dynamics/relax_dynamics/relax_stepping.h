@@ -114,8 +114,7 @@ class RelaxationResidue<Contact<>>
  * @class RelaxationScaling
  * @brief Obtain the scale for a particle relaxation step
  */
-class RelaxationScaling : public LocalDynamicsReduce<ReduceMax>,
-                          public DataDelegateSimple
+class RelaxationScaling : public LocalDynamicsReduce<ReduceMax>
 {
   public:
     explicit RelaxationScaling(SPHBody &sph_body);
@@ -132,8 +131,7 @@ class RelaxationScaling : public LocalDynamicsReduce<ReduceMax>,
  * @class PositionRelaxation
  * @brief update the particle position for a relaxation step
  */
-class PositionRelaxation : public LocalDynamics,
-                           public DataDelegateSimple
+class PositionRelaxation : public LocalDynamics
 {
   protected:
     SPHAdaptation *sph_adaptation_;
@@ -145,8 +143,7 @@ class PositionRelaxation : public LocalDynamics,
     void update(size_t index_i, Real scaling);
 };
 
-class UpdateSmoothingLengthRatioByShape : public LocalDynamics,
-                                          public DataDelegateSimple
+class UpdateSmoothingLengthRatioByShape : public LocalDynamics
 {
   protected:
     Real *h_ratio_, *Vol_;

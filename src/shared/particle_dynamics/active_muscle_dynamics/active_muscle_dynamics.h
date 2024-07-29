@@ -43,7 +43,7 @@ namespace active_muscle_dynamics
  * @brief  impose cases specific muscle activation
  * This is a abstract class to be override for case specific activation
  */
-class MuscleActivation : public LocalDynamics, public DataDelegateSimple
+class MuscleActivation : public LocalDynamics
 {
   public:
     explicit MuscleActivation(SPHBody &sph_body);

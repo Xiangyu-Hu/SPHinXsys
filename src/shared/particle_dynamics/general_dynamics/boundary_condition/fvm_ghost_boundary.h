@@ -39,7 +39,7 @@ namespace SPH
  * @class BaseGhostCreation
  * @brief Base class for the ghost particle
  */
-class GhostCreationFromMesh : public DataDelegateSimple
+class GhostCreationFromMesh : public LocalDynamics
 {
   public:
     GhostCreationFromMesh(RealBody &real_body, ANSYSMesh &ansys_mesh,

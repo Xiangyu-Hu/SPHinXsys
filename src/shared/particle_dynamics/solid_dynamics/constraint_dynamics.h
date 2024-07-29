@@ -185,8 +185,7 @@ using ConstraintBodyPartBySimBody = ConstraintBySimBody<BodyPartByParticle>;
  */
 template <class DynamicsIdentifier>
 class TotalForceForSimBody
-    : public BaseLocalDynamicsReduce<ReduceSum<SimTK::SpatialVec>, DynamicsIdentifier>,
-      public DataDelegateSimple
+    : public BaseLocalDynamicsReduce<ReduceSum<SimTK::SpatialVec>, DynamicsIdentifier>
 {
   protected:
     Vecd *force_, *force_prior_, *pos_;

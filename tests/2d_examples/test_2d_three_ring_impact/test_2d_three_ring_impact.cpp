@@ -78,7 +78,7 @@ class ParticleGenerator<SurfaceParticles, ShellRing> : public ParticleGenerator<
 };
 } // namespace SPH
 
-class InitialVelocityCondition : public BaseLocalDynamics<SPHBody>, public DataDelegateSimple
+class InitialVelocityCondition : public BaseLocalDynamics<SPHBody>
 {
   private:
     Vec2d *vel_;
@@ -86,7 +86,7 @@ class InitialVelocityCondition : public BaseLocalDynamics<SPHBody>, public DataD
 
   public:
     InitialVelocityCondition(SPHBody &body, Vec2d initial_velocity)
-        : BaseLocalDynamics<SPHBody>(body), DataDelegateSimple(body),
+        : BaseLocalDynamics<SPHBody>(body),
           vel_(this->particles_->template registerSharedVariable<Vec2d>("Velocity")),
           initial_velocity_(std::move(initial_velocity)){};
     inline void update(size_t index_i, [[maybe_unused]] Real dt = 0.0)

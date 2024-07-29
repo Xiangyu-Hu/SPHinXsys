@@ -245,7 +245,7 @@ class SwapSortableParticleData
     void operator()(UnsignedInt *a, UnsignedInt *b);
 };
 
-class ParticleSequence : public LocalDynamics, public DataDelegateSimple
+class ParticleSequence : public LocalDynamics
 {
   protected:
     Vecd *pos_;
@@ -263,7 +263,7 @@ class ParticleDataSort;
 
 template <>
 class ParticleDataSort<ParallelPolicy>
-    : public LocalDynamics, public DataDelegateSimple, public BaseDynamics<void>
+    : public LocalDynamics, public BaseDynamics<void>
 {
   protected:
     UnsignedInt *sequence_;
@@ -284,7 +284,7 @@ class ParticleDataSort<ParallelPolicy>
     virtual void exec(Real dt = 0.0) override;
 };
 
-class UpdateSortedID : public LocalDynamics, public DataDelegateSimple
+class UpdateSortedID : public LocalDynamics
 {
   protected:
     UnsignedInt *original_id_;
