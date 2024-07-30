@@ -35,7 +35,8 @@
 namespace SPH
 {
 
-class ForcePrior
+template <class DynamicsIdentifier>
+class BaseForcePrior : public BaseLocalDynamics<DynamicsIdentifier>
 {
   protected:
     Vecd *force_prior_, *current_force_, *previous_force_;
@@ -51,10 +52,10 @@ class ForcePrior
     };
 
   public:
-    ForcePrior(BaseParticles *base_particles, const std::string &force_name);
+    BaseForcePrior(DynamicsIdentifier &identifier, const std::string &force_name);
     template <class ExecutionPolicy>
     ForcePrior(const ExecutionPolicy &device_policy, BaseParticles *base_particles, const std::string &force_name);
-    virtual ~ForcePrior(){};
+    virtual ~BaseForcePrior() {};
     void update(size_t index_i, Real dt = 0.0);
 
     ComputingKernel<ForcePrior> *getComputingKernel() { return &computing_kernel_; }
@@ -62,9 +63,10 @@ class ForcePrior
   protected:
     ComputingKernel<ForcePrior> computing_kernel_;
 };
+using ForcePrior = BaseForcePrior<SPHBody>;
 
 template <class GravityType>
-class GravityForce : public LocalDynamics, public ForcePrior
+class GravityForce : public ForcePrior
 {
   protected:
     GravityType gravity_;
@@ -74,7 +76,7 @@ class GravityForce : public LocalDynamics, public ForcePrior
 
   public:
     explicit GravityForce(SPHBody &sph_body, const GravityType &gravity);
-    virtual ~GravityForce(){};
+    virtual ~GravityForce() {};
     void update(size_t index_i, Real dt = 0.0);
 };
 

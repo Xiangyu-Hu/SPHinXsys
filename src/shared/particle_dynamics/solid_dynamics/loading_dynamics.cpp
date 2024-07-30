@@ -46,7 +46,7 @@ void SpringDamperConstraintParticleWise::update(size_t index_i, Real dt)
     Vecd delta_x = pos_[index_i] - pos0_[index_i];
     loading_force_[index_i] = getSpringForce(index_i, delta_x) * mass_[index_i] +
                               getDampingForce(index_i) * mass_[index_i];
-    ForcePrior::update(index_i, dt);
+    LoadingForce::update(index_i, dt);
 }
 //=================================================================================================//
 SpringNormalOnSurfaceParticles::
@@ -116,7 +116,7 @@ void SpringNormalOnSurfaceParticles::update(size_t index_i, Real dt)
         Vecd delta_x = pos_[index_i] - pos0_[index_i];
         loading_force_[index_i] = getSpringForce(index_i, delta_x) +
                                   getDampingForce(index_i);
-        ForcePrior::update(index_i, dt);
+        LoadingForce::update(index_i, dt);
     }
 }
 //=================================================================================================//
@@ -172,7 +172,7 @@ void ExternalForceInBoundingBox::update(size_t index_i, Real dt)
     if (bounding_box_.checkContain(pos_[index_i]))
     {
         loading_force_[index_i] = acceleration_ * mass_[index_i];
-        ForcePrior::update(index_i, dt);
+        LoadingForce::update(index_i, dt);
     }
 }
 //=================================================================================================//
@@ -194,7 +194,7 @@ void ForceInBodyRegion::update(size_t index_i, Real dt)
 {
     Real time_factor = SMIN(*physical_time_ / end_time_, Real(1.0));
     loading_force_[index_i] = force_vector_ * time_factor;
-    ForcePrior::update(index_i, dt);
+    BaseLoadingForce<BodyPartByParticle>::update(index_i, dt);
 }
 //=================================================================================================//
 SurfacePressureFromSource::
@@ -261,7 +261,7 @@ void SurfacePressureFromSource::update(size_t index_i, Real dt)
         // vector is made by multiplying it with the surface normal
         // add the force to the particle
         loading_force_[index_i] = mass_[index_i] * (-1.0) * n_[index_i] * acc_from_pressure;
-        ForcePrior::update(index_i, dt);
+        BaseLoadingForce<BodyPartByParticle>::update(index_i, dt);
     }
 }
 //=================================================================================================//
@@ -274,7 +274,7 @@ PressureForceOnShell::PressureForceOnShell(SPHBody &sph_body, Real pressure)
 void PressureForceOnShell::update(size_t index_i, Real dt)
 {
     loading_force_[index_i] = -pressure_ * Vol_[index_i] * n_[index_i];
-    ForcePrior::update(index_i, dt);
+    LoadingForce::update(index_i, dt);
 }
 //=================================================================================================//
 } // namespace solid_dynamics

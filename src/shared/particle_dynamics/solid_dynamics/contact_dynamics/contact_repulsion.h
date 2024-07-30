@@ -31,7 +31,7 @@
 #define CONTACT_REPULSION_H
 
 #include "base_contact_dynamics.h"
-#include "force_prior.h"
+#include "force_prior.hpp"
 
 namespace SPH
 {
@@ -43,12 +43,12 @@ class RepulsionForce;
 
 template <class DataDelegationType>
 class RepulsionForce<Base, DataDelegationType>
-    : public LocalDynamics, public DataDelegationType
+    : public ForcePrior, public DataDelegationType
 {
   public:
     template <class BaseRelationType>
     RepulsionForce(BaseRelationType &base_relation, const std::string &variable_name)
-        : LocalDynamics(base_relation.getSPHBody()), DataDelegationType(base_relation),
+        : ForcePrior(base_relation.getSPHBody(), variable_name), DataDelegationType(base_relation),
           repulsion_force_(this->particles_->template registerSharedVariable<Vecd>(variable_name)),
           Vol_(this->particles_->template getVariableDataByName<Real>("VolumetricMeasure")){};
     virtual ~RepulsionForce(){};
@@ -59,7 +59,7 @@ class RepulsionForce<Base, DataDelegationType>
 };
 
 template <>
-class RepulsionForce<Contact<Inner<>>> : public RepulsionForce<Base, DataDelegateInner>, public ForcePrior
+class RepulsionForce<Contact<Inner<>>> : public RepulsionForce<Base, DataDelegateInner>
 {
   public:
     explicit RepulsionForce(BaseInnerRelation &self_contact_relation);
@@ -75,7 +75,7 @@ class RepulsionForce<Contact<Inner<>>> : public RepulsionForce<Base, DataDelegat
 using SelfContactForce = RepulsionForce<Contact<Inner<>>>;
 
 template <>
-class RepulsionForce<Contact<>> : public RepulsionForce<Base, DataDelegateContact>, public ForcePrior
+class RepulsionForce<Contact<>> : public RepulsionForce<Base, DataDelegateContact>
 {
   public:
     explicit RepulsionForce(BaseContactRelation &solid_body_contact_relation);
@@ -92,7 +92,7 @@ class RepulsionForce<Contact<>> : public RepulsionForce<Base, DataDelegateContac
 using ContactForce = RepulsionForce<Contact<>>;
 
 template <> // Computing the repulsion force from a rigid wall.
-class RepulsionForce<Contact<Wall>> : public RepulsionForce<Base, DataDelegateContact>, public ForcePrior
+class RepulsionForce<Contact<Wall>> : public RepulsionForce<Base, DataDelegateContact>
 {
   public:
     explicit RepulsionForce(BaseContactRelation &solid_body_contact_relation);
@@ -107,8 +107,7 @@ class RepulsionForce<Contact<Wall>> : public RepulsionForce<Base, DataDelegateCo
 using ContactForceFromWall = RepulsionForce<Contact<Wall>>;
 
 template <> // Computing the repulsion force acting on a rigid wall.
-class RepulsionForce<Wall, Contact<>> : public RepulsionForce<Base, DataDelegateContact>,
-                                        public ForcePrior
+class RepulsionForce<Wall, Contact<>> : public RepulsionForce<Base, DataDelegateContact>
 {
   public:
     explicit RepulsionForce(BaseContactRelation &solid_body_contact_relation);

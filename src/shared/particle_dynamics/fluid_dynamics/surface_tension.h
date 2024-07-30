@@ -57,7 +57,7 @@ class SurfaceStressForce;
 
 template <class DataDelegationType>
 class SurfaceStressForce<DataDelegationType>
-    : public LocalDynamics, public DataDelegationType
+    : public ForcePrior, public DataDelegationType
 {
   public:
     template <class BaseRelationType>
@@ -71,8 +71,7 @@ class SurfaceStressForce<DataDelegationType>
 };
 
 template <>
-class SurfaceStressForce<Inner<>>
-    : public SurfaceStressForce<DataDelegateInner>, public ForcePrior
+class SurfaceStressForce<Inner<>> : public SurfaceStressForce<DataDelegateInner>
 {
   public:
     SurfaceStressForce(BaseInnerRelation &inner_relation);

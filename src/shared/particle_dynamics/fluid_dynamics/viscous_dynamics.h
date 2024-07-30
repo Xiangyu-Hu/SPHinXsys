@@ -67,7 +67,7 @@ class ViscousForce;
 
 template <class DataDelegationType>
 class ViscousForce<DataDelegationType>
-    : public LocalDynamics, public DataDelegationType
+    : public ForcePrior, public DataDelegationType
 {
   public:
     template <class BaseRelationType>
@@ -82,7 +82,7 @@ class ViscousForce<DataDelegationType>
 
 template <typename ViscosityType, class KernelCorrectionType>
 class ViscousForce<Inner<>, ViscosityType, KernelCorrectionType>
-    : public ViscousForce<DataDelegateInner>, public ForcePrior
+    : public ViscousForce<DataDelegateInner>
 {
   public:
     explicit ViscousForce(BaseInnerRelation &inner_relation);
@@ -97,7 +97,7 @@ using ViscousForceInner = ViscousForce<Inner<>, FixedViscosity, NoKernelCorrecti
 
 template <typename ViscosityType, class KernelCorrectionType>
 class ViscousForce<Inner<AngularConservative>, ViscosityType, KernelCorrectionType>
-    : public ViscousForce<DataDelegateInner>, public ForcePrior
+    : public ViscousForce<DataDelegateInner>
 {
   public:
     explicit ViscousForce(BaseInnerRelation &inner_relation);

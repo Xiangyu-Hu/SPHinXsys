@@ -10,7 +10,8 @@ namespace fluid_dynamics
 template <class DataDelegationType>
 template <class BaseRelationType>
 SurfaceStressForce<DataDelegationType>::SurfaceStressForce(BaseRelationType &base_relation)
-    : LocalDynamics(base_relation.getSPHBody()), DataDelegationType(base_relation),
+    : ForcePrior(base_relation.getSPHBody(), "SurfaceTensionForce"),
+      DataDelegationType(base_relation),
       rho_(this->particles_->template getVariableDataByName<Real>("Density")),
       mass_(this->particles_->template getVariableDataByName<Real>("Mass")),
       Vol_(this->particles_->template getVariableDataByName<Real>("VolumetricMeasure")),

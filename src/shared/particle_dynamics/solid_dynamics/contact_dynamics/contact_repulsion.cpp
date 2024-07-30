@@ -8,7 +8,6 @@ namespace solid_dynamics
 RepulsionForce<Contact<Inner<>>>::
     RepulsionForce(BaseInnerRelation &self_contact_relation)
     : RepulsionForce<Base, DataDelegateInner>(self_contact_relation, "SelfRepulsionForce"),
-      ForcePrior(particles_, "SelfRepulsionForce"),
       solid_(DynamicCast<Solid>(this, sph_body_.getBaseMaterial())),
       self_repulsion_factor_(particles_->getVariableDataByName<Real>("SelfRepulsionFactor")),
       vel_(particles_->getVariableDataByName<Vecd>("Velocity")),
@@ -33,7 +32,6 @@ void RepulsionForce<Contact<Inner<>>>::interaction(size_t index_i, Real dt)
 //=================================================================================================//
 RepulsionForce<Contact<>>::RepulsionForce(BaseContactRelation &solid_body_contact_relation)
     : RepulsionForce<Base, DataDelegateContact>(solid_body_contact_relation, "RepulsionForce"),
-      ForcePrior(particles_, "RepulsionForce"),
       solid_(DynamicCast<Solid>(this, sph_body_.getBaseMaterial())),
       repulsion_factor_(particles_->getVariableDataByName<Real>("RepulsionFactor"))
 {
@@ -77,7 +75,6 @@ void RepulsionForce<Contact<>>::interaction(size_t index_i, Real dt)
 //=================================================================================================//
 RepulsionForce<Contact<Wall>>::RepulsionForce(BaseContactRelation &solid_body_contact_relation)
     : RepulsionForce<Base, DataDelegateContact>(solid_body_contact_relation, "RepulsionForce"),
-      ForcePrior(particles_, "RepulsionForce"),
       solid_(DynamicCast<Solid>(this, sph_body_.getBaseMaterial())),
       repulsion_factor_(particles_->getVariableDataByName<Real>("RepulsionFactor"))
 {
@@ -109,8 +106,7 @@ void RepulsionForce<Contact<Wall>>::interaction(size_t index_i, Real dt)
 }
 //=================================================================================================//
 RepulsionForce<Wall, Contact<>>::RepulsionForce(BaseContactRelation &solid_body_contact_relation)
-    : RepulsionForce<Base, DataDelegateContact>(solid_body_contact_relation, "RepulsionForce"),
-      ForcePrior(particles_, "RepulsionForce")
+    : RepulsionForce<Base, DataDelegateContact>(solid_body_contact_relation, "RepulsionForce")
 {
     for (size_t k = 0; k != contact_particles_.size(); ++k)
     {
