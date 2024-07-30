@@ -44,19 +44,17 @@ template <class ComputingKernelType, class ExecutionPolicy>
 class Implementation<ComputingKernelType, ExecutionPolicy>
 {
   public:
-    Implementation() = default;
-
     explicit Implementation(const ExecutionPolicy &execution_policy,
-                            ComputingKernelType *computing_kernel)
+                            ComputingKernelType &computing_kernel)
         : delegated_kernel_(computing_kernel) {}
 
-    ComputingKernelType &getBuffer()
+    ComputingKernelType &getDelegatedKernel() const
     {
         return delegated_kernel_;
     }
 
   private:
-    ComputingKernelType *delegated_kernel_;
+    ComputingKernelType &delegated_kernel_;
 };
 } // namespace execution
 } // namespace SPH

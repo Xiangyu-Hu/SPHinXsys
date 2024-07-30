@@ -122,10 +122,9 @@ class Implementation<ComputingKernelType, ParallelDevicePolicy>
     using DeviceComputingKernelType = sycl::buffer<ComputingKernelType>;
 
   public:
-    Implementation() = default;
-
-    explicit Implementation(ComputingKernelType *computing_kernel)
-        : delegated_kernel_(computing_kernel, 1) {}
+    explicit Implementation(const ParallelDevicePolicy &execution_policy,
+                            ComputingKernelType &computing_kernel)
+        : delegated_kernel_(&computing_kernel, 1) {}
 
     DeviceComputingKernelType &getBuffer()
     {

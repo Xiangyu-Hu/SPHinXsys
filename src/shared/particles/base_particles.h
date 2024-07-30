@@ -88,7 +88,7 @@ class BaseParticles
 
   public:
     explicit BaseParticles(SPHBody &sph_body, BaseMaterial *base_material);
-    virtual ~BaseParticles() {};
+    virtual ~BaseParticles(){};
     SPHBody &getSPHBody() { return sph_body_; };
     BaseMaterial &getBaseMaterial() { return base_material_; };
 
@@ -141,13 +141,13 @@ class BaseParticles
     template <typename DataType, typename... Args>
     DataType *registerSharedVariable(const std::string &name, Args &&...args);
 
-    template <class ExecutionPolicy, typename DataType, typename... Args>
-    DataType *registerSharedVariable(const ExecutionPolicy execution_policy, const std::string &name, Args &&...args)
+    template <typename DataType, class ExecutionPolicy, typename... Args>
+    DataType *registerSharedVariable(const ExecutionPolicy &execution_policy, const std::string &name, Args &&...args)
     {
         return registerSharedVariable<DataType>(name, std::forward<Args>(args)...);
     };
     template <typename DataType, typename... Args>
-    DataType *registerSharedVariable(const ParallelDevicePolicy execution_policy, const std::string &name, Args &&...args);
+    DataType *registerSharedVariable(const ParallelDevicePolicy &execution_policy, const std::string &name, Args &&...args);
 
     template <typename DataType>
     DataType *registerSharedVariableFrom(const std::string &new_name, const std::string &old_name);
@@ -157,8 +157,17 @@ class BaseParticles
     DataType *registerSharedVariableFromReload(const std::string &name);
     template <typename DataType>
     DiscreteVariable<DataType> *getVariableByName(const std::string &name);
+
     template <typename DataType>
     DataType *getVariableDataByName(const std::string &name);
+
+    template <typename DataType, class ExecutionPolicy, typename... Args>
+    DataType *getVariableDataByName(const ExecutionPolicy &execution_policy, const std::string &name, Args &&...args)
+    {
+        return getVariableDataByName<DataType>(name, std::forward<Args>(args)...);
+    };
+    template <typename DataType, typename... Args>
+    DataType *getVariableDataByName(const ParallelDevicePolicy &execution_policy, const std::string &name, Args &&...args);
 
     template <typename DataType>
     DataType *registerSingularVariable(const std::string &name,
@@ -174,6 +183,15 @@ class BaseParticles
     void addVariableToWrite(const std::string &name);
     template <typename DataType>
     void addVariableToRestart(const std::string &name);
+
+    template <typename DataType, class ExecutionPolicy>
+    void addVariableToRestart(const ExecutionPolicy execution_policy, const std::string &name)
+    {
+        addVariableToRestart<DataType>(name);
+    };
+    template <typename DataType>
+    void addVariableToRestart(const ParallelDevicePolicy execution_policy, const std::string &name);
+
     inline const ParticleVariables &getVariablesToRestart() const { return variables_to_restart_; }
     template <typename DataType>
     void addVariableToReload(const std::string &name);
@@ -190,6 +208,15 @@ class BaseParticles
   public:
     template <typename DataType>
     void addVariableToSort(const std::string &name);
+
+    template <typename DataType, class ExecutionPolicy>
+    void addVariableToSort(const ExecutionPolicy execution_policy, const std::string &name)
+    {
+        addVariableToSort<DataType>(name);
+    };
+    template <typename DataType>
+    void addVariableToSort(const ParallelDevicePolicy execution_policy, const std::string &name);
+
     UnsignedInt *ParticleOriginalIds() { return original_id_; };
     UnsignedInt *ParticleSortedIds() { return sorted_id_; };
     ParticleData &SortableParticleData() { return sortable_data_; };
@@ -252,7 +279,7 @@ class BaseParticles
     struct WriteAParticleVariableToXml
     {
         XmlParser &xml_parser_;
-        WriteAParticleVariableToXml(XmlParser &xml_parser) : xml_parser_(xml_parser) {};
+        WriteAParticleVariableToXml(XmlParser &xml_parser) : xml_parser_(xml_parser){};
 
         template <typename DataType>
         void operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables);
@@ -261,7 +288,7 @@ class BaseParticles
     struct ReadAParticleVariableFromXml
     {
         XmlParser &xml_parser_;
-        ReadAParticleVariableFromXml(XmlParser &xml_parser) : xml_parser_(xml_parser) {};
+        ReadAParticleVariableFromXml(XmlParser &xml_parser) : xml_parser_(xml_parser){};
 
         template <typename DataType>
         void operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables, BaseParticles *base_particles);

@@ -38,6 +38,7 @@ namespace po = boost::program_options;
 #endif
 
 #include "base_data_package.h"
+#include "execution_policy.h"
 #include "io_environment.h"
 #include "sph_data_containers.h"
 
@@ -48,9 +49,7 @@ namespace fs = std::filesystem;
 
 namespace SPH
 {
-/**
- * Pre-claimed classes.
- */
+using namespace execution;
 class SPHBody;
 class ComplexShape;
 
@@ -105,6 +104,15 @@ class SPHSystem
                                      DataType initial_value = ZeroData<DataType>::value);
     template <typename DataType>
     DataType *getSystemVariableDataByName(const std::string &name);
+
+    template <typename DataType, class ExecutionPolicy>
+    DataType *getSystemVariableDataByName(const ExecutionPolicy &execution_policy, const std::string &name)
+    {
+        return getSystemVariableDataByName<DataType>(name);
+    };
+
+    template <typename DataType>
+    DataType *getSystemVariableDataByName(const ParallelDevicePolicy &execution_policy, const std::string &name);
 
     template <typename DataType>
     SingularVariable<DataType> &getSystemVariableByName(const std::string &name);

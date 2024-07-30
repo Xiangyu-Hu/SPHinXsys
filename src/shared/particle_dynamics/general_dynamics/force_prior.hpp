@@ -12,8 +12,7 @@ BaseForcePrior<DynamicsIdentifier>::
     : BaseLocalDynamics<DynamicsIdentifier>(identifier),
       force_prior_(this->particles_->template registerSharedVariable<Vecd>("ForcePrior")),
       current_force_(this->particles_->template registerSharedVariable<Vecd>(force_name)),
-      previous_force_(this->particles_->template registerSharedVariable<Vecd>("Previous" + force_name)),
-      computing_kernel_(this->particles_, force_name)
+      previous_force_(this->particles_->template registerSharedVariable<Vecd>("Previous" + force_name))
 {
     this->particles_->template addVariableToRestart<Vecd>("Previous" + force_name);
     this->particles_->template addVariableToSort<Vecd>("Previous" + force_name);
@@ -74,19 +73,21 @@ template <class ExecutionPolicy>
 GravityForce<GravityType>::
     GravityForce(const ExecutionPolicy &execution_policy,
                  SPHBody &sph_body, const GravityType &gravity)
-    : ForcePrior(execution_policy, sph_body, "GravityForce"),
-      computing_kernel_(execution_policy, gravity, this->sph_system_, this->particles_) {}
+    : ForcePrior(execution_policy, sph_body, "GravityForce"), gravity_(gravity),
+      computing_kernel_(execution_policy, gravity, this->ForcePrior::getComputingKernel(),
+                        sph_system_, this->particles_) {}
 //=================================================================================================//
 template <class GravityType>
 template <class ExecutionPolicy>
 GravityForce<GravityType>::ComputingKernel::
     ComputingKernel(const ExecutionPolicy &execution_policy,
-                    const GravityType &gravity, SPHSystem *sph_system,
-                    BaseParticles *particles)
-    : ForcePrior::ComputingKernel(*ForcePrior::getComputingKernel()), gravity_(gravity),
+                    const GravityType &gravity,
+                    const ForcePrior::ComputingKernel &computing_kernel,
+                    SPHSystem &sph_system, BaseParticles *particles)
+    : ForcePrior::ComputingKernel(computing_kernel), gravity_(gravity),
       pos_(particles->getVariableDataByName<Vecd>(execution_policy, "Position")),
       mass_(particles->getVariableDataByName<Real>(execution_policy, "Mass")),
-      physical_time_(sph_system->getSystemVariableData<Real>(execution_policy, "PhysicalTime")) {}
+      physical_time_(sph_system.getSystemVariableDataByName<Real>(execution_policy, "PhysicalTime")) {}
 //=================================================================================================//
 template <class GravityType>
 void GravityForce<GravityType>::ComputingKernel::update(size_t index_i, Real dt)

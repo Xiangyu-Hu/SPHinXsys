@@ -87,23 +87,23 @@ template <class ComputingKernelType, class ComputingKernelFunction>
 inline void particle_for(const Implementation<ComputingKernelType, SequencedPolicy> &kernel_implementation,
                          const IndexRange &particles_range, const ComputingKernelFunction &kernel_function)
 {
-    auto &buffer = kernel_implementation.getBuffer();
+    ComputingKernelType &delegated_kernel = kernel_implementation.getDelegatedKernel();
     for (size_t i = particles_range.begin(); i < particles_range.end(); ++i)
-        kernel_function(i, buffer);
+        kernel_function(i, delegated_kernel);
 };
 
 template <class ComputingKernelType, class ComputingKernelFunction>
 inline void particle_for(const Implementation<ComputingKernelType, ParallelPolicy> &kernel_implementation,
                          const IndexRange &particles_range, const ComputingKernelFunction &kernel_function)
 {
-    auto &buffer = kernel_implementation.getBuffer();
+    ComputingKernelType &delegated_kernel = kernel_implementation.getDelegatedKernel();
     parallel_for(
         particles_range,
         [&](const IndexRange &r)
         {
             for (size_t i = r.begin(); i < r.end(); ++i)
             {
-                kernel_function(i, buffer);
+                kernel_function(i, delegated_kernel);
             }
         },
         ap);
