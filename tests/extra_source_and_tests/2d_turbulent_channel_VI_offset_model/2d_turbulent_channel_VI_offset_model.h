@@ -80,7 +80,7 @@ Real observe_spacing = DH_C / num_observer_points;
 Real x_observe = 0.90 * DL;
 Real observe_spacing_x = 0.02 * DL;
 int num_observer_points_x = 1;
-StdVec<Real> monitoring_bound = { 109 ,111 };
+StdVec<Real> monitoring_bound = { x_observe_start - 2.0 * resolution_ref, x_observe_start + 2.0 * resolution_ref };
 
 // By kernel weight.
 StdVec<Vecd> observation_location;
