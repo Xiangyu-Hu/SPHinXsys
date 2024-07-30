@@ -74,15 +74,6 @@ inline void particle_for(const ParallelPolicy &par, const IndexRange &particles_
         ap);
 };
 
-template <class ComputingKernelType, class ExecutionPolicy, class ComputingKernelFunction>
-void particle_for(const Implementation<ComputingKernelType, ExecutionPolicy> &kernel_implementation,
-                  const IndexRange &particles_range, const ComputingKernelFunction &kernel_function)
-{
-    std::cout << "\n Error: ExecutionPolicy, DynamicsRange or LocalDynamicsFunction not defined for particle_for !" << std::endl;
-    std::cout << __FILE__ << ':' << __LINE__ << std::endl;
-    exit(1);
-};
-
 template <class ComputingKernelType, class ComputingKernelFunction>
 inline void particle_for(const Implementation<ComputingKernelType, SequencedPolicy> &kernel_implementation,
                          const IndexRange &particles_range, const ComputingKernelFunction &kernel_function)

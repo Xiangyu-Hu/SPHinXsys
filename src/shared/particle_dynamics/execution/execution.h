@@ -44,8 +44,7 @@ template <class ComputingKernelType, class ExecutionPolicy>
 class Implementation<ComputingKernelType, ExecutionPolicy>
 {
   public:
-    explicit Implementation(const ExecutionPolicy &execution_policy,
-                            ComputingKernelType &computing_kernel)
+    explicit Implementation(ComputingKernelType &computing_kernel)
         : delegated_kernel_(computing_kernel) {}
 
     ComputingKernelType &getDelegatedKernel() const

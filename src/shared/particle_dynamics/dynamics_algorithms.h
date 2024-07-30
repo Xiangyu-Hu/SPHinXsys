@@ -130,7 +130,7 @@ class SimpleDynamicsCK : public LocalDynamicsType, public BaseDynamics<void>
     SimpleDynamicsCK(DynamicsIdentifier &identifier, Args &&...args)
         : LocalDynamicsType(ExecutionPolicy{}, identifier, std::forward<Args>(args)...),
           BaseDynamics<void>(),
-          kernel_implementation_(ExecutionPolicy{}, this->LocalDynamicsType::getComputingKernel())
+          kernel_implementation_(this->LocalDynamicsType::getComputingKernel())
     {
         static_assert(!has_initialize<ComputingKernel>::value &&
                           !has_interaction<ComputingKernel>::value,
