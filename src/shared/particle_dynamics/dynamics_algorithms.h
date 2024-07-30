@@ -107,7 +107,7 @@ class SimpleDynamics : public LocalDynamicsType, public BaseDynamics<void>
                           !has_interaction<LocalDynamicsType>::value,
                       "LocalDynamicsType does not fulfill SimpleDynamics requirements");
     };
-    virtual ~SimpleDynamics(){};
+    virtual ~SimpleDynamics() {};
 
     virtual void exec(Real dt = 0.0) override
     {
@@ -118,6 +118,38 @@ class SimpleDynamics : public LocalDynamicsType, public BaseDynamics<void>
                      [&](size_t i)
                      { this->update(i, dt); });
     };
+};
+
+template <class LocalDynamicsType, class ExecutionPolicy = ParallelPolicy>
+class SimpleDynamicsCK : public LocalDynamicsType, public BaseDynamics<void>
+{
+    using ComputingKernel = typename LocalDynamicsType::ComputingKernel;
+
+  public:
+    template <class DynamicsIdentifier, typename... Args>
+    SimpleDynamicsCK(DynamicsIdentifier &identifier, Args &&...args)
+        : LocalDynamicsType(ExecutionPolicy{}, identifier, std::forward<Args>(args)...),
+          BaseDynamics<void>(identifier.getSPHBody()),
+          kernel_implementation_(this->computing_kernel_)
+    {
+        static_assert(!has_initialize<ComputingKernel>::value &&
+                          !has_interaction<ComputingKernel>::value,
+                      "LocalDynamicsType does not fulfill SimpleDynamics requirements");
+    };
+    virtual ~SimpleDynamicsCK() {};
+
+    virtual void exec(Real dt = 0.0) override
+    {
+        this->setUpdated();
+        this->setupDynamics(dt);
+        particle_for(kernel_implementation_,
+                     this->LoopRange(),
+                     [=](size_t i, auto &&computing_kernel)
+                     { computing_kernel.update(i, dt); });
+    };
+
+  protected:
+    Implementation<ComputingKernel, ExecutionPolicy> kernel_implementation_;
 };
 
 /**
@@ -134,7 +166,7 @@ class ReduceDynamics : public LocalDynamicsType,
     ReduceDynamics(DynamicsIdentifier &identifier, Args &&...args)
         : LocalDynamicsType(identifier, std::forward<Args>(args)...),
           BaseDynamics<ReturnType>(){};
-    virtual ~ReduceDynamics(){};
+    virtual ~ReduceDynamics() {};
 
     std::string QuantityName() { return this->quantity_name_; };
     std::string DynamicsIdentifierName() { return this->identifier_.getName(); };
@@ -162,7 +194,7 @@ class BaseInteractionDynamics : public LocalDynamicsType, public BaseDynamics<vo
     explicit BaseInteractionDynamics(Args &&...args)
         : LocalDynamicsType(std::forward<Args>(args)...),
           BaseDynamics<void>(){};
-    virtual ~BaseInteractionDynamics(){};
+    virtual ~BaseInteractionDynamics() {};
 
     /** pre process such as update ghost state */
     StdVec<BaseDynamics<void> *> pre_processes_;
@@ -214,7 +246,7 @@ class InteractionSplit : public BaseInteractionDynamics<LocalDynamicsType, Paral
                           !has_update<LocalDynamicsType>::value,
                       "LocalDynamicsType does not fulfill InteractionSplit requirements");
     };
-    virtual ~InteractionSplit(){};
+    virtual ~InteractionSplit() {};
 
     /** run the main interaction step between particles. */
     virtual void runMainStep(Real dt) override
@@ -242,7 +274,7 @@ class InteractionDynamics : public BaseInteractionDynamics<LocalDynamicsType, Ex
                           !has_update<LocalDynamicsType>::value,
                       "LocalDynamicsType does not fulfill InteractionDynamics requirements");
     };
-    virtual ~InteractionDynamics(){};
+    virtual ~InteractionDynamics() {};
 
     /** run the main interaction step between particles. */
     virtual void runMainStep(Real dt) override
@@ -274,7 +306,7 @@ class InteractionWithUpdate : public InteractionDynamics<LocalDynamicsType, Exec
         static_assert(!has_initialize<LocalDynamicsType>::value,
                       "LocalDynamicsType does not fulfill InteractionWithUpdate requirements");
     }
-    virtual ~InteractionWithUpdate(){};
+    virtual ~InteractionWithUpdate() {};
 
     virtual void exec(Real dt = 0.0) override
     {
@@ -301,7 +333,7 @@ class InteractionWithInitialization : public InteractionDynamics<LocalDynamicsTy
         static_assert(!has_update<LocalDynamicsType>::value,
                       "LocalDynamicsType does not fulfill InteractionWithInitialization requirements");
     }
-    virtual ~InteractionWithInitialization(){};
+    virtual ~InteractionWithInitialization() {};
 
     virtual void exec(Real dt = 0.0) override
     {
@@ -327,7 +359,7 @@ class Dynamics1Level : public InteractionDynamics<LocalDynamicsType, ExecutionPo
     Dynamics1Level(Args &&...args)
         : InteractionDynamics<LocalDynamicsType, ExecutionPolicy>(
               false, std::forward<Args>(args)...) {}
-    virtual ~Dynamics1Level(){};
+    virtual ~Dynamics1Level() {};
 
     virtual void exec(Real dt = 0.0) override
     {

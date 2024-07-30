@@ -35,6 +35,7 @@
 
 #include "base_data_package.h"
 #include "base_variable.h"
+#include "execution_policy.h"
 #include "sph_data_containers.h"
 #include "xml_parser.h"
 
@@ -43,6 +44,7 @@
 namespace SPH
 {
 
+using namespace execution;
 class SPHBody;
 class BaseMaterial;
 class BodySurface;
@@ -86,7 +88,7 @@ class BaseParticles
 
   public:
     explicit BaseParticles(SPHBody &sph_body, BaseMaterial *base_material);
-    virtual ~BaseParticles(){};
+    virtual ~BaseParticles() {};
     SPHBody &getSPHBody() { return sph_body_; };
     BaseMaterial &getBaseMaterial() { return base_material_; };
 
@@ -135,8 +137,18 @@ class BaseParticles
   public:
     template <typename DataType, typename... Args>
     DataType *addUniqueDiscreteVariable(const std::string &name, Args &&...args);
+
     template <typename DataType, typename... Args>
     DataType *registerSharedVariable(const std::string &name, Args &&...args);
+
+    template <class ExecutionPolicy, typename DataType, typename... Args>
+    DataType *registerSharedVariable(const ExecutionPolicy execution_policy, const std::string &name, Args &&...args)
+    {
+        return registerSharedVariable<DataType>(name, std::forward<Args>(args)...);
+    };
+    template <typename DataType, typename... Args>
+    DataType *registerSharedVariable(const ParallelDevicePolicy execution_policy, const std::string &name, Args &&...args);
+
     template <typename DataType>
     DataType *registerSharedVariableFrom(const std::string &new_name, const std::string &old_name);
     template <typename DataType>
@@ -240,7 +252,7 @@ class BaseParticles
     struct WriteAParticleVariableToXml
     {
         XmlParser &xml_parser_;
-        WriteAParticleVariableToXml(XmlParser &xml_parser) : xml_parser_(xml_parser){};
+        WriteAParticleVariableToXml(XmlParser &xml_parser) : xml_parser_(xml_parser) {};
 
         template <typename DataType>
         void operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables);
@@ -249,7 +261,7 @@ class BaseParticles
     struct ReadAParticleVariableFromXml
     {
         XmlParser &xml_parser_;
-        ReadAParticleVariableFromXml(XmlParser &xml_parser) : xml_parser_(xml_parser){};
+        ReadAParticleVariableFromXml(XmlParser &xml_parser) : xml_parser_(xml_parser) {};
 
         template <typename DataType>
         void operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables, BaseParticles *base_particles);

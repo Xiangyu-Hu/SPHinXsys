@@ -34,36 +34,6 @@
 
 namespace SPH
 {
-template <class LocalDynamicsType, class ExecutionPolicy = ParallelPolicy>
-class SimpleDynamicsSYCL : public LocalDynamicsType, public BaseDynamics<void>
-{
-    using ComputingKernelType = LocalDynamicsType::ComputingKernelType;
 
-  public:
-    template <class DynamicsIdentifier, typename... Args>
-    SimpleDynamicsSYCL(DynamicsIdentifier &identifier, Args &&...args)
-        : LocalDynamicsType(ExecutionPolicy{}, identifier, std::forward<Args>(args)...),
-          BaseDynamics<void>(identifier.getSPHBody()),
-          kernel_implementation_(this->computing_kernel_)
-    {
-        static_assert(!has_initialize<ComputingKernelType>::value &&
-                          !has_interaction<ComputingKernelType>::value,
-                      "LocalDynamicsType does not fulfill SimpleDynamics requirements");
-    };
-    virtual ~SimpleDynamicsSYCL(){};
-
-    virtual void exec(Real dt = 0.0) override
-    {
-        this->setUpdated();
-        this->setupDynamics(dt);
-        particle_for(kernel_implementation_,
-                     this->LoopRange(),
-                     [&](size_t i, auto &&computing_kernel)
-                     { computing_kernel.update(i, dt); });
-    };
-
-  protected:
-    Implementation<ComputingKernelType, ExecutionPolicy> kernel_implementation_;
-};
 } // namespace SPH
 #endif // DYNAMICS_ALGORITHMS_SYCL_H

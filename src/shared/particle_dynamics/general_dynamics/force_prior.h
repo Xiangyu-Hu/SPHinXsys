@@ -41,27 +41,30 @@ class BaseForcePrior : public BaseLocalDynamics<DynamicsIdentifier>
   protected:
     Vecd *force_prior_, *current_force_, *previous_force_;
 
-    template <>
-    class ComputingKernel<ForcePrior>
+  public:
+    BaseForcePrior(DynamicsIdentifier &identifier, const std::string &force_name);
+    template <class ExecutionPolicy>
+    BaseForcePrior(const ExecutionPolicy &execution_policy,
+                   DynamicsIdentifier &identifier, const std::string &force_name);
+    virtual ~BaseForcePrior() {};
+    void update(size_t index_i, Real dt = 0.0);
+
+    class ComputingKernel
     {
         Vecd *force_prior_, *current_force_, *previous_force_;
 
       public:
-        ComputingKernel(BaseParticles *base_particles, const std::string &force_name);
+        template <class ExecutionPolicy>
+        ComputingKernel(const ExecutionPolicy &execution_policy,
+                        BaseParticles *particles, const std::string &force_name);
         void update(size_t index_i, Real dt = 0.0);
     };
 
+  private:
+    ComputingKernel computing_kernel_;
+
   public:
-    BaseForcePrior(DynamicsIdentifier &identifier, const std::string &force_name);
-    template <class ExecutionPolicy>
-    ForcePrior(const ExecutionPolicy &device_policy, BaseParticles *base_particles, const std::string &force_name);
-    virtual ~BaseForcePrior() {};
-    void update(size_t index_i, Real dt = 0.0);
-
-    ComputingKernel<ForcePrior> *getComputingKernel() { return &computing_kernel_; }
-
-  protected:
-    ComputingKernel<ForcePrior> computing_kernel_;
+    ComputingKernel *getComputingKernel() { return &computing_kernel_; }
 };
 using ForcePrior = BaseForcePrior<SPHBody>;
 
@@ -75,10 +78,33 @@ class GravityForce : public ForcePrior
     Real *physical_time_;
 
   public:
-    explicit GravityForce(SPHBody &sph_body, const GravityType &gravity);
+    GravityForce(SPHBody &sph_body, const GravityType &gravity);
+    template <class ExecutionPolicy>
+    GravityForce(const ExecutionPolicy &execution_policy,
+                 SPHBody &sph_body, const GravityType &gravity);
     virtual ~GravityForce() {};
     void update(size_t index_i, Real dt = 0.0);
-};
 
+    class ComputingKernel : public ForcePrior::ComputingKernel
+    {
+        GravityType gravity_;
+        Vecd *pos_;
+        Real *mass_;
+        Real *physical_time_;
+
+      public:
+        template <class ExecutionPolicy>
+        ComputingKernel(const ExecutionPolicy &execution_policy,
+                        const GravityType &gravity, SPHSystem *sph_system,
+                        BaseParticles *particles);
+        void update(size_t index_i, Real dt = 0.0);
+    };
+
+  private:
+    ComputingKernel computing_kernel_;
+
+  public:
+    ComputingKernel *getComputingKernel() { return &computing_kernel_; }
+};
 } // namespace SPH
 #endif // FORCE_PRIOR_H

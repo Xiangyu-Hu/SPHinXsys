@@ -33,12 +33,12 @@
 
 namespace SPH
 {
-template <class DeviceImplementation, class ComputingKernelFunction>
-inline particle_for(const DeviceImplementation &device_implementation,
-                    const IndexRange &particles_range, const ComputingKernelFunction &kernel_function)
+template <class ComputingKernelType, class ComputingKernelFunction>
+inline void particle_for(const Implementation<ComputingKernelType, ParallelDevicePolicy> &kernel_implementation,
+                         const IndexRange &particles_range, const ComputingKernelFunction &kernel_function)
 {
     auto &sycl_queue = execution_instance.getQueue();
-    auto &sycl_buffer = device_implementation.getBuffer();
+    auto &sycl_buffer = kernel_implementation.getBuffer();
     const size_t particles_size = particles_range.size();
     sycl_queue.submit([&](sycl::handler &cgh)
                       {
@@ -49,6 +49,5 @@ inline particle_for(const DeviceImplementation &device_implementation,
                              }); })
         .wait_and_throw();
 }
-
 } // namespace SPH
 #endif // PARTICLE_ITERATORS_SYCL_H
