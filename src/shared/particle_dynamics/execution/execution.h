@@ -33,6 +33,8 @@
 #include "execution_policy.h"
 
 #include "base_data_type.h"
+#include "ownership.h"
+
 namespace SPH
 {
 namespace execution
@@ -41,27 +43,28 @@ template <typename... T>
 class Implementation;
 
 template <class LocalDynamicsType, class ExecutionPolicy>
-class Implementation<ComputingKernelType, ExecutionPolicy>
+class Implementation<LocalDynamicsType, ExecutionPolicy>
 {
     using ComputingKernel = typename LocalDynamicsType::ComputingKernel;
-    UniquePtrKeeper<ComputingKernel> compting_ptr_keeper_;
+    UniquePtrKeeper<ComputingKernel> kernel_ptr_keeper_;
 
   public:
     explicit Implementation(LocalDynamicsType &local_dynamics)
-        : delegated_kernel_(nullptr) {}
+        : local_dynamics_(local_dynamics), delegated_kernel_(nullptr) {}
 
-    ComputingKernelType &getDelegatedKernel() const
+    ComputingKernel *getDelegatedKernel()
     {
         if (delegated_kernel_ == nullptr)
         {
-            delegated_kernel_ = compting_ptr_keeper_.createPtr<ComputingKernel>(local_dynamics_);
+            delegated_kernel_ =
+                kernel_ptr_keeper_.template createPtr<ComputingKernel>(local_dynamics_);
         }
-        return *delegated_kernel_;
+        return delegated_kernel_;
     }
 
   private:
     LocalDynamicsType &local_dynamics_;
-    ComputingKernelType *delegated_kernel_;
+    ComputingKernel *delegated_kernel_;
 };
 } // namespace execution
 } // namespace SPH

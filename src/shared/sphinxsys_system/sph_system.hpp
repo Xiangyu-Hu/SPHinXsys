@@ -66,15 +66,30 @@ DataType *SPHSystem::getSystemVariableDataByName(const std::string &name)
     return variable->ValueAddress();
 }
 //=================================================================================================//
+template <typename DataType>
+SingularVariable<DataType> *SPHSystem::getSystemVariableByName(const std::string &name)
+{
+    SingularVariable<DataType> *variable =
+        findVariableByName<DataType>(all_system_variables_, name);
+
+    if (variable == nullptr)
+    {
+        std::cout << "\nError: the system variable '" << name << "' is not registered!\n";
+        std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+    }
+
+    return variable;
+}
+//=================================================================================================//
 template <typename DataType, class ExecutionPolicy>
-DataType *SPHSystem::getSystemVariableDataByName(
+SingularVariable<DataType> *SPHSystem::getSystemVariableByName(
     const ExecutionPolicy &execution_policy, const std::string &name)
 {
-    return getSystemVariableDataByName<DataType>(name);
+    return getSystemVariableByName<DataType>(name);
 }
 //=================================================================================================//
 template <typename DataType>
-DataType *SPHSystem::getSystemVariableDataByName(
+SingularVariable<DataType> *SPHSystem::getSystemVariableByName(
     const ParallelDevicePolicy &execution_policy, const std::string &name)
 {
     SingularVariable<DataType> *variable =
@@ -88,25 +103,9 @@ DataType *SPHSystem::getSystemVariableDataByName(
     else if (variable->isValueDelegated())
     {
         unique_system_variable_ptrs_.createPtr<SingularDeviceSharedVariable<DataType>>(*variable);
-        return variable->ValueAddress();
     }
 
-    return variable->ValueAddress();
-}
-//=================================================================================================//
-template <typename DataType>
-SingularVariable<DataType> &SPHSystem::getSystemVariableByName(const std::string &name)
-{
-    SingularVariable<DataType> *variable =
-        findVariableByName<DataType>(all_system_variables_, name);
-
-    if (variable == nullptr)
-    {
-        std::cout << "\nError: the system variable '" << name << "' is not registered!\n";
-        std::cout << __FILE__ << ':' << __LINE__ << std::endl;
-    }
-
-    return *variable;
+    return variable;
 }
 //=================================================================================================//
 } // namespace SPH

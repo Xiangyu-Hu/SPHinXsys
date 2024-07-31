@@ -34,7 +34,7 @@
 namespace SPH
 {
 template <class ComputingKernelType, class ComputingKernelFunction>
-inline void particle_for(const Implementation<ComputingKernelType, ParallelDevicePolicy> &kernel_implementation,
+inline void particle_for(Implementation<ComputingKernelType, ParallelDevicePolicy> &kernel_implementation,
                          const IndexRange &particles_range, const ComputingKernelFunction &kernel_function)
 {
     auto &sycl_queue = execution_instance.getQueue();

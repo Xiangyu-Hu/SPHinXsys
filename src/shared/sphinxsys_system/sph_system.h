@@ -114,14 +114,14 @@ class SPHSystem
     template <typename DataType>
     DataType *getSystemVariableDataByName(const std::string &name);
 
+    template <typename DataType>
+    SingularVariable<DataType> *getSystemVariableByName(const std::string &name);
+
     template <typename DataType, class ExecutionPolicy>
-    DataType *getSystemVariableDataByName(const ExecutionPolicy &execution_policy, const std::string &name);
+    SingularVariable<DataType> *getSystemVariableByName(const ExecutionPolicy &execution_policy, const std::string &name);
 
     template <typename DataType>
-    DataType *getSystemVariableDataByName(const ParallelDevicePolicy &execution_policy, const std::string &name);
-
-    template <typename DataType>
-    SingularVariable<DataType> &getSystemVariableByName(const std::string &name);
+    SingularVariable<DataType> *getSystemVariableByName(const ParallelDevicePolicy &execution_policy, const std::string &name);
 
   protected:
     friend class IOEnvironment;

@@ -142,9 +142,10 @@ class BaseParticles
     DataType *registerSharedVariable(const std::string &name, Args &&...args);
 
     template <typename DataType, class ExecutionPolicy, typename... Args>
-    DataType *registerSharedVariable(const ExecutionPolicy &execution_policy, const std::string &name, Args &&...args)
+    DiscreteVariable<DataType> *registerSharedVariable(const ExecutionPolicy &execution_policy, const std::string &name, Args &&...args)
     {
-        return registerSharedVariable<DataType>(name, std::forward<Args>(args)...);
+        registerSharedVariable<DataType>(name, std::forward<Args>(args)...);
+        return getVariableByName<DataType>(name);
     };
     template <typename DataType, typename... Args>
     DataType *registerSharedVariable(const ParallelDevicePolicy &execution_policy, const std::string &name, Args &&...args);
@@ -161,13 +162,13 @@ class BaseParticles
     template <typename DataType>
     DataType *getVariableDataByName(const std::string &name);
 
-    template <typename DataType, class ExecutionPolicy, typename... Args>
-    DataType *getVariableDataByName(const ExecutionPolicy &execution_policy, const std::string &name, Args &&...args)
+    template <typename DataType, class ExecutionPolicy>
+    DiscreteVariable<DataType> *getVariableByName(const ExecutionPolicy &execution_policy, const std::string &name)
     {
-        return getVariableDataByName<DataType>(name, std::forward<Args>(args)...);
+        return getVariableByName<DataType>(name);
     };
-    template <typename DataType, typename... Args>
-    DataType *getVariableDataByName(const ParallelDevicePolicy &execution_policy, const std::string &name, Args &&...args);
+    template <typename DataType>
+    DiscreteVariable<DataType> *getVariableByName(const ParallelDevicePolicy &execution_policy, const std::string &name);
 
     template <typename DataType>
     DataType *registerSingularVariable(const std::string &name,

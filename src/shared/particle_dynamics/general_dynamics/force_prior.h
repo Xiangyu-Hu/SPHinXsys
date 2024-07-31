@@ -53,13 +53,11 @@ class BaseForcePrior : public BaseLocalDynamics<DynamicsIdentifier>
     class ComputingKernel
     {
       public:
-        ComputingKernel() = default;
-        template <class ExecutionPolicy>
-        ComputingKernel(const ExecutionPolicy &execution_policy,
-                        BaseParticles *particles, const std::string &force_name);
+        ComputingKernel(BaseForcePrior<DynamicsIdentifier> &base_force_prior);
         void update(size_t index_i, Real dt = 0.0);
 
       protected:
+        friend class BaseForcePrior<DynamicsIdentifier>;
         Vecd *force_prior_, *current_force_, *previous_force_;
     };
 };
@@ -75,8 +73,8 @@ class GravityForce : public ForcePrior
     Real *physical_time_;
 
     DiscreteVariable<Vecd> *v_pos_;
-    DiscreteVariable<Real> *mass_;
-    SingularVariable<Real> *physical_time_;
+    DiscreteVariable<Real> *v_mass_;
+    SingularVariable<Real> *v_physical_time_;
 
   public:
     GravityForce(SPHBody &sph_body, const GravityType &gravity);
@@ -89,14 +87,11 @@ class GravityForce : public ForcePrior
     class ComputingKernel : public ForcePrior::ComputingKernel
     {
       public:
-        template <class ExecutionPolicy>
-        ComputingKernel(const ExecutionPolicy &execution_policy,
-                        const GravityType &gravity,
-                        const ForcePrior::ComputingKernel &computing_kernel,
-                        SPHSystem &sph_system, BaseParticles *particles);
+        ComputingKernel(GravityForce<GravityType> &gravity_force);
         void update(size_t index_i, Real dt = 0.0);
 
       protected:
+        friend class GravityForce<GravityType>;
         GravityType gravity_;
         Vecd *pos_;
         Real *mass_;
