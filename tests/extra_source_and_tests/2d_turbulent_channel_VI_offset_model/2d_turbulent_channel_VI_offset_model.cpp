@@ -12,7 +12,7 @@ int main(int ac, char *av[])
     /** Tag for run particle relaxation for the initial body fitted distribution. */
     sph_system.setRunParticleRelaxation(false);
     /** Tag for computation start with relaxed body fitted particles distribution. */
-    sph_system.setReloadParticles(true);
+    sph_system.setReloadParticles(false);
 
     sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
     IOEnvironment io_environment(sph_system);
@@ -41,6 +41,14 @@ int main(int ac, char *av[])
    for(int i = 0; i < num_observer_points; ++i)
    {
        Vecd pos_observer_i= pos_observe_start + i * observe_spacing * unit_direction_observe;
+       if( i==0 )
+       {
+           pos_observer_i -= observer_offset_distance * unit_direction_observe ;
+       }
+       if( i == num_observer_points - 1 )
+       {
+           pos_observer_i += observer_offset_distance * unit_direction_observe ;
+       }
        observation_location.push_back(pos_observer_i);
    }
     ObserverBody fluid_observer(sph_system, "FluidObserver");

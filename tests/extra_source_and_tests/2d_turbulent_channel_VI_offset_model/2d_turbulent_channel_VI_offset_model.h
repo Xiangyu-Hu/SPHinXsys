@@ -14,7 +14,7 @@ using namespace SPH;
 //----------------------------------------------------------------------
 Real DH = 2.0;                         /**< Channel height. */
 Real DL = 30.0;                         /**< Channel length. */
-Real num_fluid_cross_section = 40.0;
+Real num_fluid_cross_section = 20.0;
 
 //----------------------------------------------------------------------
 //	Unique parameters for turbulence. 
@@ -86,6 +86,7 @@ StdVec<Real> monitoring_bound = { x_observe_start - 2.0 * resolution_ref, x_obse
 StdVec<Vecd> observation_location;
 Vecd pos_observe_start = Vecd(x_observe_start, resolution_ref/2.0 + offset_distance);
 Vecd unit_direction_observe = Vecd(0.0, 1.0);
+Real observer_offset_distance = 2.0 * resolution_ref ;
 //----------------------------------------------------------------------
 //	Cases-dependent geometries 
 //----------------------------------------------------------------------
