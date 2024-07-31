@@ -84,7 +84,7 @@ class BaseParticles
   private:
     DataContainerUniquePtrAssemble<DiscreteVariable> all_discrete_variable_ptrs_;
     DataContainerUniquePtrAssemble<SingularVariable> all_global_variable_ptrs_;
-    UniquePtrsKeeper<BaseVariable> unique_discrete_variable_ptrs_;
+    UniquePtrsKeeper<BaseVariable> unique_variable_ptrs_;
 
   public:
     explicit BaseParticles(SPHBody &sph_body, BaseMaterial *base_material);
@@ -127,16 +127,17 @@ class BaseParticles
   private:
     template <typename DataType>
     DiscreteVariable<DataType> *addSharedVariable(const std::string &name);
-    template <typename DataType>
-    DataType *allocateVariable(DiscreteVariable<DataType> *variable);
-    template <typename DataType>
-    DataType *initializeVariable(DiscreteVariable<DataType> *variable, DataType initial_value = ZeroData<DataType>::value);
-    template <typename DataType, class InitializationFunction>
-    DataType *initializeVariable(DiscreteVariable<DataType> *variable, const InitializationFunction &initialization);
+
+    template <typename DataType, template <typename T> class VariableType>
+    DataType *allocateVariable(VariableType<DataType> *variable);
+    template <typename DataType, template <typename T> class VariableType>
+    DataType *initializeVariable(VariableType<DataType> *variable, DataType initial_value = ZeroData<DataType>::value);
+    template <typename DataType, template <typename T> class VariableType, class InitializationFunction>
+    DataType *initializeVariable(VariableType<DataType> *variable, const InitializationFunction &initialization);
 
   public:
-    template <typename DataType, typename... Args>
-    DataType *addUniqueDiscreteVariable(const std::string &name, Args &&...args);
+    template <class GeneralVariableType, typename... Args>
+    GeneralVariableType *addUniqueVariable(const std::string &name, Args &&...args);
 
     template <typename DataType, typename... Args>
     DataType *registerSharedVariable(const std::string &name, Args &&...args);
@@ -148,7 +149,7 @@ class BaseParticles
         return getVariableByName<DataType>(name);
     };
     template <typename DataType, typename... Args>
-    DataType *registerSharedVariable(const ParallelDevicePolicy &execution_policy, const std::string &name, Args &&...args);
+    DiscreteVariable<DataType> *registerSharedVariable(const ParallelDevicePolicy &execution_policy, const std::string &name, Args &&...args);
 
     template <typename DataType>
     DataType *registerSharedVariableFrom(const std::string &new_name, const std::string &old_name);

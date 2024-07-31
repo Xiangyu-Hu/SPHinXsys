@@ -17,8 +17,8 @@ void BaseParticles::checkReloadFileRead(OwnerType *owner)
     }
 }
 //=================================================================================================//
-template <typename DataType>
-DataType *BaseParticles::allocateVariable(DiscreteVariable<DataType> *variable)
+template <typename DataType, template <typename T> class VariableType>
+DataType *BaseParticles::allocateVariable(VariableType<DataType> *variable)
 {
     if (variable->DataField() == nullptr)
     {
@@ -33,8 +33,8 @@ DataType *BaseParticles::allocateVariable(DiscreteVariable<DataType> *variable)
     return variable->DataField();
 }
 //=================================================================================================//
-template <typename DataType>
-DataType *BaseParticles::initializeVariable(DiscreteVariable<DataType> *variable, DataType initial_value)
+template <typename DataType, template <typename T> class VariableType>
+DataType *BaseParticles::initializeVariable(VariableType<DataType> *variable, DataType initial_value)
 {
     DataType *data_field = allocateVariable(variable);
     for (size_t i = 0; i != particles_bound_; ++i)
@@ -44,9 +44,9 @@ DataType *BaseParticles::initializeVariable(DiscreteVariable<DataType> *variable
     return data_field;
 }
 //=================================================================================================//
-template <typename DataType, class InitializationFunction>
+template <typename DataType, template <typename T> class VariableType, class InitializationFunction>
 DataType *BaseParticles::
-    initializeVariable(DiscreteVariable<DataType> *variable, const InitializationFunction &initialization)
+    initializeVariable(VariableType<DataType> *variable, const InitializationFunction &initialization)
 {
     DataType *data_field = initializeVariable(variable);
     for (size_t i = 0; i != total_real_particles_; ++i)
@@ -56,14 +56,13 @@ DataType *BaseParticles::
     return data_field;
 }
 //=================================================================================================//
-template <typename DataType, typename... Args>
-DataType *BaseParticles::addUniqueDiscreteVariable(const std::string &name, Args &&...args)
+template <class GeneralVariableType, typename... Args>
+GeneralVariableType *BaseParticles::addUniqueVariable(const std::string &name, Args &&...args)
 {
 
-    DiscreteVariable<DataType> *variable =
-        unique_discrete_variable_ptrs_.createPtr<DiscreteVariable<DataType>>(name);
+    GeneralVariableType *variable = unique_variable_ptrs_.createPtr<GeneralVariableType>(name);
     initializeVariable(variable, std::forward<Args>(args)...);
-    return variable->DataField();
+    return variable;
 }
 //=================================================================================================//
 template <typename DataType>
@@ -123,6 +122,25 @@ DataType *BaseParticles::registerSharedVariable(const std::string &name, Args &&
     }
 
     return variable->DataField();
+}
+//=================================================================================================//
+template <typename DataType, typename... Args>
+DiscreteVariable<DataType> *BaseParticles::
+    registerSharedVariable(const ParallelDevicePolicy &execution_policy, const std::string &name, Args &&...args)
+{
+    DiscreteVariable<DataType> *variable = addSharedVariable<DataType>(name);
+
+    if (variable->DataField() == nullptr)
+    {
+        initializeVariable(variable, std::forward<Args>(args)...);
+        constexpr int type_index = DataTypeIndex<DataType>::value;
+        if (type_index != DataTypeIndex<size_t>::value) // particle IDs excluded
+        {
+            std::get<type_index>(all_state_data_).push_back(variable->DataField());
+        }
+    }
+
+    return variable;
 }
 //=================================================================================================//
 template <typename DataType>
