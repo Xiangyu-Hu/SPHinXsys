@@ -61,6 +61,7 @@ class SPHSystem
 {
     UniquePtrKeeper<IOEnvironment> io_ptr_keeper_;
     DataContainerUniquePtrAssemble<SingularVariable> all_system_variable_ptrs_;
+    UniquePtrsKeeper<BaseVariable> unique_system_variable_ptrs_;
 
   public:
     BoundingBox system_domain_bounds_;       /**< Lower and Upper domain bounds. */
@@ -102,14 +103,19 @@ class SPHSystem
     template <typename DataType>
     DataType *registerSystemVariable(const std::string &name,
                                      DataType initial_value = ZeroData<DataType>::value);
+    template <typename DataType, class ExecutionPolicy>
+    DataType *registerSystemVariable(const ExecutionPolicy &execution_policy,
+                                     const std::string &name,
+                                     DataType initial_value = ZeroData<DataType>::value);
+    template <typename DataType>
+    DataType *registerSystemVariable(const ParallelDevicePolicy &execution_policy,
+                                     const std::string &name,
+                                     DataType initial_value = ZeroData<DataType>::value);
     template <typename DataType>
     DataType *getSystemVariableDataByName(const std::string &name);
 
     template <typename DataType, class ExecutionPolicy>
-    DataType *getSystemVariableDataByName(const ExecutionPolicy &execution_policy, const std::string &name)
-    {
-        return getSystemVariableDataByName<DataType>(name);
-    };
+    DataType *getSystemVariableDataByName(const ExecutionPolicy &execution_policy, const std::string &name);
 
     template <typename DataType>
     DataType *getSystemVariableDataByName(const ParallelDevicePolicy &execution_policy, const std::string &name);

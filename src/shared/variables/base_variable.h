@@ -37,59 +37,48 @@
 
 namespace SPH
 {
+class DeviceShared;
+class DeviceOnly;
+
 class BaseVariable
 {
   public:
     explicit BaseVariable(const std::string &name)
-        : name_(name), entity_id_(0){};
+        : name_(name){};
     virtual ~BaseVariable(){};
     std::string Name() const { return name_; };
-    size_t EntityID() const
-    {
-        if (entity_id_ == 0)
-        {
-            std::cout << "BaseVariable ID is not set for " << name_ << std::endl;
-            std::cout << __FILE__ << ':' << __LINE__ << std::endl;
-            exit(1);
-        }
-        return entity_id_;
-    };
-    void setVariableID(size_t entity_id) { entity_id_ = entity_id; };
 
   private:
-    const std::string name_; // name of an entity object
-    size_t entity_id_;       // unique id for each derived entity type
-};
-
-template <typename FunctionalType>
-class FunctionalVariable : public BaseVariable
-{
-  public:
-    template <typename... Args>
-    explicit FunctionalVariable(const std::string &name, Args &&...args)
-        : BaseVariable(name), functional_(new FunctionalType(std::forward<Args>(args)...))
-    {
-        setVariableID(typeid(FunctionalType).hash_code());
-    };
-    virtual ~FunctionalVariable() { delete functional_; };
-    FunctionalType *Functional() { return functional_; };
-
-  private:
-    FunctionalType *functional_;
+    const std::string name_;
 };
 
 template <typename DataType>
 class SingularVariable : public BaseVariable
 {
   public:
-    SingularVariable(const std::string &name, DataType &value)
-        : BaseVariable(name), value_(value){};
-    virtual ~SingularVariable(){};
+    SingularVariable(const std::string &name, const DataType &value)
+        : BaseVariable(name), value_(new DataType(value)), delegated_(value_){};
+    virtual ~SingularVariable() { delete value_; };
 
-    DataType *ValueAddress() { return &value_; };
+    DataType *ValueAddress() { return delegated_; };
+    bool isValueDelegated() { return value_ == delegated_; };
+    void setNewDelegated(DataType *new_delegated) { delegated_ = new_delegated; };
 
-  private:
-    DataType value_;
+  protected:
+    DataType *value_;
+    DataType *delegated_;
+};
+
+template <typename DataType>
+class SingularDeviceSharedVariable : public BaseVariable
+
+{
+  public:
+    SingularDeviceSharedVariable(SingularVariable<DataType> &original_variable);
+    virtual ~SingularDeviceSharedVariable();
+
+  protected:
+    DataType *device_shared_value_;
 };
 
 template <typename DataType>
@@ -97,16 +86,34 @@ class DiscreteVariable : public BaseVariable
 {
   public:
     DiscreteVariable(const std::string &name)
-        : BaseVariable(name), data_field_(nullptr){};
+        : BaseVariable(name), data_field_(nullptr), delegated_(nullptr){};
     virtual ~DiscreteVariable() { delete[] data_field_; };
-    DataType *DataField() { return data_field_; };
+    DataType *DataField() { return delegated_; };
     void allocateDataField(const size_t size)
     {
         data_field_ = new DataType[size];
-    }
+        delegated_ = data_field_;
+    };
+    bool isDataFieldDelegated() { return data_field_ == delegated_; };
+    void setNewDelegated(DataType *new_delegated) { delegated_ = new_delegated; };
 
   private:
     DataType *data_field_;
+    DataType *delegated_;
+};
+
+template <typename DataType>
+class DiscreteDeviceSharedVariable : public BaseVariable
+{
+    DiscreteVariable<DataType> &original_variable_;
+
+  public:
+    DiscreteDeviceSharedVariable(DiscreteVariable<DataType> &original_variable);
+    virtual ~DiscreteDeviceSharedVariable();
+    void allocateDataField(const size_t size);
+
+  protected:
+    DataType *device_shared_data_field_;
 };
 
 template <typename DataType>
@@ -141,7 +148,6 @@ VariableType<DataType> *findVariableByName(DataContainerAddressAssemble<Variable
 
     return result != variables.end() ? *result : nullptr;
 };
-
 template <typename DataType, template <typename VariableDataType> class VariableType, typename... Args>
 VariableType<DataType> *addVariableToAssemble(DataContainerAddressAssemble<VariableType> &assemble,
                                               DataContainerUniquePtrAssemble<VariableType> &ptr_assemble, Args &&...args)

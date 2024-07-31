@@ -21,36 +21,52 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file    base_variable_sycl.h
+ * @file    base_variable_sycl.hpp
  * @brief   TBD.
  * @author  Alberto Guarnieri and Xiangyu Hu
  */
-#ifndef BASE_VARIABLE_SYCL_H
-#define BASE_VARIABLE_SYCL_H
+#ifndef BASE_VARIABLE_SYCL_HPP
+#define BASE_VARIABLE_SYCL_HPP
 
-#include "execution_sycl.h"
+#include "base_variable_sycl.h"
 
 namespace SPH
 {
-/* SYCL memory transfer utilities */
-template <class T>
-inline T *allocateDeviceData(std::size_t size)
+//=================================================================================================//
+template <typename DataType>
+SingularDeviceSharedVariable<DataType>::
+    SingularVariable(SingularVariable<DataType> &original_variable)
+    : BaseVariable(name), device_shared_value_(allocateDeviceShared<DataType>(1))
 {
-    return sycl::malloc_device<T>(size, execution::execution_instance.getQueue());
+    *device_shared_value_ = *original_variable.ValueAddress();
+    original_variable.setDelegateValue(device_shared_value_);
 }
-
-template <class T>
-inline T *allocateSharedData(std::size_t size)
+//=================================================================================================//
+template <typename DataType>
+SingularDeviceSharedVariable<DataType>::~SingularDeviceSharedVariable()
 {
-    return sycl::malloc_shared<T>(size, execution::execution_instance.getQueue());
+    freeDeviceData(device_shared_value_);
 }
-
-template <class T>
-inline void freeDeviceData(T *device_mem)
+//=================================================================================================//
+template <typename DataType>
+DiscreteDeviceSharedVariable<DataType>::
+    DiscreteVariable(DiscreteVariable<DataType> &original_variable)
+    : BaseVariable(name), original_variable_(original_variable),
+      device_shared_data_field_(nullptr){};
+//=================================================================================================//
+template <typename DataType>
+void DiscreteDeviceSharedVariable<DataType>::allocateDataField(const size_t size)
 {
-    sycl::free(device_mem, execution::execution_instance.getQueue());
+    device_shared_data_field_ = allocateDeviceShared(size);
+    original_variable_.setDelegateValue(device_shared_data_field_);
 }
-
+//=================================================================================================//
+template <typename DataType>
+DiscreteDeviceSharedVariable<DataType>::~DiscreteDeviceSharedVariable()
+{
+    freeDeviceData(device_shared_data_field_);
+}
+//=================================================================================================//
 } // namespace SPH
 
-#endif // BASE_VARIABLE_SYCL_H
+#endif // BASE_VARIABLE_SYCL_HPP
