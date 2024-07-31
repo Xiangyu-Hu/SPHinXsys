@@ -40,20 +40,28 @@ namespace execution
 template <typename... T>
 class Implementation;
 
-template <class ComputingKernelType, class ExecutionPolicy>
+template <class LocalDynamicsType, class ExecutionPolicy>
 class Implementation<ComputingKernelType, ExecutionPolicy>
 {
+    using ComputingKernel = typename LocalDynamicsType::ComputingKernel;
+    UniquePtrKeeper<ComputingKernel> compting_ptr_keeper_;
+
   public:
-    explicit Implementation(ComputingKernelType &computing_kernel)
-        : delegated_kernel_(computing_kernel) {}
+    explicit Implementation(LocalDynamicsType &local_dynamics)
+        : delegated_kernel_(nullptr) {}
 
     ComputingKernelType &getDelegatedKernel() const
     {
-        return delegated_kernel_;
+        if (delegated_kernel_ == nullptr)
+        {
+            delegated_kernel_ = compting_ptr_keeper_.createPtr<ComputingKernel>(local_dynamics_);
+        }
+        return *delegated_kernel_;
     }
 
   private:
-    ComputingKernelType &delegated_kernel_;
+    LocalDynamicsType &local_dynamics_;
+    ComputingKernelType *delegated_kernel_;
 };
 } // namespace execution
 } // namespace SPH

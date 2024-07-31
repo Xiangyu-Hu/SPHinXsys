@@ -40,6 +40,7 @@ class BaseForcePrior : public BaseLocalDynamics<DynamicsIdentifier>
 {
   protected:
     Vecd *force_prior_, *current_force_, *previous_force_;
+    DiscreteVariable<Vecd> *v_force_prior_, *v_current_force_, *v_previous_force_;
 
   public:
     BaseForcePrior(DynamicsIdentifier &identifier, const std::string &force_name);
@@ -61,12 +62,6 @@ class BaseForcePrior : public BaseLocalDynamics<DynamicsIdentifier>
       protected:
         Vecd *force_prior_, *current_force_, *previous_force_;
     };
-
-  private:
-    ComputingKernel computing_kernel_;
-
-  public:
-    ComputingKernel &getComputingKernel() { return computing_kernel_; }
 };
 using ForcePrior = BaseForcePrior<SPHBody>;
 
@@ -78,6 +73,10 @@ class GravityForce : public ForcePrior
     Vecd *pos_;
     Real *mass_;
     Real *physical_time_;
+
+    DiscreteVariable<Vecd> *v_pos_;
+    DiscreteVariable<Real> *mass_;
+    SingularVariable<Real> *physical_time_;
 
   public:
     GravityForce(SPHBody &sph_body, const GravityType &gravity);
@@ -103,12 +102,6 @@ class GravityForce : public ForcePrior
         Real *mass_;
         Real *physical_time_;
     };
-
-  private:
-    ComputingKernel computing_kernel_;
-
-  public:
-    ComputingKernel &getComputingKernel() { return computing_kernel_; }
 };
 } // namespace SPH
 #endif // FORCE_PRIOR_H
