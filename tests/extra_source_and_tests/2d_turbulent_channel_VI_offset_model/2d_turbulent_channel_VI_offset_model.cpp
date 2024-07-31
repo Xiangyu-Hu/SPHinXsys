@@ -12,7 +12,7 @@ int main(int ac, char *av[])
     /** Tag for run particle relaxation for the initial body fitted distribution. */
     sph_system.setRunParticleRelaxation(false);
     /** Tag for computation start with relaxed body fitted particles distribution. */
-    sph_system.setReloadParticles(true);
+    sph_system.setReloadParticles(false);
 
     sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
     IOEnvironment io_environment(sph_system);
@@ -309,7 +309,7 @@ int main(int ac, char *av[])
                 
                 k_equation_relaxation.exec(dt);
                 epsilon_equation_relaxation.exec(dt);
-                k_equation_relaxation.update_prior_turbulent_value();
+                //k_equation_relaxation.update_prior_turbulent_value();
 
                 relaxation_time += dt;
                 integration_time += dt;

@@ -201,9 +201,7 @@ namespace fluid_dynamics
 		is_near_wall_P1_(*particles_->getVariableByName<int>("IsNearWallP1")),
 		velocity_gradient_(*particles_->getVariableByName<Matd>("TurbulentVelocityGradient")),
 		turbu_k_(*particles_->getVariableByName<Real>("TurbulenceKineticEnergy")),
-		turbu_k_prior_(*particles_->getVariableByName<Real>("TurbulenceKineticEnergyPrior")),
 		turbu_epsilon_(*particles_->getVariableByName<Real>("TurbulentDissipation")),
-		turbu_epsilon_prior_(*particles_->getVariableByName<Real>("TurbulentDissipationPrior")),
 		turbu_mu_(*particles_->getVariableByName<Real>("TurbulentViscosity")),
 		turbu_strain_rate_(*particles_->getVariableByName<Matd>("TurbulentStrainRate"))
 	{
@@ -214,13 +212,8 @@ namespace fluid_dynamics
 		particles_->addVariableToSort<Real>("K_Production");
 		particles_->addVariableToWrite<Real>("K_Production");
 
-		particles_->registerVariable(k_production_prior_, "K_ProductionPrior");
-		particles_->addVariableToSort<Real>("K_ProductionPrior");
-
 		particles_->addVariableToSort<Real>("TurbulenceKineticEnergy");
 		particles_->addVariableToWrite<Real>("TurbulenceKineticEnergy");
-
-		particles_->addVariableToSort<Real>("TurbulenceKineticEnergyPrior");
 
 		particles_->addVariableToSort<Real>("TurbulentViscosity");
 		particles_->addVariableToWrite<Real>("TurbulentViscosity");
@@ -228,17 +221,13 @@ namespace fluid_dynamics
 		particles_->addVariableToSort<Real>("TurbulentDissipation");
 		particles_->addVariableToWrite<Real>("TurbulentDissipation");
 
-		particles_->addVariableToSort<Real>("TurbulentDissipationPrior");
-
 		particles_->addVariableToSort<Matd>("TurbulentStrainRate");
 		particles_->addVariableToWrite<Matd>("TurbulentStrainRate");
 
 
 		//** Obtain Initial values for transport equations *		
 		std::fill(turbu_k_.begin(), turbu_k_.end(), initial_values[0]);
-		std::fill(turbu_k_prior_.begin(), turbu_k_prior_.end(), initial_values[0]);
 		std::fill(turbu_epsilon_.begin(), turbu_epsilon_.end(), initial_values[1]);
-		std::fill(turbu_epsilon_prior_.begin(), turbu_epsilon_prior_.end(), initial_values[1]);
 		std::fill(turbu_mu_.begin(), turbu_mu_.end(), initial_values[2]);
 
 		//** for test */
@@ -293,12 +282,12 @@ namespace fluid_dynamics
 		if (is_near_wall_P1_[index_i] != 1)
 			k_production_[index_i] = k_production_matrix.sum();
 			
-		//k_production = k_production_[index_i];
-		//k_dissipation = turbu_epsilon_[index_i] ;
+		k_production = k_production_[index_i];
+		k_dissipation = turbu_epsilon_[index_i] ;
 
 		//** Linearize the source term *
-		k_production = k_production_prior_[index_i];
-		k_dissipation = ( turbu_epsilon_prior_[index_i] / turbu_k_prior_[index_i] ) * turbu_k_[index_i];
+		//k_production = k_production_prior_[index_i];
+		//k_dissipation = ( turbu_epsilon_prior_[index_i] / turbu_k_prior_[index_i] ) * turbu_k_[index_i];
 		
 		dk_dt_[index_i] = k_production - k_dissipation + k_lap;
 
@@ -314,22 +303,19 @@ namespace fluid_dynamics
 		turbu_k_[index_i] += dk_dt_[index_i] * dt;
 	}
 	//=================================================================================================//
-	void K_TurtbulentModelInner::update_prior_turbulent_value()
-	{
-		k_production_prior_ = k_production_;
-		turbu_k_prior_ = turbu_k_;
-		turbu_epsilon_prior_ = turbu_epsilon_;
-	}
+	// void K_TurtbulentModelInner::update_prior_turbulent_value()
+	// {
+	// 	k_production_prior_ = k_production_;
+	// 	turbu_k_prior_ = turbu_k_;
+	// 	turbu_epsilon_prior_ = turbu_epsilon_;
+	// }
 //=================================================================================================//
 	E_TurtbulentModelInner::E_TurtbulentModelInner(BaseInnerRelation& inner_relation)
 		: BaseTurtbulentModel<Base, DataDelegateInner>(inner_relation),
 		turbu_mu_(*particles_->getVariableByName<Real>("TurbulentViscosity")),
 		turbu_k_(*particles_->getVariableByName<Real>("TurbulenceKineticEnergy")),
-		turbu_k_prior_(*particles_->getVariableByName<Real>("TurbulenceKineticEnergyPrior")),
 		turbu_epsilon_(*particles_->getVariableByName<Real>("TurbulentDissipation")),
-		turbu_epsilon_prior_(*particles_->getVariableByName<Real>("TurbulentDissipationPrior")),
-		k_production_(*particles_->getVariableByName<Real>("K_Production")),
-		k_production_prior_(*particles_->getVariableByName<Real>("K_ProductionPrior")),		
+		k_production_(*particles_->getVariableByName<Real>("K_Production")),		
 		is_near_wall_P1_(*particles_->getVariableByName<int>("IsNearWallP1"))
 	{
 		particles_->registerVariable(dE_dt_, "ChangeRateOfTDR");
@@ -354,7 +340,7 @@ namespace fluid_dynamics
 	{
 		Real rho_i = rho_[index_i];
 		//Real turbu_mu_i = turbu_mu_[index_i];
-		//Real turbu_k_i = turbu_k_[index_i];
+		Real turbu_k_i = turbu_k_[index_i];
 		Real turbu_epsilon_i = turbu_epsilon_[index_i];
 
 		Real mu_eff_i = turbu_mu_[index_i] / sigma_E_ + mu_;
@@ -374,12 +360,12 @@ namespace fluid_dynamics
 			epsilon_lap += 2.0 * mu_harmo * epsilon_derivative * inner_neighborhood.dW_ij_[n]* this->Vol_[index_j] / rho_i;
 		}
 
-		//epsilon_production = C_l_ * turbu_epsilon_i * k_production_[index_i] / turbu_k_i;
-		//epsilon_dissipation = C_2_ * turbu_epsilon_i * turbu_epsilon_i / turbu_k_i;
+		epsilon_production = C_l_ * turbu_epsilon_i * k_production_[index_i] / turbu_k_i;
+		epsilon_dissipation = C_2_ * turbu_epsilon_i * turbu_epsilon_i / turbu_k_i;
 		
 		//** Linearize the source term *
-		epsilon_production = C_l_ * turbu_epsilon_prior_[index_i] * k_production_prior_[index_i] / turbu_k_prior_[index_i];
-		epsilon_dissipation = (C_2_ * turbu_epsilon_prior_[index_i] / turbu_k_prior_[index_i]) * turbu_epsilon_i;
+		//epsilon_production = C_l_ * turbu_epsilon_prior_[index_i] * k_production_prior_[index_i] / turbu_k_prior_[index_i];
+		//epsilon_dissipation = (C_2_ * turbu_epsilon_prior_[index_i] / turbu_k_prior_[index_i]) * turbu_epsilon_i;
 		
 		dE_dt_[index_i] = epsilon_production - epsilon_dissipation + epsilon_lap;
 

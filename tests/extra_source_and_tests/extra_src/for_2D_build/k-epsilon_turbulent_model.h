@@ -160,8 +160,8 @@ namespace fluid_dynamics
 
 	protected:
 		
-		StdLargeVec<Real> turbu_k_, turbu_k_prior_;
-		StdLargeVec<Real> turbu_epsilon_, turbu_epsilon_prior_;
+		StdLargeVec<Real> turbu_k_;
+		StdLargeVec<Real> turbu_epsilon_;
 		StdLargeVec<Real> turbu_mu_;
 		StdLargeVec<Matd> turbu_strain_rate_; //** temporary naming to distinguish the regular strain rate * 
 		
@@ -183,17 +183,15 @@ namespace fluid_dynamics
 
 		inline void interaction(size_t index_i, Real dt = 0.0);
 		void update(size_t index_i, Real dt = 0.0);
-		void update_prior_turbulent_value();
+		//void update_prior_turbulent_value();
 	protected:
 		StdLargeVec<Real> dk_dt_;
-		StdLargeVec<Real> k_production_, k_production_prior_;
+		StdLargeVec<Real> k_production_;
 
 		StdLargeVec<int>& is_near_wall_P1_; //** This is used to specially treat near wall region  *
 		StdLargeVec<Matd>& velocity_gradient_;
 		StdLargeVec<Real>& turbu_k_;
-		StdLargeVec<Real>& turbu_k_prior_;
 		StdLargeVec<Real>& turbu_epsilon_;
-		StdLargeVec<Real>& turbu_epsilon_prior_;
 		StdLargeVec<Real>& turbu_mu_;
 		StdLargeVec<Matd>& turbu_strain_rate_;
         StdLargeVec<int> is_extra_viscous_dissipation_;
@@ -220,11 +218,8 @@ namespace fluid_dynamics
 		
 		StdLargeVec<Real>& turbu_mu_;
 		StdLargeVec<Real>& turbu_k_;
-		StdLargeVec<Real>& turbu_k_prior_;
 		StdLargeVec<Real>& turbu_epsilon_;
-		StdLargeVec<Real>& turbu_epsilon_prior_;
 		StdLargeVec<Real>& k_production_;
-		StdLargeVec<Real>& k_production_prior_;
 		StdLargeVec<int>& is_near_wall_P1_;
 	};
 //=================================================================================================//

@@ -40,9 +40,7 @@ namespace fluid_dynamics
 	BaseTurtbulentModel<Base, DataDelegationType>::BaseTurtbulentModel(BaseRelationType& base_relation)
 		: LocalDynamics(base_relation.getSPHBody()), DataDelegationType(base_relation),
 		turbu_k_(*(this->particles_->template registerSharedVariable<Real>("TurbulenceKineticEnergy"))),
-		turbu_k_prior_(*(this->particles_->template registerSharedVariable<Real>("TurbulenceKineticEnergyPrior"))),
 		turbu_epsilon_(*(this->particles_->template registerSharedVariable<Real>("TurbulentDissipation"))),
-		turbu_epsilon_prior_(*(this->particles_->template registerSharedVariable<Real>("TurbulentDissipationPrior"))),
 		turbu_mu_(*(this->particles_->template registerSharedVariable<Real>("TurbulentViscosity"))),
 		turbu_strain_rate_(*(this->particles_->template registerSharedVariable<Matd>("TurbulentStrainRate"))),
 		mu_(DynamicCast<Fluid>(this, this->particles_->getBaseMaterial()).ReferenceViscosity()),
