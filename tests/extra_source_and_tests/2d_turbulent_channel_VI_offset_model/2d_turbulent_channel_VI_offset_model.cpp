@@ -170,11 +170,13 @@ int main(int ac, char *av[])
     /** Impose transport velocity, with or without Extra Transprot Force, and with limiter . */
     InteractionWithUpdate<fluid_dynamics::TransportVelocityLimitedCorrectionComplex<BulkParticles>> transport_velocity_correction(water_block_inner, water_wall_contact);
     //Dynamics1Level<fluid_dynamics::ExtraTransportForceLimitedComplex<BulkParticles>> impose_extra_transport_force(water_block_inner, water_wall_contact);
-
+    
+    /** For pressure outlet . */
+    InteractionDynamics<NablaWVComplex> kernel_summation(water_block_inner, water_wall_contact);
     InteractionWithUpdate<SpatialTemporalFreeSurfaceIndicationComplex> inlet_outlet_surface_particle_indicator(water_block_inner, water_wall_contact);
 
     /** Evaluation of density by summation approach. */
-    InteractionWithUpdate<fluid_dynamics::DensitySummationFreeStreamComplex> update_density_by_summation(water_block_inner, water_wall_contact);
+    //InteractionWithUpdate<fluid_dynamics::DensitySummationFreeStreamComplex> update_density_by_summation(water_block_inner, water_wall_contact);
     
     /** Initialize particle acceleration. */
     TimeDependentAcceleration time_dependent_acceleration(Vec2d::Zero());
@@ -185,8 +187,17 @@ int main(int ac, char *av[])
     BodyAlignedBoxByCell inlet_velcoity_buffer(water_block, makeShared<AlignedBoxShape>(Transform(Vec2d(inlet_buffer_translation)), inlet_buffer_halfsize));
     SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>> inlet_velocity_buffer_inflow_condition(inlet_velcoity_buffer, 1.0);
     
-    BodyAlignedBoxByCell disposer(water_block, makeShared<AlignedBoxShape>(Transform(Vec2d(disposer_translation)), disposer_halfsize));
-    SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion> disposer_outflow_deletion(disposer, 0);
+    //----------------------------------------------------------------------
+    // Right/Outlet buffer
+    //----------------------------------------------------------------------
+    //BodyAlignedBoxByCell disposer(water_block, makeShared<AlignedBoxShape>(Transform(Vec2d(disposer_translation)), disposer_halfsize));
+    //SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion> disposer_outflow_deletion(disposer, 0);
+    BodyAlignedBoxByCell right_emitter(water_block, makeShared<AlignedBoxShape>(Transform(Rotation2d(Pi), Vec2d(right_buffer_translation)), right_buffer_halfsize));
+    fluid_dynamics::BidirectionalBuffer<RightOutflowPressure> right_emitter_inflow_injection(right_emitter, inlet_particle_buffer, xAxis);
+    BodyAlignedBoxByCell right_disposer(water_block, makeShared<AlignedBoxShape>(Transform(Vec2d(right_buffer_translation)), right_buffer_halfsize));
+    SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion> right_disposer_outflow_deletion(right_disposer, xAxis);
+    SimpleDynamics<fluid_dynamics::PressureCondition<RightOutflowPressure>> right_outflow_pressure_condition(right_emitter);
+    InteractionWithUpdate<fluid_dynamics::DensitySummationPressureComplex> update_fluid_density_pressure(water_block_inner, water_wall_contact);
 
     /** Turbulent InflowTurbulentCondition.It needs characteristic Length to calculate turbulent length  */
     SimpleDynamics<fluid_dynamics::InflowTurbulentCondition> impose_turbulent_inflow_condition(inlet_velcoity_buffer, characteristic_length, 0.8);
@@ -205,7 +216,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	File output and regression check.
     //----------------------------------------------------------------------
-        /** Output the body states. */
+    /** Output the body states. */
     BodyStatesRecordingToVtp body_states_recording(sph_system);
     body_states_recording.addVariableRecording<Real>(water_block, "Pressure");		   // output for debug
     body_states_recording.addVariableRecording<int>(water_block,"Indicator"); // output for debug
@@ -215,6 +226,7 @@ int main(int ac, char *av[])
     ObservedQuantityRecording<Real> write_recorded_water_k("TurbulenceKineticEnergy", fluid_observer_contact);
     ObservedQuantityRecording<Real> write_recorded_water_mut("TurbulentViscosity", fluid_observer_contact);
     ObservedQuantityRecording<Real> write_recorded_water_epsilon("TurbulentDissipation", fluid_observer_contact);
+    body_states_recording.addVariableRecording<int>(water_block, "BufferParticleIndicator");
     /**
      * @brief Setup geometry and initial conditions.
      */
@@ -222,6 +234,11 @@ int main(int ac, char *av[])
     sph_system.initializeSystemConfigurations();
     wall_boundary_normal_direction.exec();
     body_states_recording.addVariableRecording<Vecd>(wall_boundary, "NormalDirection");
+
+    /** Tag inlet/outlet truncated particles */
+    inlet_outlet_surface_particle_indicator.exec();
+    /** Tag outlet buffer particles */
+    right_emitter_inflow_injection.tag_buffer_particles.exec();
 
     /** Output the start states of bodies. */
     body_states_recording.writeToFile();
@@ -253,9 +270,10 @@ int main(int ac, char *av[])
             //Real Dt = get_fluid_advection_time_step_size.exec();
             Real Dt = get_turbulent_fluid_advection_time_step_size.exec();
 
-            inlet_outlet_surface_particle_indicator.exec();
+            //inlet_outlet_surface_particle_indicator.exec();
 
-            update_density_by_summation.exec();
+            //update_density_by_summation.exec();
+            update_fluid_density_pressure.exec();
 
             corrected_configuration_fluid.exec();
             corrected_configuration_fluid_only_inner.exec();
@@ -284,6 +302,9 @@ int main(int ac, char *av[])
                 turbulent_kinetic_energy_force.exec();
 
                 pressure_relaxation.exec(dt);
+
+                kernel_summation.exec();
+                right_outflow_pressure_condition.exec();
 
                 //constrain_normal_velocity_in_P_region.exec();
                 
@@ -332,12 +353,20 @@ int main(int ac, char *av[])
 
             /** inflow injection*/
             emitter_inflow_injection.exec();
-            disposer_outflow_deletion.exec();
+            right_emitter_inflow_injection.injection.exec();
+
+            //disposer_outflow_deletion.exec();
+            right_disposer_outflow_deletion.exec();
 
             /** Update cell linked list and configuration. */
             water_block.updateCellLinkedListWithParticleSort(100);
             water_block_complex.updateConfiguration();
             fluid_observer_contact.updateConfiguration();
+
+            /** Tag truncated inlet/outlet particles*/
+            inlet_outlet_surface_particle_indicator.exec();
+            /** Tag outlet buffer particles that suffer pressure condition*/
+            right_emitter_inflow_injection.tag_buffer_particles.exec();
 
             if (GlobalStaticVariables::physical_time_ > end_time * 0.6) 
             {

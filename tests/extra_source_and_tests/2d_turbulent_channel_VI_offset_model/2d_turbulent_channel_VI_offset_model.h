@@ -7,6 +7,12 @@
 
 #include "sphinxsys.h"
 #include "k-epsilon_turbulent_model.cpp"
+#include "bidirectional_buffer.h"
+#include "density_correciton.h"
+#include "density_correciton.hpp"
+#include "kernel_summation.h"
+#include "kernel_summation.hpp"
+#include "pressure_boundary.h"
 using namespace SPH;
 
 //----------------------------------------------------------------------
@@ -53,6 +59,9 @@ Real U_max = 1.5 * U_inlet; //** An estimated value, generally 1.5 U_inlet *
 Real c_f = 10.0 * U_max;
 Real rho0_f = 1.0;                                            /**< Density. */
 Real Re = 20000.0;
+
+Real Outlet_pressure = 0.0;
+
 Real mu_f = rho0_f * U_f * DH / Re;
 
 Real Re_calculated = U_f * DH * rho0_f / mu_f; 
@@ -66,9 +75,10 @@ Vec2d emitter_translation = Vec2d(-DL_sponge, 0.0) + emitter_halfsize + Vecd(0.0
 Vec2d inlet_buffer_halfsize = Vec2d(0.5 * DL_sponge, 0.5 * DH_C + BW);
 Vec2d inlet_buffer_translation = Vec2d(-DL_sponge, 0.0) + inlet_buffer_halfsize + Vecd(0.0, offset_distance - BW);
 
-Vec2d disposer_halfsize = Vec2d(0.5 * BW, 0.75 * DH);
-Vec2d disposer_translation = Vec2d(DL, DH + 0.25 * DH) - disposer_halfsize;
-
+//Vec2d disposer_halfsize = Vec2d(0.5 * BW, 0.75 * DH);
+//Vec2d disposer_translation = Vec2d(DL, DH + 0.25 * DH) - disposer_halfsize;
+Vec2d right_buffer_halfsize = Vec2d(0.5 * BW, 0.75 * DH);
+Vec2d right_buffer_translation = Vec2d(DL, DH + 0.25 * DH) - right_buffer_halfsize;
 //----------------------------------------------------------------------
 // Observation with offset model.
 //----------------------------------------------------------------------
@@ -232,5 +242,18 @@ public:
         Real run_time_ = GlobalStaticVariables::physical_time_;
         du_ave_dt_ = 0.5 * u_ref_ * (Pi / t_ref_) * sin(Pi * run_time_ / t_ref_);
         return run_time_ < t_ref_ ? Vecd(du_ave_dt_, 0.0) : global_acceleration_;
+    }
+};
+
+struct RightOutflowPressure
+{
+    template <class BoundaryConditionType>
+    RightOutflowPressure(BoundaryConditionType &boundary_condition) {}
+
+    Real operator()(Real &p_)
+    {
+        /*constant pressure*/
+        Real pressure = Outlet_pressure;
+        return pressure;
     }
 };
