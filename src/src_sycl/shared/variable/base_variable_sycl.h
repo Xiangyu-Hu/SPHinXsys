@@ -34,7 +34,7 @@ namespace SPH
 {
 /* SYCL memory transfer utilities */
 template <class T>
-inline T *allocateDeviceData(std::size_t size)
+inline T *allocateDeviceOnly(std::size_t size)
 {
     return sycl::malloc_device<T>(size, execution::execution_instance.getQueue());
 }
@@ -51,6 +51,17 @@ inline void freeDeviceData(T *device_mem)
     sycl::free(device_mem, execution::execution_instance.getQueue());
 }
 
+template <class T>
+inline execution::ExecutionEvent copyToDevice(const T *host, T *device, std::size_t size)
+{
+    return execution::execution_instance.getQueue().memcpy(device, host, size * sizeof(T));
+}
+
+template <class T>
+inline execution::ExecutionEvent copyFromDevice(T *host, const T *device, std::size_t size)
+{
+    return execution::execution_instance.getQueue().memcpy(host, device, size * sizeof(T));
+}
 } // namespace SPH
 
 #endif // BASE_VARIABLE_SYCL_H

@@ -86,34 +86,38 @@ class DiscreteVariable : public BaseVariable
 {
   public:
     DiscreteVariable(const std::string &name)
-        : BaseVariable(name), data_field_(nullptr), delegated_(nullptr){};
+        : BaseVariable(name), size_(0),
+          data_field_(nullptr), device_data_field_(nullptr){};
     virtual ~DiscreteVariable() { delete[] data_field_; };
-    DataType *DataField() { return delegated_; };
+    DataType *DataField() { return data_field_; };
+    DataType *DeviceDataField() { return device_data_field_; }
+
     void allocateDataField(const size_t size)
     {
+        size_ = size;
         data_field_ = new DataType[size];
-        delegated_ = data_field_;
     };
-    bool isDataFieldDelegated() { return data_field_ == delegated_; };
-    void setNewDelegated(DataType *new_delegated) { delegated_ = new_delegated; };
+
+    bool existDeviceDataField() { return device_data_field_ != nullptr; };
+    size_t getSize() { return size_; }
+    void setDeviceDataField(DataType *data_field) { device_data_field_ = data_field; };
+    void synchronizeWithDevice();
 
   private:
+    size_t size_;
     DataType *data_field_;
-    DataType *delegated_;
+    DataType *device_data_field_;
 };
 
 template <typename DataType>
-class DiscreteDeviceSharedVariable : public BaseVariable
+class DiscreteDeviceOnlyVariable : public BaseVariable
 {
-    DiscreteVariable<DataType> &original_variable_;
-
   public:
-    DiscreteDeviceSharedVariable(DiscreteVariable<DataType> &original_variable);
-    virtual ~DiscreteDeviceSharedVariable();
-    void allocateDataField(const size_t size);
+    DiscreteDeviceOnlyVariable(DiscreteVariable<DataType> *host_variable);
+    virtual ~DiscreteDeviceOnlyVariable();
 
   protected:
-    DataType *device_shared_data_field_;
+    DataType *device_data_field_;
 };
 
 template <typename DataType>

@@ -124,25 +124,6 @@ DataType *BaseParticles::registerSharedVariable(const std::string &name, Args &&
     return variable->DataField();
 }
 //=================================================================================================//
-template <typename DataType, typename... Args>
-DiscreteVariable<DataType> *BaseParticles::
-    registerSharedVariable(const ParallelDevicePolicy &execution_policy, const std::string &name, Args &&...args)
-{
-    DiscreteVariable<DataType> *variable = addSharedVariable<DataType>(name);
-
-    if (variable->DataField() == nullptr)
-    {
-        initializeVariable(variable, std::forward<Args>(args)...);
-        constexpr int type_index = DataTypeIndex<DataType>::value;
-        if (type_index != DataTypeIndex<size_t>::value) // particle IDs excluded
-        {
-            std::get<type_index>(all_state_data_).push_back(variable->DataField());
-        }
-    }
-
-    return variable;
-}
-//=================================================================================================//
 template <typename DataType>
 DataType *BaseParticles::registerSharedVariableFrom(
     const std::string &new_name, const std::string &old_name)
@@ -267,6 +248,25 @@ template <typename DataType>
 void BaseParticles::addVariableToReload(const std::string &name)
 {
     addVariableToList<DataType>(variables_to_reload_, name);
+}
+//=================================================================================================//
+template <typename DataType, typename... Args>
+DataType *BaseParticles::
+    registerSharedVariable(const ParallelDevicePolicy &execution_policy, const std::string &name, Args &&...args)
+{
+    registerSharedVariable<DataType>(name, std::forward<Args>(args)...);
+    return getVariableDataByName<DataType>(execution_policy, name);
+}
+//=================================================================================================//
+template <typename DataType>
+DataType *BaseParticles::getVariableDataByName(const ParallelDevicePolicy &execution_policy, const std::string &name)
+{
+    DiscreteVariable<DataType> *variable = getVariableByName<DataType>(name);
+    if (!variable->existDeviceDataField())
+    {
+        addUniqueVariable<DiscreteDeviceOnlyVariable<DataType>>(variable);
+    }
+    return variable->DeviceDataField();
 }
 //=================================================================================================//
 template <typename DataType>

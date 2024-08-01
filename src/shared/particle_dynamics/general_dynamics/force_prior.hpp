@@ -31,9 +31,9 @@ BaseForcePrior<DynamicsIdentifier>::
     BaseForcePrior(const ExecutionPolicy &execution_policy,
                    DynamicsIdentifier &identifier, const std::string &force_name)
     : BaseLocalDynamics<DynamicsIdentifier>(identifier),
-      v_force_prior_(this->particles_->template registerSharedVariable<Vecd>(execution_policy, "ForcePrior")),
-      v_current_force_(this->particles_->template registerSharedVariable<Vecd>(execution_policy, force_name)),
-      v_previous_force_(this->particles_->template registerSharedVariable<Vecd>(execution_policy, "Previous" + force_name))
+      force_prior_(this->particles_->template registerSharedVariable<Vecd>(execution_policy, "ForcePrior")),
+      current_force_(this->particles_->template registerSharedVariable<Vecd>(execution_policy, force_name)),
+      previous_force_(this->particles_->template registerSharedVariable<Vecd>(execution_policy, "Previous" + force_name))
 {
     this->particles_->template addVariableToRestart<Vecd>("Previous" + force_name);
     this->particles_->template addVariableToSort<Vecd>("Previous" + force_name);
@@ -42,9 +42,9 @@ BaseForcePrior<DynamicsIdentifier>::
 template <class DynamicsIdentifier>
 BaseForcePrior<DynamicsIdentifier>::ComputingKernel::
     ComputingKernel(BaseForcePrior<DynamicsIdentifier> &base_force_prior)
-    : force_prior_(base_force_prior.v_force_prior_->DataField()),
-      current_force_(base_force_prior.v_current_force_->DataField()),
-      previous_force_(base_force_prior.v_previous_force_->DataField()) {}
+    : force_prior_(base_force_prior.force_prior_),
+      current_force_(base_force_prior.current_force_),
+      previous_force_(base_force_prior.previous_force_) {}
 //=================================================================================================//
 template <class DynamicsIdentifier>
 void BaseForcePrior<DynamicsIdentifier>::ComputingKernel::update(size_t index_i, Real dt)
@@ -74,15 +74,14 @@ GravityForce<GravityType>::
     GravityForce(const ExecutionPolicy &execution_policy,
                  SPHBody &sph_body, const GravityType &gravity)
     : ForcePrior(execution_policy, sph_body, "GravityForce"), gravity_(gravity),
-      v_pos_(particles_->getVariableByName<Vecd>(execution_policy, "Position")),
-      v_mass_(particles_->getVariableByName<Real>(execution_policy, "Mass")),
+      pos_(particles_->getVariableDataByName<Vecd>(execution_policy, "Position")),
+      mass_(particles_->getVariableDataByName<Real>(execution_policy, "Mass")),
       v_physical_time_(sph_system_.getSystemVariableByName<Real>(execution_policy, "PhysicalTime")) {}
 //=================================================================================================//
 template <class GravityType>
 GravityForce<GravityType>::ComputingKernel::ComputingKernel(GravityForce<GravityType> &gravity_force)
-    : ForcePrior::ComputingKernel(gravity_force), gravity_(gravity_force.gravity_),
-      pos_(gravity_force.v_pos_->DataField()),
-      mass_(gravity_force.v_mass_->DataField()),
+    : ForcePrior::ComputingKernel(gravity_force),
+      gravity_(gravity_force.gravity_), pos_(gravity_force.pos_), mass_(gravity_force.mass_),
       physical_time_(gravity_force.v_physical_time_->ValueAddress()) {}
 //=================================================================================================//
 template <class GravityType>

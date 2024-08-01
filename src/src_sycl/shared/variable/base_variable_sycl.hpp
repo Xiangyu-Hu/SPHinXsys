@@ -34,6 +34,15 @@ namespace SPH
 {
 //=================================================================================================//
 template <typename DataType>
+void DiscreteVariable::synchronizeWithDevice()
+{
+    if (existDeviceDataField())
+    {
+        copyFromDevice(data_field_, device_data_field_, size);
+    }
+}
+//=================================================================================================//
+template <typename DataType>
 SingularDeviceSharedVariable<DataType>::
     SingularVariable(SingularVariable<DataType> &original_variable)
     : BaseVariable(name), device_shared_value_(allocateDeviceShared<DataType>(1))
@@ -49,20 +58,18 @@ SingularDeviceSharedVariable<DataType>::~SingularDeviceSharedVariable()
 }
 //=================================================================================================//
 template <typename DataType>
-DiscreteDeviceSharedVariable<DataType>::
-    DiscreteVariable(DiscreteVariable<DataType> &original_variable)
-    : BaseVariable(name), original_variable_(original_variable),
-      device_shared_data_field_(nullptr){};
-//=================================================================================================//
-template <typename DataType>
-void DiscreteDeviceSharedVariable<DataType>::allocateDataField(const size_t size)
+DiscreteDeviceOnlyVariable<DataType>::
+    DiscreteDeviceOnlyVariable(DiscreteVariable<DataType> *host_variable)
+    : BaseVariable(name), device_data_field_(nullptr)
 {
-    device_shared_data_field_ = allocateDeviceShared(size);
-    original_variable_.setDelegateValue(device_shared_data_field_);
-}
+    size_t size = host_variable->getSize();
+    device_data_field_ = allocateDeviceOnly(size);
+    copyToDevice(host_variable->DataField(), device_data_field_, size);
+    host_variable.setDeviceDataField(device_data_field_);
+};
 //=================================================================================================//
 template <typename DataType>
-DiscreteDeviceSharedVariable<DataType>::~DiscreteDeviceSharedVariable()
+DiscreteDeviceOnlyVariable<DataType>::~DiscreteDeviceOnlyVariable()
 {
     freeDeviceData(device_shared_data_field_);
 }

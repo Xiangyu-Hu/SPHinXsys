@@ -40,7 +40,6 @@ class BaseForcePrior : public BaseLocalDynamics<DynamicsIdentifier>
 {
   protected:
     Vecd *force_prior_, *current_force_, *previous_force_;
-    DiscreteVariable<Vecd> *v_force_prior_, *v_current_force_, *v_previous_force_;
 
   public:
     BaseForcePrior(DynamicsIdentifier &identifier, const std::string &force_name);
@@ -72,8 +71,6 @@ class GravityForce : public ForcePrior
     Real *mass_;
     Real *physical_time_;
 
-    DiscreteVariable<Vecd> *v_pos_;
-    DiscreteVariable<Real> *v_mass_;
     SingularVariable<Real> *v_physical_time_;
 
   public:

@@ -141,16 +141,6 @@ class BaseParticles
 
     template <typename DataType, typename... Args>
     DataType *registerSharedVariable(const std::string &name, Args &&...args);
-
-    template <typename DataType, class ExecutionPolicy, typename... Args>
-    DiscreteVariable<DataType> *registerSharedVariable(const ExecutionPolicy &execution_policy, const std::string &name, Args &&...args)
-    {
-        registerSharedVariable<DataType>(name, std::forward<Args>(args)...);
-        return getVariableByName<DataType>(name);
-    };
-    template <typename DataType, typename... Args>
-    DiscreteVariable<DataType> *registerSharedVariable(const ParallelDevicePolicy &execution_policy, const std::string &name, Args &&...args);
-
     template <typename DataType>
     DataType *registerSharedVariableFrom(const std::string &new_name, const std::string &old_name);
     template <typename DataType>
@@ -159,21 +149,11 @@ class BaseParticles
     DataType *registerSharedVariableFromReload(const std::string &name);
     template <typename DataType>
     DiscreteVariable<DataType> *getVariableByName(const std::string &name);
-
     template <typename DataType>
     DataType *getVariableDataByName(const std::string &name);
 
-    template <typename DataType, class ExecutionPolicy>
-    DiscreteVariable<DataType> *getVariableByName(const ExecutionPolicy &execution_policy, const std::string &name)
-    {
-        return getVariableByName<DataType>(name);
-    };
     template <typename DataType>
-    DiscreteVariable<DataType> *getVariableByName(const ParallelDevicePolicy &execution_policy, const std::string &name);
-
-    template <typename DataType>
-    DataType *registerSingularVariable(const std::string &name,
-                                       DataType initial_value = ZeroData<DataType>::value);
+    DataType *registerSingularVariable(const std::string &name, DataType initial_value = ZeroData<DataType>::value);
     template <typename DataType>
     DataType *getSingularVariableByName(const std::string &name);
     //----------------------------------------------------------------------
@@ -186,18 +166,11 @@ class BaseParticles
     template <typename DataType>
     void addVariableToRestart(const std::string &name);
 
-    template <typename DataType, class ExecutionPolicy>
-    void addVariableToRestart(const ExecutionPolicy execution_policy, const std::string &name)
-    {
-        addVariableToRestart<DataType>(name);
-    };
-    template <typename DataType>
-    void addVariableToRestart(const ParallelDevicePolicy execution_policy, const std::string &name);
-
     inline const ParticleVariables &getVariablesToRestart() const { return variables_to_restart_; }
     template <typename DataType>
     void addVariableToReload(const std::string &name);
     inline const ParticleVariables &getVariablesToReload() const { return variables_to_reload_; }
+
     //----------------------------------------------------------------------
     // Particle data for sorting
     //----------------------------------------------------------------------
@@ -210,6 +183,39 @@ class BaseParticles
   public:
     template <typename DataType>
     void addVariableToSort(const std::string &name);
+    UnsignedInt *ParticleOriginalIds() { return original_id_; };
+    UnsignedInt *ParticleSortedIds() { return sorted_id_; };
+    ParticleData &SortableParticleData() { return sortable_data_; };
+    ParticleVariables &SortableParticleVariables() { return sortable_variables_; };
+
+    //----------------------------------------------------------------------
+    // Variable related functions for offloading computing
+    //----------------------------------------------------------------------
+    template <typename DataType, class ExecutionPolicy, typename... Args>
+    DataType *registerSharedVariable(const ExecutionPolicy &execution_policy, const std::string &name, Args &&...args)
+    {
+        return registerSharedVariable<DataType>(name, std::forward<Args>(args)...);
+    };
+
+    template <typename DataType, typename... Args>
+    DataType *registerSharedVariable(const ParallelDevicePolicy &execution_policy, const std::string &name, Args &&...args);
+
+    template <typename DataType, class ExecutionPolicy>
+    DataType *getVariableDataByName(const ExecutionPolicy &execution_policy, const std::string &name)
+    {
+        return getVariableDataByName<DataType>(name);
+    };
+
+    template <typename DataType>
+    DataType *getVariableDataByName(const ParallelDevicePolicy &execution_policy, const std::string &name);
+
+    template <typename DataType, class ExecutionPolicy>
+    void addVariableToRestart(const ExecutionPolicy execution_policy, const std::string &name)
+    {
+        addVariableToRestart<DataType>(name);
+    };
+    template <typename DataType>
+    void addVariableToRestart(const ParallelDevicePolicy execution_policy, const std::string &name);
 
     template <typename DataType, class ExecutionPolicy>
     void addVariableToSort(const ExecutionPolicy execution_policy, const std::string &name)
@@ -219,10 +225,6 @@ class BaseParticles
     template <typename DataType>
     void addVariableToSort(const ParallelDevicePolicy execution_policy, const std::string &name);
 
-    UnsignedInt *ParticleOriginalIds() { return original_id_; };
-    UnsignedInt *ParticleSortedIds() { return sorted_id_; };
-    ParticleData &SortableParticleData() { return sortable_data_; };
-    ParticleVariables &SortableParticleVariables() { return sortable_variables_; };
     //----------------------------------------------------------------------
     // Particle data ouput functions
     //----------------------------------------------------------------------
