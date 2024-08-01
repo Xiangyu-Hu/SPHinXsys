@@ -28,7 +28,6 @@
 #ifndef SPHINXSYS_SYCL_H
 #define SPHINXSYS_SYCL_H
 
-#include "base_data_type_sycl.h"
 #include "base_variable_sycl.hpp"
 #include "particle_iterators_sycl.h"
 #include "sphinxsys.h"
