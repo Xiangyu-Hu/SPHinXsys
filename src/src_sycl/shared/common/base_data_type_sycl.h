@@ -32,12 +32,13 @@
 #ifndef BASE_DATA_TYPE_SYCL_H
 #define BASE_DATA_TYPE_SYCL_H
 
-#include "base_data_type.h"
+#include <CL/sycl.hpp>
 
 #ifndef SYCL_DEVICE_ONLY
 #define SYCL_DEVICE_ONLY // Eigen matrix and vector types degraded for SYCL
 #endif
 
+#include "base_data_type.h"
 namespace SPH
 {
 } // namespace SPH

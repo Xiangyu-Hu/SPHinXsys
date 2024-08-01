@@ -45,8 +45,15 @@ class Gravity
     Gravity(Vecd gravity_vector, Vecd reference_position = Vecd::Zero());
     ~Gravity(){};
 
-    Vecd InducedAcceleration(const Vecd &position = Vecd::Zero(), Real physical_time = 0.0);
-    Real getPotential(const Vecd &position);
+    Vecd InducedAcceleration(const Vecd &position = Vecd::Zero(), Real physical_time = 0.0)
+    {
+        return reference_acceleration_;
+    };
+
+    Real getPotential(const Vecd &position)
+    {
+        return reference_acceleration_.dot(zero_potential_reference_ - position);
+    };
 };
 
 class StartupAcceleration : public Gravity
@@ -57,7 +64,12 @@ class StartupAcceleration : public Gravity
     StartupAcceleration(Vecd target_velocity, Real target_time);
     ~StartupAcceleration(){};
 
-    Vecd InducedAcceleration(const Vecd &position, Real physical_time);
+    Vecd InducedAcceleration(const Vecd &position, Real physical_time)
+    {
+        Real time_factor = physical_time / target_time_;
+        Vecd acceleration = 0.5 * Pi * sin(Pi * time_factor) * Gravity::InducedAcceleration();
+        return time_factor < 1.0 ? acceleration : Vecd::Zero();
+    };
 };
 
 class IncreaseToFullGravity : public Gravity
@@ -65,8 +77,15 @@ class IncreaseToFullGravity : public Gravity
     Real time_to_full_gravity_;
 
   public:
-    explicit IncreaseToFullGravity(Vecd gravity_vector, Real time_to_full_gravity);
-    Vecd InducedAcceleration(const Vecd &position, Real physical_time);
+    IncreaseToFullGravity(Vecd gravity_vector, Real time_to_full_gravity);
+    ~IncreaseToFullGravity() {}
+
+    Vecd InducedAcceleration(const Vecd &position, Real physical_time)
+    {
+        Real time_factor = physical_time / time_to_full_gravity_;
+        Vecd full_acceleration = Gravity::InducedAcceleration();
+        return time_factor < 1.0 ? time_factor * full_acceleration : full_acceleration;
+    };
 };
 } // namespace SPH
 #endif // EXTERNAL_FORCE_H
