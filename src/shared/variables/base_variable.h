@@ -74,7 +74,7 @@ class SingularDeviceSharedVariable : public BaseVariable
 
 {
   public:
-    SingularDeviceSharedVariable(SingularVariable<DataType> &original_variable);
+    SingularDeviceSharedVariable(SingularVariable<DataType> *host_variable);
     virtual ~SingularDeviceSharedVariable();
 
   protected:

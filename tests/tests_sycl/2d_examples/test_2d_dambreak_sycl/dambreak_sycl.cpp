@@ -123,6 +123,7 @@ int main(int ac, char *av[])
     sph_system.initializeSystemConfigurations();
     wall_boundary_normal_direction.exec();
     constant_gravity.exec();
+    water_block.getBaseParticles().getVariableByName<Vecd>("ForcePrior")->synchronizeWithDevice();
     //----------------------------------------------------------------------
     //	Load restart file if necessary.
     //----------------------------------------------------------------------

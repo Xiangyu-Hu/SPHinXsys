@@ -104,13 +104,13 @@ class SPHSystem
     DataType *registerSystemVariable(const std::string &name,
                                      DataType initial_value = ZeroData<DataType>::value);
     template <typename DataType, class ExecutionPolicy>
-    DataType *registerSystemVariable(const ExecutionPolicy &execution_policy,
-                                     const std::string &name,
-                                     DataType initial_value = ZeroData<DataType>::value);
+    SingularVariable<DataType> *registerSystemVariable(const ExecutionPolicy &execution_policy,
+                                                       const std::string &name,
+                                                       DataType initial_value = ZeroData<DataType>::value);
     template <typename DataType>
-    DataType *registerSystemVariable(const ParallelDevicePolicy &execution_policy,
-                                     const std::string &name,
-                                     DataType initial_value = ZeroData<DataType>::value);
+    SingularVariable<DataType> *registerSystemVariable(const ParallelDevicePolicy &execution_policy,
+                                                       const std::string &name,
+                                                       DataType initial_value = ZeroData<DataType>::value);
     template <typename DataType>
     DataType *getSystemVariableDataByName(const std::string &name);
 

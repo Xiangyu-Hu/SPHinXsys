@@ -29,6 +29,7 @@
 #define SPHINXSYS_SYCL_H
 
 #include "base_data_type_sycl.h"
+#include "base_variable_sycl.hpp"
 #include "sphinxsys.h"
 
 #endif // SPHINXSYS_SYCL_H

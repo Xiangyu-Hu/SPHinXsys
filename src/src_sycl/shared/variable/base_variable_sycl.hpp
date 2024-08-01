@@ -28,27 +28,29 @@
 #ifndef BASE_VARIABLE_SYCL_HPP
 #define BASE_VARIABLE_SYCL_HPP
 
+#include "base_variable.h"
 #include "base_variable_sycl.h"
 
 namespace SPH
 {
 //=================================================================================================//
 template <typename DataType>
-void DiscreteVariable::synchronizeWithDevice()
+void DiscreteVariable<DataType>::synchronizeWithDevice()
 {
     if (existDeviceDataField())
     {
-        copyFromDevice(data_field_, device_data_field_, size);
+        copyFromDevice(data_field_, device_data_field_, size_);
     }
 }
 //=================================================================================================//
 template <typename DataType>
 SingularDeviceSharedVariable<DataType>::
-    SingularVariable(SingularVariable<DataType> &original_variable)
-    : BaseVariable(name), device_shared_value_(allocateDeviceShared<DataType>(1))
+    SingularDeviceSharedVariable(SingularVariable<DataType> *host_variable)
+    : BaseVariable(host_variable->Name()),
+      device_shared_value_(allocateDeviceShared<DataType>(1))
 {
-    *device_shared_value_ = *original_variable.ValueAddress();
-    original_variable.setDelegateValue(device_shared_value_);
+    *device_shared_value_ = host_variable->ValueAddress();
+    host_variable->setDelegateValueAddress(device_shared_value_);
 }
 //=================================================================================================//
 template <typename DataType>
@@ -60,18 +62,18 @@ SingularDeviceSharedVariable<DataType>::~SingularDeviceSharedVariable()
 template <typename DataType>
 DiscreteDeviceOnlyVariable<DataType>::
     DiscreteDeviceOnlyVariable(DiscreteVariable<DataType> *host_variable)
-    : BaseVariable(name), device_data_field_(nullptr)
+    : BaseVariable(host_variable->Name()), device_data_field_(nullptr)
 {
     size_t size = host_variable->getSize();
-    device_data_field_ = allocateDeviceOnly(size);
+    device_data_field_ = allocateDeviceOnly<DataType>(size);
     copyToDevice(host_variable->DataField(), device_data_field_, size);
-    host_variable.setDeviceDataField(device_data_field_);
+    host_variable->setDeviceDataField(device_data_field_);
 };
 //=================================================================================================//
 template <typename DataType>
 DiscreteDeviceOnlyVariable<DataType>::~DiscreteDeviceOnlyVariable()
 {
-    freeDeviceData(device_shared_data_field_);
+    freeDeviceData(device_data_field_);
 }
 //=================================================================================================//
 } // namespace SPH

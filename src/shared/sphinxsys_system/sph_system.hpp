@@ -22,33 +22,19 @@ DataType *SPHSystem::registerSystemVariable(const std::string &name, DataType in
 }
 //=================================================================================================//
 template <typename DataType, class ExecutionPolicy>
-DataType *SPHSystem::registerSystemVariable(const ExecutionPolicy &execution_policy,
-                                            const std::string &name, DataType initial_value)
+SingularVariable<DataType> *SPHSystem::registerSystemVariable(const ExecutionPolicy &execution_policy,
+                                                              const std::string &name, DataType initial_value)
 {
-    return registerSystemVariable<DataType>(name, initial_value);
+    registerSystemVariable<DataType>(name, initial_value);
+    return getSystemVariableByName<DataType>(name);
 }
 //=================================================================================================//
 template <typename DataType>
-DataType *SPHSystem::registerSystemVariable(const ParallelDevicePolicy &execution_policy,
-                                            const std::string &name, DataType initial_value)
+SingularVariable<DataType> *SPHSystem::registerSystemVariable(const ParallelDevicePolicy &execution_policy,
+                                                              const std::string &name, DataType initial_value)
 {
-    SingularVariable<DataType> *variable =
-        findVariableByName<DataType>(all_system_variables_, name);
-
-    if (variable == nullptr)
-    {
-        SingularVariable<DataType> *new_variable =
-            addVariableToAssemble<DataType>(all_system_variables_,
-                                            all_system_variable_ptrs_, name, initial_value);
-        unique_system_variable_ptrs_.createPtr<SingularDeviceSharedVariable<DataType>>(*new_variable);
-        return new_variable->ValueAddress();
-    }
-    else if (!variable->isValueDelegated())
-    {
-        unique_system_variable_ptrs_.createPtr<SingularDeviceSharedVariable<DataType>>(*variable);
-        return variable->ValueAddress();
-    }
-    return variable->ValueAddress();
+    registerSystemVariable<DataType>(name, initial_value);
+    return getSystemVariableByName<DataType>(execution_policy, name);
 }
 //=================================================================================================//
 template <typename DataType>
@@ -92,17 +78,10 @@ template <typename DataType>
 SingularVariable<DataType> *SPHSystem::getSystemVariableByName(
     const ParallelDevicePolicy &execution_policy, const std::string &name)
 {
-    SingularVariable<DataType> *variable =
-        findVariableByName<DataType>(all_system_variables_, name);
-
-    if (variable == nullptr)
+    SingularVariable<DataType> *variable = getSystemVariableByName<DataType>(name);
+    if (variable->isValueDelegated())
     {
-        std::cout << "\nError: the system variable '" << name << "' is not registered!\n";
-        std::cout << __FILE__ << ':' << __LINE__ << std::endl;
-    }
-    else if (variable->isValueDelegated())
-    {
-        unique_system_variable_ptrs_.createPtr<SingularDeviceSharedVariable<DataType>>(*variable);
+        unique_system_variable_ptrs_.createPtr<SingularDeviceSharedVariable<DataType>>(variable);
     }
 
     return variable;
