@@ -40,7 +40,7 @@
 #include <typeinfo>
 #include <vector>
 
-#if SPHINXSYS_USE_SYCL // Eigen matrix and vector types degraded
+#if SPHINXSYS_USE_SYCL
 #include <CL/sycl.hpp>
 #define SYCL_DEVICE_ONLY
 #endif // SPHINXSYS_USE_SYCL
