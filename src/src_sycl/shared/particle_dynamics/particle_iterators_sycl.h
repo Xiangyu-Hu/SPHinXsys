@@ -30,6 +30,7 @@
 #define PARTICLE_ITERATORS_SYCL_H
 
 #include "execution_sycl.h"
+#include "particle_iterators.h"
 
 namespace SPH
 {

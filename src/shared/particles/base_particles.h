@@ -136,8 +136,8 @@ class BaseParticles
     DataType *initializeVariable(VariableType<DataType> *variable, const InitializationFunction &initialization);
 
   public:
-    template <class GeneralVariableType, typename... Args>
-    GeneralVariableType *addUniqueVariable(const std::string &name, Args &&...args);
+    template <class DataType, typename... Args>
+    DataType *addUniqueDiscreteVariable(const std::string &name, Args &&...args);
 
     template <typename DataType, typename... Args>
     DataType *registerSharedVariable(const std::string &name, Args &&...args);

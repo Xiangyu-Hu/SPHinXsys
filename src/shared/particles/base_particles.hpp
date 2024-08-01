@@ -56,13 +56,13 @@ DataType *BaseParticles::
     return data_field;
 }
 //=================================================================================================//
-template <class GeneralVariableType, typename... Args>
-GeneralVariableType *BaseParticles::addUniqueVariable(const std::string &name, Args &&...args)
+template <class DataType, typename... Args>
+DataType *BaseParticles::addUniqueDiscreteVariable(const std::string &name, Args &&...args)
 {
 
-    GeneralVariableType *variable = unique_variable_ptrs_.createPtr<GeneralVariableType>(name);
+    DiscreteVariable<DataType> *variable = unique_variable_ptrs_.createPtr<DiscreteVariable<DataType>>(name);
     initializeVariable(variable, std::forward<Args>(args)...);
-    return variable;
+    return variable->DataField();
 }
 //=================================================================================================//
 template <typename DataType>
@@ -264,7 +264,7 @@ DataType *BaseParticles::getVariableDataByName(const ParallelDevicePolicy &execu
     DiscreteVariable<DataType> *variable = getVariableByName<DataType>(name);
     if (!variable->existDeviceDataField())
     {
-        addUniqueVariable<DiscreteDeviceOnlyVariable<DataType>>(variable);
+        unique_variable_ptrs_.createPtr<DiscreteDeviceOnlyVariable<DataType>>(variable);
     }
     return variable->DeviceDataField();
 }

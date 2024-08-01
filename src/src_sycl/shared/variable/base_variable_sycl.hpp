@@ -49,7 +49,7 @@ SingularDeviceSharedVariable<DataType>::
     : BaseVariable(host_variable->Name()),
       device_shared_value_(allocateDeviceShared<DataType>(1))
 {
-    *device_shared_value_ = host_variable->ValueAddress();
+    *device_shared_value_ = *host_variable->ValueAddress();
     host_variable->setDelegateValueAddress(device_shared_value_);
 }
 //=================================================================================================//
@@ -62,18 +62,18 @@ SingularDeviceSharedVariable<DataType>::~SingularDeviceSharedVariable()
 template <typename DataType>
 DiscreteDeviceOnlyVariable<DataType>::
     DiscreteDeviceOnlyVariable(DiscreteVariable<DataType> *host_variable)
-    : BaseVariable(host_variable->Name()), device_data_field_(nullptr)
+    : BaseVariable(host_variable->Name()), device_only_data_field_(nullptr)
 {
     size_t size = host_variable->getSize();
-    device_data_field_ = allocateDeviceOnly<DataType>(size);
-    copyToDevice(host_variable->DataField(), device_data_field_, size);
-    host_variable->setDeviceDataField(device_data_field_);
+    device_only_data_field_ = allocateDeviceOnly<DataType>(size);
+    copyToDevice(host_variable->DataField(), device_only_data_field_, size);
+    host_variable->setDeviceDataField(device_only_data_field_);
 };
 //=================================================================================================//
 template <typename DataType>
 DiscreteDeviceOnlyVariable<DataType>::~DiscreteDeviceOnlyVariable()
 {
-    freeDeviceData(device_data_field_);
+    freeDeviceData(device_only_data_field_);
 }
 //=================================================================================================//
 } // namespace SPH

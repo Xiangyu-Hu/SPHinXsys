@@ -116,22 +116,36 @@ class ExecutionEvent
     std::vector<sycl::event> event_list_;
 };
 
-template <class ComputingKernelType>
-class Implementation<ComputingKernelType, ParallelDevicePolicy>
+template <class LocalDynamicsType>
+class Implementation<LocalDynamicsType, ParallelDevicePolicy>
 {
-    using DeviceComputingKernelType = sycl::buffer<ComputingKernelType>;
+    using ComputingKernel = typename LocalDynamicsType::ComputingKernel;
+    using ComputingKernelBuffer = sycl::buffer<ComputingKernel>;
+    UniquePtrKeeper<ComputingKernel> kernel_ptr_keeper_;
+    UniquePtrKeeper<ComputingKernelBuffer> kernel_buffer_ptr_keeper_;
 
   public:
-    explicit Implementation(ComputingKernelType &computing_kernel)
-        : delegated_kernel_(&computing_kernel, 1) {}
+    explicit Implementation(LocalDynamicsType &local_dynamics)
+        : local_dynamics_(local_dynamics), computing_kernel_(nullptr),
+          computing_kernel_buffer_(nullptr) {}
 
-    DeviceComputingKernelType &getBuffer()
+    ComputingKernelBuffer &getBuffer()
     {
-        return delegated_kernel_;
+        if (computing_kernel_ == nullptr)
+        {
+            computing_kernel_ = kernel_ptr_keeper_
+                                    .template createPtr<ComputingKernel>(local_dynamics_);
+            computing_kernel_buffer_ = kernel_buffer_ptr_keeper_
+                                           .template createPtr<ComputingKernelBuffer>(computing_kernel_, 1);
+        }
+
+        return *computing_kernel_buffer_;
     }
 
   private:
-    DeviceComputingKernelType delegated_kernel_;
+    LocalDynamicsType &local_dynamics_;
+    ComputingKernel *computing_kernel_;
+    ComputingKernelBuffer *computing_kernel_buffer_;
 };
 } // namespace execution
 } // namespace SPH

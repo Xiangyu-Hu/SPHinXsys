@@ -62,7 +62,7 @@ class SingularVariable : public BaseVariable
 
     DataType *ValueAddress() { return delegated_; };
     bool isValueDelegated() { return value_ == delegated_; };
-    void setNewDelegated(DataType *new_delegated) { delegated_ = new_delegated; };
+    void setDelegateValueAddress(DataType *new_delegated) { delegated_ = new_delegated; };
 
   protected:
     DataType *value_;
@@ -117,7 +117,7 @@ class DiscreteDeviceOnlyVariable : public BaseVariable
     virtual ~DiscreteDeviceOnlyVariable();
 
   protected:
-    DataType *device_data_field_;
+    DataType *device_only_data_field_;
 };
 
 template <typename DataType>
