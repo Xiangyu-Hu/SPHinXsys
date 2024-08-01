@@ -50,6 +50,13 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     # target_compile_options(sphinxsys_core INTERFACE $<$<BOOL:${SPHINXSYS_DEVELOPER_MODE}>:-Wpedantic>) # For strict C++ standard compliance # TODO:
 endif()
 
+if(SPHINXSYS_USE_SYCL)
+    if(NOT SPHINXSYS_USE_FLOAT)
+    set(SPHINXSYS_USE_FLOAT ON)
+    message("-- Float is used as required by SPHinXsysSYCL.")
+    endif()
+endif()
+
 target_compile_definitions(sphinxsys_core INTERFACE SPHINXSYS_USE_SYCL=$<BOOL:${SPHINXSYS_USE_SYCL}>)
 target_compile_definitions(sphinxsys_core INTERFACE SPHINXSYS_USE_FLOAT=$<BOOL:${SPHINXSYS_USE_FLOAT}>)
 
@@ -104,11 +111,6 @@ if(SPHINXSYS_USE_SYCL)
     set(SPHINXSYS_USE_SYCL ON)
     if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")
         message(FATAL_ERROR "-- SPHinXsysSYCL is only supported with IntelLLVM compiler.")
-    endif()
-
-    if(NOT SPHINXSYS_USE_FLOAT)
-        set(SPHINXSYS_USE_FLOAT ON)
-        message("-- Float is used as required by SPHinXsysSYCL.")
     endif()
 
     if(NOT SPHINXSYS_SYCL_TARGETS)
