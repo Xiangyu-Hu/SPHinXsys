@@ -40,10 +40,10 @@
 #include <typeinfo>
 #include <vector>
 
-#ifndef SPHINXSYS_USE_SYCL
+#if SPHINXSYS_USE_SYCL // Eigen matrix and vector types degraded
 #include <CL/sycl.hpp>
-#define SYCL_DEVICE_ONLY // Eigen matrix and vector types degraded
-#endif                   // SPHINXSYS_USE_SYCL
+#define SYCL_DEVICE_ONLY
+#endif // SPHINXSYS_USE_SYCL
 
 #include <Eigen/Cholesky>
 #include <Eigen/Core>
