@@ -1,6 +1,7 @@
 ##### VS Code
 # VS Code setting up
 .vscode
+*.json
 
 ##### Windows
 # Windows thumbnail cache files
