@@ -44,6 +44,15 @@ void DiscreteVariable<DataType>::synchronizeWithDevice()
 }
 //=================================================================================================//
 template <typename DataType>
+void DiscreteVariable<DataType>::synchronizeDevice()
+{
+    if (existDeviceDataField())
+    {
+        copyToDevice(data_field_, device_data_field_, size_);
+    }
+}
+//=================================================================================================//
+template <typename DataType>
 SingularDeviceSharedVariable<DataType>::
     SingularDeviceSharedVariable(SingularVariable<DataType> *host_variable)
     : BaseVariable(host_variable->Name()),
