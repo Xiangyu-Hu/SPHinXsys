@@ -6,13 +6,15 @@
 namespace SPH
 {
 //=================================================================================================//
-template <typename MeshType>
-UpdateCellLinkedList<MeshType, ParallelDevicePolicy>::UpdateCellLinkedList(RealBody &real_body)
+template <typename CellLinkedListType>
+UpdateCellLinkedList<CellLinkedListType, ParallelDevicePolicy>::UpdateCellLinkedList(RealBody &real_body)
     : LocalDynamics(real_body), BaseDynamics<void>(real_body),
-      mesh_(DynamicsCast<CellLinkedList>(this, &real_body.getCellLinkedList())),
-      particles_bound_(particles_->ge)
+      mesh_(real_body.getCellLinkedList()),
+      pos_(particles_->getVariableDataByName<Vecd>(ParallelDevicePolicy{}, "Position")),
+      particle_id_list_(particles_->registerSharedVariable<UnsignedInt>(ParallelDevicePolicy{}, "ParticleIDList")),
+      particle_offset_list_(particles_->registerSharedVariable<UnsignedInt>(ParallelDevicePolicy{}, "ParticleOffsetList"))
 {
-    particles_bound_ = mesh_.NumberOfCells();
+
     pos_ = particles_->getVariablePositions();
     particle_id_list_ = particles_->getVariableParticleIndex();
     particle_offset_list_ = particles_->getVariableParticleOffset();

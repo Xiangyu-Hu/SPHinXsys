@@ -33,10 +33,12 @@
 
 namespace SPH
 {
-template <typename MeshType>
-class UpdateCellLinkedList<MeshType, ParallelDevicePolicy>
+template <typename CellLinkedListType>
+class UpdateCellLinkedList<CellLinkedListType, ParallelDevicePolicy>
     : public LocalDynamics, public BaseDynamics<void>
 {
+    using Mesh = CellLinkedListType::MeshType;
+
   public:
     UpdateCellLinkedList(SPHBody &sph_body);
     virtual ~UpdateCellLinkedList(){};
@@ -47,11 +49,14 @@ class UpdateCellLinkedList<MeshType, ParallelDevicePolicy>
       public:
       protected:
         friend class UpdateCellLinkedList<MeshType, ParallelDevicePolicy>;
-        MeshType mesh_;
+        Mesh mesh_;
+        Vecd *pos_;
+        UnsignedInt *particle_id_list_;
+        UnsignedInt *particle_offset_list_;
     };
 
   protected:
-    MeshType mesh_;
+    Mesh mesh_;
     Vecd *pos_;
     UnsignedInt *particle_id_list_;
     UnsignedInt *particle_offset_list_;
