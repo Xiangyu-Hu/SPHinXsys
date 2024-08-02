@@ -58,7 +58,7 @@ namespace fluid_dynamics
 		BaseTurtbulentModel<Base, DataDelegationType>(base_relation),
 		force_(*this->particles_->template registerSharedVariable<Vecd>("Force")), 
 		mass_(*this->particles_->template getVariableByName<Real>("Mass")),
-		indicator_(*this->particles_->template registerSharedVariable<int>("Indicator")), 
+		indicator_(*this->particles_->template getVariableByName<int>("Indicator")), 
 		pos_(*this->particles_->template getVariableByName<Vecd>("Position")),
 		turbu_k_(*this->particles_->template getVariableByName<Real>("TurbulenceKineticEnergy")),
 		test_k_grad_rslt_(*this->particles_->template registerSharedVariable<Vecd>("TkeGradResult")){}

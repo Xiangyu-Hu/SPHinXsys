@@ -184,7 +184,8 @@ struct InflowVelocity
         //target_velocity[0] = 1.5 * u_ave * SMAX(0.0, 1.0 - position[1] * position[1] / halfsize_[1] / halfsize_[1]);
         //target_velocity[0] = 1.5 * u_ave * (1.0 - position[1] * position[1] / half_channel_height / half_channel_height);
         //target_velocity[0] = u_ave;
- 
+ if(1)
+ {
         //** Impose fully-developed velocity from PYTHON result */
         //** Calculate the distance to wall, Y. position[1] is the distance to the centerline */
         Real Y = half_channel_height - std::abs(position[1]);
@@ -215,7 +216,7 @@ struct InflowVelocity
         //** Impose inlet velocity gradually */
         target_velocity[0] = run_time < t_ref_ ? 0.5 * polynomial_value * (1.0 - cos(Pi * run_time / t_ref_)) : polynomial_value;
         //target_velocity[0] = polynomial_value;
-        
+}
 
 
         if (position[1] > half_channel_height)

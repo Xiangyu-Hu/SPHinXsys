@@ -123,6 +123,10 @@ int main(int ac, char *av[])
 
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
     InteractionDynamics<fluid_dynamics::DistanceFromWall> distance_to_wall(water_wall_contact);
+    /** For pressure outlet . */
+    InteractionDynamics<NablaWVComplex> kernel_summation(water_block_inner, water_wall_contact);
+    InteractionWithUpdate<SpatialTemporalFreeSurfaceIndicationComplex> inlet_outlet_surface_particle_indicator(water_block_inner, water_wall_contact);
+    
     /** Turbulent standard wall function needs normal vectors of wall. */
     //NearShapeSurface near_surface(water_block, makeShared<WallBoundary>("Wall"));
 
@@ -170,10 +174,6 @@ int main(int ac, char *av[])
     /** Impose transport velocity, with or without Extra Transprot Force, and with limiter . */
     InteractionWithUpdate<fluid_dynamics::TransportVelocityLimitedCorrectionComplex<BulkParticles>> transport_velocity_correction(water_block_inner, water_wall_contact);
     //Dynamics1Level<fluid_dynamics::ExtraTransportForceLimitedComplex<BulkParticles>> impose_extra_transport_force(water_block_inner, water_wall_contact);
-    
-    /** For pressure outlet . */
-    InteractionDynamics<NablaWVComplex> kernel_summation(water_block_inner, water_wall_contact);
-    InteractionWithUpdate<SpatialTemporalFreeSurfaceIndicationComplex> inlet_outlet_surface_particle_indicator(water_block_inner, water_wall_contact);
 
     /** Evaluation of density by summation approach. */
     //InteractionWithUpdate<fluid_dynamics::DensitySummationFreeStreamComplex> update_density_by_summation(water_block_inner, water_wall_contact);
