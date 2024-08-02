@@ -55,7 +55,7 @@ class ExecutionInstance
     sycl::queue &getQueue()
     {
         if (!sycl_queue_)
-            sycl_queue_ = makeUnique<sycl::queue>(sycl::gpu_selector_v);
+            sycl_queue_ = makeUnique<sycl::queue>(sycl::default_selector_v);
         return *sycl_queue_;
     }
 
@@ -81,7 +81,7 @@ class ExecutionInstance
     }
 
   private:
-    ExecutionInstance() : work_group_size_(32), sycl_queue_() {}
+    ExecutionInstance() : work_group_size_(128), sycl_queue_() {}
 
     size_t work_group_size_;
     UniquePtr<sycl::queue> sycl_queue_;
