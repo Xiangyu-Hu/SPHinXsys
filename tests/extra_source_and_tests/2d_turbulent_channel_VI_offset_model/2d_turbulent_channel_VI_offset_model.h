@@ -60,7 +60,7 @@ Real c_f = 10.0 * U_max;
 Real rho0_f = 1.0;                                            /**< Density. */
 Real Re = 20000.0;
 
-Real Outlet_pressure = 100.0;
+Real Outlet_pressure = 0.0;
 
 Real mu_f = rho0_f * U_f * DH / Re;
 
@@ -70,10 +70,12 @@ Real DH_C = DH - 2.0 * offset_distance;
 //----------------------------------------------------------------------
 //	The emitter block with offset model. 
 //----------------------------------------------------------------------
-Vec2d emitter_halfsize = Vec2d(0.5 * BW, 0.5 * DH_C + BW );
-Vec2d emitter_translation = Vec2d(-DL_sponge, 0.0) + emitter_halfsize + Vecd(0.0, offset_distance - BW);
-Vec2d inlet_buffer_halfsize = Vec2d(0.5 * DL_sponge, 0.5 * DH_C + BW);
-Vec2d inlet_buffer_translation = Vec2d(-DL_sponge, 0.0) + inlet_buffer_halfsize + Vecd(0.0, offset_distance - BW);
+//Vec2d emitter_halfsize = Vec2d(0.5 * BW, 0.5 * DH_C + BW );
+//Vec2d emitter_translation = Vec2d(-DL_sponge, 0.0) + emitter_halfsize + Vecd(0.0, offset_distance - BW);
+//Vec2d inlet_buffer_halfsize = Vec2d(0.5 * DL_sponge, 0.5 * DH_C + BW);
+//Vec2d inlet_buffer_translation = Vec2d(-DL_sponge, 0.0) + inlet_buffer_halfsize + Vecd(0.0, offset_distance - BW);
+Vec2d left_buffer_halfsize = Vec2d(0.5 * BW, 0.5 * DH_C + BW );
+Vec2d left_buffer_translation = Vec2d(-DL_sponge, 0.0) + left_buffer_halfsize + Vecd(0.0, offset_distance - BW);
 
 //Vec2d disposer_halfsize = Vec2d(0.5 * BW, 0.75 * DH);
 //Vec2d disposer_translation = Vec2d(DL, DH + 0.25 * DH) - disposer_halfsize;
@@ -255,5 +257,15 @@ struct RightOutflowPressure
         /*constant pressure*/
         Real pressure = Outlet_pressure;
         return pressure;
+    }
+};
+struct LeftInflowPressure
+{
+    template <class BoundaryConditionType>
+    LeftInflowPressure(BoundaryConditionType &boundary_condition) {}
+
+    Real operator()(Real &p_)
+    {
+        return p_;
     }
 };

@@ -181,11 +181,25 @@ int main(int ac, char *av[])
     /** Initialize particle acceleration. */
     TimeDependentAcceleration time_dependent_acceleration(Vec2d::Zero());
     SimpleDynamics<GravityForce> apply_gravity_force(water_block, time_dependent_acceleration);
+    
+    //----------------------------------------------------------------------
+    // Left/Inlet buffer
+    //----------------------------------------------------------------------
+    //BodyAlignedBoxByParticle emitter(water_block, makeShared<AlignedBoxShape>(Transform(Vec2d(emitter_translation)), emitter_halfsize));
+    //SimpleDynamics<fluid_dynamics::EmitterInflowInjection> emitter_inflow_injection(emitter, inlet_particle_buffer, xAxis);
+    //BodyAlignedBoxByCell inlet_velcoity_buffer(water_block, makeShared<AlignedBoxShape>(Transform(Vec2d(inlet_buffer_translation)), inlet_buffer_halfsize));
+    //SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>> inlet_velocity_buffer_inflow_condition(inlet_velcoity_buffer, 1.0);
+    
+    BodyAlignedBoxByCell left_emitter(water_block, makeShared<AlignedBoxShape>(Transform(Vec2d(left_buffer_translation)), left_buffer_halfsize));
+    fluid_dynamics::NonPrescribedPressureBidirectionalBuffer left_emitter_inflow_injection(left_emitter, inlet_particle_buffer, xAxis);
 
-    BodyAlignedBoxByParticle emitter(water_block, makeShared<AlignedBoxShape>(Transform(Vec2d(emitter_translation)), emitter_halfsize));
-    SimpleDynamics<fluid_dynamics::EmitterInflowInjection> emitter_inflow_injection(emitter, inlet_particle_buffer, xAxis);
-    BodyAlignedBoxByCell inlet_velcoity_buffer(water_block, makeShared<AlignedBoxShape>(Transform(Vec2d(inlet_buffer_translation)), inlet_buffer_halfsize));
-    SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>> inlet_velocity_buffer_inflow_condition(inlet_velcoity_buffer, 1.0);
+    BodyAlignedBoxByCell left_disposer(water_block, makeShared<AlignedBoxShape>(Transform(Rotation2d(Pi), Vec2d(left_buffer_translation)), left_buffer_halfsize));
+    SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion> left_disposer_outflow_deletion(left_disposer, xAxis);
+    SimpleDynamics<fluid_dynamics::PressureCondition<LeftInflowPressure>> left_inflow_pressure_condition(left_emitter);
+    SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>> inflow_velocity_condition(left_emitter);
+
+    /** Turbulent InflowTurbulentCondition.It needs characteristic Length to calculate turbulent length  */
+    SimpleDynamics<fluid_dynamics::InflowTurbulentCondition> impose_turbulent_inflow_condition(left_emitter, characteristic_length, 0.8);
     
     //----------------------------------------------------------------------
     // Right/Outlet buffer
@@ -199,8 +213,7 @@ int main(int ac, char *av[])
     SimpleDynamics<fluid_dynamics::PressureCondition<RightOutflowPressure>> right_outflow_pressure_condition(right_emitter);
     InteractionWithUpdate<fluid_dynamics::DensitySummationPressureComplex> update_fluid_density_pressure(water_block_inner, water_wall_contact);
 
-    /** Turbulent InflowTurbulentCondition.It needs characteristic Length to calculate turbulent length  */
-    SimpleDynamics<fluid_dynamics::InflowTurbulentCondition> impose_turbulent_inflow_condition(inlet_velcoity_buffer, characteristic_length, 0.8);
+
 
 
     /** Choose one, ordinary or turbulent. Time step size without considering sound wave speed. */
@@ -237,7 +250,8 @@ int main(int ac, char *av[])
 
     /** Tag inlet/outlet truncated particles */
     inlet_outlet_surface_particle_indicator.exec();
-    /** Tag outlet buffer particles */
+    /** Tag in/outlet buffer particles */
+    left_emitter_inflow_injection.tag_buffer_particles.exec();
     right_emitter_inflow_injection.tag_buffer_particles.exec();
 
     /** Output the start states of bodies. */
@@ -304,7 +318,8 @@ int main(int ac, char *av[])
                 pressure_relaxation.exec(dt);
 
                 kernel_summation.exec();
-                right_outflow_pressure_condition.exec();
+                left_inflow_pressure_condition.exec(dt);
+                right_outflow_pressure_condition.exec(dt);
 
                 //constrain_normal_velocity_in_P_region.exec();
                 
@@ -312,7 +327,8 @@ int main(int ac, char *av[])
                 //constrain_Y_velocity.exec();
                 //update_turbu_plug_flow_indicator.exec();
 
-                inlet_velocity_buffer_inflow_condition.exec();
+                //inlet_velocity_buffer_inflow_condition.exec();
+                inflow_velocity_condition.exec();
 
                 impose_turbulent_inflow_condition.exec();
 
@@ -352,10 +368,12 @@ int main(int ac, char *av[])
             number_of_iterations++;
 
             /** inflow injection*/
-            emitter_inflow_injection.exec();
+            //emitter_inflow_injection.exec();
+            left_emitter_inflow_injection.injection.exec();
             right_emitter_inflow_injection.injection.exec();
 
             //disposer_outflow_deletion.exec();
+            left_disposer_outflow_deletion.exec();
             right_disposer_outflow_deletion.exec();
 
             /** Update cell linked list and configuration. */
@@ -365,7 +383,8 @@ int main(int ac, char *av[])
 
             /** Tag truncated inlet/outlet particles*/
             inlet_outlet_surface_particle_indicator.exec();
-            /** Tag outlet buffer particles that suffer pressure condition*/
+            /** Tag in/outlet buffer particles that suffer pressure condition*/
+            left_emitter_inflow_injection.tag_buffer_particles.exec();
             right_emitter_inflow_injection.tag_buffer_particles.exec();
 
             if (GlobalStaticVariables::physical_time_ > end_time * 0.6) 
