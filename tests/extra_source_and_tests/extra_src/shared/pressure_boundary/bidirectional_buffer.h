@@ -61,7 +61,7 @@ class BidirectionalBuffer
             : BaseLocalDynamics<BodyPartByCell>(aligned_box_part),
               pos_(particles_->getVariableDataByName<Vecd>("Position")),
               aligned_box_(aligned_box_part.getAlignedBoxShape()),
-              buffer_particle_indicator_(particles_->registerSharedVariable<int>("BufferParticleIndicator"))
+              buffer_particle_indicator_(particles_->registerStateVariable<int>("BufferParticleIndicator"))
         {
             particles_->addVariableToSort<int>("BufferParticleIndicator");
         };

@@ -8,8 +8,8 @@ LinearParticles::LinearParticles(SPHBody &sph_body, BaseMaterial *base_material)
 //=================================================================================================//
 void LinearParticles::registerLineProperties(StdLargeVec<Vecd> &b_n, StdLargeVec<Real> &width)
 {
-    b_n_ = registerSharedVariableFrom<Vecd>("BinormalDirection", b_n);
-    width_ = registerSharedVariableFrom<Real>("Width", width);
+    b_n_ = registerStateVariableFrom<Vecd>("BinormalDirection", b_n);
+    width_ = registerStateVariableFrom<Real>("Width", width);
     addVariableToReload<Vecd>("BinormalDirection");
     addVariableToReload<Real>("Width");
     addVariableToWrite<Vecd>("BinormalDirection");
@@ -17,13 +17,13 @@ void LinearParticles::registerLineProperties(StdLargeVec<Vecd> &b_n, StdLargeVec
 //=================================================================================================//
 void LinearParticles::registerLinePropertiesFromReload()
 {
-    b_n_ = registerSharedVariableFromReload<Vecd>("NormalDirection");
-    width_ = registerSharedVariableFromReload<Real>("Thickness");
+    b_n_ = registerStateVariableFromReload<Vecd>("NormalDirection");
+    width_ = registerStateVariableFromReload<Real>("Thickness");
 }
 //=================================================================================================//
 void LinearParticles::registerTransformationMatrix()
 {
-    transformation_matrix0_ = registerSharedVariable<Matd>(
+    transformation_matrix0_ = registerStateVariable<Matd>(
         "TransformationMatrix", [&](size_t index_i) -> Matd
         { return getTransformationMatrix(n_[index_i], b_n_[index_i]); });
 }

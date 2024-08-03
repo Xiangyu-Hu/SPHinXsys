@@ -122,7 +122,7 @@ operator()(Neighborhood &neighborhood, const Vecd &pos_i, size_t index_i, const 
 NeighborBuilderSelfContact::
     NeighborBuilderSelfContact(SPHBody &body)
     : NeighborBuilder(body.sph_adaptation_->getKernel()),
-      pos0_(body.getBaseParticles().registerSharedVariableFrom<Vecd>("InitialPosition", "Position")) {}
+      pos0_(body.getBaseParticles().registerStateVariableFrom<Vecd>("InitialPosition", "Position")) {}
 //=================================================================================================//
 void NeighborBuilderSelfContact::operator()(Neighborhood &neighborhood,
                                             const Vecd &pos_i, size_t index_i, const ListData &list_data_j)
@@ -168,7 +168,7 @@ NeighborBuilderSurfaceContact::NeighborBuilderSurfaceContact(SPHBody &body, SPHB
 //=================================================================================================//
 NeighborBuilderContactBodyPart::NeighborBuilderContactBodyPart(SPHBody &body, BodyPart &contact_body_part)
     : NeighborBuilder(NeighborBuilder::chooseKernel(body, contact_body_part.getSPHBody())),
-      part_indicator_(body.getBaseParticles().registerSharedVariable<int>("BodyPartByParticleIndicator"))
+      part_indicator_(body.getBaseParticles().registerStateVariable<int>("BodyPartByParticleIndicator"))
 {
     BodyPartByParticle &contact_body_part_by_particle = DynamicCast<BodyPartByParticle>(this, contact_body_part);
     IndexVector part_particles = contact_body_part_by_particle.body_part_particles_;
@@ -223,8 +223,8 @@ BaseNeighborBuilderContactShell::BaseNeighborBuilderContactShell(SPHBody &shell_
     : NeighborBuilder(shell_body.sph_adaptation_->getKernel()),
       n_(shell_body.getBaseParticles().getVariableDataByName<Vecd>("NormalDirection")),
       thickness_(shell_body.getBaseParticles().getVariableDataByName<Real>("Thickness")),
-      k1_ave_(shell_body.getBaseParticles().registerSharedVariable<Real>("Average1stPrincipleCurvature")),
-      k2_ave_(shell_body.getBaseParticles().registerSharedVariable<Real>("Average2ndPrincipleCurvature")),
+      k1_ave_(shell_body.getBaseParticles().registerStateVariable<Real>("Average1stPrincipleCurvature")),
+      k2_ave_(shell_body.getBaseParticles().registerStateVariable<Real>("Average2ndPrincipleCurvature")),
       particle_distance_(shell_body.getSPHBodyResolutionRef()) {}
 //=================================================================================================//
 void BaseNeighborBuilderContactShell::createNeighbor(Neighborhood &neighborhood, const Real &distance,
@@ -402,9 +402,9 @@ ShellNeighborBuilderInnerWithContactKernel::ShellNeighborBuilderInnerWithContact
 NeighborBuilderShellSelfContact::
     NeighborBuilderShellSelfContact(SPHBody &body)
     : BaseNeighborBuilderContactShell(body),
-      k1_(body.getBaseParticles().registerSharedVariable<Real>("1stPrincipleCurvature")),
-      k2_(body.getBaseParticles().registerSharedVariable<Real>("2ndPrincipleCurvature")),
-      pos0_(body.getBaseParticles().registerSharedVariableFrom<Vecd>("InitialPosition", "Position"))
+      k1_(body.getBaseParticles().registerStateVariable<Real>("1stPrincipleCurvature")),
+      k2_(body.getBaseParticles().registerStateVariable<Real>("2ndPrincipleCurvature")),
+      pos0_(body.getBaseParticles().registerStateVariableFrom<Vecd>("InitialPosition", "Position"))
 {
     // create a unreduced kernel for shell self contact
     Real smoothing_length = body.sph_adaptation_->ReferenceSmoothingLength();

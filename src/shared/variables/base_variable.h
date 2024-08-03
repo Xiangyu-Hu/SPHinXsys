@@ -85,26 +85,23 @@ template <typename DataType>
 class DiscreteVariable : public BaseVariable
 {
   public:
-    DiscreteVariable(const std::string &name)
-        : BaseVariable(name), size_(0),
-          data_field_(nullptr), device_data_field_(nullptr){};
+    DiscreteVariable(const std::string &name, size_t data_size)
+        : BaseVariable(name), data_size_(data_size),
+          data_field_(nullptr), device_data_field_(nullptr)
+    {
+        data_field_ = new DataType[data_size];
+    };
     virtual ~DiscreteVariable() { delete[] data_field_; };
     DataType *DataField() { return data_field_; };
     DataType *DeviceDataField() { return device_data_field_; }
 
-    void allocateDataField(const size_t size)
-    {
-        size_ = size;
-        data_field_ = new DataType[size];
-    };
-
     bool existDeviceDataField() { return device_data_field_ != nullptr; };
-    size_t getSize() { return size_; }
+    size_t getDataSize() { return data_size_; }
     void setDeviceDataField(DataType *data_field) { device_data_field_ = data_field; };
     void synchronizeWithDevice();
 
   private:
-    size_t size_;
+    size_t data_size_;
     DataType *data_field_;
     DataType *device_data_field_;
 };

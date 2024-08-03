@@ -14,7 +14,7 @@ RelaxationResidue<Base, DataDelegationType>::RelaxationResidue(BaseRelationType 
     : LocalDynamics(base_relation.getSPHBody()), DataDelegationType(base_relation),
       sph_adaptation_(this->sph_body_.sph_adaptation_),
       Vol_(this->particles_->template getVariableDataByName<Real>("VolumetricMeasure")),
-      residue_(this->particles_->template registerSharedVariable<Vecd>("ZeroOrderResidue")) {}
+      residue_(this->particles_->template registerStateVariable<Vecd>("ZeroOrderResidue")) {}
 //=================================================================================================//
 template <typename... Args>
 RelaxationResidue<Inner<LevelSetCorrection>>::RelaxationResidue(Args &&...args)

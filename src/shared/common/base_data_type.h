@@ -85,6 +85,12 @@ struct ZeroData
 {
     static inline DataType value = DataType::Zero();
 };
+
+template <>
+struct ZeroData<bool>
+{
+    static inline bool value = false;
+};
 template <>
 struct ZeroData<Real>
 {

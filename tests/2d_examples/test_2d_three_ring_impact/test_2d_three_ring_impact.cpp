@@ -87,7 +87,7 @@ class InitialVelocityCondition : public BaseLocalDynamics<SPHBody>
   public:
     InitialVelocityCondition(SPHBody &body, Vec2d initial_velocity)
         : BaseLocalDynamics<SPHBody>(body),
-          vel_(this->particles_->template registerSharedVariable<Vec2d>("Velocity")),
+          vel_(this->particles_->template registerStateVariable<Vec2d>("Velocity")),
           initial_velocity_(std::move(initial_velocity)){};
     inline void update(size_t index_i, [[maybe_unused]] Real dt = 0.0)
     {

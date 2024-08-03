@@ -39,7 +39,7 @@ void DiscreteVariable<DataType>::synchronizeWithDevice()
 {
     if (existDeviceDataField())
     {
-        copyFromDevice(data_field_, device_data_field_, size_);
+        copyFromDevice(data_field_, device_data_field_, data_size_);
     }
 }
 //=================================================================================================//
@@ -64,9 +64,9 @@ DiscreteDeviceOnlyVariable<DataType>::
     DiscreteDeviceOnlyVariable(DiscreteVariable<DataType> *host_variable)
     : BaseVariable(host_variable->Name()), device_only_data_field_(nullptr)
 {
-    size_t size = host_variable->getSize();
-    device_only_data_field_ = allocateDeviceOnly<DataType>(size);
-    copyToDevice(host_variable->DataField(), device_only_data_field_, size);
+    size_t data_size = host_variable->getDataSize();
+    device_only_data_field_ = allocateDeviceOnly<DataType>(data_size);
+    copyToDevice(host_variable->DataField(), device_only_data_field_, data_size);
     host_variable->setDeviceDataField(device_only_data_field_);
 };
 //=================================================================================================//

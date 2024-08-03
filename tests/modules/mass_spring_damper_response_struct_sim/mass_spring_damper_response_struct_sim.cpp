@@ -41,7 +41,7 @@ TEST(StructuralSimulation, MassSpringDamperResponse)
     //=================================================================================================//
     BaseParticles *base_particles = sim.get_solid_body_list_()[0].get()->getElasticSolidParticles();
     Vecd *pos_n = base_particles->ParticlePositions();
-    Vecd *pos_0 = base_particles->registerSharedVariableFrom<Vecd>("InitialPosition", "Position");
+    Vecd *pos_0 = base_particles->registerStateVariableFrom<Vecd>("InitialPosition", "Position");
     Real end_displ = 0.05;
 
     for (size_t index = 0; index < base_particles->TotalRealParticles(); index++)

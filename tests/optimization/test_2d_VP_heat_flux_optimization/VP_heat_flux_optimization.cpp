@@ -95,7 +95,7 @@ class DiffusionBodyInitialCondition : public LocalDynamics
     explicit DiffusionBodyInitialCondition(SPHBody &sph_body)
         : LocalDynamics(sph_body),
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
-          phi_(particles_->registerSharedVariable<Real>("Phi")){};
+          phi_(particles_->registerStateVariable<Real>("Phi")){};
 
     void update(size_t index_i, Real dt)
     {
@@ -128,7 +128,7 @@ class WallBoundaryInitialCondition : public LocalDynamics
     explicit WallBoundaryInitialCondition(SPHBody &sph_body)
         : LocalDynamics(sph_body),
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
-          phi_(particles_->registerSharedVariable<Real>("Phi")),
+          phi_(particles_->registerStateVariable<Real>("Phi")),
           heat_flux_(particles_->getVariableDataByName<Real>("HeatFlux")){};
 
     void update(size_t index_i, Real dt)
@@ -161,7 +161,7 @@ class ImposeObjectiveFunction : public LocalDynamics
   public:
     explicit ImposeObjectiveFunction(SPHBody &sph_body)
         : LocalDynamics(sph_body),
-          phi_(particles_->registerSharedVariable<Real>("Phi")),
+          phi_(particles_->registerStateVariable<Real>("Phi")),
           species_modified_(particles_->getVariableDataByName<Real>("SpeciesModified")),
           species_recovery_(particles_->getVariableDataByName<Real>("SpeciesRecovery")){};
 

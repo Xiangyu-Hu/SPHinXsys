@@ -55,7 +55,7 @@ class DepolarizationInitialCondition : public LocalDynamics
     explicit DepolarizationInitialCondition(SPHBody &sph_body)
         : LocalDynamics(sph_body),
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
-          voltage_(particles_->registerSharedVariable<Real>("Voltage")){};
+          voltage_(particles_->registerStateVariable<Real>("Voltage")){};
 
     void update(size_t index_i, Real dt)
     {

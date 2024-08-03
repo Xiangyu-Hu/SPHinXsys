@@ -13,7 +13,7 @@ DensitySummation<Base, DataDelegationType>::DensitySummation(BaseRelationType &b
     : LocalDynamics(base_relation.getSPHBody()), DataDelegationType(base_relation),
       rho_(this->particles_->template getVariableDataByName<Real>("Density")),
       mass_(this->particles_->template getVariableDataByName<Real>("Mass")),
-      rho_sum_(this->particles_->template registerSharedVariable<Real>("DensitySummation")),
+      rho_sum_(this->particles_->template registerStateVariable<Real>("DensitySummation")),
       Vol_(this->particles_->template getVariableDataByName<Real>("VolumetricMeasure")),
       rho0_(this->sph_body_.base_material_->ReferenceDensity()),
       inv_sigma0_(1.0 / this->sph_body_.sph_adaptation_->LatticeNumberDensity()),

@@ -39,7 +39,7 @@ Real CompositeSolid::CompositeDensity(size_t index_i)
 void CompositeSolid::initializeLocalParameters(BaseParticles *base_particles)
 {
     ElasticSolid::initializeLocalParameters(base_particles);
-    material_id_ = base_particles->registerSharedVariable<int>("MaterialID");
+    material_id_ = base_particles->registerStateVariable<int>("MaterialID");
 
     for (size_t i = 0; i < composite_materials_.size(); ++i)
     {

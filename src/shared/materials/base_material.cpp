@@ -26,12 +26,12 @@ Fluid::Fluid(Real rho0, Real c0, Real mu) : BaseMaterial(rho0), c0_(c0), mu_(mu)
 //=================================================================================================//
 Vecd *Solid::AverageVelocity(BaseParticles *base_particles)
 {
-    return base_particles->registerSharedVariable<Vecd>("Velocity");
+    return base_particles->registerStateVariable<Vecd>("Velocity");
 }
 //=================================================================================================//
 Vecd *Solid::AverageAcceleration(BaseParticles *base_particles)
 {
-    return base_particles->registerSharedVariable<Vecd>("Acceleration");
+    return base_particles->registerStateVariable<Vecd>("Acceleration");
 }
 //=================================================================================================//
 } // namespace SPH

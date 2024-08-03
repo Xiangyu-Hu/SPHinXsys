@@ -83,10 +83,10 @@ TemperatureSplittingByPDEWithBoundary<DataType>::
     boundary_heat_flux_.resize(this->contact_particles_.size());
     for (size_t k = 0; k != this->contact_particles_.size(); ++k)
     {
-        boundary_Vol_.push_back(this->contact_particles_[k]->template registerSharedVariable<Real>("VolumetricMeasure"));
+        boundary_Vol_.push_back(this->contact_particles_[k]->template registerStateVariable<Real>("VolumetricMeasure"));
         boundary_normal_vector_.push_back(this->contact_particles_[k]->template getVariableDataByName<Vecd>("NormalDirection"));
-        boundary_variable_.push_back(this->contact_particles_[k]->template registerSharedVariable<DataType>(variable_name));
-        boundary_heat_flux_[k] = this->contact_particles_[k]->template registerSharedVariable<Real>("HeatFlux");
+        boundary_variable_.push_back(this->contact_particles_[k]->template registerStateVariable<DataType>(variable_name));
+        boundary_heat_flux_[k] = this->contact_particles_[k]->template registerStateVariable<Real>("HeatFlux");
     }
 };
 //=================================================================================================//

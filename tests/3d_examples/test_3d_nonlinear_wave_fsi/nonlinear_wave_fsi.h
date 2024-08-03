@@ -456,7 +456,7 @@ class WaveMaking : public BodyPartMotionConstraint
     WaveMaking(BodyPartByParticle &body_part)
         : BodyPartMotionConstraint(body_part),
           h(WH), tf(5), xf(4.5), fmn(0.32), fmx(0.96), a(0.0078), N(32), g(gravity_g),
-          acc_(particles_->registerSharedVariable<Vecd>("Acceleration")),
+          acc_(particles_->registerStateVariable<Vecd>("Acceleration")),
           physical_time_(sph_system_.getSystemVariableDataByName<Real>("PhysicalTime"))
 
     {

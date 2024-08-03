@@ -30,31 +30,33 @@ void BaseParticles::initializeBasicParticleVariables()
     //----------------------------------------------------------------------
     //		register non-geometric variables
     //----------------------------------------------------------------------
-    rho_ = registerSharedVariable<Real>("Density", base_material_.ReferenceDensity());
-    mass_ = registerSharedVariable<Real>("Mass",
-                                         [&](size_t i) -> Real
-                                         { return rho_[i] * ParticleVolume(i); });
+    rho_ = registerStateVariable<Real>("Density", base_material_.ReferenceDensity());
+    mass_ = registerStateVariable<Real>("Mass",
+                                        [&](size_t i) -> Real
+                                        { return rho_[i] * ParticleVolume(i); });
     //----------------------------------------------------------------------
     //		unregistered variables and data
     //----------------------------------------------------------------------
-    original_id_ = registerSharedVariable<UnsignedInt>("OriginalID",
+    original_id_ = registerDiscreteVariable<UnsignedInt>("OriginalID", particles_bound_,
+                                                         [&](UnsignedInt i) -> UnsignedInt
+                                                         { return i; });
+    sorted_id_ = registerDiscreteVariable<UnsignedInt>("SortedID", particles_bound_,
                                                        [&](UnsignedInt i) -> UnsignedInt
                                                        { return i; });
-    sorted_id_ = registerSharedVariableFrom<UnsignedInt>("SortedID", "OriginalID");
 }
 //=================================================================================================//
 void BaseParticles::registerPositionAndVolumetricMeasure(StdLargeVec<Vecd> &pos, StdLargeVec<Real> &Vol)
 {
-    pos_ = registerSharedVariableFrom<Vecd>("Position", pos);
-    Vol_ = registerSharedVariableFrom<Real>("VolumetricMeasure", Vol);
+    pos_ = registerStateVariableFrom<Vecd>("Position", pos);
+    Vol_ = registerStateVariableFrom<Real>("VolumetricMeasure", Vol);
     addVariableToReload<Vecd>("Position");
     addVariableToReload<Real>("VolumetricMeasure");
 }
 //=================================================================================================//
 void BaseParticles::registerPositionAndVolumetricMeasureFromReload()
 {
-    pos_ = registerSharedVariableFromReload<Vecd>("Position");
-    Vol_ = registerSharedVariableFromReload<Real>("VolumetricMeasure");
+    pos_ = registerStateVariableFromReload<Vecd>("Position");
+    Vol_ = registerStateVariableFromReload<Real>("VolumetricMeasure");
 }
 //=================================================================================================//
 void BaseParticles::initializeAllParticlesBounds(size_t total_real_particles)

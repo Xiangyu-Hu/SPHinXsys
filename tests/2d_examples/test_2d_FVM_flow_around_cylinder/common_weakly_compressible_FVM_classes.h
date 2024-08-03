@@ -110,7 +110,7 @@ class PressureForceFromFluidInFVM : public BaseForceFromFluidInFVM
           riemann_solver_(fluid_, fluid_),
           each_boundary_type_contact_real_index_(each_boundary_type_contact_real_index)
     {
-        force_from_fluid_ = particles_->registerSharedVariable<Vecd>("PressureForceOnSolid");
+        force_from_fluid_ = particles_->registerStateVariable<Vecd>("PressureForceOnSolid");
     };
     Fluid &fluid_;
     Vecd *vel_;
