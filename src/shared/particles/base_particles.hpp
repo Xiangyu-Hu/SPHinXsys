@@ -132,8 +132,13 @@ template <typename DataType>
 DataType *BaseParticles::registerStateVariableFrom(
     const std::string &name, const StdLargeVec<DataType> &geometric_data)
 {
-    return registerStateVariable<DataType>(name, [&](size_t index)
-                                           { return geometric_data[index]; });
+    DataType *data_field = registerStateVariable<DataType>(name);
+
+    for (size_t i = 0; i != geometric_data.size(); ++i)
+    {
+        data_field[i] = geometric_data[i];
+    }
+    return data_field;
 }
 //=================================================================================================//
 template <typename DataType>
