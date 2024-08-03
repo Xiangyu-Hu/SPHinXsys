@@ -47,7 +47,7 @@ using namespace std::placeholders;
 namespace SPH
 {
 /**
- * @class BaseMesh
+ * @class Mesh
  * @brief Base class for all structured meshes which may be grid or cell based.
  * The basic properties of the mesh, such as lower bound, grid spacing
  * and number of grid points may be determined by the derived class.
@@ -55,44 +55,42 @@ namespace SPH
  */
 class Mesh
 {
-  protected:
-    Vecd mesh_lower_bound_;  /**< mesh lower bound as reference coordinate */
-    Real grid_spacing_;      /**< grid_spacing */
-    Arrayi all_grid_points_; /**< number of grid points by dimension */
   public:
     Mesh(BoundingBox tentative_bounds, Real grid_spacing, size_t buffer_width);
+    Mesh(Vecd mesh_lower_bound, Real grid_spacing, Arrayi all_grid_points);
     ~Mesh(){};
 
     Vecd MeshLowerBound() { return mesh_lower_bound_; };
     Real GridSpacing() { return grid_spacing_; };
     Arrayi AllGridPoints() { return all_grid_points_; };
-    Arrayi AllCells() { return all_grid_points_ - Arrayi::Ones(); };
+    Arrayi AllCells() { return all_cells_; };
     size_t NumberOfGridPoints() { return transferMeshIndexTo1D(all_grid_points_, all_grid_points_); };
-    size_t NumberOfCells() { return transferMeshIndexTo1D(AllCells(), AllCells()); };
-    /** Given the grid point number, return the cell number. */
-    Arrayi AllCellsFromAllGridPoints(const Arrayi &all_grid_points) { return all_grid_points - Arrayi::Ones(); };
-    /** Given the cell position, return the grid position. */
-    Vecd GridPositionFromCellPosition(const Vecd &cell_position) { return cell_position - 0.5 * grid_spacing_ * Vecd::Ones(); };
-    /** Given the position, return the cell index. */
+    size_t NumberOfCells() { return transferMeshIndexTo1D(all_cells_, all_cells_); };
     Arrayi CellIndexFromPosition(const Vecd &position);
-    /** Given the cell index, return the cell position. */
     Vecd CellPositionFromIndex(const Arrayi &cell_index);
-    /** Given the cell index, return the position of its lower corner. */
-    Vecd CellLowerCorner(const Arrayi &cell_index);
-    /** Given the index, return the grid position. */
     Vecd GridPositionFromIndex(const Arrayi &grid_index);
-    /** Transfer 1D int to mesh index.  */
+    Vecd CellLowerCornerPosition(const Arrayi &cell_index);
+    //----------------------------------------------------------------------
+    // Transferring between 1D mesh indexes.
+    // Here, mesh size can be either AllGridPoints or AllCells.
+    //----------------------------------------------------------------------
     Arrayi transfer1DtoMeshIndex(const Arrayi &mesh_size, size_t i);
-    /** Transfer mesh index to 1D int.  */
     size_t transferMeshIndexTo1D(const Arrayi &mesh_size, const Arrayi &mesh_index);
     /** converts mesh index into a Morton order.
      * Interleave a 10 bit number in 32 bits, fill one bit and leave the other 2 as zeros
      * https://stackoverflow.com/questions/18529057/
      * produce-interleaving-bit-patterns-morton-keys-for-32-bit-64-bit-and-128bit
      */
-    size_t MortonCode(const size_t &i);
-    /** Converts mesh index into a Morton order. */
     size_t transferMeshIndexToMortonOrder(const Arrayi &mesh_index);
+
+  protected:
+    Vecd mesh_lower_bound_;  /**< mesh lower bound as reference coordinate */
+    Real grid_spacing_;      /**< grid_spacing */
+    size_t buffer_width_;    /**< buffer width to avoid bound check.*/
+    Arrayi all_grid_points_; /**< number of grid points by dimension */
+    Arrayi all_cells_;       /**< number of cells by dimension */
+
+    size_t MortonCode(const size_t &i);
 };
 
 /**

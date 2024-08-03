@@ -118,8 +118,7 @@ class MeshWithGridDataPackages : public Mesh
   public:
     template <typename... Args>
     explicit MeshWithGridDataPackages(BoundingBox tentative_bounds, Real data_spacing, size_t buffer_size)
-        : Mesh(tentative_bounds, pkg_size * data_spacing, buffer_size),
-          data_spacing_(data_spacing),
+        : Mesh(tentative_bounds, pkg_size * data_spacing, buffer_size), data_spacing_(data_spacing),
           global_mesh_(mesh_lower_bound_ + 0.5 * data_spacing * Vecd::Ones(), data_spacing, all_cells_ * pkg_size)
     {
         allocateMetaDataMatrix();
@@ -137,7 +136,7 @@ class MeshWithGridDataPackages : public Mesh
     MeshVariableAssemble all_mesh_variables_;         /**< all mesh variables on this mesh. */
     static constexpr int pkg_size = PKG_SIZE;         /**< the size of the data package matrix*/
     const Real data_spacing_;                         /**< spacing of data in the data packages*/
-    BaseMesh global_mesh_;                            /**< the mesh for the locations of all possible data points. */
+    Mesh global_mesh_;                                /**< the mesh for the locations of all possible data points. */
     size_t num_grid_pkgs_ = 2;                        /**< the number of all distinct packages, initially only 2 singular packages. */
     using MetaData = std::pair<int, size_t>;          /**< stores the metadata for each cell: (int)singular0/inner1/core2, (size_t)package data index*/
     MeshDataMatrix<MetaData> meta_data_mesh_;         /**< metadata for all cells. */
@@ -235,7 +234,7 @@ class MeshWithGridDataPackages : public Mesh
     /** return the position of the lower bound data in a cell. */
     Vecd DataLowerBoundInCell(const Arrayi &cell_index)
     {
-        return CellLowerCorner(cell_index) + 0.5 * data_spacing_ * Vecd::Ones();
+        return CellLowerCornerPosition(cell_index) + 0.5 * data_spacing_ * Vecd::Ones();
     }
 
     /** return the grid index from its position and the index of the cell it belongs to. */
