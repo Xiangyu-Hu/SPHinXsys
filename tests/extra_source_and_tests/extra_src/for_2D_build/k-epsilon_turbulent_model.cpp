@@ -658,7 +658,8 @@ namespace fluid_dynamics
 		Real u = velocity[0];
 		Real temp_in_turbu_k = 1.5 * pow((turbulent_intensity_ * u), 2);
 		Real turbu_k_original = turbu_k;
-		
+if(0)
+{		
 		Real channel_height = CharacteristicLength_; //** Temporarily treatment *
 
         //** Impose fully-developed K from PYTHON result */
@@ -698,7 +699,7 @@ namespace fluid_dynamics
         }
         
         temp_in_turbu_k = polynomial_value;
-		
+}
 		if (position[0] < 0.0) //** Temporarily treatment *
 		{
 			turbu_k_original = temp_in_turbu_k;
@@ -711,7 +712,8 @@ namespace fluid_dynamics
 		//Real temp_in_turbu_E = C_mu_ * pow(turbu_k, 1.5) / (0.1*getTurbulentLength());
 		Real temp_in_turbu_E = C_mu_75_ * pow(turbu_k, 1.5) / TurbulentLength_;
 		Real turbu_E_original = turbu_E;
-		
+if(0)
+{	
 		Real channel_height = CharacteristicLength_; //** Temporarily treatment *
 
         //** Impose fully-developed K from PYTHON result */
@@ -751,7 +753,7 @@ namespace fluid_dynamics
         }
 		
 		temp_in_turbu_E = polynomial_value;
-		
+}
 		if (position[0] < 0.0) //** Temporarily treatment *
 		{
 			turbu_E_original = temp_in_turbu_E;
