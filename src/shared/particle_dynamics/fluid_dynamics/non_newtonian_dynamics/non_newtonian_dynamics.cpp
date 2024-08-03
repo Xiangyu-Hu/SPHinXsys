@@ -8,8 +8,8 @@ namespace fluid_dynamics
 Oldroyd_BIntegration1stHalf<Inner<>>::
     Oldroyd_BIntegration1stHalf(BaseInnerRelation &inner_relation)
     : Integration1stHalfInnerRiemann(inner_relation),
-      tau_(particles_->registerSharedVariable<Matd>("ElasticStress")),
-      dtau_dt_(particles_->registerSharedVariable<Matd>("ElasticStressChangeRate"))
+      tau_(particles_->registerStateVariable<Matd>("ElasticStress")),
+      dtau_dt_(particles_->registerStateVariable<Matd>("ElasticStressChangeRate"))
 {
     particles_->addVariableToSort<Matd>("ElasticStress");
     particles_->addVariableToRestart<Matd>("ElasticStress");
@@ -113,7 +113,7 @@ ShearRateDependentViscosity::ShearRateDependentViscosity(SPHBody &sph_body)
     : LocalDynamics(sph_body),
       vel_grad_(particles_->getVariableDataByName<Matd>("VelocityGradient")),
       generalized_newtonian_fluid_(DynamicCast<GeneralizedNewtonianFluid>(this, this->particles_->getBaseMaterial())),
-      mu_srd_(particles_->registerSharedVariable<Real>("VariableViscosity"))
+      mu_srd_(particles_->registerStateVariable<Real>("VariableViscosity"))
 {
     particles_->addVariableToWrite<Real>("VariableViscosity");
 }

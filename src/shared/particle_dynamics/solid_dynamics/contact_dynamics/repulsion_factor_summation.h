@@ -48,7 +48,7 @@ class RepulsionFactorSummation<Base, DataDelegationType>
     template <class BaseRelationType>
     RepulsionFactorSummation(BaseRelationType &base_relation, const std::string &variable_name)
         : LocalDynamics(base_relation.getSPHBody()), DataDelegationType(base_relation),
-          repulsion_factor_(this->particles_->template registerSharedVariable<Real>(variable_name)){};
+          repulsion_factor_(this->particles_->template registerStateVariable<Real>(variable_name)){};
     virtual ~RepulsionFactorSummation(){};
 
   protected:

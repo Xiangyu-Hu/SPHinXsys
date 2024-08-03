@@ -170,7 +170,7 @@ class ImposingActiveStrain : public solid_dynamics::ElasticDynamicsInitialCondit
     explicit ImposingActiveStrain(SolidBody &solid_body)
         : solid_dynamics::ElasticDynamicsInitialCondition(solid_body),
           material_id_(particles_->getVariableDataByName<int>("MaterialID")),
-          pos0_(particles_->registerSharedVariableFrom<Vecd>("InitialPosition", "Position")),
+          pos0_(particles_->registerStateVariableFrom<Vecd>("InitialPosition", "Position")),
           active_strain_(particles_->getVariableDataByName<Matd>("ActiveStrain")),
           physical_time_(sph_system_.getSystemVariableDataByName<Real>("PhysicalTime")){};
     virtual void update(size_t index_i, Real dt = 0.0)

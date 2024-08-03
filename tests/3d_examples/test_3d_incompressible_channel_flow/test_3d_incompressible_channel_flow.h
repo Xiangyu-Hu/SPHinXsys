@@ -55,9 +55,9 @@ class InvCFInitialCondition
   public:
     explicit InvCFInitialCondition(SPHBody &sph_body)
         : FluidInitialCondition(sph_body),
-          rho_(particles_->registerSharedVariable<Real>("Density")),
-          p_(particles_->registerSharedVariable<Real>("Pressure")),
-          vel_(particles_->registerSharedVariable<Vecd>("Velocity")){};
+          rho_(particles_->registerStateVariable<Real>("Density")),
+          p_(particles_->registerStateVariable<Real>("Pressure")),
+          vel_(particles_->registerStateVariable<Vecd>("Velocity")){};
 
   protected:
     Real *rho_, *p_;

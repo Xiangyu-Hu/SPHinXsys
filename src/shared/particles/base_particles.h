@@ -125,11 +125,6 @@ class BaseParticles
     // Parameterized management on particle variables and data
     //----------------------------------------------------------------------
   private:
-    template <typename DataType>
-    DiscreteVariable<DataType> *addSharedVariable(const std::string &name);
-
-    template <typename DataType, template <typename T> class VariableType>
-    DataType *allocateVariable(VariableType<DataType> *variable);
     template <typename DataType, template <typename T> class VariableType>
     DataType *initializeVariable(VariableType<DataType> *variable, DataType initial_value = ZeroData<DataType>::value);
     template <typename DataType, template <typename T> class VariableType, class InitializationFunction>
@@ -137,16 +132,20 @@ class BaseParticles
 
   public:
     template <class DataType, typename... Args>
-    DataType *addUniqueDiscreteVariable(const std::string &name, Args &&...args);
-
+    DataType *addUniqueDiscreteVariable(const std::string &name, size_t data_size, Args &&...args);
     template <typename DataType, typename... Args>
-    DataType *registerSharedVariable(const std::string &name, Args &&...args);
+    DataType *registerDiscreteVariable(const std::string &name, size_t data_size, Args &&...args);
+
+    template <class DataType, typename... Args>
+    DataType *addUniqueStateVariable(const std::string &name, Args &&...args);
+    template <typename DataType, typename... Args>
+    DataType *registerStateVariable(const std::string &name, Args &&...args);
     template <typename DataType>
-    DataType *registerSharedVariableFrom(const std::string &new_name, const std::string &old_name);
+    DataType *registerStateVariableFrom(const std::string &new_name, const std::string &old_name);
     template <typename DataType>
-    DataType *registerSharedVariableFrom(const std::string &name, const StdLargeVec<DataType> &geometric_data);
+    DataType *registerStateVariableFrom(const std::string &name, const StdLargeVec<DataType> &geometric_data);
     template <typename DataType>
-    DataType *registerSharedVariableFromReload(const std::string &name);
+    DataType *registerStateVariableFromReload(const std::string &name);
     template <typename DataType>
     DiscreteVariable<DataType> *getVariableByName(const std::string &name);
     template <typename DataType>
@@ -192,13 +191,13 @@ class BaseParticles
     // Variable related functions for offloading computing
     //----------------------------------------------------------------------
     template <typename DataType, class ExecutionPolicy, typename... Args>
-    DataType *registerSharedVariable(const ExecutionPolicy &execution_policy, const std::string &name, Args &&...args)
+    DataType *registerStateVariable(const ExecutionPolicy &execution_policy, const std::string &name, Args &&...args)
     {
-        return registerSharedVariable<DataType>(name, std::forward<Args>(args)...);
+        return registerStateVariable<DataType>(name, std::forward<Args>(args)...);
     };
 
     template <typename DataType, typename... Args>
-    DataType *registerSharedVariable(const ParallelDevicePolicy &execution_policy, const std::string &name, Args &&...args);
+    DataType *registerStateVariable(const ParallelDevicePolicy &execution_policy, const std::string &name, Args &&...args);
 
     template <typename DataType, class ExecutionPolicy>
     DataType *getVariableDataByName(const ExecutionPolicy &execution_policy, const std::string &name)

@@ -16,7 +16,7 @@ ViscousForce<DataDelegationType>::ViscousForce(BaseRelationType &base_relation)
       mass_(this->particles_->template getVariableDataByName<Real>("Mass")),
       Vol_(this->particles_->template getVariableDataByName<Real>("VolumetricMeasure")),
       vel_(this->particles_->template getVariableDataByName<Vecd>("Velocity")),
-      viscous_force_(this->particles_->template registerSharedVariable<Vecd>("ViscousForce")),
+      viscous_force_(this->particles_->template registerStateVariable<Vecd>("ViscousForce")),
       smoothing_length_(this->sph_body_.sph_adaptation_->ReferenceSmoothingLength()) {}
 //=================================================================================================//
 template <typename ViscosityType, class KernelCorrectionType>

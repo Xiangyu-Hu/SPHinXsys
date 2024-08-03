@@ -54,8 +54,8 @@ ShellCorrectConfiguration::
     ShellCorrectConfiguration(BaseInnerRelation &inner_relation)
     : LocalDynamics(inner_relation.getSPHBody()), DataDelegateInner(inner_relation),
       Vol_(particles_->getVariableDataByName<Real>("VolumetricMeasure")),
-      B_(particles_->registerSharedVariable<Matd>("LinearGradientCorrectionMatrix", IdentityMatrix<Matd>::value)),
-      n0_(particles_->registerSharedVariableFrom<Vecd>("InitialNormalDirection", "NormalDirection")),
+      B_(particles_->registerStateVariable<Matd>("LinearGradientCorrectionMatrix", IdentityMatrix<Matd>::value)),
+      n0_(particles_->registerStateVariableFrom<Vecd>("InitialNormalDirection", "NormalDirection")),
       transformation_matrix0_(particles_->getVariableDataByName<Matd>("TransformationMatrix")) {}
 //=================================================================================================//
 ShellDeformationGradientTensor::
@@ -63,11 +63,11 @@ ShellDeformationGradientTensor::
     : LocalDynamics(inner_relation.getSPHBody()), DataDelegateInner(inner_relation),
       Vol_(particles_->getVariableDataByName<Real>("VolumetricMeasure")),
       pos_(particles_->getVariableDataByName<Vecd>("Position")),
-      pseudo_n_(particles_->registerSharedVariableFrom<Vecd>("PseudoNormal", "NormalDirection")),
-      n0_(particles_->registerSharedVariableFrom<Vecd>("InitialNormalDirection", "NormalDirection")),
+      pseudo_n_(particles_->registerStateVariableFrom<Vecd>("PseudoNormal", "NormalDirection")),
+      n0_(particles_->registerStateVariableFrom<Vecd>("InitialNormalDirection", "NormalDirection")),
       B_(particles_->getVariableDataByName<Matd>("LinearGradientCorrectionMatrix")),
-      F_(particles_->registerSharedVariable<Matd>("DeformationGradient", IdentityMatrix<Matd>::value)),
-      F_bending_(particles_->registerSharedVariable<Matd>("BendingDeformationGradient")),
+      F_(particles_->registerStateVariable<Matd>("DeformationGradient", IdentityMatrix<Matd>::value)),
+      F_bending_(particles_->registerStateVariable<Matd>("BendingDeformationGradient")),
       transformation_matrix0_(particles_->getVariableDataByName<Matd>("TransformationMatrix")) {}
 //=================================================================================================//
 BaseShellRelaxation::BaseShellRelaxation(BaseInnerRelation &inner_relation)
@@ -75,22 +75,22 @@ BaseShellRelaxation::BaseShellRelaxation(BaseInnerRelation &inner_relation)
       thickness_(particles_->getVariableDataByName<Real>("Thickness")),
       Vol_(particles_->getVariableDataByName<Real>("VolumetricMeasure")),
       pos_(particles_->getVariableDataByName<Vecd>("Position")),
-      vel_(particles_->registerSharedVariable<Vecd>("Velocity")),
-      force_(particles_->registerSharedVariable<Vecd>("Force")),
-      force_prior_(particles_->registerSharedVariable<Vecd>("ForcePrior")),
-      n0_(particles_->registerSharedVariableFrom<Vecd>("InitialNormalDirection", "NormalDirection")),
-      pseudo_n_(particles_->registerSharedVariableFrom<Vecd>("PseudoNormal", "NormalDirection")),
-      dpseudo_n_dt_(particles_->registerSharedVariable<Vecd>("PseudoNormalChangeRate")),
-      dpseudo_n_d2t_(particles_->registerSharedVariable<Vecd>("PseudoNormal2ndOrderTimeDerivative")),
-      rotation_(particles_->registerSharedVariable<Vecd>("Rotation")),
-      angular_vel_(particles_->registerSharedVariable<Vecd>("AngularVelocity")),
-      dangular_vel_dt_(particles_->registerSharedVariable<Vecd>("AngularAcceleration")),
+      vel_(particles_->registerStateVariable<Vecd>("Velocity")),
+      force_(particles_->registerStateVariable<Vecd>("Force")),
+      force_prior_(particles_->registerStateVariable<Vecd>("ForcePrior")),
+      n0_(particles_->registerStateVariableFrom<Vecd>("InitialNormalDirection", "NormalDirection")),
+      pseudo_n_(particles_->registerStateVariableFrom<Vecd>("PseudoNormal", "NormalDirection")),
+      dpseudo_n_dt_(particles_->registerStateVariable<Vecd>("PseudoNormalChangeRate")),
+      dpseudo_n_d2t_(particles_->registerStateVariable<Vecd>("PseudoNormal2ndOrderTimeDerivative")),
+      rotation_(particles_->registerStateVariable<Vecd>("Rotation")),
+      angular_vel_(particles_->registerStateVariable<Vecd>("AngularVelocity")),
+      dangular_vel_dt_(particles_->registerStateVariable<Vecd>("AngularAcceleration")),
       transformation_matrix0_(particles_->getVariableDataByName<Matd>("TransformationMatrix")),
       B_(particles_->getVariableDataByName<Matd>("LinearGradientCorrectionMatrix")),
-      F_(particles_->registerSharedVariable<Matd>("DeformationGradient", IdentityMatrix<Matd>::value)),
-      dF_dt_(particles_->registerSharedVariable<Matd>("DeformationRate")),
-      F_bending_(particles_->registerSharedVariable<Matd>("BendingDeformationGradient")),
-      dF_bending_dt_(particles_->registerSharedVariable<Matd>("BendingDeformationRate")) {}
+      F_(particles_->registerStateVariable<Matd>("DeformationGradient", IdentityMatrix<Matd>::value)),
+      dF_dt_(particles_->registerStateVariable<Matd>("DeformationRate")),
+      F_bending_(particles_->registerStateVariable<Matd>("BendingDeformationGradient")),
+      dF_bending_dt_(particles_->registerStateVariable<Matd>("BendingDeformationRate")) {}
 //=================================================================================================//
 ShellStressRelaxationFirstHalf::
     ShellStressRelaxationFirstHalf(BaseInnerRelation &inner_relation,
@@ -104,12 +104,12 @@ ShellStressRelaxationFirstHalf::
       numerical_damping_scaling_matrix_(Matd::Identity() * smoothing_length_),
       rho_(particles_->getVariableDataByName<Real>("Density")),
       mass_(particles_->getVariableDataByName<Real>("Mass")),
-      global_stress_(particles_->registerSharedVariable<Matd>("GlobalStress")),
-      global_moment_(particles_->registerSharedVariable<Matd>("GlobalMoment")),
-      mid_surface_cauchy_stress_(particles_->registerSharedVariable<Matd>("MidSurfaceCauchyStress")),
-      global_shear_stress_(particles_->registerSharedVariable<Vecd>("GlobalShearStress")),
-      global_F_(particles_->registerSharedVariable<Matd>("GlobalDeformationGradient")),
-      global_F_bending_(particles_->registerSharedVariable<Matd>("GlobalBendingDeformationGradient")),
+      global_stress_(particles_->registerStateVariable<Matd>("GlobalStress")),
+      global_moment_(particles_->registerStateVariable<Matd>("GlobalMoment")),
+      mid_surface_cauchy_stress_(particles_->registerStateVariable<Matd>("MidSurfaceCauchyStress")),
+      global_shear_stress_(particles_->registerStateVariable<Vecd>("GlobalShearStress")),
+      global_F_(particles_->registerStateVariable<Matd>("GlobalDeformationGradient")),
+      global_F_bending_(particles_->registerStateVariable<Matd>("GlobalBendingDeformationGradient")),
       E0_(elastic_solid_.YoungsModulus()),
       G0_(elastic_solid_.ShearModulus()),
       nu_(elastic_solid_.PoissonRatio()),
@@ -248,7 +248,7 @@ void ConstrainShellBodyRegion::update(size_t index_i, Real dt)
 ConstrainShellBodyRegionAlongAxis::ConstrainShellBodyRegionAlongAxis(BodyPartByParticle &body_part, int axis)
     : BaseLocalDynamics<BodyPartByParticle>(body_part),
       axis_(axis), pos_(particles_->getVariableDataByName<Vecd>("Position")),
-      pos0_(particles_->registerSharedVariableFrom<Vecd>("InitialPosition", "Position")),
+      pos0_(particles_->registerStateVariableFrom<Vecd>("InitialPosition", "Position")),
       vel_(particles_->getVariableDataByName<Vecd>("Velocity")),
       force_(particles_->getVariableDataByName<Vecd>("Force")),
       rotation_(particles_->getVariableDataByName<Vecd>("Rotation")),
@@ -270,15 +270,15 @@ void ConstrainShellBodyRegionAlongAxis::update(size_t index_i, Real dt)
 InitialShellCurvature::InitialShellCurvature(BaseInnerRelation &inner_relation)
     : LocalDynamics(inner_relation.getSPHBody()), DataDelegateInner(inner_relation),
       Vol_(particles_->getVariableDataByName<Real>("VolumetricMeasure")),
-      n0_(particles_->registerSharedVariableFrom<Vecd>("InitialNormalDirection", "NormalDirection")),
+      n0_(particles_->registerStateVariableFrom<Vecd>("InitialNormalDirection", "NormalDirection")),
       B_(particles_->getVariableDataByName<Matd>("LinearGradientCorrectionMatrix")),
       transformation_matrix0_(particles_->getVariableDataByName<Matd>("TransformationMatrix")),
       n_(particles_->getVariableDataByName<Vecd>("NormalDirection")),
       F_(particles_->getVariableDataByName<Matd>("DeformationGradient")),
       F_bending_(particles_->getVariableDataByName<Matd>("BendingDeformationGradient")),
-      k1_(particles_->registerSharedVariable<Real>("1stPrincipleCurvature")),
-      k2_(particles_->registerSharedVariable<Real>("2ndPrincipleCurvature")),
-      dn_0_(particles_->registerSharedVariable<Matd>("InitialNormalGradient")){};
+      k1_(particles_->registerStateVariable<Real>("1stPrincipleCurvature")),
+      k2_(particles_->registerStateVariable<Real>("2ndPrincipleCurvature")),
+      dn_0_(particles_->registerStateVariable<Matd>("InitialNormalGradient")){};
 //=================================================================================================//
 void InitialShellCurvature::update(size_t index_i, Real)
 {
@@ -304,9 +304,9 @@ ShellCurvatureUpdate::ShellCurvatureUpdate(SPHBody &sph_body)
       transformation_matrix0_(particles_->getVariableDataByName<Matd>("TransformationMatrix")),
       F_(particles_->getVariableDataByName<Matd>("DeformationGradient")),
       F_bending_(particles_->getVariableDataByName<Matd>("BendingDeformationGradient")),
-      k1_(particles_->registerSharedVariable<Real>("1stPrincipleCurvature")),
-      k2_(particles_->registerSharedVariable<Real>("2ndPrincipleCurvature")),
-      dn_0_(particles_->registerSharedVariable<Matd>("InitialNormalGradient")){};
+      k1_(particles_->registerStateVariable<Real>("1stPrincipleCurvature")),
+      k2_(particles_->registerStateVariable<Real>("2ndPrincipleCurvature")),
+      dn_0_(particles_->registerStateVariable<Matd>("InitialNormalGradient")){};
 //=================================================================================================//
 void ShellCurvatureUpdate::update(size_t index_i, Real)
 {
@@ -323,8 +323,8 @@ AverageShellCurvature::AverageShellCurvature(BaseInnerRelation &inner_relation)
     : LocalDynamics(inner_relation.getSPHBody()), DataDelegateInner(inner_relation),
       Vol_(particles_->getVariableDataByName<Real>("VolumetricMeasure")),
       n_(particles_->getVariableDataByName<Vecd>("NormalDirection")),
-      k1_ave_(particles_->registerSharedVariable<Real>("Average1stPrincipleCurvature")),
-      k2_ave_(particles_->registerSharedVariable<Real>("Average2ndPrincipleCurvature")){};
+      k1_ave_(particles_->registerStateVariable<Real>("Average1stPrincipleCurvature")),
+      k2_ave_(particles_->registerStateVariable<Real>("Average2ndPrincipleCurvature")){};
 //=================================================================================================//
 void AverageShellCurvature::update(size_t index_i, Real)
 {

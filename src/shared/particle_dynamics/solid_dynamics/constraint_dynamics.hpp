@@ -42,8 +42,8 @@ ConstraintBySimBody<DynamicsIdentifier>::
     : MotionConstraint<DynamicsIdentifier>(identifier),
       MBsystem_(MBsystem), mobod_(mobod), integ_(integ),
       n_(this->particles_->template getVariableDataByName<Vecd>("NormalDirection")),
-      n0_(this->particles_->template registerSharedVariableFrom<Vecd>("InitialNormalDirection", "NormalDirection")),
-      acc_(this->particles_->template registerSharedVariable<Vecd>("Acceleration"))
+      n0_(this->particles_->template registerStateVariableFrom<Vecd>("InitialNormalDirection", "NormalDirection")),
+      acc_(this->particles_->template registerStateVariable<Vecd>("Acceleration"))
 {
     simbody_state_ = &integ_.getState();
     MBsystem_.realize(*simbody_state_, SimTK::Stage::Acceleration);
@@ -77,7 +77,7 @@ TotalForceForSimBody<DynamicsIdentifier>::
                          SimTK::MobilizedBody &mobod, SimTK::RungeKuttaMersonIntegrator &integ)
     : BaseLocalDynamicsReduce<ReduceSum<SimTK::SpatialVec>, DynamicsIdentifier>(identifier),
 
-      force_(this->particles_->template registerSharedVariable<Vecd>("Force")),
+      force_(this->particles_->template registerStateVariable<Vecd>("Force")),
       force_prior_(this->particles_->template getVariableDataByName<Vecd>("ForcePrior")),
       pos_(this->particles_->template getVariableDataByName<Vecd>("Position")),
       MBsystem_(MBsystem), mobod_(mobod), integ_(integ)

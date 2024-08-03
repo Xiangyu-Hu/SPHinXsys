@@ -27,12 +27,12 @@ Matd ElasticSolid::DeviatoricKirchhoff(const Matd &deviatoric_be)
 //=================================================================================================//
 Vecd *ElasticSolid::AverageVelocity(BaseParticles *base_particles)
 {
-    return base_particles->registerSharedVariable<Vecd>("AverageVelocity");
+    return base_particles->registerStateVariable<Vecd>("AverageVelocity");
 }
 //=================================================================================================//
 Vecd *ElasticSolid::AverageAcceleration(BaseParticles *base_particles)
 {
-    return base_particles->registerSharedVariable<Vecd>("AverageAcceleration");
+    return base_particles->registerStateVariable<Vecd>("AverageAcceleration");
 }
 //=================================================================================================//
 LinearElasticSolid::
@@ -248,26 +248,26 @@ Matd LocallyOrthotropicMuscle::StressPK2(Matd &F, size_t i)
 void LocallyOrthotropicMuscle::registerLocalParameters(BaseParticles *base_particles)
 {
     Muscle::registerLocalParameters(base_particles);
-    local_f0_ = base_particles->registerSharedVariable<Vecd>("Fiber");
-    local_s0_ = base_particles->registerSharedVariable<Vecd>("Sheet");
+    local_f0_ = base_particles->registerStateVariable<Vecd>("Fiber");
+    local_s0_ = base_particles->registerStateVariable<Vecd>("Sheet");
 }
 void LocallyOrthotropicMuscle::registerLocalParametersFromReload(BaseParticles *base_particles)
 {
     Muscle::registerLocalParametersFromReload(base_particles);
-    local_f0_ = base_particles->registerSharedVariableFromReload<Vecd>("Fiber");
-    local_s0_ = base_particles->registerSharedVariableFromReload<Vecd>("Sheet");
+    local_f0_ = base_particles->registerStateVariableFromReload<Vecd>("Fiber");
+    local_s0_ = base_particles->registerStateVariableFromReload<Vecd>("Sheet");
 }
 //=================================================================================================//
 void LocallyOrthotropicMuscle::initializeLocalParameters(BaseParticles *base_particles)
 {
     Muscle::initializeLocalParameters(base_particles);
-    local_f0f0_ = base_particles->registerSharedVariable<Matd>(
+    local_f0f0_ = base_particles->registerStateVariable<Matd>(
         "FiberFiberTensor", [&](size_t i) -> Matd
         { return local_f0_[i] * local_f0_[i].transpose(); });
-    local_s0s0_ = base_particles->registerSharedVariable<Matd>(
+    local_s0s0_ = base_particles->registerStateVariable<Matd>(
         "SheetSheetTensor", [&](size_t i) -> Matd
         { return local_s0_[i] * local_s0_[i].transpose(); });
-    local_f0s0_ = base_particles->registerSharedVariable<Matd>(
+    local_f0s0_ = base_particles->registerStateVariable<Matd>(
         "FiberSheetTensor", [&](size_t i) -> Matd
         { return local_f0_[i] * local_s0_[i].transpose() +
                  local_s0_[i] * local_f0_[i].transpose(); });

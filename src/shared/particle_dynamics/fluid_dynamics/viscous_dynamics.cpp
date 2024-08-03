@@ -9,7 +9,7 @@ VorticityInner::VorticityInner(BaseInnerRelation &inner_relation)
     : LocalDynamics(inner_relation.getSPHBody()), DataDelegateInner(inner_relation),
       Vol_(particles_->getVariableDataByName<Real>("VolumetricMeasure")),
       vel_(particles_->getVariableDataByName<Vecd>("Velocity")),
-      vorticity_(particles_->registerSharedVariable<AngularVecd>("VorticityInner"))
+      vorticity_(particles_->registerStateVariable<AngularVecd>("VorticityInner"))
 {
     particles_->addVariableToWrite<AngularVecd>("VorticityInner");
 }

@@ -91,8 +91,8 @@ class MotionConstraint : public BaseLocalDynamics<DynamicsIdentifier>
     explicit MotionConstraint(DynamicsIdentifier &identifier)
         : BaseLocalDynamics<DynamicsIdentifier>(identifier),
           pos_(this->particles_->template getVariableDataByName<Vecd>("Position")),
-          pos0_(this->particles_->template registerSharedVariableFrom<Vecd>("InitialPosition", "Position")),
-          vel_(this->particles_->template registerSharedVariable<Vecd>("Velocity")){};
+          pos0_(this->particles_->template registerStateVariableFrom<Vecd>("InitialPosition", "Position")),
+          vel_(this->particles_->template registerStateVariable<Vecd>("Velocity")){};
 
     virtual ~MotionConstraint(){};
 

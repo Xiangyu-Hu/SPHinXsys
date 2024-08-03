@@ -19,7 +19,7 @@ template <class MuscleType>
 void ActiveMuscle<MuscleType>::initializeLocalParameters(BaseParticles *base_particles)
 {
     MuscleType::initializeLocalParameters(base_particles);
-    active_contraction_stress_ = base_particles->registerSharedVariable<Real>("ActiveContractionStress");
+    active_contraction_stress_ = base_particles->registerStateVariable<Real>("ActiveContractionStress");
 }
 //=============================================================================================//
 template <class MuscleType>

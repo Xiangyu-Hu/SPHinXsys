@@ -951,7 +951,7 @@ Real StructuralSimulation::getMaxDisplacement(int body_index)
 {
     BaseParticles *base_particles = solid_body_list_[body_index].get()->getElasticSolidParticles();
     Vecd *pos = base_particles->ParticlePositions();
-    Vecd *pos0 = base_particles->registerSharedVariableFrom<Vecd>("InitialPosition", "Position");
+    Vecd *pos0 = base_particles->registerStateVariableFrom<Vecd>("InitialPosition", "Position");
     Real displ_max = 0;
     for (size_t i = 0; i < base_particles->TotalRealParticles(); i++)
     {

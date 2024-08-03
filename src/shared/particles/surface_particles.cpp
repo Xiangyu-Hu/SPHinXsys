@@ -23,21 +23,21 @@ void SurfaceParticles::initializeBasicParticleVariables()
 //=================================================================================================//
 void SurfaceParticles::registerSurfaceProperties(StdLargeVec<Vecd> &n, StdLargeVec<Real> &thickness)
 {
-    n_ = registerSharedVariableFrom<Vecd>("NormalDirection", n);
-    thickness_ = registerSharedVariableFrom<Real>("Thickness", thickness);
+    n_ = registerStateVariableFrom<Vecd>("NormalDirection", n);
+    thickness_ = registerStateVariableFrom<Real>("Thickness", thickness);
     addVariableToReload<Vecd>("NormalDirection");
     addVariableToReload<Real>("Thickness");
 }
 //=================================================================================================//
 void SurfaceParticles::registerSurfacePropertiesFromReload()
 {
-    n_ = registerSharedVariableFromReload<Vecd>("NormalDirection");
-    thickness_ = registerSharedVariableFromReload<Real>("Thickness");
+    n_ = registerStateVariableFromReload<Vecd>("NormalDirection");
+    thickness_ = registerStateVariableFromReload<Real>("Thickness");
 }
 //=================================================================================================//
 void SurfaceParticles::registerTransformationMatrix()
 {
-    transformation_matrix0_ = registerSharedVariable<Matd>(
+    transformation_matrix0_ = registerStateVariable<Matd>(
         "TransformationMatrix", [&](size_t index_i) -> Matd
         { return getTransformationMatrix(n_[index_i]); });
 }

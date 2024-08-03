@@ -12,9 +12,9 @@ template <class DataDelegationType>
 template <class BaseRelationType>
 EulerianIntegration<DataDelegationType>::EulerianIntegration(BaseRelationType &base_relation)
     : BaseIntegration<DataDelegationType>(base_relation),
-      mom_(this->particles_->template registerSharedVariable<Vecd>("Momentum")),
-      dmom_dt_(this->particles_->template registerSharedVariable<Vecd>("MomentumChangeRate")),
-      dmass_dt_(this->particles_->template registerSharedVariable<Real>("MassChangeRate")),
+      mom_(this->particles_->template registerStateVariable<Vecd>("Momentum")),
+      dmom_dt_(this->particles_->template registerStateVariable<Vecd>("MomentumChangeRate")),
+      dmass_dt_(this->particles_->template registerStateVariable<Real>("MassChangeRate")),
       Vol_(this->particles_->template getVariableDataByName<Real>("VolumetricMeasure")) {}
 //=================================================================================================//
 template <class RiemannSolverType>

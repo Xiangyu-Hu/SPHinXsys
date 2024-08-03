@@ -23,7 +23,7 @@ DistributingPointForces::
     {
         time_dependent_point_forces_.push_back(Vecd::Zero());
         sum_of_weight_.push_back(0.0);
-        weight_[i] = particles_->registerSharedVariable<Real>("Weight_" + std::to_string(i));
+        weight_[i] = particles_->registerStateVariable<Real>("Weight_" + std::to_string(i));
     }
 
     getWeight(); // TODO: should be revised and parallelized, using SimpleDynamics

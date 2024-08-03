@@ -335,7 +335,7 @@ class DiffusionInitialCondition : public LocalDynamics
   public:
     explicit DiffusionInitialCondition(SPHBody &sph_body)
         : LocalDynamics(sph_body),
-          phi_(particles_->registerSharedVariable<Real>("Phi")){};
+          phi_(particles_->registerStateVariable<Real>("Phi")){};
 
     void update(size_t index_i, Real dt)
     {
@@ -352,7 +352,7 @@ class RobinBoundaryDefinition : public LocalDynamics
     explicit RobinBoundaryDefinition(SolidBody &diffusion_body)
         : LocalDynamics(diffusion_body),
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
-          phi_(particles_->registerSharedVariable<Real>("Phi")),
+          phi_(particles_->registerStateVariable<Real>("Phi")),
           phi_convection_(particles_->template getVariableDataByName<Real>("PhiConvection")),
           phi_infinity_(*(this->particles_->template getSingularVariableByName<Real>("PhiInfinity"))){};
 

@@ -32,13 +32,13 @@ DiffusionRelaxation<DataDelegationType, DiffusionType>::
     for (auto &diffusion : diffusions_)
     {
         std::string diffusion_species_name = diffusion->DiffusionSpeciesName();
-        diffusion_species_.push_back(this->particles_->template registerSharedVariable<Real>(diffusion_species_name));
+        diffusion_species_.push_back(this->particles_->template registerStateVariable<Real>(diffusion_species_name));
         this->particles_->template addVariableToSort<Real>(diffusion_species_name);
         this->particles_->template addVariableToWrite<Real>(diffusion_species_name);
-        diffusion_dt_.push_back(this->particles_->template registerSharedVariable<Real>(diffusion_species_name + "ChangeRate"));
+        diffusion_dt_.push_back(this->particles_->template registerStateVariable<Real>(diffusion_species_name + "ChangeRate"));
 
         std::string gradient_species_name = diffusion->GradientSpeciesName();
-        gradient_species_.push_back(this->particles_->template registerSharedVariable<Real>(gradient_species_name));
+        gradient_species_.push_back(this->particles_->template registerStateVariable<Real>(gradient_species_name));
         this->particles_->template addVariableToSort<Real>(gradient_species_name);
         this->particles_->template addVariableToWrite<Real>(gradient_species_name);
     }
@@ -118,14 +118,14 @@ DiffusionRelaxation<Contact<ContactKernelGradientType>, DiffusionType>::
     {
         BaseParticles *contact_particles_k = this->contact_particles_[k];
         contact_kernel_gradients_.push_back(ContactKernelGradientType(this->particles_, contact_particles_k));
-        contact_Vol_.push_back(contact_particles_k->template registerSharedVariable<Real>("VolumetricMeasure"));
+        contact_Vol_.push_back(contact_particles_k->template registerStateVariable<Real>("VolumetricMeasure"));
 
         std::string diffusion_direction = "From" + this->contact_bodies_[k]->getName();
         for (auto &diffusion : this->diffusions_)
         {
             std::string variable_name = diffusion->GradientSpeciesName() + "Transfer" + diffusion_direction;
             contact_transfer_[k].push_back(
-                this->particles_->template registerSharedVariable<Real>(variable_name));
+                this->particles_->template registerStateVariable<Real>(variable_name));
         }
     }
 }
@@ -170,7 +170,7 @@ DiffusionRelaxation<Dirichlet<ContactKernelGradientType>, DiffusionType>::
         {
             std::string gradient_species_name = diffusion->GradientSpeciesName();
             contact_gradient_species_[k].push_back(
-                contact_particles_k->template registerSharedVariable<Real>(gradient_species_name));
+                contact_particles_k->template registerStateVariable<Real>(gradient_species_name));
             contact_particles_k->template addVariableToWrite<Real>(gradient_species_name);
         }
     }
@@ -231,7 +231,7 @@ DiffusionRelaxation<Neumann<ContactKernelGradientType>, DiffusionType>::
         {
             std::string diffusion_species_name = diffusion->DiffusionSpeciesName();
             contact_diffusive_flux_[k].push_back(
-                contact_particles_k->template registerSharedVariable<Real>(diffusion_species_name + "Flux"));
+                contact_particles_k->template registerStateVariable<Real>(diffusion_species_name + "Flux"));
         }
     }
 }
@@ -292,7 +292,7 @@ DiffusionRelaxation<Robin<ContactKernelGradientType>, DiffusionType>::
         {
             std::string diffusion_species_name = diffusion->DiffusionSpeciesName();
             contact_convection_[k].push_back(
-                contact_particles_k->template registerSharedVariable<Real>(diffusion_species_name + "Convection"));
+                contact_particles_k->template registerStateVariable<Real>(diffusion_species_name + "Convection"));
             contact_species_infinity_[k].push_back(
                 contact_particles_k->template registerSingularVariable<Real>(diffusion_species_name + "Infinity"));
         }
@@ -353,7 +353,7 @@ RungeKuttaStep<DiffusionRelaxationType>::RungeKuttaStep(Args &&...args)
     {
         std::string diffusion_species_name = diffusion->DiffusionSpeciesName();
         diffusion_species_s_.push_back(
-            this->particles_->template registerSharedVariable<Real>(diffusion_species_name + "Intermediate"));
+            this->particles_->template registerStateVariable<Real>(diffusion_species_name + "Intermediate"));
     }
 }
 //=================================================================================================//

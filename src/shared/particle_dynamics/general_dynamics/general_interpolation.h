@@ -112,7 +112,7 @@ class ObservingAQuantity : public InteractionDynamics<BaseInterpolation<DataType
     explicit ObservingAQuantity(BaseContactRelation &contact_relation, const std::string &variable_name)
         : InteractionDynamics<BaseInterpolation<DataType>>(contact_relation, variable_name)
     {
-        this->interpolated_quantities_ = this->particles_->template registerSharedVariable<DataType>(variable_name);
+        this->interpolated_quantities_ = this->particles_->template registerStateVariable<DataType>(variable_name);
     };
     virtual ~ObservingAQuantity(){};
 };

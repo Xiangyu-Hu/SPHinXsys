@@ -25,7 +25,7 @@ void SwapSortableParticleData::operator()(UnsignedInt *a, UnsignedInt *b)
 ParticleSequence::ParticleSequence(RealBody &real_body)
     : LocalDynamics(real_body),
       pos_(particles_->getVariableDataByName<Vecd>("Position")),
-      sequence_(particles_->registerSharedVariable<UnsignedInt>("Sequence")),
+      sequence_(particles_->registerDiscreteVariable<UnsignedInt>("Sequence", particles_->ParticlesBound())),
       cell_linked_list_(real_body.getCellLinkedList()) {}
 //=================================================================================================//
 void ParticleSequence::update(size_t index_i, Real dt)
