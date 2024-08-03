@@ -136,6 +136,8 @@ class BaseParticles
     template <typename DataType, typename... Args>
     DataType *registerDiscreteVariable(const std::string &name, size_t data_size, Args &&...args);
 
+    template <class DataType, typename... Args>
+    DataType *addUniqueStateVariable(const std::string &name, Args &&...args);
     template <typename DataType, typename... Args>
     DataType *registerStateVariable(const std::string &name, Args &&...args);
     template <typename DataType>

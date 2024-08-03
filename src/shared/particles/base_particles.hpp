@@ -51,35 +51,6 @@ DataType *BaseParticles::
     return variable->DataField();
 }
 //=================================================================================================//
-template <typename DataType>
-DataType *BaseParticles::registerSingularVariable(const std::string &name, DataType initial_value)
-{
-    SingularVariable<DataType> *variable = findVariableByName<DataType>(all_singular_variables_, name);
-
-    return variable != nullptr
-               ? variable->ValueAddress()
-               : addVariableToAssemble<DataType>(all_singular_variables_,
-                                                 all_global_variable_ptrs_, name, initial_value)
-                     ->ValueAddress();
-}
-//=================================================================================================//
-template <typename DataType>
-DataType *BaseParticles::getSingularVariableByName(const std::string &name)
-{
-    SingularVariable<DataType> *variable = findVariableByName<DataType>(all_singular_variables_, name);
-
-    if (variable != nullptr)
-    {
-        return variable->ValueAddress();
-    }
-
-    std::cout << "\nError: the variable '" << name << "' is not registered!\n";
-    std::cout << __FILE__ << ':' << __LINE__ << std::endl;
-    return nullptr;
-
-    return nullptr;
-}
-//=================================================================================================//
 template <typename DataType, typename... Args>
 DataType *BaseParticles::registerDiscreteVariable(const std::string &name,
                                                   size_t data_size, Args &&...args)
@@ -92,6 +63,12 @@ DataType *BaseParticles::registerDiscreteVariable(const std::string &name,
         initializeVariable(variable, std::forward<Args>(args)...);
     }
     return variable->DataField();
+}
+//=================================================================================================//
+template <class DataType, typename... Args>
+DataType *BaseParticles::addUniqueStateVariable(const std::string &name, Args &&...args)
+{
+    return addUniqueDiscreteVariable<DataType>(name, particles_bound_, std::forward<Args>(args)...);
 }
 //=================================================================================================//
 template <typename DataType, typename... Args>
@@ -182,6 +159,35 @@ DataType *BaseParticles::getVariableDataByName(const std::string &name)
     }
 
     return variable->DataField();
+}
+//=================================================================================================//
+template <typename DataType>
+DataType *BaseParticles::registerSingularVariable(const std::string &name, DataType initial_value)
+{
+    SingularVariable<DataType> *variable = findVariableByName<DataType>(all_singular_variables_, name);
+
+    return variable != nullptr
+               ? variable->ValueAddress()
+               : addVariableToAssemble<DataType>(all_singular_variables_,
+                                                 all_global_variable_ptrs_, name, initial_value)
+                     ->ValueAddress();
+}
+//=================================================================================================//
+template <typename DataType>
+DataType *BaseParticles::getSingularVariableByName(const std::string &name)
+{
+    SingularVariable<DataType> *variable = findVariableByName<DataType>(all_singular_variables_, name);
+
+    if (variable != nullptr)
+    {
+        return variable->ValueAddress();
+    }
+
+    std::cout << "\nError: the variable '" << name << "' is not registered!\n";
+    std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+    return nullptr;
+
+    return nullptr;
 }
 //=================================================================================================//
 template <typename DataType>
