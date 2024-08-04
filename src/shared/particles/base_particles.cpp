@@ -10,8 +10,8 @@ namespace SPH
 {
 //=================================================================================================//
 BaseParticles::BaseParticles(SPHBody &sph_body, BaseMaterial *base_material)
-    : v_total_real_particles_(registerSingularVariable<UnsignedInt>("TotalRealParticles")),
-      real_particles_bound_(0), particles_bound_(0), original_id_(nullptr), sorted_id_(nullptr),
+    : v_total_real_particles_(nullptr), real_particles_bound_(0), particles_bound_(0),
+      original_id_(nullptr), sorted_id_(nullptr),
       pos_(nullptr), Vol_(nullptr), rho_(nullptr), mass_(nullptr),
       sph_body_(sph_body), body_name_(sph_body.getName()),
       base_material_(*base_material),
@@ -23,6 +23,7 @@ BaseParticles::BaseParticles(SPHBody &sph_body, BaseMaterial *base_material)
       read_restart_variable_from_xml_(variables_to_restart_, restart_xml_parser_)
 {
     sph_body.assignBaseParticles(this);
+    v_total_real_particles_ = registerSingularVariable<UnsignedInt>("TotalRealParticles");
 }
 //=================================================================================================//
 void BaseParticles::initializeBasicParticleVariables()
