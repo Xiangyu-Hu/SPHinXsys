@@ -184,18 +184,24 @@ struct InflowVelocity
         //target_velocity[0] = 1.5 * u_ave * SMAX(0.0, 1.0 - position[1] * position[1] / halfsize_[1] / halfsize_[1]);
         //target_velocity[0] = 1.5 * u_ave * (1.0 - position[1] * position[1] / half_channel_height / half_channel_height);
         target_velocity[0] = u_ave;
- if(0)
+ if(1)
  {
         //** Impose fully-developed velocity from PYTHON result */
         //** Calculate the distance to wall, Y. position[1] is the distance to the centerline */
         Real Y = half_channel_height - std::abs(position[1]);
         int polynomial_order = 8 ;
         int num_coefficient = polynomial_order + 1 ;
-        //** Coefficient of the polynomia, 8th-order */
+        //** Coefficient of the polynomia, 8th-order, from py21 dp=0.024 */
+        // Real coeff[] = {
+        //     6.153336e-01, 3.095679e+00, -1.399783e+01, 
+        //     4.798221e+01, -1.100147e+02, 1.619762e+02, 
+        //     -1.464631e+02, 7.373006e+01, -1.577924e+01
+        // };
+        //** Coefficient of the polynomia, 8th-order, from py21 dp=0.1 */
         Real coeff[] = {
-            6.153336e-01, 3.095679e+00, -1.399783e+01, 
-            4.798221e+01, -1.100147e+02, 1.619762e+02, 
-            -1.464631e+02, 7.373006e+01, -1.577924e+01
+            6.492006e-01, 2.145673e+00, -7.442681e+00, 
+            2.148624e+01, -4.443593e+01, 6.171458e+01, 
+            -5.439313e+01, 2.726584e+01, -5.887918e+00
         };
         Real polynomial_value = 0.0;
         for (int i = 0; i < num_coefficient; ++i)

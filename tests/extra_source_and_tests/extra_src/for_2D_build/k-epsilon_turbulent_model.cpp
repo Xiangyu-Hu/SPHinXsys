@@ -658,7 +658,7 @@ namespace fluid_dynamics
 		Real u = velocity[0];
 		Real temp_in_turbu_k = 1.5 * pow((turbulent_intensity_ * u), 2);
 		Real turbu_k_original = turbu_k;
-if(0)
+if(1)
 {		
 		Real channel_height = CharacteristicLength_; //** Temporarily treatment *
 
@@ -676,11 +676,17 @@ if(0)
 
         int polynomial_order = 8 ;
         int num_coefficient = polynomial_order + 1 ;
-        //** Coefficient of the polynomia, 8th-order */
-        Real coeff[] = {
-            1.215679e-02, -6.681989e-02, 5.043783e-01, 
-            -2.344875e+00,  6.368016e+00, -1.041386e+01, 
-            1.009652e+01, -5.336236e+00, 1.183368e+00
+        //** Coefficient of the polynomia, 8th-order, from py21 dp=0.024 */
+        // Real coeff[] = {
+        //     1.215679e-02, -6.681989e-02, 5.043783e-01, 
+        //     -2.344875e+00,  6.368016e+00, -1.041386e+01, 
+        //     1.009652e+01, -5.336236e+00, 1.183368e+00
+        // };
+		//** Coefficient of the polynomia, 8th-order, from py21 dp=0.1 */
+		Real coeff[] = {
+            1.159981e-02, -4.662944e-02, 2.837400e-01, 
+            -1.193955e+00, 3.034851e+00, -4.766077e+00, 
+            4.529136e+00, -2.380854e+00, 5.307586e-01
         };
         Real polynomial_value = 0.0;
         for (int i = 0; i < num_coefficient; ++i)
@@ -712,7 +718,7 @@ if(0)
 		//Real temp_in_turbu_E = C_mu_ * pow(turbu_k, 1.5) / (0.1*getTurbulentLength());
 		Real temp_in_turbu_E = C_mu_75_ * pow(turbu_k, 1.5) / TurbulentLength_;
 		Real turbu_E_original = turbu_E;
-if(0)
+if(1)
 {	
 		Real channel_height = CharacteristicLength_; //** Temporarily treatment *
 
@@ -730,12 +736,19 @@ if(0)
 
         int polynomial_order = 8 ;
         int num_coefficient = polynomial_order + 1 ;
-        //** Coefficient of the polynomia, 8th-order */
-        Real coeff[] = {
-            1.633474e-02,  -2.488756e-01, 1.912092e+00, 
-            -8.381386e+00,   2.205987e+01, -3.542125e+01, 
-            3.391904e+01, -1.777442e+01, 3.918818e+00
+        //** Coefficient of the polynomia, 8th-order, from py21 dp=0.024 */
+        // Real coeff[] = {
+        //     1.633474e-02,  -2.488756e-01, 1.912092e+00, 
+        //     -8.381386e+00,   2.205987e+01, -3.542125e+01, 
+        //     3.391904e+01, -1.777442e+01, 3.918818e+00
+        // };
+		//** Coefficient of the polynomia, 8th-order, from py21 dp=0.1 */
+		Real coeff[] = {
+            1.428191e-02, -1.766636e-01, 1.153107e+00, 
+            -4.515606e+00, 1.103752e+01, -1.694146e+01, 
+            1.584534e+01, -8.241577e+00, 1.825421e+00
         };
+
         Real polynomial_value = 0.0;
         for (int i = 0; i < num_coefficient; ++i)
         {
@@ -868,7 +881,8 @@ if(0)
 			}
 		} 
 		//** This is a temporary treatment, particles in inlet region is not corrected by wall function *
-		if (is_near_contact > 0 && pos_[index_i][0] > 0.0) 
+		//if (is_near_contact > 0 && pos_[index_i][0] > 0.0) 
+		if (is_near_contact > 0)
 		{
 			is_near_wall_P2_[index_i] = 10; //** Particles that have contact are defined as in region P2 *  					
 			//** Get the tangential unit vector *
