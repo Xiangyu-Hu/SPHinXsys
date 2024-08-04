@@ -47,84 +47,50 @@ using namespace std::placeholders;
 namespace SPH
 {
 /**
- * @class BaseMesh
+ * @class Mesh
  * @brief Base class for all structured meshes which may be grid or cell based.
  * The basic properties of the mesh, such as lower bound, grid spacing
  * and number of grid points may be determined by the derived class.
  * Note that there is no mesh-based data defined here.
  */
-class BaseMesh
+class Mesh
 {
-  protected:
-    Vecd mesh_lower_bound_{Vecd::Zero()};    /**< mesh lower bound as reference coordinate */
-    Real grid_spacing_{1.0};                 /**< grid_spacing */
-    Arrayi all_grid_points_{Arrayi::Zero()}; /**< number of grid points by dimension */
   public:
-    BaseMesh() = default;
-    explicit BaseMesh(Arrayi all_grid_points);
-    BaseMesh(Vecd mesh_lower_bound, Real grid_spacing, Arrayi all_grid_points);
-    BaseMesh(BoundingBox tentative_bounds, Real grid_spacing, size_t buffer_width);
-    ~BaseMesh(){};
+    Mesh(BoundingBox tentative_bounds, Real grid_spacing, size_t buffer_width);
+    Mesh(Vecd mesh_lower_bound, Real grid_spacing, Arrayi all_grid_points);
+    ~Mesh(){};
 
-    /** Return the lower bound of the mesh domain. */
     Vecd MeshLowerBound() { return mesh_lower_bound_; };
-    /** Return the grid spacing. */
     Real GridSpacing() { return grid_spacing_; };
-    /** Return the number of mesh in each direction, i.e., x-, y- and z-axis. */
     Arrayi AllGridPoints() { return all_grid_points_; };
-    /** Given the cell number, return the mesh number. */
-    Arrayi AllGridPointsFromAllCells(const Arrayi &all_cells) { return all_cells + Arrayi::Ones(); };
-    /** Given the grid point number, return the cell number. */
-    Arrayi AllCellsFromAllGridPoints(const Arrayi &all_grid_points) { return all_grid_points - Arrayi::Ones(); };
-    /** Given the cell position, return the grid position. */
-    Vecd GridPositionFromCellPosition(const Vecd &cell_position) { return cell_position - 0.5 * grid_spacing_ * Vecd::Ones(); };
-    /** Given the position, return the cell index. */
+    Arrayi AllCells() { return all_cells_; };
+    size_t NumberOfGridPoints() { return transferMeshIndexTo1D(all_grid_points_, all_grid_points_); };
+    size_t NumberOfCells() { return transferMeshIndexTo1D(all_cells_, all_cells_); };
     Arrayi CellIndexFromPosition(const Vecd &position);
-    /** Given the cell index, return the cell position. */
     Vecd CellPositionFromIndex(const Arrayi &cell_index);
-    /** Given the cell index, return the position of its lower corner. */
-    Vecd CellLowerCorner(const Arrayi &cell_index);
-    /** Given the index, return the grid position. */
     Vecd GridPositionFromIndex(const Arrayi &grid_index);
-    /** Transfer 1D int to mesh index.  */
+    Vecd CellLowerCornerPosition(const Arrayi &cell_index);
+    //----------------------------------------------------------------------
+    // Transferring between 1D mesh indexes.
+    // Here, mesh size can be either AllGridPoints or AllCells.
+    //----------------------------------------------------------------------
     Arrayi transfer1DtoMeshIndex(const Arrayi &mesh_size, size_t i);
-    /** Transfer mesh index to 1D int.  */
     size_t transferMeshIndexTo1D(const Arrayi &mesh_size, const Arrayi &mesh_index);
     /** converts mesh index into a Morton order.
      * Interleave a 10 bit number in 32 bits, fill one bit and leave the other 2 as zeros
      * https://stackoverflow.com/questions/18529057/
      * produce-interleaving-bit-patterns-morton-keys-for-32-bit-64-bit-and-128bit
      */
-    size_t MortonCode(const size_t &i);
-    /** Converts mesh index into a Morton order. */
     size_t transferMeshIndexToMortonOrder(const Arrayi &mesh_index);
-};
 
-/**
- * @class Mesh
- * @brief Abstract base class for cell-based mesh
- * by introducing number of cells, buffer width and mesh-based data in its derived classes.
- * Note that we identify the difference between grid spacing and data spacing.
- * The latter is different from grid spacing when MeshWithDataPackage is considered.
- */
-class Mesh : public BaseMesh
-{
   protected:
-    Arrayi all_cells_{Arrayi::Zero()}; /**< number of cells by dimension */
-    size_t buffer_width_{0};           /**< buffer width to avoid bound check.*/
+    Vecd mesh_lower_bound_;  /**< mesh lower bound as reference coordinate */
+    Real grid_spacing_;      /**< grid_spacing */
+    size_t buffer_width_;    /**< buffer width to avoid bound check.*/
+    Arrayi all_grid_points_; /**< number of grid points by dimension */
+    Arrayi all_cells_;       /**< number of cells by dimension */
 
-    /** Copy mesh properties to another mesh. */
-    void copyMeshProperties(Mesh *another_mesh);
-
-  public:
-    Mesh(BoundingBox tentative_bounds, Real grid_spacing, size_t buffer_width);
-    Mesh(Vecd mesh_lower_bound, Arrayi all_cells, Real grid_spacing);
-    ~Mesh(){};
-
-    /** Return number of cell in each direction, i.e., x-, y- and z-axis.*/
-    Arrayi AllCells() { return all_cells_; };
-    /** Return the buffer size. */
-    size_t MeshBufferSize() { return buffer_width_; };
+    size_t MortonCode(const size_t &i);
 };
 
 /**
