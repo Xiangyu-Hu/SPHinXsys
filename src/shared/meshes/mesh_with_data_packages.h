@@ -123,10 +123,14 @@ class MeshWithGridDataPackages : public Mesh
           global_mesh_(mesh_lower_bound_ + 0.5 * data_spacing * Vecd::Ones(), data_spacing, all_cells_ * pkg_size)
     {
         allocateMetaDataMatrix();
+        allocateIndexDataMatrix();
+        allocateCategoryDataMatrix();
     };
     virtual ~MeshWithGridDataPackages()
     {
         deleteMetaDataMatrix();
+        deleteIndexDataMatrix();
+        deleteCategoryDataMatrix();
         delete[] cell_neighborhood_;
         delete[] meta_data_cell_;
     };
@@ -142,6 +146,8 @@ class MeshWithGridDataPackages : public Mesh
     size_t num_grid_pkgs_ = 2;                        /**< the number of all distinct packages, initially only 2 singular packages. */
     using MetaData = std::pair<int, size_t>;          /**< stores the metadata for each cell: (int)singular0/inner1/core2, (size_t)package data index*/
     MeshDataMatrix<MetaData> meta_data_mesh_;         /**< metadata for all cells. */
+    MeshDataMatrix<size_t> index_data_mesh_;         /**< metadata for all cells. */
+    MeshDataMatrix<int> category_data_mesh_;         /**< metadata for all cells. */
     CellNeighborhood *cell_neighborhood_;                  /**< 3*3(*3) array to store indicies of neighborhood cells. */
     std::pair<Arrayi, int> *meta_data_cell_;          /**< metadata for each occupied cell: (arrayi)cell index, (int)core1/inner0. */
     using NeighbourIndex = std::pair<size_t, Arrayi>; /**< stores shifted neighbour info: (size_t)package index, (arrayi)local grid index. */
@@ -153,6 +159,10 @@ class MeshWithGridDataPackages : public Mesh
 
     void allocateMetaDataMatrix(); /**< allocate memories for metadata of data packages. */
     void deleteMetaDataMatrix();   /**< delete memories for metadata of data packages. */
+    void allocateIndexDataMatrix(); /**< allocate memories for metadata of data packages. */
+    void deleteIndexDataMatrix();   /**< delete memories for metadata of data packages. */
+    void allocateCategoryDataMatrix(); /**< allocate memories for metadata of data packages. */
+    void deleteCategoryDataMatrix();   /**< delete memories for metadata of data packages. */
 
     template <typename DataType>
     MeshVariable<DataType> *registerMeshVariable(const std::string &variable_name)

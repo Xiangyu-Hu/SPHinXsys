@@ -45,6 +45,30 @@ void MeshWithGridDataPackages<PKG_SIZE>::deleteMetaDataMatrix()
 }
 //=================================================================================================//
 template <int PKG_SIZE>
+void MeshWithGridDataPackages<PKG_SIZE>::allocateIndexDataMatrix()
+{
+    Allocate3dArray(index_data_mesh_, all_cells_);
+}
+//=================================================================================================//
+template <int PKG_SIZE>
+void MeshWithGridDataPackages<PKG_SIZE>::deleteIndexDataMatrix()
+{
+    Delete3dArray(index_data_mesh_, all_cells_);
+}
+//=================================================================================================//
+template <int PKG_SIZE>
+void MeshWithGridDataPackages<PKG_SIZE>::allocateCategoryDataMatrix()
+{
+    Allocate3dArray(category_data_mesh_, all_cells_);
+}
+//=================================================================================================//
+template <int PKG_SIZE>
+void MeshWithGridDataPackages<PKG_SIZE>::deleteCategoryDataMatrix()
+{
+    Delete3dArray(category_data_mesh_, all_cells_);
+}
+//=================================================================================================//
+template <int PKG_SIZE>
 template <class DataType>
 DataType MeshWithGridDataPackages<PKG_SIZE>::
     probeMesh(MeshVariable<DataType> &mesh_variable, const Vecd &position)
