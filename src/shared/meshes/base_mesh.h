@@ -67,6 +67,12 @@ class Mesh
     size_t NumberOfGridPoints() { return transferMeshIndexTo1D(all_grid_points_, all_grid_points_); };
     size_t NumberOfCells() { return transferMeshIndexTo1D(all_cells_, all_cells_); };
     Arrayi CellIndexFromPosition(const Vecd &position);
+
+    size_t LinearCellIndexFromPosition(const Vecd &position)
+    {
+        return transferMeshIndexTo1D(all_cells_, CellIndexFromPosition(position));
+    };
+
     Vecd CellPositionFromIndex(const Arrayi &cell_index);
     Vecd GridPositionFromIndex(const Arrayi &grid_index);
     Vecd CellLowerCornerPosition(const Arrayi &cell_index);

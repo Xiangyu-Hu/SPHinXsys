@@ -33,33 +33,6 @@
 
 namespace SPH
 {
-template <typename CellLinkedListType>
-class UpdateCellLinkedList<CellLinkedListType, ParallelDevicePolicy>
-    : public LocalDynamics, public BaseDynamics<void>
-{
-    using Mesh = CellLinkedListType::MeshType;
 
-  public:
-    UpdateCellLinkedList(SPHBody &sph_body);
-    virtual ~UpdateCellLinkedList(){};
-    virtual void exec(Real dt = 0.0) override;
-
-    class ComputingKernel
-    {
-      public:
-      protected:
-        friend class UpdateCellLinkedList<MeshType, ParallelDevicePolicy>;
-        Mesh mesh_;
-        Vecd *pos_;
-        UnsignedInt *particle_id_list_;
-        UnsignedInt *particle_offset_list_;
-    };
-
-  protected:
-    Mesh mesh_;
-    Vecd *pos_;
-    UnsignedInt *particle_id_list_;
-    UnsignedInt *particle_offset_list_;
-};
 } // namespace SPH
 #endif // UPDATE_CELL_LINKED_LIST_SYCL_H

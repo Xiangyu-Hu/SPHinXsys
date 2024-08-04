@@ -247,6 +247,14 @@ void BaseParticles::addVariableToReload(const std::string &name)
     addVariableToList<DataType>(variables_to_reload_, name);
 }
 //=================================================================================================//
+template <typename DataType, class ExecutionPolicy, typename... Args>
+DataType *BaseParticles::registerDiscreteVariable(
+    const ExecutionPolicy &execution_policy, size_t data_size, const std::string &name, Args &&...args)
+{
+    registerDiscreteVariable<DataType>(name, data_size, std::forward<Args>(args)...);
+    return getVariableDataByName<DataType>(execution_policy, name);
+}
+//=================================================================================================//
 template <typename DataType, typename... Args>
 DataType *BaseParticles::
     registerStateVariable(const ParallelDevicePolicy &execution_policy, const std::string &name, Args &&...args)

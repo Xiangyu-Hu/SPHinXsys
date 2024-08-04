@@ -29,19 +29,61 @@
 #ifndef UPDATE_CELL_LINKED_LIST_H
 #define UPDATE_CELL_LINKED_LIST_H
 
-#include "all_particle_dynamics.h"
-#include "base_body.h"
-#include "base_particles.hpp"
+#include "base_local_dynamics.h"
 
 namespace SPH
 {
-template <class ExecutionPolicy>
+template <typename... T>
 class UpdateCellLinkedList;
 
-template <>
-class UpdateCellLinkedList<ParallelPolicy>
-    : public LocalDynamics, public BaseDynamics<void>
+template <typename CellLinkedListType>
+class UpdateCellLinkedList<CellLinkedListType> : public LocalDynamics
 {
+  public:
+    template <class ExecutionPolicy>
+    UpdateCellLinkedList(const ExecutionPolicy &execution_policy, RealBody &real_body);
+    virtual ~UpdateCellLinkedList(){};
+
+    class ComputingKernel
+    {
+      public:
+        ComputingKernel(UpdateCellLinkedList<CellLinkedListType> &update_cell_linked_list);
+
+        void setParticleOffsetUpperBound()
+
+            protected : friend class UpdateCellLinkedList<CellLinkedListType>;
+        Mesh mesh_;
+        UnsignedInt number_of_cells_, particles_bound_;
+        Vecd *pos_;
+        UnsignedInt *particle_id_list_;
+        UnsignedInt *particle_offset_list_;
+        UnsignedInt *current_size_list_;
+    };
+
+  protected:
+    Mesh mesh_;
+    UnsignedInt number_of_cells_, particles_bound_;
+    Vecd *pos_;
+    UnsignedInt *particle_id_list_;
+    UnsignedInt *particle_offset_list_;
+    UnsignedInt *current_size_list_;
 };
+
+template <class CellLinkedListType, class ExecutionPolicy = ParallelPolicy>
+class UpdateCellLinkedList<CellLinkedListType, ExecutionPolicy>
+    : public UpdateCellLinkedList<CellLinkedListType>, public BaseDynamics<void>
+{
+    using LocalDynamicsType = typename UpdateCellLinkedList<CellLinkedListType>;
+    using ComputingKernel = typename LocalDynamicsType::ComputingKernel;
+
+  public:
+    UpdateCellLinkedList(RealBody &real_body);
+    virtual ~UpdateCellLinkedList(){};
+    virtual void exec(Real dt = 0.0) override;
+
+  protected:
+    Implementation<LocalDynamicsType, ExecutionPolicy> kernel_implementation_;
+};
+
 } // namespace SPH
 #endif // UPDATE_CELL_LINKED_LIST_H

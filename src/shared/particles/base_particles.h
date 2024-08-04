@@ -186,10 +186,15 @@ class BaseParticles
     UnsignedInt *ParticleSortedIds() { return sorted_id_; };
     ParticleData &SortableParticleData() { return sortable_data_; };
     ParticleVariables &SortableParticleVariables() { return sortable_variables_; };
+    AssignIndex getAssignIndex() { return AssignIndex(); };
 
     //----------------------------------------------------------------------
     // Variable related functions for offloading computing
     //----------------------------------------------------------------------
+    template <typename DataType, class ExecutionPolicy, typename... Args>
+    DataType *registerDiscreteVariable(const ExecutionPolicy &execution_policy,
+                                       size_t data_size, const std::string &name, Args &&...args);
+
     template <typename DataType, class ExecutionPolicy, typename... Args>
     DataType *registerStateVariable(const ExecutionPolicy &execution_policy, const std::string &name, Args &&...args)
     {

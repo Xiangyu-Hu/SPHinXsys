@@ -33,7 +33,6 @@
 
 namespace SPH
 {
-
 /**
  * @class WithinScope
  * Base class introduce the concept of "within the scope".

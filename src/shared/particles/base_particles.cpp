@@ -37,12 +37,8 @@ void BaseParticles::initializeBasicParticleVariables()
     //----------------------------------------------------------------------
     //		unregistered variables and data
     //----------------------------------------------------------------------
-    original_id_ = registerDiscreteVariable<UnsignedInt>("OriginalID", particles_bound_,
-                                                         [&](UnsignedInt i) -> UnsignedInt
-                                                         { return i; });
-    sorted_id_ = registerDiscreteVariable<UnsignedInt>("SortedID", particles_bound_,
-                                                       [&](UnsignedInt i) -> UnsignedInt
-                                                       { return i; });
+    original_id_ = registerDiscreteVariable<UnsignedInt>("OriginalID", particles_bound_, getAssignIndex());
+    sorted_id_ = registerDiscreteVariable<UnsignedInt>("SortedID", particles_bound_, getAssignIndex());
 }
 //=================================================================================================//
 void BaseParticles::registerPositionAndVolumetricMeasure(StdLargeVec<Vecd> &pos, StdLargeVec<Real> &Vol)
