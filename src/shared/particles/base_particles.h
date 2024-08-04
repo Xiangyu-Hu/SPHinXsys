@@ -227,8 +227,6 @@ class BaseParticles
     //----------------------------------------------------------------------
     // Particle data ouput functions
     //----------------------------------------------------------------------
-    template <typename OutStreamType>
-    void writeParticlesToVtk(OutStreamType &output_stream);
     void writeParticlesToPltFile(std::ofstream &output_file);
     void resizeXmlDocForParticles(XmlParser &xml_parser);
     void writeParticlesToXmlForRestart(std::string &filefullpath);
@@ -266,8 +264,8 @@ class BaseParticles
     ParticleVariables variables_to_reload_;
     bool is_reload_file_read_ = false;
 
-    virtual void writePltFileHeader(std::ofstream &output_file);
-    virtual void writePltFileParticleData(std::ofstream &output_file, size_t index);
+  public:
+    ParticleVariables &VariablesToWrite() { return variables_to_write_; };
     //----------------------------------------------------------------------
     // Small structs for generalize particle operations on
     // assembled variables and data sets

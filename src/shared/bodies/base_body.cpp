@@ -79,21 +79,6 @@ void SPHBody::defineAdaptationRatios(Real h_spacing_ratio, Real new_system_refin
     sph_adaptation_->resetAdaptationRatios(h_spacing_ratio, new_system_refinement_ratio);
 }
 //=================================================================================================//
-void SPHBody::writeParticlesToVtuFile(std::ostream &output_file)
-{
-    base_particles_->writeParticlesToVtk(output_file);
-}
-//=================================================================================================//
-void SPHBody::writeParticlesToVtpFile(std::ofstream &output_file)
-{
-    base_particles_->writeParticlesToVtk(output_file);
-}
-//=================================================================================================//
-void SPHBody::writeParticlesToPltFile(std::ofstream &output_file)
-{
-    base_particles_->writeParticlesToPltFile(output_file);
-}
-//=================================================================================================//
 void SPHBody::writeParticlesToXmlForRestart(std::string &filefullpath)
 {
     base_particles_->writeParticlesToXmlForRestart(filefullpath);

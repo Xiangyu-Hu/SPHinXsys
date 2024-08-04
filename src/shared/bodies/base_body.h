@@ -170,9 +170,6 @@ class SPHBody
         generateParticles<ParticleType, ReserveType, Parameters...>(particle_reserve, std::forward<Args>(args)...);
     };
 
-    virtual void writeParticlesToVtuFile(std::ostream &output_file);
-    virtual void writeParticlesToVtpFile(std::ofstream &output_file);
-    virtual void writeParticlesToPltFile(std::ofstream &output_file);
     virtual void writeParticlesToXmlForRestart(std::string &filefullpath);
     virtual void readParticlesFromXmlForRestart(std::string &filefullpath);
     virtual void writeToXmlForReloadParticle(std::string &filefullpath);

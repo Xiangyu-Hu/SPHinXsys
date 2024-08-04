@@ -112,81 +112,12 @@ void BaseParticles::switchToBufferParticle(size_t index)
 //=================================================================================================//
 void BaseParticles::createRealParticleFrom(size_t index)
 {
-    UnsignedInt *total_real_particles = v_total_real_particles_->ValueAddress();
     size_t new_original_id = TotalRealParticles();
     original_id_[new_original_id] = new_original_id;
     /** Buffer Particle state copied from real particle. */
     copyFromAnotherParticle(new_original_id, index);
     /** Realize the buffer particle by increasing the number of real particle by one.  */
     incrementTotalRealParticles();
-}
-//=================================================================================================//
-void BaseParticles::writePltFileHeader(std::ofstream &output_file)
-{
-    output_file << " VARIABLES = \"x\",\"y\",\"z\",\"ID\"";
-
-    constexpr int type_index_int = DataTypeIndex<int>::value;
-    for (DiscreteVariable<int> *variable : std::get<type_index_int>(variables_to_write_))
-    {
-        output_file << ",\"" << variable->Name() << "\"";
-    };
-
-    constexpr int type_index_Vecd = DataTypeIndex<Vecd>::value;
-    for (DiscreteVariable<Vecd> *variable : std::get<type_index_Vecd>(variables_to_write_))
-    {
-        std::string variable_name = variable->Name();
-        output_file << ",\"" << variable_name << "_x\""
-                    << ",\"" << variable_name << "_y\""
-                    << ",\"" << variable_name << "_z\"";
-    };
-
-    constexpr int type_index_Real = DataTypeIndex<Real>::value;
-    for (DiscreteVariable<Real> *variable : std::get<type_index_Real>(variables_to_write_))
-    {
-        output_file << ",\"" << variable->Name() << "\"";
-    };
-}
-//=================================================================================================//
-void BaseParticles::writePltFileParticleData(std::ofstream &output_file, size_t index)
-{
-    // write particle positions and index first
-    Vec3d particle_position = upgradeToVec3d(pos_[index]);
-    output_file << particle_position[0] << " " << particle_position[1] << " " << particle_position[2] << " "
-                << index << " ";
-
-    constexpr int type_index_int = DataTypeIndex<int>::value;
-    for (DiscreteVariable<int> *variable : std::get<type_index_int>(variables_to_write_))
-    {
-        int *data_field = variable->DataField();
-        output_file << data_field[index] << " ";
-    };
-
-    constexpr int type_index_Vecd = DataTypeIndex<Vecd>::value;
-    for (DiscreteVariable<Vecd> *variable : std::get<type_index_Vecd>(variables_to_write_))
-    {
-        Vecd *data_field = variable->DataField();
-        Vec3d vector_value = upgradeToVec3d(data_field[index]);
-        output_file << vector_value[0] << " " << vector_value[1] << " " << vector_value[2] << " ";
-    };
-
-    constexpr int type_index_Real = DataTypeIndex<Real>::value;
-    for (DiscreteVariable<Real> *variable : std::get<type_index_Real>(variables_to_write_))
-    {
-        Real *data_field = variable->DataField();
-        output_file << data_field[index] << " ";
-    };
-}
-//=================================================================================================//
-void BaseParticles::writeParticlesToPltFile(std::ofstream &output_file)
-{
-    writePltFileHeader(output_file);
-    output_file << "\n";
-
-    for (size_t i = 0; i != TotalRealParticles(); ++i)
-    {
-        writePltFileParticleData(output_file, i);
-        output_file << "\n";
-    };
 }
 //=================================================================================================//
 void BaseParticles::resizeXmlDocForParticles(XmlParser &xml_parser)
