@@ -10,8 +10,8 @@ namespace SPH
 {
 //=================================================================================================//
 BaseParticles::BaseParticles(SPHBody &sph_body, BaseMaterial *base_material)
-    : total_real_particles_(0), real_particles_bound_(0), particles_bound_(0),
-      original_id_(nullptr), sorted_id_(nullptr),
+    : v_total_real_particles_(registerSingularVariable<UnsignedInt>("TotalRealParticles")),
+      real_particles_bound_(0), particles_bound_(0), original_id_(nullptr), sorted_id_(nullptr),
       pos_(nullptr), Vol_(nullptr), rho_(nullptr), mass_(nullptr),
       sph_body_(sph_body), body_name_(sph_body.getName()),
       base_material_(*base_material),
@@ -59,10 +59,11 @@ void BaseParticles::registerPositionAndVolumetricMeasureFromReload()
     Vol_ = registerStateVariableFromReload<Real>("VolumetricMeasure");
 }
 //=================================================================================================//
-void BaseParticles::initializeAllParticlesBounds(size_t total_real_particles)
+void BaseParticles::initializeAllParticlesBounds(size_t number_of_particles)
 {
-    total_real_particles_ = total_real_particles;
-    real_particles_bound_ = total_real_particles_;
+    UnsignedInt *total_real_particles = v_total_real_particles_->ValueAddress();
+    *total_real_particles = number_of_particles;
+    real_particles_bound_ = number_of_particles;
     particles_bound_ = real_particles_bound_;
 }
 //=================================================================================================//
@@ -98,7 +99,7 @@ void BaseParticles::updateGhostParticle(size_t ghost_index, size_t index)
 //=================================================================================================//
 void BaseParticles::switchToBufferParticle(size_t index)
 {
-    size_t last_real_particle_index = total_real_particles_ - 1;
+    size_t last_real_particle_index = TotalRealParticles() - 1;
     if (index < last_real_particle_index)
     {
         copyFromAnotherParticle(index, last_real_particle_index);
@@ -106,17 +107,18 @@ void BaseParticles::switchToBufferParticle(size_t index)
         std::swap(original_id_[index], original_id_[last_real_particle_index]);
         sorted_id_[original_id_[index]] = index;
     }
-    total_real_particles_ -= 1;
+    decrementTotalRealParticles();
 }
 //=================================================================================================//
 void BaseParticles::createRealParticleFrom(size_t index)
 {
-    size_t new_original_id = total_real_particles_;
+    UnsignedInt *total_real_particles = v_total_real_particles_->ValueAddress();
+    size_t new_original_id = TotalRealParticles();
     original_id_[new_original_id] = new_original_id;
     /** Buffer Particle state copied from real particle. */
     copyFromAnotherParticle(new_original_id, index);
-    /** Realize the buffer particle by increasing the number of real particle in the body.  */
-    total_real_particles_ += 1;
+    /** Realize the buffer particle by increasing the number of real particle by one.  */
+    incrementTotalRealParticles();
 }
 //=================================================================================================//
 void BaseParticles::writePltFileHeader(std::ofstream &output_file)
@@ -180,8 +182,7 @@ void BaseParticles::writeParticlesToPltFile(std::ofstream &output_file)
     writePltFileHeader(output_file);
     output_file << "\n";
 
-    size_t total_real_particles = total_real_particles_;
-    for (size_t i = 0; i != total_real_particles; ++i)
+    for (size_t i = 0; i != TotalRealParticles(); ++i)
     {
         writePltFileParticleData(output_file, i);
         output_file << "\n";
@@ -192,9 +193,10 @@ void BaseParticles::resizeXmlDocForParticles(XmlParser &xml_parser)
 {
     size_t total_elements = xml_parser.Size(xml_parser.first_element_);
 
-    if (total_elements <= total_real_particles_)
+    UnsignedInt total_real_particles = TotalRealParticles();
+    if (total_elements <= total_real_particles)
     {
-        xml_parser.resize(xml_parser.first_element_, total_real_particles_, "particle");
+        xml_parser.resize(xml_parser.first_element_, total_real_particles, "particle");
     }
 }
 //=================================================================================================//

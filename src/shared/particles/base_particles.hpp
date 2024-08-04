@@ -52,15 +52,15 @@ DataType *BaseParticles::
 }
 //=================================================================================================//
 template <typename DataType>
-DataType *BaseParticles::registerSingularVariable(const std::string &name, DataType initial_value)
+SingularVariable<DataType> *BaseParticles::
+    registerSingularVariable(const std::string &name, DataType initial_value)
 {
     SingularVariable<DataType> *variable = findVariableByName<DataType>(all_singular_variables_, name);
 
     return variable != nullptr
-               ? variable->ValueAddress()
-               : addVariableToAssemble<DataType>(all_singular_variables_,
-                                                 all_global_variable_ptrs_, name, initial_value)
-                     ->ValueAddress();
+               ? variable
+               : addVariableToAssemble<DataType>(
+                     all_singular_variables_, all_global_variable_ptrs_, name, initial_value);
 }
 //=================================================================================================//
 template <typename DataType>
@@ -307,7 +307,7 @@ operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables, Ba
 template <typename OutStreamType>
 void BaseParticles::writeParticlesToVtk(OutStreamType &output_stream)
 {
-    size_t total_real_particles = total_real_particles_;
+    size_t total_real_particles = TotalRealParticles();
 
     // write sorted particles ID
     output_stream << "    <DataArray Name=\"SortedParticle_ID\" type=\"Int32\" Format=\"ascii\">\n";
