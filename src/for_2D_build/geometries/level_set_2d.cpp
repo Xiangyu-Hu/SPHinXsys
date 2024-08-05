@@ -72,7 +72,8 @@ void LevelSet::finishDataPackages()
     //     });
     initialize_basic_data_for_a_package.exec();
     update_level_set_gradient.exec();
-    updateKernelIntegrals();
+    // updateKernelIntegrals();
+    update_kernel_integrals.exec();
 }
 //=================================================================================================//
 void LevelSet::initializeIndexMesh()

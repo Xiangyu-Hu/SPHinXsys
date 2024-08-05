@@ -102,6 +102,7 @@ class LevelSet : public MeshWithGridDataPackages<4>,
     bool isWithinCorePackage(Vecd position);
     Real computeKernelIntegral(const Vecd &position);
     Vecd computeKernelGradientIntegral(const Vecd &position);
+    Kernel &kernel_;
 
   protected:
     MeshVariable<Real> &phi_;
@@ -109,7 +110,6 @@ class LevelSet : public MeshWithGridDataPackages<4>,
     MeshVariable<Vecd> &phi_gradient_;
     MeshVariable<Real> &kernel_weight_;
     MeshVariable<Vecd> &kernel_gradient_;
-    Kernel &kernel_;
     MeshWithGridDataPackages<4> &mesh_data_ = *this;
 
     void initializeDataForSingularPackage(const size_t package_index, Real far_field_level_set);
@@ -135,6 +135,7 @@ class LevelSet : public MeshWithGridDataPackages<4>,
     MeshInnerDynamics<InitializeCellNeighborhood> initialize_cell_neighborhood{mesh_data_};
     MeshInnerDynamics<InitializeBasicDataForAPackage> initialize_basic_data_for_a_package{mesh_data_, shape_};
     MeshInnerDynamics<UpdateLevelSetGradient> update_level_set_gradient{mesh_data_};
+    MeshInnerDynamics<UpdateKernelIntegrals> update_kernel_integrals{mesh_data_, kernel_, global_h_ratio_};
 
     // upwind algorithm choosing candidate difference by the sign
     Real upwindDifference(Real sign, Real df_p, Real df_n);

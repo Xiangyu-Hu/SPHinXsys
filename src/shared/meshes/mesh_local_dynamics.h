@@ -33,6 +33,7 @@
 #include "base_variable.h"
 #include "mesh_with_data_packages.hpp"
 #include "base_geometry.h"
+#include "base_kernel.h"
 
 namespace SPH
 {
@@ -160,19 +161,47 @@ class UpdateLevelSetGradient : public BaseMeshLocalDynamics<size_t>
     MeshVariable<Vecd> &phi_gradient_;
 };
 
-// class UpdateKernelIntegrals
-//     : public BaseMeshLocalDynamics
-// {
-//   public:
-//     explicit UpdateKernelIntegrals(MeshWithGridDataPackages &mesh_data){};
-//     virtual ~UpdateKernelIntegrals(){};
+class UpdateKernelIntegrals : public BaseMeshLocalDynamics<size_t>
+{
+  public:
+    explicit UpdateKernelIntegrals(MeshWithGridDataPackagesType &mesh_data, Kernel &kernel, Real global_h_ratio)
+        : BaseMeshLocalDynamics(mesh_data),
+          phi_(*mesh_data.getMeshVariable<Real>("Levelset")),
+          phi_gradient_(*mesh_data.getMeshVariable<Vecd>("LevelsetGradient")),
+          kernel_weight_(*mesh_data.getMeshVariable<Real>("KernelWeight")),
+          kernel_gradient_(*mesh_data.getMeshVariable<Vecd>("KernelGradient")),
+          kernel_(kernel),
+          data_spacing_(mesh_data.DataSpacing()),
+          global_h_ratio_(global_h_ratio){};
+    virtual ~UpdateKernelIntegrals(){};
 
-//     void update(size_t package_index);
+    void update(const size_t &package_index);
 
-//   private:
-//     Real computeKernelIntegral(const Vecd &position);
-//     Vecd computeKernelGradientIntegral(const Vecd &position);
-// };
+  private:
+    MeshVariable<Real> &phi_;
+    MeshVariable<Vecd> &phi_gradient_;
+    MeshVariable<Real> &kernel_weight_;
+    MeshVariable<Vecd> &kernel_gradient_;
+    Kernel &kernel_;
+    Real data_spacing_;
+    Real global_h_ratio_;
+
+    Real probeSignedDistance(const Vecd &position) { return mesh_data_.probeMesh(phi_, position); };
+    Real computeKernelIntegral(const Vecd &position);
+    Vecd computeKernelGradientIntegral(const Vecd &position);
+
+    Real CutCellVolumeFraction(Real phi, const Vecd &phi_gradient, Real data_spacing)
+    {
+        Real squared_norm_inv = 1.0 / (phi_gradient.squaredNorm() + TinyReal);
+        Real volume_fraction(0);
+        for (size_t i = 0; i != Dimensions; ++i)
+        {
+            volume_fraction += phi_gradient[i] * phi_gradient[i] * squared_norm_inv *
+                              Heaviside(phi / (ABS(phi_gradient[i]) + TinyReal), 0.5 * data_spacing);
+        }
+        return volume_fraction;
+    }
+};
 // class ReinitializeLevelSet
 //     : public BaseMeshLocalDynamics
 // {

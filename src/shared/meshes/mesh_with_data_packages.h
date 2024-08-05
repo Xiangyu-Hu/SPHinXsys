@@ -179,13 +179,7 @@ class MeshWithGridDataPackages : public Mesh
         return variable;
     };
 
-    /** This function probe a mesh value */
-    template <class DataType>
-    DataType probeMesh(MeshVariable<DataType> &mesh_variable, const Vecd &position);
-    /** This function find the value of data from its index from global mesh. */
-    template <typename DataType>
-    DataType DataValueFromGlobalIndex(MeshVariable<DataType> &mesh_variable,
-                                      const Arrayi &global_grid_index);
+    
 
     /** resize all mesh variable data field with `num_grid_pkgs_` size(initially only singular data) */
     template <typename DataType>
@@ -210,11 +204,7 @@ class MeshWithGridDataPackages : public Mesh
     bool isCoreDataPackage(const Arrayi &cell_index);
 
     std::pair<size_t, Arrayi> NeighbourIndexShift(const Arrayi shift_index, const CellNeighborhood &neighbour);
-    /** assign value to data package according to the position of data */
-    template <typename DataType, typename FunctionByPosition>
-    void assignByPosition(MeshVariable<DataType> &mesh_variable,
-                          const Arrayi &cell_index,
-                          const FunctionByPosition &function_by_position);
+    
     /** obtain averaged value at a corner of a data cell */
     template <typename DataType>
     DataType CornerAverage(MeshVariable<DataType> &mesh_variable,
@@ -243,6 +233,18 @@ class MeshWithGridDataPackages : public Mesh
     void assignCore(const Arrayi &cell_index) { assignCategoryOnMetaDataMesh(cell_index, 2); };
 
   public:
+    /** This function find the value of data from its index from global mesh. */
+    template <typename DataType>
+    DataType DataValueFromGlobalIndex(MeshVariable<DataType> &mesh_variable,
+                                      const Arrayi &global_grid_index);
+    /** assign value to data package according to the position of data */
+    template <typename DataType, typename FunctionByPosition>
+    void assignByPosition(MeshVariable<DataType> &mesh_variable,
+                          const Arrayi &cell_index,
+                          const FunctionByPosition &function_by_position);
+    /** This function probe a mesh value */
+    template <class DataType>
+    DataType probeMesh(MeshVariable<DataType> &mesh_variable, const Vecd &position);
     /** return the position of data from its local grid index and the index of the cell it belongs to. */
     Vecd DataPositionFromIndex(const Arrayi &cell_index, const Arrayi &data_index)
     {
@@ -291,6 +293,16 @@ class MeshWithGridDataPackages : public Mesh
     void registerOccupied(std::pair<size_t, int> &occupied)
     {
         occupied_data_pkgs_.push_back(occupied);
+    }
+
+    Arrayi CellIndexFromPositionOnGlobalMesh(const Vecd &position)
+    {
+        return global_mesh_.CellIndexFromPosition(position);
+    }
+
+    Vecd GridPositionFromIndexOnGlobalMesh(const Arrayi &cell_index)
+    {
+        return global_mesh_.GridPositionFromIndex(cell_index);
     }
 };
 } // namespace SPH
