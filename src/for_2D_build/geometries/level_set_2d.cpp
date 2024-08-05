@@ -52,9 +52,11 @@ void LevelSet::finishDataPackages()
                       return a.first < b.first; 
                   });
     num_grid_pkgs_ = occupied_data_pkgs_.size() + 2;
-    initializeIndexMesh();
+    initialize_index_mesh.exec();
+    // initializeIndexMesh();
     initializeCellNeighborhood();
     resizeMeshVariableData();
+
 
     Real far_field_distance = grid_spacing_ * (Real)buffer_width_;
     initializeDataForSingularPackage(0, -far_field_distance);
