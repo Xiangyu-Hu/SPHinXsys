@@ -119,10 +119,10 @@ template <int PKG_SIZE>
 bool MeshWithGridDataPackages<PKG_SIZE>::
     isCoreDataPackage(const Arrayi &cell_index)
 {
-    // size_t package_index = PackageIndexFromCellIndex(cell_index);
-    // return meta_data_cell_[package_index].second == 1;
+    size_t package_index = PackageIndexFromCellIndex(cell_index);
+    return meta_data_cell_[package_index].second == 1;
 
-    return category_data_mesh_[cell_index[0]][cell_index[1]] == 2;
+    // return category_data_mesh_[cell_index[0]][cell_index[1]] == 2;
 }
 //=================================================================================================//
 template <int PKG_SIZE>

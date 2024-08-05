@@ -71,11 +71,10 @@ void LevelSet::finishDataPackages()
 void LevelSet::initializeIndexMesh()
 {
     num_grid_pkgs_ = occupied_data_pkgs_.size() + 2;
-    package_parallel_for(
-             [&](size_t package_index)
+    package_parallel_for([&](size_t package_index)
              {
                 size_t sort_index = occupied_data_pkgs_[package_index-2].first;
-                Arrayi cell_index = Arrayi(sort_index / all_cells_[1], sort_index % all_cells_[1]); //[notion] there might be problems
+                Arrayi cell_index = Arrayi(sort_index / all_cells_[1], sort_index % all_cells_[1]); //[notion] there might be problems, 3d implementation needed
                 assignDataPackageIndex(cell_index, package_index);
              });
 }
@@ -84,22 +83,20 @@ void LevelSet::initializeCellNeighborhood()
 {
     cell_neighborhood_ = new CellNeighborhood[num_grid_pkgs_];
     meta_data_cell_ = new std::pair<Arrayi, int>[num_grid_pkgs_];
-    mesh_parallel_for(MeshRange(Arrayi::Zero(), all_cells_),
-                      [&](size_t i, size_t j)
+    package_parallel_for(
+                      [&](size_t package_index)
                       {
-                          Arrayi cell_index = Arrayi(i, j);
-                          if (isInnerDataPackage(cell_index))
-                          {
-                              CellNeighborhood &current = cell_neighborhood_[PackageIndexFromCellIndex(cell_index)];
-                              std::pair<Arrayi, int> &metadata = meta_data_cell_[PackageIndexFromCellIndex(cell_index)];
-                              metadata.first = cell_index;
-                              metadata.second = isCoreDataPackage(cell_index) ? 1 : 0;
-                              for (int l = -1; l < 2; l++)
-                                  for (int m = -1; m < 2; m++)
-                                  {
-                                      current[l + 1][m + 1] = PackageIndexFromCellIndex(cell_index + Arrayi(l, m));
-                                  }
-                          }
+                          size_t sort_index = occupied_data_pkgs_[package_index-2].first;
+                          Arrayi cell_index = Arrayi(sort_index / all_cells_[1], sort_index % all_cells_[1]); //[notion] there might be problems, 3d implementation needed
+                          CellNeighborhood &current = cell_neighborhood_[package_index];
+                          std::pair<Arrayi, int> &metadata = meta_data_cell_[package_index];
+                          metadata.first = cell_index;
+                          metadata.second = occupied_data_pkgs_[package_index-2].second;
+                          for (int l = -1; l < 2; l++)
+                              for (int m = -1; m < 2; m++)
+                              {
+                                  current[l + 1][m + 1] = PackageIndexFromCellIndex(cell_index + Arrayi(l, m));
+                              }
                       });
 }
 //=================================================================================================//
@@ -116,7 +113,7 @@ bool LevelSet::isInnerPackage(const Arrayi &cell_index)
         all_cells_.min(cell_index + 2 * Array2i::Ones()),
         [&](int l, int m)
         {
-            return isCoreDataPackage(Arrayi(l, m));
+            return isInnerDataPackage(Arrayi(l, m));    //actually a core test here, because only core pkgs are assigned
         });
 }
 //=================================================================================================//
