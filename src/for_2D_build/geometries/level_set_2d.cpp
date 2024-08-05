@@ -5,6 +5,7 @@
 #include "base_particle_dynamics.h"
 #include "base_particles.h"
 #include "mesh_iterators.hpp"
+#include "tbb/parallel_sort.h"
 
 namespace SPH
 {
@@ -44,6 +45,12 @@ void LevelSet::finishDataPackages()
                           tagACellIsInnerPackage(Arrayi(i, j));
                       });
 
+    parallel_sort(occupied_data_pkgs_.begin(), occupied_data_pkgs_.end(),
+                  [](const std::pair<size_t, int>& a, const std::pair<size_t, int>& b)
+                  {
+                      return a.first < b.first; 
+                  });
+
     initializeIndexMesh();
     initializeCellNeighborhood();
     resizeMeshVariableData();
@@ -63,15 +70,13 @@ void LevelSet::finishDataPackages()
 //=================================================================================================//
 void LevelSet::initializeIndexMesh()
 {
-    mesh_for(MeshRange(Arrayi::Zero(), all_cells_),
-             [&](size_t i, size_t j)
+    num_grid_pkgs_ = occupied_data_pkgs_.size() + 2;
+    package_parallel_for(
+             [&](size_t package_index)
              {
-                 Arrayi cell_index = Arrayi(i, j);
-                 if (isInnerDataPackage(cell_index))
-                 {
-                     assignDataPackageIndex(Arrayi(i, j), num_grid_pkgs_);
-                     num_grid_pkgs_++;
-                 }
+                size_t sort_index = occupied_data_pkgs_[package_index-2].first;
+                Arrayi cell_index = Arrayi(sort_index / all_cells_[1], sort_index % all_cells_[1]); //[notion] there might be problems
+                assignDataPackageIndex(cell_index, package_index);
              });
 }
 //=================================================================================================//
@@ -101,7 +106,7 @@ void LevelSet::initializeCellNeighborhood()
 bool LevelSet::isWithinCorePackage(Vecd position)
 {
     Arrayi cell_index = CellIndexFromPosition(position);
-    return isCoreDataPackage(cell_index);
+    return isInnerDataPackage(cell_index);
 }
 //=============================================================================================//
 bool LevelSet::isInnerPackage(const Arrayi &cell_index)

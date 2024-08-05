@@ -33,18 +33,6 @@ DataType MeshWithGridDataPackages<PKG_SIZE>::
 }
 //=================================================================================================//
 template <int PKG_SIZE>
-void MeshWithGridDataPackages<PKG_SIZE>::allocateMetaDataMatrix()
-{
-    Allocate3dArray(meta_data_mesh_, all_cells_);
-}
-//=================================================================================================//
-template <int PKG_SIZE>
-void MeshWithGridDataPackages<PKG_SIZE>::deleteMetaDataMatrix()
-{
-    Delete3dArray(meta_data_mesh_, all_cells_);
-}
-//=================================================================================================//
-template <int PKG_SIZE>
 void MeshWithGridDataPackages<PKG_SIZE>::allocateIndexDataMatrix()
 {
     Allocate3dArray(index_data_mesh_, all_cells_);

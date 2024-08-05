@@ -47,6 +47,12 @@ void InitializeDataInACell::update(const Arrayi &cell_index)
     if (measure < grid_spacing_)
     {
         mesh_data_.assignCore(cell_index);
+        std::pair<size_t, int> occupied;
+        occupied.first = SortIndexFromCellIndex(cell_index);
+        occupied.second = 1;
+
+        mesh_data_.assignDataPackageIndex(cell_index, 2);
+        mesh_data_.registerOccupied(occupied);
     }
     else
     {
@@ -54,6 +60,11 @@ void InitializeDataInACell::update(const Arrayi &cell_index)
         mesh_data_.assignSingular(cell_index);
         mesh_data_.assignDataPackageIndex(cell_index, package_index);
     }
+}
+//=================================================================================================//
+size_t InitializeDataInACell::SortIndexFromCellIndex(const Arrayi &cell_index)
+{
+    return cell_index[0] * all_cells_[1] + cell_index[1];
 }
 //=================================================================================================//
 // void TagACellIsInnerPackage::update()

@@ -162,9 +162,14 @@ void LevelSet::tagACellIsInnerPackage(const Arrayi &cell_index)
 {
     if (isInnerPackage(cell_index))
     {
-        if (!isCoreDataPackage(cell_index))
+        if (!isInnerDataPackage(cell_index))
         {
             assignInner(cell_index);
+            std::pair<size_t, int> occupied;
+            occupied.first = cell_index[0] * all_cells_[1] + cell_index[1]; //2d version try implement, 3d separation needed
+            occupied.second = 0;
+
+            mesh_data_.registerOccupied(occupied);
         }
     }
 }

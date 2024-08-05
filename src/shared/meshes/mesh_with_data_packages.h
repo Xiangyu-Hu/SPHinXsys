@@ -122,13 +122,11 @@ class MeshWithGridDataPackages : public Mesh
           data_spacing_(data_spacing),
           global_mesh_(mesh_lower_bound_ + 0.5 * data_spacing * Vecd::Ones(), data_spacing, all_cells_ * pkg_size)
     {
-        allocateMetaDataMatrix();
         allocateIndexDataMatrix();
         allocateCategoryDataMatrix();
     };
     virtual ~MeshWithGridDataPackages()
     {
-        deleteMetaDataMatrix();
         deleteIndexDataMatrix();
         deleteCategoryDataMatrix();
         delete[] cell_neighborhood_;
@@ -140,6 +138,7 @@ class MeshWithGridDataPackages : public Mesh
 
   protected:
     MeshVariableAssemble all_mesh_variables_;         /**< all mesh variables on this mesh. */
+    ConcurrentVec<std::pair<size_t, int>> occupied_data_pkgs_; /**< (size_t)sort_index, (int)core1/inner0. */
     static constexpr int pkg_size = PKG_SIZE;         /**< the size of the data package matrix*/
     const Real data_spacing_;                         /**< spacing of data in the data packages*/
     BaseMesh global_mesh_;                            /**< the mesh for the locations of all possible data points. */
@@ -157,8 +156,6 @@ class MeshWithGridDataPackages : public Mesh
     template <typename DataType>
     using PackageTemporaryData = PackageDataMatrix<DataType, pkg_size + 1>;
 
-    void allocateMetaDataMatrix(); /**< allocate memories for metadata of data packages. */
-    void deleteMetaDataMatrix();   /**< delete memories for metadata of data packages. */
     void allocateIndexDataMatrix(); /**< allocate memories for metadata of data packages. */
     void deleteIndexDataMatrix();   /**< delete memories for metadata of data packages. */
     void allocateCategoryDataMatrix(); /**< allocate memories for metadata of data packages. */
@@ -287,11 +284,10 @@ class MeshWithGridDataPackages : public Mesh
             ap);
     }
 
-    template <typename InDataType, typename OutDataType>
-    void testGradient(MeshVariable<InDataType> &in_variable,
-                      MeshVariable<OutDataType> &out_variable){
-                        printf("test gradient\n");
-                      }
+    void registerOccupied(std::pair<size_t, int> &occupied)
+    {
+        occupied_data_pkgs_.push_back(occupied);
+    }
 };
 } // namespace SPH
 #endif // MESH_WITH_DATA_PACKAGES_H

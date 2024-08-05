@@ -59,6 +59,7 @@ class InitializeDataInACell : public BaseMeshLocalDynamics<Arrayi>
   public:
     explicit InitializeDataInACell(MeshWithGridDataPackages<4> &mesh_data, Shape &shape)
         : BaseMeshLocalDynamics(mesh_data),
+          all_cells_(mesh_data.AllCells()),
           shape_(shape){};
     virtual ~InitializeDataInACell(){};
 
@@ -67,6 +68,9 @@ class InitializeDataInACell : public BaseMeshLocalDynamics<Arrayi>
   private:
     Shape &shape_;
     Real grid_spacing_ = mesh_data_.GridSpacing();
+    Arrayi all_cells_;
+
+    size_t SortIndexFromCellIndex(const Arrayi &cell_index);
 };
 
 // class TagACellIsInnerPackage

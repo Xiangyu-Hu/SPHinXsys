@@ -34,18 +34,6 @@ DataType MeshWithGridDataPackages<PKG_SIZE>::
 }
 //=================================================================================================//
 template <int PKG_SIZE>
-void MeshWithGridDataPackages<PKG_SIZE>::allocateMetaDataMatrix()
-{
-    Allocate2dArray(meta_data_mesh_, all_cells_);
-}
-//=================================================================================================//
-template <int PKG_SIZE>
-void MeshWithGridDataPackages<PKG_SIZE>::deleteMetaDataMatrix()
-{
-    Delete2dArray(meta_data_mesh_, all_cells_);
-}
-//=================================================================================================//
-template <int PKG_SIZE>
 void MeshWithGridDataPackages<PKG_SIZE>::allocateIndexDataMatrix()
 {
     Allocate2dArray(index_data_mesh_, all_cells_);
@@ -117,20 +105,23 @@ template <int PKG_SIZE>
 bool MeshWithGridDataPackages<PKG_SIZE>::
     isSingularDataPackage(const Arrayi &cell_index)
 {
-    return category_data_mesh_[cell_index[0]][cell_index[1]] == 0;
+    return index_data_mesh_[cell_index[0]][cell_index[1]] < 2;
 }
 //=================================================================================================//
 template <int PKG_SIZE>
 bool MeshWithGridDataPackages<PKG_SIZE>::
     isInnerDataPackage(const Arrayi &cell_index)
 {
-    return category_data_mesh_[cell_index[0]][cell_index[1]] != 0;
+    return index_data_mesh_[cell_index[0]][cell_index[1]] > 1;
 }
 //=================================================================================================//
 template <int PKG_SIZE>
 bool MeshWithGridDataPackages<PKG_SIZE>::
     isCoreDataPackage(const Arrayi &cell_index)
 {
+    // size_t package_index = PackageIndexFromCellIndex(cell_index);
+    // return meta_data_cell_[package_index].second == 1;
+
     return category_data_mesh_[cell_index[0]][cell_index[1]] == 2;
 }
 //=================================================================================================//
