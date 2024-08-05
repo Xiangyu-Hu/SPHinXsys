@@ -39,11 +39,12 @@ void LevelSet::initializeDataForSingularPackage(const size_t package_index, Real
 //=================================================================================================//
 void LevelSet::finishDataPackages()
 {
-    mesh_parallel_for(MeshRange(Arrayi::Zero(), all_cells_),
-                      [&](size_t i, size_t j)
-                      {
-                          tagACellIsInnerPackage(Arrayi(i, j));
-                      });
+    // mesh_parallel_for(MeshRange(Arrayi::Zero(), all_cells_),
+    //                   [&](size_t i, size_t j)
+    //                   {
+    //                       tagACellIsInnerPackage(Arrayi(i, j));
+    //                   });
+    tag_a_cell_is_inner_package.exec();
 
     parallel_sort(occupied_data_pkgs_.begin(), occupied_data_pkgs_.end(),
                   [](const std::pair<size_t, int>& a, const std::pair<size_t, int>& b)
@@ -239,7 +240,6 @@ void LevelSet::markNearInterface(Real small_shift_factor)
 //=================================================================================================//
 void LevelSet::initializeBasicDataForAPackage(const Arrayi &cell_index, const size_t package_index, Shape &shape)
 {
-    // size_t package_index = PackageIndexFromCellIndex(cell_index);
     auto &phi = phi_.DataField()[package_index];
     auto &near_interface_id = near_interface_id_.DataField()[package_index];
     for_each_cell_data(

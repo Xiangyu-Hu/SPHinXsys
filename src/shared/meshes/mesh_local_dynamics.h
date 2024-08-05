@@ -36,7 +36,8 @@
 
 namespace SPH
 {
-// using MeshData = MeshWithGridDataPackages<4>;
+using MeshWithGridDataPackagesType = MeshWithGridDataPackages<4>;
+
 /**
  * @class BaseMeshLocalDynamics
  * @brief The base class for all mesh local particle dynamics.
@@ -73,15 +74,22 @@ class InitializeDataInACell : public BaseMeshLocalDynamics<Arrayi>
     size_t SortIndexFromCellIndex(const Arrayi &cell_index);
 };
 
-// class TagACellIsInnerPackage
-//     : public BaseMeshLocalDynamics
-// {
-//   public:
-//     explicit TagACellIsInnerPackage(MeshWithGridDataPackages &mesh_data){};
-//     virtual ~TagACellIsInnerPackage(){};
+class TagACellIsInnerPackage : public BaseMeshLocalDynamics<Arrayi>
+{
+  public:
+    explicit TagACellIsInnerPackage(MeshWithGridDataPackagesType &mesh_data)
+        : BaseMeshLocalDynamics(mesh_data),
+          all_cells_(mesh_data.AllCells()){};
+    virtual ~TagACellIsInnerPackage(){};
 
-//     void update();
-// };
+    void update(const Arrayi &index);
+
+  private:
+    Arrayi all_cells_;
+
+    //[notion] 3d implementation needed
+    bool isInnerPackage(const Arrayi &cell_index);
+};
 
 // class InitializeIndexMesh
 //     : public BaseMeshLocalDynamics

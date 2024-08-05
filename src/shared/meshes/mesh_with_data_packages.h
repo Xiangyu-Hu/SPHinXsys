@@ -208,7 +208,6 @@ class MeshWithGridDataPackages : public Mesh
     size_t PackageIndexFromCellIndex(const Arrayi &cell_index);
     void assignCategoryOnMetaDataMesh(const Arrayi &cell_index, const int category);
     bool isSingularDataPackage(const Arrayi &cell_index);
-    bool isInnerDataPackage(const Arrayi &cell_index);
     bool isCoreDataPackage(const Arrayi &cell_index);
 
     std::pair<size_t, Arrayi> NeighbourIndexShift(const Arrayi shift_index, const CellNeighborhood &neighbour);
@@ -245,10 +244,12 @@ class MeshWithGridDataPackages : public Mesh
         return DataLowerBoundInCell(cell_index) + data_index.cast<Real>().matrix() * data_spacing_;
     }
 
-  public:
     void assignSingular(const Arrayi &cell_index) { assignCategoryOnMetaDataMesh(cell_index, 0); };
     void assignInner(const Arrayi &cell_index) { assignCategoryOnMetaDataMesh(cell_index, 1); };
     void assignCore(const Arrayi &cell_index) { assignCategoryOnMetaDataMesh(cell_index, 2); };
+
+  public:
+    bool isInnerDataPackage(const Arrayi &cell_index);
     void assignDataPackageIndex(const Arrayi &cell_index, const size_t package_index);
     template <typename FunctionOnData>
     void grid_parallel_for(const FunctionOnData &function);
