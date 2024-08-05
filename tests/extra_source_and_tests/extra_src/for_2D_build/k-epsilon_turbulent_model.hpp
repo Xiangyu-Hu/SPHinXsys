@@ -50,6 +50,7 @@ namespace fluid_dynamics
 		Vol_(*this->particles_->template getVariableByName<Real>("VolumetricMeasure")),
 		vel_(*this->particles_->template getVariableByName<Vecd>("Velocity")),
 		dimension_(2){}
+		//A temporarily treatment for dimention
 //=================================================================================================//
 	template <class DataDelegationType>
 	template <class BaseRelationType>

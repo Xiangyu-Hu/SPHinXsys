@@ -12,7 +12,7 @@ int main(int ac, char *av[])
     /** Tag for run particle relaxation for the initial body fitted distribution. */
     sph_system.setRunParticleRelaxation(false);
     /** Tag for computation start with relaxed body fitted particles distribution. */
-    sph_system.setReloadParticles(true);
+    sph_system.setReloadParticles(false);
 
     sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
     IOEnvironment io_environment(sph_system);
@@ -175,6 +175,10 @@ int main(int ac, char *av[])
     //InteractionWithUpdate<fluid_dynamics::TransportVelocityLimitedCorrectionComplex<BulkParticles>> transport_velocity_correction(water_block_inner, water_wall_contact);
     //Dynamics1Level<fluid_dynamics::ExtraTransportForceLimitedComplex<BulkParticles>> impose_extra_transport_force(water_block_inner, water_wall_contact);
 
+    /** A temporarily test for the limiter . */
+    SimpleDynamics<fluid_dynamics::GetLimiterOfTransportVelocityCorrection> get_limiter_of_transport_velocity_correction(water_block, 100);
+    
+
     /** Evaluation of density by summation approach. */
     //InteractionWithUpdate<fluid_dynamics::DensitySummationFreeStreamComplex> update_density_by_summation(water_block_inner, water_wall_contact);
     
@@ -298,6 +302,7 @@ int main(int ac, char *av[])
             turbulent_viscous_force.exec();
 
             transport_velocity_correction.exec();
+            get_limiter_of_transport_velocity_correction.exec();
 
             //impose_extra_transport_force.exec();
 

@@ -658,7 +658,19 @@ class TurbulentLinearGradientCorrectionMatrix<Inner<>>
 using TurbulentLinearGradientCorrectionMatrixInner = TurbulentLinearGradientCorrectionMatrix<Inner<>>;
 
 //=================================================================================================//
+	class GetLimiterOfTransportVelocityCorrection : public LocalDynamics, public DataDelegateSimple
+	{
+	public:
+		explicit GetLimiterOfTransportVelocityCorrection(SPHBody& sph_body, Real slope);
+		virtual ~GetLimiterOfTransportVelocityCorrection() {};
 
+		void update(size_t index_i, Real dt = 0.0);
+	protected:
+		const Real h_ref_;
+		StdLargeVec<Vecd> &zero_gradient_residue_;
+		Real slope_;
+		StdLargeVec<Real> &limiter_tvc_;
+	};
 
 //=================================================================================================//
 //*********************TESTING MODULES*********************

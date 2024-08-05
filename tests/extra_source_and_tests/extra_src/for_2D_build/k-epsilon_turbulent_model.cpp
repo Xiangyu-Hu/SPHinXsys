@@ -1228,8 +1228,23 @@ if(1)
     	Real weight2_ = det_sqr / (turbu_B_[index_i].determinant() + det_sqr);
     	turbu_B_[index_i] = weight1_ * inverse + weight2_ * Matd::Identity();
 	}
-
-
+//=================================================================================================//
+	GetLimiterOfTransportVelocityCorrection::
+		GetLimiterOfTransportVelocityCorrection(SPHBody& sph_body, Real slope)
+		: LocalDynamics(sph_body), DataDelegateSimple(sph_body),
+		h_ref_(sph_body_.sph_adaptation_->ReferenceSmoothingLength()),
+		zero_gradient_residue_(*particles_->getVariableByName<Vecd>("ZeroGradientResidue")),
+		slope_(slope),
+		limiter_tvc_(*particles_->registerSharedVariable<Real>("LimiterOfTVC"))
+		{
+			particles_->addVariableToWrite<Real>("LimiterOfTVC");
+		}
+	//=================================================================================================//
+	void GetLimiterOfTransportVelocityCorrection::update(size_t index_i, Real dt)
+	{
+		Real squared_norm = zero_gradient_residue_[index_i].squaredNorm();
+		limiter_tvc_[index_i] = SMIN(slope_ * squared_norm * h_ref_ * h_ref_, Real(1) ) ;
+	}
 //=================================================================================================//
 //*********************TESTING MODULES*********************
 //=================================================================================================//
