@@ -104,15 +104,45 @@ class InitializeIndexMesh : public BaseMeshLocalDynamics<size_t>
     Arrayi all_cells_;
 };
 
-// class InitializeCellNeighborhood
-//     : public BaseMeshLocalDynamics
-// {
-//   public:
-//     explicit InitializeCellNeighborhood(MeshWithGridDataPackages &mesh_data){};
-//     virtual ~InitializeCellNeighborhood(){};
+class InitializeCellNeighborhood : public BaseMeshLocalDynamics<size_t>
+{
+  public:
+    explicit InitializeCellNeighborhood(MeshWithGridDataPackagesType &mesh_data)
+        : BaseMeshLocalDynamics(mesh_data),
+          // cell_neighborhood_(mesh_data.getCellNeighborhood()),
+          // meta_data_cell_(mesh_data.getMetaDataCell()),
+          all_cells_(mesh_data.AllCells()){};
+    virtual ~InitializeCellNeighborhood(){};
 
-//     void update();
-// };
+    void update(const size_t &index);
+
+  private:
+    Arrayi all_cells_;
+    // CellNeighborhood* cell_neighborhood_;
+    // std::pair<Arrayi, int>* meta_data_cell_;
+};
+
+class InitializeBasicDataForAPackage : public BaseMeshLocalDynamics<size_t>
+{
+  public:
+    explicit InitializeBasicDataForAPackage(MeshWithGridDataPackagesType &mesh_data, Shape &shape)
+        : BaseMeshLocalDynamics(mesh_data),
+          shape_(shape),
+          all_cells_(mesh_data.AllCells()),
+          phi_(*mesh_data.getMeshVariable<Real>("Levelset")),
+          near_interface_id_(*mesh_data.getMeshVariable<int>("NearInterfaceID")){};
+    virtual ~InitializeBasicDataForAPackage(){};
+
+    void update(const size_t &index);
+
+  private:
+    Shape &shape_;
+    Arrayi all_cells_;
+    MeshVariable<Real> &phi_;
+    MeshVariable<int> &near_interface_id_;
+
+    Arrayi CellIndexFromSortIndex(const size_t &sort_index);
+};
 
 class UpdateLevelSetGradient : public BaseMeshLocalDynamics<size_t>
 {

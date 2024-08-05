@@ -52,9 +52,12 @@ void LevelSet::finishDataPackages()
                       return a.first < b.first; 
                   });
     num_grid_pkgs_ = occupied_data_pkgs_.size() + 2;
+    cell_neighborhood_ = new CellNeighborhood[num_grid_pkgs_];
+    meta_data_cell_ = new std::pair<Arrayi, int>[num_grid_pkgs_];
     initialize_index_mesh.exec();
+    initialize_cell_neighborhood.exec();
     // initializeIndexMesh();
-    initializeCellNeighborhood();
+    // initializeCellNeighborhood();
     resizeMeshVariableData();
 
 
@@ -62,11 +65,12 @@ void LevelSet::finishDataPackages()
     initializeDataForSingularPackage(0, -far_field_distance);
     initializeDataForSingularPackage(1, far_field_distance);
 
-    package_parallel_for(
-        [&](size_t package_index)
-        {
-            initializeBasicDataForAPackage(meta_data_cell_[package_index].first, package_index, shape_);
-        });
+    // package_parallel_for(
+    //     [&](size_t package_index)
+    //     {
+    //         initializeBasicDataForAPackage(meta_data_cell_[package_index].first, package_index, shape_);
+    //     });
+    initialize_basic_data_for_a_package.exec();
     update_level_set_gradient.exec();
     updateKernelIntegrals();
 }
@@ -83,10 +87,9 @@ void LevelSet::initializeIndexMesh()
 //=================================================================================================//
 void LevelSet::initializeCellNeighborhood()
 {
-    cell_neighborhood_ = new CellNeighborhood[num_grid_pkgs_];
-    meta_data_cell_ = new std::pair<Arrayi, int>[num_grid_pkgs_];
-    package_parallel_for(
-                      [&](size_t package_index)
+    // cell_neighborhood_ = new CellNeighborhood[num_grid_pkgs_];
+    // meta_data_cell_ = new std::pair<Arrayi, int>[num_grid_pkgs_];
+    package_parallel_for([&](size_t package_index)
                       {
                           size_t sort_index = occupied_data_pkgs_[package_index-2].first;
                           Arrayi cell_index = Arrayi(sort_index / all_cells_[1], sort_index % all_cells_[1]); //[notion] there might be problems, 3d implementation needed

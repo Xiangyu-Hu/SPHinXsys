@@ -132,6 +132,8 @@ class LevelSet : public MeshWithGridDataPackages<4>,
     MeshAllDynamics<TagACellIsInnerPackage> tag_a_cell_is_inner_package{mesh_data_};
 
     MeshInnerDynamics<InitializeIndexMesh> initialize_index_mesh{mesh_data_};
+    MeshInnerDynamics<InitializeCellNeighborhood> initialize_cell_neighborhood{mesh_data_};
+    MeshInnerDynamics<InitializeBasicDataForAPackage> initialize_basic_data_for_a_package{mesh_data_, shape_};
     MeshInnerDynamics<UpdateLevelSetGradient> update_level_set_gradient{mesh_data_};
 
     // upwind algorithm choosing candidate difference by the sign

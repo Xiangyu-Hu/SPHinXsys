@@ -87,9 +87,19 @@ void InitializeIndexMesh::update(const size_t &package_index)
     mesh_data_.assignDataPackageIndex(cell_index, package_index);
 }
 //=================================================================================================//
-// void InitializeCellNeighborhood::update()
+// void InitializeCellNeighborhood::update(const size_t &package_index)
 // {
-
+//     size_t sort_index = mesh_data_.occupied_data_pkgs_[package_index-2].first;
+//     Arrayi cell_index = Arrayi(sort_index / all_cells_[1], sort_index % all_cells_[1]); //[notion] there might be problems, 3d implementation needed
+//     CellNeighborhood &current = cell_neighborhood_[package_index];
+//     std::pair<Arrayi, int> &metadata = meta_data_cell_[package_index];
+//     metadata.first = cell_index;
+//     metadata.second = mesh_data_.occupied_data_pkgs_[package_index-2].second;
+//     for (int l = -1; l < 2; l++)
+//         for (int m = -1; m < 2; m++)
+//         {
+//             current[l + 1][m + 1] = mesh_data_.PackageIndexFromCellIndex(cell_index + Arrayi(l, m));
+//         }
 // }
 //=================================================================================================//
 void UpdateLevelSetGradient::update(const size_t &index)
