@@ -115,37 +115,69 @@ class ExecutionEvent
   private:
     std::vector<sycl::event> event_list_;
 };
+} // namespace execution
 
+/* SYCL memory transfer utilities */
+template <class T>
+inline T *allocateDeviceOnly(std::size_t size)
+{
+    return sycl::malloc_device<T>(size, execution::execution_instance.getQueue());
+}
+
+template <class T>
+inline T *allocateDeviceShared(std::size_t size)
+{
+    return sycl::malloc_shared<T>(size, execution::execution_instance.getQueue());
+}
+
+template <class T>
+inline void freeDeviceData(T *device_mem)
+{
+    sycl::free(device_mem, execution::execution_instance.getQueue());
+}
+
+template <class T>
+inline execution::ExecutionEvent copyToDevice(const T *host, T *device, std::size_t size)
+{
+    return execution::execution_instance.getQueue().memcpy(device, host, size * sizeof(T));
+}
+
+template <class T>
+inline execution::ExecutionEvent copyFromDevice(T *host, const T *device, std::size_t size)
+{
+    return execution::execution_instance.getQueue().memcpy(host, device, size * sizeof(T));
+}
+
+namespace execution
+{
 template <class LocalDynamicsType>
 class Implementation<LocalDynamicsType, ParallelDevicePolicy>
 {
     using ComputingKernel = typename LocalDynamicsType::ComputingKernel;
-    using ComputingKernelBuffer = sycl::buffer<ComputingKernel>;
-    UniquePtrKeeper<ComputingKernel> kernel_ptr_keeper_;
-    UniquePtrKeeper<ComputingKernelBuffer> kernel_buffer_ptr_keeper_;
 
   public:
     explicit Implementation(LocalDynamicsType &local_dynamics)
-        : local_dynamics_(local_dynamics), computing_kernel_(nullptr),
-          computing_kernel_buffer_(nullptr) {}
-
-    ComputingKernelBuffer &getBuffer()
+        : local_dynamics_(local_dynamics), computing_kernel_(nullptr) {}
+    ~Implementation()
+    {
+        freeDeviceData(computing_kernel_);
+    }
+    ComputingKernel *getComputingKernel()
     {
         if (computing_kernel_ == nullptr)
         {
-            computing_kernel_ = kernel_ptr_keeper_
-                                    .template createPtr<ComputingKernel>(local_dynamics_);
-            computing_kernel_buffer_ = kernel_buffer_ptr_keeper_
-                                           .template createPtr<ComputingKernelBuffer>(computing_kernel_, 1);
+
+            computing_kernel_ = allocateDeviceOnly<ComputingKernel>(1);
+            ComputingKernel host = ComputingKernel(local_dynamics_);
+            copyToDevice(&host, computing_kernel_, 1);
         }
 
-        return *computing_kernel_buffer_;
+        return computing_kernel_;
     }
 
   private:
     LocalDynamicsType &local_dynamics_;
     ComputingKernel *computing_kernel_;
-    ComputingKernelBuffer *computing_kernel_buffer_;
 };
 } // namespace execution
 } // namespace SPH

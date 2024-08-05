@@ -141,10 +141,11 @@ class SimpleDynamicsCK : public LocalDynamicsType, public BaseDynamics<void>
     {
         this->setUpdated(this->identifier_.getSPHBody());
         this->setupDynamics(dt);
-        particle_for(kernel_implementation_,
+        ComputingKernel *computing_kernel = kernel_implementation_.getComputingKernel();
+        particle_for(ExecutionPolicy{},
                      this->identifier_.LoopRange(),
-                     [=](size_t i, auto &&computing_kernel)
-                     { computing_kernel.update(i, dt); });
+                     [=](size_t i)
+                     { computing_kernel->update(i, dt); });
     };
 
   protected:

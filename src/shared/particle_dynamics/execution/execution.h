@@ -50,21 +50,21 @@ class Implementation<LocalDynamicsType, ExecutionPolicy>
 
   public:
     explicit Implementation(LocalDynamicsType &local_dynamics)
-        : local_dynamics_(local_dynamics), delegated_kernel_(nullptr) {}
+        : local_dynamics_(local_dynamics), computing_kernel_(nullptr) {}
 
-    ComputingKernel *getDelegatedKernel()
+    ComputingKernel *getComputingKernel()
     {
-        if (delegated_kernel_ == nullptr)
+        if (computing_kernel_ == nullptr)
         {
-            delegated_kernel_ =
+            computing_kernel_ =
                 kernel_ptr_keeper_.template createPtr<ComputingKernel>(local_dynamics_);
         }
-        return delegated_kernel_;
+        return computing_kernel_;
     }
 
   private:
     LocalDynamicsType &local_dynamics_;
-    ComputingKernel *delegated_kernel_;
+    ComputingKernel *computing_kernel_;
 };
 } // namespace execution
 } // namespace SPH
