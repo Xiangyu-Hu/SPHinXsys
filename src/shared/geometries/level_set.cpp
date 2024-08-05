@@ -164,7 +164,6 @@ void LevelSet::tagACellIsInnerPackage(const Arrayi &cell_index)
     {
         if (!isInnerDataPackage(cell_index))
         {
-            assignInner(cell_index);
             std::pair<size_t, int> occupied;
             occupied.first = cell_index[0] * all_cells_[1] + cell_index[1]; //2d version try implement, 3d separation needed
             occupied.second = 0;

@@ -46,7 +46,6 @@ void InitializeDataInACell::update(const Arrayi &cell_index)
     Real measure = (signed_distance * normal_direction).cwiseAbs().maxCoeff();
     if (measure < grid_spacing_)
     {
-        mesh_data_.assignCore(cell_index);
         std::pair<size_t, int> occupied;
         occupied.first = SortIndexFromCellIndex(cell_index);
         occupied.second = 1;
@@ -57,7 +56,6 @@ void InitializeDataInACell::update(const Arrayi &cell_index)
     else
     {
         size_t package_index = shape_.checkContain(cell_position) ? 0 : 1;
-        mesh_data_.assignSingular(cell_index);
         mesh_data_.assignDataPackageIndex(cell_index, package_index);
     }
 }
