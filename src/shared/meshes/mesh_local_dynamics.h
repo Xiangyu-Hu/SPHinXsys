@@ -87,19 +87,22 @@ class TagACellIsInnerPackage : public BaseMeshLocalDynamics<Arrayi>
   private:
     Arrayi all_cells_;
 
-    //[notion] 3d implementation needed
     bool isInnerPackage(const Arrayi &cell_index);
 };
 
-// class InitializeIndexMesh
-//     : public BaseMeshLocalDynamics
-// {
-//   public:
-//     explicit InitializeIndexMesh(MeshWithGridDataPackages &mesh_data){};
-//     virtual ~InitializeIndexMesh(){};
+class InitializeIndexMesh : public BaseMeshLocalDynamics<size_t>
+{
+  public:
+    explicit InitializeIndexMesh(MeshWithGridDataPackagesType &mesh_data)
+        : BaseMeshLocalDynamics(mesh_data),
+          all_cells_(mesh_data.AllCells()){};
+    virtual ~InitializeIndexMesh(){};
 
-//     void update();
-// };
+    void update(const size_t &index);
+
+  private:
+    Arrayi all_cells_;
+};
 
 // class InitializeCellNeighborhood
 //     : public BaseMeshLocalDynamics

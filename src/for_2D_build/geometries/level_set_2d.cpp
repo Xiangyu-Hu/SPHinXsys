@@ -51,7 +51,7 @@ void LevelSet::finishDataPackages()
                   {
                       return a.first < b.first; 
                   });
-
+    num_grid_pkgs_ = occupied_data_pkgs_.size() + 2;
     initializeIndexMesh();
     initializeCellNeighborhood();
     resizeMeshVariableData();
@@ -71,7 +71,6 @@ void LevelSet::finishDataPackages()
 //=================================================================================================//
 void LevelSet::initializeIndexMesh()
 {
-    num_grid_pkgs_ = occupied_data_pkgs_.size() + 2;
     package_parallel_for([&](size_t package_index)
              {
                 size_t sort_index = occupied_data_pkgs_[package_index-2].first;

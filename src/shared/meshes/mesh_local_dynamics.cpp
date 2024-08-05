@@ -80,10 +80,12 @@ void TagACellIsInnerPackage::update(const Arrayi &cell_index)
     }
 }
 //=================================================================================================//
-// void InitializeIndexMesh::update()
-// {
-
-// }
+void InitializeIndexMesh::update(const size_t &package_index)
+{
+    size_t sort_index = mesh_data_.occupied_data_pkgs_[package_index-2].first;
+    Arrayi cell_index = Arrayi(sort_index / all_cells_[1], sort_index % all_cells_[1]); //[notion] there might be problems, 3d implementation needed
+    mesh_data_.assignDataPackageIndex(cell_index, package_index);
+}
 //=================================================================================================//
 // void InitializeCellNeighborhood::update()
 // {

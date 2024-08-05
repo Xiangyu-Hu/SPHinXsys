@@ -10,7 +10,7 @@ bool TagACellIsInnerPackage::isInnerPackage(const Arrayi &cell_index)
         all_cells_.min(cell_index + 2 * Array3i::Ones()),
         [&](int l, int m, int n)
         {
-            return mesh_data_.isInnerDataPackage(Arrayi(l, m, n));
+            return mesh_data_.isInnerDataPackage(Arrayi(l, m, n));    //actually a core test here, because only core pkgs are assigned
         });
 }
 //=============================================================================================//

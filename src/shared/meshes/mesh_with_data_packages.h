@@ -136,9 +136,11 @@ class MeshWithGridDataPackages : public Mesh
     virtual Real DataSpacing() override { return data_spacing_; };
     Real GridSpacing() { return grid_spacing_; };
 
+  public:
+    ConcurrentVec<std::pair<size_t, int>> occupied_data_pkgs_; /**< (size_t)sort_index, (int)core1/inner0. */
+
   protected:
     MeshVariableAssemble all_mesh_variables_;         /**< all mesh variables on this mesh. */
-    ConcurrentVec<std::pair<size_t, int>> occupied_data_pkgs_; /**< (size_t)sort_index, (int)core1/inner0. */
     static constexpr int pkg_size = PKG_SIZE;         /**< the size of the data package matrix*/
     const Real data_spacing_;                         /**< spacing of data in the data packages*/
     BaseMesh global_mesh_;                            /**< the mesh for the locations of all possible data points. */
