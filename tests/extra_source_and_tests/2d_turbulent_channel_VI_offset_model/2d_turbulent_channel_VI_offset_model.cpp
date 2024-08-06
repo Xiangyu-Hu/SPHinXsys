@@ -168,11 +168,11 @@ int main(int ac, char *av[])
     //InteractionWithUpdate<fluid_dynamics::ViscousForceWithWall> viscous_force(water_block_inner, water_wall_contact);
     
     /** Impose transport velocity, with or without Extra Transprot Force. */
-    InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionComplex<BulkParticles>> transport_velocity_correction(water_block_inner, water_wall_contact);
+    //InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionComplex<BulkParticles>> transport_velocity_correction(water_block_inner, water_wall_contact);
     //Dynamics1Level<fluid_dynamics::ExtraTransportForceComplex<BulkParticles>> impose_extra_transport_force(water_block_inner, water_wall_contact);
 
     /** Impose transport velocity, with or without Extra Transprot Force, and with limiter . */
-    //InteractionWithUpdate<fluid_dynamics::TransportVelocityLimitedCorrectionComplex<BulkParticles>> transport_velocity_correction(water_block_inner, water_wall_contact);
+    InteractionWithUpdate<fluid_dynamics::TransportVelocityLimitedCorrectionComplex<BulkParticles>> transport_velocity_correction(water_block_inner, water_wall_contact);
     //Dynamics1Level<fluid_dynamics::ExtraTransportForceLimitedComplex<BulkParticles>> impose_extra_transport_force(water_block_inner, water_wall_contact);
 
     /** A temporarily test for the limiter . */
