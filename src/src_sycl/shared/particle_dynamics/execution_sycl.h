@@ -88,33 +88,6 @@ class ExecutionInstance
 
 } static &execution_instance = ExecutionInstance::getInstance();
 
-class ExecutionEvent
-{
-  public:
-    ExecutionEvent() = default;
-    ExecutionEvent(const sycl::event &event);
-    ExecutionEvent(const std::vector<sycl::event> &event);
-
-    ExecutionEvent(const ExecutionEvent &executionEvent) = default;
-    ExecutionEvent(ExecutionEvent &&executionEvent) = default;
-
-    ExecutionEvent &operator=(const ExecutionEvent &event) = default;
-    ExecutionEvent &operator=(ExecutionEvent &&event) = default;
-
-    ExecutionEvent &operator=(sycl::event event);
-
-    const std::vector<sycl::event> &getEventList() const;
-
-    ExecutionEvent &add(sycl::event event);
-    ExecutionEvent &add(const ExecutionEvent &event);
-
-    void wait();
-    ExecutionEvent &then(std::function<void()> &&func,
-                         std::optional<std::reference_wrapper<ExecutionEvent>> host_event = {});
-
-  private:
-    std::vector<sycl::event> event_list_;
-};
 } // namespace execution
 
 /* SYCL memory transfer utilities */
@@ -137,15 +110,15 @@ inline void freeDeviceData(T *device_mem)
 }
 
 template <class T>
-inline execution::ExecutionEvent copyToDevice(const T *host, T *device, std::size_t size)
+inline void copyToDevice(const T *host, T *device, std::size_t size)
 {
-    return execution::execution_instance.getQueue().memcpy(device, host, size * sizeof(T));
+    execution::execution_instance.getQueue().memcpy(device, host, size * sizeof(T));
 }
 
 template <class T>
-inline execution::ExecutionEvent copyFromDevice(T *host, const T *device, std::size_t size)
+inline void copyFromDevice(T *host, const T *device, std::size_t size)
 {
-    return execution::execution_instance.getQueue().memcpy(host, device, size * sizeof(T));
+    execution::execution_instance.getQueue().memcpy(host, device, size * sizeof(T));
 }
 
 namespace execution
@@ -154,6 +127,7 @@ template <class LocalDynamicsType>
 class Implementation<LocalDynamicsType, ParallelDevicePolicy>
 {
     using ComputingKernel = typename LocalDynamicsType::ComputingKernel;
+    UniquePtrKeeper<ComputingKernel> kernel_ptr_keeper_;
 
   public:
     explicit Implementation(LocalDynamicsType &local_dynamics)
@@ -168,8 +142,9 @@ class Implementation<LocalDynamicsType, ParallelDevicePolicy>
         {
 
             computing_kernel_ = allocateDeviceOnly<ComputingKernel>(1);
-            ComputingKernel host = ComputingKernel(local_dynamics_);
-            copyToDevice(&host, computing_kernel_, 1);
+            ComputingKernel *host_kernel =
+                kernel_ptr_keeper_.template createPtr<ComputingKernel>(local_dynamics_);
+            copyToDevice(host_kernel, computing_kernel_, 1);
         }
 
         return computing_kernel_;
