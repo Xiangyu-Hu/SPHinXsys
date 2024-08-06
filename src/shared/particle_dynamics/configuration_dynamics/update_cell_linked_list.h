@@ -36,6 +36,14 @@ namespace SPH
 template <typename... T>
 class UpdateCellLinkedList;
 
+template <typename... T>
+struct AtomicUnsignedIntRef;
+
+template <class ExecutionPolicy>
+struct AtomicUnsignedIntRef<ExecutionPolicy>
+{
+};
+
 template <typename CellLinkedListType>
 class UpdateCellLinkedList<CellLinkedListType> : public LocalDynamics
 {
@@ -44,25 +52,39 @@ class UpdateCellLinkedList<CellLinkedListType> : public LocalDynamics
     UpdateCellLinkedList(const ExecutionPolicy &execution_policy, RealBody &real_body);
     virtual ~UpdateCellLinkedList(){};
 
+    UnsignedInt *setParticleOffsetListUpperBound();
+    void setParticleOffsetListUpperBound(const ExecutionPolicy &execution_policy);
+    void setParticleOffsetListUpperBound(const ParallelDevicePolicy &par_device);
+
+    void exclusiveScanParticleOffsetList(const ExecutionPolicy &execution_policy);
+    void exclusiveScanParticleOffsetList(const ParallelDevicePolicy &par_device);
     class ComputingKernel
     {
       public:
         ComputingKernel(UpdateCellLinkedList<CellLinkedListType> &update_cell_linked_list);
 
-        void setParticleOffsetUpperBound()
+        void clearOffsetLists(UnsignedInt linear_cell_index);
+        void incrementCellSize(UnsignedInt particle_i);
+        void updateCellLists(UnsignedInt particle_i);
 
-            protected : friend class UpdateCellLinkedList<CellLinkedListType>;
+      protected:
+        friend class UpdateCellLinkedList<CellLinkedListType>;
         Mesh mesh_;
         UnsignedInt number_of_cells_, particles_bound_;
+
         Vecd *pos_;
         UnsignedInt *particle_id_list_;
         UnsignedInt *particle_offset_list_;
         UnsignedInt *current_size_list_;
+        UnsignedInt *total_real_particles_;
     };
 
   protected:
     Mesh mesh_;
     UnsignedInt number_of_cells_, particles_bound_;
+    SingularVariable<UnsignedInt> *v_total_real_particles_;
+    DiscreteVariable<UnsignedInt> *v_particle_offset_list_;
+
     Vecd *pos_;
     UnsignedInt *particle_id_list_;
     UnsignedInt *particle_offset_list_;
