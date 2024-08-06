@@ -671,8 +671,13 @@ using TurbulentLinearGradientCorrectionMatrixInner = TurbulentLinearGradientCorr
 		Real slope_;
 		StdLargeVec<Real> &limiter_tvc_;
 	};
+//=================================================================================================//
+template <class ParticleScope>
+using TVC_Limited_withLinearGradientCorrection =
+    BaseTransportVelocityCorrectionComplex<SingleResolution, TruncatedLinear, LinearGradientCorrection, ParticleScope>;
 
 //=================================================================================================//
+
 //*********************TESTING MODULES*********************
 //=================================================================================================//
 	/** Note this is a temporary treatment *
