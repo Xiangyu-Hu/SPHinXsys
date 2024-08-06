@@ -175,9 +175,9 @@ int main(int ac, char *av[])
 
     /** Output the body states. */
     BodyStatesRecordingToVtp body_states_recording(sph_system);
-    body_states_recording.addVariableRecording<Real>(water_block, "Pressure");		   // output for debug
-    body_states_recording.addVariableRecording<int>(water_block,"Indicator"); // output for debug
-    body_states_recording.addVariableRecording<Real>(water_block,"Density"); // output for debug
+    body_states_recording.addToWrite<Real>(water_block, "Pressure");		   // output for debug
+    body_states_recording.addToWrite<int>(water_block,"Indicator"); // output for debug
+    body_states_recording.addToWrite<Real>(water_block,"Density"); // output for debug
     
     /**
      * @brief Setup geometry and initial conditions.
@@ -185,7 +185,7 @@ int main(int ac, char *av[])
     sph_system.initializeSystemCellLinkedLists();
     sph_system.initializeSystemConfigurations();
     wall_boundary_normal_direction.exec();
-    body_states_recording.addVariableRecording<Vecd>(wall_boundary, "NormalDirection");
+    body_states_recording.addToWrite<Vecd>(wall_boundary, "NormalDirection");
 
     /** Output the start states of bodies. */
     body_states_recording.writeToFile();

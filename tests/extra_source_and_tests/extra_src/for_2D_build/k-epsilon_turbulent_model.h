@@ -91,13 +91,13 @@ namespace fluid_dynamics
 		virtual ~GetVelocityGradient() {};
 	protected:
 		StdLargeVec<Real> &Vol_;
-		StdLargeVec<Vecd>& vel_, & pos_;
-		StdLargeVec<int>& is_near_wall_P1_; //** This is used to specially treat near wall region  *
-		StdLargeVec<int>& is_near_wall_P2_;
+		StdLargeVec<Vecd> &vel_,  &pos_;
+		StdLargeVec<int> &is_near_wall_P1_; //** This is used to specially treat near wall region  *
+		StdLargeVec<int> &is_near_wall_P2_;
 
-		StdLargeVec<Matd> velocity_gradient_;
+		StdLargeVec<Matd> &velocity_gradient_;
 		//**For test*
-		StdLargeVec<Matd> velocity_gradient_wall;
+		StdLargeVec<Matd> &velocity_gradient_wall;
 	};
 	//** Inner part *
 	template <>
@@ -109,7 +109,7 @@ namespace fluid_dynamics
 		void interaction(size_t index_i, Real dt = 0.0);
 		void update(size_t index_i, Real dt = 0.0);
 	protected:
-		StdLargeVec<Matd>& velocity_gradient_;
+		StdLargeVec<Matd> &velocity_gradient_;
 		StdLargeVec<Matd> &B_;
 		StdLargeVec<Matd> &turbu_B_;
 	};
@@ -124,7 +124,7 @@ namespace fluid_dynamics
 		virtual ~GetVelocityGradient() {};
 		void interaction(size_t index_i, Real dt = 0.0);
 	protected:
-		StdLargeVec<Matd>& velocity_gradient_;
+		StdLargeVec<Matd> &velocity_gradient_;
 	};
 	
 	//** Interface part *
@@ -160,14 +160,14 @@ namespace fluid_dynamics
 
 	protected:
 		
-		StdLargeVec<Real> turbu_k_;
-		StdLargeVec<Real> turbu_epsilon_;
-		StdLargeVec<Real> turbu_mu_;
-		StdLargeVec<Matd> turbu_strain_rate_; //** temporary naming to distinguish the regular strain rate * 
+		StdLargeVec<Real> &turbu_k_;
+		StdLargeVec<Real> &turbu_epsilon_;
+		StdLargeVec<Real> &turbu_mu_;
+		StdLargeVec<Matd> &turbu_strain_rate_; //** temporary naming to distinguish the regular strain rate * 
 		
 		Real mu_, smoothing_length_, particle_spacing_min_;
-		StdLargeVec<Real>& rho_,&Vol_;
-		StdLargeVec<Vecd>& vel_;
+		StdLargeVec<Real> &rho_,&Vol_;
+		StdLargeVec<Vecd> &vel_;
 		int dimension_;
 	};
 //=================================================================================================//
@@ -185,20 +185,20 @@ namespace fluid_dynamics
 		void update(size_t index_i, Real dt = 0.0);
 		//void update_prior_turbulent_value();
 	protected:
-		StdLargeVec<Real> dk_dt_;
-		StdLargeVec<Real> k_production_;
+		StdLargeVec<Real> &dk_dt_;
+		StdLargeVec<Real> &k_production_;
 
-		StdLargeVec<int>& is_near_wall_P1_; //** This is used to specially treat near wall region  *
-		StdLargeVec<Matd>& velocity_gradient_;
-		StdLargeVec<Real>& turbu_k_;
-		StdLargeVec<Real>& turbu_epsilon_;
-		StdLargeVec<Real>& turbu_mu_;
-		StdLargeVec<Matd>& turbu_strain_rate_;
-        StdLargeVec<int> is_extra_viscous_dissipation_;
+		StdLargeVec<int> &is_near_wall_P1_; //** This is used to specially treat near wall region  *
+		StdLargeVec<Matd> &velocity_gradient_;
+		StdLargeVec<Real> &turbu_k_;
+		StdLargeVec<Real> &turbu_epsilon_;
+		StdLargeVec<Real> &turbu_mu_;
+		StdLargeVec<Matd> &turbu_strain_rate_;
+        StdLargeVec<int> &is_extra_viscous_dissipation_;
 
 		//** for test */
-		StdLargeVec<int>  turbu_indicator_;
-		StdLargeVec<Real>  k_diffusion_, vel_x_;
+		StdLargeVec<int>  &turbu_indicator_;
+		StdLargeVec<Real>  &k_diffusion_, &vel_x_;
 	};
 //=================================================================================================//
 	/**
@@ -214,13 +214,13 @@ namespace fluid_dynamics
 		inline void interaction(size_t index_i, Real dt = 0.0);
 		void update(size_t index_i, Real dt = 0.0);
 	protected:
-		StdLargeVec<Real> dE_dt_, ep_production, ep_dissipation_, ep_diffusion_;
+		StdLargeVec<Real> &dE_dt_, &ep_production, &ep_dissipation_, &ep_diffusion_;
 		
-		StdLargeVec<Real>& turbu_mu_;
-		StdLargeVec<Real>& turbu_k_;
-		StdLargeVec<Real>& turbu_epsilon_;
-		StdLargeVec<Real>& k_production_;
-		StdLargeVec<int>& is_near_wall_P1_;
+		StdLargeVec<Real> &turbu_mu_;
+		StdLargeVec<Real> &turbu_k_;
+		StdLargeVec<Real> &turbu_epsilon_;
+		StdLargeVec<Real> &k_production_;
+		StdLargeVec<int> &is_near_wall_P1_;
 	};
 //=================================================================================================//
 	/**
@@ -271,14 +271,14 @@ namespace fluid_dynamics
 		explicit TKEnergyForce(BaseRelationType& base_relation);
 		virtual ~TKEnergyForce() {};
 	protected:
-		StdLargeVec<Vecd>& force_;
-		StdLargeVec<Real>& mass_;
-		StdLargeVec<int>& indicator_;
-		StdLargeVec<Vecd>& pos_;
-		StdLargeVec<Real>& turbu_k_;
-		StdLargeVec<Vecd> test_k_grad_rslt_;
+		StdLargeVec<Vecd> &force_;
+		StdLargeVec<Real> &mass_;
+		StdLargeVec<int> &indicator_;
+		StdLargeVec<Vecd> &pos_;
+		StdLargeVec<Real> &turbu_k_;
+		StdLargeVec<Vecd> &test_k_grad_rslt_;
 
-		StdLargeVec<Vecd> tke_acc_inner_, tke_acc_wall_;
+		//StdLargeVec<Vecd> &tke_acc_inner_, &tke_acc_wall_;
 	};
 	//** Inner part *
 	template <>
@@ -301,7 +301,7 @@ namespace fluid_dynamics
 		virtual ~TKEnergyForce() {};
 		void interaction(size_t index_i, Real dt = 0.0);
 	protected:
-		StdLargeVec<Vecd>& test_k_grad_rslt_;
+		StdLargeVec<Vecd> &test_k_grad_rslt_;
 	};
 
 	//** Interface part *
@@ -322,19 +322,19 @@ namespace fluid_dynamics
 		virtual ~TurbuViscousForce() {};
 		
 	protected:
-		StdLargeVec<Real>& turbu_k_;
-		StdLargeVec<Real>& turbu_mu_;
-		StdLargeVec<Real>& wall_Y_plus_;
-		StdLargeVec<Real>& wall_Y_star_;
-		StdLargeVec<Vecd>& velo_friction_;
-		StdLargeVec<Real>& y_p_;
-		StdLargeVec<int>& is_near_wall_P2_;
+		StdLargeVec<Real> &turbu_k_;
+		StdLargeVec<Real> &turbu_mu_;
+		StdLargeVec<Real> &wall_Y_plus_;
+		StdLargeVec<Real> &wall_Y_star_;
+		StdLargeVec<Vecd> &velo_friction_;
+		StdLargeVec<Real> &y_p_;
+		StdLargeVec<int> &is_near_wall_P2_;
 		Real molecular_viscosity_;
 		Real c0_;
 
 		//** For test *
 		//StdLargeVec<Matd> visc_direction_matrix_;
-		StdLargeVec<Vecd> visc_acc_inner_, visc_acc_wall_;
+		//StdLargeVec<Vecd> &visc_acc_inner_, &visc_acc_wall_;
 
 	};
 
@@ -382,11 +382,11 @@ namespace fluid_dynamics
 
 		void update(size_t index_i, Real dt = 0.0);
 	protected:
-		StdLargeVec<Real>& rho_;
-		StdLargeVec<Real>& turbu_mu_;
-		StdLargeVec<Real>& turbu_k_;
-		StdLargeVec<Real>& turbu_epsilon_;
-		StdLargeVec<Real>& wall_Y_plus_, & wall_Y_star_;
+		StdLargeVec<Real> &rho_;
+		StdLargeVec<Real> &turbu_mu_;
+		StdLargeVec<Real> &turbu_k_;
+		StdLargeVec<Real> &turbu_epsilon_;
+		StdLargeVec<Real> &wall_Y_plus_,  &wall_Y_star_;
 		Real mu_;
 	};
 //=================================================================================================//
@@ -403,11 +403,11 @@ namespace fluid_dynamics
 		Real reduce(size_t index_i, Real dt = 0.0);
 		virtual Real outputResult(Real reduced_value) override;
 	protected:
-		StdLargeVec<Vecd>& vel_;
+		StdLargeVec<Vecd> &vel_;
 		Real smoothing_length_min_;
 		Real speed_ref_turbu_, advectionCFL_;
-		StdLargeVec<Real>& turbu_mu_;
-		Fluid& fluid_;
+		StdLargeVec<Real> &turbu_mu_;
+		Fluid &fluid_;
 	};
 //=================================================================================================//
 	/**
@@ -426,8 +426,8 @@ namespace fluid_dynamics
 	protected:
 		Real relaxation_rate_;
 		Real CharacteristicLength_;
-		StdLargeVec<Real>& turbu_k_;
-		StdLargeVec<Real>& turbu_epsilon_;
+		StdLargeVec<Real> &turbu_k_;
+		StdLargeVec<Real> &turbu_epsilon_;
 		Real TurbulentLength_;
 		
 		virtual Real getTurbulentInflowK(Vecd& position, Vecd& velocity, Real& turbu_k);
@@ -444,14 +444,14 @@ namespace fluid_dynamics
 		inline void interaction(size_t index_i, Real dt = 0.0);
 		void update(size_t index_i, Real dt = 0.0);
 	protected:
-		StdLargeVec<Real> distance_to_dummy_interface_;
-		StdLargeVec<Real> distance_to_dummy_interface_up_average_;
-		StdLargeVec<int> is_near_wall_P1_;
-		StdLargeVec<int> is_near_wall_P2_;
-		StdLargeVec<int> index_nearest_;
-		StdLargeVec<Vecd> e_nearest_tau_, e_nearest_normal_;
+		StdLargeVec<Real> &distance_to_dummy_interface_;
+		StdLargeVec<Real> &distance_to_dummy_interface_up_average_;
+		StdLargeVec<int> &is_near_wall_P1_;
+		StdLargeVec<int> &is_near_wall_P2_;
+		StdLargeVec<int> &index_nearest_;
+		StdLargeVec<Vecd> &e_nearest_tau_, &e_nearest_normal_;
 
-		StdLargeVec<Vecd>& pos_;
+		StdLargeVec<Vecd> &pos_;
 		int dimension_;
 		Real fluid_particle_spacing_, wall_particle_spacing_;
 		StdLargeVec<Vecd> &distance_from_wall_;
@@ -471,26 +471,26 @@ namespace fluid_dynamics
 
 	protected:
 		//Real offset_dist_;
-		StdLargeVec<Real> y_p_;
-		StdLargeVec<Real> wall_Y_plus_, wall_Y_star_;
-		StdLargeVec<Real> velo_tan_;
-		StdLargeVec<Vecd> velo_friction_;
+		StdLargeVec<Real> &y_p_;
+		StdLargeVec<Real> &wall_Y_plus_, &wall_Y_star_;
+		StdLargeVec<Real> &velo_tan_;
+		StdLargeVec<Vecd> &velo_friction_;
 
-		StdLargeVec<Vecd>& vel_;
-		StdLargeVec<Real>& rho_;
+		StdLargeVec<Vecd> &vel_;
+		StdLargeVec<Real> &rho_;
 		Real molecular_viscosity_;
-		StdLargeVec<Real>& turbu_k_;
-		StdLargeVec<Real>& turbu_epsilon_;
-		StdLargeVec<Real>& turbu_mu_;
-		StdLargeVec<int>& is_near_wall_P1_;
-		StdLargeVec<int>& is_near_wall_P2_;
-		StdLargeVec<Matd>& velocity_gradient_;
-		StdLargeVec<Real>& k_production_;
-		StdLargeVec<Real>& distance_to_dummy_interface_;
-		StdLargeVec<Real>& distance_to_dummy_interface_up_average_;
-		StdLargeVec<int>& index_nearest;
-		StdLargeVec<Vecd>& e_nearest_tau_;
-		StdLargeVec<Vecd>& e_nearest_normal_;
+		StdLargeVec<Real> &turbu_k_;
+		StdLargeVec<Real> &turbu_epsilon_;
+		StdLargeVec<Real> &turbu_mu_;
+		StdLargeVec<int> &is_near_wall_P1_;
+		StdLargeVec<int> &is_near_wall_P2_;
+		StdLargeVec<Matd> &velocity_gradient_;
+		StdLargeVec<Real> &k_production_;
+		StdLargeVec<Real> &distance_to_dummy_interface_;
+		StdLargeVec<Real> &distance_to_dummy_interface_up_average_;
+		StdLargeVec<int> &index_nearest;
+		StdLargeVec<Vecd> &e_nearest_tau_;
+		StdLargeVec<Vecd> &e_nearest_normal_;
 		StdVec<StdLargeVec<Real>*> contact_Vol_;
 		StdVec < StdLargeVec<Vecd>*>  contact_n_;
 	};
@@ -499,14 +499,14 @@ namespace fluid_dynamics
 		public DataDelegateSimple
 	{
 	public:
-		explicit ConstrainNormalVelocityInRegionP(SPHBody& sph_body);
+		explicit ConstrainNormalVelocityInRegionP(SPHBody &sph_body);
 		virtual ~ConstrainNormalVelocityInRegionP() {};
 
 		void update(size_t index_i, Real dt = 0.0);
 	protected:
-		StdLargeVec<Vecd>& vel_;
-		StdLargeVec<int>& is_near_wall_P1_;
-		StdLargeVec<Vecd>& e_nearest_normal_;
+		StdLargeVec<Vecd> &vel_;
+		StdLargeVec<int> &is_near_wall_P1_;
+		StdLargeVec<Vecd> &e_nearest_normal_;
 	};
 //=================================================================================================//
 	template <typename... InteractionTypes>
@@ -518,11 +518,11 @@ namespace fluid_dynamics
 	{
 	public:
 		template <class BaseRelationType>
-		explicit ExtraTransportForce(BaseRelationType& base_relation);
+		explicit ExtraTransportForce(BaseRelationType &base_relation);
 		virtual ~ExtraTransportForce() {};
 	protected:
-	    StdLargeVec<Real>& rho_;
-		StdLargeVec<Vecd>& vel_;
+	    StdLargeVec<Real> &rho_;
+		StdLargeVec<Vecd> &vel_;
 		StdLargeVec<Vecd> &zero_gradient_residue_;
 		StdLargeVec<Matd> extra_transport_stress_;
 		StdLargeVec<Vecd> extra_transport_vel_;
@@ -584,8 +584,8 @@ namespace fluid_dynamics
 
 		void update(size_t index_i, Real dt = 0.0);
 	protected:
-		StdLargeVec<Vecd>& vel_;
-		StdLargeVec<Vecd>& pos_;
+		StdLargeVec<Vecd> &vel_;
+		StdLargeVec<Vecd> &pos_;
 		Real length_channel_;
 	};
 //=================================================================================================//
@@ -598,8 +598,8 @@ namespace fluid_dynamics
 
 		void update(size_t index_i, Real dt = 0.0);
 	protected:
-		StdLargeVec<int> turbu_plug_flow_indicator_;
-		StdLargeVec<Vecd>& pos_;
+		StdLargeVec<int> &turbu_plug_flow_indicator_;
+		StdLargeVec<Vecd> &pos_;
 		Real channel_width_;
 	};
 //=================================================================================================//
@@ -698,9 +698,9 @@ using TVC_NoLimiter_withLinearGradientCorrection =
 	protected:
 		PltEngine plt_engine_;
 
-		StdLargeVec<Vecd>& pos_;
+		StdLargeVec<Vecd> &pos_;
 		StdLargeVec<int> num_in_cell_;
-		StdLargeVec<Real>& turbu_k_, & turbu_mu_,  & turbu_epsilon_;
+		StdLargeVec<Real> &turbu_k_,  &turbu_mu_,   &turbu_epsilon_;
 		//std::vector<std::vector<Real>>  data_sto_;
 		StdLargeVec<std::vector<Real>> data_sto_, data_loaded_;
 		StdLargeVec<Real>  data_time_aver_sto_;
@@ -758,8 +758,8 @@ using TVC_NoLimiter_withLinearGradientCorrection =
 
 		void update(size_t index_i, Real dt = 0.0);
 	protected:
-		StdLargeVec<Vecd>& pos_;
-		StdLargeVec<Vecd>& vel_;
+		StdLargeVec<Vecd> &pos_;
+		StdLargeVec<Vecd> &vel_;
 	};
 //=================================================================================================//
 }

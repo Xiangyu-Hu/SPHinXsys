@@ -232,12 +232,12 @@ int main(int ac, char *av[])
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp body_states_recording(sph_system);
-    body_states_recording.addVariableRecording<Real>(water_block, "Pressure");
-    body_states_recording.addVariableRecording<int>(water_block, "Indicator");
-    body_states_recording.addVariableRecording<Real>(water_block, "Density");
-    body_states_recording.addVariableRecording<int>(water_block, "BufferParticleIndicator");
+    body_states_recording.addToWrite<Real>(water_block, "Pressure");
+    body_states_recording.addToWrite<int>(water_block, "Indicator");
+    body_states_recording.addToWrite<Real>(water_block, "Density");
+    body_states_recording.addToWrite<int>(water_block, "BufferParticleIndicator");
 
-    body_states_recording.addVariableRecording<Vecd>(water_block,"ZeroGradientResidue"); // output for debug
+    body_states_recording.addToWrite<Vecd>(water_block,"ZeroGradientResidue"); // output for debug
 
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>> write_centerline_velocity("Velocity", velocity_observer_contact);
     //----------------------------------------------------------------------

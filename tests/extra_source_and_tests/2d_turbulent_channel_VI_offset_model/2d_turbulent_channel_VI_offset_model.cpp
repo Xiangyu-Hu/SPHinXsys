@@ -52,7 +52,7 @@ int main(int ac, char *av[])
        observation_location.push_back(pos_observer_i);
    }
     ObserverBody fluid_observer(sph_system, "FluidObserver");
-    fluid_observer.generateParticles<BaseParticles, Observer>(observation_location);
+    fluid_observer.generateParticles<ObserverParticles>(observation_location);
 
 
     /** topology */
@@ -198,11 +198,11 @@ int main(int ac, char *av[])
     //BodyAlignedBoxByCell inlet_velcoity_buffer(water_block, makeShared<AlignedBoxShape>(Transform(Vec2d(inlet_buffer_translation)), inlet_buffer_halfsize));
     //SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>> inlet_velocity_buffer_inflow_condition(inlet_velcoity_buffer, 1.0);
     
-    BodyAlignedBoxByCell left_emitter(water_block, makeShared<AlignedBoxShape>(Transform(Vec2d(left_buffer_translation)), left_buffer_halfsize));
-    fluid_dynamics::NonPrescribedPressureBidirectionalBuffer left_emitter_inflow_injection(left_emitter, inlet_particle_buffer, xAxis);
+    BodyAlignedBoxByCell left_emitter(water_block, makeShared<AlignedBoxShape>(xAxis,Transform(Vec2d(left_buffer_translation)), left_buffer_halfsize));
+    fluid_dynamics::NonPrescribedPressureBidirectionalBuffer left_emitter_inflow_injection(left_emitter, inlet_particle_buffer);
 
-    BodyAlignedBoxByCell left_disposer(water_block, makeShared<AlignedBoxShape>(Transform(Rotation2d(Pi), Vec2d(left_buffer_translation)), left_buffer_halfsize));
-    SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion> left_disposer_outflow_deletion(left_disposer, xAxis);
+    BodyAlignedBoxByCell left_disposer(water_block, makeShared<AlignedBoxShape>(xAxis, Transform(Rotation2d(Pi), Vec2d(left_buffer_translation)), left_buffer_halfsize));
+    SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion> left_disposer_outflow_deletion(left_disposer);
     SimpleDynamics<fluid_dynamics::PressureCondition<LeftInflowPressure>> left_inflow_pressure_condition(left_emitter);
     SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>> inflow_velocity_condition(left_emitter);
 
@@ -214,10 +214,10 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //BodyAlignedBoxByCell disposer(water_block, makeShared<AlignedBoxShape>(Transform(Vec2d(disposer_translation)), disposer_halfsize));
     //SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion> disposer_outflow_deletion(disposer, 0);
-    BodyAlignedBoxByCell right_emitter(water_block, makeShared<AlignedBoxShape>(Transform(Rotation2d(Pi), Vec2d(right_buffer_translation)), right_buffer_halfsize));
-    fluid_dynamics::BidirectionalBuffer<RightOutflowPressure> right_emitter_inflow_injection(right_emitter, inlet_particle_buffer, xAxis);
-    BodyAlignedBoxByCell right_disposer(water_block, makeShared<AlignedBoxShape>(Transform(Vec2d(right_buffer_translation)), right_buffer_halfsize));
-    SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion> right_disposer_outflow_deletion(right_disposer, xAxis);
+    BodyAlignedBoxByCell right_emitter(water_block, makeShared<AlignedBoxShape>(xAxis,Transform(Rotation2d(Pi), Vec2d(right_buffer_translation)), right_buffer_halfsize));
+    fluid_dynamics::BidirectionalBuffer<RightOutflowPressure> right_emitter_inflow_injection(right_emitter, inlet_particle_buffer);
+    BodyAlignedBoxByCell right_disposer(water_block, makeShared<AlignedBoxShape>(xAxis,Transform(Vec2d(right_buffer_translation)), right_buffer_halfsize));
+    SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion> right_disposer_outflow_deletion(right_disposer);
     SimpleDynamics<fluid_dynamics::PressureCondition<RightOutflowPressure>> right_outflow_pressure_condition(right_emitter);
     InteractionWithUpdate<fluid_dynamics::DensitySummationPressureComplex> update_fluid_density_pressure(water_block_inner, water_wall_contact);
 
@@ -239,22 +239,22 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     /** Output the body states. */
     BodyStatesRecordingToVtp body_states_recording(sph_system);
-    body_states_recording.addVariableRecording<Real>(water_block, "Pressure");		   // output for debug
-    body_states_recording.addVariableRecording<int>(water_block,"Indicator"); // output for debug
-    body_states_recording.addVariableRecording<Real>(water_block,"Density"); // output for debug
-    body_states_recording.addVariableRecording<Vecd>(water_block,"ZeroGradientResidue"); // output for debug
+    body_states_recording.addToWrite<Real>(water_block, "Pressure");		   // output for debug
+    body_states_recording.addToWrite<int>(water_block,"Indicator"); // output for debug
+    body_states_recording.addToWrite<Real>(water_block,"Density"); // output for debug
+    body_states_recording.addToWrite<Vecd>(water_block,"ZeroGradientResidue"); // output for debug
     ObservedQuantityRecording<Vecd> write_recorded_water_velocity("Velocity", fluid_observer_contact);
     ObservedQuantityRecording<Real> write_recorded_water_k("TurbulenceKineticEnergy", fluid_observer_contact);
     ObservedQuantityRecording<Real> write_recorded_water_mut("TurbulentViscosity", fluid_observer_contact);
     ObservedQuantityRecording<Real> write_recorded_water_epsilon("TurbulentDissipation", fluid_observer_contact);
-    body_states_recording.addVariableRecording<int>(water_block, "BufferParticleIndicator");
+    body_states_recording.addToWrite<int>(water_block, "BufferParticleIndicator");
     /**
      * @brief Setup geometry and initial conditions.
      */
     sph_system.initializeSystemCellLinkedLists();
     sph_system.initializeSystemConfigurations();
     wall_boundary_normal_direction.exec();
-    body_states_recording.addVariableRecording<Vecd>(wall_boundary, "NormalDirection");
+    body_states_recording.addToWrite<Vecd>(wall_boundary, "NormalDirection");
 
     /** Tag inlet/outlet truncated particles */
     inlet_outlet_surface_particle_indicator.exec();
