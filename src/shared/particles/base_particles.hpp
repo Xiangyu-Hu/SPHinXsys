@@ -51,6 +51,35 @@ DataType *BaseParticles::
     return variable->DataField();
 }
 //=================================================================================================//
+template <typename DataType>
+SingularVariable<DataType> *BaseParticles::
+    registerSingularVariable(const std::string &name, DataType initial_value)
+{
+    SingularVariable<DataType> *variable = findVariableByName<DataType>(all_singular_variables_, name);
+
+    return variable != nullptr
+               ? variable
+               : addVariableToAssemble<DataType>(
+                     all_singular_variables_, all_global_variable_ptrs_, name, initial_value);
+}
+//=================================================================================================//
+template <typename DataType>
+DataType *BaseParticles::getSingularVariableByName(const std::string &name)
+{
+    SingularVariable<DataType> *variable = findVariableByName<DataType>(all_singular_variables_, name);
+
+    if (variable != nullptr)
+    {
+        return variable->ValueAddress();
+    }
+
+    std::cout << "\nError: the variable '" << name << "' is not registered!\n";
+    std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+    return nullptr;
+
+    return nullptr;
+}
+//=================================================================================================//
 template <typename DataType, typename... Args>
 DataType *BaseParticles::registerDiscreteVariable(const std::string &name,
                                                   size_t data_size, Args &&...args)
@@ -315,98 +344,6 @@ operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables, Ba
             xml_parser_.queryAttributeValue(child, variables[i]->Name(), data_field[index]);
             index++;
         }
-    }
-}
-//=================================================================================================//
-template <typename OutStreamType>
-void BaseParticles::writeParticlesToVtk(OutStreamType &output_stream)
-{
-    size_t total_real_particles = total_real_particles_;
-
-    // write sorted particles ID
-    output_stream << "    <DataArray Name=\"SortedParticle_ID\" type=\"Int32\" Format=\"ascii\">\n";
-    output_stream << "    ";
-    for (size_t i = 0; i != total_real_particles; ++i)
-    {
-        output_stream << i << " ";
-    }
-    output_stream << std::endl;
-    output_stream << "    </DataArray>\n";
-
-    // write original particles ID
-    output_stream << "    <DataArray Name=\"OriginalParticle_ID\" type=\"Int32\" Format=\"ascii\">\n";
-    output_stream << "    ";
-    for (size_t i = 0; i != total_real_particles; ++i)
-    {
-        output_stream << original_id_[i] << " ";
-    }
-    output_stream << std::endl;
-    output_stream << "    </DataArray>\n";
-
-    // write integers
-    constexpr int type_index_int = DataTypeIndex<int>::value;
-    for (DiscreteVariable<int> *variable : std::get<type_index_int>(variables_to_write_))
-    {
-        int *data_field = variable->DataField();
-        output_stream << "    <DataArray Name=\"" << variable->Name() << "\" type=\"Int32\" Format=\"ascii\">\n";
-        output_stream << "    ";
-        for (size_t i = 0; i != total_real_particles; ++i)
-        {
-            output_stream << std::fixed << std::setprecision(9) << data_field[i] << " ";
-        }
-        output_stream << std::endl;
-        output_stream << "    </DataArray>\n";
-    }
-
-    // write scalars
-    constexpr int type_index_Real = DataTypeIndex<Real>::value;
-    for (DiscreteVariable<Real> *variable : std::get<type_index_Real>(variables_to_write_))
-    {
-        Real *data_field = variable->DataField();
-        output_stream << "    <DataArray Name=\"" << variable->Name() << "\" type=\"Float32\" Format=\"ascii\">\n";
-        output_stream << "    ";
-        for (size_t i = 0; i != total_real_particles; ++i)
-        {
-            output_stream << std::fixed << std::setprecision(9) << data_field[i] << " ";
-        }
-        output_stream << std::endl;
-        output_stream << "    </DataArray>\n";
-    }
-
-    // write vectors
-    constexpr int type_index_Vecd = DataTypeIndex<Vecd>::value;
-    for (DiscreteVariable<Vecd> *variable : std::get<type_index_Vecd>(variables_to_write_))
-    {
-        Vecd *data_field = variable->DataField();
-        output_stream << "    <DataArray Name=\"" << variable->Name() << "\" type=\"Float32\"  NumberOfComponents=\"3\" Format=\"ascii\">\n";
-        output_stream << "    ";
-        for (size_t i = 0; i != total_real_particles; ++i)
-        {
-            Vec3d vector_value = upgradeToVec3d(data_field[i]);
-            output_stream << std::fixed << std::setprecision(9) << vector_value[0] << " " << vector_value[1] << " " << vector_value[2] << " ";
-        }
-        output_stream << std::endl;
-        output_stream << "    </DataArray>\n";
-    }
-
-    // write matrices
-    constexpr int type_index_Matd = DataTypeIndex<Matd>::value;
-    for (DiscreteVariable<Matd> *variable : std::get<type_index_Matd>(variables_to_write_))
-    {
-        Matd *data_field = variable->DataField();
-        output_stream << "    <DataArray Name=\"" << variable->Name() << "\" type= \"Float32\"  NumberOfComponents=\"9\" Format=\"ascii\">\n";
-        output_stream << "    ";
-        for (size_t i = 0; i != total_real_particles; ++i)
-        {
-            Mat3d matrix_value = upgradeToMat3d(data_field[i]);
-            for (int k = 0; k != 3; ++k)
-            {
-                Vec3d col_vector = matrix_value.col(k);
-                output_stream << std::fixed << std::setprecision(9) << col_vector[0] << " " << col_vector[1] << " " << col_vector[2] << " ";
-            }
-        }
-        output_stream << std::endl;
-        output_stream << "    </DataArray>\n";
     }
 }
 //=================================================================================================//

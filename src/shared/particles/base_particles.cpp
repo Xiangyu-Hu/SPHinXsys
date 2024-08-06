@@ -10,7 +10,7 @@ namespace SPH
 {
 //=================================================================================================//
 BaseParticles::BaseParticles(SPHBody &sph_body, BaseMaterial *base_material)
-    : total_real_particles_(0), real_particles_bound_(0), particles_bound_(0),
+    : v_total_real_particles_(nullptr), real_particles_bound_(0), particles_bound_(0),
       original_id_(nullptr), sorted_id_(nullptr),
       pos_(nullptr), Vol_(nullptr), rho_(nullptr), mass_(nullptr),
       sph_body_(sph_body), body_name_(sph_body.getName()),
@@ -23,6 +23,7 @@ BaseParticles::BaseParticles(SPHBody &sph_body, BaseMaterial *base_material)
       read_restart_variable_from_xml_(variables_to_restart_, restart_xml_parser_)
 {
     sph_body.assignBaseParticles(this);
+    v_total_real_particles_ = registerSingularVariable<UnsignedInt>("TotalRealParticles");
 }
 //=================================================================================================//
 void BaseParticles::initializeBasicParticleVariables()
@@ -55,10 +56,11 @@ void BaseParticles::registerPositionAndVolumetricMeasureFromReload()
     Vol_ = registerStateVariableFromReload<Real>("VolumetricMeasure");
 }
 //=================================================================================================//
-void BaseParticles::initializeAllParticlesBounds(size_t total_real_particles)
+void BaseParticles::initializeAllParticlesBounds(size_t number_of_particles)
 {
-    total_real_particles_ = total_real_particles;
-    real_particles_bound_ = total_real_particles_;
+    UnsignedInt *total_real_particles = v_total_real_particles_->ValueAddress();
+    *total_real_particles = number_of_particles;
+    real_particles_bound_ = number_of_particles;
     particles_bound_ = real_particles_bound_;
 }
 //=================================================================================================//
@@ -94,7 +96,7 @@ void BaseParticles::updateGhostParticle(size_t ghost_index, size_t index)
 //=================================================================================================//
 void BaseParticles::switchToBufferParticle(size_t index)
 {
-    size_t last_real_particle_index = total_real_particles_ - 1;
+    size_t last_real_particle_index = TotalRealParticles() - 1;
     if (index < last_real_particle_index)
     {
         copyFromAnotherParticle(index, last_real_particle_index);
@@ -102,95 +104,27 @@ void BaseParticles::switchToBufferParticle(size_t index)
         std::swap(original_id_[index], original_id_[last_real_particle_index]);
         sorted_id_[original_id_[index]] = index;
     }
-    total_real_particles_ -= 1;
+    decrementTotalRealParticles();
 }
 //=================================================================================================//
 void BaseParticles::createRealParticleFrom(size_t index)
 {
-    size_t new_original_id = total_real_particles_;
+    size_t new_original_id = TotalRealParticles();
     original_id_[new_original_id] = new_original_id;
     /** Buffer Particle state copied from real particle. */
     copyFromAnotherParticle(new_original_id, index);
-    /** Realize the buffer particle by increasing the number of real particle in the body.  */
-    total_real_particles_ += 1;
-}
-//=================================================================================================//
-void BaseParticles::writePltFileHeader(std::ofstream &output_file)
-{
-    output_file << " VARIABLES = \"x\",\"y\",\"z\",\"ID\"";
-
-    constexpr int type_index_int = DataTypeIndex<int>::value;
-    for (DiscreteVariable<int> *variable : std::get<type_index_int>(variables_to_write_))
-    {
-        output_file << ",\"" << variable->Name() << "\"";
-    };
-
-    constexpr int type_index_Vecd = DataTypeIndex<Vecd>::value;
-    for (DiscreteVariable<Vecd> *variable : std::get<type_index_Vecd>(variables_to_write_))
-    {
-        std::string variable_name = variable->Name();
-        output_file << ",\"" << variable_name << "_x\""
-                    << ",\"" << variable_name << "_y\""
-                    << ",\"" << variable_name << "_z\"";
-    };
-
-    constexpr int type_index_Real = DataTypeIndex<Real>::value;
-    for (DiscreteVariable<Real> *variable : std::get<type_index_Real>(variables_to_write_))
-    {
-        output_file << ",\"" << variable->Name() << "\"";
-    };
-}
-//=================================================================================================//
-void BaseParticles::writePltFileParticleData(std::ofstream &output_file, size_t index)
-{
-    // write particle positions and index first
-    Vec3d particle_position = upgradeToVec3d(pos_[index]);
-    output_file << particle_position[0] << " " << particle_position[1] << " " << particle_position[2] << " "
-                << index << " ";
-
-    constexpr int type_index_int = DataTypeIndex<int>::value;
-    for (DiscreteVariable<int> *variable : std::get<type_index_int>(variables_to_write_))
-    {
-        int *data_field = variable->DataField();
-        output_file << data_field[index] << " ";
-    };
-
-    constexpr int type_index_Vecd = DataTypeIndex<Vecd>::value;
-    for (DiscreteVariable<Vecd> *variable : std::get<type_index_Vecd>(variables_to_write_))
-    {
-        Vecd *data_field = variable->DataField();
-        Vec3d vector_value = upgradeToVec3d(data_field[index]);
-        output_file << vector_value[0] << " " << vector_value[1] << " " << vector_value[2] << " ";
-    };
-
-    constexpr int type_index_Real = DataTypeIndex<Real>::value;
-    for (DiscreteVariable<Real> *variable : std::get<type_index_Real>(variables_to_write_))
-    {
-        Real *data_field = variable->DataField();
-        output_file << data_field[index] << " ";
-    };
-}
-//=================================================================================================//
-void BaseParticles::writeParticlesToPltFile(std::ofstream &output_file)
-{
-    writePltFileHeader(output_file);
-    output_file << "\n";
-
-    size_t total_real_particles = total_real_particles_;
-    for (size_t i = 0; i != total_real_particles; ++i)
-    {
-        writePltFileParticleData(output_file, i);
-        output_file << "\n";
-    };
+    /** Realize the buffer particle by increasing the number of real particle by one.  */
+    incrementTotalRealParticles();
 }
 //=================================================================================================//
 void BaseParticles::resizeXmlDocForParticles(XmlParser &xml_parser)
 {
     size_t total_elements = xml_parser.Size(xml_parser.first_element_);
 
-    if (total_elements <= total_real_particles_)
+    UnsignedInt total_real_particles = TotalRealParticles();
+    if (total_elements <= total_real_particles)
     {
-        xml_parser.resize(xml_parser.first_element_, total_real_particles_, "particle");
+        xml_parser.resize(xml_parser.first_element_, total_real_particles, "particle");
     }
 }
 //=================================================================================================//

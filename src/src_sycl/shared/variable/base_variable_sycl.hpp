@@ -29,7 +29,7 @@
 #define BASE_VARIABLE_SYCL_HPP
 
 #include "base_variable.h"
-#include "base_variable_sycl.h"
+#include "execution_sycl.h"
 
 namespace SPH
 {

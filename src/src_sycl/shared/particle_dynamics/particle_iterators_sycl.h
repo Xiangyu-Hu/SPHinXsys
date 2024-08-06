@@ -34,20 +34,17 @@
 
 namespace SPH
 {
-template <class ComputingKernelType, class ComputingKernelFunction>
-inline void particle_for(Implementation<ComputingKernelType, ParallelDevicePolicy> &kernel_implementation,
-                         const IndexRange &particles_range, const ComputingKernelFunction &kernel_function)
+template <class LocalDynamicsFunction>
+inline void particle_for(const ParallelDevicePolicy &par_device,
+                         const IndexRange &particles_range, const LocalDynamicsFunction &local_dynamics_function)
 {
     auto &sycl_queue = execution_instance.getQueue();
-    auto &sycl_buffer = kernel_implementation.getBuffer();
     const size_t particles_size = particles_range.size();
     sycl_queue.submit([&](sycl::handler &cgh)
-                      {
-            auto sycl_accessor = sycl_buffer.get_access(cgh, sycl::read_write);
-            cgh.parallel_for(execution_instance.getUniformNdRange(particles_size), [=](sycl::nd_item<1> index) {
+                      { cgh.parallel_for(execution_instance.getUniformNdRange(particles_size), [=](sycl::nd_item<1> index)
+                                         {
                                  if(index.get_global_id(0) < particles_size)
-                                     kernel_function(index.get_global_id(0), sycl_accessor[0]);
-                             }); })
+                                     local_dynamics_function(index.get_global_id(0)); }); })
         .wait_and_throw();
 }
 } // namespace SPH
