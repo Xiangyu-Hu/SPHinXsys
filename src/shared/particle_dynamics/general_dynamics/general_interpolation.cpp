@@ -16,7 +16,7 @@ CorrectInterpolationKernelWeights::
 {
     for (size_t k = 0; k != contact_particles_.size(); ++k)
     {
-        contact_Vol_.push_back(contact_particles_[k]->getVariableByName<Real>("VolumetricMeasure"));
+        contact_Vol_.push_back(contact_particles_[k]->getVariableDataByName<Real>("VolumetricMeasure"));
     }
 }
 //=================================================================================================//

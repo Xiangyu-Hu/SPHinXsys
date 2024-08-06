@@ -140,7 +140,7 @@ void MeshWithGridDataPackages<PKG_SIZE>::
         for (int j = 0; j != pkg_size; ++j)
             for (int k = 0; k != pkg_size; ++k)
             {
-                Vec3d position = DataPositionFromIndex(cell_index, Arrayi(i, j));
+                Vec3d position = DataPositionFromIndex(cell_index, Arrayi(i, j, k));
                 pkg_data[i][j][k] = function_by_position(position);
             }
 }

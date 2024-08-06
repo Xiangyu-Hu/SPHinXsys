@@ -9,7 +9,7 @@
 namespace SPH
 {
 //=================================================================================================//
-void ParticleGenerator<Lattice>::initializeGeometricVariables()
+void ParticleGenerator<BaseParticles, Lattice>::prepareGeometricData()
 {
     BaseMesh mesh(domain_bounds_, lattice_spacing_, 0);
     Real particle_volume = lattice_spacing_ * lattice_spacing_ * lattice_spacing_;
@@ -23,13 +23,13 @@ void ParticleGenerator<Lattice>::initializeGeometricVariables()
                 {
                     if (initial_shape_.checkContain(particle_position))
                     {
-                        initializePositionAndVolumetricMeasure(particle_position, particle_volume);
+                        addPositionAndVolumetricMeasure(particle_position, particle_volume);
                     }
                 }
             }
 }
 //=================================================================================================//
-void ParticleGenerator<ThickSurface, Lattice>::initializeGeometricVariables()
+void ParticleGenerator<SurfaceParticles, Lattice>::prepareGeometricData()
 {
     // Calculate the total volume and
     // count the number of cells inside the body volume, where we might put particles.
@@ -54,7 +54,7 @@ void ParticleGenerator<ThickSurface, Lattice>::initializeGeometricVariables()
 
     // initialize a uniform distribution between 0 (inclusive) and 1 (exclusive)
     std::mt19937_64 rng;
-    std::uniform_real_distribution<Real> unif(0, 1);
+    std::uniform_real_distribution<Real> uniform_distr(0, 1);
 
     // Calculate the interval based on the number of particles.
     Real interval = planned_number_of_particles_ / (all_cells_ + TinyReal);
@@ -71,12 +71,12 @@ void ParticleGenerator<ThickSurface, Lattice>::initializeGeometricVariables()
                 {
                     if (initial_shape_.checkContain(particle_position))
                     {
-                        Real random_real = unif(rng);
+                        Real random_real = uniform_distr(rng);
                         // If the random_real is smaller than the interval, add a particle, only if we haven't reached the max. number of particles.
-                        if (random_real <= interval && base_particles_.total_real_particles_ < planned_number_of_particles_)
+                        if (random_real <= interval && base_particles_.TotalRealParticles() < planned_number_of_particles_)
                         {
-                            initializePositionAndVolumetricMeasure(particle_position, avg_particle_volume_ / thickness_);
-                            initializeSurfaceProperties(initial_shape_.findNormalDirection(particle_position), thickness_);
+                            addPositionAndVolumetricMeasure(particle_position, avg_particle_volume_ / thickness_);
+                            addSurfaceProperties(initial_shape_.findNormalDirection(particle_position), thickness_);
                         }
                     }
                 }

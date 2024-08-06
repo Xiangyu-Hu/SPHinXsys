@@ -108,7 +108,7 @@ class DiffusionInitialCondition : public LocalDynamics, public DataDelegateSimpl
   public:
     explicit DiffusionInitialCondition(SPHBody &sph_body)
         : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
-          pos_(*particles_->getVariableByName<Vecd>("Position")),
+          pos_(*particles_->getVariableDataByName<Vecd>("Position")),
           phi_(*particles_->registerSharedVariable<Real>("Phi")){};
 
     void update(size_t index_i, Real dt)
@@ -128,27 +128,23 @@ class DiffusionInitialCondition : public LocalDynamics, public DataDelegateSimpl
 //----------------------------------------------------------------------
 using DiffusionBodyRelaxation =
     DiffusionRelaxationRK2<DiffusionRelaxation<Inner<CorrectedKernelGradientInner>, BaseDiffusion>>;
-//----------------------------------------------------------------------
-//	an observer body to measure temperature at given positions.
-//----------------------------------------------------------------------
-template <>
-class ParticleGenerator<ObserverBody> : public ParticleGenerator<Observer>
-{
-  public:
-    explicit ParticleGenerator(SPHBody &sph_body) : ParticleGenerator<Observer>(sph_body)
-    {
-        /** A line of measuring points at the middle line. */
-        size_t number_of_observation_points = 11;
-        Real range_of_measure = L - BW;
-        Real start_of_measure = BW;
 
-        for (size_t i = 0; i < number_of_observation_points; ++i)
-        {
-            Vec2d point_coordinate(0.5 * L, start_of_measure + range_of_measure * (Real)i / (Real)(number_of_observation_points - 1));
-            positions_.push_back(point_coordinate);
-        }
+StdVec<Vecd> createObservationPoints()
+{
+    /** A line of measuring points at the middle line. */
+    size_t number_of_observation_points = 11;
+    Real range_of_measure = L - BW;
+    Real start_of_measure = BW;
+
+    StdVec<Vecd> observation_points;
+    for (size_t i = 0; i < number_of_observation_points; ++i)
+    {
+        Vec2d point_coordinate(0.5 * L, start_of_measure + range_of_measure * (Real)i / (Real)(number_of_observation_points - 1));
+        observation_points.push_back(point_coordinate);
     }
+    return observation_points;
 };
+
 } // namespace SPH
 //----------------------------------------------------------------------
 //	Main program starts here.
@@ -171,7 +167,7 @@ int main(int ac, char *av[])
     //	Observer body
     //----------------------------------------------------------------------
     ObserverBody temperature_observer(sph_system, "TemperatureObserver");
-    temperature_observer.generateParticles<BaseParticles, ObserverBody>();
+    temperature_observer.generateParticles<ObserverParticles>(createObservationPoints());
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.

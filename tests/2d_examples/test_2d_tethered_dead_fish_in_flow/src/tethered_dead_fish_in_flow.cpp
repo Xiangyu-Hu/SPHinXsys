@@ -158,19 +158,13 @@ MultiPolygon createFishHeadShape(SPHBody &sph_body)
     multi_polygon.addAPolygon(createFishBlockingShape(), ShapeBooleanOps::sub);
     return multi_polygon;
 };
-/**
- * Observer particle generator.
- */
-class FishObserver;
-template <>
-class ParticleGenerator<FishObserver> : public ParticleGenerator<Observer>
+
+StdVec<Vecd> createObservationPoints()
 {
-  public:
-    explicit ParticleGenerator(SPHBody &sph_body) : ParticleGenerator<Observer>(sph_body)
-    {
-        positions_.push_back(Vecd(cx + resolution_ref, cy));
-        positions_.push_back(Vecd(cx + fish_length - resolution_ref, cy));
-    }
+    StdVec<Vecd> observation_points;
+    observation_points.push_back(Vecd(cx + resolution_ref, cy));
+    observation_points.push_back(Vecd(cx + fish_length - resolution_ref, cy));
+    return observation_points;
 };
 //----------------------------------------------------------------------
 //	Inflow velocity
@@ -241,7 +235,7 @@ int main(int ac, char *av[])
      * @brief   Particle and body creation of fish observer.
      */
     ObserverBody fish_observer(system, "Observer");
-    fish_observer.generateParticles<BaseParticles, FishObserver>();
+    fish_observer.generateParticles<ObserverParticles>(createObservationPoints());
     /** topology */
     InnerRelation water_block_inner(water_block);
     InnerRelation fish_body_inner(fish_body);
@@ -328,7 +322,7 @@ int main(int ac, char *av[])
     InteractionDynamics<fluid_dynamics::VorticityInner> compute_vorticity(water_block_inner);
     /** Inflow boundary condition. */
     BodyAlignedBoxByCell inflow_buffer(
-        water_block, makeShared<AlignedBoxShape>(Transform(Vec2d(buffer_translation)), buffer_halfsize));
+        water_block, makeShared<AlignedBoxShape>(xAxis, Transform(Vec2d(buffer_translation)), buffer_halfsize));
     SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>> parabolic_inflow(inflow_buffer);
 
     /**

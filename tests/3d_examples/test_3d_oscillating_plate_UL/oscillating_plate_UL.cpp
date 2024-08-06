@@ -41,12 +41,12 @@ namespace SPH
 //----------------------------------------------------------------------
 class Plate;
 template <>
-class ParticleGenerator<Plate> : public ParticleGenerator<Base>
+class ParticleGenerator<BaseParticles, Plate> : public ParticleGenerator<BaseParticles>
 {
   public:
-    explicit ParticleGenerator(SPHBody &sph_body)
-        : ParticleGenerator<Base>(sph_body){};
-    virtual void initializeGeometricVariables() override
+    explicit ParticleGenerator(SPHBody &sph_body, BaseParticles &base_particles)
+        : ParticleGenerator<BaseParticles>(sph_body, base_particles){};
+    virtual void prepareGeometricData() override
     {
         for (int k = 0; k < particle_number; k++)
         {
@@ -57,7 +57,7 @@ class ParticleGenerator<Plate> : public ParticleGenerator<Base>
                     Real x = particle_spacing_ref * i - BW + particle_spacing_ref * 0.5;
                     Real y = particle_spacing_ref * j - BW + particle_spacing_ref * 0.5;
                     Real z = particle_spacing_ref * (k - ((particle_number - 1.0) / 2.0));
-                    initializePositionAndVolumetricMeasure(
+                    addPositionAndVolumetricMeasure(
                         Vecd(x, y, z), particle_spacing_ref * particle_spacing_ref * particle_spacing_ref);
                 }
             }
@@ -127,7 +127,7 @@ int main(int ac, char *av[])
     plate_body.generateParticles<BaseParticles, Plate>();
 
     ObserverBody plate_observer(sph_system, "PlateObserver");
-    plate_observer.generateParticles<BaseParticles, Observer>(observation_location);
+    plate_observer.generateParticles<ObserverParticles>(observation_location);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -163,10 +163,10 @@ int main(int ac, char *av[])
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp write_states(sph_system);
-    write_states.addVariableRecording<Real>(plate_body, "VonMisesStress");
-    write_states.addVariableRecording<Real>(plate_body, "VonMisesStress");
-    write_states.addVariableRecording<Real>(plate_body, "Pressure");
-    write_states.addVariableRecording<Real>(plate_body, "Density");
+    write_states.addToWrite<Real>(plate_body, "VonMisesStress");
+    write_states.addToWrite<Real>(plate_body, "VonMisesStress");
+    write_states.addToWrite<Real>(plate_body, "Pressure");
+    write_states.addToWrite<Real>(plate_body, "Density");
     RestartIO restart_io(sph_system);
     ObservedQuantityRecording<Vecd> write_plate_displacement("Position", plate_observer_contact);
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalKineticEnergy>> write_kinetic_energy(plate_body);

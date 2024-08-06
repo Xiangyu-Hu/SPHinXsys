@@ -56,7 +56,7 @@ int main(int ac, char *av[])
     //	Define outputs functions.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp airfoil_recording_to_vtp(airfoil);
-    airfoil_recording_to_vtp.addVariableRecording<Real>(airfoil, "SmoothingLengthRatio");
+    airfoil_recording_to_vtp.addToWrite<Real>(airfoil, "SmoothingLengthRatio");
     MeshRecordingToPlt cell_linked_list_recording(sph_system, airfoil.getCellLinkedList());
     //----------------------------------------------------------------------
     //	Define body relation map.

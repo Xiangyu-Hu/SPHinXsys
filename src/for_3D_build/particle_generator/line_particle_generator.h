@@ -33,25 +33,25 @@
 
 namespace SPH
 {
-class Line;
 
 template <> // Generate a smooth line-shape using particles
-class ParticleGenerator<Line> : public ParticleGenerator<Base>
+class ParticleGenerator<LinearParticles> : public ParticleGenerator<BaseParticles>
 {
+    StdLargeVec<Vecd> line_normal_;    /**< line normal */
+    StdLargeVec<Real> line_thickness_; /**< line thickness */
+    StdLargeVec<Vecd> line_binormal_;  /**< line binormal */
+    StdLargeVec<Real> line_width_;     /**< line width */
+
   public:
-    explicit ParticleGenerator(SPHBody &sph_body);
+    explicit ParticleGenerator(SPHBody &sph_body, LinearParticles &linear_particles);
     virtual ~ParticleGenerator(){};
 
   protected:
-    StdLargeVec<Vecd> &n_;         /**< line normal */
-    StdLargeVec<Real> &thickness_; /**< line thickness */
-    StdLargeVec<Vecd> &b_n_;       /**< line binormal */
-    StdLargeVec<Real> &width_;     /**< line width */
-
-    /** Initialize line particle. */
-    virtual void initializeLineProperties(
+    LinearParticles &linear_particles_;
+    virtual void addLineProperties(
         const Vecd &line_normal, const Vecd &line_binormal, Real thickness, Real width);
+    virtual void initializeParticleVariables() override;
+    virtual void initializeParticleVariablesFromReload() override;
 };
-
 } // namespace SPH
 #endif // LINE_PARTICLE_GENERATOR_H

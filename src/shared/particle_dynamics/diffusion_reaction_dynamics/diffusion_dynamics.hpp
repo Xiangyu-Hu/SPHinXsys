@@ -27,7 +27,7 @@ DiffusionRelaxation<DataDelegationType, DiffusionType>::
     DiffusionRelaxation(BodyRelationType &body_relation, StdVec<DiffusionType *> diffusions)
     : LocalDynamics(body_relation.getSPHBody()), DataDelegationType(body_relation),
       diffusions_(diffusions),
-      Vol_(*this->particles_->template getVariableByName<Real>("VolumetricMeasure"))
+      Vol_(*this->particles_->template getVariableDataByName<Real>("VolumetricMeasure"))
 {
     for (auto &diffusion : diffusions_)
     {
@@ -219,13 +219,13 @@ DiffusionRelaxation<Neumann<ContactKernelGradientType>, DiffusionType>::
     DiffusionRelaxation(Args &&...args)
     : DiffusionRelaxation<Contact<ContactKernelGradientType>, DiffusionType>(
           std::forward<Args>(args)...),
-      n_(*this->particles_->template getVariableByName<Vecd>("NormalDirection"))
+      n_(*this->particles_->template getVariableDataByName<Vecd>("NormalDirection"))
 {
     contact_diffusive_flux_.resize(this->contact_particles_.size());
     for (size_t k = 0; k != this->contact_particles_.size(); ++k)
     {
         BaseParticles *contact_particles_k = this->contact_particles_[k];
-        contact_n_.push_back(this->contact_particles_[k]->template getVariableByName<Vecd>("NormalDirection"));
+        contact_n_.push_back(this->contact_particles_[k]->template getVariableDataByName<Vecd>("NormalDirection"));
 
         for (auto &diffusion : this->diffusions_)
         {
@@ -278,7 +278,7 @@ DiffusionRelaxation<Robin<ContactKernelGradientType>, DiffusionType>::
     DiffusionRelaxation(Args &&...args)
     : DiffusionRelaxation<Contact<ContactKernelGradientType>, DiffusionType>(
           std::forward<Args>(args)...),
-      n_(*this->particles_->template getVariableByName<Vecd>("NormalDirection"))
+      n_(*this->particles_->template getVariableDataByName<Vecd>("NormalDirection"))
 {
     contact_convection_.resize(this->contact_particles_.size());
     contact_species_infinity_.resize(this->contact_particles_.size());
@@ -286,7 +286,7 @@ DiffusionRelaxation<Robin<ContactKernelGradientType>, DiffusionType>::
     for (size_t k = 0; k != this->contact_particles_.size(); ++k)
     {
         BaseParticles *contact_particles_k = this->contact_particles_[k];
-        contact_n_.push_back(contact_particles_k->template getVariableByName<Vecd>("NormalDirection"));
+        contact_n_.push_back(contact_particles_k->template getVariableDataByName<Vecd>("NormalDirection"));
 
         for (auto &diffusion : this->diffusions_)
         {

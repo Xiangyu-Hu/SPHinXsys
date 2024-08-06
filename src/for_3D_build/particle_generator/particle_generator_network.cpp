@@ -9,10 +9,11 @@
 namespace SPH
 {
 //=================================================================================================//
-ParticleGenerator<Network>::
-    ParticleGenerator(SPHBody &sph_body, const Vecd &starting_pnt,
+ParticleGenerator<BaseParticles, Network>::
+    ParticleGenerator(SPHBody &sph_body, BaseParticles &base_particles, const Vecd &starting_pnt,
                       const Vecd &second_pnt, int iterator, Real grad_factor)
-    : ParticleGenerator<Base>(sph_body), starting_pnt_(starting_pnt), second_pnt_(second_pnt),
+    : ParticleGenerator<BaseParticles>(sph_body, base_particles),
+      starting_pnt_(starting_pnt), second_pnt_(second_pnt),
       n_it_(iterator), fascicles_(true), segments_in_branch_(10),
       segment_length_(sph_body.sph_adaptation_->ReferenceSpacing()),
       grad_factor_(grad_factor), sph_body_(sph_body), initial_shape_(sph_body.getInitialShape()),
@@ -23,19 +24,19 @@ ParticleGenerator<Network>::
     Vecd end_direction = displacement / (displacement.norm() + TinyReal);
     /** Add initial particle to the first branch of the tree. */
     growAParticleOnBranch(tree_->root_, starting_pnt_, end_direction);
-    cell_linked_list_.InsertListDataEntry(0, pos_[0]);
+    cell_linked_list_.InsertListDataEntry(0, position_[0]);
 }
 //=================================================================================================//
-void ParticleGenerator<Network>::
+void ParticleGenerator<BaseParticles, Network>::
     growAParticleOnBranch(TreeBody::Branch *branch, const Vecd &new_point, const Vecd &end_direction)
 {
-    initializePositionAndVolumetricMeasure(new_point, segment_length_);
+    addPositionAndVolumetricMeasure(new_point, segment_length_);
     tree_->branch_locations_.push_back(branch->id_);
-    branch->inner_particles_.push_back(pos_.size() - 1);
+    branch->inner_particles_.push_back(position_.size() - 1);
     branch->end_direction_ = end_direction;
 }
 //=================================================================================================//
-Vecd ParticleGenerator<Network>::getGradientFromNearestPoints(Vecd pt, Real delta)
+Vecd ParticleGenerator<BaseParticles, Network>::getGradientFromNearestPoints(Vecd pt, Real delta)
 {
     Vecd up_grad = Vecd::Zero();
     Vecd down_grad = Vecd::Zero();
@@ -59,7 +60,7 @@ Vecd ParticleGenerator<Network>::getGradientFromNearestPoints(Vecd pt, Real delt
     return down_grad - up_grad;
 }
 //=================================================================================================//
-Vecd ParticleGenerator<Network>::createATentativeNewBranchPoint(Vecd init_point, Vecd dir)
+Vecd ParticleGenerator<BaseParticles, Network>::createATentativeNewBranchPoint(Vecd init_point, Vecd dir)
 {
     Vecd pnt_to_project = init_point + dir * segment_length_;
 
@@ -70,7 +71,7 @@ Vecd ParticleGenerator<Network>::createATentativeNewBranchPoint(Vecd init_point,
     return new_point;
 }
 //=================================================================================================//
-bool ParticleGenerator<Network>::
+bool ParticleGenerator<BaseParticles, Network>::
     isCollision(const Vecd &new_point, const ListData &nearest_neighbor, size_t parent_id)
 {
     bool collision = false;
@@ -78,7 +79,7 @@ bool ParticleGenerator<Network>::
 
     collision = extraCheck(new_point);
 
-    size_t edge_location = tree_->BranchLocation(std::get<0>(nearest_neighbor));
+    size_t edge_location = tree_->BranchLocation(position_.size(), std::get<0>(nearest_neighbor));
     if (edge_location == parent_id)
         is_family = true;
     for (const size_t &brother_branch : tree_->branches_[parent_id]->out_edge_)
@@ -99,14 +100,14 @@ bool ParticleGenerator<Network>::
     return collision;
 }
 //=================================================================================================//
-bool ParticleGenerator<Network>::
+bool ParticleGenerator<BaseParticles, Network>::
     createABranchIfValid(size_t parent_id, Real angle, Real repulsivity, size_t number_segments)
 {
     bool is_valid = false;
     TreeBody::Branch *parent_branch = tree_->branches_[parent_id];
     IndexVector &parent_elements = parent_branch->inner_particles_;
 
-    Vecd init_point = pos_[parent_elements.back()];
+    Vecd init_point = position_[parent_elements.back()];
     Vecd init_direction = parent_branch->end_direction_;
 
     Vecd surface_norm = initial_shape_.findNormalDirection(init_point);
@@ -157,22 +158,22 @@ bool ParticleGenerator<Network>::
 
         for (const size_t &particle_idx : new_branch->inner_particles_)
         {
-            cell_linked_list_.InsertListDataEntry(particle_idx, pos_[particle_idx]);
+            cell_linked_list_.InsertListDataEntry(particle_idx, position_[particle_idx]);
         }
     }
 
     return is_valid;
 }
 //=================================================================================================//
-void ParticleGenerator<Network>::initializeGeometricVariables()
+void ParticleGenerator<BaseParticles, Network>::prepareGeometricData()
 {
-    BodyStatesRecordingToVtp write_states({sph_body_});
+    ParticleGenerationRecordingToVtp write_particle_generation(sph_body_, position_);
 
     std::cout << "Now creating Particles on network... " << std::endl;
 
     size_t ite = 0;
     sph_body_.setNewlyUpdated();
-    write_states.writeToFile(0);
+    write_particle_generation.writeToFile(0);
 
     IndexVector branches_to_grow;
     IndexVector new_branches_to_grow;
@@ -200,7 +201,7 @@ void ParticleGenerator<Network>::initializeGeometricVariables()
 
         ite++;
         sph_body_.setNewlyUpdated();
-        write_states.writeToFile(ite);
+        write_particle_generation.writeToFile(ite);
     }
     std::mt19937_64 random_engine;
     for (size_t i = 0; i != n_it_; i++)
@@ -229,11 +230,10 @@ void ParticleGenerator<Network>::initializeGeometricVariables()
 
         ite++;
         sph_body_.setNewlyUpdated();
-        write_states.writeToFile(ite);
+        write_particle_generation.writeToFile(ite);
     }
 
-    std::cout << base_particles_.total_real_particles_
-              << " Particles has been successfully created!" << std::endl;
+    std::cout << position_.size() << " particles has been successfully created!" << std::endl;
 }
 //=================================================================================================//
 } // namespace SPH

@@ -131,7 +131,7 @@ class MeshWithGridDataPackages : public Mesh
         delete[] meta_data_cell_;
     };
     /** spacing between the data, which is 1/ pkg_size of this grid spacing */
-    virtual Real DataSpacing() override { return data_spacing_; };
+    Real DataSpacing() { return data_spacing_; };
 
   protected:
     MeshVariableAssemble all_mesh_variables_;         /**< all mesh variables on this mesh. */
@@ -141,7 +141,7 @@ class MeshWithGridDataPackages : public Mesh
     size_t num_grid_pkgs_ = 2;                        /**< the number of all distinct packages, initially only 2 singular packages. */
     using MetaData = std::pair<int, size_t>;          /**< stores the metadata for each cell: (int)singular0/inner1/core2, (size_t)package data index*/
     MeshDataMatrix<MetaData> meta_data_mesh_;         /**< metadata for all cells. */
-    CellNeighborhood *cell_neighborhood_;                  /**< 3*3(*3) array to store indicies of neighborhood cells. */
+    CellNeighborhood *cell_neighborhood_;             /**< 3*3(*3) array to store indicies of neighborhood cells. */
     std::pair<Arrayi, int> *meta_data_cell_;          /**< metadata for each occupied cell: (arrayi)cell index, (int)core1/inner0. */
     using NeighbourIndex = std::pair<size_t, Arrayi>; /**< stores shifted neighbour info: (size_t)package index, (arrayi)local grid index. */
     template <typename DataType>
@@ -266,6 +266,14 @@ class MeshWithGridDataPackages : public Mesh
                 }
             },
             ap);
+    }
+
+    /** Iterator on a collection of mesh data packages. sequential computing. */
+    template <typename FunctionOnData>
+    void package_for(const FunctionOnData &function)
+    {
+        for (size_t i = 2; i != num_grid_pkgs_; ++i)
+            function(i);
     }
 };
 } // namespace SPH

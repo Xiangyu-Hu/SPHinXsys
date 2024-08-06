@@ -100,7 +100,7 @@ int main(int ac, char *av[])
     else
     {
         shell.defineBodyLevelSetShape(level_set_refinement_ratio)->writeLevelSet(sph_system);
-        shell.generateParticles<SurfaceParticles, ThickSurface, Lattice>(thickness);
+        shell.generateParticles<SurfaceParticles, Lattice>(thickness);
     }
 
     if (!sph_system.RunParticleRelaxation() && !sph_system.ReloadParticles())
@@ -122,7 +122,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     InnerRelation beam_inner(beam);
     SurfaceContactRelation shell_contact(shell, {&beam});
-    SurfaceContactRelation beam_contact(beam, {&shell});
+    ShellSurfaceContactRelation beam_contact(beam, {&shell});
     //----------------------------------------------------------------------
     //	Run particle relaxation for body-fitted distribution if chosen.
     //----------------------------------------------------------------------
@@ -143,7 +143,7 @@ int main(int ac, char *av[])
         //	Output for particle relaxation.
         //----------------------------------------------------------------------
         BodyStatesRecordingToVtp write_relaxed_particles(sph_system);
-        write_relaxed_particles.addVariableRecording<int>(shell, "UpdatedIndicator");
+        write_relaxed_particles.addToWrite<int>(shell, "UpdatedIndicator");
         MeshRecordingToPlt write_mesh_cell_linked_list(sph_system, shell.getCellLinkedList());
         ReloadParticleIO write_particle_reload_files(shell);
         //----------------------------------------------------------------------
@@ -186,7 +186,7 @@ int main(int ac, char *av[])
     Dynamics1Level<solid_dynamics::DecomposedIntegration1stHalf> beam_stress_relaxation_first_half(beam_inner);
     Dynamics1Level<solid_dynamics::Integration2ndHalf> beam_stress_relaxation_second_half(beam_inner);
     /** Algorithms for shell-solid contact. */
-    InteractionDynamics<solid_dynamics::ContactDensitySummation> beam_shell_update_contact_density(beam_contact);
+    InteractionDynamics<solid_dynamics::ShellContactFactor> beam_shell_update_contact_density(beam_contact);
     InteractionWithUpdate<solid_dynamics::ContactForceFromWall> beam_compute_solid_contact_forces(beam_contact);
     InteractionWithUpdate<solid_dynamics::ContactForceToWall> shell_compute_solid_contact_forces(shell_contact);
     DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d, FixedDampingRate>>> beam_damping(0.5, beam_inner, "Velocity", physical_viscosity);

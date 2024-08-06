@@ -87,13 +87,13 @@ int main(int ac, char *av[])
 
     ObserverBody observer(sph_system, "Observer");
     observer.defineAdaptationRatios(h, 2.0);
-    observer.generateParticles<BaseParticles, Observer>(
+    observer.generateParticles<ObserverParticles>(
         StdVec<Vecd>{obs});
 
     ObserverBody WMobserver(sph_system, "WMObserver");
     WMobserver.defineAdaptationRatios(h, 2.0);
     Vecd WMpos0 = Vecd(0.0, -Maker_width / 2, HWM / 2);
-    WMobserver.generateParticles<BaseParticles, Observer>(
+    WMobserver.generateParticles<ObserverParticles>(
         StdVec<Vecd>{WMpos0});
 
     //---------------------------------------------------------
@@ -105,14 +105,14 @@ int main(int ac, char *av[])
     Real fp1y = Stry;
     Real fp1z = 1.013;
     StdVec<Vecd> fp1l = {Vecd(fp1x, fp1y, fp1z)};
-    fp1.generateParticles<BaseParticles, Observer>(fp1l);
+    fp1.generateParticles<ObserverParticles>(fp1l);
 
     ObserverBody bp1(sph_system, "BP1");
     Real bp1x = Strx - 0.295;
     Real bp1y = Stry + .035;
     Real bp1z = 0.933;
     StdVec<Vecd> bp1l = {Vecd(bp1x, bp1y, bp1z)};
-    bp1.generateParticles<BaseParticles, Observer>(bp1l);
+    bp1.generateParticles<ObserverParticles>(bp1l);
 
     //----------------------------------------------------------------------
     //	Define body relation map.
@@ -258,7 +258,7 @@ int main(int ac, char *av[])
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp write_real_body_states(sph_system);
-    write_real_body_states.addVariableRecording<Real>(water_block, "Pressure");
+    write_real_body_states.addToWrite<Real>(water_block, "Pressure");
     /** WaveProbes. */
     BodyRegionByCell wave_probe_buffer(water_block, makeShared<TransformShape<GeometricShapeBox>>(Transform(translation_WGauge), WGaugeDim));
     ReducedQuantityRecording<UpperFrontInAxisDirection<BodyPartByCell>>

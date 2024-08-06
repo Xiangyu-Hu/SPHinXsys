@@ -46,8 +46,8 @@ int main(int ac, char *av[])
     InvCFBoundaryConditionSetup boundary_condition_setup(air_block_inner, ghost_creation);
     //----------------------------------------------------------------------
     BodyStatesRecordingInMeshToVtu write_real_body_states(air_block, read_mesh_data);
-    write_real_body_states.addVariableRecording<Real>(air_block, "Density");
-    write_real_body_states.addVariableRecording<Real>(air_block, "Pressure");
+    write_real_body_states.addToWrite<Real>(air_block, "Density");
+    write_real_body_states.addToWrite<Real>(air_block, "Pressure");
     ReducedQuantityRecording<MaximumSpeed> write_maximum_speed(air_block);
 
     air_block_inner.updateConfiguration();

@@ -115,7 +115,7 @@ int main(int ac, char *av[])
 
     ObserverBody beam_observer(sph_system, "BeamObserver");
     beam_observer.sph_adaptation_->resetAdaptationRatios(1.15, 2.0);
-    beam_observer.generateParticles<BaseParticles, Observer>(observation_location);
+    beam_observer.generateParticles<ObserverParticles>(observation_location);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -148,10 +148,10 @@ int main(int ac, char *av[])
     // outputs
     //-----------------------------------------------------------------------------
     BodyStatesRecordingToVtp write_beam_states(beam_body);
-    write_beam_states.addVariableRecording<Real>(beam_body, "VonMisesStress");
-    write_beam_states.addVariableRecording<Real>(beam_body, "VonMisesStrain");
-    write_beam_states.addVariableRecording<Real>(beam_body, "Density");
-    write_beam_states.addVariableRecording<Real>(beam_body, "Pressure");
+    write_beam_states.addToWrite<Real>(beam_body, "VonMisesStress");
+    write_beam_states.addToWrite<Real>(beam_body, "VonMisesStrain");
+    write_beam_states.addToWrite<Real>(beam_body, "Density");
+    write_beam_states.addToWrite<Real>(beam_body, "Pressure");
     ObservedQuantityRecording<Vecd> write_beam_tip_displacement("Position", beam_observer_contact);
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalKineticEnergy>> write_beam_kinetic_energy(beam_body);
     //----------------------------------------------------------------------

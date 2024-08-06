@@ -21,14 +21,14 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	repulsion_density_summation.h
+ * @file 	repulsion_factor_summation.h
  * @brief 	TBD.
  * @details TBD.
  * @author	Chi Zhang and Xiangyu Hu
  */
 
-#ifndef REPULSION_DENSITY_SUMMATION_H
-#define REPULSION_DENSITY_SUMMATION_H
+#ifndef REPULSION_FACTOR_SUMMATION_H
+#define REPULSION_FACTOR_SUMMATION_H
 
 #include "base_contact_dynamics.h"
 
@@ -38,61 +38,60 @@ namespace solid_dynamics
 {
 
 template <typename... InteractionTypes>
-class RepulsionDensitySummation;
+class RepulsionFactorSummation;
 
 template <class DataDelegationType>
-class RepulsionDensitySummation<Base, DataDelegationType>
+class RepulsionFactorSummation<Base, DataDelegationType>
     : public LocalDynamics, public DataDelegationType
 {
   public:
     template <class BaseRelationType>
-    RepulsionDensitySummation(BaseRelationType &base_relation, const std::string &variable_name)
+    RepulsionFactorSummation(BaseRelationType &base_relation, const std::string &variable_name)
         : LocalDynamics(base_relation.getSPHBody()), DataDelegationType(base_relation),
-          repulsion_density_(*this->particles_->template registerSharedVariable<Real>(variable_name)){};
-    virtual ~RepulsionDensitySummation(){};
+          repulsion_factor_(*this->particles_->template registerSharedVariable<Real>(variable_name)){};
+    virtual ~RepulsionFactorSummation(){};
 
   protected:
-    StdLargeVec<Real> &repulsion_density_;
+    StdLargeVec<Real> &repulsion_factor_;
 };
 
 template <>
-class RepulsionDensitySummation<Inner<>> : public RepulsionDensitySummation<Base, DataDelegateInner>
+class RepulsionFactorSummation<Inner<>> : public RepulsionFactorSummation<Base, DataDelegateInner>
 {
   public:
-    explicit RepulsionDensitySummation(SelfSurfaceContactRelation &self_contact_relation);
-    virtual ~RepulsionDensitySummation(){};
+    explicit RepulsionFactorSummation(SelfSurfaceContactRelation &self_contact_relation);
+    virtual ~RepulsionFactorSummation(){};
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
-    StdLargeVec<Real> &mass_;
     Real offset_W_ij_;
 };
-using SelfContactDensitySummation = RepulsionDensitySummation<Inner<>>;
+using SelfContactFactorSummation = RepulsionFactorSummation<Inner<>>;
 
 template <>
-class RepulsionDensitySummation<Contact<>> : public RepulsionDensitySummation<Base, DataDelegateContact>
+class RepulsionFactorSummation<Contact<>> : public RepulsionFactorSummation<Base, DataDelegateContact>
 {
   public:
-    explicit RepulsionDensitySummation(SurfaceContactRelation &solid_body_contact_relation);
-    virtual ~RepulsionDensitySummation(){};
+    explicit RepulsionFactorSummation(SurfaceContactRelation &solid_body_contact_relation);
+    virtual ~RepulsionFactorSummation(){};
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
-    StdLargeVec<Real> &mass_;
-    StdVec<StdLargeVec<Real> *> contact_mass_;
     StdVec<Real> offset_W_ij_;
 };
-using ContactDensitySummation = RepulsionDensitySummation<Contact<>>;
+using ContactFactorSummation = RepulsionFactorSummation<Contact<>>;
 /**
- * @class ShellContactDensity
+ * @class ShellContactFactor
  * @brief Computing the contact density due to shell contact using a
  * 		 surface integral being solved by Gauss-Legendre quadrature integration.
+ *     This class can only be used when there's the source body only has contact to shell bodies,
+ *     otherwise the contact density will be overwritten by that of solid contact bodies
  */
-class ShellContactDensity : public RepulsionDensitySummation<Base, DataDelegateContact>
+class ShellContactFactor : public RepulsionFactorSummation<Base, DataDelegateContact>
 {
   public:
-    explicit ShellContactDensity(SurfaceContactRelation &solid_body_contact_relation);
-    virtual ~ShellContactDensity(){};
+    explicit ShellContactFactor(ShellSurfaceContactRelation &solid_body_contact_relation);
+    virtual ~ShellContactFactor(){};
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
@@ -108,6 +107,17 @@ class ShellContactDensity : public RepulsionDensitySummation<Base, DataDelegateC
     const StdVec<Real> three_gaussian_points_ = {-0.7745966692414834, 0.0, 0.7745966692414834};
     const StdVec<Real> three_gaussian_weights_ = {0.5555555555555556, 0.8888888888888889, 0.5555555555555556};
 };
+
+/**
+ * @class ShellSelfContactFactorSummation
+ * @brief Computing the contact density due to shell contact using dummy particle.
+ */
+class ShellSelfContactFactorSummation : public RepulsionFactorSummation<Base, DataDelegateInner>
+{
+  public:
+    explicit ShellSelfContactFactorSummation(ShellSelfContactRelation &self_contact_relation);
+    void interaction(size_t index_i, Real dt = 0.0);
+};
 } // namespace solid_dynamics
 } // namespace SPH
-#endif // REPULSION_DENSITY_SUMMATION_H
+#endif // REPULSION_FACTOR_SUMMATION_H

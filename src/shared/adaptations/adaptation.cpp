@@ -94,13 +94,13 @@ UniquePtr<BaseLevelSet> SPHAdaptation::createLevelSet(Shape &shape, Real refinem
     MultilevelLevelSet coarser_level_sets(shape.getBounds(), coarsest_spacing / refinement_ratio,
                                           total_levels - 1, shape, *this);
     // return the finest level set only
-    return makeUnique<RefinedLevelSet>(shape.getBounds(), *coarser_level_sets.getMeshLevels().back(), shape, *this);
+    return makeUnique<RefinedMesh<LevelSet>>(shape.getBounds(), *coarser_level_sets.getMeshLevels().back(), shape, *this);
 }
 //=================================================================================================//
 ParticleWithLocalRefinement::
     ParticleWithLocalRefinement(Real resolution_ref, Real h_spacing_ratio, Real system_refinement_ratio,
                                 int local_refinement_level)
-    : SPHAdaptation(resolution_ref, h_spacing_ratio, system_refinement_ratio)
+    : SPHAdaptation(resolution_ref, h_spacing_ratio, system_refinement_ratio), h_ratio_(nullptr)
 {
     local_refinement_level_ = local_refinement_level;
     spacing_min_ = MostRefinedSpacingRegular(spacing_ref_, local_refinement_level_);
@@ -114,8 +114,9 @@ ParticleWithLocalRefinement::
 void ParticleWithLocalRefinement::initializeAdaptationVariables(BaseParticles &base_particles)
 {
     SPHAdaptation::initializeAdaptationVariables(base_particles);
-    base_particles.registerVariable(h_ratio_, "SmoothingLengthRatio", [&](size_t i) -> Real
-                                    { return ReferenceSpacing() / base_particles.ParticleSpacing(i); });
+    h_ratio_ = base_particles.registerSharedVariable<Real>(
+        "SmoothingLengthRatio", [&](size_t i) -> Real
+        { return ReferenceSpacing() / base_particles.ParticleSpacing(i); });
     base_particles.addVariableToSort<Real>("SmoothingLengthRatio");
     base_particles.addVariableToReload<Real>("SmoothingLengthRatio");
 }

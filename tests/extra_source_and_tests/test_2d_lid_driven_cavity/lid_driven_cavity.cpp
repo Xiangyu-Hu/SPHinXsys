@@ -174,10 +174,10 @@ int main(int ac, char *av[])
 
     //	Define the methods for I/O operations, observations
     BodyStatesRecordingToVtp write_fluid_states(sph_system);
-    write_fluid_states.addVariableRecording<Real>(fluid, "Pressure");
-    write_fluid_states.addVariableRecording<Vecd>(no_slip_boundary, "NormalDirection");
+    write_fluid_states.addToWrite<Real>(fluid, "Pressure");
+    write_fluid_states.addToWrite<Vecd>(no_slip_boundary, "NormalDirection");
     BodyStatesRecordingToVtp write_observation_states(observer_body);
-    write_observation_states.addVariableRecording<Real>(observer_body, "VariableViscosity");
+    write_observation_states.addToWrite<Real>(observer_body, "VariableViscosity");
     //	Prepare the simulation
     sph_system.initializeSystemCellLinkedLists();
     sph_system.initializeSystemConfigurations();

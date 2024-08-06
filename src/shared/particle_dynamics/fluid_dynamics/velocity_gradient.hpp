@@ -11,8 +11,8 @@ template <class DataDelegationType>
 template <class BaseRelationType>
 VelocityGradient<DataDelegationType>::VelocityGradient(BaseRelationType &base_relation)
     : LocalDynamics(base_relation.getSPHBody()), DataDelegationType(base_relation),
-      Vol_(*this->particles_->template getVariableByName<Real>("VolumetricMeasure")),
-      vel_(*this->particles_->template getVariableByName<Vecd>("Velocity")),
+      Vol_(*this->particles_->template getVariableDataByName<Real>("VolumetricMeasure")),
+      vel_(*this->particles_->template getVariableDataByName<Vecd>("Velocity")),
       vel_grad_(*this->particles_->template registerSharedVariable<Matd>("VelocityGradient")) {}
 //=================================================================================================//
 template <class KernelCorrectionType>

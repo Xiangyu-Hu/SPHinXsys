@@ -85,18 +85,18 @@ class DynamicContactForceWithWall : public LocalDynamics,
         : LocalDynamics(solid_body_contact_relation.getSPHBody()),
           DataDelegateContact(solid_body_contact_relation),
           solid_(DynamicCast<Solid>(this, sph_body_.getBaseMaterial())),
-          Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")),
-          vel_(*particles_->getVariableByName<Vecd>("Velocity")),
-          force_prior_(*particles_->getVariableByName<Vecd>("ForcePrior")),
+          Vol_(*particles_->getVariableDataByName<Real>("VolumetricMeasure")),
+          vel_(*particles_->getVariableDataByName<Vecd>("Velocity")),
+          force_prior_(*particles_->getVariableDataByName<Vecd>("ForcePrior")),
           penalty_strength_(penalty_strength)
     {
-        impedance_ = solid_.ReferenceDensity() * sqrt(solid_.ContactStiffness());
-        reference_pressure_ = solid_.ReferenceDensity() * solid_.ContactStiffness();
+        impedance_ = sqrt(solid_.ReferenceDensity() * solid_.ContactStiffness());
+        reference_pressure_ = solid_.ContactStiffness();
         for (size_t k = 0; k != contact_particles_.size(); ++k)
         {
-            contact_Vol_.push_back(contact_particles_[k]->getVariableByName<Real>("VolumetricMeasure"));
+            contact_Vol_.push_back(contact_particles_[k]->getVariableDataByName<Real>("VolumetricMeasure"));
             contact_vel_.push_back(contact_particles_[k]->registerSharedVariable<Vecd>("Velocity"));
-            contact_n_.push_back(contact_particles_[k]->template getVariableByName<Vecd>("NormalDirection"));
+            contact_n_.push_back(contact_particles_[k]->template getVariableDataByName<Vecd>("NormalDirection"));
         }
     };
     virtual ~DynamicContactForceWithWall(){};

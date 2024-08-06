@@ -70,12 +70,13 @@ class Beam : public MultiPolygonShape
 //	particle generation considering the anisotropic resolution
 //----------------------------------------------------------------------
 template <>
-class ParticleGenerator<Beam> : public ParticleGenerator<Base>
+class ParticleGenerator<BaseParticles, Beam> : public ParticleGenerator<BaseParticles>
 {
   public:
-    ParticleGenerator(SPHBody &sph_body) : ParticleGenerator<Base>(sph_body){};
+    ParticleGenerator(SPHBody &sph_body, BaseParticles &base_particles)
+        : ParticleGenerator<BaseParticles>(sph_body, base_particles){};
 
-    virtual void initializeGeometricVariables() override
+    virtual void prepareGeometricData() override
     {
         // set particles directly
         for (int i = 0; i < x_num; i++)
@@ -84,7 +85,7 @@ class ParticleGenerator<Beam> : public ParticleGenerator<Base>
             {
                 Real x = -SL + (i + 0.5) * resolution_ref_large;
                 Real y = -PH / 2 + (j + 0.5) * resolution_ref;
-                initializePositionAndVolumetricMeasure(Vecd(x, y), (resolution_ref * resolution_ref_large));
+                addPositionAndVolumetricMeasure(Vecd(x, y), (resolution_ref * resolution_ref_large));
             }
         }
     }
@@ -134,12 +135,10 @@ class AnisotropicCorrectConfiguration : public LocalDynamics, public DataDelegat
     AnisotropicCorrectConfiguration(BaseInnerRelation &inner_relation, int beta = 0, Real alpha = Real(0))
         : LocalDynamics(inner_relation.getSPHBody()),
           DataDelegateInner(inner_relation),
-          beta_(beta), alpha_(alpha), Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")),
+          beta_(beta), alpha_(alpha), Vol_(*particles_->getVariableDataByName<Real>("VolumetricMeasure")),
           B_(*particles_->registerSharedVariable<Matd>("LinearGradientCorrectionMatrix", IdentityMatrix<Matd>::value)),
-          pos_(*particles_->getVariableByName<Vecd>("Position"))
-    {
-        particles_->registerVariable(show_neighbor_, "ShowingNeighbor", Real(0.0));
-    }
+          pos_(*particles_->getVariableDataByName<Vecd>("Position")),
+          show_neighbor_(*particles_->registerSharedVariable<Real>("ShowingNeighbor", Real(0.0))){};
     virtual ~AnisotropicCorrectConfiguration(){};
 
   protected:
@@ -149,7 +148,7 @@ class AnisotropicCorrectConfiguration : public LocalDynamics, public DataDelegat
     StdLargeVec<Real> &Vol_;
     StdLargeVec<Matd> &B_;
     StdLargeVec<Vecd> &pos_;
-    StdLargeVec<Real> show_neighbor_;
+    StdLargeVec<Real> &show_neighbor_;
 
     void interaction(size_t index_i, Real dt = 0.0)
     {
@@ -192,9 +191,10 @@ int main(int ac, char *av[])
 #ifdef BOOST_AVAILABLE
     // handle command line arguments
     system.handleCommandlineOptions(ac, av);
-#endif //----------------------------------------------------------------------
-       //	Creating body, materials and particles.
-       //----------------------------------------------------------------------
+#endif
+    //----------------------------------------------------------------------
+    //	Creating body, materials and particles.
+    //----------------------------------------------------------------------
     SolidBody beam_body(system, makeShared<Beam>("BeamBody"));
     beam_body.sph_adaptation_->resetKernel<AnisotropicKernel<KernelWendlandC2>>(scaling_vector);
     beam_body.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
@@ -202,7 +202,7 @@ int main(int ac, char *av[])
 
     ObserverBody beam_observer(system, "BeamObserver");
     beam_observer.sph_adaptation_->resetKernel<AnisotropicKernel<KernelWendlandC2>>(scaling_vector);
-    beam_observer.generateParticles<BaseParticles, Observer>(observation_location);
+    beam_observer.generateParticles<ObserverParticles>(observation_location);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -232,7 +232,7 @@ int main(int ac, char *av[])
     //-----------------------------------------------------------------------------
     IOEnvironment io_environment(system);
     BodyStatesRecordingToVtp write_beam_states(beam_body);
-    write_beam_states.addVariableRecording<Real>(beam_body, "ShowingNeighbor");
+    write_beam_states.addToWrite<Real>(beam_body, "ShowingNeighbor");
     RegressionTestEnsembleAverage<ObservedQuantityRecording<Vecd>>
         write_beam_tip_displacement("Position", beam_observer_contact);
     //----------------------------------------------------------------------

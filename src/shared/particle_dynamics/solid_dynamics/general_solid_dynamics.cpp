@@ -13,16 +13,16 @@ DistributingPointForces::
       point_forces_(point_forces), reference_positions_(reference_positions),
       time_to_full_external_force_(time_to_full_external_force),
       particle_spacing_ref_(particle_spacing_ref), h_spacing_ratio_(h_spacing_ratio),
-      pos_(*particles_->getVariableByName<Vecd>("Position")),
-      force_prior_(*particles_->getVariableByName<Vecd>("ForcePrior")),
-      thickness_(*particles_->getVariableByName<Real>("Thickness"))
+      pos_(*particles_->getVariableDataByName<Vecd>("Position")),
+      force_prior_(*particles_->getVariableDataByName<Vecd>("ForcePrior")),
+      thickness_(*particles_->getVariableDataByName<Real>("Thickness"))
 {
+    weight_.resize(point_forces_.size());
     for (size_t i = 0; i < point_forces_.size(); i++)
     {
-        weight_.push_back(StdLargeVec<Real>(0.0));
         time_dependent_point_forces_.push_back(Vecd::Zero());
         sum_of_weight_.push_back(0.0);
-        particles_->registerVariable(weight_[i], "Weight_" + std::to_string(i));
+        weight_[i] = particles_->registerSharedVariable<Real>("Weight_" + std::to_string(i));
     }
 
     getWeight(); // TODO: should be revised and parallelized, using SimpleDynamics
@@ -38,14 +38,14 @@ void DistributingPointForces::getWeight()
     for (size_t i = 0; i < point_forces_.size(); ++i)
     {
         sum_of_weight_[i] = 0.0;
-        for (size_t index = 0; index < particles_->total_real_particles_; ++index)
+        for (size_t index = 0; index < particles_->TotalRealParticles(); ++index)
         {
-            weight_[i][index] = 0.0;
+            (*weight_[i])[index] = 0.0;
             Vecd displacement = reference_positions_[i] - pos_[index];
             if (displacement.squaredNorm() <= cutoff_radius_sqr)
             {
-                weight_[i][index] = kernel_->W(h_ratio, displacement.norm(), displacement);
-                sum_of_weight_[i] += weight_[i][index];
+                (*weight_[i])[index] = kernel_->W(h_ratio, displacement.norm(), displacement);
+                sum_of_weight_[i] += (*weight_[i])[index];
             }
         }
     }
@@ -67,7 +67,7 @@ void DistributingPointForces::update(size_t index_i, Real dt)
     force_prior_[index_i] = Vecd::Zero();
     for (size_t i = 0; i < point_forces_.size(); ++i)
     {
-        Vecd force = weight_[i][index_i] / (sum_of_weight_[i] + TinyReal) * time_dependent_point_forces_[i];
+        Vecd force = (*weight_[i])[index_i] / (sum_of_weight_[i] + TinyReal) * time_dependent_point_forces_[i];
         force_prior_[index_i] += force;
     }
 }

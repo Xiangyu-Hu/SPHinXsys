@@ -27,66 +27,53 @@ const Real c_f = 10.0 * U_max; /**< Reference sound speed. */
 
 namespace SPH
 {
-//----------------------------------------------------------------------
-//	User defined particle generators.
-//----------------------------------------------------------------------
-class ObserverAxial;
-template <>
-class ParticleGenerator<ObserverAxial> : public ParticleGenerator<Observer>
+StdVec<Vecd> createAxialObservationPoints(
+    double full_length, Vec3d translation = Vec3d(0.0, 0.0, 0.0))
 {
-  public:
-    ParticleGenerator(SPHBody &sph_body, double full_length,
-                      Vec3d translation = Vec3d(0.0, 0.0, 0.0))
-        : ParticleGenerator<Observer>(sph_body)
+    StdVec<Vecd> observation_points;
+    int ny = 51;
+    for (int i = 0; i < ny; i++)
     {
-        int ny = 51;
-        for (int i = 0; i < ny; i++)
-        {
-            double y = full_length / (ny - 1) * i;
-            Vec3d point_coordinate(0.0, y, 0.0);
-            positions_.emplace_back(point_coordinate + translation);
-        }
+        double y = full_length / (ny - 1) * i;
+        Vec3d point_coordinate(0.0, y, 0.0);
+        observation_points.emplace_back(point_coordinate + translation);
     }
+    return observation_points;
 };
 
-class ObserverRadial;
-template <>
-class ParticleGenerator<ObserverRadial> : public ParticleGenerator<Observer>
+StdVec<Vecd> createRadialObservationPoints(
+    double full_length, double diameter, int number_of_particles,
+    Vec3d translation = Vec3d(0.0, 0.0, 0.0))
 {
-  public:
-    ParticleGenerator(SPHBody &sph_body, double full_length, double diameter,
-                      int number_of_particles,
-                      Vec3d translation = Vec3d(0.0, 0.0, 0.0))
-        : ParticleGenerator<Observer>(sph_body)
+    StdVec<Vecd> observation_points;
+    int n = number_of_particles + 1;
+    double y = full_length / 2.0;
+    for (int i = 0; i < n - 1; i++) // we leave out the point close to the boundary as the
+                                    // interpolation there is incorrect
+                                    // TODO: fix the interpolation
     {
-
-        int n = number_of_particles + 1;
-        double y = full_length / 2.0;
-        for (int i = 0; i < n - 1; i++) // we leave out the point close to the boundary as the
-                                        // interpolation there is incorrect
-                                        // TODO: fix the interpolation
-        {
-            double z = diameter / 2.0 * i / double(n);
-            positions_.emplace_back(Vec3d(0.0, y, z) + translation);
-            positions_.emplace_back(Vec3d(0.0, y, -z) + translation);
-        }
+        double z = diameter / 2.0 * i / double(n);
+        observation_points.emplace_back(Vec3d(0.0, y, z) + translation);
+        observation_points.emplace_back(Vec3d(0.0, y, -z) + translation);
     }
+    return observation_points;
 };
 
 class ShellBoundary;
 template <>
-class ParticleGenerator<ShellBoundary> : public ParticleGenerator<Surface>
+class ParticleGenerator<SurfaceParticles, ShellBoundary> : public ParticleGenerator<SurfaceParticles>
 {
     Real resolution_shell_;
     Real wall_thickness_;
     Real shell_thickness_;
 
   public:
-    explicit ParticleGenerator(SPHBody &sph_body, Real resolution_shell, Real wall_thickness, Real shell_thickness)
-        : ParticleGenerator<Surface>(sph_body),
+    explicit ParticleGenerator(SPHBody &sph_body, SurfaceParticles &surface_particles,
+                               Real resolution_shell, Real wall_thickness, Real shell_thickness)
+        : ParticleGenerator<SurfaceParticles>(sph_body, surface_particles),
           resolution_shell_(resolution_shell),
           wall_thickness_(wall_thickness), shell_thickness_(shell_thickness){};
-    void initializeGeometricVariables() override
+    void prepareGeometricData() override
     {
         const Real radius_mid_surface = fluid_radius + resolution_shell_ * 0.5;
         const auto particle_number_mid_surface =
@@ -101,10 +88,10 @@ class ParticleGenerator<ShellBoundary> : public ParticleGenerator<Surface>
                 Real x = radius_mid_surface * cos(theta);
                 Real y = -wall_thickness_ + (full_length + 2 * wall_thickness_) * j / (Real)particle_number_height + 0.5 * resolution_shell_;
                 Real z = radius_mid_surface * sin(theta);
-                initializePositionAndVolumetricMeasure(Vec3d(x, y, z),
-                                                       resolution_shell_ * resolution_shell_);
+                addPositionAndVolumetricMeasure(Vec3d(x, y, z),
+                                                resolution_shell_ * resolution_shell_);
                 Vec3d n_0 = Vec3d(x / radius_mid_surface, 0.0, z / radius_mid_surface);
-                initializeSurfaceProperties(n_0, shell_thickness_);
+                addSurfaceProperties(n_0, shell_thickness_);
             }
         }
     }
@@ -198,9 +185,9 @@ void poiseuille_flow(const Real resolution_ref, const Real resolution_shell, con
     shell_boundary.generateParticles<SurfaceParticles, ShellBoundary>(resolution_shell, wall_thickness, shell_thickness);
 
     ObserverBody observer_axial(system, "fluid_observer_axial");
-    observer_axial.generateParticles<BaseParticles, ObserverAxial>(full_length);
+    observer_axial.generateParticles<ObserverParticles>(createAxialObservationPoints(full_length));
     ObserverBody observer_radial(system, "fluid_observer_radial");
-    observer_radial.generateParticles<BaseParticles, ObserverRadial>(full_length, diameter, number_of_particles);
+    observer_radial.generateParticles<ObserverParticles>(createRadialObservationPoints(full_length, diameter, number_of_particles));
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -212,7 +199,7 @@ void poiseuille_flow(const Real resolution_ref, const Real resolution_shell, con
     ShellInnerRelationWithContactKernel wall_curvature_inner(shell_boundary, water_block);
     // shell normal should point from fluid to shell
     // normal corrector set to false if shell normal is already pointing from fluid to shell
-    ContactRelationToShell water_block_contact(water_block, {&shell_boundary}, {false});
+    ContactRelationFromShellToFluid water_block_contact(water_block, {&shell_boundary}, {false});
     ContactRelation observer_contact_axial(observer_axial, {&water_block});
     ContactRelation observer_contact_radial(observer_radial, {&water_block});
     //----------------------------------------------------------------------
@@ -246,20 +233,20 @@ void poiseuille_flow(const Real resolution_ref, const Real resolution_shell, con
     //----------------------------------------------------------------------
     //	Boundary conditions. Inflow & Outflow in Y-direction
     //----------------------------------------------------------------------
-    BodyAlignedBoxByParticle emitter(water_block, makeShared<AlignedBoxShape>(Transform(Vec3d(emitter_translation)), emitter_halfsize));
-    SimpleDynamics<fluid_dynamics::EmitterInflowInjection> emitter_inflow_injection(emitter, inlet_particle_buffer, yAxis);
-    BodyAlignedBoxByCell emitter_buffer(water_block, makeShared<AlignedBoxShape>(Transform(Vec3d(emitter_buffer_translation)), emitter_buffer_halfsize));
+    BodyAlignedBoxByParticle emitter(water_block, makeShared<AlignedBoxShape>(yAxis, Transform(Vec3d(emitter_translation)), emitter_halfsize));
+    SimpleDynamics<fluid_dynamics::EmitterInflowInjection> emitter_inflow_injection(emitter, inlet_particle_buffer);
+    BodyAlignedBoxByCell emitter_buffer(water_block, makeShared<AlignedBoxShape>(yAxis, Transform(Vec3d(emitter_buffer_translation)), emitter_buffer_halfsize));
     SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>> emitter_buffer_inflow_condition(emitter_buffer);
-    BodyAlignedBoxByCell disposer(water_block, makeShared<AlignedBoxShape>(Transform(Vec3d(disposer_translation)), disposer_halfsize));
-    SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion> disposer_outflow_deletion(disposer, yAxis);
+    BodyAlignedBoxByCell disposer(water_block, makeShared<AlignedBoxShape>(yAxis, Transform(Vec3d(disposer_translation)), disposer_halfsize));
+    SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion> disposer_outflow_deletion(disposer);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp body_states_recording(system);
-    body_states_recording.addVariableRecording<int>(water_block, "Indicator");
-    body_states_recording.addVariableRecording<Real>(water_block, "Pressure");
-    body_states_recording.addVariableRecording<Real>(shell_boundary, "Average1stPrincipleCurvature");
-    body_states_recording.addVariableRecording<Real>(shell_boundary, "Average2ndPrincipleCurvature");
+    body_states_recording.addToWrite<int>(water_block, "Indicator");
+    body_states_recording.addToWrite<Real>(water_block, "Pressure");
+    body_states_recording.addToWrite<Real>(shell_boundary, "Average1stPrincipleCurvature");
+    body_states_recording.addToWrite<Real>(shell_boundary, "Average2ndPrincipleCurvature");
     ObservedQuantityRecording<Vec3d> write_fluid_velocity_axial("Velocity", observer_contact_axial);
     ObservedQuantityRecording<Vec3d> write_fluid_velocity_radial("Velocity", observer_contact_radial);
     //----------------------------------------------------------------------
@@ -379,8 +366,7 @@ void poiseuille_flow(const Real resolution_ref, const Real resolution_shell, con
     //	Gtest starts from here.
     //----------------------------------------------------------------------
     /* Define analytical solution of the inflow velocity.*/
-    std::function<Vec3d(Vec3d)> inflow_velocity = [&](Vec3d pos)
-    {
+    std::function<Vec3d(Vec3d)> inflow_velocity = [&](Vec3d pos) {
         return Vec3d(0.0,
                      2.0 * U_f * (1.0 - (pos[0] * pos[0] + pos[2] * pos[2]) / (diameter * 0.5) / (diameter * 0.5)),
                      0.0);
@@ -388,14 +374,14 @@ void poiseuille_flow(const Real resolution_ref, const Real resolution_shell, con
     /* Compare all simulation to the analytical solution. */
     // Axial direction.
     StdLargeVec<Vecd> &pos_axial = observer_axial.getBaseParticles().ParticlePositions();
-    StdLargeVec<Vecd> &vel_axial = *observer_axial.getBaseParticles().getVariableByName<Vecd>("Velocity");
+    StdLargeVec<Vecd> &vel_axial = *observer_axial.getBaseParticles().getVariableDataByName<Vecd>("Velocity");
     for (size_t i = 0; i < pos_axial.size(); i++)
     {
         EXPECT_NEAR(inflow_velocity(pos_axial[i])[1], vel_axial[i][1], U_max * 10e-2); // it's below 5% but 10% for CI
     }
     // Radial direction
     StdLargeVec<Vecd> &pos_radial = observer_radial.getBaseParticles().ParticlePositions();
-    StdLargeVec<Vecd> &vel_radial = *observer_radial.getBaseParticles().getVariableByName<Vecd>("Velocity");
+    StdLargeVec<Vecd> &vel_radial = *observer_radial.getBaseParticles().getVariableDataByName<Vecd>("Velocity");
     for (size_t i = 0; i < pos_radial.size(); i++)
     {
         EXPECT_NEAR(inflow_velocity(pos_radial[i])[1], vel_radial[i][1], U_max * 10e-2); // it's below 5% but 10% for CI

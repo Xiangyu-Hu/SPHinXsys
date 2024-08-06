@@ -85,7 +85,7 @@ class PreSettingCase : public Parameter
         wall_boundary.defineMaterial<Solid>();
         wall_boundary.generateParticles<BaseParticles, Lattice>();
 
-        fluid_observer.generateParticles<BaseParticles, Observer>(observation_location);
+        fluid_observer.generateParticles<ObserverParticles>(observation_location);
     }
 };
 //----------------------------------------------------------------------

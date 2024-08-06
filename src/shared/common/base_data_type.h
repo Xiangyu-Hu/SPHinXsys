@@ -36,6 +36,8 @@
 #include <iostream>
 #include <limits>
 #include <map>
+#include <memory>
+#include <typeinfo>
 #include <vector>
 
 #include <Eigen/Cholesky>
@@ -117,6 +119,12 @@ struct ZeroData<int>
     static inline int value = 0;
 };
 
+template <>
+struct ZeroData<size_t>
+{
+    static inline size_t value = 0;
+};
+
 template <typename DataType>
 struct IdentityMatrix
 {
@@ -130,35 +138,41 @@ struct DataTypeIndex
     static constexpr int value = std::numeric_limits<int>::max();
 };
 template <>
-struct DataTypeIndex<Real>
+struct DataTypeIndex<size_t>
 {
     static constexpr int value = 0;
 };
 template <>
-struct DataTypeIndex<Vec2d>
+struct DataTypeIndex<int>
 {
     static constexpr int value = 1;
 };
 template <>
-struct DataTypeIndex<Vec3d>
+struct DataTypeIndex<Real>
 {
     static constexpr int value = 2;
 };
 template <>
-struct DataTypeIndex<Mat2d>
+struct DataTypeIndex<Vec2d>
 {
     static constexpr int value = 3;
 };
 template <>
-struct DataTypeIndex<Mat3d>
+struct DataTypeIndex<Mat2d>
 {
     static constexpr int value = 4;
 };
 template <>
-struct DataTypeIndex<int>
+struct DataTypeIndex<Vec3d>
 {
     static constexpr int value = 5;
 };
+template <>
+struct DataTypeIndex<Mat3d>
+{
+    static constexpr int value = 6;
+};
+
 /** Verbal boolean for positive and negative axis directions. */
 const int xAxis = 0;
 const int yAxis = 1;
