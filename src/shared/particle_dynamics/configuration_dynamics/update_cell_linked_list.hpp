@@ -12,16 +12,14 @@ template <typename CellLinkedListType>
 template <class ExecutionPolicy>
 UpdateCellLinkedList<CellLinkedListType>::
     UpdateCellLinkedList(const ExecutionPolicy &execution_policy, RealBody &real_body)
-    : LocalDynamics(real_body), BaseDynamics<void>(real_body),
-      mesh_(real_body.getCellLinkedList()),
-      number_of_cells_(mesh_.NumberOfCells()),
-      particles_bound_(particles_->ParticlesBound()),
-      v_total_real_particles_(particles_->getSingularVariableByName<UnsignedInt>(execution_policy, "TotalRealParticles")),
-      v_particle_offset_list_(particles_->registerDiscreteVariable<UnsignedInt>("ParticleOffsetList", number_of_cells_ + 1)),
+    : LocalDynamics(real_body), mesh_(DynamicCast<CellLinkedListType>(this, real_body.getCellLinkedList())),
+      number_of_cells_(mesh_.NumberOfCells()), particles_bound_(particles_->ParticlesBound()),
       pos_(particles_->getVariableDataByName<Vecd>(execution_policy, "Position")),
       particle_id_list_(particles_->registerDiscreteVariable<UnsignedInt>(execution_policy, "ParticleIDList", particles_bound_)),
-      particle_offset_list_(particles_->getVariableDataByName<UnsignedInt>(execution_policy, , "ParticleOffsetList")),
-      current_size_list_(particles_->registerDiscreteVariable<UnsignedInt>(execution_policy, "CurrentCellSize", number_of_cells_)) {}
+      particle_offset_list_(particles_->registerDiscreteVariable<UnsignedInt>(execution_policy, "ParticleOffsetList", number_of_cells_ + 1)),
+      current_size_list_(particles_->registerDiscreteVariable<UnsignedInt>(execution_policy, "CurrentCellSize", number_of_cells_)),
+      v_total_real_particles_(particles_->getSingularVariableByName<UnsignedInt>("TotalRealParticles")),
+      v_particle_offset_list_(particles_->getVariableByName<UnsignedInt>("ParticleOffsetList")) {}
 //=================================================================================================//
 template <typename CellLinkedListType>
 UnsignedInt *UpdateCellLinkedList<CellLinkedListType>::setParticleOffsetListUpperBound()
@@ -33,6 +31,7 @@ UnsignedInt *UpdateCellLinkedList<CellLinkedListType>::setParticleOffsetListUppe
 }
 //=================================================================================================//
 template <typename CellLinkedListType>
+template <class ExecutionPolicy>
 void UpdateCellLinkedList<CellLinkedListType>::
     setParticleOffsetListUpperBound(const ExecutionPolicy &execution_policy)
 {
@@ -63,7 +62,7 @@ template <typename CellLinkedListType>
 void UpdateCellLinkedList<CellLinkedListType>::ComputingKernel::
     incrementCellSize(UnsignedInt particle_i)
 {
-    UnsignedInt linear_cell_index = mesh.LinearCellIndexFromPosition(pos_[particle_i]);
+    UnsignedInt linear_cell_index = mesh_.LinearCellIndexFromPosition(pos_[particle_i]);
     AtomicUnsignedIntRef<ExecutionPolicy>::type atomic_cell_size(offset_cell_size[linear_cell_index]);
     ++atomic_cell_size;
 } //=================================================================================================//
@@ -71,7 +70,7 @@ template <typename CellLinkedListType>
 void UpdateCellLinkedList<CellLinkedListType>::ComputingKernel::
     updateCellLists(UnsignedInt particle_i)
 {
-    UnsignedInt linear_cell_index = mesh.LinearCellIndexFromPosition(pos_[particle_i]);
+    UnsignedInt linear_cell_index = mesh_.LinearCellIndexFromPosition(pos_[particle_i]);
     AtomicUnsignedIntRef<ExecutionPolicy>::type atomic_current_cell_size(curr_cell_size[linear_cell_index]);
     particle_id_list[offset_cell_size[linear_cell_index] + atomic_current_cell_size++] = particle_i;
 }
@@ -81,9 +80,9 @@ UpdateCellLinkedList<CellLinkedListType, ExecutionPolicy>::UpdateCellLinkedList(
     : UpdateCellLinkedList<CellLinkedListType>(ExecutionPolicy{}, real_body),
       BaseDynamics<void>(), kernel_implementation_(*this){};
 //=================================================================================================//
+template <class CellLinkedListType, class ExecutionPolicy>
 void UpdateCellLinkedList<CellLinkedListType, ExecutionPolicy>::exec(Real dt)
 {
-
     UnsignedInt total_real_particles = particles_->TotalRealParticles();
     ComputingKernel *computing_kernel = kernel_implementation_.getComputingKernel();
 

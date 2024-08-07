@@ -106,6 +106,7 @@ int main(int ac, char *av[])
     //	Define the configuration related particles dynamics.
     //----------------------------------------------------------------------
     ParticleSorting particle_sorting(water_block);
+    UpdateCellLinkedList<CellLinkedList, execution::ParallelDevicePolicy> water_block_update_cell_linked_list(water_block);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.

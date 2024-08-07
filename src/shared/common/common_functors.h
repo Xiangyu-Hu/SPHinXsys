@@ -36,7 +36,7 @@ namespace SPH
 {
 struct AssignIndex
 {
-    UnsignedInt operator()(UnsignedInt i) { return i; }
+    UnsignedInt operator()(UnsignedInt i) const { return i; }
 };
 
 /**

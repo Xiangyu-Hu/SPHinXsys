@@ -37,8 +37,9 @@ namespace SPH
 template <>
 struct AtomicUnsignedIntRef<ParallelDevicePolicy>
 {
-    typedef sycl::atomic_ref<UnsignedInt, sycl::memory_order_relaxed, sycl::memory_scope_device,
-                             sycl::access::address_space::global_space>
+    typedef sycl::atomic_ref<
+        UnsignedInt, sycl::memory_order_relaxed, sycl::memory_scope_device,
+        sycl::access::address_space::global_space>
         type;
 };
 

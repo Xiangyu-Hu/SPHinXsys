@@ -30,5 +30,6 @@
 #define ALL_CONFIGURATION_DYNAMICS_H
 
 #include "particle_sorting.hpp"
+#include "update_cell_linked_list.hpp"
 
 #endif // ALL_CONFIGURATION_DYNAMICS_H

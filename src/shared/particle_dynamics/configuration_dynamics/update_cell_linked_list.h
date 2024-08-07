@@ -29,7 +29,9 @@
 #ifndef UPDATE_CELL_LINKED_LIST_H
 #define UPDATE_CELL_LINKED_LIST_H
 
-#include "base_local_dynamics.h"
+#include "all_particle_dynamics.h"
+#include "base_body.h"
+#include "base_particles.hpp"
 
 namespace SPH
 {
@@ -53,9 +55,11 @@ class UpdateCellLinkedList<CellLinkedListType> : public LocalDynamics
     virtual ~UpdateCellLinkedList(){};
 
     UnsignedInt *setParticleOffsetListUpperBound();
+    template <class ExecutionPolicy>
     void setParticleOffsetListUpperBound(const ExecutionPolicy &execution_policy);
     void setParticleOffsetListUpperBound(const ParallelDevicePolicy &par_device);
 
+    template <class ExecutionPolicy>
     void exclusiveScanParticleOffsetList(const ExecutionPolicy &execution_policy);
     void exclusiveScanParticleOffsetList(const ParallelDevicePolicy &par_device);
     class ComputingKernel
@@ -82,20 +86,21 @@ class UpdateCellLinkedList<CellLinkedListType> : public LocalDynamics
   protected:
     Mesh mesh_;
     UnsignedInt number_of_cells_, particles_bound_;
-    SingularVariable<UnsignedInt> *v_total_real_particles_;
-    DiscreteVariable<UnsignedInt> *v_particle_offset_list_;
 
     Vecd *pos_;
     UnsignedInt *particle_id_list_;
     UnsignedInt *particle_offset_list_;
     UnsignedInt *current_size_list_;
+
+    SingularVariable<UnsignedInt> *v_total_real_particles_;
+    DiscreteVariable<UnsignedInt> *v_particle_offset_list_;
 };
 
-template <class CellLinkedListType, class ExecutionPolicy = ParallelPolicy>
+template <class CellLinkedListType, class ExecutionPolicy>
 class UpdateCellLinkedList<CellLinkedListType, ExecutionPolicy>
     : public UpdateCellLinkedList<CellLinkedListType>, public BaseDynamics<void>
 {
-    using LocalDynamicsType = typename UpdateCellLinkedList<CellLinkedListType>;
+    using LocalDynamicsType = UpdateCellLinkedList<CellLinkedListType>;
     using ComputingKernel = typename LocalDynamicsType::ComputingKernel;
 
   public:

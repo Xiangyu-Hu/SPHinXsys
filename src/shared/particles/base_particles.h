@@ -156,7 +156,7 @@ class BaseParticles
     template <typename DataType>
     SingularVariable<DataType> *registerSingularVariable(const std::string &name, DataType initial_value = ZeroData<DataType>::value);
     template <typename DataType>
-    DataType *getSingularVariableByName(const std::string &name);
+    SingularVariable<DataType> *getSingularVariableByName(const std::string &name);
     //----------------------------------------------------------------------
     // Manage subsets of particle variables
     //----------------------------------------------------------------------
@@ -193,27 +193,24 @@ class BaseParticles
     //----------------------------------------------------------------------
     // Variable related functions for offloading computing
     //----------------------------------------------------------------------
+    template <typename DataType, class ExecutionPolicy>
+    DataType *getVariableDataByName(const ExecutionPolicy &execution_policy, const std::string &name);
+    template <typename DataType>
+    DataType *getVariableDataByName(const ParallelDevicePolicy &execution_policy, const std::string &name);
+
     template <typename DataType, class ExecutionPolicy, typename... Args>
     DataType *registerDiscreteVariable(const ExecutionPolicy &execution_policy,
                                        size_t data_size, const std::string &name, Args &&...args);
-
     template <typename DataType, class ExecutionPolicy, typename... Args>
-    DataType *registerStateVariable(const ExecutionPolicy &execution_policy, const std::string &name, Args &&...args)
-    {
-        return registerStateVariable<DataType>(name, std::forward<Args>(args)...);
-    };
-
-    template <typename DataType, typename... Args>
-    DataType *registerStateVariable(const ParallelDevicePolicy &execution_policy, const std::string &name, Args &&...args);
+    DataType *registerStateVariable(const ExecutionPolicy &execution_policy, const std::string &name, Args &&...args);
 
     template <typename DataType, class ExecutionPolicy>
-    DataType *getVariableDataByName(const ExecutionPolicy &execution_policy, const std::string &name)
-    {
-        return getVariableDataByName<DataType>(name);
-    };
-
+    SingularVariable<DataType> *getSingularVariableByName(const ExecutionPolicy &execution_policy, const std::string &name);
     template <typename DataType>
-    DataType *getVariableDataByName(const ParallelDevicePolicy &execution_policy, const std::string &name);
+    SingularVariable<DataType> *getSingularVariableByName(const ParallelDevicePolicy &execution_policy, const std::string &name);
+
+    template <typename DataType, typename... Args>
+    SingularVariable<DataType> *registerSingularVariable(const ParallelDevicePolicy &execution_policy, const std::string &name, Args &&...args);
 
     template <typename DataType, class ExecutionPolicy>
     void addVariableToRestart(const ExecutionPolicy execution_policy, const std::string &name)
