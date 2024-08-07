@@ -11,11 +11,11 @@ using namespace SPH;
 
 static constexpr Real unit_mm = 1e-3; // mm, g, ms
 
-void ball_beam_contact(int dp_factor, bool use_pseudo_stiffness);
+void soft_stiff_contact(int dp_factor, bool use_pseudo_stiffness, int stiffness_factor = 1);
 
 int main(int ac, char *av[])
 {
-    ball_beam_contact(1, true);
+    soft_stiff_contact(1, true, 60);
 }
 
 //------------------------------------------------------------------------------
@@ -90,86 +90,70 @@ struct contact_algs
     void force_update() { contact_force->exec(); }
 };
 
-class Beam : public MultiPolygonShape
+class Arc : public MultiPolygonShape
 {
   public:
-    explicit Beam(const std::string &shape_name, const double length, const double height, const Vec2d &center) : MultiPolygonShape(shape_name)
+    explicit Arc(const std::string &shape_name, const Vec2d &center, double inner_radius, double thickness) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addABox(Transform(center), 0.5 * Vec2d(length, height), ShapeBooleanOps::add);
+        const Real outer_radius = inner_radius + thickness;
+        multi_polygon_.addACircle(center, outer_radius, 100, ShapeBooleanOps::add);
+        multi_polygon_.addACircle(center, inner_radius, 100, ShapeBooleanOps::sub);
+        multi_polygon_.addABox(Transform(center - outer_radius * Vec2d::UnitX()), outer_radius * Vec2d::Ones(), ShapeBooleanOps::sub);
+        multi_polygon_.addABox(Transform(center - outer_radius * Vec2d::UnitY()), outer_radius * Vec2d::Ones(), ShapeBooleanOps::sub);
     }
 };
 
-class Sphere : public MultiPolygonShape
+class Tube : public MultiPolygonShape
 {
   public:
-    explicit Sphere(const std::string &shape_name, const double radius, const Vec2d &center) : MultiPolygonShape(shape_name)
+    explicit Tube(const std::string &shape_name, const Vec2d &center, double width, double length) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addACircle(center, radius, 100, ShapeBooleanOps::add);
+        multi_polygon_.addABox(Transform(center), 0.5 * Vec2d(width, length), ShapeBooleanOps::add);
+        multi_polygon_.addACircle(center + 0.5 * length * Vec2d::UnitY(), 0.5 * width, 100, ShapeBooleanOps::add);
     }
 };
 
-class VelocityBoundaryCondition : public BaseLocalDynamics<BodyPartByParticle>, public DataDelegateSimple
+class VelocityBoundaryCondition : public BaseLocalDynamics<SPHBody>, public DataDelegateSimple
 {
   private:
     StdLargeVec<Vec2d> *vel_;
+    StdLargeVec<Vec2d> *pos_;
     Vec2d velocity_;
+    std::function<bool(SPH::Vec2d)> contains_func_;
 
   public:
-    VelocityBoundaryCondition(BodyPartByParticle &body_part, Vec2d velocity)
-        : BaseLocalDynamics<BodyPartByParticle>(body_part), DataDelegateSimple(body_part.getSPHBody()),
+    VelocityBoundaryCondition(SPHBody &body, Vec2d velocity, std::function<bool(SPH::Vec2d)> contains)
+        : BaseLocalDynamics<SPHBody>(body), DataDelegateSimple(body),
           vel_(this->particles_->template registerSharedVariable<Vec2d>("Velocity")),
-          velocity_(std::move(velocity)){};
+          pos_(this->particles_->template registerSharedVariable<Vec2d>("Position")),
+          velocity_(std::move(velocity)),
+          contains_func_(std::move(contains)){};
     inline void update(size_t index_i, [[maybe_unused]] Real dt = 0.0)
     {
-        (*vel_)[index_i] = velocity_;
+        if (contains_func_((*pos_)[index_i]))
+            (*vel_)[index_i] = velocity_;
     }
 };
 
-class SphereBoundaryGeometry : public BodyPartByParticle
+class ArcBoundaryGeometry : public BodyPartByParticle
 {
   private:
-    Real radius_;
     Real dp_;
     Vec2d center_;
 
   public:
-    SphereBoundaryGeometry(SPHBody &body, const std::string &body_part_name, Real radius, Real dp, const Vec2d &center)
+    ArcBoundaryGeometry(SPHBody &body, const std::string &body_part_name, Real dp, const Vec2d &center)
         : BodyPartByParticle(body, body_part_name),
-          radius_(radius), dp_(dp), center_(center)
+          dp_(dp), center_(center)
     {
-        TaggingParticleMethod tagging_particle_method = std::bind(&SphereBoundaryGeometry::tagManually, this, _1);
+        TaggingParticleMethod tagging_particle_method = std::bind(&ArcBoundaryGeometry::tagManually, this, _1);
         tagParticles(tagging_particle_method);
     };
 
   private:
     void tagManually(size_t index_i)
     {
-        if (pos_[index_i].y() < center_.y() - radius_ + dp_)
-            body_part_particles_.push_back(index_i);
-    };
-};
-
-class BeamBoundaryGeometry : public BodyPartByParticle
-{
-  private:
-    Real half_length_;
-    Real dp_;
-    Vec2d center_;
-
-  public:
-    BeamBoundaryGeometry(SPHBody &body, const std::string &body_part_name, Real length, Real dp, const Vec2d &center)
-        : BodyPartByParticle(body, body_part_name),
-          half_length_(0.5 * length), dp_(dp), center_(center)
-    {
-        TaggingParticleMethod tagging_particle_method = std::bind(&BeamBoundaryGeometry::tagManually, this, _1);
-        tagParticles(tagging_particle_method);
-    };
-
-  private:
-    void tagManually(size_t index_i)
-    {
-        if (pos_[index_i].x() < center_.x() - half_length_ + dp_ ||
-            pos_[index_i].x() > center_.x() + half_length_ - dp_)
+        if (pos_[index_i].y() < center_.y() + dp_)
             body_part_particles_.push_back(index_i);
     };
 };
@@ -191,7 +175,7 @@ Real get_physical_viscosity_general(Real rho, Real youngs_modulus, Real length_s
     // the physical viscosity is defined in the paper of prof. Hu
     // https://arxiv.org/pdf/2103.08932.pdf
     // physical_viscosity = (beta / 4) * sqrt(rho * Young's modulus) * L
-    // beta: shape constant (0.4 for beam)
+    // beta: shape constant (0.4 for arc)
     return shape_constant / 4.0 * std::sqrt(rho * youngs_modulus) * length_scale;
 }
 
@@ -199,92 +183,96 @@ Real get_E_from_K_and_G(Real K, Real G) { return 9.0 * K * G / (3.0 * K + G); }
 Real get_nu_from_K_and_G(Real K, Real G) { return (3 * K - 2 * G) / (2.0 * (3 * K + G)); }
 Real get_E_from_K_and_nu(Real K, Real nu) { return 3.0 * K * (1.0 - 2.0 * nu); }
 //------------------------------------------------------------------------------
-void ball_beam_contact(int dp_factor, bool use_pseudo_stiffness)
+void soft_stiff_contact(int dp_factor, bool use_pseudo_stiffness, int stiffness_factor)
 {
-    const Real end_time = 1;
-    const Vec2d velocity = 3 * Vec2d::UnitY();
-
     // geometry
-    const Real beam_length = 40;
-    const Real beam_height = 2;
-    const Real sphere_radius = 3;
+    const Real arc_inner_radius = 60;
+    const Real arc_thickness = 2;
+    const Real tube_width = 3;
+    const Real tube_length = 120;
 
     // resolution
-    const Real dp = beam_height / (4.0 * dp_factor);
+    const Real dp = arc_thickness / (4.0 * dp_factor);
+
+    // time
+    const Real max_disp = 100;
+    const Vec2d velocity = 5 * Vec2d::UnitY();
+    const Real end_time = max_disp / velocity.norm();
 
     // material properties
-    const Real rho_beam = 1e3 * std::pow(unit_mm, 2); // 1e3 kg/m^3
-    const Real bulk_modulus_beam = 3.33;              // 3.33 MPa
-    const Real shear_modulus_beam = 0.34;             // 0.34 MPa
-    const Real youngs_modulus_beam = get_E_from_K_and_G(bulk_modulus_beam, shear_modulus_beam);
-    const Real poisson_ratio_beam = get_nu_from_K_and_G(bulk_modulus_beam, shear_modulus_beam);
+    const Real rho_arc = 1e3 * std::pow(unit_mm, 2); // 1e3 kg/m^3
+    const Real bulk_modulus_arc = 3.33;              // 3.33 MPa
+    const Real shear_modulus_arc = 0.34;             // 0.34 MPa
+    const Real youngs_modulus_arc = get_E_from_K_and_G(bulk_modulus_arc, shear_modulus_arc);
+    const Real poisson_ratio_arc = get_nu_from_K_and_G(bulk_modulus_arc, shear_modulus_arc);
 
-    const Real rho_sphere = 1e3 * std::pow(unit_mm, 2); // 1e3 kg/m^3
-    const Real poisson_ratio_sphere = 0.4;              // 0.4
-    const Real youngs_modulus_sphere = use_pseudo_stiffness
-                                           ? get_E_from_K_and_nu(bulk_modulus_beam, poisson_ratio_sphere)
-                                           : 900; // 900 MPa
+    const Real rho_tube = 1e3 * std::pow(unit_mm, 2); // 1e3 kg/m^3
+    const Real poisson_ratio_tube = 0.3;              // 0.4
+    const Real youngs_modulus_tube = use_pseudo_stiffness
+                                         ? SMIN(stiffness_factor * get_E_from_K_and_nu(bulk_modulus_arc, poisson_ratio_tube), 1322.0)
+                                         : 1322; // 900 MPa
 
     // Material models
-    auto material_beam = makeShared<NeoHookeanSolid>(rho_beam, youngs_modulus_beam, poisson_ratio_beam);
-    auto material_sphere = makeShared<SaintVenantKirchhoffSolid>(rho_sphere, youngs_modulus_sphere, poisson_ratio_sphere);
+    auto material_arc = makeShared<NeoHookeanSolid>(rho_arc, youngs_modulus_arc, poisson_ratio_arc);
+    auto material_tube = makeShared<SaintVenantKirchhoffSolid>(rho_tube, youngs_modulus_tube, poisson_ratio_tube);
 
-    std::cout << "Youngs modulus of the beam: " << youngs_modulus_beam << std::endl;
-    std::cout << "Sound speed of the beam: " << material_beam->ReferenceSoundSpeed() << std::endl;
-    std::cout << "Youngs modulus of the sphere: " << youngs_modulus_sphere << std::endl;
-    std::cout << "Sound speed of the sphere: " << material_sphere->ReferenceSoundSpeed() << std::endl;
-    std::cout << "Impact speed: " << velocity << std::endl;
+    std::cout << "Youngs modulus of the arc: " << youngs_modulus_arc << std::endl;
+    std::cout << "Sound speed of the arc: " << material_arc->ReferenceSoundSpeed() << std::endl;
+    std::cout << "Youngs modulus of the tube: " << youngs_modulus_tube << std::endl;
+    std::cout << "Sound speed of the tube: " << material_tube->ReferenceSoundSpeed() << std::endl;
+    std::cout << "Impact speed: " << velocity.norm() << std::endl;
 
-    const Real physical_viscosity_beam = get_physical_viscosity_general(rho_beam, youngs_modulus_beam, beam_height);
-    const Real physical_viscosity_sphere = get_physical_viscosity_general(rho_sphere, youngs_modulus_sphere, sphere_radius);
+    const Real physical_viscosity_arc = get_physical_viscosity_general(rho_arc, youngs_modulus_arc, arc_thickness);
+    const Real physical_viscosity_tube = get_physical_viscosity_general(rho_tube, youngs_modulus_tube, tube_width);
 
     // Import meshes
-    const Vec2d beam_translation = Vec2d::Zero();
-    auto mesh_beam = std::make_shared<Beam>("Beam", beam_length, beam_height, beam_translation);
+    const Vec2d arc_translation = Vec2d::Zero();
+    auto mesh_arc = std::make_shared<Arc>("Arc", arc_translation, arc_inner_radius, arc_thickness);
 
-    const Vec2d sphere_translation = -(sphere_radius + 0.5 * beam_height) * Vec2d::UnitY();
-    auto mesh_sphere = std::make_shared<Sphere>("Sphere", sphere_radius, sphere_translation);
+    const Vec2d tube_translation = (arc_inner_radius - tube_width) * Vec2d::UnitX() - 0.5 * tube_length * Vec2d::UnitY();
+    auto mesh_tube = std::make_shared<Tube>("tube", tube_translation, tube_width, tube_length);
 
     // System bounding box
-    BoundingBox bb_system = union_bounding_box(mesh_beam->getBounds(), mesh_sphere->getBounds());
+    BoundingBox bb_system = union_bounding_box(mesh_arc->getBounds(), mesh_tube->getBounds());
 
     // System
     SPHSystem system(bb_system, dp);
     IOEnvironment io_environment(system);
 
     // Create objects
-    SolidBody beam_body(system, mesh_beam);
-    beam_body.defineBodyLevelSetShape()->cleanLevelSet(0);
-    beam_body.assignMaterial(material_beam.get());
-    beam_body.generateParticles<BaseParticles, Lattice>();
+    SolidBody arc_body(system, mesh_arc);
+    arc_body.defineBodyLevelSetShape()->cleanLevelSet(0);
+    arc_body.assignMaterial(material_arc.get());
+    arc_body.generateParticles<BaseParticles, Lattice>();
 
-    SolidBody sphere_body(system, mesh_sphere);
-    sphere_body.defineBodyLevelSetShape()->cleanLevelSet(0);
-    sphere_body.assignMaterial(material_sphere.get());
-    sphere_body.generateParticles<BaseParticles, Lattice>();
+    SolidBody tube_body(system, mesh_tube);
+    tube_body.defineBodyLevelSetShape()->cleanLevelSet(0);
+    tube_body.assignMaterial(material_tube.get());
+    tube_body.generateParticles<BaseParticles, Lattice>();
 
     // Inner relation
-    InnerRelation inner_beam(beam_body);
-    InnerRelation inner_sphere(sphere_body);
+    InnerRelation inner_arc(arc_body);
+    InnerRelation inner_tube(tube_body);
 
     // relax solid
-    relax_solid(beam_body, inner_beam);
-    relax_solid(sphere_body, inner_sphere);
+    relax_solid(arc_body, inner_arc);
+    relax_solid(tube_body, inner_tube);
 
     // Methods
-    solid_algs beam_algs(inner_beam, physical_viscosity_beam, 0.2);
-    solid_algs sphere_algs(inner_sphere, physical_viscosity_sphere, 0.2);
+    solid_algs arc_algs(inner_arc, physical_viscosity_arc, 0.5);
+    solid_algs tube_algs(inner_tube, physical_viscosity_tube, 0.5);
 
     // Contact
-    contact_algs contact_beam_sphere(beam_body, {&sphere_body});
-    contact_algs contact_sphere_beam(sphere_body, {&beam_body});
+    contact_algs contact_arc_tube(arc_body, {&tube_body});
+    contact_algs contact_tube_arc(tube_body, {&arc_body});
 
     // Boundary conditions
-    BeamBoundaryGeometry beam_fix_bc_part(beam_body, "BeamClampingBC", beam_length, dp, beam_translation);
-    SimpleDynamics<FixBodyPartConstraint> beam_fix_bc(beam_fix_bc_part);
+    ArcBoundaryGeometry arc_fix_bc_part(arc_body, "arcClampingBC", dp, arc_translation);
+    SimpleDynamics<FixBodyPartConstraint> arc_fix_bc(arc_fix_bc_part);
 
-    SphereBoundaryGeometry sphere_vel_bc_part(sphere_body, "SphereClampingBC", sphere_radius, dp, sphere_translation);
-    SimpleDynamics<VelocityBoundaryCondition> sphere_vel_bc(sphere_vel_bc_part, velocity);
+    SimpleDynamics<VelocityBoundaryCondition> tube_vel_bc(tube_body, velocity,
+                                                          [&](const Vec2d &pos)
+                                                          { return pos.y() < 0; });
 
     // Check
     auto check_nan = [&](BaseParticles &particles)
@@ -296,10 +284,10 @@ void ball_beam_contact(int dp_factor, bool use_pseudo_stiffness)
     };
 
     // Output
-    beam_body.getBaseParticles().addVariableToWrite<Vec2d>("RepulsionForce");
-    sphere_body.getBaseParticles().addVariableToWrite<Vec2d>("RepulsionForce");
-    beam_body.getBaseParticles().addVariableToWrite<Vec2d>("Velocity");
-    sphere_body.getBaseParticles().addVariableToWrite<Vec2d>("Velocity");
+    arc_body.getBaseParticles().addVariableToWrite<Vec2d>("RepulsionForce");
+    tube_body.getBaseParticles().addVariableToWrite<Vec2d>("RepulsionForce");
+    arc_body.getBaseParticles().addVariableToWrite<Vec2d>("Velocity");
+    tube_body.getBaseParticles().addVariableToWrite<Vec2d>("Velocity");
     BodyStatesRecordingToVtp vtp_output(system);
     vtp_output.writeToFile(0);
 
@@ -307,11 +295,11 @@ void ball_beam_contact(int dp_factor, bool use_pseudo_stiffness)
     system.initializeSystemCellLinkedLists();
     system.initializeSystemConfigurations();
 
-    beam_algs.corrected_config();
-    sphere_algs.corrected_config();
+    arc_algs.corrected_config();
+    tube_algs.corrected_config();
 
-    contact_beam_sphere.config_update();
-    contact_sphere_beam.config_update();
+    contact_arc_tube.config_update();
+    contact_tube_arc.config_update();
 
     // Simulation
     GlobalStaticVariables::physical_time_ = 0.0;
@@ -320,7 +308,7 @@ void ball_beam_contact(int dp_factor, bool use_pseudo_stiffness)
     Real output_period = end_time / 50.0;
     Real dt = 0.0;
     TickCount t1 = TickCount::now();
-    const Real dt_ref = std::min(beam_algs.time_step_size(), sphere_algs.time_step_size());
+    const Real dt_ref = std::min(arc_algs.time_step_size(), tube_algs.time_step_size());
     auto run_simulation = [&]()
     {
         while (GlobalStaticVariables::physical_time_ < end_time)
@@ -335,43 +323,43 @@ void ball_beam_contact(int dp_factor, bool use_pseudo_stiffness)
                               << dt << "\n";
                 }
 
-                contact_beam_sphere.density_update();
-                contact_sphere_beam.density_update();
-                contact_beam_sphere.force_update();
-                contact_sphere_beam.force_update();
+                contact_arc_tube.density_update();
+                contact_tube_arc.density_update();
+                contact_arc_tube.force_update();
+                contact_tube_arc.force_update();
 
-                dt = std::min(beam_algs.time_step_size(), sphere_algs.time_step_size());
+                dt = std::min(arc_algs.time_step_size(), tube_algs.time_step_size());
                 if (dt < dt_ref / 1e2)
                     throw std::runtime_error("time step decreased too much");
 
-                beam_algs.stress_relaxation_first(dt);
-                sphere_algs.stress_relaxation_first(dt);
+                arc_algs.stress_relaxation_first(dt);
+                tube_algs.stress_relaxation_first(dt);
 
-                sphere_vel_bc.exec();
-                beam_fix_bc.exec();
+                tube_vel_bc.exec();
+                arc_fix_bc.exec();
 
-                beam_algs.damping(dt);
-                sphere_algs.damping(dt);
+                arc_algs.damping(dt);
+                tube_algs.damping(dt);
 
-                sphere_vel_bc.exec();
-                beam_fix_bc.exec();
+                tube_vel_bc.exec();
+                arc_fix_bc.exec();
 
-                beam_algs.stress_relaxation_second(dt);
-                sphere_algs.stress_relaxation_second(dt);
+                arc_algs.stress_relaxation_second(dt);
+                tube_algs.stress_relaxation_second(dt);
 
-                beam_body.updateCellLinkedList();
-                sphere_body.updateCellLinkedList();
+                arc_body.updateCellLinkedList();
+                tube_body.updateCellLinkedList();
 
-                contact_beam_sphere.config_update();
-                contact_sphere_beam.config_update();
+                contact_arc_tube.config_update();
+                contact_tube_arc.config_update();
 
                 ++ite;
                 integral_time += dt;
                 GlobalStaticVariables::physical_time_ += dt;
 
                 { // checking if any position has become nan
-                    check_nan(beam_body.getBaseParticles());
-                    check_nan(sphere_body.getBaseParticles());
+                    check_nan(arc_body.getBaseParticles());
+                    check_nan(tube_body.getBaseParticles());
                 }
             }
 
