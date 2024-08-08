@@ -14,7 +14,7 @@ void beam_multi_resolution(int dp_factor);
 
 int main(int ac, char *av[])
 {
-    beam_single_resolution(1);
+    beam_multi_resolution(1);
 }
 
 //------------------------------------------------------------------------------
@@ -53,7 +53,7 @@ struct solid_algs
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size;
     SimpleDynamics<NormalDirectionFromBodyShape> normal_direction;
 
-    solid_algs(BaseInnerRelation &inner_relation)
+    explicit solid_algs(BaseInnerRelation &inner_relation)
         : corrected_configuration(inner_relation),
           stress_relaxation_first_half(inner_relation),
           stress_relaxation_second_half(inner_relation),
@@ -186,6 +186,13 @@ void beam_single_resolution(int dp_factor)
     BodyStatesRecordingToVtp vtp_output(system);
     vtp_output.writeToFile(0);
 
+    // Observer
+    const StdVec<Vecd> observation_locations = {Vec2d::Zero()};
+    ObserverBody observer(system, "MidObserver");
+    observer.generateParticles<ObserverParticles>(observation_locations);
+    ContactRelation observer_contact(observer, {&beam_body});
+    ObservedQuantityRecording<Vecd> write_position("Position", observer_contact);
+
     // Initialization
     system.initializeSystemCellLinkedLists();
     system.initializeSystemConfigurations();
@@ -234,6 +241,7 @@ void beam_single_resolution(int dp_factor)
 
             ite_output++;
             vtp_output.writeToFile(ite_output);
+            write_position.writeToFile(ite_output);
         }
         TimeInterval tt = TickCount::now() - t1;
         std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
@@ -327,6 +335,13 @@ void beam_multi_resolution(int dp_factor)
     BodyStatesRecordingToVtp vtp_output(system);
     vtp_output.writeToFile(0);
 
+    // Observer
+    const StdVec<Vecd> observation_locations = {Vec2d::Zero()};
+    ObserverBody observer(system, "MidObserver");
+    observer.generateParticles<ObserverParticles>(observation_locations);
+    AdaptiveContactRelation observer_contact(observer, {&beam_body});
+    ObservedQuantityRecording<Vecd> write_position("Position", observer_contact);
+
     // Initialization
     system.initializeSystemCellLinkedLists();
     system.initializeSystemConfigurations();
@@ -375,6 +390,7 @@ void beam_multi_resolution(int dp_factor)
 
             ite_output++;
             vtp_output.writeToFile(ite_output);
+            write_position.writeToFile(ite_output);
         }
         TimeInterval tt = TickCount::now() - t1;
         std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
