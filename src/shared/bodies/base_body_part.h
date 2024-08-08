@@ -161,6 +161,7 @@ class BodySurfaceLayer : public BodyPartByParticle
     virtual ~BodySurfaceLayer(){};
 
   private:
+    StdLargeVec<Vecd> *pos_;
     Real thickness_threshold_;
     void tagSurfaceLayer(size_t particle_index);
 };
