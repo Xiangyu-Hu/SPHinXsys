@@ -11,11 +11,11 @@ using namespace SPH;
 
 static constexpr Real unit_mm = 1e-3; // mm, g, ms
 
-void soft_stiff_contact(int dp_factor, bool use_pseudo_stiffness, int stiffness_factor = 1);
+void soft_stiff_contact(int dp_factor, bool use_pseudo_stiffness, double nu_min, int stiff_E_factor = 1);
 
 int main(int ac, char *av[])
 {
-    soft_stiff_contact(1, true, 60);
+    soft_stiff_contact(1, true, 0.1, 1);
 }
 
 //------------------------------------------------------------------------------
@@ -182,8 +182,9 @@ Real get_physical_viscosity_general(Real rho, Real youngs_modulus, Real length_s
 Real get_E_from_K_and_G(Real K, Real G) { return 9.0 * K * G / (3.0 * K + G); }
 Real get_nu_from_K_and_G(Real K, Real G) { return (3 * K - 2 * G) / (2.0 * (3 * K + G)); }
 Real get_E_from_K_and_nu(Real K, Real nu) { return 3.0 * K * (1.0 - 2.0 * nu); }
+Real get_nu_from_K_and_E(Real K, Real E) { return (3 * K - E) / (6.0 * K); }
 //------------------------------------------------------------------------------
-void soft_stiff_contact(int dp_factor, bool use_pseudo_stiffness, int stiffness_factor)
+void soft_stiff_contact(int dp_factor, bool use_pseudo_stiffness, double nu_min, int stiff_E_factor)
 {
     // geometry
     const Real arc_inner_radius = 60;
@@ -207,18 +208,24 @@ void soft_stiff_contact(int dp_factor, bool use_pseudo_stiffness, int stiffness_
     const Real poisson_ratio_arc = get_nu_from_K_and_G(bulk_modulus_arc, shear_modulus_arc);
 
     const Real rho_tube = 1e3 * std::pow(unit_mm, 2); // 1e3 kg/m^3
-    const Real poisson_ratio_tube = 0.3;              // 0.4
-    const Real youngs_modulus_tube = use_pseudo_stiffness
-                                         ? SMIN(stiffness_factor * get_E_from_K_and_nu(bulk_modulus_arc, poisson_ratio_tube), 1322.0)
-                                         : 1322; // 900 MPa
+    const Real poisson_ratio_tube_real = 0.3;         // 0.4
+    const Real youngs_modulus_tube_real = 1322;       // 1322 MPa
+    const Real youngs_modulus_tube = use_pseudo_stiffness ? youngs_modulus_tube_real / stiff_E_factor : youngs_modulus_tube_real;
+    const Real poisson_ratio_tube = use_pseudo_stiffness
+                                        ? SMAX(nu_min, get_nu_from_K_and_E(bulk_modulus_arc, youngs_modulus_tube))
+                                        : poisson_ratio_tube_real;
 
     // Material models
     auto material_arc = makeShared<NeoHookeanSolid>(rho_arc, youngs_modulus_arc, poisson_ratio_arc);
     auto material_tube = makeShared<SaintVenantKirchhoffSolid>(rho_tube, youngs_modulus_tube, poisson_ratio_tube);
 
     std::cout << "Youngs modulus of the arc: " << youngs_modulus_arc << std::endl;
+    std::cout << "Bulk modulus of the arc: " << bulk_modulus_arc << std::endl;
+    std::cout << "Poisson ratio of the arc: " << poisson_ratio_arc << std::endl;
     std::cout << "Sound speed of the arc: " << material_arc->ReferenceSoundSpeed() << std::endl;
     std::cout << "Youngs modulus of the tube: " << youngs_modulus_tube << std::endl;
+    std::cout << "Bulk modulus of the tube: " << material_tube->BulkModulus() << std::endl;
+    std::cout << "Poisson ratio of the tube: " << poisson_ratio_tube << std::endl;
     std::cout << "Sound speed of the tube: " << material_tube->ReferenceSoundSpeed() << std::endl;
     std::cout << "Impact speed: " << velocity.norm() << std::endl;
 
@@ -316,7 +323,7 @@ void soft_stiff_contact(int dp_factor, bool use_pseudo_stiffness, int stiffness_
             Real integral_time = 0.0;
             while (integral_time < output_period)
             {
-                if (ite % 100 == 0)
+                if (ite % 1000 == 0)
                 {
                     std::cout << "N=" << ite << " Time: "
                               << GlobalStaticVariables::physical_time_ << "	dt: "
