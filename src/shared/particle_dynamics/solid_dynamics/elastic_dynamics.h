@@ -88,7 +88,7 @@ class AcousticTimeStepSize : public LocalDynamicsReduce<ReduceMin>,
     ElasticSolid &elastic_solid_;
     StdLargeVec<Vecd> &vel_, &force_, &force_prior_;
     StdLargeVec<Real> &mass_;
-    Real smoothing_length_, c0_;
+    Real smoothing_length_min_, c0_;
 
   public:
     explicit AcousticTimeStepSize(SPHBody &sph_body, Real CFL = 0.6);

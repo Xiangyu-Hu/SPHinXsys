@@ -98,6 +98,8 @@ class CellLinkedList : public BaseCellLinkedList, public Mesh
     bool use_split_cell_lists_;
 
   protected:
+    friend class MultilevelCellLinkedList;
+
     /** using concurrent vectors due to writing conflicts when building the list */
     ConcurrentIndexVector *cell_index_lists_;
     /** non-concurrent list data rewritten for building neighbor list */
@@ -154,7 +156,9 @@ class MultilevelCellLinkedList : public MultilevelMesh<BaseCellLinkedList, CellL
   protected:
     StdLargeVec<Real> &h_ratio_; /**< Smoothing length for each level. */
     /** Update split cell list. */
-    virtual void updateSplitCellLists(SplitCellLists &split_cell_lists) override{};
+    SplitCellLists split_cell_lists_;
+    bool use_split_cell_lists_;
+    void updateSplitCellLists(SplitCellLists &split_cell_lists) override;
     /** determine mesh level from particle cutoff radius */
     inline size_t getMeshLevel(Real particle_cutoff_radius);
 
@@ -169,8 +173,11 @@ class MultilevelCellLinkedList : public MultilevelMesh<BaseCellLinkedList, CellL
     virtual ListData findNearestListDataEntry(const Vecd &position) override { return ListData(0, Vecd::Zero()); }; // mocking, not implemented
     virtual StdLargeVec<size_t> &computingSequence(BaseParticles &base_particles) override;
     virtual void tagBodyPartByCell(ConcurrentCellLists &cell_lists, std::function<bool(Vecd, Real)> &check_included) override;
-    virtual void tagBoundingCells(StdVec<CellLists> &cell_data_lists, const BoundingBox &bounding_bounds, int axis) override{};
+    virtual void tagBoundingCells(StdVec<CellLists> &cell_data_lists, const BoundingBox &bounding_bounds, int axis) override {};
     virtual StdVec<CellLinkedList *> CellLinkedListLevels() override { return getMeshLevels(); };
+
+    SplitCellLists *getSplitCellLists() override { return &split_cell_lists_; };
+    void setUseSplitCellLists() override { use_split_cell_lists_ = true; };
 };
 } // namespace SPH
 #endif // MESH_CELL_LINKED_LIST_H
