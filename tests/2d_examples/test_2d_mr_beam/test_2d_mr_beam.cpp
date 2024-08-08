@@ -131,7 +131,7 @@ void beam_single_resolution(int dp_factor)
     Gravity gravity(-params.gravity * Vec2d::UnitY());
 
     // time
-    const Real end_time = 1;
+    const Real end_time = 5;
 
     // Material models
     auto material = makeShared<SaintVenantKirchhoffSolid>(params.rho, params.youngs_modulus, params.poisson_ratio);
@@ -161,6 +161,7 @@ void beam_single_resolution(int dp_factor)
 
     // Methods
     solid_algs algs(inner);
+    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d, FixedDampingRate>>> damping(0.5, inner, "Velocity", params.physical_viscosity);
 
     // Boundary conditions
     FixPart fix_bc_part(beam_body, "ClampingPart", translation, params.length);
@@ -229,6 +230,8 @@ void beam_single_resolution(int dp_factor)
 
                 algs.stress_relaxation_first(dt);
                 fix_bc.exec();
+                damping.exec(dt);
+                fix_bc.exec();
                 algs.stress_relaxation_second(dt);
 
                 ++ite;
@@ -271,7 +274,7 @@ void beam_multi_resolution(int dp_factor)
     Gravity gravity(-params.gravity * Vec2d::UnitY());
 
     // time
-    const Real end_time = 1;
+    const Real end_time = 5;
 
     // Material models
     auto material = makeShared<SaintVenantKirchhoffSolid>(params.rho, params.youngs_modulus, params.poisson_ratio);
@@ -310,6 +313,7 @@ void beam_multi_resolution(int dp_factor)
 
     // Methods
     solid_algs algs(inner);
+    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d, FixedDampingRate>>> damping(0.5, inner, "Velocity", params.physical_viscosity);
 
     // Boundary conditions
     FixPart fix_bc_part(beam_body, "ClampingPart", translation, params.length);
@@ -377,6 +381,8 @@ void beam_multi_resolution(int dp_factor)
                     throw std::runtime_error("time step decreased too much");
 
                 algs.stress_relaxation_first(dt);
+                fix_bc.exec();
+                damping.exec(dt);
                 fix_bc.exec();
                 algs.stress_relaxation_second(dt);
 
