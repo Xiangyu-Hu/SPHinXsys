@@ -64,13 +64,6 @@ BodySurfaceLayer::BodySurfaceLayer(SPHBody &sph_body, Real layer_thickness)
     : BodyPartByParticle(sph_body, "InnerLayers"),
       thickness_threshold_(sph_body.sph_adaptation_->ReferenceSpacing() * layer_thickness)
 {
-    pos_ = [this]()
-    {
-        if (auto *pos0 = base_particles_.getVariableByName<Vecd>("InitialPosition"))
-            return pos0;
-        std::cout << "WARNING, field `InitialPosition` missing, using current `Position`";
-        return &base_particles_.pos_;
-    }();
     TaggingParticleMethod tagging_particle_method = std::bind(&BodySurfaceLayer::tagSurfaceLayer, this, _1);
     tagParticles(tagging_particle_method);
     std::cout << "Number of inner layers particles : " << body_part_particles_.size() << std::endl;
@@ -78,7 +71,14 @@ BodySurfaceLayer::BodySurfaceLayer(SPHBody &sph_body, Real layer_thickness)
 //=================================================================================================//
 void BodySurfaceLayer::tagSurfaceLayer(size_t particle_index)
 {
-    Real distance = fabs(sph_body_.body_shape_->findSignedDistance((*pos_)[particle_index]));
+    const auto &pos_ = [this]()
+    {
+        if (const auto *pos0 = base_particles_.getVariableByName<Vecd>("InitialPosition"))
+            return *pos0;
+        std::cout << "WARNING, field `InitialPosition` missing, using current `Position`";
+        return base_particles_.pos_;
+    }();
+    Real distance = fabs(sph_body_.body_shape_->findSignedDistance(pos_[particle_index]));
     if (distance < thickness_threshold_)
     {
         body_part_particles_.push_back(particle_index);
