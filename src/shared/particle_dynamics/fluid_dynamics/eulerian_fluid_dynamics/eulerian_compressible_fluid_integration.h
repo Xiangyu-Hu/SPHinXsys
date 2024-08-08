@@ -103,7 +103,7 @@ class EulerianCompressibleAcousticTimeStepSize : public AcousticTimeStepSize
     Real smoothing_length_;
 
   public:
-    explicit EulerianCompressibleAcousticTimeStepSize(SPHBody &sph_body);
+    explicit EulerianCompressibleAcousticTimeStepSize(SPHBody &sph_body, Real acousticCFL = 0.6);
     virtual ~EulerianCompressibleAcousticTimeStepSize(){};
 
     Real reduce(size_t index_i, Real dt = 0.0);

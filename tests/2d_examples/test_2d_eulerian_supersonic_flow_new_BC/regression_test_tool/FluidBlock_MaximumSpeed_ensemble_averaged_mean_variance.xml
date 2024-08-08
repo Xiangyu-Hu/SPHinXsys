@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<meanvariance>
+    <Mean_Element>
+        <Snapshot_0 MaximumSpeed_0="2.0545123305080204" />
+        <Snapshot_500 MaximumSpeed_0="2.2947990673172196" />
+        <Snapshot_1000 MaximumSpeed_0="2.3017218507821529" />
+        <Snapshot_1500 MaximumSpeed_0="2.1709004804167411" />
+        <Snapshot_2000 MaximumSpeed_0="2.1597248423002755" />
+        <Snapshot_2500 MaximumSpeed_0="2.1546261531953408" />
+        <Snapshot_3000 MaximumSpeed_0="2.1531048586678949" />
+        <Snapshot_3500 MaximumSpeed_0="2.1504747361187722" />
+        <Snapshot_4000 MaximumSpeed_0="2.1495099163796252" />
+        <Snapshot_4500 MaximumSpeed_0="2.1488790735766319" />
+    </Mean_Element>
+    <Variance_Element>
+        <Snapshot_0 MaximumSpeed_0="0.062210209162094981" />
+        <Snapshot_500 MaximumSpeed_0="0.062661027593599828" />
+        <Snapshot_1000 MaximumSpeed_0="0.062979234783680565" />
+        <Snapshot_1500 MaximumSpeed_0="0.06712808895873816" />
+        <Snapshot_2000 MaximumSpeed_0="0.066644113944492252" />
+        <Snapshot_2500 MaximumSpeed_0="0.066424138600335499" />
+        <Snapshot_3000 MaximumSpeed_0="0.066358605324200454" />
+        <Snapshot_3500 MaximumSpeed_0="0.066245415906852902" />
+        <Snapshot_4000 MaximumSpeed_0="0.066203928806145877" />
+        <Snapshot_4500 MaximumSpeed_0="0.066176812728558652" />
+    </Variance_Element>
+</meanvariance>

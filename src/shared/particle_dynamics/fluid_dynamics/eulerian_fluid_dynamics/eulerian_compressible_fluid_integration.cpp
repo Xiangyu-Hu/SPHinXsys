@@ -26,13 +26,16 @@ CompressibleFluidInitialCondition::CompressibleFluidInitialCondition(SPHBody &sp
       E_(*particles_->getVariableDataByName<Real>("TotalEnergy")) {}
 //=================================================================================================//
 EulerianCompressibleAcousticTimeStepSize::
-    EulerianCompressibleAcousticTimeStepSize(SPHBody &sph_body)
+    EulerianCompressibleAcousticTimeStepSize(SPHBody &sph_body, Real acousticCFL)
     : AcousticTimeStepSize(sph_body),
       rho_(*particles_->getVariableDataByName<Real>("Density")),
       p_(*particles_->getVariableDataByName<Real>("Pressure")),
       vel_(*particles_->getVariableDataByName<Vecd>("Velocity")),
       smoothing_length_(sph_body.sph_adaptation_->ReferenceSmoothingLength()),
-      compressible_fluid_(CompressibleFluid(1.0, 1.4)){};
+      compressible_fluid_(CompressibleFluid(1.0, 1.4))
+{
+    acousticCFL_ = acousticCFL;
+};
 //=================================================================================================//
 Real EulerianCompressibleAcousticTimeStepSize::reduce(size_t index_i, Real dt)
 {
@@ -41,7 +44,7 @@ Real EulerianCompressibleAcousticTimeStepSize::reduce(size_t index_i, Real dt)
 //=================================================================================================//
 Real EulerianCompressibleAcousticTimeStepSize::outputResult(Real reduced_value)
 {
-    return 0.6 / Dimensions * smoothing_length_ / (reduced_value + TinyReal);
+    return acousticCFL_ / Dimensions * smoothing_length_ / (reduced_value + TinyReal);
 }
 //=================================================================================================//
 } // namespace fluid_dynamics
