@@ -17,7 +17,7 @@ AcousticTimeStepSize::AcousticTimeStepSize(SPHBody &sph_body, Real CFL)
       force_(*particles_->getVariableDataByName<Vecd>("Force")),
       force_prior_(*particles_->getVariableDataByName<Vecd>("ForcePrior")),
       mass_(*particles_->getVariableDataByName<Real>("Mass")),
-      smoothing_length_(sph_body.sph_adaptation_->ReferenceSmoothingLength()),
+      smoothing_length_min_(sph_body.sph_adaptation_->MinimumSmoothingLength()),
       c0_(elastic_solid_.ReferenceSoundSpeed()) {}
 //=================================================================================================//
 Real AcousticTimeStepSize::reduce(size_t index_i, Real dt)
@@ -25,8 +25,8 @@ Real AcousticTimeStepSize::reduce(size_t index_i, Real dt)
     // since the particle does not change its configuration in pressure relaxation step
     // I chose a time-step size according to Eulerian method
     Real acceleration_norm = ((force_[index_i] + force_prior_[index_i]) / mass_[index_i]).norm();
-    return CFL_ * SMIN((Real)sqrt(smoothing_length_ / (acceleration_norm + TinyReal)),
-                       smoothing_length_ / (c0_ + vel_[index_i].norm()));
+    return CFL_ * SMIN((Real)sqrt(smoothing_length_min_ / (acceleration_norm + TinyReal)),
+                       smoothing_length_min_ / (c0_ + vel_[index_i].norm()));
 }
 //=================================================================================================//
 ElasticDynamicsInitialCondition::ElasticDynamicsInitialCondition(SPHBody &sph_body)
