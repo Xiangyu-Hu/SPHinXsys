@@ -21,14 +21,14 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	base_variable.h
- * @brief 	Here gives classes for the base variables used in simulation.
+ * @file sphinxsys_entity.h
+ * @brief Here gives classes for the constants and variables used in simulation.
  * @details These variables are those discretized in spaces and time.
- * @author	Xiangyu Hu
+ * @author Xiangyu Hu
  */
 
-#ifndef BASE_VARIABLES_H
-#define BASE_VARIABLES_H
+#ifndef SPHINXSYS_ENTITY_H
+#define SPHINXSYS_ENTITY_H
 
 #include "base_data_package.h"
 #include <cstring>
@@ -37,15 +37,12 @@
 
 namespace SPH
 {
-class DeviceShared;
-class DeviceOnly;
-
-class BaseVariable
+class BaseEntity
 {
   public:
-    explicit BaseVariable(const std::string &name)
+    explicit BaseEntity(const std::string &name)
         : name_(name){};
-    virtual ~BaseVariable(){};
+    virtual ~BaseEntity(){};
     std::string Name() const { return name_; };
 
   private:
@@ -53,11 +50,11 @@ class BaseVariable
 };
 
 template <typename DataType>
-class SingularVariable : public BaseVariable
+class SingularVariable : public BaseEntity
 {
   public:
     SingularVariable(const std::string &name, const DataType &value)
-        : BaseVariable(name), value_(new DataType(value)), delegated_(value_){};
+        : BaseEntity(name), value_(new DataType(value)), delegated_(value_){};
     virtual ~SingularVariable() { delete value_; };
 
     DataType *ValueAddress() { return delegated_; };
@@ -70,23 +67,38 @@ class SingularVariable : public BaseVariable
 };
 
 template <typename DataType>
-class SingularDeviceSharedVariable : public BaseVariable
+class DeviceSharedSingularVariable : public BaseEntity
 
 {
   public:
-    SingularDeviceSharedVariable(SingularVariable<DataType> *host_variable);
-    virtual ~SingularDeviceSharedVariable();
+    DeviceSharedSingularVariable(SingularVariable<DataType> *host_variable);
+    virtual ~DeviceSharedSingularVariable();
 
   protected:
     DataType *device_shared_value_;
 };
 
 template <typename DataType>
-class DiscreteVariable : public BaseVariable
+using ConstantEntity = SingularVariable<DataType>;
+
+template <typename DataType>
+class DeviceOnlyConstantEntity : public BaseEntity
+
+{
+  public:
+    DeviceOnlyConstantEntity(ConstantEntity<DataType> *host_constant);
+    virtual ~DeviceOnlyConstantEntity();
+
+  protected:
+    DataType *device_only_value_;
+};
+
+template <typename DataType>
+class DiscreteVariable : public BaseEntity
 {
   public:
     DiscreteVariable(const std::string &name, size_t data_size)
-        : BaseVariable(name), data_size_(data_size),
+        : BaseEntity(name), data_size_(data_size),
           data_field_(nullptr), device_data_field_(nullptr)
     {
         data_field_ = new DataType[data_size];
@@ -107,23 +119,23 @@ class DiscreteVariable : public BaseVariable
 };
 
 template <typename DataType>
-class DiscreteDeviceOnlyVariable : public BaseVariable
+class DeviceOnlyDiscreteVariable : public BaseEntity
 {
   public:
-    DiscreteDeviceOnlyVariable(DiscreteVariable<DataType> *host_variable);
-    virtual ~DiscreteDeviceOnlyVariable();
+    DeviceOnlyDiscreteVariable(DiscreteVariable<DataType> *host_variable);
+    virtual ~DeviceOnlyDiscreteVariable();
 
   protected:
     DataType *device_only_data_field_;
 };
 
 template <typename DataType>
-class MeshVariable : public BaseVariable
+class MeshVariable : public BaseEntity
 {
   public:
     using PackageData = PackageDataMatrix<DataType, 4>;
     MeshVariable(const std::string &name, size_t data_size)
-        : BaseVariable(name), data_field_(nullptr){};
+        : BaseEntity(name), data_field_(nullptr){};
     virtual ~MeshVariable() { delete[] data_field_; };
 
     // void setDataField(PackageData* mesh_data){ data_field_ = mesh_data; };
@@ -161,4 +173,4 @@ VariableType<DataType> *addVariableToAssemble(DataContainerAddressAssemble<Varia
     return new_variable;
 };
 } // namespace SPH
-#endif // BASE_VARIABLES_H
+#endif // SPHINXSYS_ENTITY_H

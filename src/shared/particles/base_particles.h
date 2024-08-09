@@ -34,9 +34,9 @@
 #define BASE_PARTICLES_H
 
 #include "base_data_package.h"
-#include "base_variable.h"
 #include "execution_policy.h"
-#include "sph_data_containers.h"
+#include "sphinxsys_containers.h"
+#include "sphinxsys_entity.h"
 #include "xml_parser.h"
 
 #include <fstream>
@@ -84,7 +84,7 @@ class BaseParticles
   private:
     DataContainerUniquePtrAssemble<DiscreteVariable> all_discrete_variable_ptrs_;
     DataContainerUniquePtrAssemble<SingularVariable> all_global_variable_ptrs_;
-    UniquePtrsKeeper<BaseVariable> unique_variable_ptrs_;
+    UniquePtrsKeeper<BaseEntity> unique_variable_ptrs_;
 
   public:
     explicit BaseParticles(SPHBody &sph_body, BaseMaterial *base_material);

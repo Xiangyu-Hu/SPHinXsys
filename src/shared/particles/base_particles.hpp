@@ -255,7 +255,7 @@ DataType *BaseParticles::getVariableDataByName(const ParallelDevicePolicy &execu
     DiscreteVariable<DataType> *variable = getVariableByName<DataType>(name);
     if (!variable->existDeviceDataField())
     {
-        unique_variable_ptrs_.createPtr<DiscreteDeviceOnlyVariable<DataType>>(variable);
+        unique_variable_ptrs_.createPtr<DeviceOnlyDiscreteVariable<DataType>>(variable);
     }
     return variable->DeviceDataField();
 }

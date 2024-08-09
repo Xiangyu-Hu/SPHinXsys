@@ -3,7 +3,7 @@
 
 #include "sph_system.h"
 
-#include "base_variable.h"
+#include "sphinxsys_entity.h"
 
 namespace SPH
 {
@@ -81,7 +81,7 @@ SingularVariable<DataType> *SPHSystem::getSystemVariableByName(
     SingularVariable<DataType> *variable = getSystemVariableByName<DataType>(name);
     if (variable->isValueDelegated())
     {
-        unique_system_variable_ptrs_.createPtr<SingularDeviceSharedVariable<DataType>>(variable);
+        unique_system_variable_ptrs_.createPtr<DeviceSharedSingularVariable<DataType>>(variable);
     }
 
     return variable;

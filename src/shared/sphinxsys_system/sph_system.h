@@ -40,7 +40,7 @@ namespace po = boost::program_options;
 #include "base_data_package.h"
 #include "execution_policy.h"
 #include "io_environment.h"
-#include "sph_data_containers.h"
+#include "sphinxsys_containers.h"
 
 #include <filesystem>
 #include <fstream>
@@ -61,7 +61,7 @@ class SPHSystem
 {
     UniquePtrKeeper<IOEnvironment> io_ptr_keeper_;
     DataContainerUniquePtrAssemble<SingularVariable> all_system_variable_ptrs_;
-    UniquePtrsKeeper<BaseVariable> unique_system_variable_ptrs_;
+    UniquePtrsKeeper<BaseEntity> unique_system_variable_ptrs_;
 
   public:
     BoundingBox system_domain_bounds_;       /**< Lower and Upper domain bounds. */
