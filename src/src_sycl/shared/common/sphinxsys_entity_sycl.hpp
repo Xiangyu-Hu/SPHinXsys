@@ -51,11 +51,12 @@ DeviceSharedSingularVariable<DataType>::~DeviceSharedSingularVariable()
 }
 //=================================================================================================//
 template <typename DataType>
-DeviceOnlyConstantEntity<DataType>::DeviceOnlyConstantEntity(ConstantEntity<DataType> *host_constant)
+DeviceOnlyConstantEntity<DataType>::
+    DeviceOnlyConstantEntity(ConstantEntity<DataType> *host_constant)
     : BaseEntity(host_constant->Name()), device_only_value_(allocateDeviceOnly<DataType>(1))
 {
-    *device_only_value_ = *host_constant->ValueAddress();
-    host_constant->setDelegateValueAddress(device_only_value_);
+    copyToDevice(host_constant->DataAddress(), device_only_value_, 1);
+    host_constant->setDeviceData(device_only_value_);
 }
 //=================================================================================================//
 template <typename DataType>

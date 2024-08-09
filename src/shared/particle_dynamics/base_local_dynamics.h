@@ -32,6 +32,7 @@
 
 #include "base_data_package.h"
 #include "base_particle_dynamics.h"
+#include "execution_policy.h"
 #include "sphinxsys_containers.h"
 
 namespace SPH
@@ -65,6 +66,8 @@ class Dynamic;         /**< A dynamic interaction */
 template <class DynamicsIdentifier>
 class BaseLocalDynamics
 {
+    UniquePtrsKeeper<BaseEntity> constant_entity_ptrs_;
+
   public:
     explicit BaseLocalDynamics(DynamicsIdentifier &identifier)
         : identifier_(identifier), sph_system_(identifier.getSPHSystem()),
@@ -81,6 +84,29 @@ class BaseLocalDynamics
     SPHSystem &sph_system_;
     SPHBody &sph_body_;
     BaseParticles *particles_;
+
+    template <class DataType>
+    ConstantEntity<DataType> *createConstantEntity(const std::string &name, const DataType &value)
+    {
+        return constant_entity_ptrs_.createPtr<ConstantEntity<DataType>>(name, value);
+    };
+
+    template <class DataType, class ExecutionPolicy>
+    ConstantEntity<DataType> *createConstantEntity(
+        const ExecutionPolicy &policy, const std::string &name, const DataType &value)
+    {
+        return constant_entity_ptrs_.createPtr<ConstantEntity<DataType>>(name, value);
+    };
+
+    template <class DataType>
+    ConstantEntity<DataType> *createConstantEntity(
+        const execution::ParallelDevicePolicy &par_device, const std::string &name, const DataType &value)
+    {
+        ConstantEntity<DataType> *constant_entity =
+            constant_entity_ptrs_.createPtr<ConstantEntity<DataType>>(name, value);
+        constant_entity_ptrs_.createPtr<DeviceOnlyConstantEntity<DataType>>(constant_entity);
+        return constant_entity;
+    };
 };
 using LocalDynamics = BaseLocalDynamics<SPHBody>;
 

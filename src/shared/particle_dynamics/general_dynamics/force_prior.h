@@ -66,12 +66,18 @@ template <class GravityType>
 class GravityForce : public ForcePrior
 {
   protected:
-    GravityType gravity_;
+    //----------------------------------------------------------------------
+    // Here gives pointer referred in local dynamics
+    //----------------------------------------------------------------------
+    SingularVariable<Real> *v_physical_time_;
+    ConstantEntity<GravityType> *ce_gravity_;
+    //----------------------------------------------------------------------
+    // Here gives pointer referred in computing kernel
+    //----------------------------------------------------------------------
+    GravityType *gravity_;
     Vecd *pos_;
     Real *mass_;
     Real *physical_time_;
-
-    SingularVariable<Real> *v_physical_time_;
 
   public:
     GravityForce(SPHBody &sph_body, const GravityType &gravity);
@@ -89,7 +95,7 @@ class GravityForce : public ForcePrior
 
       protected:
         friend class GravityForce<GravityType>;
-        GravityType gravity_;
+        GravityType *gravity_;
         Vecd *pos_;
         Real *mass_;
         Real *physical_time_;
