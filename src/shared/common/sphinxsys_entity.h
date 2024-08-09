@@ -31,12 +31,11 @@
 #define SPHINXSYS_ENTITY_H
 
 #include "base_data_package.h"
-#include <cstring>
-#include <stdio.h>
-#include <typeinfo>
+#include "execution_policy.h"
 
 namespace SPH
 {
+
 class BaseEntity
 {
   public:
@@ -45,7 +44,7 @@ class BaseEntity
     virtual ~BaseEntity(){};
     std::string Name() const { return name_; };
 
-  private:
+  protected:
     const std::string name_;
 };
 
@@ -79,7 +78,35 @@ class DeviceSharedSingularVariable : public BaseEntity
 };
 
 template <typename DataType>
-using ConstantEntity = SingularVariable<DataType>;
+class ConstantEntity : public BaseEntity
+{
+  public:
+    ConstantEntity(const std::string &name, const DataType &value)
+        : BaseEntity(name), value_(new DataType(value)), device_value_(nullptr){};
+    virtual ~ConstantEntity() { delete value_; };
+
+    bool existDeviceData() { return device_value_ != nullptr; };
+    void setDeviceData(DataType *data) { device_value_ = data; };
+    DataType *DeviceDataAddress()
+    {
+        if (!existDeviceData())
+        {
+            std::cout << "\n Error: the constant entity '" << name_ << "' not allocated on device yet!" << std::endl;
+            std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+            exit(1);
+        }
+        return device_value_;
+    };
+
+    DataType *DataAddress() { return value_; };
+    template <class ExecutionPolicy>
+    DataType *DataAddress(const ExecutionPolicy &policy) { return DataAddress(); };
+    DataType *DataAddress(const execution::ParallelDevicePolicy &par_device) { return DeviceDataAddress(); }
+
+  private:
+    DataType *value_;
+    DataType *device_value_;
+};
 
 template <typename DataType>
 class DeviceOnlyConstantEntity : public BaseEntity
