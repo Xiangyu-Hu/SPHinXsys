@@ -111,9 +111,9 @@ class ParticleGenerator<SurfaceParticles, WallBoundary> : public ParticleGenerat
         }
 
         addPositionAndVolumetricMeasure(Vecd(DL1 - 0.5 * resolution_ref_, DH + 0.5 * resolution_ref_), resolution_ref_);
-        addSurfaceProperties(Vec2d(-1.0, 1.0), wall_thickness_);
+        addSurfaceProperties(Vec2d(-1.0, 1.0).normalized(), wall_thickness_);
         addPositionAndVolumetricMeasure(Vecd(DL1 - 0.5 * resolution_ref_, - 0.5 * resolution_ref_), resolution_ref_);
-        addSurfaceProperties(Vec2d(-1.0, -1.0), wall_thickness_);
+        addSurfaceProperties(Vec2d(-1.0, -1.0).normalized(), wall_thickness_);
 
         auto particle_number_mid_surface_02 = int(DH / resolution_ref_);
         //std::cout << " particle_number_mid_surface_02 = " << particle_number_mid_surface_02 << std::endl;
@@ -394,6 +394,8 @@ int main(int ac, char *av[])
     body_states_recording.addToWrite<int>(water_block, "BufferParticleIndicator");
     body_states_recording.addToWrite<Vecd>(shell_body, "NormalDirection");
     body_states_recording.addToWrite<Vecd>(shell_body, "PressureForceFromFluid");
+    body_states_recording.addToWrite<Real>(shell_body, "Average1stPrincipleCurvature");
+    body_states_recording.addToWrite<Real>(shell_body, "Average2ndPrincipleCurvature");
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
