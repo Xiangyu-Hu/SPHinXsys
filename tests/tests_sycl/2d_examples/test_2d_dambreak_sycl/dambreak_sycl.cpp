@@ -125,6 +125,7 @@ int main(int ac, char *av[])
     wall_boundary_normal_direction.exec();
     constant_gravity.exec();
     water_block.getBaseParticles().getVariableByName<Vecd>("ForcePrior")->synchronizeWithDevice();
+    water_block_update_cell_linked_list.exec();
     //----------------------------------------------------------------------
     //	Load restart file if necessary.
     //----------------------------------------------------------------------

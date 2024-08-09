@@ -29,6 +29,7 @@
 #ifndef UPDATE_CELL_LINKED_LIST_SYCL_H
 #define UPDATE_CELL_LINKED_LIST_SYCL_H
 
+#include "execution_sycl.h"
 #include "update_cell_linked_list.h"
 
 namespace SPH

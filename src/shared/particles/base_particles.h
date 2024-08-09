@@ -200,7 +200,7 @@ class BaseParticles
 
     template <typename DataType, class ExecutionPolicy, typename... Args>
     DataType *registerDiscreteVariable(const ExecutionPolicy &execution_policy,
-                                       size_t data_size, const std::string &name, Args &&...args);
+                                       const std::string &name, size_t data_size, Args &&...args);
     template <typename DataType, class ExecutionPolicy, typename... Args>
     DataType *registerStateVariable(const ExecutionPolicy &execution_policy, const std::string &name, Args &&...args);
 

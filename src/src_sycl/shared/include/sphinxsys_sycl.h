@@ -31,6 +31,6 @@
 #include "particle_iterators_sycl.h"
 #include "sphinxsys.h"
 #include "sphinxsys_entity_sycl.hpp"
-#include "update_cell_linked_list.hpp"
+#include "update_cell_linked_list_sycl.hpp"
 
 #endif // SPHINXSYS_SYCL_H

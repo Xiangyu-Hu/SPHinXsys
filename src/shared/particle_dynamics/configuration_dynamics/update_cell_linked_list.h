@@ -56,60 +56,41 @@ class UpdateCellLinkedList<CellLinkedListType> : public LocalDynamics
 
     UnsignedInt *setParticleOffsetListUpperBound();
     template <class ExecutionPolicy>
-    void setParticleOffsetListUpperBound(const ExecutionPolicy &execution_policy);
-    void setParticleOffsetListUpperBound(const ParallelDevicePolicy &par_device);
+    void clearParticleOffsetList(const ExecutionPolicy &execution_policy);
+    void clearParticleOffsetList(const ParallelDevicePolicy &par_device);
+
+    template <class ExecutionPolicy>
+    void incrementCellSize(const ExecutionPolicy &execution_policy);
+    void incrementCellSize(const ParallelDevicePolicy &par_device);
 
     template <class ExecutionPolicy>
     void exclusiveScanParticleOffsetList(const ExecutionPolicy &execution_policy);
     void exclusiveScanParticleOffsetList(const ParallelDevicePolicy &par_device);
-    class ComputingKernel
-    {
-      public:
-        ComputingKernel(UpdateCellLinkedList<CellLinkedListType> &update_cell_linked_list);
 
-        void clearOffsetLists(UnsignedInt linear_cell_index);
-        void incrementCellSize(UnsignedInt particle_i);
-        void updateCellLists(UnsignedInt particle_i);
-
-      protected:
-        friend class UpdateCellLinkedList<CellLinkedListType>;
-        Mesh mesh_;
-        UnsignedInt number_of_cells_, particles_bound_;
-
-        Vecd *pos_;
-        UnsignedInt *particle_id_list_;
-        UnsignedInt *particle_offset_list_;
-        UnsignedInt *current_size_list_;
-        UnsignedInt *total_real_particles_;
-    };
+    template <class ExecutionPolicy>
+    void updateCellLists(const ExecutionPolicy &execution_policy);
+    void updateCellLists(const ParallelDevicePolicy &par_device);
 
   protected:
-    Mesh mesh_;
-    UnsignedInt number_of_cells_, particles_bound_;
+    ConstantEntity<Mesh> *ce_mesh_;
+    SingularVariable<UnsignedInt> *sv_total_real_particles_;
+    DiscreteVariable<UnsignedInt> *dv_particle_offset_list_;
 
+    Mesh *mesh_;
     Vecd *pos_;
     UnsignedInt *particle_id_list_;
     UnsignedInt *particle_offset_list_;
     UnsignedInt *current_size_list_;
-
-    SingularVariable<UnsignedInt> *v_total_real_particles_;
-    DiscreteVariable<UnsignedInt> *v_particle_offset_list_;
 };
 
 template <class CellLinkedListType, class ExecutionPolicy>
 class UpdateCellLinkedList<CellLinkedListType, ExecutionPolicy>
     : public UpdateCellLinkedList<CellLinkedListType>, public BaseDynamics<void>
 {
-    using LocalDynamicsType = UpdateCellLinkedList<CellLinkedListType>;
-    using ComputingKernel = typename LocalDynamicsType::ComputingKernel;
-
   public:
     UpdateCellLinkedList(RealBody &real_body);
     virtual ~UpdateCellLinkedList(){};
     virtual void exec(Real dt = 0.0) override;
-
-  protected:
-    Implementation<LocalDynamicsType, ExecutionPolicy> kernel_implementation_;
 };
 
 } // namespace SPH

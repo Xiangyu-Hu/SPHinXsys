@@ -263,7 +263,7 @@ DataType *BaseParticles::getVariableDataByName(const ParallelDevicePolicy &execu
 //=================================================================================================//
 template <typename DataType, class ExecutionPolicy, typename... Args>
 DataType *BaseParticles::registerDiscreteVariable(
-    const ExecutionPolicy &execution_policy, size_t data_size, const std::string &name, Args &&...args)
+    const ExecutionPolicy &execution_policy, const std::string &name, size_t data_size, Args &&...args)
 {
     registerDiscreteVariable<DataType>(name, data_size, std::forward<Args>(args)...);
     return getVariableDataByName<DataType>(execution_policy, name);
@@ -290,7 +290,7 @@ SingularVariable<DataType> *BaseParticles::getSingularVariableByName(
     SingularVariable<DataType> *variable = getSingularVariableByName<DataType>(name);
     if (!variable->isValueDelegated())
     {
-        unique_variable_ptrs_.createPtr<SingularDeviceSharedVariable<DataType>>(variable);
+        unique_variable_ptrs_.createPtr<DeviceSharedSingularVariable<DataType>>(variable);
     }
     return variable->DeviceValueAddress();
 }
