@@ -78,6 +78,8 @@ class CompositeSolid : public ElasticSolid
     virtual Real VolumetricKirchhoff(Real J) override { return 0.0; };
     virtual std::string getRelevantStressMeasureName() override { return "PK2"; };
 
+    Real ContactStiffness(size_t index_i) override;
+
     Real CompositeDensity(size_t index_i);
 
     template <class ElasticSolidType, typename... Args>
