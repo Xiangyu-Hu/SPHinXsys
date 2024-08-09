@@ -10,7 +10,7 @@ using namespace SPH;
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real particle_spacing_ref = 1.0 / 5.0; /**< Initial reference particle spacing. */
+Real particle_spacing_ref = 1.0 / 7.0; /**< Initial reference particle spacing. */
 Real calculation_circle_radius = 11.0;
 Vecd insert_circle_center(7.0, 0.0);
 Vecd calculation_circle_center(calculation_circle_radius, 0.0);

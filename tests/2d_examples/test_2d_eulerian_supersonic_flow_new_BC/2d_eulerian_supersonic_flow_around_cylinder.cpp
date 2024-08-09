@@ -19,13 +19,14 @@ int main(int ac, char *av[])
     // Tag for run particle relaxation for the initial body fitted distribution.
     sph_system.setRunParticleRelaxation(false);
     // Tag for computation start with relaxed body fitted particles distribution.
-    sph_system.setReloadParticles(true);
+    sph_system.setReloadParticles(false);
     // Handle command line arguments and override the tags for particle relaxation and reload.
     sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     FluidBody fluid_block(sph_system, makeShared<FluidBlock>("FluidBlock"));
+    fluid_block.sph_adaptation_->resetKernel<KernelTabulated<KernelLaguerreGauss>>(20);
     fluid_block.defineBodyLevelSetShape();
     fluid_block.defineMaterial<CompressibleFluid>(rho_reference, heat_capacity_ratio);
     Ghost<ReserveSizeFactor> ghost_boundary(0.5);
@@ -84,7 +85,7 @@ int main(int ac, char *av[])
     InteractionWithUpdate<fluid_dynamics::EulerianCompressibleIntegration1stHalfHLLCWithLimiterRiemann> pressure_relaxation(fluid_block_inner);
     InteractionWithUpdate<fluid_dynamics::EulerianCompressibleIntegration2ndHalfHLLCWithLimiterRiemann> density_and_energy_relaxation(fluid_block_inner);
     SimpleDynamics<SupersonicFlowInitialCondition> initial_condition(fluid_block);
-    ReduceDynamics<fluid_dynamics::EulerianCompressibleAcousticTimeStepSize> get_fluid_time_step_size(fluid_block, 0.2);
+    ReduceDynamics<fluid_dynamics::EulerianCompressibleAcousticTimeStepSize> get_fluid_time_step_size(fluid_block, 0.1);
     InteractionWithUpdate<LinearGradientCorrectionMatrixInner> kernel_correction_matrix(fluid_block_inner);
     InteractionDynamics<KernelGradientCorrectionInner> kernel_gradient_update(fluid_block_inner);
     //----------------------------------------------------------------------
@@ -114,6 +115,7 @@ int main(int ac, char *av[])
     RegressionTestEnsembleAverage<ReducedQuantityRecording<MaximumSpeed>> write_maximum_speed(fluid_block);
     write_real_body_states.addToWrite<int>(fluid_block, "Indicator");
     write_real_body_states.addToWrite<Vecd>(fluid_block, "Velocity");
+    write_real_body_states.addToWrite<Real>(fluid_block, "Pressure");
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
