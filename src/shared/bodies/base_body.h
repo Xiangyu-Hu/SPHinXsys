@@ -42,8 +42,8 @@
 #include "base_particle_generator.h"
 #include "base_particles.h"
 #include "cell_linked_list.h"
-#include "sph_data_containers.h"
 #include "sph_system.h"
+#include "sphinxsys_containers.h"
 
 #include <string>
 

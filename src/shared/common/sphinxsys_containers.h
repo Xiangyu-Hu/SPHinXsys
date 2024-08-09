@@ -21,17 +21,17 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	sph_data_containers.h
+ * @file 	sphinxsys_containers.h
  * @brief 	Set up of basic data structure.
  * @author	Chi Zhang and Xiangyu Hu
  */
 
-#ifndef SPH_DATA_CONTAINERS_H
-#define SPH_DATA_CONTAINERS_H
+#ifndef SPHINXSYS_CONTAINERS_H
+#define SPHINXSYS_CONTAINERS_H
 
 #include "base_data_package.h"
 #include "base_data_type.h"
-#include "base_variable.h"
+#include "sphinxsys_entity.h"
 
 namespace SPH
 {
@@ -80,4 +80,4 @@ typedef DataContainerAddressAssemble<SingularVariable> SingularVariables;
 typedef DataContainerAddressAssemble<MeshVariable> MeshVariableAssemble;
 
 } // namespace SPH
-#endif // SPH_DATA_CONTAINERS_H
+#endif // SPHINXSYS_CONTAINERS_H

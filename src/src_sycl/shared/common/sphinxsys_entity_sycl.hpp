@@ -21,18 +21,48 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file    base_variable_sycl.hpp
+ * @file    sphinxsys_entity_sycl.hpp
  * @brief   TBD.
  * @author  Alberto Guarnieri and Xiangyu Hu
  */
-#ifndef BASE_VARIABLE_SYCL_HPP
-#define BASE_VARIABLE_SYCL_HPP
+#ifndef SPHINXSYS_ENTITY_SYCL_HPP
+#define SPHINXSYS_ENTITY_SYCL_HPP
 
-#include "base_variable.h"
 #include "execution_sycl.h"
+#include "sphinxsys_entity.h"
 
 namespace SPH
 {
+//=================================================================================================//
+template <typename DataType>
+DeviceSharedSingularVariable<DataType>::
+    DeviceSharedSingularVariable(SingularVariable<DataType> *host_variable)
+    : BaseEntity(host_variable->Name()),
+      device_shared_value_(allocateDeviceShared<DataType>(1))
+{
+    *device_shared_value_ = *host_variable->ValueAddress();
+    host_variable->setDelegateValueAddress(device_shared_value_);
+}
+//=================================================================================================//
+template <typename DataType>
+DeviceSharedSingularVariable<DataType>::~DeviceSharedSingularVariable()
+{
+    freeDeviceData(device_shared_value_);
+}
+//=================================================================================================//
+template <typename DataType>
+DeviceOnlyConstantEntity<DataType>::DeviceOnlyConstantEntity(ConstantEntity<DataType> *host_constant)
+    : BaseEntity(host_constant->Name()), device_only_value_(allocateDeviceOnly<DataType>(1))
+{
+    *device_only_value_ = *host_constant->ValueAddress();
+    host_constant->setDelegateValueAddress(device_only_value_);
+}
+//=================================================================================================//
+template <typename DataType>
+DeviceOnlyConstantEntity<DataType>::~DeviceOnlyConstantEntity()
+{
+    freeDeviceData(device_only_value_);
+}
 //=================================================================================================//
 template <typename DataType>
 void DiscreteVariable<DataType>::synchronizeWithDevice()
@@ -44,34 +74,9 @@ void DiscreteVariable<DataType>::synchronizeWithDevice()
 }
 //=================================================================================================//
 template <typename DataType>
-void DiscreteVariable<DataType>::synchronizeDevice()
-{
-    if (existDeviceDataField())
-    {
-        copyToDevice(data_field_, device_data_field_, size_);
-    }
-}
-//=================================================================================================//
-template <typename DataType>
-SingularDeviceSharedVariable<DataType>::
-    SingularDeviceSharedVariable(SingularVariable<DataType> *host_variable)
-    : BaseVariable(host_variable->Name()),
-      device_shared_value_(allocateDeviceShared<DataType>(1))
-{
-    *device_shared_value_ = *host_variable->ValueAddress();
-    host_variable->setDelegateValueAddress(device_shared_value_);
-}
-//=================================================================================================//
-template <typename DataType>
-SingularDeviceSharedVariable<DataType>::~SingularDeviceSharedVariable()
-{
-    freeDeviceData(device_shared_value_);
-}
-//=================================================================================================//
-template <typename DataType>
-DiscreteDeviceOnlyVariable<DataType>::
-    DiscreteDeviceOnlyVariable(DiscreteVariable<DataType> *host_variable)
-    : BaseVariable(host_variable->Name()), device_only_data_field_(nullptr)
+DeviceOnlyDiscreteVariable<DataType>::
+    DeviceOnlyDiscreteVariable(DiscreteVariable<DataType> *host_variable)
+    : BaseEntity(host_variable->Name()), device_only_data_field_(nullptr)
 {
     size_t data_size = host_variable->getDataSize();
     device_only_data_field_ = allocateDeviceOnly<DataType>(data_size);
@@ -80,11 +85,11 @@ DiscreteDeviceOnlyVariable<DataType>::
 };
 //=================================================================================================//
 template <typename DataType>
-DiscreteDeviceOnlyVariable<DataType>::~DiscreteDeviceOnlyVariable()
+DeviceOnlyDiscreteVariable<DataType>::~DeviceOnlyDiscreteVariable()
 {
     freeDeviceData(device_only_data_field_);
 }
 //=================================================================================================//
 } // namespace SPH
 
-#endif // BASE_VARIABLE_SYCL_HPP
+#endif // SPHINXSYS_ENTITY_SYCL_HPP

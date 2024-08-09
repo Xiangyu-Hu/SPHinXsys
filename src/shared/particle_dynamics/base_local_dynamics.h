@@ -32,7 +32,7 @@
 
 #include "base_data_package.h"
 #include "base_particle_dynamics.h"
-#include "sph_data_containers.h"
+#include "sphinxsys_containers.h"
 
 namespace SPH
 {
@@ -69,12 +69,12 @@ class BaseLocalDynamics
     explicit BaseLocalDynamics(DynamicsIdentifier &identifier)
         : identifier_(identifier), sph_system_(identifier.getSPHSystem()),
           sph_body_(identifier.getSPHBody()),
-          particles_(&sph_body_.getBaseParticles()) {};
-    virtual ~BaseLocalDynamics() {};
+          particles_(&sph_body_.getBaseParticles()){};
+    virtual ~BaseLocalDynamics(){};
     DynamicsIdentifier &getDynamicsIdentifier() { return identifier_; };
     SPHBody &getSPHBody() { return sph_body_; };
     BaseParticles *getParticles() { return particles_; };
-    virtual void setupDynamics(Real dt = 0.0) {}; // setup global parameters
+    virtual void setupDynamics(Real dt = 0.0){}; // setup global parameters
 
   protected:
     DynamicsIdentifier &identifier_;
@@ -94,8 +94,8 @@ class BaseLocalDynamicsReduce : public BaseLocalDynamics<DynamicsIdentifier>
   public:
     explicit BaseLocalDynamicsReduce(DynamicsIdentifier &identifier)
         : BaseLocalDynamics<DynamicsIdentifier>(identifier),
-          quantity_name_("ReducedQuantity") {};
-    virtual ~BaseLocalDynamicsReduce() {};
+          quantity_name_("ReducedQuantity"){};
+    virtual ~BaseLocalDynamicsReduce(){};
 
     using ReturnType = decltype(Operation::reference_);
     ReturnType Reference() { return operation_.reference_; };
@@ -121,7 +121,7 @@ class Average : public ReduceSumType
     template <class DynamicsIdentifier, typename... Args>
     Average(DynamicsIdentifier &identifier, Args &&...args)
         : ReduceSumType(identifier, std::forward<Args>(args)...){};
-    virtual ~Average() {};
+    virtual ~Average(){};
     using ReturnType = typename ReduceSumType::ReturnType;
 
     virtual ReturnType outputResult(ReturnType reduced_value)
@@ -144,7 +144,7 @@ struct ConstructorArgs
     std::tuple<OtherArgs...> others_;
     SPHBody &getSPHBody() { return body_relation_.getSPHBody(); };
     ConstructorArgs(BodyRelationType &body_relation, OtherArgs... other_args)
-        : body_relation_(body_relation), others_(other_args...) {};
+        : body_relation_(body_relation), others_(other_args...){};
 };
 
 /**
@@ -160,9 +160,9 @@ template <typename... CommonParameters, template <typename... InteractionTypes> 
 class ComplexInteraction<LocalDynamicsName<>, CommonParameters...>
 {
   public:
-    ComplexInteraction() {};
+    ComplexInteraction(){};
 
-    void interaction(size_t index_i, Real dt = 0.0) {};
+    void interaction(size_t index_i, Real dt = 0.0){};
 };
 
 template <typename... CommonParameters, template <typename... InteractionTypes> class LocalDynamicsName,

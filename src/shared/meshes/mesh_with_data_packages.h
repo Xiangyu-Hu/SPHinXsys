@@ -30,8 +30,8 @@
 #define MESH_WITH_DATA_PACKAGES_H
 
 #include "base_mesh.h"
-#include "base_variable.h"
 #include "my_memory_pool.h"
+#include "sphinxsys_entity.h"
 
 #include <algorithm>
 #include <fstream>
