@@ -679,7 +679,23 @@ template <class ParticleScope>
 using TVC_NoLimiter_withLinearGradientCorrection =
     BaseTransportVelocityCorrectionComplex<SingleResolution, NoLimiter, LinearGradientCorrection, ParticleScope>;
 //=================================================================================================//
+class ModifiedTruncatedLinear : public Limiter
+{
+    Real ref_, slope_;
 
+  public:
+    ModifiedTruncatedLinear(Real ref, Real slope = 1000.0)
+        : Limiter(), ref_(ref), slope_(slope){};
+    Real operator()(Real measure)
+    {
+        Real measure_scale = measure * ref_;
+        return SMIN(slope_ * measure_scale, Real(1));
+    };
+};
+template <class ParticleScope>
+using TVC_ModifiedLimited_withLinearGradientCorrection =
+    BaseTransportVelocityCorrectionComplex<SingleResolution, ModifiedTruncatedLinear, LinearGradientCorrection, ParticleScope>;
+//=================================================================================================//
 //*********************TESTING MODULES*********************
 //=================================================================================================//
 	/** Note this is a temporary treatment *
