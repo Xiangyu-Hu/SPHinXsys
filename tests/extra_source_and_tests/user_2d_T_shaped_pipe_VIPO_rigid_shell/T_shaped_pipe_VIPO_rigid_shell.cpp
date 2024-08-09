@@ -107,9 +107,9 @@ class ParticleGenerator<SurfaceParticles, WallBoundary> : public ParticleGenerat
         }
 
         addPositionAndVolumetricMeasure(Vecd(DL1 - 0.5 * resolution_ref_, DH + 0.5 * resolution_ref_), resolution_ref_);
-        addSurfaceProperties(Vec2d(-1.0, 1.0), wall_thickness_);
+        addSurfaceProperties(Vec2d(-1.0, 1.0).normalized(), wall_thickness_);
         addPositionAndVolumetricMeasure(Vecd(DL1 - 0.5 * resolution_ref_, - 0.5 * resolution_ref_), resolution_ref_);
-        addSurfaceProperties(Vec2d(-1.0, -1.0), wall_thickness_);
+        addSurfaceProperties(Vec2d(-1.0, -1.0).normalized(), wall_thickness_);
 
         auto particle_number_mid_surface_02 = int(DH / resolution_ref_);
         //std::cout << " particle_number_mid_surface_02 = " << particle_number_mid_surface_02 << std::endl;
@@ -262,7 +262,6 @@ int main(int ac, char *av[])
     //	Note that there may be data dependence on the constructors of these methods.
     //----------------------------------------------------------------------
     // shell dynamics
-    InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration> shell_corrected_configuration(shell_inner);
     SimpleDynamics<thin_structure_dynamics::AverageShellCurvature> shell_average_curvature(shell_curvature_inner);
 
     // fluid dynamics
@@ -321,13 +320,14 @@ int main(int ac, char *av[])
     body_states_recording.addToWrite<Real>(water_block, "Density");
     body_states_recording.addToWrite<int>(water_block, "BufferParticleIndicator");
     body_states_recording.addToWrite<Vecd>(shell_body, "NormalDirection");
+    body_states_recording.addToWrite<Real>(shell_body, "Average1stPrincipleCurvature");
+    body_states_recording.addToWrite<Real>(shell_body, "Average2ndPrincipleCurvature");
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
     //----------------------------------------------------------------------
     sph_system.initializeSystemCellLinkedLists();
     sph_system.initializeSystemConfigurations();
-    shell_corrected_configuration.exec();
     shell_average_curvature.exec();
     water_block_complex.updateConfiguration();
     boundary_indicator.exec();
@@ -413,7 +413,6 @@ int main(int ac, char *av[])
             right_down_disposer_outflow_deletion.exec();
 
             water_block.updateCellLinkedListWithParticleSort(100);
-            shell_average_curvature.exec();
             water_block_complex.updateConfiguration();
 
             interval_updating_configuration += TickCount::now() - time_instance;
