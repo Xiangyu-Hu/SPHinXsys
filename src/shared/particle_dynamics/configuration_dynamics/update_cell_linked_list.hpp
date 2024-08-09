@@ -22,6 +22,7 @@ UpdateCellLinkedList<CellLinkedListType>::
       current_size_list_(particles_->registerDiscreteVariable<UnsignedInt>(execution_policy, "CurrentCellSize", mesh_->NumberOfCells()))
 {
     dv_particle_offset_list_ = particles_->getVariableByName<UnsignedInt>("ParticleOffsetList");
+    particles_->addVariableToWrite<UnsignedInt>("ParticleIDList");
 }
 //=================================================================================================//
 template <typename CellLinkedListType>

@@ -116,6 +116,7 @@ int main(int ac, char *av[])
     RestartIO restart_io(sph_system);
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalMechanicalEnergy>> write_water_mechanical_energy(water_block, gravity);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>> write_recorded_water_pressure("Pressure", fluid_observer_contact);
+    MeshRecordingToPlt cell_linked_list_recording(sph_system, water_block.getCellLinkedList());
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
@@ -124,8 +125,10 @@ int main(int ac, char *av[])
     sph_system.initializeSystemConfigurations();
     wall_boundary_normal_direction.exec();
     constant_gravity.exec();
-    water_block.getBaseParticles().getVariableByName<Vecd>("ForcePrior")->synchronizeWithDevice();
     water_block_update_cell_linked_list.exec();
+    water_block.getBaseParticles().getVariableByName<Vecd>("ForcePrior")->synchronizeWithDevice();
+    water_block.getBaseParticles().getVariableByName<UnsignedInt>("ParticleIDList")->synchronizeWithDevice();
+    cell_linked_list_recording.writeToFile();
     //----------------------------------------------------------------------
     //	Load restart file if necessary.
     //----------------------------------------------------------------------
