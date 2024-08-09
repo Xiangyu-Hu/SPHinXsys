@@ -110,8 +110,8 @@ int main(int ac, char *av[])
     SimpleDynamics<ImposingActiveStrain> imposing_active_strain(fish_body);
     SimpleDynamics<solid_dynamics::UpdateElasticNormalDirection> fish_body_update_normal(fish_body);
 
-    TimeDependentAcceleration time_dependent_acceleration(Vec2d::Zero());
-    SimpleDynamics<GravityForce> apply_gravity_force(water_block, time_dependent_acceleration);
+    StartupAcceleration time_dependent_acceleration(Vec2d::Zero(), 2.0);
+    SimpleDynamics<GravityForce<StartupAcceleration>> apply_gravity_force(water_block, time_dependent_acceleration);
 
     Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation(water_block_inner, water_block_contact);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallRiemann> density_relaxation(water_block_inner, water_block_contact);
@@ -142,6 +142,10 @@ int main(int ac, char *av[])
     InteractionWithUpdate<solid_dynamics::PressureForceFromFluid<decltype(density_relaxation)>> pressure_force_from_fluid(fish_contact);
     solid_dynamics::AverageVelocityAndAcceleration average_velocity_and_acceleration(fish_body);
     //----------------------------------------------------------------------
+    //	Define the configuration related particles dynamics.
+    //----------------------------------------------------------------------
+    ParticleSorting particle_sorting(water_block);
+    //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp write_real_body_states(sph_system);
@@ -169,6 +173,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Setup computing and initial conditions.
     //----------------------------------------------------------------------
+    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     size_t number_of_iterations = 0;
     int screen_output_interval = 100;
     Real End_Time = 1.7; /**< End time. */
@@ -185,7 +190,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------
-    while (GlobalStaticVariables::physical_time_ < End_Time)
+    while (physical_time < End_Time)
     {
         Real integration_time = 0.0;
 
@@ -233,7 +238,7 @@ int main(int ac, char *av[])
 
                 relaxation_time += dt;
                 integration_time += dt;
-                GlobalStaticVariables::physical_time_ += dt;
+                physical_time += dt;
                 emitter_buffer_inflow_condition.exec(dt);
                 inner_ite_dt++;
             }
@@ -241,7 +246,7 @@ int main(int ac, char *av[])
             if (number_of_iterations % screen_output_interval == 0)
             {
                 std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
-                          << GlobalStaticVariables::physical_time_
+                          << physical_time
                           << "	Dt = " << Dt << "	Dt / dt = " << inner_ite_dt << "	dt / dt_s = " << inner_ite_dt_s << "\n";
 
                 write_total_viscous_force_from_fluid.writeToFile(number_of_iterations);
@@ -252,8 +257,11 @@ int main(int ac, char *av[])
             /** Water block configuration and periodic condition. */
             emitter_inflow_injection.exec();
             disposer_outflow_deletion.exec();
-
-            water_block.updateCellLinkedListWithParticleSort(100);
+            if (number_of_iterations % 100 == 0 && number_of_iterations != 1)
+            {
+                particle_sorting.exec();
+            }
+            water_block.updateCellLinkedList();
             fish_body.updateCellLinkedList();
             /** one need update configuration after periodic condition. */
             water_block_complex.updateConfiguration();

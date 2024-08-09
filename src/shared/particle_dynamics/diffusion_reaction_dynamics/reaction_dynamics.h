@@ -38,7 +38,7 @@ namespace SPH
  * @brief Base class for computing the reaction process of all species
  */
 template <class ReactionModelType>
-class BaseReactionRelaxation : public LocalDynamics, public DataDelegateSimple
+class BaseReactionRelaxation : public LocalDynamics
 {
   protected:
     struct UpdateReactionSpecies
@@ -52,7 +52,7 @@ class BaseReactionRelaxation : public LocalDynamics, public DataDelegateSimple
     static constexpr int NumReactiveSpecies = ReactionModelType::NumSpecies;
     typedef std::array<std::string, NumReactiveSpecies> ReactiveSpeciesNames;
     typedef std::array<Real, NumReactiveSpecies> LocalSpecies;
-    StdVec<StdLargeVec<Real> *> reactive_species_;
+    StdVec<Real *> reactive_species_;
     ReactionModelType &reaction_model_;
     UpdateReactionSpecies update_reaction_species_;
     void loadLocalSpecies(LocalSpecies &local_species, size_t index_i);

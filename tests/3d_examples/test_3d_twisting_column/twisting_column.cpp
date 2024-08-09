@@ -132,6 +132,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     // Setup time-stepping related simulation parameters.
     //----------------------------------------------------------------------
+    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     int number_of_iterations = 0;
     Real end_time = 0.5;
     Real output_period = end_time / 250.0;
@@ -150,7 +151,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     // Main time-stepping loop.
     //----------------------------------------------------------------------
-    while (GlobalStaticVariables::physical_time_ < end_time)
+    while (physical_time < end_time)
     {
         Real integration_time = 0.0;
         while (integration_time < output_period)
@@ -158,7 +159,7 @@ int main(int ac, char *av[])
             if (number_of_iterations % 100 == 0)
             {
                 std::cout << "N=" << number_of_iterations << " Time: "
-                          << GlobalStaticVariables::physical_time_ << "	dt: "
+                          << physical_time << "	dt: "
                           << dt << "\n";
             }
             stress_relaxation_first_half.exec(dt);
@@ -168,7 +169,7 @@ int main(int ac, char *av[])
             number_of_iterations++;
             dt = computing_time_step_size.exec();
             integration_time += dt;
-            GlobalStaticVariables::physical_time_ += dt;
+            physical_time += dt;
             write_displacement.writeToFile(number_of_iterations);
             write_velocity.writeToFile(number_of_iterations);
         }

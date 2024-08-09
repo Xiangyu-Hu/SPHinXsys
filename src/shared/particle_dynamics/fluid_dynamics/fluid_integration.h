@@ -41,17 +41,17 @@ namespace SPH
 {
 namespace fluid_dynamics
 {
-class FluidInitialCondition : public LocalDynamics, public DataDelegateSimple
+class FluidInitialCondition : public LocalDynamics
 {
   public:
     explicit FluidInitialCondition(SPHBody &sph_body);
     virtual ~FluidInitialCondition(){};
 
   protected:
-    StdLargeVec<Vecd> &pos_, &vel_;
+    Vecd *pos_, *vel_;
 };
 
-class ContinuumVolumeUpdate : public LocalDynamics, public DataDelegateSimple
+class ContinuumVolumeUpdate : public LocalDynamics
 {
   public:
     explicit ContinuumVolumeUpdate(SPHBody &sph_body);
@@ -63,7 +63,7 @@ class ContinuumVolumeUpdate : public LocalDynamics, public DataDelegateSimple
     }
 
   protected:
-    StdLargeVec<Real> &Vol_, &mass_, &rho_;
+    Real *Vol_, *mass_, *rho_;
 };
 
 template <class DataDelegationType>
@@ -76,8 +76,8 @@ class BaseIntegration : public LocalDynamics, public DataDelegationType
 
   protected:
     Fluid &fluid_;
-    StdLargeVec<Real> &Vol_, &rho_, &mass_, &p_, &drho_dt_;
-    StdLargeVec<Vecd> &pos_, &vel_, &force_, &force_prior_;
+    Real *Vol_, *rho_, *mass_, *p_, *drho_dt_;
+    Vecd *pos_, *vel_, *force_, *force_prior_;
 };
 
 template <typename... InteractionTypes>
@@ -133,8 +133,8 @@ class Integration1stHalf<Contact<>, RiemannSolverType, KernelCorrectionType>
     KernelCorrectionType correction_;
     StdVec<KernelCorrectionType> contact_corrections_;
     StdVec<RiemannSolverType> riemann_solvers_;
-    StdVec<StdLargeVec<Real> *> contact_p_;
-    StdVec<StdLargeVec<Real> *> contact_Vol_;
+    StdVec<Real *> contact_p_;
+    StdVec<Real *> contact_Vol_;
 };
 
 template <class RiemannSolverType, class KernelCorrectionType>
@@ -165,7 +165,7 @@ class Integration2ndHalf<Inner<>, RiemannSolverType>
 
   protected:
     RiemannSolverType riemann_solver_;
-    StdLargeVec<Real> &mass_, &Vol_;
+    Real *mass_, *Vol_;
 };
 using Integration2ndHalfInnerRiemann = Integration2ndHalf<Inner<>, AcousticRiemannSolver>;
 using Integration2ndHalfInnerNoRiemann = Integration2ndHalf<Inner<>, NoRiemannSolver>;
@@ -195,8 +195,8 @@ class Integration2ndHalf<Contact<>, RiemannSolverType>
 
   protected:
     StdVec<RiemannSolverType> riemann_solvers_;
-    StdVec<StdLargeVec<Real> *> contact_Vol_;
-    StdVec<StdLargeVec<Vecd> *> contact_vel_;
+    StdVec<Real *> contact_Vol_;
+    StdVec<Vecd *> contact_vel_;
 };
 
 template <class RiemannSolverType>

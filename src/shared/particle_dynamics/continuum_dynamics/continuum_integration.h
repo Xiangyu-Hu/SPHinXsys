@@ -38,15 +38,15 @@ namespace SPH
 {
 namespace continuum_dynamics
 {
-class ContinuumInitialCondition : public LocalDynamics, public DataDelegateSimple
+class ContinuumInitialCondition : public LocalDynamics
 {
   public:
     explicit ContinuumInitialCondition(SPHBody &sph_body);
     virtual ~ContinuumInitialCondition(){};
 
   protected:
-    StdLargeVec<Vecd> &pos_, &vel_;
-    StdLargeVec<Mat3d> &stress_tensor_3D_;
+    Vecd *pos_, *vel_;
+    Mat3d *stress_tensor_3D_;
 };
 
 template <class FluidDynamicsType>
@@ -58,7 +58,7 @@ class BaseIntegration1stHalf : public FluidDynamicsType
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
-    StdLargeVec<Vecd> &acc_shear_;
+    Vecd *acc_shear_;
 };
 using Integration1stHalf = BaseIntegration1stHalf<fluid_dynamics::Integration1stHalfInnerNoRiemann>;
 using Integration1stHalfRiemann = BaseIntegration1stHalf<fluid_dynamics::Integration1stHalfInnerRiemann>;
@@ -73,7 +73,7 @@ class ShearAccelerationRelaxation : public fluid_dynamics::BaseIntegration<DataD
   protected:
     GeneralContinuum &continuum_;
     Real G_, smoothing_length_;
-    StdLargeVec<Vecd> &acc_shear_;
+    Vecd *acc_shear_;
 };
 
 class ShearStressRelaxation : public fluid_dynamics::BaseIntegration<DataDelegateInner>
@@ -87,9 +87,9 @@ class ShearStressRelaxation : public fluid_dynamics::BaseIntegration<DataDelegat
 
   protected:
     GeneralContinuum &continuum_;
-    StdLargeVec<Matd> &shear_stress_, &shear_stress_rate_, &velocity_gradient_, &strain_tensor_, &strain_tensor_rate_;
-    StdLargeVec<Real> &von_mises_stress_, &von_mises_strain_, &Vol_;
-    StdLargeVec<Matd> &B_;
+    Matd *shear_stress_, *shear_stress_rate_, *velocity_gradient_, *strain_tensor_, *strain_tensor_rate_;
+    Real *von_mises_stress_, *von_mises_strain_, *Vol_;
+    Matd *B_;
 };
 
 template <class DataDelegationType>
@@ -102,9 +102,9 @@ class BasePlasticIntegration : public fluid_dynamics::BaseIntegration<DataDelega
 
   protected:
     PlasticContinuum &plastic_continuum_;
-    StdLargeVec<Mat3d> &stress_tensor_3D_, &strain_tensor_3D_, &stress_rate_3D_, &strain_rate_3D_;
-    StdLargeVec<Mat3d> &elastic_strain_tensor_3D_, &elastic_strain_rate_3D_;
-    StdLargeVec<Matd> &velocity_gradient_;
+    Mat3d *stress_tensor_3D_, *strain_tensor_3D_, *stress_rate_3D_, *strain_rate_3D_;
+    Mat3d *elastic_strain_tensor_3D_, *elastic_strain_rate_3D_;
+    Matd *velocity_gradient_;
 };
 
 template <typename... InteractionTypes>
@@ -165,8 +165,8 @@ class PlasticIntegration2ndHalf<Inner<>, RiemannSolverType>
 
   protected:
     RiemannSolverType riemann_solver_;
-    StdLargeVec<Real> &acc_deviatoric_plastic_strain_, &vertical_stress_;
-    StdLargeVec<Real> &Vol_, &mass_;
+    Real *acc_deviatoric_plastic_strain_, *vertical_stress_;
+    Real *Vol_, *mass_;
     Real E_, nu_;
 
     Real getDeviatoricPlasticStrain(Mat3d &strain_tensor);

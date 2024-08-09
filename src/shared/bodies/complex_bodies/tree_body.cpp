@@ -20,7 +20,7 @@ void TreeBody::buildParticleConfiguration(ParticleConfiguration &particle_config
     neighboring_ids.push_back(branches_[1]->inner_particles_[0]);
     neighboring_ids.push_back(branches_[1]->inner_particles_[1]);
     /** Build configuration. */
-    const StdLargeVec<Vecd> &pos = base_particles_->ParticlePositions();
+    Vecd *pos = base_particles_->ParticlePositions();
     NeighborBuilderInner neighbor_relation_inner(*this);
     for (size_t n = 0; n != neighboring_ids.size(); ++n)
     {

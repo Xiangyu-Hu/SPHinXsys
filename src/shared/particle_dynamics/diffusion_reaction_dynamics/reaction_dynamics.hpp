@@ -14,12 +14,12 @@ namespace SPH
 template <class ReactionModelType>
 BaseReactionRelaxation<ReactionModelType>::
     BaseReactionRelaxation(SPHBody &sph_body, ReactionModelType &reaction_model)
-    : LocalDynamics(sph_body), DataDelegateSimple(sph_body), reaction_model_(reaction_model)
+    : LocalDynamics(sph_body), reaction_model_(reaction_model)
 {
     ReactiveSpeciesNames &species_names = reaction_model.getSpeciesNames();
     for (size_t k = 0; k != NumReactiveSpecies; ++k)
     {
-        reactive_species_.push_back(this->particles_->template registerSharedVariable<Real>(species_names[k]));
+        reactive_species_.push_back(this->particles_->template registerStateVariable<Real>(species_names[k]));
     }
 }
 //=================================================================================================//
@@ -29,7 +29,7 @@ void BaseReactionRelaxation<ReactionModelType>::
 {
     for (size_t k = 0; k != NumReactiveSpecies; ++k)
     {
-        local_species[k] = (*reactive_species_[k])[index_i];
+        local_species[k] = reactive_species_[k][index_i];
     }
 }
 //=================================================================================================//
@@ -39,7 +39,7 @@ void BaseReactionRelaxation<ReactionModelType>::
 {
     for (size_t k = 0; k != NumReactiveSpecies; ++k)
     {
-        (*reactive_species_[k])[index_i] = local_species[k];
+        reactive_species_[k][index_i] = local_species[k];
     }
 }
 //=================================================================================================//

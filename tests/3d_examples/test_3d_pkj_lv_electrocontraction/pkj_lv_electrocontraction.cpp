@@ -23,8 +23,6 @@ int main(int ac, char *av[])
      * Build up context -- a SPHSystem.
      */
     SPHSystem sph_system(system_domain_bounds, dp_0);
-    /** Set the starting time. */
-    GlobalStaticVariables::physical_time_ = 0.0;
     /** Tag for run particle relaxation for the initial body fitted distribution. */
     sph_system.setRunParticleRelaxation(false);
     /** Tag for reload initially relaxed particles. */
@@ -226,6 +224,7 @@ int main(int ac, char *av[])
     /**
      * main loop.
      */
+    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     int screen_output_interval = 10;
     int ite = 0;
     int reaction_step = 2;
@@ -241,7 +240,7 @@ int main(int ac, char *av[])
     std::cout << "Main Loop Starts Here : "
               << "\n";
     /** Main loop starts here. */
-    while (GlobalStaticVariables::physical_time_ < end_time)
+    while (physical_time < end_time)
     {
         Real integration_time = 0.0;
         while (integration_time < Ouput_T)
@@ -252,14 +251,14 @@ int main(int ac, char *av[])
                 if (ite % screen_output_interval == 0)
                 {
                     std::cout << std::fixed << std::setprecision(9) << "N=" << ite << "	Time = "
-                              << GlobalStaticVariables::physical_time_
+                              << physical_time
                               << "	dt_pkj = " << dt_pkj
                               << "	dt_myocardium = " << dt_myocardium
                               << "	dt_muscle = " << dt_muscle << "\n";
                 }
                 /** Apply stimulus excitation. */
-                // if( 0 <= GlobalStaticVariables::physical_time_
-                // 	&&  GlobalStaticVariables::physical_time_ <= 0.5)
+                // if( 0 <= physical_time
+                // 	&&  physical_time <= 0.5)
                 // {
                 // 	apply_stimulus_myocardium.exec(dt_myocardium);
                 // }
@@ -275,7 +274,7 @@ int main(int ac, char *av[])
                     if (dt_myocardium - dt_pkj_sum < dt_pkj)
                         dt_pkj = dt_myocardium - dt_pkj_sum;
 
-                    if (0 <= GlobalStaticVariables::physical_time_ && GlobalStaticVariables::physical_time_ <= 0.5)
+                    if (0 <= physical_time && physical_time <= 0.5)
                     {
                         apply_stimulus_pkj.exec(dt_pkj);
                     }
@@ -335,7 +334,7 @@ int main(int ac, char *av[])
 
                 relaxation_time += dt_myocardium;
                 integration_time += dt_myocardium;
-                GlobalStaticVariables::physical_time_ += dt_myocardium;
+                physical_time += dt_myocardium;
             }
             write_voltage.writeToFile(ite);
             write_displacement.writeToFile(ite);

@@ -31,7 +31,7 @@
 #define PARTICLE_GENERATOR_NETWORK_H
 
 #include "base_particle_generator.h"
-#include "sph_data_containers.h"
+#include "sphinxsys_containers.h"
 #include "tree_body.h"
 
 namespace SPH

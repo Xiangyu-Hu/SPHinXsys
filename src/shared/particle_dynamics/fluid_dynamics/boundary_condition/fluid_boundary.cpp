@@ -7,11 +7,10 @@ namespace fluid_dynamics
 //=================================================================================================//
 BaseFlowBoundaryCondition::BaseFlowBoundaryCondition(BodyPartByCell &body_part)
     : BaseLocalDynamics<BodyPartByCell>(body_part),
-      DataDelegateSimple(body_part.getSPHBody()),
-      rho_(*particles_->getVariableDataByName<Real>("Density")),
-      p_(*particles_->getVariableDataByName<Real>("Pressure")),
-      pos_(*particles_->getVariableDataByName<Vecd>("Position")),
-      vel_(*particles_->getVariableDataByName<Vecd>("Velocity")){};
+      rho_(particles_->getVariableDataByName<Real>("Density")),
+      p_(particles_->getVariableDataByName<Real>("Pressure")),
+      pos_(particles_->getVariableDataByName<Vecd>("Position")),
+      vel_(particles_->getVariableDataByName<Vecd>("Velocity")){};
 //=================================================================================================//
 FlowVelocityBuffer::FlowVelocityBuffer(BodyPartByCell &body_part, Real relaxation_rate)
     : BaseFlowBoundaryCondition(body_part), relaxation_rate_(relaxation_rate){};
@@ -35,15 +34,14 @@ void DampingBoundaryCondition::update(size_t index_i, Real dt)
 EmitterInflowCondition::
     EmitterInflowCondition(BodyAlignedBoxByParticle &aligned_box_part)
     : BaseLocalDynamics<BodyPartByParticle>(aligned_box_part),
-      DataDelegateSimple(aligned_box_part.getSPHBody()),
       fluid_(DynamicCast<Fluid>(this, particles_->getBaseMaterial())),
       sorted_id_(particles_->ParticleSortedIds()),
-      pos_(*particles_->getVariableDataByName<Vecd>("Position")),
-      vel_(*particles_->getVariableDataByName<Vecd>("Velocity")),
-      force_(*particles_->getVariableDataByName<Vecd>("Force")),
-      rho_(*particles_->getVariableDataByName<Real>("Density")),
-      p_(*particles_->getVariableDataByName<Real>("Pressure")),
-      drho_dt_(*particles_->getVariableDataByName<Real>("DensityChangeRate")),
+      pos_(particles_->getVariableDataByName<Vecd>("Position")),
+      vel_(particles_->getVariableDataByName<Vecd>("Velocity")),
+      force_(particles_->getVariableDataByName<Vecd>("Force")),
+      rho_(particles_->getVariableDataByName<Real>("Density")),
+      p_(particles_->getVariableDataByName<Real>("Pressure")),
+      drho_dt_(particles_->getVariableDataByName<Real>("DensityChangeRate")),
       inflow_pressure_(0), rho0_(fluid_.ReferenceDensity()),
       aligned_box_(aligned_box_part.getAlignedBoxShape()),
       updated_transform_(aligned_box_.getTransform()),
@@ -63,13 +61,12 @@ void EmitterInflowCondition ::update(size_t original_index_i, Real dt)
 EmitterInflowInjection::
     EmitterInflowInjection(BodyAlignedBoxByParticle &aligned_box_part, ParticleBuffer<Base> &buffer)
     : BaseLocalDynamics<BodyPartByParticle>(aligned_box_part),
-      DataDelegateSimple(aligned_box_part.getSPHBody()),
       fluid_(DynamicCast<Fluid>(this, particles_->getBaseMaterial())),
       original_id_(particles_->ParticleOriginalIds()),
       sorted_id_(particles_->ParticleSortedIds()),
-      pos_(*particles_->getVariableDataByName<Vecd>("Position")),
-      rho_(*particles_->getVariableDataByName<Real>("Density")),
-      p_(*particles_->getVariableDataByName<Real>("Pressure")),
+      pos_(particles_->getVariableDataByName<Vecd>("Position")),
+      rho_(particles_->getVariableDataByName<Real>("Density")),
+      p_(particles_->getVariableDataByName<Real>("Pressure")),
       buffer_(buffer), aligned_box_(aligned_box_part.getAlignedBoxShape())
 {
     buffer_.checkParticlesReserved();
@@ -95,8 +92,7 @@ void EmitterInflowInjection::update(size_t original_index_i, Real dt)
 DisposerOutflowDeletion::
     DisposerOutflowDeletion(BodyAlignedBoxByCell &aligned_box_part)
     : BaseLocalDynamics<BodyPartByCell>(aligned_box_part),
-      DataDelegateSimple(aligned_box_part.getSPHBody()),
-      pos_(*particles_->getVariableDataByName<Vecd>("Position")),
+      pos_(particles_->getVariableDataByName<Vecd>("Position")),
       aligned_box_(aligned_box_part.getAlignedBoxShape()) {}
 //=================================================================================================//
 void DisposerOutflowDeletion::update(size_t index_i, Real dt)

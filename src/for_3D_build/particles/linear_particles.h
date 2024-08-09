@@ -40,11 +40,11 @@ class LinearParticles : public SurfaceParticles
     LinearParticles(SPHBody &sph_body, BaseMaterial *base_material);
     virtual ~LinearParticles(){};
 
-    StdLargeVec<Vecd> *b_n_; /**< binormal direction */
-    StdLargeVec<Real> *width_;
+    Vecd *b_n_; /**< binormal direction */
+    Real *width_;
 
     /** get particle volume. */
-    virtual Real ParticleVolume(size_t index_i) override { return (*Vol_)[index_i] * (*thickness_)[index_i] * (*width_)[index_i]; }
+    virtual Real ParticleVolume(size_t index_i) override { return Vol_[index_i] * thickness_[index_i] * width_[index_i]; }
     void registerLineProperties(StdLargeVec<Vecd> &b_n, StdLargeVec<Real> &width);
     void registerLinePropertiesFromReload();
     virtual void registerTransformationMatrix() override;

@@ -35,32 +35,71 @@
 namespace SPH
 {
 
-class ForcePrior
+template <class DynamicsIdentifier>
+class BaseForcePrior : public BaseLocalDynamics<DynamicsIdentifier>
 {
   protected:
-    StdLargeVec<Vecd> &force_prior_, &current_force_, &previous_force_;
+    Vecd *force_prior_, *current_force_, *previous_force_;
 
   public:
-    ForcePrior(BaseParticles *base_particles, const std::string &force_name);
-    virtual ~ForcePrior(){};
+    BaseForcePrior(DynamicsIdentifier &identifier, const std::string &force_name);
+    template <class ExecutionPolicy>
+    BaseForcePrior(const ExecutionPolicy &execution_policy,
+                   DynamicsIdentifier &identifier, const std::string &force_name);
+    virtual ~BaseForcePrior(){};
     void update(size_t index_i, Real dt = 0.0);
-};
 
-class GravityForce
-    : public LocalDynamics,
-      public DataDelegateSimple,
-      public ForcePrior
+    class ComputingKernel
+    {
+      public:
+        ComputingKernel(BaseForcePrior<DynamicsIdentifier> &base_force_prior);
+        void update(size_t index_i, Real dt = 0.0);
+
+      protected:
+        friend class BaseForcePrior<DynamicsIdentifier>;
+        Vecd *force_prior_, *current_force_, *previous_force_;
+    };
+};
+using ForcePrior = BaseForcePrior<SPHBody>;
+
+template <class GravityType>
+class GravityForce : public ForcePrior
 {
   protected:
-    Gravity &gravity_;
-    StdLargeVec<Vecd> &pos_;
-    StdLargeVec<Real> &mass_;
+    //----------------------------------------------------------------------
+    // Here gives pointer referred in local dynamics
+    //----------------------------------------------------------------------
+    SingularVariable<Real> *v_physical_time_;
+    ConstantEntity<GravityType> *ce_gravity_;
+    //----------------------------------------------------------------------
+    // Here gives pointer referred in computing kernel
+    //----------------------------------------------------------------------
+    GravityType *gravity_;
+    Vecd *pos_;
+    Real *mass_;
+    Real *physical_time_;
 
   public:
-    explicit GravityForce(SPHBody &sph_body, Gravity &gravity);
+    GravityForce(SPHBody &sph_body, const GravityType &gravity);
+    template <class ExecutionPolicy>
+    GravityForce(const ExecutionPolicy &execution_policy,
+                 SPHBody &sph_body, const GravityType &gravity);
     virtual ~GravityForce(){};
     void update(size_t index_i, Real dt = 0.0);
-};
 
+    class ComputingKernel : public ForcePrior::ComputingKernel
+    {
+      public:
+        ComputingKernel(GravityForce<GravityType> &gravity_force);
+        void update(size_t index_i, Real dt = 0.0);
+
+      protected:
+        friend class GravityForce<GravityType>;
+        GravityType *gravity_;
+        Vecd *pos_;
+        Real *mass_;
+        Real *physical_time_;
+    };
+};
 } // namespace SPH
 #endif // FORCE_PRIOR_H

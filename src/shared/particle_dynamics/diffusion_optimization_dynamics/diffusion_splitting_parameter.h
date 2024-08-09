@@ -41,17 +41,17 @@ namespace SPH
  * @class ParameterSplittingByPDEInner
  * @brief Modify the parameter inner by splitting operator based on PDEs.
  */
-template <typename VariableType>
+template <typename DataType>
 class ParameterSplittingByPDEInner
-    : public OptimizationBySplittingAlgorithmBase<VariableType>
+    : public OptimizationBySplittingAlgorithmBase<DataType>
 {
   public:
-    ParameterSplittingByPDEInner(BaseInnerRelation &inner_relation, const std::string &variable_name);
+    ParameterSplittingByPDEInner(BaseInnerRelation &inner_relation, const std::string &name);
     virtual ~ParameterSplittingByPDEInner(){};
 
   protected:
-    virtual ErrorAndParameters<VariableType> computeErrorAndParameters(size_t index_i, Real dt = 0.0);
-    virtual void updateStatesByError(size_t index_i, Real dt, const ErrorAndParameters<VariableType> &error_and_parameters);
+    virtual ErrorAndParameters<DataType> computeErrorAndParameters(size_t index_i, Real dt = 0.0);
+    virtual void updateStatesByError(size_t index_i, Real dt, const ErrorAndParameters<DataType> &error_and_parameters);
     virtual void interaction(size_t index_i, Real dt = 0.0) override;
 };
 
@@ -59,21 +59,21 @@ class ParameterSplittingByPDEInner
  * @class ParameterSplittingByPDEWithBoundary
  * @brief Modify the parameter contact with the boundary by splitting operator based on PDEs.
  */
-template <typename VariableType>
+template <typename DataType>
 class ParameterSplittingByPDEWithBoundary
-    : public ParameterSplittingByPDEInner<VariableType>,
-      public DataDelegateContactOnly
+    : public ParameterSplittingByPDEInner<DataType>,
+      public DataDelegateContact
 {
   public:
     ParameterSplittingByPDEWithBoundary(BaseInnerRelation &inner_relation,
-                                        BaseContactRelation &contact_relation, const std::string &variable_name);
+                                        BaseContactRelation &contact_relation, const std::string &name);
     virtual ~ParameterSplittingByPDEWithBoundary(){};
 
   protected:
-    StdVec<StdLargeVec<Vecd> *> boundary_normal_vector_;
-    StdVec<StdLargeVec<Real> *> boundary_heat_flux_, boundary_Vol_;
-    StdVec<StdLargeVec<Real> *> boundary_species_;
-    virtual ErrorAndParameters<VariableType> computeErrorAndParameters(size_t index_i, Real dt = 0.0) override;
+    StdVec<Vecd *> boundary_normal_vector_;
+    StdVec<Real *> boundary_heat_flux_, boundary_Vol_;
+    StdVec<Real *> boundary_species_;
+    virtual ErrorAndParameters<DataType> computeErrorAndParameters(size_t index_i, Real dt = 0.0) override;
 };
 
 /**

@@ -266,7 +266,7 @@ Real getVonMisesStressFromMatrix(const Mat3d &sigma)
 //=================================================================================================//
 Vec2d getPrincipalValuesFromMatrix(const Mat2d &A)
 {
-    Eigen::EigenSolver<EigMat> ces(A, /* computeEigenvectors = */ false);
+    Eigen::EigenSolver<MatXd> ces(A, /* computeEigenvectors = */ false);
     auto eigen_values = ces.eigenvalues();
 
     std::vector<Real> sorted_values = {
@@ -281,7 +281,7 @@ Vec2d getPrincipalValuesFromMatrix(const Mat2d &A)
 //=================================================================================================//
 Vec3d getPrincipalValuesFromMatrix(const Mat3d &A)
 {
-    Eigen::EigenSolver<EigMat> ces(A, /* computeEigenvectors = */ false);
+    Eigen::EigenSolver<MatXd> ces(A, /* computeEigenvectors = */ false);
     auto eigen_values = ces.eigenvalues();
 
     std::vector<Real> sorted_values = {

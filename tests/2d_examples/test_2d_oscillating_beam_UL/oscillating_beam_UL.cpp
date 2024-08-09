@@ -164,6 +164,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Setup computing time-step controls.
     //----------------------------------------------------------------------
+    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     int ite = 0;
     Real T0 = 1.0;
     Real End_Time = T0;
@@ -177,7 +178,7 @@ int main(int ac, char *av[])
     write_beam_tip_displacement.writeToFile(0);
     write_beam_kinetic_energy.writeToFile(0);
     // computation loop starts
-    while (GlobalStaticVariables::physical_time_ < End_Time)
+    while (physical_time < End_Time)
     {
         Real integration_time = 0.0;
         while (integration_time < D_Time)
@@ -197,11 +198,11 @@ int main(int ac, char *av[])
                 ite++;
                 relaxation_time += acoustic_dt;
                 integration_time += acoustic_dt;
-                GlobalStaticVariables::physical_time_ += acoustic_dt;
+                physical_time += acoustic_dt;
                 if (ite % 500 == 0)
                 {
                     std::cout << "N=" << ite << " Time: "
-                              << GlobalStaticVariables::physical_time_ << "	advection_dt: "
+                              << physical_time << "	advection_dt: "
                               << advection_dt << "	acoustic_dt: "
                               << acoustic_dt << "\n";
                 }

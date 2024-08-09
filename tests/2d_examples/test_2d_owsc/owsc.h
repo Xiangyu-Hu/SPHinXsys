@@ -328,21 +328,23 @@ class WaveMaking : public BodyPartMotionConstraint
         : BodyPartMotionConstraint(body_part),
           model_scale_(25.0), gravity_(gravity_g), water_depth_(Water_H), wave_height_(5.0),
           wave_period_(10.0),
-          acc_(*particles_->registerSharedVariable<Vecd>("Acceleration"))
+          acc_(particles_->registerStateVariable<Vecd>("Acceleration")),
+          physical_time_(sph_system_.getSystemVariableDataByName<Real>("PhysicalTime"))
     {
         computeWaveStrokeAndFrequency();
     }
 
     void update(size_t index_i, Real dt = 0.0)
     {
-        Real time = GlobalStaticVariables::physical_time_;
+        Real time = *physical_time_;
         pos_[index_i] = pos0_[index_i] + getDisplacement(time);
         vel_[index_i] = getVelocity(time);
         acc_[index_i] = getAcceleration(time);
     };
 
   protected:
-    StdLargeVec<Vecd> &acc_;
+    Vecd *acc_;
+    Real *physical_time_;
 };
 
 Real h = 1.3 * particle_spacing_ref;

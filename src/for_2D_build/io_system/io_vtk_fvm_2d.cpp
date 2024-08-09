@@ -1,5 +1,5 @@
+#include "io_vtk.hpp"
 #include "io_vtk_fvm.h"
-
 namespace SPH
 {
 //=================================================================================================//
@@ -66,7 +66,9 @@ void BodyStatesRecordingInMeshToVtp::writeWithFileName(const std::string &sequen
 
             // Write face attribute data
             out_file << "<CellData>\n";
-            body->writeParticlesToVtpFile(out_file);
+
+            BaseParticles &particles = body->getBaseParticles();
+            writeParticlesToVtk(out_file, particles);
 
             out_file << "</CellData>\n";
 

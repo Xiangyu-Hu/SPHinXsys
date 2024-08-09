@@ -3,7 +3,7 @@
  * @author	Luhui Han, Chi Zhang and Xiangyu Hu
  */
 
-#include "io_vtk.h"
+#include "io_vtk.hpp"
 
 namespace SPH
 {
@@ -48,7 +48,7 @@ void BodyStatesRecordingToVtp::writeWithFileName(const std::string &sequence)
 
                 // write header of particles data
                 out_file << "   <PointData  Vectors=\"vector\">\n";
-                body->writeParticlesToVtpFile(out_file);
+                writeParticlesToVtk(out_file, base_particles);
                 out_file << "   </PointData>\n";
 
                 // write empty cells
@@ -101,7 +101,7 @@ void BodyStatesRecordingToVtpString::writeWithFileName(const std::string &sequen
     }
 }
 //=============================================================================================//
-void BodyStatesRecordingToVtpString::writeVtu(std::ostream &stream, SPHBody *body) const
+void BodyStatesRecordingToVtpString::writeVtu(std::ostream &stream, SPHBody *body)
 {
     stream << "<?xml version=\"1.0\"?>\n";
     stream << "<VTKFile type=\"UnstructuredGrid\" version=\"0.1\" byte_order=\"LittleEndian\">\n";
@@ -111,7 +111,7 @@ void BodyStatesRecordingToVtpString::writeVtu(std::ostream &stream, SPHBody *bod
     size_t total_real_particles = base_particles.TotalRealParticles();
     stream << "  <Piece Name =\"" << body->getName() << "\" NumberOfPoints=\"" << total_real_particles << "\" NumberOfCells=\"0\">\n";
 
-    body->writeParticlesToVtuFile(stream);
+    writeParticlesToVtk(stream, base_particles);
 
     stream << "   </PointData>\n";
 

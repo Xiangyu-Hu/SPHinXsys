@@ -22,7 +22,7 @@ void RegressionTestBase<ObserveMethodType>::writeToXml(ObservedQuantityRecording
     for (size_t i = 0; i != this->base_particles_.TotalRealParticles(); ++i)
     {
         xmlmemory_io_.writeDataToXmlMemory(observe_xml_engine_, element_,
-                                           element_name_, i, (*this->interpolated_quantities_)[i], this->quantity_name_);
+                                           element_name_, i, this->interpolated_quantities_[i], this->quantity_name_);
     };
 };
 //=================================================================================================//

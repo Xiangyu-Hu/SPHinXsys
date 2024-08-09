@@ -18,12 +18,12 @@ CompositeSolid::CompositeSolid(Real rho0)
 //=================================================================================================//
 Matd CompositeSolid::StressPK2(Matd &deformation, size_t index_i)
 {
-    return composite_materials_[(*material_id_)[index_i]]->StressPK2(deformation, index_i);
+    return composite_materials_[material_id_[index_i]]->StressPK2(deformation, index_i);
 }
 //=================================================================================================//
 Matd CompositeSolid::StressPK1(Matd &deformation, size_t index_i)
 {
-    return composite_materials_[(*material_id_)[index_i]]->StressPK1(deformation, index_i);
+    return composite_materials_[material_id_[index_i]]->StressPK1(deformation, index_i);
 }
 //=================================================================================================//
 Matd CompositeSolid::StressCauchy(Matd &almansi_strain, size_t index_i)
@@ -33,13 +33,13 @@ Matd CompositeSolid::StressCauchy(Matd &almansi_strain, size_t index_i)
 //=================================================================================================//
 Real CompositeSolid::CompositeDensity(size_t index_i)
 {
-    return composite_materials_[(*material_id_)[index_i]]->ReferenceDensity();
+    return composite_materials_[material_id_[index_i]]->ReferenceDensity();
 }
 //=================================================================================================//
 void CompositeSolid::initializeLocalParameters(BaseParticles *base_particles)
 {
     ElasticSolid::initializeLocalParameters(base_particles);
-    material_id_ = base_particles->registerSharedVariable<int>("MaterialID");
+    material_id_ = base_particles->registerStateVariable<int>("MaterialID");
 
     for (size_t i = 0; i < composite_materials_.size(); ++i)
     {
@@ -48,8 +48,8 @@ void CompositeSolid::initializeLocalParameters(BaseParticles *base_particles)
 }
 //=================================================================================================//
 MaterialIdInitialization::MaterialIdInitialization(SPHBody &sph_body)
-    : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
-      material_id_(*particles_->getVariableDataByName<int>("MaterialID")),
-      pos_(*particles_->getVariableDataByName<Vecd>("Position")){};
+    : LocalDynamics(sph_body),
+      material_id_(particles_->getVariableDataByName<int>("MaterialID")),
+      pos_(particles_->getVariableDataByName<Vecd>("Position")){};
 //=================================================================================================//
 } // namespace SPH

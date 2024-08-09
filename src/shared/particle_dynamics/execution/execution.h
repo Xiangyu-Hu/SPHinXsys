@@ -21,39 +21,51 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	execution_policy.h
+ * @file 	execution.h
  * @brief 	Here we define the execution policy relevant to parallel computing.
  * @details This analog of the standard library on the same functions.
- * @author	Xiangyu Hu and  Fabien Pean
+ * @author	Alberto Guarnieri and Xiangyu Hu
  */
 
-#ifndef EXECUTION_POLICY_H
-#define EXECUTION_POLICY_H
+#ifndef EXECUTION_H
+#define EXECUTION_H
+
+#include "execution_policy.h"
+
+#include "base_data_type.h"
+#include "ownership.h"
 
 namespace SPH
 {
 namespace execution
 {
-class SequencedPolicy
-{
-};
+template <typename... T>
+class Implementation;
 
-class UnsequencedPolicy
+template <class LocalDynamicsType, class ExecutionPolicy>
+class Implementation<LocalDynamicsType, ExecutionPolicy>
 {
-};
+    using ComputingKernel = typename LocalDynamicsType::ComputingKernel;
+    UniquePtrKeeper<ComputingKernel> kernel_ptr_keeper_;
 
-class ParallelPolicy
-{
-};
+  public:
+    explicit Implementation(LocalDynamicsType &local_dynamics)
+        : local_dynamics_(local_dynamics), computing_kernel_(nullptr) {}
 
-class ParallelUnsequencedPolicy
-{
-};
+    ComputingKernel *getComputingKernel()
+    {
+        if (computing_kernel_ == nullptr)
+        {
+            computing_kernel_ =
+                kernel_ptr_keeper_.template createPtr<ComputingKernel>(local_dynamics_);
+        }
+        return computing_kernel_;
+    }
 
-inline constexpr auto seq = SequencedPolicy{};
-inline constexpr auto unseq = UnsequencedPolicy{};
-inline constexpr auto par = ParallelPolicy{};
-inline constexpr auto par_unseq = ParallelUnsequencedPolicy{};
+  private:
+    LocalDynamicsType &local_dynamics_;
+    ComputingKernel *computing_kernel_;
+};
 } // namespace execution
 } // namespace SPH
-#endif // EXECUTION_POLICY_H
+#endif // EXECUTION_H

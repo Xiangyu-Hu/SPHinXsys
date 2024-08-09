@@ -19,7 +19,7 @@ RealBodyVector BodyPartsToRealBodies(BodyPartVector body_parts)
 SPHRelation::SPHRelation(SPHBody &sph_body)
     : sph_body_(sph_body),
       base_particles_(sph_body.getBaseParticles()),
-      pos_(*base_particles_.getVariableDataByName<Vecd>("Position")) {}
+      pos_(base_particles_.getVariableDataByName<Vecd>("Position")) {}
 //=================================================================================================//
 BaseInnerRelation::BaseInnerRelation(RealBody &real_body)
     : SPHRelation(real_body), real_body_(&real_body)

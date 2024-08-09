@@ -76,7 +76,7 @@ class DecomposedPlasticIntegration1stHalf
 
   protected:
     PlasticSolid &plastic_solid_;
-    StdLargeVec<Matd> &scaling_matrix_, &inverse_F_;
+    Matd *scaling_matrix_, *inverse_F_;
 };
 } // namespace solid_dynamics
 } // namespace SPH

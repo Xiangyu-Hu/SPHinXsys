@@ -70,14 +70,13 @@ class Heart : public ComplexShape
 using FiberDirectionDiffusionRelaxation =
     DiffusionRelaxationRK2<DiffusionRelaxation<Inner<KernelGradientInner>, IsotropicDiffusion>>;
 /** Imposing diffusion boundary condition */
-class DiffusionBCs : public BaseLocalDynamics<BodyPartByParticle>, public DataDelegateSimple
+class DiffusionBCs : public BaseLocalDynamics<BodyPartByParticle>
 {
   public:
     explicit DiffusionBCs(BodyPartByParticle &body_part, const std::string &species_name)
         : BaseLocalDynamics<BodyPartByParticle>(body_part),
-          DataDelegateSimple(body_part.getSPHBody()),
-          pos_(*particles_->getVariableDataByName<Vecd>("Position")),
-          phi_(*particles_->registerSharedVariable<Real>(species_name)){};
+          pos_(particles_->getVariableDataByName<Vecd>("Position")),
+          phi_(particles_->registerStateVariable<Real>(species_name)){};
     virtual ~DiffusionBCs(){};
 
     void update(size_t index_i, Real dt = 0.0)
@@ -100,25 +99,25 @@ class DiffusionBCs : public BaseLocalDynamics<BodyPartByParticle>, public DataDe
     };
 
   protected:
-    StdLargeVec<Vecd> &pos_;
-    StdLargeVec<Real> &phi_;
+    Vecd *pos_;
+    Real *phi_;
 };
 /** Compute Fiber and Sheet direction after diffusion */
-class ComputeFiberAndSheetDirections : public LocalDynamics, public DataDelegateSimple
+class ComputeFiberAndSheetDirections : public LocalDynamics
 {
   protected:
     LocallyOrthotropicMuscle &muscle_material_;
-    StdLargeVec<Vecd> &pos_;
-    StdLargeVec<Real> &phi_;
+    Vecd *pos_;
+    Real *phi_;
     Real beta_epi_, beta_endo_;
     Vecd center_line_vector_; // parallel to the ventricular centerline and pointing  apex-to-base
 
   public:
     explicit ComputeFiberAndSheetDirections(SPHBody &sph_body, const std::string &species_name)
-        : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
+        : LocalDynamics(sph_body),
           muscle_material_(DynamicCast<LocallyOrthotropicMuscle>(this, sph_body_.getBaseMaterial())),
-          pos_(*particles_->getVariableDataByName<Vecd>("Position")),
-          phi_(*particles_->registerSharedVariable<Real>(species_name))
+          pos_(particles_->getVariableDataByName<Vecd>("Position")),
+          phi_(particles_->registerStateVariable<Real>(species_name))
     {
         center_line_vector_ = Vecd(0.0, 1.0, 0.0);
         beta_epi_ = -(70.0 / 180.0) * M_PI;
@@ -151,13 +150,13 @@ class ComputeFiberAndSheetDirections : public LocalDynamics, public DataDelegate
 
         if (pos_[index_i][1] < -sph_body_.sph_adaptation_->ReferenceSpacing())
         {
-            (*muscle_material_.local_f0_)[index_i] = f_0 / (f_0.norm() + 1.0e-15);
-            (*muscle_material_.local_s0_)[index_i] = face_norm;
+            muscle_material_.local_f0_[index_i] = f_0 / (f_0.norm() + 1.0e-15);
+            muscle_material_.local_s0_[index_i] = face_norm;
         }
         else
         {
-            (*muscle_material_.local_f0_)[index_i] = Vecd::Zero();
-            (*muscle_material_.local_s0_)[index_i] = Vecd::Zero();
+            muscle_material_.local_f0_[index_i] = Vecd::Zero();
+            muscle_material_.local_s0_[index_i] = Vecd::Zero();
         }
     };
 };
@@ -177,13 +176,13 @@ class MuscleBaseShapeParameters : public TriangleMeshShapeBrick::ShapeParameters
 };
 
 //	application dependent initial condition
-class ApplyStimulusCurrentSI : public LocalDynamics, public DataDelegateSimple
+class ApplyStimulusCurrentSI : public LocalDynamics
 {
   public:
     explicit ApplyStimulusCurrentSI(SPHBody &sph_body)
-        : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
-          pos_(*particles_->getVariableDataByName<Vecd>("Position")),
-          voltage_(*particles_->registerSharedVariable<Real>("Voltage")){};
+        : LocalDynamics(sph_body),
+          pos_(particles_->getVariableDataByName<Vecd>("Position")),
+          voltage_(particles_->registerStateVariable<Real>("Voltage")){};
 
     void update(size_t index_i, Real dt)
     {
@@ -200,19 +199,19 @@ class ApplyStimulusCurrentSI : public LocalDynamics, public DataDelegateSimple
     };
 
   protected:
-    StdLargeVec<Vecd> &pos_;
-    StdLargeVec<Real> &voltage_;
+    Vecd *pos_;
+    Real *voltage_;
 };
 /**
  * application dependent initial condition
  */
-class ApplyStimulusCurrentSII : public LocalDynamics, public DataDelegateSimple
+class ApplyStimulusCurrentSII : public LocalDynamics
 {
   public:
     explicit ApplyStimulusCurrentSII(SPHBody &sph_body)
-        : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
-          pos_(*particles_->getVariableDataByName<Vecd>("Position")),
-          voltage_(*particles_->registerSharedVariable<Real>("Voltage")){};
+        : LocalDynamics(sph_body),
+          pos_(particles_->getVariableDataByName<Vecd>("Position")),
+          voltage_(particles_->registerStateVariable<Real>("Voltage")){};
 
     void update(size_t index_i, Real dt)
     {
@@ -229,8 +228,8 @@ class ApplyStimulusCurrentSII : public LocalDynamics, public DataDelegateSimple
     };
 
   protected:
-    StdLargeVec<Vecd> &pos_;
-    StdLargeVec<Real> &voltage_;
+    Vecd *pos_;
+    Real *voltage_;
 };
 
 StdVec<Vecd> createObservationPoints()

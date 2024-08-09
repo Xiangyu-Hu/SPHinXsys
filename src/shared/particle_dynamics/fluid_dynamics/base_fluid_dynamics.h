@@ -68,8 +68,8 @@ class InteractionWithWall : public BaseInteractionType<DataDelegateContact>
     virtual ~InteractionWithWall(){};
 
   protected:
-    StdVec<StdLargeVec<Vecd> *> wall_vel_ave_, wall_acc_ave_, wall_n_;
-    StdVec<StdLargeVec<Real> *> wall_Vol_;
+    StdVec<Vecd *> wall_vel_ave_, wall_acc_ave_, wall_n_;
+    StdVec<Real *> wall_Vol_;
 };
 
 } // namespace fluid_dynamics

@@ -27,9 +27,7 @@ void RepulsionFactorSummation<Inner<>>::interaction(size_t index_i, Real dt)
 //=================================================================================================//
 RepulsionFactorSummation<Contact<>>::
     RepulsionFactorSummation(SurfaceContactRelation &solid_body_contact_relation)
-    : RepulsionFactorSummation<Base, DataDelegateContact>(solid_body_contact_relation, "RepulsionFactor")
-{
-}
+    : RepulsionFactorSummation<Base, DataDelegateContact>(solid_body_contact_relation, "RepulsionFactor") {}
 //=================================================================================================//
 void RepulsionFactorSummation<Contact<>>::interaction(size_t index_i, Real dt)
 {
@@ -83,7 +81,7 @@ void ShellContactFactor::interaction(size_t index_i, Real dt)
 
     for (size_t k = 0; k < contact_configuration_.size(); ++k)
     {
-        StdLargeVec<Real> &contact_Vol_k = *(contact_Vol_[k]);
+        Real *contact_Vol_k = contact_Vol_[k];
         Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
         for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
         {

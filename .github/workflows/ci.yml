@@ -27,7 +27,7 @@ env:
 # A workflow is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   ###############################################################################
-  Linux-float:
+  Linux-sycl:
     if: ${{ github.event_name != 'workflow_dispatch' }}
     runs-on: ubuntu-22.04
     env:
@@ -51,6 +51,11 @@ jobs:
             libfontconfig1-dev `# From here required for vcpkg opencascade`\
             libx11-dev \
             libgl-dev
+          wget -O- https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB | gpg --dearmor | sudo tee /usr/share/keyrings/oneapi-archive-keyring.gpg > /dev/null
+          echo "deb [signed-by=/usr/share/keyrings/oneapi-archive-keyring.gpg] https://apt.repos.intel.com/oneapi all main" | sudo tee /etc/apt/sources.list.d/oneAPI.list
+          sudo apt update
+          sudo apt install intel-basekit \
+            intel-oneapi-runtime-opencl
 
       - uses: hendrikmuhs/ccache-action@v1.2
         with:
@@ -59,7 +64,7 @@ jobs:
       - uses: friendlyanon/setup-vcpkg@v1 # Setup vcpkg into ${{github.workspace}}
         with:
           committish: ${{ env.VCPKG_VERSION }}
-          cache: false
+          cache-version: ${{env.VCPKG_VERSION}}
 
       - name: Install dependencies
         run: |
@@ -73,24 +78,70 @@ jobs:
             boost-geometry \
             simbody \
             gtest \
-            xsimd \
-            pybind11 \
-            opencascade
+            pybind11
 
-      - name: Generate buildsystem using float (No test)
+      - name: Generate buildsystem
         run: |
+          # sycl environment has to be setup for each session
+          source /opt/intel/oneapi/setvars.sh --include-intel-llvm
           cmake -G Ninja \
             -D CMAKE_BUILD_TYPE=Release \
+            -D CMAKE_C_COMPILER=icx -D CMAKE_CXX_COMPILER=icpx \
             -D CMAKE_TOOLCHAIN_FILE="${{github.workspace}}/vcpkg/scripts/buildsystems/vcpkg.cmake" \
             -D CMAKE_C_COMPILER_LAUNCHER=ccache -D CMAKE_CXX_COMPILER_LAUNCHER=ccache \
-            -D SPHINXSYS_USE_FLOAT=ON \
-            -D SPHINXSYS_MODULE_OPENCASCADE=ON \
             -D SPHINXSYS_CI=ON \
+            -D SPHINXSYS_USE_SYCL=ON \
+            -D TEST_STATE_RECORDING=OFF \
             -S ${{github.workspace}} \
             -B ${{github.workspace}}/build
 
-      - name: Build using float
-        run: cmake --build build --config Release --verbose
+      - name: Build libraries and tests which are using SYCL
+        run: |
+          # sycl environment has to be setup for each session        
+          source /opt/intel/oneapi/setvars.sh --include-intel-llvm
+          cmake --build build --config Release --verbose
+
+      - name: Test with the first try
+        id: first-try
+        run: |
+          source /opt/intel/oneapi/setvars.sh --include-intel-llvm
+          cd build/tests/tests_sycl
+          ctest  --output-on-failure --timeout 1000
+        continue-on-error: true
+
+      - name: Test with the second try for failed cases
+        id: second-try
+        if: ${{ steps.first-try.outcome == 'failure' }}
+        run: |
+          source /opt/intel/oneapi/setvars.sh --include-intel-llvm        
+          cd build/tests/tests_sycl
+          ctest --rerun-failed --output-on-failure --timeout 1000
+        continue-on-error: true
+
+      - name: Test with the third try for failed cases
+        id: third-try
+        if: ${{ steps.second-try.outcome == 'failure' }}
+        run: |
+          source /opt/intel/oneapi/setvars.sh --include-intel-llvm
+          cd build/tests/tests_sycl
+          ctest --rerun-failed --output-on-failure --timeout 1000
+        continue-on-error: true
+
+      - name: Test with the fourth try for failed cases
+        id: fourth-try
+        if: ${{ steps.third-try.outcome == 'failure' }}
+        run: |
+          source /opt/intel/oneapi/setvars.sh --include-intel-llvm
+          cd build/tests/tests_sycl
+          ctest --rerun-failed --output-on-failure --timeout 1000
+        continue-on-error: true
+
+      - name: Test with the last try for failed cases
+        if: ${{ steps.fourth-try.outcome == 'failure' }}
+        run: |
+          source /opt/intel/oneapi/setvars.sh --include-intel-llvm
+          cd build/tests/tests_sycl
+          ctest --rerun-failed --output-on-failure --timeout 1000
 
   ###############################################################################
   Linux-build:

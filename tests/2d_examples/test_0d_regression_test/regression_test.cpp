@@ -103,13 +103,13 @@ namespace SPH
 //----------------------------------------------------------------------
 //	Case-dependent initial condition.
 //----------------------------------------------------------------------
-class DiffusionInitialCondition : public LocalDynamics, public DataDelegateSimple
+class DiffusionInitialCondition : public LocalDynamics
 {
   public:
     explicit DiffusionInitialCondition(SPHBody &sph_body)
-        : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
-          pos_(*particles_->getVariableDataByName<Vecd>("Position")),
-          phi_(*particles_->registerSharedVariable<Real>("Phi")){};
+        : LocalDynamics(sph_body),
+          pos_(particles_->getVariableDataByName<Vecd>("Position")),
+          phi_(particles_->registerStateVariable<Real>("Phi")){};
 
     void update(size_t index_i, Real dt)
     {
@@ -120,8 +120,8 @@ class DiffusionInitialCondition : public LocalDynamics, public DataDelegateSimpl
     };
 
   protected:
-    StdLargeVec<Vecd> &pos_;
-    StdLargeVec<Real> &phi_;
+    Vecd *pos_;
+    Real *phi_;
 };
 //----------------------------------------------------------------------
 //	Specify diffusion relaxation method.
@@ -213,6 +213,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
+    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     int ite = 0;
     Real T0 = 20.0;
     Real end_time = T0;
@@ -232,7 +233,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------
-    while (GlobalStaticVariables::physical_time_ < end_time)
+    while (physical_time < end_time)
     {
         Real integration_time = 0.0;
         while (integration_time < Output_Time)
@@ -243,7 +244,7 @@ int main(int ac, char *av[])
                 if (ite % 1 == 0)
                 {
                     std::cout << "N=" << ite << " Time: "
-                              << GlobalStaticVariables::physical_time_ << "	dt: "
+                              << physical_time << "	dt: "
                               << dt << "\n";
                 }
 
@@ -254,7 +255,7 @@ int main(int ac, char *av[])
                 dt = get_time_step_size.exec();
                 relaxation_time += dt;
                 integration_time += dt;
-                GlobalStaticVariables::physical_time_ += dt;
+                physical_time += dt;
 
                 if (ite % 100 == 0)
                 {

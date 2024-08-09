@@ -114,7 +114,7 @@ ParticleWithLocalRefinement::
 void ParticleWithLocalRefinement::initializeAdaptationVariables(BaseParticles &base_particles)
 {
     SPHAdaptation::initializeAdaptationVariables(base_particles);
-    h_ratio_ = base_particles.registerSharedVariable<Real>(
+    h_ratio_ = base_particles.registerStateVariable<Real>(
         "SmoothingLengthRatio", [&](size_t i) -> Real
         { return ReferenceSpacing() / base_particles.ParticleSpacing(i); });
     base_particles.addVariableToSort<Real>("SmoothingLengthRatio");

@@ -62,6 +62,8 @@ class BodyStatesRecordingToPlt : public BodyStatesRecording
     virtual ~BodyStatesRecordingToPlt(){};
 
   protected:
+    void writePltFileHeader(std::ofstream &output_file, ParticleVariables &variables_to_write);
+    void writePltFileParticleData(std::ofstream &output_file, ParticleVariables &variables_to_write, Vecd *position, size_t index);
     virtual void writeWithFileName(const std::string &sequence) override;
 };
 

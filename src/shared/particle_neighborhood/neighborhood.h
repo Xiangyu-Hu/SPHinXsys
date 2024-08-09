@@ -33,7 +33,7 @@
 
 #include "all_kernels.h"
 #include "base_data_package.h"
-#include "sph_data_containers.h"
+#include "sphinxsys_containers.h"
 
 namespace SPH
 {
@@ -118,7 +118,7 @@ class NeighborBuilderInnerAdaptive : public NeighborBuilder
                     const Vecd &pos_i, size_t index_i, const ListData &list_data_j) override;
 
   protected:
-    StdLargeVec<Real> &h_ratio_;
+    Real *h_ratio_;
 };
 
 /**
@@ -134,7 +134,7 @@ class NeighborBuilderSelfContact : public NeighborBuilder
                     const Vecd &pos_i, size_t index_i, const ListData &list_data_j) override;
 
   protected:
-    StdLargeVec<Vecd> &pos0_;
+    Vecd *pos0_;
 };
 
 /**
@@ -177,7 +177,7 @@ class NeighborBuilderContactBodyPart : public NeighborBuilder
                     const Vecd &pos_i, size_t index_i, const ListData &list_data_j) override;
 
   protected:
-    StdLargeVec<int> &part_indicator_; /**< indicator of the body part */
+    int *part_indicator_; /**< indicator of the body part */
 };
 
 /**
@@ -208,11 +208,11 @@ class BaseNeighborBuilderContactShell : public NeighborBuilder
 
   protected:
     UniquePtrKeeper<Kernel> kernel_keeper_;
-    StdLargeVec<Vecd> &n_; // normal direction of contact body
-    StdLargeVec<Real> &thickness_;
-    StdLargeVec<Real> &k1_ave_; // 1st principle curvature of contact body
-    StdLargeVec<Real> &k2_ave_; // 2nd principle curvature of contact body
-    Real particle_distance_;    // reference spacing of contact body
+    Vecd *n_; // normal direction of contact body
+    Real *thickness_;
+    Real *k1_ave_;           // 1st principle curvature of contact body
+    Real *k2_ave_;           // 2nd principle curvature of contact body
+    Real particle_distance_; // reference spacing of contact body
 
     void createNeighbor(Neighborhood &neighborhood, const Real &distance,
                         size_t index_j, const Real &W_ij,
@@ -295,9 +295,9 @@ class NeighborBuilderShellSelfContact : public BaseNeighborBuilderContactShell
                     const Vecd &pos_i, size_t index_i, const ListData &list_data_j) override;
 
   private:
-    StdLargeVec<Real> &k1_; // 1st principle curvature of contact body
-    StdLargeVec<Real> &k2_; // 2nd principle curvature of contact body
-    StdLargeVec<Vecd> &pos0_;
+    Real *k1_; // 1st principle curvature of contact body
+    Real *k2_; // 2nd principle curvature of contact body
+    Vecd *pos0_;
 };
 
 /**

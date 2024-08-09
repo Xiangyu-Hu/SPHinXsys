@@ -183,8 +183,8 @@ int main(int ac, char *av[])
     // boundary condition and other constraints should be defined.
     //----------------------------------------------------------------------
     Gravity gravity(Vecd(0.0, -gravity_g));
-    SimpleDynamics<GravityForce> free_ball_constant_gravity(free_ball, gravity);
-    SimpleDynamics<GravityForce> damping_ball_constant_gravity(damping_ball, gravity);
+    SimpleDynamics<GravityForce<Gravity>> free_ball_constant_gravity(free_ball, gravity);
+    SimpleDynamics<GravityForce<Gravity>> damping_ball_constant_gravity(damping_ball, gravity);
     InteractionWithUpdate<LinearGradientCorrectionMatrixInner> free_ball_corrected_configuration(free_ball_inner);
     InteractionWithUpdate<LinearGradientCorrectionMatrixInner> damping_ball_corrected_configuration(damping_ball_inner);
 
@@ -231,6 +231,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
+    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     int ite = 0;
     Real T0 = 10.0;
     Real end_time = T0;
@@ -245,7 +246,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------
-    while (GlobalStaticVariables::physical_time_ < end_time)
+    while (physical_time < end_time)
     {
         Real integration_time = 0.0;
         while (integration_time < output_interval)
@@ -256,7 +257,7 @@ int main(int ac, char *av[])
                 if (ite % 100 == 0)
                 {
                     std::cout << "N=" << ite << " Time: "
-                              << GlobalStaticVariables::physical_time_ << "	dt: " << dt << "\n";
+                              << physical_time << "	dt: " << dt << "\n";
                 }
                 free_ball_update_contact_density.exec();
                 free_ball_compute_solid_contact_forces.exec();
@@ -281,7 +282,7 @@ int main(int ac, char *av[])
                 dt = SMIN(dt_free, dt_damping);
                 relaxation_time += dt;
                 integration_time += dt;
-                GlobalStaticVariables::physical_time_ += dt;
+                physical_time += dt;
 
                 free_ball_displacement_recording.writeToFile(ite);
                 damping_ball_displacement_recording.writeToFile(ite);

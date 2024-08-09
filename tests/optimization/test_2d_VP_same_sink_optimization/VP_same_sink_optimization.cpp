@@ -76,14 +76,14 @@ class WallBoundary : public MultiPolygonShape
 //----------------------------------------------------------------------
 //	Application dependent initial condition.
 //----------------------------------------------------------------------
-class DiffusionBodyInitialCondition : public LocalDynamics, public DataDelegateSimple
+class DiffusionBodyInitialCondition : public LocalDynamics
 {
   public:
     explicit DiffusionBodyInitialCondition(SPHBody &sph_body)
-        : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
-          pos_(*particles_->getVariableDataByName<Vecd>("Position")),
-          phi_(*particles_->registerSharedVariable<Real>("Phi")),
-          heat_source_(*(particles_->registerSharedVariable<Real>("HeatSource"))){};
+        : LocalDynamics(sph_body),
+          pos_(particles_->getVariableDataByName<Vecd>("Position")),
+          phi_(particles_->registerStateVariable<Real>("Phi")),
+          heat_source_(particles_->registerStateVariable<Real>("HeatSource")){};
 
     void update(size_t index_i, Real dt)
     {
@@ -92,32 +92,32 @@ class DiffusionBodyInitialCondition : public LocalDynamics, public DataDelegateS
     };
 
   protected:
-    StdLargeVec<Vecd> &pos_;
-    StdLargeVec<Real> &phi_, &heat_source_;
+    Vecd *pos_;
+    Real *phi_, *heat_source_;
 };
 
-class ThermalConductivityRandomInitialization : public LocalDynamics, public DataDelegateSimple
+class ThermalConductivityRandomInitialization : public LocalDynamics
 {
   public:
     explicit ThermalConductivityRandomInitialization(SPHBody &sph_body)
-        : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
-          thermal_conductivity(*(particles_->getVariableDataByName<Real>("ThermalConductivity"))){};
+        : LocalDynamics(sph_body),
+          thermal_conductivity(particles_->getVariableDataByName<Real>("ThermalConductivity")){};
     void update(size_t index_i, Real dt)
     {
         thermal_conductivity[index_i] = 0.5 + rand_uniform(0.0, 1.0);
     };
 
   protected:
-    StdLargeVec<Real> &thermal_conductivity;
+    Real *thermal_conductivity;
 };
 
-class WallBoundaryInitialCondition : public LocalDynamics, public DataDelegateSimple
+class WallBoundaryInitialCondition : public LocalDynamics
 {
   public:
     explicit WallBoundaryInitialCondition(SPHBody &sph_body)
-        : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
-          pos_(*particles_->getVariableDataByName<Vecd>("Position")),
-          phi_(*particles_->registerSharedVariable<Real>("Phi")){};
+        : LocalDynamics(sph_body),
+          pos_(particles_->getVariableDataByName<Vecd>("Position")),
+          phi_(particles_->registerStateVariable<Real>("Phi")){};
 
     void update(size_t index_i, Real dt)
     {
@@ -133,20 +133,20 @@ class WallBoundaryInitialCondition : public LocalDynamics, public DataDelegateSi
     };
 
   protected:
-    StdLargeVec<Vecd> &pos_;
-    StdLargeVec<Real> &phi_;
+    Vecd *pos_;
+    Real *phi_;
 };
 //----------------------------------------------------------------------
 //  Impose constraints on the objective function
 //----------------------------------------------------------------------
-class ImposeObjectiveFunction : public LocalDynamics, public DataDelegateSimple
+class ImposeObjectiveFunction : public LocalDynamics
 {
   public:
     explicit ImposeObjectiveFunction(SPHBody &sph_body)
-        : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
-          phi_(*particles_->registerSharedVariable<Real>("Phi")),
-          species_modified_(*particles_->getVariableDataByName<Real>("SpeciesModified")),
-          species_recovery_(*particles_->getVariableDataByName<Real>("SpeciesRecovery")){};
+        : LocalDynamics(sph_body),
+          phi_(particles_->registerStateVariable<Real>("Phi")),
+          species_modified_(particles_->getVariableDataByName<Real>("SpeciesModified")),
+          species_recovery_(particles_->getVariableDataByName<Real>("SpeciesRecovery")){};
 
     void update(size_t index_i, Real learning_rate)
     {
@@ -155,16 +155,16 @@ class ImposeObjectiveFunction : public LocalDynamics, public DataDelegateSimple
     };
 
   protected:
-    StdLargeVec<Real> &phi_, &species_modified_, &species_recovery_;
+    Real *phi_, *species_modified_, *species_recovery_;
 };
 
-class StoreGlobalPDEResidual : public LocalDynamics, public DataDelegateSimple
+class StoreGlobalPDEResidual : public LocalDynamics
 {
   public:
     explicit StoreGlobalPDEResidual(SPHBody &sph_body)
-        : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
-          residual_T_local_(*particles_->getVariableDataByName<Real>("ResidualTLocal")),
-          residual_T_global_(*particles_->getVariableDataByName<Real>("ResidualTGlobal")){};
+        : LocalDynamics(sph_body),
+          residual_T_local_(particles_->getVariableDataByName<Real>("ResidualTLocal")),
+          residual_T_global_(particles_->getVariableDataByName<Real>("ResidualTGlobal")){};
 
     void update(size_t index_i, Real learning_rate)
     {
@@ -172,7 +172,7 @@ class StoreGlobalPDEResidual : public LocalDynamics, public DataDelegateSimple
     };
 
   protected:
-    StdLargeVec<Real> &residual_T_local_, &residual_T_global_;
+    Real *residual_T_local_, *residual_T_global_;
 };
 
 //----------------------------------------------------------------------
@@ -221,6 +221,7 @@ TEST(test_optimization, test_problem1_optimized)
     //----------------------------------------------------------------------
     //	Setup parameter for optimization control
     //----------------------------------------------------------------------
+    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     int ite = 0;                  /* define the loop of all operations for optimization. */
     int ite_T = 0;                /* define loop index for temperature splitting iteration. */
     int ite_k = 0;                /* define loop index for parameter splitting iteration. */
@@ -309,7 +310,7 @@ TEST(test_optimization, test_problem1_optimized)
     //----------------------------------------------------------------------
     if (sph_system.RestartStep() != 0)
     {
-        GlobalStaticVariables::physical_time_ = restart_io.readRestartFiles(sph_system.RestartStep());
+        physical_time = restart_io.readRestartFiles(sph_system.RestartStep());
         diffusion_body.updateCellLinkedList();
         diffusion_body_complex.updateConfiguration();
     }

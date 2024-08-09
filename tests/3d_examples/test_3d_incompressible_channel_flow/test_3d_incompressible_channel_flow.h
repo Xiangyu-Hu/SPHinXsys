@@ -55,12 +55,12 @@ class InvCFInitialCondition
   public:
     explicit InvCFInitialCondition(SPHBody &sph_body)
         : FluidInitialCondition(sph_body),
-          rho_(*particles_->registerSharedVariable<Real>("Density")),
-          p_(*particles_->registerSharedVariable<Real>("Pressure")),
-          vel_(*particles_->registerSharedVariable<Vecd>("Velocity")){};
+          rho_(particles_->registerStateVariable<Real>("Density")),
+          p_(particles_->registerStateVariable<Real>("Pressure")),
+          vel_(particles_->registerStateVariable<Vecd>("Velocity")){};
 
   protected:
-    StdLargeVec<Real> &rho_, &p_;
+    Real *rho_, *p_;
     void update(size_t index_i, Real dt)
     {
         rho_[index_i] = rho0_f;
@@ -71,7 +71,7 @@ class InvCFInitialCondition
     }
 
   protected:
-    StdLargeVec<Vecd> &vel_;
+    Vecd *vel_;
 };
 ///----------------------------------------------------------------------
 //	InvCFBoundaryConditionSetup

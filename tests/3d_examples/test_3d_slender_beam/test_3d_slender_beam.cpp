@@ -116,22 +116,6 @@ class BoundaryGeometryParallelToYAxis : public BodyPartByParticle
         }
     };
 };
-/**
- * define time dependent external force
- */
-class TimeDependentExternalForce : public Gravity
-{
-  public:
-    explicit TimeDependentExternalForce(Vecd external_force)
-        : Gravity(external_force) {}
-    virtual Vecd InducedAcceleration(const Vecd &position) override
-    {
-        Real current_time = GlobalStaticVariables::physical_time_;
-        return current_time < time_to_full_external_force
-                   ? current_time * global_acceleration_ / time_to_full_external_force
-                   : global_acceleration_;
-    }
-};
 } // namespace SPH
 
 /**
@@ -159,8 +143,8 @@ int main(int ac, char *av[])
     ContactRelation bar_observer_contact(bar_observer, {&bar_body});
 
     /** Common particle dynamics. */
-    TimeDependentExternalForce time_dependent_external_force(Vec3d(0.0, 0.0, q / (PT * rho0_s) - gravitational_acceleration));
-    SimpleDynamics<GravityForce> apply_time_dependent_external_force(bar_body, time_dependent_external_force);
+    IncreaseToFullGravity time_dependent_external_force(Vec3d(0.0, 0.0, q / (PT * rho0_s) - gravitational_acceleration), time_to_full_external_force);
+    SimpleDynamics<GravityForce<IncreaseToFullGravity>> apply_time_dependent_external_force(bar_body, time_dependent_external_force);
     InteractionDynamics<slender_structure_dynamics::BarCorrectConfiguration> corrected_configuration(bar_body_inner);
     /**
      * This section define all numerical methods will be used in this case.
@@ -198,10 +182,10 @@ int main(int ac, char *av[])
      * From here the time stepping begins.
      * Set the starting time.
      */
-    GlobalStaticVariables::physical_time_ = 0.0;
+    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     write_states.writeToFile(0);
     write_beam_max_displacement.writeToFile(0);
-    observed_quantity_0 = (*write_beam_max_displacement.getObservedQuantity())[0][2];
+    observed_quantity_0 = write_beam_max_displacement.getObservedQuantity()[0][2];
 
     /** Setup physical parameters. */
     int ite = 0;
@@ -214,7 +198,7 @@ int main(int ac, char *av[])
     /**
      * Main loop
      */
-    while (GlobalStaticVariables::physical_time_ < end_time)
+    while (physical_time < end_time)
     {
         Real integral_time = 0.0;
         while (integral_time < output_period)
@@ -222,7 +206,7 @@ int main(int ac, char *av[])
             if (ite % 100 == 0)
             {
                 std::cout << "N=" << ite << " Time: "
-                          << GlobalStaticVariables::physical_time_ << "	dt: "
+                          << physical_time << "	dt: "
                           << dt << "\n";
             }
             apply_time_dependent_external_force.exec();
@@ -239,7 +223,7 @@ int main(int ac, char *av[])
             ite++;
             dt = computing_time_step_size.exec();
             integral_time += dt;
-            GlobalStaticVariables::physical_time_ += dt;
+            physical_time += dt;
         }
         write_beam_max_displacement.writeToFile(ite);
         TickCount t2 = TickCount::now();
@@ -253,7 +237,7 @@ int main(int ac, char *av[])
     tt = t4 - t1 - interval;
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
-    observed_quantity_n = (*write_beam_max_displacement.getObservedQuantity())[0][2];
+    observed_quantity_n = write_beam_max_displacement.getObservedQuantity()[0][2];
 
     testing::InitGoogleTest(&ac, av);
     return RUN_ALL_TESTS();

@@ -21,17 +21,17 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	sph_data_containers.h
+ * @file 	sphinxsys_containers.h
  * @brief 	Set up of basic data structure.
  * @author	Chi Zhang and Xiangyu Hu
  */
 
-#ifndef SPH_DATA_CONTAINERS_H
-#define SPH_DATA_CONTAINERS_H
+#ifndef SPHINXSYS_CONTAINERS_H
+#define SPHINXSYS_CONTAINERS_H
 
 #include "base_data_package.h"
 #include "base_data_type.h"
-#include "base_variable.h"
+#include "sphinxsys_entity.h"
 
 namespace SPH
 {
@@ -68,11 +68,11 @@ using SplitCellLists = StdVec<ConcurrentCellLists>;
 using CellLists = std::pair<ConcurrentCellLists, DataListsInCells>;
 
 /** Generalized particle data type */
-typedef DataContainerAddressAssemble<StdLargeVec> ParticleData;
+typedef DataContainerAssemble<AllocatedData> ParticleData;
 /** Generalized particle variable type*/
 typedef DataContainerAddressAssemble<DiscreteVariable> ParticleVariables;
 /** Generalized particle variable type*/
-typedef DataContainerAddressAssemble<SingleVariable> SingleVariables;
+typedef DataContainerAddressAssemble<SingularVariable> SingularVariables;
 
 /** Generalized mesh data type */
 // template <typename DataType>
@@ -80,4 +80,4 @@ typedef DataContainerAddressAssemble<SingleVariable> SingleVariables;
 typedef DataContainerAddressAssemble<MeshVariable> MeshVariableAssemble;
 
 } // namespace SPH
-#endif // SPH_DATA_CONTAINERS_H
+#endif // SPHINXSYS_CONTAINERS_H

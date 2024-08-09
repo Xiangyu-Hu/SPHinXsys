@@ -42,7 +42,7 @@ namespace fluid_dynamics
  * @class AcousticTimeStepSize
  * @brief Computing the acoustic time step size
  */
-class AcousticTimeStepSize : public LocalDynamicsReduce<ReduceMax>, public DataDelegateSimple
+class AcousticTimeStepSize : public LocalDynamicsReduce<ReduceMax>
 {
   public:
     explicit AcousticTimeStepSize(SPHBody &sph_body, Real acousticCFL = 0.6);
@@ -52,8 +52,8 @@ class AcousticTimeStepSize : public LocalDynamicsReduce<ReduceMax>, public DataD
 
   protected:
     Fluid &fluid_;
-    StdLargeVec<Real> &rho_, &p_, &mass_;
-    StdLargeVec<Vecd> &vel_, &force_, &force_prior_;
+    Real *rho_, *p_, *mass_;
+    Vecd *vel_, *force_, *force_prior_;
     Real smoothing_length_min_;
     Real acousticCFL_;
 };
@@ -63,8 +63,7 @@ class AcousticTimeStepSize : public LocalDynamicsReduce<ReduceMax>, public DataD
  * @brief Computing the advection time step size when viscosity is handled implicitly
  */
 class AdvectionTimeStepSizeForImplicitViscosity
-    : public LocalDynamicsReduce<ReduceMax>,
-      public DataDelegateSimple
+    : public LocalDynamicsReduce<ReduceMax>
 {
   public:
     explicit AdvectionTimeStepSizeForImplicitViscosity(
@@ -74,8 +73,8 @@ class AdvectionTimeStepSizeForImplicitViscosity
     virtual Real outputResult(Real reduced_value) override;
 
   protected:
-    StdLargeVec<Real> &mass_;
-    StdLargeVec<Vecd> &vel_, &force_, &force_prior_;
+    Real *mass_;
+    Vecd *vel_, *force_, *force_prior_;
     Real smoothing_length_min_;
     Real speed_ref_, advectionCFL_;
 };

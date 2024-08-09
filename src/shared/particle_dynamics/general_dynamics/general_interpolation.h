@@ -48,7 +48,7 @@ class BaseInterpolation : public LocalDynamics, public DataDelegateContact
         for (size_t k = 0; k != this->contact_particles_.size(); ++k)
         {
             contact_Vol_.push_back(contact_particles_[k]->template getVariableDataByName<Real>("VolumetricMeasure"));
-            StdLargeVec<DataType> *contact_data =
+            DataType *contact_data =
                 this->contact_particles_[k]->template getVariableDataByName<DataType>(variable_name);
             contact_data_.push_back(contact_data);
         }
@@ -62,8 +62,8 @@ class BaseInterpolation : public LocalDynamics, public DataDelegateContact
 
         for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
         {
-            StdLargeVec<Real> &Vol_k = *(contact_Vol_[k]);
-            StdLargeVec<DataType> &data_k = *(contact_data_[k]);
+            Real *Vol_k = contact_Vol_[k];
+            DataType *data_k = contact_data_[k];
             Neighborhood &contact_neighborhood = (*this->contact_configuration_[k])[index_i];
             for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
             {
@@ -74,13 +74,13 @@ class BaseInterpolation : public LocalDynamics, public DataDelegateContact
                 ttl_weight += weight_j;
             }
         }
-        (*interpolated_quantities_)[index_i] = observed_quantity / (ttl_weight + TinyReal);
+        interpolated_quantities_[index_i] = observed_quantity / (ttl_weight + TinyReal);
     };
 
   protected:
-    StdLargeVec<DataType> *interpolated_quantities_;
-    StdVec<StdLargeVec<Real> *> contact_Vol_;
-    StdVec<StdLargeVec<DataType> *> contact_data_;
+    DataType *interpolated_quantities_;
+    StdVec<Real *> contact_Vol_;
+    StdVec<DataType *> contact_data_;
 };
 
 /**
@@ -112,7 +112,7 @@ class ObservingAQuantity : public InteractionDynamics<BaseInterpolation<DataType
     explicit ObservingAQuantity(BaseContactRelation &contact_relation, const std::string &variable_name)
         : InteractionDynamics<BaseInterpolation<DataType>>(contact_relation, variable_name)
     {
-        this->interpolated_quantities_ = this->particles_->template registerSharedVariable<DataType>(variable_name);
+        this->interpolated_quantities_ = this->particles_->template registerStateVariable<DataType>(variable_name);
     };
     virtual ~ObservingAQuantity(){};
 };
@@ -136,7 +136,7 @@ class CorrectInterpolationKernelWeights : public LocalDynamics,
 
         for (size_t k = 0; k < contact_configuration_.size(); ++k)
         {
-            StdLargeVec<Real> &Vol_k = *(contact_Vol_[k]);
+            Real *Vol_k = contact_Vol_[k];
             Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
             for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
             {
@@ -166,7 +166,7 @@ class CorrectInterpolationKernelWeights : public LocalDynamics,
     };
 
   protected:
-    StdVec<StdLargeVec<Real> *> contact_Vol_;
+    StdVec<Real *> contact_Vol_;
 };
 } // namespace SPH
 #endif // GENERAL_INTERPOLATION_H

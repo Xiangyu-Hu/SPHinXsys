@@ -49,9 +49,9 @@ class VelocityGradient<DataDelegationType>
     virtual ~VelocityGradient(){};
 
   protected:
-    StdLargeVec<Real> &Vol_;
-    StdLargeVec<Vecd> &vel_;
-    StdLargeVec<Matd> &vel_grad_;
+    Real *Vol_;
+    Vecd *vel_;
+    Matd *vel_grad_;
 };
 
 template <class KernelCorrectionType>
@@ -78,7 +78,7 @@ class VelocityGradient<Contact<Wall>> : public InteractionWithWall<VelocityGradi
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
-    StdLargeVec<Vecd> &distance_from_wall_;
+    Vecd *distance_from_wall_;
 };
 
 template <class KernelCorrectionType>

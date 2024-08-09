@@ -13,20 +13,20 @@ template <class BaseRelationType>
 RelaxationResidue<Base, DataDelegationType>::RelaxationResidue(BaseRelationType &base_relation)
     : LocalDynamics(base_relation.getSPHBody()), DataDelegationType(base_relation),
       sph_adaptation_(this->sph_body_.sph_adaptation_),
-      Vol_(*this->particles_->template getVariableDataByName<Real>("VolumetricMeasure")),
-      residue_(*this->particles_->template registerSharedVariable<Vecd>("ZeroOrderResidue")) {}
+      Vol_(this->particles_->template getVariableDataByName<Real>("VolumetricMeasure")),
+      residue_(this->particles_->template registerStateVariable<Vecd>("ZeroOrderResidue")) {}
 //=================================================================================================//
 template <typename... Args>
 RelaxationResidue<Inner<LevelSetCorrection>>::RelaxationResidue(Args &&...args)
     : RelaxationResidue<Inner<>>(std::forward<Args>(args)...),
-      pos_(*particles_->getVariableDataByName<Vecd>("Position")),
+      pos_(particles_->getVariableDataByName<Vecd>("Position")),
       level_set_shape_(DynamicCast<LevelSetShape>(this, this->getRelaxShape())){};
 //=================================================================================================//
 template <class RelaxationResidueType>
 template <typename FirstArg, typename... OtherArgs>
 RelaxationStep<RelaxationResidueType>::
     RelaxationStep(FirstArg &&first_arg, OtherArgs &&...other_args)
-    : BaseDynamics<void>(first_arg.getSPHBody()),
+    : BaseDynamics<void>(),
       real_body_(DynamicCast<RealBody>(this, first_arg.getSPHBody())),
       body_relations_(real_body_.getBodyRelations()),
       relaxation_residue_(first_arg, std::forward<OtherArgs>(other_args)...),

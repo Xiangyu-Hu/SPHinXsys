@@ -32,7 +32,8 @@
 
 #include "base_data_package.h"
 #include "base_particle_dynamics.h"
-#include "sph_data_containers.h"
+#include "execution_policy.h"
+#include "sphinxsys_containers.h"
 
 namespace SPH
 {
@@ -54,18 +55,58 @@ class Dynamic;         /**< A dynamic interaction */
 /**
  * @class BaseLocalDynamics
  * @brief The base class for all local particle dynamics.
+ * @details The basic design idea is define local dynamics for local particle operations.
+ * We split a general local dynamics into two parts in respect of functionality:
+ * one is the action on singular data, which is carried within the function setupDynamics,
+ * the other is the action on discrete variables, which will be carried out
+ * by the computing kernel. In the scenarios of offloading computing,
+ * the first function is generally carried on the host and the other on computing device.
+ * We also split the local dynamics into two part in respect of memory management.
  */
 template <class DynamicsIdentifier>
 class BaseLocalDynamics
 {
+    UniquePtrsKeeper<BaseEntity> constant_entity_ptrs_;
+
   public:
     explicit BaseLocalDynamics(DynamicsIdentifier &identifier)
-        : identifier_(identifier){};
+        : identifier_(identifier), sph_system_(identifier.getSPHSystem()),
+          sph_body_(identifier.getSPHBody()),
+          particles_(&sph_body_.getBaseParticles()){};
     virtual ~BaseLocalDynamics(){};
     DynamicsIdentifier &getDynamicsIdentifier() { return identifier_; };
-    virtual void setupDynamics(Real dt = 0.0) {}; // setup global parameters
+    SPHBody &getSPHBody() { return sph_body_; };
+    BaseParticles *getParticles() { return particles_; };
+    virtual void setupDynamics(Real dt = 0.0){}; // setup global parameters
+
   protected:
     DynamicsIdentifier &identifier_;
+    SPHSystem &sph_system_;
+    SPHBody &sph_body_;
+    BaseParticles *particles_;
+
+    template <class DataType>
+    ConstantEntity<DataType> *createConstantEntity(const std::string &name, const DataType &value)
+    {
+        return constant_entity_ptrs_.createPtr<ConstantEntity<DataType>>(name, value);
+    };
+
+    template <class DataType, class ExecutionPolicy>
+    ConstantEntity<DataType> *createConstantEntity(
+        const ExecutionPolicy &policy, const std::string &name, const DataType &value)
+    {
+        return constant_entity_ptrs_.createPtr<ConstantEntity<DataType>>(name, value);
+    };
+
+    template <class DataType>
+    ConstantEntity<DataType> *createConstantEntity(
+        const execution::ParallelDevicePolicy &par_device, const std::string &name, const DataType &value)
+    {
+        ConstantEntity<DataType> *constant_entity =
+            constant_entity_ptrs_.createPtr<ConstantEntity<DataType>>(name, value);
+        constant_entity_ptrs_.createPtr<DeviceOnlyConstantEntity<DataType>>(constant_entity);
+        return constant_entity;
+    };
 };
 using LocalDynamics = BaseLocalDynamics<SPHBody>;
 
@@ -147,7 +188,7 @@ class ComplexInteraction<LocalDynamicsName<>, CommonParameters...>
   public:
     ComplexInteraction(){};
 
-    void interaction(size_t index_i, Real dt = 0.0) {};
+    void interaction(size_t index_i, Real dt = 0.0){};
 };
 
 template <typename... CommonParameters, template <typename... InteractionTypes> class LocalDynamicsName,

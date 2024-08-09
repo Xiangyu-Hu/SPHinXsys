@@ -21,70 +21,148 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	base_variable.h
- * @brief 	Here gives classes for the base variables used in simulation.
+ * @file sphinxsys_entity.h
+ * @brief Here gives classes for the constants and variables used in simulation.
  * @details These variables are those discretized in spaces and time.
- * @author	Xiangyu Hu
+ * @author Xiangyu Hu
  */
 
-#ifndef BASE_VARIABLES_H
-#define BASE_VARIABLES_H
+#ifndef SPHINXSYS_ENTITY_H
+#define SPHINXSYS_ENTITY_H
 
 #include "base_data_package.h"
-#include <cstring>
-#include <stdio.h>
+#include "execution_policy.h"
 
 namespace SPH
 {
-class BaseVariable
+
+class BaseEntity
 {
   public:
-    explicit BaseVariable(const std::string &name) : name_(name){};
-    virtual ~BaseVariable(){};
+    explicit BaseEntity(const std::string &name)
+        : name_(name){};
+    virtual ~BaseEntity(){};
     std::string Name() const { return name_; };
 
-  private:
+  protected:
     const std::string name_;
 };
 
 template <typename DataType>
-class SingleVariable : public BaseVariable
+class SingularVariable : public BaseEntity
 {
   public:
-    SingleVariable(const std::string &name, DataType &value)
-        : BaseVariable(name), value_(value){};
-    virtual ~SingleVariable(){};
+    SingularVariable(const std::string &name, const DataType &value)
+        : BaseEntity(name), value_(new DataType(value)), delegated_(value_){};
+    virtual ~SingularVariable() { delete value_; };
 
-    DataType *ValueAddress() { return &value_; };
+    DataType *ValueAddress() { return delegated_; };
+    bool isValueDelegated() { return value_ == delegated_; };
+    void setDelegateValueAddress(DataType *new_delegated) { delegated_ = new_delegated; };
 
-  private:
-    DataType value_;
+  protected:
+    DataType *value_;
+    DataType *delegated_;
 };
 
 template <typename DataType>
-class DiscreteVariable : public BaseVariable
+class DeviceSharedSingularVariable : public BaseEntity
+
 {
   public:
-    DiscreteVariable(const std::string &name)
-        : BaseVariable(name), data_field_(nullptr){};
-    virtual ~DiscreteVariable() { delete data_field_; };
-    StdLargeVec<DataType> *DataField() { return data_field_; };
-    void allocateDataField(const size_t size, const DataType &initial_value)
+    DeviceSharedSingularVariable(SingularVariable<DataType> *host_variable);
+    virtual ~DeviceSharedSingularVariable();
+
+  protected:
+    DataType *device_shared_value_;
+};
+
+template <typename DataType>
+class ConstantEntity : public BaseEntity
+{
+  public:
+    ConstantEntity(const std::string &name, const DataType &value)
+        : BaseEntity(name), value_(new DataType(value)), device_value_(nullptr){};
+    virtual ~ConstantEntity() { delete value_; };
+
+    bool existDeviceData() { return device_value_ != nullptr; };
+    void setDeviceData(DataType *data) { device_value_ = data; };
+    DataType *DeviceDataAddress()
     {
-        data_field_ = new StdLargeVec<DataType>(size, initial_value);
-    }
+        if (!existDeviceData())
+        {
+            std::cout << "\n Error: the constant entity '" << name_ << "' not allocated on device yet!" << std::endl;
+            std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+            exit(1);
+        }
+        return device_value_;
+    };
+
+    DataType *DataAddress() { return value_; };
+    template <class ExecutionPolicy>
+    DataType *DataAddress(const ExecutionPolicy &policy) { return DataAddress(); };
+    DataType *DataAddress(const execution::ParallelDevicePolicy &par_device) { return DeviceDataAddress(); }
 
   private:
-    StdLargeVec<DataType> *data_field_;
+    DataType *value_;
+    DataType *device_value_;
 };
 
 template <typename DataType>
-class MeshVariable : public BaseVariable
+class DeviceOnlyConstantEntity : public BaseEntity
+
+{
+  public:
+    DeviceOnlyConstantEntity(ConstantEntity<DataType> *host_constant);
+    virtual ~DeviceOnlyConstantEntity();
+
+  protected:
+    DataType *device_only_value_;
+};
+
+template <typename DataType>
+class DiscreteVariable : public BaseEntity
+{
+  public:
+    DiscreteVariable(const std::string &name, size_t data_size)
+        : BaseEntity(name), data_size_(data_size),
+          data_field_(nullptr), device_data_field_(nullptr)
+    {
+        data_field_ = new DataType[data_size];
+    };
+    virtual ~DiscreteVariable() { delete[] data_field_; };
+    DataType *DataField() { return data_field_; };
+    DataType *DeviceDataField() { return device_data_field_; }
+
+    bool existDeviceDataField() { return device_data_field_ != nullptr; };
+    size_t getDataSize() { return data_size_; }
+    void setDeviceDataField(DataType *data_field) { device_data_field_ = data_field; };
+    void synchronizeWithDevice();
+
+  private:
+    size_t data_size_;
+    DataType *data_field_;
+    DataType *device_data_field_;
+};
+
+template <typename DataType>
+class DeviceOnlyDiscreteVariable : public BaseEntity
+{
+  public:
+    DeviceOnlyDiscreteVariable(DiscreteVariable<DataType> *host_variable);
+    virtual ~DeviceOnlyDiscreteVariable();
+
+  protected:
+    DataType *device_only_data_field_;
+};
+
+template <typename DataType>
+class MeshVariable : public BaseEntity
 {
   public:
     using PackageData = PackageDataMatrix<DataType, 4>;
     MeshVariable(const std::string &name, size_t data_size)
-        : BaseVariable(name), data_field_(nullptr){};
+        : BaseEntity(name), data_field_(nullptr){};
     virtual ~MeshVariable() { delete[] data_field_; };
 
     // void setDataField(PackageData* mesh_data){ data_field_ = mesh_data; };
@@ -110,7 +188,6 @@ VariableType<DataType> *findVariableByName(DataContainerAddressAssemble<Variable
 
     return result != variables.end() ? *result : nullptr;
 };
-
 template <typename DataType, template <typename VariableDataType> class VariableType, typename... Args>
 VariableType<DataType> *addVariableToAssemble(DataContainerAddressAssemble<VariableType> &assemble,
                                               DataContainerUniquePtrAssemble<VariableType> &ptr_assemble, Args &&...args)
@@ -123,4 +200,4 @@ VariableType<DataType> *addVariableToAssemble(DataContainerAddressAssemble<Varia
     return new_variable;
 };
 } // namespace SPH
-#endif // BASE_VARIABLES_H
+#endif // SPHINXSYS_ENTITY_H

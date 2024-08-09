@@ -42,9 +42,9 @@ struct NonPrescribedPressure
     template <class BoundaryConditionType>
     NonPrescribedPressure(BoundaryConditionType &boundary_condition) {}
 
-    Real operator()(Real &p_)
+    Real operator()(Real p, Real current_time)
     {
-        return p_;
+        return p;
     }
 };
 
@@ -54,15 +54,14 @@ class BidirectionalBuffer
   protected:
     TargetPressure target_pressure_;
 
-    class TagBufferParticles : public BaseLocalDynamics<BodyPartByCell>, public DataDelegateSimple
+    class TagBufferParticles : public BaseLocalDynamics<BodyPartByCell>
     {
       public:
         TagBufferParticles(BodyAlignedBoxByCell &aligned_box_part)
             : BaseLocalDynamics<BodyPartByCell>(aligned_box_part),
-              DataDelegateSimple(aligned_box_part.getSPHBody()),
-              pos_(*particles_->getVariableDataByName<Vecd>("Position")),
+              pos_(particles_->getVariableDataByName<Vecd>("Position")),
               aligned_box_(aligned_box_part.getAlignedBoxShape()),
-              buffer_particle_indicator_(*particles_->registerSharedVariable<int>("BufferParticleIndicator"))
+              buffer_particle_indicator_(particles_->registerStateVariable<int>("BufferParticleIndicator"))
         {
             particles_->addVariableToSort<int>("BufferParticleIndicator");
         };
@@ -74,27 +73,27 @@ class BidirectionalBuffer
         };
 
       protected:
-        StdLargeVec<Vecd> &pos_;
+        Vecd *pos_;
         AlignedBoxShape &aligned_box_;
-        StdLargeVec<int> &buffer_particle_indicator_;
+        int *buffer_particle_indicator_;
     };
 
-    class Injection : public BaseLocalDynamics<BodyPartByCell>, public DataDelegateSimple
+    class Injection : public BaseLocalDynamics<BodyPartByCell>
     {
       public:
         Injection(BodyAlignedBoxByCell &aligned_box_part, ParticleBuffer<Base> &particle_buffer,
                   TargetPressure &target_pressure)
             : BaseLocalDynamics<BodyPartByCell>(aligned_box_part),
-              DataDelegateSimple(aligned_box_part.getSPHBody()),
               particle_buffer_(particle_buffer),
               aligned_box_(aligned_box_part.getAlignedBoxShape()),
               fluid_(DynamicCast<Fluid>(this, particles_->getBaseMaterial())),
               original_id_(particles_->ParticleOriginalIds()),
-              pos_n_(*particles_->getVariableDataByName<Vecd>("Position")),
-              rho_n_(*particles_->getVariableDataByName<Real>("Density")),
-              p_(*particles_->getVariableDataByName<Real>("Pressure")),
-              previous_surface_indicator_(*particles_->getVariableDataByName<int>("PreviousSurfaceIndicator")),
-              buffer_particle_indicator_(*particles_->getVariableDataByName<int>("BufferParticleIndicator")),
+              pos_n_(particles_->getVariableDataByName<Vecd>("Position")),
+              rho_n_(particles_->getVariableDataByName<Real>("Density")),
+              p_(particles_->getVariableDataByName<Real>("Pressure")),
+              previous_surface_indicator_(particles_->getVariableDataByName<int>("PreviousSurfaceIndicator")),
+              buffer_particle_indicator_(particles_->getVariableDataByName<int>("BufferParticleIndicator")),
+              physical_time_(sph_system_.getSystemVariableDataByName<Real>("PhysicalTime")),
               target_pressure_(target_pressure)
         {
             particle_buffer_.checkParticlesReserved();
@@ -113,7 +112,7 @@ class BidirectionalBuffer
                 /** Periodic bounding. */
                 pos_n_[index_i] = aligned_box_.getUpperPeriodic(pos_n_[index_i]);
                 Real sound_speed = fluid_.getSoundSpeed(rho_n_[index_i]);
-                p_[index_i] = target_pressure_(p_[index_i]);
+                p_[index_i] = target_pressure_(p_[index_i], *physical_time_);
                 rho_n_[index_i] = p_[index_i] / pow(sound_speed, 2.0) + fluid_.ReferenceDensity();
                 previous_surface_indicator_[index_i] = 1;
             }
@@ -124,10 +123,11 @@ class BidirectionalBuffer
         ParticleBuffer<Base> &particle_buffer_;
         AlignedBoxShape &aligned_box_;
         Fluid &fluid_;
-        StdLargeVec<size_t> &original_id_;
-        StdLargeVec<Vecd> &pos_n_;
-        StdLargeVec<Real> &rho_n_, &p_;
-        StdLargeVec<int> &previous_surface_indicator_, &buffer_particle_indicator_;
+        UnsignedInt *original_id_;
+        Vecd *pos_n_;
+        Real *rho_n_, *p_;
+        int *previous_surface_indicator_, *buffer_particle_indicator_;
+        Real *physical_time_;
 
       private:
         TargetPressure &target_pressure_;

@@ -9,7 +9,7 @@ NearWallDistance::NearWallDistance(BaseContactRelation &wall_contact_relation)
     : LocalDynamics(wall_contact_relation.getSPHBody()), DataDelegateContact(wall_contact_relation),
       spacing_ref_(sph_body_.sph_adaptation_->ReferenceSpacing()),
       distance_default_(100.0 * spacing_ref_),
-      pos_(*particles_->getVariableDataByName<Vecd>("Position"))
+      pos_(particles_->getVariableDataByName<Vecd>("Position"))
 {
     for (size_t k = 0; k != contact_particles_.size(); ++k)
     {
@@ -23,9 +23,9 @@ void NearWallDistance::evaluateDistanceAndNormal(size_t index_i, Vecd &distance,
 {
     for (size_t k = 0; k < contact_configuration_.size(); ++k)
     {
-        StdLargeVec<Vecd> &pos_k = *(wall_pos_[k]);
-        StdLargeVec<Vecd> &n_k = *(wall_n_[k]);
-        StdLargeVec<Real> &phi_k = *(wall_phi_[k]);
+        Vecd *pos_k = wall_pos_[k];
+        Vecd *n_k = wall_n_[k];
+        Real *phi_k = wall_phi_[k];
         Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
         for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
         {
@@ -42,7 +42,7 @@ void NearWallDistance::evaluateDistanceAndNormal(size_t index_i, Vecd &distance,
 //=================================================================================================//
 DistanceFromWall::DistanceFromWall(BaseContactRelation &wall_contact_relation)
     : NearWallDistance(wall_contact_relation),
-      distance_from_wall_(*particles_->registerSharedVariable<Vecd>("DistanceFromWall")) {}
+      distance_from_wall_(particles_->registerStateVariable<Vecd>("DistanceFromWall")) {}
 //=================================================================================================//
 void DistanceFromWall::interaction(size_t index_i, Real dt)
 {

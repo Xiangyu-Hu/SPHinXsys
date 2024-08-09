@@ -42,7 +42,7 @@ template <class MuscleType>
 class ActiveMuscle : public MuscleType
 {
   protected:
-    StdLargeVec<Real> *active_contraction_stress_; /**<  active contraction stress */
+    Real *active_contraction_stress_; /**<  active contraction stress */
 
   public:
     template <typename... Args>
@@ -61,7 +61,7 @@ class ActiveMuscle : public MuscleType
  */
 class CompositeSolid : public ElasticSolid
 {
-    StdLargeVec<int> *material_id_;
+    int *material_id_;
 
   protected:
     UniquePtrsKeeper<ElasticSolid> composite_ptrs_keeper_;
@@ -95,15 +95,14 @@ class CompositeSolid : public ElasticSolid
  * @class MaterialIdInitialization
  */
 class MaterialIdInitialization
-    : public LocalDynamics,
-      public DataDelegateSimple
+    : public LocalDynamics
 {
   public:
     explicit MaterialIdInitialization(SPHBody &sph_body);
 
   protected:
-    StdLargeVec<int> &material_id_;
-    StdLargeVec<Vecd> &pos_;
+    int *material_id_;
+    Vecd *pos_;
 };
 } // namespace SPH
 #endif // COMPLEX_SOLID_H
