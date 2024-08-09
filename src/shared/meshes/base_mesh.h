@@ -66,7 +66,14 @@ class Mesh
     Arrayi AllCells() { return all_cells_; };
     size_t NumberOfGridPoints() { return transferMeshIndexTo1D(all_grid_points_, all_grid_points_); };
     size_t NumberOfCells() { return transferMeshIndexTo1D(all_cells_, all_cells_); };
-    Arrayi CellIndexFromPosition(const Vecd &position);
+
+    Arrayi CellIndexFromPosition(const Vecd &position)
+    {
+        return floor((position - mesh_lower_bound_).array() / grid_spacing_)
+            .cast<int>()
+            .max(Arrayi::Zero())
+            .min(all_grid_points_ - 2 * Arrayi::Ones());
+    };
 
     size_t LinearCellIndexFromPosition(const Vecd &position)
     {
@@ -81,7 +88,18 @@ class Mesh
     // Here, mesh size can be either AllGridPoints or AllCells.
     //----------------------------------------------------------------------
     Arrayi transfer1DtoMeshIndex(const Arrayi &mesh_size, size_t i);
-    size_t transferMeshIndexTo1D(const Arrayi &mesh_size, const Arrayi &mesh_index);
+
+    size_t transferMeshIndexTo1D(const Array2i &mesh_size, const Array2i &mesh_index)
+    {
+        return mesh_index[0] * mesh_size[1] + mesh_index[1];
+    };
+
+    size_t transferMeshIndexTo1D(const Array3i &mesh_size, const Array3i &mesh_index)
+    {
+        return mesh_index[0] * mesh_size[1] * mesh_size[2] +
+               mesh_index[1] * mesh_size[2] +
+               mesh_index[2];
+    };
     /** converts mesh index into a Morton order.
      * Interleave a 10 bit number in 32 bits, fill one bit and leave the other 2 as zeros
      * https://stackoverflow.com/questions/18529057/

@@ -20,14 +20,6 @@ Mesh::Mesh(Vecd mesh_lower_bound, Real grid_spacing, Arrayi all_grid_points)
     all_cells_ = all_grid_points_ - Arrayi::Ones();
 }
 //=================================================================================================//
-Arrayi Mesh::CellIndexFromPosition(const Vecd &position)
-{
-    return floor((position - mesh_lower_bound_).array() / grid_spacing_)
-        .cast<int>()
-        .max(Arrayi::Zero())
-        .min(all_grid_points_ - 2 * Arrayi::Ones());
-}
-//=================================================================================================//
 Vecd Mesh::CellLowerCornerPosition(const Arrayi &cell_index)
 {
     return mesh_lower_bound_ + cell_index.cast<Real>().matrix() * grid_spacing_;
