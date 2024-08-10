@@ -110,7 +110,7 @@ namespace fluid_dynamics
 				
 				Real r_ij = inner_neighborhood.r_ij_[n];
 				const Vecd& e_ij = inner_neighborhood.e_ij_[n];
-				Real weight = 0.5 ;
+				Real weight = 0.3 ;
 				if (is_near_wall_P2_[index_i] == 10 && is_near_wall_P1_[index_j] == 1)
 				{
 					//Vecd vel_ps = vel_[index_j] + 0.5 * r_ij * velocity_gradient_[index_j] * e_ij ;
