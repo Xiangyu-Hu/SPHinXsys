@@ -3,7 +3,7 @@
 
 #include "sph_system.h"
 
-#include "sphinxsys_entity.h"
+#include "sphinxsys_variable.h"
 
 namespace SPH
 {

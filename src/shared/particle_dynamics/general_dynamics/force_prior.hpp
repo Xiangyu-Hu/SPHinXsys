@@ -56,8 +56,7 @@ void BaseForcePrior<DynamicsIdentifier>::ComputingKernel::update(size_t index_i,
 template <class GravityType>
 GravityForce<GravityType>::GravityForce(SPHBody &sph_body, const GravityType &gravity)
     : ForcePrior(sph_body, "GravityForce"),
-      ce_gravity_(this->createConstantEntity<GravityType>("Gravity", gravity)),
-      gravity_(ce_gravity_->DataAddress()),
+      gravity_(this->createConstantEntity<GravityType>("Gravity", gravity)),
       pos_(particles_->getVariableDataByName<Vecd>("Position")),
       mass_(particles_->registerStateVariable<Real>("Mass")),
       physical_time_(sph_system_.getSystemVariableDataByName<Real>("PhysicalTime")) {}
@@ -76,8 +75,7 @@ GravityForce<GravityType>::
     GravityForce(const ExecutionPolicy &execution_policy,
                  SPHBody &sph_body, const GravityType &gravity)
     : ForcePrior(execution_policy, sph_body, "GravityForce"),
-      ce_gravity_(this->createConstantEntity<GravityType>(execution_policy, "Gravity", gravity)),
-      gravity_(ce_gravity_->DataAddress(execution_policy)),
+      gravity_(this->createConstantEntity<GravityType>(execution_policy, "Gravity", gravity)),
       pos_(particles_->getVariableDataByName<Vecd>(execution_policy, "Position")),
       mass_(particles_->getVariableDataByName<Real>(execution_policy, "Mass")),
       v_physical_time_(sph_system_.getSystemVariableByName<Real>(execution_policy, "PhysicalTime")) {}

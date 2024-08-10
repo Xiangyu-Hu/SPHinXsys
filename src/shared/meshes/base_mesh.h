@@ -60,14 +60,14 @@ class Mesh
     Mesh(Vecd mesh_lower_bound, Real grid_spacing, Arrayi all_grid_points);
     ~Mesh(){};
 
-    Vecd MeshLowerBound() { return mesh_lower_bound_; };
-    Real GridSpacing() { return grid_spacing_; };
-    Arrayi AllGridPoints() { return all_grid_points_; };
-    Arrayi AllCells() { return all_cells_; };
-    size_t NumberOfGridPoints() { return transferMeshIndexTo1D(all_grid_points_, all_grid_points_); };
-    size_t NumberOfCells() { return transferMeshIndexTo1D(all_cells_, all_cells_); };
+    Vecd MeshLowerBound() const { return mesh_lower_bound_; };
+    Real GridSpacing() const { return grid_spacing_; };
+    Arrayi AllGridPoints() const { return all_grid_points_; };
+    Arrayi AllCells() const { return all_cells_; };
+    size_t NumberOfGridPoints() const { return transferMeshIndexTo1D(all_grid_points_, all_grid_points_); };
+    size_t NumberOfCells() const { return transferMeshIndexTo1D(all_cells_, all_cells_); };
 
-    Arrayi CellIndexFromPosition(const Vecd &position)
+    Arrayi CellIndexFromPosition(const Vecd &position) const
     {
         return floor((position - mesh_lower_bound_).array() / grid_spacing_)
             .cast<int>()
@@ -75,26 +75,26 @@ class Mesh
             .min(all_grid_points_ - 2 * Arrayi::Ones());
     };
 
-    size_t LinearCellIndexFromPosition(const Vecd &position)
+    size_t LinearCellIndexFromPosition(const Vecd &position) const
     {
         return transferMeshIndexTo1D(all_cells_, CellIndexFromPosition(position));
     };
 
-    Vecd CellPositionFromIndex(const Arrayi &cell_index);
-    Vecd GridPositionFromIndex(const Arrayi &grid_index);
-    Vecd CellLowerCornerPosition(const Arrayi &cell_index);
+    Vecd CellPositionFromIndex(const Arrayi &cell_index) const;
+    Vecd GridPositionFromIndex(const Arrayi &grid_index) const;
+    Vecd CellLowerCornerPosition(const Arrayi &cell_index) const;
     //----------------------------------------------------------------------
     // Transferring between 1D mesh indexes.
     // Here, mesh size can be either AllGridPoints or AllCells.
     //----------------------------------------------------------------------
-    Arrayi transfer1DtoMeshIndex(const Arrayi &mesh_size, size_t i);
+    Arrayi transfer1DtoMeshIndex(const Arrayi &mesh_size, size_t i) const;
 
-    size_t transferMeshIndexTo1D(const Array2i &mesh_size, const Array2i &mesh_index)
+    size_t transferMeshIndexTo1D(const Array2i &mesh_size, const Array2i &mesh_index) const
     {
         return mesh_index[0] * mesh_size[1] + mesh_index[1];
     };
 
-    size_t transferMeshIndexTo1D(const Array3i &mesh_size, const Array3i &mesh_index)
+    size_t transferMeshIndexTo1D(const Array3i &mesh_size, const Array3i &mesh_index) const
     {
         return mesh_index[0] * mesh_size[1] * mesh_size[2] +
                mesh_index[1] * mesh_size[2] +
@@ -105,7 +105,7 @@ class Mesh
      * https://stackoverflow.com/questions/18529057/
      * produce-interleaving-bit-patterns-morton-keys-for-32-bit-64-bit-and-128bit
      */
-    size_t transferMeshIndexToMortonOrder(const Arrayi &mesh_index);
+    size_t transferMeshIndexToMortonOrder(const Arrayi &mesh_index) const;
 
   protected:
     Vecd mesh_lower_bound_;  /**< mesh lower bound as reference coordinate */
@@ -114,7 +114,7 @@ class Mesh
     Arrayi all_grid_points_; /**< number of grid points by dimension */
     Arrayi all_cells_;       /**< number of cells by dimension */
 
-    size_t MortonCode(const size_t &i);
+    size_t MortonCode(const size_t &i) const;
 };
 
 /**

@@ -10,8 +10,8 @@ template <typename CellLinkedListType>
 void UpdateCellLinkedList<CellLinkedListType>::
     clearParticleOffsetList(const ParallelDevicePolicy &par_device)
 {
-    UnsignedInt *host_data_field = setParticleOffsetListUpperBound();
-    copyToDevice(host_data_field + number_of_cells_, particle_offset_list_ + number_of_cells_, 1);
+    UnsignedInt total_real_particles = particles_->TotalRealParticles();
+    copyDataToDevice(total_real_particles, particle_offset_list_ + number_of_cells_, 1);
 
     execution_instance.getQueue()
         .submit(

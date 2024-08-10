@@ -70,11 +70,10 @@ class GravityForce : public ForcePrior
     // Here gives pointer referred in local dynamics
     //----------------------------------------------------------------------
     SingularVariable<Real> *v_physical_time_;
-    ConstantEntity<GravityType> *ce_gravity_;
     //----------------------------------------------------------------------
     // Here gives pointer referred in computing kernel
     //----------------------------------------------------------------------
-    GravityType *gravity_;
+    const GravityType *gravity_;
     Vecd *pos_;
     Real *mass_;
     Real *physical_time_;
@@ -95,7 +94,7 @@ class GravityForce : public ForcePrior
 
       protected:
         friend class GravityForce<GravityType>;
-        GravityType *gravity_;
+        const GravityType *gravity_;
         Vecd *pos_;
         Real *mass_;
         Real *physical_time_;

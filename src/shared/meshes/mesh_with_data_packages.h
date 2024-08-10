@@ -31,7 +31,7 @@
 
 #include "base_mesh.h"
 #include "my_memory_pool.h"
-#include "sphinxsys_entity.h"
+#include "sphinxsys_variable.h"
 
 #include <algorithm>
 #include <fstream>

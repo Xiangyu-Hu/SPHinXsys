@@ -66,7 +66,7 @@ class Dynamic;         /**< A dynamic interaction */
 template <class DynamicsIdentifier>
 class BaseLocalDynamics
 {
-    UniquePtrsKeeper<BaseEntity> constant_entity_ptrs_;
+    UniquePtrsKeeper<BaseVariable> constant_entity_ptrs_;
 
   public:
     explicit BaseLocalDynamics(DynamicsIdentifier &identifier)
@@ -86,26 +86,26 @@ class BaseLocalDynamics
     BaseParticles *particles_;
 
     template <class DataType>
-    ConstantEntity<DataType> *createConstantEntity(const std::string &name, const DataType &value)
+    const DataType *createConstantEntity(const std::string &name, const DataType &value)
     {
-        return constant_entity_ptrs_.createPtr<ConstantEntity<DataType>>(name, value);
+        return constant_entity_ptrs_.createPtr<SingularVariable<DataType>>(name, value)->ValueAddress();
     };
 
     template <class DataType, class ExecutionPolicy>
-    ConstantEntity<DataType> *createConstantEntity(
+    const DataType *createConstantEntity(
         const ExecutionPolicy &policy, const std::string &name, const DataType &value)
     {
-        return constant_entity_ptrs_.createPtr<ConstantEntity<DataType>>(name, value);
+        return constant_entity_ptrs_.createPtr<SingularVariable<DataType>>(name, value)->ValueAddress();
     };
 
     template <class DataType>
-    ConstantEntity<DataType> *createConstantEntity(
+    const DataType *createConstantEntity(
         const execution::ParallelDevicePolicy &par_device, const std::string &name, const DataType &value)
     {
-        ConstantEntity<DataType> *constant_entity =
-            constant_entity_ptrs_.createPtr<ConstantEntity<DataType>>(name, value);
-        constant_entity_ptrs_.createPtr<DeviceOnlyConstantEntity<DataType>>(constant_entity);
-        return constant_entity;
+        SingularVariable<DataType> *constant_entity =
+            constant_entity_ptrs_.createPtr<SingularVariable<DataType>>(name, value);
+        constant_entity_ptrs_.createPtr<DeviceSharedSingularVariable<DataType>>(constant_entity);
+        return constant_entity->ValueAddress();
     };
 };
 using LocalDynamics = BaseLocalDynamics<SPHBody>;

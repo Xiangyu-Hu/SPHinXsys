@@ -20,22 +20,22 @@ Mesh::Mesh(Vecd mesh_lower_bound, Real grid_spacing, Arrayi all_grid_points)
     all_cells_ = all_grid_points_ - Arrayi::Ones();
 }
 //=================================================================================================//
-Vecd Mesh::CellLowerCornerPosition(const Arrayi &cell_index)
+Vecd Mesh::CellLowerCornerPosition(const Arrayi &cell_index) const
 {
     return mesh_lower_bound_ + cell_index.cast<Real>().matrix() * grid_spacing_;
 }
 //=================================================================================================//
-Vecd Mesh::CellPositionFromIndex(const Arrayi &cell_index)
+Vecd Mesh::CellPositionFromIndex(const Arrayi &cell_index) const
 {
     return CellLowerCornerPosition(cell_index) + 0.5 * Vecd::Ones() * grid_spacing_;
 }
 //=================================================================================================//
-Vecd Mesh::GridPositionFromIndex(const Arrayi &grid_index)
+Vecd Mesh::GridPositionFromIndex(const Arrayi &grid_index) const
 {
     return mesh_lower_bound_ + grid_index.cast<Real>().matrix() * grid_spacing_;
 }
 //=================================================================================================//
-size_t Mesh::MortonCode(const size_t &i)
+size_t Mesh::MortonCode(const size_t &i) const
 {
     size_t x = i;
     x &= 0x3ff;

@@ -61,7 +61,7 @@ class SPHSystem
 {
     UniquePtrKeeper<IOEnvironment> io_ptr_keeper_;
     DataContainerUniquePtrAssemble<SingularVariable> all_system_variable_ptrs_;
-    UniquePtrsKeeper<BaseEntity> unique_system_variable_ptrs_;
+    UniquePtrsKeeper<BaseVariable> unique_system_variable_ptrs_;
 
   public:
     BoundingBox system_domain_bounds_;       /**< Lower and Upper domain bounds. */

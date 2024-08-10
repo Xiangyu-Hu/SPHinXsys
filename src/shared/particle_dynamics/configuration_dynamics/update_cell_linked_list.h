@@ -54,7 +54,6 @@ class UpdateCellLinkedList<CellLinkedListType> : public LocalDynamics
     UpdateCellLinkedList(const ExecutionPolicy &execution_policy, RealBody &real_body);
     virtual ~UpdateCellLinkedList(){};
 
-    UnsignedInt *setParticleOffsetListUpperBound();
     template <class ExecutionPolicy>
     void clearParticleOffsetList(const ExecutionPolicy &execution_policy);
     void clearParticleOffsetList(const ParallelDevicePolicy &par_device);
@@ -72,12 +71,9 @@ class UpdateCellLinkedList<CellLinkedListType> : public LocalDynamics
     void updateCellLists(const ParallelDevicePolicy &par_device);
 
   protected:
-    ConstantEntity<Mesh> *ce_mesh_;
+    const Mesh *mesh_;
     UnsignedInt number_of_cells_, particles_bound_;
-    SingularVariable<UnsignedInt> *sv_total_real_particles_;
-    DiscreteVariable<UnsignedInt> *dv_particle_offset_list_;
 
-    Mesh *mesh_;
     Vecd *pos_;
     UnsignedInt *particle_id_list_;
     UnsignedInt *particle_offset_list_;

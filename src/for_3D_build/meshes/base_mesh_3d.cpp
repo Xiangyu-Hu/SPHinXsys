@@ -3,7 +3,7 @@
 namespace SPH
 {
 //=================================================================================================//
-Arrayi Mesh::transfer1DtoMeshIndex(const Arrayi &mesh_size, size_t i)
+Arrayi Mesh::transfer1DtoMeshIndex(const Arrayi &mesh_size, size_t i) const
 {
     size_t row_times_column_size = mesh_size[1] * mesh_size[2];
     size_t page = i / row_times_column_size;
@@ -13,7 +13,7 @@ Arrayi Mesh::transfer1DtoMeshIndex(const Arrayi &mesh_size, size_t i)
     return Arrayi(page, column, left_over - column * row_size);
 }
 //=================================================================================================//
-size_t Mesh::transferMeshIndexToMortonOrder(const Arrayi &mesh_index)
+size_t Mesh::transferMeshIndexToMortonOrder(const Arrayi &mesh_index) const
 {
     return MortonCode(mesh_index[0]) | (MortonCode(mesh_index[1]) << 1) | (MortonCode(mesh_index[2]) << 2);
 }
