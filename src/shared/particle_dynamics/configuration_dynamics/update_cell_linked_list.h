@@ -73,6 +73,7 @@ class UpdateCellLinkedList<CellLinkedListType> : public LocalDynamics
 
   protected:
     ConstantEntity<Mesh> *ce_mesh_;
+    UnsignedInt number_of_cells_, particles_bound_;
     SingularVariable<UnsignedInt> *sv_total_real_particles_;
     DiscreteVariable<UnsignedInt> *dv_particle_offset_list_;
 

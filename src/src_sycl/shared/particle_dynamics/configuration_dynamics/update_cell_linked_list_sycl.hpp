@@ -10,13 +10,13 @@ template <typename CellLinkedListType>
 void UpdateCellLinkedList<CellLinkedListType>::
     clearParticleOffsetList(const ParallelDevicePolicy &par_device)
 {
-    UnsignedInt number_of_cells = mesh_->NumberOfCells();
     UnsignedInt *host_data_field = setParticleOffsetListUpperBound();
-    copyToDevice(host_data_field + number_of_cells, particle_offset_list_ + number_of_cells, 1);
+    copyToDevice(host_data_field + number_of_cells_, particle_offset_list_ + number_of_cells_, 1);
 
     execution_instance.getQueue()
         .submit(
-            [=, particle_offset_list = particle_offset_list_, current_size_list = current_size_list_](sycl::handler &cgh)
+            [=, number_of_cells = number_of_cells_, particle_offset_list = particle_offset_list_,
+             current_size_list = current_size_list_](sycl::handler &cgh)
             {
                 cgh.parallel_for(execution_instance.getUniformNdRange(number_of_cells),
                                  [=](sycl::nd_item<1> item)
@@ -62,10 +62,9 @@ template <typename CellLinkedListType>
 void UpdateCellLinkedList<CellLinkedListType>::
     exclusiveScanParticleOffsetList(const ParallelDevicePolicy &par_device)
 {
-    UnsignedInt number_of_cells = mesh_->NumberOfCells();
     execution_instance.getQueue()
         .submit(
-            [=, particle_offset_list = particle_offset_list_](sycl::handler &cgh)
+            [=, particle_offset_list = particle_offset_list_, number_of_cells = number_of_cells_](sycl::handler &cgh)
             {
                 cgh.parallel_for(execution_instance.getUniformNdRange(execution_instance.getWorkGroupSize()),
                                  [=](sycl::nd_item<1> item)
