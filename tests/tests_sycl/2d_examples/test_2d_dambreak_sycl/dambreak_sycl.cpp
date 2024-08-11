@@ -100,13 +100,18 @@ int main(int ac, char *av[])
     Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallRiemann> fluid_density_relaxation(water_block_inner, water_wall_contact);
     InteractionWithUpdate<fluid_dynamics::DensitySummationComplexFreeSurface> fluid_density_by_summation(water_block_inner, water_wall_contact);
 
-    ReduceDynamics<fluid_dynamics::AdvectionViscousTimeStep> fluid_advection_time_step(water_block, U_ref);
+    ReduceDynamics<fluid_dynamics::AdvectionTimeStep> fluid_advection_time_step(water_block, U_ref);
+    ReduceDynamicsCK<fluid_dynamics::AdvectionTimeStep, execution::ParallelDevicePolicy> ck_fluid_advection_time_step(water_block, U_ref);
+    DiscreteVariable<Vecd> *dv_force_prior = water_block.getBaseParticles().getVariableByName<Vecd>("ForcePrior");
+    DiscreteVariable<Vecd> *dv_force = water_block.getBaseParticles().getVariableByName<Vecd>("Force");
+    DiscreteVariable<Vecd> *dv_velocity = water_block.getBaseParticles().getVariableByName<Vecd>("Velocity");
     ReduceDynamics<fluid_dynamics::AcousticTimeStep> fluid_acoustic_time_step(water_block);
     //----------------------------------------------------------------------
     //	Define the configuration related particles dynamics.
     //----------------------------------------------------------------------
     ParticleSorting particle_sorting(water_block);
     UpdateCellLinkedList<CellLinkedList, execution::ParallelDevicePolicy> water_block_update_cell_linked_list(water_block);
+    DiscreteVariable<UnsignedInt> *dv_particle_id_list = water_block.getBaseParticles().getVariableByName<UnsignedInt>("ParticleIDList");
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
@@ -126,8 +131,8 @@ int main(int ac, char *av[])
     wall_boundary_normal_direction.exec();
     constant_gravity.exec();
     water_block_update_cell_linked_list.exec();
-    water_block.getBaseParticles().getVariableByName<Vecd>("ForcePrior")->synchronizeWithDevice();
-    water_block.getBaseParticles().getVariableByName<UnsignedInt>("ParticleIDList")->synchronizeWithDevice();
+    dv_force_prior->synchronizeWithDevice();
+    dv_particle_id_list->synchronizeWithDevice();
     cell_linked_list_recording.writeToFile();
     //----------------------------------------------------------------------
     //	Load restart file if necessary.
@@ -175,7 +180,23 @@ int main(int ac, char *av[])
         {
             /** outer loop for dual-time criteria time-stepping. */
             time_instance = TickCount::now();
+
             Real advection_dt = fluid_advection_time_step.exec();
+            if (number_of_iterations % restart_output_interval == 0)
+            {
+                dv_force_prior->synchronizeToDevice();
+                dv_force->synchronizeWithDevice();
+                dv_velocity->synchronizeWithDevice();
+                Real ck_advection_dt = ck_fluid_advection_time_step.exec();
+                std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations
+                          << "	advection_dt = " << advection_dt << "   ck_acoustic_dt = " << ck_advection_dt << "\n";
+                if (ABS(advection_dt - ck_advection_dt) > 1.0e-6)
+                {
+                    std::cout << "Error: the advection time step is not consistent with the CK time step." << std::endl;
+                    exit(1);
+                }
+            }
+
             fluid_density_by_summation.exec();
             interval_computing_time_step += TickCount::now() - time_instance;
 

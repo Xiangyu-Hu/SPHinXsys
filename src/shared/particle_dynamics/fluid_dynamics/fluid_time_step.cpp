@@ -14,12 +14,12 @@ AcousticTimeStep::AcousticTimeStep(SPHBody &sph_body, Real acousticCFL)
       vel_(particles_->getVariableDataByName<Vecd>("Velocity")),
       force_(particles_->getVariableDataByName<Vecd>("Force")),
       force_prior_(particles_->getVariableDataByName<Vecd>("ForcePrior")),
-      smoothing_length_min_(sph_body.sph_adaptation_->MinimumSmoothingLength()),
+      h_min_(sph_body.sph_adaptation_->MinimumSmoothingLength()),
       acousticCFL_(acousticCFL) {}
 //=================================================================================================//
 Real AcousticTimeStep::reduce(size_t index_i, Real dt)
 {
-    Real acceleration_scale = 4.0 * smoothing_length_min_ *
+    Real acceleration_scale = 4.0 * h_min_ *
                               (force_[index_i] + force_prior_[index_i]).norm() / mass_[index_i];
     return SMAX(fluid_.getSoundSpeed(p_[index_i], rho_[index_i]) + vel_[index_i].norm(), acceleration_scale);
 }
@@ -28,7 +28,7 @@ Real AcousticTimeStep::outputResult(Real reduced_value)
 {
     // since the particle does not change its configuration in pressure relaxation step
     // I chose a time-step size according to Eulerian method
-    return acousticCFL_ * smoothing_length_min_ / (reduced_value + TinyReal);
+    return acousticCFL_ * h_min_ / (reduced_value + TinyReal);
 }
 //=================================================================================================//
 AdvectionTimeStep::
@@ -38,12 +38,12 @@ AdvectionTimeStep::
       vel_(particles_->getVariableDataByName<Vecd>("Velocity")),
       force_(particles_->getVariableDataByName<Vecd>("Force")),
       force_prior_(particles_->getVariableDataByName<Vecd>("ForcePrior")),
-      smoothing_length_min_(sph_body.sph_adaptation_->MinimumSmoothingLength()),
+      h_min_(sph_body.sph_adaptation_->MinimumSmoothingLength()),
       speed_ref_(U_ref), advectionCFL_(advectionCFL) {}
 //=================================================================================================//
 Real AdvectionTimeStep::reduce(size_t index_i, Real dt)
 {
-    Real acceleration_scale = 4.0 * smoothing_length_min_ *
+    Real acceleration_scale = 4.0 * h_min_ *
                               (force_[index_i] + force_prior_[index_i]).norm() / mass_[index_i];
     return SMAX(vel_[index_i].squaredNorm(), acceleration_scale);
 }
@@ -51,15 +51,7 @@ Real AdvectionTimeStep::reduce(size_t index_i, Real dt)
 Real AdvectionTimeStep::outputResult(Real reduced_value)
 {
     Real speed_max = sqrt(reduced_value);
-    return advectionCFL_ * smoothing_length_min_ / (SMAX(speed_max, speed_ref_) + TinyReal);
-}
-//=================================================================================================//
-AdvectionViscousTimeStep::AdvectionViscousTimeStep(SPHBody &sph_body, Real U_ref, Real advectionCFL)
-    : AdvectionTimeStep(sph_body, U_ref, advectionCFL),
-      fluid_(DynamicCast<Fluid>(this, particles_->getBaseMaterial()))
-{
-    Real viscous_speed = fluid_.ReferenceViscosity() / fluid_.ReferenceDensity() / smoothing_length_min_;
-    speed_ref_ = SMAX(viscous_speed, speed_ref_);
+    return advectionCFL_ * h_min_ / (SMAX(speed_max, speed_ref_) + TinyReal);
 }
 //=================================================================================================//
 Real AdvectionViscousTimeStep::reduce(size_t index_i, Real dt)

@@ -187,14 +187,14 @@ class ReduceDynamicsCK : public LocalDynamicsType,
                          public BaseDynamics<typename LocalDynamicsType::ReturnType>
 {
     using ComputingKernel = typename LocalDynamicsType::ComputingKernel;
+    using ReturnType = typename LocalDynamicsType::ReturnType;
 
   public:
-    using ReturnType = typename LocalDynamicsType::ReturnType;
     template <class DynamicsIdentifier, typename... Args>
-    ReduceDynamics(DynamicsIdentifier &identifier, Args &&...args)
+    ReduceDynamicsCK(DynamicsIdentifier &identifier, Args &&...args)
         : LocalDynamicsType(ExecutionPolicy{}, identifier, std::forward<Args>(args)...),
-          BaseDynamics<ReturnType>(){};
-    virtual ~ReduceDynamics(){};
+          BaseDynamics<ReturnType>(), kernel_implementation_(*this){};
+    virtual ~ReduceDynamicsCK(){};
 
     std::string QuantityName() { return this->quantity_name_; };
     std::string DynamicsIdentifierName() { return this->identifier_.getName(); };
@@ -205,7 +205,7 @@ class ReduceDynamicsCK : public LocalDynamicsType,
         ComputingKernel *computing_kernel = kernel_implementation_.getComputingKernel();
         ReturnType temp = particle_reduce(ExecutionPolicy(),
                                           this->identifier_.LoopRange(), this->Reference(), this->getOperation(),
-                                          [&](size_t i) -> ReturnType
+                                          [=](size_t i) -> ReturnType
                                           { return computing_kernel->reduce(i, dt); });
         return this->outputResult(temp);
     };

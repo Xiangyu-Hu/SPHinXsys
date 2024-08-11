@@ -73,7 +73,7 @@ class GravityForce : public ForcePrior
     //----------------------------------------------------------------------
     // Here gives pointer referred in computing kernel
     //----------------------------------------------------------------------
-    const GravityType *gravity_;
+    const GravityType gravity_;
     Vecd *pos_;
     Real *mass_;
     Real *physical_time_;
@@ -94,7 +94,7 @@ class GravityForce : public ForcePrior
 
       protected:
         friend class GravityForce<GravityType>;
-        const GravityType *gravity_;
+        const GravityType gravity_;
         Vecd *pos_;
         Real *mass_;
         Real *physical_time_;

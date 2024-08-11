@@ -50,7 +50,7 @@ inline void particle_for(const ParallelDevicePolicy &par_device,
 
 template <class ReturnType, typename Operation, class LocalDynamicsFunction>
 inline ReturnType particle_reduce(const ParallelDevicePolicy &par_device,
-                                  const IndexRange &particles_range, const ReturnType &reference, Operation &&,
+                                  const IndexRange &particles_range, const ReturnType &reference, Operation &&operation,
                                   const LocalDynamicsFunction &local_dynamics_function)
 {
     ReturnType result = reference;
@@ -59,7 +59,7 @@ inline ReturnType particle_reduce(const ParallelDevicePolicy &par_device,
     const size_t particles_size = particles_range.size();
     sycl_queue.submit([&](sycl::handler &cgh)
                       { auto reduction_operator = 
-                            sycl::reduction(buffer_result, cgh, typename std::remove_reference_t<Operation>::SYCLOp());
+                            sycl::reduction(buffer_result, cgh, operation);
                         cgh.parallel_for(execution_instance.getUniformNdRange(particles_size), reduction_operator,
                                         [=](sycl::nd_item<1> item, auto& reduction) 
                                         {

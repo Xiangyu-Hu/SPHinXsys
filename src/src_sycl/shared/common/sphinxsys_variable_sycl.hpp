@@ -60,6 +60,15 @@ void DiscreteVariable<DataType>::synchronizeWithDevice()
 }
 //=================================================================================================//
 template <typename DataType>
+void DiscreteVariable<DataType>::synchronizeToDevice()
+{
+    if (existDeviceDataField())
+    {
+        copyToDevice(data_field_, device_data_field_, data_size_);
+    }
+}
+//=================================================================================================//
+template <typename DataType>
 DeviceOnlyDiscreteVariable<DataType>::
     DeviceOnlyDiscreteVariable(DiscreteVariable<DataType> *host_variable)
     : BaseVariable(host_variable->Name()), device_only_data_field_(nullptr)

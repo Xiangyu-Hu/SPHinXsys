@@ -55,8 +55,7 @@ void BaseForcePrior<DynamicsIdentifier>::ComputingKernel::update(size_t index_i,
 //=================================================================================================//
 template <class GravityType>
 GravityForce<GravityType>::GravityForce(SPHBody &sph_body, const GravityType &gravity)
-    : ForcePrior(sph_body, "GravityForce"),
-      gravity_(this->createConstantEntity<GravityType>("Gravity", gravity)),
+    : ForcePrior(sph_body, "GravityForce"), gravity_(gravity),
       pos_(particles_->getVariableDataByName<Vecd>("Position")),
       mass_(particles_->registerStateVariable<Real>("Mass")),
       physical_time_(sph_system_.getSystemVariableDataByName<Real>("PhysicalTime")) {}
@@ -65,7 +64,7 @@ template <class GravityType>
 void GravityForce<GravityType>::GravityForce::update(size_t index_i, Real dt)
 {
     current_force_[index_i] =
-        mass_[index_i] * gravity_->InducedAcceleration(pos_[index_i], *physical_time_);
+        mass_[index_i] * gravity_.InducedAcceleration(pos_[index_i], *physical_time_);
     ForcePrior::update(index_i, dt);
 }
 //=================================================================================================//
@@ -74,8 +73,7 @@ template <class ExecutionPolicy>
 GravityForce<GravityType>::
     GravityForce(const ExecutionPolicy &execution_policy,
                  SPHBody &sph_body, const GravityType &gravity)
-    : ForcePrior(execution_policy, sph_body, "GravityForce"),
-      gravity_(this->createConstantEntity<GravityType>(execution_policy, "Gravity", gravity)),
+    : ForcePrior(execution_policy, sph_body, "GravityForce"), gravity_(gravity),
       pos_(particles_->getVariableDataByName<Vecd>(execution_policy, "Position")),
       mass_(particles_->getVariableDataByName<Real>(execution_policy, "Mass")),
       v_physical_time_(sph_system_.getSystemVariableByName<Real>(execution_policy, "PhysicalTime")) {}
@@ -90,7 +88,7 @@ template <class GravityType>
 void GravityForce<GravityType>::ComputingKernel::update(size_t index_i, Real dt)
 {
     current_force_[index_i] =
-        mass_[index_i] * gravity_->InducedAcceleration(pos_[index_i], *physical_time_);
+        mass_[index_i] * gravity_.InducedAcceleration(pos_[index_i], *physical_time_);
     ForcePrior::ComputingKernel::update(index_i, dt);
 }
 //=================================================================================================//

@@ -95,7 +95,7 @@ class DiscreteVariable : public BaseVariable
     size_t getDataSize() { return data_size_; }
     void setDeviceDataField(DataType *data_field) { device_data_field_ = data_field; };
     void synchronizeWithDevice();
-    void synchronizeDevice();
+    void synchronizeToDevice();
 
   private:
     size_t data_size_;
