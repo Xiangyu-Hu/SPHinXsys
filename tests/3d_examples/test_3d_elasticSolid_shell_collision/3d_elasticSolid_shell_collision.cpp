@@ -161,7 +161,7 @@ int main(int ac, char *av[])
     DampingWithRandomChoice<InteractionSplit<solid_dynamics::PairwiseFrictionFromWall>>
         ball_friction(0.1, ball_contact, physical_viscosity);
 
-    ReduceDynamics<solid_dynamics::AcousticTimeStepSize> ball_get_time_step_size(ball, 0.45);
+    ReduceDynamics<solid_dynamics::AcousticTimeStep> ball_get_time_step_size(ball, 0.45);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------

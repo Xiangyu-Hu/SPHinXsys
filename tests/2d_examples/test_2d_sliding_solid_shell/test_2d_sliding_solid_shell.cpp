@@ -129,7 +129,7 @@ void run_simulation()
     DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d, FixedDampingRate>>>
         damping(0.5, free_cube_inner, "Velocity", physical_viscosity);
     /** Time step size. */
-    ReduceDynamics<solid_dynamics::AcousticTimeStepSize> free_cube_get_time_step_size(free_cube);
+    ReduceDynamics<solid_dynamics::AcousticTimeStep> free_cube_get_time_step_size(free_cube);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------

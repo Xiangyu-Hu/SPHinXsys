@@ -153,8 +153,8 @@ int main(int ac, char *av[])
     Dynamics1Level<fluid_dynamics::Integration2ndHalfInnerDissipativeRiemann> plate_density_relaxation(plate_body_inner);
     Dynamics1Level<continuum_dynamics::ShearStressRelaxation> plate_shear_stress_relaxation(plate_body_inner);
 
-    ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> fluid_advection_time_step(plate_body, U_ref, 0.2);
-    ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> fluid_acoustic_time_step(plate_body, 0.4);
+    ReduceDynamics<fluid_dynamics::AdvectionViscousTimeStep> fluid_advection_time_step(plate_body, U_ref, 0.2);
+    ReduceDynamics<fluid_dynamics::AcousticTimeStep> fluid_acoustic_time_step(plate_body, 0.4);
     BoundaryGeometry boundary_geometry(plate_body, "BoundaryGeometry");
     SimpleDynamics<FixedInAxisDirection> constrain_holder(boundary_geometry, Vecd(1.0, 1.0, 0.0));
     SimpleDynamics<solid_dynamics::ConstrainSolidBodyMassCenter> constrain_mass_center(plate_body, Vecd(1.0, 1.0, 0.0));

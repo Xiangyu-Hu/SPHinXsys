@@ -177,8 +177,8 @@ int main(int ac, char *av[])
     InteractionWithUpdate<fluid_dynamics::TransportVelocityLimitedCorrectionCorrectedComplex<AllParticles>>
         transport_velocity_correction(water_block_inner, water_block_contact);
     /** Time step size with considering sound wave speed. */
-    ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_body, U_f);
-    ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_body);
+    ReduceDynamics<fluid_dynamics::AdvectionViscousTimeStep> get_fluid_advection_time_step_size(water_body, U_f);
+    ReduceDynamics<fluid_dynamics::AcousticTimeStep> get_fluid_time_step_size(water_body);
     /** Computing viscous acceleration with wall. */
     InteractionWithUpdate<fluid_dynamics::ViscousForceWithWall> viscous_acceleration(water_block_inner, water_block_contact);
     //----------------------------------------------------------------------

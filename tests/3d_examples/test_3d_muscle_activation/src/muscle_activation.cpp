@@ -87,7 +87,7 @@ int main(int ac, char *av[])
     Dynamics1Level<solid_dynamics::Integration1stHalfPK2> stress_relaxation_first_half(muscle_body_inner);
     Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half(muscle_body_inner);
 
-    ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(muscle_body);
+    ReduceDynamics<solid_dynamics::AcousticTimeStep> computing_time_step_size(muscle_body);
     SimpleDynamics<MyocardiumActivation> myocardium_activation(muscle_body);
     BodyRegionByParticle holder(muscle_body, makeShared<TransformShape<GeometricShapeBox>>(Transform(translation_holder), halfsize_holder));
     SimpleDynamics<FixedInAxisDirection> constrain_holder(holder, Vecd(0.0, 1.0, 1.0));

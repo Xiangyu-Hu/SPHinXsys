@@ -150,7 +150,7 @@ int main(int ac, char *av[])
     InteractionDynamics<solid_dynamics::SelfContactFactorSummation> coil_self_contact_density(coil_self_contact);
     InteractionWithUpdate<solid_dynamics::SelfContactForce> coil_self_contact_forces(coil_self_contact);
 
-    ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(coil);
+    ReduceDynamics<solid_dynamics::AcousticTimeStep> computing_time_step_size(coil);
 
     // Damping the velocity field for quasi-static solution
     DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d, FixedDampingRate>>>

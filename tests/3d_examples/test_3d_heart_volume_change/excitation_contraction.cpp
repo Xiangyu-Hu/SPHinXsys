@@ -171,7 +171,7 @@ int main(int ac, char *av[])
     SimpleDynamics<NormalDirectionFromBodyShape>(mechanics_heart).exec();
     SimpleDynamics<solid_dynamics::UpdateElasticNormalDirection> body_update_normal(mechanics_heart);
     /** Time step size calculation. */
-    ReduceDynamics<solid_dynamics::AcousticTimeStepSize> get_mechanics_time_step(mechanics_heart);
+    ReduceDynamics<solid_dynamics::AcousticTimeStep> get_mechanics_time_step(mechanics_heart);
     /** Constrain region of the inserted body. */
     MuscleBaseShapeParameters muscle_base_parameters;
     BodyRegionByParticle muscle_base(mechanics_heart, makeShared<TriangleMeshShapeBrick>(muscle_base_parameters, "Holder"));

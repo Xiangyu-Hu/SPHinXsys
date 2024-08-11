@@ -235,8 +235,8 @@ int main(int ac, char *av[])
         density_relaxation(water_block_inner, water_wall_contact, water_plate_contact);
     InteractionWithUpdate<fluid_dynamics::BaseDensitySummationComplex<Inner<FreeSurface>, Contact<>, Contact<>>>
         update_density_by_summation(water_block_inner, water_wall_contact, water_plate_contact);
-    ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_f);
-    ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
+    ReduceDynamics<fluid_dynamics::AdvectionViscousTimeStep> get_fluid_advection_time_step_size(water_block, U_f);
+    ReduceDynamics<fluid_dynamics::AcousticTimeStep> get_fluid_time_step_size(water_block);
     InteractionWithUpdate<ComplexInteraction<fluid_dynamics::ViscousForce<Inner<>, Contact<Wall>, Contact<Wall>>,
                                              fluid_dynamics::FixedViscosity, NoKernelCorrection>>
         viscous_acceleration(water_block_inner, water_wall_contact, water_plate_contact);

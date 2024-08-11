@@ -95,7 +95,7 @@ int main(int ac, char *av[])
     Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half(column_inner);
     InteractionDynamics<DynamicContactForceWithWall> column_wall_contact_force(column_wall_contact);
 
-    ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(column, 0.2);
+    ReduceDynamics<solid_dynamics::AcousticTimeStep> computing_time_step_size(column, 0.2);
     //----------------------------------------------------------------------
     //	Output
     //----------------------------------------------------------------------

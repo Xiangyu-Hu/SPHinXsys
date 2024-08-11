@@ -76,11 +76,11 @@ class UpdateElasticNormalDirection : public LocalDynamics
 };
 
 /**
- * @class AcousticTimeStepSize
+ * @class AcousticTimeStep
  * @brief Computing the acoustic time step size
  * computing time step size
  */
-class AcousticTimeStepSize : public LocalDynamicsReduce<ReduceMin>
+class AcousticTimeStep : public LocalDynamicsReduce<ReduceMin>
 {
   protected:
     Real CFL_;
@@ -90,8 +90,8 @@ class AcousticTimeStepSize : public LocalDynamicsReduce<ReduceMin>
     Real smoothing_length_, c0_;
 
   public:
-    explicit AcousticTimeStepSize(SPHBody &sph_body, Real CFL = 0.6);
-    virtual ~AcousticTimeStepSize(){};
+    explicit AcousticTimeStep(SPHBody &sph_body, Real CFL = 0.6);
+    virtual ~AcousticTimeStep(){};
 
     Real reduce(size_t index_i, Real dt = 0.0);
 };

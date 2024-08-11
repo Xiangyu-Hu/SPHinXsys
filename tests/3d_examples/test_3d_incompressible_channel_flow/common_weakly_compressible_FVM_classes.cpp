@@ -7,7 +7,7 @@ namespace fluid_dynamics
 {
 //=================================================================================================//
 WCAcousticTimeStepSizeInFVM::WCAcousticTimeStepSizeInFVM(SPHBody &sph_body, Real min_distance_between_nodes, Real acousticCFL)
-    : AcousticTimeStepSize(sph_body),
+    : AcousticTimeStep(sph_body),
       rho_(particles_->getVariableDataByName<Real>("Density")),
       p_(particles_->getVariableDataByName<Real>("Pressure")),
       vel_(particles_->getVariableDataByName<Vecd>("Velocity")),

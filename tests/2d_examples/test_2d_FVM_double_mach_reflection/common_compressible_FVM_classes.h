@@ -15,7 +15,7 @@ namespace SPH
  * @class CompressibleAcousticTimeStepSizeInFVM
  * @brief Computing the acoustic time step size
  */
-class CompressibleAcousticTimeStepSizeInFVM : public fluid_dynamics::AcousticTimeStepSize
+class CompressibleAcousticTimeStepSizeInFVM : public fluid_dynamics::AcousticTimeStep
 {
   protected:
     Real *rho_, *p_;

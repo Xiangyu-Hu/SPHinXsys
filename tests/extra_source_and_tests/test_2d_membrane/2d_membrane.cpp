@@ -167,7 +167,7 @@ int main(int ac, char *av[])
     Dynamics1Level<multi_species_continuum::SaturationRelaxationInPorousMedia> saturation_relaxation(beam_body_inner);
 
     // time step size calculation
-    ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(beam_body);
+    ReduceDynamics<solid_dynamics::AcousticTimeStep> computing_time_step_size(beam_body);
     ReduceDynamics<multi_species_continuum::GetSaturationTimeStepSize> saturation_time_step_size(beam_body);
 
     // clamping a solid body part. This is softer than a direct constraint

@@ -53,7 +53,7 @@ Real SPHSystem::getSmallestTimeStepAmongSolidBodies(Real CFL)
     Real dt = MaxReal;
     for (size_t i = 0; i < solid_bodies_.size(); i++)
     {
-        ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(*solid_bodies_[i], CFL);
+        ReduceDynamics<solid_dynamics::AcousticTimeStep> computing_time_step_size(*solid_bodies_[i], CFL);
         Real dt_temp = computing_time_step_size.exec();
         if (dt_temp < dt)
             dt = dt_temp;

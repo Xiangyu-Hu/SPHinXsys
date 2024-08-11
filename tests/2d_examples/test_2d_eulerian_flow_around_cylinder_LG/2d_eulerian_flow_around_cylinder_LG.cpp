@@ -181,7 +181,7 @@ int main(int ac, char *av[])
 
     InteractionWithUpdate<fluid_dynamics::ViscousForceWithWall> viscous_force(water_block_inner, water_block_contact);
     SimpleDynamics<NormalDirectionFromBodyShape> water_block_normal_direction(water_block);
-    ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block, 0.5);
+    ReduceDynamics<fluid_dynamics::AcousticTimeStep> get_fluid_time_step_size(water_block, 0.5);
     InteractionWithUpdate<FarFieldBoundary> variable_reset_in_boundary_condition(water_block_inner);
     //----------------------------------------------------------------------
     //	Compute the force exerted on solid body due to fluid pressure and viscosity

@@ -257,9 +257,9 @@ void hydrostatic_fsi(const Real particle_spacing_gate, const Real particle_spaci
     InteractionWithUpdate<fluid_dynamics::DensitySummationComplexFreeSurface> update_fluid_density(water_block_inner, water_block_contact);
 
     /** Compute time step size without considering sound wave speed. */
-    ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_ref);
+    ReduceDynamics<fluid_dynamics::AdvectionViscousTimeStep> get_fluid_advection_time_step_size(water_block, U_ref);
     /** Compute time step size with considering sound wave speed. */
-    ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
+    ReduceDynamics<fluid_dynamics::AcousticTimeStep> get_fluid_time_step_size(water_block);
     DampingWithRandomChoice<InteractionSplit<DampingPairwiseWithWall<Vec2d, FixedDampingRate>>>
         fluid_damping(0.2, ConstructorArgs(water_block_inner, "Velocity", mu_f), ConstructorArgs(water_block_contact, "Velocity", mu_f));
     //----------------------------------------------------------------------

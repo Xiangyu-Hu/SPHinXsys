@@ -163,7 +163,7 @@ int main(int ac, char *av[])
     Dynamics1Level<solid_dynamics::DecomposedPlasticIntegration1stHalf> cream_stress_relaxation_first_half(cream_inner);
     Dynamics1Level<solid_dynamics::Integration2ndHalf> cream_stress_relaxation_second_half(cream_inner);
 
-    ReduceDynamics<solid_dynamics::AcousticTimeStepSize> cream_get_time_step_size(cream, 0.2);
+    ReduceDynamics<solid_dynamics::AcousticTimeStep> cream_get_time_step_size(cream, 0.2);
     BodyRegionByParticle platform(cream, makeShared<MultiPolygonShape>(createPlatformConstraint()));
     SimpleDynamics<FixBodyPartConstraint> platform_constraint(platform);
     //----------------------------------------------------------------------

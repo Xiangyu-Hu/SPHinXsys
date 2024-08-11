@@ -95,7 +95,7 @@ class CompressibleFluidInitialCondition : public FluidInitialCondition
     Real *rho_, *Vol_, *mass_, *p_, *E_;
 };
 
-class EulerianCompressibleAcousticTimeStepSize : public AcousticTimeStepSize
+class EulerianCompressibleAcousticTimeStepSize : public AcousticTimeStep
 {
   protected:
     Real *rho_, *p_;

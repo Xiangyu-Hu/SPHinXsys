@@ -135,7 +135,7 @@ int main(int ac, char *av[])
     Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half(beam_body_inner);
 
     SimpleDynamics<BeamInitialCondition> beam_initial_velocity(beam_body);
-    ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(beam_body);
+    ReduceDynamics<solid_dynamics::AcousticTimeStep> computing_time_step_size(beam_body);
     BodyRegionByParticle beam_base(beam_body, makeShared<MultiPolygonShape>(createBeamConstrainShape()));
     SimpleDynamics<FixBodyPartConstraint> constraint_beam_base(beam_base);
     //-----------------------------------------------------------------------------

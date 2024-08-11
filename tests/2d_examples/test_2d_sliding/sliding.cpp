@@ -111,7 +111,7 @@ int main(int ac, char *av[])
     InteractionWithUpdate<solid_dynamics::ContactForceFromWall> free_cube_compute_solid_contact_forces(free_cube_contact);
     DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d, FixedDampingRate>>> damping(0.5, free_cube_inner, "Velocity", physical_viscosity);
 
-    ReduceDynamics<solid_dynamics::AcousticTimeStepSize> free_cube_get_time_step_size(free_cube);
+    ReduceDynamics<solid_dynamics::AcousticTimeStep> free_cube_get_time_step_size(free_cube);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------

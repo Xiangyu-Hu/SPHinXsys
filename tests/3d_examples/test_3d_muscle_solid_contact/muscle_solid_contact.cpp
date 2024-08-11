@@ -93,7 +93,7 @@ int main(int ac, char *av[])
     InteractionWithUpdate<solid_dynamics::ContactForce> myocardium_compute_solid_contact_forces(myocardium_plate_contact);
     InteractionWithUpdate<solid_dynamics::ContactForce> plate_compute_solid_contact_forces(plate_myocardium_contact);
     /** Time step size calculation. */
-    ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(myocardium_body);
+    ReduceDynamics<solid_dynamics::AcousticTimeStep> computing_time_step_size(myocardium_body);
     /** Constrain the holder. */
     TransformShape<GeometricShapeBox> holder_shape(Transform(translation_stationary_plate), halfsize_stationary_plate, "Holder");
     BodyRegionByParticle holder(myocardium_body, holder_shape);

@@ -47,5 +47,27 @@ inline void particle_for(const ParallelDevicePolicy &par_device,
                                      local_dynamics_function(index.get_global_id(0)); }); })
         .wait_and_throw();
 }
+
+template <class ReturnType, typename Operation, class LocalDynamicsFunction>
+inline ReturnType particle_reduce(const ParallelDevicePolicy &par_device,
+                                  const IndexRange &particles_range, const ReturnType &reference, Operation &&,
+                                  const LocalDynamicsFunction &local_dynamics_function)
+{
+    ReturnType result = reference;
+    auto &sycl_queue = execution_instance.getQueue();
+    sycl::buffer<ReturnType> buffer_result(&result, 1);
+    const size_t particles_size = particles_range.size();
+    sycl_queue.submit([&](sycl::handler &cgh)
+                      { auto reduction_operator = 
+                            sycl::reduction(buffer_result, cgh, typename std::remove_reference_t<Operation>::SYCLOp());
+                        cgh.parallel_for(execution_instance.getUniformNdRange(particles_size), reduction_operator,
+                                        [=](sycl::nd_item<1> item, auto& reduction) 
+                                        {
+                                            if(item.get_global_id() < particles_size)
+                                                reduction.combine(local_dynamics_function(item.get_global_id(0)));
+                                        }); })
+        .wait_and_throw();
+    return result;
+}
 } // namespace SPH
 #endif // PARTICLE_ITERATORS_SYCL_H

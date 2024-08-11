@@ -116,8 +116,8 @@ int main(int ac, char *av[])
     PeriodicAlongAxis periodic_along_y(water_block.getSPHBodyBounds(), yAxis);
     PeriodicConditionUsingCellLinkedList periodic_condition_x(water_block, periodic_along_x);
     PeriodicConditionUsingCellLinkedList periodic_condition_y(water_block, periodic_along_y);
-    ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_f);
-    ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
+    ReduceDynamics<fluid_dynamics::AdvectionViscousTimeStep> get_fluid_advection_time_step_size(water_block, U_f);
+    ReduceDynamics<fluid_dynamics::AcousticTimeStep> get_fluid_time_step_size(water_block);
 
     InteractionWithUpdate<fluid_dynamics::ViscousForceWithWall> viscous_force(water_block_inner, water_block_contact);
     InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionComplex<AllParticles>> transport_velocity_correction(water_block_inner, water_block_contact);

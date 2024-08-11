@@ -78,7 +78,7 @@ int main(int ac, char *av[])
     Dynamics1Level<solid_dynamics::Integration1stHalfPK2> stress_relaxation_first_half(cantilever_body_inner);
     Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half(cantilever_body_inner);
     /** Time step size calculation. */
-    ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(cantilever_body);
+    ReduceDynamics<solid_dynamics::AcousticTimeStep> computing_time_step_size(cantilever_body);
     /** Constrain the holder. */
     TransformShape<GeometricShapeBox> holder_shape(Transform(translation_holder), halfsize_holder, "Holder");
     BodyRegionByParticle holder(cantilever_body, holder_shape);

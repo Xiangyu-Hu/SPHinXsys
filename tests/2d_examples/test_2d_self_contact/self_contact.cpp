@@ -149,7 +149,7 @@ int main(int ac, char *av[])
     InteractionWithUpdate<solid_dynamics::SelfContactForce> beam_self_contact_forces(beam_self_contact);
 
     SimpleDynamics<BeamInitialCondition> beam_initial_velocity(beam_body);
-    ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(beam_body);
+    ReduceDynamics<solid_dynamics::AcousticTimeStep> computing_time_step_size(beam_body);
 
     BodyRegionByParticle beam_base(beam_body, makeShared<MultiPolygonShape>(createBeamConstrainShape()));
     SimpleDynamics<FixBodyPartConstraint> constraint_beam_base(beam_base);

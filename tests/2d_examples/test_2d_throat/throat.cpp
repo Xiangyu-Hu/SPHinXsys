@@ -175,8 +175,8 @@ int main(int ac, char *av[])
         ConstructorArgs(fluid_block_inner, "Velocity", mu_f), ConstructorArgs(fluid_block_contact, "Velocity", mu_f));
     InteractionWithUpdate<fluid_dynamics::TransportVelocityLimitedCorrectionComplex<AllParticles>> transport_velocity_correction(fluid_block_inner, fluid_block_contact);
 
-    ReduceDynamics<fluid_dynamics::AdvectionTimeStepSizeForImplicitViscosity> get_fluid_advection_time_step_size(fluid_block, U_f);
-    ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(fluid_block);
+    ReduceDynamics<fluid_dynamics::AdvectionTimeStep> get_fluid_advection_time_step_size(fluid_block, U_f);
+    ReduceDynamics<fluid_dynamics::AcousticTimeStep> get_fluid_time_step_size(fluid_block);
     PeriodicConditionUsingGhostParticles periodic_condition(fluid_block, ghost_along_x);
     pressure_relaxation.pre_processes_.push_back(&periodic_condition.ghost_update_);
     density_relaxation.pre_processes_.push_back(&periodic_condition.ghost_update_);

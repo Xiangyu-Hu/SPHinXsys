@@ -257,7 +257,7 @@ int main(int ac, char *av[])
     Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half(beam_body_inner);
     ReduceDynamics<TotalKineticEnergy> get_kinetic_energy(beam_body);
 
-    ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(beam_body);
+    ReduceDynamics<solid_dynamics::AcousticTimeStep> computing_time_step_size(beam_body);
     BodyRegionByParticle beam_left_stretch(beam_body, makeShared<MultiPolygonShape>(createBeamLeftStretchShape()));
     SimpleDynamics<LeftStretchSolidBodyRegion> stretch_beam_left_end(beam_left_stretch);
     BodyRegionByParticle beam_right_stretch(beam_body, makeShared<MultiPolygonShape>(createBeamRightStretchShape()));

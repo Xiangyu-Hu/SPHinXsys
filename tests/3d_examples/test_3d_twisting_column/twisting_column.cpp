@@ -107,7 +107,7 @@ int main(int ac, char *av[])
     Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half(column_inner);
 
     /** Time step size calculation. We use CFL = 0.5 due to the very large twisting speed. */
-    ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(column, 0.5);
+    ReduceDynamics<solid_dynamics::AcousticTimeStep> computing_time_step_size(column, 0.5);
     SimpleDynamics<InitialCondition> initial_condition(column);
 
     TransformShape<GeometricShapeBox> holder_shape(Transform(translation_holder), halfsize_holder, "Holder");

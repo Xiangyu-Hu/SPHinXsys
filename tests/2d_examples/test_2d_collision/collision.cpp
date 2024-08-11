@@ -202,8 +202,8 @@ int main(int ac, char *av[])
     DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d, FixedDampingRate>>>
         damping(0.5, ConstructorArgs(damping_ball_inner, "Velocity", physical_viscosity));
 
-    ReduceDynamics<solid_dynamics::AcousticTimeStepSize> free_ball_get_time_step_size(free_ball);
-    ReduceDynamics<solid_dynamics::AcousticTimeStepSize> damping_ball_get_time_step_size(damping_ball);
+    ReduceDynamics<solid_dynamics::AcousticTimeStep> free_ball_get_time_step_size(free_ball);
+    ReduceDynamics<solid_dynamics::AcousticTimeStep> damping_ball_get_time_step_size(damping_ball);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------

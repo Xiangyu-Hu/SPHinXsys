@@ -39,7 +39,7 @@ namespace fluid_dynamics
  * @class WCAcousticTimeStepSizeInFVM
  * @brief Computing the acoustic time step size
  */
-class WCAcousticTimeStepSizeInFVM : public fluid_dynamics::AcousticTimeStepSize
+class WCAcousticTimeStepSizeInFVM : public fluid_dynamics::AcousticTimeStep
 {
   protected:
     Real *rho_, *p_;

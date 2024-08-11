@@ -27,7 +27,7 @@ CompressibleFluidInitialCondition::CompressibleFluidInitialCondition(SPHBody &sp
 //=================================================================================================//
 EulerianCompressibleAcousticTimeStepSize::
     EulerianCompressibleAcousticTimeStepSize(SPHBody &sph_body)
-    : AcousticTimeStepSize(sph_body),
+    : AcousticTimeStep(sph_body),
       rho_(particles_->getVariableDataByName<Real>("Density")),
       p_(particles_->getVariableDataByName<Real>("Pressure")),
       vel_(particles_->getVariableDataByName<Vecd>("Velocity")),

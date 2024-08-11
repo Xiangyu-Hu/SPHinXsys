@@ -119,8 +119,8 @@ class Environment : public PreSettingCase
     Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallRiemann> fluid_density_relaxation;
     InteractionWithUpdate<fluid_dynamics::DensitySummationComplexFreeSurface> fluid_density_by_summation;
 
-    ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> fluid_advection_time_step;
-    ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> fluid_acoustic_time_step;
+    ReduceDynamics<fluid_dynamics::AdvectionViscousTimeStep> fluid_advection_time_step;
+    ReduceDynamics<fluid_dynamics::AcousticTimeStep> fluid_acoustic_time_step;
     //----------------------------------------------------------------------
     //	Define the configuration related particles dynamics.
     //----------------------------------------------------------------------

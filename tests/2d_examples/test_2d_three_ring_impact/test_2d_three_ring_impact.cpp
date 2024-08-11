@@ -221,7 +221,7 @@ void three_ring_impact(int resolution_factor_l, int resolution_factor_m, int res
     Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half_l(ring_l_inner);
     DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d, FixedDampingRate>>>
         velocity_damping_l(0.2, ring_l_inner, "Velocity", physical_viscosity_l);
-    ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size_l(ring_l_body);
+    ReduceDynamics<solid_dynamics::AcousticTimeStep> computing_time_step_size_l(ring_l_body);
 
     InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration> corrected_configuration_m(ring_m_inner);
     Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationFirstHalf> stress_relaxation_first_half_m(ring_m_inner, 3, true);

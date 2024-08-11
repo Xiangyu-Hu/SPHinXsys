@@ -120,6 +120,36 @@ class SimpleDynamics : public LocalDynamicsType, public BaseDynamics<void>
     };
 };
 
+/**
+ * @class ReduceDynamics
+ * @brief Template class for particle-wise reduce operation, summation, max or min.
+ */
+template <class LocalDynamicsType, class ExecutionPolicy = ParallelPolicy>
+class ReduceDynamics : public LocalDynamicsType,
+                       public BaseDynamics<typename LocalDynamicsType::ReturnType>
+{
+  public:
+    using ReturnType = typename LocalDynamicsType::ReturnType;
+    template <class DynamicsIdentifier, typename... Args>
+    ReduceDynamics(DynamicsIdentifier &identifier, Args &&...args)
+        : LocalDynamicsType(identifier, std::forward<Args>(args)...),
+          BaseDynamics<ReturnType>(){};
+    virtual ~ReduceDynamics(){};
+
+    std::string QuantityName() { return this->quantity_name_; };
+    std::string DynamicsIdentifierName() { return this->identifier_.getName(); };
+
+    virtual ReturnType exec(Real dt = 0.0) override
+    {
+        this->setupDynamics(dt);
+        ReturnType temp = particle_reduce(ExecutionPolicy(),
+                                          this->identifier_.LoopRange(), this->Reference(), this->getOperation(),
+                                          [&](size_t i) -> ReturnType
+                                          { return this->reduce(i, dt); });
+        return this->outputResult(temp);
+    };
+};
+
 template <class LocalDynamicsType, class ExecutionPolicy = ParallelPolicy>
 class SimpleDynamicsCK : public LocalDynamicsType, public BaseDynamics<void>
 {
@@ -152,19 +182,17 @@ class SimpleDynamicsCK : public LocalDynamicsType, public BaseDynamics<void>
     Implementation<LocalDynamicsType, ExecutionPolicy> kernel_implementation_;
 };
 
-/**
- * @class ReduceDynamics
- * @brief Template class for particle-wise reduce operation, summation, max or min.
- */
 template <class LocalDynamicsType, class ExecutionPolicy = ParallelPolicy>
-class ReduceDynamics : public LocalDynamicsType,
-                       public BaseDynamics<typename LocalDynamicsType::ReturnType>
+class ReduceDynamicsCK : public LocalDynamicsType,
+                         public BaseDynamics<typename LocalDynamicsType::ReturnType>
 {
+    using ComputingKernel = typename LocalDynamicsType::ComputingKernel;
+
   public:
     using ReturnType = typename LocalDynamicsType::ReturnType;
     template <class DynamicsIdentifier, typename... Args>
     ReduceDynamics(DynamicsIdentifier &identifier, Args &&...args)
-        : LocalDynamicsType(identifier, std::forward<Args>(args)...),
+        : LocalDynamicsType(ExecutionPolicy{}, identifier, std::forward<Args>(args)...),
           BaseDynamics<ReturnType>(){};
     virtual ~ReduceDynamics(){};
 
@@ -174,12 +202,16 @@ class ReduceDynamics : public LocalDynamicsType,
     virtual ReturnType exec(Real dt = 0.0) override
     {
         this->setupDynamics(dt);
+        ComputingKernel *computing_kernel = kernel_implementation_.getComputingKernel();
         ReturnType temp = particle_reduce(ExecutionPolicy(),
                                           this->identifier_.LoopRange(), this->Reference(), this->getOperation(),
                                           [&](size_t i) -> ReturnType
-                                          { return this->reduce(i, dt); });
+                                          { return computing_kernel->reduce(i, dt); });
         return this->outputResult(temp);
     };
+
+  protected:
+    Implementation<LocalDynamicsType, ExecutionPolicy> kernel_implementation_;
 };
 
 /**

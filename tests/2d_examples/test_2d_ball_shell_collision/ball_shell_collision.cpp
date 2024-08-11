@@ -176,7 +176,7 @@ int main(int ac, char *av[])
     InteractionDynamics<solid_dynamics::ShellContactFactor> ball_update_contact_density(ball_contact);
     InteractionWithUpdate<solid_dynamics::ContactForceFromWall> ball_compute_solid_contact_forces(ball_contact);
 
-    ReduceDynamics<solid_dynamics::AcousticTimeStepSize> ball_get_time_step_size(ball);
+    ReduceDynamics<solid_dynamics::AcousticTimeStep> ball_get_time_step_size(ball);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
