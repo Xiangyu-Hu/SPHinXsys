@@ -122,6 +122,11 @@ void MarkNearInterface::update(const size_t &package_index)
     printf("this is the execution of DiffuseLevelSetSign\n");
 }
 //=============================================================================================//
+void RedistanceInterface::update(const size_t &package_index)
+{
+    printf("this is the execution of DiffuseLevelSetSign\n");
+}
+//=============================================================================================//
 void DiffuseLevelSetSign::update(const size_t &package_index)
 {
     printf("this is the execution of DiffuseLevelSetSign\n");

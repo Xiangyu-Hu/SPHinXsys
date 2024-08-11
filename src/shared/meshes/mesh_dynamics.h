@@ -115,26 +115,29 @@ class MeshInnerDynamics : public LocalDynamicsType, public BaseMeshDynamics<void
  * @class MeshCoreDynamics
  * @brief Mesh dynamics for only core cells on the mesh
  */
-// template <class LocalDynamicsType>
-// class MeshCoreDynamics : public LocalDynamicsType, public BaseMeshDynamics<void>
-// {
-//   public:
-//     template <class DynamicsIdentifier, typename... Args>
-//     MeshCoreDynamics(DynamicsIdentifier &identifier, Args &&...args)
-//         : LocalDynamicsType(identifier, std::forward<Args>(args)...),
-//           BaseMeshDynamics<void>(identifier){};
-//     virtual ~MeshCoreDynamics(){};
+template <class LocalDynamicsType>
+class MeshCoreDynamics : public LocalDynamicsType, public BaseMeshDynamics<void>
+{
+  public:
+    template <class DynamicsIdentifier, typename... Args>
+    MeshCoreDynamics(DynamicsIdentifier &identifier, Args &&...args)
+        : LocalDynamicsType(identifier, std::forward<Args>(args)...),
+          BaseMeshDynamics<void>(identifier){};
+    virtual ~MeshCoreDynamics(){};
 
-//     virtual void exec() override
-//     {
-//         package_parallel_for(
-//           [&](size_t package_index)
-//           {
-//               if(isCoreDataPackage(package_index))
-//                 update(package_index);
-//           }
-//         );
-//     };
-// };
+    virtual void exec() override
+    {
+        mesh_data_.package_parallel_for(
+          [&](size_t package_index)
+          {
+              std::pair<Arrayi, int> &metadata = mesh_data_.meta_data_cell_[package_index];
+              if (metadata.second == 1)
+              {
+                  this->update(package_index);
+              }
+          }
+        );
+    };
+};
 } // namespace SPH
 #endif // MESH_DYNAMICS_H

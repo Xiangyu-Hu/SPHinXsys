@@ -98,14 +98,15 @@ Vecd LevelSet::probeKernelGradientIntegral(const Vecd &position, Real h_ratio)
 //=================================================================================================//
 void LevelSet::redistanceInterface()
 {
-    package_parallel_for(
-        [&](size_t package_index) {
-            std::pair<Arrayi, int> &metadata = meta_data_cell_[package_index];
-            if (metadata.second == 1)
-            {
-                redistanceInterfaceForAPackage(PackageIndexFromCellIndex(metadata.first));
-            }
-        });
+    redistance_interface.exec();
+    // package_parallel_for(
+    //     [&](size_t package_index) {
+    //         std::pair<Arrayi, int> &metadata = meta_data_cell_[package_index];
+    //         if (metadata.second == 1)
+    //         {
+    //             redistanceInterfaceForAPackage(PackageIndexFromCellIndex(metadata.first));
+    //         }
+    //     });
 }
 //=================================================================================================//
 void LevelSet::cleanInterface(Real small_shift_factor)

@@ -262,15 +262,27 @@ class MarkNearInterface : public BaseMeshLocalDynamics<size_t>
     Real small_shift;
 };
 
-// class RedistanceInterface
-//     : public BaseMeshLocalDynamics
-// {
-//   public:
-//     explicit RedistanceInterface(MeshWithGridDataPackages &mesh_data){};
-//     virtual ~RedistanceInterface(){};
+class RedistanceInterface : public BaseMeshLocalDynamics<size_t>
+{
+  public:
+    explicit RedistanceInterface(MeshWithGridDataPackagesType &mesh_data)
+        : BaseMeshLocalDynamics(mesh_data),
+          data_spacing_(mesh_data.DataSpacing()),
+          phi_(*mesh_data.getMeshVariable<Real>("Levelset")),
+          near_interface_id_(*mesh_data.getMeshVariable<int>("NearInterfaceID")),
+          phi_gradient_(*mesh_data.getMeshVariable<Vecd>("LevelsetGradient")){};
+    virtual ~RedistanceInterface(){};
 
-//     void update(size_t package_index);
-// };
+    void update(const size_t &package_index);
+
+  private:
+    MeshVariable<Real> &phi_;
+    MeshVariable<Vecd> &phi_gradient_;
+    MeshVariable<int> &near_interface_id_;
+
+    Real data_spacing_;
+};
+
 class DiffuseLevelSetSign : public BaseMeshLocalDynamics<size_t>
 {
   public:
@@ -287,6 +299,5 @@ class DiffuseLevelSetSign : public BaseMeshLocalDynamics<size_t>
     MeshVariable<int> &near_interface_id_;
 };
 
-// } // namespace mesh_dynamics
 } // namespace SPH
 #endif // MESH_LOCAL_DYNAMICS_H

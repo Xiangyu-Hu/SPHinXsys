@@ -138,6 +138,7 @@ class LevelSet : public MeshWithGridDataPackages<4>,
     MeshInnerDynamics<UpdateKernelIntegrals> update_kernel_integrals{mesh_data_, kernel_, global_h_ratio_};
     MeshInnerDynamics<DiffuseLevelSetSign> diffuse_level_set_sign{mesh_data_};
     MeshInnerDynamics<ReinitializeLevelSet> reinitialize_level_set{mesh_data_};
+    MeshCoreDynamics<RedistanceInterface> redistance_interface{mesh_data_};
     // MeshInnerDynamics<MarkNearInterface> mark_near_interface{mesh_data_};
 
     // upwind algorithm choosing candidate difference by the sign
