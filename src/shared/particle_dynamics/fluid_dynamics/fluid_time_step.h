@@ -114,8 +114,10 @@ class AdvectionViscousTimeStep : public AdvectionTimeStep
     Fluid &fluid_;
 
   public:
-    template <typename... Args>
-    AdvectionViscousTimeStep(Args &...args);
+    AdvectionViscousTimeStep(SPHBody &sph_body, Real U_ref, Real advectionCFL = 0.25);
+    template <class ExecutionPolicy>
+    AdvectionViscousTimeStep(const ExecutionPolicy &execution_policy,
+                             SPHBody &sph_body, Real U_ref, Real advectionCFL = 0.25);
     virtual ~AdvectionViscousTimeStep(){};
     Real reduce(size_t index_i, Real dt = 0.0);
 

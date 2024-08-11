@@ -9,8 +9,8 @@ namespace fluid_dynamics
 {
 //=================================================================================================//
 template <class ExecutionPolicy>
-AdvectionTimeStep::AdvectionTimeStep(const ExecutionPolicy &exec_policy,
-                                     SPHBody &sph_body, Real U_ref, Real advectionCFL)
+AdvectionTimeStep::AdvectionTimeStep(
+    const ExecutionPolicy &exec_policy, SPHBody &sph_body, Real U_ref, Real advectionCFL)
     : LocalDynamicsReduce<ReduceMax>(sph_body),
       mass_(particles_->getVariableDataByName<Real>(exec_policy, "Mass")),
       vel_(particles_->getVariableDataByName<Vecd>(exec_policy, "Velocity")),
@@ -19,9 +19,10 @@ AdvectionTimeStep::AdvectionTimeStep(const ExecutionPolicy &exec_policy,
       h_min_(sph_body.sph_adaptation_->MinimumSmoothingLength()),
       speed_ref_(U_ref), advectionCFL_(advectionCFL) {}
 //=================================================================================================//
-template <typename... Args>
-AdvectionViscousTimeStep::AdvectionViscousTimeStep(Args &...args)
-    : AdvectionTimeStep(std::forward<Args>(args)...),
+template <class ExecutionPolicy>
+AdvectionViscousTimeStep::AdvectionViscousTimeStep(
+    const ExecutionPolicy &execution_policy, SPHBody &sph_body, Real U_ref, Real advectionCFL)
+    : AdvectionTimeStep(execution_policy, sph_body, U_ref, advectionCFL),
       fluid_(DynamicCast<Fluid>(this, particles_->getBaseMaterial()))
 {
     Real viscous_speed = fluid_.ReferenceViscosity() / fluid_.ReferenceDensity() / h_min_;

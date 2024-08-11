@@ -54,6 +54,14 @@ Real AdvectionTimeStep::outputResult(Real reduced_value)
     return advectionCFL_ * h_min_ / (SMAX(speed_max, speed_ref_) + TinyReal);
 }
 //=================================================================================================//
+AdvectionViscousTimeStep::AdvectionViscousTimeStep(SPHBody &sph_body, Real U_ref, Real advectionCFL)
+    : AdvectionTimeStep(sph_body, U_ref, advectionCFL),
+      fluid_(DynamicCast<Fluid>(this, particles_->getBaseMaterial()))
+{
+    Real viscous_speed = fluid_.ReferenceViscosity() / fluid_.ReferenceDensity() / h_min_;
+    speed_ref_ = SMAX(viscous_speed, speed_ref_);
+}
+//=================================================================================================//
 Real AdvectionViscousTimeStep::reduce(size_t index_i, Real dt)
 {
     return AdvectionTimeStep::reduce(index_i, dt);
