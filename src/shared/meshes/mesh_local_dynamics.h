@@ -202,15 +202,46 @@ class UpdateKernelIntegrals : public BaseMeshLocalDynamics<size_t>
         return volume_fraction;
     }
 };
-// class ReinitializeLevelSet
-//     : public BaseMeshLocalDynamics
-// {
-//   public:
-//     explicit ReinitializeLevelSet(MeshWithGridDataPackages &mesh_data){};
-//     virtual ~ReinitializeLevelSet(){};
 
-//     void update(size_t package_index);
-// };
+class ReinitializeLevelSet : public BaseMeshLocalDynamics<size_t>
+{
+  public:
+    explicit ReinitializeLevelSet(MeshWithGridDataPackagesType &mesh_data)
+        : BaseMeshLocalDynamics(mesh_data),
+          data_spacing_(mesh_data.DataSpacing()),
+          phi_(*mesh_data.getMeshVariable<Real>("Levelset")),
+          near_interface_id_(*mesh_data.getMeshVariable<int>("NearInterfaceID")){};
+    virtual ~ReinitializeLevelSet(){};
+
+    void update(const size_t &package_index);
+
+  private:
+    MeshVariable<Real> &phi_;
+    MeshVariable<int> &near_interface_id_;
+
+    Real data_spacing_;
+
+    Real upwindDifference(Real sign, Real df_p, Real df_n)
+    {
+        if (sign * df_p >= 0.0 && sign * df_n >= 0.0)
+            return df_n;
+        if (sign * df_p <= 0.0 && sign * df_n <= 0.0)
+            return df_p;
+        if (sign * df_p > 0.0 && sign * df_n < 0.0)
+            return 0.0;
+
+        Real df = df_p;
+        if (sign * df_p < 0.0 && sign * df_n > 0.0)
+        {
+            Real ss = sign * (fabs(df_p) - fabs(df_n)) / (df_p - df_n);
+            if (ss > 0.0)
+                df = df_n;
+        }
+
+        return df;
+    }
+};
+
 // class MarkNearInterface
 //     : public BaseMeshLocalDynamics
 // {

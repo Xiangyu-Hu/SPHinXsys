@@ -112,6 +112,11 @@ Vecd UpdateKernelIntegrals::computeKernelGradientIntegral(const Vecd &position)
     return integral * data_spacing_ * data_spacing_;
 }
 //=============================================================================================//
+void ReinitializeLevelSet::update(const size_t &package_index)
+{
+    printf("this is the execution of DiffuseLevelSetSign\n");
+}
+//=============================================================================================//
 void DiffuseLevelSetSign::update(const size_t &package_index)
 {
     printf("this is the execution of DiffuseLevelSetSign\n");

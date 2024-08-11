@@ -147,34 +147,35 @@ void LevelSet::diffuseLevelSetSign()
 //=============================================================================================//
 void LevelSet::reinitializeLevelSet()
 {
-    package_parallel_for(
-        [&](size_t package_index)
-        {
-            auto phi_data = phi_.DataField();
-            auto &phi_addrs = phi_data[package_index];
-            auto &near_interface_id_addrs = near_interface_id_.DataField()[package_index];
-            auto &neighborhood = cell_neighborhood_[package_index];
+    reinitialize_level_set.exec();
+    // package_parallel_for(
+    //     [&](size_t package_index)
+    //     {
+    //         auto phi_data = phi_.DataField();
+    //         auto &phi_addrs = phi_data[package_index];
+    //         auto &near_interface_id_addrs = near_interface_id_.DataField()[package_index];
+    //         auto &neighborhood = cell_neighborhood_[package_index];
 
-            for_each_cell_data(
-                [&](int i, int j)
-                {
-                    // only reinitialize non cut cells
-                    if (near_interface_id_addrs[i][j] != 0)
-                    {
-                        Real phi_0 = phi_addrs[i][j];
-                        Real sign = phi_0 / sqrt(phi_0 * phi_0 + data_spacing_ * data_spacing_);
-                        NeighbourIndex x1 = NeighbourIndexShift(Arrayi(i + 1, j), neighborhood);
-                        NeighbourIndex x2 = NeighbourIndexShift(Arrayi(i - 1, j), neighborhood);
-                        NeighbourIndex y1 = NeighbourIndexShift(Arrayi(i, j + 1), neighborhood);
-                        NeighbourIndex y2 = NeighbourIndexShift(Arrayi(i, j - 1), neighborhood);
-                        Real dv_x = upwindDifference(sign, phi_data[x1.first][x1.second[0]][x1.second[1]] - phi_0,
-                                                     phi_0 - phi_data[x2.first][x2.second[0]][x2.second[1]]);
-                        Real dv_y = upwindDifference(sign, phi_data[y1.first][y1.second[0]][y1.second[1]] - phi_0,
-                                                     phi_0 - phi_data[y2.first][y2.second[0]][y2.second[1]]);
-                        phi_addrs[i][j] -= 0.5 * sign * (Vec2d(dv_x, dv_y).norm() - data_spacing_);
-                    }
-                });
-        });
+    //         for_each_cell_data(
+    //             [&](int i, int j)
+    //             {
+    //                 // only reinitialize non cut cells
+    //                 if (near_interface_id_addrs[i][j] != 0)
+    //                 {
+    //                     Real phi_0 = phi_addrs[i][j];
+    //                     Real sign = phi_0 / sqrt(phi_0 * phi_0 + data_spacing_ * data_spacing_);
+    //                     NeighbourIndex x1 = NeighbourIndexShift(Arrayi(i + 1, j), neighborhood);
+    //                     NeighbourIndex x2 = NeighbourIndexShift(Arrayi(i - 1, j), neighborhood);
+    //                     NeighbourIndex y1 = NeighbourIndexShift(Arrayi(i, j + 1), neighborhood);
+    //                     NeighbourIndex y2 = NeighbourIndexShift(Arrayi(i, j - 1), neighborhood);
+    //                     Real dv_x = upwindDifference(sign, phi_data[x1.first][x1.second[0]][x1.second[1]] - phi_0,
+    //                                                  phi_0 - phi_data[x2.first][x2.second[0]][x2.second[1]]);
+    //                     Real dv_y = upwindDifference(sign, phi_data[y1.first][y1.second[0]][y1.second[1]] - phi_0,
+    //                                                  phi_0 - phi_data[y2.first][y2.second[0]][y2.second[1]]);
+    //                     phi_addrs[i][j] -= 0.5 * sign * (Vec2d(dv_x, dv_y).norm() - data_spacing_);
+    //                 }
+    //             });
+    //     });
 }
 //=================================================================================================//
 void LevelSet::markNearInterface(Real small_shift_factor)
