@@ -229,15 +229,21 @@ class UpdateKernelIntegrals : public BaseMeshLocalDynamics<size_t>
 
 //     void update(size_t package_index);
 // };
-// class DiffuseLevelSetSign
-//     : public BaseMeshLocalDynamics
-// {
-//   public:
-//     explicit DiffuseLevelSetSign(MeshWithGridDataPackages &mesh_data){};
-//     virtual ~DiffuseLevelSetSign(){};
+class DiffuseLevelSetSign : public BaseMeshLocalDynamics<size_t>
+{
+  public:
+    explicit DiffuseLevelSetSign(MeshWithGridDataPackagesType &mesh_data)
+        : BaseMeshLocalDynamics(mesh_data),
+          phi_(*mesh_data.getMeshVariable<Real>("Levelset")),
+          near_interface_id_(*mesh_data.getMeshVariable<int>("NearInterfaceID")){};
+    virtual ~DiffuseLevelSetSign(){};
 
-//     void update(size_t package_index);
-// };
+    void update(const size_t &package_index);
+
+  private:
+    MeshVariable<Real> &phi_;
+    MeshVariable<int> &near_interface_id_;
+};
 
 // } // namespace mesh_dynamics
 } // namespace SPH

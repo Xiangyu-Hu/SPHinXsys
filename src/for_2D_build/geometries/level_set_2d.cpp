@@ -39,11 +39,6 @@ void LevelSet::initializeDataForSingularPackage(const size_t package_index, Real
 //=================================================================================================//
 void LevelSet::finishDataPackages()
 {
-    // mesh_parallel_for(MeshRange(Arrayi::Zero(), all_cells_),
-    //                   [&](size_t i, size_t j)
-    //                   {
-    //                       tagACellIsInnerPackage(Arrayi(i, j));
-    //                   });
     tag_a_cell_is_inner_package.exec();
 
     parallel_sort(occupied_data_pkgs_.begin(), occupied_data_pkgs_.end(),
@@ -56,8 +51,6 @@ void LevelSet::finishDataPackages()
     meta_data_cell_ = new std::pair<Arrayi, int>[num_grid_pkgs_];
     initialize_index_mesh.exec();
     initialize_cell_neighborhood.exec();
-    // initializeIndexMesh();
-    // initializeCellNeighborhood();
     resizeMeshVariableData();
 
 
@@ -65,14 +58,8 @@ void LevelSet::finishDataPackages()
     initializeDataForSingularPackage(0, -far_field_distance);
     initializeDataForSingularPackage(1, far_field_distance);
 
-    // package_parallel_for(
-    //     [&](size_t package_index)
-    //     {
-    //         initializeBasicDataForAPackage(meta_data_cell_[package_index].first, package_index, shape_);
-    //     });
     initialize_basic_data_for_a_package.exec();
     update_level_set_gradient.exec();
-    // updateKernelIntegrals();
     update_kernel_integrals.exec();
 }
 //=================================================================================================//
@@ -125,36 +112,37 @@ bool LevelSet::isInnerPackage(const Arrayi &cell_index)
 //=================================================================================================//
 void LevelSet::diffuseLevelSetSign()
 {
-    package_parallel_for(
-        [&](size_t package_index)
-        {
-            auto phi_data = phi_.DataField();
-            auto near_interface_id_data = near_interface_id_.DataField();
-            auto &neighborhood = cell_neighborhood_[package_index];
+    diffuse_level_set_sign.exec();
+    // package_parallel_for(
+    //     [&](size_t package_index)
+    //     {
+    //         auto phi_data = phi_.DataField();
+    //         auto near_interface_id_data = near_interface_id_.DataField();
+    //         auto &neighborhood = cell_neighborhood_[package_index];
 
-            for_each_cell_data(
-                [&](int i, int j)
-                {
-                    // near interface cells are not considered
-                    if (abs(near_interface_id_data[package_index][i][j]) > 1)
-                    {
-                        mesh_find_if2d<-1, 2>(
-                            [&](int l, int m) -> bool
-                            {
-                                NeighbourIndex neighbour_index = NeighbourIndexShift(Arrayi(i + l, j + m), neighborhood);
-                                int near_interface_id = near_interface_id_data[neighbour_index.first][neighbour_index.second[0]][neighbour_index.second[1]];
-                                bool is_found = abs(near_interface_id) == 1;
-                                if (is_found)
-                                {
-                                    Real phi_0 = phi_data[package_index][i][j];
-                                    near_interface_id_data[package_index][i][j] = near_interface_id;
-                                    phi_data[package_index][i][j] = near_interface_id == 1 ? fabs(phi_0) : -fabs(phi_0);
-                                }
-                                return is_found;
-                            });
-                    }
-                });
-        });
+    //         for_each_cell_data(
+    //             [&](int i, int j)
+    //             {
+    //                 // near interface cells are not considered
+    //                 if (abs(near_interface_id_data[package_index][i][j]) > 1)
+    //                 {
+    //                     mesh_find_if2d<-1, 2>(
+    //                         [&](int l, int m) -> bool
+    //                         {
+    //                             NeighbourIndex neighbour_index = NeighbourIndexShift(Arrayi(i + l, j + m), neighborhood);
+    //                             int near_interface_id = near_interface_id_data[neighbour_index.first][neighbour_index.second[0]][neighbour_index.second[1]];
+    //                             bool is_found = abs(near_interface_id) == 1;
+    //                             if (is_found)
+    //                             {
+    //                                 Real phi_0 = phi_data[package_index][i][j];
+    //                                 near_interface_id_data[package_index][i][j] = near_interface_id;
+    //                                 phi_data[package_index][i][j] = near_interface_id == 1 ? fabs(phi_0) : -fabs(phi_0);
+    //                             }
+    //                             return is_found;
+    //                         });
+    //                 }
+    //             });
+    //     });
 }
 //=============================================================================================//
 void LevelSet::reinitializeLevelSet()

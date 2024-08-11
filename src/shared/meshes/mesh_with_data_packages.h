@@ -203,7 +203,6 @@ class MeshWithGridDataPackages : public Mesh
     bool isSingularDataPackage(const Arrayi &cell_index);
     bool isCoreDataPackage(const Arrayi &cell_index);
 
-    std::pair<size_t, Arrayi> NeighbourIndexShift(const Arrayi shift_index, const CellNeighborhood &neighbour);
     
     /** obtain averaged value at a corner of a data cell */
     template <typename DataType>
@@ -233,6 +232,7 @@ class MeshWithGridDataPackages : public Mesh
     void assignCore(const Arrayi &cell_index) { assignCategoryOnMetaDataMesh(cell_index, 2); };
 
   public:
+    std::pair<size_t, Arrayi> NeighbourIndexShift(const Arrayi shift_index, const CellNeighborhood &neighbour);
     /** This function find the value of data from its index from global mesh. */
     template <typename DataType>
     DataType DataValueFromGlobalIndex(MeshVariable<DataType> &mesh_variable,

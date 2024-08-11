@@ -126,5 +126,36 @@ Vecd UpdateKernelIntegrals::computeKernelGradientIntegral(const Vecd &position)
     return integral * data_spacing_ * data_spacing_;
 }
 //=============================================================================================//
+void DiffuseLevelSetSign::update(const size_t &package_index)
+{
+    auto phi_data = phi_.DataField();
+    auto near_interface_id_data = near_interface_id_.DataField();
+    auto &neighborhood = mesh_data_.cell_neighborhood_[package_index];
+
+    mesh_data_.for_each_cell_data(
+        [&](int i, int j)
+        {
+            // near interface cells are not considered
+            if (abs(near_interface_id_data[package_index][i][j]) > 1)
+            {
+                mesh_find_if2d<-1, 2>(
+                    [&](int l, int m) -> bool
+                    {
+                        using NeighbourIndex = std::pair<size_t, Arrayi>; /**< stores shifted neighbour info: (size_t)package index, (arrayi)local grid index. */
+                        NeighbourIndex neighbour_index = mesh_data_.NeighbourIndexShift(Arrayi(i + l, j + m), neighborhood);
+                        int near_interface_id = near_interface_id_data[neighbour_index.first][neighbour_index.second[0]][neighbour_index.second[1]];
+                        bool is_found = abs(near_interface_id) == 1;
+                        if (is_found)
+                        {
+                            Real phi_0 = phi_data[package_index][i][j];
+                            near_interface_id_data[package_index][i][j] = near_interface_id;
+                            phi_data[package_index][i][j] = near_interface_id == 1 ? fabs(phi_0) : -fabs(phi_0);
+                        }
+                        return is_found;
+                    });
+            }
+        });
+}
+//=============================================================================================//
 } // namespace SPH
 //=============================================================================================//
