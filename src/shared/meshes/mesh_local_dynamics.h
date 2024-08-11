@@ -34,6 +34,7 @@
 #include "mesh_with_data_packages.hpp"
 #include "base_geometry.h"
 #include "base_kernel.h"
+#include "data_type.h"
 
 namespace SPH
 {
@@ -242,15 +243,25 @@ class ReinitializeLevelSet : public BaseMeshLocalDynamics<size_t>
     }
 };
 
-// class MarkNearInterface
-//     : public BaseMeshLocalDynamics
-// {
-//   public:
-//     explicit MarkNearInterface(MeshWithGridDataPackages &mesh_data){};
-//     virtual ~MarkNearInterface(){};
+class MarkNearInterface : public BaseMeshLocalDynamics<size_t>
+{
+  public:
+    explicit MarkNearInterface(MeshWithGridDataPackagesType &mesh_data, Real small_shift_factor)
+        : BaseMeshLocalDynamics(mesh_data),
+          small_shift(small_shift_factor * mesh_data.DataSpacing()),
+          phi_(*mesh_data.getMeshVariable<Real>("Levelset")),
+          near_interface_id_(*mesh_data.getMeshVariable<int>("NearInterfaceID")){};
+    virtual ~MarkNearInterface(){};
 
-//     void update(size_t package_index);
-// };
+    void update(const size_t &package_index);
+
+  private:
+    MeshVariable<Real> &phi_;
+    MeshVariable<int> &near_interface_id_;
+
+    Real small_shift;
+};
+
 // class RedistanceInterface
 //     : public BaseMeshLocalDynamics
 // {

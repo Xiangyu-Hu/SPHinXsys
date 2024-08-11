@@ -204,11 +204,6 @@ class MeshWithGridDataPackages : public Mesh
     bool isCoreDataPackage(const Arrayi &cell_index);
 
     
-    /** obtain averaged value at a corner of a data cell */
-    template <typename DataType>
-    DataType CornerAverage(MeshVariable<DataType> &mesh_variable,
-                           Arrayi addrs_index, Arrayi corner_direction,
-                           CellNeighborhood &neighborhood);
     /** probe by applying bi and tri-linear interpolation within the package. */
     template <class DataType>
     DataType probeDataPackage(MeshVariable<DataType> &mesh_variable, size_t package_index, const Arrayi &cell_index, const Vecd &position);
@@ -232,6 +227,11 @@ class MeshWithGridDataPackages : public Mesh
     void assignCore(const Arrayi &cell_index) { assignCategoryOnMetaDataMesh(cell_index, 2); };
 
   public:
+    /** obtain averaged value at a corner of a data cell */
+    template <typename DataType>
+    DataType CornerAverage(MeshVariable<DataType> &mesh_variable,
+                           Arrayi addrs_index, Arrayi corner_direction,
+                           CellNeighborhood &neighborhood);
     std::pair<size_t, Arrayi> NeighbourIndexShift(const Arrayi shift_index, const CellNeighborhood &neighbour);
     /** This function find the value of data from its index from global mesh. */
     template <typename DataType>

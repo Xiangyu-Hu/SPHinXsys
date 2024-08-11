@@ -155,6 +155,56 @@ void ReinitializeLevelSet::update(const size_t &package_index)
         });
 }
 //=============================================================================================//
+void MarkNearInterface::update(const size_t &package_index)
+{
+    auto &phi_addrs = phi_.DataField()[package_index];
+    auto &near_interface_id_addrs = near_interface_id_.DataField()[package_index];
+    auto neighborhood = mesh_data_.cell_neighborhood_[package_index];
+
+    // corner averages, note that the first row and first column are not used
+    // template <typename DataType>
+    // using PackageTemporaryData = PackageDataMatrix<DataType, 5>; //[notion] the pkg_size should be replaced
+    PackageDataMatrix<Real, 5> corner_averages;
+    mesh_for_each2d<0, 5>( //[notion] same pkg_size problem above
+        [&](int i, int j)
+        {
+            corner_averages[i][j] = mesh_data_.CornerAverage(phi_, Arrayi(i, j), Arrayi(-1, -1), neighborhood);
+        });
+
+    mesh_data_.for_each_cell_data(
+        [&](int i, int j)
+        {
+            // first assume far cells
+            Real phi_0 = phi_addrs[i][j];
+            int near_interface_id = phi_0 > 0.0 ? 2 : -2;
+            if (fabs(phi_0) < small_shift)
+            {
+                near_interface_id = 0;
+                Real phi_average_0 = corner_averages[i][j];
+                // find outer cut cells by comparing the sign of corner averages
+                mesh_for_each2d<0, 2>(
+                    [&](int l, int m)
+                    {
+                        Real phi_average = corner_averages[i + l][j + m];
+                        if ((phi_average_0 - small_shift) * (phi_average - small_shift) < 0.0)
+                            near_interface_id = 1;
+                        if ((phi_average_0 + small_shift) * (phi_average + small_shift) < 0.0)
+                            near_interface_id = -1;
+                    });
+                // find zero cut cells by comparing the sign of corner averages
+                mesh_for_each2d<0, 2>(
+                    [&](int l, int m)
+                    {
+                        Real phi_average = corner_averages[i + l][j + m];
+                        if (phi_average_0 * phi_average < 0.0)
+                            near_interface_id = 0;
+                    });
+            }
+            // assign this to package
+            near_interface_id_addrs[i][j] = near_interface_id;
+        });
+}
+//=============================================================================================//
 void DiffuseLevelSetSign::update(const size_t &package_index)
 {
     auto phi_data = phi_.DataField();
