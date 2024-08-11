@@ -246,20 +246,22 @@ class ReinitializeLevelSet : public BaseMeshLocalDynamics<size_t>
 class MarkNearInterface : public BaseMeshLocalDynamics<size_t>
 {
   public:
-    explicit MarkNearInterface(MeshWithGridDataPackagesType &mesh_data, Real small_shift_factor)
+    explicit MarkNearInterface(MeshWithGridDataPackagesType &mesh_data)
         : BaseMeshLocalDynamics(mesh_data),
-          small_shift(small_shift_factor * mesh_data.DataSpacing()),
+          data_spacing_(mesh_data.DataSpacing()),
           phi_(*mesh_data.getMeshVariable<Real>("Levelset")),
           near_interface_id_(*mesh_data.getMeshVariable<int>("NearInterfaceID")){};
     virtual ~MarkNearInterface(){};
 
     void update(const size_t &package_index);
+    void setSmallShiftFactor(Real small_shift_factor){ small_shift = data_spacing_ * small_shift_factor; };
 
   private:
     MeshVariable<Real> &phi_;
     MeshVariable<int> &near_interface_id_;
 
     Real small_shift;
+    Real data_spacing_;
 };
 
 class RedistanceInterface : public BaseMeshLocalDynamics<size_t>
