@@ -49,12 +49,16 @@ class BaseMeshLocalDynamics
 {
   public:
     explicit BaseMeshLocalDynamics(MeshWithGridDataPackages<4> &mesh_data)
-        : mesh_data_(mesh_data){};
+        : mesh_data_(mesh_data),
+          all_cells_(mesh_data.AllCells()),
+          grid_spacing_(mesh_data.GridSpacing()){};
     virtual ~BaseMeshLocalDynamics(){};
 
     virtual void update(const IndexType &index) = 0;
   protected:
     MeshWithGridDataPackages<4> &mesh_data_;
+    Arrayi all_cells_;
+    Real grid_spacing_;
 };
 
 class InitializeDataInACell : public BaseMeshLocalDynamics<Arrayi>
@@ -62,7 +66,6 @@ class InitializeDataInACell : public BaseMeshLocalDynamics<Arrayi>
   public:
     explicit InitializeDataInACell(MeshWithGridDataPackages<4> &mesh_data, Shape &shape)
         : BaseMeshLocalDynamics(mesh_data),
-          all_cells_(mesh_data.AllCells()),
           shape_(shape){};
     virtual ~InitializeDataInACell(){};
 
@@ -70,8 +73,6 @@ class InitializeDataInACell : public BaseMeshLocalDynamics<Arrayi>
   
   private:
     Shape &shape_;
-    Real grid_spacing_ = mesh_data_.GridSpacing();
-    Arrayi all_cells_;
 
     size_t SortIndexFromCellIndex(const Arrayi &cell_index);
 };
@@ -80,16 +81,14 @@ class TagACellIsInnerPackage : public BaseMeshLocalDynamics<Arrayi>
 {
   public:
     explicit TagACellIsInnerPackage(MeshWithGridDataPackagesType &mesh_data)
-        : BaseMeshLocalDynamics(mesh_data),
-          all_cells_(mesh_data.AllCells()){};
+        : BaseMeshLocalDynamics(mesh_data){};
     virtual ~TagACellIsInnerPackage(){};
 
     void update(const Arrayi &index);
 
   private:
-    Arrayi all_cells_;
-
     bool isInnerPackage(const Arrayi &cell_index);
+    size_t SortIndexFromCellIndex(const Arrayi &cell_index);
 };
 
 class InitializeIndexMesh : public BaseMeshLocalDynamics<size_t>

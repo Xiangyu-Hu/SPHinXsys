@@ -60,11 +60,6 @@ void InitializeDataInACell::update(const Arrayi &cell_index)
     }
 }
 //=================================================================================================//
-size_t InitializeDataInACell::SortIndexFromCellIndex(const Arrayi &cell_index)
-{
-    return cell_index[0] * all_cells_[1] + cell_index[1];
-}
-//=================================================================================================//
 void TagACellIsInnerPackage::update(const Arrayi &cell_index)
 {
     if (isInnerPackage(cell_index))
@@ -72,7 +67,7 @@ void TagACellIsInnerPackage::update(const Arrayi &cell_index)
         if (!mesh_data_.isInnerDataPackage(cell_index))
         {
             std::pair<size_t, int> occupied;
-            occupied.first = cell_index[0] * all_cells_[1] + cell_index[1]; //2d version try implement, 3d separation needed
+            occupied.first = SortIndexFromCellIndex(cell_index);
             occupied.second = 0;
 
             mesh_data_.registerOccupied(occupied);

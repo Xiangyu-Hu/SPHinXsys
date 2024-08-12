@@ -3,6 +3,16 @@
 namespace SPH
 {
 //=============================================================================================//
+size_t InitializeDataInACell::SortIndexFromCellIndex(const Arrayi &cell_index)
+{
+    return cell_index[0] * all_cells_[1] * all_cells_[2] + cell_index[1] * all_cells_[2] + cell_index[2];
+}
+//=============================================================================================//
+size_t TagACellIsInnerPackage::SortIndexFromCellIndex(const Arrayi &cell_index)
+{
+    return cell_index[0] * all_cells_[1] * all_cells_[2] + cell_index[1] * all_cells_[2] + cell_index[2];
+}
+//=============================================================================================//
 bool TagACellIsInnerPackage::isInnerPackage(const Arrayi &cell_index)
 {
     return mesh_any_of(
