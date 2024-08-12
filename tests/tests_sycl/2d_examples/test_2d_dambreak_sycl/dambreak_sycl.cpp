@@ -185,8 +185,8 @@ int main(int ac, char *av[])
             if (number_of_iterations % restart_output_interval == 0)
             {
                 dv_force_prior->synchronizeToDevice();
-                dv_force->synchronizeWithDevice();
-                dv_velocity->synchronizeWithDevice();
+                dv_force->synchronizeToDevice();
+                dv_velocity->synchronizeToDevice();
                 Real ck_advection_dt = ck_fluid_advection_time_step.exec();
                 std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations
                           << "	advection_dt = " << advection_dt << "   ck_acoustic_dt = " << ck_advection_dt << "\n";

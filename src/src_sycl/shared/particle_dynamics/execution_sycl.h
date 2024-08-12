@@ -116,7 +116,7 @@ inline void copyToDevice(const T *host, T *device, std::size_t size)
 }
 
 template <class T>
-inline void copyDataToDevice(const T &value, T *device, std::size_t size)
+inline void copyToDevice(const T &value, T *device, std::size_t size)
 {
     execution::execution_instance.getQueue().fill(device, value, size);
 }

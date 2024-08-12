@@ -50,24 +50,24 @@ inline void particle_for(const ParallelDevicePolicy &par_device,
 
 template <class ReturnType, typename Operation, class LocalDynamicsFunction>
 inline ReturnType particle_reduce(const ParallelDevicePolicy &par_device,
-                                  const IndexRange &particles_range, const ReturnType &reference, Operation &&operation,
+                                  const IndexRange &particles_range, ReturnType temp, Operation &&operation,
                                   const LocalDynamicsFunction &local_dynamics_function)
 {
-    ReturnType result = reference;
     auto &sycl_queue = execution_instance.getQueue();
-    sycl::buffer<ReturnType> buffer_result(&result, 1);
     const size_t particles_size = particles_range.size();
-    sycl_queue.submit([&](sycl::handler &cgh)
-                      { auto reduction_operator = 
-                            sycl::reduction(buffer_result, cgh, operation);
-                        cgh.parallel_for(execution_instance.getUniformNdRange(particles_size), reduction_operator,
-                                        [=](sycl::nd_item<1> item, auto& reduction) 
-                                        {
-                                            if(item.get_global_id() < particles_size)
-                                                reduction.combine(local_dynamics_function(item.get_global_id(0)));
-                                        }); })
-        .wait_and_throw();
-    return result;
+    {
+        sycl::buffer<ReturnType> buffer_result(&temp, 1);
+        sycl_queue.submit([&](sycl::handler &cgh)
+                          {
+                              auto reduction_operator = sycl::reduction(buffer_result, cgh, operation);
+                              cgh.parallel_for(execution_instance.getUniformNdRange(particles_size), reduction_operator,
+                                               [=](sycl::nd_item<1> item, auto& reduction) {
+                                                   if(item.get_global_id() < particles_size)
+                                                       reduction.combine(local_dynamics_function(item.get_global_id(0)));
+                                               }); })
+            .wait_and_throw();
+    } // buffer_result goes out of scope, so the result (of temp) is updated
+    return temp;
 }
 } // namespace SPH
 #endif // PARTICLE_ITERATORS_SYCL_H

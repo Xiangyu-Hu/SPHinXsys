@@ -11,7 +11,7 @@ void UpdateCellLinkedList<CellLinkedListType>::
     clearParticleOffsetList(const ParallelDevicePolicy &par_device)
 {
     UnsignedInt total_real_particles = particles_->TotalRealParticles();
-    copyDataToDevice(total_real_particles, particle_offset_list_ + number_of_cells_, 1);
+    copyToDevice(total_real_particles, particle_offset_list_ + number_of_cells_, 1);
 
     execution_instance.getQueue()
         .submit(
