@@ -2,6 +2,7 @@
 
 #include "adaptation.h"
 #include "base_kernel.h"
+#include "tbb/parallel_sort.h"
 
 namespace SPH
 {
@@ -41,24 +42,39 @@ LevelSet::LevelSet(BoundingBox tentative_bounds, Real data_spacing, size_t buffe
       kernel_gradient_(*registerMeshVariable<Vecd>("KernelGradient")),
       kernel_(*sph_adaptation.getKernel()) {}
 //=================================================================================================//
-void LevelSet::updateLevelSetGradient()
+LevelSet::LevelSet(BoundingBox tentative_bounds, Real data_spacing,
+                   Shape &shape, SPHAdaptation &sph_adaptation)
+    : LevelSet(tentative_bounds, data_spacing, 4, shape, sph_adaptation)
 {
-    package_parallel_for(
-        [&](size_t package_index) {
-            computeGradient(phi_, phi_gradient_, package_index);
-        });
+    initialize_data_in_a_cell.exec();
+
+    finishDataPackages();
 }
 //=================================================================================================//
-void LevelSet::updateKernelIntegrals()
+void LevelSet::finishDataPackages()
 {
-    package_parallel_for(
-        [&](size_t package_index) {
-            Arrayi cell_index = meta_data_cell_[package_index].first;
-            assignByPosition(
-                kernel_weight_, cell_index, [&](const Vecd &position) -> Real { return computeKernelIntegral(position); });
-            assignByPosition(
-                kernel_gradient_, cell_index, [&](const Vecd &position) -> Vecd { return computeKernelGradientIntegral(position); });
-        });
+    tag_a_cell_is_inner_package.exec();
+
+    parallel_sort(occupied_data_pkgs_.begin(), occupied_data_pkgs_.end(),
+                  [](const std::pair<size_t, int>& a, const std::pair<size_t, int>& b)
+                  {
+                      return a.first < b.first; 
+                  });
+    num_grid_pkgs_ = occupied_data_pkgs_.size() + 2;
+    cell_neighborhood_ = new CellNeighborhood[num_grid_pkgs_];
+    meta_data_cell_ = new std::pair<Arrayi, int>[num_grid_pkgs_];
+    initialize_index_mesh.exec();
+    initialize_cell_neighborhood.exec();
+    resizeMeshVariableData();
+
+
+    Real far_field_distance = grid_spacing_ * (Real)buffer_width_;
+    initializeDataForSingularPackage(0, -far_field_distance);
+    initializeDataForSingularPackage(1, far_field_distance);
+
+    initialize_basic_data_for_a_package.exec();
+    update_level_set_gradient.exec();
+    update_kernel_integrals.exec();
 }
 //=================================================================================================//
 Vecd LevelSet::probeNormalDirection(const Vecd &position)
@@ -98,15 +114,15 @@ Vecd LevelSet::probeKernelGradientIntegral(const Vecd &position, Real h_ratio)
 //=================================================================================================//
 void LevelSet::redistanceInterface()
 {
-    redistance_interface.exec();
-    // package_parallel_for(
-    //     [&](size_t package_index) {
-    //         std::pair<Arrayi, int> &metadata = meta_data_cell_[package_index];
-    //         if (metadata.second == 1)
-    //         {
-    //             redistanceInterfaceForAPackage(PackageIndexFromCellIndex(metadata.first));
-    //         }
-    //     });
+    // redistance_interface.exec();
+    package_parallel_for(
+        [&](size_t package_index) {
+            std::pair<Arrayi, int> &metadata = meta_data_cell_[package_index];
+            if (metadata.second == 1)
+            {
+                redistanceInterfaceForAPackage(PackageIndexFromCellIndex(metadata.first));
+            }
+        });
 }
 //=================================================================================================//
 void LevelSet::cleanInterface(Real small_shift_factor)
@@ -114,8 +130,8 @@ void LevelSet::cleanInterface(Real small_shift_factor)
     markNearInterface(small_shift_factor);
     redistanceInterface();
     reinitializeLevelSet();
-    updateLevelSetGradient();
-    updateKernelIntegrals();
+    update_level_set_gradient.exec();
+    update_kernel_integrals.exec();
 }
 //=============================================================================================//
 void LevelSet::correctTopology(Real small_shift_factor)
@@ -123,8 +139,8 @@ void LevelSet::correctTopology(Real small_shift_factor)
     markNearInterface(small_shift_factor);
     for (size_t i = 0; i != 10; ++i)
         diffuseLevelSetSign();
-    updateLevelSetGradient();
-    updateKernelIntegrals();
+    update_level_set_gradient.exec();
+    update_kernel_integrals.exec();
 }
 //=================================================================================================//
 bool LevelSet::probeIsWithinMeshBound(const Vecd &position)
@@ -139,39 +155,6 @@ bool LevelSet::probeIsWithinMeshBound(const Vecd &position)
             is_bounded = false;
     }
     return is_bounded;
-}
-//=================================================================================================//
-void LevelSet::initializeDataInACell(const Arrayi &cell_index)
-{
-    Vecd cell_position = CellPositionFromIndex(cell_index);
-    Real signed_distance = shape_.findSignedDistance(cell_position);
-    Vecd normal_direction = shape_.findNormalDirection(cell_position);
-    Real measure = (signed_distance * normal_direction).cwiseAbs().maxCoeff();
-    if (measure < grid_spacing_)
-    {
-        assignCore(cell_index);
-    }
-    else
-    {
-        size_t package_index = shape_.checkContain(cell_position) ? 0 : 1;
-        assignSingular(cell_index);
-        assignDataPackageIndex(cell_index, package_index);
-    }
-}
-//=================================================================================================//
-void LevelSet::tagACellIsInnerPackage(const Arrayi &cell_index)
-{
-    if (isInnerPackage(cell_index))
-    {
-        if (!isInnerDataPackage(cell_index))
-        {
-            std::pair<size_t, int> occupied;
-            occupied.first = cell_index[0] * all_cells_[1] + cell_index[1]; //2d version try implement, 3d separation needed
-            occupied.second = 0;
-
-            mesh_data_.registerOccupied(occupied);
-        }
-    }
 }
 //=================================================================================================//
 Real LevelSet::upwindDifference(Real sign, Real df_p, Real df_n)

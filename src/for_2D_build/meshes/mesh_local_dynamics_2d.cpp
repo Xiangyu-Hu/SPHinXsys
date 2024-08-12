@@ -26,19 +26,21 @@ bool TagACellIsInnerPackage::isInnerPackage(const Arrayi &cell_index)
         });
 }
 //=============================================================================================//
-// void InitializeCellNeighborhood::update(const size_t &package_index)
-// {
-//     Arrayi cell_index = mesh_data_.CellIndexFromPackageSortIndex(package_index);
-//     CellNeighborhood &current = mesh_data_.getCellNeighborhoodForWrite(package_index);
-//     std::pair<Arrayi, int> &metadata = mesh_data_.getMetaDataCellForWrite(package_index);
-//     metadata.first = cell_index;
-//     metadata.second = mesh_data_.isCoreDataPackage(cell_index) ? 1 : 0;
-//     for (int l = -1; l < 2; l++)
-//         for (int m = -1; m < 2; m++)
-//         {
-//             current[l + 1][m + 1] = mesh_data_.PackageIndexFromCellIndex(cell_index + Arrayi(l, m));
-//         };
-// }
+Arrayi InitializeIndexMesh::CellIndexFromSortIndex(const size_t &sort_index)
+{
+    Array2i cell_index;
+    cell_index[0] = sort_index / all_cells_[1];
+    cell_index[1] = sort_index % all_cells_[1];
+    return cell_index;
+}
+//=============================================================================================//
+Arrayi InitializeCellNeighborhood::CellIndexFromSortIndex(const size_t &sort_index)
+{
+    Array2i cell_index;
+    cell_index[0] = sort_index / all_cells_[1];
+    cell_index[1] = sort_index % all_cells_[1];
+    return cell_index;
+}
 //=============================================================================================//
 void InitializeCellNeighborhood::update(const size_t &package_index)
 {
@@ -71,7 +73,10 @@ void InitializeBasicDataForAPackage::update(const size_t &package_index)
 //=============================================================================================//
 Arrayi InitializeBasicDataForAPackage::CellIndexFromSortIndex(const size_t &sort_index)
 {
-    return Array2i(sort_index / all_cells_[1], sort_index % all_cells_[1]);
+    Array2i cell_index;
+    cell_index[0] = sort_index / all_cells_[1];
+    cell_index[1] = sort_index % all_cells_[1];
+    return cell_index;
 }
 //=============================================================================================//
 Real UpdateKernelIntegrals::computeKernelIntegral(const Vecd &position)

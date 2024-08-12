@@ -10,14 +10,6 @@
 namespace SPH
 {
 //=================================================================================================//
-LevelSet::LevelSet(BoundingBox tentative_bounds, Real data_spacing,
-                   Shape &shape, SPHAdaptation &sph_adaptation)
-    : LevelSet(tentative_bounds, data_spacing, 4, shape, sph_adaptation)
-{
-    initialize_data_in_a_cell.exec();
-    finishDataPackages();
-}
-//=================================================================================================//
 void LevelSet::initializeDataForSingularPackage(const size_t package_index, Real far_field_level_set)
 {
     auto &phi = phi_.DataField()[package_index];
@@ -37,77 +29,10 @@ void LevelSet::initializeDataForSingularPackage(const size_t package_index, Real
         });
 }
 //=================================================================================================//
-void LevelSet::finishDataPackages()
-{
-    tag_a_cell_is_inner_package.exec();
-
-    parallel_sort(occupied_data_pkgs_.begin(), occupied_data_pkgs_.end(),
-                  [](const std::pair<size_t, int>& a, const std::pair<size_t, int>& b)
-                  {
-                      return a.first < b.first; 
-                  });
-    num_grid_pkgs_ = occupied_data_pkgs_.size() + 2;
-    cell_neighborhood_ = new CellNeighborhood[num_grid_pkgs_];
-    meta_data_cell_ = new std::pair<Arrayi, int>[num_grid_pkgs_];
-    initialize_index_mesh.exec();
-    initialize_cell_neighborhood.exec();
-    resizeMeshVariableData();
-
-
-    Real far_field_distance = grid_spacing_ * (Real)buffer_width_;
-    initializeDataForSingularPackage(0, -far_field_distance);
-    initializeDataForSingularPackage(1, far_field_distance);
-
-    initialize_basic_data_for_a_package.exec();
-    update_level_set_gradient.exec();
-    update_kernel_integrals.exec();
-}
-//=================================================================================================//
-void LevelSet::initializeIndexMesh()
-{
-    package_parallel_for([&](size_t package_index)
-             {
-                size_t sort_index = occupied_data_pkgs_[package_index-2].first;
-                Arrayi cell_index = Arrayi(sort_index / all_cells_[1], sort_index % all_cells_[1]); //[notion] there might be problems, 3d implementation needed
-                assignDataPackageIndex(cell_index, package_index);
-             });
-}
-//=================================================================================================//
-void LevelSet::initializeCellNeighborhood()
-{
-    // cell_neighborhood_ = new CellNeighborhood[num_grid_pkgs_];
-    // meta_data_cell_ = new std::pair<Arrayi, int>[num_grid_pkgs_];
-    package_parallel_for([&](size_t package_index)
-                      {
-                          size_t sort_index = occupied_data_pkgs_[package_index-2].first;
-                          Arrayi cell_index = Arrayi(sort_index / all_cells_[1], sort_index % all_cells_[1]); //[notion] there might be problems, 3d implementation needed
-                          CellNeighborhood &current = cell_neighborhood_[package_index];
-                          std::pair<Arrayi, int> &metadata = meta_data_cell_[package_index];
-                          metadata.first = cell_index;
-                          metadata.second = occupied_data_pkgs_[package_index-2].second;
-                          for (int l = -1; l < 2; l++)
-                              for (int m = -1; m < 2; m++)
-                              {
-                                  current[l + 1][m + 1] = PackageIndexFromCellIndex(cell_index + Arrayi(l, m));
-                              }
-                      });
-}
-//=================================================================================================//
 bool LevelSet::isWithinCorePackage(Vecd position)
 {
     Arrayi cell_index = CellIndexFromPosition(position);
     return isInnerDataPackage(cell_index);
-}
-//=============================================================================================//
-bool LevelSet::isInnerPackage(const Arrayi &cell_index)
-{
-    return mesh_any_of(
-        Array2i::Zero().max(cell_index - Array2i::Ones()),
-        all_cells_.min(cell_index + 2 * Array2i::Ones()),
-        [&](int l, int m)
-        {
-            return isInnerDataPackage(Arrayi(l, m));    //actually a core test here, because only core pkgs are assigned
-        });
 }
 //=================================================================================================//
 void LevelSet::diffuseLevelSetSign()
@@ -231,19 +156,6 @@ void LevelSet::markNearInterface(Real small_shift_factor)
     //                 near_interface_id_addrs[i][j] = near_interface_id;
     //             });
     //     });
-}
-//=================================================================================================//
-void LevelSet::initializeBasicDataForAPackage(const Arrayi &cell_index, const size_t package_index, Shape &shape)
-{
-    auto &phi = phi_.DataField()[package_index];
-    auto &near_interface_id = near_interface_id_.DataField()[package_index];
-    for_each_cell_data(
-        [&](int i, int j)
-        {
-            Vec2d position = DataPositionFromIndex(cell_index, Array2i(i, j));
-            phi[i][j] = shape.findSignedDistance(position);
-            near_interface_id[i][j] = phi[i][j] < 0.0 ? -2 : 2;
-        });
 }
 //=================================================================================================//
 void LevelSet::redistanceInterfaceForAPackage(const size_t package_index)
@@ -432,68 +344,6 @@ void LevelSet::writeMeshFieldToPlt(std::ofstream &output_file)
         }
         output_file << " \n";
     }
-}
-//=============================================================================================//
-Real LevelSet::computeKernelIntegral(const Vecd &position)
-{
-    Real phi = probeSignedDistance(position);
-    Real cutoff_radius = kernel_.CutOffRadius(global_h_ratio_);
-    Real threshold = cutoff_radius + data_spacing_; // consider that interface's half width is the data spacing
-
-    Real integral(0);
-    if (fabs(phi) < threshold)
-    {
-        Arrayi global_index_ = global_mesh_.CellIndexFromPosition(position);
-        mesh_for_each2d<-3, 4>(
-            [&](int i, int j)
-            {
-                Arrayi neighbor_index = Arrayi(global_index_[0] + i, global_index_[1] + j);
-                Real phi_neighbor = DataValueFromGlobalIndex(phi_, neighbor_index);
-                if (phi_neighbor > -data_spacing_)
-                {
-                    Vecd phi_gradient = DataValueFromGlobalIndex(phi_gradient_, neighbor_index);
-                    Vecd integral_position = global_mesh_.GridPositionFromIndex(neighbor_index);
-                    Vecd displacement = position - integral_position;
-                    Real distance = displacement.norm();
-                    if (distance < cutoff_radius)
-                        integral += kernel_.W(global_h_ratio_, distance, displacement) *
-                                    CutCellVolumeFraction(phi_neighbor, phi_gradient, data_spacing_);
-                }
-            });
-    }
-    return phi > threshold ? 1.0 : integral * data_spacing_ * data_spacing_;
-}
-//=============================================================================================//
-Vecd LevelSet::computeKernelGradientIntegral(const Vecd &position)
-{
-    Real phi = probeSignedDistance(position);
-    Real cutoff_radius = kernel_.CutOffRadius(global_h_ratio_);
-    Real threshold = cutoff_radius + data_spacing_;
-
-    Vecd integral = Vecd::Zero();
-    if (fabs(phi) < threshold)
-    {
-        Arrayi global_index_ = global_mesh_.CellIndexFromPosition(position);
-        mesh_for_each2d<-3, 4>(
-            [&](int i, int j)
-            {
-                Arrayi neighbor_index = Arrayi(global_index_[0] + i, global_index_[1] + j);
-                Real phi_neighbor = DataValueFromGlobalIndex(phi_, neighbor_index);
-                if (phi_neighbor > -data_spacing_)
-                {
-                    Vecd phi_gradient = DataValueFromGlobalIndex(phi_gradient_, neighbor_index);
-                    Vecd integral_position = global_mesh_.GridPositionFromIndex(neighbor_index);
-                    Vecd displacement = position - integral_position;
-                    Real distance = displacement.norm();
-                    if (distance < cutoff_radius)
-                        integral += kernel_.dW(global_h_ratio_, distance, displacement) *
-                                    CutCellVolumeFraction(phi_neighbor, phi_gradient, data_spacing_) *
-                                    displacement / (distance + TinyReal);
-                }
-            });
-    }
-
-    return integral * data_spacing_ * data_spacing_;
 }
 //=============================================================================================//
 RefinedLevelSet::RefinedLevelSet(BoundingBox tentative_bounds, LevelSet &coarse_level_set,

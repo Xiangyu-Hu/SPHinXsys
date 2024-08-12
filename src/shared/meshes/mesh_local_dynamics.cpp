@@ -78,7 +78,7 @@ void TagACellIsInnerPackage::update(const Arrayi &cell_index)
 void InitializeIndexMesh::update(const size_t &package_index)
 {
     size_t sort_index = mesh_data_.occupied_data_pkgs_[package_index-2].first;
-    Arrayi cell_index = Arrayi(sort_index / all_cells_[1], sort_index % all_cells_[1]); //[notion] there might be problems, 3d implementation needed
+    Arrayi cell_index = CellIndexFromSortIndex(sort_index);
     mesh_data_.assignDataPackageIndex(cell_index, package_index);
 }
 //=================================================================================================//
@@ -86,16 +86,6 @@ void UpdateLevelSetGradient::update(const size_t &index)
 {
     mesh_data_.computeGradient(phi_, phi_gradient_, index);
 }
-//=================================================================================================//
-// Real UpdateKernelIntegrals::computeKernelIntegral(const Vecd &position)
-// {
-
-// }
-//=================================================================================================//
-// Vecd UpdateKernelIntegrals::computeKernelGradientIntegral(const Vecd &position)
-// {
-
-// }
 //=================================================================================================//
 void UpdateKernelIntegrals::update(const size_t &package_index)
 {
@@ -107,26 +97,6 @@ void UpdateKernelIntegrals::update(const size_t &package_index)
         kernel_gradient_, cell_index, [&](const Vecd &position) -> Vecd
         { return computeKernelGradientIntegral(position); });
 }
-//=================================================================================================//
-// void ReinitializeLevelSet::update()
-// {
-
-// }
-//=================================================================================================//
-// void MarkNearInterface::update()
-// {
-
-// }
-//=================================================================================================//
-// void RedistanceInterface::update()
-// {
-
-// }
-//=================================================================================================//
-// void DiffuseLevelSetSign::update()
-// {
-
-// }
 //=================================================================================================//
 } // namespace SPH
 //=================================================================================================//
