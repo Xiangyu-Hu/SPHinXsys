@@ -14,7 +14,7 @@ Real DL = 5.0;                        /**< Reference length. */
 Real DH = 3.0;                        /**< Reference and the height of main channel. */
 Real DL1 = 0.7 * DL;                  /**< The length of the main channel. */
 Real resolution_ref = 0.15;           /**< Initial reference particle spacing. */
-Real resolution_shell = 0.5 * resolution_ref;
+Real resolution_shell = resolution_ref;
 Real BW = resolution_ref * 4.0;         /**< Reference size of the emitter. */
 Real thickness = resolution_shell * 1.0; 
 Real DL_sponge = resolution_ref * 20; /**< Reference size of the emitter buffer to impose inflow condition. */
@@ -84,7 +84,7 @@ class ParticleGenerator<SurfaceParticles, WallBoundary> : public ParticleGenerat
         //std::cout << " particle_number_mid_surface_01 = " << particle_number_mid_surface_01 << std::endl;
         for (int i = 0; i < particle_number_mid_surface_01 - 1; i++)
         {
-            Real x = -DL_sponge - BW + (Real(i) + 1.0) * resolution_shell_;  // to ensure that the X-coordinate is consistent with the inner wall of T-pipe wall case
+            Real x = -DL_sponge - BW + (Real(i) + 0.5) * resolution_shell_;
             // upper wall
             Real y1 = DH + 0.5 * resolution_shell_;
             addPositionAndVolumetricMeasure(Vecd(x, y1), resolution_shell_);
