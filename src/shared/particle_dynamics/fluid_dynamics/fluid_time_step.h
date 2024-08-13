@@ -80,6 +80,7 @@ class AdvectionTimeStep
     Real reduce(size_t index_i, Real dt = 0.0);
     virtual Real outputResult(Real reduced_value) override;
 
+    template <class T>
     class ComputingKernel
     {
       public:
@@ -121,15 +122,16 @@ class AdvectionViscousTimeStep : public AdvectionTimeStep
     virtual ~AdvectionViscousTimeStep(){};
     Real reduce(size_t index_i, Real dt = 0.0);
 
-    class ComputingKernel : public AdvectionTimeStep::ComputingKernel
+    template <class T>
+    class ComputingKernel : public AdvectionTimeStep::ComputingKernel<T>
     {
       public:
         ComputingKernel(AdvectionViscousTimeStep &advection_viscous_time_step)
-            : AdvectionTimeStep::ComputingKernel(advection_viscous_time_step){};
+            : AdvectionTimeStep::ComputingKernel<T>(advection_viscous_time_step){};
 
         Real reduce(size_t index_i, Real dt = 0.0)
         {
-            return AdvectionTimeStep::ComputingKernel::reduce(index_i, dt);
+            return AdvectionTimeStep::ComputingKernel<T>::reduce(index_i, dt);
         };
     };
 };

@@ -40,14 +40,16 @@ BaseForcePrior<DynamicsIdentifier>::
 }
 //=================================================================================================//
 template <class DynamicsIdentifier>
-BaseForcePrior<DynamicsIdentifier>::ComputingKernel::
+template <class T>
+BaseForcePrior<DynamicsIdentifier>::ComputingKernel<T>::
     ComputingKernel(BaseForcePrior<DynamicsIdentifier> &base_force_prior)
     : force_prior_(base_force_prior.force_prior_),
       current_force_(base_force_prior.current_force_),
       previous_force_(base_force_prior.previous_force_) {}
 //=================================================================================================//
 template <class DynamicsIdentifier>
-void BaseForcePrior<DynamicsIdentifier>::ComputingKernel::update(size_t index_i, Real dt)
+template <class T>
+void BaseForcePrior<DynamicsIdentifier>::ComputingKernel<T>::update(size_t index_i, Real dt)
 {
     force_prior_[index_i] += current_force_[index_i] - previous_force_[index_i];
     previous_force_[index_i] = current_force_[index_i];
@@ -79,17 +81,19 @@ GravityForce<GravityType>::
       v_physical_time_(sph_system_.getSystemVariableByName<Real>(execution_policy, "PhysicalTime")) {}
 //=================================================================================================//
 template <class GravityType>
-GravityForce<GravityType>::ComputingKernel::ComputingKernel(GravityForce<GravityType> &gravity_force)
-    : ForcePrior::ComputingKernel(gravity_force),
+template <class T>
+GravityForce<GravityType>::ComputingKernel<T>::ComputingKernel(GravityForce<GravityType> &gravity_force)
+    : ForcePrior::ComputingKernel<T>(gravity_force),
       gravity_(gravity_force.gravity_), pos_(gravity_force.pos_), mass_(gravity_force.mass_),
       physical_time_(gravity_force.v_physical_time_->ValueAddress()) {}
 //=================================================================================================//
 template <class GravityType>
-void GravityForce<GravityType>::ComputingKernel::update(size_t index_i, Real dt)
+template <class T>
+void GravityForce<GravityType>::ComputingKernel<T>::update(size_t index_i, Real dt)
 {
-    current_force_[index_i] =
+    this->current_force_[index_i] =
         mass_[index_i] * gravity_.InducedAcceleration(pos_[index_i], *physical_time_);
-    ForcePrior::ComputingKernel::update(index_i, dt);
+    ForcePrior::ComputingKernel<T>::update(index_i, dt);
 }
 //=================================================================================================//
 } // namespace SPH

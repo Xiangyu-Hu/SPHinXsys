@@ -132,7 +132,8 @@ namespace execution
 template <class LocalDynamicsType>
 class Implementation<LocalDynamicsType, ParallelDevicePolicy>
 {
-    using ComputingKernel = typename LocalDynamicsType::ComputingKernel;
+    using ComputingKernel = typename LocalDynamicsType::
+        template ComputingKernel<ParallelDevicePolicy>;
     UniquePtrKeeper<ComputingKernel> kernel_ptr_keeper_;
 
   public:

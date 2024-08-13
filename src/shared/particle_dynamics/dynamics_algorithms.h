@@ -99,7 +99,7 @@ class SimpleDynamics : public LocalDynamicsType, public BaseDynamics<void>
 {
   public:
     template <class DynamicsIdentifier, typename... Args>
-    SimpleDynamics(DynamicsIdentifier &identifier, Args &&...args)
+    SimpleDynamics(DynamicsIdentifier &identifier, Args &&... args)
         : LocalDynamicsType(identifier, std::forward<Args>(args)...),
           BaseDynamics<void>()
     {
@@ -115,8 +115,7 @@ class SimpleDynamics : public LocalDynamicsType, public BaseDynamics<void>
         this->setupDynamics(dt);
         particle_for(ExecutionPolicy(),
                      this->identifier_.LoopRange(),
-                     [&](size_t i)
-                     { this->update(i, dt); });
+                     [&](size_t i) { this->update(i, dt); });
     };
 };
 
@@ -131,7 +130,7 @@ class ReduceDynamics : public LocalDynamicsType,
   public:
     using ReturnType = typename LocalDynamicsType::ReturnType;
     template <class DynamicsIdentifier, typename... Args>
-    ReduceDynamics(DynamicsIdentifier &identifier, Args &&...args)
+    ReduceDynamics(DynamicsIdentifier &identifier, Args &&... args)
         : LocalDynamicsType(identifier, std::forward<Args>(args)...),
           BaseDynamics<ReturnType>(){};
     virtual ~ReduceDynamics(){};
@@ -144,74 +143,9 @@ class ReduceDynamics : public LocalDynamicsType,
         this->setupDynamics(dt);
         ReturnType temp = particle_reduce(ExecutionPolicy(),
                                           this->identifier_.LoopRange(), this->Reference(), this->getOperation(),
-                                          [&](size_t i) -> ReturnType
-                                          { return this->reduce(i, dt); });
+                                          [&](size_t i) -> ReturnType { return this->reduce(i, dt); });
         return this->outputResult(temp);
     };
-};
-
-template <class LocalDynamicsType, class ExecutionPolicy = ParallelPolicy>
-class SimpleDynamicsCK : public LocalDynamicsType, public BaseDynamics<void>
-{
-    using ComputingKernel = typename LocalDynamicsType::ComputingKernel;
-
-  public:
-    template <class DynamicsIdentifier, typename... Args>
-    SimpleDynamicsCK(DynamicsIdentifier &identifier, Args &&...args)
-        : LocalDynamicsType(ExecutionPolicy{}, identifier, std::forward<Args>(args)...),
-          BaseDynamics<void>(), kernel_implementation_(*this)
-    {
-        static_assert(!has_initialize<ComputingKernel>::value &&
-                          !has_interaction<ComputingKernel>::value,
-                      "LocalDynamicsType does not fulfill SimpleDynamics requirements");
-    };
-    virtual ~SimpleDynamicsCK(){};
-
-    virtual void exec(Real dt = 0.0) override
-    {
-        this->setUpdated(this->identifier_.getSPHBody());
-        this->setupDynamics(dt);
-        ComputingKernel *computing_kernel = kernel_implementation_.getComputingKernel();
-        particle_for(ExecutionPolicy{},
-                     this->identifier_.LoopRange(),
-                     [=](size_t i)
-                     { computing_kernel->update(i, dt); });
-    };
-
-  protected:
-    Implementation<LocalDynamicsType, ExecutionPolicy> kernel_implementation_;
-};
-
-template <class LocalDynamicsType, class ExecutionPolicy = ParallelPolicy>
-class ReduceDynamicsCK : public LocalDynamicsType,
-                         public BaseDynamics<typename LocalDynamicsType::ReturnType>
-{
-    using ComputingKernel = typename LocalDynamicsType::ComputingKernel;
-    using ReturnType = typename LocalDynamicsType::ReturnType;
-
-  public:
-    template <class DynamicsIdentifier, typename... Args>
-    ReduceDynamicsCK(DynamicsIdentifier &identifier, Args &&...args)
-        : LocalDynamicsType(ExecutionPolicy{}, identifier, std::forward<Args>(args)...),
-          BaseDynamics<ReturnType>(), kernel_implementation_(*this){};
-    virtual ~ReduceDynamicsCK(){};
-
-    std::string QuantityName() { return this->quantity_name_; };
-    std::string DynamicsIdentifierName() { return this->identifier_.getName(); };
-
-    virtual ReturnType exec(Real dt = 0.0) override
-    {
-        this->setupDynamics(dt);
-        ComputingKernel *computing_kernel = kernel_implementation_.getComputingKernel();
-        ReturnType temp = particle_reduce(ExecutionPolicy(),
-                                          this->identifier_.LoopRange(), this->Reference(), this->getOperation(),
-                                          [=](size_t i) -> ReturnType
-                                          { return computing_kernel->reduce(i, dt); });
-        return this->outputResult(temp);
-    };
-
-  protected:
-    Implementation<LocalDynamicsType, ExecutionPolicy> kernel_implementation_;
 };
 
 /**
@@ -223,7 +157,7 @@ class BaseInteractionDynamics : public LocalDynamicsType, public BaseDynamics<vo
 {
   public:
     template <typename... Args>
-    explicit BaseInteractionDynamics(Args &&...args)
+    explicit BaseInteractionDynamics(Args &&... args)
         : LocalDynamicsType(std::forward<Args>(args)...),
           BaseDynamics<void>(){};
     virtual ~BaseInteractionDynamics(){};
@@ -268,7 +202,7 @@ class InteractionSplit : public BaseInteractionDynamics<LocalDynamicsType, Paral
 
   public:
     template <typename... Args>
-    InteractionSplit(Args &&...args)
+    InteractionSplit(Args &&... args)
         : BaseInteractionDynamics<LocalDynamicsType, ParallelPolicy>(std::forward<Args>(args)...),
           real_body_(DynamicCast<RealBody>(this, this->getSPHBody())),
           split_cell_lists_(*real_body_.getCellLinkedList().getSplitCellLists())
@@ -285,8 +219,7 @@ class InteractionSplit : public BaseInteractionDynamics<LocalDynamicsType, Paral
     {
         particle_for(ExecutionPolicy(),
                      split_cell_lists_,
-                     [&](size_t i)
-                     { this->interaction(i, dt * 0.5); });
+                     [&](size_t i) { this->interaction(i, dt * 0.5); });
     }
 };
 
@@ -299,7 +232,7 @@ class InteractionDynamics : public BaseInteractionDynamics<LocalDynamicsType, Ex
 {
   public:
     template <typename... Args>
-    InteractionDynamics(Args &&...args)
+    InteractionDynamics(Args &&... args)
         : InteractionDynamics(true, std::forward<Args>(args)...)
     {
         static_assert(!has_initialize<LocalDynamicsType>::value &&
@@ -313,13 +246,12 @@ class InteractionDynamics : public BaseInteractionDynamics<LocalDynamicsType, Ex
     {
         particle_for(ExecutionPolicy(),
                      this->identifier_.LoopRange(),
-                     [&](size_t i)
-                     { this->interaction(i, dt); });
+                     [&](size_t i) { this->interaction(i, dt); });
     }
 
   protected:
     template <typename... Args>
-    InteractionDynamics(bool mostDerived, Args &&...args)
+    InteractionDynamics(bool mostDerived, Args &&... args)
         : BaseInteractionDynamics<LocalDynamicsType, ExecutionPolicy>(std::forward<Args>(args)...){};
 };
 
@@ -332,7 +264,7 @@ class InteractionWithUpdate : public InteractionDynamics<LocalDynamicsType, Exec
 {
   public:
     template <typename... Args>
-    InteractionWithUpdate(Args &&...args)
+    InteractionWithUpdate(Args &&... args)
         : InteractionDynamics<LocalDynamicsType, ExecutionPolicy>(false, std::forward<Args>(args)...)
     {
         static_assert(!has_initialize<LocalDynamicsType>::value,
@@ -345,8 +277,7 @@ class InteractionWithUpdate : public InteractionDynamics<LocalDynamicsType, Exec
         InteractionDynamics<LocalDynamicsType, ExecutionPolicy>::exec(dt);
         particle_for(ExecutionPolicy(),
                      this->identifier_.LoopRange(),
-                     [&](size_t i)
-                     { this->update(i, dt); });
+                     [&](size_t i) { this->update(i, dt); });
     };
 };
 
@@ -359,7 +290,7 @@ class InteractionWithInitialization : public InteractionDynamics<LocalDynamicsTy
 {
   public:
     template <typename... Args>
-    InteractionWithInitialization(Args &&...args)
+    InteractionWithInitialization(Args &&... args)
         : InteractionDynamics<LocalDynamicsType, ExecutionPolicy>(false, std::forward<Args>(args)...)
     {
         static_assert(!has_update<LocalDynamicsType>::value,
@@ -371,8 +302,7 @@ class InteractionWithInitialization : public InteractionDynamics<LocalDynamicsTy
     {
         particle_for(ExecutionPolicy(),
                      this->identifier_.LoopRange(),
-                     [&](size_t i)
-                     { this->initialization(i, dt); });
+                     [&](size_t i) { this->initialization(i, dt); });
         InteractionDynamics<LocalDynamicsType, ExecutionPolicy>::exec(dt);
     };
 };
@@ -388,7 +318,7 @@ class Dynamics1Level : public InteractionDynamics<LocalDynamicsType, ExecutionPo
 {
   public:
     template <typename... Args>
-    Dynamics1Level(Args &&...args)
+    Dynamics1Level(Args &&... args)
         : InteractionDynamics<LocalDynamicsType, ExecutionPolicy>(
               false, std::forward<Args>(args)...) {}
     virtual ~Dynamics1Level(){};
@@ -400,15 +330,13 @@ class Dynamics1Level : public InteractionDynamics<LocalDynamicsType, ExecutionPo
 
         particle_for(ExecutionPolicy(),
                      this->identifier_.LoopRange(),
-                     [&](size_t i)
-                     { this->initialization(i, dt); });
+                     [&](size_t i) { this->initialization(i, dt); });
 
         InteractionDynamics<LocalDynamicsType, ExecutionPolicy>::runInteraction(dt);
 
         particle_for(ExecutionPolicy(),
                      this->identifier_.LoopRange(),
-                     [&](size_t i)
-                     { this->update(i, dt); });
+                     [&](size_t i) { this->update(i, dt); });
     };
 };
 } // namespace SPH

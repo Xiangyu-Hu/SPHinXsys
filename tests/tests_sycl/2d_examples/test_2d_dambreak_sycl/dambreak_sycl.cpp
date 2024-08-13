@@ -75,6 +75,14 @@ int main(int ac, char *av[])
     //	Basically the the range of bodies to build neighbor particle lists.
     //  Generally, we first define all the inner relations, then the contact relations.
     //----------------------------------------------------------------------
+    UpdateCellLinkedList<CellLinkedList, execution::ParallelDevicePolicy> water_block_update_cell_linked_list(water_block);
+    DiscreteVariable<UnsignedInt> *dv_particle_id_list_water = water_block.getBaseParticles().getVariableByName<UnsignedInt>("ParticleIDList");
+    MeshRecordingToPlt water_cell_linked_list_recording(sph_system, water_block.getCellLinkedList());
+
+    UpdateCellLinkedList<CellLinkedList, execution::ParallelDevicePolicy> wall_boundary_update_cell_linked_list(wall_boundary);
+    DiscreteVariable<UnsignedInt> *dv_particle_id_list_wall = wall_boundary.getBaseParticles().getVariableByName<UnsignedInt>("ParticleIDList");
+    MeshRecordingToPlt wall_cell_linked_list_recording(sph_system, water_block.getCellLinkedList());
+
     InnerRelation water_block_inner(water_block);
     ContactRelation water_wall_contact(water_block, {&wall_boundary});
     ContactRelation fluid_observer_contact(fluid_observer, {&water_block});
@@ -110,8 +118,6 @@ int main(int ac, char *av[])
     //	Define the configuration related particles dynamics.
     //----------------------------------------------------------------------
     ParticleSorting particle_sorting(water_block);
-    UpdateCellLinkedList<CellLinkedList, execution::ParallelDevicePolicy> water_block_update_cell_linked_list(water_block);
-    DiscreteVariable<UnsignedInt> *dv_particle_id_list = water_block.getBaseParticles().getVariableByName<UnsignedInt>("ParticleIDList");
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
@@ -121,7 +127,6 @@ int main(int ac, char *av[])
     RestartIO restart_io(sph_system);
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalMechanicalEnergy>> write_water_mechanical_energy(water_block, gravity);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>> write_recorded_water_pressure("Pressure", fluid_observer_contact);
-    MeshRecordingToPlt cell_linked_list_recording(sph_system, water_block.getCellLinkedList());
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
@@ -129,11 +134,17 @@ int main(int ac, char *av[])
     sph_system.initializeSystemCellLinkedLists();
     sph_system.initializeSystemConfigurations();
     wall_boundary_normal_direction.exec();
+
     constant_gravity.exec();
-    water_block_update_cell_linked_list.exec();
     dv_force_prior->synchronizeWithDevice();
-    dv_particle_id_list->synchronizeWithDevice();
-    cell_linked_list_recording.writeToFile();
+
+    water_block_update_cell_linked_list.exec();
+    dv_particle_id_list_water->synchronizeWithDevice();
+    water_cell_linked_list_recording.writeToFile();
+
+    wall_boundary_update_cell_linked_list.exec();
+    dv_particle_id_list_wall->synchronizeWithDevice();
+    wall_cell_linked_list_recording.writeToFile();
     //----------------------------------------------------------------------
     //	Load restart file if necessary.
     //----------------------------------------------------------------------

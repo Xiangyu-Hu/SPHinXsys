@@ -28,6 +28,7 @@
 #ifndef SPHINXSYS_SYCL_H
 #define SPHINXSYS_SYCL_H
 
+#include "dynamics_algorithms_ck.h"
 #include "particle_iterators_sycl.h"
 #include "sphinxsys.h"
 #include "sphinxsys_variable_sycl.hpp"

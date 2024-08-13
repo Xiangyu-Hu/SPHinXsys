@@ -49,6 +49,7 @@ class BaseForcePrior : public BaseLocalDynamics<DynamicsIdentifier>
     virtual ~BaseForcePrior(){};
     void update(size_t index_i, Real dt = 0.0);
 
+    template <class T>
     class ComputingKernel
     {
       public:
@@ -86,7 +87,8 @@ class GravityForce : public ForcePrior
     virtual ~GravityForce(){};
     void update(size_t index_i, Real dt = 0.0);
 
-    class ComputingKernel : public ForcePrior::ComputingKernel
+    template <class T>
+    class ComputingKernel : public ForcePrior::ComputingKernel<T>
     {
       public:
         ComputingKernel(GravityForce<GravityType> &gravity_force);

@@ -45,7 +45,8 @@ class Implementation;
 template <class LocalDynamicsType, class ExecutionPolicy>
 class Implementation<LocalDynamicsType, ExecutionPolicy>
 {
-    using ComputingKernel = typename LocalDynamicsType::ComputingKernel;
+    using ComputingKernel = typename LocalDynamicsType::
+        template ComputingKernel<ExecutionPolicy>;
     UniquePtrKeeper<ComputingKernel> kernel_ptr_keeper_;
 
   public:
