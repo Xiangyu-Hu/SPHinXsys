@@ -121,7 +121,7 @@ exclusive_scan(T *first, T *last, T *d_first, Op op)
     UnsignedInt scan_size = last - first;
     using range_type = tbb::blocked_range<UnsignedInt>;
     tbb::parallel_scan(
-        range_type(0, scan_size), ZeroFData<T>::value,
+        range_type(0, scan_size), ZeroData<T>::value,
         [&](const range_type &r, T sum, bool is_final_scan) {
             T tmp = sum;
             for (UnsignedInt i = r.begin(); i < r.end(); ++i)
