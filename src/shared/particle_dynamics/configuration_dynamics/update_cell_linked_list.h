@@ -47,7 +47,7 @@ struct AtomicUnsignedIntRef;
 template <>
 struct AtomicUnsignedIntRef<ParallelPolicy>
 {
-    typedef std::atomic<UnsignedInt> type;
+    typedef std::atomic<UnsignedInt> &type;
 };
 
 template <class MeshType>
@@ -98,7 +98,8 @@ class UpdateCellLinkedList<MeshType> : public LocalDynamics
 
   protected:
     const Mesh *mesh_;
-    UnsignedInt number_of_cells_, particles_bound_;
+    UnsignedInt number_of_cells_plus_one_;
+    UnsignedInt particle_id_list_size_; // at least number_of_cells_pluse_one_
 
     Vecd *pos_;
     UnsignedInt *particle_id_list_;

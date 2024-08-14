@@ -53,11 +53,12 @@ UpdateCellLinkedList<MeshType>::
       mesh_(createConstantEntity<MeshType>(
           execution_policy, "Mesh",
           real_body.sph_adaptation_->createBackGroundMesh<MeshType>(real_body))),
-      number_of_cells_(mesh_->NumberOfCells()), particles_bound_(particles_->ParticlesBound()),
+      number_of_cells_plus_one_(mesh_->NumberOfCells() + 1),
+      particle_id_list_size_(SMAX(particles_->ParticlesBound(), number_of_cells_plus_one_)),
       pos_(particles_->getVariableDataByName<Vecd>(execution_policy, "Position")),
-      particle_id_list_(particles_->registerDiscreteVariable<UnsignedInt>(execution_policy, "ParticleIDList", particles_bound_)),
-      particle_offset_list_(particles_->registerDiscreteVariable<UnsignedInt>(execution_policy, "ParticleOffsetList", number_of_cells_ + 1)),
-      current_size_list_(particles_->registerDiscreteVariable<UnsignedInt>(execution_policy, "CurrentCellSize", number_of_cells_))
+      particle_id_list_(particles_->registerDiscreteVariable<UnsignedInt>(execution_policy, "ParticleIDList", particle_id_list_size_)),
+      particle_offset_list_(particles_->registerDiscreteVariable<UnsignedInt>(execution_policy, "ParticleOffsetList", number_of_cells_plus_one_)),
+      current_size_list_(particles_->registerDiscreteVariable<UnsignedInt>(execution_policy, "CurrentCellSize", number_of_cells_plus_one_))
 {
     particles_->addVariableToWrite<UnsignedInt>("ParticleIDList");
 }

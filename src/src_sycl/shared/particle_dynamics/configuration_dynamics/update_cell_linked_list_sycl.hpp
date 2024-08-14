@@ -10,22 +10,22 @@ template <typename MeshType>
 void UpdateCellLinkedList<MeshType>::
     clearParticleOffsetList(const ParallelDevicePolicy &par_device)
 {
-    UnsignedInt total_real_particles = particles_->TotalRealParticles();
-    copyToDevice(total_real_particles, particle_offset_list_ + number_of_cells_, 1);
-
     execution_instance.getQueue()
         .submit(
-            [=, number_of_cells = number_of_cells_, particle_offset_list = particle_offset_list_,
+            [=, number_of_cells_plus_one = number_of_cells_plus_one_,
+             particle_id_list = particle_id_list_,
+             particle_offset_list = particle_offset_list_,
              current_size_list = current_size_list_](sycl::handler &cgh)
             {
-                cgh.parallel_for(execution_instance.getUniformNdRange(number_of_cells),
+                cgh.parallel_for(execution_instance.getUniformNdRange(number_of_cells_plus_one),
                                  [=](sycl::nd_item<1> item)
                                  {
-                                     if (item.get_global_id(0) < number_of_cells)
+                                     if (item.get_global_id(0) < number_of_cells_plus_one)
                                      {
                                          UnsignedInt linear_index = item.get_global_id(0);
                                          particle_offset_list[linear_index] = 0;
                                          current_size_list[linear_index] = 0;
+                                         particle_id_list[linear_index] = 0;
                                      }
                                  });
             })
@@ -38,8 +38,8 @@ void UpdateCellLinkedList<MeshType>::
 {
     UnsignedInt total_real_particles = particles_->TotalRealParticles();
     execution_instance.getQueue()
-        .submit(
-            [=, mesh = mesh_, pos = pos_, particle_offset_list = particle_offset_list_](sycl::handler &cgh)
+        .submit( // note that particle_id_list_ is used here as temporary storage
+            [=, mesh = mesh_, pos = pos_, particle_id_list = particle_offset_list_](sycl::handler &cgh)
             {
                 cgh.parallel_for(execution_instance.getUniformNdRange(total_real_particles),
                                  [=](sycl::nd_item<1> item)
@@ -50,7 +50,7 @@ void UpdateCellLinkedList<MeshType>::
                                          UnsignedInt linear_index =
                                              mesh->LinearCellIndexFromPosition(pos[particle_i]);
                                          AtomicUnsignedIntRef<ParallelDevicePolicy>::type
-                                             atomic_cell_size(particle_offset_list[linear_index]);
+                                             atomic_cell_size(particle_id_list[linear_index]);
                                          ++atomic_cell_size;
                                      }
                                  });
@@ -63,8 +63,9 @@ void UpdateCellLinkedList<MeshType>::
     exclusiveScanParticleOffsetList(const ParallelDevicePolicy &par_device)
 {
     execution_instance.getQueue()
-        .submit(
-            [=, particle_offset_list = particle_offset_list_, number_of_cells = number_of_cells_](sycl::handler &cgh)
+        .submit( // note that particle_id_list_ is still used here as temporary storage
+            [=, particle_id_list = particle_id_list_, particle_offset_list = particle_offset_list_,
+             number_of_cells_plus_one = number_of_cells_plus_one_](sycl::handler &cgh)
             {
                 cgh.parallel_for(execution_instance.getUniformNdRange(execution_instance.getWorkGroupSize()),
                                  [=](sycl::nd_item<1> item)
@@ -72,8 +73,8 @@ void UpdateCellLinkedList<MeshType>::
                                      if (item.get_group_linear_id() == 0)
                                      {
                                          sycl::joint_exclusive_scan(
-                                             item.get_group(), particle_offset_list,
-                                             particle_offset_list + number_of_cells + 1,
+                                             item.get_group(), particle_id_list,
+                                             particle_id_list + number_of_cells_plus_one,
                                              particle_offset_list, sycl::plus<>{});
                                      }
                                  });
@@ -87,8 +88,9 @@ void UpdateCellLinkedList<MeshType>::
 {
     UnsignedInt total_real_particles = particles_->TotalRealParticles();
     execution_instance.getQueue()
-        .submit(
-            [=, mesh = mesh_, pos = pos_, current_size_list = current_size_list_, particle_id_list = particle_id_list_,
+        .submit( // note that particle_id_list_ is finally used for its intended purpose
+            [=, mesh = mesh_, pos = pos_, current_size_list = current_size_list_,
+             particle_id_list = particle_id_list_,
              particle_offset_list = particle_offset_list_](sycl::handler &cgh)
             {
                 cgh.parallel_for(execution_instance.getUniformNdRange(total_real_particles),

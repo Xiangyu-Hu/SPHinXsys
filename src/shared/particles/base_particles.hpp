@@ -193,11 +193,11 @@ DiscreteVariable<DataType> *BaseParticles::
 {
     DiscreteVariable<DataType> *variable = findVariableByName<DataType>(all_discrete_variables_, name);
 
-    if (variable != nullptr && variable->getDataSize() == particles_bound_)
+    if (variable != nullptr)
     {
         DiscreteVariable<DataType> *listed_variable = findVariableByName<DataType>(variable_set, name);
 
-        if (listed_variable == nullptr)
+        if (listed_variable == nullptr && variable->getDataSize() >= real_particles_bound_)
         {
             constexpr int type_index = DataTypeIndex<DataType>::value;
             std::get<type_index>(variable_set).push_back(variable);
@@ -206,9 +206,9 @@ DiscreteVariable<DataType> *BaseParticles::
     }
     else
     {
-        std::cout << "\n Error: the variable '" << name << "' to write is not particle variable!" << std::endl;
-        std::cout << "\n Either variable name not exist or the data size " << variable->getDataSize()
-                  << " is not for a particle variable!" << std::endl;
+        std::cout << "\n Error: the variable '" << name << "' is  not exist!" << std::endl;
+        std::cout << "\n Or the variable '" << name << "' can not be treated as a particle variable," << std::endl;
+        std::cout << "\n because the data size " << variable->getDataSize() << " is too less!" << std::endl;
         std::cout << __FILE__ << ':' << __LINE__ << std::endl;
         exit(1);
     }
