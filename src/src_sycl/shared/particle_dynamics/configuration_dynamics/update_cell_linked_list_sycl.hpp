@@ -6,8 +6,8 @@
 namespace SPH
 {
 //=================================================================================================//
-template <typename CellLinkedListType>
-void UpdateCellLinkedList<CellLinkedListType>::
+template <typename MeshType>
+void UpdateCellLinkedList<MeshType>::
     clearParticleOffsetList(const ParallelDevicePolicy &par_device)
 {
     UnsignedInt total_real_particles = particles_->TotalRealParticles();
@@ -32,8 +32,8 @@ void UpdateCellLinkedList<CellLinkedListType>::
         .wait_and_throw();
 }
 //=================================================================================================//
-template <typename CellLinkedListType>
-void UpdateCellLinkedList<CellLinkedListType>::
+template <typename MeshType>
+void UpdateCellLinkedList<MeshType>::
     incrementCellSize(const ParallelDevicePolicy &par_device)
 {
     UnsignedInt total_real_particles = particles_->TotalRealParticles();
@@ -58,8 +58,8 @@ void UpdateCellLinkedList<CellLinkedListType>::
         .wait_and_throw();
 }
 //=================================================================================================//
-template <typename CellLinkedListType>
-void UpdateCellLinkedList<CellLinkedListType>::
+template <typename MeshType>
+void UpdateCellLinkedList<MeshType>::
     exclusiveScanParticleOffsetList(const ParallelDevicePolicy &par_device)
 {
     execution_instance.getQueue()
@@ -81,8 +81,8 @@ void UpdateCellLinkedList<CellLinkedListType>::
         .wait_and_throw();
 }
 //=================================================================================================//
-template <typename CellLinkedListType>
-void UpdateCellLinkedList<CellLinkedListType>::
+template <typename MeshType>
+void UpdateCellLinkedList<MeshType>::
     updateCellLists(const ParallelDevicePolicy &par_device)
 {
     UnsignedInt total_real_particles = particles_->TotalRealParticles();

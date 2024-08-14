@@ -31,6 +31,7 @@
 
 #include "base_data_package.h"
 #include "base_kernel.h"
+#include "base_mesh.h"
 #include "sphinxsys_containers.h"
 
 namespace SPH
@@ -81,6 +82,9 @@ class SPHAdaptation
 
     virtual UniquePtr<BaseCellLinkedList> createCellLinkedList(const BoundingBox &domain_bounds);
     virtual UniquePtr<BaseLevelSet> createLevelSet(Shape &shape, Real refinement_ratio);
+
+    template <class MeshType, typename... Args>
+    MeshType createBackGroundMesh(SPHBody &sph_body, Args &&...args);
 
     template <class KernelType, typename... Args>
     void resetKernel(Args &&...args)

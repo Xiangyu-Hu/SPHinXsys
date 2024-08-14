@@ -46,8 +46,28 @@ struct AtomicUnsignedIntRef<ExecutionPolicy>
 {
 };
 
-template <typename CellLinkedListType>
-class UpdateCellLinkedList<CellLinkedListType> : public LocalDynamics
+template <class MeshType>
+class ParticleCellLinkedList : public MeshType
+{
+  protected:
+    Vecd *pos_;
+    UnsignedInt *particle_id_list_;
+    UnsignedInt *particle_offset_list_;
+
+  public:
+    ParticleCellLinkedList(
+        const MeshType &mesh, Vecd *pos_,
+        UnsignedInt *particle_id_list, UnsignedInt *particle_offset_list);
+    ~ParticleCellLinkedList(){};
+
+    template <typename NeighborhoodType, typename FunctionOnEach, typename... Args>
+    void forEachNeighbor(UnsignedInt index_i, const Vecd *source_pos,
+                         const NeighborhoodType &neighborhood,
+                         const FunctionOnEach &function, Args &&...) const;
+};
+
+template <typename MeshType>
+class UpdateCellLinkedList<MeshType> : public LocalDynamics
 {
   public:
     template <class ExecutionPolicy>
@@ -70,6 +90,8 @@ class UpdateCellLinkedList<CellLinkedListType> : public LocalDynamics
     void updateCellLists(const ExecutionPolicy &execution_policy);
     void updateCellLists(const ParallelDevicePolicy &par_device);
 
+    ParticleCellLinkedList<MeshType> getParticleCellLinkedList() const;
+
   protected:
     const Mesh *mesh_;
     UnsignedInt number_of_cells_, particles_bound_;
@@ -80,9 +102,9 @@ class UpdateCellLinkedList<CellLinkedListType> : public LocalDynamics
     UnsignedInt *current_size_list_;
 };
 
-template <class CellLinkedListType, class ExecutionPolicy>
-class UpdateCellLinkedList<CellLinkedListType, ExecutionPolicy>
-    : public UpdateCellLinkedList<CellLinkedListType>, public BaseDynamics<void>
+template <class MeshType, class ExecutionPolicy>
+class UpdateCellLinkedList<MeshType, ExecutionPolicy>
+    : public UpdateCellLinkedList<MeshType>, public BaseDynamics<void>
 {
   public:
     UpdateCellLinkedList(RealBody &real_body);

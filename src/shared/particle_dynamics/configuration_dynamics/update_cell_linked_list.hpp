@@ -3,17 +3,56 @@
 
 #include "update_cell_linked_list.h"
 
+#include "adaptation.hpp"
 #include "base_particles.hpp"
+#include "mesh_iterators.h"
 
 namespace SPH
 {
 //=================================================================================================//
-template <typename CellLinkedListType>
+template <class MeshType>
+ParticleCellLinkedList<MeshType>::ParticleCellLinkedList(
+    const MeshType &mesh, Vecd *pos, UnsignedInt *particle_id_list,
+    UnsignedInt *particle_offset_list)
+    : MeshType(mesh), pos_(pos), particle_id_list_(particle_id_list),
+      particle_offset_list_(particle_offset_list) {}
+//=================================================================================================//
+template <class MeshType>
+template <typename NeighborhoodType, typename FunctionOnEach, typename... Args>
+void ParticleCellLinkedList<MeshType>::forEachNeighbor(
+    UnsignedInt index_i, const Vecd *source_pos,
+    const NeighborhoodType &neighborhood, const FunctionOnEach &function, Args &&...args) const
+{
+    const Vecd pos_i = source_pos[index_i];
+    const Arrayi target_cell_index = this->CellIndexFromPosition(pos_i);
+    const int search_depth = neighborhood.get_search_depth(index_i);
+    mesh_for_each(
+        Arrayi::Zero().max(target_cell_index - search_depth * Arrayi::Ones()),
+        this->all_cells_.min(target_cell_index + (search_depth + 1) * Arrayi::Ones()),
+        [&](const Arrayi &cell_index)
+        {
+            const UnsignedInt linear_index = this->transferCellIndexTo1D(cell_index, this->all_cells_);
+            // Since offset_cell_size_ has linear_cell_size_+1 elements, no boundary checks are needed.
+            // offset_cell_size_[0] == 0 && offset_cell_size_[linear_cell_size_] == total_real_particles_
+            for (UnsignedInt n = particle_offset_list_[linear_index]; n < particle_offset_list_[linear_index + 1]; ++n)
+            {
+                const UnsignedInt index_j = particle_id_list_[n];
+                if (neighborhood.isWithinSupport(pos_i, pos_[index_j]))
+                {
+                    function(index_j, std::forward<Args>(args)...);
+                }
+            }
+        });
+}
+//=================================================================================================//
+template <typename MeshType>
 template <class ExecutionPolicy>
-UpdateCellLinkedList<CellLinkedListType>::
+UpdateCellLinkedList<MeshType>::
     UpdateCellLinkedList(const ExecutionPolicy &execution_policy, RealBody &real_body)
     : LocalDynamics(real_body),
-      mesh_(createConstantEntity<Mesh>(execution_policy, "Mesh", DynamicCast<CellLinkedListType>(this, real_body.getCellLinkedList()))),
+      mesh_(createConstantEntity<MeshType>(
+          execution_policy, "Mesh",
+          real_body.sph_adaptation_->createBackGroundMesh<MeshType>(real_body))),
       number_of_cells_(mesh_->NumberOfCells()), particles_bound_(particles_->ParticlesBound()),
       pos_(particles_->getVariableDataByName<Vecd>(execution_policy, "Position")),
       particle_id_list_(particles_->registerDiscreteVariable<UnsignedInt>(execution_policy, "ParticleIDList", particles_bound_)),
@@ -23,13 +62,19 @@ UpdateCellLinkedList<CellLinkedListType>::
     particles_->addVariableToWrite<UnsignedInt>("ParticleIDList");
 }
 //=================================================================================================//
-template <class CellLinkedListType, class ExecutionPolicy>
-UpdateCellLinkedList<CellLinkedListType, ExecutionPolicy>::UpdateCellLinkedList(RealBody &real_body)
-    : UpdateCellLinkedList<CellLinkedListType>(ExecutionPolicy{}, real_body),
+template <typename MeshType>
+ParticleCellLinkedList<MeshType> UpdateCellLinkedList<MeshType>::getParticleCellLinkedList() const
+{
+    return ParticleCellLinkedList<MeshType>(mesh_, pos_, particle_id_list_, particle_offset_list_);
+}
+//=================================================================================================//
+template <class MeshType, class ExecutionPolicy>
+UpdateCellLinkedList<MeshType, ExecutionPolicy>::UpdateCellLinkedList(RealBody &real_body)
+    : UpdateCellLinkedList<MeshType>(ExecutionPolicy{}, real_body),
       BaseDynamics<void>(){};
 //=================================================================================================//
-template <class CellLinkedListType, class ExecutionPolicy>
-void UpdateCellLinkedList<CellLinkedListType, ExecutionPolicy>::exec(Real dt)
+template <class MeshType, class ExecutionPolicy>
+void UpdateCellLinkedList<MeshType, ExecutionPolicy>::exec(Real dt)
 {
     this->clearParticleOffsetList(ExecutionPolicy{});
     this->incrementCellSize(ExecutionPolicy{});
