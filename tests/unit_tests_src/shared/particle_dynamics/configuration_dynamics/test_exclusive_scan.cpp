@@ -14,8 +14,8 @@ TEST(exclusive_scan, test_tbb_sycl)
 {
     UnsignedInt *list_tbb = cell_size_list.data();
 
-    std::exclusive_scan(list_tbb, list_tbb + 11, result.data(), 0, ReduceSum<UnsignedInt>());
-    SPH::exclusive_scan(list_tbb, list_tbb + 11, tbb_result.data(), ReduceSum<UnsignedInt>());
+    exclusive_scan(seq, list_tbb, list_tbb + 11, result.data(), ReduceSum<UnsignedInt>());
+    exclusive_scan(par_device, list_tbb, list_tbb + 11, tbb_result.data(), ReduceSum<UnsignedInt>());
 
     EXPECT_EQ(result, tbb_result);
 }
