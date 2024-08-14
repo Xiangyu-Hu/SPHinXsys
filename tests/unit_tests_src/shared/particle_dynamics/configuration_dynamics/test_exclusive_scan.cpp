@@ -14,8 +14,8 @@ TEST(exclusive_scan, test_tbb_sycl)
 {
     UnsignedInt *list_tbb = cell_size_list.data();
 
-    exclusive_scan(seq, list_tbb, list_tbb + 11, result.data(), ReduceSum<UnsignedInt>());
-    exclusive_scan(par_device, list_tbb, list_tbb + 11, tbb_result.data(), ReduceSum<UnsignedInt>());
+    exclusive_scan(SequencedPolicy{}, list_tbb, list_tbb + 11, result.data(), ReduceSum<UnsignedInt>());
+    exclusive_scan(ParallelPolicy{}, list_tbb, list_tbb + 11, tbb_result.data(), ReduceSum<UnsignedInt>());
 
     EXPECT_EQ(result, tbb_result);
 }

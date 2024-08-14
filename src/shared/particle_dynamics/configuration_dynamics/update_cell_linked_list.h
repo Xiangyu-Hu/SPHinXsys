@@ -120,19 +120,19 @@ class UpdateCellLinkedList<MeshType, ExecutionPolicy>
 template <typename T, typename Op>
 T exclusive_scan(const SequencedPolicy &seq_policy, T *first, T *last, T *d_first, Op op)
 {
-    UnsignedInt list_size = last - first;
+    UnsignedInt scan_size = last - first - 1;
     std::exclusive_scan(first, last, d_first, ZeroData<T>::value, op);
-    return d_first[list_size - 1];
+    return d_first[scan_size];
 }
 
 template <typename T, typename Op>
 T exclusive_scan(const ParallelPolicy &par_policy, T *first, T *last, T *d_first, Op op)
 {
     // Exclusive scan is the same as inclusive, but shifted by one
-    UnsignedInt list_size = last - first;
+    UnsignedInt scan_size = last - first - 1;
     using range_type = tbb::blocked_range<UnsignedInt>;
     tbb::parallel_scan(
-        range_type(0, list_size), ZeroData<T>::value,
+        range_type(0, scan_size), ZeroData<T>::value,
         [&](const range_type &r, T sum, bool is_final_scan)
         {
             T tmp = sum;
@@ -150,7 +150,7 @@ T exclusive_scan(const ParallelPolicy &par_policy, T *first, T *last, T *d_first
         {
             return op(a, b);
         });
-    return d_first[list_size - 1];
+    return d_first[scan_size];
 }
 
 } // namespace SPH
