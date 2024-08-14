@@ -34,6 +34,7 @@
 #include "base_particles.hpp"
 
 #include "tbb/parallel_scan.h"
+#include <atomic>
 
 namespace SPH
 {
@@ -43,9 +44,10 @@ class UpdateCellLinkedList;
 template <typename... T>
 struct AtomicUnsignedIntRef;
 
-template <class ExecutionPolicy>
-struct AtomicUnsignedIntRef<ExecutionPolicy>
+template <>
+struct AtomicUnsignedIntRef<ParallelPolicy>
 {
+    typedef std::atomic<UnsignedInt> type;
 };
 
 template <class MeshType>
