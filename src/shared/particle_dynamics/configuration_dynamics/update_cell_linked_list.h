@@ -115,14 +115,15 @@ class UpdateCellLinkedList<MeshType, ExecutionPolicy>
 };
 
 template <typename T, typename Op>
-exclusive_scan(T *first, T *last, T *d_first, Op op)
+T exclusive_scan(T *first, T *last, T *d_first, Op op)
 {
     // Exclusive scan is the same as inclusive, but shifted by one
     UnsignedInt scan_size = last - first;
     using range_type = tbb::blocked_range<UnsignedInt>;
     tbb::parallel_scan(
         range_type(0, scan_size), ZeroData<T>::value,
-        [&](const range_type &r, T sum, bool is_final_scan) {
+        [&](const range_type &r, T sum, bool is_final_scan)
+        {
             T tmp = sum;
             for (UnsignedInt i = r.begin(); i < r.end(); ++i)
             {
@@ -134,9 +135,11 @@ exclusive_scan(T *first, T *last, T *d_first, Op op)
             }
             return tmp;
         },
-        [&](const T &a, const T &b) {
+        [&](const T &a, const T &b)
+        {
             return op(a, b);
         });
+    return d_first[scan_size];
 }
 
 } // namespace SPH
