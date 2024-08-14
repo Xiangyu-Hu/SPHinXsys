@@ -33,7 +33,7 @@
 #include "base_body.h"
 #include "base_particles.hpp"
 
-#include "tbb/parallel_for.h"
+#include "tbb/parallel_scan.h"
 
 namespace SPH
 {
