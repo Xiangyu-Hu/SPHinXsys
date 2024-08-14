@@ -33,6 +33,8 @@
 #include "base_body.h"
 #include "base_particles.hpp"
 
+#include "tbb/parallel_for.h"
+
 namespace SPH
 {
 template <typename... T>
@@ -111,6 +113,31 @@ class UpdateCellLinkedList<MeshType, ExecutionPolicy>
     virtual ~UpdateCellLinkedList(){};
     virtual void exec(Real dt = 0.0) override;
 };
+
+template <typename T, typename Op>
+exclusive_scan(T *first, T *last, T *d_first, Op op)
+{
+    // Exclusive scan is the same as inclusive, but shifted by one
+    UnsignedInt scan_size = last - first;
+    using range_type = tbb::blocked_range<UnsignedInt>;
+    tbb::parallel_scan(
+        range_type(0, scan_size), ZeroFData<T>::value,
+        [&](const range_type &r, T sum, bool is_final_scan) {
+            T tmp = sum;
+            for (UnsignedInt i = r.begin(); i < r.end(); ++i)
+            {
+                tmp = op(tmp, first[i]);
+                if (is_final_scan)
+                {
+                    d_first[i + 1] = tmp;
+                }
+            }
+            return tmp;
+        },
+        [&](const T &a, const T &b) {
+            return op(a, b);
+        });
+}
 
 } // namespace SPH
 #endif // UPDATE_CELL_LINKED_LIST_H
