@@ -29,34 +29,16 @@
 #ifndef UPDATE_CELL_LINKED_LIST_H
 #define UPDATE_CELL_LINKED_LIST_H
 
+#include "base_configuration_dynamics.h"
+
 #include "all_particle_dynamics.h"
 #include "base_body.h"
 #include "base_particles.hpp"
-
-#include <boost/atomic/atomic_ref.hpp>
 
 namespace SPH
 {
 template <typename... T>
 class UpdateCellLinkedList;
-
-template <typename... T>
-struct AtomicUnsignedIntRef;
-
-template <>
-struct AtomicUnsignedIntRef<ParallelPolicy>
-{
-    typedef boost::atomic_ref<UnsignedInt> type;
-};
-
-template <typename... T>
-struct PlusUnsignedInt;
-
-template <class ExecutionPolicy>
-struct PlusUnsignedInt<ExecutionPolicy>
-{
-    typedef std::plus<UnsignedInt> type;
-};
 
 template <class MeshType>
 class ParticleCellLinkedList : public MeshType

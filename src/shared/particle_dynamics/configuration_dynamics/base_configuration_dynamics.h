@@ -21,17 +21,46 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	sphinxsys_sycl.h
- * @brief 	All SPHinXsys capabilities and SYCL.
+ * @file    base_configuration_dynamics.h
+ * @brief   TBD.
  * @author	Xiangyu Hu
  */
-#ifndef SPHINXSYS_SYCL_H
-#define SPHINXSYS_SYCL_H
 
-#include "base_configuration_dynamics_sycl.h"
-#include "dynamics_algorithms_ck.h"
-#include "particle_iterators_sycl.h"
-#include "sphinxsys.h"
-#include "sphinxsys_variable_sycl.hpp"
+#ifndef BASE_CONFIGURATION_DYNAMICS_H
+#define BASE_CONFIGURATION_DYNAMICS_H
 
-#endif // SPHINXSYS_SYCL_H
+#include "base_data_package.h"
+#include "execution_policy.h"
+
+#include <boost/atomic/atomic_ref.hpp>
+#include <functional>
+
+namespace SPH
+{
+using namespace execution;
+
+template <typename... T>
+struct AtomicUnsignedIntRef;
+
+template <>
+struct AtomicUnsignedIntRef<SequencedPolicy>
+{
+    typedef UnsignedInt &type;
+};
+
+template <>
+struct AtomicUnsignedIntRef<ParallelPolicy>
+{
+    typedef boost::atomic_ref<UnsignedInt> type;
+};
+
+template <typename... T>
+struct PlusUnsignedInt;
+
+template <class ExecutionPolicy>
+struct PlusUnsignedInt<ExecutionPolicy>
+{
+    typedef std::plus<UnsignedInt> type;
+};
+} // namespace SPH
+#endif // BASE_CONFIGURATION_DYNAMICS_H

@@ -21,20 +21,20 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file    update_cell_linked_list_sycl.h
- * @brief   TBD
+ * @file    base_configuration_dynamics_sycl.h
+ * @brief   TBD.
  * @author	Xiangyu Hu
  */
 
-#ifndef UPDATE_CELL_LINKED_LIST_SYCL_H
-#define UPDATE_CELL_LINKED_LIST_SYCL_H
+#ifndef BASE_CONFIGURATION_DYNAMICS_SYCL_H
+#define BASE_CONFIGURATION_DYNAMICS_SYCL_H
+
+#include "base_configuration_dynamics.h"
 
 #include "execution_sycl.h"
-#include "update_cell_linked_list.h"
 
 namespace SPH
 {
-
 template <>
 struct AtomicUnsignedIntRef<ParallelDevicePolicy>
 {
@@ -50,4 +50,4 @@ struct PlusUnsignedInt<ParallelDevicePolicy>
     typedef sycl::plus<UnsignedInt> type;
 };
 } // namespace SPH
-#endif // UPDATE_CELL_LINKED_LIST_SYCL_H
+#endif // BASE_CONFIGURATION_DYNAMICS_SYCL_H
