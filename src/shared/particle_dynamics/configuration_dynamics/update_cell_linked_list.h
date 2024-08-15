@@ -46,7 +46,16 @@ struct AtomicUnsignedIntRef;
 template <>
 struct AtomicUnsignedIntRef<ParallelPolicy>
 {
-    typedef tbb::atomic_ref<UnsignedInt> type;
+    typedef std::atomic_ref<UnsignedInt> type;
+};
+
+template <typename... T>
+struct PlusUnsignedInt;
+
+template <class ExecutionPolicy>
+struct PlusUnsignedInt<ExecutionPolicy>
+{
+    typedef std::plus<UnsignedInt> type;
 };
 
 template <class MeshType>
@@ -78,7 +87,7 @@ class UpdateCellLinkedList<MeshType> : public LocalDynamics
     virtual ~UpdateCellLinkedList(){};
 
     ParticleCellLinkedList<MeshType> getParticleCellLinkedList() const;
-
+    UnsignedInt getNumberOfCellsPlusOne() { return number_of_cells_plus_one_; }
     template <class T>
     class ComputingKernel
     {
@@ -86,7 +95,6 @@ class UpdateCellLinkedList<MeshType> : public LocalDynamics
         ComputingKernel(UpdateCellLinkedList<MeshType> &update_cell_linked_list);
         void clearAllLists(UnsignedInt index_i);
         void incrementCellSize(UnsignedInt index_i);
-        void buildParticleOffsetList();
         void updateCellLists(UnsignedInt index_i);
 
       protected:

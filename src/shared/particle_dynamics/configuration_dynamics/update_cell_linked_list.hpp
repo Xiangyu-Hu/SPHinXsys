@@ -99,14 +99,6 @@ void UpdateCellLinkedList<MeshType>::ComputingKernel<T>::incrementCellSize(Unsig
 //=================================================================================================//
 template <typename MeshType>
 template <class T>
-void UpdateCellLinkedList<MeshType>::ComputingKernel<T>::buildParticleOffsetList()
-{
-    exclusive_scan(T{}, particle_id_list_, particle_id_list_ + number_of_cells_plus_one_,
-                   particle_offset_list_, std::plus<UnsignedInt>());
-}
-//=================================================================================================//
-template <typename MeshType>
-template <class T>
 void UpdateCellLinkedList<MeshType>::ComputingKernel<T>::updateCellLists(UnsignedInt index_i)
 {
     const UnsignedInt linear_index = mesh_.LinearCellIndexFromPosition(pos_[index_i]);
@@ -122,21 +114,25 @@ UpdateCellLinkedList<MeshType, ExecutionPolicy>::UpdateCellLinkedList(RealBody &
 template <class MeshType, class ExecutionPolicy>
 void UpdateCellLinkedList<MeshType, ExecutionPolicy>::exec(Real dt)
 {
+    UnsignedInt total_real_particles = this->particles_->TotalRealParticles();
     ComputingKernel *computing_kernel = kernel_implementation_.getComputingKernel();
     particle_for(ExecutionPolicy{},
-                 this->identifier_.LoopRange(),
+                 IndexRange(0, this->number_of_cells_plus_one_),
                  [=](size_t i)
                  { computing_kernel->clearAllLists(i); });
 
     particle_for(ExecutionPolicy{},
-                 this->identifier_.LoopRange(),
+                 IndexRange(0, total_real_particles),
                  [=](size_t i)
                  { computing_kernel->incrementCellSize(i); });
 
-    computing_kernel->buildParticleOffsetList();
+    exclusive_scan(ExecutionPolicy{}, this->particle_id_list_,
+                   this->particle_id_list_ + this->number_of_cells_plus_one_,
+                   this->particle_offset_list_,
+                   typename PlusUnsignedInt<ExecutionPolicy>::type());
 
     particle_for(ExecutionPolicy{},
-                 this->identifier_.LoopRange(),
+                 IndexRange(0, total_real_particles),
                  [=](size_t i)
                  { computing_kernel->updateCellLists(i); });
 }

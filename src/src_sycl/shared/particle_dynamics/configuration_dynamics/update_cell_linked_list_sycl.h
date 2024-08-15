@@ -43,5 +43,11 @@ struct AtomicUnsignedIntRef<ParallelDevicePolicy>
         sycl::access::address_space::global_space>
         type;
 };
+
+template <>
+struct PlusUnsignedInt<ParallelDevicePolicy>
+{
+    typedef sycl::plus<UnsignedInt> type;
+};
 } // namespace SPH
 #endif // UPDATE_CELL_LINKED_LIST_SYCL_H

@@ -14,8 +14,8 @@ TEST(exclusive_scan, test_tbb)
 {
     UnsignedInt *list_data = cell_size_list.data();
 
-    exclusive_scan(SequencedPolicy{}, list_data, list_data + 11, result.data(), std::plus<UnsignedInt>());
-    exclusive_scan(ParallelPolicy{}, list_data, list_data + 11, tbb_result.data(), std::plus<UnsignedInt>());
+    exclusive_scan(SequencedPolicy{}, list_data, list_data + 11, result.data(), PlusUnsignedInt<SequencedPolicy>::type());
+    exclusive_scan(ParallelPolicy{}, list_data, list_data + 11, tbb_result.data(), PlusUnsignedInt<ParallelPolicy>::type());
 
     EXPECT_EQ(result, tbb_result);
 }
