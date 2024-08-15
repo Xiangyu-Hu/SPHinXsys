@@ -1,5 +1,5 @@
 #include "particle_functors.h"
-#include "update_cell_linked_list_sycl.hpp"
+#include "update_cell_linked_list_sycl.h"
 
 #include <gtest/gtest.h>
 using namespace SPH;

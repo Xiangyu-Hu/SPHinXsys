@@ -38,6 +38,42 @@
 
 namespace SPH
 {
+template <typename T, typename Op>
+T exclusive_scan(const SequencedPolicy &seq_policy, T *first, T *last, T *d_first, Op op)
+{
+    UnsignedInt scan_size = last - first - 1;
+    std::exclusive_scan(first, last, d_first, T{0}, op);
+    return d_first[scan_size];
+}
+
+template <typename T, typename Op>
+T exclusive_scan(const ParallelPolicy &par_policy, T *first, T *last, T *d_first, Op op)
+{
+    // Exclusive scan is the same as inclusive, but shifted by one
+    UnsignedInt scan_size = last - first - 1;
+    using range_type = tbb::blocked_range<UnsignedInt>;
+    tbb::parallel_scan(
+        range_type(0, scan_size), T{0},
+        [&](const range_type &r, T sum, bool is_final_scan)
+        {
+            T tmp = sum;
+            for (UnsignedInt i = r.begin(); i < r.end(); ++i)
+            {
+                tmp = op(tmp, first[i]);
+                if (is_final_scan)
+                {
+                    d_first[i + 1] = tmp;
+                }
+            }
+            return tmp;
+        },
+        [&](const T &a, const T &b)
+        {
+            return op(a, b);
+        });
+    return d_first[scan_size];
+}
+
 template <typename... T>
 class UpdateCellLinkedList;
 
@@ -78,26 +114,32 @@ class UpdateCellLinkedList<MeshType> : public LocalDynamics
     UpdateCellLinkedList(const ExecutionPolicy &execution_policy, RealBody &real_body);
     virtual ~UpdateCellLinkedList(){};
 
-    template <class ExecutionPolicy>
-    void clearParticleOffsetList(const ExecutionPolicy &execution_policy);
-    void clearParticleOffsetList(const ParallelDevicePolicy &par_device);
-
-    template <class ExecutionPolicy>
-    void incrementCellSize(const ExecutionPolicy &execution_policy);
-    void incrementCellSize(const ParallelDevicePolicy &par_device);
-
-    template <class ExecutionPolicy>
-    void exclusiveScanParticleOffsetList(const ExecutionPolicy &execution_policy);
-    void exclusiveScanParticleOffsetList(const ParallelDevicePolicy &par_device);
-
-    template <class ExecutionPolicy>
-    void updateCellLists(const ExecutionPolicy &execution_policy);
-    void updateCellLists(const ParallelDevicePolicy &par_device);
-
     ParticleCellLinkedList<MeshType> getParticleCellLinkedList() const;
 
+    template <class T>
+    class ComputingKernel
+    {
+      public:
+        ComputingKernel(UpdateCellLinkedList<MeshType> &update_cell_linked_list);
+        void clearAllLists(UnsignedInt index_i);
+        void incrementCellSize(UnsignedInt index_i);
+        void buildParticleOffsetList();
+        void updateCellLists(UnsignedInt index_i);
+
+      protected:
+        friend class UpdateCellLinkedList<MeshType>;
+        Mesh mesh_;
+        UnsignedInt number_of_cells_plus_one_;
+        UnsignedInt particle_id_list_size_; // at least number_of_cells_pluse_one_
+
+        Vecd *pos_;
+        UnsignedInt *particle_id_list_;
+        UnsignedInt *particle_offset_list_;
+        UnsignedInt *current_size_list_;
+    };
+
   protected:
-    const Mesh *mesh_;
+    Mesh mesh_;
     UnsignedInt number_of_cells_plus_one_;
     UnsignedInt particle_id_list_size_; // at least number_of_cells_pluse_one_
 
@@ -111,47 +153,17 @@ template <class MeshType, class ExecutionPolicy>
 class UpdateCellLinkedList<MeshType, ExecutionPolicy>
     : public UpdateCellLinkedList<MeshType>, public BaseDynamics<void>
 {
+    using ComputingKernel = typename UpdateCellLinkedList<MeshType>::
+        template ComputingKernel<ExecutionPolicy>;
+
   public:
     UpdateCellLinkedList(RealBody &real_body);
     virtual ~UpdateCellLinkedList(){};
     virtual void exec(Real dt = 0.0) override;
+
+  protected:
+    Implementation<UpdateCellLinkedList<MeshType>, ExecutionPolicy> kernel_implementation_;
 };
-
-template <typename T, typename Op>
-T exclusive_scan(const SequencedPolicy &seq_policy, T *first, T *last, T *d_first, Op op)
-{
-    UnsignedInt scan_size = last - first - 1;
-    std::exclusive_scan(first, last, d_first, T{0}, op);
-    return d_first[scan_size];
-}
-
-template <typename T, typename Op>
-T exclusive_scan(const ParallelPolicy &par_policy, T *first, T *last, T *d_first, Op op)
-{
-    // Exclusive scan is the same as inclusive, but shifted by one
-    UnsignedInt scan_size = last - first - 1;
-    using range_type = tbb::blocked_range<UnsignedInt>;
-    tbb::parallel_scan(
-        range_type(0, scan_size), T{0},
-        [&](const range_type &r, T sum, bool is_final_scan)
-        {
-            T tmp = sum;
-            for (UnsignedInt i = r.begin(); i < r.end(); ++i)
-            {
-                tmp = op(tmp, first[i]);
-                if (is_final_scan)
-                {
-                    d_first[i + 1] = tmp;
-                }
-            }
-            return tmp;
-        },
-        [&](const T &a, const T &b)
-        {
-            return op(a, b);
-        });
-    return d_first[scan_size];
-}
 
 } // namespace SPH
 #endif // UPDATE_CELL_LINKED_LIST_H

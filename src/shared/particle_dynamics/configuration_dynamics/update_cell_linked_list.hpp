@@ -50,10 +50,8 @@ template <class ExecutionPolicy>
 UpdateCellLinkedList<MeshType>::
     UpdateCellLinkedList(const ExecutionPolicy &execution_policy, RealBody &real_body)
     : LocalDynamics(real_body),
-      mesh_(createConstantEntity<MeshType>(
-          execution_policy, "Mesh",
-          real_body.sph_adaptation_->createBackGroundMesh<MeshType>(real_body))),
-      number_of_cells_plus_one_(mesh_->NumberOfCells() + 1),
+      mesh_(real_body.sph_adaptation_->createBackGroundMesh<MeshType>(real_body)),
+      number_of_cells_plus_one_(mesh_.NumberOfCells() + 1),
       particle_id_list_size_(SMAX(particles_->ParticlesBound(), number_of_cells_plus_one_)),
       pos_(particles_->getVariableDataByName<Vecd>(execution_policy, "Position")),
       particle_id_list_(particles_->registerDiscreteVariable<UnsignedInt>(execution_policy, "ParticleIDList", particle_id_list_size_)),
@@ -69,18 +67,78 @@ ParticleCellLinkedList<MeshType> UpdateCellLinkedList<MeshType>::getParticleCell
     return ParticleCellLinkedList<MeshType>(mesh_, pos_, particle_id_list_, particle_offset_list_);
 }
 //=================================================================================================//
+template <typename MeshType>
+template <class T>
+UpdateCellLinkedList<MeshType>::ComputingKernel<T>::
+    ComputingKernel(UpdateCellLinkedList<MeshType> &update_cell_linked_list)
+    : mesh_(update_cell_linked_list.mesh_),
+      number_of_cells_plus_one_(update_cell_linked_list.number_of_cells_plus_one_),
+      particle_id_list_size_(update_cell_linked_list.particle_id_list_size_),
+      pos_(update_cell_linked_list.pos_),
+      particle_id_list_(update_cell_linked_list.particle_id_list_),
+      particle_offset_list_(update_cell_linked_list.particle_offset_list_),
+      current_size_list_(update_cell_linked_list.current_size_list_) {}
+//=================================================================================================//
+template <typename MeshType>
+template <class T>
+void UpdateCellLinkedList<MeshType>::ComputingKernel<T>::clearAllLists(UnsignedInt index_i)
+{
+    particle_offset_list_[index_i] = 0;
+    current_size_list_[index_i] = 0;
+    particle_id_list_[index_i] = 0;
+}
+//=================================================================================================//
+template <typename MeshType>
+template <class T>
+void UpdateCellLinkedList<MeshType>::ComputingKernel<T>::incrementCellSize(UnsignedInt index_i)
+{
+    const UnsignedInt linear_index = mesh_.LinearCellIndexFromPosition(pos_[index_i]);
+    typename AtomicUnsignedIntRef<T>::type atomic_cell_size(particle_id_list_[linear_index]);
+    ++atomic_cell_size;
+}
+//=================================================================================================//
+template <typename MeshType>
+template <class T>
+void UpdateCellLinkedList<MeshType>::ComputingKernel<T>::buildParticleOffsetList()
+{
+    exclusive_scan(T{}, particle_id_list_, particle_id_list_ + number_of_cells_plus_one_,
+                   particle_offset_list_, std::plus<UnsignedInt>());
+}
+//=================================================================================================//
+template <typename MeshType>
+template <class T>
+void UpdateCellLinkedList<MeshType>::ComputingKernel<T>::updateCellLists(UnsignedInt index_i)
+{
+    const UnsignedInt linear_index = mesh_.LinearCellIndexFromPosition(pos_[index_i]);
+    typename AtomicUnsignedIntRef<T>::type atomic_current_cell_size(current_size_list_[linear_index]);
+    particle_id_list_[particle_offset_list_[linear_index] + atomic_current_cell_size++] = index_i;
+}
+//=================================================================================================//
 template <class MeshType, class ExecutionPolicy>
 UpdateCellLinkedList<MeshType, ExecutionPolicy>::UpdateCellLinkedList(RealBody &real_body)
     : UpdateCellLinkedList<MeshType>(ExecutionPolicy{}, real_body),
-      BaseDynamics<void>(){};
+      BaseDynamics<void>(), kernel_implementation_(*this){};
 //=================================================================================================//
 template <class MeshType, class ExecutionPolicy>
 void UpdateCellLinkedList<MeshType, ExecutionPolicy>::exec(Real dt)
 {
-    this->clearParticleOffsetList(ExecutionPolicy{});
-    this->incrementCellSize(ExecutionPolicy{});
-    this->exclusiveScanParticleOffsetList(ExecutionPolicy{});
-    this->updateCellLists(ExecutionPolicy{});
+    ComputingKernel *computing_kernel = kernel_implementation_.getComputingKernel();
+    particle_for(ExecutionPolicy{},
+                 this->identifier_.LoopRange(),
+                 [=](size_t i)
+                 { computing_kernel->clearAllLists(i); });
+
+    particle_for(ExecutionPolicy{},
+                 this->identifier_.LoopRange(),
+                 [=](size_t i)
+                 { computing_kernel->incrementCellSize(i); });
+
+    computing_kernel->buildParticleOffsetList();
+
+    particle_for(ExecutionPolicy{},
+                 this->identifier_.LoopRange(),
+                 [=](size_t i)
+                 { computing_kernel->updateCellLists(i); });
 }
 //=================================================================================================//
 } // namespace SPH
