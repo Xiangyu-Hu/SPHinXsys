@@ -684,7 +684,7 @@ class ModifiedTruncatedLinear : public Limiter
     Real ref_, slope_;
 
   public:
-    ModifiedTruncatedLinear(Real ref, Real slope = 1000.0)
+    ModifiedTruncatedLinear(Real ref, Real slope = 5000.0)
         : Limiter(), ref_(ref), slope_(slope){};
     Real operator()(Real measure)
     {
