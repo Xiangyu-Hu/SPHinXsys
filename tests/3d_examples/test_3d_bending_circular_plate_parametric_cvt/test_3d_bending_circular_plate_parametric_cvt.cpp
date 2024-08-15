@@ -9,7 +9,6 @@
 
 #include "sphinxsys.h"
 #include <gtest/gtest.h>
-#include <numeric>
 
 using namespace SPH;
 

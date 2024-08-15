@@ -33,7 +33,7 @@
 #include "base_body.h"
 #include "base_particles.hpp"
 
-#include <atomic>
+#include <boost/atomic/atomic_ref.hpp>
 
 namespace SPH
 {
@@ -46,7 +46,7 @@ struct AtomicUnsignedIntRef;
 template <>
 struct AtomicUnsignedIntRef<ParallelPolicy>
 {
-    typedef std::atomic_ref<UnsignedInt> type;
+    typedef boost::atomic_ref<UnsignedInt> type;
 };
 
 template <typename... T>

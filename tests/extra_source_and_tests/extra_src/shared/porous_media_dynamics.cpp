@@ -1,8 +1,6 @@
 
 #include "porous_media_dynamics.h"
 
-#include <numeric>
-
 namespace SPH
 {
 namespace multi_species_continuum

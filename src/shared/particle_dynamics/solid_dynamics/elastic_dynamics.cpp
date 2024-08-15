@@ -1,8 +1,6 @@
 #include "elastic_dynamics.h"
 #include "base_general_dynamics.h"
 
-#include <numeric>
-
 namespace SPH
 {
 //=========================================================================================================//

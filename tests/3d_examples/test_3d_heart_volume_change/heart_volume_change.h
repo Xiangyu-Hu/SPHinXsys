@@ -6,7 +6,6 @@
  */
 #include "TriangleMeshDistance.h" // for mesh operations
 #include "sphinxsys.h"            // SPHinXsys Library.
-#include <numeric>
 
 using namespace SPH;
 
