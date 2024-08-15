@@ -75,11 +75,11 @@ int main(int ac, char *av[])
     //	Basically the the range of bodies to build neighbor particle lists.
     //  Generally, we first define all the inner relations, then the contact relations.
     //----------------------------------------------------------------------
-    UpdateCellLinkedList<Mesh, execution::ParallelDevicePolicy> water_block_update_cell_linked_list(water_block);
+    UpdateCellLinkedList<Mesh, execution::ParallelPolicy> water_block_update_cell_linked_list(water_block);
     DiscreteVariable<UnsignedInt> *dv_particle_id_list_water = water_block.getBaseParticles().getVariableByName<UnsignedInt>("ParticleIDList");
     MeshRecordingToPlt water_cell_linked_list_recording(sph_system, water_block.getCellLinkedList());
 
-    UpdateCellLinkedList<Mesh, execution::ParallelDevicePolicy> wall_boundary_update_cell_linked_list(wall_boundary);
+    UpdateCellLinkedList<Mesh, execution::ParallelPolicy> wall_boundary_update_cell_linked_list(wall_boundary);
     DiscreteVariable<UnsignedInt> *dv_particle_id_list_wall = wall_boundary.getBaseParticles().getVariableByName<UnsignedInt>("ParticleIDList");
     MeshRecordingToPlt wall_cell_linked_list_recording(sph_system, water_block.getCellLinkedList());
 

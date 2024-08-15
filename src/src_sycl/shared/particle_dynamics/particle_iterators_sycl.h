@@ -69,5 +69,29 @@ inline ReturnType particle_reduce(const ParallelDevicePolicy &par_device,
     } // buffer_result goes out of scope, so the result (of temp) is updated
     return temp;
 }
+
+template <typename T, typename Op>
+T exclusive_scan(const ParallelDevicePolicy &par_policy, T *first, T *last, T *d_first, Op op)
+{
+    execution_instance.getQueue()
+        .submit([=](sycl::handler &cgh)
+                { cgh.parallel_for(
+                      execution_instance.getUniformNdRange(execution_instance.getWorkGroupSize()),
+                      [=](sycl::nd_item<1> item)
+                      {
+                          if (item.get_group_linear_id() == 0)
+                          {
+                              sycl::joint_exclusive_scan(
+                                  item.get_group(), first, last, d_first, T{0}, op);
+                          }
+                      }); })
+        .wait_and_throw();
+
+    UnsignedInt scan_size = last - first - 1;
+    UnsignedInt last_value;
+    copyFromDevice(&last_value, d_first + scan_size, 1);
+    return last_value;
+}
+
 } // namespace SPH
 #endif // PARTICLE_ITERATORS_SYCL_H
