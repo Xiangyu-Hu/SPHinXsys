@@ -10,12 +10,12 @@ StdVec<UnsignedInt> tbb_result = result;
 
 StdVec<UnsignedInt> input_result{0, 3, 5, 8, 13, 13, 14, 17, 19, 24, 25};
 
-TEST(exclusive_scan, test_tbb_sycl)
+TEST(exclusive_scan, test_tbb)
 {
-    UnsignedInt *list_tbb = cell_size_list.data();
+    UnsignedInt *list_data = cell_size_list.data();
 
-    exclusive_scan(SequencedPolicy{}, list_tbb, list_tbb + 11, result.data(), ReduceSum<UnsignedInt>());
-    exclusive_scan(ParallelPolicy{}, list_tbb, list_tbb + 11, tbb_result.data(), ReduceSum<UnsignedInt>());
+    exclusive_scan(SequencedPolicy{}, list_data, list_data + 11, result.data(), std::plus<UnsignedInt>());
+    exclusive_scan(ParallelPolicy{}, list_data, list_data + 11, tbb_result.data(), std::plus<UnsignedInt>());
 
     EXPECT_EQ(result, tbb_result);
 }

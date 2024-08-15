@@ -121,7 +121,7 @@ template <typename T, typename Op>
 T exclusive_scan(const SequencedPolicy &seq_policy, T *first, T *last, T *d_first, Op op)
 {
     UnsignedInt scan_size = last - first - 1;
-    std::exclusive_scan(first, last, d_first, ZeroData<T>::value, op);
+    std::exclusive_scan(first, last, d_first, T{0}, op);
     return d_first[scan_size];
 }
 
@@ -132,7 +132,7 @@ T exclusive_scan(const ParallelPolicy &par_policy, T *first, T *last, T *d_first
     UnsignedInt scan_size = last - first - 1;
     using range_type = tbb::blocked_range<UnsignedInt>;
     tbb::parallel_scan(
-        range_type(0, scan_size), ZeroData<T>::value,
+        range_type(0, scan_size), T{0},
         [&](const range_type &r, T sum, bool is_final_scan)
         {
             T tmp = sum;
