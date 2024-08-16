@@ -253,5 +253,15 @@ class DiffuseLevelSetSign : public BaseMeshLocalDynamics<size_t>
     void update(const size_t &package_index);
 };
 
+// class InitializeDataInACellFromCoarse : public BaseMeshLocalDynamics<Arrayi>
+// {
+//   public:
+//     explicit InitializeDataInACellFromCoarse(MeshWithGridDataPackagesType &mesh_data)
+//         : BaseMeshLocalDynamics(mesh_data){};
+//     virtual ~InitializeDataInACellFromCoarse(){};
+
+//     void update(const Arrayi &cell_index);
+// }
+
 } // namespace SPH
 #endif // MESH_LOCAL_DYNAMICS_H

@@ -135,8 +135,6 @@ class MeshWithGridDataPackages : public Mesh
     /** spacing between the data, which is 1/ pkg_size of this grid spacing */
     virtual Real DataSpacing() override { return data_spacing_; };
     Real GridSpacing() { return grid_spacing_; };
-    // CellNeighborhood* getCellNeighborhood() { return cell_neighborhood_; };
-    // std::pair<Arrayi, int>* getMetaDataCell() { return meta_data_cell_; };
   public:
     ConcurrentVec<std::pair<size_t, int>> occupied_data_pkgs_; /**< (size_t)sort_index, (int)core1/inner0. */
     CellNeighborhood *cell_neighborhood_;                  /**< 3*3(*3) array to store indicies of neighborhood cells. */
@@ -222,9 +220,9 @@ class MeshWithGridDataPackages : public Mesh
             .min((pkg_size - 1) * Arrayi::Ones());
     }
 
-    void assignSingular(const Arrayi &cell_index) { assignCategoryOnMetaDataMesh(cell_index, 0); };
-    void assignInner(const Arrayi &cell_index) { assignCategoryOnMetaDataMesh(cell_index, 1); };
-    void assignCore(const Arrayi &cell_index) { assignCategoryOnMetaDataMesh(cell_index, 2); };
+    // void assignSingular(const Arrayi &cell_index) { assignCategoryOnMetaDataMesh(cell_index, 0); };
+    // void assignInner(const Arrayi &cell_index) { assignCategoryOnMetaDataMesh(cell_index, 1); };
+    // void assignCore(const Arrayi &cell_index) { assignCategoryOnMetaDataMesh(cell_index, 2); };
 
   public:
     /** obtain averaged value at a corner of a data cell */

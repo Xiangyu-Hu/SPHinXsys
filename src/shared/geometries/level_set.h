@@ -80,8 +80,6 @@ class LevelSet : public MeshWithGridDataPackages<4>,
                  public BaseLevelSet
 {
   public:
-    // typedef GridDataPackage<4, 1> LevelSetDataPackage;
-    // ConcurrentVec<LevelSetDataPackage *> core_data_pkgs_; /**< packages near to zero level set. */
     Real global_h_ratio_;
 
     /** This constructor only initialize far field. */
@@ -100,8 +98,6 @@ class LevelSet : public MeshWithGridDataPackages<4>,
     virtual Vecd probeKernelGradientIntegral(const Vecd &position, Real h_ratio = 1.0) override;
     virtual void writeMeshFieldToPlt(std::ofstream &output_file) override;
     bool isWithinCorePackage(Vecd position);
-    // Real computeKernelIntegral(const Vecd &position);
-    // Vecd computeKernelGradientIntegral(const Vecd &position);
     Kernel &kernel_;
 
   protected:
@@ -113,7 +109,6 @@ class LevelSet : public MeshWithGridDataPackages<4>,
     MeshWithGridDataPackages<4> &mesh_data_ = *this;
 
     void initializeDataForSingularPackage(const size_t package_index, Real far_field_level_set);
-    // void initializeBasicDataForAPackage(const Arrayi &cell_index, const size_t package_index, Shape &shape);
     void redistanceInterfaceForAPackage(const size_t package_index);
 
     void finishDataPackages();
@@ -121,13 +116,6 @@ class LevelSet : public MeshWithGridDataPackages<4>,
     void markNearInterface(Real small_shift_factor);
     void redistanceInterface();
     void diffuseLevelSetSign();
-    // void updateKernelIntegrals();
-    // bool isInnerPackage(const Arrayi &cell_index);
-    // void initializeDataInACell(const Arrayi &cell_index);
-    // void tagACellIsInnerPackage(const Arrayi &cell_index);
-    // void initializeIndexMesh();
-    // void initializeCellNeighborhood();
-    // void updateLevelSetGradient();
     MeshAllDynamics<InitializeDataInACell> initialize_data_in_a_cell{mesh_data_, shape_};
     MeshAllDynamics<TagACellIsInnerPackage> tag_a_cell_is_inner_package{mesh_data_};
 

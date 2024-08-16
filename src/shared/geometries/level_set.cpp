@@ -181,7 +181,6 @@ void RefinedLevelSet::initializeDataInACellFromCoarse(const Arrayi &cell_index)
 {
     Vecd cell_position = CellPositionFromIndex(cell_index);
     size_t package_index = coarse_mesh_.probeSignedDistance(cell_position) < 0.0 ? 0 : 1;
-    assignSingular(cell_index);
     assignDataPackageIndex(cell_index, package_index);
     if (coarse_mesh_.isWithinCorePackage(cell_position))
     {
@@ -190,7 +189,13 @@ void RefinedLevelSet::initializeDataInACellFromCoarse(const Arrayi &cell_index)
         Real measure = (signed_distance * normal_direction).cwiseAbs().maxCoeff();
         if (measure < grid_spacing_)
         {
-            assignCore(cell_index);
+            // assignCore(cell_index);
+            std::pair<size_t, int> occupied;
+            occupied.first = cell_index[0] * all_cells_[1] + cell_index[1];
+            occupied.second = 1;
+
+            mesh_data_.assignDataPackageIndex(cell_index, 2);
+            mesh_data_.registerOccupied(occupied);
         }
     }
 }
