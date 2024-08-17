@@ -28,7 +28,6 @@ template <class T>
 Relation<Inner<ParticleCellLinkedListType>>::ComputingKernel<T>::
     ComputingKernel(Relation<Inner<ParticleCellLinkedListType>> &update_inner_relation)
     : particle_cell_linked_list_(update_inner_relation.particle_cell_linked_list_),
-      neighborhood_(update_inner_relation.neighborhood_),
       real_particle_bound_plus_one_(update_inner_relation.real_particle_bound_plus_one_),
       neighbor_id_list_size_(update_inner_relation.neighbor_id_list_size_),
       pos_(update_inner_relation.pos_),
@@ -52,9 +51,10 @@ void Relation<Inner<ParticleCellLinkedListType>>::ComputingKernel<T>::
     incrementNeighborSize(UnsignedInt index_i)
 {
     // Here, neighbor_id_list_ takes role of neighbor_size_list_.
-    particle_cell_linked_list_.forEachNeighbor(index_i, pos_, neighborhood_,
-                                               [=](size_t j)
-                                               { ++neighbor_id_list_[index_i]; });
+    particle_cell_linked_list_.forEachNeighbor(
+        index_i, pos_,
+        [=](size_t j)
+        { ++neighbor_id_list_[index_i]; });
 }
 //=================================================================================================//
 template <class ParticleCellLinkedListType>
@@ -63,7 +63,7 @@ void Relation<Inner<ParticleCellLinkedListType>>::ComputingKernel<T>::
     updateNeighborIDList(UnsignedInt index_i)
 {
     particle_cell_linked_list_.forEachNeighbor(
-        index_i, pos_, neighborhood_,
+        index_i, pos_,
         [=](size_t j)
         {
             ++neighbor_size_list_[index_i];

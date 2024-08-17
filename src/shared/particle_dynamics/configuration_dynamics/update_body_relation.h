@@ -72,10 +72,9 @@ class ParticleNeighborList
     ParticleNeighborList(UnsignedInt *neighbor_id_list, UnsignedInt *neighbor_offset_list);
     ~ParticleNeighborList(){};
 
-    template <typename NeighborhoodType, typename FunctionOnEach, typename... Args>
+    template <typename FunctionOnEach>
     void forEachNeighbor(UnsignedInt index_i, const Vecd *source_pos,
-                         const NeighborhoodType &neighborhood,
-                         const FunctionOnEach &function, Args &&...) const;
+                         const FunctionOnEach &function) const;
 };
 
 template <class ParticleCellLinkedListType>
@@ -105,7 +104,6 @@ class Relation<Inner<ParticleCellLinkedListType>> : public LocalDynamics
       protected:
         friend class Relation<Inner<ParticleCellLinkedListType>>;
         ParticleCellLinkedListType particle_cell_linked_list_;
-        FixedNeighborhood neighborhood_;
         UnsignedInt real_particle_bound_plus_one_;
         UnsignedInt neighbor_id_list_size_;
 
@@ -117,7 +115,6 @@ class Relation<Inner<ParticleCellLinkedListType>> : public LocalDynamics
 
   protected:
     ParticleCellLinkedListType particle_cell_linked_list_;
-    FixedNeighborhood neighborhood_;
     UnsignedInt real_particle_bound_plus_one_;
     UnsignedInt neighbor_id_list_size_;
 
