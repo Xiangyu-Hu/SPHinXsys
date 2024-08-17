@@ -47,7 +47,6 @@ LevelSet::LevelSet(BoundingBox tentative_bounds, Real data_spacing,
     : LevelSet(tentative_bounds, data_spacing, 4, shape, sph_adaptation)
 {
     initialize_data_in_a_cell.exec();
-
     finishDataPackages();
 }
 //=================================================================================================//
@@ -189,7 +188,6 @@ void RefinedLevelSet::initializeDataInACellFromCoarse(const Arrayi &cell_index)
         Real measure = (signed_distance * normal_direction).cwiseAbs().maxCoeff();
         if (measure < grid_spacing_)
         {
-            // assignCore(cell_index);
             std::pair<size_t, int> occupied;
             occupied.first = cell_index[0] * all_cells_[1] + cell_index[1];
             occupied.second = 1;
