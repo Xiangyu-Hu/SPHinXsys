@@ -190,6 +190,7 @@ void RefinedLevelSet::initializeDataInACellFromCoarse(const Arrayi &cell_index)
         {
             std::pair<size_t, int> occupied;
             occupied.first = cell_index[0] * all_cells_[1] + cell_index[1];
+            occupied.first = cell_index[0] * all_cells_[1] * all_cells_[2] + cell_index[1] * all_cells_[2] + cell_index[2];
             occupied.second = 1;
 
             mesh_data_.assignDataPackageIndex(cell_index, 2);
