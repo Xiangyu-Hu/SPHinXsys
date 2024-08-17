@@ -54,10 +54,10 @@ class ParticleCellLinkedList : public MeshType
         UnsignedInt *particle_id_list, UnsignedInt *particle_offset_list);
     ~ParticleCellLinkedList(){};
 
-    template <typename NeighborhoodType, typename FunctionOnEach, typename... Args>
+    template <typename NeighborhoodType, typename FunctionOnEach>
     void forEachNeighbor(UnsignedInt index_i, const Vecd *source_pos,
                          const NeighborhoodType &neighborhood,
-                         const FunctionOnEach &function, Args &&...) const;
+                         const FunctionOnEach &function) const;
 };
 
 template <typename MeshType>

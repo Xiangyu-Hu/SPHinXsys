@@ -18,14 +18,15 @@ ParticleCellLinkedList<MeshType>::ParticleCellLinkedList(
       particle_offset_list_(particle_offset_list) {}
 //=================================================================================================//
 template <class MeshType>
-template <typename NeighborhoodType, typename FunctionOnEach, typename... Args>
-void ParticleCellLinkedList<MeshType>::forEachNeighbor(
-    UnsignedInt index_i, const Vecd *source_pos,
-    const NeighborhoodType &neighborhood, const FunctionOnEach &function, Args &&...args) const
+template <typename NeighborhoodType, typename FunctionOnEach>
+void ParticleCellLinkedList<MeshType>::
+    forEachNeighbor(UnsignedInt index_i, const Vecd *source_pos,
+                    const NeighborhoodType &neighborhood,
+                    const FunctionOnEach &function) const
 {
     const Vecd pos_i = source_pos[index_i];
     const Arrayi target_cell_index = this->CellIndexFromPosition(pos_i);
-    const int search_depth = neighborhood.get_search_depth(index_i);
+    const int search_depth = neighborhood.getSearchDepth();
     mesh_for_each(
         Arrayi::Zero().max(target_cell_index - search_depth * Arrayi::Ones()),
         this->all_cells_.min(target_cell_index + (search_depth + 1) * Arrayi::Ones()),
@@ -39,7 +40,7 @@ void ParticleCellLinkedList<MeshType>::forEachNeighbor(
                 const UnsignedInt index_j = particle_id_list_[n];
                 if (neighborhood.isWithinSupport(pos_i, pos_[index_j]))
                 {
-                    function(index_j, std::forward<Args>(args)...);
+                    function(index_j);
                 }
             }
         });
@@ -92,6 +93,7 @@ template <typename MeshType>
 template <class T>
 void UpdateCellLinkedList<MeshType>::ComputingKernel<T>::incrementCellSize(UnsignedInt index_i)
 {
+    // Here, particle_id_list_ takes role of current_cell_size_list_.
     const UnsignedInt linear_index = mesh_.LinearCellIndexFromPosition(pos_[index_i]);
     typename AtomicUnsignedIntRef<T>::type atomic_cell_size(particle_id_list_[linear_index]);
     ++atomic_cell_size;
@@ -101,6 +103,7 @@ template <typename MeshType>
 template <class T>
 void UpdateCellLinkedList<MeshType>::ComputingKernel<T>::updateCellLists(UnsignedInt index_i)
 {
+    // Here, particle_id_list_ takes its original role.
     const UnsignedInt linear_index = mesh_.LinearCellIndexFromPosition(pos_[index_i]);
     typename AtomicUnsignedIntRef<T>::type atomic_current_cell_size(current_size_list_[linear_index]);
     particle_id_list_[particle_offset_list_[linear_index] + atomic_current_cell_size++] = index_i;
