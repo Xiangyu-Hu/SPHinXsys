@@ -32,7 +32,7 @@ void LevelSet::initializeDataForSingularPackage(const size_t package_index, Real
 bool LevelSet::isWithinCorePackage(Vecd position)
 {
     Arrayi cell_index = CellIndexFromPosition(position);
-    return isInnerDataPackage(cell_index);
+    return isCoreDataPackage(cell_index);
 }
 //=================================================================================================//
 void LevelSet::diffuseLevelSetSign()

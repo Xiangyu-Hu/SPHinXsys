@@ -156,19 +156,6 @@ void LevelSet::markNearInterface(Real small_shift_factor)
         });
 }
 //=================================================================================================//
-// void LevelSet::initializeBasicDataForAPackage(const Arrayi &cell_index, const size_t package_index, Shape &shape)
-// {
-//     auto &phi = phi_.DataField()[package_index];
-//     auto &near_interface_id = near_interface_id_.DataField()[package_index];
-//     for_each_cell_data(
-//         [&](int i, int j, int k)
-//         {
-//             Vec3d position = DataPositionFromIndex(cell_index, Array3i(i, j, k));
-//             phi[i][j][k] = shape.findSignedDistance(position);
-//             near_interface_id[i][j][k] = phi[i][j][k] < 0.0 ? -2 : 2;
-//         });
-// }
-//=================================================================================================//
 void LevelSet::redistanceInterfaceForAPackage(const size_t package_index)
 {
     auto phi_data = phi_.DataField();
