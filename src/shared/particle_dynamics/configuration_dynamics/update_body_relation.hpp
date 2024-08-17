@@ -41,8 +41,15 @@ void Relation<Inner<ParticleCellLinkedListType>>::ComputingKernel<T>::
 {
     // Here, neighbor_id_list_ takes role of temporary storage for neighbor size list.
     UnsignedInt neighbor_count = 0;
-    particle_cell_linked_list_.forEachNeighbor(index_i, pos_, [&](size_t j)
-                                               { neighbor_count++; });
+    particle_cell_linked_list_.forEachNeighbor(
+        index_i, pos_,
+        [&](size_t index_j)
+        {
+            if (index_i != index_j)
+            {
+                neighbor_count++;
+            }
+        });
     neighbor_id_list_[index_i] = neighbor_count;
 }
 //=================================================================================================//
@@ -54,10 +61,13 @@ void Relation<Inner<ParticleCellLinkedListType>>::ComputingKernel<T>::
     UnsignedInt neighbor_count = 0;
     particle_cell_linked_list_.forEachNeighbor(
         index_i, pos_,
-        [&](size_t j)
+        [&](size_t index_j)
         {
-            neighbor_count++;
-            neighbor_id_list_[neighbor_offset_list_[index_i] + neighbor_count] = j;
+            if (index_i != index_j)
+            {
+                neighbor_count++;
+            }
+            neighbor_id_list_[neighbor_offset_list_[index_i] + neighbor_count] = index_j;
         });
 }
 //=================================================================================================//
