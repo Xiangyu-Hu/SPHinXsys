@@ -183,7 +183,7 @@ int main(int ac, char *av[])
     //InteractionWithUpdate<fluid_dynamics::TVC_ModifiedLimited_withoutLinearGradientCorrection<BulkParticles>> transport_velocity_correction(water_block_inner, water_wall_contact);
     
     /** A temporarily test for the limiter . */
-    SimpleDynamics<fluid_dynamics::GetLimiterOfTransportVelocityCorrection> get_limiter_of_transport_velocity_correction(water_block, 10000);
+    SimpleDynamics<fluid_dynamics::GetLimiterOfTransportVelocityCorrection> get_limiter_of_transport_velocity_correction(water_block, 1000);
     
 
     /** Evaluation of density by summation approach. */
