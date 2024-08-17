@@ -124,20 +124,20 @@ class Relation<Inner<ParticleCellLinkedListType>> : public LocalDynamics
     UnsignedInt *neighbor_size_list_;
 };
 
-template <typename... T, class ExecutionPolicy>
-class Relation<ExecutionPolicy, T...>
-    : public Relation<T...>, public BaseDynamics<void>
+template <class RelationType, class ExecutionPolicy>
+class UpdateRelation : public RelationType, public BaseDynamics<void>
 {
-    using ComputingKernel = typename Relation<T...>::
+    using ComputingKernel = typename RelationType::
         template ComputingKernel<ExecutionPolicy>;
 
   public:
-    Relation(RealBody &real_body, T &&...parameters);
-    virtual ~Relation(){};
+    template <typename... Args>
+    UpdateRelation(RealBody &real_body, Args &&...args);
+    virtual ~UpdateRelation(){};
     virtual void exec(Real dt = 0.0) override;
 
   protected:
-    Implementation<Relation<T...>, ExecutionPolicy> kernel_implementation_;
+    Implementation<RelationType, ExecutionPolicy> kernel_implementation_;
 };
 
 } // namespace SPH

@@ -71,13 +71,14 @@ void Relation<Inner<ParticleCellLinkedListType>>::ComputingKernel<T>::
         });
 }
 //=================================================================================================//
-template <typename... T, class ExecutionPolicy>
-Relation<ExecutionPolicy, T...>::Relation(RealBody &real_body, T &&...parameters)
-    : Relation<T...>(real_body, std::forward<T>(parameters)...),
+template <class RelationType, class ExecutionPolicy>
+template <typename... Args>
+UpdateRelation<RelationType, ExecutionPolicy>::UpdateRelation(RealBody &real_body, Args &&...args)
+    : RelationType(ExecutionPolicy{}, real_body, std::forward<Args>(args)...),
       BaseDynamics<void>(), kernel_implementation_(*this) {}
 //=================================================================================================//
-template <typename... T, class ExecutionPolicy>
-void Relation<ExecutionPolicy, T...>::exec(Real dt)
+template <class RelationType, class ExecutionPolicy>
+void UpdateRelation<RelationType, ExecutionPolicy>::exec(Real dt)
 {
     UnsignedInt total_real_particles = this->particles_->TotalRealParticles();
     ComputingKernel *computing_kernel = kernel_implementation_.getComputingKernel();

@@ -5,7 +5,7 @@
 
 #include "adaptation.hpp"
 #include "base_particles.hpp"
-#include "mesh_iterators.h"
+#include "mesh_iterators.hpp"
 
 namespace SPH
 {
@@ -23,20 +23,19 @@ void ParticleCellLinkedList<MeshType>::
     forEachNeighbor(UnsignedInt index_i, const Vecd *source_pos,
                     const FunctionOnEach &function) const
 {
-    const Vecd pos_i = source_pos[index_i];
-    const Arrayi target_cell_index = this->CellIndexFromPosition(pos_i);
+    const Arrayi target_cell_index = this->CellIndexFromPosition(source_pos[index_i]);
     mesh_for_each(
         Arrayi::Zero().max(target_cell_index - Arrayi::Ones()),
         this->all_cells_.min(target_cell_index + 2 * Arrayi::Ones()),
         [&](const Arrayi &cell_index)
         {
-            const UnsignedInt linear_index = this->transferCellIndexTo1D(cell_index, this->all_cells_);
+            const UnsignedInt linear_index = this->transferMeshIndexTo1D(cell_index, this->all_cells_);
             // Since offset_cell_size_ has linear_cell_size_+1 elements, no boundary checks are needed.
             // offset_cell_size_[0] == 0 && offset_cell_size_[linear_cell_size_] == total_real_particles_
             for (UnsignedInt n = particle_offset_list_[linear_index]; n < particle_offset_list_[linear_index + 1]; ++n)
             {
                 const UnsignedInt index_j = particle_id_list_[n];
-                if ((pos_i, pos_[index_j]).squaredNorm() < this->grid_spacing_)
+                if ((source_pos[index_i] - pos_[index_j]).squaredNorm() < this->grid_spacing_)
                 {
                     function(index_j);
                 }
