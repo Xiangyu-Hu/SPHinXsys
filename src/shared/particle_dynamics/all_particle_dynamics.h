@@ -30,5 +30,6 @@
 #define ALL_PARTICLE_DYNAMICS_H
 
 #include "dynamics_algorithms.h"
+#include "dynamics_algorithms_ck.h"
 #include "particle_functors.h"
 #endif // ALL_PARTICLE_DYNAMICS_H

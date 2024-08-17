@@ -47,6 +47,7 @@ class ParticleCellLinkedList : public MeshType
     Vecd *pos_;
     UnsignedInt *particle_id_list_;
     UnsignedInt *particle_offset_list_;
+    Real grid_spacing_squared_;
 
   public:
     ParticleCellLinkedList(const MeshType &mesh, Vecd *pos_,

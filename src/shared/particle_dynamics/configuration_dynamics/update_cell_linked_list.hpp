@@ -15,7 +15,8 @@ ParticleCellLinkedList<MeshType>::ParticleCellLinkedList(
     const MeshType &mesh, Vecd *pos,
     UnsignedInt *particle_id_list, UnsignedInt *particle_offset_list)
     : MeshType(mesh), pos_(pos), particle_id_list_(particle_id_list),
-      particle_offset_list_(particle_offset_list) {}
+      particle_offset_list_(particle_offset_list),
+      grid_spacing_squared_(this->grid_spacing_ * this->grid_spacing_) {}
 //=================================================================================================//
 template <class MeshType>
 template <typename FunctionOnEach>
@@ -29,13 +30,13 @@ void ParticleCellLinkedList<MeshType>::
         this->all_cells_.min(target_cell_index + 2 * Arrayi::Ones()),
         [&](const Arrayi &cell_index)
         {
-            const UnsignedInt linear_index = this->transferMeshIndexTo1D(cell_index, this->all_cells_);
+            const UnsignedInt linear_index = this->LinearCellIndexFromCellIndex(cell_index);
             // Since offset_cell_size_ has linear_cell_size_+1 elements, no boundary checks are needed.
             // offset_cell_size_[0] == 0 && offset_cell_size_[linear_cell_size_] == total_real_particles_
             for (UnsignedInt n = particle_offset_list_[linear_index]; n < particle_offset_list_[linear_index + 1]; ++n)
             {
                 const UnsignedInt index_j = particle_id_list_[n];
-                if ((source_pos[index_i] - pos_[index_j]).squaredNorm() < this->grid_spacing_)
+                if ((source_pos[index_i] - pos_[index_j]).squaredNorm() < grid_spacing_squared_)
                 {
                     function(index_j);
                 }

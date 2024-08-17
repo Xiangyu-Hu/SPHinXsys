@@ -92,10 +92,18 @@ void UpdateRelation<RelationType, ExecutionPolicy>::exec(Real dt)
                  [=](size_t i)
                  { computing_kernel->incrementNeighborSize(i); });
 
-    exclusive_scan(ExecutionPolicy{}, this->neighbor_id_list_,
-                   this->neighbor_id_list_ + this->real_particle_bound_plus_one_,
-                   this->neighbor_offset_list_,
-                   typename PlusUnsignedInt<ExecutionPolicy>::type());
+    UnsignedInt current_neighbor_id_list_size =
+        exclusive_scan(ExecutionPolicy{}, this->neighbor_id_list_,
+                       this->neighbor_id_list_ + this->real_particle_bound_plus_one_,
+                       this->neighbor_offset_list_,
+                       typename PlusUnsignedInt<ExecutionPolicy>::type());
+    if (current_neighbor_id_list_size > this->neighbor_id_list_size_)
+    {
+        std::cout << "\n Error: the current neighbor id list size " << current_neighbor_id_list_size
+                  << " is larger than the allocated value " << neighbor_id_list_size_ " !" << std::endl;
+        std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+        exit(1);
+    }
 
     particle_for(ExecutionPolicy{},
                  IndexRange(0, total_real_particles),

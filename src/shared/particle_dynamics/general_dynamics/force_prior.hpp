@@ -75,10 +75,11 @@ template <class ExecutionPolicy>
 GravityForce<GravityType>::
     GravityForce(const ExecutionPolicy &execution_policy,
                  SPHBody &sph_body, const GravityType &gravity)
-    : ForcePrior(execution_policy, sph_body, "GravityForce"), gravity_(gravity),
+    : ForcePrior(execution_policy, sph_body, "GravityForce"),
+      v_physical_time_(sph_system_.getSystemVariableByName<Real>(execution_policy, "PhysicalTime")),
+      gravity_(gravity),
       pos_(particles_->getVariableDataByName<Vecd>(execution_policy, "Position")),
-      mass_(particles_->getVariableDataByName<Real>(execution_policy, "Mass")),
-      v_physical_time_(sph_system_.getSystemVariableByName<Real>(execution_policy, "PhysicalTime")) {}
+      mass_(particles_->getVariableDataByName<Real>(execution_policy, "Mass")) {}
 //=================================================================================================//
 template <class GravityType>
 template <class T>

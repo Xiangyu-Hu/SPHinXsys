@@ -80,6 +80,11 @@ class Mesh
         return transferMeshIndexTo1D(all_cells_, CellIndexFromPosition(position));
     };
 
+    size_t LinearCellIndexFromCellIndex(const Arrayi &cell_index) const
+    {
+        return transferMeshIndexTo1D(all_cells_, cell_index);
+    };
+
     Vecd CellPositionFromIndex(const Arrayi &cell_index) const;
     Vecd GridPositionFromIndex(const Arrayi &grid_index) const;
     Vecd CellLowerCornerPosition(const Arrayi &cell_index) const;
