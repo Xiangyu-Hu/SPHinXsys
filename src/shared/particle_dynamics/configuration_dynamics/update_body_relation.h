@@ -97,7 +97,6 @@ class Relation<Inner<ParticleCellLinkedListType>> : public LocalDynamics
     {
       public:
         ComputingKernel(Relation<Inner<ParticleCellLinkedListType>> &update_inner_relation);
-        void clearAllLists(UnsignedInt index_i);
         void incrementNeighborSize(UnsignedInt index_i);
         void updateNeighborIDList(UnsignedInt index_i);
 

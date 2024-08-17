@@ -80,7 +80,7 @@ int main(int ac, char *av[])
     MeshRecordingToPlt water_cell_linked_list_recording(sph_system, water_block.getCellLinkedList());
     UpdateRelation<Relation<Inner<ParticleCellLinkedList<Mesh>>>, ParallelPolicy>
         water_block_update_inner_relation(water_block, water_block_update_cell_linked_list.getParticleCellLinkedList());
-    DiscreteVariable<UnsignedInt> *dv_neighbor_size_list_water_inner = water_block.getBaseParticles().getVariableByName<UnsignedInt>("NeighborSizeList");
+    DiscreteVariable<UnsignedInt> *dv_neighbor_offset_list_water_inner = water_block.getBaseParticles().getVariableByName<UnsignedInt>("NeighborOffsetList");
 
     UpdateCellLinkedList<Mesh, execution::ParallelPolicy> wall_boundary_update_cell_linked_list(wall_boundary);
     DiscreteVariable<UnsignedInt> *dv_particle_id_list_wall = wall_boundary.getBaseParticles().getVariableByName<UnsignedInt>("ParticleIDList");
@@ -146,7 +146,7 @@ int main(int ac, char *av[])
     water_cell_linked_list_recording.writeToFile();
 
     water_block_update_inner_relation.exec();
-    dv_neighbor_size_list_water_inner->synchronizeWithDevice();
+    dv_neighbor_offset_list_water_inner->synchronizeWithDevice();
 
     wall_boundary_update_cell_linked_list.exec();
     dv_particle_id_list_wall->synchronizeWithDevice();

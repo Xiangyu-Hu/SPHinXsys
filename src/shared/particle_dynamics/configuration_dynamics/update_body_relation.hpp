@@ -17,10 +17,9 @@ Relation<Inner<ParticleCellLinkedListType>>::Relation(
       neighbor_id_list_size_(particles_->ParticlesBound() * NeighborSize<Dimensions>::value),
       pos_(particles_->getVariableDataByName<Vecd>(ex_policy, "Position")),
       neighbor_id_list_(particles_->registerDiscreteVariable<UnsignedInt>(ex_policy, "NeighborIDList", neighbor_id_list_size_)),
-      neighbor_offset_list_(particles_->registerDiscreteVariable<UnsignedInt>(ex_policy, "NeighborOffsetList", real_particle_bound_plus_one_)),
-      neighbor_size_list_(particles_->registerDiscreteVariable<UnsignedInt>(ex_policy, "NeighborSizeList", real_particle_bound_plus_one_))
+      neighbor_offset_list_(particles_->registerDiscreteVariable<UnsignedInt>(ex_policy, "NeighborOffsetList", real_particle_bound_plus_one_))
 {
-    particles_->addVariableToWrite<UnsignedInt>("NeighborSizeList");
+    particles_->addVariableToWrite<UnsignedInt>("NeighborOffsetList");
 }
 //=================================================================================================//
 template <class ParticleCellLinkedListType>
@@ -38,23 +37,13 @@ Relation<Inner<ParticleCellLinkedListType>>::ComputingKernel<T>::
 template <class ParticleCellLinkedListType>
 template <class T>
 void Relation<Inner<ParticleCellLinkedListType>>::ComputingKernel<T>::
-    clearAllLists(UnsignedInt index_i)
-{
-    neighbor_offset_list_[index_i] = 0;
-    neighbor_size_list_[index_i] = 0;
-    neighbor_id_list_[index_i] = 0;
-}
-//=================================================================================================//
-template <class ParticleCellLinkedListType>
-template <class T>
-void Relation<Inner<ParticleCellLinkedListType>>::ComputingKernel<T>::
     incrementNeighborSize(UnsignedInt index_i)
 {
-    // Here, neighbor_id_list_ takes role of neighbor_size_list_.
-    particle_cell_linked_list_.forEachNeighbor(
-        index_i, pos_,
-        [=](size_t j)
-        { ++neighbor_id_list_[index_i]; });
+    // Here, neighbor_id_list_ takes role of temporary storage for neighbor size list.
+    UnsignedInt neighbor_count = 0;
+    particle_cell_linked_list_.forEachNeighbor(index_i, pos_, [&](size_t j)
+                                               { neighbor_count++; });
+    neighbor_id_list_[index_i] = neighbor_count;
 }
 //=================================================================================================//
 template <class ParticleCellLinkedListType>
@@ -62,12 +51,13 @@ template <class T>
 void Relation<Inner<ParticleCellLinkedListType>>::ComputingKernel<T>::
     updateNeighborIDList(UnsignedInt index_i)
 {
+    UnsignedInt neighbor_count = 0;
     particle_cell_linked_list_.forEachNeighbor(
         index_i, pos_,
-        [=](size_t j)
+        [&](size_t j)
         {
-            ++neighbor_size_list_[index_i];
-            neighbor_id_list_[neighbor_offset_list_[index_i] + neighbor_size_list_[index_i]] = j;
+            neighbor_count++;
+            neighbor_id_list_[neighbor_offset_list_[index_i] + neighbor_count] = j;
         });
 }
 //=================================================================================================//
@@ -82,11 +72,6 @@ void UpdateRelation<RelationType, ExecutionPolicy>::exec(Real dt)
 {
     UnsignedInt total_real_particles = this->particles_->TotalRealParticles();
     ComputingKernel *computing_kernel = kernel_implementation_.getComputingKernel();
-    particle_for(ExecutionPolicy{},
-                 IndexRange(0, this->real_particle_bound_plus_one_),
-                 [=](size_t i)
-                 { computing_kernel->clearAllLists(i); });
-
     particle_for(ExecutionPolicy{},
                  IndexRange(0, total_real_particles),
                  [=](size_t i)
