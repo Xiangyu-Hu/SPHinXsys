@@ -10,7 +10,6 @@
 #include "mesh_with_data_packages.h"
 #include "mesh_iterators.hpp"
 
-//=================================================================================================//
 namespace SPH
 {
 //=================================================================================================//
@@ -43,18 +42,6 @@ template <int PKG_SIZE>
 void MeshWithGridDataPackages<PKG_SIZE>::deleteIndexDataMatrix()
 {
     Delete2dArray(index_data_mesh_, all_cells_);
-}
-//=================================================================================================//
-template <int PKG_SIZE>
-void MeshWithGridDataPackages<PKG_SIZE>::allocateCategoryDataMatrix()
-{
-    Allocate2dArray(category_data_mesh_, all_cells_);
-}
-//=================================================================================================//
-template <int PKG_SIZE>
-void MeshWithGridDataPackages<PKG_SIZE>::deleteCategoryDataMatrix()
-{
-    Delete2dArray(category_data_mesh_, all_cells_);
 }
 //=================================================================================================//
 template <int PKG_SIZE>
@@ -95,13 +82,6 @@ size_t MeshWithGridDataPackages<PKG_SIZE>::
 }
 //=================================================================================================//
 template <int PKG_SIZE>
-void MeshWithGridDataPackages<PKG_SIZE>::
-    assignCategoryOnMetaDataMesh(const Arrayi &cell_index, const int category)
-{
-    category_data_mesh_[cell_index[0]][cell_index[1]] = category;
-}
-//=================================================================================================//
-template <int PKG_SIZE>
 bool MeshWithGridDataPackages<PKG_SIZE>::
     isSingularDataPackage(const Arrayi &cell_index)
 {
@@ -113,16 +93,6 @@ bool MeshWithGridDataPackages<PKG_SIZE>::
     isInnerDataPackage(const Arrayi &cell_index)
 {
     return index_data_mesh_[cell_index[0]][cell_index[1]] > 1;
-}
-//=================================================================================================//
-template <int PKG_SIZE>
-bool MeshWithGridDataPackages<PKG_SIZE>::
-    isCoreDataPackage(const Arrayi &cell_index)
-{
-    size_t package_index = PackageIndexFromCellIndex(cell_index);
-    return meta_data_cell_[package_index].second == 1;
-
-    // return category_data_mesh_[cell_index[0]][cell_index[1]] == 2;
 }
 //=================================================================================================//
 template <int PKG_SIZE>
@@ -229,8 +199,7 @@ DataType MeshWithGridDataPackages<PKG_SIZE>::
 //=================================================================================================//
 template <int PKG_SIZE>
 template <typename FunctionOnData>
-void MeshWithGridDataPackages<PKG_SIZE>::
-    grid_parallel_for(const FunctionOnData &function)
+void MeshWithGridDataPackages<PKG_SIZE>::grid_parallel_for(const FunctionOnData &function)
 {
     mesh_parallel_for(MeshRange(Arrayi::Zero(), all_cells_),
                       [&](size_t i, size_t j)
