@@ -100,7 +100,7 @@ void UpdateRelation<RelationType, ExecutionPolicy>::exec(Real dt)
     if (current_neighbor_id_list_size > this->neighbor_id_list_size_)
     {
         std::cout << "\n Error: the current neighbor id list size " << current_neighbor_id_list_size
-                  << " is larger than the allocated value " << neighbor_id_list_size_ " !" << std::endl;
+                  << " is larger than the allocated value " << this->neighbor_id_list_size_ << " !" << std::endl;
         std::cout << __FILE__ << ':' << __LINE__ << std::endl;
         exit(1);
     }
