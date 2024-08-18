@@ -66,7 +66,7 @@ void InitializeBasicDataForAPackage::update(const size_t &package_index)
 {
     auto &phi = phi_.DataField()[package_index];
     auto &near_interface_id = near_interface_id_.DataField()[package_index];
-    Arrayi cell_index = CellIndexFromSortIndex(package_index);
+    Arrayi cell_index = mesh_data_.meta_data_cell_[package_index].first;
     mesh_data_.for_each_cell_data(
         [&](int i, int j, int k)
         {
