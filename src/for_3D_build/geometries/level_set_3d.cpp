@@ -10,25 +10,6 @@
 namespace SPH
 {
 //=================================================================================================//
-void LevelSet::initializeDataForSingularPackage(const size_t package_index, Real far_field_level_set)
-{
-    auto &phi = phi_.DataField()[package_index];
-    auto &near_interface_id = near_interface_id_.DataField()[package_index];
-    auto &phi_gradient = phi_gradient_.DataField()[package_index];
-    auto &kernel_weight = kernel_weight_.DataField()[package_index];
-    auto &kernel_gradient = kernel_gradient_.DataField()[package_index];
-
-    for_each_cell_data(
-        [&](int i, int j, int k)
-        {
-            phi[i][j][k] = far_field_level_set;
-            near_interface_id[i][j][k] = far_field_level_set < 0.0 ? -2 : 2;
-            phi_gradient[i][j][k] = Vecd::Ones();
-            kernel_weight[i][j][k] = far_field_level_set < 0.0 ? 0 : 1.0;
-            kernel_gradient[i][j][k] = Vec3d::Zero();
-        });
-}
-//=================================================================================================//
 bool LevelSet::isWithinCorePackage(Vecd position)
 {
     Arrayi cell_index = CellIndexFromPosition(position);

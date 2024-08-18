@@ -58,10 +58,10 @@ void LevelSet::finishDataPackages()
     initialize_cell_neighborhood.exec();
     resizeMeshVariableData();
 
-
     Real far_field_distance = grid_spacing_ * (Real)buffer_width_;
-    initializeDataForSingularPackage(0, -far_field_distance);
-    initializeDataForSingularPackage(1, far_field_distance);
+    MeshSingleDynamics<InitializeDataForSingularPackage> initialize_data_for_singular_package(mesh_data_);
+    initialize_data_for_singular_package.exec(0, -far_field_distance);
+    initialize_data_for_singular_package.exec(1, far_field_distance);
 
     initialize_basic_data_for_a_package.exec();
     update_level_set_gradient.exec();

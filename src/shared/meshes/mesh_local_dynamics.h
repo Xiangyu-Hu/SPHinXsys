@@ -60,7 +60,7 @@ class BaseMeshLocalDynamics
           kernel_gradient_(*mesh_data.getMeshVariable<Vecd>("KernelGradient")){};
     virtual ~BaseMeshLocalDynamics(){};
 
-    virtual void update(const IndexType &index) = 0;
+    // virtual void update(const IndexType &index) = 0;
   protected:
     MeshWithGridDataPackages<4> &mesh_data_;
     Arrayi all_cells_;
@@ -72,6 +72,16 @@ class BaseMeshLocalDynamics
     MeshVariable<int> &near_interface_id_;
     MeshVariable<Real> &kernel_weight_;
     MeshVariable<Vecd> &kernel_gradient_;
+};
+
+class InitializeDataForSingularPackage : public BaseMeshLocalDynamics<Arrayi>
+{
+  public:
+    explicit InitializeDataForSingularPackage(MeshWithGridDataPackages<4> &mesh_data)
+        : BaseMeshLocalDynamics(mesh_data){};
+    virtual ~InitializeDataForSingularPackage(){};
+
+    void update(const size_t package_index, Real far_field_level_set);
 };
 
 class InitializeDataInACell : public BaseMeshLocalDynamics<Arrayi>

@@ -46,16 +46,12 @@ namespace SPH
  * This class contains only the interface functions available
  * for all dynamics. An specific implementation should be realized.
  */
-template <class ReturnType = void>
 class BaseMeshDynamics
 {
   public:
     BaseMeshDynamics(MeshWithGridDataPackages<4> &mesh_data)
         : mesh_data_(mesh_data){};
     virtual ~BaseMeshDynamics(){};
-
-    /** There is the interface functions for computing. */
-    virtual ReturnType exec() = 0;
 
   protected:
     MeshWithGridDataPackages<4> &mesh_data_;
@@ -66,16 +62,16 @@ class BaseMeshDynamics
  * @brief Mesh dynamics for all cell on the mesh
  */
 template <class LocalDynamicsType>
-class MeshAllDynamics : public LocalDynamicsType, public BaseMeshDynamics<void>
+class MeshAllDynamics : public LocalDynamicsType, public BaseMeshDynamics
 {
   public:
     template <typename... Args>
     MeshAllDynamics(MeshWithGridDataPackages<4> &mesh_data, Args &&...args)
         : LocalDynamicsType(mesh_data, std::forward<Args>(args)...),
-          BaseMeshDynamics<void>(mesh_data){};
+          BaseMeshDynamics(mesh_data){};
     virtual ~MeshAllDynamics(){};
 
-    virtual void exec() override
+    void exec()
     {
         mesh_data_.grid_parallel_for(
             [&](Arrayi cell_index)
@@ -91,16 +87,16 @@ class MeshAllDynamics : public LocalDynamicsType, public BaseMeshDynamics<void>
  * @brief Mesh dynamics for only inner cells on the mesh
  */
 template <class LocalDynamicsType>
-class MeshInnerDynamics : public LocalDynamicsType, public BaseMeshDynamics<void>
+class MeshInnerDynamics : public LocalDynamicsType, public BaseMeshDynamics
 {
   public:
     template <typename... Args>
     MeshInnerDynamics(MeshWithGridDataPackages<4> &mesh_data, Args &&...args)
         : LocalDynamicsType(mesh_data, std::forward<Args>(args)...),
-          BaseMeshDynamics<void>(mesh_data){};
+          BaseMeshDynamics(mesh_data){};
     virtual ~MeshInnerDynamics(){};
 
-    virtual void exec() override
+    void exec()
     {
         mesh_data_.package_parallel_for(
             [&](size_t package_index)
@@ -116,16 +112,16 @@ class MeshInnerDynamics : public LocalDynamicsType, public BaseMeshDynamics<void
  * @brief Mesh dynamics for only core cells on the mesh
  */
 template <class LocalDynamicsType>
-class MeshCoreDynamics : public LocalDynamicsType, public BaseMeshDynamics<void>
+class MeshCoreDynamics : public LocalDynamicsType, public BaseMeshDynamics
 {
   public:
     template <class DynamicsIdentifier, typename... Args>
     MeshCoreDynamics(DynamicsIdentifier &identifier, Args &&...args)
         : LocalDynamicsType(identifier, std::forward<Args>(args)...),
-          BaseMeshDynamics<void>(identifier){};
+          BaseMeshDynamics(identifier){};
     virtual ~MeshCoreDynamics(){};
 
-    virtual void exec() override
+    void exec()
     {
         mesh_data_.package_parallel_for(
           [&](size_t package_index)
@@ -137,6 +133,27 @@ class MeshCoreDynamics : public LocalDynamicsType, public BaseMeshDynamics<void>
               }
           }
         );
+    };
+};
+
+/**
+ * @class MeshSingleDynamics
+ * @brief Mesh dynamics for only core cells on the mesh
+ */
+template <class LocalDynamicsType>
+class MeshSingleDynamics : public LocalDynamicsType, public BaseMeshDynamics
+{
+  public:
+    template <class DynamicsIdentifier, typename... Args>
+    MeshSingleDynamics(DynamicsIdentifier &identifier, Args &&...args)
+        : LocalDynamicsType(identifier, std::forward<Args>(args)...),
+          BaseMeshDynamics(identifier){};
+    virtual ~MeshSingleDynamics(){};
+
+    template <typename... Args>
+    void exec(Args &&...args)
+    {
+        this->update(std::forward<Args>(args)...);
     };
 };
 } // namespace SPH
