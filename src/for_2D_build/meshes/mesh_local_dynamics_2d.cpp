@@ -5,6 +5,25 @@
 namespace SPH
 {
 //=============================================================================================//
+void InitializeDataForSingularPackage::update(const size_t package_index, Real far_field_level_set)
+{
+    auto &phi = phi_.DataField()[package_index];
+    auto &near_interface_id = near_interface_id_.DataField()[package_index];
+    auto &phi_gradient = phi_gradient_.DataField()[package_index];
+    auto &kernel_weight = kernel_weight_.DataField()[package_index];
+    auto &kernel_gradient = kernel_gradient_.DataField()[package_index];
+
+    mesh_data_.for_each_cell_data(
+        [&](int i, int j)
+        {
+            phi[i][j] = far_field_level_set;
+            near_interface_id[i][j] = far_field_level_set < 0.0 ? -2 : 2;
+            phi_gradient[i][j] = Vecd::Ones();
+            kernel_weight[i][j] = far_field_level_set < 0.0 ? 0 : 1.0;
+            kernel_gradient[i][j] = Vec2d::Zero();
+        });
+}
+//=============================================================================================//
 size_t InitializeDataInACell::SortIndexFromCellIndex(const Arrayi &cell_index)
 {
     return cell_index[0] * all_cells_[1] + cell_index[1];

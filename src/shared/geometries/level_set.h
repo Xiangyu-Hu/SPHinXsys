@@ -108,9 +108,6 @@ class LevelSet : public MeshWithGridDataPackages<4>,
     MeshVariable<Vecd> &kernel_gradient_;
     MeshWithGridDataPackages<4> &mesh_data_ = *this;
 
-    void initializeDataForSingularPackage(const size_t package_index, Real far_field_level_set);
-    void redistanceInterfaceForAPackage(const size_t package_index);
-
     void finishDataPackages();
     MeshAllDynamics<InitializeDataInACell> initialize_data_in_a_cell{mesh_data_, shape_};
     MeshAllDynamics<TagACellIsInnerPackage> tag_a_cell_is_inner_package{mesh_data_};
