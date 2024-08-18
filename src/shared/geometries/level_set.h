@@ -112,10 +112,7 @@ class LevelSet : public MeshWithGridDataPackages<4>,
     void redistanceInterfaceForAPackage(const size_t package_index);
 
     void finishDataPackages();
-    void reinitializeLevelSet();
-    void markNearInterface(Real small_shift_factor);
     void redistanceInterface();
-    void diffuseLevelSetSign();
     MeshAllDynamics<InitializeDataInACell> initialize_data_in_a_cell{mesh_data_, shape_};
     MeshAllDynamics<TagACellIsInnerPackage> tag_a_cell_is_inner_package{mesh_data_};
 
