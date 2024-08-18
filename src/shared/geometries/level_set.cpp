@@ -118,18 +118,20 @@ void LevelSet::redistanceInterface()
 //=================================================================================================//
 void LevelSet::cleanInterface(Real small_shift_factor)
 {
-    markNearInterface(small_shift_factor);
+    mark_near_interface.setSmallShiftFactor(small_shift_factor);
+    mark_near_interface.exec();
     redistanceInterface();
-    reinitializeLevelSet();
+    reinitialize_level_set.exec();
     update_level_set_gradient.exec();
     update_kernel_integrals.exec();
 }
 //=============================================================================================//
 void LevelSet::correctTopology(Real small_shift_factor)
 {
-    markNearInterface(small_shift_factor);
+    mark_near_interface.setSmallShiftFactor(small_shift_factor);
+    mark_near_interface.exec();
     for (size_t i = 0; i != 10; ++i)
-        diffuseLevelSetSign();
+        diffuse_level_set_sign.exec();
     update_level_set_gradient.exec();
     update_kernel_integrals.exec();
 }
