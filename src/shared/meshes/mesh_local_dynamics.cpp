@@ -101,8 +101,9 @@ void UpdateKernelIntegrals::update(const size_t &package_index)
 void InitializeDataInACellFromCoarse::update(const Arrayi &cell_index)
 {
     Vecd cell_position = mesh_data_.CellPositionFromIndex(cell_index);
-    // size_t package_index = coarse_mesh_.probeSignedDistance(cell_position) < 0.0 ? 0 : 1;
-    mesh_data_.assignDataPackageIndex(cell_index, 1);   //todo change the 1 to package_index here
+    MeshVariable<Real> &coarse_phi_ = *coarse_mesh_.getMeshVariable<Real>("Levelset");
+    size_t package_index = coarse_mesh_.probeMesh(coarse_phi_, cell_position) < 0.0 ? 0 : 1;
+    mesh_data_.assignDataPackageIndex(cell_index, package_index);
     if (coarse_mesh_.isWithinCorePackage(cell_position))
     {
         Real signed_distance = shape_.findSignedDistance(cell_position);
