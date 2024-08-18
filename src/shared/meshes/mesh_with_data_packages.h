@@ -32,6 +32,7 @@
 #include "base_mesh.h"
 #include "base_variable.h"
 #include "my_memory_pool.h"
+#include "tbb/parallel_sort.h"
 
 #include <algorithm>
 #include <fstream>
@@ -267,6 +268,17 @@ class MeshWithGridDataPackages : public Mesh
     {
         size_t package_index = PackageIndexFromCellIndex(cell_index);
         return meta_data_cell_[package_index].second == 1;
+    }
+
+    void organizeOccupiedPackages(){
+        parallel_sort(occupied_data_pkgs_.begin(), occupied_data_pkgs_.end(),
+                    [](const std::pair<size_t, int>& a, const std::pair<size_t, int>& b)
+                    {
+                        return a.first < b.first; 
+                    });
+        num_grid_pkgs_ = occupied_data_pkgs_.size() + 2;
+        cell_neighborhood_ = new CellNeighborhood[num_grid_pkgs_];
+        meta_data_cell_ = new std::pair<Arrayi, int>[num_grid_pkgs_];
     }
 };
 } // namespace SPH

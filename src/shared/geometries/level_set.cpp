@@ -2,7 +2,6 @@
 
 #include "adaptation.h"
 #include "base_kernel.h"
-#include "tbb/parallel_sort.h"
 
 namespace SPH
 {
@@ -54,14 +53,7 @@ void LevelSet::finishDataPackages()
 {
     tag_a_cell_is_inner_package.exec();
 
-    parallel_sort(occupied_data_pkgs_.begin(), occupied_data_pkgs_.end(),
-                  [](const std::pair<size_t, int>& a, const std::pair<size_t, int>& b)
-                  {
-                      return a.first < b.first; 
-                  });
-    num_grid_pkgs_ = occupied_data_pkgs_.size() + 2;
-    cell_neighborhood_ = new CellNeighborhood[num_grid_pkgs_];
-    meta_data_cell_ = new std::pair<Arrayi, int>[num_grid_pkgs_];
+    mesh_data_.organizeOccupiedPackages();
     initialize_index_mesh.exec();
     initialize_cell_neighborhood.exec();
     resizeMeshVariableData();

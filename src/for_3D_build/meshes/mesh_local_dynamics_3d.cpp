@@ -180,7 +180,50 @@ void ReinitializeLevelSet::update(const size_t &package_index)
 //=============================================================================================//
 void MarkNearInterface::update(const size_t &package_index)
 {
-    printf("this is the execution of DiffuseLevelSetSign\n");
+    auto &phi_addrs = phi_.DataField()[package_index];
+    auto &near_interface_id_addrs = near_interface_id_.DataField()[package_index];
+    auto neighborhood = mesh_data_.cell_neighborhood_[package_index];
+
+    // corner averages, note that the first row and first column are not used
+    PackageDataMatrix<Real, 5> corner_averages;
+    mesh_for_each3d<0, 5>(
+        [&](int i, int j, int k)
+        {
+            corner_averages[i][j][k] = mesh_data_.CornerAverage(phi_, Arrayi(i, j, k), Arrayi(-1, -1, -1), neighborhood);
+        });
+
+    mesh_data_.for_each_cell_data(
+        [&](int i, int j, int k)
+        {
+            // first assume far cells
+            Real phi_0 = phi_addrs[i][j][k];
+            int near_interface_id = phi_0 > 0.0 ? 2 : -2;
+            if (fabs(phi_0) < small_shift)
+            {
+                near_interface_id = 0;
+                Real phi_average_0 = corner_averages[i][j][k];
+                // find inner and outer cut cells
+                mesh_for_each3d<0, 2>(
+                    [&](int l, int m, int n)
+                    {
+                        Real phi_average = corner_averages[i + l][j + m][k + n];
+                        if ((phi_average_0 - small_shift) * (phi_average - small_shift) < 0.0)
+                            near_interface_id = 1;
+                        if ((phi_average_0 + small_shift) * (phi_average + small_shift) < 0.0)
+                            near_interface_id = -1;
+                    });
+                // find zero cut cells
+                mesh_for_each3d<0, 2>(
+                    [&](int l, int m, int n)
+                    {
+                        Real phi_average = corner_averages[i + l][j + m][k + n];
+                        if (phi_average_0 * phi_average < 0.0)
+                            near_interface_id = 0;
+                    });
+            }
+            // assign this is to package
+            near_interface_id_addrs[i][j][k] = near_interface_id;
+        });
 }
 //=============================================================================================//
 void RedistanceInterface::update(const size_t &package_index)
@@ -190,7 +233,33 @@ void RedistanceInterface::update(const size_t &package_index)
 //=============================================================================================//
 void DiffuseLevelSetSign::update(const size_t &package_index)
 {
-    printf("this is the execution of DiffuseLevelSetSign\n");
+    auto phi_data = phi_.DataField();
+    auto near_interface_id_data = near_interface_id_.DataField();
+    auto &neighborhood = mesh_data_.cell_neighborhood_[package_index];
+
+    mesh_data_.for_each_cell_data(
+        [&](int i, int j, int k)
+        {
+            // near interface cells are not considered
+            if (abs(near_interface_id_data[package_index][i][j][k]) > 1)
+            {
+                mesh_find_if3d<-1, 2>(
+                    [&](int l, int m, int n) -> bool
+                    {
+                        using NeighbourIndex = std::pair<size_t, Arrayi>; /**< stores shifted neighbour info: (size_t)package index, (arrayi)local grid index. */
+                        NeighbourIndex neighbour_index = mesh_data_.NeighbourIndexShift(Arrayi(i + l, j + m, k + n), neighborhood);
+                        int near_interface_id = near_interface_id_data[neighbour_index.first][neighbour_index.second[0]][neighbour_index.second[1]][neighbour_index.second[2]];
+                        bool is_found = abs(near_interface_id) == 1;
+                        if (is_found)
+                        {
+                            Real phi_0 = phi_data[package_index][i][j][k];
+                            near_interface_id_data[package_index][i][j][k] = near_interface_id;
+                            phi_data[package_index][i][j][k] = near_interface_id == 1 ? fabs(phi_0) : -fabs(phi_0);
+                        }
+                        return is_found;
+                    });
+            }
+        });
 }
 //=============================================================================================//
 } // namespace SPH
