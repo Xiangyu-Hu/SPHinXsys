@@ -10,12 +10,6 @@
 namespace SPH
 {
 //=================================================================================================//
-bool LevelSet::isWithinCorePackage(Vecd position)
-{
-    Arrayi cell_index = CellIndexFromPosition(position);
-    return isCoreDataPackage(cell_index);
-}
-//=================================================================================================//
 void LevelSet::writeMeshFieldToPlt(std::ofstream &output_file)
 {
     Arrayi number_of_operation = global_mesh_.AllGridPoints();
@@ -122,19 +116,6 @@ void LevelSet::writeMeshFieldToPlt(std::ofstream &output_file)
             }
             output_file << " \n";
         }
-}
-//=============================================================================================//
-RefinedLevelSet::RefinedLevelSet(BoundingBox tentative_bounds, LevelSet &coarse_level_set,
-                                 Shape &shape, SPHAdaptation &sph_adaptation)
-    : RefinedMesh(tentative_bounds, coarse_level_set, 4, shape, sph_adaptation)
-{
-    mesh_parallel_for(MeshRange(Arrayi::Zero(), all_cells_),
-                      [&](size_t i, size_t j, size_t k)
-                      {
-                          initializeDataInACellFromCoarse(Arrayi(i, j, k));
-                      });
-
-    finishDataPackages();
 }
 //=============================================================================================//
 } // namespace SPH

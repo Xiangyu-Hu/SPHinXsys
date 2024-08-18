@@ -44,7 +44,6 @@ using MeshWithGridDataPackagesType = MeshWithGridDataPackages<4>;
  * @class BaseMeshLocalDynamics
  * @brief The base class for all mesh local particle dynamics.
  */
-template <typename IndexType>
 class BaseMeshLocalDynamics
 {
   public:
@@ -60,7 +59,6 @@ class BaseMeshLocalDynamics
           kernel_gradient_(*mesh_data.getMeshVariable<Vecd>("KernelGradient")){};
     virtual ~BaseMeshLocalDynamics(){};
 
-    // virtual void update(const IndexType &index) = 0;
   protected:
     MeshWithGridDataPackages<4> &mesh_data_;
     Arrayi all_cells_;
@@ -72,9 +70,11 @@ class BaseMeshLocalDynamics
     MeshVariable<int> &near_interface_id_;
     MeshVariable<Real> &kernel_weight_;
     MeshVariable<Vecd> &kernel_gradient_;
+
+    size_t SortIndexFromCellIndex(const Arrayi &cell_index);
 };
 
-class InitializeDataForSingularPackage : public BaseMeshLocalDynamics<Arrayi>
+class InitializeDataForSingularPackage : public BaseMeshLocalDynamics
 {
   public:
     explicit InitializeDataForSingularPackage(MeshWithGridDataPackages<4> &mesh_data)
@@ -84,7 +84,7 @@ class InitializeDataForSingularPackage : public BaseMeshLocalDynamics<Arrayi>
     void update(const size_t package_index, Real far_field_level_set);
 };
 
-class InitializeDataInACell : public BaseMeshLocalDynamics<Arrayi>
+class InitializeDataInACell : public BaseMeshLocalDynamics
 {
   public:
     explicit InitializeDataInACell(MeshWithGridDataPackages<4> &mesh_data, Shape &shape)
@@ -97,10 +97,10 @@ class InitializeDataInACell : public BaseMeshLocalDynamics<Arrayi>
   private:
     Shape &shape_;
 
-    size_t SortIndexFromCellIndex(const Arrayi &cell_index);
+    // size_t SortIndexFromCellIndex(const Arrayi &cell_index);
 };
 
-class TagACellIsInnerPackage : public BaseMeshLocalDynamics<Arrayi>
+class TagACellIsInnerPackage : public BaseMeshLocalDynamics
 {
   public:
     explicit TagACellIsInnerPackage(MeshWithGridDataPackagesType &mesh_data)
@@ -111,10 +111,10 @@ class TagACellIsInnerPackage : public BaseMeshLocalDynamics<Arrayi>
 
   private:
     bool isInnerPackage(const Arrayi &cell_index);
-    size_t SortIndexFromCellIndex(const Arrayi &cell_index);
+    // size_t SortIndexFromCellIndex(const Arrayi &cell_index);
 };
 
-class InitializeIndexMesh : public BaseMeshLocalDynamics<size_t>
+class InitializeIndexMesh : public BaseMeshLocalDynamics
 {
   public:
     explicit InitializeIndexMesh(MeshWithGridDataPackagesType &mesh_data)
@@ -127,7 +127,7 @@ class InitializeIndexMesh : public BaseMeshLocalDynamics<size_t>
     Arrayi CellIndexFromSortIndex(const size_t &sort_index);
 };
 
-class InitializeCellNeighborhood : public BaseMeshLocalDynamics<size_t>
+class InitializeCellNeighborhood : public BaseMeshLocalDynamics
 {
   public:
     explicit InitializeCellNeighborhood(MeshWithGridDataPackagesType &mesh_data)
@@ -140,7 +140,7 @@ class InitializeCellNeighborhood : public BaseMeshLocalDynamics<size_t>
     Arrayi CellIndexFromSortIndex(const size_t &sort_index);
 };
 
-class InitializeBasicDataForAPackage : public BaseMeshLocalDynamics<size_t>
+class InitializeBasicDataForAPackage : public BaseMeshLocalDynamics
 {
   public:
     explicit InitializeBasicDataForAPackage(MeshWithGridDataPackagesType &mesh_data, Shape &shape)
@@ -156,7 +156,7 @@ class InitializeBasicDataForAPackage : public BaseMeshLocalDynamics<size_t>
     Arrayi CellIndexFromSortIndex(const size_t &sort_index);
 };
 
-class UpdateLevelSetGradient : public BaseMeshLocalDynamics<size_t>
+class UpdateLevelSetGradient : public BaseMeshLocalDynamics
 {
   public:
     explicit UpdateLevelSetGradient(MeshWithGridDataPackages<4> &mesh_data)
@@ -166,7 +166,7 @@ class UpdateLevelSetGradient : public BaseMeshLocalDynamics<size_t>
     void update(const size_t &index);
 };
 
-class UpdateKernelIntegrals : public BaseMeshLocalDynamics<size_t>
+class UpdateKernelIntegrals : public BaseMeshLocalDynamics
 {
   public:
     explicit UpdateKernelIntegrals(MeshWithGridDataPackagesType &mesh_data, Kernel &kernel, Real global_h_ratio)
@@ -198,7 +198,7 @@ class UpdateKernelIntegrals : public BaseMeshLocalDynamics<size_t>
     }
 };
 
-class ReinitializeLevelSet : public BaseMeshLocalDynamics<size_t>
+class ReinitializeLevelSet : public BaseMeshLocalDynamics
 {
   public:
     explicit ReinitializeLevelSet(MeshWithGridDataPackagesType &mesh_data)
@@ -229,7 +229,7 @@ class ReinitializeLevelSet : public BaseMeshLocalDynamics<size_t>
     }
 };
 
-class MarkNearInterface : public BaseMeshLocalDynamics<size_t>
+class MarkNearInterface : public BaseMeshLocalDynamics
 {
   public:
     explicit MarkNearInterface(MeshWithGridDataPackagesType &mesh_data)
@@ -243,7 +243,7 @@ class MarkNearInterface : public BaseMeshLocalDynamics<size_t>
     Real small_shift;
 };
 
-class RedistanceInterface : public BaseMeshLocalDynamics<size_t>
+class RedistanceInterface : public BaseMeshLocalDynamics
 {
   public:
     explicit RedistanceInterface(MeshWithGridDataPackagesType &mesh_data)
@@ -253,7 +253,7 @@ class RedistanceInterface : public BaseMeshLocalDynamics<size_t>
     void update(const size_t &package_index);
 };
 
-class DiffuseLevelSetSign : public BaseMeshLocalDynamics<size_t>
+class DiffuseLevelSetSign : public BaseMeshLocalDynamics
 {
   public:
     explicit DiffuseLevelSetSign(MeshWithGridDataPackagesType &mesh_data)
@@ -263,15 +263,22 @@ class DiffuseLevelSetSign : public BaseMeshLocalDynamics<size_t>
     void update(const size_t &package_index);
 };
 
-// class InitializeDataInACellFromCoarse : public BaseMeshLocalDynamics<Arrayi>
-// {
-//   public:
-//     explicit InitializeDataInACellFromCoarse(MeshWithGridDataPackagesType &mesh_data)
-//         : BaseMeshLocalDynamics(mesh_data){};
-//     virtual ~InitializeDataInACellFromCoarse(){};
+class InitializeDataInACellFromCoarse : public BaseMeshLocalDynamics
+{
+  public:
+    explicit InitializeDataInACellFromCoarse(MeshWithGridDataPackagesType &mesh_data, MeshWithGridDataPackagesType &coarse_mesh, Shape &shape)
+        : BaseMeshLocalDynamics(mesh_data),
+          coarse_mesh_(coarse_mesh),
+          shape_(shape){};
+    virtual ~InitializeDataInACellFromCoarse(){};
 
-//     void update(const Arrayi &cell_index);
-// }
+    void update(const Arrayi &cell_index);
+
+  private:
+    MeshWithGridDataPackagesType &coarse_mesh_;
+    Shape &shape_;
+
+};
 
 } // namespace SPH
 #endif // MESH_LOCAL_DYNAMICS_H
