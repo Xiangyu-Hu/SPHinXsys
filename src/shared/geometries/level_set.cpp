@@ -157,27 +157,20 @@ Real LevelSet::upwindDifference(Real sign, Real df_p, Real df_n)
     return df;
 }
 //=============================================================================================//
-void RefinedLevelSet::initializeDataInACellFromCoarse(const Arrayi &cell_index)
+bool LevelSet::isWithinCorePackage(Vecd position)
 {
-    Vecd cell_position = CellPositionFromIndex(cell_index);
-    size_t package_index = coarse_mesh_.probeSignedDistance(cell_position) < 0.0 ? 0 : 1;
-    assignDataPackageIndex(cell_index, package_index);
-    if (coarse_mesh_.isWithinCorePackage(cell_position))
-    {
-        Real signed_distance = shape_.findSignedDistance(cell_position);
-        Vecd normal_direction = shape_.findNormalDirection(cell_position);
-        Real measure = (signed_distance * normal_direction).cwiseAbs().maxCoeff();
-        if (measure < grid_spacing_)
-        {
-            std::pair<size_t, int> occupied;
-            occupied.first = cell_index[0] * all_cells_[1] + cell_index[1];
-            occupied.first = cell_index[0] * all_cells_[1] * all_cells_[2] + cell_index[1] * all_cells_[2] + cell_index[2];
-            occupied.second = 1;
+    Arrayi cell_index = CellIndexFromPosition(position);
+    return isCoreDataPackage(cell_index);
+}
+//=============================================================================================//
+RefinedLevelSet::RefinedLevelSet(BoundingBox tentative_bounds, LevelSet &coarse_level_set,
+                                 Shape &shape, SPHAdaptation &sph_adaptation)
+    : RefinedMesh(tentative_bounds, coarse_level_set, 4, shape, sph_adaptation)
+{
+    MeshAllDynamics<InitializeDataInACellFromCoarse> initialize_data_in_a_cell_from_coarse(mesh_data_, coarse_mesh_, shape_);
+    initialize_data_in_a_cell_from_coarse.exec();
 
-            mesh_data_.assignDataPackageIndex(cell_index, 2);
-            mesh_data_.registerOccupied(occupied);
-        }
-    }
+    finishDataPackages();
 }
 //=============================================================================================//
 MultilevelLevelSet::MultilevelLevelSet(

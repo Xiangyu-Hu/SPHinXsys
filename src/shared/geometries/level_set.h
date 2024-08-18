@@ -135,9 +135,6 @@ class RefinedLevelSet : public RefinedMesh<LevelSet>
   public:
     RefinedLevelSet(BoundingBox tentative_bounds, LevelSet &coarse_level_set, Shape &shape, SPHAdaptation &sph_adaptation);
     virtual ~RefinedLevelSet(){};
-
-  protected:
-    void initializeDataInACellFromCoarse(const Arrayi &cell_index);
 };
 
 /**

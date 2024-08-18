@@ -5,6 +5,11 @@
 namespace SPH
 {
 //=============================================================================================//
+size_t BaseMeshLocalDynamics::SortIndexFromCellIndex(const Arrayi &cell_index)
+{
+    return cell_index[0] * all_cells_[1] * all_cells_[2] + cell_index[1] * all_cells_[2] + cell_index[2];
+}
+//=============================================================================================//
 void InitializeDataForSingularPackage::update(const size_t package_index, Real far_field_level_set)
 {
     auto &phi = phi_.DataField()[package_index];
@@ -22,16 +27,6 @@ void InitializeDataForSingularPackage::update(const size_t package_index, Real f
             kernel_weight[i][j][k] = far_field_level_set < 0.0 ? 0 : 1.0;
             kernel_gradient[i][j][k] = Vec3d::Zero();
         });
-}
-//=============================================================================================//
-size_t InitializeDataInACell::SortIndexFromCellIndex(const Arrayi &cell_index)
-{
-    return cell_index[0] * all_cells_[1] * all_cells_[2] + cell_index[1] * all_cells_[2] + cell_index[2];
-}
-//=============================================================================================//
-size_t TagACellIsInnerPackage::SortIndexFromCellIndex(const Arrayi &cell_index)
-{
-    return cell_index[0] * all_cells_[1] * all_cells_[2] + cell_index[1] * all_cells_[2] + cell_index[2];
 }
 //=============================================================================================//
 bool TagACellIsInnerPackage::isInnerPackage(const Arrayi &cell_index)

@@ -280,6 +280,12 @@ class MeshWithGridDataPackages : public Mesh
         cell_neighborhood_ = new CellNeighborhood[num_grid_pkgs_];
         meta_data_cell_ = new std::pair<Arrayi, int>[num_grid_pkgs_];
     }
+
+    bool isWithinCorePackage(Vecd position)
+    {
+        Arrayi cell_index = CellIndexFromPosition(position);
+        return isCoreDataPackage(cell_index);
+    }
 };
 } // namespace SPH
 #endif // MESH_WITH_DATA_PACKAGES_H

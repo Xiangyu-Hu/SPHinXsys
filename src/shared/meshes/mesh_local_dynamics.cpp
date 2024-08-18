@@ -98,5 +98,27 @@ void UpdateKernelIntegrals::update(const size_t &package_index)
         { return computeKernelGradientIntegral(position); });
 }
 //=================================================================================================//
+void InitializeDataInACellFromCoarse::update(const Arrayi &cell_index)
+{
+    Vecd cell_position = mesh_data_.CellPositionFromIndex(cell_index);
+    // size_t package_index = coarse_mesh_.probeSignedDistance(cell_position) < 0.0 ? 0 : 1;
+    mesh_data_.assignDataPackageIndex(cell_index, 1);   //todo change the 1 to package_index here
+    if (coarse_mesh_.isWithinCorePackage(cell_position))
+    {
+        Real signed_distance = shape_.findSignedDistance(cell_position);
+        Vecd normal_direction = shape_.findNormalDirection(cell_position);
+        Real measure = (signed_distance * normal_direction).cwiseAbs().maxCoeff();
+        if (measure < grid_spacing_)
+        {
+            std::pair<size_t, int> occupied;
+            occupied.first = SortIndexFromCellIndex(cell_index);
+            occupied.second = 1;
+
+            mesh_data_.assignDataPackageIndex(cell_index, 2);
+            mesh_data_.registerOccupied(occupied);
+        }
+    }
+}
+//=================================================================================================//
 } // namespace SPH
 //=================================================================================================//
