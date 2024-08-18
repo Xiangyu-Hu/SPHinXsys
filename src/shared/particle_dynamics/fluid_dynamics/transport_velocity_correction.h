@@ -128,6 +128,10 @@ using TransportVelocityCorrectionCorrectedForOpenBoundaryFlowComplex =
     BaseTransportVelocityCorrectionComplex<SingleResolution, NoLimiter, LinearGradientCorrectionWithBulkScope, ParticleScope>;
 
 template <class ParticleScope>
+using TransportVelocityLimitedCorrectionCorrectedForOpenBoundaryFlowComplex =
+    BaseTransportVelocityCorrectionComplex<SingleResolution, TruncatedLinear, LinearGradientCorrectionWithBulkScope, ParticleScope>;
+
+template <class ParticleScope>
 using TransportVelocityLimitedCorrectionComplex =
     BaseTransportVelocityCorrectionComplex<SingleResolution, TruncatedLinear, NoKernelCorrection, ParticleScope>;
 
