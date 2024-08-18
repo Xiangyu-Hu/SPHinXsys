@@ -103,24 +103,11 @@ Vecd LevelSet::probeKernelGradientIntegral(const Vecd &position, Real h_ratio)
     return probeMesh(kernel_gradient_, position);
 }
 //=================================================================================================//
-void LevelSet::redistanceInterface()
-{
-    // redistance_interface.exec();
-    package_parallel_for(
-        [&](size_t package_index) {
-            std::pair<Arrayi, int> &metadata = meta_data_cell_[package_index];
-            if (metadata.second == 1)
-            {
-                redistanceInterfaceForAPackage(PackageIndexFromCellIndex(metadata.first));
-            }
-        });
-}
-//=================================================================================================//
 void LevelSet::cleanInterface(Real small_shift_factor)
 {
     mark_near_interface.setSmallShiftFactor(small_shift_factor);
     mark_near_interface.exec();
-    redistanceInterface();
+    redistance_interface.exec();
     reinitialize_level_set.exec();
     update_level_set_gradient.exec();
     update_kernel_integrals.exec();
