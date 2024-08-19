@@ -46,26 +46,7 @@ LevelSet::LevelSet(BoundingBox tentative_bounds, Real data_spacing,
     : LevelSet(tentative_bounds, data_spacing, 4, shape, sph_adaptation)
 {
     initialize_data_in_a_cell.exec();
-    finishDataPackages();
-}
-//=================================================================================================//
-void LevelSet::finishDataPackages()
-{
-    tag_a_cell_is_inner_package.exec();
-
-    mesh_data_.organizeOccupiedPackages();
-    initialize_index_mesh.exec();
-    initialize_cell_neighborhood.exec();
-    resizeMeshVariableData();
-
-    Real far_field_distance = grid_spacing_ * (Real)buffer_width_;
-    MeshSingleDynamics<InitializeDataForSingularPackage> initialize_data_for_singular_package(mesh_data_);
-    initialize_data_for_singular_package.exec(0, -far_field_distance);
-    initialize_data_for_singular_package.exec(1, far_field_distance);
-
-    initialize_basic_data_for_a_package.exec();
-    update_level_set_gradient.exec();
-    update_kernel_integrals.exec();
+    finish_data_packages.exec();
 }
 //=================================================================================================//
 Vecd LevelSet::probeNormalDirection(const Vecd &position)
@@ -170,7 +151,7 @@ RefinedLevelSet::RefinedLevelSet(BoundingBox tentative_bounds, LevelSet &coarse_
     MeshAllDynamics<InitializeDataInACellFromCoarse> initialize_data_in_a_cell_from_coarse(mesh_data_, coarse_mesh_, shape_);
     initialize_data_in_a_cell_from_coarse.exec();
 
-    finishDataPackages();
+    finish_data_packages.exec();
 }
 //=============================================================================================//
 MultilevelLevelSet::MultilevelLevelSet(

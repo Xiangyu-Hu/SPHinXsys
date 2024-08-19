@@ -33,39 +33,53 @@
 
 #include "mesh_dynamics.h"
 #include "mesh_local_dynamics.h"
-#include "all_body_relations.h"
-#include "base_body.h"
-#include "base_data_package.h"
-#include "neighborhood.h"
-#include "sph_data_containers.h"
-
-#include <functional>
-
-using namespace std::placeholders;
 
 namespace SPH
 {
-// class DefineShapeOnMeshWithGridDataPackages
-//     : BaseMeshDynamics
-// {
-//   public:
-//     explicit DefineShapeOnMeshWithGridDataPackages(MeshWithGridDataPackages &mesh_data, Shape &shape)
-//         : BaseMeshDynamics(mesh_data),
-//           shape_(shape){};
-//     virtual ~DefineShapeOnMeshWithGridDataPackages(){};
+class FinishDataPackages : public BaseMeshDynamics
+{
+  public:
+    explicit FinishDataPackages(MeshWithGridDataPackages<4> &mesh_data, Shape &shape, Kernel &kernel, Real global_h_ratio)
+        : BaseMeshDynamics(mesh_data),
+          shape_(shape),
+          kernel_(kernel),
+          global_h_ratio_(global_h_ratio),
+          grid_spacing_(mesh_data.GridSpacing()),
+          buffer_width_(mesh_data.BufferWidth()){};
+    virtual ~FinishDataPackages(){};
 
-//     virtual void exec() override;
+    void exec(){
+        tag_a_cell_is_inner_package.exec();
 
-//   private:
-//     Shape &shape_;
+        mesh_data_.organizeOccupiedPackages();
+        initialize_index_mesh.exec();
+        initialize_cell_neighborhood.exec();
+        mesh_data_.resizeMeshVariableData();
 
-//     MeshAllDynamics<InitializeDataInACell> initialize_data_in_a_cell(mesh_data_, shape_);
-//     MeshAllDynamics<TagACellIsInnerPackage> tag_a_cell_is_inner_package(mesh_data_);
-//     MeshInnerDynamics<InitializeIndexMesh>  initialize_index_mesh(mesh_data_);
-//     MeshInnerDynamics<InitializeCellNeighborhood> initialize_cell_neighborhood(mesh_data_);
+        Real far_field_distance = grid_spacing_ * (Real)buffer_width_;
+        initialize_data_for_singular_package.exec(0, -far_field_distance);
+        initialize_data_for_singular_package.exec(1, far_field_distance);
 
-//     bool isInnerPackage();
-// };
+        initialize_basic_data_for_a_package.exec();
+        update_level_set_gradient.exec();
+        update_kernel_integrals.exec();
+    };
+
+  private:
+    Shape &shape_;
+    Kernel &kernel_;
+    Real global_h_ratio_;
+    Real grid_spacing_;
+    size_t buffer_width_;
+
+    MeshSingleDynamics<InitializeDataForSingularPackage> initialize_data_for_singular_package{mesh_data_};
+    MeshAllDynamics<TagACellIsInnerPackage> tag_a_cell_is_inner_package{mesh_data_};
+    MeshInnerDynamics<InitializeIndexMesh> initialize_index_mesh{mesh_data_};
+    MeshInnerDynamics<InitializeCellNeighborhood> initialize_cell_neighborhood{mesh_data_};
+    MeshInnerDynamics<InitializeBasicDataForAPackage> initialize_basic_data_for_a_package{mesh_data_, shape_};
+    MeshInnerDynamics<UpdateLevelSetGradient> update_level_set_gradient{mesh_data_};
+    MeshInnerDynamics<UpdateKernelIntegrals> update_kernel_integrals{mesh_data_, kernel_, global_h_ratio_};
+};
 
 // class CleanInterface
 //     : BaseMeshDynamics

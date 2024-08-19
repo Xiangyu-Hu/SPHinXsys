@@ -109,6 +109,7 @@ class MeshWithGridDataPackages : public Mesh
     /** spacing between the data, which is 1/ pkg_size of this grid spacing */
     virtual Real DataSpacing() override { return data_spacing_; };
     Real GridSpacing() { return grid_spacing_; };
+    size_t BufferWidth() { return buffer_width_; };
 
   public:
     ConcurrentVec<std::pair<size_t, int>> occupied_data_pkgs_; /**< (size_t)sort_index, (int)core1/inner0. */

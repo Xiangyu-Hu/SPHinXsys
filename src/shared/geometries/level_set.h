@@ -34,6 +34,7 @@
 #include "mesh_with_data_packages.hpp"
 #include "mesh_dynamics.h"
 #include "mesh_local_dynamics.h"
+#include "all_mesh_dynamics.h"
 
 namespace SPH
 {
@@ -108,13 +109,8 @@ class LevelSet : public MeshWithGridDataPackages<4>,
     MeshVariable<Vecd> &kernel_gradient_;
     MeshWithGridDataPackages<4> &mesh_data_ = *this;
 
-    void finishDataPackages();
+    FinishDataPackages finish_data_packages{mesh_data_, shape_, kernel_, global_h_ratio_};
     MeshAllDynamics<InitializeDataInACell> initialize_data_in_a_cell{mesh_data_, shape_};
-    MeshAllDynamics<TagACellIsInnerPackage> tag_a_cell_is_inner_package{mesh_data_};
-
-    MeshInnerDynamics<InitializeIndexMesh> initialize_index_mesh{mesh_data_};
-    MeshInnerDynamics<InitializeCellNeighborhood> initialize_cell_neighborhood{mesh_data_};
-    MeshInnerDynamics<InitializeBasicDataForAPackage> initialize_basic_data_for_a_package{mesh_data_, shape_};
     MeshInnerDynamics<UpdateLevelSetGradient> update_level_set_gradient{mesh_data_};
     MeshInnerDynamics<UpdateKernelIntegrals> update_kernel_integrals{mesh_data_, kernel_, global_h_ratio_};
     MeshInnerDynamics<DiffuseLevelSetSign> diffuse_level_set_sign{mesh_data_};
