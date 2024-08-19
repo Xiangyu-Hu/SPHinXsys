@@ -212,6 +212,7 @@ class ReinitializeLevelSet : public BaseMeshLocalDynamics
     void update(const size_t &package_index);
 
   private:
+    // upwind algorithm choosing candidate difference by the sign
     Real upwindDifference(Real sign, Real df_p, Real df_n)
     {
         if (sign * df_p >= 0.0 && sign * df_n >= 0.0)
@@ -282,6 +283,46 @@ class InitializeDataInACellFromCoarse : public BaseMeshLocalDynamics
     MeshWithGridDataPackagesType &coarse_mesh_;
     Shape &shape_;
 
+};
+
+class ProbeSignedDistance : public BaseMeshLocalDynamics
+{
+  public:
+    explicit ProbeSignedDistance(MeshWithGridDataPackagesType &mesh_data)
+        : BaseMeshLocalDynamics(mesh_data){};
+    virtual ~ProbeSignedDistance(){};
+
+    Real update(const Vecd &position) { return mesh_data_.probeMesh(phi_, position); };
+};
+
+class ProbeLevelSetGradient : public BaseMeshLocalDynamics
+{
+  public:
+    explicit ProbeLevelSetGradient(MeshWithGridDataPackagesType &mesh_data)
+        : BaseMeshLocalDynamics(mesh_data){};
+    virtual ~ProbeLevelSetGradient(){};
+
+    Vecd update(const Vecd &position) { return mesh_data_.probeMesh(phi_gradient_, position); };
+};
+
+class ProbeKernelIntegral : public BaseMeshLocalDynamics
+{
+  public:
+    explicit ProbeKernelIntegral(MeshWithGridDataPackagesType &mesh_data)
+        : BaseMeshLocalDynamics(mesh_data){};
+    virtual ~ProbeKernelIntegral(){};
+
+    Real update(const Vecd &position) { return mesh_data_.probeMesh(kernel_weight_, position); };
+};
+
+class ProbeKernelGradientIntegral : public BaseMeshLocalDynamics
+{
+  public:
+    explicit ProbeKernelGradientIntegral(MeshWithGridDataPackagesType &mesh_data)
+        : BaseMeshLocalDynamics(mesh_data){};
+    virtual ~ProbeKernelGradientIntegral(){};
+
+    Vecd update(const Vecd &position) { return mesh_data_.probeMesh(kernel_gradient_, position); };
 };
 
 } // namespace SPH

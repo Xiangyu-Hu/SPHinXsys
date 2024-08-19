@@ -102,6 +102,11 @@ class LevelSet : public MeshWithGridDataPackages<4>,
     MeshVariable<Real> &kernel_weight_;
     MeshVariable<Vecd> &kernel_gradient_;
     MeshWithGridDataPackages<4> &mesh_data_ = *this;
+    MeshCalculateDynamics<Vecd, ProbeLevelSetGradient> probe_level_set_gradient{mesh_data_};
+    MeshCalculateDynamics<Vecd, ProbeNormalDirection> probe_normal_direction{mesh_data_};
+    MeshCalculateDynamics<Real, ProbeSignedDistance> probe_signed_distance{mesh_data_};
+    MeshCalculateDynamics<Real, ProbeKernelIntegral> probe_kernel_integral{mesh_data_};
+    MeshCalculateDynamics<Vecd, ProbeKernelGradientIntegral> probe_kernel_gradient_integral{mesh_data_};
 
     FinishDataPackages finish_data_packages{mesh_data_, shape_, kernel_, global_h_ratio_};
     MeshAllDynamics<InitializeDataInACell> initialize_data_in_a_cell{mesh_data_, shape_};
@@ -112,8 +117,6 @@ class LevelSet : public MeshWithGridDataPackages<4>,
     MeshInnerDynamics<MarkNearInterface> mark_near_interface{mesh_data_};
     MeshCoreDynamics<RedistanceInterface> redistance_interface{mesh_data_};
 
-    // upwind algorithm choosing candidate difference by the sign
-    Real upwindDifference(Real sign, Real df_p, Real df_n);
 };
 
 /**

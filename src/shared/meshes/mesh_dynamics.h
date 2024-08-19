@@ -156,5 +156,22 @@ class MeshSingleDynamics : public LocalDynamicsType, public BaseMeshDynamics
         this->update(std::forward<Args>(args)...);
     };
 };
+
+template <typename ReturnType, class LocalDynamicsType>
+class MeshCalculateDynamics : public LocalDynamicsType, public BaseMeshDynamics
+{
+  public:
+    template <class DynamicsIdentifier, typename... Args>
+    MeshCalculateDynamics(DynamicsIdentifier &identifier, Args &&...args)
+        : LocalDynamicsType(identifier, std::forward<Args>(args)...),
+          BaseMeshDynamics(identifier){};
+    virtual ~MeshCalculateDynamics(){};
+
+    template <typename... Args>
+    ReturnType exec(Args &&...args)
+    {
+        return this->update(std::forward<Args>(args)...);
+    };
+};
 } // namespace SPH
 #endif // MESH_DYNAMICS_H

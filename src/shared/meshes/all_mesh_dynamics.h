@@ -81,6 +81,32 @@ class FinishDataPackages : public BaseMeshDynamics
     MeshInnerDynamics<UpdateKernelIntegrals> update_kernel_integrals{mesh_data_, kernel_, global_h_ratio_};
 };
 
+class ProbeNormalDirection : public BaseMeshLocalDynamics
+{
+  public:
+    explicit ProbeNormalDirection(MeshWithGridDataPackagesType &mesh_data)
+        : BaseMeshLocalDynamics(mesh_data){};
+    virtual ~ProbeNormalDirection(){};
+
+    Vecd update(const Vecd &position)
+    {
+        Vecd probed_value = probe_level_set_gradient.exec(position);
+
+        Real threshold = 1.0e-2 * data_spacing_;
+        while (probed_value.norm() < threshold)
+        {
+            Vecd jittered = position; // jittering
+            for (int l = 0; l != position.size(); ++l)
+                jittered[l] += rand_uniform(-0.5, 0.5) * 0.5 * data_spacing_;
+            probed_value = probe_level_set_gradient.exec(jittered);
+        }
+        return probed_value.normalized();
+    }
+
+  private:
+    MeshCalculateDynamics<Vecd, ProbeLevelSetGradient> probe_level_set_gradient{mesh_data_};
+};
+
 // class CleanInterface
 //     : BaseMeshDynamics
 // {

@@ -39,37 +39,27 @@ LevelSet::LevelSet(BoundingBox tentative_bounds, Real data_spacing,
 //=================================================================================================//
 Vecd LevelSet::probeNormalDirection(const Vecd &position)
 {
-    Vecd probed_value = probeLevelSetGradient(position);
-
-    Real threshold = 1.0e-2 * data_spacing_;
-    while (probed_value.norm() < threshold)
-    {
-        Vecd jittered = position; // jittering
-        for (int l = 0; l != position.size(); ++l)
-            jittered[l] += rand_uniform(-0.5, 0.5) * 0.5 * data_spacing_;
-        probed_value = probeLevelSetGradient(jittered);
-    }
-    return probed_value.normalized();
+    return probe_normal_direction.exec(position);
 }
 //=================================================================================================//
 Vecd LevelSet::probeLevelSetGradient(const Vecd &position)
 {
-    return probeMesh(phi_gradient_, position);
+    return probe_level_set_gradient.exec(position);
 }
 //=================================================================================================//
 Real LevelSet::probeSignedDistance(const Vecd &position)
 {
-    return probeMesh(phi_, position);
+    return probe_signed_distance.exec(position);
 }
 //=================================================================================================//
 Real LevelSet::probeKernelIntegral(const Vecd &position, Real h_ratio)
 {
-    return probeMesh(kernel_weight_, position);
+    return probe_kernel_integral.exec(position);
 }
 //=================================================================================================//
 Vecd LevelSet::probeKernelGradientIntegral(const Vecd &position, Real h_ratio)
 {
-    return probeMesh(kernel_gradient_, position);
+    return probe_kernel_gradient_integral.exec(position);
 }
 //=================================================================================================//
 void LevelSet::cleanInterface(Real small_shift_factor)
@@ -95,7 +85,7 @@ void LevelSet::correctTopology(Real small_shift_factor)
 bool LevelSet::probeIsWithinMeshBound(const Vecd &position)
 {
     bool is_bounded = true;
-    Arrayi cell_pos = CellIndexFromPosition(position);
+    Arrayi cell_pos = mesh_data_.CellIndexFromPosition(position);
     for (int i = 0; i != position.size(); ++i)
     {
         if (cell_pos[i] < 2)
@@ -105,31 +95,11 @@ bool LevelSet::probeIsWithinMeshBound(const Vecd &position)
     }
     return is_bounded;
 }
-//=================================================================================================//
-Real LevelSet::upwindDifference(Real sign, Real df_p, Real df_n)
-{
-    if (sign * df_p >= 0.0 && sign * df_n >= 0.0)
-        return df_n;
-    if (sign * df_p <= 0.0 && sign * df_n <= 0.0)
-        return df_p;
-    if (sign * df_p > 0.0 && sign * df_n < 0.0)
-        return 0.0;
-
-    Real df = df_p;
-    if (sign * df_p < 0.0 && sign * df_n > 0.0)
-    {
-        Real ss = sign * (fabs(df_p) - fabs(df_n)) / (df_p - df_n);
-        if (ss > 0.0)
-            df = df_n;
-    }
-
-    return df;
-}
 //=============================================================================================//
 bool LevelSet::isWithinCorePackage(Vecd position)
 {
-    Arrayi cell_index = CellIndexFromPosition(position);
-    return isCoreDataPackage(cell_index);
+    Arrayi cell_index = mesh_data_.CellIndexFromPosition(position);
+    return mesh_data_.isCoreDataPackage(cell_index);
 }
 //=============================================================================================//
 RefinedLevelSet::RefinedLevelSet(BoundingBox tentative_bounds, LevelSet &coarse_level_set,
