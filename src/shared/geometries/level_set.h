@@ -62,12 +62,6 @@ class BaseLevelSet : public BaseMeshField
   protected:
     Shape &shape_; /**< the geometry is described by the level set. */
     SPHAdaptation &sph_adaptation_;
-
-    /** a cut cell is a cut by the level set. */
-    /** "Multi-scale modeling of compressible multi-fluid flows with conservative interface method."
-     * Hu, X. Y., et al., Proceedings of the Summer Program. Vol. 301. Stanford, CA, USA:
-     * Center for Turbulence Research, Stanford University, 2010.*/
-    Real CutCellVolumeFraction(Real phi, const Vecd &phi_gradient, Real data_spacing);
 };
 
 /**
@@ -155,6 +149,16 @@ class MultilevelLevelSet : public MultilevelMesh<BaseLevelSet, LevelSet, Refined
   protected:
     inline size_t getProbeLevel(const Vecd &position);
     inline size_t getCoarseLevel(Real h_ratio);
+};
+
+class MeshBody
+{
+  public:
+    MeshBody(BoundingBox tentative_bounds, Real reference_data_spacing, size_t total_levels, Shape &shape, SPHAdaptation &sph_adaptation){};
+    ~MeshBody(){};
+
+  private:
+  
 };
 } // namespace SPH
 #endif // LEVEL_SET_H

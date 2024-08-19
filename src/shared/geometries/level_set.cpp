@@ -17,18 +17,6 @@ BaseLevelSet ::BaseLevelSet(Shape &shape, SPHAdaptation &sph_adaptation)
     }
 }
 //=================================================================================================//
-Real BaseLevelSet::CutCellVolumeFraction(Real phi, const Vecd &phi_gradient, Real data_spacing)
-{
-    Real squared_norm_inv = 1.0 / (phi_gradient.squaredNorm() + TinyReal);
-    Real volume_fraction(0);
-    for (size_t i = 0; i != Dimensions; ++i)
-    {
-        volume_fraction += phi_gradient[i] * phi_gradient[i] * squared_norm_inv *
-                           Heaviside(phi / (ABS(phi_gradient[i]) + TinyReal), 0.5 * data_spacing);
-    }
-    return volume_fraction;
-}
-//=================================================================================================//
 LevelSet::LevelSet(BoundingBox tentative_bounds, Real data_spacing, size_t buffer_size,
                    Shape &shape, SPHAdaptation &sph_adaptation)
     : MeshWithGridDataPackages<4>(tentative_bounds, data_spacing, buffer_size),

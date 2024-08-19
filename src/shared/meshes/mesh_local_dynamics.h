@@ -185,6 +185,10 @@ class UpdateKernelIntegrals : public BaseMeshLocalDynamics
     Real computeKernelIntegral(const Vecd &position);
     Vecd computeKernelGradientIntegral(const Vecd &position);
 
+    /** a cut cell is a cut by the level set. */
+    /** "Multi-scale modeling of compressible multi-fluid flows with conservative interface method."
+     * Hu, X. Y., et al., Proceedings of the Summer Program. Vol. 301. Stanford, CA, USA:
+     * Center for Turbulence Research, Stanford University, 2010.*/
     Real CutCellVolumeFraction(Real phi, const Vecd &phi_gradient, Real data_spacing)
     {
         Real squared_norm_inv = 1.0 / (phi_gradient.squaredNorm() + TinyReal);
