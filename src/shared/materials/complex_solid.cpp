@@ -36,6 +36,11 @@ Real CompositeSolid::CompositeDensity(size_t index_i)
     return composite_materials_[(*material_id_)[index_i]]->ReferenceDensity();
 }
 //=================================================================================================//
+Real CompositeSolid::ContactStiffness(size_t index_i)
+{
+    return composite_materials_[(*material_id_)[index_i]]->ContactStiffness();
+}
+//=================================================================================================//
 void CompositeSolid::initializeLocalParameters(BaseParticles *base_particles)
 {
     ElasticSolid::initializeLocalParameters(base_particles);

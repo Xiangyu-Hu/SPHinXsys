@@ -37,16 +37,11 @@ RepulsionForce<Contact<>>::RepulsionForce(BaseContactRelation &solid_body_contac
       solid_(DynamicCast<Solid>(this, sph_body_.getBaseMaterial())),
       repulsion_factor_(*particles_->getVariableDataByName<Real>("RepulsionFactor"))
 {
-    const Real contact_stiffness_1 = solid_.ContactStiffness();
-
     for (size_t k = 0; k != contact_particles_.size(); ++k)
     {
         contact_solids_.push_back(&DynamicCast<Solid>(this, contact_bodies_[k]->getBaseMaterial()));
         contact_Vol_.push_back(contact_particles_[k]->getVariableDataByName<Real>("VolumetricMeasure"));
         contact_repulsion_factor_.push_back(contact_particles_[k]->getVariableDataByName<Real>("RepulsionFactor"));
-
-        const Real contact_stiffness_k = contact_solids_[k]->ContactStiffness();
-        contact_stiffness_ave_.push_back(2 * contact_stiffness_1 * contact_stiffness_k / (contact_stiffness_1 + contact_stiffness_k));
     }
 }
 //=================================================================================================//
@@ -54,10 +49,10 @@ void RepulsionForce<Contact<>>::interaction(size_t index_i, Real dt)
 {
     Real sigma_i = repulsion_factor_[index_i];
     Vecd force = Vecd::Zero();
+    Real contact_stiffness_i = solid_.ContactStiffness(index_i);
+
     for (size_t k = 0; k < contact_configuration_.size(); ++k)
     {
-        Vecd force_k = Vecd::Zero();
-
         StdLargeVec<Real> &contact_density_k = *(contact_repulsion_factor_[k]);
         StdLargeVec<Real> &Vol_k = *(contact_Vol_[k]);
 
@@ -65,13 +60,16 @@ void RepulsionForce<Contact<>>::interaction(size_t index_i, Real dt)
         for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
         {
             size_t index_j = contact_neighborhood.j_[n];
+
+            Real contact_stiffness_j = contact_solids_[k]->ContactStiffness(index_j);
+            Real contact_stiffness_ave = 2 * contact_stiffness_i * contact_stiffness_j / (contact_stiffness_i + contact_stiffness_j);
+
             Vecd e_ij = contact_neighborhood.e_ij_[n];
 
-            Real sigma_star = 0.5 * (sigma_i + contact_density_k[index_j]);
+            Real sigma_star = (sigma_i + contact_density_k[index_j]) * contact_stiffness_ave;
             // force due to pressure
-            force_k -= 2.0 * sigma_star * e_ij * contact_neighborhood.dW_ij_[n] * Vol_k[index_j];
+            force -= sigma_star * e_ij * contact_neighborhood.dW_ij_[n] * Vol_k[index_j];
         }
-        force += force_k * contact_stiffness_ave_[k];
     }
     repulsion_force_[index_i] = force * particles_->ParticleVolume(index_i);
 }
@@ -90,7 +88,7 @@ RepulsionForce<Contact<Wall>>::RepulsionForce(BaseContactRelation &solid_body_co
 //=================================================================================================//
 void RepulsionForce<Contact<Wall>>::interaction(size_t index_i, Real dt)
 {
-    Real p_i = repulsion_factor_[index_i] * solid_.ContactStiffness();
+    Real p_i = repulsion_factor_[index_i] * solid_.ContactStiffness(index_i);
     /** Contact interaction. */
     Vecd force = Vecd::Zero();
     for (size_t k = 0; k < contact_configuration_.size(); ++k)
@@ -136,7 +134,7 @@ void RepulsionForce<Wall, Contact<>>::interaction(size_t index_i, Real dt)
             size_t index_j = contact_neighborhood.j_[n];
             Vecd e_ij = contact_neighborhood.e_ij_[n];
 
-            Real p_star = contact_density_k[index_j] * solid_k->ContactStiffness();
+            Real p_star = contact_density_k[index_j] * solid_k->ContactStiffness(index_j);
             // force due to pressure
             force -= 2.0 * p_star * e_ij * contact_neighborhood.dW_ij_[n] * Vol_k[index_j];
         }
