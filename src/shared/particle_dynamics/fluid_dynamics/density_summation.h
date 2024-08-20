@@ -144,8 +144,7 @@ struct FreeStream
     {
         if (rho_sum < rho)
         {
-            //return rho_sum + SMAX(Real(0), (rho - rho_sum)) * rho0 / rho;
-            return rho;
+            return rho_sum + SMAX(Real(0), (rho - rho_sum)) * rho0 / rho;
         }
         return rho_sum;
     };
