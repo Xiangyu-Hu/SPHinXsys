@@ -142,10 +142,10 @@ struct FreeStream
 {
     Real operator()(Real rho_sum, Real rho0, Real rho)
     {
-        //if (rho_sum < rho)
-        //{
-        //    return rho_sum + SMAX(Real(0), (rho - rho_sum)) * rho0 / rho;
-        //}
+        if (rho_sum < rho)
+        {
+            return rho_sum + SMAX(Real(0), (rho - rho_sum)) * rho0 / rho;
+        }
         return rho_sum;
     };
 };
