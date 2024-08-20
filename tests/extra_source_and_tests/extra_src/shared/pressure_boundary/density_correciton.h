@@ -70,7 +70,7 @@ class DensitySummationPressure<Inner<>> : public DensitySummationPressure<Inner<
   public:
     explicit DensitySummationPressure(BaseInnerRelation &inner_relation)
         : DensitySummationPressure<Inner<Base>>(inner_relation),
-          buffer_particle_indicator_(*particles_->getVariableDataByName<int>("Indicator")){};
+          buffer_particle_indicator_(*particles_->getVariableDataByName<int>("BufferParticleIndicator")){};
     virtual ~DensitySummationPressure(){};
     void interaction(size_t index_i, Real dt = 0.0);
     void update(size_t index_i, Real dt = 0.0)
