@@ -150,7 +150,7 @@ class Implementation<LocalDynamicsType, ParallelDevicePolicy>
 
             computing_kernel_ = allocateDeviceOnly<ComputingKernel>(1);
             ComputingKernel *host_kernel =
-                kernel_ptr_keeper_.template createPtr<ComputingKernel>(local_dynamics_);
+                kernel_ptr_keeper_.template createPtr<ComputingKernel>(ParallelDevicePolicy{}, local_dynamics_);
             copyToDevice(host_kernel, computing_kernel_, 1);
         }
 

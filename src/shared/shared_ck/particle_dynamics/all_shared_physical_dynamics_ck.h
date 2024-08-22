@@ -21,16 +21,18 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	sphinxsys_sycl.h
- * @brief 	All SPHinXsys capabilities and SYCL.
- * @author	Xiangyu Hu
+ * @file    all_shared_physical_dynamics_ck.h
+ * @brief   Head file for all shared physics dynamics for both 2- and 3D build.
+ *          This is the header file that user code should include to pick up all
+            particle dynamics capabilities.
+ * @author	Chi Zhang and Xiangyu Hu
  */
-#ifndef SPHINXSYS_SYCL_H
-#define SPHINXSYS_SYCL_H
 
-#include "base_configuration_dynamics_sycl.h"
-#include "particle_iterators_sycl.h"
-#include "sphinxsys_ck.h"
-#include "sphinxsys_variable_sycl.hpp"
+#ifndef ALL_SHARED_PHYSICAL_DYNAMICS_CK_H
+#define ALL_SHARED_PHYSICAL_DYNAMICS_CK_H
 
-#endif // SPHINXSYS_SYCL_H
+#include "dynamics_algorithms_ck.h"
+#include "fluid_time_step_ck.hpp"
+#include "force_prior_ck.hpp"
+
+#endif // ALL_SHARED_PHYSICAL_DYNAMICS_CK_H

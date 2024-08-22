@@ -88,7 +88,7 @@ DiscreteVariable<DataType> *BaseParticles::
     static_assert(DataTypeIndex<DataType>::value != DataTypeIndex<UnsignedInt>::value,
                   "\n Error: the data type UnsignedInt is not particle state variable!\n");
 
-    return registerDiscreteVariable<DataType>(name, particles_bound_, std::forward<Args>(args)...);
+    return registerDiscreteVariableOnly<DataType>(name, particles_bound_, std::forward<Args>(args)...);
 }
 //=================================================================================================//
 template <class DataType, typename... Args>

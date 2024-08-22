@@ -62,8 +62,8 @@ class SimpleDynamicsCK : public LocalDynamicsType, public BaseDynamics<void>
 
   public:
     template <class DynamicsIdentifier, typename... Args>
-    SimpleDynamicsCK(DynamicsIdentifier &identifier, Args &&... args)
-        : LocalDynamicsType(ExecutionPolicy{}, identifier, std::forward<Args>(args)...),
+    SimpleDynamicsCK(DynamicsIdentifier &identifier, Args &&...args)
+        : LocalDynamicsType(identifier, std::forward<Args>(args)...),
           BaseDynamics<void>(), kernel_implementation_(*this)
     {
         static_assert(!has_initialize<ComputingKernel>::value &&
@@ -79,7 +79,8 @@ class SimpleDynamicsCK : public LocalDynamicsType, public BaseDynamics<void>
         ComputingKernel *computing_kernel = kernel_implementation_.getComputingKernel();
         particle_for(ExecutionPolicy{},
                      this->identifier_.LoopRange(),
-                     [=](size_t i) { computing_kernel->update(i, dt); });
+                     [=](size_t i)
+                     { computing_kernel->update(i, dt); });
     };
 
   protected:
@@ -96,8 +97,8 @@ class ReduceDynamicsCK : public LocalDynamicsType,
 
   public:
     template <class DynamicsIdentifier, typename... Args>
-    ReduceDynamicsCK(DynamicsIdentifier &identifier, Args &&... args)
-        : LocalDynamicsType(ExecutionPolicy{}, identifier, std::forward<Args>(args)...),
+    ReduceDynamicsCK(DynamicsIdentifier &identifier, Args &&...args)
+        : LocalDynamicsType(identifier, std::forward<Args>(args)...),
           BaseDynamics<ReturnType>(), kernel_implementation_(*this){};
     virtual ~ReduceDynamicsCK(){};
 
@@ -111,7 +112,8 @@ class ReduceDynamicsCK : public LocalDynamicsType,
         ReturnType temp = particle_reduce(
             ExecutionPolicy(),
             this->identifier_.LoopRange(), this->Reference(), this->getOperation(),
-            [=](size_t i) -> ReturnType { return computing_kernel->reduce(i, dt); });
+            [=](size_t i) -> ReturnType
+            { return computing_kernel->reduce(i, dt); });
         return this->outputResult(temp);
     };
 

@@ -21,16 +21,14 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	sphinxsys_sycl.h
- * @brief 	All SPHinXsys capabilities and SYCL.
- * @author	Xiangyu Hu
+ * @file 	sphinxsys_ck.h
+ * @brief 	This is the header file that user code should include to pick up all SPHinXsys capabilities.
+ * @author	Chi Zhang and Xiangyu Hu
  */
-#ifndef SPHINXSYS_SYCL_H
-#define SPHINXSYS_SYCL_H
+#ifndef SPHINXSYS_CK_H
+#define SPHINXSYS_CK_H
 
-#include "base_configuration_dynamics_sycl.h"
-#include "particle_iterators_sycl.h"
-#include "sphinxsys_ck.h"
-#include "sphinxsys_variable_sycl.hpp"
+#include "all_shared_physical_dynamics_ck.h"
+#include "sphinxsys.h"
 
-#endif // SPHINXSYS_SYCL_H
+#endif // SPHINXSYS_CK_H

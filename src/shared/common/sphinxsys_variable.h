@@ -80,9 +80,9 @@ class SingularVariable : public BaseVariable
     DataType *ValueAddress() { return delegated_; };
 
     template <class ExecutionPolicy>
-    DataType *DelegatedDataField(const ExecutionPolicy &ex_policy) { return delegated_; };
+    DataType *DelegatedData(const ExecutionPolicy &ex_policy) { return delegated_; };
 
-    DataType *DelegatedDataField(const DeviceParallelPolicy &device_par)
+    DataType *DelegatedData(const ParallelDevicePolicy &par_device)
     {
         if (!isValueDelegated())
         {
@@ -128,7 +128,7 @@ class DiscreteVariable : public BaseVariable
     template <class ExecutionPolicy>
     DataType *DelegatedDataField(const ExecutionPolicy &ex_policy) { return data_field_; };
 
-    DataType *DelegatedDataField(const DeviceParallelPolicy &device_par)
+    DataType *DelegatedDataField(const ParallelDevicePolicy &par_device)
     {
         if (!existDeviceDataField())
         {

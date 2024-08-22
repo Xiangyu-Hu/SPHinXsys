@@ -58,7 +58,7 @@ class Implementation<LocalDynamicsType, ExecutionPolicy>
         if (computing_kernel_ == nullptr)
         {
             computing_kernel_ =
-                kernel_ptr_keeper_.template createPtr<ComputingKernel>(local_dynamics_);
+                kernel_ptr_keeper_.template createPtr<ComputingKernel>(ExecutionPolicy{}, local_dynamics_);
         }
         return computing_kernel_;
     }
