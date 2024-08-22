@@ -32,9 +32,17 @@
 
 #include "base_data_package.h"
 #include "execution_policy.h"
+#include "ownership.h"
 
 namespace SPH
 {
+using namespace execution;
+
+template <typename DataType>
+class SingularVariable;
+
+template <typename DataType>
+class DiscreteVariable;
 
 class BaseVariable
 {
@@ -49,23 +57,6 @@ class BaseVariable
 };
 
 template <typename DataType>
-class SingularVariable : public BaseVariable
-{
-  public:
-    SingularVariable(const std::string &name, const DataType &value)
-        : BaseVariable(name), value_(new DataType(value)), delegated_(value_){};
-    virtual ~SingularVariable() { delete value_; };
-
-    DataType *ValueAddress() { return delegated_; };
-    bool isValueDelegated() { return value_ == delegated_; };
-    void setDelegateValueAddress(DataType *new_delegated) { delegated_ = new_delegated; };
-
-  protected:
-    DataType *value_;
-    DataType *delegated_;
-};
-
-template <typename DataType>
 class DeviceSharedSingularVariable : public BaseVariable
 
 {
@@ -76,31 +67,36 @@ class DeviceSharedSingularVariable : public BaseVariable
   protected:
     DataType *device_shared_value_;
 };
-
 template <typename DataType>
-class DiscreteVariable : public BaseVariable
+class SingularVariable : public BaseVariable
 {
+    UniquePtrKeeper<BaseVariable> device_shared_singular_variable_keeper_;
+
   public:
-    DiscreteVariable(const std::string &name, size_t data_size)
-        : BaseVariable(name), data_size_(data_size),
-          data_field_(nullptr), device_data_field_(nullptr)
+    SingularVariable(const std::string &name, const DataType &value)
+        : BaseVariable(name), value_(new DataType(value)), delegated_(value_){};
+    virtual ~SingularVariable() { delete value_; };
+
+    DataType *ValueAddress() { return delegated_; };
+
+    template <class ExecutionPolicy>
+    DataType *DelegatedDataField(const ExecutionPolicy &ex_policy) { return delegated_; };
+
+    DataType *DelegatedDataField(const DeviceParallelPolicy &device_par)
     {
-        data_field_ = new DataType[data_size];
+        if (!isValueDelegated())
+        {
+            device_shared_singular_variable_keeper_
+                .createPtr<DeviceSharedSingularVariable<DataType>>(this);
+        }
+        return delegated_;
     };
-    virtual ~DiscreteVariable() { delete[] data_field_; };
-    DataType *DataField() { return data_field_; };
-    DataType *DeviceDataField() { return device_data_field_; }
+    bool isValueDelegated() { return value_ != delegated_; };
+    void setDelegateValueAddress(DataType *new_delegated) { delegated_ = new_delegated; };
 
-    bool existDeviceDataField() { return device_data_field_ != nullptr; };
-    size_t getDataSize() { return data_size_; }
-    void setDeviceDataField(DataType *data_field) { device_data_field_ = data_field; };
-    void synchronizeWithDevice();
-    void synchronizeToDevice();
-
-  private:
-    size_t data_size_;
-    DataType *data_field_;
-    DataType *device_data_field_;
+  protected:
+    DataType *value_;
+    DataType *delegated_;
 };
 
 template <typename DataType>
@@ -112,6 +108,46 @@ class DeviceOnlyDiscreteVariable : public BaseVariable
 
   protected:
     DataType *device_only_data_field_;
+};
+
+template <typename DataType>
+class DiscreteVariable : public BaseVariable
+{
+    UniquePtrKeeper<BaseVariable> device_only_variable_keeper_;
+
+  public:
+    DiscreteVariable(const std::string &name, size_t data_size)
+        : BaseVariable(name), data_size_(data_size),
+          data_field_(nullptr), device_data_field_(nullptr)
+    {
+        data_field_ = new DataType[data_size];
+    };
+    virtual ~DiscreteVariable() { delete[] data_field_; };
+    DataType *DataField() { return data_field_; };
+
+    template <class ExecutionPolicy>
+    DataType *DelegatedDataField(const ExecutionPolicy &ex_policy) { return data_field_; };
+
+    DataType *DelegatedDataField(const DeviceParallelPolicy &device_par)
+    {
+        if (!existDeviceDataField())
+        {
+            device_only_variable_keeper_
+                .createPtr<DeviceOnlyDiscreteVariable<DataType>>(this);
+        }
+        return device_data_field_;
+    };
+
+    bool existDeviceDataField() { return device_data_field_ != nullptr; };
+    size_t getDataSize() { return data_size_; }
+    void setDeviceDataField(DataType *data_field) { device_data_field_ = data_field; };
+    void synchronizeWithDevice();
+    void synchronizeToDevice();
+
+  private:
+    size_t data_size_;
+    DataType *data_field_;
+    DataType *device_data_field_;
 };
 
 template <typename DataType>

@@ -65,6 +65,32 @@ DataType *BaseParticles::registerDiscreteVariable(const std::string &name,
     return variable->DataField();
 }
 //=================================================================================================//
+template <typename DataType, typename... Args>
+DiscreteVariable<DataType> *BaseParticles::
+    registerDiscreteVariableOnly(const std::string &name, size_t data_size, Args &&...args)
+{
+    DiscreteVariable<DataType> *variable = findVariableByName<DataType>(all_discrete_variables_, name);
+    if (variable == nullptr)
+    {
+        variable = addVariableToAssemble<DataType>(all_discrete_variables_, all_discrete_variable_ptrs_,
+                                                   name, data_size);
+        initializeVariable(variable, std::forward<Args>(args)...);
+    }
+    return variable;
+}
+//=================================================================================================//
+template <typename DataType, typename... Args>
+DiscreteVariable<DataType> *BaseParticles::
+    registerStateVariableOnly(const std::string &name, Args &&...args)
+{
+
+    constexpr int type_index = DataTypeIndex<DataType>::value;
+    static_assert(DataTypeIndex<DataType>::value != DataTypeIndex<UnsignedInt>::value,
+                  "\n Error: the data type UnsignedInt is not particle state variable!\n");
+
+    return registerDiscreteVariable<DataType>(name, particles_bound_, std::forward<Args>(args)...);
+}
+//=================================================================================================//
 template <class DataType, typename... Args>
 DataType *BaseParticles::addUniqueStateVariable(const std::string &name, Args &&...args)
 {
@@ -244,65 +270,6 @@ template <typename DataType>
 void BaseParticles::addVariableToReload(const std::string &name)
 {
     addVariableToList<DataType>(variables_to_reload_, name);
-}
-//=================================================================================================//
-template <typename DataType, class ExecutionPolicy>
-DataType *BaseParticles::getVariableDataByName(const ExecutionPolicy &execution_policy, const std::string &name)
-{
-    return getVariableDataByName<DataType>(name);
-}
-//=================================================================================================//
-template <typename DataType>
-DataType *BaseParticles::getVariableDataByName(const ParallelDevicePolicy &execution_policy, const std::string &name)
-{
-    DiscreteVariable<DataType> *variable = getVariableByName<DataType>(name);
-    if (!variable->existDeviceDataField())
-    {
-        unique_variable_ptrs_.createPtr<DeviceOnlyDiscreteVariable<DataType>>(variable);
-    }
-    return variable->DeviceDataField();
-}
-//=================================================================================================//
-template <typename DataType, class ExecutionPolicy, typename... Args>
-DataType *BaseParticles::registerDiscreteVariable(
-    const ExecutionPolicy &execution_policy, const std::string &name, size_t data_size, Args &&...args)
-{
-    registerDiscreteVariable<DataType>(name, data_size, std::forward<Args>(args)...);
-    return getVariableDataByName<DataType>(execution_policy, name);
-}
-//=================================================================================================//
-template <typename DataType, class ExecutionPolicy, typename... Args>
-DataType *BaseParticles::registerStateVariable(const ExecutionPolicy &execution_policy, const std::string &name, Args &&...args)
-{
-    registerStateVariable<DataType>(name, std::forward<Args>(args)...);
-    return getVariableDataByName<DataType>(execution_policy, name);
-}
-//=================================================================================================//
-template <typename DataType, class ExecutionPolicy>
-SingularVariable<DataType> *BaseParticles::getSingularVariableByName(
-    const ExecutionPolicy &execution_policy, const std::string &name)
-{
-    return getSingularVariableByName<DataType>(name);
-}
-//=================================================================================================//
-template <typename DataType>
-SingularVariable<DataType> *BaseParticles::getSingularVariableByName(
-    const ParallelDevicePolicy &execution_policy, const std::string &name)
-{
-    SingularVariable<DataType> *variable = getSingularVariableByName<DataType>(name);
-    if (!variable->isValueDelegated())
-    {
-        unique_variable_ptrs_.createPtr<DeviceSharedSingularVariable<DataType>>(variable);
-    }
-    return variable->DeviceValueAddress();
-}
-//=================================================================================================//
-template <typename DataType, typename... Args>
-SingularVariable<DataType> *BaseParticles::registerSingularVariable(
-    const ParallelDevicePolicy &execution_policy, const std::string &name, Args &&...args)
-{
-    SingularVariable<DataType> *variable = registerSingularVariable<DataType>(name, std::forward<Args>(args)...);
-    return getSingularVariableByName<DataType>(execution_policy, name);
 }
 //=================================================================================================//
 template <typename DataType>

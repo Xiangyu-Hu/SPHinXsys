@@ -34,7 +34,6 @@
 #define BASE_PARTICLES_H
 
 #include "base_data_package.h"
-#include "execution_policy.h"
 #include "sphinxsys_containers.h"
 #include "sphinxsys_variable.h"
 #include "xml_parser.h"
@@ -153,6 +152,11 @@ class BaseParticles
     template <typename DataType>
     DataType *getVariableDataByName(const std::string &name);
 
+    template <typename DataType, typename... Args>
+    DiscreteVariable<DataType> *registerDiscreteVariableOnly(const std::string &name, size_t data_size, Args &&...args);
+    template <typename DataType, typename... Args>
+    DiscreteVariable<DataType> *registerStateVariableOnly(const std::string &name, Args &&...args);
+
     template <typename DataType>
     SingularVariable<DataType> *registerSingularVariable(const std::string &name, DataType initial_value = ZeroData<DataType>::value);
     template <typename DataType>
@@ -189,44 +193,6 @@ class BaseParticles
     ParticleData &SortableParticleData() { return sortable_data_; };
     ParticleVariables &SortableParticleVariables() { return sortable_variables_; };
     AssignIndex getAssignIndex() { return AssignIndex(); };
-
-    //----------------------------------------------------------------------
-    // Variable related functions for offloading computing
-    //----------------------------------------------------------------------
-    template <typename DataType, class ExecutionPolicy>
-    DataType *getVariableDataByName(const ExecutionPolicy &execution_policy, const std::string &name);
-    template <typename DataType>
-    DataType *getVariableDataByName(const ParallelDevicePolicy &execution_policy, const std::string &name);
-
-    template <typename DataType, class ExecutionPolicy, typename... Args>
-    DataType *registerDiscreteVariable(const ExecutionPolicy &execution_policy,
-                                       const std::string &name, size_t data_size, Args &&...args);
-    template <typename DataType, class ExecutionPolicy, typename... Args>
-    DataType *registerStateVariable(const ExecutionPolicy &execution_policy, const std::string &name, Args &&...args);
-
-    template <typename DataType, class ExecutionPolicy>
-    SingularVariable<DataType> *getSingularVariableByName(const ExecutionPolicy &execution_policy, const std::string &name);
-    template <typename DataType>
-    SingularVariable<DataType> *getSingularVariableByName(const ParallelDevicePolicy &execution_policy, const std::string &name);
-
-    template <typename DataType, typename... Args>
-    SingularVariable<DataType> *registerSingularVariable(const ParallelDevicePolicy &execution_policy, const std::string &name, Args &&...args);
-
-    template <typename DataType, class ExecutionPolicy>
-    void addVariableToRestart(const ExecutionPolicy execution_policy, const std::string &name)
-    {
-        addVariableToRestart<DataType>(name);
-    };
-    template <typename DataType>
-    void addVariableToRestart(const ParallelDevicePolicy execution_policy, const std::string &name);
-
-    template <typename DataType, class ExecutionPolicy>
-    void addVariableToSort(const ExecutionPolicy execution_policy, const std::string &name)
-    {
-        addVariableToSort<DataType>(name);
-    };
-    template <typename DataType>
-    void addVariableToSort(const ParallelDevicePolicy execution_policy, const std::string &name);
 
     //----------------------------------------------------------------------
     // Particle data ouput functions
