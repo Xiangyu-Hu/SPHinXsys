@@ -89,6 +89,8 @@ void CellLinkedList::UpdateCellListData(BaseParticles &base_particles)
 void CellLinkedList::updateSplitCellLists(SplitCellLists &split_cell_lists)
 {
     clearSplitCellLists(split_cell_lists);
+    // i: stride 3
+    // j: stride 3
     mesh_parallel_for(
         MeshRange(Arrayi::Zero(), all_cells_),
         [&](const Arrayi &cell_index)
@@ -203,41 +205,8 @@ MultilevelCellLinkedList::MultilevelCellLinkedList(
     size_t total_levels, SPHAdaptation &sph_adaptation)
     : MultilevelMesh<BaseCellLinkedList, CellLinkedList>(
           tentative_bounds, reference_grid_spacing, total_levels, sph_adaptation),
-      h_ratio_(*DynamicCast<ParticleWithLocalRefinement>(this, &sph_adaptation)->h_ratio_),
-      use_split_cell_lists_(false)
+      h_ratio_(*DynamicCast<ParticleWithLocalRefinement>(this, &sph_adaptation)->h_ratio_)
 {
-    size_t number_of_split_cell_lists = [&]()
-    {
-        size_t n = 0;
-        for (size_t l = 0; l != total_levels; ++l)
-            n += mesh_levels_[l]->getSplitCellLists()->size();
-        return n;
-    }();
-    split_cell_lists_.resize(number_of_split_cell_lists);
-}
-//=================================================================================================//
-void MultilevelCellLinkedList::updateSplitCellLists(SplitCellLists &split_cell_lists)
-{
-    clearSplitCellLists(split_cell_lists);
-    for (size_t l = 0; l != total_levels_; ++l)
-    {
-        // TODO: maybe better to update by mesh_levels_[l]->updateSplitCellLists(split_cell_lists)
-        // and copy the data to split_cell_lists
-        const auto &all_cells_l = mesh_levels_[l]->AllCells();
-        mesh_parallel_for(
-            MeshRange(Arrayi::Zero(), all_cells_l),
-            [this, l, &split_cell_lists](const Arrayi &cell_index)
-            {
-                ConcurrentIndexVector &cell_list = mesh_levels_[l]->getCellDataList(mesh_levels_[l]->cell_index_lists_, cell_index);
-                size_t real_particles_in_cell = cell_list.size();
-                if (real_particles_in_cell != 0)
-                {
-                    size_t split_cell_index_l = mesh_levels_[l]->transferMeshIndexTo1D(3 * Arrayi::Ones(), mod(cell_index, 3));
-                    size_t split_cell_size_l = mesh_levels_[l]->getSplitCellLists()->size();
-                    split_cell_lists[split_cell_size_l * l + split_cell_index_l].push_back(&cell_list);
-                }
-            });
-    }
 }
 //=================================================================================================//
 size_t MultilevelCellLinkedList::getMeshLevel(Real particle_cutoff_radius)
@@ -286,11 +255,6 @@ void MultilevelCellLinkedList::UpdateCellLists(BaseParticles &base_particles)
     for (size_t level = 0; level != total_levels_; ++level)
     {
         mesh_levels_[level]->UpdateCellListData(base_particles);
-    }
-
-    if (use_split_cell_lists_)
-    {
-        updateSplitCellLists(split_cell_lists_);
     }
 }
 //=================================================================================================//
