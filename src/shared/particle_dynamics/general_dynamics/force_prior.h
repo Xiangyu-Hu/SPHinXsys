@@ -43,23 +43,8 @@ class BaseForcePrior : public BaseLocalDynamics<DynamicsIdentifier>
 
   public:
     BaseForcePrior(DynamicsIdentifier &identifier, const std::string &force_name);
-    template <class ExecutionPolicy>
-    BaseForcePrior(const ExecutionPolicy &execution_policy,
-                   DynamicsIdentifier &identifier, const std::string &force_name);
     virtual ~BaseForcePrior(){};
     void update(size_t index_i, Real dt = 0.0);
-
-    template <class T>
-    class ComputingKernel
-    {
-      public:
-        ComputingKernel(BaseForcePrior<DynamicsIdentifier> &base_force_prior);
-        void update(size_t index_i, Real dt = 0.0);
-
-      protected:
-        friend class BaseForcePrior<DynamicsIdentifier>;
-        Vecd *force_prior_, *current_force_, *previous_force_;
-    };
 };
 using ForcePrior = BaseForcePrior<SPHBody>;
 
@@ -67,13 +52,6 @@ template <class GravityType>
 class GravityForce : public ForcePrior
 {
   protected:
-    //----------------------------------------------------------------------
-    // Here gives pointer referred in local dynamics
-    //----------------------------------------------------------------------
-    SingularVariable<Real> *v_physical_time_;
-    //----------------------------------------------------------------------
-    // Here gives pointer referred in computing kernel
-    //----------------------------------------------------------------------
     const GravityType gravity_;
     Vecd *pos_;
     Real *mass_;
@@ -81,26 +59,8 @@ class GravityForce : public ForcePrior
 
   public:
     GravityForce(SPHBody &sph_body, const GravityType &gravity);
-    template <class ExecutionPolicy>
-    GravityForce(const ExecutionPolicy &execution_policy,
-                 SPHBody &sph_body, const GravityType &gravity);
     virtual ~GravityForce(){};
     void update(size_t index_i, Real dt = 0.0);
-
-    template <class T>
-    class ComputingKernel : public ForcePrior::ComputingKernel<T>
-    {
-      public:
-        ComputingKernel(GravityForce<GravityType> &gravity_force);
-        void update(size_t index_i, Real dt = 0.0);
-
-      protected:
-        friend class GravityForce<GravityType>;
-        const GravityType gravity_;
-        Vecd *pos_;
-        Real *mass_;
-        Real *physical_time_;
-    };
 };
 } // namespace SPH
 #endif // FORCE_PRIOR_H

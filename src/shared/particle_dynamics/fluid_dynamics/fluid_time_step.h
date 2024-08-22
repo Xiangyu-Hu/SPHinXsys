@@ -73,36 +73,9 @@ class AdvectionTimeStep
 
   public:
     AdvectionTimeStep(SPHBody &sph_body, Real U_ref, Real advectionCFL = 0.25);
-    template <class ExecutionPolicy>
-    AdvectionTimeStep(const ExecutionPolicy &execution_policy,
-                      SPHBody &sph_body, Real U_ref, Real advectionCFL = 0.25);
     virtual ~AdvectionTimeStep(){};
     Real reduce(size_t index_i, Real dt = 0.0);
     virtual Real outputResult(Real reduced_value) override;
-
-    template <class T>
-    class ComputingKernel
-    {
-      public:
-        ComputingKernel(AdvectionTimeStep &advection_time_step)
-            : h_min_(advection_time_step.h_min_),
-              mass_(advection_time_step.mass_),
-              vel_(advection_time_step.vel_),
-              force_(advection_time_step.force_),
-              force_prior_(advection_time_step.force_prior_){};
-
-        Real reduce(size_t index_i, Real dt = 0.0)
-        {
-            Real acceleration_scale = 4.0 * h_min_ *
-                                      (force_[index_i] + force_prior_[index_i]).norm() / mass_[index_i];
-            return SMAX(vel_[index_i].squaredNorm(), acceleration_scale);
-        };
-
-      protected:
-        Real h_min_;
-        Real *mass_;
-        Vecd *vel_, *force_, *force_prior_;
-    };
 };
 
 /**
@@ -116,24 +89,8 @@ class AdvectionViscousTimeStep : public AdvectionTimeStep
 
   public:
     AdvectionViscousTimeStep(SPHBody &sph_body, Real U_ref, Real advectionCFL = 0.25);
-    template <class ExecutionPolicy>
-    AdvectionViscousTimeStep(const ExecutionPolicy &execution_policy,
-                             SPHBody &sph_body, Real U_ref, Real advectionCFL = 0.25);
     virtual ~AdvectionViscousTimeStep(){};
     Real reduce(size_t index_i, Real dt = 0.0);
-
-    template <class T>
-    class ComputingKernel : public AdvectionTimeStep::ComputingKernel<T>
-    {
-      public:
-        ComputingKernel(AdvectionViscousTimeStep &advection_viscous_time_step)
-            : AdvectionTimeStep::ComputingKernel<T>(advection_viscous_time_step){};
-
-        Real reduce(size_t index_i, Real dt = 0.0)
-        {
-            return AdvectionTimeStep::ComputingKernel<T>::reduce(index_i, dt);
-        };
-    };
 };
 } // namespace fluid_dynamics
 } // namespace SPH
