@@ -10,11 +10,11 @@
 using namespace SPH;
 
 void beam_single_resolution(int dp_factor);
-void beam_multi_resolution(int dp_factor);
+void beam_multi_resolution(int dp_factor, int refinement_level = 1);
 
 int main(int ac, char *av[])
 {
-    beam_multi_resolution(1);
+    beam_multi_resolution(1, 2);
 }
 
 //------------------------------------------------------------------------------
@@ -26,17 +26,20 @@ void relax_solid(RealBody &body, BaseInnerRelation &inner)
     using namespace relax_dynamics;
     SimpleDynamics<RandomizeParticlePosition> random_particles(body);
     RelaxationStepLevelSetCorrectionInner relaxation_step_inner(inner);
+    SimpleDynamics<UpdateSmoothingLengthRatioByShape> update_smoothing_length_ratio(body);
     //----------------------------------------------------------------------
     //	Particle relaxation starts here.
     //----------------------------------------------------------------------
     random_particles.exec(0.25);
     relaxation_step_inner.SurfaceBounding().exec();
+    update_smoothing_length_ratio.exec();
     //----------------------------------------------------------------------
     //	Relax particles of the insert body.
     //----------------------------------------------------------------------
     int ite_p = 0;
     while (ite_p < 1000)
     {
+        update_smoothing_length_ratio.exec();
         relaxation_step_inner.exec();
         ite_p += 1;
         if (ite_p % 200 == 0)
@@ -262,7 +265,7 @@ void beam_single_resolution(int dp_factor)
     }
 }
 //------------------------------------------------------------------------------
-void beam_multi_resolution(int dp_factor)
+void beam_multi_resolution(int dp_factor, int refinement_level)
 {
     const beam_parameters params;
 
@@ -300,7 +303,7 @@ void beam_multi_resolution(int dp_factor)
 
     // Create objects
     SolidBody beam_body(system, mesh);
-    beam_body.defineAdaptation<ParticleRefinementWithinShape>(1.15, 1.0, 1);
+    beam_body.defineAdaptation<ParticleRefinementWithinShape>(1.15, 1.0, refinement_level);
     beam_body.defineBodyLevelSetShape()->cleanLevelSet(0);
     beam_body.assignMaterial(material.get());
     beam_body.generateParticles<BaseParticles, Lattice, Adaptive>(refinement_region);
