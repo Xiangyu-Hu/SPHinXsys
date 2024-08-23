@@ -299,7 +299,7 @@ void three_ring_impact(int resolution_factor_l, int resolution_factor_m, int res
     {
         const auto &pos_ = particles->ParticlePositions();
         for (const auto &pos : pos_)
-            if (std::isnan(pos[0]) || std::isnan(pos[1]) || std::isnan(pos[2]))
+            if (std::isnan(pos[0]) || std::isnan(pos[1]))
                 throw std::runtime_error("position has become nan");
     };
 
