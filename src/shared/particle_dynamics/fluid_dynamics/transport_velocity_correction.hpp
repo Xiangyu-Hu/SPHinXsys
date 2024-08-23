@@ -44,10 +44,6 @@ void TransportVelocityCorrection<Inner<ResolutionType, LimiterType>, CommonContr
         for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
         {
             size_t index_j = inner_neighborhood.j_[n];
-            if(!this->within_scope_(index_j))
-            {
-                index_j = index_i;
-            }
             // acceleration for transport velocity
             inconsistency -= (this->kernel_correction_(index_i) + this->kernel_correction_(index_j, index_i)) *
                              inner_neighborhood.dW_ij_[n] * this->Vol_[index_j] * inner_neighborhood.e_ij_[n];
