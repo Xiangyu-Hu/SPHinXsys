@@ -107,5 +107,8 @@ void mesh_for(const MeshRange &mesh_range, const LocalFunction &local_function, 
 /** Iterator on the mesh by looping index. parallel computing. */
 template <typename LocalFunction, typename... Args>
 void mesh_parallel_for(const MeshRange &mesh_range, const LocalFunction &local_function, Args &&...args);
+/** Iterator on the mesh by looping index with a stride. parallel computing. */
+template <typename LocalFunction, typename... Args>
+void mesh_split_parallel_for(const MeshRange &mesh_range, const Arrayi &stride, const LocalFunction &local_function, Args &&...args);
 } // namespace SPH
 #endif // MESH_ITERATORS_H

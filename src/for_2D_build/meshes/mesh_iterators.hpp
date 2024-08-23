@@ -84,4 +84,46 @@ void mesh_parallel_for(const MeshRange &mesh_range, const LocalFunction &local_f
         ap);
 }
 //=================================================================================================//
+template <typename LocalFunction, typename... Args>
+void mesh_split_parallel_for(const MeshRange &mesh_range, const Arrayi &stride, const LocalFunction &local_function, Args &&...args)
+{
+    // forward sweeping
+    for (int m = 0; m < stride[0]; m++)
+        for (int n = 0; n < stride[1]; n++)
+        {
+            parallel_for(
+                IndexRange2d((mesh_range.first)[0] + m, (mesh_range.second)[0],
+                             (mesh_range.first)[1] + n, (mesh_range.second)[1]),
+                [&](const IndexRange2d &r)
+                {
+                    for (size_t i = r.rows().begin(); i != r.rows().end(); i++)
+                        for (size_t j = r.cols().begin(); j != r.cols().end(); j++)
+                        {
+                            if ((i - m) % stride[0] == 0 && (j - n) % stride[1] == 0)
+                                local_function(Array2i(i, j));
+                        }
+                },
+                ap);
+        }
+
+    // backward sweeping
+    for (int m = stride[0] - 1; m >= 0; m--)
+        for (int n = stride[1] - 1; n >= 0; n--)
+        {
+            parallel_for(
+                IndexRange2d((mesh_range.first)[0] + m, (mesh_range.second)[0],
+                             (mesh_range.first)[1] + n, (mesh_range.second)[1]),
+                [&](const IndexRange2d &r)
+                {
+                    for (size_t i = r.rows().end(); i != r.rows().begin(); i--)
+                        for (size_t j = r.cols().end(); j != r.cols().begin(); j--)
+                        {
+                            if ((i - 1 - m) % stride[0] == 0 && (j - 1 - n) % stride[1] == 0)
+                                local_function(Array2i(i - 1, j - 1));
+                        }
+                },
+                ap);
+        }
+}
+//=================================================================================================//
 } // namespace SPH

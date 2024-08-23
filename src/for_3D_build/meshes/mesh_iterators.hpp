@@ -94,4 +94,52 @@ void mesh_parallel_for(const MeshRange &mesh_range, const LocalFunction &local_f
         ap);
 }
 //=================================================================================================//
+template <typename LocalFunction, typename... Args>
+void mesh_split_parallel_for(const MeshRange &mesh_range, const Arrayi &stride, const LocalFunction &local_function, Args &&...args)
+{
+    // forward sweeping
+    for (int m = 0; m < stride[0]; m++)
+        for (int n = 0; n < stride[1]; n++)
+            for (int p = 0; p < stride[2]; p++)
+            {
+                parallel_for(
+                    IndexRange3d((mesh_range.first)[0] + m, (mesh_range.second)[0],
+                                 (mesh_range.first)[1] + n, (mesh_range.second)[1],
+                                 (mesh_range.first)[2] + p, (mesh_range.second)[2]),
+                    [&](const IndexRange3d &r)
+                    {
+                        for (size_t i = r.pages().begin(); i != r.pages().end(); ++i)
+                            for (size_t j = r.rows().begin(); j != r.rows().end(); ++j)
+                                for (size_t k = r.cols().begin(); k != r.cols().end(); ++k)
+                                {
+                                    if ((i - m) % stride[0] == 0 && (j - n) % stride[1] == 0 && (k - p) % stride[2] == 0)
+                                        local_function(Array3i(i, j, k));
+                                }
+                    },
+                    ap);
+            }
+
+    // backward sweeping
+    for (int m = stride[0] - 1; m >= 0; m--)
+        for (int n = stride[1] - 1; n >= 0; n--)
+            for (int p = stride[2] - 1; p >= 0; p--)
+            {
+                parallel_for(
+                    IndexRange3d((mesh_range.first)[0] + m, (mesh_range.second)[0],
+                                 (mesh_range.first)[1] + n, (mesh_range.second)[1],
+                                 (mesh_range.first)[2] + p, (mesh_range.second)[2]),
+                    [&](const IndexRange3d &r)
+                    {
+                        for (size_t i = r.pages().end(); i != r.pages().begin(); i--)
+                            for (size_t j = r.rows().end(); j != r.rows().begin(); j--)
+                                for (size_t k = r.cols().end(); k != r.cols().begin(); k--)
+                                {
+                                    if ((i - 1 - m) % stride[0] == 0 && (j - 1 - n) % stride[1] == 0 && (k - 1 - p) % stride[2] == 0)
+                                        local_function(Array3i(i - 1, j - 1, k - 1));
+                                }
+                    },
+                    ap);
+            }
+}
+//=================================================================================================//
 } // namespace SPH

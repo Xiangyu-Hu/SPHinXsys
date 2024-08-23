@@ -116,6 +116,10 @@ class CellLinkedList : public BaseCellLinkedList, public Mesh
     template <class DynamicsRange, typename GetSearchDepth, typename GetNeighborRelation>
     void searchNeighborsByParticles(DynamicsRange &dynamics_range, ParticleConfiguration &particle_configuration,
                                     GetSearchDepth &get_search_depth, GetNeighborRelation &get_neighbor_relation);
+
+    /** split algorithm */;
+    template <class LocalDynamicsFunction>
+    void particle_for_split(const LocalDynamicsFunction &local_dynamics_function);
 };
 
 template <>
