@@ -57,6 +57,8 @@ std::vector<Vecd> outer_wall_shape{
 std::vector<Vecd> inner_wall_shape{
     Vecd(-DL_sponge - BW, 0.0), Vecd(-DL_sponge - BW, DH), Vecd(DL1, DH), Vecd(DL1, 2.0 * DH + BW),
     Vecd(DL, 2.0 * DH + BW), Vecd(DL, -DH - BW), Vecd(DL1, -DH - BW), Vecd(DL1, 0.0), Vecd(-DL_sponge - BW, 0.0)};
+namespace SPH
+{
 //----------------------------------------------------------------------
 //	Define case dependent body shapes.
 //----------------------------------------------------------------------
@@ -238,6 +240,7 @@ class BoundaryGeometry : public BodyPartByParticle
         }
     };
 };
+} // namespace SPH
 //-----------------------------------------------------------------------------------------------------------
 //	Main program starts here.
 //-----------------------------------------------------------------------------------------------------------
@@ -381,7 +384,6 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     size_t number_of_iterations = sph_system.RestartStep();
     int screen_output_interval = 100;
-    int observation_sample_interval = screen_output_interval * 2;
     Real end_time = 30.0;                /**< End time. */
     Real Output_Time = end_time / 300.0; /**< Time stamps for output of body states. */
     Real dt = 0.0;                       /**< Default acoustic time step sizes. */
