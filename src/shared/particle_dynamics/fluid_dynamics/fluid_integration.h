@@ -143,6 +143,7 @@ using Integration1stHalfWithWall = ComplexInteraction<Integration1stHalf<Inner<>
 using Integration1stHalfWithWallNoRiemann = Integration1stHalfWithWall<NoRiemannSolver, NoKernelCorrection>;
 using Integration1stHalfWithWallRiemann = Integration1stHalfWithWall<AcousticRiemannSolver, NoKernelCorrection>;
 using Integration1stHalfCorrectionWithWallRiemann = Integration1stHalfWithWall<AcousticRiemannSolver, LinearGradientCorrection>;
+using Integration1stHalfCorrectionForOpenBoundaryFlowWithWallRiemann = Integration1stHalfWithWall<AcousticRiemannSolver, LinearGradientCorrectionWithBulkScope>;
 
 using MultiPhaseIntegration1stHalfWithWallRiemann =
     ComplexInteraction<Integration1stHalf<Inner<>, Contact<>, Contact<Wall>>, AcousticRiemannSolver, NoKernelCorrection>;

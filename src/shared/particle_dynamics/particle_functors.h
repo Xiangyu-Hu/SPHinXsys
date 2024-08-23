@@ -186,6 +186,11 @@ class NoKernelCorrection : public KernelCorrection
 {
   public:
     NoKernelCorrection(BaseParticles *particles) : KernelCorrection(){};
+    Real operator()(size_t index_i, size_t index_j)
+    {
+        return 1.0;
+    };
+
     Real operator()(size_t index_i)
     {
         return 1.0;
@@ -199,6 +204,11 @@ class LinearGradientCorrection : public KernelCorrection
         : KernelCorrection(),
           B_(*particles->getVariableDataByName<Matd>("LinearGradientCorrectionMatrix")){};
 
+    Matd operator()(size_t index_i, size_t index_j)
+    {
+        return B_[index_i];
+    };
+
     Matd operator()(size_t index_i)
     {
         return B_[index_i];
@@ -206,6 +216,29 @@ class LinearGradientCorrection : public KernelCorrection
 
   protected:
     StdLargeVec<Matd> &B_;
+};
+
+class LinearGradientCorrectionWithBulkScope : public KernelCorrection
+{
+  public:
+    LinearGradientCorrectionWithBulkScope(BaseParticles *particles)
+        : KernelCorrection(),
+          B_(*particles->getVariableDataByName<Matd>("LinearGradientCorrectionMatrix")),
+          within_scope_(particles){};
+
+    Matd operator()(size_t index_j, size_t index_i)
+    {
+        return within_scope_(index_j) ? B_[index_j] : B_[index_i];
+    };
+
+    Matd operator()(size_t index_i)
+    {
+        return B_[index_i];
+    };
+
+  protected:
+    StdLargeVec<Matd> &B_;
+    BulkParticles within_scope_;
 };
 
 class SingleResolution

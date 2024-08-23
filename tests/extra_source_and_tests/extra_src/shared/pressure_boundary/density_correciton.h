@@ -48,7 +48,7 @@ class DensitySummationPressure<Base, DataDelegationType>
     virtual ~DensitySummationPressure(){};
 
   protected:
-    StdLargeVec<Real> &rho_, &mass_, &rho_sum_;
+    StdLargeVec<Real> &rho_, &mass_, &rho_sum_, &Vol_;
     Real rho0_, inv_sigma0_, W0_;
 };
 
@@ -77,6 +77,8 @@ class DensitySummationPressure<Inner<>> : public DensitySummationPressure<Inner<
     {
         if (buffer_particle_indicator_[index_i] == 0)
             assignDensity(index_i);
+        //** Temporary treatment *
+        this->Vol_[index_i] = this->mass_[index_i] / this->rho_[index_i];
     };
 
   protected:
