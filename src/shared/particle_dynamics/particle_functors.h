@@ -186,7 +186,12 @@ class NoKernelCorrection : public KernelCorrection
 {
   public:
     NoKernelCorrection(BaseParticles *particles) : KernelCorrection(){};
-    Real operator()(size_t index_i, size_t index_j = 0)
+    Real operator()(size_t index_i, size_t index_j)
+    {
+        return 1.0;
+    };
+
+    Real operator()(size_t index_i)
     {
         return 1.0;
     };
@@ -199,7 +204,12 @@ class LinearGradientCorrection : public KernelCorrection
         : KernelCorrection(),
           B_(*particles->getVariableDataByName<Matd>("LinearGradientCorrectionMatrix")){};
 
-    Matd operator()(size_t index_i, size_t index_j = 0)
+    Matd operator()(size_t index_i, size_t index_j)
+    {
+        return B_[index_i];
+    };
+
+    Matd operator()(size_t index_i)
     {
         return B_[index_i];
     };
