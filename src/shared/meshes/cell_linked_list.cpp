@@ -35,6 +35,14 @@ void BaseCellLinkedList::clearSplitCellLists(SplitCellLists &split_cell_lists)
         split_cell_lists[i].clear();
 }
 //=================================================================================================//
+NeighborSearch::NeighborSearch(CellLinkedList &cell_linked_list, BaseParticles &particles)
+    : mesh_(cell_linked_list),
+      number_of_cells_plus_one_(mesh_.NumberOfCells() + 1),
+      index_list_size_(SMAX(particles.ParticlesBound(), number_of_cells_plus_one_)),
+      dv_pos_(particles.getVariableByName<Vecd>("Position")),
+      dv_particle_index_(particles.registerDiscreteVariableOnly<UnsignedInt>("ParticleIndex", index_list_size_)),
+      dv_cell_offset_(particles.registerDiscreteVariableOnly<UnsignedInt>("CellOffset", number_of_cells_plus_one_)) {}
+//=================================================================================================//
 CellLinkedList::CellLinkedList(BoundingBox tentative_bounds, Real grid_spacing,
                                SPHAdaptation &sph_adaptation)
     : BaseCellLinkedList(sph_adaptation), Mesh(tentative_bounds, grid_spacing, 2),
@@ -192,6 +200,11 @@ UnsignedInt CellLinkedList::computingSequence(Vecd &position, size_t index_i)
 {
     return transferMeshIndexToMortonOrder(CellIndexFromPosition(position));
 }
+//=================================================================================================//
+NeighborSearch CellLinkedList::createNeighborSearch(BaseParticles &particles)
+{
+    return NeighborSearch(*this, particles);
+};
 //=================================================================================================//
 MultilevelCellLinkedList::MultilevelCellLinkedList(
     BoundingBox tentative_bounds, Real reference_grid_spacing,

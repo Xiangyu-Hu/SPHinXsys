@@ -80,6 +80,39 @@ class BaseCellLinkedList : public BaseMeshField
     virtual void tagBoundingCells(StdVec<CellLists> &cell_data_lists, const BoundingBox &bounding_bounds, int axis) = 0;
 };
 
+class NeighborSearch
+{
+  public:
+    NeighborSearch(CellLinkedList &cell_linked_list, BaseParticles &particles);
+    ~NeighborSearch(){};
+
+    template <class ExecutionPolicy>
+    class ComputingKernel : public Mesh
+    {
+      public:
+        ComputingKernel(const ExecutionPolicy &ex_policy, NeighborSearch &neighbor_search);
+
+        template <typename FunctionOnEach>
+        void forEachNeighbor(UnsignedInt index_i, const Vecd *source_pos,
+                             const FunctionOnEach &function) const;
+
+      protected:
+        friend class NeighborSearch;
+        Real grid_spacing_squared_;
+        Vecd *pos_;
+        UnsignedInt *particle_index_;
+        UnsignedInt *cell_offset_;
+    };
+
+  protected:
+    Mesh mesh_;
+    UnsignedInt number_of_cells_plus_one_;
+    UnsignedInt index_list_size_; // at least number_of_cells_pluse_one_
+    DiscreteVariable<Vecd> *dv_pos_;
+    DiscreteVariable<UnsignedInt> *dv_particle_index_;
+    DiscreteVariable<UnsignedInt> *dv_cell_offset_;
+};
+
 /**
  * @class CellLinkedList
  * @brief Defining a mesh cell linked list for a body.
@@ -134,6 +167,8 @@ class CellLinkedList : public BaseCellLinkedList, public Mesh
     template <class DynamicsRange, typename GetSearchDepth, typename GetNeighborRelation>
     void searchNeighborsByParticles(DynamicsRange &dynamics_range, ParticleConfiguration &particle_configuration,
                                     GetSearchDepth &get_search_depth, GetNeighborRelation &get_neighbor_relation);
+
+    NeighborSearch createNeighborSearch(BaseParticles &particles);
 };
 
 template <>
