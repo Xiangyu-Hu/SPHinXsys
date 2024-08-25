@@ -20,7 +20,7 @@ using namespace SPH;
 //----------------------------------------------------------------------
 Real DH = 2.0;                         /**< Channel height. */
 Real DL = 30.0;                         /**< Channel length. */
-Real num_fluid_cross_section = 20.0;
+Real num_fluid_cross_section = 80.0;
 
 //----------------------------------------------------------------------
 //	Unique parameters for turbulence. 
