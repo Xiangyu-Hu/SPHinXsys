@@ -292,6 +292,7 @@ namespace fluid_dynamics
 		void interaction(size_t index_i, Real dt = 0.0);
 	protected:
 		StdLargeVec<Vecd>  &test_k_grad_rslt_;
+		StdLargeVec<Matd> &B_;
 	};
 	//** Wall part *
 	template <>
@@ -304,6 +305,7 @@ namespace fluid_dynamics
 		void interaction(size_t index_i, Real dt = 0.0);
 	protected:
 		StdLargeVec<Vecd> &test_k_grad_rslt_;
+		StdLargeVec<Matd> &B_;
 	};
 
 	//** Interface part *

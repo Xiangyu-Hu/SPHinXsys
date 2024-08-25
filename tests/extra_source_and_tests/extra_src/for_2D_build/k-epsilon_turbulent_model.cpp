@@ -412,7 +412,8 @@ namespace fluid_dynamics
 //=================================================================================================//
 	TKEnergyForce<Inner<>>::TKEnergyForce(BaseInnerRelation& inner_relation)
 		: TKEnergyForce<Base, DataDelegateInner>(inner_relation),
-		test_k_grad_rslt_(*this->particles_->template getVariableDataByName<Vecd>("TkeGradResult"))
+		test_k_grad_rslt_(*this->particles_->template getVariableDataByName<Vecd>("TkeGradResult")),
+		B_(*particles_->getVariableDataByName<Matd>("LinearGradientCorrectionMatrix"))
 		//tke_acc_inner_(*particles_->registerSharedVariable<Vecd>("TkeAccInner"))
 	{
 		//this->particles_->registerSharedVariable(tke_acc_inner_, "TkeAccInner");
@@ -432,7 +433,10 @@ namespace fluid_dynamics
 			//** strong form * 
 			//k_gradient += -1.0*(turbu_k_i - turbu_k_[index_j]) * nablaW_ijV_j;
 			//** weak form * 
-			k_gradient += (turbu_k_i + turbu_k_[index_j]) * nablaW_ijV_j;
+			//k_gradient += (turbu_k_i + turbu_k_[index_j]) * nablaW_ijV_j;
+		    //** If use RKGC *
+			k_gradient += (turbu_k_i * B_[index_j] + turbu_k_[index_j] * B_[index_i]) * nablaW_ijV_j;
+			
 		}
 		force = -1.0 * (2.0 / 3.0) * k_gradient * mass_[index_i];
 		force_[index_i] += force;
@@ -444,7 +448,8 @@ namespace fluid_dynamics
 	//=================================================================================================//
 	TKEnergyForce<Contact<>>::TKEnergyForce(BaseContactRelation& contact_relation)
 		: TKEnergyForce<Base, DataDelegateContact>(contact_relation),
-		test_k_grad_rslt_(*this->particles_->template getVariableDataByName<Vecd>("TkeGradResult"))
+		test_k_grad_rslt_(*this->particles_->template getVariableDataByName<Vecd>("TkeGradResult")),
+		B_(*particles_->getVariableDataByName<Matd>("LinearGradientCorrectionMatrix"))
 	{
 		//this->particles_->registerSharedVariable(tke_acc_wall_, "TkeAccWall");
 		//this->particles_->addVariableToWrite<Vecd>("TkeAccWall");
@@ -463,7 +468,9 @@ namespace fluid_dynamics
 				size_t index_j = contact_neighborhood.j_[n];
 				Vecd nablaW_ijV_j = contact_neighborhood.dW_ij_[n]* this->Vol_[index_j] * contact_neighborhood.e_ij_[n];
 				//** weak form * 
-				k_gradient +=  (turbu_k_i + turbu_k_i) * nablaW_ijV_j;
+				//k_gradient +=  (turbu_k_i + turbu_k_i) * nablaW_ijV_j;
+				//** If use RKGC *
+				k_gradient +=  (turbu_k_i + turbu_k_i)* B_[index_i] * nablaW_ijV_j;
 			}
 		}
 		force = -1.0 * (2.0 / 3.0) * k_gradient * mass_[index_i];
