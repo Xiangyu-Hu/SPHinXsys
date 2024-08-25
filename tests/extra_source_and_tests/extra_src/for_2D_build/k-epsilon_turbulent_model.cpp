@@ -199,6 +199,7 @@ namespace fluid_dynamics
 	K_TurtbulentModelInner::K_TurtbulentModelInner(BaseInnerRelation& inner_relation, const StdVec<Real>& initial_values, int is_extr_visc_dissipa)
 		: BaseTurtbulentModel<Base, DataDelegateInner>(inner_relation),
 		dk_dt_(*particles_->registerSharedVariable<Real>("ChangeRateOfTKE")),
+		dk_dt_without_dissipation_(*particles_->registerSharedVariable<Real>("ChangeRateOfTKEWithoutDissipation")),
 		k_production_(*particles_->registerSharedVariable<Real>("K_Production")),
 		is_near_wall_P1_(*particles_->getVariableDataByName<int>("IsNearWallP1")),
 		velocity_gradient_(*particles_->getVariableDataByName<Matd>("TurbulentVelocityGradient")),
@@ -213,6 +214,7 @@ namespace fluid_dynamics
 	{
 		//particles_->registerSharedVariable(dk_dt_, "ChangeRateOfTKE");
 		particles_->addVariableToSort<Real>("ChangeRateOfTKE");
+		particles_->addVariableToSort<Real>("ChangeRateOfTKEWithoutDissipation");
 
 		//particles_->registerSharedVariable(k_production_, "K_Production");
 		particles_->addVariableToSort<Real>("K_Production");
@@ -263,7 +265,8 @@ namespace fluid_dynamics
 
 		Real mu_eff_i = turbu_mu_[index_i] / sigma_k_ + mu_;
 
-		dk_dt_[index_i] = 0.0;;
+		dk_dt_[index_i] = 0.0;
+		dk_dt_without_dissipation_[index_i] = 0.0;
 		Real k_derivative(0.0);
 		Real k_lap(0.0);
 		Matd strain_rate = Matd::Zero();
@@ -298,6 +301,7 @@ namespace fluid_dynamics
 		//k_dissipation = ( turbu_epsilon_prior_[index_i] / turbu_k_prior_[index_i] ) * turbu_k_[index_i];
 		
 		dk_dt_[index_i] = k_production - k_dissipation + k_lap;
+		dk_dt_without_dissipation_[index_i] = k_production + k_lap;
 
 		//** for test */
 		k_diffusion_[index_i] = k_lap;
@@ -308,7 +312,9 @@ namespace fluid_dynamics
 	//=================================================================================================//
 	void K_TurtbulentModelInner::update(size_t index_i, Real dt)
 	{
-		turbu_k_[index_i] += dk_dt_[index_i] * dt;
+		//turbu_k_[index_i] += dk_dt_[index_i] * dt;
+		Real denominator = 1.0 + turbu_epsilon_[index_i] * dt / turbu_k_[index_i];
+		turbu_k_[index_i] = (turbu_k_[index_i] + dk_dt_without_dissipation_[index_i] * dt) / denominator ;
 	}
 	//=================================================================================================//
 	// void K_TurtbulentModelInner::update_prior_turbulent_value()

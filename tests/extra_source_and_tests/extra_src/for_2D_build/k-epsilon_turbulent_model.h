@@ -186,6 +186,7 @@ namespace fluid_dynamics
 		//void update_prior_turbulent_value();
 	protected:
 		StdLargeVec<Real> &dk_dt_;
+		StdLargeVec<Real> &dk_dt_without_dissipation_;
 		StdLargeVec<Real> &k_production_;
 
 		StdLargeVec<int> &is_near_wall_P1_; //** This is used to specially treat near wall region  *
