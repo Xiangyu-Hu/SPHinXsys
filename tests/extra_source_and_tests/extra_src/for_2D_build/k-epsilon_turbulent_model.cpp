@@ -312,10 +312,11 @@ namespace fluid_dynamics
 	//=================================================================================================//
 	void K_TurtbulentModelInner::update(size_t index_i, Real dt)
 	{
-		//turbu_k_[index_i] += dk_dt_[index_i] * dt;
-		Real denominator = 1.0 + turbu_epsilon_[index_i] * dt / turbu_k_[index_i];
-		turbu_k_[index_i] +=  dk_dt_without_dissipation_[index_i] * dt;
-		turbu_k_[index_i] /=  denominator ;
+		turbu_k_[index_i] += dk_dt_[index_i] * dt;
+		//** If use source term linearisation *
+		//Real denominator = 1.0 + turbu_epsilon_[index_i] * dt / turbu_k_[index_i];
+		//turbu_k_[index_i] +=  dk_dt_without_dissipation_[index_i] * dt;
+		//turbu_k_[index_i] /=  denominator ;
 	}
 	//=================================================================================================//
 	// void K_TurtbulentModelInner::update_prior_turbulent_value()
@@ -402,10 +403,11 @@ namespace fluid_dynamics
 		//** The near wall epsilon value is updated in wall function part *
 		if (is_near_wall_P1_[index_i] != 1)
 		{
-			//turbu_epsilon_[index_i] += depsilon_dt_[index_i] * dt;
-			Real denominator = 1.0 + C_2_ * turbu_epsilon_[index_i] * dt / turbu_k_[index_i];
-			turbu_epsilon_[index_i] += depsilon_dt_without_disspation_[index_i] * dt;
-			turbu_epsilon_[index_i] /= denominator;
+			turbu_epsilon_[index_i] += depsilon_dt_[index_i] * dt;
+			//** If use source term linearisation *
+			//Real denominator = 1.0 + C_2_ * turbu_epsilon_[index_i] * dt / turbu_k_[index_i];
+			//turbu_epsilon_[index_i] += depsilon_dt_without_disspation_[index_i] * dt;
+			//turbu_epsilon_[index_i] /= denominator;
 		}
 			
 	}
