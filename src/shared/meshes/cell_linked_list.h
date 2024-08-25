@@ -86,6 +86,12 @@ class NeighborSearch
     NeighborSearch(CellLinkedList &cell_linked_list, BaseParticles &particles);
     ~NeighborSearch(){};
 
+    Mesh getMesh() { return mesh_; };
+    UnsignedInt getCellOffsetListSize() { return number_of_cells_plus_one_; };
+    DiscreteVariable<Vecd> *getParticlePosition() { return dv_pos_; };
+    DiscreteVariable<UnsignedInt> *getParticleIndex() { return dv_particle_index_; };
+    DiscreteVariable<UnsignedInt> *getCellOffset() { return dv_cell_offset_; };
+
     template <class ExecutionPolicy>
     class ComputingKernel : public Mesh
     {

@@ -40,73 +40,53 @@ namespace SPH
 template <typename... T>
 class UpdateCellLinkedList;
 
-template <class MeshType>
-class ParticleCellLinkedList : public MeshType
+template <typename CellLinkedListType>
+class UpdateCellLinkedList<CellLinkedListType> : public LocalDynamics
 {
   protected:
-    Vecd *pos_;
-    UnsignedInt *particle_id_list_;
-    UnsignedInt *particle_offset_list_;
-    Real grid_spacing_squared_;
+    CellLinkedListType &cell_linked_list_;
+    NeighborSearch neighbor_search_;
+    Mesh mesh_;
+    UnsignedInt number_of_cells_plus_one_;
+    DiscreteVariable<Vecd> *dv_pos_;
+    DiscreteVariable<UnsignedInt> *dv_particle_index_;
+    DiscreteVariable<UnsignedInt> *dv_cell_offset_;
+    DiscreteVariable<UnsignedInt> *dv_current_cell_size_;
 
   public:
-    ParticleCellLinkedList(const MeshType &mesh, Vecd *pos_,
-                           UnsignedInt *particle_id_list, UnsignedInt *particle_offset_list);
-    ~ParticleCellLinkedList(){};
-
-    template <typename FunctionOnEach>
-    void forEachNeighbor(UnsignedInt index_i, const Vecd *source_pos,
-                         const FunctionOnEach &function) const;
-};
-
-template <typename MeshType>
-class UpdateCellLinkedList<MeshType> : public LocalDynamics
-{
-  public:
-    template <class ExecutionPolicy>
-    UpdateCellLinkedList(const ExecutionPolicy &execution_policy, RealBody &real_body);
+    UpdateCellLinkedList(RealBody &real_body);
     virtual ~UpdateCellLinkedList(){};
 
-    ParticleCellLinkedList<MeshType> getParticleCellLinkedList() const;
-    UnsignedInt getNumberOfCellsPlusOne() { return number_of_cells_plus_one_; }
-    template <class T>
+    template <class ExecutionPolicy>
     class ComputingKernel
     {
       public:
-        ComputingKernel(UpdateCellLinkedList<MeshType> &update_cell_linked_list);
+        ComputingKernel(const ExecutionPolicy &ex_policy,
+                        UpdateCellLinkedList<CellLinkedListType> &update_cell_linked_list);
         void clearAllLists(UnsignedInt index_i);
         void incrementCellSize(UnsignedInt index_i);
         void updateCellLists(UnsignedInt index_i);
 
       protected:
-        friend class UpdateCellLinkedList<MeshType>;
+        friend class UpdateCellLinkedList<CellLinkedListType>;
         Mesh mesh_;
         UnsignedInt number_of_cells_plus_one_;
-        UnsignedInt particle_id_list_size_; // at least number_of_cells_pluse_one_
 
         Vecd *pos_;
-        UnsignedInt *particle_id_list_;
-        UnsignedInt *particle_offset_list_;
-        UnsignedInt *current_size_list_;
+        UnsignedInt *particle_index_;
+        UnsignedInt *cell_offset_;
+        UnsignedInt *current_cell_size_;
     };
-
-  protected:
-    Mesh mesh_;
-    UnsignedInt number_of_cells_plus_one_;
-    UnsignedInt particle_id_list_size_; // at least number_of_cells_pluse_one_
-
-    Vecd *pos_;
-    UnsignedInt *particle_id_list_;
-    UnsignedInt *particle_offset_list_;
-    UnsignedInt *current_size_list_;
 };
 
-template <class MeshType, class ExecutionPolicy>
-class UpdateCellLinkedList<MeshType, ExecutionPolicy>
-    : public UpdateCellLinkedList<MeshType>, public BaseDynamics<void>
+template <class CellLinkedListType, class ExecutionPolicy>
+class UpdateCellLinkedList<CellLinkedListType, ExecutionPolicy>
+    : public UpdateCellLinkedList<CellLinkedListType>, public BaseDynamics<void>
 {
-    using ComputingKernel = typename UpdateCellLinkedList<MeshType>::
+    typedef UpdateCellLinkedList<CellLinkedListType> LocalDynamicsType;
+    using ComputingKernel = typename LocalDynamicsType::
         template ComputingKernel<ExecutionPolicy>;
+    ExecutionPolicy ex_policy_;
 
   public:
     UpdateCellLinkedList(RealBody &real_body);
@@ -114,7 +94,7 @@ class UpdateCellLinkedList<MeshType, ExecutionPolicy>
     virtual void exec(Real dt = 0.0) override;
 
   protected:
-    Implementation<UpdateCellLinkedList<MeshType>, ExecutionPolicy> kernel_implementation_;
+    Implementation<LocalDynamicsType, ExecutionPolicy> kernel_implementation_;
 };
 
 } // namespace SPH

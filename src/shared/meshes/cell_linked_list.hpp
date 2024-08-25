@@ -21,7 +21,7 @@ template <class ExecutionPolicy>
 NeighborSearch::ComputingKernel<ExecutionPolicy>::
     ComputingKernel(const ExecutionPolicy &ex_policy, NeighborSearch &neighbor_search)
     : Mesh(neighbor_search.mesh_),
-      grid_spacing_squared_(Mesh.getGridSpacing() * Mesh.getGridSpacing()),
+      grid_spacing_squared_(grid_spacing_ * grid_spacing_),
       pos_(neighbor_search.dv_pos_->DelegatedDataField(ex_policy)),
       particle_index_(neighbor_search.dv_particle_index_->DelegatedDataField(ex_policy)),
       cell_offset_(neighbor_search.dv_cell_offset_->DelegatedDataField(ex_policy)) {}
