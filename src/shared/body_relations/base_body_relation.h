@@ -125,15 +125,17 @@ class SPHRelation
  */
 class BaseInnerRelation : public SPHRelation
 {
-  protected:
-    virtual void resetNeighborhoodCurrentSize();
-
   public:
     RealBody *real_body_;
     ParticleConfiguration inner_configuration_; /**< inner configuration for the neighbor relations. */
     explicit BaseInnerRelation(RealBody &real_body);
     virtual ~BaseInnerRelation(){};
     BaseInnerRelation &getRelation() { return *this; };
+    NeighborList &getInnerNeighborList() { return inner_neighbor_list_; };
+
+  protected:
+    virtual void resetNeighborhoodCurrentSize();
+    NeighborList inner_neighbor_list_;
 };
 
 /**

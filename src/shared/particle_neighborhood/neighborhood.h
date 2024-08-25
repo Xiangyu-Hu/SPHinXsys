@@ -42,6 +42,38 @@ class SPHBody;
 class BodyPart;
 class SPHAdaptation;
 
+class NeighborList
+{
+
+  public:
+    NeighborList(BaseParticles &particles);
+    ~NeighborList(){};
+
+    UnsignedInt getParticleOffsetSize() { return real_particle_bound_plus_one_; };
+    DiscreteVariable<UnsignedInt> *getNeighborIndex() { return &dv_neighbor_index_; };
+    DiscreteVariable<UnsignedInt> *getParticleOffset() { return &dv_particle_offset_; };
+
+    template <class ExecutionPolicy>
+    class ComputingKernel
+    {
+      public:
+        ComputingKernel(const ExecutionPolicy &ex_policy, NeighborList &neighbor_list);
+
+        template <typename FunctionOnEach>
+        void forEachNeighbor(UnsignedInt index_i, const FunctionOnEach &function) const;
+
+      protected:
+        friend class NeighborList;
+        UnsignedInt *neighbor_index_;
+        UnsignedInt *particle_offset_;
+    };
+
+  protected:
+    UnsignedInt real_particle_bound_plus_one_;
+    DiscreteVariable<UnsignedInt> dv_neighbor_index_;
+    DiscreteVariable<UnsignedInt> dv_particle_offset_;
+};
+
 /**
  * @class Neighborhood
  * @brief A neighborhood around particle i.

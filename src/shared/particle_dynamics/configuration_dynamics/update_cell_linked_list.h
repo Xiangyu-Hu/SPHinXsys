@@ -45,13 +45,13 @@ class UpdateCellLinkedList<CellLinkedListType> : public LocalDynamics
 {
   protected:
     CellLinkedListType &cell_linked_list_;
-    NeighborSearch neighbor_search_;
+    NeighborSearch &neighbor_search_;
     Mesh mesh_;
     UnsignedInt number_of_cells_plus_one_;
     DiscreteVariable<Vecd> *dv_pos_;
     DiscreteVariable<UnsignedInt> *dv_particle_index_;
     DiscreteVariable<UnsignedInt> *dv_cell_offset_;
-    DiscreteVariable<UnsignedInt> *dv_current_cell_size_;
+    DiscreteVariable<UnsignedInt> dv_current_cell_size_;
 
   public:
     UpdateCellLinkedList(RealBody &real_body);

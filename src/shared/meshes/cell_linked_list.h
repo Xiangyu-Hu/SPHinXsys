@@ -135,12 +135,14 @@ class CellLinkedList : public BaseCellLinkedList, public Mesh
      */
     SplitCellLists split_cell_lists_;
     bool use_split_cell_lists_;
+    UniquePtrKeeper<NeighborSearch> neighbor_search_keeper_;
 
   protected:
     /** using concurrent vectors due to writing conflicts when building the list */
     ConcurrentIndexVector *cell_index_lists_;
     /** non-concurrent list data rewritten for building neighbor list */
     ListDataVector *cell_data_lists_;
+    NeighborSearch *neighbor_search_;
 
     void allocateMeshDataMatrix(); /**< allocate memories for addresses of data packages. */
     void deleteMeshDataMatrix();   /**< delete memories for addresses of data packages. */
@@ -174,7 +176,7 @@ class CellLinkedList : public BaseCellLinkedList, public Mesh
     void searchNeighborsByParticles(DynamicsRange &dynamics_range, ParticleConfiguration &particle_configuration,
                                     GetSearchDepth &get_search_depth, GetNeighborRelation &get_neighbor_relation);
 
-    NeighborSearch createNeighborSearch(BaseParticles &particles);
+    NeighborSearch &getNeighborSearch(BaseParticles &particles);
 };
 
 template <>

@@ -110,6 +110,7 @@ class DeviceOnlyDiscreteVariable : public BaseVariable
   public:
     DeviceOnlyDiscreteVariable(DiscreteVariable<DataType> *host_variable);
     virtual ~DeviceOnlyDiscreteVariable();
+    void reallocateDataField(DiscreteVariable<DataType> *host_variable);
 
   protected:
     DataType *device_only_data_field_;
@@ -123,7 +124,8 @@ class DiscreteVariable : public BaseVariable
   public:
     DiscreteVariable(const std::string &name, size_t data_size)
         : BaseVariable(name), data_size_(data_size),
-          data_field_(nullptr), device_data_field_(nullptr)
+          data_field_(nullptr), device_only_variable_(nullptr),
+          device_data_field_(nullptr)
     {
         data_field_ = new DataType[data_size];
     };
@@ -137,8 +139,9 @@ class DiscreteVariable : public BaseVariable
     {
         if (!existDeviceDataField())
         {
-            device_only_variable_keeper_
-                .createPtr<DeviceOnlyDiscreteVariable<DataType>>(this);
+            device_only_variable_ =
+                device_only_variable_keeper_
+                    .createPtr<DeviceOnlyDiscreteVariable<DataType>>(this);
         }
         return device_data_field_;
     };
@@ -146,12 +149,27 @@ class DiscreteVariable : public BaseVariable
     bool existDeviceDataField() { return device_data_field_ != nullptr; };
     size_t getDataSize() { return data_size_; }
     void setDeviceDataField(DataType *data_field) { device_data_field_ = data_field; };
+    void reallocateDataField(size_t tentative_size)
+    {
+        if (data_size_ < tentative_size)
+        {
+            delete[] data_field_;
+            data_size_ = tentative_size + tentative_size / 4;
+            data_field_ = new DataType[data_size_];
+
+            if (existDeviceDataField())
+            {
+                device_only_variable_->reallocateDataField(this);
+            }
+        }
+    };
     void synchronizeWithDevice();
     void synchronizeToDevice();
 
   private:
     size_t data_size_;
     DataType *data_field_;
+    DeviceOnlyDiscreteVariable<DataType> *device_only_variable_;
     DataType *device_data_field_;
 };
 

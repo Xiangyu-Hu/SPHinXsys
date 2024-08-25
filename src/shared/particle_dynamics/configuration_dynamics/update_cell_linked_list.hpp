@@ -20,8 +20,7 @@ UpdateCellLinkedList<CellLinkedListType>::UpdateCellLinkedList(RealBody &real_bo
       dv_pos_(neighbor_search_.getParticlePosition()),
       dv_particle_index_(neighbor_search_.getParticleIndex()),
       dv_cell_offset_(neighbor_search_.getCellOffset()),
-      dv_current_cell_size_(particles_->registerDiscreteVariableOnly<UnsignedInt>(
-          "CurrentCellSize", number_of_cells_plus_one_))
+      dv_current_cell_size_(DiscreteVariable<UnsignedInt>("CurrentCellSize", number_of_cells_plus_one_))
 {
     particles_->addVariableToWrite<UnsignedInt>("ParticleIndex");
 }
@@ -36,7 +35,7 @@ UpdateCellLinkedList<CellLinkedListType>::ComputingKernel<ExecutionPolicy>::
       pos_(update_cell_linked_list.dv_pos_->DelegatedDataField(ex_policy)),
       particle_index_(update_cell_linked_list.dv_particle_index_->DelegatedDataField(ex_policy)),
       cell_offset_(update_cell_linked_list.dv_cell_offset_->DelegatedDataField(ex_policy)),
-      current_cell_size_(update_cell_linked_list.dv_current_cell_size_->DelegatedDataField(ex_policy)) {}
+      current_cell_size_(update_cell_linked_list.dv_current_cell_size_.DelegatedDataField(ex_policy)) {}
 //=================================================================================================//
 template <typename CellLinkedListType>
 template <class ExecutionPolicy>

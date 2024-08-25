@@ -219,26 +219,36 @@ DiscreteVariable<DataType> *BaseParticles::
 {
     DiscreteVariable<DataType> *variable = findVariableByName<DataType>(all_discrete_variables_, name);
 
-    if (variable != nullptr)
-    {
-        DiscreteVariable<DataType> *listed_variable = findVariableByName<DataType>(variable_set, name);
-
-        if (listed_variable == nullptr && variable->getDataSize() >= real_particles_bound_)
-        {
-            constexpr int type_index = DataTypeIndex<DataType>::value;
-            std::get<type_index>(variable_set).push_back(variable);
-            return variable;
-        }
-    }
-    else
+    if (variable == nullptr)
     {
         std::cout << "\n Error: the variable '" << name << "' is  not exist!" << std::endl;
-        std::cout << "\n Or the variable '" << name << "' can not be treated as a particle variable," << std::endl;
+        std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+        exit(1);
+    }
+
+    return addVariableToList<DataType>(variable_set, variable);
+}
+//=================================================================================================//
+template <typename DataType>
+DiscreteVariable<DataType> *BaseParticles::
+    addVariableToList(ParticleVariables &variable_set, DiscreteVariable<DataType> *variable)
+{
+    if (variable->getDataSize() <= real_particles_bound_)
+    {
+        std::cout << "\n Error: The variable '" << variable->Name() << "' can not be treated as a particle variable," << std::endl;
         std::cout << "\n because the data size " << variable->getDataSize() << " is too less!" << std::endl;
         std::cout << __FILE__ << ':' << __LINE__ << std::endl;
         exit(1);
     }
-    return nullptr;
+
+    DiscreteVariable<DataType> *listed_variable = findVariableByName<DataType>(variable_set, variable->Name());
+    if (listed_variable == nullptr)
+    {
+        constexpr int type_index = DataTypeIndex<DataType>::value;
+        std::get<type_index>(variable_set).push_back(variable);
+    }
+
+    return variable;
 }
 //=================================================================================================//
 template <typename DataType>
@@ -258,6 +268,12 @@ template <typename DataType>
 void BaseParticles::addVariableToWrite(const std::string &name)
 {
     addVariableToList<DataType>(variables_to_write_, name);
+}
+//=================================================================================================//
+template <typename DataType>
+void BaseParticles::addVariableToWrite(DiscreteVariable<DataType> *variable)
+{
+    addVariableToList<DataType>(variables_to_write_, variable);
 }
 //=================================================================================================//
 template <typename DataType>

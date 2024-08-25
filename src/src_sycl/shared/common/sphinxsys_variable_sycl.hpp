@@ -77,12 +77,22 @@ DeviceOnlyDiscreteVariable<DataType>::
     device_only_data_field_ = allocateDeviceOnly<DataType>(data_size);
     copyToDevice(host_variable->DataField(), device_only_data_field_, data_size);
     host_variable->setDeviceDataField(device_only_data_field_);
-};
+}
 //=================================================================================================//
 template <typename DataType>
 DeviceOnlyDiscreteVariable<DataType>::~DeviceOnlyDiscreteVariable()
 {
     freeDeviceData(device_only_data_field_);
+}
+//=================================================================================================//
+template <typename DataType>
+void DeviceOnlyDiscreteVariable<DataType>::
+    reallocateDataField(DiscreteVariable<DataType> *host_variable)
+{
+    freeDeviceData(device_only_data_field_);
+    size_t new_host_variable_size = host_variable->getDataSize();
+    device_only_data_field_ = allocateDeviceOnly<DataType>(new_host_variable_size);
+    host_variable->setDeviceDataField(device_only_data_field_);
 }
 //=================================================================================================//
 } // namespace SPH

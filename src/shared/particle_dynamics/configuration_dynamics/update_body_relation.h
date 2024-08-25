@@ -37,66 +37,21 @@
 
 namespace SPH
 {
-template <int DIMENSION>
-struct NeighborSize
-{
-    static inline UnsignedInt value = 0;
-};
-
-template <>
-struct NeighborSize<1>
-{
-    static inline UnsignedInt value = int(2.0 * 2.6);
-};
-template <>
-struct NeighborSize<2>
-{
-    static inline UnsignedInt value = int(Pi * 2.6 * 2.6);
-};
-template <>
-struct NeighborSize<3>
-{
-    static inline UnsignedInt value = int(4.0 * Pi * 2.6 * 2.6 * 2.6 / 3.0);
-};
-
 template <typename... T>
-class Relation;
+class BodyRelationUpdate;
 
-class ParticleNeighborList
-{
-  protected:
-    UnsignedInt *neighbor_id_list_;
-    UnsignedInt *neighbor_offset_list_;
-
-  public:
-    ParticleNeighborList(UnsignedInt *neighbor_id_list, UnsignedInt *neighbor_offset_list);
-    ~ParticleNeighborList(){};
-
-    template <typename FunctionOnEach>
-    void forEachNeighbor(UnsignedInt index_i, const Vecd *source_pos,
-                         const FunctionOnEach &function) const;
-};
-
-template <class ParticleCellLinkedListType>
-class Relation<Inner<ParticleCellLinkedListType>> : public LocalDynamics
+template <>
+class BodyRelationUpdate<Inner<>> : public LocalDynamics
 {
 
   public:
-    template <class ExecutionPolicy>
-    explicit Relation(const ExecutionPolicy &execution_policy, RealBody &real_body,
-                      const ParticleCellLinkedListType &particle_cell_linked_list);
-    virtual ~Relation(){};
-
-    ParticleNeighborList getParticleNeighborList()
-    {
-        return ParticleNeighborList(neighbor_id_list_, neighbor_offset_list_);
-    };
-
+    explicit BodyRelationUpdate(BaseInnerRelation &inner_relation);
+    virtual ~BodyRelationUpdate(){};
     template <class T>
     class ComputingKernel
     {
       public:
-        ComputingKernel(Relation<Inner<ParticleCellLinkedListType>> &update_inner_relation);
+        ComputingKernel(BodyRelationUpdate<Inner<>> &update_inner_relation);
         void incrementNeighborSize(UnsignedInt index_i);
         void updateNeighborIDList(UnsignedInt index_i);
 
@@ -113,7 +68,7 @@ class Relation<Inner<ParticleCellLinkedListType>> : public LocalDynamics
     };
 
   protected:
-    ParticleCellLinkedListType particle_cell_linked_list_;
+    BodyRelationType &body_relation_;
     UnsignedInt real_particle_bound_plus_one_;
     UnsignedInt neighbor_id_list_size_;
 

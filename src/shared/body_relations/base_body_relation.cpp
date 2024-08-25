@@ -22,7 +22,8 @@ SPHRelation::SPHRelation(SPHBody &sph_body)
       pos_(base_particles_.getVariableDataByName<Vecd>("Position")) {}
 //=================================================================================================//
 BaseInnerRelation::BaseInnerRelation(RealBody &real_body)
-    : SPHRelation(real_body), real_body_(&real_body)
+    : SPHRelation(real_body), real_body_(&real_body),
+      inner_neighbor_list_(base_particles_)
 {
     subscribeToBody();
     inner_configuration_.resize(base_particles_.RealParticlesBound(), Neighborhood());

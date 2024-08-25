@@ -78,13 +78,15 @@ class DataDelegateInner
   public:
     explicit DataDelegateInner(BaseInnerRelation &inner_relation)
         : inner_relation_(inner_relation),
-          inner_configuration_(inner_relation.inner_configuration_){};
+          inner_configuration_(inner_relation.inner_configuration_),
+          inner_neighbor_list_(inner_relation.getInnerNeighborList()){};
     virtual ~DataDelegateInner(){};
     BaseInnerRelation &getBodyRelation() { return inner_relation_; };
 
   protected:
     /** inner configuration of the designated body */
     ParticleConfiguration &inner_configuration_;
+    NeighborList &inner_neighbor_list_;
 };
 
 /**
