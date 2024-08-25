@@ -433,9 +433,9 @@ namespace fluid_dynamics
 			//** strong form * 
 			//k_gradient += -1.0*(turbu_k_i - turbu_k_[index_j]) * nablaW_ijV_j;
 			//** weak form * 
-			//k_gradient += (turbu_k_i + turbu_k_[index_j]) * nablaW_ijV_j;
+			k_gradient += (turbu_k_i + turbu_k_[index_j]) * nablaW_ijV_j;
 		    //** If use RKGC *
-			k_gradient += (turbu_k_i * B_[index_j] + turbu_k_[index_j] * B_[index_i]) * nablaW_ijV_j;
+			//k_gradient += (turbu_k_i * B_[index_j] + turbu_k_[index_j] * B_[index_i]) * nablaW_ijV_j;
 			
 		}
 		force = -1.0 * (2.0 / 3.0) * k_gradient * mass_[index_i];
@@ -468,9 +468,9 @@ namespace fluid_dynamics
 				size_t index_j = contact_neighborhood.j_[n];
 				Vecd nablaW_ijV_j = contact_neighborhood.dW_ij_[n]* this->Vol_[index_j] * contact_neighborhood.e_ij_[n];
 				//** weak form * 
-				//k_gradient +=  (turbu_k_i + turbu_k_i) * nablaW_ijV_j;
+				k_gradient +=  (turbu_k_i + turbu_k_i) * nablaW_ijV_j;
 				//** If use RKGC *
-				k_gradient +=  (turbu_k_i + turbu_k_i)* B_[index_i] * nablaW_ijV_j;
+				//k_gradient +=  (turbu_k_i + turbu_k_i)* B_[index_i] * nablaW_ijV_j;
 			}
 		}
 		force = -1.0 * (2.0 / 3.0) * k_gradient * mass_[index_i];
