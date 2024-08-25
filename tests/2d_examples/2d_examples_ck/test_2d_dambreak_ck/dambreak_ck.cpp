@@ -75,7 +75,7 @@ int main(int ac, char *av[])
     //	Basically the the range of bodies to build neighbor particle lists.
     //  Generally, we first define all the inner relations, then the contact relations.
     //----------------------------------------------------------------------
-    UpdateCellLinkedList<CellLinkedList, execution::SequencedPolicy> water_block_update_cell_linked_list(water_block);
+    UpdateCellLinkedList<CellLinkedList, execution::ParallelPolicy> water_block_update_cell_linked_list(water_block);
     MeshRecordingToPlt water_cell_linked_list_recording(sph_system, water_block.getCellLinkedList());
     // UpdateRelation<Relation<Inner<ParticleCellLinkedList<Mesh>>>, ParallelPolicy>
     //    water_block_update_inner_relation(water_block, water_block_update_cell_linked_list.getParticleCellLinkedList());
@@ -101,7 +101,7 @@ int main(int ac, char *av[])
     // boundary condition and other constraints should be defined.
     //----------------------------------------------------------------------
     Gravity gravity(Vecd(0.0, -gravity_g));
-    SimpleDynamicsCK<GravityForceCK<Gravity>, execution::SequencedPolicy> constant_gravity(water_block, gravity);
+    SimpleDynamicsCK<GravityForceCK<Gravity>, execution::ParallelPolicy> constant_gravity(water_block, gravity);
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
 
     Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> fluid_pressure_relaxation(water_block_inner, water_wall_contact);
@@ -109,7 +109,7 @@ int main(int ac, char *av[])
     InteractionWithUpdate<fluid_dynamics::DensitySummationComplexFreeSurface> fluid_density_by_summation(water_block_inner, water_wall_contact);
 
     ReduceDynamics<fluid_dynamics::AdvectionTimeStep> fluid_advection_time_step(water_block, U_ref);
-    ReduceDynamicsCK<fluid_dynamics::AdvectionTimeStepCK, execution::SequencedPolicy> ck_fluid_advection_time_step(water_block, U_ref);
+    ReduceDynamicsCK<fluid_dynamics::AdvectionTimeStepCK, execution::ParallelPolicy> ck_fluid_advection_time_step(water_block, U_ref);
     ReduceDynamics<fluid_dynamics::AcousticTimeStep> fluid_acoustic_time_step(water_block);
     //----------------------------------------------------------------------
     //	Define the configuration related particles dynamics.

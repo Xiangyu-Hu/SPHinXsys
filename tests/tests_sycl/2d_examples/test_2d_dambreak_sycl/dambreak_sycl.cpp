@@ -75,15 +75,15 @@ int main(int ac, char *av[])
     //	Basically the the range of bodies to build neighbor particle lists.
     //  Generally, we first define all the inner relations, then the contact relations.
     //----------------------------------------------------------------------
-    UpdateCellLinkedList<Mesh, execution::ParallelPolicy> water_block_update_cell_linked_list(water_block);
-    DiscreteVariable<UnsignedInt> *dv_particle_id_list_water = water_block.getBaseParticles().getVariableByName<UnsignedInt>("ParticleIDList");
+    UpdateCellLinkedList<CellLinkedList, execution::ParallelPolicy> water_block_update_cell_linked_list(water_block);
+    DiscreteVariable<UnsignedInt> *dv_particle_index_water = water_block.getBaseParticles().getVariableByName<UnsignedInt>("ParticleIndex");
     MeshRecordingToPlt water_cell_linked_list_recording(sph_system, water_block.getCellLinkedList());
-    UpdateRelation<Relation<Inner<ParticleCellLinkedList<Mesh>>>, ParallelPolicy>
-        water_block_update_inner_relation(water_block, water_block_update_cell_linked_list.getParticleCellLinkedList());
-    DiscreteVariable<UnsignedInt> *dv_neighbor_offset_list_water_inner = water_block.getBaseParticles().getVariableByName<UnsignedInt>("NeighborOffsetList");
+    //    UpdateRelation<Relation<Inner<ParticleCellLinkedList<Mesh>>>, ParallelPolicy>
+    //        water_block_update_inner_relation(water_block, water_block_update_cell_linked_list.getParticleCellLinkedList());
+    //    DiscreteVariable<UnsignedInt> *dv_neighbor_offset_list_water_inner = water_block.getBaseParticles().getVariableByName<UnsignedInt>("NeighborOffsetList");
 
-    UpdateCellLinkedList<Mesh, execution::ParallelPolicy> wall_boundary_update_cell_linked_list(wall_boundary);
-    DiscreteVariable<UnsignedInt> *dv_particle_id_list_wall = wall_boundary.getBaseParticles().getVariableByName<UnsignedInt>("ParticleIDList");
+    UpdateCellLinkedList<CellLinkedList, execution::ParallelPolicy> wall_boundary_update_cell_linked_list(wall_boundary);
+    DiscreteVariable<UnsignedInt> *dv_particle_index_wall = wall_boundary.getBaseParticles().getVariableByName<UnsignedInt>("ParticleIndex");
     MeshRecordingToPlt wall_cell_linked_list_recording(sph_system, water_block.getCellLinkedList());
 
     InnerRelation water_block_inner(water_block);
@@ -104,7 +104,7 @@ int main(int ac, char *av[])
     // boundary condition and other constraints should be defined.
     //----------------------------------------------------------------------
     Gravity gravity(Vecd(0.0, -gravity_g));
-    SimpleDynamicsCK<GravityForce<Gravity>, execution::ParallelDevicePolicy> constant_gravity(water_block, gravity);
+    SimpleDynamicsCK<GravityForceCK<Gravity>, execution::ParallelDevicePolicy> constant_gravity(water_block, gravity);
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
 
     Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> fluid_pressure_relaxation(water_block_inner, water_wall_contact);
@@ -112,7 +112,7 @@ int main(int ac, char *av[])
     InteractionWithUpdate<fluid_dynamics::DensitySummationComplexFreeSurface> fluid_density_by_summation(water_block_inner, water_wall_contact);
 
     ReduceDynamics<fluid_dynamics::AdvectionTimeStep> fluid_advection_time_step(water_block, U_ref);
-    ReduceDynamicsCK<fluid_dynamics::AdvectionTimeStep, execution::ParallelDevicePolicy> ck_fluid_advection_time_step(water_block, U_ref);
+    ReduceDynamicsCK<fluid_dynamics::AdvectionTimeStepCK, execution::ParallelDevicePolicy> ck_fluid_advection_time_step(water_block, U_ref);
     DiscreteVariable<Vecd> *dv_force_prior = water_block.getBaseParticles().getVariableByName<Vecd>("ForcePrior");
     DiscreteVariable<Vecd> *dv_force = water_block.getBaseParticles().getVariableByName<Vecd>("Force");
     DiscreteVariable<Vecd> *dv_velocity = water_block.getBaseParticles().getVariableByName<Vecd>("Velocity");
@@ -142,22 +142,22 @@ int main(int ac, char *av[])
     dv_force_prior->synchronizeWithDevice();
 
     water_block_update_cell_linked_list.exec();
-    dv_particle_id_list_water->synchronizeWithDevice();
+    dv_particle_index_water->synchronizeWithDevice();
     water_cell_linked_list_recording.writeToFile();
 
-    water_block_update_inner_relation.exec();
-    dv_neighbor_offset_list_water_inner->synchronizeWithDevice();
+    //    water_block_update_inner_relation.exec();
+    //    dv_neighbor_offset_list_water_inner->synchronizeWithDevice();
 
     wall_boundary_update_cell_linked_list.exec();
-    dv_particle_id_list_wall->synchronizeWithDevice();
+    dv_particle_index_wall->synchronizeWithDevice();
     wall_cell_linked_list_recording.writeToFile();
     //----------------------------------------------------------------------
     //	Load restart file if necessary.
     //----------------------------------------------------------------------
-    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
+    SingularVariable<Real> *sv_physical_time = sph_system.getSystemVariableByName<Real>("PhysicalTime");
     if (sph_system.RestartStep() != 0)
     {
-        physical_time = restart_io.readRestartFiles(sph_system.RestartStep());
+        sv_physical_time->setValue(restart_io.readRestartFiles(sph_system.RestartStep()));
         water_block.updateCellLinkedList();
         water_wall_complex.updateConfiguration();
         fluid_observer_contact.updateConfiguration();
@@ -189,7 +189,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------
-    while (physical_time < end_time)
+    while (sv_physical_time->getValue() < end_time)
     {
         Real integration_time = 0.0;
         /** Integrate time (loop) until the next output time. */
@@ -228,7 +228,7 @@ int main(int ac, char *av[])
                 fluid_density_relaxation.exec(acoustic_dt);
                 relaxation_time += acoustic_dt;
                 integration_time += acoustic_dt;
-                physical_time += acoustic_dt;
+                sv_physical_time->incrementValue(acoustic_dt);
             }
             interval_computing_fluid_pressure_relaxation += TickCount::now() - time_instance;
 
@@ -236,7 +236,7 @@ int main(int ac, char *av[])
             if (number_of_iterations % screen_output_interval == 0)
             {
                 std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
-                          << physical_time
+                          << sv_physical_time->getValue()
                           << "	advection_dt = " << advection_dt << "	acoustic_dt = " << acoustic_dt << "\n";
 
                 if (number_of_iterations % observation_sample_interval == 0 && number_of_iterations != sph_system.RestartStep())

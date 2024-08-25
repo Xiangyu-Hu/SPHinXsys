@@ -62,7 +62,7 @@ class BaseIO
   protected:
     SPHSystem &sph_system_;
     IOEnvironment &io_environment_;
-    Real &physical_time_;
+    SingularVariable<Real> &sv_physical_time_;
 
     std::string convertPhysicalTimeToString(Real physical_time);
 

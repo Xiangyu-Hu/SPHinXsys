@@ -82,7 +82,7 @@ class ObservedQuantityRecording : public BodyStatesRecording,
     {
         this->exec();
         std::ofstream out_file(filefullpath_output_.c_str(), std::ios::app);
-        out_file << physical_time_ << "   ";
+        out_file << sv_physical_time_.getValue() << "   ";
         for (size_t i = 0; i != base_particles_.TotalRealParticles(); ++i)
         {
             plt_engine_.writeAQuantity(out_file, this->interpolated_quantities_[i]);
@@ -138,7 +138,7 @@ class ReducedQuantityRecording : public BaseIO
     virtual void writeToFile(size_t iteration_step = 0) override
     {
         std::ofstream out_file(filefullpath_output_.c_str(), std::ios::app);
-        out_file << physical_time_ << "   ";
+        out_file << sv_physical_time_.getValue() << "   ";
         plt_engine_.writeAQuantity(out_file, reduce_method_.exec());
         out_file << "\n";
         out_file.close();

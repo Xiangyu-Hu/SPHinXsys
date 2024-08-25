@@ -79,6 +79,11 @@ class SingularVariable : public BaseVariable
 
     DataType *ValueAddress() { return delegated_; };
 
+    void setValue(const DataType &value) { *delegated_ = value; };
+    DataType getValue() { return *delegated_; };
+
+    void incrementValue(const DataType &value) { *delegated_ += value; };
+
     template <class ExecutionPolicy>
     DataType *DelegatedData(const ExecutionPolicy &ex_policy) { return delegated_; };
 

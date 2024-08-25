@@ -101,27 +101,13 @@ class SPHSystem
     void addRealBody(SPHBody *sph_body) { real_bodies_.push_back(sph_body); };
 
     template <typename DataType>
-    DataType *registerSystemVariable(const std::string &name,
-                                     DataType initial_value = ZeroData<DataType>::value);
-    template <typename DataType, class ExecutionPolicy>
-    SingularVariable<DataType> *registerSystemVariable(const ExecutionPolicy &execution_policy,
-                                                       const std::string &name,
+    SingularVariable<DataType> *registerSystemVariable(const std::string &name,
                                                        DataType initial_value = ZeroData<DataType>::value);
-    template <typename DataType>
-    SingularVariable<DataType> *registerSystemVariable(const ParallelDevicePolicy &execution_policy,
-                                                       const std::string &name,
-                                                       DataType initial_value = ZeroData<DataType>::value);
-    template <typename DataType>
-    DataType *getSystemVariableDataByName(const std::string &name);
-
     template <typename DataType>
     SingularVariable<DataType> *getSystemVariableByName(const std::string &name);
 
-    template <typename DataType, class ExecutionPolicy>
-    SingularVariable<DataType> *getSystemVariableByName(const ExecutionPolicy &execution_policy, const std::string &name);
-
     template <typename DataType>
-    SingularVariable<DataType> *getSystemVariableByName(const ParallelDevicePolicy &execution_policy, const std::string &name);
+    DataType *getSystemVariableDataByName(const std::string &name);
 
   protected:
     friend class IOEnvironment;
