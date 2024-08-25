@@ -314,7 +314,8 @@ namespace fluid_dynamics
 	{
 		//turbu_k_[index_i] += dk_dt_[index_i] * dt;
 		Real denominator = 1.0 + turbu_epsilon_[index_i] * dt / turbu_k_[index_i];
-		turbu_k_[index_i] = (turbu_k_[index_i] + dk_dt_without_dissipation_[index_i] * dt) / denominator ;
+		turbu_k_[index_i] +=  dk_dt_without_dissipation_[index_i] * dt;
+		turbu_k_[index_i] /=  denominator ;
 	}
 	//=================================================================================================//
 	// void K_TurtbulentModelInner::update_prior_turbulent_value()
@@ -326,7 +327,8 @@ namespace fluid_dynamics
 //=================================================================================================//
 	E_TurtbulentModelInner::E_TurtbulentModelInner(BaseInnerRelation& inner_relation)
 		: BaseTurtbulentModel<Base, DataDelegateInner>(inner_relation),
-		dE_dt_(*particles_->registerSharedVariable<Real>("ChangeRateOfTDR")),
+		depsilon_dt_(*particles_->registerSharedVariable<Real>("ChangeRateOfTDR")),
+		depsilon_dt_without_disspation_(*particles_->registerSharedVariable<Real>("ChangeRateOfTDRWithoutDissp")),
 		ep_production(*particles_->registerSharedVariable<Real>("Ep_Production")),
 		ep_dissipation_(*particles_->registerSharedVariable<Real>("Ep_Dissipation_")),
 		ep_diffusion_(*particles_->registerSharedVariable<Real>("Ep_Diffusion_")),
@@ -336,7 +338,7 @@ namespace fluid_dynamics
 		k_production_(*particles_->getVariableDataByName<Real>("K_Production")),		
 		is_near_wall_P1_(*particles_->getVariableDataByName<int>("IsNearWallP1"))
 	{
-		//particles_->registerSharedVariable(dE_dt_, "ChangeRateOfTDR");
+		//particles_->registerSharedVariable(depsilon_dt_, "ChangeRateOfTDR");
 		particles_->addVariableToSort<Real>("ChangeRateOfTDR");
 		particles_->addVariableToWrite<Real>("ChangeRateOfTDR");
 
@@ -363,7 +365,8 @@ namespace fluid_dynamics
 
 		Real mu_eff_i = turbu_mu_[index_i] / sigma_E_ + mu_;
 
-		dE_dt_[index_i] = 0.0;
+		depsilon_dt_[index_i] = 0.0;
+		depsilon_dt_without_disspation_[index_i] = 0.0;
 		Real epsilon_production(0.0);
 		Real epsilon_derivative(0.0);
 		Real epsilon_lap(0.0);
@@ -385,7 +388,8 @@ namespace fluid_dynamics
 		//epsilon_production = C_l_ * turbu_epsilon_prior_[index_i] * k_production_prior_[index_i] / turbu_k_prior_[index_i];
 		//epsilon_dissipation = (C_2_ * turbu_epsilon_prior_[index_i] / turbu_k_prior_[index_i]) * turbu_epsilon_i;
 		
-		dE_dt_[index_i] = epsilon_production - epsilon_dissipation + epsilon_lap;
+		depsilon_dt_[index_i] = epsilon_production - epsilon_dissipation + epsilon_lap;
+		depsilon_dt_without_disspation_[index_i] = epsilon_production + epsilon_lap;
 
 		//** for test */
 		ep_production[index_i] = epsilon_production;
@@ -397,7 +401,13 @@ namespace fluid_dynamics
 	{
 		//** The near wall epsilon value is updated in wall function part *
 		if (is_near_wall_P1_[index_i] != 1)
-			turbu_epsilon_[index_i] += dE_dt_[index_i] * dt;
+		{
+			//turbu_epsilon_[index_i] += depsilon_dt_[index_i] * dt;
+			Real denominator = 1.0 + C_2_ * turbu_epsilon_[index_i] * dt / turbu_k_[index_i];
+			turbu_epsilon_[index_i] += depsilon_dt_without_disspation_[index_i] * dt;
+			turbu_epsilon_[index_i] /= denominator;
+		}
+			
 	}
 //=================================================================================================//
 	TKEnergyForce<Inner<>>::TKEnergyForce(BaseInnerRelation& inner_relation)

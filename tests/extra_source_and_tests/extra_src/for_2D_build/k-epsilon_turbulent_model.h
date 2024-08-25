@@ -215,7 +215,8 @@ namespace fluid_dynamics
 		inline void interaction(size_t index_i, Real dt = 0.0);
 		void update(size_t index_i, Real dt = 0.0);
 	protected:
-		StdLargeVec<Real> &dE_dt_, &ep_production, &ep_dissipation_, &ep_diffusion_;
+		StdLargeVec<Real> &depsilon_dt_, &depsilon_dt_without_disspation_;
+		StdLargeVec<Real> &ep_production, &ep_dissipation_, &ep_diffusion_;
 		
 		StdLargeVec<Real> &turbu_mu_;
 		StdLargeVec<Real> &turbu_k_;
