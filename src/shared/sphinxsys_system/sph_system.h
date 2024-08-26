@@ -68,7 +68,6 @@ class SPHSystem
     tbb::global_control tbb_global_control_; /**< global controlling on the total number parallel threads */
     SPHBodyVector sph_bodies_;               /**< All sph bodies. */
     SPHBodyVector observation_bodies_;       /**< The bodies without inner particle configuration. */
-    SPHBodyVector real_bodies_;              /**< The bodies with inner particle configuration. */
     SolidBodyVector solid_bodies_;           /**< The bodies with inner particle configuration and acoustic time steps . */
 
     SPHSystem(BoundingBox system_domain_bounds, Real resolution_ref,
@@ -96,11 +95,14 @@ class SPHSystem
     void initializeSystemConfigurations();
     /** get the min time step from all bodies. */
     Real getSmallestTimeStepAmongSolidBodies(Real CFL = 0.6);
-    Real ReferenceResolution(){return resolution_ref_;};
+    Real ReferenceResolution() { return resolution_ref_; };
+    SPHBodyVector getRealBodies() { return real_bodies_; };
+    void addRealBody(SPHBody *sph_body) { real_bodies_.push_back(sph_body); };
 
   protected:
     friend class IOEnvironment;
     IOEnvironment *io_environment_; /**< io environment */
+    SPHBodyVector real_bodies_;     /**< The bodies with inner particle configuration. */
     bool run_particle_relaxation_;  /**< run particle relaxation for body fitted particle distribution */
     bool reload_particles_;         /**< start the simulation with relaxed particles. */
     size_t restart_step_;           /**< restart step */

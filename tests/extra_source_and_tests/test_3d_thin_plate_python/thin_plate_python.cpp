@@ -45,11 +45,11 @@ namespace SPH
 /** Define application dependent particle generator for thin structure. */
 class Plate;
 template <>
-class ParticleGenerator<Plate> : public ParticleGenerator<Surface>, public Parameter
+class ParticleGenerator<SurfaceParticles, Plate> : public ParticleGenerator<SurfaceParticles>, public Parameter
 {
   public:
-    explicit ParticleGenerator(SPHBody &sph_body) : ParticleGenerator<Surface>(sph_body){};
-    virtual void initializeGeometricVariables() override
+    explicit ParticleGenerator(SPHBody &sph_body, SurfaceParticles &surface_particles) : ParticleGenerator<SurfaceParticles>(sph_body, surface_particles){};
+    virtual void prepareGeometricData() override
     {
         // the plate and boundary
         for (int i = 0; i < (particle_number + 2 * BWD); i++)
@@ -58,8 +58,8 @@ class ParticleGenerator<Plate> : public ParticleGenerator<Surface>, public Param
             {
                 Real x = resolution_ref * i - BW + resolution_ref * 0.5;
                 Real y = resolution_ref * j - BW + resolution_ref * 0.5;
-                initializePositionAndVolumetricMeasure(Vecd(x, y, 0.0), resolution_ref * resolution_ref);
-                initializeSurfaceProperties(n_0, PT);
+                addPositionAndVolumetricMeasure(Vecd(x, y, 0.0), resolution_ref * resolution_ref);
+                addSurfaceProperties(n_0, PT);
             }
         }
     }
@@ -153,7 +153,7 @@ class PreSettingCase : public Parameter
         plate_body.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
         plate_body.generateParticles<SurfaceParticles, Plate>();
 
-        plate_observer.generateParticles<BaseParticles, Observer>(observation_location);
+        plate_observer.generateParticles<ObserverParticles>(observation_location);
     }
 };
 Real observed_quantity_0 = 0.0;
@@ -198,9 +198,9 @@ class Environment : public PreSettingCase
     BoundaryGeometryParallelToYAxis boundary_geometry_y;
     SimpleDynamics<thin_structure_dynamics::ConstrainShellBodyRegionAlongAxis>
         constrain_holder_y;
-    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d>>>
+    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d, FixedDampingRate>>>
         plate_position_damping;
-    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d>>>
+    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d, FixedDampingRate>>>
         plate_rotation_damping;
     /** Output */
     IOEnvironment io_environment;
@@ -229,7 +229,7 @@ class Environment : public PreSettingCase
                                                     plate_position_damping(0.5, plate_body_inner, "Velocity", physical_viscosity),
                                                     plate_rotation_damping(0.5, plate_body_inner, "AngularVelocity", physical_viscosity),
                                                     io_environment(system),
-                                                    write_states(system.real_bodies_),
+                                                    write_states(system),
                                                     write_plate_max_displacement("Position", plate_observer_contact)
     {
         if (loading_factor == 200.0)

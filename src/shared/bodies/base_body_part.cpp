@@ -6,7 +6,7 @@ namespace SPH
 //=================================================================================================//
 void BodyPartByParticle::tagParticles(TaggingParticleMethod &tagging_particle_method)
 {
-    for (size_t i = 0; i < base_particles_.total_real_particles_; ++i)
+    for (size_t i = 0; i < base_particles_.TotalRealParticles(); ++i)
     {
         tagging_particle_method(i);
     }

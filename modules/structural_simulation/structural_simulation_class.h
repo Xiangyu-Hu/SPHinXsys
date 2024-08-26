@@ -94,7 +94,7 @@ class SolidBodyForSimulation
     InteractionWithUpdate<LinearGradientCorrectionMatrixInner> correct_configuration_;
     Dynamics1Level<solid_dynamics::Integration1stHalfPK2> stress_relaxation_first_half_;
     Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half_;
-    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d>>> damping_random_;
+    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d, FixedDampingRate>>> damping_random_;
 
   public:
     // no particle reload --> direct generator
@@ -111,7 +111,7 @@ class SolidBodyForSimulation
     InteractionWithUpdate<LinearGradientCorrectionMatrixInner> *getCorrectConfiguration() { return &correct_configuration_; };
     Dynamics1Level<solid_dynamics::Integration1stHalfPK2> *getStressRelaxationFirstHalf() { return &stress_relaxation_first_half_; };
     Dynamics1Level<solid_dynamics::Integration2ndHalf> *getStressRelaxationSecondHalf() { return &stress_relaxation_second_half_; };
-    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d>>> *getDampingWithRandomChoice() { return &damping_random_; };
+    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d, FixedDampingRate>>> *getDampingWithRandomChoice() { return &damping_random_; };
 };
 
 void expandBoundingBox(BoundingBox *original, BoundingBox *additional);
@@ -205,7 +205,7 @@ class StructuralSimulation
     StdVec<SharedPtr<SimpleDynamics<solid_dynamics::UpdateElasticNormalDirection>>> particle_normal_update_;
 
     StdVec<SharedPtr<SurfaceContactRelation>> contact_list_;
-    StdVec<SharedPtr<InteractionDynamics<solid_dynamics::ContactDensitySummation>>> contact_density_list_;
+    StdVec<SharedPtr<InteractionDynamics<solid_dynamics::ContactFactorSummation>>> contact_density_list_;
     StdVec<SharedPtr<InteractionDynamics<solid_dynamics::ContactForce>>> contact_force_list_;
 
     // for initializeATimeStep
@@ -282,7 +282,7 @@ class StructuralSimulation
     void executeSurfacePressure();
     void executeSpringDamperConstraintParticleWise();
     void executeSpringNormalOnSurfaceParticles();
-    void executeContactDensitySummation();
+    void executeContactFactorSummation();
     void executeContactForce();
     void executeStressRelaxationFirstHalf(Real dt);
     void executeConstrainSolidBody();

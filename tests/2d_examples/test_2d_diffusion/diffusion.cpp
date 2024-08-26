@@ -50,7 +50,7 @@ class DiffusionInitialCondition : public LocalDynamics, public DataDelegateSimpl
   public:
     explicit DiffusionInitialCondition(SPHBody &sph_body)
         : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
-          pos_(*particles_->getVariableByName<Vecd>("Position")),
+          pos_(*particles_->getVariableDataByName<Vecd>("Position")),
           phi_(*particles_->registerSharedVariable<Real>("Phi")){};
 
     void update(size_t index_i, Real dt)
@@ -74,26 +74,20 @@ class DiffusionInitialCondition : public LocalDynamics, public DataDelegateSimpl
 //----------------------------------------------------------------------
 using DiffusionBodyRelaxation =
     DiffusionRelaxationRK2<DiffusionRelaxation<Inner<CorrectedKernelGradientInner>, BaseDiffusion>>;
-//----------------------------------------------------------------------
-//	An observer particle generator.
-//----------------------------------------------------------------------
-template <>
-class ParticleGenerator<ObserverBody> : public ParticleGenerator<Observer>
-{
-  public:
-    explicit ParticleGenerator(SPHBody &sph_body)
-        : ParticleGenerator<Observer>(sph_body)
-    {
-        size_t number_of_observation_points = 11;
-        Real range_of_measure = 0.9 * L;
-        Real start_of_measure = 0.05 * L;
 
-        for (size_t i = 0; i < number_of_observation_points; ++i)
-        {
-            Vec2d point_coordinate(range_of_measure * (Real)i / (Real)(number_of_observation_points - 1) + start_of_measure, 0.5 * H);
-            positions_.push_back(point_coordinate);
-        }
+StdVec<Vecd> createObservationPoints()
+{
+    StdVec<Vecd> observation_points;
+    size_t number_of_observation_points = 11;
+    Real range_of_measure = 0.9 * L;
+    Real start_of_measure = 0.05 * L;
+
+    for (size_t i = 0; i < number_of_observation_points; ++i)
+    {
+        Vec2d point_coordinate(range_of_measure * (Real)i / (Real)(number_of_observation_points - 1) + start_of_measure, 0.5 * H);
+        observation_points.push_back(point_coordinate);
     }
+    return observation_points;
 };
 } // namespace SPH
 //----------------------------------------------------------------------
@@ -117,7 +111,7 @@ int main(int ac, char *av[])
     //	Particle and body creation of fluid observers.
     //----------------------------------------------------------------------
     ObserverBody temperature_observer(sph_system, "TemperatureObserver");
-    temperature_observer.generateParticles<BaseParticles, ObserverBody>();
+    temperature_observer.generateParticles<ObserverParticles>(createObservationPoints());
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -143,7 +137,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp write_states(sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_states(sph_system);
     RegressionTestEnsembleAverage<ObservedQuantityRecording<Real>>
         write_solid_temperature("Phi", temperature_observer_contact);
     //----------------------------------------------------------------------

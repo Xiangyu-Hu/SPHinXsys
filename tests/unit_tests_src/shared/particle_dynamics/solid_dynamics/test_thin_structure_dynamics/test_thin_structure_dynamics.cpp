@@ -54,11 +54,11 @@ namespace SPH
 /** Define application dependent particle generator for thin structure. */
 class Plate;
 template <>
-class ParticleGenerator<Plate> : public ParticleGenerator<Surface>
+class ParticleGenerator<SurfaceParticles, Plate> : public ParticleGenerator<SurfaceParticles>
 {
   public:
-    explicit ParticleGenerator(SPHBody &sph_body) : ParticleGenerator<Surface>(sph_body){};
-    virtual void initializeGeometricVariables() override
+    explicit ParticleGenerator(SPHBody &sph_body, SurfaceParticles &surface_particles) : ParticleGenerator<SurfaceParticles>(sph_body, surface_particles){};
+    virtual void prepareGeometricData() override
     {
         // the plate and boundary
         for (int i = 0; i < (particle_number + 2 * BWD); i++)
@@ -67,8 +67,8 @@ class ParticleGenerator<Plate> : public ParticleGenerator<Surface>
             {
                 Real x = resolution_ref * i - BW + resolution_ref * 0.5 - PL * 0.5;
                 Real y = resolution_ref * j - BW + resolution_ref * 0.5 - PH * 0.5;
-                initializePositionAndVolumetricMeasure(Vecd(x, y, 0.0), resolution_ref * resolution_ref);
-                initializeSurfaceProperties(n_0, PT);
+                addPositionAndVolumetricMeasure(Vecd(x, y, 0.0), resolution_ref * resolution_ref);
+                addSurfaceProperties(n_0, PT);
             }
         }
     }
@@ -97,9 +97,9 @@ class ControlledRotation : public thin_structure_dynamics::ConstrainShellBodyReg
   public:
     ControlledRotation(BodyPartByParticle &body_part)
         : ConstrainShellBodyRegion(body_part),
-          vel_(*particles_->getVariableByName<Vecd>("Velocity")),
-          angular_vel_(*particles_->getVariableByName<Vecd>("AngularVelocity")),
-          pos_(*particles_->getVariableByName<Vecd>("Position")){};
+          vel_(*particles_->getVariableDataByName<Vecd>("Velocity")),
+          angular_vel_(*particles_->getVariableDataByName<Vecd>("AngularVelocity")),
+          pos_(*particles_->getVariableDataByName<Vecd>("Position")){};
     virtual ~ControlledRotation(){};
 
   protected:
@@ -155,12 +155,12 @@ int main(int ac, char *av[])
     ControlledGeometry controlled_geometry(plate_body, "ControlledGeometry");
     SimpleDynamics<ControlledRotation> controlled_rotation(controlled_geometry);
     SimpleDynamics<thin_structure_dynamics::UpdateShellNormalDirection> update_normal(plate_body);
-    /** Output */
+    /** File and screen outputs */
     IOEnvironment io_environment(system);
-    plate_body.addBodyStateForRecording<Vecd>("PseudoNormal");
-    plate_body.addDerivedBodyStateForRecording<VonMisesStrain>();
-    StdLargeVec<Real> &all_von_mises_strain = *shell_particles->getVariableByName<Real>("VonMisesStrain");
-    BodyStatesRecordingToVtp write_states(system.real_bodies_);
+    BodyStatesRecordingToVtp write_states(system);
+    write_states.addToWrite<Vecd>(plate_body, "PseudoNormal");
+    write_states.addDerivedVariableRecording<SimpleDynamics<VonMisesStrain>>(plate_body);
+    StdLargeVec<Real> &all_von_mises_strain = *shell_particles->getVariableDataByName<Real>("VonMisesStrain");
 
     /** Apply initial condition. */
     system.initializeSystemCellLinkedLists();
@@ -222,14 +222,14 @@ int main(int ac, char *av[])
 
     for (int i = 0; i < 10; i++)
     {
-        random_index.push_back(rand_uniform(0.0, 1.0) * shell_particles->total_real_particles_);
+        random_index.push_back(rand_uniform(0.0, 1.0) * shell_particles->TotalRealParticles());
         von_mises_strain.push_back(all_von_mises_strain[random_index[i]]);
     }
 
     update_normal.exec();
 
-    pseudo_normal = *shell_particles->getVariableByName<Vecd>("PseudoNormal");
-    normal = *shell_particles->getVariableByName<Vecd>("NormalDirection");
+    pseudo_normal = *shell_particles->getVariableDataByName<Vecd>("PseudoNormal");
+    normal = *shell_particles->getVariableDataByName<Vecd>("NormalDirection");
 
     testing::InitGoogleTest(&ac, av);
     return RUN_ALL_TESTS();

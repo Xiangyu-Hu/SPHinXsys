@@ -11,13 +11,13 @@ namespace solid_dynamics
 SpringDamperConstraintParticleWise::
     SpringDamperConstraintParticleWise(SPHBody &sph_body, Vecd stiffness, Real damping_ratio)
     : LoadingForce(sph_body, "SpringDamperConstraintForce"),
-      pos_(*particles_->getVariableByName<Vecd>("Position")),
+      pos_(*particles_->getVariableDataByName<Vecd>("Position")),
       pos0_(*particles_->registerSharedVariableFrom<Vecd>("InitialPosition", "Position")),
-      vel_(*particles_->getVariableByName<Vecd>("Velocity")),
-      mass_(*particles_->getVariableByName<Real>("Mass"))
+      vel_(*particles_->getVariableDataByName<Vecd>("Velocity")),
+      mass_(*particles_->getVariableDataByName<Real>("Mass"))
 {
     // scale stiffness and damping by mass here, so it's not necessary in each iteration
-    stiffness_ = stiffness / std::accumulate(&mass_[0], &mass_[particles_->total_real_particles_], 0.0);
+    stiffness_ = stiffness / std::accumulate(&mass_[0], &mass_[particles_->TotalRealParticles()], 0.0);
     damping_coeff_ = stiffness_ * damping_ratio;
 }
 //=================================================================================================//
@@ -53,13 +53,13 @@ SpringNormalOnSurfaceParticles::
     SpringNormalOnSurfaceParticles(SPHBody &sph_body, bool outer_surface,
                                    Vecd source_point, Real stiffness, Real damping_ratio)
     : LoadingForce(sph_body, "NormalSpringForceOnSurface"),
-      pos_(*particles_->getVariableByName<Vecd>("Position")),
+      pos_(*particles_->getVariableDataByName<Vecd>("Position")),
       pos0_(*particles_->registerSharedVariableFrom<Vecd>("InitialPosition", "Position")),
-      n_(*particles_->getVariableByName<Vecd>("NormalDirection")),
+      n_(*particles_->getVariableDataByName<Vecd>("NormalDirection")),
       n0_(*particles_->registerSharedVariableFrom<Vecd>("InitialNormalDirection", "NormalDirection")),
-      vel_(*particles_->getVariableByName<Vecd>("Velocity")),
-      Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")),
-      mass_(*particles_->getVariableByName<Real>("Mass")),
+      vel_(*particles_->getVariableDataByName<Vecd>("Velocity")),
+      Vol_(*particles_->getVariableDataByName<Real>("VolumetricMeasure")),
+      mass_(*particles_->getVariableDataByName<Real>("Mass")),
       apply_spring_force_to_particle_(StdLargeVec<bool>(pos0_.size(), false))
 {
     BodySurface surface_layer(sph_body);
@@ -123,11 +123,11 @@ void SpringNormalOnSurfaceParticles::update(size_t index_i, Real dt)
 SpringOnSurfaceParticles::
     SpringOnSurfaceParticles(SPHBody &sph_body, Real stiffness, Real damping_ratio)
     : LoadingForce(sph_body, "SpringForceOnSurface"),
-      pos_(*particles_->getVariableByName<Vecd>("Position")),
+      pos_(*particles_->getVariableDataByName<Vecd>("Position")),
       pos0_(*particles_->registerSharedVariableFrom<Vecd>("InitialPosition", "Position")),
-      vel_(*particles_->getVariableByName<Vecd>("Velocity")),
-      Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")),
-      mass_(*particles_->getVariableByName<Real>("Mass")),
+      vel_(*particles_->getVariableDataByName<Vecd>("Velocity")),
+      Vol_(*particles_->getVariableDataByName<Real>("VolumetricMeasure")),
+      mass_(*particles_->getVariableDataByName<Real>("Mass")),
       apply_spring_force_to_particle_(StdLargeVec<bool>(pos0_.size(), false))
 {
     BodySurface surface_layer(sph_body);
@@ -163,8 +163,8 @@ void SpringOnSurfaceParticles::update(size_t index_i, Real dt)
 ExternalForceInBoundingBox::
     ExternalForceInBoundingBox(SPHBody &sph_body, BoundingBox &bounding_box, Vecd acceleration)
     : LoadingForce(sph_body, "ExternalForceInBoundingBox"),
-      pos_(*particles_->getVariableByName<Vecd>("Position")),
-      mass_(*particles_->getVariableByName<Real>("Mass")),
+      pos_(*particles_->getVariableDataByName<Vecd>("Position")),
+      mass_(*particles_->getVariableDataByName<Real>("Mass")),
       bounding_box_(bounding_box), acceleration_(acceleration) {}
 //=================================================================================================//
 void ExternalForceInBoundingBox::update(size_t index_i, Real dt)
@@ -179,7 +179,7 @@ void ExternalForceInBoundingBox::update(size_t index_i, Real dt)
 ForceInBodyRegion::
     ForceInBodyRegion(BodyPartByParticle &body_part, Vecd force, Real end_time)
     : BaseLoadingForce<BodyPartByParticle>(body_part, "ForceInBodyRegion"),
-      mass_(*particles_->getVariableByName<Real>("Mass")),
+      mass_(*particles_->getVariableDataByName<Real>("Mass")),
       pos0_(*particles_->registerSharedVariableFrom<Vecd>("InitialPosition", "Position")),
       force_vector_(Vecd::Zero()), end_time_(end_time)
 {
@@ -201,9 +201,9 @@ SurfacePressureFromSource::
                               StdVec<std::array<Real, 2>> pressure_over_time)
     : BaseLoadingForce<BodyPartByParticle>(body_part, "SurfacePressureForce"),
       pos0_(*particles_->registerSharedVariableFrom<Vecd>("InitialPosition", "Position")),
-      n_(*particles_->getVariableByName<Vecd>("NormalDirection")),
-      Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")),
-      mass_(*particles_->getVariableByName<Real>("Mass")),
+      n_(*particles_->getVariableDataByName<Vecd>("NormalDirection")),
+      Vol_(*particles_->getVariableDataByName<Real>("VolumetricMeasure")),
+      mass_(*particles_->getVariableDataByName<Real>("Mass")),
       pressure_over_time_(pressure_over_time),
       apply_pressure_to_particle_(StdLargeVec<bool>(pos0_.size(), false))
 {
@@ -266,8 +266,8 @@ void SurfacePressureFromSource::update(size_t index_i, Real dt)
 PressureForceOnShell::PressureForceOnShell(SPHBody &sph_body, Real pressure)
     : LoadingForce(sph_body, "PressureForceOnShell"),
       pressure_(pressure),
-      Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")),
-      n_(*particles_->getVariableByName<Vecd>("NormalDirection")) {}
+      Vol_(*particles_->getVariableDataByName<Real>("VolumetricMeasure")),
+      n_(*particles_->getVariableDataByName<Vecd>("NormalDirection")) {}
 //=================================================================================================//
 void PressureForceOnShell::update(size_t index_i, Real dt)
 {

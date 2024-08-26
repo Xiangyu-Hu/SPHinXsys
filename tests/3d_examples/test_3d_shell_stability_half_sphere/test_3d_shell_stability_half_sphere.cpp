@@ -17,7 +17,7 @@ namespace SPH
 {
 class ShellSphere;
 template <>
-class ParticleGenerator<ShellSphere> : public ParticleGenerator<Surface>
+class ParticleGenerator<SurfaceParticles, ShellSphere> : public ParticleGenerator<SurfaceParticles>
 {
     const StdVec<Vec3d> &pos_0_;
     const Vec3d center_;
@@ -25,20 +25,21 @@ class ParticleGenerator<ShellSphere> : public ParticleGenerator<Surface>
     const Real thickness_;
 
   public:
-    explicit ParticleGenerator(SPHBody &sph_body, const StdVec<Vec3d> &pos_0,
+    explicit ParticleGenerator(SPHBody &sph_body, SurfaceParticles &surface_particles,
+                               const StdVec<Vec3d> &pos_0,
                                const Vec3d &center, Real particle_area, Real thickness)
-        : ParticleGenerator<Surface>(sph_body),
+        : ParticleGenerator<SurfaceParticles>(sph_body, surface_particles),
           pos_0_(pos_0),
           center_(center),
           particle_area_(particle_area),
           thickness_(thickness){};
-    virtual void initializeGeometricVariables() override
+    virtual void prepareGeometricData() override
     {
         for (const auto &pos : pos_0_)
         {
             Vec3d center_to_pos = pos - center_;
-            initializePositionAndVolumetricMeasure(pos, particle_area_);
-            initializeSurfaceProperties(center_to_pos.normalized(), thickness_);
+            addPositionAndVolumetricMeasure(pos, particle_area_);
+            addSurfaceProperties(center_to_pos.normalized(), thickness_);
         }
     }
 };
@@ -71,7 +72,7 @@ StdVec<Vec3d> read_obj_vertices(const std::string &file_name)
         throw std::runtime_error("read_obj_vertices: file doesn't exist");
 
     StdVec<Vec3d> pos_0;
-    Vec3d particle =  Vec3d::Zero();
+    Vec3d particle = Vec3d::Zero();
     unsigned int count = 0;
     Real value = 0;
 
@@ -144,11 +145,7 @@ void sphere_compression(int dp_ratio, Real pressure, Real gravity_z)
     shell_body.defineMaterial<SaintVenantKirchhoffSolid>(rho, E, mu);
     shell_body.generateParticles<SurfaceParticles, ShellSphere>(obj_vertices, center, particle_area, thickness);
     auto shell_particles = dynamic_cast<SurfaceParticles *>(&shell_body.getBaseParticles());
-    // output
-    shell_body.addBodyStateForRecording<Vec3d>("NormalDirection");
-    shell_body.addDerivedBodyStateForRecording<Displacement>();
-    BodyStatesRecordingToVtp vtp_output({shell_body});
-    vtp_output.writeToFile(0);
+
     // methods
     InnerRelation shell_body_inner(shell_body);
 
@@ -161,11 +158,10 @@ void sphere_compression(int dp_ratio, Real pressure, Real gravity_z)
 
     ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> computing_time_step_size(shell_body);
     SimpleDynamics<thin_structure_dynamics::UpdateShellNormalDirection> normal_update(shell_body);
-    ReduceDynamics<VariableNorm<Vecd, ReduceMax>> maximum_displace_norm(shell_body, "Displacement");
     SimpleDynamics<solid_dynamics::PressureForceOnShell> apply_pressure(shell_body, pressure * pow(unit_mm, 2));
 
     BodyPartByParticle constrained_edges(shell_body, "constrained_edges");
-    StdLargeVec<Vec3d> &position = *shell_particles->getVariableByName<Vec3d>("Position");
+    StdLargeVec<Vec3d> &position = *shell_particles->getVariableDataByName<Vec3d>("Position");
     auto constrained_edge_ids = [&]() { // brute force finding the edges
         IndexVector ids;
         for (size_t i = 0; i < position.size(); ++i)
@@ -177,10 +173,17 @@ void sphere_compression(int dp_ratio, Real pressure, Real gravity_z)
 
     SimpleDynamics<thin_structure_dynamics::ConstrainShellBodyRegion> constrain_holder(constrained_edges);
 
-    DampingWithRandomChoice<InteractionSplit<DampingBySplittingInner<Vec3d>>>
+    DampingWithRandomChoice<InteractionSplit<DampingProjectionInner<Vec3d, FixedDampingRate>>>
         shell_velocity_damping(0.2, shell_body_inner, "Velocity", physical_viscosity);
-    DampingWithRandomChoice<InteractionSplit<DampingBySplittingInner<Vec3d>>>
+    DampingWithRandomChoice<InteractionSplit<DampingProjectionInner<Vec3d, FixedDampingRate>>>
         shell_rotation_damping(0.2, shell_body_inner, "AngularVelocity", physical_viscosity);
+
+    // file and screen output
+    BodyStatesRecordingToVtp vtp_output({shell_body});
+    vtp_output.addToWrite<Vecd>(shell_body, "NormalDirection");
+    vtp_output.addDerivedVariableRecording<SimpleDynamics<Displacement>>(shell_body);
+    ReduceDynamics<VariableNorm<Vecd, ReduceMax>> maximum_displace_norm(shell_body, "Displacement");
+    vtp_output.writeToFile(0);
 
     /** Apply initial condition. */
     system.initializeSystemCellLinkedLists();
@@ -210,8 +213,8 @@ void sphere_compression(int dp_ratio, Real pressure, Real gravity_z)
         }
 
         // test volume
-        StdLargeVec<Real> &Vol_ = *shell_particles->getVariableByName<Real>("VolumetricMeasure");
-        StdLargeVec<Real> &mass_ = *shell_particles->getVariableByName<Real>("Mass");
+        StdLargeVec<Real> &Vol_ = *shell_particles->getVariableDataByName<Real>("VolumetricMeasure");
+        StdLargeVec<Real> &mass_ = *shell_particles->getVariableDataByName<Real>("Mass");
         Real total_volume = std::accumulate(Vol_.begin(), Vol_.end(), 0.0);
         std::cout << "total_volume: " << total_volume << std::endl;
         Real total_mass = std::accumulate(mass_.begin(), mass_.end(), 0.0);

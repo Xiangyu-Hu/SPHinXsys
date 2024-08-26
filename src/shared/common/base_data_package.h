@@ -52,12 +52,13 @@ template <typename ContainedDataType>
 using DataContainerUniquePtrKeeper = UniquePtrsKeeper<ContainedDataType>;
 
 template <template <typename> typename KeeperType, template <typename> typename ContainerType>
-using DataAssemble = std::tuple<KeeperType<ContainerType<Real>>,
+using DataAssemble = std::tuple<KeeperType<ContainerType<size_t>>,
+                                KeeperType<ContainerType<int>>,
+                                KeeperType<ContainerType<Real>>,
                                 KeeperType<ContainerType<Vec2d>>,
-                                KeeperType<ContainerType<Vec3d>>,
                                 KeeperType<ContainerType<Mat2d>>,
-                                KeeperType<ContainerType<Mat3d>>,
-                                KeeperType<ContainerType<int>>>;
+                                KeeperType<ContainerType<Vec3d>>,
+                                KeeperType<ContainerType<Mat3d>>>;
 /** Generalized data container assemble type */
 template <template <typename> typename ContainerType>
 using DataContainerAssemble = DataAssemble<DataContainerKeeper, ContainerType>;
@@ -72,31 +73,31 @@ using DataContainerUniquePtrAssemble = DataAssemble<DataContainerUniquePtrKeeper
 template <template <typename> typename OperationType>
 class DataAssembleOperation
 {
+    OperationType<int> integer_operation;
     OperationType<Real> scalar_operation;
     OperationType<Vec2d> vector2d_operation;
-    OperationType<Vec3d> vector3d_operation;
     OperationType<Mat2d> matrix2d_operation;
+    OperationType<Vec3d> vector3d_operation;
     OperationType<Mat3d> matrix3d_operation;
-    OperationType<int> integer_operation;
 
   public:
     template <typename... Args>
-    DataAssembleOperation(Args &&... args)
-        : scalar_operation(std::forward<Args>(args)...),
+    DataAssembleOperation(Args &&...args)
+        : integer_operation(std::forward<Args>(args)...),
+          scalar_operation(std::forward<Args>(args)...),
           vector2d_operation(std::forward<Args>(args)...),
-          vector3d_operation(std::forward<Args>(args)...),
           matrix2d_operation(std::forward<Args>(args)...),
-          matrix3d_operation(std::forward<Args>(args)...),
-          integer_operation(std::forward<Args>(args)...){};
+          vector3d_operation(std::forward<Args>(args)...),
+          matrix3d_operation(std::forward<Args>(args)...){};
     template <typename... OperationArgs>
-    void operator()(OperationArgs &&... operation_args)
+    void operator()(OperationArgs &&...operation_args)
     {
+        integer_operation(std::forward<OperationArgs>(operation_args)...);
         scalar_operation(std::forward<OperationArgs>(operation_args)...);
         vector2d_operation(std::forward<OperationArgs>(operation_args)...);
-        vector3d_operation(std::forward<OperationArgs>(operation_args)...);
         matrix2d_operation(std::forward<OperationArgs>(operation_args)...);
+        vector3d_operation(std::forward<OperationArgs>(operation_args)...);
         matrix3d_operation(std::forward<OperationArgs>(operation_args)...);
-        integer_operation(std::forward<OperationArgs>(operation_args)...);
     }
 };
 
@@ -109,18 +110,18 @@ class OperationOnDataAssemble
     OperationType operation_;
 
     template <std::size_t... Is, typename... OperationArgs>
-    void operationSequence(std::index_sequence<Is...>, OperationArgs &&... operation_args)
+    void operationSequence(std::index_sequence<Is...>, OperationArgs &&...operation_args)
     {
         (operation_(std::get<Is>(data_assemble_), std::forward<OperationArgs>(operation_args)...), ...);
     }
 
   public:
     template <typename... Args>
-    OperationOnDataAssemble(DataAssembleType &data_assemble, Args &&... args)
+    OperationOnDataAssemble(DataAssembleType &data_assemble, Args &&...args)
         : data_assemble_(data_assemble), operation_(std::forward<Args>(args)...){};
 
     template <typename... OperationArgs>
-    void operator()(OperationArgs &&... operation_args)
+    void operator()(OperationArgs &&...operation_args)
     {
         operationSequence(std::make_index_sequence<tuple_size_>{}, std::forward<OperationArgs>(operation_args)...);
     }

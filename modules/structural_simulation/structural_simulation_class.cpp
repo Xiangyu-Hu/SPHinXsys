@@ -350,8 +350,8 @@ void StructuralSimulation::initializeContactBetweenTwoBodies(int first, int seco
     contact_list_.emplace_back(makeShared<SurfaceContactRelation>(*second_body, RealBodyVector({first_body})));
 
     int last = contact_list_.size() - 1;
-    contact_density_list_.push_back(makeShared<InteractionDynamics<solid_dynamics::ContactDensitySummation>>(*contact_list_[last - 1]));
-    contact_density_list_.push_back(makeShared<InteractionDynamics<solid_dynamics::ContactDensitySummation>>(*contact_list_[last]));
+    contact_density_list_.push_back(makeShared<InteractionDynamics<solid_dynamics::ContactFactorSummation>>(*contact_list_[last - 1]));
+    contact_density_list_.push_back(makeShared<InteractionDynamics<solid_dynamics::ContactFactorSummation>>(*contact_list_[last]));
 
     contact_force_list_.push_back(makeShared<InteractionWithUpdate<solid_dynamics::ContactForce>>(*contact_list_[last - 1]));
     contact_force_list_.push_back(makeShared<InteractionWithUpdate<solid_dynamics::ContactForce>>(*contact_list_[last]));
@@ -375,7 +375,7 @@ void StructuralSimulation::initializeAllContacts()
 
         contact_list_.emplace_back(makeShared<SurfaceContactRelation>(*contact_body, target_list));
         int last = contact_list_.size() - 1;
-        contact_density_list_.emplace_back(makeShared<InteractionDynamics<solid_dynamics::ContactDensitySummation>>(*contact_list_[last]));
+        contact_density_list_.emplace_back(makeShared<InteractionDynamics<solid_dynamics::ContactFactorSummation>>(*contact_list_[last]));
         contact_force_list_.emplace_back(makeShared<InteractionWithUpdate<solid_dynamics::ContactForce>>(*contact_list_[last]));
     }
     // continue appending the lists with the time dependent contacts
@@ -657,7 +657,7 @@ void StructuralSimulation::executeSpringNormalOnSurfaceParticles()
     }
 }
 
-void StructuralSimulation::executeContactDensitySummation()
+void StructuralSimulation::executeContactFactorSummation()
 {
     // number of contacts that are not time dependent: contact pairs * 2
     size_t number_of_general_contacts = contacting_body_pairs_list_.size();
@@ -844,7 +844,7 @@ void StructuralSimulation::runSimulationStep(Real &dt, Real &integration_time)
     executeSpringNormalOnSurfaceParticles();
 
     /** CONTACT */
-    executeContactDensitySummation();
+    executeContactFactorSummation();
     executeContactForce();
 
     /** STRESS RELAXATION, DAMPING, POSITIONAL CONSTRAINTS */
@@ -884,7 +884,7 @@ void StructuralSimulation::runSimulationStep(Real &dt, Real &integration_time)
 
 void StructuralSimulation::runSimulation(Real end_time)
 {
-    BodyStatesRecordingToVtp write_states(system_.real_bodies_);
+    BodyStatesRecordingToVtp write_states(system_);
 
     /** Statistics for computing time. */
     write_states.writeToFile(0);
@@ -915,7 +915,7 @@ void StructuralSimulation::runSimulation(Real end_time)
 
 double StructuralSimulation::runSimulationFixedDurationJS(int number_of_steps)
 {
-    BodyStatesRecordingToVtp write_states(system_.real_bodies_);
+    BodyStatesRecordingToVtp write_states(system_);
     GlobalStaticVariables::physical_time_ = 0.0;
 
     /** Statistics for computing time. */
@@ -961,7 +961,7 @@ Real StructuralSimulation::getMaxDisplacement(int body_index)
 
 StructuralSimulationJS::StructuralSimulationJS(const StructuralSimulationInput &input)
     : StructuralSimulation(input),
-      write_states_(system_.real_bodies_),
+      write_states_(system_),
       dt(0.0)
 {
     write_states_.writeToFile(0);

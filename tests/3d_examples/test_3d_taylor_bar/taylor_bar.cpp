@@ -39,14 +39,14 @@ int main(int ac, char *av[])
     /** Define Observer. */
     ObserverBody my_observer(sph_system, "MyObserver");
     StdVec<Vecd> observation_location = {Vecd(0.0, 0.0, PW)};
-    my_observer.generateParticles<BaseParticles, Observer>(observation_location);
+    my_observer.generateParticles<ObserverParticles>(observation_location);
 
     /**body relation topology */
     InnerRelation column_inner(column);
     ContactRelation my_observer_contact(my_observer, {&column});
     SurfaceContactRelation column_wall_contact(column, {&wall});
     /**define simple data file input and outputs functions. */
-    BodyStatesRecordingToVtp write_states(sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_states(sph_system);
 
     if (sph_system.RunParticleRelaxation())
     {

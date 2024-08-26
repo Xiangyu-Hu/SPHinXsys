@@ -100,7 +100,7 @@ int main(int ac, char *av[])
         : cream.generateParticles<BaseParticles, Lattice>();
 
     ObserverBody cream_observer(sph_system, "CreamObserver");
-    cream_observer.generateParticles<BaseParticles, Observer>(observation_location);
+    cream_observer.generateParticles<ObserverParticles>(observation_location);
     //----------------------------------------------------------------------
     //	Run particle relaxation for body-fitted distribution if chosen.
     //----------------------------------------------------------------------
@@ -119,7 +119,7 @@ int main(int ac, char *av[])
         //----------------------------------------------------------------------
         //	Output for particle relaxation.
         //----------------------------------------------------------------------
-        BodyStatesRecordingToVtp write_cream_state(sph_system.real_bodies_);
+        BodyStatesRecordingToVtp write_cream_state(sph_system);
         ReloadParticleIO write_particle_reload_files(cream);
         //----------------------------------------------------------------------
         //	Particle relaxation starts here.
@@ -169,7 +169,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp body_states_recording(sph_system.real_bodies_);
+    BodyStatesRecordingToVtp body_states_recording(sph_system);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
         cream_displacement_recording("Position", cream_observer_contact);
     //----------------------------------------------------------------------

@@ -101,7 +101,6 @@ int main(int ac, char *av[])
     water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
     Ghost<ReserveSizeFactor> ghost_boundary(0.5);
     water_block.generateParticlesWithReserve<BaseParticles, UnstructuredMesh>(ghost_boundary, ansys_mesh);
-    water_block.addBodyStateForRecording<Real>("Density");
     GhostCreationFromMesh ghost_creation(water_block, ansys_mesh, ghost_boundary);
     //----------------------------------------------------------------------
     //	Define body relation map.
@@ -127,6 +126,7 @@ int main(int ac, char *av[])
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
     BodyStatesRecordingInMeshToVtp write_real_body_states(water_block, ansys_mesh);
+    write_real_body_states.addToWrite<Real>(water_block, "Density");
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<QuantitySummation<Vecd>>> write_total_viscous_force_on_inserted_body(water_block, "ViscousForceOnSolid");
     ReducedQuantityRecording<QuantitySummation<Vecd>> write_total_pressure_force_on_inserted_body(water_block, "PressureForceOnSolid");
     ReducedQuantityRecording<MaximumSpeed> write_maximum_speed(water_block);

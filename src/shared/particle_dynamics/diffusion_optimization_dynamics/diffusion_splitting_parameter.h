@@ -24,6 +24,8 @@
 /**
  * @file 	diffusion_splitting_parameter.h
  * @brief    This is the splitting method for solving parameter field in optimization problem.
+ * Note that here inner interaction and that with boundary are derived from the inner interaction.
+ * This is because the error and parameters are computed based on both.
  * @author   Bo Zhang and Xiangyu Hu
  */
 
@@ -83,7 +85,7 @@ class UpdateParameterPDEResidual : public ParameterSplittingType
 {
   public:
     template <typename... Args>
-    UpdateParameterPDEResidual(Args &&... args);
+    UpdateParameterPDEResidual(Args &&...args);
     virtual ~UpdateParameterPDEResidual(){};
 
   protected:

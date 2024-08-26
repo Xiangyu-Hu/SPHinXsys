@@ -54,7 +54,7 @@ class DepolarizationInitialCondition : public LocalDynamics, public DataDelegate
   public:
     explicit DepolarizationInitialCondition(SPHBody &sph_body)
         : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
-          pos_(*particles_->getVariableByName<Vecd>("Position")),
+          pos_(*particles_->getVariableDataByName<Vecd>("Position")),
           voltage_(*particles_->registerSharedVariable<Real>("Voltage")){};
 
     void update(size_t index_i, Real dt)
@@ -87,7 +87,7 @@ int main(int ac, char *av[])
     muscle_body.generateParticles<BaseParticles, Lattice>();
 
     ObserverBody voltage_observer(sph_system, "VoltageObserver");
-    voltage_observer.generateParticles<BaseParticles, Observer>(observation_location);
+    voltage_observer.generateParticles<ObserverParticles>(observation_location);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -114,7 +114,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp write_states(sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_states(sph_system);
     RegressionTestEnsembleAverage<ObservedQuantityRecording<Real>>
         write_recorded_voltage("Voltage", voltage_observer_contact_relation);
     //----------------------------------------------------------------------

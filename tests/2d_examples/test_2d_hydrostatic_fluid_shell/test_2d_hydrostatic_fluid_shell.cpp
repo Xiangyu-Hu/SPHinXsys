@@ -24,18 +24,18 @@ class WaterBlock : public MultiPolygonShape
 //----------------------------------------------------------------------
 class WallBoundary;
 template <>
-class ParticleGenerator<WallBoundary> : public ParticleGenerator<Surface>
+class ParticleGenerator<SurfaceParticles, WallBoundary> : public ParticleGenerator<SurfaceParticles>
 {
     Real DH;
     Real DL;
     Real particle_spacing_gate;
 
   public:
-    explicit ParticleGenerator(SPHBody &sph_body, Real DH, Real DL,
-                               Real particle_spacing_gate)
-        : ParticleGenerator<Surface>(sph_body),
+    explicit ParticleGenerator(SPHBody &sph_body, SurfaceParticles &surface_particles,
+                               Real DH, Real DL, Real particle_spacing_gate)
+        : ParticleGenerator<SurfaceParticles>(sph_body, surface_particles),
           DH(DH), DL(DL), particle_spacing_gate(particle_spacing_gate){};
-    void initializeGeometricVariables() override
+    void prepareGeometricData() override
     {
         const auto particle_number_wall = int(DH / particle_spacing_gate);
         for (int i = 0; i < particle_number_wall; i++)
@@ -45,10 +45,10 @@ class ParticleGenerator<WallBoundary> : public ParticleGenerator<Surface>
             Real y = 0.5 * particle_spacing_gate + Real(i) * particle_spacing_gate;
             const Vec2d normal_direction_1(1.0, 0.0);
             const Vec2d normal_direction_2(-1.0, 0.0);
-            initializePositionAndVolumetricMeasure(Vecd(x1, y), particle_spacing_gate);
-            initializeSurfaceProperties(normal_direction_1, particle_spacing_gate);
-            initializePositionAndVolumetricMeasure(Vecd(x2, y), particle_spacing_gate);
-            initializeSurfaceProperties(normal_direction_2, particle_spacing_gate);
+            addPositionAndVolumetricMeasure(Vecd(x1, y), particle_spacing_gate);
+            addSurfaceProperties(normal_direction_1, particle_spacing_gate);
+            addPositionAndVolumetricMeasure(Vecd(x2, y), particle_spacing_gate);
+            addSurfaceProperties(normal_direction_2, particle_spacing_gate);
         }
     }
 };
@@ -57,7 +57,7 @@ class ParticleGenerator<WallBoundary> : public ParticleGenerator<Surface>
 //----------------------------------------------------------------------
 class Gate;
 template <>
-class ParticleGenerator<Gate> : public ParticleGenerator<Surface>
+class ParticleGenerator<SurfaceParticles, Gate> : public ParticleGenerator<SurfaceParticles>
 {
     Real DL;
     Real BW;
@@ -65,10 +65,11 @@ class ParticleGenerator<Gate> : public ParticleGenerator<Surface>
     Real Gate_thickness;
 
   public:
-    explicit ParticleGenerator(SPHBody &sph_body, Real DL, Real BW, Real particle_spacing_gate, Real Gate_thickness)
-        : ParticleGenerator<Surface>(sph_body),
+    explicit ParticleGenerator(SPHBody &sph_body, SurfaceParticles &surface_particles,
+                               Real DL, Real BW, Real particle_spacing_gate, Real Gate_thickness)
+        : ParticleGenerator<SurfaceParticles>(sph_body, surface_particles),
           DL(DL), BW(BW), particle_spacing_gate(particle_spacing_gate), Gate_thickness(Gate_thickness){};
-    void initializeGeometricVariables() override
+    void prepareGeometricData() override
     {
         const auto particle_number_gate = int((DL + 2 * BW) / particle_spacing_gate);
         // generate particles for the elastic gate
@@ -76,9 +77,9 @@ class ParticleGenerator<Gate> : public ParticleGenerator<Surface>
         {
             Real x = -BW + 0.5 * particle_spacing_gate + Real(i) * particle_spacing_gate;
             Real y = -0.5 * particle_spacing_gate;
-            initializePositionAndVolumetricMeasure(Vecd(x, y), particle_spacing_gate);
+            addPositionAndVolumetricMeasure(Vecd(x, y), particle_spacing_gate);
             const Vec2d normal_direction(0, 1.0);
-            initializeSurfaceProperties(normal_direction, Gate_thickness);
+            addSurfaceProperties(normal_direction, Gate_thickness);
         }
     }
 };
@@ -199,7 +200,7 @@ void hydrostatic_fsi(const Real particle_spacing_gate, const Real particle_spaci
     //----------------------------------------------------------------------
     ObserverBody gate_observer(sph_system, "Observer");
     gate_observer.defineAdaptation<SPHAdaptation>(1.15, particle_spacing_ref / particle_spacing_gate);
-    gate_observer.generateParticles<BaseParticles, Observer>(observation_location);
+    gate_observer.generateParticles<ObserverParticles>(observation_location);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -212,8 +213,8 @@ void hydrostatic_fsi(const Real particle_spacing_gate, const Real particle_spaci
     InnerRelation gate_inner(gate);
     // shell normal should point from fluid to shell
     // normal corrector set to true if shell normal is currently pointing from shell to fluid
-    ContactRelationToShell water_block_contact(water_block, {&wall_boundary, &gate}, {true, true});
-    ContactRelationFromShell gate_contact(gate, {&water_block}, {true});
+    ContactRelationFromShellToFluid water_block_contact(water_block, {&wall_boundary, &gate}, {true, true});
+    ContactRelationFromFluidToShell gate_contact(gate, {&water_block}, {true});
     ContactRelation gate_observer_contact(gate_observer, {&gate});
     // inner relation to compute curvature
     ShellInnerRelationWithContactKernel shell_curvature_inner(gate, water_block);
@@ -244,8 +245,8 @@ void hydrostatic_fsi(const Real particle_spacing_gate, const Real particle_spaci
     SimpleDynamics<thin_structure_dynamics::ConstrainShellBodyRegion> gate_constraint(gate_constraint_part);
     SimpleDynamics<thin_structure_dynamics::UpdateShellNormalDirection> gate_update_normal(gate);
     SimpleDynamics<thin_structure_dynamics::AverageShellCurvature> gate_curvature(shell_curvature_inner);
-    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d>>> gate_position_damping(0.2, gate_inner, "Velocity", physical_viscosity);
-    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d>>> gate_rotation_damping(0.2, gate_inner, "AngularVelocity", physical_viscosity);
+    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d, FixedDampingRate>>> gate_position_damping(0.2, gate_inner, "Velocity", physical_viscosity);
+    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d, FixedDampingRate>>> gate_rotation_damping(0.2, gate_inner, "AngularVelocity", physical_viscosity);
     //----------------------------------------------------------------------
     //	Define fluid methods which are used in this case.
     //----------------------------------------------------------------------
@@ -259,9 +260,8 @@ void hydrostatic_fsi(const Real particle_spacing_gate, const Real particle_spaci
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_ref);
     /** Compute time step size with considering sound wave speed. */
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
-    DampingWithRandomChoice<InteractionSplit<DampingPairwiseWithWall<Vec2d, DampingPairwiseInner>>>
-        fluid_damping(0.2, water_block_inner, water_block_contact, "Velocity", mu_f);
-
+    DampingWithRandomChoice<InteractionSplit<DampingPairwiseWithWall<Vec2d, FixedDampingRate>>>
+        fluid_damping(0.2, ConstructorArgs(water_block_inner, "Velocity", mu_f), ConstructorArgs(water_block_contact, "Velocity", mu_f));
     //----------------------------------------------------------------------
     //	Define fsi methods which are used in this case.
     //----------------------------------------------------------------------
@@ -272,13 +272,12 @@ void hydrostatic_fsi(const Real particle_spacing_gate, const Real particle_spaci
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
-    water_block.addBodyStateForRecording<Real>("Pressure");
-    gate.addBodyStateForRecording<Real>("Average1stPrincipleCurvature");
-    gate.addBodyStateForRecording<Real>("Average2ndPrincipleCurvature");
-    gate.addBodyStateForRecording<Vecd>("PressureForceFromFluid");
-    gate.addDerivedBodyStateForRecording<Displacement>();
-    /** Output body states for visualization. */
-    BodyStatesRecordingToVtp write_real_body_states_to_vtp(sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_real_body_states_to_vtp(sph_system);
+    write_real_body_states_to_vtp.addToWrite<Real>(water_block, "Pressure");
+    write_real_body_states_to_vtp.addToWrite<Real>(gate, "Average1stPrincipleCurvature");
+    write_real_body_states_to_vtp.addToWrite<Real>(gate, "Average2ndPrincipleCurvature");
+    write_real_body_states_to_vtp.addToWrite<Vecd>(gate, "PressureForceFromFluid");
+    write_real_body_states_to_vtp.addDerivedVariableRecording<SimpleDynamics<Displacement>>(gate);
     /** Output the observed displacement of gate center. */
     ObservedQuantityRecording<Vecd> write_beam_tip_displacement("Displacement", gate_observer_contact);
     //----------------------------------------------------------------------

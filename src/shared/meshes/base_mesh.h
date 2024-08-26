@@ -64,7 +64,7 @@ class BaseMesh
     explicit BaseMesh(Arrayi all_grid_points);
     BaseMesh(Vecd mesh_lower_bound, Real grid_spacing, Arrayi all_grid_points);
     BaseMesh(BoundingBox tentative_bounds, Real grid_spacing, size_t buffer_width);
-    virtual ~BaseMesh(){};
+    ~BaseMesh(){};
 
     /** Return the lower bound of the mesh domain. */
     Vecd MeshLowerBound() { return mesh_lower_bound_; };
@@ -119,14 +119,12 @@ class Mesh : public BaseMesh
   public:
     Mesh(BoundingBox tentative_bounds, Real grid_spacing, size_t buffer_width);
     Mesh(Vecd mesh_lower_bound, Arrayi all_cells, Real grid_spacing);
-    virtual ~Mesh(){};
+    ~Mesh(){};
 
     /** Return number of cell in each direction, i.e., x-, y- and z-axis.*/
     Arrayi AllCells() { return all_cells_; };
     /** Return the buffer size. */
     size_t MeshBufferSize() { return buffer_width_; };
-    /** Return the spacing for storing data. */
-    virtual Real DataSpacing() { return grid_spacing_; };
 };
 
 /**
@@ -150,27 +148,15 @@ class BaseMeshField
 /**
  * @class 	RefinedMesh
  * @brief 	Abstract base class derived from the coarse mesh but has double resolution.
- * 			Currently, the design is simple but can be extending for more inter-mesh operations.
  */
 template <class CoarseMeshType>
-class RefinedMesh : public CoarseMeshType
-{
-  public:
-    template <typename... Args>
-    RefinedMesh(BoundingBox tentative_bounds, CoarseMeshType &coarse_mesh, Args &&...args)
-        : CoarseMeshType(tentative_bounds, 0.5 * coarse_mesh.DataSpacing(), std::forward<Args>(args)...),
-          coarse_mesh_(coarse_mesh){};
-    virtual ~RefinedMesh(){};
-
-  protected:
-    CoarseMeshType &coarse_mesh_;
-};
+class RefinedMesh;
 
 /**
  * @class 	MultilevelMesh
  * @brief 	Multi-level Meshes with successively double the resolution
  */
-template <class MeshFieldType, class CoarsestMeshType, class RefinedMeshType>
+template <class MeshFieldType, class CoarsestMeshType>
 class MultilevelMesh : public MeshFieldType
 {
   public:
@@ -189,7 +175,7 @@ class MultilevelMesh : public MeshFieldType
             /** all mesh levels aligned at the lower bound of tentative_bounds */
             mesh_levels_.push_back(
                 mesh_level_ptr_vector_keeper_
-                    .template createPtr<RefinedMeshType>(tentative_bounds, *mesh_levels_.back(), std::forward<Args>(args)...));
+                    .template createPtr<RefinedMesh<CoarsestMeshType>>(tentative_bounds, *mesh_levels_.back(), std::forward<Args>(args)...));
         }
     };
     virtual ~MultilevelMesh(){};

@@ -93,7 +93,7 @@ class DiffusionBodyInitialCondition : public LocalDynamics, public DataDelegateS
   public:
     explicit DiffusionBodyInitialCondition(SPHBody &sph_body)
         : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
-          pos_(*particles_->getVariableByName<Vecd>("Position")),
+          pos_(*particles_->getVariableDataByName<Vecd>("Position")),
           phi_(*particles_->registerSharedVariable<Real>("Phi")){};
 
     void update(size_t index_i, Real dt)
@@ -111,9 +111,9 @@ class WallBoundaryInitialCondition : public LocalDynamics, public DataDelegateSi
   public:
     explicit WallBoundaryInitialCondition(SPHBody &sph_body)
         : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
-          pos_(*particles_->getVariableByName<Vecd>("Position")),
+          pos_(*particles_->getVariableDataByName<Vecd>("Position")),
           phi_(*particles_->registerSharedVariable<Real>("Phi")),
-          heat_flux_(*(particles_->getVariableByName<Real>("HeatFlux"))) {}
+          heat_flux_(*(particles_->getVariableDataByName<Real>("HeatFlux"))) {}
 
     void update(size_t index_i, Real dt)
     {
@@ -136,27 +136,21 @@ class WallBoundaryInitialCondition : public LocalDynamics, public DataDelegateSi
     StdLargeVec<Vecd> &pos_;
     StdLargeVec<Real> &phi_, &heat_flux_;
 };
-//----------------------------------------------------------------------
-//	An observer body to measure temperature at given positions.
-//----------------------------------------------------------------------
-class TemperatureObserver;
-template <>
-class ParticleGenerator<TemperatureObserver> : public ParticleGenerator<Observer>
-{
-  public:
-    ParticleGenerator(SPHBody &sph_body) : ParticleGenerator<Observer>(sph_body)
-    {
-        /** A line of measuring points at the middle line. */
-        size_t number_of_observation_points = 11;
-        Real range_of_measure = L;
-        Real start_of_measure = 0;
 
-        for (size_t i = 0; i < number_of_observation_points; ++i)
-        {
-            Vec2d point_coordinate(0.5 * L, range_of_measure * Real(i) / Real(number_of_observation_points - 1) + start_of_measure);
-            positions_.push_back(point_coordinate);
-        }
+StdVec<Vecd> createObservationPoints()
+{
+    StdVec<Vecd> observation_points;
+    /** A line of measuring points at the middle line. */
+    size_t number_of_observation_points = 11;
+    Real range_of_measure = L;
+    Real start_of_measure = 0;
+
+    for (size_t i = 0; i < number_of_observation_points; ++i)
+    {
+        Vec2d point_coordinate(0.5 * L, range_of_measure * Real(i) / Real(number_of_observation_points - 1) + start_of_measure);
+        observation_points.push_back(point_coordinate);
     }
+    return observation_points;
 };
 } // namespace SPH
 
@@ -186,7 +180,7 @@ TEST(test_optimization, test_problem4_non_optimization)
     //	Particle and body creation of temperature observers.
     //----------------------------------------------------------------------
     ObserverBody temperature_observer(sph_system, "TemperatureObserver");
-    temperature_observer.generateParticles<BaseParticles, TemperatureObserver>();
+    temperature_observer.generateParticles<ObserverParticles>(createObservationPoints());
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -221,8 +215,8 @@ TEST(test_optimization, test_problem4_non_optimization)
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp write_states(sph_system.real_bodies_);
-    RestartIO restart_io(sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_states(sph_system);
+    RestartIO restart_io(sph_system);
     ObservedQuantityRecording<Real> write_solid_temperature("Phi", temperature_observer_contact);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration

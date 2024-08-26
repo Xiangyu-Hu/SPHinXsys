@@ -149,7 +149,6 @@ void MeshWithGridDataPackages<PKG_SIZE>::
             Real dphidy = (in_variable_data[y1.first][y1.second[0]][y1.second[1]] -
                            in_variable_data[y2.first][y2.second[0]][y2.second[1]]);
 
-            // printf("dphidx = %f, dphidy = %f, data_spacing_ = \n", dphidx, dphidy);
             pkg_data[i][j] = 0.5 * Vecd(dphidx, dphidy) / data_spacing_;
         });
 }

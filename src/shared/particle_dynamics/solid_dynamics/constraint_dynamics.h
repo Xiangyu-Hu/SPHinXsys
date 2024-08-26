@@ -191,7 +191,7 @@ class ConstraintBySimBody : public MotionConstraint<DynamicsIdentifier>
                         SimTK::RungeKuttaMersonIntegrator &integ)
         : MotionConstraint<DynamicsIdentifier>(identifier),
           MBsystem_(MBsystem), mobod_(mobod), integ_(integ),
-          n_(*this->particles_->template getVariableByName<Vecd>("NormalDirection")),
+          n_(*this->particles_->template getVariableDataByName<Vecd>("NormalDirection")),
           n0_(*this->particles_->template registerSharedVariableFrom<Vecd>("InitialNormalDirection", "NormalDirection")),
           acc_(*this->particles_->template registerSharedVariable<Vecd>("Acceleration"))
     {
@@ -262,8 +262,8 @@ class TotalForceForSimBody
         : BaseLocalDynamicsReduce<ReduceSum<SimTK::SpatialVec>, DynamicsIdentifier>(identifier),
           DataDelegateSimple(identifier.getSPHBody()),
           force_(*particles_->registerSharedVariable<Vecd>("Force")),
-          force_prior_(*particles_->getVariableByName<Vecd>("ForcePrior")),
-          pos_(*particles_->getVariableByName<Vecd>("Position")),
+          force_prior_(*particles_->getVariableDataByName<Vecd>("ForcePrior")),
+          pos_(*particles_->getVariableDataByName<Vecd>("Position")),
           MBsystem_(MBsystem), mobod_(mobod), integ_(integ)
     {
         this->quantity_name_ = "TotalForceForSimBody";

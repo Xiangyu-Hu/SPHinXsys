@@ -109,7 +109,6 @@ int main(int ac, char *av[])
     // which is only used for update configuration.
     //----------------------------------------------------------------------
     ComplexRelation soil_block_complex(soil_block_inner, soil_block_contact);
-    BodyStatesRecordingToVtp body_states_recording(sph_system.real_bodies_);
     //----------------------------------------------------------------------
     //	Run particle relaxation for body-fitted distribution if chosen.
     //----------------------------------------------------------------------
@@ -131,7 +130,7 @@ int main(int ac, char *av[])
         //----------------------------------------------------------------------
         random_column_particles.exec(0.25);
         relaxation_step_inner.SurfaceBounding().exec();
-        body_states_recording.writeToFile(0.0);
+        write_column_to_vtp.writeToFile(0);
         //----------------------------------------------------------------------
         //	From here iteration for particle relaxation begins.
         //----------------------------------------------------------------------
@@ -169,11 +168,12 @@ int main(int ac, char *av[])
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
-    soil_block.addBodyStateForRecording<Real>("Pressure");
-    soil_block.addBodyStateForRecording<Real>("Density");
-    soil_block.addBodyStateForRecording<Real>("VerticalStress");
-    soil_block.addBodyStateForRecording<Real>("AccDeviatoricPlasticStrain");
-    RestartIO restart_io(sph_system.real_bodies_);
+    BodyStatesRecordingToVtp body_states_recording(sph_system);
+    body_states_recording.addToWrite<Real>(soil_block, "Density");
+    body_states_recording.addToWrite<Real>(soil_block, "Pressure");
+    body_states_recording.addToWrite<Real>(soil_block, "VerticalStress");
+    body_states_recording.addToWrite<Real>(soil_block, "AccDeviatoricPlasticStrain");
+    RestartIO restart_io(sph_system);
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalMechanicalEnergy>> write_soil_mechanical_energy(soil_block, gravity);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration

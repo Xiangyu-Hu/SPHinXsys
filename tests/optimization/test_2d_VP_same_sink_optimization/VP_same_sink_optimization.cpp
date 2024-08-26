@@ -81,7 +81,7 @@ class DiffusionBodyInitialCondition : public LocalDynamics, public DataDelegateS
   public:
     explicit DiffusionBodyInitialCondition(SPHBody &sph_body)
         : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
-          pos_(*particles_->getVariableByName<Vecd>("Position")),
+          pos_(*particles_->getVariableDataByName<Vecd>("Position")),
           phi_(*particles_->registerSharedVariable<Real>("Phi")),
           heat_source_(*(particles_->registerSharedVariable<Real>("HeatSource"))){};
 
@@ -101,7 +101,7 @@ class ThermalConductivityRandomInitialization : public LocalDynamics, public Dat
   public:
     explicit ThermalConductivityRandomInitialization(SPHBody &sph_body)
         : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
-          thermal_conductivity(*(particles_->getVariableByName<Real>("ThermalConductivity"))){};
+          thermal_conductivity(*(particles_->getVariableDataByName<Real>("ThermalConductivity"))){};
     void update(size_t index_i, Real dt)
     {
         thermal_conductivity[index_i] = 0.5 + rand_uniform(0.0, 1.0);
@@ -116,7 +116,7 @@ class WallBoundaryInitialCondition : public LocalDynamics, public DataDelegateSi
   public:
     explicit WallBoundaryInitialCondition(SPHBody &sph_body)
         : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
-          pos_(*particles_->getVariableByName<Vecd>("Position")),
+          pos_(*particles_->getVariableDataByName<Vecd>("Position")),
           phi_(*particles_->registerSharedVariable<Real>("Phi")){};
 
     void update(size_t index_i, Real dt)
@@ -145,8 +145,8 @@ class ImposeObjectiveFunction : public LocalDynamics, public DataDelegateSimple
     explicit ImposeObjectiveFunction(SPHBody &sph_body)
         : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
           phi_(*particles_->registerSharedVariable<Real>("Phi")),
-          species_modified_(*particles_->getVariableByName<Real>("SpeciesModified")),
-          species_recovery_(*particles_->getVariableByName<Real>("SpeciesRecovery")){};
+          species_modified_(*particles_->getVariableDataByName<Real>("SpeciesModified")),
+          species_recovery_(*particles_->getVariableDataByName<Real>("SpeciesRecovery")){};
 
     void update(size_t index_i, Real learning_rate)
     {
@@ -163,8 +163,8 @@ class StoreGlobalPDEResidual : public LocalDynamics, public DataDelegateSimple
   public:
     explicit StoreGlobalPDEResidual(SPHBody &sph_body)
         : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
-          residual_T_local_(*particles_->getVariableByName<Real>("ResidualTLocal")),
-          residual_T_global_(*particles_->getVariableByName<Real>("ResidualTGlobal")){};
+          residual_T_local_(*particles_->getVariableDataByName<Real>("ResidualTLocal")),
+          residual_T_global_(*particles_->getVariableDataByName<Real>("ResidualTGlobal")){};
 
     void update(size_t index_i, Real learning_rate)
     {
@@ -216,8 +216,8 @@ TEST(test_optimization, test_problem1_optimized)
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp write_states(sph_system.real_bodies_);
-    RestartIO restart_io(sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_states(sph_system);
+    RestartIO restart_io(sph_system);
     //----------------------------------------------------------------------
     //	Setup parameter for optimization control
     //----------------------------------------------------------------------

@@ -55,7 +55,7 @@ class ComputeTotalErrorOrPositiveParameter
     ComputeTotalErrorOrPositiveParameter(DynamicsIdentifier &identifier, const std::string &variable_name)
         : BaseLocalDynamicsReduce<ReduceSum<Real>, DynamicsIdentifier>(identifier),
           DataDelegateSimple(identifier.getSPHBody()),
-          variable_(*this->particles_->template getVariableByName<Real>(variable_name)){};
+          variable_(*this->particles_->template getVariableDataByName<Real>(variable_name)){};
     virtual ~ComputeTotalErrorOrPositiveParameter(){};
 
     Real reduce(size_t index_i, Real dt = 0.0)
@@ -80,7 +80,7 @@ class ComputeMaximumError
     ComputeMaximumError(DynamicsIdentifier &identifier, const std::string &variable_name)
         : BaseLocalDynamicsReduce<ReduceMax, DynamicsIdentifier>(identifier),
           DataDelegateSimple(identifier.getSPHBody()),
-          variable_(*this->particles_->template getVariableByName<Real>(variable_name)){};
+          variable_(*this->particles_->template getVariableDataByName<Real>(variable_name)){};
 
     Real reduce(size_t index_i, Real dt = 0.0)
     {

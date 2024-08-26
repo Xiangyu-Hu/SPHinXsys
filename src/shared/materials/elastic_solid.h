@@ -313,24 +313,26 @@ class Muscle : public NeoHookeanSolid
 class LocallyOrthotropicMuscle : public Muscle
 {
   protected:
-    StdLargeVec<Matd> local_f0f0_, local_s0s0_, local_f0s0_; /**< Sheet direction. */
+    StdLargeVec<Matd> *local_f0f0_, *local_s0s0_, *local_f0s0_; /**< Sheet direction. */
 
   public:
-    StdLargeVec<Vecd> local_f0_; /**< local fiber direction. */
-    StdLargeVec<Vecd> local_s0_; /**< local sheet direction. */
+    StdLargeVec<Vecd> *local_f0_; /**< local fiber direction. */
+    StdLargeVec<Vecd> *local_s0_; /**< local sheet direction. */
 
     explicit LocallyOrthotropicMuscle(Real rho0, Real bulk_modulus,
                                       const Vecd &f0, const Vecd &s0, const Real (&a0)[4], const Real (&b0)[4])
-        : Muscle(rho0, bulk_modulus, f0, s0, a0, b0)
+        : Muscle(rho0, bulk_modulus, f0, s0, a0, b0),
+          local_f0f0_(nullptr), local_s0s0_(nullptr), local_f0s0_(nullptr), local_f0_(nullptr), local_s0_(nullptr)
     {
         material_type_name_ = "LocallyOrthotropicMuscle";
     };
     virtual ~LocallyOrthotropicMuscle(){};
 
-    virtual void registerReloadLocalParameters(BaseParticles *base_particles) override;
+    virtual void registerLocalParameters(BaseParticles *base_particles) override;
+    virtual void registerLocalParametersFromReload(BaseParticles *base_particles) override;
     virtual void initializeLocalParameters(BaseParticles *base_particles) override;
 
-    virtual Matd MuscleFiberDirection(size_t particle_index_i) override { return local_f0f0_[particle_index_i]; };
+    virtual Matd MuscleFiberDirection(size_t particle_index_i) override { return (*local_f0f0_)[particle_index_i]; };
     /** Compute the stress through Constitutive relation. */
     virtual Matd StressPK2(Matd &deformation, size_t particle_index_i) override;
     /** Define the calculation of the stress matrix for postprocessing */

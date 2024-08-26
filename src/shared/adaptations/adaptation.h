@@ -77,7 +77,7 @@ class SPHAdaptation
     Real NumberDensityScaleFactor(Real smoothing_length_ratio);
     virtual Real SmoothingLengthRatio(size_t particle_index_i) { return 1.0; };
     void resetAdaptationRatios(Real h_spacing_ratio, Real new_system_refinement_ratio = 1.0);
-    virtual void initializeAdaptationVariables(BaseParticles &base_particles){};
+    virtual void initializeAdaptationVariables(BaseParticles &base_particles) {};
 
     virtual UniquePtr<BaseCellLinkedList> createCellLinkedList(const BoundingBox &domain_bounds);
     virtual UniquePtr<MultilevelLevelSet> createLevelSet(Shape &shape, Real refinement_ratio);
@@ -104,7 +104,7 @@ class SPHAdaptation
 class ParticleWithLocalRefinement : public SPHAdaptation
 {
   public:
-    StdLargeVec<Real> h_ratio_; /**< the ratio between reference smoothing length to variable smoothing length */
+    StdLargeVec<Real> *h_ratio_; /**< the ratio between reference smoothing length to variable smoothing length */
 
     ParticleWithLocalRefinement(Real resolution_ref, Real h_spacing_ratio_, Real system_refinement_ratio, int local_refinement_level);
     virtual ~ParticleWithLocalRefinement(){};
@@ -113,7 +113,7 @@ class ParticleWithLocalRefinement : public SPHAdaptation
     size_t getLevelSetTotalLevel();
     virtual Real SmoothingLengthRatio(size_t particle_index_i) override
     {
-        return h_ratio_[particle_index_i];
+        return (*h_ratio_)[particle_index_i];
     };
 
     virtual void initializeAdaptationVariables(BaseParticles &base_particles) override;
@@ -171,30 +171,6 @@ class ParticleRefinementWithinShape : public ParticleRefinementByShape
     virtual ~ParticleRefinementWithinShape(){};
 
     virtual Real getLocalSpacing(Shape &shape, const Vecd &position) override;
-};
-
-/**
- * @class ParticleSplitAndMerge
- * @brief adaptive resolutions with particle splitting and merging technique.
- */
-
-class ParticleSplitAndMerge : public ParticleWithLocalRefinement
-{
-  public:
-    ParticleSplitAndMerge(Real resolution_ref, Real h_spacing_ratio_, Real system_resolution_ratio, int local_refinement_level);
-    virtual ~ParticleSplitAndMerge(){};
-
-    virtual bool isSplitAllowed(Real current_volume);
-    virtual bool mergeResolutionCheck(Real volume);
-    virtual Vec2d splittingPattern(Vec2d pos, Real particle_spacing, Real delta);
-    virtual Vec3d splittingPattern(Vec3d pos, Real particle_spacing, Real delta);
-
-  protected:
-    Real minimum_volume_;
-
-    virtual Real MostRefinedSpacing(Real coarse_particle_spacing, int local_refinement_level) override;
-    virtual size_t getCellLinkedListTotalLevel() override;
-    Real MostRefinedSpacingSplitting(Real coarse_particle_spacing, int local_refinement_level);
 };
 } // namespace SPH
 #endif // ADAPTATION_H

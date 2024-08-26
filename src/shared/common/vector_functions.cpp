@@ -241,64 +241,6 @@ Real CalculateBiDotProduct(Mat3d Matrix1, Mat3d Matrix2)
     return product;
 }
 //=================================================================================================//
-Real getCosineOfAngleBetweenTwoVectors(const Vec2d &vector_1, const Vec2d &vector_2)
-{
-    // returns the cosine of the angle between two vectors
-    Real dot_product_1 = 0.0;
-    for (int i = 0; i < vector_1.size(); i++)
-    {
-        dot_product_1 += vector_1[i] * vector_2[i];
-    }
-    Real cos_theta = dot_product_1 / (vector_1.norm() * vector_2.norm());
-
-    return cos_theta;
-}
-//=================================================================================================//
-Real getCosineOfAngleBetweenTwoVectors(const Vec3d &vector_1, const Vec3d &vector_2)
-{
-    // returns the cosine of the angle between two vectors
-    Real dot_product_1 = 0.0;
-    for (int i = 0; i < vector_1.size(); i++)
-    {
-        dot_product_1 += vector_1[i] * vector_2[i];
-    }
-    Real cos_theta = dot_product_1 / (vector_1.norm() * vector_2.norm());
-
-    return cos_theta;
-}
-//=================================================================================================//
-Vec2d getVectorProjectionOfVector(const Vec2d &vector_1, const Vec2d &vector_2)
-{
-    // get the projection of the vector_1 on vector 2, which is parallel to the vector_2, meaning it is the vector_2 * scalar
-    Real dot_product_1 = 0.0;
-    Real dot_product_2 = vector_2.squaredNorm();
-    for (int i = 0; i < vector_1.size(); i++)
-    {
-        dot_product_1 += vector_1[i] * vector_2[i];
-    }
-    // get scalar, which to multiply n_0 with
-    Real lambda = dot_product_1 / dot_product_2;
-    Vec2d proj_vector_1 = lambda * vector_2;
-
-    return proj_vector_1;
-}
-//=================================================================================================//
-Vec3d getVectorProjectionOfVector(const Vec3d &vector_1, const Vec3d &vector_2)
-{
-    // get the projection of the vector_1 on vector 2, which is parallel to the vector_2, meaning it is the vector_2 * scalar
-    Real dot_product_1 = 0.0;
-    Real dot_product_2 = vector_2.squaredNorm();
-    for (int i = 0; i < vector_1.size(); i++)
-    {
-        dot_product_1 += vector_1[i] * vector_2[i];
-    }
-    // get scalar, which to multiply n_0 with
-    Real lambda = dot_product_1 / dot_product_2;
-    Vec3d proj_vector_1 = lambda * vector_2;
-
-    return proj_vector_1;
-}
-//=================================================================================================//
 Real getVonMisesStressFromMatrix(const Mat2d &sigma)
 {
     Real sigmaxx = sigma(0, 0);
@@ -361,6 +303,16 @@ Real getCrossProduct(const Vec2d &vector_1, const Vec2d &vector_2)
 Vec3d getCrossProduct(const Vec3d &vector_1, const Vec3d &vector_2)
 { // Eigen cross product for only have 3D vector
     return vector_1.cross(vector_2);
+}
+//=================================================================================================//
+Array2i mod(const Array2i &input, int modulus)
+{
+    return Array2i(input[0] % modulus, input[1] % modulus);
+}
+//=================================================================================================//
+Array3i mod(const Array3i &input, int modulus)
+{
+    return Array3i(input[0] % modulus, input[1] % modulus, input[2] % modulus);
 }
 //=================================================================================================//
 } // namespace SPH

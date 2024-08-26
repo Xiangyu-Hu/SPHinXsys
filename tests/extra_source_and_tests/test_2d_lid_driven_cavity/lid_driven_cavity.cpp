@@ -173,12 +173,11 @@ int main(int ac, char *av[])
     SimpleDynamics<ParticleSnapshotAverage<Real>> average_viscosity(observer_body, "VariableViscosity");
 
     //	Define the methods for I/O operations, observations
-    fluid.addBodyStateForRecording<Real>("Pressure");
-    no_slip_boundary.addBodyStateForRecording<Vecd>("NormalDirection");
-    BodyStatesRecordingToVtp write_fluid_states(sph_system.real_bodies_);
-    observer_body.addBodyStateForRecording<Real>("VariableViscosity");
+    BodyStatesRecordingToVtp write_fluid_states(sph_system);
+    write_fluid_states.addToWrite<Real>(fluid, "Pressure");
+    write_fluid_states.addToWrite<Vecd>(no_slip_boundary, "NormalDirection");
     BodyStatesRecordingToVtp write_observation_states(observer_body);
-
+    write_observation_states.addToWrite<Real>(observer_body, "VariableViscosity");
     //	Prepare the simulation
     sph_system.initializeSystemCellLinkedLists();
     sph_system.initializeSystemConfigurations();

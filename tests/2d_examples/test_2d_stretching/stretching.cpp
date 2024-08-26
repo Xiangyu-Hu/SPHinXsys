@@ -88,8 +88,8 @@ class LeftStretchSolidBodyRegion : public BodyPartMotionConstraint
     // TODO: use only body part as argment since body can be referred from it already
     LeftStretchSolidBodyRegion(BodyPartByParticle &body_part)
         : BodyPartMotionConstraint(body_part),
-          vel_(*particles_->getVariableByName<Vecd>("Velocity")), 
-          pos_(*particles_->getVariableByName<Vecd>("Position")){};
+          vel_(*particles_->getVariableDataByName<Vecd>("Velocity")),
+          pos_(*particles_->getVariableDataByName<Vecd>("Position")){};
 
     virtual ~LeftStretchSolidBodyRegion(){};
 
@@ -108,8 +108,8 @@ class RightStretchSolidBodyRegion : public BodyPartMotionConstraint
     // TODO: use only body part as argment since body can be referred from it already
     RightStretchSolidBodyRegion(BodyPartByParticle &body_part)
         : BodyPartMotionConstraint(body_part),
-          vel_(*particles_->getVariableByName<Vecd>("Velocity")), 
-          pos_(*particles_->getVariableByName<Vecd>("Position")){};
+          vel_(*particles_->getVariableDataByName<Vecd>("Velocity")),
+          pos_(*particles_->getVariableDataByName<Vecd>("Position")){};
 
     virtual ~RightStretchSolidBodyRegion(){};
 
@@ -151,7 +151,7 @@ class ConstrainXVelocity : public BodyPartMotionConstraint
     // TODO: use only body part as argment since body can be referred from it already
     ConstrainXVelocity(BodyPartByParticle &body_part)
         : BodyPartMotionConstraint(body_part),
-          vel_(*particles_->getVariableByName<Vecd>("Velocity")), pos_(*particles_->getVariableByName<Vecd>("Position")){};
+          vel_(*particles_->getVariableDataByName<Vecd>("Velocity")), pos_(*particles_->getVariableDataByName<Vecd>("Position")){};
 
     virtual ~ConstrainXVelocity(){};
 
@@ -194,7 +194,7 @@ int main(int ac, char *av[])
         : beam_body.generateParticles<BaseParticles, Lattice>();
 
     ObserverBody beam_observer(system, "BeamObserver");
-    beam_observer.generateParticles<BaseParticles, Observer>(observation_location);
+    beam_observer.generateParticles<ObserverParticles>(observation_location);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -218,8 +218,8 @@ int main(int ac, char *av[])
         //----------------------------------------------------------------------
         //	Output for particle relaxation.
         //----------------------------------------------------------------------
-        BodyStatesRecordingToVtp write_ball_state(system.real_bodies_);
-        ReloadParticleIO write_particle_reload_files({&beam_body});
+        BodyStatesRecordingToVtp write_ball_state(system);
+        ReloadParticleIO write_particle_reload_files(beam_body);
         //----------------------------------------------------------------------
         //	Particle relaxation starts here.
         //----------------------------------------------------------------------
@@ -265,11 +265,11 @@ int main(int ac, char *av[])
     BodyRegionByParticle beam_constrain(beam_body, makeShared<MultiPolygonShape>(createConstrainBeamShape()));
     SimpleDynamics<ConstrainXVelocity> constrain_beam_end(beam_constrain);
     InteractionDynamics<solid_dynamics::DeformationGradientBySummation> beam_deformation_gradient_tensor(beam_body_inner);
-    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d>>> damping(0.5, beam_body_inner, "Velocity", physical_viscosity);
+    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d, FixedDampingRate>>> damping(0.5, beam_body_inner, "Velocity", physical_viscosity);
     //-----------------------------------------------------------------------------
     // outputs
     //-----------------------------------------------------------------------------
-    BodyStatesRecordingToVtp write_beam_states(system.real_bodies_);
+    BodyStatesRecordingToVtp write_beam_states(system);
     ReducedQuantityRecording<TotalKineticEnergy> write_kinetic_mechanical_energy(beam_body);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>> write_displacement("Position", beam_observer_contact);
     //----------------------------------------------------------------------

@@ -26,3 +26,4 @@ add_test(NAME ${PROJECT_NAME}
 set_tests_properties(${PROJECT_NAME}_particle_relaxation PROPERTIES LABELS "Eulerian")
 set_tests_properties(${PROJECT_NAME} PROPERTIES DEPENDS "${PROJECT_NAME}_particle_relaxation")
 set_tests_properties(${PROJECT_NAME} PROPERTIES LABELS "Eulerian")
+

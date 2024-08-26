@@ -44,7 +44,7 @@ class BodyStatesRecordingToVtp : public BodyStatesRecording
 {
   public:
     BodyStatesRecordingToVtp(SPHBody &body) : BodyStatesRecording(body){};
-    BodyStatesRecordingToVtp(SPHBodyVector bodies) : BodyStatesRecording(bodies){};
+    BodyStatesRecordingToVtp(SPHSystem &sph_system) : BodyStatesRecording(sph_system){};
     virtual ~BodyStatesRecordingToVtp(){};
 
   protected:
@@ -60,8 +60,8 @@ class BodyStatesRecordingToVtp : public BodyStatesRecording
 class BodyStatesRecordingToVtpString : public BodyStatesRecording
 {
   public:
-    BodyStatesRecordingToVtpString(SPHBodyVector bodies)
-        : BodyStatesRecording(bodies){};
+    BodyStatesRecordingToVtpString(SPHSystem &sph_system)
+        : BodyStatesRecording(sph_system){};
     virtual ~BodyStatesRecordingToVtpString() = default;
 
     const VtuStringData &GetVtuData() const;
@@ -95,8 +95,20 @@ class WriteToVtpIfVelocityOutOfBound
     virtual void writeWithFileName(const std::string &sequence) override;
 
   public:
-    WriteToVtpIfVelocityOutOfBound(SPHBodyVector bodies, Real velocity_bound);
+    WriteToVtpIfVelocityOutOfBound(SPHSystem &sph_system, Real velocity_bound);
     virtual ~WriteToVtpIfVelocityOutOfBound(){};
+};
+
+class ParticleGenerationRecordingToVtp : public ParticleGenerationRecording
+{
+  public:
+    ParticleGenerationRecordingToVtp(SPHBody &body, StdLargeVec<Vecd> &position)
+        : ParticleGenerationRecording(body), position_(position){};
+    virtual ~ParticleGenerationRecordingToVtp(){};
+
+  protected:
+    StdLargeVec<Vecd> &position_;
+    virtual void writeWithFileName(const std::string &sequence) override;
 };
 } // namespace SPH
 #endif // IO_VTK_H

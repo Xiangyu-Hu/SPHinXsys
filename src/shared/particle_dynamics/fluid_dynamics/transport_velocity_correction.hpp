@@ -25,8 +25,8 @@ TransportVelocityCorrection<Inner<ResolutionType, LimiterType>, CommonControlTyp
     : TransportVelocityCorrection<Base, DataDelegateInner, CommonControlTypes...>(inner_relation),
       h_ref_(this->sph_body_.sph_adaptation_->ReferenceSmoothingLength()),
       correction_scaling_(coefficient * h_ref_ * h_ref_),
-      Vol_(*this->particles_->template getVariableByName<Real>("VolumetricMeasure")),
-      pos_(*this->particles_->template getVariableByName<Vecd>("Position")),
+      Vol_(*this->particles_->template getVariableDataByName<Real>("VolumetricMeasure")),
+      pos_(*this->particles_->template getVariableDataByName<Vecd>("Position")),
       h_ratio_(this->particles_), limiter_(h_ref_ * h_ref_)
 {
     static_assert(std::is_base_of<Limiter, LimiterType>::value,
@@ -72,7 +72,7 @@ TransportVelocityCorrection<Contact<Boundary>, CommonControlTypes...>::
 {
     for (size_t k = 0; k != this->contact_particles_.size(); ++k)
     {
-        wall_Vol_.push_back(this->contact_particles_[k]->template getVariableByName<Real>("VolumetricMeasure"));
+        wall_Vol_.push_back(this->contact_particles_[k]->template getVariableDataByName<Real>("VolumetricMeasure"));
     }
 };
 //=================================================================================================//
@@ -108,7 +108,7 @@ TransportVelocityCorrection<Contact<>, KernelCorrectionType, CommonControlTypes.
     for (size_t k = 0; k != this->contact_particles_.size(); ++k)
     {
         contact_kernel_corrections_.push_back(KernelCorrectionType(this->contact_particles_[k]));
-        contact_Vol_.push_back(this->contact_particles_[k]->template getVariableByName<Real>("VolumetricMeasure"));
+        contact_Vol_.push_back(this->contact_particles_[k]->template getVariableDataByName<Real>("VolumetricMeasure"));
     }
 }
 //=================================================================================================//

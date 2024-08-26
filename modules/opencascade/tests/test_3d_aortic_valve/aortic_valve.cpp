@@ -56,12 +56,12 @@ class BoundaryGeometry : public BodyPartByParticle
 
 class Leaflet;
 template <>
-class ParticleGenerator<Leaflet> : public ParticleGenerator<Surface>
+class ParticleGenerator<SurfaceParticles, Leaflet> : public ParticleGenerator<SurfaceParticles>
 {
   public:
-    explicit ParticleGenerator(SPHBody &sph_body)
-        : ParticleGenerator<Surface>(sph_body), sph_body_(sph_body){};
-    virtual void initializeGeometricVariables() override
+    explicit ParticleGenerator(SPHBody &sph_body, SurfaceParticles &surface_particles)
+        : ParticleGenerator<SurfaceParticles>(sph_body, surface_particles), sph_body_(sph_body){};
+    virtual void prepareGeometricData() override
     {
         SurfaceShape *a = DynamicCast<SurfaceShape>(this, &sph_body_.getInitialShape());
 
@@ -110,9 +110,9 @@ class ParticleGenerator<Leaflet> : public ParticleGenerator<Surface>
 
         for (int i = 0; i != (int)points.size(); i++)
         {
-            initializePositionAndVolumetricMeasure(points[i], particle_spacing_ref * particle_spacing_ref);
+            addPositionAndVolumetricMeasure(points[i], particle_spacing_ref * particle_spacing_ref);
             Vecd n_0 = Vec3d(1.0, 1.0, 1.0);
-            initializeSurfaceProperties(n_0, thickness);
+            addSurfaceProperties(n_0, thickness);
         }
     }
     SPHBody &sph_body_;
@@ -139,7 +139,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Define simple file input and outputs functions.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp write_relaxed_particles(sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_relaxed_particles(sph_system);
     MeshRecordingToPlt write_mesh_cell_linked_list(sph_system, leaflet.getCellLinkedList());
     //----------------------------------------------------------------------
     //	Define body relation map.
