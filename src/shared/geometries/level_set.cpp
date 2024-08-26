@@ -6,96 +6,6 @@
 namespace SPH
 {
 //=================================================================================================//
-BaseLevelSet ::BaseLevelSet(Shape &shape, SPHAdaptation &sph_adaptation)
-    : BaseMeshField("LevelSet_" + shape.getName()), shape_(shape), sph_adaptation_(sph_adaptation)
-{
-    if (!shape_.isValid())
-    {
-        std::cout << "\n BaseLevelSet Error: shape_ is invalid." << std::endl;
-        std::cout << __FILE__ << ':' << __LINE__ << std::endl;
-        throw;
-    }
-}
-//=================================================================================================//
-LevelSet::LevelSet(BoundingBox tentative_bounds, Real data_spacing, size_t buffer_size,
-                   Shape &shape, SPHAdaptation &sph_adaptation)
-    : MeshWithGridDataPackages<4>(tentative_bounds, data_spacing, buffer_size),
-      BaseLevelSet(shape, sph_adaptation),
-      global_h_ratio_(sph_adaptation.ReferenceSpacing() / data_spacing),
-      phi_(*registerMeshVariable<Real>("Levelset")),
-      near_interface_id_(*registerMeshVariable<int>("NearInterfaceID")),
-      phi_gradient_(*registerMeshVariable<Vecd>("LevelsetGradient")),
-      kernel_weight_(*registerMeshVariable<Real>("KernelWeight")),
-      kernel_gradient_(*registerMeshVariable<Vecd>("KernelGradient")),
-      kernel_(*sph_adaptation.getKernel()) {}
-//=================================================================================================//
-LevelSet::LevelSet(BoundingBox tentative_bounds, Real data_spacing,
-                   Shape &shape, SPHAdaptation &sph_adaptation)
-    : LevelSet(tentative_bounds, data_spacing, 4, shape, sph_adaptation)
-{
-    MeshAllDynamics<InitializeDataInACell> initialize_data_in_a_cell{mesh_data_, shape_};
-    initialize_data_in_a_cell.exec();
-    FinishDataPackages finish_data_packages{mesh_data_, shape_, kernel_, global_h_ratio_};
-    finish_data_packages.exec();
-}
-//=================================================================================================//
-Vecd LevelSet::probeNormalDirection(const Vecd &position)
-{
-    return probe_normal_direction.exec(position);
-}
-//=================================================================================================//
-Vecd LevelSet::probeLevelSetGradient(const Vecd &position)
-{
-    return probe_level_set_gradient.exec(position);
-}
-//=================================================================================================//
-Real LevelSet::probeSignedDistance(const Vecd &position)
-{
-    return probe_signed_distance.exec(position);
-}
-//=================================================================================================//
-Real LevelSet::probeKernelIntegral(const Vecd &position, Real h_ratio)
-{
-    return probe_kernel_integral.exec(position);
-}
-//=================================================================================================//
-Vecd LevelSet::probeKernelGradientIntegral(const Vecd &position, Real h_ratio)
-{
-    return probe_kernel_gradient_integral.exec(position);
-}
-//=================================================================================================//
-void LevelSet::cleanInterface(Real small_shift_factor)
-{
-    CleanInterface clean_interface{mesh_data_, kernel_, global_h_ratio_};
-    clean_interface.exec(small_shift_factor);
-}
-//=============================================================================================//
-void LevelSet::correctTopology(Real small_shift_factor)
-{
-    CorrectTopology correct_topology{mesh_data_, kernel_, global_h_ratio_};
-    correct_topology.exec(small_shift_factor);
-}
-//=================================================================================================//
-bool LevelSet::probeIsWithinMeshBound(const Vecd &position)
-{
-    return probe_is_within_mesh_bound.exec(position);
-}
-//=============================================================================================//
-bool LevelSet::isWithinCorePackage(Vecd position)
-{
-    return is_within_core_package.exec(position);
-}
-//=============================================================================================//
-RefinedLevelSet::RefinedLevelSet(BoundingBox tentative_bounds, LevelSet &coarse_level_set,
-                                 Shape &shape, SPHAdaptation &sph_adaptation)
-    : RefinedMesh(tentative_bounds, coarse_level_set, 4, shape, sph_adaptation)
-{
-    MeshAllDynamics<InitializeDataInACellFromCoarse> initialize_data_in_a_cell_from_coarse(mesh_data_, coarse_mesh_, shape_);
-    initialize_data_in_a_cell_from_coarse.exec();
-    FinishDataPackages finish_data_packages{mesh_data_, shape_, kernel_, global_h_ratio_};
-    finish_data_packages.exec();
-}
-//=============================================================================================//
 MultilevelLevelSet::MultilevelLevelSet(
     BoundingBox tentative_bounds, Real reference_data_spacing, size_t total_levels,
     Shape &shape, SPHAdaptation &sph_adaptation)
@@ -223,6 +133,10 @@ Real MultilevelLevelSet::probeKernelIntegral(const Vecd &position)
 //=================================================================================================//
 Real MultilevelLevelSet::probeKernelIntegral(const Vecd &position, Real h_ratio)
 {
+    if(mesh_data_set_.size() == 1){
+        MeshCalculateDynamics<Real, ProbeKernelIntegral> refine_probe{*mesh_data_set_[0]};
+        return refine_probe.exec(position);
+    }
     size_t coarse_level = getCoarseLevel(h_ratio);
     Real alpha = (global_h_ratio_vec_[coarse_level + 1] - h_ratio) /
                  (global_h_ratio_vec_[coarse_level + 1] - global_h_ratio_vec_[coarse_level]);
@@ -242,6 +156,10 @@ Vecd MultilevelLevelSet::probeKernelGradientIntegral(const Vecd &position)
 //=================================================================================================//
 Vecd MultilevelLevelSet::probeKernelGradientIntegral(const Vecd &position, Real h_ratio)
 {
+    if(mesh_data_set_.size() == 1){
+        MeshCalculateDynamics<Vecd, ProbeKernelGradientIntegral> refine_probe{*mesh_data_set_[0]};
+        return refine_probe.exec(position);
+    }
     size_t coarse_level = getCoarseLevel(h_ratio);
     Real alpha = (global_h_ratio_vec_[coarse_level + 1] - h_ratio) /
                  (global_h_ratio_vec_[coarse_level + 1] - global_h_ratio_vec_[coarse_level]);

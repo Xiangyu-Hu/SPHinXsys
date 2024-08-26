@@ -39,7 +39,6 @@ namespace SPH
 class Shape;
 class BaseParticles;
 class BodyRegionByCell;
-class BaseLevelSet;
 class MultilevelLevelSet;
 class BaseCellLinkedList;
 
