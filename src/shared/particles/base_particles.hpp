@@ -21,7 +21,7 @@ template <typename DataType, template <typename T> class VariableType>
 DataType *BaseParticles::initializeVariable(VariableType<DataType> *variable, DataType initial_value)
 {
     DataType *data_field = variable->DataField();
-    for (size_t i = 0; i != variable->getDataSize(); ++i)
+    for (size_t i = 0; i != variable->getDataFieldSize(); ++i)
     {
         data_field[i] = initial_value;
     }
@@ -33,7 +33,7 @@ DataType *BaseParticles::
     initializeVariable(VariableType<DataType> *variable, const InitializationFunction &initialization)
 {
     DataType *data_field = initializeVariable(variable);
-    for (size_t i = 0; i != variable->getDataSize(); ++i)
+    for (size_t i = 0; i != variable->getDataFieldSize(); ++i)
     {
         data_field[i] = initialization(i); // Here, function object is applied for initialization.
     }
@@ -233,10 +233,10 @@ template <typename DataType>
 DiscreteVariable<DataType> *BaseParticles::
     addVariableToList(ParticleVariables &variable_set, DiscreteVariable<DataType> *variable)
 {
-    if (variable->getDataSize() <= real_particles_bound_)
+    if (variable->getDataFieldSize() <= real_particles_bound_)
     {
         std::cout << "\n Error: The variable '" << variable->Name() << "' can not be treated as a particle variable," << std::endl;
-        std::cout << "\n because the data size " << variable->getDataSize() << " is too less!" << std::endl;
+        std::cout << "\n because the data size " << variable->getDataFieldSize() << " is too less!" << std::endl;
         std::cout << __FILE__ << ':' << __LINE__ << std::endl;
         exit(1);
     }

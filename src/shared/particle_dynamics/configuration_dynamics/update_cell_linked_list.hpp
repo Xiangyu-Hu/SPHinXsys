@@ -14,13 +14,12 @@ template <typename CellLinkedListType>
 UpdateCellLinkedList<CellLinkedListType>::UpdateCellLinkedList(RealBody &real_body)
     : LocalDynamics(real_body),
       cell_linked_list_(DynamicCast<CellLinkedListType>(this, real_body.getCellLinkedList())),
-      neighbor_search_(cell_linked_list_.createNeighborSearch(*particles_)),
-      mesh_(neighbor_search_.getMesh()),
-      number_of_cells_plus_one_(neighbor_search_.getCellOffsetListSize()),
-      dv_pos_(neighbor_search_.getParticlePosition()),
-      dv_particle_index_(neighbor_search_.getParticleIndex()),
-      dv_cell_offset_(neighbor_search_.getCellOffset()),
-      dv_current_cell_size_(DiscreteVariable<UnsignedInt>("CurrentCellSize", number_of_cells_plus_one_))
+      mesh_(cell_linked_list_),
+      cell_offset_list_size_(cell_linked_list_.getCellOffsetListSize()),
+      dv_pos_(cell_linked_list_.getParticlePosition()),
+      dv_particle_index_(cell_linked_list_.getParticleIndex()),
+      dv_cell_offset_(cell_linked_list_.getCellOffset()),
+      dv_current_cell_size_(DiscreteVariable<UnsignedInt>("CurrentCellSize", cell_offset_list_size_))
 {
     particles_->addVariableToWrite<UnsignedInt>("ParticleIndex");
 }
@@ -31,7 +30,7 @@ UpdateCellLinkedList<CellLinkedListType>::ComputingKernel<ExecutionPolicy>::
     ComputingKernel(const ExecutionPolicy &ex_policy,
                     UpdateCellLinkedList<CellLinkedListType> &update_cell_linked_list)
     : mesh_(update_cell_linked_list.mesh_),
-      number_of_cells_plus_one_(update_cell_linked_list.number_of_cells_plus_one_),
+      cell_offset_list_size_(update_cell_linked_list.cell_offset_list_size_),
       pos_(update_cell_linked_list.dv_pos_->DelegatedDataField(ex_policy)),
       particle_index_(update_cell_linked_list.dv_particle_index_->DelegatedDataField(ex_policy)),
       cell_offset_(update_cell_linked_list.dv_cell_offset_->DelegatedDataField(ex_policy)),
@@ -83,7 +82,7 @@ void UpdateCellLinkedList<MeshType, ExecutionPolicy>::exec(Real dt)
     ComputingKernel *computing_kernel = kernel_implementation_.getComputingKernel();
 
     particle_for(ex_policy_,
-                 IndexRange(0, this->number_of_cells_plus_one_),
+                 IndexRange(0, this->cell_offset_list_size_),
                  [=](size_t i)
                  { computing_kernel->clearAllLists(i); });
 
@@ -95,7 +94,7 @@ void UpdateCellLinkedList<MeshType, ExecutionPolicy>::exec(Real dt)
     UnsignedInt *particle_index = this->dv_particle_index_->DelegatedDataField(ex_policy_);
     UnsignedInt *cell_offset = this->dv_cell_offset_->DelegatedDataField(ex_policy_);
     exclusive_scan(ex_policy_, particle_index,
-                   particle_index + this->number_of_cells_plus_one_,
+                   particle_index + this->cell_offset_list_size_,
                    cell_offset,
                    typename PlusUnsignedInt<ExecutionPolicy>::type());
 

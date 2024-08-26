@@ -23,7 +23,9 @@ SPHRelation::SPHRelation(SPHBody &sph_body)
 //=================================================================================================//
 BaseInnerRelation::BaseInnerRelation(RealBody &real_body)
     : SPHRelation(real_body), real_body_(&real_body),
-      inner_neighbor_list_(base_particles_)
+      particle_offset_list_size_(base_particles_.RealParticlesBound() + 1),
+      dv_neighbor_index_(DiscreteVariable<UnsignedInt>("NeighborIndex", particle_offset_list_size_)),
+      dv_particle_offset_(DiscreteVariable<UnsignedInt>("ParticleOffset", particle_offset_list_size_))
 {
     subscribeToBody();
     inner_configuration_.resize(base_particles_.RealParticlesBound(), Neighborhood());

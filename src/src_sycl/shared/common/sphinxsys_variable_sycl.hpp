@@ -73,7 +73,7 @@ DeviceOnlyDiscreteVariable<DataType>::
     DeviceOnlyDiscreteVariable(DiscreteVariable<DataType> *host_variable)
     : BaseVariable(host_variable->Name()), device_only_data_field_(nullptr)
 {
-    size_t data_size = host_variable->getDataSize();
+    size_t data_size = host_variable->getDataFieldSize();
     device_only_data_field_ = allocateDeviceOnly<DataType>(data_size);
     copyToDevice(host_variable->DataField(), device_only_data_field_, data_size);
     host_variable->setDeviceDataField(device_only_data_field_);
@@ -90,7 +90,7 @@ void DeviceOnlyDiscreteVariable<DataType>::
     reallocateDataField(DiscreteVariable<DataType> *host_variable)
 {
     freeDeviceData(device_only_data_field_);
-    size_t new_host_variable_size = host_variable->getDataSize();
+    size_t new_host_variable_size = host_variable->getDataFieldSize();
     device_only_data_field_ = allocateDeviceOnly<DataType>(new_host_variable_size);
     host_variable->setDeviceDataField(device_only_data_field_);
 }

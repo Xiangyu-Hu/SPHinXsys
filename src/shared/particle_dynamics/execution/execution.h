@@ -63,6 +63,13 @@ class Implementation<LocalDynamicsType, ExecutionPolicy>
         return computing_kernel_;
     }
 
+    ComputingKernel *regenerateComputingKernel()
+    {
+        computing_kernel_ =
+            kernel_ptr_keeper_.template createPtr<ComputingKernel>(ExecutionPolicy{}, local_dynamics_);
+        return computing_kernel_;
+    }
+
   private:
     LocalDynamicsType &local_dynamics_;
     ComputingKernel *computing_kernel_;

@@ -10,9 +10,9 @@ namespace SPH
 {
 //=================================================================================================//
 BaseCellLinkedList::
-    BaseCellLinkedList(SPHAdaptation &sph_adaptation)
-    : BaseMeshField("CellLinkedList"),
-      kernel_(*sph_adaptation.getKernel()) {}
+    BaseCellLinkedList(BaseParticles &base_particles, SPHAdaptation &sph_adaptation)
+    : BaseMeshField("CellLinkedList"), kernel_(*sph_adaptation.getKernel()),
+      base_particles_(base_particles), dv_pos_(base_particles.getVariableByName<Vecd>("Position")) {}
 //=================================================================================================//
 SplitCellLists *BaseCellLinkedList::getSplitCellLists()
 {
@@ -35,19 +35,14 @@ void BaseCellLinkedList::clearSplitCellLists(SplitCellLists &split_cell_lists)
         split_cell_lists[i].clear();
 }
 //=================================================================================================//
-NeighborSearch::NeighborSearch(CellLinkedList &cell_linked_list, BaseParticles &particles)
-    : mesh_(cell_linked_list),
-      number_of_cells_plus_one_(mesh_.NumberOfCells() + 1),
-      index_list_size_(SMAX(particles.ParticlesBound(), number_of_cells_plus_one_)),
-      dv_pos_(particles.getVariableByName<Vecd>("Position")),
-      dv_particle_index_(particles.registerDiscreteVariableOnly<UnsignedInt>("ParticleIndex", index_list_size_)),
-      dv_cell_offset_(particles.registerDiscreteVariableOnly<UnsignedInt>("CellOffset", number_of_cells_plus_one_)) {}
-//=================================================================================================//
 CellLinkedList::CellLinkedList(BoundingBox tentative_bounds, Real grid_spacing,
-                               SPHAdaptation &sph_adaptation)
-    : BaseCellLinkedList(sph_adaptation), Mesh(tentative_bounds, grid_spacing, 2),
+                               BaseParticles &base_particles, SPHAdaptation &sph_adaptation)
+    : BaseCellLinkedList(base_particles, sph_adaptation), Mesh(tentative_bounds, grid_spacing, 2),
       use_split_cell_lists_(false), cell_index_lists_(nullptr), cell_data_lists_(nullptr),
-      neighbor_search_(nullptr)
+      cell_offset_list_size_(NumberOfCells() + 1),
+      index_list_size_(SMAX(base_particles.ParticlesBound(), cell_offset_list_size_)),
+      dv_particle_index_(base_particles.registerDiscreteVariableOnly<UnsignedInt>("ParticleIndex", index_list_size_)),
+      dv_cell_offset_(base_particles.registerDiscreteVariableOnly<UnsignedInt>("CellOffset", cell_offset_list_size_))
 {
     allocateMeshDataMatrix();
     single_cell_linked_list_level_.push_back(this);
@@ -202,18 +197,11 @@ UnsignedInt CellLinkedList::computingSequence(Vecd &position, size_t index_i)
     return transferMeshIndexToMortonOrder(CellIndexFromPosition(position));
 }
 //=================================================================================================//
-NeighborSearch &CellLinkedList::getNeighborSearch(BaseParticles &particles)
-{
-    if (neighbor_search_ == nullptr)
-        neighbor_search_ = neighbor_search_keeper_.create<NeighborSearch>(*this, particles);
-    return *neighbor_search_;
-};
-//=================================================================================================//
-MultilevelCellLinkedList::MultilevelCellLinkedList(
-    BoundingBox tentative_bounds, Real reference_grid_spacing,
-    size_t total_levels, SPHAdaptation &sph_adaptation)
+MultilevelCellLinkedList::MultilevelCellLinkedList(BoundingBox tentative_bounds,
+                                                   Real reference_grid_spacing, size_t total_levels,
+                                                   BaseParticles &base_particles, SPHAdaptation &sph_adaptation)
     : MultilevelMesh<BaseCellLinkedList, CellLinkedList>(
-          tentative_bounds, reference_grid_spacing, total_levels, sph_adaptation),
+          tentative_bounds, reference_grid_spacing, total_levels, base_particles, sph_adaptation),
       h_ratio_(DynamicCast<ParticleWithLocalRefinement>(this, &sph_adaptation)->h_ratio_)
 {
 }

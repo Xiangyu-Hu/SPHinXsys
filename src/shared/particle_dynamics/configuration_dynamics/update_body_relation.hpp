@@ -6,42 +6,22 @@
 namespace SPH
 {
 //=================================================================================================//
-template <class ParticleCellLinkedListType>
 template <class ExecutionPolicy>
-Relation<Inner<ParticleCellLinkedListType>>::Relation(
-    const ExecutionPolicy &ex_policy, RealBody &real_body,
-    const ParticleCellLinkedListType &particle_cell_linked_list)
-    : LocalDynamics(real_body),
-      particle_cell_linked_list_(particle_cell_linked_list),
-      real_particle_bound_plus_one_(particles_->RealParticlesBound() + 1),
-      neighbor_id_list_size_(particles_->ParticlesBound() * NeighborSize<Dimensions>::value),
-      pos_(particles_->getVariableDataByName<Vecd>(ex_policy, "Position")),
-      neighbor_id_list_(particles_->registerDiscreteVariable<UnsignedInt>(ex_policy, "NeighborIDList", neighbor_id_list_size_)),
-      neighbor_offset_list_(particles_->registerDiscreteVariable<UnsignedInt>(ex_policy, "NeighborOffsetList", real_particle_bound_plus_one_))
-{
-    particles_->addVariableToWrite<UnsignedInt>("NeighborOffsetList");
-}
+BodyRelationUpdate<Inner<>>::ComputingKernel<ExecutionPolicy>::ComputingKernel(
+    const ExecutionPolicy &ex_policy, BodyRelationUpdate<Inner<>> &update_inner_relation)
+    : neighbor_search_(update_inner_relation.cell_linked_list_.createNeighborSearch(ex_policy)),
+      pos_(update_inner_relation.dv_pos_->DelegatedDataField(ex_policy)),
+      neighbor_index_(update_inner_relation.dv_neighbor_index_->DelegatedDataField(ex_policy)),
+      particle_offset_(update_inner_relation.dv_particle_offset_->DelegatedDataField(ex_policy)),
+      neighbor_size_(update_inner_relation.dv_neighbor_size_.DelegatedDataField(ex_policy)) {}
 //=================================================================================================//
-template <class ParticleCellLinkedListType>
-template <class T>
-Relation<Inner<ParticleCellLinkedListType>>::ComputingKernel<T>::
-    ComputingKernel(Relation<Inner<ParticleCellLinkedListType>> &update_inner_relation)
-    : particle_cell_linked_list_(update_inner_relation.particle_cell_linked_list_),
-      real_particle_bound_plus_one_(update_inner_relation.real_particle_bound_plus_one_),
-      neighbor_id_list_size_(update_inner_relation.neighbor_id_list_size_),
-      pos_(update_inner_relation.pos_),
-      neighbor_id_list_(update_inner_relation.neighbor_id_list_),
-      neighbor_offset_list_(update_inner_relation.neighbor_offset_list_),
-      neighbor_size_list_(update_inner_relation.neighbor_size_list_) {}
-//=================================================================================================//
-template <class ParticleCellLinkedListType>
-template <class T>
-void Relation<Inner<ParticleCellLinkedListType>>::ComputingKernel<T>::
+template <class ExecutionPolicy>
+void BodyRelationUpdate<Inner<>>::ComputingKernel<ExecutionPolicy>::
     incrementNeighborSize(UnsignedInt index_i)
 {
-    // Here, neighbor_id_list_ takes role of temporary storage for neighbor size list.
+    // Here, neighbor_index_ takes role of temporary storage for neighbor size list.
     UnsignedInt neighbor_count = 0;
-    particle_cell_linked_list_.forEachNeighbor(
+    neighbor_search_.forEachSearch(
         index_i, pos_,
         [&](size_t index_j)
         {
@@ -50,16 +30,15 @@ void Relation<Inner<ParticleCellLinkedListType>>::ComputingKernel<T>::
                 neighbor_count++;
             }
         });
-    neighbor_id_list_[index_i] = neighbor_count;
+    neighbor_index_[index_i] = neighbor_count;
 }
 //=================================================================================================//
-template <class ParticleCellLinkedListType>
-template <class T>
-void Relation<Inner<ParticleCellLinkedListType>>::ComputingKernel<T>::
+template <class ExecutionPolicy>
+void BodyRelationUpdate<Inner<>>::ComputingKernel<ExecutionPolicy>::
     updateNeighborIDList(UnsignedInt index_i)
 {
     UnsignedInt neighbor_count = 0;
-    particle_cell_linked_list_.forEachNeighbor(
+    neighbor_search_.forEachSearch(
         index_i, pos_,
         [&](size_t index_j)
         {
@@ -67,37 +46,39 @@ void Relation<Inner<ParticleCellLinkedListType>>::ComputingKernel<T>::
             {
                 neighbor_count++;
             }
-            neighbor_id_list_[neighbor_offset_list_[index_i] + neighbor_count] = index_j;
+            neighbor_index_[particle_offset_[index_i] + neighbor_count] = index_j;
         });
+    neighbor_size_[index_i] = neighbor_count;
 }
 //=================================================================================================//
-template <class RelationType, class ExecutionPolicy>
+template <class BodyRelationUpdateType, class ExecutionPolicy>
 template <typename... Args>
-UpdateRelation<RelationType, ExecutionPolicy>::UpdateRelation(RealBody &real_body, Args &&...args)
-    : RelationType(ExecutionPolicy{}, real_body, std::forward<Args>(args)...),
-      BaseDynamics<void>(), kernel_implementation_(*this) {}
+UpdateRelation<BodyRelationUpdateType, ExecutionPolicy>::UpdateRelation(Args &&...args)
+    : BodyRelationUpdateType(std::forward<Args>(args)...),
+      BaseDynamics<void>(), ex_policy_(ExecutionPolicy{}), kernel_implementation_(*this) {}
 //=================================================================================================//
-template <class RelationType, class ExecutionPolicy>
-void UpdateRelation<RelationType, ExecutionPolicy>::exec(Real dt)
+template <class BodyRelationUpdateType, class ExecutionPolicy>
+void UpdateRelation<BodyRelationUpdateType, ExecutionPolicy>::exec(Real dt)
 {
     UnsignedInt total_real_particles = this->particles_->TotalRealParticles();
     ComputingKernel *computing_kernel = kernel_implementation_.getComputingKernel();
-    particle_for(ExecutionPolicy{},
+    particle_for(ex_policy_,
                  IndexRange(0, total_real_particles),
                  [=](size_t i)
                  { computing_kernel->incrementNeighborSize(i); });
 
-    UnsignedInt current_neighbor_id_list_size =
-        exclusive_scan(ExecutionPolicy{}, this->neighbor_id_list_,
-                       this->neighbor_id_list_ + this->real_particle_bound_plus_one_,
-                       this->neighbor_offset_list_,
+    UnsignedInt *neighbor_index = this->dv_neighbor_index_->DelegateDataField(ex_policy_);
+    UnsignedInt *particle_offset = this->dv_particle_offset_->DelegateDataField(ex_policy_);
+    UnsignedInt current_neighbor_index_size =
+        exclusive_scan(ex_policy_, neighbor_index,
+                       neighbor_index + this->particle_offset_list_size_,
+                       particle_offset,
                        typename PlusUnsignedInt<ExecutionPolicy>::type());
-    if (current_neighbor_id_list_size > this->neighbor_id_list_size_)
+
+    if (current_neighbor_index_size > this->dv_neighbor_index_->getDataFieldSize())
     {
-        std::cout << "\n Error: the current neighbor id list size " << current_neighbor_id_list_size
-                  << " is larger than the allocated value " << this->neighbor_id_list_size_ << " !" << std::endl;
-        std::cout << __FILE__ << ':' << __LINE__ << std::endl;
-        exit(1);
+        this->dv_neighbor_index_->reallocateDataField(current_neighbor_index_size);
+        computing_kernel = kernel_implementation_.regenerateComputingKernel();
     }
 
     particle_for(ExecutionPolicy{},

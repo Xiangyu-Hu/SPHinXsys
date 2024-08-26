@@ -51,15 +51,16 @@ class BaseCellLinkedList : public BaseMeshField
 {
   protected:
     Kernel &kernel_;
-
+    BaseParticles &base_particles_;
+    DiscreteVariable<Vecd> *dv_pos_;
     /** clear split cell lists in this mesh*/
     virtual void clearSplitCellLists(SplitCellLists &split_cell_lists);
     /** update split particle list in this mesh */
     virtual void updateSplitCellLists(SplitCellLists &split_cell_lists) = 0;
 
   public:
-    BaseCellLinkedList(SPHAdaptation &sph_adaptation);
-    virtual ~BaseCellLinkedList(){};
+    BaseCellLinkedList(BaseParticles &base_particles, SPHAdaptation &sph_adaptation);
+    virtual ~BaseCellLinkedList() {};
 
     /** access concrete cell linked list levels*/
     virtual StdVec<CellLinkedList *> CellLinkedListLevels() = 0;
@@ -78,45 +79,26 @@ class BaseCellLinkedList : public BaseMeshField
     virtual void tagBodyPartByCell(ConcurrentCellLists &cell_lists, std::function<bool(Vecd, Real)> &check_included) = 0;
     /** Tag domain bounding cells in an axis direction, called by domain bounding classes */
     virtual void tagBoundingCells(StdVec<CellLists> &cell_data_lists, const BoundingBox &bounding_bounds, int axis) = 0;
+
+    DiscreteVariable<Vecd> *getParticlePosition() { return dv_pos_; };
 };
 
-class NeighborSearch
+class NeighborSearch : public Mesh
 {
   public:
-    NeighborSearch(CellLinkedList &cell_linked_list, BaseParticles &particles);
-    ~NeighborSearch(){};
-
-    Mesh getMesh() { return mesh_; };
-    UnsignedInt getCellOffsetListSize() { return number_of_cells_plus_one_; };
-    DiscreteVariable<Vecd> *getParticlePosition() { return dv_pos_; };
-    DiscreteVariable<UnsignedInt> *getParticleIndex() { return dv_particle_index_; };
-    DiscreteVariable<UnsignedInt> *getCellOffset() { return dv_cell_offset_; };
-
     template <class ExecutionPolicy>
-    class ComputingKernel : public Mesh
-    {
-      public:
-        ComputingKernel(const ExecutionPolicy &ex_policy, NeighborSearch &neighbor_search);
+    NeighborSearch(const ExecutionPolicy &ex_policy, CellLinkedList &cell_linked_list);
 
-        template <typename FunctionOnEach>
-        void forEachNeighbor(UnsignedInt index_i, const Vecd *source_pos,
-                             const FunctionOnEach &function) const;
-
-      protected:
-        friend class NeighborSearch;
-        Real grid_spacing_squared_;
-        Vecd *pos_;
-        UnsignedInt *particle_index_;
-        UnsignedInt *cell_offset_;
-    };
+    template <typename FunctionOnEach>
+    void forEachSearch(UnsignedInt index_i, const Vecd *source_pos,
+                       const FunctionOnEach &function) const;
 
   protected:
-    Mesh mesh_;
-    UnsignedInt number_of_cells_plus_one_;
-    UnsignedInt index_list_size_; // at least number_of_cells_pluse_one_
-    DiscreteVariable<Vecd> *dv_pos_;
-    DiscreteVariable<UnsignedInt> *dv_particle_index_;
-    DiscreteVariable<UnsignedInt> *dv_cell_offset_;
+    friend class CellLinkedList;
+    Real grid_spacing_squared_;
+    Vecd *pos_;
+    UnsignedInt *particle_index_;
+    UnsignedInt *cell_offset_;
 };
 
 /**
@@ -135,14 +117,17 @@ class CellLinkedList : public BaseCellLinkedList, public Mesh
      */
     SplitCellLists split_cell_lists_;
     bool use_split_cell_lists_;
-    UniquePtrKeeper<NeighborSearch> neighbor_search_keeper_;
+
+    UnsignedInt cell_offset_list_size_;
+    UnsignedInt index_list_size_; // at least number_of_cells_pluse_one_
+    DiscreteVariable<UnsignedInt> *dv_particle_index_;
+    DiscreteVariable<UnsignedInt> *dv_cell_offset_;
 
   protected:
     /** using concurrent vectors due to writing conflicts when building the list */
     ConcurrentIndexVector *cell_index_lists_;
     /** non-concurrent list data rewritten for building neighbor list */
     ListDataVector *cell_data_lists_;
-    NeighborSearch *neighbor_search_;
 
     void allocateMeshDataMatrix(); /**< allocate memories for addresses of data packages. */
     void deleteMeshDataMatrix();   /**< delete memories for addresses of data packages. */
@@ -154,7 +139,8 @@ class CellLinkedList : public BaseCellLinkedList, public Mesh
     };
 
   public:
-    CellLinkedList(BoundingBox tentative_bounds, Real grid_spacing, SPHAdaptation &sph_adaptation);
+    CellLinkedList(BoundingBox tentative_bounds, Real grid_spacing,
+                   BaseParticles &base_particles, SPHAdaptation &sph_adaptation);
     ~CellLinkedList() { deleteMeshDataMatrix(); };
 
     void clearCellLists();
@@ -176,15 +162,21 @@ class CellLinkedList : public BaseCellLinkedList, public Mesh
     void searchNeighborsByParticles(DynamicsRange &dynamics_range, ParticleConfiguration &particle_configuration,
                                     GetSearchDepth &get_search_depth, GetNeighborRelation &get_neighbor_relation);
 
-    NeighborSearch &getNeighborSearch(BaseParticles &particles);
+    template <class ExecutionPolicy>
+    NeighborSearch createNeighborSearch(const ExecutionPolicy &ex_policy);
+    UnsignedInt getCellOffsetListSize() { return cell_offset_list_size_; };
+    DiscreteVariable<UnsignedInt> *getParticleIndex() { return dv_particle_index_; };
+    DiscreteVariable<UnsignedInt> *getCellOffset() { return dv_cell_offset_; };
 };
 
 template <>
 class RefinedMesh<CellLinkedList> : public CellLinkedList
 {
   public:
-    RefinedMesh(BoundingBox tentative_bounds, CellLinkedList &coarse_mesh, SPHAdaptation &sph_adaptation)
-        : CellLinkedList(tentative_bounds, 0.5 * coarse_mesh.GridSpacing(), sph_adaptation){};
+    RefinedMesh(BoundingBox tentative_bounds, CellLinkedList &coarse_mesh,
+                BaseParticles &base_particles, SPHAdaptation &sph_adaptation)
+        : CellLinkedList(tentative_bounds, 0.5 * coarse_mesh.GridSpacing(),
+                         base_particles, sph_adaptation) {};
 };
 
 /**
@@ -197,14 +189,15 @@ class MultilevelCellLinkedList : public MultilevelMesh<BaseCellLinkedList, CellL
   protected:
     Real *h_ratio_; /**< Smoothing length for each level. */
     /** Update split cell list. */
-    virtual void updateSplitCellLists(SplitCellLists &split_cell_lists) override{};
+    virtual void updateSplitCellLists(SplitCellLists &split_cell_lists) override {};
     /** determine mesh level from particle cutoff radius */
     inline size_t getMeshLevel(Real particle_cutoff_radius);
 
   public:
-    MultilevelCellLinkedList(BoundingBox tentative_bounds, Real reference_grid_spacing,
-                             size_t total_levels, SPHAdaptation &sph_adaptation);
-    virtual ~MultilevelCellLinkedList(){};
+    MultilevelCellLinkedList(BoundingBox tentative_bounds,
+                             Real reference_grid_spacing, size_t total_levels,
+                             BaseParticles &base_particles, SPHAdaptation &sph_adaptation);
+    virtual ~MultilevelCellLinkedList() {};
 
     virtual void UpdateCellLists(BaseParticles &base_particles) override;
     void insertParticleIndex(size_t particle_index, const Vecd &particle_position) override;
@@ -212,7 +205,7 @@ class MultilevelCellLinkedList : public MultilevelMesh<BaseCellLinkedList, CellL
     virtual ListData findNearestListDataEntry(const Vecd &position) override { return ListData(0, Vecd::Zero()); }; // mocking, not implemented
     virtual UnsignedInt computingSequence(Vecd &position, size_t index_i) override;
     virtual void tagBodyPartByCell(ConcurrentCellLists &cell_lists, std::function<bool(Vecd, Real)> &check_included) override;
-    virtual void tagBoundingCells(StdVec<CellLists> &cell_data_lists, const BoundingBox &bounding_bounds, int axis) override{};
+    virtual void tagBoundingCells(StdVec<CellLists> &cell_data_lists, const BoundingBox &bounding_bounds, int axis) override {};
     virtual StdVec<CellLinkedList *> CellLinkedListLevels() override { return getMeshLevels(); };
 };
 } // namespace SPH

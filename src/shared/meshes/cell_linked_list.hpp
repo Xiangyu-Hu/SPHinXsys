@@ -18,19 +18,15 @@ namespace SPH
 {
 //=================================================================================================//
 template <class ExecutionPolicy>
-NeighborSearch::ComputingKernel<ExecutionPolicy>::
-    ComputingKernel(const ExecutionPolicy &ex_policy, NeighborSearch &neighbor_search)
-    : Mesh(neighbor_search.mesh_),
-      grid_spacing_squared_(grid_spacing_ * grid_spacing_),
-      pos_(neighbor_search.dv_pos_->DelegatedDataField(ex_policy)),
-      particle_index_(neighbor_search.dv_particle_index_->DelegatedDataField(ex_policy)),
-      cell_offset_(neighbor_search.dv_cell_offset_->DelegatedDataField(ex_policy)) {}
+NeighborSearch::NeighborSearch(const ExecutionPolicy &ex_policy, CellLinkedList &cell_linked_list)
+    : Mesh(cell_linked_list), grid_spacing_squared_(grid_spacing_ * grid_spacing_),
+      pos_(cell_linked_list.getParticlePosition()->DelegatedDataField(ex_policy)),
+      particle_index_(cell_linked_list.getParticleIndex()->DelegatedDataField(ex_policy)),
+      cell_offset_(cell_linked_list.getCellOffset()->DelegatedDataField(ex_policy)) {}
 //=================================================================================================//
-template <class ExecutionPolicy>
 template <typename FunctionOnEach>
-void NeighborSearch::ComputingKernel<ExecutionPolicy>::
-    forEachNeighbor(UnsignedInt index_i, const Vecd *source_pos,
-                    const FunctionOnEach &function) const
+void NeighborSearch::forEachSearch(UnsignedInt index_i, const Vecd *source_pos,
+                                   const FunctionOnEach &function) const
 {
     const Arrayi target_cell_index = CellIndexFromPosition(source_pos[index_i]);
     mesh_for_each(
@@ -50,6 +46,12 @@ void NeighborSearch::ComputingKernel<ExecutionPolicy>::
                 }
             }
         });
+}
+//=================================================================================================//
+template <class ExecutionPolicy>
+NeighborSearch CellLinkedList::createNeighborSearch(const ExecutionPolicy &ex_policy)
+{
+    return NeighborSearch(ex_policy, *this);
 }
 //=================================================================================================//
 template <class DynamicsRange, typename GetSearchDepth, typename GetNeighborRelation>

@@ -49,8 +49,8 @@ template <class ReturnType = void>
 class BaseDynamics
 {
   public:
-    BaseDynamics() : is_newly_updated_(false){};
-    virtual ~BaseDynamics(){};
+    BaseDynamics() : is_newly_updated_(false) {};
+    virtual ~BaseDynamics() {};
     bool checkNewlyUpdated() { return is_newly_updated_; };
     void setNotNewlyUpdated() { is_newly_updated_ = false; };
 
@@ -78,15 +78,13 @@ class DataDelegateInner
   public:
     explicit DataDelegateInner(BaseInnerRelation &inner_relation)
         : inner_relation_(inner_relation),
-          inner_configuration_(inner_relation.inner_configuration_),
-          inner_neighbor_list_(inner_relation.getInnerNeighborList()){};
-    virtual ~DataDelegateInner(){};
+          inner_configuration_(inner_relation.inner_configuration_) {};
+    virtual ~DataDelegateInner() {};
     BaseInnerRelation &getBodyRelation() { return inner_relation_; };
 
   protected:
     /** inner configuration of the designated body */
     ParticleConfiguration &inner_configuration_;
-    NeighborList &inner_neighbor_list_;
 };
 
 /**
@@ -109,7 +107,7 @@ class DataDelegateContact
             contact_configuration_.push_back(&contact_relation.contact_configuration_[i]);
         }
     };
-    virtual ~DataDelegateContact(){};
+    virtual ~DataDelegateContact() {};
     BaseContactRelation &getBodyRelation() { return contact_relation_; };
 
   protected:

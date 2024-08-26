@@ -48,8 +48,8 @@ class BaseVariable
 {
   public:
     explicit BaseVariable(const std::string &name)
-        : name_(name){};
-    virtual ~BaseVariable(){};
+        : name_(name) {};
+    virtual ~BaseVariable() {};
     std::string Name() const { return name_; };
 
   protected:
@@ -74,7 +74,7 @@ class SingularVariable : public BaseVariable
 
   public:
     SingularVariable(const std::string &name, const DataType &value)
-        : BaseVariable(name), value_(new DataType(value)), delegated_(value_){};
+        : BaseVariable(name), value_(new DataType(value)), delegated_(value_) {};
     virtual ~SingularVariable() { delete value_; };
 
     DataType *ValueAddress() { return delegated_; };
@@ -147,9 +147,9 @@ class DiscreteVariable : public BaseVariable
     };
 
     bool existDeviceDataField() { return device_data_field_ != nullptr; };
-    size_t getDataSize() { return data_size_; }
+    size_t getDataFieldSize() { return data_size_; }
     void setDeviceDataField(DataType *data_field) { device_data_field_ = data_field; };
-    void reallocateDataField(size_t tentative_size)
+    size_t reallocateDataField(size_t tentative_size)
     {
         if (data_size_ < tentative_size)
         {
@@ -162,6 +162,7 @@ class DiscreteVariable : public BaseVariable
                 device_only_variable_->reallocateDataField(this);
             }
         }
+        return data_size_;
     };
     void synchronizeWithDevice();
     void synchronizeToDevice();
@@ -179,7 +180,7 @@ class MeshVariable : public BaseVariable
   public:
     using PackageData = PackageDataMatrix<DataType, 4>;
     MeshVariable(const std::string &name, size_t data_size)
-        : BaseVariable(name), data_field_(nullptr){};
+        : BaseVariable(name), data_field_(nullptr) {};
     virtual ~MeshVariable() { delete[] data_field_; };
 
     // void setDataField(PackageData* mesh_data){ data_field_ = mesh_data; };

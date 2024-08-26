@@ -45,9 +45,8 @@ class UpdateCellLinkedList<CellLinkedListType> : public LocalDynamics
 {
   protected:
     CellLinkedListType &cell_linked_list_;
-    NeighborSearch &neighbor_search_;
     Mesh mesh_;
-    UnsignedInt number_of_cells_plus_one_;
+    UnsignedInt cell_offset_list_size_;
     DiscreteVariable<Vecd> *dv_pos_;
     DiscreteVariable<UnsignedInt> *dv_particle_index_;
     DiscreteVariable<UnsignedInt> *dv_cell_offset_;
@@ -55,7 +54,7 @@ class UpdateCellLinkedList<CellLinkedListType> : public LocalDynamics
 
   public:
     UpdateCellLinkedList(RealBody &real_body);
-    virtual ~UpdateCellLinkedList(){};
+    virtual ~UpdateCellLinkedList() {};
 
     template <class ExecutionPolicy>
     class ComputingKernel
@@ -70,7 +69,7 @@ class UpdateCellLinkedList<CellLinkedListType> : public LocalDynamics
       protected:
         friend class UpdateCellLinkedList<CellLinkedListType>;
         Mesh mesh_;
-        UnsignedInt number_of_cells_plus_one_;
+        UnsignedInt cell_offset_list_size_;
 
         Vecd *pos_;
         UnsignedInt *particle_index_;
@@ -90,7 +89,7 @@ class UpdateCellLinkedList<CellLinkedListType, ExecutionPolicy>
 
   public:
     UpdateCellLinkedList(RealBody &real_body);
-    virtual ~UpdateCellLinkedList(){};
+    virtual ~UpdateCellLinkedList() {};
     virtual void exec(Real dt = 0.0) override;
 
   protected:

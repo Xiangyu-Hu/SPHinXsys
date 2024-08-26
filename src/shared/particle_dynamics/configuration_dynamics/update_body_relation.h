@@ -45,53 +45,51 @@ class BodyRelationUpdate<Inner<>> : public LocalDynamics
 {
 
   public:
-    explicit BodyRelationUpdate(BaseInnerRelation &inner_relation);
-    virtual ~BodyRelationUpdate(){};
-    template <class T>
+    explicit BodyRelationUpdate(InnerRelation &inner_relation);
+    virtual ~BodyRelationUpdate() {};
+
+    template <class ExecutionPolicy>
     class ComputingKernel
     {
       public:
-        ComputingKernel(BodyRelationUpdate<Inner<>> &update_inner_relation);
+        ComputingKernel(const ExecutionPolicy &ex_policy,
+                        BodyRelationUpdate<Inner<>> &update_inner_relation);
         void incrementNeighborSize(UnsignedInt index_i);
         void updateNeighborIDList(UnsignedInt index_i);
 
       protected:
-        friend class Relation<Inner<ParticleCellLinkedListType>>;
-        ParticleCellLinkedListType particle_cell_linked_list_;
-        UnsignedInt real_particle_bound_plus_one_;
-        UnsignedInt neighbor_id_list_size_;
-
+        friend class BodyRelationUpdate<Inner<>>;
+        NeighborSearch neighbor_search_;
         Vecd *pos_;
-        UnsignedInt *neighbor_id_list_;
-        UnsignedInt *neighbor_offset_list_;
-        UnsignedInt *neighbor_size_list_;
+        UnsignedInt *neighbor_index_;
+        UnsignedInt *particle_offset_;
+        UnsignedInt *neighbor_size_;
     };
 
   protected:
-    BodyRelationType &body_relation_;
-    UnsignedInt real_particle_bound_plus_one_;
-    UnsignedInt neighbor_id_list_size_;
-
-    Vecd *pos_;
-    UnsignedInt *neighbor_id_list_;
-    UnsignedInt *neighbor_offset_list_;
-    UnsignedInt *neighbor_size_list_;
+    CellLinkedList &cell_linked_list_;
+    UnsignedInt particle_offset_list_size_;
+    DiscreteVariable<Vecd> *dv_pos_;
+    DiscreteVariable<UnsignedInt> *dv_neighbor_index_;
+    DiscreteVariable<UnsignedInt> *dv_particle_offset_;
+    DiscreteVariable<UnsignedInt> dv_neighbor_size_;
 };
 
-template <class RelationType, class ExecutionPolicy>
-class UpdateRelation : public RelationType, public BaseDynamics<void>
+template <class BodyRelationUpdateType, class ExecutionPolicy>
+class UpdateRelation : public BodyRelationUpdateType, public BaseDynamics<void>
 {
-    using ComputingKernel = typename RelationType::
+    using ComputingKernel = typename BodyRelationUpdateType::
         template ComputingKernel<ExecutionPolicy>;
 
   public:
     template <typename... Args>
-    UpdateRelation(RealBody &real_body, Args &&...args);
-    virtual ~UpdateRelation(){};
+    UpdateRelation(Args &&...args);
+    virtual ~UpdateRelation() {};
     virtual void exec(Real dt = 0.0) override;
 
   protected:
-    Implementation<RelationType, ExecutionPolicy> kernel_implementation_;
+    ExecutionPolicy ex_policy_;
+    Implementation<BodyRelationUpdateType, ExecutionPolicy> kernel_implementation_;
 };
 
 } // namespace SPH
