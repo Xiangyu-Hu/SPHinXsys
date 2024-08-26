@@ -99,9 +99,7 @@ RefinedLevelSet::RefinedLevelSet(BoundingBox tentative_bounds, LevelSet &coarse_
 MultilevelLevelSet::MultilevelLevelSet(
     BoundingBox tentative_bounds, Real reference_data_spacing, size_t total_levels,
     Shape &shape, SPHAdaptation &sph_adaptation)
-    : MultilevelMesh<BaseLevelSet, LevelSet, RefinedLevelSet>(
-          tentative_bounds, reference_data_spacing, total_levels, shape, sph_adaptation),
-      kernel_(*sph_adaptation.getKernel())
+    : BaseMeshField("LevelSet_" + shape.getName()), kernel_(*sph_adaptation.getKernel()), shape_(shape), total_levels_(total_levels)
 {
     mesh_data_set_.push_back(
             mesh_data_ptr_vector_keeper_
@@ -139,6 +137,30 @@ MultilevelLevelSet::MultilevelLevelSet(
         initialize_data_in_a_cell_from_coarse.exec();
         finish_data_packages.exec();
     }
+}
+//=================================================================================================//
+MultilevelLevelSet::MultilevelLevelSet(
+    BoundingBox tentative_bounds, MeshWithGridDataPackagesType* coarse_data, Shape &shape, SPHAdaptation &sph_adaptation)
+    : BaseMeshField("LevelSet_" + shape.getName()), kernel_(*sph_adaptation.getKernel()), shape_(shape)
+{
+    total_levels_ = 1;
+    Real reference_data_spacing = coarse_data->DataSpacing() * 0.5;
+    Real global_h_ratio = sph_adaptation.ReferenceSpacing() / reference_data_spacing;
+    global_h_ratio_vec_.push_back(global_h_ratio);
+
+    mesh_data_set_.push_back(
+            mesh_data_ptr_vector_keeper_
+                .template createPtr<MeshWithGridDataPackagesType>(tentative_bounds, reference_data_spacing, 4));
+    mesh_data_set_[0]->registerMeshVariable<Real>("Levelset");
+    mesh_data_set_[0]->registerMeshVariable<int>("NearInterfaceID");
+    mesh_data_set_[0]->registerMeshVariable<Vecd>("LevelsetGradient");
+    mesh_data_set_[0]->registerMeshVariable<Real>("KernelWeight");
+    mesh_data_set_[0]->registerMeshVariable<Vecd>("KernelGradient");
+
+    MeshAllDynamics<InitializeDataInACellFromCoarse> initialize_data_in_a_cell_from_coarse(*mesh_data_set_[0], *coarse_data, shape_);
+    FinishDataPackages finish_data_packages{*mesh_data_set_[0], shape_, kernel_, global_h_ratio};
+    initialize_data_in_a_cell_from_coarse.exec();
+    finish_data_packages.exec();
 }
 //=================================================================================================//
 size_t MultilevelLevelSet::getCoarseLevel(Real h_ratio)
@@ -193,6 +215,12 @@ size_t MultilevelLevelSet::getProbeLevel(const Vecd &position)
     return 0;
 }
 //=================================================================================================//
+Real MultilevelLevelSet::probeKernelIntegral(const Vecd &position)
+{
+    MeshCalculateDynamics<Real, ProbeKernelIntegral> refine_probe{*mesh_data_set_[0]};
+    return refine_probe.exec(position);
+}
+//=================================================================================================//
 Real MultilevelLevelSet::probeKernelIntegral(const Vecd &position, Real h_ratio)
 {
     size_t coarse_level = getCoarseLevel(h_ratio);
@@ -204,6 +232,12 @@ Real MultilevelLevelSet::probeKernelIntegral(const Vecd &position, Real h_ratio)
     Real fine_level_value = fine_probe.exec(position);
 
     return alpha * coarse_level_value + (1.0 - alpha) * fine_level_value;
+}
+//=================================================================================================//
+Vecd MultilevelLevelSet::probeKernelGradientIntegral(const Vecd &position)
+{
+    MeshCalculateDynamics<Vecd, ProbeKernelGradientIntegral> refine_probe{*mesh_data_set_[0]};
+    return refine_probe.exec(position);
 }
 //=================================================================================================//
 Vecd MultilevelLevelSet::probeKernelGradientIntegral(const Vecd &position, Real h_ratio)

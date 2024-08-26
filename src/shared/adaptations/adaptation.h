@@ -40,6 +40,7 @@ class Shape;
 class BaseParticles;
 class BodyRegionByCell;
 class BaseLevelSet;
+class MultilevelLevelSet;
 class BaseCellLinkedList;
 
 /**
@@ -80,7 +81,7 @@ class SPHAdaptation
     virtual void initializeAdaptationVariables(BaseParticles &base_particles){};
 
     virtual UniquePtr<BaseCellLinkedList> createCellLinkedList(const BoundingBox &domain_bounds);
-    virtual UniquePtr<BaseLevelSet> createLevelSet(Shape &shape, Real refinement_ratio);
+    virtual UniquePtr<MultilevelLevelSet> createLevelSet(Shape &shape, Real refinement_ratio);
 
     template <class KernelType, typename... Args>
     void resetKernel(Args &&...args)
@@ -118,7 +119,7 @@ class ParticleWithLocalRefinement : public SPHAdaptation
 
     virtual void initializeAdaptationVariables(BaseParticles &base_particles) override;
     virtual UniquePtr<BaseCellLinkedList> createCellLinkedList(const BoundingBox &domain_bounds) override;
-    virtual UniquePtr<BaseLevelSet> createLevelSet(Shape &shape, Real refinement_ratio) override;
+    virtual UniquePtr<MultilevelLevelSet> createLevelSet(Shape &shape, Real refinement_ratio) override;
 
   protected:
     Real finest_spacing_bound_;   /**< the adaptation bound for finest particles */

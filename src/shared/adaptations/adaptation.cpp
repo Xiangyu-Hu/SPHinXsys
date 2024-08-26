@@ -86,7 +86,7 @@ UniquePtr<BaseCellLinkedList> SPHAdaptation::createCellLinkedList(const Bounding
     return makeUnique<CellLinkedList>(domain_bounds, kernel_ptr_->CutOffRadius(), *this);
 }
 //=================================================================================================//
-UniquePtr<BaseLevelSet> SPHAdaptation::createLevelSet(Shape &shape, Real refinement_ratio)
+UniquePtr<MultilevelLevelSet> SPHAdaptation::createLevelSet(Shape &shape, Real refinement_ratio)
 {
     // estimate the required mesh levels
     int total_levels = (int)log10(MinimumDimension(shape.getBounds()) / ReferenceSpacing()) + 2;
@@ -94,7 +94,7 @@ UniquePtr<BaseLevelSet> SPHAdaptation::createLevelSet(Shape &shape, Real refinem
     MultilevelLevelSet coarser_level_sets(shape.getBounds(), coarsest_spacing / refinement_ratio,
                                           total_levels - 1, shape, *this);
     // return the finest level set only
-    return makeUnique<RefinedLevelSet>(shape.getBounds(), *coarser_level_sets.getMeshLevels().back(), shape, *this);
+    return makeUnique<MultilevelLevelSet>(shape.getBounds(), coarser_level_sets.getMeshLevels().back(), shape, *this);
 }
 //=================================================================================================//
 ParticleWithLocalRefinement::
@@ -136,7 +136,7 @@ UniquePtr<BaseCellLinkedList> ParticleWithLocalRefinement::createCellLinkedList(
                                                 getCellLinkedListTotalLevel(), *this);
 }
 //=================================================================================================//
-UniquePtr<BaseLevelSet> ParticleWithLocalRefinement::createLevelSet(Shape &shape, Real refinement_ratio)
+UniquePtr<MultilevelLevelSet> ParticleWithLocalRefinement::createLevelSet(Shape &shape, Real refinement_ratio)
 {
     return makeUnique<MultilevelLevelSet>(shape.getBounds(), ReferenceSpacing() / refinement_ratio,
                                           getLevelSetTotalLevel(), shape, *this);

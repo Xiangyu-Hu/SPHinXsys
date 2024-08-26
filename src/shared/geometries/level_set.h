@@ -135,26 +135,42 @@ class RefinedLevelSet : public RefinedMesh<LevelSet>
  * @class MultilevelLevelSet
  * @brief Defining a multilevel level set for a complex region.
  */
-class MultilevelLevelSet : public MultilevelMesh<BaseLevelSet, LevelSet, RefinedLevelSet>
+class MultilevelLevelSet : public BaseMeshField
 {
   public:
     MultilevelLevelSet(BoundingBox tentative_bounds, Real reference_data_spacing, size_t total_levels, Shape &shape, SPHAdaptation &sph_adaptation);
-    virtual ~MultilevelLevelSet(){};
+    MultilevelLevelSet(BoundingBox tentative_bounds, MeshWithGridDataPackagesType* coarse_data, Shape &shape, SPHAdaptation &sph_adaptation);
+    ~MultilevelLevelSet(){};
 
-    virtual void cleanInterface(Real small_shift_factor) override;
-    virtual void correctTopology(Real small_shift_factor) override;
-    virtual bool probeIsWithinMeshBound(const Vecd &position) override;
-    virtual Real probeSignedDistance(const Vecd &position) override;
-    virtual Vecd probeNormalDirection(const Vecd &position) override;
-    virtual Vecd probeLevelSetGradient(const Vecd &position) override;
-    virtual Real probeKernelIntegral(const Vecd &position, Real h_ratio = 1.0) override;
-    virtual Vecd probeKernelGradientIntegral(const Vecd &position, Real h_ratio = 1.0) override;
+    void cleanInterface(Real small_shift_factor);
+    void correctTopology(Real small_shift_factor);
+    bool probeIsWithinMeshBound(const Vecd &position);
+    Real probeSignedDistance(const Vecd &position);
+    Vecd probeNormalDirection(const Vecd &position);
+    Vecd probeLevelSetGradient(const Vecd &position);
+    Real probeKernelIntegral(const Vecd &position, Real h_ratio = 1.0);
+    Real probeKernelIntegral(const Vecd &position);
+    Vecd probeKernelGradientIntegral(const Vecd &position, Real h_ratio = 1.0);
+    Vecd probeKernelGradientIntegral(const Vecd &position);
+    StdVec<MeshWithGridDataPackagesType *> getMeshLevels() { return mesh_data_set_; };
+
+    void writeMeshFieldToPlt(std::ofstream &output_file) override
+    {
+        for (size_t l = 0; l != total_levels_; ++l)
+        {
+            MeshCalculateDynamics<void, WriteMeshFieldToPlt> write_mesh_field_to_plt(*mesh_data_set_[l]);
+            write_mesh_field_to_plt.exec(output_file);
+            // mesh_levels_[l]->writeMeshFieldToPlt(output_file);
+        }
+    }
 
   protected:
     inline size_t getProbeLevel(const Vecd &position);
     inline size_t getCoarseLevel(Real h_ratio);
 
     Kernel &kernel_;
+    Shape &shape_; /**< the geometry is described by the level set. */
+    size_t total_levels_;                    /**< level 0 is the coarsest */
     StdVec<MeshWithGridDataPackagesType *> mesh_data_set_;
     StdVec<Real> global_h_ratio_vec_;
     UniquePtrsKeeper<MeshWithGridDataPackagesType> mesh_data_ptr_vector_keeper_;
