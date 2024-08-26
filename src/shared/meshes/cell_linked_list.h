@@ -60,7 +60,7 @@ class BaseCellLinkedList : public BaseMeshField
 
   public:
     BaseCellLinkedList(BaseParticles &base_particles, SPHAdaptation &sph_adaptation);
-    virtual ~BaseCellLinkedList() {};
+    virtual ~BaseCellLinkedList(){};
 
     /** access concrete cell linked list levels*/
     virtual StdVec<CellLinkedList *> CellLinkedListLevels() = 0;
@@ -176,7 +176,7 @@ class RefinedMesh<CellLinkedList> : public CellLinkedList
     RefinedMesh(BoundingBox tentative_bounds, CellLinkedList &coarse_mesh,
                 BaseParticles &base_particles, SPHAdaptation &sph_adaptation)
         : CellLinkedList(tentative_bounds, 0.5 * coarse_mesh.GridSpacing(),
-                         base_particles, sph_adaptation) {};
+                         base_particles, sph_adaptation){};
 };
 
 /**
@@ -189,7 +189,7 @@ class MultilevelCellLinkedList : public MultilevelMesh<BaseCellLinkedList, CellL
   protected:
     Real *h_ratio_; /**< Smoothing length for each level. */
     /** Update split cell list. */
-    virtual void updateSplitCellLists(SplitCellLists &split_cell_lists) override {};
+    virtual void updateSplitCellLists(SplitCellLists &split_cell_lists) override{};
     /** determine mesh level from particle cutoff radius */
     inline size_t getMeshLevel(Real particle_cutoff_radius);
 
@@ -197,7 +197,7 @@ class MultilevelCellLinkedList : public MultilevelMesh<BaseCellLinkedList, CellL
     MultilevelCellLinkedList(BoundingBox tentative_bounds,
                              Real reference_grid_spacing, size_t total_levels,
                              BaseParticles &base_particles, SPHAdaptation &sph_adaptation);
-    virtual ~MultilevelCellLinkedList() {};
+    virtual ~MultilevelCellLinkedList(){};
 
     virtual void UpdateCellLists(BaseParticles &base_particles) override;
     void insertParticleIndex(size_t particle_index, const Vecd &particle_position) override;
@@ -205,7 +205,7 @@ class MultilevelCellLinkedList : public MultilevelMesh<BaseCellLinkedList, CellL
     virtual ListData findNearestListDataEntry(const Vecd &position) override { return ListData(0, Vecd::Zero()); }; // mocking, not implemented
     virtual UnsignedInt computingSequence(Vecd &position, size_t index_i) override;
     virtual void tagBodyPartByCell(ConcurrentCellLists &cell_lists, std::function<bool(Vecd, Real)> &check_included) override;
-    virtual void tagBoundingCells(StdVec<CellLists> &cell_data_lists, const BoundingBox &bounding_bounds, int axis) override {};
+    virtual void tagBoundingCells(StdVec<CellLists> &cell_data_lists, const BoundingBox &bounding_bounds, int axis) override{};
     virtual StdVec<CellLinkedList *> CellLinkedListLevels() override { return getMeshLevels(); };
 };
 } // namespace SPH

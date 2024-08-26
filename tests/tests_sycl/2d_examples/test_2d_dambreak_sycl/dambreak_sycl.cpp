@@ -78,9 +78,6 @@ int main(int ac, char *av[])
     UpdateCellLinkedList<CellLinkedList, execution::ParallelDevicePolicy> water_block_update_cell_linked_list(water_block);
     DiscreteVariable<UnsignedInt> *dv_particle_index_water = water_block.getBaseParticles().getVariableByName<UnsignedInt>("ParticleIndex");
     MeshRecordingToPlt water_cell_linked_list_recording(sph_system, water_block.getCellLinkedList());
-    //    UpdateRelation<Relation<Inner<ParticleCellLinkedList<Mesh>>>, ParallelPolicy>
-    //        water_block_update_inner_relation(water_block, water_block_update_cell_linked_list.getParticleCellLinkedList());
-    //    DiscreteVariable<UnsignedInt> *dv_particle_offset_water_inner = water_block.getBaseParticles().getVariableByName<UnsignedInt>("NeighborOffsetList");
 
     UpdateCellLinkedList<CellLinkedList, execution::ParallelDevicePolicy> wall_boundary_update_cell_linked_list(wall_boundary);
     DiscreteVariable<UnsignedInt> *dv_particle_index_wall = wall_boundary.getBaseParticles().getVariableByName<UnsignedInt>("ParticleIndex");
@@ -89,6 +86,10 @@ int main(int ac, char *av[])
     InnerRelation water_block_inner(water_block);
     ContactRelation water_wall_contact(water_block, {&wall_boundary});
     ContactRelation fluid_observer_contact(fluid_observer, {&water_block});
+
+    UpdateRelation<BodyRelationUpdate<Inner<>>, execution::ParallelPolicy> water_block_update_inner_relation(water_block_inner);
+    DiscreteVariable<UnsignedInt> *dv_particle_offset_water_inner = water_block_inner.getParticleOffset();
+
     //----------------------------------------------------------------------
     // Combined relations built from basic relations
     // which is only used for update configuration.
@@ -145,8 +146,8 @@ int main(int ac, char *av[])
     dv_particle_index_water->synchronizeWithDevice();
     water_cell_linked_list_recording.writeToFile();
 
-    //    water_block_update_inner_relation.exec();
-    //    dv_particle_offset_water_inner->synchronizeWithDevice();
+    water_block_update_inner_relation.exec();
+    dv_particle_offset_water_inner->synchronizeWithDevice();
 
     wall_boundary_update_cell_linked_list.exec();
     dv_particle_index_wall->synchronizeWithDevice();

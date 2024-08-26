@@ -29,10 +29,10 @@
 #ifndef UPDATE_BODY_RELATION_H
 #define UPDATE_BODY_RELATION_H
 
-#include "update_cell_linked_list.h"
-
+#include "all_body_relations.h"
 #include "all_particle_dynamics.h"
 #include "base_body.h"
+#include "base_configuration_dynamics.h"
 #include "base_particles.hpp"
 
 namespace SPH
@@ -46,7 +46,7 @@ class BodyRelationUpdate<Inner<>> : public LocalDynamics
 
   public:
     explicit BodyRelationUpdate(InnerRelation &inner_relation);
-    virtual ~BodyRelationUpdate() {};
+    virtual ~BodyRelationUpdate(){};
 
     template <class ExecutionPolicy>
     class ComputingKernel
@@ -63,7 +63,6 @@ class BodyRelationUpdate<Inner<>> : public LocalDynamics
         Vecd *pos_;
         UnsignedInt *neighbor_index_;
         UnsignedInt *particle_offset_;
-        UnsignedInt *neighbor_size_;
     };
 
   protected:
@@ -72,7 +71,6 @@ class BodyRelationUpdate<Inner<>> : public LocalDynamics
     DiscreteVariable<Vecd> *dv_pos_;
     DiscreteVariable<UnsignedInt> *dv_neighbor_index_;
     DiscreteVariable<UnsignedInt> *dv_particle_offset_;
-    DiscreteVariable<UnsignedInt> dv_neighbor_size_;
 };
 
 template <class BodyRelationUpdateType, class ExecutionPolicy>
@@ -84,7 +82,7 @@ class UpdateRelation : public BodyRelationUpdateType, public BaseDynamics<void>
   public:
     template <typename... Args>
     UpdateRelation(Args &&...args);
-    virtual ~UpdateRelation() {};
+    virtual ~UpdateRelation(){};
     virtual void exec(Real dt = 0.0) override;
 
   protected:

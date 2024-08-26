@@ -3,6 +3,8 @@
 
 #include "update_body_relation.h"
 
+#include "cell_linked_list.hpp"
+
 namespace SPH
 {
 //=================================================================================================//
@@ -12,8 +14,7 @@ BodyRelationUpdate<Inner<>>::ComputingKernel<ExecutionPolicy>::ComputingKernel(
     : neighbor_search_(update_inner_relation.cell_linked_list_.createNeighborSearch(ex_policy)),
       pos_(update_inner_relation.dv_pos_->DelegatedDataField(ex_policy)),
       neighbor_index_(update_inner_relation.dv_neighbor_index_->DelegatedDataField(ex_policy)),
-      particle_offset_(update_inner_relation.dv_particle_offset_->DelegatedDataField(ex_policy)),
-      neighbor_size_(update_inner_relation.dv_neighbor_size_.DelegatedDataField(ex_policy)) {}
+      particle_offset_(update_inner_relation.dv_particle_offset_->DelegatedDataField(ex_policy)) {}
 //=================================================================================================//
 template <class ExecutionPolicy>
 void BodyRelationUpdate<Inner<>>::ComputingKernel<ExecutionPolicy>::
@@ -48,7 +49,6 @@ void BodyRelationUpdate<Inner<>>::ComputingKernel<ExecutionPolicy>::
             }
             neighbor_index_[particle_offset_[index_i] + neighbor_count] = index_j;
         });
-    neighbor_size_[index_i] = neighbor_count;
 }
 //=================================================================================================//
 template <class BodyRelationUpdateType, class ExecutionPolicy>
@@ -67,8 +67,8 @@ void UpdateRelation<BodyRelationUpdateType, ExecutionPolicy>::exec(Real dt)
                  [=](size_t i)
                  { computing_kernel->incrementNeighborSize(i); });
 
-    UnsignedInt *neighbor_index = this->dv_neighbor_index_->DelegateDataField(ex_policy_);
-    UnsignedInt *particle_offset = this->dv_particle_offset_->DelegateDataField(ex_policy_);
+    UnsignedInt *neighbor_index = this->dv_neighbor_index_->DelegatedDataField(ex_policy_);
+    UnsignedInt *particle_offset = this->dv_particle_offset_->DelegatedDataField(ex_policy_);
     UnsignedInt current_neighbor_index_size =
         exclusive_scan(ex_policy_, neighbor_index,
                        neighbor_index + this->particle_offset_list_size_,

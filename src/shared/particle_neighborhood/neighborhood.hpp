@@ -14,12 +14,11 @@ NeighborList::NeighborList(const ExecutionPolicy &ex_policy,
       particle_offset_(dv_particle_offset.DelegatedDataField(ex_policy)) {}
 //=================================================================================================//
 template <typename FunctionOnEach>
-void NeighborList<ExecutionPolicy>::forEachNeighbor(UnsignedInt index_i,
-                                                    const FunctionOnEach &function) const
+void NeighborList::forEachNeighbor(UnsignedInt index_i, const FunctionOnEach &function) const
 {
     for (UnsignedInt n = particle_offset_[index_i]; n < particle_offset_[index_i + 1]; ++n)
     {
-        function(particle_index_[n]);
+        function(neighbor_index_[n]);
     }
 }
 //=================================================================================================//

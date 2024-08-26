@@ -34,7 +34,7 @@
 #include "base_geometry.h"
 #include "base_particles.h"
 #include "cell_linked_list.h"
-#include "neighborhood.h"
+#include "neighborhood.hpp"
 
 namespace SPH
 {
@@ -71,7 +71,7 @@ struct SearchDepthAdaptive
     SearchDepthAdaptive(SPHBody &sph_body, CellLinkedList *target_cell_linked_list)
         : inv_grid_spacing_(1.0 / target_cell_linked_list->GridSpacing()),
           kernel_(sph_body.sph_adaptation_->getKernel()),
-          h_ratio_(sph_body.getBaseParticles().getVariableDataByName<Real>("SmoothingLengthRatio")) {};
+          h_ratio_(sph_body.getBaseParticles().getVariableDataByName<Real>("SmoothingLengthRatio")){};
     int operator()(size_t particle_index) const
     {
         return 1 + (int)floor(kernel_->CutOffRadius(h_ratio_[particle_index]) * inv_grid_spacing_);
@@ -89,7 +89,7 @@ struct SearchDepthAdaptiveContact
     SearchDepthAdaptiveContact(SPHBody &sph_body, CellLinkedList *target_cell_linked_list)
         : inv_grid_spacing_(1.0 / target_cell_linked_list->GridSpacing()),
           sph_adaptation_(*sph_body.sph_adaptation_),
-          kernel_(*sph_body.sph_adaptation_->getKernel()) {};
+          kernel_(*sph_body.sph_adaptation_->getKernel()){};
     int operator()(size_t particle_index) const
     {
         return 1 + (int)floor(kernel_.CutOffRadius(sph_adaptation_.SmoothingLengthRatio(particle_index)) * inv_grid_spacing_);
@@ -108,7 +108,7 @@ class SPHRelation
   public:
     SPHBody &getSPHBody() { return sph_body_; };
     explicit SPHRelation(SPHBody &sph_body);
-    virtual ~SPHRelation() {};
+    virtual ~SPHRelation(){};
 
     void subscribeToBody() { sph_body_.body_relations_.push_back(this); };
     virtual void updateConfiguration() = 0;
@@ -129,7 +129,7 @@ class BaseInnerRelation : public SPHRelation
     RealBody *real_body_;
     ParticleConfiguration inner_configuration_; /**< inner configuration for the neighbor relations. */
     explicit BaseInnerRelation(RealBody &real_body);
-    virtual ~BaseInnerRelation() {};
+    virtual ~BaseInnerRelation(){};
     BaseInnerRelation &getRelation() { return *this; };
 
     template <class ExecutionPolicy>
@@ -164,8 +164,8 @@ class BaseContactRelation : public SPHRelation
 
     BaseContactRelation(SPHBody &sph_body, RealBodyVector contact_bodies);
     BaseContactRelation(SPHBody &sph_body, BodyPartVector contact_body_parts)
-        : BaseContactRelation(sph_body, BodyPartsToRealBodies(contact_body_parts)) {};
-    virtual ~BaseContactRelation() {};
+        : BaseContactRelation(sph_body, BodyPartsToRealBodies(contact_body_parts)){};
+    virtual ~BaseContactRelation(){};
     BaseContactRelation &getRelation() { return *this; };
 };
 } // namespace SPH
