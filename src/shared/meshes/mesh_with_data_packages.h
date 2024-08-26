@@ -115,12 +115,12 @@ class MeshWithGridDataPackages : public Mesh
     ConcurrentVec<std::pair<size_t, int>> occupied_data_pkgs_; /**< (size_t)sort_index, (int)core1/inner0. */
     CellNeighborhood *cell_neighborhood_;                  /**< 3*3(*3) array to store indicies of neighborhood cells. */
     std::pair<Arrayi, int> *meta_data_cell_;          /**< metadata for each occupied cell: (arrayi)cell index, (int)core1/inner0. */
+    BaseMesh global_mesh_;                            /**< the mesh for the locations of all possible data points. */
 
   protected:
     MeshVariableAssemble all_mesh_variables_;         /**< all mesh variables on this mesh. */
     static constexpr int pkg_size = PKG_SIZE;         /**< the size of the data package matrix*/
     const Real data_spacing_;                         /**< spacing of data in the data packages*/
-    BaseMesh global_mesh_;                            /**< the mesh for the locations of all possible data points. */
     size_t num_grid_pkgs_ = 2;                        /**< the number of all distinct packages, initially only 2 singular packages. */
     using MetaData = std::pair<int, size_t>;          /**< stores the metadata for each cell: (int)singular0/inner1/core2, (size_t)package data index*/
     MeshDataMatrix<size_t> index_data_mesh_;         /**< metadata for all cells. */
@@ -133,21 +133,6 @@ class MeshWithGridDataPackages : public Mesh
 
     void allocateIndexDataMatrix(); /**< allocate memories for metadata of data packages. */
     void deleteIndexDataMatrix();   /**< delete memories for metadata of data packages. */
-
-    template <typename DataType>
-    MeshVariable<DataType> *registerMeshVariable(const std::string &variable_name)
-    {
-        MeshVariable<DataType> *variable =
-            findVariableByName<DataType>(all_mesh_variables_, variable_name);
-        if (variable == nullptr)
-        {
-            constexpr int type_index = DataTypeIndex<DataType>::value;
-            size_t new_variable_index = std::get<type_index>(all_mesh_variables_).size();
-            return addVariableToAssemble<DataType>(all_mesh_variables_, mesh_variable_ptrs_,
-                                                   variable_name, new_variable_index);
-        }
-        return variable;
-    };
 
     /** resize all mesh variable data field with `num_grid_pkgs_` size(initially only singular data) */
     template <typename DataType>
@@ -287,6 +272,21 @@ class MeshWithGridDataPackages : public Mesh
         Arrayi cell_index = CellIndexFromPosition(position);
         return isCoreDataPackage(cell_index);
     }
+
+    template <typename DataType>
+    MeshVariable<DataType> *registerMeshVariable(const std::string &variable_name)
+    {
+        MeshVariable<DataType> *variable =
+            findVariableByName<DataType>(all_mesh_variables_, variable_name);
+        if (variable == nullptr)
+        {
+            constexpr int type_index = DataTypeIndex<DataType>::value;
+            size_t new_variable_index = std::get<type_index>(all_mesh_variables_).size();
+            return addVariableToAssemble<DataType>(all_mesh_variables_, mesh_variable_ptrs_,
+                                                   variable_name, new_variable_index);
+        }
+        return variable;
+    };
 };
 } // namespace SPH
 #endif // MESH_WITH_DATA_PACKAGES_H

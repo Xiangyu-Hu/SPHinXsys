@@ -91,7 +91,7 @@ class LevelSet : public MeshWithGridDataPackages<4>,
     virtual Vecd probeLevelSetGradient(const Vecd &position) override;
     virtual Real probeKernelIntegral(const Vecd &position, Real h_ratio = 1.0) override;
     virtual Vecd probeKernelGradientIntegral(const Vecd &position, Real h_ratio = 1.0) override;
-    virtual void writeMeshFieldToPlt(std::ofstream &output_file) override;
+    virtual void writeMeshFieldToPlt(std::ofstream &output_file) override { write_mesh_field_to_plt.exec(output_file); };
     bool isWithinCorePackage(Vecd position);
     Kernel &kernel_;
 
@@ -107,9 +107,10 @@ class LevelSet : public MeshWithGridDataPackages<4>,
     MeshCalculateDynamics<Real, ProbeSignedDistance> probe_signed_distance{mesh_data_};
     MeshCalculateDynamics<Real, ProbeKernelIntegral> probe_kernel_integral{mesh_data_};
     MeshCalculateDynamics<Vecd, ProbeKernelGradientIntegral> probe_kernel_gradient_integral{mesh_data_};
+    MeshCalculateDynamics<bool, ProbeIsWithinMeshBound> probe_is_within_mesh_bound{mesh_data_};
+    MeshCalculateDynamics<bool, IsWithinCorePackage> is_within_core_package{mesh_data_};
+    MeshCalculateDynamics<void, WriteMeshFieldToPlt> write_mesh_field_to_plt{mesh_data_};
 
-    FinishDataPackages finish_data_packages{mesh_data_, shape_, kernel_, global_h_ratio_};
-    MeshAllDynamics<InitializeDataInACell> initialize_data_in_a_cell{mesh_data_, shape_};
     MeshInnerDynamics<UpdateLevelSetGradient> update_level_set_gradient{mesh_data_};
     MeshInnerDynamics<UpdateKernelIntegrals> update_kernel_integrals{mesh_data_, kernel_, global_h_ratio_};
     MeshInnerDynamics<DiffuseLevelSetSign> diffuse_level_set_sign{mesh_data_};
@@ -152,16 +153,11 @@ class MultilevelLevelSet : public MultilevelMesh<BaseLevelSet, LevelSet, Refined
   protected:
     inline size_t getProbeLevel(const Vecd &position);
     inline size_t getCoarseLevel(Real h_ratio);
-};
 
-class MeshBody
-{
-  public:
-    MeshBody(BoundingBox tentative_bounds, Real reference_data_spacing, size_t total_levels, Shape &shape, SPHAdaptation &sph_adaptation){};
-    ~MeshBody(){};
-
-  private:
-  
+    Kernel &kernel_;
+    StdVec<MeshWithGridDataPackagesType *> mesh_data_set_;
+    StdVec<Real> global_h_ratio_vec_;
+    UniquePtrsKeeper<MeshWithGridDataPackagesType> mesh_data_ptr_vector_keeper_;
 };
 } // namespace SPH
 #endif // LEVEL_SET_H

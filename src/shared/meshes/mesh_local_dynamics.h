@@ -325,5 +325,50 @@ class ProbeKernelGradientIntegral : public BaseMeshLocalDynamics
     Vecd update(const Vecd &position) { return mesh_data_.probeMesh(kernel_gradient_, position); };
 };
 
+class ProbeIsWithinMeshBound : public BaseMeshLocalDynamics
+{
+  public:
+    explicit ProbeIsWithinMeshBound(MeshWithGridDataPackagesType &mesh_data)
+        : BaseMeshLocalDynamics(mesh_data){};
+    virtual ~ProbeIsWithinMeshBound(){};
+
+    bool update(const Vecd &position)
+    {
+        bool is_bounded = true;
+        Arrayi cell_pos = mesh_data_.CellIndexFromPosition(position);
+        for (int i = 0; i != position.size(); ++i)
+        {
+            if (cell_pos[i] < 2)
+                is_bounded = false;
+            if (cell_pos[i] > (all_cells_[i] - 2))
+                is_bounded = false;
+        }
+        return is_bounded;
+    }
+};
+
+class IsWithinCorePackage : public BaseMeshLocalDynamics
+{
+  public:
+    explicit IsWithinCorePackage(MeshWithGridDataPackagesType &mesh_data)
+        : BaseMeshLocalDynamics(mesh_data){};
+    virtual ~IsWithinCorePackage(){};
+
+    bool update(Vecd position)
+    {
+        Arrayi cell_index = mesh_data_.CellIndexFromPosition(position);
+        return mesh_data_.isCoreDataPackage(cell_index);
+    }
+};
+
+class WriteMeshFieldToPlt : public BaseMeshLocalDynamics
+{
+  public:
+    explicit WriteMeshFieldToPlt(MeshWithGridDataPackagesType &mesh_data)
+        : BaseMeshLocalDynamics(mesh_data){};
+    virtual ~WriteMeshFieldToPlt(){};
+
+    void update(std::ofstream &output_file);
+};
 } // namespace SPH
 #endif // MESH_LOCAL_DYNAMICS_H

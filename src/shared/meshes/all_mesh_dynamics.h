@@ -107,45 +107,59 @@ class ProbeNormalDirection : public BaseMeshLocalDynamics
     MeshCalculateDynamics<Vecd, ProbeLevelSetGradient> probe_level_set_gradient{mesh_data_};
 };
 
-// class CleanInterface
-//     : BaseMeshDynamics
-// {
-//   public:
-//     explicit CleanInterface(MeshWithGridDataPackages &mesh_data, Real small_shift_factor)
-//         : BaseMeshDynamics(mesh_data),
-//           small_shift_factor_(small_shift_factor){};
-//     virtual ~CleanInterface(){};
+class CleanInterface : public BaseMeshDynamics
+{
+  public:
+    explicit CleanInterface(MeshWithGridDataPackagesType &mesh_data, Kernel &kernel, Real global_h_ratio)
+        : BaseMeshDynamics(mesh_data),
+          kernel_(kernel),
+          global_h_ratio_(global_h_ratio){};
+    virtual ~CleanInterface(){};
 
-//     virtual void exec() override;
+    void exec(Real small_shift_factor){
+        mark_near_interface.setSmallShiftFactor(small_shift_factor);
+        mark_near_interface.exec();
+        redistance_interface.exec();
+        reinitialize_level_set.exec();
+        update_level_set_gradient.exec();
+        update_kernel_integrals.exec();
+    }
 
-//   private:
-//     Real small_shift_factor_;
+  private:
+    Kernel &kernel_;
+    Real global_h_ratio_;
+    MeshInnerDynamics<UpdateLevelSetGradient> update_level_set_gradient{mesh_data_};
+    MeshInnerDynamics<UpdateKernelIntegrals> update_kernel_integrals{mesh_data_, kernel_, global_h_ratio_};
+    MeshInnerDynamics<MarkNearInterface> mark_near_interface{mesh_data_};
+    MeshCoreDynamics<RedistanceInterface> redistance_interface{mesh_data_};
+    MeshInnerDynamics<ReinitializeLevelSet> reinitialize_level_set{mesh_data_};
+};
 
-//     MeshInnerDynamics<MarkNearInterface> mark_near_interface(small_shift_factor_);
-//     MeshCoreDynamics<RedistanceInterface> redistance_interface;
-//     MeshInnerDynamics<ReinitializeLevelSet> reinitialize_level_set;
-//     MeshInnerDynamics<UpdateLevelSetGradient> update_level_set_gradient;
-//     MeshInnerDynamics<UpdateKernelIntegrals> update_kernel_integrals;
-// }
+class CorrectTopology : public BaseMeshDynamics
+{
+  public:
+    explicit CorrectTopology(MeshWithGridDataPackagesType &mesh_data, Kernel &kernel, Real global_h_ratio)
+        : BaseMeshDynamics(mesh_data),
+          kernel_(kernel),
+          global_h_ratio_(global_h_ratio){};
+    virtual ~CorrectTopology(){};
 
-// class CorrectTopology
-//     : BaseMeshDynamics
-// {
-//   public:
-//     explicit CorrectTopology(MeshWithGridDataPackages &mesh_data, Real small_shift_factor)
-//         : BaseMeshDynamics(mesh_data),
-//           small_shift_factor_(small_shift_factor){};
-//     virtual ~CorrectTopology(){};
+    void exec(Real small_shift_factor){
+        mark_near_interface.setSmallShiftFactor(small_shift_factor);
+        mark_near_interface.exec();
+        for (size_t i = 0; i != 10; ++i)
+            diffuse_level_set_sign.exec();
+        update_level_set_gradient.exec();
+        update_kernel_integrals.exec();
+    }
 
-//     virtual void exec() override;
-
-//   private:
-//     Real small_shift_factor_;
-
-//     MeshInnerDynamics<MarkNearInterface> mark_near_interface(small_shift_factor_);
-//     MeshInnerDynamics<DiffuseLevelSetSign> diffuse_level_set_sign();
-//     MeshInnerDynamics<UpdateLevelSetGradient> update_level_set_gradient;
-//     MeshInnerDynamics<UpdateKernelIntegrals> update_kernel_integrals;
-// }
+  private:
+    Kernel &kernel_;
+    Real global_h_ratio_;
+    MeshInnerDynamics<UpdateLevelSetGradient> update_level_set_gradient{mesh_data_};
+    MeshInnerDynamics<UpdateKernelIntegrals> update_kernel_integrals{mesh_data_, kernel_, global_h_ratio_};
+    MeshInnerDynamics<MarkNearInterface> mark_near_interface{mesh_data_};
+    MeshInnerDynamics<DiffuseLevelSetSign> diffuse_level_set_sign{mesh_data_};
+};
 } // namespace SPH
 #endif // ALL_MESH_DYNAMICS_H

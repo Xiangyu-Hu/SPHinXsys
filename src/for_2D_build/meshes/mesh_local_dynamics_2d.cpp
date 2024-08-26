@@ -342,5 +342,117 @@ void DiffuseLevelSetSign::update(const size_t &package_index)
         });
 }
 //=============================================================================================//
+void WriteMeshFieldToPlt::update(std::ofstream &output_file)
+{
+    Arrayi number_of_operation = mesh_data_.global_mesh_.AllGridPoints();
+
+    output_file << "\n";
+    output_file << "title='View'"
+                << "\n";
+    output_file << "variables= "
+                << "x, "
+                << "y, "
+                << "phi, "
+                << "n_x, "
+                << "n_y "
+                << "near_interface_id ";
+    output_file << "kernel_weight, "
+                << "kernel_gradient_x, "
+                << "kernel_gradient_y "
+                << "\n";
+    output_file << "zone i=" << number_of_operation[0] << "  j=" << number_of_operation[1] << "  k=" << 1
+                << "  DATAPACKING=BLOCK  SOLUTIONTIME=" << 0 << "\n";
+
+    for (int j = 0; j != number_of_operation[1]; ++j)
+    {
+        for (int i = 0; i != number_of_operation[0]; ++i)
+        {
+            Vecd data_position = mesh_data_.global_mesh_.GridPositionFromIndex(Arrayi(i, j));
+            output_file << data_position[0] << " ";
+        }
+        output_file << " \n";
+    }
+
+    for (int j = 0; j != number_of_operation[1]; ++j)
+    {
+        for (int i = 0; i != number_of_operation[0]; ++i)
+        {
+            Vecd data_position = mesh_data_.global_mesh_.GridPositionFromIndex(Arrayi(i, j));
+            output_file << data_position[1] << " ";
+        }
+        output_file << " \n";
+    }
+
+    for (int j = 0; j != number_of_operation[1]; ++j)
+    {
+        for (int i = 0; i != number_of_operation[0]; ++i)
+        {
+            output_file << mesh_data_.DataValueFromGlobalIndex(phi_, Arrayi(i, j))
+                        << " ";
+        }
+        output_file << " \n";
+    }
+
+    for (int j = 0; j != number_of_operation[1]; ++j)
+    {
+        for (int i = 0; i != number_of_operation[0]; ++i)
+        {
+            output_file << mesh_data_.DataValueFromGlobalIndex(phi_gradient_, Arrayi(i, j))[0]
+                        << " ";
+        }
+        output_file << " \n";
+    }
+
+    for (int j = 0; j != number_of_operation[1]; ++j)
+    {
+        for (int i = 0; i != number_of_operation[0]; ++i)
+        {
+            output_file << mesh_data_.DataValueFromGlobalIndex(phi_gradient_, Arrayi(i, j))[1]
+                        << " ";
+        }
+        output_file << " \n";
+    }
+
+    for (int j = 0; j != number_of_operation[1]; ++j)
+    {
+        for (int i = 0; i != number_of_operation[0]; ++i)
+        {
+            output_file << mesh_data_.DataValueFromGlobalIndex(near_interface_id_, Arrayi(i, j))
+                        << " ";
+        }
+        output_file << " \n";
+    }
+
+    for (int j = 0; j != number_of_operation[1]; ++j)
+    {
+        for (int i = 0; i != number_of_operation[0]; ++i)
+        {
+            output_file << mesh_data_.DataValueFromGlobalIndex(kernel_weight_, Arrayi(i, j))
+                        << " ";
+        }
+        output_file << " \n";
+    }
+
+    for (int j = 0; j != number_of_operation[1]; ++j)
+    {
+        for (int i = 0; i != number_of_operation[0]; ++i)
+        {
+            output_file << mesh_data_.DataValueFromGlobalIndex(kernel_gradient_, Arrayi(i, j))[0]
+                        << " ";
+        }
+        output_file << " \n";
+    }
+
+    for (int j = 0; j != number_of_operation[1]; ++j)
+    {
+        for (int i = 0; i != number_of_operation[0]; ++i)
+        {
+            output_file << mesh_data_.DataValueFromGlobalIndex(kernel_gradient_, Arrayi(i, j))[1]
+                        << " ";
+        }
+        output_file << " \n";
+    }
+}
+//=============================================================================================//
 } // namespace SPH
 //=============================================================================================//
