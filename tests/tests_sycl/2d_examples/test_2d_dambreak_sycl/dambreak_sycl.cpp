@@ -75,14 +75,14 @@ int main(int ac, char *av[])
     //	Basically the the range of bodies to build neighbor particle lists.
     //  Generally, we first define all the inner relations, then the contact relations.
     //----------------------------------------------------------------------
-    UpdateCellLinkedList<CellLinkedList, execution::ParallelPolicy> water_block_update_cell_linked_list(water_block);
+    UpdateCellLinkedList<CellLinkedList, execution::ParallelDevicePolicy> water_block_update_cell_linked_list(water_block);
     DiscreteVariable<UnsignedInt> *dv_particle_index_water = water_block.getBaseParticles().getVariableByName<UnsignedInt>("ParticleIndex");
     MeshRecordingToPlt water_cell_linked_list_recording(sph_system, water_block.getCellLinkedList());
     //    UpdateRelation<Relation<Inner<ParticleCellLinkedList<Mesh>>>, ParallelPolicy>
     //        water_block_update_inner_relation(water_block, water_block_update_cell_linked_list.getParticleCellLinkedList());
     //    DiscreteVariable<UnsignedInt> *dv_particle_offset_water_inner = water_block.getBaseParticles().getVariableByName<UnsignedInt>("NeighborOffsetList");
 
-    UpdateCellLinkedList<CellLinkedList, execution::ParallelPolicy> wall_boundary_update_cell_linked_list(wall_boundary);
+    UpdateCellLinkedList<CellLinkedList, execution::ParallelDevicePolicy> wall_boundary_update_cell_linked_list(wall_boundary);
     DiscreteVariable<UnsignedInt> *dv_particle_index_wall = wall_boundary.getBaseParticles().getVariableByName<UnsignedInt>("ParticleIndex");
     MeshRecordingToPlt wall_cell_linked_list_recording(sph_system, water_block.getCellLinkedList());
 

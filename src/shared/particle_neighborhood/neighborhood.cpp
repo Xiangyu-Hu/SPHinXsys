@@ -12,11 +12,6 @@
 namespace SPH
 {
 //=================================================================================================//
-NeighborList::NeighborList(BaseParticles &particles)
-    : real_particle_bound_plus_one_(particles.RealParticlesBound() + 1),
-      dv_neighbor_index_(DiscreteVariable<UnsignedInt>("NeighborIndex", real_particle_bound_plus_one_)),
-      dv_particle_offset_(DiscreteVariable<UnsignedInt>("ParticleOffset", real_particle_bound_plus_one_)) {}
-//=================================================================================================//
 void Neighborhood::removeANeighbor(size_t neighbor_n)
 {
     current_size_--;
