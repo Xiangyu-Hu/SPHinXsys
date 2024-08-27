@@ -105,6 +105,8 @@ RealBodyVector BodyPartsToRealBodies(BodyPartVector body_parts);
  */
 class SPHRelation
 {
+    UniquePtrsKeeper<BaseVariable> relation_variable_ptrs_;
+
   public:
     SPHBody &getSPHBody() { return sph_body_; };
     explicit SPHRelation(SPHBody &sph_body);
@@ -112,11 +114,19 @@ class SPHRelation
 
     void subscribeToBody() { sph_body_.body_relations_.push_back(this); };
     virtual void updateConfiguration() = 0;
+    UnsignedInt getParticleOffsetListSize() { return particle_offset_list_size_; };
 
   protected:
     SPHBody &sph_body_;
     BaseParticles &base_particles_;
     Vecd *pos_;
+    UnsignedInt particle_offset_list_size_;
+
+    template <class DataType>
+    DiscreteVariable<DataType> *addRelationVariable(const std::string &name, size_t data_size)
+    {
+        return relation_variable_ptrs_.createPtr<DiscreteVariable<DataType>>(name, data_size);
+    };
 };
 
 /**
@@ -133,20 +143,18 @@ class BaseInnerRelation : public SPHRelation
     BaseInnerRelation &getRelation() { return *this; };
 
     template <class ExecutionPolicy>
-    NeighborList updateNeighborList(const ExecutionPolicy &ex_policy)
+    NeighborList createNeighborList(const ExecutionPolicy &ex_policy)
     {
         return NeighborList(ex_policy, dv_neighbor_index_, dv_particle_offset_);
     };
 
-    UnsignedInt getParticleOffsetListSize() { return particle_offset_list_size_; };
-    DiscreteVariable<UnsignedInt> *getNeighborIndex() { return &dv_neighbor_index_; };
-    DiscreteVariable<UnsignedInt> *getParticleOffset() { return &dv_particle_offset_; };
+    DiscreteVariable<UnsignedInt> *getNeighborIndex() { return dv_neighbor_index_; };
+    DiscreteVariable<UnsignedInt> *getParticleOffset() { return dv_particle_offset_; };
 
   protected:
     virtual void resetNeighborhoodCurrentSize();
-    UnsignedInt particle_offset_list_size_;
-    DiscreteVariable<UnsignedInt> dv_neighbor_index_;
-    DiscreteVariable<UnsignedInt> dv_particle_offset_;
+    DiscreteVariable<UnsignedInt> *dv_neighbor_index_;
+    DiscreteVariable<UnsignedInt> *dv_particle_offset_;
 };
 
 /**
