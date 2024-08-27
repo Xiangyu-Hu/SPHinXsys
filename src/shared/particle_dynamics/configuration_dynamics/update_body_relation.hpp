@@ -109,10 +109,7 @@ void BodyRelationUpdate<Contact<>>::ComputingKernel<ExecutionPolicy>::
         index_i, pos_,
         [&](size_t index_j)
         {
-            if (index_i != index_j)
-            {
-                neighbor_count++;
-            }
+            neighbor_count++;
         });
     neighbor_index_[index_i] = neighbor_count;
 }
@@ -126,10 +123,7 @@ void BodyRelationUpdate<Contact<>>::ComputingKernel<ExecutionPolicy>::
         index_i, pos_,
         [&](size_t index_j)
         {
-            if (index_i != index_j)
-            {
-                neighbor_count++;
-            }
+            neighbor_count++;
             neighbor_index_[particle_offset_[index_i] + neighbor_count] = index_j;
         });
 }
