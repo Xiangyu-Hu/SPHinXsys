@@ -52,21 +52,28 @@ class Implementation<LocalDynamicsType, ExecutionPolicy>
   public:
     explicit Implementation(LocalDynamicsType &local_dynamics)
         : local_dynamics_(local_dynamics), computing_kernel_(nullptr) {}
+    ~Implementation()
+    {
+        delete computing_kernel_;
+    }
 
     ComputingKernel *getComputingKernel()
     {
         if (computing_kernel_ == nullptr)
         {
-            computing_kernel_ =
+            computing_kernel_ = new ComputingKernel;
+            ComputingKernel *temp_kernel =
                 kernel_ptr_keeper_.template createPtr<ComputingKernel>(ExecutionPolicy{}, local_dynamics_);
+            *computing_kernel_ = *temp_kernel;
         }
         return computing_kernel_;
     }
 
-    ComputingKernel *regenerateComputingKernel()
+    ComputingKernel *overwriteComputingKernel()
     {
-        computing_kernel_ =
+        ComputingKernel *temp_kernel =
             kernel_ptr_keeper_.template createPtr<ComputingKernel>(ExecutionPolicy{}, local_dynamics_);
+        *computing_kernel_ = *temp_kernel;
         return computing_kernel_;
     }
 

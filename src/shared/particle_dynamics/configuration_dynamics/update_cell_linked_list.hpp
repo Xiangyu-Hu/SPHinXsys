@@ -61,7 +61,7 @@ void UpdateCellLinkedList<CellLinkedListType>::ComputingKernel<ExecutionPolicy>:
 template <typename CellLinkedListType>
 template <class ExecutionPolicy>
 void UpdateCellLinkedList<CellLinkedListType>::ComputingKernel<ExecutionPolicy>::
-    updateCellLists(UnsignedInt index_i)
+    updateCellList(UnsignedInt index_i)
 {
     // Here, particle_index_ takes its original role.
     const UnsignedInt linear_index = mesh_.LinearCellIndexFromPosition(pos_[index_i]);
@@ -101,7 +101,7 @@ void UpdateCellLinkedList<MeshType, ExecutionPolicy>::exec(Real dt)
     particle_for(ex_policy_,
                  IndexRange(0, total_real_particles),
                  [=](size_t i)
-                 { computing_kernel->updateCellLists(i); });
+                 { computing_kernel->updateCellList(i); });
 }
 //=================================================================================================//
 } // namespace SPH

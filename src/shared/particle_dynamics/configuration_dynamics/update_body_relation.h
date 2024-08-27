@@ -55,7 +55,7 @@ class BodyRelationUpdate<Inner<>> : public LocalDynamics
         ComputingKernel(const ExecutionPolicy &ex_policy,
                         BodyRelationUpdate<Inner<>> &update_inner_relation);
         void incrementNeighborSize(UnsignedInt index_i);
-        void updateNeighborIDList(UnsignedInt index_i);
+        void updateNeighborList(UnsignedInt index_i);
 
       protected:
         friend class BodyRelationUpdate<Inner<>>;

@@ -157,7 +157,7 @@ class Implementation<LocalDynamicsType, ParallelDevicePolicy>
         return computing_kernel_;
     }
 
-    ComputingKernel *regenerateComputingKernel()
+    ComputingKernel *overwriteComputingKernel()
     {
         ComputingKernel *host_kernel =
             kernel_ptr_keeper_.template createPtr<ComputingKernel>(ParallelDevicePolicy{}, local_dynamics_);

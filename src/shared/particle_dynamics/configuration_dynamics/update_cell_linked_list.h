@@ -54,7 +54,7 @@ class UpdateCellLinkedList<CellLinkedListType> : public LocalDynamics
 
   public:
     UpdateCellLinkedList(RealBody &real_body);
-    virtual ~UpdateCellLinkedList() {};
+    virtual ~UpdateCellLinkedList(){};
 
     template <class ExecutionPolicy>
     class ComputingKernel
@@ -64,7 +64,7 @@ class UpdateCellLinkedList<CellLinkedListType> : public LocalDynamics
                         UpdateCellLinkedList<CellLinkedListType> &update_cell_linked_list);
         void clearAllLists(UnsignedInt index_i);
         void incrementCellSize(UnsignedInt index_i);
-        void updateCellLists(UnsignedInt index_i);
+        void updateCellList(UnsignedInt index_i);
 
       protected:
         friend class UpdateCellLinkedList<CellLinkedListType>;
@@ -89,7 +89,7 @@ class UpdateCellLinkedList<CellLinkedListType, ExecutionPolicy>
 
   public:
     UpdateCellLinkedList(RealBody &real_body);
-    virtual ~UpdateCellLinkedList() {};
+    virtual ~UpdateCellLinkedList(){};
     virtual void exec(Real dt = 0.0) override;
 
   protected:

@@ -36,7 +36,7 @@ void BodyRelationUpdate<Inner<>>::ComputingKernel<ExecutionPolicy>::
 //=================================================================================================//
 template <class ExecutionPolicy>
 void BodyRelationUpdate<Inner<>>::ComputingKernel<ExecutionPolicy>::
-    updateNeighborIDList(UnsignedInt index_i)
+    updateNeighborList(UnsignedInt index_i)
 {
     UnsignedInt neighbor_count = 0;
     neighbor_search_.forEachSearch(
@@ -78,13 +78,13 @@ void UpdateRelation<BodyRelationUpdateType, ExecutionPolicy>::exec(Real dt)
     if (current_neighbor_index_size > this->dv_neighbor_index_->getDataFieldSize())
     {
         this->dv_neighbor_index_->reallocateDataField(current_neighbor_index_size);
-        computing_kernel = kernel_implementation_.regenerateComputingKernel();
+        kernel_implementation_.overwriteComputingKernel();
     }
 
     particle_for(ExecutionPolicy{},
                  IndexRange(0, total_real_particles),
                  [=](size_t i)
-                 { computing_kernel->updateNeighborIDList(i); });
+                 { computing_kernel->updateNeighborList(i); });
 }
 //=================================================================================================//
 } // namespace SPH

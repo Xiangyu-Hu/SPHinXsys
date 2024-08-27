@@ -133,7 +133,7 @@ class BaseInnerRelation : public SPHRelation
     BaseInnerRelation &getRelation() { return *this; };
 
     template <class ExecutionPolicy>
-    NeighborList createNeighborList(const ExecutionPolicy &ex_policy)
+    NeighborList updateNeighborList(const ExecutionPolicy &ex_policy)
     {
         return NeighborList(ex_policy, dv_neighbor_index_, dv_particle_offset_);
     };
