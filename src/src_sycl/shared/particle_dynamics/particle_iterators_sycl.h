@@ -88,12 +88,13 @@ T exclusive_scan(const ParallelDevicePolicy &par_policy, T *first, T *d_first, U
         .wait_and_throw();
 
     UnsignedInt scan_size = d_size - 1;
-    UnsignedInt last_value;
+    T last_value;
     std::cout << "old last_value = " << last_value << std::endl;
-    copyFromDevice(&last_value, d_first, 1);
+    copyFromDevice(&last_value, d_first + scan_size, 1);
     std::cout << "new last_value = " << last_value << std::endl;
     return T(last_value);
 }
+c
 
 } // namespace SPH
 #endif // PARTICLE_ITERATORS_SYCL_H
