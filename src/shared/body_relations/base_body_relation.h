@@ -165,6 +165,8 @@ class BaseContactRelation : public SPHRelation
 {
   protected:
     virtual void resetNeighborhoodCurrentSize();
+    StdVec<DiscreteVariable<UnsignedInt> *> dv_contact_neighbor_index_;
+    StdVec<DiscreteVariable<UnsignedInt> *> dv_contact_particle_offset_;
 
   public:
     RealBodyVector contact_bodies_;
@@ -175,6 +177,9 @@ class BaseContactRelation : public SPHRelation
         : BaseContactRelation(sph_body, BodyPartsToRealBodies(contact_body_parts)){};
     virtual ~BaseContactRelation(){};
     BaseContactRelation &getRelation() { return *this; };
+    RealBodyVector getContactBodies() { return contact_bodies_; };
+    StdVec<DiscreteVariable<UnsignedInt> *> getContactNeighborIndex() { return dv_contact_neighbor_index_; };
+    StdVec<DiscreteVariable<UnsignedInt> *> getContactParticleOffset() { return dv_contact_particle_offset_; };
 };
 } // namespace SPH
 #endif // BASE_BODY_RELATION_H

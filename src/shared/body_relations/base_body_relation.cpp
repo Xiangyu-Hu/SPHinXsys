@@ -52,7 +52,12 @@ BaseContactRelation::BaseContactRelation(SPHBody &sph_body, RealBodyVector conta
     contact_configuration_.resize(contact_bodies_.size());
     for (size_t k = 0; k != contact_bodies_.size(); ++k)
     {
+        const std::string name = contact_bodies_[k]->getName();
         contact_configuration_[k].resize(base_particles_.RealParticlesBound(), Neighborhood());
+        dv_contact_neighbor_index_.push_back(addRelationVariable<UnsignedInt>(
+            "Contact" + name + "NeighborIndex", particle_offset_list_size_));
+        dv_contact_particle_offset_.push_back(addRelationVariable<UnsignedInt>(
+            "Contact" + name + "ParticleOffset", particle_offset_list_size_));
     }
 }
 //=================================================================================================//

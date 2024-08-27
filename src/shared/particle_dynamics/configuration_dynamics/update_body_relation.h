@@ -90,5 +90,56 @@ class UpdateRelation : public BodyRelationUpdateType, public BaseDynamics<void>
     Implementation<BodyRelationUpdateType, ExecutionPolicy> kernel_implementation_;
 };
 
+template <>
+class BodyRelationUpdate<Contact<>> : public LocalDynamics
+{
+
+  public:
+    explicit BodyRelationUpdate(ContactRelation &contact_relation);
+    virtual ~BodyRelationUpdate(){};
+
+    template <class ExecutionPolicy>
+    class ComputingKernel
+    {
+      public:
+        ComputingKernel(const ExecutionPolicy &ex_policy,
+                        BodyRelationUpdate<Contact<>> &update_contact_relation,
+                        UnsignedInt contact_body_index);
+        void incrementNeighborSize(UnsignedInt index_i);
+        void updateNeighborList(UnsignedInt index_i);
+
+      protected:
+        friend class BodyRelationUpdate<Inner<>>;
+        NeighborSearch neighbor_search_;
+        Vecd *pos_;
+        UnsignedInt *neighbor_index_;
+        UnsignedInt *particle_offset_;
+    };
+
+  protected:
+    UnsignedInt particle_offset_list_size_;
+    DiscreteVariable<Vecd> *dv_pos_;
+    StdVec<CellLinkedList *> contact_cell_linked_list_;
+    StdVec<DiscreteVariable<UnsignedInt> *> dv_contact_neighbor_index_;
+    StdVec<DiscreteVariable<UnsignedInt> *> dv_contact_particle_offset_;
+};
+
+template <class BodyRelationUpdateType, class ExecutionPolicy>
+class UpdateContactRelation : public BodyRelationUpdateType, public BaseDynamics<void>
+{
+    using ComputingKernel = typename BodyRelationUpdateType::
+        template ComputingKernel<ExecutionPolicy>;
+    UniquePtrsKeeper<Implementation<BodyRelationUpdateType, ExecutionPolicy>> contact_kernel_implementation_ptrs_;
+
+  public:
+    template <typename... Args>
+    UpdateContactRelation(Args &&...args);
+    virtual ~UpdateContactRelation(){};
+    virtual void exec(Real dt = 0.0) override;
+
+  protected:
+    ExecutionPolicy ex_policy_;
+    StdVec<Implementation<BodyRelationUpdateType, ExecutionPolicy> *> contact_kernel_implementation_;
+};
 } // namespace SPH
 #endif // UPDATE_BODY_RELATION_H

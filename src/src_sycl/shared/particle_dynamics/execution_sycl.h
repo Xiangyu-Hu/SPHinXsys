@@ -143,24 +143,29 @@ class Implementation<LocalDynamicsType, ParallelDevicePolicy>
     {
         freeDeviceData(computing_kernel_);
     }
-    ComputingKernel *getComputingKernel()
+
+    template <typename... Args>
+    ComputingKernel *getComputingKernel(Args &&...args)
     {
         if (computing_kernel_ == nullptr)
         {
 
             computing_kernel_ = allocateDeviceOnly<ComputingKernel>(1);
             ComputingKernel *host_kernel =
-                kernel_ptr_keeper_.template createPtr<ComputingKernel>(ParallelDevicePolicy{}, local_dynamics_);
+                kernel_ptr_keeper_.template createPtr<ComputingKernel>(
+                    ParallelDevicePolicy{}, local_dynamics_, std::forward<Args>(args)...);
             copyToDevice(host_kernel, computing_kernel_, 1);
         }
 
         return computing_kernel_;
     }
 
-    ComputingKernel *overwriteComputingKernel()
+    template <typename... Args>
+    ComputingKernel *overwriteComputingKernel(Args &&...args)
     {
         ComputingKernel *host_kernel =
-            kernel_ptr_keeper_.template createPtr<ComputingKernel>(ParallelDevicePolicy{}, local_dynamics_);
+            kernel_ptr_keeper_.template createPtr<ComputingKernel>(
+                ParallelDevicePolicy{}, local_dynamics_, std::forward<Args>(args)...);
         copyToDevice(host_kernel, computing_kernel_, 1);
         return computing_kernel_;
     }
