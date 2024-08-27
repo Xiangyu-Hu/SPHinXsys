@@ -93,9 +93,8 @@ void UpdateCellLinkedList<MeshType, ExecutionPolicy>::exec(Real dt)
 
     UnsignedInt *particle_index = this->dv_particle_index_->DelegatedDataField(ex_policy_);
     UnsignedInt *cell_offset = this->dv_cell_offset_->DelegatedDataField(ex_policy_);
-    exclusive_scan(ex_policy_, particle_index,
-                   particle_index + this->cell_offset_list_size_,
-                   cell_offset,
+    exclusive_scan(ex_policy_, particle_index, cell_offset,
+                   this->cell_offset_list_size_,
                    typename PlusUnsignedInt<ExecutionPolicy>::type());
 
     particle_for(ex_policy_,

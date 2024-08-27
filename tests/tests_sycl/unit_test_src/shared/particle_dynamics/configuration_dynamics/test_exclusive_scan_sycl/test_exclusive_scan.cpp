@@ -1,6 +1,6 @@
+#include "base_configuration_dynamics.h"
 #include "particle_functors.h"
 #include "particle_iterators_sycl.h"
-#include "update_cell_linked_list_sycl.h"
 
 #include <gtest/gtest.h>
 using namespace SPH;
@@ -15,18 +15,19 @@ StdVec<UnsignedInt> input_result{0, 3, 5, 8, 13, 13, 14, 17, 19, 24, 25};
 TEST(exclusive_scan, test_sycl)
 {
     UnsignedInt *list_data = cell_size_list.data();
-    exclusive_scan(SequencedPolicy{}, list_data, list_data + list_size, result.data(), PlusUnsignedInt<SequencedPolicy>::type());
+    UnsignedInt sum = exclusive_scan(SequencedPolicy{}, list_data, result.data(), list_size, PlusUnsignedInt<SequencedPolicy>::type());
 
     UnsignedInt *device_list_data = allocateDeviceOnly<UnsignedInt>(list_size);
     UnsignedInt *device_result = allocateDeviceOnly<UnsignedInt>(list_size);
     copyToDevice(list_data, device_list_data, list_size);
-    exclusive_scan(ParallelDevicePolicy{}, device_list_data, device_list_data + list_size, device_result, PlusUnsignedInt<ParallelDevicePolicy>::type());
+    UnsignedInt sycl_sum = exclusive_scan(ParallelDevicePolicy{}, device_list_data, device_result, list_size, PlusUnsignedInt<ParallelDevicePolicy>::type());
 
     copyFromDevice(sycl_result.data(), device_result, list_size);
     freeDeviceData(device_list_data);
     freeDeviceData(device_result);
 
     EXPECT_EQ(result, sycl_result);
+    EXPECT_EQ(sum, sycl_sum);
 }
 
 int main(int argc, char *argv[])

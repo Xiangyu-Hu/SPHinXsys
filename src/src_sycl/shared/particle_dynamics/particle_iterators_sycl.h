@@ -71,7 +71,7 @@ inline ReturnType particle_reduce(const ParallelDevicePolicy &par_device,
 }
 
 template <typename T, typename Op>
-T exclusive_scan(const ParallelDevicePolicy &par_policy, T *first, T *last, T *d_first, Op op)
+T exclusive_scan(const ParallelDevicePolicy &par_policy, T *first, T *d_first, UnsignedInt d_size, Op op)
 {
     execution_instance.getQueue()
         .submit([=](sycl::handler &cgh)
@@ -82,15 +82,17 @@ T exclusive_scan(const ParallelDevicePolicy &par_policy, T *first, T *last, T *d
                           if (item.get_group_linear_id() == 0)
                           {
                               sycl::joint_exclusive_scan(
-                                  item.get_group(), first, last, d_first, T{0}, op);
+                                  item.get_group(), first, first + d_size, d_first, T{0}, op);
                           }
                       }); })
         .wait_and_throw();
 
-    UnsignedInt scan_size = last - first - 1;
+    UnsignedInt scan_size = d_size - 1;
     UnsignedInt last_value;
-    copyFromDevice(&last_value, d_first + scan_size, 1);
-    return last_value;
+    std::cout << "old last_value = " << last_value << std::endl;
+    copyFromDevice(&last_value, d_first, 1);
+    std::cout << "new last_value = " << last_value << std::endl;
+    return T(last_value);
 }
 
 } // namespace SPH

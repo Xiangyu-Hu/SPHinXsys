@@ -70,9 +70,8 @@ void UpdateRelation<BodyRelationUpdateType, ExecutionPolicy>::exec(Real dt)
     UnsignedInt *neighbor_index = this->dv_neighbor_index_->DelegatedDataField(ex_policy_);
     UnsignedInt *particle_offset = this->dv_particle_offset_->DelegatedDataField(ex_policy_);
     UnsignedInt current_neighbor_index_size =
-        exclusive_scan(ex_policy_, neighbor_index,
-                       neighbor_index + this->particle_offset_list_size_,
-                       particle_offset,
+        exclusive_scan(ex_policy_, neighbor_index, particle_offset,
+                       this->particle_offset_list_size_,
                        typename PlusUnsignedInt<ExecutionPolicy>::type());
 
     if (current_neighbor_index_size > this->dv_neighbor_index_->getDataFieldSize())
