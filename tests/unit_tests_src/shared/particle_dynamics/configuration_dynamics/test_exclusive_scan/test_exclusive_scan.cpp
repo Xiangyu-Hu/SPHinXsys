@@ -5,19 +5,22 @@
 using namespace SPH;
 
 StdVec<UnsignedInt> cell_size_list{3, 2, 3, 5, 0, 1, 3, 2, 5, 1, 0};
-StdVec<UnsignedInt> result(cell_size_list.size(), 0);
-StdVec<UnsignedInt> tbb_result = result;
+StdVec<UnsignedInt> solution{0, 3, 5, 8, 13, 13, 14, 17, 19, 24, 25};
 
-StdVec<UnsignedInt> input_result{0, 3, 5, 8, 13, 13, 14, 17, 19, 24, 25};
+UnsignedInt list_size = cell_size_list.size();
+StdVec<UnsignedInt> result(list_size, 0);
+StdVec<UnsignedInt> tbb_result = result;
 
 TEST(exclusive_scan, test_tbb)
 {
     UnsignedInt *list_data = cell_size_list.data();
 
-    exclusive_scan(SequencedPolicy{}, list_data, list_data + 11, result.data(), PlusUnsignedInt<SequencedPolicy>::type());
-    exclusive_scan(ParallelPolicy{}, list_data, list_data + 11, tbb_result.data(), PlusUnsignedInt<ParallelPolicy>::type());
+    UnsignedInt sum = exclusive_scan(SequencedPolicy{}, list_data, result.data(), list_size, PlusUnsignedInt<SequencedPolicy>::type());
+    UnsignedInt sum_tbb = exclusive_scan(ParallelPolicy{}, list_data, tbb_result.data(), list_size, PlusUnsignedInt<ParallelPolicy>::type());
 
-    EXPECT_EQ(result, tbb_result);
+    EXPECT_EQ(solution, result);
+    EXPECT_EQ(solution, tbb_result);
+    EXPECT_EQ(sum, sum_tbb);
 }
 
 int main(int argc, char *argv[])

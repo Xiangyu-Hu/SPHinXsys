@@ -112,19 +112,19 @@ inline void freeDeviceData(T *device_mem)
 template <class T>
 inline void copyToDevice(const T *host, T *device, std::size_t size)
 {
-    execution::execution_instance.getQueue().memcpy(device, host, size * sizeof(T));
+    execution::execution_instance.getQueue().memcpy(device, host, size * sizeof(T)).wait_and_throw();
 }
 
 template <class T>
 inline void copyToDevice(const T &value, T *device, std::size_t size)
 {
-    execution::execution_instance.getQueue().fill(device, value, size);
+    execution::execution_instance.getQueue().fill(device, value, size).wait_and_throw();
 }
 
 template <class T>
 inline void copyFromDevice(T *host, const T *device, std::size_t size)
 {
-    execution::execution_instance.getQueue().memcpy(host, device, size * sizeof(T));
+    execution::execution_instance.getQueue().memcpy(host, device, size * sizeof(T)).wait_and_throw();
 }
 
 namespace execution
