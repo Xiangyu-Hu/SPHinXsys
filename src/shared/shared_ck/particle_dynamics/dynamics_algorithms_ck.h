@@ -70,7 +70,7 @@ class SimpleDynamicsCK : public LocalDynamicsType, public BaseDynamics<void>
                           !has_interaction<ComputingKernel>::value,
                       "LocalDynamicsType does not fulfill SimpleDynamics requirements");
     };
-    virtual ~SimpleDynamicsCK(){};
+    virtual ~SimpleDynamicsCK() {};
 
     virtual void exec(Real dt = 0.0) override
     {
@@ -100,7 +100,7 @@ class ReduceDynamicsCK : public LocalDynamicsType,
     ReduceDynamicsCK(DynamicsIdentifier &identifier, Args &&...args)
         : LocalDynamicsType(identifier, std::forward<Args>(args)...),
           BaseDynamics<ReturnType>(), kernel_implementation_(*this){};
-    virtual ~ReduceDynamicsCK(){};
+    virtual ~ReduceDynamicsCK() {};
 
     std::string QuantityName() { return this->quantity_name_; };
     std::string DynamicsIdentifierName() { return this->identifier_.getName(); };
@@ -119,6 +119,41 @@ class ReduceDynamicsCK : public LocalDynamicsType,
 
   protected:
     Implementation<LocalDynamicsType, ExecutionPolicy> kernel_implementation_;
+};
+
+template <typename... T>
+class SequencedCombination;
+
+template <class ExecutionPolicy, typename... CommonParameters,
+          template <typename... LocalDynamicsType> class AlgorithmType,
+          template <typename... InteractionTypes> class LocalDynamicsName>
+class SequencedCombination<AlgorithmType<ExecutionPolicy, LocalDynamicsName<>, CommonParameters...>> : public BaseDynamics<void>
+{
+  public:
+    SequencedCombination() : BaseDynamics<void>() {};
+    virtual void exec(Real dt = 0.0) override {};
+};
+template <class ExecutionPolicy, typename... CommonParameters,
+          template <typename... LocalDynamicsType> class AlgorithmType,
+          template <typename... InteractionTypes> class LocalDynamicsName,
+          class FirstInteraction, class... OtherInteractions>
+class SequencedCombination<AlgorithmType<ExecutionPolicy, LocalDynamicsName<FirstInteraction, OtherInteractions...>, CommonParameters...>>
+    : public AlgorithmType<ExecutionPolicy, LocalDynamicsName<FirstInteraction, CommonParameters...>>
+{
+  protected:
+    SequencedCombination<AlgorithmType<ExecutionPolicy, LocalDynamicsName<OtherInteractions...>, CommonParameters...>> other_interactions_;
+
+  public:
+    template <class FirstParameterSet, typename... OtherParameterSets>
+    explicit SequencedCombination(FirstParameterSet &&first_parameter_set, OtherParameterSets &&...other_parameter_sets)
+        : AlgorithmType<ExecutionPolicy, LocalDynamicsName<FirstInteraction, CommonParameters...>>(first_parameter_set),
+          other_interactions_(std::forward<OtherParameterSets>(other_parameter_sets)...){};
+
+    virtual void exec(Real dt = 0.0) override
+    {
+        AlgorithmType<ExecutionPolicy, LocalDynamicsName<FirstInteraction, CommonParameters...>>::exec(dt);
+        other_interactions_.exec(dt);
+    };
 };
 } // namespace SPH
 #endif // DYNAMICS_ALGORITHMS_CK_H

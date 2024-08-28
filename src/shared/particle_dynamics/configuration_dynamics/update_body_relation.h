@@ -75,14 +75,6 @@ class BodyRelationUpdate<Inner<>> : public LocalDynamics
 template <typename... T>
 class UpdateRelation;
 
-template <class ExecutionPolicy, typename... CommonParameters, template <typename... InteractionTypes> class LocalDynamicsName>
-class UpdateRelation<ExecutionPolicy, LocalDynamicsName<>, CommonParameters...> : public BaseDynamics<void>
-{
-  public:
-    UpdateRelation() : BaseDynamics<void>() {};
-    virtual void exec(Real dt = 0.0) override {};
-};
-
 template <class ExecutionPolicy, typename... Parameters>
 class UpdateRelation<ExecutionPolicy, BodyRelationUpdate<Inner<Parameters...>>>
     : public BodyRelationUpdate<Inner<Parameters...>>, public BaseDynamics<void>
@@ -153,29 +145,6 @@ class UpdateRelation<ExecutionPolicy, BodyRelationUpdate<Contact<Parameters...>>
   protected:
     ExecutionPolicy ex_policy_;
     StdVec<KernelImplementation *> contact_kernel_implementation_;
-};
-
-template <class ExecutionPolicy, typename... CommonParameters,
-          template <typename... InteractionTypes> class LocalDynamicsName,
-          class FirstInteraction, class... OtherInteractions>
-class UpdateRelation<ExecutionPolicy, LocalDynamicsName<FirstInteraction, OtherInteractions...>, CommonParameters...>
-    : public UpdateRelation<ExecutionPolicy, LocalDynamicsName<FirstInteraction, CommonParameters...>>
-{
-  protected:
-    UpdateRelation<ExecutionPolicy, LocalDynamicsName<OtherInteractions...>, CommonParameters...> other_interactions_;
-
-  public:
-    template <class FirstParameterSet, typename... OtherParameterSets>
-    explicit UpdateRelation(FirstParameterSet &&first_parameter_set,
-                            OtherParameterSets &&...other_parameter_sets)
-        : UpdateRelation<ExecutionPolicy, LocalDynamicsName<FirstInteraction, CommonParameters...>>(first_parameter_set),
-          other_interactions_(std::forward<OtherParameterSets>(other_parameter_sets)...){};
-
-    virtual void exec(Real dt = 0.0) override
-    {
-        UpdateRelation<ExecutionPolicy, LocalDynamicsName<FirstInteraction, CommonParameters...>>::exec(dt);
-        other_interactions_.exec(dt);
-    };
 };
 
 } // namespace SPH
