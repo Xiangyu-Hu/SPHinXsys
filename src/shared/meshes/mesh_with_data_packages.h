@@ -33,6 +33,7 @@
 #include "base_variable.h"
 #include "my_memory_pool.h"
 #include "tbb/parallel_sort.h"
+#include "mesh_iterators.h"
 
 #include <algorithm>
 #include <fstream>
@@ -107,7 +108,7 @@ class MeshWithGridDataPackages : public Mesh
         delete[] meta_data_cell_;
     };
     /** spacing between the data, which is 1/ pkg_size of this grid spacing */
-    virtual Real DataSpacing() override { return data_spacing_; };
+    Real DataSpacing() { return data_spacing_; };
     Real GridSpacing() { return grid_spacing_; };
     size_t BufferWidth() { return buffer_width_; };
 
@@ -202,7 +203,14 @@ class MeshWithGridDataPackages : public Mesh
     template <typename FunctionOnData>
     void for_each_cell_data(const FunctionOnData &function);
     template <typename FunctionOnData>
-    void grid_parallel_for(const FunctionOnData &function);
+    void grid_parallel_for(const FunctionOnData &function)
+    {
+        mesh_parallel_for(MeshRange(Arrayi::Zero(), all_cells_),
+                          [&](Arrayi cell_index)
+                          {
+                              function(cell_index);
+                          });
+    }
     void resizeMeshVariableData()
     {
         resize_mesh_variable_data_(all_mesh_variables_, num_grid_pkgs_);

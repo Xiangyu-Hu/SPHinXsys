@@ -212,17 +212,6 @@ DataType MeshWithGridDataPackages<PKG_SIZE>::
     return bilinear_1 * beta[2] + bilinear_2 * alpha[2];
 }
 //=================================================================================================//
-template <int PKG_SIZE>
-template <typename FunctionOnData>
-void MeshWithGridDataPackages<PKG_SIZE>::grid_parallel_for(const FunctionOnData &function)
-{
-    mesh_parallel_for(MeshRange(Arrayi::Zero(), all_cells_),
-                      [&](size_t i, size_t j, size_t k)
-                      {
-                          function(Arrayi(i, j, k));
-                      });
-}
-//=================================================================================================//
 } // namespace SPH
 //=================================================================================================//
 #endif // MESH_WITH_DATA_PACKAGES_3D_HPP
