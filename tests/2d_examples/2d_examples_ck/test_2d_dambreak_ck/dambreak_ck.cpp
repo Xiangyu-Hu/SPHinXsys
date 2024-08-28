@@ -75,17 +75,17 @@ int main(int ac, char *av[])
     //	Basically the the range of bodies to build neighbor particle lists.
     //  Generally, we first define all the inner relations, then the contact relations.
     //----------------------------------------------------------------------
-    UpdateCellLinkedList<CellLinkedList, execution::ParallelPolicy> water_block_update_cell_linked_list(water_block);
-    MeshRecordingToPlt water_cell_linked_list_recording(sph_system, water_block.getCellLinkedList());
-    // UpdateRelation<Relation<Inner<ParticleCellLinkedList<Mesh>>>, ParallelPolicy>
-    //    water_block_update_inner_relation(water_block, water_block_update_cell_linked_list.getParticleCellLinkedList());
-
-    // UpdateCellLinkedList<Mesh, execution::ParallelPolicy> wall_boundary_update_cell_linked_list(wall_boundary);
-    // MeshRecordingToPlt wall_cell_linked_list_recording(sph_system, water_block.getCellLinkedList());
-
     InnerRelation water_block_inner(water_block);
     ContactRelation water_wall_contact(water_block, {&wall_boundary});
     ContactRelation fluid_observer_contact(fluid_observer, {&water_block});
+
+    SequencedCombination<UpdateCellLinkedList<
+        execution::ParallelPolicy, ParticlesInCell<CellLinkedList, CellLinkedList>>>
+        water_wall_cell_linked_list(water_block, wall_boundary);
+
+    SequencedCombination<UpdateRelation<
+        execution::ParallelPolicy, BodyRelationUpdate<Inner<>, Contact<>>>>
+        water_block_update_complex_relation(water_block_inner, water_wall_contact);
     //----------------------------------------------------------------------
     // Combined relations built from basic relations
     // which is only used for update configuration.
@@ -133,8 +133,8 @@ int main(int ac, char *av[])
     wall_boundary_normal_direction.exec();
     constant_gravity.exec();
 
-    water_block_update_cell_linked_list.exec();
-    water_cell_linked_list_recording.writeToFile();
+    water_wall_cell_linked_list.exec();
+    water_block_update_complex_relation.exec();
 
     // water_block_update_inner_relation.exec();
 
