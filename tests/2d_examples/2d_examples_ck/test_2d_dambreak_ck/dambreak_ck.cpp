@@ -80,7 +80,7 @@ int main(int ac, char *av[])
     ContactRelation fluid_observer_contact(fluid_observer, {&water_block});
 
     SequencedCombination<UpdateCellLinkedList<
-        execution::SequencedPolicy, ParticlesInCell<CellLinkedList, CellLinkedList>>>
+        execution::ParallelPolicy, ParticlesInCell<CellLinkedList, CellLinkedList>>>
         water_wall_cell_linked_list(water_block, wall_boundary);
     SequencedCombination<UpdateRelation<
         execution::ParallelPolicy, BodyRelationUpdate<Inner<>, Contact<>>>>
