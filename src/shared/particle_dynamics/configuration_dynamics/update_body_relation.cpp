@@ -16,13 +16,14 @@ BodyRelationUpdate<Inner<>>::BodyRelationUpdate(InnerRelation &inner_relation)
 //=================================================================================================//
 BodyRelationUpdate<Contact<>>::BodyRelationUpdate(ContactRelation &contact_relation)
     : LocalDynamics(contact_relation.getSPHBody()),
+      contact_bodies_(contact_relation.getContactBodies()),
       particle_offset_list_size_(contact_relation.getParticleOffsetListSize()),
       dv_pos_(particles_->getVariableByName<Vecd>("Position")),
       contact_cell_linked_list_(contact_relation.getContactCellLinkedList()),
       dv_contact_neighbor_index_(contact_relation.getContactNeighborIndex()),
       dv_contact_particle_offset_(contact_relation.getContactParticleOffset())
 {
-    for (size_t k = 0; k != dv_contact_particle_offset_.size(); ++k)
+    for (size_t k = 0; k != contact_bodies_.size(); ++k)
     {
         particles_->addVariableToWrite(dv_contact_particle_offset_[k]);
     }

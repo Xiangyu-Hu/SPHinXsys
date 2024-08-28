@@ -10,11 +10,11 @@ namespace SPH
 //=================================================================================================//
 template <class ExecutionPolicy>
 BodyRelationUpdate<Inner<>>::ComputingKernel<ExecutionPolicy>::ComputingKernel(
-    const ExecutionPolicy &ex_policy, BodyRelationUpdate<Inner<>> &inner_relation_update)
-    : neighbor_search_(inner_relation_update.cell_linked_list_.createNeighborSearch(ex_policy)),
-      pos_(inner_relation_update.dv_pos_->DelegatedDataField(ex_policy)),
-      neighbor_index_(inner_relation_update.dv_neighbor_index_->DelegatedDataField(ex_policy)),
-      particle_offset_(inner_relation_update.dv_particle_offset_->DelegatedDataField(ex_policy)) {}
+    const ExecutionPolicy &ex_policy, BodyRelationUpdate<Inner<>> &encloser)
+    : neighbor_search_(encloser.cell_linked_list_.createNeighborSearch(ex_policy)),
+      pos_(encloser.dv_pos_->DelegatedDataField(ex_policy)),
+      neighbor_index_(encloser.dv_neighbor_index_->DelegatedDataField(ex_policy)),
+      particle_offset_(encloser.dv_particle_offset_->DelegatedDataField(ex_policy)) {}
 //=================================================================================================//
 template <class ExecutionPolicy>
 void BodyRelationUpdate<Inner<>>::ComputingKernel<ExecutionPolicy>::
@@ -89,14 +89,14 @@ void UpdateRelation<ExecutionPolicy, BodyRelationUpdate<Inner<Parameters...>>>::
 template <class ExecutionPolicy>
 BodyRelationUpdate<Contact<>>::ComputingKernel<ExecutionPolicy>::
     ComputingKernel(const ExecutionPolicy &ex_policy,
-                    BodyRelationUpdate<Contact<>> &update_contact_relation,
-                    UnsignedInt contact_body_index)
-    : neighbor_search_(update_contact_relation.contact_cell_linked_list_[contact_body_index]
+                    BodyRelationUpdate<Contact<>> &encloser,
+                    UnsignedInt contact_index)
+    : neighbor_search_(encloser.contact_cell_linked_list_[contact_index]
                            ->createNeighborSearch(ex_policy)),
-      pos_(update_contact_relation.dv_pos_->DelegatedDataField(ex_policy)),
-      neighbor_index_(update_contact_relation.dv_contact_neighbor_index_[contact_body_index]
+      pos_(encloser.dv_pos_->DelegatedDataField(ex_policy)),
+      neighbor_index_(encloser.dv_contact_neighbor_index_[contact_index]
                           ->DelegatedDataField(ex_policy)),
-      particle_offset_(update_contact_relation.dv_contact_particle_offset_[contact_body_index]
+      particle_offset_(encloser.dv_contact_particle_offset_[contact_index]
                            ->DelegatedDataField(ex_policy)) {}
 //=================================================================================================//
 template <class ExecutionPolicy>
@@ -146,7 +146,7 @@ void UpdateRelation<ExecutionPolicy, BodyRelationUpdate<Contact<Parameters...>>>
 {
     UnsignedInt total_real_particles = this->particles_->TotalRealParticles();
 
-    for (size_t k = 0; k != this->dv_contact_particle_offset_.size(); ++k)
+    for (size_t k = 0; k != this->contact_bodies_.size(); ++k)
     {
         ComputingKernel *computing_kernel = contact_kernel_implementation_[k]->getComputingKernel(k);
         particle_for(ex_policy_,

@@ -61,7 +61,7 @@ class ParticlesInCell<CellLinkedListType> : public LocalDynamics
     {
       public:
         ComputingKernel(const ExecutionPolicy &ex_policy,
-                        ParticlesInCell<CellLinkedListType> &particles_in_cell);
+                        ParticlesInCell<CellLinkedListType> &encloser);
         void clearAllLists(UnsignedInt index_i);
         void incrementCellSize(UnsignedInt index_i);
         void updateCellList(UnsignedInt index_i);

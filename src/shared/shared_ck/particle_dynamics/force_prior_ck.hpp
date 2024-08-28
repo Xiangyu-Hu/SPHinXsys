@@ -22,10 +22,10 @@ template <class DynamicsIdentifier>
 template <class ExecutionPolicy>
 BaseForcePriorCK<DynamicsIdentifier>::ComputingKernel<ExecutionPolicy>::
     ComputingKernel(const ExecutionPolicy &ex_policy,
-                    BaseForcePriorCK<DynamicsIdentifier> &base_force_prior)
-    : force_prior_(base_force_prior.dv_force_prior_->DelegatedDataField(ex_policy)),
-      current_force_(base_force_prior.dv_current_force_->DelegatedDataField(ex_policy)),
-      previous_force_(base_force_prior.dv_previous_force_->DelegatedDataField(ex_policy)) {}
+                    BaseForcePriorCK<DynamicsIdentifier> &encloser)
+    : force_prior_(encloser.dv_force_prior_->DelegatedDataField(ex_policy)),
+      current_force_(encloser.dv_current_force_->DelegatedDataField(ex_policy)),
+      previous_force_(encloser.dv_previous_force_->DelegatedDataField(ex_policy)) {}
 //=================================================================================================//
 template <class DynamicsIdentifier>
 template <class ExecutionPolicy>
@@ -46,12 +46,12 @@ GravityForceCK<GravityType>::GravityForceCK(SPHBody &sph_body, const GravityType
 template <class GravityType>
 template <class ExecutionPolicy>
 GravityForceCK<GravityType>::ComputingKernel<ExecutionPolicy>::ComputingKernel(
-    const ExecutionPolicy &ex_policy, GravityForceCK<GravityType> &gravity_force)
-    : ForcePriorCK::ComputingKernel<ExecutionPolicy>(ex_policy, gravity_force),
-      gravity_(gravity_force.gravity_),
-      physical_time_(gravity_force.sv_physical_time_->DelegatedData(ex_policy)),
-      pos_(gravity_force.dv_pos_->DelegatedDataField(ex_policy)),
-      mass_(gravity_force.dv_mass_->DelegatedDataField(ex_policy)) {}
+    const ExecutionPolicy &ex_policy, GravityForceCK<GravityType> &encloser)
+    : ForcePriorCK::ComputingKernel<ExecutionPolicy>(ex_policy, encloser),
+      gravity_(encloser.gravity_),
+      physical_time_(encloser.sv_physical_time_->DelegatedData(ex_policy)),
+      pos_(encloser.dv_pos_->DelegatedDataField(ex_policy)),
+      mass_(encloser.dv_mass_->DelegatedDataField(ex_policy)) {}
 //=================================================================================================//
 template <class GravityType>
 template <class ExecutionPolicy>

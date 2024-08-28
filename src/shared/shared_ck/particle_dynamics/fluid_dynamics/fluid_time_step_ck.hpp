@@ -10,12 +10,12 @@ namespace fluid_dynamics
 //=================================================================================================//
 template <class ExecutionPolicy>
 AdvectionTimeStepCK::ComputingKernel<ExecutionPolicy>::
-    ComputingKernel(const ExecutionPolicy &ex_policy, AdvectionTimeStepCK &advection_time_step)
-    : h_min_(advection_time_step.h_min_),
-      mass_(advection_time_step.dv_mass_->DelegatedDataField(ex_policy)),
-      vel_(advection_time_step.dv_vel_->DelegatedDataField(ex_policy)),
-      force_(advection_time_step.dv_force_->DelegatedDataField(ex_policy)),
-      force_prior_(advection_time_step.dv_force_prior_->DelegatedDataField(ex_policy)) {}
+    ComputingKernel(const ExecutionPolicy &ex_policy, AdvectionTimeStepCK &encloser)
+    : h_min_(encloser.h_min_),
+      mass_(encloser.dv_mass_->DelegatedDataField(ex_policy)),
+      vel_(encloser.dv_vel_->DelegatedDataField(ex_policy)),
+      force_(encloser.dv_force_->DelegatedDataField(ex_policy)),
+      force_prior_(encloser.dv_force_prior_->DelegatedDataField(ex_policy)) {}
 //=================================================================================================//
 template <class ExecutionPolicy>
 Real AdvectionTimeStepCK::ComputingKernel<ExecutionPolicy>::reduce(size_t index_i, Real dt)
@@ -27,8 +27,8 @@ Real AdvectionTimeStepCK::ComputingKernel<ExecutionPolicy>::reduce(size_t index_
 //=================================================================================================//
 template <class ExecutionPolicy>
 AdvectionViscousTimeStepCK::ComputingKernel<ExecutionPolicy>::ComputingKernel(
-    const ExecutionPolicy &ex_policy, AdvectionViscousTimeStepCK &advection_viscous_time_step)
-    : AdvectionTimeStepCK::ComputingKernel<ExecutionPolicy>(ex_policy, advection_viscous_time_step){};
+    const ExecutionPolicy &ex_policy, AdvectionViscousTimeStepCK &encloser)
+    : AdvectionTimeStepCK::ComputingKernel<ExecutionPolicy>(ex_policy, encloser){};
 //=================================================================================================//
 template <class ExecutionPolicy>
 Real AdvectionViscousTimeStepCK::ComputingKernel<ExecutionPolicy>::reduce(size_t index_i, Real dt)

@@ -47,7 +47,7 @@ class BaseForcePriorCK : public BaseLocalDynamics<DynamicsIdentifier>
     {
       public:
         ComputingKernel(const ExecutionPolicy &ex_policy,
-                        BaseForcePriorCK<DynamicsIdentifier> &base_force_prior);
+                        BaseForcePriorCK<DynamicsIdentifier> &encloser);
         void update(size_t index_i, Real dt = 0.0);
 
       protected:
@@ -71,7 +71,7 @@ class GravityForceCK : public ForcePriorCK
     {
       public:
         ComputingKernel(const ExecutionPolicy &ex_policy,
-                        GravityForceCK<GravityType> &gravity_force);
+                        GravityForceCK<GravityType> &encloser);
         void update(size_t index_i, Real dt = 0.0);
 
       protected:

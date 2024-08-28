@@ -28,13 +28,13 @@ template <typename CellLinkedListType>
 template <class ExecutionPolicy>
 ParticlesInCell<CellLinkedListType>::ComputingKernel<ExecutionPolicy>::
     ComputingKernel(const ExecutionPolicy &ex_policy,
-                    ParticlesInCell<CellLinkedListType> &particles_in_cell)
-    : mesh_(particles_in_cell.mesh_),
-      cell_offset_list_size_(particles_in_cell.cell_offset_list_size_),
-      pos_(particles_in_cell.dv_pos_->DelegatedDataField(ex_policy)),
-      particle_index_(particles_in_cell.dv_particle_index_->DelegatedDataField(ex_policy)),
-      cell_offset_(particles_in_cell.dv_cell_offset_->DelegatedDataField(ex_policy)),
-      current_cell_size_(particles_in_cell.dv_current_cell_size_.DelegatedDataField(ex_policy)) {}
+                    ParticlesInCell<CellLinkedListType> &encloser)
+    : mesh_(encloser.mesh_),
+      cell_offset_list_size_(encloser.cell_offset_list_size_),
+      pos_(encloser.dv_pos_->DelegatedDataField(ex_policy)),
+      particle_index_(encloser.dv_particle_index_->DelegatedDataField(ex_policy)),
+      cell_offset_(encloser.dv_cell_offset_->DelegatedDataField(ex_policy)),
+      current_cell_size_(encloser.dv_current_cell_size_.DelegatedDataField(ex_policy)) {}
 //=================================================================================================//
 template <typename CellLinkedListType>
 template <class ExecutionPolicy>

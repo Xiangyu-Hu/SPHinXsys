@@ -47,7 +47,7 @@ class AdvectionTimeStepCK
 {
   public:
     AdvectionTimeStepCK(SPHBody &sph_body, Real U_ref, Real advectionCFL = 0.25);
-    virtual ~AdvectionTimeStepCK(){};
+    virtual ~AdvectionTimeStepCK() {};
     virtual Real outputResult(Real reduced_value) override;
 
     template <class ExecutionPolicy>
@@ -55,7 +55,7 @@ class AdvectionTimeStepCK
     {
       public:
         ComputingKernel(const ExecutionPolicy &ex_policy,
-                        AdvectionTimeStepCK &advection_time_step);
+                        AdvectionTimeStepCK &encloser);
         Real reduce(size_t index_i, Real dt = 0.0);
 
       protected:
@@ -82,14 +82,14 @@ class AdvectionViscousTimeStepCK : public AdvectionTimeStepCK
 
   public:
     AdvectionViscousTimeStepCK(SPHBody &sph_body, Real U_ref, Real advectionCFL = 0.25);
-    virtual ~AdvectionViscousTimeStepCK(){};
+    virtual ~AdvectionViscousTimeStepCK() {};
 
     template <class ExecutionPolicy>
     class ComputingKernel : public AdvectionTimeStepCK::ComputingKernel<ExecutionPolicy>
     {
       public:
         ComputingKernel(const ExecutionPolicy &ex_policy,
-                        AdvectionViscousTimeStepCK &advection_viscous_time_step);
+                        AdvectionViscousTimeStepCK &encloser);
         Real reduce(size_t index_i, Real dt = 0.0);
     };
 };

@@ -53,7 +53,7 @@ class BodyRelationUpdate<Inner<>> : public LocalDynamics
     {
       public:
         ComputingKernel(const ExecutionPolicy &ex_policy,
-                        BodyRelationUpdate<Inner<>> &inner_relation_update);
+                        BodyRelationUpdate<Inner<>> &encloser);
         void incrementNeighborSize(UnsignedInt index_i);
         void updateNeighborList(UnsignedInt index_i);
 
@@ -107,8 +107,8 @@ class BodyRelationUpdate<Contact<>> : public LocalDynamics
     {
       public:
         ComputingKernel(const ExecutionPolicy &ex_policy,
-                        BodyRelationUpdate<Contact<>> &update_contact_relation,
-                        UnsignedInt contact_body_index);
+                        BodyRelationUpdate<Contact<>> &encloser,
+                        UnsignedInt contact_index);
         void incrementNeighborSize(UnsignedInt index_i);
         void updateNeighborList(UnsignedInt index_i);
 
@@ -120,6 +120,7 @@ class BodyRelationUpdate<Contact<>> : public LocalDynamics
     };
 
   protected:
+    RealBodyVector contact_bodies_;
     UnsignedInt particle_offset_list_size_;
     DiscreteVariable<Vecd> *dv_pos_;
     StdVec<CellLinkedList *> contact_cell_linked_list_;
