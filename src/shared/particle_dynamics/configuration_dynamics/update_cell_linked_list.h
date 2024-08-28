@@ -38,10 +38,10 @@
 namespace SPH
 {
 template <typename... T>
-class UpdateCellLinkedList;
+class ParticlesInCell;
 
 template <typename CellLinkedListType>
-class UpdateCellLinkedList<CellLinkedListType> : public LocalDynamics
+class ParticlesInCell<CellLinkedListType> : public LocalDynamics
 {
   protected:
     CellLinkedListType &cell_linked_list_;
@@ -53,15 +53,15 @@ class UpdateCellLinkedList<CellLinkedListType> : public LocalDynamics
     DiscreteVariable<UnsignedInt> dv_current_cell_size_;
 
   public:
-    UpdateCellLinkedList(RealBody &real_body);
-    virtual ~UpdateCellLinkedList() {};
+    ParticlesInCell(RealBody &real_body);
+    virtual ~ParticlesInCell() {};
 
     template <class ExecutionPolicy>
     class ComputingKernel
     {
       public:
         ComputingKernel(const ExecutionPolicy &ex_policy,
-                        UpdateCellLinkedList<CellLinkedListType> &update_cell_linked_list);
+                        ParticlesInCell<CellLinkedListType> &particles_in_cell);
         void clearAllLists(UnsignedInt index_i);
         void incrementCellSize(UnsignedInt index_i);
         void updateCellList(UnsignedInt index_i);
@@ -77,11 +77,14 @@ class UpdateCellLinkedList<CellLinkedListType> : public LocalDynamics
     };
 };
 
-template <class CellLinkedListType, class ExecutionPolicy>
-class UpdateCellLinkedList<CellLinkedListType, ExecutionPolicy>
-    : public UpdateCellLinkedList<CellLinkedListType>, public BaseDynamics<void>
+template <typename... T>
+class UpdateCellLinkedList;
+
+template <class ExecutionPolicy, class CellLinkedListType>
+class UpdateCellLinkedList<ExecutionPolicy, ParticlesInCell<CellLinkedListType>>
+    : public ParticlesInCell<CellLinkedListType>, public BaseDynamics<void>
 {
-    typedef UpdateCellLinkedList<CellLinkedListType> LocalDynamicsType;
+    typedef ParticlesInCell<CellLinkedListType> LocalDynamicsType;
     using ComputingKernel = typename LocalDynamicsType::
         template ComputingKernel<ExecutionPolicy>;
     ExecutionPolicy ex_policy_;

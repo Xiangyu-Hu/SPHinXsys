@@ -75,19 +75,20 @@ int main(int ac, char *av[])
     //	Basically the the range of bodies to build neighbor particle lists.
     //  Generally, we first define all the inner relations, then the contact relations.
     //----------------------------------------------------------------------
-    UpdateCellLinkedList<CellLinkedList, execution::ParallelDevicePolicy> water_block_update_cell_linked_list(water_block);
-    DiscreteVariable<UnsignedInt> *dv_particle_index_water = water_block.getBaseParticles().getVariableByName<UnsignedInt>("ParticleIndex");
-    MeshRecordingToPlt water_cell_linked_list_recording(sph_system, water_block.getCellLinkedList());
-
-    UpdateCellLinkedList<CellLinkedList, execution::ParallelDevicePolicy> wall_boundary_update_cell_linked_list(wall_boundary);
-    DiscreteVariable<UnsignedInt> *dv_particle_index_wall = wall_boundary.getBaseParticles().getVariableByName<UnsignedInt>("ParticleIndex");
-    MeshRecordingToPlt wall_cell_linked_list_recording(sph_system, water_block.getCellLinkedList());
+    SequencedCombination<UpdateCellLinkedList<
+        execution::ParallelDevicePolicy, ParticlesInCell<CellLinkedList, CellLinkedList>>>
+        water_wall_cell_linked_list(water_block, wall_boundary);
+    DiscreteVariable<UnsignedInt> *dv_particle_index_water =
+        water_block.getBaseParticles().getVariableByName<UnsignedInt>("ParticleIndex");
+    DiscreteVariable<UnsignedInt> *dv_particle_index_wall =
+        wall_boundary.getBaseParticles().getVariableByName<UnsignedInt>("ParticleIndex");
 
     InnerRelation water_block_inner(water_block);
     ContactRelation water_wall_contact(water_block, {&wall_boundary});
     ContactRelation fluid_observer_contact(fluid_observer, {&water_block});
 
-    SequencedCombination<UpdateRelation<execution::ParallelDevicePolicy, BodyRelationUpdate<Inner<>, Contact<>>>>
+    SequencedCombination<UpdateRelation<
+        execution::ParallelDevicePolicy, BodyRelationUpdate<Inner<>, Contact<>>>>
         water_block_update_complex_relation(water_block_inner, water_wall_contact);
     DiscreteVariable<UnsignedInt> *dv_particle_offset_water_inner = water_block_inner.getParticleOffset();
     StdVec<DiscreteVariable<UnsignedInt> *> dv_particle_offset_water_contact = water_wall_contact.getContactParticleOffset();
@@ -143,13 +144,9 @@ int main(int ac, char *av[])
     constant_gravity.exec();
     dv_force_prior->synchronizeWithDevice();
 
-    water_block_update_cell_linked_list.exec();
+    water_wall_cell_linked_list.exec();
     dv_particle_index_water->synchronizeWithDevice();
-    water_cell_linked_list_recording.writeToFile();
-
-    wall_boundary_update_cell_linked_list.exec();
     dv_particle_index_wall->synchronizeWithDevice();
-    wall_cell_linked_list_recording.writeToFile();
 
     water_block_update_complex_relation.exec();
     dv_particle_offset_water_inner->synchronizeWithDevice();
