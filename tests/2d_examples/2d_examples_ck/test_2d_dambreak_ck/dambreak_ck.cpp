@@ -80,9 +80,8 @@ int main(int ac, char *av[])
     ContactRelation fluid_observer_contact(fluid_observer, {&water_block});
 
     SequencedCombination<UpdateCellLinkedList<
-        execution::ParallelPolicy, ParticlesInCell<CellLinkedList, CellLinkedList>>>
+        execution::SequencedPolicy, ParticlesInCell<CellLinkedList, CellLinkedList>>>
         water_wall_cell_linked_list(water_block, wall_boundary);
-
     SequencedCombination<UpdateRelation<
         execution::ParallelPolicy, BodyRelationUpdate<Inner<>, Contact<>>>>
         water_block_update_complex_relation(water_block_inner, water_wall_contact);
@@ -131,15 +130,10 @@ int main(int ac, char *av[])
     sph_system.initializeSystemCellLinkedLists();
     sph_system.initializeSystemConfigurations();
     wall_boundary_normal_direction.exec();
-    constant_gravity.exec();
 
+    constant_gravity.exec();
     water_wall_cell_linked_list.exec();
     water_block_update_complex_relation.exec();
-
-    // water_block_update_inner_relation.exec();
-
-    // wall_boundary_update_cell_linked_list.exec();
-    // wall_cell_linked_list_recording.writeToFile();
     //----------------------------------------------------------------------
     //	Load restart file if necessary.
     //----------------------------------------------------------------------

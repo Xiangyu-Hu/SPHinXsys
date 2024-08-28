@@ -95,6 +95,29 @@ void DeviceOnlyDiscreteVariable<DataType>::
     host_variable->setDeviceDataField(device_only_data_field_);
 }
 //=================================================================================================//
+template <typename DataType>
+DataType *DiscreteVariable<DataType>::DelegatedDataField(const ParallelDevicePolicy &par_device)
+{
+    if (!existDeviceDataField())
+    {
+        device_only_variable_ =
+            device_only_variable_keeper_
+                .createPtr<DeviceOnlyDiscreteVariable<DataType>>(this);
+    }
+    return device_data_field_;
+}
+//=================================================================================================//
+template <typename DataType>
+void DiscreteVariable<DataType>::reallocateDataField(
+    const ParallelDevicePolicy &par_device, size_t tentative_size)
+{
+    if (data_size_ < tentative_size)
+    {
+        reallocateDataField(tentative_size);
+        device_only_variable_->reallocateDataField(this);
+    }
+}
+//=================================================================================================//
 } // namespace SPH
 
 #endif // SPHINXSYS_VARIABLE_SYCL_HPP

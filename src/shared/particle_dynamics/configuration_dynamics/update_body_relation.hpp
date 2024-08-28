@@ -76,11 +76,11 @@ void UpdateRelation<ExecutionPolicy, BodyRelationUpdate<Inner<Parameters...>>>::
 
     if (current_neighbor_index_size > this->dv_neighbor_index_->getDataFieldSize())
     {
-        this->dv_neighbor_index_->reallocateDataField(current_neighbor_index_size);
+        this->dv_neighbor_index_->reallocateDataField(ex_policy_, current_neighbor_index_size);
         kernel_implementation_.overwriteComputingKernel();
     }
 
-    particle_for(ExecutionPolicy{},
+    particle_for(ex_policy_,
                  IndexRange(0, total_real_particles),
                  [=](size_t i)
                  { computing_kernel->updateNeighborList(i); });
@@ -134,7 +134,7 @@ UpdateRelation<ExecutionPolicy, BodyRelationUpdate<Contact<Parameters...>>>::Upd
     : BodyRelationUpdate<Contact<Parameters...>>(std::forward<Args>(args)...),
       BaseDynamics<void>(), ex_policy_(ExecutionPolicy{})
 {
-    for (size_t k = 0; k != this->dv_contact_particle_offset_.size(); ++k)
+    for (size_t k = 0; k != this->contact_bodies_.size(); ++k)
     {
         contact_kernel_implementation_.push_back(
             contact_kernel_implementation_ptrs_.template createPtr<KernelImplementation>(*this));
@@ -163,11 +163,11 @@ void UpdateRelation<ExecutionPolicy, BodyRelationUpdate<Contact<Parameters...>>>
 
         if (current_neighbor_index_size > this->dv_contact_neighbor_index_[k]->getDataFieldSize())
         {
-            this->dv_contact_neighbor_index_[k]->reallocateDataField(current_neighbor_index_size);
+            this->dv_contact_neighbor_index_[k]->reallocateDataField(ex_policy_, current_neighbor_index_size);
             contact_kernel_implementation_[k]->overwriteComputingKernel(k);
         }
 
-        particle_for(ExecutionPolicy{},
+        particle_for(ex_policy_,
                      IndexRange(0, total_real_particles),
                      [=](size_t i)
                      { computing_kernel->updateNeighborList(i); });

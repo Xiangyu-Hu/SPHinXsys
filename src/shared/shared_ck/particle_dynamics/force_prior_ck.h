@@ -40,7 +40,7 @@ class BaseForcePriorCK : public BaseLocalDynamics<DynamicsIdentifier>
 {
   public:
     BaseForcePriorCK(DynamicsIdentifier &identifier, const std::string &force_name);
-    virtual ~BaseForcePriorCK() {};
+    virtual ~BaseForcePriorCK(){};
 
     template <class ExecutionPolicy>
     class ComputingKernel
@@ -64,7 +64,7 @@ class GravityForceCK : public ForcePriorCK
 {
   public:
     GravityForceCK(SPHBody &sph_body, const GravityType &gravity);
-    virtual ~GravityForceCK() {};
+    virtual ~GravityForceCK(){};
 
     template <class ExecutionPolicy>
     class ComputingKernel : public ForcePriorCK::ComputingKernel<ExecutionPolicy>
@@ -75,7 +75,7 @@ class GravityForceCK : public ForcePriorCK
         void update(size_t index_i, Real dt = 0.0);
 
       protected:
-        const GravityType gravity_;
+        GravityType gravity_;
         Real *physical_time_;
         Vecd *pos_;
         Real *mass_;

@@ -47,7 +47,6 @@ class Implementation<LocalDynamicsType, ExecutionPolicy>
 {
     using ComputingKernel = typename LocalDynamicsType::
         template ComputingKernel<ExecutionPolicy>;
-    UniquePtrKeeper<ComputingKernel> kernel_ptr_keeper_;
 
   public:
     explicit Implementation(LocalDynamicsType &local_dynamics)
@@ -64,10 +63,6 @@ class Implementation<LocalDynamicsType, ExecutionPolicy>
         {
             computing_kernel_ = new ComputingKernel(
                 ExecutionPolicy{}, local_dynamics_, std::forward<Args>(args)...);
-            ComputingKernel *temp_kernel =
-                kernel_ptr_keeper_.template createPtr<ComputingKernel>(
-                    ExecutionPolicy{}, local_dynamics_, std::forward<Args>(args)...);
-            *computing_kernel_ = *temp_kernel;
         }
         return computing_kernel_;
     }
@@ -75,10 +70,8 @@ class Implementation<LocalDynamicsType, ExecutionPolicy>
     template <typename... Args>
     ComputingKernel *overwriteComputingKernel(Args &&...args)
     {
-        ComputingKernel *temp_kernel =
-            kernel_ptr_keeper_.template createPtr<ComputingKernel>(
-                ExecutionPolicy{}, local_dynamics_, std::forward<Args>(args)...);
-        *computing_kernel_ = *temp_kernel;
+        *computing_kernel_ = ComputingKernel(
+            ExecutionPolicy{}, local_dynamics_, std::forward<Args>(args)...);
         return computing_kernel_;
     }
 

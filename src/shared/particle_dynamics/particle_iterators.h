@@ -382,10 +382,11 @@ T exclusive_scan(const ParallelPolicy &par_policy, T *first, T *d_first, Unsigne
 {
     // Exclusive scan is the same as inclusive, but shifted by one
     UnsignedInt scan_size = d_size - 1;
+    d_first[0] = T{0};
     using range_type = tbb::blocked_range<UnsignedInt>;
     tbb::parallel_scan(
-        range_type(0, scan_size), T{0},
-        [&](const range_type &r, T sum, bool is_final_scan)
+        range_type(0, scan_size), d_first[0],
+        [=](const range_type &r, T sum, bool is_final_scan) -> T
         {
             T tmp = sum;
             for (UnsignedInt i = r.begin(); i < r.end(); ++i)
