@@ -40,7 +40,7 @@ class BaseForcePriorCK : public BaseLocalDynamics<DynamicsIdentifier>
 {
   public:
     BaseForcePriorCK(DynamicsIdentifier &identifier, const std::string &force_name);
-    virtual ~BaseForcePriorCK(){};
+    virtual ~BaseForcePriorCK() {};
 
     template <class ExecutionPolicy>
     class ComputingKernel
@@ -51,7 +51,6 @@ class BaseForcePriorCK : public BaseLocalDynamics<DynamicsIdentifier>
         void update(size_t index_i, Real dt = 0.0);
 
       protected:
-        friend class BaseForcePriorCK<DynamicsIdentifier>;
         Vecd *force_prior_, *current_force_, *previous_force_;
     };
 
@@ -65,7 +64,7 @@ class GravityForceCK : public ForcePriorCK
 {
   public:
     GravityForceCK(SPHBody &sph_body, const GravityType &gravity);
-    virtual ~GravityForceCK(){};
+    virtual ~GravityForceCK() {};
 
     template <class ExecutionPolicy>
     class ComputingKernel : public ForcePriorCK::ComputingKernel<ExecutionPolicy>
@@ -76,7 +75,6 @@ class GravityForceCK : public ForcePriorCK
         void update(size_t index_i, Real dt = 0.0);
 
       protected:
-        friend class GravityForceCK<GravityType>;
         const GravityType gravity_;
         Real *physical_time_;
         Vecd *pos_;

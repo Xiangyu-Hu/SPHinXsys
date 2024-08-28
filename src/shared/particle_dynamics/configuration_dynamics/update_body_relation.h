@@ -46,19 +46,18 @@ class BodyRelationUpdate<Inner<>> : public LocalDynamics
 
   public:
     explicit BodyRelationUpdate(InnerRelation &inner_relation);
-    virtual ~BodyRelationUpdate(){};
+    virtual ~BodyRelationUpdate() {};
 
     template <class ExecutionPolicy>
     class ComputingKernel
     {
       public:
         ComputingKernel(const ExecutionPolicy &ex_policy,
-                        BodyRelationUpdate<Inner<>> &update_inner_relation);
+                        BodyRelationUpdate<Inner<>> &inner_relation_update);
         void incrementNeighborSize(UnsignedInt index_i);
         void updateNeighborList(UnsignedInt index_i);
 
       protected:
-        friend class BodyRelationUpdate<Inner<>>;
         NeighborSearch neighbor_search_;
         Vecd *pos_;
         UnsignedInt *neighbor_index_;
@@ -73,21 +72,26 @@ class BodyRelationUpdate<Inner<>> : public LocalDynamics
     DiscreteVariable<UnsignedInt> *dv_particle_offset_;
 };
 
-template <class BodyRelationUpdateType, class ExecutionPolicy>
-class UpdateRelation : public BodyRelationUpdateType, public BaseDynamics<void>
+template <typename... T>
+class UpdateRelation;
+
+template <class ExecutionPolicy, typename... Parameters>
+class UpdateRelation<ExecutionPolicy, BodyRelationUpdate<Inner<Parameters...>>>
+    : public BodyRelationUpdate<Inner<Parameters...>>, public BaseDynamics<void>
 {
-    using ComputingKernel = typename BodyRelationUpdateType::
-        template ComputingKernel<ExecutionPolicy>;
+    typedef BodyRelationUpdate<Inner<Parameters...>> LocalDynamicsType;
+    using ComputingKernel = typename LocalDynamicsType::template ComputingKernel<ExecutionPolicy>;
+    using KernelImplementation = Implementation<LocalDynamicsType, ExecutionPolicy>;
 
   public:
     template <typename... Args>
     UpdateRelation(Args &&...args);
-    virtual ~UpdateRelation(){};
+    virtual ~UpdateRelation() {};
     virtual void exec(Real dt = 0.0) override;
 
   protected:
     ExecutionPolicy ex_policy_;
-    Implementation<BodyRelationUpdateType, ExecutionPolicy> kernel_implementation_;
+    KernelImplementation kernel_implementation_;
 };
 
 template <>
@@ -96,7 +100,7 @@ class BodyRelationUpdate<Contact<>> : public LocalDynamics
 
   public:
     explicit BodyRelationUpdate(ContactRelation &contact_relation);
-    virtual ~BodyRelationUpdate(){};
+    virtual ~BodyRelationUpdate() {};
 
     template <class ExecutionPolicy>
     class ComputingKernel
@@ -109,7 +113,6 @@ class BodyRelationUpdate<Contact<>> : public LocalDynamics
         void updateNeighborList(UnsignedInt index_i);
 
       protected:
-        friend class BodyRelationUpdate<Inner<>>;
         NeighborSearch neighbor_search_;
         Vecd *pos_;
         UnsignedInt *neighbor_index_;
@@ -124,22 +127,24 @@ class BodyRelationUpdate<Contact<>> : public LocalDynamics
     StdVec<DiscreteVariable<UnsignedInt> *> dv_contact_particle_offset_;
 };
 
-template <class BodyRelationUpdateType, class ExecutionPolicy>
-class UpdateContactRelation : public BodyRelationUpdateType, public BaseDynamics<void>
+template <class ExecutionPolicy, typename... Parameters>
+class UpdateRelation<ExecutionPolicy, BodyRelationUpdate<Contact<Parameters...>>>
+    : public BodyRelationUpdate<Contact<Parameters...>>, public BaseDynamics<void>
 {
-    using ComputingKernel = typename BodyRelationUpdateType::
-        template ComputingKernel<ExecutionPolicy>;
-    UniquePtrsKeeper<Implementation<BodyRelationUpdateType, ExecutionPolicy>> contact_kernel_implementation_ptrs_;
+    typedef BodyRelationUpdate<Contact<Parameters...>> LocalDynamicsType;
+    using ComputingKernel = typename LocalDynamicsType::template ComputingKernel<ExecutionPolicy>;
+    using KernelImplementation = Implementation<LocalDynamicsType, ExecutionPolicy>;
+    UniquePtrsKeeper<KernelImplementation> contact_kernel_implementation_ptrs_;
 
   public:
     template <typename... Args>
-    UpdateContactRelation(Args &&...args);
-    virtual ~UpdateContactRelation(){};
+    UpdateRelation(Args &&...args);
+    virtual ~UpdateRelation() {};
     virtual void exec(Real dt = 0.0) override;
 
   protected:
     ExecutionPolicy ex_policy_;
-    StdVec<Implementation<BodyRelationUpdateType, ExecutionPolicy> *> contact_kernel_implementation_;
+    StdVec<KernelImplementation *> contact_kernel_implementation_;
 };
 } // namespace SPH
 #endif // UPDATE_BODY_RELATION_H

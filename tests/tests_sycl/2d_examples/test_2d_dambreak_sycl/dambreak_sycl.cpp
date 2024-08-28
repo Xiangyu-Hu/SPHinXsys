@@ -87,10 +87,10 @@ int main(int ac, char *av[])
     ContactRelation water_wall_contact(water_block, {&wall_boundary});
     ContactRelation fluid_observer_contact(fluid_observer, {&water_block});
 
-    UpdateRelation<BodyRelationUpdate<Inner<>>, execution::ParallelDevicePolicy> water_block_update_inner_relation(water_block_inner);
+    UpdateRelation<execution::ParallelDevicePolicy, BodyRelationUpdate<Inner<>>> water_block_update_inner_relation(water_block_inner);
     DiscreteVariable<UnsignedInt> *dv_particle_offset_water_inner = water_block_inner.getParticleOffset();
 
-    UpdateContactRelation<BodyRelationUpdate<Contact<>>, execution::ParallelDevicePolicy> water_block_update_contact_relation(water_wall_contact);
+    UpdateRelation<execution::ParallelDevicePolicy, BodyRelationUpdate<Contact<>>> water_block_update_contact_relation(water_wall_contact);
     StdVec<DiscreteVariable<UnsignedInt> *> dv_particle_offset_water_contact = water_wall_contact.getContactParticleOffset();
     //----------------------------------------------------------------------
     // Combined relations built from basic relations

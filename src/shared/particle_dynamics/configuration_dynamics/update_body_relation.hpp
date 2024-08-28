@@ -10,11 +10,11 @@ namespace SPH
 //=================================================================================================//
 template <class ExecutionPolicy>
 BodyRelationUpdate<Inner<>>::ComputingKernel<ExecutionPolicy>::ComputingKernel(
-    const ExecutionPolicy &ex_policy, BodyRelationUpdate<Inner<>> &update_inner_relation)
-    : neighbor_search_(update_inner_relation.cell_linked_list_.createNeighborSearch(ex_policy)),
-      pos_(update_inner_relation.dv_pos_->DelegatedDataField(ex_policy)),
-      neighbor_index_(update_inner_relation.dv_neighbor_index_->DelegatedDataField(ex_policy)),
-      particle_offset_(update_inner_relation.dv_particle_offset_->DelegatedDataField(ex_policy)) {}
+    const ExecutionPolicy &ex_policy, BodyRelationUpdate<Inner<>> &inner_relation_update)
+    : neighbor_search_(inner_relation_update.cell_linked_list_.createNeighborSearch(ex_policy)),
+      pos_(inner_relation_update.dv_pos_->DelegatedDataField(ex_policy)),
+      neighbor_index_(inner_relation_update.dv_neighbor_index_->DelegatedDataField(ex_policy)),
+      particle_offset_(inner_relation_update.dv_particle_offset_->DelegatedDataField(ex_policy)) {}
 //=================================================================================================//
 template <class ExecutionPolicy>
 void BodyRelationUpdate<Inner<>>::ComputingKernel<ExecutionPolicy>::
@@ -51,14 +51,14 @@ void BodyRelationUpdate<Inner<>>::ComputingKernel<ExecutionPolicy>::
         });
 }
 //=================================================================================================//
-template <class BodyRelationUpdateType, class ExecutionPolicy>
+template <class ExecutionPolicy, typename... Parameters>
 template <typename... Args>
-UpdateRelation<BodyRelationUpdateType, ExecutionPolicy>::UpdateRelation(Args &&...args)
-    : BodyRelationUpdateType(std::forward<Args>(args)...),
+UpdateRelation<ExecutionPolicy, BodyRelationUpdate<Inner<Parameters...>>>::UpdateRelation(Args &&...args)
+    : BodyRelationUpdate<Inner<Parameters...>>(std::forward<Args>(args)...),
       BaseDynamics<void>(), ex_policy_(ExecutionPolicy{}), kernel_implementation_(*this) {}
 //=================================================================================================//
-template <class BodyRelationUpdateType, class ExecutionPolicy>
-void UpdateRelation<BodyRelationUpdateType, ExecutionPolicy>::exec(Real dt)
+template <class ExecutionPolicy, typename... Parameters>
+void UpdateRelation<ExecutionPolicy, BodyRelationUpdate<Inner<Parameters...>>>::exec(Real dt)
 {
     UnsignedInt total_real_particles = this->particles_->TotalRealParticles();
     ComputingKernel *computing_kernel = kernel_implementation_.getComputingKernel();
@@ -128,22 +128,21 @@ void BodyRelationUpdate<Contact<>>::ComputingKernel<ExecutionPolicy>::
         });
 }
 //=================================================================================================//
-template <class BodyRelationUpdateType, class ExecutionPolicy>
+template <class ExecutionPolicy, typename... Parameters>
 template <typename... Args>
-UpdateContactRelation<BodyRelationUpdateType, ExecutionPolicy>::UpdateContactRelation(Args &&...args)
-    : BodyRelationUpdateType(std::forward<Args>(args)...),
+UpdateRelation<ExecutionPolicy, BodyRelationUpdate<Contact<Parameters...>>>::UpdateRelation(Args &&...args)
+    : BodyRelationUpdate<Contact<Parameters...>>(std::forward<Args>(args)...),
       BaseDynamics<void>(), ex_policy_(ExecutionPolicy{})
 {
     for (size_t k = 0; k != this->dv_contact_particle_offset_.size(); ++k)
     {
         contact_kernel_implementation_.push_back(
-            contact_kernel_implementation_ptrs_
-                .template createPtr<Implementation<BodyRelationUpdateType, ExecutionPolicy>>(*this));
+            contact_kernel_implementation_ptrs_.template createPtr<KernelImplementation>(*this));
     }
 }
 //=================================================================================================//
-template <class BodyRelationUpdateType, class ExecutionPolicy>
-void UpdateContactRelation<BodyRelationUpdateType, ExecutionPolicy>::exec(Real dt)
+template <class ExecutionPolicy, typename... Parameters>
+void UpdateRelation<ExecutionPolicy, BodyRelationUpdate<Contact<Parameters...>>>::exec(Real dt)
 {
     UnsignedInt total_real_particles = this->particles_->TotalRealParticles();
 
