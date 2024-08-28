@@ -87,10 +87,9 @@ int main(int ac, char *av[])
     ContactRelation water_wall_contact(water_block, {&wall_boundary});
     ContactRelation fluid_observer_contact(fluid_observer, {&water_block});
 
-    UpdateRelation<execution::ParallelDevicePolicy, BodyRelationUpdate<Inner<>>> water_block_update_inner_relation(water_block_inner);
+    UpdateRelation<execution::ParallelDevicePolicy, BodyRelationUpdate<Inner<>, Contact<>>>
+        water_block_update_complex_relation(water_block_inner, water_wall_contact);
     DiscreteVariable<UnsignedInt> *dv_particle_offset_water_inner = water_block_inner.getParticleOffset();
-
-    UpdateRelation<execution::ParallelDevicePolicy, BodyRelationUpdate<Contact<>>> water_block_update_contact_relation(water_wall_contact);
     StdVec<DiscreteVariable<UnsignedInt> *> dv_particle_offset_water_contact = water_wall_contact.getContactParticleOffset();
     //----------------------------------------------------------------------
     // Combined relations built from basic relations
@@ -152,10 +151,8 @@ int main(int ac, char *av[])
     dv_particle_index_wall->synchronizeWithDevice();
     wall_cell_linked_list_recording.writeToFile();
 
-    water_block_update_inner_relation.exec();
+    water_block_update_complex_relation.exec();
     dv_particle_offset_water_inner->synchronizeWithDevice();
-
-    water_block_update_contact_relation.exec();
     for (size_t k = 0; k != dv_particle_offset_water_contact.size(); ++k)
     {
         dv_particle_offset_water_contact[k]->synchronizeWithDevice();
