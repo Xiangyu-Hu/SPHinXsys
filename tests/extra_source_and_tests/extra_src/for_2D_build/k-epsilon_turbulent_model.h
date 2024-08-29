@@ -424,10 +424,11 @@ namespace fluid_dynamics
 	{
 	public:
 		explicit InflowTurbulentCondition(BodyPartByCell& body_part,
-			Real CharacteristicLength, Real relaxation_rate = 1.0);
+			Real CharacteristicLength, Real relaxation_rate, int type_turbu_inlet);
 		virtual ~InflowTurbulentCondition() {};
 		void update(size_t index_i, Real dt = 0.0);
 	protected:
+		int type_turbu_inlet_;
 		Real relaxation_rate_;
 		Real CharacteristicLength_;
 		StdLargeVec<Real> &turbu_k_;

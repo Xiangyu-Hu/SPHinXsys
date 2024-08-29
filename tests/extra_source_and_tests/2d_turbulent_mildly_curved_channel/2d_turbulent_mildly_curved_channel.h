@@ -7,13 +7,19 @@
 
 #include "sphinxsys.h"
 #include "k-epsilon_turbulent_model.cpp"
+#include "bidirectional_buffer.h"
+#include "density_correciton.h"
+#include "density_correciton.hpp"
+#include "kernel_summation.h"
+#include "kernel_summation.hpp"
+#include "pressure_boundary.h"
 using namespace SPH;
 
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
 Real DH = 2.0;                         /**< Channel height. */
-Real num_fluid_cross_section = 80.0;
+Real num_fluid_cross_section = 20.0;
 
 Real extend_in = 0.0 ;
 Real extend_out = 0.0 ;
@@ -29,6 +35,9 @@ Vec2d circle_center(DL1, R2);
 //	Unique parameters for turbulence. 
 //----------------------------------------------------------------------
 Real characteristic_length = DH; /**<It needs characteristic Length to calculate turbulent length and the inflow turbulent epsilon>*/
+//** For K and Epsilon, type of the turbulent inlet, 0 is freestream, 1 is from interpolation from PY21 *
+int type_turbulent_inlet = 0 ;
+Real relaxation_rate_turbulent_inlet = 0.8;
 //** Intial values for K, Epsilon and Mu_t *
 StdVec<Real> initial_turbu_values = { 0.000180001 ,3.326679e-5 ,1.0e-9 };  
 
@@ -57,6 +66,7 @@ BoundingBox system_domain_bounds(Vec2d(-DL_sponge - 2.0 * BW, -BW), Vec2d(DL_dom
 
 //** Same parameter as SPH_4 *
 Real U_inlet = 1.0;
+Real Outlet_pressure = 0.0;
 Real U_f = U_inlet; //*Characteristic velocity
 Real U_max = 1.5 * U_inlet; //** An estimated value, generally 1.5 U_inlet *
 Real c_f = 10.0 * U_max;
@@ -70,28 +80,32 @@ Real DH_C = DH - 2.0 * offset_distance;
 //----------------------------------------------------------------------
 //	The emitter block with offset model. 
 //----------------------------------------------------------------------
-Vec2d emitter_halfsize = Vec2d(0.5 * BW, 0.5 * DH_C + BW );
-Vec2d emitter_translation = Vec2d(-DL_sponge, 0.0) + emitter_halfsize + Vecd(0.0, offset_distance - BW);
-Vec2d inlet_buffer_halfsize = Vec2d(0.5 * DL_sponge, 0.5 * DH_C + BW);
-Vec2d inlet_buffer_translation = Vec2d(-DL_sponge, 0.0) + inlet_buffer_halfsize + Vecd(0.0, offset_distance - BW);
+Vec2d left_buffer_halfsize = Vec2d(0.5 * BW, 0.5 * DH_C + BW );
+Vec2d left_buffer_translation = Vec2d(-DL_sponge, 0.0) + left_buffer_halfsize + Vecd(0.0, offset_distance - BW);
 
-//** Y disposer *
-Vec2d disposer_halfsize = Vec2d(0.75 * DH, 0.5 * BW);
-Vec2d disposer_translation = Vec2d(DL_domain + 0.25 * DH, DH_domain ) - disposer_halfsize;
+Real outlet_buffer_length = BW ;
+Real outlet_buffer_height = 1.5 * DH ;
+Real outlet_disposer_rotation_angel = 0.5 * Pi ; //** By default, counter-clockwise is positive *
+Real outlet_emitter_rotation_angel = -0.5 * Pi ; //** By default, counter-clockwise is positive *
+Vec2d outlet_buffer_center_translation = Vec2d(DL_domain - 0.5 * DH , DH_domain- 0.5 * outlet_buffer_length) ;
+
+Vec2d right_buffer_halfsize = Vec2d(0.5 * outlet_buffer_length, 0.75 * outlet_buffer_height);
+Vec2d right_buffer_translation = outlet_buffer_center_translation;
+
+//Vec2d disposer_halfsize = Vec2d(0.75 * DH, 0.5 * BW);
+//Vec2d disposer_translation = Vec2d(DL_domain + 0.25 * DH, DH_domain ) - disposer_halfsize;
 //----------------------------------------------------------------------
 // Observation with offset model.
 //----------------------------------------------------------------------
-Real observe_x_ratio = 1.0;
-Real observe_x_spacing = resolution_ref * observe_x_ratio;
-Real x_start = DL1 + R1 + offset_distance;
-int num_observer_points = std::round(DH_C / resolution_ref);
-Real height_cell = resolution_ref * 1.5;
-Real cell_bound_y_down = DH + R1;
-
-Real cell_bound_y_up = cell_bound_y_down + height_cell;
-StdVec<Real> cell_bound_y = { cell_bound_y_down, cell_bound_y_up };
-StdVec<Real> monitor_bound_x, monitor_bound_x_b;
+Real x_observe_start = 0.99 * DL1;
+int num_observer_points = std::round(DH_C / resolution_ref); //**Evrey particle is regarded as a cell monitor* 
 Real observe_spacing = DH_C / num_observer_points;
+
+// By kernel weight.
+StdVec<Vecd> observation_location;
+Vecd pos_observe_start = Vecd(x_observe_start, resolution_ref/2.0 + offset_distance);
+Vecd unit_direction_observe = Vecd(0.0, 1.0);
+Real observer_offset_distance = 2.0 * resolution_ref ;
 //----------------------------------------------------------------------
 //	Cases-dependent geometries 
 //----------------------------------------------------------------------
@@ -108,33 +122,33 @@ std::vector<Vecd> createWaterBlockShape()
     water_block_shape.push_back(Vecd(DL1, DH));
     
 
-    // //** Inner Circle segment *
-    // Real start_x = DL1;
-    // for (int k = 1; k <= num_inner_arc_points; ++k)
-    // {
-    //     Real x_coordinate = start_x + k * arc_sampling_interval; //** clockwise *
-    //     //** Circle center is (DL1, R2), radius is R1. Equation is (x-DL1)^2+(y-R2)^2=R1^2,
-    //     //** Considring the coordinate, y= -sqr(R1^2-(x-DH1)^2)+R2 * 
-    //     Real y_coordinate = -sqrt( R1*R1 - (x_coordinate-DL1)*(x_coordinate-DL1) ) + R2;
-    //     water_block_shape.push_back(Vecd(x_coordinate, y_coordinate));
-    // }
+    //** Inner Circle segment *
+    Real start_x = DL1;
+    for (int k = 1; k <= num_inner_arc_points; ++k)
+    {
+        Real x_coordinate = start_x + k * arc_sampling_interval; //** clockwise *
+        //** Circle center is (DL1, R2), radius is R1. Equation is (x-DL1)^2+(y-R2)^2=R1^2,
+        //** Considring the coordinate, y= -sqr(R1^2-(x-DH1)^2)+R2 * 
+        Real y_coordinate = -sqrt( R1*R1 - (x_coordinate-DL1)*(x_coordinate-DL1) ) + R2;
+        water_block_shape.push_back(Vecd(x_coordinate, y_coordinate));
+    }
 
-    // //** 4 points for outlet tube *
-    // water_block_shape.push_back(Vecd(DL1 + R1, R2));
-    // water_block_shape.push_back(Vecd(DL1 + R1, R2 + DL2 + offset_distance));
-    // water_block_shape.push_back(Vecd(DL1 + R2, R2 + DL2 + offset_distance));
-    // water_block_shape.push_back(Vecd(DL1 + R2, R2 ));
+    //** 4 points for outlet tube *
+    water_block_shape.push_back(Vecd(DL1 + R1, R2));
+    water_block_shape.push_back(Vecd(DL1 + R1, R2 + DL2 + offset_distance));
+    water_block_shape.push_back(Vecd(DL1 + R2, R2 + DL2 + offset_distance));
+    water_block_shape.push_back(Vecd(DL1 + R2, R2 ));
 
-    // //** Outer Circle segment *
-    // start_x = DL1 + R2;
-    // for (int k = 1; k <= num_outer_arc_points; ++k)
-    // {
-    //     Real x_coordinate = start_x - k * arc_sampling_interval; //** clockwise *
-    //     //** Circle center is (DL1, R2), radius is R2. Equation is (x-DL1)^2+(y-R2)^2=R2^2,
-    //     //** Considring the coordinate, y= -sqr(R2^2-(x-DH1)^2)+R2 * 
-    //     Real y_coordinate = -sqrt( R2*R2 - (x_coordinate-DL1)*(x_coordinate-DL1) ) + R2;
-    //     water_block_shape.push_back(Vecd(x_coordinate, y_coordinate));
-    // }
+    //** Outer Circle segment *
+    start_x = DL1 + R2;
+    for (int k = 1; k <= num_outer_arc_points; ++k)
+    {
+        Real x_coordinate = start_x - k * arc_sampling_interval; //** clockwise *
+        //** Circle center is (DL1, R2), radius is R2. Equation is (x-DL1)^2+(y-R2)^2=R2^2,
+        //** Considring the coordinate, y= -sqr(R2^2-(x-DH1)^2)+R2 * 
+        Real y_coordinate = -sqrt( R2*R2 - (x_coordinate-DL1)*(x_coordinate-DL1) ) + R2;
+        water_block_shape.push_back(Vecd(x_coordinate, y_coordinate));
+    }
 
 
     //** The left 2 points for inlet tube, totally 5 *
@@ -369,5 +383,28 @@ public:
         Real run_time_ = GlobalStaticVariables::physical_time_;
         du_ave_dt_ = 0.5 * u_ref_ * (Pi / t_ref_) * sin(Pi * run_time_ / t_ref_);
         return run_time_ < t_ref_ ? Vecd(du_ave_dt_, 0.0) : global_acceleration_;
+    }
+};
+
+struct RightOutflowPressure
+{
+    template <class BoundaryConditionType>
+    RightOutflowPressure(BoundaryConditionType &boundary_condition) {}
+
+    Real operator()(Real &p_)
+    {
+        /*constant pressure*/
+        Real pressure = Outlet_pressure;
+        return pressure;
+    }
+};
+struct LeftInflowPressure
+{
+    template <class BoundaryConditionType>
+    LeftInflowPressure(BoundaryConditionType &boundary_condition) {}
+
+    Real operator()(Real &p_)
+    {
+        return p_;
     }
 };

@@ -673,8 +673,8 @@ namespace fluid_dynamics
 	}
 //=================================================================================================//
 	InflowTurbulentCondition::InflowTurbulentCondition(BodyPartByCell& body_part
-		, Real CharacteristicLength, Real relaxation_rate) :
-		BaseFlowBoundaryCondition(body_part),
+		, Real CharacteristicLength, Real relaxation_rate, int type_turbu_inlet) :
+		BaseFlowBoundaryCondition(body_part), type_turbu_inlet_(type_turbu_inlet),
 		relaxation_rate_(relaxation_rate),
 		CharacteristicLength_(CharacteristicLength),
 		turbu_k_(*particles_->getVariableDataByName<Real>("TurbulenceKineticEnergy")),
@@ -696,7 +696,7 @@ namespace fluid_dynamics
 		Real u = velocity[0];
 		Real temp_in_turbu_k = 1.5 * pow((turbulent_intensity_ * u), 2);
 		Real turbu_k_original = turbu_k;
-if(1)
+if(type_turbu_inlet_==1)
 {		
 		Real channel_height = CharacteristicLength_; //** Temporarily treatment *
 
@@ -756,7 +756,7 @@ if(1)
 		//Real temp_in_turbu_E = C_mu_ * pow(turbu_k, 1.5) / (0.1*getTurbulentLength());
 		Real temp_in_turbu_E = C_mu_75_ * pow(turbu_k, 1.5) / TurbulentLength_;
 		Real turbu_E_original = turbu_E;
-if(1)
+if(type_turbu_inlet_==1)
 {	
 		Real channel_height = CharacteristicLength_; //** Temporarily treatment *
 
