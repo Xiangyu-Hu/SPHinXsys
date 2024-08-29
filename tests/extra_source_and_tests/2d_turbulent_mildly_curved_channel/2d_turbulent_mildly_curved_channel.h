@@ -71,7 +71,8 @@ Real U_f = U_inlet; //*Characteristic velocity
 Real U_max = 1.5 * U_inlet; //** An estimated value, generally 1.5 U_inlet *
 Real c_f = 10.0 * U_max;
 Real rho0_f = 1.0;                                            /**< Density. */
-Real Re = 40000.0;
+//Real Re = 40000.0;
+Real Re = 100.0;
 Real mu_f = rho0_f * U_f * DH / Re;
 
 Real Re_calculated = U_f * DH * rho0_f / mu_f; 
