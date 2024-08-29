@@ -5,16 +5,18 @@ namespace SPH
 //=================================================================================================//
 InteractionDynamics<Inner<>>::InteractionDynamics(InnerRelation &inner_relation)
     : LocalDynamics(inner_relation.getSPHBody()),
+      sph_adaptation_(sph_body_.sph_adaptation_),
       dv_pos_(particles_->getVariableByName<Vecd>("Position")),
-      kernel_(inner_relation.getSmoothingKernel()),
-      dv_neighbor_index(inner_relation.getNeighborIndex()),
-      dv_particle_offset(inner_relation.getParticleOffset()) {}
+      dv_neighbor_index_(inner_relation.getNeighborIndex()),
+      dv_particle_offset_(inner_relation.getParticleOffset()) {}
 //=================================================================================================//
 InteractionDynamics<Contact<>>::InteractionDynamics(ContactRelation &contact_relation)
     : LocalDynamics(contact_relation.getSPHBody()),
+      sph_adaptation_(sph_body_.sph_adaptation_),
       dv_pos_(particles_->getVariableByName<Vecd>("Position")),
-      kernel_(contact_relation.getContactSmoothingKernel()),
-      dv_neighbor_index(contact_relation.getContactNeighborIndex()),
-      dv_particle_offset(contact_relation.getContactParticleOffset()) {}
+      contact_bodies_(contact_relation.getContactBodies()),
+      contact_adaptations_(contact_relation.getContactAdaptations()),
+      dv_contact_neighbor_index_(contact_relation.getContactNeighborIndex()),
+      dv_contact_particle_offset_(contact_relation.getContactParticleOffset()) {}
 //=================================================================================================//
 } // namespace SPH

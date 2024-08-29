@@ -49,19 +49,21 @@ class KernelWendlandC2CK
         rc_ref_sqr_ = kernel.CutOffRadiusSqr();
     };
 
-    Real W(const Real &r_ij, const Real &displacement) const
+    Real W(const Real &displacement) const
     {
-        Real q = r_ij * inv_h_;
+        Real q = displacement * inv_h_;
         return factor_W_1D_ * W_1D(q);
     };
-    Real W(const Real &r_ij, const Vec2d &displacement) const
+
+    Real W(const Vec2d &displacement) const
     {
-        Real q = r_ij * inv_h_;
+        Real q = displacement.norm() * inv_h_;
         return factor_W_2D_ * W_1D(q);
     };
-    Real W(const Real &r_ij, const Vec3d &displacement) const
+
+    Real W(const Vec3d &displacement) const
     {
-        Real q = r_ij * inv_h_;
+        Real q = displacement.norm() * inv_h_;
         return factor_W_3D_ * W_1D(q);
     };
 
@@ -70,19 +72,19 @@ class KernelWendlandC2CK
         return pow(1.0 - 0.5 * q, 4) * (1.0 + 2.0 * q);
     };
 
-    Real dW(const Real &r_ij, const Real &displacement) const
+    Real dW(const Real &displacement) const
     {
-        Real q = r_ij * inv_h_;
+        Real q = displacement * inv_h_;
         return factor_dW_1D_ * dW_1D(q);
     };
-    Real dW(const Real &r_ij, const Vec2d &displacement) const
+    Real dW(const Vec2d &displacement) const
     {
-        Real q = r_ij * inv_h_;
+        Real q = displacement.norm() * inv_h_;
         return factor_dW_2D_ * dW_1D(q);
     };
-    Real dW(const Real &r_ij, const Vec3d &displacement) const
+    Real dW(const Vec3d &displacement) const
     {
-        Real q = r_ij * inv_h_;
+        Real q = displacement.norm() * inv_h_;
         return factor_dW_3D_ * dW_1D(q);
     };
 
@@ -100,8 +102,18 @@ class KernelWendlandC2CK
         return displacement / (distance + TinyReal);
     };
 
-    bool checkIfWithinCutOffRadius(const Vec2d &displacement) const;
-    bool checkIfWithinCutOffRadius(const Vec3d &displacement) const;
+    bool checkIfWithinCutOffRadius(const Vec2d &displacement) const
+    {
+
+        return displacement.squaredNorm() < CutOffRadiusSqr();
+    };
+
+    bool checkIfWithinCutOffRadius(const Vec3d &displacement) const
+    {
+
+        return displacement.squaredNorm() < CutOffRadiusSqr();
+    };
+    ;
 
     inline Real CutOffRadius() const { return rc_ref_; };
     inline Real CutOffRadiusSqr() const { return rc_ref_sqr_; };

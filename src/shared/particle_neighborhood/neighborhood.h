@@ -42,23 +42,6 @@ class SPHBody;
 class BodyPart;
 class SPHAdaptation;
 
-class NeighborList
-{
-  public:
-    template <class ExecutionPolicy>
-    NeighborList(const ExecutionPolicy &ex_policy,
-                 DiscreteVariable<UnsignedInt> *dv_neighbor_index,
-                 DiscreteVariable<UnsignedInt> *dv_particle_offset);
-
-  protected:
-    UnsignedInt *neighbor_index_;
-    UnsignedInt FirstNeighbor(UnsignedInt index_i) { return particle_offset_[index_i]; };
-    UnsignedInt LastNeighbor(UnsignedInt index_i) { return particle_offset_[index_i] + 1; };
-
-  private:
-    UnsignedInt *particle_offset_;
-};
-
 /**
  * @class Neighborhood
  * @brief A neighborhood around particle i.

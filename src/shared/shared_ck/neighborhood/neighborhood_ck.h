@@ -21,75 +21,72 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file    interaction_dynamics_ck.h
- * @brief 	This is for the base classes of local particle dynamics, which describe the
- * 			dynamics of a particle and it neighbors.
- * @author	Chi Zhang, Chenxi Zhao and Xiangyu Hu
+ * @file 	neighborhood_ck.h
+ * @brief 	There are the classes for particle neighborhood.
+ * It saves the information for carrying out inter-particle (or pair) interaction,
+ * and also considered as the local configuration of the particles.
+ * @author	Xiangyu Hu
  */
 
-#ifndef INTERACTION_DYNAMICS_CK_H
-#define INTERACTION_DYNAMICS_CK_H
+#ifndef NEIGHBORHOOD_CK_H
+#define NEIGHBORHOOD_CK_H
 
-#include "base_local_dynamics.h"
-#include "neighborhood_ck.hpp"
+#include "kernel_wenland_c2_ck.h"
+#include "neighborhood.h"
 
 namespace SPH
 {
 template <typename... T>
-class InteractionDynamics;
+class Neighbor;
 
 template <>
-class InteractionDynamics<Inner<>> : public LocalDynamics
+class Neighbor<>
 {
   public:
-    explicit InteractionDynamics(InnerRelation &inner_relation);
-    virtual ~InteractionDynamics(){};
+    template <class ExecutionPolicy>
+    Neighbor(const ExecutionPolicy &ex_policy, SPHAdaptation *sph_adaptation, DiscreteVariable<Vecd> *dv_pos);
 
     template <class ExecutionPolicy>
-    class ComputingKernel : public NeighborList
+    Neighbor(const ExecutionPolicy &ex_policy, SPHAdaptation *sph_adaptation, SPHAdaptation *contact_adaptation,
+             DiscreteVariable<Vecd> *dv_pos, DiscreteVariable<Vecd> *dv_target_pos);
+    template <typename DataType>
+    inline Real W_ij(const DataType &r_ij) const
     {
-      public:
-        ComputingKernel(const ExecutionPolicy &ex_policy,
-                        InteractionDynamics<Inner<>> &encloser);
-
-      protected:
-        Neighbor<> neighbor_;
-    };
+        return kernel_.W(r_ij);
+    }
+    template <typename DataType>
+    inline Real dW_ij(const DataType &r_ij) const
+    {
+        return kernel_.dW(r_ij);
+    }
+    inline Vecd r_ij(size_t index_i, size_t index_j) const { return source_pos_[index_i] - target_pos_[index_j]; };
+    inline Vecd e_ij(size_t index_i, size_t index_j) const
+    {
+        Vecd displacement = r_ij(index_i, index_j);
+        return displacement / (displacement.norm() + TinyReal);
+    }
 
   protected:
-    SPHAdaptation *sph_adaptation_;
-    DiscreteVariable<Vecd> *dv_pos_;
-    DiscreteVariable<UnsignedInt> *dv_neighbor_index_;
-    DiscreteVariable<UnsignedInt> *dv_particle_offset_;
+    KernelWendlandC2CK kernel_;
+    Vecd *source_pos_;
+    Vecd *target_pos_;
 };
 
-template <>
-class InteractionDynamics<Contact<>> : public LocalDynamics
+class NeighborList
 {
   public:
-    explicit InteractionDynamics(ContactRelation &contact_relation);
-    virtual ~InteractionDynamics(){};
-
     template <class ExecutionPolicy>
-    class ComputingKernel : public NeighborList
-    {
-      public:
-        ComputingKernel(const ExecutionPolicy &ex_policy,
-                        InteractionDynamics<Contact<>> &encloser,
-                        UnsignedInt contact_index);
-
-      protected:
-        Neighbor<> neighbor_;
-    };
+    NeighborList(const ExecutionPolicy &ex_policy,
+                 DiscreteVariable<UnsignedInt> *dv_neighbor_index,
+                 DiscreteVariable<UnsignedInt> *dv_particle_offset);
 
   protected:
-    SPHAdaptation *sph_adaptation_;
-    DiscreteVariable<Vecd> *dv_pos_;
-    RealBodyVector contact_bodies_;
-    StdVec<SPHAdaptation *> contact_adaptations_;
-    StdVec<DiscreteVariable<Vecd> *> contact_pos_;
-    StdVec<DiscreteVariable<UnsignedInt> *> dv_contact_neighbor_index_;
-    StdVec<DiscreteVariable<UnsignedInt> *> dv_contact_particle_offset_;
+    UnsignedInt *neighbor_index_;
+    inline UnsignedInt FirstNeighbor(UnsignedInt index_i) { return particle_offset_[index_i]; };
+    inline UnsignedInt LastNeighbor(UnsignedInt index_i) { return particle_offset_[index_i] + 1; };
+
+  private:
+    UnsignedInt *particle_offset_;
 };
 } // namespace SPH
-#endif // INTERACTION_DYNAMICS_CK_H
+#endif // NEIGHBORHOOD_CK_H
