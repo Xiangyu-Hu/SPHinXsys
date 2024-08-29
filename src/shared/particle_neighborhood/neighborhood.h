@@ -47,13 +47,15 @@ class NeighborList
   public:
     template <class ExecutionPolicy>
     NeighborList(const ExecutionPolicy &ex_policy,
-                 DiscreteVariable<UnsignedInt> &dv_neighbor_index,
-                 DiscreteVariable<UnsignedInt> &dv_particle_offset);
-    template <typename FunctionOnEach>
-    void forEachNeighbor(UnsignedInt index_i, const FunctionOnEach &function) const;
+                 DiscreteVariable<UnsignedInt> *dv_neighbor_index,
+                 DiscreteVariable<UnsignedInt> *dv_particle_offset);
 
   protected:
     UnsignedInt *neighbor_index_;
+    UnsignedInt FirstNeighbor(UnsignedInt index_i) { return particle_offset_[index_i]; };
+    UnsignedInt LastNeighbor(UnsignedInt index_i) { return particle_offset_[index_i] + 1; };
+
+  private:
     UnsignedInt *particle_offset_;
 };
 
@@ -73,8 +75,8 @@ class Neighborhood
     StdLargeVec<Real> r_ij_;  /**< distance between j and i. */
     StdLargeVec<Vecd> e_ij_;  /**< unit vector pointing from j to i or inter-particle surface direction */
 
-    Neighborhood() : current_size_(0), allocated_size_(0) {};
-    ~Neighborhood() {};
+    Neighborhood() : current_size_(0), allocated_size_(0){};
+    ~Neighborhood(){};
 
     void removeANeighbor(size_t neighbor_n);
 };
@@ -103,8 +105,8 @@ class NeighborBuilder
     static Kernel *chooseKernel(SPHBody &body, SPHBody &target_body);
 
   public:
-    NeighborBuilder(Kernel *kernel) : kernel_(kernel) {};
-    virtual ~NeighborBuilder() {};
+    NeighborBuilder(Kernel *kernel) : kernel_(kernel){};
+    virtual ~NeighborBuilder(){};
     virtual void operator()(Neighborhood &neighborhood,
                             const Vecd &pos_i, size_t index_i, const ListData &list_data_j) = 0;
 };
@@ -144,7 +146,7 @@ class NeighborBuilderSelfContact : public NeighborBuilder
 {
   public:
     explicit NeighborBuilderSelfContact(SPHBody &body);
-    virtual ~NeighborBuilderSelfContact() {};
+    virtual ~NeighborBuilderSelfContact(){};
     void operator()(Neighborhood &neighborhood,
                     const Vecd &pos_i, size_t index_i, const ListData &list_data_j) override;
 
@@ -160,7 +162,7 @@ class NeighborBuilderContact : public NeighborBuilder
 {
   public:
     NeighborBuilderContact(SPHBody &body, SPHBody &contact_body);
-    virtual ~NeighborBuilderContact() {};
+    virtual ~NeighborBuilderContact(){};
     virtual void operator()(Neighborhood &neighborhood,
                             const Vecd &pos_i, size_t index_i, const ListData &list_data_j) override;
 };
@@ -176,7 +178,7 @@ class NeighborBuilderSurfaceContact : public NeighborBuilderContact
 
   public:
     NeighborBuilderSurfaceContact(SPHBody &body, SPHBody &contact_body);
-    virtual ~NeighborBuilderSurfaceContact() {};
+    virtual ~NeighborBuilderSurfaceContact(){};
 };
 
 /**
@@ -187,7 +189,7 @@ class NeighborBuilderContactBodyPart : public NeighborBuilder
 {
   public:
     NeighborBuilderContactBodyPart(SPHBody &body, BodyPart &contact_body_part);
-    virtual ~NeighborBuilderContactBodyPart() {};
+    virtual ~NeighborBuilderContactBodyPart(){};
     void operator()(Neighborhood &neighborhood,
                     const Vecd &pos_i, size_t index_i, const ListData &list_data_j) override;
 
@@ -203,7 +205,7 @@ class NeighborBuilderContactAdaptive : public NeighborBuilder
 {
   public:
     explicit NeighborBuilderContactAdaptive(SPHBody &body, SPHBody &contact_body);
-    virtual ~NeighborBuilderContactAdaptive() {};
+    virtual ~NeighborBuilderContactAdaptive(){};
     void operator()(Neighborhood &neighborhood,
                     const Vecd &pos_i, size_t index_i, const ListData &list_data_j) override;
 

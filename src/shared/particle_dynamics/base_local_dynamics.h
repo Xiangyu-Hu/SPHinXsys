@@ -84,29 +84,6 @@ class BaseLocalDynamics
     SPHSystem &sph_system_;
     SPHBody &sph_body_;
     BaseParticles *particles_;
-
-    template <class DataType>
-    const DataType *createConstantEntity(const std::string &name, const DataType &value)
-    {
-        return constant_entity_ptrs_.createPtr<SingularVariable<DataType>>(name, value)->ValueAddress();
-    };
-
-    template <class DataType, class ExecutionPolicy>
-    const DataType *createConstantEntity(
-        const ExecutionPolicy &policy, const std::string &name, const DataType &value)
-    {
-        return constant_entity_ptrs_.createPtr<SingularVariable<DataType>>(name, value)->ValueAddress();
-    };
-
-    template <class DataType>
-    const DataType *createConstantEntity(
-        const execution::ParallelDevicePolicy &par_device, const std::string &name, const DataType &value)
-    {
-        SingularVariable<DataType> *constant_entity =
-            constant_entity_ptrs_.createPtr<SingularVariable<DataType>>(name, value);
-        constant_entity_ptrs_.createPtr<DeviceSharedSingularVariable<DataType>>(constant_entity);
-        return constant_entity->ValueAddress();
-    };
 };
 using LocalDynamics = BaseLocalDynamics<SPHBody>;
 
@@ -145,7 +122,7 @@ class Average : public ReduceSumType
 {
   public:
     template <class DynamicsIdentifier, typename... Args>
-    Average(DynamicsIdentifier &identifier, Args &&...args)
+    Average(DynamicsIdentifier &identifier, Args &&... args)
         : ReduceSumType(identifier, std::forward<Args>(args)...){};
     virtual ~Average(){};
     using ReturnType = typename ReduceSumType::ReturnType;
@@ -202,7 +179,7 @@ class ComplexInteraction<LocalDynamicsName<FirstInteraction, OtherInteractions..
   public:
     template <class FirstParameterSet, typename... OtherParameterSets>
     explicit ComplexInteraction(FirstParameterSet &&first_parameter_set,
-                                OtherParameterSets &&...other_parameter_sets)
+                                OtherParameterSets &&... other_parameter_sets)
         : LocalDynamicsName<FirstInteraction, CommonParameters...>(first_parameter_set),
           other_interactions_(std::forward<OtherParameterSets>(other_parameter_sets)...){};
 
