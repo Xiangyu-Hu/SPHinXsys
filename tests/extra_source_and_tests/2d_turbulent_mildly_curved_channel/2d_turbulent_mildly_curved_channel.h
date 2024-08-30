@@ -39,7 +39,7 @@ Real characteristic_length = DH; /**<It needs characteristic Length to calculate
 int type_turbulent_inlet = 0 ;
 Real relaxation_rate_turbulent_inlet = 0.8;
 //** Tag for AMRD *
-int is_AMRD = 0 ;
+int is_AMRD = 1 ;
 //** Weight for correcting the velocity  gradient in the sub near wall region  *
 Real weight_vel_grad_sub_nearwall_ = 0.1;
 //** Intial values for K, Epsilon and Mu_t *
