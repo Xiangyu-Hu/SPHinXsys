@@ -42,6 +42,7 @@
 #include "base_particle_generator.h"
 #include "base_particles.h"
 #include "cell_linked_list.h"
+#include "execution.h"
 #include "sph_system.h"
 #include "sphinxsys_containers.h"
 
@@ -75,6 +76,7 @@ class SPHBody
     bool is_bound_set_;             /**< whether the bounding box is set */
     BoundingBox bound_;             /**< bounding box of the body */
     Shape *initial_shape_;          /**< initial volumetric geometry enclosing the body */
+    StdVec<execution::Implementation<Base> *> all_simple_reduce_computing_kernels_;
 
   public:
     SPHAdaptation *sph_adaptation_;        /**< numerical adaptation policy */
@@ -105,27 +107,28 @@ class SPHBody
     void setSPHBodyBounds(const BoundingBox &bound);
     BoundingBox getSPHBodyBounds();
     BoundingBox getSPHSystemBounds();
+    void registerComputingKernel(execution::Implementation<Base> *implementation);
     //----------------------------------------------------------------------
     //		Object factory template functions
     //----------------------------------------------------------------------
     virtual void defineAdaptationRatios(Real h_spacing_ratio, Real new_system_refinement_ratio = 1.0);
 
     template <class AdaptationType, typename... Args>
-    void defineAdaptation(Args &&...args)
+    void defineAdaptation(Args &&... args)
     {
         sph_adaptation_ = sph_adaptation_ptr_keeper_
                               .createPtr<AdaptationType>(sph_system_.ReferenceResolution(), std::forward<Args>(args)...);
     };
 
     template <typename... Args>
-    LevelSetShape *defineComponentLevelSetShape(const std::string &shape_name, Args &&...args)
+    LevelSetShape *defineComponentLevelSetShape(const std::string &shape_name, Args &&... args)
     {
         ComplexShape *complex_shape = DynamicCast<ComplexShape>(this, initial_shape_);
         return complex_shape->defineLevelSetShape(*this, shape_name, std::forward<Args>(args)...);
     };
 
     template <typename... Args>
-    LevelSetShape *defineBodyLevelSetShape(Args &&...args)
+    LevelSetShape *defineBodyLevelSetShape(Args &&... args)
     {
         LevelSetShape *level_set_shape =
             shape_ptr_keeper_.resetPtr<LevelSetShape>(*this, *initial_shape_, std::forward<Args>(args)...);
@@ -141,7 +144,7 @@ class SPHBody
     };
 
     template <class MaterialType = BaseMaterial, typename... Args>
-    MaterialType *defineMaterial(Args &&...args)
+    MaterialType *defineMaterial(Args &&... args)
     {
         MaterialType *material = base_material_ptr_keeper_.createPtr<MaterialType>(std::forward<Args>(args)...);
         assignMaterial(material);
@@ -153,7 +156,7 @@ class SPHBody
     // The local material parameters are also initialized.
     //----------------------------------------------------------------------
     template <class ParticleType, class... Parameters, typename... Args>
-    void generateParticles(Args &&...args)
+    void generateParticles(Args &&... args)
     {
         ParticleType *particles = base_particles_ptr_keeper_.createPtr<ParticleType>(*this, base_material_);
         ParticleGenerator<ParticleType, Parameters...> particle_generator(*this, *particles, std::forward<Args>(args)...);
@@ -165,7 +168,7 @@ class SPHBody
 
     // Buffer or ghost particles can be generated together with real particles
     template <class ParticleType, typename... Parameters, class ReserveType, typename... Args>
-    void generateParticlesWithReserve(ReserveType &particle_reserve, Args &&...args)
+    void generateParticlesWithReserve(ReserveType &particle_reserve, Args &&... args)
     {
         generateParticles<ParticleType, ReserveType, Parameters...>(particle_reserve, std::forward<Args>(args)...);
     };
@@ -189,7 +192,7 @@ class RealBody : public SPHBody
 
   public:
     template <typename... Args>
-    RealBody(Args &&...args)
+    RealBody(Args &&... args)
         : SPHBody(std::forward<Args>(args)...),
           cell_linked_list_created_(false)
     {

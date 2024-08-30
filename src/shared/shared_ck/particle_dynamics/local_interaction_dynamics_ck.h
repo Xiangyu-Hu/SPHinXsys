@@ -21,14 +21,14 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file    interaction_dynamics_ck.h
+ * @file    local_interaction_dynamics_ck.h
  * @brief 	This is for the base classes of local particle dynamics, which describe the
  * 			dynamics of a particle and it neighbors.
  * @author	Chi Zhang, Chenxi Zhao and Xiangyu Hu
  */
 
-#ifndef INTERACTION_DYNAMICS_CK_H
-#define INTERACTION_DYNAMICS_CK_H
+#ifndef LOCAL_INTERACTION_DYNAMICS_CK_H
+#define LOCAL_INTERACTION_DYNAMICS_CK_H
 
 #include "base_local_dynamics.h"
 #include "neighborhood_ck.hpp"
@@ -36,24 +36,28 @@
 namespace SPH
 {
 template <typename... T>
-class InteractionDynamics;
+class LocalInteractionDynamics;
 
 template <typename... Parameters>
-class InteractionDynamics<Inner<Parameters...>> : public LocalDynamics
+class LocalInteractionDynamics<Inner<Parameters...>> : public LocalDynamics
 {
   public:
-    explicit InteractionDynamics(InnerRelation &inner_relation);
-    virtual ~InteractionDynamics(){};
+    explicit LocalInteractionDynamics(InnerRelation &inner_relation);
+    virtual ~LocalInteractionDynamics(){};
 
     template <class ExecutionPolicy>
     class ComputingKernel : public NeighborList, public Neighbor<Parameters...>
     {
       public:
         ComputingKernel(const ExecutionPolicy &ex_policy,
-                        InteractionDynamics<Inner<Parameters...>> &encloser);
+                        LocalInteractionDynamics<Inner<Parameters...>> &encloser);
     };
 
+    void registerComputingKernel(Implementation<Base> *implementation);
+    void resetComputingKernelUpdated();
+
   protected:
+    InnerRelation &inner_relation_;
     SPHAdaptation *sph_adaptation_;
     DiscreteVariable<Vecd> *dv_pos_;
     DiscreteVariable<UnsignedInt> *dv_neighbor_index_;
@@ -61,22 +65,26 @@ class InteractionDynamics<Inner<Parameters...>> : public LocalDynamics
 };
 
 template <typename... Parameters>
-class InteractionDynamics<Contact<Parameters...>> : public LocalDynamics
+class LocalInteractionDynamics<Contact<Parameters...>> : public LocalDynamics
 {
   public:
-    explicit InteractionDynamics(ContactRelation &contact_relation);
-    virtual ~InteractionDynamics(){};
+    explicit LocalInteractionDynamics(ContactRelation &contact_relation);
+    virtual ~LocalInteractionDynamics(){};
 
     template <class ExecutionPolicy>
     class ComputingKernel : public NeighborList, public Neighbor<Parameters...>
     {
       public:
         ComputingKernel(const ExecutionPolicy &ex_policy,
-                        InteractionDynamics<Contact<Parameters...>> &encloser,
+                        LocalInteractionDynamics<Contact<Parameters...>> &encloser,
                         UnsignedInt contact_index);
     };
 
+    void registerComputingKernel(Implementation<Base> *implementation, UnsignedInt contact_index);
+    void resetComputingKernelUpdated(UnsignedInt contact_index);
+
   protected:
+    ContactRelation &contact_relation_;
     SPHAdaptation *sph_adaptation_;
     DiscreteVariable<Vecd> *dv_pos_;
     RealBodyVector contact_bodies_;
@@ -86,4 +94,4 @@ class InteractionDynamics<Contact<Parameters...>> : public LocalDynamics
     StdVec<DiscreteVariable<UnsignedInt> *> dv_contact_particle_offset_;
 };
 } // namespace SPH
-#endif // INTERACTION_DYNAMICS_CK_H
+#endif // LOCAL_INTERACTION_DYNAMICS_CK_H

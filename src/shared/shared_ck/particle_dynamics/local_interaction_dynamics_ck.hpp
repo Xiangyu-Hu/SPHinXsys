@@ -1,30 +1,47 @@
-#ifndef INTERACTION_DYNAMICS_CK_HPP
-#define INTERACTION_DYNAMICS_CK_HPP
+#ifndef LOCAL_INTERACTION_DYNAMICS_CK_HPP
+#define LOCAL_INTERACTION_DYNAMICS_CK_HPP
 
-#include "interaction_dynamics_ck.h"
+#include "local_interaction_dynamics_ck.h"
 
 namespace SPH
 {
 //=================================================================================================//
 template <typename... Parameters>
-InteractionDynamics<Inner<Parameters...>>::InteractionDynamics(InnerRelation &inner_relation)
+LocalInteractionDynamics<Inner<Parameters...>>::
+    LocalInteractionDynamics(InnerRelation &inner_relation)
     : LocalDynamics(inner_relation.getSPHBody()),
+      inner_relation_(inner_relation),
       sph_adaptation_(sph_body_.sph_adaptation_),
       dv_pos_(particles_->getVariableByName<Vecd>("Position")),
       dv_neighbor_index_(inner_relation.getNeighborIndex()),
       dv_particle_offset_(inner_relation.getParticleOffset()) {}
 //=================================================================================================//
 template <typename... Parameters>
+void LocalInteractionDynamics<Inner<Parameters...>>::
+    registerComputingKernel(Implementation<Base> *implementation)
+{
+    inner_relation_.registerComputingKernel(implementation);
+}
+//=================================================================================================//
+template <typename... Parameters>
+void LocalInteractionDynamics<Inner<Parameters...>>::resetComputingKernelUpdated()
+{
+    inner_relation_.resetComputingKernelUpdated();
+}
+//=================================================================================================//
+template <typename... Parameters>
 template <class ExecutionPolicy>
-InteractionDynamics<Inner<Parameters...>>::ComputingKernel<ExecutionPolicy>::
+LocalInteractionDynamics<Inner<Parameters...>>::ComputingKernel<ExecutionPolicy>::
     ComputingKernel(const ExecutionPolicy &ex_policy,
-                    InteractionDynamics<Inner<Parameters...>> &encloser)
+                    LocalInteractionDynamics<Inner<Parameters...>> &encloser)
     : NeighborList(ex_policy, encloser.dv_neighbor_index_, encloser.dv_particle_offset_),
       Neighbor<Parameters...>(ex_policy, encloser.sph_adaptation_, encloser.dv_pos_) {}
 //=================================================================================================//
 template <typename... Parameters>
-InteractionDynamics<Contact<Parameters...>>::InteractionDynamics(ContactRelation &contact_relation)
+LocalInteractionDynamics<Contact<Parameters...>>::
+    LocalInteractionDynamics(ContactRelation &contact_relation)
     : LocalDynamics(contact_relation.getSPHBody()),
+      contact_relation_(contact_relation),
       sph_adaptation_(sph_body_.sph_adaptation_),
       dv_pos_(particles_->getVariableByName<Vecd>("Position")),
       contact_bodies_(contact_relation.getContactBodies()),
@@ -33,10 +50,24 @@ InteractionDynamics<Contact<Parameters...>>::InteractionDynamics(ContactRelation
       dv_contact_particle_offset_(contact_relation.getContactParticleOffset()) {}
 //=================================================================================================//
 template <typename... Parameters>
+void LocalInteractionDynamics<Contact<Parameters...>>::
+    registerComputingKernel(Implementation<Base> *implementation, UnsignedInt contact_index)
+{
+    contact_relation_.registerComputingKernel(implementation, contact_index);
+}
+//=================================================================================================//
+template <typename... Parameters>
+void LocalInteractionDynamics<Contact<Parameters...>>::
+    resetComputingKernelUpdated(UnsignedInt contact_index)
+{
+    contact_relation_.resetComputingKernelUpdated(contact_index);
+}
+//=================================================================================================//
+template <typename... Parameters>
 template <class ExecutionPolicy>
-InteractionDynamics<Contact<Parameters...>>::ComputingKernel<ExecutionPolicy>::
+LocalInteractionDynamics<Contact<Parameters...>>::ComputingKernel<ExecutionPolicy>::
     ComputingKernel(const ExecutionPolicy &ex_policy,
-                    InteractionDynamics<Contact<Parameters...>> &encloser, UnsignedInt contact_index)
+                    LocalInteractionDynamics<Contact<Parameters...>> &encloser, UnsignedInt contact_index)
     : NeighborList(ex_policy,
                    encloser.dv_contact_neighbor_index_[contact_index],
                    encloser.dv_contact_particle_offset_[contact_index]),
@@ -45,4 +76,4 @@ InteractionDynamics<Contact<Parameters...>>::ComputingKernel<ExecutionPolicy>::
                               encloser.dv_pos_, encloser.contact_pos_[contact_index]) {}
 //=================================================================================================//
 } // namespace SPH
-#endif // INTERACTION_DYNAMICS_CK_HPP
+#endif // LOCAL_INTERACTION_DYNAMICS_CK_HPP

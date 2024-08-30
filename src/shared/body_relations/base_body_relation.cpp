@@ -35,14 +35,26 @@ void BaseInnerRelation::resetNeighborhoodCurrentSize()
 {
     parallel_for(
         IndexRange(0, base_particles_.TotalRealParticles()),
-        [&](const IndexRange &r)
-        {
+        [&](const IndexRange &r) {
             for (size_t num = r.begin(); num != r.end(); ++num)
             {
                 inner_configuration_[num].current_size_ = 0;
             }
         },
         ap);
+}
+//=================================================================================================//
+void BaseInnerRelation::registerComputingKernel(execution::Implementation<Base> *implementation)
+{
+    all_inner_computing_kernels_.push_back(implementation);
+}
+//=================================================================================================//
+void BaseInnerRelation::resetComputingKernelUpdated()
+{
+    for (size_t k = 0; k != all_inner_computing_kernels_.size(); ++k)
+    {
+        all_inner_computing_kernels_[k]->resetUpdated();
+    }
 }
 //=================================================================================================//
 BaseContactRelation::BaseContactRelation(SPHBody &sph_body, RealBodyVector contact_sph_bodies)
@@ -59,6 +71,7 @@ BaseContactRelation::BaseContactRelation(SPHBody &sph_body, RealBodyVector conta
             "Contact" + name + "NeighborIndex", particle_offset_list_size_));
         dv_contact_particle_offset_.push_back(addRelationVariable<UnsignedInt>(
             "Contact" + name + "ParticleOffset", particle_offset_list_size_));
+        all_contact_computing_kernels_.resize(contact_bodies_.size());
     }
 }
 //=================================================================================================//
@@ -68,14 +81,27 @@ void BaseContactRelation::resetNeighborhoodCurrentSize()
     {
         parallel_for(
             IndexRange(0, base_particles_.TotalRealParticles()),
-            [&](const IndexRange &r)
-            {
+            [&](const IndexRange &r) {
                 for (size_t num = r.begin(); num != r.end(); ++num)
                 {
                     contact_configuration_[k][num].current_size_ = 0;
                 }
             },
             ap);
+    }
+}
+//=================================================================================================//
+void BaseContactRelation::registerComputingKernel(
+    execution::Implementation<Base> *implementation, UnsignedInt contact_index)
+{
+    all_contact_computing_kernels_[contact_index].push_back(implementation);
+}
+//=================================================================================================//
+void BaseContactRelation::resetComputingKernelUpdated(UnsignedInt contact_index)
+{
+    for (size_t k = 0; k != all_contact_computing_kernels_[contact_index].size(); ++k)
+    {
+        all_contact_computing_kernels_[contact_index][k]->resetUpdated();
     }
 }
 //=================================================================================================//

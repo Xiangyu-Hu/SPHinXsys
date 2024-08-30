@@ -34,6 +34,7 @@
 #include "base_body.h"
 #include "base_configuration_dynamics.h"
 #include "base_particles.hpp"
+#include "local_interaction_dynamics_ck.hpp"
 
 namespace SPH
 {
@@ -41,35 +42,28 @@ template <typename... T>
 class BodyRelationUpdate;
 
 template <>
-class BodyRelationUpdate<Inner<>> : public LocalDynamics
+class BodyRelationUpdate<Inner<>> : public LocalInteractionDynamics<Inner<>>
 {
 
   public:
     explicit BodyRelationUpdate(InnerRelation &inner_relation);
-    virtual ~BodyRelationUpdate() {};
+    virtual ~BodyRelationUpdate(){};
 
     template <class ExecutionPolicy>
-    class ComputingKernel
+    class ComputingKernel : public LocalInteractionDynamics<Inner<>>::ComputingKernel<ExecutionPolicy>
     {
       public:
-        ComputingKernel(const ExecutionPolicy &ex_policy,
-                        BodyRelationUpdate<Inner<>> &encloser);
+        ComputingKernel(const ExecutionPolicy &ex_policy, BodyRelationUpdate<Inner<>> &encloser);
         void incrementNeighborSize(UnsignedInt index_i);
         void updateNeighborList(UnsignedInt index_i);
 
       protected:
         NeighborSearch neighbor_search_;
-        Vecd *pos_;
-        UnsignedInt *neighbor_index_;
-        UnsignedInt *particle_offset_;
     };
 
   protected:
     CellLinkedList &cell_linked_list_;
     UnsignedInt particle_offset_list_size_;
-    DiscreteVariable<Vecd> *dv_pos_;
-    DiscreteVariable<UnsignedInt> *dv_neighbor_index_;
-    DiscreteVariable<UnsignedInt> *dv_particle_offset_;
 };
 
 template <typename... T>
@@ -85,8 +79,8 @@ class UpdateRelation<ExecutionPolicy, BodyRelationUpdate<Inner<Parameters...>>>
 
   public:
     template <typename... Args>
-    UpdateRelation(Args &&...args);
-    virtual ~UpdateRelation() {};
+    UpdateRelation(Args &&... args);
+    virtual ~UpdateRelation(){};
     virtual void exec(Real dt = 0.0) override;
 
   protected:
@@ -95,15 +89,15 @@ class UpdateRelation<ExecutionPolicy, BodyRelationUpdate<Inner<Parameters...>>>
 };
 
 template <>
-class BodyRelationUpdate<Contact<>> : public LocalDynamics
+class BodyRelationUpdate<Contact<>> : public LocalInteractionDynamics<Contact<>>
 {
 
   public:
     explicit BodyRelationUpdate(ContactRelation &contact_relation);
-    virtual ~BodyRelationUpdate() {};
+    virtual ~BodyRelationUpdate(){};
 
     template <class ExecutionPolicy>
-    class ComputingKernel
+    class ComputingKernel : public LocalInteractionDynamics<Contact<>>::ComputingKernel<ExecutionPolicy>
     {
       public:
         ComputingKernel(const ExecutionPolicy &ex_policy,
@@ -114,18 +108,11 @@ class BodyRelationUpdate<Contact<>> : public LocalDynamics
 
       protected:
         NeighborSearch neighbor_search_;
-        Vecd *pos_;
-        UnsignedInt *neighbor_index_;
-        UnsignedInt *particle_offset_;
     };
 
   protected:
-    RealBodyVector contact_bodies_;
     UnsignedInt particle_offset_list_size_;
-    DiscreteVariable<Vecd> *dv_pos_;
     StdVec<CellLinkedList *> contact_cell_linked_list_;
-    StdVec<DiscreteVariable<UnsignedInt> *> dv_contact_neighbor_index_;
-    StdVec<DiscreteVariable<UnsignedInt> *> dv_contact_particle_offset_;
 };
 
 template <class ExecutionPolicy, typename... Parameters>
@@ -139,8 +126,8 @@ class UpdateRelation<ExecutionPolicy, BodyRelationUpdate<Contact<Parameters...>>
 
   public:
     template <typename... Args>
-    UpdateRelation(Args &&...args);
-    virtual ~UpdateRelation() {};
+    UpdateRelation(Args &&... args);
+    virtual ~UpdateRelation(){};
     virtual void exec(Real dt = 0.0) override;
 
   protected:

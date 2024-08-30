@@ -130,7 +130,7 @@ inline void copyFromDevice(T *host, const T *device, std::size_t size)
 namespace execution
 {
 template <class LocalDynamicsType>
-class Implementation<LocalDynamicsType, ParallelDevicePolicy>
+class Implementation<LocalDynamicsType, ParallelDevicePolicy> : public Implementation<Base>
 {
     using ComputingKernel = typename LocalDynamicsType::
         template ComputingKernel<ParallelDevicePolicy>;
@@ -138,36 +138,43 @@ class Implementation<LocalDynamicsType, ParallelDevicePolicy>
 
   public:
     explicit Implementation(LocalDynamicsType &local_dynamics)
-        : local_dynamics_(local_dynamics), computing_kernel_(nullptr) {}
+        : Implementation<Base>(),
+          local_dynamics_(local_dynamics), computing_kernel_(nullptr) {}
     ~Implementation()
     {
         freeDeviceData(computing_kernel_);
     }
 
     template <typename... Args>
-    ComputingKernel *getComputingKernel(Args &&...args)
+    ComputingKernel *getComputingKernel(Args &&... args)
     {
         if (computing_kernel_ == nullptr)
         {
-
+            local_dynamics_.registerComputingKernel(this, std::forward<Args>(args)...);
             computing_kernel_ = allocateDeviceOnly<ComputingKernel>(1);
             ComputingKernel *host_kernel =
                 kernel_ptr_keeper_.template createPtr<ComputingKernel>(
                     ParallelDevicePolicy{}, local_dynamics_, std::forward<Args>(args)...);
             copyToDevice(host_kernel, computing_kernel_, 1);
+            setUpdated();
+        }
+
+        if (!isUpdated())
+        {
+            overwriteComputingKernel(std::forward<Args>(args)...);
         }
 
         return computing_kernel_;
     }
 
     template <typename... Args>
-    ComputingKernel *overwriteComputingKernel(Args &&...args)
+    void overwriteComputingKernel(Args &&... args)
     {
         ComputingKernel *host_kernel =
             kernel_ptr_keeper_.template createPtr<ComputingKernel>(
                 ParallelDevicePolicy{}, local_dynamics_, std::forward<Args>(args)...);
         copyToDevice(host_kernel, computing_kernel_, 1);
-        return computing_kernel_;
+        setUpdated();
     }
 
   private:

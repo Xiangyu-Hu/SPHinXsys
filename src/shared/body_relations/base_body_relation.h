@@ -34,6 +34,7 @@
 #include "base_geometry.h"
 #include "base_particles.h"
 #include "cell_linked_list.h"
+#include "execution.h"
 #include "neighborhood.h"
 
 namespace SPH
@@ -144,11 +145,14 @@ class BaseInnerRelation : public SPHRelation
 
     DiscreteVariable<UnsignedInt> *getNeighborIndex() { return dv_neighbor_index_; };
     DiscreteVariable<UnsignedInt> *getParticleOffset() { return dv_particle_offset_; };
+    void registerComputingKernel(execution::Implementation<Base> *implementation);
+    void resetComputingKernelUpdated();
 
   protected:
     virtual void resetNeighborhoodCurrentSize();
     DiscreteVariable<UnsignedInt> *dv_neighbor_index_;
     DiscreteVariable<UnsignedInt> *dv_particle_offset_;
+    StdVec<execution::Implementation<Base> *> all_inner_computing_kernels_;
 };
 
 /**
@@ -161,6 +165,7 @@ class BaseContactRelation : public SPHRelation
     virtual void resetNeighborhoodCurrentSize();
     StdVec<DiscreteVariable<UnsignedInt> *> dv_contact_neighbor_index_;
     StdVec<DiscreteVariable<UnsignedInt> *> dv_contact_particle_offset_;
+    StdVec<StdVec<execution::Implementation<Base> *>> all_contact_computing_kernels_;
 
   public:
     RealBodyVector contact_bodies_;
@@ -176,6 +181,8 @@ class BaseContactRelation : public SPHRelation
     StdVec<SPHAdaptation *> getContactAdaptations() { return contact_adaptations_; };
     StdVec<DiscreteVariable<UnsignedInt> *> getContactNeighborIndex() { return dv_contact_neighbor_index_; };
     StdVec<DiscreteVariable<UnsignedInt> *> getContactParticleOffset() { return dv_contact_particle_offset_; };
+    void registerComputingKernel(execution::Implementation<Base> *implementation, UnsignedInt contact_index);
+    void resetComputingKernelUpdated(UnsignedInt contact_index);
 };
 } // namespace SPH
 #endif // BASE_BODY_RELATION_H

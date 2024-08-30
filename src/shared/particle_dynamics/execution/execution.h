@@ -30,10 +30,10 @@
 #ifndef EXECUTION_H
 #define EXECUTION_H
 
-#include "execution_policy.h"
-
 #include "base_data_type.h"
+#include "execution_policy.h"
 #include "ownership.h"
+#include "sphinxsys_containers.h"
 
 namespace SPH
 {
@@ -42,37 +42,61 @@ namespace execution
 template <typename... T>
 class Implementation;
 
+template <>
+class Implementation<Base>
+{
+  public:
+    explicit Implementation() {}
+    ~Implementation() {}
+
+    bool isUpdated() { return is_updated_; };
+    void resetUpdated() { is_updated_ = false; };
+
+  protected:
+    bool is_updated_ = false;
+    void setUpdated() { is_updated_ = true; };
+};
+
 template <class LocalDynamicsType, class ExecutionPolicy>
-class Implementation<LocalDynamicsType, ExecutionPolicy>
+class Implementation<LocalDynamicsType, ExecutionPolicy> : public Implementation<Base>
 {
     using ComputingKernel = typename LocalDynamicsType::
         template ComputingKernel<ExecutionPolicy>;
 
   public:
     explicit Implementation(LocalDynamicsType &local_dynamics)
-        : local_dynamics_(local_dynamics), computing_kernel_(nullptr) {}
+        : Implementation<Base>(),
+          local_dynamics_(local_dynamics), computing_kernel_(nullptr) {}
     ~Implementation()
     {
         delete computing_kernel_;
     }
 
     template <typename... Args>
-    ComputingKernel *getComputingKernel(Args &&...args)
+    ComputingKernel *getComputingKernel(Args &&... args)
     {
         if (computing_kernel_ == nullptr)
         {
+            local_dynamics_.registerComputingKernel(this, std::forward<Args>(args)...);
             computing_kernel_ = new ComputingKernel(
                 ExecutionPolicy{}, local_dynamics_, std::forward<Args>(args)...);
+            setUpdated();
         }
+
+        if (!isUpdated())
+        {
+            overwriteComputingKernel(std::forward<Args>(args)...);
+        }
+
         return computing_kernel_;
     }
 
     template <typename... Args>
-    ComputingKernel *overwriteComputingKernel(Args &&...args)
+    void overwriteComputingKernel(Args &&... args)
     {
         *computing_kernel_ = ComputingKernel(
             ExecutionPolicy{}, local_dynamics_, std::forward<Args>(args)...);
-        return computing_kernel_;
+        setUpdated();
     }
 
   private:

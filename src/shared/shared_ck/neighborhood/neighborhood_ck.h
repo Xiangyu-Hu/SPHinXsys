@@ -76,11 +76,9 @@ class NeighborList
 
   protected:
     UnsignedInt *neighbor_index_;
+    UnsignedInt *particle_offset_;
     inline UnsignedInt FirstNeighbor(UnsignedInt i) { return particle_offset_[i]; };
     inline UnsignedInt LastNeighbor(UnsignedInt i) { return particle_offset_[i] + 1; };
-
-  private:
-    UnsignedInt *particle_offset_;
 };
 } // namespace SPH
 #endif // NEIGHBORHOOD_CK_H
