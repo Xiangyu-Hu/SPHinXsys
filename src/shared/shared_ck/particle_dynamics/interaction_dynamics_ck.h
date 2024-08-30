@@ -38,22 +38,19 @@ namespace SPH
 template <typename... T>
 class InteractionDynamics;
 
-template <>
-class InteractionDynamics<Inner<>> : public LocalDynamics
+template <typename... Parameters>
+class InteractionDynamics<Inner<Parameters...>> : public LocalDynamics
 {
   public:
     explicit InteractionDynamics(InnerRelation &inner_relation);
     virtual ~InteractionDynamics(){};
 
     template <class ExecutionPolicy>
-    class ComputingKernel : public NeighborList
+    class ComputingKernel : public NeighborList, public Neighbor<Parameters...>
     {
       public:
         ComputingKernel(const ExecutionPolicy &ex_policy,
-                        InteractionDynamics<Inner<>> &encloser);
-
-      protected:
-        Neighbor<> neighbor_;
+                        InteractionDynamics<Inner<Parameters...>> &encloser);
     };
 
   protected:
@@ -63,23 +60,20 @@ class InteractionDynamics<Inner<>> : public LocalDynamics
     DiscreteVariable<UnsignedInt> *dv_particle_offset_;
 };
 
-template <>
-class InteractionDynamics<Contact<>> : public LocalDynamics
+template <typename... Parameters>
+class InteractionDynamics<Contact<Parameters...>> : public LocalDynamics
 {
   public:
     explicit InteractionDynamics(ContactRelation &contact_relation);
     virtual ~InteractionDynamics(){};
 
     template <class ExecutionPolicy>
-    class ComputingKernel : public NeighborList
+    class ComputingKernel : public NeighborList, public Neighbor<Parameters...>
     {
       public:
         ComputingKernel(const ExecutionPolicy &ex_policy,
-                        InteractionDynamics<Contact<>> &encloser,
+                        InteractionDynamics<Contact<Parameters...>> &encloser,
                         UnsignedInt contact_index);
-
-      protected:
-        Neighbor<> neighbor_;
     };
 
   protected:

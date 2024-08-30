@@ -49,20 +49,14 @@ class Neighbor<>
     template <class ExecutionPolicy>
     Neighbor(const ExecutionPolicy &ex_policy, SPHAdaptation *sph_adaptation, SPHAdaptation *contact_adaptation,
              DiscreteVariable<Vecd> *dv_pos, DiscreteVariable<Vecd> *dv_target_pos);
-    template <typename DataType>
-    inline Real W_ij(const DataType &r_ij) const
+
+    inline Vecd r_ij(size_t i, size_t j) const { return source_pos_[i] - target_pos_[j]; };
+    inline Real W_ij(size_t i, size_t j) const { return kernel_.W(r_ij(i, j)); }
+    inline Real dW_ij(size_t i, size_t j) const { return kernel_.dW(r_ij(i, j)); }
+
+    inline Vecd e_ij(size_t i, size_t j) const
     {
-        return kernel_.W(r_ij);
-    }
-    template <typename DataType>
-    inline Real dW_ij(const DataType &r_ij) const
-    {
-        return kernel_.dW(r_ij);
-    }
-    inline Vecd r_ij(size_t index_i, size_t index_j) const { return source_pos_[index_i] - target_pos_[index_j]; };
-    inline Vecd e_ij(size_t index_i, size_t index_j) const
-    {
-        Vecd displacement = r_ij(index_i, index_j);
+        Vecd displacement = r_ij(i, j);
         return displacement / (displacement.norm() + TinyReal);
     }
 
@@ -82,8 +76,8 @@ class NeighborList
 
   protected:
     UnsignedInt *neighbor_index_;
-    inline UnsignedInt FirstNeighbor(UnsignedInt index_i) { return particle_offset_[index_i]; };
-    inline UnsignedInt LastNeighbor(UnsignedInt index_i) { return particle_offset_[index_i] + 1; };
+    inline UnsignedInt FirstNeighbor(UnsignedInt i) { return particle_offset_[i]; };
+    inline UnsignedInt LastNeighbor(UnsignedInt i) { return particle_offset_[i] + 1; };
 
   private:
     UnsignedInt *particle_offset_;
