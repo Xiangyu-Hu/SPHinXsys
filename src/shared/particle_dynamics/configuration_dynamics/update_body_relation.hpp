@@ -22,7 +22,8 @@ void BodyRelationUpdate<Inner<>>::ComputingKernel<ExecutionPolicy>::
     UnsignedInt neighbor_count = 0;
     neighbor_search_.forEachSearch(
         index_i, this->source_pos_,
-        [&](size_t index_j) {
+        [&](size_t index_j)
+        {
             if (index_i != index_j)
             {
                 neighbor_count++;
@@ -38,7 +39,8 @@ void BodyRelationUpdate<Inner<>>::ComputingKernel<ExecutionPolicy>::
     UnsignedInt neighbor_count = 0;
     neighbor_search_.forEachSearch(
         index_i, this->source_pos_,
-        [&](size_t index_j) {
+        [&](size_t index_j)
+        {
             if (index_i != index_j)
             {
                 neighbor_count++;
@@ -49,7 +51,7 @@ void BodyRelationUpdate<Inner<>>::ComputingKernel<ExecutionPolicy>::
 //=================================================================================================//
 template <class ExecutionPolicy, typename... Parameters>
 template <typename... Args>
-UpdateRelation<ExecutionPolicy, BodyRelationUpdate<Inner<Parameters...>>>::UpdateRelation(Args &&... args)
+UpdateRelation<ExecutionPolicy, BodyRelationUpdate<Inner<Parameters...>>>::UpdateRelation(Args &&...args)
     : BodyRelationUpdate<Inner<Parameters...>>(std::forward<Args>(args)...),
       BaseDynamics<void>(), ex_policy_(ExecutionPolicy{}), kernel_implementation_(*this) {}
 //=================================================================================================//
@@ -60,7 +62,8 @@ void UpdateRelation<ExecutionPolicy, BodyRelationUpdate<Inner<Parameters...>>>::
     ComputingKernel *computing_kernel = kernel_implementation_.getComputingKernel();
     particle_for(ex_policy_,
                  IndexRange(0, total_real_particles),
-                 [=](size_t i) { computing_kernel->incrementNeighborSize(i); });
+                 [=](size_t i)
+                 { computing_kernel->incrementNeighborSize(i); });
 
     UnsignedInt *neighbor_index = this->dv_neighbor_index_->DelegatedDataField(ex_policy_);
     UnsignedInt *particle_offset = this->dv_particle_offset_->DelegatedDataField(ex_policy_);
@@ -78,7 +81,8 @@ void UpdateRelation<ExecutionPolicy, BodyRelationUpdate<Inner<Parameters...>>>::
 
     particle_for(ex_policy_,
                  IndexRange(0, total_real_particles),
-                 [=](size_t i) { computing_kernel->updateNeighborList(i); });
+                 [=](size_t i)
+                 { computing_kernel->updateNeighborList(i); });
 }
 //=================================================================================================//
 template <class ExecutionPolicy>
@@ -99,7 +103,8 @@ void BodyRelationUpdate<Contact<>>::ComputingKernel<ExecutionPolicy>::
     UnsignedInt neighbor_count = 0;
     neighbor_search_.forEachSearch(
         index_i, this->source_pos_,
-        [&](size_t index_j) {
+        [&](size_t index_j)
+        {
             neighbor_count++;
         });
     this->neighbor_index_[index_i] = neighbor_count;
@@ -112,7 +117,8 @@ void BodyRelationUpdate<Contact<>>::ComputingKernel<ExecutionPolicy>::
     UnsignedInt neighbor_count = 0;
     neighbor_search_.forEachSearch(
         index_i, this->source_pos_,
-        [&](size_t index_j) {
+        [&](size_t index_j)
+        {
             neighbor_count++;
             this->neighbor_index_[this->particle_offset_[index_i] + neighbor_count] = index_j;
         });
@@ -120,7 +126,7 @@ void BodyRelationUpdate<Contact<>>::ComputingKernel<ExecutionPolicy>::
 //=================================================================================================//
 template <class ExecutionPolicy, typename... Parameters>
 template <typename... Args>
-UpdateRelation<ExecutionPolicy, BodyRelationUpdate<Contact<Parameters...>>>::UpdateRelation(Args &&... args)
+UpdateRelation<ExecutionPolicy, BodyRelationUpdate<Contact<Parameters...>>>::UpdateRelation(Args &&...args)
     : BodyRelationUpdate<Contact<Parameters...>>(std::forward<Args>(args)...),
       BaseDynamics<void>(), ex_policy_(ExecutionPolicy{})
 {
@@ -141,7 +147,8 @@ void UpdateRelation<ExecutionPolicy, BodyRelationUpdate<Contact<Parameters...>>>
         ComputingKernel *computing_kernel = contact_kernel_implementation_[k]->getComputingKernel(k);
         particle_for(ex_policy_,
                      IndexRange(0, total_real_particles),
-                     [=](size_t i) { computing_kernel->incrementNeighborSize(i); });
+                     [=](size_t i)
+                     { computing_kernel->incrementNeighborSize(i); });
 
         UnsignedInt *neighbor_index = this->dv_contact_neighbor_index_[k]->DelegatedDataField(ex_policy_);
         UnsignedInt *particle_offset = this->dv_contact_particle_offset_[k]->DelegatedDataField(ex_policy_);
@@ -159,7 +166,8 @@ void UpdateRelation<ExecutionPolicy, BodyRelationUpdate<Contact<Parameters...>>>
 
         particle_for(ex_policy_,
                      IndexRange(0, total_real_particles),
-                     [=](size_t i) { computing_kernel->updateNeighborList(i); });
+                     [=](size_t i)
+                     { computing_kernel->updateNeighborList(i); });
     }
 }
 //=================================================================================================//
