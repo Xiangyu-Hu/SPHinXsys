@@ -84,7 +84,8 @@ Real Re_calculated = U_f * DH * rho0_f / mu_f;
 Real DH_C = DH - 2.0 * offset_distance;
 
 //** Intial inlet pressure to drive flow *
-Real initial_inlet_pressure = 0.5 * rho0_f * U_inlet ;
+//Real initial_inlet_pressure = 0.5 * rho0_f * U_inlet ;
+Real initial_inlet_pressure = 100.0;
 //----------------------------------------------------------------------
 //	The emitter block with offset model. 
 //----------------------------------------------------------------------
@@ -432,7 +433,7 @@ struct LeftInflowPressure
     Real operator()(Real &p_)
     {
         Real run_time_ = GlobalStaticVariables::physical_time_;
-        if(run_time_ > 5.0)
+        if(run_time_ > 20.0)
         {
             return p_;
         }
