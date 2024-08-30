@@ -39,11 +39,13 @@ Real characteristic_length = DH; /**<It needs characteristic Length to calculate
 int type_turbulent_inlet = 0 ;
 Real relaxation_rate_turbulent_inlet = 0.8;
 //** Tag for AMRD *
-int is_AMRD = 1 ;
+int is_AMRD = 0 ;
 //** Weight for correcting the velocity  gradient in the sub near wall region  *
 Real weight_vel_grad_sub_nearwall_ = 0.1;
 //** Intial values for K, Epsilon and Mu_t *
 StdVec<Real> initial_turbu_values = { 0.000180001 ,3.326679e-5 ,1.0e-9 };  
+//** Intial inlet pressure to drive flow *
+Real initial_inlet_pressure = 5.0 ;
 
 Real y_p_constant = 0.05;
 Real resolution_ref = (DH - 2.0 * y_p_constant) / (num_fluid_cross_section - 1.0); /**< Initial reference particle spacing. */
@@ -428,6 +430,15 @@ struct LeftInflowPressure
 
     Real operator()(Real &p_)
     {
-        return p_;
+        Real run_time_ = GlobalStaticVariables::physical_time_;
+        if(run_time_ > 5.0)
+        {
+            return p_;
+        }
+        else
+        {
+            return initial_inlet_pressure;
+        }
+        
     }
 };
