@@ -41,7 +41,7 @@ Real relaxation_rate_turbulent_inlet = 0.8;
 //** Tag for AMRD *
 int is_AMRD = 0 ;
 //** Weight for correcting the velocity  gradient in the sub near wall region  *
-Real weight_vel_grad_sub_nearwall_ = 0.5;
+Real weight_vel_grad_sub_nearwall_ = 0.1;
 //** Intial values for K, Epsilon and Mu_t *
 StdVec<Real> initial_turbu_values = { 0.000180001 ,3.326679e-5 ,1.0e-9 };  
 
