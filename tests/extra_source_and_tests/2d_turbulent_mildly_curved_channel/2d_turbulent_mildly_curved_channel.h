@@ -44,8 +44,6 @@ int is_AMRD = 0 ;
 Real weight_vel_grad_sub_nearwall_ = 0.1;
 //** Intial values for K, Epsilon and Mu_t *
 StdVec<Real> initial_turbu_values = { 0.000180001 ,3.326679e-5 ,1.0e-9 };  
-//** Intial inlet pressure to drive flow *
-Real initial_inlet_pressure = 5.0 ;
 
 Real y_p_constant = 0.05;
 Real resolution_ref = (DH - 2.0 * y_p_constant) / (num_fluid_cross_section - 1.0); /**< Initial reference particle spacing. */
@@ -84,6 +82,9 @@ Real mu_f = rho0_f * U_f * DH / Re;
 Real Re_calculated = U_f * DH * rho0_f / mu_f; 
 
 Real DH_C = DH - 2.0 * offset_distance;
+
+//** Intial inlet pressure to drive flow *
+Real initial_inlet_pressure = 0.5 * rho0_f * U_inlet ;
 //----------------------------------------------------------------------
 //	The emitter block with offset model. 
 //----------------------------------------------------------------------
