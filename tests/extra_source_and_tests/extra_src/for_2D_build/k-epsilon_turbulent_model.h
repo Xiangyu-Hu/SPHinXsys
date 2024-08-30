@@ -104,7 +104,7 @@ namespace fluid_dynamics
 	class GetVelocityGradient<Inner<>> : public GetVelocityGradient<DataDelegateInner>
 	{
 	public:
-		explicit GetVelocityGradient(BaseInnerRelation& inner_relation);
+		explicit GetVelocityGradient(BaseInnerRelation& inner_relation, Real weight_sub);
 		virtual ~GetVelocityGradient() {};
 		void interaction(size_t index_i, Real dt = 0.0);
 		void update(size_t index_i, Real dt = 0.0);
@@ -112,6 +112,7 @@ namespace fluid_dynamics
 		StdLargeVec<Matd> &velocity_gradient_;
 		StdLargeVec<Matd> &B_;
 		StdLargeVec<Matd> &turbu_B_;
+		Real weight_sub_nearwall_;
 	};
 	using GetVelocityGradientInner = GetVelocityGradient<Inner<>>;
 	

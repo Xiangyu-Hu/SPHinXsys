@@ -85,11 +85,12 @@ namespace fluid_dynamics
 		return vel_fric_mag * vel_fric_mag / dynamic_viscosity;
 	}
 //=================================================================================================//
-	GetVelocityGradient<Inner<>>::GetVelocityGradient(BaseInnerRelation& inner_relation)
+	GetVelocityGradient<Inner<>>::GetVelocityGradient(BaseInnerRelation& inner_relation, Real weight_sub)
 		: GetVelocityGradient<DataDelegateInner>(inner_relation),
 		velocity_gradient_(*particles_->getVariableDataByName<Matd>("TurbulentVelocityGradient")),
 		B_(*particles_->getVariableDataByName<Matd>("LinearGradientCorrectionMatrix")),
-		turbu_B_(*particles_->getVariableDataByName<Matd>("TurbulentLinearGradientCorrectionMatrix"))
+		turbu_B_(*particles_->getVariableDataByName<Matd>("TurbulentLinearGradientCorrectionMatrix")),
+		weight_sub_nearwall_(weight_sub)
 	{
 		this->particles_->addVariableToSort<Matd>("TurbulentVelocityGradient");
 		this->particles_->addVariableToWrite<Matd>("TurbulentVelocityGradient");
@@ -110,7 +111,6 @@ namespace fluid_dynamics
 				
 				Real r_ij = inner_neighborhood.r_ij_[n];
 				const Vecd& e_ij = inner_neighborhood.e_ij_[n];
-				Real weight = 0.5 ;
 				if (is_near_wall_P2_[index_i] == 10 && is_near_wall_P1_[index_j] == 1)
 				{
 					//Vecd vel_ps = vel_[index_j] + 0.5 * r_ij * velocity_gradient_[index_j] * e_ij ;
@@ -126,8 +126,8 @@ namespace fluid_dynamics
 					Vecd vel_diff = velocity_gradient_[index_j] * r_ij * e_ij;
 					Matd P2 = - vel_diff * nablaW_ijV_j.transpose();
 					
-					//velocity_gradient_[index_i] += - weight * vel_diff * nablaW_ijV_j.transpose();
-					velocity_gradient_[index_i] +=  ( 1 - weight ) * P1 +  weight* P2;
+					//velocity_gradient_[index_i] += - weight_sub_nearwall_ * vel_diff * nablaW_ijV_j.transpose();
+					velocity_gradient_[index_i] +=  ( 1 - weight_sub_nearwall_ ) * P1 +  weight_sub_nearwall_* P2;
 				}
 				else
 				{

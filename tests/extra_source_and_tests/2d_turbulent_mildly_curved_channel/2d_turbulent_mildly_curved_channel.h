@@ -38,6 +38,10 @@ Real characteristic_length = DH; /**<It needs characteristic Length to calculate
 //** For K and Epsilon, type of the turbulent inlet, 0 is freestream, 1 is from interpolation from PY21 *
 int type_turbulent_inlet = 0 ;
 Real relaxation_rate_turbulent_inlet = 0.8;
+//** Tag for AMRD *
+int is_AMRD = 0 ;
+//** Weight for correcting the velocity  gradient in the sub near wall region  *
+Real weight_vel_grad_sub_nearwall_ = 0.5;
 //** Intial values for K, Epsilon and Mu_t *
 StdVec<Real> initial_turbu_values = { 0.000180001 ,3.326679e-5 ,1.0e-9 };  
 
@@ -87,13 +91,14 @@ Vec2d left_buffer_translation = Vec2d(-DL_sponge, 0.0) + left_buffer_halfsize + 
 Real outlet_buffer_length = BW ;
 Real outlet_buffer_height = 1.5 * DH ;
 
-//Real outlet_disposer_rotation_angel = 0.5 * Pi ; //** By default, counter-clockwise is positive *
-//Real outlet_emitter_rotation_angel = -0.5 * Pi ; //** By default, counter-clockwise is positive *
-//Vec2d outlet_buffer_center_translation = Vec2d(DL_domain - 0.5 * DH , DH_domain- 0.5 * outlet_buffer_length) ;
+Real outlet_disposer_rotation_angel = 0.5 * Pi ; //** By default, counter-clockwise is positive *
+Real outlet_emitter_rotation_angel = -0.5 * Pi ; //** By default, counter-clockwise is positive *
+Vec2d outlet_buffer_center_translation = Vec2d(DL_domain - 0.5 * DH , DH_domain- 0.5 * outlet_buffer_length) ;
 
-Real outlet_disposer_rotation_angel = 0.0 * Pi ; //** By default, counter-clockwise is positive *
-Real outlet_emitter_rotation_angel =  Pi ; //** By default, counter-clockwise is positive *
-Vec2d outlet_buffer_center_translation = Vec2d(DL_domain - 0.5 * outlet_buffer_length , 0.5 * DH) ;
+//** If return to the straight channel *
+// Real outlet_disposer_rotation_angel = 0.0 * Pi ; //** By default, counter-clockwise is positive *
+// Real outlet_emitter_rotation_angel =  Pi ; //** By default, counter-clockwise is positive *
+// Vec2d outlet_buffer_center_translation = Vec2d(DL_domain - 0.5 * outlet_buffer_length , 0.5 * DH) ;
 
 Vec2d right_buffer_halfsize = Vec2d(0.5 * outlet_buffer_length, 0.75 * outlet_buffer_height);
 Vec2d right_buffer_translation = outlet_buffer_center_translation;
@@ -128,37 +133,37 @@ std::vector<Vecd> createWaterBlockShape()
     water_block_shape.push_back(Vecd(DL1, DH));
     
 
-    // //** Inner Circle segment *
-    // Real start_x = DL1;
-    // for (int k = 1; k <= num_inner_arc_points; ++k)
-    // {
-    //     Real x_coordinate = start_x + k * arc_sampling_interval; //** clockwise *
-    //     //** Circle center is (DL1, R2), radius is R1. Equation is (x-DL1)^2+(y-R2)^2=R1^2,
-    //     //** Considring the coordinate, y= -sqr(R1^2-(x-DH1)^2)+R2 * 
-    //     Real y_coordinate = -sqrt( R1*R1 - (x_coordinate-DL1)*(x_coordinate-DL1) ) + R2;
-    //     water_block_shape.push_back(Vecd(x_coordinate, y_coordinate));
-    // }
+    //** Inner Circle segment *
+    Real start_x = DL1;
+    for (int k = 1; k <= num_inner_arc_points; ++k)
+    {
+        Real x_coordinate = start_x + k * arc_sampling_interval; //** clockwise *
+        //** Circle center is (DL1, R2), radius is R1. Equation is (x-DL1)^2+(y-R2)^2=R1^2,
+        //** Considring the coordinate, y= -sqr(R1^2-(x-DH1)^2)+R2 * 
+        Real y_coordinate = -sqrt( R1*R1 - (x_coordinate-DL1)*(x_coordinate-DL1) ) + R2;
+        water_block_shape.push_back(Vecd(x_coordinate, y_coordinate));
+    }
 
-    // //** 4 points for outlet tube *
-    // water_block_shape.push_back(Vecd(DL1 + R1, R2));
-    // water_block_shape.push_back(Vecd(DL1 + R1, R2 + DL2 + offset_distance));
-    // water_block_shape.push_back(Vecd(DL1 + R2, R2 + DL2 + offset_distance));
-    // water_block_shape.push_back(Vecd(DL1 + R2, R2 ));
+    //** 4 points for outlet tube *
+    water_block_shape.push_back(Vecd(DL1 + R1, R2));
+    water_block_shape.push_back(Vecd(DL1 + R1, R2 + DL2 + offset_distance));
+    water_block_shape.push_back(Vecd(DL1 + R2, R2 + DL2 + offset_distance));
+    water_block_shape.push_back(Vecd(DL1 + R2, R2 ));
 
-    // //** Outer Circle segment *
-    // start_x = DL1 + R2;
-    // for (int k = 1; k <= num_outer_arc_points; ++k)
-    // {
-    //     Real x_coordinate = start_x - k * arc_sampling_interval; //** clockwise *
-    //     //** Circle center is (DL1, R2), radius is R2. Equation is (x-DL1)^2+(y-R2)^2=R2^2,
-    //     //** Considring the coordinate, y= -sqr(R2^2-(x-DH1)^2)+R2 * 
-    //     Real y_coordinate = -sqrt( R2*R2 - (x_coordinate-DL1)*(x_coordinate-DL1) ) + R2;
-    //     water_block_shape.push_back(Vecd(x_coordinate, y_coordinate));
-    // }
+    //** Outer Circle segment *
+    start_x = DL1 + R2;
+    for (int k = 1; k <= num_outer_arc_points; ++k)
+    {
+        Real x_coordinate = start_x - k * arc_sampling_interval; //** clockwise *
+        //** Circle center is (DL1, R2), radius is R2. Equation is (x-DL1)^2+(y-R2)^2=R2^2,
+        //** Considring the coordinate, y= -sqr(R2^2-(x-DH1)^2)+R2 * 
+        Real y_coordinate = -sqrt( R2*R2 - (x_coordinate-DL1)*(x_coordinate-DL1) ) + R2;
+        water_block_shape.push_back(Vecd(x_coordinate, y_coordinate));
+    }
 
     //** If return to straight channel, add extra 2 points *
-    water_block_shape.push_back(Vecd(DL_domain + offset_distance, DH));
-    water_block_shape.push_back(Vecd(DL_domain + offset_distance, 0.0));
+    // water_block_shape.push_back(Vecd(DL_domain + offset_distance, DH));
+    // water_block_shape.push_back(Vecd(DL_domain + offset_distance, 0.0));
 
     //** The left 2 points for inlet tube, totally 5 *
     water_block_shape.push_back(Vecd(DL1, 0.0));
@@ -185,37 +190,37 @@ std::vector<Vecd> createOuterWallShape()
     water_block_shape.push_back(Vecd(-DL_sponge - offset_distance - BW, DH));
     water_block_shape.push_back(Vecd(DL1, DH));
     
-    // //** Inner Circle segment *
-    // Real start_x = DL1;
-    // for (int k = 1; k <= num_inner_arc_points; ++k)
-    // {
-    //     Real x_coordinate = start_x + k * arc_sampling_interval; //** clockwise *
-    //     //** Circle center is (DL1, R2), radius is R1. Equation is (x-DL1)^2+(y-R2)^2=R1^2,
-    //     //** Considring the coordinate, y= -sqr(R1^2-(x-DH1)^2)+R2 * 
-    //     Real y_coordinate = -sqrt( R1*R1 - (x_coordinate-DL1)*(x_coordinate-DL1) ) + R2;
-    //     water_block_shape.push_back(Vecd(x_coordinate, y_coordinate));
-    // }
+    //** Inner Circle segment *
+    Real start_x = DL1;
+    for (int k = 1; k <= num_inner_arc_points; ++k)
+    {
+        Real x_coordinate = start_x + k * arc_sampling_interval; //** clockwise *
+        //** Circle center is (DL1, R2), radius is R1. Equation is (x-DL1)^2+(y-R2)^2=R1^2,
+        //** Considring the coordinate, y= -sqr(R1^2-(x-DH1)^2)+R2 * 
+        Real y_coordinate = -sqrt( R1*R1 - (x_coordinate-DL1)*(x_coordinate-DL1) ) + R2;
+        water_block_shape.push_back(Vecd(x_coordinate, y_coordinate));
+    }
 
-    // //** 4 points for outlet tube *
-    // water_block_shape.push_back(Vecd(DL1 + R1, R2));
-    // water_block_shape.push_back(Vecd(DL1 + R1, R2 + DL2 + offset_distance + BW));
-    // water_block_shape.push_back(Vecd(DL1 + R2, R2 + DL2 + offset_distance + BW));
-    // water_block_shape.push_back(Vecd(DL1 + R2, R2 ));
+    //** 4 points for outlet tube *
+    water_block_shape.push_back(Vecd(DL1 + R1, R2));
+    water_block_shape.push_back(Vecd(DL1 + R1, R2 + DL2 + offset_distance + BW));
+    water_block_shape.push_back(Vecd(DL1 + R2, R2 + DL2 + offset_distance + BW));
+    water_block_shape.push_back(Vecd(DL1 + R2, R2 ));
 
-    // //** Outer Circle segment *
-    // start_x = DL1 + R2;
-    // for (int k = 1; k <= num_outer_arc_points; ++k)
-    // {
-    //     Real x_coordinate = start_x - k * arc_sampling_interval; //** clockwise *
-    //     //** Circle center is (DL1, R2), radius is R2. Equation is (x-DL1)^2+(y-R2)^2=R2^2,
-    //     //** Considring the coordinate, y= -sqr(R2^2-(x-DH1)^2)+R2 * 
-    //     Real y_coordinate = -sqrt( R2*R2 - (x_coordinate-DL1)*(x_coordinate-DL1) ) + R2;
-    //     water_block_shape.push_back(Vecd(x_coordinate, y_coordinate));
-    // }
+    //** Outer Circle segment *
+    start_x = DL1 + R2;
+    for (int k = 1; k <= num_outer_arc_points; ++k)
+    {
+        Real x_coordinate = start_x - k * arc_sampling_interval; //** clockwise *
+        //** Circle center is (DL1, R2), radius is R2. Equation is (x-DL1)^2+(y-R2)^2=R2^2,
+        //** Considring the coordinate, y= -sqr(R2^2-(x-DH1)^2)+R2 * 
+        Real y_coordinate = -sqrt( R2*R2 - (x_coordinate-DL1)*(x_coordinate-DL1) ) + R2;
+        water_block_shape.push_back(Vecd(x_coordinate, y_coordinate));
+    }
 
     //** If return to straight channel, add extra 2 points *
-    water_block_shape.push_back(Vecd(DL_domain + offset_distance + BW, DH));
-    water_block_shape.push_back(Vecd(DL_domain + offset_distance + BW, 0.0));
+    // water_block_shape.push_back(Vecd(DL_domain + offset_distance + BW, DH));
+    // water_block_shape.push_back(Vecd(DL_domain + offset_distance + BW, 0.0));
 
     //** The left 2 points for inlet tube, totally 5 *
     water_block_shape.push_back(Vecd(DL1, 0.0));
@@ -232,37 +237,37 @@ std::vector<Vecd> createInnerWallShape()
     water_block_shape.push_back(Vecd(-DL_sponge - offset_distance - 2.0 * BW, DH));
     water_block_shape.push_back(Vecd(DL1, DH));
     
-    // //** Inner Circle segment *
-    // Real start_x = DL1;
-    // for (int k = 1; k <= num_inner_arc_points; ++k)
-    // {
-    //     Real x_coordinate = start_x + k * arc_sampling_interval; //** clockwise *
-    //     //** Circle center is (DL1, R2), radius is R1. Equation is (x-DL1)^2+(y-R2)^2=R1^2,
-    //     //** Considring the coordinate, y= -sqr(R1^2-(x-DH1)^2)+R2 * 
-    //     Real y_coordinate = -sqrt( R1*R1 - (x_coordinate-DL1)*(x_coordinate-DL1) ) + R2;
-    //     water_block_shape.push_back(Vecd(x_coordinate, y_coordinate));
-    // }
+    //** Inner Circle segment *
+    Real start_x = DL1;
+    for (int k = 1; k <= num_inner_arc_points; ++k)
+    {
+        Real x_coordinate = start_x + k * arc_sampling_interval; //** clockwise *
+        //** Circle center is (DL1, R2), radius is R1. Equation is (x-DL1)^2+(y-R2)^2=R1^2,
+        //** Considring the coordinate, y= -sqr(R1^2-(x-DH1)^2)+R2 * 
+        Real y_coordinate = -sqrt( R1*R1 - (x_coordinate-DL1)*(x_coordinate-DL1) ) + R2;
+        water_block_shape.push_back(Vecd(x_coordinate, y_coordinate));
+    }
 
-    // //** 4 points for outlet tube *
-    // water_block_shape.push_back(Vecd(DL1 + R1, R2));
-    // water_block_shape.push_back(Vecd(DL1 + R1, R2 + DL2 + offset_distance + 2.0 * BW));
-    // water_block_shape.push_back(Vecd(DL1 + R2, R2 + DL2 + offset_distance + 2.0 * BW));
-    // water_block_shape.push_back(Vecd(DL1 + R2, R2 ));
+    //** 4 points for outlet tube *
+    water_block_shape.push_back(Vecd(DL1 + R1, R2));
+    water_block_shape.push_back(Vecd(DL1 + R1, R2 + DL2 + offset_distance + 2.0 * BW));
+    water_block_shape.push_back(Vecd(DL1 + R2, R2 + DL2 + offset_distance + 2.0 * BW));
+    water_block_shape.push_back(Vecd(DL1 + R2, R2 ));
 
-    // //** Outer Circle segment *
-    // start_x = DL1 + R2;
-    // for (int k = 1; k <= num_outer_arc_points; ++k)
-    // {
-    //     Real x_coordinate = start_x - k * arc_sampling_interval; //** clockwise *
-    //     //** Circle center is (DL1, R2), radius is R2. Equation is (x-DL1)^2+(y-R2)^2=R2^2,
-    //     //** Considring the coordinate, y= -sqr(R2^2-(x-DH1)^2)+R2 * 
-    //     Real y_coordinate = -sqrt( R2*R2 - (x_coordinate-DL1)*(x_coordinate-DL1) ) + R2;
-    //     water_block_shape.push_back(Vecd(x_coordinate, y_coordinate));
-    // }
+    //** Outer Circle segment *
+    start_x = DL1 + R2;
+    for (int k = 1; k <= num_outer_arc_points; ++k)
+    {
+        Real x_coordinate = start_x - k * arc_sampling_interval; //** clockwise *
+        //** Circle center is (DL1, R2), radius is R2. Equation is (x-DL1)^2+(y-R2)^2=R2^2,
+        //** Considring the coordinate, y= -sqr(R2^2-(x-DH1)^2)+R2 * 
+        Real y_coordinate = -sqrt( R2*R2 - (x_coordinate-DL1)*(x_coordinate-DL1) ) + R2;
+        water_block_shape.push_back(Vecd(x_coordinate, y_coordinate));
+    }
 
     //** If return to straight channel, add extra 2 points *
-    water_block_shape.push_back(Vecd(DL_domain + offset_distance + 2.0 * BW, DH));
-    water_block_shape.push_back(Vecd(DL_domain + offset_distance + 2.0 * BW, 0.0));
+    // water_block_shape.push_back(Vecd(DL_domain + offset_distance + 2.0 * BW, DH));
+    // water_block_shape.push_back(Vecd(DL_domain + offset_distance + 2.0 * BW, 0.0));
 
 
     //** The left 2 points for inlet tube, totally 5 *
