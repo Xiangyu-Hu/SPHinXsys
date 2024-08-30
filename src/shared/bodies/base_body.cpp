@@ -74,6 +74,11 @@ BoundingBox SPHBody::getSPHBodyBounds()
     return is_bound_set_ ? bound_ : initial_shape_->getBounds();
 }
 //=================================================================================================//
+void SPHBody::registerComputingKernel(execution::Implementation<Base> *implementation)
+{
+    all_simple_reduce_computing_kernels_.push_back(implementation);
+}
+//=================================================================================================//
 void SPHBody::defineAdaptationRatios(Real h_spacing_ratio, Real new_system_refinement_ratio)
 {
     sph_adaptation_->resetAdaptationRatios(h_spacing_ratio, new_system_refinement_ratio);
