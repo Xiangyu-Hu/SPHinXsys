@@ -38,11 +38,11 @@ void BaseCellLinkedList::clearSplitCellLists(SplitCellLists &split_cell_lists)
 CellLinkedList::CellLinkedList(BoundingBox tentative_bounds, Real grid_spacing,
                                BaseParticles &base_particles, SPHAdaptation &sph_adaptation)
     : BaseCellLinkedList(base_particles, sph_adaptation), Mesh(tentative_bounds, grid_spacing, 2),
-      use_split_cell_lists_(false), cell_index_lists_(nullptr), cell_data_lists_(nullptr),
-      cell_offset_list_size_(NumberOfCells() + 1),
+      use_split_cell_lists_(false), cell_offset_list_size_(NumberOfCells() + 1),
       index_list_size_(SMAX(base_particles.ParticlesBound(), cell_offset_list_size_)),
       dv_particle_index_(base_particles.registerDiscreteVariableOnly<UnsignedInt>("ParticleIndex", index_list_size_)),
-      dv_cell_offset_(base_particles.registerDiscreteVariableOnly<UnsignedInt>("CellOffset", cell_offset_list_size_))
+      dv_cell_offset_(base_particles.registerDiscreteVariableOnly<UnsignedInt>("CellOffset", cell_offset_list_size_)),
+      cell_index_lists_(nullptr), cell_data_lists_(nullptr)
 {
     allocateMeshDataMatrix();
     single_cell_linked_list_level_.push_back(this);

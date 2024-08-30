@@ -83,8 +83,6 @@ template <typename DataType, typename... Args>
 DiscreteVariable<DataType> *BaseParticles::
     registerStateVariableOnly(const std::string &name, Args &&...args)
 {
-
-    constexpr int type_index = DataTypeIndex<DataType>::value;
     static_assert(DataTypeIndex<DataType>::value != DataTypeIndex<UnsignedInt>::value,
                   "\n Error: the data type UnsignedInt is not particle state variable!\n");
 

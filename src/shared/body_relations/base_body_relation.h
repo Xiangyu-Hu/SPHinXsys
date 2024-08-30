@@ -120,7 +120,6 @@ class SPHRelation
   protected:
     SPHBody &sph_body_;
     BaseParticles &base_particles_;
-    Vecd *pos_;
     UnsignedInt particle_offset_list_size_;
 
     template <class DataType>
@@ -169,6 +168,7 @@ class BaseContactRelation : public SPHRelation
 
   public:
     RealBodyVector contact_bodies_;
+    StdVec<BaseParticles *> contact_particles_;
     StdVec<SPHAdaptation *> contact_adaptations_;
     StdVec<ParticleConfiguration> contact_configuration_; /**< Configurations for particle interaction between bodies. */
 
@@ -178,6 +178,7 @@ class BaseContactRelation : public SPHRelation
     virtual ~BaseContactRelation(){};
     BaseContactRelation &getRelation() { return *this; };
     RealBodyVector getContactBodies() { return contact_bodies_; };
+    StdVec<BaseParticles *> getContactParticles() { return contact_particles_; };
     StdVec<SPHAdaptation *> getContactAdaptations() { return contact_adaptations_; };
     StdVec<DiscreteVariable<UnsignedInt> *> getContactNeighborIndex() { return dv_contact_neighbor_index_; };
     StdVec<DiscreteVariable<UnsignedInt> *> getContactParticleOffset() { return dv_contact_particle_offset_; };

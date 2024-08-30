@@ -45,9 +45,16 @@ LocalInteractionDynamics<Contact<Parameters...>>::
       sph_adaptation_(sph_body_.sph_adaptation_),
       dv_pos_(particles_->getVariableByName<Vecd>("Position")),
       contact_bodies_(contact_relation.getContactBodies()),
+      contact_particles_(contact_relation.getContactParticles()),
       contact_adaptations_(contact_relation.getContactAdaptations()),
       dv_contact_neighbor_index_(contact_relation.getContactNeighborIndex()),
-      dv_contact_particle_offset_(contact_relation.getContactParticleOffset()) {}
+      dv_contact_particle_offset_(contact_relation.getContactParticleOffset())
+{
+    for (size_t k = 0; k != contact_particles_.size(); ++k)
+    {
+        contact_pos_.push_back(contact_particles_[k]->getVariableByName<Vecd>("Position"));
+    }
+}
 //=================================================================================================//
 template <typename... Parameters>
 void LocalInteractionDynamics<Contact<Parameters...>>::

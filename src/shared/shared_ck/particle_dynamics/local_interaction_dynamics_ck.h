@@ -88,6 +88,7 @@ class LocalInteractionDynamics<Contact<Parameters...>> : public LocalDynamics
     SPHAdaptation *sph_adaptation_;
     DiscreteVariable<Vecd> *dv_pos_;
     RealBodyVector contact_bodies_;
+    StdVec<BaseParticles *> contact_particles_;
     StdVec<SPHAdaptation *> contact_adaptations_;
     StdVec<DiscreteVariable<Vecd> *> contact_pos_;
     StdVec<DiscreteVariable<UnsignedInt> *> dv_contact_neighbor_index_;

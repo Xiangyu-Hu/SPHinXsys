@@ -19,7 +19,6 @@ RealBodyVector BodyPartsToRealBodies(BodyPartVector body_parts)
 SPHRelation::SPHRelation(SPHBody &sph_body)
     : sph_body_(sph_body),
       base_particles_(sph_body.getBaseParticles()),
-      pos_(base_particles_.getVariableDataByName<Vecd>("Position")),
       particle_offset_list_size_(base_particles_.RealParticlesBound() + 1) {}
 //=================================================================================================//
 BaseInnerRelation::BaseInnerRelation(RealBody &real_body)
@@ -35,7 +34,8 @@ void BaseInnerRelation::resetNeighborhoodCurrentSize()
 {
     parallel_for(
         IndexRange(0, base_particles_.TotalRealParticles()),
-        [&](const IndexRange &r) {
+        [&](const IndexRange &r)
+        {
             for (size_t num = r.begin(); num != r.end(); ++num)
             {
                 inner_configuration_[num].current_size_ = 0;
@@ -65,6 +65,7 @@ BaseContactRelation::BaseContactRelation(SPHBody &sph_body, RealBodyVector conta
     for (size_t k = 0; k != contact_bodies_.size(); ++k)
     {
         const std::string name = contact_bodies_[k]->getName();
+        contact_particles_.push_back(&contact_bodies_[k]->getBaseParticles());
         contact_adaptations_.push_back(contact_bodies_[k]->sph_adaptation_);
         contact_configuration_[k].resize(base_particles_.RealParticlesBound(), Neighborhood());
         dv_contact_neighbor_index_.push_back(addRelationVariable<UnsignedInt>(
@@ -81,7 +82,8 @@ void BaseContactRelation::resetNeighborhoodCurrentSize()
     {
         parallel_for(
             IndexRange(0, base_particles_.TotalRealParticles()),
-            [&](const IndexRange &r) {
+            [&](const IndexRange &r)
+            {
                 for (size_t num = r.begin(); num != r.end(); ++num)
                 {
                     contact_configuration_[k][num].current_size_ = 0;

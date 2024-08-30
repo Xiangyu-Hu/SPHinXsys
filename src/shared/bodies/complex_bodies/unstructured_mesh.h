@@ -73,6 +73,7 @@ class BaseInnerRelationInFVM : public BaseInnerRelation
     virtual ~BaseInnerRelationInFVM(){};
 
   protected:
+    Vecd *pos_;
     Real *Vol_;
     virtual void resetNeighborhoodCurrentSize() override;
 };
