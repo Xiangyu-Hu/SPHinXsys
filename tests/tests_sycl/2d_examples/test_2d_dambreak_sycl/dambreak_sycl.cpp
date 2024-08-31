@@ -113,9 +113,9 @@ int main(int ac, char *av[])
     Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallRiemann> fluid_density_relaxation(water_block_inner, water_wall_contact);
     InteractionWithUpdate<fluid_dynamics::DensitySummationComplexFreeSurface> fluid_density_by_summation(water_block_inner, water_wall_contact);
 
-    // InteractionDynamicsCK<execution::ParallelDevicePolicy, WithUpdate,
-    //                     fluid_dynamics::DensitySummationCK<Inner<FreeSurface>>>
-    //    fluid_density_summation(water_block_inner);
+    InteractionDynamicsCK<execution::ParallelDevicePolicy,
+                          fluid_dynamics::DensitySummationCKInnerFreeSurface>
+        fluid_density_summation(water_block_inner);
 
     ReduceDynamics<fluid_dynamics::AdvectionTimeStep>
         fluid_advection_time_step(water_block, U_ref);

@@ -7,8 +7,8 @@ namespace SPH
 {
 //=================================================================================================//
 template <typename... Parameters>
-LocalInteractionDynamics<Inner<Parameters...>>::
-    LocalInteractionDynamics(InnerRelation &inner_relation)
+Interaction<Inner<Parameters...>>::
+    Interaction(InnerRelation &inner_relation)
     : LocalDynamics(inner_relation.getSPHBody()),
       inner_relation_(inner_relation),
       sph_adaptation_(sph_body_.sph_adaptation_),
@@ -17,29 +17,29 @@ LocalInteractionDynamics<Inner<Parameters...>>::
       dv_particle_offset_(inner_relation.getParticleOffset()) {}
 //=================================================================================================//
 template <typename... Parameters>
-void LocalInteractionDynamics<Inner<Parameters...>>::
+void Interaction<Inner<Parameters...>>::
     registerComputingKernel(Implementation<Base> *implementation)
 {
     inner_relation_.registerComputingKernel(implementation);
 }
 //=================================================================================================//
 template <typename... Parameters>
-void LocalInteractionDynamics<Inner<Parameters...>>::resetComputingKernelUpdated()
+void Interaction<Inner<Parameters...>>::resetComputingKernelUpdated()
 {
     inner_relation_.resetComputingKernelUpdated();
 }
 //=================================================================================================//
 template <typename... Parameters>
 template <class ExecutionPolicy>
-LocalInteractionDynamics<Inner<Parameters...>>::ComputingKernel::
+Interaction<Inner<Parameters...>>::ComputingKernel::
     ComputingKernel(const ExecutionPolicy &ex_policy,
-                    LocalInteractionDynamics<Inner<Parameters...>> &encloser)
+                    Interaction<Inner<Parameters...>> &encloser)
     : NeighborList(ex_policy, encloser.dv_neighbor_index_, encloser.dv_particle_offset_),
       Neighbor<Parameters...>(ex_policy, encloser.sph_adaptation_, encloser.dv_pos_) {}
 //=================================================================================================//
 template <typename... Parameters>
-LocalInteractionDynamics<Contact<Parameters...>>::
-    LocalInteractionDynamics(ContactRelation &contact_relation)
+Interaction<Contact<Parameters...>>::
+    Interaction(ContactRelation &contact_relation)
     : LocalDynamics(contact_relation.getSPHBody()),
       contact_relation_(contact_relation),
       sph_adaptation_(sph_body_.sph_adaptation_),
@@ -57,14 +57,14 @@ LocalInteractionDynamics<Contact<Parameters...>>::
 }
 //=================================================================================================//
 template <typename... Parameters>
-void LocalInteractionDynamics<Contact<Parameters...>>::
+void Interaction<Contact<Parameters...>>::
     registerComputingKernel(Implementation<Base> *implementation, UnsignedInt contact_index)
 {
     contact_relation_.registerComputingKernel(implementation, contact_index);
 }
 //=================================================================================================//
 template <typename... Parameters>
-void LocalInteractionDynamics<Contact<Parameters...>>::
+void Interaction<Contact<Parameters...>>::
     resetComputingKernelUpdated(UnsignedInt contact_index)
 {
     contact_relation_.resetComputingKernelUpdated(contact_index);
@@ -72,9 +72,9 @@ void LocalInteractionDynamics<Contact<Parameters...>>::
 //=================================================================================================//
 template <typename... Parameters>
 template <class ExecutionPolicy>
-LocalInteractionDynamics<Contact<Parameters...>>::ComputingKernel::
+Interaction<Contact<Parameters...>>::ComputingKernel::
     ComputingKernel(const ExecutionPolicy &ex_policy,
-                    LocalInteractionDynamics<Contact<Parameters...>> &encloser, UnsignedInt contact_index)
+                    Interaction<Contact<Parameters...>> &encloser, UnsignedInt contact_index)
     : NeighborList(ex_policy,
                    encloser.dv_contact_neighbor_index_[contact_index],
                    encloser.dv_contact_particle_offset_[contact_index]),

@@ -33,7 +33,7 @@
 #define DENSITY_SUMMATION_CK_H
 
 #include "base_fluid_dynamics.h"
-#include "local_interaction_dynamics_ck.h"
+#include "local_interaction_dynamics_ck.hpp"
 
 namespace SPH
 {
@@ -43,7 +43,7 @@ template <typename... T>
 class Regularization;
 
 template <>
-class Regularization<>
+class Regularization<Internal>
 {
   public:
     template <class ComputingKernelType>
@@ -60,23 +60,27 @@ class Regularization<FreeSurface>
     Real operator()(Real &rho_sum, Real rho0, Real &rho) { return SMAX(rho_sum, rho0); };
 };
 
-template <typename... InteractionTypes>
+template <typename... RelationTypes>
 class DensitySummationCK;
 
-template <class LocalDynamicsType>
-class DensitySummationCK<LocalDynamicsType> : public LocalDynamicsType
+template <template <typename... T> class RelationType, typename... Parameters>
+class DensitySummationCK<Interaction<RelationType<Parameters...>>>
+    : public Interaction<RelationType<Parameters...>>
 {
+
   public:
     template <class DynamicsIdentifier>
     explicit DensitySummationCK(DynamicsIdentifier &identifier);
     virtual ~DensitySummationCK(){};
 
-    class ComputingKernel : public LocalDynamicsType::ComputingKernel
+    class ComputingKernel : public Interaction<RelationType<Parameters...>>::ComputingKernel
     {
       public:
         template <class ExecutionPolicy>
         ComputingKernel(const ExecutionPolicy &ex_policy,
-                        DensitySummationCK<LocalDynamicsType> &encloser);
+                        DensitySummationCK<Interaction<RelationType<Parameters...>>> &encloser);
+
+      protected:
         Real *rho_, *mass_, *rho_sum_, *Vol_;
         Real rho0_, inv_sigma0_;
     };
@@ -86,42 +90,43 @@ class DensitySummationCK<LocalDynamicsType> : public LocalDynamicsType
     Real rho0_, inv_sigma0_;
 };
 
-template <typename... RegularizationType, typename... Parameters>
-class DensitySummationCK<Inner<Regularization<RegularizationType...>, Parameters...>>
-    : public DensitySummationCK<LocalInteractionDynamics<Inner<Parameters...>>>
+template <class RegularizationType, typename... Parameters>
+class DensitySummationCK<Inner<RegularizationType, Parameters...>>
+    : public DensitySummationCK<Interaction<Inner<Parameters...>>>
 {
   public:
     explicit DensitySummationCK(InnerRelation &inner_relation);
     virtual ~DensitySummationCK(){};
 
     class ComputingKernel
-        : public DensitySummationCK<LocalInteractionDynamics<Inner<Parameters...>>>::
+        : public DensitySummationCK<Interaction<Inner<Parameters...>>>::
               ComputingKernel
     {
       public:
         template <class ExecutionPolicy>
         ComputingKernel(const ExecutionPolicy &ex_policy,
-                        DensitySummationCK<Inner<Parameters...>> &encloser);
+                        DensitySummationCK<Inner<RegularizationType, Parameters...>> &encloser);
         void interaction(size_t index_i, Real dt = 0.0);
         void update(size_t index_i, Real dt = 0.0);
 
       protected:
         Real W0_;
-        Regularization<RegularizationType...> regularization_;
+        Regularization<RegularizationType> regularization_;
     };
 };
-using DensitySummationCKInner = DensitySummationCK<Inner<Regularization<>>>;
+using DensitySummationCKInner = DensitySummationCK<Inner<Internal>>;
+using DensitySummationCKInnerFreeSurface = DensitySummationCK<Inner<FreeSurface>>;
 
 template <typename... Parameters>
 class DensitySummationCK<Contact<Parameters...>>
-    : public DensitySummationCK<LocalInteractionDynamics<Contact<Parameters...>>>
+    : public DensitySummationCK<Interaction<Contact<Parameters...>>>
 {
   public:
     explicit DensitySummationCK(ContactRelation &contact_relation);
     virtual ~DensitySummationCK(){};
 
     class ComputingKernel
-        : public DensitySummationCK<LocalInteractionDynamics<Contact<Parameters...>>>::
+        : public DensitySummationCK<Interaction<Contact<Parameters...>>>::
               ComputingKernel
     {
       public:

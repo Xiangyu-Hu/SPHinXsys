@@ -43,7 +43,7 @@ class BodyRelationUpdate;
 
 template <typename... Parameters>
 class BodyRelationUpdate<Inner<Parameters...>>
-    : public LocalInteractionDynamics<Inner<Parameters...>>
+    : public Interaction<Inner<Parameters...>>
 {
 
   public:
@@ -51,7 +51,7 @@ class BodyRelationUpdate<Inner<Parameters...>>
     virtual ~BodyRelationUpdate(){};
 
     class ComputingKernel
-        : public LocalInteractionDynamics<Inner<Parameters...>>::ComputingKernel
+        : public Interaction<Inner<Parameters...>>::ComputingKernel
     {
       public:
         template <class ExecutionPolicy>
@@ -93,7 +93,7 @@ class UpdateRelation<ExecutionPolicy, BodyRelationUpdate<Inner<Parameters...>>>
 
 template <typename... Parameters>
 class BodyRelationUpdate<Contact<Parameters...>>
-    : public LocalInteractionDynamics<Contact<Parameters...>>
+    : public Interaction<Contact<Parameters...>>
 {
 
   public:
@@ -101,7 +101,7 @@ class BodyRelationUpdate<Contact<Parameters...>>
     virtual ~BodyRelationUpdate(){};
 
     class ComputingKernel
-        : public LocalInteractionDynamics<Contact<Parameters...>>::ComputingKernel
+        : public Interaction<Contact<Parameters...>>::ComputingKernel
     {
       public:
         template <class ExecutionPolicy>

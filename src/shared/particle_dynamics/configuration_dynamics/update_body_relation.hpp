@@ -10,7 +10,7 @@ namespace SPH
 //=================================================================================================//
 template <typename... Parameters>
 BodyRelationUpdate<Inner<Parameters...>>::BodyRelationUpdate(InnerRelation &inner_relation)
-    : LocalInteractionDynamics<Inner<Parameters...>>(inner_relation),
+    : Interaction<Inner<Parameters...>>(inner_relation),
       cell_linked_list_(inner_relation.getCellLinkedList()),
       particle_offset_list_size_(inner_relation.getParticleOffsetListSize())
 {
@@ -21,7 +21,7 @@ template <typename... Parameters>
 template <class ExecutionPolicy>
 BodyRelationUpdate<Inner<Parameters...>>::ComputingKernel::ComputingKernel(
     const ExecutionPolicy &ex_policy, BodyRelationUpdate<Inner<Parameters...>> &encloser)
-    : LocalInteractionDynamics<Inner<Parameters...>>::ComputingKernel(ex_policy, encloser),
+    : Interaction<Inner<Parameters...>>::ComputingKernel(ex_policy, encloser),
       neighbor_search_(encloser.cell_linked_list_.createNeighborSearch(ex_policy)) {}
 //=================================================================================================//
 template <typename... Parameters>
@@ -97,7 +97,7 @@ void UpdateRelation<ExecutionPolicy, BodyRelationUpdate<Inner<Parameters...>>>::
 //=================================================================================================//
 template <typename... Parameters>
 BodyRelationUpdate<Contact<Parameters...>>::BodyRelationUpdate(ContactRelation &contact_relation)
-    : LocalInteractionDynamics<Contact<Parameters...>>(contact_relation),
+    : Interaction<Contact<Parameters...>>(contact_relation),
       particle_offset_list_size_(contact_relation.getParticleOffsetListSize()),
       contact_cell_linked_list_(contact_relation.getContactCellLinkedList())
 {
@@ -113,7 +113,7 @@ BodyRelationUpdate<Contact<Parameters...>>::
     ComputingKernel::ComputingKernel(const ExecutionPolicy &ex_policy,
                                      BodyRelationUpdate<Contact<Parameters...>> &encloser,
                                      UnsignedInt contact_index)
-    : LocalInteractionDynamics<Contact<>>::ComputingKernel(ex_policy, encloser, contact_index),
+    : Interaction<Contact<>>::ComputingKernel(ex_policy, encloser, contact_index),
       neighbor_search_(encloser.contact_cell_linked_list_[contact_index]
                            ->createNeighborSearch(ex_policy)) {}
 //=================================================================================================//

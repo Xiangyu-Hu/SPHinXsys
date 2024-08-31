@@ -36,21 +36,21 @@
 namespace SPH
 {
 template <typename... T>
-class LocalInteractionDynamics;
+class Interaction;
 
 template <typename... Parameters>
-class LocalInteractionDynamics<Inner<Parameters...>> : public LocalDynamics
+class Interaction<Inner<Parameters...>> : public LocalDynamics
 {
   public:
-    explicit LocalInteractionDynamics(InnerRelation &inner_relation);
-    virtual ~LocalInteractionDynamics(){};
+    explicit Interaction(InnerRelation &inner_relation);
+    virtual ~Interaction(){};
 
     class ComputingKernel : public NeighborList, public Neighbor<Parameters...>
     {
       public:
         template <class ExecutionPolicy>
         ComputingKernel(const ExecutionPolicy &ex_policy,
-                        LocalInteractionDynamics<Inner<Parameters...>> &encloser);
+                        Interaction<Inner<Parameters...>> &encloser);
     };
 
     void registerComputingKernel(Implementation<Base> *implementation);
@@ -65,18 +65,18 @@ class LocalInteractionDynamics<Inner<Parameters...>> : public LocalDynamics
 };
 
 template <typename... Parameters>
-class LocalInteractionDynamics<Contact<Parameters...>> : public LocalDynamics
+class Interaction<Contact<Parameters...>> : public LocalDynamics
 {
   public:
-    explicit LocalInteractionDynamics(ContactRelation &contact_relation);
-    virtual ~LocalInteractionDynamics(){};
+    explicit Interaction(ContactRelation &contact_relation);
+    virtual ~Interaction(){};
 
     class ComputingKernel : public NeighborList, public Neighbor<Parameters...>
     {
       public:
         template <class ExecutionPolicy>
         ComputingKernel(const ExecutionPolicy &ex_policy,
-                        LocalInteractionDynamics<Contact<Parameters...>> &encloser,
+                        Interaction<Contact<Parameters...>> &encloser,
                         UnsignedInt contact_index);
     };
 
