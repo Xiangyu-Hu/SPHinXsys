@@ -85,7 +85,7 @@ Real DH_C = DH - 2.0 * offset_distance;
 
 //** Intial inlet pressure to drive flow *
 //Real initial_inlet_pressure = 0.5 * rho0_f * U_inlet ;
-Real initial_inlet_pressure = 100.0;
+//Real initial_inlet_pressure = 100.0;
 //----------------------------------------------------------------------
 //	The emitter block with offset model. 
 //----------------------------------------------------------------------
@@ -137,33 +137,33 @@ std::vector<Vecd> createWaterBlockShape()
     water_block_shape.push_back(Vecd(DL1, DH));
     
 
-    //** Inner Circle segment *
-    Real start_x = DL1;
-    for (int k = 1; k <= num_inner_arc_points; ++k)
-    {
-        Real x_coordinate = start_x + k * arc_sampling_interval; //** clockwise *
-        //** Circle center is (DL1, R2), radius is R1. Equation is (x-DL1)^2+(y-R2)^2=R1^2,
-        //** Considring the coordinate, y= -sqr(R1^2-(x-DH1)^2)+R2 * 
-        Real y_coordinate = -sqrt( R1*R1 - (x_coordinate-DL1)*(x_coordinate-DL1) ) + R2;
-        water_block_shape.push_back(Vecd(x_coordinate, y_coordinate));
-    }
+    // //** Inner Circle segment *
+    // Real start_x = DL1;
+    // for (int k = 1; k <= num_inner_arc_points; ++k)
+    // {
+    //     Real x_coordinate = start_x + k * arc_sampling_interval; //** clockwise *
+    //     //** Circle center is (DL1, R2), radius is R1. Equation is (x-DL1)^2+(y-R2)^2=R1^2,
+    //     //** Considring the coordinate, y= -sqr(R1^2-(x-DH1)^2)+R2 * 
+    //     Real y_coordinate = -sqrt( R1*R1 - (x_coordinate-DL1)*(x_coordinate-DL1) ) + R2;
+    //     water_block_shape.push_back(Vecd(x_coordinate, y_coordinate));
+    // }
 
-    //** 4 points for outlet tube *
-    water_block_shape.push_back(Vecd(DL1 + R1, R2));
-    water_block_shape.push_back(Vecd(DL1 + R1, R2 + DL2 + offset_distance));
-    water_block_shape.push_back(Vecd(DL1 + R2, R2 + DL2 + offset_distance));
-    water_block_shape.push_back(Vecd(DL1 + R2, R2 ));
+    // //** 4 points for outlet tube *
+    // water_block_shape.push_back(Vecd(DL1 + R1, R2));
+    // water_block_shape.push_back(Vecd(DL1 + R1, R2 + DL2 + offset_distance));
+    // water_block_shape.push_back(Vecd(DL1 + R2, R2 + DL2 + offset_distance));
+    // water_block_shape.push_back(Vecd(DL1 + R2, R2 ));
 
-    //** Outer Circle segment *
-    start_x = DL1 + R2;
-    for (int k = 1; k <= num_outer_arc_points; ++k)
-    {
-        Real x_coordinate = start_x - k * arc_sampling_interval; //** clockwise *
-        //** Circle center is (DL1, R2), radius is R2. Equation is (x-DL1)^2+(y-R2)^2=R2^2,
-        //** Considring the coordinate, y= -sqr(R2^2-(x-DH1)^2)+R2 * 
-        Real y_coordinate = -sqrt( R2*R2 - (x_coordinate-DL1)*(x_coordinate-DL1) ) + R2;
-        water_block_shape.push_back(Vecd(x_coordinate, y_coordinate));
-    }
+    // //** Outer Circle segment *
+    // start_x = DL1 + R2;
+    // for (int k = 1; k <= num_outer_arc_points; ++k)
+    // {
+    //     Real x_coordinate = start_x - k * arc_sampling_interval; //** clockwise *
+    //     //** Circle center is (DL1, R2), radius is R2. Equation is (x-DL1)^2+(y-R2)^2=R2^2,
+    //     //** Considring the coordinate, y= -sqr(R2^2-(x-DH1)^2)+R2 * 
+    //     Real y_coordinate = -sqrt( R2*R2 - (x_coordinate-DL1)*(x_coordinate-DL1) ) + R2;
+    //     water_block_shape.push_back(Vecd(x_coordinate, y_coordinate));
+    // }
 
     //** If return to straight channel, add extra 2 points *
     // water_block_shape.push_back(Vecd(DL_domain + offset_distance, DH));
@@ -432,15 +432,15 @@ struct LeftInflowPressure
 
     Real operator()(Real &p_)
     {
-        Real run_time_ = GlobalStaticVariables::physical_time_;
-        if(run_time_ > 20.0)
-        {
+        // Real run_time_ = GlobalStaticVariables::physical_time_;
+        // if(run_time_ > 20.0)
+        // {
             return p_;
-        }
-        else
-        {
-            return initial_inlet_pressure;
-        }
+        // }
+        // else
+        // {
+        //     return initial_inlet_pressure;
+        // }
         
     }
 };

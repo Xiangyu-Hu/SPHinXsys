@@ -23,8 +23,9 @@ int main(int ac, char *av[])
     FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
     water_block.defineBodyLevelSetShape();
     water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
-    ParticleBuffer<ReserveSizeFactor> inlet_particle_buffer(0.5);
-    (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
+    ParticleBuffer<ReserveSizeFactor> inlet_particle_buffer(10.0);
+    //(!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
+    (0)
         ? water_block.generateParticlesWithReserve<BaseParticles, Reload>(inlet_particle_buffer, water_block.getName())
         : water_block.generateParticlesWithReserve<BaseParticles, Lattice>(inlet_particle_buffer);
     /**
@@ -203,7 +204,8 @@ int main(int ac, char *av[])
     SimpleDynamics<fluid_dynamics::PressureConditionCorrection<RightOutflowPressure>> right_outflow_pressure_condition(right_emitter);
 
     /** Temporary treatment for Pressure outlet module  */
-    InteractionWithUpdate<fluid_dynamics::DensitySummationPressureComplex> update_fluid_density_pressure(water_block_inner, water_wall_contact);
+    //InteractionWithUpdate<fluid_dynamics::DensitySummationPressureComplex> update_fluid_density_pressure(water_block_inner, water_wall_contact);
+    InteractionWithUpdate<fluid_dynamics::DensitySummationFreeStreamComplex> update_density_by_summation(water_block_inner, water_wall_contact);
 
     /** Choose one, ordinary or turbulent. Time step size without considering sound wave speed. */
     ReduceDynamics<fluid_dynamics::TurbulentAdvectionTimeStepSize> get_turbulent_fluid_advection_time_step_size(water_block, U_f);
@@ -277,8 +279,8 @@ int main(int ac, char *av[])
 
             //inlet_outlet_surface_particle_indicator.exec();
 
-            //update_density_by_summation.exec();
-            update_fluid_density_pressure.exec();
+            update_density_by_summation.exec();
+            //update_fluid_density_pressure.exec();
             
             corrected_configuration_fluid.exec();
             corrected_configuration_fluid_only_inner.exec();
