@@ -31,8 +31,10 @@
 #ifndef ALL_SHARED_PHYSICAL_DYNAMICS_CK_H
 #define ALL_SHARED_PHYSICAL_DYNAMICS_CK_H
 
+#include "complex_algorithms_ck.h"
+#include "density_summation_ck.hpp"
 #include "dynamics_algorithms_ck.h"
-#include "fluid_time_step_ck.hpp"
+#include "fluid_time_step_ck.h"
 #include "force_prior_ck.hpp"
 
 #endif // ALL_SHARED_PHYSICAL_DYNAMICS_CK_H

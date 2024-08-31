@@ -73,24 +73,24 @@ inline ReturnType particle_reduce(const ParallelDevicePolicy &par_device,
 template <typename T, typename Op>
 T exclusive_scan(const ParallelDevicePolicy &par_policy, T *first, T *d_first, UnsignedInt d_size, Op op)
 {
-    T sum = T{0};
-    {
-        sycl::buffer<T> buffer_sum(&sum, 1);
-        execution_instance.getQueue()
-            .submit([=](sycl::handler &cgh)
-                    { cgh.parallel_for(
-                          execution_instance.getUniformNdRange(execution_instance.getWorkGroupSize()),
-                          [=](sycl::nd_item<1> item)
+    execution_instance.getQueue()
+        .submit([=](sycl::handler &cgh)
+                { cgh.parallel_for(
+                      execution_instance.getUniformNdRange(execution_instance.getWorkGroupSize()),
+                      [=](sycl::nd_item<1> item)
+                      {
+                          if (item.get_group_linear_id() == 0)
                           {
-                              if (item.get_group_linear_id() == 0)
-                              {
-                                  buffer_sum = sycl::joint_exclusive_scan(
-                                      item.get_group(), first, first + d_size, d_first, buffer_sum, op);
-                              }
-                          }); })
-            .wait_and_throw();
-    } // buffer_result goes out of scope, so the result (of sum) is updated
-    return sum;
+                              sycl::joint_exclusive_scan(
+                                  item.get_group(), first, first + d_size, d_first, T{0}, op);
+                          }
+                      }); })
+        .wait_and_throw();
+
+    UnsignedInt scan_size = d_size - 1;
+    T last_value;
+    copyFromDevice(&last_value, d_first + scan_size, 1);
+    return last_value;
 }
 } // namespace SPH
 #endif // PARTICLE_ITERATORS_SYCL_H

@@ -132,8 +132,7 @@ namespace execution
 template <class LocalDynamicsType>
 class Implementation<LocalDynamicsType, ParallelDevicePolicy> : public Implementation<Base>
 {
-    using ComputingKernel = typename LocalDynamicsType::
-        template ComputingKernel<ParallelDevicePolicy>;
+    using ComputingKernel = typename LocalDynamicsType::ComputingKernel;
     UniquePtrKeeper<ComputingKernel> kernel_ptr_keeper_;
 
   public:
@@ -146,7 +145,7 @@ class Implementation<LocalDynamicsType, ParallelDevicePolicy> : public Implement
     }
 
     template <typename... Args>
-    ComputingKernel *getComputingKernel(Args &&... args)
+    ComputingKernel *getComputingKernel(Args &&...args)
     {
         if (computing_kernel_ == nullptr)
         {
@@ -168,7 +167,7 @@ class Implementation<LocalDynamicsType, ParallelDevicePolicy> : public Implement
     }
 
     template <typename... Args>
-    void overwriteComputingKernel(Args &&... args)
+    void overwriteComputingKernel(Args &&...args)
     {
         ComputingKernel *host_kernel =
             kernel_ptr_keeper_.template createPtr<ComputingKernel>(

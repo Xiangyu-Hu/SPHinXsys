@@ -60,8 +60,7 @@ class Implementation<Base>
 template <class LocalDynamicsType, class ExecutionPolicy>
 class Implementation<LocalDynamicsType, ExecutionPolicy> : public Implementation<Base>
 {
-    using ComputingKernel = typename LocalDynamicsType::
-        template ComputingKernel<ExecutionPolicy>;
+    using ComputingKernel = typename LocalDynamicsType::ComputingKernel;
 
   public:
     explicit Implementation(LocalDynamicsType &local_dynamics)
@@ -73,7 +72,7 @@ class Implementation<LocalDynamicsType, ExecutionPolicy> : public Implementation
     }
 
     template <typename... Args>
-    ComputingKernel *getComputingKernel(Args &&... args)
+    ComputingKernel *getComputingKernel(Args &&...args)
     {
         if (computing_kernel_ == nullptr)
         {
@@ -92,7 +91,7 @@ class Implementation<LocalDynamicsType, ExecutionPolicy> : public Implementation
     }
 
     template <typename... Args>
-    void overwriteComputingKernel(Args &&... args)
+    void overwriteComputingKernel(Args &&...args)
     {
         *computing_kernel_ = ComputingKernel(
             ExecutionPolicy{}, local_dynamics_, std::forward<Args>(args)...);

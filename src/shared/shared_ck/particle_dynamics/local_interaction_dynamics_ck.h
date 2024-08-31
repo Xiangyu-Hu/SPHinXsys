@@ -45,10 +45,10 @@ class LocalInteractionDynamics<Inner<Parameters...>> : public LocalDynamics
     explicit LocalInteractionDynamics(InnerRelation &inner_relation);
     virtual ~LocalInteractionDynamics(){};
 
-    template <class ExecutionPolicy>
     class ComputingKernel : public NeighborList, public Neighbor<Parameters...>
     {
       public:
+        template <class ExecutionPolicy>
         ComputingKernel(const ExecutionPolicy &ex_policy,
                         LocalInteractionDynamics<Inner<Parameters...>> &encloser);
     };
@@ -71,10 +71,10 @@ class LocalInteractionDynamics<Contact<Parameters...>> : public LocalDynamics
     explicit LocalInteractionDynamics(ContactRelation &contact_relation);
     virtual ~LocalInteractionDynamics(){};
 
-    template <class ExecutionPolicy>
     class ComputingKernel : public NeighborList, public Neighbor<Parameters...>
     {
       public:
+        template <class ExecutionPolicy>
         ComputingKernel(const ExecutionPolicy &ex_policy,
                         LocalInteractionDynamics<Contact<Parameters...>> &encloser,
                         UnsignedInt contact_index);

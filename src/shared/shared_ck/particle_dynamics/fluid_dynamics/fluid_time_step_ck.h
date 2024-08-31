@@ -47,16 +47,26 @@ class AdvectionTimeStepCK
 {
   public:
     AdvectionTimeStepCK(SPHBody &sph_body, Real U_ref, Real advectionCFL = 0.25);
-    virtual ~AdvectionTimeStepCK() {};
+    virtual ~AdvectionTimeStepCK(){};
     virtual Real outputResult(Real reduced_value) override;
 
-    template <class ExecutionPolicy>
     class ComputingKernel
     {
       public:
-        ComputingKernel(const ExecutionPolicy &ex_policy,
-                        AdvectionTimeStepCK &encloser);
-        Real reduce(size_t index_i, Real dt = 0.0);
+        template <class ExecutionPolicy>
+        ComputingKernel(const ExecutionPolicy &ex_policy, AdvectionTimeStepCK &encloser)
+            : h_min_(encloser.h_min_),
+              mass_(encloser.dv_mass_->DelegatedDataField(ex_policy)),
+              vel_(encloser.dv_vel_->DelegatedDataField(ex_policy)),
+              force_(encloser.dv_force_->DelegatedDataField(ex_policy)),
+              force_prior_(encloser.dv_force_prior_->DelegatedDataField(ex_policy)){};
+
+        Real reduce(size_t index_i, Real dt)
+        {
+            Real acceleration_scale =
+                4.0 * h_min_ * (force_[index_i] + force_prior_[index_i]).norm() / mass_[index_i];
+            return SMAX(vel_[index_i].squaredNorm(), acceleration_scale);
+        };
 
       protected:
         Real h_min_;
@@ -82,15 +92,19 @@ class AdvectionViscousTimeStepCK : public AdvectionTimeStepCK
 
   public:
     AdvectionViscousTimeStepCK(SPHBody &sph_body, Real U_ref, Real advectionCFL = 0.25);
-    virtual ~AdvectionViscousTimeStepCK() {};
+    virtual ~AdvectionViscousTimeStepCK(){};
 
-    template <class ExecutionPolicy>
-    class ComputingKernel : public AdvectionTimeStepCK::ComputingKernel<ExecutionPolicy>
+    class ComputingKernel : public AdvectionTimeStepCK::ComputingKernel
     {
       public:
-        ComputingKernel(const ExecutionPolicy &ex_policy,
-                        AdvectionViscousTimeStepCK &encloser);
-        Real reduce(size_t index_i, Real dt = 0.0);
+        template <class ExecutionPolicy>
+        ComputingKernel(const ExecutionPolicy &ex_policy, AdvectionViscousTimeStepCK &encloser)
+            : AdvectionTimeStepCK::ComputingKernel(ex_policy, encloser){};
+
+        Real reduce(size_t index_i, Real dt = 0.0)
+        {
+            return AdvectionTimeStepCK::ComputingKernel::reduce(index_i, dt);
+        };
     };
 };
 } // namespace fluid_dynamics

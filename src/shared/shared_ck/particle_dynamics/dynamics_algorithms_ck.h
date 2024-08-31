@@ -27,15 +27,15 @@
  *			One leads to the change of particle states, the other not.
  *			There are 5 classes the first type. They are:
  * 			SimpleDynamics is without particle interaction. Particles just update their states;
- *			InteractionDynamics is with particle interaction with its neighbors;
- *			InteractionSplit is InteractionDynamics but using spliting algorithm;
- *			InteractionWithUpdate is with particle interaction with its neighbors and then update their states;
+ *			InteractionDynamicsCK is with particle interaction with its neighbors;
+ *			InteractionSplit is InteractionDynamicsCK but using spliting algorithm;
+ *			InteractionWithUpdateCK is with particle interaction with its neighbors and then update their states;
  *			Dynamics1Level is the most complex dynamics, has successive three steps: initialization, interaction and update.
  *			In order to avoid misusing of the above algorithms, type traits are used to make sure that the matching between
- *			the algorithm and local dynamics. For example, the LocalDynamics which matches InteractionDynamics must have
+ *			the algorithm and local dynamics. For example, the LocalDynamics which matches InteractionDynamicsCK must have
  *			the function interaction() but should not have the function update() or initialize().
  *			The existence of the latter suggests that more complex algorithms,
- *			such as InteractionWithUpdate or Dynamics1Level should be used.
+ *			such as InteractionWithUpdateCK or Dynamics1Level should be used.
  *			There are 2 classes for the second type.
  *			ReduceDynamics carries out a reduce operation through the particles.
  *			Average further computes average of a ReduceDynamics for summation.
@@ -57,8 +57,7 @@ namespace SPH
 template <class LocalDynamicsType, class ExecutionPolicy = ParallelPolicy>
 class SimpleDynamicsCK : public LocalDynamicsType, public BaseDynamics<void>
 {
-    using ComputingKernel = typename LocalDynamicsType::
-        template ComputingKernel<ExecutionPolicy>;
+    using ComputingKernel = typename LocalDynamicsType::ComputingKernel;
 
   public:
     template <class DynamicsIdentifier, typename... Args>
@@ -70,7 +69,7 @@ class SimpleDynamicsCK : public LocalDynamicsType, public BaseDynamics<void>
                           !has_interaction<ComputingKernel>::value,
                       "LocalDynamicsType does not fulfill SimpleDynamics requirements");
     };
-    virtual ~SimpleDynamicsCK() {};
+    virtual ~SimpleDynamicsCK(){};
 
     virtual void exec(Real dt = 0.0) override
     {
@@ -91,8 +90,7 @@ template <class LocalDynamicsType, class ExecutionPolicy = ParallelPolicy>
 class ReduceDynamicsCK : public LocalDynamicsType,
                          public BaseDynamics<typename LocalDynamicsType::ReturnType>
 {
-    using ComputingKernel = typename LocalDynamicsType::
-        template ComputingKernel<ExecutionPolicy>;
+    using ComputingKernel = typename LocalDynamicsType::ComputingKernel;
     using ReturnType = typename LocalDynamicsType::ReturnType;
 
   public:
@@ -100,7 +98,7 @@ class ReduceDynamicsCK : public LocalDynamicsType,
     ReduceDynamicsCK(DynamicsIdentifier &identifier, Args &&...args)
         : LocalDynamicsType(identifier, std::forward<Args>(args)...),
           BaseDynamics<ReturnType>(), kernel_implementation_(*this){};
-    virtual ~ReduceDynamicsCK() {};
+    virtual ~ReduceDynamicsCK(){};
 
     std::string QuantityName() { return this->quantity_name_; };
     std::string DynamicsIdentifierName() { return this->identifier_.getName(); };
@@ -120,40 +118,154 @@ class ReduceDynamicsCK : public LocalDynamicsType,
   protected:
     Implementation<LocalDynamicsType, ExecutionPolicy> kernel_implementation_;
 };
-
 template <typename... T>
-class SequencedCombination;
+class InteractionDynamicsCK;
 
-template <class ExecutionPolicy, typename... CommonParameters,
-          template <typename... LocalDynamicsType> class AlgorithmType,
-          template <typename... InteractionTypes> class LocalDynamicsName>
-class SequencedCombination<AlgorithmType<ExecutionPolicy, LocalDynamicsName<>, CommonParameters...>> : public BaseDynamics<void>
+template <class ExecutionPolicy,
+          template <typename... InteractionTypes> class LocalInteractionName,
+          typename... Parameters>
+class InteractionDynamicsCK<ExecutionPolicy, LocalInteractionName<Inner<Parameters...>>>
+    : public LocalInteractionName<Inner<Parameters...>>, public BaseDynamics<void>
 {
-  public:
-    SequencedCombination() : BaseDynamics<void>() {};
-    virtual void exec(Real dt = 0.0) override {};
-};
-template <class ExecutionPolicy, typename... CommonParameters,
-          template <typename... LocalDynamicsType> class AlgorithmType,
-          template <typename... InteractionTypes> class LocalDynamicsName,
-          class FirstInteraction, class... OtherInteractions>
-class SequencedCombination<AlgorithmType<ExecutionPolicy, LocalDynamicsName<FirstInteraction, OtherInteractions...>, CommonParameters...>>
-    : public AlgorithmType<ExecutionPolicy, LocalDynamicsName<FirstInteraction, CommonParameters...>>
-{
-  protected:
-    SequencedCombination<AlgorithmType<ExecutionPolicy, LocalDynamicsName<OtherInteractions...>, CommonParameters...>> other_interactions_;
+
+    using LocalDynamicsType = LocalInteractionName<Inner<Parameters...>>;
+    using ComputingKernel = typename LocalDynamicsType::ComputingKernel;
+    using KernelImplementation = Implementation<LocalDynamicsType, ExecutionPolicy>;
 
   public:
-    template <class FirstParameterSet, typename... OtherParameterSets>
-    explicit SequencedCombination(FirstParameterSet &&first_parameter_set, OtherParameterSets &&...other_parameter_sets)
-        : AlgorithmType<ExecutionPolicy, LocalDynamicsName<FirstInteraction, CommonParameters...>>(first_parameter_set),
-          other_interactions_(std::forward<OtherParameterSets>(other_parameter_sets)...){};
+    template <typename... Args>
+    InteractionDynamicsCK(Args &&...args)
+        : LocalInteractionName<Inner<Parameters...>>(std::forward<Args>(args)...),
+          BaseDynamics<void>(), ex_policy_(ExecutionPolicy{}),
+          kernel_implementation_(*this)
+    {
+        static_assert(!has_initialize<LocalDynamicsType>::value &&
+                          !has_update<LocalDynamicsType>::value,
+                      "LocalDynamicsType does not fulfill InteractionDynamicsCK requirements");
+    };
+    virtual ~InteractionDynamicsCK(){};
+
+    /** pre process such as update ghost state */
+    StdVec<BaseDynamics<void> *> pre_processes_;
+    /** post process such as impose constraint */
+    StdVec<BaseDynamics<void> *> post_processes_;
 
     virtual void exec(Real dt = 0.0) override
     {
-        AlgorithmType<ExecutionPolicy, LocalDynamicsName<FirstInteraction, CommonParameters...>>::exec(dt);
-        other_interactions_.exec(dt);
+        this->setUpdated(this->identifier_.getSPHBody());
+        this->setupDynamics(dt);
+        runInteraction(dt);
+    };
+
+  protected:
+    ExecutionPolicy ex_policy_;
+    KernelImplementation kernel_implementation_;
+
+    /** run the interactions between particles. */
+    virtual void runInteraction(Real dt)
+    {
+        for (size_t k = 0; k < this->pre_processes_.size(); ++k)
+            this->pre_processes_[k]->exec(dt);
+
+        runMainStep(dt);
+
+        for (size_t k = 0; k < this->post_processes_.size(); ++k)
+            this->post_processes_[k]->exec(dt);
+    };
+
+    /** run the main interaction step between particles. */
+    void runMainStep(Real dt)
+    {
+        ComputingKernel *computing_kernel = kernel_implementation_.getComputingKernel();
+        particle_for(ex_policy_,
+                     this->identifier_.LoopRange(),
+                     [=](size_t i)
+                     { computing_kernel->interaction(i, dt); });
+    }
+};
+
+class WithUpdate;
+class WithInitialization;
+class OneLevel;
+
+template <class ExecutionPolicy, class LocalInteractionDynamicsType>
+class InteractionDynamicsCK<ExecutionPolicy, WithUpdate, LocalInteractionDynamicsType>
+    : public InteractionDynamicsCK<ExecutionPolicy, LocalInteractionDynamicsType>
+{
+    using BaseInteractionDynamicsType =
+        InteractionDynamicsCK<ExecutionPolicy, LocalInteractionDynamicsType>;
+    using ComputingKernel = typename BaseInteractionDynamicsType::ComputingKernel;
+
+  public:
+    template <typename... Args>
+    InteractionDynamicsCK(Args &&...args)
+        : BaseInteractionDynamicsType(std::forward<Args>(args)...){};
+
+    virtual void runInteraction(Real dt) override
+    {
+        for (size_t k = 0; k < this->pre_processes_.size(); ++k)
+            this->pre_processes_[k]->exec(dt);
+
+        this->runMainStep(dt);
+
+        ComputingKernel *computing_kernel = this->kernel_implementation_.getComputingKernel();
+        particle_for(this->ex_policy_,
+                     this->identifier_.LoopRange(),
+                     [=](size_t i)
+                     { computing_kernel->update(i, dt); });
+
+        for (size_t k = 0; k < this->post_processes_.size(); ++k)
+            this->post_processes_[k]->exec(dt);
     };
 };
+
+template <class ExecutionPolicy,
+          template <typename... InteractionTypes> class LocalInteractionName,
+          typename... Parameters>
+class InteractionDynamicsCK<ExecutionPolicy, LocalInteractionName<Contact<Parameters...>>>
+    : public LocalInteractionName<Contact<Parameters...>>, public BaseDynamics<void>
+{
+
+    using LocalDynamicsType = LocalInteractionName<Contact<Parameters...>>;
+    using ComputingKernel = typename LocalDynamicsType::ComputingKernel;
+    using KernelImplementation = Implementation<LocalDynamicsType, ExecutionPolicy>;
+    UniquePtrsKeeper<KernelImplementation> contact_kernel_implementation_ptrs_;
+
+  public:
+    template <typename... Args>
+    InteractionDynamicsCK(Args &&...args)
+        : LocalInteractionName<Contact<Parameters...>>(std::forward<Args>(args)...),
+          BaseDynamics<void>(), ex_policy_(ExecutionPolicy{})
+    {
+        static_assert(!has_initialize<LocalDynamicsType>::value &&
+                          !has_update<LocalDynamicsType>::value,
+                      "LocalDynamicsType does not fulfill InteractionDynamicsCK requirements");
+        for (size_t k = 0; k != this->contact_bodies_.size(); ++k)
+        {
+            contact_kernel_implementation_.push_back(
+                contact_kernel_implementation_ptrs_.template createPtr<KernelImplementation>(*this));
+        }
+    };
+    virtual ~InteractionDynamicsCK(){};
+
+  protected:
+    ExecutionPolicy ex_policy_;
+    StdVec<KernelImplementation *> contact_kernel_implementation_;
+
+    /** run the main interaction step between particles. */
+    virtual void runMainStep(Real dt) override
+    {
+        for (size_t k = 0; k != this->contact_bodies_.size(); ++k)
+        {
+            ComputingKernel *computing_kernel = contact_kernel_implementation_[k]->getComputingKernel(k);
+
+            particle_for(ex_policy_,
+                         this->identifier_.LoopRange(),
+                         [=](size_t i)
+                         { computing_kernel->interaction(i, dt); });
+        }
+    }
+};
+
 } // namespace SPH
 #endif // DYNAMICS_ALGORITHMS_CK_H

@@ -8,15 +8,25 @@
 namespace SPH
 {
 //=================================================================================================//
+template <typename... Parameters>
+BodyRelationUpdate<Inner<Parameters...>>::BodyRelationUpdate(InnerRelation &inner_relation)
+    : LocalInteractionDynamics<Inner<Parameters...>>(inner_relation),
+      cell_linked_list_(inner_relation.getCellLinkedList()),
+      particle_offset_list_size_(inner_relation.getParticleOffsetListSize())
+{
+    this->particles_->addVariableToWrite(this->dv_particle_offset_);
+}
+//=================================================================================================//
+template <typename... Parameters>
 template <class ExecutionPolicy>
-BodyRelationUpdate<Inner<>>::ComputingKernel<ExecutionPolicy>::ComputingKernel(
-    const ExecutionPolicy &ex_policy, BodyRelationUpdate<Inner<>> &encloser)
-    : LocalInteractionDynamics<Inner<>>::ComputingKernel<ExecutionPolicy>(ex_policy, encloser),
+BodyRelationUpdate<Inner<Parameters...>>::ComputingKernel::ComputingKernel(
+    const ExecutionPolicy &ex_policy, BodyRelationUpdate<Inner<Parameters...>> &encloser)
+    : LocalInteractionDynamics<Inner<Parameters...>>::ComputingKernel(ex_policy, encloser),
       neighbor_search_(encloser.cell_linked_list_.createNeighborSearch(ex_policy)) {}
 //=================================================================================================//
-template <class ExecutionPolicy>
-void BodyRelationUpdate<Inner<>>::ComputingKernel<ExecutionPolicy>::
-    incrementNeighborSize(UnsignedInt index_i)
+template <typename... Parameters>
+void BodyRelationUpdate<Inner<Parameters...>>::
+    ComputingKernel::incrementNeighborSize(UnsignedInt index_i)
 {
     // Here, neighbor_index_ takes role of temporary storage for neighbor size list.
     UnsignedInt neighbor_count = 0;
@@ -32,9 +42,9 @@ void BodyRelationUpdate<Inner<>>::ComputingKernel<ExecutionPolicy>::
     this->neighbor_index_[index_i] = neighbor_count;
 }
 //=================================================================================================//
-template <class ExecutionPolicy>
-void BodyRelationUpdate<Inner<>>::ComputingKernel<ExecutionPolicy>::
-    updateNeighborList(UnsignedInt index_i)
+template <typename... Parameters>
+void BodyRelationUpdate<Inner<Parameters...>>::
+    ComputingKernel::updateNeighborList(UnsignedInt index_i)
 {
     UnsignedInt neighbor_count = 0;
     neighbor_search_.forEachSearch(
@@ -85,19 +95,31 @@ void UpdateRelation<ExecutionPolicy, BodyRelationUpdate<Inner<Parameters...>>>::
                  { computing_kernel->updateNeighborList(i); });
 }
 //=================================================================================================//
+template <typename... Parameters>
+BodyRelationUpdate<Contact<Parameters...>>::BodyRelationUpdate(ContactRelation &contact_relation)
+    : LocalInteractionDynamics<Contact<Parameters...>>(contact_relation),
+      particle_offset_list_size_(contact_relation.getParticleOffsetListSize()),
+      contact_cell_linked_list_(contact_relation.getContactCellLinkedList())
+{
+    for (size_t k = 0; k != this->contact_bodies_.size(); ++k)
+    {
+        this->particles_->addVariableToWrite(this->dv_contact_particle_offset_[k]);
+    }
+}
+//=================================================================================================//
+template <typename... Parameters>
 template <class ExecutionPolicy>
-BodyRelationUpdate<Contact<>>::ComputingKernel<ExecutionPolicy>::
-    ComputingKernel(const ExecutionPolicy &ex_policy,
-                    BodyRelationUpdate<Contact<>> &encloser,
-                    UnsignedInt contact_index)
-    : LocalInteractionDynamics<Contact<>>::ComputingKernel<ExecutionPolicy>(
-          ex_policy, encloser, contact_index),
+BodyRelationUpdate<Contact<Parameters...>>::
+    ComputingKernel::ComputingKernel(const ExecutionPolicy &ex_policy,
+                                     BodyRelationUpdate<Contact<Parameters...>> &encloser,
+                                     UnsignedInt contact_index)
+    : LocalInteractionDynamics<Contact<>>::ComputingKernel(ex_policy, encloser, contact_index),
       neighbor_search_(encloser.contact_cell_linked_list_[contact_index]
                            ->createNeighborSearch(ex_policy)) {}
 //=================================================================================================//
-template <class ExecutionPolicy>
-void BodyRelationUpdate<Contact<>>::ComputingKernel<ExecutionPolicy>::
-    incrementNeighborSize(UnsignedInt index_i)
+template <typename... Parameters>
+void BodyRelationUpdate<Contact<Parameters...>>::
+    ComputingKernel::incrementNeighborSize(UnsignedInt index_i)
 {
     // Here, neighbor_index_ takes role of temporary storage for neighbor size list.
     UnsignedInt neighbor_count = 0;
@@ -110,9 +132,9 @@ void BodyRelationUpdate<Contact<>>::ComputingKernel<ExecutionPolicy>::
     this->neighbor_index_[index_i] = neighbor_count;
 }
 //=================================================================================================//
-template <class ExecutionPolicy>
-void BodyRelationUpdate<Contact<>>::ComputingKernel<ExecutionPolicy>::
-    updateNeighborList(UnsignedInt index_i)
+template <typename... Parameters>
+void BodyRelationUpdate<Contact<Parameters...>>::
+    ComputingKernel::updateNeighborList(UnsignedInt index_i)
 {
     UnsignedInt neighbor_count = 0;
     neighbor_search_.forEachSearch(

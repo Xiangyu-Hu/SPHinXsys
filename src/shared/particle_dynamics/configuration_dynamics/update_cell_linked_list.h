@@ -38,10 +38,11 @@
 namespace SPH
 {
 template <typename... T>
-class ParticlesInCell;
+class UpdateCellLinkedList;
 
-template <typename CellLinkedListType>
-class ParticlesInCell<CellLinkedListType> : public LocalDynamics
+template <class ExecutionPolicy, typename CellLinkedListType>
+class UpdateCellLinkedList<ExecutionPolicy, CellLinkedListType>
+    : public LocalDynamics, public BaseDynamics<void>
 {
   protected:
     CellLinkedListType &cell_linked_list_;
@@ -53,15 +54,14 @@ class ParticlesInCell<CellLinkedListType> : public LocalDynamics
     DiscreteVariable<UnsignedInt> dv_current_cell_size_;
 
   public:
-    ParticlesInCell(RealBody &real_body);
-    virtual ~ParticlesInCell() {};
+    UpdateCellLinkedList(RealBody &real_body);
+    virtual ~UpdateCellLinkedList(){};
 
-    template <class ExecutionPolicy>
     class ComputingKernel
     {
       public:
         ComputingKernel(const ExecutionPolicy &ex_policy,
-                        ParticlesInCell<CellLinkedListType> &encloser);
+                        UpdateCellLinkedList<ExecutionPolicy, CellLinkedListType> &encloser);
         void clearAllLists(UnsignedInt index_i);
         void incrementCellSize(UnsignedInt index_i);
         void updateCellList(UnsignedInt index_i);
@@ -75,26 +75,13 @@ class ParticlesInCell<CellLinkedListType> : public LocalDynamics
         UnsignedInt *cell_offset_;
         UnsignedInt *current_cell_size_;
     };
-};
 
-template <typename... T>
-class UpdateCellLinkedList;
-
-template <class ExecutionPolicy, class CellLinkedListType>
-class UpdateCellLinkedList<ExecutionPolicy, ParticlesInCell<CellLinkedListType>>
-    : public ParticlesInCell<CellLinkedListType>, public BaseDynamics<void>
-{
-    typedef ParticlesInCell<CellLinkedListType> LocalDynamicsType;
-    using ComputingKernel = typename LocalDynamicsType::
-        template ComputingKernel<ExecutionPolicy>;
-    ExecutionPolicy ex_policy_;
-
-  public:
-    UpdateCellLinkedList(RealBody &real_body);
-    virtual ~UpdateCellLinkedList() {};
     virtual void exec(Real dt = 0.0) override;
+    typedef UpdateCellLinkedList<ExecutionPolicy, CellLinkedListType> LocalDynamicsType;
+    using ComputingKernel = typename LocalDynamicsType::ComputingKernel;
 
   protected:
+    ExecutionPolicy ex_policy_;
     Implementation<LocalDynamicsType, ExecutionPolicy> kernel_implementation_;
 };
 

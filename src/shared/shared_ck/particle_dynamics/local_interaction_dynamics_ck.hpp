@@ -31,7 +31,7 @@ void LocalInteractionDynamics<Inner<Parameters...>>::resetComputingKernelUpdated
 //=================================================================================================//
 template <typename... Parameters>
 template <class ExecutionPolicy>
-LocalInteractionDynamics<Inner<Parameters...>>::ComputingKernel<ExecutionPolicy>::
+LocalInteractionDynamics<Inner<Parameters...>>::ComputingKernel::
     ComputingKernel(const ExecutionPolicy &ex_policy,
                     LocalInteractionDynamics<Inner<Parameters...>> &encloser)
     : NeighborList(ex_policy, encloser.dv_neighbor_index_, encloser.dv_particle_offset_),
@@ -72,7 +72,7 @@ void LocalInteractionDynamics<Contact<Parameters...>>::
 //=================================================================================================//
 template <typename... Parameters>
 template <class ExecutionPolicy>
-LocalInteractionDynamics<Contact<Parameters...>>::ComputingKernel<ExecutionPolicy>::
+LocalInteractionDynamics<Contact<Parameters...>>::ComputingKernel::
     ComputingKernel(const ExecutionPolicy &ex_policy,
                     LocalInteractionDynamics<Contact<Parameters...>> &encloser, UnsignedInt contact_index)
     : NeighborList(ex_policy,

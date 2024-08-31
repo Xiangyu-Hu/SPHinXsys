@@ -41,19 +41,22 @@ namespace SPH
 template <typename... T>
 class BodyRelationUpdate;
 
-template <>
-class BodyRelationUpdate<Inner<>> : public LocalInteractionDynamics<Inner<>>
+template <typename... Parameters>
+class BodyRelationUpdate<Inner<Parameters...>>
+    : public LocalInteractionDynamics<Inner<Parameters...>>
 {
 
   public:
     explicit BodyRelationUpdate(InnerRelation &inner_relation);
     virtual ~BodyRelationUpdate(){};
 
-    template <class ExecutionPolicy>
-    class ComputingKernel : public LocalInteractionDynamics<Inner<>>::ComputingKernel<ExecutionPolicy>
+    class ComputingKernel
+        : public LocalInteractionDynamics<Inner<Parameters...>>::ComputingKernel
     {
       public:
-        ComputingKernel(const ExecutionPolicy &ex_policy, BodyRelationUpdate<Inner<>> &encloser);
+        template <class ExecutionPolicy>
+        ComputingKernel(const ExecutionPolicy &ex_policy,
+                        BodyRelationUpdate<Inner<Parameters...>> &encloser);
         void incrementNeighborSize(UnsignedInt index_i);
         void updateNeighborList(UnsignedInt index_i);
 
@@ -74,12 +77,12 @@ class UpdateRelation<ExecutionPolicy, BodyRelationUpdate<Inner<Parameters...>>>
     : public BodyRelationUpdate<Inner<Parameters...>>, public BaseDynamics<void>
 {
     typedef BodyRelationUpdate<Inner<Parameters...>> LocalDynamicsType;
-    using ComputingKernel = typename LocalDynamicsType::template ComputingKernel<ExecutionPolicy>;
+    using ComputingKernel = typename LocalDynamicsType::ComputingKernel;
     using KernelImplementation = Implementation<LocalDynamicsType, ExecutionPolicy>;
 
   public:
     template <typename... Args>
-    UpdateRelation(Args &&... args);
+    UpdateRelation(Args &&...args);
     virtual ~UpdateRelation(){};
     virtual void exec(Real dt = 0.0) override;
 
@@ -88,20 +91,22 @@ class UpdateRelation<ExecutionPolicy, BodyRelationUpdate<Inner<Parameters...>>>
     KernelImplementation kernel_implementation_;
 };
 
-template <>
-class BodyRelationUpdate<Contact<>> : public LocalInteractionDynamics<Contact<>>
+template <typename... Parameters>
+class BodyRelationUpdate<Contact<Parameters...>>
+    : public LocalInteractionDynamics<Contact<Parameters...>>
 {
 
   public:
     explicit BodyRelationUpdate(ContactRelation &contact_relation);
     virtual ~BodyRelationUpdate(){};
 
-    template <class ExecutionPolicy>
-    class ComputingKernel : public LocalInteractionDynamics<Contact<>>::ComputingKernel<ExecutionPolicy>
+    class ComputingKernel
+        : public LocalInteractionDynamics<Contact<Parameters...>>::ComputingKernel
     {
       public:
+        template <class ExecutionPolicy>
         ComputingKernel(const ExecutionPolicy &ex_policy,
-                        BodyRelationUpdate<Contact<>> &encloser,
+                        BodyRelationUpdate<Contact<Parameters...>> &encloser,
                         UnsignedInt contact_index);
         void incrementNeighborSize(UnsignedInt index_i);
         void updateNeighborList(UnsignedInt index_i);
@@ -120,13 +125,13 @@ class UpdateRelation<ExecutionPolicy, BodyRelationUpdate<Contact<Parameters...>>
     : public BodyRelationUpdate<Contact<Parameters...>>, public BaseDynamics<void>
 {
     typedef BodyRelationUpdate<Contact<Parameters...>> LocalDynamicsType;
-    using ComputingKernel = typename LocalDynamicsType::template ComputingKernel<ExecutionPolicy>;
+    using ComputingKernel = typename LocalDynamicsType::ComputingKernel;
     using KernelImplementation = Implementation<LocalDynamicsType, ExecutionPolicy>;
     UniquePtrsKeeper<KernelImplementation> contact_kernel_implementation_ptrs_;
 
   public:
     template <typename... Args>
-    UpdateRelation(Args &&... args);
+    UpdateRelation(Args &&...args);
     virtual ~UpdateRelation(){};
     virtual void exec(Real dt = 0.0) override;
 

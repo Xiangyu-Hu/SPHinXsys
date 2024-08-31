@@ -10,25 +10,25 @@
 namespace SPH
 {
 //=================================================================================================//
-template <typename CellLinkedListType>
-ParticlesInCell<CellLinkedListType>::ParticlesInCell(RealBody &real_body)
-    : LocalDynamics(real_body),
+template <class ExecutionPolicy, typename CellLinkedListType>
+UpdateCellLinkedList<ExecutionPolicy, CellLinkedListType>::UpdateCellLinkedList(RealBody &real_body)
+    : LocalDynamics(real_body), BaseDynamics<void>(),
       cell_linked_list_(DynamicCast<CellLinkedListType>(this, real_body.getCellLinkedList())),
       mesh_(cell_linked_list_),
       cell_offset_list_size_(cell_linked_list_.getCellOffsetListSize()),
       dv_pos_(cell_linked_list_.getParticlePosition()),
       dv_particle_index_(cell_linked_list_.getParticleIndex()),
       dv_cell_offset_(cell_linked_list_.getCellOffset()),
-      dv_current_cell_size_(DiscreteVariable<UnsignedInt>("CurrentCellSize", cell_offset_list_size_))
+      dv_current_cell_size_(DiscreteVariable<UnsignedInt>("CurrentCellSize", cell_offset_list_size_)),
+      ex_policy_(ExecutionPolicy{}), kernel_implementation_(*this)
 {
     particles_->addVariableToWrite<UnsignedInt>("ParticleIndex");
 }
 //=================================================================================================//
-template <typename CellLinkedListType>
-template <class ExecutionPolicy>
-ParticlesInCell<CellLinkedListType>::ComputingKernel<ExecutionPolicy>::
+template <class ExecutionPolicy, typename CellLinkedListType>
+UpdateCellLinkedList<ExecutionPolicy, CellLinkedListType>::ComputingKernel::
     ComputingKernel(const ExecutionPolicy &ex_policy,
-                    ParticlesInCell<CellLinkedListType> &encloser)
+                    UpdateCellLinkedList<ExecutionPolicy, CellLinkedListType> &encloser)
     : mesh_(encloser.mesh_),
       cell_offset_list_size_(encloser.cell_offset_list_size_),
       pos_(encloser.dv_pos_->DelegatedDataField(ex_policy)),
@@ -36,9 +36,8 @@ ParticlesInCell<CellLinkedListType>::ComputingKernel<ExecutionPolicy>::
       cell_offset_(encloser.dv_cell_offset_->DelegatedDataField(ex_policy)),
       current_cell_size_(encloser.dv_current_cell_size_.DelegatedDataField(ex_policy)) {}
 //=================================================================================================//
-template <typename CellLinkedListType>
-template <class ExecutionPolicy>
-void ParticlesInCell<CellLinkedListType>::ComputingKernel<ExecutionPolicy>::
+template <class ExecutionPolicy, typename CellLinkedListType>
+void UpdateCellLinkedList<ExecutionPolicy, CellLinkedListType>::ComputingKernel::
     clearAllLists(UnsignedInt index_i)
 {
     cell_offset_[index_i] = 0;
@@ -46,9 +45,8 @@ void ParticlesInCell<CellLinkedListType>::ComputingKernel<ExecutionPolicy>::
     particle_index_[index_i] = 0;
 }
 //=================================================================================================//
-template <typename CellLinkedListType>
-template <class ExecutionPolicy>
-void ParticlesInCell<CellLinkedListType>::ComputingKernel<ExecutionPolicy>::
+template <class ExecutionPolicy, typename CellLinkedListType>
+void UpdateCellLinkedList<ExecutionPolicy, CellLinkedListType>::ComputingKernel::
     incrementCellSize(UnsignedInt index_i)
 {
     // Here, particle_index_ takes role of current_cell_size_list_.
@@ -58,9 +56,8 @@ void ParticlesInCell<CellLinkedListType>::ComputingKernel<ExecutionPolicy>::
     ++atomic_cell_size;
 }
 //=================================================================================================//
-template <typename CellLinkedListType>
-template <class ExecutionPolicy>
-void ParticlesInCell<CellLinkedListType>::ComputingKernel<ExecutionPolicy>::
+template <class ExecutionPolicy, typename CellLinkedListType>
+void UpdateCellLinkedList<ExecutionPolicy, CellLinkedListType>::ComputingKernel::
     updateCellList(UnsignedInt index_i)
 {
     // Here, particle_index_ takes its original role.
@@ -71,13 +68,7 @@ void ParticlesInCell<CellLinkedListType>::ComputingKernel<ExecutionPolicy>::
 }
 //=================================================================================================//
 template <class ExecutionPolicy, class CellLinkedListType>
-UpdateCellLinkedList<ExecutionPolicy, ParticlesInCell<CellLinkedListType>>::
-    UpdateCellLinkedList(RealBody &real_body)
-    : ParticlesInCell<CellLinkedListType>(real_body),
-      BaseDynamics<void>(), ex_policy_(ExecutionPolicy{}), kernel_implementation_(*this){};
-//=================================================================================================//
-template <class ExecutionPolicy, class CellLinkedListType>
-void UpdateCellLinkedList<ExecutionPolicy, ParticlesInCell<CellLinkedListType>>::exec(Real dt)
+void UpdateCellLinkedList<ExecutionPolicy, CellLinkedListType>::exec(Real dt)
 {
     UnsignedInt total_real_particles = this->particles_->TotalRealParticles();
     ComputingKernel *computing_kernel = kernel_implementation_.getComputingKernel();

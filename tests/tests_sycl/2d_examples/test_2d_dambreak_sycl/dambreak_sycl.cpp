@@ -75,9 +75,8 @@ int main(int ac, char *av[])
     //	Basically the the range of bodies to build neighbor particle lists.
     //  Generally, we first define all the inner relations, then the contact relations.
     //----------------------------------------------------------------------
-    SequencedCombination<UpdateCellLinkedList<
-        execution::ParallelDevicePolicy, ParticlesInCell<CellLinkedList, CellLinkedList>>>
-        water_wall_cell_linked_list(water_block, wall_boundary);
+    UpdateCellLinkedList<execution::ParallelDevicePolicy, CellLinkedList> water_cell_linked_list(water_block);
+    UpdateCellLinkedList<execution::ParallelDevicePolicy, CellLinkedList> wall_cell_linked_list(wall_boundary);
     DiscreteVariable<UnsignedInt> *dv_particle_index_water =
         water_block.getBaseParticles().getVariableByName<UnsignedInt>("ParticleIndex");
     DiscreteVariable<UnsignedInt> *dv_particle_index_wall =
@@ -114,7 +113,12 @@ int main(int ac, char *av[])
     Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallRiemann> fluid_density_relaxation(water_block_inner, water_wall_contact);
     InteractionWithUpdate<fluid_dynamics::DensitySummationComplexFreeSurface> fluid_density_by_summation(water_block_inner, water_wall_contact);
 
-    ReduceDynamics<fluid_dynamics::AdvectionTimeStep> fluid_advection_time_step(water_block, U_ref);
+    // InteractionDynamicsCK<execution::ParallelDevicePolicy, WithUpdate,
+    //                     fluid_dynamics::DensitySummationCK<Inner<FreeSurface>>>
+    //    fluid_density_summation(water_block_inner);
+
+    ReduceDynamics<fluid_dynamics::AdvectionTimeStep>
+        fluid_advection_time_step(water_block, U_ref);
     ReduceDynamicsCK<fluid_dynamics::AdvectionTimeStepCK, execution::ParallelDevicePolicy> ck_fluid_advection_time_step(water_block, U_ref);
     DiscreteVariable<Vecd> *dv_force_prior = water_block.getBaseParticles().getVariableByName<Vecd>("ForcePrior");
     DiscreteVariable<Vecd> *dv_force = water_block.getBaseParticles().getVariableByName<Vecd>("Force");
@@ -144,7 +148,8 @@ int main(int ac, char *av[])
     constant_gravity.exec();
     dv_force_prior->synchronizeWithDevice();
 
-    water_wall_cell_linked_list.exec();
+    water_cell_linked_list.exec();
+    wall_cell_linked_list.exec();
     dv_particle_index_water->synchronizeWithDevice();
     dv_particle_index_wall->synchronizeWithDevice();
 
