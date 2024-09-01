@@ -10,9 +10,9 @@ namespace SPH
 namespace fluid_dynamics
 {
 //=================================================================================================//
-template <template <typename... T> class RelationType, typename... Parameters>
+template <template <typename...> class RelationType, typename... Parameters>
 template <class DynamicsIdentifier>
-DensitySummationCK<Interaction<RelationType<Parameters...>>>::
+DensitySummationCK<Base, RelationType<Parameters...>>::
     DensitySummationCK(DynamicsIdentifier &identifier)
     : Interaction<RelationType<Parameters...>>(identifier),
       dv_rho_(this->particles_->template getVariableByName<Real>("Density")),
@@ -22,12 +22,14 @@ DensitySummationCK<Interaction<RelationType<Parameters...>>>::
       rho0_(this->sph_body_.getBaseMaterial().ReferenceDensity()),
       inv_sigma0_(1.0 / this->sph_adaptation_->LatticeNumberDensity()) {}
 //=================================================================================================//
-template <template <typename... T> class RelationType, typename... Parameters>
-template <class ExecutionPolicy>
-DensitySummationCK<Interaction<RelationType<Parameters...>>>::ComputingKernel::
+template <template <typename...> class RelationType, typename... Parameters>
+template <class ExecutionPolicy, typename... Args>
+DensitySummationCK<Base, RelationType<Parameters...>>::ComputingKernel::
     ComputingKernel(const ExecutionPolicy &ex_policy,
-                    DensitySummationCK<Interaction<RelationType<Parameters...>>> &encloser)
-    : Interaction<RelationType<Parameters...>>::ComputingKernel(ex_policy, encloser),
+                    DensitySummationCK<Base, RelationType<Parameters...>> &encloser,
+                    Args &&...args)
+    : Interaction<RelationType<Parameters...>>::
+          ComputingKernel(ex_policy, encloser, std::forward<Args>(args)...),
       rho_(encloser.dv_rho_->DelegatedDataField(ex_policy)),
       mass_(encloser.dv_mass_->DelegatedDataField(ex_policy)),
       rho_sum_(encloser.dv_rho_sum_->DelegatedDataField(ex_policy)),
@@ -37,16 +39,14 @@ DensitySummationCK<Interaction<RelationType<Parameters...>>>::ComputingKernel::
 template <typename RegularizationType, typename... Parameters>
 DensitySummationCK<Inner<RegularizationType, Parameters...>>::
     DensitySummationCK(InnerRelation &inner_relation)
-    : DensitySummationCK<Interaction<Inner<Parameters...>>>(inner_relation) {}
+    : DensitySummationCK<Base, Inner<Parameters...>>(inner_relation) {}
 //=================================================================================================//
 template <typename RegularizationType, typename... Parameters>
 template <class ExecutionPolicy>
-DensitySummationCK<Inner<RegularizationType, Parameters...>>::
-    ComputingKernel::ComputingKernel(
-        const ExecutionPolicy &ex_policy,
-        DensitySummationCK<Inner<RegularizationType, Parameters...>> &encloser)
-    : DensitySummationCK<Interaction<Inner<Parameters...>>>::
-          ComputingKernel(ex_policy, encloser),
+DensitySummationCK<Inner<RegularizationType, Parameters...>>::ComputingKernel::
+    ComputingKernel(const ExecutionPolicy &ex_policy,
+                    DensitySummationCK<Inner<RegularizationType, Parameters...>> &encloser)
+    : DensitySummationCK<Base, Inner<Parameters...>>::ComputingKernel(ex_policy, encloser),
       W0_(this->kernel_.W(ZeroData<Vecd>::value)), regularization_(*this) {}
 //=================================================================================================//
 template <typename RegularizationType, typename... Parameters>
@@ -70,7 +70,7 @@ void DensitySummationCK<Inner<RegularizationType, Parameters...>>::
 //=================================================================================================//
 template <typename... Parameters>
 DensitySummationCK<Contact<Parameters...>>::DensitySummationCK(ContactRelation &contact_relation)
-    : DensitySummationCK<Interaction<Contact<Parameters...>>>(contact_relation)
+    : DensitySummationCK<Base, Contact<Parameters...>>(contact_relation)
 {
     for (size_t k = 0; k != this->contact_particles_.size(); ++k)
     {
@@ -86,10 +86,10 @@ DensitySummationCK<Contact<Parameters...>>::ComputingKernel::
     ComputingKernel(const ExecutionPolicy &ex_policy,
                     DensitySummationCK<Contact<Parameters...>> &encloser,
                     size_t contact_index)
-    : DensitySummationCK<Interaction<Contact<Parameters...>>>::
+    : DensitySummationCK<Base, Contact<Parameters...>>::
           ComputingKernel(ex_policy, encloser, contact_index),
-      contact_inv_rho0_k_(encloser.contact_inv_rho0_),
-      contact_mass_k_(encloser.contact_mass_[contact_index]->DelegatedDataField(ex_policy)) {}
+      contact_inv_rho0_k_(encloser.contact_inv_rho0_[contact_index]),
+      contact_mass_k_(encloser.dv_contact_mass_[contact_index]->DelegatedDataField(ex_policy)) {}
 //=================================================================================================//
 template <typename... Parameters>
 void DensitySummationCK<Contact<Parameters...>>::ComputingKernel::
