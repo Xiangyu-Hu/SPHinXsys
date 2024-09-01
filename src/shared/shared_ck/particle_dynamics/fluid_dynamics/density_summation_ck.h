@@ -120,6 +120,9 @@ template <class FlowType, typename... Parameters>
 class DensitySummationCK<Inner<FlowType, Parameters...>>
     : public DensitySummationCK<Base, Inner<Parameters...>>
 {
+    using RegularizationKernel =
+        typename Regularization<FlowType>::ComputingKernel;
+
   public:
     explicit DensitySummationCK(InnerRelation &inner_relation);
     virtual ~DensitySummationCK(){};
@@ -136,7 +139,7 @@ class DensitySummationCK<Inner<FlowType, Parameters...>>
 
       protected:
         Real W0_;
-        typename Regularization<FlowType>::ComputingKernel regularization_;
+        RegularizationKernel regularization_;
     };
 
   protected:
