@@ -39,6 +39,7 @@ namespace SPH
 {
 namespace fluid_dynamics
 {
+
 template <typename...>
 class Regularization;
 
@@ -46,18 +47,40 @@ template <>
 class Regularization<Internal>
 {
   public:
-    template <class ComputingKernelType>
-    Regularization(ComputingKernelType &computing_kernel){};
-    Real operator()(Real &rho_sum, Real rho0, Real &rho) { return rho_sum; };
+    Regularization(BaseParticles *particles){};
+
+    class ComputingKernel
+    {
+      public:
+        template <class ExecutionPolicy, class ComputingKernelType>
+        ComputingKernel(const ExecutionPolicy &ex_policy,
+                        Regularization<Internal> &encloser,
+                        ComputingKernelType &computing_kernel){};
+
+        Real operator()(Real &rho_sum) { return rho_sum; };
+    };
 };
 
 template <>
 class Regularization<FreeSurface>
 {
   public:
-    template <class ComputingKernelType>
-    Regularization(ComputingKernelType &computing_kernel){};
-    Real operator()(Real &rho_sum, Real rho0, Real &rho) { return SMAX(rho_sum, rho0); };
+    Regularization(BaseParticles *particles){};
+
+    class ComputingKernel
+    {
+      public:
+        template <class ExecutionPolicy, class ComputingKernelType>
+        ComputingKernel(const ExecutionPolicy &ex_policy,
+                        Regularization<FreeSurface> &encloser,
+                        ComputingKernelType &computing_kernel)
+            : rho0_(computing_kernel.InitialDensity()){};
+
+        Real operator()(Real &rho_sum) { return SMAX(rho_sum, rho0_); };
+
+      protected:
+        Real rho0_;
+    };
 };
 
 template <typename... RelationTypes>
@@ -81,6 +104,7 @@ class DensitySummationCK<Base, RelationType<Parameters...>>
         ComputingKernel(const ExecutionPolicy &ex_policy,
                         DensitySummationCK<Base, RelationType<Parameters...>> &encloser,
                         Args &&...args);
+        Real InitialDensity() { return rho0_; };
 
       protected:
         Real *rho_, *mass_, *rho_sum_, *Vol_;
@@ -92,8 +116,8 @@ class DensitySummationCK<Base, RelationType<Parameters...>>
     Real rho0_, inv_sigma0_;
 };
 
-template <class RegularizationType, typename... Parameters>
-class DensitySummationCK<Inner<RegularizationType, Parameters...>>
+template <class FlowType, typename... Parameters>
+class DensitySummationCK<Inner<FlowType, Parameters...>>
     : public DensitySummationCK<Base, Inner<Parameters...>>
 {
   public:
@@ -106,14 +130,17 @@ class DensitySummationCK<Inner<RegularizationType, Parameters...>>
       public:
         template <class ExecutionPolicy>
         ComputingKernel(const ExecutionPolicy &ex_policy,
-                        DensitySummationCK<Inner<RegularizationType, Parameters...>> &encloser);
+                        DensitySummationCK<Inner<FlowType, Parameters...>> &encloser);
         void interaction(size_t index_i, Real dt = 0.0);
         void update(size_t index_i, Real dt = 0.0);
 
       protected:
         Real W0_;
-        Regularization<RegularizationType> regularization_;
+        typename Regularization<FlowType>::ComputingKernel regularization_;
     };
+
+  protected:
+    Regularization<FlowType> regularization_method_;
 };
 using DensitySummationCKInner = DensitySummationCK<Inner<Internal>>;
 using DensitySummationCKInnerFreeSurface = DensitySummationCK<Inner<FreeSurface>>;

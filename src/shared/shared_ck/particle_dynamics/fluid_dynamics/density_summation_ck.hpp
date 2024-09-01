@@ -39,7 +39,8 @@ DensitySummationCK<Base, RelationType<Parameters...>>::ComputingKernel::
 template <typename RegularizationType, typename... Parameters>
 DensitySummationCK<Inner<RegularizationType, Parameters...>>::
     DensitySummationCK(InnerRelation &inner_relation)
-    : DensitySummationCK<Base, Inner<Parameters...>>(inner_relation) {}
+    : DensitySummationCK<Base, Inner<Parameters...>>(inner_relation),
+      regularization_method_(this->particles_) {}
 //=================================================================================================//
 template <typename RegularizationType, typename... Parameters>
 template <class ExecutionPolicy>
@@ -47,7 +48,8 @@ DensitySummationCK<Inner<RegularizationType, Parameters...>>::ComputingKernel::
     ComputingKernel(const ExecutionPolicy &ex_policy,
                     DensitySummationCK<Inner<RegularizationType, Parameters...>> &encloser)
     : DensitySummationCK<Base, Inner<Parameters...>>::ComputingKernel(ex_policy, encloser),
-      W0_(this->kernel_.W(ZeroData<Vecd>::value)), regularization_(*this) {}
+      W0_(this->kernel_.W(ZeroData<Vecd>::value)),
+      regularization_(ex_policy, encloser.regularization_method_, *this) {}
 //=================================================================================================//
 template <typename RegularizationType, typename... Parameters>
 void DensitySummationCK<Inner<RegularizationType, Parameters...>>::
