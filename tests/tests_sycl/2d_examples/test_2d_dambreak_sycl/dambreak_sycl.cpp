@@ -117,8 +117,11 @@ int main(int ac, char *av[])
                           fluid_dynamics::DensitySummationCKInnerFreeSurface>
         fluid_density_summation(water_block_inner);
 
-    ReduceDynamics<fluid_dynamics::AdvectionTimeStep>
-        fluid_advection_time_step(water_block, U_ref);
+    InteractionDynamicsCK<execution::ParallelDevicePolicy,
+                          fluid_dynamics::DensitySummationCK<Contact<>>>
+        fluid_density_summation_contact(water_wall_contact);
+
+    ReduceDynamics<fluid_dynamics::AdvectionTimeStep> fluid_advection_time_step(water_block, U_ref);
     ReduceDynamicsCK<fluid_dynamics::AdvectionTimeStepCK, execution::ParallelDevicePolicy> ck_fluid_advection_time_step(water_block, U_ref);
     DiscreteVariable<Vecd> *dv_force_prior = water_block.getBaseParticles().getVariableByName<Vecd>("ForcePrior");
     DiscreteVariable<Vecd> *dv_force = water_block.getBaseParticles().getVariableByName<Vecd>("Force");

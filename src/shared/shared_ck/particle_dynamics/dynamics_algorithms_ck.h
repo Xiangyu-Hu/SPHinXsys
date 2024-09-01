@@ -44,7 +44,7 @@
  *			and is recognized by particle dynamics with the signature functions, like update, initialization and interaction.
  *			DynamicsRange define and range of particles for the dynamics.
  *			The default range is the entire body. Other ranges are BodyPartByParticle and BodyPartByCell.
- * @author	Chi Zhang, Fabien Pean and Xiangyu Hu
+ * @author	Xiangyu Hu
  */
 
 #ifndef DYNAMICS_ALGORITHMS_CK_H
@@ -118,48 +118,24 @@ class ReduceDynamicsCK : public LocalDynamicsType,
   protected:
     Implementation<LocalDynamicsType, ExecutionPolicy> kernel_implementation_;
 };
-template <typename... T>
+template <typename...>
 class InteractionDynamicsCK;
 
-template <class ExecutionPolicy,
-          template <typename... InteractionTypes> class LocalInteractionName,
-          typename... Parameters>
-class InteractionDynamicsCK<ExecutionPolicy, LocalInteractionName<Inner<Parameters...>>>
-    : public LocalInteractionName<Inner<Parameters...>>, public BaseDynamics<void>
+template <>
+class InteractionDynamicsCK<Base>
 {
-
-    using LocalDynamicsType = LocalInteractionName<Inner<Parameters...>>;
-    using ComputingKernel = typename LocalDynamicsType::ComputingKernel;
-    using KernelImplementation = Implementation<LocalDynamicsType, ExecutionPolicy>;
-
   public:
-    template <typename... Args>
-    InteractionDynamicsCK(Args &&...args)
-        : LocalInteractionName<Inner<Parameters...>>(std::forward<Args>(args)...),
-          BaseDynamics<void>(), ex_policy_(ExecutionPolicy{}),
-          kernel_implementation_(*this)
-    {
-        static_assert(!has_initialize<LocalDynamicsType>::value &&
-                          !has_update<LocalDynamicsType>::value,
-                      "LocalDynamicsType does not fulfill InteractionDynamicsCK requirements");
-    };
-    virtual ~InteractionDynamicsCK(){};
+    InteractionDynamicsCK(){};
+    void addPreProcess(BaseDynamics<void> *pre_process) { pre_processes_.push_back(pre_process); };
+    void addPostProcess(BaseDynamics<void> *post_process) { post_processes_.push_back(post_process); };
 
+  protected:
     /** pre process such as update ghost state */
     StdVec<BaseDynamics<void> *> pre_processes_;
     /** post process such as impose constraint */
     StdVec<BaseDynamics<void> *> post_processes_;
-
-    virtual void exec(Real dt = 0.0) override
-    {
-        this->setUpdated(this->identifier_.getSPHBody());
-        this->setupDynamics(dt);
-        runInteraction(dt);
-    };
-
-  protected:
-    ExecutionPolicy ex_policy_;
-    KernelImplementation kernel_implementation_;
+    /** run the main interaction step between particles. */
+    virtual void runMainStep(Real dt) = 0;
 
     /** run the interactions between particles. */
     virtual void runInteraction(Real dt)
@@ -172,15 +148,111 @@ class InteractionDynamicsCK<ExecutionPolicy, LocalInteractionName<Inner<Paramete
         for (size_t k = 0; k < this->post_processes_.size(); ++k)
             this->post_processes_[k]->exec(dt);
     };
+};
+
+template <class ExecutionPolicy,
+          template <typename...> class LocalInteractionName,
+          typename... Parameters>
+class InteractionDynamicsCK<ExecutionPolicy, LocalInteractionName<Inner<Parameters...>>>
+    : public LocalInteractionName<Inner<Parameters...>>,
+      public InteractionDynamicsCK<Base>,
+      public BaseDynamics<void>
+{
+
+    using LocalDynamicsType = LocalInteractionName<Inner<Parameters...>>;
+    using ComputingKernel = typename LocalDynamicsType::ComputingKernel;
+    using KernelImplementation = Implementation<LocalDynamicsType, ExecutionPolicy>;
+
+  public:
+    template <typename... Args>
+    InteractionDynamicsCK(Args &&...args)
+        : LocalInteractionName<Inner<Parameters...>>(std::forward<Args>(args)...),
+          InteractionDynamicsCK<Base>(), BaseDynamics<void>(),
+          ex_policy_(ExecutionPolicy{}), kernel_implementation_(*this)
+    {
+        static_assert(!has_initialize<LocalDynamicsType>::value &&
+                          !has_update<LocalDynamicsType>::value,
+                      "LocalDynamicsType does not fulfill InteractionDynamicsCK requirements");
+    };
+    virtual ~InteractionDynamicsCK(){};
+
+    virtual void exec(Real dt = 0.0) override
+    {
+        this->setUpdated(this->identifier_.getSPHBody());
+        this->setupDynamics(dt);
+        runInteraction(dt);
+    };
+
+  protected:
+    ExecutionPolicy ex_policy_;
+    KernelImplementation kernel_implementation_;
 
     /** run the main interaction step between particles. */
-    void runMainStep(Real dt)
+    virtual void runMainStep(Real dt) override
     {
         ComputingKernel *computing_kernel = kernel_implementation_.getComputingKernel();
         particle_for(ex_policy_,
                      this->identifier_.LoopRange(),
                      [=](size_t i)
                      { computing_kernel->interaction(i, dt); });
+    }
+};
+
+template <class ExecutionPolicy,
+          template <typename...> class LocalInteractionName,
+          typename... Parameters>
+class InteractionDynamicsCK<ExecutionPolicy, LocalInteractionName<Contact<Parameters...>>>
+    : public LocalInteractionName<Contact<Parameters...>>,
+      public InteractionDynamicsCK<Base>,
+      public BaseDynamics<void>
+{
+
+    using LocalDynamicsType = LocalInteractionName<Contact<Parameters...>>;
+    using ComputingKernel = typename LocalDynamicsType::ComputingKernel;
+    using KernelImplementation = Implementation<LocalDynamicsType, ExecutionPolicy>;
+    UniquePtrsKeeper<KernelImplementation> contact_kernel_implementation_ptrs_;
+
+  public:
+    template <typename... Args>
+    InteractionDynamicsCK(Args &&...args)
+        : LocalInteractionName<Contact<Parameters...>>(std::forward<Args>(args)...),
+          BaseDynamics<void>(), InteractionDynamicsCK<Base>(),
+          ex_policy_(ExecutionPolicy{})
+    {
+        static_assert(!has_initialize<LocalDynamicsType>::value &&
+                          !has_update<LocalDynamicsType>::value,
+                      "LocalDynamicsType does not fulfill InteractionDynamicsCK requirements");
+        for (size_t k = 0; k != this->contact_bodies_.size(); ++k)
+        {
+            contact_kernel_implementation_.push_back(
+                contact_kernel_implementation_ptrs_.template createPtr<KernelImplementation>(*this));
+        }
+    };
+    virtual ~InteractionDynamicsCK(){};
+
+    virtual void exec(Real dt = 0.0) override
+    {
+        this->setUpdated(this->identifier_.getSPHBody());
+        this->setupDynamics(dt);
+        runInteraction(dt);
+    };
+
+  protected:
+    ExecutionPolicy ex_policy_;
+    StdVec<KernelImplementation *> contact_kernel_implementation_;
+
+    /** run the main interaction step between particles. */
+    virtual void runMainStep(Real dt) override
+    {
+        for (size_t k = 0; k != this->contact_bodies_.size(); ++k)
+        {
+            ComputingKernel *computing_kernel = contact_kernel_implementation_[k]->getComputingKernel(k);
+
+            particle_for(ex_policy_,
+                         this->identifier_.LoopRange(),
+                         [=](size_t i)
+                         { computing_kernel->interaction(i, dt); });
+        }
     }
 };
 
@@ -217,54 +289,6 @@ class InteractionDynamicsCK<ExecutionPolicy, WithUpdate, LocalInteractionDynamic
         for (size_t k = 0; k < this->post_processes_.size(); ++k)
             this->post_processes_[k]->exec(dt);
     };
-};
-
-template <class ExecutionPolicy,
-          template <typename... InteractionTypes> class LocalInteractionName,
-          typename... Parameters>
-class InteractionDynamicsCK<ExecutionPolicy, LocalInteractionName<Contact<Parameters...>>>
-    : public LocalInteractionName<Contact<Parameters...>>, public BaseDynamics<void>
-{
-
-    using LocalDynamicsType = LocalInteractionName<Contact<Parameters...>>;
-    using ComputingKernel = typename LocalDynamicsType::ComputingKernel;
-    using KernelImplementation = Implementation<LocalDynamicsType, ExecutionPolicy>;
-    UniquePtrsKeeper<KernelImplementation> contact_kernel_implementation_ptrs_;
-
-  public:
-    template <typename... Args>
-    InteractionDynamicsCK(Args &&...args)
-        : LocalInteractionName<Contact<Parameters...>>(std::forward<Args>(args)...),
-          BaseDynamics<void>(), ex_policy_(ExecutionPolicy{})
-    {
-        static_assert(!has_initialize<LocalDynamicsType>::value &&
-                          !has_update<LocalDynamicsType>::value,
-                      "LocalDynamicsType does not fulfill InteractionDynamicsCK requirements");
-        for (size_t k = 0; k != this->contact_bodies_.size(); ++k)
-        {
-            contact_kernel_implementation_.push_back(
-                contact_kernel_implementation_ptrs_.template createPtr<KernelImplementation>(*this));
-        }
-    };
-    virtual ~InteractionDynamicsCK(){};
-
-  protected:
-    ExecutionPolicy ex_policy_;
-    StdVec<KernelImplementation *> contact_kernel_implementation_;
-
-    /** run the main interaction step between particles. */
-    virtual void runMainStep(Real dt) override
-    {
-        for (size_t k = 0; k != this->contact_bodies_.size(); ++k)
-        {
-            ComputingKernel *computing_kernel = contact_kernel_implementation_[k]->getComputingKernel(k);
-
-            particle_for(ex_policy_,
-                         this->identifier_.LoopRange(),
-                         [=](size_t i)
-                         { computing_kernel->interaction(i, dt); });
-        }
-    }
 };
 
 } // namespace SPH
