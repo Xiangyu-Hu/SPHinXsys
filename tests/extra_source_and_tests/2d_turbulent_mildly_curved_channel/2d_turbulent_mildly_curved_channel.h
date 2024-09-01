@@ -21,6 +21,10 @@ using namespace SPH;
 Real DH = 2.0;                         /**< Channel height. */
 Real num_fluid_cross_section = 20.0;
 
+Real central_angel = 60.0 * 2.0 * Pi / 360.0; 
+Real a = sin(central_angel);
+Real b = cos(central_angel);
+
 Real extend_in = 0.0 ;
 Real extend_out = 0.0 ;
 Real DL1 = 4.0 + extend_in;
@@ -31,6 +35,13 @@ Real DL_domain = DL1+R1+DH;
 Real DH_domain = DH+R1+DL2;
 Vec2d circle_center(DL1, R2);
 
+Vec2d point_N(R2 * a + DL1, R2 - R2 * b);
+Vec2d point_M(R1 * a + DL1, R2 - R1 * b);
+Vec2d vec_MN = point_N - point_M;
+Vec2d vec_MN_vertical (-1.0*vec_MN[1], vec_MN[0]);
+Vec2d unit_vec_MN_vertical = vec_MN_vertical.normalized();
+Vec2d point_P = point_N + DL2 * unit_vec_MN_vertical;
+Vec2d point_Q = point_M + DL2 * unit_vec_MN_vertical;
 //----------------------------------------------------------------------
 //	Unique parameters for turbulence. 
 //----------------------------------------------------------------------
@@ -95,9 +106,13 @@ Vec2d left_buffer_translation = Vec2d(-DL_sponge, 0.0) + left_buffer_halfsize + 
 Real outlet_buffer_length = BW ;
 Real outlet_buffer_height = 1.5 * DH ;
 
-Real outlet_disposer_rotation_angel = 0.5 * Pi ; //** By default, counter-clockwise is positive *
-Real outlet_emitter_rotation_angel = -0.5 * Pi ; //** By default, counter-clockwise is positive *
-Vec2d outlet_buffer_center_translation = Vec2d(DL_domain - 0.5 * DH , DH_domain- 0.5 * outlet_buffer_length) ;
+//Real outlet_disposer_rotation_angel = 0.5 * Pi ; //** By default, counter-clockwise is positive *
+//Vec2d outlet_buffer_center_translation = Vec2d(DL_domain - 0.5 * DH , DH_domain- 0.5 * outlet_buffer_length) ;
+
+Real outlet_disposer_rotation_angel = central_angel ; //** By default, counter-clockwise is positive *
+Vec2d outlet_buffer_center_translation = (point_Q + point_P) / 2.0 + unit_vec_MN_vertical * outlet_buffer_length / 2.0;
+
+Real outlet_emitter_rotation_angel = Pi + outlet_disposer_rotation_angel; //** By default, counter-clockwise is positive *
 
 //** If return to the straight channel *
 // Real outlet_disposer_rotation_angel = 0.0 * Pi ; //** By default, counter-clockwise is positive *
@@ -125,8 +140,8 @@ Real observer_offset_distance = 2.0 * resolution_ref ;
 //	Cases-dependent geometries 
 //----------------------------------------------------------------------
 Real arc_sampling_interval = 0.01;   //** Specify the arc resolution here *
-int num_inner_arc_points = int(R1 / arc_sampling_interval);
-int num_outer_arc_points = int(R2 / arc_sampling_interval);
+int num_inner_arc_points = int(R1 * a / arc_sampling_interval);
+int num_outer_arc_points = int(R2 * a / arc_sampling_interval);
 std::vector<Vecd> createWaterBlockShape()
 {
     std::vector<Vecd> water_block_shape;
@@ -206,13 +221,13 @@ std::vector<Vecd> createOuterWallShape()
     }
 
     //** 4 points for outlet tube *
-    water_block_shape.push_back(Vecd(DL1 + R1, R2));
-    water_block_shape.push_back(Vecd(DL1 + R1, R2 + DL2 + offset_distance + BW));
-    water_block_shape.push_back(Vecd(DL1 + R2, R2 + DL2 + offset_distance + BW));
-    water_block_shape.push_back(Vecd(DL1 + R2, R2 ));
+    water_block_shape.push_back(point_M);
+    water_block_shape.push_back(point_Q + (offset_distance + BW) * unit_vec_MN_vertical);
+    water_block_shape.push_back(point_P + (offset_distance + BW) * unit_vec_MN_vertical);
+    water_block_shape.push_back(point_N);
 
     //** Outer Circle segment *
-    start_x = DL1 + R2;
+    start_x = point_N[0];
     for (int k = 1; k <= num_outer_arc_points; ++k)
     {
         Real x_coordinate = start_x - k * arc_sampling_interval; //** clockwise *
@@ -253,13 +268,13 @@ std::vector<Vecd> createInnerWallShape()
     }
 
     //** 4 points for outlet tube *
-    water_block_shape.push_back(Vecd(DL1 + R1, R2));
-    water_block_shape.push_back(Vecd(DL1 + R1, R2 + DL2 + offset_distance + 2.0 * BW));
-    water_block_shape.push_back(Vecd(DL1 + R2, R2 + DL2 + offset_distance + 2.0 * BW));
-    water_block_shape.push_back(Vecd(DL1 + R2, R2 ));
+    water_block_shape.push_back(point_M);
+    water_block_shape.push_back(point_Q + (offset_distance + 2.0 * BW) * unit_vec_MN_vertical);
+    water_block_shape.push_back(point_P + (offset_distance + 2.0 * BW) * unit_vec_MN_vertical);
+    water_block_shape.push_back(point_N);
 
     //** Outer Circle segment *
-    start_x = DL1 + R2;
+    start_x = point_N[0];
     for (int k = 1; k <= num_outer_arc_points; ++k)
     {
         Real x_coordinate = start_x - k * arc_sampling_interval; //** clockwise *

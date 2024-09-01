@@ -132,7 +132,7 @@ int main(int ac, char *av[])
     /** Turbulent standard wall function needs normal vectors of wall. */
     //NearShapeSurface near_surface(water_block, makeShared<WallBoundary>("Wall"));
     
-    InteractionWithUpdate<LinearGradientCorrectionMatrixComplex> corrected_configuration_fluid(water_block_inner, water_wall_contact);
+    InteractionWithUpdate<LinearGradientCorrectionMatrixComplex> corrected_configuration_fluid(ConstructorArgs(water_block_inner, 0.5), water_wall_contact);
 
     InteractionWithUpdate<fluid_dynamics::TurbulentLinearGradientCorrectionMatrixInner> corrected_configuration_fluid_only_inner(water_block_inner);
 
