@@ -27,6 +27,15 @@ MultilevelLevelSet::MultilevelLevelSet(
     FinishDataPackages finish_data_packages{*mesh_data_set_[0], shape_, kernel_, global_h_ratio};
     initialize_data_in_a_cell.exec();
     finish_data_packages.exec();
+    probe_signed_distance_set_.push_back(
+            probe_signed_distance_vector_keeper_
+                .template createPtr<MeshCalculateDynamics<Real, ProbeSignedDistance>>(*mesh_data_set_[0]));
+    probe_normal_direction_set_.push_back(
+        probe_normal_direction_vector_keeper_
+            .template createPtr<MeshCalculateDynamics<Vecd, ProbeNormalDirection>>(*mesh_data_set_[0]));
+    probe_level_set_gradient_set_.push_back(
+        probe_level_set_gradient_vector_keeper_
+            .template createPtr<MeshCalculateDynamics<Vecd, ProbeLevelSetGradient>>(*mesh_data_set_[0]));
 
     for (size_t level = 1; level != total_levels_; ++level)
     {
@@ -46,7 +55,20 @@ MultilevelLevelSet::MultilevelLevelSet(
         FinishDataPackages finish_data_packages{*mesh_data_set_[level], shape_, kernel_, global_h_ratio};
         initialize_data_in_a_cell_from_coarse.exec();
         finish_data_packages.exec();
+
+        probe_signed_distance_set_.push_back(
+            probe_signed_distance_vector_keeper_
+                .template createPtr<MeshCalculateDynamics<Real, ProbeSignedDistance>>(*mesh_data_set_[level]));
+        probe_normal_direction_set_.push_back(
+            probe_normal_direction_vector_keeper_
+                .template createPtr<MeshCalculateDynamics<Vecd, ProbeNormalDirection>>(*mesh_data_set_[level]));
+        probe_level_set_gradient_set_.push_back(
+            probe_level_set_gradient_vector_keeper_
+                .template createPtr<MeshCalculateDynamics<Vecd, ProbeLevelSetGradient>>(*mesh_data_set_[level]));
     }
+
+    clean_interface = new CleanInterface{*mesh_data_set_.back(), kernel_, global_h_ratio_vec_.back()};
+    correct_topology = new CorrectTopology{*mesh_data_set_.back(), kernel_, global_h_ratio_vec_.back()};
 }
 //=================================================================================================//
 MultilevelLevelSet::MultilevelLevelSet(
@@ -71,6 +93,19 @@ MultilevelLevelSet::MultilevelLevelSet(
     FinishDataPackages finish_data_packages{*mesh_data_set_[0], shape_, kernel_, global_h_ratio};
     initialize_data_in_a_cell_from_coarse.exec();
     finish_data_packages.exec();
+
+    probe_signed_distance_set_.push_back(
+            probe_signed_distance_vector_keeper_
+                .template createPtr<MeshCalculateDynamics<Real, ProbeSignedDistance>>(*mesh_data_set_[0]));
+    probe_normal_direction_set_.push_back(
+        probe_normal_direction_vector_keeper_
+            .template createPtr<MeshCalculateDynamics<Vecd, ProbeNormalDirection>>(*mesh_data_set_[0]));
+    probe_level_set_gradient_set_.push_back(
+        probe_level_set_gradient_vector_keeper_
+            .template createPtr<MeshCalculateDynamics<Vecd, ProbeLevelSetGradient>>(*mesh_data_set_[0]));
+
+    clean_interface = new CleanInterface{*mesh_data_set_.back(), kernel_, global_h_ratio_vec_.back()};
+    correct_topology = new CorrectTopology{*mesh_data_set_.back(), kernel_, global_h_ratio_vec_.back()};
 }
 //=================================================================================================//
 size_t MultilevelLevelSet::getCoarseLevel(Real h_ratio)
@@ -87,32 +122,27 @@ size_t MultilevelLevelSet::getCoarseLevel(Real h_ratio)
 //=================================================================================================//
 void MultilevelLevelSet::cleanInterface(Real small_shift_factor)
 {
-    CleanInterface clean_interface{*mesh_data_set_.back(), kernel_, global_h_ratio_vec_.back()};
-    clean_interface.exec(small_shift_factor);
+    clean_interface->exec(small_shift_factor);
 }
 //=============================================================================================//
 void MultilevelLevelSet::correctTopology(Real small_shift_factor)
 {
-    CorrectTopology correct_topology{*mesh_data_set_.back(), kernel_, global_h_ratio_vec_.back()};
-    correct_topology.exec(small_shift_factor);
+    correct_topology->exec(small_shift_factor);
 }
 //=============================================================================================//
 Real MultilevelLevelSet::probeSignedDistance(const Vecd &position)
 {
-    MeshCalculateDynamics<Real, ProbeSignedDistance> probe_signed_distance{*mesh_data_set_[getProbeLevel(position)]};
-    return probe_signed_distance.exec(position);
+    return probe_signed_distance_set_[getProbeLevel(position)]->exec(position);
 }
 //=============================================================================================//
 Vecd MultilevelLevelSet::probeNormalDirection(const Vecd &position)
 {
-    MeshCalculateDynamics<Vecd, ProbeNormalDirection> probe_normal_direction{*mesh_data_set_[getProbeLevel(position)]};
-    return probe_normal_direction.exec(position);
+    return probe_normal_direction_set_[getProbeLevel(position)]->exec(position);
 }
 //=============================================================================================//
 Vecd MultilevelLevelSet::probeLevelSetGradient(const Vecd &position)
 {
-    MeshCalculateDynamics<Vecd, ProbeLevelSetGradient> probe_levelset_gradient{*mesh_data_set_[getProbeLevel(position)]};
-    return probe_levelset_gradient.exec(position);
+    return probe_level_set_gradient_set_[getProbeLevel(position)]->exec(position);
 }
 //=============================================================================================//
 size_t MultilevelLevelSet::getProbeLevel(const Vecd &position)
@@ -123,12 +153,6 @@ size_t MultilevelLevelSet::getProbeLevel(const Vecd &position)
             return level - 1; // jump out of the loop!
     }
     return 0;
-}
-//=================================================================================================//
-Real MultilevelLevelSet::probeKernelIntegral(const Vecd &position)
-{
-    MeshCalculateDynamics<Real, ProbeKernelIntegral> refine_probe{*mesh_data_set_[0]};
-    return refine_probe.exec(position);
 }
 //=================================================================================================//
 Real MultilevelLevelSet::probeKernelIntegral(const Vecd &position, Real h_ratio)
@@ -146,12 +170,6 @@ Real MultilevelLevelSet::probeKernelIntegral(const Vecd &position, Real h_ratio)
     Real fine_level_value = fine_probe.exec(position);
 
     return alpha * coarse_level_value + (1.0 - alpha) * fine_level_value;
-}
-//=================================================================================================//
-Vecd MultilevelLevelSet::probeKernelGradientIntegral(const Vecd &position)
-{
-    MeshCalculateDynamics<Vecd, ProbeKernelGradientIntegral> refine_probe{*mesh_data_set_[0]};
-    return refine_probe.exec(position);
 }
 //=================================================================================================//
 Vecd MultilevelLevelSet::probeKernelGradientIntegral(const Vecd &position, Real h_ratio)
