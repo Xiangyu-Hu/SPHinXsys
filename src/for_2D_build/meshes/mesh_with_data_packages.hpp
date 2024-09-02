@@ -10,7 +10,6 @@
 #include "mesh_with_data_packages.h"
 #include "mesh_iterators.hpp"
 
-//=================================================================================================//
 namespace SPH
 {
 //=================================================================================================//
@@ -34,18 +33,6 @@ DataType MeshWithGridDataPackages<PKG_SIZE>::
 }
 //=================================================================================================//
 template <int PKG_SIZE>
-void MeshWithGridDataPackages<PKG_SIZE>::allocateMetaDataMatrix()
-{
-    Allocate2dArray(meta_data_mesh_, all_cells_);
-}
-//=================================================================================================//
-template <int PKG_SIZE>
-void MeshWithGridDataPackages<PKG_SIZE>::deleteMetaDataMatrix()
-{
-    Delete2dArray(meta_data_mesh_, all_cells_);
-}
-//=================================================================================================//
-template <int PKG_SIZE>
 void MeshWithGridDataPackages<PKG_SIZE>::allocateIndexDataMatrix()
 {
     Allocate2dArray(index_data_mesh_, all_cells_);
@@ -55,18 +42,6 @@ template <int PKG_SIZE>
 void MeshWithGridDataPackages<PKG_SIZE>::deleteIndexDataMatrix()
 {
     Delete2dArray(index_data_mesh_, all_cells_);
-}
-//=================================================================================================//
-template <int PKG_SIZE>
-void MeshWithGridDataPackages<PKG_SIZE>::allocateCategoryDataMatrix()
-{
-    Allocate2dArray(category_data_mesh_, all_cells_);
-}
-//=================================================================================================//
-template <int PKG_SIZE>
-void MeshWithGridDataPackages<PKG_SIZE>::deleteCategoryDataMatrix()
-{
-    Delete2dArray(category_data_mesh_, all_cells_);
 }
 //=================================================================================================//
 template <int PKG_SIZE>
@@ -107,31 +82,17 @@ size_t MeshWithGridDataPackages<PKG_SIZE>::
 }
 //=================================================================================================//
 template <int PKG_SIZE>
-void MeshWithGridDataPackages<PKG_SIZE>::
-    assignCategoryOnMetaDataMesh(const Arrayi &cell_index, const int category)
-{
-    category_data_mesh_[cell_index[0]][cell_index[1]] = category;
-}
-//=================================================================================================//
-template <int PKG_SIZE>
 bool MeshWithGridDataPackages<PKG_SIZE>::
     isSingularDataPackage(const Arrayi &cell_index)
 {
-    return category_data_mesh_[cell_index[0]][cell_index[1]] == 0;
+    return index_data_mesh_[cell_index[0]][cell_index[1]] < 2;
 }
 //=================================================================================================//
 template <int PKG_SIZE>
 bool MeshWithGridDataPackages<PKG_SIZE>::
     isInnerDataPackage(const Arrayi &cell_index)
 {
-    return category_data_mesh_[cell_index[0]][cell_index[1]] != 0;
-}
-//=================================================================================================//
-template <int PKG_SIZE>
-bool MeshWithGridDataPackages<PKG_SIZE>::
-    isCoreDataPackage(const Arrayi &cell_index)
-{
-    return category_data_mesh_[cell_index[0]][cell_index[1]] == 2;
+    return index_data_mesh_[cell_index[0]][cell_index[1]] > 1;
 }
 //=================================================================================================//
 template <int PKG_SIZE>
@@ -188,7 +149,6 @@ void MeshWithGridDataPackages<PKG_SIZE>::
             Real dphidy = (in_variable_data[y1.first][y1.second[0]][y1.second[1]] -
                            in_variable_data[y2.first][y2.second[0]][y2.second[1]]);
 
-            // printf("dphidx = %f, dphidy = %f, data_spacing_ = \n", dphidx, dphidy);
             pkg_data[i][j] = 0.5 * Vecd(dphidx, dphidy) / data_spacing_;
         });
 }
@@ -234,18 +194,6 @@ DataType MeshWithGridDataPackages<PKG_SIZE>::
                         mesh_variable_data[neighbour_index_4.first][neighbour_index_4.second[0]][neighbour_index_4.second[1]] * alpha[0] * alpha[1];
 
     return bilinear;
-}
-//=================================================================================================//
-template <int PKG_SIZE>
-template <typename FunctionOnData>
-void MeshWithGridDataPackages<PKG_SIZE>::
-    grid_parallel_for(const FunctionOnData &function)
-{
-    mesh_parallel_for(MeshRange(Arrayi::Zero(), all_cells_),
-                      [&](size_t i, size_t j)
-                      {
-                          function(Arrayi(i, j));
-                      });
 }
 //=================================================================================================//
 } // namespace SPH

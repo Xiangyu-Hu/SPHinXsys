@@ -52,11 +52,11 @@ int main(int ac, char *av[])
     airfoil.defineAdaptation<ParticleRefinementNearSurface>(1.15, 1.0, 3);
     airfoil.defineBodyLevelSetShape()->cleanLevelSet()->writeLevelSet(sph_system);
     airfoil.generateParticles<BaseParticles, Lattice, Adaptive>();
-    airfoil.addBodyStateForRecording<Real>("SmoothingLengthRatio");
     //----------------------------------------------------------------------
     //	Define outputs functions.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp airfoil_recording_to_vtp({&airfoil});
+    BodyStatesRecordingToVtp airfoil_recording_to_vtp(airfoil);
+    airfoil_recording_to_vtp.addToWrite<Real>(airfoil, "SmoothingLengthRatio");
     MeshRecordingToPlt cell_linked_list_recording(sph_system, airfoil.getCellLinkedList());
     //----------------------------------------------------------------------
     //	Define body relation map.

@@ -127,7 +127,7 @@ int main(int ac, char *av[])
     ObserverBody beam_observer(sph_system, "BeamObserver");
     beam_observer.defineAdaptationRatios(1.15, 2.0);
     StdVec<Vecd> beam_observation_location = {Vecd(PL, 0.0)};
-    beam_observer.generateParticles<BaseParticles, Observer>(beam_observation_location);
+    beam_observer.generateParticles<ObserverParticles>(beam_observation_location);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -145,7 +145,7 @@ int main(int ac, char *av[])
     InteractionWithUpdate<LinearGradientCorrectionMatrixInner> beam_corrected_configuration(beam_body_inner);
     Dynamics1Level<solid_dynamics::DecomposedIntegration1stHalf> stress_relaxation_first_half(beam_body_inner);
     Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half(beam_body_inner);
-    InteractionDynamics<solid_dynamics::SelfContactDensitySummation> beam_self_contact_density(beam_self_contact);
+    InteractionDynamics<solid_dynamics::SelfContactFactorSummation> beam_self_contact_density(beam_self_contact);
     InteractionWithUpdate<solid_dynamics::SelfContactForce> beam_self_contact_forces(beam_self_contact);
 
     SimpleDynamics<BeamInitialCondition> beam_initial_velocity(beam_body);
@@ -157,8 +157,8 @@ int main(int ac, char *av[])
     //	outputs
     //-----------------------------------------------------------------------------
     IOEnvironment io_environment(sph_system);
-    beam_body.addBodyStateForRecording<Real>("SelfRepulsionDensity");
-    BodyStatesRecordingToVtp write_beam_states(sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_beam_states(beam_body);
+    write_beam_states.addToWrite<Real>(beam_body, "SelfRepulsionFactor");
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
         write_beam_tip_displacement("Position", beam_observer_contact);
     //-----------------------------------------------------------------------------

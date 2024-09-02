@@ -55,6 +55,8 @@ int main(int ac, char *av[])
         RelaxationStepInner relaxation_step_inner(herat_model_inner);
         BodyStatesRecordingToVtp write_herat_model_state_to_vtp({herat_model});
         ReloadParticleIO write_particle_reload_files(herat_model);
+        write_particle_reload_files.addToReload<Vecd>(herat_model, "Fiber");
+        write_particle_reload_files.addToReload<Vecd>(herat_model, "Sheet");
         //----------------------------------------------------------------------
         //	Physics relaxation starts here.
         //----------------------------------------------------------------------
@@ -86,7 +88,7 @@ int main(int ac, char *av[])
         BodySurface surface_part(herat_model);
         SimpleDynamics<DiffusionBCs> impose_diffusion_bc(surface_part, "Phi");
         impose_diffusion_bc.exec();
-        herat_model.addBodyStateForRecording<Real>("Phi");
+        write_herat_model_state_to_vtp.addToWrite<Real>(herat_model, "Phi");
         write_herat_model_state_to_vtp.writeToFile(ite);
 
         int diffusion_step = 100;
@@ -141,10 +143,10 @@ int main(int ac, char *av[])
     //	SPH Observation section
     //----------------------------------------------------------------------
     ObserverBody voltage_observer(sph_system, "VoltageObserver");
-    voltage_observer.generateParticles<BaseParticles, HeartObserver>();
+    voltage_observer.generateParticles<ObserverParticles>(createObservationPoints());
 
     ObserverBody myocardium_observer(sph_system, "MyocardiumObserver");
-    myocardium_observer.generateParticles<BaseParticles, HeartObserver>();
+    myocardium_observer.generateParticles<ObserverParticles>(createObservationPoints());
 
     /** topology */
     InnerRelation physiology_heart_inner(physiology_heart);
@@ -201,11 +203,11 @@ int main(int ac, char *av[])
     SimpleDynamics<FixBodyPartConstraint> constraint_holder(muscle_base);
 
     /**IO for observer.*/
-    physiology_heart.addBodyStateForRecording<Real>("Voltage");
-    physiology_heart.addBodyStateForRecording<Real>("GateVariable");
-    physiology_heart.addBodyStateForRecording<Real>("ActiveContractionStress");
-    mechanics_heart.addBodyStateForRecording<Real>("ActiveContractionStress");
-    BodyStatesRecordingToVtp write_states(sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_states(sph_system);
+    write_states.addToWrite<Real>(physiology_heart, "Voltage");
+    write_states.addToWrite<Real>(physiology_heart, "GateVariable");
+    write_states.addToWrite<Real>(physiology_heart, "ActiveContractionStress");
+    write_states.addToWrite<Real>(mechanics_heart, "ActiveContractionStress");
     ObservedQuantityRecording<Real> write_voltage("Voltage", voltage_observer_contact);
     ObservedQuantityRecording<Vecd> write_displacement("Position", myocardium_observer_contact);
     /**

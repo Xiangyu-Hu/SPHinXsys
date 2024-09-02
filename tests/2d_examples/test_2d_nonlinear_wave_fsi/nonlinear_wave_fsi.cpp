@@ -31,7 +31,7 @@ int main(int ac, char *av[])
 
     ObserverBody observer(sph_system, "Observer");
     observer.defineAdaptationRatios(1.15, 2.0);
-    observer.generateParticles<BaseParticles, Observer>(StdVec<Vecd>{obs});
+    observer.generateParticles<ObserverParticles>(StdVec<Vecd>{obs});
     //---------------------------------------------------------
     // PRESSURE PROBES
     //---------------------------------------------------------
@@ -40,13 +40,13 @@ int main(int ac, char *av[])
     Real fp2y = 0.968;
     StdVec<Vecd> fp2l = {Vecd(fp2x, fp2y)};
     fp2.defineAdaptationRatios(1.15, 2.0);
-    fp2.generateParticles<BaseParticles, Observer>(fp2l);
+    fp2.generateParticles<ObserverParticles>(fp2l);
     ObserverBody fp3(sph_system, "FluidObserver3");
     Real fp3x = 12.466;
     Real fp3y = 1.013;
     StdVec<Vecd> fp3l = {Vecd(fp3x, fp3y)};
     fp3.defineAdaptationRatios(1.15, 2.0);
-    fp3.generateParticles<BaseParticles, Observer>(fp3l);
+    fp3.generateParticles<ObserverParticles>(fp3l);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -172,7 +172,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp write_real_body_states(sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_real_body_states(sph_system);
     /** WaveProbe. */
     BodyRegionByCell wave_probe_buffer(water_block, makeShared<MultiPolygonShape>(createWaveGauge(), "WaveGauge"));
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<UpperFrontInAxisDirection<BodyPartByCell>>>
@@ -191,7 +191,7 @@ int main(int ac, char *av[])
         write_recorded_pressure_fp2("Pressure", fp2_contact_w);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
         write_recorded_pressure_fp3("Pressure", fp3_contact_w);
-    RestartIO restart_io(sph_system.real_bodies_);
+    RestartIO restart_io(sph_system);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.

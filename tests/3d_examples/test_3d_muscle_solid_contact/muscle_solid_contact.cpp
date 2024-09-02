@@ -88,8 +88,8 @@ int main(int ac, char *av[])
     Dynamics1Level<solid_dynamics::Integration1stHalfPK2> stress_relaxation_first_half(myocardium_body_inner);
     Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half(myocardium_body_inner);
     /** Algorithms for solid-solid contact. */
-    InteractionDynamics<solid_dynamics::ContactDensitySummation> myocardium_update_contact_density(myocardium_plate_contact);
-    InteractionDynamics<solid_dynamics::ContactDensitySummation> plate_update_contact_density(plate_myocardium_contact);
+    InteractionDynamics<solid_dynamics::ContactFactorSummation> myocardium_update_contact_density(myocardium_plate_contact);
+    InteractionDynamics<solid_dynamics::ContactFactorSummation> plate_update_contact_density(plate_myocardium_contact);
     InteractionWithUpdate<solid_dynamics::ContactForce> myocardium_compute_solid_contact_forces(myocardium_plate_contact);
     InteractionWithUpdate<solid_dynamics::ContactForce> plate_compute_solid_contact_forces(plate_myocardium_contact);
     /** Time step size calculation. */
@@ -99,13 +99,13 @@ int main(int ac, char *av[])
     BodyRegionByParticle holder(myocardium_body, holder_shape);
     SimpleDynamics<FixBodyPartConstraint> constraint_holder(holder);
     /** Damping with the solid body*/
-    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d>>>
+    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d, FixedDampingRate>>>
         muscle_damping(0.1, myocardium_body_inner, "Velocity", physical_viscosity);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp write_states(sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_states(sph_system);
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalKineticEnergy>> write_myocardium_body_kinetic_energy(myocardium_body);
     //----------------------------------------------------------------------
     //	The multi body system from simbody.

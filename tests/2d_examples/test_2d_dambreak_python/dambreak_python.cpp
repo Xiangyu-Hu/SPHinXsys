@@ -85,7 +85,7 @@ class PreSettingCase : public Parameter
         wall_boundary.defineMaterial<Solid>();
         wall_boundary.generateParticles<BaseParticles, Lattice>();
 
-        fluid_observer.generateParticles<BaseParticles, Observer>(observation_location);
+        fluid_observer.generateParticles<ObserverParticles>(observation_location);
     }
 };
 //----------------------------------------------------------------------
@@ -162,8 +162,8 @@ class Environment : public PreSettingCase
           fluid_density_by_summation(water_block_inner, water_wall_contact),
           fluid_advection_time_step(water_block, U_ref),
           fluid_acoustic_time_step(water_block),
-          body_states_recording(sph_system.real_bodies_),
-          restart_io(sph_system.real_bodies_),
+          body_states_recording(sph_system),
+          restart_io(sph_system),
           write_water_mechanical_energy(water_block, gravity),
           write_recorded_water_pressure("Pressure", fluid_observer_contact)
     {

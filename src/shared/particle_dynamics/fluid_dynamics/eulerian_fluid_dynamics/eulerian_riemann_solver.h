@@ -86,7 +86,7 @@ class HLLCWithLimiterRiemannSolver
     Real limiter_parameter_;
 
   public:
-    HLLCWithLimiterRiemannSolver(CompressibleFluid &compressible_fluid_i, CompressibleFluid &compressible_fluid_j, Real limiter_parameter = 5.0);
+    HLLCWithLimiterRiemannSolver(CompressibleFluid &compressible_fluid_i, CompressibleFluid &compressible_fluid_j, Real limiter_parameter = 1.0);
     CompressibleFluidStarState getInterfaceState(const CompressibleFluidState &state_i, const CompressibleFluidState &state_j, const Vecd &e_ij);
 };
 } // namespace SPH

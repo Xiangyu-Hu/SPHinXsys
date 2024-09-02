@@ -172,6 +172,9 @@ class BaseDataDelegateContact : public BaseDataDelegateType
     StdVec<ParticleConfiguration *> contact_configuration_;
 };
 using DataDelegateContact = BaseDataDelegateContact<DataDelegateSimple>;
+/** Required for projection-based operator splitting (implicit) method,
+ * the error and parameter need to computed for inner and contact particles together
+ * other than can be handled by separately as other explicit methods. */
 using DataDelegateContactOnly = BaseDataDelegateContact<DataDelegateEmptyBase>;
 } // namespace SPH
 #endif // BASE_PARTICLE_DYNAMICS_H

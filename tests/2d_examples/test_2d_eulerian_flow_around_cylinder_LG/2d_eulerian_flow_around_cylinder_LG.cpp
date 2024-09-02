@@ -133,8 +133,8 @@ int main(int ac, char *av[])
         using namespace relax_dynamics;
         SimpleDynamics<RandomizeParticlePosition> random_inserted_body_particles(cylinder);
         SimpleDynamics<RandomizeParticlePosition> random_water_body_particles(water_block);
-        BodyStatesRecordingToVtp write_real_body_states(sph_system.real_bodies_);
-        ReloadParticleIO write_real_body_particle_reload_files(sph_system.real_bodies_);
+        BodyStatesRecordingToVtp write_real_body_states(sph_system);
+        ReloadParticleIO write_real_body_particle_reload_files({&cylinder, &water_block});
         RelaxationStepLevelSetCorrectionInner relaxation_step_inner(cylinder_inner);
         RelaxationStepLevelSetCorrectionComplex relaxation_step_complex(
             ConstructorArgs(water_block_inner, std::string("OuterBoundary")), water_block_contact);
@@ -191,8 +191,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
-    water_block.addBodyStateForRecording<int>("Indicator");
-    BodyStatesRecordingToVtp write_real_body_states(sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_real_body_states(sph_system);
+    write_real_body_states.addToWrite<int>(water_block, "Indicator");
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<QuantitySummation<Vecd>>>
         write_total_viscous_force_from_fluid(cylinder, "ViscousForceFromFluid");
     ReducedQuantityRecording<QuantitySummation<Vecd>>

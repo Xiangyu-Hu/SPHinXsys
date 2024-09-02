@@ -231,7 +231,6 @@ class SwapSortableParticleData
 {
   protected:
     StdLargeVec<size_t> &sequence_;
-    StdLargeVec<size_t> &unsorted_id_;
     ParticleData &sortable_data_;
     OperationOnDataAssemble<ParticleData, SwapParticleDataValue> swap_particle_data_value_;
 
@@ -253,6 +252,9 @@ class ParticleSorting
 {
   protected:
     BaseParticles &base_particles_;
+    StdLargeVec<size_t> &original_id_;
+    StdLargeVec<size_t> &sorted_id_;
+    StdLargeVec<size_t> &sequence_;
 
     /** using pointer because it is constructed after particles. */
     SwapSortableParticleData swap_sortable_particle_data_;
@@ -270,7 +272,7 @@ class ParticleSorting
     virtual ~ParticleSorting(){};
     /** sorting particle data according to the cell location of particles */
     virtual void sortingParticleData(size_t *begin, size_t size);
-    /** update the reference of sorted data from unsorted data */
+    /** update the reference of sorted data from original data */
     virtual void updateSortedId();
 };
 } // namespace SPH

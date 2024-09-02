@@ -41,7 +41,7 @@ void mesh_for_each(const Array2i &lower, const Array2i &upper, const FunctionOnE
     for (int l = lower[0]; l != upper[0]; ++l)
         for (int m = lower[1]; m != upper[1]; ++m)
         {
-            function(l, m);
+            function(Array2i(l, m));
         }
 }
 //=================================================================================================//
@@ -63,7 +63,7 @@ void mesh_for(const MeshRange &mesh_range, const LocalFunction &local_function, 
     for (int i = (mesh_range.first)[0]; i != (mesh_range.second)[0]; ++i)
         for (int j = (mesh_range.first)[1]; j != (mesh_range.second)[1]; ++j)
         {
-            local_function(i, j);
+            local_function(Array2i(i, j));
         }
 }
 //=================================================================================================//
@@ -78,7 +78,7 @@ void mesh_parallel_for(const MeshRange &mesh_range, const LocalFunction &local_f
             for (size_t i = r.rows().begin(); i != r.rows().end(); ++i)
                 for (size_t j = r.cols().begin(); j != r.cols().end(); ++j)
                 {
-                    local_function(i, j);
+                    local_function(Array2i(i, j));
                 }
         },
         ap);

@@ -7,18 +7,19 @@ namespace fluid_dynamics
 //=================================================================================================//
 SurfaceTensionStress::
     SurfaceTensionStress(BaseContactRelation &contact_relation, StdVec<Real> contact_surface_tension)
-    : LocalDynamics(contact_relation.getSPHBody()), DataDelegateContact(contact_relation)
+    : LocalDynamics(contact_relation.getSPHBody()), DataDelegateContact(contact_relation),
+      color_gradient_(*particles_->registerSharedVariable<Vecd>("ColorGradient")),
+      surface_tension_stress_(*particles_->registerSharedVariable<Matd>("SurfaceTensionStress")),
+      contact_surface_tension_(contact_surface_tension)
 {
-    particles_->registerVariable(color_gradient_, "ColorGradient");
     particles_->addVariableToSort<Vecd>("ColorGradient");
     particles_->addVariableToWrite<Vecd>("ColorGradient");
-    particles_->registerVariable(surface_tension_stress_, "SurfaceTensionStress");
     particles_->addVariableToSort<Matd>("SurfaceTensionStress");
     particles_->addVariableToWrite<Matd>("SurfaceTensionStress");
     Real rho0 = getSPHBody().base_material_->ReferenceDensity();
     for (size_t k = 0; k != contact_particles_.size(); ++k)
     {
-        contact_Vol_.push_back(contact_particles_[k]->getVariableByName<Real>("VolumetricMeasure"));
+        contact_Vol_.push_back(contact_particles_[k]->getVariableDataByName<Real>("VolumetricMeasure"));
         contact_surface_tension_.push_back(contact_surface_tension[k]);
         Real rho0_k = contact_bodies_[k]->base_material_->ReferenceDensity();
         contact_fraction_.push_back(rho0 / (rho0 + rho0_k));
@@ -76,11 +77,11 @@ SurfaceStressForce<Contact<>>::SurfaceStressForce(BaseContactRelation &contact_r
     {
         Real rho0_k = contact_bodies_[k]->base_material_->ReferenceDensity();
         contact_fraction_.push_back(rho0 / (rho0 + rho0_k));
-        contact_Vol_.push_back(contact_particles_[k]->getVariableByName<Real>("VolumetricMeasure"));
+        contact_Vol_.push_back(contact_particles_[k]->getVariableDataByName<Real>("VolumetricMeasure"));
         contact_color_gradient_.push_back(
-            contact_particles_[k]->getVariableByName<Vecd>("ColorGradient"));
+            contact_particles_[k]->getVariableDataByName<Vecd>("ColorGradient"));
         contact_surface_tension_stress_.push_back(
-            contact_particles_[k]->getVariableByName<Matd>("SurfaceTensionStress"));
+            contact_particles_[k]->getVariableDataByName<Matd>("SurfaceTensionStress"));
     }
 }
 //=================================================================================================//

@@ -47,7 +47,7 @@ class BodyPart
     BodyPart(SPHBody &sph_body, const std::string &body_part_name)
         : sph_body_(sph_body), body_part_name_(body_part_name),
           base_particles_(sph_body.getBaseParticles()),
-          pos_(*base_particles_.getVariableByName<Vecd>("Position")){};
+          pos_(*base_particles_.getVariableDataByName<Vecd>("Position")){};
     virtual ~BodyPart(){};
 
     SPHBody &getSPHBody() { return sph_body_; };
@@ -222,13 +222,15 @@ template <class BodyRegionType>
 class AlignedBoxRegion : public BodyRegionType
 {
   public:
-    AlignedBoxShape &aligned_box_;
-
     AlignedBoxRegion(RealBody &real_body, AlignedBoxShape &aligned_box)
         : BodyRegionType(real_body, aligned_box), aligned_box_(aligned_box){};
     AlignedBoxRegion(RealBody &real_body, SharedPtr<AlignedBoxShape> aligned_box_ptr)
         : BodyRegionType(real_body, aligned_box_ptr), aligned_box_(*aligned_box_ptr.get()){};
     virtual ~AlignedBoxRegion(){};
+    AlignedBoxShape &getAlignedBoxShape() { return aligned_box_; };
+
+  protected:
+    AlignedBoxShape &aligned_box_;
 };
 
 using BodyAlignedBoxByParticle = AlignedBoxRegion<BodyRegionByParticle>;

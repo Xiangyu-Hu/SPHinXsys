@@ -12,12 +12,12 @@ template <class BaseRelationType>
 BaseIntegration<DataDelegationType>::BaseIntegration(BaseRelationType &base_relation)
     : LocalDynamics(base_relation.getSPHBody()), DataDelegationType(base_relation),
       fluid_(DynamicCast<Fluid>(this, this->particles_->getBaseMaterial())),
-      Vol_(*this->particles_->template getVariableByName<Real>("VolumetricMeasure")),
-      rho_(*this->particles_->template getVariableByName<Real>("Density")),
-      mass_(*this->particles_->template getVariableByName<Real>("Mass")),
+      Vol_(*this->particles_->template getVariableDataByName<Real>("VolumetricMeasure")),
+      rho_(*this->particles_->template getVariableDataByName<Real>("Density")),
+      mass_(*this->particles_->template getVariableDataByName<Real>("Mass")),
       p_(*this->particles_->template registerSharedVariable<Real>("Pressure")),
       drho_dt_(*this->particles_->template registerSharedVariable<Real>("DensityChangeRate")),
-      pos_(*this->particles_->template getVariableByName<Vecd>("Position")),
+      pos_(*this->particles_->template getVariableDataByName<Vecd>("Position")),
       vel_(*this->particles_->template registerSharedVariable<Vecd>("Velocity")),
       force_(*this->particles_->template registerSharedVariable<Vecd>("Force")),
       force_prior_(*this->particles_->template registerSharedVariable<Vecd>("ForcePrior")) {}
@@ -136,7 +136,7 @@ Integration1stHalf<Contact<>, RiemannSolverType, KernelCorrectionType>::
         Fluid &contact_fluid = DynamicCast<Fluid>(this, this->contact_particles_[k]->getBaseMaterial());
         riemann_solvers_.push_back(RiemannSolverType(this->fluid_, contact_fluid));
         contact_p_.push_back(this->contact_particles_[k]->template registerSharedVariable<Real>("Pressure"));
-        contact_Vol_.push_back(this->contact_particles_[k]->template getVariableByName<Real>("VolumetricMeasure"));
+        contact_Vol_.push_back(this->contact_particles_[k]->template getVariableDataByName<Real>("VolumetricMeasure"));
     }
 }
 //=================================================================================================//
@@ -172,8 +172,8 @@ template <class RiemannSolverType>
 Integration2ndHalf<Inner<>, RiemannSolverType>::
     Integration2ndHalf(BaseInnerRelation &inner_relation)
     : BaseIntegration<DataDelegateInner>(inner_relation), riemann_solver_(this->fluid_, this->fluid_),
-      mass_(*particles_->getVariableByName<Real>("Mass")),
-      Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")) {}
+      mass_(*particles_->getVariableDataByName<Real>("Mass")),
+      Vol_(*particles_->getVariableDataByName<Real>("VolumetricMeasure")) {}
 //=================================================================================================//
 template <class RiemannSolverType>
 void Integration2ndHalf<Inner<>, RiemannSolverType>::initialization(size_t index_i, Real dt)
@@ -250,7 +250,7 @@ Integration2ndHalf<Contact<>, RiemannSolverType>::
         Fluid &contact_fluid = DynamicCast<Fluid>(this, contact_particles_[k]->getBaseMaterial());
         riemann_solvers_.push_back(RiemannSolverType(fluid_, contact_fluid));
         contact_vel_.push_back(contact_particles_[k]->template registerSharedVariable<Vecd>("Velocity"));
-        contact_Vol_.push_back(contact_particles_[k]->template getVariableByName<Real>("VolumetricMeasure"));
+        contact_Vol_.push_back(contact_particles_[k]->template getVariableDataByName<Real>("VolumetricMeasure"));
     }
 }
 //=================================================================================================//

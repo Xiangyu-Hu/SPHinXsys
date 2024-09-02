@@ -20,7 +20,7 @@ namespace SPH
 {
 class ShellCircle;
 template <>
-class ParticleGenerator<ShellCircle> : public ParticleGenerator<Surface>
+class ParticleGenerator<SurfaceParticles, ShellCircle> : public ParticleGenerator<SurfaceParticles>
 {
     const StdVec<Vec3d> &pos_0_;
     const Vec3d normal_;
@@ -28,18 +28,19 @@ class ParticleGenerator<ShellCircle> : public ParticleGenerator<Surface>
     const Real thickness_;
 
   public:
-    explicit ParticleGenerator(SPHBody &sph_body, const StdVec<Vec3d> &pos_0, const Vec3d &normal, Real particle_area, Real thickness)
-        : ParticleGenerator<Surface>(sph_body),
+    explicit ParticleGenerator(SPHBody &sph_body, SurfaceParticles &surface_particles,
+                               const StdVec<Vec3d> &pos_0, const Vec3d &normal, Real particle_area, Real thickness)
+        : ParticleGenerator<SurfaceParticles>(sph_body, surface_particles),
           pos_0_(pos_0),
           normal_(normal),
           particle_area_(particle_area),
           thickness_(thickness){};
-    virtual void initializeGeometricVariables() override
+    virtual void prepareGeometricData() override
     {
         for (const auto &pos : pos_0_)
         {
-            initializePositionAndVolumetricMeasure(pos, particle_area_);
-            initializeSurfaceProperties(normal_, thickness_);
+            addPositionAndVolumetricMeasure(pos, particle_area_);
+            addSurfaceProperties(normal_, thickness_);
         }
     }
 };
@@ -130,18 +131,18 @@ struct observer_point_shell
     {
         ElasticSolid &elastic_solid_ = DynamicCast<ElasticSolid>(this, particles.getBaseMaterial());
         pos_n = interpolate_observer<Vec3d>(particles, neighbor_ids, pos_0, [&](size_t id)
-                                            { return (*particles.getVariableByName<Vec3d>("Position"))[id]; });
+                                            { return (*particles.getVariableDataByName<Vec3d>("Position"))[id]; });
         displacement = interpolate_observer<Vec3d>(particles, neighbor_ids, pos_0, [&](size_t id)
-                                                   { return (*particles.getVariableByName<Vec3d>("Displacement"))[id]; });
+                                                   { return (*particles.getVariableDataByName<Vec3d>("Displacement"))[id]; });
         global_shear_stress = interpolate_observer<Vec3d>(particles, neighbor_ids, pos_0, [&](size_t id)
-                                                          { return (*particles.getVariableByName<Vec3d>("GlobalShearStress"))[id]; });
+                                                          { return (*particles.getVariableDataByName<Vec3d>("GlobalShearStress"))[id]; });
         global_stress = interpolate_observer<Mat3d>(particles, neighbor_ids, pos_0, [&](size_t id)
-                                                    { return (*particles.getVariableByName<Mat3d>("GlobalStress"))[id]; });
+                                                    { return (*particles.getVariableDataByName<Mat3d>("GlobalStress"))[id]; });
         def_gradient = interpolate_observer<Mat3d>(particles, neighbor_ids, pos_0, [&](size_t id)
-                                                   { return (*particles.getVariableByName<Mat3d>("DeformationGradient"))[id]; });
+                                                   { return (*particles.getVariableDataByName<Mat3d>("DeformationGradient"))[id]; });
         pk2_stress = interpolate_observer<Mat3d>(particles, neighbor_ids, pos_0, [&](size_t id)
                                                  {
-			Mat3d F = (*particles.getVariableByName<Mat3d>("DeformationGradient"))[id];
+			Mat3d F = (*particles.getVariableDataByName<Mat3d>("DeformationGradient"))[id];
 			return elastic_solid_.StressPK2(F, id); });
         cauchy_stress = (1.0 / def_gradient.determinant()) * def_gradient * pk2_stress * def_gradient.transpose();
     }
@@ -240,8 +241,6 @@ return_data bending_circular_plate(Real dp_ratio)
     shell_body.defineMaterial<LinearElasticSolid>(rho, E, mu);
     shell_body.generateParticles<SurfaceParticles, ShellCircle>(obj_vertices, sym_vec, particle_area, thickness);
     auto shell_particles = dynamic_cast<SurfaceParticles *>(&shell_body.getBaseParticles());
-    shell_body.addBodyStateForRecording<Vec3d>("NormalDirection");
-    shell_body.addDerivedBodyStateForRecording<Displacement>();
 
     // methods
     InnerRelation shell_body_inner(shell_body);
@@ -253,7 +252,6 @@ return_data bending_circular_plate(Real dp_ratio)
     Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationSecondHalf> stress_relaxation_second_half(shell_body_inner);
 
     ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> computing_time_step_size(shell_body);
-    ReduceDynamics<VariableNorm<Vecd, ReduceMax>> maximum_displace_norm(shell_body, "Displacement");
     BodyPartByParticle constrained_edges(shell_body, "constrained_edges");
     auto constrained_edge_ids = [&]() { // brute force finding the edges
         IndexVector ids;
@@ -265,9 +263,9 @@ return_data bending_circular_plate(Real dp_ratio)
     constrained_edges.body_part_particles_ = constrained_edge_ids;
 
     SimpleDynamics<thin_structure_dynamics::ConstrainShellBodyRegion> constrain_holder(constrained_edges);
-    DampingWithRandomChoice<InteractionSplit<DampingBySplittingInner<Vec3d>>>
+    DampingWithRandomChoice<InteractionSplit<DampingProjectionInner<Vec3d, FixedDampingRate>>>
         shell_velocity_damping(0.2, shell_body_inner, "Velocity", physical_viscosity);
-    DampingWithRandomChoice<InteractionSplit<DampingBySplittingInner<Vec3d>>>
+    DampingWithRandomChoice<InteractionSplit<DampingProjectionInner<Vec3d, FixedDampingRate>>>
         shell_rotation_damping(0.2, shell_body_inner, "AngularVelocity", physical_viscosity);
 
     /** Apply initial condition. */
@@ -276,9 +274,13 @@ return_data bending_circular_plate(Real dp_ratio)
     corrected_configuration.exec();
     constant_gravity_force.exec();
 
-    // output
+    // file and screen outputs
     BodyStatesRecordingToVtp vtp_output({shell_body});
+    vtp_output.addToWrite<Vec3d>(shell_body, "NormalDirection");
+    vtp_output.addDerivedVariableRecording<SimpleDynamics<Displacement>>(shell_body);
+    ReduceDynamics<VariableNorm<Vecd, ReduceMax>> maximum_displace_norm(shell_body, "Displacement");
     vtp_output.writeToFile(0);
+
     StdLargeVec<Vecd> &pos0_ = *shell_particles->registerSharedVariableFrom<Vecd>("InitialPosition", "Position");
     // observer point
     point_center.neighbor_ids = [&]() { // full neighborhood
@@ -309,7 +311,7 @@ return_data bending_circular_plate(Real dp_ratio)
 
         // test volume
         StdLargeVec<Real> &Vol_ = shell_particles->VolumetricMeasures();
-        StdLargeVec<Real> &mass_ = *shell_particles->getVariableByName<Real>("Mass");
+        StdLargeVec<Real> &mass_ = *shell_particles->getVariableDataByName<Real>("Mass");
         Real total_volume = std::accumulate(Vol_.begin(), Vol_.end(), 0.0);
         std::cout << "total_volume: " << total_volume << std::endl;
         Real total_mass = std::accumulate(mass_.begin(), mass_.end(), 0.0);

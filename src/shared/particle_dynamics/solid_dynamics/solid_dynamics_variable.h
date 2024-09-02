@@ -30,11 +30,8 @@
 #ifndef SOLID_DYNAMICS_VARIABLE_H
 #define SOLID_DYNAMICS_VARIABLE_H
 
-#include "all_body_relations.h"
-#include "base_particles.hpp"
+#include "base_general_dynamics.h"
 #include "elastic_solid.h"
-#include "particle_dynamics_algorithms.h"
-#include "solid_body.h"
 
 namespace SPH
 {
@@ -42,8 +39,7 @@ namespace SPH
  * @class Displacement
  * @brief computing displacement from current and initial particle position
  */
-class Displacement : public BaseDerivedVariable<Vecd>,
-                     public DataDelegateSimple,
+class Displacement : public BaseDerivedVariable<Vecd, DataDelegateSimple>,
                      public LocalDynamics
 {
   public:
@@ -89,8 +85,7 @@ class TranslationAndRotation : public DataDelegateSimple,
     StdLargeVec<Vecd> &pos_, &pos0_;
 };
 
-class GreenLagrangeStrain : public BaseDerivedVariable<Matd>,
-                            public DataDelegateSimple,
+class GreenLagrangeStrain : public BaseDerivedVariable<Matd, DataDelegateSimple>,
                             public LocalDynamics
 {
   public:
@@ -106,8 +101,7 @@ class GreenLagrangeStrain : public BaseDerivedVariable<Matd>,
  * @class VonMisesStress
  * @brief computing von_Mises_stress
  */
-class VonMisesStress : public BaseDerivedVariable<Real>,
-                       public DataDelegateSimple,
+class VonMisesStress : public BaseDerivedVariable<Real, DataDelegateSimple>,
                        public LocalDynamics
 {
   public:
@@ -126,8 +120,7 @@ class VonMisesStress : public BaseDerivedVariable<Real>,
  * @class VonMisesStrain
  * @brief computing von Mises strain
  */
-class VonMisesStrain : public BaseDerivedVariable<Real>,
-                       public DataDelegateSimple,
+class VonMisesStrain : public BaseDerivedVariable<Real, DataDelegateSimple>,
                        public LocalDynamics
 {
   public:
@@ -143,8 +136,7 @@ class VonMisesStrain : public BaseDerivedVariable<Real>,
  * @class VonMisesStrain
  * @brief update von Mises strain
  */
-class VonMisesStrainDynamic : public BaseDerivedVariable<Real>,
-                              public DataDelegateSimple,
+class VonMisesStrainDynamic : public BaseDerivedVariable<Real, DataDelegateSimple>,
                               public LocalDynamics
 {
   public:
@@ -162,8 +154,7 @@ class VonMisesStrainDynamic : public BaseDerivedVariable<Real>,
  * @class MidSurfaceVonMisesStress
  * @brief computing mid-surface von Mises stress of shells
  */
-class MidSurfaceVonMisesStress : public BaseDerivedVariable<Real>,
-                                 public DataDelegateSimple,
+class MidSurfaceVonMisesStress : public BaseDerivedVariable<Real, DataDelegateSimple>,
                                  public LocalDynamics
 {
   public:

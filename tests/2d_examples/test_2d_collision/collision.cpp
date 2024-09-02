@@ -107,9 +107,9 @@ int main(int ac, char *av[])
     wall_boundary.generateParticles<BaseParticles, Lattice>();
 
     ObserverBody free_ball_observer(sph_system, "FreeBallObserver");
-    free_ball_observer.generateParticles<BaseParticles, Observer>(observation_location_1);
+    free_ball_observer.generateParticles<ObserverParticles>(observation_location_1);
     ObserverBody damping_ball_observer(sph_system, "DampingBallObserver");
-    damping_ball_observer.generateParticles<BaseParticles, Observer>(observation_location_2);
+    damping_ball_observer.generateParticles<ObserverParticles>(observation_location_2);
     //----------------------------------------------------------------------
     //	Run particle relaxation for body-fitted distribution if chosen.
     //----------------------------------------------------------------------
@@ -131,7 +131,7 @@ int main(int ac, char *av[])
         //----------------------------------------------------------------------
         //	Output for particle relaxation.
         //----------------------------------------------------------------------
-        BodyStatesRecordingToVtp write_ball_state(sph_system.real_bodies_);
+        BodyStatesRecordingToVtp write_ball_state(sph_system);
         ReloadParticleIO write_particle_reload_files({&free_ball, &damping_ball});
         //----------------------------------------------------------------------
         //	Particle relaxation starts here.
@@ -194,20 +194,20 @@ int main(int ac, char *av[])
     Dynamics1Level<solid_dynamics::Integration1stHalfPK2> damping_ball_stress_relaxation_first_half(damping_ball_inner);
     Dynamics1Level<solid_dynamics::Integration2ndHalf> damping_ball_stress_relaxation_second_half(damping_ball_inner);
     /** Algorithms for solid-solid contact. */
-    InteractionDynamics<solid_dynamics::ContactDensitySummation> free_ball_update_contact_density(free_ball_contact);
+    InteractionDynamics<solid_dynamics::ContactFactorSummation> free_ball_update_contact_density(free_ball_contact);
     InteractionWithUpdate<solid_dynamics::ContactForceFromWall> free_ball_compute_solid_contact_forces(free_ball_contact);
-    InteractionDynamics<solid_dynamics::ContactDensitySummation> damping_ball_update_contact_density(damping_ball_contact);
+    InteractionDynamics<solid_dynamics::ContactFactorSummation> damping_ball_update_contact_density(damping_ball_contact);
     InteractionWithUpdate<solid_dynamics::ContactForceFromWall> damping_ball_compute_solid_contact_forces(damping_ball_contact);
     /** Damping for one ball */
-    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d>>>
-        damping(0.5, damping_ball_inner, "Velocity", physical_viscosity);
+    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d, FixedDampingRate>>>
+        damping(0.5, ConstructorArgs(damping_ball_inner, "Velocity", physical_viscosity));
 
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize> free_ball_get_time_step_size(free_ball);
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize> damping_ball_get_time_step_size(damping_ball);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp body_states_recording(sph_system.real_bodies_);
+    BodyStatesRecordingToVtp body_states_recording(sph_system);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
         free_ball_displacement_recording("Position", free_ball_observer_contact);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>

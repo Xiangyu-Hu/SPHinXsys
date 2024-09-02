@@ -45,10 +45,9 @@ int main(int ac, char *av[])
     /** Boundary conditions set up */
     InvCFBoundaryConditionSetup boundary_condition_setup(air_block_inner, ghost_creation);
     //----------------------------------------------------------------------
-    // Visualization in FVM with date in cell.
-    air_block.addBodyStateForRecording<Real>("Density");
-    air_block.addBodyStateForRecording<Real>("Pressure");
     BodyStatesRecordingInMeshToVtu write_real_body_states(air_block, read_mesh_data);
+    write_real_body_states.addToWrite<Real>(air_block, "Density");
+    write_real_body_states.addToWrite<Real>(air_block, "Pressure");
     ReducedQuantityRecording<MaximumSpeed> write_maximum_speed(air_block);
 
     air_block_inner.updateConfiguration();

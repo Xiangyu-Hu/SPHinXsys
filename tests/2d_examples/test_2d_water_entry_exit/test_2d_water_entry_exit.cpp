@@ -67,7 +67,7 @@ class WettingFluidBodyInitialCondition : public LocalDynamics, public DataDelega
   public:
     explicit WettingFluidBodyInitialCondition(SPHBody &sph_body)
         : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
-          pos_(*particles_->getVariableByName<Vecd>("Position")),
+          pos_(*particles_->getVariableDataByName<Vecd>("Position")),
           phi_(*particles_->registerSharedVariable<Real>("Phi")){};
 
     void update(size_t index_i, Real dt)
@@ -118,7 +118,7 @@ class WettingWallBodyInitialCondition : public LocalDynamics, public DataDelegat
   public:
     explicit WettingWallBodyInitialCondition(SPHBody &sph_body)
         : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
-          pos_(*particles_->getVariableByName<Vecd>("Position")),
+          pos_(*particles_->getVariableDataByName<Vecd>("Position")),
           phi_(*particles_->registerSharedVariable<Real>("Phi")){};
 
     void update(size_t index_i, Real dt)
@@ -146,7 +146,7 @@ class WettingCylinderBodyInitialCondition : public LocalDynamics, public DataDel
   public:
     explicit WettingCylinderBodyInitialCondition(SPHBody &sph_body)
         : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
-          pos_(*particles_->getVariableByName<Vecd>("Position")),
+          pos_(*particles_->getVariableDataByName<Vecd>("Position")),
           phi_(*particles_->registerSharedVariable<Real>("Phi")){};
 
     void update(size_t index_i, Real dt)
@@ -206,10 +206,10 @@ int main(int ac, char *av[])
         : cylinder.generateParticles<BaseParticles, Lattice>();
 
     ObserverBody cylinder_observer(sph_system, "CylinderObserver");
-    cylinder_observer.generateParticles<BaseParticles, Observer>(observer_location);
+    cylinder_observer.generateParticles<ObserverParticles>(observer_location);
 
     ObserverBody wetting_observer(sph_system, "WettingObserver");
-    wetting_observer.generateParticles<BaseParticles, Observer>(wetting_observer_location);
+    wetting_observer.generateParticles<ObserverParticles>(wetting_observer_location);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -242,9 +242,9 @@ int main(int ac, char *av[])
         using namespace relax_dynamics;
         SimpleDynamics<RandomizeParticlePosition> random_inserted_body_particles(cylinder);
         /** Write the body state to Vtp file. */
-        BodyStatesRecordingToVtp write_inserted_body_to_vtp({&cylinder});
+        BodyStatesRecordingToVtp write_inserted_body_to_vtp(cylinder);
         /** Write the particle reload files. */
-        ReloadParticleIO write_particle_reload_files({&cylinder});
+        ReloadParticleIO write_particle_reload_files(cylinder);
         /** A  Physics relaxation step. */
         RelaxationStepInner relaxation_step_inner(cylinder_inner);
         //----------------------------------------------------------------------
@@ -348,13 +348,12 @@ int main(int ac, char *av[])
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
-    water_block.addBodyStateForRecording<Real>("Pressure");
-    water_block.addBodyStateForRecording<Real>("Density");
-    water_block.addBodyStateForRecording<int>("Indicator");
-    cylinder.addBodyStateForRecording<Real>("Density");
-    wall_boundary.addBodyStateForRecording<Vecd>("NormalDirection");
-    BodyStatesRecordingToVtp body_states_recording(sph_system.real_bodies_);
-    RestartIO restart_io(sph_system.real_bodies_);
+    BodyStatesRecordingToVtp body_states_recording(sph_system);
+    body_states_recording.addToWrite<Real>(water_block, "Pressure");          // output for debug
+    body_states_recording.addToWrite<Real>(water_block, "Density");           // output for debug
+    body_states_recording.addToWrite<int>(water_block, "Indicator");          // output for debug
+    body_states_recording.addToWrite<Vecd>(wall_boundary, "NormalDirection"); // output for debug
+    RestartIO restart_io(sph_system);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>> write_cylinder_displacement("Position", cylinder_observer_contact);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>> write_cylinder_wetting("Phi", wetting_observer_contact);
     //----------------------------------------------------------------------

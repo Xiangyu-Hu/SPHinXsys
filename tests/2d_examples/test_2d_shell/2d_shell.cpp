@@ -39,11 +39,12 @@ namespace SPH
 /** Define application dependent particle generator for thin structure. */
 class Cylinder;
 template <>
-class ParticleGenerator<Cylinder> : public ParticleGenerator<Surface>
+class ParticleGenerator<SurfaceParticles, Cylinder> : public ParticleGenerator<SurfaceParticles>
 {
   public:
-    explicit ParticleGenerator(SPHBody &sph_body) : ParticleGenerator<Surface>(sph_body){};
-    virtual void initializeGeometricVariables() override
+    explicit ParticleGenerator(SPHBody &sph_body, SurfaceParticles &surface_particles)
+        : ParticleGenerator<SurfaceParticles>(sph_body, surface_particles){};
+    virtual void prepareGeometricData() override
     {
         // the cylinder and boundary
         for (int i = 0; i < particle_number_mid_surface + 2 * BWD; i++)
@@ -52,9 +53,9 @@ class ParticleGenerator<Cylinder> : public ParticleGenerator<Surface>
                      cos(50.0 / 180.0 * Pi + (i + 0.5 - BWD) * 80.0 / 360.0 * 2 * Pi / (Real)particle_number_mid_surface);
             Real y = radius_mid_surface *
                      sin(50.0 / 180.0 * Pi + (i + 0.5 - BWD) * 80.0 / 360.0 * 2 * Pi / (Real)particle_number_mid_surface);
-            initializePositionAndVolumetricMeasure(Vecd(x, y), particle_spacing_ref);
+            addPositionAndVolumetricMeasure(Vecd(x, y), particle_spacing_ref);
             Vec2d normal_direction = Vec2d(x / radius_mid_surface, y / radius_mid_surface);
-            initializeSurfaceProperties(normal_direction, thickness);
+            addSurfaceProperties(normal_direction, thickness);
         }
     }
 };
@@ -111,7 +112,7 @@ int main(int ac, char *av[])
 
     /** Define Observer. */
     ObserverBody cylinder_observer(sph_system, "CylinderObserver");
-    cylinder_observer.generateParticles<BaseParticles, Observer>(observation_location);
+    cylinder_observer.generateParticles<ObserverParticles>(observation_location);
 
     /** Set body contact map
      *  The contact map gives the data connections between the bodies
@@ -132,14 +133,14 @@ int main(int ac, char *av[])
     ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> computing_time_step_size(cylinder_body);
     BoundaryGeometry boundary_geometry(cylinder_body, "BoundaryGeometry");
     SimpleDynamics<thin_structure_dynamics::ConstrainShellBodyRegion> fixed_free_rotate_shell_boundary(boundary_geometry);
-    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d>>>
+    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d, FixedDampingRate>>>
         cylinder_position_damping(0.2, cylinder_body_inner, "Velocity", physical_viscosity);
-    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d>>>
+    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d, FixedDampingRate>>>
         cylinder_rotation_damping(0.2, cylinder_body_inner, "AngularVelocity", physical_viscosity);
     /** Output */
     IOEnvironment io_environment(sph_system);
-    cylinder_body.addBodyStateForRecording<Vecd>("PseudoNormal");
-    BodyStatesRecordingToVtp write_states(sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_states(sph_system);
+    write_states.addToWrite<Vecd>(cylinder_body, "PseudoNormal");
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
         write_cylinder_max_displacement("Position", cylinder_observer_contact);
 

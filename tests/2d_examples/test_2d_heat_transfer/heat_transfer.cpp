@@ -100,7 +100,7 @@ class ThermosolidBodyInitialCondition : public LocalDynamics, public DataDelegat
   public:
     explicit ThermosolidBodyInitialCondition(SPHBody &sph_body)
         : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
-          pos_(*particles_->getVariableByName<Vecd>("Position")),
+          pos_(*particles_->getVariableDataByName<Vecd>("Position")),
           phi_(*particles_->registerSharedVariable<Real>("Phi")){};
 
     void update(size_t index_i, Real dt)
@@ -128,7 +128,7 @@ class ThermofluidBodyInitialCondition : public LocalDynamics, public DataDelegat
   public:
     explicit ThermofluidBodyInitialCondition(SPHBody &sph_body)
         : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
-          pos_(*particles_->getVariableByName<Vecd>("Position")),
+          pos_(*particles_->getVariableDataByName<Vecd>("Position")),
           phi_(*particles_->registerSharedVariable<Real>("Phi")){};
 
     void update(size_t index_i, Real dt)
@@ -168,7 +168,7 @@ struct InflowVelocity
         Vecd target_velocity = velocity;
         Real run_time = GlobalStaticVariables::physical_time_;
         Real u_ave = run_time < t_ref_ ? 0.5 * u_ref_ * (1.0 - cos(Pi * run_time / t_ref_)) : u_ref_;
-        if (aligned_box_.checkInBounds(0, position))
+        if (aligned_box_.checkInBounds(position))
         {
             target_velocity[0] = 1.5 * u_ave * (1.0 - position[1] * position[1] / halfsize_[1] / halfsize_[1]);
         }
@@ -198,7 +198,7 @@ int main(int ac, char *av[])
     thermosolid_body.generateParticles<BaseParticles, Lattice>();
 
     ObserverBody temperature_observer(sph_system, "FluidObserver");
-    temperature_observer.generateParticles<BaseParticles, Observer>(observation_location);
+    temperature_observer.generateParticles<ObserverParticles>(observation_location);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -240,7 +240,7 @@ int main(int ac, char *av[])
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step(thermofluid_body);
     PeriodicAlongAxis periodic_along_x(thermofluid_body.getSPHBodyBounds(), xAxis);
     PeriodicConditionUsingCellLinkedList periodic_condition(thermofluid_body, periodic_along_x);
-    BodyAlignedBoxByCell inflow_buffer(thermofluid_body, makeShared<AlignedBoxShape>(Transform(Vec2d(buffer_translation)), buffer_halfsize));
+    BodyAlignedBoxByCell inflow_buffer(thermofluid_body, makeShared<AlignedBoxShape>(xAxis, Transform(Vec2d(buffer_translation)), buffer_halfsize));
     SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>> parabolic_inflow(inflow_buffer);
 
     IsotropicDiffusion diffusion("Phi", "Phi", diffusion_coeff);
@@ -255,9 +255,9 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
-    thermofluid_body.addBodyStateForRecording<Real>("Phi");
-    thermosolid_body.addBodyStateForRecording<Real>("Phi");
-    BodyStatesRecordingToVtp write_real_body_states(sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_real_body_states(sph_system);
+    write_real_body_states.addToWrite<Real>(thermofluid_body, "Phi");
+    write_real_body_states.addToWrite<Real>(thermosolid_body, "Phi");
     RegressionTestEnsembleAverage<ObservedQuantityRecording<Real>> write_fluid_phi("Phi", fluid_observer_contact);
     ObservedQuantityRecording<Vecd> write_fluid_velocity("Velocity", fluid_observer_contact);
     //----------------------------------------------------------------------

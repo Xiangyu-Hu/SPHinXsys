@@ -61,8 +61,8 @@ class InteractionWithWall : public BaseInteractionType<DataDelegateContact>
             Solid &solid_material = DynamicCast<Solid>(this, this->contact_particles_[k]->getBaseMaterial());
             wall_vel_ave_.push_back(solid_material.AverageVelocity(this->contact_particles_[k]));
             wall_acc_ave_.push_back(solid_material.AverageAcceleration(this->contact_particles_[k]));
-            wall_n_.push_back(this->contact_particles_[k]->template getVariableByName<Vecd>("NormalDirection"));
-            wall_Vol_.push_back(this->contact_particles_[k]->template getVariableByName<Real>("VolumetricMeasure"));
+            wall_n_.push_back(this->contact_particles_[k]->template getVariableDataByName<Vecd>("NormalDirection"));
+            wall_Vol_.push_back(this->contact_particles_[k]->template getVariableDataByName<Real>("VolumetricMeasure"));
         }
     };
     virtual ~InteractionWithWall(){};

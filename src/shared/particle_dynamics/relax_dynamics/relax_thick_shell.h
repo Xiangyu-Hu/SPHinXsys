@@ -86,7 +86,7 @@ class ShellNormalDirectionPrediction : public BaseDynamics<void>
     {
         Real thickness_;
         LevelSetShape *level_set_shape_;
-        StdLargeVec<Vecd> &pos_, &n_, n_temp_;
+        StdLargeVec<Vecd> &pos_, &n_, &n_temp_;
 
       public:
         NormalPrediction(SPHBody &sph_body, Real thickness);
@@ -119,8 +119,8 @@ class ShellNormalDirectionPrediction : public BaseDynamics<void>
       protected:
         std::mutex mutex_modify_neighbor_; /**< mutex exclusion for memory conflict */
         const Real consistency_criterion_;
-        StdLargeVec<int> updated_indicator_; /**> 0 not updated, 1 updated with reliable prediction, 2 updated from a reliable neighbor */
         StdLargeVec<Vecd> &n_;
+        StdLargeVec<int> &updated_indicator_; /**> 0 not updated, 1 updated with reliable prediction, 2 updated from a reliable neighbor */
     };
 
     class ConsistencyUpdatedCheck : public LocalDynamicsReduce<ReduceAND>,

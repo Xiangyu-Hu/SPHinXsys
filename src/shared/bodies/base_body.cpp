@@ -89,11 +89,6 @@ void SPHBody::writeParticlesToVtpFile(std::ofstream &output_file)
     base_particles_->writeParticlesToVtk(output_file);
 }
 //=================================================================================================//
-void SPHBody::writeSurfaceParticlesToVtuFile(std::ofstream &output_file, BodySurface &surface_particles)
-{
-    base_particles_->writeSurfaceParticlesToVtuFile(output_file, surface_particles);
-}
-//=================================================================================================//
 void SPHBody::writeParticlesToPltFile(std::ofstream &output_file)
 {
     base_particles_->writeParticlesToPltFile(output_file);
@@ -112,11 +107,6 @@ void SPHBody::readParticlesFromXmlForRestart(std::string &filefullpath)
 void SPHBody::writeToXmlForReloadParticle(std::string &filefullpath)
 {
     base_particles_->writeToXmlForReloadParticle(filefullpath);
-}
-//=================================================================================================//
-void SPHBody::readFromXmlForReloadParticle(std::string &filefullpath)
-{
-    base_particles_->readFromXmlForReloadParticle(filefullpath);
 }
 //=================================================================================================//
 BaseCellLinkedList &RealBody::getCellLinkedList()

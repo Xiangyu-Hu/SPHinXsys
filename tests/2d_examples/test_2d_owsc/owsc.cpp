@@ -30,7 +30,7 @@ int main(int ac, char *av[])
     flap.generateParticles<BaseParticles, Lattice>();
 
     ObserverBody observer(sph_system, "Observer");
-    observer.generateParticles<BaseParticles, Observer>(creatObserverPositions());
+    observer.generateParticles<ObserverParticles>(creatObserverPositions());
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -165,7 +165,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp write_real_body_states(sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_real_body_states(sph_system);
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<QuantitySummation<Vecd>>>
         write_total_viscous_force_from_fluid(flap, "ViscousForceFromFluid");
     WriteSimBodyPinData write_flap_pin_data(sph_system, integ, pin_spot);

@@ -72,7 +72,7 @@ int main(int ac, char *av[])
     cantilever_body.generateParticles<BaseParticles, Lattice>();
     /** Define Observer. */
     ObserverBody cantilever_observer(sph_system, "CantileverObserver");
-    cantilever_observer.generateParticles<BaseParticles, Observer>(observation_location);
+    cantilever_observer.generateParticles<ObserverParticles>(observation_location);
 
     /** topology */
     InnerRelation cantilever_body_inner(cantilever_body);
@@ -96,11 +96,11 @@ int main(int ac, char *av[])
     TransformShape<GeometricShapeBox> holder_shape(Transform(translation_holder), halfsize_holder, "Holder");
     BodyRegionByParticle holder(cantilever_body, holder_shape);
     SimpleDynamics<FixBodyPartConstraint> constraint_holder(holder);
-    DampingWithRandomChoice<InteractionSplit<DampingBySplittingInner<Vec3d>>>
+    DampingWithRandomChoice<InteractionSplit<DampingProjectionInner<Vec3d, FixedDampingRate>>>
         muscle_damping(0.1, cantilever_body_inner, "Velocity", physical_viscosity);
     /** Output */
     IOEnvironment io_environment(sph_system);
-    BodyStatesRecordingToVtp write_states(sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_states(sph_system);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
         write_displacement("Position", cantilever_observer_contact);
     /**

@@ -42,18 +42,19 @@ namespace SPH
 {
 class Plate;
 template <>
-class ParticleGenerator<Plate> : public ParticleGenerator<Surface>
+class ParticleGenerator<SurfaceParticles, Plate> : public ParticleGenerator<SurfaceParticles>
 {
   public:
-    explicit ParticleGenerator(SPHBody &sph_body) : ParticleGenerator<Surface>(sph_body){};
-    virtual void initializeGeometricVariables() override
+    explicit ParticleGenerator(SPHBody &sph_body, SurfaceParticles &surface_particles)
+        : ParticleGenerator<SurfaceParticles>(sph_body, surface_particles){};
+    virtual void prepareGeometricData() override
     {
         // the plate and boundary
         for (int i = 0; i < (particle_number + 2 * BWD); i++)
         {
             Real x = resolution_ref * i - BW + resolution_ref * 0.5;
-            initializePositionAndVolumetricMeasure(Vecd(x, 0.0), resolution_ref);
-            initializeSurfaceProperties(n_0, thickness);
+            addPositionAndVolumetricMeasure(Vecd(x, 0.0), resolution_ref);
+            addSurfaceProperties(n_0, thickness);
         }
     };
 };
@@ -97,7 +98,7 @@ int main(int ac, char *av[])
     plate_body.generateParticles<SurfaceParticles, Plate>();
 
     ObserverBody plate_observer(sph_system, "PlateObserver");
-    plate_observer.generateParticles<BaseParticles, Observer>(observation_location);
+    plate_observer.generateParticles<ObserverParticles>(observation_location);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -116,20 +117,20 @@ int main(int ac, char *av[])
     Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationSecondHalf> stress_relaxation_second_half(plate_body_inner);
 
     ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> computing_time_step_size(plate_body);
-    SimpleDynamics<thin_structure_dynamics::DistributingPointForcesToShell>
+    SimpleDynamics<solid_dynamics::DistributingPointForces>
         apply_point_force(plate_body, point_force, reference_position, time_to_full_external_force, resolution_ref);
     /** Constrain the Boundary. */
     BoundaryGeometry boundary_geometry(plate_body, "BoundaryGeometry");
     SimpleDynamics<thin_structure_dynamics::ConstrainShellBodyRegion> constrain_holder(boundary_geometry);
-    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d>>>
+    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d, FixedDampingRate>>>
         plate_position_damping(0.2, plate_body_inner, "Velocity", physical_viscosity);
-    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d>>>
+    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d, FixedDampingRate>>>
         plate_rotation_damping(0.2, plate_body_inner, "AngularVelocity", physical_viscosity);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
-    plate_body.addBodyStateForRecording<Vecd>("ForcePrior");
-    BodyStatesRecordingToVtp write_states(sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_states(sph_system);
+    write_states.addToWrite<Vecd>(plate_body, "ForcePrior");
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
         write_plate_max_displacement("Position", plate_observer_contact); // TODO: using ensemble better
     //----------------------------------------------------------------------

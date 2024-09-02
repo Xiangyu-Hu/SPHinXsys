@@ -154,13 +154,13 @@ int main(int ac, char *av[])
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
-    water_block.addBodyStateForRecording<Real>("Density");
-    water_block.addBodyStateForRecording<Real>("Pressure");
-    water_block.addBodyStateForRecording<Matd>("SurfaceTensionStress");
-    air_block.addBodyStateForRecording<Vecd>("ForcePrior");
-    air_block.addBodyStateForRecording<Real>("Density");
-    air_block.addBodyStateForRecording<Real>("Pressure");
-    BodyStatesRecordingToVtp body_states_recording(sph_system.real_bodies_);
+    BodyStatesRecordingToVtp body_states_recording(sph_system);
+    body_states_recording.addToWrite<Real>(water_block, "Density");
+    body_states_recording.addToWrite<Real>(water_block, "Pressure");
+    body_states_recording.addToWrite<Matd>(water_block, "SurfaceTensionStress");
+    body_states_recording.addToWrite<Vecd>(air_block, "ForcePrior");
+    body_states_recording.addToWrite<Real>(air_block, "Density");
+    body_states_recording.addToWrite<Real>(air_block, "Pressure");
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalKineticEnergy>> write_water_kinetic_energy(water_block);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration

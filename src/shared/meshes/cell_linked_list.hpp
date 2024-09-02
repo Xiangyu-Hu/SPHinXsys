@@ -27,18 +27,18 @@ void CellLinkedList::searchNeighborsByParticles(
                  [&](size_t index_i)
                  {
                      int search_depth = get_search_depth(index_i);
-                     Array2i target_cell_index = CellIndexFromPosition(pos[index_i]);
+                     Arrayi target_cell_index = CellIndexFromPosition(pos[index_i]);
 
                      Neighborhood &neighborhood = particle_configuration[index_i];
                      mesh_for_each(
-                         Array2i::Zero().max(target_cell_index - search_depth * Array2i::Ones()),
-                         all_cells_.min(target_cell_index + (search_depth + 1) * Array2i::Ones()),
-                         [&](int l, int m)
+                         Arrayi::Zero().max(target_cell_index - search_depth * Arrayi::Ones()),
+                         all_cells_.min(target_cell_index + (search_depth + 1) * Arrayi::Ones()),
+                         [&](const Arrayi &cell_index)
                          {
-                             ListDataVector &target_particles = cell_data_lists_[l][m];
-                             for (const ListData &list_data : target_particles)
+                             ListDataVector &target_particles = getCellDataList(cell_data_lists_, cell_index);
+                             for (const ListData &data_list : target_particles)
                              {
-                                 get_neighbor_relation(neighborhood, pos[index_i], index_i, list_data);
+                                 get_neighbor_relation(neighborhood, pos[index_i], index_i, data_list);
                              }
                          });
                  });

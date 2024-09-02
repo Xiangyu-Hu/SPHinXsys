@@ -48,27 +48,17 @@ class WallBoundary : public ComplexShape
     }
 };
 
-//	define an observer particle generator
-namespace SPH
+StdVec<Vecd> createObservationPoints()
 {
-class WaterObserver;
-template <>
-class ParticleGenerator<WaterObserver> : public ParticleGenerator<Observer>
-{
-  public:
-    explicit ParticleGenerator(SPHBody &sph_body)
-        : ParticleGenerator<Observer>(sph_body)
-    {
-        // add observation points
-        positions_.push_back(Vecd(DL, 0.01, 0.5 * DW));
-        positions_.push_back(Vecd(DL, 0.1, 0.5 * DW));
-        positions_.push_back(Vecd(DL, 0.2, 0.5 * DW));
-        positions_.push_back(Vecd(DL, 0.24, 0.5 * DW));
-        positions_.push_back(Vecd(DL, 0.252, 0.5 * DW));
-        positions_.push_back(Vecd(DL, 0.266, 0.5 * DW));
-    }
+    StdVec<Vecd> observation_points;
+    observation_points.push_back(Vecd(DL, 0.01, 0.5 * DW));
+    observation_points.push_back(Vecd(DL, 0.1, 0.5 * DW));
+    observation_points.push_back(Vecd(DL, 0.2, 0.5 * DW));
+    observation_points.push_back(Vecd(DL, 0.24, 0.5 * DW));
+    observation_points.push_back(Vecd(DL, 0.252, 0.5 * DW));
+    observation_points.push_back(Vecd(DL, 0.266, 0.5 * DW));
+    return observation_points;
 };
-} // namespace SPH
 
 // the main program with commandline options
 int main(int ac, char *av[])
@@ -92,7 +82,7 @@ int main(int ac, char *av[])
     wall_boundary.generateParticles<BaseParticles, Lattice>();
 
     ObserverBody fluid_observer(sph_system, "FluidObserver");
-    fluid_observer.generateParticles<BaseParticles, WaterObserver>();
+    fluid_observer.generateParticles<ObserverParticles>(createObservationPoints());
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -128,8 +118,8 @@ int main(int ac, char *av[])
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
-    wall_boundary.addBodyStateForRecording<Vec3d>("NormalDirection");
-    BodyStatesRecordingToVtp write_water_block_states(sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_water_block_states(sph_system);
+    write_water_block_states.addToWrite<Vec3d>(wall_boundary, "NormalDirection");
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalMechanicalEnergy>> write_water_mechanical_energy(water_block, gravity);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>> write_recorded_water_pressure("Pressure", fluid_observer_contact);
     //----------------------------------------------------------------------

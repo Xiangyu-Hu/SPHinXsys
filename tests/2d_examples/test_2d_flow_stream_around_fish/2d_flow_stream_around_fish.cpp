@@ -62,7 +62,7 @@ int main(int ac, char *av[])
         using namespace relax_dynamics;
         SimpleDynamics<RandomizeParticlePosition> random_fish_body_particles(fish_body);
         BodyStatesRecordingToVtp write_fish_body(fish_body);
-        ReloadParticleIO write_particle_reload_files({&fish_body});
+        ReloadParticleIO write_particle_reload_files(fish_body);
         RelaxationStepInner relaxation_step_inner(fish_inner);
         //----------------------------------------------------------------------
         //	Particle relaxation starts here.
@@ -122,14 +122,14 @@ int main(int ac, char *av[])
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_f);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
 
-    BodyAlignedBoxByParticle emitter(water_block, makeShared<AlignedBoxShape>(Transform(Vec2d(emitter_translation)), emitter_halfsize));
-    SimpleDynamics<fluid_dynamics::EmitterInflowInjection> emitter_inflow_injection(emitter, inlet_particle_buffer, xAxis);
+    BodyAlignedBoxByParticle emitter(water_block, makeShared<AlignedBoxShape>(xAxis, Transform(Vec2d(emitter_translation)), emitter_halfsize));
+    SimpleDynamics<fluid_dynamics::EmitterInflowInjection> emitter_inflow_injection(emitter, inlet_particle_buffer);
 
-    BodyAlignedBoxByCell emitter_buffer(water_block, makeShared<AlignedBoxShape>(Transform(Vec2d(emitter_buffer_translation)), emitter_buffer_halfsize));
+    BodyAlignedBoxByCell emitter_buffer(water_block, makeShared<AlignedBoxShape>(xAxis, Transform(Vec2d(emitter_buffer_translation)), emitter_buffer_halfsize));
     SimpleDynamics<fluid_dynamics::InflowVelocityCondition<FreeStreamVelocity>> emitter_buffer_inflow_condition(emitter_buffer);
 
-    BodyAlignedBoxByCell disposer(water_block, makeShared<AlignedBoxShape>(Transform(Vec2d(disposer_translation)), disposer_halfsize));
-    SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion> disposer_outflow_deletion(disposer, 0);
+    BodyAlignedBoxByCell disposer(water_block, makeShared<AlignedBoxShape>(xAxis, Transform(Vec2d(disposer_translation)), disposer_halfsize));
+    SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion> disposer_outflow_deletion(disposer);
 
     SimpleDynamics<fluid_dynamics::FreeStreamVelocityCorrection<FreeStreamVelocity>> velocity_boundary_condition_constraint(water_block);
     pressure_relaxation.post_processes_.push_back(&velocity_boundary_condition_constraint);
@@ -144,13 +144,12 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
-    water_block.addBodyStateForRecording<Real>("Pressure");
-    water_block.addBodyStateForRecording<int>("Indicator");
-    fish_body.addBodyStateForRecording<Real>("Density");
-    fish_body.addBodyStateForRecording<int>("MaterialID");
-    fish_body.addBodyStateForRecording<Matd>("ActiveStrain");
-    BodyStatesRecordingToVtp write_real_body_states(sph_system.real_bodies_);
-    RestartIO restart_io(sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_real_body_states(sph_system);
+    write_real_body_states.addToWrite<Real>(water_block, "Pressure");
+    write_real_body_states.addToWrite<int>(water_block, "Indicator");
+    write_real_body_states.addToWrite<int>(fish_body, "MaterialID");
+    write_real_body_states.addToWrite<Matd>(fish_body, "ActiveStrain");
+    RestartIO restart_io(sph_system);
     ReducedQuantityRecording<QuantitySummation<Vecd>> write_total_viscous_force_from_fluid(fish_body, "ViscousForceFromFluid");
     ReducedQuantityRecording<QuantitySummation<Vecd>> write_total_pressure_force_from_fluid(fish_body, "PressureForceFromFluid");
     //----------------------------------------------------------------------

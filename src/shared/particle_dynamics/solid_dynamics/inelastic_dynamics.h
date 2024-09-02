@@ -64,15 +64,9 @@ class DecomposedPlasticIntegration1stHalf
             Vecd e_ij_difference = pair_inverse_F * pair_distance / r_ij - e_ij;
             Real e_ij_difference_norm = e_ij_difference.norm();
 
-            Real limiter = 0.0;
-            if (e_ij_difference_norm > 0.05)
-            {
-                limiter = SMIN(e_ij_difference_norm - 0.05, 1.0);
-            }
+            Real limiter = SMIN(10.0 * SMAX(e_ij_difference_norm - 0.05, 0.0), 1.0);
 
-            Real weight = inner_neighborhood.W_ij_[n] * inv_W0_;
-            Vecd shear_force_ij = plastic_solid_.ShearModulus() * pair_scaling *
-                                  (e_ij + 8.0 * limiter * weight * Dimensions * e_ij_difference);
+            Vecd shear_force_ij = plastic_solid_.ShearModulus() * pair_scaling * (e_ij + limiter * e_ij_difference);
             force += mass_[index_i] * ((stress_on_particle_[index_i] + stress_on_particle_[index_j]) * e_ij + shear_force_ij) *
                      inner_neighborhood.dW_ij_[n] * Vol_[index_j] * inv_rho0_;
         }
@@ -82,8 +76,7 @@ class DecomposedPlasticIntegration1stHalf
 
   protected:
     PlasticSolid &plastic_solid_;
-    StdLargeVec<Matd> scaling_matrix_, inverse_F_;
-    Real inv_W0_ = 1.0 / sph_body_.sph_adaptation_->getKernel()->W0(ZeroVecd);
+    StdLargeVec<Matd> &scaling_matrix_, &inverse_F_;
 };
 } // namespace solid_dynamics
 } // namespace SPH
