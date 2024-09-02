@@ -33,6 +33,7 @@
 
 #include "mesh_local_dynamics.h"
 #include "mesh_with_data_packages.hpp"
+#include "mesh_iterators.h"
 
 #include <functional>
 
@@ -50,11 +51,23 @@ class BaseMeshDynamics
 {
   public:
     BaseMeshDynamics(MeshWithGridDataPackages<4> &mesh_data)
-        : mesh_data_(mesh_data){};
+        : mesh_data_(mesh_data),
+          all_cells_(mesh_data.AllCells()){};
     virtual ~BaseMeshDynamics(){};
 
   protected:
     MeshWithGridDataPackages<4> &mesh_data_;
+    Arrayi all_cells_;
+
+    template <typename FunctionOnData>
+    void grid_parallel_for(const FunctionOnData &function)
+    {
+        mesh_parallel_for(MeshRange(Arrayi::Zero(), all_cells_),
+                          [&](Arrayi cell_index)
+                          {
+                              function(cell_index);
+                          });
+    }
 };
 
 /**
@@ -73,7 +86,7 @@ class MeshAllDynamics : public LocalDynamicsType, public BaseMeshDynamics
 
     void exec()
     {
-        mesh_data_.grid_parallel_for(
+        grid_parallel_for(
             [&](Arrayi cell_index)
             {
               this->update(cell_index);

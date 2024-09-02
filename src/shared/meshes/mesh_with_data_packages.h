@@ -202,15 +202,6 @@ class MeshWithGridDataPackages : public Mesh
     /** void (non_value_returning) function iterate on all data points by value. */
     template <typename FunctionOnData>
     void for_each_cell_data(const FunctionOnData &function);
-    template <typename FunctionOnData>
-    void grid_parallel_for(const FunctionOnData &function)
-    {
-        mesh_parallel_for(MeshRange(Arrayi::Zero(), all_cells_),
-                          [&](Arrayi cell_index)
-                          {
-                              function(cell_index);
-                          });
-    }
     void resizeMeshVariableData()
     {
         resize_mesh_variable_data_(all_mesh_variables_, num_grid_pkgs_);
