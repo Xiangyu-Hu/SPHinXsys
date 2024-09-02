@@ -18,23 +18,20 @@ using namespace SPH;
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real DH = 2.0;                         /**< Channel height. */
+Real DH = 0.0635;                         /**< Channel height. */
 Real num_fluid_cross_section = 20.0;
-
-Real central_angel = 60.0 * 2.0 * Pi / 360.0; 
-Real a = sin(central_angel);
-Real b = cos(central_angel);
-
+Real central_angel = 43.0 * 2.0 * Pi / 360.0; 
 Real extend_in = 0.0 ;
 Real extend_out = 0.0 ;
-Real DL1 = 4.0 + extend_in;
-Real DL2 = 4.0 + extend_out;
-Real R1 = 18.0;
-Real R2 = R1 + DH;
-Real DL_domain = DL1+R1+DH;
-Real DH_domain = DH+R1+DL2;
-Vec2d circle_center(DL1, R2);
+Real DL1 = 0.15 + extend_in;
+Real DL2 = 0.15 + extend_out;
+Real R_average = 6.350;
 
+Real R1 = R_average - DH / 2.0;
+Real R2 = R_average + DH / 2.0;;
+Vec2d circle_center(DL1, R2);
+Real a = sin(central_angel);
+Real b = cos(central_angel);
 Vec2d point_N(R2 * a + DL1, R2 - R2 * b);
 Vec2d point_M(R1 * a + DL1, R2 - R1 * b);
 Vec2d vec_MN = point_N - point_M;
@@ -42,6 +39,9 @@ Vec2d vec_MN_vertical (-1.0*vec_MN[1], vec_MN[0]);
 Vec2d unit_vec_MN_vertical = vec_MN_vertical.normalized();
 Vec2d point_P = point_N + DL2 * unit_vec_MN_vertical;
 Vec2d point_Q = point_M + DL2 * unit_vec_MN_vertical;
+
+Real DL_domain = point_P[0];
+Real DH_domain = point_Q[1];
 //----------------------------------------------------------------------
 //	Unique parameters for turbulence. 
 //----------------------------------------------------------------------
@@ -52,11 +52,14 @@ Real relaxation_rate_turbulent_inlet = 0.8;
 //** Tag for AMRD *
 int is_AMRD = 0 ;
 //** Weight for correcting the velocity  gradient in the sub near wall region  *
-Real weight_vel_grad_sub_nearwall_ = 0.1;
+Real weight_vel_grad_sub_nearwall = 0.1;
+//** Empirical parameter for initial stability*
+Real turbulent_module_activate_time = 2.5;  
 //** Intial values for K, Epsilon and Mu_t *
 StdVec<Real> initial_turbu_values = { 0.000180001 ,3.326679e-5 ,1.0e-9 };  
 
-Real y_p_constant = 0.05;
+Real y_p_constant = DH / 2.0 / num_fluid_cross_section; //** For the first try *
+//Real y_p_constant = 0.05;
 Real resolution_ref = (DH - 2.0 * y_p_constant) / (num_fluid_cross_section - 1.0); /**< Initial reference particle spacing. */
 Real offset_distance = y_p_constant - resolution_ref / 2.0; //** Basically offset distance is large than or equal to 0 *
 
@@ -110,7 +113,7 @@ Real outlet_buffer_height = 1.5 * DH ;
 //Vec2d outlet_buffer_center_translation = Vec2d(DL_domain - 0.5 * DH , DH_domain- 0.5 * outlet_buffer_length) ;
 
 Real outlet_disposer_rotation_angel = central_angel ; //** By default, counter-clockwise is positive *
-Vec2d outlet_buffer_center_translation = (point_Q + point_P) / 2.0 + unit_vec_MN_vertical * outlet_buffer_length / 2.0;
+Vec2d outlet_buffer_center_translation = (point_Q + point_P) / 2.0 - unit_vec_MN_vertical * outlet_buffer_length / 2.0;
 
 Real outlet_emitter_rotation_angel = Pi + outlet_disposer_rotation_angel; //** By default, counter-clockwise is positive *
 
@@ -152,33 +155,33 @@ std::vector<Vecd> createWaterBlockShape()
     water_block_shape.push_back(Vecd(DL1, DH));
     
 
-    // //** Inner Circle segment *
-    // Real start_x = DL1;
-    // for (int k = 1; k <= num_inner_arc_points; ++k)
-    // {
-    //     Real x_coordinate = start_x + k * arc_sampling_interval; //** clockwise *
-    //     //** Circle center is (DL1, R2), radius is R1. Equation is (x-DL1)^2+(y-R2)^2=R1^2,
-    //     //** Considring the coordinate, y= -sqr(R1^2-(x-DH1)^2)+R2 * 
-    //     Real y_coordinate = -sqrt( R1*R1 - (x_coordinate-DL1)*(x_coordinate-DL1) ) + R2;
-    //     water_block_shape.push_back(Vecd(x_coordinate, y_coordinate));
-    // }
+    //** Inner Circle segment *
+    Real start_x = DL1;
+    for (int k = 1; k <= num_inner_arc_points; ++k)
+    {
+        Real x_coordinate = start_x + k * arc_sampling_interval; //** clockwise *
+        //** Circle center is (DL1, R2), radius is R1. Equation is (x-DL1)^2+(y-R2)^2=R1^2,
+        //** Considring the coordinate, y= -sqr(R1^2-(x-DH1)^2)+R2 * 
+        Real y_coordinate = -sqrt( R1*R1 - (x_coordinate-DL1)*(x_coordinate-DL1) ) + R2;
+        water_block_shape.push_back(Vecd(x_coordinate, y_coordinate));
+    }
 
-    // //** 4 points for outlet tube *
-    // water_block_shape.push_back(Vecd(DL1 + R1, R2));
-    // water_block_shape.push_back(Vecd(DL1 + R1, R2 + DL2 + offset_distance));
-    // water_block_shape.push_back(Vecd(DL1 + R2, R2 + DL2 + offset_distance));
-    // water_block_shape.push_back(Vecd(DL1 + R2, R2 ));
+    //** 4 points for outlet tube *
+    water_block_shape.push_back(point_M);
+    water_block_shape.push_back(point_Q + offset_distance * unit_vec_MN_vertical);
+    water_block_shape.push_back(point_P + offset_distance * unit_vec_MN_vertical);
+    water_block_shape.push_back(point_N);
 
-    // //** Outer Circle segment *
-    // start_x = DL1 + R2;
-    // for (int k = 1; k <= num_outer_arc_points; ++k)
-    // {
-    //     Real x_coordinate = start_x - k * arc_sampling_interval; //** clockwise *
-    //     //** Circle center is (DL1, R2), radius is R2. Equation is (x-DL1)^2+(y-R2)^2=R2^2,
-    //     //** Considring the coordinate, y= -sqr(R2^2-(x-DH1)^2)+R2 * 
-    //     Real y_coordinate = -sqrt( R2*R2 - (x_coordinate-DL1)*(x_coordinate-DL1) ) + R2;
-    //     water_block_shape.push_back(Vecd(x_coordinate, y_coordinate));
-    // }
+    //** Outer Circle segment *
+    start_x = point_N[0];
+    for (int k = 1; k <= num_outer_arc_points; ++k)
+    {
+        Real x_coordinate = start_x - k * arc_sampling_interval; //** clockwise *
+        //** Circle center is (DL1, R2), radius is R2. Equation is (x-DL1)^2+(y-R2)^2=R2^2,
+        //** Considring the coordinate, y= -sqr(R2^2-(x-DH1)^2)+R2 * 
+        Real y_coordinate = -sqrt( R2*R2 - (x_coordinate-DL1)*(x_coordinate-DL1) ) + R2;
+        water_block_shape.push_back(Vecd(x_coordinate, y_coordinate));
+    }
 
     //** If return to straight channel, add extra 2 points *
     // water_block_shape.push_back(Vecd(DL_domain + offset_distance, DH));
