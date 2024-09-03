@@ -165,7 +165,6 @@ class DensitySummationCK<Contact<Parameters...>>
                         DensitySummationCK<Contact<Parameters...>> &encloser,
                         size_t contact_index);
         void interaction(size_t index_i, Real dt = 0.0);
-        void update(size_t index_i, Real dt = 0.0);
 
       protected:
         Real contact_inv_rho0_k_;
