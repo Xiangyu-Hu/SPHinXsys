@@ -37,6 +37,8 @@ int main(int ac, char *av[])
         ? wall_boundary.generateParticles<BaseParticles, Reload>( wall_boundary.getName())
         : wall_boundary.generateParticles<BaseParticles, Lattice>();
 
+    ObserverBody observer_center_point(sph_system, "ObserverCenterPoint");
+    observer_center_point.generateParticles<ObserverParticles>(observer_location_center_point);
 
    for(int i = 0; i < num_observer_points; ++i)
    {
@@ -59,6 +61,7 @@ int main(int ac, char *av[])
     InnerRelation water_block_inner(water_block);
     ContactRelation water_wall_contact(water_block, {&wall_boundary});
     ContactRelation fluid_observer_contact(fluid_observer, {&water_block});
+    ContactRelation observer_centerpoint_contact(observer_center_point, {&water_block});
     //----------------------------------------------------------------------
     // Combined relations built from basic relations
     // which is only used for update configuration.
@@ -264,6 +267,7 @@ int main(int ac, char *av[])
     ObservedQuantityRecording<Real> write_recorded_water_mut("TurbulentViscosity", fluid_observer_contact);
     ObservedQuantityRecording<Real> write_recorded_water_epsilon("TurbulentDissipation", fluid_observer_contact);
     body_states_recording.addToWrite<int>(water_block, "BufferParticleIndicator");
+    RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>> write_centerpoint_quantity("TurbulentViscosity", observer_centerpoint_contact);
     /**
      * @brief Setup geometry and initial conditions.
      */
@@ -278,21 +282,25 @@ int main(int ac, char *av[])
     left_emitter_inflow_injection.tag_buffer_particles.exec();
     right_emitter_inflow_injection.tag_buffer_particles.exec();
 
-    /** Output the start states of bodies. */
-    body_states_recording.writeToFile();
     //----------------------------------------------------------------------
     //	Setup computing and initial conditions.
     //----------------------------------------------------------------------
     size_t number_of_iterations = sph_system.RestartStep();
     int screen_output_interval = 100;
+    int observation_sample_interval = screen_output_interval * 2;
     Real end_time = 200.0;   /**< End time. */
-    Real Output_Time = end_time / 10.0; /**< Time stamps for output of body states. */
+    Real Output_Time = end_time / 4.0; /**< Time stamps for output of body states. */
     Real dt = 0.0;          /**< Default acoustic time step sizes. */
     //----------------------------------------------------------------------
     //	Statistics for CPU time
     //----------------------------------------------------------------------
     TickCount t1 = TickCount::now();
     TimeInterval interval;
+    //----------------------------------------------------------------------
+    //	First output before the main loop.
+    //----------------------------------------------------------------------
+    body_states_recording.writeToFile();
+    write_centerpoint_quantity.writeToFile(number_of_iterations);
     //----------------------------------------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------------------------------------
@@ -389,6 +397,10 @@ int main(int ac, char *av[])
                 std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
                           << GlobalStaticVariables::physical_time_
                           << "	Dt = " << Dt << "	dt = " << dt << "\n";
+                if (number_of_iterations % observation_sample_interval == 0 && number_of_iterations != sph_system.RestartStep())
+                {
+                    write_centerpoint_quantity.writeToFile(number_of_iterations);
+                }
             }
             number_of_iterations++;
 
@@ -428,7 +440,7 @@ int main(int ac, char *av[])
         }
         //TickCount t2 = TickCount::now();
         body_states_recording.writeToFile();
-        
+        observer_centerpoint_contact.updateConfiguration();
         num_output_file++;
         //if (num_output_file == 100)
         //    system("pause");
@@ -444,5 +456,14 @@ int main(int ac, char *av[])
 
     get_time_average_cross_section_data.get_time_average_data(end_time * 0.75);
     std::cout << "The time-average data is output " << std::endl;
+
+    if (sph_system.GenerateRegressionData())
+    {
+        write_centerpoint_quantity.generateDataBase(1.0e-3);
+    }
+    else
+    {
+        write_centerpoint_quantity.testResult();
+    }
     return 0;
 }

@@ -99,6 +99,9 @@ StdVec<Vecd> observation_location;
 Vecd pos_observe_start = Vecd(x_observe_start, resolution_ref/2.0 + offset_distance);
 Vecd unit_direction_observe = Vecd(0.0, 1.0);
 Real observer_offset_distance = 2.0 * resolution_ref ;
+
+//** For regression test *
+StdVec<Vecd> observer_location_center_point = {Vecd(0.5 * DL, 0.5 * DH)};
 //----------------------------------------------------------------------
 //	Cases-dependent geometries 
 //----------------------------------------------------------------------
