@@ -52,7 +52,7 @@ class InteractionDynamicsCK<Base>
     /** run the main interaction step between particles. */
     virtual void runMainStep(Real dt) = 0;
 
-    /** run the interactions between particles. */
+    /** run all interactions step. */
     virtual void runInteraction(Real dt)
     {
         for (size_t k = 0; k < this->pre_processes_.size(); ++k)
