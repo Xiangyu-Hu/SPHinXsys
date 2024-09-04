@@ -55,7 +55,7 @@
 namespace SPH
 {
 template <class ExecutionPolicy, class UpdateType>
-class SimpleDynamics : public UpdateType, public BaseDynamics<void>
+class SimpleDynamicsCK : public UpdateType, public BaseDynamics<void>
 {
     using UpdateKernel = typename UpdateType::UpdateKernel;
     using KernelImplementation =
@@ -64,10 +64,10 @@ class SimpleDynamics : public UpdateType, public BaseDynamics<void>
 
   public:
     template <class DynamicsIdentifier, typename... Args>
-    SimpleDynamics(DynamicsIdentifier &identifier, Args &&...args)
+    SimpleDynamicsCK(DynamicsIdentifier &identifier, Args &&...args)
         : UpdateType(identifier, std::forward<Args>(args)...),
           BaseDynamics<void>(), kernel_implementation_(*this){};
-    virtual ~SimpleDynamics(){};
+    virtual ~SimpleDynamicsCK(){};
 
     virtual void exec(Real dt = 0.0) override
     {

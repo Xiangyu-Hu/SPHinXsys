@@ -30,6 +30,7 @@
 #define INTERACTION_DYNAMICS_ALGORITHMS_CK_H
 
 #include "dynamics_algorithms.h"
+#include "local_interaction_dynamics_ck.hpp"
 
 namespace SPH
 {
@@ -130,7 +131,7 @@ class InteractionDynamicsCK<ExecutionPolicy, Base,
   public:
     template <typename... Args>
     InteractionDynamicsCK(Args &&...args)
-        : InteractionType<Inner<ExtensionTypes..., Parameters...>>(std::forward<Args>(args)...),
+        : InteractionType<Inner<Parameters...>>(std::forward<Args>(args)...),
           kernel_implementation_(*this){};
     virtual ~InteractionDynamicsCK(){};
 
@@ -155,13 +156,13 @@ class InteractionDynamicsCK<ExecutionPolicy, Base,
     using InteractKernel = typename LocalDynamicsType::InteractKernel;
     using KernelImplementation =
         Implementation<ExecutionPolicy, LocalDynamicsType, InteractKernel>;
+    UniquePtrsKeeper<KernelImplementation> contact_kernel_implementation_ptrs_;
     StdVec<KernelImplementation *> contact_kernel_implementation_;
 
   public:
     template <typename... Args>
     InteractionDynamicsCK(Args &&...args)
-        : InteractionType<Contact<Parameters...>>(std::forward<Args>(args)...),
-          InteractionDynamicsCK<FirstParameter>()
+        : InteractionType<Contact<Parameters...>>(std::forward<Args>(args)...)
     {
         for (size_t k = 0; k != this->contact_bodies_.size(); ++k)
         {
@@ -231,7 +232,7 @@ class InteractionDynamicsCK<
     : public InteractionDynamicsCK<
           ExecutionPolicy, Base,
           InteractionType<RelationType<WithUpdate, OtherParameters...>>>,
-      public InteractionDynamicsCK<WithUpdate>(),
+      public InteractionDynamicsCK<WithUpdate>,
       public BaseDynamics<void>
 {
     using LocalDynamicsType = InteractionType<RelationType<WithUpdate, OtherParameters...>>;

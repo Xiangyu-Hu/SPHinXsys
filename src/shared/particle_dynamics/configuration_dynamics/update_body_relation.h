@@ -79,13 +79,16 @@ class UpdateRelation<ExecutionPolicy, BodyRelationUpdate<Inner<Parameters...>>>
     typedef BodyRelationUpdate<Inner<Parameters...>> LocalDynamicsType;
     using ComputingKernel = typename LocalDynamicsType::ComputingKernel;
     using KernelImplementation = Implementation<ExecutionPolicy, LocalDynamicsType, ComputingKernel>;
-    KernelImplementation kernel_implementation_;
 
   public:
     template <typename... Args>
     UpdateRelation(Args &&...args);
     virtual ~UpdateRelation(){};
     virtual void exec(Real dt = 0.0) override;
+
+  protected:
+    ExecutionPolicy ex_policy_;
+    KernelImplementation kernel_implementation_;
 };
 
 template <typename... Parameters>

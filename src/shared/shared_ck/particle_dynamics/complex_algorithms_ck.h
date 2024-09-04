@@ -31,6 +31,7 @@
 #define COMPLEX_ALGORITHMS_CK_H
 
 #include "dynamics_algorithms_ck.h"
+#include "interaction_dynamics_algorithms_ck.h"
 
 namespace SPH
 {

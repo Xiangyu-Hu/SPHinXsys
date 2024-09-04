@@ -128,7 +128,7 @@ class DensitySummationCK<Inner<FlowType, Parameters...>>
     virtual ~DensitySummationCK(){};
 
     class InteractKernel
-        : public InteractKernel<Base, Inner<Parameters...>>::InteractKernel
+        : public DensitySummationCK<Base, Inner<Parameters...>>::InteractKernel
     {
       public:
         template <class ExecutionPolicy>

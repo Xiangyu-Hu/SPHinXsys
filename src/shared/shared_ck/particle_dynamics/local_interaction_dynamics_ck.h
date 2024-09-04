@@ -35,6 +35,10 @@
 
 namespace SPH
 {
+class WithUpdate;
+class WithInitialization;
+class OneLevel;
+
 template <typename... T>
 class Interaction;
 
@@ -65,7 +69,7 @@ class Interaction<Inner<Parameters...>> : public LocalDynamics
 };
 
 template <typename... Parameters>
-class InteractKernel<Contact<Parameters...>> : public LocalDynamics
+class Interaction<Contact<Parameters...>> : public LocalDynamics
 {
   public:
     explicit Interaction(ContactRelation &contact_relation);
