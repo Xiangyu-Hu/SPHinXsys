@@ -276,31 +276,32 @@ class InteractionDynamicsCK<
     };
 };
 
-template <class ExecutionPolicy, template <typename...> class LocalInteractionName>
-class InteractionDynamicsCK<ExecutionPolicy, LocalInteractionName<>>
+template <class ExecutionPolicy, template <typename...> class InteractionType>
+class InteractionDynamicsCK<ExecutionPolicy, InteractionType<>>
 {
   public:
     InteractionDynamicsCK(){};
     void runInteractionStep(Real dt = 0.0){};
 };
 
-template <class ExecutionPolicy, template <typename...> class LocalInteractionName,
-          class FirstInteraction, class... OtherInteractions>
-class InteractionDynamicsCK<ExecutionPolicy, LocalInteractionName<FirstInteraction, OtherInteractions...>>
-    : public InteractionDynamicsCK<ExecutionPolicy, LocalInteractionName<FirstInteraction>>
+template <class ExecutionPolicy, template <typename...> class InteractionType,
+          class FirstInteraction, class... Others>
+class InteractionDynamicsCK<ExecutionPolicy, InteractionType<FirstInteraction, Others...>>
+    : public InteractionDynamicsCK<ExecutionPolicy, InteractionType<FirstInteraction>>
 {
   protected:
-    InteractionDynamicsCK<ExecutionPolicy, LocalInteractionName<OtherInteractions...>> other_interactions_;
+    InteractionDynamicsCK<ExecutionPolicy, InteractionType<Others...>> other_interactions_;
 
   public:
     template <class FirstParameterSet, typename... OtherParameterSets>
-    explicit InteractionDynamicsCK(FirstParameterSet &&first_parameter_set, OtherParameterSets &&...other_parameter_sets)
-        : InteractionDynamicsCK<ExecutionPolicy, LocalInteractionName<FirstInteraction>>(first_parameter_set),
+    explicit InteractionDynamicsCK(FirstParameterSet &&first_parameter_set,
+                                   OtherParameterSets &&...other_parameter_sets)
+        : InteractionDynamicsCK<ExecutionPolicy, InteractionType<FirstInteraction>>(first_parameter_set),
           other_interactions_(std::forward<OtherParameterSets>(other_parameter_sets)...){};
 
     virtual void runInteractionStep(Real dt = 0.0) override
     {
-        InteractionDynamicsCK<ExecutionPolicy, LocalInteractionName<FirstInteraction>>::runInteractionStep(dt);
+        InteractionDynamicsCK<ExecutionPolicy, InteractionType<FirstInteraction>>::runInteractionStep(dt);
         other_interactions_.runInteractionStep(dt);
     };
 };
