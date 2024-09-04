@@ -5,37 +5,38 @@
  * @author 	Xiangyu Hu, Chi Zhang and Luhui Han
  */
 
-#include "sphinxsys.h"
-#include "k-epsilon_turbulent_model.cpp"
 #include "bidirectional_buffer.h"
 #include "density_correciton.h"
 #include "density_correciton.hpp"
+#include "k-epsilon_turbulent_model.cpp"
 #include "kernel_summation.h"
 #include "kernel_summation.hpp"
 #include "pressure_boundary.h"
+#include "sphinxsys.h"
 using namespace SPH;
 
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real DH = 0.0635;                         /**< Channel height. */
+Real DH = 0.0635; /**< Channel height. */
 Real num_fluid_cross_section = 20.0;
-Real central_angel = 43.0 * 2.0 * Pi / 360.0; 
-Real extend_in = 0.0 ;
-Real extend_out = 0.0 ;
+Real central_angel = 43.0 * 2.0 * Pi / 360.0;
+Real extend_in = 0.0;
+Real extend_out = 0.0;
 Real DL1 = 0.15 + extend_in;
 Real DL2 = 0.15 + extend_out;
 Real R_average = 6.350;
 
 Real R1 = R_average - DH / 2.0;
-Real R2 = R_average + DH / 2.0;;
+Real R2 = R_average + DH / 2.0;
+;
 Vec2d circle_center(DL1, R2);
 Real a = sin(central_angel);
 Real b = cos(central_angel);
-Vec2d point_N(R2 * a + DL1, R2 - R2 * b);
-Vec2d point_M(R1 * a + DL1, R2 - R1 * b);
+Vec2d point_N(R2 *a + DL1, R2 - R2 * b);
+Vec2d point_M(R1 *a + DL1, R2 - R1 * b);
 Vec2d vec_MN = point_N - point_M;
-Vec2d vec_MN_vertical (-1.0*vec_MN[1], vec_MN[0]);
+Vec2d vec_MN_vertical(-1.0 * vec_MN[1], vec_MN[0]);
 Vec2d unit_vec_MN_vertical = vec_MN_vertical.normalized();
 Vec2d point_P = point_N + DL2 * unit_vec_MN_vertical;
 Vec2d point_Q = point_M + DL2 * unit_vec_MN_vertical;
@@ -43,31 +44,31 @@ Vec2d point_Q = point_M + DL2 * unit_vec_MN_vertical;
 Real DL_domain = point_P[0];
 Real DH_domain = point_Q[1];
 //----------------------------------------------------------------------
-//	Unique parameters for turbulence. 
+//	Unique parameters for turbulence.
 //----------------------------------------------------------------------
 Real characteristic_length = DH; /**<It needs characteristic Length to calculate turbulent length and the inflow turbulent epsilon>*/
 //** For K and Epsilon, type of the turbulent inlet, 0 is freestream, 1 is from interpolation from PY21 *
-int type_turbulent_inlet = 0 ;
+int type_turbulent_inlet = 0;
 Real relaxation_rate_turbulent_inlet = 0.8;
 //** Tag for AMRD *
-int is_AMRD = 0 ;
+int is_AMRD = 0;
 //** Weight for correcting the velocity  gradient in the sub near wall region  *
 Real weight_vel_grad_sub_nearwall = 0.1;
 //** Empirical parameter for initial stability*
-Real turbulent_module_activate_time = 2.5;  
+Real turbulent_module_activate_time = 2.5;
 //** Intial values for K, Epsilon and Mu_t *
-StdVec<Real> initial_turbu_values = { 0.000180001 ,3.326679e-5 ,1.0e-9 };  
+StdVec<Real> initial_turbu_values = {0.000180001, 3.326679e-5, 1.0e-9};
 
 Real y_p_constant = DH / 2.0 / num_fluid_cross_section; //** For the first try *
 //Real y_p_constant = 0.05;
 Real resolution_ref = (DH - 2.0 * y_p_constant) / (num_fluid_cross_section - 1.0); /**< Initial reference particle spacing. */
-Real offset_distance = y_p_constant - resolution_ref / 2.0; //** Basically offset distance is large than or equal to 0 *
+Real offset_distance = y_p_constant - resolution_ref / 2.0;                        //** Basically offset distance is large than or equal to 0 *
 
-Real BW = resolution_ref * 4;         /**< Reference size of the emitter. */
+Real BW = resolution_ref * 4; /**< Reference size of the emitter. */
 Real DL_sponge = resolution_ref * 20;
 Real half_channel_height = DH / 2.0;
 //----------------------------------------------------------------------
-//	Domain bounds of the system. 
+//	Domain bounds of the system.
 //----------------------------------------------------------------------
 BoundingBox system_domain_bounds(Vec2d(-DL_sponge - 2.0 * BW, -BW), Vec2d(DL_domain + 2.0 * BW, DH_domain + 2.0 * BW));
 
@@ -85,15 +86,15 @@ BoundingBox system_domain_bounds(Vec2d(-DL_sponge - 2.0 * BW, -BW), Vec2d(DL_dom
 //** Same parameter as SPH_4 *
 Real U_inlet = 1.0;
 Real Outlet_pressure = 0.0;
-Real U_f = U_inlet; //*Characteristic velocity
+Real U_f = U_inlet;         //*Characteristic velocity
 Real U_max = 1.5 * U_inlet; //** An estimated value, generally 1.5 U_inlet *
 Real c_f = 10.0 * U_max;
-Real rho0_f = 1.0;                                            /**< Density. */
+Real rho0_f = 1.0; /**< Density. */
 Real Re = 40000.0;
 //Real Re = 100.0;
 Real mu_f = rho0_f * U_f * DH / Re;
 
-Real Re_calculated = U_f * DH * rho0_f / mu_f; 
+Real Re_calculated = U_f * DH * rho0_f / mu_f;
 
 Real DH_C = DH - 2.0 * offset_distance;
 
@@ -101,18 +102,18 @@ Real DH_C = DH - 2.0 * offset_distance;
 //Real initial_inlet_pressure = 0.5 * rho0_f * U_inlet ;
 //Real initial_inlet_pressure = 100.0;
 //----------------------------------------------------------------------
-//	The emitter block with offset model. 
+//	The emitter block with offset model.
 //----------------------------------------------------------------------
-Vec2d left_buffer_halfsize = Vec2d(0.5 * BW, 0.5 * DH_C + BW );
+Vec2d left_buffer_halfsize = Vec2d(0.5 * BW, 0.5 * DH_C + BW);
 Vec2d left_buffer_translation = Vec2d(-DL_sponge, 0.0) + left_buffer_halfsize + Vecd(0.0, offset_distance - BW);
 
-Real outlet_buffer_length = BW ;
-Real outlet_buffer_height = 1.5 * DH ;
+Real outlet_buffer_length = BW;
+Real outlet_buffer_height = 1.5 * DH;
 
 //Real outlet_disposer_rotation_angel = 0.5 * Pi ; //** By default, counter-clockwise is positive *
 //Vec2d outlet_buffer_center_translation = Vec2d(DL_domain - 0.5 * DH , DH_domain- 0.5 * outlet_buffer_length) ;
 
-Real outlet_disposer_rotation_angel = central_angel ; //** By default, counter-clockwise is positive *
+Real outlet_disposer_rotation_angel = central_angel; //** By default, counter-clockwise is positive *
 Vec2d outlet_buffer_center_translation = (point_Q + point_P) / 2.0 - unit_vec_MN_vertical * outlet_buffer_length / 2.0;
 
 Real outlet_emitter_rotation_angel = Pi + outlet_disposer_rotation_angel; //** By default, counter-clockwise is positive *
@@ -131,29 +132,28 @@ Vec2d right_buffer_translation = outlet_buffer_center_translation;
 // Observation with offset model.
 //----------------------------------------------------------------------
 Real x_observe_start = 0.99 * DL1;
-int num_observer_points = std::round(DH_C / resolution_ref); //**Evrey particle is regarded as a cell monitor* 
+int num_observer_points = std::round(DH_C / resolution_ref); //**Evrey particle is regarded as a cell monitor*
 Real observe_spacing = DH_C / num_observer_points;
 
 // By kernel weight.
 StdVec<Vecd> observation_location;
-Vecd pos_observe_start = Vecd(x_observe_start, resolution_ref/2.0 + offset_distance);
+Vecd pos_observe_start = Vecd(x_observe_start, resolution_ref / 2.0 + offset_distance);
 Vecd unit_direction_observe = Vecd(0.0, 1.0);
-Real observer_offset_distance = 2.0 * resolution_ref ;
+Real observer_offset_distance = 2.0 * resolution_ref;
 //----------------------------------------------------------------------
-//	Cases-dependent geometries 
+//	Cases-dependent geometries
 //----------------------------------------------------------------------
-Real arc_sampling_interval = 0.01;   //** Specify the arc resolution here *
+Real arc_sampling_interval = 0.01; //** Specify the arc resolution here *
 int num_inner_arc_points = int(R1 * a / arc_sampling_interval);
 int num_outer_arc_points = int(R2 * a / arc_sampling_interval);
 std::vector<Vecd> createWaterBlockShape()
 {
     std::vector<Vecd> water_block_shape;
-    
+
     //** 3 points for inlet tube, totally 5 *
     water_block_shape.push_back(Vecd(-DL_sponge - offset_distance, 0.0));
     water_block_shape.push_back(Vecd(-DL_sponge - offset_distance, DH));
     water_block_shape.push_back(Vecd(DL1, DH));
-    
 
     //** Inner Circle segment *
     Real start_x = DL1;
@@ -161,8 +161,8 @@ std::vector<Vecd> createWaterBlockShape()
     {
         Real x_coordinate = start_x + k * arc_sampling_interval; //** clockwise *
         //** Circle center is (DL1, R2), radius is R1. Equation is (x-DL1)^2+(y-R2)^2=R1^2,
-        //** Considring the coordinate, y= -sqr(R1^2-(x-DH1)^2)+R2 * 
-        Real y_coordinate = -sqrt( R1*R1 - (x_coordinate-DL1)*(x_coordinate-DL1) ) + R2;
+        //** Considring the coordinate, y= -sqr(R1^2-(x-DH1)^2)+R2 *
+        Real y_coordinate = -sqrt(R1 * R1 - (x_coordinate - DL1) * (x_coordinate - DL1)) + R2;
         water_block_shape.push_back(Vecd(x_coordinate, y_coordinate));
     }
 
@@ -178,8 +178,8 @@ std::vector<Vecd> createWaterBlockShape()
     {
         Real x_coordinate = start_x - k * arc_sampling_interval; //** clockwise *
         //** Circle center is (DL1, R2), radius is R2. Equation is (x-DL1)^2+(y-R2)^2=R2^2,
-        //** Considring the coordinate, y= -sqr(R2^2-(x-DH1)^2)+R2 * 
-        Real y_coordinate = -sqrt( R2*R2 - (x_coordinate-DL1)*(x_coordinate-DL1) ) + R2;
+        //** Considring the coordinate, y= -sqr(R2^2-(x-DH1)^2)+R2 *
+        Real y_coordinate = -sqrt(R2 * R2 - (x_coordinate - DL1) * (x_coordinate - DL1)) + R2;
         water_block_shape.push_back(Vecd(x_coordinate, y_coordinate));
     }
 
@@ -189,14 +189,14 @@ std::vector<Vecd> createWaterBlockShape()
 
     //** The left 2 points for inlet tube, totally 5 *
     water_block_shape.push_back(Vecd(DL1, 0.0));
-    water_block_shape.push_back(Vecd(-DL_sponge - offset_distance,  0.0));
-    
+    water_block_shape.push_back(Vecd(-DL_sponge - offset_distance, 0.0));
+
     return water_block_shape;
 }
 class WaterBlock : public ComplexShape
 {
-public:
-    explicit WaterBlock(const std::string& shape_name) : ComplexShape(shape_name)
+  public:
+    explicit WaterBlock(const std::string &shape_name) : ComplexShape(shape_name)
     {
         MultiPolygon computational_domain(createWaterBlockShape());
         add<ExtrudeShape<MultiPolygonShape>>(-offset_distance, computational_domain, "ComputationalDomain");
@@ -206,20 +206,20 @@ public:
 std::vector<Vecd> createOuterWallShape()
 {
     std::vector<Vecd> water_block_shape;
-    
+
     //** 3 points for inlet tube, totally 5 *
     water_block_shape.push_back(Vecd(-DL_sponge - offset_distance - BW, 0.0));
     water_block_shape.push_back(Vecd(-DL_sponge - offset_distance - BW, DH));
     water_block_shape.push_back(Vecd(DL1, DH));
-    
+
     //** Inner Circle segment *
     Real start_x = DL1;
     for (int k = 1; k <= num_inner_arc_points; ++k)
     {
         Real x_coordinate = start_x + k * arc_sampling_interval; //** clockwise *
         //** Circle center is (DL1, R2), radius is R1. Equation is (x-DL1)^2+(y-R2)^2=R1^2,
-        //** Considring the coordinate, y= -sqr(R1^2-(x-DH1)^2)+R2 * 
-        Real y_coordinate = -sqrt( R1*R1 - (x_coordinate-DL1)*(x_coordinate-DL1) ) + R2;
+        //** Considring the coordinate, y= -sqr(R1^2-(x-DH1)^2)+R2 *
+        Real y_coordinate = -sqrt(R1 * R1 - (x_coordinate - DL1) * (x_coordinate - DL1)) + R2;
         water_block_shape.push_back(Vecd(x_coordinate, y_coordinate));
     }
 
@@ -235,8 +235,8 @@ std::vector<Vecd> createOuterWallShape()
     {
         Real x_coordinate = start_x - k * arc_sampling_interval; //** clockwise *
         //** Circle center is (DL1, R2), radius is R2. Equation is (x-DL1)^2+(y-R2)^2=R2^2,
-        //** Considring the coordinate, y= -sqr(R2^2-(x-DH1)^2)+R2 * 
-        Real y_coordinate = -sqrt( R2*R2 - (x_coordinate-DL1)*(x_coordinate-DL1) ) + R2;
+        //** Considring the coordinate, y= -sqr(R2^2-(x-DH1)^2)+R2 *
+        Real y_coordinate = -sqrt(R2 * R2 - (x_coordinate - DL1) * (x_coordinate - DL1)) + R2;
         water_block_shape.push_back(Vecd(x_coordinate, y_coordinate));
     }
 
@@ -246,27 +246,27 @@ std::vector<Vecd> createOuterWallShape()
 
     //** The left 2 points for inlet tube, totally 5 *
     water_block_shape.push_back(Vecd(DL1, 0.0));
-    water_block_shape.push_back(Vecd(-DL_sponge - offset_distance - BW,  0.0));
-    
+    water_block_shape.push_back(Vecd(-DL_sponge - offset_distance - BW, 0.0));
+
     return water_block_shape;
 }
 std::vector<Vecd> createInnerWallShape()
 {
     std::vector<Vecd> water_block_shape;
-    
+
     //** 3 points for inlet tube, totally 5 *
     water_block_shape.push_back(Vecd(-DL_sponge - offset_distance - 2.0 * BW, 0.0));
     water_block_shape.push_back(Vecd(-DL_sponge - offset_distance - 2.0 * BW, DH));
     water_block_shape.push_back(Vecd(DL1, DH));
-    
+
     //** Inner Circle segment *
     Real start_x = DL1;
     for (int k = 1; k <= num_inner_arc_points; ++k)
     {
         Real x_coordinate = start_x + k * arc_sampling_interval; //** clockwise *
         //** Circle center is (DL1, R2), radius is R1. Equation is (x-DL1)^2+(y-R2)^2=R1^2,
-        //** Considring the coordinate, y= -sqr(R1^2-(x-DH1)^2)+R2 * 
-        Real y_coordinate = -sqrt( R1*R1 - (x_coordinate-DL1)*(x_coordinate-DL1) ) + R2;
+        //** Considring the coordinate, y= -sqr(R1^2-(x-DH1)^2)+R2 *
+        Real y_coordinate = -sqrt(R1 * R1 - (x_coordinate - DL1) * (x_coordinate - DL1)) + R2;
         water_block_shape.push_back(Vecd(x_coordinate, y_coordinate));
     }
 
@@ -282,8 +282,8 @@ std::vector<Vecd> createInnerWallShape()
     {
         Real x_coordinate = start_x - k * arc_sampling_interval; //** clockwise *
         //** Circle center is (DL1, R2), radius is R2. Equation is (x-DL1)^2+(y-R2)^2=R2^2,
-        //** Considring the coordinate, y= -sqr(R2^2-(x-DH1)^2)+R2 * 
-        Real y_coordinate = -sqrt( R2*R2 - (x_coordinate-DL1)*(x_coordinate-DL1) ) + R2;
+        //** Considring the coordinate, y= -sqr(R2^2-(x-DH1)^2)+R2 *
+        Real y_coordinate = -sqrt(R2 * R2 - (x_coordinate - DL1) * (x_coordinate - DL1)) + R2;
         water_block_shape.push_back(Vecd(x_coordinate, y_coordinate));
     }
 
@@ -291,11 +291,10 @@ std::vector<Vecd> createInnerWallShape()
     // water_block_shape.push_back(Vecd(DL_domain + offset_distance + 2.0 * BW, DH));
     // water_block_shape.push_back(Vecd(DL_domain + offset_distance + 2.0 * BW, 0.0));
 
-
     //** The left 2 points for inlet tube, totally 5 *
     water_block_shape.push_back(Vecd(DL1, 0.0));
-    water_block_shape.push_back(Vecd(-DL_sponge - offset_distance - 2.0 * BW,  0.0));
-    
+    water_block_shape.push_back(Vecd(-DL_sponge - offset_distance - 2.0 * BW, 0.0));
+
     return water_block_shape;
 }
 
@@ -304,8 +303,8 @@ std::vector<Vecd> createInnerWallShape()
  */
 class WallBoundary : public ComplexShape
 {
-public:
-    explicit WallBoundary(const std::string& shape_name) : ComplexShape(shape_name)
+  public:
+    explicit WallBoundary(const std::string &shape_name) : ComplexShape(shape_name)
     {
         MultiPolygon outer_dummy_boundary(createOuterWallShape());
         add<ExtrudeShape<MultiPolygonShape>>(-offset_distance + BW, outer_dummy_boundary, "OuterDummyBoundary");
@@ -360,7 +359,7 @@ public:
 //         inner_wall_shape1.push_back(Vecd(DL1, 0.0));
 //         inner_wall_shape1.push_back(Vecd(-DL_sponge - 2.0 * BW, 0.0 ));
 //         multi_polygon_.addAPolygon(inner_wall_shape1, ShapeBooleanOps::sub);
-        
+
 //         //** Get the outlet straight channel wall *
 //         std::vector<Vecd> outer_wall_shape2;
 //         outer_wall_shape2.push_back(Vecd(DL1 + R1 - BW     , DH + R1));
@@ -385,16 +384,16 @@ public:
 struct InflowVelocity
 {
     Real u_ref_, t_ref_;
-    AlignedBoxShape& aligned_box_;
+    AlignedBoxShape &aligned_box_;
     Vecd halfsize_;
 
     template <class BoundaryConditionType>
-    InflowVelocity(BoundaryConditionType& boundary_condition)
+    InflowVelocity(BoundaryConditionType &boundary_condition)
         : u_ref_(U_inlet), t_ref_(2.0),
-        aligned_box_(boundary_condition.getAlignedBox()),
-        halfsize_(aligned_box_.HalfSize()) {}
+          aligned_box_(boundary_condition.getAlignedBox()),
+          halfsize_(aligned_box_.HalfSize()) {}
 
-    Vecd operator()(Vecd& position, Vecd& velocity)
+    Vecd operator()(Vecd &position, Vecd &velocity)
     {
         Vecd target_velocity = velocity;
         Real run_time = GlobalStaticVariables::physical_time_;
@@ -405,7 +404,7 @@ struct InflowVelocity
         if (position[1] > half_channel_height)
         {
             std::cout << "Particles out of domain, wrong inlet velocity." << std::endl;
-            std::cout <<position[1]<<std::endl;
+            std::cout << position[1] << std::endl;
             std::cin.get();
         }
         target_velocity[1] = 0.0;
@@ -417,13 +416,13 @@ struct InflowVelocity
 //----------------------------------------------------------------------
 class TimeDependentAcceleration : public Gravity
 {
-    Real  t_ref_, u_ref_, du_ave_dt_;
+    Real t_ref_, u_ref_, du_ave_dt_;
 
-public:
+  public:
     explicit TimeDependentAcceleration(Vecd gravity_vector)
         : Gravity(gravity_vector), t_ref_(2.0), u_ref_(U_inlet), du_ave_dt_(0) {}
 
-    virtual Vecd InducedAcceleration(const Vecd& position) override
+    virtual Vecd InducedAcceleration(const Vecd &position) override
     {
         Real run_time_ = GlobalStaticVariables::physical_time_;
         du_ave_dt_ = 0.5 * u_ref_ * (Pi / t_ref_) * sin(Pi * run_time_ / t_ref_);
@@ -453,12 +452,11 @@ struct LeftInflowPressure
         // Real run_time_ = GlobalStaticVariables::physical_time_;
         // if(run_time_ > 20.0)
         // {
-            return p_;
+        return p_;
         // }
         // else
         // {
         //     return initial_inlet_pressure;
         // }
-        
     }
 };
