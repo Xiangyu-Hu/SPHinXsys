@@ -36,21 +36,10 @@ int main(int ac, char *av[])
         ? wall_boundary.generateParticles<BaseParticles, Reload>(wall_boundary.getName())
         : wall_boundary.generateParticles<BaseParticles, Lattice>();
 
-    for (int i = 0; i < num_observer_points; ++i)
-    {
-        Vecd pos_observer_i = pos_observe_start + i * observe_spacing * unit_direction_observe;
-        if (i == 0)
-        {
-            pos_observer_i -= observer_offset_distance * unit_direction_observe;
-        }
-        if (i == num_observer_points - 1)
-        {
-            pos_observer_i += observer_offset_distance * unit_direction_observe;
-        }
-        observation_location.push_back(pos_observer_i);
-    }
+    getPositionsOfMultipleObserveLines();
+    output_observe_positions();
     ObserverBody fluid_observer(sph_system, "FluidObserver");
-    fluid_observer.generateParticles<ObserverParticles>(observation_location);
+    fluid_observer.generateParticles<ObserverParticles>(observation_locations);
 
     /** topology */
     InnerRelation water_block_inner(water_block);
@@ -130,7 +119,7 @@ int main(int ac, char *av[])
     /** Turbulent standard wall function needs normal vectors of wall. */
     //NearShapeSurface near_surface(water_block, makeShared<WallBoundary>("Wall"));
 
-    InteractionWithUpdate<LinearGradientCorrectionMatrixComplex> corrected_configuration_fluid(ConstructorArgs(water_block_inner, 0.5), water_wall_contact);
+    InteractionWithUpdate<LinearGradientCorrectionMatrixComplex> corrected_configuration_fluid(water_block_inner, water_wall_contact);
 
     InteractionWithUpdate<fluid_dynamics::TurbulentLinearGradientCorrectionMatrixInner> corrected_configuration_fluid_only_inner(water_block_inner);
 

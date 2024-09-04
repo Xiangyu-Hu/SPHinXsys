@@ -90,7 +90,7 @@ Real U_f = U_inlet;         //*Characteristic velocity
 Real U_max = 1.5 * U_inlet; //** An estimated value, generally 1.5 U_inlet *
 Real c_f = 10.0 * U_max;
 Real rho0_f = 1.0; /**< Density. */
-Real Re = 40000.0;
+Real Re = 60000.0;
 //Real Re = 100.0;
 Real mu_f = rho0_f * U_f * DH / Re;
 
@@ -131,15 +131,53 @@ Vec2d right_buffer_translation = outlet_buffer_center_translation;
 //----------------------------------------------------------------------
 // Observation with offset model.
 //----------------------------------------------------------------------
-Real x_observe_start = 0.99 * DL1;
+// ** By kernel weight. *
+int number_observe_line = 4;
+Real observe_angles[4] = {
+    7.0 * (2.0 * Pi / 360.0),
+    14.0 * (2.0 * Pi / 360.0),
+    21.0 * (2.0 * Pi / 360.0),
+    34.0 * (2.0 * Pi / 360.0)};
+Real observer_offset_distance = 2.0 * resolution_ref;
+
 int num_observer_points = std::round(DH_C / resolution_ref); //**Evrey particle is regarded as a cell monitor*
 Real observe_spacing = DH_C / num_observer_points;
 
-// By kernel weight.
-StdVec<Vecd> observation_location;
-Vecd pos_observe_start = Vecd(x_observe_start, resolution_ref / 2.0 + offset_distance);
-Vecd unit_direction_observe = Vecd(0.0, 1.0);
-Real observer_offset_distance = 2.0 * resolution_ref;
+StdVec<Vecd> observation_locations;
+void getPositionsOfMultipleObserveLines()
+{
+    for (int k = 0; k < number_observe_line; ++k)
+    {
+        Real ob_a = sin(observe_angles[k]);
+        Real ob_b = cos(observe_angles[k]);
+        Vec2d ob_point_at_outer_wall(R2 * ob_a + DL1, R2 - R2 * ob_b);
+        Vec2d vec_point_at_outer_wall_to_circle_center = circle_center - ob_point_at_outer_wall;
+        Vec2d unit_direction_observe = vec_point_at_outer_wall_to_circle_center.normalized();
+        Vecd pos_observe_start = ob_point_at_outer_wall + y_p_constant * unit_direction_observe;
+        for (int i = 0; i < num_observer_points; ++i)
+        {
+            Real offset = 0.0;
+            offset = (i == 0 ? -observer_offset_distance : (i == num_observer_points - 1 ? observer_offset_distance : 0.0));
+            Vecd pos_observer_i = pos_observe_start + (i * observe_spacing + offset) * unit_direction_observe;
+            observation_locations.push_back(pos_observer_i);
+        }
+    }
+}
+void output_observe_positions()
+{
+    std::string filename = "../bin/output/observer_positions.dat";
+    std::ofstream outfile(filename);
+    if (!outfile.is_open())
+    {
+        std::cerr << "Error: Unable to open file " << filename << " for writing." << std::endl;
+        return;
+    }
+    for (const Vecd &position : observation_locations)
+    {
+        outfile << position[0] << " " << position[1] << "\n";
+    }
+    outfile.close();
+}
 //----------------------------------------------------------------------
 //	Cases-dependent geometries
 //----------------------------------------------------------------------
