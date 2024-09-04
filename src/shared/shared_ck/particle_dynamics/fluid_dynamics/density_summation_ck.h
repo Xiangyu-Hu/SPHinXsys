@@ -117,7 +117,7 @@ class DensitySummationCK<Base, RelationType<Parameters...>>
 };
 
 template <class FlowType, typename... Parameters>
-class DensitySummationCK<Inner<FlowType, Parameters...>>
+class DensitySummationCK<Inner<WithUpdate, FlowType, Parameters...>>
     : public DensitySummationCK<Base, Inner<Parameters...>>
 {
     using RegularizationKernel =
@@ -133,7 +133,7 @@ class DensitySummationCK<Inner<FlowType, Parameters...>>
       public:
         template <class ExecutionPolicy>
         InteractKernel(const ExecutionPolicy &ex_policy,
-                       DensitySummationCK<Inner<FlowType, Parameters...>> &encloser);
+                       DensitySummationCK<Inner<WithUpdate, FlowType, Parameters...>> &encloser);
         void interact(size_t index_i, Real dt = 0.0);
 
       protected:
@@ -146,7 +146,7 @@ class DensitySummationCK<Inner<FlowType, Parameters...>>
       public:
         template <class ExecutionPolicy>
         UpdateKernel(const ExecutionPolicy &ex_policy,
-                     DensitySummationCK<Inner<FlowType, Parameters...>> &encloser);
+                     DensitySummationCK<Inner<WithUpdate, FlowType, Parameters...>> &encloser);
         void update(size_t index_i, Real dt = 0.0);
 
       protected:
@@ -156,8 +156,8 @@ class DensitySummationCK<Inner<FlowType, Parameters...>>
   protected:
     Regularization<FlowType> regularization_method_;
 };
-using DensitySummationCKInner = DensitySummationCK<Inner<Internal>>;
-using DensitySummationCKInnerFreeSurface = DensitySummationCK<Inner<FreeSurface>>;
+using DensitySummationCKInner = DensitySummationCK<Inner<WithUpdate, Internal>>;
+using DensitySummationCKInnerFreeSurface = DensitySummationCK<Inner<WithUpdate, FreeSurface>>;
 
 template <typename... Parameters>
 class DensitySummationCK<Contact<Parameters...>>
@@ -186,6 +186,9 @@ class DensitySummationCK<Contact<Parameters...>>
     StdVec<Real> contact_inv_rho0_;
     StdVec<DiscreteVariable<Real> *> dv_contact_mass_;
 };
+
+using DensitySummationComplexFreeSurfaceCK = DensitySummationCK<Inner<WithUpdate, FreeSurface>, Contact<>>;
+
 } // namespace fluid_dynamics
 } // namespace SPH
 #endif // DENSITY_SUMMATION_CK_H

@@ -37,21 +37,21 @@ DensitySummationCK<Base, RelationType<Parameters...>>::InteractKernel::
       rho0_(encloser.rho0_), inv_sigma0_(encloser.inv_sigma0_) {}
 //=================================================================================================//
 template <typename RegularizationType, typename... Parameters>
-DensitySummationCK<Inner<RegularizationType, Parameters...>>::
+DensitySummationCK<Inner<WithUpdate, RegularizationType, Parameters...>>::
     DensitySummationCK(InnerRelation &inner_relation)
     : DensitySummationCK<Base, Inner<Parameters...>>(inner_relation),
       regularization_method_(this->particles_) {}
 //=================================================================================================//
 template <typename RegularizationType, typename... Parameters>
 template <class ExecutionPolicy>
-DensitySummationCK<Inner<RegularizationType, Parameters...>>::InteractKernel::
+DensitySummationCK<Inner<WithUpdate, RegularizationType, Parameters...>>::InteractKernel::
     InteractKernel(const ExecutionPolicy &ex_policy,
-                   DensitySummationCK<Inner<RegularizationType, Parameters...>> &encloser)
+                   DensitySummationCK<Inner<WithUpdate, RegularizationType, Parameters...>> &encloser)
     : DensitySummationCK<Base, Inner<Parameters...>>::InteractKernel(ex_policy, encloser),
       W0_(this->kernel_.W(ZeroData<Vecd>::value)) {}
 //=================================================================================================//
 template <typename RegularizationType, typename... Parameters>
-void DensitySummationCK<Inner<RegularizationType, Parameters...>>::
+void DensitySummationCK<Inner<WithUpdate, RegularizationType, Parameters...>>::
     InteractKernel::interact(size_t index_i, Real dt)
 {
     Real sigma = W0_;
@@ -63,14 +63,14 @@ void DensitySummationCK<Inner<RegularizationType, Parameters...>>::
 //=================================================================================================//
 template <typename RegularizationType, typename... Parameters>
 template <class ExecutionPolicy>
-DensitySummationCK<Inner<RegularizationType, Parameters...>>::UpdateKernel::
+DensitySummationCK<Inner<WithUpdate, RegularizationType, Parameters...>>::UpdateKernel::
     UpdateKernel(const ExecutionPolicy &ex_policy,
-                 DensitySummationCK<Inner<RegularizationType, Parameters...>> &encloser)
+                 DensitySummationCK<Inner<WithUpdate, RegularizationType, Parameters...>> &encloser)
     : DensitySummationCK<Base, Inner<Parameters...>>::InteractKernel(ex_policy, encloser),
       regularization_(ex_policy, encloser.regularization_method_, *this) {}
 //=================================================================================================//
 template <typename RegularizationType, typename... Parameters>
-void DensitySummationCK<Inner<RegularizationType, Parameters...>>::
+void DensitySummationCK<Inner<WithUpdate, RegularizationType, Parameters...>>::
     UpdateKernel::update(size_t index_i, Real dt)
 {
     this->rho_[index_i] = regularization_(this->rho_sum_[index_i]);

@@ -69,41 +69,5 @@ class SequencedCombination<AlgorithmType<ExecutionPolicy, LocalDynamicsName<Firs
         other_interactions_.exec(dt);
     };
 };
-
-template <typename... T>
-class ComplexInteraction;
-
-template <class ExecutionPolicy, typename... CommonParameters,
-          template <typename... InteractionTypes> class LocalInteractionName>
-class ComplexInteraction<InteractionDynamicsCK<ExecutionPolicy, LocalInteractionName<>, CommonParameters...>>
-{
-  public:
-    ComplexInteraction(){};
-    void runMainStep(Real dt){};
-};
-
-template <class ExecutionPolicy, typename... CommonParameters,
-          template <typename... InteractionTypes> class LocalInteractionName,
-          class FirstInteraction, class... OtherInteractions>
-class ComplexInteraction<InteractionDynamicsCK<ExecutionPolicy, LocalInteractionName<FirstInteraction, OtherInteractions...>, CommonParameters...>>
-    : public InteractionDynamicsCK<ExecutionPolicy, LocalInteractionName<FirstInteraction, CommonParameters...>>
-{
-  protected:
-    ComplexInteraction<InteractionDynamicsCK<ExecutionPolicy, LocalInteractionName<OtherInteractions...>, CommonParameters...>> other_interactions_;
-
-  public:
-    template <class FirstParameterSet, typename... OtherParameterSets>
-    explicit ComplexInteraction(FirstParameterSet &&first_parameter_set, OtherParameterSets &&...other_parameter_sets)
-        : InteractionDynamicsCK<ExecutionPolicy, LocalInteractionName<FirstInteraction, CommonParameters...>>(first_parameter_set),
-          other_interactions_(std::forward<OtherParameterSets>(other_parameter_sets)...){};
-
-    virtual void exec(Real dt = 0.0) override
-    {
-        this->setUpdated(this->identifier_.getSPHBody());
-        this->setupDynamics(dt);
-        InteractionDynamicsCK<ExecutionPolicy, LocalInteractionName<FirstInteraction, CommonParameters...>>::exec(dt);
-        other_interactions_.exec(dt);
-    };
-};
 } // namespace SPH
 #endif // COMPLEX_ALGORITHMS_CK_H

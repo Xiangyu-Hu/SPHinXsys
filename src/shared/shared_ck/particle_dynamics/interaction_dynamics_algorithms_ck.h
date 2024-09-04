@@ -245,7 +245,7 @@ class InteractionDynamicsCK<
     template <typename... Args>
     InteractionDynamicsCK(Args &&...args)
         : InteractionDynamicsCK<
-              ExecutionPolicy, WithUpdate,
+              ExecutionPolicy, Base,
               InteractionType<RelationType<WithUpdate, OtherParameters...>>>(
               std::forward<Args>(args)...),
           InteractionDynamicsCK<WithUpdate>(),
@@ -273,6 +273,35 @@ class InteractionDynamicsCK<
                      this->identifier_.LoopRange(),
                      [=](size_t i)
                      { update_kernel->update(i, dt); });
+    };
+};
+
+template <class ExecutionPolicy, template <typename...> class LocalInteractionName>
+class InteractionDynamicsCK<ExecutionPolicy, LocalInteractionName<>>
+{
+  public:
+    InteractionDynamicsCK(){};
+    void runInteractionStep(Real dt = 0.0){};
+};
+
+template <class ExecutionPolicy, template <typename...> class LocalInteractionName,
+          class FirstInteraction, class... OtherInteractions>
+class InteractionDynamicsCK<ExecutionPolicy, LocalInteractionName<FirstInteraction, OtherInteractions...>>
+    : public InteractionDynamicsCK<ExecutionPolicy, LocalInteractionName<FirstInteraction>>
+{
+  protected:
+    InteractionDynamicsCK<ExecutionPolicy, LocalInteractionName<OtherInteractions...>> other_interactions_;
+
+  public:
+    template <class FirstParameterSet, typename... OtherParameterSets>
+    explicit InteractionDynamicsCK(FirstParameterSet &&first_parameter_set, OtherParameterSets &&...other_parameter_sets)
+        : InteractionDynamicsCK<ExecutionPolicy, LocalInteractionName<FirstInteraction>>(first_parameter_set),
+          other_interactions_(std::forward<OtherParameterSets>(other_parameter_sets)...){};
+
+    virtual void runInteractionStep(Real dt = 0.0) override
+    {
+        InteractionDynamicsCK<ExecutionPolicy, LocalInteractionName<FirstInteraction>>::runInteractionStep(dt);
+        other_interactions_.runInteractionStep(dt);
     };
 };
 } // namespace SPH
