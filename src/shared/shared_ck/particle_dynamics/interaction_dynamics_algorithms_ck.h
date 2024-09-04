@@ -37,7 +37,7 @@ template <typename...>
 class InteractionDynamicsCK;
 
 template <>
-class InteractionDynamicsCK<Base>
+class InteractionDynamicsCK<>
 {
   public:
     InteractionDynamicsCK(){};
@@ -50,15 +50,15 @@ class InteractionDynamicsCK<Base>
     /** post process such as impose constraint */
     StdVec<BaseDynamics<void> *> post_processes_;
     /** run the main interaction step between particles. */
-    virtual void runMainStep(Real dt) = 0;
+    virtual void runInteractionStep(Real dt) = 0;
 
     /** run all interactions step. */
-    virtual void runInteraction(Real dt)
+    virtual void runAllSteps(Real dt)
     {
         for (size_t k = 0; k < this->pre_processes_.size(); ++k)
             this->pre_processes_[k]->exec(dt);
 
-        runMainStep(dt);
+        runInteractionStep(dt);
 
         for (size_t k = 0; k < this->post_processes_.size(); ++k)
             this->post_processes_[k]->exec(dt);
@@ -66,14 +66,14 @@ class InteractionDynamicsCK<Base>
 };
 
 template <>
-class InteractionDynamicsCK<WithUpdate> : public InteractionDynamicsCK<Base>
+class InteractionDynamicsCK<WithUpdate> : public InteractionDynamicsCK<>
 {
   public:
-    InteractionDynamicsCK() : InteractionDynamicsCK<Base>(){};
+    InteractionDynamicsCK() : InteractionDynamicsCK<>(){};
 
-    virtual void runInteraction(Real dt) override
+    virtual void runAllSteps(Real dt) override
     {
-        InteractionDynamicsCK<Base>::runInteraction(dt);
+        InteractionDynamicsCK<>::runAllSteps(dt);
         runUpdateStep(dt);
     };
 
@@ -82,187 +82,192 @@ class InteractionDynamicsCK<WithUpdate> : public InteractionDynamicsCK<Base>
 };
 
 template <>
-class InteractionDynamicsCK<WithInitialization> : public InteractionDynamicsCK<Base>
+class InteractionDynamicsCK<WithInitialization> : public InteractionDynamicsCK<>
 {
   public:
-    InteractionDynamicsCK() : InteractionDynamicsCK<Base>(){};
+    InteractionDynamicsCK() : InteractionDynamicsCK<>(){};
 
-    virtual void runInteraction(Real dt) override
+    virtual void runAllSteps(Real dt) override
     {
-        runInitialization(dt);
-        InteractionDynamicsCK<Base>::runInteraction(dt);
+        runInitializationStep(dt);
+        InteractionDynamicsCK<>::runAllSteps(dt);
     };
 
   protected:
-    virtual void runInitialization(Real dt) = 0;
+    virtual void runInitializationStep(Real dt) = 0;
 };
 
 template <>
-class InteractionDynamicsCK<OneLevel> : public InteractionDynamicsCK<Base>
+class InteractionDynamicsCK<OneLevel> : public InteractionDynamicsCK<>
 {
   public:
-    InteractionDynamicsCK() : InteractionDynamicsCK<Base>(){};
+    InteractionDynamicsCK() : InteractionDynamicsCK<>(){};
 
-    virtual void runInteraction(Real dt) override
+    virtual void runAllSteps(Real dt) override
     {
-        runInitialization(dt);
-        InteractionDynamicsCK<Base>::runInteraction(dt);
+        runInitializationStep(dt);
+        InteractionDynamicsCK<>::runAllSteps(dt);
         runUpdateStep(dt);
     };
 
   protected:
+    virtual void runInitializationStep(Real dt) = 0;
     virtual void runUpdateStep(Real dt) = 0;
-    virtual void runInitialization(Real dt) = 0;
 };
 
-template <class ExecutionPolicy, class InteractionType,
-          template <typename...> class InteractionName, typename... Parameters>
-class InteractionDynamicsCK<ExecutionPolicy, InteractionType,
-                            InteractionName<Inner<Parameters...>>>
-    : public InteractionName<Inner<Parameters...>>,
-      public InteractionDynamicsCK<InteractionType>
+template <class ExecutionPolicy,
+          template <typename...> class InteractionType, typename... Parameters>
+class InteractionDynamicsCK<ExecutionPolicy, Base,
+                            InteractionType<Inner<Parameters...>>>
+    : public InteractionType<Inner<Parameters...>>
 {
-
-    using LocalDynamicsType = InteractionName<Inner<Parameters...>>;
-    using ComputingKernel = typename LocalDynamicsType::ComputingKernel;
-    using KernelImplementation = Implementation<LocalDynamicsType, ExecutionPolicy>;
+    using LocalDynamicsType = InteractionType<Inner<Parameters...>>;
+    using InteractionKernel = typename LocalDynamicsType::InteractionKernel;
+    using KernelImplementation =
+        Implementation<ExecutionPolicy, LocalDynamicsType, InteractionKernel>;
+    KernelImplementation kernel_implementation_;
 
   public:
     template <typename... Args>
-    InteractionDynamicsCK(Args &&...args)
-        : InteractionName<Inner<Parameters...>>(std::forward<Args>(args)...),
-          InteractionDynamicsCK<InteractionType>(),
-          ex_policy_(ExecutionPolicy{}), kernel_implementation_(*this){};
+    InteractionDynamicsCK(Args &&... args)
+        : InteractionType<Inner<ExtensionTypes..., Parameters...>>(std::forward<Args>(args)...),
+          kernel_implementation_(*this){};
     virtual ~InteractionDynamicsCK(){};
 
   protected:
-    ExecutionPolicy ex_policy_;
-    KernelImplementation kernel_implementation_;
-
-    ComputingKernel *getFirstComputingKernel()
+    void runInteraction(Real dt)
     {
-        return kernel_implementation_->getComputingKernel();
-    };
-
-    virtual void runMainStep(Real dt) override
-    {
-        ComputingKernel *computing_kernel = kernel_implementation_.getComputingKernel();
-        particle_for(ex_policy_,
+        InteractionKernel *interaction_kernel = kernel_implementation_.getComputingKernel();
+        particle_for(ExecutionPolicy{},
                      this->identifier_.LoopRange(),
-                     [=](size_t i)
-                     { computing_kernel->interaction(i, dt); });
+                     [=](size_t i) { (*interaction_kernel)(i, dt); });
     };
 };
 
-template <class ExecutionPolicy, class InteractionType,
-          template <typename...> class InteractionName, typename... Parameters>
-class InteractionDynamicsCK<ExecutionPolicy, InteractionType,
-                            InteractionName<Contact<Parameters...>>>
-    : public InteractionName<Contact<Parameters...>>,
-      public InteractionDynamicsCK<InteractionType>
+template <class ExecutionPolicy,
+          template <typename...> class InteractionType, typename... Parameters>
+class InteractionDynamicsCK<ExecutionPolicy, Base,
+                            InteractionType<Contact<Parameters...>>>
+    : public InteractionType<Contact<Parameters...>>
 {
-
-    using LocalDynamicsType = InteractionName<Contact<Parameters...>>;
-    using ComputingKernel = typename LocalDynamicsType::ComputingKernel;
-    using KernelImplementation = Implementation<LocalDynamicsType, ExecutionPolicy>;
+    using LocalDynamicsType = InteractionType<Contact<Parameters...>>;
+    using InteractionKernel = typename LocalDynamicsType::InteractionKernel;
+    using KernelImplementation =
+        Implementation<ExecutionPolicy, LocalDynamicsType, InteractionKernel>;
+    StdVec<KernelImplementation *> contact_kernel_implementation_;
 
   public:
     template <typename... Args>
-    InteractionDynamicsCK(Args &&...args)
-        : InteractionName<Contact<Parameters...>>(std::forward<Args>(args)...),
-          InteractionDynamicsCK<InteractionType>(),
-          ex_policy_(ExecutionPolicy{})
+    InteractionDynamicsCK(Args &&... args)
+        : InteractionType<Contact<Parameters...>>(std::forward<Args>(args)...),
+          InteractionDynamicsCK<FirstParameter>()
     {
         for (size_t k = 0; k != this->contact_bodies_.size(); ++k)
         {
             contact_kernel_implementation_.push_back(
-                contact_kernel_implementation_ptrs_.template createPtr<KernelImplementation>(*this));
+                contact_kernel_implementation_ptrs_
+                    .template createPtr<KernelImplementation>(*this));
         }
     };
     virtual ~InteractionDynamicsCK(){};
 
   protected:
-    ExecutionPolicy ex_policy_;
-    StdVec<KernelImplementation *> contact_kernel_implementation_;
-    ComputingKernel *getFirstComputingKernel()
-    {
-        return contact_kernel_implementation_[0]->getComputingKernel(0);
-    };
-
-    virtual void runMainStep(Real dt) override
+    void runInteraction(Real dt)
     {
         for (size_t k = 0; k != this->contact_bodies_.size(); ++k)
         {
-            ComputingKernel *computing_kernel = contact_kernel_implementation_[k]->getComputingKernel(k);
+            InteractionKernel *interaction_kernel =
+                contact_kernel_implementation_[k]->getComputingKernel(k);
 
-            particle_for(ex_policy_,
+            particle_for(ExecutionPolicy{},
                          this->identifier_.LoopRange(),
-                         [=](size_t i)
-                         { computing_kernel->interaction(i, dt); });
+                         [=](size_t i) { (*interaction_kernel)(i, dt); });
         }
     };
 };
 
 template <class ExecutionPolicy,
-          template <typename...> class InteractionName,
+          template <typename...> class InteractionType,
           template <typename...> class RelationType,
           typename... Parameters>
 class InteractionDynamicsCK<ExecutionPolicy,
-                            InteractionName<RelationType<Parameters...>>>
+                            InteractionType<RelationType<Parameters...>>>
     : public InteractionDynamicsCK<ExecutionPolicy, Base,
-                                   InteractionName<RelationType<Parameters...>>>,
+                                   InteractionType<RelationType<Parameters...>>>,
+      public InteractionDynamicsCK<>,
       public BaseDynamics<void>
 {
   public:
     template <typename... Args>
-    InteractionDynamicsCK(Args &&...args)
-        : InteractionDynamicsCK<ExecutionPolicy, Base,
-                                InteractionName<RelationType<Parameters...>>>(std::forward<Args>(args)...),
-          BaseDynamics<void>() {}
+    InteractionDynamicsCK(Args &&... args)
+        : InteractionDynamicsCK<
+              ExecutionPolicy, Base,
+              InteractionType<RelationType<Parameters...>>>(std::forward<Args>(args)...),
+          InteractionDynamicsCK<>(), BaseDynamics<void>() {}
     virtual ~InteractionDynamicsCK(){};
 
     virtual void exec(Real dt = 0.0) override
     {
         this->setUpdated(this->identifier_.getSPHBody());
         this->setupDynamics(dt);
-        runInteraction(dt);
+        InteractionDynamicsCK<>::runAllSteps(dt);
+    };
+
+    virtual void runInteractionStep(Real dt = 0.0) override
+    {
+        this->runInteraction(dt);
     };
 };
 
 template <class ExecutionPolicy,
-          template <typename...> class InteractionName,
+          template <typename...> class InteractionType,
           template <typename...> class RelationType,
           typename... OtherParameters>
-class InteractionDynamicsCK<ExecutionPolicy,
-                            InteractionName<RelationType<WithUpdate, OtherParameters...>>>
-    : public InteractionDynamicsCK<ExecutionPolicy, WithUpdate,
-                                   InteractionName<RelationType<WithUpdate, OtherParameters...>>>,
+class InteractionDynamicsCK<
+    ExecutionPolicy,
+    InteractionType<RelationType<WithUpdate, OtherParameters...>>>
+    : public InteractionDynamicsCK<
+          ExecutionPolicy, Base,
+          InteractionType<RelationType<WithUpdate, OtherParameters...>>>,
+      public InteractionDynamicsCK<WithUpdate>(),
       public BaseDynamics<void>
 {
+    using LocalDynamicsType = InteractionType<RelationType<WithUpdate, OtherParameters...>>;
+    using UpdateKernel = typename LocalDynamicsType::UpdateKernel;
+    using KernelImplementation =
+        Implementation<ExecutionPolicy, LocalDynamicsType, UpdateKernel>;
+    KernelImplementation kernel_implementation_;
+
   public:
     template <typename... Args>
-    InteractionDynamicsCK(Args &&...args)
+    InteractionDynamicsCK(Args &&... args)
         : InteractionDynamicsCK<
               ExecutionPolicy, WithUpdate,
-              InteractionName<RelationType<WithUpdate, OtherParameters...>>>(std::forward<Args>(args)...),
-          BaseDynamics<void>() {}
+              InteractionType<RelationType<
+                  WithUpdate, OtherParameters...>>>(std::forward<Args>(args)...),
+          InteractionDynamicsCK<WithUpdate>(),
+          BaseDynamics<void>() : kernel_implementation_(*this) {}
     virtual ~InteractionDynamicsCK(){};
 
     virtual void exec(Real dt = 0.0) override
     {
         this->setUpdated(this->identifier_.getSPHBody());
         this->setupDynamics(dt);
-        runInteraction(dt);
+        InteractionDynamicsCK<WithUpdate>::runAllSteps(dt);
     };
 
   protected:
+    virtual void runInteractionStep(Real dt = 0.0) override
+    {
+        this->runInteraction(dt);
+    };
+
     virtual void runUpdateStep(Real dt) override
     {
-        ComputingKernel *computing_kernel = this->getFirstComputingKernel();
-        particle_for(this->ex_policy_,
+        UpdateKernel *update_kernel = kernel_implementation_.getComputingKernel();
+        particle_for(ExecutionPolicy{},
                      this->identifier_.LoopRange(),
-                     [=](size_t i)
-                     { computing_kernel->update(i, dt); });
+                     [=](size_t i) { (*update_kernel)(i, dt); });
     };
 };
 } // namespace SPH

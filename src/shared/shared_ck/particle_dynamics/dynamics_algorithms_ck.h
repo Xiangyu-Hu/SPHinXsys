@@ -54,49 +54,46 @@
 
 namespace SPH
 {
-template <class LocalDynamicsType, class ExecutionPolicy = ParallelPolicy>
-class SimpleDynamicsCK : public LocalDynamicsType, public BaseDynamics<void>
+template <class ExecutionPolicy, class EvolutionType>
+class EvolutionDynamics : public EvolutionType, public BaseDynamics<void>
 {
-    using ComputingKernel = typename LocalDynamicsType::ComputingKernel;
+    using EvolutionKernel = typename EvolutionType::EvolutionKernel;
+    using KernelImplementation =
+        Implementation<ExecutionPolicy, EvolutionType, EvolutionKernel>;
+    KernelImplementation kernel_implementation_;
 
   public:
     template <class DynamicsIdentifier, typename... Args>
-    SimpleDynamicsCK(DynamicsIdentifier &identifier, Args &&...args)
-        : LocalDynamicsType(identifier, std::forward<Args>(args)...),
-          BaseDynamics<void>(), kernel_implementation_(*this)
-    {
-        static_assert(!has_initialize<ComputingKernel>::value &&
-                          !has_interaction<ComputingKernel>::value,
-                      "LocalDynamicsType does not fulfill SimpleDynamics requirements");
-    };
+    SimpleDynamicsCK(DynamicsIdentifier &identifier, Args &&... args)
+        : EvolutionType(identifier, std::forward<Args>(args)...),
+          BaseDynamics<void>(), kernel_implementation_(*this){};
     virtual ~SimpleDynamicsCK(){};
 
     virtual void exec(Real dt = 0.0) override
     {
         this->setUpdated(this->identifier_.getSPHBody());
         this->setupDynamics(dt);
-        ComputingKernel *computing_kernel = kernel_implementation_.getComputingKernel();
+        EvolutionKernel *evolution_kernel = kernel_implementation_.getComputingKernel();
         particle_for(ExecutionPolicy{},
                      this->identifier_.LoopRange(),
-                     [=](size_t i)
-                     { computing_kernel->update(i, dt); });
+                     [=](size_t i) { (*evolution_kernel)(i, dt); });
     };
-
-  protected:
-    Implementation<LocalDynamicsType, ExecutionPolicy> kernel_implementation_;
 };
 
-template <class LocalDynamicsType, class ExecutionPolicy = ParallelPolicy>
-class ReduceDynamicsCK : public LocalDynamicsType,
-                         public BaseDynamics<typename LocalDynamicsType::ReturnType>
+template <class ExecutionPolicy, class ReduceType>
+class ReduceDynamicsCK : public ReduceType,
+                         public BaseDynamics<typename ReduceType::ReturnType>
 {
-    using ComputingKernel = typename LocalDynamicsType::ComputingKernel;
-    using ReturnType = typename LocalDynamicsType::ReturnType;
+    using ReduceKernel = typename ReduceType::ReduceKernel;
+    using ReturnType = typename ReduceType::ReturnType;
+    using KernelImplementation =
+        Implementation<ExecutionPolicy, ReduceType, ReduceKernel>;
+    KernelImplementation kernel_implementation_;
 
   public:
     template <class DynamicsIdentifier, typename... Args>
-    ReduceDynamicsCK(DynamicsIdentifier &identifier, Args &&...args)
-        : LocalDynamicsType(identifier, std::forward<Args>(args)...),
+    ReduceDynamicsCK(DynamicsIdentifier &identifier, Args &&... args)
+        : ReduceType(identifier, std::forward<Args>(args)...),
           BaseDynamics<ReturnType>(), kernel_implementation_(*this){};
     virtual ~ReduceDynamicsCK(){};
 
@@ -106,17 +103,13 @@ class ReduceDynamicsCK : public LocalDynamicsType,
     virtual ReturnType exec(Real dt = 0.0) override
     {
         this->setupDynamics(dt);
-        ComputingKernel *computing_kernel = kernel_implementation_.getComputingKernel();
+        ReduceKernel *reduce_kernel = kernel_implementation_.getComputingKernel();
         ReturnType temp = particle_reduce(
-            ExecutionPolicy(),
+            ExecutionPolicy{},
             this->identifier_.LoopRange(), this->Reference(), this->getOperation(),
-            [=](size_t i) -> ReturnType
-            { return computing_kernel->reduce(i, dt); });
+            [=](size_t i) -> ReturnType { return (*reduce_kernel)(i, dt); });
         return this->outputResult(temp);
     };
-
-  protected:
-    Implementation<LocalDynamicsType, ExecutionPolicy> kernel_implementation_;
 };
 } // namespace SPH
 #endif // DYNAMICS_ALGORITHMS_CK_H

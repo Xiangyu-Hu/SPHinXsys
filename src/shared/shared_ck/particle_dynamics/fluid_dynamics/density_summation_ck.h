@@ -103,7 +103,7 @@ class DensitySummationCK<Base, RelationType<Parameters...>>
         template <class ExecutionPolicy, typename... Args>
         ComputingKernel(const ExecutionPolicy &ex_policy,
                         DensitySummationCK<Base, RelationType<Parameters...>> &encloser,
-                        Args &&...args);
+                        Args &&... args);
         Real InitialDensity() { return rho0_; };
 
       protected:
@@ -139,6 +139,18 @@ class DensitySummationCK<Inner<FlowType, Parameters...>>
 
       protected:
         Real W0_;
+    };
+
+    class UpdateKernel
+        : public DensitySummationCK<Base, Inner<Parameters...>>::ComputingKernel
+    {
+      public:
+        template <class ExecutionPolicy>
+        UpdateKernel(const ExecutionPolicy &ex_policy,
+                     DensitySummationCK<Inner<FlowType, Parameters...>> &encloser);
+        void operator()(size_t index_i, Real dt = 0.0);
+
+      protected:
         RegularizationKernel regularization_;
     };
 

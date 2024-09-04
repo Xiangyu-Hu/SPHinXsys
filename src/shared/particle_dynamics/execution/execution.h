@@ -57,11 +57,10 @@ class Implementation<Base>
     void setUpdated() { is_updated_ = true; };
 };
 
-template <class LocalDynamicsType, class ExecutionPolicy>
-class Implementation<LocalDynamicsType, ExecutionPolicy> : public Implementation<Base>
+template <class ExecutionPolicy, class LocalDynamicsType, class ComputingKernelType>
+class Implementation<ExecutionPolicy, LocalDynamicsType, ComputingKernelType>
+    : public Implementation<Base>
 {
-    using ComputingKernel = typename LocalDynamicsType::ComputingKernel;
-
   public:
     explicit Implementation(LocalDynamicsType &local_dynamics)
         : Implementation<Base>(),
@@ -72,12 +71,12 @@ class Implementation<LocalDynamicsType, ExecutionPolicy> : public Implementation
     }
 
     template <typename... Args>
-    ComputingKernel *getComputingKernel(Args &&...args)
+    ComputingKernelType *getComputingKernel(Args &&... args)
     {
         if (computing_kernel_ == nullptr)
         {
             local_dynamics_.registerComputingKernel(this, std::forward<Args>(args)...);
-            computing_kernel_ = new ComputingKernel(
+            computing_kernel_ = new ComputingKernelType(
                 ExecutionPolicy{}, local_dynamics_, std::forward<Args>(args)...);
             setUpdated();
         }
@@ -91,16 +90,16 @@ class Implementation<LocalDynamicsType, ExecutionPolicy> : public Implementation
     }
 
     template <typename... Args>
-    void overwriteComputingKernel(Args &&...args)
+    void overwriteComputingKernel(Args &&... args)
     {
-        *computing_kernel_ = ComputingKernel(
+        *computing_kernel_ = ComputingKernelType(
             ExecutionPolicy{}, local_dynamics_, std::forward<Args>(args)...);
         setUpdated();
     }
 
   private:
     LocalDynamicsType &local_dynamics_;
-    ComputingKernel *computing_kernel_;
+    ComputingKernelType *computing_kernel_;
 };
 } // namespace execution
 } // namespace SPH

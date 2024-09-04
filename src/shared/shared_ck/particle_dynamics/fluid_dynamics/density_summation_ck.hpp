@@ -27,7 +27,7 @@ template <class ExecutionPolicy, typename... Args>
 DensitySummationCK<Base, RelationType<Parameters...>>::ComputingKernel::
     ComputingKernel(const ExecutionPolicy &ex_policy,
                     DensitySummationCK<Base, RelationType<Parameters...>> &encloser,
-                    Args &&...args)
+                    Args &&... args)
     : Interaction<RelationType<Parameters...>>::
           ComputingKernel(ex_policy, encloser, std::forward<Args>(args)...),
       rho_(encloser.dv_rho_->DelegatedDataField(ex_policy)),
@@ -48,8 +48,7 @@ DensitySummationCK<Inner<RegularizationType, Parameters...>>::ComputingKernel::
     ComputingKernel(const ExecutionPolicy &ex_policy,
                     DensitySummationCK<Inner<RegularizationType, Parameters...>> &encloser)
     : DensitySummationCK<Base, Inner<Parameters...>>::ComputingKernel(ex_policy, encloser),
-      W0_(this->kernel_.W(ZeroData<Vecd>::value)),
-      regularization_(ex_policy, encloser.regularization_method_, *this) {}
+      W0_(this->kernel_.W(ZeroData<Vecd>::value)) {}
 //=================================================================================================//
 template <typename RegularizationType, typename... Parameters>
 void DensitySummationCK<Inner<RegularizationType, Parameters...>>::
@@ -63,8 +62,16 @@ void DensitySummationCK<Inner<RegularizationType, Parameters...>>::
 }
 //=================================================================================================//
 template <typename RegularizationType, typename... Parameters>
+template <class ExecutionPolicy>
+DensitySummationCK<Inner<RegularizationType, Parameters...>>::UpdateKernel::
+    UpdateKernel(const ExecutionPolicy &ex_policy,
+                 DensitySummationCK<Inner<RegularizationType, Parameters...>> &encloser)
+    : DensitySummationCK<Base, Inner<Parameters...>>::ComputingKernel(ex_policy, encloser),
+      regularization_(ex_policy, encloser.regularization_method_, *this) {}
+//=================================================================================================//
+template <typename RegularizationType, typename... Parameters>
 void DensitySummationCK<Inner<RegularizationType, Parameters...>>::
-    ComputingKernel::update(size_t index_i, Real dt)
+    UpdateKernel::operator()(size_t index_i, Real dt)
 {
     this->rho_[index_i] = regularization_(this->rho_sum_[index_i]);
     this->Vol_[index_i] = this->mass_[index_i] / this->rho_[index_i];
