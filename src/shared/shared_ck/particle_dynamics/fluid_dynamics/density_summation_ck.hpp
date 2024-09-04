@@ -24,12 +24,12 @@ DensitySummationCK<Base, RelationType<Parameters...>>::
 //=================================================================================================//
 template <template <typename...> class RelationType, typename... Parameters>
 template <class ExecutionPolicy, typename... Args>
-DensitySummationCK<Base, RelationType<Parameters...>>::ComputingKernel::
-    ComputingKernel(const ExecutionPolicy &ex_policy,
-                    DensitySummationCK<Base, RelationType<Parameters...>> &encloser,
-                    Args &&... args)
+DensitySummationCK<Base, RelationType<Parameters...>>::InteractKernel::
+    InteractKernel(const ExecutionPolicy &ex_policy,
+                   DensitySummationCK<Base, RelationType<Parameters...>> &encloser,
+                   Args &&...args)
     : Interaction<RelationType<Parameters...>>::
-          ComputingKernel(ex_policy, encloser, std::forward<Args>(args)...),
+          InteractKernel(ex_policy, encloser, std::forward<Args>(args)...),
       rho_(encloser.dv_rho_->DelegatedDataField(ex_policy)),
       mass_(encloser.dv_mass_->DelegatedDataField(ex_policy)),
       rho_sum_(encloser.dv_rho_sum_->DelegatedDataField(ex_policy)),
@@ -44,15 +44,15 @@ DensitySummationCK<Inner<RegularizationType, Parameters...>>::
 //=================================================================================================//
 template <typename RegularizationType, typename... Parameters>
 template <class ExecutionPolicy>
-DensitySummationCK<Inner<RegularizationType, Parameters...>>::ComputingKernel::
-    ComputingKernel(const ExecutionPolicy &ex_policy,
-                    DensitySummationCK<Inner<RegularizationType, Parameters...>> &encloser)
-    : DensitySummationCK<Base, Inner<Parameters...>>::ComputingKernel(ex_policy, encloser),
+DensitySummationCK<Inner<RegularizationType, Parameters...>>::InteractKernel::
+    InteractKernel(const ExecutionPolicy &ex_policy,
+                   DensitySummationCK<Inner<RegularizationType, Parameters...>> &encloser)
+    : DensitySummationCK<Base, Inner<Parameters...>>::InteractKernel(ex_policy, encloser),
       W0_(this->kernel_.W(ZeroData<Vecd>::value)) {}
 //=================================================================================================//
 template <typename RegularizationType, typename... Parameters>
 void DensitySummationCK<Inner<RegularizationType, Parameters...>>::
-    ComputingKernel::interaction(size_t index_i, Real dt)
+    InteractKernel::interact(size_t index_i, Real dt)
 {
     Real sigma = W0_;
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
@@ -66,12 +66,12 @@ template <class ExecutionPolicy>
 DensitySummationCK<Inner<RegularizationType, Parameters...>>::UpdateKernel::
     UpdateKernel(const ExecutionPolicy &ex_policy,
                  DensitySummationCK<Inner<RegularizationType, Parameters...>> &encloser)
-    : DensitySummationCK<Base, Inner<Parameters...>>::ComputingKernel(ex_policy, encloser),
+    : DensitySummationCK<Base, Inner<Parameters...>>::InteractKernel(ex_policy, encloser),
       regularization_(ex_policy, encloser.regularization_method_, *this) {}
 //=================================================================================================//
 template <typename RegularizationType, typename... Parameters>
 void DensitySummationCK<Inner<RegularizationType, Parameters...>>::
-    UpdateKernel::operator()(size_t index_i, Real dt)
+    UpdateKernel::update(size_t index_i, Real dt)
 {
     this->rho_[index_i] = regularization_(this->rho_sum_[index_i]);
     this->Vol_[index_i] = this->mass_[index_i] / this->rho_[index_i];
@@ -91,18 +91,18 @@ DensitySummationCK<Contact<Parameters...>>::DensitySummationCK(ContactRelation &
 //=================================================================================================//
 template <typename... Parameters>
 template <class ExecutionPolicy>
-DensitySummationCK<Contact<Parameters...>>::ComputingKernel::
-    ComputingKernel(const ExecutionPolicy &ex_policy,
-                    DensitySummationCK<Contact<Parameters...>> &encloser,
-                    size_t contact_index)
+DensitySummationCK<Contact<Parameters...>>::InteractKernel::
+    InteractKernel(const ExecutionPolicy &ex_policy,
+                   DensitySummationCK<Contact<Parameters...>> &encloser,
+                   size_t contact_index)
     : DensitySummationCK<Base, Contact<Parameters...>>::
-          ComputingKernel(ex_policy, encloser, contact_index),
+          InteractKernel(ex_policy, encloser, contact_index),
       contact_inv_rho0_k_(encloser.contact_inv_rho0_[contact_index]),
       contact_mass_k_(encloser.dv_contact_mass_[contact_index]->DelegatedDataField(ex_policy)) {}
 //=================================================================================================//
 template <typename... Parameters>
-void DensitySummationCK<Contact<Parameters...>>::ComputingKernel::
-    interaction(size_t index_i, Real dt)
+void DensitySummationCK<Contact<Parameters...>>::
+    InteractKernel::interact(size_t index_i, Real dt)
 {
     Real sigma(0);
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)

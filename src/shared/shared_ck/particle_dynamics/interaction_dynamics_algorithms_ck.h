@@ -122,14 +122,14 @@ class InteractionDynamicsCK<ExecutionPolicy, Base,
     : public InteractionType<Inner<Parameters...>>
 {
     using LocalDynamicsType = InteractionType<Inner<Parameters...>>;
-    using InteractionKernel = typename LocalDynamicsType::InteractionKernel;
+    using InteractKernel = typename LocalDynamicsType::InteractKernel;
     using KernelImplementation =
-        Implementation<ExecutionPolicy, LocalDynamicsType, InteractionKernel>;
+        Implementation<ExecutionPolicy, LocalDynamicsType, InteractKernel>;
     KernelImplementation kernel_implementation_;
 
   public:
     template <typename... Args>
-    InteractionDynamicsCK(Args &&... args)
+    InteractionDynamicsCK(Args &&...args)
         : InteractionType<Inner<ExtensionTypes..., Parameters...>>(std::forward<Args>(args)...),
           kernel_implementation_(*this){};
     virtual ~InteractionDynamicsCK(){};
@@ -137,10 +137,11 @@ class InteractionDynamicsCK<ExecutionPolicy, Base,
   protected:
     void runInteraction(Real dt)
     {
-        InteractionKernel *interaction_kernel = kernel_implementation_.getComputingKernel();
+        InteractKernel *interact_kernel = kernel_implementation_.getComputingKernel();
         particle_for(ExecutionPolicy{},
                      this->identifier_.LoopRange(),
-                     [=](size_t i) { (*interaction_kernel)(i, dt); });
+                     [=](size_t i)
+                     { interact_kernel->interact(i, dt); });
     };
 };
 
@@ -151,14 +152,14 @@ class InteractionDynamicsCK<ExecutionPolicy, Base,
     : public InteractionType<Contact<Parameters...>>
 {
     using LocalDynamicsType = InteractionType<Contact<Parameters...>>;
-    using InteractionKernel = typename LocalDynamicsType::InteractionKernel;
+    using InteractKernel = typename LocalDynamicsType::InteractKernel;
     using KernelImplementation =
-        Implementation<ExecutionPolicy, LocalDynamicsType, InteractionKernel>;
+        Implementation<ExecutionPolicy, LocalDynamicsType, InteractKernel>;
     StdVec<KernelImplementation *> contact_kernel_implementation_;
 
   public:
     template <typename... Args>
-    InteractionDynamicsCK(Args &&... args)
+    InteractionDynamicsCK(Args &&...args)
         : InteractionType<Contact<Parameters...>>(std::forward<Args>(args)...),
           InteractionDynamicsCK<FirstParameter>()
     {
@@ -176,12 +177,13 @@ class InteractionDynamicsCK<ExecutionPolicy, Base,
     {
         for (size_t k = 0; k != this->contact_bodies_.size(); ++k)
         {
-            InteractionKernel *interaction_kernel =
+            InteractKernel *interact_kernel =
                 contact_kernel_implementation_[k]->getComputingKernel(k);
 
             particle_for(ExecutionPolicy{},
                          this->identifier_.LoopRange(),
-                         [=](size_t i) { (*interaction_kernel)(i, dt); });
+                         [=](size_t i)
+                         { interact_kernel->interact(i, dt); });
         }
     };
 };
@@ -199,7 +201,7 @@ class InteractionDynamicsCK<ExecutionPolicy,
 {
   public:
     template <typename... Args>
-    InteractionDynamicsCK(Args &&... args)
+    InteractionDynamicsCK(Args &&...args)
         : InteractionDynamicsCK<
               ExecutionPolicy, Base,
               InteractionType<RelationType<Parameters...>>>(std::forward<Args>(args)...),
@@ -240,7 +242,7 @@ class InteractionDynamicsCK<
 
   public:
     template <typename... Args>
-    InteractionDynamicsCK(Args &&... args)
+    InteractionDynamicsCK(Args &&...args)
         : InteractionDynamicsCK<
               ExecutionPolicy, WithUpdate,
               InteractionType<RelationType<WithUpdate, OtherParameters...>>>(
@@ -268,7 +270,8 @@ class InteractionDynamicsCK<
         UpdateKernel *update_kernel = kernel_implementation_.getComputingKernel();
         particle_for(ExecutionPolicy{},
                      this->identifier_.LoopRange(),
-                     [=](size_t i) { (*update_kernel)(i, dt); });
+                     [=](size_t i)
+                     { update_kernel->update(i, dt); });
     };
 };
 } // namespace SPH

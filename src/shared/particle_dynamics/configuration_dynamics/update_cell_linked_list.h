@@ -82,7 +82,7 @@ class UpdateCellLinkedList<ExecutionPolicy, CellLinkedListType>
 
   protected:
     ExecutionPolicy ex_policy_;
-    Implementation<LocalDynamicsType, ExecutionPolicy> kernel_implementation_;
+    Implementation<ExecutionPolicy, LocalDynamicsType, ComputingKernel> kernel_implementation_;
 };
 
 } // namespace SPH

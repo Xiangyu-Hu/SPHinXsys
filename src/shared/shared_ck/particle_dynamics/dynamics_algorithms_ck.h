@@ -54,29 +54,30 @@
 
 namespace SPH
 {
-template <class ExecutionPolicy, class EvolutionType>
-class EvolutionDynamics : public EvolutionType, public BaseDynamics<void>
+template <class ExecutionPolicy, class UpdateType>
+class SimpleDynamics : public UpdateType, public BaseDynamics<void>
 {
-    using EvolutionKernel = typename EvolutionType::EvolutionKernel;
+    using UpdateKernel = typename UpdateType::UpdateKernel;
     using KernelImplementation =
-        Implementation<ExecutionPolicy, EvolutionType, EvolutionKernel>;
+        Implementation<ExecutionPolicy, UpdateType, UpdateKernel>;
     KernelImplementation kernel_implementation_;
 
   public:
     template <class DynamicsIdentifier, typename... Args>
-    EvolutionDynamics(DynamicsIdentifier &identifier, Args &&... args)
-        : EvolutionType(identifier, std::forward<Args>(args)...),
+    SimpleDynamics(DynamicsIdentifier &identifier, Args &&...args)
+        : UpdateType(identifier, std::forward<Args>(args)...),
           BaseDynamics<void>(), kernel_implementation_(*this){};
-    virtual ~EvolutionDynamics(){};
+    virtual ~SimpleDynamics(){};
 
     virtual void exec(Real dt = 0.0) override
     {
         this->setUpdated(this->identifier_.getSPHBody());
         this->setupDynamics(dt);
-        EvolutionKernel *evolution_kernel = kernel_implementation_.getComputingKernel();
+        UpdateKernel *update_kernel = kernel_implementation_.getComputingKernel();
         particle_for(ExecutionPolicy{},
                      this->identifier_.LoopRange(),
-                     [=](size_t i) { (*evolution_kernel)(i, dt); });
+                     [=](size_t i)
+                     { update_kernel->update(i, dt); });
     };
 };
 
@@ -92,7 +93,7 @@ class ReduceDynamicsCK : public ReduceType,
 
   public:
     template <class DynamicsIdentifier, typename... Args>
-    ReduceDynamicsCK(DynamicsIdentifier &identifier, Args &&... args)
+    ReduceDynamicsCK(DynamicsIdentifier &identifier, Args &&...args)
         : ReduceType(identifier, std::forward<Args>(args)...),
           BaseDynamics<ReturnType>(), kernel_implementation_(*this){};
     virtual ~ReduceDynamicsCK(){};
@@ -107,7 +108,8 @@ class ReduceDynamicsCK : public ReduceType,
         ReturnType temp = particle_reduce(
             ExecutionPolicy{},
             this->identifier_.LoopRange(), this->Reference(), this->getOperation(),
-            [=](size_t i) -> ReturnType { return (*reduce_kernel)(i, dt); });
+            [=](size_t i) -> ReturnType
+            { return reduce_kernel->reduce(i, dt); });
         return this->outputResult(temp);
     };
 };

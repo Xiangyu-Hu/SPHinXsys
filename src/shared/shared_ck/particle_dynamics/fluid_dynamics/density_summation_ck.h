@@ -96,14 +96,14 @@ class DensitySummationCK<Base, RelationType<Parameters...>>
     explicit DensitySummationCK(DynamicsIdentifier &identifier);
     virtual ~DensitySummationCK(){};
 
-    class ComputingKernel
-        : public Interaction<RelationType<Parameters...>>::ComputingKernel
+    class InteractKernel
+        : public Interaction<RelationType<Parameters...>>::InteractKernel
     {
       public:
         template <class ExecutionPolicy, typename... Args>
-        ComputingKernel(const ExecutionPolicy &ex_policy,
-                        DensitySummationCK<Base, RelationType<Parameters...>> &encloser,
-                        Args &&... args);
+        InteractKernel(const ExecutionPolicy &ex_policy,
+                       DensitySummationCK<Base, RelationType<Parameters...>> &encloser,
+                       Args &&...args);
         Real InitialDensity() { return rho0_; };
 
       protected:
@@ -127,28 +127,27 @@ class DensitySummationCK<Inner<FlowType, Parameters...>>
     explicit DensitySummationCK(InnerRelation &inner_relation);
     virtual ~DensitySummationCK(){};
 
-    class ComputingKernel
-        : public DensitySummationCK<Base, Inner<Parameters...>>::ComputingKernel
+    class InteractKernel
+        : public InteractKernel<Base, Inner<Parameters...>>::InteractKernel
     {
       public:
         template <class ExecutionPolicy>
-        ComputingKernel(const ExecutionPolicy &ex_policy,
-                        DensitySummationCK<Inner<FlowType, Parameters...>> &encloser);
-        void interaction(size_t index_i, Real dt = 0.0);
-        void update(size_t index_i, Real dt = 0.0);
+        InteractKernel(const ExecutionPolicy &ex_policy,
+                       DensitySummationCK<Inner<FlowType, Parameters...>> &encloser);
+        void interact(size_t index_i, Real dt = 0.0);
 
       protected:
         Real W0_;
     };
 
     class UpdateKernel
-        : public DensitySummationCK<Base, Inner<Parameters...>>::ComputingKernel
+        : public DensitySummationCK<Base, Inner<Parameters...>>::InteractKernel
     {
       public:
         template <class ExecutionPolicy>
         UpdateKernel(const ExecutionPolicy &ex_policy,
                      DensitySummationCK<Inner<FlowType, Parameters...>> &encloser);
-        void operator()(size_t index_i, Real dt = 0.0);
+        void update(size_t index_i, Real dt = 0.0);
 
       protected:
         RegularizationKernel regularization_;
@@ -168,15 +167,15 @@ class DensitySummationCK<Contact<Parameters...>>
     explicit DensitySummationCK(ContactRelation &contact_relation);
     virtual ~DensitySummationCK(){};
 
-    class ComputingKernel
-        : public DensitySummationCK<Base, Contact<Parameters...>>::ComputingKernel
+    class InteractKernel
+        : public DensitySummationCK<Base, Contact<Parameters...>>::InteractKernel
     {
       public:
         template <class ExecutionPolicy>
-        ComputingKernel(const ExecutionPolicy &ex_policy,
-                        DensitySummationCK<Contact<Parameters...>> &encloser,
-                        size_t contact_index);
-        void interaction(size_t index_i, Real dt = 0.0);
+        InteractKernel(const ExecutionPolicy &ex_policy,
+                       DensitySummationCK<Contact<Parameters...>> &encloser,
+                       size_t contact_index);
+        void interact(size_t index_i, Real dt = 0.0);
 
       protected:
         Real contact_inv_rho0_k_;

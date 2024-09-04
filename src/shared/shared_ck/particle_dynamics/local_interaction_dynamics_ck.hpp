@@ -31,9 +31,9 @@ void Interaction<Inner<Parameters...>>::resetComputingKernelUpdated()
 //=================================================================================================//
 template <typename... Parameters>
 template <class ExecutionPolicy>
-Interaction<Inner<Parameters...>>::InteractionKernel::
-    InteractionKernel(const ExecutionPolicy &ex_policy,
-                      Interaction<Inner<Parameters...>> &encloser)
+Interaction<Inner<Parameters...>>::InteractKernel::
+    InteractKernel(const ExecutionPolicy &ex_policy,
+                   Interaction<Inner<Parameters...>> &encloser)
     : NeighborList(ex_policy, encloser.dv_neighbor_index_, encloser.dv_particle_offset_),
       Neighbor<Parameters...>(ex_policy, encloser.sph_adaptation_, encloser.dv_pos_) {}
 //=================================================================================================//
@@ -72,9 +72,9 @@ void Interaction<Contact<Parameters...>>::
 //=================================================================================================//
 template <typename... Parameters>
 template <class ExecutionPolicy>
-Interaction<Contact<Parameters...>>::InteractionKernel::
-    InteractionKernel(const ExecutionPolicy &ex_policy,
-                      Interaction<Contact<Parameters...>> &encloser, UnsignedInt contact_index)
+Interaction<Contact<Parameters...>>::InteractKernel::
+    InteractKernel(const ExecutionPolicy &ex_policy,
+                   Interaction<Contact<Parameters...>> &encloser, UnsignedInt contact_index)
     : NeighborList(ex_policy,
                    encloser.dv_contact_neighbor_index_[contact_index],
                    encloser.dv_contact_particle_offset_[contact_index]),

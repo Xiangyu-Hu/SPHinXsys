@@ -21,7 +21,7 @@ template <typename... Parameters>
 template <class ExecutionPolicy>
 BodyRelationUpdate<Inner<Parameters...>>::ComputingKernel::ComputingKernel(
     const ExecutionPolicy &ex_policy, BodyRelationUpdate<Inner<Parameters...>> &encloser)
-    : Interaction<Inner<Parameters...>>::ComputingKernel(ex_policy, encloser),
+    : Interaction<Inner<Parameters...>>::InteractKernel(ex_policy, encloser),
       neighbor_search_(encloser.cell_linked_list_.createNeighborSearch(ex_policy)) {}
 //=================================================================================================//
 template <typename... Parameters>
@@ -113,7 +113,7 @@ BodyRelationUpdate<Contact<Parameters...>>::
     ComputingKernel::ComputingKernel(const ExecutionPolicy &ex_policy,
                                      BodyRelationUpdate<Contact<Parameters...>> &encloser,
                                      UnsignedInt contact_index)
-    : Interaction<Contact<>>::ComputingKernel(ex_policy, encloser, contact_index),
+    : Interaction<Contact<>>::InteractKernel(ex_policy, encloser, contact_index),
       neighbor_search_(encloser.contact_cell_linked_list_[contact_index]
                            ->createNeighborSearch(ex_policy)) {}
 //=================================================================================================//

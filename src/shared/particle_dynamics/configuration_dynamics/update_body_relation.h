@@ -51,7 +51,7 @@ class BodyRelationUpdate<Inner<Parameters...>>
     virtual ~BodyRelationUpdate(){};
 
     class ComputingKernel
-        : public Interaction<Inner<Parameters...>>::ComputingKernel
+        : public Interaction<Inner<Parameters...>>::InteractKernel
     {
       public:
         template <class ExecutionPolicy>
@@ -78,17 +78,14 @@ class UpdateRelation<ExecutionPolicy, BodyRelationUpdate<Inner<Parameters...>>>
 {
     typedef BodyRelationUpdate<Inner<Parameters...>> LocalDynamicsType;
     using ComputingKernel = typename LocalDynamicsType::ComputingKernel;
-    using KernelImplementation = Implementation<LocalDynamicsType, ExecutionPolicy>;
+    using KernelImplementation = Implementation<ExecutionPolicy, LocalDynamicsType, ComputingKernel>;
+    KernelImplementation kernel_implementation_;
 
   public:
     template <typename... Args>
     UpdateRelation(Args &&...args);
     virtual ~UpdateRelation(){};
     virtual void exec(Real dt = 0.0) override;
-
-  protected:
-    ExecutionPolicy ex_policy_;
-    KernelImplementation kernel_implementation_;
 };
 
 template <typename... Parameters>
@@ -101,7 +98,7 @@ class BodyRelationUpdate<Contact<Parameters...>>
     virtual ~BodyRelationUpdate(){};
 
     class ComputingKernel
-        : public Interaction<Contact<Parameters...>>::ComputingKernel
+        : public Interaction<Contact<Parameters...>>::InteractKernel
     {
       public:
         template <class ExecutionPolicy>
@@ -126,7 +123,7 @@ class UpdateRelation<ExecutionPolicy, BodyRelationUpdate<Contact<Parameters...>>
 {
     typedef BodyRelationUpdate<Contact<Parameters...>> LocalDynamicsType;
     using ComputingKernel = typename LocalDynamicsType::ComputingKernel;
-    using KernelImplementation = Implementation<LocalDynamicsType, ExecutionPolicy>;
+    using KernelImplementation = Implementation<ExecutionPolicy, LocalDynamicsType, ComputingKernel>;
     UniquePtrsKeeper<KernelImplementation> contact_kernel_implementation_ptrs_;
 
   public:

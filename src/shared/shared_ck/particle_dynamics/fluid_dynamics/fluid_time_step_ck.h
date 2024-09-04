@@ -50,11 +50,11 @@ class AdvectionTimeStepCK
     virtual ~AdvectionTimeStepCK(){};
     virtual Real outputResult(Real reduced_value) override;
 
-    class ComputingKernel
+    class ReduceKernel
     {
       public:
         template <class ExecutionPolicy>
-        ComputingKernel(const ExecutionPolicy &ex_policy, AdvectionTimeStepCK &encloser)
+        ReduceKernel(const ExecutionPolicy &ex_policy, AdvectionTimeStepCK &encloser)
             : h_min_(encloser.h_min_),
               mass_(encloser.dv_mass_->DelegatedDataField(ex_policy)),
               vel_(encloser.dv_vel_->DelegatedDataField(ex_policy)),
@@ -94,16 +94,16 @@ class AdvectionViscousTimeStepCK : public AdvectionTimeStepCK
     AdvectionViscousTimeStepCK(SPHBody &sph_body, Real U_ref, Real advectionCFL = 0.25);
     virtual ~AdvectionViscousTimeStepCK(){};
 
-    class ComputingKernel : public AdvectionTimeStepCK::ComputingKernel
+    class ReduceKernel : public AdvectionTimeStepCK::ReduceKernel
     {
       public:
         template <class ExecutionPolicy>
-        ComputingKernel(const ExecutionPolicy &ex_policy, AdvectionViscousTimeStepCK &encloser)
-            : AdvectionTimeStepCK::ComputingKernel(ex_policy, encloser){};
+        ReduceKernel(const ExecutionPolicy &ex_policy, AdvectionViscousTimeStepCK &encloser)
+            : AdvectionTimeStepCK::ReduceKernel(ex_policy, encloser){};
 
         Real reduce(size_t index_i, Real dt = 0.0)
         {
-            return AdvectionTimeStepCK::ComputingKernel::reduce(index_i, dt);
+            return AdvectionTimeStepCK::ReduceKernel::reduce(index_i, dt);
         };
     };
 };
