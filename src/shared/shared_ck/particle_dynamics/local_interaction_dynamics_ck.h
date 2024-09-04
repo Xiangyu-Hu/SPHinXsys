@@ -45,12 +45,12 @@ class Interaction<Inner<Parameters...>> : public LocalDynamics
     explicit Interaction(InnerRelation &inner_relation);
     virtual ~Interaction(){};
 
-    class ComputingKernel : public NeighborList, public Neighbor<Parameters...>
+    class InteractionKernel : public NeighborList, public Neighbor<Parameters...>
     {
       public:
         template <class ExecutionPolicy>
-        ComputingKernel(const ExecutionPolicy &ex_policy,
-                        Interaction<Inner<Parameters...>> &encloser);
+        InteractionKernel(const ExecutionPolicy &ex_policy,
+                          Interaction<Inner<Parameters...>> &encloser);
     };
 
     void registerComputingKernel(Implementation<Base> *implementation);
@@ -65,19 +65,19 @@ class Interaction<Inner<Parameters...>> : public LocalDynamics
 };
 
 template <typename... Parameters>
-class Interaction<Contact<Parameters...>> : public LocalDynamics
+class InteractionKernel<Contact<Parameters...>> : public LocalDynamics
 {
   public:
     explicit Interaction(ContactRelation &contact_relation);
     virtual ~Interaction(){};
 
-    class ComputingKernel : public NeighborList, public Neighbor<Parameters...>
+    class InteractionKernel : public NeighborList, public Neighbor<Parameters...>
     {
       public:
         template <class ExecutionPolicy>
-        ComputingKernel(const ExecutionPolicy &ex_policy,
-                        Interaction<Contact<Parameters...>> &encloser,
-                        UnsignedInt contact_index);
+        InteractionKernel(const ExecutionPolicy &ex_policy,
+                          Interaction<Contact<Parameters...>> &encloser,
+                          UnsignedInt contact_index);
     };
 
     void registerComputingKernel(Implementation<Base> *implementation, UnsignedInt contact_index);

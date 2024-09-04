@@ -64,10 +64,10 @@ class EvolutionDynamics : public EvolutionType, public BaseDynamics<void>
 
   public:
     template <class DynamicsIdentifier, typename... Args>
-    SimpleDynamicsCK(DynamicsIdentifier &identifier, Args &&... args)
+    EvolutionDynamics(DynamicsIdentifier &identifier, Args &&... args)
         : EvolutionType(identifier, std::forward<Args>(args)...),
           BaseDynamics<void>(), kernel_implementation_(*this){};
-    virtual ~SimpleDynamicsCK(){};
+    virtual ~EvolutionDynamics(){};
 
     virtual void exec(Real dt = 0.0) override
     {

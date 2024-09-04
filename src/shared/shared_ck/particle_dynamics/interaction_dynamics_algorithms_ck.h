@@ -49,7 +49,7 @@ class InteractionDynamicsCK<>
     StdVec<BaseDynamics<void> *> pre_processes_;
     /** post process such as impose constraint */
     StdVec<BaseDynamics<void> *> post_processes_;
-    /** run the main interaction step between particles. */
+    /** run the interaction step between particles. */
     virtual void runInteractionStep(Real dt) = 0;
 
     /** run all interactions step. */
@@ -243,10 +243,11 @@ class InteractionDynamicsCK<
     InteractionDynamicsCK(Args &&... args)
         : InteractionDynamicsCK<
               ExecutionPolicy, WithUpdate,
-              InteractionType<RelationType<
-                  WithUpdate, OtherParameters...>>>(std::forward<Args>(args)...),
+              InteractionType<RelationType<WithUpdate, OtherParameters...>>>(
+              std::forward<Args>(args)...),
           InteractionDynamicsCK<WithUpdate>(),
-          BaseDynamics<void>() : kernel_implementation_(*this) {}
+          BaseDynamics<void>(),
+          kernel_implementation_(*this) {}
     virtual ~InteractionDynamicsCK(){};
 
     virtual void exec(Real dt = 0.0) override
