@@ -34,7 +34,7 @@
 #include "base_body.h"
 #include "base_configuration_dynamics.h"
 #include "base_particles.hpp"
-#include "local_interaction_dynamics_ck.hpp"
+#include "interaction_ck.hpp"
 
 namespace SPH
 {
@@ -48,7 +48,7 @@ class BodyRelationUpdate<Inner<Parameters...>>
 
   public:
     explicit BodyRelationUpdate(InnerRelation &inner_relation);
-    virtual ~BodyRelationUpdate(){};
+    virtual ~BodyRelationUpdate() {};
 
     class ComputingKernel
         : public Interaction<Inner<Parameters...>>::InteractKernel
@@ -83,7 +83,7 @@ class UpdateRelation<ExecutionPolicy, BodyRelationUpdate<Inner<Parameters...>>>
   public:
     template <typename... Args>
     UpdateRelation(Args &&...args);
-    virtual ~UpdateRelation(){};
+    virtual ~UpdateRelation() {};
     virtual void exec(Real dt = 0.0) override;
 
   protected:
@@ -98,7 +98,7 @@ class BodyRelationUpdate<Contact<Parameters...>>
 
   public:
     explicit BodyRelationUpdate(ContactRelation &contact_relation);
-    virtual ~BodyRelationUpdate(){};
+    virtual ~BodyRelationUpdate() {};
 
     class ComputingKernel
         : public Interaction<Contact<Parameters...>>::InteractKernel
@@ -132,7 +132,7 @@ class UpdateRelation<ExecutionPolicy, BodyRelationUpdate<Contact<Parameters...>>
   public:
     template <typename... Args>
     UpdateRelation(Args &&...args);
-    virtual ~UpdateRelation(){};
+    virtual ~UpdateRelation() {};
     virtual void exec(Real dt = 0.0) override;
 
   protected:

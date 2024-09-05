@@ -30,8 +30,8 @@
 #ifndef COMPLEX_ALGORITHMS_CK_H
 #define COMPLEX_ALGORITHMS_CK_H
 
-#include "dynamics_algorithms_ck.h"
-#include "interaction_dynamics_algorithms_ck.h"
+#include "base_local_dynamics.h"
+#include "base_particle_dynamics.h"
 
 namespace SPH
 {
@@ -44,8 +44,8 @@ template <class ExecutionPolicy, typename... CommonParameters,
 class SequencedCombination<AlgorithmType<ExecutionPolicy, LocalDynamicsName<>, CommonParameters...>> : public BaseDynamics<void>
 {
   public:
-    SequencedCombination() : BaseDynamics<void>(){};
-    virtual void exec(Real dt = 0.0) override{};
+    SequencedCombination() : BaseDynamics<void>() {};
+    virtual void exec(Real dt = 0.0) override {};
 };
 template <class ExecutionPolicy, typename... CommonParameters,
           template <typename... LocalDynamicsType> class AlgorithmType,

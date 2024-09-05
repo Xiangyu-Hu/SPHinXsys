@@ -21,27 +21,27 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	interaction_dynamics_algorithms_ck.h
+ * @file 	interaction_algorithms_ck.h
  * @brief 	TBD
  * @author	Xiangyu Hu
  */
 
-#ifndef INTERACTION_DYNAMICS_ALGORITHMS_CK_H
-#define INTERACTION_DYNAMICS_ALGORITHMS_CK_H
+#ifndef INTERACTION_ALGORITHMS_CK_H
+#define INTERACTION_ALGORITHMS_CK_H
 
-#include "dynamics_algorithms.h"
-#include "local_interaction_dynamics_ck.hpp"
-
+#include "base_particle_dynamics.h"
+#include "interaction_ck.hpp"
+#include "particle_iterators.h"
 namespace SPH
 {
 template <typename...>
 class InteractionDynamicsCK;
 
 template <>
-class InteractionDynamicsCK<>
+class InteractionDynamicsCK<Base>
 {
   public:
-    InteractionDynamicsCK(){};
+    InteractionDynamicsCK() {};
     void addPreProcess(BaseDynamics<void> *pre_process) { pre_processes_.push_back(pre_process); };
     void addPostProcess(BaseDynamics<void> *post_process) { post_processes_.push_back(post_process); };
 
@@ -52,64 +52,38 @@ class InteractionDynamicsCK<>
     StdVec<BaseDynamics<void> *> post_processes_;
     /** run the interaction step between particles. */
     virtual void runInteractionStep(Real dt) = 0;
-
     /** run all interactions step. */
-    virtual void runAllSteps(Real dt)
-    {
-        for (size_t k = 0; k < this->pre_processes_.size(); ++k)
-            this->pre_processes_[k]->exec(dt);
-
-        runInteractionStep(dt);
-
-        for (size_t k = 0; k < this->post_processes_.size(); ++k)
-            this->post_processes_[k]->exec(dt);
-    };
+    virtual void runAllSteps(Real dt);
 };
 
 template <>
-class InteractionDynamicsCK<WithUpdate> : public InteractionDynamicsCK<>
+class InteractionDynamicsCK<WithUpdate> : public InteractionDynamicsCK<Base>
 {
   public:
-    InteractionDynamicsCK() : InteractionDynamicsCK<>(){};
-
-    virtual void runAllSteps(Real dt) override
-    {
-        InteractionDynamicsCK<>::runAllSteps(dt);
-        runUpdateStep(dt);
-    };
+    InteractionDynamicsCK() : InteractionDynamicsCK<Base>() {};
+    virtual void runAllSteps(Real dt) override;
 
   protected:
     virtual void runUpdateStep(Real dt) = 0;
 };
 
 template <>
-class InteractionDynamicsCK<WithInitialization> : public InteractionDynamicsCK<>
+class InteractionDynamicsCK<WithInitialization> : public InteractionDynamicsCK<Base>
 {
   public:
-    InteractionDynamicsCK() : InteractionDynamicsCK<>(){};
-
-    virtual void runAllSteps(Real dt) override
-    {
-        runInitializationStep(dt);
-        InteractionDynamicsCK<>::runAllSteps(dt);
-    };
+    InteractionDynamicsCK() : InteractionDynamicsCK<Base>() {};
+    virtual void runAllSteps(Real dt) override;
 
   protected:
     virtual void runInitializationStep(Real dt) = 0;
 };
 
 template <>
-class InteractionDynamicsCK<OneLevel> : public InteractionDynamicsCK<>
+class InteractionDynamicsCK<OneLevel> : public InteractionDynamicsCK<Base>
 {
   public:
-    InteractionDynamicsCK() : InteractionDynamicsCK<>(){};
-
-    virtual void runAllSteps(Real dt) override
-    {
-        runInitializationStep(dt);
-        InteractionDynamicsCK<>::runAllSteps(dt);
-        runUpdateStep(dt);
-    };
+    InteractionDynamicsCK() : InteractionDynamicsCK<Base>() {};
+    virtual void runAllSteps(Real dt) override;
 
   protected:
     virtual void runInitializationStep(Real dt) = 0;
@@ -133,7 +107,7 @@ class InteractionDynamicsCK<ExecutionPolicy, Base,
     InteractionDynamicsCK(Args &&...args)
         : InteractionType<Inner<Parameters...>>(std::forward<Args>(args)...),
           kernel_implementation_(*this){};
-    virtual ~InteractionDynamicsCK(){};
+    virtual ~InteractionDynamicsCK() {};
 
   protected:
     void runInteraction(Real dt)
@@ -171,7 +145,7 @@ class InteractionDynamicsCK<ExecutionPolicy, Base,
                     .template createPtr<KernelImplementation>(*this));
         }
     };
-    virtual ~InteractionDynamicsCK(){};
+    virtual ~InteractionDynamicsCK() {};
 
   protected:
     void runInteraction(Real dt)
@@ -197,7 +171,7 @@ class InteractionDynamicsCK<ExecutionPolicy,
                             InteractionType<RelationType<Parameters...>>>
     : public InteractionDynamicsCK<ExecutionPolicy, Base,
                                    InteractionType<RelationType<Parameters...>>>,
-      public InteractionDynamicsCK<>,
+      public InteractionDynamicsCK<Base>,
       public BaseDynamics<void>
 {
   public:
@@ -206,14 +180,14 @@ class InteractionDynamicsCK<ExecutionPolicy,
         : InteractionDynamicsCK<
               ExecutionPolicy, Base,
               InteractionType<RelationType<Parameters...>>>(std::forward<Args>(args)...),
-          InteractionDynamicsCK<>(), BaseDynamics<void>() {}
-    virtual ~InteractionDynamicsCK(){};
+          InteractionDynamicsCK<Base>(), BaseDynamics<void>() {}
+    virtual ~InteractionDynamicsCK() {};
 
     virtual void exec(Real dt = 0.0) override
     {
         this->setUpdated(this->identifier_.getSPHBody());
         this->setupDynamics(dt);
-        InteractionDynamicsCK<>::runAllSteps(dt);
+        InteractionDynamicsCK<Base>::runAllSteps(dt);
     };
 
     virtual void runInteractionStep(Real dt = 0.0) override
@@ -251,7 +225,7 @@ class InteractionDynamicsCK<
           InteractionDynamicsCK<WithUpdate>(),
           BaseDynamics<void>(),
           kernel_implementation_(*this) {}
-    virtual ~InteractionDynamicsCK(){};
+    virtual ~InteractionDynamicsCK() {};
 
     virtual void exec(Real dt = 0.0) override
     {
@@ -280,8 +254,8 @@ template <class ExecutionPolicy, template <typename...> class InteractionType>
 class InteractionDynamicsCK<ExecutionPolicy, InteractionType<>>
 {
   public:
-    InteractionDynamicsCK(){};
-    void runInteractionStep(Real dt = 0.0){};
+    InteractionDynamicsCK() {};
+    void runInteractionStep(Real dt = 0.0) {};
 };
 
 template <class ExecutionPolicy, template <typename...> class InteractionType,
@@ -306,4 +280,4 @@ class InteractionDynamicsCK<ExecutionPolicy, InteractionType<FirstInteraction, O
     };
 };
 } // namespace SPH
-#endif // INTERACTION_DYNAMICS_ALGORITHMS_CK_H
+#endif // INTERACTION_ALGORITHMS_CK_H

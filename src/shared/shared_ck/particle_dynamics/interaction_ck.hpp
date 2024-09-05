@@ -1,7 +1,7 @@
-#ifndef LOCAL_INTERACTION_DYNAMICS_CK_HPP
-#define LOCAL_INTERACTION_DYNAMICS_CK_HPP
+#ifndef INTERACTION_CK_HPP
+#define INTERACTION_CK_HPP
 
-#include "local_interaction_dynamics_ck.h"
+#include "interaction_ck.h"
 
 namespace SPH
 {
@@ -83,4 +83,4 @@ Interaction<Contact<Parameters...>>::InteractKernel::
                               encloser.dv_pos_, encloser.contact_pos_[contact_index]) {}
 //=================================================================================================//
 } // namespace SPH
-#endif // LOCAL_INTERACTION_DYNAMICS_CK_HPP
+#endif // INTERACTION_CK_HPP

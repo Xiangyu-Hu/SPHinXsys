@@ -33,9 +33,9 @@
 
 #include "complex_algorithms_ck.h"
 #include "density_summation_ck.hpp"
-#include "dynamics_algorithms_ck.h"
 #include "fluid_time_step_ck.h"
 #include "force_prior_ck.hpp"
-#include "interaction_dynamics_algorithms_ck.h"
+#include "interaction_algorithms_ck.h"
+#include "simple_algorithms_ck.h"
 
 #endif // ALL_SHARED_PHYSICAL_DYNAMICS_CK_H

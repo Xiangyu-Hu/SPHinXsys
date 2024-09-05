@@ -21,14 +21,14 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file    local_interaction_dynamics_ck.h
+ * @file    interaction_ck.h
  * @brief 	This is for the base classes of local particle dynamics, which describe the
  * 			dynamics of a particle and it neighbors.
  * @author	Chi Zhang, Chenxi Zhao and Xiangyu Hu
  */
 
-#ifndef LOCAL_INTERACTION_DYNAMICS_CK_H
-#define LOCAL_INTERACTION_DYNAMICS_CK_H
+#ifndef INTERACTION_CK_H
+#define INTERACTION_CK_H
 
 #include "base_local_dynamics.h"
 #include "neighborhood_ck.hpp"
@@ -47,7 +47,7 @@ class Interaction<Inner<Parameters...>> : public LocalDynamics
 {
   public:
     explicit Interaction(InnerRelation &inner_relation);
-    virtual ~Interaction(){};
+    virtual ~Interaction() {};
 
     class InteractKernel : public NeighborList, public Neighbor<Parameters...>
     {
@@ -73,7 +73,7 @@ class Interaction<Contact<Parameters...>> : public LocalDynamics
 {
   public:
     explicit Interaction(ContactRelation &contact_relation);
-    virtual ~Interaction(){};
+    virtual ~Interaction() {};
 
     class InteractKernel : public NeighborList, public Neighbor<Parameters...>
     {
@@ -99,4 +99,4 @@ class Interaction<Contact<Parameters...>> : public LocalDynamics
     StdVec<DiscreteVariable<UnsignedInt> *> dv_contact_particle_offset_;
 };
 } // namespace SPH
-#endif // LOCAL_INTERACTION_DYNAMICS_CK_H
+#endif // INTERACTION_CK_H

@@ -33,7 +33,7 @@
 #define DENSITY_SUMMATION_CK_H
 
 #include "base_fluid_dynamics.h"
-#include "local_interaction_dynamics_ck.hpp"
+#include "interaction_ck.hpp"
 
 namespace SPH
 {
@@ -47,7 +47,7 @@ template <>
 class Regularization<Internal>
 {
   public:
-    Regularization(BaseParticles *particles){};
+    Regularization(BaseParticles *particles) {};
 
     class ComputingKernel
     {
@@ -65,7 +65,7 @@ template <>
 class Regularization<FreeSurface>
 {
   public:
-    Regularization(BaseParticles *particles){};
+    Regularization(BaseParticles *particles) {};
 
     class ComputingKernel
     {
@@ -94,7 +94,7 @@ class DensitySummationCK<Base, RelationType<Parameters...>>
   public:
     template <class DynamicsIdentifier>
     explicit DensitySummationCK(DynamicsIdentifier &identifier);
-    virtual ~DensitySummationCK(){};
+    virtual ~DensitySummationCK() {};
 
     class InteractKernel
         : public Interaction<RelationType<Parameters...>>::InteractKernel
@@ -125,7 +125,7 @@ class DensitySummationCK<Inner<WithUpdate, FlowType, Parameters...>>
 
   public:
     explicit DensitySummationCK(InnerRelation &inner_relation);
-    virtual ~DensitySummationCK(){};
+    virtual ~DensitySummationCK() {};
 
     class InteractKernel
         : public DensitySummationCK<Base, Inner<Parameters...>>::InteractKernel
@@ -165,7 +165,7 @@ class DensitySummationCK<Contact<Parameters...>>
 {
   public:
     explicit DensitySummationCK(ContactRelation &contact_relation);
-    virtual ~DensitySummationCK(){};
+    virtual ~DensitySummationCK() {};
 
     class InteractKernel
         : public DensitySummationCK<Base, Contact<Parameters...>>::InteractKernel

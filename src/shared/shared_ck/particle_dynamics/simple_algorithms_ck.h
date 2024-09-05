@@ -21,41 +21,23 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	dynamics_algorithms_ck.h
+ * @file 	simple_algorithms_ck.h
  * @brief 	This is the classes for algorithms particle dynamics .
- * @detail	Generally, there are two types of particle dynamics algorithms.
- *			One leads to the change of particle states, the other not.
- *			There are 5 classes the first type. They are:
- * 			SimpleDynamics is without particle interaction. Particles just update their states;
- *			InteractionDynamicsCK is with particle interaction with its neighbors;
- *			InteractionSplit is InteractionDynamicsCK but using spliting algorithm;
- *			InteractionWithUpdateCK is with particle interaction with its neighbors and then update their states;
- *			Dynamics1Level is the most complex dynamics, has successive three steps: initialization, interaction and update.
- *			In order to avoid misusing of the above algorithms, type traits are used to make sure that the matching between
- *			the algorithm and local dynamics. For example, the LocalDynamics which matches InteractionDynamicsCK must have
- *			the function interaction() but should not have the function update() or initialize().
- *			The existence of the latter suggests that more complex algorithms,
- *			such as InteractionWithUpdateCK or Dynamics1Level should be used.
- *			There are 2 classes for the second type.
- *			ReduceDynamics carries out a reduce operation through the particles.
- *			Average further computes average of a ReduceDynamics for summation.
- *			Each particle dynamics is templated with a LocalDynamics and a DynamicsRange.
- *			The local dynamics defines the behavior of a single particle or with its neighbors,
- *			and is recognized by particle dynamics with the signature functions, like update, initialization and interaction.
- *			DynamicsRange define and range of particles for the dynamics.
- *			The default range is the entire body. Other ranges are BodyPartByParticle and BodyPartByCell.
+ * @detail	TBD
  * @author	Xiangyu Hu
  */
 
-#ifndef DYNAMICS_ALGORITHMS_CK_H
-#define DYNAMICS_ALGORITHMS_CK_H
+#ifndef SIMPLE_ALGORITHMS_CK_H
+#define SIMPLE_ALGORITHMS_CK_H
 
-#include "dynamics_algorithms.h"
+#include "base_local_dynamics.h"
+#include "base_particle_dynamics.h"
+#include "particle_iterators.h"
 
 namespace SPH
 {
 template <class ExecutionPolicy, class UpdateType>
-class SimpleDynamicsCK : public UpdateType, public BaseDynamics<void>
+class StateDynamics : public UpdateType, public BaseDynamics<void>
 {
     using UpdateKernel = typename UpdateType::UpdateKernel;
     using KernelImplementation =
@@ -64,10 +46,10 @@ class SimpleDynamicsCK : public UpdateType, public BaseDynamics<void>
 
   public:
     template <class DynamicsIdentifier, typename... Args>
-    SimpleDynamicsCK(DynamicsIdentifier &identifier, Args &&...args)
+    StateDynamics(DynamicsIdentifier &identifier, Args &&...args)
         : UpdateType(identifier, std::forward<Args>(args)...),
           BaseDynamics<void>(), kernel_implementation_(*this){};
-    virtual ~SimpleDynamicsCK(){};
+    virtual ~StateDynamics() {};
 
     virtual void exec(Real dt = 0.0) override
     {
@@ -96,7 +78,7 @@ class ReduceDynamicsCK : public ReduceType,
     ReduceDynamicsCK(DynamicsIdentifier &identifier, Args &&...args)
         : ReduceType(identifier, std::forward<Args>(args)...),
           BaseDynamics<ReturnType>(), kernel_implementation_(*this){};
-    virtual ~ReduceDynamicsCK(){};
+    virtual ~ReduceDynamicsCK() {};
 
     std::string QuantityName() { return this->quantity_name_; };
     std::string DynamicsIdentifierName() { return this->identifier_.getName(); };
@@ -114,4 +96,4 @@ class ReduceDynamicsCK : public ReduceType,
     };
 };
 } // namespace SPH
-#endif // DYNAMICS_ALGORITHMS_CK_H
+#endif // SIMPLE_ALGORITHMS_CK_H
