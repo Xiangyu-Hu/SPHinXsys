@@ -32,6 +32,7 @@
 #include "base_particle_dynamics.h"
 #include "interaction_ck.hpp"
 #include "particle_iterators.h"
+
 namespace SPH
 {
 template <typename...>
@@ -90,16 +91,13 @@ class InteractionDynamicsCK<OneLevel> : public InteractionDynamicsCK<Base>
     virtual void runUpdateStep(Real dt) = 0;
 };
 
-template <class ExecutionPolicy,
-          template <typename...> class InteractionType, typename... Parameters>
-class InteractionDynamicsCK<ExecutionPolicy, Base,
-                            InteractionType<Inner<Parameters...>>>
+template <class ExecutionPolicy, template <typename...> class InteractionType, typename... Parameters>
+class InteractionDynamicsCK<ExecutionPolicy, Base, InteractionType<Inner<Parameters...>>>
     : public InteractionType<Inner<Parameters...>>
 {
     using LocalDynamicsType = InteractionType<Inner<Parameters...>>;
     using InteractKernel = typename LocalDynamicsType::InteractKernel;
-    using KernelImplementation =
-        Implementation<ExecutionPolicy, LocalDynamicsType, InteractKernel>;
+    using KernelImplementation = Implementation<ExecutionPolicy, LocalDynamicsType, InteractKernel>;
     KernelImplementation kernel_implementation_;
 
   public:
@@ -120,16 +118,13 @@ class InteractionDynamicsCK<ExecutionPolicy, Base,
     };
 };
 
-template <class ExecutionPolicy,
-          template <typename...> class InteractionType, typename... Parameters>
-class InteractionDynamicsCK<ExecutionPolicy, Base,
-                            InteractionType<Contact<Parameters...>>>
+template <class ExecutionPolicy, template <typename...> class InteractionType, typename... Parameters>
+class InteractionDynamicsCK<ExecutionPolicy, Base, InteractionType<Contact<Parameters...>>>
     : public InteractionType<Contact<Parameters...>>
 {
     using LocalDynamicsType = InteractionType<Contact<Parameters...>>;
     using InteractKernel = typename LocalDynamicsType::InteractKernel;
-    using KernelImplementation =
-        Implementation<ExecutionPolicy, LocalDynamicsType, InteractKernel>;
+    using KernelImplementation = Implementation<ExecutionPolicy, LocalDynamicsType, InteractKernel>;
     UniquePtrsKeeper<KernelImplementation> contact_kernel_implementation_ptrs_;
     StdVec<KernelImplementation *> contact_kernel_implementation_;
 
@@ -163,14 +158,11 @@ class InteractionDynamicsCK<ExecutionPolicy, Base,
     };
 };
 
-template <class ExecutionPolicy,
-          template <typename...> class InteractionType,
-          template <typename...> class RelationType,
-          typename... Parameters>
-class InteractionDynamicsCK<ExecutionPolicy,
-                            InteractionType<RelationType<Parameters...>>>
-    : public InteractionDynamicsCK<ExecutionPolicy, Base,
-                                   InteractionType<RelationType<Parameters...>>>,
+template <class ExecutionPolicy, template <typename...> class InteractionType,
+          template <typename...> class RelationType, typename... Parameters>
+class InteractionDynamicsCK<ExecutionPolicy, InteractionType<RelationType<Parameters...>>>
+    : public InteractionDynamicsCK<
+          ExecutionPolicy, Base, InteractionType<RelationType<Parameters...>>>,
       public InteractionDynamicsCK<Base>,
       public BaseDynamics<void>
 {
@@ -196,16 +188,12 @@ class InteractionDynamicsCK<ExecutionPolicy,
     };
 };
 
-template <class ExecutionPolicy,
-          template <typename...> class InteractionType,
-          template <typename...> class RelationType,
-          typename... OtherParameters>
+template <class ExecutionPolicy, template <typename...> class InteractionType,
+          template <typename...> class RelationType, typename... OtherParameters>
 class InteractionDynamicsCK<
-    ExecutionPolicy,
-    InteractionType<RelationType<WithUpdate, OtherParameters...>>>
+    ExecutionPolicy, InteractionType<RelationType<WithUpdate, OtherParameters...>>>
     : public InteractionDynamicsCK<
-          ExecutionPolicy, Base,
-          InteractionType<RelationType<WithUpdate, OtherParameters...>>>,
+          ExecutionPolicy, Base, InteractionType<RelationType<WithUpdate, OtherParameters...>>>,
       public InteractionDynamicsCK<WithUpdate>,
       public BaseDynamics<void>
 {
@@ -219,8 +207,7 @@ class InteractionDynamicsCK<
     template <typename... Args>
     InteractionDynamicsCK(Args &&...args)
         : InteractionDynamicsCK<
-              ExecutionPolicy, Base,
-              InteractionType<RelationType<WithUpdate, OtherParameters...>>>(
+              ExecutionPolicy, Base, InteractionType<RelationType<WithUpdate, OtherParameters...>>>(
               std::forward<Args>(args)...),
           InteractionDynamicsCK<WithUpdate>(),
           BaseDynamics<void>(),
