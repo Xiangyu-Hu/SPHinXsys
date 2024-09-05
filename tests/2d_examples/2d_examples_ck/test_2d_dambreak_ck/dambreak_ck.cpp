@@ -79,9 +79,8 @@ int main(int ac, char *av[])
     ContactRelation water_wall_contact(water_block, {&wall_boundary});
     ContactRelation fluid_observer_contact(fluid_observer, {&water_block});
 
-    SequencedCombination<UpdateCellLinkedList<
-        execution::SequencedPolicy, ParticlesInCell<CellLinkedList, CellLinkedList>>>
-        water_wall_cell_linked_list(water_block, wall_boundary);
+    UpdateCellLinkedList<execution::ParallelDevicePolicy, CellLinkedList> water_cell_linked_list(water_block);
+    UpdateCellLinkedList<execution::ParallelDevicePolicy, CellLinkedList> wall_cell_linked_list(wall_boundary);
     SequencedCombination<UpdateRelation<
         execution::SequencedPolicy, BodyRelationUpdate<Inner<>, Contact<>>>>
         water_block_update_complex_relation(water_block_inner, water_wall_contact);
@@ -107,6 +106,9 @@ int main(int ac, char *av[])
     Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallRiemann> fluid_density_relaxation(water_block_inner, water_wall_contact);
     InteractionWithUpdate<fluid_dynamics::DensitySummationComplexFreeSurface> fluid_density_by_summation(water_block_inner, water_wall_contact);
 
+    InteractionDynamicsCK<execution::ParallelDevicePolicy, fluid_dynamics::DensitySummationComplexFreeSurfaceCK>
+        fluid_density_by_summation_ck(water_block_inner, water_wall_contact);
+
     ReduceDynamics<fluid_dynamics::AdvectionTimeStep> fluid_advection_time_step(water_block, U_ref);
     ReduceDynamicsCK<fluid_dynamics::AdvectionTimeStepCK, execution::ParallelPolicy> ck_fluid_advection_time_step(water_block, U_ref);
     ReduceDynamics<fluid_dynamics::AcousticTimeStep> fluid_acoustic_time_step(water_block);
@@ -120,6 +122,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp body_states_recording(sph_system);
     body_states_recording.addToWrite<Vecd>(wall_boundary, "NormalDirection");
+    body_states_recording.addToWrite<Real>(water_block, "Density");
     RestartIO restart_io(sph_system);
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalMechanicalEnergy>> write_water_mechanical_energy(water_block, gravity);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>> write_recorded_water_pressure("Pressure", fluid_observer_contact);

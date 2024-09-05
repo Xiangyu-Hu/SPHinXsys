@@ -133,6 +133,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp body_states_recording(sph_system);
     body_states_recording.addToWrite<Vecd>(wall_boundary, "NormalDirection");
+    body_states_recording.addToWrite<Real>(water_block, "Density");
     RestartIO restart_io(sph_system);
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalMechanicalEnergy>> write_water_mechanical_energy(water_block, gravity);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>> write_recorded_water_pressure("Pressure", fluid_observer_contact);
