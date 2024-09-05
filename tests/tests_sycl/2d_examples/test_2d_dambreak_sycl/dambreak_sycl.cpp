@@ -115,7 +115,7 @@ int main(int ac, char *av[])
 
     InteractionDynamicsCK<execution::ParallelDevicePolicy, fluid_dynamics::DensitySummationComplexFreeSurfaceCK>
         fluid_density_by_summation_ck(water_block_inner, water_wall_contact);
-    DiscreteVariable<Real> *dv_density = water_block.getBaseParticles().getVariableByName<real>("Density");
+    DiscreteVariable<Real> *dv_density = water_block.getBaseParticles().getVariableByName<Real>("Density");
 
     ReduceDynamics<fluid_dynamics::AdvectionTimeStep> fluid_advection_time_step(water_block, U_ref);
     ReduceDynamicsCK<execution::ParallelDevicePolicy, fluid_dynamics::AdvectionTimeStepCK> ck_fluid_advection_time_step(water_block, U_ref);
