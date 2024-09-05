@@ -110,8 +110,8 @@ void DensitySummationCK<Contact<Parameters...>>::
         UnsignedInt index_j = this->neighbor_index_[n];
         sigma += this->W_ij(index_i, index_j) * contact_inv_rho0_k_ * contact_mass_k_[index_j];
     }
-    this->rho_sum_[index_i] = sigma * this->rho0_ * this->rho0_ *
-                              this->inv_sigma0_ / this->mass_[index_i];
+    this->rho_sum_[index_i] += sigma * this->rho0_ * this->rho0_ *
+                               this->inv_sigma0_ / this->mass_[index_i];
 }
 //=================================================================================================//
 } // namespace fluid_dynamics

@@ -79,8 +79,8 @@ int main(int ac, char *av[])
     ContactRelation water_wall_contact(water_block, {&wall_boundary});
     ContactRelation fluid_observer_contact(fluid_observer, {&water_block});
 
-    UpdateCellLinkedList<execution::ParallelDevicePolicy, CellLinkedList> water_cell_linked_list(water_block);
-    UpdateCellLinkedList<execution::ParallelDevicePolicy, CellLinkedList> wall_cell_linked_list(wall_boundary);
+    UpdateCellLinkedList<execution::ParallelPolicy, CellLinkedList> water_cell_linked_list(water_block);
+    UpdateCellLinkedList<execution::ParallelPolicy, CellLinkedList> wall_cell_linked_list(wall_boundary);
     SequencedCombination<UpdateRelation<
         execution::SequencedPolicy, BodyRelationUpdate<Inner<>, Contact<>>>>
         water_block_update_complex_relation(water_block_inner, water_wall_contact);
@@ -99,18 +99,18 @@ int main(int ac, char *av[])
     // boundary condition and other constraints should be defined.
     //----------------------------------------------------------------------
     Gravity gravity(Vecd(0.0, -gravity_g));
-    StateDynamics<GravityForceCK<Gravity>, execution::SequencedPolicy> constant_gravity(water_block, gravity);
+    StateDynamics<execution::ParallelPolicy, GravityForceCK<Gravity>> constant_gravity(water_block, gravity);
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
 
     Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> fluid_pressure_relaxation(water_block_inner, water_wall_contact);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallRiemann> fluid_density_relaxation(water_block_inner, water_wall_contact);
     InteractionWithUpdate<fluid_dynamics::DensitySummationComplexFreeSurface> fluid_density_by_summation(water_block_inner, water_wall_contact);
 
-    InteractionDynamicsCK<execution::ParallelDevicePolicy, fluid_dynamics::DensitySummationComplexFreeSurfaceCK>
+    InteractionDynamicsCK<execution::SequencedPolicy, fluid_dynamics::DensitySummationComplexFreeSurfaceCK>
         fluid_density_by_summation_ck(water_block_inner, water_wall_contact);
 
     ReduceDynamics<fluid_dynamics::AdvectionTimeStep> fluid_advection_time_step(water_block, U_ref);
-    ReduceDynamicsCK<fluid_dynamics::AdvectionTimeStepCK, execution::ParallelPolicy> ck_fluid_advection_time_step(water_block, U_ref);
+    ReduceDynamicsCK<execution::ParallelPolicy, fluid_dynamics::AdvectionTimeStepCK> ck_fluid_advection_time_step(water_block, U_ref);
     ReduceDynamics<fluid_dynamics::AcousticTimeStep> fluid_acoustic_time_step(water_block);
     //----------------------------------------------------------------------
     //	Define the configuration related particles dynamics.
@@ -135,8 +135,10 @@ int main(int ac, char *av[])
     wall_boundary_normal_direction.exec();
 
     constant_gravity.exec();
-    water_wall_cell_linked_list.exec();
+    water_cell_linked_list.exec();
+    wall_cell_linked_list.exec();
     water_block_update_complex_relation.exec();
+    fluid_density_by_summation_ck.exec();
     //----------------------------------------------------------------------
     //	Load restart file if necessary.
     //----------------------------------------------------------------------

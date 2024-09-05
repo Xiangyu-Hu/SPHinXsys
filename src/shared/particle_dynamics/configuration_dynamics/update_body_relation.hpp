@@ -53,9 +53,9 @@ void BodyRelationUpdate<Inner<Parameters...>>::
         {
             if (index_i != index_j)
             {
+                this->neighbor_index_[this->particle_offset_[index_i] + neighbor_count] = index_j;
                 neighbor_count++;
             }
-            this->neighbor_index_[this->particle_offset_[index_i] + neighbor_count] = index_j;
         });
 }
 //=================================================================================================//
@@ -141,8 +141,8 @@ void BodyRelationUpdate<Contact<Parameters...>>::
         index_i, this->source_pos_,
         [&](size_t index_j)
         {
-            neighbor_count++;
             this->neighbor_index_[this->particle_offset_[index_i] + neighbor_count] = index_j;
+            neighbor_count++;
         });
 }
 //=================================================================================================//
