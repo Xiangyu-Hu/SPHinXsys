@@ -50,13 +50,13 @@ class Neighbor<>
     Neighbor(const ExecutionPolicy &ex_policy, SPHAdaptation *sph_adaptation, SPHAdaptation *contact_adaptation,
              DiscreteVariable<Vecd> *dv_pos, DiscreteVariable<Vecd> *dv_target_pos);
 
-    inline Vecd r_ij(size_t i, size_t j) const { return source_pos_[i] - target_pos_[j]; };
-    inline Real W_ij(size_t i, size_t j) const { return kernel_.W(r_ij(i, j)); }
-    inline Real dW_ij(size_t i, size_t j) const { return kernel_.dW(r_ij(i, j)); }
+    inline Vecd vec_r_ij(size_t i, size_t j) const { return source_pos_[i] - target_pos_[j]; };
+    inline Real W_ij(size_t i, size_t j) const { return kernel_.W(vec_r_ij(i, j)); }
+    inline Real dW_ij(size_t i, size_t j) const { return kernel_.dW(vec_r_ij(i, j)); }
 
     inline Vecd e_ij(size_t i, size_t j) const
     {
-        Vecd displacement = r_ij(i, j);
+        Vecd displacement = vec_r_ij(i, j);
         return displacement / (displacement.norm() + TinyReal);
     }
 

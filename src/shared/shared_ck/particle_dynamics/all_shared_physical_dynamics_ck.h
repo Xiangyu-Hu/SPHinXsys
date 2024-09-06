@@ -31,6 +31,7 @@
 #ifndef ALL_SHARED_PHYSICAL_DYNAMICS_CK_H
 #define ALL_SHARED_PHYSICAL_DYNAMICS_CK_H
 
+#include "acoustic_step.hpp"
 #include "all_general_dynamics_ck.h"
 #include "complex_algorithms_ck.h"
 #include "density_summation_ck.hpp"

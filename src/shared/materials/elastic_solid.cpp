@@ -37,12 +37,12 @@ Vecd *ElasticSolid::AverageAcceleration(BaseParticles *base_particles)
 //=================================================================================================//
 DiscreteVariable<Vecd> *ElasticSolid::AverageVelocityVariable(BaseParticles *base_particles)
 {
-    return base_particles->registerDiscreteVariablesOnly<Vecd>("AverageVelocity");
+    return base_particles->registerStateVariableOnly<Vecd>("AverageVelocity");
 }
 //=================================================================================================//
 DiscreteVariable<Vecd> *ElasticSolid::AverageAccelerationVariable(BaseParticles *base_particles)
 {
-    return base_particles->registerDiscreteVariablesOnly<Vecd>("AverageAcceleration");
+    return base_particles->registerStateVariableOnly<Vecd>("AverageAcceleration");
 }
 //=================================================================================================//
 LinearElasticSolid::

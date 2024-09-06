@@ -108,10 +108,15 @@ int main(int ac, char *av[])
     Gravity gravity(Vecd(0.0, -gravity_g));
     StateDynamics<execution::ParallelDevicePolicy, GravityForceCK<Gravity>> constant_gravity(water_block, gravity);
     StateDynamics<execution::ParallelPolicy, NormalFromBodyShapeCK> wall_boundary_normal_direction(wall_boundary);
+    StateDynamics<execution::ParallelDevicePolicy, fluid_dynamics::AdvectionStepSetup> water_advection_step_setup(water_block);
+    StateDynamics<execution::ParallelDevicePolicy, fluid_dynamics::AdvectionStepClose> water_advection_step_close(water_block);
 
     Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> fluid_pressure_relaxation(water_block_inner, water_wall_contact);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallRiemann> fluid_density_relaxation(water_block_inner, water_wall_contact);
     InteractionWithUpdate<fluid_dynamics::DensitySummationComplexFreeSurface> fluid_density_by_summation(water_block_inner, water_wall_contact);
+
+    InteractionDynamicsCK<execution::ParallelDevicePolicy, fluid_dynamics::AcousticStep1stHalfWithWallRiemannCK>
+        fluid_pressure_relaxation_ck(water_block_inner, water_wall_contact);
 
     InteractionDynamicsCK<execution::ParallelDevicePolicy, fluid_dynamics::DensitySummationComplexFreeSurfaceCK>
         fluid_density_by_summation_ck(water_block_inner, water_wall_contact);
@@ -121,8 +126,7 @@ int main(int ac, char *av[])
     ReduceDynamics<fluid_dynamics::AcousticTimeStep> fluid_acoustic_time_step(water_block);
 
     ReduceDynamicsCK<execution::ParallelDevicePolicy, fluid_dynamics::AdvectionTimeStepCK> fluid_advection_time_step_ck(water_block, U_ref);
-    ReduceDynamicsCK<execution::ParallelDevicePolicy, fluid_dynamics::AcousticTimeStepCK<WeaklyCompressibleFluid>>
-        fluid_acoustic_time_step_ck(water_block);
+    ReduceDynamicsCK<execution::ParallelDevicePolicy, fluid_dynamics::AcousticTimeStepCK> fluid_acoustic_time_step_ck(water_block);
     DiscreteVariable<Vecd> *dv_force_prior = water_block.getBaseParticles().getVariableByName<Vecd>("ForcePrior");
     DiscreteVariable<Vecd> *dv_force = water_block.getBaseParticles().getVariableByName<Vecd>("Force");
     DiscreteVariable<Vecd> *dv_velocity = water_block.getBaseParticles().getVariableByName<Vecd>("Velocity");

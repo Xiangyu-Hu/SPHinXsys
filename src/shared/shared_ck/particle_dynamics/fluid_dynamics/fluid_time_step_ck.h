@@ -33,28 +33,33 @@
 #define FLUID_TIME_STEP_CK_H
 
 #include "base_fluid_dynamics.h"
+#include "weakly_compressible_fluid.h"
 
 namespace SPH
 {
 namespace fluid_dynamics
 {
-template <class FluidType>
 class AcousticTimeStepCK : public LocalDynamicsReduce<ReduceMax>
 {
-    using EosKernel = typename FluidType::EosKernel;
+    using EosKernel = typename WeaklyCompressibleFluid::EosKernel;
 
   public:
     explicit AcousticTimeStepCK(SPHBody &sph_body, Real acousticCFL = 0.6);
     virtual ~AcousticTimeStepCK(){};
-    Real reduce(size_t index_i, Real dt = 0.0);
     virtual Real outputResult(Real reduced_value) override;
 
     class ReduceKernel
     {
       public:
         template <class ExecutionPolicy>
-        ReduceKernel(const ExecutionPolicy &ex_policy, AcousticTimeStepCK<FluidType> &encloser);
-        Real reduce(size_t index_i, Real dt = 0.0);
+        ReduceKernel(const ExecutionPolicy &ex_policy, AcousticTimeStepCK &encloser);
+
+        Real reduce(size_t index_i, Real dt = 0.0)
+        {
+            Real acceleration_scale = 4.0 * h_min_ *
+                                      (force_[index_i] + force_prior_[index_i]).norm() / mass_[index_i];
+            return SMAX(eos_.getSoundSpeed(p_[index_i], rho_[index_i]) + vel_[index_i].norm(), acceleration_scale);
+        };
 
       protected:
         EosKernel eos_;
@@ -64,7 +69,7 @@ class AcousticTimeStepCK : public LocalDynamicsReduce<ReduceMax>
     };
 
   protected:
-    FluidType &fluid_;
+    WeaklyCompressibleFluid &fluid_;
     DiscreteVariable<Real> *dv_rho_, *dv_p_, *dv_mass_;
     DiscreteVariable<Vecd> *dv_vel_, *dv_force_, *dv_force_prior_;
     Real h_min_;
@@ -149,10 +154,10 @@ class AdvectionStepSetup : public LocalDynamics
         template <class ExecutionPolicy>
         UpdateKernel(const ExecutionPolicy &ex_policy, AdvectionStepSetup &encloser);
 
-        Real update(size_t index_i, Real dt = 0.0)
+        void update(size_t index_i, Real dt = 0.0)
         {
             Vol_[index_i] = mass_[index_i] / rho_[index_i];
-            dpos_[index_i] = ZeroData<Vecd>::value;
+            dpos_[index_i] = Vecd::Zero();
         };
 
       protected:
@@ -161,7 +166,7 @@ class AdvectionStepSetup : public LocalDynamics
     };
 
   protected:
-    DiscreteVariable<Real> *dv_Vol_, dv_mass_;
+    DiscreteVariable<Real> *dv_Vol_, *dv_mass_, *dv_rho_;
     DiscreteVariable<Vecd> *dv_dpos_;
 };
 
@@ -177,7 +182,7 @@ class AdvectionStepClose : public LocalDynamics
         template <class ExecutionPolicy>
         UpdateKernel(const ExecutionPolicy &ex_policy, AdvectionStepClose &encloser);
 
-        Real update(size_t index_i, Real dt = 0.0)
+        void update(size_t index_i, Real dt = 0.0)
         {
             pos_[index_i] += dpos_[index_i];
         };

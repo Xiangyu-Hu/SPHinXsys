@@ -125,6 +125,58 @@ void InteractionDynamicsCK<ExecutionPolicy, InteractionType<RelationType<WithUpd
 }
 //=================================================================================================//
 template <class ExecutionPolicy, template <typename...> class InteractionType,
+          template <typename...> class RelationType, typename... OtherParameters>
+template <typename... Args>
+InteractionDynamicsCK<ExecutionPolicy, InteractionType<RelationType<OneLevel, OtherParameters...>>>::
+    InteractionDynamicsCK(Args &&...args)
+    : InteractionDynamicsCK<ExecutionPolicy, Base, InteractionType<RelationType<OneLevel, OtherParameters...>>>(
+          std::forward<Args>(args)...),
+      InteractionDynamicsCK<OneLevel>(), BaseDynamics<void>(),
+      initialize_kernel_implementation_(*this), update_kernel_implementation_(*this) {}
+//=================================================================================================//
+template <class ExecutionPolicy, template <typename...> class InteractionType,
+          template <typename...> class RelationType, typename... OtherParameters>
+void InteractionDynamicsCK<ExecutionPolicy, InteractionType<RelationType<OneLevel, OtherParameters...>>>::
+    exec(Real dt)
+{
+    this->setUpdated(this->identifier_.getSPHBody());
+    this->setupDynamics(dt);
+    InteractionDynamicsCK<OneLevel>::runAllSteps(dt);
+}
+//=================================================================================================//
+template <class ExecutionPolicy, template <typename...> class InteractionType,
+          template <typename...> class RelationType, typename... OtherParameters>
+void InteractionDynamicsCK<ExecutionPolicy, InteractionType<RelationType<OneLevel, OtherParameters...>>>::
+    runInteractionStep(Real dt)
+{
+    this->runInteraction(dt);
+}
+//=================================================================================================//
+template <class ExecutionPolicy, template <typename...> class InteractionType,
+          template <typename...> class RelationType, typename... OtherParameters>
+void InteractionDynamicsCK<ExecutionPolicy, InteractionType<RelationType<OneLevel, OtherParameters...>>>::
+    runInitializationStep(Real dt)
+{
+    InitializeKernel *initialize_kernel = initialize_kernel_implementation_.getComputingKernel();
+    particle_for(ExecutionPolicy{},
+                 this->identifier_.LoopRange(),
+                 [=](size_t i)
+                 { initialize_kernel->initialize(i, dt); });
+}
+//=================================================================================================//
+template <class ExecutionPolicy, template <typename...> class InteractionType,
+          template <typename...> class RelationType, typename... OtherParameters>
+void InteractionDynamicsCK<ExecutionPolicy, InteractionType<RelationType<OneLevel, OtherParameters...>>>::
+    runUpdateStep(Real dt)
+{
+    UpdateKernel *update_kernel = update_kernel_implementation_.getComputingKernel();
+    particle_for(ExecutionPolicy{},
+                 this->identifier_.LoopRange(),
+                 [=](size_t i)
+                 { update_kernel->update(i, dt); });
+}
+//=================================================================================================//
+template <class ExecutionPolicy, template <typename...> class InteractionType,
           class FirstInteraction, class... Others>
 template <class FirstParameterSet, typename... OtherParameterSets>
 InteractionDynamicsCK<ExecutionPolicy, InteractionType<FirstInteraction, Others...>>::
