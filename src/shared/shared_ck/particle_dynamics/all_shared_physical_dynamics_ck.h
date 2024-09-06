@@ -33,7 +33,7 @@
 
 #include "complex_algorithms_ck.h"
 #include "density_summation_ck.hpp"
-#include "fluid_time_step_ck.h"
+#include "fluid_time_step_ck.hpp"
 #include "force_prior_ck.hpp"
 #include "interaction_algorithms_ck.hpp"
 #include "simple_algorithms_ck.h"

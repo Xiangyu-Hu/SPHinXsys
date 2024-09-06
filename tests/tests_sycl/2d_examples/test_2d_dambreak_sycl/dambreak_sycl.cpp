@@ -118,11 +118,18 @@ int main(int ac, char *av[])
     DiscreteVariable<Real> *dv_density = water_block.getBaseParticles().getVariableByName<Real>("Density");
 
     ReduceDynamics<fluid_dynamics::AdvectionTimeStep> fluid_advection_time_step(water_block, U_ref);
-    ReduceDynamicsCK<execution::ParallelDevicePolicy, fluid_dynamics::AdvectionTimeStepCK> ck_fluid_advection_time_step(water_block, U_ref);
+    ReduceDynamics<fluid_dynamics::AcousticTimeStep> fluid_acoustic_time_step(water_block);
+
+    ReduceDynamicsCK<execution::ParallelDevicePolicy, fluid_dynamics::AdvectionTimeStepCK> fluid_advection_time_step_ck(water_block, U_ref);
+    ReduceDynamicsCK<execution::ParallelDevicePolicy, fluid_dynamics::AcousticTimeStepCK<WeaklyCompressibleFluid>>
+        fluid_acoustic_time_step_ck(water_block);
     DiscreteVariable<Vecd> *dv_force_prior = water_block.getBaseParticles().getVariableByName<Vecd>("ForcePrior");
     DiscreteVariable<Vecd> *dv_force = water_block.getBaseParticles().getVariableByName<Vecd>("Force");
     DiscreteVariable<Vecd> *dv_velocity = water_block.getBaseParticles().getVariableByName<Vecd>("Velocity");
-    ReduceDynamics<fluid_dynamics::AcousticTimeStep> fluid_acoustic_time_step(water_block);
+    DiscreteVariable<Real> *dv_rho = water_block.getBaseParticles().getVariableByName<Real>("Density");
+    DiscreteVariable<Real> *dv_mass = water_block.getBaseParticles().getVariableByName<Real>("Mass");
+    DiscreteVariable<Real> *dv_p = water_block.getBaseParticles().getVariableByName<Real>("Pressure");
+
     //----------------------------------------------------------------------
     //	Define the configuration related particles dynamics.
     //----------------------------------------------------------------------
@@ -215,10 +222,10 @@ int main(int ac, char *av[])
                 dv_force_prior->synchronizeToDevice();
                 dv_force->synchronizeToDevice();
                 dv_velocity->synchronizeToDevice();
-                Real ck_advection_dt = ck_fluid_advection_time_step.exec();
+                Real advection_dt_ck = fluid_advection_time_step_ck.exec();
                 std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations
-                          << "	advection_dt = " << advection_dt << "   ck_acoustic_dt = " << ck_advection_dt << "\n";
-                if (ABS(advection_dt - ck_advection_dt) > 1.0e-6)
+                          << "	advection_dt = " << advection_dt << "   advection_dt_ck = " << advection_dt_ck << "\n";
+                if (ABS(advection_dt - advection_dt_ck) > 1.0e-6)
                 {
                     std::cout << "Error: the advection time step is not consistent with the CK time step." << std::endl;
                     exit(1);
@@ -235,6 +242,24 @@ int main(int ac, char *av[])
             {
                 /** inner loop for dual-time criteria time-stepping.  */
                 acoustic_dt = fluid_acoustic_time_step.exec();
+
+                if (number_of_iterations % restart_output_interval == 0)
+                {
+                    dv_rho->synchronizeToDevice();
+                    dv_mass->synchronizeToDevice();
+                    dv_p->synchronizeToDevice();
+                    dv_force_prior->synchronizeToDevice();
+                    dv_force->synchronizeToDevice();
+                    dv_velocity->synchronizeToDevice();
+                    Real acoustic_dt_ck = fluid_acoustic_time_step_ck.exec();
+                    std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations
+                              << "	acoustic_dt = " << acoustic_dt << "   acoustic_dt_ck = " << acoustic_dt_ck << "\n";
+                    if (ABS(acoustic_dt - acoustic_dt_ck) > 1.0e-6)
+                    {
+                        std::cout << "Error: the acoustic time step is not consistent with the CK time step." << std::endl;
+                        exit(1);
+                    }
+                }
                 fluid_pressure_relaxation.exec(acoustic_dt);
                 fluid_density_relaxation.exec(acoustic_dt);
                 relaxation_time += acoustic_dt;

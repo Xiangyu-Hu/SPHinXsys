@@ -38,10 +38,39 @@ namespace SPH
 {
 namespace fluid_dynamics
 {
-/**
- * @class AdvectionTimeStepCK
- * @brief Computing the advection time step size when viscosity is handled implicitly
- */
+template <class FluidType>
+class AcousticTimeStepCK : public LocalDynamicsReduce<ReduceMax>
+{
+    using EosKernel = typename FluidType::EosKernel;
+
+  public:
+    explicit AcousticTimeStepCK(SPHBody &sph_body, Real acousticCFL = 0.6);
+    virtual ~AcousticTimeStepCK(){};
+    Real reduce(size_t index_i, Real dt = 0.0);
+    virtual Real outputResult(Real reduced_value) override;
+
+    class ReduceKernel
+    {
+      public:
+        template <class ExecutionPolicy>
+        ReduceKernel(const ExecutionPolicy &ex_policy, AcousticTimeStepCK<FluidType> &encloser);
+        Real reduce(size_t index_i, Real dt = 0.0);
+
+      protected:
+        EosKernel eos_;
+        Real *rho_, *p_, *mass_;
+        Vecd *vel_, *force_, *force_prior_;
+        Real h_min_;
+    };
+
+  protected:
+    FluidType &fluid_;
+    DiscreteVariable<Real> *dv_rho_, *dv_p_, *dv_mass_;
+    DiscreteVariable<Vecd> *dv_vel_, *dv_force_, *dv_force_prior_;
+    Real h_min_;
+    Real acousticCFL_;
+};
+
 class AdvectionTimeStepCK
     : public LocalDynamicsReduce<ReduceMax>
 {

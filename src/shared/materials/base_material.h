@@ -93,6 +93,15 @@ class Fluid : public BaseMaterial
     virtual Real DensityFromPressure(Real p) = 0;
     virtual Real getSoundSpeed(Real p = 0.0, Real rho = 1.0) = 0;
     virtual Fluid *ThisObjectPtr() override { return this; };
+
+    class EosKernel
+    {
+      public:
+        EosKernel(Fluid &encloser);
+
+      protected:
+        Real c0_, rho0_;
+    };
 };
 
 /** @class  Solid

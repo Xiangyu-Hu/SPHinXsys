@@ -24,6 +24,8 @@ Fluid::Fluid(Real rho0, Real c0, Real mu) : BaseMaterial(rho0), c0_(c0), mu_(mu)
     material_type_name_ = "Fluid";
 }
 //=================================================================================================//
+Fluid::EosKernel::EosKernel(Fluid &encloser) : c0_(encloser.c0_), rho0_(encloser.rho0_) {}
+//=================================================================================================//
 Vecd *Solid::AverageVelocity(BaseParticles *base_particles)
 {
     return base_particles->registerStateVariable<Vecd>("Velocity");
