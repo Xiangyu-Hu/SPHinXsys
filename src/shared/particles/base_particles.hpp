@@ -17,8 +17,8 @@ void BaseParticles::checkReloadFileRead(OwnerType *owner)
     }
 }
 //=================================================================================================//
-template <typename DataType, template <typename T> class VariableType>
-DataType *BaseParticles::initializeVariable(VariableType<DataType> *variable, DataType initial_value)
+template <typename DataType>
+DataType *BaseParticles::initializeVariable(DiscreteVariable<DataType> *variable, DataType initial_value)
 {
     DataType *data_field = variable->DataField();
     for (size_t i = 0; i != variable->getDataFieldSize(); ++i)
@@ -28,14 +28,27 @@ DataType *BaseParticles::initializeVariable(VariableType<DataType> *variable, Da
     return data_field;
 }
 //=================================================================================================//
-template <typename DataType, template <typename T> class VariableType, class InitializationFunction>
+template <typename DataType, class InitializationFunction>
 DataType *BaseParticles::
-    initializeVariable(VariableType<DataType> *variable, const InitializationFunction &initialization)
+    initializeVariable(DiscreteVariable<DataType> *variable, const InitializationFunction &initialization)
 {
     DataType *data_field = initializeVariable(variable);
     for (size_t i = 0; i != variable->getDataFieldSize(); ++i)
     {
         data_field[i] = initialization(i); // Here, function object is applied for initialization.
+    }
+    return data_field;
+}
+//=================================================================================================//
+template <typename DataType>
+DataType *BaseParticles::initializeVariable(
+    DiscreteVariable<DataType> *variable, DiscreteVariable<DataType> *old_variable)
+{
+    DataType *data_field = variable->DataField();
+    DataType *old_data_field = old_variable->DataField();
+    for (size_t i = 0; i != variable->getDataFieldSize(); ++i)
+    {
+        data_field[i] = old_data_field[i];
     }
     return data_field;
 }

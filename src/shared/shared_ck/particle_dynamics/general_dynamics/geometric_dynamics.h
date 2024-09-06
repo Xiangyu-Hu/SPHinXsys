@@ -21,21 +21,42 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file    all_shared_physical_dynamics_ck.h
- * @brief   Head file for all shared physics dynamics for both 2- and 3D build.
- *          This is the header file that user code should include to pick up all
-            particle dynamics capabilities.
- * @author	Chi Zhang and Xiangyu Hu
+ * @file    geometric_dynamics.h
+ * @brief   This is the particle dynamics applicable for all type bodies
+ * @author	Xiangyu Hu
  */
 
-#ifndef ALL_SHARED_PHYSICAL_DYNAMICS_CK_H
-#define ALL_SHARED_PHYSICAL_DYNAMICS_CK_H
+#ifndef GEOMETRIC_DYNAMICS_H
+#define GEOMETRIC_DYNAMICS_H
 
-#include "all_general_dynamics_ck.h"
-#include "complex_algorithms_ck.h"
-#include "density_summation_ck.hpp"
-#include "fluid_time_step_ck.hpp"
-#include "interaction_algorithms_ck.hpp"
-#include "simple_algorithms_ck.h"
+#include "base_general_dynamics.h"
 
-#endif // ALL_SHARED_PHYSICAL_DYNAMICS_CK_H
+namespace SPH
+{
+class NormalFromBodyShapeCK : public LocalDynamics
+{
+  public:
+    explicit NormalFromBodyShapeCK(SPHBody &sph_body);
+    virtual ~NormalFromBodyShapeCK(){};
+
+    class UpdateKernel
+    {
+      public:
+        template <class ExecutionPolicy>
+        UpdateKernel(const ExecutionPolicy &ex_policy,
+                     NormalFromBodyShapeCK &encloser);
+        void update(size_t index_i, Real dt = 0.0);
+
+      protected:
+        Shape *initial_shape_;
+        Vecd *pos_, *n_, *n0_;
+        Real *phi_, *phi0_;
+    };
+
+  protected:
+    Shape *initial_shape_;
+    DiscreteVariable<Vecd> *dv_pos_, *dv_n_, *dv_n0_;
+    DiscreteVariable<Real> *dv_phi_, *dv_phi0_;
+};
+} // namespace SPH
+#endif // GEOMETRIC_DYNAMICS_H
