@@ -29,5 +29,16 @@ AdvectionViscousTimeStepCK::AdvectionViscousTimeStepCK(SPHBody &sph_body, Real U
     speed_ref_ = SMAX(viscous_speed, speed_ref_);
 }
 //=================================================================================================//
+AdvectionStepSetup::AdvectionStepSetup(SPHBody &sph_body)
+    : LocalDynamics(sph_body),
+      dv_Vol_(particles_->getVariableByName<Real>("VolumetricMeasure")),
+      dv_mass_(particles_->getVariableByName<Real>("Mass")),
+      dv_dpos_(particles_->registerStateVariable<Vecd>("Displacement")) {}
+//=================================================================================================//
+AdvectionStepClose::AdvectionStepClose(SPHBody &sph_body)
+    : LocalDynamics(sph_body),
+      dv_pos_(particles_->getVariableByName<Vecd>("Position")),
+      dv_dpos_(particles_->getVariableByName<Vecd>("Displacement")) {}
+//=================================================================================================//
 } // namespace fluid_dynamics
 } // namespace SPH

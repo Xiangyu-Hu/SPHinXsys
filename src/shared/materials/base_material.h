@@ -128,6 +128,11 @@ class Solid : public BaseMaterial
     /** Get average acceleration when interacting with fluid. */
     virtual Vecd *AverageAcceleration(BaseParticles *base_particles);
 
+    /** Get average velocity when interacting with fluid. */
+    virtual DiscreteVariable<Vecd> *AverageVelocityVariable(BaseParticles *base_particles);
+    /** Get average acceleration when interacting with fluid. */
+    virtual DiscreteVariable<Vecd> *AverageAccelerationVariable(BaseParticles *base_particles);
+
   protected:
     Real contact_stiffness_; /**< contact-force stiffness related to bulk modulus*/
     Real contact_friction_;  /**< friction property mimic fluid viscosity*/

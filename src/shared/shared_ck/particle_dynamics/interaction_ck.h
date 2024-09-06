@@ -47,7 +47,7 @@ class Interaction<Inner<Parameters...>> : public LocalDynamics
 {
   public:
     explicit Interaction(InnerRelation &inner_relation);
-    virtual ~Interaction() {};
+    virtual ~Interaction(){};
 
     class InteractKernel : public NeighborList, public Neighbor<Parameters...>
     {
@@ -73,7 +73,7 @@ class Interaction<Contact<Parameters...>> : public LocalDynamics
 {
   public:
     explicit Interaction(ContactRelation &contact_relation);
-    virtual ~Interaction() {};
+    virtual ~Interaction(){};
 
     class InteractKernel : public NeighborList, public Neighbor<Parameters...>
     {
@@ -97,6 +97,18 @@ class Interaction<Contact<Parameters...>> : public LocalDynamics
     StdVec<DiscreteVariable<Vecd> *> contact_pos_;
     StdVec<DiscreteVariable<UnsignedInt> *> dv_contact_neighbor_index_;
     StdVec<DiscreteVariable<UnsignedInt> *> dv_contact_particle_offset_;
+};
+
+template <typename... Parameters>
+class Interaction<Contact<Wall, Parameters...>> : public Interaction<Contact<Parameters...>>
+{
+  public:
+    explicit Interaction(ContactRelation &wall_contact_relation);
+    virtual ~Interaction(){};
+
+  protected:
+    StdVec<DiscreteVariable<Vecd> *> dv_wall_vel_ave_, dv_wall_acc_ave_, dv_wall_n_;
+    StdVec<DiscreteVariable<Real> *> dv_wall_Vol_;
 };
 } // namespace SPH
 #endif // INTERACTION_CK_H

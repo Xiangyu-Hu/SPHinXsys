@@ -106,6 +106,10 @@ class ElasticSolid : public Solid
     virtual Vecd *AverageVelocity(BaseParticles *base_particles) override;
     /** Get  average acceleration when interacting with fluid. */
     virtual Vecd *AverageAcceleration(BaseParticles *base_particles) override;
+    /** Get average velocity when interacting with fluid. */
+    virtual DiscreteVariable<Vecd> *AverageVelocityVariable(BaseParticles *base_particles) override;
+    /** Get average acceleration when interacting with fluid. */
+    virtual DiscreteVariable<Vecd> *AverageAccelerationVariable(BaseParticles *base_particles) override;
     virtual ElasticSolid *ThisObjectPtr() override { return this; };
 };
 

@@ -82,5 +82,19 @@ Interaction<Contact<Parameters...>>::InteractKernel::
                               encloser.contact_adaptations_[contact_index],
                               encloser.dv_pos_, encloser.contact_pos_[contact_index]) {}
 //=================================================================================================//
+template <typename... Parameters>
+Interaction<Contact<Wall, Parameters...>>::Interaction(ContactRelation &wall_contact_relation)
+    : Interaction<Contact<Parameters...>>(wall_contact_relation)
+{
+    for (size_t k = 0; k != this->contact_particles_.size(); ++k)
+    {
+        Solid &solid_material = DynamicCast<Solid>(this, this->contact_particles_[k]->getBaseMaterial());
+        dv_wall_vel_ave_.push_back(solid_material.AverageVelocityVariable(this->contact_particles_[k]));
+        dv_wall_acc_ave_.push_back(solid_material.AverageAccelerationVariable(this->contact_particles_[k]));
+        dv_wall_n_.push_back(this->contact_particles_[k]->template getVariableByName<Vecd>("NormalDirection"));
+        dv_wall_Vol_.push_back(this->contact_particles_[k]->template getVariableByName<Real>("VolumetricMeasure"));
+    }
+}
+//=================================================================================================//
 } // namespace SPH
 #endif // INTERACTION_CK_HPP

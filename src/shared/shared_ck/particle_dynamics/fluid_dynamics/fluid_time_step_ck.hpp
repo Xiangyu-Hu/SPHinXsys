@@ -50,6 +50,19 @@ Real AcousticTimeStepCK<FluidType>::outputResult(Real reduced_value)
     return acousticCFL_ * h_min_ / (reduced_value + TinyReal);
 }
 //=================================================================================================//
+template <class ExecutionPolicy>
+AdvectionStepSetup::UpdateKernel::
+    UpdateKernel(const ExecutionPolicy &ex_policy, AdvectionStepSetup &encloser)
+    : dv_Vol_(encloser.dv_Vol_->DelegatedDataField(ex_policy)),
+      dv_mass_(encloser.dv_mass_->DelegatedDataField(ex_policy)),
+      dv_dpos_(encloser.dv_dpos_->DelegatedDataField(ex_policy)) {}
+//=================================================================================================//
+template <class ExecutionPolicy>
+AdvectionStepClose::UpdateKernel::
+    UpdateKernel(const ExecutionPolicy &ex_policy, AdvectionStepClose &encloser)
+    : dv_pos_(encloser.dv_pos_->DelegatedDataField(ex_policy)),
+      dv_dpos_(encloser.dv_dpos_->DelegatedDataField(ex_policy)) {}
+//=================================================================================================//
 } // namespace fluid_dynamics
 } // namespace SPH
 #endif // FLUID_TIME_STEP_CK_HPP

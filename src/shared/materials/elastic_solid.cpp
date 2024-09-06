@@ -35,6 +35,16 @@ Vecd *ElasticSolid::AverageAcceleration(BaseParticles *base_particles)
     return base_particles->registerStateVariable<Vecd>("AverageAcceleration");
 }
 //=================================================================================================//
+DiscreteVariable<Vecd> *ElasticSolid::AverageVelocityVariable(BaseParticles *base_particles)
+{
+    return base_particles->registerDiscreteVariablesOnly<Vecd>("AverageVelocity");
+}
+//=================================================================================================//
+DiscreteVariable<Vecd> *ElasticSolid::AverageAccelerationVariable(BaseParticles *base_particles)
+{
+    return base_particles->registerDiscreteVariablesOnly<Vecd>("AverageAcceleration");
+}
+//=================================================================================================//
 LinearElasticSolid::
     LinearElasticSolid(Real rho0, Real youngs_modulus, Real poisson_ratio) : ElasticSolid(rho0)
 {

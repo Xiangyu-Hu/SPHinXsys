@@ -136,6 +136,59 @@ class AdvectionViscousTimeStepCK : public AdvectionTimeStepCK
         };
     };
 };
+
+class AdvectionStepSetup : public LocalDynamics
+{
+  public:
+    explicit AdvectionStepSetup(SPHBody &sph_body);
+    virtual ~AdvectionStepSetup(){};
+
+    class UpdateKernel
+    {
+      public:
+        template <class ExecutionPolicy>
+        UpdateKernel(const ExecutionPolicy &ex_policy, AdvectionStepSetup &encloser);
+
+        Real update(size_t index_i, Real dt = 0.0)
+        {
+            Vol_[index_i] = mass_[index_i] / rho_[index_i];
+            dpos_[index_i] = ZeroData<Vecd>::value;
+        };
+
+      protected:
+        Real *Vol_, *mass_, *rho_;
+        Vecd *dpos_;
+    };
+
+  protected:
+    DiscreteVariable<Real> *dv_Vol_, dv_mass_;
+    DiscreteVariable<Vecd> *dv_dpos_;
+};
+
+class AdvectionStepClose : public LocalDynamics
+{
+  public:
+    explicit AdvectionStepClose(SPHBody &sph_body);
+    virtual ~AdvectionStepClose(){};
+
+    class UpdateKernel
+    {
+      public:
+        template <class ExecutionPolicy>
+        UpdateKernel(const ExecutionPolicy &ex_policy, AdvectionStepClose &encloser);
+
+        Real update(size_t index_i, Real dt = 0.0)
+        {
+            pos_[index_i] += dpos_[index_i];
+        };
+
+      protected:
+        Vecd *pos_, *dpos_;
+    };
+
+  protected:
+    DiscreteVariable<Vecd> *dv_pos_, *dv_dpos_;
+};
 } // namespace fluid_dynamics
 } // namespace SPH
 #endif // FLUID_TIME_STEP_CK_H

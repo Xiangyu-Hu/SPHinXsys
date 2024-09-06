@@ -36,4 +36,14 @@ Vecd *Solid::AverageAcceleration(BaseParticles *base_particles)
     return base_particles->registerStateVariable<Vecd>("Acceleration");
 }
 //=================================================================================================//
+DiscreteVariable<Vecd> *Solid::AverageVelocityVariable(BaseParticles *base_particles)
+{
+    return base_particles->registerDiscreteVariablesOnly<Vecd>("Velocity");
+}
+//=================================================================================================//
+DiscreteVariable<Vecd> *Solid::AverageAccelerationVariable(BaseParticles *base_particles)
+{
+    return base_particles->registerDiscreteVariablesOnly<Vecd>("Acceleration");
+}
+//=================================================================================================//
 } // namespace SPH
