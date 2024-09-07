@@ -150,8 +150,13 @@ class DiscreteVariable : public BaseVariable
     };
 
     void reallocateDataField(const ParallelDevicePolicy &par_device, size_t tentative_size);
+
     void synchronizeWithDevice();
     void synchronizeToDevice();
+
+    template <class ExecutionPolicy>
+    void prepareForOutput(const ExecutionPolicy &ex_policy){};
+    void prepareForOutput(const ParallelDevicePolicy &ex_policy) { synchronizeWithDevice(); };
 
   private:
     size_t data_size_;

@@ -85,7 +85,7 @@ class ObservedQuantityRecordingCK : public BodyStatesRecording,
     virtual void writeWithFileName(const std::string &sequence) override
     {
         this->exec();
-        //        dv_interpolated_quantities_->synchronizeWithDevice(ExecutionPolicy{});
+        this->dv_interpolated_quantities_->prepareForOutput(ExecutionPolicy{});
         DataType *interpolated_quantities_ = this->dv_interpolated_quantities_->DataField();
         std::ofstream out_file(filefullpath_output_.c_str(), std::ios::app);
         out_file << sv_physical_time_.getValue() << "   ";
