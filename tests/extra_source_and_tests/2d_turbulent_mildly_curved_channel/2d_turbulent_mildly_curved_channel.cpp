@@ -239,10 +239,7 @@ int main(int ac, char *av[])
     //	Setup computing and initial conditions.
     //----------------------------------------------------------------------
     size_t number_of_iterations = sph_system.RestartStep();
-    int screen_output_interval = 100;
-    Real end_time = 10.0;               /**< End time. */
-    Real Output_Time = end_time / 40.0; /**< Time stamps for output of body states. */
-    Real dt = 0.0;                      /**< Default acoustic time step sizes. */
+    Real dt = 0.0; /**< Default acoustic time step sizes. */
     //----------------------------------------------------------------------
     //	Statistics for CPU time
     //----------------------------------------------------------------------
@@ -354,7 +351,7 @@ int main(int ac, char *av[])
             left_emitter_inflow_injection.tag_buffer_particles.exec();
             right_emitter_inflow_injection.tag_buffer_particles.exec();
 
-            if (GlobalStaticVariables::physical_time_ > end_time * 0.1)
+            if (GlobalStaticVariables::physical_time_ > cutoff_time)
             {
                 write_recorded_water_velocity.writeToFile(number_of_iterations);
                 write_recorded_water_k.writeToFile(number_of_iterations);

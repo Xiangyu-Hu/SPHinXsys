@@ -132,6 +132,11 @@ Vec2d right_buffer_translation = outlet_buffer_center_translation;
 // Observation with offset model.
 //----------------------------------------------------------------------
 // ** By kernel weight. *
+int screen_output_interval = 100;
+Real end_time = 10.0;               /**< End time. */
+Real Output_Time = end_time / 40.0; /**< Time stamps for output of body states. */
+
+Real cutoff_time = end_time * 0.6; //** Should be the same as the PY script */
 int number_observe_line = 4;
 Real observe_angles[4] = {
     7.0 * (2.0 * Pi / 360.0),
