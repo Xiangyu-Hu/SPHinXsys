@@ -13,7 +13,9 @@ namespace SPH
 {
 //=================================================================================================//
 template <class ObserveMethodType>
-void RegressionTestBase<ObserveMethodType>::writeToXml(ObservedQuantityRecording<VariableType> *observe_method, size_t iteration)
+template <typename... Parameters>
+void RegressionTestBase<ObserveMethodType>::
+    writeToXml(ObservedQuantityRecording<Parameters...> *observe_method, size_t iteration)
 {
     this->exec();
     std::string element_name_ = "Snapshot_" + std::to_string(iteration);
@@ -38,7 +40,9 @@ void RegressionTestBase<ObserveMethodType>::writeToXml(ReducedQuantityRecording<
 };
 //=================================================================================================//
 template <class ObserveMethodType>
-void RegressionTestBase<ObserveMethodType>::readFromXml(ObservedQuantityRecording<VariableType> *observe_method)
+template <typename... Parameters>
+void RegressionTestBase<ObserveMethodType>::
+    readFromXml(ObservedQuantityRecording<Parameters...> *observe_method)
 {
     observe_xml_engine_.loadXmlFile(in_output_filefullpath_);
     size_t number_of_particle_ = this->base_particles_.TotalRealParticles();

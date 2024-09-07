@@ -110,11 +110,12 @@ class RegressionTestBase : public ObserveMethodType
     };
     virtual ~RegressionTestBase();
 
-    void writeToXml(ObservedQuantityRecording<VariableType> *observe_method, size_t iteration = 0);
+    template <typename... Parameters>
+    void writeToXml(ObservedQuantityRecording<Parameters...> *observe_method, size_t iteration = 0);
     template <typename ReduceType>
     void writeToXml(ReducedQuantityRecording<ReduceType> *reduce_method, size_t iteration = 0);
-    /* read current result from xml file into xml memory. */
-    void readFromXml(ObservedQuantityRecording<VariableType> *observe_method);
+    template <typename... Parameters>
+    void readFromXml(ObservedQuantityRecording<Parameters...> *observe_method);
     template <typename ReduceType>
     void readFromXml(ReducedQuantityRecording<ReduceType> *reduce_method);
 
