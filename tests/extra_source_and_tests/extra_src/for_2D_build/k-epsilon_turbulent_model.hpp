@@ -93,10 +93,10 @@ TurbuViscousForce<DataDelegationType>::TurbuViscousForce(BaseRelationType &base_
 //=================================================================================================//
 template <class DataDelegationType, class ParticleScope>
 template <class BaseRelationType>
-ExtraTransportForce<Base, DataDelegationType, ParticleScope>::ExtraTransportForce(BaseRelationType &base_relation)
-    : LocalDynamics(base_relation.getSPHBody()),
-      DataDelegationType(base_relation), rho_(*this->particles_->template getVariableDataByName<Real>("Density")),
-      vel_(*this->particles_->template getVariableDataByName<Vecd>("Velocity")),
+ExtraTransportForce<Base, DataDelegationType, ParticleScope>::
+    ExtraTransportForce(BaseRelationType &base_relation)
+    : LocalDynamics(base_relation.getSPHBody()), DataDelegationType(base_relation),
+      rho_(*this->particles_->template getVariableDataByName<Real>("Density")), vel_(*this->particles_->template getVariableDataByName<Vecd>("Velocity")),
       zero_gradient_residue_(*this->particles_->template getVariableDataByName<Vecd>("ZeroGradientResidue")),
       extra_transport_stress_(*(this->particles_->template registerSharedVariable<Matd>("ExtraTransportStress"))),
       extra_transport_vel_(*(this->particles_->template registerSharedVariable<Vecd>("ExtraTransportVelocity"))),

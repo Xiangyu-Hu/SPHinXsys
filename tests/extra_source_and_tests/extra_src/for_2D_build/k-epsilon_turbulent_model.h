@@ -105,7 +105,7 @@ template <>
 class GetVelocityGradient<Inner<>> : public GetVelocityGradient<DataDelegateInner>
 {
   public:
-    explicit GetVelocityGradient(BaseInnerRelation &inner_relation);
+    explicit GetVelocityGradient(BaseInnerRelation &inner_relation, Real weight_sub);
     virtual ~GetVelocityGradient(){};
     void interaction(size_t index_i, Real dt = 0.0);
     void update(size_t index_i, Real dt = 0.0);
@@ -114,6 +114,7 @@ class GetVelocityGradient<Inner<>> : public GetVelocityGradient<DataDelegateInne
     StdLargeVec<Matd> &velocity_gradient_;
     StdLargeVec<Matd> &B_;
     StdLargeVec<Matd> &turbu_B_;
+    Real weight_sub_nearwall_;
 };
 using GetVelocityGradientInner = GetVelocityGradient<Inner<>>;
 
@@ -434,11 +435,12 @@ class InflowTurbulentCondition : public BaseFlowBoundaryCondition, public BaseTu
 {
   public:
     explicit InflowTurbulentCondition(BodyPartByCell &body_part,
-                                      Real CharacteristicLength, Real relaxation_rate = 1.0);
+                                      Real CharacteristicLength, Real relaxation_rate, int type_turbu_inlet);
     virtual ~InflowTurbulentCondition(){};
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
+    int type_turbu_inlet_;
     Real relaxation_rate_;
     Real CharacteristicLength_;
     StdLargeVec<Real> &turbu_k_;

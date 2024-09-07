@@ -85,11 +85,12 @@ Real WallFunction::laminar_law_velocity_gradient(Real vel_fric_mag, Real dynamic
     return vel_fric_mag * vel_fric_mag / dynamic_viscosity;
 }
 //=================================================================================================//
-GetVelocityGradient<Inner<>>::GetVelocityGradient(BaseInnerRelation &inner_relation)
+GetVelocityGradient<Inner<>>::GetVelocityGradient(BaseInnerRelation &inner_relation, Real weight_sub)
     : GetVelocityGradient<DataDelegateInner>(inner_relation),
       velocity_gradient_(*particles_->getVariableDataByName<Matd>("TurbulentVelocityGradient")),
       B_(*particles_->getVariableDataByName<Matd>("LinearGradientCorrectionMatrix")),
-      turbu_B_(*particles_->getVariableDataByName<Matd>("TurbulentLinearGradientCorrectionMatrix"))
+      turbu_B_(*particles_->getVariableDataByName<Matd>("TurbulentLinearGradientCorrectionMatrix")),
+      weight_sub_nearwall_(weight_sub)
 {
     this->particles_->addVariableToSort<Matd>("TurbulentVelocityGradient");
     this->particles_->addVariableToWrite<Matd>("TurbulentVelocityGradient");
@@ -110,7 +111,6 @@ void GetVelocityGradient<Inner<>>::interaction(size_t index_i, Real dt)
 
             Real r_ij = inner_neighborhood.r_ij_[n];
             const Vecd &e_ij = inner_neighborhood.e_ij_[n];
-            Real weight = 0.1;
             if (is_near_wall_P2_[index_i] == 10 && is_near_wall_P1_[index_j] == 1)
             {
                 //Vecd vel_ps = vel_[index_j] + 0.5 * r_ij * velocity_gradient_[index_j] * e_ij ;
@@ -126,8 +126,8 @@ void GetVelocityGradient<Inner<>>::interaction(size_t index_i, Real dt)
                 Vecd vel_diff = velocity_gradient_[index_j] * r_ij * e_ij;
                 Matd P2 = -vel_diff * nablaW_ijV_j.transpose();
 
-                //velocity_gradient_[index_i] += - weight * vel_diff * nablaW_ijV_j.transpose();
-                velocity_gradient_[index_i] += (1 - weight) * P1 + weight * P2;
+                //velocity_gradient_[index_i] += - weight_sub_nearwall_ * vel_diff * nablaW_ijV_j.transpose();
+                velocity_gradient_[index_i] += (1 - weight_sub_nearwall_) * P1 + weight_sub_nearwall_ * P2;
             }
             else
             {
@@ -661,11 +661,11 @@ Real TurbulentAdvectionTimeStepSize::outputResult(Real reduced_value)
     return advectionCFL_ * smoothing_length_min_ / (SMAX(speed_max, speed_ref_turbu_) + TinyReal);
 }
 //=================================================================================================//
-InflowTurbulentCondition::InflowTurbulentCondition(BodyPartByCell &body_part, Real CharacteristicLength, Real relaxation_rate) : BaseFlowBoundaryCondition(body_part),
-                                                                                                                                 relaxation_rate_(relaxation_rate),
-                                                                                                                                 CharacteristicLength_(CharacteristicLength),
-                                                                                                                                 turbu_k_(*particles_->getVariableDataByName<Real>("TurbulenceKineticEnergy")),
-                                                                                                                                 turbu_epsilon_(*particles_->getVariableDataByName<Real>("TurbulentDissipation"))
+InflowTurbulentCondition::InflowTurbulentCondition(BodyPartByCell &body_part, Real CharacteristicLength, Real relaxation_rate, int type_turbu_inlet) : BaseFlowBoundaryCondition(body_part), type_turbu_inlet_(type_turbu_inlet),
+                                                                                                                                                       relaxation_rate_(relaxation_rate),
+                                                                                                                                                       CharacteristicLength_(CharacteristicLength),
+                                                                                                                                                       turbu_k_(*particles_->getVariableDataByName<Real>("TurbulenceKineticEnergy")),
+                                                                                                                                                       turbu_epsilon_(*particles_->getVariableDataByName<Real>("TurbulentDissipation"))
 {
     TurbulentLength_ = turbulent_length_ratio_for_epsilon_inlet_ * CharacteristicLength_;
 }
@@ -683,7 +683,7 @@ Real InflowTurbulentCondition::getTurbulentInflowK(Vecd &position, Vecd &velocit
     Real u = velocity[0];
     Real temp_in_turbu_k = 1.5 * pow((turbulent_intensity_ * u), 2);
     Real turbu_k_original = turbu_k;
-    if (1)
+    if (type_turbu_inlet_ == 1)
     {
         Real channel_height = CharacteristicLength_; //** Temporarily treatment *
 
@@ -742,7 +742,7 @@ Real InflowTurbulentCondition::getTurbulentInflowE(Vecd &position, Real &turbu_k
     //Real temp_in_turbu_E = C_mu_ * pow(turbu_k, 1.5) / (0.1*getTurbulentLength());
     Real temp_in_turbu_E = C_mu_75_ * pow(turbu_k, 1.5) / TurbulentLength_;
     Real turbu_E_original = turbu_E;
-    if (1)
+    if (type_turbu_inlet_ == 1)
     {
         Real channel_height = CharacteristicLength_; //** Temporarily treatment *
 
