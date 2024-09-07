@@ -116,7 +116,9 @@ int main(int ac, char *av[])
     InteractionWithUpdate<fluid_dynamics::DensitySummationComplexFreeSurface> fluid_density_by_summation(water_block_inner, water_wall_contact);
 
     InteractionDynamicsCK<execution::ParallelDevicePolicy, fluid_dynamics::AcousticStep1stHalfWithWallRiemannCK>
-        fluid_pressure_relaxation_ck(water_block_inner, water_wall_contact);
+        fluid_acoustic_step_1st_half(water_block_inner, water_wall_contact);
+    InteractionDynamicsCK<execution::ParallelDevicePolicy, fluid_dynamics::AcousticStep2ndHalfWithWallRiemannCK>
+        fluid_acoustic_step_2nd_half(water_block_inner, water_wall_contact);
 
     InteractionDynamicsCK<execution::ParallelDevicePolicy, fluid_dynamics::DensityRegularizationComplexFreeSurface>
         fluid_density_by_summation_ck(water_block_inner, water_wall_contact);

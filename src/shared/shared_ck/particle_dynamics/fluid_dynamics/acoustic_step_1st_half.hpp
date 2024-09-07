@@ -1,7 +1,7 @@
-#ifndef ACOUSTIC_STEP_HPP
-#define ACOUSTIC_STEP_HPP
+#ifndef ACOUSTIC_STEP_1ST_HALF_HPP
+#define ACOUSTIC_STEP_1ST_HALF_HPP
 
-#include "acoustic_step.h"
+#include "acoustic_step_1st_half.h"
 
 namespace SPH
 {
@@ -118,8 +118,8 @@ AcousticStep1stHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType, Param
       drho_dt_(encloser.dv_drho_dt_->DelegatedDataField(ex_policy)),
       force_(encloser.dv_force_->DelegatedDataField(ex_policy)),
       force_prior_(encloser.dv_force_prior_->DelegatedDataField(ex_policy)),
-      wall_Vol_k_(encloser.dv_wall_Vol_[contact_index]->DelegatedDataField(ex_policy)),
-      wall_acc_ave_k_(encloser.dv_wall_acc_ave_[contact_index]->DelegatedDataField(ex_policy)) {}
+      wall_Vol_(encloser.dv_wall_Vol_[contact_index]->DelegatedDataField(ex_policy)),
+      wall_acc_ave_(encloser.dv_wall_acc_ave_[contact_index]->DelegatedDataField(ex_policy)) {}
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
 void AcousticStep1stHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType, Parameters...>>::
@@ -130,11 +130,11 @@ void AcousticStep1stHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType, 
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
     {
         UnsignedInt index_j = this->neighbor_index_[n];
-        Real dW_ijV_j = this->dW_ij(index_i, index_j) * wall_Vol_k_[index_j];
+        Real dW_ijV_j = this->dW_ij(index_i, index_j) * wall_Vol_[index_j];
         Vecd e_ij = this->e_ij(index_i, index_j);
         Real r_ij = this->vec_r_ij(index_i, index_j).norm();
 
-        Real face_wall_external_acceleration = (force_prior_[index_i] / mass_[index_i] - wall_acc_ave_k_[index_j]).dot(-e_ij);
+        Real face_wall_external_acceleration = (force_prior_[index_i] / mass_[index_i] - wall_acc_ave_[index_j]).dot(-e_ij);
         Real p_in_wall = p_[index_i] + rho_[index_i] * r_ij * SMAX(Real(0), face_wall_external_acceleration);
         force -= (p_[index_i] + p_in_wall) * correction_(index_i) * dW_ijV_j * e_ij;
         rho_dissipation += riemann_solver_.DissipativeUJump(p_[index_i] - p_in_wall) * dW_ijV_j;
@@ -145,4 +145,4 @@ void AcousticStep1stHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType, 
 //=================================================================================================//
 } // namespace fluid_dynamics
 } // namespace SPH
-#endif // ACOUSTIC_STEP_HPP
+#endif // ACOUSTIC_STEP_1ST_HALF_HPP

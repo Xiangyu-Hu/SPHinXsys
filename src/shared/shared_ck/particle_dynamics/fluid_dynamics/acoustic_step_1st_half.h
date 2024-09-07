@@ -21,14 +21,14 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	acoustic_step.h
+ * @file 	acoustic_step_1st_half.h
  * @brief 	Here, we define the algorithm classes for fluid dynamics within the body.
  * @details TBD.
  * @author	Xiangyu Hu
  */
 
-#ifndef ACOUSTIC_STEP_H
-#define ACOUSTIC_STEP_H
+#ifndef ACOUSTIC_STEP_1ST_HALF_H
+#define ACOUSTIC_STEP_1ST_HALF_H
 
 #include "base_fluid_dynamics.h"
 #include "interaction_ck.hpp"
@@ -92,7 +92,7 @@ class AcousticStep1stHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionTyp
         KernelCorrectionType correction_;
         RiemannSolverType riemann_solver_;
         Real *Vol_, *rho_, *p_, *drho_dt_;
-        Vecd *vel_, *force_;
+        Vecd *force_;
     };
 
     class UpdateKernel
@@ -134,8 +134,8 @@ class AcousticStep1stHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType,
         RiemannSolverType riemann_solver_;
         Real *Vol_, *rho_, *mass_, *p_, *drho_dt_;
         Vecd *vel_, *force_, *force_prior_;
-        Real *wall_Vol_k_;
-        Vecd *wall_acc_ave_k_;
+        Real *wall_Vol_;
+        Vecd *wall_acc_ave_;
     };
 
   protected:
@@ -148,4 +148,4 @@ using AcousticStep1stHalfWithWallRiemannCK =
                         Contact<Wall, AcousticRiemannSolver, NoKernelCorrection>>;
 } // namespace fluid_dynamics
 } // namespace SPH
-#endif // ACOUSTIC_STEP_H
+#endif // ACOUSTIC_STEP_1ST_HALF_H

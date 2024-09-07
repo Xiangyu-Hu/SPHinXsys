@@ -31,7 +31,8 @@
 #ifndef ALL_SHARED_PHYSICAL_DYNAMICS_CK_H
 #define ALL_SHARED_PHYSICAL_DYNAMICS_CK_H
 
-#include "acoustic_step.hpp"
+#include "acoustic_step_1st_half.hpp"
+#include "acoustic_step_2nd_half.hpp"
 #include "all_general_dynamics_ck.h"
 #include "complex_algorithms_ck.h"
 #include "density_regularization.hpp"
