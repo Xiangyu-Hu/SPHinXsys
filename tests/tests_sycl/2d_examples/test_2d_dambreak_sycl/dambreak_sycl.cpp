@@ -89,6 +89,8 @@ int main(int ac, char *av[])
     SequencedCombination<UpdateRelation<
         execution::ParallelDevicePolicy, BodyRelationUpdate<Inner<>, Contact<>>>>
         water_block_update_complex_relation(water_block_inner, water_wall_contact);
+    UpdateRelation<execution::SequencedPolicy, BodyRelationUpdate<Contact<>>>
+        fluid_observer_contact_relation(fluid_observer_contact);
     DiscreteVariable<UnsignedInt> *dv_particle_offset_water_inner = water_block_inner.getParticleOffset();
     StdVec<DiscreteVariable<UnsignedInt> *> dv_particle_offset_water_contact = water_wall_contact.getContactParticleOffset();
     //----------------------------------------------------------------------
@@ -145,6 +147,7 @@ int main(int ac, char *av[])
     RestartIO restart_io(sph_system);
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalMechanicalEnergy>> write_water_mechanical_energy(water_block, gravity);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>> write_recorded_water_pressure("Pressure", fluid_observer_contact);
+    ObservingAQuantityCK<execution::ParallelDevicePolicy, Real> fluid_observer_pressure(fluid_observer_contact, "Pressure");
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
@@ -170,6 +173,9 @@ int main(int ac, char *av[])
 
     fluid_density_by_summation_ck.exec();
     dv_density->synchronizeWithDevice();
+
+    fluid_observer_contact_relation.exec();
+    fluid_observer_pressure.exec();
     //----------------------------------------------------------------------
     //	Load restart file if necessary.
     //----------------------------------------------------------------------
