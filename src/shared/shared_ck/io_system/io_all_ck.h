@@ -20,15 +20,14 @@
  * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
  *                                                                           *
  * ------------------------------------------------------------------------- */
-/**
- * @file 	sphinxsys_ck.h
- * @brief 	This is the header file that user code should include to pick up all SPHinXsys capabilities.
- * @author	Chi Zhang and Xiangyu Hu
- */
-#ifndef SPHINXSYS_CK_H
-#define SPHINXSYS_CK_H
 
-#include "all_shared_physical_dynamics_ck.h"
-#include "io_all_ck.h"
-#include "sphinxsys.h"
-#endif // SPHINXSYS_CK_H
+/** @file io_all_ck.h
+This is the header file that user code should include to pick up all
+io class used in SPHinXsys. **/
+
+#ifndef IO_ALL_CK_H
+#define IO_ALL_CK_H
+
+#include "io_observation_ck.h"
+
+#endif // IO_ALL_CK_H

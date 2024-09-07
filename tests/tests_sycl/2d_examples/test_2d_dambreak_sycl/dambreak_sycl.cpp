@@ -147,7 +147,7 @@ int main(int ac, char *av[])
     RestartIO restart_io(sph_system);
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalMechanicalEnergy>> write_water_mechanical_energy(water_block, gravity);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>> write_recorded_water_pressure("Pressure", fluid_observer_contact);
-    ObservingAQuantityCK<execution::ParallelDevicePolicy, Real> fluid_observer_pressure(fluid_observer_contact, "Pressure");
+    ObservedQuantityRecordingCK<execution::ParallelDevicePolicy, Real> fluid_observer_pressure("Pressure", fluid_observer_contact);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
