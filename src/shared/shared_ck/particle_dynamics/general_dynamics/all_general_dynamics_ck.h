@@ -31,3 +31,4 @@
 
 #include "force_prior_ck.hpp"
 #include "geometric_dynamics.hpp"
+#include "interpolation_dynamics.hpp"
