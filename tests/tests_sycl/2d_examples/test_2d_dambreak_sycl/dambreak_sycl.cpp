@@ -135,11 +135,6 @@ int main(int ac, char *av[])
     DiscreteVariable<Real> *dv_rho = water_block.getBaseParticles().getVariableByName<Real>("Density");
     DiscreteVariable<Real> *dv_mass = water_block.getBaseParticles().getVariableByName<Real>("Mass");
     DiscreteVariable<Real> *dv_p = water_block.getBaseParticles().getVariableByName<Real>("Pressure");
-
-    //----------------------------------------------------------------------
-    //	Define the configuration related particles dynamics.
-    //----------------------------------------------------------------------
-    ParticleSorting particle_sorting(water_block);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
@@ -293,10 +288,6 @@ int main(int ac, char *av[])
 
             /** Update cell linked list and configuration. */
             time_instance = TickCount::now();
-            if (number_of_iterations % 100 == 0 && number_of_iterations != 1)
-            {
-                particle_sorting.exec();
-            }
             water_block.updateCellLinkedList();
             water_wall_complex.updateConfiguration();
             fluid_observer_contact.updateConfiguration();
