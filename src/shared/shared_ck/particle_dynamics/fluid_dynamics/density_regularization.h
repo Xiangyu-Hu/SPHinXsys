@@ -21,7 +21,7 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file density_summation_ck.h
+ * @file density_regularization.h
  * @brief Here, we define the algorithm classes for computing
  * the density of a continuum by kernel function summation.
  * @details We are using templates and their explicit or partial specializations
@@ -29,8 +29,8 @@
  * @author Xiangyu Hu
  */
 
-#ifndef DENSITY_SUMMATION_CK_H
-#define DENSITY_SUMMATION_CK_H
+#ifndef DENSITY_REGULARIZATION_H
+#define DENSITY_REGULARIZATION_H
 
 #include "base_fluid_dynamics.h"
 #include "interaction_ck.hpp"
@@ -47,7 +47,7 @@ template <>
 class Regularization<Internal>
 {
   public:
-    Regularization(BaseParticles *particles) {};
+    Regularization(BaseParticles *particles){};
 
     class ComputingKernel
     {
@@ -65,7 +65,7 @@ template <>
 class Regularization<FreeSurface>
 {
   public:
-    Regularization(BaseParticles *particles) {};
+    Regularization(BaseParticles *particles){};
 
     class ComputingKernel
     {
@@ -84,17 +84,17 @@ class Regularization<FreeSurface>
 };
 
 template <typename... RelationTypes>
-class DensitySummationCK;
+class DensityRegularization;
 
 template <template <typename...> class RelationType, typename... Parameters>
-class DensitySummationCK<Base, RelationType<Parameters...>>
+class DensityRegularization<Base, RelationType<Parameters...>>
     : public Interaction<RelationType<Parameters...>>
 {
 
   public:
     template <class DynamicsIdentifier>
-    explicit DensitySummationCK(DynamicsIdentifier &identifier);
-    virtual ~DensitySummationCK() {};
+    explicit DensityRegularization(DynamicsIdentifier &identifier);
+    virtual ~DensityRegularization(){};
 
     class InteractKernel
         : public Interaction<RelationType<Parameters...>>::InteractKernel
@@ -102,7 +102,7 @@ class DensitySummationCK<Base, RelationType<Parameters...>>
       public:
         template <class ExecutionPolicy, typename... Args>
         InteractKernel(const ExecutionPolicy &ex_policy,
-                       DensitySummationCK<Base, RelationType<Parameters...>> &encloser,
+                       DensityRegularization<Base, RelationType<Parameters...>> &encloser,
                        Args &&...args);
         Real InitialDensity() { return rho0_; };
 
@@ -117,23 +117,23 @@ class DensitySummationCK<Base, RelationType<Parameters...>>
 };
 
 template <class FlowType, typename... Parameters>
-class DensitySummationCK<Inner<WithUpdate, FlowType, Parameters...>>
-    : public DensitySummationCK<Base, Inner<Parameters...>>
+class DensityRegularization<Inner<WithUpdate, FlowType, Parameters...>>
+    : public DensityRegularization<Base, Inner<Parameters...>>
 {
     using RegularizationKernel =
         typename Regularization<FlowType>::ComputingKernel;
 
   public:
-    explicit DensitySummationCK(InnerRelation &inner_relation);
-    virtual ~DensitySummationCK() {};
+    explicit DensityRegularization(InnerRelation &inner_relation);
+    virtual ~DensityRegularization(){};
 
     class InteractKernel
-        : public DensitySummationCK<Base, Inner<Parameters...>>::InteractKernel
+        : public DensityRegularization<Base, Inner<Parameters...>>::InteractKernel
     {
       public:
         template <class ExecutionPolicy>
         InteractKernel(const ExecutionPolicy &ex_policy,
-                       DensitySummationCK<Inner<WithUpdate, FlowType, Parameters...>> &encloser);
+                       DensityRegularization<Inner<WithUpdate, FlowType, Parameters...>> &encloser);
         void interact(size_t index_i, Real dt = 0.0);
 
       protected:
@@ -141,12 +141,12 @@ class DensitySummationCK<Inner<WithUpdate, FlowType, Parameters...>>
     };
 
     class UpdateKernel
-        : public DensitySummationCK<Base, Inner<Parameters...>>::InteractKernel
+        : public DensityRegularization<Base, Inner<Parameters...>>::InteractKernel
     {
       public:
         template <class ExecutionPolicy>
         UpdateKernel(const ExecutionPolicy &ex_policy,
-                     DensitySummationCK<Inner<WithUpdate, FlowType, Parameters...>> &encloser);
+                     DensityRegularization<Inner<WithUpdate, FlowType, Parameters...>> &encloser);
         void update(size_t index_i, Real dt = 0.0);
 
       protected:
@@ -156,24 +156,24 @@ class DensitySummationCK<Inner<WithUpdate, FlowType, Parameters...>>
   protected:
     Regularization<FlowType> regularization_method_;
 };
-using DensitySummationCKInner = DensitySummationCK<Inner<WithUpdate, Internal>>;
-using DensitySummationCKInnerFreeSurface = DensitySummationCK<Inner<WithUpdate, FreeSurface>>;
+using DensitySummationCKInner = DensityRegularization<Inner<WithUpdate, Internal>>;
+using DensitySummationCKInnerFreeSurface = DensityRegularization<Inner<WithUpdate, FreeSurface>>;
 
 template <typename... Parameters>
-class DensitySummationCK<Contact<Parameters...>>
-    : public DensitySummationCK<Base, Contact<Parameters...>>
+class DensityRegularization<Contact<Parameters...>>
+    : public DensityRegularization<Base, Contact<Parameters...>>
 {
   public:
-    explicit DensitySummationCK(ContactRelation &contact_relation);
-    virtual ~DensitySummationCK() {};
+    explicit DensityRegularization(ContactRelation &contact_relation);
+    virtual ~DensityRegularization(){};
 
     class InteractKernel
-        : public DensitySummationCK<Base, Contact<Parameters...>>::InteractKernel
+        : public DensityRegularization<Base, Contact<Parameters...>>::InteractKernel
     {
       public:
         template <class ExecutionPolicy>
         InteractKernel(const ExecutionPolicy &ex_policy,
-                       DensitySummationCK<Contact<Parameters...>> &encloser,
+                       DensityRegularization<Contact<Parameters...>> &encloser,
                        size_t contact_index);
         void interact(size_t index_i, Real dt = 0.0);
 
@@ -187,8 +187,8 @@ class DensitySummationCK<Contact<Parameters...>>
     StdVec<DiscreteVariable<Real> *> dv_contact_mass_;
 };
 
-using DensitySummationComplexFreeSurfaceCK = DensitySummationCK<Inner<WithUpdate, FreeSurface>, Contact<>>;
+using DensityRegularizationComplexFreeSurface = DensityRegularization<Inner<WithUpdate, FreeSurface>, Contact<>>;
 
 } // namespace fluid_dynamics
 } // namespace SPH
-#endif // DENSITY_SUMMATION_CK_H
+#endif // DENSITY_REGULARIZATION_H

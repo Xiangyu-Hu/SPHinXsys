@@ -118,7 +118,7 @@ int main(int ac, char *av[])
     InteractionDynamicsCK<execution::ParallelDevicePolicy, fluid_dynamics::AcousticStep1stHalfWithWallRiemannCK>
         fluid_pressure_relaxation_ck(water_block_inner, water_wall_contact);
 
-    InteractionDynamicsCK<execution::ParallelDevicePolicy, fluid_dynamics::DensitySummationComplexFreeSurfaceCK>
+    InteractionDynamicsCK<execution::ParallelDevicePolicy, fluid_dynamics::DensityRegularizationComplexFreeSurface>
         fluid_density_by_summation_ck(water_block_inner, water_wall_contact);
     DiscreteVariable<Real> *dv_density = water_block.getBaseParticles().getVariableByName<Real>("Density");
 
