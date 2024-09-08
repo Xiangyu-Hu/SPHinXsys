@@ -19,7 +19,7 @@ using namespace SPH;
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
 Real DH = 0.0635; /**< Channel height. */
-Real num_fluid_cross_section = 20.0;
+Real num_fluid_cross_section = 40.0;
 Real central_angel = 43.0 * 2.0 * Pi / 360.0;
 Real extend_in = 0.0;
 Real extend_out = 0.0;
@@ -51,7 +51,7 @@ Real characteristic_length = DH; /**<It needs characteristic Length to calculate
 int type_turbulent_inlet = 0;
 Real relaxation_rate_turbulent_inlet = 0.8;
 //** Tag for AMRD *
-int is_AMRD = 1;
+int is_AMRD = 0;
 //** Weight for correcting the velocity  gradient in the sub near wall region  *
 Real weight_vel_grad_sub_nearwall = 0.1;
 //** Empirical parameter for initial stability*
