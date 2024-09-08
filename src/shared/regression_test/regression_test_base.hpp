@@ -21,10 +21,11 @@ void RegressionTestBase<ObserveMethodType>::
     std::string element_name_ = "Snapshot_" + std::to_string(iteration);
     SimTK::Xml::Element &element_ = observe_xml_engine_.root_element_;
     observe_xml_engine_.addElementToXmlDoc(element_name_);
+    VariableType *interpolated_quantities = this->dv_interpolated_quantities_->DataField();
     for (size_t i = 0; i != this->base_particles_.TotalRealParticles(); ++i)
     {
         xmlmemory_io_.writeDataToXmlMemory(observe_xml_engine_, element_,
-                                           element_name_, i, this->interpolated_quantities_[i], this->quantity_name_);
+                                           element_name_, i, interpolated_quantities[i], this->quantity_name_);
     };
 };
 //=================================================================================================//

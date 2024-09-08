@@ -51,11 +51,6 @@ class VariableNorm : public BaseLocalDynamicsReduce<NormType, DynamicsIdentifier
 
   protected:
     DataType *variable_;
-
-    template <typename Datatype>
-    Real getSquaredNorm(const Datatype &variable) { return variable.squaredNorm(); };
-
-    Real getSquaredNorm(const Real &variable) { return variable * variable; };
 };
 
 /**

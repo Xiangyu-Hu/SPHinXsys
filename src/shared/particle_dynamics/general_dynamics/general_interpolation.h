@@ -43,7 +43,7 @@ class BaseInterpolation : public LocalDynamics, public DataDelegateContact
   public:
     explicit BaseInterpolation(BaseContactRelation &contact_relation, const std::string &variable_name)
         : LocalDynamics(contact_relation.getSPHBody()), DataDelegateContact(contact_relation),
-          interpolated_quantities_(nullptr)
+          dv_interpolated_quantities_(nullptr), interpolated_quantities_(nullptr)
     {
         for (size_t k = 0; k != this->contact_particles_.size(); ++k)
         {
@@ -78,6 +78,7 @@ class BaseInterpolation : public LocalDynamics, public DataDelegateContact
     };
 
   protected:
+    DiscreteVariable<DataType> *dv_interpolated_quantities_;
     DataType *interpolated_quantities_;
     StdVec<Real *> contact_Vol_;
     StdVec<DataType *> contact_data_;
@@ -95,8 +96,9 @@ class InterpolatingAQuantity : public BaseInterpolation<DataType>
                                     const std::string &interpolated_variable, const std::string &target_variable)
         : BaseInterpolation<DataType>(contact_relation, target_variable)
     {
-        this->interpolated_quantities_ =
-            this->particles_->template getVariableDataByName<DataType>(interpolated_variable);
+        this->dv_interpolated_quantities_ =
+            this->particles_->template getVariableByName<DataType>(interpolated_variable);
+        this->interpolated_quantities_ = this->dv_interpolated_quantities_->DataField();
     };
     virtual ~InterpolatingAQuantity(){};
 };
@@ -112,7 +114,8 @@ class ObservingAQuantity : public InteractionDynamics<BaseInterpolation<DataType
     explicit ObservingAQuantity(BaseContactRelation &contact_relation, const std::string &variable_name)
         : InteractionDynamics<BaseInterpolation<DataType>>(contact_relation, variable_name)
     {
-        this->interpolated_quantities_ = this->particles_->template registerStateVariable<DataType>(variable_name);
+        this->dv_interpolated_quantities_ = this->particles_->template registerStateVariableOnly<DataType>(variable_name);
+        this->interpolated_quantities_ = this->dv_interpolated_quantities_->DataField();
     };
     virtual ~ObservingAQuantity(){};
 };

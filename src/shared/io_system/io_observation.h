@@ -35,13 +35,13 @@
 
 namespace SPH
 {
-/**
- * @class ObservedQuantityRecording
- * @brief write files for observed quantity
- */
+
+template <typename...>
+class ObservedQuantityRecording;
+
 template <typename VariableType>
-class ObservedQuantityRecording : public BodyStatesRecording,
-                                  public ObservingAQuantity<VariableType>
+class ObservedQuantityRecording<VariableType> : public BodyStatesRecording,
+                                                public ObservingAQuantity<VariableType>
 {
   protected:
     SPHBody &observer_;

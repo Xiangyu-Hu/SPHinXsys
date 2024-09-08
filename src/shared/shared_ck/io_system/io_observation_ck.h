@@ -29,7 +29,7 @@
 #ifndef IO_OBSERVATION_CK_H
 #define IO_OBSERVATION_CK_H
 
-#include "io_base.h"
+#include "io_observation.h"
 
 #include "execution_policy.h"
 #include "interpolation_dynamics.hpp"
@@ -37,13 +37,10 @@
 
 namespace SPH
 {
-/**
- * @class ObservedQuantityRecordingCK
- * @brief write files for observed quantity
- */
 template <class ExecutionPolicy, typename DataType>
-class ObservedQuantityRecordingCK : public BodyStatesRecording,
-                                    public ObservingAQuantityCK<ExecutionPolicy, DataType>
+class ObservedQuantityRecording<ExecutionPolicy, DataType>
+    : public BodyStatesRecording,
+      public ObservingAQuantityCK<ExecutionPolicy, DataType>
 {
   protected:
     SPHBody &observer_;
@@ -57,7 +54,7 @@ class ObservedQuantityRecordingCK : public BodyStatesRecording,
     DataType type_indicator_; /*< this is an indicator to identify the variable type. */
 
   public:
-    ObservedQuantityRecordingCK(const std::string &quantity_name, ContactRelation &contact_relation)
+    ObservedQuantityRecording(const std::string &quantity_name, ContactRelation &contact_relation)
         : BodyStatesRecording(contact_relation.getSPHBody()),
           ObservingAQuantityCK<ExecutionPolicy, DataType>(contact_relation, quantity_name),
           observer_(contact_relation.getSPHBody()), plt_engine_(),
@@ -65,7 +62,7 @@ class ObservedQuantityRecordingCK : public BodyStatesRecording,
           dynamics_identifier_name_(contact_relation.getSPHBody().getName()),
           quantity_name_(quantity_name)
     {
-        DataType *interpolated_quantities_ = this->dv_interpolated_quantities_->DataField();
+        DataType *interpolated_quantities = this->dv_interpolated_quantities_->DataField();
         /** Output for .dat file. */
         filefullpath_output_ = io_environment_.output_folder_ + "/" + dynamics_identifier_name_ + "_" + quantity_name + ".dat";
         std::ofstream out_file(filefullpath_output_.c_str(), std::ios::app);
@@ -75,23 +72,23 @@ class ObservedQuantityRecordingCK : public BodyStatesRecording,
         for (size_t i = 0; i != base_particles_.TotalRealParticles(); ++i)
         {
             std::string quantity_name_i = quantity_name + "[" + std::to_string(i) + "]";
-            plt_engine_.writeAQuantityHeader(out_file, interpolated_quantities_[i], quantity_name_i);
+            plt_engine_.writeAQuantityHeader(out_file, interpolated_quantities[i], quantity_name_i);
         }
         out_file << "\n";
         out_file.close();
     };
-    virtual ~ObservedQuantityRecordingCK(){};
+    virtual ~ObservedQuantityRecording(){};
 
     virtual void writeWithFileName(const std::string &sequence) override
     {
         this->exec();
         this->dv_interpolated_quantities_->prepareForOutput(ExecutionPolicy{});
-        DataType *interpolated_quantities_ = this->dv_interpolated_quantities_->DataField();
+        DataType *interpolated_quantities = this->dv_interpolated_quantities_->DataField();
         std::ofstream out_file(filefullpath_output_.c_str(), std::ios::app);
         out_file << sv_physical_time_.getValue() << "   ";
         for (size_t i = 0; i != base_particles_.TotalRealParticles(); ++i)
         {
-            plt_engine_.writeAQuantity(out_file, interpolated_quantities_[i]);
+            plt_engine_.writeAQuantity(out_file, interpolated_quantities[i]);
         }
         out_file << "\n";
         out_file.close();
