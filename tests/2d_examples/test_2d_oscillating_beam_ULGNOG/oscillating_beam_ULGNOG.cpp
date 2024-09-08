@@ -1,8 +1,9 @@
 /* ----------------------------------------------------------------------------*
- *          SPHinXsys: 2D oscillation beam--updated Lagrangian method          *
+ *                    SPHinXsys: 2D oscillation beam                           *
  * ----------------------------------------------------------------------------*
  * This is the one of the basic test cases for understanding SPH method for    *
- * solid simulation based on updated Lagrangian method                         *
+ * solid simulation based on updated Lagrangian method.                        *
+ * A generalized hourglass control method is used here.                         *
  * In this case, the constraint of the beam is implemented with                *
  * internal constrained subregion.                                             *
  * @author Shuaihao Zhang, Dong Wu and Xiangyu Hu                              *
@@ -108,7 +109,6 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     RealBody beam_body(sph_system, makeShared<Beam>("BeamBody"));
-    beam_body.sph_adaptation_->resetKernel<KernelCubicBSpline>();
     beam_body.defineMaterial<GeneralContinuum>(rho0_s, c0, Youngs_modulus, poisson);
     beam_body.generateParticles<BaseParticles, Lattice>();
 
@@ -131,13 +131,11 @@ int main(int ac, char *av[])
     /** initial condition */
     InteractionWithUpdate<LinearGradientCorrectionMatrixInner> correction_matrix(beam_body_inner);
     SimpleDynamics<BeamInitialCondition> beam_initial_velocity(beam_body);
-
-    InteractionDynamics<continuum_dynamics::ShearAccelerationRelaxation> beam_shear_acceleration(beam_body_inner);
-    Dynamics1Level<continuum_dynamics::ShearStressRelaxation> beam_shear_stress_relaxation(beam_body_inner);
+    Dynamics1Level<continuum_dynamics::ShearAccelerationRelaxationHourglassControl>
+        beam_shear_acceleration_relaxation(beam_body_inner);
     Dynamics1Level<continuum_dynamics::Integration1stHalf> beam_pressure_relaxation(beam_body_inner);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfInnerDissipativeRiemann> beam_density_relaxation(beam_body_inner);
     SimpleDynamics<fluid_dynamics::ContinuumVolumeUpdate> beam_volume_update(beam_body);
-
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> fluid_advection_time_step(beam_body, U_ref, 0.2);
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> fluid_acoustic_time_step(beam_body, 0.4);
     // clamping a solid body part.
@@ -184,15 +182,13 @@ int main(int ac, char *av[])
             Real relaxation_time = 0.0;
             Real advection_dt = fluid_advection_time_step.exec();
             beam_volume_update.exec();
-
             while (relaxation_time < advection_dt)
             {
                 Real acoustic_dt = fluid_acoustic_time_step.exec();
-                beam_shear_stress_relaxation.exec(acoustic_dt);
                 beam_pressure_relaxation.exec(acoustic_dt);
                 constraint_beam_base.exec();
+                beam_shear_acceleration_relaxation.exec(acoustic_dt);
                 beam_density_relaxation.exec(acoustic_dt);
-                beam_shear_acceleration.exec(acoustic_dt);
                 ite++;
                 relaxation_time += acoustic_dt;
                 integration_time += acoustic_dt;
@@ -229,6 +225,5 @@ int main(int ac, char *av[])
     {
         write_beam_kinetic_energy.testResult();
     }
-
     return 0;
 }

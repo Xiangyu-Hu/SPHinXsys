@@ -49,6 +49,22 @@ class ContinuumInitialCondition : public LocalDynamics, public DataDelegateSimpl
     StdLargeVec<Mat3d> &stress_tensor_3D_;
 };
 
+class AcousticTimeStepSize : public LocalDynamicsReduce<ReduceMax>, public DataDelegateSimple
+{
+  public:
+    explicit AcousticTimeStepSize(SPHBody &sph_body, Real acousticCFL = 0.6);
+    virtual ~AcousticTimeStepSize(){};
+    Real reduce(size_t index_i, Real dt = 0.0);
+    virtual Real outputResult(Real reduced_value) override;
+
+  protected:
+    Fluid &fluid_;
+    StdLargeVec<Real> &rho_, &p_;
+    StdLargeVec<Vecd> &vel_;
+    Real smoothing_length_min_;
+    Real acousticCFL_;
+};
+
 template <class FluidDynamicsType>
 class BaseIntegration1stHalf : public FluidDynamicsType
 {
@@ -202,6 +218,35 @@ class StressDiffusion : public BasePlasticIntegration<DataDelegateInner>
   protected:
     Real zeta_ = 0.1, fai_; /*diffusion coefficient*/
     Real smoothing_length_, sound_speed_;
+};
+
+class ShearAccelerationRelaxationHourglassControl : public fluid_dynamics::BaseIntegration<DataDelegateInner>
+{
+  public:
+    explicit ShearAccelerationRelaxationHourglassControl(BaseInnerRelation &inner_relation, Real xi_ = 4.0);
+    virtual ~ShearAccelerationRelaxationHourglassControl(){};
+    void initialization(size_t index_i, Real dt = 0.0);
+    void interaction(size_t index_i, Real dt = 0.0);
+    void update(size_t index_i, Real dt = 0.0);
+
+  protected:
+    GeneralContinuum &continuum_;
+    StdLargeVec<Matd> &shear_stress_, &shear_stress_rate_, &velocity_gradient_, &strain_tensor_, &strain_tensor_rate_, &B_;
+    StdLargeVec<Real> &von_mises_stress_, &von_mises_strain_, &scale_penalty_force_;
+    StdLargeVec<Vecd> &acc_shear_, &acc_hourglass_;
+    Real G_, xi_;
+};
+
+class ShearStressRelaxationHourglassControlJ2Plasticity : public ShearAccelerationRelaxationHourglassControl
+{
+  public:
+    explicit ShearStressRelaxationHourglassControlJ2Plasticity(BaseInnerRelation &inner_relation, Real xi_ = 0.2);
+    virtual ~ShearStressRelaxationHourglassControlJ2Plasticity(){};
+    void interaction(size_t index_i, Real dt = 0.0);
+
+  protected:
+    J2Plasticity &J2_plasticity_;
+    StdLargeVec<Real> &hardening_factor_;
 };
 } // namespace continuum_dynamics
 } // namespace SPH

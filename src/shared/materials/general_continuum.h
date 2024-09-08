@@ -98,5 +98,31 @@ class PlasticContinuum : public GeneralContinuum
 
     virtual GeneralContinuum *ThisObjectPtr() override { return this; };
 };
+
+class J2Plasticity : public GeneralContinuum
+{
+  protected:
+    Real yield_stress_;
+    Real hardening_modulus_;
+    const Real sqrt_2_over_3_ = sqrt(2.0 / 3.0);
+
+  public:
+    explicit J2Plasticity(Real rho0, Real c0, Real youngs_modulus, Real poisson_ratio, Real yield_stress, Real hardening_modulus = 0.0)
+        : GeneralContinuum(rho0, c0, youngs_modulus, poisson_ratio),
+          yield_stress_(yield_stress), hardening_modulus_(hardening_modulus)
+    {
+        material_type_name_ = "J2Plasticity";
+    };
+    virtual ~J2Plasticity(){};
+
+    Real YieldStress() { return yield_stress_; };
+    Real HardeningModulus() { return hardening_modulus_; };
+
+    virtual Matd ConstitutiveRelationShearStress(Matd &velocity_gradient, Matd &shear_stress, Real &hardening_factor);
+    virtual Matd ReturnMappingShearStress(Matd &shear_stress,  Real &hardening_factor);
+    virtual Real ScalePenaltyForce(Matd &shear_stress, Real &hardening_factor);
+    virtual Real HardeningFactorRate(const Matd &shear_stress, Real &hardening_factor);
+    virtual J2Plasticity *ThisObjectPtr() override { return this; };
+};
 } // namespace SPH
 #endif // GENERAL_CONTINUUM_H
