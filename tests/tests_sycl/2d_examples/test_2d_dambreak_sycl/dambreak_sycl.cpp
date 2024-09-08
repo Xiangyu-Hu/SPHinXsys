@@ -159,7 +159,7 @@ int main(int ac, char *av[])
     TickCount t1 = TickCount::now();
     TimeInterval interval;
     TimeInterval interval_computing_time_step;
-    TimeInterval interval_computing_fluid_pressure_relaxation;
+    TimeInterval interval_acoustic_steps;
     TimeInterval interval_updating_configuration;
     TickCount time_instance;
     //----------------------------------------------------------------------
@@ -198,7 +198,7 @@ int main(int ac, char *av[])
                 integration_time += acoustic_dt;
                 sv_physical_time->incrementValue(acoustic_dt);
             }
-            interval_computing_fluid_pressure_relaxation += TickCount::now() - time_instance;
+            interval_acoustic_steps += TickCount::now() - time_instance;
 
             /** screen output, write body observables and restart files  */
             if (number_of_iterations % screen_output_interval == 0)
@@ -239,8 +239,8 @@ int main(int ac, char *av[])
               << " seconds." << std::endl;
     std::cout << std::fixed << std::setprecision(9) << "interval_computing_time_step ="
               << interval_computing_time_step.seconds() << "\n";
-    std::cout << std::fixed << std::setprecision(9) << "interval_computing_fluid_pressure_relaxation = "
-              << interval_computing_fluid_pressure_relaxation.seconds() << "\n";
+    std::cout << std::fixed << std::setprecision(9) << "interval_acoustic_steps = "
+              << interval_acoustic_steps.seconds() << "\n";
     std::cout << std::fixed << std::setprecision(9) << "interval_updating_configuration = "
               << interval_updating_configuration.seconds() << "\n";
 
