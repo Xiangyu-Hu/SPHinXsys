@@ -97,12 +97,14 @@ class ObservedQuantityRecording<VariableType> : public BodyStatesRecording,
     }
 };
 
+template <typename...>
+class ReducedQuantityRecording;
 /**
  * @class ReducedQuantityRecording
  * @brief write reduced quantity of a body
  */
 template <class LocalReduceMethodType>
-class ReducedQuantityRecording : public BaseIO
+class ReducedQuantityRecording<LocalReduceMethodType> : public BaseIO
 {
   protected:
     PltEngine plt_engine_;

@@ -19,12 +19,14 @@ VariableNormCK<DataType, NormType, DynamicsIdentifier>::ReduceKernel::
     : variable_(encloser.dv_variable_->template DelegatedDataField(ex_policy)) {}
 //=================================================================================================//
 template <class ExecutionPolicy, class EncloserType>
-TotalKineticEnergyCK::ReduceKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+TotalKineticEnergyCK::ReduceKernel::
+    ReduceKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : mass_(encloser.dv_mass_->DelegatedDataField(ex_policy)),
       vel_(encloser.dv_vel_->DelegatedDataField(ex_policy)) {}
 //=================================================================================================//
 template <class ExecutionPolicy, class EncloserType>
-TotalMechanicalEnergyCK::ReduceKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+TotalMechanicalEnergyCK::ReduceKernel::
+    ReduceKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : TotalKineticEnergyCK::ReduceKernel(ex_policy, encloser),
       gravity_(encloser.gravity_),
       pos_(encloser.dv_pos_->DelegatedDataField(ex_policy)) {}

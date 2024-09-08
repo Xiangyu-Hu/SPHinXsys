@@ -100,5 +100,48 @@ class ObservedQuantityRecording<ExecutionPolicy, DataType>
     }
 };
 
+template <class ExecutionPolicy, class LocalReduceMethodType>
+class ReducedQuantityRecording<ExecutionPolicy, LocalReduceMethodType> : public BaseIO
+{
+  protected:
+    PltEngine plt_engine_;
+    ReduceDynamicsCK<ExecutionPolicy, LocalReduceMethodType> reduce_method_;
+    std::string dynamics_identifier_name_;
+    const std::string quantity_name_;
+    std::string filefullpath_output_;
+
+  public:
+    /*< deduce variable type from reduce method. */
+    using VariableType = typename LocalReduceMethodType::ReturnType;
+    VariableType type_indicator_; /*< this is an indicator to identify the variable type. */
+
+  public:
+    template <class DynamicsIdentifier, typename... Args>
+    ReducedQuantityRecording(DynamicsIdentifier &identifier, Args &&...args)
+        : BaseIO(identifier.getSPHBody().getSPHSystem()), plt_engine_(),
+          reduce_method_(identifier, std::forward<Args>(args)...),
+          dynamics_identifier_name_(reduce_method_.DynamicsIdentifierName()),
+          quantity_name_(reduce_method_.QuantityName())
+    {
+        /** output for .dat file. */
+        filefullpath_output_ = io_environment_.output_folder_ + "/" + dynamics_identifier_name_ + "_" + quantity_name_ + ".dat";
+        std::ofstream out_file(filefullpath_output_.c_str(), std::ios::app);
+        out_file << "\"run_time\""
+                 << "   ";
+        plt_engine_.writeAQuantityHeader(out_file, reduce_method_.Reference(), quantity_name_);
+        out_file << "\n";
+        out_file.close();
+    };
+    virtual ~ReducedQuantityRecording(){};
+
+    virtual void writeToFile(size_t iteration_step = 0) override
+    {
+        std::ofstream out_file(filefullpath_output_.c_str(), std::ios::app);
+        out_file << sv_physical_time_.getValue() << "   ";
+        plt_engine_.writeAQuantity(out_file, reduce_method_.exec());
+        out_file << "\n";
+        out_file.close();
+    };
+};
 } // namespace SPH
 #endif // IO_OBSERVATION_CK_H
