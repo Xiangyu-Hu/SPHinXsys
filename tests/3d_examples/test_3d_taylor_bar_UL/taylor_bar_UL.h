@@ -28,7 +28,7 @@ Real yield_stress = 0.29e9;
 Real vel_0 = 373.0;
 Real U_max = vel_0;
 Real c0 = sqrt(Youngs_modulus / (3 * (1 - 2 * poisson) * rho0_s));
-
+/** Define the wall. */
 class WallBoundary : public ComplexShape
 {
   public:
@@ -65,7 +65,7 @@ class InitialCondition
         vel_[index_i][2] = -vel_0;
     }
 };
-
+/** Contact force. */
 class DynamicContactForceWithWall : public LocalDynamics,
                                     public DataDelegateContact
 {

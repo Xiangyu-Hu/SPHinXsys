@@ -16,7 +16,7 @@ int main(int ac, char *av[])
     system.setReloadParticles(true);
 
     RealBody column(system, makeShared<Column>("Column"));
-    column.defineBodyLevelSetShape();
+    column.defineBodyLevelSetShape()->writeLevelSet(system);
     column.defineMaterial<J2Plasticity>(rho0_s, c0, Youngs_modulus, poisson, yield_stress);
     (!system.RunParticleRelaxation() && system.ReloadParticles())
         ? column.generateParticles<BaseParticles, Reload>(column.getName())
@@ -36,10 +36,6 @@ int main(int ac, char *av[])
     SurfaceContactRelation column_wall_contact(column, {&wall_boundary});
     /**define simple data file input and outputs functions. */
     BodyStatesRecordingToVtp write_states(system);
-    write_states.addToWrite<Real>(column, "VonMisesStress");
-    write_states.addToWrite<Real>(column, "VonMisesStrain");
-    write_states.addToWrite<Real>(column, "Pressure");
-    write_states.addToWrite<Real>(column, "Density");
     //----------------------------------------------------------------------
     //	Run particle relaxation for body-fitted distribution if chosen.
     //----------------------------------------------------------------------
@@ -94,6 +90,10 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Output
     //----------------------------------------------------------------------
+    write_states.addToWrite<Real>(column, "VonMisesStress");
+    write_states.addToWrite<Real>(column, "VonMisesStrain");
+    write_states.addToWrite<Real>(column, "Pressure");
+    write_states.addToWrite<Real>(column, "Density");
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>> write_displacement("Position", my_observer_contact);
     //----------------------------------------------------------------------
     // From here the time stepping begins.
