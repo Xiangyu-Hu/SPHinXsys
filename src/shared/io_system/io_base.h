@@ -196,7 +196,7 @@ class RestartIO : public BaseIO
         {
             prepare_variable_to_restart_[i](ex_policy);
         }
-        writeToFile(iteration_step, iteration_step);
+        writeToFile(iteration_step);
     };
 
     virtual void readFromFile(size_t iteration_step = 0);
@@ -251,7 +251,7 @@ class ReloadParticleIO : public BaseIO
         {
             prepare_variable_to_reload_[i](ex_policy);
         }
-        writeToFile(iteration_step, iteration_step);
+        writeToFile(iteration_step);
     };
 };
 

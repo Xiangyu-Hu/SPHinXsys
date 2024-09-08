@@ -25,6 +25,7 @@ AdvectionStepSetup::UpdateKernel::
     UpdateKernel(const ExecutionPolicy &ex_policy, AdvectionStepSetup &encloser)
     : Vol_(encloser.dv_Vol_->DelegatedDataField(ex_policy)),
       mass_(encloser.dv_mass_->DelegatedDataField(ex_policy)),
+      rho_(encloser.dv_rho_->DelegatedDataField(ex_policy)),
       dpos_(encloser.dv_dpos_->DelegatedDataField(ex_policy)) {}
 //=================================================================================================//
 template <class ExecutionPolicy>

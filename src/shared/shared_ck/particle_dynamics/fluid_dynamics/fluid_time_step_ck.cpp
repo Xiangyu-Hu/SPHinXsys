@@ -52,6 +52,7 @@ AdvectionStepSetup::AdvectionStepSetup(SPHBody &sph_body)
     : LocalDynamics(sph_body),
       dv_Vol_(particles_->getVariableByName<Real>("VolumetricMeasure")),
       dv_mass_(particles_->getVariableByName<Real>("Mass")),
+      dv_rho_(particles_->getVariableByName<Real>("Density")),
       dv_dpos_(particles_->registerStateVariableOnly<Vecd>("Displacement")) {}
 //=================================================================================================//
 AdvectionStepClose::AdvectionStepClose(SPHBody &sph_body)

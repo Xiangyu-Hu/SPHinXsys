@@ -25,18 +25,20 @@ bool BaseIO::isBodyIncluded(const SPHBodyVector &bodies, SPHBody *sph_body)
 //=============================================================================================//
 BodyStatesRecording::BodyStatesRecording(SPHSystem &sph_system)
     : BaseIO(sph_system), bodies_(sph_system.getRealBodies()),
-      state_recording_(sph_system_.StateRecording()) {}
-//=============================================================================================//
-BodyStatesRecording::BodyStatesRecording(SPHBody &body)
-    : BaseIO(body.getSPHSystem()), bodies_({&body}),
       state_recording_(sph_system_.StateRecording())
 {
     for (size_t i = 0; i < bodies_.size(); ++i)
     {
         BaseParticles &particles = bodies_[i]->getBaseParticles();
-        prepare_variable_to_write_.push_back(particles.VariablesToWrite());
+        prepare_variable_to_write_.push_back(
+            OperationOnDataAssemble<ParticleVariables, prepareParticleVariableForOutput>(
+                particles.VariablesToWrite()));
     }
 }
+//=============================================================================================//
+BodyStatesRecording::BodyStatesRecording(SPHBody &body)
+    : BaseIO(body.getSPHSystem()), bodies_({&body}),
+      state_recording_(sph_system_.StateRecording()) {}
 //=============================================================================================//
 void BodyStatesRecording::writeToFile()
 {
@@ -67,7 +69,9 @@ RestartIO::RestartIO(SPHSystem &sph_system)
         // basic variable for write to restart file
         BaseParticles &particles = bodies_[i]->getBaseParticles();
         particles.addVariableToRestart<UnsignedInt>("OriginalID");
-        prepare_variable_to_restart_.push_back(particles.VariablesToRestart());
+        prepare_variable_to_restart_.push_back(
+            OperationOnDataAssemble<ParticleVariables, prepareParticleVariableForOutput>(
+                particles.VariablesToRestart()));
     }
 }
 //=============================================================================================//
@@ -138,7 +142,9 @@ ReloadParticleIO::ReloadParticleIO(SPHBodyVector bodies)
 
         // basic variable for write to restart file
         BaseParticles &particles = bodies_[i]->getBaseParticles();
-        prepare_variable_to_reload_.push_back(particles.VariablesToReload());
+        prepare_variable_to_reload_.push_back(
+            OperationOnDataAssemble<ParticleVariables, prepareParticleVariableForOutput>(
+                particles.VariablesToReload()));
     }
 }
 //=============================================================================================//
