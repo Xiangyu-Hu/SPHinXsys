@@ -21,13 +21,45 @@ AcousticStep<BaseInteractionType>::AcousticStep(DynamicsIdentifier &identifier)
       dv_vel_(this->particles_->template registerStateVariableOnly<Vecd>("Velocity")),
       dv_dpos_(this->particles_->template getVariableByName<Vecd>("Displacement")),
       dv_force_(this->particles_->template registerStateVariableOnly<Vecd>("Force")),
-      dv_force_prior_(this->particles_->template registerStateVariableOnly<Vecd>("ForcePrior")) {}
+      dv_force_prior_(this->particles_->template registerStateVariableOnly<Vecd>("ForcePrior"))
+{
+    //----------------------------------------------------------------------
+    //		add sortable particle data
+    //----------------------------------------------------------------------
+    this->particles_->template addVariableToSort<Vecd>("Position");
+    this->particles_->template addVariableToSort<Vecd>("Velocity");
+    this->particles_->template addVariableToSort<Real>("Mass");
+    this->particles_->template addVariableToSort<Vecd>("ForcePrior");
+    this->particles_->template addVariableToSort<Vecd>("Force");
+    this->particles_->template addVariableToSort<Real>("DensityChangeRate");
+    this->particles_->template addVariableToSort<Real>("Density");
+    this->particles_->template addVariableToSort<Real>("Pressure");
+    this->particles_->template addVariableToSort<Real>("VolumetricMeasure");
+    //----------------------------------------------------------------------
+    //		add restart output particle data
+    //----------------------------------------------------------------------
+    this->particles_->template addVariableToRestart<Vecd>("Position");
+    this->particles_->template addVariableToRestart<Real>("VolumetricMeasure");
+    this->particles_->template addVariableToRestart<Real>("Pressure");
+    this->particles_->template addVariableToRestart<Real>("DensityChangeRate");
+    this->particles_->template addVariableToRestart<Vecd>("Velocity");
+    this->particles_->template addVariableToRestart<Vecd>("Force");
+    this->particles_->template addVariableToRestart<Vecd>("ForcePrior");
+    //----------------------------------------------------------------------
+    //		add output particle data
+    //----------------------------------------------------------------------
+    this->particles_->template addVariableToWrite<Vecd>("Velocity");
+}
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
 AcousticStep1stHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType, Parameters...>>::
     AcousticStep1stHalf(InnerRelation &inner_relation)
     : AcousticStep<Interaction<Inner<Parameters...>>>(inner_relation),
-      correction_(this->particles_), riemann_solver_(this->fluid_, this->fluid_) {}
+      correction_(this->particles_), riemann_solver_(this->fluid_, this->fluid_)
+{
+    static_assert(std::is_base_of<KernelCorrection, KernelCorrectionType>::value,
+                  "KernelCorrection is not the base of KernelCorrectionType!");
+}
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
 template <class ExecutionPolicy, class EncloserType>
