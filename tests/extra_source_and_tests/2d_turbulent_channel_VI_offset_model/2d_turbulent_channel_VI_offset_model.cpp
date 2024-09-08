@@ -150,7 +150,7 @@ int main(int ac, char *av[])
     /** Turbulent.Note: When use wall function, K Epsilon calculation only consider inner */
     InteractionWithUpdate<fluid_dynamics::JudgeIsNearWall> update_near_wall_status(water_block_inner, water_wall_contact);
 
-    InteractionWithUpdate<fluid_dynamics::GetVelocityGradientInner> get_velocity_gradient(water_block_inner);
+    InteractionWithUpdate<fluid_dynamics::GetVelocityGradientInner> get_velocity_gradient(water_block_inner, weight_vel_grad_sub_nearwall);
     //InteractionWithUpdate<fluid_dynamics::GetVelocityGradientComplex> get_velocity_gradient(water_block_inner, water_wall_contact);
 
     //InteractionWithUpdate<fluid_dynamics::VelocityGradientWithWall<LinearGradientCorrection>> vel_grad_calculation(water_block_inner, water_wall_contact);
@@ -158,7 +158,7 @@ int main(int ac, char *av[])
 
     /** Turbulent.Note: Temporarily transfer parameters at this place. The 3rd parameter refers to extra dissipation for viscous */
 
-    InteractionWithUpdate<fluid_dynamics::K_TurtbulentModelInner> k_equation_relaxation(water_block_inner, initial_turbu_values);
+    InteractionWithUpdate<fluid_dynamics::K_TurtbulentModelInner> k_equation_relaxation(water_block_inner, initial_turbu_values, is_AMRD);
     //InteractionWithUpdate<fluid_dynamics::K_TurtbulentModelInner> k_equation_relaxation(water_block_inner, initial_turbu_values, 1);
 
     InteractionWithUpdate<fluid_dynamics::E_TurtbulentModelInner> epsilon_equation_relaxation(water_block_inner);
@@ -221,7 +221,7 @@ int main(int ac, char *av[])
     SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>> inflow_velocity_condition(left_emitter);
 
     /** Turbulent InflowTurbulentCondition.It needs characteristic Length to calculate turbulent length  */
-    SimpleDynamics<fluid_dynamics::InflowTurbulentCondition> impose_turbulent_inflow_condition(left_emitter, characteristic_length, 0.8);
+    SimpleDynamics<fluid_dynamics::InflowTurbulentCondition> impose_turbulent_inflow_condition(left_emitter, characteristic_length, relaxation_rate_turbulent_inlet, type_turbulent_inlet);
 
     //----------------------------------------------------------------------
     // Right/Outlet buffer

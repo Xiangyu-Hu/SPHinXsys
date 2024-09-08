@@ -26,6 +26,13 @@ Real num_fluid_cross_section = 20.0;
 //	Unique parameters for turbulence.
 //----------------------------------------------------------------------
 Real characteristic_length = DH; /**<It needs characteristic Length to calculate turbulent length and the inflow turbulent epsilon>*/
+//** For K and Epsilon, type of the turbulent inlet, 0 is freestream, 1 is from interpolation from PY21 *
+int type_turbulent_inlet = 1;
+Real relaxation_rate_turbulent_inlet = 0.8;
+//** Tag for AMRD *
+int is_AMRD = 0;
+//** Weight for correcting the velocity  gradient in the sub near wall region  *
+Real weight_vel_grad_sub_nearwall = 0.1;
 //** Intial values for K, Epsilon and Mu_t *
 StdVec<Real> initial_turbu_values = {0.000180001, 3.326679e-5, 1.0e-9};
 
