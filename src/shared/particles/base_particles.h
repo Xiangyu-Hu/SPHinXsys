@@ -242,6 +242,8 @@ class BaseParticles
 
   public:
     ParticleVariables &VariablesToWrite() { return variables_to_write_; };
+    ParticleVariables &VariablesToRestart() { return variables_to_restart_; };
+    ParticleVariables &VariablesToReload() { return variables_to_reload_; };
     //----------------------------------------------------------------------
     // Small structs for generalize particle operations on
     // assembled variables and data sets

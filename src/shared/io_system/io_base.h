@@ -75,6 +75,21 @@ class BaseIO
     }
 
     bool isBodyIncluded(const SPHBodyVector &bodies, SPHBody *sph_body);
+
+    struct prepareParticleVariableForOutput
+    {
+        prepareParticleVariableForOutput(){};
+
+        template <class ExecutionPolicy, typename DataType>
+        void operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables,
+                        const ExecutionPolicy &ex_policy)
+        {
+            for (size_t i = 0; i != variables.size(); ++i)
+            {
+                variables[i]->prepareForOutput(ex_policy);
+            }
+        };
+    };
 };
 
 /**
@@ -90,6 +105,18 @@ class BodyStatesRecording : public BaseIO
     virtual ~BodyStatesRecording(){};
     /** write with filename indicated by physical time */
     void writeToFile();
+
+    template <class ExecutionPolicy>
+    void writeToFile(const ExecutionPolicy &ex_policy)
+    {
+        for (size_t i = 0; i < bodies_.size(); ++i)
+        {
+            prepare_variable_to_write_[i](ex_policy);
+        }
+
+        writeToFile();
+    };
+
     virtual void writeToFile(size_t iteration_step) override;
 
     template <typename DataType>
@@ -132,6 +159,9 @@ class BodyStatesRecording : public BaseIO
     SPHBodyVector bodies_;
     StdVec<BaseDynamics<void> *> derived_variables_;
     bool state_recording_;
+    StdVec<OperationOnDataAssemble<ParticleVariables, prepareParticleVariableForOutput>>
+        prepare_variable_to_write_;
+
     virtual void writeWithFileName(const std::string &sequence) = 0;
 
   private:
@@ -148,6 +178,8 @@ class RestartIO : public BaseIO
     SPHBodyVector bodies_;
     std::string overall_file_path_;
     StdVec<std::string> file_names_;
+    StdVec<OperationOnDataAssemble<ParticleVariables, prepareParticleVariableForOutput>>
+        prepare_variable_to_restart_;
 
     Real readRestartTime(size_t restart_step);
 
@@ -156,6 +188,17 @@ class RestartIO : public BaseIO
     virtual ~RestartIO(){};
 
     virtual void writeToFile(size_t iteration_step = 0) override;
+
+    template <class ExecutionPolicy>
+    void writeToFile(const ExecutionPolicy &ex_policy, size_t iteration_step = 0)
+    {
+        for (size_t i = 0; i < bodies_.size(); ++i)
+        {
+            prepare_variable_to_restart_[i](ex_policy);
+        }
+        writeToFile(iteration_step, iteration_step);
+    };
+
     virtual void readFromFile(size_t iteration_step = 0);
 
     virtual Real readRestartFiles(size_t restart_step)
@@ -174,6 +217,8 @@ class ReloadParticleIO : public BaseIO
   protected:
     SPHBodyVector bodies_;
     StdVec<std::string> file_names_;
+    StdVec<OperationOnDataAssemble<ParticleVariables, prepareParticleVariableForOutput>>
+        prepare_variable_to_reload_;
 
   public:
     ReloadParticleIO(SPHBodyVector bodies);
@@ -198,6 +243,16 @@ class ReloadParticleIO : public BaseIO
     };
 
     virtual void writeToFile(size_t iteration_step = 0) override;
+
+    template <class ExecutionPolicy>
+    void writeToFile(const ExecutionPolicy &ex_policy, size_t iteration_step = 0)
+    {
+        for (size_t i = 0; i < bodies_.size(); ++i)
+        {
+            prepare_variable_to_reload_[i](ex_policy);
+        }
+        writeToFile(iteration_step, iteration_step);
+    };
 };
 
 class ParticleGenerationRecording : public BaseIO

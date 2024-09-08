@@ -293,7 +293,7 @@ int main(int ac, char *av[])
                     write_recorded_water_pressure.writeToFile(number_of_iterations);
                 }
                 if (number_of_iterations % restart_output_interval == 0)
-                    restart_io.writeToFile(number_of_iterations);
+                    restart_io.writeToFile(execution::ParallelDevicePolicy{}, number_of_iterations);
             }
             number_of_iterations++;
 
@@ -305,7 +305,7 @@ int main(int ac, char *av[])
             interval_updating_configuration += TickCount::now() - time_instance;
         }
 
-        body_states_recording.writeToFile();
+        body_states_recording.writeToFile(execution::ParallelDevicePolicy{});
         TickCount t2 = TickCount::now();
         TickCount t3 = TickCount::now();
         interval += t3 - t2;

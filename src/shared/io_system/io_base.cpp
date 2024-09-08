@@ -29,7 +29,14 @@ BodyStatesRecording::BodyStatesRecording(SPHSystem &sph_system)
 //=============================================================================================//
 BodyStatesRecording::BodyStatesRecording(SPHBody &body)
     : BaseIO(body.getSPHSystem()), bodies_({&body}),
-      state_recording_(sph_system_.StateRecording()) {}
+      state_recording_(sph_system_.StateRecording())
+{
+    for (size_t i = 0; i < bodies_.size(); ++i)
+    {
+        BaseParticles &particles = bodies_[i]->getBaseParticles();
+        prepare_variable_to_write_.push_back(particles.VariablesToWrite());
+    }
+}
 //=============================================================================================//
 void BodyStatesRecording::writeToFile()
 {
@@ -60,6 +67,7 @@ RestartIO::RestartIO(SPHSystem &sph_system)
         // basic variable for write to restart file
         BaseParticles &particles = bodies_[i]->getBaseParticles();
         particles.addVariableToRestart<UnsignedInt>("OriginalID");
+        prepare_variable_to_restart_.push_back(particles.VariablesToRestart());
     }
 }
 //=============================================================================================//
@@ -124,9 +132,14 @@ void RestartIO::readFromFile(size_t restart_step)
 ReloadParticleIO::ReloadParticleIO(SPHBodyVector bodies)
     : BaseIO(bodies[0]->getSPHSystem()), bodies_(bodies)
 {
-    std::transform(bodies.begin(), bodies.end(), std::back_inserter(file_names_),
-                   [&](SPHBody *body) -> std::string
-                   { return io_environment_.reload_folder_ + "/" + body->getName() + "_rld.xml"; });
+    for (size_t i = 0; i < bodies_.size(); ++i)
+    {
+        file_names_.push_back(io_environment_.reload_folder_ + "/" + bodies_[i]->getName() + "rld.xml");
+
+        // basic variable for write to restart file
+        BaseParticles &particles = bodies_[i]->getBaseParticles();
+        prepare_variable_to_reload_.push_back(particles.VariablesToReload());
+    }
 }
 //=============================================================================================//
 ReloadParticleIO::ReloadParticleIO(SPHBody &sph_body, const std::string &given_body_name)
