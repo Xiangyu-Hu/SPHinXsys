@@ -44,7 +44,6 @@ int main(int ac, char *av[])
         SimpleDynamics<RandomizeParticlePosition> random_column_particles(column);
         /** Write the body state to Vtp file. */
         BodyStatesRecordingToVtp write_column_to_vtp(column);
-        BodyStatesRecordingToVtp write_states(system);
         /** Write the particle reload files. */
         ReloadParticleIO write_particle_reload_files(column);
         /** A  Physics relaxation step. */
@@ -62,7 +61,7 @@ int main(int ac, char *av[])
         {
             relaxation_step_inner.exec();
             ite_p += 1;
-            if (ite_p % 100 == 0)
+            if (ite_p % 200 == 0)
             {
                 std::cout << std::fixed << std::setprecision(9) << "Relaxation steps for the column body N = " << ite_p << "\n";
                 write_column_to_vtp.writeToFile(ite_p);
