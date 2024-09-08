@@ -36,6 +36,10 @@ int main(int ac, char *av[])
     SurfaceContactRelation column_wall_contact(column, {&wall_boundary});
     /**define simple data file input and outputs functions. */
     BodyStatesRecordingToVtp write_states(system);
+    write_states.addToWrite<Real>(column, "VonMisesStress");
+    write_states.addToWrite<Real>(column, "VonMisesStrain");
+    write_states.addToWrite<Real>(column, "Pressure");
+    write_states.addToWrite<Real>(column, "Density");
     //----------------------------------------------------------------------
     //	Run particle relaxation for body-fitted distribution if chosen.
     //----------------------------------------------------------------------
@@ -87,10 +91,6 @@ int main(int ac, char *av[])
     ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> advection_time_step(column, U_max, 0.2);
     ReduceDynamics<continuum_dynamics::AcousticTimeStepSize> acoustic_time_step(column, 0.4);
     InteractionDynamics<DynamicContactForceWithWall> column_wall_contact_force(column_wall_contact);
-    write_states.addToWrite<Real>(column, "VonMisesStress");
-    write_states.addToWrite<Real>(column, "VonMisesStrain");
-    write_states.addToWrite<Real>(column, "Pressure");
-    write_states.addToWrite<Real>(column, "Density");
     //----------------------------------------------------------------------
     //	Output
     //----------------------------------------------------------------------
