@@ -132,8 +132,8 @@ Vec2d right_buffer_translation = outlet_buffer_center_translation;
 //----------------------------------------------------------------------
 // ** By kernel weight. *
 int screen_output_interval = 100;
-Real end_time = 10.0;               /**< End time. */
-Real Output_Time = end_time / 40.0; /**< Time stamps for output of body states. */
+Real end_time = 10.0;              /**< End time. */
+Real Output_Time = end_time / 2.0; /**< Time stamps for output of body states. */
 
 Real cutoff_time = end_time * 0.6; //** cutoff_time should be a integral and the same as the PY script */
 int number_observe_line = 4;
@@ -142,7 +142,7 @@ Real observe_angles[4] = {
     45.0 * (2.0 * Pi / 360.0),
     65.0 * (2.0 * Pi / 360.0),
     85.0 * (2.0 * Pi / 360.0)};
-Real observer_offset_distance = 2.0 * resolution_ref;
+Real observer_offset_distance = 1.8 * resolution_ref;
 
 int num_observer_points = std::round(DH_C / resolution_ref); //**Evrey particle is regarded as a cell monitor*
 Real observe_spacing = DH_C / num_observer_points;
