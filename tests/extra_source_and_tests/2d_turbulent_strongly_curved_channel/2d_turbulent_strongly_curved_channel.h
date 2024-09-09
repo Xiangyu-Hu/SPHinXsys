@@ -50,7 +50,7 @@ Real characteristic_length = DH; /**<It needs characteristic Length to calculate
 int type_turbulent_inlet = 0;
 Real relaxation_rate_turbulent_inlet = 0.8;
 //** Tag for AMRD *
-int is_AMRD = 0;
+int is_AMRD = 1;
 //** Weight for correcting the velocity  gradient in the sub near wall region  *
 Real weight_vel_grad_sub_nearwall = 0.1;
 //** Empirical parameter for initial stability*
@@ -135,7 +135,7 @@ int screen_output_interval = 100;
 Real end_time = 10.0;               /**< End time. */
 Real Output_Time = end_time / 40.0; /**< Time stamps for output of body states. */
 
-Real cutoff_time = end_time * 0.0; //** cutoff_time should be a integral and the same as the PY script */
+Real cutoff_time = end_time * 0.6; //** cutoff_time should be a integral and the same as the PY script */
 int number_observe_line = 4;
 Real observe_angles[4] = {
     25.0 * (2.0 * Pi / 360.0),

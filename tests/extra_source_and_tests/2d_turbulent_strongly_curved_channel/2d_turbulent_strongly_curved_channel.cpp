@@ -144,7 +144,7 @@ int main(int ac, char *av[])
     InteractionDynamics<fluid_dynamics::StandardWallFunctionCorrection> standard_wall_function_correction(water_block_inner, water_wall_contact, y_p_constant);
 
     /** Turbulent.Extra boundary condition */
-    //SimpleDynamics<fluid_dynamics::ConstrainNormalVelocityInRegionP> constrain_normal_velocity_in_P_region(water_block);
+    SimpleDynamics<fluid_dynamics::ConstrainNormalVelocityInRegionP> constrain_normal_velocity_in_P_region(water_block);
 
     /** Choose one, ordinary or turbulent. Computing viscous force, */
     InteractionWithUpdate<fluid_dynamics::TurbulentViscousForceWithWall> turbulent_viscous_force(water_block_inner, water_wall_contact);
@@ -297,7 +297,7 @@ int main(int ac, char *av[])
                 left_inflow_pressure_condition.exec(dt);
                 right_outflow_pressure_condition.exec(dt);
 
-                //constrain_normal_velocity_in_P_region.exec();
+                constrain_normal_velocity_in_P_region.exec();
 
                 inflow_velocity_condition.exec();
 
