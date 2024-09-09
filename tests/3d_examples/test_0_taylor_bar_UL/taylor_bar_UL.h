@@ -3,7 +3,6 @@
  * @brief This is the case setup for plastic taylor bar using updated Lagragian SPH.
  * @author Shuaihao Zhang, Dong Wu and Xiangyu Hu
  */
-#pragma once
 #include "sphinxsys.h"
 using namespace SPH;
 //----------------------------------------------------------------------

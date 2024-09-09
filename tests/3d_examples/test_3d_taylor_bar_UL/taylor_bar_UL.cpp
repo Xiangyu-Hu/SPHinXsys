@@ -4,9 +4,6 @@
  * @author Shuaihao Zhang, Dong Wu and Xiangyu Hu
  */
 #include "taylor_bar_UL.h"
-#include "sphinxsys.h"
-using namespace SPH;
-
 int main(int ac, char *av[])
 {
     /** Setup the system. Please the make sure the global domain bounds are correctly defined. */
@@ -49,7 +46,7 @@ int main(int ac, char *av[])
         /** Write the particle reload files. */
         ReloadParticleIO write_particle_reload_files(column);
         /** A  Physics relaxation step. */
-        RelaxationStepLevelSetCorrectionInner relaxation_step_inner(column_inner);
+        RelaxationStepInner relaxation_step_inner(column_inner);
         /**
          * @brief 	Particle relaxation starts here.
          */
