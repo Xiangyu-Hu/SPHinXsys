@@ -65,8 +65,8 @@ class MultilevelLevelSet : public BaseMeshField
     {
         for (size_t l = 0; l != total_levels_; ++l)
         {
-            MeshCalculateDynamics<void, WriteMeshFieldToPlt> write_mesh_field_to_plt(*mesh_data_set_[l]);
-            write_mesh_field_to_plt.exec(output_file);
+            WriteMeshFieldToPlt write_mesh_field_to_plt(*mesh_data_set_[l]);
+            write_mesh_field_to_plt.update(output_file);
         }
     }
 
@@ -79,13 +79,13 @@ class MultilevelLevelSet : public BaseMeshField
     size_t total_levels_;                    /**< level 0 is the coarsest */
     StdVec<Real> global_h_ratio_vec_;
     StdVec<MeshWithGridDataPackagesType *> mesh_data_set_;
-    StdVec<MeshCalculateDynamics<Real, ProbeSignedDistance> *> probe_signed_distance_set_;
-    StdVec<MeshCalculateDynamics<Vecd, ProbeNormalDirection> *> probe_normal_direction_set_;
-    StdVec<MeshCalculateDynamics<Vecd, ProbeLevelSetGradient> *> probe_level_set_gradient_set_;
+    StdVec<ProbeSignedDistance *> probe_signed_distance_set_;
+    StdVec<ProbeNormalDirection *> probe_normal_direction_set_;
+    StdVec<ProbeLevelSetGradient *> probe_level_set_gradient_set_;
     UniquePtrsKeeper<MeshWithGridDataPackagesType> mesh_data_ptr_vector_keeper_;
-    UniquePtrsKeeper<MeshCalculateDynamics<Real, ProbeSignedDistance>> probe_signed_distance_vector_keeper_;
-    UniquePtrsKeeper<MeshCalculateDynamics<Vecd, ProbeNormalDirection>> probe_normal_direction_vector_keeper_;
-    UniquePtrsKeeper<MeshCalculateDynamics<Vecd, ProbeLevelSetGradient>> probe_level_set_gradient_vector_keeper_;
+    UniquePtrsKeeper<ProbeSignedDistance> probe_signed_distance_vector_keeper_;
+    UniquePtrsKeeper<ProbeNormalDirection> probe_normal_direction_vector_keeper_;
+    UniquePtrsKeeper<ProbeLevelSetGradient> probe_level_set_gradient_vector_keeper_;
 
     CleanInterface *clean_interface;
     CorrectTopology *correct_topology;

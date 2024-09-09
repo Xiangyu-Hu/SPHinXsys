@@ -52,12 +52,16 @@ class BaseMeshDynamics
   public:
     BaseMeshDynamics(MeshWithGridDataPackages<4> &mesh_data)
         : mesh_data_(mesh_data),
-          all_cells_(mesh_data.AllCells()){};
+          all_cells_(mesh_data.AllCells()),
+          num_grid_pkgs_(mesh_data.num_grid_pkgs_),
+          meta_data_cell_(mesh_data.meta_data_cell_){};
     virtual ~BaseMeshDynamics(){};
 
   protected:
     MeshWithGridDataPackages<4> &mesh_data_;
     Arrayi all_cells_;
+    size_t &num_grid_pkgs_;
+    std::pair<Arrayi, int>* &meta_data_cell_; 
 
     template <typename FunctionOnData>
     void grid_parallel_for(const FunctionOnData &function)
@@ -67,6 +71,21 @@ class BaseMeshDynamics
                           {
                               function(cell_index);
                           });
+    }
+
+    /** Iterator on a collection of mesh data packages. parallel computing. */
+    template <typename FunctionOnData>
+    void package_parallel_for(const FunctionOnData &function)
+    {
+        parallel_for(IndexRange(2, num_grid_pkgs_),
+                    [&](const IndexRange &r)
+                    {
+                        for (size_t i = r.begin(); i != r.end(); ++i)
+                        {
+                            function(i);
+                        }
+                    },
+                    ap);
     }
 };
 
@@ -111,7 +130,7 @@ class MeshInnerDynamics : public LocalDynamicsType, public BaseMeshDynamics
 
     void exec()
     {
-        mesh_data_.package_parallel_for(
+        package_parallel_for(
             [&](size_t package_index)
             {
               this->update(package_index);
@@ -136,54 +155,16 @@ class MeshCoreDynamics : public LocalDynamicsType, public BaseMeshDynamics
 
     void exec()
     {
-        mesh_data_.package_parallel_for(
+        package_parallel_for(
           [&](size_t package_index)
           {
-              std::pair<Arrayi, int> &metadata = mesh_data_.meta_data_cell_[package_index];
+              std::pair<Arrayi, int> &metadata = meta_data_cell_[package_index];
               if (metadata.second == 1)
               {
                   this->update(package_index);
               }
           }
         );
-    };
-};
-
-/**
- * @class MeshSingleDynamics
- * @brief Mesh dynamics for only core cells on the mesh
- */
-template <class LocalDynamicsType>
-class MeshSingleDynamics : public LocalDynamicsType, public BaseMeshDynamics
-{
-  public:
-    template <class DynamicsIdentifier, typename... Args>
-    MeshSingleDynamics(DynamicsIdentifier &identifier, Args &&...args)
-        : LocalDynamicsType(identifier, std::forward<Args>(args)...),
-          BaseMeshDynamics(identifier){};
-    virtual ~MeshSingleDynamics(){};
-
-    template <typename... Args>
-    void exec(Args &&...args)
-    {
-        this->update(std::forward<Args>(args)...);
-    };
-};
-
-template <typename ReturnType, class LocalDynamicsType>
-class MeshCalculateDynamics : public LocalDynamicsType, public BaseMeshDynamics
-{
-  public:
-    template <class DynamicsIdentifier, typename... Args>
-    MeshCalculateDynamics(DynamicsIdentifier &identifier, Args &&...args)
-        : LocalDynamicsType(identifier, std::forward<Args>(args)...),
-          BaseMeshDynamics(identifier){};
-    virtual ~MeshCalculateDynamics(){};
-
-    template <typename... Args>
-    ReturnType exec(Args &&...args)
-    {
-        return this->update(std::forward<Args>(args)...);
     };
 };
 } // namespace SPH

@@ -57,8 +57,8 @@ class FinishDataPackages : public BaseMeshDynamics
         mesh_data_.resizeMeshVariableData();
 
         Real far_field_distance = grid_spacing_ * (Real)buffer_width_;
-        initialize_data_for_singular_package.exec(0, -far_field_distance);
-        initialize_data_for_singular_package.exec(1, far_field_distance);
+        initialize_data_for_singular_package.update(0, -far_field_distance);
+        initialize_data_for_singular_package.update(1, far_field_distance);
 
         initialize_basic_data_for_a_package.exec();
         update_level_set_gradient.exec();
@@ -72,7 +72,7 @@ class FinishDataPackages : public BaseMeshDynamics
     Real grid_spacing_;
     size_t buffer_width_;
 
-    MeshSingleDynamics<InitializeDataForSingularPackage> initialize_data_for_singular_package{mesh_data_};
+    InitializeDataForSingularPackage initialize_data_for_singular_package{mesh_data_};
     MeshAllDynamics<TagACellIsInnerPackage> tag_a_cell_is_inner_package{mesh_data_};
     MeshInnerDynamics<InitializeIndexMesh> initialize_index_mesh{mesh_data_};
     MeshInnerDynamics<InitializeCellNeighborhood> initialize_cell_neighborhood{mesh_data_};
@@ -90,7 +90,7 @@ class ProbeNormalDirection : public BaseMeshLocalDynamics
 
     Vecd update(const Vecd &position)
     {
-        Vecd probed_value = probe_level_set_gradient.exec(position);
+        Vecd probed_value = probe_level_set_gradient.update(position);
 
         Real threshold = 1.0e-2 * data_spacing_;
         while (probed_value.norm() < threshold)
@@ -98,13 +98,13 @@ class ProbeNormalDirection : public BaseMeshLocalDynamics
             Vecd jittered = position; // jittering
             for (int l = 0; l != position.size(); ++l)
                 jittered[l] += rand_uniform(-0.5, 0.5) * 0.5 * data_spacing_;
-            probed_value = probe_level_set_gradient.exec(jittered);
+            probed_value = probe_level_set_gradient.update(jittered);
         }
         return probed_value.normalized();
     }
 
   private:
-    MeshCalculateDynamics<Vecd, ProbeLevelSetGradient> probe_level_set_gradient{mesh_data_};
+    ProbeLevelSetGradient probe_level_set_gradient{mesh_data_};
 };
 
 class CleanInterface : public BaseMeshDynamics

@@ -96,8 +96,8 @@ class MeshWithGridDataPackages : public Mesh
     template <typename... Args>
     explicit MeshWithGridDataPackages(BoundingBox tentative_bounds, Real data_spacing, size_t buffer_size)
         : Mesh(tentative_bounds, pkg_size * data_spacing, buffer_size),
-          data_spacing_(data_spacing),
-          global_mesh_(mesh_lower_bound_ + 0.5 * data_spacing * Vecd::Ones(), data_spacing, all_cells_ * pkg_size)
+          global_mesh_(mesh_lower_bound_ + 0.5 * data_spacing * Vecd::Ones(), data_spacing, all_cells_ * pkg_size),
+          data_spacing_(data_spacing)
     {
         allocateIndexDataMatrix();
     };
@@ -117,12 +117,12 @@ class MeshWithGridDataPackages : public Mesh
     CellNeighborhood *cell_neighborhood_;                  /**< 3*3(*3) array to store indicies of neighborhood cells. */
     std::pair<Arrayi, int> *meta_data_cell_;          /**< metadata for each occupied cell: (arrayi)cell index, (int)core1/inner0. */
     BaseMesh global_mesh_;                            /**< the mesh for the locations of all possible data points. */
+    size_t num_grid_pkgs_ = 2;                        /**< the number of all distinct packages, initially only 2 singular packages. */
 
   protected:
     MeshVariableAssemble all_mesh_variables_;         /**< all mesh variables on this mesh. */
     static constexpr int pkg_size = PKG_SIZE;         /**< the size of the data package matrix*/
     const Real data_spacing_;                         /**< spacing of data in the data packages*/
-    size_t num_grid_pkgs_ = 2;                        /**< the number of all distinct packages, initially only 2 singular packages. */
     using MetaData = std::pair<int, size_t>;          /**< stores the metadata for each cell: (int)singular0/inner1/core2, (size_t)package data index*/
     MeshDataMatrix<size_t> index_data_mesh_;         /**< metadata for all cells. */
     using NeighbourIndex = std::pair<size_t, Arrayi>; /**< stores shifted neighbour info: (size_t)package index, (arrayi)local grid index. */
@@ -218,21 +218,6 @@ class MeshWithGridDataPackages : public Mesh
     void computeGradient(MeshVariable<InDataType> &in_variable,
                          MeshVariable<OutDataType> &out_variable,
                          const size_t package_index);
-    /** Iterator on a collection of mesh data packages. parallel computing. */
-    template <typename FunctionOnData>
-    void package_parallel_for(const FunctionOnData &function)
-    {
-        parallel_for(
-            IndexRange(2, num_grid_pkgs_),
-            [&](const IndexRange &r)
-            {
-                for (size_t i = r.begin(); i != r.end(); ++i)
-                {
-                    function(i);
-                }
-            },
-            ap);
-    }
 
     void registerOccupied(std::pair<size_t, int> &occupied)
     {
