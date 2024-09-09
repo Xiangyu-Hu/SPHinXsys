@@ -18,17 +18,16 @@ using namespace SPH;
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real DH = 0.0635; /**< Channel height. */
+Real scale = 0.0254;
+Real DH = 3.0 * scale; /**< Channel height. */
 Real num_fluid_cross_section = 20.0;
-Real central_angel = 43.0 * 2.0 * Pi / 360.0;
+Real central_angel = 90.0 * 2.0 * Pi / 360.0;
 Real extend_in = 0.0;
 Real extend_out = 0.0;
-Real DL1 = 0.15 + extend_in;
-Real DL2 = 0.15 + extend_out;
-Real R_average = 6.350;
-
-Real R1 = R_average - DH / 2.0;
-Real R2 = R_average + DH / 2.0;
+Real DL1 = 3.0 * DH + extend_in;
+Real DL2 = 3.0 * DH + extend_out;
+Real R1 = 27.0 * scale;
+Real R2 = 30.0 * scale;
 
 Vec2d circle_center(DL1, R2);
 Real a = sin(central_angel);
@@ -90,7 +89,7 @@ Real U_f = U_inlet;         //*Characteristic velocity
 Real U_max = 1.5 * U_inlet; //** An estimated value, generally 1.5 U_inlet *
 Real c_f = 10.0 * U_max;
 Real rho0_f = 1.0; /**< Density. */
-Real Re = 60000.0;
+Real Re = 148400.0;
 //Real Re = 100.0;
 Real mu_f = rho0_f * U_f * DH / Re;
 
@@ -136,13 +135,13 @@ int screen_output_interval = 100;
 Real end_time = 10.0;               /**< End time. */
 Real Output_Time = end_time / 40.0; /**< Time stamps for output of body states. */
 
-Real cutoff_time = end_time * 0.6; //** cutoff_time should be a integral and the same as the PY script */
+Real cutoff_time = end_time * 0.0; //** cutoff_time should be a integral and the same as the PY script */
 int number_observe_line = 4;
 Real observe_angles[4] = {
-    7.0 * (2.0 * Pi / 360.0),
-    14.0 * (2.0 * Pi / 360.0),
-    21.0 * (2.0 * Pi / 360.0),
-    34.0 * (2.0 * Pi / 360.0)};
+    25.0 * (2.0 * Pi / 360.0),
+    45.0 * (2.0 * Pi / 360.0),
+    65.0 * (2.0 * Pi / 360.0),
+    85.0 * (2.0 * Pi / 360.0)};
 Real observer_offset_distance = 2.0 * resolution_ref;
 
 int num_observer_points = std::round(DH_C / resolution_ref); //**Evrey particle is regarded as a cell monitor*
@@ -356,71 +355,7 @@ class WallBoundary : public ComplexShape
         subtract<ExtrudeShape<MultiPolygonShape>>(-offset_distance, inner_dummy_boundary, "InnerDummyBoundary");
     }
 };
-// class WallBoundary : public MultiPolygonShape
-// {
-// public:
-//     explicit WallBoundary(const std::string& shape_name) : MultiPolygonShape(shape_name)
-//     {
-//         /** Geometry definition. */
-//         //** Get the ring *
-//         multi_polygon_.addACircle(circle_center, R2+BW, 100, ShapeBooleanOps::add);
-//         multi_polygon_.addACircle(circle_center, R2, 100, ShapeBooleanOps::sub);
-//         multi_polygon_.addACircle(circle_center, R1 , 100, ShapeBooleanOps::add);
-//         multi_polygon_.addACircle(circle_center, R1-BW, 100, ShapeBooleanOps::sub);
-//         //** Get the 1/4 ring *
-//         std::vector<Vecd> sub_circle;
-//         Vec2d temp =  Vec2d::Zero();
-//         temp = circle_center + Vec2d(-(R2 + BW), -(R2 + BW));
-//         sub_circle.push_back(temp);
-//         temp = circle_center + Vec2d(-(R2 + BW), (R2 + BW));
-//         sub_circle.push_back(temp);
-//         temp = circle_center + Vec2d((R2 + BW), (R2 + BW));
-//         sub_circle.push_back(temp);
-//         temp = circle_center + Vec2d((R2 + BW), 0.0);
-//         sub_circle.push_back(temp);
-//         temp = circle_center + Vec2d(0.0, 0.0);
-//         sub_circle.push_back(temp);
-//         temp = circle_center + Vec2d(0.0, -(R2 + BW));
-//         sub_circle.push_back(temp);
-//         temp = circle_center + Vec2d(-(R2 + BW), -(R2 + BW));
-//         sub_circle.push_back(temp);
-//         multi_polygon_.addAPolygon(sub_circle, ShapeBooleanOps::sub);
 
-//         //** Get the inlet straight channel wall *
-//         std::vector<Vecd> outer_wall_shape1;
-//         outer_wall_shape1.push_back(Vecd(-DL_sponge - BW, -BW));
-//         outer_wall_shape1.push_back(Vecd(-DL_sponge - BW, DH + BW));
-//         outer_wall_shape1.push_back(Vecd(DL1 , DH + BW));
-//         outer_wall_shape1.push_back(Vecd(DL1 , -BW));
-//         outer_wall_shape1.push_back(Vecd(-DL_sponge - BW, -BW));
-//         multi_polygon_.addAPolygon(outer_wall_shape1, ShapeBooleanOps::add);
-
-//         std::vector<Vecd> inner_wall_shape1;
-//         inner_wall_shape1.push_back(Vecd(-DL_sponge - 2.0 * BW, 0.0 ));
-//         inner_wall_shape1.push_back(Vecd(-DL_sponge - 2.0 * BW, DH ));
-//         inner_wall_shape1.push_back(Vecd(DL1, DH ));
-//         inner_wall_shape1.push_back(Vecd(DL1, 0.0));
-//         inner_wall_shape1.push_back(Vecd(-DL_sponge - 2.0 * BW, 0.0 ));
-//         multi_polygon_.addAPolygon(inner_wall_shape1, ShapeBooleanOps::sub);
-
-//         //** Get the outlet straight channel wall *
-//         std::vector<Vecd> outer_wall_shape2;
-//         outer_wall_shape2.push_back(Vecd(DL1 + R1 - BW     , DH + R1));
-//         outer_wall_shape2.push_back(Vecd(DL1 + R1 - BW     , DH + R1 + DL2 + BW ));
-//         outer_wall_shape2.push_back(Vecd(DL1 + R1+ DH + BW , DH + R1 + DL2 + BW ));
-//         outer_wall_shape2.push_back(Vecd(DL1 + R1+ DH + BW , DH + R1 ));
-//         outer_wall_shape2.push_back(Vecd(DL1 + R1 - BW     , DH + R1));
-//         multi_polygon_.addAPolygon(outer_wall_shape2, ShapeBooleanOps::add);
-
-//         std::vector<Vecd> inner_wall_shape2;
-//         inner_wall_shape2.push_back(Vecd(DL1 + R1      , DH + R1));
-//         inner_wall_shape2.push_back(Vecd(DL1 + R1      , DH + R1 + DL2+ 2.0 * BW));
-//         inner_wall_shape2.push_back(Vecd(DL1 + R1 + DH , DH + R1 + DL2 + +2.0 * BW));
-//         inner_wall_shape2.push_back(Vecd(DL1 + R1 + DH , DH + R1));
-//         inner_wall_shape2.push_back(Vecd(DL1 + R1      , DH + R1));
-//         multi_polygon_.addAPolygon(inner_wall_shape2, ShapeBooleanOps::sub);
-//     }
-// };
 //----------------------------------------------------------------------
 //	Inflow velocity
 //----------------------------------------------------------------------
