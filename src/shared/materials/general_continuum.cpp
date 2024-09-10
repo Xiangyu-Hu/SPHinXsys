@@ -102,7 +102,6 @@ Matd J2Plasticity::ReturnMappingShearStress(Matd &shear_stress, Real &hardening_
     Real f = sqrt(2.0 * stress_tensor_J2) - sqrt_2_over_3_ * (hardening_modulus_ * hardening_factor + yield_stress_);
     if (f > TinyReal)
     {
-
         Real r = (sqrt_2_over_3_ * (hardening_modulus_ * hardening_factor + yield_stress_)) / (sqrt(2.0 * stress_tensor_J2) + TinyReal);
         shear_stress = r * shear_stress;
     }
@@ -116,7 +115,6 @@ Real J2Plasticity::ScalePenaltyForce(Matd &shear_stress, Real &hardening_factor)
     Real f = sqrt(2.0 * stress_tensor_J2) - sqrt_2_over_3_ * (hardening_modulus_ * hardening_factor + yield_stress_);
     if (f > TinyReal)
     {
-
         r = (sqrt_2_over_3_ * (hardening_modulus_ * hardening_factor + yield_stress_)) / (sqrt(2.0 * stress_tensor_J2) + TinyReal);
     }
     return r;
@@ -126,13 +124,6 @@ Real J2Plasticity::HardeningFactorRate(const Matd &shear_stress, Real &hardening
 {
     Real stress_tensor_J2 = 0.5 * (shear_stress.cwiseProduct(shear_stress.transpose())).sum();
     Real f = sqrt(2.0 * stress_tensor_J2) - sqrt_2_over_3_ * (hardening_modulus_ * hardening_factor + yield_stress_);
-    if (f > TinyReal)
-    {
-        return 0.5 * f / (G_ + hardening_modulus_ / 3.0);
-    }
-    else
-    {
-        return 0.0;
-    }
+    return (f > TinyReal) ? 0.5 * f / (G_ + hardening_modulus_ / 3.0) : 0.0;
 }
 } // namespace SPH
