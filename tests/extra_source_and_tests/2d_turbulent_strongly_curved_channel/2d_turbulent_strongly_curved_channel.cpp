@@ -297,7 +297,7 @@ int main(int ac, char *av[])
                 left_inflow_pressure_condition.exec(dt);
                 right_outflow_pressure_condition.exec(dt);
 
-                constrain_normal_velocity_in_P_region.exec();
+                //constrain_normal_velocity_in_P_region.exec();
 
                 inflow_velocity_condition.exec();
 
