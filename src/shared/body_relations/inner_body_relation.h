@@ -144,5 +144,22 @@ class ShellSelfContactRelation : public BaseInnerRelation
     NeighborBuilderShellSelfContact get_shell_self_contact_neighbor_;
     CellLinkedList &cell_linked_list_;
 };
+
+/**
+ * @class AdaptiveSplittingInnerRelation
+ * @brief The relation within a SPH body with smoothing length adaptation for splitting algorithm
+ *        a particle can only see neighbors with ascending ids or higher levels
+ */
+class AdaptiveSplittingInnerRelation : public AdaptiveInnerRelation
+{
+  public:
+    explicit AdaptiveSplittingInnerRelation(RealBody &real_body)
+        : AdaptiveInnerRelation(real_body),
+          get_adaptive_splitting_inner_neighbor_(real_body){};
+    void updateConfiguration() override;
+
+  private:
+    NeighborBuilderSplitInnerAdaptive get_adaptive_splitting_inner_neighbor_;
+};
 } // namespace SPH
 #endif // INNER_BODY_RELATION_H

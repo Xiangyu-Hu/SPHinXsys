@@ -527,5 +527,36 @@ void NeighborBuilderSurfaceContactFromSolid::operator()(Neighborhood &neighborho
     }
 }
 //=================================================================================================//
+NeighborBuilderSplitInnerAdaptive::
+    NeighborBuilderSplitInnerAdaptive(SPHBody &body)
+    : NeighborBuilder(body.sph_adaptation_->getKernel()),
+      h_ratio_(*body.getBaseParticles().getVariableDataByName<Real>("SmoothingLengthRatio")),
+      level_(*body.getBaseParticles().getVariableDataByName<size_t>("ParticleMeshLevel")) {}
+//=================================================================================================//
+void NeighborBuilderSplitInnerAdaptive::
+operator()(Neighborhood &neighborhood, const Vecd &pos_i, size_t index_i, const ListData &list_data_j)
+{
+    size_t index_j = list_data_j.first;
+
+    // Only add neighbors when dp_i >= dp_j
+    // When dp_i == dp_j, only add neighbors when i < j
+    size_t level_i = level_[index_i];
+    if (size_t level_j = level_[index_j]; level_i > level_j || (level_i == level_j && index_i >= index_j))
+        return;
+
+    Vecd displacement = pos_i - list_data_j.second;
+    Real distance = displacement.norm();
+    Real i_h_ratio = h_ratio_[index_i];
+    Real h_ratio_min = SMIN(i_h_ratio, h_ratio_[index_j]);
+    Real cutoff_radius = kernel_->CutOffRadius(h_ratio_min);
+    if (distance < cutoff_radius && index_i != index_j)
+    {
+        neighborhood.current_size_ >= neighborhood.allocated_size_
+            ? createNeighbor(neighborhood, distance, displacement, index_j, i_h_ratio, h_ratio_min)
+            : initializeNeighbor(neighborhood, distance, displacement, index_j, i_h_ratio, h_ratio_min);
+        neighborhood.current_size_++;
+    }
+};
+//=================================================================================================//
 } // namespace SPH
 //=================================================================================================//
