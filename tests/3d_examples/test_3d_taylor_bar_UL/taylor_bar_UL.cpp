@@ -8,9 +8,9 @@ int main(int ac, char *av[])
 {
     /** Setup the system. Please the make sure the global domain bounds are correctly defined. */
     SPHSystem system(system_domain_bounds, particle_spacing_ref);
-    system.handleCommandlineOptions(ac, av)->setIOEnvironment();
     system.setRunParticleRelaxation(false);
     system.setReloadParticles(true);
+    system.handleCommandlineOptions(ac, av)->setIOEnvironment();
 
     RealBody column(system, makeShared<Column>("Column"));
     column.defineBodyLevelSetShape()->writeLevelSet(system);
@@ -46,7 +46,7 @@ int main(int ac, char *av[])
         /** Write the particle reload files. */
         ReloadParticleIO write_particle_reload_files(column);
         /** A  Physics relaxation step. */
-        RelaxationStepInner relaxation_step_inner(column_inner);
+        RelaxationStepLevelSetCorrectionInner relaxation_step_inner(column_inner);
         /**
          * @brief 	Particle relaxation starts here.
          */
