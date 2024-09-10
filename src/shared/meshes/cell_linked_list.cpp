@@ -14,36 +14,13 @@ BaseCellLinkedList::
     : BaseMeshField("CellLinkedList"),
       kernel_(*sph_adaptation.getKernel()) {}
 //=================================================================================================//
-SplitCellLists *BaseCellLinkedList::getSplitCellLists()
-{
-    std::cout << "\n Error: SplitCellList not defined!" << std::endl;
-    std::cout << __FILE__ << ':' << __LINE__ << std::endl;
-    exit(1);
-    return nullptr;
-}
-//=================================================================================================//
-void BaseCellLinkedList::setUseSplitCellLists()
-{
-    std::cout << "\n Error: SplitCellList not defined!" << std::endl;
-    std::cout << __FILE__ << ':' << __LINE__ << std::endl;
-    exit(1);
-};
-//=================================================================================================//
-void BaseCellLinkedList::clearSplitCellLists(SplitCellLists &split_cell_lists)
-{
-    for (size_t i = 0; i < split_cell_lists.size(); i++)
-        split_cell_lists[i].clear();
-}
-//=================================================================================================//
 CellLinkedList::CellLinkedList(BoundingBox tentative_bounds, Real grid_spacing,
                                SPHAdaptation &sph_adaptation)
     : BaseCellLinkedList(sph_adaptation), Mesh(tentative_bounds, grid_spacing, 2),
-      use_split_cell_lists_(false), cell_index_lists_(nullptr), cell_data_lists_(nullptr)
+      cell_index_lists_(nullptr), cell_data_lists_(nullptr)
 {
     allocateMeshDataMatrix();
     single_cell_linked_list_level_.push_back(this);
-    size_t number_of_split_cell_lists = pow(3, Dimensions);
-    split_cell_lists_.resize(number_of_split_cell_lists);
 }
 //=================================================================================================//
 void CellLinkedList ::allocateMeshDataMatrix()
@@ -86,25 +63,6 @@ void CellLinkedList::UpdateCellListData(BaseParticles &base_particles)
         });
 }
 //=================================================================================================//
-void CellLinkedList::updateSplitCellLists(SplitCellLists &split_cell_lists)
-{
-    clearSplitCellLists(split_cell_lists);
-    // i: stride 3
-    // j: stride 3
-    mesh_parallel_for(
-        MeshRange(Arrayi::Zero(), all_cells_),
-        [&](const Arrayi &cell_index)
-        {
-            ConcurrentIndexVector &cell_list = getCellDataList(cell_index_lists_, cell_index);
-            size_t real_particles_in_cell = cell_list.size();
-            if (real_particles_in_cell != 0)
-            {
-                split_cell_lists[transferMeshIndexTo1D(3 * Arrayi::Ones(), mod(cell_index, 3))]
-                    .push_back(&cell_list);
-            }
-        });
-}
-//=================================================================================================//
 void CellLinkedList::UpdateCellLists(BaseParticles &base_particles)
 {
     clearCellLists();
@@ -122,11 +80,6 @@ void CellLinkedList::UpdateCellLists(BaseParticles &base_particles)
         ap);
 
     UpdateCellListData(base_particles);
-
-    if (use_split_cell_lists_)
-    {
-        updateSplitCellLists(split_cell_lists_);
-    }
 }
 //=================================================================================================//
 void CellLinkedList ::insertParticleIndex(size_t particle_index, const Vecd &particle_position)

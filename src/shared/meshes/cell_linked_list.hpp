@@ -44,4 +44,20 @@ void CellLinkedList::searchNeighborsByParticles(
                  });
 }
 //=================================================================================================//
+template <class LocalDynamicsFunction>
+void CellLinkedList::particle_for_split(const LocalDynamicsFunction &local_dynamics_function)
+{
+    mesh_split_parallel_for(
+        MeshRange(Arrayi::Zero(), all_cells_),
+        3 * Arrayi::Ones(),
+        [&](const Arrayi &cell_index)
+        {
+            const ConcurrentIndexVector &cell_list = getCellDataList(cell_index_lists_, cell_index);
+            for (size_t index_i : cell_list)
+            {
+                local_dynamics_function(index_i);
+            }
+        });
+}
+//=================================================================================================//
 } // namespace SPH
