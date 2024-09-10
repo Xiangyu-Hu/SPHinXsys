@@ -100,7 +100,7 @@ UniquePtr<BaseLevelSet> SPHAdaptation::createLevelSet(Shape &shape, Real refinem
 ParticleWithLocalRefinement::
     ParticleWithLocalRefinement(Real resolution_ref, Real h_spacing_ratio, Real system_refinement_ratio,
                                 int local_refinement_level)
-    : SPHAdaptation(resolution_ref, h_spacing_ratio, system_refinement_ratio), h_ratio_(nullptr)
+    : SPHAdaptation(resolution_ref, h_spacing_ratio, system_refinement_ratio), h_ratio_(nullptr), level_(nullptr)
 {
     local_refinement_level_ = local_refinement_level;
     spacing_min_ = MostRefinedSpacingRegular(spacing_ref_, local_refinement_level_);
@@ -117,6 +117,7 @@ void ParticleWithLocalRefinement::initializeAdaptationVariables(BaseParticles &b
     h_ratio_ = base_particles.registerSharedVariable<Real>(
         "SmoothingLengthRatio", [&](size_t i) -> Real
         { return ReferenceSpacing() / base_particles.ParticleSpacing(i); });
+    level_ = base_particles.registerSharedVariable<size_t>("ParticleMeshLevel");
     base_particles.addVariableToSort<Real>("SmoothingLengthRatio");
     base_particles.addVariableToReload<Real>("SmoothingLengthRatio");
 }
