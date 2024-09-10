@@ -26,20 +26,17 @@ void relax_solid(RealBody &body, BaseInnerRelation &inner)
     using namespace relax_dynamics;
     SimpleDynamics<RandomizeParticlePosition> random_particles(body);
     RelaxationStepLevelSetCorrectionInner relaxation_step_inner(inner);
-    SimpleDynamics<UpdateSmoothingLengthRatioByShape> update_smoothing_length_ratio(body);
     //----------------------------------------------------------------------
     //	Particle relaxation starts here.
     //----------------------------------------------------------------------
     random_particles.exec(0.25);
     relaxation_step_inner.SurfaceBounding().exec();
-    update_smoothing_length_ratio.exec();
     //----------------------------------------------------------------------
     //	Relax particles of the insert body.
     //----------------------------------------------------------------------
     int ite_p = 0;
     while (ite_p < 1000)
     {
-        update_smoothing_length_ratio.exec();
         relaxation_step_inner.exec();
         ite_p += 1;
         if (ite_p % 200 == 0)
@@ -182,14 +179,6 @@ void beam_single_resolution(int dp_factor)
                 throw std::runtime_error("position has become nan");
     };
 
-    // Output
-    beam_body.getBaseParticles().addVariableToWrite<Vec2d>("GravityForce");
-    beam_body.getBaseParticles().addVariableToWrite<Vec2d>("NormalDirection");
-    beam_body.getBaseParticles().addVariableToWrite<Vec2d>("Velocity");
-    beam_body.getBaseParticles().addVariableToWrite<Vec2d>("Position");
-    BodyStatesRecordingToVtp vtp_output(system);
-    vtp_output.writeToFile(0);
-
     // Observer
     const StdVec<Vecd> observation_locations = {Vec2d::Zero()};
     ObserverBody observer(system, "MidObserver");
@@ -205,6 +194,14 @@ void beam_single_resolution(int dp_factor)
 
     constant_gravity.exec();
 
+    // Output
+    beam_body.getBaseParticles().addVariableToWrite<Vec2d>("GravityForce");
+    beam_body.getBaseParticles().addVariableToWrite<Vec2d>("NormalDirection");
+    beam_body.getBaseParticles().addVariableToWrite<Vec2d>("Velocity");
+    beam_body.getBaseParticles().addVariableToWrite<Vec2d>("Position");
+    BodyStatesRecordingToVtp vtp_output(system);
+    vtp_output.writeToFile(0);
+
     // Simulation
     GlobalStaticVariables::physical_time_ = 0.0;
     int ite = 0;
@@ -213,6 +210,7 @@ void beam_single_resolution(int dp_factor)
     Real dt = 0.0;
     TickCount t1 = TickCount::now();
     const Real dt_ref = algs.time_step_size();
+    std::cout << "dt_ref: " << dt_ref << std::endl;
     auto run_simulation = [&]()
     {
         while (GlobalStaticVariables::physical_time_ < end_time)
@@ -316,7 +314,9 @@ void beam_multi_resolution(int dp_factor, int refinement_level)
 
     // Methods
     solid_algs algs(inner);
-    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d, FixedDampingRate>>> damping(0.5, inner, "Velocity", params.physical_viscosity);
+    // damping
+    AdaptiveSplittingInnerRelation inner_split(beam_body);
+    DampingWithRandomChoice<InteractionAdaptiveSplit<DampingPairwiseInner<Vec2d, FixedDampingRate>>> damping(0.5, inner_split, "Velocity", params.physical_viscosity);
 
     // Boundary conditions
     FixPart fix_bc_part(beam_body, "ClampingPart", translation, params.length);
@@ -334,14 +334,6 @@ void beam_multi_resolution(int dp_factor, int refinement_level)
                 throw std::runtime_error("position has become nan");
     };
 
-    // Output
-    beam_body.getBaseParticles().addVariableToWrite<Vec2d>("GravityForce");
-    beam_body.getBaseParticles().addVariableToWrite<Vec2d>("NormalDirection");
-    beam_body.getBaseParticles().addVariableToWrite<Vec2d>("Velocity");
-    beam_body.getBaseParticles().addVariableToWrite<Vec2d>("Position");
-    BodyStatesRecordingToVtp vtp_output(system);
-    vtp_output.writeToFile(0);
-
     // Observer
     const StdVec<Vecd> observation_locations = {Vec2d::Zero()};
     ObserverBody observer(system, "MidObserver");
@@ -357,6 +349,46 @@ void beam_multi_resolution(int dp_factor, int refinement_level)
 
     constant_gravity.exec();
 
+    // check if split inner is correct
+    const auto &mesh_level = *beam_body.getBaseParticles().getVariableDataByName<size_t>("ParticleMeshLevel");
+    for (size_t index_i = 0; index_i < beam_body.getBaseParticles().TotalRealParticles(); index_i++)
+    {
+        const auto &inner_neighbor = inner.inner_configuration_[index_i];
+        const auto &inner_split_neighbor = inner_split.inner_configuration_[index_i];
+        if (inner_neighbor.current_size_ < inner_split_neighbor.current_size_)
+        {
+            std::cout << "Error: split inner should have fewer neighbors than inner" << std::endl;
+            exit(1);
+        }
+        for (size_t n = 0; n < inner_split_neighbor.current_size_; n++)
+        {
+            size_t index_j = inner_split_neighbor.j_[n];
+            if (mesh_level[index_i] > mesh_level[index_j])
+            {
+                std::cout << "Error: a particle can only see particles with dp_j << dp_i" << std::endl;
+                exit(1);
+            }
+            if (mesh_level[index_i] == mesh_level[index_j] && index_i >= index_j)
+            {
+                std::cout << "Error: a particle can only see particles with index_j > index_i" << std::endl;
+                exit(1);
+            }
+        }
+    }
+
+    // Output
+    // transform size_t to int for output
+    beam_body.getBaseParticles().registerSharedVariable<int>("MeshLevel", [&](size_t i) -> int
+                                                             { return int(mesh_level[i]); });
+    beam_body.getBaseParticles().addVariableToWrite<Real>("SmoothingLengthRatio");
+    beam_body.getBaseParticles().addVariableToWrite<int>("MeshLevel");
+    beam_body.getBaseParticles().addVariableToWrite<Vec2d>("GravityForce");
+    beam_body.getBaseParticles().addVariableToWrite<Vec2d>("NormalDirection");
+    beam_body.getBaseParticles().addVariableToWrite<Vec2d>("Velocity");
+    beam_body.getBaseParticles().addVariableToWrite<Vec2d>("Position");
+    BodyStatesRecordingToVtp vtp_output(system);
+    vtp_output.writeToFile(0);
+
     // Simulation
     GlobalStaticVariables::physical_time_ = 0.0;
     int ite = 0;
@@ -365,6 +397,7 @@ void beam_multi_resolution(int dp_factor, int refinement_level)
     Real dt = 0.0;
     TickCount t1 = TickCount::now();
     const Real dt_ref = algs.time_step_size();
+    std::cout << "dt_ref: " << dt_ref << std::endl;
     auto run_simulation = [&]()
     {
         while (GlobalStaticVariables::physical_time_ < end_time)
@@ -385,8 +418,8 @@ void beam_multi_resolution(int dp_factor, int refinement_level)
 
                 algs.stress_relaxation_first(dt);
                 fix_bc.exec();
-                damping.exec(dt);
-                fix_bc.exec();
+                // damping.exec(dt);
+                // fix_bc.exec();
                 algs.stress_relaxation_second(dt);
 
                 ++ite;
