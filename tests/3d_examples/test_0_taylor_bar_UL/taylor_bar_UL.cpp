@@ -47,7 +47,7 @@ int main(int ac, char *av[])
         /** Write the particle reload files. */
         ReloadParticleIO write_particle_reload_files(column);
         /** A  Physics relaxation step. */
-        RelaxationStepLevelSetInner relaxation_step_inner(column_inner);
+        RelaxationStepLevelSetCorrectionInner relaxation_step_inner(column_inner);
         /**
          * @brief 	Particle relaxation starts here.
          */
