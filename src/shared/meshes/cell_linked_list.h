@@ -157,6 +157,10 @@ class MultilevelCellLinkedList : public MultilevelMesh<BaseCellLinkedList, CellL
     virtual void tagBodyPartByCell(ConcurrentCellLists &cell_lists, std::function<bool(Vecd, Real)> &check_included) override;
     virtual void tagBoundingCells(StdVec<CellLists> &cell_data_lists, const BoundingBox &bounding_bounds, int axis) override {};
     virtual StdVec<CellLinkedList *> CellLinkedListLevels() override { return getMeshLevels(); };
+
+    /** split algorithm */;
+    template <class LocalDynamicsFunction>
+    void particle_for_split(const LocalDynamicsFunction &local_dynamics_function);
 };
 } // namespace SPH
 #endif // MESH_CELL_LINKED_LIST_H

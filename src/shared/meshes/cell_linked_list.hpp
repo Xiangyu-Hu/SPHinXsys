@@ -60,4 +60,11 @@ void CellLinkedList::particle_for_split(const LocalDynamicsFunction &local_dynam
         });
 }
 //=================================================================================================//
+template <class LocalDynamicsFunction>
+void MultilevelCellLinkedList::particle_for_split(const LocalDynamicsFunction &local_dynamics_function)
+{
+    for (size_t level = 0; level != total_levels_; ++level)
+        mesh_levels_[level]->particle_for_split(local_dynamics_function);
+}
+//=================================================================================================//
 } // namespace SPH

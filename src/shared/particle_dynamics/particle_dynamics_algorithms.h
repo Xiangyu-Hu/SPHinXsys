@@ -223,6 +223,37 @@ class InteractionSplit : public BaseInteractionDynamics<LocalDynamicsType, Paral
 };
 
 /**
+ * @class InteractionSplit
+ * @brief This is for the splitting algorithm
+ */
+template <class LocalDynamicsType, class ExecutionPolicy = ParallelPolicy>
+class InteractionAdaptiveSplit : public BaseInteractionDynamics<LocalDynamicsType, ParallelPolicy>
+{
+  protected:
+    RealBody &real_body_;
+    MultilevelCellLinkedList &cell_linked_list_;
+
+  public:
+    template <typename... Args>
+    explicit InteractionAdaptiveSplit(Args &&...args)
+        : BaseInteractionDynamics<LocalDynamicsType, ParallelPolicy>(std::forward<Args>(args)...),
+          real_body_(DynamicCast<RealBody>(this, this->getSPHBody())),
+          cell_linked_list_(DynamicCast<MultilevelCellLinkedList>(this, real_body_.getCellLinkedList()))
+    {
+        static_assert(!has_initialize<LocalDynamicsType>::value &&
+                          !has_update<LocalDynamicsType>::value,
+                      "LocalDynamicsType does not fulfill InteractionSplit requirements");
+    };
+
+    /** run the main interaction step between particles. */
+    virtual void runMainStep(Real dt) override
+    {
+        cell_linked_list_.particle_for_split([&](size_t i)
+                                             { this->interaction(i, dt * 0.5); });
+    }
+};
+
+/**
  * @class InteractionDynamics
  * @brief This is the class with a single step of particle interaction with other particles
  */
