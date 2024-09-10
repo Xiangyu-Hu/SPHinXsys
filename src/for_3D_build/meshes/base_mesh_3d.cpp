@@ -13,8 +13,4 @@ Arrayi Mesh::transfer1DtoMeshIndex(const Arrayi &mesh_size, size_t i) const
     return Arrayi(page, column, left_over - column * row_size);
 }
 //=================================================================================================//
-size_t Mesh::transferMeshIndexToMortonOrder(const Arrayi &mesh_index) const
-{
-    return MortonCode(mesh_index[0]) | (MortonCode(mesh_index[1]) << 1) | (MortonCode(mesh_index[2]) << 2);
-}
 } // namespace SPH

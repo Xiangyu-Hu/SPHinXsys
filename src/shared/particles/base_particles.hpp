@@ -266,7 +266,7 @@ template <typename DataType>
 void BaseParticles::addVariableToSort(const std::string &name)
 {
     DiscreteVariable<DataType> *new_sortable =
-        addVariableToList<DataType>(sortable_variables_, name);
+        addVariableToList<DataType>(variables_to_sort_, name);
     if (new_sortable != nullptr)
     {
         constexpr int type_index = DataTypeIndex<DataType>::value;

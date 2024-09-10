@@ -21,24 +21,34 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file    all_shared_physical_dynamics_ck.h
- * @brief   Head file for all shared physics dynamics for both 2- and 3D build.
- *          This is the header file that user code should include to pick up all
-            particle dynamics capabilities.
- * @author	Chi Zhang and Xiangyu Hu
+ * @file particle_sort_sycl.h
+ * @brief Here gives the classes for particle sorting.
+ * @author Xiangyu Hu
  */
 
-#ifndef ALL_SHARED_PHYSICAL_DYNAMICS_CK_H
-#define ALL_SHARED_PHYSICAL_DYNAMICS_CK_H
+#ifndef PARTICLE_SORT_SYCL_H
+#define PARTICLE_SORT_SYCL_H
 
-#include "acoustic_step_1st_half.hpp"
-#include "acoustic_step_2nd_half.hpp"
-#include "all_general_dynamics_ck.h"
-#include "complex_algorithms_ck.h"
-#include "density_regularization.hpp"
-#include "fluid_time_step_ck.hpp"
-#include "interaction_algorithms_ck.hpp"
-#include "particle_sort_ck.hpp"
-#include "simple_algorithms_ck.h"
+#include "base_configuration_dynamics_sycl.h"
+#include "execution_sycl.h"
+#include "particle_sort_ck.h"
 
-#endif // ALL_SHARED_PHYSICAL_DYNAMICS_CK_H
+namespace SPH
+{
+using namespace execution;
+
+class RadixSort
+{
+  public:
+    template <class ExecutionPolicy>
+    explicit RadixSort(const ExecutionPolicy &ex_policy,
+                       DiscreteVariable<UnsignedInt> *dv_sequence,
+                       DiscreteVariable<UnsignedInt> *dv_index_permutation);
+    void sort(const ParallelDevicePolicy &ex_policy, BaseParticles *particles);
+
+  protected:
+    DiscreteVariable<UnsignedInt> *dv_sequence_;
+    DiscreteVariable<UnsignedInt> *dv_index_permutation_;
+};
+} // namespace SPH
+#endif // PARTICLE_SORT_SYCL_H

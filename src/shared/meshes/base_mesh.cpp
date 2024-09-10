@@ -35,15 +35,4 @@ Vecd Mesh::GridPositionFromIndex(const Arrayi &grid_index) const
     return mesh_lower_bound_ + grid_index.cast<Real>().matrix() * grid_spacing_;
 }
 //=================================================================================================//
-size_t Mesh::MortonCode(const size_t &i) const
-{
-    size_t x = i;
-    x &= 0x3ff;
-    x = (x | x << 16) & 0x30000ff;
-    x = (x | x << 8) & 0x300f00f;
-    x = (x | x << 4) & 0x30c30c3;
-    x = (x | x << 2) & 0x9249249;
-    return x;
-}
-//=================================================================================================//
 } // namespace SPH

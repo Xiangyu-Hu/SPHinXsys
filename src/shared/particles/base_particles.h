@@ -189,7 +189,7 @@ class BaseParticles
     UnsignedInt *original_id_; /**< the original ids assigned just after particle is generated. */
     UnsignedInt *sorted_id_;   /**< the current sorted particle ids of particles from original ids. */
     ParticleData sortable_data_;
-    ParticleVariables sortable_variables_;
+    ParticleVariables variables_to_sort_;
 
   public:
     template <typename DataType>
@@ -197,7 +197,6 @@ class BaseParticles
     UnsignedInt *ParticleOriginalIds() { return original_id_; };
     UnsignedInt *ParticleSortedIds() { return sorted_id_; };
     ParticleData &SortableParticleData() { return sortable_data_; };
-    ParticleVariables &SortableParticleVariables() { return sortable_variables_; };
     AssignIndex getAssignIndex() { return AssignIndex(); };
 
     //----------------------------------------------------------------------
@@ -244,6 +243,7 @@ class BaseParticles
     ParticleVariables &VariablesToWrite() { return variables_to_write_; };
     ParticleVariables &VariablesToRestart() { return variables_to_restart_; };
     ParticleVariables &VariablesToReload() { return variables_to_reload_; };
+    ParticleVariables &VariablesToSort() { return variables_to_sort_; };
     //----------------------------------------------------------------------
     // Small structs for generalize particle operations on
     // assembled variables and data sets

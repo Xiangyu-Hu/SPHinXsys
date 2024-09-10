@@ -110,7 +110,15 @@ class Mesh
      * https://stackoverflow.com/questions/18529057/
      * produce-interleaving-bit-patterns-morton-keys-for-32-bit-64-bit-and-128bit
      */
-    size_t transferMeshIndexToMortonOrder(const Arrayi &mesh_index) const;
+    size_t transferMeshIndexToMortonOrder(const Array2i &mesh_index) const
+    {
+        return MortonCode(mesh_index[0]) | (MortonCode(mesh_index[1]) << 1);
+    };
+
+    size_t transferMeshIndexToMortonOrder(const Array3i &mesh_index) const
+    {
+        return MortonCode(mesh_index[0]) | (MortonCode(mesh_index[1]) << 1) | (MortonCode(mesh_index[2]) << 2);
+    };
 
   protected:
     Vecd mesh_lower_bound_;  /**< mesh lower bound as reference coordinate */
@@ -119,7 +127,16 @@ class Mesh
     Arrayi all_grid_points_; /**< number of grid points by dimension */
     Arrayi all_cells_;       /**< number of cells by dimension */
 
-    size_t MortonCode(const size_t &i) const;
+    size_t MortonCode(const size_t &i) const
+    {
+        size_t x = i;
+        x &= 0x3ff;
+        x = (x | x << 16) & 0x30000ff;
+        x = (x | x << 8) & 0x300f00f;
+        x = (x | x << 4) & 0x30c30c3;
+        x = (x | x << 2) & 0x9249249;
+        return x;
+    };
 };
 
 /**

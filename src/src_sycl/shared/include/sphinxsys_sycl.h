@@ -30,6 +30,8 @@
 
 #include "base_configuration_dynamics_sycl.h"
 #include "particle_iterators_sycl.h"
+#include "particle_sort_sycl.h"
+#include "particle_sort_sycl.hpp"
 #include "sphinxsys_ck.h"
 #include "sphinxsys_variable_sycl.hpp"
 

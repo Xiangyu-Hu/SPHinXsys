@@ -95,6 +95,7 @@ int main(int ac, char *av[])
     // Finally, the auxillary models such as time step estimator, initial condition,
     // boundary condition and other constraints should be defined.
     //----------------------------------------------------------------------
+    ParticleSortCK<execution::ParallelDevicePolicy, RadixSort> particle_sort(water_block);
     Gravity gravity(Vecd(0.0, -gravity_g));
     StateDynamics<execution::ParallelDevicePolicy, GravityForceCK<Gravity>> constant_gravity(water_block, gravity);
     StateDynamics<execution::ParallelPolicy, NormalFromBodyShapeCK> wall_boundary_normal_direction(wall_boundary);
@@ -220,6 +221,10 @@ int main(int ac, char *av[])
             /** Update cell linked list and configuration. */
             time_instance = TickCount::now();
             water_advection_step_close.exec();
+            if (number_of_iterations % 100 == 0 && number_of_iterations != 1)
+            {
+                particle_sort.exec();
+            }
             water_cell_linked_list.exec();
             water_block_update_complex_relation.exec();
             fluid_observer_contact_relation.exec();
