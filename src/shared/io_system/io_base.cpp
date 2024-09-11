@@ -30,8 +30,9 @@ BodyStatesRecording::BodyStatesRecording(SPHSystem &sph_system)
     for (size_t i = 0; i < bodies_.size(); ++i)
     {
         BaseParticles &particles = bodies_[i]->getBaseParticles();
+        dv_all_pos_.push_back(particles.getVariableByName<Vecd>("Position"));
         prepare_variable_to_write_.push_back(
-            OperationOnDataAssemble<ParticleVariables, prepareParticleVariableForOutput>(
+            OperationOnDataAssemble<ParticleVariables, prepareVariablesToWrite>(
                 particles.VariablesToWrite()));
     }
 }
@@ -70,7 +71,7 @@ RestartIO::RestartIO(SPHSystem &sph_system)
         BaseParticles &particles = bodies_[i]->getBaseParticles();
         particles.addVariableToRestart<UnsignedInt>("OriginalID");
         prepare_variable_to_restart_.push_back(
-            OperationOnDataAssemble<ParticleVariables, prepareParticleVariableForOutput>(
+            OperationOnDataAssemble<ParticleVariables, prepareVariablesToWrite>(
                 particles.VariablesToRestart()));
     }
 }
@@ -143,7 +144,7 @@ ReloadParticleIO::ReloadParticleIO(SPHBodyVector bodies)
         // basic variable for write to restart file
         BaseParticles &particles = bodies_[i]->getBaseParticles();
         prepare_variable_to_reload_.push_back(
-            OperationOnDataAssemble<ParticleVariables, prepareParticleVariableForOutput>(
+            OperationOnDataAssemble<ParticleVariables, prepareVariablesToWrite>(
                 particles.VariablesToReload()));
     }
 }
