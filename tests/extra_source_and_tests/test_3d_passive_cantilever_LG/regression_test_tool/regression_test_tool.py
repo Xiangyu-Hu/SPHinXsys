@@ -11,8 +11,8 @@ from regression_test_base_tool import SphinxsysRegressionTest
 case name: test_3d_passive_cantilever
 """
 
-case_name = "test_3d_passive_cantilever"
-body_name = "MyocardiumObserver"
+case_name = "test_3d_passive_cantilever_LG"
+body_name = "CantileverObserver"
 parameter_name = "Position"
 
 number_of_run_times = 0
