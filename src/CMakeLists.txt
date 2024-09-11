@@ -72,7 +72,7 @@ if(SPHINXSYS_3D)
     if(SPHINXSYS_USE_SYCL)
         foreach(FILEPATH ${SPHINXSYS_SYCL_HEADERS})
             get_filename_component(DIR ${FILEPATH} DIRECTORY)
-            list(APPEND SPHINXSYS_2D_INCLUDE_DIRS ${DIR})
+            list(APPEND SPHINXSYS_3D_INCLUDE_DIRS ${DIR})
         endforeach()
 
         target_sources(sphinxsys_3d PUBLIC ${SPHINXSYS_SHARED_HEADERS} ${SPHINXSYS_3D_HEADERS} ${SPHINXSYS_SYCL_HEADERS})
