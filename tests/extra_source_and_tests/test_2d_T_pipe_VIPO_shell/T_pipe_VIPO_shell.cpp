@@ -40,7 +40,7 @@ Real c_f = 10.0 * U_f * SMAX(Real(1), DH / (Real(2.0) * (DL - DL1))); /** Refere
 //	Material parameters of the shell.
 //----------------------------------------------------------------------
 Real rho0_s = 1.0e3;           /** Normalized density. */
-Real Youngs_modulus = 1.0e6; /** Normalized Youngs Modulus. */
+Real Youngs_modulus = 1.0e5; /** Normalized Youngs Modulus. */
 Real poisson = 0.3;          /** Poisson ratio. */
 //----------------------------------------------------------------------
 //	Define geometry of SPH bodies.
