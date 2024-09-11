@@ -44,7 +44,7 @@ template <typename DataType>
 class Interpolation<Contact<DataType>> : public Interaction<Contact<>>
 {
   public:
-    Interpolation(ContactRelation &pair_contact_relation, const std::string &variable_name);
+    Interpolation(Relation<Contact<>> &pair_contact_relation, const std::string &variable_name);
     virtual ~Interpolation(){};
 
     class InteractKernel : public Interaction<Contact<>>::InteractKernel
@@ -71,7 +71,7 @@ template <class ExecutionPolicy, typename DataType>
 class ObservingAQuantityCK : public InteractionDynamicsCK<ExecutionPolicy, Interpolation<Contact<DataType>>>
 {
   public:
-    explicit ObservingAQuantityCK(ContactRelation &pair_contact_relation, const std::string &variable_name)
+    explicit ObservingAQuantityCK(Relation<Contact<>> &pair_contact_relation, const std::string &variable_name)
         : InteractionDynamicsCK<ExecutionPolicy, Interpolation<Contact<DataType>>>(pair_contact_relation, variable_name){};
     virtual ~ObservingAQuantityCK(){};
 };

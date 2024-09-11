@@ -78,9 +78,9 @@ int main(int ac, char *av[])
     UpdateCellLinkedList<execution::ParallelDevicePolicy, CellLinkedList> water_cell_linked_list(water_block);
     UpdateCellLinkedList<execution::ParallelDevicePolicy, CellLinkedList> wall_cell_linked_list(wall_boundary);
 
-    InnerRelation water_block_inner(water_block);
-    ContactRelation water_wall_contact(water_block, {&wall_boundary});
-    ContactRelation fluid_observer_contact(fluid_observer, {&water_block});
+    Relation<Inner<>> water_block_inner(water_block);
+    Relation<Contact<>> water_wall_contact(water_block, {&wall_boundary});
+    Relation<Contact<>> fluid_observer_contact(fluid_observer, {&water_block});
 
     SequencedCombination<UpdateRelation<execution::ParallelDevicePolicy, BodyRelationUpdate<Inner<>, Contact<>>>>
         water_block_update_complex_relation(water_block_inner, water_wall_contact);

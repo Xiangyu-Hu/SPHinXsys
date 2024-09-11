@@ -32,6 +32,7 @@
 
 #include "base_local_dynamics.h"
 #include "neighborhood_ck.hpp"
+#include "relation_ck.hpp"
 
 namespace SPH
 {
@@ -46,7 +47,7 @@ template <typename... Parameters>
 class Interaction<Inner<Parameters...>> : public LocalDynamics
 {
   public:
-    explicit Interaction(InnerRelation &inner_relation);
+    explicit Interaction(Relation<Inner<Parameters...>> &inner_relation);
     virtual ~Interaction(){};
 
     class InteractKernel : public NeighborList, public Neighbor<Parameters...>
@@ -61,7 +62,7 @@ class Interaction<Inner<Parameters...>> : public LocalDynamics
     void resetComputingKernelUpdated();
 
   protected:
-    InnerRelation &inner_relation_;
+    Relation<Inner<Parameters...>> &inner_relation_;
     SPHAdaptation *sph_adaptation_;
     DiscreteVariable<Vecd> *dv_pos_;
     DiscreteVariable<UnsignedInt> *dv_neighbor_index_;
@@ -72,7 +73,7 @@ template <typename... Parameters>
 class Interaction<Contact<Parameters...>> : public LocalDynamics
 {
   public:
-    explicit Interaction(ContactRelation &contact_relation);
+    explicit Interaction(Relation<Contact<Parameters...>> &contact_relation);
     virtual ~Interaction(){};
 
     class InteractKernel : public NeighborList, public Neighbor<Parameters...>
@@ -88,7 +89,7 @@ class Interaction<Contact<Parameters...>> : public LocalDynamics
     void resetComputingKernelUpdated(UnsignedInt contact_index);
 
   protected:
-    ContactRelation &contact_relation_;
+    Relation<Contact<Parameters...>> &contact_relation_;
     SPHAdaptation *sph_adaptation_;
     DiscreteVariable<Vecd> *dv_pos_;
     RealBodyVector contact_bodies_;
@@ -103,7 +104,7 @@ template <typename... Parameters>
 class Interaction<Contact<Wall, Parameters...>> : public Interaction<Contact<Parameters...>>
 {
   public:
-    explicit Interaction(ContactRelation &wall_contact_relation);
+    explicit Interaction(Relation<Contact<Parameters...>> &wall_contact_relation);
     virtual ~Interaction(){};
 
   protected:

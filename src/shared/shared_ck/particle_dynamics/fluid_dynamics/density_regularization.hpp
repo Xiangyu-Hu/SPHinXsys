@@ -38,7 +38,7 @@ DensityRegularization<Base, RelationType<Parameters...>>::InteractKernel::
 //=================================================================================================//
 template <typename RegularizationType, typename... Parameters>
 DensityRegularization<Inner<WithUpdate, RegularizationType, Parameters...>>::
-    DensityRegularization(InnerRelation &inner_relation)
+    DensityRegularization(Relation<Inner<Parameters...>> &inner_relation)
     : DensityRegularization<Base, Inner<Parameters...>>(inner_relation),
       regularization_method_(this->particles_) {}
 //=================================================================================================//
@@ -77,7 +77,8 @@ void DensityRegularization<Inner<WithUpdate, RegularizationType, Parameters...>>
 }
 //=================================================================================================//
 template <typename... Parameters>
-DensityRegularization<Contact<Parameters...>>::DensityRegularization(ContactRelation &contact_relation)
+DensityRegularization<Contact<Parameters...>>::
+    DensityRegularization(Relation<Contact<Parameters...>> &contact_relation)
     : DensityRegularization<Base, Contact<Parameters...>>(contact_relation)
 {
     for (size_t k = 0; k != this->contact_particles_.size(); ++k)

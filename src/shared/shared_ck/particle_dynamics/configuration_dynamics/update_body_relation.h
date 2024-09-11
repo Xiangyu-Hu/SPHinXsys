@@ -47,8 +47,8 @@ class BodyRelationUpdate<Inner<Parameters...>>
 {
 
   public:
-    explicit BodyRelationUpdate(InnerRelation &inner_relation);
-    virtual ~BodyRelationUpdate() {};
+    explicit BodyRelationUpdate(Relation<Inner<Parameters...>> &inner_relation);
+    virtual ~BodyRelationUpdate(){};
 
     class ComputingKernel
         : public Interaction<Inner<Parameters...>>::InteractKernel
@@ -83,7 +83,7 @@ class UpdateRelation<ExecutionPolicy, BodyRelationUpdate<Inner<Parameters...>>>
   public:
     template <typename... Args>
     UpdateRelation(Args &&...args);
-    virtual ~UpdateRelation() {};
+    virtual ~UpdateRelation(){};
     virtual void exec(Real dt = 0.0) override;
 
   protected:
@@ -97,8 +97,8 @@ class BodyRelationUpdate<Contact<Parameters...>>
 {
 
   public:
-    explicit BodyRelationUpdate(ContactRelation &contact_relation);
-    virtual ~BodyRelationUpdate() {};
+    explicit BodyRelationUpdate(Relation<Contact<Parameters...>> &contact_relation);
+    virtual ~BodyRelationUpdate(){};
 
     class ComputingKernel
         : public Interaction<Contact<Parameters...>>::InteractKernel
@@ -132,7 +132,7 @@ class UpdateRelation<ExecutionPolicy, BodyRelationUpdate<Contact<Parameters...>>
   public:
     template <typename... Args>
     UpdateRelation(Args &&...args);
-    virtual ~UpdateRelation() {};
+    virtual ~UpdateRelation(){};
     virtual void exec(Real dt = 0.0) override;
 
   protected:

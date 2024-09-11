@@ -53,7 +53,7 @@ AcousticStep<BaseInteractionType>::AcousticStep(DynamicsIdentifier &identifier)
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
 AcousticStep1stHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType, Parameters...>>::
-    AcousticStep1stHalf(InnerRelation &inner_relation)
+    AcousticStep1stHalf(Relation<Inner<Parameters...>> &inner_relation)
     : AcousticStep<Interaction<Inner<Parameters...>>>(inner_relation),
       correction_(this->particles_), riemann_solver_(this->fluid_, this->fluid_)
 {
@@ -131,7 +131,7 @@ void AcousticStep1stHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
 AcousticStep1stHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType, Parameters...>>::
-    AcousticStep1stHalf(ContactRelation &wall_contact_relation)
+    AcousticStep1stHalf(Relation<Contact<Parameters...>> &wall_contact_relation)
     : AcousticStep<Interaction<Contact<Wall, Parameters...>>>(wall_contact_relation),
       correction_(this->particles_), riemann_solver_(this->fluid_, this->fluid_) {}
 //=================================================================================================//

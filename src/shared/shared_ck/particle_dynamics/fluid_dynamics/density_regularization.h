@@ -124,7 +124,7 @@ class DensityRegularization<Inner<WithUpdate, FlowType, Parameters...>>
         typename Regularization<FlowType>::ComputingKernel;
 
   public:
-    explicit DensityRegularization(InnerRelation &inner_relation);
+    explicit DensityRegularization(Relation<Inner<Parameters...>> &inner_relation);
     virtual ~DensityRegularization(){};
 
     class InteractKernel
@@ -164,7 +164,7 @@ class DensityRegularization<Contact<Parameters...>>
     : public DensityRegularization<Base, Contact<Parameters...>>
 {
   public:
-    explicit DensityRegularization(ContactRelation &contact_relation);
+    explicit DensityRegularization(Relation<Contact<Parameters...>> &contact_relation);
     virtual ~DensityRegularization(){};
 
     class InteractKernel

@@ -37,21 +37,6 @@
 
 namespace SPH
 {
-//----------------------------------------------------------------------
-// Interaction type identifies
-//----------------------------------------------------------------------
-template <typename... InnerParameters>
-class Inner; /**< Inner interaction: interaction within a body*/
-
-template <typename... ContactParameters>
-class Contact; /**< Contact interaction: interaction between a body with one or several another bodies */
-
-class Boundary;        /**< Interaction with boundary */
-class Wall;            /**< Interaction with wall boundary */
-class Extended;        /**< An extened method of an interaction type */
-class SpatialTemporal; /**< A interaction considering spatial temporal correlations */
-class Dynamic;         /**< A dynamic interaction */
-
 /**
  * @class BaseLocalDynamics
  * @brief The base class for all local particle dynamics.
@@ -126,7 +111,7 @@ class Average : public ReduceSumType
 {
   public:
     template <class DynamicsIdentifier, typename... Args>
-    Average(DynamicsIdentifier &identifier, Args &&... args)
+    Average(DynamicsIdentifier &identifier, Args &&...args)
         : ReduceSumType(identifier, std::forward<Args>(args)...){};
     virtual ~Average(){};
     using ReturnType = typename ReduceSumType::ReturnType;
@@ -183,7 +168,7 @@ class ComplexInteraction<LocalDynamicsName<FirstInteraction, OtherInteractions..
   public:
     template <class FirstParameterSet, typename... OtherParameterSets>
     explicit ComplexInteraction(FirstParameterSet &&first_parameter_set,
-                                OtherParameterSets &&... other_parameter_sets)
+                                OtherParameterSets &&...other_parameter_sets)
         : LocalDynamicsName<FirstInteraction, CommonParameters...>(first_parameter_set),
           other_interactions_(std::forward<OtherParameterSets>(other_parameter_sets)...){};
 

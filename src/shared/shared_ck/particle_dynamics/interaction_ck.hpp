@@ -8,7 +8,7 @@ namespace SPH
 //=================================================================================================//
 template <typename... Parameters>
 Interaction<Inner<Parameters...>>::
-    Interaction(InnerRelation &inner_relation)
+    Interaction(Relation<Inner<Parameters...>> &inner_relation)
     : LocalDynamics(inner_relation.getSPHBody()),
       inner_relation_(inner_relation),
       sph_adaptation_(sph_body_.sph_adaptation_),
@@ -39,7 +39,7 @@ Interaction<Inner<Parameters...>>::InteractKernel::
 //=================================================================================================//
 template <typename... Parameters>
 Interaction<Contact<Parameters...>>::
-    Interaction(ContactRelation &contact_relation)
+    Interaction(Relation<Contact<Parameters...>> &contact_relation)
     : LocalDynamics(contact_relation.getSPHBody()),
       contact_relation_(contact_relation),
       sph_adaptation_(sph_body_.sph_adaptation_),
@@ -83,7 +83,8 @@ Interaction<Contact<Parameters...>>::InteractKernel::
                               encloser.dv_pos_, encloser.contact_pos_[contact_index]) {}
 //=================================================================================================//
 template <typename... Parameters>
-Interaction<Contact<Wall, Parameters...>>::Interaction(ContactRelation &wall_contact_relation)
+Interaction<Contact<Wall, Parameters...>>::
+    Interaction(Relation<Contact<Parameters...>> &wall_contact_relation)
     : Interaction<Contact<Parameters...>>(wall_contact_relation)
 {
     for (size_t k = 0; k != this->contact_particles_.size(); ++k)

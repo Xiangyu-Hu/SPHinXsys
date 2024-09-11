@@ -65,7 +65,7 @@ class AcousticStep1stHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionTyp
     using BaseInteraction = AcousticStep<Interaction<Inner<Parameters...>>>;
 
   public:
-    explicit AcousticStep1stHalf(InnerRelation &inner_relation);
+    explicit AcousticStep1stHalf(Relation<Inner<Parameters...>> &inner_relation);
     virtual ~AcousticStep1stHalf(){};
 
     class InitializeKernel
@@ -119,7 +119,7 @@ class AcousticStep1stHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType,
     using BaseInteraction = AcousticStep<Interaction<Contact<Wall, Parameters...>>>;
 
   public:
-    explicit AcousticStep1stHalf(ContactRelation &wall_contact_relation);
+    explicit AcousticStep1stHalf(Relation<Contact<Parameters...>> &wall_contact_relation);
     virtual ~AcousticStep1stHalf(){};
 
     class InteractKernel : public BaseInteraction::InteractKernel

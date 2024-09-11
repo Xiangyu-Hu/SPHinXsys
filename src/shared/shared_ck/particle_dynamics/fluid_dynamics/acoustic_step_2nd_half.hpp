@@ -10,7 +10,7 @@ namespace fluid_dynamics
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
 AcousticStep2ndHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType, Parameters...>>::
-    AcousticStep2ndHalf(InnerRelation &inner_relation)
+    AcousticStep2ndHalf(Relation<Inner<Parameters...>> &inner_relation)
     : AcousticStep<Interaction<Inner<Parameters...>>>(inner_relation),
       correction_(this->particles_), riemann_solver_(this->fluid_, this->fluid_)
 {
@@ -81,7 +81,7 @@ void AcousticStep2ndHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
 AcousticStep2ndHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType, Parameters...>>::
-    AcousticStep2ndHalf(ContactRelation &wall_contact_relation)
+    AcousticStep2ndHalf(Relation<Contact<Parameters...>> &wall_contact_relation)
     : AcousticStep<Interaction<Contact<Wall, Parameters...>>>(wall_contact_relation),
       correction_(this->particles_), riemann_solver_(this->fluid_, this->fluid_) {}
 //=================================================================================================//

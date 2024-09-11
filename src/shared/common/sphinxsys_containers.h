@@ -46,6 +46,20 @@ class SolidBody;
 class BodyPart;
 class BaseParticles;
 class UserDefined; // Indicating with user defined type in apps
+//----------------------------------------------------------------------
+// Interaction type identifies
+//----------------------------------------------------------------------
+template <typename... InnerParameters>
+class Inner; /**< Inner interaction: interaction within a body*/
+
+template <typename... ContactParameters>
+class Contact; /**< Contact interaction: interaction between a body with one or several another bodies */
+
+class Boundary;        /**< Interaction with boundary */
+class Wall;            /**< Interaction with wall boundary */
+class Extended;        /**< An extened method of an interaction type */
+class SpatialTemporal; /**< A interaction considering spatial temporal correlations */
+class Dynamic;         /**< A dynamic interaction */
 
 using MaterialVector = StdVec<BaseMaterial *>;
 using SPHBodyVector = StdVec<SPHBody *>;

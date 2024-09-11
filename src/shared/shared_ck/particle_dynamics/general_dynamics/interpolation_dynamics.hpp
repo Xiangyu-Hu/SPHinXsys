@@ -7,7 +7,7 @@ namespace SPH
 {
 //=================================================================================================//
 template <typename DataType>
-Interpolation<Contact<DataType>>::Interpolation(ContactRelation &pair_contact_relation, const std::string &variable_name)
+Interpolation<Contact<DataType>>::Interpolation(Relation<Contact<>> &pair_contact_relation, const std::string &variable_name)
     : Interaction<Contact<>>(pair_contact_relation),
       dv_interpolated_quantities_(this->particles_->template registerStateVariableOnly<DataType>(variable_name))
 {
