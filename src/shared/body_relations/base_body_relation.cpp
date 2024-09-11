@@ -18,13 +18,10 @@ RealBodyVector BodyPartsToRealBodies(BodyPartVector body_parts)
 //=================================================================================================//
 SPHRelation::SPHRelation(SPHBody &sph_body)
     : sph_body_(sph_body),
-      base_particles_(sph_body.getBaseParticles()),
-      particle_offset_list_size_(base_particles_.RealParticlesBound() + 1) {}
+      base_particles_(sph_body.getBaseParticles()) {}
 //=================================================================================================//
 BaseInnerRelation::BaseInnerRelation(RealBody &real_body)
-    : SPHRelation(real_body), real_body_(&real_body),
-      dv_neighbor_index_(addRelationVariable<UnsignedInt>("NeighborIndex", particle_offset_list_size_)),
-      dv_particle_offset_(addRelationVariable<UnsignedInt>("ParticleOffset", particle_offset_list_size_))
+    : SPHRelation(real_body), real_body_(&real_body)
 {
     subscribeToBody();
     inner_configuration_.resize(base_particles_.RealParticlesBound(), Neighborhood());
@@ -44,19 +41,6 @@ void BaseInnerRelation::resetNeighborhoodCurrentSize()
         ap);
 }
 //=================================================================================================//
-void BaseInnerRelation::registerComputingKernel(execution::Implementation<Base> *implementation)
-{
-    all_inner_computing_kernels_.push_back(implementation);
-}
-//=================================================================================================//
-void BaseInnerRelation::resetComputingKernelUpdated()
-{
-    for (size_t k = 0; k != all_inner_computing_kernels_.size(); ++k)
-    {
-        all_inner_computing_kernels_[k]->resetUpdated();
-    }
-}
-//=================================================================================================//
 BaseContactRelation::BaseContactRelation(SPHBody &sph_body, RealBodyVector contact_sph_bodies)
     : SPHRelation(sph_body), contact_bodies_(contact_sph_bodies)
 {
@@ -68,11 +52,6 @@ BaseContactRelation::BaseContactRelation(SPHBody &sph_body, RealBodyVector conta
         contact_particles_.push_back(&contact_bodies_[k]->getBaseParticles());
         contact_adaptations_.push_back(contact_bodies_[k]->sph_adaptation_);
         contact_configuration_[k].resize(base_particles_.RealParticlesBound(), Neighborhood());
-        dv_contact_neighbor_index_.push_back(addRelationVariable<UnsignedInt>(
-            "Contact" + name + "NeighborIndex", particle_offset_list_size_));
-        dv_contact_particle_offset_.push_back(addRelationVariable<UnsignedInt>(
-            "Contact" + name + "ParticleOffset", particle_offset_list_size_));
-        all_contact_computing_kernels_.resize(contact_bodies_.size());
     }
 }
 //=================================================================================================//
@@ -90,20 +69,6 @@ void BaseContactRelation::resetNeighborhoodCurrentSize()
                 }
             },
             ap);
-    }
-}
-//=================================================================================================//
-void BaseContactRelation::registerComputingKernel(
-    execution::Implementation<Base> *implementation, UnsignedInt contact_index)
-{
-    all_contact_computing_kernels_[contact_index].push_back(implementation);
-}
-//=================================================================================================//
-void BaseContactRelation::resetComputingKernelUpdated(UnsignedInt contact_index)
-{
-    for (size_t k = 0; k != all_contact_computing_kernels_[contact_index].size(); ++k)
-    {
-        all_contact_computing_kernels_[contact_index][k]->resetUpdated();
     }
 }
 //=================================================================================================//

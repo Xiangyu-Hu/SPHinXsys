@@ -106,8 +106,6 @@ RealBodyVector BodyPartsToRealBodies(BodyPartVector body_parts);
  */
 class SPHRelation
 {
-    UniquePtrsKeeper<BaseVariable> relation_variable_ptrs_;
-
   public:
     SPHBody &getSPHBody() { return sph_body_; };
     explicit SPHRelation(SPHBody &sph_body);
@@ -115,18 +113,10 @@ class SPHRelation
 
     void subscribeToBody() { sph_body_.body_relations_.push_back(this); };
     virtual void updateConfiguration() = 0;
-    UnsignedInt getParticleOffsetListSize() { return particle_offset_list_size_; };
 
   protected:
     SPHBody &sph_body_;
     BaseParticles &base_particles_;
-    UnsignedInt particle_offset_list_size_;
-
-    template <class DataType>
-    DiscreteVariable<DataType> *addRelationVariable(const std::string &name, size_t data_size)
-    {
-        return relation_variable_ptrs_.createPtr<DiscreteVariable<DataType>>(name, data_size);
-    };
 };
 
 /**
@@ -142,16 +132,8 @@ class BaseInnerRelation : public SPHRelation
     virtual ~BaseInnerRelation(){};
     BaseInnerRelation &getRelation() { return *this; };
 
-    DiscreteVariable<UnsignedInt> *getNeighborIndex() { return dv_neighbor_index_; };
-    DiscreteVariable<UnsignedInt> *getParticleOffset() { return dv_particle_offset_; };
-    void registerComputingKernel(execution::Implementation<Base> *implementation);
-    void resetComputingKernelUpdated();
-
   protected:
     virtual void resetNeighborhoodCurrentSize();
-    DiscreteVariable<UnsignedInt> *dv_neighbor_index_;
-    DiscreteVariable<UnsignedInt> *dv_particle_offset_;
-    StdVec<execution::Implementation<Base> *> all_inner_computing_kernels_;
 };
 
 /**
@@ -162,9 +144,6 @@ class BaseContactRelation : public SPHRelation
 {
   protected:
     virtual void resetNeighborhoodCurrentSize();
-    StdVec<DiscreteVariable<UnsignedInt> *> dv_contact_neighbor_index_;
-    StdVec<DiscreteVariable<UnsignedInt> *> dv_contact_particle_offset_;
-    StdVec<StdVec<execution::Implementation<Base> *>> all_contact_computing_kernels_;
 
   public:
     RealBodyVector contact_bodies_;
@@ -180,10 +159,6 @@ class BaseContactRelation : public SPHRelation
     RealBodyVector getContactBodies() { return contact_bodies_; };
     StdVec<BaseParticles *> getContactParticles() { return contact_particles_; };
     StdVec<SPHAdaptation *> getContactAdaptations() { return contact_adaptations_; };
-    StdVec<DiscreteVariable<UnsignedInt> *> getContactNeighborIndex() { return dv_contact_neighbor_index_; };
-    StdVec<DiscreteVariable<UnsignedInt> *> getContactParticleOffset() { return dv_contact_particle_offset_; };
-    void registerComputingKernel(execution::Implementation<Base> *implementation, UnsignedInt contact_index);
-    void resetComputingKernelUpdated(UnsignedInt contact_index);
 };
 } // namespace SPH
 #endif // BASE_BODY_RELATION_H
