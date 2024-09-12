@@ -21,9 +21,9 @@ using namespace SPH;
 Real scale = 0.0254;
 Real DH = 3.0 * scale; /**< Channel height. */
 Real num_fluid_cross_section = 20.0;
-Real central_angel = 180.0 * 2.0 * Pi / 360.0;
+Real central_angel = 210.0 * 2.0 * Pi / 360.0;
 Real extend_in = 0.0;
-Real extend_out = 3.0 * DH;
+Real extend_out = 6.0 * DH;
 Real DL1 = 3.0 * DH + extend_in;
 Real DL2 = 3.0 * DH + extend_out;
 Real R1 = 27.0 * scale;
