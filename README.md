@@ -1,11 +1,23 @@
 # ![SPHinXsys Logo](assets/logo.png) SPHinXsys
 
-**Notice on repository transfer to SPHinXsys team** 
+**Notice on migration to heterogeneous computational platform** 
 
-In order to promoting open-source democratization,
-this repository will be transferred to the SPHinXsys team 
-in the next few weeks.
-After the transfer, the decision-making process for SPHinXsys will be made by a number of project leaders from different institutions.
+Now, SPHinXsys is ready for the migration from CPU parallelism to heterogeneous parallelism 
+by which the computing can be carried out on both CPU and GPU. 
+This will be done by using SYCL (implementation by Intel's DPC++),  
+a heterogeneous architectures in standard C++.
+However, during migration process, 
+we will kept the current code with minimum change so that 
+the library cam be still used as before.
+
+The basic framework has been achieved and 
+a test of 2D dambreak case has been added to the folder test/test_sycl.
+Due to the specially designed framework, 
+all the numerical method can be developed and tested in the environments 
+without GPU or even DPC++ installed.
+If these methods work, it will also work if the DPC++ and GPU are installed. 
+
+
 
 **Project status**  
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
