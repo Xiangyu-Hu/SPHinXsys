@@ -23,7 +23,7 @@ void function(const Array2i &index, std::vector<size_t> &vec, const Array2i &all
 
 TEST(test_mesh_iterator, split_for)
 {
-    Array2i all_cells(9, 9);
+    Array2i all_cells(10, 10);
     MeshRange mesh_range(Array2i::Zero(), all_cells);
     Array2i stride = 3 * Array2i::Ones();
 
@@ -32,22 +32,39 @@ TEST(test_mesh_iterator, split_for)
     std::vector<size_t> vec_1(total_cells);
     std::vector<size_t> vec_2(total_cells);
 
-    mesh_split_for(
-        mesh_range, stride,
-        [&](const Array2i &index)
-        {
-            function(index, vec_1, all_cells);
-        });
-
-    mesh_split_parallel_for(
+    // forward test
+    mesh_stride_forward_for(
         mesh_range, stride,
         [&](const Array2i &index)
         {
             function(index, vec_2, all_cells);
         });
 
+    mesh_stride_forward_parallel_for(
+        mesh_range, stride,
+        [&](const Array2i &index)
+        {
+            function(index, vec_1, all_cells);
+        });
+
     for (size_t i = 0; i < total_cells; ++i)
-    {
         ASSERT_EQ(vec_1[i], vec_2[i]);
-    }
+
+    // backward test
+    mesh_stride_backward_for(
+        mesh_range, stride,
+        [&](const Array2i &index)
+        {
+            function(index, vec_2, all_cells);
+        });
+
+    mesh_stride_backward_parallel_for(
+        mesh_range, stride,
+        [&](const Array2i &index)
+        {
+            function(index, vec_1, all_cells);
+        });
+
+    for (size_t i = 0; i < total_cells; ++i)
+        ASSERT_EQ(vec_1[i], vec_2[i]);
 }

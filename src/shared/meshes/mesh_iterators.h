@@ -107,11 +107,17 @@ void mesh_for(const MeshRange &mesh_range, const LocalFunction &local_function, 
 /** Iterator on the mesh by looping index. parallel computing. */
 template <typename LocalFunction, typename... Args>
 void mesh_parallel_for(const MeshRange &mesh_range, const LocalFunction &local_function, Args &&...args);
-/** Iterator on the mesh by looping index with a stride. sequential computing. */
+/** Iterator on the mesh by looping index with a stride in forward direction. sequential computing. */
 template <typename LocalFunction, typename... Args>
-void mesh_split_for(const MeshRange &mesh_range, const Arrayi &stride, const LocalFunction &local_function, Args &&...args);
-/** Iterator on the mesh by looping index with a stride. parallel computing. */
+void mesh_stride_forward_for(const MeshRange &mesh_range, const Arrayi &stride, const LocalFunction &local_function, Args &&...args);
+/** Iterator on the mesh by looping index with a stride in forward direction. parallel computing. */
 template <typename LocalFunction, typename... Args>
-void mesh_split_parallel_for(const MeshRange &mesh_range, const Arrayi &stride, const LocalFunction &local_function, Args &&...args);
+void mesh_stride_forward_parallel_for(const MeshRange &mesh_range, const Arrayi &stride, const LocalFunction &local_function, Args &&...args);
+/** Iterator on the mesh by looping index with a stride in backward direction. sequential computing. */
+template <typename LocalFunction, typename... Args>
+void mesh_stride_backward_for(const MeshRange &mesh_range, const Arrayi &stride, const LocalFunction &local_function, Args &&...args);
+/** Iterator on the mesh by looping index with a stride in backward direction. parallel computing. */
+template <typename LocalFunction, typename... Args>
+void mesh_stride_backward_parallel_for(const MeshRange &mesh_range, const Arrayi &stride, const LocalFunction &local_function, Args &&...args);
 } // namespace SPH
 #endif // MESH_ITERATORS_H
