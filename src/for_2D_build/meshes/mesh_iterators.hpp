@@ -112,10 +112,10 @@ void mesh_stride_forward_parallel_for(const MeshRange &mesh_range, const Arrayi 
 template <typename LocalFunction, typename... Args>
 void mesh_stride_backward_for(const MeshRange &mesh_range, const Arrayi &stride, const LocalFunction &local_function, Args &&...args)
 {
-    for (int m = stride[0] - 1; m >= 0; m--)
-        for (int n = stride[1] - 1; n >= 0; n--)
-            for (auto i = (mesh_range.first)[0] + m; i < (mesh_range.second)[0]; i += stride[0])
-                for (auto j = (mesh_range.first)[1] + n; j < (mesh_range.second)[1]; j += stride[1])
+    for (int m = stride[0]; m > 0; m--)
+        for (int n = stride[1]; n > 0; n--)
+            for (auto i = (mesh_range.first)[0] + m - 1; i < (mesh_range.second)[0]; i += stride[0])
+                for (auto j = (mesh_range.first)[1] + n - 1; j < (mesh_range.second)[1]; j += stride[1])
                 {
                     local_function(Array2i(i, j));
                 }
@@ -124,11 +124,11 @@ void mesh_stride_backward_for(const MeshRange &mesh_range, const Arrayi &stride,
 template <typename LocalFunction, typename... Args>
 void mesh_stride_backward_parallel_for(const MeshRange &mesh_range, const Arrayi &stride, const LocalFunction &local_function, Args &&...args)
 {
-    for (int m = stride[0] - 1; m >= 0; m--)
-        for (int n = stride[1] - 1; n >= 0; n--)
+    for (int m = stride[0]; m > 0; m--)
+        for (int n = stride[1]; n > 0; n--)
         {
-            parallel_for((mesh_range.first)[0] + m, (mesh_range.second)[0], stride[0], [&](auto i)
-                         { parallel_for((mesh_range.first)[1] + n, (mesh_range.second)[1], stride[1], [&](auto j)
+            parallel_for((mesh_range.first)[0] + m - 1, (mesh_range.second)[0], stride[0], [&](auto i)
+                         { parallel_for((mesh_range.first)[1] + n - 1, (mesh_range.second)[1], stride[1], [&](auto j)
                                         { local_function(Array2i(i, j)); }, ap); },
                          ap);
         }
