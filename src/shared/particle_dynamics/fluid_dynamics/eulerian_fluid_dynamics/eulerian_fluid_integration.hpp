@@ -65,6 +65,7 @@ void EulerianIntegration1stHalf<Contact<Wall>, RiemannSolverType>::interaction(s
     {
         Vecd *n_k = wall_n_[k];
         Real *Vol_k = wall_Vol_[k];
+        Vecd *vel_ave_k = wall_vel_ave_[k];
         Neighborhood &wall_neighborhood = (*contact_configuration_[k])[index_i];
         for (size_t n = 0; n != wall_neighborhood.current_size_; ++n)
         {
@@ -72,7 +73,7 @@ void EulerianIntegration1stHalf<Contact<Wall>, RiemannSolverType>::interaction(s
             Vecd &e_ij = wall_neighborhood.e_ij_[n];
             Real dW_ijV_j = wall_neighborhood.dW_ij_[n] * Vol_k[index_j];
 
-            Vecd vel_in_wall = -state_i.vel_;
+            Vecd vel_in_wall = 2.0 * vel_ave_k[index_j] - state_i.vel_;
             Real p_in_wall = state_i.p_;
             Real rho_in_wall = state_i.rho_;
             FluidStateIn state_j(rho_in_wall, vel_in_wall, p_in_wall);
@@ -132,6 +133,7 @@ void EulerianIntegration2ndHalf<Contact<Wall>, RiemannSolverType>::interaction(s
     {
         Vecd *n_k = this->wall_n_[k];
         Real *Vol_k = this->wall_Vol_[k];
+        Vecd *vel_ave_k = wall_vel_ave_[k];
         Neighborhood &wall_neighborhood = (*contact_configuration_[k])[index_i];
         for (size_t n = 0; n != wall_neighborhood.current_size_; ++n)
         {
@@ -139,7 +141,7 @@ void EulerianIntegration2ndHalf<Contact<Wall>, RiemannSolverType>::interaction(s
             Vecd &e_ij = wall_neighborhood.e_ij_[n];
             Real dW_ijV_j = wall_neighborhood.dW_ij_[n] * Vol_k[index_j];
 
-            Vecd vel_in_wall = -state_i.vel_;
+            Vecd vel_in_wall = 2.0 * vel_ave_k[index_j] - state_i.vel_;
             Real p_in_wall = state_i.p_;
             Real rho_in_wall = state_i.rho_;
 
