@@ -95,9 +95,8 @@ void mesh_parallel_for(const MeshRange &mesh_range, const LocalFunction &local_f
 }
 //=================================================================================================//
 template <typename LocalFunction, typename... Args>
-void mesh_split_for(const MeshRange &mesh_range, const Arrayi &stride, const LocalFunction &local_function, Args &&...args)
+void mesh_stride_forward_for(const MeshRange &mesh_range, const Arrayi &stride, const LocalFunction &local_function, Args &&...args)
 {
-    // forward sweeping
     for (int m = 0; m < stride[0]; m++)
         for (int n = 0; n < stride[1]; n++)
             for (int p = 0; p < stride[2]; p++)
@@ -107,72 +106,49 @@ void mesh_split_for(const MeshRange &mesh_range, const Arrayi &stride, const Loc
                         {
                             local_function(Array3i(i, j, k));
                         }
-
-    // backward sweeping
-    for (int m = stride[0] - 1; m >= 0; m--)
-        for (int n = stride[1] - 1; n >= 0; n--)
-            for (int p = stride[2] - 1; p >= 0; p--)
-            {
-                const auto index_total_i = (mesh_range.second)[0] - 1 - (mesh_range.first)[0] - m;
-                const auto index_total_j = (mesh_range.second)[1] - 1 - (mesh_range.first)[1] - n;
-                const auto index_total_k = (mesh_range.second)[2] - 1 - (mesh_range.first)[2] - p;
-                const auto i_max = (mesh_range.second)[0] - 1 - index_total_i % stride[0];
-                const auto j_max = (mesh_range.second)[1] - 1 - index_total_j % stride[1];
-                const auto k_max = (mesh_range.second)[2] - 1 - index_total_k % stride[2];
-                for (auto i = i_max; i >= (mesh_range.first)[0] + m; i -= stride[0])
-                    for (auto j = j_max; j >= (mesh_range.first)[1] + n; j -= stride[1])
-                        for (auto k = k_max; k >= (mesh_range.first)[2] + p; k -= stride[2])
-                        {
-                            local_function(Array3i(i, j, k));
-                        }
-            }
 }
 //=================================================================================================//
 template <typename LocalFunction, typename... Args>
-void mesh_split_parallel_for(const MeshRange &mesh_range, const Arrayi &stride, const LocalFunction &local_function, Args &&...args)
+void mesh_stride_forward_parallel_for(const MeshRange &mesh_range, const Arrayi &stride, const LocalFunction &local_function, Args &&...args)
 {
-    // forward sweeping
     for (int m = 0; m < stride[0]; m++)
         for (int n = 0; n < stride[1]; n++)
             for (int p = 0; p < stride[2]; p++)
             {
-                parallel_for(
-                    IndexRange3d((mesh_range.first)[0] + m, (mesh_range.second)[0],
-                                 (mesh_range.first)[1] + n, (mesh_range.second)[1],
-                                 (mesh_range.first)[2] + p, (mesh_range.second)[2]),
-                    [&](const IndexRange3d &r)
-                    {
-                        for (auto i = r.pages().begin(); i != r.pages().end(); ++i)
-                            for (auto j = r.rows().begin(); j != r.rows().end(); ++j)
-                                for (auto k = r.cols().begin(); k != r.cols().end(); ++k)
-                                {
-                                    if ((i - m) % stride[0] == 0 && (j - n) % stride[1] == 0 && (k - p) % stride[2] == 0)
-                                        local_function(Array3i(i, j, k));
-                                }
-                    },
-                    ap);
+                parallel_for((mesh_range.first)[0] + m, (mesh_range.second)[0], stride[0], [&](auto i)
+                             { parallel_for((mesh_range.first)[1] + n, (mesh_range.second)[1], stride[1], [&](auto j)
+                                            { parallel_for((mesh_range.first)[2] + p, (mesh_range.second)[2], stride[2], [&](auto k)
+                                                           { local_function(Array3i(i, j, k)); },
+                                                           ap); }, ap); }, ap);
             }
-
-    // backward sweeping
-    for (int m = stride[0] - 1; m >= 0; m--)
-        for (int n = stride[1] - 1; n >= 0; n--)
-            for (int p = stride[2] - 1; p >= 0; p--)
+}
+//=================================================================================================//
+template <typename LocalFunction, typename... Args>
+void mesh_stride_backward_for(const MeshRange &mesh_range, const Arrayi &stride, const LocalFunction &local_function, Args &&...args)
+{
+    for (int m = stride[0]; m > 0; m--)
+        for (int n = stride[1]; n > 0; n--)
+            for (int p = stride[2]; p > 0; p--)
+                for (auto i = (mesh_range.first)[0] + m - 1; i < (mesh_range.second)[0]; i += stride[0])
+                    for (auto j = (mesh_range.first)[1] + n - 1; j < (mesh_range.second)[1]; j += stride[1])
+                        for (auto k = (mesh_range.first)[2] + p - 1; k < (mesh_range.second)[2]; k += stride[2])
+                        {
+                            local_function(Array3i(i, j, k));
+                        }
+}
+//=================================================================================================//
+template <typename LocalFunction, typename... Args>
+void mesh_stride_backward_parallel_for(const MeshRange &mesh_range, const Arrayi &stride, const LocalFunction &local_function, Args &&...args)
+{
+    for (int m = stride[0]; m > 0; m--)
+        for (int n = stride[1]; n > 0; n--)
+            for (int p = stride[2]; p > 0; p--)
             {
-                parallel_for(
-                    IndexRange3d((mesh_range.first)[0] + m, (mesh_range.second)[0],
-                                 (mesh_range.first)[1] + n, (mesh_range.second)[1],
-                                 (mesh_range.first)[2] + p, (mesh_range.second)[2]),
-                    [&](const IndexRange3d &r)
-                    {
-                        for (auto i = r.pages().end(); i != r.pages().begin(); i--)
-                            for (auto j = r.rows().end(); j != r.rows().begin(); j--)
-                                for (auto k = r.cols().end(); k != r.cols().begin(); k--)
-                                {
-                                    if ((i - 1 - m) % stride[0] == 0 && (j - 1 - n) % stride[1] == 0 && (k - 1 - p) % stride[2] == 0)
-                                        local_function(Array3i(i - 1, j - 1, k - 1));
-                                }
-                    },
-                    ap);
+                parallel_for((mesh_range.first)[0] + m - 1, (mesh_range.second)[0], stride[0], [&](auto i)
+                             { parallel_for((mesh_range.first)[1] + n - 1, (mesh_range.second)[1], stride[1], [&](auto j)
+                                            { parallel_for((mesh_range.first)[2] + p - 1, (mesh_range.second)[2], stride[2], [&](auto k)
+                                                           { local_function(Array3i(i, j, k)); },
+                                                           ap); }, ap); }, ap);
             }
 }
 //=================================================================================================//

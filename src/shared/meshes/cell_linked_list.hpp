@@ -45,17 +45,61 @@ void CellLinkedList::searchNeighborsByParticles(
 }
 //=================================================================================================//
 template <class LocalDynamicsFunction>
-void CellLinkedList::particle_for_split(const LocalDynamicsFunction &local_dynamics_function)
+void CellLinkedList::particle_for_split(const execution::SequencedPolicy &, const LocalDynamicsFunction &local_dynamics_function)
 {
-    mesh_split_parallel_for(
+    // fowward sweeping
+    mesh_stride_forward_for(
         MeshRange(Arrayi::Zero(), all_cells_),
         3 * Arrayi::Ones(),
         [&](const Arrayi &cell_index)
         {
             const ConcurrentIndexVector &cell_list = getCellDataList(cell_index_lists_, cell_index);
-            for (size_t index_i : cell_list)
+            for (const size_t index_i : cell_list)
             {
                 local_dynamics_function(index_i);
+            }
+        });
+
+    // backward sweeping
+    mesh_stride_backward_for(
+        MeshRange(Arrayi::Zero(), all_cells_),
+        3 * Arrayi::Ones(),
+        [&](const Arrayi &cell_index)
+        {
+            const ConcurrentIndexVector &cell_list = getCellDataList(cell_index_lists_, cell_index);
+            for (size_t i = cell_list.size(); i != 0; --i)
+            {
+                local_dynamics_function(cell_list[i - 1]);
+            }
+        });
+}
+//=================================================================================================//
+template <class LocalDynamicsFunction>
+void CellLinkedList::particle_for_split(const execution::ParallelPolicy &, const LocalDynamicsFunction &local_dynamics_function)
+{
+    // foward sweeping
+    mesh_stride_forward_parallel_for(
+        MeshRange(Arrayi::Zero(), all_cells_),
+        3 * Arrayi::Ones(),
+        [&](const Arrayi &cell_index)
+        {
+            const ConcurrentIndexVector &cell_list = getCellDataList(cell_index_lists_, cell_index);
+            for (const size_t index_i : cell_list)
+            {
+                local_dynamics_function(index_i);
+            }
+        });
+
+    // backward sweeping
+    mesh_stride_backward_parallel_for(
+        MeshRange(Arrayi::Zero(), all_cells_),
+        3 * Arrayi::Ones(),
+        [&](const Arrayi &cell_index)
+        {
+            const ConcurrentIndexVector &cell_list = getCellDataList(cell_index_lists_, cell_index);
+            for (size_t i = cell_list.size(); i != 0; --i)
+            {
+                local_dynamics_function(cell_list[i - 1]);
             }
         });
 }

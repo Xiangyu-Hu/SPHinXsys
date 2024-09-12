@@ -33,6 +33,7 @@
 #define MESH_CELL_LINKED_LIST_H
 
 #include "base_mesh.h"
+#include "execution_policy.h"
 #include "neighborhood.h"
 
 namespace SPH
@@ -119,7 +120,9 @@ class CellLinkedList : public BaseCellLinkedList, public Mesh
 
     /** split algorithm */;
     template <class LocalDynamicsFunction>
-    void particle_for_split(const LocalDynamicsFunction &local_dynamics_function);
+    void particle_for_split(const execution::SequencedPolicy &, const LocalDynamicsFunction &local_dynamics_function);
+    template <class LocalDynamicsFunction>
+    void particle_for_split(const execution::ParallelPolicy &, const LocalDynamicsFunction &local_dynamics_function);
 };
 
 template <>
