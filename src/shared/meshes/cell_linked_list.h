@@ -163,7 +163,9 @@ class MultilevelCellLinkedList : public MultilevelMesh<BaseCellLinkedList, CellL
 
     /** split algorithm */;
     template <class LocalDynamicsFunction>
-    void particle_for_split(const LocalDynamicsFunction &local_dynamics_function);
+    void particle_for_split(const execution::SequencedPolicy &, const LocalDynamicsFunction &local_dynamics_function);
+    template <class LocalDynamicsFunction>
+    void particle_for_split(const execution::ParallelPolicy &, const LocalDynamicsFunction &local_dynamics_function);
 };
 } // namespace SPH
 #endif // MESH_CELL_LINKED_LIST_H
