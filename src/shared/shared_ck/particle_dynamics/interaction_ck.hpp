@@ -52,7 +52,7 @@ Interaction<Contact<Parameters...>>::
 {
     for (size_t k = 0; k != contact_particles_.size(); ++k)
     {
-        contact_pos_.push_back(contact_particles_[k]->getVariableByName<Vecd>("Position"));
+        contact_pos_.push_back(contact_particles_[k]->template getVariableByName<Vecd>("Position"));
     }
 }
 //=================================================================================================//
