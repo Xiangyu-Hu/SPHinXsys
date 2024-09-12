@@ -203,7 +203,7 @@ class InteractionSplit : public BaseInteractionDynamics<LocalDynamicsType, Paral
 
   public:
     template <typename... Args>
-    InteractionSplit(Args &&... args)
+    explicit InteractionSplit(Args &&...args)
         : BaseInteractionDynamics<LocalDynamicsType, ParallelPolicy>(std::forward<Args>(args)...),
           real_body_(DynamicCast<RealBody>(this, this->getSPHBody())),
           cell_linked_list_(DynamicCast<CellLinkedList>(this, real_body_.getCellLinkedList()))
@@ -212,12 +212,11 @@ class InteractionSplit : public BaseInteractionDynamics<LocalDynamicsType, Paral
                           !has_update<LocalDynamicsType>::value,
                       "LocalDynamicsType does not fulfill InteractionSplit requirements");
     };
-    virtual ~InteractionSplit(){};
 
     /** run the main interaction step between particles. */
-    virtual void runMainStep(Real dt) override
+    void runMainStep(Real dt) override
     {
-        cell_linked_list_.particle_for_split([&](size_t i)
+        cell_linked_list_.particle_for_split(ExecutionPolicy(), [&](size_t i)
                                              { this->interaction(i, dt * 0.5); });
     }
 };
