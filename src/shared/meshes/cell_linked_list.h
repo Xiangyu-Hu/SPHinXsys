@@ -33,6 +33,7 @@
 #define MESH_CELL_LINKED_LIST_H
 
 #include "base_mesh.h"
+#include "execution_policy.h"
 #include "neighborhood.h"
 
 namespace SPH
@@ -119,7 +120,9 @@ class CellLinkedList : public BaseCellLinkedList, public Mesh
 
     /** split algorithm */;
     template <class LocalDynamicsFunction>
-    void particle_for_split(const LocalDynamicsFunction &local_dynamics_function);
+    void particle_for_split(const execution::SequencedPolicy &, const LocalDynamicsFunction &local_dynamics_function);
+    template <class LocalDynamicsFunction>
+    void particle_for_split(const execution::ParallelPolicy &, const LocalDynamicsFunction &local_dynamics_function);
 };
 
 template <>
@@ -153,7 +156,7 @@ class MultilevelCellLinkedList : public MultilevelMesh<BaseCellLinkedList, CellL
     virtual ListData findNearestListDataEntry(const Vecd &position) override { return ListData(0, Vecd::Zero()); }; // mocking, not implemented
     virtual StdLargeVec<size_t> &computingSequence(BaseParticles &base_particles) override;
     virtual void tagBodyPartByCell(ConcurrentCellLists &cell_lists, std::function<bool(Vecd, Real)> &check_included) override;
-    virtual void tagBoundingCells(StdVec<CellLists> &cell_data_lists, const BoundingBox &bounding_bounds, int axis) override{};
+    virtual void tagBoundingCells(StdVec<CellLists> &cell_data_lists, const BoundingBox &bounding_bounds, int axis) override {};
     virtual StdVec<CellLinkedList *> CellLinkedListLevels() override { return getMeshLevels(); };
 };
 } // namespace SPH
