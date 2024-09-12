@@ -257,16 +257,16 @@ DiscreteVariable<DataType> *BaseParticles::
     {
         constexpr int type_index = DataTypeIndex<DataType>::value;
         std::get<type_index>(variable_set).push_back(variable);
+        return variable;
     }
 
-    return variable;
+    return nullptr; // no variable added as sorted variable
 }
 //=================================================================================================//
 template <typename DataType>
 void BaseParticles::addVariableToSort(const std::string &name)
 {
-    DiscreteVariable<DataType> *new_sortable =
-        addVariableToList<DataType>(variables_to_sort_, name);
+    DiscreteVariable<DataType> *new_sortable = addVariableToList<DataType>(variables_to_sort_, name);
     if (new_sortable != nullptr)
     {
         constexpr int type_index = DataTypeIndex<DataType>::value;
