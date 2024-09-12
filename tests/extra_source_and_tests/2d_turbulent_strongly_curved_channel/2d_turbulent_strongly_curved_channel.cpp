@@ -256,7 +256,7 @@ int main(int ac, char *av[])
         /** Integrate time (loop) until the next output time. */
         while (integration_time < Output_Time)
         {
-            apply_gravity_force.exec();
+            //apply_gravity_force.exec();
 
             //Real Dt = get_fluid_advection_time_step_size.exec();
             Real Dt = get_turbulent_fluid_advection_time_step_size.exec();
@@ -268,9 +268,10 @@ int main(int ac, char *av[])
 
             corrected_configuration_fluid.exec();
             corrected_configuration_fluid_only_inner.exec();
-
-            update_eddy_viscosity.exec();
-
+            if (GlobalStaticVariables::physical_time_ > turbulent_module_activate_time) //** A temporary treatment *
+            {
+                update_eddy_viscosity.exec();
+            }
             //viscous_force.exec();
             turbulent_viscous_force.exec();
 
@@ -289,8 +290,10 @@ int main(int ac, char *av[])
 
                 dt = SMIN(get_fluid_time_step_size.exec(), Dt);
 
-                turbulent_kinetic_energy_force.exec();
-
+                if (GlobalStaticVariables::physical_time_ > turbulent_module_activate_time) //** A temporary treatment *
+                {
+                    turbulent_kinetic_energy_force.exec();
+                }
                 pressure_relaxation.exec(dt);
 
                 kernel_summation.exec();
@@ -301,7 +304,10 @@ int main(int ac, char *av[])
 
                 inflow_velocity_condition.exec();
 
-                impose_turbulent_inflow_condition.exec();
+                if (GlobalStaticVariables::physical_time_ > turbulent_module_activate_time) //** A temporary treatment *
+                {
+                    impose_turbulent_inflow_condition.exec();
+                }
 
                 density_relaxation.exec(dt);
 
