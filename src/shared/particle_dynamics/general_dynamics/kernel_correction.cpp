@@ -5,8 +5,7 @@ namespace SPH
 //=================================================================================================//
 void LinearGradientCorrectionMatrix<Inner<>>::interaction(size_t index_i, Real dt)
 {
-    Matd local_configuration = Eps * Matd::Identity();
-
+    Matd local_configuration = ZeroData<Matd>::value;
     const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
     for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
     {
@@ -21,7 +20,8 @@ void LinearGradientCorrectionMatrix<Inner<>>::interaction(size_t index_i, Real d
 void LinearGradientCorrectionMatrix<Inner<>>::update(size_t index_i, Real dt)
 {
     Real det_sqr = SMAX(alpha_ - B_[index_i].determinant(), Real(0));
-    Matd inverse = B_[index_i].inverse();
+    Matd B_T = B_[index_i].transpose(); //for Tikhonov regularization
+    Matd inverse = (B_T * B_[index_i] + SqrtEps * Matd::Identity()).inverse() * B_T;
     Real weight1_ = B_[index_i].determinant() / (B_[index_i].determinant() + det_sqr);
     Real weight2_ = det_sqr / (B_[index_i].determinant() + det_sqr);
     B_[index_i] = weight1_ * inverse + weight2_ * Matd::Identity();

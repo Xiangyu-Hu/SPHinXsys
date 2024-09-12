@@ -21,10 +21,10 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	complex_shape.h
- * @brief 	Here, we define the a container of different type of shapes, which allow
- * 			the boolean operation between the different type of shapes. The shapes
- * 			can be defined previously and add to this complex shapes container.
+ * @file complex_shape.h
+ * @brief Here, we define the a container of different type of shapes, which allow
+ * the boolean operation between the different type of shapes. The shapes
+ * can be defined previously and add to this complex shapes container.
  */
 
 #ifndef COMPLEX_SHAPE_H
@@ -39,6 +39,15 @@ namespace SPH
 {
 class LevelSetShape;
 
+/**
+ * @class ComplexShape
+ * @brief  For now, if the level set shape (for particle relaxation) 
+ * will be generated from the complex shape, 
+ * partially overlapped shapes are not allowed for 3D problems. 
+ * However, if only the contain function
+ * is used, for example generating particles using lattice generator, 
+ * partially overlapped shapes are allowed.
+ **/
 class ComplexShape : public BinaryShapes
 {
   public:
@@ -47,7 +56,7 @@ class ComplexShape : public BinaryShapes
     virtual ~ComplexShape(){};
 
     template <typename... Args>
-    LevelSetShape *defineLevelSetShape(SPHBody &sph_body, const std::string &shape_name, Args &&...args)
+    LevelSetShape *defineLevelSetShape(SPHBody &sph_body, const std::string &shape_name, Args &&... args)
     {
         size_t index = getSubShapeIndexByName(shape_name);
         LevelSetShape *level_set_shape = sub_shape_ptrs_keeper_[index].createPtr<LevelSetShape>(
@@ -71,12 +80,12 @@ class AlignedBoxShape : public TransformShape<GeometricShapeBox>
   public:
     /** construct directly */
     template <typename... Args>
-    explicit AlignedBoxShape(int upper_bound_axis, const Transform &transform, Args &&...args)
+    explicit AlignedBoxShape(int upper_bound_axis, const Transform &transform, Args &&... args)
         : TransformShape<GeometricShapeBox>(transform, std::forward<Args>(args)...),
           alignment_axis_(upper_bound_axis){};
     /** construct from a shape already has aligned boundaries */
     template <typename... Args>
-    explicit AlignedBoxShape(int upper_bound_axis, const Shape &shape, Args &&...args)
+    explicit AlignedBoxShape(int upper_bound_axis, const Shape &shape, Args &&... args)
         : TransformShape<GeometricShapeBox>(
               Transform(Vecd(0.5 * (shape.bounding_box_.second_ + shape.bounding_box_.first_))),
               0.5 * (shape.bounding_box_.second_ - shape.bounding_box_.first_), std::forward<Args>(args)...),
