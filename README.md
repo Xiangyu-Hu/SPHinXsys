@@ -84,14 +84,6 @@ Please check the source code of
 [2D Dambreak case with python interface](https://github.com/Xiangyu-Hu/SPHinXsys/tree/master/tests/2d_examples/test_2d_dambreak_python)
 for the usage.
 
-## Heterogenous computing
-
-Recently, we have a preview release for the heterogeneous computing version of SPHinXsys.
-By using SYCL, a royalty-free open standard developed by the Khronos Group that allows developers
-to program heterogeneous architectures in standard C++, SPHinXsys is able to utilize the power of GPU.
-Please check the [Preview Release](https://github.com/Xiangyu-Hu/SPHinXsys/releases/tag/v1.0-beta.08-sycl)
-and the [SYCL branch](https://github.com/Xiangyu-Hu/SPHinXsys/tree/sycl) for details.
-
 ## Publications
 
 Main publication on the library:
