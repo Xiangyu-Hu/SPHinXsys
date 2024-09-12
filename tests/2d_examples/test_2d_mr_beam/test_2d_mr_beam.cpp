@@ -14,7 +14,8 @@ void beam_multi_resolution(int dp_factor, int refinement_level = 1);
 
 int main(int ac, char *av[])
 {
-    beam_multi_resolution(1, 2);
+    beam_single_resolution(4);
+    // beam_multi_resolution(1, 2);
 }
 
 //------------------------------------------------------------------------------
@@ -57,6 +58,7 @@ struct solid_algs
     explicit solid_algs(BaseInnerRelation &inner_relation)
         : corrected_configuration(inner_relation),
           stress_relaxation_first_half(inner_relation),
+          stress_relaxation_first_half_right_cauchy(inner_relation),
           stress_relaxation_second_half(inner_relation),
           computing_time_step_size(inner_relation.getSPHBody()),
           normal_direction(inner_relation.getSPHBody()){};
@@ -233,8 +235,8 @@ void beam_single_resolution(int dp_factor)
 
                 algs.stress_relaxation_first(dt);
                 fix_bc.exec();
-                // damping.exec(dt);
-                // fix_bc.exec();
+                damping.exec(dt);
+                fix_bc.exec();
                 algs.stress_relaxation_second(dt);
 
                 ++ite;
@@ -322,7 +324,7 @@ void beam_multi_resolution(int dp_factor, int refinement_level)
 
     // Create objects
     SolidBody beam_body(system, mesh);
-    beam_body.defineAdaptation<ParticleRefinementWithinShape_v2>(1.15, 1.0, refinement_level, 4);
+    beam_body.defineAdaptation<ParticleRefinementWithinShape_v2>(1.15, 1.0, refinement_level, 2);
     beam_body.defineBodyLevelSetShape()->cleanLevelSet(0);
     beam_body.assignMaterial(material.get());
     beam_body.generateParticles<BaseParticles, Lattice, Adaptive>(refinement_region);
@@ -370,35 +372,9 @@ void beam_multi_resolution(int dp_factor, int refinement_level)
 
     constant_gravity.exec();
 
-    // check if split inner is correct
-    const auto &mesh_level = *beam_body.getBaseParticles().getVariableDataByName<size_t>("ParticleMeshLevel");
-    for (size_t index_i = 0; index_i < beam_body.getBaseParticles().TotalRealParticles(); index_i++)
-    {
-        const auto &inner_neighbor = inner.inner_configuration_[index_i];
-        const auto &inner_split_neighbor = inner_split.inner_configuration_[index_i];
-        if (inner_neighbor.current_size_ < inner_split_neighbor.current_size_)
-        {
-            std::cout << "Error: split inner should have fewer neighbors than inner" << std::endl;
-            exit(1);
-        }
-        for (size_t n = 0; n < inner_split_neighbor.current_size_; n++)
-        {
-            size_t index_j = inner_split_neighbor.j_[n];
-            if (mesh_level[index_i] > mesh_level[index_j])
-            {
-                std::cout << "Error: a particle can only see particles with dp_j << dp_i" << std::endl;
-                exit(1);
-            }
-            if (mesh_level[index_i] == mesh_level[index_j] && index_i >= index_j)
-            {
-                std::cout << "Error: a particle can only see particles with index_j > index_i" << std::endl;
-                exit(1);
-            }
-        }
-    }
-
     // Output
     // transform size_t to int for output
+    const auto &mesh_level = *beam_body.getBaseParticles().getVariableDataByName<size_t>("ParticleMeshLevel");
     beam_body.getBaseParticles().registerSharedVariable<int>("MeshLevel", [&](size_t i) -> int
                                                              { return int(mesh_level[i]); });
     beam_body.getBaseParticles().addVariableToWrite<Real>("SmoothingLengthRatio");
@@ -440,8 +416,10 @@ void beam_multi_resolution(int dp_factor, int refinement_level)
 
                 algs.stress_relaxation_first_right_cauchy(dt);
                 fix_bc.exec();
-                // damping.exec(dt);
-                // fix_bc.exec();
+                // run twice in the test
+                damping.exec(dt);
+                damping.exec(dt);
+                fix_bc.exec();
                 algs.stress_relaxation_second(dt);
 
                 ++ite;
