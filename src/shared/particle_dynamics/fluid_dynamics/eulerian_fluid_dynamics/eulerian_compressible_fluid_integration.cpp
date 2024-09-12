@@ -26,7 +26,7 @@ CompressibleFluidInitialCondition::CompressibleFluidInitialCondition(SPHBody &sp
       E_(particles_->getVariableDataByName<Real>("TotalEnergy")) {}
 //=================================================================================================//
 EulerianCompressibleAcousticTimeStepSize::
-    EulerianCompressibleAcousticTimeStepSize(SPHBody &sph_body, , Real acousticCFL)
+    EulerianCompressibleAcousticTimeStepSize(SPHBody &sph_body, Real acousticCFL)
     : AcousticTimeStep(sph_body),
       rho_(particles_->getVariableDataByName<Real>("Density")),
       p_(particles_->getVariableDataByName<Real>("Pressure")),
