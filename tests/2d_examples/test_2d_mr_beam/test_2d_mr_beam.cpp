@@ -49,6 +49,7 @@ struct solid_algs
 {
     InteractionWithUpdate<LinearGradientCorrectionMatrixInner> corrected_configuration;
     Dynamics1Level<solid_dynamics::Integration1stHalfPK2> stress_relaxation_first_half;
+    Dynamics1Level<solid_dynamics::Integration1stHalfPK2RightCauchy> stress_relaxation_first_half_right_cauchy;
     Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half;
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size;
     SimpleDynamics<NormalDirectionFromBodyShape> normal_direction;
@@ -62,6 +63,7 @@ struct solid_algs
 
     void corrected_config() { corrected_configuration.exec(); }
     void stress_relaxation_first(Real dt) { stress_relaxation_first_half.exec(dt); }
+    void stress_relaxation_first_right_cauchy(Real dt) { stress_relaxation_first_half_right_cauchy.exec(dt); }
     void stress_relaxation_second(Real dt) { stress_relaxation_second_half.exec(dt); }
     void normal_update() { normal_direction.exec(); }
     Real time_step_size() { return computing_time_step_size.exec(); }
@@ -175,7 +177,7 @@ void beam_single_resolution(int dp_factor)
     {
         const auto &pos_ = particles.ParticlePositions();
         for (const auto &pos : pos_)
-            if (std::isnan(pos[0]) || std::isnan(pos[1]) || std::isnan(pos[2]))
+            if (std::isnan(pos[0]) || std::isnan(pos[1]))
                 throw std::runtime_error("position has become nan");
     };
 
@@ -231,8 +233,8 @@ void beam_single_resolution(int dp_factor)
 
                 algs.stress_relaxation_first(dt);
                 fix_bc.exec();
-                damping.exec(dt);
-                fix_bc.exec();
+                // damping.exec(dt);
+                // fix_bc.exec();
                 algs.stress_relaxation_second(dt);
 
                 ++ite;
@@ -262,6 +264,25 @@ void beam_single_resolution(int dp_factor)
         exit(0);
     }
 }
+//------------------------------------------------------------------------------
+class ParticleRefinementWithinShape_v2 : public ParticleRefinementWithinShape
+{
+  public:
+    ParticleRefinementWithinShape_v2(Real resolution_ref, Real h_spacing_ratio_, Real system_refinement_ratio, int local_refinement_level, Real transition_factor = 2)
+        : ParticleRefinementWithinShape(resolution_ref, h_spacing_ratio_, system_refinement_ratio, local_refinement_level),
+          transition_factor_(transition_factor)
+    {
+        std::cout << "transition factor: " << transition_factor_ << std::endl;
+    }
+    inline Real getLocalSpacing(Shape &shape, const Vecd &position) override
+    {
+        Real phi = shape.findSignedDistance(position);
+        return phi < 0.0 ? finest_spacing_bound_ : smoothedSpacing(phi, transition_factor_ * spacing_ref_);
+    }
+
+  private:
+    Real transition_factor_;
+};
 //------------------------------------------------------------------------------
 void beam_multi_resolution(int dp_factor, int refinement_level)
 {
@@ -301,7 +322,7 @@ void beam_multi_resolution(int dp_factor, int refinement_level)
 
     // Create objects
     SolidBody beam_body(system, mesh);
-    beam_body.defineAdaptation<ParticleRefinementWithinShape>(1.15, 1.0, refinement_level);
+    beam_body.defineAdaptation<ParticleRefinementWithinShape_v2>(1.15, 1.0, refinement_level, 4);
     beam_body.defineBodyLevelSetShape()->cleanLevelSet(0);
     beam_body.assignMaterial(material.get());
     beam_body.generateParticles<BaseParticles, Lattice, Adaptive>(refinement_region);
@@ -330,7 +351,7 @@ void beam_multi_resolution(int dp_factor, int refinement_level)
     {
         const auto &pos_ = particles.ParticlePositions();
         for (const auto &pos : pos_)
-            if (std::isnan(pos[0]) || std::isnan(pos[1]) || std::isnan(pos[2]))
+            if (std::isnan(pos[0]) || std::isnan(pos[1]))
                 throw std::runtime_error("position has become nan");
     };
 
@@ -382,6 +403,7 @@ void beam_multi_resolution(int dp_factor, int refinement_level)
                                                              { return int(mesh_level[i]); });
     beam_body.getBaseParticles().addVariableToWrite<Real>("SmoothingLengthRatio");
     beam_body.getBaseParticles().addVariableToWrite<int>("MeshLevel");
+    beam_body.getBaseParticles().addVariableToWrite<Real>("VolumetricMeasure");
     beam_body.getBaseParticles().addVariableToWrite<Vec2d>("GravityForce");
     beam_body.getBaseParticles().addVariableToWrite<Vec2d>("NormalDirection");
     beam_body.getBaseParticles().addVariableToWrite<Vec2d>("Velocity");
@@ -416,7 +438,7 @@ void beam_multi_resolution(int dp_factor, int refinement_level)
                 if (dt < dt_ref / 1e2)
                     throw std::runtime_error("time step decreased too much");
 
-                algs.stress_relaxation_first(dt);
+                algs.stress_relaxation_first_right_cauchy(dt);
                 fix_bc.exec();
                 // damping.exec(dt);
                 // fix_bc.exec();

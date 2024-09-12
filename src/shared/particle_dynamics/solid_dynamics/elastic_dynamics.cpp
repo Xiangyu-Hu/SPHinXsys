@@ -181,5 +181,13 @@ void Integration2ndHalf::update(size_t index_i, Real dt)
     F_[index_i] += dF_dt_[index_i] * dt * 0.5;
 }
 //=================================================================================================//
+void Integration1stHalfPK2RightCauchy::initialization(size_t index_i, Real dt)
+{
+    Integration1stHalfPK2::initialization(index_i, dt);
+    // add damping stress
+    const Matd numerical_damping_stress = elastic_solid_.NumericalDampingRightCauchy(F_[index_i], dF_dt_[index_i], smoothing_length_ / h_ratio_[index_i], index_i);
+    stress_PK1_B_[index_i] += F_[index_i] * 0.5 * numerical_dissipation_factor_ * numerical_damping_stress;
+}
+//=================================================================================================//
 } // namespace solid_dynamics
 } // namespace SPH

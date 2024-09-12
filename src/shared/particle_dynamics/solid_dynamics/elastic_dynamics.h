@@ -290,6 +290,37 @@ class DecomposedIntegration1stHalf : public BaseIntegration1stHalf
 };
 
 /**
+ * @class Integration1stHalfPK2RightCauchy
+ * @brief Using PK2 stress constitute relation and right Cauchy damping
+ */
+class Integration1stHalfPK2RightCauchy : public Integration1stHalfPK2
+{
+  public:
+    explicit Integration1stHalfPK2RightCauchy(BaseInnerRelation &inner_relation)
+        : Integration1stHalfPK2(inner_relation),
+          h_ratio_(*particles_->registerSharedVariable<Real>("SmoothingLengthRatio", 1.0)){};
+    void initialization(size_t index_i, Real dt = 0.0);
+    inline void interaction(size_t index_i, Real dt = 0.0)
+    {
+        // including gravity and force from fluid
+        Vecd force = Vecd::Zero();
+        const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
+        for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+        {
+            size_t index_j = inner_neighborhood.j_[n];
+            Vecd e_ij = inner_neighborhood.e_ij_[n];
+            force += mass_[index_i] * inv_rho0_ * inner_neighborhood.dW_ij_[n] * Vol_[index_j] *
+                     (stress_PK1_B_[index_i] + stress_PK1_B_[index_j]) * e_ij;
+        }
+
+        force_[index_i] = force;
+    }
+
+  private:
+    StdLargeVec<Real> h_ratio_;
+};
+
+/**
  * @class Integration2ndHalf
  * @brief computing stress relaxation process by verlet time stepping
  * This is the second step
