@@ -139,7 +139,7 @@ ReloadParticleIO::ReloadParticleIO(SPHBodyVector bodies)
 {
     for (size_t i = 0; i < bodies_.size(); ++i)
     {
-        file_names_.push_back(io_environment_.reload_folder_ + "/" + bodies_[i]->getName() + "rld.xml");
+        file_names_.push_back(io_environment_.reload_folder_ + "/" + bodies_[i]->getName() + "_rld.xml");
 
         // basic variable for write to restart file
         BaseParticles &particles = bodies_[i]->getBaseParticles();
