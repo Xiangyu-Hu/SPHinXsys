@@ -51,7 +51,7 @@ namespace SPH
 template <class DynamicsIdentifier>
 class BaseLocalDynamics
 {
-    UniquePtrsKeeper<BaseVariable> constant_entity_ptrs_;
+    UniquePtrsKeeper<Entity> constant_entity_ptrs_;
 
   public:
     explicit BaseLocalDynamics(DynamicsIdentifier &identifier)

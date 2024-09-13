@@ -42,7 +42,7 @@ class Relation;
 template <>
 class Relation<Base>
 {
-    UniquePtrsKeeper<BaseVariable> relation_variable_ptrs_;
+    UniquePtrsKeeper<Entity> relation_variable_ptrs_;
 
   public:
     explicit Relation(SPHBody &sph_body);

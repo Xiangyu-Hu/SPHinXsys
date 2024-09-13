@@ -37,8 +37,7 @@ namespace SPH
 template <typename DataType>
 DeviceSharedSingularVariable<DataType>::
     DeviceSharedSingularVariable(SingularVariable<DataType> *host_variable)
-    : BaseVariable(host_variable->Name()),
-      device_shared_value_(allocateDeviceShared<DataType>(1))
+    : device_shared_value_(allocateDeviceShared<DataType>(1))
 {
     *device_shared_value_ = *host_variable->ValueAddress();
     host_variable->setDelegateValueAddress(device_shared_value_);
@@ -71,7 +70,7 @@ void DiscreteVariable<DataType>::synchronizeToDevice()
 template <typename DataType>
 DeviceOnlyDiscreteVariable<DataType>::
     DeviceOnlyDiscreteVariable(DiscreteVariable<DataType> *host_variable)
-    : BaseVariable(host_variable->Name()), device_only_data_field_(nullptr)
+    : device_only_data_field_(nullptr)
 {
     size_t data_size = host_variable->getDataFieldSize();
     device_only_data_field_ = allocateDeviceOnly<DataType>(data_size);

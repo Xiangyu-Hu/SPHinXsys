@@ -83,7 +83,7 @@ class BaseParticles
   private:
     DataContainerUniquePtrAssemble<DiscreteVariable> all_discrete_variable_ptrs_;
     DataContainerUniquePtrAssemble<SingularVariable> all_global_variable_ptrs_;
-    UniquePtrsKeeper<BaseVariable> unique_variable_ptrs_;
+    UniquePtrsKeeper<Entity> unique_variable_ptrs_;
 
   public:
     explicit BaseParticles(SPHBody &sph_body, BaseMaterial *base_material);

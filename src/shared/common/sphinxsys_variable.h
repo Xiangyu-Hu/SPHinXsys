@@ -44,12 +44,12 @@ class SingularVariable;
 template <typename DataType>
 class DiscreteVariable;
 
-class BaseVariable
+class Entity
 {
   public:
-    explicit BaseVariable(const std::string &name)
+    explicit Entity(const std::string &name)
         : name_(name){};
-    virtual ~BaseVariable(){};
+    virtual ~Entity(){};
     std::string Name() const { return name_; };
 
   protected:
@@ -57,8 +57,7 @@ class BaseVariable
 };
 
 template <typename DataType>
-class DeviceSharedSingularVariable : public BaseVariable
-
+class DeviceSharedSingularVariable
 {
   public:
     DeviceSharedSingularVariable(SingularVariable<DataType> *host_variable);
@@ -68,13 +67,13 @@ class DeviceSharedSingularVariable : public BaseVariable
     DataType *device_shared_value_;
 };
 template <typename DataType>
-class SingularVariable : public BaseVariable
+class SingularVariable : public Entity
 {
-    UniquePtrKeeper<BaseVariable> device_shared_singular_variable_keeper_;
+    UniquePtrKeeper<Entity> device_shared_singular_variable_keeper_;
 
   public:
     SingularVariable(const std::string &name, const DataType &value)
-        : BaseVariable(name), value_(new DataType(value)), delegated_(value_){};
+        : Entity(name), value_(new DataType(value)), delegated_(value_){};
     virtual ~SingularVariable() { delete value_; };
 
     DataType *ValueAddress() { return delegated_; };
@@ -105,7 +104,7 @@ class SingularVariable : public BaseVariable
 };
 
 template <typename DataType>
-class DeviceOnlyDiscreteVariable : public BaseVariable
+class DeviceOnlyDiscreteVariable
 {
   public:
     DeviceOnlyDiscreteVariable(DiscreteVariable<DataType> *host_variable);
@@ -117,13 +116,13 @@ class DeviceOnlyDiscreteVariable : public BaseVariable
 };
 
 template <typename DataType>
-class DiscreteVariable : public BaseVariable
+class DiscreteVariable : public Entity
 {
-    UniquePtrKeeper<BaseVariable> device_only_variable_keeper_;
+    UniquePtrKeeper<Entity> device_only_variable_keeper_;
 
   public:
     DiscreteVariable(const std::string &name, size_t data_size)
-        : BaseVariable(name), data_size_(data_size),
+        : Entity(name), data_size_(data_size),
           data_field_(nullptr), device_only_variable_(nullptr),
           device_data_field_(nullptr)
     {
@@ -173,12 +172,12 @@ class DiscreteVariable : public BaseVariable
 };
 
 template <typename DataType>
-class MeshVariable : public BaseVariable
+class MeshVariable : public Entity
 {
   public:
     using PackageData = PackageDataMatrix<DataType, 4>;
     MeshVariable(const std::string &name, size_t data_size)
-        : BaseVariable(name), data_field_(nullptr){};
+        : Entity(name), data_field_(nullptr){};
     virtual ~MeshVariable() { delete[] data_field_; };
 
     // void setDataField(PackageData* mesh_data){ data_field_ = mesh_data; };
