@@ -260,7 +260,7 @@ DiscreteVariable<DataType> *BaseParticles::
         return variable;
     }
 
-    return nullptr; // no variable added as sorted variable
+    return nullptr; // no variable added as sortable variable
 }
 //=================================================================================================//
 template <typename DataType>
