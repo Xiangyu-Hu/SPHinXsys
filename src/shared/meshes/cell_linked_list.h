@@ -88,6 +88,8 @@ class CellLinkedList : public BaseCellLinkedList, public Mesh
     ConcurrentIndexVector *cell_index_lists_;
     /** non-concurrent list data rewritten for building neighbor list */
     ListDataVector *cell_data_lists_;
+    /**< number of split cell lists */
+    size_t number_of_split_cell_lists_;
 
     void allocateMeshDataMatrix(); /**< allocate memories for addresses of data packages. */
     void deleteMeshDataMatrix();   /**< delete memories for addresses of data packages. */

@@ -17,7 +17,7 @@ BaseCellLinkedList::
 CellLinkedList::CellLinkedList(BoundingBox tentative_bounds, Real grid_spacing,
                                SPHAdaptation &sph_adaptation)
     : BaseCellLinkedList(sph_adaptation), Mesh(tentative_bounds, grid_spacing, 2),
-      cell_index_lists_(nullptr), cell_data_lists_(nullptr)
+      cell_index_lists_(nullptr), cell_data_lists_(nullptr), number_of_split_cell_lists_(pow(3, Dimensions))
 {
     allocateMeshDataMatrix();
     single_cell_linked_list_level_.push_back(this);
