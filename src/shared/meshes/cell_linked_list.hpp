@@ -50,14 +50,26 @@ void CellLinkedList::particle_for_split(const execution::SequencedPolicy &, cons
     // foward sweeping
     for (size_t k = 0; k < number_of_split_cell_lists_; k++)
     {
+        // get the corresponding 2D/3D split cell index (m, n)
+        // e.g., for k = 0, split_cell_index = (0,0), for k = 3, split_cell_index = (1,0), etc.
         const Arrayi split_cell_index = transfer1DtoMeshIndex(3 * Arrayi::Ones(), k);
+        // get the number of cells belonging to the split cell k
+        // i_max = (M - m - 1) / 3 + 1, j_max = (N - n - 1) / 3 + 1
+        // e.g. all_cells = (M,N) = (6, 9), (m, n) = (1, 1), then i_max = 2, j_max = 3
         const Arrayi all_cells_k = (all_cells_ - split_cell_index - Arrayi::Ones()) / 3 + Arrayi::Ones();
-        const size_t number_of_cells = get1DMeshSize(all_cells_k);
+        const size_t number_of_cells = get1DMeshSize(all_cells_k); // i_max * j_max
 
+        // looping over all cells in the split cell k
         for (size_t l = 0; l < number_of_cells; l++)
         {
+            // get the 2D/3D cell index of the l-th cell in the split cell k
+            // (i , j) = (m + 3 * (l / j_max), n + 3 * l % i_max)
+            // e.g. all_cells = (M,N) = (6, 9), (m, n) = (1, 1), l = 0, then (i, j) = (1, 1)
+            // l = 1, then (i, j) = (1, 4), l = 3, then (i, j) = (4, 1), etc.
             const Arrayi cell_index = split_cell_index + 3 * transfer1DtoMeshIndex(all_cells_k, l);
+            // get the list of particles in the cell (i, j)
             const ConcurrentIndexVector &cell_list = getCellDataList(cell_index_lists_, cell_index);
+            // looping over all particles in the cell (i, j)
             for (const size_t index_i : cell_list)
             {
                 local_dynamics_function(index_i);
