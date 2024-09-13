@@ -20,6 +20,11 @@ size_t BaseMesh::transferMeshIndexTo1D(const Array3i &mesh_size, const Array3i &
            mesh_index[2];
 }
 //=================================================================================================//
+size_t BaseMesh::get1DMeshSize(const Array3i &mesh_size)
+{
+    return mesh_size[0] * mesh_size[1] * mesh_size[2];
+}
+//=================================================================================================//
 size_t BaseMesh::transferMeshIndexToMortonOrder(const Array3i &mesh_index)
 {
     return MortonCode(mesh_index[0]) | (MortonCode(mesh_index[1]) << 1) | (MortonCode(mesh_index[2]) << 2);

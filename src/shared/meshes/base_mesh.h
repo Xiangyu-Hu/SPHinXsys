@@ -90,6 +90,8 @@ class BaseMesh
     Arrayi transfer1DtoMeshIndex(const Arrayi &mesh_size, size_t i);
     /** Transfer mesh index to 1D int.  */
     size_t transferMeshIndexTo1D(const Arrayi &mesh_size, const Arrayi &mesh_index);
+    /** Get 1D mesh size from 2D/3D mesh size */
+    size_t get1DMeshSize(const Arrayi &mesh_size);
     /** converts mesh index into a Morton order.
      * Interleave a 10 bit number in 32 bits, fill one bit and leave the other 2 as zeros
      * https://stackoverflow.com/questions/18529057/
