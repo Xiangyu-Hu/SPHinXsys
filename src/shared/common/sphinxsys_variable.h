@@ -47,9 +47,8 @@ class DiscreteVariable;
 class Entity
 {
   public:
-    explicit Entity(const std::string &name)
-        : name_(name){};
-    virtual ~Entity(){};
+    explicit Entity(const std::string &name) : name_(name){};
+    ~Entity(){};
     std::string Name() const { return name_; };
 
   protected:
@@ -57,15 +56,16 @@ class Entity
 };
 
 template <typename DataType>
-class DeviceSharedSingularVariable
+class DeviceSharedSingularVariable : public Entity
 {
   public:
     DeviceSharedSingularVariable(SingularVariable<DataType> *host_variable);
-    virtual ~DeviceSharedSingularVariable();
+    ~DeviceSharedSingularVariable();
 
   protected:
     DataType *device_shared_value_;
 };
+
 template <typename DataType>
 class SingularVariable : public Entity
 {
@@ -74,7 +74,7 @@ class SingularVariable : public Entity
   public:
     SingularVariable(const std::string &name, const DataType &value)
         : Entity(name), value_(new DataType(value)), delegated_(value_){};
-    virtual ~SingularVariable() { delete value_; };
+    ~SingularVariable() { delete value_; };
 
     DataType *ValueAddress() { return delegated_; };
 
@@ -104,11 +104,11 @@ class SingularVariable : public Entity
 };
 
 template <typename DataType>
-class DeviceOnlyDiscreteVariable
+class DeviceOnlyDiscreteVariable : public Entity
 {
   public:
     DeviceOnlyDiscreteVariable(DiscreteVariable<DataType> *host_variable);
-    virtual ~DeviceOnlyDiscreteVariable();
+    ~DeviceOnlyDiscreteVariable();
     void reallocateDataField(DiscreteVariable<DataType> *host_variable);
 
   protected:
@@ -128,7 +128,7 @@ class DiscreteVariable : public Entity
     {
         data_field_ = new DataType[data_size];
     };
-    virtual ~DiscreteVariable() { delete[] data_field_; };
+    ~DiscreteVariable() { delete[] data_field_; };
     DataType *DataField() { return data_field_; };
 
     template <class ExecutionPolicy>
@@ -178,7 +178,7 @@ class MeshVariable : public Entity
     using PackageData = PackageDataMatrix<DataType, 4>;
     MeshVariable(const std::string &name, size_t data_size)
         : Entity(name), data_field_(nullptr){};
-    virtual ~MeshVariable() { delete[] data_field_; };
+    ~MeshVariable() { delete[] data_field_; };
 
     // void setDataField(PackageData* mesh_data){ data_field_ = mesh_data; };
     PackageData *DataField() { return data_field_; };

@@ -31,6 +31,7 @@
 
 #include "base_data_package.h"
 #include "base_data_type.h"
+#include "sphinxsys_constant.h"
 #include "sphinxsys_variable.h"
 
 namespace SPH
