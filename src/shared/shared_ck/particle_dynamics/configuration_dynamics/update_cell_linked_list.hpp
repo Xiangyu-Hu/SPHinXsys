@@ -16,7 +16,7 @@ UpdateCellLinkedList<ExecutionPolicy, CellLinkedListType>::UpdateCellLinkedList(
       cell_linked_list_(DynamicCast<CellLinkedListType>(this, real_body.getCellLinkedList())),
       mesh_(cell_linked_list_),
       cell_offset_list_size_(cell_linked_list_.getCellOffsetListSize()),
-      dv_pos_(cell_linked_list_.getParticlePosition()),
+      dv_pos_(particles_->getVariableByName<Vecd>("Position")),
       dv_particle_index_(cell_linked_list_.getParticleIndex()),
       dv_cell_offset_(cell_linked_list_.getCellOffset()),
       dv_current_cell_size_(DiscreteVariable<UnsignedInt>("CurrentCellSize", cell_offset_list_size_)),

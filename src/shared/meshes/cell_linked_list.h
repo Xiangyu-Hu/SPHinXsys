@@ -51,8 +51,6 @@ class BaseCellLinkedList : public BaseMeshField
 {
   protected:
     Kernel &kernel_;
-    BaseParticles &base_particles_;
-    DiscreteVariable<Vecd> *dv_pos_;
     /** clear split cell lists in this mesh*/
     virtual void clearSplitCellLists(SplitCellLists &split_cell_lists);
     /** update split particle list in this mesh */
@@ -79,15 +77,14 @@ class BaseCellLinkedList : public BaseMeshField
     virtual void tagBodyPartByCell(ConcurrentCellLists &cell_lists, std::function<bool(Vecd, Real)> &check_included) = 0;
     /** Tag domain bounding cells in an axis direction, called by domain bounding classes */
     virtual void tagBoundingCells(StdVec<CellLists> &cell_data_lists, const BoundingBox &bounding_bounds, int axis) = 0;
-
-    DiscreteVariable<Vecd> *getParticlePosition() { return dv_pos_; };
 };
 
 class NeighborSearch : public Mesh
 {
   public:
     template <class ExecutionPolicy>
-    NeighborSearch(const ExecutionPolicy &ex_policy, CellLinkedList &cell_linked_list);
+    NeighborSearch(const ExecutionPolicy &ex_policy,
+                   CellLinkedList &cell_linked_list, DiscreteVariable<Vecd> *pos);
 
     template <typename FunctionOnEach>
     void forEachSearch(UnsignedInt index_i, const Vecd *source_pos,
@@ -162,7 +159,7 @@ class CellLinkedList : public BaseCellLinkedList, public Mesh
                                     GetSearchDepth &get_search_depth, GetNeighborRelation &get_neighbor_relation);
 
     template <class ExecutionPolicy>
-    NeighborSearch createNeighborSearch(const ExecutionPolicy &ex_policy);
+    NeighborSearch createNeighborSearch(const ExecutionPolicy &ex_policy, DiscreteVariable<Vecd> *pos);
     UnsignedInt getCellOffsetListSize() { return cell_offset_list_size_; };
     DiscreteVariable<UnsignedInt> *getParticleIndex() { return dv_particle_index_; };
     DiscreteVariable<UnsignedInt> *getCellOffset() { return dv_cell_offset_; };

@@ -18,9 +18,10 @@ namespace SPH
 {
 //=================================================================================================//
 template <class ExecutionPolicy>
-NeighborSearch::NeighborSearch(const ExecutionPolicy &ex_policy, CellLinkedList &cell_linked_list)
+NeighborSearch::NeighborSearch(
+    const ExecutionPolicy &ex_policy, CellLinkedList &cell_linked_list, DiscreteVariable<Vecd> *pos)
     : Mesh(cell_linked_list), grid_spacing_squared_(grid_spacing_ * grid_spacing_),
-      pos_(cell_linked_list.getParticlePosition()->DelegatedDataField(ex_policy)),
+      pos_(pos->DelegatedDataField(ex_policy)),
       particle_index_(cell_linked_list.getParticleIndex()->DelegatedDataField(ex_policy)),
       cell_offset_(cell_linked_list.getCellOffset()->DelegatedDataField(ex_policy)) {}
 //=================================================================================================//
@@ -49,9 +50,10 @@ void NeighborSearch::forEachSearch(UnsignedInt index_i, const Vecd *source_pos,
 }
 //=================================================================================================//
 template <class ExecutionPolicy>
-NeighborSearch CellLinkedList::createNeighborSearch(const ExecutionPolicy &ex_policy)
+NeighborSearch CellLinkedList::createNeighborSearch(
+    const ExecutionPolicy &ex_policy, DiscreteVariable<Vecd> *pos)
 {
-    return NeighborSearch(ex_policy, *this);
+    return NeighborSearch(ex_policy, *this, pos);
 }
 //=================================================================================================//
 template <class DynamicsRange, typename GetSearchDepth, typename GetNeighborRelation>

@@ -11,8 +11,7 @@ namespace SPH
 //=================================================================================================//
 BaseCellLinkedList::
     BaseCellLinkedList(BaseParticles &base_particles, SPHAdaptation &sph_adaptation)
-    : BaseMeshField("CellLinkedList"), kernel_(*sph_adaptation.getKernel()),
-      base_particles_(base_particles), dv_pos_(base_particles.getVariableByName<Vecd>("Position")) {}
+    : BaseMeshField("CellLinkedList"), kernel_(*sph_adaptation.getKernel()) {}
 //=================================================================================================//
 SplitCellLists *BaseCellLinkedList::getSplitCellLists()
 {
