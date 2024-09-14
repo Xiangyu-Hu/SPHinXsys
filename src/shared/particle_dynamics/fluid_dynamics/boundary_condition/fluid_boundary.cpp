@@ -107,7 +107,7 @@ void DisposerOutflowDeletion::update(size_t index_i, Real dt)
         if (pos_[index_i][1] < 0.8) //** A temporary treatment *
         {
             std::cout << "Unphysically deleting" << std::endl;
-            std::cin.get();
+            //std::cin.get();
         }
         particles_->switchToBufferParticle(index_i);
     }
