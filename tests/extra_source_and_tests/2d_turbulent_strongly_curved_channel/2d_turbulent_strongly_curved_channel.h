@@ -20,7 +20,7 @@ using namespace SPH;
 //----------------------------------------------------------------------
 Real scale = 0.0254;
 Real DH = 3.0 * scale; /**< Channel height. */
-Real num_fluid_cross_section = 60.0;
+Real num_fluid_cross_section = 20.0;
 Real central_angel = 210.0 * 2.0 * Pi / 360.0;
 Real extend_in = 0.0;
 Real extend_out = 6.0 * DH;
@@ -57,7 +57,8 @@ Real characteristic_length = DH; /**<It needs characteristic Length to calculate
 int type_turbulent_inlet = 0;
 Real relaxation_rate_turbulent_inlet = 0.8;
 //** Tag for AMRD *
-int is_AMRD = 0;
+int is_AMRD = 1;
+bool is_constrain_normal_velocity_in_P_region = true;
 //** Weight for correcting the velocity  gradient in the sub near wall region  *
 Real weight_vel_grad_sub_nearwall = 0.1;
 //** Empirical parameter for initial stability*
@@ -144,8 +145,8 @@ BoundingBox system_domain_bounds(left_bottom_point + Vec2d(-2.0 * BW, -2.0 * BW)
 //----------------------------------------------------------------------
 // ** By kernel weight. *
 int screen_output_interval = 100;
-Real end_time = 10.0;                /**< End time. */
-Real Output_Time = end_time / 200.0; /**< Time stamps for output of body states. */
+Real end_time = 10.0;               /**< End time. */
+Real Output_Time = end_time / 20.0; /**< Time stamps for output of body states. */
 
 Real cutoff_time = end_time * 0.6; //** cutoff_time should be a integral and the same as the PY script */
 int number_observe_line = 4;
