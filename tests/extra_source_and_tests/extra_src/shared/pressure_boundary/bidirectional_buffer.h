@@ -60,6 +60,7 @@ class BidirectionalBuffer
         TagBufferParticles(BodyAlignedBoxByCell &aligned_box_part)
             : BaseLocalDynamics<BodyPartByCell>(aligned_box_part),
               DataDelegateSimple(aligned_box_part.getSPHBody()),
+              part_id_(aligned_box_part.getPartID()),
               pos_(*particles_->getVariableDataByName<Vecd>("Position")),
               aligned_box_(aligned_box_part.getAlignedBoxShape()),
               buffer_particle_indicator_(*particles_->registerSharedVariable<int>("BufferParticleIndicator"))
@@ -70,10 +71,11 @@ class BidirectionalBuffer
 
         virtual void update(size_t index_i, Real dt = 0.0)
         {
-            buffer_particle_indicator_[index_i] = aligned_box_.checkInBounds(pos_[index_i]) ? 1 : 0;
+            buffer_particle_indicator_[index_i] = aligned_box_.checkInBounds(pos_[index_i]) ? part_id_ : 0;
         };
 
       protected:
+        int part_id_;
         StdLargeVec<Vecd> &pos_;
         AlignedBoxShape &aligned_box_;
         StdLargeVec<int> &buffer_particle_indicator_;
@@ -86,12 +88,13 @@ class BidirectionalBuffer
                   TargetPressure &target_pressure)
             : BaseLocalDynamics<BodyPartByCell>(aligned_box_part),
               DataDelegateSimple(aligned_box_part.getSPHBody()),
+              part_id_(aligned_box_part.getPartID()),
               particle_buffer_(particle_buffer),
               aligned_box_(aligned_box_part.getAlignedBoxShape()),
               fluid_(DynamicCast<Fluid>(this, particles_->getBaseMaterial())),
               original_id_(particles_->ParticleOriginalIds()),
-              pos_n_(*particles_->getVariableDataByName<Vecd>("Position")),
-              rho_n_(*particles_->getVariableDataByName<Real>("Density")),
+              pos_(*particles_->getVariableDataByName<Vecd>("Position")),
+              rho_(*particles_->getVariableDataByName<Real>("Density")),
               p_(*particles_->getVariableDataByName<Real>("Pressure")),
               previous_surface_indicator_(*particles_->getVariableDataByName<int>("PreviousSurfaceIndicator")),
               buffer_particle_indicator_(*particles_->getVariableDataByName<int>("BufferParticleIndicator")),
@@ -103,30 +106,49 @@ class BidirectionalBuffer
 
         void update(size_t index_i, Real dt = 0.0)
         {
-            if (aligned_box_.checkUpperBound(pos_n_[index_i]) && buffer_particle_indicator_[index_i] == 1)
+            if (aligned_box_.checkUpperBound(pos_[index_i]) &&
+                buffer_particle_indicator_[index_i] == part_id_ &&
+                index_i < particles_->TotalRealParticles())
             {
-                mutex_switch_to_real_.lock();
+                mutex_switch.lock();
                 particle_buffer_.checkEnoughBuffer(*particles_);
                 particles_->createRealParticleFrom(index_i);
-                mutex_switch_to_real_.unlock();
+                size_t new_index_i = particles_->TotalRealParticles() - 1;
+                buffer_particle_indicator_[new_index_i] = 0;
+                mutex_switch.unlock();
 
                 /** Periodic bounding. */
-                pos_n_[index_i] = aligned_box_.getUpperPeriodic(pos_n_[index_i]);
-                Real sound_speed = fluid_.getSoundSpeed(rho_n_[index_i]);
+                pos_[index_i] = aligned_box_.getUpperPeriodic(pos_[index_i]);
+                Real sound_speed = fluid_.getSoundSpeed(rho_[index_i]);
                 p_[index_i] = target_pressure_(p_[index_i]);
-                rho_n_[index_i] = p_[index_i] / pow(sound_speed, 2.0) + fluid_.ReferenceDensity();
+                rho_[index_i] = p_[index_i] / pow(sound_speed, 2.0) + fluid_.ReferenceDensity();
                 previous_surface_indicator_[index_i] = 1;
+            }
+
+            if (aligned_box_.checkLowerBound(pos_[index_i]) &&
+                buffer_particle_indicator_[index_i] == part_id_ &&
+                index_i < particles_->TotalRealParticles())
+            {
+                mutex_switch.lock();
+                while (aligned_box_.checkLowerBound(pos_[index_i]) &&
+                       buffer_particle_indicator_[index_i] == part_id_ &&
+                       index_i < particles_->TotalRealParticles())
+                {
+                    particles_->switchToBufferParticle(index_i);
+                }
+                mutex_switch.unlock();
             }
         }
 
       protected:
-        std::mutex mutex_switch_to_real_;
+        int part_id_;
+        std::mutex mutex_switch;
         ParticleBuffer<Base> &particle_buffer_;
         AlignedBoxShape &aligned_box_;
         Fluid &fluid_;
         StdLargeVec<size_t> &original_id_;
-        StdLargeVec<Vecd> &pos_n_;
-        StdLargeVec<Real> &rho_n_, &p_;
+        StdLargeVec<Vecd> &pos_;
+        StdLargeVec<Real> &rho_, &p_;
         StdLargeVec<int> &previous_surface_indicator_, &buffer_particle_indicator_;
 
       private:

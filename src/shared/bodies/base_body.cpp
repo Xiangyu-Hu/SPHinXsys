@@ -36,6 +36,12 @@ BoundingBox SPHBody::getSPHSystemBounds()
     return sph_system_.system_domain_bounds_;
 }
 //=================================================================================================//
+int SPHBody::getNewBodyPartID()
+{
+    total_body_parts_++;
+    return total_body_parts_;
+};
+//=================================================================================================//
 SPHSystem &SPHBody::getSPHSystem()
 {
     return sph_system_;

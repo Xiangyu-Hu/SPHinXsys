@@ -5,25 +5,25 @@
  * @author 	Chenxi Zhao, Weiyi Kong, Xiangyu Hu
  */
 
-#include "sphinxsys.h"
 #include "bidirectional_buffer.h"
 #include "density_correciton.h"
 #include "density_correciton.hpp"
 #include "kernel_summation.h"
 #include "kernel_summation.hpp"
 #include "pressure_boundary.h"
+#include "sphinxsys.h"
 
 using namespace SPH;
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real DL = 0.2;                                               /**< Reference length. */
-Real DH = 0.1;                                               /**< Reference and the height of main channel. */
-Real DL1 = 0.75 * DL;                                        /**< The length of the main channel. */
-Real resolution_ref = 0.005;                                 /**< Initial reference particle spacing. */
+Real DL = 0.2;               /**< Reference length. */
+Real DH = 0.1;               /**< Reference and the height of main channel. */
+Real DL1 = 0.75 * DL;        /**< The length of the main channel. */
+Real resolution_ref = 0.005; /**< Initial reference particle spacing. */
 Real resolution_shell = resolution_ref;
-Real BW = resolution_shell * 1.0;                                
-Real buffer_width = resolution_ref * 4.0;                                /**< Reference size of the emitter. */
+Real BW = resolution_shell * 1.0;
+Real buffer_width = resolution_ref * 4.0;                    /**< Reference size of the emitter. */
 Real DL_sponge = resolution_ref * 20;                        /**< Reference size of the emitter buffer to impose inflow condition. */
 StdVec<Vecd> observer_location = {Vecd(0.5 * DL, 0.5 * DH)}; /**< Displacement observation point. */
 Real level_set_refinement_ratio = resolution_ref / (0.1 * BW);
@@ -31,7 +31,7 @@ Real level_set_refinement_ratio = resolution_ref / (0.1 * BW);
 //	Global parameters on the fluid properties.
 //----------------------------------------------------------------------
 Real Outlet_pressure = 0;
-Real rho0_f = 1.0;                                                 /**< Reference density of fluid. Using air density here.*/
+Real rho0_f = 1.0;                                                    /**< Reference density of fluid. Using air density here.*/
 Real Re = 100.0;                                                      /**< Reynolds number. */
 Real U_f = 1.0;                                                       /**< Characteristic velocity. */
 Real mu_f = rho0_f * U_f * DH / Re;                                   /**< Dynamics viscosity. */
@@ -39,7 +39,7 @@ Real c_f = 10.0 * U_f * SMAX(Real(1), DH / (Real(2.0) * (DL - DL1))); /** Refere
 //----------------------------------------------------------------------
 //	Material parameters of the shell.
 //----------------------------------------------------------------------
-Real rho0_s = 1.0e3;           /** Normalized density. */
+Real rho0_s = 1.0e3;         /** Normalized density. */
 Real Youngs_modulus = 1.0e5; /** Normalized Youngs Modulus. */
 Real poisson = 0.3;          /** Poisson ratio. */
 //----------------------------------------------------------------------
@@ -98,7 +98,7 @@ class ParticleGenerator<SurfaceParticles, WallBoundary> : public ParticleGenerat
     void prepareGeometricData() override
     {
         auto particle_number_mid_surface_01 = int((DL1 + DL_sponge) / resolution_shell_);
-        //std::cout << " particle_number_mid_surface_01 = " << particle_number_mid_surface_01 << std::endl;
+        // std::cout << " particle_number_mid_surface_01 = " << particle_number_mid_surface_01 << std::endl;
         for (int i = 0; i < particle_number_mid_surface_01 - 1; i++)
         {
             Real x = -DL_sponge + (Real(i) + 0.5) * resolution_shell_;
@@ -108,7 +108,7 @@ class ParticleGenerator<SurfaceParticles, WallBoundary> : public ParticleGenerat
             Vec2d normal_direction_1 = Vec2d(0, 1.0);
             addSurfaceProperties(normal_direction_1, shell_thickness_);
             // lower wall
-            Real y2 = - 0.5 * resolution_shell_; // lower wall
+            Real y2 = -0.5 * resolution_shell_; // lower wall
             addPositionAndVolumetricMeasure(Vecd(x, y2), resolution_shell_);
             Vec2d normal_direction_2 = Vec2d(0, -1.0);
             addSurfaceProperties(normal_direction_2, shell_thickness_);
@@ -116,11 +116,11 @@ class ParticleGenerator<SurfaceParticles, WallBoundary> : public ParticleGenerat
 
         addPositionAndVolumetricMeasure(Vecd(DL1 - 0.5 * resolution_shell_, DH + 0.5 * resolution_shell_), resolution_shell_);
         addSurfaceProperties(Vec2d(-1.0, 1.0).normalized(), shell_thickness_);
-        addPositionAndVolumetricMeasure(Vecd(DL1 - 0.5 * resolution_shell_, - 0.5 * resolution_shell_), resolution_shell_);
+        addPositionAndVolumetricMeasure(Vecd(DL1 - 0.5 * resolution_shell_, -0.5 * resolution_shell_), resolution_shell_);
         addSurfaceProperties(Vec2d(-1.0, -1.0).normalized(), shell_thickness_);
 
         auto particle_number_mid_surface_02 = int(DH / resolution_shell_);
-        //std::cout << " particle_number_mid_surface_02 = " << particle_number_mid_surface_02 << std::endl;
+        // std::cout << " particle_number_mid_surface_02 = " << particle_number_mid_surface_02 << std::endl;
         for (int i = 1; i < particle_number_mid_surface_02; i++)
         {
             // upper wall
@@ -130,13 +130,13 @@ class ParticleGenerator<SurfaceParticles, WallBoundary> : public ParticleGenerat
             Vec2d normal_direction = Vec2d(-1.0, 0);
             addSurfaceProperties(normal_direction, shell_thickness_);
             // lower wall
-            Real y2 =  -(Real(i) + 0.5) * resolution_shell_;
+            Real y2 = -(Real(i) + 0.5) * resolution_shell_;
             addPositionAndVolumetricMeasure(Vecd(x, y2), resolution_shell_);
             addSurfaceProperties(normal_direction, shell_thickness_);
         }
 
         auto particle_number_mid_surface_03 = int(1.5 * DH / resolution_shell_);
-        //std::cout << " particle_number_mid_surface_03 = " << particle_number_mid_surface_03 << std::endl;
+        // std::cout << " particle_number_mid_surface_03 = " << particle_number_mid_surface_03 << std::endl;
         for (int i = 0; i < particle_number_mid_surface_03; i++)
         {
             Real y1 = 0.5 * DH + (Real(i) + 0.5) * resolution_shell_;
@@ -232,9 +232,7 @@ class BoundaryGeometry : public BodyPartByParticle
   private:
     void tagManually(size_t index_i)
     {
-        if (base_particles_.ParticlePositions()[index_i][0] < -DL_sponge + buffer_width
-            || base_particles_.ParticlePositions()[index_i][1] > 2.0 * DH - buffer_width
-            || base_particles_.ParticlePositions()[index_i][1] < -DH + buffer_width)
+        if (base_particles_.ParticlePositions()[index_i][0] < -DL_sponge + buffer_width || base_particles_.ParticlePositions()[index_i][1] > 2.0 * DH - buffer_width || base_particles_.ParticlePositions()[index_i][1] < -DH + buffer_width)
         {
             body_part_particles_.push_back(index_i);
         }
@@ -321,14 +319,14 @@ int main(int ac, char *av[])
     Vec2d left_buffer_halfsize = Vec2d(0.5 * buffer_width, 0.5 * DH);
     Vec2d left_buffer_translation = Vec2d(-DL_sponge, 0.0) + left_buffer_halfsize;
     BodyAlignedBoxByCell left_emitter(water_block, makeShared<AlignedBoxShape>(xAxis, Transform(Vec2d(left_buffer_translation)), left_buffer_halfsize));
-    fluid_dynamics::NonPrescribedPressureBidirectionalBuffer left_emitter_inflow_injection(left_emitter, in_outlet_particle_buffer);
+    fluid_dynamics::BidirectionalBuffer<fluid_dynamics::NonPrescribedPressure, execution::SequencedPolicy> left_emitter_inflow_injection(left_emitter, in_outlet_particle_buffer);
     BodyAlignedBoxByCell left_disposer(water_block, makeShared<AlignedBoxShape>(xAxis, Transform(Rotation2d(Pi), Vec2d(left_buffer_translation)), left_buffer_halfsize));
     SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion> left_disposer_outflow_deletion(left_disposer);
     // up buffer
     Vec2d up_buffer_halfsize = Vec2d(0.5 * buffer_width, 0.75);
     Vec2d up_buffer_translation = Vec2d(0.5 * (DL + DL1), 2.0 * DH - 0.5 * buffer_width);
     BodyAlignedBoxByCell up_emitter(water_block, makeShared<AlignedBoxShape>(xAxis, Transform(Rotation2d(-0.5 * Pi), Vec2d(up_buffer_translation)), up_buffer_halfsize));
-    fluid_dynamics::BidirectionalBuffer<UpOutflowPressure> right_up_emitter_inflow_injection(up_emitter, in_outlet_particle_buffer);
+    fluid_dynamics::BidirectionalBuffer<UpOutflowPressure, execution::SequencedPolicy> right_up_emitter_inflow_injection(up_emitter, in_outlet_particle_buffer);
     BodyAlignedBoxByCell up_disposer(water_block, makeShared<AlignedBoxShape>(xAxis, Transform(Rotation2d(0.5 * Pi), Vec2d(up_buffer_translation)), up_buffer_halfsize));
     SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion> right_up_disposer_outflow_deletion(up_disposer);
     // down buffer
@@ -363,7 +361,7 @@ int main(int ac, char *av[])
     body_states_recording.addToWrite<Vecd>(shell_body, "PressureForceFromFluid");
     body_states_recording.addToWrite<Real>(shell_body, "Average1stPrincipleCurvature");
     body_states_recording.addToWrite<Real>(shell_body, "Average2ndPrincipleCurvature");
-   RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>> write_centerline_velocity("Velocity", velocity_observer_contact);
+    RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>> write_centerline_velocity("Velocity", velocity_observer_contact);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
@@ -384,10 +382,10 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     size_t number_of_iterations = sph_system.RestartStep();
     int screen_output_interval = 100;
-    Real end_time = 15.0;                /**< End time. */
+    Real end_time = 15.0;              /**< End time. */
     Real Output_Time = end_time / 150; /**< Time stamps for output of body states. */
-    Real dt = 0.0;                       /**< Default acoustic time step sizes. */
-    Real dt_s = 0.0; /**< Default acoustic time step sizes for solid. */
+    Real dt = 0.0;                     /**< Default acoustic time step sizes. */
+    Real dt_s = 0.0;                   /**< Default acoustic time step sizes for solid. */
     //----------------------------------------------------------------------
     //	Statistics for CPU time
     //----------------------------------------------------------------------
@@ -474,11 +472,11 @@ int main(int ac, char *av[])
             left_emitter_inflow_injection.injection.exec();
             right_up_emitter_inflow_injection.injection.exec();
             right_down_emitter_inflow_injection.injection.exec();
-            left_disposer_outflow_deletion.exec();
-            right_up_disposer_outflow_deletion.exec();
-            right_down_disposer_outflow_deletion.exec();
+            //            left_disposer_outflow_deletion.exec();
+            //            right_up_disposer_outflow_deletion.exec();
+            //            right_down_disposer_outflow_deletion.exec();
 
-            water_block.updateCellLinkedListWithParticleSort(100);
+            //            water_block.updateCellLinkedListWithParticleSort(100);
             shell_update_normal.exec();
             shell_body.updateCellLinkedList();
             shell_curvature_inner.updateConfiguration();
