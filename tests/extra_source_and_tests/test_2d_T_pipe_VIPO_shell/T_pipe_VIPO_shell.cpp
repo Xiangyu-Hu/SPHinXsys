@@ -183,9 +183,9 @@ struct LeftInflowPressure
     template <class BoundaryConditionType>
     LeftInflowPressure(BoundaryConditionType &boundary_condition) {}
 
-    Real operator()(Real &p_, Real physical_time)
+    Real operator()(Real p, Real physical_time)
     {
-        return p_;
+        return p;
     }
 };
 
@@ -194,7 +194,7 @@ struct UpOutflowPressure
     template <class BoundaryConditionType>
     UpOutflowPressure(BoundaryConditionType &boundary_condition) {}
 
-    Real operator()(Real &p_, Real physical_time)
+    Real operator()(Real p, Real physical_time)
     {
         /*constant pressure*/
         Real pressure = Outlet_pressure;
@@ -207,7 +207,7 @@ struct DownOutflowPressure
     template <class BoundaryConditionType>
     DownOutflowPressure(BoundaryConditionType &boundary_condition) {}
 
-    Real operator()(Real &p_, Real physical_time)
+    Real operator()(Real p, Real physical_time)
     {
         /*constant pressure*/
         Real pressure = Outlet_pressure;
