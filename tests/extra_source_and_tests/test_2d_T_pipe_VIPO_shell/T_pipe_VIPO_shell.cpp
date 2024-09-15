@@ -485,8 +485,9 @@ int main(int ac, char *av[])
 
             if (number_of_iterations % 100 == 0 && number_of_iterations != 1)
             {
-                //           particle_sorting.exec();
+                particle_sorting.exec();
             }
+            water_block.updateCellLinkedList();
             shell_update_normal.exec();
             shell_body.updateCellLinkedList();
             shell_curvature_inner.updateConfiguration();
