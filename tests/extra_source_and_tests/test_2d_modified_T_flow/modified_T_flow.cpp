@@ -321,9 +321,13 @@ int main(int ac, char *av[])
 
             time_instance = TickCount::now();
 
-            left_bidirection_buffer.injection_deletion.exec();
-            up_bidirection_buffer.injection_deletion.exec();
-            down_bidirection_buffer.injection_deletion.exec();
+            left_bidirection_buffer.injection.exec();
+            up_bidirection_buffer.injection.exec();
+            down_bidirection_buffer.injection.exec();
+
+            left_bidirection_buffer.deletion.exec();
+            up_bidirection_buffer.deletion.exec();
+            down_bidirection_buffer.deletion.exec();
 
             if (number_of_iterations % 100 == 0 && number_of_iterations != 1)
             {
