@@ -107,7 +107,7 @@ void BaseParticles::switchToBufferParticle(size_t index)
     decrementTotalRealParticles();
 }
 //=================================================================================================//
-void BaseParticles::createRealParticleFrom(size_t index)
+UnsignedInt BaseParticles::createRealParticleFrom(UnsignedInt index)
 {
     size_t new_original_id = TotalRealParticles();
     original_id_[new_original_id] = new_original_id;
@@ -115,6 +115,7 @@ void BaseParticles::createRealParticleFrom(size_t index)
     copyFromAnotherParticle(new_original_id, index);
     /** Realize the buffer particle by increasing the number of real particle by one.  */
     incrementTotalRealParticles();
+    return new_original_id;
 }
 //=================================================================================================//
 void BaseParticles::resizeXmlDocForParticles(XmlParser &xml_parser)

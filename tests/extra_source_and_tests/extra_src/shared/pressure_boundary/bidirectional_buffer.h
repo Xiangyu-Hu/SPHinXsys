@@ -80,17 +80,16 @@ class BidirectionalBuffer
         int *buffer_particle_indicator_;
     };
 
-    class Injection : public BaseLocalDynamics<BodyPartByCell>
+    class InjectionAndDeletion : public BaseLocalDynamics<BodyPartByCell>
     {
       public:
-        Injection(BodyAlignedBoxByCell &aligned_box_part, ParticleBuffer<Base> &particle_buffer,
-                  TargetPressure &target_pressure)
+        InjectionAndDeletion(BodyAlignedBoxByCell &aligned_box_part, ParticleBuffer<Base> &particle_buffer,
+                             TargetPressure &target_pressure)
             : BaseLocalDynamics<BodyPartByCell>(aligned_box_part),
               part_id_(aligned_box_part.getPartID()),
               particle_buffer_(particle_buffer),
               aligned_box_(aligned_box_part.getAlignedBoxShape()),
               fluid_(DynamicCast<Fluid>(this, particles_->getBaseMaterial())),
-              original_id_(particles_->ParticleOriginalIds()),
               pos_(particles_->getVariableDataByName<Vecd>("Position")),
               rho_(particles_->getVariableDataByName<Real>("Density")),
               p_(particles_->getVariableDataByName<Real>("Pressure")),
@@ -101,7 +100,7 @@ class BidirectionalBuffer
         {
             particle_buffer_.checkParticlesReserved();
         };
-        virtual ~Injection(){};
+        virtual ~InjectionAndDeletion(){};
 
         void update(size_t index_i, Real dt = 0.0)
         {
@@ -111,9 +110,8 @@ class BidirectionalBuffer
             {
                 mutex_switch.lock();
                 particle_buffer_.checkEnoughBuffer(*particles_);
-                particles_->createRealParticleFrom(index_i);
-                size_t new_index_i = particles_->TotalRealParticles() - 1;
-                buffer_particle_indicator_[new_index_i] = 0;
+                size_t new_particle_index = particles_->createRealParticleFrom(index_i);
+                buffer_particle_indicator_[new_particle_index] = 0;
                 mutex_switch.unlock();
 
                 /** Periodic bounding. */
@@ -140,7 +138,6 @@ class BidirectionalBuffer
         ParticleBuffer<Base> &particle_buffer_;
         AlignedBoxShape &aligned_box_;
         Fluid &fluid_;
-        UnsignedInt *original_id_;
         Vecd *pos_;
         Real *rho_, *p_;
         int *previous_surface_indicator_, *buffer_particle_indicator_;
@@ -153,14 +150,12 @@ class BidirectionalBuffer
   public:
     BidirectionalBuffer(BodyAlignedBoxByCell &aligned_box_part, ParticleBuffer<Base> &particle_buffer)
         : target_pressure_(*this), tag_buffer_particles(aligned_box_part),
-          injection(aligned_box_part, particle_buffer, target_pressure_){};
+          injection_deletion(aligned_box_part, particle_buffer, target_pressure_){};
     virtual ~BidirectionalBuffer(){};
 
     SimpleDynamics<TagBufferParticles, ExecutionPolicy> tag_buffer_particles;
-    SimpleDynamics<Injection, ExecutionPolicy> injection;
+    SimpleDynamics<InjectionAndDeletion, ExecutionPolicy> injection_deletion;
 };
-
-using NonPrescribedPressureBidirectionalBuffer = BidirectionalBuffer<NonPrescribedPressure>;
 } // namespace fluid_dynamics
 } // namespace SPH
 #endif // BIDIRECTIONAL_BUFFER_H

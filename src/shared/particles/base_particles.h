@@ -121,7 +121,7 @@ class BaseParticles
     size_t allocateGhostParticles(size_t ghost_size);
     void updateGhostParticle(size_t ghost_index, size_t index);
     void switchToBufferParticle(size_t index);
-    void createRealParticleFrom(size_t index);
+    UnsignedInt createRealParticleFrom(UnsignedInt index);
     //----------------------------------------------------------------------
     // Parameterized management on particle variables and data
     //----------------------------------------------------------------------
