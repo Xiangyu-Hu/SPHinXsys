@@ -59,6 +59,7 @@ class BidirectionalBuffer
       public:
         TagBufferParticles(BodyAlignedBoxByCell &aligned_box_part)
             : BaseLocalDynamics<BodyPartByCell>(aligned_box_part),
+              part_id_(aligned_box_part.getPartID()),
               pos_(particles_->getVariableDataByName<Vecd>("Position")),
               aligned_box_(aligned_box_part.getAlignedBoxShape()),
               buffer_particle_indicator_(particles_->registerStateVariable<int>("BufferParticleIndicator"))
@@ -69,10 +70,11 @@ class BidirectionalBuffer
 
         virtual void update(size_t index_i, Real dt = 0.0)
         {
-            buffer_particle_indicator_[index_i] = aligned_box_.checkInBounds(pos_[index_i]) ? 1 : 0;
+            buffer_particle_indicator_[index_i] = aligned_box_.checkInBounds(pos_[index_i]) ? part_id_ : 0;
         };
 
       protected:
+        int part_id_;
         Vecd *pos_;
         AlignedBoxShape &aligned_box_;
         int *buffer_particle_indicator_;
@@ -84,6 +86,7 @@ class BidirectionalBuffer
         Injection(BodyAlignedBoxByCell &aligned_box_part, ParticleBuffer<Base> &particle_buffer,
                   TargetPressure &target_pressure)
             : BaseLocalDynamics<BodyPartByCell>(aligned_box_part),
+              part_id_(aligned_box_part.getPartID()),
               particle_buffer_(particle_buffer),
               aligned_box_(aligned_box_part.getAlignedBoxShape()),
               fluid_(DynamicCast<Fluid>(this, particles_->getBaseMaterial())),
@@ -102,12 +105,16 @@ class BidirectionalBuffer
 
         void update(size_t index_i, Real dt = 0.0)
         {
-            if (aligned_box_.checkUpperBound(pos_n_[index_i]) && buffer_particle_indicator_[index_i] == 1)
+            if (aligned_box_.checkUpperBound(pos_[index_i]) &&
+                buffer_particle_indicator_[index_i] == part_id_ &&
+                index_i < particles_->TotalRealParticles())
             {
-                mutex_switch_to_real_.lock();
+                mutex_switch.lock();
                 particle_buffer_.checkEnoughBuffer(*particles_);
                 particles_->createRealParticleFrom(index_i);
-                mutex_switch_to_real_.unlock();
+                size_t new_index_i = particles_->TotalRealParticles() - 1;
+                buffer_particle_indicator_[new_index_i] = 0;
+                mutex_switch.unlock();
 
                 /** Periodic bounding. */
                 pos_n_[index_i] = aligned_box_.getUpperPeriodic(pos_n_[index_i]);
@@ -116,10 +123,25 @@ class BidirectionalBuffer
                 rho_n_[index_i] = p_[index_i] / pow(sound_speed, 2.0) + fluid_.ReferenceDensity();
                 previous_surface_indicator_[index_i] = 1;
             }
+
+            if (aligned_box_.checkLowerBound(pos_[index_i]) &&
+                buffer_particle_indicator_[index_i] == part_id_ &&
+                index_i < particles_->TotalRealParticles())
+            {
+                mutex_switch.lock();
+                while (aligned_box_.checkLowerBound(pos_[index_i]) &&
+                       buffer_particle_indicator_[index_i] == part_id_ &&
+                       index_i < particles_->TotalRealParticles())
+                {
+                    particles_->switchToBufferParticle(index_i);
+                }
+                mutex_switch.unlock();
+            }
         }
 
       protected:
-        std::mutex mutex_switch_to_real_;
+        int part_id_;
+        std::mutex mutex_switch;
         ParticleBuffer<Base> &particle_buffer_;
         AlignedBoxShape &aligned_box_;
         Fluid &fluid_;
