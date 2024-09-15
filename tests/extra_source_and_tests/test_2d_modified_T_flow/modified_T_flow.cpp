@@ -201,30 +201,21 @@ int main(int ac, char *av[])
     Vec2d left_buffer_halfsize = Vec2d(0.5 * BW, 0.5 * DH);
     Vec2d left_buffer_translation = Vec2d(-DL_sponge, 0.0) + left_buffer_halfsize;
     BodyAlignedBoxByCell left_emitter(water_block, makeShared<AlignedBoxShape>(xAxis, Transform(Vec2d(left_buffer_translation)), left_buffer_halfsize));
-    fluid_dynamics::NonPrescribedPressureBidirectionalBuffer left_emitter_inflow_injection(left_emitter, in_outlet_particle_buffer);
-
-    BodyAlignedBoxByCell left_disposer(water_block, makeShared<AlignedBoxShape>(xAxis, Transform(Rotation2d(Pi), Vec2d(left_buffer_translation)), left_buffer_halfsize));
-    SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion> left_disposer_outflow_deletion(left_disposer);
+    fluid_dynamics::BidirectionalBuffer<LeftInflowPressure> left_bidirection_buffer(left_emitter, in_outlet_particle_buffer);
     //----------------------------------------------------------------------
     // Up buffer
     //----------------------------------------------------------------------
     Vec2d up_buffer_halfsize = Vec2d(0.5 * BW, 0.75);
     Vec2d up_buffer_translation = Vec2d(0.5 * (DL + DL1), 2.0 * DH - 0.5 * BW);
     BodyAlignedBoxByCell up_emitter(water_block, makeShared<AlignedBoxShape>(xAxis, Transform(Rotation2d(-0.5 * Pi), Vec2d(up_buffer_translation)), up_buffer_halfsize));
-    fluid_dynamics::BidirectionalBuffer<UpOutflowPressure> up_emitter_inflow_injection(up_emitter, in_outlet_particle_buffer);
-
-    BodyAlignedBoxByCell up_disposer(water_block, makeShared<AlignedBoxShape>(xAxis, Transform(Rotation2d(0.5 * Pi), Vec2d(up_buffer_translation)), up_buffer_halfsize));
-    SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion> up_disposer_outflow_deletion(up_disposer);
+    fluid_dynamics::BidirectionalBuffer<UpOutflowPressure> up_bidirection_buffer(up_emitter, in_outlet_particle_buffer);
     //----------------------------------------------------------------------
     // Down buffer
     //----------------------------------------------------------------------
     Vec2d down_buffer_halfsize = Vec2d(0.5 * BW, 0.75);
     Vec2d down_buffer_translation = Vec2d(0.5 * (DL + DL1), -DH + 0.5 * BW);
     BodyAlignedBoxByCell down_emitter(water_block, makeShared<AlignedBoxShape>(xAxis, Transform(Rotation2d(0.5 * Pi), Vec2d(down_buffer_translation)), down_buffer_halfsize));
-    fluid_dynamics::BidirectionalBuffer<DownOutflowPressure> down_emitter_inflow_injection(down_emitter, in_outlet_particle_buffer);
-
-    BodyAlignedBoxByCell down_disposer(water_block, makeShared<AlignedBoxShape>(xAxis, Transform(Rotation2d(-0.5 * Pi), Vec2d(down_buffer_translation)), down_buffer_halfsize));
-    SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion> down_disposer_outflow_deletion(down_disposer);
+    fluid_dynamics::BidirectionalBuffer<DownOutflowPressure> down_bidirection_buffer(down_emitter, in_outlet_particle_buffer);
 
     InteractionWithUpdate<fluid_dynamics::DensitySummationPressureComplex> update_fluid_density(water_block_inner, water_block_contact);
     SimpleDynamics<fluid_dynamics::PressureCondition<LeftInflowPressure>> left_inflow_pressure_condition(left_emitter);
@@ -253,9 +244,9 @@ int main(int ac, char *av[])
     sph_system.initializeSystemCellLinkedLists();
     sph_system.initializeSystemConfigurations();
     boundary_indicator.exec();
-    left_emitter_inflow_injection.tag_buffer_particles.exec();
-    up_emitter_inflow_injection.tag_buffer_particles.exec();
-    down_emitter_inflow_injection.tag_buffer_particles.exec();
+    left_bidirection_buffer.tag_buffer_particles.exec();
+    up_bidirection_buffer.tag_buffer_particles.exec();
+    down_bidirection_buffer.tag_buffer_particles.exec();
     wall_boundary_normal_direction.exec();
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
@@ -330,12 +321,9 @@ int main(int ac, char *av[])
 
             time_instance = TickCount::now();
 
-            left_emitter_inflow_injection.injection.exec();
-            up_emitter_inflow_injection.injection.exec();
-            down_emitter_inflow_injection.injection.exec();
-            left_disposer_outflow_deletion.exec();
-            up_disposer_outflow_deletion.exec();
-            down_disposer_outflow_deletion.exec();
+            left_bidirection_buffer.injection_deletion.exec();
+            up_bidirection_buffer.injection_deletion.exec();
+            down_bidirection_buffer.injection_deletion.exec();
 
             if (number_of_iterations % 100 == 0 && number_of_iterations != 1)
             {
@@ -346,9 +334,9 @@ int main(int ac, char *av[])
 
             interval_updating_configuration += TickCount::now() - time_instance;
             boundary_indicator.exec();
-            left_emitter_inflow_injection.tag_buffer_particles.exec();
-            up_emitter_inflow_injection.tag_buffer_particles.exec();
-            down_emitter_inflow_injection.tag_buffer_particles.exec();
+            left_bidirection_buffer.tag_buffer_particles.exec();
+            up_bidirection_buffer.tag_buffer_particles.exec();
+            down_bidirection_buffer.tag_buffer_particles.exec();
         }
         TickCount t2 = TickCount::now();
         body_states_recording.writeToFile();
