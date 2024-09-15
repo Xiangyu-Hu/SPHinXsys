@@ -81,8 +81,8 @@ struct InflowVelocity
     {
         Vecd target_velocity = Vecd::Zero();
 
-        u_ave = fabs(Inlet_pressure - Outlet_pressure) * (position[1] + 0.5 * DH) * (position[1] + 0.5 * DH - DH) / (2.0 * mu_f * DL) +
-                (4.0 * fabs(Inlet_pressure - Outlet_pressure) * DH * DH) /
+        u_ave = (Inlet_pressure - Outlet_pressure) * (position[1] + 0.5 * DH) * (DH - position[1] - 0.5 * DH) / (2.0 * mu_f * DL) +
+                (4.0 * (Inlet_pressure - Outlet_pressure) * DH * DH) /
                     (mu_f * DL * Pi * Pi * Pi) * sin(Pi * (position[1] + 0.5 * DH) / DH) * exp(-(Pi * Pi * mu_f * current_time) / (DH * DH));
 
         target_velocity[0] = u_ave;
