@@ -67,10 +67,10 @@ class BidirectionalBuffer
         int *buffer_particle_indicator_;
     };
 
-    class InjectionAndDelettion : public BaseLocalDynamics<BodyPartByCell>
+    class InjectionAndDeletion : public BaseLocalDynamics<BodyPartByCell>
     {
       public:
-        InjectionAndDelettion(BodyAlignedBoxByCell &aligned_box_part, ParticleBuffer<Base> &particle_buffer)
+        InjectionAndDeletion(BodyAlignedBoxByCell &aligned_box_part, ParticleBuffer<Base> &particle_buffer)
             : BaseLocalDynamics<BodyPartByCell>(aligned_box_part),
               target_pressure_(*this),
               part_id_(aligned_box_part.getPartID()),
@@ -86,13 +86,13 @@ class BidirectionalBuffer
         {
             particle_buffer_.checkParticlesReserved();
         };
-        virtual ~InjectionAndDelettion(){};
+        virtual ~InjectionAndDeletion(){};
 
         void update(size_t index_i, Real dt = 0.0)
         {
             if (!aligned_box_.checkInBounds(pos_[index_i]))
             {
-                mutex_switch.lock();
+                mutex_switch_.lock();
                 if (aligned_box_.checkUpperBound(pos_[index_i]) &&
                     buffer_particle_indicator_[index_i] == part_id_ &&
                     index_i < particles_->TotalRealParticles())
@@ -117,14 +117,14 @@ class BidirectionalBuffer
 
                     particles_->switchToBufferParticle(index_i);
                 }
-                mutex_switch.unlock();
+                mutex_switch_.unlock();
             }
         }
 
       protected:
         InjectionPressure target_pressure_;
         int part_id_;
-        std::mutex mutex_switch;
+        std::mutex mutex_switch_;
         ParticleBuffer<Base> &particle_buffer_;
         AlignedBoxShape &aligned_box_;
         Fluid &fluid_;
@@ -141,7 +141,7 @@ class BidirectionalBuffer
     virtual ~BidirectionalBuffer(){};
 
     SimpleDynamics<TagBufferParticles, ExecutionPolicy> tag_buffer_particles;
-    SimpleDynamics<InjectionAndDelettion, ExecutionPolicy> injection_deletion;
+    SimpleDynamics<InjectionAndDeletion, ExecutionPolicy> injection_deletion;
 };
 } // namespace fluid_dynamics
 } // namespace SPH
