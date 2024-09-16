@@ -137,7 +137,7 @@ int main(int ac, char *av[])
     //	This section define all numerical methods will be used in this case.
     //----------------------------------------------------------------------
     Gravity gravity(Vec3d(0.0, -1.0, 0.0));
-    SimpleDynamics<GravityForce> coil_constant_gravity(coil, gravity);
+    SimpleDynamics<GravityForce<Gravity>> coil_constant_gravity(coil, gravity);
     // Corrected configuration for reproducing rigid rotation.
     InteractionWithUpdate<LinearGradientCorrectionMatrixInner> corrected_configuration(coil_inner);
 
@@ -150,7 +150,7 @@ int main(int ac, char *av[])
     InteractionDynamics<solid_dynamics::SelfContactFactorSummation> coil_self_contact_density(coil_self_contact);
     InteractionWithUpdate<solid_dynamics::SelfContactForce> coil_self_contact_forces(coil_self_contact);
 
-    ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(coil);
+    ReduceDynamics<solid_dynamics::AcousticTimeStep> computing_time_step_size(coil);
 
     // Damping the velocity field for quasi-static solution
     DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d, FixedDampingRate>>>
@@ -169,6 +169,7 @@ int main(int ac, char *av[])
     coil_constant_gravity.exec();
     write_states.writeToFile(0);
     // Setup time stepping control parameters.
+    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     int ite = 0;
     Real end_time = 10.0;
     Real output_period = end_time / 100.0;
@@ -179,7 +180,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Main loop
     //----------------------------------------------------------------------
-    while (GlobalStaticVariables::physical_time_ < end_time)
+    while (physical_time < end_time)
     {
         Real integration_time = 0.0;
         while (integration_time < output_period)
@@ -187,7 +188,7 @@ int main(int ac, char *av[])
             if (ite % 100 == 0)
             {
                 std::cout << "N=" << ite << " Time: "
-                          << GlobalStaticVariables::physical_time_ << "	dt: "
+                          << physical_time << "	dt: "
                           << dt << "\n";
                 write_coil_kinetic_energy.writeToFile(ite);
             }
@@ -204,7 +205,7 @@ int main(int ac, char *av[])
             ite++;
             dt = computing_time_step_size.exec();
             integration_time += dt;
-            GlobalStaticVariables::physical_time_ += dt;
+            physical_time += dt;
 
             // update particle neighbor relations for contact dynamics
             coil.updateCellLinkedList();

@@ -10,8 +10,8 @@ DecomposedPlasticIntegration1stHalf::
     DecomposedPlasticIntegration1stHalf(BaseInnerRelation &inner_relation)
     : DecomposedIntegration1stHalf(inner_relation),
       plastic_solid_(DynamicCast<PlasticSolid>(this, elastic_solid_)),
-      scaling_matrix_(*particles_->registerSharedVariable<Matd>("ScalingMatrix")),
-      inverse_F_(*particles_->registerSharedVariable<Matd>("InverseDeformation")) {}
+      scaling_matrix_(particles_->registerStateVariable<Matd>("ScalingMatrix")),
+      inverse_F_(particles_->registerStateVariable<Matd>("InverseDeformation")) {}
 //=================================================================================================//
 void DecomposedPlasticIntegration1stHalf::initialization(size_t index_i, Real dt)
 {

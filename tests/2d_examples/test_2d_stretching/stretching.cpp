@@ -88,14 +88,14 @@ class LeftStretchSolidBodyRegion : public BodyPartMotionConstraint
     // TODO: use only body part as argment since body can be referred from it already
     LeftStretchSolidBodyRegion(BodyPartByParticle &body_part)
         : BodyPartMotionConstraint(body_part),
-          vel_(*particles_->getVariableDataByName<Vecd>("Velocity")),
-          pos_(*particles_->getVariableDataByName<Vecd>("Position")){};
+          vel_(particles_->getVariableDataByName<Vecd>("Velocity")),
+          pos_(particles_->getVariableDataByName<Vecd>("Position")){};
 
     virtual ~LeftStretchSolidBodyRegion(){};
 
   protected:
-    StdLargeVec<Vecd> &vel_;
-    StdLargeVec<Vecd> &pos_;
+    Vecd *vel_;
+    Vecd *pos_;
     virtual void update(size_t index_i, Real Dt = 0.0)
     {
         pos_[index_i][0] -= 0.5e-4 * Dt;
@@ -108,14 +108,14 @@ class RightStretchSolidBodyRegion : public BodyPartMotionConstraint
     // TODO: use only body part as argment since body can be referred from it already
     RightStretchSolidBodyRegion(BodyPartByParticle &body_part)
         : BodyPartMotionConstraint(body_part),
-          vel_(*particles_->getVariableDataByName<Vecd>("Velocity")),
-          pos_(*particles_->getVariableDataByName<Vecd>("Position")){};
+          vel_(particles_->getVariableDataByName<Vecd>("Velocity")),
+          pos_(particles_->getVariableDataByName<Vecd>("Position")){};
 
     virtual ~RightStretchSolidBodyRegion(){};
 
   protected:
-    StdLargeVec<Vecd> &vel_;
-    StdLargeVec<Vecd> &pos_;
+    Vecd *vel_;
+    Vecd *pos_;
     virtual void update(size_t index_i, Real Dt = 0.0)
     {
         pos_[index_i][0] += 0.5e-4 * Dt;
@@ -151,13 +151,13 @@ class ConstrainXVelocity : public BodyPartMotionConstraint
     // TODO: use only body part as argment since body can be referred from it already
     ConstrainXVelocity(BodyPartByParticle &body_part)
         : BodyPartMotionConstraint(body_part),
-          vel_(*particles_->getVariableDataByName<Vecd>("Velocity")), pos_(*particles_->getVariableDataByName<Vecd>("Position")){};
+          vel_(particles_->getVariableDataByName<Vecd>("Velocity")), pos_(particles_->getVariableDataByName<Vecd>("Position")){};
 
     virtual ~ConstrainXVelocity(){};
 
   protected:
-    StdLargeVec<Vecd> &vel_;
-    StdLargeVec<Vecd> &pos_;
+    Vecd *vel_;
+    Vecd *pos_;
     virtual void update(size_t index_i, Real dt = 0.0)
     {
         vel_[index_i] = Vecd(0.0, vel_[index_i][1]);
@@ -257,7 +257,7 @@ int main(int ac, char *av[])
     Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half(beam_body_inner);
     ReduceDynamics<TotalKineticEnergy> get_kinetic_energy(beam_body);
 
-    ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(beam_body);
+    ReduceDynamics<solid_dynamics::AcousticTimeStep> computing_time_step_size(beam_body);
     BodyRegionByParticle beam_left_stretch(beam_body, makeShared<MultiPolygonShape>(createBeamLeftStretchShape()));
     SimpleDynamics<LeftStretchSolidBodyRegion> stretch_beam_left_end(beam_left_stretch);
     BodyRegionByParticle beam_right_stretch(beam_body, makeShared<MultiPolygonShape>(createBeamRightStretchShape()));
@@ -282,6 +282,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Setup computing time-step controls.
     //----------------------------------------------------------------------
+    Real &physical_time = *system.getSystemVariableDataByName<Real>("PhysicalTime");
     int ite = 0;
     int Dt_ite = 0;
     Real End_Time = 100.0;
@@ -302,7 +303,7 @@ int main(int ac, char *av[])
     write_displacement.writeToFile(0);
 
     // computation loop starts
-    while (GlobalStaticVariables::physical_time_ < End_Time)
+    while (physical_time < End_Time)
     {
         Real integration_time = 0.0;
         // integrate time (loop) until the next output time
@@ -335,7 +336,7 @@ int main(int ac, char *av[])
                     if (ite % 500 == 0)
                     {
                         std::cout << "N=" << ite << " Time: "
-                                  << GlobalStaticVariables::physical_time_
+                                  << physical_time
                                   << "	Dt: " << Dt << "	dt: " << dt
                                   << "	Dt:dt = " << Dt / dt << "\n";
                     }
@@ -348,7 +349,7 @@ int main(int ac, char *av[])
                 }
                 relaxation_time += dt;
                 integration_time += dt;
-                GlobalStaticVariables::physical_time_ += dt;
+                physical_time += dt;
             }
         }
 
@@ -363,7 +364,7 @@ int main(int ac, char *av[])
     tt = t4 - t1 - interval;
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds."
               << "  Iterations:  " << ite << std::endl;
-    std::cout << "Total iterations computation:  " << GlobalStaticVariables::physical_time_ / dt
+    std::cout << "Total iterations computation:  " << physical_time / dt
               << std::endl;
 
     if (system.GenerateRegressionData())

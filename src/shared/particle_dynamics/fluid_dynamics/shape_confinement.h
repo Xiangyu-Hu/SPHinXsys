@@ -42,7 +42,7 @@ namespace fluid_dynamics
  * @class StaticConfinementDensity
  * @brief static confinement condition for density summation
  */
-class StaticConfinementDensity : public BaseLocalDynamics<BodyPartByCell>, public DataDelegateSimple
+class StaticConfinementDensity : public BaseLocalDynamics<BodyPartByCell>
 {
   public:
     StaticConfinementDensity(NearShapeSurface &near_surface);
@@ -51,8 +51,8 @@ class StaticConfinementDensity : public BaseLocalDynamics<BodyPartByCell>, publi
 
   protected:
     Real rho0_, inv_sigma0_;
-    StdLargeVec<Real> &mass_, &rho_sum_;
-    StdLargeVec<Vecd> &pos_;
+    Real *mass_, *rho_sum_;
+    Vecd *pos_;
     LevelSetShape *level_set_shape_;
 };
 
@@ -60,7 +60,7 @@ class StaticConfinementDensity : public BaseLocalDynamics<BodyPartByCell>, publi
  * @class StaticConfinementIntegration1stHalf
  * @brief static confinement condition for pressure relaxation
  */
-class StaticConfinementIntegration1stHalf : public BaseLocalDynamics<BodyPartByCell>, public DataDelegateSimple
+class StaticConfinementIntegration1stHalf : public BaseLocalDynamics<BodyPartByCell>
 {
   public:
     StaticConfinementIntegration1stHalf(NearShapeSurface &near_surface);
@@ -69,8 +69,8 @@ class StaticConfinementIntegration1stHalf : public BaseLocalDynamics<BodyPartByC
 
   protected:
     Fluid &fluid_;
-    StdLargeVec<Real> &rho_, &p_, &mass_;
-    StdLargeVec<Vecd> &pos_, &vel_, &force_;
+    Real *rho_, *p_, *mass_;
+    Vecd *pos_, *vel_, *force_;
     LevelSetShape *level_set_shape_;
     AcousticRiemannSolver riemann_solver_;
 };
@@ -79,7 +79,7 @@ class StaticConfinementIntegration1stHalf : public BaseLocalDynamics<BodyPartByC
  * @class StaticConfinementIntegration2ndHalf
  * @brief static confinement condition for density relaxation
  */
-class StaticConfinementIntegration2ndHalf : public BaseLocalDynamics<BodyPartByCell>, public DataDelegateSimple
+class StaticConfinementIntegration2ndHalf : public BaseLocalDynamics<BodyPartByCell>
 {
   public:
     StaticConfinementIntegration2ndHalf(NearShapeSurface &near_surface);
@@ -88,8 +88,8 @@ class StaticConfinementIntegration2ndHalf : public BaseLocalDynamics<BodyPartByC
 
   protected:
     Fluid &fluid_;
-    StdLargeVec<Real> &rho_, &p_, &drho_dt_;
-    StdLargeVec<Vecd> &pos_, &vel_;
+    Real *rho_, *p_, *drho_dt_;
+    Vecd *pos_, *vel_;
     LevelSetShape *level_set_shape_;
     AcousticRiemannSolver riemann_solver_;
 };

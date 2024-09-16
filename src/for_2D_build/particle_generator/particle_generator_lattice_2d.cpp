@@ -11,9 +11,9 @@ namespace SPH
 //=================================================================================================//
 void ParticleGenerator<BaseParticles, Lattice>::prepareGeometricData()
 {
-    BaseMesh mesh(domain_bounds_, lattice_spacing_, 0);
+    Mesh mesh(domain_bounds_, lattice_spacing_, 0);
     Real particle_volume = lattice_spacing_ * lattice_spacing_;
-    Arrayi number_of_lattices = mesh.AllCellsFromAllGridPoints(mesh.AllGridPoints());
+    Arrayi number_of_lattices = mesh.AllCells();
     for (int i = 0; i < number_of_lattices[0]; ++i)
         for (int j = 0; j < number_of_lattices[1]; ++j)
         {
@@ -32,12 +32,12 @@ void ParticleGenerator<SurfaceParticles, Lattice>::prepareGeometricData()
 {
     // Calculate the total volume and
     // count the number of cells inside the body volume, where we might put particles.
-    std::unique_ptr<BaseMesh> mesh(new BaseMesh(domain_bounds_, lattice_spacing_, 0));
-    Arrayi number_of_lattices = mesh->AllCellsFromAllGridPoints(mesh->AllGridPoints());
+    Mesh mesh(domain_bounds_, lattice_spacing_, 0);
+    Arrayi number_of_lattices = mesh.AllCells();
     for (int i = 0; i < number_of_lattices[0]; ++i)
         for (int j = 0; j < number_of_lattices[1]; ++j)
         {
-            Vecd particle_position = mesh->CellPositionFromIndex(Arrayi(i, j));
+            Vecd particle_position = mesh.CellPositionFromIndex(Arrayi(i, j));
             if (initial_shape_.checkNotFar(particle_position, lattice_spacing_))
             {
                 if (initial_shape_.checkContain(particle_position))
@@ -63,7 +63,7 @@ void ParticleGenerator<SurfaceParticles, Lattice>::prepareGeometricData()
     for (int i = 0; i < number_of_lattices[0]; ++i)
         for (int j = 0; j < number_of_lattices[1]; ++j)
         {
-            Vecd particle_position = mesh->CellPositionFromIndex(Arrayi(i, j));
+            Vecd particle_position = mesh.CellPositionFromIndex(Arrayi(i, j));
             if (initial_shape_.checkNotFar(particle_position, lattice_spacing_))
             {
                 if (initial_shape_.checkContain(particle_position))

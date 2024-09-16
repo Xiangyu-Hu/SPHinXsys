@@ -20,7 +20,7 @@ ADD_EXECUTABLE(${PROJECT_NAME} ${EXECUTABLE_OUTPUT_PATH} ${DIR_SRCS})
 add_test(NAME ${PROJECT_NAME} COMMAND ${PROJECT_NAME} --state_recording=${TEST_STATE_RECORDING}
     WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH})
 
-set_tests_properties(${PROJECT_NAME} PROPERTIES LABELS "spatial_temporal_identification")
+set_tests_properties(${PROJECT_NAME} PROPERTIES LABELS "pressure boundary")
 
 set_target_properties(${PROJECT_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${EXECUTABLE_OUTPUT_PATH}")
 target_link_libraries(${PROJECT_NAME} extra_sources_2d)

@@ -112,7 +112,7 @@ struct InflowVelocity
           aligned_box_(boundary_condition.getAlignedBox()),
           halfsize_(aligned_box_.HalfSize()) {}
 
-    Vec3d operator()(Vec3d &position, Vec3d &velocity)
+    Vec3d operator()(Vec3d &position, Vec3d &velocity, Real current_time)
     {
         Vec3d target_velocity = Vec3d(0, 0, 0);
         target_velocity[1] = SMAX(2.0 * U_f *
@@ -228,8 +228,8 @@ void poiseuille_flow(const Real resolution_ref, const Real resolution_shell, con
     InteractionWithUpdate<fluid_dynamics::ViscousForceWithWall> viscous_acceleration(water_block_inner, water_block_contact);
     InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionComplex<BulkParticles>> transport_velocity_correction(water_block_inner, water_block_contact);
 
-    ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_max);
-    ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
+    ReduceDynamics<fluid_dynamics::AdvectionViscousTimeStep> get_fluid_advection_time_step_size(water_block, U_max);
+    ReduceDynamics<fluid_dynamics::AcousticTimeStep> get_fluid_time_step_size(water_block);
     //----------------------------------------------------------------------
     //	Boundary conditions. Inflow & Outflow in Y-direction
     //----------------------------------------------------------------------
@@ -239,6 +239,10 @@ void poiseuille_flow(const Real resolution_ref, const Real resolution_shell, con
     SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>> emitter_buffer_inflow_condition(emitter_buffer);
     BodyAlignedBoxByCell disposer(water_block, makeShared<AlignedBoxShape>(yAxis, Transform(Vec3d(disposer_translation)), disposer_halfsize));
     SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion> disposer_outflow_deletion(disposer);
+    //----------------------------------------------------------------------
+    //	Define the configuration related particles dynamics.
+    //----------------------------------------------------------------------
+    ParticleSorting particle_sorting(water_block);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //----------------------------------------------------------------------
@@ -262,7 +266,8 @@ void poiseuille_flow(const Real resolution_ref, const Real resolution_shell, con
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
-    size_t number_of_iterations = system.RestartStep();
+    Real &physical_time = *system.getSystemVariableDataByName<Real>("PhysicalTime");
+    size_t number_of_iterations = 0;
     int screen_output_interval = 100;
     Real end_time = 2.0;               /**< End time. */
     Real Output_Time = end_time / 100; /**< Time stamps for output of body states. */
@@ -286,7 +291,7 @@ void poiseuille_flow(const Real resolution_ref, const Real resolution_shell, con
     //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------
-    while (GlobalStaticVariables::physical_time_ < end_time)
+    while (physical_time < end_time)
     {
         Real integration_time = 0.0;
         /** Integrate time (loop) until the next output time. */
@@ -311,7 +316,7 @@ void poiseuille_flow(const Real resolution_ref, const Real resolution_shell, con
                 density_relaxation.exec(dt);
                 relaxation_time += dt;
                 integration_time += dt;
-                GlobalStaticVariables::physical_time_ += dt;
+                physical_time += dt;
                 emitter_buffer_inflow_condition.exec();
             }
             interval_computing_pressure_relaxation +=
@@ -320,7 +325,7 @@ void poiseuille_flow(const Real resolution_ref, const Real resolution_shell, con
             {
                 std::cout << std::fixed << std::setprecision(9)
                           << "N=" << number_of_iterations
-                          << "	Time = " << GlobalStaticVariables::physical_time_
+                          << "	Time = " << physical_time
                           << "	Dt = " << Dt << "	dt = " << dt << "\n";
             }
             number_of_iterations++;
@@ -330,8 +335,11 @@ void poiseuille_flow(const Real resolution_ref, const Real resolution_shell, con
             emitter_inflow_injection.exec();
             disposer_outflow_deletion.exec();
 
-            /** Update cell linked list and configuration. */
-            water_block.updateCellLinkedListWithParticleSort(100);
+            if (number_of_iterations % 100 == 0 && number_of_iterations != 1)
+            {
+                particle_sorting.exec();
+            }
+            water_block.updateCellLinkedList();
             water_block_complex.updateConfiguration();
             interval_updating_configuration += TickCount::now() - time_instance;
         }
@@ -366,23 +374,26 @@ void poiseuille_flow(const Real resolution_ref, const Real resolution_shell, con
     //	Gtest starts from here.
     //----------------------------------------------------------------------
     /* Define analytical solution of the inflow velocity.*/
-    std::function<Vec3d(Vec3d)> inflow_velocity = [&](Vec3d pos) {
+    std::function<Vec3d(Vec3d)> inflow_velocity = [&](Vec3d pos)
+    {
         return Vec3d(0.0,
                      2.0 * U_f * (1.0 - (pos[0] * pos[0] + pos[2] * pos[2]) / (diameter * 0.5) / (diameter * 0.5)),
                      0.0);
     };
     /* Compare all simulation to the analytical solution. */
     // Axial direction.
-    StdLargeVec<Vecd> &pos_axial = observer_axial.getBaseParticles().ParticlePositions();
-    StdLargeVec<Vecd> &vel_axial = *observer_axial.getBaseParticles().getVariableDataByName<Vecd>("Velocity");
-    for (size_t i = 0; i < pos_axial.size(); i++)
+    BaseParticles &axial_particles = observer_axial.getBaseParticles();
+    Vecd *pos_axial = axial_particles.ParticlePositions();
+    Vecd *vel_axial = axial_particles.getVariableDataByName<Vecd>("Velocity");
+    for (size_t i = 0; i < axial_particles.TotalRealParticles(); i++)
     {
         EXPECT_NEAR(inflow_velocity(pos_axial[i])[1], vel_axial[i][1], U_max * 10e-2); // it's below 5% but 10% for CI
     }
     // Radial direction
-    StdLargeVec<Vecd> &pos_radial = observer_radial.getBaseParticles().ParticlePositions();
-    StdLargeVec<Vecd> &vel_radial = *observer_radial.getBaseParticles().getVariableDataByName<Vecd>("Velocity");
-    for (size_t i = 0; i < pos_radial.size(); i++)
+    BaseParticles &radial_particles = observer_axial.getBaseParticles();
+    Vecd *pos_radial = radial_particles.ParticlePositions();
+    Vecd *vel_radial = radial_particles.getVariableDataByName<Vecd>("Velocity");
+    for (size_t i = 0; i < radial_particles.TotalRealParticles(); i++)
     {
         EXPECT_NEAR(inflow_velocity(pos_radial[i])[1], vel_radial[i][1], U_max * 10e-2); // it's below 5% but 10% for CI
     }

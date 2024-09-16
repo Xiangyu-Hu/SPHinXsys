@@ -163,7 +163,7 @@ int main(int ac, char *av[])
     // this section define all numerical methods will be used in this case
     //-------------------------------------------------------------------
     Gravity gravity(Vecd(gravity_g, 0.0));
-    SimpleDynamics<GravityForce> constant_gravity(fluid_block, gravity);
+    SimpleDynamics<GravityForce<Gravity>> constant_gravity(fluid_block, gravity);
     InteractionDynamics<NormalDirectionFromParticles> wall_boundary_normal_direction(wall_boundary_inner);
     InteractionDynamics<fluid_dynamics::DistanceFromWall> distance_to_wall(fluid_block_contact);
 
@@ -175,12 +175,16 @@ int main(int ac, char *av[])
         ConstructorArgs(fluid_block_inner, "Velocity", mu_f), ConstructorArgs(fluid_block_contact, "Velocity", mu_f));
     InteractionWithUpdate<fluid_dynamics::TransportVelocityLimitedCorrectionComplex<AllParticles>> transport_velocity_correction(fluid_block_inner, fluid_block_contact);
 
-    ReduceDynamics<fluid_dynamics::AdvectionTimeStepSizeForImplicitViscosity> get_fluid_advection_time_step_size(fluid_block, U_f);
-    ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(fluid_block);
+    ReduceDynamics<fluid_dynamics::AdvectionTimeStep> get_fluid_advection_time_step_size(fluid_block, U_f);
+    ReduceDynamics<fluid_dynamics::AcousticTimeStep> get_fluid_time_step_size(fluid_block);
     PeriodicConditionUsingGhostParticles periodic_condition(fluid_block, ghost_along_x);
     pressure_relaxation.pre_processes_.push_back(&periodic_condition.ghost_update_);
     density_relaxation.pre_processes_.push_back(&periodic_condition.ghost_update_);
     InteractionDynamics<fluid_dynamics::VorticityInner> compute_vorticity(fluid_block_inner);
+    //----------------------------------------------------------------------
+    //	Define the configuration related particles dynamics.
+    //----------------------------------------------------------------------
+    ParticleSorting particle_sorting(fluid_block);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
@@ -205,6 +209,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
+    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     size_t number_of_iterations = 0;
     int screen_output_interval = 10;
     int observation_sample_interval = screen_output_interval * 2;
@@ -222,7 +227,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------
-    while (GlobalStaticVariables::physical_time_ < end_time)
+    while (physical_time < end_time)
     {
         Real integration_time = 0.0;
         // integrate time (loop) until the next output time
@@ -245,13 +250,13 @@ int main(int ac, char *av[])
 
                 relaxation_time += dt;
                 integration_time += dt;
-                GlobalStaticVariables::physical_time_ += dt;
+                physical_time += dt;
             }
 
             if (number_of_iterations % screen_output_interval == 0)
             {
                 std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
-                          << GlobalStaticVariables::physical_time_
+                          << physical_time
                           << "	Dt = " << Dt << "	dt = " << dt << "\n";
                 if (number_of_iterations % observation_sample_interval == 0 && number_of_iterations != sph_system.RestartStep())
                 {
@@ -263,7 +268,11 @@ int main(int ac, char *av[])
 
             // water block configuration and periodic condition
             periodic_condition.bounding_.exec();
-            fluid_block.updateCellLinkedListWithParticleSort(100);
+            if (number_of_iterations % 100 == 0 && number_of_iterations != 1)
+            {
+                particle_sorting.exec();
+            }
+            fluid_block.updateCellLinkedList();
             periodic_condition.ghost_creation_.exec();
             fluid_block_complex.updateConfiguration();
         }

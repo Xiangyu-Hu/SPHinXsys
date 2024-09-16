@@ -1,11 +1,12 @@
 # ![SPHinXsys Logo](assets/logo.png) SPHinXsys
 
-**Notice on repository transfer to SPHinXsys team** 
+## Notice on the transformation to heterogeneous computational platform
 
-In order to promoting open-source democratization,
-this repository will be transferred to the SPHinXsys team 
-in the next few weeks.
-After the transfer, the decision-making process for SPHinXsys will be made by a number of project leaders from different institutions.
+SPHinXsys is set to undergo a major transformation, moving from traditional CPU parallelism to a new era of heterogeneous parallelism, where compute-intensive tasks can harness the power of both CPUs and GPUs. This evolution will be driven by SYCL (via Intel's DPC++), enabling us to leverage heterogeneous architectures with standard C++. Importantly, this transformation will be achieved with minimal disruption to the existing codebase, ensuring seamless continuity for current users.
+
+The groundwork for this shift is already laid out. A 2D dambreak test case has been added to the `test/test_sycl` folder, showcasing the capabilities of our specially designed framework. What's unique about this framework is that it allows for the development and testing of numerical methods even in environments without GPUs or DPC++ installed. If these methods are crafted following our specified guidelines and prove functional, they will seamlessly operate in environments equipped with DPC++ and GPU support.
+
+By embracing this new paradigm, SPHinXsys is positioning itself at the forefront of multi-physics modeling, where performance meets versatility.
 
 **Project status**  
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
@@ -19,7 +20,14 @@ After the transfer, the decision-making process for SPHinXsys will be made by a 
 [![YouTube](https://img.shields.io/badge/YouTube-FF0000.svg?style=flat&logo=YouTube&logoColor=white)](https://www.youtube.com/channel/UCexdJbxOn9dvim6Jg1dnCFQ)
 [![Bilibili](https://img.shields.io/badge/bilibili-%E5%93%94%E5%93%A9%E5%93%94%E5%93%A9-critical)](https://space.bilibili.com/1761273682/video)
 
-## Description
+## Master and stable branches
+
+The most active development (or default) branch of this repository is `master`.
+This branch gives the updated development of SPHinXsys using heterogeneous (using TBB and SYCL) parallelism.
+
+The most stable branch of the repository is `version1.0`, which is based on CPU (using TBB) parallelism.
+
+## Repository Description
 
 SPHinXsys (pronunciation: s'fink-sis) is an acronym from **S**moothed **P**article **H**ydrodynamics for **in**dustrial comple**X** **sys**tems.
 The multi-physics library uses SPH (smoothed particle hydrodynamics) as the underlying numerical method
@@ -46,6 +54,8 @@ Here, we present several short examples in flow, solid dynamics, fluid structure
 <img src="https://github.com/Xiangyu-Hu/SPHinXsys-public-files/blob/master/videos/fish-swimming.gif" height="168px"></a>
 <a href="https://github.com/Xiangyu-Hu/SPHinXsys/blob/master/tests/2d_examples/test_2d_column_collapse/column_collapse.cpp">
 <img src="https://github.com/Xiangyu-Hu/SPHinXsys-public-files/blob/master/videos/2d_column_collapse.gif" height="168px"></a>
+<a href="https://github.com/Xiangyu-Hu/SPHinXsys/blob/master/tests/extra_source_and_tests/test_2d_T_pipe_VIPO_shell/T_pipe_VIPO_shell.cpp">
+<img src="https://github.com/Xiangyu-Hu/SPHinXsys-public-files/blob/master/videos/fluid-shell-interaction.gif" height="168px"></a>
 
 ## Fully compatible to classical FVM method
 
@@ -61,35 +71,27 @@ The only difference is that SPHinXsys reads a predefined mesh, other than genera
 
 ## Target-driven optimization
 
-The unique target-driven optimization is able to achieve the optimization target and physical solution all-in-once, 
+The unique target-driven optimization is able to achieve the optimization target and physical solution all-in-once,
 which is able to accelerate optimization process greatly.
-The following gives an example of optimizing the conductivity distribution 
+The following gives an example of optimizing the conductivity distribution
 for a thermal domain problem targeting minimum average temperature.
 
 <a href="https://github.com/Xiangyu-Hu/SPHinXsys/blob/master/tests/optimization/test_2d_VP_heat_flux_optimization/VP_heat_flux_optimization.cpp">
 <img src="https://github.com/Xiangyu-Hu/SPHinXsys-public-files/blob/master/videos/optimization.gif" height="192px"></a>
 
 Note that the physical solution of the thermal domain (right) and the optimal distribution of conductivity (left)
-are obtained at the same time when optimization is finished. 
-Also note that the entire optimization process is very fast and 
+are obtained at the same time when optimization is finished.
+Also note that the entire optimization process is very fast and
 only several times slower than that for a single physical solution with given conductivity distribution.  
 
 ## Python interface
 
-While SPHinXsys is written in C++, it provides a python interface for users to write python scripts to control the simulation, 
+While SPHinXsys is written in C++, it provides a python interface for users to write python scripts to control the simulation,
 including carry out regression tests for continuous integration (CI) and other tasks.
 One example is given below for the dambreak case.
-Please check the source code of 
-[2D Dambreak case with python interface](https://github.com/Xiangyu-Hu/SPHinXsys/tree/master/tests/2d_examples/test_2d_dambreak_python) 
+Please check the source code of
+[2D Dambreak case with python interface](https://github.com/Xiangyu-Hu/SPHinXsys/tree/master/tests/2d_examples/test_2d_dambreak_python)
 for the usage.
-
-## Heterogenous computing
-
-Recently, we have a preview release for the heterogeneous computing version of SPHinXsys. 
-By using SYCL, a royalty-free open standard developed by the Khronos Group that allows developers
-to program heterogeneous architectures in standard C++, SPHinXsys is able to utilize the power of GPU.
-Please check the [Preview Release](https://github.com/Xiangyu-Hu/SPHinXsys/releases/tag/v1.0-beta.08-sycl)
-and the [SYCL branch](https://github.com/Xiangyu-Hu/SPHinXsys/tree/sycl) for details.
 
 ## Publications
 
@@ -114,10 +116,10 @@ For a Docker image, check <https://hub.docker.com/r/toshev/sphinxsys>.
 
 ## Interaction with SPHinXsys and the team
 
-Thank you for using and supporting our open-source project! 
+Thank you for using and supporting our open-source project!
 We value each feedback.
 
-#### For SPHinXsys users:
+#### For SPHinXsys users
 
 Your input is crucial to us. We encourage you to report any issues you encounter with the library, including:
 
@@ -128,7 +130,7 @@ Your input is crucial to us. We encourage you to report any issues you encounter
 
 We particularly appreciate feedback stemming from practical simulations or projects, as these insights are essential for improving SPHinXsys.
 
-#### For SPHinXsys developers:
+#### For SPHinXsys developers
 
 If you don't have a GitHub account yet, please register for one. Fork the SPHinXsys repository to add new features or improve existing ones. Once your changes are ready, commit them and initiate a pull request to have your contributions merged into the main repository.
 

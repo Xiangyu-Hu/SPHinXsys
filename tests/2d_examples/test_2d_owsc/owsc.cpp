@@ -63,7 +63,7 @@ int main(int ac, char *av[])
     // The coupling with multi-body dynamics will be introduced at last.
     //----------------------------------------------------------------------
     Gravity gravity(Vecd(0.0, -gravity_g));
-    SimpleDynamics<GravityForce> constant_gravity(water_block, gravity);
+    SimpleDynamics<GravityForce<Gravity>> constant_gravity(water_block, gravity);
     SimpleDynamics<OffsetInitialPosition> flap_offset_position(flap, offset);
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
     SimpleDynamics<NormalDirectionFromBodyShape> flap_normal_direction(flap);
@@ -73,8 +73,8 @@ int main(int ac, char *av[])
     InteractionWithUpdate<fluid_dynamics::DensitySummationComplexFreeSurface> update_density_by_summation(water_block_inner, water_block_contact);
     InteractionWithUpdate<fluid_dynamics::ViscousForceWithWall> viscous_force(water_block_inner, water_block_contact);
 
-    ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_f);
-    ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
+    ReduceDynamics<fluid_dynamics::AdvectionViscousTimeStep> get_fluid_advection_time_step_size(water_block, U_f);
+    ReduceDynamics<fluid_dynamics::AcousticTimeStep> get_fluid_time_step_size(water_block);
     BodyRegionByCell damping_buffer(water_block, makeShared<MultiPolygonShape>(createDampingBufferShape()));
     SimpleDynamics<fluid_dynamics::DampingBoundaryCondition> damping_wave(damping_buffer);
     BodyRegionByParticle wave_maker(wall_boundary, makeShared<MultiPolygonShape>(createWaveMakerShape()));
@@ -82,6 +82,12 @@ int main(int ac, char *av[])
 
     InteractionWithUpdate<solid_dynamics::ViscousForceFromFluid> viscous_force_from_fluid(flap_contact);
     InteractionWithUpdate<solid_dynamics::PressureForceFromFluid<decltype(density_relaxation)>> pressure_force_from_fluid(flap_contact);
+
+    //----------------------------------------------------------------------
+    //	Define the configuration related particles dynamics.
+    //----------------------------------------------------------------------
+    ParticleSorting particle_sorting(water_block);
+
     //----------------------------------------------------------------------
     //	Define the multi-body system
     //----------------------------------------------------------------------
@@ -212,7 +218,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Basic control parameters for time stepping.
     //----------------------------------------------------------------------
-    GlobalStaticVariables::physical_time_ = 0.0;
+    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     int number_of_iterations = 0;
     int screen_output_interval = 1000;
     Real end_time = total_physical_time;
@@ -226,7 +232,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Main loop of time stepping starts here.
     //----------------------------------------------------------------------
-    while (GlobalStaticVariables::physical_time_ < end_time)
+    while (physical_time < end_time)
     {
         Real integral_time = 0.0;
         while (integral_time < output_interval)
@@ -261,19 +267,23 @@ int main(int ac, char *av[])
                 integral_time += dt;
                 total_time += dt;
                 if (total_time >= relax_time)
-                    GlobalStaticVariables::physical_time_ += dt;
+                    physical_time += dt;
             }
 
             if (number_of_iterations % screen_output_interval == 0)
             {
                 std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations
                           << "	Total Time = " << total_time
-                          << "	Physical Time = " << GlobalStaticVariables::physical_time_
+                          << "	Physical Time = " << physical_time
                           << "	Dt = " << Dt << "	dt = " << dt << "\n";
             }
             number_of_iterations++;
             damping_wave.exec(Dt);
-            water_block.updateCellLinkedListWithParticleSort(100);
+            if (number_of_iterations % 100 == 0 && number_of_iterations != 1)
+            {
+                particle_sorting.exec();
+            }
+            water_block.updateCellLinkedList();
             wall_boundary.updateCellLinkedList();
             flap.updateCellLinkedList();
             water_block_complex.updateConfiguration();
@@ -282,7 +292,7 @@ int main(int ac, char *av[])
             if (total_time >= relax_time)
             {
                 write_total_viscous_force_from_fluid.writeToFile(number_of_iterations);
-                write_flap_pin_data.writeToFile(GlobalStaticVariables::physical_time_);
+                write_flap_pin_data.writeToFile(physical_time);
                 wave_probe_4.writeToFile(number_of_iterations);
                 wave_probe_5.writeToFile(number_of_iterations);
                 wave_probe_12.writeToFile(number_of_iterations);

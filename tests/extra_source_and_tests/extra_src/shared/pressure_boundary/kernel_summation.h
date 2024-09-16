@@ -47,7 +47,7 @@ class NablaWV<DataDelegationType>
     virtual ~NablaWV(){};
 
   protected:
-    StdLargeVec<Vecd> &kernel_sum_;
+    Vecd *kernel_sum_;
 };
 
 template <>
@@ -60,7 +60,7 @@ class NablaWV<Inner<>>
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
-    StdLargeVec<Real> &Vol_;
+    Real *Vol_;
 };
 
 template <>
@@ -79,7 +79,7 @@ class NablaWV<Contact<>>
     virtual ~NablaWV(){};
     void interaction(size_t index_i, Real dt = 0.0);
 
-    StdVec<StdLargeVec<Real> *> contact_Vol_;
+    StdVec<Real *> contact_Vol_;
 };
 
 using NablaWVComplex = ComplexInteraction<NablaWV<Inner<>, Contact<>>>;

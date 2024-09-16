@@ -39,26 +39,26 @@ namespace SPH
  * @brief  Write files for bodies
  * the output file is VTK XML format in FVMcan visualized by ParaView the data type vtkPolyData
  */
-class BodyStatesRecordingInMeshToVtp : public BodyStatesRecording
+class BodyStatesRecordingInMeshToVtp : public BodyStatesRecordingToVtp
 {
   public:
     BodyStatesRecordingInMeshToVtp(SPHBody &body, ANSYSMesh &ansys_mesh);
     virtual ~BodyStatesRecordingInMeshToVtp(){};
 
   protected:
-    virtual void writeWithFileName(const std::string &sequence) override; // TODO: to be implemented in 3d
+    virtual void writeWithFileName(const std::string &sequence) override;
     StdLargeVec<Vecd> &node_coordinates_;
     StdLargeVec<StdVec<size_t>> &elements_nodes_connection_;
 };
 
-class BodyStatesRecordingInMeshToVtu : public BodyStatesRecording
+class BodyStatesRecordingInMeshToVtu : public BodyStatesRecordingToVtp
 {
   public:
     BodyStatesRecordingInMeshToVtu(SPHBody &body, ANSYSMesh &ansys_mesh);
     virtual ~BodyStatesRecordingInMeshToVtu(){};
 
   protected:
-    virtual void writeWithFileName(const std::string &sequence) override; // TODO: to be implemented in 2d
+    virtual void writeWithFileName(const std::string &sequence) override;
     StdLargeVec<Vecd> &node_coordinates_;
     StdLargeVec<StdVec<size_t>> &elements_nodes_connection_;
     SPHBody &bounds_;

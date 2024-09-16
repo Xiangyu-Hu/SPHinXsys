@@ -45,16 +45,17 @@ namespace solid_dynamics
  * @class DistributingPointForces
  * @brief Distribute a series of point forces to its contact shell bodies.
  */
-class DistributingPointForces : public LocalDynamics, public DataDelegateSimple
+class DistributingPointForces : public LocalDynamics
 {
   protected:
     std::vector<Vecd> point_forces_, reference_positions_, time_dependent_point_forces_;
     Real time_to_full_external_force_;
     Real particle_spacing_ref_, h_spacing_ratio_;
-    StdLargeVec<Vecd> &pos_, &force_prior_;
-    StdLargeVec<Real> &thickness_;
-    std::vector<StdLargeVec<Real> *> weight_;
+    Vecd *pos_, *force_prior_;
+    Real *thickness_;
+    std::vector<Real *> weight_;
     std::vector<Real> sum_of_weight_;
+    Real *physical_time_;
 
     void getWeight();
 

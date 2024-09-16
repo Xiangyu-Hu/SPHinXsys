@@ -47,7 +47,7 @@ LocalIsotropicDiffusion::LocalIsotropicDiffusion(const std::string &species_name
 //=================================================================================================//
 void LocalIsotropicDiffusion::initializeLocalParameters(BaseParticles *base_particles)
 {
-    local_diffusivity_ = base_particles->registerSharedVariable<Real>(
+    local_diffusivity_ = base_particles->registerStateVariable<Real>(
         "ThermalConductivity", [&](size_t i) -> Real
         { return diff_cf_; });
     base_particles->addVariableToWrite<Real>("ThermalConductivity");
@@ -92,23 +92,23 @@ LocalDirectionalDiffusion::LocalDirectionalDiffusion(const std::string &species_
 //=================================================================================================//
 void LocalDirectionalDiffusion::registerLocalParameters(BaseParticles *base_particles)
 {
-    local_bias_direction_ = base_particles->registerSharedVariable<Vecd>("Fiber");
+    local_bias_direction_ = base_particles->registerStateVariable<Vecd>("Fiber");
 }
 //=================================================================================================//
 void LocalDirectionalDiffusion::registerLocalParametersFromReload(BaseParticles *base_particles)
 {
-    local_bias_direction_ = base_particles->registerSharedVariableFromReload<Vecd>("Fiber");
+    local_bias_direction_ = base_particles->registerStateVariableFromReload<Vecd>("Fiber");
 }
 //=================================================================================================//
 void LocalDirectionalDiffusion::initializeLocalParameters(BaseParticles *base_particles)
 {
     DirectionalDiffusion::initializeLocalParameters(base_particles);
-    local_transformed_diffusivity_ = base_particles->registerSharedVariable<Matd>(
+    local_transformed_diffusivity_ = base_particles->registerStateVariable<Matd>(
         "LocalTransformedDiffusivity",
         [&](size_t i) -> Matd
         {
             Matd diff_i = diff_cf_ * Matd::Identity() +
-                          bias_diff_cf_ * (*local_bias_direction_)[i] * (*local_bias_direction_)[i].transpose();
+                          bias_diff_cf_ * local_bias_direction_[i] * local_bias_direction_[i].transpose();
             return inverseCholeskyDecomposition(diff_i);
         });
 
