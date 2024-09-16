@@ -116,7 +116,7 @@ void ShearStressRelaxation::update(size_t index_i, Real dt)
 //====================================================================================//
 StressDiffusion::StressDiffusion(BaseInnerRelation &inner_relation)
     : BasePlasticIntegration<DataDelegateInner>(inner_relation),
-      fai_(DynamicCast<PlasticContinuum>(this, plastic_continuum_).getFrictionAngle()),
+      phi_(DynamicCast<PlasticContinuum>(this, plastic_continuum_).getFrictionAngle()),
       smoothing_length_(sph_body_.sph_adaptation_->ReferenceSmoothingLength()),
       sound_speed_(plastic_continuum_.ReferenceSoundSpeed()) {}
 //====================================================================================//
@@ -135,17 +135,17 @@ void StressDiffusion::interaction(size_t index_i, Real dt)
         Real dW_ijV_j = inner_neighborhood.dW_ij_[n] * Vol_[index_j];
         Real y_ij = pos_[index_i](1, 0) - pos_[index_j](1, 0);
         diffusion_stress_ = stress_tensor_3D_[index_i] - stress_tensor_3D_[index_j];
-        diffusion_stress_(0, 0) -= (1 - sin(fai_)) * density * gravity * y_ij;
+        diffusion_stress_(0, 0) -= (1 - sin(phi_)) * density * gravity * y_ij;
         diffusion_stress_(1, 1) -= density * gravity * y_ij;
-        diffusion_stress_(2, 2) -= (1 - sin(fai_)) * density * gravity * y_ij;
+        diffusion_stress_(2, 2) -= (1 - sin(phi_)) * density * gravity * y_ij;
         diffusion_stress_rate_ += 2 * zeta_ * smoothing_length_ * sound_speed_ *
                                   diffusion_stress_ * r_ij * dW_ijV_j / (r_ij * r_ij + 0.01 * smoothing_length_);
     }
     stress_rate_3D_[index_i] = diffusion_stress_rate_;
 }
 //====================================================================================//
-ShearAccelerationRelaxationHourglassControl ::
-    ShearAccelerationRelaxationHourglassControl(BaseInnerRelation &inner_relation, Real xi)
+ShearStressRelaxationHourglassControl ::
+    ShearStressRelaxationHourglassControl(BaseInnerRelation &inner_relation, Real xi)
     : fluid_dynamics::BaseIntegration<DataDelegateInner>(inner_relation),
       continuum_(DynamicCast<GeneralContinuum>(this, particles_->getBaseMaterial())),
       shear_stress_(*particles_->registerSharedVariable<Matd>("ShearStress")),
@@ -173,7 +173,7 @@ ShearAccelerationRelaxationHourglassControl ::
     particles_->addVariableToSort<Vecd>("AccelerationHourglass");
 }
 //====================================================================================//
-void ShearAccelerationRelaxationHourglassControl::initialization(size_t index_i, Real dt)
+void ShearStressRelaxationHourglassControl::initialization(size_t index_i, Real dt)
 {
     Matd velocity_gradient = Matd::Zero();
     Neighborhood &inner_neighborhood = inner_configuration_[index_i];
@@ -190,7 +190,7 @@ void ShearAccelerationRelaxationHourglassControl::initialization(size_t index_i,
     velocity_gradient_[index_i] = velocity_gradient;
 }
 //====================================================================================//
-void ShearAccelerationRelaxationHourglassControl::interaction(size_t index_i, Real dt)
+void ShearStressRelaxationHourglassControl::interaction(size_t index_i, Real dt)
 {
     shear_stress_rate_[index_i] = continuum_.ConstitutiveRelationShearStress(velocity_gradient_[index_i], shear_stress_[index_i]);
     shear_stress_[index_i] += shear_stress_rate_[index_i] * dt;
@@ -201,7 +201,7 @@ void ShearAccelerationRelaxationHourglassControl::interaction(size_t index_i, Re
     von_mises_strain_[index_i] = getVonMisesStressFromMatrix(strain_tensor_[index_i]);
 }
 //====================================================================================//
-void ShearAccelerationRelaxationHourglassControl::update(size_t index_i, Real dt)
+void ShearStressRelaxationHourglassControl::update(size_t index_i, Real dt)
 {
     Real rho_i = rho_[index_i];
     Matd shear_stress_i = shear_stress_[index_i];
@@ -225,7 +225,7 @@ void ShearAccelerationRelaxationHourglassControl::update(size_t index_i, Real dt
 //====================================================================================//
 ShearStressRelaxationHourglassControlJ2Plasticity ::
     ShearStressRelaxationHourglassControlJ2Plasticity(BaseInnerRelation &inner_relation, Real xi)
-    : ShearAccelerationRelaxationHourglassControl(inner_relation, xi),
+    : ShearStressRelaxationHourglassControl(inner_relation, xi),
       J2_plasticity_(DynamicCast<J2Plasticity>(this, particles_->getBaseMaterial())),
       hardening_factor_(*particles_->registerSharedVariable<Real>("HardeningFactor"))
 {

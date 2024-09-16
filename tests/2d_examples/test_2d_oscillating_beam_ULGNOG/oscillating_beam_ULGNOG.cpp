@@ -131,7 +131,7 @@ int main(int ac, char *av[])
     /** initial condition */
     InteractionWithUpdate<LinearGradientCorrectionMatrixInner> correction_matrix(beam_body_inner);
     SimpleDynamics<BeamInitialCondition> beam_initial_velocity(beam_body);
-    Dynamics1Level<continuum_dynamics::ShearAccelerationRelaxationHourglassControl>
+    Dynamics1Level<continuum_dynamics::ShearStressRelaxationHourglassControl>
         beam_shear_acceleration_relaxation(beam_body_inner);
     Dynamics1Level<continuum_dynamics::Integration1stHalf> beam_pressure_relaxation(beam_body_inner);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfInnerDissipativeRiemann> beam_density_relaxation(beam_body_inner);

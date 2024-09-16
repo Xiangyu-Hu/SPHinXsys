@@ -216,15 +216,15 @@ class StressDiffusion : public BasePlasticIntegration<DataDelegateInner>
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
-    Real zeta_ = 0.1, fai_; /*diffusion coefficient*/
+    Real zeta_ = 0.1, phi_; /*diffusion coefficient*/
     Real smoothing_length_, sound_speed_;
 };
 
-class ShearAccelerationRelaxationHourglassControl : public fluid_dynamics::BaseIntegration<DataDelegateInner>
+class ShearStressRelaxationHourglassControl : public fluid_dynamics::BaseIntegration<DataDelegateInner>
 {
   public:
-    explicit ShearAccelerationRelaxationHourglassControl(BaseInnerRelation &inner_relation, Real xi_ = 4.0);
-    virtual ~ShearAccelerationRelaxationHourglassControl(){};
+    explicit ShearStressRelaxationHourglassControl(BaseInnerRelation &inner_relation, Real xi_ = 4.0);
+    virtual ~ShearStressRelaxationHourglassControl(){};
     void initialization(size_t index_i, Real dt = 0.0);
     void interaction(size_t index_i, Real dt = 0.0);
     void update(size_t index_i, Real dt = 0.0);
@@ -237,7 +237,7 @@ class ShearAccelerationRelaxationHourglassControl : public fluid_dynamics::BaseI
     Real G_, xi_;
 };
 
-class ShearStressRelaxationHourglassControlJ2Plasticity : public ShearAccelerationRelaxationHourglassControl
+class ShearStressRelaxationHourglassControlJ2Plasticity : public ShearStressRelaxationHourglassControl
 {
   public:
     explicit ShearStressRelaxationHourglassControlJ2Plasticity(BaseInnerRelation &inner_relation, Real xi_ = 0.2);

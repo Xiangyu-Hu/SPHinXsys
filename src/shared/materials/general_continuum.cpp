@@ -114,9 +114,7 @@ Real J2Plasticity::ScalePenaltyForce(Matd &shear_stress, Real &hardening_factor)
     Real r = 1.0;
     Real f = sqrt(2.0 * stress_tensor_J2) - sqrt_2_over_3_ * (hardening_modulus_ * hardening_factor + yield_stress_);
     if (f > TinyReal)
-    {
         r = (sqrt_2_over_3_ * (hardening_modulus_ * hardening_factor + yield_stress_)) / (sqrt(2.0 * stress_tensor_J2) + TinyReal);
-    }
     return r;
 }
 //=================================================================================================//
