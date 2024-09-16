@@ -64,9 +64,7 @@ Mat3d PlasticContinuum::ReturnMapping(Mat3d &stress_tensor)
 {
     Real stress_tensor_I1 = stress_tensor.trace();
     if (-alpha_phi_ * stress_tensor_I1 + k_c_ < 0)
-    {
         stress_tensor -= (1.0 / stress_dimension_) * (stress_tensor_I1 - k_c_ / alpha_phi_) * Mat3d::Identity();
-    }
     stress_tensor_I1 = stress_tensor.trace();
     Mat3d deviatoric_stress_tensor = stress_tensor - (1.0 / stress_dimension_) * stress_tensor.trace() * Mat3d::Identity();
     Real stress_tensor_J2 = 0.5 * (deviatoric_stress_tensor.cwiseProduct(deviatoric_stress_tensor.transpose())).sum();
@@ -100,12 +98,10 @@ Matd J2Plasticity::ReturnMappingShearStress(Matd &shear_stress, Real &hardening_
 {
     Real stress_tensor_J2 = 0.5 * (shear_stress.cwiseProduct(shear_stress.transpose())).sum();
     Real f = sqrt(2.0 * stress_tensor_J2) - sqrt_2_over_3_ * (hardening_modulus_ * hardening_factor + yield_stress_);
+    Real r = 1.0;
     if (f > TinyReal)
-    {
-        Real r = (sqrt_2_over_3_ * (hardening_modulus_ * hardening_factor + yield_stress_)) / (sqrt(2.0 * stress_tensor_J2) + TinyReal);
-        shear_stress = r * shear_stress;
-    }
-    return shear_stress;
+        r = (sqrt_2_over_3_ * (hardening_modulus_ * hardening_factor + yield_stress_)) / (sqrt(2.0 * stress_tensor_J2) + TinyReal);
+    return r * shear_stress;
 }
 //=================================================================================================//
 Real J2Plasticity::ScalePenaltyForce(Matd &shear_stress, Real &hardening_factor)

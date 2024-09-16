@@ -11,21 +11,21 @@ ContinuumInitialCondition::ContinuumInitialCondition(SPHBody &sph_body)
       vel_(particles_->registerStateVariable<Vecd>("Velocity")),
       stress_tensor_3D_(particles_->registerStateVariable<Mat3d>("StressTensor3D")) {}
 //=================================================================================================//
-AcousticTimeStepSize::AcousticTimeStepSize(SPHBody &sph_body, Real acousticCFL)
+AcousticTimeStep::AcousticTimeStep(SPHBody &sph_body, Real acousticCFL)
     : LocalDynamicsReduce<ReduceMax>(sph_body),
-      DataDelegateSimple(sph_body), fluid_(DynamicCast<Fluid>(this, particles_->getBaseMaterial())),
-      rho_(*particles_->getVariableDataByName<Real>("Density")),
-      p_(*particles_->getVariableDataByName<Real>("Pressure")),
-      vel_(*particles_->getVariableDataByName<Vecd>("Velocity")),
+      fluid_(DynamicCast<Fluid>(this, particles_->getBaseMaterial())),
+      rho_(particles_->getVariableDataByName<Real>("Density")),
+      p_(particles_->getVariableDataByName<Real>("Pressure")),
+      vel_(particles_->getVariableDataByName<Vecd>("Velocity")),
       smoothing_length_min_(sph_body.sph_adaptation_->MinimumSmoothingLength()),
       acousticCFL_(acousticCFL) {}
 //=================================================================================================//
-Real AcousticTimeStepSize::reduce(size_t index_i, Real dt)
+Real AcousticTimeStep::reduce(size_t index_i, Real dt)
 {
     return fluid_.getSoundSpeed(p_[index_i], rho_[index_i]) + vel_[index_i].norm();
 }
 //=================================================================================================//
-Real AcousticTimeStepSize::outputResult(Real reduced_value)
+Real AcousticTimeStep::outputResult(Real reduced_value)
 {
     return acousticCFL_ * smoothing_length_min_ / (reduced_value + TinyReal);
 }
@@ -148,17 +148,17 @@ ShearStressRelaxationHourglassControl ::
     ShearStressRelaxationHourglassControl(BaseInnerRelation &inner_relation, Real xi)
     : fluid_dynamics::BaseIntegration<DataDelegateInner>(inner_relation),
       continuum_(DynamicCast<GeneralContinuum>(this, particles_->getBaseMaterial())),
-      shear_stress_(*particles_->registerSharedVariable<Matd>("ShearStress")),
-      shear_stress_rate_(*particles_->registerSharedVariable<Matd>("ShearStressRate")),
-      velocity_gradient_(*particles_->registerSharedVariable<Matd>("VelocityGradient")),
-      strain_tensor_(*particles_->registerSharedVariable<Matd>("StrainTensor")),
-      strain_tensor_rate_(*particles_->registerSharedVariable<Matd>("StrainTensorRate")),
-      B_(*particles_->getVariableDataByName<Matd>("LinearGradientCorrectionMatrix")),
-      von_mises_stress_(*particles_->registerSharedVariable<Real>("VonMisesStress")),
-      von_mises_strain_(*particles_->registerSharedVariable<Real>("VonMisesStrain")),
-      scale_penalty_force_(*particles_->registerSharedVariable<Real>("ScalePenaltyForce", Real(1.0))),
-      acc_shear_(*particles_->registerSharedVariable<Vecd>("AccelerationByShear")),
-      acc_hourglass_(*particles_->registerSharedVariable<Vecd>("AccelerationHourglass")),
+      shear_stress_(particles_->registerStateVariable<Matd>("ShearStress")),
+      shear_stress_rate_(particles_->registerStateVariable<Matd>("ShearStressRate")),
+      velocity_gradient_(particles_->registerStateVariable<Matd>("VelocityGradient")),
+      strain_tensor_(particles_->registerStateVariable<Matd>("StrainTensor")),
+      strain_tensor_rate_(particles_->registerStateVariable<Matd>("StrainTensorRate")),
+      B_(particles_->getVariableDataByName<Matd>("LinearGradientCorrectionMatrix")),
+      von_mises_stress_(particles_->registerStateVariable<Real>("VonMisesStress")),
+      von_mises_strain_(particles_->registerStateVariable<Real>("VonMisesStrain")),
+      scale_penalty_force_(particles_->registerStateVariable<Real>("ScalePenaltyForce", Real(1.0))),
+      acc_shear_(particles_->registerStateVariable<Vecd>("AccelerationByShear")),
+      acc_hourglass_(particles_->registerStateVariable<Vecd>("AccelerationHourglass")),
       G_(continuum_.getShearModulus(continuum_.getYoungsModulus(), continuum_.getPoissonRatio())), xi_(xi)
 {
     particles_->addVariableToSort<Matd>("ShearStress");
@@ -227,7 +227,7 @@ ShearStressRelaxationHourglassControlJ2Plasticity ::
     ShearStressRelaxationHourglassControlJ2Plasticity(BaseInnerRelation &inner_relation, Real xi)
     : ShearStressRelaxationHourglassControl(inner_relation, xi),
       J2_plasticity_(DynamicCast<J2Plasticity>(this, particles_->getBaseMaterial())),
-      hardening_factor_(*particles_->registerSharedVariable<Real>("HardeningFactor"))
+      hardening_factor_(particles_->registerStateVariable<Real>("HardeningFactor"))
 {
     particles_->addVariableToSort<Real>("HardeningFactor");
 }

@@ -22,7 +22,7 @@
  * ------------------------------------------------------------------------- */
 /**
  * @file 	general_continuum.h
- * @brief 	Describe the linear elastic and Drucker-Prager's plastic model
+ * @brief 	Describe the linear elastic, J2 plasticity, and Drucker-Prager's plastic model
  * @author	Shuaihao Zhang and Xiangyu Hu
  */
 

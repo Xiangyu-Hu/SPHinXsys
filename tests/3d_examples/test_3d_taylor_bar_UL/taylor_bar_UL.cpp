@@ -81,8 +81,8 @@ int main(int ac, char *av[])
     Dynamics1Level<continuum_dynamics::Integration1stHalf> column_pressure_relaxation(column_inner);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfInnerDissipativeRiemann> column_density_relaxation(column_inner);
     SimpleDynamics<fluid_dynamics::ContinuumVolumeUpdate> beam_volume_update(column);
-    ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> advection_time_step(column, U_max, 0.2);
-    ReduceDynamics<continuum_dynamics::AcousticTimeStepSize> acoustic_time_step(column, 0.4);
+    ReduceDynamics<fluid_dynamics::AdvectionViscousTimeStep> advection_time_step(column, U_max, 0.2);
+    ReduceDynamics<continuum_dynamics::AcousticTimeStep> acoustic_time_step(column, 0.4);
     InteractionDynamics<DynamicContactForceWithWall> column_wall_contact_force(column_wall_contact);
     //----------------------------------------------------------------------
     //	Output
@@ -95,7 +95,6 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     // From here the time stepping begins.
     //----------------------------------------------------------------------
-    GlobalStaticVariables::physical_time_ = 0.0;
     system.initializeSystemCellLinkedLists();
     system.initializeSystemConfigurations();
     wall_normal_direction.exec();
@@ -104,6 +103,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     // Setup time-stepping related simulation parameters.
     //----------------------------------------------------------------------
+    Real &physical_time = *system.getSystemVariableDataByName<Real>("PhysicalTime");
     int ite = 0;
     Real end_time = 6.0e-5;
     int screen_output_interval = 100;
@@ -119,7 +119,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     // Main time-stepping loop.
     //----------------------------------------------------------------------
-    while (GlobalStaticVariables::physical_time_ < end_time)
+    while (physical_time < end_time)
     {
         Real integration_time = 0.0;
         while (integration_time < output_period)
@@ -133,7 +133,7 @@ int main(int ac, char *av[])
                 if (ite % screen_output_interval == 0)
                 {
                     std::cout << "N=" << ite << " Time: "
-                              << GlobalStaticVariables::physical_time_ << "	advection_dt: "
+                              << physical_time << "	advection_dt: "
                               << advection_dt << "	acoustic_dt: "
                               << acoustic_dt << "\n";
                 }
@@ -146,7 +146,7 @@ int main(int ac, char *av[])
                 ite++;
                 relaxation_time += acoustic_dt;
                 integration_time += acoustic_dt;
-                GlobalStaticVariables::physical_time_ += acoustic_dt;
+                physical_time += acoustic_dt;
             }
             column.updateCellLinkedList();
             column_inner.updateConfiguration();

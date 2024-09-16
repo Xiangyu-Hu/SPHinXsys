@@ -49,18 +49,18 @@ class ContinuumInitialCondition : public LocalDynamics
     Mat3d *stress_tensor_3D_;
 };
 
-class AcousticTimeStepSize : public LocalDynamicsReduce<ReduceMax>, public DataDelegateSimple
+class AcousticTimeStep : public LocalDynamicsReduce<ReduceMax>
 {
   public:
-    explicit AcousticTimeStepSize(SPHBody &sph_body, Real acousticCFL = 0.6);
-    virtual ~AcousticTimeStepSize(){};
+    explicit AcousticTimeStep(SPHBody &sph_body, Real acousticCFL = 0.6);
+    virtual ~AcousticTimeStep(){};
     Real reduce(size_t index_i, Real dt = 0.0);
     virtual Real outputResult(Real reduced_value) override;
 
   protected:
     Fluid &fluid_;
-    StdLargeVec<Real> &rho_, &p_;
-    StdLargeVec<Vecd> &vel_;
+    Real *rho_, *p_;
+    Vecd *vel_;
     Real smoothing_length_min_;
     Real acousticCFL_;
 };
@@ -231,9 +231,9 @@ class ShearStressRelaxationHourglassControl : public fluid_dynamics::BaseIntegra
 
   protected:
     GeneralContinuum &continuum_;
-    StdLargeVec<Matd> &shear_stress_, &shear_stress_rate_, &velocity_gradient_, &strain_tensor_, &strain_tensor_rate_, &B_;
-    StdLargeVec<Real> &von_mises_stress_, &von_mises_strain_, &scale_penalty_force_;
-    StdLargeVec<Vecd> &acc_shear_, &acc_hourglass_;
+    Matd *shear_stress_, *shear_stress_rate_, *velocity_gradient_, *strain_tensor_, *strain_tensor_rate_, *B_;
+    Real *von_mises_stress_, *von_mises_strain_, *scale_penalty_force_;
+    Vecd *acc_shear_, *acc_hourglass_;
     Real G_, xi_;
 };
 
@@ -246,7 +246,7 @@ class ShearStressRelaxationHourglassControlJ2Plasticity : public ShearStressRela
 
   protected:
     J2Plasticity &J2_plasticity_;
-    StdLargeVec<Real> &hardening_factor_;
+    Real *hardening_factor_;
 };
 } // namespace continuum_dynamics
 } // namespace SPH

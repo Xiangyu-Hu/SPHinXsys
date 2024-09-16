@@ -74,9 +74,9 @@ class DynamicContactForceWithWall : public LocalDynamics,
         : LocalDynamics(solid_body_contact_relation.getSPHBody()),
           DataDelegateContact(solid_body_contact_relation),
           continuum_(DynamicCast<GeneralContinuum>(this, sph_body_.getBaseMaterial())),
-          Vol_(*particles_->getVariableDataByName<Real>("VolumetricMeasure")),
-          vel_(*particles_->getVariableDataByName<Vecd>("Velocity")),
-          force_prior_(*particles_->getVariableDataByName<Vecd>("ForcePrior")),
+          Vol_(particles_->getVariableDataByName<Real>("VolumetricMeasure")),
+          vel_(particles_->getVariableDataByName<Vecd>("Velocity")),
+          force_prior_(particles_->getVariableDataByName<Vecd>("ForcePrior")),
           penalty_strength_(penalty_strength)
     {
         impedance_ = continuum_.ReferenceDensity() * sqrt(continuum_.ContactStiffness());
@@ -84,7 +84,7 @@ class DynamicContactForceWithWall : public LocalDynamics,
         for (size_t k = 0; k != contact_particles_.size(); ++k)
         {
             contact_Vol_.push_back(contact_particles_[k]->getVariableDataByName<Real>("VolumetricMeasure"));
-            contact_vel_.push_back(contact_particles_[k]->registerSharedVariable<Vecd>("Velocity"));
+            contact_vel_.push_back(contact_particles_[k]->registerStateVariable<Vecd>("Velocity"));
             contact_n_.push_back(contact_particles_[k]->template getVariableDataByName<Vecd>("NormalDirection"));
         }
     };
@@ -99,9 +99,9 @@ class DynamicContactForceWithWall : public LocalDynamics,
                 1.0 / (sph_body_.sph_adaptation_->ReferenceSpacing() * particle_spacing_j1);
             particle_spacing_ratio2 *= 0.1 * particle_spacing_ratio2;
 
-            StdLargeVec<Vecd> &n_k = *(contact_n_[k]);
-            StdLargeVec<Vecd> &vel_n_k = *(contact_vel_[k]);
-            StdLargeVec<Real> &Vol_k = *(contact_Vol_[k]);
+            Vecd *n_k = contact_n_[k];
+            Vecd *vel_n_k = contact_vel_[k];
+            Real *Vol_k = contact_Vol_[k];
             Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
             for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
             {
@@ -123,10 +123,10 @@ class DynamicContactForceWithWall : public LocalDynamics,
 
   protected:
     GeneralContinuum &continuum_;
-    StdLargeVec<Real> &Vol_;
-    StdLargeVec<Vecd> &vel_, &force_prior_; // note that prior force directly used here
-    StdVec<StdLargeVec<Real> *> contact_Vol_;
-    StdVec<StdLargeVec<Vecd> *> contact_vel_, contact_n_;
+    Real *Vol_;
+    Vecd *vel_, *force_prior_; // note that prior force directly used here
+    StdVec<Real *> contact_Vol_;
+    StdVec<Vecd *> contact_vel_, contact_n_;
     Real penalty_strength_;
     Real impedance_, reference_pressure_;
 };
