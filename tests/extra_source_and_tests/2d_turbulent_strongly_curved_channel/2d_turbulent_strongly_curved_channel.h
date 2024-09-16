@@ -60,7 +60,7 @@ Real relaxation_rate_turbulent_inlet = 0.8;
 int is_AMRD = 0;
 bool is_constrain_normal_velocity_in_P_region = false;
 //** Weight for correcting the velocity  gradient in the sub near wall region  *
-Real weight_vel_grad_sub_nearwall = 0.00;
+Real weight_vel_grad_sub_nearwall = 0.10;
 //** Empirical parameter for initial stability*
 Real turbulent_module_activate_time = 2.5;
 //** Intial values for K, Epsilon and Mu_t *
@@ -155,7 +155,7 @@ Real observe_angles[4] = {
     120.0 * (2.0 * Pi / 360.0),
     150.0 * (2.0 * Pi / 360.0),
     172.0 * (2.0 * Pi / 360.0)};
-Real observer_offset_distance = 1.8 * resolution_ref;
+Real observer_offset_distance = 0.0 * resolution_ref;
 
 int num_observer_points = std::round(DH_C / resolution_ref); //**Evrey particle is regarded as a cell monitor*
 Real observe_spacing = DH_C / num_observer_points;
