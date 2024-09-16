@@ -278,10 +278,8 @@ int main(int ac, char *av[])
 
             time_instance = TickCount::now();
 
-            left_bidirection_buffer.injection.exec();
-            right_bidirection_buffer.injection.exec();
-            left_bidirection_buffer.deletion.exec();
-            right_bidirection_buffer.deletion.exec();
+            left_bidirection_buffer.injection_deletion.exec();
+            right_bidirection_buffer.injection_deletion.exec();
 
             water_block.updateCellLinkedList();
             water_block_complex.updateConfiguration();

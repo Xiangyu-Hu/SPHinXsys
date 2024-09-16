@@ -299,12 +299,8 @@ int main(int ac, char *av[])
 
             time_instance = TickCount::now();
 
-            // first do injection for all buffers
-            left_bidirection_buffer.injection.exec();
-            right_bidirection_buffer.injection.exec();
-            // then do deletion for all buffers
-            left_bidirection_buffer.deletion.exec();
-            right_bidirection_buffer.deletion.exec();
+            left_bidirection_buffer.injection_deletion.exec();
+            right_bidirection_buffer.injection_deletion.exec();
 
             if (number_of_iterations % 100 == 0 && number_of_iterations != 1)
             {

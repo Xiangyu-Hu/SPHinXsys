@@ -37,22 +37,9 @@ namespace SPH
 {
 namespace fluid_dynamics
 {
-struct NonPrescribedPressure
-{
-    template <class BoundaryConditionType>
-    NonPrescribedPressure(BoundaryConditionType &boundary_condition) {}
-
-    Real operator()(Real p, Real current_time)
-    {
-        return p;
-    }
-};
-
-template <typename TargetPressure, class ExecutionPolicy = ParallelPolicy>
+template <typename InjectionPressure, class ExecutionPolicy = ParallelPolicy>
 class BidirectionalBuffer
 {
-  protected:
-    TargetPressure target_pressure_;
 
     class TagBufferParticles : public BaseLocalDynamics<BodyPartByCell>
     {
@@ -80,12 +67,12 @@ class BidirectionalBuffer
         int *buffer_particle_indicator_;
     };
 
-    class Injection : public BaseLocalDynamics<BodyPartByCell>
+    class InjectionAndDelettion : public BaseLocalDynamics<BodyPartByCell>
     {
       public:
-        Injection(BodyAlignedBoxByCell &aligned_box_part, ParticleBuffer<Base> &particle_buffer,
-                  TargetPressure &target_pressure)
+        InjectionAndDelettion(BodyAlignedBoxByCell &aligned_box_part, ParticleBuffer<Base> &particle_buffer)
             : BaseLocalDynamics<BodyPartByCell>(aligned_box_part),
+              target_pressure_(*this),
               part_id_(aligned_box_part.getPartID()),
               particle_buffer_(particle_buffer),
               aligned_box_(aligned_box_part.getAlignedBoxShape()),
@@ -95,22 +82,22 @@ class BidirectionalBuffer
               p_(particles_->getVariableDataByName<Real>("Pressure")),
               previous_surface_indicator_(particles_->getVariableDataByName<int>("PreviousSurfaceIndicator")),
               buffer_particle_indicator_(particles_->getVariableDataByName<int>("BufferParticleIndicator")),
-              physical_time_(sph_system_.getSystemVariableDataByName<Real>("PhysicalTime")),
-              target_pressure_(target_pressure)
+              physical_time_(sph_system_.getSystemVariableDataByName<Real>("PhysicalTime"))
         {
             particle_buffer_.checkParticlesReserved();
         };
-        virtual ~Injection(){};
+        virtual ~InjectionAndDelettion(){};
 
         void update(size_t index_i, Real dt = 0.0)
         {
             if (!aligned_box_.checkInBounds(pos_[index_i]))
             {
+                mutex_switch.lock();
                 if (aligned_box_.checkUpperBound(pos_[index_i]) &&
                     buffer_particle_indicator_[index_i] == part_id_ &&
                     index_i < particles_->TotalRealParticles())
                 {
-                    mutex_switch.lock();
+
                     particle_buffer_.checkEnoughBuffer(*particles_);
                     size_t new_particle_index = particles_->createRealParticleFrom(index_i);
                     buffer_particle_indicator_[new_particle_index] = 0;
@@ -121,42 +108,8 @@ class BidirectionalBuffer
                     p_[index_i] = target_pressure_(p_[index_i], *physical_time_);
                     rho_[index_i] = p_[index_i] / pow(sound_speed, 2.0) + fluid_.ReferenceDensity();
                     previous_surface_indicator_[index_i] = 1;
-                    mutex_switch.unlock();
                 }
-            }
-        }
 
-      protected:
-        int part_id_;
-        std::mutex mutex_switch;
-        ParticleBuffer<Base> &particle_buffer_;
-        AlignedBoxShape &aligned_box_;
-        Fluid &fluid_;
-        Vecd *pos_;
-        Real *rho_, *p_;
-        int *previous_surface_indicator_, *buffer_particle_indicator_;
-        Real *physical_time_;
-
-      private:
-        TargetPressure &target_pressure_;
-    };
-
-    class Deletion : public BaseLocalDynamics<BodyPartByCell>
-    {
-      public:
-        Deletion(BodyAlignedBoxByCell &aligned_box_part)
-            : BaseLocalDynamics<BodyPartByCell>(aligned_box_part),
-              part_id_(aligned_box_part.getPartID()),
-              aligned_box_(aligned_box_part.getAlignedBoxShape()),
-              pos_(particles_->getVariableDataByName<Vecd>("Position")),
-              buffer_particle_indicator_(particles_->getVariableDataByName<int>("BufferParticleIndicator")){};
-        virtual ~Deletion(){};
-
-        void update(size_t index_i, Real dt = 0.0)
-        {
-            if (!aligned_box_.checkInBounds(pos_[index_i]))
-            {
-                mutex_switch.lock();
                 while (aligned_box_.checkLowerBound(pos_[index_i]) &&
                        buffer_particle_indicator_[index_i] == part_id_ &&
                        index_i < particles_->TotalRealParticles())
@@ -169,23 +122,26 @@ class BidirectionalBuffer
         }
 
       protected:
+        InjectionPressure target_pressure_;
         int part_id_;
         std::mutex mutex_switch;
+        ParticleBuffer<Base> &particle_buffer_;
         AlignedBoxShape &aligned_box_;
+        Fluid &fluid_;
         Vecd *pos_;
-        int *buffer_particle_indicator_;
+        Real *rho_, *p_;
+        int *previous_surface_indicator_, *buffer_particle_indicator_;
+        Real *physical_time_;
     };
 
   public:
     BidirectionalBuffer(BodyAlignedBoxByCell &aligned_box_part, ParticleBuffer<Base> &particle_buffer)
-        : target_pressure_(*this), tag_buffer_particles(aligned_box_part),
-          injection(aligned_box_part, particle_buffer, target_pressure_),
-          deletion(aligned_box_part){};
+        : tag_buffer_particles(aligned_box_part),
+          injection_deletion(aligned_box_part, particle_buffer){};
     virtual ~BidirectionalBuffer(){};
 
     SimpleDynamics<TagBufferParticles, ExecutionPolicy> tag_buffer_particles;
-    SimpleDynamics<Injection, ExecutionPolicy> injection;
-    SimpleDynamics<Deletion, ExecutionPolicy> deletion;
+    SimpleDynamics<InjectionAndDelettion, ExecutionPolicy> injection_deletion;
 };
 } // namespace fluid_dynamics
 } // namespace SPH
