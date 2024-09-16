@@ -13,22 +13,26 @@ namespace SPH
 {
 //=================================================================================================//
 template <class ObserveMethodType>
-void RegressionTestBase<ObserveMethodType>::writeToXml(ObservedQuantityRecording<VariableType> *observe_method, size_t iteration)
+template <typename... Parameters>
+void RegressionTestBase<ObserveMethodType>::
+    writeToXml(ObservedQuantityRecording<Parameters...> *observe_method, size_t iteration)
 {
     this->exec();
     std::string element_name_ = "Snapshot_" + std::to_string(iteration);
     SimTK::Xml::Element &element_ = observe_xml_engine_.root_element_;
     observe_xml_engine_.addElementToXmlDoc(element_name_);
+    VariableType *interpolated_quantities = this->dv_interpolated_quantities_->DataField();
     for (size_t i = 0; i != this->base_particles_.TotalRealParticles(); ++i)
     {
         xmlmemory_io_.writeDataToXmlMemory(observe_xml_engine_, element_,
-                                           element_name_, i, (*this->interpolated_quantities_)[i], this->quantity_name_);
+                                           element_name_, i, interpolated_quantities[i], this->quantity_name_);
     };
 };
 //=================================================================================================//
 template <class ObserveMethodType>
-template <typename ReduceType>
-void RegressionTestBase<ObserveMethodType>::writeToXml(ReducedQuantityRecording<ReduceType> *reduce_method, size_t iteration)
+template <typename... Parameters>
+void RegressionTestBase<ObserveMethodType>::
+    writeToXml(ReducedQuantityRecording<Parameters...> *reduce_method, size_t iteration)
 {
     std::string element_name_ = "Snapshot_" + std::to_string(iteration);
     SimTK::Xml::Element &element_ = observe_xml_engine_.root_element_;
@@ -38,7 +42,9 @@ void RegressionTestBase<ObserveMethodType>::writeToXml(ReducedQuantityRecording<
 };
 //=================================================================================================//
 template <class ObserveMethodType>
-void RegressionTestBase<ObserveMethodType>::readFromXml(ObservedQuantityRecording<VariableType> *observe_method)
+template <typename... Parameters>
+void RegressionTestBase<ObserveMethodType>::
+    readFromXml(ObservedQuantityRecording<Parameters...> *observe_method)
 {
     observe_xml_engine_.loadXmlFile(in_output_filefullpath_);
     size_t number_of_particle_ = this->base_particles_.TotalRealParticles();
@@ -57,8 +63,9 @@ void RegressionTestBase<ObserveMethodType>::readFromXml(ObservedQuantityRecordin
 };
 //=================================================================================================//
 template <class ObserveMethodType>
-template <typename ReduceType>
-void RegressionTestBase<ObserveMethodType>::readFromXml(ReducedQuantityRecording<ReduceType> *reduce_method)
+template <typename... Parameters>
+void RegressionTestBase<ObserveMethodType>::
+    readFromXml(ReducedQuantityRecording<Parameters...> *reduce_method)
 {
     observe_xml_engine_.loadXmlFile(in_output_filefullpath_);
     size_t number_of_particle_ = 1;

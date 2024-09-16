@@ -78,20 +78,20 @@ class ParticleGenerator<SurfaceParticles, ShellRing> : public ParticleGenerator<
 };
 } // namespace SPH
 
-class InitialVelocityCondition : public BaseLocalDynamics<SPHBody>, public DataDelegateSimple
+class InitialVelocityCondition : public BaseLocalDynamics<SPHBody>
 {
   private:
-    StdLargeVec<Vec2d> *vel_;
+    Vec2d *vel_;
     Vec2d initial_velocity_;
 
   public:
     InitialVelocityCondition(SPHBody &body, Vec2d initial_velocity)
-        : BaseLocalDynamics<SPHBody>(body), DataDelegateSimple(body),
-          vel_(this->particles_->template registerSharedVariable<Vec2d>("Velocity")),
+        : BaseLocalDynamics<SPHBody>(body),
+          vel_(this->particles_->template registerStateVariable<Vec2d>("Velocity")),
           initial_velocity_(std::move(initial_velocity)){};
     inline void update(size_t index_i, [[maybe_unused]] Real dt = 0.0)
     {
-        (*vel_)[index_i] = initial_velocity_;
+        vel_[index_i] = initial_velocity_;
     }
 };
 
@@ -221,7 +221,7 @@ void three_ring_impact(int resolution_factor_l, int resolution_factor_m, int res
     Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half_l(ring_l_inner);
     DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d, FixedDampingRate>>>
         velocity_damping_l(0.2, ring_l_inner, "Velocity", physical_viscosity_l);
-    ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size_l(ring_l_body);
+    ReduceDynamics<solid_dynamics::AcousticTimeStep> computing_time_step_size_l(ring_l_body);
 
     InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration> corrected_configuration_m(ring_m_inner);
     Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationFirstHalf> stress_relaxation_first_half_m(ring_m_inner, 3, true);
@@ -258,7 +258,7 @@ void three_ring_impact(int resolution_factor_l, int resolution_factor_m, int res
     // Contact method
     // curvature update
     SimpleDynamics<thin_structure_dynamics::InitialShellCurvature> initial_curvature_m(ring_m_inner);
-    SimpleDynamics<thin_structure_dynamics::ShellCurvatureUpdate> curvature_m_update(ring_m_inner);
+    SimpleDynamics<thin_structure_dynamics::ShellCurvatureUpdate> curvature_m_update(ring_m_body);
     SimpleDynamics<thin_structure_dynamics::AverageShellCurvature> average_curvature_m_with_s_kernel(curvature_inner_m_with_s_kernel);
     SimpleDynamics<thin_structure_dynamics::AverageShellCurvature> average_curvature_s_with_m_kernel(curvature_inner_s_with_m_kernel);
 
@@ -297,9 +297,9 @@ void three_ring_impact(int resolution_factor_l, int resolution_factor_m, int res
     // Check
     auto check_nan = [&](BaseParticles *particles)
     {
-        const auto &pos_ = particles->ParticlePositions();
-        for (const auto &pos : pos_)
-            if (std::isnan(pos[0]) || std::isnan(pos[1]) || std::isnan(pos[2]))
+        Vecd *pos = particles->getVariableDataByName<Vecd>("Position");
+        for (size_t index_i = 0; index_i < particles->TotalRealParticles(); ++index_i)
+            if (std::isnan(pos[index_i][0]) || std::isnan(pos[index_i][1]) || std::isnan(pos[index_i][2]))
                 throw std::runtime_error("position has become nan");
     };
 
@@ -326,7 +326,7 @@ void three_ring_impact(int resolution_factor_l, int resolution_factor_m, int res
     vel_ic_s.exec();
 
     // Simulation
-    GlobalStaticVariables::physical_time_ = 0.0;
+    Real &physical_time = *system.getSystemVariableDataByName<Real>("PhysicalTime");
     int ite = 0;
     int ite_output = 0;
     Real output_period = end_time / 100.0;
@@ -335,7 +335,7 @@ void three_ring_impact(int resolution_factor_l, int resolution_factor_m, int res
     const Real dt_ref = std::min({computing_time_step_size_l.exec(), computing_time_step_size_m.exec(), computing_time_step_size_s.exec()});
     auto run_simulation = [&]()
     {
-        while (GlobalStaticVariables::physical_time_ < end_time)
+        while (physical_time < end_time)
         {
             Real integral_time = 0.0;
             while (integral_time < output_period)
@@ -343,7 +343,7 @@ void three_ring_impact(int resolution_factor_l, int resolution_factor_m, int res
                 if (ite % 1000 == 0)
                 {
                     std::cout << "N=" << ite << " Time: "
-                              << GlobalStaticVariables::physical_time_ << "	dt: "
+                              << physical_time << "	dt: "
                               << dt << "\n";
                 }
 
@@ -397,7 +397,7 @@ void three_ring_impact(int resolution_factor_l, int resolution_factor_m, int res
 
                 ++ite;
                 integral_time += dt;
-                GlobalStaticVariables::physical_time_ += dt;
+                physical_time += dt;
 
                 { // checking if any position has become nan
                     check_nan(particles_l);

@@ -191,7 +191,7 @@ int main(int ac, char *av[])
     InteractionWithUpdate<solid_dynamics::ContactForceToWall> shell_compute_solid_contact_forces(shell_contact);
     DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d, FixedDampingRate>>> beam_damping(0.5, beam_inner, "Velocity", physical_viscosity);
 
-    ReduceDynamics<solid_dynamics::AcousticTimeStepSize> shell_get_time_step_size(beam, 0.5);
+    ReduceDynamics<solid_dynamics::AcousticTimeStep> shell_get_time_step_size(beam, 0.5);
     BodyRegionByParticle holder(beam, makeShared<MultiPolygonShape>(createBeamConstrainShape()));
     SimpleDynamics<FixBodyPartConstraint> constraint_holder(holder);
     //----------------------------------------------------------------------
@@ -237,6 +237,7 @@ int main(int ac, char *av[])
     /** Initial states output. */
     body_states_recording.writeToFile(0);
     /** Main loop. */
+    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     int ite = 0;
     Real T0 = 1.0;
     Real end_time = T0;
@@ -250,7 +251,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------
-    while (GlobalStaticVariables::physical_time_ < end_time)
+    while (physical_time < end_time)
     {
         Real integration_time = 0.0;
         while (integration_time < output_interval)
@@ -258,7 +259,7 @@ int main(int ac, char *av[])
             if (ite % 100 == 0)
             {
                 std::cout << "N=" << ite << " Time: "
-                          << GlobalStaticVariables::physical_time_ << "	dt: " << dt << "\n";
+                          << physical_time << "	dt: " << dt << "\n";
                 write_beam_kinetic_energy.writeToFile(ite);
             }
             beam_shell_update_contact_density.exec();
@@ -288,7 +289,7 @@ int main(int ac, char *av[])
             Real dt_free = shell_get_time_step_size.exec();
             dt = dt_free;
             integration_time += dt;
-            GlobalStaticVariables::physical_time_ += dt;
+            physical_time += dt;
         }
         TickCount t2 = TickCount::now();
         body_states_recording.writeToFile(ite);

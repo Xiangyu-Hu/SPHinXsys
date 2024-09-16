@@ -45,17 +45,15 @@ namespace SPH
  */
 template <class DynamicsIdentifier>
 class ComputeTotalErrorOrPositiveParameter
-    : public BaseLocalDynamicsReduce<ReduceSum<Real>, DynamicsIdentifier>,
-      public DataDelegateSimple
+    : public BaseLocalDynamicsReduce<ReduceSum<Real>, DynamicsIdentifier>
 {
   protected:
-    StdLargeVec<Real> &variable_;
+    Real *variable_;
 
   public:
     ComputeTotalErrorOrPositiveParameter(DynamicsIdentifier &identifier, const std::string &variable_name)
         : BaseLocalDynamicsReduce<ReduceSum<Real>, DynamicsIdentifier>(identifier),
-          DataDelegateSimple(identifier.getSPHBody()),
-          variable_(*this->particles_->template getVariableDataByName<Real>(variable_name)){};
+          variable_(this->particles_->template getVariableDataByName<Real>(variable_name)){};
     virtual ~ComputeTotalErrorOrPositiveParameter(){};
 
     Real reduce(size_t index_i, Real dt = 0.0)
@@ -70,17 +68,15 @@ class ComputeTotalErrorOrPositiveParameter
  */
 template <class DynamicsIdentifier>
 class ComputeMaximumError
-    : public BaseLocalDynamicsReduce<ReduceMax, DynamicsIdentifier>,
-      public DataDelegateSimple
+    : public BaseLocalDynamicsReduce<ReduceMax, DynamicsIdentifier>
 {
   protected:
-    StdLargeVec<Real> &variable_;
+    Real *variable_;
 
   public:
     ComputeMaximumError(DynamicsIdentifier &identifier, const std::string &variable_name)
         : BaseLocalDynamicsReduce<ReduceMax, DynamicsIdentifier>(identifier),
-          DataDelegateSimple(identifier.getSPHBody()),
-          variable_(*this->particles_->template getVariableDataByName<Real>(variable_name)){};
+          variable_(this->particles_->template getVariableDataByName<Real>(variable_name)){};
 
     Real reduce(size_t index_i, Real dt = 0.0)
     {
@@ -95,8 +91,7 @@ class ComputeMaximumError
  */
 template <class DynamicsIdentifier>
 class ThermalConductivityConstraint
-    : public LocalDynamics,
-      public DataDelegateSimple
+    : public LocalDynamics
 {
   public:
     ThermalConductivityConstraint(DynamicsIdentifier &identifier, const std::string &variable_name,
@@ -107,7 +102,7 @@ class ThermalConductivityConstraint
   protected:
     Real initial_thermal_conductivity_;
     Real new_average_thermal_conductivity_;
-    StdLargeVec<Real> &local_diffusivity_;
+    Real *local_diffusivity_;
     void update(size_t index_i, Real dt = 0.0);
 };
 } // namespace SPH

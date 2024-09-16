@@ -39,7 +39,7 @@ namespace SPH
  * @class BaseGhostCreation
  * @brief Base class for the ghost particle
  */
-class GhostCreationFromMesh : public DataDelegateSimple
+class GhostCreationFromMesh : public LocalDynamics
 {
   public:
     GhostCreationFromMesh(RealBody &real_body, ANSYSMesh &ansys_mesh,
@@ -51,8 +51,8 @@ class GhostCreationFromMesh : public DataDelegateSimple
     std::mutex mutex_create_ghost_particle_; /**< mutex exclusion for memory conflict */
     StdLargeVec<Vecd> &node_coordinates_;
     StdVec<StdVec<StdVec<size_t>>> &mesh_topology_;
-    StdLargeVec<Vecd> &pos_;
-    StdLargeVec<Real> &Vol_;
+    Vecd *pos_;
+    Real *Vol_;
     void addGhostParticleAndSetInConfiguration();
 
   public:
@@ -65,26 +65,26 @@ class GhostCreationFromMesh : public DataDelegateSimple
 //----------------------------------------------------------------------
 //	BoundaryConditionSetupInFVM
 //----------------------------------------------------------------------
-class BoundaryConditionSetupInFVM : public DataDelegateInner
+class BoundaryConditionSetupInFVM : public LocalDynamics, public DataDelegateInner
 {
   public:
     BoundaryConditionSetupInFVM(BaseInnerRelationInFVM &inner_relation, GhostCreationFromMesh &ghost_creation);
     virtual ~BoundaryConditionSetupInFVM(){};
-    virtual void applyReflectiveWallBoundary(size_t ghost_index, size_t index_i, Vecd e_ij) {};
-    virtual void applyNonSlipWallBoundary(size_t ghost_index, size_t index_i) {};
-    virtual void applyGivenValueInletFlow(size_t ghost_index) {};
-    virtual void applyOutletBoundary(size_t ghost_index, size_t index_i) {};
-    virtual void applyTopBoundary(size_t ghost_index, size_t index_i) {};
-    virtual void applyFarFieldBoundary(size_t ghost_index) {};
-    virtual void applyPressureOutletBC(size_t ghost_index, size_t index_i) {};
-    virtual void applySymmetryBoundary(size_t ghost_index, size_t index_i, Vecd e_ij) {};
-    virtual void applyVelocityInletFlow(size_t ghost_index, size_t index_i) {};
+    virtual void applyReflectiveWallBoundary(size_t ghost_index, size_t index_i, Vecd e_ij){};
+    virtual void applyNonSlipWallBoundary(size_t ghost_index, size_t index_i){};
+    virtual void applyGivenValueInletFlow(size_t ghost_index){};
+    virtual void applyOutletBoundary(size_t ghost_index, size_t index_i){};
+    virtual void applyTopBoundary(size_t ghost_index, size_t index_i){};
+    virtual void applyFarFieldBoundary(size_t ghost_index){};
+    virtual void applyPressureOutletBC(size_t ghost_index, size_t index_i){};
+    virtual void applySymmetryBoundary(size_t ghost_index, size_t index_i, Vecd e_ij){};
+    virtual void applyVelocityInletFlow(size_t ghost_index, size_t index_i){};
     // Common functionality for resetting boundary conditions
     void resetBoundaryConditions();
 
   protected:
-    StdLargeVec<Real> &rho_, &Vol_, &mass_, &p_;
-    StdLargeVec<Vecd> &vel_, &pos_, &mom_;
+    Real *rho_, *Vol_, *mass_, *p_;
+    Vecd *vel_, *pos_, *mom_;
     std::pair<size_t, size_t> &ghost_bound_;
     StdVec<StdVec<size_t>> &each_boundary_type_with_all_ghosts_index_;
     StdVec<StdVec<Vecd>> &each_boundary_type_with_all_ghosts_eij_;

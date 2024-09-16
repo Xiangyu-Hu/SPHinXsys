@@ -66,8 +66,8 @@ class HardeningPlasticSolid : public PlasticSolid
   protected:
     Real hardening_modulus_;
     const Real sqrt_2_over_3_ = sqrt(2.0 / 3.0);
-    StdLargeVec<Matd> *inverse_plastic_strain_; /**< inverse of plastic right cauchy green strain tensor */
-    StdLargeVec<Real> *hardening_parameter_;    /**< hardening parameter */
+    Matd *inverse_plastic_strain_; /**< inverse of plastic right cauchy green strain tensor */
+    Real *hardening_parameter_;    /**< hardening parameter */
 
   public:
     /** Constructor */
@@ -132,7 +132,7 @@ class ViscousPlasticSolid : public PlasticSolid
     Real viscous_modulus_;
     Real Herschel_Bulkley_power_;
     const Real sqrt_2_over_3_ = sqrt(2.0 / 3.0);
-    StdLargeVec<Matd> *inverse_plastic_strain_; /**< inverse of plastic right cauchy green strain tensor */
+    Matd *inverse_plastic_strain_; /**< inverse of plastic right cauchy green strain tensor */
 
   public:
     /** Constructor */

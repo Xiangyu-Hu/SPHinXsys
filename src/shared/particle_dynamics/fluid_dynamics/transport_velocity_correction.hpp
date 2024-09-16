@@ -12,7 +12,7 @@ template <class BaseRelationType>
 TransportVelocityCorrection<Base, DataDelegationType, KernelCorrectionType, ParticleScope>::
     TransportVelocityCorrection(BaseRelationType &base_relation)
     : LocalDynamics(base_relation.getSPHBody()), DataDelegationType(base_relation),
-      zero_gradient_residue_(*this->particles_->template registerSharedVariable<Vecd>("ZeroGradientResidue")),
+      zero_gradient_residue_(this->particles_->template registerStateVariable<Vecd>("ZeroGradientResidue")),
       kernel_correction_(this->particles_), within_scope_(this->particles_)
 {
     static_assert(std::is_base_of<WithinScope, ParticleScope>::value,
@@ -25,8 +25,8 @@ TransportVelocityCorrection<Inner<ResolutionType, LimiterType>, CommonControlTyp
     : TransportVelocityCorrection<Base, DataDelegateInner, CommonControlTypes...>(inner_relation),
       h_ref_(this->sph_body_.sph_adaptation_->ReferenceSmoothingLength()),
       correction_scaling_(coefficient * h_ref_ * h_ref_),
-      Vol_(*this->particles_->template getVariableDataByName<Real>("VolumetricMeasure")),
-      pos_(*this->particles_->template getVariableDataByName<Vecd>("Position")),
+      Vol_(this->particles_->template getVariableDataByName<Real>("VolumetricMeasure")),
+      pos_(this->particles_->template getVariableDataByName<Vecd>("Position")),
       h_ratio_(this->particles_), limiter_(h_ref_ * h_ref_)
 {
     static_assert(std::is_base_of<Limiter, LimiterType>::value,
@@ -85,7 +85,7 @@ void TransportVelocityCorrection<Contact<Boundary>, CommonControlTypes...>::
         Vecd inconsistency = Vecd::Zero();
         for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
         {
-            StdLargeVec<Real> &wall_Vol_k = *(wall_Vol_[k]);
+            Real *wall_Vol_k = wall_Vol_[k];
             Neighborhood &contact_neighborhood = (*this->contact_configuration_[k])[index_i];
             for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
             {
@@ -121,7 +121,7 @@ void TransportVelocityCorrection<Contact<>, KernelCorrectionType, CommonControlT
         Vecd inconsistency = Vecd::Zero();
         for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
         {
-            StdLargeVec<Real> &Vol_k = *(this->contact_Vol_[k]);
+            Real *Vol_k = this->contact_Vol_[k];
             Neighborhood &contact_neighborhood = (*this->contact_configuration_[k])[index_i];
             KernelCorrectionType &kernel_correction_k = this->contact_kernel_corrections_[k];
             for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)

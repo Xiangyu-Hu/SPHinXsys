@@ -76,6 +76,11 @@ VecType getVectorProjectionOfVector(const VecType &vector_1, const VecType &vect
     return vector_1.dot(vector_2) * vector_2 / (vector_2.squaredNorm() + TinyReal);
 };
 
+template <typename Datatype>
+Real getSquaredNorm(const Datatype &variable) { return variable.squaredNorm(); };
+
+inline Real getSquaredNorm(const Real &variable) { return variable * variable; };
+
 /** von Mises stress from stress matrix */
 Real getVonMisesStressFromMatrix(const Mat2d &sigma);
 Real getVonMisesStressFromMatrix(const Mat3d &sigma);

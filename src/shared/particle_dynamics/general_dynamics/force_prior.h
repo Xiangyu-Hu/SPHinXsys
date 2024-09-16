@@ -35,32 +35,32 @@
 namespace SPH
 {
 
-class ForcePrior
+template <class DynamicsIdentifier>
+class BaseForcePrior : public BaseLocalDynamics<DynamicsIdentifier>
 {
   protected:
-    StdLargeVec<Vecd> &force_prior_, &current_force_, &previous_force_;
+    Vecd *force_prior_, *current_force_, *previous_force_;
 
   public:
-    ForcePrior(BaseParticles *base_particles, const std::string &force_name);
-    virtual ~ForcePrior(){};
+    BaseForcePrior(DynamicsIdentifier &identifier, const std::string &force_name);
+    virtual ~BaseForcePrior(){};
     void update(size_t index_i, Real dt = 0.0);
 };
+using ForcePrior = BaseForcePrior<SPHBody>;
 
-class GravityForce
-    : public LocalDynamics,
-      public DataDelegateSimple,
-      public ForcePrior
+template <class GravityType>
+class GravityForce : public ForcePrior
 {
   protected:
-    Gravity &gravity_;
-    StdLargeVec<Vecd> &pos_;
-    StdLargeVec<Real> &mass_;
+    const GravityType gravity_;
+    Vecd *pos_;
+    Real *mass_;
+    Real *physical_time_;
 
   public:
-    explicit GravityForce(SPHBody &sph_body, Gravity &gravity);
+    GravityForce(SPHBody &sph_body, const GravityType &gravity);
     virtual ~GravityForce(){};
     void update(size_t index_i, Real dt = 0.0);
 };
-
 } // namespace SPH
 #endif // FORCE_PRIOR_H

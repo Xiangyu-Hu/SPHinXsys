@@ -39,29 +39,29 @@ namespace SPH
  * @class OptimizationBySplittingAlgorithmBase
  * @brief The base class for optimization using the splitting algorithm.
  */
-template <typename VariableType>
+template <typename DataType>
 class OptimizationBySplittingAlgorithmBase
     : public LocalDynamics,
       public DataDelegateInner
 {
   public:
-    explicit OptimizationBySplittingAlgorithmBase(BaseInnerRelation &inner_relation, const std::string &variable_name);
+    explicit OptimizationBySplittingAlgorithmBase(BaseInnerRelation &inner_relation, const std::string &name);
     virtual ~OptimizationBySplittingAlgorithmBase(){};
     virtual void interaction(size_t index_i, Real dt = 0.0) = 0;
 
   protected:
     LocalIsotropicDiffusion &diffusion_;
-    StdLargeVec<Real> &Vol_, &mass_;
-    StdLargeVec<Vecd> &normal_vector_;
-    StdLargeVec<VariableType> &variable_;
-    StdLargeVec<Real> &heat_flux_, &heat_source_;
-    StdLargeVec<int> &splitting_index_;
-    StdLargeVec<Real> &species_modified_, &species_recovery_;
-    StdLargeVec<Real> &parameter_recovery_, &eta_regularization_;
-    StdLargeVec<Real> &residual_T_local_, &residual_T_global_;
-    StdLargeVec<Real> &residual_k_local_, &residual_k_global_;
-    StdLargeVec<Real> &variation_local_, &variation_global_;
-    StdLargeVec<Real> &residual_after_splitting_;
+    Real *Vol_, *mass_;
+    Vecd *normal_vector_;
+    DataType *variable_;
+    Real *heat_flux_, *heat_source_;
+    int *splitting_index_;
+    Real *species_modified_, *species_recovery_;
+    Real *parameter_recovery_, *eta_regularization_;
+    Real *residual_T_local_, *residual_T_global_;
+    Real *residual_k_local_, *residual_k_global_;
+    Real *variation_local_, *variation_global_;
+    Real *residual_after_splitting_;
 };
 
 /**
@@ -70,12 +70,12 @@ class OptimizationBySplittingAlgorithmBase
  *        after each splitting step, which could smooth the distribution
  *        and avoid some local optimal solution.
  */
-template <typename VariableType>
+template <typename DataType>
 class RegularizationByDiffusionAnalogy
-    : public OptimizationBySplittingAlgorithmBase<VariableType>
+    : public OptimizationBySplittingAlgorithmBase<DataType>
 {
   public:
-    RegularizationByDiffusionAnalogy(BaseInnerRelation &inner_relation, const std::string &variable_name,
+    RegularizationByDiffusionAnalogy(BaseInnerRelation &inner_relation, const std::string &name,
                                      Real initial_eta = 1, Real variation = 1);
     virtual ~RegularizationByDiffusionAnalogy(){};
 
@@ -86,8 +86,8 @@ class RegularizationByDiffusionAnalogy
 
   protected:
     Real initial_eta_, maximum_variation_, averaged_variation_;
-    virtual ErrorAndParameters<VariableType> computeVariationAndParameters(size_t index_i, Real dt);
-    virtual void updateStatesByVariation(size_t index_i, Real dt, const ErrorAndParameters<VariableType> &variation_and_parameters);
+    virtual ErrorAndParameters<DataType> computeVariationAndParameters(size_t index_i, Real dt);
+    virtual void updateStatesByVariation(size_t index_i, Real dt, const ErrorAndParameters<DataType> &variation_and_parameters);
     virtual void interaction(size_t index_i, Real dt = 0.0) override;
 };
 
@@ -96,17 +96,17 @@ class RegularizationByDiffusionAnalogy
  * @brief The global variation of parameter can be updated after the process
  *        of splitting which is an essential parameter for optimization schedule.
  */
-template <typename VariableType>
+template <typename DataType>
 class UpdateRegularizationVariation
-    : public OptimizationBySplittingAlgorithmBase<VariableType>
+    : public OptimizationBySplittingAlgorithmBase<DataType>
 {
   public:
-    UpdateRegularizationVariation(BaseInnerRelation &inner_relation, const std::string &variable_name);
+    UpdateRegularizationVariation(BaseInnerRelation &inner_relation, const std::string &name);
     virtual ~UpdateRegularizationVariation(){};
 
   protected:
     /* Redefine the compute function to avoid non-meaningful initial variation. */
-    virtual ErrorAndParameters<VariableType> computeVariationAndParameters(size_t index_i, Real dt);
+    virtual ErrorAndParameters<DataType> computeVariationAndParameters(size_t index_i, Real dt);
     virtual void interaction(size_t index_i, Real dt = 0.0) override;
 };
 } // namespace SPH

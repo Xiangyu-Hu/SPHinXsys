@@ -108,18 +108,20 @@ class Cylinder : public MultiPolygonShape
 class FreeStreamCondition : public fluid_dynamics::FlowVelocityBuffer
 {
     Real u_ave_, u_ref_, t_ref;
+    Real *physical_time_;
 
   public:
     FreeStreamCondition(BodyPartByCell &constrained_region)
         : fluid_dynamics::FlowVelocityBuffer(constrained_region),
-          u_ave_(0), u_ref_(U_f), t_ref(2.0) {}
+          u_ave_(0), u_ref_(U_f), t_ref(2.0),
+          physical_time_(sph_system_.getSystemVariableDataByName<Real>("PhysicalTime")) {}
     Vecd getTargetVelocity(Vecd &position, Vecd &velocity) override
     {
         return Vecd(u_ave_, 0.0);
     }
     void setupDynamics(Real dt = 0.0) override
     {
-        Real run_time = GlobalStaticVariables::physical_time_;
+        Real run_time = *physical_time_;
         u_ave_ = run_time < t_ref ? 0.5 * u_ref_ * (1.0 - cos(Pi * run_time / t_ref)) : u_ref_;
     }
 };
