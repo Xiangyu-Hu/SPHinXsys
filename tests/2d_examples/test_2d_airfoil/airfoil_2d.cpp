@@ -81,8 +81,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	First output before the simulation.
     //----------------------------------------------------------------------
-    airfoil_recording_to_vtp.writeToFile(0);
-    cell_linked_list_recording.writeToFile(0);
+    airfoil_recording_to_vtp.writeToFile();
+    cell_linked_list_recording.writeToFile();
     //----------------------------------------------------------------------
     //	Particle relaxation time stepping start here.
     //----------------------------------------------------------------------
