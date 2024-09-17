@@ -27,7 +27,6 @@ Real rho0_s = 1000.0;          /** Normalized density. */
 Real Youngs_modulus = 100.0e6; /** Normalized Youngs Modulus. */
 Real poisson = 0.3;            /** Poisson ratio. */
 Real c0 = sqrt(Youngs_modulus / (3 * (1 - 2 * poisson) * rho0_s));
-Real gravity_g = 0.0;
 
 Real governing_vibration_integer_x = 2.0;
 Real governing_vibration_integer_y = 2.0;
@@ -147,12 +146,10 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     SimpleDynamics<BeamInitialCondition> initial_velocity(plate_body);
     InteractionWithUpdate<LinearGradientCorrectionMatrixInner> corrected_configuration(plate_body_inner);
-
     InteractionDynamics<continuum_dynamics::ShearAccelerationRelaxation> plate_shear_acceleration(plate_body_inner);
     Dynamics1Level<continuum_dynamics::Integration1stHalf> plate_pressure_relaxation(plate_body_inner);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfInnerDissipativeRiemann> plate_density_relaxation(plate_body_inner);
     Dynamics1Level<continuum_dynamics::ShearStressRelaxation> plate_shear_stress_relaxation(plate_body_inner);
-
     ReduceDynamics<fluid_dynamics::AdvectionViscousTimeStep> fluid_advection_time_step(plate_body, U_ref, 0.2);
     ReduceDynamics<fluid_dynamics::AcousticTimeStep> fluid_acoustic_time_step(plate_body, 0.4);
     BoundaryGeometry boundary_geometry(plate_body, "BoundaryGeometry");

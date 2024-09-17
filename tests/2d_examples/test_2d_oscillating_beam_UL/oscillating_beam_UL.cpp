@@ -27,7 +27,6 @@ Real rho0_s = 1.0e3;         // reference density
 Real Youngs_modulus = 2.0e6; // reference Youngs modulus
 Real poisson = 0.3975;       // Poisson ratio
 Real c0 = sqrt(Youngs_modulus / (3 * (1 - 2 * poisson) * rho0_s));
-Real gravity_g = 0.0;
 //----------------------------------------------------------------------
 //	Parameters for initial condition on velocity
 //----------------------------------------------------------------------

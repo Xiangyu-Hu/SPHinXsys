@@ -99,11 +99,9 @@ void ShearStressRelaxation::interaction(size_t index_i, Real dt)
     }
     velocity_gradient_[index_i] = velocity_gradient;
     /*calculate strain*/
-    Matd strain_rate = 0.5 * (velocity_gradient + velocity_gradient.transpose());
-    strain_tensor_rate_[index_i] = strain_rate;
+    strain_tensor_rate_[index_i] = 0.5 * (velocity_gradient + velocity_gradient.transpose());
     strain_tensor_[index_i] += strain_tensor_rate_[index_i] * 0.5 * dt;
-    Matd strain_i = strain_tensor_[index_i];
-    von_mises_strain_[index_i] = getVonMisesStressFromMatrix(strain_i);
+    von_mises_strain_[index_i] = getVonMisesStressFromMatrix(strain_tensor_[index_i]);
 }
 //====================================================================================//
 void ShearStressRelaxation::update(size_t index_i, Real dt)

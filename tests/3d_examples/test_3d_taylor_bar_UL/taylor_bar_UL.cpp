@@ -31,8 +31,6 @@ int main(int ac, char *av[])
     InnerRelation column_inner(column);
     ContactRelation my_observer_contact(my_observer, {&column});
     SurfaceContactRelation column_wall_contact(column, {&wall_boundary});
-    /**define simple data file input and outputs functions. */
-    BodyStatesRecordingToVtp write_states(system);
     //----------------------------------------------------------------------
     //	Run particle relaxation for body-fitted distribution if chosen.
     //----------------------------------------------------------------------
@@ -42,7 +40,7 @@ int main(int ac, char *av[])
         /** Random reset the insert body particle position. */
         SimpleDynamics<RandomizeParticlePosition> random_column_particles(column);
         /** Write the body state to Vtp file. */
-        BodyStatesRecordingToVtp write_column_to_vtp(column);
+        BodyStatesRecordingToVtp write_column_to_vtp(system);
         /** Write the particle reload files. */
         ReloadParticleIO write_particle_reload_files(column);
         /** A  Physics relaxation step. */
@@ -52,8 +50,7 @@ int main(int ac, char *av[])
          */
         random_column_particles.exec(0.25);
         relaxation_step_inner.SurfaceBounding().exec();
-        write_states.writeToFile(0.0);
-
+        write_column_to_vtp.writeToFile(0);
         /** relax particles of the insert body. */
         int ite_p = 0;
         while (ite_p < 1000)
@@ -87,6 +84,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Output
     //----------------------------------------------------------------------
+    /**define simple data file input and outputs functions. */
+    BodyStatesRecordingToVtp write_states(system);
     write_states.addToWrite<Real>(column, "VonMisesStress");
     write_states.addToWrite<Real>(column, "VonMisesStrain");
     write_states.addToWrite<Real>(column, "Pressure");
