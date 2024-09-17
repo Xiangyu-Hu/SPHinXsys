@@ -1,4 +1,4 @@
-#include "2d_turbulent_strongly_curved_channel.h"
+#include "2d_turbulent_diffuser.h"
 using namespace SPH;
 
 int main(int ac, char *av[])
