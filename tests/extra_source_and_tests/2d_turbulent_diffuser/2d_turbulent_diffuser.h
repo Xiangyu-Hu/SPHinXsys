@@ -18,37 +18,20 @@ using namespace SPH;
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real scale = 0.0254;
-Real DH = 3.0 * scale; /**< Channel height. */
+Real scale = 1.0e-3;
+Real DH = 0.015; /**< Channel height. */
 Real num_fluid_cross_section = 20.0;
-Real central_angel = 210.0 * 2.0 * Pi / 360.0;
-Real extend_in = 0.0;
-Real extend_out = 6.0 * DH;
+Real extend_in = 5.0 * DH;
+Real extend_out = 3.0 * DH;
 Real DL1 = 3.0 * DH + extend_in;
 Real DL2 = 3.0 * DH + extend_out;
-Real R1 = 27.0 * scale;
-Real R2 = 30.0 * scale;
-
-Vec2d circle_center(DL1, R2);
-Vec2d point_A(DL1, 0.0);
+Real DL3 = 21.0 * DH;
+Real incline_angle = 10.0 * (2.0 * Pi / 360.0);
+Vec2d point_A(0.0, DH);
 Vec2d point_B(DL1, DH);
-
-Real theta_start = atan2(point_B[1] - circle_center[1], point_B[0] - circle_center[0]);
-
-Real a = sin(central_angel + theta_start);
-Real b = cos(central_angel + theta_start);
-Vec2d vec_ba(b, a);
-Vec2d point_N = vec_ba * R2 + circle_center;
-Vec2d point_M = vec_ba * R1 + circle_center;
-
-Real theta_end = atan2(point_M[1] - circle_center[1], point_M[0] - circle_center[0]);
-
-Vec2d vec_MN = point_N - point_M;
-Vec2d vec_MN_vertical(-1.0 * vec_MN[1], vec_MN[0]);
-Vec2d unit_vec_MN_vertical = vec_MN_vertical.normalized();
-Vec2d point_P = point_N + DL2 * unit_vec_MN_vertical;
-Vec2d point_Q = point_M + DL2 * unit_vec_MN_vertical;
-
+Vec2d point_C(DL1 + DL3, DH + DL3 * tan(incline_angle));
+Vec2d point_D(DL1 + DL3 + DL2, DH + DL3 * tan(incline_angle));
+Vec2d point_E(DL1 + DL3 + DL2, 0.0);
 //----------------------------------------------------------------------
 //	Unique parameters for turbulence.
 //----------------------------------------------------------------------
@@ -60,7 +43,7 @@ Real relaxation_rate_turbulent_inlet = 0.8;
 int is_AMRD = 0;
 bool is_constrain_normal_velocity_in_P_region = false;
 //** Weight for correcting the velocity  gradient in the sub near wall region  *
-Real weight_vel_grad_sub_nearwall = 0.00;
+Real weight_vel_grad_sub_nearwall = 0.1;
 //** Empirical parameter for initial stability*
 Real turbulent_module_activate_time = 2.5;
 //** Intial values for K, Epsilon and Mu_t *
@@ -89,7 +72,7 @@ Real U_f = U_inlet;         //*Characteristic velocity
 Real U_max = 1.5 * U_inlet; //** An estimated value, generally 1.5 U_inlet *
 Real c_f = 10.0 * U_max;
 Real rho0_f = 1.0; /**< Density. */
-Real Re = 148400.0;
+Real Re = 18000.0;
 //Real Re = 100.0;
 Real mu_f = rho0_f * U_f * DH / Re;
 
@@ -98,7 +81,7 @@ Real Re_calculated = U_f * DH * rho0_f / mu_f;
 Real DH_C = DH - 2.0 * offset_distance;
 
 //** Intial inlet pressure to drive flow *
-Real initial_inlet_pressure = 0.5 * rho0_f * U_inlet * U_inlet;
+//Real initial_inlet_pressure = 0.5 * rho0_f * U_inlet * U_inlet;
 //Real initial_inlet_pressure = 5.0;
 //----------------------------------------------------------------------
 //	The emitter block with offset model.
@@ -113,11 +96,8 @@ Vec2d left_buffer_translation = Vec2d(-DL_sponge, 0.0) + left_buffer_halfsize + 
 Real outlet_buffer_length = BW;
 Real outlet_buffer_height = 1.5 * DH;
 
-//Real outlet_disposer_rotation_angel = 0.5 * Pi ; //** By default, counter-clockwise is positive *
-//Vec2d outlet_buffer_center_translation = Vec2d(DL_domain - 0.5 * DH , DH_domain- 0.5 * outlet_buffer_length) ;
-
-Real outlet_disposer_rotation_angel = central_angel; //** By default, counter-clockwise is positive *
-Vec2d outlet_buffer_center_translation = (point_Q + point_P) / 2.0 - unit_vec_MN_vertical * outlet_buffer_length / 2.0;
+Real outlet_disposer_rotation_angel = 0.0; //** By default, counter-clockwise is positive *
+Vec2d outlet_buffer_center_translation = (point_D + point_E) / 2.0 + Vecd(-1.0, 0.0) * outlet_buffer_length / 2.0;
 
 Real outlet_emitter_rotation_angel = Pi + outlet_disposer_rotation_angel; //** By default, counter-clockwise is positive *
 
@@ -135,48 +115,79 @@ Vec2d right_buffer_translation = outlet_buffer_center_translation;
 //----------------------------------------------------------------------
 //	Domain bounds of the system.
 //----------------------------------------------------------------------
-Real DL_domain = DL1 + R2;
-Real DH_domain = DH + 2.0 * R2;
-Vec2d left_bottom_point(-2.0 * R2, 0.0);
+Real DL_domain = DL1 + DL3 + DL2 + offset_distance;
+Real DH_domain = point_D[1];
+Vec2d left_bottom_point(-DL_sponge - offset_distance, 0.0);
 Vec2d right_up_point(DL_domain, DH_domain);
 BoundingBox system_domain_bounds(left_bottom_point + Vec2d(-2.0 * BW, -2.0 * BW), right_up_point + Vec2d(2.0 * BW, 2.0 * BW));
+//----------------------------------------------------------------------
+// Output and time average control.
+//----------------------------------------------------------------------
+int screen_output_interval = 100;
+Real end_time = 10.0;              /**< End time. */
+Real Output_Time = end_time / 4.0; /**< Time stamps for output of body states. */
+Real cutoff_time = end_time * 0.6; //** cutoff_time should be a integral and the same as the PY script */
 //----------------------------------------------------------------------
 // Observation with offset model.
 //----------------------------------------------------------------------
 // ** By kernel weight. *
-int screen_output_interval = 100;
-Real end_time = 10.0;              /**< End time. */
-Real Output_Time = end_time / 4.0; /**< Time stamps for output of body states. */
-
-Real cutoff_time = end_time * 0.6; //** cutoff_time should be a integral and the same as the PY script */
-int number_observe_line = 4;
-Real observe_angles[4] = {
-    90.0 * (2.0 * Pi / 360.0),
-    120.0 * (2.0 * Pi / 360.0),
-    150.0 * (2.0 * Pi / 360.0),
-    172.0 * (2.0 * Pi / 360.0)};
+int number_observe_line = 7;
 Real observer_offset_distance = 1.8 * resolution_ref;
-
-int num_observer_points = std::round(DH_C / resolution_ref); //**Evrey particle is regarded as a cell monitor*
-Real observe_spacing = DH_C / num_observer_points;
+Vec2d unit_direction_observe(0.0, -1.0); //** From end to start to ensure observe accuracy on the inclined wall */
+// ** Determine the observing start point. *
+Real observe_start_x[7] = {
+    point_B[0] - 5.87 * DH,
+    point_B[0] + 2.59 * DH,
+    point_B[0] + 5.98 * DH,
+    point_B[0] + 13.56 * DH,
+    point_B[0] + 16.93 * DH,
+    point_B[0] + 20.32 * DH,
+    point_B[0] + 23.71 * DH};
+Real observe_start_y = 0.0 + offset_distance;
+// ** Determine the length of the observing line and other information. *
+Real observe_line_length[7] = {0.0};
+Real observe_end_y[7] = {0.0};
+int num_observer_points[7] = {0};
+void getObservingLineLengthAndEndPoints()
+{
+    for (int i = 0; i < number_observe_line; ++i)
+    {
+        if (observe_start_x[i] < point_B[0])
+        {
+            observe_end_y[i] = observe_start_y + DH_C;
+            observe_line_length[i] = DH_C;
+            num_observer_points[i] = std::round(observe_line_length[i] / resolution_ref);
+        }
+        else if (observe_start_x[i] >= point_B[0] && observe_start_x[i] < point_C[0])
+        {
+            Real x_diff = observe_start_x[i] - point_B[0];
+            Real y_diff = x_diff * tan(incline_angle);
+            observe_end_y[i] = y_diff + point_B[1] - offset_distance;
+            observe_line_length[i] = observe_end_y[i] - observe_start_y;
+            num_observer_points[i] = std::round(observe_line_length[i] / resolution_ref);
+        }
+        else if (observe_start_x[i] >= point_C[0])
+        {
+            observe_end_y[i] = point_D[1] - offset_distance;
+            observe_line_length[i] = point_D[1] - 2.0 * offset_distance;
+            num_observer_points[i] = std::round(observe_line_length[i] / resolution_ref);
+        }
+    }
+}
 
 StdVec<Vecd> observation_locations;
 void getPositionsOfMultipleObserveLines()
 {
+    getObservingLineLengthAndEndPoints();
     for (int k = 0; k < number_observe_line; ++k)
     {
-        Real rotate_angle_local = observe_angles[k];
-        Real rotate_angle_global = theta_start + 1.0 * rotate_angle_local;
-        Vec2d alpha(cos(rotate_angle_global), sin(rotate_angle_global));
-        Vec2d ob_point_at_outer_wall = R2 * alpha + circle_center;
-
-        Vec2d vec_point_at_outer_wall_to_circle_center = circle_center - ob_point_at_outer_wall;
-        Vec2d unit_direction_observe = vec_point_at_outer_wall_to_circle_center.normalized();
-        Vecd pos_observe_start = ob_point_at_outer_wall + y_p_constant * unit_direction_observe;
-        for (int i = 0; i < num_observer_points; ++i)
+        Vecd pos_observe_start(observe_start_x[k], observe_end_y[k]);
+        int num_observer_point = num_observer_points[k];
+        Real observe_spacing = observe_line_length[k] / num_observer_point;
+        for (int i = 0; i < num_observer_point; ++i)
         {
             Real offset = 0.0;
-            offset = (i == 0 ? -observer_offset_distance : (i == num_observer_points - 1 ? observer_offset_distance : 0.0));
+            offset = (i == 0 ? -observer_offset_distance : (i == num_observer_point - 1 ? observer_offset_distance : 0.0));
             Vecd pos_observer_i = pos_observe_start + (i * observe_spacing + offset) * unit_direction_observe;
             observation_locations.push_back(pos_observer_i);
         }
@@ -200,53 +211,20 @@ void output_observe_positions()
 //----------------------------------------------------------------------
 //	Cases-dependent geometries
 //----------------------------------------------------------------------
-Real arc_sampling_interval = 0.1 * (2.0 * Pi / 360.0); //** Specify the arc resolution here *
-int num_arc_points = int(central_angel / arc_sampling_interval);
-
-//** direction = 1.0 or -1.0 means counterclockwise or clockwise  *
-std::vector<Vecd> createCircleSegment(Real theta0, Real direction, Real radius)
-{
-    std::vector<Vecd> arc_shape;
-    for (int k = 1; k <= num_arc_points; ++k)
-    {
-        Real rotate_angle_local = Real(k) * arc_sampling_interval;
-        Real rotate_angle_global = theta0 + direction * rotate_angle_local;
-        Vec2d alpha(cos(rotate_angle_global), sin(rotate_angle_global));
-        Vec2d point = radius * alpha + circle_center;
-        arc_shape.push_back(point);
-    }
-    return arc_shape;
-}
 
 std::vector<Vecd> createWaterBlockShape()
 {
     std::vector<Vecd> water_block_shape;
 
-    //** 3 points for inlet tube, totally 5 *
     water_block_shape.push_back(Vecd(-DL_sponge - offset_distance, 0.0));
     water_block_shape.push_back(Vecd(-DL_sponge - offset_distance, DH));
-    water_block_shape.push_back(Vecd(DL1, DH));
-
-    //** Inner Circle segment *
-    std::vector<Vec2d> arc_inner = createCircleSegment(theta_start, 1.0, R1);
-    water_block_shape.insert(water_block_shape.end(), arc_inner.begin(), arc_inner.end());
-
-    //** 4 points for outlet tube *
-    water_block_shape.push_back(point_M);
-    water_block_shape.push_back(point_Q + offset_distance * unit_vec_MN_vertical);
-    water_block_shape.push_back(point_P + offset_distance * unit_vec_MN_vertical);
-    water_block_shape.push_back(point_N);
-
-    //** Outer Circle segment *
-    std::vector<Vec2d> arc_outer = createCircleSegment(theta_end, -1.0, R2);
-    water_block_shape.insert(water_block_shape.end(), arc_outer.begin(), arc_outer.end());
-
-    //** If return to straight channel, add extra 2 points *
-    // water_block_shape.push_back(Vecd(DL_domain + offset_distance, DH));
-    // water_block_shape.push_back(Vecd(DL_domain + offset_distance, 0.0));
-
-    //** The left 2 points for inlet tube, totally 5 *
-    water_block_shape.push_back(Vecd(DL1, 0.0));
+    water_block_shape.push_back(point_A);
+    water_block_shape.push_back(point_B);
+    water_block_shape.push_back(point_C);
+    water_block_shape.push_back(point_D);
+    water_block_shape.push_back(Vecd(point_D[0] + offset_distance, point_D[1]));
+    water_block_shape.push_back(Vecd(point_D[0] + offset_distance, point_E[1]));
+    water_block_shape.push_back(point_E);
     water_block_shape.push_back(Vecd(-DL_sponge - offset_distance, 0.0));
 
     return water_block_shape;
@@ -265,31 +243,15 @@ std::vector<Vecd> createOuterWallShape()
 {
     std::vector<Vecd> water_block_shape;
 
-    //** 3 points for inlet tube, totally 5 *
     water_block_shape.push_back(Vecd(-DL_sponge - offset_distance - BW, 0.0));
     water_block_shape.push_back(Vecd(-DL_sponge - offset_distance - BW, DH));
-    water_block_shape.push_back(Vecd(DL1, DH));
-
-    //** Inner Circle segment *
-    std::vector<Vec2d> arc_inner = createCircleSegment(theta_start, 1.0, R1);
-    water_block_shape.insert(water_block_shape.end(), arc_inner.begin(), arc_inner.end());
-
-    //** 4 points for outlet tube *
-    water_block_shape.push_back(point_M);
-    water_block_shape.push_back(point_Q + (offset_distance + BW) * unit_vec_MN_vertical);
-    water_block_shape.push_back(point_P + (offset_distance + BW) * unit_vec_MN_vertical);
-    water_block_shape.push_back(point_N);
-
-    //** Outer Circle segment *
-    std::vector<Vec2d> arc_outer = createCircleSegment(theta_end, -1.0, R2);
-    water_block_shape.insert(water_block_shape.end(), arc_outer.begin(), arc_outer.end());
-
-    //** If return to straight channel, add extra 2 points *
-    // water_block_shape.push_back(Vecd(DL_domain + offset_distance + BW, DH));
-    // water_block_shape.push_back(Vecd(DL_domain + offset_distance + BW, 0.0));
-
-    //** The left 2 points for inlet tube, totally 5 *
-    water_block_shape.push_back(Vecd(DL1, 0.0));
+    water_block_shape.push_back(point_A);
+    water_block_shape.push_back(point_B);
+    water_block_shape.push_back(point_C);
+    water_block_shape.push_back(point_D);
+    water_block_shape.push_back(Vecd(point_D[0] + offset_distance + BW, point_D[1]));
+    water_block_shape.push_back(Vecd(point_D[0] + offset_distance + BW, point_E[1]));
+    water_block_shape.push_back(point_E);
     water_block_shape.push_back(Vecd(-DL_sponge - offset_distance - BW, 0.0));
 
     return water_block_shape;
@@ -298,31 +260,15 @@ std::vector<Vecd> createInnerWallShape()
 {
     std::vector<Vecd> water_block_shape;
 
-    //** 3 points for inlet tube, totally 5 *
     water_block_shape.push_back(Vecd(-DL_sponge - offset_distance - 2.0 * BW, 0.0));
     water_block_shape.push_back(Vecd(-DL_sponge - offset_distance - 2.0 * BW, DH));
-    water_block_shape.push_back(Vecd(DL1, DH));
-
-    //** Inner Circle segment *
-    std::vector<Vec2d> arc_inner = createCircleSegment(theta_start, 1.0, R1);
-    water_block_shape.insert(water_block_shape.end(), arc_inner.begin(), arc_inner.end());
-
-    //** 4 points for outlet tube *
-    water_block_shape.push_back(point_M);
-    water_block_shape.push_back(point_Q + (offset_distance + 2.0 * BW) * unit_vec_MN_vertical);
-    water_block_shape.push_back(point_P + (offset_distance + 2.0 * BW) * unit_vec_MN_vertical);
-    water_block_shape.push_back(point_N);
-
-    //** Outer Circle segment *
-    std::vector<Vec2d> arc_outer = createCircleSegment(theta_end, -1.0, R2);
-    water_block_shape.insert(water_block_shape.end(), arc_outer.begin(), arc_outer.end());
-
-    //** If return to straight channel, add extra 2 points *
-    // water_block_shape.push_back(Vecd(DL_domain + offset_distance + 2.0 * BW, DH));
-    // water_block_shape.push_back(Vecd(DL_domain + offset_distance + 2.0 * BW, 0.0));
-
-    //** The left 2 points for inlet tube, totally 5 *
-    water_block_shape.push_back(Vecd(DL1, 0.0));
+    water_block_shape.push_back(point_A);
+    water_block_shape.push_back(point_B);
+    water_block_shape.push_back(point_C);
+    water_block_shape.push_back(point_D);
+    water_block_shape.push_back(Vecd(point_D[0] + offset_distance + 2.0 * BW, point_D[1]));
+    water_block_shape.push_back(Vecd(point_D[0] + offset_distance + 2.0 * BW, point_E[1]));
+    water_block_shape.push_back(point_E);
     water_block_shape.push_back(Vecd(-DL_sponge - offset_distance - 2.0 * BW, 0.0));
 
     return water_block_shape;
@@ -415,6 +361,6 @@ struct LeftInflowPressure
 
     Real operator()(Real &p_)
     {
-        return (GlobalStaticVariables::physical_time_ > 2.0) ? p_ : initial_inlet_pressure;
+        return p_;
     }
 };

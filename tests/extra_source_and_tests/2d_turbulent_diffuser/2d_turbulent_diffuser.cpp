@@ -9,7 +9,7 @@ int main(int ac, char *av[])
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
 
     /** Tag for run particle relaxation for the initial body fitted distribution. */
-    sph_system.setRunParticleRelaxation(false);
+    sph_system.setRunParticleRelaxation(true);
     /** Tag for computation start with relaxed body fitted particles distribution. */
     sph_system.setReloadParticles(true);
 
@@ -256,7 +256,7 @@ int main(int ac, char *av[])
         /** Integrate time (loop) until the next output time. */
         while (integration_time < Output_Time)
         {
-            //apply_gravity_force.exec();
+            apply_gravity_force.exec();
 
             //Real Dt = get_fluid_advection_time_step_size.exec();
             Real Dt = get_turbulent_fluid_advection_time_step_size.exec();
