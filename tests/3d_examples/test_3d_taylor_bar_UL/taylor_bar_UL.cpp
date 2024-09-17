@@ -74,9 +74,10 @@ int main(int ac, char *av[])
     SimpleDynamics<InitialCondition> initial_condition(column);
     SimpleDynamics<NormalDirectionFromBodyShape> wall_normal_direction(wall_boundary);
     InteractionWithUpdate<LinearGradientCorrectionMatrixInner> corrected_configuration(column_inner);
-    Dynamics1Level<continuum_dynamics::ShearStressRelaxationHourglassControlJ2Plasticity> column_shear_stress_relaxation(column_inner);
     Dynamics1Level<continuum_dynamics::Integration1stHalf> column_pressure_relaxation(column_inner);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfInnerDissipativeRiemann> column_density_relaxation(column_inner);
+    InteractionWithUpdate<continuum_dynamics::ShearStressRelaxationHourglassControl1stHalfJ2Plasticity> column_shear_stress(column_inner);
+    InteractionDynamics<continuum_dynamics::ShearStressRelaxationHourglassControl2ndHalf> column_shear_acceleration(column_inner);
     SimpleDynamics<fluid_dynamics::ContinuumVolumeUpdate> column_volume_update(column);
     ReduceDynamics<fluid_dynamics::AdvectionViscousTimeStep> advection_time_step(column, U_max, 0.2);
     ReduceDynamics<continuum_dynamics::AcousticTimeStep> acoustic_time_step(column, 0.4);
@@ -139,7 +140,8 @@ int main(int ac, char *av[])
                 column_wall_contact_force.exec(acoustic_dt);
 
                 column_pressure_relaxation.exec(acoustic_dt);
-                column_shear_stress_relaxation.exec(acoustic_dt);
+                column_shear_stress.exec(acoustic_dt);
+                column_shear_acceleration.exec(acoustic_dt);
                 column_density_relaxation.exec(acoustic_dt);
 
                 ite++;

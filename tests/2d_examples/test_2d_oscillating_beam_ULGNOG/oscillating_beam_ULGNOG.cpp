@@ -128,12 +128,12 @@ int main(int ac, char *av[])
     // this section define all numerical methods will be used in this case
     //-----------------------------------------------------------------------------
     /** initial condition */
-    InteractionWithUpdate<LinearGradientCorrectionMatrixInner> correction_matrix(beam_body_inner);
     SimpleDynamics<BeamInitialCondition> beam_initial_velocity(beam_body);
-    Dynamics1Level<continuum_dynamics::ShearStressRelaxationHourglassControl>
-        beam_shear_acceleration_relaxation(beam_body_inner);
+    InteractionWithUpdate<LinearGradientCorrectionMatrixInner> correction_matrix(beam_body_inner);
     Dynamics1Level<continuum_dynamics::Integration1stHalf> beam_pressure_relaxation(beam_body_inner);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfInnerDissipativeRiemann> beam_density_relaxation(beam_body_inner);
+    InteractionWithUpdate<continuum_dynamics::ShearStressRelaxationHourglassControl1stHalf> beam_shear_stress(beam_body_inner);
+    InteractionDynamics<continuum_dynamics::ShearStressRelaxationHourglassControl2ndHalf> beam_shear_acceleration(beam_body_inner);
     SimpleDynamics<fluid_dynamics::ContinuumVolumeUpdate> beam_volume_update(beam_body);
     ReduceDynamics<fluid_dynamics::AdvectionViscousTimeStep> advection_time_step(beam_body, U_ref, 0.2);
     ReduceDynamics<fluid_dynamics::AcousticTimeStep> acoustic_time_step(beam_body, 0.4);
@@ -187,7 +187,8 @@ int main(int ac, char *av[])
                 Real acoustic_dt = acoustic_time_step.exec();
                 beam_pressure_relaxation.exec(acoustic_dt);
                 constraint_beam_base.exec();
-                beam_shear_acceleration_relaxation.exec(acoustic_dt);
+                beam_shear_stress.exec(acoustic_dt);
+                beam_shear_acceleration.exec(acoustic_dt);
                 beam_density_relaxation.exec(acoustic_dt);
                 ite++;
                 relaxation_time += acoustic_dt;

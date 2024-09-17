@@ -214,29 +214,40 @@ class StressDiffusion : public BasePlasticIntegration<DataDelegateInner>
     Real smoothing_length_, sound_speed_;
 };
 
-class ShearStressRelaxationHourglassControl : public fluid_dynamics::BaseIntegration<DataDelegateInner>
+class ShearStressRelaxationHourglassControl1stHalf : public fluid_dynamics::BaseIntegration<DataDelegateInner>
 {
   public:
-    explicit ShearStressRelaxationHourglassControl(BaseInnerRelation &inner_relation, Real xi_ = 4.0);
-    virtual ~ShearStressRelaxationHourglassControl(){};
-    void initialization(size_t index_i, Real dt = 0.0);
+    explicit ShearStressRelaxationHourglassControl1stHalf(BaseInnerRelation &inner_relation, Real xi = 4.0);
+    virtual ~ShearStressRelaxationHourglassControl1stHalf(){};
     void interaction(size_t index_i, Real dt = 0.0);
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
     GeneralContinuum &continuum_;
     Matd *shear_stress_, *shear_stress_rate_, *velocity_gradient_, *strain_tensor_, *strain_tensor_rate_, *B_;
-    Real *scale_penalty_force_;
-    Vecd *acc_shear_, *acc_hourglass_;
-    Real G_, xi_;
+    Real *scale_penalty_force_, xi_;
 };
 
-class ShearStressRelaxationHourglassControlJ2Plasticity : public ShearStressRelaxationHourglassControl
+class ShearStressRelaxationHourglassControl2ndHalf : public fluid_dynamics::BaseIntegration<DataDelegateInner>
 {
   public:
-    explicit ShearStressRelaxationHourglassControlJ2Plasticity(BaseInnerRelation &inner_relation, Real xi_ = 0.2);
-    virtual ~ShearStressRelaxationHourglassControlJ2Plasticity(){};
+    explicit ShearStressRelaxationHourglassControl2ndHalf(BaseInnerRelation &inner_relation);
+    virtual ~ShearStressRelaxationHourglassControl2ndHalf(){};
     void interaction(size_t index_i, Real dt = 0.0);
+
+  protected:
+    GeneralContinuum &continuum_;
+    Matd *shear_stress_, *velocity_gradient_;
+    Vecd *acc_shear_, *acc_hourglass_;
+    Real *scale_penalty_force_, G_;
+};
+
+class ShearStressRelaxationHourglassControl1stHalfJ2Plasticity : public ShearStressRelaxationHourglassControl1stHalf
+{
+  public:
+    explicit ShearStressRelaxationHourglassControl1stHalfJ2Plasticity(BaseInnerRelation &inner_relation, Real xi = 0.2);
+    virtual ~ShearStressRelaxationHourglassControl1stHalfJ2Plasticity(){};
+    void update(size_t index_i, Real dt = 0.0);
 
   protected:
     J2Plasticity &J2_plasticity_;
