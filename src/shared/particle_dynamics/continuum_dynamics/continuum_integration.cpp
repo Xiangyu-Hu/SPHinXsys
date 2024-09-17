@@ -65,15 +65,11 @@ ShearStressRelaxation::ShearStressRelaxation(BaseInnerRelation &inner_relation)
       velocity_gradient_(particles_->registerStateVariable<Matd>("VelocityGradient")),
       strain_tensor_(particles_->registerStateVariable<Matd>("StrainTensor")),
       strain_tensor_rate_(particles_->registerStateVariable<Matd>("StrainTensorRate")),
-      von_mises_stress_(particles_->registerStateVariable<Real>("VonMisesStress")),
-      von_mises_strain_(particles_->registerStateVariable<Real>("VonMisesStrain")),
-      Vol_(particles_->getVariableDataByName<Real>("VolumetricMeasure")),
-      B_(particles_->getVariableDataByName<Matd>("LinearGradientCorrectionMatrix"))
+      B_(particles_->getVariableDataByName<Matd>("LinearGradientCorrectionMatrix")),
+      Vol_(particles_->getVariableDataByName<Real>("VolumetricMeasure"))
 {
     particles_->addVariableToSort<Matd>("ShearStress");
     particles_->addVariableToSort<Matd>("ShearStressRate");
-    particles_->addVariableToSort<Real>("VonMisesStress");
-    particles_->addVariableToSort<Real>("VonMisesStrain");
     particles_->addVariableToSort<Matd>("VelocityGradient");
     particles_->addVariableToSort<Matd>("StrainTensor");
     particles_->addVariableToSort<Matd>("StrainTensorRate");
@@ -98,18 +94,14 @@ void ShearStressRelaxation::interaction(size_t index_i, Real dt)
         velocity_gradient -= v_ij * (B_[index_i] * e_ij * dW_ijV_j).transpose();
     }
     velocity_gradient_[index_i] = velocity_gradient;
-    /*calculate strain*/
     strain_tensor_rate_[index_i] = 0.5 * (velocity_gradient + velocity_gradient.transpose());
     strain_tensor_[index_i] += strain_tensor_rate_[index_i] * 0.5 * dt;
-    von_mises_strain_[index_i] = getVonMisesStressFromMatrix(strain_tensor_[index_i]);
 }
 //====================================================================================//
 void ShearStressRelaxation::update(size_t index_i, Real dt)
 {
     shear_stress_rate_[index_i] = continuum_.ConstitutiveRelationShearStress(velocity_gradient_[index_i], shear_stress_[index_i]);
     shear_stress_[index_i] += shear_stress_rate_[index_i] * dt * 0.5;
-    Matd stress_tensor_i = shear_stress_[index_i] - p_[index_i] * Matd::Identity();
-    von_mises_stress_[index_i] = getVonMisesStressFromMatrix(stress_tensor_i);
 }
 //====================================================================================//
 StressDiffusion::StressDiffusion(BaseInnerRelation &inner_relation)
@@ -152,8 +144,6 @@ ShearStressRelaxationHourglassControl ::
       strain_tensor_(particles_->registerStateVariable<Matd>("StrainTensor")),
       strain_tensor_rate_(particles_->registerStateVariable<Matd>("StrainTensorRate")),
       B_(particles_->getVariableDataByName<Matd>("LinearGradientCorrectionMatrix")),
-      von_mises_stress_(particles_->registerStateVariable<Real>("VonMisesStress")),
-      von_mises_strain_(particles_->registerStateVariable<Real>("VonMisesStrain")),
       scale_penalty_force_(particles_->registerStateVariable<Real>("ScalePenaltyForce", Real(1.0))),
       acc_shear_(particles_->registerStateVariable<Vecd>("AccelerationByShear")),
       acc_hourglass_(particles_->registerStateVariable<Vecd>("AccelerationHourglass")),
@@ -164,8 +154,6 @@ ShearStressRelaxationHourglassControl ::
     particles_->addVariableToSort<Matd>("VelocityGradient");
     particles_->addVariableToSort<Matd>("StrainTensor");
     particles_->addVariableToSort<Matd>("StrainTensorRate");
-    particles_->addVariableToSort<Real>("VonMisesStress");
-    particles_->addVariableToSort<Real>("VonMisesStrain");
     particles_->addVariableToSort<Real>("ScalePenaltyForce");
     particles_->addVariableToSort<Vecd>("AccelerationByShear");
     particles_->addVariableToSort<Vecd>("AccelerationHourglass");
@@ -192,11 +180,8 @@ void ShearStressRelaxationHourglassControl::interaction(size_t index_i, Real dt)
 {
     shear_stress_rate_[index_i] = continuum_.ConstitutiveRelationShearStress(velocity_gradient_[index_i], shear_stress_[index_i]);
     shear_stress_[index_i] += shear_stress_rate_[index_i] * dt;
-    Matd stress_tensor_i = shear_stress_[index_i] - p_[index_i] * Matd::Identity();
-    von_mises_stress_[index_i] = getVonMisesStressFromMatrix(stress_tensor_i);
     strain_tensor_rate_[index_i] = 0.5 * (velocity_gradient_[index_i] + velocity_gradient_[index_i].transpose());
     strain_tensor_[index_i] += strain_tensor_rate_[index_i] * dt;
-    von_mises_strain_[index_i] = getVonMisesStressFromMatrix(strain_tensor_[index_i]);
 }
 //====================================================================================//
 void ShearStressRelaxationHourglassControl::update(size_t index_i, Real dt)
@@ -238,11 +223,8 @@ void ShearStressRelaxationHourglassControlJ2Plasticity::interaction(size_t index
     hardening_factor_[index_i] += sqrt(2.0 / 3.0) * hardening_factor_increment;
     scale_penalty_force_[index_i] = J2_plasticity_.ScalePenaltyForce(shear_stress_try, hardening_factor_[index_i]);
     shear_stress_[index_i] = J2_plasticity_.ReturnMappingShearStress(shear_stress_try, hardening_factor_[index_i]);
-    Matd stress_tensor_i = shear_stress_[index_i] - p_[index_i] * Matd::Identity();
-    von_mises_stress_[index_i] = getVonMisesStressFromMatrix(stress_tensor_i);
     Matd strain_rate = 0.5 * (velocity_gradient_[index_i] + velocity_gradient_[index_i].transpose());
     strain_tensor_[index_i] += strain_rate * dt;
-    von_mises_strain_[index_i] = getVonMisesStressFromMatrix(strain_tensor_[index_i]);
 }
 } // namespace continuum_dynamics
 } // namespace SPH

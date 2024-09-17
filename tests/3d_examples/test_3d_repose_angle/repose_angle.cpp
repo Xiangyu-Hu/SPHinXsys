@@ -171,7 +171,9 @@ int main(int ac, char *av[])
     BodyStatesRecordingToVtp body_states_recording(sph_system);
     body_states_recording.addToWrite<Real>(soil_block, "Density");
     body_states_recording.addToWrite<Real>(soil_block, "Pressure");
+    SimpleDynamics<continuum_dynamics::VerticalStress> vertical_stress(soil_block);
     body_states_recording.addToWrite<Real>(soil_block, "VerticalStress");
+    SimpleDynamics<continuum_dynamics::AccDeviatoricPlasticStrain> accumulated_deviatoric_plastic_strain(soil_block);
     body_states_recording.addToWrite<Real>(soil_block, "AccDeviatoricPlasticStrain");
     RestartIO restart_io(sph_system);
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalMechanicalEnergy>> write_soil_mechanical_energy(soil_block, gravity);
@@ -263,6 +265,8 @@ int main(int ac, char *av[])
             interval_updating_configuration += TickCount::now() - time_instance;
         }
         TickCount t2 = TickCount::now();
+        vertical_stress.exec();
+        accumulated_deviatoric_plastic_strain.exec();
         body_states_recording.writeToFile();
         TickCount t3 = TickCount::now();
         interval += t3 - t2;

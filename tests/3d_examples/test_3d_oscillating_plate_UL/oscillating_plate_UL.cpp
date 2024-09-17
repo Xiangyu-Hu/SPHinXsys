@@ -160,10 +160,10 @@ int main(int ac, char *av[])
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp write_states(sph_system);
-    write_states.addToWrite<Real>(plate_body, "VonMisesStress");
-    write_states.addToWrite<Real>(plate_body, "VonMisesStress");
     write_states.addToWrite<Real>(plate_body, "Pressure");
     write_states.addToWrite<Real>(plate_body, "Density");
+    SimpleDynamics<continuum_dynamics::VonMisesStress> plate_von_mises_stress(plate_body);
+    write_states.addToWrite<Real>(plate_body, "VonMisesStress");
     RestartIO restart_io(sph_system);
     ObservedQuantityRecording<Vecd> write_plate_displacement("Position", plate_observer_contact);
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalKineticEnergy>> write_kinetic_energy(plate_body);
@@ -233,6 +233,7 @@ int main(int ac, char *av[])
             plate_body_inner.updateConfiguration();
             corrected_configuration.exec();
         }
+        plate_von_mises_stress.exec();
         write_plate_displacement.writeToFile(number_of_iterations);
         write_kinetic_energy.writeToFile(number_of_iterations);
         TickCount t2 = TickCount::now();

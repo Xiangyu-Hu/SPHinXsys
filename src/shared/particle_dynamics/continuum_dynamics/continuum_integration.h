@@ -103,9 +103,8 @@ class ShearStressRelaxation : public fluid_dynamics::BaseIntegration<DataDelegat
 
   protected:
     GeneralContinuum &continuum_;
-    Matd *shear_stress_, *shear_stress_rate_, *velocity_gradient_, *strain_tensor_, *strain_tensor_rate_;
-    Real *von_mises_stress_, *von_mises_strain_, *Vol_;
-    Matd *B_;
+    Matd *shear_stress_, *shear_stress_rate_, *velocity_gradient_, *strain_tensor_, *strain_tensor_rate_, *B_;
+    Real *Vol_;
 };
 
 template <class DataDelegationType>
@@ -119,7 +118,6 @@ class BasePlasticIntegration : public fluid_dynamics::BaseIntegration<DataDelega
   protected:
     PlasticContinuum &plastic_continuum_;
     Mat3d *stress_tensor_3D_, *strain_tensor_3D_, *stress_rate_3D_, *strain_rate_3D_;
-    Mat3d *elastic_strain_tensor_3D_, *elastic_strain_rate_3D_;
     Matd *velocity_gradient_;
 };
 
@@ -181,11 +179,7 @@ class PlasticIntegration2ndHalf<Inner<>, RiemannSolverType>
 
   protected:
     RiemannSolverType riemann_solver_;
-    Real *acc_deviatoric_plastic_strain_, *vertical_stress_;
     Real *Vol_, *mass_;
-    Real E_, nu_;
-
-    Real getDeviatoricPlasticStrain(Mat3d &strain_tensor);
 };
 using PlasticIntegration2ndHalfInnerNoRiemann = PlasticIntegration2ndHalf<Inner<>, NoRiemannSolver>;
 using PlasticIntegration2ndHalfInnerRiemann = PlasticIntegration2ndHalf<Inner<>, AcousticRiemannSolver>;
@@ -232,7 +226,7 @@ class ShearStressRelaxationHourglassControl : public fluid_dynamics::BaseIntegra
   protected:
     GeneralContinuum &continuum_;
     Matd *shear_stress_, *shear_stress_rate_, *velocity_gradient_, *strain_tensor_, *strain_tensor_rate_, *B_;
-    Real *von_mises_stress_, *von_mises_strain_, *scale_penalty_force_;
+    Real *scale_penalty_force_;
     Vecd *acc_shear_, *acc_hourglass_;
     Real G_, xi_;
 };

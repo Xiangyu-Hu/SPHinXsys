@@ -77,7 +77,7 @@ int main(int ac, char *av[])
     Dynamics1Level<continuum_dynamics::ShearStressRelaxationHourglassControlJ2Plasticity> column_shear_stress_relaxation(column_inner);
     Dynamics1Level<continuum_dynamics::Integration1stHalf> column_pressure_relaxation(column_inner);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfInnerDissipativeRiemann> column_density_relaxation(column_inner);
-    SimpleDynamics<fluid_dynamics::ContinuumVolumeUpdate> beam_volume_update(column);
+    SimpleDynamics<fluid_dynamics::ContinuumVolumeUpdate> column_volume_update(column);
     ReduceDynamics<fluid_dynamics::AdvectionViscousTimeStep> advection_time_step(column, U_max, 0.2);
     ReduceDynamics<continuum_dynamics::AcousticTimeStep> acoustic_time_step(column, 0.4);
     InteractionDynamics<DynamicContactForceWithWall> column_wall_contact_force(column_wall_contact);
@@ -86,10 +86,10 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     /**define simple data file input and outputs functions. */
     BodyStatesRecordingToVtp write_states(system);
-    write_states.addToWrite<Real>(column, "VonMisesStress");
-    write_states.addToWrite<Real>(column, "VonMisesStrain");
     write_states.addToWrite<Real>(column, "Pressure");
     write_states.addToWrite<Real>(column, "Density");
+    SimpleDynamics<continuum_dynamics::VonMisesStress> column_von_mises_stress(column);
+    write_states.addToWrite<Real>(column, "VonMisesStress");
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>> write_displacement("Position", my_observer_contact);
     //----------------------------------------------------------------------
     // From here the time stepping begins.
@@ -125,7 +125,7 @@ int main(int ac, char *av[])
         {
             Real relaxation_time = 0.0;
             Real advection_dt = advection_time_step.exec();
-            beam_volume_update.exec();
+            column_volume_update.exec();
             while (relaxation_time < advection_dt)
             {
                 Real acoustic_dt = acoustic_time_step.exec();
@@ -153,6 +153,7 @@ int main(int ac, char *av[])
             corrected_configuration.exec();
         }
         TickCount t2 = TickCount::now();
+        column_von_mises_stress.exec();
         write_states.writeToFile(ite);
         write_displacement.writeToFile(ite);
         TickCount t3 = TickCount::now();
