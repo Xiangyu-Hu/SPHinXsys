@@ -173,9 +173,9 @@ void ShearStressRelaxationHourglassControl1stHalf::interaction(size_t index_i, R
 //====================================================================================//
 void ShearStressRelaxationHourglassControl1stHalf::update(size_t index_i, Real dt)
 {
-    scale_penalty_force_[index_i] = xi_;
     shear_stress_rate_[index_i] = continuum_.ConstitutiveRelationShearStress(velocity_gradient_[index_i], shear_stress_[index_i]);
     shear_stress_[index_i] += shear_stress_rate_[index_i] * dt;
+    scale_penalty_force_[index_i] = xi_;
     strain_tensor_rate_[index_i] = 0.5 * (velocity_gradient_[index_i] + velocity_gradient_[index_i].transpose());
     strain_tensor_[index_i] += strain_tensor_rate_[index_i] * dt;
 }

@@ -134,8 +134,8 @@ int main(int ac, char *av[])
     int screen_output_interval = 500;
     int observation_sample_interval = screen_output_interval * 2;
     int restart_output_interval = screen_output_interval * 10;
-    Real End_Time = 1.0;         /**< End time. */
-    Real D_Time = End_Time / 50; /**< Time stamps for output of body states. */
+    Real End_Time = 0.8;         /**< End time. */
+    Real D_Time = End_Time / 40; /**< Time stamps for output of body states. */
     Real Dt = 0.1 * D_Time;
     //----------------------------------------------------------------------
     //	Statistics for CPU time

@@ -1,7 +1,5 @@
 #pragma once
-
 #include "continuum_integration.h"
-
 #include "base_particles.hpp"
 namespace SPH
 {
