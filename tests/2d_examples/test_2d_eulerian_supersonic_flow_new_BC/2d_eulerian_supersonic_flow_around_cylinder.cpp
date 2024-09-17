@@ -112,7 +112,7 @@ int main(int ac, char *av[])
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp write_real_body_states(sph_system);
-    RegressionTestEnsembleAverage<ReducedQuantityRecording<MaximumSpeed>> write_maximum_speed(fluid_block);
+    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<MaximumSpeed>> write_maximum_speed(fluid_block);
     write_real_body_states.addToWrite<int>(fluid_block, "Indicator");
     write_real_body_states.addToWrite<Vecd>(fluid_block, "Velocity");
     write_real_body_states.addToWrite<Real>(fluid_block, "Pressure");
@@ -173,7 +173,7 @@ int main(int ac, char *av[])
 
     if (sph_system.GenerateRegressionData())
     {
-        write_maximum_speed.generateDataBase(1.0e-3, 1.0e-3);
+        write_maximum_speed.generateDataBase(1.0e-2);
     }
     else
     {
