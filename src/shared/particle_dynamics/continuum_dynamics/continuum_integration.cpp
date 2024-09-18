@@ -115,8 +115,8 @@ void StressDiffusion::interaction(size_t index_i, Real dt)
     Vecd acc_prior_i = force_prior_[index_i] / mass_[index_i];
     Real gravity = abs(acc_prior_i(1, 0));
     Real density = plastic_continuum_.getDensity();
-    Mat3d diffusion_stress_rate_ = Mat3d::Zero();
-    Mat3d diffusion_stress_ = Mat3d::Zero();
+    Mat3d diffusion_stress_rate = Mat3d::Zero();
+    Mat3d diffusion_stress = Mat3d::Zero();
     Neighborhood &inner_neighborhood = inner_configuration_[index_i];
     for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
     {
@@ -124,14 +124,14 @@ void StressDiffusion::interaction(size_t index_i, Real dt)
         Real r_ij = inner_neighborhood.r_ij_[n];
         Real dW_ijV_j = inner_neighborhood.dW_ij_[n] * Vol_[index_j];
         Real y_ij = pos_[index_i](1, 0) - pos_[index_j](1, 0);
-        diffusion_stress_ = stress_tensor_3D_[index_i] - stress_tensor_3D_[index_j];
-        diffusion_stress_(0, 0) -= (1 - sin(phi_)) * density * gravity * y_ij;
-        diffusion_stress_(1, 1) -= density * gravity * y_ij;
-        diffusion_stress_(2, 2) -= (1 - sin(phi_)) * density * gravity * y_ij;
-        diffusion_stress_rate_ += 2 * zeta_ * smoothing_length_ * sound_speed_ *
-                                  diffusion_stress_ * r_ij * dW_ijV_j / (r_ij * r_ij + 0.01 * smoothing_length_);
+        diffusion_stress = stress_tensor_3D_[index_i] - stress_tensor_3D_[index_j];
+        diffusion_stress(0, 0) -= (1 - sin(phi_)) * density * gravity * y_ij;
+        diffusion_stress(1, 1) -= density * gravity * y_ij;
+        diffusion_stress(2, 2) -= (1 - sin(phi_)) * density * gravity * y_ij;
+        diffusion_stress_rate += 2 * zeta_ * smoothing_length_ * sound_speed_ *
+                                  diffusion_stress * r_ij * dW_ijV_j / (r_ij * r_ij + 0.01 * smoothing_length_);
     }
-    stress_rate_3D_[index_i] = diffusion_stress_rate_;
+    stress_rate_3D_[index_i] = diffusion_stress_rate;
 }
 //====================================================================================//
 ShearStressRelaxationHourglassControl1stHalf ::
