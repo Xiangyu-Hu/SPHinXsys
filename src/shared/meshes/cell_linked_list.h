@@ -33,6 +33,7 @@
 #define MESH_CELL_LINKED_LIST_H
 
 #include "base_mesh.h"
+#include "execution_policy.h"
 #include "neighborhood.h"
 
 namespace SPH
@@ -51,20 +52,14 @@ class BaseCellLinkedList : public BaseMeshField
 {
   protected:
     Kernel &kernel_;
-    /** clear split cell lists in this mesh*/
-    virtual void clearSplitCellLists(SplitCellLists &split_cell_lists);
-    /** update split particle list in this mesh */
-    virtual void updateSplitCellLists(SplitCellLists &split_cell_lists) = 0;
 
   public:
     BaseCellLinkedList(BaseParticles &base_particles, SPHAdaptation &sph_adaptation);
-    virtual ~BaseCellLinkedList() {};
+    virtual ~BaseCellLinkedList(){};
 
     /** access concrete cell linked list levels*/
     virtual StdVec<CellLinkedList *> CellLinkedListLevels() = 0;
     virtual void UpdateCellLists(BaseParticles &base_particles) = 0;
-    virtual SplitCellLists *getSplitCellLists();
-    virtual void setUseSplitCellLists();
     /** Insert a cell-linked_list entry to the concurrent index list. */
     virtual void insertParticleIndex(size_t particle_index, const Vecd &particle_position) = 0;
     /** Insert a cell-linked_list entry of the index and particle position pair. */
@@ -105,14 +100,6 @@ class NeighborSearch : public Mesh
 class CellLinkedList : public BaseCellLinkedList, public Mesh
 {
     StdVec<CellLinkedList *> single_cell_linked_list_level_;
-    /**
-     * @brief particle by cells lists is for parallel splitting algorithm.
-     * All particles in each cell are collected together.
-     * If two particles each belongs two different cell entries,
-     * they have no interaction because they are too far.
-     */
-    SplitCellLists split_cell_lists_;
-    bool use_split_cell_lists_;
 
     UnsignedInt cell_offset_list_size_;
     UnsignedInt index_list_size_; // at least number_of_cells_pluse_one_
@@ -124,10 +111,11 @@ class CellLinkedList : public BaseCellLinkedList, public Mesh
     ConcurrentIndexVector *cell_index_lists_;
     /** non-concurrent list data rewritten for building neighbor list */
     ListDataVector *cell_data_lists_;
+    /**< number of split cell lists */
+    size_t number_of_split_cell_lists_;
 
     void allocateMeshDataMatrix(); /**< allocate memories for addresses of data packages. */
     void deleteMeshDataMatrix();   /**< delete memories for addresses of data packages. */
-    virtual void updateSplitCellLists(SplitCellLists &split_cell_lists) override;
     template <typename DataListsType>
     DataListsType &getCellDataList(DataListsType *data_lists, const Arrayi &cell_index)
     {
@@ -140,8 +128,6 @@ class CellLinkedList : public BaseCellLinkedList, public Mesh
     ~CellLinkedList() { deleteMeshDataMatrix(); };
 
     void clearCellLists();
-    virtual SplitCellLists *getSplitCellLists() override { return &split_cell_lists_; };
-    virtual void setUseSplitCellLists() override { use_split_cell_lists_ = true; };
     void UpdateCellListData(BaseParticles &base_particles);
     virtual void UpdateCellLists(BaseParticles &base_particles) override;
     void insertParticleIndex(size_t particle_index, const Vecd &particle_position) override;
@@ -163,6 +149,12 @@ class CellLinkedList : public BaseCellLinkedList, public Mesh
     UnsignedInt getCellOffsetListSize() { return cell_offset_list_size_; };
     DiscreteVariable<UnsignedInt> *getParticleIndex() { return dv_particle_index_; };
     DiscreteVariable<UnsignedInt> *getCellOffset() { return dv_cell_offset_; };
+
+    /** split algorithm */;
+    template <class LocalDynamicsFunction>
+    void particle_for_split(const execution::SequencedPolicy &, const LocalDynamicsFunction &local_dynamics_function);
+    template <class LocalDynamicsFunction>
+    void particle_for_split(const execution::ParallelPolicy &, const LocalDynamicsFunction &local_dynamics_function);
 };
 
 template <>
@@ -172,7 +164,7 @@ class RefinedMesh<CellLinkedList> : public CellLinkedList
     RefinedMesh(BoundingBox tentative_bounds, CellLinkedList &coarse_mesh,
                 BaseParticles &base_particles, SPHAdaptation &sph_adaptation)
         : CellLinkedList(tentative_bounds, 0.5 * coarse_mesh.GridSpacing(),
-                         base_particles, sph_adaptation) {};
+                         base_particles, sph_adaptation){};
 };
 
 /**
@@ -184,8 +176,6 @@ class MultilevelCellLinkedList : public MultilevelMesh<BaseCellLinkedList, CellL
 {
   protected:
     Real *h_ratio_; /**< Smoothing length for each level. */
-    /** Update split cell list. */
-    virtual void updateSplitCellLists(SplitCellLists &split_cell_lists) override {};
     /** determine mesh level from particle cutoff radius */
     inline size_t getMeshLevel(Real particle_cutoff_radius);
 
@@ -193,7 +183,7 @@ class MultilevelCellLinkedList : public MultilevelMesh<BaseCellLinkedList, CellL
     MultilevelCellLinkedList(BoundingBox tentative_bounds,
                              Real reference_grid_spacing, size_t total_levels,
                              BaseParticles &base_particles, SPHAdaptation &sph_adaptation);
-    virtual ~MultilevelCellLinkedList() {};
+    virtual ~MultilevelCellLinkedList(){};
 
     virtual void UpdateCellLists(BaseParticles &base_particles) override;
     void insertParticleIndex(size_t particle_index, const Vecd &particle_position) override;

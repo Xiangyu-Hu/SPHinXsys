@@ -77,8 +77,6 @@ using ListData = std::pair<size_t, Vecd>;
 using ListDataVector = StdLargeVec<ListData>;
 using DataListsInCells = StdLargeVec<ListDataVector *>;
 using ConcurrentCellLists = ConcurrentVec<ConcurrentIndexVector *>;
-/** Cell list for splitting algorithms. */
-using SplitCellLists = StdVec<ConcurrentCellLists>;
 /** Cell list for periodic boundary condition algorithms. */
 using CellLists = std::pair<ConcurrentCellLists, DataListsInCells>;
 

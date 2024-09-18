@@ -299,7 +299,7 @@ void three_ring_impact(int resolution_factor_l, int resolution_factor_m, int res
     {
         Vecd *pos = particles->getVariableDataByName<Vecd>("Position");
         for (size_t index_i = 0; index_i < particles->TotalRealParticles(); ++index_i)
-            if (std::isnan(pos[index_i][0]) || std::isnan(pos[index_i][1]) || std::isnan(pos[index_i][2]))
+            if (std::isnan(pos[index_i][0]) || std::isnan(pos[index_i][1]))
                 throw std::runtime_error("position has become nan");
     };
 

@@ -52,6 +52,7 @@
 
 #include "base_local_dynamics.h"
 #include "base_particle_dynamics.h"
+#include "cell_linked_list.hpp"
 #include "particle_iterators.h"
 
 #include <type_traits>
@@ -198,28 +199,25 @@ class InteractionSplit : public BaseInteractionDynamics<LocalDynamicsType, Paral
 {
   protected:
     RealBody &real_body_;
-    SplitCellLists &split_cell_lists_;
+    CellLinkedList &cell_linked_list_;
 
   public:
     template <typename... Args>
-    InteractionSplit(Args &&... args)
+    explicit InteractionSplit(Args &&...args)
         : BaseInteractionDynamics<LocalDynamicsType, ParallelPolicy>(std::forward<Args>(args)...),
           real_body_(DynamicCast<RealBody>(this, this->getSPHBody())),
-          split_cell_lists_(*real_body_.getCellLinkedList().getSplitCellLists())
+          cell_linked_list_(DynamicCast<CellLinkedList>(this, real_body_.getCellLinkedList()))
     {
-        real_body_.getCellLinkedList().setUseSplitCellLists();
         static_assert(!has_initialize<LocalDynamicsType>::value &&
                           !has_update<LocalDynamicsType>::value,
                       "LocalDynamicsType does not fulfill InteractionSplit requirements");
     };
-    virtual ~InteractionSplit(){};
 
     /** run the main interaction step between particles. */
-    virtual void runMainStep(Real dt) override
+    void runMainStep(Real dt) override
     {
-        particle_for(ExecutionPolicy(),
-                     split_cell_lists_,
-                     [&](size_t i) { this->interaction(i, dt * 0.5); });
+        cell_linked_list_.particle_for_split(ExecutionPolicy(), [&](size_t i)
+                                             { this->interaction(i, dt * 0.5); });
     }
 };
 
