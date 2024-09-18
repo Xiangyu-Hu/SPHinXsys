@@ -83,6 +83,15 @@ void CellLinkedList::searchNeighborsByParticles(
                  });
 }
 //=================================================================================================//
+inline size_t get_1d_number_of_cells(const Array2i &all_cells)
+{
+    return all_cells[0] * all_cells[1];
+}
+inline size_t get_1d_number_of_cells(const Array3i &all_cells)
+{
+    return all_cells[0] * all_cells[1] * all_cells[2];
+}
+//=================================================================================================//
 template <class LocalDynamicsFunction>
 void CellLinkedList::particle_for_split(const execution::SequencedPolicy &, const LocalDynamicsFunction &local_dynamics_function)
 {
@@ -96,7 +105,7 @@ void CellLinkedList::particle_for_split(const execution::SequencedPolicy &, cons
         // i_max = (M - m - 1) / 3 + 1, j_max = (N - n - 1) / 3 + 1
         // e.g. all_cells = (M,N) = (6, 9), (m, n) = (1, 1), then i_max = 2, j_max = 3
         const Arrayi all_cells_k = (all_cells_ - split_cell_index - Arrayi::Ones()) / 3 + Arrayi::Ones();
-        const size_t number_of_cells = get1DMeshSize(all_cells_k); // i_max * j_max
+        const size_t number_of_cells = get_1d_number_of_cells(all_cells_k); // i_max * j_max
 
         // looping over all cells in the split cell k
         for (size_t l = 0; l < number_of_cells; l++)
@@ -121,7 +130,7 @@ void CellLinkedList::particle_for_split(const execution::SequencedPolicy &, cons
     {
         const Arrayi split_cell_index = transfer1DtoMeshIndex(3 * Arrayi::Ones(), k - 1);
         const Arrayi all_cells_k = (all_cells_ - split_cell_index - Arrayi::Ones()) / 3 + Arrayi::Ones();
-        const size_t number_of_cells = get1DMeshSize(all_cells_k);
+        const size_t number_of_cells = get_1d_number_of_cells(all_cells_k);
 
         for (size_t l = 0; l < number_of_cells; l++)
         {
@@ -143,7 +152,7 @@ void CellLinkedList::particle_for_split(const execution::ParallelPolicy &, const
     {
         const Arrayi split_cell_index = transfer1DtoMeshIndex(3 * Arrayi::Ones(), k);
         const Arrayi all_cells_k = (all_cells_ - split_cell_index - Arrayi::Ones()) / 3 + Arrayi::Ones();
-        const size_t number_of_cells = get1DMeshSize(all_cells_k);
+        const size_t number_of_cells = get_1d_number_of_cells(all_cells_k);
 
         parallel_for(
             IndexRange(0, number_of_cells),
@@ -167,7 +176,7 @@ void CellLinkedList::particle_for_split(const execution::ParallelPolicy &, const
     {
         const Arrayi split_cell_index = transfer1DtoMeshIndex(3 * Arrayi::Ones(), k - 1);
         const Arrayi all_cells_k = (all_cells_ - split_cell_index - Arrayi::Ones()) / 3 + Arrayi::Ones();
-        const size_t number_of_cells = get1DMeshSize(all_cells_k);
+        const size_t number_of_cells = get_1d_number_of_cells(all_cells_k);
 
         parallel_for(
             IndexRange(0, number_of_cells),

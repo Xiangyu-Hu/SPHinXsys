@@ -20,9 +20,9 @@ TEST(test_meshes, split_for)
     body.defineMaterial<Solid>();
     body.generateParticles<BaseParticles, Lattice>();
     auto &particles = body.getBaseParticles();
-    const auto &pos = *particles.registerSharedVariable<Vec2d>("Position");
-    auto &quantity = *particles.registerSharedVariable<Real>("Quantity", [&](size_t i)
-                                                             { return pos[i].norm(); });
+    const auto pos = particles.registerStateVariable<Vec2d>("Position");
+    auto quantity = particles.registerStateVariable<Real>("Quantity", [&](size_t i) -> Real
+                                                          { return pos[i].norm(); });
 
     InnerRelation inner(body);
 

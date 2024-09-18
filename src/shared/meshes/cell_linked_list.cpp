@@ -10,9 +10,8 @@ namespace SPH
 {
 //=================================================================================================//
 BaseCellLinkedList::
-    BaseCellLinkedList(SPHAdaptation &sph_adaptation)
-    : BaseMeshField("CellLinkedList"),
-      kernel_(*sph_adaptation.getKernel()) {}
+    BaseCellLinkedList(BaseParticles &base_particles, SPHAdaptation &sph_adaptation)
+    : BaseMeshField("CellLinkedList"), kernel_(*sph_adaptation.getKernel()) {}
 //=================================================================================================//
 CellLinkedList::CellLinkedList(BoundingBox tentative_bounds, Real grid_spacing,
                                BaseParticles &base_particles, SPHAdaptation &sph_adaptation)
@@ -21,7 +20,8 @@ CellLinkedList::CellLinkedList(BoundingBox tentative_bounds, Real grid_spacing,
       index_list_size_(SMAX(base_particles.ParticlesBound(), cell_offset_list_size_)),
       dv_particle_index_(base_particles.registerDiscreteVariableOnly<UnsignedInt>("ParticleIndex", index_list_size_)),
       dv_cell_offset_(base_particles.registerDiscreteVariableOnly<UnsignedInt>("CellOffset", cell_offset_list_size_)),
-      cell_index_lists_(nullptr), cell_data_lists_(nullptr), number_of_split_cell_lists_(pow(3, Dimensions))
+      cell_index_lists_(nullptr), cell_data_lists_(nullptr),
+      number_of_split_cell_lists_(static_cast<size_t>(pow(3, Dimensions)))
 {
     allocateMeshDataMatrix();
     single_cell_linked_list_level_.push_back(this);

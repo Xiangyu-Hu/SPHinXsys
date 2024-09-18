@@ -33,7 +33,6 @@
 #define MESH_ITERATORS_H
 
 #include "base_data_package.h"
-#include "base_mesh.h"
 
 namespace SPH
 {
