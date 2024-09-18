@@ -224,7 +224,7 @@ class ShearStressRelaxationHourglassControl1stHalf : public fluid_dynamics::Base
 
   protected:
     GeneralContinuum &continuum_;
-    Matd *shear_stress_, *shear_stress_rate_, *velocity_gradient_, *strain_tensor_, *strain_tensor_rate_, *B_;
+    Matd *shear_stress_, *velocity_gradient_, *strain_tensor_, *B_;
     Real *scale_penalty_force_, xi_;
 };
 

@@ -139,18 +139,14 @@ ShearStressRelaxationHourglassControl1stHalf ::
     : fluid_dynamics::BaseIntegration<DataDelegateInner>(inner_relation),
       continuum_(DynamicCast<GeneralContinuum>(this, particles_->getBaseMaterial())),
       shear_stress_(particles_->registerStateVariable<Matd>("ShearStress")),
-      shear_stress_rate_(particles_->registerStateVariable<Matd>("ShearStressRate")),
       velocity_gradient_(particles_->registerStateVariable<Matd>("VelocityGradient")),
       strain_tensor_(particles_->registerStateVariable<Matd>("StrainTensor")),
-      strain_tensor_rate_(particles_->registerStateVariable<Matd>("StrainTensorRate")),
       B_(particles_->getVariableDataByName<Matd>("LinearGradientCorrectionMatrix")),
       scale_penalty_force_(particles_->registerStateVariable<Real>("ScalePenaltyForce")), xi_(xi)
 {
     particles_->addVariableToSort<Matd>("ShearStress");
-    particles_->addVariableToSort<Matd>("ShearStressRate");
     particles_->addVariableToSort<Matd>("VelocityGradient");
     particles_->addVariableToSort<Matd>("StrainTensor");
-    particles_->addVariableToSort<Matd>("StrainTensorRate");
     particles_->addVariableToSort<Real>("ScalePenaltyForce");
 }
 //====================================================================================//
@@ -164,8 +160,7 @@ void ShearStressRelaxationHourglassControl1stHalf::interaction(size_t index_i, R
         size_t index_j = inner_neighborhood.j_[n];
         Real dW_ijV_j = inner_neighborhood.dW_ij_[n] * Vol_[index_j];
         Vecd &e_ij = inner_neighborhood.e_ij_[n];
-        Matd velocity_gradient_ij;
-        velocity_gradient_ij = -(vel_i - vel_[index_j]) * (B_[index_i] * e_ij * dW_ijV_j).transpose();
+        Matd velocity_gradient_ij = -(vel_i - vel_[index_j]) * (B_[index_i] * e_ij * dW_ijV_j).transpose();
         velocity_gradient += velocity_gradient_ij;
     }
     velocity_gradient_[index_i] = velocity_gradient;
@@ -173,11 +168,11 @@ void ShearStressRelaxationHourglassControl1stHalf::interaction(size_t index_i, R
 //====================================================================================//
 void ShearStressRelaxationHourglassControl1stHalf::update(size_t index_i, Real dt)
 {
-    shear_stress_rate_[index_i] = continuum_.ConstitutiveRelationShearStress(velocity_gradient_[index_i], shear_stress_[index_i]);
-    shear_stress_[index_i] += shear_stress_rate_[index_i] * dt;
+    Matd shear_stress_rate = continuum_.ConstitutiveRelationShearStress(velocity_gradient_[index_i], shear_stress_[index_i]);
+    shear_stress_[index_i] += shear_stress_rate * dt;
     scale_penalty_force_[index_i] = xi_;
-    strain_tensor_rate_[index_i] = 0.5 * (velocity_gradient_[index_i] + velocity_gradient_[index_i].transpose());
-    strain_tensor_[index_i] += strain_tensor_rate_[index_i] * dt;
+    Matd strain_tensor_rate = 0.5 * (velocity_gradient_[index_i] + velocity_gradient_[index_i].transpose());
+    strain_tensor_[index_i] += strain_tensor_rate * dt;
 }
 //====================================================================================//
 ShearStressRelaxationHourglassControl2ndHalf ::
@@ -228,8 +223,8 @@ ShearStressRelaxationHourglassControl1stHalfJ2Plasticity ::
 //====================================================================================//
 void ShearStressRelaxationHourglassControl1stHalfJ2Plasticity::update(size_t index_i, Real dt)
 {
-    shear_stress_rate_[index_i] = J2_plasticity_.ConstitutiveRelationShearStress(velocity_gradient_[index_i], shear_stress_[index_i], hardening_factor_[index_i]);
-    Matd shear_stress_try = shear_stress_[index_i] + shear_stress_rate_[index_i] * dt;
+    Matd shear_stress_rate = J2_plasticity_.ConstitutiveRelationShearStress(velocity_gradient_[index_i], shear_stress_[index_i], hardening_factor_[index_i]);
+    Matd shear_stress_try = shear_stress_[index_i] + shear_stress_rate * dt;
     Real hardening_factor_increment = J2_plasticity_.HardeningFactorRate(shear_stress_try, hardening_factor_[index_i]);
     hardening_factor_[index_i] += sqrt(2.0 / 3.0) * hardening_factor_increment;
     scale_penalty_force_[index_i] = xi_ * J2_plasticity_.ScalePenaltyForce(shear_stress_try, hardening_factor_[index_i]);
