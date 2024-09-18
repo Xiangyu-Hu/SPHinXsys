@@ -104,11 +104,6 @@ void DisposerOutflowDeletion::update(size_t index_i, Real dt)
     mutex_switch_to_buffer_.lock();
     while (aligned_box_.checkUpperBound(pos_[index_i]) && index_i < particles_->TotalRealParticles())
     {
-        if (pos_[index_i][1] < 0.8) //** A temporary treatment *
-        {
-            std::cout << "Unphysically deleting" << std::endl;
-            //std::cin.get();
-        }
         particles_->switchToBufferParticle(index_i);
     }
     mutex_switch_to_buffer_.unlock();

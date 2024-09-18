@@ -44,6 +44,7 @@ int is_AMRD = 0;
 bool is_constrain_normal_velocity_in_P_region = false;
 //** Weight for correcting the velocity  gradient in the sub near wall region  *
 Real weight_vel_grad_sub_nearwall = 0.1;
+bool is_always_lattice_arrange_fluid = false;
 //** Empirical parameter for initial stability*
 Real turbulent_module_activate_time = 2.5;
 //** Intial values for K, Epsilon and Mu_t *
@@ -51,8 +52,9 @@ StdVec<Real> initial_turbu_values = {0.000180001, 3.326679e-5, 1.0e-3};
 
 Real y_p_constant = DH / 2.0 / num_fluid_cross_section; //** For the first try *
 //Real y_p_constant = 0.05;
-Real resolution_ref = (DH - 2.0 * y_p_constant) / (num_fluid_cross_section - 1.0); /**< Initial reference particle spacing. */
-Real offset_distance = y_p_constant - resolution_ref / 2.0;                        //** Basically offset distance is large than or equal to 0 *
+Real resolution_ref_temp = (DH - 2.0 * y_p_constant) / (num_fluid_cross_section - 1.0); /**< Initial reference particle spacing. */
+Real resolution_ref = round(resolution_ref_temp * 1.0e8) / 1.0e8;
+Real offset_distance = y_p_constant - resolution_ref / 2.0; //** Basically offset distance is large than or equal to 0 *
 
 //----------------------------------------------------------------------
 //	Material properties of the fluid.
@@ -94,7 +96,7 @@ Vec2d left_buffer_halfsize = Vec2d(0.5 * BW, 0.5 * DH_C + BW);
 Vec2d left_buffer_translation = Vec2d(-DL_sponge, 0.0) + left_buffer_halfsize + Vecd(0.0, offset_distance - BW);
 
 Real outlet_buffer_length = BW;
-Real outlet_buffer_height = 1.5 * DH;
+Real outlet_buffer_height = 5.0 * DH;
 
 Real outlet_disposer_rotation_angel = 0.0; //** By default, counter-clockwise is positive *
 Vec2d outlet_buffer_center_translation = (point_D + point_E) / 2.0 + Vecd(-1.0, 0.0) * outlet_buffer_length / 2.0;
@@ -124,9 +126,9 @@ BoundingBox system_domain_bounds(left_bottom_point + Vec2d(-2.0 * BW, -2.0 * BW)
 // Output and time average control.
 //----------------------------------------------------------------------
 int screen_output_interval = 100;
-Real end_time = 10.0;              /**< End time. */
-Real Output_Time = end_time / 4.0; /**< Time stamps for output of body states. */
-Real cutoff_time = end_time * 0.6; //** cutoff_time should be a integral and the same as the PY script */
+Real end_time = 10.0;                /**< End time. */
+Real Output_Time = end_time / 200.0; /**< Time stamps for output of body states. */
+Real cutoff_time = end_time * 0.6;   //** cutoff_time should be a integral and the same as the PY script */
 //----------------------------------------------------------------------
 // Observation with offset model.
 //----------------------------------------------------------------------

@@ -9,7 +9,7 @@ int main(int ac, char *av[])
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
 
     /** Tag for run particle relaxation for the initial body fitted distribution. */
-    sph_system.setRunParticleRelaxation(true);
+    sph_system.setRunParticleRelaxation(false);
     /** Tag for computation start with relaxed body fitted particles distribution. */
     sph_system.setReloadParticles(true);
 
@@ -23,7 +23,7 @@ int main(int ac, char *av[])
     water_block.defineBodyLevelSetShape();
     water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
     ParticleBuffer<ReserveSizeFactor> inlet_particle_buffer(0.5);
-    (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
+    (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles() && !is_always_lattice_arrange_fluid)
         ? water_block.generateParticlesWithReserve<BaseParticles, Reload>(inlet_particle_buffer, water_block.getName())
         : water_block.generateParticlesWithReserve<BaseParticles, Lattice>(inlet_particle_buffer);
     /**
@@ -250,6 +250,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------------------------------------
     int num_output_file = 0;
     //Real start_time_turbulence = 70.0;
+    //std::cout << "Press any key to start";
+    //std::cin.get();
     while (GlobalStaticVariables::physical_time_ < end_time)
     {
         Real integration_time = 0.0;
