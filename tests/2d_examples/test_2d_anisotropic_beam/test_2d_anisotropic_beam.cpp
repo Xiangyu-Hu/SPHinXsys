@@ -135,20 +135,20 @@ class AnisotropicCorrectConfiguration : public LocalDynamics, public DataDelegat
     AnisotropicCorrectConfiguration(BaseInnerRelation &inner_relation, int beta = 0, Real alpha = Real(0))
         : LocalDynamics(inner_relation.getSPHBody()),
           DataDelegateInner(inner_relation),
-          beta_(beta), alpha_(alpha), Vol_(*particles_->getVariableDataByName<Real>("VolumetricMeasure")),
-          B_(*particles_->registerSharedVariable<Matd>("LinearGradientCorrectionMatrix", IdentityMatrix<Matd>::value)),
-          pos_(*particles_->getVariableDataByName<Vecd>("Position")),
-          show_neighbor_(*particles_->registerSharedVariable<Real>("ShowingNeighbor", Real(0.0))){};
+          beta_(beta), alpha_(alpha), Vol_(particles_->getVariableDataByName<Real>("VolumetricMeasure")),
+          B_(particles_->registerStateVariable<Matd>("LinearGradientCorrectionMatrix", IdentityMatrix<Matd>::value)),
+          pos_(particles_->getVariableDataByName<Vecd>("Position")),
+          show_neighbor_(particles_->registerStateVariable<Real>("ShowingNeighbor", Real(0.0))){};
     virtual ~AnisotropicCorrectConfiguration(){};
 
   protected:
   protected:
     int beta_;
     Real alpha_;
-    StdLargeVec<Real> &Vol_;
-    StdLargeVec<Matd> &B_;
-    StdLargeVec<Vecd> &pos_;
-    StdLargeVec<Real> &show_neighbor_;
+    Real *Vol_;
+    Matd *B_;
+    Vecd *pos_;
+    Real *show_neighbor_;
 
     void interaction(size_t index_i, Real dt = 0.0)
     {
@@ -223,7 +223,7 @@ int main(int ac, char *av[])
     Dynamics1Level<solid_dynamics::Integration1stHalfPK2> stress_relaxation_first_half(beam_body_inner);
     Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half(beam_body_inner);
 
-    ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(beam_body);
+    ReduceDynamics<solid_dynamics::AcousticTimeStep> computing_time_step_size(beam_body);
     SimpleDynamics<BeamInitialCondition> beam_initial_velocity(beam_body);
     BodyRegionByParticle beam_base(beam_body, makeShared<MultiPolygonShape>(createBeamConstrainShape()));
     SimpleDynamics<FixBodyPartConstraint> constraint_beam_base(beam_base);
@@ -245,6 +245,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Setup computing time-step controls.
     //----------------------------------------------------------------------
+    Real &physical_time = *system.getSystemVariableDataByName<Real>("PhysicalTime");
     int number_of_iterations = 0;
     Real T0 = 1.0;
     Real end_time = T0;
@@ -262,7 +263,7 @@ int main(int ac, char *av[])
     write_beam_states.writeToFile();
     write_beam_tip_displacement.writeToFile(number_of_iterations);
     // computation loop starts
-    while (GlobalStaticVariables::physical_time_ < end_time)
+    while (physical_time < end_time)
     {
         Real integration_time = 0.0;
         // integrate time (loop) until the next output time
@@ -280,12 +281,12 @@ int main(int ac, char *av[])
                 dt = scaling_factor * computing_time_step_size.exec();
                 relaxation_time += dt;
                 integration_time += dt;
-                GlobalStaticVariables::physical_time_ += dt;
+                physical_time += dt;
 
                 if (number_of_iterations % 100 == 0)
                 {
                     std::cout << "N=" << number_of_iterations << " Time: "
-                              << GlobalStaticVariables::physical_time_ << "	dt: "
+                              << physical_time << "	dt: "
                               << dt << "\n";
                 }
             }

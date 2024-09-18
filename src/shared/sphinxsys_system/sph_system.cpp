@@ -1,4 +1,4 @@
-#include "sph_system.h"
+#include "sph_system.hpp"
 
 #include "all_body_relations.h"
 #include "base_body.h"
@@ -12,7 +12,10 @@ SPHSystem::SPHSystem(BoundingBox system_domain_bounds, Real resolution_ref, size
       resolution_ref_(resolution_ref),
       tbb_global_control_(tbb::global_control::max_allowed_parallelism, number_of_threads),
       io_environment_(nullptr), run_particle_relaxation_(false), reload_particles_(false),
-      restart_step_(0), generate_regression_data_(false), state_recording_(true) {}
+      restart_step_(0), generate_regression_data_(false), state_recording_(true)
+{
+    registerSystemVariable<Real>("PhysicalTime", 0.0);
+}
 //=================================================================================================//
 IOEnvironment &SPHSystem::getIOEnvironment()
 {
@@ -50,7 +53,7 @@ Real SPHSystem::getSmallestTimeStepAmongSolidBodies(Real CFL)
     Real dt = MaxReal;
     for (size_t i = 0; i < solid_bodies_.size(); i++)
     {
-        ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(*solid_bodies_[i], CFL);
+        ReduceDynamics<solid_dynamics::AcousticTimeStep> computing_time_step_size(*solid_bodies_[i], CFL);
         Real dt_temp = computing_time_step_size.exec();
         if (dt_temp < dt)
             dt = dt_temp;

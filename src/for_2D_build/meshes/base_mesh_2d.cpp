@@ -3,26 +3,11 @@
 namespace SPH
 {
 //=============================================================================================//
-Array2i BaseMesh::transfer1DtoMeshIndex(const Array2i &mesh_size, size_t i)
+Arrayi Mesh::transfer1DtoMeshIndex(const Arrayi &mesh_size, size_t i) const
 {
     size_t row_size = mesh_size[1];
     size_t column = i / row_size;
-    return Array2i(column, i - column * row_size);
-}
-//=============================================================================================//
-size_t BaseMesh::transferMeshIndexTo1D(const Array2i &mesh_size, const Array2i &mesh_index)
-{
-    return mesh_index[0] * mesh_size[1] + mesh_index[1];
-}
-//=============================================================================================//
-size_t BaseMesh::get1DMeshSize(const Array2i &mesh_size)
-{
-    return mesh_size[0] * mesh_size[1];
-}
-//=============================================================================================//
-size_t BaseMesh::transferMeshIndexToMortonOrder(const Array2i &mesh_index)
-{
-    return MortonCode(mesh_index[0]) | (MortonCode(mesh_index[1]) << 1);
+    return Arrayi(column, i - column * row_size);
 }
 } // namespace SPH
 //=============================================================================================//

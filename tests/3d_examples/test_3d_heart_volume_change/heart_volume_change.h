@@ -6,7 +6,6 @@
  */
 #include "TriangleMeshDistance.h" // for mesh operations
 #include "sphinxsys.h"            // SPHinXsys Library.
-#include <numeric>
 
 using namespace SPH;
 
@@ -53,8 +52,8 @@ class MeshData
     void load(std::string path_to_mesh, Real scale);
     void initialize();
     void translate(const Vec3d &translation);
-    IndexVector get_ids_close_to_surface(const StdLargeVec<Vec3d> &pos_0, const IndexVector &all_surface_ids, Real distance) const;
-    IndexVector get_ids_close_to_surface(const StdLargeVec<Vec3d> &pos_0, Real distance) const;
+    IndexVector get_ids_close_to_surface(Vec3d *pos_0, const IndexVector &all_surface_ids, Real distance) const;
+    IndexVector get_ids_close_to_surface(Vec3d *pos_0, size_t total_real_particles, Real distance) const;
 };
 
 // MyocardiumSurfaces
@@ -66,7 +65,7 @@ class MyocardiumSurfaces
   public:
     MyocardiumSurfaces(SolidBody &sph_body)
         : particles_(sph_body.getBaseParticles()),
-          pos0_(*particles_.registerSharedVariableFrom<Vecd>("InitialPosition", "Position")){};
+          pos0_(particles_.registerStateVariableFrom<Vecd>("InitialPosition", "Position")){};
     ~MyocardiumSurfaces() = default;
 
     // mesh_offset: max distance between myocardium and ventricle mesh
@@ -86,7 +85,7 @@ class MyocardiumSurfaces
 
   private:
     BaseParticles &particles_;
-    StdLargeVec<Vecd> &pos0_;
+    Vecd *pos0_;
     IndexVector myo_surface_ids_; // full myocardium surface
     IndexVector lv_ids_;
     IndexVector rv_ids_;
@@ -98,10 +97,10 @@ class SurfaceOperationsVentricle
   public:
     SurfaceOperationsVentricle(InnerRelation &inner_relation, const IndexVector &ids)
         : particles_(inner_relation.getSPHBody().getBaseParticles()),
-          vel_(*particles_.getVariableDataByName<Vecd>("Velocity")),
-          n_(*particles_.getVariableDataByName<Vecd>("NormalDirection")),
-          n0_(*particles_.registerSharedVariableFrom<Vecd>("InitialNormalDirection", "NormalDirection")),
-          F_(*particles_.getVariableDataByName<Matd>("DeformationGradient")),
+          vel_(particles_.getVariableDataByName<Vecd>("Velocity")),
+          n_(particles_.getVariableDataByName<Vecd>("NormalDirection")),
+          n0_(particles_.registerStateVariableFrom<Vecd>("InitialNormalDirection", "NormalDirection")),
+          F_(particles_.getVariableDataByName<Matd>("DeformationGradient")),
           ids_(ids), srf_area_0_(ids_.size(), 0), srf_area_n_(ids_.size(), 0),
           Q_current_(0), Q_prev_(0), dQ_dt_(0), delta_V_(0)
     {
@@ -132,8 +131,8 @@ class SurfaceOperationsVentricle
     void init_srf_area(InnerRelation &inner_relation);
 
     BaseParticles &particles_;
-    StdLargeVec<Vecd> &vel_, &n_, &n0_;
-    StdLargeVec<Matd> &F_;
+    Vecd *vel_, *n_, *n0_;
+    Matd *F_;
     // ids_, srf_area_0_, srf_area_n_ maintain particle correspondence
     const IndexVector &ids_;  // ids of srf particles of interest
     StdVec<Real> srf_area_0_; // initial surface area

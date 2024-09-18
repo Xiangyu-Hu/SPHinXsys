@@ -38,7 +38,6 @@ namespace SPH
 template <typename... InteractionTypes>
 class LinearGradientCorrectionMatrix;
 
-
 // WKGC1 will be used for calculate the KGC matrix.
 // The difference between WKGC1 and WKGC2 can refer to https://doi.org/10.1016/j.cma.2023.116460
 
@@ -52,8 +51,8 @@ class LinearGradientCorrectionMatrix<DataDelegationType>
     virtual ~LinearGradientCorrectionMatrix(){};
 
   protected:
-    StdLargeVec<Real> &Vol_;
-    StdLargeVec<Matd> &B_;
+    Real *Vol_;
+    Matd *B_;
 };
 
 template <>
@@ -84,8 +83,8 @@ class LinearGradientCorrectionMatrix<Contact<>>
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
-    StdVec<StdLargeVec<Real> *> contact_Vol_;
-    StdVec<StdLargeVec<Real> *> contact_mass_;
+    StdVec<Real *> contact_Vol_;
+    StdVec<Real *> contact_mass_;
 };
 
 using LinearGradientCorrectionMatrixComplex = ComplexInteraction<LinearGradientCorrectionMatrix<Inner<>, Contact<>>>;

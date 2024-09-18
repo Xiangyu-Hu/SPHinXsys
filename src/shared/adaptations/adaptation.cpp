@@ -16,7 +16,7 @@ SPHAdaptation::SPHAdaptation(Real resolution_ref, Real h_spacing_ratio, Real sys
       h_ref_(h_spacing_ratio_ * spacing_ref_), kernel_ptr_(makeUnique<KernelWendlandC2>(h_ref_)),
       sigma0_ref_(computeLatticeNumberDensity(Vecd())),
       spacing_min_(this->MostRefinedSpacingRegular(spacing_ref_, local_refinement_level_)),
-      Vol_min_(pow(spacing_min_, Dimensions)), h_ratio_max_(spacing_ref_ / spacing_min_){};
+      Vol_min_(pow(spacing_min_, Dimensions)), h_ratio_max_(spacing_ref_ / spacing_min_) {};
 //=================================================================================================//
 Real SPHAdaptation::MostRefinedSpacing(Real coarse_particle_spacing, int local_refinement_level)
 {
@@ -81,9 +81,10 @@ void SPHAdaptation::resetAdaptationRatios(Real h_spacing_ratio, Real new_system_
     h_ratio_max_ = spacing_ref_ / spacing_min_;
 }
 //=================================================================================================//
-UniquePtr<BaseCellLinkedList> SPHAdaptation::createCellLinkedList(const BoundingBox &domain_bounds)
+UniquePtr<BaseCellLinkedList> SPHAdaptation::
+    createCellLinkedList(const BoundingBox &domain_bounds, BaseParticles &base_particles)
 {
-    return makeUnique<CellLinkedList>(domain_bounds, kernel_ptr_->CutOffRadius(), *this);
+    return makeUnique<CellLinkedList>(domain_bounds, kernel_ptr_->CutOffRadius(), base_particles, *this);
 }
 //=================================================================================================//
 UniquePtr<BaseLevelSet> SPHAdaptation::createLevelSet(Shape &shape, Real refinement_ratio)
@@ -114,7 +115,7 @@ ParticleWithLocalRefinement::
 void ParticleWithLocalRefinement::initializeAdaptationVariables(BaseParticles &base_particles)
 {
     SPHAdaptation::initializeAdaptationVariables(base_particles);
-    h_ratio_ = base_particles.registerSharedVariable<Real>(
+    h_ratio_ = base_particles.registerStateVariable<Real>(
         "SmoothingLengthRatio", [&](size_t i) -> Real
         { return ReferenceSpacing() / base_particles.ParticleSpacing(i); });
     base_particles.addVariableToSort<Real>("SmoothingLengthRatio");
@@ -131,10 +132,11 @@ size_t ParticleWithLocalRefinement::getLevelSetTotalLevel()
     return getCellLinkedListTotalLevel() + 1;
 }
 //=================================================================================================//
-UniquePtr<BaseCellLinkedList> ParticleWithLocalRefinement::createCellLinkedList(const BoundingBox &domain_bounds)
+UniquePtr<BaseCellLinkedList> ParticleWithLocalRefinement::
+    createCellLinkedList(const BoundingBox &domain_bounds, BaseParticles &base_particles)
 {
     return makeUnique<MultilevelCellLinkedList>(domain_bounds, kernel_ptr_->CutOffRadius(),
-                                                getCellLinkedListTotalLevel(), *this);
+                                                getCellLinkedListTotalLevel(), base_particles, *this);
 }
 //=================================================================================================//
 UniquePtr<BaseLevelSet> ParticleWithLocalRefinement::createLevelSet(Shape &shape, Real refinement_ratio)

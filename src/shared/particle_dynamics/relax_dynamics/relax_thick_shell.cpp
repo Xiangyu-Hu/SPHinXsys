@@ -6,8 +6,8 @@ namespace relax_dynamics
 {
 //=================================================================================================//
 ShellMidSurfaceBounding::ShellMidSurfaceBounding(NearShapeSurface &body_part)
-    : BaseLocalDynamics<BodyPartByCell>(body_part), DataDelegateSimple(body_part.getSPHBody()),
-      pos_(*particles_->getVariableDataByName<Vecd>("Position")),
+    : BaseLocalDynamics<BodyPartByCell>(body_part),
+      pos_(particles_->getVariableDataByName<Vecd>("Position")),
       constrained_distance_(0.5 * sph_body_.sph_adaptation_->MinimumSpacing()),
       particle_spacing_ref_(sph_body_.sph_adaptation_->MinimumSpacing()),
       level_set_shape_(DynamicCast<LevelSetShape>(this, &sph_body_.getInitialShape())) {}
@@ -23,7 +23,7 @@ void ShellMidSurfaceBounding::update(size_t index_i, Real dt)
 ShellNormalDirectionPrediction::
     ShellNormalDirectionPrediction(BaseInnerRelation &inner_relation,
                                    Real thickness, Real consistency_criterion)
-    : BaseDynamics<void>(inner_relation.getSPHBody()),
+    : BaseDynamics<void>(),
       convergence_criterion_(cos(0.01 * Pi)),
       consistency_criterion_(consistency_criterion),
       normal_prediction_(inner_relation.getSPHBody(), thickness),
@@ -80,11 +80,11 @@ void ShellNormalDirectionPrediction::correctNormalDirection()
 }
 //=================================================================================================//
 ShellNormalDirectionPrediction::NormalPrediction::NormalPrediction(SPHBody &sph_body, Real thickness)
-    : DataDelegateSimple(sph_body), LocalDynamics(sph_body), thickness_(thickness),
+    : LocalDynamics(sph_body), thickness_(thickness),
       level_set_shape_(DynamicCast<LevelSetShape>(this, &sph_body.getInitialShape())),
-      pos_(*particles_->getVariableDataByName<Vecd>("Position")),
-      n_(*particles_->getVariableDataByName<Vecd>("NormalDirection")),
-      n_temp_(*particles_->registerSharedVariable<Vecd>(
+      pos_(particles_->getVariableDataByName<Vecd>("Position")),
+      n_(particles_->getVariableDataByName<Vecd>("NormalDirection")),
+      n_temp_(particles_->registerStateVariable<Vecd>(
           "PreviousNormalDirection", [&](size_t i) -> Vecd
           { return n_[i]; })) {}
 //=================================================================================================//
@@ -96,10 +96,10 @@ void ShellNormalDirectionPrediction::NormalPrediction::update(size_t index_i, Re
 //=================================================================================================//
 ShellNormalDirectionPrediction::PredictionConvergenceCheck::
     PredictionConvergenceCheck(SPHBody &sph_body, Real convergence_criterion)
-    : LocalDynamicsReduce<ReduceAND>(sph_body), DataDelegateSimple(sph_body),
+    : LocalDynamicsReduce<ReduceAND>(sph_body),
       convergence_criterion_(convergence_criterion),
-      n_(*particles_->getVariableDataByName<Vecd>("NormalDirection")),
-      n_temp_(*particles_->getVariableDataByName<Vecd>("PreviousNormalDirection")) {}
+      n_(particles_->getVariableDataByName<Vecd>("NormalDirection")),
+      n_temp_(particles_->getVariableDataByName<Vecd>("PreviousNormalDirection")) {}
 //=================================================================================================//
 bool ShellNormalDirectionPrediction::PredictionConvergenceCheck::reduce(size_t index_i, Real dt)
 {
@@ -110,8 +110,8 @@ ShellNormalDirectionPrediction::ConsistencyCorrection::
     ConsistencyCorrection(BaseInnerRelation &inner_relation, Real consistency_criterion)
     : LocalDynamics(inner_relation.getSPHBody()), DataDelegateInner(inner_relation),
       consistency_criterion_(consistency_criterion),
-      n_(*particles_->getVariableDataByName<Vecd>("NormalDirection")),
-      updated_indicator_(*particles_->registerSharedVariable<int>(
+      n_(particles_->getVariableDataByName<Vecd>("NormalDirection")),
+      updated_indicator_(particles_->registerStateVariable<int>(
           "UpdatedIndicator", [&](size_t i) -> int
           { return 0; }))
 {
@@ -151,8 +151,7 @@ void ShellNormalDirectionPrediction::ConsistencyCorrection::interaction(size_t i
 //=================================================================================================//
 ShellNormalDirectionPrediction::ConsistencyUpdatedCheck::ConsistencyUpdatedCheck(SPHBody &sph_body)
     : LocalDynamicsReduce<ReduceAND>(sph_body),
-      DataDelegateSimple(sph_body),
-      updated_indicator_(*particles_->getVariableDataByName<int>("UpdatedIndicator")) {}
+      updated_indicator_(particles_->getVariableDataByName<int>("UpdatedIndicator")) {}
 //=================================================================================================//
 bool ShellNormalDirectionPrediction::ConsistencyUpdatedCheck::reduce(size_t index_i, Real dt)
 {
@@ -170,7 +169,7 @@ void ShellNormalDirectionPrediction::SmoothingNormal::update(size_t index_i, Rea
 }
 //=================================================================================================//
 ShellRelaxationStep::ShellRelaxationStep(BaseInnerRelation &inner_relation)
-    : BaseDynamics<void>(inner_relation.getSPHBody()),
+    : BaseDynamics<void>(),
       real_body_(DynamicCast<RealBody>(this, inner_relation.getSPHBody())),
       inner_relation_(inner_relation), near_shape_surface_(real_body_),
       relaxation_residue_(inner_relation),

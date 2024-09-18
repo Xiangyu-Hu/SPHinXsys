@@ -42,8 +42,8 @@ class SmearedSurfaceIndication : public LocalDynamics, public DataDelegateInner
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
-    StdLargeVec<int> &indicator_;
-    StdLargeVec<int> &smeared_surface_;
+    int *indicator_;
+    int *smeared_surface_;
 };
 } // namespace SPH
 #endif // SMEARED_SURFACE_INDICATION_H

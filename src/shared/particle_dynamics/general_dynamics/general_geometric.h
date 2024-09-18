@@ -37,7 +37,7 @@ namespace SPH
  * @class NormalDirectionFromBodyShape
  * @brief normal direction at particles
  */
-class NormalDirectionFromBodyShape : public LocalDynamics, public DataDelegateSimple
+class NormalDirectionFromBodyShape : public LocalDynamics
 {
   public:
     explicit NormalDirectionFromBodyShape(SPHBody &sph_body);
@@ -46,15 +46,15 @@ class NormalDirectionFromBodyShape : public LocalDynamics, public DataDelegateSi
 
   protected:
     Shape &initial_shape_;
-    StdLargeVec<Vecd> &pos_, &n_, &n0_;
-    StdLargeVec<Real> &phi_, &phi0_;
+    Vecd *pos_, *n_, *n0_;
+    Real *phi_, *phi0_;
 };
 
 /**
  * @class NormalDirectionFromSubShapeAndOp
  * @brief normal direction at particles
  */
-class NormalDirectionFromSubShapeAndOp : public LocalDynamics, public DataDelegateSimple
+class NormalDirectionFromSubShapeAndOp : public LocalDynamics
 {
   public:
     explicit NormalDirectionFromSubShapeAndOp(SPHBody &sph_body, const std::string &shape_name);
@@ -65,8 +65,8 @@ class NormalDirectionFromSubShapeAndOp : public LocalDynamics, public DataDelega
     SubShapeAndOp *shape_and_op_;
     Shape *shape_;
     const Real switch_sign_;
-    StdLargeVec<Vecd> &pos_, &n_, &n0_;
-    StdLargeVec<Real> &phi_, &phi0_;
+    Vecd *pos_, *n_, *n0_;
+    Real *phi_, *phi0_;
 };
 
 class NormalDirectionFromParticles : public LocalDynamics, public DataDelegateInner
@@ -78,8 +78,8 @@ class NormalDirectionFromParticles : public LocalDynamics, public DataDelegateIn
 
   protected:
     Shape &initial_shape_;
-    StdLargeVec<Vecd> &pos_, &n_, &n0_;
-    StdLargeVec<Real> &phi_, &phi0_, &Vol_;
+    Vecd *pos_, *n_, *n0_;
+    Real *phi_, *phi0_, *Vol_;
 };
 } // namespace SPH
 #endif // GENERAL_GEOMETRIC_H

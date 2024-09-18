@@ -47,7 +47,7 @@ bool FreeSurfaceIndication<Inner<>>::isVeryNearFreeSurface(size_t index_i)
 FreeSurfaceIndication<Inner<SpatialTemporal>>::
     FreeSurfaceIndication(BaseInnerRelation &inner_relation)
     : FreeSurfaceIndication<Inner<>>(inner_relation),
-      previous_surface_indicator_(*particles_->registerSharedVariable<int>("PreviousSurfaceIndicator", 1))
+      previous_surface_indicator_(particles_->registerStateVariable<int>("PreviousSurfaceIndicator", 1))
 {
     particles_->addVariableToSort<int>("PreviousSurfaceIndicator");
 }
@@ -89,7 +89,7 @@ void FreeSurfaceIndication<Contact<>>::interaction(size_t index_i, Real dt)
     Real pos_div = 0.0;
     for (size_t k = 0; k < contact_configuration_.size(); ++k)
     {
-        StdLargeVec<Real> &Vol_k = *(contact_Vol_[k]);
+        Real *Vol_k = contact_Vol_[k];
         Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
         for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
         {
@@ -115,8 +115,8 @@ void FreeSurfaceIndication<Contact<NonWetting>>::interaction(size_t index_i, Rea
     Real pos_div = 0.0;
     for (size_t k = 0; k < contact_configuration_.size(); ++k)
     {
-        StdLargeVec<Real> &wetting_k = *(contact_phi_[k]);
-        StdLargeVec<Real> &Vol_k = *(contact_Vol_[k]);
+        Real *wetting_k = contact_phi_[k];
+        Real *Vol_k = contact_Vol_[k];
         Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
         for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
         {

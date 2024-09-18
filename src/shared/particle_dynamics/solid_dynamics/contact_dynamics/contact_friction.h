@@ -52,18 +52,14 @@ class PairwiseFrictionFromWall : public LocalDynamics, public DataDelegateContac
 
     inline void interaction(size_t index_i, Real dt = 0.0)
     {
-        Real Vol_i = Vol_[index_i];
-        Real mass_i = mass_[index_i];
-        Vecd &vel_i = vel_[index_i];
-
         std::array<Real, MaximumNeighborhoodSize> parameter_b;
 
         /** Contact interaction. */
         for (size_t k = 0; k < contact_configuration_.size(); ++k)
         {
-            StdLargeVec<Vecd> &vel_k = *(wall_vel_n_[k]);
-            StdLargeVec<Vecd> &n_k = *(wall_n_[k]);
-            StdLargeVec<Real> &Vol_k = *(wall_Vol_n_[k]);
+            Vecd *vel_k = wall_vel_n_[k];
+            Vecd *n_k = wall_n_[k];
+            Real *Vol_k = wall_Vol_n_[k];
             Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
             // forward sweep
             for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
@@ -71,13 +67,14 @@ class PairwiseFrictionFromWall : public LocalDynamics, public DataDelegateContac
                 size_t index_j = contact_neighborhood.j_[n];
                 Vecd &e_ij = contact_neighborhood.e_ij_[n];
 
-                parameter_b[n] = eta_ * contact_neighborhood.dW_ij_[n] * Vol_k[index_j] * Vol_i * dt / contact_neighborhood.r_ij_[n];
+                parameter_b[n] = eta_ * contact_neighborhood.dW_ij_[n] * Vol_k[index_j] *
+                                 Vol_[index_i] * dt / contact_neighborhood.r_ij_[n];
 
                 // only update particle i
-                Vecd vel_derivative = (vel_i - vel_k[index_j]);
+                Vecd vel_derivative = (vel_[index_i] - vel_k[index_j]);
                 Vecd n_j = e_ij.dot(n_k[index_j]) > 0.0 ? n_k[index_j] : -1.0 * n_k[index_j];
                 vel_derivative -= SMAX(Real(0), vel_derivative.dot(n_j)) * n_j;
-                vel_i += parameter_b[n] * vel_derivative / (mass_i - 2.0 * parameter_b[n]);
+                vel_[index_i] += parameter_b[n] * vel_derivative / (mass_[index_i] - 2.0 * parameter_b[n]);
             }
             // backward sweep
             for (size_t n = contact_neighborhood.current_size_; n != 0; --n)
@@ -86,20 +83,20 @@ class PairwiseFrictionFromWall : public LocalDynamics, public DataDelegateContac
                 Vecd &e_ij = contact_neighborhood.e_ij_[n];
 
                 // only update particle i
-                Vecd vel_derivative = (vel_i - vel_k[index_j]);
+                Vecd vel_derivative = (vel_[index_i] - vel_k[index_j]);
                 Vecd n_j = e_ij.dot(n_k[index_j]) > 0.0 ? n_k[index_j] : -1.0 * n_k[index_j];
                 vel_derivative -= SMAX(Real(0), vel_derivative.dot(n_j)) * n_j;
-                vel_i += parameter_b[n - 1] * vel_derivative / (mass_i - 2.0 * parameter_b[n - 1]);
+                vel_[index_i] += parameter_b[n - 1] * vel_derivative / (mass_[index_i] - 2.0 * parameter_b[n - 1]);
             }
         }
     };
 
   protected:
     Real eta_; /**< friction coefficient */
-    StdLargeVec<Real> &Vol_, &mass_;
-    StdLargeVec<Vecd> &vel_;
-    StdVec<StdLargeVec<Real> *> wall_Vol_n_;
-    StdVec<StdLargeVec<Vecd> *> wall_vel_n_, wall_n_;
+    Real *Vol_, *mass_;
+    Vecd *vel_;
+    StdVec<Real *> wall_Vol_n_;
+    StdVec<Vecd *> wall_vel_n_, wall_n_;
 };
 
 } // namespace solid_dynamics
