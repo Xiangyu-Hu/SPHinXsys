@@ -106,8 +106,7 @@ class BodyStatesRecording : public BaseIO
     /** write with filename indicated by physical time */
     void writeToFile();
 
-    template <class ExecutionPolicy>
-    void writeToFile(const ExecutionPolicy &ex_policy)
+    void writeToFile(const ParallelDevicePolicy &ex_policy)
     {
         for (size_t i = 0; i < bodies_.size(); ++i)
         {
@@ -115,6 +114,16 @@ class BodyStatesRecording : public BaseIO
             prepare_variable_to_write_[i](ex_policy);
         }
 
+        writeToFile();
+    };
+
+    void writeToFile(const ParallelPolicy &ex_policy)
+    {
+        writeToFile();
+    };
+
+    void writeToFile(const SequencedPolicy &ex_policy)
+    {
         writeToFile();
     };
 
