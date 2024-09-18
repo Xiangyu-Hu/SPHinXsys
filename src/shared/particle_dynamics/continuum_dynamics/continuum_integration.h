@@ -79,34 +79,6 @@ class BaseIntegration1stHalf : public FluidDynamicsType
 using Integration1stHalf = BaseIntegration1stHalf<fluid_dynamics::Integration1stHalfInnerNoRiemann>;
 using Integration1stHalfRiemann = BaseIntegration1stHalf<fluid_dynamics::Integration1stHalfInnerRiemann>;
 
-class ShearAccelerationRelaxation : public fluid_dynamics::BaseIntegration<DataDelegateInner>
-{
-  public:
-    explicit ShearAccelerationRelaxation(BaseInnerRelation &inner_relation);
-    virtual ~ShearAccelerationRelaxation(){};
-    void interaction(size_t index_i, Real dt = 0.0);
-
-  protected:
-    GeneralContinuum &continuum_;
-    Real G_, smoothing_length_;
-    Vecd *acc_shear_;
-};
-
-class ShearStressRelaxation : public fluid_dynamics::BaseIntegration<DataDelegateInner>
-{
-  public:
-    explicit ShearStressRelaxation(BaseInnerRelation &inner_relation);
-    virtual ~ShearStressRelaxation(){};
-    void initialization(size_t index_i, Real dt = 0.0);
-    void interaction(size_t index_i, Real dt = 0.0);
-    void update(size_t index_i, Real dt = 0.0);
-
-  protected:
-    GeneralContinuum &continuum_;
-    Matd *shear_stress_, *shear_stress_rate_, *velocity_gradient_, *strain_tensor_, *strain_tensor_rate_, *B_;
-    Real *Vol_;
-};
-
 template <class DataDelegationType>
 class BasePlasticIntegration : public fluid_dynamics::BaseIntegration<DataDelegationType>
 {
