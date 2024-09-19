@@ -31,7 +31,7 @@ twitter_username: sphinxsys
 github_username:  Xiangyu-Hu
 
 # Build settings
-remote_theme: https://github.com/jekyll/minima
+theme: minima
 # theme: jekyll-theme-Architect
 plugins:
   - jekyll-feed
