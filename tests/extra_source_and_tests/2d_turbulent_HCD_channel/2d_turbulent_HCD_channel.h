@@ -18,20 +18,25 @@ using namespace SPH;
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real scale = 1.0e-3;
-Real DH = 0.015; /**< Channel height. */
-Real num_fluid_cross_section = 20.0;
-Real extend_in = 5.0 * DH;
-Real extend_out = 3.0 * DH;
-Real DL1 = 3.0 * DH + extend_in;
-Real DL2 = 3.0 * DH + extend_out;
-Real DL3 = 21.0 * DH;
-Real incline_angle = 10.0 * (2.0 * Pi / 360.0);
+Real DH = 2.0; /**< Channel height. */
+Real num_fluid_cross_section = 40.0;
+Real extend_in = 2.0;
+Real extend_out = 4.0;
+Real DL1 = 1.0 + extend_in;
+Real DL2 = 1.5;
+Real DL3 = 1.0;
+Real DL4 = 1.5;
+Real DL5 = 1.0 + extend_out;
+Real DL = DL1 + DL2 + DL3 + DL4 + DL5;
+Real incline_angle = 30.0 * (2.0 * Pi / 360.0);
+Real DH1 = DL2 * tan(incline_angle);
 Vec2d point_A(0.0, DH);
-Vec2d point_B(DL1, DH);
-Vec2d point_C(DL1 + DL3, DH + DL3 * tan(incline_angle));
-Vec2d point_D(DL1 + DL3 + DL2, DH + DL3 * tan(incline_angle));
-Vec2d point_E(DL1 + DL3 + DL2, 0.0);
+Vec2d point_B(DL, DH);
+Vec2d point_C(DL, 0.0);
+Vec2d point_D(DL - DL5, 0.0);
+Vec2d point_E(DL - DL5 - DL4, DH1);
+Vec2d point_F(DL1 + DL2, DH1);
+Vec2d point_G(DL1, 0.0);
 //----------------------------------------------------------------------
 //	Unique parameters for turbulence.
 //----------------------------------------------------------------------
@@ -117,8 +122,8 @@ Vec2d right_buffer_translation = outlet_buffer_center_translation;
 //----------------------------------------------------------------------
 //	Domain bounds of the system.
 //----------------------------------------------------------------------
-Real DL_domain = DL1 + DL3 + DL2 + offset_distance;
-Real DH_domain = point_D[1];
+Real DL_domain = DL;
+Real DH_domain = DH;
 Vec2d left_bottom_point(-DL_sponge - offset_distance, 0.0);
 Vec2d right_up_point(DL_domain, DH_domain);
 BoundingBox system_domain_bounds(left_bottom_point + Vec2d(-2.0 * BW, -2.0 * BW), right_up_point + Vec2d(2.0 * BW, 2.0 * BW));
@@ -222,11 +227,13 @@ std::vector<Vecd> createWaterBlockShape()
     water_block_shape.push_back(Vecd(-DL_sponge - offset_distance, DH));
     water_block_shape.push_back(point_A);
     water_block_shape.push_back(point_B);
+    water_block_shape.push_back(Vecd(point_B[0] + offset_distance, point_B[1]));
+    water_block_shape.push_back(Vecd(point_C[0] + offset_distance, point_C[1]));
     water_block_shape.push_back(point_C);
     water_block_shape.push_back(point_D);
-    water_block_shape.push_back(Vecd(point_D[0] + offset_distance, point_D[1]));
-    water_block_shape.push_back(Vecd(point_D[0] + offset_distance, point_E[1]));
     water_block_shape.push_back(point_E);
+    water_block_shape.push_back(point_F);
+    water_block_shape.push_back(point_G);
     water_block_shape.push_back(Vecd(-DL_sponge - offset_distance, 0.0));
 
     return water_block_shape;
@@ -249,11 +256,13 @@ std::vector<Vecd> createOuterWallShape()
     water_block_shape.push_back(Vecd(-DL_sponge - offset_distance - BW, DH));
     water_block_shape.push_back(point_A);
     water_block_shape.push_back(point_B);
+    water_block_shape.push_back(Vecd(point_B[0] + offset_distance + BW, point_B[1]));
+    water_block_shape.push_back(Vecd(point_C[0] + offset_distance + BW, point_C[1]));
     water_block_shape.push_back(point_C);
     water_block_shape.push_back(point_D);
-    water_block_shape.push_back(Vecd(point_D[0] + offset_distance + BW, point_D[1]));
-    water_block_shape.push_back(Vecd(point_D[0] + offset_distance + BW, point_E[1]));
     water_block_shape.push_back(point_E);
+    water_block_shape.push_back(point_F);
+    water_block_shape.push_back(point_G);
     water_block_shape.push_back(Vecd(-DL_sponge - offset_distance - BW, 0.0));
 
     return water_block_shape;
@@ -266,11 +275,13 @@ std::vector<Vecd> createInnerWallShape()
     water_block_shape.push_back(Vecd(-DL_sponge - offset_distance - 2.0 * BW, DH));
     water_block_shape.push_back(point_A);
     water_block_shape.push_back(point_B);
+    water_block_shape.push_back(Vecd(point_B[0] + offset_distance + 2.0 * BW, point_B[1]));
+    water_block_shape.push_back(Vecd(point_C[0] + offset_distance + 2.0 * BW, point_C[1]));
     water_block_shape.push_back(point_C);
     water_block_shape.push_back(point_D);
-    water_block_shape.push_back(Vecd(point_D[0] + offset_distance + 2.0 * BW, point_D[1]));
-    water_block_shape.push_back(Vecd(point_D[0] + offset_distance + 2.0 * BW, point_E[1]));
     water_block_shape.push_back(point_E);
+    water_block_shape.push_back(point_F);
+    water_block_shape.push_back(point_G);
     water_block_shape.push_back(Vecd(-DL_sponge - offset_distance - 2.0 * BW, 0.0));
 
     return water_block_shape;

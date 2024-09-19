@@ -11,7 +11,7 @@ int main(int ac, char *av[])
     /** Tag for run particle relaxation for the initial body fitted distribution. */
     sph_system.setRunParticleRelaxation(false);
     /** Tag for computation start with relaxed body fitted particles distribution. */
-    sph_system.setReloadParticles(true);
+    sph_system.setReloadParticles(false);
 
     sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
     IOEnvironment io_environment(sph_system);
@@ -250,8 +250,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------------------------------------
     int num_output_file = 0;
     //Real start_time_turbulence = 70.0;
-    //std::cout << "Press any key to start";
-    //std::cin.get();
+    std::cout << "Press any key to start";
+    std::cin.get();
     while (GlobalStaticVariables::physical_time_ < end_time)
     {
         Real integration_time = 0.0;
