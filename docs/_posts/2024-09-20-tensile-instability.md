@@ -2,7 +2,6 @@
 layout: post
 title:  "Misinterpretation of tensile instability in SPH solid dynamics"
 date:   2024-09-20
-author: Xiangyu Hu
 categories: sphinxsys update
 ---
 Xiangyu Hu
