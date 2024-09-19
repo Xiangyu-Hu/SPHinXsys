@@ -31,7 +31,7 @@ twitter_username: sphinxsys
 github_username:  Xiangyu-Hu/SPHinXsys
 
 # Build settings
-theme: minima
+theme: jekyll-theme-minimal
 plugins:
   - jekyll-feed
 
