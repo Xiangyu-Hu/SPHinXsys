@@ -4,6 +4,7 @@ title:  "Welcome to SPHinXsys!"
 date:   2024-09-19 17:46:25 +0200
 categories: sphinxsys update
 ---
+
 ## Why SPHinXsys?
 
 SPHinXsys offers a new frontier in simulation technology with the cutting-edge unified multi-physics simulation and optimization library. Harnessing the power of particle-based modeling, the platform addresses the complexities of fluid dynamics, structural mechanics, fluid-structure interactions, thermal analysis, chemical reactions and AI-aware optimizations.
