@@ -12,7 +12,7 @@ This blog is from some parts from the [Journal of Computational Physics](https:/
 
 More than two decades ago, it was found the numerical simulations of typical elastic dynamics problems using updated Lagrangian smoothed particle hydrodynamics (ULSPH) may lead to numerical instability.
 
-<p align="center"><img src="/SPHinXsys/assets/img/tensor-instability.jpg" alt="Tensor-instability" height="350"/> p> <center>Fig. 1. Illustration for (a) no numerical instabilities, (b) non-physical fractures and (c) zigzag pattern in ULSPH simulations of 2D oscillating plates. The particles are colored with von Mises stress.</center>
+<p align="center"><img src="/SPHinXsys/assets/img/tensor-instability.jpg" alt="Tensor-instability" height="350"/><center>Fig. 1. Illustration for (a) no numerical instabilities, (b) non-physical fractures and (c) zigzag pattern in ULSPH simulations of 2D oscillating plates. The particles are colored with von Mises stress.</center>
 
 <br clear="left"/>
 
