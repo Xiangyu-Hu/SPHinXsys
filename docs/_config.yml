@@ -30,8 +30,10 @@ url: "" # the base hostname & protocol for your site, e.g. http://example.com
 twitter_username: sphinxsys
 github_username:  Xiangyu-Hu/SPHinXsys
 
+incremental: false
+
 # Build settings
-theme: jekyll-theme-minimal
+theme: minima
 plugins:
   - jekyll-feed
 
