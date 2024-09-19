@@ -3,21 +3,14 @@
 namespace SPH
 {
 //=================================================================================================//
-ExternalForce::ExternalForce() {}
-//=================================================================================================//
-Gravity::Gravity(Vecd global_acceleration, Vecd reference_position)
-    : ExternalForce(), global_acceleration_(global_acceleration),
+Gravity::Gravity(Vecd gravity_vector, Vecd reference_position)
+    : reference_acceleration_(gravity_vector),
       zero_potential_reference_(reference_position) {}
 //=================================================================================================//
-Vecd Gravity::InducedAcceleration(const Vecd &position)
-{
-    return global_acceleration_;
-}
+StartupAcceleration::StartupAcceleration(Vecd target_velocity, Real target_time)
+    : Gravity(target_velocity / target_time), target_time_(target_time) {}
 //=================================================================================================//
-Real Gravity::getPotential(const Vecd &position)
-{
-    return InducedAcceleration(position).dot(zero_potential_reference_ - position);
-}
+IncreaseToFullGravity::IncreaseToFullGravity(Vecd gravity_vector, Real time_to_full_gravity)
+    : Gravity(gravity_vector), time_to_full_gravity_(time_to_full_gravity) {}
 //=================================================================================================//
 } // namespace SPH
-  //=================================================================================================//

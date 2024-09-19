@@ -9,7 +9,6 @@
 
 namespace SPH
 {
-
 //=================================================================================================//
 void CellLinkedList::
     tagBoundingCells(StdVec<CellLists> &cell_data_lists, const BoundingBox &bounding_bounds, int axis)

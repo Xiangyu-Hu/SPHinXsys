@@ -46,9 +46,9 @@ class PullingForce : public solid_dynamics::BaseLoadingForce<BodyPartByParticle>
   public:
     PullingForce(BodyPartByParticle &body_part, StdVec<std::array<Real, 2>> f_arr)
         : solid_dynamics::BaseLoadingForce<BodyPartByParticle>(body_part, "PullingForce"),
-          mass_n_(*particles_->getVariableDataByName<Real>("Mass")),
-          Vol_(*particles_->getVariableDataByName<Real>("VolumetricMeasure")),
-          F_(*particles_->getVariableDataByName<Matd>("DeformationGradient")),
+          mass_n_(particles_->getVariableDataByName<Real>("Mass")),
+          Vol_(particles_->getVariableDataByName<Real>("VolumetricMeasure")),
+          F_(particles_->getVariableDataByName<Matd>("DeformationGradient")),
           force_arr_(f_arr),
           particles_num_(body_part.body_part_particles_.size())
     {
@@ -73,14 +73,14 @@ class PullingForce : public solid_dynamics::BaseLoadingForce<BodyPartByParticle>
         Real mean_force_ = getForce(time) * J * area_0_[index_i] * current_normal_norm;
 
         loading_force_[index_i] = mean_force_ * normal;
-        ForcePrior::update(index_i, time);
+        solid_dynamics::BaseLoadingForce<BodyPartByParticle>::update(index_i, time);
     }
 
   protected:
-    StdLargeVec<Real> &mass_n_;
+    Real *mass_n_;
     StdLargeVec<Real> area_0_;
-    StdLargeVec<Real> &Vol_;
-    StdLargeVec<Matd> &F_;
+    Real *Vol_;
+    Matd *F_;
 
     StdVec<std::array<Real, 2>> force_arr_;
     size_t particles_num_;
@@ -136,7 +136,7 @@ int main(int ac, char *av[])
     Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half(beam_body_inner);
 
     /** Time step size calculation. */
-    ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(beam_body);
+    ReduceDynamics<solid_dynamics::AcousticTimeStep> computing_time_step_size(beam_body);
 
     /** specify end-time for defining the force-time profile */
     Real end_time = 1;
@@ -169,7 +169,6 @@ int main(int ac, char *av[])
     RegressionTestTimeAverage<ObservedQuantityRecording<Real>>
         write_beam_stress("VonMisesStress", beam_observer_contact);
     /* time step begins */
-    GlobalStaticVariables::physical_time_ = 0.0;
     sph_system.initializeSystemCellLinkedLists();
     sph_system.initializeSystemConfigurations();
 
@@ -178,6 +177,7 @@ int main(int ac, char *av[])
     write_states.writeToFile(0);
     write_beam_stress.writeToFile(0);
     /** Setup physical parameters. */
+    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     int ite = 0;
     Real output_period = end_time / 200.0;
     Real dt = 0.0;
@@ -188,7 +188,7 @@ int main(int ac, char *av[])
     /**
      * Main loop
      */
-    while (GlobalStaticVariables::physical_time_ < end_time)
+    while (physical_time < end_time)
     {
         Real integration_time = 0.0;
         while (integration_time < output_period)
@@ -196,11 +196,11 @@ int main(int ac, char *av[])
             if (ite % 100 == 0)
             {
                 std::cout << "N=" << ite << " Time: "
-                          << GlobalStaticVariables::physical_time_ << "	dt: "
+                          << physical_time << "	dt: "
                           << dt << "\n";
             }
 
-            pull_force.exec(GlobalStaticVariables::physical_time_);
+            pull_force.exec(physical_time);
 
             /** Stress relaxation and damping. */
             stress_relaxation_first_half.exec(dt);
@@ -212,7 +212,7 @@ int main(int ac, char *av[])
             ite++;
             dt = sph_system.getSmallestTimeStepAmongSolidBodies();
             integration_time += dt;
-            GlobalStaticVariables::physical_time_ += dt;
+            physical_time += dt;
         }
         TickCount t2 = TickCount::now();
         write_beam_stress.writeToFile(ite);

@@ -46,26 +46,26 @@ namespace solid_dynamics
  * @brief  set initial condition for a solid body with different material
  * This is a abstract class to be override for case specific initial conditions.
  */
-class ElasticDynamicsInitialCondition : public LocalDynamics, public DataDelegateSimple
+class ElasticDynamicsInitialCondition : public LocalDynamics
 {
   public:
     explicit ElasticDynamicsInitialCondition(SPHBody &sph_body);
     virtual ~ElasticDynamicsInitialCondition(){};
 
   protected:
-    StdLargeVec<Vecd> &pos_, &vel_;
+    Vecd *pos_, *vel_;
 };
 
 /**
  * @class UpdateElasticNormalDirection
  * @brief update particle normal directions for elastic solid
  */
-class UpdateElasticNormalDirection : public LocalDynamics, public DataDelegateSimple
+class UpdateElasticNormalDirection : public LocalDynamics
 {
   protected:
-    StdLargeVec<Vecd> &n_, &n0_;
-    StdLargeVec<Real> &phi_, &phi0_;
-    StdLargeVec<Matd> &F_;
+    Vecd *n_, *n0_;
+    Real *phi_, *phi0_;
+    Matd *F_;
     Vecd getRotatedNormalDirection(const Matd &F, const Vecd &n0);
 
   public:
@@ -76,23 +76,22 @@ class UpdateElasticNormalDirection : public LocalDynamics, public DataDelegateSi
 };
 
 /**
- * @class AcousticTimeStepSize
+ * @class AcousticTimeStep
  * @brief Computing the acoustic time step size
  * computing time step size
  */
-class AcousticTimeStepSize : public LocalDynamicsReduce<ReduceMin>,
-                             public DataDelegateSimple
+class AcousticTimeStep : public LocalDynamicsReduce<ReduceMin>
 {
   protected:
     Real CFL_;
     ElasticSolid &elastic_solid_;
-    StdLargeVec<Vecd> &vel_, &force_, &force_prior_;
-    StdLargeVec<Real> &mass_;
+    Vecd *vel_, *force_, *force_prior_;
+    Real *mass_;
     Real smoothing_length_min_, c0_;
 
   public:
-    explicit AcousticTimeStepSize(SPHBody &sph_body, Real CFL = 0.6);
-    virtual ~AcousticTimeStepSize(){};
+    explicit AcousticTimeStep(SPHBody &sph_body, Real CFL = 0.6);
+    virtual ~AcousticTimeStep(){};
 
     Real reduce(size_t index_i, Real dt = 0.0);
 };
@@ -125,9 +124,9 @@ class DeformationGradientBySummation : public LocalDynamics, public DataDelegate
     };
 
   protected:
-    StdLargeVec<Real> &Vol_;
-    StdLargeVec<Vecd> &pos_;
-    StdLargeVec<Matd> &B_, &F_;
+    Real *Vol_;
+    Vecd *pos_;
+    Matd *B_, *F_;
 };
 
 /**
@@ -141,9 +140,9 @@ class BaseElasticIntegration : public LocalDynamics, public DataDelegateInner
     virtual ~BaseElasticIntegration(){};
 
   protected:
-    StdLargeVec<Real> &Vol_;
-    StdLargeVec<Vecd> &pos_, &vel_, &force_;
-    StdLargeVec<Matd> &B_, &F_, &dF_dt_;
+    Real *Vol_;
+    Vecd *pos_, *vel_, *force_;
+    Matd *B_, *F_, *dF_dt_;
 };
 
 /**
@@ -161,8 +160,8 @@ class BaseIntegration1stHalf : public BaseElasticIntegration
   protected:
     ElasticSolid &elastic_solid_;
     Real rho0_, inv_rho0_;
-    StdLargeVec<Real> &rho_, &mass_;
-    StdLargeVec<Vecd> &force_prior_;
+    Real *rho_, *mass_;
+    Vecd *force_prior_;
     Real smoothing_length_;
 };
 
@@ -204,7 +203,7 @@ class Integration1stHalf : public BaseIntegration1stHalf
     };
 
   protected:
-    StdLargeVec<Matd> &stress_PK1_B_;
+    Matd *stress_PK1_B_;
     Real numerical_dissipation_factor_;
     Real inv_W0_ = 1.0 / sph_body_.sph_adaptation_->getKernel()->W0(ZeroVecd);
 };
@@ -284,8 +283,8 @@ class DecomposedIntegration1stHalf : public BaseIntegration1stHalf
     };
 
   protected:
-    StdLargeVec<Real> &J_to_minus_2_over_dimension_;
-    StdLargeVec<Matd> &stress_on_particle_, &inverse_F_T_;
+    Real *J_to_minus_2_over_dimension_;
+    Matd *stress_on_particle_, *inverse_F_T_;
     const Real correction_factor_ = 1.07;
 };
 

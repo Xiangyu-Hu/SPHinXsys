@@ -162,8 +162,8 @@ int main(int ac, char *av[])
     InteractionWithUpdate<fluid_dynamics::NonNewtonianViscousForceWithWall<AngularConservative>> viscous_acceleration(fluid_inner, fluid_all_walls);
     InteractionWithUpdate<fluid_dynamics::TransportVelocityLimitedCorrectionComplex<AllParticles>> transport_velocity_correction(fluid_inner, fluid_all_walls);
 
-    ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(fluid, u_lid);
-    ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_acoustic_time_step_size(fluid);
+    ReduceDynamics<fluid_dynamics::AdvectionViscousTimeStep> get_fluid_advection_time_step_size(fluid, u_lid);
+    ReduceDynamics<fluid_dynamics::AcousticTimeStep> get_acoustic_time_step_size(fluid);
     ReduceDynamics<fluid_dynamics::SRDViscousTimeStepSize> get_viscous_time_step_size(fluid);
 
     InteractionDynamics<fluid_dynamics::VorticityInner> compute_vorticity(fluid_inner);
@@ -172,6 +172,10 @@ int main(int ac, char *av[])
     ObservingAQuantity<Real> observing_viscosity(fluid_observer_contact, "VariableViscosity");
     SimpleDynamics<ParticleSnapshotAverage<Real>> average_viscosity(observer_body, "VariableViscosity");
 
+    //----------------------------------------------------------------------
+    //	Define the configuration related particles dynamics.
+    //----------------------------------------------------------------------
+    ParticleSorting particle_sorting(fluid);
     //	Define the methods for I/O operations, observations
     BodyStatesRecordingToVtp write_fluid_states(sph_system);
     write_fluid_states.addToWrite<Real>(fluid, "Pressure");
@@ -185,7 +189,7 @@ int main(int ac, char *av[])
     wall_boundary_normal_direction.exec();
 
     //	Setup for time-stepping control
-    // size_t number_of_iterations = sph_system.RestartStep();
+    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     Real output_interval = end_time / number_of_outputs;
     Real dt = 0;
     Real Dt = 0;
@@ -198,7 +202,7 @@ int main(int ac, char *av[])
     //	First output before the main loop.
     write_fluid_states.writeToFile(0);
     TickCount t1 = TickCount::now();
-    while (GlobalStaticVariables::physical_time_ < end_time)
+    while (physical_time < end_time)
     {
         iteration++;
         TimeInterval tt;
@@ -224,16 +228,20 @@ int main(int ac, char *av[])
             pressure_relaxation.exec(dt);
             density_relaxation.exec(dt);
             relaxation_time += dt;
-            GlobalStaticVariables::physical_time_ += dt;
+            physical_time += dt;
         }
 
-        fluid.updateCellLinkedListWithParticleSort(100);
+        if (iteration % 100 == 0 && iteration != 1)
+        {
+            particle_sorting.exec();
+        }
+        fluid.updateCellLinkedList();
         fluid_walls_complex.updateConfiguration();
 
-        if (iteration % 100 == 0 || output_counter * output_interval < GlobalStaticVariables::physical_time_)
+        if (iteration % 100 == 0 || output_counter * output_interval < physical_time)
         {
-            std::cout << "Iteration: " << iteration << " | sim time in %: " << GlobalStaticVariables::physical_time_ / end_time * 100
-                      << " | physical time in s: " << GlobalStaticVariables::physical_time_
+            std::cout << "Iteration: " << iteration << " | sim time in %: " << physical_time / end_time * 100
+                      << " | physical time in s: " << physical_time
                       << " | computation time in s: " << tt.seconds() << " | dt_adv: " << Dt_adv << " | dt_visc: " << Dt_visc
                       << " | dt_aco: " << Dt_aco << "\n"
                       << std::flush;
@@ -246,7 +254,7 @@ int main(int ac, char *av[])
             }
         }
 
-        if (output_counter * output_interval < GlobalStaticVariables::physical_time_)
+        if (output_counter * output_interval < physical_time)
         {
             compute_vorticity.exec();
             write_fluid_states.writeToFile();

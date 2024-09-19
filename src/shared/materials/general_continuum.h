@@ -22,7 +22,7 @@
  * ------------------------------------------------------------------------- */
 /**
  * @file 	general_continuum.h
- * @brief 	Describe the linear elastic and Drucker-Prager's plastic model
+ * @brief 	Describe the linear elastic, J2 plasticity, and Drucker-Prager's plastic model
  * @author	Shuaihao Zhang and Xiangyu Hu
  */
 
@@ -43,7 +43,7 @@ class GeneralContinuum : public WeaklyCompressibleFluid
     Real contact_stiffness_; /* contact-force stiffness related to bulk modulus*/
   public:
     explicit GeneralContinuum(Real rho0, Real c0, Real youngs_modulus, Real poisson_ratio)
-        : WeaklyCompressibleFluid(rho0, c0), E_(0.0), G_(0.0), K_(0.0), nu_(0.0), contact_stiffness_(c0 * c0)
+        : WeaklyCompressibleFluid(rho0, c0), E_(0.0), G_(0.0), K_(0.0), nu_(0.0), contact_stiffness_(rho0_ * c0 * c0)
     {
         material_type_name_ = "GeneralContinuum";
         E_ = youngs_modulus;
@@ -97,6 +97,32 @@ class PlasticContinuum : public GeneralContinuum
     virtual Mat3d ReturnMapping(Mat3d &stress_tensor);
 
     virtual GeneralContinuum *ThisObjectPtr() override { return this; };
+};
+
+class J2Plasticity : public GeneralContinuum
+{
+  protected:
+    Real yield_stress_;
+    Real hardening_modulus_;
+    const Real sqrt_2_over_3_ = sqrt(2.0 / 3.0);
+
+  public:
+    explicit J2Plasticity(Real rho0, Real c0, Real youngs_modulus, Real poisson_ratio, Real yield_stress, Real hardening_modulus = 0.0)
+        : GeneralContinuum(rho0, c0, youngs_modulus, poisson_ratio),
+          yield_stress_(yield_stress), hardening_modulus_(hardening_modulus)
+    {
+        material_type_name_ = "J2Plasticity";
+    };
+    virtual ~J2Plasticity(){};
+
+    Real YieldStress() { return yield_stress_; };
+    Real HardeningModulus() { return hardening_modulus_; };
+
+    virtual Matd ConstitutiveRelationShearStress(Matd &velocity_gradient, Matd &shear_stress, Real &hardening_factor);
+    virtual Matd ReturnMappingShearStress(Matd &shear_stress,  Real &hardening_factor);
+    virtual Real ScalePenaltyForce(Matd &shear_stress, Real &hardening_factor);
+    virtual Real HardeningFactorRate(const Matd &shear_stress, Real &hardening_factor);
+    virtual J2Plasticity *ThisObjectPtr() override { return this; };
 };
 } // namespace SPH
 #endif // GENERAL_CONTINUUM_H

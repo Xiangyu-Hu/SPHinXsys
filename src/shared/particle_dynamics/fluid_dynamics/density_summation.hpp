@@ -11,10 +11,10 @@ template <class DataDelegationType>
 template <class BaseRelationType>
 DensitySummation<Base, DataDelegationType>::DensitySummation(BaseRelationType &base_relation)
     : LocalDynamics(base_relation.getSPHBody()), DataDelegationType(base_relation),
-      rho_(*this->particles_->template getVariableDataByName<Real>("Density")),
-      mass_(*this->particles_->template getVariableDataByName<Real>("Mass")),
-      rho_sum_(*this->particles_->template registerSharedVariable<Real>("DensitySummation")),
-      Vol_(*this->particles_->template getVariableDataByName<Real>("VolumetricMeasure")),
+      rho_(this->particles_->template getVariableDataByName<Real>("Density")),
+      mass_(this->particles_->template getVariableDataByName<Real>("Mass")),
+      rho_sum_(this->particles_->template registerStateVariable<Real>("DensitySummation")),
+      Vol_(this->particles_->template getVariableDataByName<Real>("VolumetricMeasure")),
       rho0_(this->sph_body_.base_material_->ReferenceDensity()),
       inv_sigma0_(1.0 / this->sph_body_.sph_adaptation_->LatticeNumberDensity()),
       W0_(this->sph_body_.sph_adaptation_->getKernel()->W0(ZeroVecd)) {}
@@ -34,7 +34,7 @@ template <typename NearSurfaceType, typename... SummationType>
 template <typename... Args>
 DensitySummation<Inner<NearSurfaceType, SummationType...>>::DensitySummation(Args &&...args)
     : DensitySummation<Inner<SummationType...>>(std::forward<Args>(args)...),
-      indicator_(*this->particles_->template getVariableDataByName<int>("Indicator")){};
+      indicator_(this->particles_->template getVariableDataByName<int>("Indicator")){};
 //=================================================================================================//
 template <typename NearSurfaceType, typename... SummationType>
 void DensitySummation<Inner<NearSurfaceType, SummationType...>>::update(size_t index_i, Real dt)

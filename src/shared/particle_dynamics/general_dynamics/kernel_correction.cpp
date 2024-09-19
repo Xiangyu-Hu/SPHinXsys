@@ -43,7 +43,7 @@ void LinearGradientCorrectionMatrix<Contact<>>::interaction(size_t index_i, Real
     Matd local_configuration = ZeroData<Matd>::value;
     for (size_t k = 0; k < contact_configuration_.size(); ++k)
     {
-        StdLargeVec<Real> &Vol_k = *(contact_Vol_[k]);
+        Real *Vol_k = contact_Vol_[k];
         Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
         for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
         {
@@ -59,7 +59,7 @@ void LinearGradientCorrectionMatrix<Contact<>>::interaction(size_t index_i, Real
 KernelGradientCorrection<Inner<>>::
     KernelGradientCorrection(BaseInnerRelation &inner_relation)
     : KernelGradientCorrection<DataDelegateInner>(inner_relation),
-      average_correction_matrix_(*particles_->getVariableDataByName<Matd>("LinearGradientCorrectionMatrix")){};
+      average_correction_matrix_(particles_->getVariableDataByName<Matd>("LinearGradientCorrectionMatrix")){};
 //=================================================================================================//
 void KernelGradientCorrection<Inner<>>::interaction(size_t index_i, Real dt)
 {
@@ -75,8 +75,8 @@ KernelGradientCorrection<Contact<>>::
     {
         contact_average_correction_matrix_.push_back(
             PairAverageVariable<Matd>(
-                *particles_->getVariableDataByName<Matd>("LinearGradientCorrectionMatrix"),
-                *contact_particles_[k]->getVariableDataByName<Matd>("LinearGradientCorrectionMatrix")));
+                particles_->getVariableDataByName<Matd>("LinearGradientCorrectionMatrix"),
+                contact_particles_[k]->getVariableDataByName<Matd>("LinearGradientCorrectionMatrix")));
     }
 }
 //=================================================================================================//

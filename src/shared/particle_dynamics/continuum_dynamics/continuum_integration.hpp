@@ -1,7 +1,5 @@
 #pragma once
-
 #include "continuum_integration.h"
-
 #include "base_particles.hpp"
 namespace SPH
 {
@@ -11,7 +9,7 @@ namespace continuum_dynamics
 template <class FluidDynamicsType>
 BaseIntegration1stHalf<FluidDynamicsType>::BaseIntegration1stHalf(BaseInnerRelation &inner_relation)
     : FluidDynamicsType(inner_relation),
-      acc_shear_(*this->particles_->template getVariableDataByName<Vecd>("AccelerationByShear")) {}
+      acc_shear_(this->particles_->template registerStateVariable<Vecd>("AccelerationByShear")) {}
 //=================================================================================================//
 template <class FluidDynamicsType>
 void BaseIntegration1stHalf<FluidDynamicsType>::update(size_t index_i, Real dt)
@@ -24,16 +22,12 @@ template <class BaseRelationType>
 BasePlasticIntegration<DataDelegationType>::BasePlasticIntegration(BaseRelationType &base_relation)
     : fluid_dynamics::BaseIntegration<DataDelegationType>(base_relation),
       plastic_continuum_(DynamicCast<PlasticContinuum>(this, this->particles_->getBaseMaterial())),
-      stress_tensor_3D_(*this->particles_->template registerSharedVariable<Mat3d>("StressTensor3D")),
-      strain_tensor_3D_(*this->particles_->template registerSharedVariable<Mat3d>("StrainTensor3D")),
-      stress_rate_3D_(*this->particles_->template registerSharedVariable<Mat3d>("StressRate3D")),
-      strain_rate_3D_(*this->particles_->template registerSharedVariable<Mat3d>("StrainRate3D")),
-      elastic_strain_tensor_3D_(*this->particles_->template registerSharedVariable<Mat3d>("ElasticStrainTensor3D")),
-      elastic_strain_rate_3D_(*this->particles_->template registerSharedVariable<Mat3d>("ElasticStrainRate3D")),
-      velocity_gradient_(*this->particles_->template registerSharedVariable<Matd>("VelocityGradient"))
+      stress_tensor_3D_(this->particles_->template registerStateVariable<Mat3d>("StressTensor3D")),
+      strain_tensor_3D_(this->particles_->template registerStateVariable<Mat3d>("StrainTensor3D")),
+      stress_rate_3D_(this->particles_->template registerStateVariable<Mat3d>("StressRate3D")),
+      strain_rate_3D_(this->particles_->template registerStateVariable<Mat3d>("StrainRate3D")),
+      velocity_gradient_(this->particles_->template registerStateVariable<Matd>("VelocityGradient"))
 {
-    this->particles_->template addVariableToSort<Mat3d>("ElasticStrainTensor3D");
-    this->particles_->template addVariableToSort<Mat3d>("ElasticStrainRate3D");
     this->particles_->template addVariableToSort<Mat3d>("StrainTensor3D");
     this->particles_->template addVariableToSort<Mat3d>("StressTensor3D");
     this->particles_->template addVariableToSort<Mat3d>("StrainRate3D");
@@ -113,8 +107,8 @@ void PlasticIntegration1stHalf<Contact<Wall>, RiemannSolverType>::interaction(si
     Matd stress_tensor_i = degradeToMatd(stress_tensor_3D_[index_i]);
     for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
     {
-        StdLargeVec<Vecd> &wall_acc_ave_k = *(wall_acc_ave_[k]);
-        StdLargeVec<Real> &wall_Vol_k = *(wall_Vol_[k]);
+        Vecd *wall_acc_ave_k = wall_acc_ave_[k];
+        Real *wall_Vol_k = wall_Vol_[k];
         Neighborhood &wall_neighborhood = (*contact_configuration_[k])[index_i];
         for (size_t n = 0; n != wall_neighborhood.current_size_; ++n)
         {
@@ -142,15 +136,8 @@ template <class RiemannSolverType>
 PlasticIntegration2ndHalf<Inner<>, RiemannSolverType>::PlasticIntegration2ndHalf(BaseInnerRelation &inner_relation)
     : BasePlasticIntegration<DataDelegateInner>(inner_relation),
       riemann_solver_(plastic_continuum_, plastic_continuum_, 20.0 * (Real)Dimensions),
-      acc_deviatoric_plastic_strain_(*particles_->registerSharedVariable<Real>("AccDeviatoricPlasticStrain")),
-      vertical_stress_(*particles_->registerSharedVariable<Real>("VerticalStress")),
-      Vol_(*particles_->getVariableDataByName<Real>("VolumetricMeasure")),
-      mass_(*particles_->getVariableDataByName<Real>("Mass")),
-      E_(plastic_continuum_.getYoungsModulus()), nu_(plastic_continuum_.getPoissonRatio())
-{
-    particles_->addVariableToSort<Real>("AccDeviatoricPlasticStrain");
-    particles_->addVariableToSort<Real>("VerticalStress");
-}
+      Vol_(particles_->getVariableDataByName<Real>("VolumetricMeasure")),
+      mass_(particles_->getVariableDataByName<Real>("Mass")) {}
 //=================================================================================================//
 template <class RiemannSolverType>
 void PlasticIntegration2ndHalf<Inner<>, RiemannSolverType>::initialization(size_t index_i, Real dt)
@@ -181,14 +168,6 @@ void PlasticIntegration2ndHalf<Inner<>, RiemannSolverType>::interaction(size_t i
 }
 //=================================================================================================//
 template <class RiemannSolverType>
-Real PlasticIntegration2ndHalf<Inner<>, RiemannSolverType>::getDeviatoricPlasticStrain(Mat3d &strain_tensor)
-{
-    Mat3d deviatoric_strain_tensor = strain_tensor - (1.0 / (Real)Dimensions) * strain_tensor.trace() * Mat3d::Identity();
-    Real sum = (deviatoric_strain_tensor.cwiseProduct(deviatoric_strain_tensor)).sum();
-    return sqrt(sum * 2.0 / 3.0);
-}
-//=================================================================================================//
-template <class RiemannSolverType>
 void PlasticIntegration2ndHalf<Inner<>, RiemannSolverType>::update(size_t index_i, Real dt)
 {
     rho_[index_i] += drho_dt_[index_i] * dt * 0.5;
@@ -198,18 +177,9 @@ void PlasticIntegration2ndHalf<Inner<>, RiemannSolverType>::update(size_t index_
     stress_rate_3D_[index_i] += stress_tensor_rate_3D_;
     stress_tensor_3D_[index_i] += stress_rate_3D_[index_i] * dt;
     /*return mapping*/
-    Mat3d stress_tensor_ = plastic_continuum_.ReturnMapping(stress_tensor_3D_[index_i]);
-    stress_tensor_3D_[index_i] = stress_tensor_;
-    vertical_stress_[index_i] = stress_tensor_3D_[index_i](1, 1);
+    stress_tensor_3D_[index_i] = plastic_continuum_.ReturnMapping(stress_tensor_3D_[index_i]);
     strain_rate_3D_[index_i] = 0.5 * (velocity_gradient + velocity_gradient.transpose());
     strain_tensor_3D_[index_i] += strain_rate_3D_[index_i] * dt;
-    /*calculate elastic strain*/
-    Mat3d deviatoric_stress = stress_tensor_3D_[index_i] - (1.0 / 3.0) * stress_tensor_3D_[index_i].trace() * Mat3d::Identity();
-    Real hydrostatic_pressure = (1.0 / 3.0) * stress_tensor_3D_[index_i].trace();
-    elastic_strain_tensor_3D_[index_i] = deviatoric_stress / (2.0 * plastic_continuum_.getShearModulus(E_, nu_)) +
-                                         hydrostatic_pressure * Mat3d::Identity() / (9.0 * plastic_continuum_.getBulkModulus(E_, nu_));
-    Mat3d plastic_strain_tensor_3D = strain_tensor_3D_[index_i] - elastic_strain_tensor_3D_[index_i];
-    acc_deviatoric_plastic_strain_[index_i] = getDeviatoricPlasticStrain(plastic_strain_tensor_3D);
 }
 //=================================================================================================//
 template <class RiemannSolverType>
@@ -227,9 +197,9 @@ void PlasticIntegration2ndHalf<Contact<Wall>, RiemannSolverType>::interaction(si
     Matd velocity_gradient = Matd::Zero();
     for (size_t k = 0; k < contact_configuration_.size(); ++k)
     {
-        StdLargeVec<Vecd> &vel_ave_k = *(wall_vel_ave_[k]);
-        StdLargeVec<Vecd> &n_k = *(wall_n_[k]);
-        StdLargeVec<Real> &wall_Vol_k = *(wall_Vol_[k]);
+        Vecd *vel_ave_k = wall_vel_ave_[k];
+        Vecd *n_k = wall_n_[k];
+        Real *wall_Vol_k = wall_Vol_[k];
         Neighborhood &wall_neighborhood = (*contact_configuration_[k])[index_i];
         for (size_t n = 0; n != wall_neighborhood.current_size_; ++n)
         {

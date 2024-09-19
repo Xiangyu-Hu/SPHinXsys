@@ -83,22 +83,6 @@ class BoundaryGeometry : public BodyPartByParticle
         }
     };
 };
-/**
- * define time dependent external force
- */
-class TimeDependentExternalForce : public Gravity
-{
-  public:
-    explicit TimeDependentExternalForce(Vecd external_force)
-        : Gravity(external_force) {}
-    virtual Vecd InducedAcceleration(const Vecd &position) override
-    {
-        Real current_time = GlobalStaticVariables::physical_time_;
-        return current_time < time_to_full_external_force
-                   ? current_time * global_acceleration_ / time_to_full_external_force
-                   : global_acceleration_;
-    }
-};
 } // namespace SPH
 
 /**
@@ -125,8 +109,8 @@ int main(int ac, char *av[])
     InnerRelation plate_body_inner(plate_body);
     ContactRelation plate_observer_contact(plate_observer, {&plate_body});
 
-    TimeDependentExternalForce time_dependent_external_force(Vec3d(0.0, 0.0, q / (PT * rho0_s) - gravitational_acceleration));
-    SimpleDynamics<GravityForce> apply_time_dependent_external_force(plate_body, time_dependent_external_force);
+    IncreaseToFullGravity time_dependent_external_force(Vec3d(0.0, 0.0, q / (PT * rho0_s) - gravitational_acceleration), time_to_full_external_force);
+    SimpleDynamics<GravityForce<IncreaseToFullGravity>> apply_time_dependent_external_force(plate_body, time_dependent_external_force);
 
     /**
      * This section define all numerical methods will be used in this case.
@@ -158,11 +142,11 @@ int main(int ac, char *av[])
      * From here the time stepping begins.
      * Set the starting time.
      */
-    GlobalStaticVariables::physical_time_ = 0.0;
     write_states.writeToFile(0);
     write_plate_max_displacement.writeToFile(0);
 
     /** Setup physical parameters. */
+    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     int ite = 0;
     Real end_time = 4.0e-5;
     // Real end_time = 0.8;
@@ -174,7 +158,7 @@ int main(int ac, char *av[])
     /**
      * Main loop
      */
-    while (GlobalStaticVariables::physical_time_ < end_time)
+    while (physical_time < end_time)
     {
         Real integral_time = 0.0;
         while (integral_time < output_period)
@@ -182,7 +166,7 @@ int main(int ac, char *av[])
             if (ite % 100 == 0)
             {
                 std::cout << "N=" << ite << " Time: "
-                          << GlobalStaticVariables::physical_time_ << "	dt: "
+                          << physical_time << "	dt: "
                           << dt << "\n";
             }
             apply_time_dependent_external_force.exec();
@@ -193,7 +177,7 @@ int main(int ac, char *av[])
             ite++;
             dt = computing_time_step_size.exec();
             integral_time += dt;
-            GlobalStaticVariables::physical_time_ += dt;
+            physical_time += dt;
         }
         write_plate_max_displacement.writeToFile(ite);
         TickCount t2 = TickCount::now();

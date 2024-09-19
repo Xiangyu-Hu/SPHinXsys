@@ -89,36 +89,18 @@ class WaterBlock : public ComplexShape
 struct FreeStreamVelocity
 {
     Real u_ref_, t_ref_;
+    Real *physical_time_;
 
     template <class BoundaryConditionType>
     FreeStreamVelocity(BoundaryConditionType &boundary_condition)
         : u_ref_(0.0), t_ref_(2.0) {}
 
-    Vecd operator()(Vecd &position, Vecd &velocity)
+    Vecd operator()(Vecd &position, Vecd &velocity, Real current_time)
     {
         Vecd target_velocity = Vecd::Zero();
-        Real run_time = GlobalStaticVariables::physical_time_;
-        target_velocity[0] = run_time < t_ref_ ? 0.5 * u_ref_ * (1.0 - cos(Pi * run_time / t_ref_)) : u_ref_;
+        Real time_factor = current_time / t_ref_;
+        target_velocity[0] = time_factor < 1.0 ? 0.5 * u_ref_ * (1.0 - cos(Pi * time_factor)) : u_ref_;
         return target_velocity;
-    }
-};
-//----------------------------------------------------------------------
-//	Define time dependent acceleration in x-direction
-//----------------------------------------------------------------------
-class TimeDependentAcceleration : public Gravity
-{
-    Real t_ref_, u_ref_, du_ave_dt_;
-
-  public:
-    explicit TimeDependentAcceleration(Vecd gravity_vector)
-        : Gravity(gravity_vector), t_ref_(2.0), u_ref_(0.00), du_ave_dt_(0) {}
-
-    virtual Vecd InducedAcceleration(const Vecd &position) override
-    {
-        Real run_time_ = GlobalStaticVariables::physical_time_;
-        du_ave_dt_ = 0.5 * u_ref_ * (Pi / t_ref_) * sin(Pi * run_time_ / t_ref_);
-
-        return run_time_ < t_ref_ ? Vecd(du_ave_dt_, 0.0) : global_acceleration_;
     }
 };
 //----------------------------------------------------------------------
@@ -187,9 +169,10 @@ class ImposingActiveStrain : public solid_dynamics::ElasticDynamicsInitialCondit
   public:
     explicit ImposingActiveStrain(SolidBody &solid_body)
         : solid_dynamics::ElasticDynamicsInitialCondition(solid_body),
-          material_id_(*particles_->getVariableDataByName<int>("MaterialID")),
-          pos0_(*particles_->registerSharedVariableFrom<Vecd>("InitialPosition", "Position")),
-          active_strain_(*particles_->getVariableDataByName<Matd>("ActiveStrain")){};
+          material_id_(particles_->getVariableDataByName<int>("MaterialID")),
+          pos0_(particles_->registerStateVariableFrom<Vecd>("InitialPosition", "Position")),
+          active_strain_(particles_->getVariableDataByName<Matd>("ActiveStrain")),
+          physical_time_(sph_system_.getSystemVariableDataByName<Real>("PhysicalTime")){};
     virtual void update(size_t index_i, Real dt = 0.0)
     {
         if (material_id_[index_i] == 0)
@@ -204,7 +187,7 @@ class ImposingActiveStrain : public solid_dynamics::ElasticDynamicsInitialCondit
             Real wave_number = 2 * Pi / lambda;
             Real hx = -(pow(x, 2) - pow(fish_length, 2)) / pow(fish_length, 2);
             Real start_time = 0.2;
-            Real current_time = GlobalStaticVariables::physical_time_;
+            Real current_time = *physical_time_;
             Real strength = 1 - exp(-current_time / start_time);
 
             Real phase_shift = y > (cy + bone_thickness / 2) ? 0 : Pi / 2;
@@ -214,7 +197,8 @@ class ImposingActiveStrain : public solid_dynamics::ElasticDynamicsInitialCondit
     };
 
   protected:
-    StdLargeVec<int> &material_id_;
-    StdLargeVec<Vecd> &pos0_;
-    StdLargeVec<Matd> &active_strain_;
+    int *material_id_;
+    Vecd *pos0_;
+    Matd *active_strain_;
+    Real *physical_time_;
 };

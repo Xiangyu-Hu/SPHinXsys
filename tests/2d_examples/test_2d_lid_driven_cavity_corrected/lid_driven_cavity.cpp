@@ -131,8 +131,6 @@ int main(int ac, char *av[])
     sph_system.setRunParticleRelaxation(false);
     // Tag for computation start with relaxed body fitted particles distribution.
     sph_system.setReloadParticles(false);
-    /** Set the starting time. */
-    GlobalStaticVariables::physical_time_ = 0.0;
     IOEnvironment io_environment(sph_system);
     sph_system.handleCommandlineOptions(ac, av);
     //----------------------------------------------------------------------
@@ -179,8 +177,8 @@ int main(int ac, char *av[])
     InteractionWithUpdate<fluid_dynamics::TransportVelocityLimitedCorrectionCorrectedComplex<AllParticles>>
         transport_velocity_correction(water_block_inner, water_block_contact);
     /** Time step size with considering sound wave speed. */
-    ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_body, U_f);
-    ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_body);
+    ReduceDynamics<fluid_dynamics::AdvectionViscousTimeStep> get_fluid_advection_time_step_size(water_body, U_f);
+    ReduceDynamics<fluid_dynamics::AcousticTimeStep> get_fluid_time_step_size(water_body);
     /** Computing viscous acceleration with wall. */
     InteractionWithUpdate<fluid_dynamics::ViscousForceWithWall> viscous_acceleration(water_block_inner, water_block_contact);
     //----------------------------------------------------------------------
@@ -203,6 +201,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
+    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     size_t number_of_iterations = 0;
     int screen_output_interval = 100;
     Real End_Time = 30.0; /**< End time. */
@@ -221,7 +220,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------
-    while (GlobalStaticVariables::physical_time_ < End_Time)
+    while (physical_time < End_Time)
     {
         Real integration_time = 0.0;
         while (integration_time < output_interval)
@@ -242,13 +241,13 @@ int main(int ac, char *av[])
                 integration_time += dt;
                 pressure_relaxation.exec(dt);
                 density_relaxation.exec(dt);
-                GlobalStaticVariables::physical_time_ += dt;
+                physical_time += dt;
             }
 
             if (number_of_iterations % screen_output_interval == 0)
             {
                 std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
-                          << GlobalStaticVariables::physical_time_
+                          << physical_time
                           << "	dt = " << dt << "\n";
             }
             number_of_iterations++;

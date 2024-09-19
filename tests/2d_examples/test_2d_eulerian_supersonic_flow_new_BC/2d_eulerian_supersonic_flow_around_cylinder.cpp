@@ -1,6 +1,6 @@
 /**
  * @file 	2d_eulerian_supersonic_flow_around_cylinder.cpp
- * @brief 	This is the compressible test for Eulerian supersonic flow around a cylinder 
+ * @brief 	This is the compressible test for Eulerian supersonic flow around a cylinder
             with the FVM boundary algorithm, i.e., zero-order consistency, in the SPHinXsys.
  * @author 	Zhentong Wang and Xiangyu Hu
  */
@@ -112,13 +112,14 @@ int main(int ac, char *av[])
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp write_real_body_states(sph_system);
-    RegressionTestEnsembleAverage<ReducedQuantityRecording<MaximumSpeed>> write_maximum_speed(fluid_block);
+    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<MaximumSpeed>> write_maximum_speed(fluid_block);
     write_real_body_states.addToWrite<int>(fluid_block, "Indicator");
     write_real_body_states.addToWrite<Vecd>(fluid_block, "Velocity");
     write_real_body_states.addToWrite<Real>(fluid_block, "Pressure");
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
+    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     size_t number_of_iterations = 0;
     int screen_output_interval = 500;
     Real end_time = 40.0;
@@ -135,7 +136,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------
-    while (GlobalStaticVariables::physical_time_ < end_time)
+    while (physical_time < end_time)
     {
         Real integration_time = 0.0;
         while (integration_time < output_interval)
@@ -147,12 +148,12 @@ int main(int ac, char *av[])
             boundary_condition_setup.resetBoundaryConditions();
 
             integration_time += dt;
-            GlobalStaticVariables::physical_time_ += dt;
+            physical_time += dt;
             if (number_of_iterations % screen_output_interval == 0)
             {
                 write_maximum_speed.writeToFile(number_of_iterations);
                 std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
-                          << GlobalStaticVariables::physical_time_
+                          << physical_time
                           << "	dt = " << dt << "\n";
             }
             number_of_iterations++;
@@ -172,7 +173,7 @@ int main(int ac, char *av[])
 
     if (sph_system.GenerateRegressionData())
     {
-        write_maximum_speed.generateDataBase(1.0e-3, 1.0e-3);
+        write_maximum_speed.generateDataBase(1.0e-2);
     }
     else
     {

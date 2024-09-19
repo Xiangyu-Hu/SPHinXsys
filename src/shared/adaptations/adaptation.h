@@ -31,7 +31,8 @@
 
 #include "base_data_package.h"
 #include "base_kernel.h"
-#include "sph_data_containers.h"
+#include "base_mesh.h"
+#include "sphinxsys_containers.h"
 
 namespace SPH
 {
@@ -79,8 +80,11 @@ class SPHAdaptation
     void resetAdaptationRatios(Real h_spacing_ratio, Real new_system_refinement_ratio = 1.0);
     virtual void initializeAdaptationVariables(BaseParticles &base_particles) {};
 
-    virtual UniquePtr<BaseCellLinkedList> createCellLinkedList(const BoundingBox &domain_bounds);
+    virtual UniquePtr<BaseCellLinkedList> createCellLinkedList(const BoundingBox &domain_bounds, BaseParticles &base_particles);
     virtual UniquePtr<BaseLevelSet> createLevelSet(Shape &shape, Real refinement_ratio);
+
+    template <class MeshType, typename... Args>
+    MeshType createBackGroundMesh(SPHBody &sph_body, Args &&...args);
 
     template <class KernelType, typename... Args>
     void resetKernel(Args &&...args)
@@ -104,8 +108,8 @@ class SPHAdaptation
 class ParticleWithLocalRefinement : public SPHAdaptation
 {
   public:
-    StdLargeVec<Real> *h_ratio_; /**< the ratio between reference smoothing length to variable smoothing length */
-    StdLargeVec<size_t> *level_; /**< the mesh level of the particle */
+    Real *h_ratio_; /**< the ratio between reference smoothing length to variable smoothing length */
+    size_t *level_; /**< the mesh level of the particle */
 
     ParticleWithLocalRefinement(Real resolution_ref, Real h_spacing_ratio_, Real system_refinement_ratio, int local_refinement_level);
     virtual ~ParticleWithLocalRefinement(){};
@@ -114,11 +118,11 @@ class ParticleWithLocalRefinement : public SPHAdaptation
     size_t getLevelSetTotalLevel();
     virtual Real SmoothingLengthRatio(size_t particle_index_i) override
     {
-        return (*h_ratio_)[particle_index_i];
+        return h_ratio_[particle_index_i];
     };
 
     virtual void initializeAdaptationVariables(BaseParticles &base_particles) override;
-    virtual UniquePtr<BaseCellLinkedList> createCellLinkedList(const BoundingBox &domain_bounds) override;
+    virtual UniquePtr<BaseCellLinkedList> createCellLinkedList(const BoundingBox &domain_bounds, BaseParticles &base_particles) override;
     virtual UniquePtr<BaseLevelSet> createLevelSet(Shape &shape, Real refinement_ratio) override;
 
   protected:

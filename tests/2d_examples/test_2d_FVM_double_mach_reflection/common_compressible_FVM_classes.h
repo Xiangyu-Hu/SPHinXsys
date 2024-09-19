@@ -15,11 +15,11 @@ namespace SPH
  * @class CompressibleAcousticTimeStepSizeInFVM
  * @brief Computing the acoustic time step size
  */
-class CompressibleAcousticTimeStepSizeInFVM : public fluid_dynamics::AcousticTimeStepSize
+class CompressibleAcousticTimeStepSizeInFVM : public fluid_dynamics::AcousticTimeStep
 {
   protected:
-    StdLargeVec<Real> &rho_, &p_;
-    StdLargeVec<Vecd> &vel_;
+    Real *rho_, *p_;
+    Vecd *vel_;
     Real min_distance_between_nodes_;
 
   public:
