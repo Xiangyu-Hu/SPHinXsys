@@ -99,12 +99,10 @@ int main(int ac, char *av[])
     Gravity gravity(Vecd(0.0, -gravity_g));
     SimpleDynamics<GravityForce<Gravity>> constant_gravity(soil_block, gravity);
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
-
     Dynamics1Level<continuum_dynamics::PlasticIntegration1stHalfWithWallRiemann> granular_stress_relaxation(soil_block_inner, soil_block_contact);
     Dynamics1Level<continuum_dynamics::PlasticIntegration2ndHalfWithWallRiemann> granular_density_relaxation(soil_block_inner, soil_block_contact);
     InteractionWithUpdate<fluid_dynamics::DensitySummationComplexFreeSurface> soil_density_by_summation(soil_block_inner, soil_block_contact);
     InteractionDynamics<continuum_dynamics::StressDiffusion> stress_diffusion(soil_block_inner);
-
     ReduceDynamics<fluid_dynamics::AcousticTimeStep> soil_acoustic_time_step(soil_block, 0.4);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
@@ -113,9 +111,10 @@ int main(int ac, char *av[])
     BodyStatesRecordingToVtp body_states_recording(sph_system);
     body_states_recording.addToWrite<Real>(soil_block, "Pressure");
     body_states_recording.addToWrite<Real>(soil_block, "Density");
+    SimpleDynamics<continuum_dynamics::VerticalStress> vertical_stress(soil_block);
     body_states_recording.addToWrite<Real>(soil_block, "VerticalStress");
+    SimpleDynamics<continuum_dynamics::AccDeviatoricPlasticStrain> accumulated_deviatoric_plastic_strain(soil_block);
     body_states_recording.addToWrite<Real>(soil_block, "AccDeviatoricPlasticStrain");
-    body_states_recording.addToWrite<Vecd>(wall_boundary, "NormalDirection");
     RestartIO restart_io(sph_system);
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalMechanicalEnergy>>
         write_mechanical_energy(soil_block, gravity);
@@ -135,8 +134,8 @@ int main(int ac, char *av[])
     int screen_output_interval = 500;
     int observation_sample_interval = screen_output_interval * 2;
     int restart_output_interval = screen_output_interval * 10;
-    Real End_Time = 1.0;         /**< End time. */
-    Real D_Time = End_Time / 50; /**< Time stamps for output of body states. */
+    Real End_Time = 0.8;         /**< End time. */
+    Real D_Time = End_Time / 40; /**< Time stamps for output of body states. */
     Real Dt = 0.1 * D_Time;
     //----------------------------------------------------------------------
     //	Statistics for CPU time
@@ -205,6 +204,8 @@ int main(int ac, char *av[])
             interval_updating_configuration += TickCount::now() - time_instance;
         }
         TickCount t2 = TickCount::now();
+        vertical_stress.exec();
+        accumulated_deviatoric_plastic_strain.exec();
         body_states_recording.writeToFile();
         TickCount t3 = TickCount::now();
         interval += t3 - t2;

@@ -1,8 +1,9 @@
 /* ----------------------------------------------------------------------------*
- *          SPHinXsys: 2D oscillation beam--updated Lagrangian method          *
+ *                    SPHinXsys: 2D oscillation beam                           *
  * ----------------------------------------------------------------------------*
  * This is the one of the basic test cases for understanding SPH method for    *
- * solid simulation based on updated Lagrangian method                         *
+ * solid simulation based on updated Lagrangian method.                        *
+ * A generalized hourglass control method is used here.                         *
  * In this case, the constraint of the beam is implemented with                *
  * internal constrained subregion.                                             *
  * @author Shuaihao Zhang, Dong Wu and Xiangyu Hu                              *
@@ -26,9 +27,7 @@ BoundingBox system_domain_bounds(Vec2d(-SL - BW, -PL / 2.0),
 Real rho0_s = 1.0e3;         // reference density
 Real Youngs_modulus = 2.0e6; // reference Youngs modulus
 Real poisson = 0.3975;       // Poisson ratio
-// Real poisson = 0.4;		 //Poisson ratio
 Real c0 = sqrt(Youngs_modulus / (3 * (1 - 2 * poisson) * rho0_s));
-Real gravity_g = 0.0;
 //----------------------------------------------------------------------
 //	Parameters for initial condition on velocity
 //----------------------------------------------------------------------
@@ -109,7 +108,6 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     RealBody beam_body(sph_system, makeShared<Beam>("BeamBody"));
-    beam_body.sph_adaptation_->resetKernel<KernelCubicBSpline>();
     beam_body.defineMaterial<GeneralContinuum>(rho0_s, c0, Youngs_modulus, poisson);
     beam_body.generateParticles<BaseParticles, Lattice>();
 
@@ -130,17 +128,15 @@ int main(int ac, char *av[])
     // this section define all numerical methods will be used in this case
     //-----------------------------------------------------------------------------
     /** initial condition */
-    InteractionWithUpdate<LinearGradientCorrectionMatrixInner> correction_matrix(beam_body_inner);
     SimpleDynamics<BeamInitialCondition> beam_initial_velocity(beam_body);
-
-    InteractionDynamics<continuum_dynamics::ShearAccelerationRelaxation> beam_shear_acceleration(beam_body_inner);
-    Dynamics1Level<continuum_dynamics::ShearStressRelaxation> beam_shear_stress_relaxation(beam_body_inner);
+    InteractionWithUpdate<LinearGradientCorrectionMatrixInner> correction_matrix(beam_body_inner);
     Dynamics1Level<continuum_dynamics::Integration1stHalf> beam_pressure_relaxation(beam_body_inner);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfInnerDissipativeRiemann> beam_density_relaxation(beam_body_inner);
+    InteractionWithUpdate<continuum_dynamics::ShearStressRelaxationHourglassControl1stHalf> beam_shear_stress(beam_body_inner);
+    InteractionDynamics<continuum_dynamics::ShearStressRelaxationHourglassControl2ndHalf> beam_shear_acceleration(beam_body_inner);
     SimpleDynamics<fluid_dynamics::ContinuumVolumeUpdate> beam_volume_update(beam_body);
-
-    ReduceDynamics<fluid_dynamics::AdvectionViscousTimeStep> fluid_advection_time_step(beam_body, U_ref, 0.2);
-    ReduceDynamics<fluid_dynamics::AcousticTimeStep> fluid_acoustic_time_step(beam_body, 0.4);
+    ReduceDynamics<fluid_dynamics::AdvectionViscousTimeStep> advection_time_step(beam_body, U_ref, 0.2);
+    ReduceDynamics<fluid_dynamics::AcousticTimeStep> acoustic_time_step(beam_body, 0.4);
     // clamping a solid body part.
     BodyRegionByParticle beam_base(beam_body, makeShared<MultiPolygonShape>(createBeamConstrainShape()));
     SimpleDynamics<FixBodyPartConstraint> constraint_beam_base(beam_base);
@@ -148,10 +144,10 @@ int main(int ac, char *av[])
     // outputs
     //-----------------------------------------------------------------------------
     BodyStatesRecordingToVtp write_beam_states(beam_body);
-    write_beam_states.addToWrite<Real>(beam_body, "VonMisesStress");
-    write_beam_states.addToWrite<Real>(beam_body, "VonMisesStrain");
     write_beam_states.addToWrite<Real>(beam_body, "Density");
     write_beam_states.addToWrite<Real>(beam_body, "Pressure");
+    SimpleDynamics<continuum_dynamics::VonMisesStress> beam_von_mises_stress(beam_body);
+    write_beam_states.addToWrite<Real>(beam_body, "VonMisesStress");
     ObservedQuantityRecording<Vecd> write_beam_tip_displacement("Position", beam_observer_contact);
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalKineticEnergy>> write_beam_kinetic_energy(beam_body);
     //----------------------------------------------------------------------
@@ -184,17 +180,16 @@ int main(int ac, char *av[])
         while (integration_time < D_Time)
         {
             Real relaxation_time = 0.0;
-            Real advection_dt = fluid_advection_time_step.exec();
+            Real advection_dt = advection_time_step.exec();
             beam_volume_update.exec();
-
             while (relaxation_time < advection_dt)
             {
-                Real acoustic_dt = fluid_acoustic_time_step.exec();
-                beam_shear_stress_relaxation.exec(acoustic_dt);
+                Real acoustic_dt = acoustic_time_step.exec();
                 beam_pressure_relaxation.exec(acoustic_dt);
                 constraint_beam_base.exec();
-                beam_density_relaxation.exec(acoustic_dt);
+                beam_shear_stress.exec(acoustic_dt);
                 beam_shear_acceleration.exec(acoustic_dt);
+                beam_density_relaxation.exec(acoustic_dt);
                 ite++;
                 relaxation_time += acoustic_dt;
                 integration_time += acoustic_dt;
@@ -211,6 +206,7 @@ int main(int ac, char *av[])
             beam_body_inner.updateConfiguration();
             correction_matrix.exec();
         }
+        beam_von_mises_stress.exec();
         write_beam_tip_displacement.writeToFile(ite);
         write_beam_kinetic_energy.writeToFile(ite);
         TickCount t2 = TickCount::now();
@@ -231,6 +227,5 @@ int main(int ac, char *av[])
     {
         write_beam_kinetic_energy.testResult();
     }
-
     return 0;
 }
