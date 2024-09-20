@@ -30,6 +30,17 @@ url: "https://xiangyu-hu.github.io" # the base hostname & protocol for your site
 twitter_username: sphinxsys
 github_username:  Xiangyu-Hu
 
+comments:
+  giscus:
+    enabled: true
+    repo: "Xiangyu-Hu/SPHinXsys"
+    repo_id: "MDEwOlJlcG9zaXRvcnkxODkwNzAxNDA="
+    category: "Announcements"
+    category_id: "DIC_kwDOC0T7PM4CPNAR"
+    mapping: "pathname"
+    reactions_enabled: "1"
+    theme: "light"
+
 # Build settings
 theme: minima
 # theme: jekyll-theme-Architect
