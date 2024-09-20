@@ -38,6 +38,7 @@ int main(int ac, char *av[])
 
     getPositionsOfMultipleObserveLines();
     output_observe_positions();
+    output_observe_theoretical_y();
     output_number_observe_points_on_lines();
     ObserverBody fluid_observer(sph_system, "FluidObserver");
     fluid_observer.generateParticles<ObserverParticles>(observation_locations);

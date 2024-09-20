@@ -169,6 +169,7 @@ void getObservingLineLengthAndEndPoints()
 }
 
 StdVec<Vecd> observation_locations;
+StdVec<Vecd> observation_theoretical_locations;
 void getPositionsOfMultipleObserveLines()
 {
     getObservingLineLengthAndEndPoints();
@@ -182,7 +183,9 @@ void getPositionsOfMultipleObserveLines()
             Real offset = 0.0;
             offset = (i == 0 ? -observer_offset_distance : (i == num_observer_point - 1 ? observer_offset_distance : 0.0));
             Vecd pos_observer_i = pos_observe_start + (i * observe_spacing + offset) * unit_direction_observe;
+            Vecd pos_observer_i_no_offset = pos_observe_start + i * observe_spacing * unit_direction_observe;
             observation_locations.push_back(pos_observer_i);
+            observation_theoretical_locations.push_back(pos_observer_i_no_offset);
         }
     }
 }
@@ -198,6 +201,21 @@ void output_observe_positions()
     for (const Vecd &position : observation_locations)
     {
         outfile << position[0] << " " << position[1] << "\n";
+    }
+    outfile.close();
+}
+void output_observe_theoretical_y()
+{
+    std::string filename = "../bin/output/observer_theoretical_y.dat";
+    std::ofstream outfile(filename);
+    if (!outfile.is_open())
+    {
+        std::cerr << "Error: Unable to open file " << filename << " for writing." << std::endl;
+        return;
+    }
+    for (const Vecd &position : observation_theoretical_locations)
+    {
+        outfile << position[1] << "\n";
     }
     outfile.close();
 }
