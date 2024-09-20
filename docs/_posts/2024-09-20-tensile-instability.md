@@ -17,7 +17,7 @@ using updated Lagrangian smoothed particle hydrodynamics (ULSPH) may lead to num
 <p align="center"><img src="{{site.baseurl}}/assets/img/tensor-instability.jpg" alt="Tensor-instability" height="350"/>
 <center>Fig. 1. Illustration for (a) no numerical instabilities, (b) non-physical fractures and
 (c) zigzag pattern in ULSPH simulations of 2D oscillating plates.
-The particles are colored with von Mises stress.</center>
+The particles are colored with von Mises stress.</center> </p>
 
 ### Tensile instability
 
