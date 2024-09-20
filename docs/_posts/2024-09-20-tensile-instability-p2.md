@@ -5,6 +5,7 @@ date:   2024-09-20
 categories: sph method
 ---
 <head> {% include mathjax.html %} </head>
+<head> {% include reading-time.html %} </head>
 
 Xiangyu Hu
 
