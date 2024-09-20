@@ -86,7 +86,7 @@ int main(int ac, char *av[])
 
     UpdateRelation<MyExecutionPolicy, Inner<>, Contact<>> water_block_update_complex_relation(water_block_inner, water_wall_contact);
     UpdateRelation<MyExecutionPolicy, Contact<>> fluid_observer_contact_relation(fluid_observer_contact);
-    ParticleSortCK<MyExecutionPolicy, QuickSort> particle_sort(water_block);
+    ParticleSortCK<MyExecutionPolicy, RadixSort> particle_sort(water_block);
     //----------------------------------------------------------------------
     // Define the numerical methods used in the simulation.
     // Note that there may be data dependence on the sequence of constructions.
