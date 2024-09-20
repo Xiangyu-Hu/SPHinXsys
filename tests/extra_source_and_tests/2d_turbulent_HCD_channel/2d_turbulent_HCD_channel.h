@@ -76,10 +76,10 @@ Real offset_distance = y_p_constant - resolution_ref / 2.0; //** Basically offse
 Real U_inlet = 1.0;
 Real Outlet_pressure = 0.0;
 Real U_f = U_inlet;         //*Characteristic velocity
-Real U_max = 1.5 * U_inlet; //** An estimated value, generally 1.5 U_inlet *
+Real U_max = 3.0 * U_inlet; //** An estimated value, generally 1.5 U_inlet *
 Real c_f = 10.0 * U_max;
 Real rho0_f = 1.0; /**< Density. */
-Real Re = 18000.0;
+Real Re = 40000.0;
 //Real Re = 100.0;
 Real mu_f = rho0_f * U_f * DH / Re;
 
@@ -101,10 +101,10 @@ Vec2d left_buffer_halfsize = Vec2d(0.5 * BW, 0.5 * DH_C + BW);
 Vec2d left_buffer_translation = Vec2d(-DL_sponge, 0.0) + left_buffer_halfsize + Vecd(0.0, offset_distance - BW);
 
 Real outlet_buffer_length = BW;
-Real outlet_buffer_height = 5.0 * DH;
+Real outlet_buffer_height = DH_C + 2.0 * BW;
 
 Real outlet_disposer_rotation_angel = 0.0; //** By default, counter-clockwise is positive *
-Vec2d outlet_buffer_center_translation = (point_D + point_E) / 2.0 + Vecd(-1.0, 0.0) * outlet_buffer_length / 2.0;
+Vec2d outlet_buffer_center_translation = (point_B + point_C) / 2.0 + Vecd(-1.0, 0.0) * outlet_buffer_length / 2.0;
 
 Real outlet_emitter_rotation_angel = Pi + outlet_disposer_rotation_angel; //** By default, counter-clockwise is positive *
 
@@ -131,52 +131,38 @@ BoundingBox system_domain_bounds(left_bottom_point + Vec2d(-2.0 * BW, -2.0 * BW)
 // Output and time average control.
 //----------------------------------------------------------------------
 int screen_output_interval = 100;
-Real end_time = 10.0;                /**< End time. */
+Real end_time = 200.0;               /**< End time. */
 Real Output_Time = end_time / 200.0; /**< Time stamps for output of body states. */
-Real cutoff_time = end_time * 0.6;   //** cutoff_time should be a integral and the same as the PY script */
+Real cutoff_time = 100.0;            //** cutoff_time should be a integral and the same as the PY script */
 //----------------------------------------------------------------------
 // Observation with offset model.
 //----------------------------------------------------------------------
 // ** By kernel weight. *
-int number_observe_line = 7;
-Real observer_offset_distance = 1.8 * resolution_ref;
-Vec2d unit_direction_observe(0.0, -1.0); //** From end to start to ensure observe accuracy on the inclined wall */
+int number_observe_line = 2;
+Real observer_offset_distance = 0.0 * resolution_ref;
+Vec2d unit_direction_observe(0.0, 1.0);
 // ** Determine the observing start point. *
-Real observe_start_x[7] = {
-    point_B[0] - 5.87 * DH,
-    point_B[0] + 2.59 * DH,
-    point_B[0] + 5.98 * DH,
-    point_B[0] + 13.56 * DH,
-    point_B[0] + 16.93 * DH,
-    point_B[0] + 20.32 * DH,
-    point_B[0] + 23.71 * DH};
-Real observe_start_y = 0.0 + offset_distance;
+Real observe_start_x[2] = {
+    (point_E[0] + point_F[0]) / 2.0,
+    (point_C[0] + point_D[0]) / 2.0};
+Real observe_start_y[2] = {
+    DH1 + offset_distance + 0.5 * resolution_ref,
+    point_C[1] + offset_distance + 0.5 * resolution_ref};
 // ** Determine the length of the observing line and other information. *
-Real observe_line_length[7] = {0.0};
-Real observe_end_y[7] = {0.0};
-int num_observer_points[7] = {0};
+Real observe_line_length[2] = {0.0};
+int num_observer_points[2] = {0};
 void getObservingLineLengthAndEndPoints()
 {
     for (int i = 0; i < number_observe_line; ++i)
     {
-        if (observe_start_x[i] < point_B[0])
+        if (observe_start_x[i] < point_E[0] && observe_start_x[i] >= point_F[0])
         {
-            observe_end_y[i] = observe_start_y + DH_C;
+            observe_line_length[i] = DH - DH1 - 2.0 * offset_distance;
+            num_observer_points[i] = std::round(observe_line_length[i] / resolution_ref);
+        }
+        else if (observe_start_x[i] >= point_D[0])
+        {
             observe_line_length[i] = DH_C;
-            num_observer_points[i] = std::round(observe_line_length[i] / resolution_ref);
-        }
-        else if (observe_start_x[i] >= point_B[0] && observe_start_x[i] < point_C[0])
-        {
-            Real x_diff = observe_start_x[i] - point_B[0];
-            Real y_diff = x_diff * tan(incline_angle);
-            observe_end_y[i] = y_diff + point_B[1] - offset_distance;
-            observe_line_length[i] = observe_end_y[i] - observe_start_y;
-            num_observer_points[i] = std::round(observe_line_length[i] / resolution_ref);
-        }
-        else if (observe_start_x[i] >= point_C[0])
-        {
-            observe_end_y[i] = point_D[1] - offset_distance;
-            observe_line_length[i] = point_D[1] - 2.0 * offset_distance;
             num_observer_points[i] = std::round(observe_line_length[i] / resolution_ref);
         }
     }
@@ -188,7 +174,7 @@ void getPositionsOfMultipleObserveLines()
     getObservingLineLengthAndEndPoints();
     for (int k = 0; k < number_observe_line; ++k)
     {
-        Vecd pos_observe_start(observe_start_x[k], observe_end_y[k]);
+        Vecd pos_observe_start(observe_start_x[k], observe_start_y[k]);
         int num_observer_point = num_observer_points[k];
         Real observe_spacing = observe_line_length[k] / num_observer_point;
         for (int i = 0; i < num_observer_point; ++i)
@@ -212,6 +198,21 @@ void output_observe_positions()
     for (const Vecd &position : observation_locations)
     {
         outfile << position[0] << " " << position[1] << "\n";
+    }
+    outfile.close();
+}
+void output_number_observe_points_on_lines()
+{
+    std::string filename = "../bin/output/observer_num_points_on_lines.dat";
+    std::ofstream outfile(filename);
+    if (!outfile.is_open())
+    {
+        std::cerr << "Error: Unable to open file " << filename << " for writing." << std::endl;
+        return;
+    }
+    for (const int &number : num_observer_points)
+    {
+        outfile << number << "\n";
     }
     outfile.close();
 }
