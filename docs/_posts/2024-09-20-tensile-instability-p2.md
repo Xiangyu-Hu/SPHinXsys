@@ -17,7 +17,7 @@ If only the hourglass modes have contribution, one may require that
 all the numerical simulations which are identified as tensile instability
 become numerically stable if only the method preventing hourglass is applied.
 
-<p align="center"><img src="{{site.baseurl}}/assets/img/zigzag.jpg"alt="Zigzag" height="350"/>
+<p align="center"><img src="{{site.baseurl}}/assets/img/zigzag.jpg" alt="Zigzag" height="350"/>
 <center>Fig. 2. Illustration of zero energy modes by considering a simple case.
 The particles are uniformly distributed along the x-axis,
 and change from time step n to time step n + 1
