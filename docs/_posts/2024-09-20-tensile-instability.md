@@ -19,12 +19,15 @@ using updated Lagrangian smoothed particle hydrodynamics (ULSPH) may lead to num
 (c) zigzag pattern in ULSPH simulations of 2D oscillating plates.
 The particles are colored with von Mises stress.</center> <br clear="left"/>
 
+### Tensile instability
+
 As shown in Fig. 1b for a typical example, the numerical instability involving particle clustering and non-physical fractures
 presented these simulations is often identified as tensile instability, a fundamental numerical issue caused by the tensile stress.
-
 Since such numerical instability is identified, different approaches have been proposed to address this problem.
 One popular method is the artificial stress method,
 based on the concept of counteracting the tension to prevent the instability.
+
+### Hourglass modes
 
 An interest phenomenon one can observe is that, as shown in Fig. 1c,
 although the artificial stress can eliminate non-physical fractures in some cases,
@@ -36,6 +39,8 @@ another fundamental numerical issue related to collocation methods.
 Hourglass modes were also found in total Lagrangian SPH (TLSPH) elastic dynamics,
 when the deformation is very large, even though TLSPH does not suffer from the tensile instability,
 i.e. without particle clustering and non-physical fractures.
+
+### Origin of the numerical instability
 
 Such observation leads to people puzzling which is the original mechanism of the instability.
 Is the tensile instability or actually the hourglass modes?.
