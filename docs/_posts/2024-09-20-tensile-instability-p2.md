@@ -40,23 +40,37 @@ which leads to an inaccurate estimation of the shear stress and shear accelerati
 
 ### Remedy for hourglass modes
 
-An interest phenomenon one can observe is that, as shown in Fig. 1c,
-although the artificial stress can eliminate non-physical fractures in some cases,
-the artifacts with zigzag patterns appear in the stress profile.
-This issue is not unique for the specific cases,
-and can be found in other ULSPH methods aimed at mitigating tensile instability.
-The zigzag pattern is a typical numerical instability phenomenon well known as hourglass modes,
-another fundamental numerical issue related to collocation methods.
-Hourglass modes were also found in total Lagrangian SPH (TLSPH) elastic dynamics,
-when the deformation is very large, even though TLSPH does not suffer from the tensile instability,
-i.e. without particle clustering and non-physical fractures.
+In a recent effective remedy for hourglass modes in
+[our previous journal paper on TLSPH](https://doi.org/10.1016/j.cma.2019.01.042),
+the particle acceleration due to the divergence of shear stress is directly obtained from
+a one-step Laplacian formulation of the particle displacement other than the nested
+implementation of the 2nd-order derivatives used in the previous TLSPH formulations.
+Actually, such non-nested SPH formulation of Laplacian is widely used in SPH fluid dynamics
+for computing the viscous-force term in the Navier-Stokes equations,
+and is found much stabler than the nested counterpart. 
 
-### Origin of the numerical instability
+In the journal paper, we present an essentially non-hourglass formulation by utilizing
+the Laplacian operator which is widely used in fluid simulations.
+The final the non-nested formulation of shear acceleration can be written as
 
-Such observation leads to people puzzling which is the original mechanism of the instability.
-Is the tensile instability or actually the hourglass modes?.
-In the next part, I will introduce the approach in the above journal paper
-which is able to resolve this puzzle.
+$$
+    {\dot{\mathbf v}^s} = 2 \zeta {\frac{G}{\mathbf \rho} {\int_{0}^{t} {\left(\sum_{j} \frac{\mathbf e_{ij} \cdot \mathbf v_{ij}}{r_{ij}} {\nabla_i W_{ij}} V_j \right)}  \text{d}t}} 
+$$
+
+Compared to original SPH methods, this formula is capable of eliminating zero energy modes, 
+i.e., it can account for the variations in shear acceleration caused by
+the motion illustrated in Fig. 2 since every particle pair has contribution to shear force induced
+acceleration. 
+
+For the detailed derivation, one can refer to the journal paper given in Part 1 of the blog.
+
+### Is the remedy able to eliminate tensile instability?  
+
+From the above formulation,
+we see that the shear deformation in zigzag particle distribution
+generates sufficient shear force to avoid the zero energy modes.
+In the next part, I will demonstrate that it is not only able to eliminate
+the hourglass modes, but also the instability previous considered as tensile instability too.
 
 <script src="https://giscus.app/client.js"
         data-repo="Xiangyu-Hu/SPHinXsys"
