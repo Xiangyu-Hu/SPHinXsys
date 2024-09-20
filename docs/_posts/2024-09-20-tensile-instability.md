@@ -46,3 +46,23 @@ Such observation leads to people puzzling which is the original mechanism of the
 Is the tensile instability or actually the hourglass modes?.
 In the next part, I will introduce the approach in the above journal paper
 which is able to resolve this puzzle.
+
+\{\{ if site.comments.giscus.enabled \}\}
+<script src="https://giscus.app/client.js"
+        data-repo="bartoszgorka/bartoszgorka.github.io"
+        data-repo-id="MDEwOlJlcG9zaXRvcnkyOTk2NTk5MzI="
+        data-category="Announcements"
+        data-category-id="DIC_kwDOEdxynM4CThkc"
+        data-mapping="pathname"
+        data-strict="0"
+        data-reactions-enabled="1"
+        data-emit-metadata="0"
+        data-input-position="bottom"
+        data-theme="light"
+        data-lang="en"
+        data-loading="lazy"
+        crossorigin="anonymous"
+        async>
+</script>
+<noscript>Please enable JavaScript to view the comments.</noscript>
+\{\{ end \}\}
