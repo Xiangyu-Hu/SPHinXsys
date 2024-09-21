@@ -19,7 +19,7 @@ using namespace SPH;
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
 Real DH = 2.0; /**< Channel height. */
-Real num_fluid_cross_section = 40.0;
+Real num_fluid_cross_section = 60.0;
 Real extend_in = 2.0;
 Real extend_out = 4.0;
 Real DL1 = 1.0 + extend_in;
@@ -49,14 +49,14 @@ int is_AMRD = 0;
 bool is_constrain_normal_velocity_in_P_region = false;
 //** Weight for correcting the velocity  gradient in the sub near wall region  *
 Real weight_vel_grad_sub_nearwall = 0.1;
-bool is_always_lattice_arrange_fluid = true;
+bool is_always_lattice_arrange_fluid = false;
 //** Empirical parameter for initial stability*
 Real turbulent_module_activate_time = 2.5;
 //** Intial values for K, Epsilon and Mu_t *
 StdVec<Real> initial_turbu_values = {0.000180001, 3.326679e-5, 1.0e-3};
 
-Real y_p_constant = DH / 2.0 / num_fluid_cross_section; //** For the first try *
-//Real y_p_constant = 0.05;
+//Real y_p_constant = DH / 2.0 / num_fluid_cross_section; //** For the first try *
+Real y_p_constant = 0.025;
 Real resolution_ref_temp = (DH - 2.0 * y_p_constant) / (num_fluid_cross_section - 1.0); /**< Initial reference particle spacing. */
 Real resolution_ref = round(resolution_ref_temp * 1.0e8) / 1.0e8;
 Real offset_distance = y_p_constant - resolution_ref / 2.0; //** Basically offset distance is large than or equal to 0 *
