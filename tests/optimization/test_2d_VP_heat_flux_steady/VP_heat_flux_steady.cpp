@@ -175,7 +175,7 @@ TEST(test_optimization, test_problem4_non_optimization)
 
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
     wall_boundary.defineMaterial<Solid>();
-    wall_boundary.generateParticles<BaseParticles, Lattice>();
+    wall_boundary.generateParticles<BaseParticles, Lattice>(wall_boundary_shape);
     //----------------------------  ------------------------------------------
     //	Particle and body creation of temperature observers.
     //----------------------------------------------------------------------
@@ -199,7 +199,7 @@ TEST(test_optimization, test_problem4_non_optimization)
     //	Note that there may be data dependence on the constructors of these methods.
     //----------------------------------------------------------------------
     SimpleDynamics<NormalDirectionFromBodyShape> diffusion_body_normal_direction(diffusion_body);
-    SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
+    SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary, wall_boundary_shape);
 
     InteractionSplit<TemperatureSplittingByPDEWithBoundary<Real>>
         temperature_splitting(diffusion_body_inner, diffusion_body_contact, "Phi");

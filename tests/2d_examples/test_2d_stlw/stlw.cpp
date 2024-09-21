@@ -24,7 +24,7 @@ int main(int ac, char *av[])
 
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
     wall_boundary.defineMaterial<Solid>();
-    wall_boundary.generateParticles<BaseParticles, Lattice>();
+    wall_boundary.generateParticles<BaseParticles, Lattice>(wall_boundary_shape);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -43,7 +43,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Define all numerical methods which are used in this case.
     //----------------------------------------------------------------------
-    SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
+    SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary, wall_boundary_shape);
     Gravity gravity(Vecd(0.0, -gravity_g));
     SimpleDynamics<GravityForce<Gravity>> constant_gravity(water_block, gravity);
 

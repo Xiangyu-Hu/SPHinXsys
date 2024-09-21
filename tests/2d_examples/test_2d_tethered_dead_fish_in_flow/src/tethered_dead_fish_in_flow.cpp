@@ -300,7 +300,7 @@ int main(int ac, char *av[])
     /** Periodic BCs in x direction. */
     PeriodicAlongAxis periodic_along_x(water_block_shape.getBounds(), xAxis);
     PeriodicConditionUsingCellLinkedList periodic_condition(water_block, periodic_along_x);
-    SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
+    SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary, wall_boundary_shape);
     SimpleDynamics<NormalDirectionFromBodyShape> fish_body_normal_direction(fish_body);
     /** Corrected configuration.*/
     InteractionWithUpdate<LinearGradientCorrectionMatrixInner> fish_body_corrected_configuration(fish_body_inner);

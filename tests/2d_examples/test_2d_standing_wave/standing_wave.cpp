@@ -112,7 +112,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
-    FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
+    WaterBlock water_block_shape("WaterBody");
+    FluidBody water_block(sph_system, water_block_shape.getName());
     water_block.defineAdaptation<SPHAdaptation>(1.3, 1.0);
     water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
     // Using relaxed particle distribution if needed
@@ -124,7 +125,7 @@ int main(int ac, char *av[])
     wall_boundary.defineMaterial<Solid>();
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
         ? wall_boundary.generateParticles<BaseParticles, Reload>(wall_boundary.getName())
-        : wall_boundary.generateParticles<BaseParticles, Lattice>();
+        : wall_boundary.generateParticles<BaseParticles, Lattice>(wall_boundary_shape);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -146,7 +147,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     Gravity gravity(Vecd(0.0, -gravity_g));
     SimpleDynamics<GravityForce<Gravity>> constant_gravity(water_block, gravity);
-    SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
+    SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary, wall_boundary_shape);
     InteractionWithUpdate<LinearGradientCorrectionMatrixComplex> corrected_configuration_fluid(ConstructorArgs(water_block_inner, 0.5), water_wall_contact);
     Dynamics1Level<fluid_dynamics::Integration1stHalfCorrectionWithWallRiemann> fluid_pressure_relaxation_correct(water_block_inner, water_wall_contact);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallRiemann> fluid_density_relaxation(water_block_inner, water_wall_contact);

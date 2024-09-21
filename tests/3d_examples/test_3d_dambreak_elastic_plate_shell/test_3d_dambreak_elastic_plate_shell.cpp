@@ -162,13 +162,14 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
-    FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
+    WaterBlock water_block_shape("WaterBody");
+    FluidBody water_block(sph_system, water_block_shape.getName());
     water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
     water_block.generateParticles<BaseParticles, Lattice>();
 
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
     wall_boundary.defineMaterial<Solid>();
-    wall_boundary.generateParticles<BaseParticles, Lattice>();
+    wall_boundary.generateParticles<BaseParticles, Lattice>(wall_boundary_shape);
 
     SolidBody gate(sph_system, makeShared<MovingGate>("Gate"));
     gate.defineMaterial<Solid>();
@@ -213,7 +214,7 @@ int main(int ac, char *av[])
     //	Note that there may be data dependence on the sequence of constructions.
     //----------------------------------------------------------------------
     // solid
-    SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
+    SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary, wall_boundary_shape);
     SimpleDynamics<NormalDirectionFromBodyShape> gate_normal_direction(gate);
     SimpleDynamics<GateMotionConstraint> update_gate_position(gate);
     // Shell

@@ -111,7 +111,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     Gravity gravity(Vecd(gravity_g, 0.0));
     SimpleDynamics<GravityForce<Gravity>> constant_gravity(water_block, gravity);
-    SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
+    SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary, wall_boundary_shape);
     InteractionWithUpdate<LinearGradientCorrectionMatrixComplex> kernel_correction_complex(water_block_inner, water_wall_contact);
 
     Dynamics1Level<fluid_dynamics::Integration1stHalfCorrectionWithWallRiemann> pressure_relaxation(water_block_inner, water_wall_contact);

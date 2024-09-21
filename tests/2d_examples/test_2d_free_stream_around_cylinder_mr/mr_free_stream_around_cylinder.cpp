@@ -24,7 +24,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
+    WaterBlock water_block_shape("WaterBody");
+    FluidBody water_block(sph_system, water_block_shape.getName());
     water_block.defineAdaptation<ParticleRefinementWithinShape>(1.3, 1.0, 1);
     water_block.defineComponentLevelSetShape("OuterBoundary")->writeLevelSet(sph_system);
     water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);

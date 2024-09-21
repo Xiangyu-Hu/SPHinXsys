@@ -124,7 +124,7 @@ int main(int ac, char *av[])
     // Then fluid dynamics and the corresponding coupling dynamics.
     // The coupling with multi-body dynamics will be introduced at last.
     //----------------------------------------------------------------------
-    SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
+    SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary, wall_boundary_shape);
     SimpleDynamics<NormalDirectionFromBodyShape> insert_body_normal_direction(insert_body);
     InteractionWithUpdate<LinearGradientCorrectionMatrixInner> insert_body_corrected_configuration(insert_body_inner);
 

@@ -132,14 +132,15 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
-    FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
+    WaterBlock water_block_shape("WaterBody");
+    FluidBody water_block(sph_system, water_block_shape.getName());
     water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
     ParticleBuffer<ReserveSizeFactor> in_outlet_particle_buffer(0.5);
     water_block.generateParticlesWithReserve<BaseParticles, Lattice>(in_outlet_particle_buffer);
 
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
     wall_boundary.defineMaterial<Solid>();
-    wall_boundary.generateParticles<BaseParticles, Lattice>();
+    wall_boundary.generateParticles<BaseParticles, Lattice>(wall_boundary_shape);
 
     ObserverBody velocity_observer(sph_system, "VelocityObserver");
     velocity_observer.generateParticles<ObserverParticles>(observer_location);
@@ -166,7 +167,7 @@ int main(int ac, char *av[])
     // Finally, the auxillary models such as time step estimator, initial condition,
     // boundary condition and other constraints should be defined.
     //----------------------------------------------------------------------
-    SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
+    SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary, wall_boundary_shape);
 
     InteractionDynamics<NablaWVComplex> kernel_summation(water_block_inner, water_block_contact);
     InteractionWithUpdate<SpatialTemporalFreeSurfaceIndicationComplex> boundary_indicator(water_block_inner, water_block_contact);

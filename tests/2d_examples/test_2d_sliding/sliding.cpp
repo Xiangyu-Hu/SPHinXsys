@@ -80,7 +80,7 @@ int main(int ac, char *av[])
 
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
     wall_boundary.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
-    wall_boundary.generateParticles<BaseParticles, Lattice>();
+    wall_boundary.generateParticles<BaseParticles, Lattice>(wall_boundary_shape);
 
     ObserverBody cube_observer(sph_system, "CubeObserver");
     cube_observer.generateParticles<ObserverParticles>(observation_location);

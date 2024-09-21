@@ -181,17 +181,19 @@ void hydrostatic_fsi(const Real particle_spacing_gate, const Real particle_spaci
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    FluidBody water_block(sph_system, makeShared<WaterBlock>(createWaterBlockShape(), "WaterBody"));
-    water_block.defineBodyLevelSetShape()->correctLevelSetSign()->cleanLevelSet(0);
+    WaterBlock water_block_shape(createWaterBlockShape(), "WaterBody");
+    FluidBody water_block(sph_system, water_block_shape.getName());
+    LevelSetShape water_block_shape_level_set(water_block, water_block_shape);
+    water_block_shape_level_set.cleanLevelSet(0);
     water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
-    water_block.generateParticles<BaseParticles, Lattice>();
+    water_block.generateParticles<BaseParticles, Lattice>(water_block_shape_level_set);
 
-    SolidBody wall_boundary(sph_system, makeShared<DefaultShape>("Wall"));
+    SolidBody wall_boundary(sph_system, "Wall");
     wall_boundary.defineAdaptation<SPHAdaptation>(1.15, particle_spacing_ref / particle_spacing_gate);
     wall_boundary.defineMaterial<Solid>();
     wall_boundary.generateParticles<SurfaceParticles, WallBoundary>(DH, DL, particle_spacing_gate);
 
-    SolidBody gate(sph_system, makeShared<DefaultShape>("Gate"));
+    SolidBody gate(sph_system, "Gate");
     gate.defineAdaptation<SPHAdaptation>(1.15, particle_spacing_ref / particle_spacing_gate);
     gate.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     gate.generateParticles<SurfaceParticles, Gate>(DL, BW, particle_spacing_gate, Gate_thickness);

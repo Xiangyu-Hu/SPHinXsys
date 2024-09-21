@@ -93,7 +93,7 @@ int main(int ac, char *av[])
 
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
     wall_boundary.defineMaterial<Solid>();
-    wall_boundary.generateParticles<BaseParticles, Lattice>();
+    wall_boundary.generateParticles<BaseParticles, Lattice>(wall_boundary_shape);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -155,7 +155,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     Gravity gravity(Vec3d(0.0, -gravity_g, 0.0));
     SimpleDynamics<GravityForce<Gravity>> constant_gravity(soil_block, gravity);
-    SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
+    SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary, wall_boundary_shape);
     SimpleDynamics<SoilInitialCondition> soil_initial_condition(soil_block);
 
     Dynamics1Level<continuum_dynamics::PlasticIntegration1stHalfWithWallRiemann> granular_stress_relaxation(soil_block_inner, soil_block_contact);

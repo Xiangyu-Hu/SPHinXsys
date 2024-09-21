@@ -86,7 +86,7 @@ int main(int ac, char *av[])
     FluidBody water_body(sph_system, water_block_shape.getName());
     water_body.sph_adaptation_->resetKernel<KernelTabulated<KernelLaguerreGauss>>(20);
     water_body.defineMaterial<CompressibleFluid>(rho0_f, heat_capacity_ratio, mu_f);
-    water_body.generateParticles<BaseParticles, Lattice>();
+    water_body.generateParticles<BaseParticles, Lattice>(water_block_shape);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.

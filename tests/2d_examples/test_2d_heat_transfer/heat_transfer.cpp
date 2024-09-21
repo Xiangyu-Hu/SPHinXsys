@@ -229,7 +229,7 @@ int main(int ac, char *av[])
     // Then fluid dynamics and the corresponding coupling dynamics.
     // The coupling with multi-body dynamics will be introduced at last.
     //----------------------------------------------------------------------
-    SimpleDynamics<NormalDirectionFromBodyShape> thermosolid_body_normal_direction(thermosolid_body);
+    SimpleDynamics<NormalDirectionFromBodyShape> thermosolid_body_normal_direction(thermosolid_body, thermosolid_body_shape);
 
     Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation(fluid_body_inner, fluid_body_contact);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallNoRiemann> density_relaxation(fluid_body_inner, fluid_body_contact);

@@ -214,7 +214,7 @@ TEST(test_optimization, test_problem4_optimized)
     diffusion_body.generateParticles<BaseParticles, Lattice>();
 
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
-    wall_boundary.generateParticles<BaseParticles, Lattice>();
+    wall_boundary.generateParticles<BaseParticles, Lattice>(wall_boundary_shape);
 
     //----------------------------------------------------------------------
     //	Define body relation map.
@@ -280,7 +280,7 @@ TEST(test_optimization, test_problem4_optimized)
     //	Note that there may be data dependence on the constructors of these methods.
     //----------------------------------------------------------------------
     SimpleDynamics<NormalDirectionFromBodyShape> diffusion_body_normal_direction(diffusion_body);
-    SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
+    SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary, wall_boundary_shape);
 
     InteractionSplit<TemperatureSplittingByPDEWithBoundary<Real>>
         temperature_splitting_pde_complex(diffusion_body_inner, diffusion_body_contact, "Phi");
