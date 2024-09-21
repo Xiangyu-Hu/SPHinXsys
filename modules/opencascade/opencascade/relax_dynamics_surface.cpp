@@ -21,9 +21,10 @@ void ShapeSurfaceConstraint::update(size_t index_i, Real dt)
 }
 //=================================================================================================//
 RelaxationStepInnerFirstHalf::
-    RelaxationStepInnerFirstHalf(BaseInnerRelation &inner_relation)
+    RelaxationStepInnerFirstHalf(BaseInnerRelation &inner_relation, Shape &shape)
     : BaseDynamics<void>(), real_body_(inner_relation.real_body_),
-      inner_relation_(inner_relation), relaxation_acceleration_inner_(inner_relation) {}
+      inner_relation_(inner_relation),
+      relaxation_acceleration_inner_(inner_relation, shape) {}
 //=================================================================================================//
 void RelaxationStepInnerFirstHalf::exec(Real dt)
 {

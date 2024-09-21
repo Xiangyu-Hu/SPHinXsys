@@ -48,7 +48,7 @@ void SpringDamperConstraintParticleWise::update(size_t index_i, Real dt)
 }
 //=================================================================================================//
 SpringNormalOnSurfaceParticles::
-    SpringNormalOnSurfaceParticles(SPHBody &sph_body, bool outer_surface,
+    SpringNormalOnSurfaceParticles(SPHBody &sph_body, Shape &body_shape, bool outer_surface,
                                    Vecd source_point, Real stiffness, Real damping_ratio)
     : LoadingForce(sph_body, "NormalSpringForceOnSurface"),
       pos_(particles_->getVariableDataByName<Vecd>("Position")),
@@ -61,7 +61,7 @@ SpringNormalOnSurfaceParticles::
       is_spring_force_applied_(particles_->addUniqueDiscreteVariable<bool>(
           "isSpringForceApplied", particles_->ParticlesBound(), false))
 {
-    BodySurface surface_layer(sph_body);
+    BodySurface surface_layer(sph_body, body_shape);
 
     for (size_t index_i : surface_layer.body_part_particles_)
     {
@@ -120,7 +120,7 @@ void SpringNormalOnSurfaceParticles::update(size_t index_i, Real dt)
 }
 //=================================================================================================//
 SpringOnSurfaceParticles::
-    SpringOnSurfaceParticles(SPHBody &sph_body, Real stiffness, Real damping_ratio)
+    SpringOnSurfaceParticles(SPHBody &sph_body, Shape &body_shape, Real stiffness, Real damping_ratio)
     : LoadingForce(sph_body, "SpringForceOnSurface"),
       pos_(particles_->getVariableDataByName<Vecd>("Position")),
       pos0_(particles_->registerStateVariableFrom<Vecd>("InitialPosition", "Position")),
@@ -130,7 +130,7 @@ SpringOnSurfaceParticles::
       is_spring_force_applied_(particles_->addUniqueDiscreteVariable<bool>(
           "isSpringForceApplied", particles_->ParticlesBound(), false))
 {
-    BodySurface surface_layer(sph_body);
+    BodySurface surface_layer(sph_body, body_shape);
     // select which particles the spring is applied to
     // if the particle is in the surface layer, the force is applied
     for (size_t index_i : surface_layer.body_part_particles_)
@@ -198,7 +198,7 @@ void ForceInBodyRegion::update(size_t index_i, Real dt)
 }
 //=================================================================================================//
 SurfacePressureFromSource::
-    SurfacePressureFromSource(BodyPartByParticle &body_part, Vecd source_point,
+    SurfacePressureFromSource(BodyPartByParticle &body_part, Shape &body_shape, Vecd source_point,
                               StdVec<std::array<Real, 2>> pressure_over_time)
     : BaseLoadingForce<BodyPartByParticle>(body_part, "SurfacePressureForce"),
       pos0_(particles_->registerStateVariableFrom<Vecd>("InitialPosition", "Position")),
@@ -210,7 +210,7 @@ SurfacePressureFromSource::
           "isPressureApplied", particles_->ParticlesBound(), false)),
       physical_time_(sph_system_.getSystemVariableDataByName<Real>("PhysicalTime"))
 {
-    BodySurface surface_layer(body_part.getSPHBody());
+    BodySurface surface_layer(body_part.getSPHBody(), body_shape);
 
     for (size_t index_i : surface_layer.body_part_particles_)
     {

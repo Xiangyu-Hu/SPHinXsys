@@ -93,7 +93,7 @@ class SpringDamperConstraintParticleWise : public LoadingForce
 class SpringNormalOnSurfaceParticles : public LoadingForce
 {
   public:
-    SpringNormalOnSurfaceParticles(SPHBody &sph_body, bool outer_surface,
+    SpringNormalOnSurfaceParticles(SPHBody &sph_body, Shape &body_shape, bool outer_surface,
                                    Vecd source_point, Real stiffness, Real damping_ratio = 0.05);
 
     bool *getApplySpringForceToParticle() { return is_spring_force_applied_; }
@@ -129,7 +129,7 @@ class SpringOnSurfaceParticles : public LoadingForce
     bool *is_spring_force_applied_;
 
   public:
-    SpringOnSurfaceParticles(SPHBody &sph_body, Real stiffness, Real damping_ratio = 0.05);
+    SpringOnSurfaceParticles(SPHBody &sph_body, Shape &body_shape, Real stiffness, Real damping_ratio = 0.05);
 
     bool *getApplySpringForceToParticle() { return is_spring_force_applied_; }
     void update(size_t index_i, Real dt = 0.0);
@@ -179,7 +179,7 @@ class ForceInBodyRegion : public BaseLoadingForce<BodyPartByParticle>
 class SurfacePressureFromSource : public BaseLoadingForce<BodyPartByParticle>
 {
   public:
-    SurfacePressureFromSource(BodyPartByParticle &body_part,
+    SurfacePressureFromSource(BodyPartByParticle &body_part, Shape &body_shape,
                               Vecd source_point, StdVec<std::array<Real, 2>> pressure_over_time);
 
     bool *getApplyPressureToParticle() { return is_pressure_applied_; }

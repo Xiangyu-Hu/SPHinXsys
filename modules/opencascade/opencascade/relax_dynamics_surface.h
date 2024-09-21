@@ -56,7 +56,7 @@ class ShapeSurfaceConstraint : public LocalDynamics
 class RelaxationStepInnerFirstHalf : public BaseDynamics<void>
 {
   public:
-    explicit RelaxationStepInnerFirstHalf(BaseInnerRelation &inner_relation);
+    explicit RelaxationStepInnerFirstHalf(BaseInnerRelation &inner_relation, Shape &shape);
     virtual ~RelaxationStepInnerFirstHalf(){};
     virtual void exec(Real dt = 0.0) override;
 

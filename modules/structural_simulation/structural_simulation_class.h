@@ -116,11 +116,6 @@ class SolidBodyForSimulation
 
 void expandBoundingBox(BoundingBox *original, BoundingBox *additional);
 
-void relaxParticlesSingleResolution(bool write_particles_to_file,
-                                    SolidBodyFromMesh &solid_body_from_mesh,
-                                    BaseParticles &solid_body_from_mesh_particles,
-                                    InnerRelation &solid_body_from_mesh_inner);
-
 static inline Real getPhysicalViscosityGeneral(Real rho, Real youngs_modulus, Real length_scale, Real shape_constant = 1.0)
 {
     // the physical viscosity is defined in the paper pf prof. Hu

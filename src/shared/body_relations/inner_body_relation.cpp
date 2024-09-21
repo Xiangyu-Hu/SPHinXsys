@@ -48,9 +48,9 @@ void AdaptiveInnerRelation::updateConfiguration()
 }
 //=================================================================================================//
 SelfSurfaceContactRelation::
-    SelfSurfaceContactRelation(RealBody &real_body)
+    SelfSurfaceContactRelation(RealBody &real_body, Shape &body_shape)
     : BaseInnerRelation(real_body),
-      body_surface_layer_(real_body),
+      body_surface_layer_(real_body, body_shape),
       body_part_particles_(body_surface_layer_.body_part_particles_),
       get_self_contact_neighbor_(real_body),
       cell_linked_list_(DynamicCast<CellLinkedList>(this, real_body.getCellLinkedList())) {}

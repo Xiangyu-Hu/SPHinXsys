@@ -156,7 +156,7 @@ int main(int ac, char *av[])
     //	Methods used for particle relaxation.
     //----------------------------------------------------------------------
     using namespace relax_dynamics;
-    RelaxationStepInnerFirstHalf leaflet_relaxation_first_half(leaflet_inner);
+    RelaxationStepInnerFirstHalf leaflet_relaxation_first_half(leaflet_inner, leaflet_shape);
     RelaxationStepInnerSecondHalf leaflet_relaxation_second_half(leaflet_inner, leaflet_shape);
     /** Constrain the boundary. */
     BoundaryGeometry boundary_geometry(leaflet, "BoundaryGeometry");
