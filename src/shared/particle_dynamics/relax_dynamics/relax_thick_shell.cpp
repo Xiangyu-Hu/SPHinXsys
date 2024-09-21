@@ -10,7 +10,7 @@ ShellMidSurfaceBounding::ShellMidSurfaceBounding(NearShapeSurface &body_part)
       pos_(particles_->getVariableDataByName<Vecd>("Position")),
       constrained_distance_(0.5 * sph_body_.sph_adaptation_->MinimumSpacing()),
       particle_spacing_ref_(sph_body_.sph_adaptation_->MinimumSpacing()),
-      level_set_shape_(DynamicCast<LevelSetShape>(this, &sph_body_.getInitialShape())) {}
+      level_set_shape_(&body_part.getLevelSetShape()) {}
 //=================================================================================================//
 void ShellMidSurfaceBounding::update(size_t index_i, Real dt)
 {
@@ -21,12 +21,12 @@ void ShellMidSurfaceBounding::update(size_t index_i, Real dt)
 }
 //=================================================================================================//
 ShellNormalDirectionPrediction::
-    ShellNormalDirectionPrediction(BaseInnerRelation &inner_relation,
+    ShellNormalDirectionPrediction(BaseInnerRelation &inner_relation, Shape &shape,
                                    Real thickness, Real consistency_criterion)
     : BaseDynamics<void>(),
       convergence_criterion_(cos(0.01 * Pi)),
       consistency_criterion_(consistency_criterion),
-      normal_prediction_(inner_relation.getSPHBody(), thickness),
+      normal_prediction_(inner_relation.getSPHBody(), shape, thickness),
       normal_prediction_convergence_check_(inner_relation.getSPHBody(), convergence_criterion_),
       consistency_correction_(inner_relation, consistency_criterion_),
       consistency_updated_check_(inner_relation.getSPHBody()),
@@ -79,9 +79,10 @@ void ShellNormalDirectionPrediction::correctNormalDirection()
     std::cout << "\n Information: normal consistency updated after '" << ite_updated << "' steps." << std::endl;
 }
 //=================================================================================================//
-ShellNormalDirectionPrediction::NormalPrediction::NormalPrediction(SPHBody &sph_body, Real thickness)
+ShellNormalDirectionPrediction::NormalPrediction::
+    NormalPrediction(SPHBody &sph_body, Shape &shape, Real thickness)
     : LocalDynamics(sph_body), thickness_(thickness),
-      level_set_shape_(DynamicCast<LevelSetShape>(this, &sph_body.getInitialShape())),
+      level_set_shape_(DynamicCast<LevelSetShape>(this, &shape)),
       pos_(particles_->getVariableDataByName<Vecd>("Position")),
       n_(particles_->getVariableDataByName<Vecd>("NormalDirection")),
       n_temp_(particles_->registerStateVariable<Vecd>(
@@ -168,11 +169,11 @@ void ShellNormalDirectionPrediction::SmoothingNormal::update(size_t index_i, Rea
     smoothed_[index_i] /= temp_[index_i].norm() + TinyReal;
 }
 //=================================================================================================//
-ShellRelaxationStep::ShellRelaxationStep(BaseInnerRelation &inner_relation)
+ShellRelaxationStep::ShellRelaxationStep(BaseInnerRelation &inner_relation, Shape &relax_shape)
     : BaseDynamics<void>(),
       real_body_(DynamicCast<RealBody>(this, inner_relation.getSPHBody())),
-      inner_relation_(inner_relation), near_shape_surface_(real_body_),
-      relaxation_residue_(inner_relation),
+      inner_relation_(inner_relation), near_shape_surface_(real_body_, relax_shape),
+      relaxation_residue_(inner_relation, relax_shape),
       relaxation_scaling_(real_body_), position_relaxation_(real_body_),
       mid_surface_bounding_(near_shape_surface_) {}
 //=================================================================================================//

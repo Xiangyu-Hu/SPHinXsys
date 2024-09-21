@@ -150,10 +150,11 @@ class BodyRegionByParticle : public BodyPartByParticle
 class BodySurface : public BodyPartByParticle
 {
   public:
-    explicit BodySurface(SPHBody &sph_body);
+    explicit BodySurface(SPHBody &sph_body, Shape &body_shape);
     virtual ~BodySurface(){};
 
   protected:
+    Shape &body_shape_;
     Real particle_spacing_min_;
     void tagNearSurface(size_t particle_index);
 };
@@ -165,10 +166,11 @@ class BodySurface : public BodyPartByParticle
 class BodySurfaceLayer : public BodyPartByParticle
 {
   public:
-    explicit BodySurfaceLayer(SPHBody &sph_body, Real layer_thickness = 3.0);
+    explicit BodySurfaceLayer(SPHBody &sph_body, Shape &body_shape, Real layer_thickness = 3.0);
     virtual ~BodySurfaceLayer(){};
 
   private:
+    Shape &body_shape_;
     Real thickness_threshold_;
     void tagSurfaceLayer(size_t particle_index);
 };
@@ -206,10 +208,7 @@ class NearShapeSurface : public BodyPartByCell
     UniquePtrKeeper<LevelSetShape> level_set_shape_keeper_;
 
   public:
-    NearShapeSurface(RealBody &real_body, SharedPtr<Shape> shape_ptr);
-    NearShapeSurface(RealBody &real_body, LevelSetShape &level_set_shape);
-    explicit NearShapeSurface(RealBody &real_body);
-    NearShapeSurface(RealBody &real_body, const std::string &sub_shape_name);
+    NearShapeSurface(RealBody &real_body, Shape &shape);
     virtual ~NearShapeSurface(){};
     LevelSetShape &getLevelSetShape() { return level_set_shape_; };
 

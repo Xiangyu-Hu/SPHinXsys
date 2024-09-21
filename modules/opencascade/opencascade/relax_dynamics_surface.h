@@ -41,11 +41,11 @@ class SurfaceShape;
 
 namespace relax_dynamics
 {
-class ShapeSurfaceBounding2 : public LocalDynamics
+class ShapeSurfaceConstraint : public LocalDynamics
 {
   public:
-    ShapeSurfaceBounding2(RealBody &real_body_);
-    virtual ~ShapeSurfaceBounding2(){};
+    ShapeSurfaceConstraint(RealBody &real_body, Shape &shape);
+    virtual ~ShapeSurfaceConstraint(){};
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
@@ -69,16 +69,16 @@ class RelaxationStepInnerFirstHalf : public BaseDynamics<void>
 class RelaxationStepInnerSecondHalf : public BaseDynamics<void>
 {
   public:
-    explicit RelaxationStepInnerSecondHalf(BaseInnerRelation &inner_relation);
+    explicit RelaxationStepInnerSecondHalf(BaseInnerRelation &inner_relation, Shape &shape);
     virtual ~RelaxationStepInnerSecondHalf(){};
-    SimpleDynamics<ShapeSurfaceBounding2> &SurfaceBounding() { return surface_bounding_; };
+    SimpleDynamics<ShapeSurfaceConstraint> &SurfaceBounding() { return surface_bounding_; };
     virtual void exec(Real dt = 0.0) override;
 
   protected:
     RealBody *real_body_;
     ReduceDynamics<RelaxationScaling> get_time_step_square_;
     SimpleDynamics<PositionRelaxation> update_particle_position_;
-    SimpleDynamics<ShapeSurfaceBounding2> surface_bounding_;
+    SimpleDynamics<ShapeSurfaceConstraint> surface_bounding_;
 };
 
 /**
@@ -88,7 +88,7 @@ class RelaxationStepInnerSecondHalf : public BaseDynamics<void>
 class SurfaceNormalDirection : public LocalDynamics
 {
   public:
-    explicit SurfaceNormalDirection(SPHBody &sph_body);
+    explicit SurfaceNormalDirection(SPHBody &sph_body, Shape &shape);
     virtual ~SurfaceNormalDirection(){};
     void update(size_t index_i, Real dt = 0.0);
 

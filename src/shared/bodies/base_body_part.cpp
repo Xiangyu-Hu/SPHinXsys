@@ -51,8 +51,9 @@ void BodyRegionByParticle::tagByContain(size_t particle_index)
     }
 }
 //=================================================================================================//
-BodySurface::BodySurface(SPHBody &sph_body)
+BodySurface::BodySurface(SPHBody &sph_body, Shape &body_shape)
     : BodyPartByParticle(sph_body, "BodySurface"),
+      body_shape_(body_shape),
       particle_spacing_min_(sph_body.sph_adaptation_->MinimumSpacing())
 {
     TaggingParticleMethod tagging_particle_method = std::bind(&BodySurface::tagNearSurface, this, _1);
@@ -62,13 +63,14 @@ BodySurface::BodySurface(SPHBody &sph_body)
 //=================================================================================================//
 void BodySurface::tagNearSurface(size_t particle_index)
 {
-    Real phi = sph_body_.getInitialShape().findSignedDistance(pos_[particle_index]);
+    Real phi = body_shape_.findSignedDistance(pos_[particle_index]);
     if (fabs(phi) < particle_spacing_min_)
         body_part_particles_.push_back(particle_index);
 }
 //=================================================================================================//
-BodySurfaceLayer::BodySurfaceLayer(SPHBody &sph_body, Real layer_thickness)
+BodySurfaceLayer::BodySurfaceLayer(SPHBody &sph_body, Shape &body_shape, Real layer_thickness)
     : BodyPartByParticle(sph_body, "InnerLayers"),
+      body_shape_(body_shape),
       thickness_threshold_(sph_body.sph_adaptation_->ReferenceSpacing() * layer_thickness)
 {
     TaggingParticleMethod tagging_particle_method = std::bind(&BodySurfaceLayer::tagSurfaceLayer, this, _1);
@@ -78,7 +80,7 @@ BodySurfaceLayer::BodySurfaceLayer(SPHBody &sph_body, Real layer_thickness)
 //=================================================================================================//
 void BodySurfaceLayer::tagSurfaceLayer(size_t particle_index)
 {
-    Real distance = fabs(sph_body_.getInitialShape().findSignedDistance(pos_[particle_index]));
+    Real distance = fabs(body_shape_.findSignedDistance(pos_[particle_index]));
     if (distance < thickness_threshold_)
     {
         body_part_particles_.push_back(particle_index);
@@ -104,34 +106,9 @@ bool BodyRegionByCell::checkNotFar(Vecd cell_position, Real threshold)
     return body_part_shape_.checkNotFar(cell_position, threshold);
 }
 //=================================================================================================//
-NearShapeSurface::NearShapeSurface(RealBody &real_body, LevelSetShape &level_set_shape)
-    : BodyPartByCell(real_body, level_set_shape.getName()), level_set_shape_(level_set_shape)
-{
-    TaggingCellMethod tagging_cell_method = std::bind(&NearShapeSurface::checkNearSurface, this, _1, _2);
-    tagCells(tagging_cell_method);
-}
-//=================================================================================================//
-NearShapeSurface::NearShapeSurface(RealBody &real_body, SharedPtr<Shape> shape_ptr)
-    : BodyPartByCell(real_body, shape_ptr->getName()),
-      level_set_shape_(level_set_shape_keeper_.createRef<LevelSetShape>(real_body, *shape_ptr.get(), true))
-{
-    TaggingCellMethod tagging_cell_method = std::bind(&NearShapeSurface::checkNearSurface, this, _1, _2);
-    tagCells(tagging_cell_method);
-}
-//=================================================================================================//
-NearShapeSurface::NearShapeSurface(RealBody &real_body)
-    : BodyPartByCell(real_body, "NearShapeSurface"),
-      level_set_shape_(DynamicCast<LevelSetShape>(this, real_body.getInitialShape()))
-{
-    TaggingCellMethod tagging_cell_method = std::bind(&NearShapeSurface::checkNearSurface, this, _1, _2);
-    tagCells(tagging_cell_method);
-}
-//=================================================================================================//
-NearShapeSurface::NearShapeSurface(RealBody &real_body, const std::string &sub_shape_name)
-    : BodyPartByCell(real_body, sub_shape_name),
-      level_set_shape_(
-          DynamicCast<LevelSetShape>(this, *DynamicCast<ComplexShape>(this, real_body.getInitialShape())
-                                                .getSubShapeByName(sub_shape_name)))
+NearShapeSurface::NearShapeSurface(RealBody &real_body, Shape &shape)
+    : BodyPartByCell(real_body, shape.getName()),
+      level_set_shape_(DynamicCast<LevelSetShape>(this, shape))
 {
     TaggingCellMethod tagging_cell_method = std::bind(&NearShapeSurface::checkNearSurface, this, _1, _2);
     tagCells(tagging_cell_method);

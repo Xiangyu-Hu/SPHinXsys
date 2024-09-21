@@ -10,13 +10,14 @@ namespace SPH
 {
 //=================================================================================================//
 ParticleGenerator<BaseParticles, Network>::
-    ParticleGenerator(SPHBody &sph_body, BaseParticles &base_particles, const Vecd &starting_pnt,
+    ParticleGenerator(SPHBody &sph_body, BaseParticles &base_particles,
+                      Shape &shape, const Vecd &starting_pnt,
                       const Vecd &second_pnt, int iterator, Real grad_factor)
     : ParticleGenerator<BaseParticles>(sph_body, base_particles),
       starting_pnt_(starting_pnt), second_pnt_(second_pnt),
       n_it_(iterator), fascicles_(true), segments_in_branch_(10),
       segment_length_(sph_body.sph_adaptation_->ReferenceSpacing()),
-      grad_factor_(grad_factor), sph_body_(sph_body), initial_shape_(sph_body.getInitialShape()),
+      grad_factor_(grad_factor), sph_body_(sph_body), shape_(shape),
       cell_linked_list_(DynamicCast<RealBody>(this, sph_body).getCellLinkedList()),
       tree_(DynamicCast<TreeBody>(this, &sph_body))
 {
@@ -64,8 +65,8 @@ Vecd ParticleGenerator<BaseParticles, Network>::createATentativeNewBranchPoint(V
 {
     Vecd pnt_to_project = init_point + dir * segment_length_;
 
-    Real phi = initial_shape_.findSignedDistance(pnt_to_project);
-    Vecd unit_normal = initial_shape_.findNormalDirection(pnt_to_project);
+    Real phi = shape_.findSignedDistance(pnt_to_project);
+    Vecd unit_normal = shape_.findNormalDirection(pnt_to_project);
     unit_normal /= unit_normal.norm() + TinyReal;
     Vecd new_point = pnt_to_project - phi * unit_normal;
     return new_point;
@@ -110,7 +111,7 @@ bool ParticleGenerator<BaseParticles, Network>::
     Vecd init_point = position_[parent_elements.back()];
     Vecd init_direction = parent_branch->end_direction_;
 
-    Vecd surface_norm = initial_shape_.findNormalDirection(init_point);
+    Vecd surface_norm = shape_.findNormalDirection(init_point);
     surface_norm /= surface_norm.norm() + TinyReal;
     Vecd in_plane = -init_direction.cross(surface_norm);
 
@@ -130,7 +131,7 @@ bool ParticleGenerator<BaseParticles, Network>::
 
         for (size_t i = 1; i < number_segments; i++)
         {
-            surface_norm = initial_shape_.findNormalDirection(new_point);
+            surface_norm = shape_.findNormalDirection(new_point);
             surface_norm /= surface_norm.norm() + TinyReal;
             /** Project grad to surface. */
             grad = getGradientFromNearestPoints(new_point, delta);

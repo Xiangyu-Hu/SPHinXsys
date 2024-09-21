@@ -63,8 +63,7 @@ class RelaxationResidue<Inner<>>
     : public RelaxationResidue<Base, DataDelegateInner>
 {
   public:
-    explicit RelaxationResidue(BaseInnerRelation &inner_relation);
-    RelaxationResidue(BaseInnerRelation &inner_relation, const std::string &sub_shape_name);
+    explicit RelaxationResidue(BaseInnerRelation &inner_relation, Shape &relax_shape);
     virtual ~RelaxationResidue(){};
     Shape &getRelaxShape() { return relax_shape_; };
     void interaction(size_t index_i, Real dt = 0.0);
@@ -154,7 +153,6 @@ class UpdateSmoothingLengthRatioByShape : public LocalDynamics
 
   public:
     UpdateSmoothingLengthRatioByShape(SPHBody &sph_body, Shape &adaptation_shape);
-    explicit UpdateSmoothingLengthRatioByShape(SPHBody &sph_body);
     virtual ~UpdateSmoothingLengthRatioByShape(){};
     void update(size_t index_i, Real dt = 0.0);
 };

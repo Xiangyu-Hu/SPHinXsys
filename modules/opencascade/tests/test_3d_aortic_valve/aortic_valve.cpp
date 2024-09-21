@@ -59,12 +59,11 @@ template <>
 class ParticleGenerator<SurfaceParticles, Leaflet> : public ParticleGenerator<SurfaceParticles>
 {
   public:
-    explicit ParticleGenerator(SPHBody &sph_body, SurfaceParticles &surface_particles)
-        : ParticleGenerator<SurfaceParticles>(sph_body, surface_particles), sph_body_(sph_body){};
+    explicit ParticleGenerator(SPHBody &sph_body, SurfaceParticles &surface_particles, Shape &shape)
+        : ParticleGenerator<SurfaceParticles>(sph_body, surface_particles),
+          surface_shape_(DynamicCast<SurfaceShape>(this, &shape)){};
     virtual void prepareGeometricData() override
     {
-        SurfaceShape *a = DynamicCast<SurfaceShape>(this, &sph_body_.getInitialShape());
-
         Standard_Real u1 = 0;
         Standard_Real v1 = DELTA1;
         Standard_Real u2 = DELTA2;
@@ -74,24 +73,24 @@ class ParticleGenerator<SurfaceParticles, Leaflet> : public ParticleGenerator<Su
         for (size_t k = 0; k <= 1 / DELTA1; k++)
         {
             Standard_Real u = u1 + k * DELTA1;
-            points.push_back(a->getCartesianPoint(u, 0));
+            points.push_back(surface_shape_->getCartesianPoint(u, 0));
         }
         for (size_t k = 0; k <= 1 / DELTA1 - 1; k++)
         {
             Standard_Real v = v1 + k * DELTA1;
-            points.push_back(a->getCartesianPoint(0, v));
+            points.push_back(surface_shape_->getCartesianPoint(0, v));
         }
 
         for (size_t n = 0; n <= 1 / DELTA2 - 2; n++)
         {
             Standard_Real u = u2 + n * DELTA2;
-            points.push_back(a->getCartesianPoint(u, 1));
+            points.push_back(surface_shape_->getCartesianPoint(u, 1));
         }
 
         for (size_t n = 0; n <= 1 / DELTA2 - 1; n++)
         {
             Standard_Real v = v2 + n * DELTA2;
-            points.push_back(a->getCartesianPoint(1, v));
+            points.push_back(surface_shape_->getCartesianPoint(1, v));
         }
 
         for (size_t k = 0; k <= 8; k++)
@@ -104,7 +103,7 @@ class ParticleGenerator<SurfaceParticles, Leaflet> : public ParticleGenerator<Su
             for (size_t n = 0; n <= 20; n++)
             {
                 Standard_Real u = u1 + n * U_DELTA;
-                points.push_back(a->getCartesianPoint(u, v));
+                points.push_back(surface_shape_->getCartesianPoint(u, v));
             }
         }
 
@@ -115,7 +114,9 @@ class ParticleGenerator<SurfaceParticles, Leaflet> : public ParticleGenerator<Su
             addSurfaceProperties(n_0, thickness);
         }
     }
-    SPHBody &sph_body_;
+
+  protected:
+    SurfaceShape *surface_shape_;
 };
 } // namespace SPH
 
@@ -132,10 +133,11 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    SolidBody leaflet(sph_system, makeShared<SurfaceShapeSTEP>(full_path_to_geometry, "Leaflet"));
+    SurfaceShapeSTEP leaflet_shape(full_path_to_geometry, "Leaflet");
+    SolidBody leaflet(sph_system, leaflet_shape.getName());
     // here dummy linear elastic solid is use because no solid dynamics in particle relaxation
     leaflet.defineMaterial<Solid>();
-    leaflet.generateParticles<SurfaceParticles, Leaflet>();
+    leaflet.generateParticles<SurfaceParticles, Leaflet>(leaflet_shape);
     //----------------------------------------------------------------------
     //	Define simple file input and outputs functions.
     //----------------------------------------------------------------------
@@ -155,10 +157,10 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     using namespace relax_dynamics;
     RelaxationStepInnerFirstHalf leaflet_relaxation_first_half(leaflet_inner);
-    RelaxationStepInnerSecondHalf leaflet_relaxation_second_half(leaflet_inner);
+    RelaxationStepInnerSecondHalf leaflet_relaxation_second_half(leaflet_inner, leaflet_shape);
     /** Constrain the boundary. */
     BoundaryGeometry boundary_geometry(leaflet, "BoundaryGeometry");
-    SimpleDynamics<SurfaceNormalDirection> surface_normal_direction(leaflet);
+    SimpleDynamics<SurfaceNormalDirection> surface_normal_direction(leaflet, leaflet_shape);
     //----------------------------------------------------------------------
     //	Particle relaxation starts here.
     //----------------------------------------------------------------------

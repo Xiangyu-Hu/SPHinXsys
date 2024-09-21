@@ -4,9 +4,11 @@
 namespace SPH
 {
 //=================================================================================================//
-GhostCreationInESPH::GhostCreationInESPH(BaseInnerRelation &inner_relation, Ghost<ReserveSizeFactor> &ghost_boundary)
+GhostCreationInESPH::GhostCreationInESPH(BaseInnerRelation &inner_relation,
+                                         Shape &body_shape, Ghost<ReserveSizeFactor> &ghost_boundary)
     : LocalDynamics(inner_relation.getSPHBody()), DataDelegateInner(inner_relation),
-      ghost_boundary_(ghost_boundary), get_inner_neighbor_(&inner_relation.getSPHBody()),
+      body_shape_(body_shape), ghost_boundary_(ghost_boundary),
+      get_inner_neighbor_(&inner_relation.getSPHBody()),
       indicator_(particles_->getVariableDataByName<int>("Indicator")),
       Vol_(particles_->getVariableDataByName<Real>("VolumetricMeasure")),
       pos_(particles_->getVariableDataByName<Vecd>("Position")),
@@ -34,7 +36,7 @@ void GhostCreationInESPH::ghostGenerationAndAddToConfiguration()
             }
             Real ghost_particle_dW_ijV_j = -gradient_summation.norm();
             Vecd ghost_particle_eij = -gradient_summation / ghost_particle_dW_ijV_j;
-            Real distance_to_ghost = fabs(sph_body_.getInitialShape().findSignedDistance(pos_[index_i]));
+            Real distance_to_ghost = fabs(body_shape_.findSignedDistance(pos_[index_i]));
             Vecd displacement_to_ghost = distance_to_ghost * ghost_particle_eij;
             Vecd ghost_position = pos_[index_i] - displacement_to_ghost;
             mutex_create_ghost_particle_.lock();

@@ -75,7 +75,7 @@ class ShellNormalDirectionPrediction : public BaseDynamics<void>
     void correctNormalDirection();
 
   public:
-    explicit ShellNormalDirectionPrediction(BaseInnerRelation &inner_relation,
+    explicit ShellNormalDirectionPrediction(BaseInnerRelation &inner_relation, Shape &shape,
                                             Real thickness, Real consistency_criterion = cos(Pi / 20.0));
     virtual ~ShellNormalDirectionPrediction(){};
     virtual void exec(Real dt = 0.0) override;
@@ -88,7 +88,7 @@ class ShellNormalDirectionPrediction : public BaseDynamics<void>
         Vecd *pos_, *n_, *n_temp_;
 
       public:
-        NormalPrediction(SPHBody &sph_body, Real thickness);
+        NormalPrediction(SPHBody &sph_body, Shape &shape, Real thickness);
         virtual ~NormalPrediction(){};
         void update(size_t index_i, Real dt = 0.0);
     };
@@ -157,7 +157,7 @@ class ShellNormalDirectionPrediction : public BaseDynamics<void>
 class ShellRelaxationStep : public BaseDynamics<void>
 {
   public:
-    explicit ShellRelaxationStep(BaseInnerRelation &inner_relation);
+    explicit ShellRelaxationStep(BaseInnerRelation &inner_relation, Shape &relax_shape);
     virtual ~ShellRelaxationStep(){};
     virtual void exec(Real dt = 0.0) override;
     SimpleDynamics<ShellMidSurfaceBounding> &MidSurfaceBounding() { return mid_surface_bounding_; };
