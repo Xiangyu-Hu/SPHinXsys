@@ -48,10 +48,12 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    RealBody airfoil(sph_system, makeShared<ImportModel>("AirFoil"));
+    ImportModel airfoil_shape("AirFoil");
+    RealBody airfoil(sph_system, airfoil_shape.getName());
     airfoil.defineAdaptation<ParticleRefinementNearSurface>(1.15, 1.0, 3);
-    airfoil.defineBodyLevelSetShape()->cleanLevelSet()->writeLevelSet(sph_system);
-    airfoil.generateParticles<BaseParticles, Lattice, Adaptive>();
+    LevelSetShape airfoil_level_set(airfoil, airfoil_shape, 1.0);
+    airfoil_level_set.cleanLevelSet()->writeLevelSet(sph_system);
+    airfoil.generateParticles<BaseParticles, Lattice, Adaptive>(airfoil_level_set);
     //----------------------------------------------------------------------
     //	Define outputs functions.
     //----------------------------------------------------------------------
@@ -69,8 +71,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     using namespace relax_dynamics;
     SimpleDynamics<RandomizeParticlePosition> random_airfoil_particles(airfoil);
-    RelaxationStepLevelSetCorrectionInner relaxation_step(airfoil_inner);
-    SimpleDynamics<UpdateSmoothingLengthRatioByShape> update_smoothing_length_ratio(airfoil);
+    RelaxationStepLevelSetCorrectionInner relaxation_step(airfoil_inner, airfoil_level_set);
+    SimpleDynamics<UpdateSmoothingLengthRatioByShape> update_smoothing_length_ratio(airfoil, airfoil_level_set);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.

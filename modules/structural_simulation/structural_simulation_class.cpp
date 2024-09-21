@@ -464,7 +464,8 @@ void StructuralSimulation::initializeSurfacePressure()
         StdVec<std::array<Real, 2>> pressure_over_time = std::get<3>(surface_pressure_tuple_[i]);
 
         BodyPartByParticle *bp = body_part_tri_mesh_ptr_keeper_.createPtr<BodyPartFromMesh>(*solid_body_list_[body_index]->getSolidBodyFromMesh(), tri_mesh);
-        surface_pressure_.emplace_back(makeShared<SimpleDynamics<solid_dynamics::SurfacePressureFromSource>>(*bp, point, pressure_over_time));
+        surface_pressure_.emplace_back(makeShared<SimpleDynamics<solid_dynamics::SurfacePressureFromSource>>(
+            *bp, *body_mesh_list_[i], point, pressure_over_time));
     }
 }
 
