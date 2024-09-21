@@ -103,11 +103,11 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    DiffusionBlock diffusion_block("DiffusionBlock");
-    SolidBody diffusion_body(sph_system, diffusion_block.getName());
+    DiffusionBlock diffusion_block_shape("DiffusionBlock");
+    SolidBody diffusion_body(sph_system, diffusion_block_shape.getName());
     DirectionalDiffusion *diffusion =
         diffusion_body.defineMaterial<DirectionalDiffusion>("Phi", diffusion_coeff, bias_coeff, bias_direction);
-    diffusion_body.generateParticles<BaseParticles, Lattice>();
+    diffusion_body.generateParticles<BaseParticles, Lattice>(diffusion_block_shape);
     //----------------------------------------------------------------------
     //	Particle and body creation of fluid observers.
     //----------------------------------------------------------------------
@@ -133,7 +133,7 @@ int main(int ac, char *av[])
     SimpleDynamics<DiffusionInitialCondition> setup_diffusion_initial_condition(diffusion_body);
 
     GetDiffusionTimeStepSize get_time_step_size(diffusion_body, *diffusion);
-    PeriodicAlongAxis periodic_along_x(diffusion_block.getBounds(), xAxis);
+    PeriodicAlongAxis periodic_along_x(diffusion_block_shape.getBounds(), xAxis);
     PeriodicConditionUsingCellLinkedList periodic_condition_y(diffusion_body, periodic_along_x);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.

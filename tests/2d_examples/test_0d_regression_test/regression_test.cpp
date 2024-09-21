@@ -159,10 +159,11 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Create body, materials and particles.
     //----------------------------------------------------------------------
-    SolidBody diffusion_body(sph_system, makeShared<MultiPolygonShape>(createDiffusionDomain(), "DiffusionBody"));
+    MultiPolygonShape diffusion_body_shape(createDiffusionDomain(), "DiffusionBody");
+    SolidBody diffusion_body(sph_system, diffusion_body_shape.getName());
     DirectionalDiffusion *diffusion =
         diffusion_body.defineMaterial<DirectionalDiffusion>("Phi", diffusion_coeff, bias_coeff, bias_direction);
-    diffusion_body.generateParticles<BaseParticles, Lattice>();
+    diffusion_body.generateParticles<BaseParticles, Lattice>(diffusion_body_shape);
     //----------------------------------------------------------------------
     //	Observer body
     //----------------------------------------------------------------------

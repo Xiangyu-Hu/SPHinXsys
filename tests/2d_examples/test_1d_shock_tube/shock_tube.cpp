@@ -91,7 +91,7 @@ int main(int ac, char *av[])
     WaveBlock wave_block_shape("WaveBlock");
     FluidBody wave_body(sph_system, wave_block_shape.getName());
     wave_body.defineMaterial<CompressibleFluid>(rho0_l, heat_capacity_ratio);
-    wave_body.generateParticles<BaseParticles, Lattice>();
+    wave_body.generateParticles<BaseParticles, Lattice>(wave_block_shape);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The inner relation defines the particle configuration for particles within a body.

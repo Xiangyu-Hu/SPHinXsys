@@ -145,18 +145,21 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBlock"));
+    WaterBlock water_block_shape("WaterBlock");
+    FluidBody water_block(sph_system, water_block_shape.getName());
     water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
-    water_block.generateParticles<BaseParticles, Lattice>();
+    water_block.generateParticles<BaseParticles, Lattice>(water_block_shape);
 
-    SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
+    WallBoundary wall_boundary_shape("WallBoundary");
+    SolidBody wall_boundary(sph_system, wall_boundary_shape.getName());
     wall_boundary.defineMaterial<Solid>();
-    wall_boundary.generateParticles<BaseParticles, Lattice>();
+    wall_boundary.generateParticles<BaseParticles, Lattice>(wall_boundary_shape);
 
-    SolidBody gate(sph_system, makeShared<MultiPolygonShape>(createGateShape(), "Gate"));
+    MultiPolygonShape gate_shape(createGateShape(), "Gate");
+    SolidBody gate(sph_system, gate_shape.getName());
     gate.defineAdaptationRatios(1.15, 2.0);
     gate.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
-    gate.generateParticles<BaseParticles, Lattice>();
+    gate.generateParticles<BaseParticles, Lattice>(gate_shape);
 
     ObserverBody gate_observer(sph_system, "Observer");
     gate_observer.defineAdaptationRatios(1.15, 2.0);
@@ -192,8 +195,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     SimpleDynamics<OffsetInitialPosition> gate_offset_position(gate, offset);
     InteractionWithUpdate<LinearGradientCorrectionMatrixInner> gate_corrected_configuration(gate_inner);
-    SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
-    SimpleDynamics<NormalDirectionFromBodyShape> gate_normal_direction(gate);
+    SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary, wall_boundary_shape);
+    SimpleDynamics<NormalDirectionFromBodyShape> gate_normal_direction(gate, gate_shape);
 
     Dynamics1Level<solid_dynamics::Integration1stHalfPK2> gate_stress_relaxation_first_half(gate_inner);
     Dynamics1Level<solid_dynamics::Integration2ndHalf> gate_stress_relaxation_second_half(gate_inner);
