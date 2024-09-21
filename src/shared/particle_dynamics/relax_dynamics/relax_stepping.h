@@ -76,8 +76,7 @@ template <>
 class RelaxationResidue<Inner<LevelSetCorrection>> : public RelaxationResidue<Inner<>>
 {
   public:
-    template <typename... Args>
-    RelaxationResidue(Args &&...args);
+    RelaxationResidue(BaseInnerRelation &inner_relation, LevelSetShape *level_set_shape);
     template <typename BodyRelationType, typename FirstArg>
     explicit RelaxationResidue(ConstructorArgs<BodyRelationType, FirstArg> parameters)
         : RelaxationResidue(parameters.body_relation_, std::get<0>(parameters.others_)){};

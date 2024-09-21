@@ -55,22 +55,10 @@ StdVec<Vecd> observation_location = {Vecd(PL, 0.0)};
 namespace SPH
 {
 //----------------------------------------------------------------------
-//	Define the beam body
-//----------------------------------------------------------------------
-class Beam : public MultiPolygonShape
-{
-  public:
-    explicit Beam(const std::string &shape_name) : MultiPolygonShape(shape_name)
-    {
-        multi_polygon_.addAPolygon(beam_base_shape, ShapeBooleanOps::add);
-        multi_polygon_.addAPolygon(beam_shape, ShapeBooleanOps::add);
-    }
-};
-//----------------------------------------------------------------------
 //	particle generation considering the anisotropic resolution
 //----------------------------------------------------------------------
 template <>
-class ParticleGenerator<BaseParticles, Beam> : public ParticleGenerator<BaseParticles>
+class ParticleGenerator<BaseParticles, UserDefined> : public ParticleGenerator<BaseParticles>
 {
   public:
     ParticleGenerator(SPHBody &sph_body, BaseParticles &base_particles)
@@ -195,10 +183,10 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    SolidBody beam_body(system, makeShared<Beam>("BeamBody"));
+    SolidBody beam_body(system, "BeamBody");
     beam_body.sph_adaptation_->resetKernel<AnisotropicKernel<KernelWendlandC2>>(scaling_vector);
     beam_body.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
-    beam_body.generateParticles<BaseParticles, Beam>();
+    beam_body.generateParticles<BaseParticles, UserDefined>();
 
     ObserverBody beam_observer(system, "BeamObserver");
     beam_observer.sph_adaptation_->resetKernel<AnisotropicKernel<KernelWendlandC2>>(scaling_vector);

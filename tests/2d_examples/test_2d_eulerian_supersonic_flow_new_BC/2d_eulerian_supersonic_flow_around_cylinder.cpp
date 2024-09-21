@@ -25,14 +25,15 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    FluidBody fluid_block(sph_system, makeShared<FluidBlock>("FluidBlock"));
+    FluidBlock fluid_block_shape("FluidBlock");
+    FluidBody fluid_block(sph_system, fluid_block_shape.getName());
     fluid_block.sph_adaptation_->resetKernel<KernelTabulated<KernelLaguerreGauss>>(20);
-    fluid_block.defineBodyLevelSetShape();
+    LevelSetShape level_set_shape(fluid_block, fluid_block_shape);
     fluid_block.defineMaterial<CompressibleFluid>(rho_reference, heat_capacity_ratio);
     Ghost<ReserveSizeFactor> ghost_boundary(0.5);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
         ? fluid_block.generateParticlesWithReserve<BaseParticles, Reload>(ghost_boundary, fluid_block.getName())
-        : fluid_block.generateParticlesWithReserve<BaseParticles, Lattice>(ghost_boundary);
+        : fluid_block.generateParticlesWithReserve<BaseParticles, Lattice>(ghost_boundary, level_set_shape);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -52,7 +53,7 @@ int main(int ac, char *av[])
         SimpleDynamics<RandomizeParticlePosition> random_water_body_particles(fluid_block);
         BodyStatesRecordingToVtp write_real_body_states(fluid_block);
         ReloadParticleIO write_real_body_particle_reload_files(fluid_block);
-        RelaxationStepLevelSetCorrectionInner relaxation_step_inner(fluid_block_inner);
+        RelaxationStepLevelSetCorrectionInner relaxation_step_inner(fluid_block_inner, &level_set_shape);
         //----------------------------------------------------------------------
         //	Particle relaxation starts here.
         //----------------------------------------------------------------------
@@ -101,7 +102,7 @@ int main(int ac, char *av[])
     //	Ghost kernel gradient update is to make the boundary particles strictly achieve zero-order consistency.
     //  strictly achieve zero-order consistency
     //----------------------------------------------------------------------
-    GhostCreationInESPH ghost_creation_for_boundary_condition(fluid_block_inner, ghost_boundary);
+    GhostCreationInESPH ghost_creation_for_boundary_condition(fluid_block_inner, level_set_shape, ghost_boundary);
     SupersonicFlowBoundaryConditionSetup boundary_condition_setup(fluid_block_inner, ghost_creation_for_boundary_condition);
     InteractionWithUpdate<GhostKernelGradientUpdate> ghost_kernel_gradient_update(fluid_block_inner);
     boundary_condition_setup.resetBoundaryConditions();

@@ -71,7 +71,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     using namespace relax_dynamics;
     SimpleDynamics<RandomizeParticlePosition> random_airfoil_particles(airfoil);
-    RelaxationStepLevelSetCorrectionInner relaxation_step(airfoil_inner, airfoil_level_set);
+    RelaxationStepLevelSetCorrectionInner relaxation_step(airfoil_inner, &airfoil_level_set);
     SimpleDynamics<UpdateSmoothingLengthRatioByShape> update_smoothing_length_ratio(airfoil, airfoil_level_set);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration

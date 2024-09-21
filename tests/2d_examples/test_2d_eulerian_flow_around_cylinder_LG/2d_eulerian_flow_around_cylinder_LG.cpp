@@ -90,22 +90,24 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBlock"));
+    WaterBlock water_block_shape("WaterBlock");
+    FluidBody water_block(sph_system, water_block_shape.getName());
     water_block.sph_adaptation_->resetKernel<KernelTabulated<KernelLaguerreGauss>>(20);
-    water_block.defineComponentLevelSetShape("OuterBoundary");
+    LevelSetShape level_set_shape(water_block, *water_block_shape.getSubShapeByName("OuterBoundary"));
     water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
         ? water_block.generateParticles<BaseParticles, Reload>(water_block.getName())
         : water_block.generateParticles<BaseParticles, Lattice>(water_block_shape);
 
-    SolidBody cylinder(sph_system, makeShared<Cylinder>("Cylinder"));
+    Cylinder cylinder_shape("Cylinder");
+    SolidBody cylinder(sph_system, cylinder_shape.getName());
     cylinder.defineAdaptationRatios(1.3, 2.0);
     cylinder.sph_adaptation_->resetKernel<KernelTabulated<KernelLaguerreGauss>>(20);
-    cylinder.defineBodyLevelSetShape();
+    LevelSetShape cylinder_shape_level_set(cylinder, cylinder_shape);
     cylinder.defineMaterial<Solid>();
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
         ? cylinder.generateParticles<BaseParticles, Reload>(cylinder.getName())
-        : cylinder.generateParticles<BaseParticles, Lattice>();
+        : cylinder.generateParticles<BaseParticles, Lattice>(cylinder_shape_level_set);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -135,9 +137,9 @@ int main(int ac, char *av[])
         SimpleDynamics<RandomizeParticlePosition> random_water_body_particles(water_block);
         BodyStatesRecordingToVtp write_real_body_states(sph_system);
         ReloadParticleIO write_real_body_particle_reload_files({&cylinder, &water_block});
-        RelaxationStepLevelSetCorrectionInner relaxation_step_inner(cylinder_inner);
+        RelaxationStepLevelSetCorrectionInner relaxation_step_inner(cylinder_inner, &cylinder_shape_level_set);
         RelaxationStepLevelSetCorrectionComplex relaxation_step_complex(
-            ConstructorArgs(water_block_inner, std::string("OuterBoundary")), water_block_contact);
+            ConstructorArgs(water_block_inner, &level_set_shape), water_block_contact);
         //----------------------------------------------------------------------
         //	Particle relaxation starts here.
         //----------------------------------------------------------------------
@@ -174,13 +176,13 @@ int main(int ac, char *av[])
     InteractionWithUpdate<LinearGradientCorrectionMatrixComplex> cylinder_kernel_correction_matrix(cylinder_inner, cylinder_contact);
     InteractionWithUpdate<LinearGradientCorrectionMatrixComplex> water_block_kernel_correction_matrix(water_block_inner, water_block_contact);
     InteractionDynamics<KernelGradientCorrectionComplex> kernel_gradient_update(water_block_inner, water_block_contact);
-    SimpleDynamics<NormalDirectionFromBodyShape> cylinder_normal_direction(cylinder);
+    SimpleDynamics<NormalDirectionFromBodyShape> cylinder_normal_direction(cylinder, cylinder_shape_level_set);
 
     InteractionWithUpdate<fluid_dynamics::EulerianIntegration1stHalfWithWallRiemann> pressure_relaxation(water_block_inner, water_block_contact);
     InteractionWithUpdate<fluid_dynamics::EulerianIntegration2ndHalfWithWallRiemann> density_relaxation(water_block_inner, water_block_contact);
 
     InteractionWithUpdate<fluid_dynamics::ViscousForceWithWall> viscous_force(water_block_inner, water_block_contact);
-    SimpleDynamics<NormalDirectionFromBodyShape> water_block_normal_direction(water_block);
+    SimpleDynamics<NormalDirectionFromBodyShape> water_block_normal_direction(water_block, water_block_shape);
     ReduceDynamics<fluid_dynamics::AcousticTimeStep> get_fluid_time_step_size(water_block, 0.5);
     InteractionWithUpdate<FarFieldBoundary> variable_reset_in_boundary_condition(water_block_inner);
     //----------------------------------------------------------------------

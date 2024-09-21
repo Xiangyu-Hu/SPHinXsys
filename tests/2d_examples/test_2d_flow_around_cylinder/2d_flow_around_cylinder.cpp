@@ -36,11 +36,11 @@ int main(int ac, char *av[])
     Cylinder cylinder_shape("Cylinder");
     SolidBody cylinder(sph_system, cylinder_shape.getName());
     cylinder.defineAdaptationRatios(1.15, 2.0);
-    LevelSetShape level_set_shape(cylinder, cylinder_shape, 1.0);
+    LevelSetShape cylinder_shape_level_set(cylinder, cylinder_shape, 1.0);
     cylinder.defineMaterial<Solid>();
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
         ? cylinder.generateParticles<BaseParticles, Reload>(cylinder.getName())
-        : cylinder.generateParticles<BaseParticles, Lattice>(level_set_shape);
+        : cylinder.generateParticles<BaseParticles, Lattice>(cylinder_shape_level_set);
 
     ObserverBody fluid_observer(sph_system, "FluidObserver");
     fluid_observer.generateParticles<ObserverParticles>(observation_locations);
@@ -79,7 +79,7 @@ int main(int ac, char *av[])
         /** Write the particle reload files. */
         ReloadParticleIO write_particle_reload_files(cylinder);
         /** A  Physics relaxation step. */
-        RelaxationStepInner relaxation_step_inner(cylinder_inner);
+        RelaxationStepInner relaxation_step_inner(cylinder_inner, cylinder_shape_level_set);
         //----------------------------------------------------------------------
         //	Particle relaxation starts here.
         //----------------------------------------------------------------------
@@ -108,7 +108,7 @@ int main(int ac, char *av[])
     //	Define the main numerical methods used in the simulation.
     //	Note that there may be data dependence on the constructors of these methods.
     //----------------------------------------------------------------------
-    SimpleDynamics<NormalDirectionFromBodyShape> cylinder_normal_direction(cylinder);
+    SimpleDynamics<NormalDirectionFromBodyShape> cylinder_normal_direction(cylinder, cylinder_shape_level_set);
 
     Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation(water_block_inner, water_block_contact);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallNoRiemann> density_relaxation(water_block_inner, water_block_contact);

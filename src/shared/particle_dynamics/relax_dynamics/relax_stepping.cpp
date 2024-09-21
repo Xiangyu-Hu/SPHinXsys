@@ -21,6 +21,12 @@ void RelaxationResidue<Inner<>>::interaction(size_t index_i, Real dt)
     residue_[index_i] = residue;
 };
 //=================================================================================================//
+RelaxationResidue<Inner<LevelSetCorrection>>::
+    RelaxationResidue(BaseInnerRelation &inner_relation, LevelSetShape *level_set_shape)
+    : RelaxationResidue<Inner<>>(inner_relation, *level_set_shape),
+      pos_(particles_->getVariableDataByName<Vecd>("Position")),
+      level_set_shape_(*level_set_shape){};
+//=================================================================================================//
 void RelaxationResidue<Inner<LevelSetCorrection>>::interaction(size_t index_i, Real dt)
 {
     RelaxationResidue<Inner<>>::interaction(index_i, dt);

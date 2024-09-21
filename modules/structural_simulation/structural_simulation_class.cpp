@@ -63,7 +63,7 @@ void expandBoundingBox(BoundingBox *original, BoundingBox *additional)
 
 void relaxParticlesSingleResolution(bool write_particle_relaxation_data,
                                     InnerRelation &solid_body_from_mesh_inner,
-                                    Shape &shape)
+                                    LevelSetShape *level_set_shape)
 {
     RealBody &solid_body_from_mesh = dynamic_cast<RealBody &>(solid_body_from_mesh_inner.getSPHBody());
     BodyStatesRecordingToVtp write_solid_body_from_mesh_to_vtp(solid_body_from_mesh);
@@ -73,7 +73,7 @@ void relaxParticlesSingleResolution(bool write_particle_relaxation_data,
     //----------------------------------------------------------------------
     SimpleDynamics<relax_dynamics::RandomizeParticlePosition> random_solid_body_from_mesh_particles(solid_body_from_mesh);
     /** A  Physics relaxation step. */
-    relax_dynamics::RelaxationStepLevelSetCorrectionInner relaxation_step_inner(solid_body_from_mesh_inner, shape);
+    relax_dynamics::RelaxationStepLevelSetCorrectionInner relaxation_step_inner(solid_body_from_mesh_inner, level_set_shape);
     //----------------------------------------------------------------------
     //	Particle relaxation starts here.
     //----------------------------------------------------------------------
@@ -118,7 +118,7 @@ std::tuple<Vecd *, Real *> generateAndRelaxParticlesFromMesh(
     {
         system.setIOEnvironment();
         InnerRelation inner_relation(model);
-        relaxParticlesSingleResolution(write_particle_relaxation_data, inner_relation, *triangle_mesh_shape);
+        relaxParticlesSingleResolution(write_particle_relaxation_data, inner_relation, &level_set_shape);
     }
 
     return std::tuple<Vecd *, Real *>(model.getBaseParticles().ParticlePositions(), model.getBaseParticles().VolumetricMeasures());

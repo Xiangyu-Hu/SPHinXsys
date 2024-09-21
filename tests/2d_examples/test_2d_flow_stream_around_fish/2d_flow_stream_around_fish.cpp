@@ -27,16 +27,18 @@ int main(int ac, char *av[])
     FluidBody water_block(sph_system, water_block_shape.getName());
     water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
     ParticleBuffer<ReserveSizeFactor> inlet_particle_buffer(0.5);
-    water_block.generateParticlesWithReserve<BaseParticles, Lattice>(inlet_particle_buffer);
+    water_block.generateParticlesWithReserve<BaseParticles, Lattice>(inlet_particle_buffer, water_block_shape);
 
-    SolidBody fish_body(sph_system, makeShared<FishBody>("FishBody"));
+    FishBody fish_body_shape("FishBody");
+    SolidBody fish_body(sph_system, fish_body.getName());
     fish_body.defineAdaptationRatios(1.15, 2.0);
-    fish_body.defineBodyLevelSetShape()->writeLevelSet(sph_system);
+    LevelSetShape fish_body_level_set_shape(fish_body, fish_body_shape);
+    fish_body_level_set_shape.writeLevelSet(sph_system);
     fish_body.defineMaterial<FishBodyComposite>();
     //  Using relaxed particle distribution if needed
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
         ? fish_body.generateParticles<BaseParticles, Reload>(fish_body.getName())
-        : fish_body.generateParticles<BaseParticles, Lattice>();
+        : fish_body.generateParticles<BaseParticles, Lattice>(fish_body_level_set_shape);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -64,7 +66,7 @@ int main(int ac, char *av[])
         SimpleDynamics<RandomizeParticlePosition> random_fish_body_particles(fish_body);
         BodyStatesRecordingToVtp write_fish_body(fish_body);
         ReloadParticleIO write_particle_reload_files(fish_body);
-        RelaxationStepInner relaxation_step_inner(fish_inner);
+        RelaxationStepInner relaxation_step_inner(fish_inner, fish_body_level_set_shape);
         //----------------------------------------------------------------------
         //	Particle relaxation starts here.
         //----------------------------------------------------------------------
@@ -99,7 +101,7 @@ int main(int ac, char *av[])
     // Then fluid dynamics and the corresponding coupling dynamics.
     // The coupling with multi-body dynamics will be introduced at last.
     //----------------------------------------------------------------------
-    SimpleDynamics<NormalDirectionFromBodyShape> fish_body_normal_direction(fish_body);
+    SimpleDynamics<NormalDirectionFromBodyShape> fish_body_normal_direction(fish_body, fish_body_level_set_shape);
     InteractionWithUpdate<LinearGradientCorrectionMatrixInner> fish_body_corrected_configuration(fish_inner);
     SimpleDynamics<FishMaterialInitialization> composite_material_id(fish_body);
     InteractionWithUpdate<SpatialTemporalFreeSurfaceIndicationComplex> free_stream_surface_indicator(water_block_inner, water_block_contact);

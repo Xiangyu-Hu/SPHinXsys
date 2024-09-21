@@ -27,21 +27,23 @@ int main(int ac, char *av[])
     WaterBlock water_block_shape("WaterBody");
     FluidBody water_block(sph_system, water_block_shape.getName());
     water_block.defineAdaptation<ParticleRefinementWithinShape>(1.3, 1.0, 1);
-    water_block.defineComponentLevelSetShape("OuterBoundary")->writeLevelSet(sph_system);
+    LevelSetShape water_block_level_set_shape(water_block, *water_block_shape.getSubShapeByName("OuterBoundary"));
+    water_block_level_set_shape.writeLevelSet(sph_system);
     water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
     MultiPolygonShape refinement_region(MultiPolygon(initial_refinement_region), "RefinementRegion");
     ParticleBuffer<ReserveSizeFactor> inlet_particle_buffer(0.5);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
         ? water_block.generateParticlesWithReserve<BaseParticles, Reload>(inlet_particle_buffer, water_block.getName())
-        : water_block.generateParticles<BaseParticles, Lattice, Adaptive>(refinement_region);
+        : water_block.generateParticles<BaseParticles, Lattice, Adaptive>(water_block_shape, refinement_region);
 
-    SolidBody cylinder(sph_system, makeShared<Cylinder>("Cylinder"));
+    Cylinder cylinder_shape("Cylinder");
+    SolidBody cylinder(sph_system, cylinder_shape.getName());
     cylinder.defineAdaptationRatios(1.15, 4.0);
-    cylinder.defineBodyLevelSetShape();
+    LevelSetShape cylinder_shape_level_set(cylinder, cylinder_shape);
     cylinder.defineMaterial<Solid>();
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
         ? cylinder.generateParticles<BaseParticles, Reload>(cylinder.getName())
-        : cylinder.generateParticles<BaseParticles, Lattice>();
+        : cylinder.generateParticles<BaseParticles, Lattice>(cylinder_shape_level_set);
 
     ObserverBody fluid_observer(sph_system, "FluidObserver");
     fluid_observer.generateParticles<ObserverParticles>(observation_locations);
@@ -78,9 +80,9 @@ int main(int ac, char *av[])
         BodyStatesRecordingToVtp write_real_body_states(sph_system);
         ReloadParticleIO write_real_body_particle_reload_files({&water_block, &cylinder});
         /** A  Physics relaxation step. */
-        RelaxationStepLevelSetCorrectionInner relaxation_step_inner(cylinder_inner);
+        RelaxationStepLevelSetCorrectionInner relaxation_step_inner(cylinder_inner, &cylinder_shape_level_set);
         RelaxationStepLevelSetCorrectionComplex relaxation_step_complex(
-            ConstructorArgs(water_block_inner, std::string("OuterBoundary")), water_contact);
+            ConstructorArgs(water_block_inner, &water_block_level_set_shape), water_contact);
         SimpleDynamics<UpdateSmoothingLengthRatioByShape> update_smoothing_length_ratio(water_block, refinement_region);
         //----------------------------------------------------------------------
         //	Particle relaxation starts here.
@@ -117,7 +119,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     StartupAcceleration time_dependent_acceleration(Vec2d(U_f, 0.0), 2.0);
     SimpleDynamics<GravityForce<StartupAcceleration>> apply_gravity_force(water_block, time_dependent_acceleration);
-    SimpleDynamics<NormalDirectionFromBodyShape> cylinder_normal_direction(cylinder);
+    SimpleDynamics<NormalDirectionFromBodyShape> cylinder_normal_direction(cylinder, cylinder_shape_level_set);
     InteractionWithUpdate<SpatialTemporalFreeSurfaceIndicationComplex> free_stream_surface_indicator(water_block_inner, water_contact);
 
     Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation(water_block_inner, water_contact);
