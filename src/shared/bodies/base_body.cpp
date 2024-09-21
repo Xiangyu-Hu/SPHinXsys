@@ -7,29 +7,14 @@
 namespace SPH
 {
 //=================================================================================================//
-SPHBody::SPHBody(SPHSystem &sph_system, Shape &shape, const std::string &name)
+SPHBody::SPHBody(SPHSystem &sph_system, const std::string &name)
     : sph_system_(sph_system), body_name_(name), newly_updated_(true),
-      base_particles_(nullptr), is_bound_set_(false), initial_shape_(&shape), total_body_parts_(0),
+      base_particles_(nullptr), is_bound_set_(false), total_body_parts_(0),
       sph_adaptation_(sph_adaptation_ptr_keeper_.createPtr<SPHAdaptation>(sph_system.ReferenceResolution())),
       base_material_(base_material_ptr_keeper_.createPtr<BaseMaterial>())
 {
     sph_system_.sph_bodies_.push_back(this);
 }
-//=================================================================================================//
-SPHBody::SPHBody(SPHSystem &sph_system, Shape &shape)
-    : SPHBody(sph_system, shape, shape.getName()) {}
-//=================================================================================================//
-SPHBody::SPHBody(SPHSystem &sph_system, const std::string &name)
-    : SPHBody(sph_system, makeShared<DefaultShape>(name)) {}
-//=================================================================================================//
-SPHBody::SPHBody(SPHSystem &sph_system, SharedPtr<Shape> shape_ptr, const std::string &name)
-    : SPHBody(sph_system, *shape_ptr.get(), name)
-{
-    shape_ptr_keeper_.assignPtr(shape_ptr);
-}
-//=================================================================================================//
-SPHBody::SPHBody(SPHSystem &sph_system, SharedPtr<Shape> shape_ptr)
-    : SPHBody(sph_system, shape_ptr, shape_ptr->getName()) {}
 //=================================================================================================//
 BoundingBox SPHBody::getSPHSystemBounds()
 {
@@ -51,7 +36,7 @@ BaseParticles &SPHBody::getBaseParticles()
 {
     if (base_particles_ == nullptr)
     {
-        std::cout << "\n Error: BaseParticle not generated yet! \n";
+        std::cout << "\n Error: BaseParticle not constructed yet! \n";
         std::cout << __FILE__ << ':' << __LINE__ << std::endl;
         exit(1);
     }
@@ -73,11 +58,6 @@ void SPHBody::setSPHBodyBounds(const BoundingBox &bound)
 {
     bound_ = bound;
     is_bound_set_ = true;
-}
-//=================================================================================================//
-BoundingBox SPHBody::getSPHBodyBounds()
-{
-    return is_bound_set_ ? bound_ : initial_shape_->getBounds();
 }
 //=================================================================================================//
 void SPHBody::registerComputingKernel(execution::Implementation<Base> *implementation)

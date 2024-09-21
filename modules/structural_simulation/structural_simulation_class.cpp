@@ -23,12 +23,12 @@ BodyPartFromMesh::BodyPartFromMesh(SPHBody &body, SharedPtr<TriangleMeshShape> t
 SolidBodyFromMesh::SolidBodyFromMesh(
     SPHSystem &system, SharedPtr<TriangleMeshShape> triangle_mesh_shape, Real resolution,
     SharedPtr<SaintVenantKirchhoffSolid> material_model, Vecd *pos_0, Real *volume)
-    : SolidBody(system, triangle_mesh_shape)
+    : SolidBody(system, triangle_mesh_shape->getName())
 {
     defineAdaptationRatios(1.15, system.resolution_ref_ / resolution);
-    defineBodyLevelSetShape()->cleanLevelSet();
+    LevelSetShape level_set_shape(*this, *triangle_mesh_shape, 1.0);
     assignMaterial(material_model.get());
-    generateParticles<BaseParticles, Lattice>();
+    generateParticles<BaseParticles, Lattice>(*level_set_shape.cleanLevelSet());
 }
 
 SolidBodyForSimulation::SolidBodyForSimulation(
@@ -108,10 +108,10 @@ std::tuple<Vecd *, Real *> generateAndRelaxParticlesFromMesh(
 {
     BoundingBox bb = triangle_mesh_shape->getBounds();
     SPHSystem system(bb, resolution);
-    SolidBody model(system, triangle_mesh_shape);
-    model.defineBodyLevelSetShape()->cleanLevelSet();
+    SolidBody model(system, triangle_mesh_shape->getName());
+    LevelSetShape level_set_shape(model, *triangle_mesh_shape, 1.0);
     model.defineMaterial<Solid>();
-    model.generateParticles<BaseParticles, Lattice>();
+    model.generateParticles<BaseParticles, Lattice>(*level_set_shape.cleanLevelSet());
 
     if (particle_relaxation)
     {
@@ -538,7 +538,9 @@ void StructuralSimulation::initializePositionSolidBody()
         Real end_time = std::get<2>(position_solid_body_tuple_[i]);
         Vecd pos_end_center = std::get<3>(position_solid_body_tuple_[i]);
         position_solid_body_.emplace_back(makeShared<SimpleDynamics<solid_dynamics::PositionSolidBody>>(
-            *solid_body_list_[body_index]->getSolidBodyFromMesh(), start_time, end_time, pos_end_center));
+            *solid_body_list_[body_index]->getSolidBodyFromMesh(),
+            body_mesh_list_[body_index]->getBounds(),
+            start_time, end_time, pos_end_center));
     }
 }
 
@@ -552,7 +554,9 @@ void StructuralSimulation::initializePositionScaleSolidBody()
         Real end_time = std::get<2>(position_scale_solid_body_tuple_[i]);
         Real scale = std::get<3>(position_scale_solid_body_tuple_[i]);
         position_scale_solid_body_.emplace_back(makeShared<SimpleDynamics<solid_dynamics::PositionScaleSolidBody>>(
-            *solid_body_list_[body_index]->getSolidBodyFromMesh(), start_time, end_time, scale));
+            *solid_body_list_[body_index]->getSolidBodyFromMesh(),
+            body_mesh_list_[body_index]->getBounds(),
+            start_time, end_time, scale));
     }
 }
 

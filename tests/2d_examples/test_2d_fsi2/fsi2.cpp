@@ -28,21 +28,25 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
+    WaterBlock water_block_shape("WaterBody");
+    FluidBody water_block(sph_system, water_block_shape.getName());
     water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
-    water_block.generateParticles<BaseParticles, Lattice>();
+    water_block.generateParticles<BaseParticles, Lattice>(water_block_shape);
 
-    SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
+    WallBoundary wall_boundary_shape("WallBoundary");
+    SolidBody wall_boundary(sph_system, wall_boundary_shape.getName());
     wall_boundary.defineMaterial<Solid>();
-    wall_boundary.generateParticles<BaseParticles, Lattice>();
+    wall_boundary.generateParticles<BaseParticles, Lattice>(wall_boundary_shape);
 
-    SolidBody insert_body(sph_system, makeShared<Insert>("InsertedBody"));
+    Insert inserted_body_shape("InsertedBody");
+    SolidBody insert_body(sph_system, inserted_body_shape.getName());
     insert_body.defineAdaptationRatios(1.15, 2.0);
-    insert_body.defineBodyLevelSetShape()->writeLevelSet(sph_system);
+    LevelSetShape level_set_shape(insert_body, inserted_body_shape, 1.0);
+    level_set_shape.writeLevelSet(sph_system);
     insert_body.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
         ? insert_body.generateParticles<BaseParticles, Reload>(insert_body.getName())
-        : insert_body.generateParticles<BaseParticles, Lattice>();
+        : insert_body.generateParticles<BaseParticles, Lattice>(level_set_shape);
 
     ObserverBody beam_observer(sph_system, "BeamObserver");
     StdVec<Vecd> beam_observation_location = {0.5 * (BRT + BRB)};
@@ -144,7 +148,7 @@ int main(int ac, char *av[])
 
     BodyAlignedBoxByCell inflow_buffer(water_block, makeShared<AlignedBoxShape>(xAxis, Transform(Vec2d(buffer_translation)), buffer_halfsize));
     SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>> parabolic_inflow(inflow_buffer);
-    PeriodicAlongAxis periodic_along_x(water_block.getSPHBodyBounds(), xAxis);
+    PeriodicAlongAxis periodic_along_x(water_block_shape.getBounds(), xAxis);
     PeriodicConditionUsingCellLinkedList periodic_condition(water_block, periodic_along_x);
 
     InteractionDynamics<fluid_dynamics::VorticityInner> compute_vorticity(water_block_inner);

@@ -103,7 +103,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    SolidBody diffusion_body(sph_system, makeShared<DiffusionBlock>("DiffusionBlock"));
+    DiffusionBlock diffusion_block("DiffusionBlock");
+    SolidBody diffusion_body(sph_system, diffusion_block.getName());
     DirectionalDiffusion *diffusion =
         diffusion_body.defineMaterial<DirectionalDiffusion>("Phi", diffusion_coeff, bias_coeff, bias_direction);
     diffusion_body.generateParticles<BaseParticles, Lattice>();
@@ -132,7 +133,7 @@ int main(int ac, char *av[])
     SimpleDynamics<DiffusionInitialCondition> setup_diffusion_initial_condition(diffusion_body);
 
     GetDiffusionTimeStepSize get_time_step_size(diffusion_body, *diffusion);
-    PeriodicAlongAxis periodic_along_x(diffusion_body.getSPHBodyBounds(), xAxis);
+    PeriodicAlongAxis periodic_along_x(diffusion_block.getBounds(), xAxis);
     PeriodicConditionUsingCellLinkedList periodic_condition_y(diffusion_body, periodic_along_x);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.

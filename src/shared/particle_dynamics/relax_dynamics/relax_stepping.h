@@ -148,12 +148,12 @@ class UpdateSmoothingLengthRatioByShape : public LocalDynamics
   protected:
     Real *h_ratio_, *Vol_;
     Vecd *pos_;
-    Shape &target_shape_;
+    Shape &adaptation_shape_;
     ParticleRefinementByShape *particle_adaptation_;
     Real reference_spacing_;
 
   public:
-    UpdateSmoothingLengthRatioByShape(SPHBody &sph_body, Shape &target_shape);
+    UpdateSmoothingLengthRatioByShape(SPHBody &sph_body, Shape &adaptation_shape);
     explicit UpdateSmoothingLengthRatioByShape(SPHBody &sph_body);
     virtual ~UpdateSmoothingLengthRatioByShape(){};
     void update(size_t index_i, Real dt = 0.0);

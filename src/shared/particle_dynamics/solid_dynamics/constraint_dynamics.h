@@ -68,7 +68,7 @@ class SpringConstrain : public MotionConstraint<BodyPartByParticle>
 class PositionSolidBody : public MotionConstraint<SPHBody>
 {
   public:
-    PositionSolidBody(SPHBody &sph_body, Real start_time, Real end_time, Vecd pos_end_center);
+    PositionSolidBody(SPHBody &sph_body, BoundingBox body_bounds, Real start_time, Real end_time, Vecd pos_end_center);
     virtual ~PositionSolidBody(){};
     Vecd *GetParticlePos0() { return pos0_; };
     Vecd *GetParticlePosN() { return pos_; };
@@ -90,7 +90,7 @@ class PositionSolidBody : public MotionConstraint<SPHBody>
 class PositionScaleSolidBody : public MotionConstraint<SPHBody>
 {
   public:
-    PositionScaleSolidBody(SPHBody &sph_body, Real start_time, Real end_time, Real end_scale);
+    PositionScaleSolidBody(SPHBody &sph_body, BoundingBox body_bounds, Real start_time, Real end_time, Real end_scale);
     virtual ~PositionScaleSolidBody(){};
     Vecd *GetParticlePos0() { return pos0_; };
     Vecd *GetParticlePosN() { return pos_; };

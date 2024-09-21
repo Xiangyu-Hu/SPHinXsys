@@ -188,13 +188,15 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    FluidBody thermofluid_body(sph_system, makeShared<ThermofluidBody>("ThermofluidBody"));
+    ThermofluidBody thermofluid_body_shape("ThermofluidBody");
+    FluidBody thermofluid_body(sph_system, thermofluid_body_shape.getName());
     thermofluid_body.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
-    thermofluid_body.generateParticles<BaseParticles, Lattice>();
+    thermofluid_body.generateParticles<BaseParticles, Lattice>(thermofluid_body_shape);
 
-    SolidBody thermosolid_body(sph_system, makeShared<ThermosolidBody>("ThermosolidBody"));
+    ThermosolidBody thermosolid_body_shape("ThermosolidBody");
+    SolidBody thermosolid_body(sph_system, thermosolid_body_shape.getName());
     thermosolid_body.defineMaterial<Solid>();
-    thermosolid_body.generateParticles<BaseParticles, Lattice>();
+    thermosolid_body.generateParticles<BaseParticles, Lattice>(thermosolid_body_shape);
 
     ObserverBody temperature_observer(sph_system, "FluidObserver");
     temperature_observer.generateParticles<ObserverParticles>(observation_location);
@@ -237,7 +239,7 @@ int main(int ac, char *av[])
 
     ReduceDynamics<fluid_dynamics::AdvectionViscousTimeStep> get_fluid_advection_time_step(thermofluid_body, U_f);
     ReduceDynamics<fluid_dynamics::AcousticTimeStep> get_fluid_time_step(thermofluid_body);
-    PeriodicAlongAxis periodic_along_x(thermofluid_body.getSPHBodyBounds(), xAxis);
+    PeriodicAlongAxis periodic_along_x(thermofluid_body_shape.getBounds(), xAxis);
     PeriodicConditionUsingCellLinkedList periodic_condition(thermofluid_body, periodic_along_x);
     BodyAlignedBoxByCell inflow_buffer(thermofluid_body, makeShared<AlignedBoxShape>(xAxis, Transform(Vec2d(buffer_translation)), buffer_halfsize));
     SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>> parabolic_inflow(inflow_buffer);

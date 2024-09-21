@@ -82,7 +82,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    FluidBody water_body(sph_system, makeShared<WaterBlock>("WaterBody"));
+    WaterBlock water_block_shape("WaterBody");
+    FluidBody water_body(sph_system, water_block_shape.getName());
     water_body.sph_adaptation_->resetKernel<KernelTabulated<KernelLaguerreGauss>>(20);
     water_body.defineMaterial<CompressibleFluid>(rho0_f, heat_capacity_ratio, mu_f);
     water_body.generateParticles<BaseParticles, Lattice>();
@@ -103,8 +104,8 @@ int main(int ac, char *av[])
     InteractionWithUpdate<fluid_dynamics::EulerianCompressibleIntegration2ndHalfHLLCWithLimiterRiemann> density_and_energy_relaxation(water_body_inner);
 
     SimpleDynamics<TaylorGreenInitialCondition> initial_condition(water_body);
-    PeriodicAlongAxis periodic_along_x(water_body.getSPHBodyBounds(), xAxis);
-    PeriodicAlongAxis periodic_along_y(water_body.getSPHBodyBounds(), yAxis);
+    PeriodicAlongAxis periodic_along_x(water_block_shape.getBounds(), xAxis);
+    PeriodicAlongAxis periodic_along_y(water_block_shape.getBounds(), yAxis);
     PeriodicConditionUsingCellLinkedList periodic_condition_x(water_body, periodic_along_x);
     PeriodicConditionUsingCellLinkedList periodic_condition_y(water_body, periodic_along_y);
     ReduceDynamics<fluid_dynamics::EulerianCompressibleAcousticTimeStepSize> get_fluid_time_step_size(water_body);

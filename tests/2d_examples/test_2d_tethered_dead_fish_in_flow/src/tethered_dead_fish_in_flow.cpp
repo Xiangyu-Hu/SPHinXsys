@@ -210,26 +210,30 @@ int main(int ac, char *av[])
     /**
      * @brief   Particles and body creation for water.
      */
-    FluidBody water_block(system, makeShared<WaterBlock>("WaterBody"));
+    WaterBlock water_block_shape("WaterBody");
+    FluidBody water_block(system, water_block_shape.getName());
     water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
-    water_block.generateParticles<BaseParticles, Lattice>();
+    water_block.generateParticles<BaseParticles, Lattice>(water_block_shape);
     /**
      * @brief   Particles and body creation for wall boundary.
      */
-    SolidBody wall_boundary(system, makeShared<WallBoundary>("Wall"));
+    WallBoundary wall_boundary_shape("Wall");
+    SolidBody wall_boundary(system, wall_boundary_shape.getName());
     wall_boundary.defineMaterial<Solid>();
-    wall_boundary.generateParticles<BaseParticles, Lattice>();
+    wall_boundary.generateParticles<BaseParticles, Lattice>(wall_boundary_shape);
     /**
      * @brief   Particles and body creation for fish.
      */
-    SolidBody fish_body(system, makeShared<FishBody>("FishBody"));
+    FishBody fish_body_shape("FishBody");
+    SolidBody fish_body(system, fish_body_shape.getName());
     fish_body.defineAdaptationRatios(1.15, 2.0);
-    fish_body.defineBodyLevelSetShape();
+    LevelSetShape level_set_shape(fish_body, fish_body_shape, 1.0);
+    level_set_shape.writeLevelSet(system);
     fish_body.defineMaterial<NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
     // Using relaxed particle distribution if needed
     (!system.RunParticleRelaxation() && system.ReloadParticles())
         ? fish_body.generateParticles<BaseParticles, Reload>(fish_body.getName())
-        : fish_body.generateParticles<BaseParticles, Lattice>();
+        : fish_body.generateParticles<BaseParticles, Lattice>(level_set_shape);
     /**
      * @brief   Particle and body creation of fish observer.
      */
@@ -294,7 +298,7 @@ int main(int ac, char *av[])
      * @brief   Methods used for updating data structure.
      */
     /** Periodic BCs in x direction. */
-    PeriodicAlongAxis periodic_along_x(water_block.getSPHBodyBounds(), xAxis);
+    PeriodicAlongAxis periodic_along_x(water_block_shape.getBounds(), xAxis);
     PeriodicConditionUsingCellLinkedList periodic_condition(water_block, periodic_along_x);
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
     SimpleDynamics<NormalDirectionFromBodyShape> fish_body_normal_direction(fish_body);

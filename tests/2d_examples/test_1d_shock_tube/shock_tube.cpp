@@ -88,7 +88,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Create body, materials and particles.
     //----------------------------------------------------------------------
-    FluidBody wave_body(sph_system, makeShared<WaveBlock>("WaveBody"));
+    WaveBlock wave_block_shape("WaveBlock");
+    FluidBody wave_body(sph_system, wave_block_shape.getName());
     wave_body.defineMaterial<CompressibleFluid>(rho0_l, heat_capacity_ratio);
     wave_body.generateParticles<BaseParticles, Lattice>();
     //----------------------------------------------------------------------
@@ -105,7 +106,7 @@ int main(int ac, char *av[])
     InteractionWithUpdate<fluid_dynamics::EulerianCompressibleIntegration2ndHalfHLLCRiemann> density_and_energy_relaxation(wave_body_inner);
 
     SimpleDynamics<ShockTubeInitialCondition> waves_initial_condition(wave_body);
-    PeriodicAlongAxis periodic_along_y(wave_body.getSPHBodyBounds(), yAxis);
+    PeriodicAlongAxis periodic_along_y(wave_block_shape.getBounds(), yAxis);
     PeriodicConditionUsingCellLinkedList periodic_condition_y(wave_body, periodic_along_y);
     ReduceDynamics<fluid_dynamics::EulerianCompressibleAcousticTimeStepSize> get_wave_time_step_size(wave_body);
     InteractionWithUpdate<LinearGradientCorrectionMatrixInner> kernel_correction_matrix(wave_body_inner);
