@@ -96,7 +96,7 @@ int main(int ac, char *av[])
     water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
         ? water_block.generateParticles<BaseParticles, Reload>(water_block.getName())
-        : water_block.generateParticles<BaseParticles, Lattice>();
+        : water_block.generateParticles<BaseParticles, Lattice>(water_block_shape);
 
     SolidBody cylinder(sph_system, makeShared<Cylinder>("Cylinder"));
     cylinder.defineAdaptationRatios(1.3, 2.0);

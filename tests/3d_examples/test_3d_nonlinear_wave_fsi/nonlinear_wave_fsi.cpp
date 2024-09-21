@@ -76,14 +76,15 @@ int main(int ac, char *av[])
     WaterBlock water_block_shape("WaterBody");
     FluidBody water_block(sph_system, water_block_shape.getName());
     water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
-    water_block.generateParticles<BaseParticles, Lattice>();
+    water_block.generateParticles<BaseParticles, Lattice>(water_block_shape);
 
     WallBoundary wall_boundary_shape("Wall");
     SolidBody wall_boundary(sph_system, wall_boundary_shape.getName());
     wall_boundary.defineMaterial<Solid>();
     wall_boundary.generateParticles<BaseParticles, Lattice>(wall_boundary_shape);
 
-    SolidBody structure(sph_system, makeShared<FloatingStructure>("Structure"));
+    FloatingStructure floating_structure_shape("Structure");
+    SolidBody structure(sph_system, floating_structure_shape.getName());
     structure.defineMaterial<Solid>(StructureDensity);
     structure.generateParticles<BaseParticles, Reload>("Structure_Fit");
 
@@ -148,7 +149,7 @@ int main(int ac, char *av[])
     SimpleDynamics<GravityForce<Gravity>> constant_gravity_to_fluid(water_block, gravity);
     SimpleDynamics<OffsetInitialPosition> structure_offset_position(structure, offset);
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary, wall_boundary_shape);
-    SimpleDynamics<NormalDirectionFromBodyShape> structure_normal_direction(structure);
+    SimpleDynamics<NormalDirectionFromBodyShape> structure_normal_direction(structure, floating_structure_shape);
     InteractionWithUpdate<LinearGradientCorrectionMatrixInner> structure_corrected_configuration(structure_inner);
 
     InteractionWithUpdate<LinearGradientCorrectionMatrixComplex> corrected_configuration_fluid(ConstructorArgs(water_block_inner, 0.1), water_block_contact);

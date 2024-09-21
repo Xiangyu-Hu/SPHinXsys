@@ -125,7 +125,7 @@ int main(int ac, char *av[])
     // Using relaxed particle distribution if needed
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
         ? water_block.generateParticles<BaseParticles, Reload>(water_block.getName())
-        : water_block.generateParticles<BaseParticles, Lattice>();
+        : water_block.generateParticles<BaseParticles, Lattice>(water_block_shape);
 
     ObserverBody fluid_observer(sph_system, "FluidObserver");
     StdVec<Vecd> observation_location = {Vecd(0.0, 0.0)};

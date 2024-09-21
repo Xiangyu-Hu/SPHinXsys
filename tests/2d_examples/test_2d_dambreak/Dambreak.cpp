@@ -65,7 +65,7 @@ int main(int ac, char *av[])
     water_block.generateParticles<BaseParticles, Lattice>(initial_water_block);
 
     WallBoundary wall_boundary_shape("WallBoundary");
-    SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
+    SolidBody wall_boundary(sph_system, wall_boundary_shape.getName());
     wall_boundary.defineMaterial<Solid>();
     wall_boundary.generateParticles<BaseParticles, Lattice>(wall_boundary_shape);
 
