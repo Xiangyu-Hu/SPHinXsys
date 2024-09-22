@@ -176,7 +176,7 @@ int main(int ac, char *av[])
     gate.defineMaterial<Solid>();
     gate.generateParticles<BaseParticles, Lattice>();
 
-    SolidBody plate(sph_system, makeShared<DefaultShape>("Plate"));
+    SolidBody plate(sph_system, "Plate");
     plate.defineAdaptation<SPHAdaptation>(1.15, resolution_ref / resolution_shell);
     plate.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, youngs_modulus, poisson_ratio);
     plate.generateParticles<SurfaceParticles, Plate>();

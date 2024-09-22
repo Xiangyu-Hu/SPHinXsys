@@ -90,8 +90,10 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    SolidBody shell(sph_system, makeShared<Shell>("Shell"));
+    Shell shell_shape("Shell");
+    SolidBody shell(sph_system, shell_shape.getName());
     shell.defineAdaptation<SPHAdaptation>(1.15, 1.0);
+    LevelSetShape level_set_shape(shell, shell_shape, level_set_refinement_ratio);
     shell.defineMaterial<Solid>();
     if (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
     {
@@ -99,8 +101,7 @@ int main(int ac, char *av[])
     }
     else
     {
-        shell.defineBodyLevelSetShape(level_set_refinement_ratio)->writeLevelSet(sph_system);
-        shell.generateParticles<SurfaceParticles, Lattice>(thickness);
+        shell.generateParticles<SurfaceParticles, Lattice>(level_set_shape, thickness);
     }
 
     if (!sph_system.RunParticleRelaxation() && !sph_system.ReloadParticles())
@@ -109,9 +110,10 @@ int main(int ac, char *av[])
         return 0;
     }
 
-    SolidBody beam(sph_system, makeShared<Beam>("Beam"));
+    Beam beam_shape("Beam");
+    SolidBody beam(sph_system, beam_shape.getName());
     beam.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
-    beam.generateParticles<BaseParticles, Lattice>();
+    beam.generateParticles<BaseParticles, Lattice>(beam_shape);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -121,8 +123,8 @@ int main(int ac, char *av[])
     //  inner and contact relations.
     //----------------------------------------------------------------------
     InnerRelation beam_inner(beam);
-    SurfaceContactRelation shell_contact(shell, {&beam});
-    ShellSurfaceContactRelation beam_contact(beam, {&shell});
+    SurfaceContactRelation shell_contact(shell, shell_shape, {&beam});
+    ShellSurfaceContactRelation beam_contact(beam, beam_shape, {&shell});
     //----------------------------------------------------------------------
     //	Run particle relaxation for body-fitted distribution if chosen.
     //----------------------------------------------------------------------
@@ -137,8 +139,8 @@ int main(int ac, char *av[])
         //----------------------------------------------------------------------
         using namespace relax_dynamics;
         SimpleDynamics<RandomizeParticlePosition> shell_random_particles(shell);
-        ShellRelaxationStep relaxation_step_shell_inner(shell_inner);
-        ShellNormalDirectionPrediction shell_normal_prediction(shell_inner, thickness, cos(Pi / 3.75));
+        ShellRelaxationStep relaxation_step_shell_inner(shell_inner, level_set_shape);
+        ShellNormalDirectionPrediction shell_normal_prediction(shell_inner, level_set_shape, thickness, cos(Pi / 3.75));
         //----------------------------------------------------------------------
         //	Output for particle relaxation.
         //----------------------------------------------------------------------

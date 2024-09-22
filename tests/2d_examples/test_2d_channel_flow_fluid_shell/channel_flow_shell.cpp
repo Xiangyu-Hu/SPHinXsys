@@ -171,7 +171,7 @@ void channel_flow_shell(const Real resolution_ref, const Real wall_thickness)
     water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
     water_block.generateParticles<BaseParticles, Lattice>(water_block_shape);
 
-    SolidBody wall_boundary(sph_system, makeShared<DefaultShape>("Wall"));
+    SolidBody wall_boundary(sph_system, "Wall");
     wall_boundary.defineMaterial<Solid>();
     wall_boundary.generateParticles<SurfaceParticles, WallBoundary>(resolution_ref, wall_thickness);
 

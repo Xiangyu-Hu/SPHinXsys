@@ -127,7 +127,7 @@ int main(int ac, char *av[])
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
 
     /** create a bar body. */
-    SolidBody bar_body(sph_system, makeShared<DefaultShape>("BarBody"));
+    SolidBody bar_body(sph_system, "BarBody");
     bar_body.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     bar_body.generateParticles<LinearParticles, Bar>();
 

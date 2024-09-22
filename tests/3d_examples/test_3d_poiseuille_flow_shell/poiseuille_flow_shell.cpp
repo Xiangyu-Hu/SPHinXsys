@@ -179,7 +179,7 @@ void poiseuille_flow(const Real resolution_ref, const Real resolution_shell, con
     ParticleBuffer<ReserveSizeFactor> inlet_particle_buffer(0.5);
     water_block.generateParticlesWithReserve<BaseParticles, Lattice>(inlet_particle_buffer, water_block_shape);
 
-    SolidBody shell_boundary(system, makeShared<DefaultShape>("Shell"));
+    SolidBody shell_boundary(system, "Shell");
     shell_boundary.defineAdaptation<SPH::SPHAdaptation>(1.15, resolution_ref / resolution_shell);
     shell_boundary.defineMaterial<LinearElasticSolid>(1, 1e3, 0.45);
     shell_boundary.generateParticles<SurfaceParticles, ShellBoundary>(resolution_shell, wall_thickness, shell_thickness);

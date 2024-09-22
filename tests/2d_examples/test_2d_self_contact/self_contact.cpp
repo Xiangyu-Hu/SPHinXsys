@@ -139,7 +139,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     InnerRelation beam_body_inner(beam_body);
     ContactRelation beam_observer_contact(beam_observer, {&beam_body});
-    SelfSurfaceContactRelation beam_self_contact(beam_body);
+    SelfSurfaceContactRelation beam_self_contact(beam_body, beam_body_shape);
     //-----------------------------------------------------------------------------
     // this section define all numerical methods will be used in this case
     //-----------------------------------------------------------------------------

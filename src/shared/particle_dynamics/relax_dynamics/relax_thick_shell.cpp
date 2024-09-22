@@ -169,7 +169,7 @@ void ShellNormalDirectionPrediction::SmoothingNormal::update(size_t index_i, Rea
     smoothed_[index_i] /= temp_[index_i].norm() + TinyReal;
 }
 //=================================================================================================//
-ShellRelaxationStep::ShellRelaxationStep(BaseInnerRelation &inner_relation, Shape &relax_shape)
+ShellRelaxationStep::ShellRelaxationStep(BaseInnerRelation &inner_relation, LevelSetShape &relax_shape)
     : BaseDynamics<void>(),
       real_body_(DynamicCast<RealBody>(this, inner_relation.getSPHBody())),
       inner_relation_(inner_relation), near_shape_surface_(real_body_, relax_shape),

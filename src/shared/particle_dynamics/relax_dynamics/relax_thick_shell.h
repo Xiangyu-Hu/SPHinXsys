@@ -157,7 +157,7 @@ class ShellNormalDirectionPrediction : public BaseDynamics<void>
 class ShellRelaxationStep : public BaseDynamics<void>
 {
   public:
-    explicit ShellRelaxationStep(BaseInnerRelation &inner_relation, Shape &relax_shape);
+    explicit ShellRelaxationStep(BaseInnerRelation &inner_relation, LevelSetShape &relax_shape);
     virtual ~ShellRelaxationStep(){};
     virtual void exec(Real dt = 0.0) override;
     SimpleDynamics<ShellMidSurfaceBounding> &MidSurfaceBounding() { return mid_surface_bounding_; };

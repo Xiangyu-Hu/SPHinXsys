@@ -40,17 +40,19 @@ int main(int ac, char *av[])
     sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
 
     /** Creating body, materials and particles. */
-    SolidBody pipe_body(sph_system, makeShared<Pipe>("PipeBody"));
+    Pipe pipe_body_shape("PipeBody");
+    SolidBody pipe_body(sph_system, pipe_body_shape.getName());
     pipe_body.defineAdaptation<SPHAdaptation>(1.15, 1.0);
-    pipe_body.defineBodyLevelSetShape(level_set_refinement_ratio)->writeLevelSet(sph_system);
-    pipe_body.generateParticles<SurfaceParticles, Lattice>(thickness);
+    LevelSetShape level_set_shape(pipe_body, pipe_body_shape, level_set_refinement_ratio);
+    level_set_shape.writeLevelSet(sph_system);
+    pipe_body.generateParticles<SurfaceParticles, Lattice>(level_set_shape, thickness);
 
     InnerRelation pipe_body_inner(pipe_body);
     using namespace relax_dynamics;
     SimpleDynamics<RandomizeParticlePosition> random_pipe_body_particles(pipe_body);
     /** A  Physics relaxation step. */
-    ShellRelaxationStep relaxation_step_pipe_body_inner(pipe_body_inner);
-    ShellNormalDirectionPrediction shell_normal_prediction(pipe_body_inner, thickness);
+    ShellRelaxationStep relaxation_step_pipe_body_inner(pipe_body_inner, level_set_shape);
+    ShellNormalDirectionPrediction shell_normal_prediction(pipe_body_inner, level_set_shape, thickness);
     /**
      * @brief define simple data file input and outputs functions.
      */

@@ -106,7 +106,7 @@ int main(int ac, char *av[])
     SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
     sph_system.handleCommandlineOptions(ac, av); // handle command line arguments
     /** Create a Cylinder body. */
-    SolidBody cylinder_body(sph_system, makeShared<DefaultShape>("CylinderBody"));
+    SolidBody cylinder_body(sph_system, "CylinderBody");
     cylinder_body.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     cylinder_body.generateParticles<SurfaceParticles, Cylinder>();
     /** Define Observer. */

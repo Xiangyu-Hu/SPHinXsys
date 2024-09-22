@@ -74,7 +74,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    SolidBody shell(sph_system, makeShared<DefaultShape>("shell"));
+    SolidBody shell(sph_system, "shell");
     shell.defineMaterial<Solid>();
     shell.generateParticles<SurfaceParticles, Cylinder>();
 

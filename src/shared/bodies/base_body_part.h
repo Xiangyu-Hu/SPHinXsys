@@ -204,11 +204,8 @@ class BodyRegionByCell : public BodyPartByCell
  */
 class NearShapeSurface : public BodyPartByCell
 {
-  private:
-    UniquePtrKeeper<LevelSetShape> level_set_shape_keeper_;
-
   public:
-    NearShapeSurface(RealBody &real_body, Shape &shape);
+    NearShapeSurface(RealBody &real_body, LevelSetShape &level_set_shape);
     virtual ~NearShapeSurface(){};
     LevelSetShape &getLevelSetShape() { return level_set_shape_; };
 
