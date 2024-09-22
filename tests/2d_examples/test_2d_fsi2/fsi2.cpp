@@ -67,7 +67,7 @@ int main(int ac, char *av[])
         //----------------------------------------------------------------------
         using namespace relax_dynamics;
         SimpleDynamics<RandomizeParticlePosition> random_insert_body_particles(insert_body);
-        RelaxationStepInner relaxation_step_inner(insert_body_inner);
+        RelaxationStepInner relaxation_step_inner(insert_body_inner, level_set_shape);
         BodyStatesRecordingToVtp write_insert_body_to_vtp(insert_body);
         ReloadParticleIO write_particle_reload_files(insert_body);
         //----------------------------------------------------------------------
@@ -125,7 +125,7 @@ int main(int ac, char *av[])
     // The coupling with multi-body dynamics will be introduced at last.
     //----------------------------------------------------------------------
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary, wall_boundary_shape);
-    SimpleDynamics<NormalDirectionFromBodyShape> insert_body_normal_direction(insert_body);
+    SimpleDynamics<NormalDirectionFromBodyShape> insert_body_normal_direction(insert_body, level_set_shape);
     InteractionWithUpdate<LinearGradientCorrectionMatrixInner> insert_body_corrected_configuration(insert_body_inner);
 
     Dynamics1Level<solid_dynamics::Integration1stHalfPK2> insert_body_stress_relaxation_first_half(insert_body_inner);

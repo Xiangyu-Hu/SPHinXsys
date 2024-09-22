@@ -91,13 +91,14 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    SolidBody cream(sph_system, makeShared<Cream>("Cream"));
-    cream.defineBodyLevelSetShape();
+    Cream cream_shape("Cream");
+    SolidBody cream(sph_system, cream_shape.getName());
+    LevelSetShape level_set_shape(cream, cream_shape);
     cream.defineMaterial<ViscousPlasticSolid>(rho0_s, Youngs_modulus, poisson,
                                               yield_stress, viscosity, Herschel_Bulkley_power);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
         ? cream.generateParticles<BaseParticles, Reload>(cream.getName())
-        : cream.generateParticles<BaseParticles, Lattice>();
+        : cream.generateParticles<BaseParticles, Lattice>(level_set_shape);
 
     ObserverBody cream_observer(sph_system, "CreamObserver");
     cream_observer.generateParticles<ObserverParticles>(observation_location);
@@ -115,7 +116,7 @@ int main(int ac, char *av[])
         //----------------------------------------------------------------------
         using namespace relax_dynamics;
         SimpleDynamics<RandomizeParticlePosition> cream_random_particles(cream);
-        RelaxationStepInner cream_relaxation_step_inner(cream_inner);
+        RelaxationStepInner cream_relaxation_step_inner(cream_inner, level_set_shape);
         //----------------------------------------------------------------------
         //	Output for particle relaxation.
         //----------------------------------------------------------------------

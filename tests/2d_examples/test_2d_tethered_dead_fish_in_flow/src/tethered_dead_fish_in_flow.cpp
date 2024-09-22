@@ -264,7 +264,7 @@ int main(int ac, char *av[])
         ReloadParticleIO write_particle_reload_files(fish_body);
 
         /** A  Physics relaxation step. */
-        RelaxationStepInner relaxation_step_inner(fish_body_inner);
+        RelaxationStepInner relaxation_step_inner(fish_body_inner, level_set_shape);
         /**
          * @brief 	Particle relaxation starts here.
          */
@@ -301,7 +301,7 @@ int main(int ac, char *av[])
     PeriodicAlongAxis periodic_along_x(water_block_shape.getBounds(), xAxis);
     PeriodicConditionUsingCellLinkedList periodic_condition(water_block, periodic_along_x);
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary, wall_boundary_shape);
-    SimpleDynamics<NormalDirectionFromBodyShape> fish_body_normal_direction(fish_body);
+    SimpleDynamics<NormalDirectionFromBodyShape> fish_body_normal_direction(fish_body, level_set_shape);
     /** Corrected configuration.*/
     InteractionWithUpdate<LinearGradientCorrectionMatrixInner> fish_body_corrected_configuration(fish_body_inner);
     /**

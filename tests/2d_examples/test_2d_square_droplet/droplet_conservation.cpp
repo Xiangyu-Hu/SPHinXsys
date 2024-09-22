@@ -95,9 +95,10 @@ int main(int ac, char *av[])
     water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
     water_block.generateParticles<BaseParticles, Lattice>(water_block_shape);
 
-    FluidBody air_block(sph_system, makeShared<AirBlock>("AirBody"));
+    AirBlock air_block_shape("AirBody");
+    FluidBody air_block(sph_system, air_block_shape.getName());
     air_block.defineMaterial<WeaklyCompressibleFluid>(rho0_a, c_f, mu_a);
-    air_block.generateParticles<BaseParticles, Lattice>();
+    air_block.generateParticles<BaseParticles, Lattice>(air_block_shape);
 
     WallBoundary wall_boundary_shape("WallBoundary");
     SolidBody wall_boundary(sph_system, wall_boundary_shape.getName());

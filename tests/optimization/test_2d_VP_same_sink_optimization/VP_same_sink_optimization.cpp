@@ -190,10 +190,11 @@ TEST(test_optimization, test_problem1_optimized)
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    SolidBody diffusion_body(sph_system, makeShared<DiffusionBody>("DiffusionBody"));
+    DiffusionBody diffusion_body_shape("DiffusionBody");
+    SolidBody diffusion_body(sph_system, diffusion_body_shape.getName());
     LocalIsotropicDiffusion *local_isotropic_diffusion =
         diffusion_body.defineMaterial<LocalIsotropicDiffusion>("Phi", "Phi", diffusion_coeff);
-    diffusion_body.generateParticles<BaseParticles, Lattice>();
+    diffusion_body.generateParticles<BaseParticles, Lattice>(diffusion_body_shape);
 
     WallBoundary wall_boundary_shape("WallBoundary");
     SolidBody wall_boundary(sph_system, wall_boundary_shape.getName());
@@ -259,7 +260,7 @@ TEST(test_optimization, test_problem1_optimized)
     //	Define the main numerical methods used for optimization
     //  Note that there may be data dependence on the constructors of tested methods.
     //----------------------------------------------------------------------
-    SimpleDynamics<NormalDirectionFromBodyShape> diffusion_body_normal_direction(diffusion_body);
+    SimpleDynamics<NormalDirectionFromBodyShape> diffusion_body_normal_direction(diffusion_body, diffusion_body_shape);
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary, wall_boundary_shape);
 
     InteractionSplit<TemperatureSplittingByPDEWithBoundary<Real>>

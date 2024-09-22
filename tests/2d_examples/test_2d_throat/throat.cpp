@@ -166,7 +166,7 @@ int main(int ac, char *av[])
     //-------------------------------------------------------------------
     Gravity gravity(Vecd(gravity_g, 0.0));
     SimpleDynamics<GravityForce<Gravity>> constant_gravity(fluid_block, gravity);
-    InteractionDynamics<NormalDirectionFromParticles> wall_boundary_normal_direction(wall_boundary_inner);
+    InteractionDynamics<NormalDirectionFromParticles> wall_boundary_normal_direction(wall_boundary_inner, wall_boundary_shape);
     InteractionDynamics<fluid_dynamics::DistanceFromWall> distance_to_wall(fluid_block_contact);
 
     Dynamics1Level<fluid_dynamics::Oldroyd_BIntegration1stHalfWithWall> pressure_relaxation(fluid_block_inner, fluid_block_contact);
