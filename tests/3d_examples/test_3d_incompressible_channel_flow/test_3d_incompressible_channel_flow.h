@@ -33,20 +33,6 @@ Real mu_f = 0.0; /**< Dynamics viscosity. */
 //----------------------------------------------------------------------
 std::string mesh_fullpath = "./input/Channel_ICEM.msh";
 //----------------------------------------------------------------------
-//	Define geometries and body shapes
-//----------------------------------------------------------------------
-
-class AirBody : public ComplexShape
-{
-  public:
-    explicit AirBody(const std::string &shape_name) : ComplexShape(shape_name)
-    {
-        Vecd halfsize_wave(0.5 * DH, 0.5 * DL, 0.5 * DW);
-        Transform translation_wave(halfsize_wave);
-        add<TransformShape<GeometricShapeBox>>(Transform(translation_wave), halfsize_wave);
-    }
-};
-///----------------------------------------------------------------------
 //	Initialization
 //----------------------------------------------------------------------
 class InvCFInitialCondition

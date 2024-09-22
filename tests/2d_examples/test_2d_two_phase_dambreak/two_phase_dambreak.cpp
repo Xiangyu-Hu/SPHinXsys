@@ -60,8 +60,8 @@ int main(int ac, char *av[])
     //	Define the main numerical methods used in the simulation.
     //	Note that there may be data dependence on the constructors of these methods.
     //----------------------------------------------------------------------
-    /** Initialize particle acceleration. */
-    SimpleDynamics<NormalDirectionFromSubShapeAndOp> inner_normal_direction(wall_boundary, "InnerWall");
+    SubShapeAndOp *inner_wall_shape_and_op = wall_boundary_shape.getSubShapeAndOpByName("InnerWall");
+    SimpleDynamics<NormalDirectionFromSubShapeAndOp> inner_normal_direction(wall_boundary, inner_wall_shape_and_op);
 
     Gravity gravity(Vecd(0.0, -gravity_g));
     SimpleDynamics<GravityForce<Gravity>> constant_gravity_to_water(water_block, gravity);

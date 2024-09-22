@@ -290,9 +290,9 @@ class ParticleGenerator<BaseParticles, NetworkWithExtraCheck>
     };
 
   public:
-    ParticleGenerator(SPHBody &sph_body, BaseParticles &base_particles,
+    ParticleGenerator(SPHBody &sph_body, BaseParticles &base_particles, LevelSetShape &level_set_shape,
                       Vecd starting_pnt, Vecd second_pnt, int iterator, Real grad_factor)
         : ParticleGenerator<BaseParticles, Network>(
-              sph_body, base_particles, starting_pnt, second_pnt, iterator, grad_factor){};
+              sph_body, base_particles, level_set_shape, starting_pnt, second_pnt, iterator, grad_factor){};
 };
 } // namespace SPH

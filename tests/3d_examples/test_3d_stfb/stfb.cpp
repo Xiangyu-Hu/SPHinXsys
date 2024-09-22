@@ -70,7 +70,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     SimpleDynamics<OffsetInitialPosition> structure_offset_position(structure, offset);
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary, wall_boundary_shape);
-    SimpleDynamics<NormalDirectionFromBodyShape> str_normal(structure);
+    SimpleDynamics<NormalDirectionFromBodyShape> str_normal(structure, floating_structure_shape);
 
     Gravity gravity(Vec3d(0.0, 0.0, -gravity_g));
     SimpleDynamics<GravityForce<Gravity>> constant_gravity(water_block, gravity);

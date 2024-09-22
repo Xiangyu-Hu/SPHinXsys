@@ -13,37 +13,6 @@ using namespace SPH;
 
 Real to_rad(Real angle) { return angle * Pi / 180; }
 
-void relax_shell(RealBody &plate_body, Real thickness)
-{
-    // BUG: apparently only works if dp > thickness, otherwise ShellNormalDirectionPrediction::correctNormalDirection() throws error
-    using namespace relax_dynamics;
-    InnerRelation imported_model_inner(plate_body);
-    SimpleDynamics<RandomizeParticlePosition> random_imported_model_particles(plate_body);
-    ShellRelaxationStep relaxation_step_inner(imported_model_inner);
-    ShellNormalDirectionPrediction shell_normal_prediction(imported_model_inner, thickness);
-    //----------------------------------------------------------------------
-    //	Particle relaxation starts here.
-    //----------------------------------------------------------------------
-    random_imported_model_particles.exec(0.25);
-    relaxation_step_inner.MidSurfaceBounding().exec();
-    plate_body.updateCellLinkedList();
-    //----------------------------------------------------------------------
-    //	Particle relaxation time stepping start here.
-    //----------------------------------------------------------------------
-    int ite_p = 0;
-    while (ite_p < 1000)
-    {
-        if (ite_p % 100 == 0)
-        {
-            std::cout << std::fixed << std::setprecision(9) << "Relaxation steps for the inserted body N = " << ite_p << "\n";
-        }
-        relaxation_step_inner.exec();
-        ite_p += 1;
-    }
-    shell_normal_prediction.exec();
-    std::cout << "The physics relaxation process of imported model finish !" << std::endl;
-}
-
 namespace SPH
 {
 class ShellRoof;
@@ -331,13 +300,10 @@ return_data roof_under_self_weight(Real dp, bool cvt = true, int particle_number
         bb_system = get_particles_bounding_box(obj_vertices); // store this
     }
 
-    // shell
-    auto shell_shape = makeShared<ComplexShape>("shell_shape" + std::to_string(dp_cm)); // keep all data for parameter study
-
     // starting the actual simulation
     SPHSystem system(bb_system, dp);
     system.setIOEnvironment(false);
-    SolidBody shell_body(system, shell_shape);
+    SolidBody shell_body(system, "shell_shape" + std::to_string(dp_cm));
     shell_body.defineMaterial<LinearElasticSolid>(rho, E, mu);
     if (cvt)
     {
@@ -354,10 +320,6 @@ return_data roof_under_self_weight(Real dp, bool cvt = true, int particle_number
     system.system_domain_bounds_ = bb_system;
     std::cout << "bb_system.first_: " << bb_system.first_ << std::endl;
     std::cout << "bb_system.second_: " << bb_system.second_ << std::endl;
-    { // recalculate the volume/area after knowing the particle positions
-      // for (auto& vol: shell_particles->Vol_) vol = total_area / shell_particles->TotalRealParticles();
-      // for (auto& mass: shell_particles->mass_) mass = total_area*rho / shell_particles->TotalRealParticles();
-    }
 
     // methods
     InnerRelation shell_body_inner(shell_body);

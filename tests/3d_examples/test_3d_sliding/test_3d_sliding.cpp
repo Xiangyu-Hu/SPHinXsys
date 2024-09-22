@@ -94,26 +94,26 @@ void block_sliding(
 
     // Import meshes
     auto cube_translation = Vec3d(0.5 * cube_length + 2 * resolution_cube, 0.5 * cube_length, 0.0);
-    auto mesh_cube = std::make_shared<TriangleMeshShapeBrick>(0.5 * cube_length * Vec3d::Ones(), 5, cube_translation, "Cube");
+    TriangleMeshShapeBrick mesh_cube(0.5 * cube_length * Vec3d::Ones(), 5, cube_translation, "Cube");
     auto slope_translation = Vec3d(0.5 * slope_length, -(0.65 * resolution_cube + 1.15 * resolution_slope), 0);
-    auto mesh_slope = std::make_shared<TriangleMeshShapeBrick>(0.5 * Vec3d(slope_length, resolution_slope, slope_width), 5, slope_translation, "Slope");
+    TriangleMeshShapeBrick mesh_slope(0.5 * Vec3d(slope_length, resolution_slope, slope_width), 5, slope_translation, "Slope");
 
     // Material models
     auto material_cube = makeShared<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
 
     // System bounding box
-    BoundingBox bb_system = union_bounding_box(mesh_cube->getBounds(), mesh_slope->getBounds());
+    BoundingBox bb_system = union_bounding_box(mesh_cube.getBounds(), mesh_slope.getBounds());
 
     // System
     SPHSystem system(bb_system, resolution_cube);
     IOEnvironment io_environment(system);
 
     // Create objects
-    SolidBody cube_body(system, mesh_cube);
+    SolidBody cube_body(system, mesh_cube.getName());
     cube_body.assignMaterial(material_cube.get());
-    cube_body.generateParticles<BaseParticles, Lattice>();
+    cube_body.generateParticles<BaseParticles, Lattice>(mesh_cube);
 
-    SolidBody slope_body(system, mesh_slope);
+    SolidBody slope_body(system, mesh_slope.getName());
     slope_body.defineAdaptationRatios(1.15, resolution_cube / resolution_slope);
     slope_body.assignMaterial(material_cube.get());
     slope_body.generateParticles<SurfaceParticles, Wall>(slope_translation, slope_length, slope_width, resolution_slope);
@@ -130,7 +130,7 @@ void block_sliding(
     ReduceDynamics<solid_dynamics::AcousticTimeStep> computing_time_step_size(cube_body);
 
     // Contact relation
-    SurfaceContactRelation contact_cube_to_slope(cube_body, {&slope_body}, {true});
+    SurfaceContactRelation contact_cube_to_slope(cube_body, mesh_cube, {&slope_body}, {true});
     // Contact density
     InteractionDynamics<solid_dynamics::ContactFactorSummation> contact_factor(contact_cube_to_slope);
     // Contact Force

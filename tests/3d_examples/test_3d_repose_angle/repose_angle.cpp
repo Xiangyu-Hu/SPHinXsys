@@ -84,12 +84,14 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
-    RealBody soil_block(sph_system, makeShared<SoilBlock>("GranularBody"));
-    soil_block.defineBodyLevelSetShape()->writeLevelSet(sph_system);
+    SoilBlock soil_block_shape("GranularBody");
+    RealBody soil_block(sph_system, soil_block_shape.getName());
+    LevelSetShape level_set_shape(soil_block, soil_block_shape);
+    level_set_shape.writeLevelSet(sph_system);
     soil_block.defineMaterial<PlasticContinuum>(rho0_s, c_s, Youngs_modulus, poisson, friction_angle);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
         ? soil_block.generateParticles<BaseParticles, Reload>(soil_block.getName())
-        : soil_block.generateParticles<BaseParticles, Lattice>();
+        : soil_block.generateParticles<BaseParticles, Lattice>(level_set_shape);
 
     WallBoundary wall_boundary_shape("WallBoundary");
     SolidBody wall_boundary(sph_system, wall_boundary_shape.getName());
@@ -120,7 +122,7 @@ int main(int ac, char *av[])
         //----------------------------------------------------------------------
         using namespace relax_dynamics;
         SimpleDynamics<RandomizeParticlePosition> random_column_particles(soil_block);
-        RelaxationStepInner relaxation_step_inner(soil_block_inner);
+        RelaxationStepInner relaxation_step_inner(soil_block_inner, level_set_shape);
         //----------------------------------------------------------------------
         //	Output for particle relaxation.
         //----------------------------------------------------------------------

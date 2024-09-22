@@ -69,16 +69,19 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    SolidBody coil(sph_system, makeShared<Coil>("Coil"));
-    coil.defineBodyLevelSetShape()->writeLevelSet(sph_system);
+    Coil coil_shape("Coil");
+    SolidBody coil(sph_system, coil_shape.getName());
+    LevelSetShape level_set_shape(coil, coil_shape);
+    level_set_shape.writeLevelSet(sph_system);
     coil.defineMaterial<NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
         ? coil.generateParticles<BaseParticles, Reload>(coil.getName())
-        : coil.generateParticles<BaseParticles, Lattice>();
+        : coil.generateParticles<BaseParticles, Lattice>(level_set_shape);
 
-    SolidBody stationary_plate(sph_system, makeShared<StationaryPlate>("StationaryPlate"));
+    StationaryPlate stationary_plate_shape("StationaryPlate");
+    SolidBody stationary_plate(sph_system, stationary_plate_shape.getName());
     stationary_plate.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
-    stationary_plate.generateParticles<BaseParticles, Lattice>();
+    stationary_plate.generateParticles<BaseParticles, Lattice>(stationary_plate_shape);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -88,8 +91,8 @@ int main(int ac, char *av[])
     //  inner and contact relations.
     //----------------------------------------------------------------------
     InnerRelation coil_inner(coil);
-    SelfSurfaceContactRelation coil_self_contact(coil);
-    SurfaceContactRelation coil_contact(coil_self_contact, {&stationary_plate});
+    SelfSurfaceContactRelation coil_self_contact(coil, level_set_shape);
+    SurfaceContactRelation coil_contact(coil_self_contact, level_set_shape, {&stationary_plate});
     //----------------------------------------------------------------------
     //	Define simple file input and outputs functions.
     //----------------------------------------------------------------------
@@ -107,7 +110,7 @@ int main(int ac, char *av[])
         // Write the particle reload files.
         ReloadParticleIO write_particle_reload_files(coil);
         // A  Physics relaxation step.
-        RelaxationStepInner relaxation_step_inner(coil_inner);
+        RelaxationStepInner relaxation_step_inner(coil_inner, level_set_shape);
         //----------------------------------------------------------------------
         //	Particle relaxation starts here.
         //----------------------------------------------------------------------

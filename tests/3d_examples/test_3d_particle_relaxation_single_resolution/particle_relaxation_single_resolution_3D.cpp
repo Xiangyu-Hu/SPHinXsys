@@ -98,7 +98,7 @@ int main(int ac, char *av[])
     // level set shape is used for particle relaxation
     LevelSetShape level_set_shape(imported_model, import_model_shape);
     level_set_shape.correctLevelSetSign()->writeLevelSet(sph_system);
-    imported_model.generateParticles<BaseParticles, Lattice>();
+    imported_model.generateParticles<BaseParticles, Lattice>(level_set_shape);
     //----------------------------------------------------------------------
     //	Define simple file input and outputs functions.
     //----------------------------------------------------------------------
