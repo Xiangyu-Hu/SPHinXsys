@@ -160,10 +160,9 @@ void poiseuille_flow(const Real resolution_ref, const Real resolution_shell, con
     //----------------------------------------------------------------------
     //  Define water shape
     //----------------------------------------------------------------------
-    auto water_block_shape = makeShared<ComplexShape>("WaterBody");
-    water_block_shape->add<TriangleMeshShapeCylinder>(SimTK::UnitVec3(0., 1., 0.), fluid_radius,
-                                                      full_length * 0.5, SimTK_resolution,
-                                                      translation_fluid);
+    TriangleMeshShapeCylinder water_block_shape(SimTK::UnitVec3(0., 1., 0.), fluid_radius,
+                                                full_length * 0.5, SimTK_resolution,
+                                                translation_fluid);
 
     //----------------------------------------------------------------------
     //  Build up -- a SPHSystem --
@@ -174,12 +173,12 @@ void poiseuille_flow(const Real resolution_ref, const Real resolution_shell, con
     //----------------------------------------------------------------------
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
-    FluidBody water_block(system, water_block_shape);
+    FluidBody water_block(system, "WaterBody");
     water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
     ParticleBuffer<ReserveSizeFactor> inlet_particle_buffer(0.5);
-    water_block.generateParticlesWithReserve<BaseParticles, Lattice>(inlet_particle_buffer);
+    water_block.generateParticlesWithReserve<BaseParticles, Lattice>(inlet_particle_buffer, water_block_shape);
 
-    SolidBody shell_boundary(system, makeShared<DefaultShape>("Shell"));
+    SolidBody shell_boundary(system, "Shell");
     shell_boundary.defineAdaptation<SPH::SPHAdaptation>(1.15, resolution_ref / resolution_shell);
     shell_boundary.defineMaterial<LinearElasticSolid>(1, 1e3, 0.45);
     shell_boundary.generateParticles<SurfaceParticles, ShellBoundary>(resolution_shell, wall_thickness, shell_thickness);

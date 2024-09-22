@@ -34,23 +34,22 @@ int main(int ac, char *av[])
     IOEnvironment io_environment(sph_system);
 
     Heart triangle_mesh_heart_model("HeartModel");
-    SharedPtr<LevelSetShape> level_set_heart_model =
-        makeShared<LevelSetShape>(triangle_mesh_heart_model, makeShared<SPHAdaptation>(dp_0));
-    level_set_heart_model->correctLevelSetSign()->writeLevelSet(sph_system);
+    LevelSetShape level_set_heart_model(triangle_mesh_heart_model, makeShared<SPHAdaptation>(dp_0));
+    level_set_heart_model.correctLevelSetSign()->writeLevelSet(sph_system);
     //----------------------------------------------------------------------
     //	SPH Particle relaxation section
     //----------------------------------------------------------------------
     /** check whether run particle relaxation for body fitted particle distribution. */
     if (sph_system.RunParticleRelaxation() && !sph_system.ReloadParticles())
     {
-        SolidBody herat_model(sph_system, level_set_heart_model);
+        SolidBody herat_model(sph_system, level_set_heart_model.getName());
         herat_model.defineMaterial<LocallyOrthotropicMuscle>(rho0_s, bulk_modulus, fiber_direction, sheet_direction, a0, b0);
-        herat_model.generateParticles<BaseParticles, Lattice>();
+        herat_model.generateParticles<BaseParticles, Lattice>(level_set_heart_model);
         /** topology */
         InnerRelation herat_model_inner(herat_model);
         using namespace relax_dynamics;
         SimpleDynamics<RandomizeParticlePosition> random_particles(herat_model);
-        RelaxationStepInner relaxation_step_inner(herat_model_inner);
+        RelaxationStepInner relaxation_step_inner(herat_model_inner, level_set_heart_model);
         BodyStatesRecordingToVtp write_herat_model_state_to_vtp({herat_model});
         ReloadParticleIO write_particle_reload_files(herat_model);
         write_particle_reload_files.addToReload<Vecd>(herat_model, "Fiber");
@@ -82,9 +81,9 @@ int main(int ac, char *av[])
         IsotropicDiffusion diffusion("Phi", "Phi", diffusion_coeff);
         GetDiffusionTimeStepSize get_time_step_size(herat_model, diffusion);
         FiberDirectionDiffusionRelaxation diffusion_relaxation(herat_model_inner, &diffusion);
-        SimpleDynamics<ComputeFiberAndSheetDirections> compute_fiber_sheet(herat_model, "Phi");
-        BodySurface surface_part(herat_model);
-        SimpleDynamics<DiffusionBCs> impose_diffusion_bc(surface_part, "Phi");
+        SimpleDynamics<ComputeFiberAndSheetDirections> compute_fiber_sheet(herat_model, level_set_heart_model, "Phi");
+        BodySurface surface_part(herat_model, level_set_heart_model);
+        SimpleDynamics<DiffusionBCs> impose_diffusion_bc(surface_part, level_set_heart_model, "Phi");
         impose_diffusion_bc.exec();
         write_herat_model_state_to_vtp.addToWrite<Real>(herat_model, "Phi");
         write_herat_model_state_to_vtp.writeToFile(ite);
@@ -114,28 +113,28 @@ int main(int ac, char *av[])
     //	SPH simulation section
     //----------------------------------------------------------------------
     /** create a SPH body, material and particles */
-    SolidBody physiology_heart(sph_system, level_set_heart_model, "PhysiologyHeart");
+    SolidBody physiology_heart(sph_system, "PhysiologyHeart");
     AlievPanfilowModel aliev_panfilow_model(k_a, c_m, k, a, b, mu_1, mu_2, epsilon);
     MonoFieldElectroPhysiology<LocalDirectionalDiffusion> *myocardium_physiology =
         physiology_heart.defineMaterial<MonoFieldElectroPhysiology<LocalDirectionalDiffusion>>(
             aliev_panfilow_model, diffusion_coeff, bias_coeff, fiber_direction);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
         ? physiology_heart.generateParticles<BaseParticles, Reload>("HeartModel")
-        : physiology_heart.generateParticles<BaseParticles, Lattice>();
+        : physiology_heart.generateParticles<BaseParticles, Lattice>(level_set_heart_model);
 
     /** create a SPH body, material and particles */
-    SolidBody mechanics_heart(sph_system, level_set_heart_model, "MechanicalHeart");
+    SolidBody mechanics_heart(sph_system, "MechanicalHeart");
     mechanics_heart.defineMaterial<ActiveMuscle<LocallyOrthotropicMuscle>>(rho0_s, bulk_modulus, fiber_direction, sheet_direction, a0, b0);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
         ? mechanics_heart.generateParticles<BaseParticles, Reload>("HeartModel")
-        : mechanics_heart.generateParticles<BaseParticles, Lattice>();
+        : mechanics_heart.generateParticles<BaseParticles, Lattice>(level_set_heart_model);
 
     /** Creat a Purkinje network for fast diffusion, material and particles */
-    TreeBody pkj_body(sph_system, level_set_heart_model, "Purkinje");
+    TreeBody pkj_body(sph_system, "Purkinje");
     MonoFieldElectroPhysiology<IsotropicDiffusion> *pkj_physiology =
         pkj_body.defineMaterial<MonoFieldElectroPhysiology<IsotropicDiffusion>>(
             aliev_panfilow_model, diffusion_coeff * acceleration_factor);
-    pkj_body.generateParticles<BaseParticles, NetworkWithExtraCheck>(starting_point, second_point, 50, 1.0);
+    pkj_body.generateParticles<BaseParticles, NetworkWithExtraCheck>(level_set_heart_model, starting_point, second_point, 50, 1.0);
     TreeTerminates pkj_leaves(pkj_body);
     //----------------------------------------------------------------------
     //	SPH Observation section

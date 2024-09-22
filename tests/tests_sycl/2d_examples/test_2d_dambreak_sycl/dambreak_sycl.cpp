@@ -58,13 +58,14 @@ int main(int ac, char *av[])
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
     TransformShape<GeometricShapeBox> initial_water_block(Transform(water_block_translation), water_block_halfsize, "WaterBody");
-    FluidBody water_block(sph_system, initial_water_block);
+    FluidBody water_block(sph_system, initial_water_block.getName());
     water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
-    water_block.generateParticles<BaseParticles, Lattice>();
+    water_block.generateParticles<BaseParticles, Lattice>(water_block_shape);
 
-    SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
+    WallBoundary wall_boundary_shape("WallBoundary");
+    SolidBody wall_boundary(sph_system, wall_boundary_shape.getName());
     wall_boundary.defineMaterial<Solid>();
-    wall_boundary.generateParticles<BaseParticles, Lattice>();
+    wall_boundary.generateParticles<BaseParticles, Lattice>(wall_boundary_shape);
 
     ObserverBody fluid_observer(sph_system, "FluidObserver");
     StdVec<Vecd> observation_location = {Vecd(DL, 0.2)};
@@ -98,7 +99,7 @@ int main(int ac, char *av[])
     ParticleSortCK<execution::ParallelDevicePolicy, RadixSort> particle_sort(water_block);
     Gravity gravity(Vecd(0.0, -gravity_g));
     StateDynamics<execution::ParallelDevicePolicy, GravityForceCK<Gravity>> constant_gravity(water_block, gravity);
-    StateDynamics<execution::ParallelPolicy, NormalFromBodyShapeCK> wall_boundary_normal_direction(wall_boundary);
+    StateDynamics<execution::ParallelPolicy, NormalFromBodyShapeCK> wall_boundary_normal_direction(wall_boundary, wall_boundary_shape);
     StateDynamics<execution::ParallelDevicePolicy, fluid_dynamics::AdvectionStepSetup> water_advection_step_setup(water_block);
     StateDynamics<execution::ParallelDevicePolicy, fluid_dynamics::AdvectionStepClose> water_advection_step_close(water_block);
 

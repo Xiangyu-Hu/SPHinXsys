@@ -73,11 +73,12 @@ int main(int ac, char *av[])
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
     sph_system.handleCommandlineOptions(ac, av);
     /** create a Cantilever body, corresponding material, particles and reaction model. */
-    SolidBody cantilever_body(sph_system, makeShared<Cantilever>("CantileverBody"));
+    Cantilever cantilever_body_shape("CantileverBody");
+    SolidBody cantilever_body(sph_system, cantilever_body_shape.getName());
     cantilever_body.defineAdaptationRatios(1.3, 1.0);
     cantilever_body.sph_adaptation_->resetKernel<KernelTabulated<KernelLaguerreGauss>>(20);
     cantilever_body.defineMaterial<Muscle>(rho0_s, bulk_modulus, fiber_direction, sheet_direction, a0, b0);
-    cantilever_body.generateParticles<BaseParticles, Lattice>();
+    cantilever_body.generateParticles<BaseParticles, Lattice>(cantilever_body_shape);
     /** Define Observer. */
     ObserverBody cantilever_observer(sph_system, "CantileverObserver");
     cantilever_observer.generateParticles<ObserverParticles>(observation_location);

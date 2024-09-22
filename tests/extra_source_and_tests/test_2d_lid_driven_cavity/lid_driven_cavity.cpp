@@ -132,16 +132,18 @@ int main(int ac, char *av[])
     sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
 
     //	Creating bodies with corresponding materials and particles
-    FluidBody fluid(sph_system, makeShared<FluidFilling>("FluidBody"));
+    FluidFilling fluid_body_shape("FluidBody");
+    FluidBody fluid(sph_system, fluid_body_shape.getName());
     fluid.defineMaterial<HerschelBulkleyFluid>(rho, SOS, min_shear_rate, max_shear_rate, K, n, tau_y);
-    fluid.generateParticles<BaseParticles, Lattice>();
+    fluid.generateParticles<BaseParticles, Lattice>(fluid_body_shape);
 
-    SolidBody no_slip_boundary(sph_system, makeShared<No_Slip_Boundary>("NoSlipWall"));
+    No_Slip_Boundary no_slip_boundary_shape("NoSlipWall");
+    SolidBody no_slip_boundary(sph_system, no_slip_boundary_shape.getName());
     no_slip_boundary.defineMaterial<Solid>();
-    no_slip_boundary.generateParticles<BaseParticles, Lattice>();
+    no_slip_boundary.generateParticles<BaseParticles, Lattice>(no_slip_boundary_shape);
 
-    ObserverBody observer_body(sph_system, makeShared<FluidFilling>("ObserverBody"));
-    observer_body.generateParticles<BaseParticles, Lattice>();
+    ObserverBody observer_body(sph_system, "ObserverBody");
+    observer_body.generateParticles<BaseParticles, Lattice>(fluid_body_shape);
 
     //	Define body relation map
     InnerRelation fluid_inner(fluid);
@@ -150,7 +152,7 @@ int main(int ac, char *av[])
     ComplexRelation fluid_walls_complex(fluid_inner, fluid_all_walls);
 
     //	Define the numerical methods used in the simulation
-    SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(no_slip_boundary);
+    SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(no_slip_boundary, no_slip_boundary_shape);
     InteractionWithUpdate<LinearGradientCorrectionMatrixComplex> corrected_configuration_fluid(ConstructorArgs(fluid_inner, 0.3), fluid_all_walls);
     Dynamics1Level<fluid_dynamics::Integration1stHalfWithWall<AcousticRiemannSolver, LinearGradientCorrection>> pressure_relaxation(fluid_inner, fluid_all_walls);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWall<NoRiemannSolver>> density_relaxation(fluid_inner, fluid_all_walls);

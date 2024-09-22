@@ -83,12 +83,14 @@ void run_simulation()
     //----------------------------------------------------------------------
     //	Creating body, materials and particles
     //----------------------------------------------------------------------
-    SolidBody free_cube(sph_system, makeShared<Cube>("FreeCube"));
-    free_cube.defineBodyLevelSetShape()->cleanLevelSet(0);
+    Cube cube_shape("FreeCube");
+    SolidBody free_cube(sph_system, cube_shape.getName());
+    LevelSetShape level_set_shape(free_cube, cube_shape);
+    level_set_shape.cleanLevelSet(0);
     free_cube.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
-    free_cube.generateParticles<BaseParticles, Lattice>();
+    free_cube.generateParticles<BaseParticles, Lattice>(level_set_shape);
 
-    SolidBody wall_boundary(sph_system, makeShared<DefaultShape>("Wall"));
+    SolidBody wall_boundary(sph_system, "Wall");
     wall_boundary.defineAdaptation<SPHAdaptation>(1.15, resolution_ref / resolution_shell);
     wall_boundary.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     wall_boundary.generateParticles<SurfaceParticles, WallBoundary>();
@@ -104,7 +106,7 @@ void run_simulation()
     //  inner and contact relations.
     //----------------------------------------------------------------------
     InnerRelation free_cube_inner(free_cube);
-    SurfaceContactRelation free_cube_contact(free_cube, {&wall_boundary}, {false});
+    SurfaceContactRelation free_cube_contact(free_cube, level_set_shape, {&wall_boundary}, {false});
     ShellInnerRelationWithContactKernel wall_curvature_inner(wall_boundary, free_cube);
     ContactRelation cube_observer_contact(cube_observer, {&free_cube});
     //----------------------------------------------------------------------

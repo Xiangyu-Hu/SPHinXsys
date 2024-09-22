@@ -128,7 +128,7 @@ class PreSettingCase : public Parameter
     PreSettingCase() : system_domain_bounds(Vec3d(-BW, -BW, -0.5 * resolution_ref),
                                             Vec3d(PL + BW, PH + BW, 0.5 * resolution_ref)),
                        system(system_domain_bounds, resolution_ref),
-                       plate_body(system, makeShared<DefaultShape>("PlateBody")),
+                       plate_body(system, "PlateBody"),
                        plate_observer(system, "PlateObserver")
     {
         //----------------------------------------------------------------------

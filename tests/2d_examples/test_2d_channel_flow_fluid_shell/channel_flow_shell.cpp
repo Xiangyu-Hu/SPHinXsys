@@ -166,11 +166,12 @@ void channel_flow_shell(const Real resolution_ref, const Real wall_thickness)
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    FluidBody water_block(sph_system, makeShared<WaterBlock>(createWaterBlockShape(), "WaterBody"));
+    WaterBlock water_block_shape = WaterBlock(createWaterBlockShape(), "WaterBody");
+    FluidBody water_block(sph_system, water_block_shape.getName());
     water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
-    water_block.generateParticles<BaseParticles, Lattice>();
+    water_block.generateParticles<BaseParticles, Lattice>(water_block_shape);
 
-    SolidBody wall_boundary(sph_system, makeShared<DefaultShape>("Wall"));
+    SolidBody wall_boundary(sph_system, "Wall");
     wall_boundary.defineMaterial<Solid>();
     wall_boundary.generateParticles<SurfaceParticles, WallBoundary>(resolution_ref, wall_thickness);
 
@@ -219,7 +220,7 @@ void channel_flow_shell(const Real resolution_ref, const Real wall_thickness)
         water_block, makeShared<AlignedBoxShape>(xAxis, Transform(Vec2d(buffer_translation)), buffer_halfsize));
     SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>> parabolic_inflow(inflow_buffer);
     /** Periodic BCs in x direction. */
-    PeriodicAlongAxis periodic_along_x(water_block.getSPHBodyBounds(), xAxis);
+    PeriodicAlongAxis periodic_along_x(water_block_shape.getBounds(), xAxis);
     PeriodicConditionUsingCellLinkedList periodic_condition(water_block, periodic_along_x);
     // Curvature calculation
     SimpleDynamics<thin_structure_dynamics::AverageShellCurvature> shell_curvature(shell_curvature_inner);

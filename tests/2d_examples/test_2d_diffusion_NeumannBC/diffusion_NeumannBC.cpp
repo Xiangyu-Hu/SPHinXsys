@@ -20,18 +20,21 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    SolidBody diffusion_body(sph_system, makeShared<DiffusionBody>("DiffusionBody"));
+    DiffusionBody diffusion_body_shape("DiffusionBody");
+    SolidBody diffusion_body(sph_system, diffusion_body_shape.getName());
     IsotropicDiffusion *diffusion =
         diffusion_body.defineMaterial<IsotropicDiffusion>("Phi", "Phi", diffusion_coeff);
-    diffusion_body.generateParticles<BaseParticles, Lattice>();
+    diffusion_body.generateParticles<BaseParticles, Lattice>(diffusion_body_shape);
 
-    SolidBody wall_Dirichlet(sph_system, makeShared<DirichletWallBoundary>("DirichletWallBoundary"));
+    DirichletWallBoundary wall_shape_Dirichlet("DirichletWallBoundary");
+    SolidBody wall_Dirichlet(sph_system, wall_shape_Dirichlet.getName());
     wall_Dirichlet.defineMaterial<Solid>();
-    wall_Dirichlet.generateParticles<BaseParticles, Lattice>();
+    wall_Dirichlet.generateParticles<BaseParticles, Lattice>(wall_shape_Dirichlet);
 
-    SolidBody wall_Neumann(sph_system, makeShared<NeumannWallBoundary>("NeumannWallBoundary"));
+    NeumannWallBoundary wall_shape_Neumann("NeumannWallBoundary");
+    SolidBody wall_Neumann(sph_system, wall_shape_Neumann.getName());
     wall_Neumann.defineMaterial<Solid>();
-    wall_Neumann.generateParticles<BaseParticles, Lattice>();
+    wall_Neumann.generateParticles<BaseParticles, Lattice>(wall_shape_Neumann);
     //----------------------------------------------------------------------
     //	Particle and body creation of temperature observers.
     //----------------------------------------------------------------------
@@ -50,8 +53,8 @@ int main(int ac, char *av[])
     //	Define the main numerical methods used in the simulation.
     //	Note that there may be data dependence on the constructors of these methods.
     //----------------------------------------------------------------------
-    SimpleDynamics<NormalDirectionFromBodyShape> diffusion_body_normal_direction(diffusion_body);
-    SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_Neumann);
+    SimpleDynamics<NormalDirectionFromBodyShape> diffusion_body_normal_direction(diffusion_body, diffusion_body_shape);
+    SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_Neumann, wall_shape_Neumann);
 
     DiffusionBodyRelaxation temperature_relaxation(
         ConstructorArgs(diffusion_body_inner, diffusion),

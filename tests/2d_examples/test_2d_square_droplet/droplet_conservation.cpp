@@ -90,17 +90,20 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
-    FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
+    WaterBlock water_block_shape("WaterBody");
+    FluidBody water_block(sph_system, water_block_shape.getName());
     water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
-    water_block.generateParticles<BaseParticles, Lattice>();
+    water_block.generateParticles<BaseParticles, Lattice>(water_block_shape);
 
-    FluidBody air_block(sph_system, makeShared<AirBlock>("AirBody"));
+    AirBlock air_block_shape("AirBody");
+    FluidBody air_block(sph_system, air_block_shape.getName());
     air_block.defineMaterial<WeaklyCompressibleFluid>(rho0_a, c_f, mu_a);
-    air_block.generateParticles<BaseParticles, Lattice>();
+    air_block.generateParticles<BaseParticles, Lattice>(air_block_shape);
 
-    SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
+    WallBoundary wall_boundary_shape("WallBoundary");
+    SolidBody wall_boundary(sph_system, wall_boundary_shape.getName());
     wall_boundary.defineMaterial<Solid>();
-    wall_boundary.generateParticles<BaseParticles, Lattice>();
+    wall_boundary.generateParticles<BaseParticles, Lattice>(wall_boundary_shape);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -122,7 +125,7 @@ int main(int ac, char *av[])
     //	Define the numerical methods used in the simulation.
     //	Note that there may be data dependence on the sequence of constructions.
     //----------------------------------------------------------------------
-    SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
+    SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary, wall_boundary_shape);
 
     Dynamics1Level<fluid_dynamics::MultiPhaseIntegration1stHalfWithWallRiemann> water_pressure_relaxation(water_inner, water_air_contact, water_wall_contact);
     Dynamics1Level<fluid_dynamics::MultiPhaseIntegration2ndHalfWithWallRiemann> water_density_relaxation(water_inner, water_air_contact, water_wall_contact);

@@ -28,17 +28,19 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBlock"));
+    WaterBlock water_block_shape("WaterBlock");
+    FluidBody water_block(sph_system, water_block_shape.getName());
     water_block.defineMaterial<ParameterizedWaterMaterial>(parameterization_io, rho0_f, c_f, mu_f);
-    water_block.generateParticles<BaseParticles, Lattice>();
+    water_block.generateParticles<BaseParticles, Lattice>(water_block_shape);
 
-    SolidBody cylinder(sph_system, makeShared<Cylinder>("Cylinder"));
+    Cylinder cylinder_shape("Cylinder");
+    SolidBody cylinder(sph_system, cylinder_shape.getName());
     cylinder.defineAdaptationRatios(1.15, 2.0);
-    cylinder.defineBodyLevelSetShape();
+    LevelSetShape cylinder_shape_level_set(cylinder, cylinder_shape, 1.0);
     cylinder.defineMaterial<Solid>();
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
         ? cylinder.generateParticles<BaseParticles, Reload>(cylinder.getName())
-        : cylinder.generateParticles<BaseParticles, Lattice>();
+        : cylinder.generateParticles<BaseParticles, Lattice>(cylinder_shape_level_set);
 
     ObserverBody fluid_observer(sph_system, "FluidObserver");
     fluid_observer.generateParticles<ObserverParticles>(observation_locations);
@@ -77,7 +79,7 @@ int main(int ac, char *av[])
         /** Write the particle reload files. */
         ReloadParticleIO write_particle_reload_files(cylinder);
         /** A  Physics relaxation step. */
-        RelaxationStepInner relaxation_step_inner(cylinder_inner);
+        RelaxationStepInner relaxation_step_inner(cylinder_inner, cylinder_shape_level_set);
         //----------------------------------------------------------------------
         //	Particle relaxation starts here.
         //----------------------------------------------------------------------
@@ -106,14 +108,14 @@ int main(int ac, char *av[])
     //	Define the main numerical methods used in the simulation.
     //	Note that there may be data dependence on the constructors of these methods.
     //----------------------------------------------------------------------
-    SimpleDynamics<NormalDirectionFromBodyShape> cylinder_normal_direction(cylinder);
+    SimpleDynamics<NormalDirectionFromBodyShape> cylinder_normal_direction(cylinder, cylinder_shape_level_set);
 
     Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation(water_block_inner, water_block_contact);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallNoRiemann> density_relaxation(water_block_inner, water_block_contact);
     InteractionWithUpdate<fluid_dynamics::DensitySummationComplex> update_density_by_summation(water_block_inner, water_block_contact);
 
-    PeriodicAlongAxis periodic_along_x(water_block.getSPHBodyBounds(), xAxis);
-    PeriodicAlongAxis periodic_along_y(water_block.getSPHBodyBounds(), yAxis);
+    PeriodicAlongAxis periodic_along_x(water_block_shape.getBounds(), xAxis);
+    PeriodicAlongAxis periodic_along_y(water_block_shape.getBounds(), yAxis);
     PeriodicConditionUsingCellLinkedList periodic_condition_x(water_block, periodic_along_x);
     PeriodicConditionUsingCellLinkedList periodic_condition_y(water_block, periodic_along_y);
     ReduceDynamics<fluid_dynamics::AdvectionViscousTimeStep> get_fluid_advection_time_step_size(water_block, U_f);

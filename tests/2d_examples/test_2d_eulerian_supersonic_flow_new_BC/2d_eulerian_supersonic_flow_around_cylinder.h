@@ -28,7 +28,7 @@ Real Mach_number = 2.0;
 //----------------------------------------------------------------------
 //	Define geometries and body shapes
 //----------------------------------------------------------------------
-std::vector<Vecd> Creatrightsqureshape()
+std::vector<Vecd> CreatRightSquareShape()
 {
     // geometry
     std::vector<Vecd> right_square_shape;
@@ -46,7 +46,7 @@ class FluidBlock : public MultiPolygonShape
     {
         multi_polygon_.addACircle(calculation_circle_center, calculation_circle_radius, 100, ShapeBooleanOps::add);
         multi_polygon_.addACircle(insert_circle_center, insert_circle_radius, 100, ShapeBooleanOps::sub);
-        multi_polygon_.addAPolygon(Creatrightsqureshape(), ShapeBooleanOps::sub);
+        multi_polygon_.addAPolygon(CreatRightSquareShape(), ShapeBooleanOps::sub);
     }
 };
 //----------------------------------------------------------------------
@@ -82,6 +82,7 @@ class SupersonicFlowBoundaryConditionSetup : public GhostBoundaryConditionSetupI
   public:
     SupersonicFlowBoundaryConditionSetup(BaseInnerRelation &inner_relation, GhostCreationInESPH &ghost_creation)
         : GhostBoundaryConditionSetupInESPH(inner_relation, ghost_creation),
+          body_shape_(ghost_creation.getBodyShape()),
           p_(particles_->getVariableDataByName<Real>("Pressure")),
           E_(particles_->getVariableDataByName<Real>("TotalEnergy"))
     {
@@ -108,7 +109,7 @@ class SupersonicFlowBoundaryConditionSetup : public GhostBoundaryConditionSetupI
         }
     };
 
-    // For inner boundaries, we set the refective boundary conditions as boundary_type 3.
+    // For inner boundaries, we set the reflective boundary conditions as boundary_type 3.
     void applyReflectiveWallBoundary(size_t ghost_index, size_t index_i, Vecd e_ij) override
     {
         rho_[ghost_index] = rho_[index_i];
@@ -120,10 +121,10 @@ class SupersonicFlowBoundaryConditionSetup : public GhostBoundaryConditionSetupI
         E_[ghost_index] = rho_e * Vol_[ghost_index] + 0.5 * mass_[ghost_index] * vel_[ghost_index].squaredNorm();
     }
 
-    // For outer boundaries, we set the non-refective far-field boundary conditions as boundary_type 9.
+    // For outer boundaries, we set the non-reflective far-field boundary conditions as boundary_type 9.
     void applyFarFieldBoundary(size_t ghost_index, size_t index_i) override
     {
-        Vecd normal_direction_index_i = sph_body_.getInitialShape().findNormalDirection(pos_[index_i]);
+        Vecd normal_direction_index_i = body_shape_.findNormalDirection(pos_[index_i]);
         Vecd velocity_farfield = Vecd::Zero();
         Real sound_speed = sqrt(p_farfield * heat_capacity_ratio / rho_farfield);
         velocity_farfield[0] = Mach_number * sound_speed;
@@ -229,5 +230,6 @@ class SupersonicFlowBoundaryConditionSetup : public GhostBoundaryConditionSetupI
     }
 
   protected:
+    Shape &body_shape_;
     Real *p_, *E_;
 };

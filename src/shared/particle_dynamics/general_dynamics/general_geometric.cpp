@@ -4,9 +4,8 @@
 namespace SPH
 {
 //=============================================================================================//
-NormalDirectionFromBodyShape::NormalDirectionFromBodyShape(SPHBody &sph_body)
-    : LocalDynamics(sph_body),
-      initial_shape_(sph_body.getInitialShape()),
+NormalDirectionFromBodyShape::NormalDirectionFromBodyShape(SPHBody &sph_body, Shape &shape)
+    : LocalDynamics(sph_body), shape_(shape),
       pos_(particles_->getVariableDataByName<Vecd>("Position")),
       n_(particles_->registerStateVariable<Vecd>("NormalDirection")),
       n0_(particles_->registerStateVariableFrom<Vecd>("InitialNormalDirection", "NormalDirection")),
@@ -15,19 +14,17 @@ NormalDirectionFromBodyShape::NormalDirectionFromBodyShape(SPHBody &sph_body)
 //=============================================================================================//
 void NormalDirectionFromBodyShape::update(size_t index_i, Real dt)
 {
-    Vecd normal_direction = initial_shape_.findNormalDirection(pos_[index_i]);
+    Vecd normal_direction = shape_.findNormalDirection(pos_[index_i]);
     n_[index_i] = normal_direction;
     n0_[index_i] = normal_direction;
-    Real signed_distance = initial_shape_.findSignedDistance(pos_[index_i]);
+    Real signed_distance = shape_.findSignedDistance(pos_[index_i]);
     phi_[index_i] = signed_distance;
     phi0_[index_i] = signed_distance;
 }
 //=============================================================================================//
 NormalDirectionFromSubShapeAndOp::
-    NormalDirectionFromSubShapeAndOp(SPHBody &sph_body, const std::string &shape_name)
-    : LocalDynamics(sph_body),
-      shape_and_op_(DynamicCast<ComplexShape>(this, sph_body.getInitialShape()).getSubShapeAndOpByName(shape_name)),
-      shape_(shape_and_op_->first),
+    NormalDirectionFromSubShapeAndOp(SPHBody &sph_body, SubShapeAndOp *shape_and_op)
+    : LocalDynamics(sph_body), shape_and_op_(shape_and_op), shape_(shape_and_op_->first),
       switch_sign_(shape_and_op_->second == ShapeBooleanOps::add ? 1.0 : -1.0),
       pos_(particles_->getVariableDataByName<Vecd>("Position")),
       n_(particles_->registerStateVariable<Vecd>("NormalDirection")),
@@ -45,10 +42,10 @@ void NormalDirectionFromSubShapeAndOp::update(size_t index_i, Real dt)
     phi0_[index_i] = signed_distance;
 }
 //=============================================================================================//
-NormalDirectionFromParticles::NormalDirectionFromParticles(BaseInnerRelation &inner_relation)
+NormalDirectionFromParticles::
+    NormalDirectionFromParticles(BaseInnerRelation &inner_relation, Shape &shape)
     : LocalDynamics(inner_relation.getSPHBody()), DataDelegateInner(inner_relation),
-      initial_shape_(sph_body_.getInitialShape()),
-      pos_(particles_->getVariableDataByName<Vecd>("Position")),
+      shape_(shape), pos_(particles_->getVariableDataByName<Vecd>("Position")),
       n_(particles_->registerStateVariable<Vecd>("NormalDirection")),
       n0_(particles_->registerStateVariableFrom<Vecd>("InitialNormalDirection", "NormalDirection")),
       phi_(particles_->registerStateVariable<Real>("SignedDistance")),
@@ -67,7 +64,7 @@ void NormalDirectionFromParticles::interaction(size_t index_i, Real dt)
     normal_direction = normal_direction / (normal_direction.norm() + TinyReal);
     n_[index_i] = normal_direction;
     n0_[index_i] = normal_direction;
-    Real signed_distance = initial_shape_.findSignedDistance(pos_[index_i]);
+    Real signed_distance = shape_.findSignedDistance(pos_[index_i]);
     phi_[index_i] = signed_distance;
     phi0_[index_i] = signed_distance;
 }

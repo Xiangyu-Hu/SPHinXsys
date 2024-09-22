@@ -94,7 +94,7 @@ int main(int ac, char *av[])
     SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
     sph_system.handleCommandlineOptions(ac, av);
     /** create a plate body. */
-    SolidBody plate_body(sph_system, makeShared<DefaultShape>("PlateBody"));
+    SolidBody plate_body(sph_system, "PlateBody");
     plate_body.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     plate_body.generateParticles<SurfaceParticles, Plate>();
 

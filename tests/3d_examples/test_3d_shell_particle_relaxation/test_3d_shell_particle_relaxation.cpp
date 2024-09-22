@@ -48,9 +48,11 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    RealBody imported_model(sph_system, makeShared<ImportedShellModel>("ImportedShellModel"));
-    imported_model.defineBodyLevelSetShape(level_set_refinement_ratio)->correctLevelSetSign()->writeLevelSet(sph_system);
-    imported_model.generateParticles<SurfaceParticles, Lattice>(thickness);
+    ImportedShellModel imported_model_shape("ImportedShellModel");
+    RealBody imported_model(sph_system, imported_model_shape.getName());
+    LevelSetShape level_set_shape(imported_model, imported_model_shape, level_set_refinement_ratio);
+    level_set_shape.correctLevelSetSign()->writeLevelSet(sph_system);
+    imported_model.generateParticles<SurfaceParticles, Lattice>(level_set_shape, thickness);
     //----------------------------------------------------------------------
     //	Define simple file input and outputs functions.
     //----------------------------------------------------------------------
@@ -72,8 +74,8 @@ int main(int ac, char *av[])
     using namespace relax_dynamics;
     SimpleDynamics<RandomizeParticlePosition> random_imported_model_particles(imported_model);
     /** A  Physics relaxation step. */
-    ShellRelaxationStep relaxation_step_inner(imported_model_inner);
-    ShellNormalDirectionPrediction shell_normal_prediction(imported_model_inner, thickness);
+    ShellRelaxationStep relaxation_step_inner(imported_model_inner, level_set_shape);
+    ShellNormalDirectionPrediction shell_normal_prediction(imported_model_inner, level_set_shape, thickness);
     //----------------------------------------------------------------------
     //	Particle relaxation starts here.
     //----------------------------------------------------------------------

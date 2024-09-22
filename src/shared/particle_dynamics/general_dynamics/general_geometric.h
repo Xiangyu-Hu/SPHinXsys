@@ -40,12 +40,12 @@ namespace SPH
 class NormalDirectionFromBodyShape : public LocalDynamics
 {
   public:
-    explicit NormalDirectionFromBodyShape(SPHBody &sph_body);
+    explicit NormalDirectionFromBodyShape(SPHBody &sph_body, Shape &shape);
     virtual ~NormalDirectionFromBodyShape(){};
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
-    Shape &initial_shape_;
+    Shape &shape_;
     Vecd *pos_, *n_, *n0_;
     Real *phi_, *phi0_;
 };
@@ -57,7 +57,7 @@ class NormalDirectionFromBodyShape : public LocalDynamics
 class NormalDirectionFromSubShapeAndOp : public LocalDynamics
 {
   public:
-    explicit NormalDirectionFromSubShapeAndOp(SPHBody &sph_body, const std::string &shape_name);
+    explicit NormalDirectionFromSubShapeAndOp(SPHBody &sph_body, SubShapeAndOp *shape_and_op);
     virtual ~NormalDirectionFromSubShapeAndOp(){};
     void update(size_t index_i, Real dt = 0.0);
 
@@ -72,12 +72,12 @@ class NormalDirectionFromSubShapeAndOp : public LocalDynamics
 class NormalDirectionFromParticles : public LocalDynamics, public DataDelegateInner
 {
   public:
-    explicit NormalDirectionFromParticles(BaseInnerRelation &inner_relation);
+    explicit NormalDirectionFromParticles(BaseInnerRelation &inner_relation, Shape &shape);
     virtual ~NormalDirectionFromParticles(){};
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
-    Shape &initial_shape_;
+    Shape &shape_;
     Vecd *pos_, *n_, *n0_;
     Real *phi_, *phi0_, *Vol_;
 };

@@ -60,7 +60,9 @@ class PreSettingCase : public Parameter
     BoundingBox system_domain_bounds;
     SPHSystem sph_system;
     IOEnvironment io_environment;
+    TransformShape<GeometricShapeBox> water_block_shape;
     FluidBody water_block;
+    WallBoundary wall_boundary_shape;
     SolidBody wall_boundary;
     StdVec<Vecd> observation_location;
     ObserverBody fluid_observer;
@@ -70,9 +72,10 @@ class PreSettingCase : public Parameter
         : system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW)),
           sph_system(system_domain_bounds, particle_spacing_ref),
           io_environment(sph_system),
-          water_block(sph_system, makeShared<TransformShape<GeometricShapeBox>>(
-                                      Transform(water_block_translation), water_block_halfsize, "WaterBody")),
-          wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary")),
+          water_block_shape(Transform(water_block_translation), water_block_halfsize, "WaterBody"),
+          water_block(sph_system, water_block_shape.getName()),
+          wall_boundary_shape("WallBoundary"),
+          wall_boundary(sph_system, wall_boundary_shape.getName()),
           observation_location({Vecd(DL, 0.2)}),
           fluid_observer(sph_system, "FluidObserver")
     {
@@ -80,10 +83,10 @@ class PreSettingCase : public Parameter
         //	Creating bodies with corresponding materials and particles.
         //----------------------------------------------------------------------
         water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
-        water_block.generateParticles<BaseParticles, Lattice>();
+        water_block.generateParticles<BaseParticles, Lattice>(water_block_shape);
 
         wall_boundary.defineMaterial<Solid>();
-        wall_boundary.generateParticles<BaseParticles, Lattice>();
+        wall_boundary.generateParticles<BaseParticles, Lattice>(wall_boundary_shape);
 
         fluid_observer.generateParticles<ObserverParticles>(observation_location);
     }
@@ -162,7 +165,7 @@ class Environment : public PreSettingCase
           fluid_observer_contact(fluid_observer, {&water_block}),
           gravity(Vecd(0.0, -gravity_g)),
           constant_gravity(water_block, gravity),
-          wall_boundary_normal_direction(wall_boundary),
+          wall_boundary_normal_direction(wall_boundary, wall_boundary_shape),
           fluid_pressure_relaxation(water_block_inner, water_wall_contact),
           fluid_density_relaxation(water_block_inner, water_wall_contact),
           fluid_density_by_summation(water_block_inner, water_wall_contact),

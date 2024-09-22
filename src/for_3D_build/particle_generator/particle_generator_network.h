@@ -43,7 +43,7 @@ class ParticleGenerator<BaseParticles, Network> : public ParticleGenerator<BaseP
 {
   public:
     ParticleGenerator(SPHBody &sph_body, BaseParticles &base_particles,
-                      const Vecd &starting_pnt,
+                      Shape &shape, const Vecd &starting_pnt,
                       const Vecd &second_pnt, int iterator, Real grad_factor);
     virtual ~ParticleGenerator(){};
 
@@ -63,7 +63,7 @@ class ParticleGenerator<BaseParticles, Network> : public ParticleGenerator<BaseP
     std::vector<Real> fascicle_angles_ = {-1.25, 0.75}; /**< angles with respect to the initial edge of the fascicles.*/
     Real fascicle_ratio_ = 15.0;                        /**< ratio of length  of the fascicles. Include one per fascicle to include.*/
     SPHBody &sph_body_;
-    Shape &initial_shape_;
+    Shape &shape_;
     BaseCellLinkedList &cell_linked_list_;
     TreeBody *tree_;
     /**

@@ -49,15 +49,6 @@ std::vector<Vecd> CreatComputationDomain()
     computation_domain.push_back(Vecd(0.0, 0.0));
     return computation_domain;
 }
-class WaveBody : public ComplexShape
-{
-  public:
-    explicit WaveBody(const std::string &shape_name) : ComplexShape(shape_name)
-    {
-        MultiPolygon wave_block(CreatComputationDomain());
-        add<MultiPolygonShape>(wave_block, "WaveBlock");
-    }
-};
 //----------------------------------------------------------------------
 //	Case-dependent initial condition.
 //----------------------------------------------------------------------

@@ -10,15 +10,15 @@ TEST(test_meshes, split_for)
 
     MultiPolygon shape;
     shape.addABox(Transform(0.5 * length * Vec2d::Ones()), 0.5 * length * Vec2d::Ones(), ShapeBooleanOps::add);
-    auto polygon_shape = makeShared<MultiPolygonShape>(shape, "PolygonShape");
+    MultiPolygonShape polygon_shape(shape, "PolygonShape");
 
-    BoundingBox bb_system = polygon_shape->getBounds();
+    BoundingBox bb_system = polygon_shape.getBounds();
 
     SPHSystem system(bb_system, dp);
 
-    SolidBody body(system, polygon_shape);
+    SolidBody body(system, polygon_shape.getName());
     body.defineMaterial<Solid>();
-    body.generateParticles<BaseParticles, Lattice>();
+    body.generateParticles<BaseParticles, Lattice>(polygon_shape);
     auto &particles = body.getBaseParticles();
     const auto pos = particles.registerStateVariable<Vec2d>("Position");
     auto quantity = particles.registerStateVariable<Real>("Quantity", [&](size_t i) -> Real

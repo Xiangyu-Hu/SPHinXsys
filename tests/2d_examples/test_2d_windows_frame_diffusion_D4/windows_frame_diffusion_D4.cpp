@@ -22,15 +22,18 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    SolidBody diffusion_body(sph_system, makeShared<MultiPolygonShape>(createOverallStructureBody(), "DiffusionBody"));
+    MultiPolygonShape diffusion_body_shape(createOverallStructureBody(), "DiffusionBody");
+    SolidBody diffusion_body(sph_system, diffusion_body_shape.getName());
     LocalIsotropicDiffusion *frame_diffusion = diffusion_body.defineMaterial<LocalIsotropicDiffusion>("Phi", "Phi", wood_cond);
-    diffusion_body.generateParticles<BaseParticles, Lattice>();
+    diffusion_body.generateParticles<BaseParticles, Lattice>(diffusion_body_shape);
 
-    SolidBody boundary_Robin_in(sph_system, makeShared<MultiPolygonShape>(createInternalAirBody(), "InternalConvectionBoundary"));
-    boundary_Robin_in.generateParticles<BaseParticles, Lattice>();
+    MultiPolygonShape boundary_in_shape(createInternalAirBody(), "InternalConvectionBoundary");
+    SolidBody boundary_Robin_in(sph_system, boundary_in_shape.getName());
+    boundary_Robin_in.generateParticles<BaseParticles, Lattice>(boundary_in_shape);
 
-    SolidBody boundary_Robin_ex(sph_system, makeShared<MultiPolygonShape>(createExternalAirBody(), "ExternalConvectionBoundary"));
-    boundary_Robin_ex.generateParticles<BaseParticles, Lattice>();
+    MultiPolygonShape boundary_ex_shape(createExternalAirBody(), "ExternalConvectionBoundary");
+    SolidBody boundary_Robin_ex(sph_system, boundary_ex_shape.getName());
+    boundary_Robin_ex.generateParticles<BaseParticles, Lattice>(boundary_ex_shape);
     //----------------------------------------------------------------------
     //	Particle and body creation of temperature observers.
     //----------------------------------------------------------------------
@@ -48,9 +51,9 @@ int main(int ac, char *av[])
     //	Define the main numerical methods used in the simulation.
     //	Note that there may be data dependence on the constructors of these methods.
     //----------------------------------------------------------------------
-    SimpleDynamics<NormalDirectionFromBodyShape> diffusion_body_normal_direction(diffusion_body);
-    SimpleDynamics<NormalDirectionFromBodyShape> Robin_normal_direction_in(boundary_Robin_in);
-    SimpleDynamics<NormalDirectionFromBodyShape> Robin_normal_direction_ex(boundary_Robin_ex);
+    SimpleDynamics<NormalDirectionFromBodyShape> diffusion_body_normal_direction(diffusion_body, diffusion_body_shape);
+    SimpleDynamics<NormalDirectionFromBodyShape> Robin_normal_direction_in(boundary_Robin_in, boundary_in_shape);
+    SimpleDynamics<NormalDirectionFromBodyShape> Robin_normal_direction_ex(boundary_Robin_ex, boundary_ex_shape);
 
     // Define body regions
     BodyRegionByParticle epdm_body(diffusion_body, makeShared<MultiPolygonShape>(createEPDMBody()));

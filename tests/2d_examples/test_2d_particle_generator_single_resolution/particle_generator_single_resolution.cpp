@@ -50,9 +50,11 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    RealBody input_body(sph_system, makeShared<InputBody>("SPHInXsysLogo"));
-    input_body.defineBodyLevelSetShape()->writeLevelSet(sph_system);
-    input_body.generateParticles<BaseParticles, Lattice>();
+    InputBody input_body_shape("SPHInXsysLogo");
+    RealBody input_body(sph_system, input_body_shape.getName());
+    LevelSetShape level_set_shape(input_body, input_body_shape);
+    level_set_shape.writeLevelSet(sph_system);
+    input_body.generateParticles<BaseParticles, Lattice>(level_set_shape);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -67,7 +69,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     using namespace relax_dynamics;
     SimpleDynamics<RandomizeParticlePosition> random_input_body_particles(input_body);
-    RelaxationStepLevelSetCorrectionInner relaxation_step_inner(input_body_inner);
+    RelaxationStepLevelSetCorrectionInner relaxation_step_inner(input_body_inner, &level_set_shape);
     //----------------------------------------------------------------------
     //	Define simple file input and outputs functions.
     //----------------------------------------------------------------------

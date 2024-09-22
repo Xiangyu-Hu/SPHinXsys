@@ -41,15 +41,6 @@ std::vector<Vecd> createWaterBlockShape()
 
     return water_block_shape;
 }
-class WaterBlock : public ComplexShape
-{
-  public:
-    explicit WaterBlock(const std::string &shape_name) : ComplexShape(shape_name)
-    {
-        MultiPolygon water_block(createWaterBlockShape());
-        add<MultiPolygonShape>(water_block, "WaterBlock");
-    }
-};
 //----------------------------------------------------------------------
 //	Case dependent boundary condition
 //----------------------------------------------------------------------
@@ -97,7 +88,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBlock"));
+    FluidBody water_block(sph_system, "WaterBlock");
     water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
     Ghost<ReserveSizeFactor> ghost_boundary(0.5);
     water_block.generateParticlesWithReserve<BaseParticles, UnstructuredMesh>(ghost_boundary, ansys_mesh);

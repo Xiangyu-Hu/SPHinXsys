@@ -120,9 +120,10 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    SolidBody beam_body(sph_system, makeShared<Beam>("BeamBody"));
+    Beam beam_body_shape("BeamBody");
+    SolidBody beam_body(sph_system, beam_body_shape.getName());
     beam_body.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
-    beam_body.generateParticles<BaseParticles, Lattice>();
+    beam_body.generateParticles<BaseParticles, Lattice>(beam_body_shape);
 
     ObserverBody beam_observer(sph_system, "BeamObserver");
     beam_observer.defineAdaptationRatios(1.15, 2.0);
@@ -138,7 +139,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     InnerRelation beam_body_inner(beam_body);
     ContactRelation beam_observer_contact(beam_observer, {&beam_body});
-    SelfSurfaceContactRelation beam_self_contact(beam_body);
+    SelfSurfaceContactRelation beam_self_contact(beam_body, beam_body_shape);
     //-----------------------------------------------------------------------------
     // this section define all numerical methods will be used in this case
     //-----------------------------------------------------------------------------

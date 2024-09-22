@@ -28,15 +28,15 @@ void SpringConstrain::update(size_t index_i, Real dt)
 }
 //=================================================================================================//
 PositionSolidBody::
-    PositionSolidBody(SPHBody &sph_body, Real start_time, Real end_time, Vecd pos_end_center)
+    PositionSolidBody(SPHBody &sph_body, BoundingBox body_bounds,
+                      Real start_time, Real end_time, Vecd pos_end_center)
     : MotionConstraint<SPHBody>(sph_body),
       start_time_(start_time), end_time_(end_time),
       physical_time_(sph_system_.getSystemVariableDataByName<Real>("PhysicalTime")),
       pos_end_center_(pos_end_center)
 
 {
-    BoundingBox bounds = sph_body.getSPHBodyBounds();
-    pos_0_center_ = (bounds.first_ + bounds.second_) * 0.5;
+    pos_0_center_ = (body_bounds.first_ + body_bounds.second_) * 0.5;
     translation_ = pos_end_center_ - pos_0_center_;
 }
 //=================================================================================================//
@@ -58,13 +58,13 @@ void PositionSolidBody::update(size_t index_i, Real dt)
 }
 //=================================================================================================//
 PositionScaleSolidBody::
-    PositionScaleSolidBody(SPHBody &sph_body, Real start_time, Real end_time, Real end_scale)
+    PositionScaleSolidBody(SPHBody &sph_body, BoundingBox body_bounds,
+                           Real start_time, Real end_time, Real end_scale)
     : MotionConstraint<SPHBody>(sph_body),
       start_time_(start_time), end_time_(end_time), end_scale_(end_scale),
       physical_time_(sph_system_.getSystemVariableDataByName<Real>("PhysicalTime"))
 {
-    BoundingBox bounds = sph_body.getSPHBodyBounds();
-    pos_0_center_ = (bounds.first_ + bounds.second_) * 0.5;
+    pos_0_center_ = (body_bounds.first_ + body_bounds.second_) * 0.5;
 }
 //=================================================================================================//
 Vecd PositionScaleSolidBody::getDisplacement(size_t index_i, Real dt)

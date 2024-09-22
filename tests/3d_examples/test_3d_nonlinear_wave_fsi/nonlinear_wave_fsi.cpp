@@ -16,11 +16,14 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     SPHSystem system_fit(system_domain_bounds, particle_spacing_structure);
     system_fit.handleCommandlineOptions(ac, av)->setIOEnvironment();
-    SolidBody structure_fit(system_fit, makeShared<FloatingStructure>("Structure_Fit"));
+
+    FloatingStructure structure_fit_shape("Structure_Fit");
+    SolidBody structure_fit(system_fit, structure_fit_shape.getName());
     structure_fit.defineAdaptation<ParticleRefinementNearSurface>(1.3, 0.7, 3);
-    structure_fit.defineBodyLevelSetShape()->correctLevelSetSign()->writeLevelSet(system_fit);
+    LevelSetShape level_set_shape(structure_fit, structure_fit_shape);
+    level_set_shape.correctLevelSetSign()->writeLevelSet(system_fit);
     structure_fit.defineMaterial<Solid>(StructureDensity);
-    structure_fit.generateParticles<BaseParticles, Lattice, Adaptive>();
+    structure_fit.generateParticles<BaseParticles, Lattice, Adaptive>(level_set_shape);
 
     //----------------------------------------------------------------------
     //	Define body relation map.
@@ -33,8 +36,8 @@ int main(int ac, char *av[])
     using namespace relax_dynamics;
     SimpleDynamics<RandomizeParticlePosition> random_imported_model_particles(structure_fit);
     /** A  Physics relaxation step. */
-    RelaxationStepLevelSetCorrectionInner relaxation_step_inner(structure_adaptive_inner);
-    SimpleDynamics<UpdateSmoothingLengthRatioByShape> update_smoothing_length_ratio(structure_fit);
+    RelaxationStepLevelSetCorrectionInner relaxation_step_inner(structure_adaptive_inner, &level_set_shape);
+    SimpleDynamics<UpdateSmoothingLengthRatioByShape> update_smoothing_length_ratio(structure_fit, level_set_shape);
     /** Write the particle reload files. */
     ReloadParticleIO write_particle_reload_files(structure_fit);
 
@@ -73,15 +76,18 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
+    WaterBlock water_block_shape("WaterBody");
+    FluidBody water_block(sph_system, water_block_shape.getName());
     water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
-    water_block.generateParticles<BaseParticles, Lattice>();
+    water_block.generateParticles<BaseParticles, Lattice>(water_block_shape);
 
-    SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("Wall"));
+    WallBoundary wall_boundary_shape("Wall");
+    SolidBody wall_boundary(sph_system, wall_boundary_shape.getName());
     wall_boundary.defineMaterial<Solid>();
-    wall_boundary.generateParticles<BaseParticles, Lattice>();
+    wall_boundary.generateParticles<BaseParticles, Lattice>(wall_boundary_shape);
 
-    SolidBody structure(sph_system, makeShared<FloatingStructure>("Structure"));
+    FloatingStructure floating_structure_shape("Structure");
+    SolidBody structure(sph_system, floating_structure_shape.getName());
     structure.defineMaterial<Solid>(StructureDensity);
     structure.generateParticles<BaseParticles, Reload>("Structure_Fit");
 
@@ -145,8 +151,8 @@ int main(int ac, char *av[])
     Gravity gravity(Vecd(0.0, 0.0, -gravity_g));
     SimpleDynamics<GravityForce<Gravity>> constant_gravity_to_fluid(water_block, gravity);
     SimpleDynamics<OffsetInitialPosition> structure_offset_position(structure, offset);
-    SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
-    SimpleDynamics<NormalDirectionFromBodyShape> structure_normal_direction(structure);
+    SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary, wall_boundary_shape);
+    SimpleDynamics<NormalDirectionFromBodyShape> structure_normal_direction(structure, floating_structure_shape);
     InteractionWithUpdate<LinearGradientCorrectionMatrixInner> structure_corrected_configuration(structure_inner);
 
     InteractionWithUpdate<LinearGradientCorrectionMatrixComplex> corrected_configuration_fluid(ConstructorArgs(water_block_inner, 0.1), water_block_contact);

@@ -28,9 +28,10 @@ void ContactRelation::updateConfiguration()
     }
 }
 //=================================================================================================//
-ShellSurfaceContactRelation::ShellSurfaceContactRelation(SPHBody &sph_body, RealBodyVector contact_bodies)
+ShellSurfaceContactRelation::ShellSurfaceContactRelation(
+    SPHBody &sph_body, Shape &body_shape, RealBodyVector contact_bodies)
     : ContactRelationCrossResolution(sph_body, contact_bodies),
-      body_surface_layer_(shape_surface_ptr_keeper_.createPtr<BodySurfaceLayer>(sph_body)),
+      body_surface_layer_(shape_surface_ptr_keeper_.createPtr<BodySurfaceLayer>(sph_body, body_shape)),
       body_part_particles_(body_surface_layer_->body_part_particles_)
 {
     for (size_t k = 0; k != contact_bodies_.size(); ++k)
@@ -183,9 +184,10 @@ void ContactRelationFromFluidToShell::updateConfiguration()
     }
 }
 //=================================================================================================//
-SurfaceContactRelation::SurfaceContactRelation(SPHBody &sph_body, RealBodyVector contact_bodies, StdVec<bool> normal_corrections)
+SurfaceContactRelation::SurfaceContactRelation(SPHBody &sph_body, Shape &body_shape,
+                                               RealBodyVector contact_bodies, StdVec<bool> normal_corrections)
     : ContactRelationCrossResolution(sph_body, std::move(contact_bodies)),
-      body_surface_layer_(shape_surface_ptr_keeper_.createPtr<BodySurfaceLayer>(sph_body)),
+      body_surface_layer_(shape_surface_ptr_keeper_.createPtr<BodySurfaceLayer>(sph_body, body_shape)),
       body_part_particles_(body_surface_layer_->body_part_particles_)
 {
     // Check if the source body is a shell body

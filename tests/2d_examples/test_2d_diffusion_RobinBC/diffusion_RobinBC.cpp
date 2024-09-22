@@ -21,18 +21,21 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    SolidBody diffusion_body(sph_system, makeShared<DiffusionBody>("DiffusionBody"));
+    DiffusionBody diffusion_body_shape("DiffusionBody");
+    SolidBody diffusion_body(sph_system, diffusion_body_shape.getName());
     IsotropicDiffusion *diffusion =
         diffusion_body.defineMaterial<IsotropicDiffusion>("Phi", "Phi", diffusion_coeff);
-    diffusion_body.generateParticles<BaseParticles, Lattice>();
+    diffusion_body.generateParticles<BaseParticles, Lattice>(diffusion_body_shape);
 
-    SolidBody wall_boundary_Dirichlet(sph_system, makeShared<DirichletWallBoundary>("DirichletWallBoundary"));
+    DirichletWallBoundary wall_shape_Dirichlet("DirichletWallBoundary");
+    SolidBody wall_boundary_Dirichlet(sph_system, wall_shape_Dirichlet.getName());
     wall_boundary_Dirichlet.defineMaterial<Solid>();
-    wall_boundary_Dirichlet.generateParticles<BaseParticles, Lattice>();
+    wall_boundary_Dirichlet.generateParticles<BaseParticles, Lattice>(wall_shape_Dirichlet);
 
-    SolidBody wall_boundary_Robin(sph_system, makeShared<RobinWallBoundary>("RobinWallBoundary"));
+    RobinWallBoundary wall_shape_Robin("RobinWallBoundary");
+    SolidBody wall_boundary_Robin(sph_system, wall_shape_Robin.getName());
     wall_boundary_Robin.defineMaterial<Solid>();
-    wall_boundary_Robin.generateParticles<BaseParticles, Lattice>();
+    wall_boundary_Robin.generateParticles<BaseParticles, Lattice>(wall_shape_Robin);
     //----------------------------------------------------------------------
     //	Particle and body creation of temperature observers.
     //----------------------------------------------------------------------
@@ -53,9 +56,9 @@ int main(int ac, char *av[])
     //	Define the main numerical methods used in the simulation.
     //	Note that there may be data dependence on the constructors of these methods.
     //----------------------------------------------------------------------
-    SimpleDynamics<NormalDirectionFromBodyShape> diffusion_body_normal_direction(diffusion_body);
-    SimpleDynamics<NormalDirectionFromBodyShape> Dirichlet_normal_direction(wall_boundary_Dirichlet);
-    SimpleDynamics<NormalDirectionFromBodyShape> Robin_normal_direction(wall_boundary_Robin);
+    SimpleDynamics<NormalDirectionFromBodyShape> diffusion_body_normal_direction(diffusion_body, diffusion_body_shape);
+    SimpleDynamics<NormalDirectionFromBodyShape> Dirichlet_normal_direction(wall_boundary_Dirichlet, wall_shape_Dirichlet);
+    SimpleDynamics<NormalDirectionFromBodyShape> Robin_normal_direction(wall_boundary_Robin, wall_shape_Robin);
 
     DiffusionBodyRelaxation temperature_relaxation(
         ConstructorArgs(diffusion_inner, diffusion),

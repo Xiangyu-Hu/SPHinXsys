@@ -109,9 +109,10 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
-    FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
+    WaterBlock water_block_shape("WaterBody");
+    FluidBody water_block(sph_system, water_block_shape.getName());
     water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
-    water_block.generateParticles<BaseParticles, Lattice>();
+    water_block.generateParticles<BaseParticles, Lattice>(water_block_shape);
 
     ObserverBody fluid_observer(sph_system, "FluidObserver");
     fluid_observer.generateParticles<ObserverParticles>(observation_location);
@@ -140,11 +141,16 @@ int main(int ac, char *av[])
     ReduceDynamics<fluid_dynamics::AcousticTimeStep> get_fluid_time_step_size(water_block);
 
     /** Define the confinement condition for wall. */
-    NearShapeSurface near_surface_wall(water_block, makeShared<WallShape>("Wall"));
-    near_surface_wall.getLevelSetShape().writeLevelSet(sph_system);
+    WallShape wall_shape("Wall");
+    LevelSetShape wall_level_set_shape(water_block, wall_shape);
+    wall_level_set_shape.writeLevelSet(sph_system);
+    NearShapeSurface near_surface_wall(water_block, wall_level_set_shape);
     fluid_dynamics::StaticConfinement confinement_condition_wall(near_surface_wall);
     /** Define the confinement condition for structure. */
-    NearShapeSurface near_surface_triangle(water_block, makeShared<InverseShape<Triangle>>("Triangle"));
+    InverseShape<Triangle> structure_shape("Triangle");
+    LevelSetShape structure_level_set_shape(water_block, structure_shape);
+    structure_level_set_shape.writeLevelSet(sph_system);
+    NearShapeSurface near_surface_triangle(water_block, structure_level_set_shape);
     near_surface_triangle.getLevelSetShape().writeLevelSet(sph_system);
     fluid_dynamics::StaticConfinement confinement_condition_triangle(near_surface_triangle);
     /** Push back the static confinement condition to corresponding dynamics. */

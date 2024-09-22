@@ -88,23 +88,26 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    SolidBody free_ball(sph_system, makeShared<FreeBall>("FreeBall"));
-    free_ball.defineBodyLevelSetShape();
+    FreeBall free_ball_shape("FreeBall");
+    SolidBody free_ball(sph_system, free_ball_shape.getName());
+    LevelSetShape free_ball_level_set(free_ball, free_ball_shape, 1.0);
     free_ball.defineMaterial<NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
         ? free_ball.generateParticles<BaseParticles, Reload>(free_ball.getName())
-        : free_ball.generateParticles<BaseParticles, Lattice>();
+        : free_ball.generateParticles<BaseParticles, Lattice>(free_ball_level_set);
 
-    SolidBody damping_ball(sph_system, makeShared<DampingBall>("DampingBall"));
-    damping_ball.defineBodyLevelSetShape();
+    DampingBall damping_ball_shape("DampingBall");
+    SolidBody damping_ball(sph_system, damping_ball_shape.getName());
+    LevelSetShape damping_ball_level_set(damping_ball, damping_ball_shape, 1.0);
     damping_ball.defineMaterial<NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
         ? damping_ball.generateParticles<BaseParticles, Reload>(damping_ball.getName())
-        : damping_ball.generateParticles<BaseParticles, Lattice>();
+        : damping_ball.generateParticles<BaseParticles, Lattice>(damping_ball_level_set);
 
-    SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
+    WallBoundary wall_boundary_shape("WallBoundary");
+    SolidBody wall_boundary(sph_system, wall_boundary_shape.getName());
     wall_boundary.defineMaterial<NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
-    wall_boundary.generateParticles<BaseParticles, Lattice>();
+    wall_boundary.generateParticles<BaseParticles, Lattice>(wall_boundary_shape);
 
     ObserverBody free_ball_observer(sph_system, "FreeBallObserver");
     free_ball_observer.generateParticles<ObserverParticles>(observation_location_1);
@@ -126,8 +129,8 @@ int main(int ac, char *av[])
         using namespace relax_dynamics;
         SimpleDynamics<RandomizeParticlePosition> free_ball_random_particles(free_ball);
         SimpleDynamics<RandomizeParticlePosition> damping_ball_random_particles(damping_ball);
-        RelaxationStepInner free_ball_relaxation_step(free_ball_inner);
-        RelaxationStepInner damping_ball_relaxation_step(damping_ball_inner);
+        RelaxationStepInner free_ball_relaxation_step(free_ball_inner, free_ball_shape);
+        RelaxationStepInner damping_ball_relaxation_step(damping_ball_inner, damping_ball_shape);
         //----------------------------------------------------------------------
         //	Output for particle relaxation.
         //----------------------------------------------------------------------
@@ -168,9 +171,9 @@ int main(int ac, char *av[])
     //  inner and contact relations.
     //----------------------------------------------------------------------
     InnerRelation free_ball_inner(free_ball);
-    SurfaceContactRelation free_ball_contact(free_ball, {&wall_boundary});
+    SurfaceContactRelation free_ball_contact(free_ball, free_ball_shape, {&wall_boundary});
     InnerRelation damping_ball_inner(damping_ball);
-    SurfaceContactRelation damping_ball_contact(damping_ball, {&wall_boundary});
+    SurfaceContactRelation damping_ball_contact(damping_ball, damping_ball_shape, {&wall_boundary});
     ContactRelation free_ball_observer_contact(free_ball_observer, {&free_ball});
     ContactRelation damping_all_observer_contact(damping_ball_observer, {&damping_ball});
     //----------------------------------------------------------------------

@@ -92,7 +92,7 @@ int main(int ac, char *av[])
     sph_system.handleCommandlineOptions(ac, av);
 
     /** Create a Cylinder body. */
-    SolidBody cylinder_body(sph_system, makeShared<DefaultShape>("CylinderBody"));
+    SolidBody cylinder_body(sph_system, "CylinderBody");
     cylinder_body.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     cylinder_body.generateParticles<SurfaceParticles, Cylinder>();
 

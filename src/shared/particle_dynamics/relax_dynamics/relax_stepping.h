@@ -63,8 +63,7 @@ class RelaxationResidue<Inner<>>
     : public RelaxationResidue<Base, DataDelegateInner>
 {
   public:
-    explicit RelaxationResidue(BaseInnerRelation &inner_relation);
-    RelaxationResidue(BaseInnerRelation &inner_relation, const std::string &sub_shape_name);
+    explicit RelaxationResidue(BaseInnerRelation &inner_relation, Shape &relax_shape);
     virtual ~RelaxationResidue(){};
     Shape &getRelaxShape() { return relax_shape_; };
     void interaction(size_t index_i, Real dt = 0.0);
@@ -77,8 +76,7 @@ template <>
 class RelaxationResidue<Inner<LevelSetCorrection>> : public RelaxationResidue<Inner<>>
 {
   public:
-    template <typename... Args>
-    RelaxationResidue(Args &&...args);
+    RelaxationResidue(BaseInnerRelation &inner_relation, LevelSetShape *level_set_shape);
     template <typename BodyRelationType, typename FirstArg>
     explicit RelaxationResidue(ConstructorArgs<BodyRelationType, FirstArg> parameters)
         : RelaxationResidue(parameters.body_relation_, std::get<0>(parameters.others_)){};
@@ -148,13 +146,12 @@ class UpdateSmoothingLengthRatioByShape : public LocalDynamics
   protected:
     Real *h_ratio_, *Vol_;
     Vecd *pos_;
-    Shape &target_shape_;
+    Shape &adaptation_shape_;
     ParticleRefinementByShape *particle_adaptation_;
     Real reference_spacing_;
 
   public:
-    UpdateSmoothingLengthRatioByShape(SPHBody &sph_body, Shape &target_shape);
-    explicit UpdateSmoothingLengthRatioByShape(SPHBody &sph_body);
+    UpdateSmoothingLengthRatioByShape(SPHBody &sph_body, Shape &adaptation_shape);
     virtual ~UpdateSmoothingLengthRatioByShape(){};
     void update(size_t index_i, Real dt = 0.0);
 };

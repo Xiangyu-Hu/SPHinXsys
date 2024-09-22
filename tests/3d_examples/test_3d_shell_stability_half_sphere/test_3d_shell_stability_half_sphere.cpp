@@ -134,13 +134,10 @@ void sphere_compression(int dp_ratio, Real pressure, Real gravity_z)
     std::cout << "bb_system.first_: " << bb_system.first_ << std::endl;
     std::cout << "bb_system.second_: " << bb_system.second_ << std::endl;
 
-    // shell
-    auto shell_shape = makeShared<ComplexShape>("shell_shape" + std::to_string(dp_ratio)); // keep all data for parameter study
-
     // starting the actual simulation
     SPHSystem system(bb_system, dp);
     system.setIOEnvironment(false);
-    SolidBody shell_body(system, shell_shape);
+    SolidBody shell_body(system, "shell_shape" + std::to_string(dp_ratio));
     shell_body.defineMaterial<SaintVenantKirchhoffSolid>(rho, E, mu);
     shell_body.generateParticles<SurfaceParticles, ShellSphere>(obj_vertices, center, particle_area, thickness);
     auto shell_particles = dynamic_cast<SurfaceParticles *>(&shell_body.getBaseParticles());

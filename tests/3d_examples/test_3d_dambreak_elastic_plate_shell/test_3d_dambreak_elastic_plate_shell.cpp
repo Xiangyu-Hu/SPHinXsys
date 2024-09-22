@@ -162,19 +162,22 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
-    FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
+    WaterBlock water_block_shape("WaterBody");
+    FluidBody water_block(sph_system, water_block_shape.getName());
     water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
-    water_block.generateParticles<BaseParticles, Lattice>();
+    water_block.generateParticles<BaseParticles, Lattice>(water_block_shape);
 
-    SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
+    WallBoundary wall_boundary_shape("WallBoundary");
+    SolidBody wall_boundary(sph_system, wall_boundary_shape.getName());
     wall_boundary.defineMaterial<Solid>();
-    wall_boundary.generateParticles<BaseParticles, Lattice>();
+    wall_boundary.generateParticles<BaseParticles, Lattice>(wall_boundary_shape);
 
-    SolidBody gate(sph_system, makeShared<MovingGate>("Gate"));
+    MovingGate gate_shape("Gate");
+    SolidBody gate(sph_system, gate_shape.getName());
     gate.defineMaterial<Solid>();
-    gate.generateParticles<BaseParticles, Lattice>();
+    gate.generateParticles<BaseParticles, Lattice>(gate_shape);
 
-    SolidBody plate(sph_system, makeShared<DefaultShape>("Plate"));
+    SolidBody plate(sph_system, "Plate");
     plate.defineAdaptation<SPHAdaptation>(1.15, resolution_ref / resolution_shell);
     plate.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, youngs_modulus, poisson_ratio);
     plate.generateParticles<SurfaceParticles, Plate>();
@@ -213,8 +216,8 @@ int main(int ac, char *av[])
     //	Note that there may be data dependence on the sequence of constructions.
     //----------------------------------------------------------------------
     // solid
-    SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
-    SimpleDynamics<NormalDirectionFromBodyShape> gate_normal_direction(gate);
+    SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary, wall_boundary_shape);
+    SimpleDynamics<NormalDirectionFromBodyShape> gate_normal_direction(gate, gate_shape);
     SimpleDynamics<GateMotionConstraint> update_gate_position(gate);
     // Shell
     InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration> plate_corrected_configuration(plate_inner);

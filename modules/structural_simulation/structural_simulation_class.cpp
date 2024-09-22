@@ -23,12 +23,12 @@ BodyPartFromMesh::BodyPartFromMesh(SPHBody &body, SharedPtr<TriangleMeshShape> t
 SolidBodyFromMesh::SolidBodyFromMesh(
     SPHSystem &system, SharedPtr<TriangleMeshShape> triangle_mesh_shape, Real resolution,
     SharedPtr<SaintVenantKirchhoffSolid> material_model, Vecd *pos_0, Real *volume)
-    : SolidBody(system, triangle_mesh_shape)
+    : SolidBody(system, triangle_mesh_shape->getName())
 {
     defineAdaptationRatios(1.15, system.resolution_ref_ / resolution);
-    defineBodyLevelSetShape()->cleanLevelSet();
+    LevelSetShape level_set_shape(*this, *triangle_mesh_shape, 1.0);
     assignMaterial(material_model.get());
-    generateParticles<BaseParticles, Lattice>();
+    generateParticles<BaseParticles, Lattice>(*level_set_shape.cleanLevelSet());
 }
 
 SolidBodyForSimulation::SolidBodyForSimulation(
@@ -36,7 +36,7 @@ SolidBodyForSimulation::SolidBodyForSimulation(
     Real physical_viscosity, SharedPtr<SaintVenantKirchhoffSolid> material_model, Vecd *pos_0, Real *volume)
     : solid_body_from_mesh_(system, triangle_mesh_shape, resolution, material_model, pos_0, volume),
       inner_body_relation_(solid_body_from_mesh_),
-      initial_normal_direction_(SimpleDynamics<NormalDirectionFromBodyShape>(solid_body_from_mesh_)),
+      initial_normal_direction_(SimpleDynamics<NormalDirectionFromBodyShape>(solid_body_from_mesh_, *triangle_mesh_shape)),
       correct_configuration_(inner_body_relation_),
       stress_relaxation_first_half_(inner_body_relation_),
       stress_relaxation_second_half_(inner_body_relation_),
@@ -62,9 +62,10 @@ void expandBoundingBox(BoundingBox *original, BoundingBox *additional)
 }
 
 void relaxParticlesSingleResolution(bool write_particle_relaxation_data,
-                                    SolidBody &solid_body_from_mesh,
-                                    InnerRelation &solid_body_from_mesh_inner)
+                                    InnerRelation &solid_body_from_mesh_inner,
+                                    LevelSetShape *level_set_shape)
 {
+    RealBody &solid_body_from_mesh = dynamic_cast<RealBody &>(solid_body_from_mesh_inner.getSPHBody());
     BodyStatesRecordingToVtp write_solid_body_from_mesh_to_vtp(solid_body_from_mesh);
 
     //----------------------------------------------------------------------
@@ -72,7 +73,7 @@ void relaxParticlesSingleResolution(bool write_particle_relaxation_data,
     //----------------------------------------------------------------------
     SimpleDynamics<relax_dynamics::RandomizeParticlePosition> random_solid_body_from_mesh_particles(solid_body_from_mesh);
     /** A  Physics relaxation step. */
-    relax_dynamics::RelaxationStepLevelSetCorrectionInner relaxation_step_inner(solid_body_from_mesh_inner);
+    relax_dynamics::RelaxationStepLevelSetCorrectionInner relaxation_step_inner(solid_body_from_mesh_inner, level_set_shape);
     //----------------------------------------------------------------------
     //	Particle relaxation starts here.
     //----------------------------------------------------------------------
@@ -108,16 +109,16 @@ std::tuple<Vecd *, Real *> generateAndRelaxParticlesFromMesh(
 {
     BoundingBox bb = triangle_mesh_shape->getBounds();
     SPHSystem system(bb, resolution);
-    SolidBody model(system, triangle_mesh_shape);
-    model.defineBodyLevelSetShape()->cleanLevelSet();
+    SolidBody model(system, triangle_mesh_shape->getName());
+    LevelSetShape level_set_shape(model, *triangle_mesh_shape, 1.0);
     model.defineMaterial<Solid>();
-    model.generateParticles<BaseParticles, Lattice>();
+    model.generateParticles<BaseParticles, Lattice>(*level_set_shape.cleanLevelSet());
 
     if (particle_relaxation)
     {
         system.setIOEnvironment();
         InnerRelation inner_relation(model);
-        relaxParticlesSingleResolution(write_particle_relaxation_data, model, inner_relation);
+        relaxParticlesSingleResolution(write_particle_relaxation_data, inner_relation, &level_set_shape);
     }
 
     return std::tuple<Vecd *, Real *>(model.getBaseParticles().ParticlePositions(), model.getBaseParticles().VolumetricMeasures());
@@ -345,10 +346,12 @@ void StructuralSimulation::initializeElasticSolidBodies()
 void StructuralSimulation::initializeContactBetweenTwoBodies(int first, int second)
 {
     SolidBodyFromMesh *first_body = solid_body_list_[first]->getSolidBodyFromMesh();
+    Shape &first_shape = *body_mesh_list_[first];
     SolidBodyFromMesh *second_body = solid_body_list_[second]->getSolidBodyFromMesh();
+    Shape &second_shape = *body_mesh_list_[second];
 
-    contact_list_.emplace_back(makeShared<SurfaceContactRelation>(*first_body, RealBodyVector({second_body})));
-    contact_list_.emplace_back(makeShared<SurfaceContactRelation>(*second_body, RealBodyVector({first_body})));
+    contact_list_.emplace_back(makeShared<SurfaceContactRelation>(*first_body, first_shape, RealBodyVector({second_body})));
+    contact_list_.emplace_back(makeShared<SurfaceContactRelation>(*second_body, second_shape, RealBodyVector({first_body})));
 
     int last = contact_list_.size() - 1;
     contact_density_list_.push_back(makeShared<InteractionDynamics<solid_dynamics::ContactFactorSummation>>(*contact_list_[last - 1]));
@@ -374,7 +377,7 @@ void StructuralSimulation::initializeAllContacts()
             target_list.emplace_back(solid_body_list_[target_i]->getSolidBodyFromMesh());
         }
 
-        contact_list_.emplace_back(makeShared<SurfaceContactRelation>(*contact_body, target_list));
+        contact_list_.emplace_back(makeShared<SurfaceContactRelation>(*contact_body, *body_mesh_list_[i], target_list));
         int last = contact_list_.size() - 1;
         contact_density_list_.emplace_back(makeShared<InteractionDynamics<solid_dynamics::ContactFactorSummation>>(*contact_list_[last]));
         contact_force_list_.emplace_back(makeShared<InteractionWithUpdate<solid_dynamics::ContactForce>>(*contact_list_[last]));
@@ -461,7 +464,8 @@ void StructuralSimulation::initializeSurfacePressure()
         StdVec<std::array<Real, 2>> pressure_over_time = std::get<3>(surface_pressure_tuple_[i]);
 
         BodyPartByParticle *bp = body_part_tri_mesh_ptr_keeper_.createPtr<BodyPartFromMesh>(*solid_body_list_[body_index]->getSolidBodyFromMesh(), tri_mesh);
-        surface_pressure_.emplace_back(makeShared<SimpleDynamics<solid_dynamics::SurfacePressureFromSource>>(*bp, point, pressure_over_time));
+        surface_pressure_.emplace_back(makeShared<SimpleDynamics<solid_dynamics::SurfacePressureFromSource>>(
+            *bp, *body_mesh_list_[i], point, pressure_over_time));
     }
 }
 
@@ -489,7 +493,7 @@ void StructuralSimulation::initializeSpringNormalOnSurfaceParticles()
         Real damping_coefficient = std::get<5>(surface_spring_tuple_[i]);
 
         surface_spring_.emplace_back(makeShared<SimpleDynamics<solid_dynamics::SpringNormalOnSurfaceParticles>>(
-            *solid_body_list_[body_index]->getSolidBodyFromMesh(),
+            *solid_body_list_[body_index]->getSolidBodyFromMesh(), *body_mesh_list_[body_index],
             inner_outer, point, spring_stiffness, damping_coefficient));
     }
 }
@@ -538,7 +542,9 @@ void StructuralSimulation::initializePositionSolidBody()
         Real end_time = std::get<2>(position_solid_body_tuple_[i]);
         Vecd pos_end_center = std::get<3>(position_solid_body_tuple_[i]);
         position_solid_body_.emplace_back(makeShared<SimpleDynamics<solid_dynamics::PositionSolidBody>>(
-            *solid_body_list_[body_index]->getSolidBodyFromMesh(), start_time, end_time, pos_end_center));
+            *solid_body_list_[body_index]->getSolidBodyFromMesh(),
+            body_mesh_list_[body_index]->getBounds(),
+            start_time, end_time, pos_end_center));
     }
 }
 
@@ -552,7 +558,9 @@ void StructuralSimulation::initializePositionScaleSolidBody()
         Real end_time = std::get<2>(position_scale_solid_body_tuple_[i]);
         Real scale = std::get<3>(position_scale_solid_body_tuple_[i]);
         position_scale_solid_body_.emplace_back(makeShared<SimpleDynamics<solid_dynamics::PositionScaleSolidBody>>(
-            *solid_body_list_[body_index]->getSolidBodyFromMesh(), start_time, end_time, scale));
+            *solid_body_list_[body_index]->getSolidBodyFromMesh(),
+            body_mesh_list_[body_index]->getBounds(),
+            start_time, end_time, scale));
     }
 }
 

@@ -23,18 +23,21 @@ int main(int ac, char *av[])
     IOEnvironment io_environment(sph_system);
 
     /** create a body with corresponding material, particles and reaction model. */
-    SolidBody column(sph_system, makeShared<Column>("Column"));
+    Column column_shape("Column");
+    SolidBody column(sph_system, column_shape.getName());
     column.defineAdaptationRatios(1.3, 1.0);
-    column.defineBodyLevelSetShape()->writeLevelSet(sph_system);
+    LevelSetShape level_set_shape(column, column_shape);
+    level_set_shape.writeLevelSet(sph_system);
     column.defineMaterial<HardeningPlasticSolid>(
         rho0_s, Youngs_modulus, poisson, yield_stress, hardening_modulus);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
         ? column.generateParticles<BaseParticles, Reload>(column.getName())
-        : column.generateParticles<BaseParticles, Lattice>();
+        : column.generateParticles<BaseParticles, Lattice>(level_set_shape);
 
-    SolidBody wall(sph_system, makeShared<WallShape>("Wall"));
+    WallShape wall_shape("Wall");
+    SolidBody wall(sph_system, wall_shape.getName());
     wall.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
-    wall.generateParticles<BaseParticles, Lattice>();
+    wall.generateParticles<BaseParticles, Lattice>(wall_shape);
 
     /** Define Observer. */
     ObserverBody my_observer(sph_system, "MyObserver");
@@ -44,7 +47,7 @@ int main(int ac, char *av[])
     /**body relation topology */
     InnerRelation column_inner(column);
     ContactRelation my_observer_contact(my_observer, {&column});
-    SurfaceContactRelation column_wall_contact(column, {&wall});
+    SurfaceContactRelation column_wall_contact(column, level_set_shape, {&wall});
     /**define simple data file input and outputs functions. */
     BodyStatesRecordingToVtp write_states(sph_system);
 
@@ -59,7 +62,7 @@ int main(int ac, char *av[])
 
         ReloadParticleIO write_particle_reload_files(column);
         /** A  Physics relaxation step. */
-        RelaxationStepInner relaxation_step_inner(column_inner);
+        RelaxationStepInner relaxation_step_inner(column_inner, level_set_shape);
         /**
          * @brief 	Particle relaxation starts here.
          */
@@ -88,7 +91,7 @@ int main(int ac, char *av[])
     //	All numerical methods will be used in this case.
     //----------------------------------------------------------------------
     SimpleDynamics<InitialCondition> initial_condition(column);
-    SimpleDynamics<NormalDirectionFromBodyShape> wall_normal_direction(wall);
+    SimpleDynamics<NormalDirectionFromBodyShape> wall_normal_direction(wall, wall_shape);
     InteractionWithUpdate<LinearGradientCorrectionMatrixInner> corrected_configuration(column_inner);
 
     Dynamics1Level<solid_dynamics::DecomposedPlasticIntegration1stHalf> stress_relaxation_first_half(column_inner);

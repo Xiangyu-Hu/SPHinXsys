@@ -62,14 +62,16 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
-    SolidBody myocardium_body(sph_system, makeShared<Myocardium>("MyocardiumBody"));
+    Myocardium myocardium_body_shape("MyocardiumBody");
+    SolidBody myocardium_body(sph_system, myocardium_body_shape.getName());
     myocardium_body.defineMaterial<NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
-    myocardium_body.generateParticles<BaseParticles, Lattice>();
+    myocardium_body.generateParticles<BaseParticles, Lattice>(myocardium_body_shape);
 
-    SolidBody moving_plate(sph_system, makeShared<MovingPlate>("MovingPlate"));
+    MovingPlate moving_plate_shape("MovingPlate");
+    SolidBody moving_plate(sph_system, moving_plate_shape.getName());
     moving_plate.defineAdaptationRatios(1.15, 1.5);
     moving_plate.defineMaterial<NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
-    moving_plate.generateParticles<BaseParticles, Lattice>();
+    moving_plate.generateParticles<BaseParticles, Lattice>(moving_plate_shape);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -78,8 +80,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     InnerRelation myocardium_body_inner(myocardium_body);
     InnerRelation moving_plate_inner(moving_plate);
-    SurfaceContactRelation myocardium_plate_contact(myocardium_body, {&moving_plate});
-    SurfaceContactRelation plate_myocardium_contact(moving_plate, {&myocardium_body});
+    SurfaceContactRelation myocardium_plate_contact(myocardium_body, myocardium_body_shape, {&moving_plate});
+    SurfaceContactRelation plate_myocardium_contact(moving_plate, moving_plate_shape, {&myocardium_body});
     //----------------------------------------------------------------------
     //	Define the numerical methods used in the simulation.
     //	Note that there may be data dependence on the sequence of constructions.

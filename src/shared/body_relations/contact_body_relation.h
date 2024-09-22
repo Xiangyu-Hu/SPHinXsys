@@ -100,10 +100,10 @@ class ShellSurfaceContactRelation : public ContactRelationCrossResolution
   public:
     BodySurfaceLayer *body_surface_layer_;
 
-    ShellSurfaceContactRelation(SPHBody &sph_body, RealBodyVector contact_bodies);
+    ShellSurfaceContactRelation(SPHBody &sph_body, Shape &body_shape, RealBodyVector contact_bodies);
     ShellSurfaceContactRelation(SelfSurfaceContactRelation &solid_body_relation_self_contact,
-                                RealBodyVector contact_bodies)
-        : ShellSurfaceContactRelation(*solid_body_relation_self_contact.real_body_, contact_bodies){};
+                                Shape &body_shape, RealBodyVector contact_bodies)
+        : ShellSurfaceContactRelation(*solid_body_relation_self_contact.real_body_, body_shape, contact_bodies){};
     virtual ~ShellSurfaceContactRelation(){};
     virtual void updateConfiguration() override;
 
@@ -205,11 +205,13 @@ class SurfaceContactRelation : public ContactRelationCrossResolution
     UniquePtrKeeper<BodySurfaceLayer> shape_surface_ptr_keeper_;
 
   public:
-    SurfaceContactRelation(SPHBody &sph_body, RealBodyVector contact_bodies, StdVec<bool> normal_corrections = {});
+    SurfaceContactRelation(SPHBody &sph_body, Shape &body_shape,
+                           RealBodyVector contact_bodies, StdVec<bool> normal_corrections = {});
     SurfaceContactRelation(SelfSurfaceContactRelation &solid_body_relation_self_contact,
-                           RealBodyVector contact_bodies,
+                           Shape &body_shape, RealBodyVector contact_bodies,
                            StdVec<bool> normal_corrections = {})
         : SurfaceContactRelation(*solid_body_relation_self_contact.real_body_,
+                                 body_shape,
                                  std::move(contact_bodies),
                                  std::move(normal_corrections)){};
     ~SurfaceContactRelation() override = default;

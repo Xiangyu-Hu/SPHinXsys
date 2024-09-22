@@ -62,13 +62,15 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
-    SolidBody myocardium_body(sph_system, makeShared<Myocardium>("MyocardiumBody"));
+    Myocardium myocardium_body_shape("MyocardiumBody");
+    SolidBody myocardium_body(sph_system, myocardium_body_shape.getName());
     myocardium_body.defineMaterial<NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
-    myocardium_body.generateParticles<BaseParticles, Lattice>();
+    myocardium_body.generateParticles<BaseParticles, Lattice>(myocardium_body_shape);
 
-    SolidBody moving_plate(sph_system, makeShared<MovingPlate>("MovingPlate"));
+    MovingPlate moving_plate_shape("MovingPlate");
+    SolidBody moving_plate(sph_system, moving_plate_shape.getName());
     moving_plate.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
-    moving_plate.generateParticles<BaseParticles, Lattice>();
+    moving_plate.generateParticles<BaseParticles, Lattice>(moving_plate_shape);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -76,8 +78,8 @@ int main(int ac, char *av[])
     //  Generally, we first define all the inner relations, then the contact relations.
     //----------------------------------------------------------------------
     InnerRelation myocardium_body_inner(myocardium_body);
-    SurfaceContactRelation myocardium_plate_contact(myocardium_body, {&moving_plate});
-    SurfaceContactRelation plate_myocardium_contact(moving_plate, {&myocardium_body});
+    SurfaceContactRelation myocardium_plate_contact(myocardium_body, myocardium_body_shape, {&moving_plate});
+    SurfaceContactRelation plate_myocardium_contact(moving_plate, moving_plate_shape, {&myocardium_body});
     //----------------------------------------------------------------------
     //	Define the numerical methods used in the simulation.
     //	Note that there may be data dependence on the sequence of constructions.
@@ -117,8 +119,7 @@ int main(int ac, char *av[])
     SimTK::GeneralForceSubsystem forces(MBsystem);
     SimTK::CableTrackerSubsystem cables(MBsystem);
     /** mass properties of the fixed spot. */
-    TransformShape<GeometricShapeBox> moving_plate_shape(Transform(translation_moving_plate), halfsize_moving_plate, "Plate");
-    SimpleDynamics<NormalDirectionFromBodyShape> moving_plate_normal_direction(moving_plate);
+    SimpleDynamics<NormalDirectionFromBodyShape> moving_plate_normal_direction(moving_plate, moving_plate_shape);
     SolidBodyPartForSimbody plate_multibody(moving_plate, moving_plate_shape);
     /** Mass properties of the constrained spot.
      * SimTK::MassProperties(mass, center of mass, inertia)

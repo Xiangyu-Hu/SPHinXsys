@@ -44,10 +44,12 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    RealBody imported_model(sph_system, makeShared<SolidBodyFromMesh>("SolidBodyFromMesh"));
+    SolidBodyFromMesh imported_model_shape("SolidBodyFromMesh");
+    RealBody imported_model(sph_system, imported_model_shape.getName());
     imported_model.defineAdaptation<ParticleRefinementNearSurface>(1.15, 1.0, 2);
-    imported_model.defineBodyLevelSetShape()->writeLevelSet(sph_system);
-    imported_model.generateParticles<BaseParticles, Lattice, Adaptive>();
+    LevelSetShape level_set_shape(imported_model, imported_model_shape);
+    level_set_shape.writeLevelSet(sph_system);
+    imported_model.generateParticles<BaseParticles, Lattice, Adaptive>(level_set_shape);
     //----------------------------------------------------------------------
     //	Define simple file input and outputs functions.
     //----------------------------------------------------------------------
@@ -70,8 +72,8 @@ int main(int ac, char *av[])
     using namespace relax_dynamics;
     SimpleDynamics<RandomizeParticlePosition> random_imported_model_particles(imported_model);
     /** A  Physics relaxation step. */
-    RelaxationStepLevelSetCorrectionInner relaxation_step_inner(imported_model_inner);
-    SimpleDynamics<UpdateSmoothingLengthRatioByShape> update_smoothing_length_ratio(imported_model);
+    RelaxationStepLevelSetCorrectionInner relaxation_step_inner(imported_model_inner, &level_set_shape);
+    SimpleDynamics<UpdateSmoothingLengthRatioByShape> update_smoothing_length_ratio(imported_model, level_set_shape);
     //----------------------------------------------------------------------
     //	Particle relaxation starts here.
     //----------------------------------------------------------------------

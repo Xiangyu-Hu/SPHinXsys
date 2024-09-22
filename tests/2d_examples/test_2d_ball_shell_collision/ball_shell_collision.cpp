@@ -55,7 +55,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    SolidBody ball(sph_system, makeShared<GeometricShapeBall>(ball_center, ball_radius, "BallBody"));
+    GeometricShapeBall ball_shape(ball_center, ball_radius, "BallBody");
+    SolidBody ball(sph_system, ball_shape.getName());
     ball.defineMaterial<NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
     if (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
     {
@@ -63,11 +64,13 @@ int main(int ac, char *av[])
     }
     else
     {
-        ball.defineBodyLevelSetShape()->writeLevelSet(sph_system);
-        ball.generateParticles<BaseParticles, Lattice>();
+        LevelSetShape level_set_shape(ball, ball_shape, 1.0);
+        level_set_shape.writeLevelSet(sph_system);
+        ball.generateParticles<BaseParticles, Lattice>(level_set_shape);
     }
 
-    SolidBody rigid_shell(sph_system, makeShared<ShellShape>("ShellShape"));
+    ShellShape shell_shape("ShellShape");
+    SolidBody rigid_shell(sph_system, shell_shape.getName());
     rigid_shell.defineAdaptation<SPHAdaptation>(1.15, 1.0);
     rigid_shell.defineMaterial<Solid>();
     if (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
@@ -78,13 +81,7 @@ int main(int ac, char *av[])
     {
         std::cout << "Error: This case requires reload shell particles for simulation!" << std::endl;
         return 0;
-    }
-    else
-    {
-        Real level_set_refinement_ratio = resolution_ref / (0.1 * thickness);
-        rigid_shell.defineBodyLevelSetShape(level_set_refinement_ratio)->writeLevelSet(sph_system);
-        rigid_shell.generateParticles<SurfaceParticles, Lattice>(thickness);
-    }
+    };
 
     ObserverBody ball_observer(sph_system, "BallObserver");
     ball_observer.generateParticles<ObserverParticles>(StdVec<Vecd>{ball_center});
@@ -93,6 +90,10 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     if (sph_system.RunParticleRelaxation() && !sph_system.ReloadParticles())
     {
+        Real level_set_refinement_ratio = resolution_ref / (0.1 * thickness);
+        LevelSetShape level_set_shell(rigid_shell, shell_shape, level_set_refinement_ratio);
+        level_set_shell.writeLevelSet(sph_system);
+        rigid_shell.generateParticles<SurfaceParticles, Lattice>(level_set_shell, thickness);
         //----------------------------------------------------------------------
         //	Define body relation map used for particle relaxation.
         //----------------------------------------------------------------------
@@ -103,13 +104,13 @@ int main(int ac, char *av[])
         //----------------------------------------------------------------------
         using namespace relax_dynamics;
         SimpleDynamics<RandomizeParticlePosition> ball_random_particles(ball);
-        RelaxationStepInner ball_relaxation_step(ball_inner);
+        RelaxationStepInner ball_relaxation_step(ball_inner, ball_shape);
         //----------------------------------------------------------------------
         //	Define the methods for particle relaxation for the rigid shell.
         //----------------------------------------------------------------------
         SimpleDynamics<RandomizeParticlePosition> rigid_shell_random_particles(rigid_shell);
-        ShellRelaxationStep rigid_shell_relaxation_step(rigid_shell_inner);
-        ShellNormalDirectionPrediction shell_normal_prediction(rigid_shell_inner, thickness, cos(Pi / 3.75));
+        ShellRelaxationStep rigid_shell_relaxation_step(rigid_shell_inner, level_set_shell);
+        ShellNormalDirectionPrediction shell_normal_prediction(rigid_shell_inner, level_set_shell, thickness, cos(Pi / 3.75));
         //----------------------------------------------------------------------
         //	Output for particle relaxation.
         //----------------------------------------------------------------------
@@ -156,7 +157,7 @@ int main(int ac, char *av[])
     //  Generally, we first define all the inner relations, then the contact relations.
     //----------------------------------------------------------------------
     InnerRelation ball_inner(ball);
-    ShellSurfaceContactRelation ball_contact(ball, {&rigid_shell});
+    ShellSurfaceContactRelation ball_contact(ball, ball_shape, {&rigid_shell});
     ContactRelation ball_observer_contact(ball_observer, {&ball});
     //----------------------------------------------------------------------
     // Define the numerical methods used in the simulation.

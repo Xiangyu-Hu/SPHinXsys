@@ -47,12 +47,14 @@ struct RealAndGhostParticleData
 class GhostCreationInESPH : public LocalDynamics, public DataDelegateInner
 {
   public:
-    explicit GhostCreationInESPH(BaseInnerRelation &inner_relation, Ghost<ReserveSizeFactor> &ghost_boundary);
+    explicit GhostCreationInESPH(BaseInnerRelation &inner_relation, Shape &body_shape, Ghost<ReserveSizeFactor> &ghost_boundary);
     virtual ~GhostCreationInESPH(){};
     std::vector<RealAndGhostParticleData> real_and_ghost_particle_data_;
     void ghostGenerationAndAddToConfiguration();
+    Shape &getBodyShape() { return body_shape_; };
 
   protected:
+    Shape &body_shape_;
     Ghost<ReserveSizeFactor> &ghost_boundary_;
     std::mutex mutex_create_ghost_particle_; /**< mutex exclusion for memory conflict */
     NeighborBuilderInnerInFVM get_inner_neighbor_;

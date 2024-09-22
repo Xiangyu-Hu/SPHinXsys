@@ -97,8 +97,8 @@ StdVec<Vecd> VelocityXObserverParticle()
 
     for (size_t i = 0; i < number_of_observation_point; ++i)
     {
-        Vec2d point_corrdinate(range_of_measure * (Real)i / (Real)(number_of_observation_point - 1) + start_of_measure, 0.5 * DL);
-        observation_points.push_back(point_corrdinate);
+        Vec2d point_coordinate(range_of_measure * (Real)i / (Real)(number_of_observation_point - 1) + start_of_measure, 0.5 * DL);
+        observation_points.push_back(point_coordinate);
     }
     return observation_points;
 }
@@ -111,10 +111,10 @@ StdVec<Vecd> VelocityYObserverParticle()
     Real start_of_measure = 0.5 * resolution_ref;
     for (size_t i = 0; i < number_of_observation_point; ++i)
     {
-        Vec2d point_corrdinate(0.5 * DH, range_of_measure * (Real)i /
+        Vec2d point_coordinate(0.5 * DH, range_of_measure * (Real)i /
                                                  (Real)(number_of_observation_point - 1) +
                                              start_of_measure);
-        observation_points.push_back(point_corrdinate);
+        observation_points.push_back(point_coordinate);
     }
     return observation_points;
 }
@@ -136,13 +136,15 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    FluidBody water_body(sph_system, makeShared<WaterBlock>("WaterBody"));
+    WaterBlock water_body_shape("WaterBody");
+    FluidBody water_body(sph_system, water_body_shape.getName());
     water_body.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
-    water_body.generateParticles<BaseParticles, Lattice>();
+    water_body.generateParticles<BaseParticles, Lattice>(water_body_shape);
 
-    SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("Wall"));
+    WallBoundary wall_boundary_shape("Wall");
+    SolidBody wall_boundary(sph_system, wall_boundary_shape.getName());
     wall_boundary.defineMaterial<Solid>();
-    wall_boundary.generateParticles<BaseParticles, Lattice>();
+    wall_boundary.generateParticles<BaseParticles, Lattice>(wall_boundary_shape);
     //----------------------------------------------------------------------
     //	Particle and body creation of fluid observers.
     //----------------------------------------------------------------------
@@ -164,7 +166,7 @@ int main(int ac, char *av[])
     //	Define the main numerical methods used in the simulation.
     //	Note that there may be data dependence on the constructors of these methods.
     //----------------------------------------------------------------------
-    SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
+    SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary, wall_boundary_shape);
     /** Initial condition with momentum field */
     SimpleDynamics<BoundaryVelocity> solid_initial_condition(wall_boundary);
     /** Kernel correction matrix and transport velocity formulation. */

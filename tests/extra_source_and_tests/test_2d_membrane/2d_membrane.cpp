@@ -138,10 +138,11 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    SolidBody beam_body(sph_system, makeShared<Beam>("2dMembrane"));
+    Beam beam_body_shape("2dMembraneBase");
+    SolidBody beam_body(sph_system, beam_body_shape.getName());
     beam_body.defineMaterial<multi_species_continuum::PorousMediaSolid>(
         rho_0, Youngs_modulus, poisson, diffusivity_constant_, fluid_initial_density_, water_pressure_constant_);
-    beam_body.generateParticles<BaseParticles, Lattice>();
+    beam_body.generateParticles<BaseParticles, Lattice>(beam_body_shape);
 
     ObserverBody beam_observer(sph_system, "MembraneObserver");
     beam_observer.defineAdaptationRatios(1.15, 2.0);

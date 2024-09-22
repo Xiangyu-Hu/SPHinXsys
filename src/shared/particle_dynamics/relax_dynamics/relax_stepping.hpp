@@ -16,12 +16,6 @@ RelaxationResidue<Base, DataDelegationType>::RelaxationResidue(BaseRelationType 
       Vol_(this->particles_->template getVariableDataByName<Real>("VolumetricMeasure")),
       residue_(this->particles_->template registerStateVariable<Vecd>("ZeroOrderResidue")) {}
 //=================================================================================================//
-template <typename... Args>
-RelaxationResidue<Inner<LevelSetCorrection>>::RelaxationResidue(Args &&...args)
-    : RelaxationResidue<Inner<>>(std::forward<Args>(args)...),
-      pos_(particles_->getVariableDataByName<Vecd>("Position")),
-      level_set_shape_(DynamicCast<LevelSetShape>(this, this->getRelaxShape())){};
-//=================================================================================================//
 template <class RelaxationResidueType>
 template <typename FirstArg, typename... OtherArgs>
 RelaxationStep<RelaxationResidueType>::

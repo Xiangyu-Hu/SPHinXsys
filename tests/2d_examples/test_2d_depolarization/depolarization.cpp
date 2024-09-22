@@ -79,12 +79,13 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    SolidBody muscle_body(sph_system, makeShared<MuscleBlock>("MuscleBlock"));
+    MuscleBlock muscle_block_shape("MuscleBlock");
+    SolidBody muscle_body(sph_system, muscle_block_shape.getName());
     AlievPanfilowModel muscle_reaction_model(k_a, c_m, k, a, b, mu_1, mu_2, epsilon);
     MonoFieldElectroPhysiology<DirectionalDiffusion> *mono_field_electro_physiology =
         muscle_body.defineMaterial<MonoFieldElectroPhysiology<DirectionalDiffusion>>(
             muscle_reaction_model, diffusion_coeff, bias_coeff, fiber_direction);
-    muscle_body.generateParticles<BaseParticles, Lattice>();
+    muscle_body.generateParticles<BaseParticles, Lattice>(muscle_block_shape);
 
     ObserverBody voltage_observer(sph_system, "VoltageObserver");
     voltage_observer.generateParticles<ObserverParticles>(observation_location);

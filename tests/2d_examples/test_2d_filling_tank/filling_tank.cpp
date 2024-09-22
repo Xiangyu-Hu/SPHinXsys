@@ -94,15 +94,16 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     TransformShape<GeometricShapeBox> water_inlet_shape(Transform(inlet_translation), inlet_halfsize);
-    FluidBody water_body(sph_system, water_inlet_shape, "WaterBody");
+    FluidBody water_body(sph_system, "WaterBody");
     water_body.sph_adaptation_->resetKernel<KernelTabulated<KernelWendlandC2>>(20);
     water_body.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
     ParticleBuffer<ReserveSizeFactor> inlet_buffer(350.0);
-    water_body.generateParticlesWithReserve<BaseParticles, Lattice>(inlet_buffer);
+    water_body.generateParticlesWithReserve<BaseParticles, Lattice>(inlet_buffer, water_inlet_shape);
 
-    SolidBody wall(sph_system, makeShared<WallBoundary>("Wall"));
+    WallBoundary wall_boundary_shape("Wall");
+    SolidBody wall(sph_system, wall_boundary_shape.getName());
     wall.defineMaterial<Solid>();
-    wall.generateParticles<BaseParticles, Lattice>();
+    wall.generateParticles<BaseParticles, Lattice>(wall_boundary_shape);
 
     ObserverBody fluid_observer(sph_system, "FluidObserver");
     fluid_observer.generateParticles<ObserverParticles>(observation_location);
@@ -124,7 +125,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Define all numerical methods which are used in this case.
     //----------------------------------------------------------------------
-    SimpleDynamics<NormalDirectionFromBodyShape> wall_normal_direction(wall);
+    SimpleDynamics<NormalDirectionFromBodyShape> wall_normal_direction(wall, wall_boundary_shape);
     InteractionWithUpdate<SpatialTemporalFreeSurfaceIndicationComplex> indicate_free_surface(water_body_inner, water_body_contact);
 
     Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation(water_body_inner, water_body_contact);

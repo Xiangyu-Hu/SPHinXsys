@@ -10,7 +10,7 @@ namespace SPH
 template <class ExecutionPolicy>
 NormalFromBodyShapeCK::UpdateKernel::
     UpdateKernel(const ExecutionPolicy &ex_policy, NormalFromBodyShapeCK &encloser)
-    : initial_shape_(encloser.initial_shape_),
+    : shape_(encloser.shape_),
       pos_(encloser.dv_pos_->DelegatedDataField(ex_policy)),
       n_(encloser.dv_n_->DelegatedDataField(ex_policy)),
       n0_(encloser.dv_n0_->DelegatedDataField(ex_policy)),

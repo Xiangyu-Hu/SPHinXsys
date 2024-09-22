@@ -5,15 +5,9 @@ namespace SPH
 namespace relax_dynamics
 {
 //=================================================================================================//
-RelaxationResidue<Inner<>>::RelaxationResidue(BaseInnerRelation &inner_relation)
+RelaxationResidue<Inner<>>::RelaxationResidue(BaseInnerRelation &inner_relation, Shape &relax_shape)
     : RelaxationResidue<Base, DataDelegateInner>(inner_relation),
-      relax_shape_(sph_body_.getInitialShape()){};
-//=================================================================================================//
-RelaxationResidue<Inner<>>::
-    RelaxationResidue(BaseInnerRelation &inner_relation, const std::string &sub_shape_name)
-    : RelaxationResidue<Base, DataDelegateInner>(inner_relation),
-      relax_shape_(*DynamicCast<ComplexShape>(this, sph_body_.getInitialShape())
-                        .getSubShapeByName(sub_shape_name)) {}
+      relax_shape_(relax_shape){};
 //=================================================================================================//
 void RelaxationResidue<Inner<>>::interaction(size_t index_i, Real dt)
 {
@@ -26,6 +20,12 @@ void RelaxationResidue<Inner<>>::interaction(size_t index_i, Real dt)
     }
     residue_[index_i] = residue;
 };
+//=================================================================================================//
+RelaxationResidue<Inner<LevelSetCorrection>>::
+    RelaxationResidue(BaseInnerRelation &inner_relation, LevelSetShape *level_set_shape)
+    : RelaxationResidue<Inner<>>(inner_relation, *level_set_shape),
+      pos_(particles_->getVariableDataByName<Vecd>("Position")),
+      level_set_shape_(*level_set_shape){};
 //=================================================================================================//
 void RelaxationResidue<Inner<LevelSetCorrection>>::interaction(size_t index_i, Real dt)
 {
@@ -77,21 +77,18 @@ void PositionRelaxation::update(size_t index_i, Real dt_square)
 }
 //=================================================================================================//
 UpdateSmoothingLengthRatioByShape::
-    UpdateSmoothingLengthRatioByShape(SPHBody &sph_body, Shape &target_shape)
+    UpdateSmoothingLengthRatioByShape(SPHBody &sph_body, Shape &adaptation_shape)
     : LocalDynamics(sph_body),
       h_ratio_(particles_->getVariableDataByName<Real>("SmoothingLengthRatio")),
       Vol_(particles_->getVariableDataByName<Real>("VolumetricMeasure")),
       pos_(particles_->getVariableDataByName<Vecd>("Position")),
-      target_shape_(target_shape),
+      adaptation_shape_(adaptation_shape),
       particle_adaptation_(DynamicCast<ParticleRefinementByShape>(this, sph_body.sph_adaptation_)),
       reference_spacing_(particle_adaptation_->ReferenceSpacing()) {}
 //=================================================================================================//
-UpdateSmoothingLengthRatioByShape::UpdateSmoothingLengthRatioByShape(SPHBody &sph_body)
-    : UpdateSmoothingLengthRatioByShape(sph_body, sph_body.getInitialShape()) {}
-//=================================================================================================//
 void UpdateSmoothingLengthRatioByShape::update(size_t index_i, Real dt_square)
 {
-    Real local_spacing = particle_adaptation_->getLocalSpacing(target_shape_, pos_[index_i]);
+    Real local_spacing = particle_adaptation_->getLocalSpacing(adaptation_shape_, pos_[index_i]);
     h_ratio_[index_i] = reference_spacing_ / local_spacing;
     Vol_[index_i] = pow(local_spacing, Dimensions);
 }

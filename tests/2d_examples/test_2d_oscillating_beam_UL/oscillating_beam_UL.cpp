@@ -107,9 +107,10 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    RealBody beam_body(sph_system, makeShared<Beam>("BeamBody"));
+    Beam beam_body_shape("BeamBody");
+    RealBody beam_body(sph_system, beam_body_shape.getName());
     beam_body.defineMaterial<GeneralContinuum>(rho0_s, c0, Youngs_modulus, poisson);
-    beam_body.generateParticles<BaseParticles, Lattice>();
+    beam_body.generateParticles<BaseParticles, Lattice>(beam_body_shape);
 
     ObserverBody beam_observer(sph_system, "BeamObserver");
     beam_observer.sph_adaptation_->resetAdaptationRatios(1.15, 2.0);

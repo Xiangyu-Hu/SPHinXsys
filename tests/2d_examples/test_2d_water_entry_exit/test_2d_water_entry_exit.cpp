@@ -189,21 +189,24 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
-    FluidBody water_block(sph_system, makeShared<WettingFluidBody>("WaterBody"));
+    WettingFluidBody water_block_shape("WaterBody");
+    FluidBody water_block(sph_system, water_block_shape.getName());
     water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
-    water_block.generateParticles<BaseParticles, Lattice>();
+    water_block.generateParticles<BaseParticles, Lattice>(water_block_shape);
 
-    SolidBody wall_boundary(sph_system, makeShared<WettingWallBody>("WallBoundary"));
+    WettingWallBody wall_boundary_shape("WallBoundary");
+    SolidBody wall_boundary(sph_system, wall_boundary_shape.getName());
     wall_boundary.defineMaterial<Solid>();
-    wall_boundary.generateParticles<BaseParticles, Lattice>();
+    wall_boundary.generateParticles<BaseParticles, Lattice>(wall_boundary_shape);
 
-    SolidBody cylinder(sph_system, makeShared<WettingCylinderBody>("Cylinder"));
+    WettingCylinderBody cylinder_shape("Cylinder");
+    SolidBody cylinder(sph_system, cylinder_shape.getName());
     cylinder.defineAdaptationRatios(1.15, 1.0);
-    cylinder.defineBodyLevelSetShape();
+    LevelSetShape cylinder_shape_level_set(cylinder, cylinder_shape);
     cylinder.defineMaterial<Solid>(rho0_s);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
         ? cylinder.generateParticles<BaseParticles, Reload>(cylinder.getName())
-        : cylinder.generateParticles<BaseParticles, Lattice>();
+        : cylinder.generateParticles<BaseParticles, Lattice>(cylinder_shape_level_set);
 
     ObserverBody cylinder_observer(sph_system, "CylinderObserver");
     cylinder_observer.generateParticles<ObserverParticles>(observer_location);
@@ -246,7 +249,7 @@ int main(int ac, char *av[])
         /** Write the particle reload files. */
         ReloadParticleIO write_particle_reload_files(cylinder);
         /** A  Physics relaxation step. */
-        RelaxationStepInner relaxation_step_inner(cylinder_inner);
+        RelaxationStepInner relaxation_step_inner(cylinder_inner, cylinder_shape_level_set);
         //----------------------------------------------------------------------
         //	Particle relaxation starts here.
         //----------------------------------------------------------------------
@@ -286,8 +289,8 @@ int main(int ac, char *av[])
     Gravity gravity(Vecd(0.0, -gravity_g));
     SimpleDynamics<GravityForce<Gravity>> constant_gravity(water_block, gravity);
     InteractionWithUpdate<WettingCoupledSpatialTemporalFreeSurfaceIndicationComplex> free_stream_surface_indicator(water_block_inner, water_block_contact);
-    SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
-    SimpleDynamics<NormalDirectionFromBodyShape> cylinder_normal_direction(cylinder);
+    SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary, wall_boundary_shape);
+    SimpleDynamics<NormalDirectionFromBodyShape> cylinder_normal_direction(cylinder, cylinder_shape_level_set);
 
     Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> fluid_pressure_relaxation(water_block_inner, water_block_contact);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallRiemann> fluid_density_relaxation(water_block_inner, water_block_contact);

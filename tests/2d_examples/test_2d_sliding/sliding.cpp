@@ -74,13 +74,15 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating body, materials and particles
     //----------------------------------------------------------------------
-    SolidBody free_cube(sph_system, makeShared<Cube>("FreeCube"));
+    Cube cube_shape("FreeCube");
+    SolidBody free_cube(sph_system, cube_shape.getName());
     free_cube.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
-    free_cube.generateParticles<BaseParticles, Lattice>();
+    free_cube.generateParticles<BaseParticles, Lattice>(cube_shape);
 
-    SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
+    WallBoundary wall_boundary_shape("WallBoundary");
+    SolidBody wall_boundary(sph_system, wall_boundary_shape.getName());
     wall_boundary.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
-    wall_boundary.generateParticles<BaseParticles, Lattice>();
+    wall_boundary.generateParticles<BaseParticles, Lattice>(wall_boundary_shape);
 
     ObserverBody cube_observer(sph_system, "CubeObserver");
     cube_observer.generateParticles<ObserverParticles>(observation_location);
@@ -93,7 +95,7 @@ int main(int ac, char *av[])
     //  inner and contact relations.
     //----------------------------------------------------------------------
     InnerRelation free_cube_inner(free_cube);
-    SurfaceContactRelation free_cube_contact(free_cube, {&wall_boundary});
+    SurfaceContactRelation free_cube_contact(free_cube, cube_shape, {&wall_boundary});
     ContactRelation cube_observer_contact(cube_observer, {&free_cube});
     //----------------------------------------------------------------------
     //	Define the main numerical methods used in the simulation.

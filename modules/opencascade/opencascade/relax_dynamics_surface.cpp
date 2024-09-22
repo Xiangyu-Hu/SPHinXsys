@@ -10,22 +10,21 @@ namespace SPH
 namespace relax_dynamics
 {
 //=================================================================================================//
-ShapeSurfaceBounding2::ShapeSurfaceBounding2(RealBody &real_body_)
+ShapeSurfaceConstraint::ShapeSurfaceConstraint(RealBody &real_body_, Shape &shape)
     : LocalDynamics(real_body_),
-      pos_(particles_->getVariableDataByName<Vecd>("Position"))
-{
-    shape_ = &real_body_.getInitialShape();
-}
+      pos_(particles_->getVariableDataByName<Vecd>("Position")),
+      shape_(&shape) {}
 //=================================================================================================//
-void ShapeSurfaceBounding2::update(size_t index_i, Real dt)
+void ShapeSurfaceConstraint::update(size_t index_i, Real dt)
 {
     pos_[index_i] = shape_->findClosestPoint(pos_[index_i]);
 }
 //=================================================================================================//
 RelaxationStepInnerFirstHalf::
-    RelaxationStepInnerFirstHalf(BaseInnerRelation &inner_relation)
+    RelaxationStepInnerFirstHalf(BaseInnerRelation &inner_relation, Shape &shape)
     : BaseDynamics<void>(), real_body_(inner_relation.real_body_),
-      inner_relation_(inner_relation), relaxation_acceleration_inner_(inner_relation) {}
+      inner_relation_(inner_relation),
+      relaxation_acceleration_inner_(inner_relation, shape) {}
 //=================================================================================================//
 void RelaxationStepInnerFirstHalf::exec(Real dt)
 {
@@ -36,12 +35,10 @@ void RelaxationStepInnerFirstHalf::exec(Real dt)
 
 //=================================================================================================//
 RelaxationStepInnerSecondHalf::
-    RelaxationStepInnerSecondHalf(BaseInnerRelation &inner_relation)
+    RelaxationStepInnerSecondHalf(BaseInnerRelation &inner_relation, Shape &shape)
     : BaseDynamics<void>(), real_body_(inner_relation.real_body_),
       get_time_step_square_(*real_body_), update_particle_position_(*real_body_),
-      surface_bounding_(*real_body_)
-{
-}
+      surface_bounding_(*real_body_, shape) {}
 //=================================================================================================//
 void RelaxationStepInnerSecondHalf::exec(Real dt)
 {
@@ -51,9 +48,9 @@ void RelaxationStepInnerSecondHalf::exec(Real dt)
 }
 
 //=================================================================================================//
-SurfaceNormalDirection::SurfaceNormalDirection(SPHBody &sph_body)
+SurfaceNormalDirection::SurfaceNormalDirection(SPHBody &sph_body, Shape &shape)
     : LocalDynamics(sph_body),
-      surface_shape_(DynamicCast<SurfaceShape>(this, &sph_body.getInitialShape())),
+      surface_shape_(DynamicCast<SurfaceShape>(this, &shape)),
       pos_(particles_->getVariableDataByName<Vecd>("Position")),
       n_(particles_->registerStateVariable<Vecd>("NormalDirection")) {}
 
