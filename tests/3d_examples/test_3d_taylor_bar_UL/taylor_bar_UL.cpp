@@ -12,14 +12,17 @@ int main(int ac, char *av[])
     system.setReloadParticles(true);
     system.handleCommandlineOptions(ac, av)->setIOEnvironment();
 
-    RealBody column(system, makeShared<Column>("Column"));
-    column.defineBodyLevelSetShape()->writeLevelSet(system);
+    Column column_shape("Column");
+    RealBody column(system, column_shape.getName());
+    LevelSetShape level_set_shape(column, column_shape);
+    level_set_shape.writeLevelSet(system);
     column.defineMaterial<J2Plasticity>(rho0_s, c0, Youngs_modulus, poisson, yield_stress);
     (!system.RunParticleRelaxation() && system.ReloadParticles())
         ? column.generateParticles<BaseParticles, Reload>(column.getName())
-        : column.generateParticles<BaseParticles, Lattice>();
+        : column.generateParticles<BaseParticles, Lattice>(level_set_shape);
 
-    SolidBody wall_boundary(system, makeShared<WallBoundary>("Wall"));
+    WallBoundary wall_boundary_shape("Wall");
+    SolidBody wall_boundary(system, wall_boundary_shape.getName());
     wall_boundary.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     wall_boundary.generateParticles<BaseParticles, Lattice>(wall_boundary_shape);
 
@@ -30,7 +33,7 @@ int main(int ac, char *av[])
     /**body relation topology */
     InnerRelation column_inner(column);
     ContactRelation my_observer_contact(my_observer, {&column});
-    SurfaceContactRelation column_wall_contact(column, {&wall_boundary});
+    SurfaceContactRelation column_wall_contact(column, level_set_shape, {&wall_boundary});
     //----------------------------------------------------------------------
     //	Run particle relaxation for body-fitted distribution if chosen.
     //----------------------------------------------------------------------
@@ -44,7 +47,7 @@ int main(int ac, char *av[])
         /** Write the particle reload files. */
         ReloadParticleIO write_particle_reload_files(column);
         /** A  Physics relaxation step. */
-        RelaxationStepLevelSetCorrectionInner relaxation_step_inner(column_inner);
+        RelaxationStepLevelSetCorrectionInner relaxation_step_inner(column_inner, &level_set_shape);
         /**
          * @brief 	Particle relaxation starts here.
          */
@@ -72,7 +75,7 @@ int main(int ac, char *av[])
     //	All numerical methods will be used in this case.
     //----------------------------------------------------------------------
     SimpleDynamics<InitialCondition> initial_condition(column);
-    SimpleDynamics<NormalDirectionFromBodyShape> wall_normal_direction(wall_boundary);
+    SimpleDynamics<NormalDirectionFromBodyShape> wall_normal_direction(wall_boundary, level_set_shape);
     InteractionWithUpdate<LinearGradientCorrectionMatrixInner> corrected_configuration(column_inner);
     Dynamics1Level<continuum_dynamics::Integration1stHalf> column_pressure_relaxation(column_inner);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfInnerDissipativeRiemann> column_density_relaxation(column_inner);

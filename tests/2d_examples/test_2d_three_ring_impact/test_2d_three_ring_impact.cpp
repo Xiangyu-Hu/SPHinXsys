@@ -9,14 +9,14 @@
 #include "sphinxsys.h"
 using namespace SPH;
 
-void relax_solid(RealBody &body, InnerRelation &inner)
+void relax_solid(InnerRelation &inner, LevelSetShape &level_set_shape)
 {
     //----------------------------------------------------------------------
     //	Methods used for particle relaxation.
     //----------------------------------------------------------------------
     using namespace relax_dynamics;
-    SimpleDynamics<RandomizeParticlePosition> random_particles(body);
-    RelaxationStepLevelSetCorrectionInner relaxation_step_inner(inner);
+    SimpleDynamics<RandomizeParticlePosition> random_particles(inner.getSPHBody());
+    RelaxationStepLevelSetCorrectionInner relaxation_step_inner(inner, &level_set_shape);
     //----------------------------------------------------------------------
     //	Particle relaxation starts here.
     //----------------------------------------------------------------------
@@ -189,19 +189,22 @@ void three_ring_impact(int resolution_factor_l, int resolution_factor_m, int res
     IOEnvironment io_environment(system);
 
     // Body
-    SolidBody ring_l_body(system, makeShared<Ring>("RingLarge", center_l, 0.5 * diameter_inner_l, 0.5 * diameter_outer_l));
-    ring_l_body.defineBodyLevelSetShape();
+    Ring ring_l_body_shape("RingLarge", center_l, 0.5 * diameter_inner_l, 0.5 * diameter_outer_l);
+    SolidBody ring_l_body(system, ring_l_body_shape.getName());
+    LevelSetShape level_set_shape(ring_l_body, ring_l_body_shape);
     ring_l_body.assignMaterial(material_l.get());
-    ring_l_body.generateParticles<BaseParticles, Lattice>();
+    ring_l_body.generateParticles<BaseParticles, Lattice>(level_set_shape);
     auto particles_l = &ring_l_body.getBaseParticles();
 
-    SolidBody ring_m_body(system, makeShared<DefaultShape>("RingMedium"));
+    DefaultShape ring_m_default_shape("RingMedium");
+    SolidBody ring_m_body(system, ring_m_default_shape.getName());
     ring_m_body.defineAdaptationRatios(1.15, dp_l / dp_m);
     ring_m_body.assignMaterial(material_m.get());
     ring_m_body.generateParticles<SurfaceParticles, ShellRing>(center_m, 0.5 * mid_srf_diameter_m, dp_m, thickness_m);
     auto particles_m = &ring_m_body.getBaseParticles();
 
-    SolidBody ring_s_body(system, makeShared<DefaultShape>("RingSmall"));
+    DefaultShape ring_s_default_shape("RingSmall");
+    SolidBody ring_s_body(system, ring_s_default_shape.getName());
     ring_s_body.defineAdaptationRatios(1.15, dp_l / dp_s);
     ring_s_body.assignMaterial(material_s.get());
     ring_s_body.generateParticles<SurfaceParticles, ShellRing>(center_s, 0.5 * mid_srf_diameter_s, dp_s, thickness_s);
@@ -213,7 +216,7 @@ void three_ring_impact(int resolution_factor_l, int resolution_factor_m, int res
     InnerRelation ring_s_inner(ring_s_body);
 
     // relaxation
-    relax_solid(ring_l_body, ring_l_inner);
+    relax_solid(ring_l_inner, level_set_shape);
 
     // Methods
     InteractionWithUpdate<LinearGradientCorrectionMatrixInner> corrected_configuration_l(ring_l_inner);
@@ -247,9 +250,9 @@ void three_ring_impact(int resolution_factor_l, int resolution_factor_m, int res
     ShellSelfContactRelation self_contact_m(ring_m_body);
 
     // Contact relation
-    SurfaceContactRelation contact_s(ring_s_body, {&ring_m_body}, {true});
-    SurfaceContactRelation contact_m(ring_m_body, {&ring_s_body, &ring_l_body}, {true, false});
-    SurfaceContactRelation contact_l(ring_l_body, {&ring_m_body}, {true});
+    SurfaceContactRelation contact_s(ring_s_body, ring_s_default_shape, {&ring_m_body}, {true});
+    SurfaceContactRelation contact_m(ring_m_body, ring_m_default_shape, {&ring_s_body, &ring_l_body}, {true, false});
+    SurfaceContactRelation contact_l(ring_l_body, ring_l_body_shape, {&ring_m_body}, {true});
 
     // Inner relation of curvature
     ShellInnerRelationWithContactKernel curvature_inner_m_with_s_kernel(ring_m_body, ring_s_body);

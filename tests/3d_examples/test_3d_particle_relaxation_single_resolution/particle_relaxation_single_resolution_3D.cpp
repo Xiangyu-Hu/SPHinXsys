@@ -55,24 +55,24 @@ class SolidBodyFromMesh : public ComplexShape
 //	Setting for the second geometry.
 //	To use this, please commenting the setting for the first geometry.
 //----------------------------------------------------------------------
-//std::string full_path_to_file = "./input/fluid.stl";
+// std::string full_path_to_file = "./input/fluid.stl";
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-//Vec3d domain_lower_bound(-0.036, -0.046, -0.011);
-//Vec3d domain_upper_bound(0.036, 0.093, 0.072);
-//Vecd translation(0.0, 0.0, 0.0);
-//Real scaling = 1.0;
+// Vec3d domain_lower_bound(-0.036, -0.046, -0.011);
+// Vec3d domain_upper_bound(0.036, 0.093, 0.072);
+// Vecd translation(0.0, 0.0, 0.0);
+// Real scaling = 1.0;
 
 //----------------------------------------------------------------------
 //	Below are common parts for the two test geometries.
 //----------------------------------------------------------------------
-//BoundingBox system_domain_bounds(domain_lower_bound, domain_upper_bound);
-//Real dp_0 = (domain_upper_bound[0] - domain_lower_bound[0]) / 100.0;
+// BoundingBox system_domain_bounds(domain_lower_bound, domain_upper_bound);
+// Real dp_0 = (domain_upper_bound[0] - domain_lower_bound[0]) / 100.0;
 //----------------------------------------------------------------------
 //	define the imported model.
 //----------------------------------------------------------------------
-//class SolidBodyFromMesh : public ComplexShape
+// class SolidBodyFromMesh : public ComplexShape
 //{
 //  public:
 //    explicit SolidBodyFromMesh(const std::string &shape_name) : ComplexShape(shape_name)
@@ -93,9 +93,11 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    RealBody imported_model(sph_system, makeShared<SolidBodyFromMesh>("SolidBodyFromMesh"));
+    SolidBodyFromMesh import_model_shape("SolidBodyFromMesh");
+    RealBody imported_model(sph_system, import_model_shape.getName());
     // level set shape is used for particle relaxation
-    imported_model.defineBodyLevelSetShape()->correctLevelSetSign()->writeLevelSet(sph_system);
+    LevelSetShape level_set_shape(imported_model, import_model_shape);
+    level_set_shape.correctLevelSetSign()->writeLevelSet(sph_system);
     imported_model.generateParticles<BaseParticles, Lattice>();
     //----------------------------------------------------------------------
     //	Define simple file input and outputs functions.
@@ -117,7 +119,7 @@ int main(int ac, char *av[])
     using namespace relax_dynamics;
     SimpleDynamics<RandomizeParticlePosition> random_imported_model_particles(imported_model);
     /** A  Physics relaxation step. */
-    RelaxationStepLevelSetCorrectionInner relaxation_step_inner(imported_model_inner);
+    RelaxationStepLevelSetCorrectionInner relaxation_step_inner(imported_model_inner, &level_set_shape);
     //----------------------------------------------------------------------
     //	Particle relaxation starts here.
     //----------------------------------------------------------------------

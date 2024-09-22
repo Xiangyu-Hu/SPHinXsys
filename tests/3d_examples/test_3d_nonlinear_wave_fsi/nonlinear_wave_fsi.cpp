@@ -16,11 +16,14 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     SPHSystem system_fit(system_domain_bounds, particle_spacing_structure);
     system_fit.handleCommandlineOptions(ac, av)->setIOEnvironment();
-    SolidBody structure_fit(system_fit, makeShared<FloatingStructure>("Structure_Fit"));
+
+    FloatingStructure structure_fit_shape("Structure_Fit");
+    SolidBody structure_fit(system_fit, structure_fit_shape.getName());
     structure_fit.defineAdaptation<ParticleRefinementNearSurface>(1.3, 0.7, 3);
-    structure_fit.defineBodyLevelSetShape()->correctLevelSetSign()->writeLevelSet(system_fit);
+    LevelSetShape level_set_shape(structure_fit, structure_fit_shape);
+    level_set_shape.correctLevelSetSign()->writeLevelSet(system_fit);
     structure_fit.defineMaterial<Solid>(StructureDensity);
-    structure_fit.generateParticles<BaseParticles, Lattice, Adaptive>();
+    structure_fit.generateParticles<BaseParticles, Lattice, Adaptive>(level_set_shape);
 
     //----------------------------------------------------------------------
     //	Define body relation map.
@@ -33,8 +36,8 @@ int main(int ac, char *av[])
     using namespace relax_dynamics;
     SimpleDynamics<RandomizeParticlePosition> random_imported_model_particles(structure_fit);
     /** A  Physics relaxation step. */
-    RelaxationStepLevelSetCorrectionInner relaxation_step_inner(structure_adaptive_inner);
-    SimpleDynamics<UpdateSmoothingLengthRatioByShape> update_smoothing_length_ratio(structure_fit);
+    RelaxationStepLevelSetCorrectionInner relaxation_step_inner(structure_adaptive_inner, &level_set_shape);
+    SimpleDynamics<UpdateSmoothingLengthRatioByShape> update_smoothing_length_ratio(structure_fit, level_set_shape);
     /** Write the particle reload files. */
     ReloadParticleIO write_particle_reload_files(structure_fit);
 
