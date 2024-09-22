@@ -66,9 +66,9 @@ int main(int ac, char *av[])
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
     TransformShape<GeometricShapeBox> muscle_body_shape(Transform(translation_myocardium), halfsize_myocardium, "MyocardiumMuscleBody");
-    SolidBody muscle_body(sph_system, muscle_body_shape);
+    SolidBody muscle_body(sph_system, muscle_body_shape.getName());
     muscle_body.defineMaterial<ActiveMuscle<Muscle>>(rho0_s, bulk_modulus, fiber_direction, sheet_direction, a0, b0);
-    muscle_body.generateParticles<BaseParticles, Lattice>();
+    muscle_body.generateParticles<BaseParticles, Lattice>(muscle_body_shape);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.

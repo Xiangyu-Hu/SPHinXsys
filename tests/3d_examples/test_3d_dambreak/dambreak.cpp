@@ -72,8 +72,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
-    WaterBlock initial_water_block("WaterBody");
-    FluidBody water_block(sph_system, initial_water_block.getName());
+    WaterBlock water_block_shape("WaterBody");
+    FluidBody water_block(sph_system, water_block_shape.getName());
     water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
     water_block.generateParticles<BaseParticles, Lattice>(water_block_shape);
 

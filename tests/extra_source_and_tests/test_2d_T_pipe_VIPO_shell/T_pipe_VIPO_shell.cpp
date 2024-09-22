@@ -261,11 +261,10 @@ int main(int ac, char *av[])
     FluidBody water_block(sph_system, water_block_shape.getName());
     water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
     ParticleBuffer<ReserveSizeFactor> in_outlet_particle_buffer(0.5);
-    water_block.generateParticlesWithReserve<BaseParticles, Lattice>(in_outlet_particle_buffer);
+    water_block.generateParticlesWithReserve<BaseParticles, Lattice>(in_outlet_particle_buffer, water_block_shape);
 
-    SolidBody shell_body(sph_system, makeShared<ShellShape>("ShellBody"));
+    SolidBody shell_body(sph_system, "ShellBody");
     shell_body.defineAdaptation<SPHAdaptation>(1.15, resolution_ref / resolution_shell);
-    shell_body.defineBodyLevelSetShape(level_set_refinement_ratio)->writeLevelSet(sph_system);
     shell_body.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     shell_body.generateParticles<SurfaceParticles, WallBoundary>(resolution_shell, BW);
 

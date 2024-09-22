@@ -117,7 +117,8 @@ int main(int ac, char *av[])
     IOEnvironment io_environment(sph_system);
 
     /** Import a beam body, with corresponding material and particles. */
-    SolidBody beam_body(sph_system, makeShared<Beam>("beam"));
+    Beam beam_body_shape("Beam");
+    SolidBody beam_body(sph_system, beam_body_shape.getName());
     beam_body.defineMaterial<LinearElasticSolid>(rho, Youngs_modulus, poisson_ratio);
     beam_body.generateParticles<BaseParticles, Lattice>(beam_body_shape);
 

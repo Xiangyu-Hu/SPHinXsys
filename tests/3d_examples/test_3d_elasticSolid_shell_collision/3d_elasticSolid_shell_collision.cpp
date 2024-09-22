@@ -78,7 +78,10 @@ int main(int ac, char *av[])
     shell.defineMaterial<Solid>();
     shell.generateParticles<SurfaceParticles, Cylinder>();
 
-    SolidBody ball(sph_system, makeShared<GeometricShapeBall>(ball_center, ball_radius, "BallBody"));
+    GeometricShapeBall ball_shape(ball_center, ball_radius, "BallBody");
+    SolidBody ball(sph_system, ball_shape.getName());
+    LevelSetShape level_set_shape(ball, ball_shape);
+    level_set_shape.writeLevelSet(sph_system);
     ball.defineMaterial<NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
     if (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
     {
@@ -86,8 +89,7 @@ int main(int ac, char *av[])
     }
     else
     {
-        ball.defineBodyLevelSetShape()->writeLevelSet(sph_system);
-        ball.generateParticles<BaseParticles, Lattice>();
+        ball.generateParticles<BaseParticles, Lattice>(level_set_shape);
     }
 
     ObserverBody ball_observer(sph_system, "BallObserver");
@@ -106,7 +108,7 @@ int main(int ac, char *av[])
         //----------------------------------------------------------------------
         using namespace relax_dynamics;
         SimpleDynamics<RandomizeParticlePosition> ball_random_particles(ball);
-        RelaxationStepInner ball_relaxation_step_inner(ball_inner);
+        RelaxationStepInner ball_relaxation_step_inner(ball_inner, level_set_shape);
         //----------------------------------------------------------------------
         //	Output for particle relaxation.
         //----------------------------------------------------------------------
@@ -143,7 +145,7 @@ int main(int ac, char *av[])
     //  Generally, we first define all the inner relations, then the contact relations.
     //----------------------------------------------------------------------
     InnerRelation ball_inner(ball);
-    ShellSurfaceContactRelation ball_contact(ball, {&shell});
+    ShellSurfaceContactRelation ball_contact(ball, level_set_shape, {&shell});
     ContactRelation ball_observer_contact(ball_observer, {&ball});
     //----------------------------------------------------------------------
     //	Define the main numerical methods used in the simulation.

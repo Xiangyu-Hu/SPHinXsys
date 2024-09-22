@@ -8,15 +8,15 @@ TEST(test_meshes, split_for)
     Real length = 10;
     Real dp = 1;
 
-    auto shape = makeShared<GeometricShapeBox>(0.5 * length * Vec3d::Ones(), "Shape");
+    GeometricShapeBox shape(0.5 * length * Vec3d::Ones(), "Shape");
 
-    BoundingBox bb_system = shape->getBounds();
+    BoundingBox bb_system = shape.getBounds();
 
     SPHSystem system(bb_system, dp);
 
-    SolidBody body(system, shape);
+    SolidBody body(system, shape.getName());
     body.defineMaterial<Solid>();
-    body.generateParticles<BaseParticles, Lattice>();
+    body.generateParticles<BaseParticles, Lattice>(shape);
     auto &particles = body.getBaseParticles();
     const auto pos = particles.registerStateVariable<Vec3d>("Position");
     auto quantity = particles.registerStateVariable<Real>("Quantity", [&](size_t i) -> Real

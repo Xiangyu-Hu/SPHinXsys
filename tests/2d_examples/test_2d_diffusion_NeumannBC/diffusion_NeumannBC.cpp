@@ -53,7 +53,7 @@ int main(int ac, char *av[])
     //	Define the main numerical methods used in the simulation.
     //	Note that there may be data dependence on the constructors of these methods.
     //----------------------------------------------------------------------
-
+    SimpleDynamics<NormalDirectionFromBodyShape> diffusion_body_normal_direction(diffusion_body, diffusion_body_shape);
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_Neumann, wall_shape_Neumann);
 
     DiffusionBodyRelaxation temperature_relaxation(

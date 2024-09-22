@@ -29,9 +29,9 @@ int main(int ac, char *av[])
     wall_boundary.generateParticles<BaseParticles, Lattice>(wall_boundary_shape);
 
     TransformShape<GeometricShapeBox> structure_shape(Transform(structure_translation), structure_halfsize, "Structure");
-    SolidBody structure(sph_system, structure_shape);
+    SolidBody structure(sph_system, structure_shape.getName());
     structure.defineMaterial<Solid>(rho_s);
-    structure.generateParticles<BaseParticles, Lattice>(floating_structure_shape);
+    structure.generateParticles<BaseParticles, Lattice>(structure_shape);
 
     ObserverBody observer(sph_system, "Observer");
     observer.defineAdaptationRatios(1.15, 2.0);
@@ -66,7 +66,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     SimpleDynamics<OffsetInitialPosition> structure_offset_position(structure, offset);
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary, wall_boundary_shape);
-    SimpleDynamics<NormalDirectionFromBodyShape> str_normal(structure);
+    SimpleDynamics<NormalDirectionFromBodyShape> str_normal(structure, structure_shape);
 
     Gravity gravity(Vecd(0.0, -gravity_g));
     SimpleDynamics<GravityForce<Gravity>> constant_gravity(water_block, gravity);

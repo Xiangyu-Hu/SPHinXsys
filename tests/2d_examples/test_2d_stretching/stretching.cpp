@@ -184,14 +184,15 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    SolidBody beam_body(system, makeShared<Beam>("StretchingBody"));
-    beam_body.defineBodyLevelSetShape();
+    Beam beam_body_shape("StretchingBody");
+    SolidBody beam_body(system, beam_body_shape.getName());
+    LevelSetShape level_set_shape(beam_body, beam_body_shape);
     beam_body.defineMaterial<NonLinearHardeningPlasticSolid>(
         rho0_s, Youngs_modulus, poisson, yield_stress, hardening_modulus, saturation_flow_stress, saturation_exponent);
 
     (!system.RunParticleRelaxation() && system.ReloadParticles())
         ? beam_body.generateParticles<BaseParticles, Reload>(beam_body.getName())
-        : beam_body.generateParticles<BaseParticles, Lattice>(beam_body_shape);
+        : beam_body.generateParticles<BaseParticles, Lattice>(level_set_shape);
 
     ObserverBody beam_observer(system, "BeamObserver");
     beam_observer.generateParticles<ObserverParticles>(observation_location);
@@ -214,7 +215,7 @@ int main(int ac, char *av[])
         //----------------------------------------------------------------------
         using namespace relax_dynamics;
         SimpleDynamics<RandomizeParticlePosition> beam_body_random_particles(beam_body);
-        RelaxationStepInner beam_body_relaxation_step_inner(beam_body_inner);
+        RelaxationStepInner beam_body_relaxation_step_inner(beam_body_inner, level_set_shape);
         //----------------------------------------------------------------------
         //	Output for particle relaxation.
         //----------------------------------------------------------------------

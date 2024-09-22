@@ -172,9 +172,10 @@ int main(int ac, char *av[])
     wall_boundary.defineMaterial<Solid>();
     wall_boundary.generateParticles<BaseParticles, Lattice>(wall_boundary_shape);
 
-    SolidBody gate(sph_system, makeShared<MovingGate>("Gate"));
+    MovingGate gate_shape("Gate");
+    SolidBody gate(sph_system, gate_shape.getName());
     gate.defineMaterial<Solid>();
-    gate.generateParticles<BaseParticles, Lattice>();
+    gate.generateParticles<BaseParticles, Lattice>(gate_shape);
 
     SolidBody plate(sph_system, "Plate");
     plate.defineAdaptation<SPHAdaptation>(1.15, resolution_ref / resolution_shell);
@@ -216,7 +217,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     // solid
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary, wall_boundary_shape);
-    SimpleDynamics<NormalDirectionFromBodyShape> gate_normal_direction(gate);
+    SimpleDynamics<NormalDirectionFromBodyShape> gate_normal_direction(gate, gate_shape);
     SimpleDynamics<GateMotionConstraint> update_gate_position(gate);
     // Shell
     InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration> plate_corrected_configuration(plate_inner);
