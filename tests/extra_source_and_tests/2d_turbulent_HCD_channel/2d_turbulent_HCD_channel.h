@@ -19,9 +19,10 @@ using namespace SPH;
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
 Real DH = 2.0; /**< Channel height. */
-Real num_fluid_cross_section = 120.0;
+Real num_fluid_cross_section = 40.0;
 Real extend_in = 2.0;
 Real extend_out = 4.0;
+Real extend_compensate_relaxation = 1.0;
 Real DL1 = 1.0 + extend_in;
 Real DL2 = 1.5;
 Real DL3 = 1.0;
@@ -124,7 +125,7 @@ Vec2d right_buffer_translation = outlet_buffer_center_translation;
 //----------------------------------------------------------------------
 Real DL_domain = DL;
 Real DH_domain = DH;
-Vec2d left_bottom_point(-DL_sponge - offset_distance, 0.0);
+Vec2d left_bottom_point(-DL_sponge - offset_distance - extend_compensate_relaxation, 0.0);
 Vec2d right_up_point(DL_domain, DH_domain);
 BoundingBox system_domain_bounds(left_bottom_point + Vec2d(-2.0 * BW, -2.0 * BW), right_up_point + Vec2d(2.0 * BW, 2.0 * BW));
 //----------------------------------------------------------------------
@@ -242,8 +243,8 @@ std::vector<Vecd> createWaterBlockShape()
 {
     std::vector<Vecd> water_block_shape;
 
-    water_block_shape.push_back(Vecd(-DL_sponge - offset_distance, 0.0));
-    water_block_shape.push_back(Vecd(-DL_sponge - offset_distance, DH));
+    water_block_shape.push_back(Vecd(-DL_sponge - offset_distance - extend_compensate_relaxation, 0.0));
+    water_block_shape.push_back(Vecd(-DL_sponge - offset_distance - extend_compensate_relaxation, DH));
     water_block_shape.push_back(point_A);
     water_block_shape.push_back(point_B);
     water_block_shape.push_back(Vecd(point_B[0] + offset_distance, point_B[1]));
@@ -253,7 +254,7 @@ std::vector<Vecd> createWaterBlockShape()
     water_block_shape.push_back(point_E);
     water_block_shape.push_back(point_F);
     water_block_shape.push_back(point_G);
-    water_block_shape.push_back(Vecd(-DL_sponge - offset_distance, 0.0));
+    water_block_shape.push_back(Vecd(-DL_sponge - offset_distance - extend_compensate_relaxation, 0.0));
 
     return water_block_shape;
 }
