@@ -16,7 +16,7 @@ SPHAdaptation::SPHAdaptation(Real resolution_ref, Real h_spacing_ratio, Real sys
       h_ref_(h_spacing_ratio_ * spacing_ref_), kernel_ptr_(makeUnique<KernelWendlandC2>(h_ref_)),
       sigma0_ref_(computeLatticeNumberDensity(Vecd())),
       spacing_min_(this->MostRefinedSpacingRegular(spacing_ref_, local_refinement_level_)),
-      Vol_min_(pow(spacing_min_, Dimensions)), h_ratio_max_(spacing_ref_ / spacing_min_) {};
+      Vol_min_(pow(spacing_min_, Dimensions)), h_ratio_max_(spacing_ref_ / spacing_min_){};
 //=================================================================================================//
 Real SPHAdaptation::MostRefinedSpacing(Real coarse_particle_spacing, int local_refinement_level)
 {
@@ -118,7 +118,7 @@ void ParticleWithLocalRefinement::initializeAdaptationVariables(BaseParticles &b
     h_ratio_ = base_particles.registerStateVariable<Real>(
         "SmoothingLengthRatio", [&](size_t i) -> Real
         { return ReferenceSpacing() / base_particles.ParticleSpacing(i); });
-    level_ = base_particles.registerSharedVariable<size_t>("ParticleMeshLevel");
+    level_ = base_particles.registerStateVariable<int>("ParticleMeshLevel");
     base_particles.addVariableToSort<Real>("SmoothingLengthRatio");
     base_particles.addVariableToReload<Real>("SmoothingLengthRatio");
 }

@@ -176,7 +176,7 @@ class MultilevelCellLinkedList : public MultilevelMesh<BaseCellLinkedList, CellL
 {
   protected:
     Real *h_ratio_; /**< Smoothing length for each level. */
-    size_t *level_; /**< Mesh level for each particle. */
+    int *level_;    /**< Mesh level for each particle. */
 
     /** determine mesh level from particle cutoff radius */
     inline size_t getMeshLevel(Real particle_cutoff_radius);

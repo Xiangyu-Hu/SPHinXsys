@@ -346,8 +346,8 @@ class NeighborBuilderSplitInnerAdaptive : public NeighborBuilder
                     const Vecd &pos_i, size_t index_i, const ListData &list_data_j) override;
 
   private:
-    StdLargeVec<Real> &h_ratio_;
-    StdLargeVec<size_t> &level_;
+    Real *h_ratio_;
+    int *level_;
 };
 } // namespace SPH
 #endif // NEIGHBORHOOD_H
