@@ -13,7 +13,7 @@ void beam_multi_resolution(double dp_factor, bool damping_on, int refinement_lev
 
 int main(int ac, char *av[])
 {
-    beam_multi_resolution(2.5, false, 2);
+    beam_multi_resolution(3.5, true, 2);
 }
 
 //------------------------------------------------------------------------------
@@ -186,7 +186,10 @@ void beam_multi_resolution(double dp_factor, bool damping_on, int refinement_lev
     auto damping_exec = [&](Real dt)
     {
         if (refinement_level > 0)
+        {
             damping_mr_res->exec(dt);
+            damping_mr_res->exec(dt);
+        }
         else
             damping_single_res->exec(dt);
     };
