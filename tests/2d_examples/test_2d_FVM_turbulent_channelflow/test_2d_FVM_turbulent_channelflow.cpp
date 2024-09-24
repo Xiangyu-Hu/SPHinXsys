@@ -25,7 +25,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    FluidBody water_block(sph_system, makeShared<WaterBlock>("TurbulentChannelFlow"));
+    FluidBody water_block(sph_system, makeShared<WaterBlock>("TurbulentChannelFlow_Mutavg_0.1"));
     water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
     Ghost<ReserveSizeFactor> ghost_boundary(0.5);
     water_block.generateParticlesWithReserve<BaseParticles, UnstructuredMesh>(ghost_boundary, read_mesh_data);
@@ -44,6 +44,7 @@ int main(int ac, char *av[])
     InteractionWithUpdate<fluid_dynamics::EulerianIntegration1stHalfInnerRiemann> pressure_relaxation(water_block_inner, 1.0);
     InteractionWithUpdate<fluid_dynamics::EulerianIntegration2ndHalfInnerRiemann> density_relaxation(water_block_inner, 10000.0);
     SimpleDynamics<TCFInitialCondition> initial_condition(water_block);
+    SimpleDynamics<fluid_dynamics::WallAdjacentCells> wall_adj_cell(water_block_inner, ghost_creation);
     
     InteractionWithUpdate<fluid_dynamics::KEpsilonStd1stHalf> tke(water_block_inner, ghost_creation);
     InteractionWithUpdate<fluid_dynamics::KEpsilonStd2ndHalf> dissipationrate(water_block_inner, ghost_creation);
@@ -60,7 +61,7 @@ int main(int ac, char *av[])
     ReducedQuantityRecording<MaximumSpeed> write_maximum_speed(water_block);
 
     initial_condition.exec();
-    //profiles.exec();
+    wall_adj_cell.exec();
     water_block_inner.updateConfiguration();
     write_real_body_states.addToWrite<Real>(water_block, "Density");
     write_real_body_states.addToWrite<Real>(water_block, "Pressure");
@@ -98,9 +99,9 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     size_t number_of_iterations = 0;
-    int screen_output_interval = 5000;
-    Real end_time = 200.0;
-    Real output_interval = 1.0; /**< time stamps for output. */ 
+    int screen_output_interval = 8000;
+    Real end_time = 20.0;
+    Real output_interval = 0.1; /**< time stamps for output. */ 
     //----------------------------------------------------------------------
     //	Statistics for CPU time
     //----------------------------------------------------------------------

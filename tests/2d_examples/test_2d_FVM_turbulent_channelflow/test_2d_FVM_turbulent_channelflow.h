@@ -29,7 +29,7 @@ Real mu_f = (rho0_f * U_f * DH * 0.5) / rey_bulk;       /**< Dynamic Viscosity. 
 Real c_f = 10.0 * U_f;                               /**< Reference sound speed. */
 
 Real I = 0.05;
-Real viscosityRatio = 10;//check this
+Real length_scale = 0.07 * 2 * DH / pow(0.09, 0.75);
 //----------------------------------------------------------------------
 //	Set the file path to the data file.
 //----------------------------------------------------------------------
@@ -83,8 +83,8 @@ class TCFInitialCondition
         Vecd initial_velocity(1.0, 0.0);
         vel_[index_i] = initial_velocity;
         K_[index_i] = (3.0 / 2.0) * (initial_velocity.squaredNorm()) * (I * I);
-        Eps_[index_i] = rho_[index_i] * C_mu_ * ((K_[index_i] * K_[index_i]) / (mu_f)) * (1 / viscosityRatio);
-        mu_t_[index_i] = mu_f * viscosityRatio;
+        Eps_[index_i] = pow(K_[index_i], 1.5) / length_scale;
+        mu_t_[index_i] = C_mu_ * rho_[index_i] * pow(K_[index_i], 2.0) / Eps_[index_i];
         mass_[index_i] = rho_[index_i] * Vol_[index_i];
         mom_[index_i] = mass_[index_i] * vel_[index_i];
     }
@@ -117,26 +117,25 @@ public:
         rho_[ghost_index] = rho_[index_i];
         K_[ghost_index] = K_[index_i];
         Eps_[ghost_index] = Eps_[index_i];
-        mu_t_[ghost_index] = mu_t_[index_i]; // rho_[ghost_index] * C_mu_ * ((Kprof_[ghost_index] * Kprof_[ghost_index]) / (Epsprof_[ghost_index]))
-        //Tau_wall_[ghost_index] = Tau_wall_[index_i];
+        mu_t_[ghost_index] = mu_t_[index_i];
     }
     void applyVelocityInletFlow(size_t ghost_index, size_t index_i) override
     {
 
         Vecd inlet_velocity(1.0, 0.0);
         vel_[ghost_index] = inlet_velocity;
-        p_[ghost_index] = p_[index_i];     // p_ [index_i] 0.3;
-        rho_[ghost_index] = rho_[index_i]; // rho_[index_i]; // rho_[index_i];fluid_.DensityFromPressure(0.025)
+        p_[ghost_index] = p_[index_i];
+        rho_[ghost_index] = rho_[index_i]; 
         K_[ghost_index] = (3.0 / 2.0) * (vel_[ghost_index].squaredNorm()) * (I * I);
-        Eps_[ghost_index] = rho_[index_i] * C_mu_ * ((K_[ghost_index] * K_[ghost_index]) / (mu_f)) * (1 / viscosityRatio);
-        mu_t_[ghost_index] = mu_f * viscosityRatio;
+        Eps_[ghost_index] = pow(K_[ghost_index], 1.5) / length_scale;
+        mu_t_[ghost_index] = C_mu_ * rho_[ghost_index] * pow(K_[ghost_index], 2.0) / Eps_[ghost_index];
     }
     void applyPressureOutletBC(size_t ghost_index, size_t index_i) override
     {
         if (vel_[index_i][0] >= 0.0)
         {
             vel_[ghost_index] = vel_[index_i];
-            p_[ghost_index] = 0.0; // p_[index_i];
+            p_[ghost_index] = 0.0;
             rho_[ghost_index] = rho_[index_i];
             K_[ghost_index] = K_[index_i];
             Eps_[ghost_index] = Eps_[index_i];
@@ -145,17 +144,16 @@ public:
         else
         {
             vel_[ghost_index] = vel_[index_i];
-            p_[ghost_index] = 0.0; // p_[index_i];
+            p_[ghost_index] = 0.0;
             rho_[ghost_index] = rho_[index_i];
             K_[ghost_index] = (3.0 / 2.0) * (vel_[ghost_index].squaredNorm()) * (I * I);
-            Eps_[ghost_index] = rho_[index_i] * C_mu_ * ((K_[ghost_index] * K_[ghost_index]) / (mu_f)) * (1 / viscosityRatio);
-            mu_t_[ghost_index] = mu_f * viscosityRatio;
+            Eps_[ghost_index] = pow(K_[ghost_index], 1.5) / length_scale;
+            mu_t_[ghost_index] = C_mu_ * rho_[ghost_index] * pow(K_[ghost_index], 2.0) / Eps_[ghost_index];
         }
         
     }
 protected:
     Real *Eps_, *K_, *mu_t_;
-    //&Tau_wall_;
     Fluid& fluid_;
     Real C_mu_;
 };
