@@ -51,6 +51,8 @@ bool is_constrain_normal_velocity_in_P_region = true;
 //** Weight for correcting the velocity  gradient in the sub near wall region  *
 Real weight_vel_grad_sub_nearwall = 0.1;
 bool is_always_lattice_arrange_fluid = false;
+//** Tag for Source Term Linearisation *
+bool is_source_term_linearisation = true;
 //** Empirical parameter for initial stability*
 Real turbulent_module_activate_time = 2.5;
 //** Intial values for K, Epsilon and Mu_t *
