@@ -22,10 +22,12 @@ The particles are colored with von Mises stress.</center> </p>
 ### Tensile instability
 
 As shown in Fig. 1b for a typical example, the numerical instability involving particle clustering and non-physical fractures
-presented these simulations is often identified as tensile instability, a fundamental numerical issue caused by the tensile stress.
-Since such numerical instability is identified, different approaches have been proposed to address this problem.
+presented in these simulations is often identified as tensile instability, a fundamental numerical issue caused by the tensile stress.
+Such instability often exhibit also in fluid simulations when negative pressure exists.
+Since such numerical instability is identified, different approaches have been proposed to eliminate or suppress it.
 One popular method is the artificial stress method,
-based on the concept of counteracting the tension to prevent the instability.
+based on the concept of counteracting the tension with compressive stress
+an hence preventing the instability.
 
 ### Hourglass modes
 
@@ -42,9 +44,9 @@ i.e. without particle clustering and non-physical fractures.
 
 ### Origin of the numerical instability
 
-Such observation leads to people puzzling which is the original mechanism of the instability.
+The above observations lead to people puzzling which is the original mechanism of the instability shown in SPH solid dynamics simulations.
 Is the tensile instability or actually the hourglass modes?.
-In the next part, I will introduce the approach in the above journal paper
+In the next part, I will introduce the approach developed in the above journal paper
 which is able to resolve this puzzle.
 
 <script src="https://giscus.app/client.js"
