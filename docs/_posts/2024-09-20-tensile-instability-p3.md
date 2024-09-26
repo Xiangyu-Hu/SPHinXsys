@@ -91,7 +91,7 @@ Such observation at least is able to clarify that the numerical instabilities
 in these simulations using standard SPH formulation
 are not introduced by tensile instability as previously identified.
 Another observation is that, even the artificial stress method
-is not able eliminate the hourglass mode,
+is not able to eliminate the hourglass mode,
 it can mitigate them or at least delay their development.
 This phenomenon is in good agreement with the idea that
 adding extra artificial repulsion forces in SPH generally stabilize the simulation,
@@ -101,7 +101,7 @@ as shown in Fig. 5, if they are not well designed.
 One more brave assumption is that there may be no tensile instability
 at all in SPH elastic dynamics.
 This statement may be conflict with the fluid simulations,
-which obviously still suffers from tensile instability even
+which obviously still suffer from tensile instability even
 when shear stress is not taken into account.
 Comparing the above simulations with typical ones for fluids,
 one may argue that there are no dominant isotropic tension,
@@ -110,7 +110,7 @@ One can carry out a simple numerical experiment on this,
 by applying a 2D circular solid piece
 (with relaxed particle distribution to break exact symmetry)
 with initial radial velocity and check
-if SPH-ENOG can still give numerical stable simulation.
+if SPH-ENOG can still give a stable simulation.
 If the simulation is proved to be not stable, one may need to rename
 tensile instability into negative-pressure instability.
 Otherwise, there is no tensile instability in SPH elastic dynamics at all!
