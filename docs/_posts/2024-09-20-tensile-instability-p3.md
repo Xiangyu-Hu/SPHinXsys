@@ -73,7 +73,7 @@ and the calculation process can barely continue. For the SPH-OAS, the non-physic
 <p align="center"><img src="{{site.baseurl}}/assets/img/two-ring-hard.jpg" alt="Colliding-ring-hard" height="350"/>
 <center>Fig. 8. Evolution of particle configuration when the collision velocity is high.</center> </p>
 
-Furthermore, with the colliding velocity is increased,
+Furthermore, with the colliding velocity increased,
 it can be seen from Fig. 8,
 not only zigzag patterns, but also numerical fractures appear
 for results obtained by SPH-OAS.
@@ -81,7 +81,7 @@ Fortunately, SPH-ENOG performs well even at large colliding velocity,
 and all numerical instabilities are perfectly eliminated,
 which suggests the stability and robustness of the present SPH-ENOG.
 
-### No tensile instability in SPH elastic dynamics?  
+## No tensile instability in SPH elastic dynamics?  
 
 In these two numerical examples,
 tensile stress is obvious due to large deformations
