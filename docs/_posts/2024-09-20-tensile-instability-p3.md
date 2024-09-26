@@ -115,7 +115,7 @@ If the simulation is proved to be not stable, one may need to rename
 tensile instability into negative-pressure instability.
 Otherwise, there is no tensile instability in SPH elastic dynamics at all!
 
-While I am to see this simulation result using SPHinXsys,
+While I am happy to see this simulation result using SPHinXsys,
 I would predict the second as in the
 [journal paper](https://doi.org/10.1016/j.jcp.2024.113072)
 there is already a case (spinning plate as shown below)
