@@ -53,7 +53,7 @@ thus it cannot be used for long-duration computations.
 
 ### 2D colliding rubber rings
 
-<p align="center"><img src="{{site.baseurl}}/assets/img/two-ring-setup.jpg" alt="Colliding-ring-setup" height="350"/>
+<p align="center"><img src="{{site.baseurl}}/assets/img/two-ring-setup.jpg" alt="Colliding-ring-setup" height="150"/>
 <center>Fig. 6. 2D oscillating plate: case setup.</center> </p>
 
 The collision of two rubber rings is simulated. As shown in Fig. 6,
