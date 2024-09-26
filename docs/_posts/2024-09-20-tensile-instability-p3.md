@@ -86,12 +86,12 @@ which suggests the stability and robustness of the present SPH-ENOG.
 In these two numerical examples,
 tensile stress is obvious due to large deformations
 and even dominants the dynamics,
-the simulations are very stable when the hourglass formulation is employed.
+the simulations are very stable when the non-hourglass formulation is employed.
 Such observation at least is able to clarify that the numerical instabilities
 in these simulations using standard SPH formulation
 are not introduced by tensile instability as previously identified.
 Another observation is that, even the artificial stress method
-is not able to eliminate the hourglass mode,
+is not able to eliminate the hourglass modes,
 it can mitigate them or at least delay their development.
 This phenomenon is in good agreement with the idea that
 adding extra artificial repulsion forces in SPH generally stabilize the simulation,
@@ -114,6 +114,15 @@ if SPH-ENOG can still give a stable simulation.
 If the simulation is proved to be not stable, one may need to rename
 tensile instability into negative-pressure instability.
 Otherwise, there is no tensile instability in SPH elastic dynamics at all!
+
+While I am to see this simulation result using SPHinXsys,
+I would predict the second as in the
+[journal paper](https://doi.org/10.1016/j.jcp.2024.113072)
+there is already a case (spinning plate as shown below)
+is quite similar to the one mentioned above.
+
+<p align="center"><img src="{{site.baseurl}}/assets/img/rotating-patch.jpg" alt="Rotating-patch" height="350"/>
+<center>Fig. 9. The evolution of pressure and square shape at different instants for the spinning plate.</center> </p>
 
 <script src="https://giscus.app/client.js"
         data-repo="Xiangyu-Hu/SPHinXsys"
