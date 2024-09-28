@@ -100,6 +100,7 @@ class SimbodyEnvironment : public SphFlapReloadEnvironment
 class SphOWSC : public SimbodyEnvironment
 {
   protected:
+    SPHSystem &sph_system_;
     InnerRelation water_block_inner, flap_inner;
     ContactRelation water_block_contact, flap_contact, flap_observer_contact_with_water, flap_observer_contact_with_flap, 
         wave_velocity_observer_contact_with_water;
@@ -167,6 +168,7 @@ class SphOWSC : public SimbodyEnvironment
   public:
     explicit SphOWSC(int parallel_env, int episode_env) 
         : SimbodyEnvironment(parallel_env, episode_env),
+          sph_system_(sph_system),
 	  water_block_inner(water_block), 
 	  flap_inner(flap),
 	  water_block_contact(water_block, {&wall_boundary, &flap}),
