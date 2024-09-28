@@ -89,11 +89,11 @@ class SimbodyEnvironment : public SphFlapReloadEnvironment
 	  force_on_bodies(forces, matter),
 	  linear_damper(forces, pin_spot, SimTK::MobilizerUIndex(0), 20), integ(MBsystem)
     {
-	  pin_spot.setDefaultAngle(0);
-	  state = MBsystem.realizeTopology();
-	  integ.setAccuracy(1e-3);
-	  integ.setAllowInterpolation(false);
-	  integ.initialize(state);
+	pin_spot.setDefaultAngle(0);
+	state = MBsystem.realizeTopology();
+	integ.setAccuracy(1e-3);
+	integ.setAllowInterpolation(false);
+	integ.initialize(state);
     }
 };
 
