@@ -43,6 +43,7 @@ def get_args():
     parser.add_argument("--n-step", type=int, default=1) 
     parser.add_argument("--batch-size", type=int, default=64) 
     parser.add_argument("--training-num", type=int, default=1) 
+    parser.add_argument("--test-num", type=int, default=1)
     parser.add_argument('--test-num', type=int, default=0)
     parser.add_argument("--logdir", type=str, default="log") 
     parser.add_argument("--device", type=str, default="cuda" if torch.cuda.is_available() else "cpu") 
@@ -106,10 +107,19 @@ def training_sac(args=get_args()):
         action_space=envs.action_space,
     )
 
-    # load a previous policy
+    # load a previous or trained policy
     if args.resume_path:
         policy.load_state_dict(torch.load(args.resume_path, map_location=args.device))
         print("Loaded agent from: ", args.resume_path)
+        
+    if args.watch:
+        # Watch the play of the trained policy
+        policy.eval()
+        test_collector = Collector(policy, envs)
+        test_collector.reset()
+        result = test_collector.collect(n_episode=args.test_num)
+        print(f"Final reward: {result['rews'].mean()}, length: {result['lens'].mean()}")
+        return
 
     # Setup replay buffer and collector for training
     buffer = VectorReplayBuffer(args.buffer_size, len(envs)) if args.training_num > 1 else ReplayBuffer(args.buffer_size)

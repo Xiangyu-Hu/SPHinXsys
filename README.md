@@ -93,34 +93,6 @@ Please check the source code of
 [2D Dambreak case with python interface](https://github.com/Xiangyu-Hu/SPHinXsys/tree/master/tests/2d_examples/test_2d_dambreak_python)
 for the usage.
 
-## Deep reinforcement learning in SPHinXsys
-
-By leveraging the Python interface of SPHinXsys, one can rapidly and modularly construct SPHinXsys simulation environments required for deep reinforcement learning (DRL). Effective training can be conducted using various algorithms from the mainstream DRL platform Tianshou. Please refer to the source code of
-[2D owsc case with python interface](https://github.com/Xiangyu-Hu/SPHinXsys/tree/master/tests/extra_source_and_tests/test_2d_owsc_python). 
-
-Step-by-Step instructions:
-1. **Use conda or Python to create a virtual Python environment.**  
-   Python 3.10 is recommended for compatibility.
-
-   ```bash
-   conda create -n drl_env python=3.10
-2. **Activate the python environment and install required libraries.**
-   
-   ```bash
-   conda activate drl_env
-   pip install tianshou
-3. **Set up the SPHinXsys-based reinforcement learning environment in the `drl_gym_environments` directory.**  
-   Detailed environment setup instructions can be found in the `README.md` file.
-
-   ```bash
-   cd path_to_deep_reinforcement_learning_tool/drl_gym_environments
-   pip install -e .
-6. **Navigate to the `drl_tianshou_training` directory and start the training process.**
-
-   ```bash
-   cd path_to_deep_reinforcement_learning_tool/drl_tianshou_training
-   python sac.py
-
 ## Publications
 
 Main publication on the library:
