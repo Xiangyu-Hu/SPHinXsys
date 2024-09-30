@@ -89,7 +89,7 @@ class MeshWithGridDataPackages : public Mesh
     ConcurrentVec<std::pair<size_t, int>> occupied_data_pkgs_; /**< (size_t)sort_index, (int)core1/inner0. */
     CellNeighborhood *cell_neighborhood_;                  /**< 3*3(*3) array to store indicies of neighborhood cells. */
     std::pair<Arrayi, int> *meta_data_cell_;          /**< metadata for each occupied cell: (arrayi)cell index, (int)core1/inner0. */
-    BaseMesh global_mesh_;                            /**< the mesh for the locations of all possible data points. */
+    Mesh global_mesh_;                            /**< the mesh for the locations of all possible data points. */
     size_t num_grid_pkgs_ = 2;                        /**< the number of all distinct packages, initially only 2 singular packages. */
 
   protected:
