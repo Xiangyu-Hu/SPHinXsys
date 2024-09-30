@@ -44,32 +44,6 @@ using namespace std::placeholders;
 namespace SPH
 {
 /**
- * @class BaseDataPackage
- * @brief Abstract base class for a data package,
- * 		  by which the data in a derived class can be on- or off-grid.
- * 		  The data package can be defined in a cell of a background mesh so the pkg_index is
- * 		  the cell location on the mesh.
- */
-class BaseDataPackage
-{
-  public:
-    BaseDataPackage() : cell_index_on_mesh_(Arrayi::Zero()), state_indicator_(0){};
-    virtual ~BaseDataPackage(){};
-    void setInnerPackage() { state_indicator_ = 1; };
-    bool isInnerPackage() { return state_indicator_ != 0; };
-    void setCorePackage() { state_indicator_ = 2; };
-    bool isCorePackage() { return state_indicator_ == 2; };
-    void setCellIndexOnMesh(const Arrayi &cell_index) { cell_index_on_mesh_ = cell_index; }
-    Arrayi CellIndexOnMesh() const { return cell_index_on_mesh_; }
-
-  protected:
-    Arrayi cell_index_on_mesh_; /**< index of this data package on the background mesh, zero if it is not on the mesh. */
-    /** reserved value: 0 not occupying background mesh, 1 occupying.
-     *  guide to use: larger for high priority of the data package. */
-    int state_indicator_;
-};
-
-/**
  * @class MeshWithGridDataPackages
  * @brief Abstract class for mesh with grid-based data packages.
  * @details The idea is to save sparse data on a cell-based mesh.
@@ -85,7 +59,6 @@ class BaseDataPackage
  * All these data packages are indexed by a concurrent vector inner_data_pkgs_.
  * Note that a data package should be not near the mesh bound, otherwise one will encounter the error "out of range".
  */
-// template <class GridDataPackageType>
 template <int PKG_SIZE>
 class MeshWithGridDataPackages : public Mesh
 {
@@ -136,21 +109,20 @@ class MeshWithGridDataPackages : public Mesh
     void deleteIndexDataMatrix();   /**< delete memories for metadata of data packages. */
 
     /** resize all mesh variable data field with `num_grid_pkgs_` size(initially only singular data) */
-    template <typename DataType>
     struct ResizeMeshVariableData
     {
-        void operator()(MeshVariableAssemble &all_mesh_variables_,
+        template <typename DataType>
+        void operator()(DataContainerAddressKeeper<MeshVariable<DataType>> &all_mesh_variables_,
                         const size_t num_grid_pkgs_)
         {
-            constexpr int type_index = DataTypeIndex<DataType>::value;
-            for (size_t l = 0; l != std::get<type_index>(all_mesh_variables_).size(); ++l)
+            for (size_t l = 0; l != all_mesh_variables_.size(); ++l)
             {
-                MeshVariable<DataType> *variable = std::get<type_index>(all_mesh_variables_)[l];
+                MeshVariable<DataType> *variable = all_mesh_variables_[l];
                 variable->allocateAllMeshVariableData(num_grid_pkgs_);
             }
         }
     };
-    DataAssembleOperation<ResizeMeshVariableData> resize_mesh_variable_data_;
+    OperationOnDataAssemble<MeshVariableAssemble, ResizeMeshVariableData> resize_mesh_variable_data_{all_mesh_variables_};
 
     /** probe by applying bi and tri-linear interpolation within the package. */
     template <class DataType>
@@ -204,7 +176,7 @@ class MeshWithGridDataPackages : public Mesh
     void for_each_cell_data(const FunctionOnData &function);
     void resizeMeshVariableData()
     {
-        resize_mesh_variable_data_(all_mesh_variables_, num_grid_pkgs_);
+        resize_mesh_variable_data_(num_grid_pkgs_);
     }
 
     template <typename DataType>

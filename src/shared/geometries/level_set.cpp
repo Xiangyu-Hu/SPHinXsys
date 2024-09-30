@@ -11,101 +11,77 @@ MultilevelLevelSet::MultilevelLevelSet(
     Shape &shape, SPHAdaptation &sph_adaptation)
     : BaseMeshField("LevelSet_" + shape.getName()), kernel_(*sph_adaptation.getKernel()), shape_(shape), total_levels_(total_levels)
 {
-    mesh_data_set_.push_back(
-            mesh_data_ptr_vector_keeper_
-                .template createPtr<MeshWithGridDataPackagesType>(tentative_bounds, reference_data_spacing, 4));
-
-    mesh_data_set_[0]->registerMeshVariable<Real>("Levelset");
-    mesh_data_set_[0]->registerMeshVariable<int>("NearInterfaceID");
-    mesh_data_set_[0]->registerMeshVariable<Vecd>("LevelsetGradient");
-    mesh_data_set_[0]->registerMeshVariable<Real>("KernelWeight");
-    mesh_data_set_[0]->registerMeshVariable<Vecd>("KernelGradient");
-
     Real global_h_ratio = sph_adaptation.ReferenceSpacing() / reference_data_spacing;
     global_h_ratio_vec_.push_back(global_h_ratio);
-    MeshAllDynamics<InitializeDataInACell> initialize_data_in_a_cell{*mesh_data_set_[0], shape_};
-    FinishDataPackages finish_data_packages{*mesh_data_set_[0], shape_, kernel_, global_h_ratio};
-    initialize_data_in_a_cell.exec();
-    finish_data_packages.exec();
-    probe_signed_distance_set_.push_back(
-            probe_signed_distance_vector_keeper_
-                .template createPtr<ProbeSignedDistance>(*mesh_data_set_[0]));
-    probe_normal_direction_set_.push_back(
-        probe_normal_direction_vector_keeper_
-            .template createPtr<ProbeNormalDirection>(*mesh_data_set_[0]));
-    probe_level_set_gradient_set_.push_back(
-        probe_level_set_gradient_vector_keeper_
-            .template createPtr<ProbeLevelSetGradient>(*mesh_data_set_[0]));
 
-    for (size_t level = 1; level != total_levels_; ++level)
-    {
-        reference_data_spacing *= 0.5;
-        global_h_ratio *= 2;
+    initializeLevel(0, reference_data_spacing, global_h_ratio, tentative_bounds);
+
+    for (size_t level = 1; level < total_levels_; ++level) {
+        reference_data_spacing *= 0.5;  // Halve the data spacing
+        global_h_ratio *= 2;            // Double the ratio
         global_h_ratio_vec_.push_back(global_h_ratio);
-        /** all mesh levels aligned at the lower bound of tentative_bounds */
-        mesh_data_set_.push_back(
-            mesh_data_ptr_vector_keeper_
-                .template createPtr<MeshWithGridDataPackagesType>(tentative_bounds, reference_data_spacing, 4));
-        mesh_data_set_[level]->registerMeshVariable<Real>("Levelset");
-        mesh_data_set_[level]->registerMeshVariable<int>("NearInterfaceID");
-        mesh_data_set_[level]->registerMeshVariable<Vecd>("LevelsetGradient");
-        mesh_data_set_[level]->registerMeshVariable<Real>("KernelWeight");
-        mesh_data_set_[level]->registerMeshVariable<Vecd>("KernelGradient");
-        MeshAllDynamics<InitializeDataInACellFromCoarse> initialize_data_in_a_cell_from_coarse(*mesh_data_set_[level], *mesh_data_set_[level - 1], shape_);
-        FinishDataPackages finish_data_packages{*mesh_data_set_[level], shape_, kernel_, global_h_ratio};
-        initialize_data_in_a_cell_from_coarse.exec();
-        finish_data_packages.exec();
 
-        probe_signed_distance_set_.push_back(
-            probe_signed_distance_vector_keeper_
-                .template createPtr<ProbeSignedDistance>(*mesh_data_set_[level]));
-        probe_normal_direction_set_.push_back(
-            probe_normal_direction_vector_keeper_
-                .template createPtr<ProbeNormalDirection>(*mesh_data_set_[level]));
-        probe_level_set_gradient_set_.push_back(
-            probe_level_set_gradient_vector_keeper_
-                .template createPtr<ProbeLevelSetGradient>(*mesh_data_set_[level]));
+        initializeLevel(level, reference_data_spacing, global_h_ratio, tentative_bounds);
     }
 
-    clean_interface = new CleanInterface{*mesh_data_set_.back(), kernel_, global_h_ratio_vec_.back()};
-    correct_topology = new CorrectTopology{*mesh_data_set_.back(), kernel_, global_h_ratio_vec_.back()};
+    clean_interface = makeUnique<CleanInterface>(*mesh_data_set_.back(), kernel_, global_h_ratio_vec_.back());
+    correct_topology = makeUnique<CorrectTopology>(*mesh_data_set_.back(), kernel_, global_h_ratio_vec_.back());
 }
 //=================================================================================================//
 MultilevelLevelSet::MultilevelLevelSet(
     BoundingBox tentative_bounds, MeshWithGridDataPackagesType* coarse_data, Shape &shape, SPHAdaptation &sph_adaptation)
-    : BaseMeshField("LevelSet_" + shape.getName()), kernel_(*sph_adaptation.getKernel()), shape_(shape)
+    : BaseMeshField("LevelSet_" + shape.getName()), kernel_(*sph_adaptation.getKernel()), shape_(shape), total_levels_(1)
 {
-    total_levels_ = 1;
     Real reference_data_spacing = coarse_data->DataSpacing() * 0.5;
     Real global_h_ratio = sph_adaptation.ReferenceSpacing() / reference_data_spacing;
     global_h_ratio_vec_.push_back(global_h_ratio);
 
+    initializeLevel(0, reference_data_spacing, global_h_ratio, tentative_bounds, coarse_data);
+
+    clean_interface = makeUnique<CleanInterface>(*mesh_data_set_.back(), kernel_, global_h_ratio_vec_.back());
+    correct_topology = makeUnique<CorrectTopology>(*mesh_data_set_.back(), kernel_, global_h_ratio_vec_.back());
+}
+//=================================================================================================//
+void MultilevelLevelSet::initializeLevel(size_t level, Real reference_data_spacing, Real global_h_ratio, BoundingBox tentative_bounds, MeshWithGridDataPackagesType* coarse_data)
+{
     mesh_data_set_.push_back(
             mesh_data_ptr_vector_keeper_
                 .template createPtr<MeshWithGridDataPackagesType>(tentative_bounds, reference_data_spacing, 4));
-    mesh_data_set_[0]->registerMeshVariable<Real>("Levelset");
-    mesh_data_set_[0]->registerMeshVariable<int>("NearInterfaceID");
-    mesh_data_set_[0]->registerMeshVariable<Vecd>("LevelsetGradient");
-    mesh_data_set_[0]->registerMeshVariable<Real>("KernelWeight");
-    mesh_data_set_[0]->registerMeshVariable<Vecd>("KernelGradient");
 
-    MeshAllDynamics<InitializeDataInACellFromCoarse> initialize_data_in_a_cell_from_coarse(*mesh_data_set_[0], *coarse_data, shape_);
-    FinishDataPackages finish_data_packages{*mesh_data_set_[0], shape_, kernel_, global_h_ratio};
-    initialize_data_in_a_cell_from_coarse.exec();
+    RegisterMeshVariable register_mesh_variable;
+    register_mesh_variable.exec(mesh_data_set_[level]);
+
+    if (coarse_data == nullptr) {
+        MeshAllDynamics<InitializeDataInACell> initialize_data_in_a_cell(*mesh_data_set_[level], shape_);
+        initialize_data_in_a_cell.exec();
+    } else {
+        MeshAllDynamics<InitializeDataInACellFromCoarse> initialize_data_in_a_cell_from_coarse(*mesh_data_set_[level], *coarse_data, shape_);
+        initialize_data_in_a_cell_from_coarse.exec();
+    }
+
+    FinishDataPackages finish_data_packages(*mesh_data_set_[level], shape_, kernel_, global_h_ratio);
     finish_data_packages.exec();
 
+    registerProbes(level);
+}
+//=================================================================================================//
+void MultilevelLevelSet::registerProbes(size_t level)
+{
     probe_signed_distance_set_.push_back(
-            probe_signed_distance_vector_keeper_
-                .template createPtr<ProbeSignedDistance>(*mesh_data_set_[0]));
+        probe_signed_distance_vector_keeper_
+            .template createPtr<ProbeSignedDistance>(*mesh_data_set_[level]));
     probe_normal_direction_set_.push_back(
         probe_normal_direction_vector_keeper_
-            .template createPtr<ProbeNormalDirection>(*mesh_data_set_[0]));
+            .template createPtr<ProbeNormalDirection>(*mesh_data_set_[level]));
     probe_level_set_gradient_set_.push_back(
         probe_level_set_gradient_vector_keeper_
-            .template createPtr<ProbeLevelSetGradient>(*mesh_data_set_[0]));
-
-    clean_interface = new CleanInterface{*mesh_data_set_.back(), kernel_, global_h_ratio_vec_.back()};
-    correct_topology = new CorrectTopology{*mesh_data_set_.back(), kernel_, global_h_ratio_vec_.back()};
+            .template createPtr<ProbeLevelSetGradient>(*mesh_data_set_[level]));
+    probe_kernel_integral_set_.push_back(
+        probe_kernel_integral_vector_keeper_
+            .template createPtr<ProbeKernelIntegral>(*mesh_data_set_[level]));
+    probe_kernel_gradient_integral_set_.push_back(
+        probe_kernel_gradient_integral_vector_keeper_
+            .template createPtr<ProbeKernelGradientIntegral>(*mesh_data_set_[level]));
 }
 //=================================================================================================//
 size_t MultilevelLevelSet::getCoarseLevel(Real h_ratio)
@@ -158,16 +134,13 @@ size_t MultilevelLevelSet::getProbeLevel(const Vecd &position)
 Real MultilevelLevelSet::probeKernelIntegral(const Vecd &position, Real h_ratio)
 {
     if(mesh_data_set_.size() == 1){
-        ProbeKernelIntegral refine_probe{*mesh_data_set_[0]};
-        return refine_probe.update(position);
+        return probe_kernel_integral_set_[0]->update(position);
     }
     size_t coarse_level = getCoarseLevel(h_ratio);
     Real alpha = (global_h_ratio_vec_[coarse_level + 1] - h_ratio) /
                  (global_h_ratio_vec_[coarse_level + 1] - global_h_ratio_vec_[coarse_level]);
-    ProbeKernelIntegral coarse_probe{*mesh_data_set_[coarse_level]};
-    ProbeKernelIntegral fine_probe{*mesh_data_set_[coarse_level + 1]};
-    Real coarse_level_value = coarse_probe.update(position);
-    Real fine_level_value = fine_probe.update(position);
+    Real coarse_level_value = probe_kernel_integral_set_[coarse_level]->update(position);
+    Real fine_level_value = probe_kernel_integral_set_[coarse_level + 1]->update(position);
 
     return alpha * coarse_level_value + (1.0 - alpha) * fine_level_value;
 }
@@ -175,16 +148,13 @@ Real MultilevelLevelSet::probeKernelIntegral(const Vecd &position, Real h_ratio)
 Vecd MultilevelLevelSet::probeKernelGradientIntegral(const Vecd &position, Real h_ratio)
 {
     if(mesh_data_set_.size() == 1){
-        ProbeKernelGradientIntegral refine_probe{*mesh_data_set_[0]};
-        return refine_probe.update(position);
+        return probe_kernel_gradient_integral_set_[0]->update(position);
     }
     size_t coarse_level = getCoarseLevel(h_ratio);
     Real alpha = (global_h_ratio_vec_[coarse_level + 1] - h_ratio) /
                  (global_h_ratio_vec_[coarse_level + 1] - global_h_ratio_vec_[coarse_level]);
-    ProbeKernelGradientIntegral coarse_probe{*mesh_data_set_[coarse_level]};
-    ProbeKernelGradientIntegral fine_probe{*mesh_data_set_[coarse_level + 1]};
-    Vecd coarse_level_value = coarse_probe.update(position);
-    Vecd fine_level_value = fine_probe.update(position);
+    Vecd coarse_level_value = probe_kernel_gradient_integral_set_[coarse_level]->update(position);
+    Vecd fine_level_value = probe_kernel_gradient_integral_set_[coarse_level + 1]->update(position);
 
     return alpha * coarse_level_value + (1.0 - alpha) * fine_level_value;
 }

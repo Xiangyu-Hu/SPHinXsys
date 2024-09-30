@@ -36,6 +36,20 @@
 
 namespace SPH
 {
+class RegisterMeshVariable
+{
+  public:
+    explicit RegisterMeshVariable(){};
+    ~RegisterMeshVariable(){};
+
+    void exec(MeshWithGridDataPackagesType *mesh_data){
+        mesh_data->registerMeshVariable<Real>("Levelset");
+        mesh_data->registerMeshVariable<int>("NearInterfaceID");
+        mesh_data->registerMeshVariable<Vecd>("LevelsetGradient");
+        mesh_data->registerMeshVariable<Real>("KernelWeight");
+        mesh_data->registerMeshVariable<Vecd>("KernelGradient");
+    }
+};
 class FinishDataPackages : public BaseMeshDynamics
 {
   public:

@@ -63,16 +63,16 @@ class MultilevelLevelSet : public BaseMeshField
 
     void writeMeshFieldToPlt(std::ofstream &output_file) override
     {
-        for (size_t l = 0; l != total_levels_; ++l)
-        {
-            WriteMeshFieldToPlt write_mesh_field_to_plt(*mesh_data_set_[l]);
-            write_mesh_field_to_plt.update(output_file);
-        }
+        for(size_t l = 0; l != total_levels_; ++l)
+            WriteMeshFieldToPlt(*mesh_data_set_[l]).update(output_file);
     }
 
   protected:
     inline size_t getProbeLevel(const Vecd &position);
     inline size_t getCoarseLevel(Real h_ratio);
+
+    void initializeLevel(size_t level, Real reference_data_spacing, Real global_h_ratio, BoundingBox tentative_bounds, MeshWithGridDataPackagesType* coarse_data = nullptr);
+    void registerProbes(size_t level);
 
     Kernel &kernel_;
     Shape &shape_;                           /**< the geometry is described by the level set. */
@@ -82,13 +82,17 @@ class MultilevelLevelSet : public BaseMeshField
     StdVec<ProbeSignedDistance *> probe_signed_distance_set_;
     StdVec<ProbeNormalDirection *> probe_normal_direction_set_;
     StdVec<ProbeLevelSetGradient *> probe_level_set_gradient_set_;
+    StdVec<ProbeKernelIntegral *> probe_kernel_integral_set_;
+    StdVec<ProbeKernelGradientIntegral *> probe_kernel_gradient_integral_set_;
     UniquePtrsKeeper<MeshWithGridDataPackagesType> mesh_data_ptr_vector_keeper_;
     UniquePtrsKeeper<ProbeSignedDistance> probe_signed_distance_vector_keeper_;
     UniquePtrsKeeper<ProbeNormalDirection> probe_normal_direction_vector_keeper_;
     UniquePtrsKeeper<ProbeLevelSetGradient> probe_level_set_gradient_vector_keeper_;
+    UniquePtrsKeeper<ProbeKernelIntegral> probe_kernel_integral_vector_keeper_;
+    UniquePtrsKeeper<ProbeKernelGradientIntegral> probe_kernel_gradient_integral_vector_keeper_;
 
-    CleanInterface *clean_interface;
-    CorrectTopology *correct_topology;
+    UniquePtr<CleanInterface> clean_interface;
+    UniquePtr<CorrectTopology> correct_topology;
 };
 } // namespace SPH
 #endif // LEVEL_SET_H

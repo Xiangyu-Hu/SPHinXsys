@@ -76,7 +76,6 @@ typedef DataContainerAddressAssemble<SingleVariable> SingleVariables;
 
 /** Generalized mesh data type */
 // template <typename DataType>
-// using MeshVariable = DiscreteVariable<DataType>;
 typedef DataContainerAddressAssemble<MeshVariable> MeshVariableAssemble;
 
 } // namespace SPH
