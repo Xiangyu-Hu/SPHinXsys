@@ -8,8 +8,8 @@
 #define MESH_WITH_DATA_PACKAGES_2D_HPP
 
 #include "mesh_with_data_packages.h"
+#include "mesh_iterators.hpp"
 
-//=================================================================================================//
 namespace SPH
 {
 //=================================================================================================//
@@ -33,15 +33,15 @@ DataType MeshWithGridDataPackages<PKG_SIZE>::
 }
 //=================================================================================================//
 template <int PKG_SIZE>
-void MeshWithGridDataPackages<PKG_SIZE>::allocateMetaDataMatrix()
+void MeshWithGridDataPackages<PKG_SIZE>::allocateIndexDataMatrix()
 {
-    Allocate2dArray(meta_data_mesh_, all_cells_);
+    Allocate2dArray(index_data_mesh_, all_cells_);
 }
 //=================================================================================================//
 template <int PKG_SIZE>
-void MeshWithGridDataPackages<PKG_SIZE>::deleteMetaDataMatrix()
+void MeshWithGridDataPackages<PKG_SIZE>::deleteIndexDataMatrix()
 {
-    Delete2dArray(meta_data_mesh_, all_cells_);
+    Delete2dArray(index_data_mesh_, all_cells_);
 }
 //=================================================================================================//
 template <int PKG_SIZE>
@@ -71,48 +71,28 @@ template <int PKG_SIZE>
 void MeshWithGridDataPackages<PKG_SIZE>::
     assignDataPackageIndex(const Arrayi &cell_index, const size_t package_index)
 {
-    MetaData &metadata = meta_data_mesh_[cell_index[0]][cell_index[1]];
-    metadata.second = package_index;
+    index_data_mesh_[cell_index[0]][cell_index[1]] = package_index;
 }
 //=================================================================================================//
 template <int PKG_SIZE>
 size_t MeshWithGridDataPackages<PKG_SIZE>::
     PackageIndexFromCellIndex(const Arrayi &cell_index)
 {
-    MetaData &metadata = meta_data_mesh_[cell_index[0]][cell_index[1]];
-    return metadata.second;
-}
-//=================================================================================================//
-template <int PKG_SIZE>
-void MeshWithGridDataPackages<PKG_SIZE>::
-    assignCategoryOnMetaDataMesh(const Arrayi &cell_index, const int category)
-{
-    MetaData &metadata = meta_data_mesh_[cell_index[0]][cell_index[1]];
-    metadata.first = category;
+    return index_data_mesh_[cell_index[0]][cell_index[1]];
 }
 //=================================================================================================//
 template <int PKG_SIZE>
 bool MeshWithGridDataPackages<PKG_SIZE>::
     isSingularDataPackage(const Arrayi &cell_index)
 {
-    MetaData &metadata = meta_data_mesh_[cell_index[0]][cell_index[1]];
-    return metadata.first == 0;
+    return index_data_mesh_[cell_index[0]][cell_index[1]] < 2;
 }
 //=================================================================================================//
 template <int PKG_SIZE>
 bool MeshWithGridDataPackages<PKG_SIZE>::
     isInnerDataPackage(const Arrayi &cell_index)
 {
-    MetaData &metadata = meta_data_mesh_[cell_index[0]][cell_index[1]];
-    return metadata.first != 0;
-}
-//=================================================================================================//
-template <int PKG_SIZE>
-bool MeshWithGridDataPackages<PKG_SIZE>::
-    isCoreDataPackage(const Arrayi &cell_index)
-{
-    MetaData &metadata = meta_data_mesh_[cell_index[0]][cell_index[1]];
-    return metadata.first == 2;
+    return index_data_mesh_[cell_index[0]][cell_index[1]] > 1;
 }
 //=================================================================================================//
 template <int PKG_SIZE>

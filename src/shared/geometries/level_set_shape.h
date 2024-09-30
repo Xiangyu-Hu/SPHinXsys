@@ -45,7 +45,7 @@ class SPHSystem;
 class LevelSetShape : public Shape
 {
   private:
-    UniquePtrKeeper<BaseLevelSet> level_set_keeper_;
+    UniquePtrKeeper<MultilevelLevelSet> level_set_keeper_;
     SharedPtr<SPHAdaptation> sph_adaptation_;
 
   public:
@@ -68,7 +68,7 @@ class LevelSetShape : public Shape
     void writeLevelSet(SPHSystem &sph_system);
 
   protected:
-    BaseLevelSet &level_set_; /**< narrow bounded level set mesh. */
+    MultilevelLevelSet &level_set_; /**< narrow bounded level set mesh. */
 
     virtual BoundingBox findBounds() override;
 };
