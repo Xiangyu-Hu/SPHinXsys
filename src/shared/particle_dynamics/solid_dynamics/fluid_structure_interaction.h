@@ -32,7 +32,7 @@
 #include "all_particle_dynamics.h"
 #include "base_material.h"
 #include "elastic_dynamics.h"
-#include "force_prior.h"
+#include "force_prior.hpp"
 #include "riemann_solver.h"
 
 namespace SPH
@@ -43,18 +43,18 @@ namespace solid_dynamics
  * @class BaseForceFromFluid
  * @brief Base class for computing the forces from the fluid
  */
-class BaseForceFromFluid : public LocalDynamics, public DataDelegateContact, public ForcePrior
+class BaseForceFromFluid : public ForcePrior, public DataDelegateContact
 {
   public:
     explicit BaseForceFromFluid(BaseContactRelation &contact_relation, const std::string &force_name);
     virtual ~BaseForceFromFluid(){};
-    StdLargeVec<Vecd> &getForceFromFluid() { return force_from_fluid_; };
+    Vecd *getForceFromFluid() { return force_from_fluid_; };
 
   protected:
     Solid &solid_;
-    StdLargeVec<Real> &Vol_;
+    Real *Vol_;
     StdVec<Fluid *> contact_fluids_;
-    StdLargeVec<Vecd> &force_from_fluid_;
+    Vecd *force_from_fluid_;
 };
 
 /**
@@ -69,9 +69,9 @@ class ViscousForceFromFluid : public BaseForceFromFluid
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
-    StdLargeVec<Vecd> &vel_ave_;
-    StdVec<StdLargeVec<Real> *> contact_Vol_;
-    StdVec<StdLargeVec<Vecd> *> contact_vel_;
+    Vecd *vel_ave_;
+    StdVec<Real *> contact_Vol_;
+    StdVec<Vecd *> contact_vel_;
     StdVec<Real> mu_;
     StdVec<Real> smoothing_length_;
 };
@@ -94,9 +94,9 @@ class PressureForceFromFluid : public BaseForceFromFluid
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
-    StdLargeVec<Vecd> &vel_ave_, &acc_ave_, &n_;
-    StdVec<StdLargeVec<Real> *> contact_rho_n_, contact_mass_, contact_p_, contact_Vol_;
-    StdVec<StdLargeVec<Vecd> *> contact_vel_, contact_force_prior_;
+    Vecd *vel_ave_, *acc_ave_, *n_;
+    StdVec<Real *> contact_rho_, contact_mass_, contact_p_, contact_Vol_;
+    StdVec<Vecd *> contact_vel_, contact_force_prior_;
     StdVec<RiemannSolverType> riemann_solvers_;
 };
 
@@ -106,10 +106,10 @@ class PressureForceFromFluid : public BaseForceFromFluid
  * This class is for FSI applications to achieve smaller solid dynamics
  * time step size compared to the fluid dynamics
  */
-class InitializeDisplacement : public LocalDynamics, public DataDelegateSimple
+class InitializeDisplacement : public LocalDynamics
 {
   protected:
-    StdLargeVec<Vecd> &pos_, &pos_temp_;
+    Vecd *pos_, *pos_temp_;
 
   public:
     explicit InitializeDisplacement(SPHBody &sph_body);
@@ -124,10 +124,10 @@ class InitializeDisplacement : public LocalDynamics, public DataDelegateSimple
  * This class is for FSI applications to achieve smaller solid dynamics
  * time step size compared to the fluid dynamics
  */
-class UpdateAverageVelocityAndAcceleration : public LocalDynamics, public DataDelegateSimple
+class UpdateAverageVelocityAndAcceleration : public LocalDynamics
 {
   protected:
-    StdLargeVec<Vecd> &pos_, &pos_temp_, &vel_ave_, &acc_ave_;
+    Vecd *pos_, *pos_temp_, *vel_ave_, *acc_ave_;
 
   public:
     explicit UpdateAverageVelocityAndAcceleration(SPHBody &sph_body);

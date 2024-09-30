@@ -56,9 +56,9 @@ class PorousMediaDampingPairwiseInner : public LocalDynamics, public DataDelegat
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
-    StdLargeVec<Real> &Vol_, &mass_;
+    Real *Vol_, *mass_;
 
-    StdLargeVec<VariableType> &variable_;
+    VariableType *variable_;
     Real eta_; /**< damping coefficient */
 };
 } // namespace multi_species_continuum

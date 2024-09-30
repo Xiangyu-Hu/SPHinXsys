@@ -43,21 +43,21 @@ namespace SPH
  * @brief Used to define derived variable
  * which will only be computed for visualization.
  */
-template <typename DataType, class DataDelegateType>
-class BaseDerivedVariable : public DataDelegateType
+template <typename DataType>
+class BaseDerivedVariable : public LocalDynamics
 {
   public:
     template <class DynamicsIdentifier>
     BaseDerivedVariable(DynamicsIdentifier &identifier, const std::string &variable_name)
-        : DataDelegateType(identifier),
-          derived_variable_(*this->particles_->template registerSharedVariable<DataType>(variable_name))
+        : LocalDynamics(identifier),
+          derived_variable_(this->particles_->template registerStateVariable<DataType>(variable_name))
     {
         this->particles_->template addVariableToWrite<DataType>(variable_name);
     };
     virtual ~BaseDerivedVariable(){};
 
   protected:
-    StdLargeVec<DataType> &derived_variable_;
+    DataType *derived_variable_;
 };
 } // namespace SPH
 #endif // BASE_GENERAL_DYNAMICS_H

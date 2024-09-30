@@ -30,7 +30,7 @@
 #ifndef MESH_LOCAL_DYNAMICS_H
 #define MESH_LOCAL_DYNAMICS_H
 
-#include "base_variable.h"
+#include "sphinxsys_variable.h"
 #include "mesh_with_data_packages.hpp"
 #include "base_geometry.h"
 #include "base_kernel.h"

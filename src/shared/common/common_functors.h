@@ -34,15 +34,19 @@
 
 namespace SPH
 {
+struct AssignIndex
+{
+    UnsignedInt operator()(UnsignedInt i) const { return i; }
+};
 
-/** 
+/**
  * @class Limiter
- * Base class introduce the concept of limiter, 
- * which limits the magnitude of a value with a fraction. 
- * The derived class should implement the operator Real() 
+ * Base class introduce the concept of limiter,
+ * which limits the magnitude of a value with a fraction.
+ * The derived class should implement the operator Real()
  * to indicate limiting fraction.
- * Generally, the object of the derived class 
- * should be named as "limiter" or "limiter_" (class member) 
+ * Generally, the object of the derived class
+ * should be named as "limiter" or "limiter_" (class member)
  * so that the code can be more readable.
  */
 class Limiter
@@ -53,10 +57,10 @@ class NoLimiter : public Limiter
 {
   public:
     template <typename... Args>
-    NoLimiter(Args &&... args) : Limiter(){};
+    NoLimiter(Args &&...args) : Limiter(){};
 
     template <typename... Args>
-    Real operator()(Args &&... args)
+    Real operator()(Args &&...args)
     {
         return 1.0;
     };

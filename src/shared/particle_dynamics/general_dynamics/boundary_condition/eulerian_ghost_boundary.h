@@ -41,10 +41,10 @@ struct RealAndGhostParticleData
 
 /**
  * @class GhostCreationInESPH
- * @brief The extra storage for the boundary particles, similar with the ghost particle, 
+ * @brief The extra storage for the boundary particles, similar with the ghost particle,
  * is established to obey the zero-order consistency.
  */
-class GhostCreationInESPH : public DataDelegateInner
+class GhostCreationInESPH : public LocalDynamics, public DataDelegateInner
 {
   public:
     explicit GhostCreationInESPH(BaseInnerRelation &inner_relation, Ghost<ReserveSizeFactor> &ghost_boundary);
@@ -53,13 +53,12 @@ class GhostCreationInESPH : public DataDelegateInner
     void ghostGenerationAndAddToConfiguration();
 
   protected:
-    SPHBody &sph_body_;
     Ghost<ReserveSizeFactor> &ghost_boundary_;
     std::mutex mutex_create_ghost_particle_; /**< mutex exclusion for memory conflict */
     NeighborBuilderInnerInFVM get_inner_neighbor_;
-    StdLargeVec<int> &indicator_;
-    StdLargeVec<Real> &Vol_;
-    StdLargeVec<Vecd> &pos_;
+    int *indicator_;
+    Real *Vol_;
+    Vecd *pos_;
 
   public:
     std::pair<size_t, size_t> &ghost_bound_;
@@ -68,7 +67,7 @@ class GhostCreationInESPH : public DataDelegateInner
 //----------------------------------------------------------------------
 //	GhostBoundaryConditionSetupInESPH
 //----------------------------------------------------------------------
-class GhostBoundaryConditionSetupInESPH : public DataDelegateInner
+class GhostBoundaryConditionSetupInESPH : public LocalDynamics, public DataDelegateInner
 {
   public:
     GhostBoundaryConditionSetupInESPH(BaseInnerRelation &inner_relation, GhostCreationInESPH &ghost_creation);
@@ -86,16 +85,16 @@ class GhostBoundaryConditionSetupInESPH : public DataDelegateInner
     void resetBoundaryConditions();
 
   protected:
-    StdLargeVec<Real> &rho_, &Vol_, &mass_;
-    StdLargeVec<Vecd> &vel_, &pos_, &mom_;
+    Real *rho_, *Vol_, *mass_;
+    Vecd *vel_, *pos_, *mom_;
     std::pair<size_t, size_t> &ghost_bound_;
     std::vector<RealAndGhostParticleData> real_and_ghost_particle_data_;
-    StdLargeVec<int> &boundary_type_;
+    int *boundary_type_;
     Real W0_;
 };
 /**
  * @class GhostKernelGradientUpdate
- * @brief Here, this class is used to update the boundary particle 
+ * @brief Here, this class is used to update the boundary particle
           after implementing the kernel correction to strictly follow the zero-order consistency
  */
 class GhostKernelGradientUpdate : public LocalDynamics, public DataDelegateInner
@@ -107,9 +106,9 @@ class GhostKernelGradientUpdate : public LocalDynamics, public DataDelegateInner
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
-    StdLargeVec<Real> &Vol_;
-    StdLargeVec<Vecd> &kernel_gradient_original_summation_;
-    StdLargeVec<int> &indicator_;
+    Real *Vol_;
+    Vecd *kernel_gradient_original_summation_;
+    int *indicator_;
 };
 } // namespace SPH
 #endif // Eulerian_GHOST_BOUNDARY_H

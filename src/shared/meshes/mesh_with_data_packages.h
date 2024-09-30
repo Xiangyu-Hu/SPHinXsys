@@ -30,10 +30,10 @@
 #define MESH_WITH_DATA_PACKAGES_H
 
 #include "base_mesh.h"
-#include "base_variable.h"
 #include "my_memory_pool.h"
 #include "tbb/parallel_sort.h"
 #include "mesh_iterators.h"
+#include "sphinxsys_variable.h"
 
 #include <algorithm>
 #include <fstream>
@@ -89,7 +89,7 @@ class MeshWithGridDataPackages : public Mesh
     ConcurrentVec<std::pair<size_t, int>> occupied_data_pkgs_; /**< (size_t)sort_index, (int)core1/inner0. */
     CellNeighborhood *cell_neighborhood_;                  /**< 3*3(*3) array to store indicies of neighborhood cells. */
     std::pair<Arrayi, int> *meta_data_cell_;          /**< metadata for each occupied cell: (arrayi)cell index, (int)core1/inner0. */
-    BaseMesh global_mesh_;                            /**< the mesh for the locations of all possible data points. */
+    Mesh global_mesh_;                                /**< the mesh for the locations of all possible data points. */
     size_t num_grid_pkgs_ = 2;                        /**< the number of all distinct packages, initially only 2 singular packages. */
 
   protected:
@@ -132,7 +132,7 @@ class MeshWithGridDataPackages : public Mesh
     /** return the position of the lower bound data in a cell. */
     Vecd DataLowerBoundInCell(const Arrayi &cell_index)
     {
-        return CellLowerCorner(cell_index) + 0.5 * data_spacing_ * Vecd::Ones();
+        return CellLowerCornerPosition(cell_index) + 0.5 * data_spacing_ * Vecd::Ones();
     }
 
     /** return the grid index from its position and the index of the cell it belongs to. */

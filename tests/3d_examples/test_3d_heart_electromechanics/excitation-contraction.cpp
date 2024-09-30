@@ -67,14 +67,13 @@ class Heart : public ComplexShape
 using FiberDirectionDiffusionRelaxation =
     DiffusionRelaxationRK2<DiffusionRelaxation<Inner<KernelGradientInner>, IsotropicDiffusion>>;
 /** Imposing diffusion boundary condition */
-class DiffusionBCs : public BaseLocalDynamics<BodyPartByParticle>, public DataDelegateSimple
+class DiffusionBCs : public BaseLocalDynamics<BodyPartByParticle>
 {
   public:
     explicit DiffusionBCs(BodyPartByParticle &body_part, const std::string &species_name)
         : BaseLocalDynamics<BodyPartByParticle>(body_part),
-          DataDelegateSimple(body_part.getSPHBody()),
-          pos_(*particles_->getVariableDataByName<Vecd>("Position")),
-          phi_(*particles_->registerSharedVariable<Real>(species_name)){};
+          pos_(particles_->getVariableDataByName<Vecd>("Position")),
+          phi_(particles_->registerStateVariable<Real>(species_name)){};
     virtual ~DiffusionBCs(){};
 
     void update(size_t index_i, Real dt = 0.0)
@@ -96,25 +95,25 @@ class DiffusionBCs : public BaseLocalDynamics<BodyPartByParticle>, public DataDe
     };
 
   protected:
-    StdLargeVec<Vecd> &pos_;
-    StdLargeVec<Real> &phi_;
+    Vecd *pos_;
+    Real *phi_;
 };
 /** Compute Fiber and Sheet direction after diffusion */
-class ComputeFiberAndSheetDirections : public LocalDynamics, public DataDelegateSimple
+class ComputeFiberAndSheetDirections : public LocalDynamics
 {
   protected:
     LocallyOrthotropicMuscle &muscle_material_;
-    StdLargeVec<Vecd> &pos_;
-    StdLargeVec<Real> &phi_;
+    Vecd *pos_;
+    Real *phi_;
     Real beta_epi_, beta_endo_;
     Vecd center_line_vector_; // parallel to the ventricular centerline and pointing  apex-to-base
 
   public:
     explicit ComputeFiberAndSheetDirections(SPHBody &sph_body, const std::string &species_name)
-        : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
+        : LocalDynamics(sph_body),
           muscle_material_(DynamicCast<LocallyOrthotropicMuscle>(this, sph_body_.getBaseMaterial())),
-          pos_(*particles_->getVariableDataByName<Vecd>("Position")),
-          phi_(*particles_->registerSharedVariable<Real>(species_name))
+          pos_(particles_->getVariableDataByName<Vecd>("Position")),
+          phi_(particles_->registerStateVariable<Real>(species_name))
     {
         center_line_vector_ = Vecd(0.0, 1.0, 0.0);
         beta_epi_ = -(70.0 / 180.0) * M_PI;
@@ -147,13 +146,13 @@ class ComputeFiberAndSheetDirections : public LocalDynamics, public DataDelegate
 
         if (pos_[index_i][1] < -sph_body_.sph_adaptation_->ReferenceSpacing())
         {
-            (*muscle_material_.local_f0_)[index_i] = f_0 / (f_0.norm() + 1.0e-15);
-            (*muscle_material_.local_s0_)[index_i] = face_norm;
+            muscle_material_.local_f0_[index_i] = f_0 / (f_0.norm() + 1.0e-15);
+            muscle_material_.local_s0_[index_i] = face_norm;
         }
         else
         {
-            (*muscle_material_.local_f0_)[index_i] = Vecd::Zero();
-            (*muscle_material_.local_s0_)[index_i] = Vecd::Zero();
+            muscle_material_.local_f0_[index_i] = Vecd::Zero();
+            muscle_material_.local_s0_[index_i] = Vecd::Zero();
         }
     };
 };
@@ -171,13 +170,13 @@ class MuscleBaseShapeParameters : public TriangleMeshShapeBrick::ShapeParameters
     }
 };
 //	application dependent initial condition
-class ApplyStimulusCurrentSI : public LocalDynamics, public DataDelegateSimple
+class ApplyStimulusCurrentSI : public LocalDynamics
 {
   public:
     explicit ApplyStimulusCurrentSI(SPHBody &sph_body)
-        : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
-          pos_(*particles_->getVariableDataByName<Vecd>("Position")),
-          voltage_(*particles_->registerSharedVariable<Real>("Voltage")){};
+        : LocalDynamics(sph_body),
+          pos_(particles_->getVariableDataByName<Vecd>("Position")),
+          voltage_(particles_->registerStateVariable<Real>("Voltage")){};
 
     void update(size_t index_i, Real dt)
     {
@@ -194,19 +193,19 @@ class ApplyStimulusCurrentSI : public LocalDynamics, public DataDelegateSimple
     };
 
   protected:
-    StdLargeVec<Vecd> &pos_;
-    StdLargeVec<Real> &voltage_;
+    Vecd *pos_;
+    Real *voltage_;
 };
 /**
  * application dependent initial condition
  */
-class ApplyStimulusCurrentSII : public LocalDynamics, public DataDelegateSimple
+class ApplyStimulusCurrentSII : public LocalDynamics
 {
   public:
     explicit ApplyStimulusCurrentSII(SPHBody &sph_body)
-        : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
-          pos_(*particles_->getVariableDataByName<Vecd>("Position")),
-          voltage_(*particles_->registerSharedVariable<Real>("Voltage")){};
+        : LocalDynamics(sph_body),
+          pos_(particles_->getVariableDataByName<Vecd>("Position")),
+          voltage_(particles_->registerStateVariable<Real>("Voltage")){};
 
     void update(size_t index_i, Real dt)
     {
@@ -223,8 +222,8 @@ class ApplyStimulusCurrentSII : public LocalDynamics, public DataDelegateSimple
     };
 
   protected:
-    StdLargeVec<Vecd> &pos_;
-    StdLargeVec<Real> &voltage_;
+    Vecd *pos_;
+    Real *voltage_;
 };
 
 StdVec<Vecd> createObservationPoints()
@@ -382,7 +381,7 @@ int main(int ac, char *av[])
     //	Apply the Iron stimulus.
     SimpleDynamics<ApplyStimulusCurrentSI> apply_stimulus_s1(physiology_heart);
     SimpleDynamics<ApplyStimulusCurrentSII> apply_stimulus_s2(physiology_heart);
-    // Active mechanics.
+    //  Active mechanics.
     InteractionWithUpdate<LinearGradientCorrectionMatrixInner> correct_configuration_contraction(mechanics_body_inner);
     InteractionDynamics<CorrectInterpolationKernelWeights> correct_kernel_weights_for_interpolation(mechanics_body_contact);
     /** Interpolate the active contract stress from electrophysiology body. */
@@ -397,7 +396,7 @@ int main(int ac, char *av[])
     Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half(mechanics_body_inner);
 
     /** Time step size calculation. */
-    ReduceDynamics<solid_dynamics::AcousticTimeStepSize> get_mechanics_time_step(mechanics_heart);
+    ReduceDynamics<solid_dynamics::AcousticTimeStep> get_mechanics_time_step(mechanics_heart);
     /** Constrain region of the inserted body. */
     MuscleBaseShapeParameters muscle_base_parameters;
     BodyRegionByParticle muscle_base(mechanics_heart, makeShared<TriangleMeshShapeBrick>(muscle_base_parameters, "Holder"));
@@ -429,6 +428,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	 Physical parameters for main loop.
     //----------------------------------------------------------------------
+    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     int screen_output_interval = 10;
     int ite = 0;
     int reaction_step = 2;
@@ -443,7 +443,7 @@ int main(int ac, char *av[])
     std::cout << "Main Loop Starts Here : "
               << "\n";
     /** Main loop starts here. */
-    while (GlobalStaticVariables::physical_time_ < end_time)
+    while (physical_time < end_time)
     {
         Real integration_time = 0.0;
         while (integration_time < Ouput_T)
@@ -454,18 +454,18 @@ int main(int ac, char *av[])
                 if (ite % screen_output_interval == 0)
                 {
                     std::cout << std::fixed << std::setprecision(9) << "N=" << ite << "	Time = "
-                              << GlobalStaticVariables::physical_time_
+                              << physical_time
                               << "	dt = " << dt
                               << "	dt_s = " << dt_s << "\n";
                 }
                 /** Apply stimulus excitation. */
-                if (0 <= GlobalStaticVariables::physical_time_ && GlobalStaticVariables::physical_time_ <= 0.5)
+                if (0 <= physical_time && physical_time <= 0.5)
                 {
                     apply_stimulus_s1.exec(dt);
                 }
                 /** Single spiral wave. */
-                // if( 60 <= GlobalStaticVariables::physical_time_
-                // 	&&  GlobalStaticVariables::physical_time_ <= 65)
+                // if( 60 <= physical_time
+                // 	&&  physical_time <= 65)
                 // {
                 // 	apply_stimulus_s2.exec(dt);
                 // }
@@ -507,7 +507,7 @@ int main(int ac, char *av[])
 
                 relaxation_time += dt;
                 integration_time += dt;
-                GlobalStaticVariables::physical_time_ += dt;
+                physical_time += dt;
             }
             write_voltage.writeToFile(ite);
             write_displacement.writeToFile(ite);

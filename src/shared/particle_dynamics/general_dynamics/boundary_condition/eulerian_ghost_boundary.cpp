@@ -4,12 +4,12 @@
 namespace SPH
 {
 //=================================================================================================//
-GhostCreationInESPH::GhostCreationInESPH(BaseInnerRelation &inner_relation, Ghost<ReserveSizeFactor> &ghost_boundary) 
-    : DataDelegateInner(inner_relation), sph_body_(inner_relation.getSPHBody()),
+GhostCreationInESPH::GhostCreationInESPH(BaseInnerRelation &inner_relation, Ghost<ReserveSizeFactor> &ghost_boundary)
+    : LocalDynamics(inner_relation.getSPHBody()), DataDelegateInner(inner_relation),
       ghost_boundary_(ghost_boundary), get_inner_neighbor_(&inner_relation.getSPHBody()),
-      indicator_(*particles_->getVariableDataByName<int>("Indicator")),
-      Vol_(*particles_->getVariableDataByName<Real>("VolumetricMeasure")),
-      pos_(*particles_->getVariableDataByName<Vecd>("Position")),
+      indicator_(particles_->getVariableDataByName<int>("Indicator")),
+      Vol_(particles_->getVariableDataByName<Real>("VolumetricMeasure")),
+      pos_(particles_->getVariableDataByName<Vecd>("Position")),
       ghost_bound_(ghost_boundary.GhostBound())
 {
     ghostGenerationAndAddToConfiguration();
@@ -19,7 +19,7 @@ void GhostCreationInESPH::ghostGenerationAndAddToConfiguration()
 {
     ghost_bound_.second = ghost_bound_.first;
     RealAndGhostParticleData real_and_ghost_necessary_data;
-    
+
     for (size_t index_i = 0; index_i != particles_->TotalRealParticles(); ++index_i)
     {
         if (indicator_[index_i] == 1)
@@ -35,14 +35,14 @@ void GhostCreationInESPH::ghostGenerationAndAddToConfiguration()
             Real ghost_particle_dW_ijV_j = -gradient_summation.norm();
             Vecd ghost_particle_eij = -gradient_summation / ghost_particle_dW_ijV_j;
             Real distance_to_ghost = fabs(sph_body_.getInitialShape().findSignedDistance(pos_[index_i]));
-            Vecd diaplacement_to_ghost = distance_to_ghost * ghost_particle_eij;
-            Vecd ghost_position = pos_[index_i] - diaplacement_to_ghost;
+            Vecd displacement_to_ghost = distance_to_ghost * ghost_particle_eij;
+            Vecd ghost_position = pos_[index_i] - displacement_to_ghost;
             mutex_create_ghost_particle_.lock();
             size_t ghost_particle_index = ghost_bound_.second;
             ghost_bound_.second++;
             ghost_boundary_.checkWithinGhostSize(ghost_bound_);
             particles_->updateGhostParticle(ghost_particle_index, index_i);
-            //Here, we assue the volume as the same the real particle
+            // Here, we ensure the volume as the same the real particle
             Vol_[ghost_particle_index] = Vol_[index_i];
             pos_[ghost_particle_index] = ghost_position;
             mutex_create_ghost_particle_.unlock();
@@ -50,7 +50,7 @@ void GhostCreationInESPH::ghostGenerationAndAddToConfiguration()
             Real ghost_particle_dW_ij = ghost_particle_dW_ijV_j / (Vol_[ghost_particle_index] + TinyReal);
             get_inner_neighbor_(inner_neighborhood, double_distance_to_ghost, ghost_particle_dW_ij, ghost_particle_eij, ghost_particle_index);
 
-            //add all necessary data of real particle and corresponding ghost particle
+            // add all necessary data of real particle and corresponding ghost particle
             real_and_ghost_necessary_data.real_index_ = index_i;
             real_and_ghost_necessary_data.ghost_index_ = ghost_particle_index;
             real_and_ghost_necessary_data.e_ij_ghost_ = ghost_particle_eij;
@@ -61,16 +61,16 @@ void GhostCreationInESPH::ghostGenerationAndAddToConfiguration()
 //=================================================================================================//
 GhostBoundaryConditionSetupInESPH::
     GhostBoundaryConditionSetupInESPH(BaseInnerRelation &inner_relation, GhostCreationInESPH &ghost_creation)
-    : DataDelegateInner(inner_relation),
-      rho_(*particles_->getVariableDataByName<Real>("Density")),
-      Vol_(*particles_->getVariableDataByName<Real>("VolumetricMeasure")),
-      mass_(*particles_->getVariableDataByName<Real>("Mass")),
-      vel_(*particles_->getVariableDataByName<Vecd>("Velocity")),
-      pos_(*particles_->getVariableDataByName<Vecd>("Position")),
-      mom_(*particles_->getVariableDataByName<Vecd>("Momentum")),
+    : LocalDynamics(inner_relation.getSPHBody()), DataDelegateInner(inner_relation),
+      rho_(particles_->getVariableDataByName<Real>("Density")),
+      Vol_(particles_->getVariableDataByName<Real>("VolumetricMeasure")),
+      mass_(particles_->getVariableDataByName<Real>("Mass")),
+      vel_(particles_->getVariableDataByName<Vecd>("Velocity")),
+      pos_(particles_->getVariableDataByName<Vecd>("Position")),
+      mom_(particles_->getVariableDataByName<Vecd>("Momentum")),
       ghost_bound_(ghost_creation.ghost_bound_),
       real_and_ghost_particle_data_(ghost_creation.real_and_ghost_particle_data_),
-      boundary_type_(*particles_->registerSharedVariable<int>("BoundaryType")),
+      boundary_type_(particles_->registerStateVariable<int>("BoundaryType")),
       W0_(sph_body_.sph_adaptation_->getKernel()->W0(ZeroVecd))
 {
     setupBoundaryTypes();
@@ -115,10 +115,11 @@ void GhostBoundaryConditionSetupInESPH::resetBoundaryConditions()
 }
 //=================================================================================================//
 GhostKernelGradientUpdate::GhostKernelGradientUpdate(BaseInnerRelation &inner_relation)
-    : LocalDynamics(inner_relation.getSPHBody()), DataDelegateInner(inner_relation), 
-      Vol_(*particles_->getVariableDataByName<Real>("VolumetricMeasure")),
-      kernel_gradient_original_summation_(*particles_->registerSharedVariable<Vecd>("KernelGradientOriginalSummation")),
-      indicator_(*particles_->getVariableDataByName<int>("Indicator")){};
+    : LocalDynamics(inner_relation.getSPHBody()), DataDelegateInner(inner_relation),
+      Vol_(particles_->getVariableDataByName<Real>("VolumetricMeasure")),
+      kernel_gradient_original_summation_(
+          particles_->registerStateVariable<Vecd>("KernelGradientOriginalSummation")),
+      indicator_(particles_->getVariableDataByName<int>("Indicator")){};
 //=================================================================================================//
 void GhostKernelGradientUpdate::interaction(size_t index_i, Real dt)
 {

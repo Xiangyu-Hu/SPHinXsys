@@ -55,8 +55,8 @@ class VariableViscosity : public PairGeomAverageVariable<Real>
   public:
     VariableViscosity(BaseParticles *particles1, BaseParticles *particles2)
         : PairGeomAverageVariable<Real>(
-              *particles1->getVariableDataByName<Real>("VariableViscosity"),
-              *particles2->getVariableDataByName<Real>("VariableViscosity")){};
+              particles1->getVariableDataByName<Real>("VariableViscosity"),
+              particles2->getVariableDataByName<Real>("VariableViscosity")){};
     explicit VariableViscosity(BaseParticles *particles)
         : VariableViscosity(particles, particles){};
     virtual ~VariableViscosity(){};
@@ -67,7 +67,7 @@ class ViscousForce;
 
 template <class DataDelegationType>
 class ViscousForce<DataDelegationType>
-    : public LocalDynamics, public DataDelegationType
+    : public ForcePrior, public DataDelegationType
 {
   public:
     template <class BaseRelationType>
@@ -75,14 +75,14 @@ class ViscousForce<DataDelegationType>
     virtual ~ViscousForce(){};
 
   protected:
-    StdLargeVec<Real> &rho_, &mass_, &Vol_;
-    StdLargeVec<Vecd> &vel_, &viscous_force_;
+    Real *rho_, *mass_, *Vol_;
+    Vecd *vel_, *viscous_force_;
     Real smoothing_length_;
 };
 
 template <typename ViscosityType, class KernelCorrectionType>
 class ViscousForce<Inner<>, ViscosityType, KernelCorrectionType>
-    : public ViscousForce<DataDelegateInner>, public ForcePrior
+    : public ViscousForce<DataDelegateInner>
 {
   public:
     explicit ViscousForce(BaseInnerRelation &inner_relation);
@@ -97,7 +97,7 @@ using ViscousForceInner = ViscousForce<Inner<>, FixedViscosity, NoKernelCorrecti
 
 template <typename ViscosityType, class KernelCorrectionType>
 class ViscousForce<Inner<AngularConservative>, ViscosityType, KernelCorrectionType>
-    : public ViscousForce<DataDelegateInner>, public ForcePrior
+    : public ViscousForce<DataDelegateInner>
 {
   public:
     explicit ViscousForce(BaseInnerRelation &inner_relation);
@@ -152,8 +152,8 @@ class ViscousForce<Contact<>, ViscosityType, KernelCorrectionType>
     StdVec<ViscosityType> contact_mu_;
     KernelCorrectionType kernel_correction_;
     StdVec<KernelCorrectionType> contact_kernel_corrections_;
-    StdVec<StdLargeVec<Vecd> *> contact_vel_;
-    StdVec<StdLargeVec<Real> *> wall_Vol_;
+    StdVec<Vecd *> contact_vel_;
+    StdVec<Real *> wall_Vol_;
 };
 
 using ViscousForceWithWall = ComplexInteraction<ViscousForce<Inner<>, Contact<Wall>>, FixedViscosity, NoKernelCorrection>;
@@ -177,9 +177,9 @@ class VorticityInner : public LocalDynamics, public DataDelegateInner
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
-    StdLargeVec<Real> &Vol_;
-    StdLargeVec<Vecd> &vel_;
-    StdLargeVec<AngularVecd> &vorticity_;
+    Real *Vol_;
+    Vecd *vel_;
+    AngularVecd *vorticity_;
 };
 } // namespace fluid_dynamics
 } // namespace SPH

@@ -7,10 +7,10 @@ sys.path.append(path)
 from regression_test_base_tool import SphinxsysRegressionTest
 
 """
-case name: 2d_eulerian_supersonic_flow_around_cylinder
+case name: test_2d_eulerian_supersonic_flow_new_BC
 """
 
-case_name = "2d_eulerian_supersonic_flow_around_cylinder"
+case_name = "test_2d_eulerian_supersonic_flow_new_BC"
 body_name = "FluidBlock"
 parameter_name = "MaximumSpeed"
 

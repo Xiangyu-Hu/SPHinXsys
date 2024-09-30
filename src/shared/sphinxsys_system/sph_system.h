@@ -38,8 +38,9 @@ namespace po = boost::program_options;
 #endif
 
 #include "base_data_package.h"
+#include "execution_policy.h"
 #include "io_environment.h"
-#include "sph_data_containers.h"
+#include "sphinxsys_containers.h"
 
 #include <filesystem>
 #include <fstream>
@@ -48,9 +49,7 @@ namespace fs = std::filesystem;
 
 namespace SPH
 {
-/**
- * Pre-claimed classes.
- */
+using namespace execution;
 class SPHBody;
 class ComplexShape;
 
@@ -61,6 +60,8 @@ class ComplexShape;
 class SPHSystem
 {
     UniquePtrKeeper<IOEnvironment> io_ptr_keeper_;
+    DataContainerUniquePtrAssemble<SingularVariable> all_system_variable_ptrs_;
+    UniquePtrsKeeper<Entity> unique_system_variable_ptrs_;
 
   public:
     BoundingBox system_domain_bounds_;       /**< Lower and Upper domain bounds. */
@@ -99,6 +100,15 @@ class SPHSystem
     SPHBodyVector getRealBodies() { return real_bodies_; };
     void addRealBody(SPHBody *sph_body) { real_bodies_.push_back(sph_body); };
 
+    template <typename DataType>
+    SingularVariable<DataType> *registerSystemVariable(const std::string &name,
+                                                       DataType initial_value = ZeroData<DataType>::value);
+    template <typename DataType>
+    SingularVariable<DataType> *getSystemVariableByName(const std::string &name);
+
+    template <typename DataType>
+    DataType *getSystemVariableDataByName(const std::string &name);
+
   protected:
     friend class IOEnvironment;
     IOEnvironment *io_environment_; /**< io environment */
@@ -108,6 +118,7 @@ class SPHSystem
     size_t restart_step_;           /**< restart step */
     bool generate_regression_data_; /**< run and generate or enhance the regression test data set. */
     bool state_recording_;          /**< Record state in output folder. */
+    SingularVariables all_system_variables_;
 };
 } // namespace SPH
 #endif // SPH_SYSTEM_H

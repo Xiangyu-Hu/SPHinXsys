@@ -1,12 +1,12 @@
 /**
  * @file 	2d_eulerian_supersonic_flow_around_cylinder.h
- * @brief 	This is the compressible test for Eulerian supersonic flow around a cylinder 
+ * @brief 	This is the compressible test for Eulerian supersonic flow around a cylinder
             with the FVM boundary algorithm in the SPHinXsys.
  * @author 	Zhentong Wang and Xiangyu Hu
  */
+#include "eulerian_ghost_boundary.h"
 #include "sphinxsys.h"
-#include "eulerian_ghost_boundary.h" 
-using namespace SPH; 
+using namespace SPH;
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
@@ -82,25 +82,25 @@ class SupersonicFlowBoundaryConditionSetup : public GhostBoundaryConditionSetupI
   public:
     SupersonicFlowBoundaryConditionSetup(BaseInnerRelation &inner_relation, GhostCreationInESPH &ghost_creation)
         : GhostBoundaryConditionSetupInESPH(inner_relation, ghost_creation),
-          p_(*particles_->getVariableDataByName<Real>("Pressure")),
-          E_(*particles_->getVariableDataByName<Real>("TotalEnergy"))
+          p_(particles_->getVariableDataByName<Real>("Pressure")),
+          E_(particles_->getVariableDataByName<Real>("TotalEnergy"))
     {
         setupBoundaryTypes();
     };
     virtual ~SupersonicFlowBoundaryConditionSetup(){};
 
-    //Here, we follow the FVM labelling different boundary conditions with different number
-    void setupBoundaryTypes()
+    // Here, we follow the FVM labelling different boundary conditions with different number
+    void setupBoundaryTypes() override
     {
         for (size_t ghost_number = 0; ghost_number != real_and_ghost_particle_data_.size(); ++ghost_number)
         {
             size_t index_i = real_and_ghost_particle_data_[ghost_number].real_index_;
-            //around cylinder
+            // around cylinder
             if ((pos_[index_i] - insert_circle_center).norm() <= insert_circle_radius + 5.0 * particle_spacing_ref)
             {
                 boundary_type_[index_i] = 3;
             }
-            //outer boundary
+            // outer boundary
             else if ((pos_[index_i] - insert_circle_center).norm() > insert_circle_radius + 5.0 * particle_spacing_ref)
             {
                 boundary_type_[index_i] = 9;
@@ -120,7 +120,7 @@ class SupersonicFlowBoundaryConditionSetup : public GhostBoundaryConditionSetupI
         E_[ghost_index] = rho_e * Vol_[ghost_index] + 0.5 * mass_[ghost_index] * vel_[ghost_index].squaredNorm();
     }
 
-    //For outer boundaries, we set the non-refective far-field boundary conditions as boundary_type 9.
+    // For outer boundaries, we set the non-refective far-field boundary conditions as boundary_type 9.
     void applyFarFieldBoundary(size_t ghost_index, size_t index_i) override
     {
         Vecd normal_direction_index_i = sph_body_.getInitialShape().findNormalDirection(pos_[index_i]);
@@ -130,10 +130,10 @@ class SupersonicFlowBoundaryConditionSetup : public GhostBoundaryConditionSetupI
         Real velocity_farfield_normal = velocity_farfield.dot(normal_direction_index_i);
         Real velocity_boundary_normal = vel_[index_i].dot(normal_direction_index_i);
 
-        //judge the inflow boundary condition
+        // judge the inflow boundary condition
         if (normal_direction_index_i[0] <= 0.0 || fabs(normal_direction_index_i[1]) > fabs(normal_direction_index_i[0]))
         {
-            //supersonic inflow condition
+            // supersonic inflow condition
             if (fabs(velocity_boundary_normal) >= sound_speed)
             {
                 vel_[ghost_index] = velocity_farfield;
@@ -144,7 +144,7 @@ class SupersonicFlowBoundaryConditionSetup : public GhostBoundaryConditionSetupI
                 Real rho_e = p_[ghost_index] / (heat_capacity_ratio - 1.0);
                 E_[ghost_index] = rho_e * Vol_[ghost_index] + 0.5 * mass_[ghost_index] * vel_[ghost_index].squaredNorm();
             }
-            //subsonic inflow condition
+            // subsonic inflow condition
             if (fabs(velocity_boundary_normal) < sound_speed)
             {
                 Real inner_weight_summation = W0_ * Vol_[index_i];
@@ -179,7 +179,7 @@ class SupersonicFlowBoundaryConditionSetup : public GhostBoundaryConditionSetupI
         }
         else
         {
-            //supersonic outflow condition
+            // supersonic outflow condition
             if (fabs(velocity_boundary_normal) >= sound_speed)
             {
                 vel_[ghost_index] = vel_[index_i];
@@ -190,7 +190,7 @@ class SupersonicFlowBoundaryConditionSetup : public GhostBoundaryConditionSetupI
                 Real rho_e = p_[ghost_index] / (heat_capacity_ratio - 1.0);
                 E_[ghost_index] = rho_e * Vol_[ghost_index] + 0.5 * mass_[ghost_index] * vel_[ghost_index].squaredNorm();
             }
-            //subsonic outflow condition
+            // subsonic outflow condition
             if (fabs(velocity_boundary_normal) < sound_speed)
             {
                 Real inner_weight_summation = W0_ * Vol_[index_i];
@@ -229,5 +229,5 @@ class SupersonicFlowBoundaryConditionSetup : public GhostBoundaryConditionSetupI
     }
 
   protected:
-    StdLargeVec<Real> &p_, &E_;
+    Real *p_, *E_;
 };

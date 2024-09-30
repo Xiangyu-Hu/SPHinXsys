@@ -31,8 +31,8 @@ Real Youngs_modulus = 1.3024653e6; /** Normalized Youngs Modulus. */
 Real poisson = 0.3;                /** Poisson ratio. */
 
 StdVec<int> random_index;
-StdLargeVec<Vecd> pseudo_normal;
-StdLargeVec<Vecd> normal;
+Vecd *pseudo_normal = nullptr;
+Vecd *normal = nullptr;
 StdVec<Real> von_mises_strain;
 TEST(Plate, RigidRotationTest)
 {
@@ -97,17 +97,19 @@ class ControlledRotation : public thin_structure_dynamics::ConstrainShellBodyReg
   public:
     ControlledRotation(BodyPartByParticle &body_part)
         : ConstrainShellBodyRegion(body_part),
-          vel_(*particles_->getVariableDataByName<Vecd>("Velocity")),
-          angular_vel_(*particles_->getVariableDataByName<Vecd>("AngularVelocity")),
-          pos_(*particles_->getVariableDataByName<Vecd>("Position")){};
+          vel_(particles_->getVariableDataByName<Vecd>("Velocity")),
+          angular_vel_(particles_->getVariableDataByName<Vecd>("AngularVelocity")),
+          pos_(particles_->getVariableDataByName<Vecd>("Position")),
+          physical_time_(sph_system_.getSystemVariableDataByName<Real>("PhysicalTime")){};
     virtual ~ControlledRotation(){};
 
   protected:
-    StdLargeVec<Vecd> &vel_, &angular_vel_, &pos_;
+    Vecd *vel_, *angular_vel_, *pos_;
+    Real *physical_time_;
     Real rotation_v = Pi;
     void update(size_t index_i, Real dt = 0.0)
     {
-        Real current_time = GlobalStaticVariables::physical_time_;
+        Real current_time = *physical_time_;
         if (current_time <= 0.5)
         {
             vel_[index_i] = Vecd(0.0, -rotation_v * pos_[index_i][2], rotation_v * pos_[index_i][1]);
@@ -160,7 +162,7 @@ int main(int ac, char *av[])
     BodyStatesRecordingToVtp write_states(system);
     write_states.addToWrite<Vecd>(plate_body, "PseudoNormal");
     write_states.addDerivedVariableRecording<SimpleDynamics<VonMisesStrain>>(plate_body);
-    StdLargeVec<Real> &all_von_mises_strain = *shell_particles->getVariableDataByName<Real>("VonMisesStrain");
+    Real *all_von_mises_strain = shell_particles->getVariableDataByName<Real>("VonMisesStrain");
 
     /** Apply initial condition. */
     system.initializeSystemCellLinkedLists();
@@ -172,10 +174,10 @@ int main(int ac, char *av[])
      * From here the time stepping begins.
      * Set the starting time.
      */
-    GlobalStaticVariables::physical_time_ = 0.0;
     write_states.writeToFile(0);
 
     /** Setup physical parameters. */
+    Real &physical_time = *system.getSystemVariableDataByName<Real>("PhysicalTime");
     int ite = 0;
     Real end_time = 1.1;
     Real output_period = end_time / 100.0;
@@ -186,7 +188,7 @@ int main(int ac, char *av[])
     /**
      * Main loop
      */
-    while (GlobalStaticVariables::physical_time_ < end_time)
+    while (physical_time < end_time)
     {
         Real integral_time = 0.0;
         while (integral_time < output_period)
@@ -194,11 +196,11 @@ int main(int ac, char *av[])
             if (ite % 100 == 0)
             {
                 std::cout << "N=" << ite << " Time: "
-                          << GlobalStaticVariables::physical_time_ << "	dt: "
+                          << physical_time << "	dt: "
                           << dt << "\n";
             }
             stress_relaxation_first_half.exec(dt);
-            if (GlobalStaticVariables::physical_time_ > 0.5 && GlobalStaticVariables::physical_time_ < 0.51)
+            if (physical_time > 0.5 && physical_time < 0.51)
             {
                 controlled_rotation.exec();
             }
@@ -207,7 +209,7 @@ int main(int ac, char *av[])
             ite++;
             dt = computing_time_step_size.exec();
             integral_time += dt;
-            GlobalStaticVariables::physical_time_ += dt;
+            physical_time += dt;
         }
         TickCount t2 = TickCount::now();
         write_states.writeToFile();
@@ -228,8 +230,8 @@ int main(int ac, char *av[])
 
     update_normal.exec();
 
-    pseudo_normal = *shell_particles->getVariableDataByName<Vecd>("PseudoNormal");
-    normal = *shell_particles->getVariableDataByName<Vecd>("NormalDirection");
+    pseudo_normal = shell_particles->getVariableDataByName<Vecd>("PseudoNormal");
+    normal = shell_particles->getVariableDataByName<Vecd>("NormalDirection");
 
     testing::InitGoogleTest(&ac, av);
     return RUN_ALL_TESTS();
