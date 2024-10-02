@@ -8,7 +8,7 @@ namespace SPH
     { 
     //=================================================================================================//
         BaseTurbulence::BaseTurbulence(BaseInnerRelation& inner_relation, GhostCreationFromMesh& ghost_creator)
-            : BaseIntegration<DataDelegateInner>(inner_relation), ghost_creator_(ghost_creator),
+            : BaseIntegration<DataDelegateInner>(inner_relation),
           mom_(this->particles_->template registerStateVariable<Vecd>("Momentum")),
           dmom_dt_(this->particles_->template registerStateVariable<Vecd>("MomentumChangeRate")),
           dmass_dt_(this->particles_->template registerStateVariable<Real>("MassChangeRate")),
@@ -25,7 +25,8 @@ namespace SPH
           Cmu_(0.09), sigmak_(1.0), sigmaeps_(1.3), C1eps_(1.44), C2eps_(1.92),
           K_(this->particles_->template registerStateVariable<Real>("TKE")),
           Eps_(this->particles_->template registerStateVariable<Real>("Dissipation")),
-          mu_t_(this->particles_->template registerStateVariable<Real>("TurblunetViscosity"))
+          mu_t_(this->particles_->template registerStateVariable<Real>("TurblunetViscosity")),
+          ghost_creator_(ghost_creator)
           {}
         //=================================================================================================//
            
@@ -77,7 +78,6 @@ namespace SPH
         
         void WallAdjacentCells::update(size_t index_i, Real dt)
         {
-         Vecd wallnormal = Vecd::Zero();
             Vecd lower_wall = {pos_[index_i][0], 0.0};
             Vecd upper_wall = {pos_[index_i][0], 2.0};
             Vecd lower_wall_normal = {0.0, 1.0};
@@ -122,10 +122,9 @@ namespace SPH
         {
             
             Neighborhood& inner_neighborhood = inner_configuration_[index_i];
-            Matd K_prod = Matd::Zero(), K_prod_iso = Matd::Zero(), K_prod_total = Matd::Zero();
-            Matd vel_matrix = Matd::Zero(), vel_gradient_mat = Matd::Zero();
+            Matd K_prod = Matd::Zero();
+            Matd vel_matrix = Matd::Zero();
             Matd strain_tensor = Matd::Zero(), strain_rate_modulus = Matd::Zero();
-            Real Kprodtot = 0.0;
             K_prod_[index_i] = 0.0, K_adv_[index_i] = 0.0, K_lap_[index_i] = 0.0, strain_rate_[index_i] = 0.0;
             dudx_[index_i] = 0.0, dudy_[index_i] = 0.0, dvdx_[index_i] = 0.0, dvdy_[index_i] = 0.0;
             vel_gradient_mat_[index_i] = Matd::Zero();
@@ -266,7 +265,7 @@ namespace SPH
         void StdWallFunctionFVM::nearwallquantities(size_t index_i)
         {
             ystar_[index_i] = (rho_[index_i] * std::pow(Cmu_, 0.25) * std::pow(K_[index_i], 0.5) * yp_[index_i]) / (fluid_.ReferenceViscosity());
-            Real u_star, mu_eff_wall, friction_velocity;
+            Real u_star;
             Vecd veltangential = (vel_[index_i] - wallnormal_[index_i].dot(vel_[index_i]) * (wallnormal_[index_i]));
 
             if (ystar_[index_i] >= 11.225)
