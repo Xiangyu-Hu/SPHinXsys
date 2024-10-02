@@ -21,12 +21,10 @@ namespace SPH
             protected:
             Vecd *mom_, *dmom_dt_;
             Real *dmass_dt_;
-            Real *K_prod_p_, *K_prod_, *Eps_p_, *Eps_sum_, *K_adv_, *K_lap_;
-            Real *Eps_adv_, *Eps_lap_, *Eps_prodscalar_, *Eps_scalar_;
+            Real *K_prod_p_, *K_prod_, *Eps_p_, *K_adv_, *K_lap_;
+            Real *Eps_adv_, *Eps_lap_, *Eps_prodscalar_, *Eps_scalar_, *Tau_wall_;
             Real Cmu_, sigmak_;
-            Real sigmaeps_, C1eps_, C2eps_;
-            Real *Tau_wall_;
-            Real *K_, *Eps_, *mu_t_;
+            Real sigmaeps_, C1eps_, C2eps_, *K_, *Eps_, *mu_t_;
             GhostCreationFromMesh& ghost_creator_;
         };
         //=================================================================================================//
@@ -39,7 +37,7 @@ namespace SPH
 
         protected:
           Vecd *wallnormal_;
-          Real *walladjacentcellflag_, *yp_;
+          Real *walladjacentcellflag_, *yp_, *cornercellflag_;
           StdLargeVec<Real> walladjacentindex_,  wallghostindex_;
           StdLargeVec<Vecd> walleij_;
           Real ymax_;
@@ -47,24 +45,8 @@ namespace SPH
 
            void walladjacentcellyp();
            void update(size_t index_i, Real dt);
-        };
+        };       
         //=================================================================================================//
-        /*
-        class WallAdjacentCells : public BaseTurbulence
-        {
-         public:
-           explicit WallAdjacentCells(BaseInnerRelation &inner_relation, GhostCreationFromMesh &ghost_creator);
-           virtual ~WallAdjacentCells(){};
-
-         protected:
-           StdLargeVec<Real> walladjacentindex_, &walladjacentcellflag_, wallghostindex_, &wallfacearea_;
-           StdLargeVec<Vecd> walleij_;
-
-           void walladjacentcellyp();
-        };
-        */ 
-        //=================================================================================================//
-        /*
         class StdWallFunctionFVM : public BaseTurbulence
         {
          public:
@@ -73,24 +55,10 @@ namespace SPH
            void nearwallquantities(size_t index_i);
 
          protected:
-           StdLargeVec<Real> &walladjacentcellflag_, &yp_;
-           StdLargeVec<Vecd> &wallnormal_;
-           Real vonkar_, E_;
-        };*/ 
-        //=================================================================================================//
-        class StdWallFunctionFVM : public WallAdjacentCells
-        {
-         public:
-           explicit StdWallFunctionFVM(BaseInnerRelation &inner_relation, GhostCreationFromMesh &ghost_creator);
-           virtual ~StdWallFunctionFVM(){};
-           void nearwallquantities(size_t index_i);
-
-         protected:
-           //StdLargeVec<Real> &walladjacentcellflag_, &yp_;
-           //StdLargeVec<Vecd> &wallnormal_;
-           Real vonkar_, E_;
-           Real *ystar_;
+           Real *ystar_, *yp_, *cornercellflag_;
+           Vecd *wallnormal_;
            Matd *vel_gradient_mat_;
+           Real vonkar_, E_;
         };
         //=================================================================================================//
 
@@ -103,8 +71,7 @@ namespace SPH
             void update(size_t index_i, Real dt = 0.0);
 
             protected:
-            Real *dK_dt_, *walladjacentcellflag_, *strain_rate_;
-            Matd *vel_gradient_mat_;
+            Real *dK_dt_, *walladjacentcellflag_, *strain_rate_, *cornercellflag_;
             Real *dudx_, *dudy_, *dvdx_, *dvdy_;
         };
         //=================================================================================================//

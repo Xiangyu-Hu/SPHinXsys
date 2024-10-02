@@ -9,59 +9,67 @@ namespace SPH
     //=================================================================================================//
         BaseTurbulence::BaseTurbulence(BaseInnerRelation& inner_relation, GhostCreationFromMesh& ghost_creator)
             : BaseIntegration<DataDelegateInner>(inner_relation), ghost_creator_(ghost_creator),
-            mom_(this->particles_->template registerStateVariable<Vecd>("Momentum")),
+          mom_(this->particles_->template registerStateVariable<Vecd>("Momentum")),
           dmom_dt_(this->particles_->template registerStateVariable<Vecd>("MomentumChangeRate")),
           dmass_dt_(this->particles_->template registerStateVariable<Real>("MassChangeRate")),
           K_prod_p_(this->particles_->template registerStateVariable<Real>("TKEProductionInWallAdjCell")),
           K_prod_(this->particles_->template registerStateVariable<Real>("TKEProduction")),
           Eps_p_(this->particles_->template registerStateVariable<Real>("DissipationRateInWallAdjCell")),
-          Eps_sum_(this->particles_->template registerStateVariable<Real>("DissipationSum")),
           K_adv_(this->particles_->template registerStateVariable<Real>("TKEAdvection")),
           K_lap_(this->particles_->template registerStateVariable<Real>("TKELaplacian")),
           Eps_adv_(this->particles_->template registerStateVariable<Real>("DissipationAdvection")),
-          Tau_wall_(this->particles_->template registerStateVariable<Real>("WallShearStress")),
           Eps_lap_(this->particles_->template registerStateVariable<Real>("DissipationLaplacian")),
           Eps_prodscalar_(this->particles_->template registerStateVariable<Real>("DissipationProdscalar")),
           Eps_scalar_(this->particles_->template registerStateVariable<Real>("DissipationScalar")),
+          Tau_wall_(this->particles_->template registerStateVariable<Real>("WallShearStress")),
           Cmu_(0.09), sigmak_(1.0), sigmaeps_(1.3), C1eps_(1.44), C2eps_(1.92),
           K_(this->particles_->template registerStateVariable<Real>("TKE")),
           Eps_(this->particles_->template registerStateVariable<Real>("Dissipation")),
           mu_t_(this->particles_->template registerStateVariable<Real>("TurblunetViscosity"))
-            {}
+          {}
         //=================================================================================================//
            
             WallAdjacentCells::WallAdjacentCells(BaseInnerRelation &inner_relation, GhostCreationFromMesh &ghost_creator)
-                : BaseTurbulence(inner_relation, ghost_creator), yp_(this->particles_->template registerStateVariable<Real>("WallNormalDistance")),
-                  walladjacentcellflag_(this->particles_->template registerStateVariable<Real>("FlagForWallAdjacentCells")),
-                  wallnormal_(this->particles_->template registerStateVariable<Vecd>("WallNormal")), ymax_(0.0), 
-                  bounds_(inner_relation.getSPHBody())
-            {
-            walladjacentcellyp();
-            }
+              : BaseTurbulence(inner_relation, ghost_creator), wallnormal_(this->particles_->template registerStateVariable<Vecd>("WallNormal")),
+                walladjacentcellflag_(this->particles_->template registerStateVariable<Real>("FlagForWallAdjacentCells")),
+                yp_(this->particles_->template registerStateVariable<Real>("WallNormalDistance")),
+                cornercellflag_(this->particles_->template registerStateVariable<Real>("CornerCellFlag")), ymax_(0.0), 
+                bounds_(inner_relation.getSPHBody())
+                {
+                    walladjacentcellyp();
+                }
         //=================================================================================================//
         void WallAdjacentCells::walladjacentcellyp()
         {
             walladjacentindex_.resize(particles_->ParticlesBound());
             wallghostindex_.resize(particles_->ParticlesBound());
             walleij_.resize(particles_->ParticlesBound());
-            Real boundary_type = 3;
-                
-            if (!ghost_creator_.each_boundary_type_with_all_ghosts_index_[boundary_type].empty())
+            
+            for (size_t boundary_type = 0; boundary_type < ghost_creator_.each_boundary_type_with_all_ghosts_index_.size(); ++boundary_type)
             {
-                for (size_t ghost_number = 0; ghost_number != ghost_creator_.each_boundary_type_with_all_ghosts_index_[boundary_type].size(); ++ghost_number)
+                if (!ghost_creator_.each_boundary_type_with_all_ghosts_index_[boundary_type].empty())
                 {
-
-                    size_t ghost_index = ghost_creator_.each_boundary_type_with_all_ghosts_index_[boundary_type][ghost_number];
-                    size_t index_real = ghost_creator_.each_boundary_type_contact_real_index_[boundary_type][ghost_number];
-                    walleij_[index_real] = ghost_creator_.each_boundary_type_with_all_ghosts_eij_[boundary_type][ghost_number];
-                    walladjacentindex_[index_real] = index_real;
-                    wallghostindex_[index_real] = ghost_index;
-                    if ((pos_[index_real] - pos_[ghost_index]).dot(walleij_[index_real]) > ymax_)
+                    for (size_t ghost_number = 0; ghost_number != ghost_creator_.each_boundary_type_with_all_ghosts_index_[boundary_type].size(); ++ghost_number)
                     {
-                        ymax_ = (pos_[index_real] - pos_[ghost_index]).dot(walleij_[index_real]);
+                        size_t ghost_index = ghost_creator_.each_boundary_type_with_all_ghosts_index_[boundary_type][ghost_number];
+                        size_t index_real = ghost_creator_.each_boundary_type_contact_real_index_[boundary_type][ghost_number];
+                        walleij_[index_real] = ghost_creator_.each_boundary_type_with_all_ghosts_eij_[boundary_type][ghost_number];
 
+                        if (boundary_type == 3)
+                        {
+                            walladjacentindex_[index_real] = index_real;
+                            wallghostindex_[index_real] = ghost_index;
+                            walladjacentcellflag_[index_real] = 1.0;
+                            if ((pos_[index_real] - pos_[ghost_index]).dot(walleij_[index_real]) > ymax_)
+                            {
+                                ymax_ = (pos_[index_real] - pos_[ghost_index]).dot(walleij_[index_real]);
+                            }
+                        }
+                        if (walladjacentcellflag_[index_real] == 1.0 && boundary_type != 3)
+                        {
+                            cornercellflag_[index_real] = 1.0;
+                        }
                     }
-                    
                 }
             }
         }
@@ -86,13 +94,11 @@ namespace SPH
             if (lower_wall_condition)
             {
                 yp_[index_i] = (pos_[index_i] - lower_wall).dot(lower_wall_normal);
-                walladjacentcellflag_[index_i] = 1.0;
                 wallnormal_[index_i] = lower_wall_normal;
             }
             else if (upper_wall_condition)
             {
-                yp_[index_i] = (pos_[index_i] - upper_wall).dot(upper_wall_normal);
-                walladjacentcellflag_[index_i] = 1.0;    
+                yp_[index_i] = (pos_[index_i] - upper_wall).dot(upper_wall_normal);   
                 wallnormal_[index_i] = upper_wall_normal;
             }
         }
@@ -105,12 +111,12 @@ namespace SPH
               dK_dt_(this->particles_->template registerStateVariable<Real>("TKEChangeRate")),
               walladjacentcellflag_(this->particles_->template getVariableDataByName<Real>("FlagForWallAdjacentCells")),
               strain_rate_(this->particles_->template registerStateVariable<Real>("StrainRate")),
+              cornercellflag_(this->particles_->template getVariableDataByName<Real>("CornerCellFlag")),
               dudx_(this->particles_->template registerStateVariable<Real>("dudx")),
               dudy_(this->particles_->template registerStateVariable<Real>("dudy")),
               dvdx_(this->particles_->template registerStateVariable<Real>("dvdx")),
-              dvdy_(this->particles_->template registerStateVariable<Real>("dvdy")),
-              vel_gradient_mat_(this->particles_->template getVariableDataByName<Matd>("VelocityGradient"))
-        {}
+              dvdy_(this->particles_->template registerStateVariable<Real>("dvdy"))
+              {}
         //=================================================================================================//
         void KEpsilonStd1stHalf::interaction(size_t index_i, Real dt)
         {
@@ -121,7 +127,7 @@ namespace SPH
             Matd strain_tensor = Matd::Zero(), strain_rate_modulus = Matd::Zero();
             Real Kprodtot = 0.0;
             K_prod_[index_i] = 0.0, K_adv_[index_i] = 0.0, K_lap_[index_i] = 0.0, strain_rate_[index_i] = 0.0;
-            Eps_sum_[index_i] = 0.0, dudx_[index_i] = 0.0, dudy_[index_i] = 0.0, dvdx_[index_i] = 0.0, dvdy_[index_i] = 0.0;
+            dudx_[index_i] = 0.0, dudy_[index_i] = 0.0, dvdx_[index_i] = 0.0, dvdy_[index_i] = 0.0;
             vel_gradient_mat_[index_i] = Matd::Zero();
             Real mu_t_upperlimit = 1e4 * fluid_.ReferenceViscosity();
             Real mu_t_lowerlimit = 1e-3 * fluid_.ReferenceViscosity();
@@ -249,10 +255,13 @@ namespace SPH
         }
         //=================================================================================================//
          StdWallFunctionFVM::StdWallFunctionFVM(BaseInnerRelation &inner_relation, GhostCreationFromMesh &ghost_creator)
-            : WallAdjacentCells(inner_relation, ghost_creator), ystar_(this->particles_->template registerStateVariable<Real>("Ystar")),
-              vel_gradient_mat_(this->particles_->template registerStateVariable< Matd > ("VelocityGradient")),
+            : BaseTurbulence(inner_relation, ghost_creator), ystar_(this->particles_->template registerStateVariable<Real>("Ystar")),
+              yp_(this->particles_->template getVariableDataByName<Real>("WallNormalDistance")),
+              cornercellflag_(this->particles_->template getVariableDataByName<Real>("CornerCellFlag")),
+              wallnormal_(this->particles_->template getVariableDataByName<Vecd>("WallNormal")),
+              vel_gradient_mat_(this->particles_->template registerStateVariable<Matd>("VelocityGradient")), 
               vonkar_(0.4187), E_(9.793)
-           {}
+              {}
         //=================================================================================================//
         void StdWallFunctionFVM::nearwallquantities(size_t index_i)
         {
@@ -271,6 +280,11 @@ namespace SPH
                 //vel_gradient_mat_[index_i](0, 1) = veltangential.norm() / (yp_[index_i] * log(E_ * ystar_[index_i]));
 
                 K_prod_p_[index_i] = std::pow(Tau_wall_[index_i], 2.0) / (vonkar_ * rho_[index_i] * std::pow(Cmu_, 0.25) * std::pow(K_[index_i], 0.5) * yp_[index_i]);
+                if (cornercellflag_[index_i] == 1.0)
+                {
+                    K_prod_p_[index_i] = K_prod_p_[index_i] / 2.0; //using 0.5 as weight
+                }
+                
                 Eps_p_[index_i] = (std::pow(Cmu_, 3.0 / 4.0) * std::pow(K_[index_i], 1.5)) / (vonkar_ * yp_[index_i]);
                
             }

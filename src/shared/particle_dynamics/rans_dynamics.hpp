@@ -14,9 +14,9 @@ namespace SPH
           rho_(this->particles_->template getVariableDataByName<Real>("Density")),
           mass_(this->particles_->template getVariableDataByName<Real>("Mass")),
           Vol_(this->particles_->template getVariableDataByName<Real>("VolumetricMeasure")),
-          vel_(this->particles_->template getVariableDataByName<Vecd>("Velocity")),
           mu_t_(this->particles_->template getVariableDataByName<Real>("TurblunetViscosity")),
           walladjacentcellflag_(this->particles_->template getVariableDataByName<Real>("FlagForWallAdjacentCells")),
+          vel_(this->particles_->template getVariableDataByName<Vecd>("Velocity")), 
           turbulent_viscous_force_(this->particles_->template registerStateVariable<Vecd>("TurbulentViscousForce")),
           smoothing_length_(this->sph_body_.sph_adaptation_->ReferenceSmoothingLength()) {}
     //=================================================================================================//
@@ -34,10 +34,11 @@ namespace SPH
             const Vecd &e_ij = inner_neighborhood.e_ij_[n];
             Real mu_t_avg = (2.0 * mu_t_[index_i] * mu_t_[index_j]) / (mu_t_[index_i] + mu_t_[index_j]);
             
-            // turbulent viscous force
-            Vecd vel_derivative = (vel_[index_i] - vel_[index_j]) /
-                                  (inner_neighborhood.r_ij_[n] + 0.01 * smoothing_length_);
-            force += e_ij.dot(2.0 * e_ij) * mu_t_avg * vel_derivative * inner_neighborhood.dW_ij_[n] * Vol_[index_j];
+                // turbulent viscous force
+                Vecd vel_derivative = (vel_[index_i] - vel_[index_j]) /
+                                      (inner_neighborhood.r_ij_[n] + 0.01 * smoothing_length_);
+
+                force += e_ij.dot(2.0 * e_ij) * mu_t_avg * vel_derivative * inner_neighborhood.dW_ij_[n] * Vol_[index_j];    
         }
         turbulent_viscous_force_[index_i] = force * Vol_[index_i];
     }
