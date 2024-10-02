@@ -101,11 +101,11 @@ class TCFBoundaryConditionSetup : public BoundaryConditionSetupInFVM
 public:
 
     TCFBoundaryConditionSetup(BaseInnerRelationInFVM& inner_relation, GhostCreationFromMesh& ghost_creation)
-        :BoundaryConditionSetupInFVM(inner_relation, ghost_creation),
-        fluid_(DynamicCast<WeaklyCompressibleFluid>(this, particles_->getBaseMaterial())), 
+        :BoundaryConditionSetupInFVM(inner_relation, ghost_creation), 
         K_(this->particles_->template getVariableDataByName<Real>("TKE")),
         Eps_(this->particles_->template getVariableDataByName<Real>("Dissipation")),
         mu_t_(this->particles_->template getVariableDataByName<Real>("TurblunetViscosity")),
+        fluid_(DynamicCast<WeaklyCompressibleFluid>(this, particles_->getBaseMaterial())),
         Cmu_(0.09){};
     virtual ~TCFBoundaryConditionSetup() {};
 
