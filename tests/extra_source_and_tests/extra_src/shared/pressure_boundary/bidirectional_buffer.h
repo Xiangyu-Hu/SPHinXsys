@@ -62,6 +62,7 @@ class BidirectionalBuffer
               part_id_(aligned_box_part.getPartID()),
               pos_(particles_->getVariableDataByName<Vecd>("Position")),
               aligned_box_(aligned_box_part.getAlignedBoxShape()),
+              upper_bound_fringe_(-sph_body_.getSPHBodyResolutionRef()),
               buffer_particle_indicator_(particles_->registerStateVariable<int>("BufferParticleIndicator"))
         {
             particles_->addVariableToSort<int>("BufferParticleIndicator");
@@ -70,13 +71,17 @@ class BidirectionalBuffer
 
         virtual void update(size_t index_i, Real dt = 0.0)
         {
-            buffer_particle_indicator_[index_i] = aligned_box_.checkInBounds(pos_[index_i]) ? part_id_ : 0;
+            if (aligned_box_.checkInBounds(pos_[index_i], 0.0, upper_bound_fringe_))
+            {
+                buffer_particle_indicator_[index_i] = part_id_;
+            }
         };
 
       protected:
         int part_id_;
         Vecd *pos_;
         AlignedBoxShape &aligned_box_;
+        Real upper_bound_fringe_;
         int *buffer_particle_indicator_;
     };
 
@@ -120,7 +125,6 @@ class BidirectionalBuffer
                     Real sound_speed = fluid_.getSoundSpeed(rho_[index_i]);
                     p_[index_i] = target_pressure_(p_[index_i], *physical_time_);
                     rho_[index_i] = p_[index_i] / pow(sound_speed, 2.0) + fluid_.ReferenceDensity();
-                    previous_surface_indicator_[index_i] = 1;
                     mutex_switch.unlock();
                 }
             }
@@ -163,6 +167,7 @@ class BidirectionalBuffer
                 {
 
                     particles_->switchToBufferParticle(index_i);
+                    buffer_particle_indicator_[index_i] = 0;
                 }
                 mutex_switch.unlock();
             }
