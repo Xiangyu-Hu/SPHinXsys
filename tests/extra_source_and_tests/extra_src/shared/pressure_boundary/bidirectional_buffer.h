@@ -57,14 +57,14 @@ class BidirectionalBuffer
     class TagBufferParticles : public BaseLocalDynamics<BodyPartByCell>
     {
       public:
-        TagBufferParticles(BodyAlignedBoxByCell &aligned_box_part)
+        TagBufferParticles(BodyAlignedBoxByCell &aligned_box_part, bool is_initialization = false)
             : BaseLocalDynamics<BodyPartByCell>(aligned_box_part),
               part_id_(aligned_box_part.getPartID()),
               pos_(particles_->getVariableDataByName<Vecd>("Position")),
               aligned_box_(aligned_box_part.getAlignedBoxShape()),
-              upper_bound_fringe_(-sph_body_.getSPHBodyResolutionRef()),
               buffer_particle_indicator_(particles_->registerStateVariable<int>("BufferParticleIndicator"))
         {
+            upper_bound_fringe_ = is_initialization ? 0.0 : -sph_body_.getSPHBodyResolutionRef();
             particles_->addVariableToSort<int>("BufferParticleIndicator");
         };
         virtual ~TagBufferParticles(){};
@@ -81,8 +81,8 @@ class BidirectionalBuffer
         int part_id_;
         Vecd *pos_;
         AlignedBoxShape &aligned_box_;
-        Real upper_bound_fringe_;
         int *buffer_particle_indicator_;
+        Real upper_bound_fringe_;
     };
 
     class Injection : public BaseLocalDynamics<BodyPartByCell>
@@ -183,12 +183,15 @@ class BidirectionalBuffer
 
   public:
     BidirectionalBuffer(BodyAlignedBoxByCell &aligned_box_part, ParticleBuffer<Base> &particle_buffer)
-        : target_pressure_(*this), tag_buffer_particles(aligned_box_part),
+        : target_pressure_(*this), 
+          buffer_particles_initialization(aligned_box_part, true),
+          buffer_particles_update(aligned_box_part),
           injection(aligned_box_part, particle_buffer, target_pressure_),
           deletion(aligned_box_part){};
     virtual ~BidirectionalBuffer(){};
 
-    SimpleDynamics<TagBufferParticles, ExecutionPolicy> tag_buffer_particles;
+    SimpleDynamics<TagBufferParticles, ExecutionPolicy> buffer_particles_initialization;
+    SimpleDynamics<TagBufferParticles, ExecutionPolicy> buffer_particles_update;
     SimpleDynamics<Injection, ExecutionPolicy> injection;
     SimpleDynamics<Deletion, ExecutionPolicy> deletion;
 };
