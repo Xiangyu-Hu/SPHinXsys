@@ -374,9 +374,9 @@ int main(int ac, char *av[])
     water_block_complex.updateConfiguration();
     shell_water_contact.updateConfiguration();
     boundary_indicator.exec();
-    left_bidirection_buffer.buffer_particles_initialization.exec();
-    right_up_bidirection_buffer.buffer_particles_initialization.exec();
-    right_down_bidirection_buffer.buffer_particles_initialization.exec();
+    left_bidirection_buffer.tag_buffer_particles.exec();
+    right_up_bidirection_buffer.tag_buffer_particles.exec();
+    right_down_bidirection_buffer.tag_buffer_particles.exec();
     //----------------------------------------------------------------------
     //	Setup computing and initial conditions.
     //----------------------------------------------------------------------
@@ -493,9 +493,9 @@ int main(int ac, char *av[])
             interval_updating_configuration += TickCount::now() - time_instance;
             boundary_indicator.exec();
 
-            left_bidirection_buffer.buffer_particles_update.exec();
-            right_up_bidirection_buffer.buffer_particles_update.exec();
-            right_down_bidirection_buffer.buffer_particles_update.exec();
+            left_bidirection_buffer.tag_buffer_particles.exec();
+            right_up_bidirection_buffer.tag_buffer_particles.exec();
+            right_down_bidirection_buffer.tag_buffer_particles.exec();
         }
         TickCount t2 = TickCount::now();
         body_states_recording.writeToFile();

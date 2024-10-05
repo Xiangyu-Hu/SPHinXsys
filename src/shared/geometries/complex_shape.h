@@ -94,8 +94,8 @@ class AlignedBoxShape : public TransformShape<GeometricShapeBox>
 
     Vecd HalfSize() { return halfsize_; }
     bool checkInBounds(const Vecd &probe_point, Real lower_bound_fringe = 0.0, Real upper_bound_fringe = 0.0);
-    bool checkUpperBound(const Vecd &probe_point);
-    bool checkLowerBound(const Vecd &probe_point);
+    bool checkUpperBound(const Vecd &probe_point, Real upper_bound_fringe = 0.0);
+    bool checkLowerBound(const Vecd &probe_point, Real lower_bound_fringe = 0.0);
     bool checkNearUpperBound(const Vecd &probe_point, Real threshold);
     bool checkNearLowerBound(const Vecd &probe_point, Real threshold);
     Vecd getUpperPeriodic(const Vecd &probe_point);
