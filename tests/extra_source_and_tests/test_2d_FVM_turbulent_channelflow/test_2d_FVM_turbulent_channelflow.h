@@ -8,7 +8,7 @@
 #ifndef FVM_TURBULENT_CHANNEL_FLOW_H
 #define FVM_TURBULENT_CHANNEL_FLOW_H             
 #include "common_weakly_compressible_FVM_classes.h"
-#include "TurbulenceModel.h"
+#include "turbulence_model.h"
 #include "rans_dynamics.hpp"
 using namespace SPH;
 using namespace std;
@@ -66,7 +66,7 @@ class TCFInitialCondition
 {
     public:
         explicit TCFInitialCondition(SPHBody& sph_body)
-          : FluidInitialCondition(sph_body), Cmu_(0.09), Vol_(this->particles_->template getVariableDataByName<Real>("VolumetricMeasure")),
+          : FluidInitialCondition(sph_body), C_mu_(0.09), Vol_(this->particles_->template getVariableDataByName<Real>("VolumetricMeasure")),
             K_(this->particles_->template registerStateVariable<Real>("TKE")),
             Eps_(this->particles_->template registerStateVariable<Real>("Dissipation")),
             mu_t_(this->particles_->template registerStateVariable<Real>("TurblunetViscosity")),
@@ -84,12 +84,12 @@ class TCFInitialCondition
         vel_[index_i] = initial_velocity;
         K_[index_i] = (3.0 / 2.0) * (initial_velocity.squaredNorm()) * (I * I);
         Eps_[index_i] = pow(K_[index_i], 1.5) / length_scale;
-        mu_t_[index_i] = Cmu_ * rho_[index_i] * pow(K_[index_i], 2.0) / Eps_[index_i];
+        mu_t_[index_i] = C_mu_ * rho_[index_i] * pow(K_[index_i], 2.0) / Eps_[index_i];
         mass_[index_i] = rho_[index_i] * Vol_[index_i];
         mom_[index_i] = mass_[index_i] * vel_[index_i];
     }
 protected:
-  Real Cmu_;
+  Real C_mu_;
   Real *Vol_, *K_, *Eps_, *mu_t_, *rho_, *p_, *mass_;
   Vecd *mom_;
 };
@@ -106,7 +106,7 @@ public:
         Eps_(this->particles_->template getVariableDataByName<Real>("Dissipation")),
         mu_t_(this->particles_->template getVariableDataByName<Real>("TurblunetViscosity")),
         fluid_(DynamicCast<WeaklyCompressibleFluid>(this, particles_->getBaseMaterial())),
-        Cmu_(0.09){};
+        C_mu_(0.09){};
     virtual ~TCFBoundaryConditionSetup() {};
 
     void applyNonSlipWallBoundary(size_t ghost_index, size_t index_i) override
@@ -127,7 +127,7 @@ public:
         rho_[ghost_index] = rho_[index_i]; 
         K_[ghost_index] = (3.0 / 2.0) * (vel_[ghost_index].squaredNorm()) * (I * I);
         Eps_[ghost_index] = pow(K_[ghost_index], 1.5) / length_scale;
-        mu_t_[ghost_index] = Cmu_ * rho_[ghost_index] * pow(K_[ghost_index], 2.0) / Eps_[ghost_index];
+        mu_t_[ghost_index] = C_mu_ * rho_[ghost_index] * pow(K_[ghost_index], 2.0) / Eps_[ghost_index];
     }
     void applyPressureOutletBC(size_t ghost_index, size_t index_i) override
     {
@@ -147,13 +147,13 @@ public:
             rho_[ghost_index] = rho_[index_i];
             K_[ghost_index] = (3.0 / 2.0) * (vel_[ghost_index].squaredNorm()) * (I * I);
             Eps_[ghost_index] = pow(K_[ghost_index], 1.5) / length_scale;
-            mu_t_[ghost_index] = Cmu_ * rho_[ghost_index] * pow(K_[ghost_index], 2.0) / Eps_[ghost_index];
+            mu_t_[ghost_index] = C_mu_ * rho_[ghost_index] * pow(K_[ghost_index], 2.0) / Eps_[ghost_index];
         }
         
     }
 protected:
     Real *K_, *Eps_, *mu_t_;
     Fluid& fluid_;
-    Real Cmu_;
+    Real C_mu_;
 };
 #endif // FVM_TURBULENT_CHANNEL_FLOW_H

@@ -22,9 +22,9 @@ namespace SPH
             Vecd *mom_, *dmom_dt_;
             Real *dmass_dt_;
             Real *K_prod_p_, *K_prod_, *Eps_p_, *K_adv_, *K_lap_;
-            Real *Eps_adv_, *Eps_lap_, *Eps_prodscalar_, *Eps_scalar_, *Tau_wall_;
-            Real Cmu_, sigmak_;
-            Real sigmaeps_, C1eps_, C2eps_, *K_, *Eps_, *mu_t_;
+            Real *Eps_adv_, *Eps_lap_, *Eps_prod_, *Eps_destruction_, *Tau_wall_;
+            Real C_mu_, sigma_k_;
+            Real sigma_eps_, C1_eps_, C2_eps_, *K_, *Eps_, *mu_t_;
             GhostCreationFromMesh& ghost_creator_;
         };
         //=================================================================================================//
@@ -36,10 +36,10 @@ namespace SPH
             
 
         protected:
-          Vecd *wallnormal_;
-          Real *walladjacentcellflag_, *yp_, *cornercellflag_, *boundary_type_;
-          StdLargeVec<Real> walladjacentindex_,  wallghostindex_;
-          StdLargeVec<Vecd> walleij_;
+          Vecd *wall_normal_;
+          Real *wall_adjacent_cell_flag_, *yp_, *corner_cell_flag_, *boundary_type_;
+          StdLargeVec<Real> wall_adjacent_index_,  wall_ghost_index_;
+          StdLargeVec<Vecd> wall_eij_;
           Real ymax_;
           SPHBody &bounds_;
 
@@ -55,10 +55,10 @@ namespace SPH
            void nearwallquantities(size_t index_i);
 
          protected:
-           Real *ystar_, *yp_;
-           Vecd *wallnormal_;
+           Real *y_star_, *yp_;
+           Vecd *wall_normal_;
            Matd *vel_gradient_mat_;
-           Real vonkar_, E_;
+           Real von_kar_, E_;
         };
         //=================================================================================================//
 
@@ -71,7 +71,7 @@ namespace SPH
             void update(size_t index_i, Real dt = 0.0);
 
             protected:
-            Real *dK_dt_, *walladjacentcellflag_, *strain_rate_, *cornercellflag_, *boundary_type_;
+            Real *dK_dt_, *wall_adjacent_cell_flag_, *strain_rate_, *corner_cell_flag_, *boundary_type_;
             Real *dudx_, *dudy_, *dvdx_, *dvdy_;
         };
         //=================================================================================================//
@@ -84,7 +84,7 @@ namespace SPH
             void update(size_t index_i, Real dt = 0.0);
 
             protected:
-            Real *dEps_dt_, *walladjacentcellflag_;
+            Real *dEps_dt_, *wall_adjacent_cell_flag_;
         };
         //=================================================================================================//
         

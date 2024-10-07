@@ -83,8 +83,8 @@ int main(int ac, char *av[])
     write_real_body_states.addToWrite<Real>(water_block, "TKELaplacian");
     write_real_body_states.addToWrite<Real>(water_block, "DissipationAdvection");
     write_real_body_states.addToWrite<Real>(water_block, "DissipationLaplacian");
-    write_real_body_states.addToWrite<Real>(water_block, "DissipationProdscalar");
-    write_real_body_states.addToWrite<Real>(water_block, "DissipationScalar");
+    write_real_body_states.addToWrite<Real>(water_block, "DissipationProd");
+    write_real_body_states.addToWrite<Real>(water_block, "DissipationDestruction");
     write_real_body_states.addToWrite<Real>(water_block, "WallShearStress");
     write_real_body_states.addToWrite<Vecd>(water_block, "TkeGradientForce");
     write_real_body_states.addToWrite<Real>(water_block, "Ystar");

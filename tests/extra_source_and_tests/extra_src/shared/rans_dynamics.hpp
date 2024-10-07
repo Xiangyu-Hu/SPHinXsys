@@ -15,7 +15,7 @@ namespace SPH
           mass_(this->particles_->template getVariableDataByName<Real>("Mass")),
           Vol_(this->particles_->template getVariableDataByName<Real>("VolumetricMeasure")),
           mu_t_(this->particles_->template getVariableDataByName<Real>("TurblunetViscosity")),
-          walladjacentcellflag_(this->particles_->template getVariableDataByName<Real>("FlagForWallAdjacentCells")),
+          wall_adjacent_cell_flag_(this->particles_->template getVariableDataByName<Real>("FlagForWallAdjacentCells")),
           vel_(this->particles_->template getVariableDataByName<Vecd>("Velocity")), 
           turbulent_viscous_force_(this->particles_->template registerStateVariable<Vecd>("TurbulentViscousForce")),
           smoothing_length_(this->sph_body_.sph_adaptation_->ReferenceSmoothingLength()) {}

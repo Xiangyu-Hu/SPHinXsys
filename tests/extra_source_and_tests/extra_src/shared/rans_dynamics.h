@@ -25,7 +25,7 @@ class TurbulentViscousForceInFVM<DataDelegationType>
         virtual ~TurbulentViscousForceInFVM(){};
 
       protected:
-        Real *rho_, *mass_, *Vol_, *mu_t_, *walladjacentcellflag_;
+        Real *rho_, *mass_, *Vol_, *mu_t_, *wall_adjacent_cell_flag_;
         Vecd *vel_, *turbulent_viscous_force_;
         Real smoothing_length_;
 };

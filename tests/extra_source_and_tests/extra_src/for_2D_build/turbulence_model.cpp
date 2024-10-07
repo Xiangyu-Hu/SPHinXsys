@@ -1,6 +1,6 @@
 #ifndef TURBULENCEMODEL_CPP
 #define TURBULENCEMODEL_CPP
-#include "TurbulenceModel.h"
+#include "turbulence_model.h"
 #include "sphinxsys.h"
 namespace SPH
 {  
@@ -19,10 +19,10 @@ namespace SPH
           K_lap_(this->particles_->template registerStateVariable<Real>("TKELaplacian")),
           Eps_adv_(this->particles_->template registerStateVariable<Real>("DissipationAdvection")),
           Eps_lap_(this->particles_->template registerStateVariable<Real>("DissipationLaplacian")),
-          Eps_prodscalar_(this->particles_->template registerStateVariable<Real>("DissipationProdscalar")),
-          Eps_scalar_(this->particles_->template registerStateVariable<Real>("DissipationScalar")),
+          Eps_prod_(this->particles_->template registerStateVariable<Real>("DissipationProd")),
+          Eps_destruction_(this->particles_->template registerStateVariable<Real>("DissipationDestruction")),
           Tau_wall_(this->particles_->template registerStateVariable<Real>("WallShearStress")),
-          Cmu_(0.09), sigmak_(1.0), sigmaeps_(1.3), C1eps_(1.44), C2eps_(1.92),
+          C_mu_(0.09), sigma_k_(1.0), sigma_eps_(1.3), C1_eps_(1.44), C2_eps_(1.92),
           K_(this->particles_->template registerStateVariable<Real>("TKE")),
           Eps_(this->particles_->template registerStateVariable<Real>("Dissipation")),
           mu_t_(this->particles_->template registerStateVariable<Real>("TurblunetViscosity")),
@@ -31,10 +31,10 @@ namespace SPH
         //=================================================================================================//
            
             WallAdjacentCells::WallAdjacentCells(BaseInnerRelation &inner_relation, GhostCreationFromMesh &ghost_creator)
-              : BaseTurbulence(inner_relation, ghost_creator), wallnormal_(this->particles_->template registerStateVariable<Vecd>("WallNormal")),
-                walladjacentcellflag_(this->particles_->template registerStateVariable<Real>("FlagForWallAdjacentCells")),
+              : BaseTurbulence(inner_relation, ghost_creator), wall_normal_(this->particles_->template registerStateVariable<Vecd>("WallNormal")),
+                wall_adjacent_cell_flag_(this->particles_->template registerStateVariable<Real>("FlagForWallAdjacentCells")),
                 yp_(this->particles_->template registerStateVariable<Real>("WallNormalDistance")),
-                cornercellflag_(this->particles_->template registerStateVariable<Real>("CornerCellFlag")), 
+                corner_cell_flag_(this->particles_->template registerStateVariable<Real>("CornerCellFlag")), 
                 boundary_type_(this->particles_->template registerStateVariable<Real>("BoundaryType")), ymax_(0.0), 
                 bounds_(inner_relation.getSPHBody())
                 {
@@ -43,9 +43,9 @@ namespace SPH
         //=================================================================================================//
         void WallAdjacentCells::walladjacentcellyp()
         {
-            walladjacentindex_.resize(particles_->ParticlesBound());
-            wallghostindex_.resize(particles_->ParticlesBound());
-            walleij_.resize(particles_->ParticlesBound());
+            wall_adjacent_index_.resize(particles_->ParticlesBound());
+            wall_ghost_index_.resize(particles_->ParticlesBound());
+            wall_eij_.resize(particles_->ParticlesBound());
             
             for (size_t boundary_type = 0; boundary_type < ghost_creator_.each_boundary_type_with_all_ghosts_index_.size(); ++boundary_type)
             {
@@ -55,21 +55,21 @@ namespace SPH
                     {
                         size_t ghost_index = ghost_creator_.each_boundary_type_with_all_ghosts_index_[boundary_type][ghost_number];
                         size_t index_real = ghost_creator_.each_boundary_type_contact_real_index_[boundary_type][ghost_number];
-                        walleij_[index_real] = ghost_creator_.each_boundary_type_with_all_ghosts_eij_[boundary_type][ghost_number];
+                        wall_eij_[index_real] = ghost_creator_.each_boundary_type_with_all_ghosts_eij_[boundary_type][ghost_number];
 
                         if (boundary_type == 3)
                         {
-                            walladjacentindex_[index_real] = index_real;
-                            wallghostindex_[index_real] = ghost_index;
-                            walladjacentcellflag_[index_real] = 1.0;
-                            if ((pos_[index_real] - pos_[ghost_index]).dot(walleij_[index_real]) > ymax_)
+                            wall_adjacent_index_[index_real] = index_real;
+                            wall_ghost_index_[index_real] = ghost_index;
+                            wall_adjacent_cell_flag_[index_real] = 1.0;
+                            if ((pos_[index_real] - pos_[ghost_index]).dot(wall_eij_[index_real]) > ymax_)
                             {
-                                ymax_ = (pos_[index_real] - pos_[ghost_index]).dot(walleij_[index_real]);
+                                ymax_ = (pos_[index_real] - pos_[ghost_index]).dot(wall_eij_[index_real]);
                             }
                         }
-                        if (walladjacentcellflag_[index_real] == 1.0 && boundary_type != 3)
+                        if (wall_adjacent_cell_flag_[index_real] == 1.0 && boundary_type != 3)
                         {
-                            cornercellflag_[index_real] = 1.0;
+                            corner_cell_flag_[index_real] = 1.0;
                             boundary_type_[ghost_index] = boundary_type;
                         }
                     }
@@ -96,12 +96,12 @@ namespace SPH
             if (lower_wall_condition)
             {
                 yp_[index_i] = (pos_[index_i] - lower_wall).dot(lower_wall_normal);
-                wallnormal_[index_i] = lower_wall_normal;
+                wall_normal_[index_i] = lower_wall_normal;
             }
             else if (upper_wall_condition)
             {
                 yp_[index_i] = (pos_[index_i] - upper_wall).dot(upper_wall_normal);   
-                wallnormal_[index_i] = upper_wall_normal;
+                wall_normal_[index_i] = upper_wall_normal;
             }
         }
         
@@ -111,9 +111,9 @@ namespace SPH
         KEpsilonStd1stHalf::KEpsilonStd1stHalf(BaseInnerRelation &inner_relation, GhostCreationFromMesh& ghost_creator) 
             : StdWallFunctionFVM(inner_relation, ghost_creator),
               dK_dt_(this->particles_->template registerStateVariable<Real>("TKEChangeRate")),
-              walladjacentcellflag_(this->particles_->template getVariableDataByName<Real>("FlagForWallAdjacentCells")),
+              wall_adjacent_cell_flag_(this->particles_->template getVariableDataByName<Real>("FlagForWallAdjacentCells")),
               strain_rate_(this->particles_->template registerStateVariable<Real>("StrainRate")),
-              cornercellflag_(this->particles_->template getVariableDataByName<Real>("CornerCellFlag")),
+              corner_cell_flag_(this->particles_->template getVariableDataByName<Real>("CornerCellFlag")),
               boundary_type_(this->particles_->template getVariableDataByName<Real>("BoundaryType")),
               dudx_(this->particles_->template registerStateVariable<Real>("dudx")),
               dudy_(this->particles_->template registerStateVariable<Real>("dudy")),
@@ -133,10 +133,10 @@ namespace SPH
             vel_gradient_mat_[index_i] = Matd::Zero();
             Real mu_t_upperlimit = 1e4 * fluid_.ReferenceViscosity();
             Real mu_t_lowerlimit = 1e-3 * fluid_.ReferenceViscosity();
-            Real mu_t = rho_[index_i] * Cmu_ * ((K_[index_i] * K_[index_i]) / (Eps_[index_i]));
+            Real mu_t = rho_[index_i] * C_mu_ * ((K_[index_i] * K_[index_i]) / (Eps_[index_i]));
             mu_t_[index_i] = std::max(std::min(mu_t_upperlimit, mu_t), mu_t_lowerlimit);
 
-            if (walladjacentcellflag_[index_i] == 1.0)
+            if (wall_adjacent_cell_flag_[index_i] == 1.0)
             {
                 nearwallquantities(index_i);
                 for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
@@ -148,7 +148,7 @@ namespace SPH
                     Real mu_t_avg = (2.0 * mu_t_[index_i] * mu_t_[index_j]) / (mu_t_[index_i] + mu_t_[index_j]);
 
                     K_adv_[index_i] += -(dW_ij * Vol_[index_j] * rho_[index_i] * (K_[index_i] - K_[index_j])) * ((vel_[index_i]).dot(e_ij));
-                    K_lap_[index_i] += 2.0 * dW_ij * Vol_[index_j] * ((fluid_.ReferenceViscosity() + mu_t_avg / sigmak_) * (K_[index_i] - K_[index_j]) / (r_ij));
+                    K_lap_[index_i] += 2.0 * dW_ij * Vol_[index_j] * ((fluid_.ReferenceViscosity() + mu_t_avg / sigma_k_) * (K_[index_i] - K_[index_j]) / (r_ij));
                     /*
                     K_adv_[index_i] += -(dW_ij * Vol_[index_j] * rho_[index_i] * (K_[index_i] - K_[index_j])) * (((vel_[index_i]) - vel_[index_j]).dot(e_ij));     // For better results
                     K_lap_[index_i] += 2.0 * dW_ij * Vol_[index_j] * ((fluid_.ReferenceViscosity() + mu_t_[index_i] / sigmak_) * (K_[index_i] - K_[index_j]) / (r_ij)); //For better results
@@ -179,7 +179,7 @@ namespace SPH
                     Real mu_t_avg = (2.0 * mu_t_[index_i] * mu_t_[index_j]) / (mu_t_[index_i] + mu_t_[index_j]);
 
                     K_adv_[index_i] += -(dW_ij * Vol_[index_j] * rho_[index_i] * (K_[index_i] - K_[index_j])) * ((vel_[index_i]).dot(e_ij));
-                    K_lap_[index_i] += 2.0 * dW_ij * Vol_[index_j] * ((fluid_.ReferenceViscosity() + mu_t_avg / sigmak_) * (K_[index_i] - K_[index_j]) / (r_ij));
+                    K_lap_[index_i] += 2.0 * dW_ij * Vol_[index_j] * ((fluid_.ReferenceViscosity() + mu_t_avg / sigma_k_) * (K_[index_i] - K_[index_j]) / (r_ij));
                     /*K_adv_[index_i] += -(dW_ij * Vol_[index_j] * rho_[index_i] * (K_[index_i] - K_[index_j])) * (((vel_[index_i]) - vel_[index_j]).dot(e_ij));     // For better results
                     K_lap_[index_i] += 2.0 * dW_ij * Vol_[index_j] * ((fluid_.ReferenceViscosity() + mu_t_[index_i] / sigmak_) * (K_[index_i] - K_[index_j]) / (r_ij)); // For better results*/ 
                     
@@ -217,20 +217,20 @@ namespace SPH
         KEpsilonStd2ndHalf::KEpsilonStd2ndHalf(BaseInnerRelation &inner_relation, GhostCreationFromMesh& ghost_creator) 
             : BaseTurbulence(inner_relation, ghost_creator),
             dEps_dt_(this->particles_->template registerStateVariable<Real>("DissipationChangeRate")),
-            walladjacentcellflag_(this->particles_->template getVariableDataByName<Real>("FlagForWallAdjacentCells"))
+            wall_adjacent_cell_flag_(this->particles_->template getVariableDataByName<Real>("FlagForWallAdjacentCells"))
         {}
         //=================================================================================================//
         
         void KEpsilonStd2ndHalf::interaction(size_t index_i, Real dt)
         {
             Real Eps_changerate = 0.0;
-            Eps_adv_[index_i] = 0.0, Eps_lap_[index_i] = 0.0, Eps_prodscalar_[index_i] = 0.0, Eps_scalar_[index_i] = 0.0;
+            Eps_adv_[index_i] = 0.0, Eps_lap_[index_i] = 0.0, Eps_prod_[index_i] = 0.0, Eps_destruction_[index_i] = 0.0;
             Neighborhood &inner_neighborhood = inner_configuration_[index_i];
-            if (walladjacentcellflag_[index_i] != 1)
+            if (wall_adjacent_cell_flag_[index_i] != 1)
             {
                 Real mu_t_upperlimit = 1e4 * fluid_.ReferenceViscosity();
                 Real mu_t_lowerlimit = 1e-3 * fluid_.ReferenceViscosity();
-                Real mu_t = rho_[index_i] * Cmu_ * ((K_[index_i] * K_[index_i]) / (Eps_[index_i]));
+                Real mu_t = rho_[index_i] * C_mu_ * ((K_[index_i] * K_[index_i]) / (Eps_[index_i]));
                 mu_t_[index_i] = std::max(std::min(mu_t_upperlimit, mu_t), mu_t_lowerlimit);
 
                 for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
@@ -242,21 +242,21 @@ namespace SPH
                     Real mu_t_avg = (2.0 * mu_t_[index_i] * mu_t_[index_j]) / (mu_t_[index_i] + mu_t_[index_j]);
 
                     Eps_adv_[index_i] += -(dW_ij * Vol_[index_j] * rho_[index_i] * (Eps_[index_i] - Eps_[index_j])) * ((vel_[index_i]).dot(e_ij));
-                    Eps_lap_[index_i] += 2.0 * dW_ij * Vol_[index_j] * (fluid_.ReferenceViscosity() + mu_t_avg / sigmaeps_) * ((Eps_[index_i] - Eps_[index_j]) / (r_ij));
+                    Eps_lap_[index_i] += 2.0 * dW_ij * Vol_[index_j] * (fluid_.ReferenceViscosity() + mu_t_avg / sigma_eps_) * ((Eps_[index_i] - Eps_[index_j]) / (r_ij));
                     /*Eps_adv_[index_i] += -(dW_ij * Vol_[index_j] * rho_[index_i] * (Eps_[index_i] - Eps_[index_j])) * (((vel_[index_i]) - vel_[index_j]).dot(e_ij));
                     Eps_lap_[index_i] += 2.0 * dW_ij * Vol_[index_j] * (fluid_.ReferenceViscosity() + mu_t_[index_i] / sigmaeps_) * ((Eps_[index_i] - Eps_[index_j]) / (r_ij)); //For better results*/
 
                     Eps_changerate = Eps_adv_[index_i] + Eps_lap_[index_i];
                 }
-                Eps_prodscalar_[index_i] = C1eps_ * (Eps_[index_i] / (K_[index_i])) * K_prod_[index_i];
-                Eps_scalar_[index_i] = -C2eps_ * rho_[index_i] * (Eps_[index_i] * Eps_[index_i]) / (K_[index_i]);
-                dEps_dt_[index_i] = Eps_changerate + Eps_prodscalar_[index_i] + Eps_scalar_[index_i];
+                Eps_prod_[index_i] = C1_eps_ * (Eps_[index_i] / (K_[index_i])) * K_prod_[index_i];
+                Eps_destruction_[index_i] = -C2_eps_ * rho_[index_i] * (Eps_[index_i] * Eps_[index_i]) / (K_[index_i]);
+                dEps_dt_[index_i] = Eps_changerate + Eps_prod_[index_i] + Eps_destruction_[index_i];
             }
         }
         //=================================================================================================//
         void KEpsilonStd2ndHalf::update(size_t index_i, Real dt)
         {
-            if (walladjacentcellflag_[index_i] != 1)
+            if (wall_adjacent_cell_flag_[index_i] != 1)
             {
                 Eps_[index_i] += (dEps_dt_[index_i] / rho_[index_i]) * dt;
             }
@@ -267,36 +267,36 @@ namespace SPH
         }
         //=================================================================================================//
          StdWallFunctionFVM::StdWallFunctionFVM(BaseInnerRelation &inner_relation, GhostCreationFromMesh &ghost_creator)
-            : BaseTurbulence(inner_relation, ghost_creator), ystar_(this->particles_->template registerStateVariable<Real>("Ystar")),
+            : BaseTurbulence(inner_relation, ghost_creator), y_star_(this->particles_->template registerStateVariable<Real>("Ystar")),
               yp_(this->particles_->template getVariableDataByName<Real>("WallNormalDistance")),
-              wallnormal_(this->particles_->template getVariableDataByName<Vecd>("WallNormal")),
+              wall_normal_(this->particles_->template getVariableDataByName<Vecd>("WallNormal")),
               vel_gradient_mat_(this->particles_->template registerStateVariable<Matd>("VelocityGradient")), 
-              vonkar_(0.4187), E_(9.793)
+              von_kar_(0.4187), E_(9.793)
               {}
         //=================================================================================================//
         void StdWallFunctionFVM::nearwallquantities(size_t index_i)
         {
-            ystar_[index_i] = (rho_[index_i] * std::pow(Cmu_, 0.25) * std::pow(K_[index_i], 0.5) * yp_[index_i]) / (fluid_.ReferenceViscosity());
+            y_star_[index_i] = (rho_[index_i] * std::pow(C_mu_, 0.25) * std::pow(K_[index_i], 0.5) * yp_[index_i]) / (fluid_.ReferenceViscosity());
             Real u_star;
-            Vecd veltangential = (vel_[index_i] - wallnormal_[index_i].dot(vel_[index_i]) * (wallnormal_[index_i]));
+            Vecd veltangential = (vel_[index_i] - wall_normal_[index_i].dot(vel_[index_i]) * (wall_normal_[index_i]));
 
-            if (ystar_[index_i] >= 11.225)
+            if (y_star_[index_i] >= 11.225)
             {
-                u_star = (1.0 / vonkar_) * std::log(E_ * ystar_[index_i]);
-                mu_t_[index_i] = fluid_.ReferenceViscosity() * ((ystar_[index_i]) / (1 / vonkar_ * std::log(E_ * ystar_[index_i])) - 1.0);
+                u_star = (1.0 / von_kar_) * std::log(E_ * y_star_[index_i]);
+                mu_t_[index_i] = fluid_.ReferenceViscosity() * ((y_star_[index_i]) / (1 / von_kar_ * std::log(E_ * y_star_[index_i])) - 1.0);
                 
-                Tau_wall_[index_i] = (veltangential.norm() * std::pow(Cmu_, 0.25) * std::pow(K_[index_i], 0.5) * rho_[index_i]) / (u_star);
+                Tau_wall_[index_i] = (veltangential.norm() * std::pow(C_mu_, 0.25) * std::pow(K_[index_i], 0.5) * rho_[index_i]) / (u_star);
                 vel_gradient_mat_[index_i] = Matd::Zero();
-                vel_gradient_mat_[index_i](0, 1) = Tau_wall_[index_i] / (rho_[index_i] * pow(Cmu_, 0.25) * pow(K_[index_i], 0.5) * vonkar_ * yp_[index_i]);
+                vel_gradient_mat_[index_i](0, 1) = Tau_wall_[index_i] / (rho_[index_i] * pow(C_mu_, 0.25) * pow(K_[index_i], 0.5) * von_kar_ * yp_[index_i]);
                 //vel_gradient_mat_[index_i](0, 1) = veltangential.norm() / (yp_[index_i] * log(E_ * ystar_[index_i]));
 
-                K_prod_p_[index_i] = std::pow(Tau_wall_[index_i], 2.0) / (vonkar_ * rho_[index_i] * std::pow(Cmu_, 0.25) * std::pow(K_[index_i], 0.5) * yp_[index_i]);
-                Eps_p_[index_i] = (std::pow(Cmu_, 3.0 / 4.0) * std::pow(K_[index_i], 1.5)) / (vonkar_ * yp_[index_i]);
+                K_prod_p_[index_i] = std::pow(Tau_wall_[index_i], 2.0) / (von_kar_ * rho_[index_i] * std::pow(C_mu_, 0.25) * std::pow(K_[index_i], 0.5) * yp_[index_i]);
+                Eps_p_[index_i] = (std::pow(C_mu_, 3.0 / 4.0) * std::pow(K_[index_i], 1.5)) / (von_kar_ * yp_[index_i]);
                
             }
-            else if (ystar_[index_i] < 11.225)
+            else if (y_star_[index_i] < 11.225)
             {
-                u_star = ystar_[index_i];
+                u_star = y_star_[index_i];
                 Tau_wall_[index_i] = fluid_.ReferenceViscosity() * veltangential.norm() / yp_[index_i];
                 vel_gradient_mat_[index_i] = Matd::Zero();
                 vel_gradient_mat_[index_i](0, 1) = Tau_wall_[index_i] / fluid_.ReferenceViscosity();
