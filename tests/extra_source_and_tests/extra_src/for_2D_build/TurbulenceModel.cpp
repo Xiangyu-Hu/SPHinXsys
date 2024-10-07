@@ -148,10 +148,10 @@ namespace SPH
                     Vecd &e_ij = inner_neighborhood.e_ij_[n];
                     Real mu_t_avg = (2.0 * mu_t_[index_i] * mu_t_[index_j]) / (mu_t_[index_i] + mu_t_[index_j]);
 
-                    K_adv_[index_i] += -(dW_ij * Vol_[index_j] * rho_[index_i] * (K_[index_i] - K_[index_j])) * ((vel_[index_i]).dot(e_ij));
-                    K_lap_[index_i] += 2.0 * dW_ij * Vol_[index_j] * ((fluid_.ReferenceViscosity() + mu_t_avg / sigmak_) * (K_[index_i] - K_[index_j]) / (r_ij));
-                    //K_adv_[index_i] += -(dW_ij * Vol_[index_j] * rho_[index_i] * (K_[index_i] - K_[index_j])) * (((vel_[index_i]) - vel_[index_j]).dot(e_ij)); //For better results
-                    //K_lap_[index_i] += 2.0 * dW_ij * Vol_[index_j] * ((fluid_.ReferenceViscosity() + mu_t_[index_i] / sigmak_) * (K_[index_i] - K_[index_j]) / (r_ij)); //For better results
+                    /*K_adv_[index_i] += -(dW_ij * Vol_[index_j] * rho_[index_i] * (K_[index_i] - K_[index_j])) * ((vel_[index_i]).dot(e_ij));
+                    K_lap_[index_i] += 2.0 * dW_ij * Vol_[index_j] * ((fluid_.ReferenceViscosity() + mu_t_avg / sigmak_) * (K_[index_i] - K_[index_j]) / (r_ij));*/ 
+                    K_adv_[index_i] += -(dW_ij * Vol_[index_j] * rho_[index_i] * (K_[index_i] - K_[index_j])) * (((vel_[index_i]) - vel_[index_j]).dot(e_ij)); //For better results
+                    K_lap_[index_i] += 2.0 * dW_ij * Vol_[index_j] * ((fluid_.ReferenceViscosity() + mu_t_[index_i] / sigmak_) * (K_[index_i] - K_[index_j]) / (r_ij)); //For better results
                 }
                 strain_tensor = 0.5 * (vel_gradient_mat_[index_i] + vel_gradient_mat_[index_i].transpose());
                 strain_rate_modulus = 2.0 * strain_tensor.array() * strain_tensor.array();
@@ -177,10 +177,10 @@ namespace SPH
                     Vecd &e_ij = inner_neighborhood.e_ij_[n];
                     Real mu_t_avg = (2.0 * mu_t_[index_i] * mu_t_[index_j]) / (mu_t_[index_i] + mu_t_[index_j]);
 
-                    K_adv_[index_i] += -(dW_ij * Vol_[index_j] * rho_[index_i] * (K_[index_i] - K_[index_j])) * ((vel_[index_i]).dot(e_ij)); 
-                    K_lap_[index_i] += 2.0 * dW_ij * Vol_[index_j] * ((fluid_.ReferenceViscosity() + mu_t_avg / sigmak_) * (K_[index_i] - K_[index_j]) / (r_ij));
-                    // K_adv_[index_i] += -(dW_ij * Vol_[index_j] * rho_[index_i] * (K_[index_i] - K_[index_j])) * (((vel_[index_i]) - vel_[index_j]).dot(e_ij)); //For better results
-                    // K_lap_[index_i] += 2.0 * dW_ij * Vol_[index_j] * ((fluid_.ReferenceViscosity() + mu_t_[index_i] / sigmak_) * (K_[index_i] - K_[index_j]) / (r_ij)); //For better results
+                    /*K_adv_[index_i] += -(dW_ij * Vol_[index_j] * rho_[index_i] * (K_[index_i] - K_[index_j])) * ((vel_[index_i]).dot(e_ij));
+                    K_lap_[index_i] += 2.0 * dW_ij * Vol_[index_j] * ((fluid_.ReferenceViscosity() + mu_t_avg / sigmak_) * (K_[index_i] - K_[index_j]) / (r_ij));*/
+                    K_adv_[index_i] += -(dW_ij * Vol_[index_j] * rho_[index_i] * (K_[index_i] - K_[index_j])) * (((vel_[index_i]) - vel_[index_j]).dot(e_ij));          // For better results
+                    K_lap_[index_i] += 2.0 * dW_ij * Vol_[index_j] * ((fluid_.ReferenceViscosity() + mu_t_[index_i] / sigmak_) * (K_[index_i] - K_[index_j]) / (r_ij)); // For better results
                     
                     vel_matrix = (vel_[index_i] - vel_[index_j]) * e_ij.transpose();
                     vel_gradient_mat_[index_i] += dW_ij * Vol_[index_j] * vel_matrix;
@@ -240,10 +240,10 @@ namespace SPH
                     Vecd &e_ij = inner_neighborhood.e_ij_[n];
                     Real mu_t_avg = (2.0 * mu_t_[index_i] * mu_t_[index_j]) / (mu_t_[index_i] + mu_t_[index_j]);
 
-                    Eps_adv_[index_i] += -(dW_ij * Vol_[index_j] * rho_[index_i] * (Eps_[index_i] - Eps_[index_j])) * ((vel_[index_i]).dot(e_ij));
-                    Eps_lap_[index_i] += 2.0 * dW_ij * Vol_[index_j] * (fluid_.ReferenceViscosity() + mu_t_avg / sigmaeps_) * ((Eps_[index_i] - Eps_[index_j]) / (r_ij));
-                    /*Eps_adv_[index_i] += -(dW_ij * Vol_[index_j] * rho_[index_i] * (Eps_[index_i] - Eps_[index_j])) * (((vel_[index_i]) - vel_[index_j]).dot(e_ij));
-                    Eps_lap_[index_i] += 2.0 * dW_ij * Vol_[index_j] * (fluid_.ReferenceViscosity() + mu_t_[index_i] / sigmaeps_) * ((Eps_[index_i] - Eps_[index_j]) / (r_ij));*/ //For better results
+                    /* Eps_adv_[index_i] += -(dW_ij * Vol_[index_j] * rho_[index_i] * (Eps_[index_i] - Eps_[index_j])) * ((vel_[index_i]).dot(e_ij));
+                    Eps_lap_[index_i] += 2.0 * dW_ij * Vol_[index_j] * (fluid_.ReferenceViscosity() + mu_t_avg / sigmaeps_) * ((Eps_[index_i] - Eps_[index_j]) / (r_ij));*/
+                    Eps_adv_[index_i] += -(dW_ij * Vol_[index_j] * rho_[index_i] * (Eps_[index_i] - Eps_[index_j])) * (((vel_[index_i]) - vel_[index_j]).dot(e_ij));
+                    Eps_lap_[index_i] += 2.0 * dW_ij * Vol_[index_j] * (fluid_.ReferenceViscosity() + mu_t_[index_i] / sigmaeps_) * ((Eps_[index_i] - Eps_[index_j]) / (r_ij)); //For better results
 
                     Eps_changerate = Eps_adv_[index_i] + Eps_lap_[index_i];
                 }
