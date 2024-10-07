@@ -166,9 +166,7 @@ class BidirectionalBuffer
                        buffer_particle_indicator_[index_i] == part_id_ &&
                        index_i < particles_->TotalRealParticles())
                 {
-
                     particles_->switchToBufferParticle(index_i);
-                    buffer_particle_indicator_[index_i] = 0;
                 }
                 mutex_switch.unlock();
             }
