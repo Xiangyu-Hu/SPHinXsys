@@ -135,7 +135,6 @@ namespace SPH
             Real mu_t_lowerlimit = 1e-3 * fluid_.ReferenceViscosity();
             Real mu_t = rho_[index_i] * Cmu_ * ((K_[index_i] * K_[index_i]) / (Eps_[index_i]));
             mu_t_[index_i] = std::max(std::min(mu_t_upperlimit, mu_t), mu_t_lowerlimit);
-            size_t cornerghost_index = 0.0;
 
             if (walladjacentcellflag_[index_i] == 1.0)
             {
