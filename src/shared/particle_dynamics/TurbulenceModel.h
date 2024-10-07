@@ -37,7 +37,7 @@ namespace SPH
 
         protected:
           Vecd *wallnormal_;
-          Real *walladjacentcellflag_, *yp_, *cornercellflag_;
+          Real *walladjacentcellflag_, *yp_, *cornercellflag_, *boundary_type_;
           StdLargeVec<Real> walladjacentindex_,  wallghostindex_;
           StdLargeVec<Vecd> walleij_;
           Real ymax_;
@@ -55,7 +55,7 @@ namespace SPH
            void nearwallquantities(size_t index_i);
 
          protected:
-           Real *ystar_, *yp_, *cornercellflag_;
+           Real *ystar_, *yp_;
            Vecd *wallnormal_;
            Matd *vel_gradient_mat_;
            Real vonkar_, E_;
@@ -71,7 +71,7 @@ namespace SPH
             void update(size_t index_i, Real dt = 0.0);
 
             protected:
-            Real *dK_dt_, *walladjacentcellflag_, *strain_rate_, *cornercellflag_;
+            Real *dK_dt_, *walladjacentcellflag_, *strain_rate_, *cornercellflag_, *boundary_type_;
             Real *dudx_, *dudy_, *dvdx_, *dvdy_;
         };
         //=================================================================================================//
