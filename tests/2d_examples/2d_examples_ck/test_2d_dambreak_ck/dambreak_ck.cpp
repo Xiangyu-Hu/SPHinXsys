@@ -75,17 +75,20 @@ int main(int ac, char *av[])
     //	Basically the the range of bodies to build neighbor particle lists.
     //  Generally, we first define all the inner relations, then the contact relations.
     //----------------------------------------------------------------------
-    UpdateCellLinkedList<execution::ParallelPolicy, CellLinkedList> water_cell_linked_list(water_block);
-    UpdateCellLinkedList<execution::ParallelPolicy, CellLinkedList> wall_cell_linked_list(wall_boundary);
+    using MyExecutionPolicy = execution::ParallelPolicy; // define execution policy for this case
+
+    UpdateCellLinkedList<MyExecutionPolicy, CellLinkedList> water_cell_linked_list(water_block);
+    UpdateCellLinkedList<MyExecutionPolicy, CellLinkedList> wall_cell_linked_list(wall_boundary);
 
     Relation<Inner<>> water_block_inner(water_block);
     Relation<Contact<>> water_wall_contact(water_block, {&wall_boundary});
     Relation<Contact<>> fluid_observer_contact(fluid_observer, {&water_block});
 
-    SequencedCombination<UpdateRelation<execution::ParallelPolicy, BodyRelationUpdate<Inner<>, Contact<>>>>
+    UpdateRelation<MyExecutionPolicy, Inner<>, Contact<>>
         water_block_update_complex_relation(water_block_inner, water_wall_contact);
-    UpdateRelation<execution::ParallelPolicy, BodyRelationUpdate<Contact<>>>
+    UpdateRelation<MyExecutionPolicy, Contact<>>
         fluid_observer_contact_relation(fluid_observer_contact);
+    ParticleSortCK<MyExecutionPolicy, QuickSort> particle_sort(water_block);
     //----------------------------------------------------------------------
     // Define the numerical methods used in the simulation.
     // Note that there may be data dependence on the sequence of constructions.
@@ -95,22 +98,21 @@ int main(int ac, char *av[])
     // Finally, the auxillary models such as time step estimator, initial condition,
     // boundary condition and other constraints should be defined.
     //----------------------------------------------------------------------
-    ParticleSortCK<execution::ParallelPolicy, QuickSort> particle_sort(water_block);
     Gravity gravity(Vecd(0.0, -gravity_g));
-    StateDynamics<execution::ParallelPolicy, GravityForceCK<Gravity>> constant_gravity(water_block, gravity);
-    StateDynamics<execution::ParallelPolicy, NormalFromBodyShapeCK> wall_boundary_normal_direction(wall_boundary);
-    StateDynamics<execution::ParallelPolicy, fluid_dynamics::AdvectionStepSetup> water_advection_step_setup(water_block);
-    StateDynamics<execution::ParallelPolicy, fluid_dynamics::AdvectionStepClose> water_advection_step_close(water_block);
+    StateDynamics<MyExecutionPolicy, GravityForceCK<Gravity>> constant_gravity(water_block, gravity);
+    StateDynamics<MyExecutionPolicy, NormalFromBodyShapeCK> wall_boundary_normal_direction(wall_boundary);
+    StateDynamics<MyExecutionPolicy, fluid_dynamics::AdvectionStepSetup> water_advection_step_setup(water_block);
+    StateDynamics<MyExecutionPolicy, fluid_dynamics::AdvectionStepClose> water_advection_step_close(water_block);
 
-    InteractionDynamicsCK<execution::ParallelPolicy, fluid_dynamics::AcousticStep1stHalfWithWallRiemannCK>
+    InteractionDynamicsCK<MyExecutionPolicy, fluid_dynamics::AcousticStep1stHalfWithWallRiemannCK>
         fluid_acoustic_step_1st_half(water_block_inner, water_wall_contact);
-    InteractionDynamicsCK<execution::ParallelPolicy, fluid_dynamics::AcousticStep2ndHalfWithWallRiemannCK>
+    InteractionDynamicsCK<MyExecutionPolicy, fluid_dynamics::AcousticStep2ndHalfWithWallRiemannCK>
         fluid_acoustic_step_2nd_half(water_block_inner, water_wall_contact);
-    InteractionDynamicsCK<execution::ParallelPolicy, fluid_dynamics::DensityRegularizationComplexFreeSurface>
+    InteractionDynamicsCK<MyExecutionPolicy, fluid_dynamics::DensityRegularizationComplexFreeSurface>
         fluid_density_regularization(water_block_inner, water_wall_contact);
 
-    ReduceDynamicsCK<execution::ParallelPolicy, fluid_dynamics::AdvectionTimeStepCK> fluid_advection_time_step(water_block, U_ref);
-    ReduceDynamicsCK<execution::ParallelPolicy, fluid_dynamics::AcousticTimeStepCK> fluid_acoustic_time_step(water_block);
+    ReduceDynamicsCK<MyExecutionPolicy, fluid_dynamics::AdvectionTimeStepCK> fluid_advection_time_step(water_block, U_ref);
+    ReduceDynamicsCK<MyExecutionPolicy, fluid_dynamics::AcousticTimeStepCK> fluid_acoustic_time_step(water_block);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
@@ -120,9 +122,9 @@ int main(int ac, char *av[])
     body_states_recording.addToWrite<Real>(water_block, "Density");
     RestartIO restart_io(sph_system);
 
-    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<execution::ParallelPolicy, TotalMechanicalEnergyCK>>
+    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<MyExecutionPolicy, TotalMechanicalEnergyCK>>
         record_water_mechanical_energy(water_block, gravity);
-    RegressionTestDynamicTimeWarping<ObservedQuantityRecording<execution::ParallelPolicy, Real>>
+    RegressionTestDynamicTimeWarping<ObservedQuantityRecording<MyExecutionPolicy, Real>>
         fluid_observer_pressure("Pressure", fluid_observer_contact);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
@@ -166,7 +168,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	First output before the main loop.
     //----------------------------------------------------------------------
-    body_states_recording.writeToFile(execution::ParallelPolicy{});
+    body_states_recording.writeToFile(MyExecutionPolicy{});
     record_water_mechanical_energy.writeToFile(number_of_iterations);
     fluid_observer_pressure.writeToFile(number_of_iterations);
     //----------------------------------------------------------------------
@@ -214,7 +216,7 @@ int main(int ac, char *av[])
                     fluid_observer_pressure.writeToFile(number_of_iterations);
                 }
                 if (number_of_iterations % restart_output_interval == 0)
-                    restart_io.writeToFile(execution::ParallelPolicy{}, number_of_iterations);
+                    restart_io.writeToFile(MyExecutionPolicy{}, number_of_iterations);
             }
             number_of_iterations++;
 
@@ -231,7 +233,7 @@ int main(int ac, char *av[])
             interval_updating_configuration += TickCount::now() - time_instance;
         }
 
-        body_states_recording.writeToFile(execution::ParallelPolicy{});
+        body_states_recording.writeToFile(MyExecutionPolicy{});
         TickCount t2 = TickCount::now();
         TickCount t3 = TickCount::now();
         interval += t3 - t2;
