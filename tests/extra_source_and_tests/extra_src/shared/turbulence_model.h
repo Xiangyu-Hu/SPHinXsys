@@ -45,7 +45,19 @@ namespace SPH
 
            void walladjacentcellyp();
            void update(size_t index_i, Real dt);
-        };       
+        };  
+        //=================================================================================================//
+        class TurbuleceVariablesGradient : public BaseTurbulence
+        {
+         public:
+           explicit TurbuleceVariablesGradient(BaseInnerRelation &inner_relation, GhostCreationFromMesh &ghost_creator);
+           virtual ~TurbuleceVariablesGradient(){};
+
+         protected:
+           Vecd *K_grad_, *Eps_grad_;
+
+           void update(size_t index_i, Real dt);
+        };
         //=================================================================================================//
         class StdWallFunctionFVM : public BaseTurbulence
         {
@@ -73,6 +85,7 @@ namespace SPH
             protected:
             Real *dK_dt_, *wall_adjacent_cell_flag_, *strain_rate_, *corner_cell_flag_, *boundary_type_;
             Real *dudx_, *dudy_, *dvdx_, *dvdy_;
+            Vecd *K_grad_, *Eps_grad_; 
         };
         //=================================================================================================//
         class KEpsilonStd2ndHalf : public BaseTurbulence
@@ -85,6 +98,7 @@ namespace SPH
 
             protected:
             Real *dEps_dt_, *wall_adjacent_cell_flag_;
+            Vecd *K_grad_, *Eps_grad_;
         };
         //=================================================================================================//
         

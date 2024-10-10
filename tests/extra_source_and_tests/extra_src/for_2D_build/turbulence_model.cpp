@@ -29,7 +29,6 @@ namespace SPH
           ghost_creator_(ghost_creator)
           {}
         //=================================================================================================//
-           
             WallAdjacentCells::WallAdjacentCells(BaseInnerRelation &inner_relation, GhostCreationFromMesh &ghost_creator)
               : BaseTurbulence(inner_relation, ghost_creator), wall_normal_(this->particles_->template registerStateVariable<Vecd>("WallNormal")),
                 wall_adjacent_cell_flag_(this->particles_->template registerStateVariable<Real>("FlagForWallAdjacentCells")),
@@ -77,7 +76,6 @@ namespace SPH
             }
         }
         //=================================================================================================//
-        
         void WallAdjacentCells::update(size_t index_i, Real dt)
         {
             Vecd lower_wall = {pos_[index_i][0], 0.0};
@@ -104,8 +102,38 @@ namespace SPH
                 wall_normal_[index_i] = upper_wall_normal;
             }
         }
-        
-        
+        //=================================================================================================//
+        TurbuleceVariablesGradient::TurbuleceVariablesGradient(BaseInnerRelation &inner_relation, GhostCreationFromMesh &ghost_creator)
+            : BaseTurbulence(inner_relation, ghost_creator), K_grad_(this->particles_->template registerStateVariable<Vecd>("TKEGradient")),
+              Eps_grad_(this->particles_->template registerStateVariable<Vecd>("DissipationGradient"))
+        {}
+        //=================================================================================================//
+        void TurbuleceVariablesGradient::update(size_t index_i, Real dt)
+        {
+            K_grad_[index_i] = Vecd::Zero(), Eps_grad_[index_i] = Vecd::Zero();
+            Neighborhood &inner_neighborhood = inner_configuration_[index_i];
+            for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+            {
+                size_t index_j = inner_neighborhood.j_[n];
+                Real dW_ij = inner_neighborhood.dW_ij_[n];
+                Real r_ij = inner_neighborhood.r_ij_[n];
+                Vecd &e_ij = inner_neighborhood.e_ij_[n];
+
+                K_grad_[index_i] += dW_ij * Vol_[index_j] * (K_[index_i] - K_[index_j]) * e_ij;
+                Eps_grad_[index_i] += dW_ij * Vol_[index_j] * (Eps_[index_i] - Eps_[index_j]) * e_ij;
+                if (index_i == 41468)
+                {
+                    Vecd tkegrad = K_grad_[index_i];
+                    Real ki = K_[index_i];
+                    Real kj = K_[index_j];
+                    Vecd epsgrad = Eps_grad_[index_i];
+                    Real epsi = Eps_[index_i];
+                    Real epsj = Eps_[index_j];
+                    Real c = 0.0;
+                }
+                
+            }
+        }
         //=================================================================================================//
 
         KEpsilonStd1stHalf::KEpsilonStd1stHalf(BaseInnerRelation &inner_relation, GhostCreationFromMesh& ghost_creator) 
@@ -118,7 +146,9 @@ namespace SPH
               dudx_(this->particles_->template registerStateVariable<Real>("dudx")),
               dudy_(this->particles_->template registerStateVariable<Real>("dudy")),
               dvdx_(this->particles_->template registerStateVariable<Real>("dvdx")),
-              dvdy_(this->particles_->template registerStateVariable<Real>("dvdy"))
+              dvdy_(this->particles_->template registerStateVariable<Real>("dvdy")),
+              K_grad_(this->particles_->template getVariableDataByName<Vecd>("TKEGradient")),
+              Eps_grad_(this->particles_->template getVariableDataByName<Vecd>("DissipationGradient"))
               {}
         //=================================================================================================//
         void KEpsilonStd1stHalf::interaction(size_t index_i, Real dt)
@@ -146,12 +176,49 @@ namespace SPH
                     Real r_ij = inner_neighborhood.r_ij_[n];
                     Vecd &e_ij = inner_neighborhood.e_ij_[n];
                     Real mu_t_avg = (2.0 * mu_t_[index_i] * mu_t_[index_j]) / (mu_t_[index_i] + mu_t_[index_j]);
+                     
+                    if ((vel_[index_i]).dot(e_ij) > 0.0)
+                    {    
+                        Vecd distance = pos_[index_i] - pos_[index_j];
+                        K_adv_[index_i] += -(dW_ij * Vol_[index_j] * rho_[index_i]) * ((K_[index_j] - K_[index_i]) + (K_grad_[index_j]).dot(distance)) * ((vel_[index_i]).dot(e_ij));
 
-                    K_adv_[index_i] += -(dW_ij * Vol_[index_j] * rho_[index_i] * (K_[index_i] - K_[index_j])) * ((vel_[index_i]).dot(e_ij));
+                        if (index_i == 41468)
+                        {
+                            Vecd veli = vel_[index_i];
+                            Real Kadv = K_adv_[index_i];
+                            Vecd tkegrad = K_grad_[index_j];
+                            Real ki = K_[index_i];
+                            Real kj = K_[index_j];
+                            Vecd epsgrad = Eps_grad_[index_i];
+                            Real epsi = Eps_[index_i];
+                            Real epsj = Eps_[index_j];
+                            Real c = 0.0;
+                        }
+                    }
+                    else
+                    {
+                        Vecd distance = pos_[index_j] - pos_[index_i];
+                        K_adv_[index_i] += -(dW_ij * Vol_[index_j] * rho_[index_i]) * ((K_[index_i] - K_[index_j]) + (K_grad_[index_i]).dot(distance)) * ((vel_[index_i]).dot(e_ij));
+
+                        if (index_i == 41468)
+                        {
+                            Vecd veli = vel_[index_i];
+                            Real Kadv = K_adv_[index_i];
+                            Vecd tkegrad = K_grad_[index_i];
+                            Vecd d = distance;
+                            Real ki = K_[index_i];
+                            Real kj = K_[index_j];
+                            Vecd epsgrad = Eps_grad_[index_i];
+                            Real epsi = Eps_[index_i];
+                            Real epsj = Eps_[index_j];
+                            Real c = 0.0;
+                        }
+                    }
+
                     K_lap_[index_i] += 2.0 * dW_ij * Vol_[index_j] * ((fluid_.ReferenceViscosity() + mu_t_avg / sigma_k_) * (K_[index_i] - K_[index_j]) / (r_ij));
                     /*
-                    K_adv_[index_i] += -(dW_ij * Vol_[index_j] * rho_[index_i] * (K_[index_i] - K_[index_j])) * (((vel_[index_i]) - vel_[index_j]).dot(e_ij));     // For better results
-                    K_lap_[index_i] += 2.0 * dW_ij * Vol_[index_j] * ((fluid_.ReferenceViscosity() + mu_t_[index_i] / sigmak_) * (K_[index_i] - K_[index_j]) / (r_ij)); //For better results
+                    K_adv_[index_i] += -(dW_ij * Vol_[index_j] * rho_[index_i] * (K_[index_i] - K_[index_j])) * (((vel_[index_i]) - vel_[index_j]).dot(e_ij));      // For better results
+                    K_lap_[index_i] += 2.0 * dW_ij * Vol_[index_j] * ((fluid_.ReferenceViscosity() + mu_t_[index_i] / sigma_k_) * (K_[index_i] - K_[index_j]) / (r_ij)); //For better results
                     */ 
                 }
                 strain_tensor = 0.5 * (vel_gradient_mat_[index_i] + vel_gradient_mat_[index_i].transpose());
@@ -177,11 +244,22 @@ namespace SPH
                     Real r_ij = inner_neighborhood.r_ij_[n];
                     Vecd &e_ij = inner_neighborhood.e_ij_[n];
                     Real mu_t_avg = (2.0 * mu_t_[index_i] * mu_t_[index_j]) / (mu_t_[index_i] + mu_t_[index_j]);
+                    
+                    if ((vel_[index_i]).dot(e_ij) > 0.0)
+                    {
+                        Vecd distance = pos_[index_i] - pos_[index_j];
+                        K_adv_[index_i] += -(dW_ij * Vol_[index_j] * rho_[index_i]) * ((K_[index_j] - K_[index_i]) + (K_grad_[index_j]).dot(distance)) * ((vel_[index_i]).dot(e_ij));
+                    }
+                    else
+                    {
+                        Vecd distance = pos_[index_j] - pos_[index_i];
+                        K_adv_[index_i] += -(dW_ij * Vol_[index_j] * rho_[index_i]) * ((K_[index_i] - K_[index_j]) + (K_grad_[index_i]).dot(distance)) * ((vel_[index_i]).dot(e_ij));
+                    }
 
-                    K_adv_[index_i] += -(dW_ij * Vol_[index_j] * rho_[index_i] * (K_[index_i] - K_[index_j])) * ((vel_[index_i]).dot(e_ij));
                     K_lap_[index_i] += 2.0 * dW_ij * Vol_[index_j] * ((fluid_.ReferenceViscosity() + mu_t_avg / sigma_k_) * (K_[index_i] - K_[index_j]) / (r_ij));
-                    /*K_adv_[index_i] += -(dW_ij * Vol_[index_j] * rho_[index_i] * (K_[index_i] - K_[index_j])) * (((vel_[index_i]) - vel_[index_j]).dot(e_ij));     // For better results
-                    K_lap_[index_i] += 2.0 * dW_ij * Vol_[index_j] * ((fluid_.ReferenceViscosity() + mu_t_[index_i] / sigmak_) * (K_[index_i] - K_[index_j]) / (r_ij)); // For better results*/ 
+                    /*
+                    K_adv_[index_i] += -(dW_ij * Vol_[index_j] * rho_[index_i] * (K_[index_i] - K_[index_j])) * (((vel_[index_i]) - vel_[index_j]).dot(e_ij));      // For better results
+                    K_lap_[index_i] += 2.0 * dW_ij * Vol_[index_j] * ((fluid_.ReferenceViscosity() + mu_t_[index_i] / sigma_k_) * (K_[index_i] - K_[index_j]) / (r_ij)); // For better results*/
                     
                     vel_matrix = (vel_[index_i] - vel_[index_j]) * e_ij.transpose();
                     vel_gradient_mat_[index_i] += dW_ij * Vol_[index_j] * vel_matrix;
@@ -217,7 +295,9 @@ namespace SPH
         KEpsilonStd2ndHalf::KEpsilonStd2ndHalf(BaseInnerRelation &inner_relation, GhostCreationFromMesh& ghost_creator) 
             : BaseTurbulence(inner_relation, ghost_creator),
             dEps_dt_(this->particles_->template registerStateVariable<Real>("DissipationChangeRate")),
-            wall_adjacent_cell_flag_(this->particles_->template getVariableDataByName<Real>("FlagForWallAdjacentCells"))
+            wall_adjacent_cell_flag_(this->particles_->template getVariableDataByName<Real>("FlagForWallAdjacentCells")),
+            K_grad_(this->particles_->template getVariableDataByName<Vecd>("TKEGradient")),
+            Eps_grad_(this->particles_->template getVariableDataByName<Vecd>("DissipationGradient"))
         {}
         //=================================================================================================//
         
@@ -241,10 +321,21 @@ namespace SPH
                     Vecd &e_ij = inner_neighborhood.e_ij_[n];
                     Real mu_t_avg = (2.0 * mu_t_[index_i] * mu_t_[index_j]) / (mu_t_[index_i] + mu_t_[index_j]);
 
-                    Eps_adv_[index_i] += -(dW_ij * Vol_[index_j] * rho_[index_i] * (Eps_[index_i] - Eps_[index_j])) * ((vel_[index_i]).dot(e_ij));
+                    if ((vel_[index_i]).dot(e_ij) > 0.0)
+                    {
+                        Vecd distance = pos_[index_i] - pos_[index_j];
+                        Eps_adv_[index_i] += -(dW_ij * Vol_[index_j] * rho_[index_i]) * ((Eps_[index_j] - Eps_[index_i]) + (Eps_grad_[index_j]).dot(distance)) * ((vel_[index_i]).dot(e_ij));
+                    }
+                    else
+                    {
+                        Vecd distance = pos_[index_j] - pos_[index_i];
+                        Eps_adv_[index_i] += -(dW_ij * Vol_[index_j] * rho_[index_i]) * ((Eps_[index_i] - Eps_[index_j]) + (Eps_grad_[index_i]).dot(distance)) * ((vel_[index_i]).dot(e_ij));
+                    }
+
                     Eps_lap_[index_i] += 2.0 * dW_ij * Vol_[index_j] * (fluid_.ReferenceViscosity() + mu_t_avg / sigma_eps_) * ((Eps_[index_i] - Eps_[index_j]) / (r_ij));
-                    /*Eps_adv_[index_i] += -(dW_ij * Vol_[index_j] * rho_[index_i] * (Eps_[index_i] - Eps_[index_j])) * (((vel_[index_i]) - vel_[index_j]).dot(e_ij));
-                    Eps_lap_[index_i] += 2.0 * dW_ij * Vol_[index_j] * (fluid_.ReferenceViscosity() + mu_t_[index_i] / sigmaeps_) * ((Eps_[index_i] - Eps_[index_j]) / (r_ij)); //For better results*/
+                    /*
+                    Eps_adv_[index_i] += -(dW_ij * Vol_[index_j] * rho_[index_i] * (Eps_[index_i] - Eps_[index_j])) * (((vel_[index_i]) - vel_[index_j]).dot(e_ij));
+                    Eps_lap_[index_i] += 2.0 * dW_ij * Vol_[index_j] * (fluid_.ReferenceViscosity() + mu_t_[index_i] / sigma_eps_) * ((Eps_[index_i] - Eps_[index_j]) / (r_ij)); //For better results*/ 
 
                     Eps_changerate = Eps_adv_[index_i] + Eps_lap_[index_i];
                 }

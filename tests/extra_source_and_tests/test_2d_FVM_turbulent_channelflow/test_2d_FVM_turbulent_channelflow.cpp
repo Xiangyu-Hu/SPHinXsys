@@ -45,6 +45,7 @@ int main(int ac, char *av[])
     InteractionWithUpdate<fluid_dynamics::EulerianIntegration2ndHalfInnerRiemann> density_relaxation(water_block_inner, 10000.0);
     SimpleDynamics<TCFInitialCondition> initial_condition(water_block);
     SimpleDynamics<fluid_dynamics::WallAdjacentCells> wall_adj_cell(water_block_inner, ghost_creation);
+    SimpleDynamics<fluid_dynamics::TurbuleceVariablesGradient> turbulence_quantities_grad(water_block_inner, ghost_creation);
     
     InteractionWithUpdate<fluid_dynamics::KEpsilonStd1stHalf> tke(water_block_inner, ghost_creation);
     InteractionWithUpdate<fluid_dynamics::KEpsilonStd2ndHalf> dissipationrate(water_block_inner, ghost_creation);
@@ -94,14 +95,16 @@ int main(int ac, char *av[])
     write_real_body_states.addToWrite<Real>(water_block, "dvdx");
     write_real_body_states.addToWrite<Real>(water_block, "dvdy");
     write_real_body_states.addToWrite<Matd>(water_block, "VelocityGradient");
+    write_real_body_states.addToWrite<Vecd>(water_block, "TKEGradient");
+    write_real_body_states.addToWrite<Vecd>(water_block, "DissipationGradient");
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
     Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     size_t number_of_iterations = 0;
     int screen_output_interval = 8000;
-    Real end_time = 200.0;
-    Real output_interval = 2.0; /**< time stamps for output. */ 
+    Real end_time = 100.0;
+    Real output_interval = 1.0; /**< time stamps for output. */ 
     //----------------------------------------------------------------------
     //	Statistics for CPU time
     //----------------------------------------------------------------------
@@ -121,6 +124,7 @@ int main(int ac, char *av[])
         {
             Real dt = get_fluid_time_step_size.exec();
             boundary_condition_setup.resetBoundaryConditions();
+            turbulence_quantities_grad.exec();
             tke.exec(dt);
             boundary_condition_setup.resetBoundaryConditions();
             dissipationrate.exec(dt);
@@ -141,6 +145,10 @@ int main(int ac, char *av[])
             }
             
             number_of_iterations++;
+            if (number_of_iterations == 300)
+            {
+                Real k = 1.0;
+            }
         }
         TickCount t2 = TickCount::now();
         write_real_body_states.writeToFile();
