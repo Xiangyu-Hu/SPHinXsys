@@ -3,25 +3,25 @@
 namespace SPH
 {
 //=================================================================================================//
-bool AlignedBoxShape::checkInBounds(const Vecd &probe_point)
+bool AlignedBoxShape::checkInBounds(const Vecd &probe_point, Real lower_bound_fringe, Real upper_bound_fringe)
 {
     Vecd position_in_frame = transform_.shiftBaseStationToFrame(probe_point);
-    return position_in_frame[alignment_axis_] >= -halfsize_[alignment_axis_] &&
-                   position_in_frame[alignment_axis_] <= halfsize_[alignment_axis_]
+    return position_in_frame[alignment_axis_] >= -halfsize_[alignment_axis_] - lower_bound_fringe &&
+                   position_in_frame[alignment_axis_] <= halfsize_[alignment_axis_] + upper_bound_fringe
                ? true
                : false;
 }
 //=================================================================================================//
-bool AlignedBoxShape::checkUpperBound(const Vecd &probe_point)
+bool AlignedBoxShape::checkUpperBound(const Vecd &probe_point, Real upper_bound_fringe)
 {
     Vecd position_in_frame = transform_.shiftBaseStationToFrame(probe_point);
-    return position_in_frame[alignment_axis_] > halfsize_[alignment_axis_] ? true : false;
+    return position_in_frame[alignment_axis_] > halfsize_[alignment_axis_] + upper_bound_fringe ? true : false;
 }
 //=================================================================================================//
-bool AlignedBoxShape::checkLowerBound(const Vecd &probe_point)
+bool AlignedBoxShape::checkLowerBound(const Vecd &probe_point, Real lower_bound_fringe)
 {
     Vecd position_in_frame = transform_.shiftBaseStationToFrame(probe_point);
-    return position_in_frame[alignment_axis_] < -halfsize_[alignment_axis_] ? true : false;
+    return position_in_frame[alignment_axis_] < -halfsize_[alignment_axis_] - lower_bound_fringe ? true : false;
 }
 //=================================================================================================//
 bool AlignedBoxShape::checkNearUpperBound(const Vecd &probe_point, Real threshold)
