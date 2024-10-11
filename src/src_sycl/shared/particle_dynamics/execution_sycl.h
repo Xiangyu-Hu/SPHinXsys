@@ -131,34 +131,34 @@ namespace execution
 {
 template <class LocalDynamicsType, class ComputingKernelType>
 class Implementation<ParallelDevicePolicy, LocalDynamicsType, ComputingKernelType>
-    : public Implementation<Base>
+    : public Implementation<ParallelDevicePolicy, LocalDynamicsType>
 {
     UniquePtrKeeper<ComputingKernelType> kernel_ptr_keeper_;
 
   public:
     explicit Implementation(LocalDynamicsType &local_dynamics)
-        : Implementation<Base>(),
-          local_dynamics_(local_dynamics), computing_kernel_(nullptr) {}
+        : Implementation<ParallelDevicePolicy, LocalDynamicsType>(local_dynamics),
+          computing_kernel_(nullptr) {}
     ~Implementation()
     {
         freeDeviceData(computing_kernel_);
     }
 
     template <typename... Args>
-    ComputingKernelType *getComputingKernel(Args &&... args)
+    ComputingKernelType *getComputingKernel(Args &&...args)
     {
         if (computing_kernel_ == nullptr)
         {
-            local_dynamics_.registerComputingKernel(this, std::forward<Args>(args)...);
+            this->local_dynamics_.registerComputingKernel(this, std::forward<Args>(args)...);
             computing_kernel_ = allocateDeviceOnly<ComputingKernelType>(1);
             ComputingKernelType *host_kernel =
                 kernel_ptr_keeper_.template createPtr<ComputingKernelType>(
-                    ParallelDevicePolicy{}, local_dynamics_, std::forward<Args>(args)...);
+                    ParallelDevicePolicy{}, this->local_dynamics_, std::forward<Args>(args)...);
             copyToDevice(host_kernel, computing_kernel_, 1);
-            setUpdated();
+             this->setUpdated();
         }
 
-        if (!isUpdated())
+        if (! this->isUpdated())
         {
             overwriteComputingKernel(std::forward<Args>(args)...);
         }
@@ -167,17 +167,16 @@ class Implementation<ParallelDevicePolicy, LocalDynamicsType, ComputingKernelTyp
     }
 
     template <typename... Args>
-    void overwriteComputingKernel(Args &&... args)
+    void overwriteComputingKernel(Args &&...args)
     {
         ComputingKernelType *host_kernel =
             kernel_ptr_keeper_.template createPtr<ComputingKernelType>(
-                ParallelDevicePolicy{}, local_dynamics_, std::forward<Args>(args)...);
+                ParallelDevicePolicy{}, this->local_dynamics_, std::forward<Args>(args)...);
         copyToDevice(host_kernel, computing_kernel_, 1);
-        setUpdated();
+         this->setUpdated();
     }
 
-  private:
-    LocalDynamicsType &local_dynamics_;
+  protected:
     ComputingKernelType *computing_kernel_;
 };
 } // namespace execution

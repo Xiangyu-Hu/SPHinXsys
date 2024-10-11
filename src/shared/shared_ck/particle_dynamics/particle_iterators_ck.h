@@ -30,7 +30,7 @@
 #define PARTICLE_ITERATORS_CK_H
 
 #include "execution.h"
-#include "loop_reange.h"
+#include "loop_range.h"
 
 namespace SPH
 {
@@ -38,7 +38,7 @@ using namespace execution;
 
 template <class LocalDynamicsFunction>
 void particle_for(const SequencedPolicy &seq,
-                  const LoopRangeCK<ExecutionPolicy, SPHBody> &loop_range,
+                  LoopRangeCK<SequencedPolicy, SPHBody> &loop_range,
                   const LocalDynamicsFunction &local_dynamics_function)
 {
     for (size_t i = 0; i < loop_range.LoopBound(); ++i)
@@ -47,7 +47,7 @@ void particle_for(const SequencedPolicy &seq,
 
 template <class LocalDynamicsFunction>
 void particle_for(const ParallelPolicy &par,
-                  const LoopRangeCK<ExecutionPolicy, SPHBody> &loop_range,
+                  LoopRangeCK<ParallelPolicy, SPHBody> &loop_range,
                   const LocalDynamicsFunction &local_dynamics_function)
 {
     parallel_for(
@@ -64,11 +64,11 @@ void particle_for(const ParallelPolicy &par,
 
 template <class ReturnType, typename Operation, class LocalDynamicsFunction>
 inline ReturnType particle_reduce(const SequencedPolicy &seq,
-                                  const LoopRangeCK<ExecutionPolicy, SPHBody> &loop_range,
+                                  LoopRangeCK<SequencedPolicy, SPHBody> &loop_range,
                                   ReturnType temp, Operation &&operation,
                                   const LocalDynamicsFunction &local_dynamics_function)
 {
-    for (size_t i = 0; i < loop_range.LoopBound.end(); ++i)
+    for (size_t i = 0; i < loop_range.LoopBound(); ++i)
     {
         temp = operation(temp, local_dynamics_function(i));
     }
@@ -77,7 +77,7 @@ inline ReturnType particle_reduce(const SequencedPolicy &seq,
 
 template <class ReturnType, typename Operation, class LocalDynamicsFunction>
 inline ReturnType particle_reduce(const ParallelPolicy &par,
-                                  const LoopRangeCK<ExecutionPolicy, SPHBody> &loop_range,
+                                  LoopRangeCK<ParallelPolicy, SPHBody> &loop_range,
                                   ReturnType temp, Operation &&operation,
                                   const LocalDynamicsFunction &local_dynamics_function)
 {

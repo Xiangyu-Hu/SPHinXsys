@@ -49,15 +49,16 @@ class StateDynamics : public UpdateType, public BaseDynamics<void>
     StateDynamics(DynamicsIdentifier &identifier, Args &&...args)
         : UpdateType(identifier, std::forward<Args>(args)...),
           BaseDynamics<void>(), kernel_implementation_(*this){};
-    virtual ~StateDynamics() {};
+    virtual ~StateDynamics(){};
 
     virtual void exec(Real dt = 0.0) override
     {
         this->setUpdated(this->identifier_.getSPHBody());
         this->setupDynamics(dt);
+        auto &loop_range = kernel_implementation_.getLoopRange();
         UpdateKernel *update_kernel = kernel_implementation_.getComputingKernel();
         particle_for(ExecutionPolicy{},
-                     this->identifier_.LoopRange(),
+                     loop_range,
                      [=](size_t i)
                      { update_kernel->update(i, dt); });
     };
@@ -78,7 +79,7 @@ class ReduceDynamicsCK : public ReduceType,
     ReduceDynamicsCK(DynamicsIdentifier &identifier, Args &&...args)
         : ReduceType(identifier, std::forward<Args>(args)...),
           BaseDynamics<ReturnType>(), kernel_implementation_(*this){};
-    virtual ~ReduceDynamicsCK() {};
+    virtual ~ReduceDynamicsCK(){};
 
     std::string QuantityName() { return this->quantity_name_; };
     std::string DynamicsIdentifierName() { return this->identifier_.getName(); };
@@ -86,10 +87,11 @@ class ReduceDynamicsCK : public ReduceType,
     virtual ReturnType exec(Real dt = 0.0) override
     {
         this->setupDynamics(dt);
+        auto &loop_range = kernel_implementation_.getLoopRange();
         ReduceKernel *reduce_kernel = kernel_implementation_.getComputingKernel();
         ReturnType temp = particle_reduce(
             ExecutionPolicy{},
-            this->identifier_.LoopRange(), this->Reference(), this->getOperation(),
+            loop_range, this->Reference(), this->getOperation(),
             [=](size_t i) -> ReturnType
             { return reduce_kernel->reduce(i, dt); });
         return this->outputResult(temp);

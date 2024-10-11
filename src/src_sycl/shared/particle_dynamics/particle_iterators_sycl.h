@@ -30,16 +30,17 @@
 #define PARTICLE_ITERATORS_SYCL_H
 
 #include "execution_sycl.h"
-#include "particle_iterators.h"
+#include "particle_iterators_ck.h"
 
 namespace SPH
 {
 template <class LocalDynamicsFunction>
 inline void particle_for(const ParallelDevicePolicy &par_device,
-                         const IndexRange &particles_range, const LocalDynamicsFunction &local_dynamics_function)
+                         LoopRangeCK<ParallelDevicePolicy, SPHBody> &loop_range,
+                         const LocalDynamicsFunction &local_dynamics_function)
 {
     auto &sycl_queue = execution_instance.getQueue();
-    const size_t particles_size = particles_range.size();
+    const size_t particles_size = loop_range.LoopBound();
     sycl_queue.submit([&](sycl::handler &cgh)
                       { cgh.parallel_for(execution_instance.getUniformNdRange(particles_size), [=](sycl::nd_item<1> index)
                                          {
@@ -50,11 +51,12 @@ inline void particle_for(const ParallelDevicePolicy &par_device,
 
 template <class ReturnType, typename Operation, class LocalDynamicsFunction>
 inline ReturnType particle_reduce(const ParallelDevicePolicy &par_device,
-                                  const IndexRange &particles_range, ReturnType temp, Operation &&operation,
+                                  LoopRangeCK<ParallelDevicePolicy, SPHBody> &loop_range,
+                                  ReturnType temp, Operation &&operation,
                                   const LocalDynamicsFunction &local_dynamics_function)
 {
     auto &sycl_queue = execution_instance.getQueue();
-    const size_t particles_size = particles_range.size();
+    const size_t particles_size = loop_range.LoopBound();
     {
         sycl::buffer<ReturnType> buffer_result(&temp, 1);
         sycl_queue.submit([&](sycl::handler &cgh)

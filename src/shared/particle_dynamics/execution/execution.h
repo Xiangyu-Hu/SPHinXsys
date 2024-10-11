@@ -32,6 +32,7 @@
 
 #include "base_data_type.h"
 #include "execution_policy.h"
+#include "loop_range.h"
 #include "ownership.h"
 #include "sphinxsys_containers.h"
 
@@ -57,31 +58,60 @@ class Implementation<Base>
     void setUpdated() { is_updated_ = true; };
 };
 
+template <class ExecutionPolicy, class LocalDynamicsType>
+class Implementation<ExecutionPolicy, LocalDynamicsType> : public Implementation<Base>
+{
+    using DynamicsIdentifier = typename LocalDynamicsType::DynamicsIdentifierType;
+    using LoopRangeType = LoopRangeCK<ExecutionPolicy, DynamicsIdentifier>;
+
+  public:
+    explicit Implementation(LocalDynamicsType &local_dynamics)
+        : Implementation<Base>(), local_dynamics_(local_dynamics),
+          loop_range_(nullptr) {};
+    ~Implementation()
+    {
+        delete loop_range_;
+    };
+
+    LoopRangeType &getLoopRange()
+    {
+        if (loop_range_ == nullptr)
+        {
+            loop_range_ = new LoopRangeType(local_dynamics_.getDynamicsIdentifier());
+        }
+        return *loop_range_;
+    };
+
+  protected:
+    LocalDynamicsType &local_dynamics_;
+    LoopRangeType *loop_range_;
+};
+
 template <class ExecutionPolicy, class LocalDynamicsType, class ComputingKernelType>
 class Implementation<ExecutionPolicy, LocalDynamicsType, ComputingKernelType>
-    : public Implementation<Base>
+    : public Implementation<ExecutionPolicy, LocalDynamicsType>
 {
   public:
     explicit Implementation(LocalDynamicsType &local_dynamics)
-        : Implementation<Base>(),
-          local_dynamics_(local_dynamics), computing_kernel_(nullptr) {}
+        : Implementation<ExecutionPolicy, LocalDynamicsType>(local_dynamics),
+          computing_kernel_(nullptr) {}
     ~Implementation()
     {
         delete computing_kernel_;
     }
 
     template <typename... Args>
-    ComputingKernelType *getComputingKernel(Args &&... args)
+    ComputingKernelType *getComputingKernel(Args &&...args)
     {
         if (computing_kernel_ == nullptr)
         {
-            local_dynamics_.registerComputingKernel(this, std::forward<Args>(args)...);
+            this->local_dynamics_.registerComputingKernel(this, std::forward<Args>(args)...);
             computing_kernel_ = new ComputingKernelType(
-                ExecutionPolicy{}, local_dynamics_, std::forward<Args>(args)...);
-            setUpdated();
+                ExecutionPolicy{}, this->local_dynamics_, std::forward<Args>(args)...);
+            this->setUpdated();
         }
 
-        if (!isUpdated())
+        if (!this->isUpdated())
         {
             overwriteComputingKernel(std::forward<Args>(args)...);
         }
@@ -90,15 +120,14 @@ class Implementation<ExecutionPolicy, LocalDynamicsType, ComputingKernelType>
     }
 
     template <typename... Args>
-    void overwriteComputingKernel(Args &&... args)
+    void overwriteComputingKernel(Args &&...args)
     {
         *computing_kernel_ = ComputingKernelType(
-            ExecutionPolicy{}, local_dynamics_, std::forward<Args>(args)...);
-        setUpdated();
+            ExecutionPolicy{}, this->local_dynamics_, std::forward<Args>(args)...);
+        this->setUpdated();
     }
 
-  private:
-    LocalDynamicsType &local_dynamics_;
+  protected:
     ComputingKernelType *computing_kernel_;
 };
 } // namespace execution
