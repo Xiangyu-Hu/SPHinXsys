@@ -90,7 +90,7 @@ class SPHBody
     SPHBody(SPHSystem &sph_system, const std::string &name);
     SPHBody(SPHSystem &sph_system, SharedPtr<Shape> shape_ptr, const std::string &name);
     SPHBody(SPHSystem &sph_system, SharedPtr<Shape> shape_ptr);
-    virtual ~SPHBody(){};
+    virtual ~SPHBody() {};
 
     std::string getName() { return body_name_; };
     SPHSystem &getSPHSystem();
@@ -202,7 +202,7 @@ class RealBody : public SPHBody
     {
         this->getSPHSystem().addRealBody(this);
     };
-    virtual ~RealBody(){};
+    virtual ~RealBody() {};
     BaseCellLinkedList &getCellLinkedList();
     void updateCellLinkedList();
 };

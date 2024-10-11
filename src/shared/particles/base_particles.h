@@ -87,7 +87,7 @@ class BaseParticles
 
   public:
     explicit BaseParticles(SPHBody &sph_body, BaseMaterial *base_material);
-    virtual ~BaseParticles(){};
+    virtual ~BaseParticles() {};
     SPHBody &getSPHBody() { return sph_body_; };
     BaseMaterial &getBaseMaterial() { return base_material_; };
 
@@ -99,7 +99,7 @@ class BaseParticles
     // particles_bound_ gives the total number of particles in all groups.
     //----------------------------------------------------------------------
   protected:
-    SingularVariable<UnsignedInt> *v_total_real_particles_;
+    SingularVariable<UnsignedInt> *sv_total_real_particles_;
     UnsignedInt real_particles_bound_;
     UnsignedInt particles_bound_;
 
@@ -109,9 +109,10 @@ class BaseParticles
     //----------------------------------------------------------------------
     // Generalized particle manipulation
     //----------------------------------------------------------------------
-    UnsignedInt TotalRealParticles() { return *v_total_real_particles_->ValueAddress(); };
-    void incrementTotalRealParticles(UnsignedInt increment = 1) { *v_total_real_particles_->ValueAddress() += increment; };
-    void decrementTotalRealParticles(UnsignedInt decrement = 1) { *v_total_real_particles_->ValueAddress() -= decrement; };
+    SingularVariable<UnsignedInt> *svTotalRealParticles() { return sv_total_real_particles_; };
+    UnsignedInt TotalRealParticles() { return *sv_total_real_particles_->ValueAddress(); };
+    void incrementTotalRealParticles(UnsignedInt increment = 1) { *sv_total_real_particles_->ValueAddress() += increment; };
+    void decrementTotalRealParticles(UnsignedInt decrement = 1) { *sv_total_real_particles_->ValueAddress() -= decrement; };
     UnsignedInt RealParticlesBound() { return real_particles_bound_; };
     UnsignedInt ParticlesBound() { return particles_bound_; };
     void initializeAllParticlesBounds(size_t total_real_particles);
@@ -258,7 +259,7 @@ class BaseParticles
     struct WriteAParticleVariableToXml
     {
         XmlParser &xml_parser_;
-        WriteAParticleVariableToXml(XmlParser &xml_parser) : xml_parser_(xml_parser){};
+        WriteAParticleVariableToXml(XmlParser &xml_parser) : xml_parser_(xml_parser) {};
 
         template <typename DataType>
         void operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables);
@@ -267,7 +268,7 @@ class BaseParticles
     struct ReadAParticleVariableFromXml
     {
         XmlParser &xml_parser_;
-        ReadAParticleVariableFromXml(XmlParser &xml_parser) : xml_parser_(xml_parser){};
+        ReadAParticleVariableFromXml(XmlParser &xml_parser) : xml_parser_(xml_parser) {};
 
         template <typename DataType>
         void operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables, BaseParticles *base_particles);
