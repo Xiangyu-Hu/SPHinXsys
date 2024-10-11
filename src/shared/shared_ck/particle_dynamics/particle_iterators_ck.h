@@ -63,10 +63,10 @@ void particle_for(const ParallelPolicy &par,
 };
 
 template <class ReturnType, typename Operation, class LocalDynamicsFunction>
-inline ReturnType particle_reduce(const SequencedPolicy &seq,
-                                  LoopRangeCK<SequencedPolicy, SPHBody> &loop_range,
-                                  ReturnType temp, Operation &&operation,
-                                  const LocalDynamicsFunction &local_dynamics_function)
+ReturnType particle_reduce(const SequencedPolicy &seq,
+                           LoopRangeCK<SequencedPolicy, SPHBody> &loop_range,
+                           ReturnType temp, Operation &&operation,
+                           const LocalDynamicsFunction &local_dynamics_function)
 {
     for (size_t i = 0; i < loop_range.LoopBound(); ++i)
     {
@@ -76,10 +76,10 @@ inline ReturnType particle_reduce(const SequencedPolicy &seq,
 }
 
 template <class ReturnType, typename Operation, class LocalDynamicsFunction>
-inline ReturnType particle_reduce(const ParallelPolicy &par,
-                                  LoopRangeCK<ParallelPolicy, SPHBody> &loop_range,
-                                  ReturnType temp, Operation &&operation,
-                                  const LocalDynamicsFunction &local_dynamics_function)
+ReturnType particle_reduce(const ParallelPolicy &par,
+                           LoopRangeCK<ParallelPolicy, SPHBody> &loop_range,
+                           ReturnType temp, Operation &&operation,
+                           const LocalDynamicsFunction &local_dynamics_function)
 {
     return parallel_reduce(
         IndexRange(0, loop_range.LoopBound()),

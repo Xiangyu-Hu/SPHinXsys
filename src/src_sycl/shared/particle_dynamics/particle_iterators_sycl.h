@@ -35,9 +35,24 @@
 namespace SPH
 {
 template <class LocalDynamicsFunction>
-inline void particle_for(const ParallelDevicePolicy &par_device,
-                         LoopRangeCK<ParallelDevicePolicy, SPHBody> &loop_range,
-                         const LocalDynamicsFunction &local_dynamics_function)
+void particle_for(const ParallelDevicePolicy &par_device,
+                  const IndexRange &particles_range,
+                  const LocalDynamicsFunction &local_dynamics_function)
+{
+    auto &sycl_queue = execution_instance.getQueue();
+    const size_t particles_size = particles_range.size();
+    sycl_queue.submit([&](sycl::handler &cgh)
+                      { cgh.parallel_for(execution_instance.getUniformNdRange(particles_size), [=](sycl::nd_item<1> index)
+                                         {
+                                 if(index.get_global_id(0) < particles_size)
+                                     local_dynamics_function(index.get_global_id(0)); }); })
+        .wait_and_throw();
+}
+
+template <class LocalDynamicsFunction>
+void particle_for(const ParallelDevicePolicy &par_device,
+                  LoopRangeCK<ParallelDevicePolicy, SPHBody> &loop_range,
+                  const LocalDynamicsFunction &local_dynamics_function)
 {
     auto &sycl_queue = execution_instance.getQueue();
     const size_t particles_size = loop_range.LoopBound();
@@ -50,10 +65,10 @@ inline void particle_for(const ParallelDevicePolicy &par_device,
 }
 
 template <class ReturnType, typename Operation, class LocalDynamicsFunction>
-inline ReturnType particle_reduce(const ParallelDevicePolicy &par_device,
-                                  LoopRangeCK<ParallelDevicePolicy, SPHBody> &loop_range,
-                                  ReturnType temp, Operation &&operation,
-                                  const LocalDynamicsFunction &local_dynamics_function)
+ReturnType particle_reduce(const ParallelDevicePolicy &par_device,
+                           LoopRangeCK<ParallelDevicePolicy, SPHBody> &loop_range,
+                           ReturnType temp, Operation &&operation,
+                           const LocalDynamicsFunction &local_dynamics_function)
 {
     auto &sycl_queue = execution_instance.getQueue();
     const size_t particles_size = loop_range.LoopBound();
