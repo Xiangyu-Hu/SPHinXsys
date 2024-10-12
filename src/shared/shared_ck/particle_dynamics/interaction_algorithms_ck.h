@@ -31,7 +31,7 @@
 
 #include "base_particle_dynamics.h"
 #include "interaction_ck.hpp"
-#include "particle_iterators.h"
+#include "particle_iterators_ck.h"
 
 namespace SPH
 {

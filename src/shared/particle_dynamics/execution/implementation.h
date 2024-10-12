@@ -21,43 +21,25 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	execution.h
+ * @file 	implementation.h
  * @brief 	Here we define the execution policy relevant to parallel computing.
  * @details This analog of the standard library on the same functions.
  * @author	Alberto Guarnieri and Xiangyu Hu
  */
 
-#ifndef EXECUTION_H
-#define EXECUTION_H
+#ifndef IMPLEMENTATION_H
+#define IMPLEMENTATION_H
 
+#include "base_implementation.h"
 #include "base_data_type.h"
 #include "execution_policy.h"
 #include "loop_range.h"
 #include "ownership.h"
-#include "sphinxsys_containers.h"
 
 namespace SPH
 {
 namespace execution
 {
-template <typename... T>
-class Implementation;
-
-template <>
-class Implementation<Base>
-{
-  public:
-    explicit Implementation() {}
-    ~Implementation() {}
-
-    bool isUpdated() { return is_updated_; };
-    void resetUpdated() { is_updated_ = false; };
-
-  protected:
-    bool is_updated_ = false;
-    void setUpdated() { is_updated_ = true; };
-};
-
 template <class ExecutionPolicy, class LocalDynamicsType>
 class Implementation<ExecutionPolicy, LocalDynamicsType> : public Implementation<Base>
 {
@@ -132,4 +114,4 @@ class Implementation<ExecutionPolicy, LocalDynamicsType, ComputingKernelType>
 };
 } // namespace execution
 } // namespace SPH
-#endif // EXECUTION_H
+#endif // IMPLEMENTATION_H

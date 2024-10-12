@@ -21,16 +21,16 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	execution_sycl.h
+ * @file 	implementation_sycl.h
  * @brief 	Here we define the execution policy relevant to parallel computing.
  * @details This analog of the standard library on the same functions.
  * @author	Alberto Guarnieri and Xiangyu Hu
  */
 
-#ifndef EXECUTION_SYCL_H
-#define EXECUTION_SYCL_H
+#ifndef IMPLEMENTATION_SYCL_H
+#define IMPLEMENTATION_SYCL_H
 
-#include "execution.h"
+#include "implementation.h"
 #include "execution_policy.h"
 
 #include "ownership.h"
@@ -155,10 +155,10 @@ class Implementation<ParallelDevicePolicy, LocalDynamicsType, ComputingKernelTyp
                 kernel_ptr_keeper_.template createPtr<ComputingKernelType>(
                     ParallelDevicePolicy{}, this->local_dynamics_, std::forward<Args>(args)...);
             copyToDevice(host_kernel, computing_kernel_, 1);
-             this->setUpdated();
+            this->setUpdated();
         }
 
-        if (! this->isUpdated())
+        if (!this->isUpdated())
         {
             overwriteComputingKernel(std::forward<Args>(args)...);
         }
@@ -173,7 +173,7 @@ class Implementation<ParallelDevicePolicy, LocalDynamicsType, ComputingKernelTyp
             kernel_ptr_keeper_.template createPtr<ComputingKernelType>(
                 ParallelDevicePolicy{}, this->local_dynamics_, std::forward<Args>(args)...);
         copyToDevice(host_kernel, computing_kernel_, 1);
-         this->setUpdated();
+        this->setUpdated();
     }
 
   protected:
@@ -181,4 +181,4 @@ class Implementation<ParallelDevicePolicy, LocalDynamicsType, ComputingKernelTyp
 };
 } // namespace execution
 } // namespace SPH
-#endif // EXECUTION_SYCL_H
+#endif // IMPLEMENTATION_SYCL_H

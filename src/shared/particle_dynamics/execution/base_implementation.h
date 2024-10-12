@@ -21,34 +21,39 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file particle_sort_sycl.h
- * @brief Here gives the classes for particle sorting.
- * @author Xiangyu Hu
+ * @file 	base_implementation.h
+ * @brief 	Here we define the execution policy relevant to parallel computing.
+ * @details This analog of the standard library on the same functions.
+ * @author	Alberto Guarnieri and Xiangyu Hu
  */
 
-#ifndef PARTICLE_SORT_SYCL_H
-#define PARTICLE_SORT_SYCL_H
+#ifndef BASE_IMPLEMENTATION_H
+#define BASE_IMPLEMENTATION_H
 
-#include "base_configuration_dynamics_sycl.h"
-#include "implementation_sycl.h"
-#include "particle_sort_ck.h"
+#include "sphinxsys_containers.h"
 
 namespace SPH
 {
-using namespace execution;
+namespace execution
+{
+template <typename... T>
+class Implementation;
 
-class RadixSort
+template <>
+class Implementation<Base>
 {
   public:
-    template <class ExecutionPolicy>
-    explicit RadixSort(const ExecutionPolicy &ex_policy,
-                       DiscreteVariable<UnsignedInt> *dv_sequence,
-                       DiscreteVariable<UnsignedInt> *dv_index_permutation);
-    void sort(const ParallelDevicePolicy &ex_policy, BaseParticles *particles);
+    explicit Implementation() {}
+    ~Implementation() {}
+
+    bool isUpdated() { return is_updated_; };
+    void resetUpdated() { is_updated_ = false; };
 
   protected:
-    DiscreteVariable<UnsignedInt> *dv_sequence_;
-    DiscreteVariable<UnsignedInt> *dv_index_permutation_;
+    bool is_updated_ = false;
+    void setUpdated() { is_updated_ = true; };
 };
+
+} // namespace execution
 } // namespace SPH
-#endif // PARTICLE_SORT_SYCL_H
+#endif // BASE_IMPLEMENTATION_H

@@ -37,7 +37,7 @@ namespace SPH
 template <typename...>
 class LoopRangeCK;
 
-template <class ExecutionPolicy, class SPHBody>
+template <class ExecutionPolicy>
 class LoopRangeCK<ExecutionPolicy, SPHBody>
 {
     BaseParticles &particles_;

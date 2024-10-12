@@ -29,7 +29,7 @@
 #ifndef PARTICLE_ITERATORS_SYCL_H
 #define PARTICLE_ITERATORS_SYCL_H
 
-#include "execution_sycl.h"
+#include "implementation_sycl.h"
 #include "particle_iterators_ck.h"
 
 namespace SPH

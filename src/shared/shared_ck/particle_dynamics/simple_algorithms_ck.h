@@ -32,7 +32,7 @@
 
 #include "base_local_dynamics.h"
 #include "base_particle_dynamics.h"
-#include "particle_iterators.h"
+#include "particle_iterators_ck.h"
 
 namespace SPH
 {
