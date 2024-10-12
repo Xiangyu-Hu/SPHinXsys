@@ -245,5 +245,49 @@ inline ReturnType particle_reduce(const ParallelPolicy &par, const IndexVector &
             return operation(x, y);
         });
 };
+
+/**
+ * BodypartByCell-wise reduce iterators (for sequential and parallel computing).
+ */
+template <class ReturnType, typename Operation, class LocalDynamicsFunction>
+inline ReturnType particle_reduce(const SequencedPolicy &seq, const ConcurrentCellLists &body_part_cells,
+                                  ReturnType temp, Operation &&operation,
+                                  const LocalDynamicsFunction &local_dynamics_function)
+{
+    for (size_t i = 0; i != body_part_cells.size(); ++i)
+    {
+        ConcurrentIndexVector &particle_indexes = *body_part_cells[i];
+        for (size_t num = 0; num < particle_indexes.size(); ++num)
+        {
+            temp = operation(temp, local_dynamics_function(particle_indexes[num]));
+        }
+    }
+
+    return temp;
+}
+
+template <class ReturnType, typename Operation, class LocalDynamicsFunction>
+inline ReturnType particle_reduce(const ParallelPolicy &par, const ConcurrentCellLists &body_part_cells,
+                                  ReturnType temp, Operation &&operation,
+                                  const LocalDynamicsFunction &local_dynamics_function)
+{
+    return parallel_reduce(
+        IndexRange(0, body_part_cells.size()),
+        temp,
+        [&](const IndexRange &r, ReturnType temp0) -> ReturnType
+        {
+            for (size_t i = r.begin(); i != r.end(); ++i)
+            {
+                ConcurrentIndexVector &particle_indexes = *body_part_cells[i];
+                for (size_t num = 0; num < particle_indexes.size(); ++num)
+                {
+                    temp0 = operation(temp0, local_dynamics_function(particle_indexes[num]));
+                }
+            }
+            return temp0;
+        },
+        [&](const ReturnType &x, const ReturnType &y) -> ReturnType
+        { return operation(x, y); });
+}
 } // namespace SPH
 #endif // PARTICLE_ITERATORS_H
