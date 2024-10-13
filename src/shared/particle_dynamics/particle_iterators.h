@@ -33,8 +33,6 @@
 #include "implementation.h"
 #include "sphinxsys_containers.h"
 
-#include <numeric>
-
 namespace SPH
 {
 using namespace execution;
