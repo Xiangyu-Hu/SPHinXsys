@@ -1,7 +1,7 @@
 #ifndef SPHINXSYS_CONSTANT_SYCL_HPP
 #define SPHINXSYS_CONSTANT_SYCL_HPP
 
-#include "execution_sycl.h"
+#include "implementation_sycl.h"
 #include "sphinxsys_constant.h"
 
 namespace SPH

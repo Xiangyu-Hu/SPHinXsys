@@ -1,5 +1,6 @@
 #include "particle_functors.h"
-#include "update_cell_linked_list.h"
+#include "base_configuration_dynamics.h"
+#include "particle_iterators_ck.h"
 
 #include <gtest/gtest.h>
 using namespace SPH;

@@ -1,7 +1,7 @@
 #ifndef SPHINXSYS_VARIABLE_SYCL_HPP
 #define SPHINXSYS_VARIABLE_SYCL_HPP
 
-#include "execution_sycl.h"
+#include "implementation_sycl.h"
 #include "sphinxsys_variable.h"
 
 namespace SPH

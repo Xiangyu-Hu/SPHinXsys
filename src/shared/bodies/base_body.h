@@ -42,7 +42,7 @@
 #include "base_particle_generator.h"
 #include "base_particles.h"
 #include "cell_linked_list.h"
-#include "execution.h"
+#include "base_implementation.h"
 #include "sph_system.h"
 #include "sphinxsys_containers.h"
 
@@ -90,7 +90,7 @@ class SPHBody
     SPHBody(SPHSystem &sph_system, const std::string &name);
     SPHBody(SPHSystem &sph_system, SharedPtr<Shape> shape_ptr, const std::string &name);
     SPHBody(SPHSystem &sph_system, SharedPtr<Shape> shape_ptr);
-    virtual ~SPHBody(){};
+    virtual ~SPHBody() {};
 
     std::string getName() { return body_name_; };
     SPHSystem &getSPHSystem();
@@ -202,7 +202,7 @@ class RealBody : public SPHBody
     {
         this->getSPHSystem().addRealBody(this);
     };
-    virtual ~RealBody(){};
+    virtual ~RealBody() {};
     BaseCellLinkedList &getCellLinkedList();
     void updateCellLinkedList();
 };

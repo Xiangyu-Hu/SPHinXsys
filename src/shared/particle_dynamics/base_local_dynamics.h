@@ -59,6 +59,7 @@ class BaseLocalDynamics
           sph_body_(identifier.getSPHBody()),
           particles_(&sph_body_.getBaseParticles()){};
     virtual ~BaseLocalDynamics(){};
+    typedef DynamicsIdentifier DynamicsIdentifierType;
     DynamicsIdentifier &getDynamicsIdentifier() { return identifier_; };
     SPHBody &getSPHBody() { return sph_body_; };
     BaseParticles *getParticles() { return particles_; };

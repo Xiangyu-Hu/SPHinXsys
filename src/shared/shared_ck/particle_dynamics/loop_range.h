@@ -21,34 +21,32 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file particle_sort_sycl.h
- * @brief Here gives the classes for particle sorting.
- * @author Xiangyu Hu
+ * @file 	loop_range.h
+ * @brief 	Here, we define loop ranges for parallel computing.
+ * @author	Xiangyu Hu
  */
 
-#ifndef PARTICLE_SORT_SYCL_H
-#define PARTICLE_SORT_SYCL_H
+#ifndef LOOP_RANGE_H
+#define LOOP_RANGE_H
 
-#include "base_configuration_dynamics_sycl.h"
-#include "implementation_sycl.h"
-#include "particle_sort_ck.h"
+#include "base_body.h"
+#include "base_particles.hpp"
 
 namespace SPH
 {
-using namespace execution;
+template <typename...>
+class LoopRangeCK;
 
-class RadixSort
+template <class ExecutionPolicy>
+class LoopRangeCK<ExecutionPolicy, SPHBody>
 {
-  public:
-    template <class ExecutionPolicy>
-    explicit RadixSort(const ExecutionPolicy &ex_policy,
-                       DiscreteVariable<UnsignedInt> *dv_sequence,
-                       DiscreteVariable<UnsignedInt> *dv_index_permutation);
-    void sort(const ParallelDevicePolicy &ex_policy, BaseParticles *particles);
+    BaseParticles &particles_;
 
-  protected:
-    DiscreteVariable<UnsignedInt> *dv_sequence_;
-    DiscreteVariable<UnsignedInt> *dv_index_permutation_;
+  public:
+    LoopRangeCK(SPHBody &sph_body) : particles_(sph_body.getBaseParticles()) {};
+    virtual ~LoopRangeCK() {};
+    UnsignedInt LoopBound() { return particles_.TotalRealParticles(); };
+    UnsignedInt TotalParticlesInRange() { return particles_.TotalRealParticles(); };
 };
 } // namespace SPH
-#endif // PARTICLE_SORT_SYCL_H
+#endif // LOOP_RANGE_H

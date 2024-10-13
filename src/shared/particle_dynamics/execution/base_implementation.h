@@ -21,18 +21,15 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	execution.h
+ * @file 	base_implementation.h
  * @brief 	Here we define the execution policy relevant to parallel computing.
  * @details This analog of the standard library on the same functions.
  * @author	Alberto Guarnieri and Xiangyu Hu
  */
 
-#ifndef EXECUTION_H
-#define EXECUTION_H
+#ifndef BASE_IMPLEMENTATION_H
+#define BASE_IMPLEMENTATION_H
 
-#include "base_data_type.h"
-#include "execution_policy.h"
-#include "ownership.h"
 #include "sphinxsys_containers.h"
 
 namespace SPH
@@ -57,50 +54,6 @@ class Implementation<Base>
     void setUpdated() { is_updated_ = true; };
 };
 
-template <class ExecutionPolicy, class LocalDynamicsType, class ComputingKernelType>
-class Implementation<ExecutionPolicy, LocalDynamicsType, ComputingKernelType>
-    : public Implementation<Base>
-{
-  public:
-    explicit Implementation(LocalDynamicsType &local_dynamics)
-        : Implementation<Base>(),
-          local_dynamics_(local_dynamics), computing_kernel_(nullptr) {}
-    ~Implementation()
-    {
-        delete computing_kernel_;
-    }
-
-    template <typename... Args>
-    ComputingKernelType *getComputingKernel(Args &&... args)
-    {
-        if (computing_kernel_ == nullptr)
-        {
-            local_dynamics_.registerComputingKernel(this, std::forward<Args>(args)...);
-            computing_kernel_ = new ComputingKernelType(
-                ExecutionPolicy{}, local_dynamics_, std::forward<Args>(args)...);
-            setUpdated();
-        }
-
-        if (!isUpdated())
-        {
-            overwriteComputingKernel(std::forward<Args>(args)...);
-        }
-
-        return computing_kernel_;
-    }
-
-    template <typename... Args>
-    void overwriteComputingKernel(Args &&... args)
-    {
-        *computing_kernel_ = ComputingKernelType(
-            ExecutionPolicy{}, local_dynamics_, std::forward<Args>(args)...);
-        setUpdated();
-    }
-
-  private:
-    LocalDynamicsType &local_dynamics_;
-    ComputingKernelType *computing_kernel_;
-};
 } // namespace execution
 } // namespace SPH
-#endif // EXECUTION_H
+#endif // BASE_IMPLEMENTATION_H
