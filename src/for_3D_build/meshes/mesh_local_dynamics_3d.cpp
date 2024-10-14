@@ -107,7 +107,7 @@ Real UpdateKernelIntegrals::computeKernelIntegral(const Vecd &position)
                 }
             });
     }
-    return phi > threshold ? 1.0 : integral * data_spacing_ * data_spacing_;
+    return phi > threshold ? 1.0 : integral * data_spacing_ * data_spacing_ * data_spacing_;
 }
 //=============================================================================================//
 Vecd UpdateKernelIntegrals::computeKernelGradientIntegral(const Vecd &position)
@@ -139,7 +139,7 @@ Vecd UpdateKernelIntegrals::computeKernelGradientIntegral(const Vecd &position)
             });
     }
 
-    return integral * data_spacing_ * data_spacing_;
+    return integral * data_spacing_ * data_spacing_ * data_spacing_;
 }
 //=============================================================================================//
 void ReinitializeLevelSet::update(const size_t &package_index)
