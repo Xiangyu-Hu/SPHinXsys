@@ -157,7 +157,8 @@ MultilevelCellLinkedList::MultilevelCellLinkedList(BoundingBox tentative_bounds,
                                                    BaseParticles &base_particles, SPHAdaptation &sph_adaptation)
     : MultilevelMesh<BaseCellLinkedList, CellLinkedList>(
           tentative_bounds, reference_grid_spacing, total_levels, base_particles, sph_adaptation),
-      h_ratio_(DynamicCast<ParticleWithLocalRefinement>(this, &sph_adaptation)->h_ratio_)
+      h_ratio_(DynamicCast<ParticleWithLocalRefinement>(this, &sph_adaptation)->h_ratio_),
+      level_(DynamicCast<ParticleWithLocalRefinement>(this, &sph_adaptation)->level_)
 {
 }
 //=================================================================================================//
@@ -176,6 +177,7 @@ size_t MultilevelCellLinkedList::getMeshLevel(Real particle_cutoff_radius)
 void MultilevelCellLinkedList::insertParticleIndex(size_t particle_index, const Vecd &particle_position)
 {
     size_t level = getMeshLevel(kernel_.CutOffRadius(h_ratio_[particle_index]));
+    level_[particle_index] = level;
     mesh_levels_[level]->insertParticleIndex(particle_index, particle_position);
 }
 //=================================================================================================//
