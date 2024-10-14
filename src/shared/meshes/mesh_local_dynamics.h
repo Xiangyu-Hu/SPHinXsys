@@ -72,6 +72,7 @@ class BaseMeshLocalDynamics
     MeshVariable<Vecd> &kernel_gradient_;
 
     size_t SortIndexFromCellIndex(const Arrayi &cell_index);
+    Arrayi CellIndexFromSortIndex(const size_t &sort_index);
 };
 
 class InitializeDataForSingularPackage : public BaseMeshLocalDynamics
@@ -96,8 +97,6 @@ class InitializeDataInACell : public BaseMeshLocalDynamics
   
   private:
     Shape &shape_;
-
-    // size_t SortIndexFromCellIndex(const Arrayi &cell_index);
 };
 
 class TagACellIsInnerPackage : public BaseMeshLocalDynamics
@@ -111,7 +110,6 @@ class TagACellIsInnerPackage : public BaseMeshLocalDynamics
 
   private:
     bool isInnerPackage(const Arrayi &cell_index);
-    // size_t SortIndexFromCellIndex(const Arrayi &cell_index);
 };
 
 class InitializeIndexMesh : public BaseMeshLocalDynamics
@@ -122,9 +120,6 @@ class InitializeIndexMesh : public BaseMeshLocalDynamics
     virtual ~InitializeIndexMesh(){};
 
     void update(const size_t &index);
-
-  private:
-    Arrayi CellIndexFromSortIndex(const size_t &sort_index);
 };
 
 class InitializeCellNeighborhood : public BaseMeshLocalDynamics
@@ -135,9 +130,6 @@ class InitializeCellNeighborhood : public BaseMeshLocalDynamics
     virtual ~InitializeCellNeighborhood(){};
 
     void update(const size_t &index);
-
-  private:
-    Arrayi CellIndexFromSortIndex(const size_t &sort_index);
 };
 
 class InitializeBasicDataForAPackage : public BaseMeshLocalDynamics
@@ -152,8 +144,6 @@ class InitializeBasicDataForAPackage : public BaseMeshLocalDynamics
 
   private:
     Shape &shape_;
-
-    Arrayi CellIndexFromSortIndex(const size_t &sort_index);
 };
 
 class UpdateLevelSetGradient : public BaseMeshLocalDynamics
