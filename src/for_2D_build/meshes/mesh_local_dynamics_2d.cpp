@@ -10,6 +10,14 @@ size_t BaseMeshLocalDynamics::SortIndexFromCellIndex(const Arrayi &cell_index)
     return cell_index[0] * all_cells_[1] + cell_index[1];
 }
 //=============================================================================================//
+Arrayi BaseMeshLocalDynamics::CellIndexFromSortIndex(const size_t &sort_index)
+{
+    Array2i cell_index;
+    cell_index[0] = sort_index / all_cells_[1];
+    cell_index[1] = sort_index % all_cells_[1];
+    return cell_index;
+}
+//=============================================================================================//
 void InitializeDataForSingularPackage::update(const size_t package_index, Real far_field_level_set)
 {
     auto &phi = phi_.DataField()[package_index];
@@ -40,22 +48,6 @@ bool TagACellIsInnerPackage::isInnerPackage(const Arrayi &cell_index)
         });
 }
 //=============================================================================================//
-Arrayi InitializeIndexMesh::CellIndexFromSortIndex(const size_t &sort_index)
-{
-    Array2i cell_index;
-    cell_index[0] = sort_index / all_cells_[1];
-    cell_index[1] = sort_index % all_cells_[1];
-    return cell_index;
-}
-//=============================================================================================//
-Arrayi InitializeCellNeighborhood::CellIndexFromSortIndex(const size_t &sort_index)
-{
-    Array2i cell_index;
-    cell_index[0] = sort_index / all_cells_[1];
-    cell_index[1] = sort_index % all_cells_[1];
-    return cell_index;
-}
-//=============================================================================================//
 void InitializeCellNeighborhood::update(const size_t &package_index)
 {
     size_t sort_index = mesh_data_.occupied_data_pkgs_[package_index-2].first;
@@ -83,14 +75,6 @@ void InitializeBasicDataForAPackage::update(const size_t &package_index)
             phi[i][j] = shape_.findSignedDistance(position);
             near_interface_id[i][j] = phi[i][j] < 0.0 ? -2 : 2;
         });
-}
-//=============================================================================================//
-Arrayi InitializeBasicDataForAPackage::CellIndexFromSortIndex(const size_t &sort_index)
-{
-    Array2i cell_index;
-    cell_index[0] = sort_index / all_cells_[1];
-    cell_index[1] = sort_index % all_cells_[1];
-    return cell_index;
 }
 //=============================================================================================//
 Real UpdateKernelIntegrals::computeKernelIntegral(const Vecd &position)
