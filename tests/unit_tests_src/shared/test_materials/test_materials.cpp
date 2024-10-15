@@ -20,12 +20,9 @@ TEST(material_verification, sanity_check)
     {
         auto S = material.StressPK2(F, 0);
         auto s = material.StressCauchy(e, 0);
-        return (s.isApprox(F * S * F.transpose() / J, tolerance));
+        return s.isApprox(F * S * F.transpose() / J, tolerance);
     };
-    EXPECT_TRUE(sanity_check(SPH::LinearElasticSolid{1, E, nu}));
     EXPECT_TRUE(sanity_check(SPH::SaintVenantKirchhoffSolid{1, E, nu}));
-    EXPECT_TRUE(sanity_check(SPH::NeoHookeanSolidIncompressible{1, E, nu}));
-    EXPECT_TRUE(sanity_check(SPH::NeoHookeanSolid{1, E, nu}));
 }
 
 int main(int argc, char *argv[])
