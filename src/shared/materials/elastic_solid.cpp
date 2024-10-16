@@ -101,10 +101,10 @@ Matd SaintVenantKirchhoffSolid::StressPK2(Matd &F, size_t index_i)
 }
 Matd SaintVenantKirchhoffSolid::StressCauchy(Matd &almansi_strain, size_t index_i)
 {
-    const auto I = SPH::Mat3d::Identity();
-    const SPH::Mat3d B = (I - 2 * almansi_strain).inverse();
+    const auto I = SPH::Matd::Identity();
+    const SPH::Matd B = (I - 2 * almansi_strain).inverse();
     const double J = std::sqrt(B.determinant());
-    const double trE = 0.5 * (B.trace() - 3); // tr(C) == tr(B)
+    const double trE = 0.5 * (B.trace() - Dimensions); // tr(C) == tr(B)
     const auto F_E_FT = 0.5 * (B * B - B);
     return (lambda0_ * trE * B + 2.0 * G0_ * F_E_FT) / J;
 }
