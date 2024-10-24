@@ -54,6 +54,8 @@ Real relaxation_rate_turbulent_inlet = 0.8;
 int is_AMRD = 0;
 //** Weight for correcting the velocity  gradient in the sub near wall region  *
 Real weight_vel_grad_sub_nearwall = 0.1;
+//** Tag for Source Term Linearisation *
+bool is_source_term_linearisation = false;
 //** Empirical parameter for initial stability*
 Real turbulent_module_activate_time = 2.5;
 //** Intial values for K, Epsilon and Mu_t *
