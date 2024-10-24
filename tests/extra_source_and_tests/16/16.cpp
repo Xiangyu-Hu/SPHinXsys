@@ -1,4 +1,4 @@
-#include "2d_turbulent_mildly_curved_channel.h"
+#include "16.h"
 using namespace SPH;
 
 int main(int ac, char *av[])
@@ -23,7 +23,7 @@ int main(int ac, char *av[])
     water_block.defineBodyLevelSetShape();
     water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
     ParticleBuffer<ReserveSizeFactor> inlet_particle_buffer(0.5);
-    (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
+    (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles() && !is_always_lattice_arrange_fluid)
         ? water_block.generateParticlesWithReserve<BaseParticles, Reload>(inlet_particle_buffer, water_block.getName())
         : water_block.generateParticlesWithReserve<BaseParticles, Lattice>(inlet_particle_buffer);
     /**
@@ -38,6 +38,8 @@ int main(int ac, char *av[])
 
     getPositionsOfMultipleObserveLines();
     output_observe_positions();
+    output_observe_theoretical_y();
+    output_number_observe_points_on_lines();
     ObserverBody fluid_observer(sph_system, "FluidObserver");
     fluid_observer.generateParticles<ObserverParticles>(observation_locations);
 
@@ -138,13 +140,13 @@ int main(int ac, char *av[])
     //InteractionWithUpdate<fluid_dynamics::GetVelocityGradientComplex> get_velocity_gradient(water_block_inner, water_wall_contact);
 
     /** Turbulent.Note: Temporarily transfer parameters at this place. The 3rd parameter refers to extra dissipation for viscous */
-    InteractionWithUpdate<fluid_dynamics::K_TurtbulentModelInner> k_equation_relaxation(water_block_inner, initial_turbu_values, is_AMRD);
-    InteractionWithUpdate<fluid_dynamics::E_TurtbulentModelInner> epsilon_equation_relaxation(water_block_inner);
+    InteractionWithUpdate<fluid_dynamics::K_TurtbulentModelInner> k_equation_relaxation(water_block_inner, initial_turbu_values, is_AMRD, is_source_term_linearisation);
+    InteractionWithUpdate<fluid_dynamics::E_TurtbulentModelInner> epsilon_equation_relaxation(water_block_inner, is_source_term_linearisation);
     InteractionDynamics<fluid_dynamics::TKEnergyForceComplex> turbulent_kinetic_energy_force(water_block_inner, water_wall_contact);
     InteractionDynamics<fluid_dynamics::StandardWallFunctionCorrection> standard_wall_function_correction(water_block_inner, water_wall_contact, y_p_constant);
 
     /** Turbulent.Extra boundary condition */
-    //SimpleDynamics<fluid_dynamics::ConstrainNormalVelocityInRegionP> constrain_normal_velocity_in_P_region(water_block);
+    SimpleDynamics<fluid_dynamics::ConstrainNormalVelocityInRegionP> constrain_normal_velocity_in_P_region(water_block);
 
     /** Choose one, ordinary or turbulent. Computing viscous force, */
     InteractionWithUpdate<fluid_dynamics::TurbulentViscousForceWithWall> turbulent_viscous_force(water_block_inner, water_wall_contact);
@@ -250,6 +252,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------------------------------------
     int num_output_file = 0;
     //Real start_time_turbulence = 70.0;
+    //std::cout << "Press any key to start";
+    //std::cin.get();
     while (GlobalStaticVariables::physical_time_ < end_time)
     {
         Real integration_time = 0.0;
@@ -268,9 +272,10 @@ int main(int ac, char *av[])
 
             corrected_configuration_fluid.exec();
             corrected_configuration_fluid_only_inner.exec();
-
-            update_eddy_viscosity.exec();
-
+            if (GlobalStaticVariables::physical_time_ > turbulent_module_activate_time) //** A temporary treatment *
+            {
+                update_eddy_viscosity.exec();
+            }
             //viscous_force.exec();
             turbulent_viscous_force.exec();
 
@@ -289,19 +294,27 @@ int main(int ac, char *av[])
 
                 dt = SMIN(get_fluid_time_step_size.exec(), Dt);
 
-                turbulent_kinetic_energy_force.exec();
-
+                if (GlobalStaticVariables::physical_time_ > turbulent_module_activate_time) //** A temporary treatment *
+                {
+                    turbulent_kinetic_energy_force.exec();
+                }
                 pressure_relaxation.exec(dt);
 
                 kernel_summation.exec();
                 left_inflow_pressure_condition.exec(dt);
                 right_outflow_pressure_condition.exec(dt);
 
-                //constrain_normal_velocity_in_P_region.exec();
+                if (is_constrain_normal_velocity_in_P_region)
+                {
+                    constrain_normal_velocity_in_P_region.exec();
+                }
 
                 inflow_velocity_condition.exec();
 
-                impose_turbulent_inflow_condition.exec();
+                if (GlobalStaticVariables::physical_time_ > turbulent_module_activate_time) //** A temporary treatment *
+                {
+                    impose_turbulent_inflow_condition.exec();
+                }
 
                 density_relaxation.exec(dt);
 
