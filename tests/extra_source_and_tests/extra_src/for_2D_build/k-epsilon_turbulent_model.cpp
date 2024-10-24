@@ -5,7 +5,7 @@ namespace SPH
 //=================================================================================================//
 namespace fluid_dynamics
 {
-using TurbuIntegration2ndHalfWithWallDissipativeRieman = ComplexInteraction<Integration2ndHalf<Inner<>, Contact<Wall>>, DissipativeRiemannSolver>;
+using TurbuIntegration2ndHalfWithWallDissipativeRiemann = ComplexInteraction<Integration2ndHalf<Inner<>, Contact<Wall>>, DissipativeRiemannSolver>;
 //=================================================================================================//
 BaseTurbuClosureCoeff::BaseTurbuClosureCoeff()
     : Karman_(0.41), turbu_const_E_(9.8), C_mu_(0.09), turbulent_intensity_(5.0e-2),
@@ -35,11 +35,11 @@ Real WallFunction::get_dimensionless_velocity(Real y_star)
     Real dimensionless_velocity = 0.0;
     if (y_star < y_star_threshold_laminar_ && GlobalStaticVariables::physical_time_ > start_time_laminar_)
     {
-        dimensionless_velocity = laminar_law_wall_functon(y_star);
+        dimensionless_velocity = laminar_law_wall_function(y_star);
     }
     else
     {
-        dimensionless_velocity = log_law_wall_functon(y_star);
+        dimensionless_velocity = log_law_wall_function(y_star);
     }
     if (std::isnan(dimensionless_velocity) || std::isinf(dimensionless_velocity))
     {
@@ -62,14 +62,14 @@ Real WallFunction::get_near_wall_velocity_gradient_magnitude(Real y_star, Real v
     return vel_grad_mag;
 }
 //=================================================================================================//
-Real WallFunction::log_law_wall_functon(Real y_star)
+Real WallFunction::log_law_wall_function(Real y_star)
 {
     //** u_star should larger than 0 *
     Real u_star = abs(log(turbu_const_E_ * y_star) / Karman_);
     return u_star;
 }
 //=================================================================================================//
-Real WallFunction::laminar_law_wall_functon(Real y_star)
+Real WallFunction::laminar_law_wall_function(Real y_star)
 {
     Real u_star = y_star;
     return u_star;
@@ -192,8 +192,8 @@ void TransferVelocityGradient::update(size_t index_i, Real dt)
     }
 }
 //=================================================================================================//
-K_TurtbulentModelInner::K_TurtbulentModelInner(BaseInnerRelation &inner_relation, const StdVec<Real> &initial_values, int is_extr_visc_dissipa, bool is_STL)
-    : BaseTurtbulentModel<Base, DataDelegateInner>(inner_relation),
+K_TurbulentModelInner::K_TurbulentModelInner(BaseInnerRelation &inner_relation, const StdVec<Real> &initial_values, int is_extr_visc_dissipa, bool is_STL)
+    : BaseTurbulentModel<Base, DataDelegateInner>(inner_relation),
       dk_dt_(*particles_->registerSharedVariable<Real>("ChangeRateOfTKE")),
       dk_dt_without_dissipation_(*particles_->registerSharedVariable<Real>("ChangeRateOfTKEWithoutDissipation")),
       k_production_(*particles_->registerSharedVariable<Real>("K_Production")),
@@ -252,7 +252,7 @@ K_TurtbulentModelInner::K_TurtbulentModelInner(BaseInnerRelation &inner_relation
     std::fill(is_extra_viscous_dissipation_.begin(), is_extra_viscous_dissipation_.end(), is_extr_visc_dissipa);
 }
 //=================================================================================================//
-void K_TurtbulentModelInner::interaction(size_t index_i, Real dt)
+void K_TurbulentModelInner::interaction(size_t index_i, Real dt)
 {
     //Vecd vel_i = vel_[index_i];
     Real rho_i = rho_[index_i];
@@ -305,7 +305,7 @@ void K_TurtbulentModelInner::interaction(size_t index_i, Real dt)
     turbu_strain_rate_[index_i] = strain_rate;
 }
 //=================================================================================================//
-void K_TurtbulentModelInner::update(size_t index_i, Real dt)
+void K_TurbulentModelInner::update(size_t index_i, Real dt)
 {
     if (is_STL_)
     {
@@ -320,17 +320,17 @@ void K_TurtbulentModelInner::update(size_t index_i, Real dt)
     }
 }
 //=================================================================================================//
-// void K_TurtbulentModelInner::update_prior_turbulent_value()
+// void K_TurbulentModelInner::update_prior_turbulent_value()
 // {
 // 	k_production_prior_ = k_production_;
 // 	turbu_k_prior_ = turbu_k_;
 // 	turbu_epsilon_prior_ = turbu_epsilon_;
 // }
 //=================================================================================================//
-E_TurtbulentModelInner::E_TurtbulentModelInner(BaseInnerRelation &inner_relation, bool is_STL)
-    : BaseTurtbulentModel<Base, DataDelegateInner>(inner_relation),
+E_TurbulentModelInner::E_TurbulentModelInner(BaseInnerRelation &inner_relation, bool is_STL)
+    : BaseTurbulentModel<Base, DataDelegateInner>(inner_relation),
       depsilon_dt_(*particles_->registerSharedVariable<Real>("ChangeRateOfTDR")),
-      depsilon_dt_without_disspation_(*particles_->registerSharedVariable<Real>("ChangeRateOfTDRWithoutDissp")),
+      depsilon_dt_without_dissipation_(*particles_->registerSharedVariable<Real>("ChangeRateOfTDRWithoutDissp")),
       ep_production(*particles_->registerSharedVariable<Real>("Ep_Production")),
       ep_dissipation_(*particles_->registerSharedVariable<Real>("Ep_Dissipation_")),
       ep_diffusion_(*particles_->registerSharedVariable<Real>("Ep_Diffusion_")),
@@ -358,7 +358,7 @@ E_TurtbulentModelInner::E_TurtbulentModelInner(BaseInnerRelation &inner_relation
     particles_->addVariableToWrite<Real>("Ep_Diffusion_");
 }
 //=================================================================================================//
-void E_TurtbulentModelInner::
+void E_TurbulentModelInner::
     interaction(size_t index_i, Real dt)
 {
     Real rho_i = rho_[index_i];
@@ -369,7 +369,7 @@ void E_TurtbulentModelInner::
     Real mu_eff_i = turbu_mu_[index_i] / sigma_E_ + mu_;
 
     depsilon_dt_[index_i] = 0.0;
-    depsilon_dt_without_disspation_[index_i] = 0.0;
+    depsilon_dt_without_dissipation_[index_i] = 0.0;
     Real epsilon_production(0.0);
     Real epsilon_derivative(0.0);
     Real epsilon_lap(0.0);
@@ -392,7 +392,7 @@ void E_TurtbulentModelInner::
     //epsilon_dissipation = (C_2_ * turbu_epsilon_prior_[index_i] / turbu_k_prior_[index_i]) * turbu_epsilon_i;
 
     depsilon_dt_[index_i] = epsilon_production - epsilon_dissipation + epsilon_lap;
-    depsilon_dt_without_disspation_[index_i] = epsilon_production + epsilon_lap;
+    depsilon_dt_without_dissipation_[index_i] = epsilon_production + epsilon_lap;
 
     //** for test */
     ep_production[index_i] = epsilon_production;
@@ -400,7 +400,7 @@ void E_TurtbulentModelInner::
     ep_diffusion_[index_i] = epsilon_lap;
 }
 //=================================================================================================//
-void E_TurtbulentModelInner::update(size_t index_i, Real dt)
+void E_TurbulentModelInner::update(size_t index_i, Real dt)
 {
     //** The near wall epsilon value is updated in wall function part *
     if (is_near_wall_P1_[index_i] != 1)
@@ -409,7 +409,7 @@ void E_TurtbulentModelInner::update(size_t index_i, Real dt)
         {
             //** If use source term linearisation *
             Real denominator = 1.0 + C_2_ * turbu_epsilon_[index_i] * dt / turbu_k_[index_i];
-            turbu_epsilon_[index_i] += depsilon_dt_without_disspation_[index_i] * dt;
+            turbu_epsilon_[index_i] += depsilon_dt_without_dissipation_[index_i] * dt;
             turbu_epsilon_[index_i] /= denominator;
         }
         else
@@ -662,9 +662,9 @@ TurbulentAdvectionTimeStepSize::TurbulentAdvectionTimeStepSize(SPHBody &sph_body
 Real TurbulentAdvectionTimeStepSize::reduce(size_t index_i, Real dt)
 {
     Real turbu_viscous_speed = (fluid_.ReferenceViscosity() + turbu_mu_[index_i]) / fluid_.ReferenceDensity() / smoothing_length_min_;
-    Real turbu_viscous_speed_squre = turbu_viscous_speed * turbu_viscous_speed;
-    Real vel_n_squre = vel_[index_i].squaredNorm();
-    Real vel_bigger = SMAX(turbu_viscous_speed_squre, vel_n_squre);
+    Real turbu_viscous_speed_squire = turbu_viscous_speed * turbu_viscous_speed;
+    Real vel_n_squire = vel_[index_i].squaredNorm();
+    Real vel_bigger = SMAX(turbu_viscous_speed_squire, vel_n_squire);
 
     return vel_bigger;
 }
@@ -715,13 +715,13 @@ Real InflowTurbulentCondition::getTurbulentInflowK(Vecd &position, Vecd &velocit
 
         int polynomial_order = 8;
         int num_coefficient = polynomial_order + 1;
-        //** Coefficient of the polynomia, 8th-order, from py21 dp=0.024 */
+        //** Coefficient of the polynomial, 8th-order, from py21 dp=0.024 */
         // Real coeff[] = {
         //     1.215679e-02, -6.681989e-02, 5.043783e-01,
         //     -2.344875e+00,  6.368016e+00, -1.041386e+01,
         //     1.009652e+01, -5.336236e+00, 1.183368e+00
         // };
-        //** Coefficient of the polynomia, 8th-order, from py21 dp=0.1 */
+        //** Coefficient of the polynomial, 8th-order, from py21 dp=0.1 */
         Real coeff[] = {
             1.159981e-02, -4.662944e-02, 2.837400e-01,
             -1.193955e+00, 3.034851e+00, -4.766077e+00,
@@ -774,13 +774,13 @@ Real InflowTurbulentCondition::getTurbulentInflowE(Vecd &position, Real &turbu_k
 
         int polynomial_order = 8;
         int num_coefficient = polynomial_order + 1;
-        //** Coefficient of the polynomia, 8th-order, from py21 dp=0.024 */
+        //** Coefficient of the polynomial, 8th-order, from py21 dp=0.024 */
         // Real coeff[] = {
         //     1.633474e-02,  -2.488756e-01, 1.912092e+00,
         //     -8.381386e+00,   2.205987e+01, -3.542125e+01,
         //     3.391904e+01, -1.777442e+01, 3.918818e+00
         // };
-        //** Coefficient of the polynomia, 8th-order, from py21 dp=0.1 */
+        //** Coefficient of the polynomial, 8th-order, from py21 dp=0.1 */
         Real coeff[] = {
             1.428191e-02, -1.766636e-01, 1.153107e+00,
             -4.515606e+00, 1.103752e+01, -1.694146e+01,
@@ -1299,7 +1299,7 @@ void GetLimiterOfTransportVelocityCorrection::update(size_t index_i, Real dt)
 
 //=================================================================================================//
 BaseGetTimeAverageData::BaseGetTimeAverageData(BaseInnerRelation &inner_relation, int num_observer_points)
-    : BaseTurtbulentModel<Base, DataDelegateInner>(inner_relation), plt_engine_(),
+    : BaseTurbulentModel<Base, DataDelegateInner>(inner_relation), plt_engine_(),
       pos_(*particles_->getVariableDataByName<Vecd>("Position")),
       turbu_k_(*particles_->getVariableDataByName<Real>("TurbulenceKineticEnergy")),
       turbu_mu_(*particles_->getVariableDataByName<Real>("TurbulentViscosity")),

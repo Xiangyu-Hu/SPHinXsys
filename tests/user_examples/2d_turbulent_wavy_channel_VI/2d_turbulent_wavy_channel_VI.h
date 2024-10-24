@@ -5,12 +5,11 @@
  * @author 	Xiangyu Hu, Chi Zhang and Luhui Han
  */
 
-#include "sphinxsys.h"
+#include "k-epsilon_turbulent_model.cpp"
 #include "k-epsilon_turbulent_model_complex.h"
 #include "k-epsilon_turbulent_model_complex.hpp"
-#include "k-epsilon_turbulent_model.cpp"
+#include "sphinxsys.h"
 using namespace SPH;
-
 
 /**
  * @ Parameters for validation with [1997 Joseph JCP].
@@ -22,44 +21,44 @@ Real gravity_g = 1.0e-4;
 Real nu_f = 1.0e-6;
 Real mu_f = nu_f * rho0_f;
 Real U_f = 1.25e-5;
-Real c_f = 10.0 * U_f;*/             
+Real c_f = 10.0 * U_f;*/
 
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real DH = 1.0;                         /**< Channel height. */
-Real DL = 40.0;                         /**< Channel length. */
+Real DH = 1.0;  /**< Channel height. */
+Real DL = 40.0; /**< Channel length. */
 Real amplitude = 0.1;
 Real wave_length = 1;
-Real resolution_ref = DH / 20.0;              /**< Initial reference particle spacing. */
-Real BW = resolution_ref * 4;         /**< Reference size of the emitter. */
+Real resolution_ref = DH / 20.0; /**< Initial reference particle spacing. */
+Real BW = resolution_ref * 4;    /**< Reference size of the emitter. */
 Real DL_sponge = resolution_ref * 20;
 Real characteristic_length = DH; /**<It needs characteristic Length to calculate turbulent length and the inflow turbulent epsilon>*/
 Real extend_out = 0.1 * DL;
 Real extend_in = 0.1 * DL;
 /** Domain bounds of the system. */
-BoundingBox system_domain_bounds(Vec2d(-DL_sponge -2.0 * BW, -DH), Vec2d(DL + 2.0 * BW+ extend_out + extend_in, DH + 2.0 * BW));
+BoundingBox system_domain_bounds(Vec2d(-DL_sponge - 2.0 * BW, -DH), Vec2d(DL + 2.0 * BW + extend_out + extend_in, DH + 2.0 * BW));
 StdVec<int> id_exclude;
 Real y_p_theo = 0.0;
 Real offset_dist_ref = 0.0;
-//** Intial values for K, Epsilon and Mu_t *
-StdVec<Real> initial_turbu_values = { 0.01 ,0.1 ,0.001 };
+//** Initial values for K, Epsilon and Mu_t *
+StdVec<Real> initial_turbu_values = {0.01, 0.1, 0.001};
 //----------------------------------------------------------------------
 //	Material properties of the fluid.
 //----------------------------------------------------------------------
-Real U_f = 0.816; //*Characteristic velo is regarded as average velo here
-Real c_f = 10.0 * U_f;                                        /**< Speed of sound. */
-Real rho0_f = 1.0;                                            /**< Density. */
+Real U_f = 0.816;      //*Characteristic velo is regarded as average velo here
+Real c_f = 10.0 * U_f; /**< Speed of sound. */
+Real rho0_f = 1.0;     /**< Density. */
 Real mu_f = 0.0001;
 Real Re = U_f * DH * rho0_f / mu_f;
 //----------------------------------------------------------------------
 // Observation.
 //----------------------------------------------------------------------
 //** Trough *
-int num_observer_points = std::round((DH+ amplitude) / resolution_ref); //**Evrey particle is regarded as a cell monitor* 
-Real pos_x_cross_line = 1.25 ;
+int num_observer_points = std::round((DH + amplitude) / resolution_ref); //**Evrey particle is regarded as a cell monitor*
+Real pos_x_cross_line = 1.25;
 Real size_cell_x = 1.8 * resolution_ref;
-StdVec<Real> monitoring_bound = { pos_x_cross_line - size_cell_x/2.0, pos_x_cross_line + size_cell_x / 2.0 }; //**The 2nd periodic wave*
+StdVec<Real> monitoring_bound = {pos_x_cross_line - size_cell_x / 2.0, pos_x_cross_line + size_cell_x / 2.0}; //**The 2nd periodic wave*
 Real observe_offset_y = -1.0 * amplitude;
 //----------------------------------------------------------------------
 //	Cases-dependent geometries
@@ -70,17 +69,14 @@ Vec2d emitter_translation = Vec2d(-DL_sponge, 0.0) + emitter_halfsize;
 Vec2d inlet_buffer_halfsize = Vec2d(0.5 * DL_sponge, 0.5 * DH);
 Vec2d inlet_buffer_translation = Vec2d(-DL_sponge, 0.0) + inlet_buffer_halfsize;
 Vec2d disposer_up_halfsize = Vec2d(0.5 * BW, 0.55 * DH);
-Vec2d disposer_up_translation = Vec2d(DL + extend_out+ extend_in, -0.05 * DH) + disposer_up_halfsize;
+Vec2d disposer_up_translation = Vec2d(DL + extend_out + extend_in, -0.05 * DH) + disposer_up_halfsize;
 
 /** the water block . */
-std::vector<Vecd> water_block_shape
-{
-    Vecd(-DL_sponge, 0.0),Vecd(-DL_sponge, DH),
-    Vecd(DL + extend_out + extend_in, DH),Vecd(DL + extend_out + extend_in, 0.0),Vecd(-DL_sponge, 0.0)
-};
+std::vector<Vecd> water_block_shape{
+    Vecd(-DL_sponge, 0.0), Vecd(-DL_sponge, DH),
+    Vecd(DL + extend_out + extend_in, DH), Vecd(DL + extend_out + extend_in, 0.0), Vecd(-DL_sponge, 0.0)};
 /** the water in the trough part. */
-std::vector<Vecd> water_shape_trough
-{
+std::vector<Vecd> water_shape_trough{
     Vecd(0.0 + extend_in, 0.0),
     Vecd(DL + extend_in, 0.0),
     Vecd(DL + extend_in, -amplitude),
@@ -88,8 +84,7 @@ std::vector<Vecd> water_shape_trough
     Vecd(0.0 + extend_in, 0.0),
 };
 /** the top wall polygon. */
-std::vector<Vecd> top_wall_shape
-{
+std::vector<Vecd> top_wall_shape{
     Vecd(-DL_sponge - 2.0 * BW, DH),
     Vecd(-DL_sponge - 2.0 * BW, DH + BW),
     Vecd(DL + 2.0 * BW + extend_out + extend_in, DH + BW),
@@ -102,8 +97,8 @@ class WavyShape
 {
     int num_wavy_points, num_wavy_extend_left, num_wavy_extend_right;
     int num_total;
-    Real wavy_interval = 0.01;   //** Specify the wavy resolution here *
-public:
+    Real wavy_interval = 0.01; //** Specify the wavy resolution here *
+  public:
     explicit WavyShape()
     {
         bottom_wall_shape.push_back(Vecd(-DL_sponge - 2.0 * BW, 0.0));
@@ -118,8 +113,8 @@ public:
         bottom_wall_shape.push_back(Vecd(DL + extend_in, 0.0));
         bottom_wall_shape.push_back(Vecd(DL + 2.0 * BW + extend_out + extend_in, 0.0));
         bottom_wall_shape.push_back(Vecd(DL + 2.0 * BW + extend_out + extend_in, -BW - amplitude));
-        bottom_wall_shape.push_back(Vecd(-DL_sponge - 2.0 * BW , -BW - amplitude));
-        bottom_wall_shape.push_back(Vecd(-DL_sponge - 2.0 * BW , 0.0));
+        bottom_wall_shape.push_back(Vecd(-DL_sponge - 2.0 * BW, -BW - amplitude));
+        bottom_wall_shape.push_back(Vecd(-DL_sponge - 2.0 * BW, 0.0));
     }
 };
 
@@ -128,8 +123,8 @@ public:
 //----------------------------------------------------------------------
 class WaterBlock : public MultiPolygonShape
 {
-public:
-    explicit WaterBlock(const std::string& shape_name) : MultiPolygonShape(shape_name)
+  public:
+    explicit WaterBlock(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
         /** Geometry definition. */
         multi_polygon_.addAPolygon(water_block_shape, ShapeBooleanOps::add);
@@ -143,8 +138,8 @@ public:
 //----------------------------------------------------------------------
 class WallBoundary : public MultiPolygonShape
 {
-public:
-    explicit WallBoundary(const std::string& shape_name) : MultiPolygonShape(shape_name)
+  public:
+    explicit WallBoundary(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
         /** Geometry definition. */
         multi_polygon_.addAPolygon(top_wall_shape, ShapeBooleanOps::add);
@@ -158,16 +153,16 @@ public:
 struct InflowVelocity
 {
     Real u_ref_, t_ref_;
-    AlignedBoxShape& aligned_box_;
+    AlignedBoxShape &aligned_box_;
     Vecd halfsize_;
 
     template <class BoundaryConditionType>
-    InflowVelocity(BoundaryConditionType& boundary_condition)
+    InflowVelocity(BoundaryConditionType &boundary_condition)
         : u_ref_(U_f), t_ref_(2.0),
-        aligned_box_(boundary_condition.getAlignedBox()),
-        halfsize_(aligned_box_.HalfSize()) {}
+          aligned_box_(boundary_condition.getAlignedBox()),
+          halfsize_(aligned_box_.HalfSize()) {}
 
-    Vecd operator()(Vecd& position, Vecd& velocity)
+    Vecd operator()(Vecd &position, Vecd &velocity)
     {
         Vecd target_velocity = velocity;
         Real run_time = GlobalStaticVariables::physical_time_;
@@ -193,11 +188,11 @@ class TimeDependentAcceleration : public Gravity
 {
     Real du_ave_dt_, u_ref_, t_ref_;
 
-public:
+  public:
     explicit TimeDependentAcceleration(Vecd gravity_vector)
         : Gravity(gravity_vector), t_ref_(2.0), u_ref_(U_f), du_ave_dt_(0) {}
 
-    virtual Vecd InducedAcceleration(const Vecd& position) override
+    virtual Vecd InducedAcceleration(const Vecd &position) override
     {
         Real run_time_ = GlobalStaticVariables::physical_time_;
         du_ave_dt_ = 0.5 * u_ref_ * (Pi / t_ref_) * sin(Pi * run_time_ / t_ref_);

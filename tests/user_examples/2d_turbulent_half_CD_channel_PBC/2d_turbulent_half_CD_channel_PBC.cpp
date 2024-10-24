@@ -1,6 +1,5 @@
 #include "2d_turbulent_half_CD_channel_PBC.h"
-using namespace SPH;            
-
+using namespace SPH;
 
 int main(int ac, char *av[])
 {
@@ -54,7 +53,7 @@ int main(int ac, char *av[])
         /** Random reset the insert body particle position. */
         SimpleDynamics<RandomizeParticlePosition> random_inserted_body_particles(wall_boundary);
         /** Write the body state to Vtp file. */
-        BodyStatesRecordingToVtp write_inserted_body_to_vtp(io_environment, { &wall_boundary });
+        BodyStatesRecordingToVtp write_inserted_body_to_vtp(io_environment, {&wall_boundary});
         /** Write the particle reload files. */
         ReloadParticleIO write_particle_reload_files(io_environment, wall_boundary);
         /** A  Physics relaxation step. */
@@ -92,9 +91,9 @@ int main(int ac, char *av[])
     Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallNoRiemann> density_relaxation(water_block_inner, water_wall_contact);
 
     /** Turbulent.Note: When use wall function, K Epsilon calculation only consider inner */
-    InteractionWithUpdate<fluid_dynamics::K_TurtbulentModelInner> k_equation_relaxation(water_block_inner, initial_turbu_values);
+    InteractionWithUpdate<fluid_dynamics::K_TurbulentModelInner> k_equation_relaxation(water_block_inner, initial_turbu_values);
     InteractionDynamics<fluid_dynamics::GetVelocityGradientInner> get_velocity_gradient(water_block_inner);
-    InteractionWithUpdate<fluid_dynamics::E_TurtbulentModelInner> epsilon_equation_relaxation(water_block_inner);
+    InteractionWithUpdate<fluid_dynamics::E_TurbulentModelInner> epsilon_equation_relaxation(water_block_inner);
     InteractionDynamics<fluid_dynamics::TKEnergyForceComplex> turbulent_kinetic_energy_acceleration(water_block_inner, water_wall_contact);
 
     /** Define external force. */
@@ -110,25 +109,24 @@ int main(int ac, char *av[])
     /** Choose one, ordinary or turbulent. Computing viscous acceleration, */
     InteractionDynamics<fluid_dynamics::TurbulentViscousAccelerationWithWall> turbulent_viscous_acceleration(water_block_inner, water_wall_contact);
     //InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_inner, water_wall_contact);
-    
+
     /** Impose transport velocity. */
     InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionComplex<AllParticles>> transport_velocity_correction(water_block_inner, water_wall_contact);
     /** Evaluation of density by summation approach. */
     InteractionWithUpdate<fluid_dynamics::DensitySummationComplex> update_density_by_summation(water_block_inner, water_wall_contact);
-    water_block.addBodyStateForRecording<Real>("Pressure");		   // output for debug
+    water_block.addBodyStateForRecording<Real>("Pressure"); // output for debug
     water_block.addBodyStateForRecording<int>("Indicator"); // output for debug
-    water_block.addBodyStateForRecording<Real>("Density"); // output for debug
+    water_block.addBodyStateForRecording<Real>("Density");  // output for debug
 
     /** Initialize particle acceleration. */
     SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(water_block, makeShared<Gravity>(Vecd(gravity_g, 0.0)));
     /** Periodic BCs in x direction. */
     PeriodicConditionUsingCellLinkedList periodic_condition(water_block, water_block.getBodyShapeBounds(), xAxis);
 
-
     /** Choose one, ordinary or turbulent. Time step size without considering sound wave speed. */
     ReduceDynamics<fluid_dynamics::TurbulentAdvectionTimeStepSize> get_turbulent_fluid_advection_time_step_size(water_block, U_f);
     //ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_f);
-    
+
     /** Time step size with considering sound wave speed. */
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
 
@@ -136,7 +134,6 @@ int main(int ac, char *av[])
     SimpleDynamics<fluid_dynamics::TurbulentEddyViscosity> update_eddy_viscosity(water_block);
 
     //SimpleDynamics<fluid_dynamics::ClearYPositionForTest> clear_y_displacement(water_block);
-
 
     /** Output the body states. */
     BodyStatesRecordingToVtp body_states_recording(io_environment, sph_system.real_bodies_);
@@ -156,9 +153,9 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     size_t number_of_iterations = sph_system.RestartStep();
     int screen_output_interval = 100;
-    Real end_time = 600.0;   /**< End time. */
+    Real end_time = 600.0;              /**< End time. */
     Real Output_Time = end_time / 40.0; /**< Time stamps for output of body states. */
-    Real dt = 0.0;          /**< Default acoustic time step sizes. */
+    Real dt = 0.0;                      /**< Default acoustic time step sizes. */
     //----------------------------------------------------------------------
     //	Statistics for CPU time
     //----------------------------------------------------------------------
@@ -176,7 +173,7 @@ int main(int ac, char *av[])
         {
             /** Acceleration due to viscous force and gravity. */
             initialize_a_fluid_step.exec();
-            
+
             //Real Dt = get_fluid_advection_time_step_size.exec();
             Real Dt = get_turbulent_fluid_advection_time_step_size.exec();
 
@@ -196,13 +193,13 @@ int main(int ac, char *av[])
                 //std::cout << "inner_itr=" << inner_itr << std::endl;
 
                 dt = SMIN(get_fluid_time_step_size.exec(), Dt);
-                
+
                 turbulent_kinetic_energy_acceleration.exec();
 
                 pressure_relaxation.exec(dt);
 
                 density_relaxation.exec(dt);
-                
+
                 get_velocity_gradient.exec(dt);
                 k_equation_relaxation.exec(dt);
                 epsilon_equation_relaxation.exec(dt);
@@ -214,7 +211,6 @@ int main(int ac, char *av[])
                 inner_itr++;
 
                 //clear_y_displacement.exec();
-                
             }
             if (number_of_iterations % screen_output_interval == 0)
             {
@@ -232,16 +228,15 @@ int main(int ac, char *av[])
 
             get_time_average_cross_section_data.exec();
             get_time_average_cross_section_data.output_time_history_data(end_time * 0.75);
-
         }
         TickCount t2 = TickCount::now();
-        
+
         body_states_recording.writeToFile();
         num_output_file++;
         if (num_output_file == 20)
             //system("pause");
-        
-        TickCount t3 = TickCount::now();
+
+            TickCount t3 = TickCount::now();
     }
     TickCount t4 = TickCount::now();
 

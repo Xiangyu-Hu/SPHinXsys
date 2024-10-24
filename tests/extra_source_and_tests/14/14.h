@@ -65,7 +65,7 @@ Real weight_vel_grad_sub_nearwall = 0.10;
 bool is_source_term_linearisation = false;
 //** Empirical parameter for initial stability*
 Real turbulent_module_activate_time = 2.5;
-//** Intial values for K, Epsilon and Mu_t *
+//** Initial values for K, Epsilon and Mu_t *
 StdVec<Real> initial_turbu_values = {0.000180001, 3.326679e-5, 1.0e-3};
 
 Real y_p_constant = DH / 2.0 / num_fluid_cross_section; //** For the first try *
@@ -99,7 +99,7 @@ Real Re_calculated = U_f * DH * rho0_f / mu_f;
 
 Real DH_C = DH - 2.0 * offset_distance;
 
-//** Intial inlet pressure to drive flow *
+//** Initial inlet pressure to drive flow *
 Real initial_inlet_pressure = 0.5 * rho0_f * U_inlet * U_inlet;
 //Real initial_inlet_pressure = 5.0;
 //----------------------------------------------------------------------

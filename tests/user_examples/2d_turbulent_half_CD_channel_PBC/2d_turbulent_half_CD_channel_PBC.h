@@ -11,7 +11,6 @@
 #include "k-epsilon_turbulent_model.cpp"
 using namespace SPH;
 
-
 /**
  * @ Parameters for validation with [1997 Joseph JCP].
  */
@@ -22,15 +21,15 @@ Real gravity_g = 1.0e-4;
 Real nu_f = 1.0e-6;
 Real mu_f = nu_f * rho0_f;
 Real U_f = 1.25e-5;
-Real c_f = 10.0 * U_f;*/             
+Real c_f = 10.0 * U_f;*/
 
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real DH = 2.0;                         /**< Channel height. */
-Real DL = 6.0;                         /**< Channel length. */
-Real resolution_ref = DH/20;              /**< Initial reference particle spacing. */
-Real BW = resolution_ref * 4;         /**< Reference size of the emitter. */
+Real DH = 2.0;                 /**< Channel height. */
+Real DL = 6.0;                 /**< Channel length. */
+Real resolution_ref = DH / 20; /**< Initial reference particle spacing. */
+Real BW = resolution_ref * 4;  /**< Reference size of the emitter. */
 Real DL1 = 1.0;
 Real DL2 = 1.5;
 Real DL3 = 1.0;
@@ -41,18 +40,18 @@ BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
 StdVec<int> id_exclude;
 Real y_p_theo = 0.0;
 Real offset_dist_ref = 0.0;
-//** Intial values for K, Epsilon and Mu_t *
-StdVec<Real> initial_turbu_values = { 1.0 ,1.0 ,1.0 };
+//** Initial values for K, Epsilon and Mu_t *
+StdVec<Real> initial_turbu_values = {1.0, 1.0, 1.0};
 //----------------------------------------------------------------------
 //	Material properties of the fluid.
 //----------------------------------------------------------------------
 
 //Real u_max = 1.5;
 //Real U_f = u_max * 2.0 / 3.0; //*Characteristic velo is regarded as average velo here
-Real U_f = 2.2; //*Characteristic velo is regarded as average velo here
-Real c_f = 10.0 * U_f;                                        /**< Speed of sound. */
+Real U_f = 2.2;        //*Characteristic velo is regarded as average velo here
+Real c_f = 10.0 * U_f; /**< Speed of sound. */
 
-Real rho0_f = 1.0;                                            /**< Density. */
+Real rho0_f = 1.0; /**< Density. */
 
 //Real Re = 40000.0;
 //Real mu_f = rho0_f * U_f * DH  / Re;
@@ -66,8 +65,8 @@ Real Re = U_f * DH * rho0_f / mu_f;
 //----------------------------------------------------------------------
 // Observation.
 //----------------------------------------------------------------------
-int num_observer_points = std::round(DH / resolution_ref); //**Evrey particle is regarded as a cell monitor* 
-StdVec<Real> monitoring_bound = { DL / 2.0 - 10.0 * resolution_ref ,DL / 2.0 + 10.0 * resolution_ref };
+int num_observer_points = std::round(DH / resolution_ref); //**Evrey particle is regarded as a cell monitor*
+StdVec<Real> monitoring_bound = {DL / 2.0 - 10.0 * resolution_ref, DL / 2.0 + 10.0 * resolution_ref};
 
 //----------------------------------------------------------------------
 // @brief 	Fluid body definition.
@@ -80,10 +79,10 @@ std::vector<Vecd> createWaterBlockShape()
     water_block_shape.push_back(Vecd(DL, DH));
     water_block_shape.push_back(Vecd(DL, 0.0));
 
-    water_block_shape.push_back(Vecd(DL -DL1, 0.0));
+    water_block_shape.push_back(Vecd(DL - DL1, 0.0));
     water_block_shape.push_back(Vecd(DL1 + DL2 + DL3, DH1));
     water_block_shape.push_back(Vecd(DL1 + DL2, DH1));
-    water_block_shape.push_back(Vecd(DL1 , 0.0));
+    water_block_shape.push_back(Vecd(DL1, 0.0));
 
     water_block_shape.push_back(Vecd(0.0, 0.0));
 
@@ -91,8 +90,8 @@ std::vector<Vecd> createWaterBlockShape()
 }
 class WaterBlock : public ComplexShape
 {
-public:
-    explicit WaterBlock(const std::string& shape_name) : ComplexShape(shape_name)
+  public:
+    explicit WaterBlock(const std::string &shape_name) : ComplexShape(shape_name)
     {
         MultiPolygon outer_boundary(createWaterBlockShape());
         add<MultiPolygonShape>(outer_boundary, "OuterBoundary");
@@ -104,8 +103,8 @@ public:
  */
 class WallBoundary : public MultiPolygonShape
 {
-public:
-    explicit WallBoundary(const std::string& shape_name) : MultiPolygonShape(shape_name)
+  public:
+    explicit WallBoundary(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
         /** Geometry definition. */
         std::vector<Vecd> outer_wall_shape;

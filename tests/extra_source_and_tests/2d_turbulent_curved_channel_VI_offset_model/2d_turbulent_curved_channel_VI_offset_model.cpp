@@ -1,6 +1,5 @@
 #include "2d_turbulent_curved_channel_VI_offset_model.h"
-using namespace SPH;            
-
+using namespace SPH;
 
 int main(int ac, char *av[])
 {
@@ -8,7 +7,7 @@ int main(int ac, char *av[])
      * @brief Build up -- a SPHSystem --
      */
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
-    
+
     /** Tag for run particle relaxation for the initial body fitted distribution. */
     sph_system.setRunParticleRelaxation(false);
     /** Tag for computation start with relaxed body fitted particles distribution. */
@@ -35,9 +34,8 @@ int main(int ac, char *av[])
     wall_boundary.defineBodyLevelSetShape();
     wall_boundary.defineMaterial<Solid>();
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? wall_boundary.generateParticles<Reload>( wall_boundary.getName())
+        ? wall_boundary.generateParticles<Reload>(wall_boundary.getName())
         : wall_boundary.generateParticles<Lattice>();
-
 
     /** topology */
     InnerRelation water_block_inner(water_block);
@@ -48,8 +46,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     ComplexRelation water_block_complex(water_block_inner, water_wall_contact);
     //----------------------------------------------------------------------
-//	Run particle relaxation for body-fitted distribution if chosen.
-//----------------------------------------------------------------------
+    //	Run particle relaxation for body-fitted distribution if chosen.
+    //----------------------------------------------------------------------
     if (sph_system.RunParticleRelaxation())
     {
         using namespace relax_dynamics;
@@ -62,10 +60,10 @@ int main(int ac, char *av[])
         SimpleDynamics<RandomizeParticlePosition> random_inserted_body_particles(wall_boundary);
         SimpleDynamics<RandomizeParticlePosition> random_inserted_body_particles_water(water_block);
         /** Write the body state to Vtp file. */
-        BodyStatesRecordingToVtp write_inserted_body_to_vtp(wall_boundary );
-        BodyStatesRecordingToVtp write_inserted_body_to_vtp_water(water_block );
+        BodyStatesRecordingToVtp write_inserted_body_to_vtp(wall_boundary);
+        BodyStatesRecordingToVtp write_inserted_body_to_vtp_water(water_block);
         /** Write the particle reload files. */
-        ReloadParticleIO write_particle_reload_files( wall_boundary);
+        ReloadParticleIO write_particle_reload_files(wall_boundary);
         ReloadParticleIO write_particle_reload_files_water(water_block);
         /** A  Physics relaxation step. */
         relax_dynamics::RelaxationStepLevelSetCorrectionInner relaxation_step_inner(wall_boundary_inner);
@@ -78,7 +76,7 @@ int main(int ac, char *av[])
 
         relaxation_step_inner.SurfaceBounding().exec();
         relaxation_step_inner_water.SurfaceBounding().exec();
-        
+
         write_inserted_body_to_vtp.writeToFile(0);
         write_inserted_body_to_vtp_water.writeToFile(0);
 
@@ -107,12 +105,12 @@ int main(int ac, char *av[])
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
     /** Turbulent standard wall function needs normal vectors of wall. */
     NearShapeSurface near_surface(water_block, makeShared<WallBoundary>("Wall"));
-    
+
     /** Pressure relaxation algorithm with Riemann solver for viscous flows. */
     Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation(water_block_inner, water_wall_contact);
     /** Density relaxation algorithm by using position verlet time stepping. */
-    Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallNoRiemann> density_relaxation(water_block_inner, water_wall_contact);    
-    
+    Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallNoRiemann> density_relaxation(water_block_inner, water_wall_contact);
+
     /** Turbulent.Note: When use wall function, K Epsilon calculation only consider inner */
     InteractionWithUpdate<fluid_dynamics::JudgeIsNearWall> update_near_wall_status(water_block_inner, water_wall_contact, near_surface);
 
@@ -120,8 +118,8 @@ int main(int ac, char *av[])
     //InteractionDynamics<fluid_dynamics::GetVelocityGradientComplex> get_velocity_gradient(water_block_inner, water_wall_contact);
 
     /** Turbulent.Note: Temporarily transfer parameters at this place. The 3rd parameter refers to extra dissipation for viscous */
-    InteractionWithUpdate<fluid_dynamics::K_TurtbulentModelInner> k_equation_relaxation(water_block_inner, initial_turbu_values);
-    InteractionWithUpdate<fluid_dynamics::E_TurtbulentModelInner> epsilon_equation_relaxation(water_block_inner);
+    InteractionWithUpdate<fluid_dynamics::K_TurbulentModelInner> k_equation_relaxation(water_block_inner, initial_turbu_values);
+    InteractionWithUpdate<fluid_dynamics::E_TurbulentModelInner> epsilon_equation_relaxation(water_block_inner);
     InteractionDynamics<fluid_dynamics::TKEnergyForceComplex> turbulent_kinetic_energy_force(water_block_inner, water_wall_contact);
     InteractionDynamics<fluid_dynamics::StandardWallFunctionCorrection> standard_wall_function_correction(water_block_inner, water_wall_contact, y_p_constant);
 
@@ -130,22 +128,19 @@ int main(int ac, char *av[])
     {
         monitor_bound_x.push_back(x_start + i * observe_x_spacing);
     }
-    SimpleDynamics<fluid_dynamics::GetTimeAverageCrossSectionData_Y,SequencedPolicy> get_time_average_cross_section_data_y
-    (water_block_inner, num_observer_points, observe_x_ratio, cell_bound_y, monitor_bound_x, monitor_bound_x_b);
+    SimpleDynamics<fluid_dynamics::GetTimeAverageCrossSectionData_Y, SequencedPolicy> get_time_average_cross_section_data_y(water_block_inner, num_observer_points, observe_x_ratio, cell_bound_y, monitor_bound_x, monitor_bound_x_b);
 
     /** Choose one, ordinary or turbulent. Computing viscous force, */
     InteractionWithUpdate<fluid_dynamics::TurbulentViscousForceWithWall> turbulent_viscous_force(water_block_inner, water_wall_contact);
     //InteractionWithUpdate<fluid_dynamics::ViscousForceWithWall> viscous_force(water_block_inner, water_wall_contact);
-    
+
     /** Impose transport velocity. */
     InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionComplex<BulkParticles>> transport_velocity_correction(water_block_inner, water_wall_contact);
-    
+
     InteractionWithUpdate<SpatialTemporalFreeSurfaceIndicationComplex> inlet_outlet_surface_particle_indicator(water_block_inner, water_wall_contact);
 
     /** Evaluation of density by summation approach. */
     InteractionWithUpdate<fluid_dynamics::DensitySummationFreeStreamComplex> update_density_by_summation(water_block_inner, water_wall_contact);
-    
-
 
     /** Initialize particle acceleration. */
     TimeDependentAcceleration time_dependent_acceleration(Vec2d::Zero());
@@ -153,20 +148,19 @@ int main(int ac, char *av[])
 
     BodyAlignedBoxByParticle emitter(water_block, makeShared<AlignedBoxShape>(Transform(Vec2d(emitter_translation)), emitter_halfsize));
     SimpleDynamics<fluid_dynamics::EmitterInflowInjection> emitter_inflow_injection(emitter, inlet_particle_buffer, xAxis);
-    BodyAlignedBoxByCell inlet_velcoity_buffer(water_block, makeShared<AlignedBoxShape>(Transform(Vec2d(inlet_buffer_translation)), inlet_buffer_halfsize));
-    SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>> inlet_velocity_buffer_inflow_condition(inlet_velcoity_buffer, 1.0);
-    
+    BodyAlignedBoxByCell inlet_velocity_buffer(water_block, makeShared<AlignedBoxShape>(Transform(Vec2d(inlet_buffer_translation)), inlet_buffer_halfsize));
+    SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>> inlet_velocity_buffer_inflow_condition(inlet_velocity_buffer, 1.0);
+
     BodyAlignedBoxByCell disposer(water_block, makeShared<AlignedBoxShape>(Transform(Vec2d(disposer_translation)), disposer_halfsize));
     SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion> disposer_outflow_deletion(disposer, yAxis);
 
     /** Turbulent InflowTurbulentCondition.It needs characteristic Length to calculate turbulent length  */
-    SimpleDynamics<fluid_dynamics::InflowTurbulentCondition> impose_turbulent_inflow_condition(inlet_velcoity_buffer, characteristic_length, 0.8);
-
+    SimpleDynamics<fluid_dynamics::InflowTurbulentCondition> impose_turbulent_inflow_condition(inlet_velocity_buffer, characteristic_length, 0.8);
 
     /** Choose one, ordinary or turbulent. Time step size without considering sound wave speed. */
     ReduceDynamics<fluid_dynamics::TurbulentAdvectionTimeStepSize> get_turbulent_fluid_advection_time_step_size(water_block, U_f);
     //ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_f);
-    
+
     /** Time step size with considering sound wave speed. */
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
 
@@ -175,10 +169,10 @@ int main(int ac, char *av[])
 
     /** Output the body states. */
     BodyStatesRecordingToVtp body_states_recording(sph_system);
-    body_states_recording.addToWrite<Real>(water_block, "Pressure");		   // output for debug
-    body_states_recording.addToWrite<int>(water_block,"Indicator"); // output for debug
-    body_states_recording.addToWrite<Real>(water_block,"Density"); // output for debug
-    
+    body_states_recording.addToWrite<Real>(water_block, "Pressure"); // output for debug
+    body_states_recording.addToWrite<int>(water_block, "Indicator"); // output for debug
+    body_states_recording.addToWrite<Real>(water_block, "Density");  // output for debug
+
     /**
      * @brief Setup geometry and initial conditions.
      */
@@ -189,15 +183,15 @@ int main(int ac, char *av[])
 
     /** Output the start states of bodies. */
     body_states_recording.writeToFile();
-     get_time_average_cross_section_data_y.output_monitor_x_coordinate();
+    get_time_average_cross_section_data_y.output_monitor_x_coordinate();
     //----------------------------------------------------------------------
     //	Setup computing and initial conditions.
     //----------------------------------------------------------------------
     size_t number_of_iterations = sph_system.RestartStep();
     int screen_output_interval = 100;
-    Real end_time = 200.0;   /**< End time. */
+    Real end_time = 200.0;               /**< End time. */
     Real Output_Time = end_time / 200.0; /**< Time stamps for output of body states. */
-    Real dt = 0.0;          /**< Default acoustic time step sizes. */
+    Real dt = 0.0;                       /**< Default acoustic time step sizes. */
     //----------------------------------------------------------------------
     //	Statistics for CPU time
     //----------------------------------------------------------------------
@@ -244,7 +238,7 @@ int main(int ac, char *av[])
                 turbulent_kinetic_energy_force.exec();
 
                 pressure_relaxation.exec(dt);
-                
+
                 inlet_velocity_buffer_inflow_condition.exec();
 
                 impose_turbulent_inflow_condition.exec();
@@ -265,9 +259,8 @@ int main(int ac, char *av[])
                 //std::cout << "num_output_file=" << num_output_file << std::endl;
                 //if (GlobalStaticVariables::physical_time_ >9.3)
                 //{
-                    //body_states_recording.writeToFile();
+                //body_states_recording.writeToFile();
                 //}
-                
             }
             if (number_of_iterations % screen_output_interval == 0)
             {
@@ -285,13 +278,13 @@ int main(int ac, char *av[])
             water_block.updateCellLinkedListWithParticleSort(100);
             water_block_complex.updateConfiguration();
 
-            if (GlobalStaticVariables::physical_time_ > end_time * 0.1) 
+            if (GlobalStaticVariables::physical_time_ > end_time * 0.1)
             {
                 get_time_average_cross_section_data_y.exec();
                 get_time_average_cross_section_data_y.output_time_history_data(end_time * 0.75);
             }
             //if (GlobalStaticVariables::physical_time_ > end_time * 0.5)
-                //body_states_recording.writeToFile();
+            //body_states_recording.writeToFile();
         }
         //TickCount t2 = TickCount::now();
         body_states_recording.writeToFile();
@@ -299,7 +292,6 @@ int main(int ac, char *av[])
         //if (num_output_file == 100)
         //    system("pause");
         //TickCount t3 = TickCount::now();
-
     }
     TickCount t4 = TickCount::now();
 

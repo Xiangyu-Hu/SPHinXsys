@@ -72,8 +72,8 @@ class WallFunction : public BaseTurbuClosureCoeff
     Real get_near_wall_velocity_gradient_magnitude(Real y_star, Real vel_fric_mag, Real denominator_log_law, Real dynamic_viscosity);
     Real get_distance_from_P_to_wall(Real y_p_constant);
 
-    Real log_law_wall_functon(Real y_star);
-    Real laminar_law_wall_functon(Real y_star);
+    Real log_law_wall_function(Real y_star);
+    Real laminar_law_wall_function(Real y_star);
     Real log_law_velocity_gradient(Real vel_fric_mag, Real denominator_log_law);
     Real laminar_law_velocity_gradient(Real vel_fric_mag, Real dynamic_viscosity);
 };
@@ -152,16 +152,16 @@ class TransferVelocityGradient : public LocalDynamics,
 };
 //=================================================================================================//
 template <typename... T>
-class BaseTurtbulentModel;
+class BaseTurbulentModel;
 
 template <class DataDelegationType>
-class BaseTurtbulentModel<Base, DataDelegationType>
+class BaseTurbulentModel<Base, DataDelegationType>
     : public LocalDynamics, public DataDelegationType, public BaseTurbuClosureCoeff
 {
   public:
     template <class BaseRelationType>
-    explicit BaseTurtbulentModel(BaseRelationType &base_relation);
-    virtual ~BaseTurtbulentModel(){};
+    explicit BaseTurbulentModel(BaseRelationType &base_relation);
+    virtual ~BaseTurbulentModel(){};
 
   protected:
     StdLargeVec<Real> &turbu_k_;
@@ -176,14 +176,14 @@ class BaseTurtbulentModel<Base, DataDelegationType>
 };
 //=================================================================================================//
 /**
-	 * @class K_TurtbulentModelInner
-	 * @brief  K_TurtbulentModelInner
+	 * @class K_TurbulentModelInner
+	 * @brief  K_TurbulentModelInner
 	 */
-class K_TurtbulentModelInner : public BaseTurtbulentModel<Base, DataDelegateInner>
+class K_TurbulentModelInner : public BaseTurbulentModel<Base, DataDelegateInner>
 {
   public:
-    explicit K_TurtbulentModelInner(BaseInnerRelation &inner_relation, const StdVec<Real> &initial_values, int is_extr_visc_dissipa, bool is_STL);
-    virtual ~K_TurtbulentModelInner(){};
+    explicit K_TurbulentModelInner(BaseInnerRelation &inner_relation, const StdVec<Real> &initial_values, int is_extr_visc_dissipa, bool is_STL);
+    virtual ~K_TurbulentModelInner(){};
 
     inline void interaction(size_t index_i, Real dt = 0.0);
     void update(size_t index_i, Real dt = 0.0);
@@ -208,20 +208,20 @@ class K_TurtbulentModelInner : public BaseTurtbulentModel<Base, DataDelegateInne
 };
 //=================================================================================================//
 /**
-	 * @class E_TurtbulentModelInner
-	 * @brief  E_TurtbulentModelInner
+	 * @class E_TurbulentModelInner
+	 * @brief  E_TurbulentModelInner
 	 */
-class E_TurtbulentModelInner : public BaseTurtbulentModel<Base, DataDelegateInner>
+class E_TurbulentModelInner : public BaseTurbulentModel<Base, DataDelegateInner>
 {
   public:
-    explicit E_TurtbulentModelInner(BaseInnerRelation &inner_relation, bool is_STL);
-    virtual ~E_TurtbulentModelInner(){};
+    explicit E_TurbulentModelInner(BaseInnerRelation &inner_relation, bool is_STL);
+    virtual ~E_TurbulentModelInner(){};
 
     inline void interaction(size_t index_i, Real dt = 0.0);
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
-    StdLargeVec<Real> &depsilon_dt_, &depsilon_dt_without_disspation_;
+    StdLargeVec<Real> &depsilon_dt_, &depsilon_dt_without_dissipation_;
     StdLargeVec<Real> &ep_production, &ep_dissipation_, &ep_diffusion_;
 
     StdLargeVec<Real> &turbu_mu_;
@@ -236,7 +236,7 @@ class E_TurtbulentModelInner : public BaseTurtbulentModel<Base, DataDelegateInne
 	 * @class kOmegaSST_TurtbulentModelInner
 	 * @brief  kOmegaSST_TurtbulentModelInner
 	 */
-class kOmegaSST_kTransportEquationInner : public BaseTurtbulentModel<Base, DataDelegateInner>
+class kOmegaSST_kTransportEquationInner : public BaseTurbulentModel<Base, DataDelegateInner>
 {
   public:
     explicit kOmegaSST_kTransportEquationInner(BaseInnerRelation &inner_relation, const StdVec<Real> &initial_values);
@@ -253,7 +253,7 @@ class kOmegaSST_kTransportEquationInner : public BaseTurtbulentModel<Base, DataD
 	 * @class kOmegaSST_TurtbulentModelInner
 	 * @brief  kOmegaSST_TurtbulentModelInner
 	 */
-class kOmegaSST_omegaTransportEquationInner : public BaseTurtbulentModel<Base, DataDelegateInner>
+class kOmegaSST_omegaTransportEquationInner : public BaseTurbulentModel<Base, DataDelegateInner>
 {
   public:
     explicit kOmegaSST_omegaTransportEquationInner(BaseInnerRelation &inner_relation);
@@ -272,7 +272,7 @@ class TKEnergyForce;
 
 template <class DataDelegationType>
 class TKEnergyForce<Base, DataDelegationType>
-    : public BaseTurtbulentModel<Base, DataDelegationType>
+    : public BaseTurbulentModel<Base, DataDelegationType>
 {
   public:
     template <class BaseRelationType>
@@ -744,7 +744,7 @@ using TVC_ModifiedLimited_withoutLinearGradientCorrection =
 	* @brief  BaseGetTimeAverageData
 	*/
 //template <class DataDelegationType>
-class BaseGetTimeAverageData : public BaseTurtbulentModel<Base, DataDelegateInner>
+class BaseGetTimeAverageData : public BaseTurbulentModel<Base, DataDelegateInner>
 {
   public:
     explicit BaseGetTimeAverageData(BaseInnerRelation &inner_relation, int num_observer_points);

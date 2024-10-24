@@ -35,7 +35,7 @@ int is_AMRD = 0;
 Real weight_vel_grad_sub_nearwall = 0.1;
 //** Tag for Source Term Linearisation *
 bool is_source_term_linearisation = false;
-//** Intial values for K, Epsilon and Mu_t *
+//** Initial values for K, Epsilon and Mu_t *
 StdVec<Real> initial_turbu_values = {0.000180001, 3.326679e-5, 1.0e-9};
 
 Real y_p_constant = 0.05;
@@ -203,13 +203,13 @@ struct InflowVelocity
             Real Y = half_channel_height - std::abs(position[1]);
             int polynomial_order = 8;
             int num_coefficient = polynomial_order + 1;
-            //** Coefficient of the polynomia, 8th-order, from py21 dp=0.024 */
+            //** Coefficient of the polynomial, 8th-order, from py21 dp=0.024 */
             // Real coeff[] = {
             //     6.153336e-01, 3.095679e+00, -1.399783e+01,
             //     4.798221e+01, -1.100147e+02, 1.619762e+02,
             //     -1.464631e+02, 7.373006e+01, -1.577924e+01
             // };
-            //** Coefficient of the polynomia, 8th-order, from py21 dp=0.1 */
+            //** Coefficient of the polynomial, 8th-order, from py21 dp=0.1 */
             Real coeff[] = {
                 6.492006e-01, 2.145673e+00, -7.442681e+00,
                 2.148624e+01, -4.443593e+01, 6.171458e+01,

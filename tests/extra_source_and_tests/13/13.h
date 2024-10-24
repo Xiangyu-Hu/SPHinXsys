@@ -58,7 +58,7 @@ Real weight_vel_grad_sub_nearwall = 0.1;
 bool is_source_term_linearisation = false;
 //** Empirical parameter for initial stability*
 Real turbulent_module_activate_time = 2.5;
-//** Intial values for K, Epsilon and Mu_t *
+//** Initial values for K, Epsilon and Mu_t *
 StdVec<Real> initial_turbu_values = {0.000180001, 3.326679e-5, 1.0e-9};
 
 Real y_p_constant = DH / 2.0 / num_fluid_cross_section; //** For the first try *

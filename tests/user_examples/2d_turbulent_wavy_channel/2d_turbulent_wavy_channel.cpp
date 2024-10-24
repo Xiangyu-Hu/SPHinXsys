@@ -27,7 +27,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    
+
     //WavyShape create_wavy_shape;
     ChannelShape create_channel_shape;
 
@@ -109,7 +109,7 @@ int main(int ac, char *av[])
     //	Note that there may be data dependence on the constructors of these methods.
     //----------------------------------------------------------------------
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
-    
+
     SharedPtr<TimeDependentAcceleration> gravity_ptr = makeShared<TimeDependentAcceleration>(Vecd(0.0, 0.0));
     SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(water_block, gravity_ptr);
     //SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(water_block);
@@ -118,24 +118,24 @@ int main(int ac, char *av[])
     InteractionWithUpdate<fluid_dynamics::DensitySummationComplex> update_density_by_summation(water_block_inner, water_block_contact);
 
     ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
-    Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann,SequencedPolicy> pressure_relaxation(water_block_inner, water_block_contact);
+    Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann, SequencedPolicy> pressure_relaxation(water_block_inner, water_block_contact);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallNoRiemann> density_relaxation(water_block_inner, water_block_contact);
 
     /** Turbulent.Note: When use wall function, K Epsilon calculation only consider inner */
-    InteractionWithUpdate<fluid_dynamics::K_TurtbulentModelInner> k_equation_relaxation(water_block_inner);
+    InteractionWithUpdate<fluid_dynamics::K_TurbulentModelInner> k_equation_relaxation(water_block_inner);
     InteractionDynamics<fluid_dynamics::GetVelocityGradientInner> get_velocity_gradient(water_block_inner);
-    InteractionWithUpdate<fluid_dynamics::E_TurtbulentModelInner> epsilon_equation_relaxation(water_block_inner);
+    InteractionWithUpdate<fluid_dynamics::E_TurbulentModelInner> epsilon_equation_relaxation(water_block_inner);
     InteractionDynamics<fluid_dynamics::TKEnergyForceComplex> turbulent_kinetic_energy_acceleration(water_block_inner, water_block_contact);
 
     /** Turbulent standard wall function needs normal vectors of wall. */
     NearShapeSurface near_surface(water_block, makeShared<WallBoundary>("Wall"));
     near_surface.level_set_shape_.writeLevelSet(io_environment);
     InteractionDynamics<fluid_dynamics::StandardWallFunctionCorrection, SequencedPolicy> standard_wall_function_correction(water_block_inner, water_block_contact, offset_dist_ref, id_exclude, near_surface);
-    
+
     /** Turbulent viscosity calculation, choose one from the origianl viscosity calculation. */
     InteractionDynamics<fluid_dynamics::TurbulentViscousAccelerationWithWall, SequencedPolicy> turbulent_viscous_acceleration(water_block_inner, water_block_contact);
     //InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_inner, water_block_contact);
-    
+
     /** Turbulent advection time step, choose one from the origianl advection time step calculation. */
     ReduceDynamics<fluid_dynamics::TurbulentAdvectionTimeStepSize> get_turbulent_fluid_advection_time_step_size(water_block, U_f);
     //ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_f);
@@ -157,8 +157,8 @@ int main(int ac, char *av[])
     BodyStatesRecordingToVtp write_real_body_states(io_environment, sph_system.real_bodies_);
     ObservedQuantityRecording<Vecd>
         write_fluid_velocity("Velocity", io_environment, fluid_observer_contact);
-    water_block.addBodyStateForRecording<Real>("Pressure");		   // output for debug
-    water_block.addBodyStateForRecording<Real>("Density");		   // output for debug
+    water_block.addBodyStateForRecording<Real>("Pressure"); // output for debug
+    water_block.addBodyStateForRecording<Real>("Density");  // output for debug
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
@@ -200,10 +200,10 @@ int main(int ac, char *av[])
         while (integration_time < output_interval)
         {
             initialize_a_fluid_step.exec();
-            
+
             Real Dt = get_turbulent_fluid_advection_time_step_size.exec();
             //Real Dt = get_fluid_advection_time_step_size.exec();
-            
+
             update_density_by_summation.exec();
 
             update_eddy_viscosity.exec();
@@ -217,7 +217,7 @@ int main(int ac, char *av[])
             Real relaxation_time = 0.0;
             while (relaxation_time < Dt)
             {
-                
+
                 Real dt = SMIN(get_fluid_time_step_size.exec(), Dt);
 
                 turbulent_kinetic_energy_acceleration.exec();
@@ -228,15 +228,14 @@ int main(int ac, char *av[])
                 //fix_y_velocity.exec();
                 impose_turbulent_inflow_condition.exec();
 
-
                 /** Fluid pressure relaxation, second half. */
                 density_relaxation.exec(dt);
-                
+
                 get_velocity_gradient.exec(dt);
                 k_equation_relaxation.exec(dt);
                 epsilon_equation_relaxation.exec(dt);
                 standard_wall_function_correction.exec();
-                
+
                 relaxation_time += dt;
                 integration_time += dt;
                 GlobalStaticVariables::physical_time_ += dt;
