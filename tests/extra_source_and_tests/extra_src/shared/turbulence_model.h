@@ -73,11 +73,11 @@ namespace SPH
            Real von_kar_, E_;
         };
         //=================================================================================================//
-
+        template <class RiemannSolverType>
         class KEpsilonStd1stHalf : public StdWallFunctionFVM
         {
             public:
-            explicit KEpsilonStd1stHalf(BaseInnerRelation &inner_relation, GhostCreationFromMesh& ghost_creator);
+           explicit KEpsilonStd1stHalf(BaseInnerRelation &inner_relation, GhostCreationFromMesh &ghost_creator, Real limiter_parameter = 15.0);
             virtual ~KEpsilonStd1stHalf() {};
             void interaction(size_t index_i, Real dt = 0.0);
             void update(size_t index_i, Real dt = 0.0);
@@ -85,21 +85,24 @@ namespace SPH
             protected:
             Real *dK_dt_, *wall_adjacent_cell_flag_, *strain_rate_, *corner_cell_flag_, *boundary_type_;
             Real *dudx_, *dudy_, *dvdx_, *dvdy_;
-            Vecd *K_grad_, *Eps_grad_; 
+            RiemannSolverType riemann_solver_;
         };
+        using KEpsilonStd1stHalfAcousticRiemannSolver = KEpsilonStd1stHalf<AcousticRiemannSolver>;
         //=================================================================================================//
+        template <class RiemannSolverType>
         class KEpsilonStd2ndHalf : public BaseTurbulence
         {
             public:
-            explicit KEpsilonStd2ndHalf(BaseInnerRelation &inner_relation, GhostCreationFromMesh& ghost_creator);
+            explicit KEpsilonStd2ndHalf(BaseInnerRelation &inner_relation, GhostCreationFromMesh &ghost_creator, Real limiter_parameter = 15.0);
             virtual ~KEpsilonStd2ndHalf() {};
             void interaction(size_t index_i, Real dt = 0.0);
             void update(size_t index_i, Real dt = 0.0);
 
             protected:
             Real *dEps_dt_, *wall_adjacent_cell_flag_;
-            Vecd *K_grad_, *Eps_grad_;
+            RiemannSolverType riemann_solver_;
         };
+        using KEpsilonStd2ndHalfAcousticRiemannSolver = KEpsilonStd2ndHalf<AcousticRiemannSolver>;
         //=================================================================================================//
         
     }// namespace fluid_dynamics

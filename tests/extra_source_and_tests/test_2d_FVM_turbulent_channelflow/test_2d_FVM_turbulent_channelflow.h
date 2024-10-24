@@ -8,7 +8,7 @@
 #ifndef FVM_TURBULENT_CHANNEL_FLOW_H
 #define FVM_TURBULENT_CHANNEL_FLOW_H             
 #include "common_weakly_compressible_FVM_classes.h"
-#include "turbulence_model.h"
+#include "turbulence_model.hpp"
 #include "rans_dynamics.hpp"
 using namespace SPH;
 using namespace std;
