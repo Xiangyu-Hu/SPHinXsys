@@ -192,7 +192,7 @@ void TransferVelocityGradient::update(size_t index_i, Real dt)
     }
 }
 //=================================================================================================//
-K_TurtbulentModelInner::K_TurtbulentModelInner(BaseInnerRelation &inner_relation, const StdVec<Real> &initial_values, int is_extr_visc_dissipa)
+K_TurtbulentModelInner::K_TurtbulentModelInner(BaseInnerRelation &inner_relation, const StdVec<Real> &initial_values, int is_extr_visc_dissipa, bool is_STL)
     : BaseTurtbulentModel<Base, DataDelegateInner>(inner_relation),
       dk_dt_(*particles_->registerSharedVariable<Real>("ChangeRateOfTKE")),
       dk_dt_without_dissipation_(*particles_->registerSharedVariable<Real>("ChangeRateOfTKEWithoutDissipation")),
@@ -204,6 +204,7 @@ K_TurtbulentModelInner::K_TurtbulentModelInner(BaseInnerRelation &inner_relation
       turbu_mu_(*particles_->getVariableDataByName<Real>("TurbulentViscosity")),
       turbu_strain_rate_(*particles_->getVariableDataByName<Matd>("TurbulentStrainRate")),
       is_extra_viscous_dissipation_(*particles_->registerSharedVariable<int>("TurbulentExtraViscousDissipation")),
+      is_STL_(is_STL),
       turbu_indicator_(*particles_->registerSharedVariable<int>("TurbulentIndicator")),
       k_diffusion_(*particles_->registerSharedVariable<Real>("K_Diffusion")),
       vel_x_(*particles_->registerSharedVariable<Real>("Velocity_X"))
@@ -306,11 +307,17 @@ void K_TurtbulentModelInner::interaction(size_t index_i, Real dt)
 //=================================================================================================//
 void K_TurtbulentModelInner::update(size_t index_i, Real dt)
 {
-    turbu_k_[index_i] += dk_dt_[index_i] * dt;
-    //** If use source term linearisation *
-    //Real denominator = 1.0 + turbu_epsilon_[index_i] * dt / turbu_k_[index_i];
-    //turbu_k_[index_i] +=  dk_dt_without_dissipation_[index_i] * dt;
-    //turbu_k_[index_i] /=  denominator ;
+    if (is_STL_)
+    {
+        //** If use source term linearisation *
+        Real denominator = 1.0 + turbu_epsilon_[index_i] * dt / turbu_k_[index_i];
+        turbu_k_[index_i] += dk_dt_without_dissipation_[index_i] * dt;
+        turbu_k_[index_i] /= denominator;
+    }
+    else
+    {
+        turbu_k_[index_i] += dk_dt_[index_i] * dt;
+    }
 }
 //=================================================================================================//
 // void K_TurtbulentModelInner::update_prior_turbulent_value()
@@ -320,7 +327,7 @@ void K_TurtbulentModelInner::update(size_t index_i, Real dt)
 // 	turbu_epsilon_prior_ = turbu_epsilon_;
 // }
 //=================================================================================================//
-E_TurtbulentModelInner::E_TurtbulentModelInner(BaseInnerRelation &inner_relation)
+E_TurtbulentModelInner::E_TurtbulentModelInner(BaseInnerRelation &inner_relation, bool is_STL)
     : BaseTurtbulentModel<Base, DataDelegateInner>(inner_relation),
       depsilon_dt_(*particles_->registerSharedVariable<Real>("ChangeRateOfTDR")),
       depsilon_dt_without_disspation_(*particles_->registerSharedVariable<Real>("ChangeRateOfTDRWithoutDissp")),
@@ -331,7 +338,8 @@ E_TurtbulentModelInner::E_TurtbulentModelInner(BaseInnerRelation &inner_relation
       turbu_k_(*particles_->getVariableDataByName<Real>("TurbulenceKineticEnergy")),
       turbu_epsilon_(*particles_->getVariableDataByName<Real>("TurbulentDissipation")),
       k_production_(*particles_->getVariableDataByName<Real>("K_Production")),
-      is_near_wall_P1_(*particles_->getVariableDataByName<int>("IsNearWallP1"))
+      is_near_wall_P1_(*particles_->getVariableDataByName<int>("IsNearWallP1")),
+      is_STL_(is_STL)
 {
     //particles_->registerSharedVariable(depsilon_dt_, "ChangeRateOfTDR");
     particles_->addVariableToSort<Real>("ChangeRateOfTDR");
@@ -397,11 +405,17 @@ void E_TurtbulentModelInner::update(size_t index_i, Real dt)
     //** The near wall epsilon value is updated in wall function part *
     if (is_near_wall_P1_[index_i] != 1)
     {
-        turbu_epsilon_[index_i] += depsilon_dt_[index_i] * dt;
-        //** If use source term linearisation *
-        //Real denominator = 1.0 + C_2_ * turbu_epsilon_[index_i] * dt / turbu_k_[index_i];
-        //turbu_epsilon_[index_i] += depsilon_dt_without_disspation_[index_i] * dt;
-        //turbu_epsilon_[index_i] /= denominator;
+        if (is_STL_)
+        {
+            //** If use source term linearisation *
+            Real denominator = 1.0 + C_2_ * turbu_epsilon_[index_i] * dt / turbu_k_[index_i];
+            turbu_epsilon_[index_i] += depsilon_dt_without_disspation_[index_i] * dt;
+            turbu_epsilon_[index_i] /= denominator;
+        }
+        else
+        {
+            turbu_epsilon_[index_i] += depsilon_dt_[index_i] * dt;
+        }
     }
 }
 //=================================================================================================//

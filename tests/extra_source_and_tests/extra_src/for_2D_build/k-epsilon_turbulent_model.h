@@ -182,7 +182,7 @@ class BaseTurtbulentModel<Base, DataDelegationType>
 class K_TurtbulentModelInner : public BaseTurtbulentModel<Base, DataDelegateInner>
 {
   public:
-    explicit K_TurtbulentModelInner(BaseInnerRelation &inner_relation, const StdVec<Real> &initial_values, int is_extr_visc_dissipa = 0);
+    explicit K_TurtbulentModelInner(BaseInnerRelation &inner_relation, const StdVec<Real> &initial_values, int is_extr_visc_dissipa, bool is_STL);
     virtual ~K_TurtbulentModelInner(){};
 
     inline void interaction(size_t index_i, Real dt = 0.0);
@@ -200,6 +200,7 @@ class K_TurtbulentModelInner : public BaseTurtbulentModel<Base, DataDelegateInne
     StdLargeVec<Real> &turbu_mu_;
     StdLargeVec<Matd> &turbu_strain_rate_;
     StdLargeVec<int> &is_extra_viscous_dissipation_;
+    bool is_STL_;
 
     //** for test */
     StdLargeVec<int> &turbu_indicator_;
@@ -213,7 +214,7 @@ class K_TurtbulentModelInner : public BaseTurtbulentModel<Base, DataDelegateInne
 class E_TurtbulentModelInner : public BaseTurtbulentModel<Base, DataDelegateInner>
 {
   public:
-    explicit E_TurtbulentModelInner(BaseInnerRelation &inner_relation);
+    explicit E_TurtbulentModelInner(BaseInnerRelation &inner_relation, bool is_STL);
     virtual ~E_TurtbulentModelInner(){};
 
     inline void interaction(size_t index_i, Real dt = 0.0);
@@ -228,6 +229,7 @@ class E_TurtbulentModelInner : public BaseTurtbulentModel<Base, DataDelegateInne
     StdLargeVec<Real> &turbu_epsilon_;
     StdLargeVec<Real> &k_production_;
     StdLargeVec<int> &is_near_wall_P1_;
+    bool is_STL_;
 };
 //=================================================================================================//
 /**
