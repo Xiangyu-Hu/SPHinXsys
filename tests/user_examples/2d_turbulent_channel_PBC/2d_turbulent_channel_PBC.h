@@ -60,7 +60,7 @@ Real Re = U_f * DH * rho0_f / mu_f;
 //----------------------------------------------------------------------
 // Observation.
 //----------------------------------------------------------------------
-int num_observer_points = std::round(DH / resolution_ref); //**Evrey particle is regarded as a cell monitor*
+int num_observer_points = std::round(DH / resolution_ref); //**Every particle is regarded as a cell monitor*
 StdVec<Real> monitoring_bound = {DL / 2.0 - 10.0 * resolution_ref, DL / 2.0 + 10.0 * resolution_ref};
 
 //----------------------------------------------------------------------

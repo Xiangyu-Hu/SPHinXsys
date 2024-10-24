@@ -62,7 +62,7 @@ Real Re = U_f * DH * rho0_f / mu_f;
 //----------------------------------------------------------------------
 
 //** Trough *
-int num_observer_points = std::round((DH + amplitude) / resolution_ref); //**Evrey particle is regarded as a cell monitor*
+int num_observer_points = std::round((DH + amplitude) / resolution_ref); //**Every particle is regarded as a cell monitor*
 Real pos_x_cross_line = 1.25;
 Real size_cell_x = 1.8 * resolution_ref;
 StdVec<Real> monitoring_bound = {pos_x_cross_line - size_cell_x / 2.0, pos_x_cross_line + size_cell_x / 2.0}; //**The 2nd periodic wave*

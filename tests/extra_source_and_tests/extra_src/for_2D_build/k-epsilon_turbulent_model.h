@@ -233,8 +233,8 @@ class E_TurbulentModelInner : public BaseTurbulentModel<Base, DataDelegateInner>
 };
 //=================================================================================================//
 /**
-	 * @class kOmegaSST_TurtbulentModelInner
-	 * @brief  kOmegaSST_TurtbulentModelInner
+	 * @class kOmegaSST_TurbulentModelInner
+	 * @brief  kOmegaSST_TurbulentModelInner
 	 */
 class kOmegaSST_kTransportEquationInner : public BaseTurbulentModel<Base, DataDelegateInner>
 {
@@ -250,8 +250,8 @@ class kOmegaSST_kTransportEquationInner : public BaseTurbulentModel<Base, DataDe
 };
 //=================================================================================================//
 /**
-	 * @class kOmegaSST_TurtbulentModelInner
-	 * @brief  kOmegaSST_TurtbulentModelInner
+	 * @class kOmegaSST_TurbulentModelInner
+	 * @brief  kOmegaSST_TurbulentModelInner
 	 */
 class kOmegaSST_omegaTransportEquationInner : public BaseTurbulentModel<Base, DataDelegateInner>
 {

@@ -961,10 +961,10 @@ void JudgeIsNearWall::update(size_t index_i, Real dt)
         //** Choose one kind of the distance to classify *
         Real distance = distance_to_dummy_interface_[index_i];
 
-        //** Classify the wall-nearest paritcles *
+        //** Classify the wall-nearest particles *
         if (distance < 1.0 * fluid_particle_spacing_)
             is_near_wall_P1_[index_i] = 1;
-        //** Check the distance. Useless because with contant_y_p this may not make big difference *
+        //** Check the distance. Useless because with constant_y_p this may not make big difference *
         //if (distance < 0.05 * fluid_particle_spacing_)
         //{
         //	std::cout << "There is a particle too close to wall" << std::endl;
@@ -1063,12 +1063,12 @@ void StandardWallFunctionCorrection::interaction(size_t index_i, Real dt)
         Real rho_i = rho_[index_i];
         Real nu_i = molecular_viscosity_ / rho_i;
 
-        //** Calcualte Y_star, note the current code is based on Y_star *
+        //** Calculate Y_star, note the current code is based on Y_star *
         wall_Y_star_[index_i] = y_p_constant_i * C_mu_25_ * turbu_k_i_05 / nu_i;
 
         //** Calculate friction velocity, including P2 region. *
         Real velo_fric_mag = 0.0;
-        Real velo_tan_mag = 0.0; //** tangitial velo magnitude for fluid particle i *
+        Real velo_tan_mag = 0.0; //** tangential velo magnitude for fluid particle i *
 
         velo_tan_mag = abs(e_i_nearest_tau.dot(vel_i));
         velo_tan_[index_i] = velo_tan_mag;
@@ -1107,7 +1107,7 @@ void StandardWallFunctionCorrection::interaction(size_t index_i, Real dt)
         if (vel_i.dot(velo_friction_[index_i]) < 0.0)
             velo_friction_[index_i] = -1.0 * velo_friction_[index_i];
 
-        //** Calcualte Y_plus  *
+        //** Calculate Y_plus  *
         wall_Y_plus_[index_i] = y_p_constant_i * velo_fric_mag / nu_i;
 
         // ** Correct the near wall values, only for P1 region *
@@ -1350,7 +1350,7 @@ void BaseGetTimeAverageData::output_time_history_data(Real cutoff_time)
         {
             //if (num_in_cell_[i] == 0 && GlobalStaticVariables::physical_time_ > cutoff_time)
             //{
-            //	std::cout << "There is a empaty monitoring cell, cell number=" << i << std::endl;
+            //	std::cout << "There is a empty monitoring cell, cell number=" << i << std::endl;
             //	std::cin.get();
             //}
             num_in_cell_[i] == 0 ? plt_engine_.writeAQuantity(out_file, 0.0) : plt_engine_.writeAQuantity(out_file, data_sto_[i][j] / num_in_cell_[i]);

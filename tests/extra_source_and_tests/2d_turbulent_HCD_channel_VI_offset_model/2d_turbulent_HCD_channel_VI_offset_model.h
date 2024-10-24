@@ -91,7 +91,7 @@ Real x_observe = 5.0;
 //Real x_observe_start = 0.90 * DL;
 //Real observe_spacing_x = 0.02 * DL;
 //int num_observer_points_x = 1;
-int num_observer_points = std::round(DH_C / resolution_ref); //**Evrey particle is regarded as a cell monitor*
+int num_observer_points = std::round(DH_C / resolution_ref); //**Every particle is regarded as a cell monitor*
 StdVec<Real> monitoring_bound = {x_observe - 1.0 * resolution_ref, x_observe + 1.0 * resolution_ref};
 //Real observe_spacing = DH_C / num_observer_points;
 //StdVec<Vecd> observation_locations;

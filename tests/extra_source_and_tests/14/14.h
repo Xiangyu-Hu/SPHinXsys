@@ -159,7 +159,7 @@ Real observe_angles[4] = {
     172.0 * (2.0 * Pi / 360.0)};
 Real observer_offset_distance = 0.0 * resolution_ref;
 
-int num_observer_points = std::round(DH_C / resolution_ref); //**Evrey particle is regarded as a cell monitor*
+int num_observer_points = std::round(DH_C / resolution_ref); //**Every particle is regarded as a cell monitor*
 Real observe_spacing = DH_C / num_observer_points;
 
 StdVec<Vecd> observation_locations;
