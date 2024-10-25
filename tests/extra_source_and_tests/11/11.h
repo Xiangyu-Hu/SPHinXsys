@@ -53,15 +53,6 @@ BoundingBox system_domain_bounds(Vec2d(-DL_sponge - 2.0 * BW, -BW), Vec2d(DL + 2
 //----------------------------------------------------------------------
 //	Material properties of the fluid.
 //----------------------------------------------------------------------
-//** Laminar *
-//Real U_inlet = 0.5;
-//Real U_max = 0.75;
-//Real U_f = U_inlet; //*Characteristic velo is regarded as average velo here
-//Real c_f = 10.0 * U_max;                                        /**< Speed of sound. */
-//Real rho0_f = 1.0;                                            /**< Density. */
-//Real mu_f = 0.01;
-
-//** Same parameter as SPH_4 *
 Real U_inlet = 1.0;
 Real U_f = U_inlet;         //*Characteristic velocity
 Real U_max = 1.5 * U_inlet; //** An estimated value, generally 1.5 U_inlet *

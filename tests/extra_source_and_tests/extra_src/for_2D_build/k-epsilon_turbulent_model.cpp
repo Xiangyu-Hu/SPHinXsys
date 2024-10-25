@@ -395,7 +395,7 @@ void E_TurbulentModelInner::update(size_t index_i, Real dt)
 TKEnergyForce<Inner<>>::TKEnergyForce(BaseInnerRelation &inner_relation)
     : TKEnergyForce<Base, DataDelegateInner>(inner_relation),
       test_k_grad_rslt_(*this->particles_->template getVariableDataByName<Vecd>("TkeGradResult")),
-      B_(*particles_->getVariableDataByName<Matd>("LinearGradientCorrectionMatrix")){}
+      B_(*particles_->getVariableDataByName<Matd>("LinearGradientCorrectionMatrix")) {}
 //=================================================================================================//
 void TKEnergyForce<Inner<>>::interaction(size_t index_i, Real dt)
 {
@@ -424,7 +424,7 @@ void TKEnergyForce<Inner<>>::interaction(size_t index_i, Real dt)
 TKEnergyForce<Contact<>>::TKEnergyForce(BaseContactRelation &contact_relation)
     : TKEnergyForce<Base, DataDelegateContact>(contact_relation),
       test_k_grad_rslt_(*this->particles_->template getVariableDataByName<Vecd>("TkeGradResult")),
-      B_(*particles_->getVariableDataByName<Matd>("LinearGradientCorrectionMatrix")){}
+      B_(*particles_->getVariableDataByName<Matd>("LinearGradientCorrectionMatrix")) {}
 //=================================================================================================//
 void TKEnergyForce<Contact<>>::interaction(size_t index_i, Real dt)
 {
@@ -456,7 +456,7 @@ TurbuViscousForce<Inner<>>::TurbuViscousForce(BaseInnerRelation &inner_relation)
       ForcePrior(particles_, "ViscousForce"),
       turbu_indicator_(*this->particles_->template getVariableDataByName<int>("TurbulentIndicator")),
       is_extra_viscous_dissipation_(*this->particles_->template getVariableDataByName<int>("TurbulentExtraViscousDissipation")),
-      B_(*particles_->getVariableDataByName<Matd>("LinearGradientCorrectionMatrix")){}
+      B_(*particles_->getVariableDataByName<Matd>("LinearGradientCorrectionMatrix")) {}
 //=================================================================================================//
 void TurbuViscousForce<Inner<>>::interaction(size_t index_i, Real dt)
 {
@@ -503,7 +503,7 @@ void TurbuViscousForce<Inner<>>::interaction(size_t index_i, Real dt)
 TurbuViscousForce<Contact<Wall>>::TurbuViscousForce(BaseContactRelation &wall_contact_relation)
     : BaseTurbuViscousForceWithWall(wall_contact_relation),
       wall_particle_spacing_(wall_contact_relation.getSPHBody().sph_adaptation_->ReferenceSpacing()),
-      B_(*particles_->getVariableDataByName<Matd>("LinearGradientCorrectionMatrix")){}
+      B_(*particles_->getVariableDataByName<Matd>("LinearGradientCorrectionMatrix")) {}
 //=================================================================================================//
 void TurbuViscousForce<Contact<Wall>>::interaction(size_t index_i, Real dt)
 {
@@ -610,12 +610,12 @@ Real TurbulentAdvectionTimeStepSize::outputResult(Real reduced_value)
     return advectionCFL_ * smoothing_length_min_ / (SMAX(speed_max, speed_ref_turbu_) + TinyReal);
 }
 //=================================================================================================//
-InflowTurbulentCondition::InflowTurbulentCondition(BodyPartByCell &body_part, Real CharacteristicLength, Real relaxation_rate, int type_turbu_inlet) 
-: BaseFlowBoundaryCondition(body_part), type_turbu_inlet_(type_turbu_inlet),
-                                                                                                                                                       relaxation_rate_(relaxation_rate),
-                                                                                                                                                       CharacteristicLength_(CharacteristicLength),
-                                                                                                                                                       turbu_k_(*particles_->getVariableDataByName<Real>("TurbulenceKineticEnergy")),
-                                                                                                                                                       turbu_epsilon_(*particles_->getVariableDataByName<Real>("TurbulentDissipation"))
+InflowTurbulentCondition::InflowTurbulentCondition(BodyPartByCell &body_part, Real CharacteristicLength, Real relaxation_rate, int type_turbu_inlet)
+    : BaseFlowBoundaryCondition(body_part), type_turbu_inlet_(type_turbu_inlet),
+      relaxation_rate_(relaxation_rate),
+      CharacteristicLength_(CharacteristicLength),
+      turbu_k_(*particles_->getVariableDataByName<Real>("TurbulenceKineticEnergy")),
+      turbu_epsilon_(*particles_->getVariableDataByName<Real>("TurbulentDissipation"))
 {
     TurbulentLength_ = turbulent_length_ratio_for_epsilon_inlet_ * CharacteristicLength_;
 }
@@ -689,7 +689,6 @@ Real InflowTurbulentCondition::getTurbulentInflowK(Vecd &position, Vecd &velocit
 //=================================================================================================//
 Real InflowTurbulentCondition::getTurbulentInflowE(Vecd &position, Real &turbu_k, Real &turbu_E)
 {
-    //Real temp_in_turbu_E = C_mu_ * pow(turbu_k, 1.5) / (0.1*getTurbulentLength());
     Real temp_in_turbu_E = C_mu_75_ * pow(turbu_k, 1.5) / TurbulentLength_;
     Real turbu_E_original = turbu_E;
     if (type_turbu_inlet_ == 1)
@@ -770,30 +769,23 @@ JudgeIsNearWall::
         contact_Vol_.push_back(contact_particles_[k]->getVariableDataByName<Real>("VolumetricMeasure"));
     }
 
-    //particles_->registerSharedVariable(distance_to_dummy_interface_up_average_, "DistanceToDummyInterfaceUpAver");
     particles_->addVariableToSort<Real>("DistanceToDummyInterfaceUpAver");
     particles_->addVariableToWrite<Real>("DistanceToDummyInterfaceUpAver");
 
-    //particles_->registerSharedVariable(distance_to_dummy_interface_, "DistanceToDummyInterface");
     particles_->addVariableToSort<Real>("DistanceToDummyInterface");
     particles_->addVariableToWrite<Real>("DistanceToDummyInterface");
 
-    //particles_->registerSharedVariable(index_nearest_, "NearestIndex");
     particles_->addVariableToSort<int>("NearestIndex");
     particles_->addVariableToWrite<int>("NearestIndex");
 
-    //particles_->registerSharedVariable(is_near_wall_P1_, "IsNearWallP1");
     particles_->addVariableToSort<int>("IsNearWallP1");
     particles_->addVariableToWrite<int>("IsNearWallP1");
 
-    //particles_->registerSharedVariable(is_near_wall_P2_, "IsNearWallP2");
     particles_->addVariableToSort<int>("IsNearWallP2");
     particles_->addVariableToWrite<int>("IsNearWallP2");
 
-    //particles_->registerSharedVariable(e_nearest_tau_, "WallNearestTangentialUnitVector");
     particles_->addVariableToSort<Vecd>("WallNearestTangentialUnitVector");
 
-    //particles_->registerSharedVariable(e_nearest_normal_, "WallNearestNormalUnitVector");
     particles_->addVariableToSort<Vecd>("WallNearestNormalUnitVector");
 
     particles_->addVariableToWrite<Vecd>("DistanceFromWall");
@@ -900,14 +892,6 @@ void JudgeIsNearWall::update(size_t index_i, Real dt)
         //** Classify the wall-nearest particles *
         if (distance < 1.0 * fluid_particle_spacing_)
             is_near_wall_P1_[index_i] = 1;
-        //** Check the distance. Useless because with constant_y_p this may not make big difference *
-        //if (distance < 0.05 * fluid_particle_spacing_)
-        //{
-        //	std::cout << "There is a particle too close to wall" << std::endl;
-        //	std::cout << "index_i=" << index_i << std::endl;
-        //	std::cout << "distance=" << distance << std::endl;
-        //	std::cin.get();
-        //}
     }
 }
 //=================================================================================================//
@@ -941,27 +925,22 @@ StandardWallFunctionCorrection::
         contact_Vol_.push_back(contact_particles_[k]->getVariableDataByName<Real>("VolumetricMeasure"));
     }
 
-    //particles_->registerSharedVariable(y_p_, "Y_P");
     particles_->addVariableToSort<Real>("Y_P");
     particles_->addVariableToWrite<Real>("Y_P");
 
     //** Fixed y_p_ as a constant distance *
     std::fill(y_p_.begin(), y_p_.end(), y_p_constant);
 
-    //particles_->registerSharedVariable(wall_Y_plus_, "WallYplus");
     particles_->addVariableToSort<Real>("WallYplus");
     particles_->addVariableToWrite<Real>("WallYplus");
 
     //** Initial value is important, especially when use log law *
-    //particles_->registerSharedVariable(wall_Y_star_, "WallYstar", TinyReal);
     particles_->addVariableToSort<Real>("WallYstar");
     particles_->addVariableToWrite<Real>("WallYstar");
 
-    //particles_->registerSharedVariable(velo_tan_, "TangentialVelocity");
     particles_->addVariableToSort<Real>("TangentialVelocity");
     particles_->addVariableToWrite<Real>("TangentialVelocity");
 
-    //particles_->registerSharedVariable(velo_friction_, "FrictionVelocity");
     particles_->addVariableToSort<Vecd>("FrictionVelocity");
     particles_->addVariableToWrite<Vecd>("FrictionVelocity");
 };
@@ -1074,8 +1053,6 @@ void StandardWallFunctionCorrection::interaction(size_t index_i, Real dt)
                     Vecd e_j_tau = Vecd::Zero();
 
                     size_t index_j = contact_neighborhood.j_[n];
-                    //Real r_ij = contact_neighborhood.r_ij_[n];
-                    //Vecd& e_ij = contact_neighborhood.e_ij_[n];
                     Vecd e_j_n = n_k[index_j];
 
                     //** Get tangential unit vector, temporarily only suitable for 2D*
@@ -1125,12 +1102,7 @@ void StandardWallFunctionCorrection::interaction(size_t index_i, Real dt)
             velocity_gradient_[index_i] = Q.transpose() * vel_grad_i_tn * Q;
 
             k_production_[index_i] = G_k_p_weighted_sum / total_weight;
-
-            //** Correct normal velocity at particle P *
-            //vel_[index_i] = vel_i - (vel_i.dot(e_i_nearest_n)) * e_i_nearest_n;
         }
-        //** Correct normal velocity at particle P *
-        //vel_[index_i] = vel_i - (vel_i.dot(e_i_nearest_n)) * e_i_nearest_n;
     }
 }
 //=================================================================================================//
@@ -1172,7 +1144,6 @@ UpdateTurbulentPlugFlowIndicator::
       turbu_plug_flow_indicator_(*particles_->registerSharedVariable<int>("TurbulentPlugFlowIndicator")),
       pos_(*particles_->getVariableDataByName<Vecd>("Position")), channel_width_(DH)
 {
-    //particles_->registerSharedVariable(turbu_plug_flow_indicator_, "TurbulentPlugFlowIndicator");
     particles_->addVariableToSort<int>("TurbulentPlugFlowIndicator");
     particles_->addVariableToWrite<int>("TurbulentPlugFlowIndicator");
 }
