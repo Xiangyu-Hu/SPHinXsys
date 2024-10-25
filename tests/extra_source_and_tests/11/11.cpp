@@ -169,8 +169,6 @@ int main(int ac, char *av[])
     //SimpleDynamics<fluid_dynamics::ConstrainVelocityAt_Y_Direction> constrain_Y_velocity(water_block, DL);
     //SimpleDynamics<fluid_dynamics::UpdateTurbulentPlugFlowIndicator> update_turbu_plug_flow_indicator(water_block, DH);
 
-    SimpleDynamics<fluid_dynamics::GetTimeAverageCrossSectionData> get_time_average_cross_section_data(water_block_inner, num_observer_points, monitoring_bound, offset_distance);
-
     /** Choose one, ordinary or turbulent. Computing viscous force, */
     InteractionWithUpdate<fluid_dynamics::TurbulentViscousForceWithWall> turbulent_viscous_force(water_block_inner, water_wall_contact);
     //InteractionWithUpdate<fluid_dynamics::ViscousForceWithWall> viscous_force(water_block_inner, water_wall_contact);
@@ -420,8 +418,6 @@ int main(int ac, char *av[])
 
             if (GlobalStaticVariables::physical_time_ > end_time * 0.6)
             {
-                get_time_average_cross_section_data.exec();
-                get_time_average_cross_section_data.output_time_history_data(end_time * 0.75);
                 write_recorded_water_velocity.writeToFile(number_of_iterations);
                 write_recorded_water_k.writeToFile(number_of_iterations);
                 write_recorded_water_mut.writeToFile(number_of_iterations);
@@ -444,9 +440,6 @@ int main(int ac, char *av[])
     tt = t4 - t1 - interval;
     std::cout << "Total wall time for computation: " << tt.seconds()
               << " seconds." << std::endl;
-
-    get_time_average_cross_section_data.get_time_average_data(end_time * 0.75);
-    std::cout << "The time-average data is output " << std::endl;
 
     if (sph_system.GenerateRegressionData())
     {
