@@ -50,7 +50,7 @@ BaseTurbulentModel<Base, DataDelegationType>::BaseTurbulentModel(BaseRelationTyp
       Vol_(*this->particles_->template getVariableDataByName<Real>("VolumetricMeasure")),
       vel_(*this->particles_->template getVariableDataByName<Vecd>("Velocity")),
       dimension_(2) {}
-//A temporarily treatment for dimension
+//** A temporarily treatment for dimension **
 //=================================================================================================//
 template <class DataDelegationType>
 template <class BaseRelationType>

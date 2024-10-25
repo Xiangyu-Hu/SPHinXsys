@@ -209,11 +209,9 @@ K_TurbulentModelInner::K_TurbulentModelInner(BaseInnerRelation &inner_relation, 
       k_diffusion_(*particles_->registerSharedVariable<Real>("K_Diffusion")),
       vel_x_(*particles_->registerSharedVariable<Real>("Velocity_X"))
 {
-    //particles_->registerSharedVariable(dk_dt_, "ChangeRateOfTKE");
     particles_->addVariableToSort<Real>("ChangeRateOfTKE");
     particles_->addVariableToSort<Real>("ChangeRateOfTKEWithoutDissipation");
 
-    //particles_->registerSharedVariable(k_production_, "K_Production");
     particles_->addVariableToSort<Real>("K_Production");
     particles_->addVariableToWrite<Real>("K_Production");
 
@@ -235,26 +233,21 @@ K_TurbulentModelInner::K_TurbulentModelInner(BaseInnerRelation &inner_relation, 
     std::fill(turbu_mu_.begin(), turbu_mu_.end(), initial_values[2]);
 
     //** for test */
-    //particles_->registerSharedVariable(k_diffusion_, "K_Diffusion");
     particles_->addVariableToSort<Real>("K_Diffusion");
     particles_->addVariableToWrite<Real>("K_Diffusion");
 
     particles_->addVariableToWrite<Real>("ChangeRateOfTKE");
 
-    //particles_->registerSharedVariable(vel_x_, "Velocity_X");
     particles_->addVariableToSort<Real>("Velocity_X");
 
-    //particles_->registerSharedVariable(turbu_indicator_, "TurbulentIndicator");
     particles_->addVariableToSort<int>("TurbulentIndicator");
     particles_->addVariableToWrite<int>("TurbulentIndicator");
 
-    //particles_->registerSharedVariable(is_extra_viscous_dissipation_, "TurbulentExtraViscousDissipation");
     std::fill(is_extra_viscous_dissipation_.begin(), is_extra_viscous_dissipation_.end(), is_extr_visc_dissipa);
 }
 //=================================================================================================//
 void K_TurbulentModelInner::interaction(size_t index_i, Real dt)
 {
-    //Vecd vel_i = vel_[index_i];
     Real rho_i = rho_[index_i];
     Real turbu_mu_i = turbu_mu_[index_i];
     Real turbu_k_i = turbu_k_[index_i];
@@ -292,10 +285,6 @@ void K_TurbulentModelInner::interaction(size_t index_i, Real dt)
     k_production = k_production_[index_i];
     k_dissipation = turbu_epsilon_[index_i];
 
-    //** Linearize the source term *
-    //k_production = k_production_prior_[index_i];
-    //k_dissipation = ( turbu_epsilon_prior_[index_i] / turbu_k_prior_[index_i] ) * turbu_k_[index_i];
-
     dk_dt_[index_i] = k_production - k_dissipation + k_lap;
     dk_dt_without_dissipation_[index_i] = k_production + k_lap;
 
@@ -320,13 +309,6 @@ void K_TurbulentModelInner::update(size_t index_i, Real dt)
     }
 }
 //=================================================================================================//
-// void K_TurbulentModelInner::update_prior_turbulent_value()
-// {
-// 	k_production_prior_ = k_production_;
-// 	turbu_k_prior_ = turbu_k_;
-// 	turbu_epsilon_prior_ = turbu_epsilon_;
-// }
-//=================================================================================================//
 E_TurbulentModelInner::E_TurbulentModelInner(BaseInnerRelation &inner_relation, bool is_STL)
     : BaseTurbulentModel<Base, DataDelegateInner>(inner_relation),
       depsilon_dt_(*particles_->registerSharedVariable<Real>("ChangeRateOfTDR")),
@@ -341,19 +323,15 @@ E_TurbulentModelInner::E_TurbulentModelInner(BaseInnerRelation &inner_relation, 
       is_near_wall_P1_(*particles_->getVariableDataByName<int>("IsNearWallP1")),
       is_STL_(is_STL)
 {
-    //particles_->registerSharedVariable(depsilon_dt_, "ChangeRateOfTDR");
     particles_->addVariableToSort<Real>("ChangeRateOfTDR");
     particles_->addVariableToWrite<Real>("ChangeRateOfTDR");
 
-    //particles_->registerSharedVariable(ep_production, "Ep_Production");
     particles_->addVariableToSort<Real>("Ep_Production");
     particles_->addVariableToWrite<Real>("Ep_Production");
 
-    //particles_->registerSharedVariable(ep_dissipation_, "Ep_Dissipation_");
     particles_->addVariableToSort<Real>("Ep_Dissipation_");
     particles_->addVariableToWrite<Real>("Ep_Dissipation_");
 
-    //particles_->registerSharedVariable(ep_diffusion_, "Ep_Diffusion_");
     particles_->addVariableToSort<Real>("Ep_Diffusion_");
     particles_->addVariableToWrite<Real>("Ep_Diffusion_");
 }
@@ -362,7 +340,6 @@ void E_TurbulentModelInner::
     interaction(size_t index_i, Real dt)
 {
     Real rho_i = rho_[index_i];
-    //Real turbu_mu_i = turbu_mu_[index_i];
     Real turbu_k_i = turbu_k_[index_i];
     Real turbu_epsilon_i = turbu_epsilon_[index_i];
 
@@ -386,10 +363,6 @@ void E_TurbulentModelInner::
 
     epsilon_production = C_l_ * turbu_epsilon_i * k_production_[index_i] / turbu_k_i;
     epsilon_dissipation = C_2_ * turbu_epsilon_i * turbu_epsilon_i / turbu_k_i;
-
-    //** Linearize the source term *
-    //epsilon_production = C_l_ * turbu_epsilon_prior_[index_i] * k_production_prior_[index_i] / turbu_k_prior_[index_i];
-    //epsilon_dissipation = (C_2_ * turbu_epsilon_prior_[index_i] / turbu_k_prior_[index_i]) * turbu_epsilon_i;
 
     depsilon_dt_[index_i] = epsilon_production - epsilon_dissipation + epsilon_lap;
     depsilon_dt_without_dissipation_[index_i] = epsilon_production + epsilon_lap;
@@ -422,12 +395,7 @@ void E_TurbulentModelInner::update(size_t index_i, Real dt)
 TKEnergyForce<Inner<>>::TKEnergyForce(BaseInnerRelation &inner_relation)
     : TKEnergyForce<Base, DataDelegateInner>(inner_relation),
       test_k_grad_rslt_(*this->particles_->template getVariableDataByName<Vecd>("TkeGradResult")),
-      B_(*particles_->getVariableDataByName<Matd>("LinearGradientCorrectionMatrix"))
-//tke_acc_inner_(*particles_->registerSharedVariable<Vecd>("TkeAccInner"))
-{
-    //this->particles_->registerSharedVariable(tke_acc_inner_, "TkeAccInner");
-    //this->particles_->addVariableToWrite<Vecd>("TkeAccInner");
-}
+      B_(*particles_->getVariableDataByName<Matd>("LinearGradientCorrectionMatrix")){}
 //=================================================================================================//
 void TKEnergyForce<Inner<>>::interaction(size_t index_i, Real dt)
 {
@@ -449,19 +417,14 @@ void TKEnergyForce<Inner<>>::interaction(size_t index_i, Real dt)
     force = -1.0 * (2.0 / 3.0) * k_gradient * mass_[index_i];
     force_[index_i] += force;
 
-    //for test
-    //tke_acc_inner_[index_i] = force / mass_[index_i];
+    //** for test *
     test_k_grad_rslt_[index_i] = k_gradient;
 }
 //=================================================================================================//
 TKEnergyForce<Contact<>>::TKEnergyForce(BaseContactRelation &contact_relation)
     : TKEnergyForce<Base, DataDelegateContact>(contact_relation),
       test_k_grad_rslt_(*this->particles_->template getVariableDataByName<Vecd>("TkeGradResult")),
-      B_(*particles_->getVariableDataByName<Matd>("LinearGradientCorrectionMatrix"))
-{
-    //this->particles_->registerSharedVariable(tke_acc_wall_, "TkeAccWall");
-    //this->particles_->addVariableToWrite<Vecd>("TkeAccWall");
-}
+      B_(*particles_->getVariableDataByName<Matd>("LinearGradientCorrectionMatrix")){}
 //=================================================================================================//
 void TKEnergyForce<Contact<>>::interaction(size_t index_i, Real dt)
 {
@@ -484,8 +447,7 @@ void TKEnergyForce<Contact<>>::interaction(size_t index_i, Real dt)
     force = -1.0 * (2.0 / 3.0) * k_gradient * mass_[index_i];
     force_[index_i] += force;
 
-    //for test
-    //tke_acc_wall_[index_i] = force / mass_[index_i];
+    //** for test *
     test_k_grad_rslt_[index_i] += k_gradient;
 }
 //=================================================================================================//
@@ -494,20 +456,13 @@ TurbuViscousForce<Inner<>>::TurbuViscousForce(BaseInnerRelation &inner_relation)
       ForcePrior(particles_, "ViscousForce"),
       turbu_indicator_(*this->particles_->template getVariableDataByName<int>("TurbulentIndicator")),
       is_extra_viscous_dissipation_(*this->particles_->template getVariableDataByName<int>("TurbulentExtraViscousDissipation")),
-      B_(*particles_->getVariableDataByName<Matd>("LinearGradientCorrectionMatrix"))
-{
-    //this->particles_->registerSharedVariable(visc_acc_inner_, "ViscousAccInner");
-    //this->particles_->addVariableToSort<Vecd>("ViscousAccInner");
-    //this->particles_->addVariableToWrite<Vecd>("ViscousAccInner");
-}
+      B_(*particles_->getVariableDataByName<Matd>("LinearGradientCorrectionMatrix")){}
 //=================================================================================================//
 void TurbuViscousForce<Inner<>>::interaction(size_t index_i, Real dt)
 {
     turbu_indicator_[index_i] = 0;
 
     Real mu_eff_i = turbu_mu_[index_i] + molecular_viscosity_;
-
-    //visc_acc_inner_[index_i] = Vecd::Zero();
 
     Vecd force = Vecd::Zero();
     Vecd vel_derivative = Vecd::Zero();
@@ -526,9 +481,6 @@ void TurbuViscousForce<Inner<>>::interaction(size_t index_i, Real dt)
 
         Real u_jump = (vel_[index_i] - vel_[index_j]).dot(e_ij);
 
-        //Real dissipation_judge = 0.0025 * rho_[index_i] * c0_ * smoothing_length_;
-        //Real dissipation = 0.1 * rho_[index_i] * c0_ * smoothing_length_;
-
         Real dissipation = rho_[index_i] * smoothing_length_ * SMIN(3.0 * SMAX(u_jump, Real(0)), c0_);
         Real dissipation_judge = dissipation;
 
@@ -542,29 +494,19 @@ void TurbuViscousForce<Inner<>>::interaction(size_t index_i, Real dt)
         shear_stress = (shear_stress - shear_stress_eij) + shear_stress_eij_corrected;
 
         Vecd force_j = 2.0 * mass_[index_i] * shear_stress * inner_neighborhood.dW_ij_[n] * this->Vol_[index_j];
-        //Vecd force_j = e_ij.dot((B_[index_i] + B_[index_j]) * e_ij) * mass_[index_i] * shear_stress * inner_neighborhood.dW_ij_[n]* this->Vol_[index_j];
 
         force += force_j;
     }
     viscous_force_[index_i] = force / rho_[index_i];
-    //for test
-    //visc_acc_inner_[index_i] = force / rho_[index_i]/ mass_[index_i];
 }
 //=================================================================================================//
 TurbuViscousForce<Contact<Wall>>::TurbuViscousForce(BaseContactRelation &wall_contact_relation)
     : BaseTurbuViscousForceWithWall(wall_contact_relation),
       wall_particle_spacing_(wall_contact_relation.getSPHBody().sph_adaptation_->ReferenceSpacing()),
-      B_(*particles_->getVariableDataByName<Matd>("LinearGradientCorrectionMatrix"))
-{
-    //this->particles_->registerSharedVariable(visc_acc_wall_, "ViscousAccWall");
-    //this->particles_->addVariableToSort<Vecd>("ViscousAccWall");
-    //this->particles_->addVariableToWrite<Vecd>("ViscousAccWall");
-}
+      B_(*particles_->getVariableDataByName<Matd>("LinearGradientCorrectionMatrix")){}
 //=================================================================================================//
 void TurbuViscousForce<Contact<Wall>>::interaction(size_t index_i, Real dt)
 {
-    //this->visc_acc_wall_[index_i] = Vecd::Zero();
-    //int is_near_wall_P2 = this->is_near_wall_P2_[index_i];
     //** Wall viscous force only affects P2 region fluid particles *
     if (this->is_near_wall_P2_[index_i] != 10)
         return;
@@ -584,13 +526,11 @@ void TurbuViscousForce<Contact<Wall>>::interaction(size_t index_i, Real dt)
     Matd Q = Matd::Zero();
     for (size_t k = 0; k < contact_configuration_.size(); ++k)
     {
-        //StdLargeVec<Vecd>& vel_ave_k = *(this->wall_vel_ave_[k]);
         Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
         StdLargeVec<Vecd> &n_k = *(this->wall_n_[k]);
         for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
         {
             size_t index_j = contact_neighborhood.j_[n];
-            //Real r_ij = contact_neighborhood.r_ij_[n];
             Vecd &e_ij = contact_neighborhood.e_ij_[n];
 
             e_j_n = n_k[index_j];
@@ -619,16 +559,11 @@ void TurbuViscousForce<Contact<Wall>>::interaction(size_t index_i, Real dt)
             //** Transform local wall shear stress to global   *
             WSS_j = Q.transpose() * WSS_j_tn * Q;
             Vecd force_j = 2.0 * mass_[index_i] * WSS_j * e_ij * contact_neighborhood.dW_ij_[n] * this->Vol_[index_j] / rho_i;
-            //Vecd force_j = mass_[index_i] * WSS_j * ( (B_[index_i] + B_[index_j])* e_ij ) * contact_neighborhood.dW_ij_[n]* this->Vol_[index_j] / rho_i;
-
-            //force_j = force_j - (force_j.dot(e_j_n)) * e_j_n;
 
             force += force_j;
         }
     }
     viscous_force_[index_i] += force;
-    //** For test *
-    //this->visc_acc_wall_[index_i] = force/ mass_[index_i];
 }
 //=================================================================================================//
 TurbulentEddyViscosity::
@@ -675,7 +610,8 @@ Real TurbulentAdvectionTimeStepSize::outputResult(Real reduced_value)
     return advectionCFL_ * smoothing_length_min_ / (SMAX(speed_max, speed_ref_turbu_) + TinyReal);
 }
 //=================================================================================================//
-InflowTurbulentCondition::InflowTurbulentCondition(BodyPartByCell &body_part, Real CharacteristicLength, Real relaxation_rate, int type_turbu_inlet) : BaseFlowBoundaryCondition(body_part), type_turbu_inlet_(type_turbu_inlet),
+InflowTurbulentCondition::InflowTurbulentCondition(BodyPartByCell &body_part, Real CharacteristicLength, Real relaxation_rate, int type_turbu_inlet) 
+: BaseFlowBoundaryCondition(body_part), type_turbu_inlet_(type_turbu_inlet),
                                                                                                                                                        relaxation_rate_(relaxation_rate),
                                                                                                                                                        CharacteristicLength_(CharacteristicLength),
                                                                                                                                                        turbu_k_(*particles_->getVariableDataByName<Real>("TurbulenceKineticEnergy")),

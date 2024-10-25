@@ -93,7 +93,7 @@ class GetVelocityGradient<DataDelegationType>
   protected:
     StdLargeVec<Real> &Vol_;
     StdLargeVec<Vecd> &vel_, &pos_;
-    StdLargeVec<int> &is_near_wall_P1_; //** This is used to specially treat near wall region  *
+    StdLargeVec<int> &is_near_wall_P1_;
     StdLargeVec<int> &is_near_wall_P2_;
 
     StdLargeVec<Matd> &velocity_gradient_;
@@ -118,7 +118,7 @@ class GetVelocityGradient<Inner<>> : public GetVelocityGradient<DataDelegateInne
 };
 using GetVelocityGradientInner = GetVelocityGradient<Inner<>>;
 
-//** Updated Wall part *
+//** Wall part *
 template <>
 class GetVelocityGradient<Contact<Wall>> : public InteractionWithWall<GetVelocityGradient>
 {
@@ -133,8 +133,6 @@ class GetVelocityGradient<Contact<Wall>> : public InteractionWithWall<GetVelocit
 
 //** Interface part *
 using GetVelocityGradientComplex = ComplexInteraction<GetVelocityGradient<Inner<>, Contact<Wall>>>;
-
-//using GetVelocityGradientComplex = BaseGetVelocityGradientComplex<Inner<>, Contact<>>;
 //=================================================================================================//
 class TransferVelocityGradient : public LocalDynamics,
                                  public DataDelegateSimple
@@ -187,13 +185,13 @@ class K_TurbulentModelInner : public BaseTurbulentModel<Base, DataDelegateInner>
 
     inline void interaction(size_t index_i, Real dt = 0.0);
     void update(size_t index_i, Real dt = 0.0);
-    //void update_prior_turbulent_value();
+
   protected:
     StdLargeVec<Real> &dk_dt_;
     StdLargeVec<Real> &dk_dt_without_dissipation_;
     StdLargeVec<Real> &k_production_;
 
-    StdLargeVec<int> &is_near_wall_P1_; //** This is used to specially treat near wall region  *
+    StdLargeVec<int> &is_near_wall_P1_;
     StdLargeVec<Matd> &velocity_gradient_;
     StdLargeVec<Real> &turbu_k_;
     StdLargeVec<Real> &turbu_epsilon_;
@@ -232,40 +230,6 @@ class E_TurbulentModelInner : public BaseTurbulentModel<Base, DataDelegateInner>
     bool is_STL_;
 };
 //=================================================================================================//
-/**
-	 * @class kOmegaSST_TurbulentModelInner
-	 * @brief  kOmegaSST_TurbulentModelInner
-	 */
-class kOmegaSST_kTransportEquationInner : public BaseTurbulentModel<Base, DataDelegateInner>
-{
-  public:
-    explicit kOmegaSST_kTransportEquationInner(BaseInnerRelation &inner_relation, const StdVec<Real> &initial_values);
-    virtual ~kOmegaSST_kTransportEquationInner(){};
-
-    inline void interaction(size_t index_i, Real dt = 0.0);
-    void update(size_t index_i, Real dt = 0.0);
-    void update_prior_turbulent_value();
-
-  protected:
-};
-//=================================================================================================//
-/**
-	 * @class kOmegaSST_TurbulentModelInner
-	 * @brief  kOmegaSST_TurbulentModelInner
-	 */
-class kOmegaSST_omegaTransportEquationInner : public BaseTurbulentModel<Base, DataDelegateInner>
-{
-  public:
-    explicit kOmegaSST_omegaTransportEquationInner(BaseInnerRelation &inner_relation);
-    virtual ~kOmegaSST_omegaTransportEquationInner(){};
-
-    inline void interaction(size_t index_i, Real dt = 0.0);
-    void update(size_t index_i, Real dt = 0.0);
-    void update_prior_turbulent_value();
-
-  protected:
-};
-//=================================================================================================//
 
 template <typename... InteractionTypes>
 class TKEnergyForce;
@@ -286,8 +250,6 @@ class TKEnergyForce<Base, DataDelegationType>
     StdLargeVec<Vecd> &pos_;
     StdLargeVec<Real> &turbu_k_;
     StdLargeVec<Vecd> &test_k_grad_rslt_;
-
-    //StdLargeVec<Vecd> &tke_acc_inner_, &tke_acc_wall_;
 };
 //** Inner part *
 template <>
@@ -308,7 +270,6 @@ class TKEnergyForce<Contact<>> : public TKEnergyForce<Base, DataDelegateContact>
 {
   public:
     explicit TKEnergyForce(BaseContactRelation &contact_relation);
-    //: TKEnergyForce<Base, DataDelegateContact>(contact_relation) {};
     virtual ~TKEnergyForce(){};
     void interaction(size_t index_i, Real dt = 0.0);
 
@@ -344,10 +305,6 @@ class TurbuViscousForce<DataDelegationType> : public ViscousForce<DataDelegation
     StdLargeVec<int> &is_near_wall_P2_;
     Real molecular_viscosity_;
     Real c0_;
-
-    //** For test *
-    //StdLargeVec<Matd> visc_direction_matrix_;
-    //StdLargeVec<Vecd> &visc_acc_inner_, &visc_acc_wall_;
 };
 
 //** Inner part *
@@ -487,7 +444,6 @@ class StandardWallFunctionCorrection : public LocalDynamics, public DataDelegate
     inline void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
-    //Real offset_dist_;
     StdLargeVec<Real> &y_p_;
     StdLargeVec<Real> &wall_Y_plus_, &wall_Y_star_;
     StdLargeVec<Real> &velo_tan_;
