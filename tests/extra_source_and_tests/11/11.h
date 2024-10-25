@@ -70,15 +70,9 @@ Real DH_C = DH - 2.0 * offset_distance;
 //----------------------------------------------------------------------
 //	The emitter block with offset model.
 //----------------------------------------------------------------------
-//Vec2d emitter_halfsize = Vec2d(0.5 * BW, 0.5 * DH_C + BW );
-//Vec2d emitter_translation = Vec2d(-DL_sponge, 0.0) + emitter_halfsize + Vecd(0.0, offset_distance - BW);
-//Vec2d inlet_buffer_halfsize = Vec2d(0.5 * DL_sponge, 0.5 * DH_C + BW);
-//Vec2d inlet_buffer_translation = Vec2d(-DL_sponge, 0.0) + inlet_buffer_halfsize + Vecd(0.0, offset_distance - BW);
 Vec2d left_buffer_halfsize = Vec2d(0.5 * BW, 0.5 * DH_C + BW);
 Vec2d left_buffer_translation = Vec2d(-DL_sponge, 0.0) + left_buffer_halfsize + Vecd(0.0, offset_distance - BW);
 
-//Vec2d disposer_halfsize = Vec2d(0.5 * BW, 0.75 * DH);
-//Vec2d disposer_translation = Vec2d(DL, DH + 0.25 * DH) - disposer_halfsize;
 Vec2d right_buffer_halfsize = Vec2d(0.5 * BW, 0.75 * DH);
 Vec2d right_buffer_translation = Vec2d(DL, DH + 0.25 * DH) - right_buffer_halfsize;
 //----------------------------------------------------------------------
@@ -87,12 +81,6 @@ Vec2d right_buffer_translation = Vec2d(DL, DH + 0.25 * DH) - right_buffer_halfsi
 Real x_observe_start = 0.99 * DL;
 int num_observer_points = std::round(DH_C / resolution_ref); //**Every particle is regarded as a cell monitor*
 Real observe_spacing = DH_C / num_observer_points;
-
-// By cell.
-Real x_observe = 0.90 * DL;
-Real observe_spacing_x = 0.02 * DL;
-int num_observer_points_x = 1;
-StdVec<Real> monitoring_bound = {x_observe_start - 2.0 * resolution_ref, x_observe_start + 2.0 * resolution_ref};
 
 // By kernel weight.
 StdVec<Vecd> observation_location;

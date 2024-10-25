@@ -113,20 +113,9 @@ void GetVelocityGradient<Inner<>>::interaction(size_t index_i, Real dt)
             const Vecd &e_ij = inner_neighborhood.e_ij_[n];
             if (is_near_wall_P2_[index_i] == 10 && is_near_wall_P1_[index_j] == 1)
             {
-                //Vecd vel_ps = vel_[index_j] + 0.5 * r_ij * velocity_gradient_[index_j] * e_ij ;
-                //Vecd vel_ps =  0.5 * vel_[index_j] + 0.5 * vel_[index_i] ;
-                //velocity_gradient_[index_i] += -2.0 * (vel_i - vel_ps) * nablaW_ijV_j.transpose();
-                //std::cout<<"Calculate velocity gradient according to interpolation!"<<std::endl;
-                //std::cin.get();
-                //Vecd vel_diff = velocity_gradient_[index_j] * r_ij * e_ij;
-                //Vecd vel_diff = velocity_gradient_[index_j] * e_ij;
-
-                //Real factor_B = B_[index_i].norm() / turbu_B_[index_i].norm();
                 Matd P1 = -(vel_i - vel_[index_j]) * nablaW_ijV_j.transpose();
                 Vecd vel_diff = velocity_gradient_[index_j] * r_ij * e_ij;
                 Matd P2 = -vel_diff * nablaW_ijV_j.transpose();
-
-                //velocity_gradient_[index_i] += - weight_sub_nearwall_ * vel_diff * nablaW_ijV_j.transpose();
                 velocity_gradient_[index_i] += (1 - weight_sub_nearwall_) * P1 + weight_sub_nearwall_ * P2;
             }
             else
@@ -162,14 +151,11 @@ void GetVelocityGradient<Contact<Wall>>::interaction(size_t index_i, Real dt)
         Vecd vel_i = vel_[index_i];
         for (size_t k = 0; k < DataDelegateContact::contact_configuration_.size(); ++k)
         {
-            //StdLargeVec<Vecd>& vel_ave_k = *(wall_vel_ave_[k]);
             Neighborhood &contact_neighborhood = (*DataDelegateContact::contact_configuration_[k])[index_i];
             for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
             {
                 size_t index_j = contact_neighborhood.j_[n];
                 Vecd nablaW_ijV_j = contact_neighborhood.dW_ij_[n] * this->Vol_[index_j] * contact_neighborhood.e_ij_[n];
-
-                //velocity_gradient_[index_i] += -2.0 * (vel_i - vel_ave_k[index_j]) * nablaW_ijV_j.transpose();
                 velocity_gradient_[index_i] += -1.0 * (vel_i)*nablaW_ijV_j.transpose();
             }
         }
