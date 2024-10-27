@@ -86,11 +86,10 @@ struct InflowVelocity
           aligned_box_(boundary_condition.getAlignedBox()),
           halfsize_(aligned_box_.HalfSize()) {}
 
-    Vecd operator()(Vecd &position, Vecd &velocity)
+    Vecd operator()(Vecd &position, Vecd &velocity, Real current_time)
     {
         Vecd target_velocity = velocity;
-        Real run_time = GlobalStaticVariables::physical_time_;
-        Real u_ave = run_time < t_ref_ ? 0.5 * u_ref_ * (1.0 - cos(Pi * run_time / t_ref_)) : u_ref_;
+        Real u_ave = current_time < t_ref_ ? 0.5 * u_ref_ * (1.0 - cos(Pi * current_time / t_ref_)) : u_ref_;
         if (aligned_box_.checkInBounds(position))
         {
             target_velocity[0] = 1.5 * u_ave * (1.0 - position[1] * position[1] / halfsize_[1] / halfsize_[1]);
@@ -209,9 +208,9 @@ void channel_flow_shell(const Real resolution_ref, const Real wall_thickness)
     /** Evaluation of density by summation approach. */
     InteractionWithUpdate<fluid_dynamics::DensitySummationComplex> update_density_by_summation(water_block_inner, water_block_contact);
     /** Time step size without considering sound wave speed. */
-    ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, 1.5 * U_f);
+    ReduceDynamics<fluid_dynamics::AdvectionViscousTimeStep> get_fluid_advection_time_step_size(water_block, 1.5 * U_f);
     /** Time step size with considering sound wave speed. */
-    ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
+    ReduceDynamics<fluid_dynamics::AcousticTimeStep> get_fluid_time_step_size(water_block);
     /** viscous acceleration and transport velocity correction can be combined because they are independent dynamics. */
     InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionComplex<AllParticles>> transport_correction(water_block_inner, water_block_contact);
     InteractionWithUpdate<fluid_dynamics::ViscousForceWithWall> viscous_acceleration(water_block_inner, water_block_contact);
@@ -224,6 +223,10 @@ void channel_flow_shell(const Real resolution_ref, const Real wall_thickness)
     PeriodicConditionUsingCellLinkedList periodic_condition(water_block, periodic_along_x);
     // Curvature calculation
     SimpleDynamics<thin_structure_dynamics::AverageShellCurvature> shell_curvature(shell_curvature_inner);
+    //----------------------------------------------------------------------
+    //	Define the configuration related particles dynamics.
+    //----------------------------------------------------------------------
+    ParticleSorting particle_sorting(water_block);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
@@ -249,6 +252,7 @@ void channel_flow_shell(const Real resolution_ref, const Real wall_thickness)
     //----------------------------------------------------------------------
     //	Setup computing and initial conditions.
     //----------------------------------------------------------------------
+    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     size_t number_of_iterations = 0;
     int screen_output_interval = 100;
     Real end_time = 10.0;
@@ -265,7 +269,7 @@ void channel_flow_shell(const Real resolution_ref, const Real wall_thickness)
     //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------
-    while (GlobalStaticVariables::physical_time_ < end_time)
+    while (physical_time < end_time)
     {
         Real integration_time = 0.0;
         /** Integrate time (loop) until the next output time. */
@@ -290,7 +294,7 @@ void channel_flow_shell(const Real resolution_ref, const Real wall_thickness)
 
                 relaxation_time += dt;
                 integration_time += dt;
-                GlobalStaticVariables::physical_time_ += dt;
+                physical_time += dt;
 
                 inner_ite_dt++;
             }
@@ -298,15 +302,18 @@ void channel_flow_shell(const Real resolution_ref, const Real wall_thickness)
             if (number_of_iterations % screen_output_interval == 0)
             {
                 std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
-                          << GlobalStaticVariables::physical_time_
+                          << physical_time
                           << "	Dt = " << Dt << "	Dt / dt = " << inner_ite_dt << "\n";
             }
             number_of_iterations++;
 
             /** Water block configuration and periodic condition. */
             periodic_condition.bounding_.exec();
-
-            water_block.updateCellLinkedListWithParticleSort(100);
+            if (number_of_iterations % 100 == 0 && number_of_iterations != 1)
+            {
+                particle_sorting.exec();
+            }
+            water_block.updateCellLinkedList();
             periodic_condition.update_cell_linked_list_.exec();
             water_block_complex.updateConfiguration();
         }
@@ -338,16 +345,18 @@ void channel_flow_shell(const Real resolution_ref, const Real wall_thickness)
     };
     /* Compare all simulation to the analytical solution. */
     // Axial direction.
-    StdLargeVec<Vecd> &pos_axial = fluid_axial_observer.getBaseParticles().ParticlePositions();
-    StdLargeVec<Vecd> &vel_axial = *fluid_axial_observer.getBaseParticles().getVariableDataByName<Vecd>("Velocity");
-    for (size_t i = 0; i < pos_axial.size(); i++)
+    BaseParticles &fluid_axial_particles = fluid_axial_observer.getBaseParticles();
+    Vecd *pos_axial = fluid_axial_particles.ParticlePositions();
+    Vecd *vel_axial = fluid_axial_particles.getVariableDataByName<Vecd>("Velocity");
+    for (size_t i = 0; i < fluid_axial_particles.TotalRealParticles(); i++)
     {
         EXPECT_NEAR(inflow_velocity(pos_axial[i])[1], vel_axial[i][1], U_f * 5e-2);
     }
     // Radial direction
-    StdLargeVec<Vecd> &pos_radial = fluid_radial_observer.getBaseParticles().ParticlePositions();
-    StdLargeVec<Vecd> &vel_radial = *fluid_radial_observer.getBaseParticles().getVariableDataByName<Vecd>("Velocity");
-    for (size_t i = 0; i < pos_radial.size(); i++)
+    BaseParticles &fluid_radial_particles = fluid_radial_observer.getBaseParticles();
+    Vecd *pos_radial = fluid_radial_particles.ParticlePositions();
+    Vecd *vel_radial = fluid_radial_particles.getVariableDataByName<Vecd>("Velocity");
+    for (size_t i = 0; i < fluid_radial_particles.TotalRealParticles(); i++)
     {
         EXPECT_NEAR(inflow_velocity(pos_radial[i])[1], vel_radial[i][1], U_f * 5e-2);
     }

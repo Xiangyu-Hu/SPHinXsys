@@ -36,7 +36,7 @@
 #define BASE_MATERIAL_H
 
 #include "base_data_package.h"
-#include "sph_data_containers.h"
+#include "sphinxsys_containers.h"
 
 namespace SPH
 {
@@ -56,15 +56,15 @@ class BaseMaterial
     virtual ~BaseMaterial(){};
     std::string MaterialType() { return material_type_name_; }
     Real ReferenceDensity() { return rho0_; };
-    virtual void registerLocalParameters(BaseParticles *base_particles) {};
-    virtual void registerLocalParametersFromReload(BaseParticles *base_particles) {};
+    virtual void registerLocalParameters(BaseParticles *base_particles){};
+    virtual void registerLocalParametersFromReload(BaseParticles *base_particles){};
     /**
      * This will be called after particles generation
      * and is important because particles are not defined yet when material is constructed.
      * For a composite material, i.e. there is a material pointer with another material,
      * one need assign the base particle to that material too.
      */
-    virtual void initializeLocalParameters(BaseParticles *base_particles) {};
+    virtual void initializeLocalParameters(BaseParticles *base_particles){};
     void setLocalParameters(bool is_reload, BaseParticles *base_particles);
     virtual BaseMaterial *ThisObjectPtr() { return this; };
 
@@ -93,6 +93,15 @@ class Fluid : public BaseMaterial
     virtual Real DensityFromPressure(Real p) = 0;
     virtual Real getSoundSpeed(Real p = 0.0, Real rho = 1.0) = 0;
     virtual Fluid *ThisObjectPtr() override { return this; };
+
+    class EosKernel
+    {
+      public:
+        EosKernel(Fluid &encloser);
+
+      protected:
+        Real c0_, rho0_;
+    };
 };
 
 /** @class  Solid
@@ -115,9 +124,14 @@ class Solid : public BaseMaterial
     Real ContactStiffness() { return contact_stiffness_; };
     virtual Solid *ThisObjectPtr() override { return this; };
     /** Get average velocity when interacting with fluid. */
-    virtual StdLargeVec<Vecd> *AverageVelocity(BaseParticles *base_particles);
+    virtual Vecd *AverageVelocity(BaseParticles *base_particles);
     /** Get average acceleration when interacting with fluid. */
-    virtual StdLargeVec<Vecd> *AverageAcceleration(BaseParticles *base_particles);
+    virtual Vecd *AverageAcceleration(BaseParticles *base_particles);
+
+    /** Get average velocity when interacting with fluid. */
+    virtual DiscreteVariable<Vecd> *AverageVelocityVariable(BaseParticles *base_particles);
+    /** Get average acceleration when interacting with fluid. */
+    virtual DiscreteVariable<Vecd> *AverageAccelerationVariable(BaseParticles *base_particles);
 
   protected:
     Real contact_stiffness_; /**< contact-force stiffness related to bulk modulus*/

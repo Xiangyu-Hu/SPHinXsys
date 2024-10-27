@@ -44,11 +44,13 @@ class SimBodyStatesIO
     IOEnvironment &io_environment_;
     SimTK::RungeKuttaMersonIntegrator &integ_;
     MobilizedBodyType &mobody_;
+    Real &physical_time_;
 
   public:
     SimBodyStatesIO(SPHSystem &sph_system, SimTK::RungeKuttaMersonIntegrator &integ,
                     MobilizedBodyType &mobody)
-        : io_environment_(sph_system.getIOEnvironment()), integ_(integ), mobody_(mobody){};
+        : io_environment_(sph_system.getIOEnvironment()), integ_(integ), mobody_(mobody),
+          physical_time_(*sph_system.getSystemVariableDataByName<Real>("PhysicalTime")){};
     virtual ~SimBodyStatesIO(){};
 };
 

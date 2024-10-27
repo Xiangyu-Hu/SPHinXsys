@@ -18,6 +18,9 @@ Real WeaklyCompressibleFluid::getSoundSpeed(Real p, Real rho)
     return c0_;
 }
 //=================================================================================================//
+WeaklyCompressibleFluid::EosKernel::EosKernel(WeaklyCompressibleFluid &encloser)
+    : Fluid::EosKernel(encloser), p0_(encloser.p0_) {}
+//=================================================================================================//
 Real SymmetricTaitFluid::getPressure(Real rho)
 {
     Real rho_ratio = rho / rho0_;

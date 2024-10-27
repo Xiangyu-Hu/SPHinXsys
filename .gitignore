@@ -1,6 +1,8 @@
 ##### VS Code
 # VS Code setting up
 .vscode
+*.json
+CMakePresets.json
 
 ##### Windows
 # Windows thumbnail cache files

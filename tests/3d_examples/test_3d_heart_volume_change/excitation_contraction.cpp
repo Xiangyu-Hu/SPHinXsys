@@ -22,7 +22,6 @@ int main(int ac, char *av[])
     //	SPHSystem section
     //----------------------------------------------------------------------
     SPHSystem sph_system(system_domain_bounds, dp_0);
-    GlobalStaticVariables::physical_time_ = 0.0;
     Real mechanical_time_ = 0.0;
     sph_system.setRunParticleRelaxation(false); // Tag for run particle relaxation for body-fitted distribution
     sph_system.setReloadParticles(false);       // Tag for computation with save particles distribution
@@ -155,7 +154,7 @@ int main(int ac, char *av[])
     //	Apply the Iron stimulus.
     SimpleDynamics<ApplyStimulusCurrentSI> apply_stimulus_s1(physiology_heart);
     SimpleDynamics<ApplyStimulusCurrentSII> apply_stimulus_s2(physiology_heart);
-    // Active mechanics.
+    //  Active mechanics.
     InteractionWithUpdate<LinearGradientCorrectionMatrixInner> correct_configuration_contraction(mechanics_body_inner);
     InteractionDynamics<CorrectInterpolationKernelWeights> correct_kernel_weights_for_interpolation(mechanics_body_contact);
     /** Interpolate the active contract stress from electrophysiology body. */
@@ -172,7 +171,7 @@ int main(int ac, char *av[])
     SimpleDynamics<NormalDirectionFromBodyShape>(mechanics_heart).exec();
     SimpleDynamics<solid_dynamics::UpdateElasticNormalDirection> body_update_normal(mechanics_heart);
     /** Time step size calculation. */
-    ReduceDynamics<solid_dynamics::AcousticTimeStepSize> get_mechanics_time_step(mechanics_heart);
+    ReduceDynamics<solid_dynamics::AcousticTimeStep> get_mechanics_time_step(mechanics_heart);
     /** Constrain region of the inserted body. */
     MuscleBaseShapeParameters muscle_base_parameters;
     BodyRegionByParticle muscle_base(mechanics_heart, makeShared<TriangleMeshShapeBrick>(muscle_base_parameters, "Holder"));
@@ -232,6 +231,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	 Physical parameters for main loop.
     //----------------------------------------------------------------------
+    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     int screen_output_interval = 10;
     int ite = 0;
     int reaction_step = 2;
@@ -246,7 +246,7 @@ int main(int ac, char *av[])
     std::cout << "Main Loop Starts Here : "
               << "\n";
     /** Main loop starts here. */
-    while (GlobalStaticVariables::physical_time_ < end_time)
+    while (physical_time < end_time)
     {
         Real integration_time = 0.0;
         while (integration_time < Ouput_T)
@@ -257,18 +257,18 @@ int main(int ac, char *av[])
                 if (ite % screen_output_interval == 0)
                 {
                     std::cout << std::fixed << std::setprecision(9) << "N=" << ite << "	Time = "
-                              << GlobalStaticVariables::physical_time_
+                              << physical_time
                               << "	dt = " << dt
                               << "	dt_s = " << dt_s << "\n";
                 }
                 /** Apply stimulus excitation. */
-                if (0 <= GlobalStaticVariables::physical_time_ && GlobalStaticVariables::physical_time_ <= 0.5)
+                if (0 <= physical_time && physical_time <= 0.5)
                 {
                     apply_stimulus_s1.exec(dt);
                 }
                 /** Single spiral wave. */
-                // if( 60 <= GlobalStaticVariables::physical_time_
-                // 	&&  GlobalStaticVariables::physical_time_ <= 65)
+                // if( 60 <= physical_time
+                // 	&&  physical_time <= 65)
                 // {
                 // 	apply_stimulus_s2.exec(dt);
                 // }
@@ -337,7 +337,7 @@ int main(int ac, char *av[])
 
                 relaxation_time += dt;
                 integration_time += dt;
-                GlobalStaticVariables::physical_time_ += dt;
+                physical_time += dt;
             }
             write_voltage.writeToFile(ite);
             write_displacement.writeToFile(ite);

@@ -55,7 +55,7 @@ class TransportVelocityCorrection<Base, DataDelegationType, KernelCorrectionType
     virtual ~TransportVelocityCorrection(){};
 
   protected:
-    StdLargeVec<Vecd> &zero_gradient_residue_;
+    Vecd *zero_gradient_residue_;
     KernelCorrectionType kernel_correction_;
     ParticleScope within_scope_;
 };
@@ -75,8 +75,8 @@ class TransportVelocityCorrection<Inner<ResolutionType, LimiterType>, CommonCont
 
   protected:
     const Real h_ref_, correction_scaling_;
-    StdLargeVec<Real> &Vol_;
-    StdLargeVec<Vecd> &pos_;
+    Real *Vol_;
+    Vecd *pos_;
     ResolutionType h_ratio_;
     LimiterType limiter_;
 };
@@ -94,7 +94,7 @@ class TransportVelocityCorrection<Contact<Boundary>, CommonControlTypes...>
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
-    StdVec<StdLargeVec<Real> *> wall_Vol_;
+    StdVec<Real *> wall_Vol_;
 };
 
 template <class KernelCorrectionType, typename... CommonControlTypes>
@@ -108,7 +108,7 @@ class TransportVelocityCorrection<Contact<>, KernelCorrectionType, CommonControl
 
   protected:
     StdVec<KernelCorrectionType> contact_kernel_corrections_;
-    StdVec<StdLargeVec<Real> *> contact_Vol_;
+    StdVec<Real *> contact_Vol_;
 };
 
 template <class ResolutionType, class LimiterType, typename... CommonControlTypes>

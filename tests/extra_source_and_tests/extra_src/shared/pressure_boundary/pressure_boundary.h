@@ -47,14 +47,15 @@ class PressureBoundaryCondition : public BaseFlowBoundaryCondition
           alignment_axis_(aligned_box_.AlignmentAxis()),
           transform_(aligned_box_.getTransform()),
           target_pressure_(*this),
-          kernel_sum_(*particles_->getVariableDataByName<Vecd>("KernelSummation")),
-          kernel_correction_(this->particles_){};
+          kernel_sum_(particles_->getVariableDataByName<Vecd>("KernelSummation")),
+          kernel_correction_(this->particles_),
+          physical_time_(sph_system_.getSystemVariableDataByName<Real>("PhysicalTime")){};
     virtual ~PressureBoundaryCondition(){};
     AlignedBoxShape &getAlignedBox() { return aligned_box_; };
 
     void update(size_t index_i, Real dt = 0.0)
     {
-        //vel_[index_i] += 2.0 * kernel_sum_[index_i] * target_pressure_(p_[index_i]) / rho_[index_i] * dt;
+        //vel_[index_i] += 2.0 * kernel_sum_[index_i] * target_pressure_(p_[index_i], *physical_time_) / rho_[index_i] * dt;
         vel_[index_i] += 2.0 * kernel_correction_(index_i) * kernel_sum_[index_i] * target_pressure_(p_[index_i]) / rho_[index_i] * dt;
 
         Vecd frame_velocity = Vecd::Zero();
@@ -67,7 +68,8 @@ class PressureBoundaryCondition : public BaseFlowBoundaryCondition
     const int alignment_axis_;
     Transform &transform_;
     TargetPressure target_pressure_;
-    StdLargeVec<Vecd> &kernel_sum_;
+    Vecd *kernel_sum_;
+    Real *physical_time_;
     KernelCorrectionType kernel_correction_;
 };
 

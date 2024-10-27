@@ -95,13 +95,13 @@ class ThermosolidBody : public MultiPolygonShape
 //----------------------------------------------------------------------
 //	Application dependent solid body initial condition
 //----------------------------------------------------------------------
-class ThermosolidBodyInitialCondition : public LocalDynamics, public DataDelegateSimple
+class ThermosolidBodyInitialCondition : public LocalDynamics
 {
   public:
     explicit ThermosolidBodyInitialCondition(SPHBody &sph_body)
-        : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
-          pos_(*particles_->getVariableDataByName<Vecd>("Position")),
-          phi_(*particles_->registerSharedVariable<Real>("Phi")){};
+        : LocalDynamics(sph_body),
+          pos_(particles_->getVariableDataByName<Vecd>("Position")),
+          phi_(particles_->registerStateVariable<Real>("Phi")){};
 
     void update(size_t index_i, Real dt)
     {
@@ -117,19 +117,19 @@ class ThermosolidBodyInitialCondition : public LocalDynamics, public DataDelegat
     };
 
   protected:
-    StdLargeVec<Vecd> &pos_;
-    StdLargeVec<Real> &phi_;
+    Vecd *pos_;
+    Real *phi_;
 };
 //----------------------------------------------------------------------
 //	Application dependent fluid body initial condition
 //----------------------------------------------------------------------
-class ThermofluidBodyInitialCondition : public LocalDynamics, public DataDelegateSimple
+class ThermofluidBodyInitialCondition : public LocalDynamics
 {
   public:
     explicit ThermofluidBodyInitialCondition(SPHBody &sph_body)
-        : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
-          pos_(*particles_->getVariableDataByName<Vecd>("Position")),
-          phi_(*particles_->registerSharedVariable<Real>("Phi")){};
+        : LocalDynamics(sph_body),
+          pos_(particles_->getVariableDataByName<Vecd>("Position")),
+          phi_(particles_->registerStateVariable<Real>("Phi")){};
 
     void update(size_t index_i, Real dt)
     {
@@ -140,8 +140,8 @@ class ThermofluidBodyInitialCondition : public LocalDynamics, public DataDelegat
     };
 
   protected:
-    StdLargeVec<Vecd> &pos_;
-    StdLargeVec<Real> &phi_;
+    Vecd *pos_;
+    Real *phi_;
 };
 //----------------------------------------------------------------------
 //	Set thermal relaxation between different bodies
@@ -163,11 +163,10 @@ struct InflowVelocity
           aligned_box_(boundary_condition.getAlignedBox()),
           halfsize_(aligned_box_.HalfSize()) {}
 
-    Vecd operator()(Vecd &position, Vecd &velocity)
+    Vecd operator()(Vecd &position, Vecd &velocity, Real current_time)
     {
         Vecd target_velocity = velocity;
-        Real run_time = GlobalStaticVariables::physical_time_;
-        Real u_ave = run_time < t_ref_ ? 0.5 * u_ref_ * (1.0 - cos(Pi * run_time / t_ref_)) : u_ref_;
+        Real u_ave = current_time < t_ref_ ? 0.5 * u_ref_ * (1.0 - cos(Pi * current_time / t_ref_)) : u_ref_;
         if (aligned_box_.checkInBounds(position))
         {
             target_velocity[0] = 1.5 * u_ave * (1.0 - position[1] * position[1] / halfsize_[1] / halfsize_[1]);
@@ -236,8 +235,8 @@ int main(int ac, char *av[])
     InteractionWithUpdate<fluid_dynamics::ViscousForceWithWall> viscous_force(fluid_body_inner, fluid_body_contact);
     InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionComplex<AllParticles>> transport_velocity_correction(fluid_body_inner, fluid_body_contact);
 
-    ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step(thermofluid_body, U_f);
-    ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step(thermofluid_body);
+    ReduceDynamics<fluid_dynamics::AdvectionViscousTimeStep> get_fluid_advection_time_step(thermofluid_body, U_f);
+    ReduceDynamics<fluid_dynamics::AcousticTimeStep> get_fluid_time_step(thermofluid_body);
     PeriodicAlongAxis periodic_along_x(thermofluid_body.getSPHBodyBounds(), xAxis);
     PeriodicConditionUsingCellLinkedList periodic_condition(thermofluid_body, periodic_along_x);
     BodyAlignedBoxByCell inflow_buffer(thermofluid_body, makeShared<AlignedBoxShape>(xAxis, Transform(Vec2d(buffer_translation)), buffer_halfsize));
@@ -252,6 +251,10 @@ int main(int ac, char *av[])
     SimpleDynamics<ThermofluidBodyInitialCondition> thermofluid_initial_condition(thermofluid_body);
 
     InteractionDynamics<fluid_dynamics::VorticityInner> compute_vorticity(fluid_body_inner);
+    //----------------------------------------------------------------------
+    //	Define the configuration related particles dynamics.
+    //----------------------------------------------------------------------
+    ParticleSorting particle_sorting(thermofluid_body);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
@@ -278,6 +281,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
+    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     Real end_time = 10;
     Real output_interval = end_time / 100.0; /**< time stamps for output,WriteToFile*/
     int number_of_iterations = 0;
@@ -294,7 +298,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------
-    while (GlobalStaticVariables::physical_time_ < end_time)
+    while (physical_time < end_time)
     {
         Real integration_time = 0.0;
         /** Integrate time (loop) until the next output time. */
@@ -316,7 +320,7 @@ int main(int ac, char *av[])
 
                 relaxation_time += dt;
                 integration_time += dt;
-                GlobalStaticVariables::physical_time_ += dt;
+                physical_time += dt;
                 parabolic_inflow.exec();
                 inner_ite_dt++;
             }
@@ -324,14 +328,18 @@ int main(int ac, char *av[])
             if (number_of_iterations % screen_output_interval == 0)
             {
                 std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
-                          << GlobalStaticVariables::physical_time_
+                          << physical_time
                           << "	Dt = " << Dt << "	Dt / dt = " << inner_ite_dt << "\n";
             }
             number_of_iterations++;
 
             /** Water block configuration and periodic condition. */
             periodic_condition.bounding_.exec();
-            thermofluid_body.updateCellLinkedListWithParticleSort(100);
+            if (number_of_iterations % 100 == 0 && number_of_iterations != 1)
+            {
+                particle_sorting.exec();
+            }
+            thermofluid_body.updateCellLinkedList();
             periodic_condition.update_cell_linked_list_.exec();
             fluid_body_complex.updateConfiguration();
         }

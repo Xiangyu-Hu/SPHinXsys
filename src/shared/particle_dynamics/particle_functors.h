@@ -33,7 +33,6 @@
 
 namespace SPH
 {
-
 /**
  * @class WithinScope
  * Base class introduce the concept of "within the scope".
@@ -64,12 +63,12 @@ class AllParticles : public WithinScope
 template <int INDICATOR>
 class IndicatedParticles : public WithinScope
 {
-    StdLargeVec<int> &indicator_;
+    int *indicator_;
 
   public:
     explicit IndicatedParticles(BaseParticles *base_particles)
         : WithinScope(),
-          indicator_(*base_particles->getVariableDataByName<int>("Indicator")){};
+          indicator_(base_particles->getVariableDataByName<int>("Indicator")){};
     bool operator()(size_t index_i)
     {
         return indicator_[index_i] == INDICATOR;
@@ -81,12 +80,12 @@ using BulkParticles = IndicatedParticles<0>;
 template <int INDICATOR>
 class NotIndicatedParticles : public WithinScope
 {
-    StdLargeVec<int> &indicator_;
+    int *indicator_;
 
   public:
     explicit NotIndicatedParticles(BaseParticles *base_particles)
         : WithinScope(),
-          indicator_(*base_particles->getVariableDataByName<int>("Indicator")){};
+          indicator_(base_particles->getVariableDataByName<int>("Indicator")){};
     bool operator()(size_t index_i)
     {
         return indicator_[index_i] != INDICATOR;
@@ -147,12 +146,12 @@ class PairGeomAverageFixed : public GeomAverage
 template <typename T>
 class PairAverageVariable : public ParticleAverage
 {
-    StdLargeVec<T> &v1_, &v2_;
+    T *v1_, *v2_;
 
   public:
-    PairAverageVariable(StdLargeVec<T> &v1, StdLargeVec<T> &v2)
+    PairAverageVariable(T *v1, T *v2)
         : ParticleAverage(), v1_(v1), v2_(v2){};
-    explicit PairAverageVariable(StdLargeVec<T> &v)
+    explicit PairAverageVariable(T *v)
         : PairAverageVariable(v, v){};
     T operator()(size_t index_i, size_t index_j)
     {
@@ -163,12 +162,12 @@ class PairAverageVariable : public ParticleAverage
 template <typename T>
 class PairGeomAverageVariable : public GeomAverage
 {
-    StdLargeVec<T> &v1_, &v2_;
+    T *v1_, *v2_;
 
   public:
-    PairGeomAverageVariable(StdLargeVec<T> &v1, StdLargeVec<T> &v2)
+    PairGeomAverageVariable(T *v1, T *v2)
         : GeomAverage(), v1_(v1), v2_(v2){};
-    explicit PairGeomAverageVariable(StdLargeVec<T> &v)
+    explicit PairGeomAverageVariable(T *v)
         : PairGeomAverageVariable(v, v){};
 
     T operator()(size_t index_i, size_t index_j)
@@ -202,7 +201,7 @@ class LinearGradientCorrection : public KernelCorrection
   public:
     LinearGradientCorrection(BaseParticles *particles)
         : KernelCorrection(),
-          B_(*particles->getVariableDataByName<Matd>("LinearGradientCorrectionMatrix")){};
+          B_(particles->getVariableDataByName<Matd>("LinearGradientCorrectionMatrix")){};
 
     Matd operator()(size_t index_i, size_t index_j)
     {
@@ -215,7 +214,35 @@ class LinearGradientCorrection : public KernelCorrection
     };
 
   protected:
-    StdLargeVec<Matd> &B_;
+    Matd *B_;
+};
+
+class LinearGradientCorrectionWithBulkScope : public KernelCorrection
+{
+  public:
+    LinearGradientCorrectionWithBulkScope(BaseParticles *particles)
+        : KernelCorrection(),
+          B_(*particles->getVariableDataByName<Matd>("LinearGradientCorrectionMatrix")),
+          within_scope_(particles){};
+
+    Matd operator()(size_t index_j, size_t index_i)
+    {
+        return within_scope_(index_j) ? B_[index_j] : B_[index_i];
+    };
+
+    Matd operator()(size_t index_i, size_t index_j)
+    {
+        return B_[index_i];
+    };
+
+    Matd operator()(size_t index_i)
+    {
+        return B_[index_i];
+    };
+
+  protected:
+    Matd *B_;
+    BulkParticles within_scope_;
 };
 
 class LinearGradientCorrectionWithBulkScope : public KernelCorrection
@@ -237,7 +264,7 @@ class LinearGradientCorrectionWithBulkScope : public KernelCorrection
     };
 
   protected:
-    StdLargeVec<Matd> &B_;
+    Matd *B_;
     BulkParticles within_scope_;
 };
 
@@ -257,7 +284,7 @@ class AdaptiveResolution
 {
   public:
     AdaptiveResolution(BaseParticles *particles)
-        : h_ratio_(*particles->getVariableDataByName<Real>("SmoothingLengthRatio")){};
+        : h_ratio_(particles->getVariableDataByName<Real>("SmoothingLengthRatio")){};
 
     Real operator()(size_t index_i)
     {
@@ -265,7 +292,7 @@ class AdaptiveResolution
     };
 
   protected:
-    StdLargeVec<Real> &h_ratio_;
+    Real *h_ratio_;
 };
 //----------------------------------------------------------------------
 // Particle reduce functors

@@ -48,7 +48,7 @@ class DensitySummationPressure<Base, DataDelegationType>
     virtual ~DensitySummationPressure(){};
 
   protected:
-    StdLargeVec<Real> &rho_, &mass_, &rho_sum_, &Vol_;
+    Real *rho_, *mass_, *rho_sum_;
     Real rho0_, inv_sigma0_, W0_;
 };
 
@@ -70,7 +70,7 @@ class DensitySummationPressure<Inner<>> : public DensitySummationPressure<Inner<
   public:
     explicit DensitySummationPressure(BaseInnerRelation &inner_relation)
         : DensitySummationPressure<Inner<Base>>(inner_relation),
-          buffer_particle_indicator_(*particles_->getVariableDataByName<int>("BufferParticleIndicator")){};
+          buffer_particle_indicator_(particles_->getVariableDataByName<int>("BufferParticleIndicator")){};
     virtual ~DensitySummationPressure(){};
     void interaction(size_t index_i, Real dt = 0.0);
     void update(size_t index_i, Real dt = 0.0)
@@ -78,12 +78,12 @@ class DensitySummationPressure<Inner<>> : public DensitySummationPressure<Inner<
         if (buffer_particle_indicator_[index_i] == 0)
             assignDensity(index_i);
         //** Temporary treatment *
-        if(GlobalStaticVariables::physical_time_>5.0)
+        if (GlobalStaticVariables::physical_time_ > 5.0)
             this->Vol_[index_i] = this->mass_[index_i] / this->rho_[index_i];
     };
 
   protected:
-    StdLargeVec<int> &buffer_particle_indicator_;
+    int *buffer_particle_indicator_;
 };
 
 template <>
@@ -95,7 +95,7 @@ class DensitySummationPressure<Contact<Base>> : public DensitySummationPressure<
 
   protected:
     StdVec<Real> contact_inv_rho0_;
-    StdVec<StdLargeVec<Real> *> contact_mass_;
+    StdVec<Real *> contact_mass_;
     Real ContactSummation(size_t index_i);
 };
 

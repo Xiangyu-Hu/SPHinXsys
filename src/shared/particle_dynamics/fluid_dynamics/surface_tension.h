@@ -46,10 +46,10 @@ class SurfaceTensionStress : public LocalDynamics, public DataDelegateContact
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
-    StdLargeVec<Vecd> &color_gradient_;
-    StdLargeVec<Matd> &surface_tension_stress_;
+    Vecd *color_gradient_;
+    Matd *surface_tension_stress_;
     StdVec<Real> contact_surface_tension_, contact_fraction_;
-    StdVec<StdLargeVec<Real> *> contact_Vol_;
+    StdVec<Real *> contact_Vol_;
 };
 
 template <typename... T>
@@ -57,7 +57,7 @@ class SurfaceStressForce;
 
 template <class DataDelegationType>
 class SurfaceStressForce<DataDelegationType>
-    : public LocalDynamics, public DataDelegationType
+    : public ForcePrior, public DataDelegationType
 {
   public:
     template <class BaseRelationType>
@@ -65,14 +65,13 @@ class SurfaceStressForce<DataDelegationType>
     virtual ~SurfaceStressForce(){};
 
   protected:
-    StdLargeVec<Real> &rho_, &mass_, &Vol_;
-    StdLargeVec<Vecd> &color_gradient_, &surface_tension_force_;
-    StdLargeVec<Matd> &surface_tension_stress_;
+    Real *rho_, *mass_, *Vol_;
+    Vecd *color_gradient_, *surface_tension_force_;
+    Matd *surface_tension_stress_;
 };
 
 template <>
-class SurfaceStressForce<Inner<>>
-    : public SurfaceStressForce<DataDelegateInner>, public ForcePrior
+class SurfaceStressForce<Inner<>> : public SurfaceStressForce<DataDelegateInner>
 {
   public:
     SurfaceStressForce(BaseInnerRelation &inner_relation);
@@ -89,9 +88,9 @@ class SurfaceStressForce<Contact<>> : public SurfaceStressForce<DataDelegateCont
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
-    StdVec<StdLargeVec<Real> *> contact_Vol_;
-    StdVec<StdLargeVec<Vecd> *> contact_color_gradient_;
-    StdVec<StdLargeVec<Matd> *> contact_surface_tension_stress_;
+    StdVec<Real *> contact_Vol_;
+    StdVec<Vecd *> contact_color_gradient_;
+    StdVec<Matd *> contact_surface_tension_stress_;
     StdVec<Real> contact_surface_tension_, contact_fraction_;
 };
 

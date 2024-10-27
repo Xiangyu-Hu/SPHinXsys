@@ -25,14 +25,24 @@ Matd ElasticSolid::DeviatoricKirchhoff(const Matd &deviatoric_be)
     return G0_ * deviatoric_be;
 }
 //=================================================================================================//
-StdLargeVec<Vecd> *ElasticSolid::AverageVelocity(BaseParticles *base_particles)
+Vecd *ElasticSolid::AverageVelocity(BaseParticles *base_particles)
 {
-    return base_particles->registerSharedVariable<Vecd>("AverageVelocity");
+    return base_particles->registerStateVariable<Vecd>("AverageVelocity");
 }
 //=================================================================================================//
-StdLargeVec<Vecd> *ElasticSolid::AverageAcceleration(BaseParticles *base_particles)
+Vecd *ElasticSolid::AverageAcceleration(BaseParticles *base_particles)
 {
-    return base_particles->registerSharedVariable<Vecd>("AverageAcceleration");
+    return base_particles->registerStateVariable<Vecd>("AverageAcceleration");
+}
+//=================================================================================================//
+DiscreteVariable<Vecd> *ElasticSolid::AverageVelocityVariable(BaseParticles *base_particles)
+{
+    return base_particles->registerStateVariableOnly<Vecd>("AverageVelocity");
+}
+//=================================================================================================//
+DiscreteVariable<Vecd> *ElasticSolid::AverageAccelerationVariable(BaseParticles *base_particles)
+{
+    return base_particles->registerStateVariableOnly<Vecd>("AverageAcceleration");
 }
 //=================================================================================================//
 LinearElasticSolid::
@@ -233,44 +243,44 @@ Real Muscle::VolumetricKirchhoff(Real J)
 Matd LocallyOrthotropicMuscle::StressPK2(Matd &F, size_t i)
 {
     Matd right_cauchy = F.transpose() * F;
-    Real I_ff_1 = (right_cauchy * (*local_f0_)[i]).transpose() * (*local_f0_)[i] - 1.0;
-    Real I_ss_1 = (right_cauchy * (*local_s0_)[i]).transpose() * (*local_s0_)[i] - 1.0;
-    Real I_fs = (right_cauchy * (*local_f0_)[i]).transpose() * (*local_s0_)[i];
+    Real I_ff_1 = (right_cauchy * local_f0_[i]).transpose() * local_f0_[i] - 1.0;
+    Real I_ss_1 = (right_cauchy * local_s0_[i]).transpose() * local_s0_[i] - 1.0;
+    Real I_fs = (right_cauchy * local_f0_[i]).transpose() * local_s0_[i];
     Real I_1_1 = right_cauchy.trace() - Real(Dimensions);
     Real J = F.determinant();
     return a0_[0] * exp(b0_[0] * I_1_1) * Matd::Identity() +
            (lambda0_ * (J - 1.0) - a0_[0]) * J * right_cauchy.inverse() +
-           2.0 * a0_[1] * I_ff_1 * exp(b0_[1] * I_ff_1 * I_ff_1) * (*local_f0f0_)[i] +
-           2.0 * a0_[2] * I_ss_1 * exp(b0_[2] * I_ss_1 * I_ss_1) * (*local_s0s0_)[i] +
-           a0_[3] * I_fs * exp(b0_[3] * I_fs * I_fs) * (*local_f0s0_)[i];
+           2.0 * a0_[1] * I_ff_1 * exp(b0_[1] * I_ff_1 * I_ff_1) * local_f0f0_[i] +
+           2.0 * a0_[2] * I_ss_1 * exp(b0_[2] * I_ss_1 * I_ss_1) * local_s0s0_[i] +
+           a0_[3] * I_fs * exp(b0_[3] * I_fs * I_fs) * local_f0s0_[i];
 }
 //=================================================================================================//
 void LocallyOrthotropicMuscle::registerLocalParameters(BaseParticles *base_particles)
 {
     Muscle::registerLocalParameters(base_particles);
-    local_f0_ = base_particles->registerSharedVariable<Vecd>("Fiber");
-    local_s0_ = base_particles->registerSharedVariable<Vecd>("Sheet");
+    local_f0_ = base_particles->registerStateVariable<Vecd>("Fiber");
+    local_s0_ = base_particles->registerStateVariable<Vecd>("Sheet");
 }
 void LocallyOrthotropicMuscle::registerLocalParametersFromReload(BaseParticles *base_particles)
 {
     Muscle::registerLocalParametersFromReload(base_particles);
-    local_f0_ = base_particles->registerSharedVariableFromReload<Vecd>("Fiber");
-    local_s0_ = base_particles->registerSharedVariableFromReload<Vecd>("Sheet");
+    local_f0_ = base_particles->registerStateVariableFromReload<Vecd>("Fiber");
+    local_s0_ = base_particles->registerStateVariableFromReload<Vecd>("Sheet");
 }
 //=================================================================================================//
 void LocallyOrthotropicMuscle::initializeLocalParameters(BaseParticles *base_particles)
 {
     Muscle::initializeLocalParameters(base_particles);
-    local_f0f0_ = base_particles->registerSharedVariable<Matd>(
+    local_f0f0_ = base_particles->registerStateVariable<Matd>(
         "FiberFiberTensor", [&](size_t i) -> Matd
-        { return (*local_f0_)[i] * (*local_f0_)[i].transpose(); });
-    local_s0s0_ = base_particles->registerSharedVariable<Matd>(
+        { return local_f0_[i] * local_f0_[i].transpose(); });
+    local_s0s0_ = base_particles->registerStateVariable<Matd>(
         "SheetSheetTensor", [&](size_t i) -> Matd
-        { return (*local_s0_)[i] * (*local_s0_)[i].transpose(); });
-    local_f0s0_ = base_particles->registerSharedVariable<Matd>(
+        { return local_s0_[i] * local_s0_[i].transpose(); });
+    local_f0s0_ = base_particles->registerStateVariable<Matd>(
         "FiberSheetTensor", [&](size_t i) -> Matd
-        { return (*local_f0_)[i] * (*local_s0_)[i].transpose() +
-                 (*local_s0_)[i] * (*local_f0_)[i].transpose(); });
+        { return local_f0_[i] * local_s0_[i].transpose() +
+                 local_s0_[i] * local_f0_[i].transpose(); });
 }
 //=================================================================================================//
 } // namespace SPH

@@ -30,3 +30,4 @@
 
 #include "base_continuum_dynamics.h"
 #include "continuum_integration.hpp"
+#include "continuum_dynamics_variable.h"

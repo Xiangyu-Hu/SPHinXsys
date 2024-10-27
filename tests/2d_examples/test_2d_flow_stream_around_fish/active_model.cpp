@@ -15,13 +15,13 @@ ActiveModelSolid::ActiveModelSolid(Real rho0, Real youngs_modulus, Real poisson_
 void ActiveModelSolid::initializeLocalParameters(BaseParticles *base_particles)
 {
     SaintVenantKirchhoffSolid::initializeLocalParameters(base_particles);
-    active_strain_ = base_particles->registerSharedVariable<Matd>("ActiveStrain");
+    active_strain_ = base_particles->registerStateVariable<Matd>("ActiveStrain");
 }
 //=================================================================================================//
 Matd ActiveModelSolid::StressPK1(Matd &F, size_t index_i)
 {
     // Calculate the active deformation gradient
-    Matd F0 = (2.0 * (*active_strain_)[index_i] + Matd::Identity()).llt().matrixL();
+    Matd F0 = (2.0 * active_strain_[index_i] + Matd::Identity()).llt().matrixL();
     Matd F0_inv = F0.inverse();
 
     // Calculate the elastic deformation
@@ -29,7 +29,7 @@ Matd ActiveModelSolid::StressPK1(Matd &F, size_t index_i)
     Matd F0_star = F0.determinant() * F0_inv.transpose();
 
     // Calculate the elastic strain
-    Matd E_e = 0.5 * (F.transpose() * F - Matd::Identity()) - (*active_strain_)[index_i];
+    Matd E_e = 0.5 * (F.transpose() * F - Matd::Identity()) - active_strain_[index_i];
     return F_e * (lambda0_ * E_e.trace() * Matd::Identity() + 2.0 * G0_ * E_e) * F0_star;
 }
 //=================================================================================================//

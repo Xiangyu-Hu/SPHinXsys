@@ -127,19 +127,19 @@ void block_sliding(
     Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half(cube_inner);
     DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d, FixedDampingRate>>>
         velocity_damping(0.5, cube_inner, "Velocity", get_physical_viscosity_general(rho0_s, Youngs_modulus, resolution_cube));
-    ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(cube_body);
+    ReduceDynamics<solid_dynamics::AcousticTimeStep> computing_time_step_size(cube_body);
 
     // Contact relation
     SurfaceContactRelation contact_cube_to_slope(cube_body, {&slope_body}, {true});
     // Contact density
-    InteractionDynamics<solid_dynamics::ContactFactorSummation> contact_density(contact_cube_to_slope);
+    InteractionDynamics<solid_dynamics::ContactFactorSummation> contact_factor(contact_cube_to_slope);
     // Contact Force
     InteractionWithUpdate<solid_dynamics::ContactForceFromWall> contact_force(contact_cube_to_slope);
 
     // gravity
     const Real g = 9.81;
     Gravity gravity(rotation * (-g * Vec3d::UnitY()));
-    SimpleDynamics<GravityForce> constant_gravity(cube_body, gravity);
+    SimpleDynamics<GravityForce<Gravity>> constant_gravity(cube_body, gravity);
 
     // analytical solution
     Real sin_theta = sin(slope_angle);
@@ -165,15 +165,6 @@ void block_sliding(
     ObservedQuantityRecording<Vecd>
         write_cube_displacement("Position", cube_observer_contact);
 
-    auto check_disp = [&]()
-    {
-        const Vec3d analytical_disp = get_analytical_displacement(GlobalStaticVariables::physical_time_);
-        const Vec3d pos_observer = (*write_cube_displacement.getObservedQuantity())[0];
-        const Vec3d rotated_disp = rotation_inverse * (pos_observer - cube_translation);
-        for (int n = 0; n < 3; n++)
-            ASSERT_NEAR(abs(rotated_disp[n]), abs(analytical_disp[n]), max_error);
-    };
-
     // initialize
     system.initializeSystemCellLinkedLists();
     system.initializeSystemConfigurations();
@@ -181,16 +172,26 @@ void block_sliding(
     constant_gravity.exec();
 
     // simulation
-    GlobalStaticVariables::physical_time_ = 0.0;
+    Real &physical_time = *system.getSystemVariableDataByName<Real>("PhysicalTime");
     int ite = 0;
     int ite_output = 0;
     Real output_period = end_time / 20.0;
     Real dt = 0.0;
+
+    auto check_disp = [&]()
+    {
+        const Vec3d analytical_disp = get_analytical_displacement(physical_time);
+        const Vec3d pos_observer = write_cube_displacement.getObservedQuantity()[0];
+        const Vec3d rotated_disp = rotation_inverse * (pos_observer - cube_translation);
+        for (int n = 0; n < 3; n++)
+            ASSERT_NEAR(abs(rotated_disp[n]), abs(analytical_disp[n]), max_error);
+    };
+
     TickCount t1 = TickCount::now();
     const Real dt_ref = computing_time_step_size.exec();
     auto run_simulation = [&]()
     {
-        while (GlobalStaticVariables::physical_time_ < end_time)
+        while (physical_time < end_time)
         {
             Real integral_time = 0.0;
             while (integral_time < output_period)
@@ -198,11 +199,11 @@ void block_sliding(
                 if (ite % 1000 == 0)
                 {
                     std::cout << "N=" << ite << " Time: "
-                              << GlobalStaticVariables::physical_time_ << "	dt: "
+                              << physical_time << "	dt: "
                               << dt << "\n";
                 }
 
-                contact_density.exec();
+                contact_factor.exec();
                 contact_force.exec();
 
                 dt = computing_time_step_size.exec();
@@ -218,7 +219,7 @@ void block_sliding(
 
                 ++ite;
                 integral_time += dt;
-                GlobalStaticVariables::physical_time_ += dt;
+                physical_time += dt;
             }
 
             ite_output++;

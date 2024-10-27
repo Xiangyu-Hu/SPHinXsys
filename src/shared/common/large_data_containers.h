@@ -36,6 +36,7 @@
 #include "tbb/concurrent_vector.h"
 #include "tbb/parallel_for.h"
 #include "tbb/parallel_reduce.h"
+#include "tbb/parallel_scan.h"
 #include "tbb/scalable_allocator.h"
 #include "tbb/tick_count.h"
 

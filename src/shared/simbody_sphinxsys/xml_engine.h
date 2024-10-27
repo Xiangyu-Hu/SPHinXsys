@@ -32,7 +32,7 @@
 #include "SimTKcommon/internal/Xml.h"
 #include "base_data_package.h"
 #include "simbody_middle.h"
-#include "sph_data_containers.h"
+#include "sphinxsys_containers.h"
 #include "type_wrapper.h"
 
 #include <filesystem>
