@@ -341,7 +341,7 @@ class ParticleSplittingIcosahedron : public BaseParticleSplitting
 {
   private:
     Real get_epsilon() override { return 0.65; }
-    Real get_alpha() override { return 0.9; }
+    Real get_alpha() override { return 0.7; }
     int get_splitting_number() override { return 13; }
     const double lambda_ratio = 0.33;
     const double lambda_max = 1 / (1 + 12 * lambda_ratio);
