@@ -24,7 +24,7 @@ struct InflowVelocity
     Vecd operator()(Vecd &position, Vecd &velocity, Real current_time)
     {
         Real u_max = current_time < t_ref_ ? 0.5 * u_ref_ * (1.0 - cos(Pi * current_time / t_ref_)) : u_ref_;
-        Real vel = 1.5 * u_max * SMAX(0.0, 1.0 - position[1] * position[1] / halfsize_[1] / halfsize_[1]);
+        Real vel = u_max * SMAX(0.0, 1.0 - position[1] * position[1] / halfsize_[1] / halfsize_[1]);
         return vel * Vecd::UnitX();
     }
 };
@@ -564,17 +564,22 @@ class DensityRenormalization : public LocalDynamics,
                 Vol_sum += W_ijV_j;
             }
         }
-        Real rho_re = mass_sum / Vol_sum;
-        // if (isNearFreeSurface(index_i))
-        // {
-        //     if (rho_re < rho_[index_i])
-        //         rho_re = rho_re + SMAX(Real(0), (rho_[index_i] - rho_re)) * rho0_ / rho_[index_i];
-        // }
-        rho_re_[index_i] = rho_re;
+        rho_re_[index_i] = mass_sum / Vol_sum;
     }
 
     void update(size_t index_i, Real)
     {
+        // auto near_surface_rho = [&](Real rho_sum, Real rho0, Real rho)
+        // {
+        //     if (rho_sum < rho)
+        //         return rho_sum + SMAX(Real(0), (rho - rho_sum)) * rho0 / rho;
+        //     return rho_sum;
+        // };
+
+        // rho_[index_i] =
+        //     isNearFreeSurface(index_i)
+        //         ? near_surface_rho(rho_re_[index_i], rho0_, rho_[index_i])
+        //         : rho_re_[index_i];
         rho_[index_i] = rho_re_[index_i];
         Vol_[index_i] = mass_[index_i] / rho_[index_i];
     }
@@ -646,7 +651,6 @@ void poiseulle_flow_mr()
     const int refinement_level = std::floor(std::log2(dp_ref / dp_min));
     const Real wall_thickness = 4 * dp_ref;
     const Real emitter_length = 4 * dp_ref;
-    const Real buffer_length = 10 * dp_ref;
 
     // material properties
     const Real rho0 = 1;
@@ -782,7 +786,7 @@ void poiseulle_flow_mr()
     Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     size_t number_of_iterations = 0;
     int screen_output_interval = 100;
-    Real end_time = 2.0;    /**< End time. */
+    Real end_time = 100.0;  /**< End time. */
     Real Output_Time = 1.0; /**< Time stamps for output of body states. */
     Real dt = 0.0;          /**< Default acoustic time step sizes. */
 
