@@ -222,35 +222,7 @@ class LinearGradientCorrectionWithBulkScope : public KernelCorrection
   public:
     LinearGradientCorrectionWithBulkScope(BaseParticles *particles)
         : KernelCorrection(),
-          B_(*particles->getVariableDataByName<Matd>("LinearGradientCorrectionMatrix")),
-          within_scope_(particles){};
-
-    Matd operator()(size_t index_j, size_t index_i)
-    {
-        return within_scope_(index_j) ? B_[index_j] : B_[index_i];
-    };
-
-    Matd operator()(size_t index_i, size_t index_j)
-    {
-        return B_[index_i];
-    };
-
-    Matd operator()(size_t index_i)
-    {
-        return B_[index_i];
-    };
-
-  protected:
-    Matd *B_;
-    BulkParticles within_scope_;
-};
-
-class LinearGradientCorrectionWithBulkScope : public KernelCorrection
-{
-  public:
-    LinearGradientCorrectionWithBulkScope(BaseParticles *particles)
-        : KernelCorrection(),
-          B_(*particles->getVariableDataByName<Matd>("LinearGradientCorrectionMatrix")),
+          B_(particles->getVariableDataByName<Matd>("LinearGradientCorrectionMatrix")),
           within_scope_(particles){};
 
     Matd operator()(size_t index_j, size_t index_i)

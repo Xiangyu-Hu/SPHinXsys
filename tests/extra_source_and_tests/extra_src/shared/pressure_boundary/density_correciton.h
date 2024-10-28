@@ -77,9 +77,6 @@ class DensitySummationPressure<Inner<>> : public DensitySummationPressure<Inner<
     {
         if (buffer_particle_indicator_[index_i] == 0)
             assignDensity(index_i);
-        //** Temporary treatment *
-        if (GlobalStaticVariables::physical_time_ > 5.0)
-            this->Vol_[index_i] = this->mass_[index_i] / this->rho_[index_i];
     };
 
   protected:

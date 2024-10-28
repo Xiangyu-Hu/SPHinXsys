@@ -175,8 +175,8 @@ int main(int ac, char *av[])
     //InteractionWithUpdate<fluid_dynamics::DensitySummationFreeStreamComplex> update_density_by_summation(water_block_inner, water_wall_contact);
 
     /** Initialize particle acceleration. */
-    TimeDependentAcceleration time_dependent_acceleration(Vec2d::Zero());
-    SimpleDynamics<GravityForce> apply_gravity_force(water_block, time_dependent_acceleration);
+    StartupAcceleration time_dependent_acceleration(Vec2d::Zero(), 2.0);
+    SimpleDynamics<GravityForce<Gravity>> apply_gravity_force(water_block, time_dependent_acceleration);
 
     //----------------------------------------------------------------------
     // Left/Inlet buffer
@@ -210,10 +210,10 @@ int main(int ac, char *av[])
 
     /** Choose one, ordinary or turbulent. Time step size without considering sound wave speed. */
     ReduceDynamics<fluid_dynamics::TurbulentAdvectionTimeStepSize> get_turbulent_fluid_advection_time_step_size(water_block, U_f);
-    //ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_f);
+    //ReduceDynamics<fluid_dynamics::AdvectionViscousTimeStep> get_fluid_advection_time_step_size(water_block, U_f);
 
     /** Time step size with considering sound wave speed. */
-    ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
+    ReduceDynamics<fluid_dynamics::AcousticTimeStep> get_fluid_time_step_size(water_block);
 
     /** Turbulent eddy viscosity calculation needs values of Wall Y start. */
     SimpleDynamics<fluid_dynamics::TurbulentEddyViscosity> update_eddy_viscosity(water_block);
@@ -270,7 +270,7 @@ int main(int ac, char *av[])
     //	Main loop starts here.
     //----------------------------------------------------------------------------------------------------
     int num_output_file = 0;
-    while (GlobalStaticVariables::physical_time_ < end_time)
+    while (physical_time_ < end_time)
     {
         Real integration_time = 0.0;
         /** Integrate time (loop) until the next output time. */
@@ -332,10 +332,10 @@ int main(int ac, char *av[])
 
                 relaxation_time += dt;
                 integration_time += dt;
-                GlobalStaticVariables::physical_time_ += dt;
+                physical_time_ += dt;
                 inner_itr++;
                 //std::cout << "num_output_file=" << num_output_file << std::endl;
-                //if (GlobalStaticVariables::physical_time_ >9.3)
+                //if (physical_time_ >9.3)
                 //{
                 //body_states_recording.writeToFile();
                 //}
@@ -343,7 +343,7 @@ int main(int ac, char *av[])
             if (number_of_iterations % screen_output_interval == 0)
             {
                 std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
-                          << GlobalStaticVariables::physical_time_
+                          << physical_time_
                           << "	Dt = " << Dt << "	dt = " << dt << "\n";
                 if (number_of_iterations % observation_sample_interval == 0 && number_of_iterations != sph_system.RestartStep())
                 {
@@ -360,7 +360,11 @@ int main(int ac, char *av[])
             right_disposer_outflow_deletion.exec();
 
             /** Update cell linked list and configuration. */
-            water_block.updateCellLinkedListWithParticleSort(100);
+            if (number_of_iterations % 100 == 0 && number_of_iterations != 1)
+            {
+                particle_sorting.exec();
+            }
+            water_block.updateCellLinkedList();
             water_block_complex.updateConfiguration();
             fluid_observer_contact.updateConfiguration();
 
@@ -370,14 +374,14 @@ int main(int ac, char *av[])
             left_emitter_inflow_injection.tag_buffer_particles.exec();
             right_emitter_inflow_injection.tag_buffer_particles.exec();
 
-            if (GlobalStaticVariables::physical_time_ > end_time * 0.6)
+            if (physical_time_ > end_time * 0.6)
             {
                 write_recorded_water_velocity.writeToFile(number_of_iterations);
                 write_recorded_water_k.writeToFile(number_of_iterations);
                 write_recorded_water_mut.writeToFile(number_of_iterations);
                 write_recorded_water_epsilon.writeToFile(number_of_iterations);
             }
-            //if (GlobalStaticVariables::physical_time_ > end_time * 0.5)
+            //if (physical_time_ > end_time * 0.5)
             //body_states_recording.writeToFile();
         }
         //TickCount t2 = TickCount::now();
