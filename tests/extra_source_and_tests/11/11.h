@@ -71,11 +71,15 @@ Real DH_C = DH - 2.0 * offset_distance;
 //----------------------------------------------------------------------
 //	The emitter block with offset model.
 //----------------------------------------------------------------------
-Vec2d left_buffer_halfsize = Vec2d(0.5 * BW, 0.5 * DH_C + BW);
-Vec2d left_buffer_translation = Vec2d(-DL_sponge, 0.0) + left_buffer_halfsize + Vecd(0.0, offset_distance - BW);
+// Vec2d left_buffer_halfsize = Vec2d(0.5 * BW, 0.5 * DH_C + BW);
+// Vec2d left_buffer_translation = Vec2d(-DL_sponge, 0.0) + left_buffer_halfsize + Vecd(0.0, offset_distance - BW);
+Vec2d left_buffer_halfsize = Vec2d(2.5 * resolution_ref, 0.5 * DH);
+Vec2d left_buffer_translation = left_buffer_halfsize + Vec2d(-DL_sponge, 0.0);
 
-Vec2d right_buffer_halfsize = Vec2d(0.5 * BW, 0.75 * DH);
-Vec2d right_buffer_translation = Vec2d(DL, DH + 0.25 * DH) - right_buffer_halfsize;
+// Vec2d right_buffer_halfsize = Vec2d(0.5 * BW, 0.75 * DH);
+// Vec2d right_buffer_translation = Vec2d(DL, DH + 0.25 * DH) - right_buffer_halfsize;
+Vec2d right_buffer_halfsize = Vec2d(2.5 * resolution_ref, 0.5 * DH);
+Vec2d right_buffer_translation = Vec2d(DL - 2.5 * resolution_ref, 0.5 * DH);
 //----------------------------------------------------------------------
 // Observation with offset model.
 //----------------------------------------------------------------------
@@ -230,7 +234,7 @@ struct RightOutflowPressure
     template <class BoundaryConditionType>
     RightOutflowPressure(BoundaryConditionType &boundary_condition) {}
 
-    Real operator()(Real &p_)
+    Real operator()(Real p, Real current_time)
     {
         /*constant pressure*/
         Real pressure = Outlet_pressure;
@@ -242,8 +246,8 @@ struct LeftInflowPressure
     template <class BoundaryConditionType>
     LeftInflowPressure(BoundaryConditionType &boundary_condition) {}
 
-    Real operator()(Real &p_)
+    Real operator()(Real p, Real current_time)
     {
-        return p_;
+        return p;
     }
 };

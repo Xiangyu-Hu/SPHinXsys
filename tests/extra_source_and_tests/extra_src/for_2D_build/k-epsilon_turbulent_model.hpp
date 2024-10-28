@@ -39,9 +39,6 @@ template <class DataDelegationType>
 template <class BaseRelationType>
 BaseTurbulentModel<Base, DataDelegationType>::BaseTurbulentModel(BaseRelationType &base_relation)
     : LocalDynamics(base_relation.getSPHBody()), DataDelegationType(base_relation),
-      turbu_k_(this->particles_->template registerStateVariable<Real>("TurbulenceKineticEnergy")),
-      turbu_epsilon_(this->particles_->template registerStateVariable<Real>("TurbulentDissipation")),
-      turbu_mu_(this->particles_->template registerStateVariable<Real>("TurbulentViscosity")),
       turbu_strain_rate_(this->particles_->template registerStateVariable<Matd>("TurbulentStrainRate")),
       mu_(DynamicCast<Fluid>(this, this->particles_->getBaseMaterial()).ReferenceViscosity()),
       smoothing_length_(this->sph_body_.sph_adaptation_->ReferenceSmoothingLength()),

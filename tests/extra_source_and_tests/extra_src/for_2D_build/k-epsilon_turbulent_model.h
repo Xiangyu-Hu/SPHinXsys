@@ -161,9 +161,6 @@ class BaseTurbulentModel<Base, DataDelegationType>
     virtual ~BaseTurbulentModel(){};
 
   protected:
-    Real *turbu_k_;
-    Real *turbu_epsilon_;
-    Real *turbu_mu_;
     Matd *turbu_strain_rate_; //** temporary naming to distinguish the regular strain rate *
 
     Real mu_, smoothing_length_, particle_spacing_min_;

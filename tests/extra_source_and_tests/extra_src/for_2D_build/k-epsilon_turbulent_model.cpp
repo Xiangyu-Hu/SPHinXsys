@@ -185,11 +185,11 @@ K_TurbulentModelInner::K_TurbulentModelInner(BaseInnerRelation &inner_relation, 
       k_production_(particles_->registerStateVariable<Real>("K_Production")),
       is_near_wall_P1_(particles_->getVariableDataByName<int>("IsNearWallP1")),
       velocity_gradient_(particles_->getVariableDataByName<Matd>("TurbulentVelocityGradient")),
-      turbu_k_(particles_->getVariableDataByName<Real>("TurbulenceKineticEnergy")),
-      turbu_epsilon_(particles_->getVariableDataByName<Real>("TurbulentDissipation")),
-      turbu_mu_(particles_->getVariableDataByName<Real>("TurbulentViscosity")),
+      turbu_k_(particles_->registerStateVariable<Real>("TurbulenceKineticEnergy", Real(initial_values[0]))),
+      turbu_epsilon_(particles_->registerStateVariable<Real>("TurbulentDissipation", Real(initial_values[1]))),
+      turbu_mu_(particles_->registerStateVariable<Real>("TurbulentViscosity", Real(initial_values[2]))),
       turbu_strain_rate_(particles_->getVariableDataByName<Matd>("TurbulentStrainRate")),
-      is_extra_viscous_dissipation_(particles_->registerStateVariable<int>("TurbulentExtraViscousDissipation")),
+      is_extra_viscous_dissipation_(particles_->registerStateVariable<int>("TurbulentExtraViscousDissipation", is_extr_visc_dissipa)),
       is_STL_(is_STL),
       turbu_indicator_(particles_->registerStateVariable<int>("TurbulentIndicator")),
       k_diffusion_(particles_->registerStateVariable<Real>("K_Diffusion")),
@@ -214,9 +214,9 @@ K_TurbulentModelInner::K_TurbulentModelInner(BaseInnerRelation &inner_relation, 
     particles_->addVariableToWrite<Matd>("TurbulentStrainRate");
 
     //** Obtain Initial values for transport equations *
-    std::fill(turbu_k_.begin(), turbu_k_.end(), initial_values[0]);
-    std::fill(turbu_epsilon_.begin(), turbu_epsilon_.end(), initial_values[1]);
-    std::fill(turbu_mu_.begin(), turbu_mu_.end(), initial_values[2]);
+    // std::fill(turbu_k_.begin(), turbu_k_.end(), initial_values[0]);
+    // std::fill(turbu_epsilon_.begin(), turbu_epsilon_.end(), initial_values[1]);
+    // std::fill(turbu_mu_.begin(), turbu_mu_.end(), initial_values[2]);
 
     //** for test */
     particles_->addVariableToSort<Real>("K_Diffusion");
@@ -229,7 +229,7 @@ K_TurbulentModelInner::K_TurbulentModelInner(BaseInnerRelation &inner_relation, 
     particles_->addVariableToSort<int>("TurbulentIndicator");
     particles_->addVariableToWrite<int>("TurbulentIndicator");
 
-    std::fill(is_extra_viscous_dissipation_.begin(), is_extra_viscous_dissipation_.end(), is_extr_visc_dissipa);
+    //std::fill(is_extra_viscous_dissipation_.begin(), is_extra_viscous_dissipation_.end(), is_extr_visc_dissipa);
 }
 //=================================================================================================//
 void K_TurbulentModelInner::interaction(size_t index_i, Real dt)

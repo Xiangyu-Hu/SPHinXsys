@@ -56,7 +56,7 @@ class PressureBoundaryCondition : public BaseFlowBoundaryCondition
     void update(size_t index_i, Real dt = 0.0)
     {
         //vel_[index_i] += 2.0 * kernel_sum_[index_i] * target_pressure_(p_[index_i], *physical_time_) / rho_[index_i] * dt;
-        vel_[index_i] += 2.0 * kernel_correction_(index_i) * kernel_sum_[index_i] * target_pressure_(p_[index_i]) / rho_[index_i] * dt;
+        vel_[index_i] += 2.0 * kernel_correction_(index_i) * kernel_sum_[index_i] * target_pressure_(p_[index_i], *physical_time_) / rho_[index_i] * dt;
 
         Vecd frame_velocity = Vecd::Zero();
         frame_velocity[alignment_axis_] = transform_.xformBaseVecToFrame(vel_[index_i])[alignment_axis_];
@@ -69,8 +69,8 @@ class PressureBoundaryCondition : public BaseFlowBoundaryCondition
     Transform &transform_;
     TargetPressure target_pressure_;
     Vecd *kernel_sum_;
-    Real *physical_time_;
     KernelCorrectionType kernel_correction_;
+    Real *physical_time_;
 };
 
 template <typename TargetPressure>

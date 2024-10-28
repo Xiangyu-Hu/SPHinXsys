@@ -403,7 +403,7 @@ struct RightOutflowPressure
     template <class BoundaryConditionType>
     RightOutflowPressure(BoundaryConditionType &boundary_condition) {}
 
-    Real operator()(Real &p_)
+    Real operator()(Real p, Real current_time)
     {
         /*constant pressure*/
         Real pressure = Outlet_pressure;
@@ -415,7 +415,7 @@ struct LeftInflowPressure
     template <class BoundaryConditionType>
     LeftInflowPressure(BoundaryConditionType &boundary_condition) {}
 
-    Real operator()(Real &p_)
+    Real operator()(Real p, Real current_time)
     {
         return (physical_time_ > 2.0) ? p_ : initial_inlet_pressure;
     }
