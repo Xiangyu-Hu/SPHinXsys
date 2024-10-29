@@ -174,7 +174,7 @@ void TransferVelocityGradient::update(size_t index_i, Real dt)
     velocity_gradient_[index_i] = Matd::Zero();
     if (is_near_wall_P1_[index_i] != 1)
     {
-        velocity_gradient_[index_i] = vel_grad_[index_i]; //** Transfer value, but exclude P region */
+        velocity_gradient_[index_i] = vel_grad_[index_i];
     }
 }
 //=================================================================================================//
@@ -213,12 +213,6 @@ K_TurbulentModelInner::K_TurbulentModelInner(BaseInnerRelation &inner_relation, 
     particles_->addVariableToSort<Matd>("TurbulentStrainRate");
     particles_->addVariableToWrite<Matd>("TurbulentStrainRate");
 
-    //** Obtain Initial values for transport equations *
-    // std::fill(turbu_k_.begin(), turbu_k_.end(), initial_values[0]);
-    // std::fill(turbu_epsilon_.begin(), turbu_epsilon_.end(), initial_values[1]);
-    // std::fill(turbu_mu_.begin(), turbu_mu_.end(), initial_values[2]);
-
-    //** for test */
     particles_->addVariableToSort<Real>("K_Diffusion");
     particles_->addVariableToWrite<Real>("K_Diffusion");
 
@@ -228,8 +222,6 @@ K_TurbulentModelInner::K_TurbulentModelInner(BaseInnerRelation &inner_relation, 
 
     particles_->addVariableToSort<int>("TurbulentIndicator");
     particles_->addVariableToWrite<int>("TurbulentIndicator");
-
-    //std::fill(is_extra_viscous_dissipation_.begin(), is_extra_viscous_dissipation_.end(), is_extr_visc_dissipa);
 }
 //=================================================================================================//
 void K_TurbulentModelInner::interaction(size_t index_i, Real dt)
@@ -261,10 +253,9 @@ void K_TurbulentModelInner::interaction(size_t index_i, Real dt)
     strain_rate = 0.5 * (velocity_gradient_[index_i].transpose() + velocity_gradient_[index_i]);
 
     Re_stress = 2.0 * strain_rate * turbu_mu_i / rho_i - (2.0 / 3.0) * turbu_k_i * Matd::Identity();
-    //Re_stress = 2.0 * strain_rate * turbu_mu_i / rho_i;
 
     Matd k_production_matrix = Re_stress.array() * velocity_gradient_[index_i].array();
-    //** The near wall k production is updated in wall function part *
+
     if (is_near_wall_P1_[index_i] != 1)
         k_production_[index_i] = k_production_matrix.sum();
 
@@ -274,7 +265,6 @@ void K_TurbulentModelInner::interaction(size_t index_i, Real dt)
     dk_dt_[index_i] = k_production - k_dissipation + k_lap;
     dk_dt_without_dissipation_[index_i] = k_production + k_lap;
 
-    //** for test */
     k_diffusion_[index_i] = k_lap;
     vel_x_[index_i] = vel_[index_i][0];
     turbu_strain_rate_[index_i] = strain_rate;
@@ -284,7 +274,7 @@ void K_TurbulentModelInner::update(size_t index_i, Real dt)
 {
     if (is_STL_)
     {
-        //** If use source term linearisation *
+
         Real denominator = 1.0 + turbu_epsilon_[index_i] * dt / turbu_k_[index_i];
         turbu_k_[index_i] += dk_dt_without_dissipation_[index_i] * dt;
         turbu_k_[index_i] /= denominator;
@@ -353,7 +343,6 @@ void E_TurbulentModelInner::
     depsilon_dt_[index_i] = epsilon_production - epsilon_dissipation + epsilon_lap;
     depsilon_dt_without_dissipation_[index_i] = epsilon_production + epsilon_lap;
 
-    //** for test */
     ep_production[index_i] = epsilon_production;
     ep_dissipation_[index_i] = epsilon_dissipation;
     ep_diffusion_[index_i] = epsilon_lap;
@@ -361,12 +350,12 @@ void E_TurbulentModelInner::
 //=================================================================================================//
 void E_TurbulentModelInner::update(size_t index_i, Real dt)
 {
-    //** The near wall epsilon value is updated in wall function part *
+
     if (is_near_wall_P1_[index_i] != 1)
     {
         if (is_STL_)
         {
-            //** If use source term linearisation *
+
             Real denominator = 1.0 + C_2_ * turbu_epsilon_[index_i] * dt / turbu_k_[index_i];
             turbu_epsilon_[index_i] += depsilon_dt_without_dissipation_[index_i] * dt;
             turbu_epsilon_[index_i] /= denominator;
@@ -393,17 +382,12 @@ void TKEnergyForce<Inner<>>::interaction(size_t index_i, Real dt)
     {
         size_t index_j = inner_neighborhood.j_[n];
         Vecd nablaW_ijV_j = inner_neighborhood.dW_ij_[n] * this->Vol_[index_j] * inner_neighborhood.e_ij_[n];
-        //** strong form *
-        //k_gradient += -1.0*(turbu_k_i - turbu_k_[index_j]) * nablaW_ijV_j;
-        //** weak form *
+
         k_gradient += (turbu_k_i + turbu_k_[index_j]) * nablaW_ijV_j;
-        //** If use RKGC *
-        //k_gradient += (turbu_k_i * B_[index_j] + turbu_k_[index_j] * B_[index_i]) * nablaW_ijV_j;
     }
     force = -1.0 * (2.0 / 3.0) * k_gradient * mass_[index_i];
     force_[index_i] += force;
 
-    //** for test *
     test_k_grad_rslt_[index_i] = k_gradient;
 }
 //=================================================================================================//
@@ -424,16 +408,13 @@ void TKEnergyForce<Contact<>>::interaction(size_t index_i, Real dt)
         {
             size_t index_j = contact_neighborhood.j_[n];
             Vecd nablaW_ijV_j = contact_neighborhood.dW_ij_[n] * this->Vol_[index_j] * contact_neighborhood.e_ij_[n];
-            //** weak form *
+
             k_gradient += (turbu_k_i + turbu_k_i) * nablaW_ijV_j;
-            //** If use RKGC *
-            //k_gradient +=  (turbu_k_i + turbu_k_i)* B_[index_i] * nablaW_ijV_j;
         }
     }
     force = -1.0 * (2.0 / 3.0) * k_gradient * mass_[index_i];
     force_[index_i] += force;
 
-    //** for test *
     test_k_grad_rslt_[index_i] += k_gradient;
 }
 //=================================================================================================//
@@ -469,12 +450,11 @@ void TurbuViscousForce<Inner<>>::interaction(size_t index_i, Real dt)
         Real dissipation = rho_[index_i] * smoothing_length_ * SMIN(3.0 * SMAX(u_jump, Real(0)), c0_);
         Real dissipation_judge = dissipation;
 
-        //** Introduce dissipation *
         Vecd shear_stress_eij_corrected = shear_stress_eij;
         if (mu_harmo < dissipation_judge && is_extra_viscous_dissipation_[index_i] == 1)
         {
             shear_stress_eij_corrected = ((dissipation * vel_derivative).dot(e_ij)) * e_ij;
-            turbu_indicator_[index_i]++; //** For test *
+            turbu_indicator_[index_i]++;
         }
         shear_stress = (shear_stress - shear_stress_eij) + shear_stress_eij_corrected;
 
@@ -493,7 +473,7 @@ TurbuViscousForce<Contact<Wall>>::TurbuViscousForce(BaseContactRelation &wall_co
 //=================================================================================================//
 void TurbuViscousForce<Contact<Wall>>::interaction(size_t index_i, Real dt)
 {
-    //** Wall viscous force only affects P2 region fluid particles *
+
     if (this->is_near_wall_P2_[index_i] != 10)
         return;
 
@@ -508,8 +488,8 @@ void TurbuViscousForce<Contact<Wall>>::interaction(size_t index_i, Real dt)
     Vecd force = Vecd::Zero();
     Vecd e_j_n = Vecd::Zero();
     Vecd e_j_tau = Vecd::Zero();
-    Matd WSS_j_tn = Matd::Zero(); //** Wall shear stress of wall particle j on t-n plane *
-    Matd WSS_j = Matd::Zero();    //** Wall shear stress of wall particle j on x-y plane *
+    Matd WSS_j_tn = Matd::Zero();
+    Matd WSS_j = Matd::Zero();
     Matd Q = Matd::Zero();
     for (size_t k = 0; k < contact_configuration_.size(); ++k)
     {
@@ -523,11 +503,9 @@ void TurbuViscousForce<Contact<Wall>>::interaction(size_t index_i, Real dt)
             e_j_n = n_k[index_j];
             Q = getTransformationMatrix(e_j_n);
 
-            //** Get tangential unit vector, temporarily only suitable for 2D*
             e_j_tau[0] = e_j_n[1];
             e_j_tau[1] = e_j_n[0] * (-1.0);
 
-            //** Calculate the local friction velocity *
             Real vel_i_tau_mag = abs(vel_i.dot(e_j_tau));
 
             Real y_p_j = get_distance_from_P_to_wall(y_p_constant_i);
@@ -535,7 +513,6 @@ void TurbuViscousForce<Contact<Wall>>::interaction(size_t index_i, Real dt)
             Real u_star_j = get_dimensionless_velocity(y_star_j, current_time);
             Real fric_vel_mag_j = sqrt(C_mu_25_ * turbu_k_i_05 * vel_i_tau_mag / u_star_j);
 
-            //** Construct local wall shear stress, if this is on each wall particle j   *
             Real WSS_tn_mag_j = rho_i * fric_vel_mag_j * fric_vel_mag_j * boost::qvm::sign(vel_i.dot(e_j_tau));
 
             WSS_j_tn(0, 0) = 0.0;
@@ -543,7 +520,6 @@ void TurbuViscousForce<Contact<Wall>>::interaction(size_t index_i, Real dt)
             WSS_j_tn(1, 0) = 0.0;
             WSS_j_tn(1, 1) = 0.0;
 
-            //** Transform local wall shear stress to global   *
             WSS_j = Q.transpose() * WSS_j_tn * Q;
             Vecd force_j = 2.0 * mass_[index_i] * WSS_j * e_ij * contact_neighborhood.dW_ij_[n] * this->Vol_[index_j] / rho_i;
 
@@ -622,10 +598,8 @@ Real InflowTurbulentCondition::getTurbulentInflowK(Vecd &position, Vecd &velocit
     Real turbu_k_original = turbu_k;
     if (type_turbu_inlet_ == 1)
     {
-        Real channel_height = CharacteristicLength_; //** Temporarily treatment *
+        Real channel_height = CharacteristicLength_;
 
-        //** Impose fully-developed K from PYTHON result */
-        //** Calculate the distance to wall, Y. position here is the actual postion in x-y coordinate, no transformation*/
         Real Y = 0.0;
         if (position[1] < channel_height / 2.0)
         {
@@ -638,13 +612,7 @@ Real InflowTurbulentCondition::getTurbulentInflowK(Vecd &position, Vecd &velocit
 
         int polynomial_order = 8;
         int num_coefficient = polynomial_order + 1;
-        //** Coefficient of the polynomial, 8th-order, from py21 dp=0.024 */
-        // Real coeff[] = {
-        //     1.215679e-02, -6.681989e-02, 5.043783e-01,
-        //     -2.344875e+00,  6.368016e+00, -1.041386e+01,
-        //     1.009652e+01, -5.336236e+00, 1.183368e+00
-        // };
-        //** Coefficient of the polynomial, 8th-order, from py21 dp=0.1 */
+
         Real coeff[] = {
             1.159981e-02, -4.662944e-02, 2.837400e-01,
             -1.193955e+00, 3.034851e+00, -4.766077e+00,
@@ -667,7 +635,7 @@ Real InflowTurbulentCondition::getTurbulentInflowK(Vecd &position, Vecd &velocit
 
         temp_in_turbu_k = polynomial_value;
     }
-    if (position[0] < 0.0) //** Temporarily treatment *
+    if (position[0] < 0.0)
     {
         turbu_k_original = temp_in_turbu_k;
     }
@@ -680,10 +648,8 @@ Real InflowTurbulentCondition::getTurbulentInflowE(Vecd &position, Real &turbu_k
     Real turbu_E_original = turbu_E;
     if (type_turbu_inlet_ == 1)
     {
-        Real channel_height = CharacteristicLength_; //** Temporarily treatment *
+        Real channel_height = CharacteristicLength_;
 
-        //** Impose fully-developed K from PYTHON result */
-        //** Calculate the distance to wall, Y. position here is the actual postion in x-y coordinate, no transformation*/
         Real Y = 0.0;
         if (position[1] < channel_height / 2.0)
         {
@@ -696,13 +662,7 @@ Real InflowTurbulentCondition::getTurbulentInflowE(Vecd &position, Real &turbu_k
 
         int polynomial_order = 8;
         int num_coefficient = polynomial_order + 1;
-        //** Coefficient of the polynomial, 8th-order, from py21 dp=0.024 */
-        // Real coeff[] = {
-        //     1.633474e-02,  -2.488756e-01, 1.912092e+00,
-        //     -8.381386e+00,   2.205987e+01, -3.542125e+01,
-        //     3.391904e+01, -1.777442e+01, 3.918818e+00
-        // };
-        //** Coefficient of the polynomial, 8th-order, from py21 dp=0.1 */
+
         Real coeff[] = {
             1.428191e-02, -1.766636e-01, 1.153107e+00,
             -4.515606e+00, 1.103752e+01, -1.694146e+01,
@@ -726,7 +686,7 @@ Real InflowTurbulentCondition::getTurbulentInflowE(Vecd &position, Real &turbu_k
 
         temp_in_turbu_E = polynomial_value;
     }
-    if (position[0] < 0.0) //** Temporarily treatment *
+    if (position[0] < 0.0)
     {
         turbu_E_original = temp_in_turbu_E;
     }
@@ -780,7 +740,7 @@ JudgeIsNearWall::
 //=================================================================================================//
 void JudgeIsNearWall::interaction(size_t index_i, Real dt)
 {
-    //** If not clear the values completely, particles that leave P2 region will still carry the values. *
+
     is_near_wall_P2_[index_i] = 0;
     index_nearest_[index_i] = 0;
     distance_to_dummy_interface_[index_i] = 0.0;
@@ -799,7 +759,6 @@ void JudgeIsNearWall::interaction(size_t index_i, Real dt)
     int count_average(0);
     int is_near_contact = 0;
 
-    //** Calculate nearest info. *
     for (size_t k = 0; k < contact_configuration_.size(); ++k)
     {
         Real *Vol_k = (contact_Vol_[k]);
@@ -817,50 +776,46 @@ void JudgeIsNearWall::interaction(size_t index_i, Real dt)
             Vecd &e_ij = contact_neighborhood.e_ij_[n];
             Vecd &n_k_j = n_k[index_j];
 
-            //** The distance to dummy interface is 0.5 dp smaller than the r_ij_normal *
             r_dummy_normal_j = abs(n_k_j.dot(r_ij * e_ij)) - 0.5 * wall_particle_spacing_;
 
-            /** Get the minimum distance, the distance to wall should not be negative*/
             if (r_ij < r_min && r_dummy_normal_j > 0.0 + TinyReal)
             {
-                r_min = r_ij; //** Find the nearest wall particle *
-                //**If use level-set,this would not activate.*
+                r_min = r_ij;
+
                 r_dummy_normal = r_dummy_normal_j;
                 e_i_nearest_n = n_k[index_j];
                 id_nearest_j = index_j;
             }
-            //** Only average the bigger value or itself*
+
             if (r_dummy_normal_j - r_dummy_normal > (-1.0 * TinyReal))
             {
                 count_average++;
-                //** Sum the projection distances according to the kernel approx. *
+
                 r_dmy_itfc_n_sum += weight_j * r_dummy_normal_j;
                 ttl_weight += weight_j;
             }
         }
     }
-    //** This is a temporary treatment, particles in inlet region is not corrected by wall function *
-    //if (is_near_contact > 0 && pos_[index_i][0] > 0.0)
+
     if (is_near_contact > 0)
     {
-        is_near_wall_P2_[index_i] = 10; //** Particles that have contact are defined as in region P2 *
-        //** Get the tangential unit vector *
+        is_near_wall_P2_[index_i] = 10;
+
         if (dimension_ == 2)
         {
             e_i_nearest_tau[0] = e_i_nearest_n[1];
             e_i_nearest_tau[1] = e_i_nearest_n[0] * (-1.0);
         }
-        //** Check the function *
+
         if (r_dmy_itfc_n_sum <= 0.0)
         {
             std::cout << "r_dmy_itfc_n_sum is almost zero" << std::endl;
             std::cout << "count=" << count_average << std::endl;
             std::cin.get();
         }
-        //** Average the projection distances according to the kernel approx. *
+
         distance_to_dummy_interface_up_average_[index_i] = r_dmy_itfc_n_sum / ttl_weight;
 
-        //** Store wall-nearest values. *
         index_nearest_[index_i] = id_nearest_j;
         e_nearest_normal_[index_i] = e_i_nearest_n;
         e_nearest_tau_[index_i] = e_i_nearest_tau;
@@ -873,10 +828,9 @@ void JudgeIsNearWall::update(size_t index_i, Real dt)
     is_near_wall_P1_[index_i] = 0;
     if (is_near_wall_P2_[index_i] == 10)
     {
-        //** Choose one kind of the distance to classify *
+
         Real distance = distance_to_dummy_interface_[index_i];
 
-        //** Classify the wall-nearest particles *
         if (distance < 1.0 * fluid_particle_spacing_)
             is_near_wall_P1_[index_i] = 1;
     }
@@ -916,13 +870,9 @@ StandardWallFunctionCorrection::
     particles_->addVariableToSort<Real>("Y_P");
     particles_->addVariableToWrite<Real>("Y_P");
 
-    //** Fixed y_p_ as a constant distance *
-    // std::fill(y_p_.begin(), y_p_.end(), y_p_constant);
-
     particles_->addVariableToSort<Real>("WallYplus");
     particles_->addVariableToWrite<Real>("WallYplus");
 
-    //** Initial value is important, especially when use log law *
     particles_->addVariableToSort<Real>("WallYstar");
     particles_->addVariableToWrite<Real>("WallYstar");
 
@@ -941,9 +891,6 @@ void StandardWallFunctionCorrection::interaction(size_t index_i, Real dt)
     wall_Y_star_[index_i] = 0.0;
     Real current_time = *physical_time_;
 
-    //** If use level-set to get distance from P to wall, activate this *
-    //y_p_[index_i]= distance_to_dummy_interface_levelset_[index_i];
-
     if (is_near_wall_P2_[index_i] == 10)
     {
         Real y_p_constant_i = y_p_[index_i];
@@ -951,28 +898,16 @@ void StandardWallFunctionCorrection::interaction(size_t index_i, Real dt)
         Real turbu_k_i_05 = pow(turbu_k_[index_i], 0.5);
         Real turbu_k_i_15 = pow(turbu_k_[index_i], 1.5);
 
-        //** Choose one kind of the distance to calculate the wall-nearest values *
-        //Real r_dummy_normal = distance_to_dummy_interface_up_average_[index_i];
-        //Real r_dummy_normal = distance_to_dummy_interface_[index_i];
-        //Real r_dummy_normal = distance_to_dummy_interface_levelset_[index_i];
-
-        //if (r_dummy_normal <= TinyReal)
-        //{
-        //std::cout << "r_dummy_normal <= TinyReal" << std::endl;
-        //std::cin.get();
-        //}
         Vecd e_i_nearest_tau = e_nearest_tau_[index_i];
         Vecd e_i_nearest_n = e_nearest_normal_[index_i];
         const Vecd &vel_i = vel_[index_i];
         Real rho_i = rho_[index_i];
         Real nu_i = molecular_viscosity_ / rho_i;
 
-        //** Calculate Y_star, note the current code is based on Y_star *
         wall_Y_star_[index_i] = y_p_constant_i * C_mu_25_ * turbu_k_i_05 / nu_i;
 
-        //** Calculate friction velocity, including P2 region. *
         Real velo_fric_mag = 0.0;
-        Real velo_tan_mag = 0.0; //** tangential velo magnitude for fluid particle i *
+        Real velo_tan_mag = 0.0;
 
         velo_tan_mag = abs(e_i_nearest_tau.dot(vel_i));
         velo_tan_[index_i] = velo_tan_mag;
@@ -1006,18 +941,15 @@ void StandardWallFunctionCorrection::interaction(size_t index_i, Real dt)
             std::cin.get();
         }
 
-        //** friction velocity have the same direction of vel_i, if not, change its direction *
         velo_friction_[index_i] = velo_fric_mag * e_i_nearest_tau;
         if (vel_i.dot(velo_friction_[index_i]) < 0.0)
             velo_friction_[index_i] = -1.0 * velo_friction_[index_i];
 
-        //** Calculate Y_plus  *
         wall_Y_plus_[index_i] = y_p_constant_i * velo_fric_mag / nu_i;
 
-        // ** Correct the near wall values, only for P1 region *
         if (is_near_wall_P1_[index_i] == 1)
         {
-            Matd vel_grad_i_tn = Matd::Zero(); //** velocity gradient of wall-nearest fluid particle i on t-n plane *
+            Matd vel_grad_i_tn = Matd::Zero();
             Matd Q = Matd::Zero();
             Real total_weight = 0.0;
 
@@ -1044,7 +976,6 @@ void StandardWallFunctionCorrection::interaction(size_t index_i, Real dt)
                     size_t index_j = contact_neighborhood.j_[n];
                     Vecd e_j_n = n_k[index_j];
 
-                    //** Get tangential unit vector, temporarily only suitable for 2D*
                     e_j_tau[0] = e_j_n[1];
                     e_j_tau[1] = e_j_n[0] * (-1.0);
 
@@ -1121,7 +1052,7 @@ ConstrainVelocityAt_Y_Direction::
 //=================================================================================================//
 void ConstrainVelocityAt_Y_Direction::update(size_t index_i, Real dt)
 {
-    if (pos_[index_i][0] > 0.5 * length_channel_) //** Very temporary treatment *
+    if (pos_[index_i][0] > 0.5 * length_channel_)
     {
         vel_[index_i][1] = 0.0;
     }
@@ -1140,9 +1071,9 @@ UpdateTurbulentPlugFlowIndicator::
 void UpdateTurbulentPlugFlowIndicator::update(size_t index_i, Real dt)
 {
     turbu_plug_flow_indicator_[index_i] = 0;
-    if (pos_[index_i][0] > 0.0) //** Buffer region is still applied tran.vel. Very temporary treatment *
+    if (pos_[index_i][0] > 0.0)
     {
-        if (pos_[index_i][1] > 0.25 * channel_width_ && pos_[index_i][1] < 0.75 * channel_width_) //** Very temporary treatment *
+        if (pos_[index_i][1] > 0.25 * channel_width_ && pos_[index_i][1] < 0.75 * channel_width_)
         {
             turbu_plug_flow_indicator_[index_i] = 1;
         }

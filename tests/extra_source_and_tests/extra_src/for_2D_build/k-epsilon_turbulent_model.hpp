@@ -47,7 +47,7 @@ BaseTurbulentModel<Base, DataDelegationType>::BaseTurbulentModel(BaseRelationTyp
       Vol_(this->particles_->template getVariableDataByName<Real>("VolumetricMeasure")),
       vel_(this->particles_->template getVariableDataByName<Vecd>("Velocity")),
       dimension_(2) {}
-//** A temporarily treatment for dimension **
+
 //=================================================================================================//
 template <class DataDelegationType>
 template <class BaseRelationType>
@@ -121,9 +121,7 @@ ExtraTransportForce<Inner<LimiterType>, CommonControlTypes...>::ExtraTransportFo
 template <class LimiterType, typename... CommonControlTypes>
 void ExtraTransportForce<Inner<LimiterType>, CommonControlTypes...>::initialization(size_t index_i, Real dt)
 {
-    //** This initialisation is used to calculate the modified quantity of pos of the Transport Vel Correction(TVC) *
-    //** the calculation of dr_tilde should be same as that in TVC */
-    //** This step is redundant if we could modify the library to directly store and get dr_tilde */
+
     extra_transport_stress_[index_i] = Matd::Zero();
     if (this->within_scope_(index_i))
     {
