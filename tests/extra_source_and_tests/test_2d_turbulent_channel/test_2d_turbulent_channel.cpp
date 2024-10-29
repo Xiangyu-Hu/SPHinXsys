@@ -159,6 +159,7 @@ int main(int ac, char *av[])
     //	File output and regression check.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp body_states_recording(sph_system);
+    body_states_recording.addToWrite<Real>(water_block, "TurbulenceKineticEnergy");
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>> write_centerpoint_quantity("TurbulentViscosity", observer_centerpoint_contact);
     /**
      * @brief Setup geometry and initial conditions.
