@@ -58,17 +58,6 @@ Vec2d left_buffer_translation = left_buffer_halfsize + Vec2d(-DL_sponge, 0.0);
 
 Vec2d right_buffer_halfsize = Vec2d(2.5 * resolution_ref, 0.5 * DH);
 Vec2d right_buffer_translation = Vec2d(DL - 2.5 * resolution_ref, 0.5 * DH);
-//----------------------------------------------------------------------
-// Observation.
-//----------------------------------------------------------------------
-Real x_observe_start = 0.99 * DL;
-int num_observer_points = std::round(DH_C / resolution_ref);
-Real observe_spacing = DH_C / num_observer_points;
-
-StdVec<Vecd> observation_location;
-Vecd pos_observe_start = Vecd(x_observe_start, resolution_ref / 2.0 + offset_distance);
-Vecd unit_direction_observe = Vecd(0.0, 1.0);
-Real observer_offset_distance = 2.0 * resolution_ref;
 
 //** For regression test *
 StdVec<Vecd> observer_location_center_point = {Vecd(0.5 * DL, 0.5 * DH)};
@@ -172,25 +161,9 @@ struct InflowVelocity
                 polynomial_value += coeff[i] * std::pow(Y, i);
             }
 
-            if (Y > half_channel_height || Y < 0.0)
-            {
-                std::cout << "position[1]=" << position[1] << std::endl;
-                std::cout << "Y=" << Y << std::endl;
-                std::cout << "polynomial_value=" << polynomial_value << std::endl;
-                std::cout << "Stop" << std::endl;
-                std::cout << "=================" << std::endl;
-                std::cin.get();
-            }
-
             target_velocity[0] = current_time < t_ref_ ? 0.5 * polynomial_value * (1.0 - cos(Pi * current_time / t_ref_)) : polynomial_value;
         }
 
-        if (position[1] > half_channel_height)
-        {
-            std::cout << "Particles out of domain, wrong inlet velocity." << std::endl;
-            std::cout << position[1] << std::endl;
-            std::cin.get();
-        }
         target_velocity[1] = 0.0;
         return target_velocity;
     }

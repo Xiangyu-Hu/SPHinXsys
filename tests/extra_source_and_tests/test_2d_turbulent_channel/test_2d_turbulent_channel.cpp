@@ -39,26 +39,9 @@ int main(int ac, char *av[])
     ObserverBody observer_center_point(sph_system, "ObserverCenterPoint");
     observer_center_point.generateParticles<ObserverParticles>(observer_location_center_point);
 
-    for (int i = 0; i < num_observer_points; ++i)
-    {
-        Vecd pos_observer_i = pos_observe_start + i * observe_spacing * unit_direction_observe;
-        if (i == 0)
-        {
-            pos_observer_i -= observer_offset_distance * unit_direction_observe;
-        }
-        if (i == num_observer_points - 1)
-        {
-            pos_observer_i += observer_offset_distance * unit_direction_observe;
-        }
-        observation_location.push_back(pos_observer_i);
-    }
-    ObserverBody fluid_observer(sph_system, "FluidObserver");
-    fluid_observer.generateParticles<ObserverParticles>(observation_location);
-
     /** topology */
     InnerRelation water_block_inner(water_block);
     ContactRelation water_wall_contact(water_block, {&wall_boundary});
-    ContactRelation fluid_observer_contact(fluid_observer, {&water_block});
     ContactRelation observer_centerpoint_contact(observer_center_point, {&water_block});
     //----------------------------------------------------------------------
     // Combined relations built from basic relations
@@ -141,8 +124,6 @@ int main(int ac, char *av[])
     InteractionWithUpdate<fluid_dynamics::TurbulentViscousForceWithWall> turbulent_viscous_force(water_block_inner, water_wall_contact);
     InteractionWithUpdate<fluid_dynamics::TVC_ModifiedLimited_RKGC_OBFCorrection<BulkParticles>> transport_velocity_correction(water_block_inner, water_wall_contact);
 
-    SimpleDynamics<fluid_dynamics::GetLimiterOfTransportVelocityCorrection> get_limiter_of_transport_velocity_correction(water_block, 1000);
-
     StartupAcceleration time_dependent_acceleration(Vec2d(U_f, 0.0), 2.0);
     SimpleDynamics<GravityForce<StartupAcceleration>> apply_gravity_force(water_block, time_dependent_acceleration);
 
@@ -185,15 +166,6 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
 
     BodyStatesRecordingToVtp body_states_recording(sph_system);
-    body_states_recording.addToWrite<Real>(water_block, "Pressure");
-    body_states_recording.addToWrite<int>(water_block, "Indicator");
-    body_states_recording.addToWrite<Real>(water_block, "Density");
-    body_states_recording.addToWrite<Vecd>(water_block, "ZeroGradientResidue");
-    ObservedQuantityRecording<Vecd> write_recorded_water_velocity("Velocity", fluid_observer_contact);
-    ObservedQuantityRecording<Real> write_recorded_water_k("TurbulenceKineticEnergy", fluid_observer_contact);
-    ObservedQuantityRecording<Real> write_recorded_water_mut("TurbulentViscosity", fluid_observer_contact);
-    ObservedQuantityRecording<Real> write_recorded_water_epsilon("TurbulentDissipation", fluid_observer_contact);
-    body_states_recording.addToWrite<int>(water_block, "BufferParticleIndicator");
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>> write_centerpoint_quantity("TurbulentViscosity", observer_centerpoint_contact);
     /**
      * @brief Setup geometry and initial conditions.
@@ -253,7 +225,6 @@ int main(int ac, char *av[])
             turbulent_viscous_force.exec();
 
             transport_velocity_correction.exec();
-            get_limiter_of_transport_velocity_correction.exec();
 
             Real relaxation_time = 0.0;
             int inner_itr = 0;
@@ -317,20 +288,11 @@ int main(int ac, char *av[])
             }
             water_block.updateCellLinkedList();
             water_block_complex.updateConfiguration();
-            fluid_observer_contact.updateConfiguration();
 
             inlet_outlet_surface_particle_indicator.exec();
 
             left_bidirection_buffer.tag_buffer_particles.exec();
             right_bidirection_buffer.tag_buffer_particles.exec();
-
-            if (physical_time > end_time * 0.6)
-            {
-                write_recorded_water_velocity.writeToFile(number_of_iterations);
-                write_recorded_water_k.writeToFile(number_of_iterations);
-                write_recorded_water_mut.writeToFile(number_of_iterations);
-                write_recorded_water_epsilon.writeToFile(number_of_iterations);
-            }
         }
 
         body_states_recording.writeToFile();
