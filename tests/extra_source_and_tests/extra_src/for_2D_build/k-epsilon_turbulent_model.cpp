@@ -71,7 +71,6 @@ GetVelocityGradient<Inner<>>::GetVelocityGradient(BaseInnerRelation &inner_relat
       weight_sub_nearwall_(weight_sub)
 {
     this->particles_->addVariableToSort<Matd>("TurbulentVelocityGradient");
-    this->particles_->addVariableToWrite<Matd>("TurbulentVelocityGradient");
 }
 //=================================================================================================//
 void GetVelocityGradient<Inner<>>::interaction(size_t index_i, Real dt)
@@ -116,7 +115,6 @@ GetVelocityGradient<Contact<Wall>>::GetVelocityGradient(BaseContactRelation &con
       velocity_gradient_(particles_->getVariableDataByName<Matd>("TurbulentVelocityGradient"))
 {
     this->particles_->addVariableToSort<Matd>("Velocity_Gradient_Wall");
-    this->particles_->addVariableToWrite<Matd>("Velocity_Gradient_Wall");
 }
 //=================================================================================================//
 void GetVelocityGradient<Contact<Wall>>::interaction(size_t index_i, Real dt)
@@ -156,31 +154,14 @@ K_TurbulentModelInner::K_TurbulentModelInner(BaseInnerRelation &inner_relation, 
 {
     particles_->addVariableToSort<Real>("ChangeRateOfTKE");
     particles_->addVariableToSort<Real>("ChangeRateOfTKEWithoutDissipation");
-
     particles_->addVariableToSort<Real>("K_Production");
-    particles_->addVariableToWrite<Real>("K_Production");
-
     particles_->addVariableToSort<Real>("TurbulenceKineticEnergy");
-    particles_->addVariableToWrite<Real>("TurbulenceKineticEnergy");
-
     particles_->addVariableToSort<Real>("TurbulentViscosity");
-    particles_->addVariableToWrite<Real>("TurbulentViscosity");
-
     particles_->addVariableToSort<Real>("TurbulentDissipation");
-    particles_->addVariableToWrite<Real>("TurbulentDissipation");
-
     particles_->addVariableToSort<Matd>("TurbulentStrainRate");
-    particles_->addVariableToWrite<Matd>("TurbulentStrainRate");
-
     particles_->addVariableToSort<Real>("K_Diffusion");
-    particles_->addVariableToWrite<Real>("K_Diffusion");
-
-    particles_->addVariableToWrite<Real>("ChangeRateOfTKE");
-
     particles_->addVariableToSort<Real>("Velocity_X");
-
     particles_->addVariableToSort<int>("TurbulentIndicator");
-    particles_->addVariableToWrite<int>("TurbulentIndicator");
 }
 //=================================================================================================//
 void K_TurbulentModelInner::interaction(size_t index_i, Real dt)
@@ -258,16 +239,9 @@ E_TurbulentModelInner::E_TurbulentModelInner(BaseInnerRelation &inner_relation, 
       is_STL_(is_STL)
 {
     particles_->addVariableToSort<Real>("ChangeRateOfTDR");
-    particles_->addVariableToWrite<Real>("ChangeRateOfTDR");
-
     particles_->addVariableToSort<Real>("Ep_Production");
-    particles_->addVariableToWrite<Real>("Ep_Production");
-
     particles_->addVariableToSort<Real>("Ep_Dissipation_");
-    particles_->addVariableToWrite<Real>("Ep_Dissipation_");
-
     particles_->addVariableToSort<Real>("Ep_Diffusion_");
-    particles_->addVariableToWrite<Real>("Ep_Diffusion_");
 }
 //=================================================================================================//
 void E_TurbulentModelInner::
@@ -652,25 +626,12 @@ JudgeIsNearWall::
     }
 
     particles_->addVariableToSort<Real>("DistanceToDummyInterfaceUpAver");
-    particles_->addVariableToWrite<Real>("DistanceToDummyInterfaceUpAver");
-
     particles_->addVariableToSort<Real>("DistanceToDummyInterface");
-    particles_->addVariableToWrite<Real>("DistanceToDummyInterface");
-
     particles_->addVariableToSort<int>("NearestIndex");
-    particles_->addVariableToWrite<int>("NearestIndex");
-
     particles_->addVariableToSort<int>("IsNearWallP1");
-    particles_->addVariableToWrite<int>("IsNearWallP1");
-
     particles_->addVariableToSort<int>("IsNearWallP2");
-    particles_->addVariableToWrite<int>("IsNearWallP2");
-
     particles_->addVariableToSort<Vecd>("WallNearestTangentialUnitVector");
-
     particles_->addVariableToSort<Vecd>("WallNearestNormalUnitVector");
-
-    particles_->addVariableToWrite<Vecd>("DistanceFromWall");
 };
 //=================================================================================================//
 void JudgeIsNearWall::interaction(size_t index_i, Real dt)
@@ -795,19 +756,10 @@ StandardWallFunctionCorrection::
     }
 
     particles_->addVariableToSort<Real>("Y_P");
-    particles_->addVariableToWrite<Real>("Y_P");
-
     particles_->addVariableToSort<Real>("WallYplus");
-    particles_->addVariableToWrite<Real>("WallYplus");
-
     particles_->addVariableToSort<Real>("WallYstar");
-    particles_->addVariableToWrite<Real>("WallYstar");
-
     particles_->addVariableToSort<Real>("TangentialVelocity");
-    particles_->addVariableToWrite<Real>("TangentialVelocity");
-
     particles_->addVariableToSort<Vecd>("FrictionVelocity");
-    particles_->addVariableToWrite<Vecd>("FrictionVelocity");
 };
 //=================================================================================================//
 void StandardWallFunctionCorrection::interaction(size_t index_i, Real dt)

@@ -158,7 +158,6 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	File output and regression check.
     //----------------------------------------------------------------------
-
     BodyStatesRecordingToVtp body_states_recording(sph_system);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>> write_centerpoint_quantity("TurbulentViscosity", observer_centerpoint_contact);
     /**
@@ -198,7 +197,6 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------------------------------------
-    int num_output_file = 0;
     while (physical_time < end_time)
     {
         Real integration_time = 0.0;
@@ -291,7 +289,6 @@ int main(int ac, char *av[])
 
         body_states_recording.writeToFile();
         observer_centerpoint_contact.updateConfiguration();
-        num_output_file++;
     }
     TickCount t4 = TickCount::now();
 
