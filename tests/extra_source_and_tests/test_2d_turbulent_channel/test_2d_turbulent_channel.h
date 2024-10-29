@@ -1,8 +1,8 @@
 /**
- * @file 	2d_turbulent_channel_PBC.h
- * @brief 	This is the case file for the test of flow passing by a cylinder.
- * @details  We consider a flow passing by a cylinder in 2D.
- * @author 	Xiangyu Hu, Chi Zhang and Luhui Han
+ * @file 	2d_turbulent_channel.h
+ * @brief 	This is the case file for testing turbulent channel.
+ * @details  We consider a flow passing in channel.
+ * @author 	Xiangyu Hu
  */
 
 #include "bidirectional_buffer.h"
@@ -18,76 +18,53 @@ using namespace SPH;
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real DH = 2.0;  /**< Channel height. */
-Real DL = 30.0; /**< Channel length. */
+Real DH = 2.0;
+Real DL = 30.0;
 Real num_fluid_cross_section = 20.0;
 
-//----------------------------------------------------------------------
-//	Unique parameters for turbulence.
-//----------------------------------------------------------------------
-Real characteristic_length = DH; /**<It needs characteristic Length to calculate turbulent length and the inflow turbulent epsilon>*/
-//** For K and Epsilon, type of the turbulent inlet, 0 is freestream, 1 is from interpolation from PY21 *
+Real characteristic_length = DH;
 int type_turbulent_inlet = 1;
 Real relaxation_rate_turbulent_inlet = 0.8;
-//** Tag for AMRD *
 int is_AMRD = 0;
 bool is_constrain_normal_velocity_in_P_region = false;
-//** Weight for correcting the velocity  gradient in the sub near wall region  *
 Real weight_vel_grad_sub_nearwall = 0.1;
-//** Tag for Source Term Linearisation *
 bool is_source_term_linearisation = false;
-//** Initial values for K, Epsilon and Mu_t *
 StdVec<Real> initial_turbu_values = {0.000180001, 3.326679e-5, 1.0e-9};
-
 Real y_p_constant = 0.05;
-Real resolution_ref = (DH - 2.0 * y_p_constant) / (num_fluid_cross_section - 1.0); /**< Initial reference particle spacing. */
-Real offset_distance = y_p_constant - resolution_ref / 2.0;                        //** Basically offset distance is large than or equal to 0 *
-
-Real BW = resolution_ref * 4; /**< Reference size of the emitter. */
+Real resolution_ref = (DH - 2.0 * y_p_constant) / (num_fluid_cross_section - 1.0);
+Real offset_distance = y_p_constant - resolution_ref / 2.0;
+Real BW = resolution_ref * 4;
 Real DL_sponge = resolution_ref * 20;
 Real half_channel_height = DH / 2.0;
-//----------------------------------------------------------------------
-//	Domain bounds of the system.
-//----------------------------------------------------------------------
+
 BoundingBox system_domain_bounds(Vec2d(-DL_sponge - 2.0 * BW, -BW), Vec2d(DL + 2.0 * BW, DH + 2.0 * BW));
 
 //----------------------------------------------------------------------
 //	Material properties of the fluid.
 //----------------------------------------------------------------------
 Real U_inlet = 1.0;
-Real U_f = U_inlet;         //*Characteristic velocity
-Real U_max = 1.5 * U_inlet; //** An estimated value, generally 1.5 U_inlet *
+Real U_f = U_inlet;
+Real U_max = 1.5 * U_inlet;
 Real c_f = 10.0 * U_max;
-Real rho0_f = 1.0; /**< Density. */
+Real rho0_f = 1.0;
 Real Re = 20000.0;
 
 Real Outlet_pressure = 0.0;
-
 Real mu_f = rho0_f * U_f * DH / Re;
-
-Real Re_calculated = U_f * DH * rho0_f / mu_f;
-
 Real DH_C = DH - 2.0 * offset_distance;
-//----------------------------------------------------------------------
-//	The emitter block with offset model.
-//----------------------------------------------------------------------
-// Vec2d left_buffer_halfsize = Vec2d(0.5 * BW, 0.5 * DH_C + BW);
-// Vec2d left_buffer_translation = Vec2d(-DL_sponge, 0.0) + left_buffer_halfsize + Vecd(0.0, offset_distance - BW);
+
 Vec2d left_buffer_halfsize = Vec2d(2.5 * resolution_ref, 0.5 * DH);
 Vec2d left_buffer_translation = left_buffer_halfsize + Vec2d(-DL_sponge, 0.0);
 
-// Vec2d right_buffer_halfsize = Vec2d(0.5 * BW, 0.75 * DH);
-// Vec2d right_buffer_translation = Vec2d(DL, DH + 0.25 * DH) - right_buffer_halfsize;
 Vec2d right_buffer_halfsize = Vec2d(2.5 * resolution_ref, 0.5 * DH);
 Vec2d right_buffer_translation = Vec2d(DL - 2.5 * resolution_ref, 0.5 * DH);
 //----------------------------------------------------------------------
-// Observation with offset model.
+// Observation.
 //----------------------------------------------------------------------
 Real x_observe_start = 0.99 * DL;
-int num_observer_points = std::round(DH_C / resolution_ref); //**Every particle is regarded as a cell monitor*
+int num_observer_points = std::round(DH_C / resolution_ref);
 Real observe_spacing = DH_C / num_observer_points;
 
-// By kernel weight.
 StdVec<Vecd> observation_location;
 Vecd pos_observe_start = Vecd(x_observe_start, resolution_ref / 2.0 + offset_distance);
 Vecd unit_direction_observe = Vecd(0.0, 1.0);
@@ -176,23 +153,15 @@ struct InflowVelocity
     {
         Vecd target_velocity = velocity;
         Real u_ave = current_time < t_ref_ ? 0.5 * u_ref_ * (1.0 - cos(Pi * current_time / t_ref_)) : u_ref_;
-        //target_velocity[0] = 1.5 * u_ave * SMAX(0.0, 1.0 - position[1] * position[1] / halfsize_[1] / halfsize_[1]);
-        //target_velocity[0] = 1.5 * u_ave * (1.0 - position[1] * position[1] / half_channel_height / half_channel_height);
+
         target_velocity[0] = u_ave;
         if (1)
         {
-            //** Impose fully-developed velocity from PYTHON result */
-            //** Calculate the distance to wall, Y. position[1] is the distance to the centerline */
+
             Real Y = half_channel_height - std::abs(position[1]);
             int polynomial_order = 8;
             int num_coefficient = polynomial_order + 1;
-            //** Coefficient of the polynomial, 8th-order, from py21 dp=0.024 */
-            // Real coeff[] = {
-            //     6.153336e-01, 3.095679e+00, -1.399783e+01,
-            //     4.798221e+01, -1.100147e+02, 1.619762e+02,
-            //     -1.464631e+02, 7.373006e+01, -1.577924e+01
-            // };
-            //** Coefficient of the polynomial, 8th-order, from py21 dp=0.1 */
+
             Real coeff[] = {
                 6.492006e-01, 2.145673e+00, -7.442681e+00,
                 2.148624e+01, -4.443593e+01, 6.171458e+01,
@@ -213,9 +182,7 @@ struct InflowVelocity
                 std::cin.get();
             }
 
-            //** Impose inlet velocity gradually */
             target_velocity[0] = current_time < t_ref_ ? 0.5 * polynomial_value * (1.0 - cos(Pi * current_time / t_ref_)) : polynomial_value;
-            //target_velocity[0] = polynomial_value;
         }
 
         if (position[1] > half_channel_height)
@@ -236,7 +203,7 @@ struct RightOutflowPressure
 
     Real operator()(Real p, Real current_time)
     {
-        /*constant pressure*/
+
         Real pressure = Outlet_pressure;
         return pressure;
     }
