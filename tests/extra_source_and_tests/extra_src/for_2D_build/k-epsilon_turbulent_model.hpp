@@ -88,118 +88,6 @@ TurbuViscousForce<DataDelegationType>::TurbuViscousForce(BaseRelationType &base_
       molecular_viscosity_(DynamicCast<Fluid>(this, this->particles_->getBaseMaterial()).ReferenceViscosity()),
       c0_(DynamicCast<Fluid>(this, this->particles_->getBaseMaterial()).ReferenceSoundSpeed()) {}
 //=================================================================================================//
-template <class DataDelegationType, class ParticleScope>
-template <class BaseRelationType>
-ExtraTransportForce<Base, DataDelegationType, ParticleScope>::
-    ExtraTransportForce(BaseRelationType &base_relation)
-    : LocalDynamics(base_relation.getSPHBody()), DataDelegationType(base_relation),
-      rho_(this->particles_->template getVariableDataByName<Real>("Density")), vel_(this->particles_->template getVariableDataByName<Vecd>("Velocity")),
-      zero_gradient_residue_(this->particles_->template getVariableDataByName<Vecd>("ZeroGradientResidue")),
-      extra_transport_stress_(this->particles_->template registerStateVariable<Matd>("ExtraTransportStress")),
-      extra_transport_vel_(this->particles_->template registerStateVariable<Vecd>("ExtraTransportVelocity")),
-      within_scope_(this->particles_)
-{
-    static_assert(std::is_base_of<WithinScope, ParticleScope>::value,
-                  "WithinScope is not the base of ParticleScope!");
-}
-
-//=================================================================================================//
-template <class LimiterType, typename... CommonControlTypes>
-ExtraTransportForce<Inner<LimiterType>, CommonControlTypes...>::ExtraTransportForce(BaseInnerRelation &inner_relation)
-    : ExtraTransportForce<Base, DataDelegateInner, CommonControlTypes...>(inner_relation),
-      Vol_(this->particles_->template getVariableDataByName<Real>("VolumetricMeasure")),
-      h_ref_(this->sph_body_.sph_adaptation_->ReferenceSmoothingLength()),
-      extra_transport_stress_(this->particles_->template getVariableDataByName<Matd>("ExtraTransportStress")),
-      extra_transport_vel_(this->particles_->template getVariableDataByName<Vecd>("ExtraTransportVelocity")),
-      limiter_(h_ref_ * h_ref_)
-{
-    static_assert(std::is_base_of<Limiter, LimiterType>::value,
-                  "Limiter is not the base of LimiterType!");
-    this->particles_->template addVariableToWrite<Vecd>("ExtraTransportVelocity");
-}
-//=================================================================================================//
-template <class LimiterType, typename... CommonControlTypes>
-void ExtraTransportForce<Inner<LimiterType>, CommonControlTypes...>::initialization(size_t index_i, Real dt)
-{
-
-    extra_transport_stress_[index_i] = Matd::Zero();
-    if (this->within_scope_(index_i))
-    {
-        Real correction_scaling = 0.2 * h_ref_ * h_ref_;
-        Real inv_h_ratio = 1.0;
-        Real squared_norm = this->zero_gradient_residue_[index_i].squaredNorm();
-
-        Vecd dr_tilde = correction_scaling * limiter_(squared_norm) * this->zero_gradient_residue_[index_i] * inv_h_ratio * inv_h_ratio;
-
-        extra_transport_stress_[index_i] = this->rho_[index_i] * this->vel_[index_i] * dr_tilde.transpose();
-    }
-}
-//=================================================================================================//
-template <class LimiterType, typename... CommonControlTypes>
-void ExtraTransportForce<Inner<LimiterType>, CommonControlTypes...>::interaction(size_t index_i, Real dt)
-{
-    extra_transport_vel_[index_i] = Vecd::Zero();
-    if (this->within_scope_(index_i))
-    {
-        Matd extra_transport_stress_i = extra_transport_stress_[index_i];
-        Vecd extra_transport_vel = Vecd::Zero();
-        const Neighborhood &inner_neighborhood = this->inner_configuration_[index_i];
-        for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
-        {
-            size_t index_j = inner_neighborhood.j_[n];
-            Vecd nablaW_ijV_j = inner_neighborhood.dW_ij_[n] * this->Vol_[index_j] * inner_neighborhood.e_ij_[n];
-
-            extra_transport_vel += (extra_transport_stress_i + extra_transport_stress_[index_j]) * nablaW_ijV_j;
-        }
-        extra_transport_vel_[index_i] = extra_transport_vel / this->rho_[index_i];
-    }
-}
-//=================================================================================================//
-template <class LimiterType, typename... CommonControlTypes>
-void ExtraTransportForce<Inner<LimiterType>, CommonControlTypes...>::update(size_t index_i, Real dt)
-{
-    if (this->within_scope_(index_i))
-    {
-        this->vel_[index_i] += extra_transport_vel_[index_i];
-    }
-}
-//=================================================================================================//
-template <typename... CommonControlTypes>
-ExtraTransportForce<Contact<Boundary>, CommonControlTypes...>::ExtraTransportForce(BaseContactRelation &contact_relation)
-    : ExtraTransportForce<Base, DataDelegateContact, CommonControlTypes...>(contact_relation),
-      extra_transport_stress_(this->particles_->template getVariableDataByName<Matd>("ExtraTransportStress")),
-      extra_transport_vel_(this->particles_->template getVariableDataByName<Vecd>("ExtraTransportVelocity"))
-{
-    for (size_t k = 0; k != this->contact_particles_.size(); ++k)
-    {
-        wall_Vol_.push_back(&(this->contact_particles_[k]->Vol_));
-    }
-}
-//=================================================================================================//
-template <typename... CommonControlTypes>
-void ExtraTransportForce<Contact<Boundary>, CommonControlTypes...>::interaction(size_t index_i, Real dt)
-{
-    if (this->within_scope_(index_i))
-    {
-        Matd extra_transport_stress_i = extra_transport_stress_[index_i];
-        Vecd extra_transport_vel = Vecd::Zero();
-        for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
-        {
-            Real *wall_Vol_k = *(wall_Vol_[k]);
-            Neighborhood &contact_neighborhood = (*this->contact_configuration_[k])[index_i];
-            for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
-            {
-                size_t index_j = contact_neighborhood.j_[n];
-                Vecd nablaW_ijV_j = contact_neighborhood.dW_ij_[n] * wall_Vol_k[index_j] * contact_neighborhood.e_ij_[n];
-
-                extra_transport_vel += (extra_transport_stress_i)*nablaW_ijV_j;
-            }
-        }
-        extra_transport_vel_[index_i] += extra_transport_vel / this->rho_[index_i];
-    }
-}
-
-//=================================================================================================//
 template <class DataDelegationType>
 template <class BaseRelationType>
 TurbulentLinearGradientCorrectionMatrix<DataDelegationType>::
@@ -217,7 +105,6 @@ TurbulentLinearGradientCorrectionMatrix<DataDelegationType>::
 }
 
 //=================================================================================================//
-
 } // namespace fluid_dynamics
 //=================================================================================================//
 } // namespace SPH

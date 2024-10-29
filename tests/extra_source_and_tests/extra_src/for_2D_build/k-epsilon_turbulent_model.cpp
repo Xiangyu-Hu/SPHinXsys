@@ -162,22 +162,6 @@ void GetVelocityGradient<Contact<Wall>>::interaction(size_t index_i, Real dt)
     }
 }
 //=================================================================================================//
-TransferVelocityGradient::
-    TransferVelocityGradient(SPHBody &sph_body)
-    : LocalDynamics(sph_body),
-      is_near_wall_P1_(particles_->getVariableDataByName<int>("IsNearWallP1")),
-      velocity_gradient_(particles_->getVariableDataByName<Matd>("TurbulentVelocityGradient")),
-      vel_grad_(this->particles_->template registerStateVariable<Matd>("VelocityGradient")) {}
-//=================================================================================================//
-void TransferVelocityGradient::update(size_t index_i, Real dt)
-{
-    velocity_gradient_[index_i] = Matd::Zero();
-    if (is_near_wall_P1_[index_i] != 1)
-    {
-        velocity_gradient_[index_i] = vel_grad_[index_i];
-    }
-}
-//=================================================================================================//
 K_TurbulentModelInner::K_TurbulentModelInner(BaseInnerRelation &inner_relation, const StdVec<Real> &initial_values, int is_extr_visc_dissipa, bool is_STL)
     : BaseTurbulentModel<Base, DataDelegateInner>(inner_relation),
       dk_dt_(particles_->registerStateVariable<Real>("ChangeRateOfTKE")),
@@ -1041,45 +1025,6 @@ void ConstrainNormalVelocityInRegionP::update(size_t index_i, Real dt)
     }
 }
 //=================================================================================================//
-
-//=================================================================================================//
-ConstrainVelocityAt_Y_Direction::
-    ConstrainVelocityAt_Y_Direction(SPHBody &sph_body, Real Length_channel)
-    : LocalDynamics(sph_body),
-      vel_(particles_->getVariableDataByName<Vecd>("Velocity")),
-      pos_(particles_->getVariableDataByName<Vecd>("Position")),
-      length_channel_(Length_channel) {}
-//=================================================================================================//
-void ConstrainVelocityAt_Y_Direction::update(size_t index_i, Real dt)
-{
-    if (pos_[index_i][0] > 0.5 * length_channel_)
-    {
-        vel_[index_i][1] = 0.0;
-    }
-}
-//=================================================================================================//
-UpdateTurbulentPlugFlowIndicator::
-    UpdateTurbulentPlugFlowIndicator(SPHBody &sph_body, Real DH)
-    : LocalDynamics(sph_body),
-      turbu_plug_flow_indicator_(particles_->registerStateVariable<int>("TurbulentPlugFlowIndicator")),
-      pos_(particles_->getVariableDataByName<Vecd>("Position")), channel_width_(DH)
-{
-    particles_->addVariableToSort<int>("TurbulentPlugFlowIndicator");
-    particles_->addVariableToWrite<int>("TurbulentPlugFlowIndicator");
-}
-//=================================================================================================//
-void UpdateTurbulentPlugFlowIndicator::update(size_t index_i, Real dt)
-{
-    turbu_plug_flow_indicator_[index_i] = 0;
-    if (pos_[index_i][0] > 0.0)
-    {
-        if (pos_[index_i][1] > 0.25 * channel_width_ && pos_[index_i][1] < 0.75 * channel_width_)
-        {
-            turbu_plug_flow_indicator_[index_i] = 1;
-        }
-    }
-}
-//=================================================================================================//
 void TurbulentLinearGradientCorrectionMatrix<Inner<>>::interaction(size_t index_i, Real dt)
 {
     Matd local_configuration = Eps * Matd::Identity();
@@ -1102,23 +1047,6 @@ void TurbulentLinearGradientCorrectionMatrix<Inner<>>::update(size_t index_i, Re
     Real weight1_ = turbu_B_[index_i].determinant() / (turbu_B_[index_i].determinant() + det_sqr);
     Real weight2_ = det_sqr / (turbu_B_[index_i].determinant() + det_sqr);
     turbu_B_[index_i] = weight1_ * inverse + weight2_ * Matd::Identity();
-}
-//=================================================================================================//
-GetLimiterOfTransportVelocityCorrection::
-    GetLimiterOfTransportVelocityCorrection(SPHBody &sph_body, Real slope)
-    : LocalDynamics(sph_body),
-      h_ref_(sph_body_.sph_adaptation_->ReferenceSmoothingLength()),
-      zero_gradient_residue_(particles_->getVariableDataByName<Vecd>("ZeroGradientResidue")),
-      slope_(slope),
-      limiter_tvc_(particles_->registerStateVariable<Real>("LimiterOfTVC"))
-{
-    particles_->addVariableToWrite<Real>("LimiterOfTVC");
-}
-//=================================================================================================//
-void GetLimiterOfTransportVelocityCorrection::update(size_t index_i, Real dt)
-{
-    Real squared_norm = zero_gradient_residue_[index_i].squaredNorm();
-    limiter_tvc_[index_i] = SMIN(slope_ * squared_norm * h_ref_ * h_ref_, Real(1));
 }
 //=================================================================================================//
 } // namespace fluid_dynamics
