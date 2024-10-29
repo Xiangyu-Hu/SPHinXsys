@@ -531,25 +531,10 @@ class ModifiedTruncatedLinear : public Limiter
         return SMIN(slope_ * measure_scale, Real(1));
     };
 };
-template <class ParticleScope>
-using TVC_ModifiedLimited_NoRKGC =
-    BaseTransportVelocityCorrectionComplex<SingleResolution, ModifiedTruncatedLinear, NoKernelCorrection, ParticleScope>;
-
-template <class ParticleScope>
-using TVC_ModifiedLimited_withLinearGradientCorrection =
-    BaseTransportVelocityCorrectionComplex<SingleResolution, ModifiedTruncatedLinear, LinearGradientCorrection, ParticleScope>;
 
 template <class ParticleScope>
 using TVC_ModifiedLimited_RKGC_OBFCorrection =
     BaseTransportVelocityCorrectionComplex<SingleResolution, ModifiedTruncatedLinear, LinearGradientCorrectionWithBulkScope, ParticleScope>;
-
-template <class ParticleScope>
-using TVC_NotLimited_RKGC_OBFCorrection =
-    BaseTransportVelocityCorrectionComplex<SingleResolution, NoLimiter, LinearGradientCorrectionWithBulkScope, ParticleScope>;
-
-template <class ParticleScope>
-using TVC_ModifiedLimited_withoutLinearGradientCorrection =
-    BaseTransportVelocityCorrectionComplex<SingleResolution, ModifiedTruncatedLinear, NoKernelCorrection, ParticleScope>;
 //=================================================================================================//
 } // namespace fluid_dynamics
 } // namespace SPH

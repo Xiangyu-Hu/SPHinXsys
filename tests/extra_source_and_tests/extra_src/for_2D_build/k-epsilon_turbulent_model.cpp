@@ -18,15 +18,6 @@ BaseTurbuClosureCoeff::BaseTurbuClosureCoeff()
 //=================================================================================================//
 Real WallFunction::get_distance_from_P_to_wall(Real y_p_constant)
 {
-    //** Check the distance. *
-    //if (y_p_constant < 0.05 * dp_wall)
-    //{
-    //	std::cout << "y_p_j < 0.05 * wall_particle_spacing_" << std::endl;
-    //	std::cin.get();
-    //}
-    //y_p_j = abs(e_j_n.dot(r_ij * e_ij)) - 0.5 * wall_particle_spacing_;
-
-    //** Use the constant y_p strategy. *
     return y_p_constant;
 }
 //=================================================================================================//
@@ -41,18 +32,6 @@ Real WallFunction::get_dimensionless_velocity(Real y_star, Real time)
     {
         dimensionless_velocity = log_law_wall_function(y_star);
     }
-    if (std::isnan(dimensionless_velocity) || std::isinf(dimensionless_velocity))
-    {
-        std::cout << "u_star=" << dimensionless_velocity << std::endl;
-        std::cout << "y_star=" << y_star << std::endl;
-        std::cin.get();
-    }
-    //if (dimensionless_velocity<0.0)
-    //{
-    //	std::cout << "dimensionless_velocity<0.0" << dimensionless_velocity << std::endl;
-    //	std::cin.get();
-    //}
-
     return dimensionless_velocity;
 }
 //=================================================================================================//
@@ -64,7 +43,6 @@ Real WallFunction::get_near_wall_velocity_gradient_magnitude(Real y_star, Real v
 //=================================================================================================//
 Real WallFunction::log_law_wall_function(Real y_star)
 {
-    //** u_star should larger than 0 *
     Real u_star = abs(log(turbu_const_E_ * y_star) / Karman_);
     return u_star;
 }
@@ -98,7 +76,6 @@ GetVelocityGradient<Inner<>>::GetVelocityGradient(BaseInnerRelation &inner_relat
 //=================================================================================================//
 void GetVelocityGradient<Inner<>>::interaction(size_t index_i, Real dt)
 {
-    //** The near wall velo grad is updated in wall function part *
     if (is_near_wall_P1_[index_i] != 1)
     {
         velocity_gradient_[index_i] = Matd::Zero();
@@ -130,7 +107,6 @@ void GetVelocityGradient<Inner<>>::update(size_t index_i, Real dt)
 {
     if (is_near_wall_P1_[index_i] != 1)
     {
-        //velocity_gradient_[index_i] *= B_[index_i];
         velocity_gradient_[index_i] *= turbu_B_[index_i];
     }
 }
@@ -145,7 +121,6 @@ GetVelocityGradient<Contact<Wall>>::GetVelocityGradient(BaseContactRelation &con
 //=================================================================================================//
 void GetVelocityGradient<Contact<Wall>>::interaction(size_t index_i, Real dt)
 {
-    //** The near wall velo grad is updated in wall function part *
     if (is_near_wall_P1_[index_i] != 1)
     {
         Vecd vel_i = vel_[index_i];
@@ -258,7 +233,6 @@ void K_TurbulentModelInner::update(size_t index_i, Real dt)
 {
     if (is_STL_)
     {
-
         Real denominator = 1.0 + turbu_epsilon_[index_i] * dt / turbu_k_[index_i];
         turbu_k_[index_i] += dk_dt_without_dissipation_[index_i] * dt;
         turbu_k_[index_i] /= denominator;
@@ -339,7 +313,6 @@ void E_TurbulentModelInner::update(size_t index_i, Real dt)
     {
         if (is_STL_)
         {
-
             Real denominator = 1.0 + C_2_ * turbu_epsilon_[index_i] * dt / turbu_k_[index_i];
             turbu_epsilon_[index_i] += depsilon_dt_without_dissipation_[index_i] * dt;
             turbu_epsilon_[index_i] /= denominator;
@@ -606,17 +579,6 @@ Real InflowTurbulentCondition::getTurbulentInflowK(Vecd &position, Vecd &velocit
         {
             polynomial_value += coeff[i] * std::pow(Y, i);
         }
-
-        if (Y > channel_height / 2.0 || Y < 0.0)
-        {
-            std::cout << "position[1]=" << position[1] << std::endl;
-            std::cout << "Y=" << Y << std::endl;
-            std::cout << "polynomial_value=" << polynomial_value << std::endl;
-            std::cout << "Stop" << std::endl;
-            std::cout << "=================" << std::endl;
-            std::cin.get();
-        }
-
         temp_in_turbu_k = polynomial_value;
     }
     if (position[0] < 0.0)
@@ -657,17 +619,6 @@ Real InflowTurbulentCondition::getTurbulentInflowE(Vecd &position, Real &turbu_k
         {
             polynomial_value += coeff[i] * std::pow(Y, i);
         }
-
-        if (Y > channel_height / 2.0 || Y < 0.0)
-        {
-            std::cout << "position[1]=" << position[1] << std::endl;
-            std::cout << "Y=" << Y << std::endl;
-            std::cout << "polynomial_value=" << polynomial_value << std::endl;
-            std::cout << "Stop" << std::endl;
-            std::cout << "=================" << std::endl;
-            std::cin.get();
-        }
-
         temp_in_turbu_E = polynomial_value;
     }
     if (position[0] < 0.0)
@@ -724,7 +675,6 @@ JudgeIsNearWall::
 //=================================================================================================//
 void JudgeIsNearWall::interaction(size_t index_i, Real dt)
 {
-
     is_near_wall_P2_[index_i] = 0;
     index_nearest_[index_i] = 0;
     distance_to_dummy_interface_[index_i] = 0.0;
@@ -789,13 +739,6 @@ void JudgeIsNearWall::interaction(size_t index_i, Real dt)
         {
             e_i_nearest_tau[0] = e_i_nearest_n[1];
             e_i_nearest_tau[1] = e_i_nearest_n[0] * (-1.0);
-        }
-
-        if (r_dmy_itfc_n_sum <= 0.0)
-        {
-            std::cout << "r_dmy_itfc_n_sum is almost zero" << std::endl;
-            std::cout << "count=" << count_average << std::endl;
-            std::cin.get();
         }
 
         distance_to_dummy_interface_up_average_[index_i] = r_dmy_itfc_n_sum / ttl_weight;
@@ -896,35 +839,8 @@ void StandardWallFunctionCorrection::interaction(size_t index_i, Real dt)
         velo_tan_mag = abs(e_i_nearest_tau.dot(vel_i));
         velo_tan_[index_i] = velo_tan_mag;
 
-        if (wall_Y_star_[index_i] != static_cast<Real>(wall_Y_star_[index_i]))
-        {
-            std::cout << "y* is not a real value, please check" << std::endl;
-            std::cin.get();
-        }
-
         Real u_star = get_dimensionless_velocity(wall_Y_star_[index_i], current_time);
         velo_fric_mag = sqrt(C_mu_25_ * turbu_k_i_05 * velo_tan_mag / u_star);
-
-        if (velo_fric_mag != static_cast<Real>(velo_fric_mag))
-        {
-            std::cout << "friction velocity is not a real, please check" << std::endl;
-            std::cout << "velo_fric=" << velo_fric_mag << std::endl
-                      << "velo_tan_mag=" << velo_tan_mag << std::endl;
-            std::cout << "turbu_k_=" << pow(turbu_k_[index_i], 0.5) << std::endl;
-            std::cout << "sum=" << (Karman_ * velo_tan_mag * C_mu_25_ * pow(turbu_k_[index_i], 0.5) / log(turbu_const_E_ * C_mu_25_ * pow(turbu_k_[index_i], 0.5) * y_p_constant_i * rho_i / molecular_viscosity_)) << std::endl;
-            std::cout << "numerator=" << Karman_ * velo_tan_mag * C_mu_25_ * pow(turbu_k_[index_i], 0.5) << std::endl;
-            std::cout << "denominator=" << log(turbu_const_E_ * C_mu_25_ * pow(turbu_k_[index_i], 0.5) * y_p_constant_i * rho_i / molecular_viscosity_) << std::endl;
-            Real temp = C_mu_25_ * pow(turbu_k_[index_i], 0.5) * velo_tan_mag / u_star;
-
-            std::cout << "temp =" << temp << std::endl;
-
-            std::cout << "pow(turbu_k_[index_i], 0.5) =" << pow(turbu_k_[index_i], 0.5) << std::endl;
-            std::cout << "velo_tan_mag / u_star =" << velo_tan_mag / u_star << std::endl;
-            std::cout << "velo_tan_mag =" << velo_tan_mag << std::endl;
-            std::cout << " u_star =" << u_star << std::endl;
-            std::cin.get();
-        }
-
         velo_friction_[index_i] = velo_fric_mag * e_i_nearest_tau;
         if (vel_i.dot(velo_friction_[index_i]) < 0.0)
             velo_friction_[index_i] = -1.0 * velo_friction_[index_i];
