@@ -1,4 +1,4 @@
-#include "14.h"
+#include "test_2d_turbulent_channel.h"
 using namespace SPH;
 
 int main(int ac, char *av[])
@@ -11,7 +11,7 @@ int main(int ac, char *av[])
     /** Tag for run particle relaxation for the initial body fitted distribution. */
     sph_system.setRunParticleRelaxation(false);
     /** Tag for computation start with relaxed body fitted particles distribution. */
-    sph_system.setReloadParticles(true);
+    sph_system.setReloadParticles(false);
 
     sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
     IOEnvironment io_environment(sph_system);
@@ -36,15 +36,30 @@ int main(int ac, char *av[])
         ? wall_boundary.generateParticles<BaseParticles, Reload>(wall_boundary.getName())
         : wall_boundary.generateParticles<BaseParticles, Lattice>();
 
-    getPositionsOfMultipleObserveLines();
-    output_observe_positions();
+    ObserverBody observer_center_point(sph_system, "ObserverCenterPoint");
+    observer_center_point.generateParticles<ObserverParticles>(observer_location_center_point);
+
+    for (int i = 0; i < num_observer_points; ++i)
+    {
+        Vecd pos_observer_i = pos_observe_start + i * observe_spacing * unit_direction_observe;
+        if (i == 0)
+        {
+            pos_observer_i -= observer_offset_distance * unit_direction_observe;
+        }
+        if (i == num_observer_points - 1)
+        {
+            pos_observer_i += observer_offset_distance * unit_direction_observe;
+        }
+        observation_location.push_back(pos_observer_i);
+    }
     ObserverBody fluid_observer(sph_system, "FluidObserver");
-    fluid_observer.generateParticles<ObserverParticles>(observation_locations);
+    fluid_observer.generateParticles<ObserverParticles>(observation_location);
 
     /** topology */
     InnerRelation water_block_inner(water_block);
     ContactRelation water_wall_contact(water_block, {&wall_boundary});
     ContactRelation fluid_observer_contact(fluid_observer, {&water_block});
+    ContactRelation observer_centerpoint_contact(observer_center_point, {&water_block});
     //----------------------------------------------------------------------
     // Combined relations built from basic relations
     // which is only used for update configuration.
@@ -73,9 +88,6 @@ int main(int ac, char *av[])
         /** A  Physics relaxation step. */
         RelaxationStepLevelSetCorrectionInner relaxation_step_inner(wall_boundary_inner);
         RelaxationStepLevelSetCorrectionInner relaxation_step_inner_water(water_block_inner);
-        //RelaxationStepLevelSetCorrectionComplex relaxation_step_inner(wall_boundary_inner, water_block);
-        //RelaxationStepLevelSetCorrectionComplex relaxation_step_inner_water(water_block_inner, water_wall_contact); //** For consistency of Fluid *
-
         //----------------------------------------------------------------------
         //	Particle relaxation starts here.
         //----------------------------------------------------------------------
@@ -121,6 +133,7 @@ int main(int ac, char *av[])
 
     InteractionWithUpdate<LinearGradientCorrectionMatrixComplex> corrected_configuration_fluid(water_block_inner, water_wall_contact);
 
+    //InteractionWithUpdate<LinearGradientCorrectionMatrixInner> corrected_configuration_fluid(water_block_inner);
     InteractionWithUpdate<fluid_dynamics::TurbulentLinearGradientCorrectionMatrixInner> corrected_configuration_fluid_only_inner(water_block_inner);
 
     /** Pressure relaxation algorithm with Riemann solver for viscous flows. */
@@ -130,44 +143,47 @@ int main(int ac, char *av[])
 
     /** Density relaxation algorithm by using position verlet time stepping. */
     Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallNoRiemann> density_relaxation(water_block_inner, water_wall_contact);
+    //Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallRiemann> density_relaxation(water_block_inner, water_wall_contact);
+    //Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWall<DissipativeRiemannSolver>> density_relaxation(water_block_inner, water_wall_contact);
 
     /** Turbulent.Note: When use wall function, K Epsilon calculation only consider inner */
     InteractionWithUpdate<fluid_dynamics::JudgeIsNearWall> update_near_wall_status(water_block_inner, water_wall_contact);
 
     InteractionWithUpdate<fluid_dynamics::GetVelocityGradientInner> get_velocity_gradient(water_block_inner, weight_vel_grad_sub_nearwall);
     //InteractionWithUpdate<fluid_dynamics::GetVelocityGradientComplex> get_velocity_gradient(water_block_inner, water_wall_contact);
+    //InteractionWithUpdate<fluid_dynamics::VelocityGradientWithWall<LinearGradientCorrection>> vel_grad_calculation(water_block_inner, water_wall_contact);
 
-    /** Turbulent.Note: Temporarily transfer parameters at this place. The 3rd parameter refers to extra dissipation for viscous */
     InteractionWithUpdate<fluid_dynamics::K_TurbulentModelInner> k_equation_relaxation(water_block_inner, initial_turbu_values, is_AMRD, is_source_term_linearisation);
     InteractionWithUpdate<fluid_dynamics::E_TurbulentModelInner> epsilon_equation_relaxation(water_block_inner, is_source_term_linearisation);
     InteractionDynamics<fluid_dynamics::TKEnergyForceComplex> turbulent_kinetic_energy_force(water_block_inner, water_wall_contact);
     InteractionDynamics<fluid_dynamics::StandardWallFunctionCorrection> standard_wall_function_correction(water_block_inner, water_wall_contact, y_p_constant);
 
-    /** Turbulent.Extra boundary condition */
     SimpleDynamics<fluid_dynamics::ConstrainNormalVelocityInRegionP> constrain_normal_velocity_in_P_region(water_block);
 
     /** Choose one, ordinary or turbulent. Computing viscous force, */
     InteractionWithUpdate<fluid_dynamics::TurbulentViscousForceWithWall> turbulent_viscous_force(water_block_inner, water_wall_contact);
     //InteractionWithUpdate<fluid_dynamics::ViscousForceWithWall> viscous_force(water_block_inner, water_wall_contact);
 
-    /** Impose transport velocity. */
+    /** Impose transport velocity, with or without limiter . */
+    //InteractionWithUpdate<fluid_dynamics::TransportVelocityLimitedCorrectionComplex<BulkParticles>> transport_velocity_correction(water_block_inner, water_wall_contact);
     InteractionWithUpdate<fluid_dynamics::TVC_ModifiedLimited_RKGC_OBFCorrection<BulkParticles>> transport_velocity_correction(water_block_inner, water_wall_contact);
 
     /** A temporarily test for the limiter . */
     SimpleDynamics<fluid_dynamics::GetLimiterOfTransportVelocityCorrection> get_limiter_of_transport_velocity_correction(water_block, 1000);
 
+    /** Evaluation of density by summation approach. */
+    //InteractionWithUpdate<fluid_dynamics::DensitySummationFreeStreamComplex> update_density_by_summation(water_block_inner, water_wall_contact);
+
     /** Initialize particle acceleration. */
-    StartupAcceleration time_dependent_acceleration(Vec2d::Zero(), 2.0);
-    SimpleDynamics<GravityForce<Gravity>> apply_gravity_force(water_block, time_dependent_acceleration);
+    StartupAcceleration time_dependent_acceleration(Vec2d(U_f, 0.0), 2.0);
+    SimpleDynamics<GravityForce<StartupAcceleration>> apply_gravity_force(water_block, time_dependent_acceleration);
 
     //----------------------------------------------------------------------
     // Left/Inlet buffer
     //----------------------------------------------------------------------
-    BodyAlignedBoxByCell left_emitter(water_block, makeShared<AlignedBoxShape>(xAxis, Transform(Vec2d(left_buffer_translation)), left_buffer_halfsize));
-    fluid_dynamics::NonPrescribedPressureBidirectionalBuffer left_emitter_inflow_injection(left_emitter, inlet_particle_buffer);
-
-    BodyAlignedBoxByCell left_disposer(water_block, makeShared<AlignedBoxShape>(xAxis, Transform(Rotation2d(Pi), Vec2d(left_buffer_translation)), left_buffer_halfsize));
-    SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion> left_disposer_outflow_deletion(left_disposer);
+    AlignedBoxShape left_emitter_shape(xAxis, Transform(Vec2d(left_buffer_translation)), left_buffer_halfsize);
+    BodyAlignedBoxByCell left_emitter(water_block, left_emitter_shape);
+    fluid_dynamics::BidirectionalBuffer<LeftInflowPressure> left_bidirection_buffer(left_emitter, inlet_particle_buffer);
 
     //SimpleDynamics<fluid_dynamics::PressureCondition<LeftInflowPressure>> left_inflow_pressure_condition(left_emitter);
     SimpleDynamics<fluid_dynamics::PressureConditionCorrection<LeftInflowPressure>> left_inflow_pressure_condition(left_emitter);
@@ -180,19 +196,15 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     // Right/Outlet buffer
     //----------------------------------------------------------------------
-    //BodyAlignedBoxByCell disposer(water_block, makeShared<AlignedBoxShape>(Transform(Vec2d(disposer_translation)), disposer_halfsize));
-    //SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion> disposer_outflow_deletion(disposer, 0);
-    BodyAlignedBoxByCell right_emitter(water_block, makeShared<AlignedBoxShape>(xAxis, Transform(Rotation2d(outlet_emitter_rotation_angel), Vec2d(right_buffer_translation)), right_buffer_halfsize));
-    fluid_dynamics::BidirectionalBuffer<RightOutflowPressure> right_emitter_inflow_injection(right_emitter, inlet_particle_buffer);
-    BodyAlignedBoxByCell right_disposer(water_block, makeShared<AlignedBoxShape>(xAxis, Transform(Rotation2d(outlet_disposer_rotation_angel), Vec2d(right_buffer_translation)), right_buffer_halfsize));
-    SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion> right_disposer_outflow_deletion(right_disposer);
+    AlignedBoxShape right_emitter_shape(xAxis, Transform(Rotation2d(Pi), Vec2d(right_buffer_translation)), right_buffer_halfsize);
+    BodyAlignedBoxByCell right_emitter(water_block, right_emitter_shape);
+    fluid_dynamics::BidirectionalBuffer<RightOutflowPressure> right_bidirection_buffer(right_emitter, inlet_particle_buffer);
 
     //SimpleDynamics<fluid_dynamics::PressureCondition<RightOutflowPressure>> right_outflow_pressure_condition(right_emitter);
     SimpleDynamics<fluid_dynamics::PressureConditionCorrection<RightOutflowPressure>> right_outflow_pressure_condition(right_emitter);
+    //----------------------------------------------------------------------
 
-    /** Temporary treatment for Pressure outlet module  */
     InteractionWithUpdate<fluid_dynamics::DensitySummationPressureComplex> update_fluid_density_pressure(water_block_inner, water_wall_contact);
-    //InteractionWithUpdate<fluid_dynamics::DensitySummationFreeStreamComplex> update_density_by_summation(water_block_inner, water_wall_contact);
 
     /** Choose one, ordinary or turbulent. Time step size without considering sound wave speed. */
     ReduceDynamics<fluid_dynamics::TurbulentAdvectionTimeStepSize> get_turbulent_fluid_advection_time_step_size(water_block, U_f);
@@ -203,7 +215,10 @@ int main(int ac, char *av[])
 
     /** Turbulent eddy viscosity calculation needs values of Wall Y start. */
     SimpleDynamics<fluid_dynamics::TurbulentEddyViscosity> update_eddy_viscosity(water_block);
-
+    //----------------------------------------------------------------------
+    //	Define the configuration related particles dynamics.
+    //----------------------------------------------------------------------
+    ParticleSorting particle_sorting(water_block);
     //----------------------------------------------------------------------
     //	File output and regression check.
     //----------------------------------------------------------------------
@@ -218,7 +233,7 @@ int main(int ac, char *av[])
     ObservedQuantityRecording<Real> write_recorded_water_mut("TurbulentViscosity", fluid_observer_contact);
     ObservedQuantityRecording<Real> write_recorded_water_epsilon("TurbulentDissipation", fluid_observer_contact);
     body_states_recording.addToWrite<int>(water_block, "BufferParticleIndicator");
-
+    RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>> write_centerpoint_quantity("TurbulentViscosity", observer_centerpoint_contact);
     /**
      * @brief Setup geometry and initial conditions.
      */
@@ -230,33 +245,40 @@ int main(int ac, char *av[])
     /** Tag inlet/outlet truncated particles */
     inlet_outlet_surface_particle_indicator.exec();
     /** Tag in/outlet buffer particles */
-    left_emitter_inflow_injection.tag_buffer_particles.exec();
-    right_emitter_inflow_injection.tag_buffer_particles.exec();
+    left_bidirection_buffer.tag_buffer_particles.exec();
+    right_bidirection_buffer.tag_buffer_particles.exec();
 
-    /** Output the start states of bodies. */
-    body_states_recording.writeToFile();
     //----------------------------------------------------------------------
     //	Setup computing and initial conditions.
     //----------------------------------------------------------------------
+    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     size_t number_of_iterations = sph_system.RestartStep();
-    Real dt = 0.0; /**< Default acoustic time step sizes. */
+    int screen_output_interval = 100;
+    int observation_sample_interval = screen_output_interval * 2;
+    Real end_time = 200.0;             /**< End time. */
+    Real Output_Time = end_time / 4.0; /**< Time stamps for output of body states. */
+    Real dt = 0.0;                     /**< Default acoustic time step sizes. */
     //----------------------------------------------------------------------
     //	Statistics for CPU time
     //----------------------------------------------------------------------
     TickCount t1 = TickCount::now();
     TimeInterval interval;
+    //----------------------------------------------------------------------
+    //	First output before the main loop.
+    //----------------------------------------------------------------------
+    body_states_recording.writeToFile();
+    write_centerpoint_quantity.writeToFile(number_of_iterations);
     //----------------------------------------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------------------------------------
     int num_output_file = 0;
-    //Real start_time_turbulence = 70.0;
-    while (physical_time_ < end_time)
+    while (physical_time < end_time)
     {
         Real integration_time = 0.0;
         /** Integrate time (loop) until the next output time. */
         while (integration_time < Output_Time)
         {
-            //apply_gravity_force.exec();
+            apply_gravity_force.exec();
 
             //Real Dt = get_fluid_advection_time_step_size.exec();
             Real Dt = get_turbulent_fluid_advection_time_step_size.exec();
@@ -268,10 +290,9 @@ int main(int ac, char *av[])
 
             corrected_configuration_fluid.exec();
             corrected_configuration_fluid_only_inner.exec();
-            if (physical_time_ > turbulent_module_activate_time) //** A temporary treatment *
-            {
-                update_eddy_viscosity.exec();
-            }
+
+            update_eddy_viscosity.exec();
+
             //viscous_force.exec();
             turbulent_viscous_force.exec();
 
@@ -283,17 +304,10 @@ int main(int ac, char *av[])
             int inner_itr = 0;
             while (relaxation_time < Dt)
             {
-                //if (inner_itr == 8)
-                //{
-                //    system("pause");
-                //}
-
                 dt = SMIN(get_fluid_time_step_size.exec(), Dt);
 
-                if (physical_time_ > turbulent_module_activate_time) //** A temporary treatment *
-                {
-                    turbulent_kinetic_energy_force.exec();
-                }
+                turbulent_kinetic_energy_force.exec();
+
                 pressure_relaxation.exec(dt);
 
                 kernel_summation.exec();
@@ -301,35 +315,30 @@ int main(int ac, char *av[])
                 right_outflow_pressure_condition.exec(dt);
 
                 if (is_constrain_normal_velocity_in_P_region)
-                {
                     constrain_normal_velocity_in_P_region.exec();
-                }
 
                 inflow_velocity_condition.exec();
 
-                if (physical_time_ > turbulent_module_activate_time) //** A temporary treatment *
-                {
-                    impose_turbulent_inflow_condition.exec();
-                }
+                impose_turbulent_inflow_condition.exec();
 
                 density_relaxation.exec(dt);
 
                 distance_to_wall.exec();
                 update_near_wall_status.exec();
 
-                if (physical_time_ > turbulent_module_activate_time) //** A temporary treatment *
-                {
-                    standard_wall_function_correction.exec();
-                    get_velocity_gradient.exec(dt);
-                    k_equation_relaxation.exec(dt);
-                    epsilon_equation_relaxation.exec(dt);
-                }
+                standard_wall_function_correction.exec();
+
+                get_velocity_gradient.exec(dt);
+
+                k_equation_relaxation.exec(dt);
+                epsilon_equation_relaxation.exec(dt);
+
                 relaxation_time += dt;
                 integration_time += dt;
-                physical_time_ += dt;
+                physical_time += dt;
                 inner_itr++;
                 //std::cout << "num_output_file=" << num_output_file << std::endl;
-                //if (physical_time_ >9.3)
+                //if (physical_time >9.3)
                 //{
                 //body_states_recording.writeToFile();
                 //}
@@ -337,17 +346,21 @@ int main(int ac, char *av[])
             if (number_of_iterations % screen_output_interval == 0)
             {
                 std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
-                          << physical_time_
+                          << physical_time
                           << "	Dt = " << Dt << "	dt = " << dt << "\n";
+                if (number_of_iterations % observation_sample_interval == 0 && number_of_iterations != sph_system.RestartStep())
+                {
+                    write_centerpoint_quantity.writeToFile(number_of_iterations);
+                }
             }
             number_of_iterations++;
 
-            /** inflow injection*/
-            left_emitter_inflow_injection.injection.exec();
-            right_emitter_inflow_injection.injection.exec();
-
-            left_disposer_outflow_deletion.exec();
-            right_disposer_outflow_deletion.exec();
+            // ** First do injection for all buffers *
+            left_bidirection_buffer.injection.exec();
+            right_bidirection_buffer.injection.exec();
+            // ** Then do deletion for all buffers *
+            left_bidirection_buffer.deletion.exec();
+            right_bidirection_buffer.deletion.exec();
 
             /** Update cell linked list and configuration. */
             if (number_of_iterations % 100 == 0 && number_of_iterations != 1)
@@ -361,21 +374,22 @@ int main(int ac, char *av[])
             /** Tag truncated inlet/outlet particles*/
             inlet_outlet_surface_particle_indicator.exec();
             /** Tag in/outlet buffer particles that suffer pressure condition*/
-            left_emitter_inflow_injection.tag_buffer_particles.exec();
-            right_emitter_inflow_injection.tag_buffer_particles.exec();
+            left_bidirection_buffer.tag_buffer_particles.exec();
+            right_bidirection_buffer.tag_buffer_particles.exec();
 
-            if (physical_time_ > cutoff_time)
+            if (physical_time > end_time * 0.6)
             {
                 write_recorded_water_velocity.writeToFile(number_of_iterations);
                 write_recorded_water_k.writeToFile(number_of_iterations);
                 write_recorded_water_mut.writeToFile(number_of_iterations);
                 write_recorded_water_epsilon.writeToFile(number_of_iterations);
             }
-            //if (physical_time_ > end_time * 0.5)
+            //if (physical_time > end_time * 0.5)
             //body_states_recording.writeToFile();
         }
         //TickCount t2 = TickCount::now();
         body_states_recording.writeToFile();
+        observer_centerpoint_contact.updateConfiguration();
         num_output_file++;
         //if (num_output_file == 100)
         //    system("pause");
@@ -387,5 +401,14 @@ int main(int ac, char *av[])
     tt = t4 - t1 - interval;
     std::cout << "Total wall time for computation: " << tt.seconds()
               << " seconds." << std::endl;
+
+    if (sph_system.GenerateRegressionData())
+    {
+        write_centerpoint_quantity.generateDataBase(1.0e-3);
+    }
+    else
+    {
+        write_centerpoint_quantity.testResult();
+    }
     return 0;
 }
