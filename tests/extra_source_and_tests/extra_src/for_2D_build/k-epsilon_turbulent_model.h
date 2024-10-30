@@ -316,10 +316,6 @@ class TurbuViscousForce<Contact<Wall>> : public BaseTurbuViscousForceWithWall, p
 
 using TurbulentViscousForceWithWall = ComplexInteraction<TurbuViscousForce<Inner<>, Contact<Wall>>>;
 //=================================================================================================//
-/**
-	 * @class TurbuViscousAccInner
-	 * @brief  the turbulent viscosity force induced acceleration
-	 */
 class TurbulentEddyViscosity : public LocalDynamics, public BaseTurbuClosureCoeff
 {
   public:
