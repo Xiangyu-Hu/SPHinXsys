@@ -177,18 +177,17 @@ class MeshVariable : public Entity
   public:
     using PackageData = PackageDataMatrix<DataType, 4>;
     MeshVariable(const std::string &name, size_t data_size)
-        : Entity(name), data_field_(nullptr){};
-    ~MeshVariable() { delete[] data_field_; };
+        : Entity(name), discrete_variable_(name, data_size){};
+    ~MeshVariable() {};
 
-    // void setDataField(PackageData* mesh_data){ data_field_ = mesh_data; };
-    PackageData *DataField() { return data_field_; };
+    PackageData *DataField() { return discrete_variable_.DelegatedDataField(execution::par); };
     void allocateAllMeshVariableData(const size_t size)
     {
-        data_field_ = new PackageData[size];
+        discrete_variable_.reallocateDataField(execution::par, size);
     }
 
   private:
-    PackageData *data_field_;
+    DiscreteVariable<PackageData> discrete_variable_;
 };
 
 template <typename DataType, template <typename VariableDataType> class VariableType>

@@ -20,6 +20,17 @@ Arrayi BaseMeshLocalDynamics::CellIndexFromSortIndex(const size_t &sort_index)
     return cell_index;
 }
 //=============================================================================================//
+template <typename FunctionOnData>
+void BaseMeshLocalDynamics::for_each_cell_data(const FunctionOnData &function)
+{
+    for (int i = 0; i != pkg_size; ++i)
+        for (int j = 0; j != pkg_size; ++j)
+            for (int k = 0; k != pkg_size; ++k)
+            {
+                function(i, j, k);
+            }
+}
+//=============================================================================================//
 void InitializeDataForSingularPackage::update(const size_t package_index, Real far_field_level_set)
 {
     auto &phi = phi_.DataField()[package_index];
@@ -28,7 +39,7 @@ void InitializeDataForSingularPackage::update(const size_t package_index, Real f
     auto &kernel_weight = kernel_weight_.DataField()[package_index];
     auto &kernel_gradient = kernel_gradient_.DataField()[package_index];
 
-    mesh_data_.for_each_cell_data(
+    for_each_cell_data(
         [&](int i, int j, int k)
         {
             phi[i][j][k] = far_field_level_set;
@@ -71,7 +82,7 @@ void InitializeBasicDataForAPackage::update(const size_t &package_index)
     auto &phi = phi_.DataField()[package_index];
     auto &near_interface_id = near_interface_id_.DataField()[package_index];
     Arrayi cell_index = mesh_data_.meta_data_cell_[package_index].first;
-    mesh_data_.for_each_cell_data(
+    for_each_cell_data(
         [&](int i, int j, int k)
         {
             Vec3d position = mesh_data_.DataPositionFromIndex(cell_index, Array3i(i, j, k));
@@ -149,7 +160,7 @@ void ReinitializeLevelSet::update(const size_t &package_index)
     auto &near_interface_id_addrs = near_interface_id_.DataField()[package_index];
     auto &neighborhood = mesh_data_.cell_neighborhood_[package_index];
 
-    mesh_data_.for_each_cell_data(
+    for_each_cell_data(
         [&](int i, int j, int k)
         {
             // only reinitialize non cut cells
@@ -186,7 +197,7 @@ void MarkNearInterface::update(const size_t &package_index)
             corner_averages[i][j][k] = mesh_data_.CornerAverage(phi_, Arrayi(i, j, k), Arrayi(-1, -1, -1), neighborhood);
         });
 
-    mesh_data_.for_each_cell_data(
+    for_each_cell_data(
         [&](int i, int j, int k)
         {
             // first assume far cells
@@ -227,7 +238,7 @@ void RedistanceInterface::update(const size_t &package_index)
     auto &neighborhood = mesh_data_.cell_neighborhood_[package_index];
 
     using NeighbourIndex = std::pair<size_t, Arrayi>; /**< stores shifted neighbour info: (size_t)package index, (arrayi)local grid index. */
-    mesh_data_.for_each_cell_data(
+    for_each_cell_data(
         [&](int i, int j, int k)
         {
             int near_interface_id = near_interface_id_data[package_index][i][j][k];
@@ -303,7 +314,7 @@ void DiffuseLevelSetSign::update(const size_t &package_index)
     auto near_interface_id_data = near_interface_id_.DataField();
     auto &neighborhood = mesh_data_.cell_neighborhood_[package_index];
 
-    mesh_data_.for_each_cell_data(
+    for_each_cell_data(
         [&](int i, int j, int k)
         {
             // near interface cells are not considered

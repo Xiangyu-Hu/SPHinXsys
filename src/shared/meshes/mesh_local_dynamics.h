@@ -60,7 +60,8 @@ class BaseMeshLocalDynamics
     virtual ~BaseMeshLocalDynamics(){};
 
   protected:
-    MeshWithGridDataPackages<4> &mesh_data_;
+    MeshWithGridDataPackagesType &mesh_data_;
+    static constexpr int pkg_size = 4; 
     Arrayi all_cells_;
     Real grid_spacing_;
     Real data_spacing_;
@@ -73,6 +74,10 @@ class BaseMeshLocalDynamics
 
     size_t SortIndexFromCellIndex(const Arrayi &cell_index);
     Arrayi CellIndexFromSortIndex(const size_t &sort_index);
+
+    /** void (non_value_returning) function iterate on all data points by value. */
+    template <typename FunctionOnData>
+    void for_each_cell_data(const FunctionOnData &function);
 };
 
 class InitializeDataForSingularPackage : public BaseMeshLocalDynamics
@@ -154,6 +159,12 @@ class UpdateLevelSetGradient : public BaseMeshLocalDynamics
     virtual ~UpdateLevelSetGradient(){};
 
     void update(const size_t &index);
+  private:
+    /** compute gradient transform within data package at `package_index` */
+    template <typename InDataType, typename OutDataType>
+    void computeGradient(MeshVariable<InDataType> &in_variable,
+                         MeshVariable<OutDataType> &out_variable,
+                         const size_t package_index);
 };
 
 class UpdateKernelIntegrals : public BaseMeshLocalDynamics
