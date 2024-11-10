@@ -10,6 +10,7 @@
 #include "common_weakly_compressible_FVM_classes.h"
 #include "turbulence_model.hpp"
 #include "rans_dynamics.hpp"
+#include "extended_eulerian_riemann_solver.cpp"
 using namespace SPH;
 using namespace std;
 //----------------------------------------------------------------------

@@ -42,12 +42,13 @@ int main(int ac, char *av[])
     the value is larger, the numerical dissipation larger*/
 
     InteractionWithUpdate<fluid_dynamics::EulerianIntegration1stHalfInnerRiemann> pressure_relaxation(water_block_inner, 1.0);
-    InteractionWithUpdate<fluid_dynamics::EulerianIntegration2ndHalfInnerRiemann> density_relaxation(water_block_inner, 1.0);
+    InteractionWithUpdate<fluid_dynamics::EulerianIntegration2ndHalfInnerRiemann> density_relaxation(water_block_inner, 1000.0);
     SimpleDynamics<TCFInitialCondition> initial_condition(water_block);
     SimpleDynamics<fluid_dynamics::WallAdjacentCells> wall_adj_cell(water_block_inner, ghost_creation);
+    SimpleDynamics<fluid_dynamics::TurbuleceVariablesGradient> turbulence_gradients(water_block_inner, ghost_creation);
    
-    InteractionWithUpdate<fluid_dynamics::KEpsilonStd1stHalfAcousticRiemannSolver> tke(water_block_inner, ghost_creation, 1.0);
-    InteractionWithUpdate<fluid_dynamics::KEpsilonStd2ndHalfAcousticRiemannSolver> dissipationrate(water_block_inner, ghost_creation, 1.0);
+    InteractionWithUpdate<fluid_dynamics::KEpsilonStd1stHalfExtendedHLLCRiemannSolver> tke(water_block_inner, ghost_creation);
+    InteractionWithUpdate<fluid_dynamics::KEpsilonStd2ndHalfExtendedHLLCRiemannSolver> dissipationrate(water_block_inner, ghost_creation);
     
     TCFBoundaryConditionSetup boundary_condition_setup(water_block_inner, ghost_creation);
     /** Time step size with considering sound wave speed. */
@@ -94,14 +95,16 @@ int main(int ac, char *av[])
     write_real_body_states.addToWrite<Real>(water_block, "dvdx");
     write_real_body_states.addToWrite<Real>(water_block, "dvdy");
     write_real_body_states.addToWrite<Matd>(water_block, "VelocityGradient");
+    write_real_body_states.addToWrite<Vecd>(water_block, "TKEGradient");
+    write_real_body_states.addToWrite<Vecd>(water_block, "DissipationGradient");
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
     Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     size_t number_of_iterations = 0;
     int screen_output_interval = 3000;
-    Real end_time = 10.0;
-    Real output_interval = 0.05; /**< time stamps for output. */ 
+    Real end_time = 500.0;
+    Real output_interval = 5.0; /**< time stamps for output. */ 
     //----------------------------------------------------------------------
     //	Statistics for CPU time
     //----------------------------------------------------------------------
@@ -120,6 +123,7 @@ int main(int ac, char *av[])
         while (integration_time < output_interval)
         {
             Real dt = get_fluid_time_step_size.exec();
+            turbulence_gradients.exec();
             boundary_condition_setup.resetBoundaryConditions();
             tke.exec(dt);
             boundary_condition_setup.resetBoundaryConditions();
@@ -138,6 +142,10 @@ int main(int ac, char *av[])
                 cout << fixed << setprecision(9) << "N=" << number_of_iterations << "	Time = "
                     << physical_time
                     << "	dt = " << dt << "\n";
+            }
+            if (number_of_iterations == 100 || number_of_iterations == 300 || number_of_iterations == 600)
+            {
+                Real x = 2.0;
             }
             number_of_iterations++;
         }
