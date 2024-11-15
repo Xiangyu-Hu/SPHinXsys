@@ -155,6 +155,7 @@ class SaintVenantKirchhoffSolid : public LinearElasticSolid
 
     /** second Piola-Kirchhoff stress related with green-lagrangian deformation tensor */
     virtual Matd StressPK2(Matd &deformation, size_t particle_index_i) override;
+    virtual Matd StressCauchy(Matd &almansi_strain, Matd &F, size_t particle_index_i) override;
 };
 
 /**
@@ -219,6 +220,7 @@ class OrthotropicSolid : public LinearElasticSolid
 
     /** second Piola-Kirchhoff stress related with green-lagrangian deformation tensor */
     virtual Matd StressPK2(Matd &deformation, size_t particle_index_i) override;
+    virtual Matd StressCauchy(Matd &almansi_strain, Matd &F, size_t particle_index_i) override;
     /** Volumetric Kirchhoff stress determinate */
     virtual Real VolumetricKirchhoff(Real J) override;
 
@@ -254,6 +256,7 @@ class FeneNeoHookeanSolid : public LinearElasticSolid
     };
     virtual ~FeneNeoHookeanSolid(){};
     virtual Matd StressPK2(Matd &deformation, size_t particle_index_i) override;
+    virtual Matd StressCauchy(Matd &almansi_strain, Matd &F, size_t particle_index_i) override;
     /** Define the calculation of the stress matrix for postprocessing */
     virtual std::string getRelevantStressMeasureName() override { return "Cauchy"; };
 };
@@ -281,6 +284,7 @@ class Muscle : public NeoHookeanSolid
     virtual Matd MuscleFiberDirection(size_t particle_index_i) { return f0f0_; };
     /** compute the stress through Constitutive relation. */
     virtual Matd StressPK2(Matd &deformation, size_t particle_index_i) override;
+    virtual Matd StressCauchy(Matd &almansi_strain, Matd &F, size_t particle_index_i) override;
     /** Volumetric Kirchhoff stress form determinate */
     virtual Real VolumetricKirchhoff(Real J) override;
     /** Define the calculation of the stress matrix for postprocessing */
@@ -330,6 +334,7 @@ class LocallyOrthotropicMuscle : public Muscle
     virtual Matd MuscleFiberDirection(size_t particle_index_i) override { return local_f0f0_[particle_index_i]; };
     /** Compute the stress through Constitutive relation. */
     virtual Matd StressPK2(Matd &deformation, size_t particle_index_i) override;
+    virtual Matd StressCauchy(Matd &almansi_strain, Matd &F, size_t particle_index_i) override;
     /** Define the calculation of the stress matrix for postprocessing */
     virtual std::string getRelevantStressMeasureName() override { return "Cauchy"; };
 };
