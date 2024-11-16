@@ -55,8 +55,16 @@ namespace SPH
                     Real mu_t_avg = (2.0 * mu_t_[index_i] * mu_t_[index_j]) / (mu_t_[index_i] + mu_t_[index_j]);
                     Real K_avg = 0.5 * (K_[index_i] + K_[index_j]);
                     
-                    K_adv_[index_i] += -(dW_ij * Vol_[index_j] * interface_state.rho_) * (interface_state.K_) * (interface_state.vel_.dot(e_ij));
-                    Real x = 1.0;
+                    if (vel_[index_i].dot(e_ij) > 0)
+                    {
+                        K_adv_[index_i] += -(dW_ij * Vol_[index_j] * interface_state.rho_) * (K_[index_j]) * (interface_state.vel_.dot(e_ij));
+                    }
+                    else
+                    {
+                        K_adv_[index_i] += -(dW_ij * Vol_[index_j] * interface_state.rho_) * (K_[index_i]) * (interface_state.vel_.dot(e_ij));
+                    }
+                    //K_adv_[index_i] += -(dW_ij * Vol_[index_j] * interface_state.rho_) * (interface_state.K_) * (interface_state.vel_.dot(e_ij));
+                    
                     K_lap_[index_i] += 2.0 * dW_ij * Vol_[index_j] * ((fluid_.ReferenceViscosity() + mu_t_avg / sigma_k_) * (K_[index_i] - K_[index_j]) / (r_ij));
                     
                     
@@ -92,8 +100,15 @@ namespace SPH
                     Real mu_t_avg = (2.0 * mu_t_[index_i] * mu_t_[index_j]) / (mu_t_[index_i] + mu_t_[index_j]);
                     Real K_avg = 0.5 * (K_[index_i] + K_[index_j]);
                     
-                    K_adv_[index_i] += -(dW_ij * Vol_[index_j] * interface_state.rho_) * (interface_state.K_) * (interface_state.vel_.dot(e_ij));
-                    Real C = 1.0;
+                   if (vel_[index_i].dot(e_ij) > 0)
+                    {
+                        K_adv_[index_i] += -(dW_ij * Vol_[index_j] * interface_state.rho_) * (K_[index_j]) * (interface_state.vel_.dot(e_ij));
+                    }
+                    else
+                    {
+                        K_adv_[index_i] += -(dW_ij * Vol_[index_j] * interface_state.rho_) * (K_[index_i]) * (interface_state.vel_.dot(e_ij));
+                    }
+                    // K_adv_[index_i] += -(dW_ij * Vol_[index_j] * interface_state.rho_) * (interface_state.K_) * (interface_state.vel_.dot(e_ij));
                     K_lap_[index_i] += 2.0 * dW_ij * Vol_[index_j] * ((fluid_.ReferenceViscosity() + mu_t_avg / sigma_k_) * (K_[index_i] - K_[index_j]) / (r_ij));
                     
                     
@@ -166,8 +181,16 @@ namespace SPH
                     Real mu_t_avg = (2.0 * mu_t_[index_i] * mu_t_[index_j]) / (mu_t_[index_i] + mu_t_[index_j]);
                     Real Eps_avg = 0.5 * (Eps_[index_i] + Eps_[index_j]);
                     
-                    Eps_adv_[index_i] += -(dW_ij * Vol_[index_j] * interface_state.rho_) * (interface_state.Eps_) * (interface_state.vel_.dot(e_ij));
-                    Real V = 1.2; 
+                    if (vel_[index_i].dot(e_ij) > 0)
+                    {
+                        Eps_adv_[index_i] += -(dW_ij * Vol_[index_j] * interface_state.rho_) * (Eps_[index_j]) * (interface_state.vel_.dot(e_ij));
+                    }
+                    else
+                    {
+                        Eps_adv_[index_i] += -(dW_ij * Vol_[index_j] * interface_state.rho_) * (Eps_[index_i]) * (interface_state.vel_.dot(e_ij));
+                    }
+
+                    //Eps_adv_[index_i] += -(dW_ij * Vol_[index_j] * interface_state.rho_) * (interface_state.Eps_) * (interface_state.vel_.dot(e_ij));
                     Eps_lap_[index_i] += 2.0 * dW_ij * Vol_[index_j] * (fluid_.ReferenceViscosity() + mu_t_avg / sigma_eps_) * ((Eps_[index_i] - Eps_[index_j]) / (r_ij));
                     
                     /* Eps_adv_[index_i] += -2.0 * (dW_ij * Vol_[index_j] * interface_state.rho_ * Eps_avg * interface_state.vel_).dot(e_ij);

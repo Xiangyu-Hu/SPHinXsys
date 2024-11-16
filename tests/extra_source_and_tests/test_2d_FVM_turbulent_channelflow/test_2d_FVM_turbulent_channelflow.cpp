@@ -103,8 +103,8 @@ int main(int ac, char *av[])
     Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     size_t number_of_iterations = 0;
     int screen_output_interval = 3000;
-    Real end_time = 500.0;
-    Real output_interval = 5.0; /**< time stamps for output. */ 
+    Real end_time = 200.0;
+    Real output_interval = 2.0; /**< time stamps for output. */ 
     //----------------------------------------------------------------------
     //	Statistics for CPU time
     //----------------------------------------------------------------------
@@ -142,10 +142,6 @@ int main(int ac, char *av[])
                 cout << fixed << setprecision(9) << "N=" << number_of_iterations << "	Time = "
                     << physical_time
                     << "	dt = " << dt << "\n";
-            }
-            if (number_of_iterations == 100 || number_of_iterations == 300 || number_of_iterations == 600)
-            {
-                Real x = 2.0;
             }
             number_of_iterations++;
         }
