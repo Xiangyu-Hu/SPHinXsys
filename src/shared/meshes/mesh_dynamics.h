@@ -34,6 +34,7 @@
 #include "mesh_local_dynamics.h"
 #include "mesh_with_data_packages.hpp"
 #include "mesh_iterators.h"
+#include "execution.h"
 
 #include <functional>
 
@@ -134,6 +135,35 @@ class MeshInnerDynamics : public LocalDynamicsType, public BaseMeshDynamics
             [&](size_t package_index)
             {
               this->update(package_index);
+            }
+        );
+    };
+};
+
+/**
+ * @class MeshInnerDynamicsCK
+ * @brief Mesh dynamics for only inner cells on the mesh (SYCL version)
+ */
+template <class ExecutionPolicy, class LocalDynamicsType>
+class MeshInnerDynamicsCK : public LocalDynamicsType, public BaseMeshDynamics
+{
+    using UpdateKernel = typename LocalDynamicsType::UpdateKernel;
+    using KernelImplementation = Implementation<ExecutionPolicy, LocalDynamicsType, UpdateKernel>;
+    KernelImplementation kernel_implementation_;
+  public:
+    template <typename... Args>
+    MeshInnerDynamicsCK(MeshWithGridDataPackages<4> &mesh_data, Args &&...args)
+        : LocalDynamicsType(mesh_data, std::forward<Args>(args)...),
+          BaseMeshDynamics(mesh_data), kernel_implementation_(*this){};
+    virtual ~MeshInnerDynamicsCK(){};
+
+    void exec()
+    {
+        UpdateKernel *update_kernel = kernel_implementation_.getComputingKernel();
+        package_parallel_for(
+            [&](size_t package_index)
+            {
+              update_kernel->update(package_index);
             }
         );
     };

@@ -66,7 +66,7 @@ void InitializeCellNeighborhood::update(const size_t &package_index)
     size_t sort_index = mesh_data_.occupied_data_pkgs_[package_index-2].first;
     Arrayi cell_index = CellIndexFromSortIndex(sort_index);
     CellNeighborhood &current = mesh_data_.cell_neighborhood_[package_index];
-    std::pair<Arrayi, int> &metadata = mesh_data_.meta_data_cell_[package_index];
+    std::pair<Arrayi, int> &metadata = meta_data_cell_[package_index];
     metadata.first = cell_index;
     metadata.second = mesh_data_.occupied_data_pkgs_[package_index-2].second;
     for (int l = -1; l < 2; l++)
@@ -81,12 +81,26 @@ void InitializeBasicDataForAPackage::update(const size_t &package_index)
 {
     auto &phi = phi_.DataField()[package_index];
     auto &near_interface_id = near_interface_id_.DataField()[package_index];
-    Arrayi cell_index = mesh_data_.meta_data_cell_[package_index].first;
+    Arrayi cell_index = meta_data_cell_[package_index].first;
     for_each_cell_data(
         [&](int i, int j, int k)
         {
             Vec3d position = mesh_data_.DataPositionFromIndex(cell_index, Array3i(i, j, k));
             phi[i][j][k] = shape_.findSignedDistance(position);
+            near_interface_id[i][j][k] = phi[i][j][k] < 0.0 ? -2 : 2;
+        });
+}
+//=============================================================================================//
+void InitializeBasicDataForAPackage::UpdateKernel::update(const size_t &package_index)
+{
+    auto &phi = phi_[package_index];
+    auto &near_interface_id = near_interface_id_[package_index];
+    Arrayi cell_index = meta_data_cell_[package_index].first;
+    base_dynamics->for_each_cell_data(
+        [&](int i, int j, int k)
+        {
+            Vec3d position = mesh_data_->DataPositionFromIndex(cell_index, Array3i(i, j, k));
+            phi[i][j][k] = shape_->findSignedDistance(position);
             near_interface_id[i][j][k] = phi[i][j][k] < 0.0 ? -2 : 2;
         });
 }

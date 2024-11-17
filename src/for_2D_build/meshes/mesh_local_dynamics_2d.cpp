@@ -63,7 +63,7 @@ void InitializeCellNeighborhood::update(const size_t &package_index)
     size_t sort_index = mesh_data_.occupied_data_pkgs_[package_index-2].first;
     Arrayi cell_index = Arrayi(sort_index / all_cells_[1], sort_index % all_cells_[1]); //[notion] there might be problems, 3d implementation needed
     CellNeighborhood &current = mesh_data_.cell_neighborhood_[package_index];
-    std::pair<Arrayi, int> &metadata = mesh_data_.meta_data_cell_[package_index];
+    std::pair<Arrayi, int> &metadata = meta_data_cell_[package_index];
     metadata.first = cell_index;
     metadata.second = mesh_data_.occupied_data_pkgs_[package_index-2].second;
     for (int l = -1; l < 2; l++)
@@ -77,11 +77,25 @@ void InitializeBasicDataForAPackage::update(const size_t &package_index)
 {
     auto &phi = phi_.DataField()[package_index];
     auto &near_interface_id = near_interface_id_.DataField()[package_index];
-    Arrayi cell_index = mesh_data_.meta_data_cell_[package_index].first;
+    Arrayi cell_index = meta_data_cell_[package_index].first;
     for_each_cell_data(
         [&](int i, int j)
         {
             Vec2d position = mesh_data_.DataPositionFromIndex(cell_index, Array2i(i, j));
+            phi[i][j] = shape_.findSignedDistance(position);
+            near_interface_id[i][j] = phi[i][j] < 0.0 ? -2 : 2;
+        });
+}
+//=============================================================================================//
+void InitializeBasicDataForAPackage::UpdateKernel::update(const size_t &package_index)
+{
+    auto &phi = phi_.DataField()[package_index];
+    auto &near_interface_id = near_interface_id_.DataField()[package_index];
+    Arrayi cell_index = meta_data_cell_[package_index].first;
+    base_dynamics.for_each_cell_data(
+        [&](int i, int j)
+        {
+            Vec3d position = mesh_data_.DataPositionFromIndex(cell_index, Array2i(i, j));
             phi[i][j] = shape_.findSignedDistance(position);
             near_interface_id[i][j] = phi[i][j] < 0.0 ? -2 : 2;
         });

@@ -35,6 +35,7 @@
 #include "base_geometry.h"
 #include "base_kernel.h"
 #include "data_type.h"
+#include "execution.h"
 
 namespace SPH
 {
@@ -52,6 +53,7 @@ class BaseMeshLocalDynamics
           all_cells_(mesh_data.AllCells()),
           grid_spacing_(mesh_data.GridSpacing()),
           data_spacing_(mesh_data.DataSpacing()),
+          meta_data_cell_(mesh_data.meta_data_cell_),
           phi_(*mesh_data.getMeshVariable<Real>("Levelset")),
           phi_gradient_(*mesh_data.getMeshVariable<Vecd>("LevelsetGradient")),
           near_interface_id_(*mesh_data.getMeshVariable<int>("NearInterfaceID")),
@@ -59,12 +61,13 @@ class BaseMeshLocalDynamics
           kernel_gradient_(*mesh_data.getMeshVariable<Vecd>("KernelGradient")){};
     virtual ~BaseMeshLocalDynamics(){};
 
-  protected:
+  // protected:
     MeshWithGridDataPackagesType &mesh_data_;
     static constexpr int pkg_size = 4; 
     Arrayi all_cells_;
     Real grid_spacing_;
     Real data_spacing_;
+    std::pair<Arrayi, int>* &meta_data_cell_;
 
     MeshVariable<Real> &phi_;
     MeshVariable<Vecd> &phi_gradient_;
@@ -78,6 +81,7 @@ class BaseMeshLocalDynamics
     /** void (non_value_returning) function iterate on all data points by value. */
     template <typename FunctionOnData>
     void for_each_cell_data(const FunctionOnData &function);
+    void registerComputingKernel(execution::Implementation<Base> *implementation){};
 };
 
 class InitializeDataForSingularPackage : public BaseMeshLocalDynamics
@@ -146,6 +150,28 @@ class InitializeBasicDataForAPackage : public BaseMeshLocalDynamics
     virtual ~InitializeBasicDataForAPackage(){};
 
     void update(const size_t &index);
+
+    class UpdateKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+            : mesh_data_(&encloser.mesh_data_),
+              meta_data_cell_(encloser.meta_data_cell_),
+              shape_(&encloser.shape_),
+              phi_(encloser.phi_.DataField()),
+              near_interface_id_(encloser.near_interface_id_.DataField()),
+              base_dynamics(&encloser){};
+        void update(const size_t &index);
+
+      protected:
+        MeshWithGridDataPackagesType *mesh_data_;
+        std::pair<Arrayi, int>* meta_data_cell_;
+        Shape *shape_;
+        PackageDataMatrix<Real, 4> *phi_;
+        PackageDataMatrix<int, 4> *near_interface_id_;
+        BaseMeshLocalDynamics *base_dynamics;
+    };
 
   private:
     Shape &shape_;
