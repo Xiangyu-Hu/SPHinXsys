@@ -124,8 +124,7 @@ Vecd MultilevelLevelSet::probeLevelSetGradient(const Vecd &position)
 size_t MultilevelLevelSet::getProbeLevel(const Vecd &position)
 {
     for (size_t level = total_levels_; level != 0; --level){
-        IsWithinCorePackage is_within_core_package{*mesh_data_set_[level - 1]};
-        if(is_within_core_package.update(position))
+        if(mesh_data_set_[level - 1]->isWithinCorePackage(position))
             return level - 1; // jump out of the loop!
     }
     return 0;

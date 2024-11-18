@@ -80,7 +80,7 @@ class BaseMeshLocalDynamics
 
     /** void (non_value_returning) function iterate on all data points by value. */
     template <typename FunctionOnData>
-    void for_each_cell_data(const FunctionOnData &function);
+    static void for_each_cell_data(const FunctionOnData &function);
     void registerComputingKernel(execution::Implementation<Base> *implementation){};
 };
 
@@ -371,20 +371,6 @@ class ProbeIsWithinMeshBound : public BaseMeshLocalDynamics
                 is_bounded = false;
         }
         return is_bounded;
-    }
-};
-
-class IsWithinCorePackage : public BaseMeshLocalDynamics
-{
-  public:
-    explicit IsWithinCorePackage(MeshWithGridDataPackagesType &mesh_data)
-        : BaseMeshLocalDynamics(mesh_data){};
-    virtual ~IsWithinCorePackage(){};
-
-    bool update(Vecd position)
-    {
-        Arrayi cell_index = mesh_data_.CellIndexFromPosition(position);
-        return mesh_data_.isCoreDataPackage(cell_index);
     }
 };
 
