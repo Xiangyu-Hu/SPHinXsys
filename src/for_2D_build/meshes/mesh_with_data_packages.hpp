@@ -125,35 +125,6 @@ void MeshWithGridDataPackages<PKG_SIZE>::
 }
 //=================================================================================================//
 template <int PKG_SIZE>
-template <typename InDataType, typename OutDataType>
-void MeshWithGridDataPackages<PKG_SIZE>::
-    computeGradient(MeshVariable<InDataType> &in_variable,
-                    MeshVariable<OutDataType> &out_variable,
-                    const size_t package_index)
-{
-    auto in_variable_data = in_variable.DataField();
-    auto out_variable_data = out_variable.DataField();
-
-    auto &neighborhood = cell_neighborhood_[package_index];
-    auto &pkg_data = out_variable_data[package_index];
-
-    for_each_cell_data(
-        [&](int i, int j)
-        {
-            std::pair<size_t, Arrayi> x1 = NeighbourIndexShift(Arrayi(i + 1, j), neighborhood);
-            std::pair<size_t, Arrayi> x2 = NeighbourIndexShift(Arrayi(i - 1, j), neighborhood);
-            std::pair<size_t, Arrayi> y1 = NeighbourIndexShift(Arrayi(i, j + 1), neighborhood);
-            std::pair<size_t, Arrayi> y2 = NeighbourIndexShift(Arrayi(i, j - 1), neighborhood);
-            Real dphidx = (in_variable_data[x1.first][x1.second[0]][x1.second[1]] -
-                           in_variable_data[x2.first][x2.second[0]][x2.second[1]]);
-            Real dphidy = (in_variable_data[y1.first][y1.second[0]][y1.second[1]] -
-                           in_variable_data[y2.first][y2.second[0]][y2.second[1]]);
-
-            pkg_data[i][j] = 0.5 * Vecd(dphidx, dphidy) / data_spacing_;
-        });
-}
-//=================================================================================================//
-template <int PKG_SIZE>
 template <typename DataType>
 DataType MeshWithGridDataPackages<PKG_SIZE>::
     CornerAverage(MeshVariable<DataType> &mesh_variable, Arrayi addrs_index, Arrayi corner_direction, CellNeighborhood &neighborhood)

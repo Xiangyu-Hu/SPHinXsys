@@ -127,38 +127,6 @@ void MeshWithGridDataPackages<PKG_SIZE>::
 }
 //=================================================================================================//
 template <int PKG_SIZE>
-template <typename InDataType, typename OutDataType>
-void MeshWithGridDataPackages<PKG_SIZE>::
-    computeGradient(MeshVariable<InDataType> &in_variable,
-                    MeshVariable<OutDataType> &out_variable,
-                    const size_t package_index)
-{
-    auto in_variable_data = in_variable.DataField();
-    auto out_variable_data = out_variable.DataField();
-
-    auto &neighborhood = cell_neighborhood_[package_index];
-    auto &pkg_data = out_variable_data[package_index];
-
-    for_each_cell_data(
-        [&](int i, int j, int k)
-        {
-            std::pair<size_t, Arrayi> x1 = NeighbourIndexShift(Arrayi(i + 1, j, k), neighborhood);
-            std::pair<size_t, Arrayi> x2 = NeighbourIndexShift(Arrayi(i - 1, j, k), neighborhood);
-            std::pair<size_t, Arrayi> y1 = NeighbourIndexShift(Arrayi(i, j + 1, k), neighborhood);
-            std::pair<size_t, Arrayi> y2 = NeighbourIndexShift(Arrayi(i, j - 1, k), neighborhood);
-            std::pair<size_t, Arrayi> z1 = NeighbourIndexShift(Arrayi(i, j, k + 1), neighborhood);
-            std::pair<size_t, Arrayi> z2 = NeighbourIndexShift(Arrayi(i, j, k - 1), neighborhood);
-            Real dphidx = (in_variable_data[x1.first][x1.second[0]][x1.second[1]][x1.second[2]] -
-                           in_variable_data[x2.first][x2.second[0]][x2.second[1]][x2.second[2]]);
-            Real dphidy = (in_variable_data[y1.first][y1.second[0]][y1.second[1]][y1.second[2]] -
-                           in_variable_data[y2.first][y2.second[0]][y2.second[1]][y2.second[2]]);
-            Real dphidz = (in_variable_data[z1.first][z1.second[0]][z1.second[1]][z1.second[2]] -
-                           in_variable_data[z2.first][z2.second[0]][z2.second[1]][z2.second[2]]);
-            pkg_data[i][j][k] = 0.5 * Vecd(dphidx, dphidy, dphidz) / data_spacing_;
-        });
-}
-//=================================================================================================//
-template <int PKG_SIZE>
 template <typename DataType>
 DataType MeshWithGridDataPackages<PKG_SIZE>::
     CornerAverage(MeshVariable<DataType> &mesh_variable, Arrayi addrs_index, Arrayi corner_direction, CellNeighborhood &neighborhood)

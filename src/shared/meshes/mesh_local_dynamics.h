@@ -54,6 +54,7 @@ class BaseMeshLocalDynamics
           grid_spacing_(mesh_data.GridSpacing()),
           data_spacing_(mesh_data.DataSpacing()),
           meta_data_cell_(mesh_data.meta_data_cell_),
+          cell_neighborhood_(mesh_data.cell_neighborhood_),
           phi_(*mesh_data.getMeshVariable<Real>("Levelset")),
           phi_gradient_(*mesh_data.getMeshVariable<Vecd>("LevelsetGradient")),
           near_interface_id_(*mesh_data.getMeshVariable<int>("NearInterfaceID")),
@@ -68,6 +69,7 @@ class BaseMeshLocalDynamics
     Real grid_spacing_;
     Real data_spacing_;
     std::pair<Arrayi, int>* &meta_data_cell_;
+    CellNeighborhood* &cell_neighborhood_;
 
     MeshVariable<Real> &phi_;
     MeshVariable<Vecd> &phi_gradient_;
@@ -81,6 +83,7 @@ class BaseMeshLocalDynamics
     /** void (non_value_returning) function iterate on all data points by value. */
     template <typename FunctionOnData>
     static void for_each_cell_data(const FunctionOnData &function);
+    std::pair<size_t, Arrayi> NeighbourIndexShift(const Arrayi shift_index, const CellNeighborhood &neighbour);
     void registerComputingKernel(execution::Implementation<Base> *implementation){};
 };
 
@@ -184,13 +187,33 @@ class UpdateLevelSetGradient : public BaseMeshLocalDynamics
         : BaseMeshLocalDynamics(mesh_data){};
     virtual ~UpdateLevelSetGradient(){};
 
-    void update(const size_t &index);
-  private:
+    void update(const size_t &index){ computeGradient(phi_, phi_gradient_, index); };
+    
+    class UpdateKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+            : data_spacing_(encloser.data_spacing_),
+              phi_(encloser.phi_.DataField()),
+              phi_gradient_(encloser.phi_gradient_.DataField()),
+              base_dynamics(&encloser),
+              cell_neighborhood_(encloser.cell_neighborhood_){};
+        void update(const size_t &index);
+
+      protected:
+        Real data_spacing_;
+        PackageDataMatrix<Real, 4> *phi_;
+        PackageDataMatrix<Vecd, 4> *phi_gradient_;
+        BaseMeshLocalDynamics *base_dynamics;
+        CellNeighborhood *cell_neighborhood_;
+    };
+
     /** compute gradient transform within data package at `package_index` */
     template <typename InDataType, typename OutDataType>
     void computeGradient(MeshVariable<InDataType> &in_variable,
-                         MeshVariable<OutDataType> &out_variable,
-                         const size_t package_index);
+                        MeshVariable<OutDataType> &out_variable,
+                        const size_t package_index);
 };
 
 class UpdateKernelIntegrals : public BaseMeshLocalDynamics

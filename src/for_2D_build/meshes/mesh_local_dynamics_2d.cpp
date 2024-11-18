@@ -1,4 +1,4 @@
-#include "mesh_local_dynamics.h"
+#include "mesh_local_dynamics.hpp"
 
 #include "mesh_iterators.h"
 
@@ -18,14 +18,15 @@ Arrayi BaseMeshLocalDynamics::CellIndexFromSortIndex(const size_t &sort_index)
     return cell_index;
 }
 //=============================================================================================//
-template <typename FunctionOnData>
-void BaseMeshLocalDynamics::for_each_cell_data(const FunctionOnData &function)
+std::pair<size_t, Arrayi> BaseMeshLocalDynamics::
+    NeighbourIndexShift(const Arrayi shift_index, const CellNeighborhood &neighbour)
 {
-    for (int i = 0; i != pkg_size; ++i)
-        for (int j = 0; j != pkg_size; ++j)
-        {
-            function(i, j);
-        }
+    std::pair<size_t, Arrayi> result;
+    Arrayi neighbour_index = (shift_index + pkg_size * Arrayi::Ones()) / pkg_size;
+    result.first = neighbour[neighbour_index[0]][neighbour_index[1]];
+    result.second = (shift_index + pkg_size * Arrayi::Ones()) - neighbour_index * pkg_size;
+
+    return result;
 }
 //=============================================================================================//
 void InitializeDataForSingularPackage::update(const size_t package_index, Real far_field_level_set)
@@ -89,15 +90,36 @@ void InitializeBasicDataForAPackage::update(const size_t &package_index)
 //=============================================================================================//
 void InitializeBasicDataForAPackage::UpdateKernel::update(const size_t &package_index)
 {
-    auto &phi = phi_.DataField()[package_index];
-    auto &near_interface_id = near_interface_id_.DataField()[package_index];
+    auto &phi = phi_[package_index];
+    auto &near_interface_id = near_interface_id_[package_index];
     Arrayi cell_index = meta_data_cell_[package_index].first;
-    base_dynamics.for_each_cell_data(
+    base_dynamics->for_each_cell_data(
         [&](int i, int j)
         {
-            Vec3d position = mesh_data_.DataPositionFromIndex(cell_index, Array2i(i, j));
-            phi[i][j] = shape_.findSignedDistance(position);
+            Vec2d position = mesh_data_->DataPositionFromIndex(cell_index, Array2i(i, j));
+            phi[i][j] = shape_->findSignedDistance(position);
             near_interface_id[i][j] = phi[i][j] < 0.0 ? -2 : 2;
+        });
+}
+//=============================================================================================//
+void UpdateLevelSetGradient::UpdateKernel::update(const size_t &package_index)
+{
+    auto &neighborhood = cell_neighborhood_[package_index];
+    auto &pkg_data = phi_gradient_[package_index];
+
+    base_dynamics->for_each_cell_data(
+        [&](int i, int j)
+        {
+            std::pair<size_t, Arrayi> x1 = base_dynamics->NeighbourIndexShift(Arrayi(i + 1, j), neighborhood);
+            std::pair<size_t, Arrayi> x2 = base_dynamics->NeighbourIndexShift(Arrayi(i - 1, j), neighborhood);
+            std::pair<size_t, Arrayi> y1 = base_dynamics->NeighbourIndexShift(Arrayi(i, j + 1), neighborhood);
+            std::pair<size_t, Arrayi> y2 = base_dynamics->NeighbourIndexShift(Arrayi(i, j - 1), neighborhood);
+            Real dphidx = (phi_[x1.first][x1.second[0]][x1.second[1]] -
+                           phi_[x2.first][x2.second[0]][x2.second[1]]);
+            Real dphidy = (phi_[y1.first][y1.second[0]][y1.second[1]] -
+                           phi_[y2.first][y2.second[0]][y2.second[1]]);
+
+            pkg_data[i][j] = 0.5 * Vecd(dphidx, dphidy) / data_spacing_;
         });
 }
 //=============================================================================================//
@@ -179,10 +201,10 @@ void ReinitializeLevelSet::update(const size_t &package_index)
                 Real phi_0 = phi_addrs[i][j];
                 Real sign = phi_0 / sqrt(phi_0 * phi_0 + data_spacing_ * data_spacing_);
                 using NeighbourIndex = std::pair<size_t, Arrayi>; /**< stores shifted neighbour info: (size_t)package index, (arrayi)local grid index. */
-                NeighbourIndex x1 = mesh_data_.NeighbourIndexShift(Arrayi(i + 1, j), neighborhood);
-                NeighbourIndex x2 = mesh_data_.NeighbourIndexShift(Arrayi(i - 1, j), neighborhood);
-                NeighbourIndex y1 = mesh_data_.NeighbourIndexShift(Arrayi(i, j + 1), neighborhood);
-                NeighbourIndex y2 = mesh_data_.NeighbourIndexShift(Arrayi(i, j - 1), neighborhood);
+                NeighbourIndex x1 = NeighbourIndexShift(Arrayi(i + 1, j), neighborhood);
+                NeighbourIndex x2 = NeighbourIndexShift(Arrayi(i - 1, j), neighborhood);
+                NeighbourIndex y1 = NeighbourIndexShift(Arrayi(i, j + 1), neighborhood);
+                NeighbourIndex y2 = NeighbourIndexShift(Arrayi(i, j - 1), neighborhood);
                 Real dv_x = upwindDifference(sign, phi_data[x1.first][x1.second[0]][x1.second[1]] - phi_0,
                                               phi_0 - phi_data[x2.first][x2.second[0]][x2.second[1]]);
                 Real dv_y = upwindDifference(sign, phi_data[y1.first][y1.second[0]][y1.second[1]] - phi_0,
@@ -260,7 +282,7 @@ void RedistanceInterface::update(const size_t &package_index)
                 mesh_for_each2d<-1, 2>(
                     [&](int r, int s)
                     {
-                        NeighbourIndex neighbour_index = mesh_data_.NeighbourIndexShift(Arrayi(i + r, j + s), neighborhood);
+                        NeighbourIndex neighbour_index = NeighbourIndexShift(Arrayi(i + r, j + s), neighborhood);
                         int neighbor_near_interface_id = near_interface_id_data[neighbour_index.first][neighbour_index.second[0]][neighbour_index.second[1]];
                         if (neighbor_near_interface_id >= 1)
                             positive_band = true;
@@ -273,7 +295,7 @@ void RedistanceInterface::update(const size_t &package_index)
                     mesh_for_each2d<-4, 5>(
                         [&](int x, int y)
                         {
-                            NeighbourIndex neighbour_index = mesh_data_.NeighbourIndexShift(Arrayi(i + x, j + y), neighborhood);
+                            NeighbourIndex neighbour_index = NeighbourIndexShift(Arrayi(i + x, j + y), neighborhood);
                             auto &neighbor_phi = phi_.DataField()[neighbour_index.first];
                             auto &neighbor_phi_gradient = phi_gradient_.DataField()[neighbour_index.first];
                             auto &neighbor_near_interface_id = near_interface_id_.DataField()[neighbour_index.first];
@@ -297,7 +319,7 @@ void RedistanceInterface::update(const size_t &package_index)
                     mesh_for_each2d<-4, 5>(
                         [&](int x, int y)
                         {
-                            NeighbourIndex neighbour_index = mesh_data_.NeighbourIndexShift(Arrayi(i + x, j + y), neighborhood);
+                            NeighbourIndex neighbour_index = NeighbourIndexShift(Arrayi(i + x, j + y), neighborhood);
                             auto &neighbor_phi = phi_.DataField()[neighbour_index.first];
                             auto &neighbor_phi_gradient = phi_gradient_.DataField()[neighbour_index.first];
                             auto &neighbor_near_interface_id = near_interface_id_.DataField()[neighbour_index.first];
@@ -335,7 +357,7 @@ void DiffuseLevelSetSign::update(const size_t &package_index)
                     [&](int l, int m) -> bool
                     {
                         using NeighbourIndex = std::pair<size_t, Arrayi>; /**< stores shifted neighbour info: (size_t)package index, (arrayi)local grid index. */
-                        NeighbourIndex neighbour_index = mesh_data_.NeighbourIndexShift(Arrayi(i + l, j + m), neighborhood);
+                        NeighbourIndex neighbour_index = NeighbourIndexShift(Arrayi(i + l, j + m), neighborhood);
                         int near_interface_id = near_interface_id_data[neighbour_index.first][neighbour_index.second[0]][neighbour_index.second[1]];
                         bool is_found = abs(near_interface_id) == 1;
                         if (is_found)

@@ -82,11 +82,6 @@ void InitializeIndexMesh::update(const size_t &package_index)
     mesh_data_.assignDataPackageIndex(cell_index, package_index);
 }
 //=================================================================================================//
-void UpdateLevelSetGradient::update(const size_t &index)
-{
-    mesh_data_.computeGradient(phi_, phi_gradient_, index);
-}
-//=================================================================================================//
 void UpdateKernelIntegrals::update(const size_t &package_index)
 {
     Arrayi cell_index = mesh_data_.meta_data_cell_[package_index].first;

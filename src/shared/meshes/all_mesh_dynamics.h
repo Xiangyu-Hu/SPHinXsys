@@ -32,7 +32,7 @@
 #define ALL_MESH_DYNAMICS_H
 
 #include "mesh_dynamics.h"
-#include "mesh_local_dynamics.h"
+#include "mesh_local_dynamics.hpp"
 
 namespace SPH
 {
@@ -92,7 +92,8 @@ class FinishDataPackages : public BaseMeshDynamics
     MeshInnerDynamics<InitializeCellNeighborhood> initialize_cell_neighborhood{mesh_data_};
     // MeshInnerDynamics<InitializeBasicDataForAPackage> initialize_basic_data_for_a_package{mesh_data_, shape_};
     MeshInnerDynamicsCK<execution::ParallelPolicy, InitializeBasicDataForAPackage> initialize_basic_data_for_a_package{mesh_data_, shape_};
-    MeshInnerDynamics<UpdateLevelSetGradient> update_level_set_gradient{mesh_data_};
+    MeshInnerDynamicsCK<execution::ParallelPolicy, UpdateLevelSetGradient> update_level_set_gradient{mesh_data_};
+    // MeshInnerDynamics<UpdateLevelSetGradient> update_level_set_gradient{mesh_data_};
     MeshInnerDynamics<UpdateKernelIntegrals> update_kernel_integrals{mesh_data_, kernel_, global_h_ratio_};
 };
 
@@ -143,7 +144,8 @@ class CleanInterface : public BaseMeshDynamics
   private:
     Kernel &kernel_;
     Real global_h_ratio_;
-    MeshInnerDynamics<UpdateLevelSetGradient> update_level_set_gradient{mesh_data_};
+    MeshInnerDynamicsCK<execution::ParallelPolicy, UpdateLevelSetGradient> update_level_set_gradient{mesh_data_};
+    // MeshInnerDynamics<UpdateLevelSetGradient> update_level_set_gradient{mesh_data_};
     MeshInnerDynamics<UpdateKernelIntegrals> update_kernel_integrals{mesh_data_, kernel_, global_h_ratio_};
     MeshInnerDynamics<MarkNearInterface> mark_near_interface{mesh_data_};
     MeshCoreDynamics<RedistanceInterface> redistance_interface{mesh_data_};
@@ -171,7 +173,8 @@ class CorrectTopology : public BaseMeshDynamics
   private:
     Kernel &kernel_;
     Real global_h_ratio_;
-    MeshInnerDynamics<UpdateLevelSetGradient> update_level_set_gradient{mesh_data_};
+    // MeshInnerDynamics<UpdateLevelSetGradient> update_level_set_gradient{mesh_data_};
+    MeshInnerDynamicsCK<execution::ParallelPolicy, UpdateLevelSetGradient> update_level_set_gradient{mesh_data_};
     MeshInnerDynamics<UpdateKernelIntegrals> update_kernel_integrals{mesh_data_, kernel_, global_h_ratio_};
     MeshInnerDynamics<MarkNearInterface> mark_near_interface{mesh_data_};
     MeshInnerDynamics<DiffuseLevelSetSign> diffuse_level_set_sign{mesh_data_};

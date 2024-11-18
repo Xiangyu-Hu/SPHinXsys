@@ -185,12 +185,6 @@ class MeshWithGridDataPackages : public Mesh
         return findVariableByName<DataType>(all_mesh_variables_, variable_name);
     }
 
-    /** compute gradient transform within data package at `package_index` */
-    template <typename InDataType, typename OutDataType>
-    void computeGradient(MeshVariable<InDataType> &in_variable,
-                         MeshVariable<OutDataType> &out_variable,
-                         const size_t package_index);
-
     void registerOccupied(std::pair<size_t, int> &occupied)
     {
         occupied_data_pkgs_.push_back(occupied);
