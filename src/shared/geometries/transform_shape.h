@@ -78,8 +78,8 @@ class TransformShape : public BaseShapeType
     virtual BoundingBox findBounds() override
     {
         BoundingBox original_bound = BaseShapeType::findBounds();
-        Vecd bb_min = Vecd::Constant(Infinity);
-        Vecd bb_max = Vecd::Constant(-Infinity);
+        Vecd bb_min = Vecd::Constant(MaxReal);
+        Vecd bb_max = Vecd::Constant(-MaxReal);
         for (auto x : {original_bound.first_.x(), original_bound.second_.x()})
         {
             for (auto y : {original_bound.first_.y(), original_bound.second_.y()})
