@@ -72,11 +72,34 @@ class TransformShape : public BaseShapeType
   protected:
     Transform transform_;
 
+    /// Returns the AABB of the rotated underlying shape's AABB
+    /// ⚠️ It is not the tight fit AABB of the underlying shape
+    /// But at least it encloses the underlying shape fully
     virtual BoundingBox findBounds() override
     {
         BoundingBox original_bound = BaseShapeType::findBounds();
-        return BoundingBox(transform_.shiftFrameStationToBase(original_bound.first_),
-                           transform_.shiftFrameStationToBase(original_bound.second_));
+        Vecd bb_min = Vecd::Constant(Infinity);
+        Vecd bb_max = Vecd::Constant(-Infinity);
+        for (auto x : {original_bound.first_.x(), original_bound.second_.x()})
+        {
+            for (auto y : {original_bound.first_.y(), original_bound.second_.y()})
+            {
+                if constexpr (Dimensions == 3)
+                {
+                    for (auto z : {original_bound.first_.z(), original_bound.second_.z()})
+                    {
+                        bb_min = bb_min.cwiseMin(transform_.shiftFrameStationToBase(Vecd(x, y, z)));
+                        bb_max = bb_max.cwiseMax(transform_.shiftFrameStationToBase(Vecd(x, y, z)));
+                    }
+                }
+                else
+                {
+                    bb_min = bb_min.cwiseMin(transform_.shiftFrameStationToBase(Vecd(x, y)));
+                    bb_max = bb_max.cwiseMax(transform_.shiftFrameStationToBase(Vecd(x, y)));
+                }
+            }
+        }
+        return BoundingBox(bb_min, bb_max);
     };
 };
 } // namespace SPH
