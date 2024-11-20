@@ -1,7 +1,7 @@
 /**
  * @file 	cohesive_soil_failure.h
  * @brief 	2D cohesive soil failure.
- * @details This case employs the SPH to simulate cohesive granular materials.  
+ * @details This case employs the SPH to simulate cohesive granular materials.
  *          The transport velocity formulation is adopted to address the tensile instability.
  * @author Shuaihao Zhang
  */
