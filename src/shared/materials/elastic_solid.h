@@ -213,10 +213,10 @@ class NeoHookeanSolidIncompressible : public LinearElasticSolid
  * @class OrthotropicSolid
  * @brief Generic definition with 3 orthogonal directions + 9 independent parameters,
  * ONLY for 3D applications
- * @param "a" --> 3 principal direction vectors
- * @param "E" --> 3 principal Young's moduli
- * @param "G" --> 3 principal shear moduli
- * @param "poisson" --> 3 principal Poisson's ratios
+ * @param "a" --> 3 principal direction vectors in the order of a_x, a_y, a_z
+ * @param "E" --> 3 principal Young's moduli in the order of E_x, E_y, E_z
+ * @param "G" --> 3 principal shear moduli in the order of G_xy, G_yz, G_zx
+ * @param "poisson" --> 3 principal Poisson's ratios in the order of nu_xy, ny_zx, nu_yz
  */
 class OrthotropicSolid : public LinearElasticSolid
 {
@@ -225,9 +225,10 @@ class OrthotropicSolid : public LinearElasticSolid
                      std::array<Real, Dimensions> G, std::array<Real, Dimensions> poisson);
 
     /** second Piola-Kirchhoff stress related with green-lagrangian deformation tensor */
-    virtual Matd StressPK2(Matd &deformation, size_t particle_index_i) override;
+    Matd StressPK2(Matd &deformation, size_t particle_index_i) override;
+    Matd StressCauchy(Matd &almansi_strain, size_t particle_index_i) override;
     /** Volumetric Kirchhoff stress determinate */
-    virtual Real VolumetricKirchhoff(Real J) override;
+    Real VolumetricKirchhoff(Real J) override;
 
   protected:
     // input data
@@ -236,13 +237,14 @@ class OrthotropicSolid : public LinearElasticSolid
     std::array<Real, Dimensions> G_;
     std::array<Real, Dimensions> poisson_;
     // calculated data
-    Real Mu_[Dimensions];
+    std::array<Real, Dimensions> Mu_;
     Matd Lambda_;
-    Matd A_[Dimensions];
+    std::array<Matd, Dimensions> A_;
 
-    virtual void CalculateAllMu();
-    virtual void CalculateAllLambda();
-    virtual void CalculateA0();
+    void CalculateAllMu();
+    void CalculateAllLambda();
+    void CalculateA0();
+    void reset_sound_speeds();
 };
 
 /**

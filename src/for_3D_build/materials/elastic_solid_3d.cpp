@@ -7,18 +7,18 @@ namespace SPH
 void OrthotropicSolid::CalculateAllMu()
 {
 
-    Mu_[0] = 1 / G_[0] + 1 / G_[2] - 1 / G_[1];
-    Mu_[1] = 1 / G_[1] + 1 / G_[0] - 1 / G_[2];
-    Mu_[2] = 1 / G_[2] + 1 / G_[1] - 1 / G_[0];
+    Mu_[0] = G_[0] + G_[2] - G_[1];
+    Mu_[1] = G_[1] + G_[0] - G_[2];
+    Mu_[2] = G_[2] + G_[1] - G_[0];
 }
 //=================================================================================================//
 void OrthotropicSolid::CalculateAllLambda()
 {
     // first we calculate the upper left part, a 3x3 matrix of the full compliance matrix
     Matd Compliance = Matd::Zero();
-    Compliance.col(0) = Vecd(1 / E_[0], -poisson_[0] / E_[1], -poisson_[1] / E_[2]);
+    Compliance.col(0) = Vecd(1 / E_[0], -poisson_[0] / E_[0], -poisson_[1] / E_[2]);
     Compliance.col(1) = Vecd(-poisson_[0] / E_[0], 1 / E_[1], -poisson_[2] / E_[1]);
-    Compliance.col(2) = Vecd(-poisson_[1] / E_[0], -poisson_[2] / E_[1], 1 / E_[2]);
+    Compliance.col(2) = Vecd(-poisson_[1] / E_[2], -poisson_[2] / E_[1], 1 / E_[2]);
     // we calculate the inverse of the Compliance matrix, and calculate the lambdas elementwise
     Matd Compliance_inv = Compliance.inverse();
     // Lambda_ is a 3x3 matrix
