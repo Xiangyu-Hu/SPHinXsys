@@ -1,9 +1,9 @@
 /**
  * @file 	cohesive_soil_failure.cpp
  * @brief 	2D cohesive soil failure.
- * @author Shuaihao Zhang and Xiangyu Hu
+ * @author Shuaihao Zhang
  */
-#include "cohesive_soil_failure.h" //SPHinXsys Library.
+#include "cohesive_soil_failure.h"
 //----------------------------------------------------------------------
 //	Main program starts here.
 //----------------------------------------------------------------------

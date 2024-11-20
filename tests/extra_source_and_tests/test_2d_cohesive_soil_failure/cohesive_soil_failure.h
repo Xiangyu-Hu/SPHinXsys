@@ -1,9 +1,9 @@
 /**
  * @file 	cohesive_soil_failure.h
  * @brief 	2D cohesive soil failure.
- * @details This is the one of the basic test cases, also the first case for understanding
- * 			SPH method for modelling cohesive granular materials.
- * @author Shuaihao Zhang and Xiangyu Hu
+ * @details This case employs the SPH to simulate cohesive granular materials.  
+ *          The transport velocity formulation is adopted to address the tensile instability.
+ * @author Shuaihao Zhang
  */
 #include "sphinxsys.h" //SPHinXsys Library.
 using namespace SPH;   // Namespace cite here.
