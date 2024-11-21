@@ -10,8 +10,12 @@ namespace SPH
 //=================================================================================================//
 void ElasticSolid::setSoundSpeeds()
 {
-    c0_ = sqrt(K0_ / rho0_);
+    // Ref: https://en.wikipedia.org/wiki/Speed_of_sound#Speed_of_sound_in_solids
+    // pressure wave speed
+    c0_ = sqrt((K0_ + 4.0 * G0_ / 3.0) / rho0_);
+    // pressure wave speed for 1D solids
     ct0_ = sqrt(E0_ / rho0_);
+    // shear wave speed
     cs0_ = sqrt(G0_ / rho0_);
 };
 //=================================================================================================//
