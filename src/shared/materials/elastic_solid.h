@@ -44,8 +44,7 @@ namespace SPH
 class ElasticSolid : public Solid
 {
   protected:
-    Real c0_;  /*< sound wave speed */
-    Real ct0_; /*< tensile wave speed */
+    Real c0_;  /*< pressure wave speed */
     Real cs0_; /*< shear wave speed */
     Real E0_;  /*< Youngs or tensile modules  */
     Real G0_;  /*< shear modules  */
@@ -55,7 +54,7 @@ class ElasticSolid : public Solid
     void setSoundSpeeds();
 
   public:
-    explicit ElasticSolid(Real rho0) : Solid(rho0), c0_(0.0), ct0_(0.0), cs0_(0.0),
+    explicit ElasticSolid(Real rho0) : Solid(rho0), c0_(0.0), cs0_(0.0),
                                        E0_(0.0), G0_(0.0), K0_(0.0), nu_(0.0)
     {
         material_type_name_ = "ElasticSolid";
@@ -63,7 +62,6 @@ class ElasticSolid : public Solid
     virtual ~ElasticSolid(){};
 
     Real ReferenceSoundSpeed() { return c0_; };
-    Real TensileWaveSpeed() { return ct0_; };
     Real ShearWaveSpeed() { return cs0_; };
     Real YoungsModulus() { return E0_; };
     Real ShearModulus() { return G0_; };
