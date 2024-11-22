@@ -10,7 +10,7 @@ namespace SPH
 //=================================================================================================//
 void ElasticSolid::setSoundSpeeds()
 {
-    c0_ = sqrt((K0_ + 4.*G/3.) / rho0_); // https://en.wikipedia.org/wiki/Speed_of_sound#Three-dimensional_solids
+    c0_ = sqrt((K0_ + 4.*G0_/3.) / rho0_); // https://en.wikipedia.org/wiki/Speed_of_sound#Three-dimensional_solids
     ct0_ = sqrt(E0_ / rho0_); // ⚠️ Calculation valid only for 1D solid https://en.wikipedia.org/wiki/Speed_of_sound#One-dimensional_solids
     cs0_ = sqrt(G0_ / rho0_);
 };
