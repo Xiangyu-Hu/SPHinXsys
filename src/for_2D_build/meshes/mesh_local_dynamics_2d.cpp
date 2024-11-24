@@ -185,6 +185,34 @@ Vecd UpdateKernelIntegrals::computeKernelGradientIntegral(const Vecd &position)
     return integral * data_spacing_ * data_spacing_;
 }
 //=============================================================================================//
+void ReinitializeLevelSet::UpdateKernel::update(const size_t &package_index)
+{
+    auto &phi_addrs = phi_[package_index];
+    auto &near_interface_id_addrs = near_interface_id_[package_index];
+    auto &neighborhood = cell_neighborhood_[package_index];
+
+    base_dynamics->for_each_cell_data(
+        [&](int i, int j)
+        {
+            // only reinitialize non cut cells
+            if (near_interface_id_addrs[i][j] != 0)
+            {
+                Real phi_0 = phi_addrs[i][j];
+                Real sign = phi_0 / sqrt(phi_0 * phi_0 + data_spacing_ * data_spacing_);
+                using NeighbourIndex = std::pair<size_t, Arrayi>; /**< stores shifted neighbour info: (size_t)package index, (arrayi)local grid index. */
+                NeighbourIndex x1 = base_dynamics->NeighbourIndexShift(Arrayi(i + 1, j), neighborhood);
+                NeighbourIndex x2 = base_dynamics->NeighbourIndexShift(Arrayi(i - 1, j), neighborhood);
+                NeighbourIndex y1 = base_dynamics->NeighbourIndexShift(Arrayi(i, j + 1), neighborhood);
+                NeighbourIndex y2 = base_dynamics->NeighbourIndexShift(Arrayi(i, j - 1), neighborhood);
+                Real dv_x = upwindDifference(sign, phi_[x1.first][x1.second[0]][x1.second[1]] - phi_0,
+                                              phi_0 - phi_[x2.first][x2.second[0]][x2.second[1]]);
+                Real dv_y = upwindDifference(sign, phi_[y1.first][y1.second[0]][y1.second[1]] - phi_0,
+                                              phi_0 - phi_[y2.first][y2.second[0]][y2.second[1]]);
+                phi_addrs[i][j] -= 0.5 * sign * (Vec2d(dv_x, dv_y).norm() - data_spacing_);
+            }
+        });
+}
+//=============================================================================================//
 void ReinitializeLevelSet::update(const size_t &package_index)
 {
     auto phi_data = phi_.DataField();

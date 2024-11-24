@@ -190,6 +190,35 @@ Vecd UpdateKernelIntegrals::computeKernelGradientIntegral(const Vecd &position)
     return integral * data_spacing_ * data_spacing_ * data_spacing_;
 }
 //=============================================================================================//
+void ReinitializeLevelSet::UpdateKernel::update(const size_t &package_index)
+{
+    auto &phi_addrs = phi_[package_index];
+    auto &near_interface_id_addrs = near_interface_id_[package_index];
+    auto &neighborhood = cell_neighborhood_[package_index];
+
+    base_dynamics->for_each_cell_data(
+        [&](int i, int j, int k)
+        {
+            // only reinitialize non cut cells
+            if (near_interface_id_addrs[i][j][k] != 0)
+            {
+                Real phi_0 = phi_addrs[i][j][k];
+                Real sign = phi_0 / sqrt(phi_0 * phi_0 + data_spacing_ * data_spacing_);
+                using NeighbourIndex = std::pair<size_t, Arrayi>; /**< stores shifted neighbour info: (size_t)package index, (arrayi)local grid index. */
+                NeighbourIndex x1 = base_dynamics->NeighbourIndexShift(Arrayi(i + 1, j, k), neighborhood);
+                NeighbourIndex x2 = base_dynamics->NeighbourIndexShift(Arrayi(i - 1, j, k), neighborhood);
+                NeighbourIndex y1 = base_dynamics->NeighbourIndexShift(Arrayi(i, j + 1, k), neighborhood);
+                NeighbourIndex y2 = base_dynamics->NeighbourIndexShift(Arrayi(i, j - 1, k), neighborhood);
+                NeighbourIndex z1 = base_dynamics->NeighbourIndexShift(Arrayi(i, j, k + 1), neighborhood);
+                NeighbourIndex z2 = base_dynamics->NeighbourIndexShift(Arrayi(i, j, k - 1), neighborhood);
+                Real dv_x = upwindDifference(sign, phi_[x1.first][x1.second[0]][x1.second[1]][x1.second[2]] - phi_0, phi_0 - phi_[x2.first][x2.second[0]][x2.second[1]][x2.second[2]]);
+                Real dv_y = upwindDifference(sign, phi_[y1.first][y1.second[0]][y1.second[1]][y1.second[2]] - phi_0, phi_0 - phi_[y2.first][y2.second[0]][y2.second[1]][y2.second[2]]);
+                Real dv_z = upwindDifference(sign, phi_[z1.first][z1.second[0]][z1.second[1]][z1.second[2]] - phi_0, phi_0 - phi_[z2.first][z2.second[0]][z2.second[1]][z2.second[2]]);
+                phi_addrs[i][j][k] -= 0.3 * sign * (Vec3d(dv_x, dv_y, dv_z).norm() - data_spacing_);
+            }
+        });
+}
+//=============================================================================================//
 void ReinitializeLevelSet::update(const size_t &package_index)
 {
     auto phi_data = phi_.DataField();

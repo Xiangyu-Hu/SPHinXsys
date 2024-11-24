@@ -267,6 +267,46 @@ class ReinitializeLevelSet : public BaseMeshLocalDynamics
 
     void update(const size_t &package_index);
 
+    class UpdateKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+            : data_spacing_(encloser.data_spacing_),
+              phi_(encloser.phi_.DataField()),
+              near_interface_id_(encloser.near_interface_id_.DataField()),
+              cell_neighborhood_(encloser.cell_neighborhood_),
+              base_dynamics(&encloser){};
+        void update(const size_t &index);
+
+      protected:
+        Real data_spacing_;
+        PackageDataMatrix<Real, 4> *phi_;
+        PackageDataMatrix<int, 4> *near_interface_id_;
+        CellNeighborhood *cell_neighborhood_;
+        BaseMeshLocalDynamics *base_dynamics;
+
+        Real upwindDifference(Real sign, Real df_p, Real df_n)
+        {
+            if (sign * df_p >= 0.0 && sign * df_n >= 0.0)
+                return df_n;
+            if (sign * df_p <= 0.0 && sign * df_n <= 0.0)
+                return df_p;
+            if (sign * df_p > 0.0 && sign * df_n < 0.0)
+                return 0.0;
+
+            Real df = df_p;
+            if (sign * df_p < 0.0 && sign * df_n > 0.0)
+            {
+                Real ss = sign * (fabs(df_p) - fabs(df_n)) / (df_p - df_n);
+                if (ss > 0.0)
+                    df = df_n;
+            }
+
+            return df;
+        }
+    };
+
   private:
     // upwind algorithm choosing candidate difference by the sign
     Real upwindDifference(Real sign, Real df_p, Real df_n)

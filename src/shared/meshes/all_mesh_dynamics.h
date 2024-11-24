@@ -149,7 +149,8 @@ class CleanInterface : public BaseMeshDynamics
     MeshInnerDynamics<UpdateKernelIntegrals> update_kernel_integrals{mesh_data_, kernel_, global_h_ratio_};
     MeshInnerDynamics<MarkNearInterface> mark_near_interface{mesh_data_};
     MeshCoreDynamics<RedistanceInterface> redistance_interface{mesh_data_};
-    MeshInnerDynamics<ReinitializeLevelSet> reinitialize_level_set{mesh_data_};
+    // MeshInnerDynamics<ReinitializeLevelSet> reinitialize_level_set{mesh_data_};
+    MeshInnerDynamicsCK<execution::ParallelPolicy, ReinitializeLevelSet> reinitialize_level_set{mesh_data_};
 };
 
 class CorrectTopology : public BaseMeshDynamics
