@@ -134,7 +134,6 @@ class MeshWithGridDataPackages : public Mesh
 
   public:
     std::pair<size_t, Arrayi> NeighbourIndexShift(const Arrayi shift_index, const CellNeighborhood &neighbour);
-    bool isInnerDataPackage(const Arrayi &cell_index);
     void assignDataPackageIndex(const Arrayi &cell_index, const size_t package_index);
     size_t PackageIndexFromCellIndex(const Arrayi &cell_index);
     /** obtain averaged value at a corner of a data cell */
@@ -146,23 +145,12 @@ class MeshWithGridDataPackages : public Mesh
     template <typename DataType>
     DataType DataValueFromGlobalIndex(MeshVariable<DataType> &mesh_variable,
                                       const Arrayi &global_grid_index);
-    /** assign value to data package according to the position of data */
-    template <typename DataType, typename FunctionByPosition>
-    void assignByPosition(MeshVariable<DataType> &mesh_variable,
-                          const Arrayi &cell_index,
-                          const FunctionByPosition &function_by_position);
     /** return the position of data from its local grid index and the index of the cell it belongs to. */
     Vecd DataPositionFromIndex(const Arrayi &cell_index, const Arrayi &data_index)
     {
         return DataLowerBoundInCell(cell_index) + data_index.cast<Real>().matrix() * data_spacing_;
     }
-    /** void (non_value_returning) function iterate on all data points by value. */
-    template <typename FunctionOnData>
-    void for_each_cell_data(const FunctionOnData &function);
-    void resizeMeshVariableData()
-    {
-        resize_mesh_variable_data_(num_grid_pkgs_);
-    }
+    void resizeMeshVariableData() { resize_mesh_variable_data_(num_grid_pkgs_); }
 
     template <typename DataType>
     MeshVariable<DataType> *getMeshVariable(const std::string &variable_name)
@@ -175,20 +163,19 @@ class MeshWithGridDataPackages : public Mesh
         occupied_data_pkgs_.push_back(occupied);
     }
 
-    Arrayi CellIndexFromPositionOnGlobalMesh(const Vecd &position)
-    {
-        return global_mesh_.CellIndexFromPosition(position);
-    }
+    Arrayi CellIndexFromPositionOnGlobalMesh(const Vecd &position) { return global_mesh_.CellIndexFromPosition(position); }
+    Vecd GridPositionFromIndexOnGlobalMesh(const Arrayi &cell_index) { return global_mesh_.GridPositionFromIndex(cell_index); }
 
-    Vecd GridPositionFromIndexOnGlobalMesh(const Arrayi &cell_index)
-    {
-        return global_mesh_.GridPositionFromIndex(cell_index);
-    }
-
+    bool isInnerDataPackage(const Arrayi &cell_index);
     bool isCoreDataPackage(const Arrayi &cell_index)
     {
         size_t package_index = PackageIndexFromCellIndex(cell_index);
         return meta_data_cell_[package_index].second == 1;
+    }
+    bool isWithinCorePackage(Vecd position)
+    {
+        Arrayi cell_index = CellIndexFromPosition(position);
+        return isCoreDataPackage(cell_index);
     }
 
     void organizeOccupiedPackages(){
@@ -202,11 +189,6 @@ class MeshWithGridDataPackages : public Mesh
         meta_data_cell_ = new std::pair<Arrayi, int>[num_grid_pkgs_];
     }
 
-    bool isWithinCorePackage(Vecd position)
-    {
-        Arrayi cell_index = CellIndexFromPosition(position);
-        return isCoreDataPackage(cell_index);
-    }
 
     template <typename DataType>
     MeshVariable<DataType> *registerMeshVariable(const std::string &variable_name)

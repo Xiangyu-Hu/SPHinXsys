@@ -85,6 +85,7 @@ class BaseMeshLocalDynamics
     /** void (non_value_returning) function iterate on all data points by value. */
     template <typename FunctionOnData>
     static void for_each_cell_data(const FunctionOnData &function);
+
     std::pair<size_t, Arrayi> NeighbourIndexShift(const Arrayi shift_index, const CellNeighborhood &neighbour);
     void registerComputingKernel(execution::Implementation<Base> *implementation){};
 
@@ -94,6 +95,12 @@ class BaseMeshLocalDynamics
     /** probe by applying bi and tri-linear interpolation within the package. */
     template <class DataType>
     DataType probeDataPackage(MeshWithGridDataPackagesType &probe_mesh_, MeshVariableData<DataType> *mesh_variable_data, size_t package_index, const Arrayi &cell_index, const Vecd &position);
+
+    /** assign value to data package according to the position of data */
+    template <typename DataType, typename FunctionByPosition>
+    void assignByPosition(MeshVariable<DataType> &mesh_variable,
+                          const Arrayi &cell_index,
+                          const FunctionByPosition &function_by_position);
 };
 
 class InitializeDataForSingularPackage : public BaseMeshLocalDynamics
@@ -232,7 +239,27 @@ class UpdateKernelIntegrals : public BaseMeshLocalDynamics
         : BaseMeshLocalDynamics(mesh_data),
           kernel_(kernel),
           global_h_ratio_(global_h_ratio){};
-    virtual ~UpdateKernelIntegrals(){};
+    ~UpdateKernelIntegrals(){};
+
+    // class UpdateKernel
+    // {
+    //   public:
+    //     template <class ExecutionPolicy, class EncloserType>
+    //     UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+    //         : data_spacing_(encloser.data_spacing_),
+    //           phi_(encloser.phi_.DataField()),
+    //           phi_gradient_(encloser.phi_gradient_.DataField()),
+    //           base_dynamics(&encloser),
+    //           cell_neighborhood_(encloser.cell_neighborhood_){};
+    //     void update(const size_t &index);
+
+    //   protected:
+    //     Real data_spacing_;
+    //     MeshVariableData<Real> *phi_;
+    //     MeshVariableData<Vecd> *phi_gradient_;
+    //     BaseMeshLocalDynamics *base_dynamics;
+    //     CellNeighborhood *cell_neighborhood_;
+    // };
 
     void update(const size_t &package_index);
 

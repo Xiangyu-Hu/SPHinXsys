@@ -53,6 +53,21 @@ DataType BaseMeshLocalDynamics::probeDataPackage(MeshWithGridDataPackagesType &p
     return bilinear;
 }
 //=============================================================================================//
+template <typename DataType, typename FunctionByPosition>
+void BaseMeshLocalDynamics::assignByPosition(MeshVariable<DataType> &mesh_variable,
+                                                          const Arrayi &cell_index,
+                                                          const FunctionByPosition &function_by_position)
+{
+    size_t package_index = mesh_data_.PackageIndexFromCellIndex(cell_index);
+    auto &pkg_data = mesh_variable.DataField()[package_index];
+    for (int i = 0; i != pkg_size; ++i)
+        for (int j = 0; j != pkg_size; ++j)
+        {
+            Vec2d position = mesh_data.DataPositionFromIndex(cell_index, Arrayi(i, j));
+            pkg_data[i][j] = function_by_position(position);
+        }
+}
+//=============================================================================================//
 template <typename InDataType, typename OutDataType>
 void UpdateLevelSetGradient::computeGradient(MeshVariable<InDataType> &in_variable,
                                              MeshVariable<OutDataType> &out_variable,

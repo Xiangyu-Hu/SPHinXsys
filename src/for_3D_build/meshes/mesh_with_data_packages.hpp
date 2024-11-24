@@ -45,19 +45,6 @@ void MeshWithGridDataPackages<PKG_SIZE>::deleteIndexDataMatrix()
 }
 //=================================================================================================//
 template <int PKG_SIZE>
-template <typename FunctionOnData>
-void MeshWithGridDataPackages<PKG_SIZE>::
-    for_each_cell_data(const FunctionOnData &function)
-{
-    for (int i = 0; i != pkg_size; ++i)
-        for (int j = 0; j != pkg_size; ++j)
-            for (int k = 0; k != pkg_size; ++k)
-            {
-                function(i, j, k);
-            }
-}
-//=================================================================================================//
-template <int PKG_SIZE>
 void MeshWithGridDataPackages<PKG_SIZE>::
     assignDataPackageIndex(const Arrayi &cell_index, const size_t package_index)
 {
@@ -95,24 +82,6 @@ std::pair<size_t, Arrayi> MeshWithGridDataPackages<PKG_SIZE>::
     result.second = (shift_index + pkg_size * Arrayi::Ones()) - neighbour_index * pkg_size;
 
     return result;
-}
-//=================================================================================================//
-template <int PKG_SIZE>
-template <typename DataType, typename FunctionByPosition>
-void MeshWithGridDataPackages<PKG_SIZE>::
-    assignByPosition(MeshVariable<DataType> &mesh_variable,
-                     const Arrayi &cell_index,
-                     const FunctionByPosition &function_by_position)
-{
-    size_t package_index = PackageIndexFromCellIndex(cell_index);
-    auto &pkg_data = mesh_variable.DataField()[package_index];
-    for (int i = 0; i != pkg_size; ++i)
-        for (int j = 0; j != pkg_size; ++j)
-            for (int k = 0; k != pkg_size; ++k)
-            {
-                Vec3d position = DataPositionFromIndex(cell_index, Arrayi(i, j, k));
-                pkg_data[i][j][k] = function_by_position(position);
-            }
 }
 //=================================================================================================//
 template <int PKG_SIZE>

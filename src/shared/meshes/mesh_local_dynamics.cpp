@@ -85,10 +85,10 @@ void InitializeIndexMesh::update(const size_t &package_index)
 void UpdateKernelIntegrals::update(const size_t &package_index)
 {
     Arrayi cell_index = mesh_data_.meta_data_cell_[package_index].first;
-    mesh_data_.assignByPosition(
+    assignByPosition(
         kernel_weight_, cell_index, [&](const Vecd &position) -> Real
         { return computeKernelIntegral(position); });
-    mesh_data_.assignByPosition(
+    assignByPosition(
         kernel_gradient_, cell_index, [&](const Vecd &position) -> Vecd
         { return computeKernelGradientIntegral(position); });
 }
