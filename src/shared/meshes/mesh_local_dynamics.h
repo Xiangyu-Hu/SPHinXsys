@@ -392,6 +392,28 @@ class InitializeDataInACellFromCoarse : public BaseMeshLocalDynamics
           coarse_phi_(*coarse_mesh_.getMeshVariable<Real>("Levelset")){};
     virtual ~InitializeDataInACellFromCoarse(){};
 
+    // class UpdateKernel
+    // {
+    //   public:
+    //     template <class ExecutionPolicy, class EncloserType>
+    //     UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+    //         : shape_(&encloser.shape_),
+    //           grid_spacing_(encloser.grid_spacing_),
+    //           mesh_data_(&encloser.mesh_data_),
+    //           coarse_mesh_(&encloser.coarse_mesh_),
+    //           coarse_phi_(coarse_mesh_->getMeshVariable<Real>("Levelset")->DataField()),
+    //           base_dynamics_(&encloser){};
+    //     void update(const Arrayi &cell_index);
+
+    //   protected:
+    //     BaseMeshLocalDynamics *base_dynamics;
+    //     Shape *shape_;
+    //     Real grid_spacing_;
+    //     MeshWithGridDataPackagesType *mesh_data_;
+    //     MeshWithGridDataPackagesType *coarse_mesh_;
+    //     PackageDataMatrix<Real, 4> *coarse_phi_;
+    // };
+
     void update(const Arrayi &cell_index);
 
   private:

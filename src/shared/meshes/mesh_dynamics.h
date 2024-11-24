@@ -116,6 +116,35 @@ class MeshAllDynamics : public LocalDynamicsType, public BaseMeshDynamics
 };
 
 /**
+ * @class MeshInnerDynamicsCK
+ * @brief Mesh dynamics for only inner cells on the mesh (SYCL version)
+ */
+template <class ExecutionPolicy, class LocalDynamicsType>
+class MeshAllDynamicsCK : public LocalDynamicsType, public BaseMeshDynamics
+{
+    using UpdateKernel = typename LocalDynamicsType::UpdateKernel;
+    using KernelImplementation = Implementation<ExecutionPolicy, LocalDynamicsType, UpdateKernel>;
+    KernelImplementation kernel_implementation_;
+  public:
+    template <typename... Args>
+    MeshAllDynamicsCK(MeshWithGridDataPackages<4> &mesh_data, Args &&...args)
+        : LocalDynamicsType(mesh_data, std::forward<Args>(args)...),
+          BaseMeshDynamics(mesh_data), kernel_implementation_(*this){};
+    virtual ~MeshAllDynamicsCK(){};
+
+    void exec()
+    {
+        UpdateKernel *update_kernel = kernel_implementation_.getComputingKernel();
+        grid_parallel_for(
+            [&](Arrayi cell_index)
+            {
+              update_kernel->update(cell_index);
+            }
+        );
+    };
+};
+
+/**
  * @class MeshInnerDynamics
  * @brief Mesh dynamics for only inner cells on the mesh
  */
