@@ -369,6 +369,32 @@ void RedistanceInterface::update(const size_t &package_index)
         });
 }
 //=============================================================================================//
+void DiffuseLevelSetSign::UpdateKernel::update(const size_t &package_index)
+{
+    base_dynamics->for_each_cell_data(
+        [&](int i, int j)
+        {
+            // near interface cells are not considered
+            if (abs(near_interface_id_[package_index][i][j]) > 1)
+            {
+                mesh_find_if2d<-1, 2>(
+                    [&](int l, int m) -> bool
+                    {
+                        std::pair<size_t, Arrayi> neighbour_index = base_dynamics->NeighbourIndexShift(Arrayi(i + l, j + m), cell_neighborhood_);
+                        int near_interface_id = near_interface_id_[neighbour_index.first][neighbour_index.second[0]][neighbour_index.second[1]];
+                        bool is_found = abs(near_interface_id) == 1;
+                        if (is_found)
+                        {
+                            Real phi_0 = phi_[package_index][i][j];
+                            near_interface_id_[package_index][i][j] = near_interface_id;
+                            phi_[package_index][i][j] = near_interface_id == 1 ? fabs(phi_0) : -fabs(phi_0);
+                        }
+                        return is_found;
+                    });
+            }
+        });
+}
+//=============================================================================================//
 void DiffuseLevelSetSign::update(const size_t &package_index)
 {
     auto phi_data = phi_.DataField();

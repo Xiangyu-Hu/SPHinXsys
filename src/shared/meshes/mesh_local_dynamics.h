@@ -361,6 +361,24 @@ class DiffuseLevelSetSign : public BaseMeshLocalDynamics
         : BaseMeshLocalDynamics(mesh_data){};
     virtual ~DiffuseLevelSetSign(){};
 
+    class UpdateKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+            : phi_(encloser.phi_.DataField()),
+              near_interface_id_(encloser.near_interface_id_.DataField()),
+              cell_neighborhood_(encloser.cell_neighborhood_),
+              base_dynamics(&encloser){};
+        void update(const size_t &index);
+
+      protected:
+        PackageDataMatrix<Real, 4> *phi_;
+        PackageDataMatrix<int, 4> *near_interface_id_;
+        CellNeighborhood *cell_neighborhood_;
+        BaseMeshLocalDynamics *base_dynamics;
+    };
+
     void update(const size_t &package_index);
 };
 
