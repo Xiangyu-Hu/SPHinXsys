@@ -18,18 +18,18 @@ void BaseMeshLocalDynamics::for_each_cell_data(const FunctionOnData &function)
 //=============================================================================================//
 template <class DataType>
 DataType BaseMeshLocalDynamics::probeMesh(MeshWithGridDataPackagesType &probe_mesh_,
-                                          MeshVariable<DataType> &mesh_variable,
+                                          MeshVariableData<DataType> *mesh_variable_data,
                                           const Vecd &position)
 {
     Arrayi cell_index = probe_mesh_.CellIndexFromPosition(position);
     size_t package_index = probe_mesh_.PackageIndexFromCellIndex(cell_index);
-    return probe_mesh_.isInnerDataPackage(cell_index) ? probeDataPackage(mesh_variable, package_index, cell_index, position)
-                                                     : mesh_variable.DataField()[package_index][0][0];
+    return probe_mesh_.isInnerDataPackage(cell_index) ? probeDataPackage(probe_mesh_, mesh_variable_data, package_index, cell_index, position)
+                                                     : mesh_variable_data[package_index][0][0];
 }
 //=============================================================================================//
 template <class DataType>
 DataType BaseMeshLocalDynamics::probeDataPackage(MeshWithGridDataPackagesType &probe_mesh_,
-                                                 MeshVariable<DataType> &mesh_variable,
+                                                 MeshVariableData<DataType> *mesh_variable_data,
                                                  size_t package_index,
                                                  const Arrayi &cell_index,
                                                  const Vecd &position)
@@ -40,7 +40,6 @@ DataType BaseMeshLocalDynamics::probeDataPackage(MeshWithGridDataPackagesType &p
     Vecd beta = Vecd::Ones() - alpha;
 
     auto &neighborhood = probe_mesh_.cell_neighborhood_[package_index];
-    auto mesh_variable_data = mesh_variable.DataField();
     std::pair<size_t, Arrayi> neighbour_index_1 = NeighbourIndexShift(Arrayi(data_index[0], data_index[1]), neighborhood);
     std::pair<size_t, Arrayi> neighbour_index_2 = NeighbourIndexShift(Arrayi(data_index[0] + 1, data_index[1]), neighborhood);
     std::pair<size_t, Arrayi> neighbour_index_3 = NeighbourIndexShift(Arrayi(data_index[0], data_index[1] + 1), neighborhood);

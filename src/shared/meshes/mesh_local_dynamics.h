@@ -41,6 +41,9 @@ namespace SPH
 {
 using MeshWithGridDataPackagesType = MeshWithGridDataPackages<4>;
 
+template <class T>
+using MeshVariableData = PackageDataMatrix<T, 4>;
+
 /**
  * @class BaseMeshLocalDynamics
  * @brief The base class for all mesh local particle dynamics.
@@ -87,10 +90,10 @@ class BaseMeshLocalDynamics
 
     /** This function probe a mesh value */
     template <class DataType>
-    DataType probeMesh(MeshWithGridDataPackagesType &probe_mesh_, MeshVariable<DataType> &mesh_variable, const Vecd &position);
+    DataType probeMesh(MeshWithGridDataPackagesType &probe_mesh_, MeshVariableData<DataType> *mesh_variable_data, const Vecd &position);
     /** probe by applying bi and tri-linear interpolation within the package. */
     template <class DataType>
-    DataType probeDataPackage(MeshWithGridDataPackagesType &probe_mesh_, MeshVariable<DataType> &mesh_variable, size_t package_index, const Arrayi &cell_index, const Vecd &position);
+    DataType probeDataPackage(MeshWithGridDataPackagesType &probe_mesh_, MeshVariableData<DataType> *mesh_variable_data, size_t package_index, const Arrayi &cell_index, const Vecd &position);
 };
 
 class InitializeDataForSingularPackage : public BaseMeshLocalDynamics
@@ -177,8 +180,8 @@ class InitializeBasicDataForAPackage : public BaseMeshLocalDynamics
         MeshWithGridDataPackagesType *mesh_data_;
         std::pair<Arrayi, int>* meta_data_cell_;
         Shape *shape_;
-        PackageDataMatrix<Real, 4> *phi_;
-        PackageDataMatrix<int, 4> *near_interface_id_;
+        MeshVariableData<Real> *phi_;
+        MeshVariableData<int> *near_interface_id_;
         BaseMeshLocalDynamics *base_dynamics;
     };
 
@@ -209,8 +212,8 @@ class UpdateLevelSetGradient : public BaseMeshLocalDynamics
 
       protected:
         Real data_spacing_;
-        PackageDataMatrix<Real, 4> *phi_;
-        PackageDataMatrix<Vecd, 4> *phi_gradient_;
+        MeshVariableData<Real> *phi_;
+        MeshVariableData<Vecd> *phi_gradient_;
         BaseMeshLocalDynamics *base_dynamics;
         CellNeighborhood *cell_neighborhood_;
     };
@@ -237,7 +240,7 @@ class UpdateKernelIntegrals : public BaseMeshLocalDynamics
     Kernel &kernel_;
     Real global_h_ratio_;
 
-    Real probeSignedDistance(const Vecd &position) { return probeMesh(mesh_data_, phi_, position); };
+    Real probeSignedDistance(const Vecd &position) { return probeMesh(mesh_data_, phi_.DataField(), position); };
     Real computeKernelIntegral(const Vecd &position);
     Vecd computeKernelGradientIntegral(const Vecd &position);
 
@@ -281,8 +284,8 @@ class ReinitializeLevelSet : public BaseMeshLocalDynamics
 
       protected:
         Real data_spacing_;
-        PackageDataMatrix<Real, 4> *phi_;
-        PackageDataMatrix<int, 4> *near_interface_id_;
+        MeshVariableData<Real> *phi_;
+        MeshVariableData<int> *near_interface_id_;
         CellNeighborhood *cell_neighborhood_;
         BaseMeshLocalDynamics *base_dynamics;
 
@@ -373,8 +376,8 @@ class DiffuseLevelSetSign : public BaseMeshLocalDynamics
         void update(const size_t &index);
 
       protected:
-        PackageDataMatrix<Real, 4> *phi_;
-        PackageDataMatrix<int, 4> *near_interface_id_;
+        MeshVariableData<Real> *phi_;
+        MeshVariableData<int> *near_interface_id_;
         CellNeighborhood *cell_neighborhood_;
         BaseMeshLocalDynamics *base_dynamics;
     };
@@ -392,27 +395,27 @@ class InitializeDataInACellFromCoarse : public BaseMeshLocalDynamics
           coarse_phi_(*coarse_mesh_.getMeshVariable<Real>("Levelset")){};
     virtual ~InitializeDataInACellFromCoarse(){};
 
-    // class UpdateKernel
-    // {
-    //   public:
-    //     template <class ExecutionPolicy, class EncloserType>
-    //     UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-    //         : shape_(&encloser.shape_),
-    //           grid_spacing_(encloser.grid_spacing_),
-    //           mesh_data_(&encloser.mesh_data_),
-    //           coarse_mesh_(&encloser.coarse_mesh_),
-    //           coarse_phi_(coarse_mesh_->getMeshVariable<Real>("Levelset")->DataField()),
-    //           base_dynamics_(&encloser){};
-    //     void update(const Arrayi &cell_index);
+    class UpdateKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+            : shape_(&encloser.shape_),
+              grid_spacing_(encloser.grid_spacing_),
+              mesh_data_(&encloser.mesh_data_),
+              coarse_mesh_(&encloser.coarse_mesh_),
+              coarse_phi_(coarse_mesh_->getMeshVariable<Real>("Levelset")->DataField()),
+              base_dynamics_(&encloser){};
+        void update(const Arrayi &cell_index);
 
-    //   protected:
-    //     BaseMeshLocalDynamics *base_dynamics;
-    //     Shape *shape_;
-    //     Real grid_spacing_;
-    //     MeshWithGridDataPackagesType *mesh_data_;
-    //     MeshWithGridDataPackagesType *coarse_mesh_;
-    //     PackageDataMatrix<Real, 4> *coarse_phi_;
-    // };
+      protected:
+        BaseMeshLocalDynamics *base_dynamics_;
+        Shape *shape_;
+        Real grid_spacing_;
+        MeshWithGridDataPackagesType *mesh_data_;
+        MeshWithGridDataPackagesType *coarse_mesh_;
+        MeshVariableData<Real> *coarse_phi_;
+    };
 
     void update(const Arrayi &cell_index);
 
@@ -429,7 +432,7 @@ class ProbeSignedDistance : public BaseMeshLocalDynamics
         : BaseMeshLocalDynamics(mesh_data){};
     virtual ~ProbeSignedDistance(){};
 
-    Real update(const Vecd &position) { return probeMesh(mesh_data_, phi_, position); };
+    Real update(const Vecd &position) { return probeMesh(mesh_data_, phi_.DataField(), position); };
 };
 
 class ProbeLevelSetGradient : public BaseMeshLocalDynamics
@@ -439,7 +442,7 @@ class ProbeLevelSetGradient : public BaseMeshLocalDynamics
         : BaseMeshLocalDynamics(mesh_data){};
     virtual ~ProbeLevelSetGradient(){};
 
-    Vecd update(const Vecd &position) { return probeMesh(mesh_data_, phi_gradient_, position); };
+    Vecd update(const Vecd &position) { return probeMesh(mesh_data_, phi_gradient_.DataField(), position); };
 };
 
 class ProbeKernelIntegral : public BaseMeshLocalDynamics
@@ -449,7 +452,7 @@ class ProbeKernelIntegral : public BaseMeshLocalDynamics
         : BaseMeshLocalDynamics(mesh_data){};
     virtual ~ProbeKernelIntegral(){};
 
-    Real update(const Vecd &position) { return probeMesh(mesh_data_, kernel_weight_, position); };
+    Real update(const Vecd &position) { return probeMesh(mesh_data_, kernel_weight_.DataField(), position); };
 };
 
 class ProbeKernelGradientIntegral : public BaseMeshLocalDynamics
@@ -459,7 +462,7 @@ class ProbeKernelGradientIntegral : public BaseMeshLocalDynamics
         : BaseMeshLocalDynamics(mesh_data){};
     virtual ~ProbeKernelGradientIntegral(){};
 
-    Vecd update(const Vecd &position) { return probeMesh(mesh_data_, kernel_gradient_, position); };
+    Vecd update(const Vecd &position) { return probeMesh(mesh_data_, kernel_gradient_.DataField(), position); };
 };
 
 class ProbeIsWithinMeshBound : public BaseMeshLocalDynamics
