@@ -17,6 +17,54 @@ void BaseMeshLocalDynamics::for_each_cell_data(const FunctionOnData &function)
             }
 }
 //=============================================================================================//
+template <class DataType>
+DataType BaseMeshLocalDynamics::probeMesh(MeshWithGridDataPackagesType &probe_mesh_,
+                                          MeshVariable<DataType> &mesh_variable,
+                                          const Vecd &position)
+{
+    Arrayi cell_index = probe_mesh_.CellIndexFromPosition(position);
+    size_t package_index = probe_mesh_.PackageIndexFromCellIndex(cell_index);
+    return probe_mesh_.isInnerDataPackage(cell_index) ? probeDataPackage(probe_mesh_, mesh_variable, package_index, cell_index, position)
+                                                     : mesh_variable.DataField()[package_index][0][0][0];
+}
+//=============================================================================================//
+template <class DataType>
+DataType BaseMeshLocalDynamics::probeDataPackage(MeshWithGridDataPackagesType &probe_mesh_,
+                                                 MeshVariable<DataType> &mesh_variable,
+                                                 size_t package_index,
+                                                 const Arrayi &cell_index,
+                                                 const Vecd &position)
+{
+    Arrayi data_index = probe_mesh_.DataIndexFromPosition(cell_index, position);
+    Vecd data_position = probe_mesh_.DataPositionFromIndex(cell_index, data_index);
+    Vecd alpha = (position - data_position) / data_spacing_;
+    Vecd beta = Vecd::Ones() - alpha;
+
+    auto &neighborhood = probe_mesh_.cell_neighborhood_[package_index];
+    auto mesh_variable_data = mesh_variable.DataField();
+    std::pair<size_t, Arrayi> neighbour_index_1 = NeighbourIndexShift(Arrayi(data_index[0], data_index[1], data_index[2]), neighborhood);
+    std::pair<size_t, Arrayi> neighbour_index_2 = NeighbourIndexShift(Arrayi(data_index[0] + 1, data_index[1], data_index[2]), neighborhood);
+    std::pair<size_t, Arrayi> neighbour_index_3 = NeighbourIndexShift(Arrayi(data_index[0], data_index[1] + 1, data_index[2]), neighborhood);
+    std::pair<size_t, Arrayi> neighbour_index_4 = NeighbourIndexShift(Arrayi(data_index[0] + 1, data_index[1] + 1, data_index[2]), neighborhood);
+
+    DataType bilinear_1 = mesh_variable_data[neighbour_index_1.first][neighbour_index_1.second[0]][neighbour_index_1.second[1]][neighbour_index_1.second[2]] * beta[0] * beta[1] +
+                          mesh_variable_data[neighbour_index_2.first][neighbour_index_2.second[0]][neighbour_index_2.second[1]][neighbour_index_2.second[2]] * alpha[0] * beta[1] +
+                          mesh_variable_data[neighbour_index_3.first][neighbour_index_3.second[0]][neighbour_index_3.second[1]][neighbour_index_3.second[2]] * beta[0] * alpha[1] +
+                          mesh_variable_data[neighbour_index_4.first][neighbour_index_4.second[0]][neighbour_index_4.second[1]][neighbour_index_4.second[2]] * alpha[0] * alpha[1];
+
+    neighbour_index_1 = NeighbourIndexShift(Arrayi(data_index[0], data_index[1], data_index[2] + 1), neighborhood);
+    neighbour_index_2 = NeighbourIndexShift(Arrayi(data_index[0] + 1, data_index[1], data_index[2] + 1), neighborhood);
+    neighbour_index_3 = NeighbourIndexShift(Arrayi(data_index[0], data_index[1] + 1, data_index[2] + 1), neighborhood);
+    neighbour_index_4 = NeighbourIndexShift(Arrayi(data_index[0] + 1, data_index[1] + 1, data_index[2] + 1), neighborhood);
+
+    DataType bilinear_2 = mesh_variable_data[neighbour_index_1.first][neighbour_index_1.second[0]][neighbour_index_1.second[1]][neighbour_index_1.second[2]] * beta[0] * beta[1] +
+                          mesh_variable_data[neighbour_index_2.first][neighbour_index_2.second[0]][neighbour_index_2.second[1]][neighbour_index_2.second[2]] * alpha[0] * beta[1] +
+                          mesh_variable_data[neighbour_index_3.first][neighbour_index_3.second[0]][neighbour_index_3.second[1]][neighbour_index_3.second[2]] * beta[0] * alpha[1] +
+                          mesh_variable_data[neighbour_index_4.first][neighbour_index_4.second[0]][neighbour_index_4.second[1]][neighbour_index_4.second[2]] * alpha[0] * alpha[1];
+
+    return bilinear_1 * beta[2] + bilinear_2 * alpha[2];
+}
+//=============================================================================================//
 template <typename InDataType, typename OutDataType>
 void UpdateLevelSetGradient::computeGradient(MeshVariable<InDataType> &in_variable,
                                              MeshVariable<OutDataType> &out_variable,

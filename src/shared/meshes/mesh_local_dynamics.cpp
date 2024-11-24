@@ -97,9 +97,9 @@ void InitializeDataInACellFromCoarse::update(const Arrayi &cell_index)
 {
     Vecd cell_position = mesh_data_.CellPositionFromIndex(cell_index);
     MeshVariable<Real> &coarse_phi_ = *coarse_mesh_.getMeshVariable<Real>("Levelset");
-    size_t package_index = coarse_mesh_.probeMesh(coarse_phi_, cell_position) < 0.0 ? 0 : 1;
+    size_t package_index = probeMesh(coarse_mesh_, coarse_phi_, cell_position) < 0.0 ? 0 : 1;
     mesh_data_.assignDataPackageIndex(cell_index, package_index);
-    if (coarse_mesh_.isWithinCorePackage(cell_position))
+    if(coarse_mesh_.isWithinCorePackage(cell_position))
     {
         Real signed_distance = shape_.findSignedDistance(cell_position);
         Vecd normal_direction = shape_.findNormalDirection(cell_position);

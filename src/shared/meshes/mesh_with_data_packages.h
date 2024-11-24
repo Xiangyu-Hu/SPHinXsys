@@ -124,24 +124,12 @@ class MeshWithGridDataPackages : public Mesh
     };
     OperationOnDataAssemble<MeshVariableAssemble, ResizeMeshVariableData> resize_mesh_variable_data_{all_mesh_variables_};
 
-    /** probe by applying bi and tri-linear interpolation within the package. */
-    template <class DataType>
-    DataType probeDataPackage(MeshVariable<DataType> &mesh_variable, size_t package_index, const Arrayi &cell_index, const Vecd &position);
     bool isSingularDataPackage(const Arrayi &cell_index);
 
     /** return the position of the lower bound data in a cell. */
     Vecd DataLowerBoundInCell(const Arrayi &cell_index)
     {
         return CellLowerCornerPosition(cell_index) + 0.5 * data_spacing_ * Vecd::Ones();
-    }
-
-    /** return the grid index from its position and the index of the cell it belongs to. */
-    Arrayi DataIndexFromPosition(const Arrayi &cell_index, const Vecd &position)
-    {
-        return floor((position - DataLowerBoundInCell(cell_index)).array() / data_spacing_)
-            .template cast<int>()
-            .max(Arrayi::Zero())
-            .min((pkg_size - 1) * Arrayi::Ones());
     }
 
   public:
@@ -163,9 +151,6 @@ class MeshWithGridDataPackages : public Mesh
     void assignByPosition(MeshVariable<DataType> &mesh_variable,
                           const Arrayi &cell_index,
                           const FunctionByPosition &function_by_position);
-    /** This function probe a mesh value */
-    template <class DataType>
-    DataType probeMesh(MeshVariable<DataType> &mesh_variable, const Vecd &position);
     /** return the position of data from its local grid index and the index of the cell it belongs to. */
     Vecd DataPositionFromIndex(const Arrayi &cell_index, const Arrayi &data_index)
     {
@@ -237,6 +222,15 @@ class MeshWithGridDataPackages : public Mesh
         }
         return variable;
     };
+
+    /** return the grid index from its position and the index of the cell it belongs to. */
+    Arrayi DataIndexFromPosition(const Arrayi &cell_index, const Vecd &position)
+    {
+        return floor((position - DataLowerBoundInCell(cell_index)).array() / data_spacing_)
+            .template cast<int>()
+            .max(Arrayi::Zero())
+            .min((pkg_size - 1) * Arrayi::Ones());
+    }
 };
 } // namespace SPH
 #endif // MESH_WITH_DATA_PACKAGES_H
