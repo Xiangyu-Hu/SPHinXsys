@@ -137,6 +137,8 @@ class BaseParticles
   public:
     template <class DataType, typename... Args>
     DataType *addUniqueDiscreteVariable(const std::string &name, size_t data_size, Args &&...args);
+    template <class DataType, typename... Args>
+    DiscreteVariable<DataType> *addUniqueDiscreteVariableOnly(const std::string &name, size_t data_size, Args &&...args);
     template <typename DataType, typename... Args>
     DataType *registerDiscreteVariable(const std::string &name, size_t data_size, Args &&...args);
 
@@ -160,6 +162,8 @@ class BaseParticles
     template <typename DataType, typename... Args>
     DiscreteVariable<DataType> *registerStateVariableOnly(const std::string &name, Args &&...args);
 
+    template <typename DataType>
+    SingularVariable<DataType> *addUniqueSingularVariableOnly(const std::string &name, DataType initial_value = ZeroData<DataType>::value);
     template <typename DataType>
     SingularVariable<DataType> *registerSingularVariable(const std::string &name, DataType initial_value = ZeroData<DataType>::value);
     template <typename DataType>

@@ -38,7 +38,7 @@ namespace SPH
 {
 /**
  * @class BodyPart
- * @brief An auxillary class for SPHBody to indicate a part of the body.
+ * @brief An auxiliary class for SPHBody to indicate a part of the body.
  */
 using namespace std::placeholders;
 class BodyPart
@@ -64,6 +64,25 @@ class BodyPart
     Vecd *pos_;
 };
 
+class RangeByParticle
+{
+  public:
+    template <class ExecutionPolicy>
+    RangeByParticle(const ExecutionPolicy &ex_policy,
+                    DiscreteVariable<UnsignedInt> *dv_particle_indexes,
+                    SingularVariable<UnsignedInt> *sv_range_size)
+        : particle_indexes_(dv_particle_indexes->DelegatedDataField(ex_policy)),
+          range_size_(sv_range_size->DelegatedData(ex_policy)){};
+    virtual ~RangeByParticle(){};
+
+    UnsignedInt *ParticleIndexes() { return particle_indexes_; };
+    UnsignedInt RangeSize() { return *range_size_; };
+
+  protected:
+    UnsignedInt *particle_indexes_;
+    UnsignedInt *range_size_;
+};
+
 /**
  * @class BodyPartByParticle
  * @brief A body part with a collection of particles.
@@ -76,9 +95,7 @@ class BodyPartByParticle : public BodyPart
     IndexVector &LoopRange() { return body_part_particles_; };
     size_t SizeOfLoopRange() { return body_part_particles_.size(); };
 
-    BodyPartByParticle(SPHBody &sph_body, const std::string &body_part_name)
-        : BodyPart(sph_body, body_part_name),
-          body_part_bounds_(Vecd::Zero(), Vecd::Zero()), body_part_bounds_set_(false){};
+    BodyPartByParticle(SPHBody &sph_body, const std::string &body_part_name);
     virtual ~BodyPartByParticle(){};
 
     void setBodyPartBounds(BoundingBox bbox)
@@ -95,6 +112,8 @@ class BodyPartByParticle : public BodyPart
     }
 
   protected:
+    DiscreteVariable<UnsignedInt> *dv_particle_indexes_;
+    SingularVariable<UnsignedInt> *sv_range_size_;
     BoundingBox body_part_bounds_;
     bool body_part_bounds_set_;
 
