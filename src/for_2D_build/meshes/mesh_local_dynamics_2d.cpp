@@ -292,17 +292,13 @@ void MarkNearInterface::update(const size_t &package_index)
         });
 }
 //=============================================================================================//
-void RedistanceInterface::update(const size_t &package_index)
+void RedistanceInterface::UpdateKernel::update(const size_t &package_index)
 {
-    auto phi_data = phi_.DataField();
-    auto near_interface_id_data = near_interface_id_.DataField();
-    auto &neighborhood = mesh_data_.cell_neighborhood_[package_index];
     using NeighbourIndex = std::pair<size_t, Arrayi>; /**< stores shifted neighbour info: (size_t)package index, (arrayi)local grid index. */
-
-    for_each_cell_data(
+    base_dynamics->for_each_cell_data(
         [&](int i, int j)
         {
-            int near_interface_id = near_interface_id_data[package_index][i][j];
+            int near_interface_id = near_interface_id_[package_index][i][j];
             if (near_interface_id == 0)
             {
                 bool positive_band = false;
@@ -310,8 +306,8 @@ void RedistanceInterface::update(const size_t &package_index)
                 mesh_for_each2d<-1, 2>(
                     [&](int r, int s)
                     {
-                        NeighbourIndex neighbour_index = NeighbourIndexShift(Arrayi(i + r, j + s), neighborhood);
-                        int neighbor_near_interface_id = near_interface_id_data[neighbour_index.first][neighbour_index.second[0]][neighbour_index.second[1]];
+                        NeighbourIndex neighbour_index = base_dynamics->NeighbourIndexShift(Arrayi(i + r, j + s), *cell_neighborhood_);
+                        int neighbor_near_interface_id = near_interface_id_[neighbour_index.first][neighbour_index.second[0]][neighbour_index.second[1]];
                         if (neighbor_near_interface_id >= 1)
                             positive_band = true;
                         if (neighbor_near_interface_id <= -1)
@@ -323,10 +319,10 @@ void RedistanceInterface::update(const size_t &package_index)
                     mesh_for_each2d<-4, 5>(
                         [&](int x, int y)
                         {
-                            NeighbourIndex neighbour_index = NeighbourIndexShift(Arrayi(i + x, j + y), neighborhood);
-                            auto &neighbor_phi = phi_.DataField()[neighbour_index.first];
-                            auto &neighbor_phi_gradient = phi_gradient_.DataField()[neighbour_index.first];
-                            auto &neighbor_near_interface_id = near_interface_id_.DataField()[neighbour_index.first];
+                            NeighbourIndex neighbour_index = base_dynamics->NeighbourIndexShift(Arrayi(i + x, j + y), *cell_neighborhood_);
+                            auto &neighbor_phi = phi_[neighbour_index.first];
+                            auto &neighbor_phi_gradient = phi_gradient_[neighbour_index.first];
+                            auto &neighbor_near_interface_id = near_interface_id_[neighbour_index.first];
                             if (neighbor_near_interface_id[neighbour_index.second[0]][neighbour_index.second[1]] >= 1)
                             {
                                 Real phi_p_ = neighbor_phi[neighbour_index.second[0]][neighbour_index.second[1]];
@@ -335,11 +331,11 @@ void RedistanceInterface::update(const size_t &package_index)
                                 min_distance_p = SMIN(min_distance_p, (Vecd((Real)x, (Real)y) * data_spacing_ + phi_p_ * norm_to_face).norm());
                             }
                         });
-                    phi_data[package_index][i][j] = -min_distance_p;
+                    phi_[package_index][i][j] = -min_distance_p;
                     // this immediate switch of near interface id
                     // does not intervening with the identification of unresolved interface
                     // based on the assumption that positive false_and negative bands are not close to each other
-                    near_interface_id_data[package_index][i][j] = -1;
+                    near_interface_id_[package_index][i][j] = -1;
                 }
                 if (negative_band == false)
                 {
@@ -347,10 +343,10 @@ void RedistanceInterface::update(const size_t &package_index)
                     mesh_for_each2d<-4, 5>(
                         [&](int x, int y)
                         {
-                            NeighbourIndex neighbour_index = NeighbourIndexShift(Arrayi(i + x, j + y), neighborhood);
-                            auto &neighbor_phi = phi_.DataField()[neighbour_index.first];
-                            auto &neighbor_phi_gradient = phi_gradient_.DataField()[neighbour_index.first];
-                            auto &neighbor_near_interface_id = near_interface_id_.DataField()[neighbour_index.first];
+                            NeighbourIndex neighbour_index = base_dynamics->NeighbourIndexShift(Arrayi(i + x, j + y), *cell_neighborhood_);
+                            auto &neighbor_phi = phi_[neighbour_index.first];
+                            auto &neighbor_phi_gradient = phi_gradient_[neighbour_index.first];
+                            auto &neighbor_near_interface_id = near_interface_id_[neighbour_index.first];
                             if (neighbor_near_interface_id[neighbour_index.second[0]][neighbour_index.second[1]] <= -1)
                             {
                                 Real phi_n_ = neighbor_phi[neighbour_index.second[0]][neighbour_index.second[1]];
@@ -359,11 +355,11 @@ void RedistanceInterface::update(const size_t &package_index)
                                 min_distance_n = SMIN(min_distance_n, (Vecd((Real)x, (Real)y) * data_spacing_ - phi_n_ * norm_to_face).norm());
                             }
                         });
-                    phi_data[package_index][i][j] = min_distance_n;
+                    phi_[package_index][i][j] = min_distance_n;
                     // this immediate switch of near interface id
                     // does not intervening with the identification of unresolved interface
                     // based on the assumption that positive false_and negative bands are not close to each other
-                    near_interface_id_data[package_index][i][j] = 1;
+                    near_interface_id_[package_index][i][j] = 1;
                 }
             }
         });

@@ -198,6 +198,35 @@ class MeshInnerDynamicsCK : public LocalDynamicsType, public BaseMeshDynamics
     };
 };
 
+template <class ExecutionPolicy, class LocalDynamicsType>
+class MeshCoreDynamicsCK : public LocalDynamicsType, public BaseMeshDynamics
+{
+    using UpdateKernel = typename LocalDynamicsType::UpdateKernel;
+    using KernelImplementation = Implementation<ExecutionPolicy, LocalDynamicsType, UpdateKernel>;
+    KernelImplementation kernel_implementation_;
+  public:
+    template <typename... Args>
+    MeshCoreDynamicsCK(MeshWithGridDataPackages<4> &mesh_data, Args &&...args)
+        : LocalDynamicsType(mesh_data, std::forward<Args>(args)...),
+          BaseMeshDynamics(mesh_data), kernel_implementation_(*this){};
+    virtual ~MeshCoreDynamicsCK(){};
+
+    void exec()
+    {
+        UpdateKernel *update_kernel = kernel_implementation_.getComputingKernel();
+        package_parallel_for(
+            [&](size_t package_index)
+            {
+              std::pair<Arrayi, int> &metadata = meta_data_cell_[package_index];
+              if (metadata.second == 1)
+              {
+                  update_kernel->update(package_index);
+              }
+            }
+        );
+    };
+};
+
 /**
  * @class MeshCoreDynamics
  * @brief Mesh dynamics for only core cells on the mesh
