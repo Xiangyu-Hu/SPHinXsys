@@ -98,9 +98,13 @@ class BaseMeshLocalDynamics
 
     /** assign value to data package according to the position of data */
     template <typename DataType, typename FunctionByPosition>
-    void assignByPosition(MeshVariable<DataType> &mesh_variable,
+    void assignByPosition(MeshVariableData<DataType> *mesh_variable_data,
                           const Arrayi &cell_index,
                           const FunctionByPosition &function_by_position);
+
+    template <typename DataType>
+    DataType DataValueFromGlobalIndex(MeshVariableData<DataType> *mesh_variable_data,
+                                      const Arrayi &global_grid_index);
 };
 
 class InitializeDataForSingularPackage : public BaseMeshLocalDynamics
@@ -241,25 +245,56 @@ class UpdateKernelIntegrals : public BaseMeshLocalDynamics
           global_h_ratio_(global_h_ratio){};
     ~UpdateKernelIntegrals(){};
 
-    // class UpdateKernel
-    // {
-    //   public:
-    //     template <class ExecutionPolicy, class EncloserType>
-    //     UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-    //         : data_spacing_(encloser.data_spacing_),
-    //           phi_(encloser.phi_.DataField()),
-    //           phi_gradient_(encloser.phi_gradient_.DataField()),
-    //           base_dynamics(&encloser),
-    //           cell_neighborhood_(encloser.cell_neighborhood_){};
-    //     void update(const size_t &index);
+    class UpdateKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+            : data_spacing_(encloser.data_spacing_),
+              global_h_ratio_(encloser.global_h_ratio_),
+              phi_(encloser.phi_.DataField()),
+              phi_gradient_(encloser.phi_gradient_.DataField()),
+              kernel_weight_(encloser.kernel_weight_.DataField()),
+              kernel_gradient_(encloser.kernel_gradient_.DataField()),
+              base_dynamics(&encloser),
+              meta_data_cell_(encloser.meta_data_cell_),
+              kernel_(&encloser.kernel_),
+              mesh_data_(&encloser.mesh_data_){};
+        void update(const size_t &index);
 
-    //   protected:
-    //     Real data_spacing_;
-    //     MeshVariableData<Real> *phi_;
-    //     MeshVariableData<Vecd> *phi_gradient_;
-    //     BaseMeshLocalDynamics *base_dynamics;
-    //     CellNeighborhood *cell_neighborhood_;
-    // };
+      protected:
+        Real data_spacing_;
+        Real global_h_ratio_;
+        MeshVariableData<Real> *phi_;
+        MeshVariableData<Vecd> *phi_gradient_;
+        MeshVariableData<Real> *kernel_weight_;
+        MeshVariableData<Vecd> *kernel_gradient_;
+        BaseMeshLocalDynamics *base_dynamics;
+        std::pair<Arrayi, int> *meta_data_cell_;
+
+        Kernel *kernel_;
+        MeshWithGridDataPackagesType *mesh_data_;
+        //mesh_data_
+        Real computeKernelIntegral(const Vecd &position);
+        Vecd computeKernelGradientIntegral(const Vecd &position);
+
+        /** a cut cell is a cut by the level set. */
+        /** "Multi-scale modeling of compressible multi-fluid flows with conservative interface method."
+         * Hu, X. Y., et al., Proceedings of the Summer Program. Vol. 301. Stanford, CA, USA:
+         * Center for Turbulence Research, Stanford University, 2010.*/
+        Real CutCellVolumeFraction(Real phi, const Vecd &phi_gradient, Real data_spacing)
+        {
+            Real squared_norm_inv = 1.0 / (phi_gradient.squaredNorm() + TinyReal);
+            Real volume_fraction(0);
+            for (size_t i = 0; i != Dimensions; ++i)
+            {
+                volume_fraction += phi_gradient[i] * phi_gradient[i] * squared_norm_inv *
+                                  Heaviside(phi / (ABS(phi_gradient[i]) + TinyReal), 0.5 * data_spacing);
+            }
+            return volume_fraction;
+        }
+        Real probeSignedDistance(const Vecd &position) { return base_dynamics->probeMesh(*mesh_data_, phi_, position); };
+    };
 
     void update(const size_t &package_index);
 
@@ -267,25 +302,7 @@ class UpdateKernelIntegrals : public BaseMeshLocalDynamics
     Kernel &kernel_;
     Real global_h_ratio_;
 
-    Real probeSignedDistance(const Vecd &position) { return probeMesh(mesh_data_, phi_.DataField(), position); };
-    Real computeKernelIntegral(const Vecd &position);
-    Vecd computeKernelGradientIntegral(const Vecd &position);
 
-    /** a cut cell is a cut by the level set. */
-    /** "Multi-scale modeling of compressible multi-fluid flows with conservative interface method."
-     * Hu, X. Y., et al., Proceedings of the Summer Program. Vol. 301. Stanford, CA, USA:
-     * Center for Turbulence Research, Stanford University, 2010.*/
-    Real CutCellVolumeFraction(Real phi, const Vecd &phi_gradient, Real data_spacing)
-    {
-        Real squared_norm_inv = 1.0 / (phi_gradient.squaredNorm() + TinyReal);
-        Real volume_fraction(0);
-        for (size_t i = 0; i != Dimensions; ++i)
-        {
-            volume_fraction += phi_gradient[i] * phi_gradient[i] * squared_norm_inv *
-                              Heaviside(phi / (ABS(phi_gradient[i]) + TinyReal), 0.5 * data_spacing);
-        }
-        return volume_fraction;
-    }
 };
 
 class ReinitializeLevelSet : public BaseMeshLocalDynamics

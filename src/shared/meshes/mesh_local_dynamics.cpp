@@ -82,15 +82,26 @@ void InitializeIndexMesh::update(const size_t &package_index)
     mesh_data_.assignDataPackageIndex(cell_index, package_index);
 }
 //=================================================================================================//
-void UpdateKernelIntegrals::update(const size_t &package_index)
+void UpdateKernelIntegrals::UpdateKernel::update(const size_t &package_index)
 {
-    Arrayi cell_index = mesh_data_.meta_data_cell_[package_index].first;
-    assignByPosition(
+    Arrayi cell_index = meta_data_cell_[package_index].first;
+    base_dynamics->assignByPosition(
         kernel_weight_, cell_index, [&](const Vecd &position) -> Real
         { return computeKernelIntegral(position); });
-    assignByPosition(
+    base_dynamics->assignByPosition(
         kernel_gradient_, cell_index, [&](const Vecd &position) -> Vecd
         { return computeKernelGradientIntegral(position); });
+}
+//=================================================================================================//
+void UpdateKernelIntegrals::update(const size_t &package_index)
+{
+    // Arrayi cell_index = mesh_data_.meta_data_cell_[package_index].first;
+    // assignByPosition(
+    //     kernel_weight_, cell_index, [&](const Vecd &position) -> Real
+    //     { return computeKernelIntegral(position); });
+    // assignByPosition(
+    //     kernel_gradient_, cell_index, [&](const Vecd &position) -> Vecd
+    //     { return computeKernelGradientIntegral(position); });
 }
 //=================================================================================================//
 void InitializeDataInACellFromCoarse::UpdateKernel::update(const Arrayi &cell_index)

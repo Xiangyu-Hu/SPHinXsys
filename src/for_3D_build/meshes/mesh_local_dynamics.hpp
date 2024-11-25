@@ -65,12 +65,12 @@ DataType BaseMeshLocalDynamics::probeDataPackage(MeshWithGridDataPackagesType &p
 }
 //=============================================================================================//
 template <typename DataType, typename FunctionByPosition>
-void BaseMeshLocalDynamics::assignByPosition(MeshVariable<DataType> &mesh_variable,
+void BaseMeshLocalDynamics::assignByPosition(MeshVariableData<DataType> *mesh_variable_data,
                                             const Arrayi &cell_index,
                                             const FunctionByPosition &function_by_position)
 {
     size_t package_index = mesh_data_.PackageIndexFromCellIndex(cell_index);
-    auto &pkg_data = mesh_variable.DataField()[package_index];
+    auto &pkg_data = mesh_variable_data[package_index];
     for (int i = 0; i != pkg_size; ++i)
         for (int j = 0; j != pkg_size; ++j)
             for (int k = 0; k != pkg_size; ++k)
@@ -78,6 +78,23 @@ void BaseMeshLocalDynamics::assignByPosition(MeshVariable<DataType> &mesh_variab
                 Vec3d position = mesh_data_.DataPositionFromIndex(cell_index, Arrayi(i, j, k));
                 pkg_data[i][j][k] = function_by_position(position);
             }
+}
+//=============================================================================================//
+template <typename DataType>
+DataType BaseMeshLocalDynamics::DataValueFromGlobalIndex(MeshVariableData<DataType> *mesh_variable_data,
+                                                        const Arrayi &global_grid_index)
+{
+    Arrayi cell_index_on_mesh_ = Arrayi::Zero();
+    Arrayi local_data_index = Arrayi::Zero();
+    for (int n = 0; n != 3; n++)
+    {
+        size_t cell_index_in_this_direction = global_grid_index[n] / pkg_size;
+        cell_index_on_mesh_[n] = cell_index_in_this_direction;
+        local_data_index[n] = global_grid_index[n] - cell_index_in_this_direction * pkg_size;
+    }
+    size_t package_index = mesh_data_.PackageIndexFromCellIndex(cell_index_on_mesh_);
+    auto &data = mesh_variable_data[package_index];
+    return data[local_data_index[0]][local_data_index[1]][local_data_index[2]];
 }
 //=============================================================================================//
 template <typename InDataType, typename OutDataType>
