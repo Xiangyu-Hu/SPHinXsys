@@ -101,7 +101,7 @@ ShellStressRelaxationFirstHalf::
         gaussian_weight_ = three_gaussian_weights_;
     }
     /** Define the factor of hourglass control algorithm. */
-    hourglass_control_factor_ = 0.002;
+    hourglass_control_factor_ = 0.01;
 }
 //=================================================================================================//
 void ShellStressRelaxationFirstHalf::initialization(size_t index_i, Real dt)

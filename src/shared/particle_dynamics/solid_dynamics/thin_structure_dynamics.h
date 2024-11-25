@@ -236,6 +236,9 @@ class ShellStressRelaxationFirstHalf : public BaseShellRelaxation
 
     void update(size_t index_i, Real dt = 0.0);
 
+    inline Real hourglass_control_factor() const { return hourglass_control_factor_; };
+    inline void hourglass_control_factor(Real value) { hourglass_control_factor_ = value; };
+
   protected:
     ElasticSolid &elastic_solid_;
     StdLargeVec<Matd> &global_stress_, &global_moment_, &mid_surface_cauchy_stress_, &numerical_damping_scaling_;
