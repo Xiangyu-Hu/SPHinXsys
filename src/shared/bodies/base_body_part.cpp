@@ -4,12 +4,21 @@
 namespace SPH
 {
 //=================================================================================================//
+BodyPartByParticle::BodyPartByParticle(SPHBody &sph_body, const std::string &body_part_name)
+    : BodyPart(sph_body, body_part_name), dv_particle_indexes_(nullptr), sv_range_size_(nullptr),
+      body_part_bounds_(Vecd::Zero(), Vecd::Zero()), body_part_bounds_set_(false) {}
+//=================================================================================================//
 void BodyPartByParticle::tagParticles(TaggingParticleMethod &tagging_particle_method)
 {
     for (size_t i = 0; i < base_particles_.TotalRealParticles(); ++i)
     {
         tagging_particle_method(i);
     }
+    dv_particle_indexes_ = base_particles_.addUniqueDiscreteVariableOnly<UnsignedInt>(
+        body_part_name_, body_part_particles_.size(), [&](size_t i) -> Real
+        { return body_part_particles_[i]; });
+    sv_range_size_ = base_particles_.addUniqueSingularVariableOnly<UnsignedInt>(
+        body_part_name_ + "_Size", body_part_particles_.size());
 };
 //=============================================================================================//
 size_t BodyPartByCell::SizeOfLoopRange()
@@ -41,7 +50,6 @@ BodyRegionByParticle::BodyRegionByParticle(SPHBody &sph_body, SharedPtr<Shape> s
 {
     shape_ptr_keeper_.assignRef(shape_ptr);
 }
-//==
 //=================================================================================================//
 void BodyRegionByParticle::tagByContain(size_t particle_index)
 {

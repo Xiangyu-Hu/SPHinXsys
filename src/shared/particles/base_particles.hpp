@@ -64,6 +64,17 @@ DataType *BaseParticles::
     return variable->DataField();
 }
 //=================================================================================================//
+template <class DataType, typename... Args>
+DiscreteVariable<DataType> *BaseParticles::
+    addUniqueDiscreteVariableOnly(const std::string &name, size_t data_size, Args &&...args)
+{
+
+    DiscreteVariable<DataType> *variable =
+        unique_variable_ptrs_.createPtr<DiscreteVariable<DataType>>(name, data_size);
+    initializeVariable(variable, std::forward<Args>(args)...);
+    return variable;
+}
+//=================================================================================================//
 template <typename DataType, typename... Args>
 DataType *BaseParticles::registerDiscreteVariable(const std::string &name,
                                                   size_t data_size, Args &&...args)
@@ -196,6 +207,16 @@ DataType *BaseParticles::getVariableDataByName(const std::string &name)
     }
 
     return variable->DataField();
+}
+//=================================================================================================//
+template <class DataType>
+SingularVariable<DataType> *BaseParticles::
+    addUniqueSingularVariableOnly(const std::string &name, DataType initial_value)
+{
+
+    SingularVariable<DataType> *variable =
+        unique_variable_ptrs_.createPtr<SingularVariable<DataType>>(name, initial_value);
+    return variable;
 }
 //=================================================================================================//
 template <typename DataType>
