@@ -186,13 +186,14 @@ class MeshInnerDynamicsCK : public LocalDynamicsType, public BaseMeshDynamics
           BaseMeshDynamics(mesh_data), kernel_implementation_(*this){};
     virtual ~MeshInnerDynamicsCK(){};
 
-    void exec()
+    template <typename... Args>
+    void exec(Args &&...args)
     {
         UpdateKernel *update_kernel = kernel_implementation_.getComputingKernel();
         package_parallel_for(
             [&](size_t package_index)
             {
-              update_kernel->update(package_index);
+              update_kernel->update(package_index, std::forward<Args>(args)...);
             }
         );
     };

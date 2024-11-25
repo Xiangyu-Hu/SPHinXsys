@@ -134,8 +134,7 @@ class CleanInterface : public BaseMeshDynamics
     virtual ~CleanInterface(){};
 
     void exec(Real small_shift_factor){
-        mark_near_interface.setSmallShiftFactor(small_shift_factor);
-        mark_near_interface.exec();
+        mark_near_interface.exec(small_shift_factor);
         redistance_interface.exec();
         reinitialize_level_set.exec();
         update_level_set_gradient.exec();
@@ -149,7 +148,7 @@ class CleanInterface : public BaseMeshDynamics
     // MeshInnerDynamics<UpdateLevelSetGradient> update_level_set_gradient{mesh_data_};
     // MeshInnerDynamics<UpdateKernelIntegrals> update_kernel_integrals{mesh_data_, kernel_, global_h_ratio_};
     MeshInnerDynamicsCK<execution::ParallelPolicy, UpdateKernelIntegrals> update_kernel_integrals{mesh_data_, kernel_, global_h_ratio_};
-    MeshInnerDynamics<MarkNearInterface> mark_near_interface{mesh_data_};
+    MeshInnerDynamicsCK<execution::ParallelPolicy, MarkNearInterface> mark_near_interface{mesh_data_};
     MeshCoreDynamicsCK<execution::ParallelPolicy, RedistanceInterface> redistance_interface{mesh_data_};
     // MeshCoreDynamics<RedistanceInterface> redistance_interface{mesh_data_};
     // MeshInnerDynamics<ReinitializeLevelSet> reinitialize_level_set{mesh_data_};
@@ -166,8 +165,7 @@ class CorrectTopology : public BaseMeshDynamics
     virtual ~CorrectTopology(){};
 
     void exec(Real small_shift_factor){
-        mark_near_interface.setSmallShiftFactor(small_shift_factor);
-        mark_near_interface.exec();
+        mark_near_interface.exec(small_shift_factor);
         for (size_t i = 0; i != 10; ++i)
             diffuse_level_set_sign.exec();
         update_level_set_gradient.exec();
@@ -181,7 +179,7 @@ class CorrectTopology : public BaseMeshDynamics
     MeshInnerDynamicsCK<execution::ParallelPolicy, UpdateLevelSetGradient> update_level_set_gradient{mesh_data_};
     // MeshInnerDynamics<UpdateKernelIntegrals> update_kernel_integrals{mesh_data_, kernel_, global_h_ratio_};
     MeshInnerDynamicsCK<execution::ParallelPolicy, UpdateKernelIntegrals> update_kernel_integrals{mesh_data_, kernel_, global_h_ratio_};
-    MeshInnerDynamics<MarkNearInterface> mark_near_interface{mesh_data_};
+    MeshInnerDynamicsCK<execution::ParallelPolicy, MarkNearInterface> mark_near_interface{mesh_data_};
     MeshInnerDynamicsCK<execution::ParallelPolicy, DiffuseLevelSetSign> diffuse_level_set_sign{mesh_data_};
     // MeshInnerDynamics<DiffuseLevelSetSign> diffuse_level_set_sign{mesh_data_};
 };

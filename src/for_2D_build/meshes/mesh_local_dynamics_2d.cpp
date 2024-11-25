@@ -242,11 +242,11 @@ void ReinitializeLevelSet::update(const size_t &package_index)
         });
 }
 //=============================================================================================//
-void MarkNearInterface::update(const size_t &package_index)
+void MarkNearInterface::UpdateKernel::update(const size_t &package_index, Real small_shift_factor)
 {
-    auto &phi_addrs = phi_.DataField()[package_index];
-    auto &near_interface_id_addrs = near_interface_id_.DataField()[package_index];
-    auto neighborhood = mesh_data_.cell_neighborhood_[package_index];
+    Real small_shift = data_spacing_ * small_shift_factor; 
+    auto &phi_addrs = phi_[package_index];
+    auto &near_interface_id_addrs = near_interface_id_[package_index];
 
     // corner averages, note that the first row and first column are not used
     // template <typename DataType>
@@ -255,10 +255,10 @@ void MarkNearInterface::update(const size_t &package_index)
     mesh_for_each2d<0, 5>( //[notion] same pkg_size problem above
         [&](int i, int j)
         {
-            corner_averages[i][j] = mesh_data_.CornerAverage(phi_, Arrayi(i, j), Arrayi(-1, -1), neighborhood);
+            corner_averages[i][j] = base_dynamics->CornerAverage(phi_, Arrayi(i, j), Arrayi(-1, -1), *cell_neighborhood_);
         });
 
-    for_each_cell_data(
+    base_dynamics->for_each_cell_data(
         [&](int i, int j)
         {
             // first assume far cells
@@ -467,7 +467,7 @@ void WriteMeshFieldToPlt::update(std::ofstream &output_file)
     {
         for (int i = 0; i != number_of_operation[0]; ++i)
         {
-            output_file << mesh_data_.DataValueFromGlobalIndex(phi_, Arrayi(i, j))
+            output_file << DataValueFromGlobalIndex(phi_.DataField(), Arrayi(i, j))
                         << " ";
         }
         output_file << " \n";
@@ -477,7 +477,7 @@ void WriteMeshFieldToPlt::update(std::ofstream &output_file)
     {
         for (int i = 0; i != number_of_operation[0]; ++i)
         {
-            output_file << mesh_data_.DataValueFromGlobalIndex(phi_gradient_, Arrayi(i, j))[0]
+            output_file << DataValueFromGlobalIndex(phi_gradient_.DataField(), Arrayi(i, j))[0]
                         << " ";
         }
         output_file << " \n";
@@ -487,7 +487,7 @@ void WriteMeshFieldToPlt::update(std::ofstream &output_file)
     {
         for (int i = 0; i != number_of_operation[0]; ++i)
         {
-            output_file << mesh_data_.DataValueFromGlobalIndex(phi_gradient_, Arrayi(i, j))[1]
+            output_file << DataValueFromGlobalIndex(phi_gradient_.DataField(), Arrayi(i, j))[1]
                         << " ";
         }
         output_file << " \n";
@@ -497,7 +497,7 @@ void WriteMeshFieldToPlt::update(std::ofstream &output_file)
     {
         for (int i = 0; i != number_of_operation[0]; ++i)
         {
-            output_file << mesh_data_.DataValueFromGlobalIndex(near_interface_id_, Arrayi(i, j))
+            output_file << DataValueFromGlobalIndex(near_interface_id_.DataField(), Arrayi(i, j))
                         << " ";
         }
         output_file << " \n";
@@ -507,7 +507,7 @@ void WriteMeshFieldToPlt::update(std::ofstream &output_file)
     {
         for (int i = 0; i != number_of_operation[0]; ++i)
         {
-            output_file << mesh_data_.DataValueFromGlobalIndex(kernel_weight_, Arrayi(i, j))
+            output_file << DataValueFromGlobalIndex(kernel_weight_.DataField(), Arrayi(i, j))
                         << " ";
         }
         output_file << " \n";
@@ -517,7 +517,7 @@ void WriteMeshFieldToPlt::update(std::ofstream &output_file)
     {
         for (int i = 0; i != number_of_operation[0]; ++i)
         {
-            output_file << mesh_data_.DataValueFromGlobalIndex(kernel_gradient_, Arrayi(i, j))[0]
+            output_file << DataValueFromGlobalIndex(kernel_gradient_.DataField(), Arrayi(i, j))[0]
                         << " ";
         }
         output_file << " \n";
@@ -527,7 +527,7 @@ void WriteMeshFieldToPlt::update(std::ofstream &output_file)
     {
         for (int i = 0; i != number_of_operation[0]; ++i)
         {
-            output_file << mesh_data_.DataValueFromGlobalIndex(kernel_gradient_, Arrayi(i, j))[1]
+            output_file << DataValueFromGlobalIndex(kernel_gradient_.DataField(), Arrayi(i, j))[1]
                         << " ";
         }
         output_file << " \n";

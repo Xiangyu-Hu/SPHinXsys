@@ -85,6 +85,23 @@ DataType BaseMeshLocalDynamics::DataValueFromGlobalIndex(MeshVariableData<DataTy
     return data[local_data_index[0]][local_data_index[1]];
 }
 //=============================================================================================//
+template <typename DataType>
+DataType BaseMeshLocalDynamics::CornerAverage(MeshVariableData<DataType> *mesh_variable_data,
+                                              Arrayi addrs_index, Arrayi corner_direction,
+                                              CellNeighborhood &neighborhood)
+{
+    DataType average = ZeroData<DataType>::value;
+    for (int i = 0; i != 2; ++i)
+        for (int j = 0; j != 2; ++j)
+        {
+            int x_index = addrs_index[0] + i * corner_direction[0];
+            int y_index = addrs_index[1] + j * corner_direction[1];
+            std::pair<size_t, Arrayi> neighbour_index = NeighbourIndexShift(Arrayi(x_index, y_index), neighborhood);
+            average += mesh_variable_data[neighbour_index.first][neighbour_index.second[0]][neighbour_index.second[1]];
+        }
+    return average * 0.25;
+}
+//=============================================================================================//
 template <typename InDataType, typename OutDataType>
 void UpdateLevelSetGradient::computeGradient(MeshVariable<InDataType> &in_variable,
                                              MeshVariable<OutDataType> &out_variable,

@@ -102,9 +102,16 @@ class BaseMeshLocalDynamics
                           const Arrayi &cell_index,
                           const FunctionByPosition &function_by_position);
 
+    /** This function find the value of data from its index from global mesh. */
     template <typename DataType>
     DataType DataValueFromGlobalIndex(MeshVariableData<DataType> *mesh_variable_data,
                                       const Arrayi &global_grid_index);
+
+    /** obtain averaged value at a corner of a data cell */
+    template <typename DataType>
+    DataType CornerAverage(MeshVariableData<DataType> *mesh_variable,
+                           Arrayi addrs_index, Arrayi corner_direction,
+                           CellNeighborhood &neighborhood);
 };
 
 class InitializeDataForSingularPackage : public BaseMeshLocalDynamics
@@ -384,11 +391,27 @@ class MarkNearInterface : public BaseMeshLocalDynamics
         : BaseMeshLocalDynamics(mesh_data){};
     virtual ~MarkNearInterface(){};
 
-    void update(const size_t &package_index);
-    void setSmallShiftFactor(Real small_shift_factor){ small_shift = data_spacing_ * small_shift_factor; };
+    class UpdateKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+            : data_spacing_(encloser.data_spacing_),
+              phi_(encloser.phi_.DataField()),
+              near_interface_id_(encloser.near_interface_id_.DataField()),
+              base_dynamics(&encloser),
+              cell_neighborhood_(encloser.cell_neighborhood_){};
+        void update(const size_t &index, Real small_shift_factor);
 
-  private:
-    Real small_shift;
+      protected:
+        Real data_spacing_;
+        MeshVariableData<Real> *phi_;
+        MeshVariableData<int> *near_interface_id_;
+        BaseMeshLocalDynamics *base_dynamics;
+        CellNeighborhood *cell_neighborhood_;
+    };
+
+    void update(const size_t &package_index);
 };
 
 class RedistanceInterface : public BaseMeshLocalDynamics

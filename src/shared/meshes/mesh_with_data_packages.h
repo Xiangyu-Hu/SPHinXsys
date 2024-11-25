@@ -133,18 +133,8 @@ class MeshWithGridDataPackages : public Mesh
     }
 
   public:
-    std::pair<size_t, Arrayi> NeighbourIndexShift(const Arrayi shift_index, const CellNeighborhood &neighbour);
     void assignDataPackageIndex(const Arrayi &cell_index, const size_t package_index);
     size_t PackageIndexFromCellIndex(const Arrayi &cell_index);
-    /** obtain averaged value at a corner of a data cell */
-    template <typename DataType>
-    DataType CornerAverage(MeshVariable<DataType> &mesh_variable,
-                           Arrayi addrs_index, Arrayi corner_direction,
-                           CellNeighborhood &neighborhood);
-    /** This function find the value of data from its index from global mesh. */
-    template <typename DataType>
-    DataType DataValueFromGlobalIndex(MeshVariable<DataType> &mesh_variable,
-                                      const Arrayi &global_grid_index);
     /** return the position of data from its local grid index and the index of the cell it belongs to. */
     Vecd DataPositionFromIndex(const Arrayi &cell_index, const Arrayi &data_index)
     {
