@@ -30,6 +30,7 @@
 #define LOOP_RANGE_H
 
 #include "base_body.h"
+#include "base_body_part.h"
 #include "base_particles.hpp"
 
 namespace SPH
@@ -40,13 +41,30 @@ class LoopRangeCK;
 template <class ExecutionPolicy>
 class LoopRangeCK<ExecutionPolicy, SPHBody>
 {
-    BaseParticles &particles_;
-
   public:
-    LoopRangeCK(SPHBody &sph_body) : particles_(sph_body.getBaseParticles()) {};
-    virtual ~LoopRangeCK() {};
-    UnsignedInt LoopBound() { return particles_.TotalRealParticles(); };
-    UnsignedInt TotalParticlesInRange() { return particles_.TotalRealParticles(); };
+    LoopRangeCK(SPHBody &sph_body)
+        : loop_bound_(sph_body.getBaseParticles().svTotalRealParticles()->DelegatedData(ExecutionPolicy{})){};
+    virtual ~LoopRangeCK(){};
+    UnsignedInt LoopBound() { return *loop_bound_; };
+
+  protected:
+    UnsignedInt *loop_bound_;
+};
+
+template <class ExecutionPolicy>
+class LoopRangeCK<ExecutionPolicy, BodyPartByParticle>
+{
+  public:
+    LoopRangeCK(BodyPartByParticle &body_part_by_particle)
+        : particle_indexes_(body_part_by_particle.dvParticleIndexes()->DelegatedDataField(ExecutionPolicy{})),
+          loop_bound_(body_part_by_particle.svRangeSize()->DelegatedData(ExecutionPolicy{})){};
+
+    UnsignedInt *ParticleIndexes() { return particle_indexes_; };
+    UnsignedInt LoopBound() { return *loop_bound_; };
+
+  protected:
+    UnsignedInt *particle_indexes_;
+    UnsignedInt *loop_bound_;
 };
 } // namespace SPH
 #endif // LOOP_RANGE_H

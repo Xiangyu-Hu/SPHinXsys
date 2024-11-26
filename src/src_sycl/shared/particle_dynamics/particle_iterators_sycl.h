@@ -64,6 +64,22 @@ void particle_for(const ParallelDevicePolicy &par_device,
         .wait_and_throw();
 }
 
+template <class LocalDynamicsFunction>
+void particle_for(const ParallelDevicePolicy &par_device,
+                  LoopRangeCK<ParallelDevicePolicy, BodyPartByParticle> &loop_range,
+                  const LocalDynamicsFunction &local_dynamics_function)
+{
+    auto &sycl_queue = execution_instance.getQueue();
+    UnsignedInt *particle_indexes = loop_range.ParticleIndexes();
+    const size_t loop_bound = loop_range.LoopBound();
+    sycl_queue.submit([&](sycl::handler &cgh)
+                      { cgh.parallel_for(execution_instance.getUniformNdRange(loop_bound), [=](sycl::nd_item<1> index)
+                                         {
+                                 if(index.get_global_id(0) < loop_bound)
+                                     local_dynamics_function(particle_indexes[index.get_global_id(0)]); }); })
+        .wait_and_throw();
+}
+
 template <class ReturnType, typename Operation, class LocalDynamicsFunction>
 ReturnType particle_reduce(const ParallelDevicePolicy &par_device,
                            LoopRangeCK<ParallelDevicePolicy, SPHBody> &loop_range,

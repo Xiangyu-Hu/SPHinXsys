@@ -64,6 +64,34 @@ void particle_for(const ParallelPolicy &par,
         ap);
 };
 
+template <class LocalDynamicsFunction>
+void particle_for(const SequencedPolicy &seq,
+                  LoopRangeCK<SequencedPolicy, BodyPartByParticle> &loop_range,
+                  const LocalDynamicsFunction &local_dynamics_function)
+{
+    UnsignedInt *particle_indexes = loop_range.ParticleIndexes();
+    for (size_t i = 0; i < loop_range.LoopBound(); ++i)
+        local_dynamics_function(particle_indexes[i]);
+};
+
+template <class LocalDynamicsFunction>
+void particle_for(const ParallelPolicy &par,
+                  LoopRangeCK<ParallelPolicy, BodyPartByParticle> &loop_range,
+                  const LocalDynamicsFunction &local_dynamics_function)
+{
+    UnsignedInt *particle_indexes = loop_range.ParticleIndexes();
+    parallel_for(
+        IndexRange(0, loop_range.LoopBound()),
+        [&](const IndexRange &r)
+        {
+            for (size_t i = r.begin(); i < r.end(); ++i)
+            {
+                local_dynamics_function(particle_indexes[i]);
+            }
+        },
+        ap);
+};
+
 template <class ReturnType, typename Operation, class LocalDynamicsFunction>
 ReturnType particle_reduce(const SequencedPolicy &seq,
                            LoopRangeCK<SequencedPolicy, SPHBody> &loop_range,
