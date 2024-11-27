@@ -139,12 +139,40 @@ void ShellStressRelaxationFirstHalf::initialization(size_t index_i, Real dt)
                                             (Matd::Identity() - inverse_F_gaussian_point.transpose() * inverse_F_gaussian_point) *
                                             transformation_matrix_[index_i] * current_transformation_matrix.transpose();
 
-        /** correct Almansi strain tensor according to plane stress problem. */
-        current_local_almansi_strain = getCorrectedAlmansiStrain(current_local_almansi_strain, nu_);
+        current_local_almansi_strain(2, 2) = 0;
+        Matd cauchy_stress = elastic_solid_.StressCauchy(current_local_almansi_strain, F_gaussian_point, index_i);
+        { /// Enforce plane stress condition adapting algorithm from Sec. 5.4.1 from http://dx.doi.org/10.18419/opus-14215
+          /// Differential geometry and the geometrically non-linear Reissner-Mindlin shell model
+          /// @WARN Algorithm is not guaranteed to converge, see discussion in Sec. 5.4.1
+          ///       even more so considering we do not reuse analytical derivatives.
 
-        /** correct out-plane numerical damping. */
-        Matd cauchy_stress = elastic_solid_.StressCauchy(current_local_almansi_strain, F_gaussian_point, index_i) + current_transformation_matrix * transformation_matrix_[index_i].transpose() * F_gaussian_point *
-                                                                                                                        elastic_solid_.NumericalDampingRightCauchy(F_gaussian_point, dF_gaussian_point_dt, numerical_damping_scaling_[index_i], index_i) * F_gaussian_point.transpose() * transformation_matrix_[index_i] * current_transformation_matrix.transpose() / F_gaussian_point.determinant();
+            double E = E0_; // Take the default Young's modulus of the material as the initial derivative.
+            int it = 0;
+            constexpr int max_iterations = 20; // @WARN hard-coded maximum number of iterations
+            constexpr auto infinity = std::numeric_limits<Real>::infinity();
+            auto tolerance_sqr = [](const Matd &stress)
+            {
+                return std::max(Eps, Eps * stress.block<2, 2>(0, 0).colwise().squaredNorm().minCoeff());
+            };
+            for (double s_next = infinity;
+                 s_next * s_next > tolerance_sqr(cauchy_stress) && it < max_iterations;
+                 ++it)
+            {
+                double e_prev = current_local_almansi_strain(2, 2);
+                double s_prev = cauchy_stress(2, 2);
+                double e_next = e_prev - s_prev / E;
+                current_local_almansi_strain(2, 2) = e_next;
+                cauchy_stress = elastic_solid_.StressCauchy(current_local_almansi_strain, F_gaussian_point, index_i);
+                s_next = cauchy_stress(2, 2);
+                E = (s_next - s_prev) / (e_next - e_prev);
+            }
+            if (cauchy_stress.allFinite() == false || it == max_iterations)
+                throw std::runtime_error("[ShellStressRelaxationFirstHalf::initialization] Enforcing plane stress condition for shell failed.");
+        }
+        /// Impact of including numerical damping in the algorithm above unclear
+        /// Left here in absence of discriminating factors
+        Matd damping = current_transformation_matrix * transformation_matrix_[index_i].transpose() * F_gaussian_point * elastic_solid_.NumericalDampingRightCauchy(F_gaussian_point, dF_gaussian_point_dt, numerical_damping_scaling_[index_i], index_i) * F_gaussian_point.transpose() * transformation_matrix_[index_i] * current_transformation_matrix.transpose() / F_gaussian_point.determinant();
+        cauchy_stress += damping;
 
         /** Impose modeling assumptions. */
         cauchy_stress.col(Dimensions - 1) *= shear_correction_factor_;
