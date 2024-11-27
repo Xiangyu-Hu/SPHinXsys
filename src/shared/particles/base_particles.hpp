@@ -154,6 +154,24 @@ DataType *BaseParticles::registerStateVariableFrom(
 }
 //=================================================================================================//
 template <typename DataType>
+DiscreteVariable<DataType> *BaseParticles::registerStateVariableOnlyFrom(
+    const std::string &new_name, const std::string &old_name)
+{
+    DiscreteVariable<DataType> *variable = findVariableByName<DataType>(all_discrete_variables_, old_name);
+
+    if (variable == nullptr)
+    {
+        std::cout << "\nError: the old variable '" << old_name << "' is not registered!\n";
+        std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+        exit(1);
+    }
+
+    DataType *old_data_field = variable->DataField();
+    return registerStateVariableOnly<DataType>(new_name, [&](size_t index)
+                                               { return old_data_field[index]; });
+}
+//=================================================================================================//
+template <typename DataType>
 DataType *BaseParticles::registerStateVariableFrom(
     const std::string &name, const StdLargeVec<DataType> &geometric_data)
 {

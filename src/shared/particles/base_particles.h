@@ -87,7 +87,7 @@ class BaseParticles
 
   public:
     explicit BaseParticles(SPHBody &sph_body, BaseMaterial *base_material);
-    virtual ~BaseParticles() {};
+    virtual ~BaseParticles(){};
     SPHBody &getSPHBody() { return sph_body_; };
     BaseMaterial &getBaseMaterial() { return base_material_; };
 
@@ -161,6 +161,8 @@ class BaseParticles
     DiscreteVariable<DataType> *registerDiscreteVariableOnly(const std::string &name, size_t data_size, Args &&...args);
     template <typename DataType, typename... Args>
     DiscreteVariable<DataType> *registerStateVariableOnly(const std::string &name, Args &&...args);
+    template <typename DataType>
+    DiscreteVariable<DataType> *registerStateVariableOnlyFrom(const std::string &new_name, const std::string &old_name);
 
     template <typename DataType>
     SingularVariable<DataType> *addUniqueSingularVariableOnly(const std::string &name, DataType initial_value = ZeroData<DataType>::value);
@@ -263,7 +265,7 @@ class BaseParticles
     struct WriteAParticleVariableToXml
     {
         XmlParser &xml_parser_;
-        WriteAParticleVariableToXml(XmlParser &xml_parser) : xml_parser_(xml_parser) {};
+        WriteAParticleVariableToXml(XmlParser &xml_parser) : xml_parser_(xml_parser){};
 
         template <typename DataType>
         void operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables);
@@ -272,7 +274,7 @@ class BaseParticles
     struct ReadAParticleVariableFromXml
     {
         XmlParser &xml_parser_;
-        ReadAParticleVariableFromXml(XmlParser &xml_parser) : xml_parser_(xml_parser) {};
+        ReadAParticleVariableFromXml(XmlParser &xml_parser) : xml_parser_(xml_parser){};
 
         template <typename DataType>
         void operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables, BaseParticles *base_particles);
