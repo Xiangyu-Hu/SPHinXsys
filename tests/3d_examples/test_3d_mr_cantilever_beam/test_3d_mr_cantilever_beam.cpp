@@ -9,11 +9,12 @@
 #include "sphinxsys.h"
 using namespace SPH;
 
-void beam_multi_resolution(double dp_factor, bool damping_on, int refinement_level = 1);
+void beam_multi_resolution(Real dp_factor, bool damping_on, int refinement_level = 1);
 
 int main(int ac, char *av[])
 {
-    beam_multi_resolution(3.5, true, 2);
+    // beam_multi_resolution(4, true, 0);
+    beam_multi_resolution(2, true, 1);
 }
 
 //------------------------------------------------------------------------------
@@ -111,13 +112,14 @@ struct beam_parameters
     const Real gravity = 9.8;
 };
 //------------------------------------------------------------------------------
-void beam_multi_resolution(double dp_factor, bool damping_on, int refinement_level)
+void beam_multi_resolution(Real dp_factor, bool damping_on, int refinement_level)
 {
     const beam_parameters params;
 
     // resolution
-    const Real dp = params.height / (4.0 * dp_factor);
-    const Real extension_length = 4 * dp;
+    const Real dp_ref = params.height / 4.0;
+    const Real dp = dp_ref / dp_factor;
+    const Real extension_length = 4 * dp_ref;
 
     // load
     Gravity gravity(-params.gravity * Vec3d::UnitY());
@@ -134,10 +136,11 @@ void beam_multi_resolution(double dp_factor, bool damping_on, int refinement_lev
     auto mesh = makeShared<TransformShape<GeometricShapeBox>>(Transform(translation), halfsize, "beam");
 
     // refinement region
-    const Real refinement_region_length = 0.5 * params.length;
-    const Vec3d refinement_halfsize = 0.5 * Vec3d(refinement_region_length, params.height, params.width);
-    const Vec3d refinement_translation = (params.length - 0.5 * refinement_region_length) * Vec3d::UnitX();
-    auto refinement_region = makeShared<TransformShape<GeometricShapeBox>>(Transform(refinement_translation), refinement_halfsize);
+    // const Real refinement_region_length = 0.5 * params.length;
+    // const Vec3d refinement_halfsize = 0.5 * Vec3d(refinement_region_length, params.height, params.width);
+    // const Vec3d refinement_translation = (params.length - 0.5 * refinement_region_length) * Vec3d::UnitX();
+    // auto refinement_region = makeShared<TransformShape<GeometricShapeBox>>(Transform(refinement_translation), refinement_halfsize);
+    auto refinement_region = makeShared<TransformShape<GeometricShapeBox>>(Transform(translation), halfsize);
 
     // System bounding box
     BoundingBox bb_system = mesh->getBounds();
@@ -174,22 +177,22 @@ void beam_multi_resolution(double dp_factor, bool damping_on, int refinement_lev
     solid_algs algs(*inner);
 
     // damping
-    std::unique_ptr<AdaptiveSplittingInnerRelation> inner_split = nullptr;
+    std::unique_ptr<SplittingInnerRelation> inner_split = nullptr;
+    std::unique_ptr<AdaptiveSplittingInnerRelation> adaptive_inner_split = nullptr;
     if (refinement_level > 0)
-        inner_split = std::make_unique<AdaptiveSplittingInnerRelation>(beam_body);
+        adaptive_inner_split = std::make_unique<AdaptiveSplittingInnerRelation>(beam_body);
+    else
+        inner_split = std::make_unique<SplittingInnerRelation>(beam_body);
     std::unique_ptr<DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d, FixedDampingRate>>>> damping_single_res;
     std::unique_ptr<DampingWithRandomChoice<InteractionAdaptiveSplit<DampingPairwiseInner<Vec3d, FixedDampingRate>>>> damping_mr_res;
     if (refinement_level > 0)
-        damping_mr_res = std::make_unique<DampingWithRandomChoice<InteractionAdaptiveSplit<DampingPairwiseInner<Vec3d, FixedDampingRate>>>>(0.2, *inner_split, "Velocity", params.physical_viscosity);
+        damping_mr_res = std::make_unique<DampingWithRandomChoice<InteractionAdaptiveSplit<DampingPairwiseInner<Vec3d, FixedDampingRate>>>>(0.2, *adaptive_inner_split, "Velocity", params.physical_viscosity);
     else
-        damping_single_res = std::make_unique<DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d, FixedDampingRate>>>>(0.2, *inner, "Velocity", params.physical_viscosity);
+        damping_single_res = std::make_unique<DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d, FixedDampingRate>>>>(0.2, *inner_split, "Velocity", params.physical_viscosity);
     auto damping_exec = [&](Real dt)
     {
         if (refinement_level > 0)
-        {
             damping_mr_res->exec(dt);
-            damping_mr_res->exec(dt);
-        }
         else
             damping_single_res->exec(dt);
     };
@@ -206,7 +209,7 @@ void beam_multi_resolution(double dp_factor, bool damping_on, int refinement_lev
     {
         Vec3d *pos = particles.getVariableDataByName<Vec3d>("Position");
         for (size_t index_i = 0; index_i < particles.TotalRealParticles(); ++index_i)
-            if (std::isnan(pos[index_i][0]) || std::isnan(pos[index_i][1]) || std::isnan(pos[index_i][2]))
+            if (std::isnan(pos[index_i].norm()))
                 throw std::runtime_error("position has become nan");
     };
 
@@ -221,11 +224,64 @@ void beam_multi_resolution(double dp_factor, bool damping_on, int refinement_lev
     system.initializeSystemCellLinkedLists();
     system.initializeSystemConfigurations();
 
+    if (refinement_level > 0)
+    {
+        auto &cell_linked_list = *dynamic_cast<MultilevelCellLinkedList *>(&beam_body.getCellLinkedList());
+        auto *level = cell_linked_list.get_level();
+        for (size_t i = 0; i < beam_body.getBaseParticles().TotalRealParticles(); ++i)
+        {
+            if (level[i] != refinement_level)
+            {
+                std::cout << "level[i]: " << level[i] << std::endl;
+                throw std::runtime_error("particle is not in the correct level");
+            }
+        }
+    }
+
     algs.corrected_config();
 
     constant_gravity.exec();
 
     // Output
+    std::cout << "Total real particle number: " << beam_body.getBaseParticles().TotalRealParticles() << "\n";
+
+    auto *neighbor_number = beam_body.getBaseParticles().registerStateVariable<int>("InnerNeighborNumber", 0);
+    for (size_t i = 0; i < beam_body.getBaseParticles().TotalRealParticles(); ++i)
+    {
+        const auto &neighbor = inner->inner_configuration_[i];
+        neighbor_number[i] = neighbor.current_size_;
+    }
+    beam_body.getBaseParticles().addVariableToWrite<int>("InnerNeighborNumber");
+    auto get_ave_neighbor_number = [&](const BaseInnerRelation &inner)
+    {
+        double ave_neighbor_number = 0.0;
+        for (size_t i = 0; i < beam_body.getBaseParticles().TotalRealParticles(); ++i)
+        {
+            const auto &neighbor = inner.inner_configuration_[i];
+            ave_neighbor_number += neighbor.current_size_;
+        }
+        return ave_neighbor_number / beam_body.getBaseParticles().TotalRealParticles();
+    };
+    double inner_neighbor_number = get_ave_neighbor_number(*inner);
+    double split_inner_neighbor_number = refinement_level == 0 ? get_ave_neighbor_number(*inner_split) : get_ave_neighbor_number(*adaptive_inner_split);
+    std::cout << "Average inner neighbor number: " << inner_neighbor_number << "\n";
+    std::cout << "Average split inner neighbor number: " << split_inner_neighbor_number << "\n";
+
+    if (refinement_level > 0)
+    {
+        for (size_t i = 0; i < beam_body.getBaseParticles().TotalRealParticles(); ++i)
+        {
+            const auto &neighbor = adaptive_inner_split->inner_configuration_[i];
+            std::vector<size_t> neighbor_indices(neighbor.current_size_);
+            for (size_t n = 0; n < neighbor.current_size_; ++n)
+                neighbor_indices[n] = neighbor.j_[n];
+            std::sort(neighbor_indices.begin(), neighbor_indices.end());
+            auto it = std::unique(neighbor_indices.begin(), neighbor_indices.end());
+            if (it != neighbor_indices.end())
+                throw std::runtime_error("duplicate neighbor");
+        }
+    }
+
     beam_body.getBaseParticles().addVariableToWrite<Vec3d>("GravityForce");
     beam_body.getBaseParticles().addVariableToWrite<Vec3d>("NormalDirection");
     beam_body.getBaseParticles().addVariableToWrite<Vec3d>("Velocity");
@@ -246,6 +302,7 @@ void beam_multi_resolution(double dp_factor, bool damping_on, int refinement_lev
     Real output_period = end_time / 50.0;
     Real dt = 0.0;
     TickCount t1 = TickCount::now();
+    TimeInterval time_damping;
     const Real dt_ref = system.getSmallestTimeStepAmongSolidBodies();
     std::cout << "dt_ref: " << dt_ref << std::endl;
     auto run_simulation = [&]()
@@ -270,7 +327,9 @@ void beam_multi_resolution(double dp_factor, bool damping_on, int refinement_lev
                 fix_bc.exec();
                 if (damping_on)
                 {
+                    TickCount t_damping_0 = TickCount::now();
                     damping_exec(dt);
+                    time_damping += (TickCount::now() - t_damping_0);
                     fix_bc.exec();
                 }
                 algs.stress_relaxation_second(dt);
@@ -289,6 +348,7 @@ void beam_multi_resolution(double dp_factor, bool damping_on, int refinement_lev
         }
         TimeInterval tt = TickCount::now() - t1;
         std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
+        std::cout << "Total wall time for damping: " << time_damping.seconds() << " seconds." << std::endl;
     };
 
     try
