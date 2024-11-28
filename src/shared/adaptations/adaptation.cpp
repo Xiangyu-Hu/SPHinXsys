@@ -125,12 +125,12 @@ void ParticleWithLocalRefinement::initializeAdaptationVariables(BaseParticles &b
 //=================================================================================================//
 size_t ParticleWithLocalRefinement::getCellLinkedListTotalLevel()
 {
-    return size_t(local_refinement_level_);
+    return size_t(local_refinement_level_) + 1;
 }
 //=================================================================================================//
 size_t ParticleWithLocalRefinement::getLevelSetTotalLevel()
 {
-    return getCellLinkedListTotalLevel() + 1;
+    return getCellLinkedListTotalLevel();
 }
 //=================================================================================================//
 UniquePtr<BaseCellLinkedList> ParticleWithLocalRefinement::

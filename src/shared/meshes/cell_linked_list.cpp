@@ -165,8 +165,10 @@ MultilevelCellLinkedList::MultilevelCellLinkedList(BoundingBox tentative_bounds,
 size_t MultilevelCellLinkedList::getMeshLevel(Real particle_cutoff_radius)
 {
     for (size_t level = total_levels_; level != 0; --level)
-        if (particle_cutoff_radius - mesh_levels_[level - 1]->GridSpacing() < Eps)
-            return level - 1; // jump out the loop!
+    {
+        if (particle_cutoff_radius - mesh_levels_[level - 1]->GridSpacing() < SqrtEps)
+            return level - 1;
+    }
 
     std::cout << "\n Error: CellLinkedList level searching out of bound!" << std::endl;
     std::cout << __FILE__ << ':' << __LINE__ << std::endl;
