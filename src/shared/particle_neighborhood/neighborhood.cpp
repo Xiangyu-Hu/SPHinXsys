@@ -558,5 +558,28 @@ operator()(Neighborhood &neighborhood, const Vecd &pos_i, size_t index_i, const 
     }
 };
 //=================================================================================================//
+NeighborBuilderSplitInner::
+    NeighborBuilderSplitInner(SPHBody &body)
+    : NeighborBuilder(body.sph_adaptation_->getKernel()) {}
+
+void NeighborBuilderSplitInner::
+operator()(Neighborhood &neighborhood, const Vecd &pos_i, size_t index_i, const ListData &list_data_j)
+{
+    size_t index_j = list_data_j.first;
+
+    if (index_i >= index_j)
+        return;
+
+    // only add neighbors when i < j
+    Vecd displacement = pos_i - list_data_j.second;
+    Real distance_metric = displacement.squaredNorm();
+    if (kernel_->checkIfWithinCutOffRadius(displacement))
+    {
+        neighborhood.current_size_ >= neighborhood.allocated_size_
+            ? createNeighbor(neighborhood, std::sqrt(distance_metric), displacement, index_j)
+            : initializeNeighbor(neighborhood, std::sqrt(distance_metric), displacement, index_j);
+        neighborhood.current_size_++;
+    }
+};
 } // namespace SPH
 //=================================================================================================//

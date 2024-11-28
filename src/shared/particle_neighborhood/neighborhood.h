@@ -349,5 +349,13 @@ class NeighborBuilderSplitInnerAdaptive : public NeighborBuilder
     Real *h_ratio_;
     int *level_;
 };
+
+class NeighborBuilderSplitInner : public NeighborBuilder
+{
+  public:
+    explicit NeighborBuilderSplitInner(SPHBody &body);
+    void operator()(Neighborhood &neighborhood,
+                    const Vecd &pos_i, size_t index_i, const ListData &list_data_j) override;
+};
 } // namespace SPH
 #endif // NEIGHBORHOOD_H
