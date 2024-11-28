@@ -196,6 +196,9 @@ class MultilevelCellLinkedList : public MultilevelMesh<BaseCellLinkedList, CellL
     virtual void tagBoundingCells(StdVec<CellLists> &cell_data_lists, const BoundingBox &bounding_bounds, int axis) override {};
     virtual StdVec<CellLinkedList *> CellLinkedListLevels() override { return getMeshLevels(); };
 
+    // temp get function
+    const auto *get_level() const { return level_; };
+
     /** split algorithm */;
     template <class LocalDynamicsFunction>
     void particle_for_split(const execution::SequencedPolicy &, const LocalDynamicsFunction &local_dynamics_function);
