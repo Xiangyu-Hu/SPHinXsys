@@ -100,7 +100,8 @@ Main publication on the library:
 1. C. Zhang, M. Rezavand, Y. Zhu, Y. Yu, D. Wu, W. Zhang, J. Wang, X. Hu,
 "SPHinXsys: an open-source multi-physics and multi-resolution library based on smoothed particle hydrodynamics",
 Computer Physics Communications, 267, 108066, 2021.  
-[![Main Publication](https://img.shields.io/badge/doi-10.1016%2Fj.cpc.2021.108066-d45815.svg)](https://doi.org/10.1016/j.cpc.2021.108066)
+[![Main Publication](https://img.shields.io/badge/doi-10.1016%2Fj.cpc.2021.108066-d45815.svg)](https://doi.org/10.1016/j.cpc.2021.108066)  
+[Google Scholar citations](https://scholar.google.com/scholar?cites=696006064513647619&as_sdt=2005&sciodt=0,5&hl=en)
 
 The numerical methods and computational algorithms in SPHinXsys are based on the following [publications](assets/publication.md).
 
