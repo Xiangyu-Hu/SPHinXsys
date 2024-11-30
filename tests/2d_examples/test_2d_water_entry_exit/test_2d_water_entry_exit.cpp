@@ -433,7 +433,8 @@ int main(int ac, char *av[])
                 integ.stepBy(dt);
                 SimTK::State &state_for_update = integ.updAdvancedState();
                 force_on_bodies.clearAllBodyForces(state_for_update);
-                force_on_bodies.setOneBodyForce(state_for_update, tethered_spot, force_on_tethered_spot.exec());
+                force_on_bodies.setOneBodyForce(state_for_update, tethered_spot,
+                                                SimTKSpatialVecFromTorqueAndForce(force_on_tethered_spot.exec()));
                 constraint_tethered_spot.exec();
 
                 relaxation_time += dt;

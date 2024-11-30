@@ -269,7 +269,8 @@ int main(int ac, char *av[])
             {
                 SimTK::State &state_for_update = integ.updAdvancedState();
                 force_on_bodies.clearAllBodyForces(state_for_update);
-                force_on_bodies.setOneBodyForce(state_for_update, shellMBody, force_on_shell.exec());
+                force_on_bodies.setOneBodyForce(state_for_update, shellMBody,
+                                                SimTKSpatialVecFromTorqueAndForce(force_on_shell.exec()));
                 integ.stepBy(dt);
                 constraint_shell.exec();
             }

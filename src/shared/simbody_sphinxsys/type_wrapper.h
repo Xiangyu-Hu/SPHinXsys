@@ -48,5 +48,7 @@ SimTKMat33 EigenToSimTK(const Mat3d &eigen_matrix);
 Mat2d SimTKToEigen(const SimTKMat22 &simTK_matrix);
 Mat3d SimTKToEigen(const SimTKMat33 &simTK_matrix);
 
+using TorqueAndForce = Eigen::Matrix<Vec3d, 2, 1>;
+SimTK::SpatialVec SimTKSpatialVecFromTorqueAndForce(TorqueAndForce torque_and_force);
 } // namespace SPH
 #endif // TYPE_WRAPPER_H

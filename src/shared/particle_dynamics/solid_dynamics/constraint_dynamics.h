@@ -209,7 +209,7 @@ using ConstraintBodyPartBySimBody = ConstraintBySimBody<BodyPartByParticle>;
  */
 template <class DynamicsIdentifier>
 class TotalForceForSimBody
-    : public BaseLocalDynamicsReduce<ReduceSum<SimTK::SpatialVec>, DynamicsIdentifier>
+    : public BaseLocalDynamicsReduce<ReduceSum<TorqueAndForce>, DynamicsIdentifier>
 {
   protected:
     Vecd *force_, *force_prior_, *pos_;
@@ -225,7 +225,7 @@ class TotalForceForSimBody
     virtual ~TotalForceForSimBody(){};
 
     virtual void setupDynamics(Real dt = 0.0) override;
-    SimTK::SpatialVec reduce(size_t index_i, Real dt = 0.0);
+    TorqueAndForce reduce(size_t index_i, Real dt = 0.0);
 };
 using TotalForceOnBodyForSimBody = TotalForceForSimBody<SPHBody>;
 using TotalForceOnBodyPartForSimBody = TotalForceForSimBody<BodyPartByParticle>;
