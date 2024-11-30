@@ -53,12 +53,8 @@ ConstraintBySimBody<DynamicsIdentifier>::
 template <class DynamicsIdentifier>
 void ConstraintBySimBody<DynamicsIdentifier>::initializeSimbodyState(const SimTK::State &state)
 {
-    simbody_state_.original_location_ = SimTKToEigen(mobod_.getBodyOriginLocation(state));
-    simbody_state_.origin_velocity_ = SimTKToEigen(mobod_.getBodyOriginVelocity(state));
-    simbody_state_.origin_acceleration_ = SimTKToEigen(mobod_.getBodyOriginAcceleration(state));
-    simbody_state_.rotation_ = SimTKToEigen(mobod_.getBodyRotation(state));
-    simbody_state_.angular_velocity_ = SimTKToEigen(mobod_.getBodyAngularVelocity(state));
-    simbody_state_.angular_acceleration_ = SimTKToEigen(mobod_.getBodyAngularAcceleration(state));
+    updateSimbodyState(state);
+    simbody_state_.initial_origin_location_ = simbody_state_.origin_location_;
 }
 //=================================================================================================//
 template <class DynamicsIdentifier>
@@ -72,9 +68,12 @@ void ConstraintBySimBody<DynamicsIdentifier>::setupDynamics(Real dt)
 template <class DynamicsIdentifier>
 void ConstraintBySimBody<DynamicsIdentifier>::updateSimbodyState(const SimTK::State &state)
 {
-    simbody_state_.rotation_ = SimTKToEigen(mobod_.getBodyRotation(state));
+    simbody_state_.origin_location_ = SimTKToEigen(mobod_.getBodyOriginLocation(state));
+    simbody_state_.origin_velocity_ = SimTKToEigen(mobod_.getBodyOriginVelocity(state));
+    simbody_state_.origin_acceleration_ = SimTKToEigen(mobod_.getBodyOriginAcceleration(state));
     simbody_state_.angular_velocity_ = SimTKToEigen(mobod_.getBodyAngularVelocity(state));
     simbody_state_.angular_acceleration_ = SimTKToEigen(mobod_.getBodyAngularAcceleration(state));
+    simbody_state_.rotation_ = SimTKToEigen(mobod_.getBodyRotation(state));
 }
 //=================================================================================================//
 template <class DynamicsIdentifier>

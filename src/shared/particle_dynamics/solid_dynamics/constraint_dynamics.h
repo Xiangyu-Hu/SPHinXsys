@@ -150,28 +150,28 @@ class ConstrainSolidBodyMassCenter : public MotionConstraint<SPHBody>
 
 struct SimbodyState
 {
-    Vec3d original_location_, origin_velocity_, origin_acceleration_;
-    Mat3d rotation_;
+    Vec3d initial_origin_location_;
+    Vec3d origin_location_, origin_velocity_, origin_acceleration_;
     Vec3d angular_velocity_, angular_acceleration_;
+    Mat3d rotation_;
 
     // implemented according to the Simbody API function with the same name
-    void findStationLocationVelocityAndAccelerationInGround(const Vec3d &location,
-                                                            const Vec3d &normal_direction,
+    void findStationLocationVelocityAndAccelerationInGround(const Vec3d &initial_location,
+                                                            const Vec3d &initial_normal,
                                                             Vec3d &locationOnGround,
                                                             Vec3d &velocityInGround,
                                                             Vec3d &accelerationInGround,
                                                             Vec3d &normalInGround)
     {
-        Vec3d locationOnB = location - original_location_;
-        Vec3d temp_location = rotation_ * locationOnB;
-        locationOnGround = original_location_ + temp_location;
+        Vec3d temp_location = rotation_ * (initial_location - initial_origin_location_);
+        locationOnGround = origin_location_ + temp_location;
 
-        Vec3d temp_velocity = angular_velocity_.cross(locationOnB);
+        Vec3d temp_velocity = angular_velocity_.cross(temp_location);
         velocityInGround = origin_velocity_ + temp_velocity;
         accelerationInGround = origin_acceleration_ +
-                               angular_acceleration_.cross(locationOnB) +
+                               angular_acceleration_.cross(temp_location) +
                                angular_velocity_.cross(temp_velocity);
-        normalInGround = rotation_ * normal_direction;
+        normalInGround = rotation_ * initial_normal;
     };
 };
 
