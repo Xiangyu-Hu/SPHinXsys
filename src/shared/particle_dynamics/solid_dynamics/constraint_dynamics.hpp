@@ -45,30 +45,49 @@ ConstraintBySimBody<DynamicsIdentifier>::
       n0_(this->particles_->template registerStateVariableFrom<Vecd>("InitialNormalDirection", "NormalDirection")),
       acc_(this->particles_->template registerStateVariable<Vecd>("Acceleration"))
 {
-    simbody_state_ = &integ_.getState();
-    MBsystem_.realize(*simbody_state_, SimTK::Stage::Acceleration);
-    initial_mobod_origin_location_ = mobod_.getBodyOriginLocation(*simbody_state_);
+    const SimTK::State *state = &integ_.getState();
+    MBsystem_.realize(*state, SimTK::Stage::Acceleration);
+    initializeSimbodyState(*state);
+}
+//=================================================================================================//
+template <class DynamicsIdentifier>
+void ConstraintBySimBody<DynamicsIdentifier>::initializeSimbodyState(const SimTK::State &state)
+{
+    simbody_state_.original_location_ = SimTKToEigen(mobod_.getBodyOriginLocation(state));
+    simbody_state_.origin_velocity_ = SimTKToEigen(mobod_.getBodyOriginVelocity(state));
+    simbody_state_.origin_acceleration_ = SimTKToEigen(mobod_.getBodyOriginAcceleration(state));
+    simbody_state_.rotation_ = SimTKToEigen(mobod_.getBodyRotation(state));
+    simbody_state_.angular_velocity_ = SimTKToEigen(mobod_.getBodyAngularVelocity(state));
+    simbody_state_.angular_acceleration_ = SimTKToEigen(mobod_.getBodyAngularAcceleration(state));
+}
+//=================================================================================================//
+template <class DynamicsIdentifier>
+void ConstraintBySimBody<DynamicsIdentifier>::setupDynamics(Real dt)
+{
+    const SimTK::State *state = &integ_.getState();
+    MBsystem_.realize(*state, SimTK::Stage::Acceleration);
+    updateSimbodyState(*state);
+};
+//=================================================================================================//
+template <class DynamicsIdentifier>
+void ConstraintBySimBody<DynamicsIdentifier>::updateSimbodyState(const SimTK::State &state)
+{
+    simbody_state_.rotation_ = SimTKToEigen(mobod_.getBodyRotation(state));
+    simbody_state_.angular_velocity_ = SimTKToEigen(mobod_.getBodyAngularVelocity(state));
+    simbody_state_.angular_acceleration_ = SimTKToEigen(mobod_.getBodyAngularAcceleration(state));
 }
 //=================================================================================================//
 template <class DynamicsIdentifier>
 void ConstraintBySimBody<DynamicsIdentifier>::update(size_t index_i, Real dt)
 {
     /** Change to SimTK::Vector. */
-    SimTKVec3 rr, pos, vel, acc;
-    rr = EigenToSimTK(upgradeToVec3d(this->pos0_[index_i])) - initial_mobod_origin_location_;
-    mobod_.findStationLocationVelocityAndAccelerationInGround(*simbody_state_, rr, pos, vel, acc);
-    /** this is how we calculate the particle position in after transform of MBbody.
-     * const SimTK::Rotation&  R_GB = mobod_.getBodyRotation(simbody_state);
-     * const SimTKVec3&      p_GB = mobod_.getBodyOriginLocation(simbody_state);
-     * const SimTKVec3 r = R_GB * rr; // re-express station vector p_BS in G (15 flops)
-     * base_particle_data_i.pos_  = (p_GB + r);
-     */
-    this->pos_[index_i] = degradeToVecd(SimTKToEigen(pos));
-    this->vel_[index_i] = degradeToVecd(SimTKToEigen(vel));
-    acc_[index_i] = degradeToVecd(SimTKToEigen(acc));
-
-    SimTKVec3 n = (mobod_.getBodyRotation(*simbody_state_) * EigenToSimTK(upgradeToVec3d(n0_[index_i])));
-    n_[index_i] = degradeToVecd(SimTKToEigen(n));
+    Vec3d pos, vel, acc, n;
+    simbody_state_.findStationLocationVelocityAndAccelerationInGround(
+        upgradeToVec3d(this->pos0_[index_i]), upgradeToVec3d(n0_[index_i]), pos, vel, acc, n);
+    this->pos_[index_i] = degradeToVecd(pos);
+    this->vel_[index_i] = degradeToVecd(vel);
+    acc_[index_i] = degradeToVecd(acc);
+    n_[index_i] = degradeToVecd(n);
 }
 //=================================================================================================//
 template <class DynamicsIdentifier>
@@ -88,9 +107,9 @@ TotalForceForSimBody<DynamicsIdentifier>::
 template <class DynamicsIdentifier>
 void TotalForceForSimBody<DynamicsIdentifier>::setupDynamics(Real dt)
 {
-    const SimTK::State *simbody_state = &integ_.getState();
-    MBsystem_.realize(*simbody_state, SimTK::Stage::Acceleration);
-    current_mobod_origin_location_ = mobod_.getBodyOriginLocation(*simbody_state);
+    const SimTK::State *state = &integ_.getState();
+    MBsystem_.realize(*state, SimTK::Stage::Acceleration);
+    current_mobod_origin_location_ = mobod_.getBodyOriginLocation(*state);
 }
 //=================================================================================================//
 template <class DynamicsIdentifier>
