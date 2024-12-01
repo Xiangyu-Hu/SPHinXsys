@@ -322,10 +322,8 @@ class SphOWSC : public SimbodyEnvironment
                     {
                         SimTK::State &state_for_update = integ.updAdvancedState();
                         linear_damper.setDamping(state_for_update, dampling_coefficient_from_python);
-                        Real angle = pin_spot.getAngle(state_for_update);
                         force_on_bodies.clearAllBodyForces(state_for_update);
-                        force_on_bodies.setOneBodyForce(state_for_update, pin_spot,
-                                                        SimTKSpatialVecFromTorqueAndForce(force_on_spot_flap.exec(angle)));
+                        force_on_bodies.setOneBodyForce(state_for_update, pin_spot, force_on_spot_flap.exec());
                         integ.stepBy(dt);
                         constraint_spot_flap.exec();
                         wave_making.exec(dt);

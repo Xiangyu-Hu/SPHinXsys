@@ -49,9 +49,4 @@ Mat3d SimTKToEigen(const SimTKMat33 &simTK_matrix)
         {(Real)simTK_matrix(2, 0), (Real)simTK_matrix(2, 1), (Real)simTK_matrix(2, 2)}};
 }
 //=================================================================================================//
-SimTK::SpatialVec SimTKSpatialVecFromTorqueAndForce(const TorqueAndForce &torque_and_force)
-{
-    return SimTK::SpatialVec(EigenToSimTK(torque_and_force[0]), EigenToSimTK(torque_and_force[1]));
-}
-//=================================================================================================//
 } // namespace SPH

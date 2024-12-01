@@ -93,7 +93,7 @@ template <class DynamicsIdentifier>
 TotalForceForSimBody<DynamicsIdentifier>::
     TotalForceForSimBody(DynamicsIdentifier &identifier, SimTK::MultibodySystem &MBsystem,
                          SimTK::MobilizedBody &mobod, SimTK::RungeKuttaMersonIntegrator &integ)
-    : BaseLocalDynamicsReduce<ReduceSum<TorqueAndForce>, DynamicsIdentifier>(identifier),
+    : BaseLocalDynamicsReduce<ReduceSum<SimTK::SpatialVec>, DynamicsIdentifier>(identifier),
 
       force_(this->particles_->template registerStateVariable<Vecd>("Force")),
       force_prior_(this->particles_->template getVariableDataByName<Vecd>("ForcePrior")),
@@ -112,14 +112,13 @@ void TotalForceForSimBody<DynamicsIdentifier>::setupDynamics(Real dt)
 }
 //=================================================================================================//
 template <class DynamicsIdentifier>
-TorqueAndForce TotalForceForSimBody<DynamicsIdentifier>::reduce(size_t index_i, Real dt)
+SimTK::SpatialVec TotalForceForSimBody<DynamicsIdentifier>::reduce(size_t index_i, Real dt)
 {
     Vecd force = force_[index_i] + force_prior_[index_i];
-    Vec3d force_from_particle = upgradeToVec3d(force);
-    Vec3d displacement = upgradeToVec3d(pos_[index_i]) - SimTKToEigen(current_mobod_origin_location_);
-    Vec3d torque_from_particle = displacement.cross(force_from_particle);
-
-    return TorqueAndForce(torque_from_particle, force_from_particle);
+    SimTKVec3 force_from_particle = EigenToSimTK(upgradeToVec3d(force));
+    SimTKVec3 displacement = EigenToSimTK(upgradeToVec3d(pos_[index_i])) - current_mobod_origin_location_;
+    SimTKVec3 torque_from_particle = SimTK::cross(displacement, force_from_particle);
+    return SimTK::SpatialVec(torque_from_particle, force_from_particle);
 }
 //=================================================================================================//
 } // namespace solid_dynamics

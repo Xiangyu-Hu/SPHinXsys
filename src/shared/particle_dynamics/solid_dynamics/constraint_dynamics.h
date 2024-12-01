@@ -155,6 +155,14 @@ struct SimbodyState
     Vec3d angular_velocity_, angular_acceleration_;
     Mat3d rotation_;
 
+    SimbodyState() : initial_origin_location_(ZeroData<Vec3d>::value),
+                     origin_location_(ZeroData<Vec3d>::value),
+                     origin_velocity_(ZeroData<Vec3d>::value),
+                     origin_acceleration_(ZeroData<Vec3d>::value),
+                     angular_velocity_(ZeroData<Vec3d>::value),
+                     angular_acceleration_(ZeroData<Vec3d>::value),
+                     rotation_(Mat3d::Identity()) {}
+
     // implemented according to the Simbody API function with the same name
     void findStationLocationVelocityAndAccelerationInGround(const Vec3d &initial_location,
                                                             const Vec3d &initial_normal,
@@ -209,7 +217,7 @@ using ConstraintBodyPartBySimBody = ConstraintBySimBody<BodyPartByParticle>;
  */
 template <class DynamicsIdentifier>
 class TotalForceForSimBody
-    : public BaseLocalDynamicsReduce<ReduceSum<TorqueAndForce>, DynamicsIdentifier>
+    : public BaseLocalDynamicsReduce<ReduceSum<SimTK::SpatialVec>, DynamicsIdentifier>
 {
   protected:
     Vecd *force_, *force_prior_, *pos_;
@@ -225,7 +233,7 @@ class TotalForceForSimBody
     virtual ~TotalForceForSimBody(){};
 
     virtual void setupDynamics(Real dt = 0.0) override;
-    TorqueAndForce reduce(size_t index_i, Real dt = 0.0);
+    SimTK::SpatialVec reduce(size_t index_i, Real dt = 0.0);
 };
 using TotalForceOnBodyForSimBody = TotalForceForSimBody<SPHBody>;
 using TotalForceOnBodyPartForSimBody = TotalForceForSimBody<BodyPartByParticle>;
