@@ -41,13 +41,6 @@ size_t MeshWithGridDataPackages<PKG_SIZE>::
 //=================================================================================================//
 template <int PKG_SIZE>
 bool MeshWithGridDataPackages<PKG_SIZE>::
-    isSingularDataPackage(const Arrayi &cell_index)
-{
-    return index_data_mesh_[cell_index[0]][cell_index[1]][cell_index[2]] < 2;
-}
-//=================================================================================================//
-template <int PKG_SIZE>
-bool MeshWithGridDataPackages<PKG_SIZE>::
     isInnerDataPackage(const Arrayi &cell_index)
 {
     return index_data_mesh_[cell_index[0]][cell_index[1]][cell_index[2]] > 1;

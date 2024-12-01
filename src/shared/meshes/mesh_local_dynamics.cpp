@@ -46,12 +46,8 @@ void InitializeDataInACell::update(const Arrayi &cell_index)
     Real measure = (signed_distance * normal_direction).cwiseAbs().maxCoeff();
     if (measure < grid_spacing_)
     {
-        std::pair<size_t, int> occupied;
-        occupied.first = SortIndexFromCellIndex(cell_index);
-        occupied.second = 1;
-
         mesh_data_.assignDataPackageIndex(cell_index, 2);
-        mesh_data_.registerOccupied(occupied);
+        mesh_data_.registerOccupied(SortIndexFromCellIndex(cell_index), 1);
     }
     else
     {
@@ -62,16 +58,9 @@ void InitializeDataInACell::update(const Arrayi &cell_index)
 //=================================================================================================//
 void TagACellIsInnerPackage::update(const Arrayi &cell_index)
 {
-    if (isInnerPackage(cell_index))
+    if (isInnerPackage(cell_index) && !mesh_data_.isInnerDataPackage(cell_index))
     {
-        if (!mesh_data_.isInnerDataPackage(cell_index))
-        {
-            std::pair<size_t, int> occupied;
-            occupied.first = SortIndexFromCellIndex(cell_index);
-            occupied.second = 0;
-
-            mesh_data_.registerOccupied(occupied);
-        }
+        mesh_data_.registerOccupied(SortIndexFromCellIndex(cell_index), 0);
     }
 }
 //=================================================================================================//
@@ -116,34 +105,9 @@ void InitializeDataInACellFromCoarse::UpdateKernel::update(const Arrayi &cell_in
         Real measure = (signed_distance * normal_direction).cwiseAbs().maxCoeff();
         if (measure < grid_spacing_)
         {
-            std::pair<size_t, int> occupied;
-            occupied.first = base_dynamics_->SortIndexFromCellIndex(cell_index);
-            occupied.second = 1;
-
+            size_t sort_index = base_dynamics_->SortIndexFromCellIndex(cell_index);
             mesh_data_->assignDataPackageIndex(cell_index, 2);
-            mesh_data_->registerOccupied(occupied);
-        }
-    }
-}
-//=================================================================================================//
-void InitializeDataInACellFromCoarse::update(const Arrayi &cell_index)
-{
-    Vecd cell_position = mesh_data_.CellPositionFromIndex(cell_index);
-    size_t package_index = probeMesh(coarse_mesh_, coarse_phi_.DataField(), cell_position) < 0.0 ? 0 : 1;
-    mesh_data_.assignDataPackageIndex(cell_index, package_index);
-    if(coarse_mesh_.isWithinCorePackage(cell_position))
-    {
-        Real signed_distance = shape_.findSignedDistance(cell_position);
-        Vecd normal_direction = shape_.findNormalDirection(cell_position);
-        Real measure = (signed_distance * normal_direction).cwiseAbs().maxCoeff();
-        if (measure < grid_spacing_)
-        {
-            std::pair<size_t, int> occupied;
-            occupied.first = SortIndexFromCellIndex(cell_index);
-            occupied.second = 1;
-
-            mesh_data_.assignDataPackageIndex(cell_index, 2);
-            mesh_data_.registerOccupied(occupied);
+            mesh_data_->registerOccupied(sort_index, 1);
         }
     }
 }

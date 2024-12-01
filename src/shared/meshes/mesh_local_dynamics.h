@@ -500,8 +500,7 @@ class InitializeDataInACellFromCoarse : public BaseMeshLocalDynamics
     explicit InitializeDataInACellFromCoarse(MeshWithGridDataPackagesType &mesh_data, MeshWithGridDataPackagesType &coarse_mesh, Shape &shape)
         : BaseMeshLocalDynamics(mesh_data),
           coarse_mesh_(coarse_mesh),
-          shape_(shape),
-          coarse_phi_(*coarse_mesh_.getMeshVariable<Real>("Levelset")){};
+          shape_(shape){};
     virtual ~InitializeDataInACellFromCoarse(){};
 
     class UpdateKernel
@@ -526,12 +525,9 @@ class InitializeDataInACellFromCoarse : public BaseMeshLocalDynamics
         MeshVariableData<Real> *coarse_phi_;
     };
 
-    void update(const Arrayi &cell_index);
-
   private:
     MeshWithGridDataPackagesType &coarse_mesh_;
     Shape &shape_;
-    MeshVariable<Real> &coarse_phi_;
 };
 
 class ProbeSignedDistance : public BaseMeshLocalDynamics
