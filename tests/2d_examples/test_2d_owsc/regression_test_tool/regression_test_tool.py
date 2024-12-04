@@ -17,6 +17,7 @@ parameter_name = "TotalViscousForceFromFluid"
 number_of_run_times = 0
 converged = 0
 sphinxsys = SphinxsysRegressionTest(case_name, body_name, parameter_name)
+clean_input_folder(sphinxsys.input_file_path)
 
 
 while True:

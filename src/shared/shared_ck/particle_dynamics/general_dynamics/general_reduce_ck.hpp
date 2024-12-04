@@ -16,7 +16,7 @@ template <typename DataType, typename NormType, class DynamicsIdentifier>
 template <class ExecutionPolicy, class EncloserType>
 VariableNormCK<DataType, NormType, DynamicsIdentifier>::ReduceKernel::
     ReduceKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-    : variable_(encloser.dv_variable_->template DelegatedDataField(ex_policy)) {}
+    : variable_(encloser.dv_variable_->DelegatedDataField(ex_policy)) {}
 //=================================================================================================//
 template <class ExecutionPolicy, class EncloserType>
 TotalKineticEnergyCK::ReduceKernel::
