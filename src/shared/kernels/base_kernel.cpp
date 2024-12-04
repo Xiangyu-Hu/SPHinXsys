@@ -143,7 +143,7 @@ Real Kernel::dW(const Real &h_ratio, const Real &r_ij, const Vec2d &displacement
 Real Kernel::dW(const Real &h_ratio, const Real &r_ij, const Vec3d &displacement) const
 {
     Real q = r_ij * inv_h_ * h_ratio;
-    return factor_dW_3D_ * dW_3D(q) * h_factor_dW_1D_(h_ratio);
+    return factor_dW_3D_ * dW_3D(q) * h_factor_dW_3D_(h_ratio);
 }
 //=================================================================================================//
 Real Kernel::d2W(const Real &h_ratio, const Real &r_ij, const Real &displacement) const
