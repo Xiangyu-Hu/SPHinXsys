@@ -119,6 +119,45 @@ class ViscousForceCK<Base, RelationType<Parameters...>>
     Real smoothing_length_;
 };
 
+template <typename ViscosityType, class KernelCorrectionType, typename... Parameters>
+class ViscousForceCK<Inner<ViscosityType, KernelCorrectionType, Parameters...>>
+    : public ViscousForceCK<Base, Inner<Parameters...>>
+{
+    using ViscosityKernel = typename ViscosityType::ComputingKernel;
+
+  public:
+    explicit DensityRegularization(Relation<Inner<Parameters...>> &inner_relation);
+    virtual ~DensityRegularization(){};
+
+    class InteractKernel
+        : public DensityRegularization<Base, Inner<Parameters...>>::InteractKernel
+    {
+      public:
+        template <class ExecutionPolicy>
+        InteractKernel(const ExecutionPolicy &ex_policy,
+                       DensityRegularization<Inner<WithUpdate, FlowType, Parameters...>> &encloser);
+        void interact(size_t index_i, Real dt = 0.0);
+
+      protected:
+        Real W0_;
+    };
+
+    class UpdateKernel
+        : public DensityRegularization<Base, Inner<Parameters...>>::InteractKernel
+    {
+      public:
+        template <class ExecutionPolicy>
+        UpdateKernel(const ExecutionPolicy &ex_policy,
+                     DensityRegularization<Inner<WithUpdate, FlowType, Parameters...>> &encloser);
+        void update(size_t index_i, Real dt = 0.0);
+
+      protected:
+        RegularizationKernel regularization_;
+    };
+
+  protected:
+    Regularization<FlowType> regularization_method_;
+};
 } // namespace fluid_dynamics
 } // namespace SPH
 #endif // VISCOUS_FORCE_H
