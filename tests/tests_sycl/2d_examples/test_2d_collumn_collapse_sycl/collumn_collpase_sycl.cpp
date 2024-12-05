@@ -1,9 +1,9 @@
 /**
- * @file dambreak_ck.cpp
- * @brief 2D dambreak example using computing kernels.
+ * @file dambreak_sycl.cpp
+ * @brief 2D dambreak example using SYCL.
  * @author Xiangyu Hu
  */
-#include "sphinxsys_ck.h"
+#include "sphinxsys_sycl.h"
 using namespace SPH; // Namespace cite here.
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
@@ -17,10 +17,17 @@ Real BW = particle_spacing_ref * 4; /**< Thickness of tank wall. */
 //----------------------------------------------------------------------
 //	Material parameters.
 //----------------------------------------------------------------------
-Real rho0_f = 1.0;                       /**< Reference density of fluid. */
-Real gravity_g = 1.0;                    /**< Gravity. */
+Real rho0_f = 1000.0;                       /**< Reference density of fluid. */
+Real gravity_g = 9.8;                    /**< Gravity. */
 Real U_ref = 2.0 * sqrt(gravity_g * LH); /**< Characteristic velocity. */
 Real c_f = 10.0 * U_ref;                 /**< Reference sound speed. */
+
+//----------------------------------------------------------------------
+Real rho0_s = 1000.0;                                                       // reference density of soil
+Real Youngs_modulus = 5.84e6;                                             // reference Youngs modulus
+Real poisson = 0.3;                                                       // Poisson ratio
+Real c_s = sqrt(Youngs_modulus / (rho0_s * 3.0 * (1.0 - 2.0 * poisson))); // sound speed
+Real friction_angle = 21.9 * Pi / 180;
 //----------------------------------------------------------------------
 //	Geometric shapes used in this case.
 //----------------------------------------------------------------------
@@ -59,7 +66,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     TransformShape<GeometricShapeBox> initial_water_block(Transform(water_block_translation), water_block_halfsize, "WaterBody");
     FluidBody water_block(sph_system, initial_water_block);
-    water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
+    water_block.defineMaterial<PlasticContinuum>(rho0_s, c_s, Youngs_modulus, poisson, friction_angle);
     water_block.generateParticles<BaseParticles, Lattice>();
 
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
@@ -84,11 +91,9 @@ int main(int ac, char *av[])
     Relation<Contact<>> water_wall_contact(water_block, {&wall_boundary});
     Relation<Contact<>> fluid_observer_contact(fluid_observer, {&water_block});
 
-    UpdateRelation<MyExecutionPolicy, Inner<>, Contact<>>
-        water_block_update_complex_relation(water_block_inner, water_wall_contact);
-    UpdateRelation<MyExecutionPolicy, Contact<>>
-        fluid_observer_contact_relation(fluid_observer_contact);
-    ParticleSortCK<MyExecutionPolicy, QuickSort> particle_sort(water_block);
+    UpdateRelation<MyExecutionPolicy, Inner<>, Contact<>> water_block_update_complex_relation(water_block_inner, water_wall_contact);
+    UpdateRelation<MyExecutionPolicy, Contact<>> fluid_observer_contact_relation(fluid_observer_contact);
+    ParticleSortCK<MyExecutionPolicy, RadixSort> particle_sort(water_block);
     //----------------------------------------------------------------------
     // Define the numerical methods used in the simulation.
     // Note that there may be data dependence on the sequence of constructions.
@@ -100,13 +105,13 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     Gravity gravity(Vecd(0.0, -gravity_g));
     StateDynamics<MyExecutionPolicy, GravityForceCK<Gravity>> constant_gravity(water_block, gravity);
-    StateDynamics<MyExecutionPolicy, NormalFromBodyShapeCK> wall_boundary_normal_direction(wall_boundary);
+    StateDynamics<execution::ParallelPolicy, NormalFromBodyShapeCK> wall_boundary_normal_direction(wall_boundary);
     StateDynamics<MyExecutionPolicy, fluid_dynamics::AdvectionStepSetup> water_advection_step_setup(water_block);
     StateDynamics<MyExecutionPolicy, fluid_dynamics::AdvectionStepClose> water_advection_step_close(water_block);
 
-    InteractionDynamicsCK<MyExecutionPolicy, fluid_dynamics::AcousticStep1stHalfWithWallRiemannCK>
+    InteractionDynamicsCK<MyExecutionPolicy, fluid_dynamics::PlasticAcousticStep1stHalfWithWallRiemannCK>
         fluid_acoustic_step_1st_half(water_block_inner, water_wall_contact);
-    InteractionDynamicsCK<MyExecutionPolicy, fluid_dynamics::AcousticStep2ndHalfWithWallRiemannCK>
+    InteractionDynamicsCK<MyExecutionPolicy, fluid_dynamics::PlasticAcousticStep2ndHalfWithWallRiemannCK>
         fluid_acoustic_step_2nd_half(water_block_inner, water_wall_contact);
     InteractionDynamicsCK<MyExecutionPolicy, fluid_dynamics::DensityRegularizationComplexFreeSurface>
         fluid_density_regularization(water_block_inner, water_wall_contact);
@@ -142,7 +147,7 @@ int main(int ac, char *av[])
     wall_boundary_normal_direction.exec();
     constant_gravity.exec();
 
-    water_cell_linked_list.exec();
+    water_cell_linked_list.exec();      
     wall_cell_linked_list.exec();
 
     water_block_update_complex_relation.exec();
@@ -264,4 +269,3 @@ int main(int ac, char *av[])
 
     return 0;
 };
-`

@@ -2,7 +2,16 @@
 
 ## Notice on the transformation to heterogeneous computational platform
 
-I'm tring on the development of the GPU-accelerated soil mechanics
+I'm trying on the development of the GPU-accelerated soil mechanics
+
+Currently, I encountered a Bug, but I can't find the reason.
+
+The error is at acoustic_step_2nd_half.hpp, Line 218
+The detailed description, error output and my attempt are also listed at Line 220-240
+
+
+
+
 
 SPHinXsys is set to undergo a major transformation, moving from traditional CPU parallelism to a new era of heterogeneous parallelism, where compute-intensive tasks can harness the power of both CPUs and GPUs. This evolution will be driven by SYCL (via Intel's DPC++), enabling us to leverage heterogeneous architectures with standard C++. Importantly, this transformation will be achieved with minimal disruption to the existing codebase, ensuring seamless continuity for current users.
 

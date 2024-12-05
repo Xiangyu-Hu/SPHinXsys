@@ -27,6 +27,16 @@ Matd GeneralContinuum::ConstitutiveRelationShearStress(Matd &velocity_gradient, 
     return stress_rate;
 }
 //=================================================================================================//
+
+
+//=================================================================================================//
+//add
+GeneralContinuum::GeneralContinuumKernel::GeneralContinuumKernel(GeneralContinuum &encloser) : WeaklyCompressibleFluid::EosKernel(encloser),
+E_(encloser.E_), G_(encloser.G_),K_(encloser.K_),nu_(encloser.nu_),contact_stiffness_(encloser.contact_stiffness_){}
+//=================================================================================================//
+
+
+//=================================================================================================//
 Real PlasticContinuum::getDPConstantsA(Real friction_angle)
 {
     return tan(friction_angle) / sqrt(9.0 + 12.0 * tan(friction_angle) * tan(friction_angle));
