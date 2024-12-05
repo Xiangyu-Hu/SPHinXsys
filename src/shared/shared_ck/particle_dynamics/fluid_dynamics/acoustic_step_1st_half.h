@@ -32,6 +32,7 @@
 
 #include "base_fluid_dynamics.h"
 #include "interaction_ck.hpp"
+#include "kernel_correction_ck.hpp"
 #include "riemann_solver.h"
 
 namespace SPH
@@ -63,6 +64,7 @@ class AcousticStep1stHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionTyp
 {
     using EosKernel = typename WeaklyCompressibleFluid::EosKernel;
     using BaseInteraction = AcousticStep<Interaction<Inner<Parameters...>>>;
+    using CorrectionKernel = typename KernelCorrectionType::ComputingKernel;
 
   public:
     explicit AcousticStep1stHalf(Relation<Inner<Parameters...>> &inner_relation);
@@ -89,7 +91,7 @@ class AcousticStep1stHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionTyp
         void interact(size_t index_i, Real dt = 0.0);
 
       protected:
-        KernelCorrectionType correction_;
+        CorrectionKernel correction_;
         RiemannSolverType riemann_solver_;
         Real *Vol_, *rho_, *p_, *drho_dt_;
         Vecd *force_;
@@ -108,7 +110,7 @@ class AcousticStep1stHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionTyp
     };
 
   protected:
-    KernelCorrectionType correction_;
+    KernelCorrectionType kernel_correction_;
     RiemannSolverType riemann_solver_;
 };
 
@@ -117,6 +119,7 @@ class AcousticStep1stHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType,
     : public AcousticStep<Interaction<Contact<Wall, Parameters...>>>
 {
     using BaseInteraction = AcousticStep<Interaction<Contact<Wall, Parameters...>>>;
+    using CorrectionKernel = typename KernelCorrectionType::ComputingKernel;
 
   public:
     explicit AcousticStep1stHalf(Relation<Contact<Parameters...>> &wall_contact_relation);
@@ -130,7 +133,7 @@ class AcousticStep1stHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType,
         void interact(size_t index_i, Real dt = 0.0);
 
       protected:
-        KernelCorrectionType correction_;
+        CorrectionKernel correction_;
         RiemannSolverType riemann_solver_;
         Real *Vol_, *rho_, *mass_, *p_, *drho_dt_;
         Vecd *vel_, *force_, *force_prior_;
@@ -139,13 +142,13 @@ class AcousticStep1stHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType,
     };
 
   protected:
-    KernelCorrectionType correction_;
+    KernelCorrectionType kernel_correction_;
     RiemannSolverType riemann_solver_;
 };
 
 using AcousticStep1stHalfWithWallRiemannCK =
-    AcousticStep1stHalf<Inner<OneLevel, AcousticRiemannSolver, NoKernelCorrection>,
-                        Contact<Wall, AcousticRiemannSolver, NoKernelCorrection>>;
+    AcousticStep1stHalf<Inner<OneLevel, AcousticRiemannSolver, NoKernelCorrectionCK>,
+                        Contact<Wall, AcousticRiemannSolver, NoKernelCorrectionCK>>;
 } // namespace fluid_dynamics
 } // namespace SPH
 #endif // ACOUSTIC_STEP_1ST_HALF_H

@@ -7,12 +7,13 @@ namespace SPH
 {
 //=================================================================================================//
 template <template <typename...> class RelationType, typename... Parameters>
+template <class DynamicsIdentifier>
 LinearCorrectionMatrix<Base, RelationType<Parameters...>>::
     LinearCorrectionMatrix(DynamicsIdentifier &identifier)
     : Interaction<RelationType<Parameters...>>(identifier),
       dv_Vol_(this->particles_->template getVariableByName<Real>("VolumetricMeasure")),
       dv_B_(this->particles_->template registerStateVariableOnly<Matd>(
-          "LinearGradientCorrectionMatrix", IdentityMatrix<Matd>::value)) {}
+          "LinearCorrectionMatrix", IdentityMatrix<Matd>::value)) {}
 //=================================================================================================//
 template <template <typename...> class RelationType, typename... Parameters>
 template <class ExecutionPolicy, typename... Args>
@@ -73,7 +74,6 @@ LinearCorrectionMatrix<Contact<Parameters...>>::
 {
     for (size_t k = 0; k != this->contact_particles_.size(); ++k)
     {
-        dv_contact_mass_.push_back(this->contact_particles_[k]->template getVariableByName<Real>("Mass"));
         dv_contact_Vol_.push_back(this->contact_particles_[k]->template getVariableByName<Real>("VolumetricMeasure"));
     }
 }

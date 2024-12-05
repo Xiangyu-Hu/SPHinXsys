@@ -102,10 +102,10 @@ class ParticleParameter // base class to indicate the concept of particle parame
 template <typename T>
 class ParameterFixed : public ParticleParameter
 {
-    const T parameter_;
+    T parameter_;
 
   public:
-    ParameterFixed(const T &c) : ParameterFixed(), parameter_(c){};
+    explicit ParameterFixed(const T &c) : ParticleParameter(), parameter_(c){};
     T operator()(size_t index_i)
     {
         return parameter_;
@@ -118,7 +118,7 @@ class ParameterVariable : public ParticleParameter
     T *v_;
 
   public:
-    ParameterVariable(T *v) : ParticleParameter(), v_(v){};
+    explicit ParameterVariable(T *v) : ParticleParameter(), v_(v){};
     T operator()(size_t index_i)
     {
         return v_[index_i];
@@ -213,6 +213,7 @@ class PairGeomAverageVariable : public GeomAverage
 class KernelCorrection // base class to indicate the concept of kernel correction
 {
 };
+
 class NoKernelCorrection : public KernelCorrection
 {
   public:
