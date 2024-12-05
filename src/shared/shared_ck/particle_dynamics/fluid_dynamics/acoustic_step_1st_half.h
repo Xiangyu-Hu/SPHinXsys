@@ -149,6 +149,9 @@ class AcousticStep1stHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType,
 using AcousticStep1stHalfWithWallRiemannCK =
     AcousticStep1stHalf<Inner<OneLevel, AcousticRiemannSolver, NoKernelCorrectionCK>,
                         Contact<Wall, AcousticRiemannSolver, NoKernelCorrectionCK>>;
+using AcousticStep1stHalfWithWallRiemannCorrectionCK =
+    AcousticStep1stHalf<Inner<OneLevel, AcousticRiemannSolver, LinearCorrectionCK>,
+                        Contact<Wall, AcousticRiemannSolver, LinearCorrectionCK>>;
 } // namespace fluid_dynamics
 } // namespace SPH
 #endif // ACOUSTIC_STEP_1ST_HALF_H
