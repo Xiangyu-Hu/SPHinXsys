@@ -37,7 +37,7 @@ template <typename... Parameters>
 void LinearCorrectionMatrix<Inner<WithUpdate, Parameters...>>::
     InteractKernel::interact(size_t index_i, Real dt)
 {
-    Matd local_configuration = ZeroData<Matd>::value;
+    Matd local_configuration = Matd::Zero();
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
     {
         UnsignedInt index_j = this->neighbor_index_[n];
@@ -92,7 +92,7 @@ template <typename... Parameters>
 void LinearCorrectionMatrix<Contact<Parameters...>>::
     InteractKernel::interact(size_t index_i, Real dt)
 {
-    Matd local_configuration = ZeroData<Matd>::value;
+    Matd local_configuration = Matd::Zero();
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
     {
         UnsignedInt index_j = this->neighbor_index_[n];
