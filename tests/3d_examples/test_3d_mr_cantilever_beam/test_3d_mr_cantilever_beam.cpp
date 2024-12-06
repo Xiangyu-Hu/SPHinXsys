@@ -27,7 +27,7 @@ void relax_solid(RealBody &body, BaseInnerRelation &inner)
     //----------------------------------------------------------------------
     using namespace relax_dynamics;
     SimpleDynamics<RandomizeParticlePosition> random_particles(body);
-    RelaxationStepInner relaxation_step_inner(inner);
+    RelaxationStepLevelSetCorrectionInner relaxation_step_inner(inner);
     //----------------------------------------------------------------------
     //	Particle relaxation starts here.
     //----------------------------------------------------------------------
@@ -136,11 +136,10 @@ void beam_multi_resolution(Real dp_factor, bool damping_on, int refinement_level
     auto mesh = makeShared<TransformShape<GeometricShapeBox>>(Transform(translation), halfsize, "beam");
 
     // refinement region
-    // const Real refinement_region_length = 0.5 * params.length;
-    // const Vec3d refinement_halfsize = 0.5 * Vec3d(refinement_region_length, params.height, params.width);
-    // const Vec3d refinement_translation = (params.length - 0.5 * refinement_region_length) * Vec3d::UnitX();
-    // auto refinement_region = makeShared<TransformShape<GeometricShapeBox>>(Transform(refinement_translation), refinement_halfsize);
-    auto refinement_region = makeShared<TransformShape<GeometricShapeBox>>(Transform(translation), halfsize);
+    const Real refinement_region_length = 0.5 * params.length;
+    const Vec3d refinement_halfsize = 0.5 * Vec3d(refinement_region_length, params.height, params.width);
+    const Vec3d refinement_translation = (params.length - 0.5 * refinement_region_length) * Vec3d::UnitX();
+    auto refinement_region = makeShared<TransformShape<GeometricShapeBox>>(Transform(refinement_translation), refinement_halfsize);
 
     // System bounding box
     BoundingBox bb_system = mesh->getBounds();
@@ -151,17 +150,14 @@ void beam_multi_resolution(Real dp_factor, bool damping_on, int refinement_level
 
     // Create objects
     SolidBody beam_body(system, mesh);
+    if (refinement_level > 0)
+        beam_body.defineAdaptation<ParticleRefinementWithinShape>(1.15, 1.0, refinement_level);
     beam_body.defineBodyLevelSetShape()->cleanLevelSet(0);
     beam_body.assignMaterial(material.get());
     if (refinement_level > 0)
-    {
-        beam_body.defineAdaptation<ParticleRefinementWithinShape>(1.15, 1.0, refinement_level);
         beam_body.generateParticles<BaseParticles, Lattice, Adaptive>(*refinement_region);
-    }
     else
-    {
         beam_body.generateParticles<BaseParticles, Lattice>();
-    }
 
     // Inner relation
     std::unique_ptr<BaseInnerRelation> inner;
@@ -223,20 +219,6 @@ void beam_multi_resolution(Real dp_factor, bool damping_on, int refinement_level
     // Initialization
     system.initializeSystemCellLinkedLists();
     system.initializeSystemConfigurations();
-
-    if (refinement_level > 0)
-    {
-        auto &cell_linked_list = *dynamic_cast<MultilevelCellLinkedList *>(&beam_body.getCellLinkedList());
-        auto *level = cell_linked_list.get_level();
-        for (size_t i = 0; i < beam_body.getBaseParticles().TotalRealParticles(); ++i)
-        {
-            if (level[i] != refinement_level)
-            {
-                std::cout << "level[i]: " << level[i] << std::endl;
-                throw std::runtime_error("particle is not in the correct level");
-            }
-        }
-    }
 
     algs.corrected_config();
 
