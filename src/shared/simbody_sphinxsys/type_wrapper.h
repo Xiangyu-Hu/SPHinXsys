@@ -47,6 +47,5 @@ SimTKMat22 EigenToSimTK(const Mat2d &eigen_matrix);
 SimTKMat33 EigenToSimTK(const Mat3d &eigen_matrix);
 Mat2d SimTKToEigen(const SimTKMat22 &simTK_matrix);
 Mat3d SimTKToEigen(const SimTKMat33 &simTK_matrix);
-
 } // namespace SPH
 #endif // TYPE_WRAPPER_H
