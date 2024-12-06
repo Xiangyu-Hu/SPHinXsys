@@ -147,9 +147,8 @@ Real NeoHookeanSolidIncompressible::VolumetricKirchhoff(Real J)
 //=================================================================================================//
 OrthotropicSolid::OrthotropicSolid(Real rho_0, std::array<Vecd, Dimensions> a, std::array<Real, Dimensions> E,
                                    std::array<Real, Dimensions> G, std::array<Real, Dimensions> poisson)
-    // set parameters for parent class: LinearElasticSolid
-    // we take the max. E and max. poisson to approximate the maximum of
-    // the Bulk modulus --> for time step size calculation
+    // since Poisson ratio can be larger than 0.5 for orthotropic materials,
+    // the sound speed needs to be reset after parameters are computed
     : LinearElasticSolid(rho_0, *std::max_element(E.cbegin(), E.cend()),
                          *std::max_element(poisson.cbegin(), poisson.cend())),
       a_(a), E_(E), G_(G), poisson_(poisson)
@@ -159,6 +158,9 @@ OrthotropicSolid::OrthotropicSolid(Real rho_0, std::array<Vecd, Dimensions> a, s
     CalculateA0();
     CalculateAllMu();
     CalculateAllLambda();
+    // we take the max. K in three pinciple directions to approximate the maximum of
+    // the Bulk modulus --> for time step size calculation
+    reset_sound_speeds();
 };
 //=================================================================================================//
 Matd OrthotropicSolid::StressPK2(Matd &F, size_t index_i)
@@ -175,9 +177,15 @@ Matd OrthotropicSolid::StressPK2(Matd &F, size_t index_i)
             Summa2 += Lambda_(i, j) * (CalculateBiDotProduct(A_[i], strain) * A_[j] +
                                        CalculateBiDotProduct(A_[j], strain) * A_[i]);
         }
-        stress_PK2 += Mu_[i] * (((A_[i] * strain) + (strain * A_[i])) + 1 / 2 * (Summa2));
+        stress_PK2 += Mu_[i] * (A_[i] * strain + strain * A_[i]) + 0.5 * Summa2;
     }
     return stress_PK2;
+}
+//=================================================================================================//
+Matd StressCauchy(Matd &almansi_strain, size_t particle_index_i)
+{
+    // TODO: implement
+    throw(std::runtime_error("Cauchy stress of orthotropic material not yet implemented"));
 }
 //=================================================================================================//
 Real OrthotropicSolid::VolumetricKirchhoff(Real J)
@@ -189,6 +197,18 @@ void OrthotropicSolid::CalculateA0()
 {
     for (int i = 0; i < Dimensions; ++i)
         A_[i] = a_[i] * a_[i].transpose();
+}
+//=================================================================================================//
+void OrthotropicSolid::reset_sound_speeds()
+{
+    std::array<Real, Dimensions> K;
+    for (int i = 0; i < Dimensions; ++i)
+        K[i] = (Lambda_.row(i).sum() + 2.0 * Mu_[i]) / 3.0;
+    K0_ = *std::max_element(K.cbegin(), K.cend());
+    G0_ = *std::max_element(G_.cbegin(), G_.cend());
+    lambda0_ = Lambda_.maxCoeff();
+    setSoundSpeeds();
+    setContactStiffness(c0_);
 }
 //=================================================================================================//
 Matd FeneNeoHookeanSolid::StressPK2(Matd &F, size_t index_i)
