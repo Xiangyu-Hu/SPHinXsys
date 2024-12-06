@@ -38,7 +38,7 @@ namespace SPH
 {
 /**
  * @class BodyPart
- * @brief An auxillary class for SPHBody to indicate a part of the body.
+ * @brief An auxiliary class for SPHBody to indicate a part of the body.
  */
 using namespace std::placeholders;
 class BodyPart
