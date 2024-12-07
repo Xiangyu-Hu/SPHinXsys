@@ -47,6 +47,7 @@ class ConstraintBySimBodyCK : public BaseLocalDynamics<DynamicsIdentifier>
     explicit ConstraintBySimBodyCK(DynamicsIdentifier &identifier, SimTK::MultibodySystem &MBsystem,
                                    SimTK::MobilizedBody &mobod, SimTK::RungeKuttaMersonIntegrator &integ);
     virtual ~ConstraintBySimBodyCK(){};
+    virtual void setupDynamics(Real dt = 0.0) override;
 
     class UpdateKernel
     {
@@ -67,60 +68,47 @@ class ConstraintBySimBodyCK : public BaseLocalDynamics<DynamicsIdentifier>
     SimTK::RungeKuttaMersonIntegrator &integ_;
     DiscreteVariable<Vecd> *dv_pos_, *dv_pos0_, *dv_vel_;
     DiscreteVariable<Vecd> *dv_n_, *dv_n0_, *dv_acc_;
-    SingularVariable<SimbodyState> sv_simbody_state_;
+    SingularVariable<SimbodyState> *sv_simbody_state_;
 
     void initializeSimbodyState(const SimTK::State &state);
     void updateSimbodyState(const SimTK::State &state);
 };
+using ConstraintBodyBySimBodyCK = ConstraintBySimBodyCK<SPHBody>;
+using ConstraintBodyPartBySimBodyCK = ConstraintBySimBodyCK<BodyPartByParticle>;
 
 template <class DynamicsIdentifier>
-class ConstraintBySimBody : public MotionConstraint<DynamicsIdentifier>
-{
-  public:
-    ConstraintBySimBody(DynamicsIdentifier &identifier, SimTK::MultibodySystem &MBsystem,
-                        SimTK::MobilizedBody &mobod, SimTK::RungeKuttaMersonIntegrator &integ);
-    virtual ~ConstraintBySimBody(){};
-    virtual void setupDynamics(Real dt = 0.0) override;
-    void update(size_t index_i, Real dt = 0.0);
-
-  protected:
-    SimTK::MultibodySystem &MBsystem_;
-    SimTK::MobilizedBody &mobod_;
-    SimTK::RungeKuttaMersonIntegrator &integ_;
-    SimbodyState simbody_state_;
-    Vecd *n_, *n0_, *acc_;
-
-    void initializeSimbodyState(const SimTK::State &state);
-    void updateSimbodyState(const SimTK::State &state);
-};
-
-/**
- * @class TotalForceForSimBody
- * @brief Compute the force acting on the solid body part
- * for applying to simbody forces latter
- */
-template <class DynamicsIdentifier>
-class TotalForceForSimBody
+class TotalForceForSimBodyCK
     : public BaseLocalDynamicsReduce<ReduceSum<SimTK::SpatialVec>, DynamicsIdentifier>
 {
+
+  public:
+    TotalForceForSimBodyCK(DynamicsIdentifier &identifier, SimTK::MultibodySystem &MBsystem,
+                           SimTK::MobilizedBody &mobod, SimTK::RungeKuttaMersonIntegrator &integ);
+
+    virtual ~TotalForceForSimBodyCK(){};
+    virtual void setupDynamics(Real dt = 0.0) override;
+
+    class ReduceKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        ReduceKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+        SimTK::SpatialVec reduce(size_t index_i, Real dt = 0.0);
+
+      protected:
+        Vecd *force_, *force_prior_, *pos_;
+        SimTKVec3 *current_origin_location_;
+    };
+
   protected:
-    Vecd *force_, *force_prior_, *pos_;
     SimTK::MultibodySystem &MBsystem_;
     SimTK::MobilizedBody &mobod_;
     SimTK::RungeKuttaMersonIntegrator &integ_;
-    SimTKVec3 current_mobod_origin_location_;
-
-  public:
-    TotalForceForSimBody(DynamicsIdentifier &identifier, SimTK::MultibodySystem &MBsystem,
-                         SimTK::MobilizedBody &mobod, SimTK::RungeKuttaMersonIntegrator &integ);
-
-    virtual ~TotalForceForSimBody(){};
-
-    virtual void setupDynamics(Real dt = 0.0) override;
-    SimTK::SpatialVec reduce(size_t index_i, Real dt = 0.0);
+    DiscreteVariable<Vecd> *dv_force_, *dv_force_prior_, *dv_pos_;
+    SingularVariable<SimTKVec3> *sv_current_origin_location_;
 };
-using TotalForceOnBodyForSimBody = TotalForceForSimBody<SPHBody>;
-using TotalForceOnBodyPartForSimBody = TotalForceForSimBody<BodyPartByParticle>;
+using TotalForceOnBodyForSimBodyCK = TotalForceForSimBodyCK<SPHBody>;
+using TotalForceOnBodyPartForSimBodyCK = TotalForceForSimBodyCK<BodyPartByParticle>;
 } // namespace solid_dynamics
 } // namespace SPH
 #endif // SOLID_CONSTRAINT_H

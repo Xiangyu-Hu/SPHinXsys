@@ -28,7 +28,7 @@ ConstraintBySimBodyCK<DynamicsIdentifier>::
 }
 //=================================================================================================//
 template <class DynamicsIdentifier>
-void ConstraintBySimBody<DynamicsIdentifier>::setupDynamics(Real dt)
+void ConstraintBySimBodyCK<DynamicsIdentifier>::setupDynamics(Real dt)
 {
     const SimTK::State *state = &integ_.getState();
     MBsystem_.realize(*state, SimTK::Stage::Acceleration);
@@ -43,6 +43,7 @@ void ConstraintBySimBodyCK<DynamicsIdentifier>::initializeSimbodyState(const Sim
     simbody_state->initial_origin_location_ = simbody_state->origin_location_;
 }
 //=================================================================================================//
+template <class DynamicsIdentifier>
 void ConstraintBySimBodyCK<DynamicsIdentifier>::updateSimbodyState(const SimTK::State &state)
 {
     SimbodyState *simbody_state = sv_simbody_state_->ValueAddress();
@@ -56,7 +57,7 @@ void ConstraintBySimBodyCK<DynamicsIdentifier>::updateSimbodyState(const SimTK::
 //=================================================================================================//
 template <class DynamicsIdentifier>
 template <class ExecutionPolicy, class EncloserType>
-ConstraintBySimBodyCK<DynamicsIdentifier>::
+ConstraintBySimBodyCK<DynamicsIdentifier>::UpdateKernel::
     UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : pos_(encloser.dv_pos_->DelegatedDataField(ex_policy)),
       pos0_(encloser.dv_pos0_->DelegatedDataField(ex_policy)),
@@ -67,7 +68,7 @@ ConstraintBySimBodyCK<DynamicsIdentifier>::
       simbody_state_(encloser.sv_simbody_state_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <class DynamicsIdentifier>
-ConstraintBySimBodyCK<DynamicsIdentifier>::UpdateKernel::update(size_t index_i, Real dt)
+void ConstraintBySimBodyCK<DynamicsIdentifier>::UpdateKernel::update(size_t index_i, Real dt)
 {
     Vec3d pos, vel, acc, n;
     simbody_state_->findStationLocationVelocityAndAccelerationInGround(
@@ -76,6 +77,50 @@ ConstraintBySimBodyCK<DynamicsIdentifier>::UpdateKernel::update(size_t index_i, 
     vel_[index_i] = degradeToVecd(vel);
     acc_[index_i] = degradeToVecd(acc);
     n_[index_i] = degradeToVecd(n);
+}
+//=================================================================================================//
+template <class DynamicsIdentifier>
+TotalForceForSimBodyCK<DynamicsIdentifier>::
+    TotalForceForSimBodyCK(DynamicsIdentifier &identifier, SimTK::MultibodySystem &MBsystem,
+                           SimTK::MobilizedBody &mobod, SimTK::RungeKuttaMersonIntegrator &integ)
+    : BaseLocalDynamicsReduce<ReduceSum<SimTK::SpatialVec>, DynamicsIdentifier>(identifier),
+      MBsystem_(MBsystem), mobod_(mobod), integ_(integ),
+      dv_force_(this->particles_->template registerStateVariableOnly<Vecd>("Force")),
+      dv_force_prior_(this->particles_->template getVariableByName<Vecd>("ForcePrior")),
+      dv_pos_(this->particles_->template getVariableByName<Vecd>("Position")),
+      sv_current_origin_location_(
+          this->particles_->template addSingularVariableOnly<SimTKVec3>(
+              identifier.Name() + "OriginLocation"))
+{
+    this->quantity_name_ = "TotalForceForSimBody";
+}
+//=================================================================================================//
+template <class DynamicsIdentifier>
+void TotalForceForSimBodyCK<DynamicsIdentifier>::setupDynamics(Real dt)
+{
+    const SimTK::State *state = &integ_.getState();
+    MBsystem_.realize(*state, SimTK::Stage::Acceleration);
+    sv_current_origin_location_->setValue(mobod_.getBodyOriginLocation(*state));
+}
+//=================================================================================================//
+template <class DynamicsIdentifier>
+template <class ExecutionPolicy, class EncloserType>
+TotalForceForSimBodyCK<DynamicsIdentifier>::
+    ReduceKernel::ReduceKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+    : force_(encloser.dv_force_->DelegatedDataField(ex_policy)),
+      force_prior_(encloser.dv_force_prior_->DelegatedDataField(ex_policy)),
+      pos_(encloser.dv_pos_->DelegatedDataField(ex_policy)),
+      current_origin_location_(encloser.sv_current_origin_location_->DelegatedData(ex_policy)) {}
+//=================================================================================================//
+template <class DynamicsIdentifier>
+SimTK::SpatialVec TotalForceForSimBodyCK<DynamicsIdentifier>::
+    ReduceKernel::reduce(size_t index_i, Real dt)
+{
+    Vecd force = force_[index_i] + force_prior_[index_i];
+    SimTKVec3 force_from_particle = EigenToSimTK(upgradeToVec3d(force));
+    SimTKVec3 displacement = EigenToSimTK(upgradeToVec3d(pos_[index_i])) - *current_origin_location_;
+    SimTKVec3 torque_from_particle = SimTK::cross(displacement, force_from_particle);
+    return SimTK::SpatialVec(torque_from_particle, force_from_particle);
 }
 //=================================================================================================//
 } // namespace solid_dynamics
