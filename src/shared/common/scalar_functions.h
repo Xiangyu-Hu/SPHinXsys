@@ -147,6 +147,11 @@ inline bool Not_a_number(T a)
     return (std::isnan(a) || !(std::isfinite(a))) ? true : false;
 }
 
+harmonic_average(const Real &a, const Real &b)
+{
+    return 2.0 * a * b / (a + b);
+}
+
 inline Real rand_normal(Real u, Real std)
 {
     unsigned seed = (unsigned)std::chrono::system_clock::now().time_since_epoch().count();

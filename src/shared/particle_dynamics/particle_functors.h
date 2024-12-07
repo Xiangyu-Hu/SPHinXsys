@@ -134,7 +134,7 @@ class ParticleAverage // base class to indicate the concept of particle average
 template <typename T>
 class PairAverageFixed : public ParticleAverage
 {
-    const T average_;
+    T average_;
 
   public:
     PairAverageFixed(const T &c1, const T &c2)
