@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<result>
+    <Snapshot_Element>
+        <Snapshot number_of_snapshot_for_local_result_="3" />
+    </Snapshot_Element>
+    <Result_Element>
+        <Particle_0 snapshot_0="145040.00000000006" snapshot_1="136012.88679968426" snapshot_2="129919.09490070603" />
+    </Result_Element>
+</result>
