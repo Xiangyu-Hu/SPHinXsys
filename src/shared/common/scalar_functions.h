@@ -147,7 +147,7 @@ inline bool Not_a_number(T a)
     return (std::isnan(a) || !(std::isfinite(a))) ? true : false;
 }
 
-harmonic_average(const Real &a, const Real &b)
+inline Real harmonic_average(const Real &a, const Real &b)
 {
     return 2.0 * a * b / (a + b);
 }

@@ -56,8 +56,7 @@ class ViscousForceCK<Base, ViscosityType, KernelCorrectionType, RelationType<Par
     virtual ~ViscousForceCK(){};
 
     class InteractKernel
-        : public Interaction<RelationType<Parameters...>>::InteractKernel,
-          public ForcePriorCK::UpdateKernel
+        : public Interaction<RelationType<Parameters...>>::InteractKernel
     {
       public:
         template <class ExecutionPolicy, class EncloserType>
@@ -66,38 +65,38 @@ class ViscousForceCK<Base, ViscosityType, KernelCorrectionType, RelationType<Par
       protected:
         ViscosityKernel viscosity_;
         CorrectionKernel correction_;
-        Real *rho_, *mass_, *Vol_;
+        Real *Vol_;
         Vecd *vel_, *viscous_force_;
-        Real smoothing_length_;
+        Real smoothing_length_sq_;
     };
 
   protected:
     KernelCorrectionType kernel_correction_;
     ViscosityType viscosity_method_;
-    DiscreteVariable<Real> *dv_rho_, *dv_mass_, *dv_Vol_;
+    DiscreteVariable<Real> *dv_Vol_;
     DiscreteVariable<Vecd> *dv_vel_, *dv_viscous_force_;
-    Real smoothing_length_;
+    Real smoothing_length_sq_;
 };
 
 template <typename ViscosityType, class KernelCorrectionType, typename... Parameters>
-class ViscousForceCK<Inner<ViscosityType, KernelCorrectionType, Parameters...>>
+class ViscousForceCK<Inner<WithUpdate, ViscosityType, KernelCorrectionType, Parameters...>>
     : public ViscousForceCK<Base, ViscosityType, KernelCorrectionType, Inner<Parameters...>>
 {
     using BaseViscousForceType = ViscousForceCK<Base, ViscosityType, KernelCorrectionType, Inner<Parameters...>>;
 
   public:
-    explicit ViscousForceCK(Relation<Inner<Parameters...>> &inner_relation);
+    explicit ViscousForceCK(Relation<Inner<Parameters...>> &inner_relation)
+        : BaseViscousForceType(inner_relation){};
     virtual ~ViscousForceCK(){};
 
     class InteractKernel : public BaseViscousForceType::InteractKernel
     {
       public:
         template <class ExecutionPolicy, class EncloserType>
-        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+            : BaseViscousForceType::InteractKernel(ex_policy, encloser){};
         void interact(size_t index_i, Real dt = 0.0);
     };
-
-  protected:
 };
 
 template <typename ViscosityType, class KernelCorrectionType, typename... Parameters>
@@ -107,15 +106,23 @@ class ViscousForceCK<Contact<Wall, ViscosityType, KernelCorrectionType, Paramete
     using BaseViscousForceType = ViscousForceCK<Base, ViscosityType, KernelCorrectionType, Contact<Wall, Parameters...>>;
 
   public:
-    explicit ViscousForceCK(Relation<Contact<Parameters...>> &contact_relation);
+    explicit ViscousForceCK(Relation<Contact<Parameters...>> &contact_relation)
+        : BaseViscousForceType(contact_relation){};
     virtual ~ViscousForceCK(){};
 
     class InteractKernel : public BaseViscousForceType::InteractKernel
     {
       public:
         template <class ExecutionPolicy, class EncloserType>
-        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, size_t contact_index);
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, size_t contact_index)
+            : BaseViscousForceType::InteractKernel(ex_policy, encloser, contact_index),
+              wall_Vol_(encloser.dv_wall_Vol_[contact_index]->DelegatedDataField(ex_policy)),
+              wall_vel_ave_(encloser.dv_wall_vel_ave_[contact_index]->DelegatedDataField(ex_policy)){};
         void interact(size_t index_i, Real dt = 0.0);
+
+      protected:
+        Real *wall_Vol_;
+        Vecd *wall_vel_ave_;
     };
 };
 
@@ -160,8 +167,8 @@ class Viscosity<Variable>
     DiscreteVariable<Real> *dv_mu_;
 };
 
-using ViscousForceInnerCK = ViscousForceCK<Inner<Viscosity<Constant>, NoKernelCorrectionCK>>;
-using ViscousForceComplexCK = ViscousForceCK<Inner<Viscosity<Constant>, NoKernelCorrectionCK>,
+using ViscousForceInnerCK = ViscousForceCK<Inner<WithUpdate, Viscosity<Constant>, NoKernelCorrectionCK>>;
+using ViscousForceComplexCK = ViscousForceCK<Inner<WithUpdate, Viscosity<Constant>, NoKernelCorrectionCK>,
                                              Contact<Wall, Viscosity<Constant>, NoKernelCorrectionCK>>;
 } // namespace fluid_dynamics
 } // namespace SPH
