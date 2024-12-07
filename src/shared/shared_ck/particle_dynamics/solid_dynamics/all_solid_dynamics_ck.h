@@ -21,22 +21,9 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file    all_shared_physical_dynamics_ck.h
- * @brief   Head file for all shared physics dynamics for both 2- and 3D build.
- *          This is the header file that user code should include to pick up all
-            particle dynamics capabilities.
- * @author	Chi Zhang and Xiangyu Hu
+ * @file    all_solid_dynamics_ck.h
  */
 
-#ifndef ALL_SHARED_PHYSICAL_DYNAMICS_CK_H
-#define ALL_SHARED_PHYSICAL_DYNAMICS_CK_H
+#pragma once
 
-#include "all_general_dynamics_ck.h"
-#include "all_shared_fluid_dynamics_ck.h"
-#include "all_solid_dynamics_ck.h"
-#include "complex_algorithms_ck.h"
-#include "interaction_algorithms_ck.hpp"
-#include "particle_sort_ck.hpp"
-#include "simple_algorithms_ck.h"
-
-#endif // ALL_SHARED_PHYSICAL_DYNAMICS_CK_H
+#include "solid_constraint.hpp"

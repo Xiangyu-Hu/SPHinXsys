@@ -13,33 +13,6 @@ Vec3d FirstAxisVector(const Vec3d &zero_vector)
     return Vec3d(1.0, 0.0, 0.0);
 };
 //=================================================================================================//
-Vec3d upgradeToVec3d(const Real &input)
-{
-    return Vec3d(input, 0.0, 0.0);
-}
-//=================================================================================================//
-Vec3d upgradeToVec3d(const Vec2d &input)
-{
-    return Vec3d(input[0], input[1], 0.0);
-}
-//=================================================================================================//
-Vec3d upgradeToVec3d(const Vec3d &input)
-{
-    return input;
-}
-//=================================================================================================//
-Mat3d upgradeToMat3d(const Mat2d &input)
-{
-    Mat3d output = Mat3d::Zero();
-    output.block<2, 2>(0, 0) = input;
-    return output;
-}
-//=================================================================================================//
-Mat3d upgradeToMat3d(const Mat3d &input)
-{
-    return input;
-}
-//=================================================================================================//
 Mat2d getInverse(const Mat2d &A)
 {
     Mat2d minv = Mat2d::Zero();

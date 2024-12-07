@@ -39,10 +39,40 @@ namespace SPH
 {
 namespace solid_dynamics
 {
-/**
- * @class ConstraintBySimBody
- * @brief Constrain by the motion computed from Simbody.
- */
+
+template <class DynamicsIdentifier>
+class ConstraintBySimBodyCK : public BaseLocalDynamics<DynamicsIdentifier>
+{
+  public:
+    explicit ConstraintBySimBodyCK(DynamicsIdentifier &identifier, SimTK::MultibodySystem &MBsystem,
+                                   SimTK::MobilizedBody &mobod, SimTK::RungeKuttaMersonIntegrator &integ);
+    virtual ~ConstraintBySimBodyCK(){};
+
+    class UpdateKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+        void update(size_t index_i, Real dt = 0.0);
+
+      protected:
+        Vecd *pos_, *pos0_, *vel_;
+        Vecd *n_, *n0_, *acc_;
+        SimbodyState *simbody_state_;
+    };
+
+  protected:
+    SimTK::MultibodySystem &MBsystem_;
+    SimTK::MobilizedBody &mobod_;
+    SimTK::RungeKuttaMersonIntegrator &integ_;
+    DiscreteVariable<Vecd> *dv_pos_, *dv_pos0_, *dv_vel_;
+    DiscreteVariable<Vecd> *dv_n_, *dv_n0_, *dv_acc_;
+    SingularVariable<SimbodyState> sv_simbody_state_;
+
+    void initializeSimbodyState(const SimTK::State &state);
+    void updateSimbodyState(const SimTK::State &state);
+};
+
 template <class DynamicsIdentifier>
 class ConstraintBySimBody : public MotionConstraint<DynamicsIdentifier>
 {
@@ -50,24 +80,19 @@ class ConstraintBySimBody : public MotionConstraint<DynamicsIdentifier>
     ConstraintBySimBody(DynamicsIdentifier &identifier, SimTK::MultibodySystem &MBsystem,
                         SimTK::MobilizedBody &mobod, SimTK::RungeKuttaMersonIntegrator &integ);
     virtual ~ConstraintBySimBody(){};
-
-    virtual void setupDynamics(Real dt = 0.0) override
-    {
-        simbody_state_ = &integ_.getState();
-        MBsystem_.realize(*simbody_state_, SimTK::Stage::Acceleration);
-    };
+    virtual void setupDynamics(Real dt = 0.0) override;
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
     SimTK::MultibodySystem &MBsystem_;
     SimTK::MobilizedBody &mobod_;
     SimTK::RungeKuttaMersonIntegrator &integ_;
+    SimbodyState simbody_state_;
     Vecd *n_, *n0_, *acc_;
-    const SimTK::State *simbody_state_;
-    SimTKVec3 initial_mobod_origin_location_;
+
+    void initializeSimbodyState(const SimTK::State &state);
+    void updateSimbodyState(const SimTK::State &state);
 };
-using ConstraintBodyBySimBody = ConstraintBySimBody<SPHBody>;
-using ConstraintBodyPartBySimBody = ConstraintBySimBody<BodyPartByParticle>;
 
 /**
  * @class TotalForceForSimBody
