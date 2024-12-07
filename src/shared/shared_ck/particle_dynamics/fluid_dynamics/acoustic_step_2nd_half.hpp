@@ -12,7 +12,7 @@ template <class RiemannSolverType, class KernelCorrectionType, typename... Param
 AcousticStep2ndHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType, Parameters...>>::
     AcousticStep2ndHalf(Relation<Inner<Parameters...>> &inner_relation)
     : AcousticStep<Interaction<Inner<Parameters...>>>(inner_relation),
-      correction_(this->particles_), riemann_solver_(this->fluid_, this->fluid_)
+      kernel_correction_(this->particles_), riemann_solver_(this->fluid_, this->fluid_)
 {
     static_assert(std::is_base_of<KernelCorrection, KernelCorrectionType>::value,
                   "KernelCorrection is not the base of KernelCorrectionType!");
@@ -37,7 +37,7 @@ template <class ExecutionPolicy, class EncloserType>
 AcousticStep2ndHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType, Parameters...>>::
     InteractKernel::InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : BaseInteraction::InteractKernel(ex_policy, encloser),
-      correction_(encloser.correction_),
+      correction_(ex_policy, encloser.kernel_correction_),
       riemann_solver_(encloser.riemann_solver_),
       Vol_(encloser.dv_Vol_->DelegatedDataField(ex_policy)),
       rho_(encloser.dv_rho_->DelegatedDataField(ex_policy)),
@@ -83,7 +83,7 @@ template <class RiemannSolverType, class KernelCorrectionType, typename... Param
 AcousticStep2ndHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType, Parameters...>>::
     AcousticStep2ndHalf(Relation<Contact<Parameters...>> &wall_contact_relation)
     : AcousticStep<Interaction<Contact<Wall, Parameters...>>>(wall_contact_relation),
-      correction_(this->particles_), riemann_solver_(this->fluid_, this->fluid_) {}
+      kernel_correction_(this->particles_), riemann_solver_(this->fluid_, this->fluid_) {}
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
 template <class ExecutionPolicy, class EncloserType>
@@ -91,7 +91,7 @@ AcousticStep2ndHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType, Param
     InteractKernel::InteractKernel(
         const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt contact_index)
     : BaseInteraction::InteractKernel(ex_policy, encloser, contact_index),
-      correction_(encloser.correction_),
+      correction_(ex_policy, encloser.kernel_correction_),
       riemann_solver_(encloser.riemann_solver_),
       Vol_(encloser.dv_Vol_->DelegatedDataField(ex_policy)),
       rho_(encloser.dv_rho_->DelegatedDataField(ex_policy)),

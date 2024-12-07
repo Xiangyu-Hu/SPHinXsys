@@ -104,9 +104,11 @@ int main(int ac, char *av[])
     StateDynamics<MyExecutionPolicy, fluid_dynamics::AdvectionStepSetup> water_advection_step_setup(water_block);
     StateDynamics<MyExecutionPolicy, fluid_dynamics::AdvectionStepClose> water_advection_step_close(water_block);
 
-    InteractionDynamicsCK<MyExecutionPolicy, fluid_dynamics::AcousticStep1stHalfWithWallRiemannCK>
+    InteractionDynamicsCK<MyExecutionPolicy, LinearCorrectionMatrixComplex>
+        fluid_linear_correction_matrix(ConstructorArgs(water_block_inner, 0.5), water_wall_contact);
+    InteractionDynamicsCK<MyExecutionPolicy, fluid_dynamics::AcousticStep1stHalfWithWallRiemannCorrectionCK>
         fluid_acoustic_step_1st_half(water_block_inner, water_wall_contact);
-    InteractionDynamicsCK<MyExecutionPolicy, fluid_dynamics::AcousticStep2ndHalfWithWallRiemannCK>
+    InteractionDynamicsCK<MyExecutionPolicy, fluid_dynamics::AcousticStep2ndHalfWithWallRiemannCorrectionCK>
         fluid_acoustic_step_2nd_half(water_block_inner, water_wall_contact);
     InteractionDynamicsCK<MyExecutionPolicy, fluid_dynamics::DensityRegularizationComplexFreeSurface>
         fluid_density_regularization(water_block_inner, water_wall_contact);
@@ -183,6 +185,7 @@ int main(int ac, char *av[])
             /** outer loop for dual-time criteria time-stepping. */
             time_instance = TickCount::now();
 
+            fluid_linear_correction_matrix.exec();
             fluid_density_regularization.exec();
             Real advection_dt = fluid_advection_time_step.exec();
             water_advection_step_setup.exec();
