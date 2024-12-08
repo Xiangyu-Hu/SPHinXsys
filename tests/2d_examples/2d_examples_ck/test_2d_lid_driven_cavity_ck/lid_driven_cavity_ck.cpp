@@ -1,89 +1,68 @@
 /**
  * @file 	Lid_driven_square_cavity.cpp
  * @brief 	2d lip driven square cavity example
- * @details This is the one of the basic test cases for the RKGC inner flow.
+ * @details This is the one of the basic test cases for fluid dynamics.
  * @author 	Bo Zhang, Xiangyu Hu
  */
-#include "sphinxsys.h" //	SPHinXsys Library.
-using namespace SPH;   //	Namespace cite here.
+#include "sphinxsys_ck.h" //	SPHinXsys Library.
+using namespace SPH;      //	Namespace cite here.
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real DL = 1.0;                    /**< box length. */
-Real DH = 1.0;                    /**< box height. */
-Real resolution_ref = 1.0 / 50.0; /**< Global reference resolution. */
-Real BW = resolution_ref * 6;     /**< Extending width for BCs. */
-/** Domain bounds of the system. */
-BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
+// geometry data
+Real height = 1;
+Real width = 1;
+Real boundary_width = particle_spacing * 4; // boundary width
+Real resolution_ref = height / 50.0;        /**< Global reference resolution. */
+BoundingBox system_domain_bounds(Vecd(-boundary_width * 2, -boundary_width * 2),
+                                 Vecd(width + boundary_width * 2, height + boundary_width * 2));
 //----------------------------------------------------------------------
 //	Material properties of the fluid.
 //----------------------------------------------------------------------
-Real rho0_f = 1.0;                  /**< Reference density of fluid. */
-Real U_f = 1.0;                     /**< Characteristic velocity. */
-Real c_f = 10.0 * U_f;              /**< Reference sound speed. */
-Real Re = 100.0;                    /**< Reynolds number. */
-Real mu_f = rho0_f * U_f * DL / Re; /**< Dynamics viscosity. */
+Real rho0_f = 1.0;                      /**< Reference density of fluid. */
+Real U_f = 1.0;                         /**< Characteristic velocity. */
+Real c_f = 10.0 * U_f;                  /**< Reference sound speed. */
+Real Re = 100.0;                        /**< Reynolds number. */
+Real mu_f = rho0_f * U_f * height / Re; /**< Dynamics viscosity. */
+
 //----------------------------------------------------------------------
-//	Cases-dependent geometries
+//	Complex shapes for wall boundary
 //----------------------------------------------------------------------
-class WaterBlock : public MultiPolygonShape
+class LidBoundary : public ComplexShape
 {
   public:
-    explicit WaterBlock(const std::string &shape_name) : MultiPolygonShape(shape_name)
+    explicit LidBoundary(const std::string &shape_name) : ComplexShape(shape_name)
     {
-        /** Geometry definition. */
-        std::vector<Vecd> water_body_shape;
-        water_body_shape.push_back(Vecd(0.0, 0.0));
-        water_body_shape.push_back(Vecd(0.0, DH));
-        water_body_shape.push_back(Vecd(DL, DH));
-        water_body_shape.push_back(Vecd(DL, 0.0));
-        water_body_shape.push_back(Vecd(0.0, 0.0));
-        multi_polygon_.addAPolygon(water_body_shape, ShapeBooleanOps::add);
+        Vecd scaled_container(0.5 * width + boundary_width, 0.5 * boundary_width);
+        Transform translate_to_origin(scaled_container);
+        Vecd transform(-boundary_width, height);
+        Transform translate_to_position(transform + scaled_container);
+        add<TransformShape<GeometricShapeBox>>(Transform(translate_to_position), scaled_container);
     }
 };
-/**
- * @brief 	Wall boundary body definition.
- */
-class WallBoundary : public MultiPolygonShape
+class WallBoundary : public ComplexShape
 {
   public:
-    explicit WallBoundary(const std::string &shape_name) : MultiPolygonShape(shape_name)
+    explicit WallBoundary(const std::string &shape_name) : ComplexShape(shape_name)
     {
-        /** Geometry definition. */
-        std::vector<Vecd> outer_wall_shape;
-        outer_wall_shape.push_back(Vecd(-BW, -BW));
-        outer_wall_shape.push_back(Vecd(-BW, DH + BW));
-        outer_wall_shape.push_back(Vecd(DL + BW, DH + BW));
-        outer_wall_shape.push_back(Vecd(DL + BW, -BW));
-        outer_wall_shape.push_back(Vecd(-BW, -BW));
-        std::vector<Vecd> inner_wall_shape;
-        inner_wall_shape.push_back(Vecd(0.0, 0.0));
-        inner_wall_shape.push_back(Vecd(0.0, DH));
-        inner_wall_shape.push_back(Vecd(DL, DH));
-        inner_wall_shape.push_back(Vecd(DL, 0.0));
-        inner_wall_shape.push_back(Vecd(0.0, 0.0));
+        Vecd scaled_container_outer(0.5 * width + boundary_width, 0.5 * height + boundary_width);
+        Vecd scaled_container(0.5 * width, 0.5 * height);
+        Transform translate_to_origin_outer(Vec2d(-boundary_width, -boundary_width) + scaled_container_outer);
+        Transform translate_to_origin_inner(scaled_container);
 
-        multi_polygon_.addAPolygon(outer_wall_shape, ShapeBooleanOps::add);
-        multi_polygon_.addAPolygon(inner_wall_shape, ShapeBooleanOps::sub);
+        add<TransformShape<GeometricShapeBox>>(Transform(translate_to_origin_outer), scaled_container_outer);
+        subtract<TransformShape<GeometricShapeBox>>(Transform(translate_to_origin_inner), scaled_container);
     }
 };
-//----------------------------------------------------------------------
-//	Application dependent initial condition
-//----------------------------------------------------------------------
-class BoundaryVelocity : public MotionConstraint<SPHBody>
+class WaterBlock : public ComplexShape
 {
   public:
-    BoundaryVelocity(SPHBody &body)
-        : MotionConstraint<SPHBody>(body) {}
-
-    void update(size_t index_i, Real dt = 0.0)
+    explicit WaterBlock(const std::string &shape_name) : ComplexShape(shape_name)
     {
-        if (pos_[index_i][1] > DH)
-        {
-            vel_[index_i][0] = 1.0;
-            vel_[index_i][1] = 0.0;
-        }
-    };
+        Vecd scaled_container(0.5 * width, 0.5 * height);
+        Transform translate_to_origin(scaled_container);
+        add<TransformShape<GeometricShapeBox>>(Transform(translate_to_origin), scaled_container);
+    }
 };
 //----------------------------------------------------------------------
 //	An observer particle generator.
@@ -97,8 +76,8 @@ StdVec<Vecd> VelocityXObserverParticle()
 
     for (size_t i = 0; i < number_of_observation_point; ++i)
     {
-        Vec2d point_corrdinate(range_of_measure * (Real)i / (Real)(number_of_observation_point - 1) + start_of_measure, 0.5 * DL);
-        observation_points.push_back(point_corrdinate);
+        Vec2d point_coordinate(range_of_measure * (Real)i / (Real)(number_of_observation_point - 1) + start_of_measure, 0.5 * height);
+        observation_points.push_back(point_coordinate);
     }
     return observation_points;
 }
@@ -111,10 +90,8 @@ StdVec<Vecd> VelocityYObserverParticle()
     Real start_of_measure = 0.5 * resolution_ref;
     for (size_t i = 0; i < number_of_observation_point; ++i)
     {
-        Vec2d point_corrdinate(0.5 * DH, range_of_measure * (Real)i /
-                                                 (Real)(number_of_observation_point - 1) +
-                                             start_of_measure);
-        observation_points.push_back(point_corrdinate);
+        Vec2d point_coordinate(0.5 * width, range_of_measure * (Real)i / (Real)(number_of_observation_point - 1) + start_of_measure);
+        observation_points.push_back(point_coordinate);
     }
     return observation_points;
 }
@@ -155,32 +132,50 @@ int main(int ac, char *av[])
     //	The contact map gives the topological connections between the bodies.
     //	Basically the the range of bodies to build neighbor particle lists.
     //----------------------------------------------------------------------
-    InnerRelation water_block_inner(water_body);
-    ContactRelation water_block_contact(water_body, {&wall_boundary});
-    ContactRelation horizontal_observer_contact(horizontal_observer, {&water_body});
-    ContactRelation vertical_observer_contact(vertical_observer, {&water_body});
-    ComplexRelation water_block_complex(water_block_inner, water_block_contact);
+    using MyExecutionPolicy = execution::ParallelDevicePolicy; // define execution policy for this case
+
+    UpdateCellLinkedList<MyExecutionPolicy, CellLinkedList> water_cell_linked_list(water_body);
+    UpdateCellLinkedList<MyExecutionPolicy, CellLinkedList> wall_cell_linked_list(wall_boundary);
+
+    Relation<Inner<>> water_body_inner(water_body);
+    Relation<Contact<>> water_wall_contact(water_body, {&wall_boundary});
+    Relation<Contact<>> horizontal_observer_contact(horizontal_observer, {&water_body});
+    Relation<Contact<>> vertical_observer_contact(vertical_observer, {&water_body});
+
+    UpdateRelation<MyExecutionPolicy, Inner<>, Contact<>> water_body_update_complex_relation(water_body_inner, water_wall_contact);
+    UpdateRelation<MyExecutionPolicy, Contact<>> horizontal_observer_contact_relation(horizontal_observer_contact);
+    UpdateRelation<MyExecutionPolicy, Contact<>> vertical_observer_contact_relation(vertical_observer_contact);
+    ParticleSortCK<MyExecutionPolicy, QuickSort> particle_sort(water_body);
     //----------------------------------------------------------------------
     //	Define the main numerical methods used in the simulation.
     //	Note that there may be data dependence on the constructors of these methods.
     //----------------------------------------------------------------------
-    SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
-    /** Initial condition with momentum field */
-    SimpleDynamics<BoundaryVelocity> solid_initial_condition(wall_boundary);
-    /** Kernel correction matrix and transport velocity formulation. */
-    InteractionWithUpdate<LinearGradientCorrectionMatrixComplex> kernel_correction_complex(water_block_inner, water_block_contact);
-    /** Evaluation of density by summation approach. */
-    InteractionWithUpdate<fluid_dynamics::DensitySummationComplex> update_density_by_summation(water_block_inner, water_block_contact);
-    /** Pressure and density relaxation algorithm by using Verlet time stepping. */
-    Dynamics1Level<fluid_dynamics::Integration1stHalfCorrectionWithWallRiemann> pressure_relaxation(water_block_inner, water_block_contact);
-    Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallRiemann> density_relaxation(water_block_inner, water_block_contact);
+    Gravity gravity(Vecd(0.0, -gravity_g));
+    StateDynamics<MyExecutionPolicy, GravityForceCK<Gravity>> constant_gravity(water_body, gravity);
+    StateDynamics<execution::ParallelPolicy, NormalFromBodyShapeCK> wall_boundary_normal_direction(wall_boundary);
+    StateDynamics<MyExecutionPolicy, fluid_dynamics::AdvectionStepSetup> water_advection_step_setup(water_body);
+    StateDynamics<MyExecutionPolicy, fluid_dynamics::AdvectionStepClose> water_advection_step_close(water_body);
+    BodyRegionByParticle lid_boundary(wall_boundary, makeShared<LidBoundary>("LidBoundary"));
+    StateDynamics<MyExecutionPolicy, ConstantConstraintCK<BodyRegionByParticle, Vec2d>> lid_velocity(lid_boundary, "Velocity", Vec2d(U_f, 0.0));
+
+    InteractionDynamicsCK<MyExecutionPolicy, LinearCorrectionMatrixComplex>
+        fluid_linear_correction_matrix(ConstructorArgs(water_body_inner, 0.5), water_wall_contact);
+    InteractionDynamicsCK<MyExecutionPolicy, fluid_dynamics::AcousticStep1stHalfWithWallRiemannCorrectionCK>
+        fluid_acoustic_step_1st_half(water_body_inner, water_wall_contact);
+    InteractionDynamicsCK<MyExecutionPolicy, fluid_dynamics::AcousticStep2ndHalfWithWallRiemannCorrectionCK>
+        fluid_acoustic_step_2nd_half(water_body_inner, water_wall_contact);
+    InteractionDynamicsCK<MyExecutionPolicy, fluid_dynamics::DensityRegularizationComplex>
+        fluid_density_regularization(water_body_inner, water_wall_contact);
+    InteractionDynamicsCK<MyExecutionPolicy, fluid_dynamics::ViscousForceWithWallCK>
+        viscous_acceleration(water_body_inner, water_wall_contact);
+
+    ReduceDynamicsCK<MyExecutionPolicy, fluid_dynamics::AdvectionTimeStepCK> fluid_advection_time_step(water_body, U_ref);
+    ReduceDynamicsCK<MyExecutionPolicy, fluid_dynamics::AcousticTimeStepCK> fluid_acoustic_time_step(water_body);
+
     InteractionWithUpdate<fluid_dynamics::TransportVelocityLimitedCorrectionCorrectedComplex<AllParticles>>
-        transport_velocity_correction(water_block_inner, water_block_contact);
-    /** Time step size with considering sound wave speed. */
-    ReduceDynamics<fluid_dynamics::AdvectionViscousTimeStep> get_fluid_advection_time_step_size(water_body, U_f);
-    ReduceDynamics<fluid_dynamics::AcousticTimeStep> get_fluid_time_step_size(water_body);
+        transport_velocity_correction(water_body_inner, water_body_contact);
     /** Computing viscous acceleration with wall. */
-    InteractionWithUpdate<fluid_dynamics::ViscousForceWithWall> viscous_acceleration(water_block_inner, water_block_contact);
+    InteractionWithUpdate<fluid_dynamics::ViscousForceWithWall> viscous_acceleration(water_body_inner, water_body_contact);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
@@ -252,7 +247,7 @@ int main(int ac, char *av[])
             }
             number_of_iterations++;
             water_body.updateCellLinkedList();
-            water_block_complex.updateConfiguration();
+            water_body_complex.updateConfiguration();
         }
         TickCount t2 = TickCount::now();
         write_real_body_states.writeToFile();

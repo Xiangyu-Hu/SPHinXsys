@@ -34,55 +34,38 @@
 
 namespace SPH
 {
-
-template <class DynamicsIdentifier, class ConstraintType>
-class MotionConstraintCK : public BaseLocalDynamics<DynamicsIdentifier>
+template <class DynamicsIdentifier, typename DataType>
+class ConstantConstraintCK : public BaseLocalDynamics<DynamicsIdentifier>
 {
   public:
-    explicit MotionConstraintCK(DynamicsIdentifier &identifier)
+    ConstantConstraintCK(DynamicsIdentifier &identifier, const std::string &variable_name,
+                         const DataType &constrained_value)
         : BaseLocalDynamics<DynamicsIdentifier>(identifier),
-          dv_pos_(this->particles_->template getVariableDataByNameOnly<Vecd>("Position")),
-          dv_pos0_(this->particles_->template registerStateVariableOnlyFrom<Vecd>("InitialPosition", "Position")),
-          dv_vel_(this->particles_->template getVariableDataByNameOnly<Vecd>("Velocity")){};
-
-    virtual ~MotionConstraintCK(){};
+          dv_variable_(this->particles_->template getVariableByName<DataType>(variable_name)),
+          constrained_value_(constrained_value){};
+    virtual ~ConstantConstraintCK(){};
 
     class UpdateKernel
     {
       public:
-        template <class ExecutionPolicy>
-        UpdateKernel(const ExecutionPolicy &ex_policy,
-                     MotionConstraintCK<DynamicsIdentifier, ConstraintType> &encloser)
-            : constraint_(encloser.dv_pos_->DelegatedDataField(ex_policy),
-                          encloser.dv_pos0_->DelegatedDataField(ex_policy),
-                          encloser.dv_vel_->DelegatedDataField(ex_policy)){};
+        template <class ExecutionPolicy, class EncloserType>
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+            : variable_(encloser.dv_variable_->DelegatedDataField(ex_policy)),
+              constrained_value_(encloser.constrained_value_){};
+
         void update(size_t index_i, Real dt = 0.0)
         {
-            constraint_(index_i, dt);
+            variable_[index_i] = constrained_value_;
         };
 
       protected:
-        ConstraintType constraint_;
+        DataType *variable_;
+        DataType constrained_value_;
     };
 
   protected:
-    DiscreteVariable<Vecd> *dv_pos_, *dv_pos0_, *dv_vel_;
+    DiscreteVariable<DataType> *dv_variable_;
+    DataType constrained_value_;
 };
-
-class FixConstraintCK
-{
-    Vecd *pos_, *pos0_, *vel_;
-
-  public:
-    FixConstraintCK(Vecd *pos, Vecd *pos0, Vecd *vel)
-        : pos_(pos), pos0_(pos0), vel_(vel){};
-    void operator()(size_t index_i, Real dt = 0.0)
-    {
-        pos_[index_i] = pos0_[index_i];
-        vel_[index_i] = Vecd::Zero();
-    };
-};
-using FixBodyPartConstraintCK = MotionConstraintCK<BodyPartByParticle, FixConstraintCK>;
-
 } // namespace SPH
 #endif // GENERAL_CONSTRAINT_CK_H
