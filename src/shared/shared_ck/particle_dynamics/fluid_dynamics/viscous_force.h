@@ -168,7 +168,7 @@ class Viscosity<Variable>
 };
 
 using ViscousForceInnerCK = ViscousForceCK<Inner<WithUpdate, Viscosity<Constant>, NoKernelCorrectionCK>>;
-using ViscousForceComplexCK = ViscousForceCK<Inner<WithUpdate, Viscosity<Constant>, NoKernelCorrectionCK>,
+using ViscousForceWithWallCK = ViscousForceCK<Inner<WithUpdate, Viscosity<Constant>, NoKernelCorrectionCK>,
                                              Contact<Wall, Viscosity<Constant>, NoKernelCorrectionCK>>;
 } // namespace fluid_dynamics
 } // namespace SPH
