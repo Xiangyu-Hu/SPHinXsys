@@ -29,9 +29,9 @@ with the help of the kernel-shell layer interface and execution implementation.
 The data transformed from kernel-shell layer has the form of pointer.
 For that from discrete variable, it can be accessed just as arrays.
 
-Still, one can use other constant trivially-copyable data structures in any of the 3 layers.
-Beside simple types, one typical more complex example is the RiemannSolver,
-which is a trivially-copyable constant and can be use in computing kernels directly.
+Still, one can copy directly constant trivially-copyable data structures through the 3 layers.
+Beside simple types, one typical more complex example is RiemannSolver,
+which is a trivially-copyable constant and can be copied to computing kernels directly.
 
 <script src="https://giscus.app/client.js"
         data-repo="Xiangyu-Hu/SPHinXsys"
