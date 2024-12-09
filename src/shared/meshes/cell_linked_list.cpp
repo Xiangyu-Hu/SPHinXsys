@@ -157,18 +157,15 @@ MultilevelCellLinkedList::MultilevelCellLinkedList(BoundingBox tentative_bounds,
                                                    BaseParticles &base_particles, SPHAdaptation &sph_adaptation)
     : MultilevelMesh<BaseCellLinkedList, CellLinkedList>(
           tentative_bounds, reference_grid_spacing, total_levels, base_particles, sph_adaptation),
-      h_ratio_(DynamicCast<ParticleWithLocalRefinement>(this, &sph_adaptation)->h_ratio_),
-      level_(DynamicCast<ParticleWithLocalRefinement>(this, &sph_adaptation)->level_)
+      h_ratio_(DynamicCast<ParticleWithLocalRefinement>(this, &sph_adaptation)->h_ratio_)
 {
 }
 //=================================================================================================//
 size_t MultilevelCellLinkedList::getMeshLevel(Real particle_cutoff_radius)
 {
     for (size_t level = total_levels_; level != 0; --level)
-    {
-        if (particle_cutoff_radius - mesh_levels_[level - 1]->GridSpacing() < SqrtEps)
-            return level - 1;
-    }
+        if (particle_cutoff_radius - mesh_levels_[level - 1]->GridSpacing() < Eps)
+            return level - 1; // jump out the loop!
 
     std::cout << "\n Error: CellLinkedList level searching out of bound!" << std::endl;
     std::cout << __FILE__ << ':' << __LINE__ << std::endl;
@@ -179,7 +176,6 @@ size_t MultilevelCellLinkedList::getMeshLevel(Real particle_cutoff_radius)
 void MultilevelCellLinkedList::insertParticleIndex(size_t particle_index, const Vecd &particle_position)
 {
     size_t level = getMeshLevel(kernel_.CutOffRadius(h_ratio_[particle_index]));
-    level_[particle_index] = level;
     mesh_levels_[level]->insertParticleIndex(particle_index, particle_position);
 }
 //=================================================================================================//

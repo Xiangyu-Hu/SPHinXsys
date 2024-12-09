@@ -332,30 +332,5 @@ class NeighborBuilderSurfaceContactFromSolid : public NeighborBuilderSurfaceCont
     void operator()(Neighborhood &neighborhood,
                     const Vecd &pos_i, size_t index_i, const ListData &list_data_j) override;
 };
-
-/**
- * @class NeighborBuilderInnerAdaptive
- * @brief A inner neighbor builder functor when the particles have different smoothing lengths for splitting algorithm.
- *        a particle can only see neighbors with ascending ids or higher levels
- */
-class NeighborBuilderSplitInnerAdaptive : public NeighborBuilder
-{
-  public:
-    explicit NeighborBuilderSplitInnerAdaptive(SPHBody &body);
-    void operator()(Neighborhood &neighborhood,
-                    const Vecd &pos_i, size_t index_i, const ListData &list_data_j) override;
-
-  private:
-    Real *h_ratio_;
-    int *level_;
-};
-
-class NeighborBuilderSplitInner : public NeighborBuilder
-{
-  public:
-    explicit NeighborBuilderSplitInner(SPHBody &body);
-    void operator()(Neighborhood &neighborhood,
-                    const Vecd &pos_i, size_t index_i, const ListData &list_data_j) override;
-};
 } // namespace SPH
 #endif // NEIGHBORHOOD_H
