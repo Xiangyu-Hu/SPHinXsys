@@ -5,7 +5,7 @@
 
 namespace SPH
 {
-namespace solid_dynamics
+namespace FSI
 {
 //=================================================================================================//
 template <class KernelCorrectionType, typename... Parameters>
@@ -35,7 +35,7 @@ ForceFromFluidCK<KernelCorrectionType, Parameters...>::InteractKernel::
       Vol_(encloser.dv_Vol_->DelegatedDataField(ex_policy)),
       force_from_fluid_(encloser.dv_force_from_fluid_->DelegatedDataField(ex_policy)),
       vel_ave_(encloser.dv_vel_ave_->DelegatedDataField(ex_policy)),
-      contact_correction_(encloser.contact_kernel_correction_[contact_index]),
+      contact_correction_(ex_policy, encloser.contact_kernel_correction_[contact_index]),
       contact_Vol_(encloser.contact_Vol_[contact_index]->DelegatedDataField(ex_policy)),
       contact_vel_(encloser.contact_vel_[contact_index]->DelegatedDataField(ex_policy)) {}
 //=================================================================================================//
@@ -46,7 +46,7 @@ ViscousForceFromFluidCK<Contact<WithUpdate, ViscousForceType, Parameters...>>::
 {
     for (size_t k = 0; k != this->contact_particles_.size(); ++k)
     {
-        contact_viscosity_method_.push_back(ViscousForceType(*this->contact_particles_[k]));
+        contact_viscosity_method_.push_back(ViscosityType(*this->contact_particles_[k]));
         contact_smoothing_length_sq_.push_back(pow(this->contact_bodies_[k]->sph_adaptation_->ReferenceSmoothingLength(), 2));
     }
 }
@@ -56,7 +56,7 @@ template <class ExecutionPolicy, class EncloserType>
 ViscousForceFromFluidCK<Contact<WithUpdate, ViscousForceType, Parameters...>>::InteractKernel::
     InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt contact_index)
     : BaseForceFromFluid::InteractKernel(ex_policy, encloser, contact_index),
-      viscosity_(encloser.contact_viscosity_method_[contact_index]),
+      viscosity_(ex_policy, encloser.contact_viscosity_method_[contact_index]),
       smoothing_length_sq_(encloser.contact_smoothing_length_sq_[contact_index]) {}
 //=================================================================================================//
 template <typename ViscousForceType, typename... Parameters>
@@ -133,6 +133,6 @@ void PressureForceFromFluidCK<Contact<WithUpdate, AcousticStep2ndHalfType, Param
     this->force_from_fluid_[index_i] = force * this->Vol_[index_i];
 }
 //=================================================================================================//
-} // namespace solid_dynamics
+} // namespace FSI
 } // namespace SPH
 #endif // FLUID_STRUCTURE_INTERACTION_CK_HPP

@@ -145,6 +145,7 @@ int main(int ac, char *av[])
 
     Relation<Inner<>> water_block_inner(water_block);
     Relation<Contact<>> water_block_contact(water_block, {&wall_boundary, &structure});
+    Relation<Contact<>> structure_contact(structure, {&water_block});
     Relation<Contact<>> observer_contact(observer, {&structure});
 
     UpdateRelation<MyExecutionPolicy, Inner<>, Contact<>>
@@ -163,10 +164,13 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     Gravity gravity(Vecd(0.0, -gravity_g));
     StateDynamics<MyExecutionPolicy, GravityForceCK<Gravity>> constant_gravity(water_block, gravity);
-    StateDynamics<MyExecutionPolicy, NormalFromBodyShapeCK> wall_boundary_normal_direction(wall_boundary);
-    StateDynamics<MyExecutionPolicy, NormalFromBodyShapeCK> structure_boundary_normal_direction(structure);
+    StateDynamics<execution::ParallelPolicy, NormalFromBodyShapeCK> wall_boundary_normal_direction(wall_boundary);
+    StateDynamics<execution::ParallelPolicy, NormalFromBodyShapeCK> structure_boundary_normal_direction(structure);
     StateDynamics<MyExecutionPolicy, fluid_dynamics::AdvectionStepSetup> water_advection_step_setup(water_block);
     StateDynamics<MyExecutionPolicy, fluid_dynamics::AdvectionStepClose> water_advection_step_close(water_block);
+
+    ReduceDynamicsCK<MyExecutionPolicy, fluid_dynamics::AdvectionTimeStepCK> fluid_advection_time_step(water_block, U_ref);
+    ReduceDynamicsCK<MyExecutionPolicy, fluid_dynamics::AcousticTimeStepCK> fluid_acoustic_time_step(water_block);
 
     InteractionDynamicsCK<MyExecutionPolicy, fluid_dynamics::AcousticStep1stHalfWithWallRiemannCK>
         fluid_acoustic_step_1st_half(water_block_inner, water_block_contact);
@@ -176,12 +180,10 @@ int main(int ac, char *av[])
         fluid_density_regularization(water_block_inner, water_block_contact);
     InteractionDynamicsCK<MyExecutionPolicy, fluid_dynamics::ViscousForceWithWallCK>
         viscous_force(water_block_inner, water_block_contact);
-
-    ReduceDynamicsCK<MyExecutionPolicy, fluid_dynamics::AdvectionTimeStepCK> fluid_advection_time_step(water_block, U_ref);
-    ReduceDynamicsCK<MyExecutionPolicy, fluid_dynamics::AcousticTimeStepCK> fluid_acoustic_time_step(water_block);
-
-    InteractionWithUpdate<solid_dynamics::ViscousForceFromFluid> viscous_force_on_solid(structure_contact);
-    InteractionWithUpdate<solid_dynamics::PressureForceFromFluid<decltype(density_relaxation)>> fluid_force_on_solid(structure_contact);
+    InteractionDynamicsCK<MyExecutionPolicy, FSI::ViscousForceOnStructure<decltype(viscous_force)>>
+        viscous_force_on_structure(structure_contact);
+    InteractionDynamicsCK<MyExecutionPolicy, FSI::PressureForceOnStructure<decltype(fluid_acoustic_step_2nd_half)>>
+        pressure_force_on_structure(structure_contact);
     //----------------------------------------------------------------------
     //	Define the configuration related particles dynamics.
     //----------------------------------------------------------------------
@@ -306,7 +308,7 @@ int main(int ac, char *av[])
             update_density_by_summation.exec();
             viscous_force.exec();
             /** Viscous force exerting on structure. */
-            viscous_force_on_solid.exec();
+            viscous_force_on_structure.exec();
 
             Real relaxation_time = 0.0;
             while (relaxation_time < Dt)
@@ -314,75 +316,75 @@ int main(int ac, char *av[])
                 dt = get_fluid_time_step_size.exec();
 
                 pressure_relaxation.exec(dt);
-                //                fluid_force_on_solid.exec();
+                pressure_force_on_structure.exec();
                 density_relaxation.exec(dt);
                 /** coupled rigid body dynamics. */
-                /*                if (total_time >= relax_time)
-                                {
-                                    SimTK::State &state_for_update = integ.updAdvancedState();
-                                    force_on_bodies.clearAllBodyForces(state_for_update);
-                                    force_on_bodies.setOneBodyForce(state_for_update, structure_mob, force_on_structure.exec());
-                                    integ.stepBy(dt);
-                                    constraint_on_structure.exec();
-                                }*/
-                interpolation_observer_position.exec();
-
-                relaxation_time += dt;
-                integral_time += dt;
-                total_time += dt;
                 if (total_time >= relax_time)
-                    physical_time += dt;
+                {
+                    SimTK::State &state_for_update = integ.updAdvancedState();
+                    force_on_bodies.clearAllBodyForces(state_for_update);
+                    force_on_bodies.setOneBodyForce(state_for_update, structure_mob, force_on_structure.exec());
+                    integ.stepBy(dt);
+                    constraint_on_structure.exec();
+
+                    interpolation_observer_position.exec();
+
+                    relaxation_time += dt;
+                    integral_time += dt;
+                    total_time += dt;
+                    if (total_time >= relax_time)
+                        physical_time += dt;
+                }
+
+                if (number_of_iterations % screen_output_interval == 0)
+                {
+                    std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations
+                              << "	Total Time = " << total_time
+                              << "	Physical Time = " << physical_time
+                              << "	Dt = " << Dt << "	dt = " << dt << "\n";
+                }
+                number_of_iterations++;
+                if (number_of_iterations % 100 == 0 && number_of_iterations != 1)
+                {
+                    particle_sorting.exec();
+                }
+                water_block.updateCellLinkedList();
+                wall_boundary.updateCellLinkedList();
+                structure.updateCellLinkedList();
+                water_block_complex.updateConfiguration();
+                structure_contact.updateConfiguration();
+                observer_contact_with_water.updateConfiguration();
+
+                if (total_time >= relax_time)
+                {
+                    write_structure_position.writeToFile(number_of_iterations);
+                    wave_gauge.writeToFile(number_of_iterations);
+                }
             }
 
-            if (number_of_iterations % screen_output_interval == 0)
-            {
-                std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations
-                          << "	Total Time = " << total_time
-                          << "	Physical Time = " << physical_time
-                          << "	Dt = " << Dt << "	dt = " << dt << "\n";
-            }
-            number_of_iterations++;
-            if (number_of_iterations % 100 == 0 && number_of_iterations != 1)
-            {
-                particle_sorting.exec();
-            }
-            water_block.updateCellLinkedList();
-            wall_boundary.updateCellLinkedList();
-            structure.updateCellLinkedList();
-            water_block_complex.updateConfiguration();
-            structure_contact.updateConfiguration();
-            observer_contact_with_water.updateConfiguration();
-
+            TickCount t2 = TickCount::now();
             if (total_time >= relax_time)
-            {
-                write_structure_position.writeToFile(number_of_iterations);
-                wave_gauge.writeToFile(number_of_iterations);
-            }
+                write_real_body_states.writeToFile();
+            TickCount t3 = TickCount::now();
+            interval += t3 - t2;
         }
 
-        TickCount t2 = TickCount::now();
-        if (total_time >= relax_time)
-            write_real_body_states.writeToFile();
-        TickCount t3 = TickCount::now();
-        interval += t3 - t2;
+        TickCount t4 = TickCount::now();
+
+        TimeInterval tt;
+        tt = t4 - t1 - interval;
+        std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
+
+        if (sph_system.GenerateRegressionData())
+        {
+            write_structure_position.generateDataBase(0.001);
+            wave_gauge.generateDataBase(0.001);
+        }
+        else
+        {
+            write_structure_position.testResult();
+            wave_gauge.testResult();
+        }
+
+        return 0;
     }
-
-    TickCount t4 = TickCount::now();
-
-    TimeInterval tt;
-    tt = t4 - t1 - interval;
-    std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
-
-    if (sph_system.GenerateRegressionData())
-    {
-        write_structure_position.generateDataBase(0.001);
-        wave_gauge.generateDataBase(0.001);
-    }
-    else
-    {
-        write_structure_position.testResult();
-        wave_gauge.testResult();
-    }
-
-    return 0;
-}

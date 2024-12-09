@@ -36,7 +36,7 @@
 
 namespace SPH
 {
-namespace solid_dynamics
+namespace FSI
 {
 template <class KernelCorrectionType, typename... Parameters>
 class ForceFromFluidCK : public Interaction<Contact<Parameters...>>, public ForcePriorCK
@@ -80,9 +80,10 @@ template <typename ViscousForceType, typename... Parameters>
 class ViscousForceFromFluidCK<Contact<WithUpdate, ViscousForceType, Parameters...>>
     : public ForceFromFluidCK<decltype(ViscousForceType::kernel_correction_), Parameters...>
 {
-    using ViscosityKernel = typename ViscousForceType::ComputingKernel;
-    using KernelCorrectionType = decltype(ViscousForceType::kernel_correction_);
-    using BaseForceFromFluid = ForceFromFluidCK<KernelCorrectionType, Parameters...>;
+
+    using ViscosityType = decltype(ViscousForceType::viscosity_method_);
+    using ViscosityKernel = typename ViscosityType::ComputingKernel;
+    using BaseForceFromFluid = ForceFromFluidCK<decltype(ViscousForceType::kernel_correction_), Parameters...>;
 
   public:
     explicit ViscousForceFromFluidCK(BaseContactRelation &contact_relation);
@@ -100,9 +101,11 @@ class ViscousForceFromFluidCK<Contact<WithUpdate, ViscousForceType, Parameters..
     };
 
   protected:
-    StdVec<ViscosityKernel> contact_viscosity_method_;
+    StdVec<ViscosityType> contact_viscosity_method_;
     StdVec<Real> contact_smoothing_length_sq_;
 };
+template <typename ViscousForceType>
+using ViscousForceOnStructure = ViscousForceFromFluidCK<Contact<WithUpdate, ViscousForceType>>;
 
 template <typename...>
 class PressureForceFromFluidCK;
@@ -113,7 +116,7 @@ class PressureForceFromFluidCK<Contact<WithUpdate, AcousticStep2ndHalfType, Para
 {
     using RiemannSolverType = decltype(AcousticStep2ndHalfType::riemann_solver_);
     using KernelCorrectionType = decltype(AcousticStep2ndHalfType::kernel_correction_);
-    using BaseForceFromFluid = ForceFromFluidCK<KernelCorrectionType, Parameters...>;
+    using BaseForceFromFluid = ForceFromFluidCK<decltype(AcousticStep2ndHalfType::kernel_correction_), Parameters...>;
 
   public:
     explicit PressureForceFromFluidCK(BaseContactRelation &contact_relation);
@@ -139,6 +142,8 @@ class PressureForceFromFluidCK<Contact<WithUpdate, AcousticStep2ndHalfType, Para
     StdVec<DiscreteVariable<Real> *> dv_contact_rho_, dv_contact_mass_, dv_contact_p_;
     StdVec<DiscreteVariable<Vecd> *> dv_contact_force_prior_;
 };
-} // namespace solid_dynamics
+template <typename AcousticStep2ndHalfType>
+using PressureForceOnStructure = PressureForceFromFluidCK<Contact<WithUpdate, AcousticStep2ndHalfType>>;
+} // namespace FSI
 } // namespace SPH
 #endif // FLUID_STRUCTURE_INTERACTION_CK_H
