@@ -26,5 +26,4 @@
 
 #pragma once
 
-#include "fluid_structure_interaction_ck.hpp"
 #include "solid_constraint.hpp"

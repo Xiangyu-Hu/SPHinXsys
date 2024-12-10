@@ -9,8 +9,8 @@ namespace FSI
 {
 //=================================================================================================//
 template <class KernelCorrectionType, typename... Parameters>
-ForceFromFluidCK<KernelCorrectionType, Parameters...>::
-    ForceFromFluidCK(BaseContactRelation &contact_relation, const std::string &force_name)
+ForceFromFluid<KernelCorrectionType, Parameters...>::
+    ForceFromFluid(BaseContactRelation &contact_relation, const std::string &force_name)
     : Interaction<Contact<Parameters...>>(contact_relation),
       ForcePriorCK(contact_relation.getSPHBody(), force_name),
       solid_(DynamicCast<Solid>(this, this->sph_body_.getBaseMaterial())),
@@ -29,7 +29,7 @@ ForceFromFluidCK<KernelCorrectionType, Parameters...>::
 //=================================================================================================//
 template <class KernelCorrectionType, typename... Parameters>
 template <class ExecutionPolicy, class EncloserType>
-ForceFromFluidCK<KernelCorrectionType, Parameters...>::InteractKernel::
+ForceFromFluid<KernelCorrectionType, Parameters...>::InteractKernel::
     InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt contact_index)
     : Interaction<Contact<Parameters...>>::InteractKernel(ex_policy, encloser, contact_index),
       Vol_(encloser.dv_Vol_->DelegatedDataField(ex_policy)),
@@ -40,8 +40,8 @@ ForceFromFluidCK<KernelCorrectionType, Parameters...>::InteractKernel::
       contact_vel_(encloser.contact_vel_[contact_index]->DelegatedDataField(ex_policy)) {}
 //=================================================================================================//
 template <typename ViscousForceType, typename... Parameters>
-ViscousForceFromFluidCK<Contact<WithUpdate, ViscousForceType, Parameters...>>::
-    ViscousForceFromFluidCK(BaseContactRelation &contact_relation)
+ViscousForceFromFluid<Contact<WithUpdate, ViscousForceType, Parameters...>>::
+    ViscousForceFromFluid(BaseContactRelation &contact_relation)
     : BaseForceFromFluid(contact_relation, "ViscousForceFromFluid")
 {
     for (size_t k = 0; k != this->contact_particles_.size(); ++k)
@@ -53,14 +53,14 @@ ViscousForceFromFluidCK<Contact<WithUpdate, ViscousForceType, Parameters...>>::
 //=================================================================================================//
 template <typename ViscousForceType, typename... Parameters>
 template <class ExecutionPolicy, class EncloserType>
-ViscousForceFromFluidCK<Contact<WithUpdate, ViscousForceType, Parameters...>>::InteractKernel::
+ViscousForceFromFluid<Contact<WithUpdate, ViscousForceType, Parameters...>>::InteractKernel::
     InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt contact_index)
     : BaseForceFromFluid::InteractKernel(ex_policy, encloser, contact_index),
       viscosity_(ex_policy, encloser.contact_viscosity_method_[contact_index]),
       smoothing_length_sq_(encloser.contact_smoothing_length_sq_[contact_index]) {}
 //=================================================================================================//
 template <typename ViscousForceType, typename... Parameters>
-void ViscousForceFromFluidCK<Contact<WithUpdate, ViscousForceType, Parameters...>>::
+void ViscousForceFromFluid<Contact<WithUpdate, ViscousForceType, Parameters...>>::
     InteractKernel::interact(size_t index_i, Real dt)
 {
     Vecd force = Vecd::Zero();
@@ -81,8 +81,8 @@ void ViscousForceFromFluidCK<Contact<WithUpdate, ViscousForceType, Parameters...
 }
 //=================================================================================================//
 template <class AcousticStep2ndHalfType, typename... Parameters>
-PressureForceFromFluidCK<Contact<WithUpdate, AcousticStep2ndHalfType, Parameters...>>::
-    PressureForceFromFluidCK(BaseContactRelation &contact_relation)
+PressureForceFromFluid<Contact<WithUpdate, AcousticStep2ndHalfType, Parameters...>>::
+    PressureForceFromFluid(BaseContactRelation &contact_relation)
     : BaseForceFromFluid(contact_relation, "PressureForceFromFluid"),
       dv_acc_ave_(this->solid_.AverageAccelerationVariable(this->particles_)),
       dv_n_(this->particles_->template getVariableByName<Vecd>("NormalDirection"))
@@ -99,7 +99,7 @@ PressureForceFromFluidCK<Contact<WithUpdate, AcousticStep2ndHalfType, Parameters
 //=================================================================================================//
 template <class AcousticStep2ndHalfType, typename... Parameters>
 template <class ExecutionPolicy, class EncloserType>
-PressureForceFromFluidCK<Contact<WithUpdate, AcousticStep2ndHalfType, Parameters...>>::InteractKernel::
+PressureForceFromFluid<Contact<WithUpdate, AcousticStep2ndHalfType, Parameters...>>::InteractKernel::
     InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt contact_index)
     : BaseForceFromFluid::InteractKernel(ex_policy, encloser, contact_index),
       acc_ave_(encloser.dv_acc_ave_->DelegatedDataField(ex_policy)),
@@ -111,7 +111,7 @@ PressureForceFromFluidCK<Contact<WithUpdate, AcousticStep2ndHalfType, Parameters
       contact_force_prior_(encloser.dv_contact_force_prior_[contact_index]->DelegatedDataField(ex_policy)) {}
 //=================================================================================================//
 template <class AcousticStep2ndHalfType, typename... Parameters>
-void PressureForceFromFluidCK<Contact<WithUpdate, AcousticStep2ndHalfType, Parameters...>>::
+void PressureForceFromFluid<Contact<WithUpdate, AcousticStep2ndHalfType, Parameters...>>::
     InteractKernel::interact(size_t index_i, Real dt)
 {
     Vecd force = Vecd::Zero();

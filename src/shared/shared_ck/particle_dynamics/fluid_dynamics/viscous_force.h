@@ -71,6 +71,9 @@ class ViscousForceCK<Base, ViscosityType, KernelCorrectionType, RelationType<Par
     };
 
   protected:
+    template <typename...>
+    friend class FSI::ViscousForceFromFluid;
+    
     KernelCorrectionType kernel_correction_;
     ViscosityType viscosity_method_;
     DiscreteVariable<Real> *dv_Vol_;
@@ -169,7 +172,7 @@ class Viscosity<Variable>
 
 using ViscousForceInnerCK = ViscousForceCK<Inner<WithUpdate, Viscosity<Constant>, NoKernelCorrectionCK>>;
 using ViscousForceWithWallCK = ViscousForceCK<Inner<WithUpdate, Viscosity<Constant>, NoKernelCorrectionCK>,
-                                             Contact<Wall, Viscosity<Constant>, NoKernelCorrectionCK>>;
+                                              Contact<Wall, Viscosity<Constant>, NoKernelCorrectionCK>>;
 } // namespace fluid_dynamics
 } // namespace SPH
 #endif // VISCOUS_FORCE_H

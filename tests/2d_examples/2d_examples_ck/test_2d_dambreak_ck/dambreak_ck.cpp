@@ -231,6 +231,7 @@ int main(int ac, char *av[])
                 particle_sort.exec();
             }
             water_cell_linked_list.exec();
+            structure_cell_linked_list.exec();
             water_block_update_complex_relation.exec();
             fluid_observer_contact_relation.exec();
             interval_updating_configuration += TickCount::now() - time_instance;
