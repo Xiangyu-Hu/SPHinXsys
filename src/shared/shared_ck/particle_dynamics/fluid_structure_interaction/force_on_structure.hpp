@@ -1,7 +1,7 @@
-#ifndef FLUID_STRUCTURE_INTERACTION_CK_HPP
-#define FLUID_STRUCTURE_INTERACTION_CK_HPP
+#ifndef FORCE_ON_STRUCTURE_HPP
+#define FORCE_ON_STRUCTURE_HPP
 
-#include "fluid_structure_interaction_ck.h"
+#include "force_on_structure.h"
 
 namespace SPH
 {
@@ -72,8 +72,8 @@ void ViscousForceFromFluidCK<Contact<WithUpdate, ViscousForceType, Parameters...
         Vecd vel_derivative = (this->ave_vel_[index_i] - this->contact_vel_[index_j]) /
                               (vec_r_ij.squaredNorm() + 0.01 * smoothing_length_sq_);
 
-        force += vec_r_ij.dot(this->contact_correction_(index_i) * e_ij) *
-                 viscosity_(index_i) * vel_derivative *
+        force += vec_r_ij.dot(this->contact_correction_(index_j) * e_ij) *
+                 viscosity_(index_j) * vel_derivative *
                  this->dW_ij_(index_i, index_j) * this->contact_Vol_[index_j];
     }
 
@@ -126,7 +126,8 @@ void PressureForceFromFluidCK<Contact<WithUpdate, AcousticStep2ndHalfType, Param
             (contact_force_prior_[index_j] / contact_mass_[index_j] - acc_ave_[index_i]).dot(e_ij);
         Real p_in_wall = contact_p_[index_j] + contact_rho_[index_j] * r_ij * SMAX(Real(0), face_wall_external_acceleration);
         Real u_jump = 2.0 * (this->contact_vel_[index_j] - this->vel_ave_[index_i]).dot(n_[index_i]);
-        force -= (riemann_solver_.DissipativePJump(u_jump) * n_[index_i] + (p_in_wall + contact_p_[index_j]) * e_ij) *
+        force -= (riemann_solver_.DissipativePJump(u_jump) * n_[index_i] +
+                  (p_in_wall + contact_p_[index_j]) * this->contact_correction_(index_j) * e_ij) *
                  this->dW_ij_(index_i, index_j) * this->contact_Vol_[index_j];
     }
 
@@ -135,4 +136,4 @@ void PressureForceFromFluidCK<Contact<WithUpdate, AcousticStep2ndHalfType, Param
 //=================================================================================================//
 } // namespace FSI
 } // namespace SPH
-#endif // FLUID_STRUCTURE_INTERACTION_CK_HPP
+#endif // FORCE_ON_STRUCTURE_HPP
