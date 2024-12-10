@@ -146,18 +146,6 @@ class ShellSelfContactRelation : public BaseInnerRelation
     CellLinkedList &cell_linked_list_;
 };
 
-class SplittingInnerRelation : public InnerRelation
-{
-  public:
-    explicit SplittingInnerRelation(RealBody &real_body)
-        : InnerRelation(real_body),
-          get_splitting_inner_neighbor_(real_body){};
-    void updateConfiguration() override;
-
-  private:
-    NeighborBuilderSplitInner get_splitting_inner_neighbor_;
-};
-
 /**
  * @class AdaptiveSplittingInnerRelation
  * @brief The relation within a SPH body with smoothing length adaptation for splitting algorithm

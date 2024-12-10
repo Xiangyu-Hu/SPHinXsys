@@ -121,11 +121,4 @@ void AdaptiveSplittingInnerRelation::updateConfiguration()
     }
 }
 //=================================================================================================//
-void SplittingInnerRelation::updateConfiguration()
-{
-    resetNeighborhoodCurrentSize();
-    cell_linked_list_.searchNeighborsByParticles(
-        sph_body_, inner_configuration_,
-        get_single_search_depth_, get_splitting_inner_neighbor_);
-}
 } // namespace SPH
