@@ -13,66 +13,6 @@ Vec3d FirstAxisVector(const Vec3d &zero_vector)
     return Vec3d(1.0, 0.0, 0.0);
 };
 //=================================================================================================//
-Vec3d upgradeToVec3d(const Real &input)
-{
-    return Vec3d(input, 0.0, 0.0);
-}
-//=================================================================================================//
-Vec3d upgradeToVec3d(const Vec2d &input)
-{
-    return Vec3d(input[0], input[1], 0.0);
-}
-//=================================================================================================//
-Vec3d upgradeToVec3d(const Vec3d &input)
-{
-    return input;
-}
-//=================================================================================================//
-Mat3d upgradeToMat3d(const Mat2d &input)
-{
-    Mat3d output = Mat3d::Zero();
-    output.block<2, 2>(0, 0) = input;
-    return output;
-}
-//=================================================================================================//
-Mat3d upgradeToMat3d(const Mat3d &input)
-{
-    return input;
-}
-//=================================================================================================//
-Mat2d getInverse(const Mat2d &A)
-{
-    Mat2d minv = Mat2d::Zero();
-    Real det = A(0, 0) * A(1, 1) - A(0, 1) * A(1, 0);
-    Real invdet = 1.0 / det;
-    minv(0, 0) = A(1, 1) * invdet;
-    minv(0, 1) = -A(0, 1) * invdet;
-    minv(1, 0) = -A(1, 0) * invdet;
-    minv(1, 1) = A(0, 0) * invdet;
-    return minv;
-}
-//=================================================================================================//
-Mat3d getInverse(const Mat3d &A)
-{
-    Real det = A(0, 0) * (A(1, 1) * A(2, 2) - A(2, 1) * A(1, 2)) -
-               A(0, 1) * (A(1, 0) * A(2, 2) - A(1, 2) * A(2, 0)) +
-               A(0, 2) * (A(1, 0) * A(2, 1) - A(1, 1) * A(2, 0));
-
-    Real invdet = 1 / det;
-    Mat3d minv = Mat3d::Zero();
-    minv(0, 0) = (A(1, 1) * A(2, 2) - A(2, 1) * A(1, 2)) * invdet;
-    minv(0, 1) = (A(0, 2) * A(2, 1) - A(0, 1) * A(2, 2)) * invdet;
-    minv(0, 2) = (A(0, 1) * A(1, 2) - A(0, 2) * A(1, 1)) * invdet;
-    minv(1, 0) = (A(1, 2) * A(2, 0) - A(1, 0) * A(2, 2)) * invdet;
-    minv(1, 1) = (A(0, 0) * A(2, 2) - A(0, 2) * A(2, 0)) * invdet;
-    minv(1, 2) = (A(1, 0) * A(0, 2) - A(0, 0) * A(1, 2)) * invdet;
-    minv(2, 0) = (A(1, 0) * A(2, 1) - A(2, 0) * A(1, 1)) * invdet;
-    minv(2, 1) = (A(2, 0) * A(0, 1) - A(0, 0) * A(2, 1)) * invdet;
-    minv(2, 2) = (A(0, 0) * A(1, 1) - A(1, 0) * A(0, 1)) * invdet;
-
-    return minv;
-}
-//=================================================================================================//
 Mat2d getAverageValue(const Mat2d &A, const Mat2d &B)
 {
     Mat2d C = Mat2d::Identity();
