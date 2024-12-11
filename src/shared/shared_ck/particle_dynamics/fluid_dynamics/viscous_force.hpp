@@ -22,14 +22,14 @@ ViscousForceCK<Base, ViscosityType, KernelCorrectionType, RelationType<Parameter
 //=================================================================================================//
 template <typename ViscosityType, class KernelCorrectionType,
           template <typename...> class RelationType, typename... Parameters>
-template <class ExecutionPolicy, class EncloserType>
-ViscousForceCK<Base, ViscosityType, KernelCorrectionType, RelationType<Parameters...>>::
-    InteractKernel::InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-    : Interaction<RelationType<Parameters...>>::InteractKernel(ex_policy, encloser),
+template <class ExecutionPolicy, class EncloserType, typename... Args>
+ViscousForceCK<Base, ViscosityType, KernelCorrectionType, RelationType<Parameters...>>::InteractKernel::
+    InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, Args &&...args)
+    : Interaction<RelationType<Parameters...>>::InteractKernel(ex_policy, encloser, std::forward<Args>(args)...),
       viscosity_(ex_policy, encloser.viscosity_method_),
       correction_(ex_policy, encloser.kernel_correction_),
       Vol_(encloser.dv_Vol_->DelegatedDataField(ex_policy)),
-      vel_(encloser.dv_vel_->template getPointer()),
+      vel_(encloser.dv_vel_->DelegatedDataField(ex_policy)),
       viscous_force_(encloser.dv_viscous_force_->DelegatedDataField(ex_policy)),
       smoothing_length_sq_(encloser.smoothing_length_sq_) {}
 //=================================================================================================//
@@ -47,8 +47,8 @@ void ViscousForceCK<Inner<WithUpdate, ViscosityType, KernelCorrectionType, Param
                               (vec_r_ij.squaredNorm() + 0.01 * this->smoothing_length_sq_);
 
         force += vec_r_ij.dot((this->correction_(index_i) + this->correction_(index_j)) * e_ij) *
-                 harmonic_average(this->viscosity_(index_i), this->viscosity_(index_j)) * vel_derivative *
-                 this->dW_ij_(index_i, index_j) * this->Vol_[index_j];
+                 harmonic_average(this->viscosity_(index_i), this->viscosity_(index_j)) *
+                 vel_derivative * this->dW_ij(index_i, index_j) * this->Vol_[index_j];
     }
     this->viscous_force_[index_i] = force * this->Vol_[index_i];
 }
@@ -68,7 +68,7 @@ void ViscousForceCK<Contact<Wall, ViscosityType, KernelCorrectionType, Parameter
 
         force += vec_r_ij.dot(this->correction_(index_i) * e_ij) *
                  this->viscosity_(index_i) * vel_derivative *
-                 this->dW_ij_(index_i, index_j) * this->wall_Vol_[index_j];
+                 this->dW_ij(index_i, index_j) * this->wall_Vol_[index_j];
     }
     this->viscous_force_[index_i] += force * this->Vol_[index_i];
 }

@@ -44,8 +44,9 @@ class ForceFromFluid : public Interaction<Contact<Parameters...>>, public ForceP
     using CorrectionKernel = typename KernelCorrectionType::ComputingKernel;
 
   public:
-    explicit ForceFromFluid(BaseContactRelation &contact_relation, const std::string &force_name);
-    virtual ~ForceFromFluid() {};
+    template <class ContactRelationType>
+    explicit ForceFromFluid(ContactRelationType &contact_relation, const std::string &force_name);
+    virtual ~ForceFromFluid(){};
 
     class InteractKernel
         : public Interaction<Contact<Parameters...>>::InteractKernel
@@ -86,8 +87,9 @@ class ViscousForceFromFluid<Contact<WithUpdate, ViscousForceType, Parameters...>
     using BaseForceFromFluid = ForceFromFluid<decltype(ViscousForceType::kernel_correction_), Parameters...>;
 
   public:
-    explicit ViscousForceFromFluid(BaseContactRelation &contact_relation);
-    virtual ~ViscousForceFromFluid() {};
+    template <class ContactRelationType>
+    explicit ViscousForceFromFluid(ContactRelationType &contact_relation);
+    virtual ~ViscousForceFromFluid(){};
     class InteractKernel : public BaseForceFromFluid::InteractKernel
     {
       public:
@@ -119,8 +121,9 @@ class PressureForceFromFluid<Contact<WithUpdate, AcousticStep2ndHalfType, Parame
     using BaseForceFromFluid = ForceFromFluid<decltype(AcousticStep2ndHalfType::kernel_correction_), Parameters...>;
 
   public:
-    explicit PressureForceFromFluid(BaseContactRelation &contact_relation);
-    virtual ~PressureForceFromFluid() {};
+    template <class ContactRelationType>
+    explicit PressureForceFromFluid(ContactRelationType &contact_relation);
+    virtual ~PressureForceFromFluid(){};
 
     class InteractKernel : public BaseForceFromFluid::InteractKernel
     {

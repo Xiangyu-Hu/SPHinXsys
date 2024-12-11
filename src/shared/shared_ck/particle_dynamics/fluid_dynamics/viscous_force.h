@@ -59,8 +59,8 @@ class ViscousForceCK<Base, ViscosityType, KernelCorrectionType, RelationType<Par
         : public Interaction<RelationType<Parameters...>>::InteractKernel
     {
       public:
-        template <class ExecutionPolicy, class EncloserType>
-        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+        template <class ExecutionPolicy, class EncloserType, typename... Args>
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, Args &&...args);
 
       protected:
         ViscosityKernel viscosity_;

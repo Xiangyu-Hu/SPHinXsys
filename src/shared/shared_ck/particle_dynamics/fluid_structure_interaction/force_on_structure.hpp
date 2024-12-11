@@ -9,8 +9,9 @@ namespace FSI
 {
 //=================================================================================================//
 template <class KernelCorrectionType, typename... Parameters>
+template <class ContactRelationType>
 ForceFromFluid<KernelCorrectionType, Parameters...>::
-    ForceFromFluid(BaseContactRelation &contact_relation, const std::string &force_name)
+    ForceFromFluid(ContactRelationType &contact_relation, const std::string &force_name)
     : Interaction<Contact<Parameters...>>(contact_relation), ForcePriorCK(this->particles_, force_name),
       solid_(DynamicCast<Solid>(this, this->sph_body_.getBaseMaterial())),
       dv_Vol_(this->particles_->template getVariableByName<Real>("VolumetricMeasure")),
@@ -39,13 +40,14 @@ ForceFromFluid<KernelCorrectionType, Parameters...>::InteractKernel::
       contact_vel_(encloser.contact_vel_[contact_index]->DelegatedDataField(ex_policy)) {}
 //=================================================================================================//
 template <typename ViscousForceType, typename... Parameters>
+template <class ContactRelationType>
 ViscousForceFromFluid<Contact<WithUpdate, ViscousForceType, Parameters...>>::
-    ViscousForceFromFluid(BaseContactRelation &contact_relation)
+    ViscousForceFromFluid(ContactRelationType &contact_relation)
     : BaseForceFromFluid(contact_relation, "ViscousForceFromFluid")
 {
     for (size_t k = 0; k != this->contact_particles_.size(); ++k)
     {
-        contact_viscosity_method_.push_back(ViscosityType(*this->contact_particles_[k]));
+        contact_viscosity_method_.push_back(ViscosityType(this->contact_particles_[k]));
         contact_smoothing_length_sq_.push_back(pow(this->contact_bodies_[k]->sph_adaptation_->ReferenceSmoothingLength(), 2));
     }
 }
@@ -68,20 +70,21 @@ void ViscousForceFromFluid<Contact<WithUpdate, ViscousForceType, Parameters...>>
         UnsignedInt index_j = this->neighbor_index_[n];
         Vecd e_ij = this->e_ij(index_i, index_j);
         Vecd vec_r_ij = this->vec_r_ij(index_i, index_j);
-        Vecd vel_derivative = (this->ave_vel_[index_i] - this->contact_vel_[index_j]) /
+        Vecd vel_derivative = (this->vel_ave_[index_i] - this->contact_vel_[index_j]) /
                               (vec_r_ij.squaredNorm() + 0.01 * smoothing_length_sq_);
 
         force += vec_r_ij.dot(this->contact_correction_(index_j) * e_ij) *
                  viscosity_(index_j) * vel_derivative *
-                 this->dW_ij_(index_i, index_j) * this->contact_Vol_[index_j];
+                 this->dW_ij(index_i, index_j) * this->contact_Vol_[index_j];
     }
 
     this->force_from_fluid_[index_i] = force * this->Vol_[index_i];
 }
 //=================================================================================================//
 template <class AcousticStep2ndHalfType, typename... Parameters>
+template <class ContactRelationType>
 PressureForceFromFluid<Contact<WithUpdate, AcousticStep2ndHalfType, Parameters...>>::
-    PressureForceFromFluid(BaseContactRelation &contact_relation)
+    PressureForceFromFluid(ContactRelationType &contact_relation)
     : BaseForceFromFluid(contact_relation, "PressureForceFromFluid"),
       dv_acc_ave_(this->solid_.AverageAccelerationVariable(this->particles_)),
       dv_n_(this->particles_->template getVariableByName<Vecd>("NormalDirection"))
@@ -127,7 +130,7 @@ void PressureForceFromFluid<Contact<WithUpdate, AcousticStep2ndHalfType, Paramet
         Real u_jump = 2.0 * (this->contact_vel_[index_j] - this->vel_ave_[index_i]).dot(n_[index_i]);
         force -= (riemann_solver_.DissipativePJump(u_jump) * n_[index_i] +
                   (p_in_wall + contact_p_[index_j]) * this->contact_correction_(index_j) * e_ij) *
-                 this->dW_ij_(index_i, index_j) * this->contact_Vol_[index_j];
+                 this->dW_ij(index_i, index_j) * this->contact_Vol_[index_j];
     }
 
     this->force_from_fluid_[index_i] = force * this->Vol_[index_i];
