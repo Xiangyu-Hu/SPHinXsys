@@ -11,8 +11,7 @@ namespace FSI
 template <class KernelCorrectionType, typename... Parameters>
 ForceFromFluid<KernelCorrectionType, Parameters...>::
     ForceFromFluid(BaseContactRelation &contact_relation, const std::string &force_name)
-    : Interaction<Contact<Parameters...>>(contact_relation),
-      ForcePriorCK(contact_relation.getSPHBody(), force_name),
+    : Interaction<Contact<Parameters...>>(contact_relation), ForcePriorCK(this->particles_, force_name),
       solid_(DynamicCast<Solid>(this, this->sph_body_.getBaseMaterial())),
       dv_Vol_(this->particles_->template getVariableByName<Real>("VolumetricMeasure")),
       dv_force_from_fluid_(this->dv_current_force_),

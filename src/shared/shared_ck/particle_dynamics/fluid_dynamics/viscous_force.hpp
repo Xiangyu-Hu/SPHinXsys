@@ -13,7 +13,7 @@ template <class BaseRelationType>
 ViscousForceCK<Base, ViscosityType, KernelCorrectionType, RelationType<Parameters...>>::
     ViscousForceCK(BaseRelationType &base_relation)
     : Interaction<RelationType<Parameters...>>(base_relation),
-      ForcePriorCK(base_relation.getSPHBody(), "ViscousForce"),
+      ForcePriorCK(this->particles_, "ViscousForce"),
       viscosity_method_(this->particles_), kernel_correction_(this->particles_),
       dv_Vol_(this->particles_->template getVariableByName<Real>("VolumetricMeasure")),
       dv_vel_(this->particles_->template getVariableByName<Vecd>("Velocity")),
