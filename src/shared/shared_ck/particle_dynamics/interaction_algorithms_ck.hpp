@@ -11,7 +11,10 @@ template <typename... Args>
 InteractionDynamicsCK<ExecutionPolicy, Base, InteractionType<Inner<Parameters...>>>::
     InteractionDynamicsCK(Args &&...args)
     : InteractionType<Inner<Parameters...>>(std::forward<Args>(args)...),
-      kernel_implementation_(*this) {}
+      kernel_implementation_(*this)
+{
+    this->registerComputingKernel(&kernel_implementation_);
+}
 //=================================================================================================//
 template <class ExecutionPolicy, template <typename...> class InteractionType, typename... Parameters>
 void InteractionDynamicsCK<ExecutionPolicy, Base, InteractionType<Inner<Parameters...>>>::
@@ -35,6 +38,7 @@ InteractionDynamicsCK<ExecutionPolicy, Base, InteractionType<Contact<Parameters.
         contact_kernel_implementation_.push_back(
             contact_kernel_implementation_ptrs_
                 .template createPtr<KernelImplementation>(*this));
+        this->registerComputingKernel(contact_kernel_implementation_.back(), k);
     }
 }
 //=================================================================================================//

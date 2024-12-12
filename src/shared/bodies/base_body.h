@@ -76,9 +76,7 @@ class SPHBody
     bool is_bound_set_;             /**< whether the bounding box is set */
     BoundingBox bound_;             /**< bounding box of the body */
     Shape *initial_shape_;          /**< initial volumetric geometry enclosing the body */
-    int total_body_parts_;
-    StdVec<execution::Implementation<Base> *> all_simple_reduce_computing_kernels_;
-    /**< total number of body parts */
+    int total_body_parts_;          /**< total number of body parts */
 
   public:
     SPHAdaptation *sph_adaptation_;        /**< numerical adaptation policy */
@@ -109,7 +107,6 @@ class SPHBody
     void setSPHBodyBounds(const BoundingBox &bound);
     BoundingBox getSPHBodyBounds();
     BoundingBox getSPHSystemBounds();
-    void registerComputingKernel(execution::Implementation<Base> *implementation);
     int getNewBodyPartID();
     int getTotalBodyParts() { return total_body_parts_; };
     //----------------------------------------------------------------------
