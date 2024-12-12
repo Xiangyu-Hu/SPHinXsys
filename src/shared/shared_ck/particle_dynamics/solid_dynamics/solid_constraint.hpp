@@ -89,8 +89,8 @@ TotalForceForSimBodyCK<DynamicsIdentifier>::
       dv_force_prior_(this->particles_->template getVariableByName<Vecd>("ForcePrior")),
       dv_pos_(this->particles_->template getVariableByName<Vecd>("Position")),
       sv_current_origin_location_(
-          this->particles_->template addSingularVariableOnly<SimTKVec3>(
-              identifier.Name() + "OriginLocation"))
+          this->particles_->template addUniqueSingularVariableOnly<SimTKVec3>(
+              identifier.getName() + "OriginLocation"))
 {
     this->quantity_name_ = "TotalForceForSimBody";
 }

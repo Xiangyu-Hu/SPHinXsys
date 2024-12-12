@@ -38,19 +38,17 @@ namespace SPH
 {
 using namespace execution;
 
-template <class LocalDynamicsFunction>
-void particle_for(const SequencedPolicy &seq,
-                  LoopRangeCK<SequencedPolicy, SPHBody> &loop_range,
-                  const LocalDynamicsFunction &local_dynamics_function)
+template <class DynamicsIdentifier, class UnaryFunc>
+void particle_for(const LoopRangeCK<SequencedPolicy, DynamicsIdentifier> &loop_range,
+                  const UnaryFunc &unary_func)
 {
     for (size_t i = 0; i < loop_range.LoopBound(); ++i)
-        local_dynamics_function(i);
+        loop_range.computeUnit(unary_func, i);
 };
 
-template <class LocalDynamicsFunction>
-void particle_for(const ParallelPolicy &par,
-                  LoopRangeCK<ParallelPolicy, SPHBody> &loop_range,
-                  const LocalDynamicsFunction &local_dynamics_function)
+template <class DynamicsIdentifier, class UnaryFunc>
+void particle_for(const LoopRangeCK<ParallelPolicy, DynamicsIdentifier> &loop_range,
+                  const UnaryFunc &unary_func)
 {
     parallel_for(
         IndexRange(0, loop_range.LoopBound()),
@@ -58,58 +56,28 @@ void particle_for(const ParallelPolicy &par,
         {
             for (size_t i = r.begin(); i < r.end(); ++i)
             {
-                local_dynamics_function(i);
+                loop_range.computeUnit(unary_func, i);
             }
         },
         ap);
 };
 
-template <class LocalDynamicsFunction>
-void particle_for(const SequencedPolicy &seq,
-                  LoopRangeCK<SequencedPolicy, BodyPartByParticle> &loop_range,
-                  const LocalDynamicsFunction &local_dynamics_function)
-{
-    UnsignedInt *particle_indexes = loop_range.ParticleIndexes();
-    for (size_t i = 0; i < loop_range.LoopBound(); ++i)
-        local_dynamics_function(particle_indexes[i]);
-};
-
-template <class LocalDynamicsFunction>
-void particle_for(const ParallelPolicy &par,
-                  LoopRangeCK<ParallelPolicy, BodyPartByParticle> &loop_range,
-                  const LocalDynamicsFunction &local_dynamics_function)
-{
-    UnsignedInt *particle_indexes = loop_range.ParticleIndexes();
-    parallel_for(
-        IndexRange(0, loop_range.LoopBound()),
-        [&](const IndexRange &r)
-        {
-            for (size_t i = r.begin(); i < r.end(); ++i)
-            {
-                local_dynamics_function(particle_indexes[i]);
-            }
-        },
-        ap);
-};
-
-template <class ReturnType, typename Operation, class LocalDynamicsFunction>
-ReturnType particle_reduce(const SequencedPolicy &seq,
-                           LoopRangeCK<SequencedPolicy, SPHBody> &loop_range,
+template <class DynamicsIdentifier, class ReturnType, typename Operation, class UnaryFunc>
+ReturnType particle_reduce(const LoopRangeCK<SequencedPolicy, DynamicsIdentifier> &loop_range,
                            ReturnType temp, Operation &&operation,
-                           const LocalDynamicsFunction &local_dynamics_function)
+                           const UnaryFunc &unary_func)
 {
     for (size_t i = 0; i < loop_range.LoopBound(); ++i)
     {
-        temp = operation(temp, local_dynamics_function(i));
+        temp = operation(temp, loop_range.template reduceUnit<ReturnType>(unary_func, i));
     }
     return temp;
 }
 
-template <class ReturnType, typename Operation, class LocalDynamicsFunction>
-ReturnType particle_reduce(const ParallelPolicy &par,
-                           LoopRangeCK<ParallelPolicy, SPHBody> &loop_range,
+template <class DynamicsIdentifier, class ReturnType, typename Operation, class UnaryFunc>
+ReturnType particle_reduce(const LoopRangeCK<ParallelPolicy, DynamicsIdentifier> &loop_range,
                            ReturnType temp, Operation &&operation,
-                           const LocalDynamicsFunction &local_dynamics_function)
+                           const UnaryFunc &unary_func)
 {
     return parallel_reduce(
         IndexRange(0, loop_range.LoopBound()),
@@ -117,7 +85,7 @@ ReturnType particle_reduce(const ParallelPolicy &par,
         {
 				for (size_t i = r.begin(); i != r.end(); ++i)
 				{
-					temp0 = operation(temp0, local_dynamics_function(i));
+					temp0 = operation(temp0, loop_range.template reduceUnit<ReturnType>(unary_func, i));
 				}
 				return temp0; },
         [&](const ReturnType &x, const ReturnType &y) -> ReturnType

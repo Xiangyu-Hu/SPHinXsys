@@ -44,6 +44,12 @@ struct ZeroData<SimTK::SpatialVec>
     static inline SimTK::SpatialVec value = SimTK::SpatialVec(SimTKVec3(0), SimTKVec3(0));
 };
 
+template <>
+struct ZeroData<SimTKVec3>
+{
+    static inline SimTKVec3 value = SimTKVec3(0);
+};
+
 struct SimbodyState
 {
     Vec3d initial_origin_location_;

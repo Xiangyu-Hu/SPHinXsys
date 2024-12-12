@@ -57,9 +57,7 @@ class StateDynamics : public UpdateType, public BaseDynamics<void>
         this->setupDynamics(dt);
         auto &loop_range = kernel_implementation_.getLoopRange();
         UpdateKernel *update_kernel = kernel_implementation_.getComputingKernel();
-        particle_for(ExecutionPolicy{},
-                     loop_range,
-                     [=](size_t i)
+        particle_for(loop_range, [=](size_t i)
                      { update_kernel->update(i, dt); });
     };
 };
@@ -90,7 +88,6 @@ class ReduceDynamicsCK : public ReduceType,
         auto &loop_range = kernel_implementation_.getLoopRange();
         ReduceKernel *reduce_kernel = kernel_implementation_.getComputingKernel();
         ReturnType temp = particle_reduce(
-            ExecutionPolicy{},
             loop_range, this->Reference(), this->getOperation(),
             [=](size_t i) -> ReturnType
             { return reduce_kernel->reduce(i, dt); });

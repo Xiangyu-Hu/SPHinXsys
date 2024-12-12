@@ -22,9 +22,7 @@ void InteractionDynamicsCK<ExecutionPolicy, Base, InteractionType<Inner<Paramete
 {
     auto &loop_range = kernel_implementation_.getLoopRange();
     InteractKernel *interact_kernel = kernel_implementation_.getComputingKernel();
-    particle_for(ExecutionPolicy{},
-                 loop_range,
-                 [=](size_t i)
+    particle_for(loop_range, [=](size_t i)
                  { interact_kernel->interact(i, dt); });
 }
 //=================================================================================================//
@@ -53,9 +51,7 @@ void InteractionDynamicsCK<ExecutionPolicy, Base, InteractionType<Contact<Parame
         InteractKernel *interact_kernel =
             contact_kernel_implementation_[k]->getComputingKernel(k);
 
-        particle_for(ExecutionPolicy{},
-                     loop_range,
-                     [=](size_t i)
+        particle_for(loop_range, [=](size_t i)
                      { interact_kernel->interact(i, dt); });
     }
 }
@@ -125,9 +121,7 @@ void InteractionDynamicsCK<ExecutionPolicy, InteractionType<RelationType<WithUpd
 {
     auto &loop_range = kernel_implementation_.getLoopRange();
     UpdateKernel *update_kernel = kernel_implementation_.getComputingKernel();
-    particle_for(ExecutionPolicy{},
-                 loop_range,
-                 [=](size_t i)
+    particle_for(loop_range, [=](size_t i)
                  { update_kernel->update(i, dt); });
 }
 //=================================================================================================//
@@ -166,9 +160,7 @@ void InteractionDynamicsCK<ExecutionPolicy, InteractionType<RelationType<OneLeve
 {
     auto &loop_range = initialize_kernel_implementation_.getLoopRange();
     InitializeKernel *initialize_kernel = initialize_kernel_implementation_.getComputingKernel();
-    particle_for(ExecutionPolicy{},
-                 loop_range,
-                 [=](size_t i)
+    particle_for(loop_range, [=](size_t i)
                  { initialize_kernel->initialize(i, dt); });
 }
 //=================================================================================================//
@@ -179,9 +171,7 @@ void InteractionDynamicsCK<ExecutionPolicy, InteractionType<RelationType<OneLeve
 {
     auto &loop_range = update_kernel_implementation_.getLoopRange();
     UpdateKernel *update_kernel = update_kernel_implementation_.getComputingKernel();
-    particle_for(ExecutionPolicy{},
-                 loop_range,
-                 [=](size_t i)
+    particle_for(loop_range, [=](size_t i)
                  { update_kernel->update(i, dt); });
 }
 //=================================================================================================//

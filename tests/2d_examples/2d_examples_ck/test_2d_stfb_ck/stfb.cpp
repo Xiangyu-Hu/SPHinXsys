@@ -256,10 +256,10 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp write_real_body_states(sph_system);
     TransformShape<GeometricShapeBox> wave_probe_buffer_shape(Transform(gauge_translation), gauge_halfsize, "FreeSurfaceGauge");
-    BodyRegionByCell wave_probe_buffer(water_block, wave_probe_buffer_shape);
-    //    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<UpperFrontInAxisDirection<BodyPartByCell>>>
-    //        wave_gauge(wave_probe_buffer, "FreeSurfaceHeight");
-    RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
+    // BodyRegionByCell wave_probe_buffer(water_block, wave_probe_buffer_shape);
+    //     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<UpperFrontInAxisDirection<BodyPartByCell>>>
+    //         wave_gauge(wave_probe_buffer, "FreeSurfaceHeight");
+    RegressionTestDynamicTimeWarping<ObservedQuantityRecording<MyExecutionPolicy, Vecd>>
         write_structure_position("Position", observer_contact);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration

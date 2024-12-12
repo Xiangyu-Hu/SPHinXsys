@@ -34,10 +34,10 @@
 
 namespace SPH
 {
-template <class LocalDynamicsFunction>
+template <class UnaryFunc>
 void particle_for(const ParallelDevicePolicy &par_device,
                   const IndexRange &particles_range,
-                  const LocalDynamicsFunction &local_dynamics_function)
+                  const UnaryFunc &unary_func)
 {
     auto &sycl_queue = execution_instance.getQueue();
     const size_t particles_size = particles_range.size();
@@ -45,14 +45,13 @@ void particle_for(const ParallelDevicePolicy &par_device,
                       { cgh.parallel_for(execution_instance.getUniformNdRange(particles_size), [=](sycl::nd_item<1> index)
                                          {
                                  if(index.get_global_id(0) < particles_size)
-                                     local_dynamics_function(index.get_global_id(0)); }); })
+                                     unary_func(index.get_global_id(0)); }); })
         .wait_and_throw();
 }
 
-template <class LocalDynamicsFunction>
-void particle_for(const ParallelDevicePolicy &par_device,
-                  LoopRangeCK<ParallelDevicePolicy, SPHBody> &loop_range,
-                  const LocalDynamicsFunction &local_dynamics_function)
+template <class DynamicsIdentifier, class UnaryFunc>
+void particle_for(const LoopRangeCK<ParallelDevicePolicy, DynamicsIdentifier> &loop_range,
+                  const UnaryFunc &unary_func)
 {
     auto &sycl_queue = execution_instance.getQueue();
     const size_t particles_size = loop_range.LoopBound();
@@ -60,31 +59,14 @@ void particle_for(const ParallelDevicePolicy &par_device,
                       { cgh.parallel_for(execution_instance.getUniformNdRange(particles_size), [=](sycl::nd_item<1> index)
                                          {
                                  if(index.get_global_id(0) < particles_size)
-                                     local_dynamics_function(index.get_global_id(0)); }); })
+                                     loop_range.computeUnit(unary_func, index.get_global_id(0)); }); })
         .wait_and_throw();
 }
 
-template <class LocalDynamicsFunction>
-void particle_for(const ParallelDevicePolicy &par_device,
-                  LoopRangeCK<ParallelDevicePolicy, BodyPartByParticle> &loop_range,
-                  const LocalDynamicsFunction &local_dynamics_function)
-{
-    auto &sycl_queue = execution_instance.getQueue();
-    UnsignedInt *particle_indexes = loop_range.ParticleIndexes();
-    const size_t loop_bound = loop_range.LoopBound();
-    sycl_queue.submit([&](sycl::handler &cgh)
-                      { cgh.parallel_for(execution_instance.getUniformNdRange(loop_bound), [=](sycl::nd_item<1> index)
-                                         {
-                                 if(index.get_global_id(0) < loop_bound)
-                                     local_dynamics_function(particle_indexes[index.get_global_id(0)]); }); })
-        .wait_and_throw();
-}
-
-template <class ReturnType, typename Operation, class LocalDynamicsFunction>
-ReturnType particle_reduce(const ParallelDevicePolicy &par_device,
-                           LoopRangeCK<ParallelDevicePolicy, SPHBody> &loop_range,
+template <class DynamicsIdentifier, class ReturnType, typename Operation, class UnaryFunc>
+ReturnType particle_reduce(const LoopRangeCK<ParallelDevicePolicy, DynamicsIdentifier> &loop_range,
                            ReturnType temp, Operation &&operation,
-                           const LocalDynamicsFunction &local_dynamics_function)
+                           const UnaryFunc &unary_func)
 {
     auto &sycl_queue = execution_instance.getQueue();
     const size_t particles_size = loop_range.LoopBound();
@@ -96,7 +78,8 @@ ReturnType particle_reduce(const ParallelDevicePolicy &par_device,
                               cgh.parallel_for(execution_instance.getUniformNdRange(particles_size), reduction_operator,
                                                [=](sycl::nd_item<1> item, auto& reduction) {
                                                    if(item.get_global_id() < particles_size)
-                                                       reduction.combine(local_dynamics_function(item.get_global_id(0)));
+                                                       reduction.combine(loop_range.template reduceUnit<ReturnType>(
+                                                        unary_func, item.get_global_id(0)));
                                                }); })
             .wait_and_throw();
     } // buffer_result goes out of scope, so the result (of temp) is updated
