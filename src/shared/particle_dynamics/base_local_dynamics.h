@@ -64,10 +64,6 @@ class BaseLocalDynamics
     SPHBody &getSPHBody() { return sph_body_; };
     BaseParticles *getParticles() { return particles_; };
     virtual void setupDynamics(Real dt = 0.0){}; // setup global parameters
-    void registerComputingKernel(Implementation<Base> *implementation)
-    {
-        sph_body_.registerComputingKernel(implementation);
-    };
 
   protected:
     DynamicsIdentifier &identifier_;

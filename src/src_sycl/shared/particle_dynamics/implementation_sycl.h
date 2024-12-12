@@ -30,8 +30,8 @@
 #ifndef IMPLEMENTATION_SYCL_H
 #define IMPLEMENTATION_SYCL_H
 
-#include "implementation.h"
 #include "execution_policy.h"
+#include "implementation.h"
 
 #include "ownership.h"
 #include <sycl/sycl.hpp>
@@ -149,7 +149,6 @@ class Implementation<ParallelDevicePolicy, LocalDynamicsType, ComputingKernelTyp
     {
         if (computing_kernel_ == nullptr)
         {
-            this->local_dynamics_.registerComputingKernel(this, std::forward<Args>(args)...);
             computing_kernel_ = allocateDeviceOnly<ComputingKernelType>(1);
             ComputingKernelType *host_kernel =
                 kernel_ptr_keeper_.template createPtr<ComputingKernelType>(

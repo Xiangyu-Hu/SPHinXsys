@@ -30,8 +30,8 @@
 #ifndef IMPLEMENTATION_H
 #define IMPLEMENTATION_H
 
-#include "base_implementation.h"
 #include "base_data_type.h"
+#include "base_implementation.h"
 #include "execution_policy.h"
 #include "loop_range.h"
 #include "ownership.h"
@@ -49,7 +49,7 @@ class Implementation<ExecutionPolicy, LocalDynamicsType> : public Implementation
   public:
     explicit Implementation(LocalDynamicsType &local_dynamics)
         : Implementation<Base>(), local_dynamics_(local_dynamics),
-          loop_range_(nullptr) {};
+          loop_range_(nullptr){};
     ~Implementation()
     {
         delete loop_range_;
@@ -87,7 +87,6 @@ class Implementation<ExecutionPolicy, LocalDynamicsType, ComputingKernelType>
     {
         if (computing_kernel_ == nullptr)
         {
-            this->local_dynamics_.registerComputingKernel(this, std::forward<Args>(args)...);
             computing_kernel_ = new ComputingKernelType(
                 ExecutionPolicy{}, this->local_dynamics_, std::forward<Args>(args)...);
             this->setUpdated();
