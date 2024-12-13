@@ -60,8 +60,6 @@ int main(int ac, char *av[])
 //------------------------------------------------------------------------------
 void relax_solid(RealBody &body, BaseInnerRelation &inner)
 {
-    BodyStatesRecordingToVtp record({body});
-    MeshRecordingToPlt cell_linked_list_recording(body.getSPHSystem(), body.getCellLinkedList());
     //----------------------------------------------------------------------
     //	Methods used for particle relaxation.
     //----------------------------------------------------------------------
@@ -74,7 +72,6 @@ void relax_solid(RealBody &body, BaseInnerRelation &inner)
     random_particles.exec(0.25);
     relaxation_step_inner.SurfaceBounding().exec();
     body.updateCellLinkedList();
-    cell_linked_list_recording.writeToFile(0);
     //----------------------------------------------------------------------
     //	Relax particles of the insert body.
     //----------------------------------------------------------------------
@@ -221,7 +218,7 @@ return_data beam_multi_resolution(Real dp_factor, bool damping_on, int refinemen
         adaptive_inner_split = std::make_unique<AdaptiveSplittingInnerRelation>(beam_body);
     std::unique_ptr<DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d, FixedDampingRate>>>> damping_single_res;
     std::unique_ptr<DampingWithRandomChoice<InteractionAdaptiveSplit<DampingPairwiseInner<Vec3d, FixedDampingRate>>>> damping_mr_res;
-    if (refinement_level > 0)
+    if (refinement_level > 0) // for multi-resolution, the damping physical viscosity is doubled as a pair of particles only see each other once
         damping_mr_res = std::make_unique<DampingWithRandomChoice<InteractionAdaptiveSplit<DampingPairwiseInner<Vec3d, FixedDampingRate>>>>(0.2, *adaptive_inner_split, "Velocity", 2 * params.physical_viscosity);
     else
         damping_single_res = std::make_unique<DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d, FixedDampingRate>>>>(0.2, *inner, "Velocity", params.physical_viscosity);
@@ -320,6 +317,7 @@ return_data beam_multi_resolution(Real dp_factor, bool damping_on, int refinemen
             write_position.writeToFile(ite_output);
         }
         TimeInterval tt = TickCount::now() - t1;
+        std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
         data.run_time = tt.seconds();
         data.damping_time = time_damping.seconds();
     };
