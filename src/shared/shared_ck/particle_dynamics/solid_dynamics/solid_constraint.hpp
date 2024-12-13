@@ -17,8 +17,8 @@ ConstraintBySimBodyCK<DynamicsIdentifier>::
       dv_pos_(this->particles_->template getVariableByName<Vecd>("Position")),
       dv_pos0_(this->particles_->template registerStateVariableOnlyFrom<Vecd>("InitialPosition", "Position")),
       dv_vel_(this->particles_->template getVariableByName<Vecd>("Velocity")),
-      dv_n_(this->particles_->template getVariableByName<Vecd>("Normal")),
-      dv_n0_(this->particles_->template registerStateVariableOnlyFrom<Vecd>("InitialNormal", "Normal")),
+      dv_n_(this->particles_->template getVariableByName<Vecd>("NormalDirection")),
+      dv_n0_(this->particles_->template registerStateVariableOnlyFrom<Vecd>("InitialNormalDirection", "NormalDirection")),
       dv_acc_(this->particles_->template getVariableByName<Vecd>("Acceleration")),
       sv_simbody_state_(this->particles_->template addUniqueSingularVariableOnly<SimbodyState>("SimbodyState"))
 {
