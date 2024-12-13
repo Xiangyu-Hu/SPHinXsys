@@ -55,7 +55,12 @@ class ExecutionInstance
     sycl::queue &getQueue()
     {
         if (!sycl_queue_)
+        {
             sycl_queue_ = makeUnique<sycl::queue>(sycl::default_selector_v);
+            auto device = sycl_queue_->get_device();
+            size_t max_workgroup_size = device.get_info<sycl::info::device::max_work_group_size>();
+            work_group_size_ = std::min(max_workgroup_size, 64UL);
+        }
         return *sycl_queue_;
     }
 
