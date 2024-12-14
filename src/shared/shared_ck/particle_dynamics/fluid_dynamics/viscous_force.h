@@ -53,7 +53,7 @@ class ViscousForceCK<Base, ViscosityType, KernelCorrectionType, RelationType<Par
   public:
     template <class BaseRelationType>
     explicit ViscousForceCK(BaseRelationType &base_relation);
-    virtual ~ViscousForceCK(){};
+    virtual ~ViscousForceCK() {};
 
     class InteractKernel
         : public Interaction<RelationType<Parameters...>>::InteractKernel
@@ -73,9 +73,9 @@ class ViscousForceCK<Base, ViscosityType, KernelCorrectionType, RelationType<Par
   protected:
     template <typename...>
     friend class FSI::ViscousForceFromFluid;
-    
-    KernelCorrectionType kernel_correction_;
+
     ViscosityType viscosity_method_;
+    KernelCorrectionType kernel_correction_;
     DiscreteVariable<Real> *dv_Vol_;
     DiscreteVariable<Vecd> *dv_vel_, *dv_viscous_force_;
     Real smoothing_length_sq_;
@@ -89,8 +89,8 @@ class ViscousForceCK<Inner<WithUpdate, ViscosityType, KernelCorrectionType, Para
 
   public:
     explicit ViscousForceCK(Relation<Inner<Parameters...>> &inner_relation)
-        : BaseViscousForceType(inner_relation){};
-    virtual ~ViscousForceCK(){};
+        : BaseViscousForceType(inner_relation) {};
+    virtual ~ViscousForceCK() {};
 
     class InteractKernel : public BaseViscousForceType::InteractKernel
     {
@@ -110,8 +110,8 @@ class ViscousForceCK<Contact<Wall, ViscosityType, KernelCorrectionType, Paramete
 
   public:
     explicit ViscousForceCK(Relation<Contact<Parameters...>> &contact_relation)
-        : BaseViscousForceType(contact_relation){};
-    virtual ~ViscousForceCK(){};
+        : BaseViscousForceType(contact_relation) {};
+    virtual ~ViscousForceCK() {};
 
     class InteractKernel : public BaseViscousForceType::InteractKernel
     {
@@ -137,7 +137,7 @@ class Viscosity<Constant>
 {
   public:
     Viscosity(BaseParticles *particles)
-        : mu_(DynamicCast<Fluid>(this, particles->getBaseMaterial()).ReferenceViscosity()){};
+        : mu_(DynamicCast<Fluid>(this, particles->getBaseMaterial()).ReferenceViscosity()) {};
 
     class ComputingKernel : public ParameterFixed<Real>
     {
@@ -156,7 +156,7 @@ class Viscosity<Variable>
 {
   public:
     Viscosity(BaseParticles *particles)
-        : dv_mu_(particles->getVariableByName<Real>("VariableViscosity")){};
+        : dv_mu_(particles->getVariableByName<Real>("VariableViscosity")) {};
 
     class ComputingKernel : public ParameterVariable<Real>
     {

@@ -121,7 +121,6 @@ void PressureForceFromFluid<Contact<WithUpdate, AcousticStep2ndHalfType, Paramet
     {
         UnsignedInt index_j = this->neighbor_index_[n];
         Vecd e_ij = this->e_ij(index_i, index_j);
-        Vecd vec_r_ij = this->vec_r_ij(index_i, index_j);
         Real r_ij = this->vec_r_ij(index_i, index_j).norm();
 
         Real face_wall_external_acceleration =

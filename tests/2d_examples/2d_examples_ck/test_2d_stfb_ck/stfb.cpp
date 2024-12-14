@@ -151,6 +151,8 @@ int main(int ac, char *av[])
     UpdateRelation<MyExecutionPolicy, Inner<>, Contact<>>
         water_block_update_complex_relation(water_block_inner, water_block_contact);
     UpdateRelation<MyExecutionPolicy, Contact<>>
+        structure_update_contact_relation(structure_contact);
+    UpdateRelation<MyExecutionPolicy, Contact<>>
         observer_update_contact_relation(observer_contact);
     ParticleSortCK<MyExecutionPolicy, QuickSort> particle_sort(water_block);
     //----------------------------------------------------------------------
@@ -194,7 +196,7 @@ int main(int ac, char *av[])
     /** the forces of the system. */
     SimTK::GeneralForceSubsystem forces(MBsystem);
     /** mass properties of the fixed spot. */
-    StructureSystemForSimbody structure_multibody(structure, structure_shape);
+    SolidBodyPartForSimbody structure_multibody(structure, structure_shape);
     /** Mass properties of the constrained spot.
      * SimTK::MassProperties(mass, center of mass, inertia)
      */
@@ -274,6 +276,7 @@ int main(int ac, char *av[])
     structure_cell_linked_list.exec();
 
     water_block_update_complex_relation.exec();
+    structure_update_contact_relation.exec();
     observer_update_contact_relation.exec();
     //----------------------------------------------------------------------
     //	Basic control parameters for time stepping.
@@ -353,6 +356,7 @@ int main(int ac, char *av[])
             water_cell_linked_list.exec();
             structure_cell_linked_list.exec();
             water_block_update_complex_relation.exec();
+            structure_update_contact_relation.exec();
 
             if (total_time >= relax_time)
             {
