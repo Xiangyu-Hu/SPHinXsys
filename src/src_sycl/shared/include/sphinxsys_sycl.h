@@ -35,6 +35,6 @@
 #include "sphinxsys_ck.h"
 #include "sphinxsys_constant_sycl.hpp"
 #include "sphinxsys_variable_sycl.hpp"
-#include "simboody_variable_sycl.h"
+#include "simbody_variable_sycl.h"
 
 #endif // SPHINXSYS_SYCL_H

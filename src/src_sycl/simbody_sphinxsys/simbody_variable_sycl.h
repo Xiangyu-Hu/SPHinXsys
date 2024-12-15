@@ -31,11 +31,11 @@
 #include "all_simbody.h"
 #include "implementation_sycl.h"
 
-namespace SPH
+namespace sycl
 {
 template <>
-struct sycl::is_device_copyable<SimTK::SpatialVec> : std::true_type
+struct is_device_copyable<SimTK::SpatialVec> : std::true_type
 {
 };
-} // namespace SPH
+} // namespace sycl
 #endif // SIMBODY_VARIABLE_SYCL_H
