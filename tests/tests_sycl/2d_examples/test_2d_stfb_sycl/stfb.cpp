@@ -367,7 +367,7 @@ int main(int ac, char *av[])
 
         TickCount t2 = TickCount::now();
         if (total_time >= relax_time)
-            write_real_body_states.writeToFile();
+            write_real_body_states.writeToFile(MyExecutionPolicy{});
         TickCount t3 = TickCount::now();
         interval += t3 - t2;
     }
