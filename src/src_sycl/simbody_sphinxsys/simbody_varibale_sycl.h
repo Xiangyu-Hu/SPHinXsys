@@ -10,9 +10,9 @@
  *                                                                           *
  * SPHinXsys is partially funded by German Research Foundation               *
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
- *  HU1527/12-1 and HU1527/12-4.                                             *
+ *  HU1527/12-1 and HU1527/12-4                                              *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2022 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -21,20 +21,21 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	sphinxsys_sycl.h
- * @brief 	All SPHinXsys capabilities and SYCL.
+ * @file 	simbody_variable_sycl.h
+ * @brief 	TBD.
  * @author	Xiangyu Hu
  */
-#ifndef SPHINXSYS_SYCL_H
-#define SPHINXSYS_SYCL_H
+#ifndef SIMBODY_VARIABLE_SYCL_H
+#define SIMBODY_VARIABLE_SYCL_H
 
-#include "base_configuration_dynamics_sycl.h"
-#include "particle_iterators_sycl.h"
-#include "particle_sort_sycl.h"
-#include "particle_sort_sycl.hpp"
-#include "sphinxsys_ck.h"
-#include "sphinxsys_constant_sycl.hpp"
-#include "sphinxsys_variable_sycl.hpp"
-#include "simboody_variable_sycl.h"
+#include "all_simbody.h"
+#include "implementation_sycl.h"
 
-#endif // SPHINXSYS_SYCL_H
+namespace SPH
+{
+template <>
+struct sycl::is_device_copyable<SimTK::SpatialVec> : std::true_type
+{
+};
+} // namespace SPH
+#endif // SIMBODY_VARIABLE_SYCL_H
