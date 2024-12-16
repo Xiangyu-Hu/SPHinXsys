@@ -87,14 +87,17 @@ class FinishDataPackages : public BaseMeshDynamics
     size_t buffer_width_;
 
     InitializeDataForSingularPackage initialize_data_for_singular_package{mesh_data_};
-    MeshAllDynamics<TagACellIsInnerPackage> tag_a_cell_is_inner_package{mesh_data_};
-    MeshInnerDynamics<InitializeIndexMesh> initialize_index_mesh{mesh_data_};
-    MeshInnerDynamics<InitializeCellNeighborhood> initialize_cell_neighborhood{mesh_data_};
+    // MeshAllDynamics<TagACellIsInnerPackage> tag_a_cell_is_inner_package{mesh_data_};
+    // MeshInnerDynamics<InitializeIndexMesh> initialize_index_mesh{mesh_data_};
+    // MeshInnerDynamics<InitializeCellNeighborhood> initialize_cell_neighborhood{mesh_data_};
     // MeshInnerDynamics<InitializeBasicDataForAPackage> initialize_basic_data_for_a_package{mesh_data_, shape_};
-    MeshInnerDynamicsCK<execution::ParallelPolicy, InitializeBasicDataForAPackage> initialize_basic_data_for_a_package{mesh_data_, shape_};
-    MeshInnerDynamicsCK<execution::ParallelPolicy, UpdateLevelSetGradient> update_level_set_gradient{mesh_data_};
     // MeshInnerDynamics<UpdateLevelSetGradient> update_level_set_gradient{mesh_data_};
     // MeshInnerDynamics<UpdateKernelIntegrals> update_kernel_integrals{mesh_data_, kernel_, global_h_ratio_};
+    MeshAllDynamicsCK<execution::ParallelPolicy, TagACellIsInnerPackage> tag_a_cell_is_inner_package{mesh_data_};
+    MeshInnerDynamicsCK<execution::ParallelPolicy, InitializeIndexMesh> initialize_index_mesh{mesh_data_};
+    MeshInnerDynamicsCK<execution::ParallelPolicy, InitializeCellNeighborhood> initialize_cell_neighborhood{mesh_data_};
+    MeshInnerDynamicsCK<execution::ParallelPolicy, InitializeBasicDataForAPackage> initialize_basic_data_for_a_package{mesh_data_, shape_};
+    MeshInnerDynamicsCK<execution::ParallelPolicy, UpdateLevelSetGradient> update_level_set_gradient{mesh_data_};
     MeshInnerDynamicsCK<execution::ParallelPolicy, UpdateKernelIntegrals> update_kernel_integrals{mesh_data_, kernel_, global_h_ratio_};
 };
 
@@ -144,14 +147,14 @@ class CleanInterface : public BaseMeshDynamics
   private:
     Kernel &kernel_;
     Real global_h_ratio_;
-    MeshInnerDynamicsCK<execution::ParallelPolicy, UpdateLevelSetGradient> update_level_set_gradient{mesh_data_};
     // MeshInnerDynamics<UpdateLevelSetGradient> update_level_set_gradient{mesh_data_};
     // MeshInnerDynamics<UpdateKernelIntegrals> update_kernel_integrals{mesh_data_, kernel_, global_h_ratio_};
+    // MeshCoreDynamics<RedistanceInterface> redistance_interface{mesh_data_};
+    // MeshInnerDynamics<ReinitializeLevelSet> reinitialize_level_set{mesh_data_};
+    MeshInnerDynamicsCK<execution::ParallelPolicy, UpdateLevelSetGradient> update_level_set_gradient{mesh_data_};
     MeshInnerDynamicsCK<execution::ParallelPolicy, UpdateKernelIntegrals> update_kernel_integrals{mesh_data_, kernel_, global_h_ratio_};
     MeshInnerDynamicsCK<execution::ParallelPolicy, MarkNearInterface> mark_near_interface{mesh_data_};
     MeshCoreDynamicsCK<execution::ParallelPolicy, RedistanceInterface> redistance_interface{mesh_data_};
-    // MeshCoreDynamics<RedistanceInterface> redistance_interface{mesh_data_};
-    // MeshInnerDynamics<ReinitializeLevelSet> reinitialize_level_set{mesh_data_};
     MeshInnerDynamicsCK<execution::ParallelPolicy, ReinitializeLevelSet> reinitialize_level_set{mesh_data_};
 };
 
@@ -176,12 +179,12 @@ class CorrectTopology : public BaseMeshDynamics
     Kernel &kernel_;
     Real global_h_ratio_;
     // MeshInnerDynamics<UpdateLevelSetGradient> update_level_set_gradient{mesh_data_};
-    MeshInnerDynamicsCK<execution::ParallelPolicy, UpdateLevelSetGradient> update_level_set_gradient{mesh_data_};
     // MeshInnerDynamics<UpdateKernelIntegrals> update_kernel_integrals{mesh_data_, kernel_, global_h_ratio_};
+    // MeshInnerDynamics<DiffuseLevelSetSign> diffuse_level_set_sign{mesh_data_};
+    MeshInnerDynamicsCK<execution::ParallelPolicy, UpdateLevelSetGradient> update_level_set_gradient{mesh_data_};
     MeshInnerDynamicsCK<execution::ParallelPolicy, UpdateKernelIntegrals> update_kernel_integrals{mesh_data_, kernel_, global_h_ratio_};
     MeshInnerDynamicsCK<execution::ParallelPolicy, MarkNearInterface> mark_near_interface{mesh_data_};
     MeshInnerDynamicsCK<execution::ParallelPolicy, DiffuseLevelSetSign> diffuse_level_set_sign{mesh_data_};
-    // MeshInnerDynamics<DiffuseLevelSetSign> diffuse_level_set_sign{mesh_data_};
 };
 } // namespace SPH
 #endif // ALL_MESH_DYNAMICS_H

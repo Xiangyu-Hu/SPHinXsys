@@ -31,6 +31,7 @@
 #define MESH_LOCAL_DYNAMICS_H
 
 #include "sphinxsys_variable.h"
+// #include "triangle_mesh_shape.h"
 #include "mesh_with_data_packages.hpp"
 #include "base_geometry.h"
 #include "base_kernel.h"
@@ -43,6 +44,30 @@ using MeshWithGridDataPackagesType = MeshWithGridDataPackages<4>;
 
 template <class T>
 using MeshVariableData = PackageDataMatrix<T, 4>;
+
+class FindSignedDistance
+{
+  public:
+    template <class ExecutionPolicy, class ShapeType>
+    FindSignedDistance(const ExecutionPolicy &ex_policy, const ShapeType &shape)
+        : shape_(shape){};
+    ~FindSignedDistance(){};
+
+    Real exec(const Vecd &probe_point){ return shape_.findSignedDistance(probe_point); };
+
+  private:
+    Shape &shape_;
+};
+
+// template <class ExecutionPolicy>
+// class FindSignedDistance<ExecutionPolicy, TriangleMeshShapeSTL>
+// {
+//   public:
+//     FindSignedDistance(const ExecutionPolicy &ex_policy, TriangleMeshShapeSTL &shape_){};
+//     ~FindSignedDistance(){};
+
+//     Real exec(const Vecd &probe_point);
+// };
 
 /**
  * @class BaseMeshLocalDynamics
@@ -132,8 +157,24 @@ class InitializeDataInACell : public BaseMeshLocalDynamics
           shape_(shape){};
     virtual ~InitializeDataInACell(){};
 
-    void update(const Arrayi &index);
-  
+    class UpdateKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+            : mesh_data_(&encloser.mesh_data_),
+              grid_spacing_(encloser.grid_spacing_),
+              shape_(&encloser.shape_),
+              base_dynamics(&encloser){};
+        void update(const Arrayi &cell_index);
+
+      protected:
+        MeshWithGridDataPackagesType *mesh_data_;
+        Real grid_spacing_;
+        Shape *shape_;
+        BaseMeshLocalDynamics *base_dynamics;
+    };
+
   private:
     Shape &shape_;
 };
@@ -145,10 +186,23 @@ class TagACellIsInnerPackage : public BaseMeshLocalDynamics
         : BaseMeshLocalDynamics(mesh_data){};
     virtual ~TagACellIsInnerPackage(){};
 
-    void update(const Arrayi &index);
+    class UpdateKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+            : all_cells_(encloser.all_cells_),
+              mesh_data_(&encloser.mesh_data_),
+              base_dynamics(&encloser){};
+        void update(const Arrayi &cell_index);
 
-  private:
-    bool isInnerPackage(const Arrayi &cell_index);
+      protected:
+        Arrayi all_cells_;
+        MeshWithGridDataPackagesType *mesh_data_;
+        BaseMeshLocalDynamics *base_dynamics;
+
+        bool isInnerPackage(const Arrayi &cell_index);
+    };
 };
 
 class InitializeIndexMesh : public BaseMeshLocalDynamics
@@ -158,7 +212,19 @@ class InitializeIndexMesh : public BaseMeshLocalDynamics
         : BaseMeshLocalDynamics(mesh_data){};
     virtual ~InitializeIndexMesh(){};
 
-    void update(const size_t &index);
+    class UpdateKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+            : mesh_data_(&encloser.mesh_data_),
+              base_dynamics(&encloser){};
+        void update(const size_t &package_index);
+
+      protected:
+        MeshWithGridDataPackagesType *mesh_data_;
+        BaseMeshLocalDynamics *base_dynamics;
+    };
 };
 
 class InitializeCellNeighborhood : public BaseMeshLocalDynamics
@@ -168,7 +234,23 @@ class InitializeCellNeighborhood : public BaseMeshLocalDynamics
         : BaseMeshLocalDynamics(mesh_data){};
     virtual ~InitializeCellNeighborhood(){};
 
-    void update(const size_t &index);
+    class UpdateKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+            : meta_data_cell_(encloser.meta_data_cell_),
+              cell_neighborhood_(encloser.cell_neighborhood_),
+              mesh_data_(&encloser.mesh_data_),
+              base_dynamics(&encloser){};
+        void update(const size_t &package_index);
+
+      protected:
+        std::pair<Arrayi, int> *meta_data_cell_;
+        CellNeighborhood *cell_neighborhood_;
+        MeshWithGridDataPackagesType *mesh_data_;
+        BaseMeshLocalDynamics *base_dynamics;
+    };
 };
 
 class InitializeBasicDataForAPackage : public BaseMeshLocalDynamics
@@ -178,8 +260,6 @@ class InitializeBasicDataForAPackage : public BaseMeshLocalDynamics
         : BaseMeshLocalDynamics(mesh_data),
           shape_(shape){};
     virtual ~InitializeBasicDataForAPackage(){};
-
-    void update(const size_t &index);
 
     class UpdateKernel
     {
@@ -281,7 +361,6 @@ class UpdateKernelIntegrals : public BaseMeshLocalDynamics
 
         Kernel *kernel_;
         MeshWithGridDataPackagesType *mesh_data_;
-        //mesh_data_
         Real computeKernelIntegral(const Vecd &position);
         Vecd computeKernelGradientIntegral(const Vecd &position);
 
@@ -303,8 +382,6 @@ class UpdateKernelIntegrals : public BaseMeshLocalDynamics
         Real probeSignedDistance(const Vecd &position) { return base_dynamics->probeMesh(*mesh_data_, phi_, position); };
     };
 
-    void update(const size_t &package_index);
-
   private:
     Kernel &kernel_;
     Real global_h_ratio_;
@@ -318,8 +395,6 @@ class ReinitializeLevelSet : public BaseMeshLocalDynamics
     explicit ReinitializeLevelSet(MeshWithGridDataPackagesType &mesh_data)
         : BaseMeshLocalDynamics(mesh_data){};
     virtual ~ReinitializeLevelSet(){};
-
-    void update(const size_t &package_index);
 
     class UpdateKernel
     {
@@ -410,8 +485,6 @@ class MarkNearInterface : public BaseMeshLocalDynamics
         BaseMeshLocalDynamics *base_dynamics;
         CellNeighborhood *cell_neighborhood_;
     };
-
-    void update(const size_t &package_index);
 };
 
 class RedistanceInterface : public BaseMeshLocalDynamics
@@ -462,8 +535,6 @@ class RedistanceInterface : public BaseMeshLocalDynamics
             return df;
         }
     };
-
-    // void update(const size_t &package_index);
 };
 
 class DiffuseLevelSetSign : public BaseMeshLocalDynamics
@@ -490,8 +561,6 @@ class DiffuseLevelSetSign : public BaseMeshLocalDynamics
         CellNeighborhood *cell_neighborhood_;
         BaseMeshLocalDynamics *base_dynamics;
     };
-
-    void update(const size_t &package_index);
 };
 
 class InitializeDataInACellFromCoarse : public BaseMeshLocalDynamics

@@ -52,10 +52,9 @@ void MultilevelLevelSet::initializeLevel(size_t level, Real reference_data_spaci
     register_mesh_variable.exec(mesh_data_set_[level]);
 
     if (coarse_data == nullptr) {
-        MeshAllDynamics<InitializeDataInACell> initialize_data_in_a_cell(*mesh_data_set_[level], shape_);
+        MeshAllDynamicsCK<execution::ParallelPolicy, InitializeDataInACell> initialize_data_in_a_cell(*mesh_data_set_[level], shape_);
         initialize_data_in_a_cell.exec();
     } else {
-        // MeshAllDynamics<InitializeDataInACellFromCoarse> initialize_data_in_a_cell_from_coarse(*mesh_data_set_[level], *coarse_data, shape_);
         MeshAllDynamicsCK<execution::ParallelPolicy, InitializeDataInACellFromCoarse> initialize_data_in_a_cell_from_coarse(*mesh_data_set_[level], *coarse_data, shape_);
         initialize_data_in_a_cell_from_coarse.exec();
     }

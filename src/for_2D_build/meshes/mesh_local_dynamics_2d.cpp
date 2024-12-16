@@ -48,44 +48,30 @@ void InitializeDataForSingularPackage::update(const size_t package_index, Real f
         });
 }
 //=============================================================================================//
-bool TagACellIsInnerPackage::isInnerPackage(const Arrayi &cell_index)
+bool TagACellIsInnerPackage::UpdateKernel::isInnerPackage(const Arrayi &cell_index)
 {
     return mesh_any_of(
         Array2i::Zero().max(cell_index - Array2i::Ones()),
         all_cells_.min(cell_index + 2 * Array2i::Ones()),
         [&](int l, int m)
         {
-            return mesh_data_.isInnerDataPackage(Arrayi(l, m));    //actually a core test here, because only core pkgs are assigned
+            return mesh_data_->isInnerDataPackage(Arrayi(l, m));    //actually a core test here, because only core pkgs are assigned
         });
 }
 //=============================================================================================//
-void InitializeCellNeighborhood::update(const size_t &package_index)
+void InitializeCellNeighborhood::UpdateKernel::update(const size_t &package_index)
 {
-    size_t sort_index = mesh_data_.occupied_data_pkgs_[package_index-2].first;
-    Arrayi cell_index = Arrayi(sort_index / all_cells_[1], sort_index % all_cells_[1]); //[notion] there might be problems, 3d implementation needed
-    CellNeighborhood &current = mesh_data_.cell_neighborhood_[package_index];
+    size_t sort_index = mesh_data_->occupied_data_pkgs_[package_index-2].first;
+    Arrayi cell_index = base_dynamics->CellIndexFromSortIndex(sort_index);
+    CellNeighborhood &current = cell_neighborhood_[package_index];
     std::pair<Arrayi, int> &metadata = meta_data_cell_[package_index];
     metadata.first = cell_index;
-    metadata.second = mesh_data_.occupied_data_pkgs_[package_index-2].second;
+    metadata.second = mesh_data_->occupied_data_pkgs_[package_index-2].second;
     for (int l = -1; l < 2; l++)
         for (int m = -1; m < 2; m++)
         {
-            current[l + 1][m + 1] = mesh_data_.PackageIndexFromCellIndex(cell_index + Arrayi(l, m));
+            current[l + 1][m + 1] = mesh_data_->PackageIndexFromCellIndex(cell_index + Arrayi(l, m));
         }
-}
-//=============================================================================================//
-void InitializeBasicDataForAPackage::update(const size_t &package_index)
-{
-    auto &phi = phi_.DataField()[package_index];
-    auto &near_interface_id = near_interface_id_.DataField()[package_index];
-    Arrayi cell_index = meta_data_cell_[package_index].first;
-    for_each_cell_data(
-        [&](int i, int j)
-        {
-            Vec2d position = mesh_data_.DataPositionFromIndex(cell_index, Array2i(i, j));
-            phi[i][j] = shape_.findSignedDistance(position);
-            near_interface_id[i][j] = phi[i][j] < 0.0 ? -2 : 2;
-        });
 }
 //=============================================================================================//
 void InitializeBasicDataForAPackage::UpdateKernel::update(const size_t &package_index)
@@ -208,35 +194,6 @@ void ReinitializeLevelSet::UpdateKernel::update(const size_t &package_index)
                                               phi_0 - phi_[x2.first][x2.second[0]][x2.second[1]]);
                 Real dv_y = upwindDifference(sign, phi_[y1.first][y1.second[0]][y1.second[1]] - phi_0,
                                               phi_0 - phi_[y2.first][y2.second[0]][y2.second[1]]);
-                phi_addrs[i][j] -= 0.5 * sign * (Vec2d(dv_x, dv_y).norm() - data_spacing_);
-            }
-        });
-}
-//=============================================================================================//
-void ReinitializeLevelSet::update(const size_t &package_index)
-{
-    auto phi_data = phi_.DataField();
-    auto &phi_addrs = phi_data[package_index];
-    auto &near_interface_id_addrs = near_interface_id_.DataField()[package_index];
-    auto &neighborhood = mesh_data_.cell_neighborhood_[package_index];
-
-    for_each_cell_data(
-        [&](int i, int j)
-        {
-            // only reinitialize non cut cells
-            if (near_interface_id_addrs[i][j] != 0)
-            {
-                Real phi_0 = phi_addrs[i][j];
-                Real sign = phi_0 / sqrt(phi_0 * phi_0 + data_spacing_ * data_spacing_);
-                using NeighbourIndex = std::pair<size_t, Arrayi>; /**< stores shifted neighbour info: (size_t)package index, (arrayi)local grid index. */
-                NeighbourIndex x1 = NeighbourIndexShift(Arrayi(i + 1, j), neighborhood);
-                NeighbourIndex x2 = NeighbourIndexShift(Arrayi(i - 1, j), neighborhood);
-                NeighbourIndex y1 = NeighbourIndexShift(Arrayi(i, j + 1), neighborhood);
-                NeighbourIndex y2 = NeighbourIndexShift(Arrayi(i, j - 1), neighborhood);
-                Real dv_x = upwindDifference(sign, phi_data[x1.first][x1.second[0]][x1.second[1]] - phi_0,
-                                              phi_0 - phi_data[x2.first][x2.second[0]][x2.second[1]]);
-                Real dv_y = upwindDifference(sign, phi_data[y1.first][y1.second[0]][y1.second[1]] - phi_0,
-                                              phi_0 - phi_data[y2.first][y2.second[0]][y2.second[1]]);
                 phi_addrs[i][j] -= 0.5 * sign * (Vec2d(dv_x, dv_y).norm() - data_spacing_);
             }
         });
@@ -384,37 +341,6 @@ void DiffuseLevelSetSign::UpdateKernel::update(const size_t &package_index)
                             Real phi_0 = phi_[package_index][i][j];
                             near_interface_id_[package_index][i][j] = near_interface_id;
                             phi_[package_index][i][j] = near_interface_id == 1 ? fabs(phi_0) : -fabs(phi_0);
-                        }
-                        return is_found;
-                    });
-            }
-        });
-}
-//=============================================================================================//
-void DiffuseLevelSetSign::update(const size_t &package_index)
-{
-    auto phi_data = phi_.DataField();
-    auto near_interface_id_data = near_interface_id_.DataField();
-    auto &neighborhood = mesh_data_.cell_neighborhood_[package_index];
-
-    for_each_cell_data(
-        [&](int i, int j)
-        {
-            // near interface cells are not considered
-            if (abs(near_interface_id_data[package_index][i][j]) > 1)
-            {
-                mesh_find_if2d<-1, 2>(
-                    [&](int l, int m) -> bool
-                    {
-                        using NeighbourIndex = std::pair<size_t, Arrayi>; /**< stores shifted neighbour info: (size_t)package index, (arrayi)local grid index. */
-                        NeighbourIndex neighbour_index = NeighbourIndexShift(Arrayi(i + l, j + m), neighborhood);
-                        int near_interface_id = near_interface_id_data[neighbour_index.first][neighbour_index.second[0]][neighbour_index.second[1]];
-                        bool is_found = abs(near_interface_id) == 1;
-                        if (is_found)
-                        {
-                            Real phi_0 = phi_data[package_index][i][j];
-                            near_interface_id_data[package_index][i][j] = near_interface_id;
-                            phi_data[package_index][i][j] = near_interface_id == 1 ? fabs(phi_0) : -fabs(phi_0);
                         }
                         return is_found;
                     });
