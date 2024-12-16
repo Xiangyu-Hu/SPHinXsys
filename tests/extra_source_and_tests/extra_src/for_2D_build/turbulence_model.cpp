@@ -140,7 +140,6 @@ namespace SPH
                 Tau_wall_[index_i] = (veltangential.norm() * std::pow(C_mu_, 0.25) * std::pow(K_[index_i], 0.5) * rho_[index_i]) / (u_star);
                 vel_gradient_mat_[index_i] = Matd::Zero();
                 vel_gradient_mat_[index_i](0, 1) = Tau_wall_[index_i] / (rho_[index_i] * pow(C_mu_, 0.25) * pow(K_[index_i], 0.5) * von_kar_ * yp_[index_i]);
-                //vel_gradient_mat_[index_i](0, 1) = veltangential.norm() / (yp_[index_i] * log(E_ * ystar_[index_i]));
 
                 K_prod_p_[index_i] = std::pow(Tau_wall_[index_i], 2.0) / (von_kar_ * rho_[index_i] * std::pow(C_mu_, 0.25) * std::pow(K_[index_i], 0.5) * yp_[index_i]);
                 Eps_p_[index_i] = (std::pow(C_mu_, 3.0 / 4.0) * std::pow(K_[index_i], 1.5)) / (von_kar_ * yp_[index_i]);

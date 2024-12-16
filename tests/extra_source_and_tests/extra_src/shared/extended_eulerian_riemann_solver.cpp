@@ -36,18 +36,12 @@ ExtendedFluidStarState ExtendedHLLCRiemannSolver::
 
     }
     if (s_l <= 0.0 && 0.0 <= s_star)
-    {
-        /* k_star = 0.5 * (state_i.K_ + state_j.K_);
-        eps_star = 0.5 * (state_i.Eps_ + state_j.Eps_);*/
-        
+    {   
         k_star = state_i.K_ * (s_l - ul) / (s_l - s_star);
         eps_star = state_i.Eps_ * (s_l - ul) / (s_l - s_star);
     }
     if (s_star <= 0.0 && 0.0 <= s_r)
     {
-        /*k_star = 0.5 * (state_i.K_ + state_j.K_);
-        eps_star = 0.5 * (state_i.Eps_ + state_j.Eps_);*/
-        
         k_star = state_j.K_ * (s_r - ur) / (s_r - s_star);
         eps_star = state_j.Eps_ * (s_r - ur) / (s_r - s_star);
         

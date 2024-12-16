@@ -84,7 +84,7 @@ namespace SPH
             void update(size_t index_i, Real dt = 0.0);
 
             protected:
-            Real *dK_dt_, *wall_adjacent_cell_flag_, *strain_rate_, *corner_cell_flag_, *boundary_type_;
+            Real *dK_dt_, *wall_adjacent_cell_flag_, *strain_rate_;
             Real *dudx_, *dudy_, *dvdx_, *dvdy_;
             RiemannSolverType riemann_solver_;
             Vecd *K_grad_, *Eps_grad_;
