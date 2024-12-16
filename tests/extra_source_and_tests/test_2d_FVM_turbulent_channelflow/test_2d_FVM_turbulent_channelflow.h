@@ -17,7 +17,7 @@ using namespace std;
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real DL = 120;                  /**< Channel length. */
+Real DL = 120;                   /**< Channel length. */
 Real DH = 2;                  /**< Channel height. */
 Real resolution_ref = 1.0 / 5.0; /**< Initial reference particle spacing. */
 BoundingBox system_domain_bounds(Vec2d(0.0, 0.0), Vec2d(DL, DH));
