@@ -45,7 +45,7 @@ class BodyPart
 {
   public:
     BodyPart(SPHBody &sph_body, const std::string &body_part_name);
-    virtual ~BodyPart(){};
+    virtual ~BodyPart() {};
     SPHBody &getSPHBody() { return sph_body_; };
     SPHSystem &getSPHSystem() { return sph_body_.getSPHSystem(); };
     std::string getName() { return body_part_name_; };
@@ -55,11 +55,11 @@ class BodyPart
 
   protected:
     SPHBody &sph_body_;
-    DiscreteVariable<UnsignedInt> *dv_index_list_;
-    SingularVariable<UnsignedInt> *sv_range_size_;
     int part_id_;
     std::string body_part_name_;
     BaseParticles &base_particles_;
+    DiscreteVariable<UnsignedInt> *dv_index_list_;
+    SingularVariable<UnsignedInt> *sv_range_size_;
     Vecd *pos_;
 };
 
@@ -75,7 +75,7 @@ class BodyPartByParticle : public BodyPart
     IndexVector &LoopRange() { return body_part_particles_; };
     size_t SizeOfLoopRange() { return body_part_particles_.size(); };
     BodyPartByParticle(SPHBody &sph_body, const std::string &body_part_name);
-    virtual ~BodyPartByParticle(){};
+    virtual ~BodyPartByParticle() {};
 
     void setBodyPartBounds(BoundingBox bbox)
     {
@@ -110,7 +110,7 @@ class BodyPartByCell : public BodyPart
     size_t SizeOfLoopRange();
 
     BodyPartByCell(RealBody &real_body, const std::string &body_part_name);
-    virtual ~BodyPartByCell(){};
+    virtual ~BodyPartByCell() {};
 
   protected:
     CellLinkedList &cell_linked_list_;
@@ -130,7 +130,7 @@ class BodyRegionByParticle : public BodyPartByParticle
   public:
     BodyRegionByParticle(SPHBody &sph_body, Shape &body_part_shape);
     BodyRegionByParticle(SPHBody &sph_body, SharedPtr<Shape> shape_ptr);
-    virtual ~BodyRegionByParticle(){};
+    virtual ~BodyRegionByParticle() {};
     Shape &getBodyPartShape() { return body_part_shape_; };
 
   protected:
@@ -146,7 +146,7 @@ class BodySurface : public BodyPartByParticle
 {
   public:
     explicit BodySurface(SPHBody &sph_body);
-    virtual ~BodySurface(){};
+    virtual ~BodySurface() {};
 
   protected:
     Real particle_spacing_min_;
@@ -161,7 +161,7 @@ class BodySurfaceLayer : public BodyPartByParticle
 {
   public:
     explicit BodySurfaceLayer(SPHBody &sph_body, Real layer_thickness = 3.0);
-    virtual ~BodySurfaceLayer(){};
+    virtual ~BodySurfaceLayer() {};
 
   private:
     Real thickness_threshold_;
@@ -180,7 +180,7 @@ class BodyRegionByCell : public BodyPartByCell
   public:
     BodyRegionByCell(RealBody &real_body, Shape &body_part_shape);
     BodyRegionByCell(RealBody &real_body, SharedPtr<Shape> shape_ptr);
-    virtual ~BodyRegionByCell(){};
+    virtual ~BodyRegionByCell() {};
     Shape &getBodyPartShape() { return body_part_shape_; };
 
   private:
@@ -205,7 +205,7 @@ class NearShapeSurface : public BodyPartByCell
     NearShapeSurface(RealBody &real_body, LevelSetShape &level_set_shape);
     explicit NearShapeSurface(RealBody &real_body);
     NearShapeSurface(RealBody &real_body, const std::string &sub_shape_name);
-    virtual ~NearShapeSurface(){};
+    virtual ~NearShapeSurface() {};
     LevelSetShape &getLevelSetShape() { return level_set_shape_; };
 
   private:
@@ -222,10 +222,10 @@ class AlignedBoxRegion : public BodyRegionType
 {
   public:
     AlignedBoxRegion(RealBody &real_body, AlignedBoxShape &aligned_box)
-        : BodyRegionType(real_body, aligned_box), aligned_box_(aligned_box){};
+        : BodyRegionType(real_body, aligned_box), aligned_box_(aligned_box) {};
     AlignedBoxRegion(RealBody &real_body, SharedPtr<AlignedBoxShape> aligned_box_ptr)
-        : BodyRegionType(real_body, aligned_box_ptr), aligned_box_(*aligned_box_ptr.get()){};
-    virtual ~AlignedBoxRegion(){};
+        : BodyRegionType(real_body, aligned_box_ptr), aligned_box_(*aligned_box_ptr.get()) {};
+    virtual ~AlignedBoxRegion() {};
     AlignedBoxShape &getAlignedBoxShape() { return aligned_box_; };
 
   protected:
