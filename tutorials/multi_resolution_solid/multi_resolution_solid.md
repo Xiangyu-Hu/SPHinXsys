@@ -78,8 +78,12 @@ For future studies, we may explore using atomic to prevent memory conflict at th
 
 ## Examples
 
-A test on 3d cantilever beam can be found in `3d_examples/cantilever_beam`. The simulations on run on //TODO: finish this part
+A test on 3d cantilever beam can be found in `3d_examples/cantilever_beam`. Simulation ran on 12th Gen Intel(R) Core(TM) i7-12700H with 20 cores. The reference deflection is taken as $-0.02 - 5.86 \times 10^{-3}$, which is the result with the conventional TLSPH method with h/dp=24 from [Zhu2022](https://doi.org/10.1016/j.jcp.2022.111105).
 
-| Refinement level | Particle number [-]| dp_max [m] | dp_min [m] | Computational time | Damping time |
-|-------|------------------|----------------------------|--------------------------------------|-----------------------|-----------------|
-| 0 | 14336 | 0.0025 | 0.0025 | // | // |
+| Refinement level | Particle number [-]| dp_max [m] | dp_min [m] | Computational time [s]| Damping time [s]| Deflection [m] | Error [%] |
+|-------|------------------|----------------------------|--------------------------------------|-----------------------|-----------------|-----------------|-----------------|
+| 0 | 114688 | 0.00125 | 0.00125 | 564.12 | 135.11 | -0.02605 | 0.73 |
+| 1 | 53203  | 0.0025  | 0.00125 | 295.93 | 78.96  | -0.02682 | 3.71 |
+| 2 | 46175  | 0.005   | 0.00125 | 246.19 | 67.88  | -0.02867 | 10.86 |
+
+In this example, the damping time of the multi-resolution solid is shorter than the fully-refined uniform one, but it could also take a longer time depending on the particle number and sizes.
