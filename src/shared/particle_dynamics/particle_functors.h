@@ -93,6 +93,38 @@ class NotIndicatedParticles : public WithinScope
 };
 
 //----------------------------------------------------------------------
+// Particle parameter functors
+//----------------------------------------------------------------------
+class ParticleParameter // base class to indicate the concept of particle parameter
+{
+};
+
+template <typename T>
+class ParameterFixed : public ParticleParameter
+{
+    T parameter_;
+
+  public:
+    explicit ParameterFixed(const T &c) : ParticleParameter(), parameter_(c){};
+    T operator()(size_t index_i)
+    {
+        return parameter_;
+    };
+};
+
+template <typename T>
+class ParameterVariable : public ParticleParameter
+{
+    T *v_;
+
+  public:
+    explicit ParameterVariable(T *v) : ParticleParameter(), v_(v){};
+    T operator()(size_t index_i)
+    {
+        return v_[index_i];
+    };
+};
+//----------------------------------------------------------------------
 // Particle average functors
 //----------------------------------------------------------------------
 class ParticleAverage // base class to indicate the concept of particle average
@@ -181,6 +213,7 @@ class PairGeomAverageVariable : public GeomAverage
 class KernelCorrection // base class to indicate the concept of kernel correction
 {
 };
+
 class NoKernelCorrection : public KernelCorrection
 {
   public:

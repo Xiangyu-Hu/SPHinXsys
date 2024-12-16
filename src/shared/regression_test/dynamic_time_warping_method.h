@@ -24,7 +24,7 @@
  * @file 	dynamic_time_warping_method.h
  * @brief 	Classes for the comparison between validated and tested results
                         with dynamic time warping method.
- * @author	Bo Zhang , Chi Zhang and Xiangyu Hu
+ * @author	Bo Zhang, Chi Zhang and Xiangyu Hu
  */
 
 #ifndef DYNAMIC_TIME_WARPING_H
@@ -103,7 +103,7 @@ class RegressionTestDynamicTimeWarping : public RegressionTestTimeAverage<Observ
             }
             this->writeResultToXml(this->number_of_run_ - 1);
             writeDTWDistanceToXml();
-            compareDTWDistance(threshold_value);
+            compareDTWDistance(threshold_value);  //wether the distance is convergence.
         }
         else
             std::cout << "The results have been converged." << std::endl;

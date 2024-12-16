@@ -176,6 +176,8 @@ class MultilevelCellLinkedList : public MultilevelMesh<BaseCellLinkedList, CellL
 {
   protected:
     Real *h_ratio_; /**< Smoothing length for each level. */
+    int *level_;    /**< Mesh level for each particle. */
+
     /** determine mesh level from particle cutoff radius */
     inline size_t getMeshLevel(Real particle_cutoff_radius);
 
@@ -193,6 +195,15 @@ class MultilevelCellLinkedList : public MultilevelMesh<BaseCellLinkedList, CellL
     virtual void tagBodyPartByCell(ConcurrentCellLists &cell_lists, std::function<bool(Vecd, Real)> &check_included) override;
     virtual void tagBoundingCells(StdVec<CellLists> &cell_data_lists, const BoundingBox &bounding_bounds, int axis) override {};
     virtual StdVec<CellLinkedList *> CellLinkedListLevels() override { return getMeshLevels(); };
+
+    // temp get function
+    const auto *get_level() const { return level_; };
+
+    /** split algorithm */;
+    template <class LocalDynamicsFunction>
+    void particle_for_split(const execution::SequencedPolicy &, const LocalDynamicsFunction &local_dynamics_function);
+    template <class LocalDynamicsFunction>
+    void particle_for_split(const execution::ParallelPolicy &, const LocalDynamicsFunction &local_dynamics_function);
 };
 } // namespace SPH
 #endif // MESH_CELL_LINKED_LIST_H

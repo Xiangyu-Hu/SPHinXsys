@@ -148,6 +148,41 @@ class ConstrainSolidBodyMassCenter : public MotionConstraint<SPHBody>
     void update(size_t index_i, Real dt = 0.0);
 };
 
+struct SimbodyState
+{
+    Vec3d initial_origin_location_;
+    Vec3d origin_location_, origin_velocity_, origin_acceleration_;
+    Vec3d angular_velocity_, angular_acceleration_;
+    Mat3d rotation_;
+
+    SimbodyState() : initial_origin_location_(ZeroData<Vec3d>::value),
+                     origin_location_(ZeroData<Vec3d>::value),
+                     origin_velocity_(ZeroData<Vec3d>::value),
+                     origin_acceleration_(ZeroData<Vec3d>::value),
+                     angular_velocity_(ZeroData<Vec3d>::value),
+                     angular_acceleration_(ZeroData<Vec3d>::value),
+                     rotation_(Mat3d::Identity()) {}
+
+    // implemented according to the Simbody API function with the same name
+    void findStationLocationVelocityAndAccelerationInGround(const Vec3d &initial_location,
+                                                            const Vec3d &initial_normal,
+                                                            Vec3d &locationOnGround,
+                                                            Vec3d &velocityInGround,
+                                                            Vec3d &accelerationInGround,
+                                                            Vec3d &normalInGround)
+    {
+        Vec3d temp_location = rotation_ * (initial_location - initial_origin_location_);
+        locationOnGround = origin_location_ + temp_location;
+
+        Vec3d temp_velocity = angular_velocity_.cross(temp_location);
+        velocityInGround = origin_velocity_ + temp_velocity;
+        accelerationInGround = origin_acceleration_ +
+                               angular_acceleration_.cross(temp_location) +
+                               angular_velocity_.cross(temp_velocity);
+        normalInGround = rotation_ * initial_normal;
+    };
+};
+
 /**
  * @class ConstraintBySimBody
  * @brief Constrain by the motion computed from Simbody.
@@ -159,21 +194,18 @@ class ConstraintBySimBody : public MotionConstraint<DynamicsIdentifier>
     ConstraintBySimBody(DynamicsIdentifier &identifier, SimTK::MultibodySystem &MBsystem,
                         SimTK::MobilizedBody &mobod, SimTK::RungeKuttaMersonIntegrator &integ);
     virtual ~ConstraintBySimBody(){};
-
-    virtual void setupDynamics(Real dt = 0.0) override
-    {
-        simbody_state_ = &integ_.getState();
-        MBsystem_.realize(*simbody_state_, SimTK::Stage::Acceleration);
-    };
+    virtual void setupDynamics(Real dt = 0.0) override;
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
     SimTK::MultibodySystem &MBsystem_;
     SimTK::MobilizedBody &mobod_;
     SimTK::RungeKuttaMersonIntegrator &integ_;
+    SimbodyState simbody_state_;
     Vecd *n_, *n0_, *acc_;
-    const SimTK::State *simbody_state_;
-    SimTKVec3 initial_mobod_origin_location_;
+
+    void initializeSimbodyState(const SimTK::State &state);
+    void updateSimbodyState(const SimTK::State &state);
 };
 using ConstraintBodyBySimBody = ConstraintBySimBody<SPHBody>;
 using ConstraintBodyPartBySimBody = ConstraintBySimBody<BodyPartByParticle>;

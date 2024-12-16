@@ -33,3 +33,4 @@
 #include "general_reduce_ck.hpp"
 #include "geometric_dynamics.hpp"
 #include "interpolation_dynamics.hpp"
+#include "kernel_correction_ck.hpp"

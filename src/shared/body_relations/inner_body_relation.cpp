@@ -110,4 +110,22 @@ void ShellSelfContactRelation::updateConfiguration()
         get_single_search_depth_, get_shell_self_contact_neighbor_);
 }
 //=================================================================================================//
+void AdaptiveSplittingInnerRelation::updateConfiguration()
+{
+    resetNeighborhoodCurrentSize();
+    for (size_t l = 0; l != total_levels_; ++l)
+    {
+        cell_linked_list_levels_[l]->searchNeighborsByParticles(
+            sph_body_, inner_configuration_,
+            *get_multi_level_search_depth_[l], get_adaptive_splitting_inner_neighbor_);
+    }
+}
+//=================================================================================================//
+void SplittingInnerRelation::updateConfiguration()
+{
+    resetNeighborhoodCurrentSize();
+    cell_linked_list_.searchNeighborsByParticles(
+        sph_body_, inner_configuration_,
+        get_single_search_depth_, get_splitting_inner_neighbor_);
+}
 } // namespace SPH
