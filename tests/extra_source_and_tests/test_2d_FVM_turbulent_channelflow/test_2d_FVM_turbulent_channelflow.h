@@ -11,6 +11,7 @@
 #include "turbulence_model.hpp"
 #include "rans_dynamics.hpp"
 #include "extended_eulerian_riemann_solver.cpp"
+
 using namespace SPH;
 using namespace std;
 //----------------------------------------------------------------------
@@ -72,9 +73,9 @@ class TCFInitialCondition
             Eps_(this->particles_->template registerStateVariable<Real>("Dissipation")),
             mu_t_(this->particles_->template registerStateVariable<Real>("TurblunetViscosity")),
             rho_(this->particles_->template getVariableDataByName<Real>("Density")), 
-            p_(this->particles_->template getVariableDataByName<Real>("Pressure")),
-            mass_(this->particles_->template getVariableDataByName<Real>("Mass")),
-            mom_(this->particles_->template getVariableDataByName<Vecd>("Momentum"))
+            p_(this->particles_->template registerStateVariable<Real>("Pressure")),
+            mass_(this->particles_->template registerStateVariable<Real>("Mass")),
+            mom_(this->particles_->template registerStateVariable<Vecd>("Momentum"))
         {};
 
     void update(size_t index_i, Real dt)

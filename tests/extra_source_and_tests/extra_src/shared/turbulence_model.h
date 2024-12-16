@@ -3,7 +3,6 @@
 #include "fluid_integration.hpp"
 #include "unstructured_mesh.h"
 #include "all_particle_dynamics.h"
-#include "riemann_solver.h"
 #include "fvm_ghost_boundary.h"
 #include "rans_dynamics.h"
 #include "extended_eulerian_riemann_solver.h"
@@ -39,7 +38,7 @@ namespace SPH
 
         protected:
           Vecd *wall_normal_;
-          Real *wall_adjacent_cell_flag_, *yp_, *corner_cell_flag_, *boundary_type_;
+          Real *wall_adjacent_cell_flag_, *yp_;
           StdLargeVec<Real> wall_adjacent_index_,  wall_ghost_index_;
           StdLargeVec<Vecd> wall_eij_;
           Real ymax_;
@@ -91,6 +90,7 @@ namespace SPH
             Vecd *K_grad_, *Eps_grad_;
         };
         using KEpsilonStd1stHalfExtendedHLLCRiemannSolver = KEpsilonStd1stHalf<ExtendedHLLCRiemannSolver>;
+        using KEpsilonStd1stHalfAcousticRiemannSolver = KEpsilonStd1stHalf<AcousticRiemannSolver>;
         //=================================================================================================//
         template <class RiemannSolverType>
         class KEpsilonStd2ndHalf : public BaseTurbulence
@@ -107,6 +107,7 @@ namespace SPH
             Vecd *K_grad_, *Eps_grad_;
         };
         using KEpsilonStd2ndHalfExtendedHLLCRiemannSolver = KEpsilonStd2ndHalf<ExtendedHLLCRiemannSolver>;
+        using KEpsilonStd2dnHalfAcousticRiemannSolver = KEpsilonStd2ndHalf<AcousticRiemannSolver>;
         //=================================================================================================//
         
     }// namespace fluid_dynamics

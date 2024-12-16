@@ -9,9 +9,9 @@ namespace SPH
     //=================================================================================================//
         BaseTurbulence::BaseTurbulence(BaseInnerRelation& inner_relation, GhostCreationFromMesh& ghost_creator)
             : BaseIntegration<DataDelegateInner>(inner_relation),
-          mom_(this->particles_->template registerStateVariable<Vecd>("Momentum")),
-          dmom_dt_(this->particles_->template registerStateVariable<Vecd>("MomentumChangeRate")),
-          dmass_dt_(this->particles_->template registerStateVariable<Real>("MassChangeRate")),
+          mom_(this->particles_->template getVariableDataByName<Vecd>("Momentum")),
+          dmom_dt_(this->particles_->template getVariableDataByName<Vecd>("MomentumChangeRate")),
+          dmass_dt_(this->particles_->template getVariableDataByName<Real>("MassChangeRate")),
           K_prod_p_(this->particles_->template registerStateVariable<Real>("TKEProductionInWallAdjCell")),
           K_prod_(this->particles_->template registerStateVariable<Real>("TKEProduction")),
           Eps_p_(this->particles_->template registerStateVariable<Real>("DissipationRateInWallAdjCell")),
@@ -23,9 +23,9 @@ namespace SPH
           Eps_destruction_(this->particles_->template registerStateVariable<Real>("DissipationDestruction")),
           Tau_wall_(this->particles_->template registerStateVariable<Real>("WallShearStress")),
           C_mu_(0.09), sigma_k_(1.0), sigma_eps_(1.3), C1_eps_(1.44), C2_eps_(1.92),
-          K_(this->particles_->template registerStateVariable<Real>("TKE")),
-          Eps_(this->particles_->template registerStateVariable<Real>("Dissipation")),
-          mu_t_(this->particles_->template registerStateVariable<Real>("TurblunetViscosity")),
+          K_(this->particles_->template getVariableDataByName<Real>("TKE")),
+          Eps_(this->particles_->template getVariableDataByName<Real>("Dissipation")),
+          mu_t_(this->particles_->template getVariableDataByName<Real>("TurblunetViscosity")),
           ghost_creator_(ghost_creator)
           {}
         //=================================================================================================//
@@ -33,8 +33,7 @@ namespace SPH
               : BaseTurbulence(inner_relation, ghost_creator), wall_normal_(this->particles_->template registerStateVariable<Vecd>("WallNormal")),
                 wall_adjacent_cell_flag_(this->particles_->template registerStateVariable<Real>("FlagForWallAdjacentCells")),
                 yp_(this->particles_->template registerStateVariable<Real>("WallNormalDistance")),
-                corner_cell_flag_(this->particles_->template registerStateVariable<Real>("CornerCellFlag")), 
-                boundary_type_(this->particles_->template registerStateVariable<Real>("BoundaryType")), ymax_(0.0), 
+                ymax_(0.0), 
                 bounds_(inner_relation.getSPHBody())
                 {
                     walladjacentcellyp();
@@ -65,11 +64,6 @@ namespace SPH
                             {
                                 ymax_ = (pos_[index_real] - pos_[ghost_index]).dot(wall_eij_[index_real]);
                             }
-                        }
-                        if (wall_adjacent_cell_flag_[index_real] == 1.0 && boundary_type != 3)
-                        {
-                            corner_cell_flag_[index_real] = 1.0;
-                            boundary_type_[ghost_index] = boundary_type;
                         }
                     }
                 }

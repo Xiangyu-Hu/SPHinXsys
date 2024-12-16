@@ -73,8 +73,6 @@ namespace SPH
 
         tke_gradient_force_[index_i] = force * Vol_[index_i];
     }
-
     }// namespace SPH
-
 }// namespace SPH
 #endif // RANS_DYNAMICS_HPP

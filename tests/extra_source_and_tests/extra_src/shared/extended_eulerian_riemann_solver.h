@@ -30,12 +30,15 @@
 #define EXTENDED_EULERIAN_RIEMANN_SOLVER_H
 
 #include "base_data_package.h"
-#include "compressible_fluid.h"
-#include "eulerian_riemann_solver.h"
+#include "fluid_integration.hpp"
+#include "riemann_solver.h"
+
 namespace SPH
 {
+namespace fluid_dynamics
+{
 
-struct ExendedFluidState : FluidStateIn
+    struct ExendedFluidState : FluidStateIn
 {
     Real &K_;
     Real &Eps_;
@@ -46,18 +49,21 @@ struct ExendedFluidState : FluidStateIn
 struct ExtendedFluidStarState : FluidStateOut
 {
     Real K_;
-    Real Eps_; 
+    Real Eps_;
     ExtendedFluidStarState(Real rho, Vecd vel, Real p, Real K, Real Eps)
         : FluidStateOut(rho, vel, p), K_(K), Eps_(Eps){};
 };
 
-class ExtendedHLLCRiemannSolver : NoRiemannSolver
+class ExtendedHLLCRiemannSolver : AcousticRiemannSolver
 {
     Fluid &fluid_i_, &fluid_j_;
+    Real limiter_parameter_;
+
   public:
-  template <class FluidI, class FluidJ>
-    ExtendedHLLCRiemannSolver(FluidI &fluid_i, FluidJ &fluid_j);
+    template <class FluidI, class FluidJ>
+    ExtendedHLLCRiemannSolver(FluidI &fluid_i, FluidJ &fluid_j, Real limiter_parameter = 0.0);
     ExtendedFluidStarState getExtendedInterfaceState(const ExendedFluidState &state_i, const ExendedFluidState &state_j, const Vecd &e_ij);
 };
+} // namespace fluid_dynamics
 } // namespace SPH
 #endif // EXTENDED_EULERIAN_RIEMANN_SOLVER_H

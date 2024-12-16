@@ -40,22 +40,21 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     /** Here we introduce the limiter in the Riemann solver and 0 means the no extra numerical dissipation.
     the value is larger, the numerical dissipation larger*/
-
-    InteractionWithUpdate<fluid_dynamics::EulerianIntegration1stHalfInnerRiemann> pressure_relaxation(water_block_inner, 1.0);
-    InteractionWithUpdate<fluid_dynamics::EulerianIntegration2ndHalfInnerRiemann> density_relaxation(water_block_inner, 1000.0);
     SimpleDynamics<TCFInitialCondition> initial_condition(water_block);
+    InteractionWithUpdate<fluid_dynamics::EulerianIntegration1stHalfInnerRiemann> pressure_relaxation(water_block_inner, 1.0);
+    InteractionWithUpdate<fluid_dynamics::EulerianIntegration2ndHalfInnerRiemann> density_relaxation(water_block_inner, 10000.0);
     SimpleDynamics<fluid_dynamics::WallAdjacentCells> wall_adj_cell(water_block_inner, ghost_creation);
-    SimpleDynamics<fluid_dynamics::TurbuleceVariablesGradient> turbulence_gradients(water_block_inner, ghost_creation);
+    SimpleDynamics<fluid_dynamics::TurbuleceVariablesGradient> turbulence_gradients(water_block_inner, ghost_creation); //For second order upwind
    
-    InteractionWithUpdate<fluid_dynamics::KEpsilonStd1stHalfExtendedHLLCRiemannSolver> tke(water_block_inner, ghost_creation);
-    InteractionWithUpdate<fluid_dynamics::KEpsilonStd2ndHalfExtendedHLLCRiemannSolver> dissipationrate(water_block_inner, ghost_creation);
-    
+    InteractionWithUpdate<fluid_dynamics::KEpsilonStd1stHalfExtendedHLLCRiemannSolver> tke(water_block_inner, ghost_creation, 0.0);
+    InteractionWithUpdate<fluid_dynamics::KEpsilonStd2ndHalfExtendedHLLCRiemannSolver> dissipationrate(water_block_inner, ghost_creation, 0.0);
+
     TCFBoundaryConditionSetup boundary_condition_setup(water_block_inner, ghost_creation);
     /** Time step size with considering sound wave speed. */
     ReduceDynamics<fluid_dynamics::WCAcousticTimeStepSizeInFVM> get_fluid_time_step_size(water_block, read_mesh_data.MinMeshEdge());
     InteractionWithUpdate<fluid_dynamics::TurbulentViscousForceInner> turbulent_viscous_force(water_block_inner);
     InteractionWithUpdate<fluid_dynamics::ViscousForceInner> viscous_force(water_block_inner);
-    InteractionWithUpdate<fluid_dynamics::TkeGradientForceInner> tke_gradient_force(water_block_inner);
+    InteractionWithUpdate<fluid_dynamics::TkeGradientForceInner> tke_gradient_force(water_block_inner); 
     
    // visualization in FVM with data in cell
     BodyStatesRecordingInMeshToVtp write_real_body_states(water_block, read_mesh_data);
@@ -73,8 +72,6 @@ int main(int ac, char *av[])
     write_real_body_states.addToWrite<Vecd>(water_block, "MomentumChangeRate");
     write_real_body_states.addToWrite<Real>(water_block, "MassChangeRate");
     write_real_body_states.addToWrite<Vecd>(water_block, "ViscousForce");
-    //write_real_body_states.addToWrite<Vecd>(water_block, "MomentumPressureGradient");
-    // write_real_body_states.addToWrite<Vecd>(water_block, "MomentumAdvection");
     
     write_real_body_states.addToWrite<Vecd>(water_block, "TurbulentViscousForce");
     write_real_body_states.addToWrite<Real>(water_block, "TKEProduction");
@@ -102,7 +99,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     size_t number_of_iterations = 0;
-    int screen_output_interval = 3000;
+
+    int screen_output_interval = 5000;
     Real end_time = 200.0;
     Real output_interval = 2.0; /**< time stamps for output. */ 
     //----------------------------------------------------------------------
@@ -123,7 +121,7 @@ int main(int ac, char *av[])
         while (integration_time < output_interval)
         {
             Real dt = get_fluid_time_step_size.exec();
-            turbulence_gradients.exec();
+            turbulence_gradients.exec(); //For second order upwind
             boundary_condition_setup.resetBoundaryConditions();
             tke.exec(dt);
             boundary_condition_setup.resetBoundaryConditions();
