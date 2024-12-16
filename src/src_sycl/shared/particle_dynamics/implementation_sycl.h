@@ -136,13 +136,13 @@ namespace execution
 {
 template <class LocalDynamicsType, class ComputingKernelType>
 class Implementation<ParallelDevicePolicy, LocalDynamicsType, ComputingKernelType>
-    : public Implementation<ParallelDevicePolicy, LocalDynamicsType>
+    : public Implementation<Base>
 {
     UniquePtrKeeper<ComputingKernelType> kernel_ptr_keeper_;
 
   public:
     explicit Implementation(LocalDynamicsType &local_dynamics)
-        : Implementation<ParallelDevicePolicy, LocalDynamicsType>(local_dynamics),
+        : Implementation<Base>(), local_dynamics_(local_dynamics),
           computing_kernel_(nullptr) {}
     ~Implementation()
     {
@@ -181,6 +181,7 @@ class Implementation<ParallelDevicePolicy, LocalDynamicsType, ComputingKernelTyp
     }
 
   protected:
+    LocalDynamicsType &local_dynamics_;
     ComputingKernelType *computing_kernel_;
 };
 } // namespace execution

@@ -62,11 +62,11 @@ class BaseLocalDynamics
           sph_body_(identifier.getSPHBody()),
           particles_(&sph_body_.getBaseParticles()){};
     virtual ~BaseLocalDynamics(){};
-    typedef DynamicsIdentifier DynamicsIdentifierType;
+    typedef DynamicsIdentifier Identifier;
     DynamicsIdentifier &getDynamicsIdentifier() { return identifier_; };
     SPHBody &getSPHBody() { return sph_body_; };
     BaseParticles *getParticles() { return particles_; };
-    virtual void setupDynamics(Real dt = 0.0) {}; // setup global parameters
+    virtual void setupDynamics(Real dt = 0.0){}; // setup global parameters
 
   protected:
     DynamicsIdentifier &identifier_;
@@ -88,8 +88,8 @@ class BaseLocalDynamicsReduce : public BaseLocalDynamics<DynamicsIdentifier>
     explicit BaseLocalDynamicsReduce(DynamicsIdentifier &identifier)
         : BaseLocalDynamics<DynamicsIdentifier>(identifier),
           reference_(ReduceReference<Operation>::value),
-          quantity_name_("ReducedQuantity") {};
-    virtual ~BaseLocalDynamicsReduce() {};
+          quantity_name_("ReducedQuantity"){};
+    virtual ~BaseLocalDynamicsReduce(){};
 
     ReturnType Reference() { return reference_; };
     std::string QuantityName() { return quantity_name_; };
@@ -115,7 +115,7 @@ class Average : public ReduceSumType
     template <class DynamicsIdentifier, typename... Args>
     Average(DynamicsIdentifier &identifier, Args &&...args)
         : ReduceSumType(identifier, std::forward<Args>(args)...){};
-    virtual ~Average() {};
+    virtual ~Average(){};
     using ReturnType = typename ReduceSumType::ReturnType;
 
     virtual ReturnType outputResult(ReturnType reduced_value)
@@ -138,7 +138,7 @@ struct ConstructorArgs
     std::tuple<OtherArgs...> others_;
     SPHBody &getSPHBody() { return body_relation_.getSPHBody(); };
     ConstructorArgs(BodyRelationType &body_relation, OtherArgs... other_args)
-        : body_relation_(body_relation), others_(other_args...) {};
+        : body_relation_(body_relation), others_(other_args...){};
 };
 
 /**
@@ -154,9 +154,9 @@ template <typename... CommonParameters, template <typename... InteractionTypes> 
 class ComplexInteraction<LocalDynamicsName<>, CommonParameters...>
 {
   public:
-    ComplexInteraction() {};
+    ComplexInteraction(){};
 
-    void interaction(size_t index_i, Real dt = 0.0) {};
+    void interaction(size_t index_i, Real dt = 0.0){};
 };
 
 template <typename... CommonParameters, template <typename... InteractionTypes> class LocalDynamicsName,

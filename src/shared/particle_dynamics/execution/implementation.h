@@ -40,42 +40,14 @@ namespace SPH
 {
 namespace execution
 {
-template <class ExecutionPolicy, class LocalDynamicsType>
-class Implementation<ExecutionPolicy, LocalDynamicsType> : public Implementation<Base>
-{
-    using DynamicsIdentifier = typename LocalDynamicsType::DynamicsIdentifierType;
-    using LoopRangeType = LoopRangeCK<ExecutionPolicy, DynamicsIdentifier>;
-
-  public:
-    explicit Implementation(LocalDynamicsType &local_dynamics)
-        : Implementation<Base>(), local_dynamics_(local_dynamics),
-          loop_range_(nullptr){};
-    ~Implementation()
-    {
-        delete loop_range_;
-    };
-
-    LoopRangeType &getLoopRange()
-    {
-        if (loop_range_ == nullptr)
-        {
-            loop_range_ = new LoopRangeType(local_dynamics_.getDynamicsIdentifier());
-        }
-        return *loop_range_;
-    };
-
-  protected:
-    LocalDynamicsType &local_dynamics_;
-    LoopRangeType *loop_range_;
-};
 
 template <class ExecutionPolicy, class LocalDynamicsType, class ComputingKernelType>
 class Implementation<ExecutionPolicy, LocalDynamicsType, ComputingKernelType>
-    : public Implementation<ExecutionPolicy, LocalDynamicsType>
+    : public Implementation<Base>
 {
   public:
     explicit Implementation(LocalDynamicsType &local_dynamics)
-        : Implementation<ExecutionPolicy, LocalDynamicsType>(local_dynamics),
+        : Implementation<Base>(), local_dynamics_(local_dynamics),
           computing_kernel_(nullptr) {}
     ~Implementation()
     {
@@ -109,6 +81,7 @@ class Implementation<ExecutionPolicy, LocalDynamicsType, ComputingKernelType>
     }
 
   protected:
+    LocalDynamicsType &local_dynamics_;
     ComputingKernelType *computing_kernel_;
 };
 } // namespace execution
