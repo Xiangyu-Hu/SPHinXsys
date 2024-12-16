@@ -26,7 +26,11 @@ void BodyPartByParticle::tagParticles(TaggingParticleMethod &tagging_particle_me
         { return body_part_particles_[i]; });
     sv_range_size_ = base_particles_.addUniqueSingularVariableOnly<UnsignedInt>(
         body_part_name_ + "_Size", body_part_particles_.size());
-};
+}
+//=============================================================================================//
+BodyPartByCell::BodyPartByCell(RealBody &real_body, const std::string &body_part_name)
+    : BodyPart(real_body, body_part_name),
+      cell_linked_list_(DynamicCast<CellLinkedList>(this, real_body.getCellLinkedList())) {}
 //=============================================================================================//
 size_t BodyPartByCell::SizeOfLoopRange()
 {
@@ -36,11 +40,46 @@ size_t BodyPartByCell::SizeOfLoopRange()
         size_of_loop_range += body_part_cells_[i]->size();
     }
     return size_of_loop_range;
-};
+}
 //=================================================================================================//
 void BodyPartByCell::tagCells(TaggingCellMethod &tagging_cell_method)
 {
-    cell_linked_list_.tagBodyPartByCell(body_part_cells_, tagging_cell_method);
+    ConcurrentVec<size_t> cell_list;
+    Arrayi all_cells = cell_linked_list_.AllCells();
+    Real grid_spacing = cell_linked_list_.GridSpacing();
+    mesh_parallel_for(
+        MeshRange(Arrayi::Zero(), all_cells),
+        [&](const Arrayi &cell_index)
+        {
+            bool is_included = false;
+            mesh_for_each(
+                Arrayi::Zero().max(cell_index - Arrayi::Ones()),
+                all_cells.min(cell_index + 2 * Arrayi::Ones()),
+                [&](const Arrayi &neighbor_cell_index)
+                {
+                    if (tagging_cell_method(
+                            cell_linked_list_
+                                .CellPositionFromIndex(neighbor_cell_index),
+                            grid_spacing))
+                    {
+                        is_included = true;
+                    }
+                });
+            if (is_included == true)
+                cell_list.push_back(cell_linked_list_.LinearCellIndexFromCellIndex(cell_index));
+        });
+
+    ConcurrentIndexVector *cell_index_lists = cell_linked_list_.getCellIndexLists();
+    for (size_t i = 0; i != cell_list.size(); ++i)
+    {
+        body_part_cells_.push_back(&cell_index_lists[cell_list[i]]);
+    }
+
+    dv_index_list_ = base_particles_.addUniqueDiscreteVariableOnly<UnsignedInt>(
+        body_part_name_, cell_list.size(), [&](size_t i) -> Real
+        { return cell_list[i]; });
+    sv_range_size_ = base_particles_.addUniqueSingularVariableOnly<UnsignedInt>(
+        body_part_name_ + "_Size", cell_list.size());
 }
 //=================================================================================================//
 BodyRegionByParticle::
