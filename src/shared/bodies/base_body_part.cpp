@@ -4,8 +4,15 @@
 namespace SPH
 {
 //=================================================================================================//
+BodyPart::BodyPart(SPHBody &sph_body, const std::string &body_part_name)
+    : sph_body_(sph_body), part_id_(sph_body.getNewBodyPartID()),
+      body_part_name_(body_part_name),
+      base_particles_(sph_body.getBaseParticles()),
+      pos_(base_particles_.getVariableDataByName<Vecd>("Position")),
+      dv_index_list_(nullptr), sv_range_size_(nullptr) {}
+//=================================================================================================//
 BodyPartByParticle::BodyPartByParticle(SPHBody &sph_body, const std::string &body_part_name)
-    : BodyPart(sph_body, body_part_name), dv_particle_indexes_(nullptr), sv_range_size_(nullptr),
+    : BodyPart(sph_body, body_part_name),
       body_part_bounds_(Vecd::Zero(), Vecd::Zero()), body_part_bounds_set_(false) {}
 //=================================================================================================//
 void BodyPartByParticle::tagParticles(TaggingParticleMethod &tagging_particle_method)
@@ -14,7 +21,7 @@ void BodyPartByParticle::tagParticles(TaggingParticleMethod &tagging_particle_me
     {
         tagging_particle_method(i);
     }
-    dv_particle_indexes_ = base_particles_.addUniqueDiscreteVariableOnly<UnsignedInt>(
+    dv_index_list_ = base_particles_.addUniqueDiscreteVariableOnly<UnsignedInt>(
         body_part_name_, body_part_particles_.size(), [&](size_t i) -> Real
         { return body_part_particles_[i]; });
     sv_range_size_ = base_particles_.addUniqueSingularVariableOnly<UnsignedInt>(
