@@ -44,10 +44,8 @@ class LoopRangeCK<ExecutionPolicy, SPHBody>
   public:
     LoopRangeCK(SPHBody &sph_body)
         : loop_bound_(sph_body.getBaseParticles().svTotalRealParticles()->DelegatedData(ExecutionPolicy{})){};
-    template <class UnaryFunc>
-    void computeUnit(const UnaryFunc &f, UnsignedInt i) const { f(i); };
     template <class ReturnType, class UnaryFunc>
-    ReturnType reduceUnit(const UnaryFunc &f, UnsignedInt i) const { return f(i); };
+    ReturnType computeUnit(const UnaryFunc &f, UnsignedInt i) const { return f(i); };
     UnsignedInt LoopBound() const { return *loop_bound_; };
 
   protected:
@@ -59,17 +57,14 @@ class LoopRangeCK<ExecutionPolicy, BodyPartType>
 {
   public:
     LoopRangeCK(BodyPartType &body_part)
-        : dv_index_list_(body_part.dvIndexList()->DelegatedDataField(ExecutionPolicy{})),
+        : index_list_(body_part.dvIndexList()->DelegatedDataField(ExecutionPolicy{})),
           loop_bound_(body_part.svRangeSize()->DelegatedData(ExecutionPolicy{})){};
-
-    template <class UnaryFunc>
-    void computeUnit(const UnaryFunc &f, UnsignedInt i) const { f(dv_index_list_[i]); };
     template <class ReturnType, class UnaryFunc>
-    ReturnType reduceUnit(const UnaryFunc &f, UnsignedInt i) const { return f(dv_index_list_[i]); };
+    ReturnType computeUnit(const UnaryFunc &f, UnsignedInt i) const { return f(index_list_[i]); };
     UnsignedInt LoopBound() const { return *loop_bound_; };
 
   protected:
-    UnsignedInt *dv_index_list_;
+    UnsignedInt *index_list_;
     UnsignedInt *loop_bound_;
 };
 
