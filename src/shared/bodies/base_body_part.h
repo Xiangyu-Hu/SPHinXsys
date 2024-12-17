@@ -55,11 +55,11 @@ class BodyPart
 
   protected:
     SPHBody &sph_body_;
-    DiscreteVariable<UnsignedInt> *dv_index_list_;
-    SingularVariable<UnsignedInt> *sv_range_size_;
     int part_id_;
     std::string body_part_name_;
     BaseParticles &base_particles_;
+    DiscreteVariable<UnsignedInt> *dv_index_list_;
+    SingularVariable<UnsignedInt> *sv_range_size_;
     Vecd *pos_;
 };
 
