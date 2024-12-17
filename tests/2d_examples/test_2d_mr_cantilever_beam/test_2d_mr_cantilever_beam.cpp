@@ -1,26 +1,62 @@
 /**
- * @file 	Three ring impact.cpp
- * @brief 	This is the case file for the test of dynamic contacts between shell and solid.
+ * @file 	test_2d_mr_cantilever_beam.cpp
+ * @brief 	This is the case file for the test of multi-resolution solid dynamics.
  * @author  Weiyi Kong, Xiangyu Hu
  */
 
 #include "base_data_type.h"
 #include "large_data_containers.h"
 #include "sphinxsys.h"
+#include <gtest/gtest.h>
 using namespace SPH;
 
-void beam_multi_resolution(double dp_factor, bool damping_on, int refinement_level = 1);
+struct return_data
+{
+    Real deflection = std::numeric_limits<Real>::max();
+    size_t number_of_particles = std::numeric_limits<size_t>::max();
+    Real dp_max = std::numeric_limits<Real>::max();       // the maximum particle spacing
+    Real dp_min = std::numeric_limits<Real>::max();       // the minimum particle spacing
+    Real run_time = std::numeric_limits<Real>::max();     // the total simulation time
+    Real damping_time = std::numeric_limits<Real>::max(); // time spent on damping
+};
+
+return_data beam_multi_resolution(double dp_factor, bool damping_on, int refinement_level = 1);
+
+TEST(mr_solid, dp_4)
+{
+    auto print_result = [&](const return_data &data)
+    {
+        std::cout << data.dp_max << "\t"
+                  << data.dp_min << "\t"
+                  << data.number_of_particles << "\t"
+                  << data.run_time << "\t"
+                  << data.damping_time << "\t"
+                  << data.deflection << "\n";
+    };
+    auto data_single = beam_multi_resolution(8, true, 0);
+    auto data_mr = beam_multi_resolution(4, true, 1);
+    std::cout << "Resolution max [m]" << "\t"
+              << "" << "Resolution min [m]" << "\t"
+              << "Particles [-]" << "\t"
+              << "Run time [s]" << "\t"
+              << "Damping time [s]" << "\t"
+              << "Deflection [m]" << "\n";
+    print_result(data_single);
+    print_result(data_mr);
+
+    ASSERT_LE(std::abs((data_mr.deflection - data_single.deflection) / data_single.deflection), 5); // 5% error
+    ASSERT_LE(data_mr.run_time, data_single.run_time);
+}
 
 int main(int ac, char *av[])
 {
-    beam_multi_resolution(1.5, false, 2);
+    testing::InitGoogleTest(&ac, av);
+    return RUN_ALL_TESTS();
 }
 
 //------------------------------------------------------------------------------
 void relax_solid(RealBody &body, BaseInnerRelation &inner)
 {
-    BodyStatesRecordingToVtp record({body});
-    MeshRecordingToPlt cell_linked_list_recording(body.getSPHSystem(), body.getCellLinkedList());
     //----------------------------------------------------------------------
     //	Methods used for particle relaxation.
     //----------------------------------------------------------------------
@@ -32,9 +68,7 @@ void relax_solid(RealBody &body, BaseInnerRelation &inner)
     //----------------------------------------------------------------------
     random_particles.exec(0.25);
     relaxation_step_inner.SurfaceBounding().exec();
-    record.writeToFile();
     body.updateCellLinkedList();
-    cell_linked_list_recording.writeToFile(0);
     //----------------------------------------------------------------------
     //	Relax particles of the insert body.
     //----------------------------------------------------------------------
@@ -46,7 +80,6 @@ void relax_solid(RealBody &body, BaseInnerRelation &inner)
         if (ite_p % 100 == 0)
         {
             std::cout << std::fixed << std::setprecision(9) << "Relaxation steps for the inserted body N = " << ite_p << "\n";
-            record.writeToFile(ite_p);
         }
     }
     std::cout << "The physics relaxation process of inserted body finish !" << std::endl;
@@ -82,14 +115,9 @@ class Beam : public MultiPolygonShape
 
 class FixPart : public BodyPartByParticle
 {
-  private:
-    const Vec2d &center_;
-    Real length_;
-
   public:
-    FixPart(SPHBody &body, const std::string &body_part_name, const Vec2d &center, Real length)
-        : BodyPartByParticle(body, body_part_name),
-          center_(center), length_(length)
+    FixPart(SPHBody &body, const std::string &body_part_name)
+        : BodyPartByParticle(body, body_part_name)
     {
         TaggingParticleMethod tagging_particle_method = std::bind(&FixPart::tagManually, this, _1);
         tagParticles(tagging_particle_method);
@@ -98,7 +126,7 @@ class FixPart : public BodyPartByParticle
   private:
     void tagManually(size_t index_i)
     {
-        if (pos_[index_i].x() > center_.x() + 0.5 * length_ || pos_[index_i].x() < center_.x() - 0.5 * length_)
+        if (pos_[index_i].x() < 0)
             body_part_particles_.push_back(index_i);
     };
 };
@@ -125,13 +153,15 @@ struct beam_parameters
     const Real gravity = 9.8;
 };
 //------------------------------------------------------------------------------
-void beam_multi_resolution(double dp_factor, bool damping_on, int refinement_level)
+return_data beam_multi_resolution(double dp_factor, bool damping_on, int refinement_level)
 {
     const beam_parameters params;
+    return_data data;
 
     // resolution
-    const Real dp = params.height / (4.0 * dp_factor);
-    const Real extension_length = 4 * dp;
+    const Real dp_ref = params.height / 4.0;
+    const Real dp = dp_ref / dp_factor;
+    const Real extension_length = 4 * dp_ref;
 
     // load
     Gravity gravity(-params.gravity * Vec2d::UnitY());
@@ -165,46 +195,74 @@ void beam_multi_resolution(double dp_factor, bool damping_on, int refinement_lev
 
     // Create objects
     SolidBody beam_body(system, mesh);
-    beam_body.defineAdaptation<ParticleRefinementWithinShape>(1.15, 1.0, refinement_level);
+    if (refinement_level > 0)
+        beam_body.defineAdaptation<ParticleRefinementWithinShape>(1.15, 1.0, refinement_level);
     beam_body.defineBodyLevelSetShape()->cleanLevelSet(0);
     beam_body.assignMaterial(material.get());
-    beam_body.generateParticles<BaseParticles, Lattice, Adaptive>(refinement_region);
+    if (refinement_level > 0)
+        beam_body.generateParticles<BaseParticles, Lattice, Adaptive>(refinement_region);
+    else
+        beam_body.generateParticles<BaseParticles, Lattice>();
+
+    data.number_of_particles = beam_body.getBaseParticles().TotalRealParticles();
+    data.dp_max = beam_body.getSPHBodyResolutionRef();
+    data.dp_min = beam_body.sph_adaptation_->MinimumSpacing();
 
     // Inner relation
-    AdaptiveInnerRelation inner(beam_body);
+    std::unique_ptr<BaseInnerRelation> inner;
+    if (refinement_level > 0)
+        inner = std::make_unique<AdaptiveInnerRelation>(beam_body);
+    else
+        inner = std::make_unique<InnerRelation>(beam_body);
 
     // relax solid
-    relax_solid(beam_body, inner);
-    exit(0);
+    relax_solid(beam_body, *inner);
 
     // Methods
-    solid_algs algs(inner);
+    solid_algs algs(*inner);
     // damping
-    AdaptiveSplittingInnerRelation inner_split(beam_body);
-    DampingWithRandomChoice<InteractionAdaptiveSplit<DampingPairwiseInner<Vec2d, FixedDampingRate>>> damping(0.5, inner_split, "Velocity", params.physical_viscosity);
+    std::unique_ptr<AdaptiveSplittingInnerRelation> adaptive_inner_split = nullptr;
+    if (refinement_level > 0)
+        adaptive_inner_split = std::make_unique<AdaptiveSplittingInnerRelation>(beam_body);
+    std::unique_ptr<DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d, FixedDampingRate>>>> damping_single_res;
+    std::unique_ptr<DampingWithRandomChoice<InteractionAdaptiveSplit<DampingPairwiseInner<Vec2d, FixedDampingRate>>>> damping_mr_res;
+    if (refinement_level > 0) // for multi-resolution, the damping physical viscosity is doubled as a pair of particles only see each other once
+        damping_mr_res = std::make_unique<DampingWithRandomChoice<InteractionAdaptiveSplit<DampingPairwiseInner<Vec2d, FixedDampingRate>>>>(0.2, *adaptive_inner_split, "Velocity", 2 * params.physical_viscosity);
+    else
+        damping_single_res = std::make_unique<DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d, FixedDampingRate>>>>(0.2, *inner, "Velocity", params.physical_viscosity);
+    auto damping_exec = [&](Real dt)
+    {
+        if (refinement_level > 0)
+            damping_mr_res->exec(dt);
+        else
+            damping_single_res->exec(dt);
+    };
 
     // Boundary conditions
-    FixPart fix_bc_part(beam_body, "ClampingPart", translation, params.length);
+    FixPart fix_bc_part(beam_body, "ClampingPart");
     SimpleDynamics<FixBodyPartConstraint> fix_bc(fix_bc_part);
 
     // gravity
     SimpleDynamics<GravityForce<Gravity>> constant_gravity(beam_body, gravity);
 
-    // Check
-    auto check_nan = [&](BaseParticles &particles)
+    // Output
+    // transform size_t to int for output
+    if (refinement_level > 0)
     {
-        Vec3d *pos = particles.getVariableDataByName<Vec3d>("Position");
-        for (size_t index_i = 0; index_i < particles.TotalRealParticles(); ++index_i)
-            if (std::isnan(pos[index_i][0]) || std::isnan(pos[index_i][1]))
-                throw std::runtime_error("position has become nan");
-    };
+        beam_body.getBaseParticles().addVariableToWrite<Real>("SmoothingLengthRatio");
+        beam_body.getBaseParticles().addVariableToWrite<int>("ParticleMeshLevel");
+    }
+    beam_body.getBaseParticles().addVariableToWrite<Vec2d>("Velocity");
+    BodyStatesRecordingToVtp vtp_output(system);
+    vtp_output.addDerivedVariableRecording<SimpleDynamics<Displacement>>(beam_body);
+    vtp_output.writeToFile(0);
 
     // Observer
-    const StdVec<Vecd> observation_locations = {Vec2d::Zero()};
+    const StdVec<Vecd> observation_locations = {params.length * Vec2d::UnitX()};
     ObserverBody observer(system, "MidObserver");
     observer.generateParticles<ObserverParticles>(observation_locations);
     AdaptiveContactRelation observer_contact(observer, {&beam_body});
-    ObservedQuantityRecording<Vecd> write_position("Position", observer_contact);
+    ObservedQuantityRecording<Vecd> write_position("Displacement", observer_contact);
 
     // Initialization
     system.initializeSystemCellLinkedLists();
@@ -214,20 +272,6 @@ void beam_multi_resolution(double dp_factor, bool damping_on, int refinement_lev
 
     constant_gravity.exec();
 
-    // Output
-    // transform size_t to int for output
-    beam_body.getBaseParticles().addVariableToWrite<Real>("SmoothingLengthRatio");
-    beam_body.getBaseParticles().addVariableToWrite<int>("ParticleMeshLevel");
-    beam_body.getBaseParticles().addVariableToWrite<Real>("VolumetricMeasure");
-    beam_body.getBaseParticles().addVariableToWrite<Vec2d>("GravityForce");
-    beam_body.getBaseParticles().addVariableToWrite<Vec2d>("NormalDirection");
-    beam_body.getBaseParticles().addVariableToWrite<Vec2d>("Velocity");
-    beam_body.getBaseParticles().addVariableToWrite<Vec2d>("Position");
-    BodyStatesRecordingToVtp vtp_output(system);
-    vtp_output.writeToFile(0);
-
-    exit(0);
-
     // Simulation
     Real &physical_time = *system.getSystemVariableDataByName<Real>("PhysicalTime");
     int ite = 0;
@@ -235,8 +279,10 @@ void beam_multi_resolution(double dp_factor, bool damping_on, int refinement_lev
     Real output_period = end_time / 50.0;
     Real dt = 0.0;
     TickCount t1 = TickCount::now();
+    TimeInterval time_damping;
     const Real dt_ref = system.getSmallestTimeStepAmongSolidBodies();
     std::cout << "dt_ref: " << dt_ref << std::endl;
+
     auto run_simulation = [&]()
     {
         while (physical_time < end_time)
@@ -257,18 +303,19 @@ void beam_multi_resolution(double dp_factor, bool damping_on, int refinement_lev
 
                 algs.stress_relaxation_first(dt);
                 fix_bc.exec();
-                // run twice in the test
-                damping.exec(dt);
-                damping.exec(dt);
+                if (damping_on)
+                {
+                    TickCount t_damping_0 = TickCount::now();
+                    damping_exec(dt);
+                    time_damping += (TickCount::now() - t_damping_0);
+                    fix_bc.exec();
+                }
                 fix_bc.exec();
                 algs.stress_relaxation_second(dt);
 
                 ++ite;
                 integral_time += dt;
                 physical_time += dt;
-
-                // checking if any position has become nan
-                check_nan(beam_body.getBaseParticles());
             }
 
             ite_output++;
@@ -277,6 +324,8 @@ void beam_multi_resolution(double dp_factor, bool damping_on, int refinement_lev
         }
         TimeInterval tt = TickCount::now() - t1;
         std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
+        data.run_time = tt.seconds();
+        data.damping_time = time_damping.seconds();
     };
 
     try
@@ -289,4 +338,7 @@ void beam_multi_resolution(double dp_factor, bool damping_on, int refinement_lev
         vtp_output.writeToFile(ite_output + 1);
         exit(0);
     }
+
+    data.deflection = write_position.getObservedQuantity()[0].y();
+    return data;
 }

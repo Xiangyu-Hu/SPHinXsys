@@ -1,27 +1,65 @@
 /**
- * @file 	Three ring impact.cpp
- * @brief 	This is the case file for the test of dynamic contacts between shell and solid.
+ * @file 	test_3d_mr_cantilever_beam.cpp
+ * @brief 	This is the case file for the test of multi-resolution solid dynamics.
  * @author  Weiyi Kong, Xiangyu Hu
  */
 
 #include "base_data_type.h"
 #include "large_data_containers.h"
 #include "sphinxsys.h"
+#include <gtest/gtest.h>
 using namespace SPH;
 
-void beam_multi_resolution(Real dp_factor, bool damping_on, int refinement_level = 1);
+struct return_data
+{
+    Real deflection = std::numeric_limits<Real>::max();
+    Real error = std::numeric_limits<Real>::max(); // % error
+    size_t number_of_particles = std::numeric_limits<size_t>::max();
+    Real dp_max = std::numeric_limits<Real>::max();       // the maximum particle spacing
+    Real dp_min = std::numeric_limits<Real>::max();       // the minimum particle spacing
+    Real run_time = std::numeric_limits<Real>::max();     // the total simulation time
+    Real damping_time = std::numeric_limits<Real>::max(); // time spent on damping
+};
+
+return_data beam_multi_resolution(Real dp_factor, bool damping_on, int refinement_level = 1);
+
+TEST(mr_solid, dp_2)
+{
+    auto print_result = [&](const return_data &data)
+    {
+        std::cout << data.dp_max << "\t"
+                  << data.dp_min << "\t"
+                  << data.number_of_particles << "\t"
+                  << data.run_time << "\t"
+                  << data.damping_time << "\t"
+                  << data.deflection << "\t"
+                  << data.error << "\n";
+    };
+    auto data_single = beam_multi_resolution(4, true, 0);
+    auto data_mr = beam_multi_resolution(2, true, 1);
+    std::cout << "Resolution max [m]" << "\t"
+              << "" << "Resolution min [m]" << "\t"
+              << "Particles [-]" << "\t"
+              << "Run time [s]" << "\t"
+              << "Damping time [s]" << "\t"
+              << "Deflection [m]" << "\t"
+              << "Error [%]" << "\n";
+    print_result(data_single);
+    print_result(data_mr);
+
+    ASSERT_LE(data_mr.error, 15); // 15% error
+    ASSERT_LE(data_mr.run_time, data_single.run_time);
+}
 
 int main(int ac, char *av[])
 {
-    // beam_multi_resolution(4, true, 0);
-    beam_multi_resolution(2, true, 1);
+    testing::InitGoogleTest(&ac, av);
+    return RUN_ALL_TESTS();
 }
 
 //------------------------------------------------------------------------------
 void relax_solid(RealBody &body, BaseInnerRelation &inner)
 {
-    BodyStatesRecordingToVtp record({body});
-    MeshRecordingToPlt cell_linked_list_recording(body.getSPHSystem(), body.getCellLinkedList());
     //----------------------------------------------------------------------
     //	Methods used for particle relaxation.
     //----------------------------------------------------------------------
@@ -33,9 +71,7 @@ void relax_solid(RealBody &body, BaseInnerRelation &inner)
     //----------------------------------------------------------------------
     random_particles.exec(0.25);
     relaxation_step_inner.SurfaceBounding().exec();
-    // record.writeToFile();
     body.updateCellLinkedList();
-    cell_linked_list_recording.writeToFile(0);
     //----------------------------------------------------------------------
     //	Relax particles of the insert body.
     //----------------------------------------------------------------------
@@ -47,7 +83,6 @@ void relax_solid(RealBody &body, BaseInnerRelation &inner)
         if (ite_p % 100 == 0)
         {
             std::cout << std::fixed << std::setprecision(9) << "Relaxation steps for the inserted body N = " << ite_p << "\n";
-            // record.writeToFile(ite_p);
         }
     }
     std::cout << "The physics relaxation process of inserted body finish !" << std::endl;
@@ -112,9 +147,10 @@ struct beam_parameters
     const Real gravity = 9.8;
 };
 //------------------------------------------------------------------------------
-void beam_multi_resolution(Real dp_factor, bool damping_on, int refinement_level)
+return_data beam_multi_resolution(Real dp_factor, bool damping_on, int refinement_level)
 {
     const beam_parameters params;
+    return_data data;
 
     // resolution
     const Real dp_ref = params.height / 4.0;
@@ -159,6 +195,10 @@ void beam_multi_resolution(Real dp_factor, bool damping_on, int refinement_level
     else
         beam_body.generateParticles<BaseParticles, Lattice>();
 
+    data.number_of_particles = beam_body.getBaseParticles().TotalRealParticles();
+    data.dp_max = beam_body.getSPHBodyResolutionRef();
+    data.dp_min = beam_body.sph_adaptation_->MinimumSpacing();
+
     // Inner relation
     std::unique_ptr<BaseInnerRelation> inner;
     if (refinement_level > 0)
@@ -173,18 +213,15 @@ void beam_multi_resolution(Real dp_factor, bool damping_on, int refinement_level
     solid_algs algs(*inner);
 
     // damping
-    std::unique_ptr<SplittingInnerRelation> inner_split = nullptr;
     std::unique_ptr<AdaptiveSplittingInnerRelation> adaptive_inner_split = nullptr;
     if (refinement_level > 0)
         adaptive_inner_split = std::make_unique<AdaptiveSplittingInnerRelation>(beam_body);
-    else
-        inner_split = std::make_unique<SplittingInnerRelation>(beam_body);
     std::unique_ptr<DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d, FixedDampingRate>>>> damping_single_res;
     std::unique_ptr<DampingWithRandomChoice<InteractionAdaptiveSplit<DampingPairwiseInner<Vec3d, FixedDampingRate>>>> damping_mr_res;
-    if (refinement_level > 0)
-        damping_mr_res = std::make_unique<DampingWithRandomChoice<InteractionAdaptiveSplit<DampingPairwiseInner<Vec3d, FixedDampingRate>>>>(0.2, *adaptive_inner_split, "Velocity", params.physical_viscosity);
+    if (refinement_level > 0) // for multi-resolution, the damping physical viscosity is doubled as a pair of particles only see each other once
+        damping_mr_res = std::make_unique<DampingWithRandomChoice<InteractionAdaptiveSplit<DampingPairwiseInner<Vec3d, FixedDampingRate>>>>(0.2, *adaptive_inner_split, "Velocity", 2 * params.physical_viscosity);
     else
-        damping_single_res = std::make_unique<DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d, FixedDampingRate>>>>(0.2, *inner_split, "Velocity", params.physical_viscosity);
+        damping_single_res = std::make_unique<DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d, FixedDampingRate>>>>(0.2, *inner, "Velocity", params.physical_viscosity);
     auto damping_exec = [&](Real dt)
     {
         if (refinement_level > 0)
@@ -200,21 +237,27 @@ void beam_multi_resolution(Real dp_factor, bool damping_on, int refinement_level
     // gravity
     SimpleDynamics<GravityForce<Gravity>> constant_gravity(beam_body, gravity);
 
-    // Check
-    auto check_nan = [&](BaseParticles &particles)
+    // Output
+
+    beam_body.getBaseParticles().addVariableToWrite<Vec3d>("GravityForce");
+    beam_body.getBaseParticles().addVariableToWrite<Vec3d>("NormalDirection");
+    beam_body.getBaseParticles().addVariableToWrite<Vec3d>("Velocity");
+    if (refinement_level > 0)
     {
-        Vec3d *pos = particles.getVariableDataByName<Vec3d>("Position");
-        for (size_t index_i = 0; index_i < particles.TotalRealParticles(); ++index_i)
-            if (std::isnan(pos[index_i].norm()))
-                throw std::runtime_error("position has become nan");
-    };
+        beam_body.getBaseParticles().addVariableToWrite<Real>("SmoothingLengthRatio");
+        beam_body.getBaseParticles().addVariableToWrite<int>("ParticleMeshLevel");
+    }
+    BodyStatesRecordingToVtp vtp_output(system);
+    vtp_output.addDerivedVariableRecording<SimpleDynamics<Displacement>>(beam_body);
+    vtp_output.writeToFile(0);
 
     // Observer
     const StdVec<Vecd> observation_locations = {params.length * Vec3d::UnitX()};
     ObserverBody observer(system, "MidObserver");
     observer.generateParticles<ObserverParticles>(observation_locations);
     AdaptiveContactRelation observer_contact(observer, {&beam_body});
-    ObservedQuantityRecording<Vecd> write_position("Position", observer_contact);
+    ObservedQuantityRecording<Vecd> write_position("Displacement", observer_contact);
+    write_position.writeToFile(0);
 
     // Initialization
     system.initializeSystemCellLinkedLists();
@@ -223,59 +266,6 @@ void beam_multi_resolution(Real dp_factor, bool damping_on, int refinement_level
     algs.corrected_config();
 
     constant_gravity.exec();
-
-    // Output
-    std::cout << "Total real particle number: " << beam_body.getBaseParticles().TotalRealParticles() << "\n";
-
-    auto *neighbor_number = beam_body.getBaseParticles().registerStateVariable<int>("InnerNeighborNumber", 0);
-    for (size_t i = 0; i < beam_body.getBaseParticles().TotalRealParticles(); ++i)
-    {
-        const auto &neighbor = inner->inner_configuration_[i];
-        neighbor_number[i] = neighbor.current_size_;
-    }
-    beam_body.getBaseParticles().addVariableToWrite<int>("InnerNeighborNumber");
-    auto get_ave_neighbor_number = [&](const BaseInnerRelation &inner)
-    {
-        double ave_neighbor_number = 0.0;
-        for (size_t i = 0; i < beam_body.getBaseParticles().TotalRealParticles(); ++i)
-        {
-            const auto &neighbor = inner.inner_configuration_[i];
-            ave_neighbor_number += neighbor.current_size_;
-        }
-        return ave_neighbor_number / beam_body.getBaseParticles().TotalRealParticles();
-    };
-    double inner_neighbor_number = get_ave_neighbor_number(*inner);
-    double split_inner_neighbor_number = refinement_level == 0 ? get_ave_neighbor_number(*inner_split) : get_ave_neighbor_number(*adaptive_inner_split);
-    std::cout << "Average inner neighbor number: " << inner_neighbor_number << "\n";
-    std::cout << "Average split inner neighbor number: " << split_inner_neighbor_number << "\n";
-
-    if (refinement_level > 0)
-    {
-        for (size_t i = 0; i < beam_body.getBaseParticles().TotalRealParticles(); ++i)
-        {
-            const auto &neighbor = adaptive_inner_split->inner_configuration_[i];
-            std::vector<size_t> neighbor_indices(neighbor.current_size_);
-            for (size_t n = 0; n < neighbor.current_size_; ++n)
-                neighbor_indices[n] = neighbor.j_[n];
-            std::sort(neighbor_indices.begin(), neighbor_indices.end());
-            auto it = std::unique(neighbor_indices.begin(), neighbor_indices.end());
-            if (it != neighbor_indices.end())
-                throw std::runtime_error("duplicate neighbor");
-        }
-    }
-
-    beam_body.getBaseParticles().addVariableToWrite<Vec3d>("GravityForce");
-    beam_body.getBaseParticles().addVariableToWrite<Vec3d>("NormalDirection");
-    beam_body.getBaseParticles().addVariableToWrite<Vec3d>("Velocity");
-    beam_body.getBaseParticles().addVariableToWrite<Vec3d>("Position");
-    if (refinement_level > 0)
-    {
-        beam_body.getBaseParticles().addVariableToWrite<Real>("SmoothingLengthRatio");
-        beam_body.getBaseParticles().addVariableToWrite<int>("ParticleMeshLevel");
-    }
-    BodyStatesRecordingToVtp vtp_output(system);
-    vtp_output.writeToFile(0);
-    write_position.writeToFile(0);
 
     // Simulation
     Real &physical_time = *system.getSystemVariableDataByName<Real>("PhysicalTime");
@@ -287,6 +277,7 @@ void beam_multi_resolution(Real dp_factor, bool damping_on, int refinement_level
     TimeInterval time_damping;
     const Real dt_ref = system.getSmallestTimeStepAmongSolidBodies();
     std::cout << "dt_ref: " << dt_ref << std::endl;
+
     auto run_simulation = [&]()
     {
         while (physical_time < end_time)
@@ -319,9 +310,6 @@ void beam_multi_resolution(Real dp_factor, bool damping_on, int refinement_level
                 ++ite;
                 integral_time += dt;
                 physical_time += dt;
-
-                // checking if any position has become nan
-                check_nan(beam_body.getBaseParticles());
             }
 
             ite_output++;
@@ -330,7 +318,8 @@ void beam_multi_resolution(Real dp_factor, bool damping_on, int refinement_level
         }
         TimeInterval tt = TickCount::now() - t1;
         std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
-        std::cout << "Total wall time for damping: " << time_damping.seconds() << " seconds." << std::endl;
+        data.run_time = tt.seconds();
+        data.damping_time = time_damping.seconds();
     };
 
     try
@@ -343,4 +332,14 @@ void beam_multi_resolution(Real dp_factor, bool damping_on, int refinement_level
         vtp_output.writeToFile(ite_output + 1);
         exit(0);
     }
+
+    // error
+    // Reference: A dynamic relaxation method with operator splitting and random-choice strategy for SPH
+    // https://doi.org/10.1016/j.jcp.2022.111105
+    // deflection with the conventional TLSPH method with h/dp=24
+    const Real deflection_ref = -0.02 - 5.86e-3;
+    data.deflection = write_position.getObservedQuantity()[0].y();
+    data.error = std::abs(data.deflection - deflection_ref) / std::abs(deflection_ref) * 100.0;
+
+    return data;
 }
