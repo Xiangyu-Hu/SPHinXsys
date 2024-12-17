@@ -84,7 +84,7 @@ void Integration1stHalf<Inner<>, RiemannSolverType, KernelCorrectionType>::inter
         Real dW_ijV_j = inner_neighborhood.dW_ij_[n] * Vol_[index_j];
         const Vecd &e_ij = inner_neighborhood.e_ij_[n];
 
-        force -= (p_[index_i] * correction_(index_j) + p_[index_j] * correction_(index_i)) * dW_ijV_j * e_ij;
+        force -= (p_[index_i] * correction_(index_j, index_i) + p_[index_j] * correction_(index_i)) * dW_ijV_j * e_ij;
         rho_dissipation += riemann_solver_.DissipativeUJump(p_[index_i] - p_[index_j]) * dW_ijV_j;
     }
     force_[index_i] += force * Vol_[index_i];

@@ -43,6 +43,8 @@ void DensitySummation<Inner<NearSurfaceType, SummationType...>>::update(size_t i
         isNearFreeSurface(index_i)
             ? near_surface_rho_(this->rho_sum_[index_i], this->rho0_, this->rho_[index_i])
             : this->rho_sum_[index_i];
+    //** Temporary treatment *
+    this->Vol_[index_i] = this->mass_[index_i] / this->rho_[index_i];
 }
 //=================================================================================================//
 template <typename NearSurfaceType, typename... SummationType>
