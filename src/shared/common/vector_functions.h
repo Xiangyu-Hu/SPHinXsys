@@ -23,7 +23,7 @@
 /**
  * @file 	vector_functions.h
  * @brief 	Basic functions for vector type data.
- * @author	Chi Zhang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Huc
  */
 #ifndef VECTOR_FUNCTIONS_H
 #define VECTOR_FUNCTIONS_H
@@ -35,17 +35,24 @@ namespace SPH
 Vec2d FirstAxisVector(const Vec2d &zero_vector);
 Vec3d FirstAxisVector(const Vec3d &zero_vector);
 
-Vec3d upgradeToVec3d(const Real &input);
-Vec3d upgradeToVec3d(const Vec2d &input);
-Vec3d upgradeToVec3d(const Vec3d &input);
-Mat3d upgradeToMat3d(const Mat2d &input);
-Mat3d upgradeToMat3d(const Mat3d &input);
+inline Vec3d upgradeToVec3d(const Real &input)
+{
+    return Vec3d(input, 0.0, 0.0);
+};
+inline Vec3d upgradeToVec3d(const Vec2d &input)
+{
+    return Vec3d(input[0], input[1], 0.0);
+};
+inline Vec3d upgradeToVec3d(const Vec3d &input) { return input; };
 
-Vecd degradeToVecd(const Vec3d &input);
-Matd degradeToMatd(const Mat3d &input);
+inline Mat3d upgradeToMat3d(const Mat2d &input)
+{
+    Mat3d output = Mat3d::Zero();
+    output.block<2, 2>(0, 0) = input;
+    return output;
+};
+inline Mat3d upgradeToMat3d(const Mat3d &input) { return input; };
 
-Mat2d getInverse(const Mat2d &A);
-Mat3d getInverse(const Mat3d &A);
 Mat2d getAverageValue(const Mat2d &A, const Mat2d &B);
 Mat3d getAverageValue(const Mat3d &A, const Mat3d &B);
 Mat2d inverseCholeskyDecomposition(const Mat2d &A);

@@ -63,7 +63,6 @@ template <class RiemannSolverType, class KernelCorrectionType, typename... Param
 class PlasticAcousticStep1stHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType, Parameters...>>
     : public PlasticAcousticStep<Interaction<Inner<Parameters...>>>
 {
-    using EosKernel = typename WeaklyCompressibleFluid::EosKernel;
     using BaseInteraction = PlasticAcousticStep<Interaction<Inner<Parameters...>>>;
 
   public:
@@ -78,7 +77,6 @@ class PlasticAcousticStep1stHalf<Inner<OneLevel, RiemannSolverType, KernelCorrec
         void initialize(size_t index_i, Real dt = 0.0);
 
       protected:
-        EosKernel eos_;
         Real *rho_, *p_, *drho_dt_;
         Vecd *vel_, *dpos_;
         Mat3d *stress_tensor_3D_;
@@ -140,12 +138,17 @@ class PlasticAcousticStep1stHalf<Contact<Wall, RiemannSolverType, KernelCorrecti
         KernelCorrectionType correction_;
         RiemannSolverType riemann_solver_;
         Real *Vol_, *rho_, *mass_, *p_, *drho_dt_;
-        Vecd *vel_, *force_, *force_prior_;
+        Vecd *force_, *force_prior_;
         Real *wall_Vol_;
         Vecd *wall_acc_ave_;
 
         //add
         Mat3d *stress_tensor_3D_;
+
+        //2nd
+        Vecd *wall_vel_ave_, *wall_n_;
+
+        Matd *velocity_gradient_;
     };
 
   protected:

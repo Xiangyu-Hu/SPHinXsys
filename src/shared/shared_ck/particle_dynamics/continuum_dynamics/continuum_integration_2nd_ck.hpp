@@ -58,14 +58,14 @@ void PlasticAcousticStep2ndHalf<Inner<OneLevel, RiemannSolverType, KernelCorrect
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
     {
         UnsignedInt index_j = this->neighbor_index_[n];
-        Vecd corrected_e_ij = correction_(index_i) * this->e_ij(index_i, index_j);
+        Vecd e_ij = correction_(index_i) * this->e_ij(index_i, index_j);
         Real dW_ijV_j = this->dW_ij(index_i, index_j) * Vol_[index_j];
   
 
-        Real u_jump = (vel_[index_i] - vel_[index_j]).dot(corrected_e_ij);
+        Real u_jump = (vel_[index_i] - vel_[index_j]).dot(e_ij);
         density_change_rate += u_jump * dW_ijV_j;
-        p_dissipation += riemann_solver_.DissipativePJump(u_jump) * dW_ijV_j * corrected_e_ij;
-        velocity_gradient -= (vel_[index_i] - vel_[index_j]) * dW_ijV_j * corrected_e_ij.transpose();
+        p_dissipation += riemann_solver_.DissipativePJump(u_jump) * dW_ijV_j * e_ij;
+        velocity_gradient -= (vel_[index_i] - vel_[index_j]) * dW_ijV_j * e_ij.transpose();
     }
     drho_dt_[index_i] += density_change_rate * rho_[index_i];
     force_[index_i] = p_dissipation * Vol_[index_i];
@@ -82,7 +82,8 @@ PlasticAcousticStep2ndHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionTy
       strain_tensor_3D_(encloser.dv_strain_tensor_3D_->DelegatedDataField(ex_policy)),
       stress_rate_3D_(encloser.dv_stress_rate_3D_->DelegatedDataField(ex_policy)),
       strain_rate_3D_(encloser.dv_strain_rate_3D_->DelegatedDataField(ex_policy)),
-      plastic_func_(encloser.plastic_continuum_)
+      velocity_gradient_(encloser.dv_velocity_gradient_->DelegatedDataField(ex_policy)),
+      plastic_kernel_(encloser.plastic_continuum_)
       {}
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
@@ -92,11 +93,11 @@ void PlasticAcousticStep2ndHalf<Inner<OneLevel, RiemannSolverType, KernelCorrect
     rho_[index_i] += drho_dt_[index_i] * dt * 0.5;
 
     Mat3d velocity_gradient = upgradeToMat3d(velocity_gradient_[index_i]);
-    Mat3d stress_tensor_rate_3D_ = plastic_func_.ConstitutiveRelation(velocity_gradient, stress_tensor_3D_[index_i]);
-    stress_rate_3D_[index_i] += stress_tensor_rate_3D_;
+    Mat3d stress_tensor_rate_3D_ = plastic_kernel_.ConstitutiveRelation(velocity_gradient, stress_tensor_3D_[index_i]);
+    stress_rate_3D_[index_i] = stress_tensor_rate_3D_;
     stress_tensor_3D_[index_i] += stress_rate_3D_[index_i] * dt;
     /*return mapping*/
-    stress_tensor_3D_[index_i] = plastic_func_.ReturnMapping(stress_tensor_3D_[index_i]);
+    stress_tensor_3D_[index_i] = plastic_kernel_.ReturnMapping(stress_tensor_3D_[index_i]);
     strain_rate_3D_[index_i] = 0.5 * (velocity_gradient + velocity_gradient.transpose());
     strain_tensor_3D_[index_i] += strain_rate_3D_[index_i] * dt;
 }
@@ -139,15 +140,13 @@ void PlasticAcousticStep2ndHalf<Contact<Wall, RiemannSolverType, KernelCorrectio
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
     {
         UnsignedInt index_j = this->neighbor_index_[n];
-        Vecd corrected_e_ij = correction_(index_i) * this->e_ij(index_i, index_j);
+        Vecd e_ij = this->e_ij(index_i, index_j);
         Real dW_ijV_j = this->dW_ij(index_i, index_j) * wall_Vol_[index_j];
-
-
         Vecd vel_in_wall = 2.0 * wall_vel_ave_[index_j] - vel_[index_i];
-        density_change_rate += (vel_i- vel_in_wall).dot(corrected_e_ij) * dW_ijV_j;
+        density_change_rate += (vel_i- vel_in_wall).dot(e_ij) * dW_ijV_j;
         Real u_jump = 2.0 * (vel_i- wall_vel_ave_[index_j]).dot(wall_n_[index_j]);
         p_dissipation += riemann_solver_.DissipativePJump(u_jump) * dW_ijV_j * wall_n_[index_j];
-        velocity_gradient -= (vel_i - vel_in_wall) * dW_ijV_j * corrected_e_ij.transpose();
+        velocity_gradient -= (vel_i - vel_in_wall) * dW_ijV_j * e_ij.transpose();
     }
     drho_dt_[index_i] += density_change_rate * rho_[index_i];
     force_[index_i] += p_dissipation * Vol_[index_i];

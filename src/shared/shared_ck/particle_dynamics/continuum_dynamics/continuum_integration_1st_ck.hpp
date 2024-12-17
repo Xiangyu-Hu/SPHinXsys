@@ -42,8 +42,7 @@ template <class RiemannSolverType, class KernelCorrectionType, typename... Param
 template <class ExecutionPolicy, class EncloserType>
 PlasticAcousticStep1stHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType, Parameters...>>::
     InitializeKernel::InitializeKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-    : eos_(encloser.fluid_),
-      rho_(encloser.dv_rho_->DelegatedDataField(ex_policy)),
+    : rho_(encloser.dv_rho_->DelegatedDataField(ex_policy)),
       p_(encloser.dv_p_->DelegatedDataField(ex_policy)),
       drho_dt_(encloser.dv_drho_dt_->DelegatedDataField(ex_policy)),
       vel_(encloser.dv_vel_->DelegatedDataField(ex_policy)),
@@ -57,8 +56,6 @@ void PlasticAcousticStep1stHalf<Inner<OneLevel, RiemannSolverType, KernelCorrect
     rho_[index_i] += drho_dt_[index_i] * dt * 0.5;
     p_[index_i] = -stress_tensor_3D_[index_i].trace() / 3;
     dpos_[index_i] += vel_[index_i] * dt * 0.5;
-
-
 }
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
@@ -89,7 +86,6 @@ void PlasticAcousticStep1stHalf<Inner<OneLevel, RiemannSolverType, KernelCorrect
     {
         UnsignedInt index_j = this->neighbor_index_[n];
         Real dW_ijV_j = this->dW_ij(index_i, index_j) * Vol_[index_j];
-        //Vecd e_ij = this->e_ij(index_i, index_j);
         Vecd nablaW_ijV_j = this->dW_ij(index_i, index_j) * Vol_[index_j] * this->e_ij(index_i, index_j);
         Matd stress_tensor_j = degradeToMatd(stress_tensor_3D_[index_j]);
         force += mass_[index_i] * rho_[index_j] * ((stress_tensor_i + stress_tensor_j) / (rho_i * rho_[index_j])) * nablaW_ijV_j;
@@ -121,7 +117,7 @@ template <class RiemannSolverType, class KernelCorrectionType, typename... Param
 PlasticAcousticStep1stHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType, Parameters...>>::
     PlasticAcousticStep1stHalf(Relation<Contact<Parameters...>> &wall_contact_relation)
     : PlasticAcousticStep<Interaction<Contact<Wall, Parameters...>>>(wall_contact_relation),
-      correction_(this->particles_), riemann_solver_(this->fluid_, this->fluid_) {}
+      correction_(this->particles_), riemann_solver_(this->plastic_continuum_, this->plastic_continuum_) {}
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
 template <class ExecutionPolicy, class EncloserType>
@@ -139,7 +135,8 @@ PlasticAcousticStep1stHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType
       force_(encloser.dv_force_->DelegatedDataField(ex_policy)),
       force_prior_(encloser.dv_force_prior_->DelegatedDataField(ex_policy)),
       wall_Vol_(encloser.dv_wall_Vol_[contact_index]->DelegatedDataField(ex_policy)),
-      wall_acc_ave_(encloser.dv_wall_acc_ave_[contact_index]->DelegatedDataField(ex_policy)) {}
+      wall_acc_ave_(encloser.dv_wall_acc_ave_[contact_index]->DelegatedDataField(ex_policy)),
+      stress_tensor_3D_(encloser.dv_stress_tensor_3D_->DelegatedDataField(ex_policy)) {}
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
 void PlasticAcousticStep1stHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType, Parameters...>>::
@@ -161,7 +158,7 @@ void PlasticAcousticStep1stHalf<Contact<Wall, RiemannSolverType, KernelCorrectio
         force += 2 * mass_[index_i] * stress_tensor_i * dW_ijV_j * e_ij;
         rho_dissipation += riemann_solver_.DissipativeUJump(p_[index_i] - p_in_wall) * dW_ijV_j;
     }
-    force_[index_i] += force * Vol_[index_i];
+    force_[index_i] += force / rho_[index_i];
     drho_dt_[index_i] += rho_dissipation * rho_[index_i];
 }
 

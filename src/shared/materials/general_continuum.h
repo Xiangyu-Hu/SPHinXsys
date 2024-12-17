@@ -69,38 +69,39 @@ class GeneralContinuum : public WeaklyCompressibleFluid
     virtual GeneralContinuum *ThisObjectPtr() override { return this; };
 
      //add
-    class GeneralContinuumKernel:WeaklyCompressibleFluid::EosKernel
+    class GeneralContinuumKernel
     {
       public:
-        GeneralContinuumKernel(GeneralContinuum &encloser): WeaklyCompressibleFluid::EosKernel(encloser),
-        E_(encloser.E_), G_(encloser.G_),K_(encloser.K_),nu_(encloser.nu_),contact_stiffness_(encloser.contact_stiffness_){};
+        GeneralContinuumKernel(GeneralContinuum &encloser):
+        E_(encloser.E_), G_(encloser.G_),K_(encloser.K_){};
 
-        Real lambda0_; /* first Lame parameter */
-        Real getYoungsModulus() { return E_; };
-        Real getPoissonRatio() { return nu_; };
+        //Real lambda0_; /* first Lame parameter */
+        //Real getYoungsModulus() { return E_; };
+        //Real getPoissonRatio() { return nu_; };
         //Real getDensity() { return rho0_; };
 
-        Real getBulkModulus(Real youngs_modulus, Real poisson_ratio)
-        {
-            return youngs_modulus / 3.0 / (1.0 - 2.0 * poisson_ratio);
-        };
+        // Real getBulkModulus(Real youngs_modulus, Real poisson_ratio)
+        // {
+        //     return youngs_modulus / 3.0 / (1.0 - 2.0 * poisson_ratio);
+        // };
 
-        Real getShearModulus(Real youngs_modulus, Real poisson_ratio)
-        {
-            return 0.5 * youngs_modulus / (1.0 + poisson_ratio);
-        };
+        // Real getShearModulus(Real youngs_modulus, Real poisson_ratio)
+        // {
+        //     return 0.5 * youngs_modulus / (1.0 + poisson_ratio);
+        // };
 
-        Real getLambda(Real youngs_modulus, Real poisson_ratio)
-        {
-            return nu_ * youngs_modulus / (1.0 + poisson_ratio) / (1.0 - 2.0 * poisson_ratio);
-        };
+        // Real getLambda(Real youngs_modulus, Real poisson_ratio)
+        // {
+        //     return nu_ * youngs_modulus / (1.0 + poisson_ratio) / (1.0 - 2.0 * poisson_ratio);
+        // };
 
       protected:
         Real E_;                 /* Youngs or tensile modules  */
         Real G_;                 /* shear modules  */
         Real K_;                 /* bulk modules  */
-        Real nu_;                /* Poisson ratio  */
-        Real contact_stiffness_; /* contact-force stiffness related to bulk modulus*/
+        // Real nu_;                /* Poisson ratio  */
+        // Real contact_stiffness_; /* contact-force stiffness related to bulk modulus*/
+        //,nu_(encloser.nu_),contact_stiffness_(encloser.contact_stiffness_)
     };
 };
 
@@ -139,7 +140,7 @@ class PlasticContinuum : public GeneralContinuum
       public:
 
         PlasticKernel(PlasticContinuum &encloser) : GeneralContinuum::GeneralContinuumKernel(encloser),
-        c_(encloser.c_), phi_(encloser.phi_),psi_(encloser.psi_),alpha_phi_(encloser.alpha_phi_),k_c_(encloser.k_c_)
+        psi_(encloser.psi_),alpha_phi_(encloser.alpha_phi_),k_c_(encloser.k_c_)
         {};
 
         Real getDPConstantsA(Real friction_angle)
@@ -187,12 +188,12 @@ class PlasticContinuum : public GeneralContinuum
 
 
       protected:
-          Real c_;                            /* cohesion  */
-          Real phi_;                          /* friction angle  */
+          //Real c_;                            /* cohesion  */
+          //Real phi_;                          /* friction angle  */
           Real psi_;                          /* dilatancy angle  */
           Real alpha_phi_;                    /* Drucker-Prager's constants */
           Real k_c_;                          /* Drucker-Prager's constants */
-          const Real stress_dimension_ = 3.0; /* plain strain condition */
+          Real stress_dimension_ = 3.0; /* plain strain condition */   //Temporarily cancel const --need to check
 
 
     };
