@@ -149,7 +149,6 @@ class CellLinkedList : public BaseCellLinkedList, public Mesh
     UnsignedInt getCellOffsetListSize() { return cell_offset_list_size_; };
     DiscreteVariable<UnsignedInt> *getParticleIndex() { return dv_particle_index_; };
     DiscreteVariable<UnsignedInt> *getCellOffset() { return dv_cell_offset_; };
-    ConcurrentIndexVector *getCellIndexLists() {return cell_index_lists_; };
 
     /** split algorithm */;
     template <class LocalDynamicsFunction>

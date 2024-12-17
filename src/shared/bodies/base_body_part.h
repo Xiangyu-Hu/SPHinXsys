@@ -109,11 +109,12 @@ class BodyPartByCell : public BodyPart
     ConcurrentCellLists &LoopRange() { return body_part_cells_; };
     size_t SizeOfLoopRange();
 
-    BodyPartByCell(RealBody &real_body, const std::string &body_part_name);
+    BodyPartByCell(RealBody &real_body, const std::string &body_part_name)
+        : BodyPart(real_body, body_part_name), cell_linked_list_(real_body.getCellLinkedList()){};
     virtual ~BodyPartByCell(){};
 
   protected:
-    CellLinkedList &cell_linked_list_;
+    BaseCellLinkedList &cell_linked_list_;
     typedef std::function<bool(Vecd, Real)> TaggingCellMethod;
     void tagCells(TaggingCellMethod &tagging_cell_method);
 };
