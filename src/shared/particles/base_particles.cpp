@@ -10,7 +10,7 @@ namespace SPH
 {
 //=================================================================================================//
 BaseParticles::BaseParticles(SPHBody &sph_body, BaseMaterial *base_material)
-    : v_total_real_particles_(nullptr), real_particles_bound_(0), particles_bound_(0),
+    : sv_total_real_particles_(nullptr), real_particles_bound_(0), particles_bound_(0),
       original_id_(nullptr), sorted_id_(nullptr),
       pos_(nullptr), Vol_(nullptr), rho_(nullptr), mass_(nullptr),
       sph_body_(sph_body), body_name_(sph_body.getName()),
@@ -23,7 +23,7 @@ BaseParticles::BaseParticles(SPHBody &sph_body, BaseMaterial *base_material)
       read_restart_variable_from_xml_(variables_to_restart_, restart_xml_parser_)
 {
     sph_body.assignBaseParticles(this);
-    v_total_real_particles_ = registerSingularVariable<UnsignedInt>("TotalRealParticles");
+    sv_total_real_particles_ = registerSingularVariable<UnsignedInt>("TotalRealParticles");
 }
 //=================================================================================================//
 void BaseParticles::initializeBasicParticleVariables()
@@ -58,7 +58,7 @@ void BaseParticles::registerPositionAndVolumetricMeasureFromReload()
 //=================================================================================================//
 void BaseParticles::initializeAllParticlesBounds(size_t number_of_particles)
 {
-    UnsignedInt *total_real_particles = v_total_real_particles_->ValueAddress();
+    UnsignedInt *total_real_particles = sv_total_real_particles_->ValueAddress();
     *total_real_particles = number_of_particles;
     real_particles_bound_ = number_of_particles;
     particles_bound_ = real_particles_bound_;

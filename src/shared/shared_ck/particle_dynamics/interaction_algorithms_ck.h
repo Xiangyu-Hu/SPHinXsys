@@ -31,7 +31,7 @@
 
 #include "base_particle_dynamics.h"
 #include "interaction_ck.hpp"
-#include "particle_iterators.h"
+#include "particle_iterators_ck.h"
 
 namespace SPH
 {
@@ -96,6 +96,7 @@ class InteractionDynamicsCK<ExecutionPolicy, Base, InteractionType<Inner<Paramet
     : public InteractionType<Inner<Parameters...>>
 {
     using LocalDynamicsType = InteractionType<Inner<Parameters...>>;
+    using Identifier = typename LocalDynamicsType::Identifier;
     using InteractKernel = typename LocalDynamicsType::InteractKernel;
     using KernelImplementation = Implementation<ExecutionPolicy, LocalDynamicsType, InteractKernel>;
     KernelImplementation kernel_implementation_;
@@ -114,6 +115,7 @@ class InteractionDynamicsCK<ExecutionPolicy, Base, InteractionType<Contact<Param
     : public InteractionType<Contact<Parameters...>>
 {
     using LocalDynamicsType = InteractionType<Contact<Parameters...>>;
+    using Identifier = typename LocalDynamicsType::Identifier;
     using InteractKernel = typename LocalDynamicsType::InteractKernel;
     using KernelImplementation = Implementation<ExecutionPolicy, LocalDynamicsType, InteractKernel>;
     UniquePtrsKeeper<KernelImplementation> contact_kernel_implementation_ptrs_;
@@ -155,6 +157,7 @@ class InteractionDynamicsCK<
       public BaseDynamics<void>
 {
     using LocalDynamicsType = InteractionType<RelationType<WithUpdate, OtherParameters...>>;
+    using Identifier = typename LocalDynamicsType::Identifier;
     using UpdateKernel = typename LocalDynamicsType::UpdateKernel;
     using KernelImplementation =
         Implementation<ExecutionPolicy, LocalDynamicsType, UpdateKernel>;
@@ -181,6 +184,7 @@ class InteractionDynamicsCK<
       public BaseDynamics<void>
 {
     using LocalDynamicsType = InteractionType<RelationType<OneLevel, OtherParameters...>>;
+    using Identifier = typename LocalDynamicsType::Identifier;
     using InitializeKernel = typename LocalDynamicsType::InitializeKernel;
     using UpdateKernel = typename LocalDynamicsType::UpdateKernel;
     using InitializeKernelImplementation =

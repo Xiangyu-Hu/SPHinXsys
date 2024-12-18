@@ -61,6 +61,8 @@ class Wall;            /**< Interaction with wall boundary */
 class Extended;        /**< An extened method of an interaction type */
 class SpatialTemporal; /**< A interaction considering spatial temporal correlations */
 class Dynamic;         /**< A dynamic interaction */
+class Constant;        /**< A constant parameter */
+class Variable;        /**< A variable parameter */
 
 using MaterialVector = StdVec<BaseMaterial *>;
 using SPHBodyVector = StdVec<SPHBody *>;

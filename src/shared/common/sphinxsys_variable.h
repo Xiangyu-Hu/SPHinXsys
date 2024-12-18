@@ -77,10 +77,8 @@ class SingularVariable : public Entity
     ~SingularVariable() { delete value_; };
 
     DataType *ValueAddress() { return delegated_; };
-
     void setValue(const DataType &value) { *delegated_ = value; };
     DataType getValue() { return *delegated_; };
-
     void incrementValue(const DataType &value) { *delegated_ += value; };
 
     template <class ExecutionPolicy>

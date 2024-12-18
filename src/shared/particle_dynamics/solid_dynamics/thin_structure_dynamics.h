@@ -259,7 +259,7 @@ class ShellStressRelaxationFirstHalf : public BaseShellRelaxation
 
 /**
  * @class ShellStressRelaxationSecondHalf
- * @brief computing stress relaxation process by verlet time stepping
+ * @brief computing stress relaxation process by Verlet time stepping
  * This is the second step
  */
 class ShellStressRelaxationSecondHalf : public BaseShellRelaxation
