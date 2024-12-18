@@ -44,6 +44,8 @@ class LoopRangeCK<ExecutionPolicy, SPHBody>
   public:
     LoopRangeCK(SPHBody &sph_body)
         : loop_bound_(sph_body.getBaseParticles().svTotalRealParticles()->DelegatedData(ExecutionPolicy{})){};
+    LoopRangeCK(SingularVariable<UnsignedInt> *sv_total_particles)
+        : loop_bound_(sv_total_particles->DelegatedData(ExecutionPolicy{})){};
     template <class ReturnType, class UnaryFunc>
     ReturnType computeUnit(const UnaryFunc &f, UnsignedInt i) const { return f(i); };
     UnsignedInt LoopBound() const { return *loop_bound_; };
