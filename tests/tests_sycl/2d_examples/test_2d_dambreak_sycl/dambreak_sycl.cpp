@@ -139,7 +139,7 @@ int main(int ac, char *av[])
         sv_physical_time->setValue(restart_io.readRestartFiles(sph_system.RestartStep()));
     }
 
-    wall_boundary_normal_direction.exec();
+    wall_boundary_normal_direction.exec(); // run particle dynamics on CPU first
     constant_gravity.exec();
 
     water_cell_linked_list.exec();

@@ -97,7 +97,7 @@ class BasePorousMediaRelaxation : public LocalDynamics, public DataDelegateInner
 
 /**
  * @class PorousMediaStressRelaxationFirstHalf
- * @brief computing Porous Media stress relaxation process by verlet time stepping
+ * @brief computing Porous Media stress relaxation process by Verlet time stepping
  * This is the first step
  */
 class PorousMediaStressRelaxationFirstHalf
@@ -152,7 +152,7 @@ class PorousMediaStressRelaxationFirstHalf
 
 /**
  * @class PorousMediaStressRelaxationSecondHalf
- * @brief computing Porous Media stress relaxation process by verlet time stepping
+ * @brief computing Porous Media stress relaxation process by Verlet time stepping
  * This is the second step
  */
 class PorousMediaStressRelaxationSecondHalf

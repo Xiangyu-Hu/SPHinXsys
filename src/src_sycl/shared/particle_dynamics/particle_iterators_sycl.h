@@ -29,14 +29,15 @@
 #ifndef PARTICLE_ITERATORS_SYCL_H
 #define PARTICLE_ITERATORS_SYCL_H
 
-#include "execution_sycl.h"
-#include "particle_iterators.h"
+#include "implementation_sycl.h"
+#include "particle_iterators_ck.h"
 
 namespace SPH
 {
-template <class LocalDynamicsFunction>
-inline void particle_for(const ParallelDevicePolicy &par_device,
-                         const IndexRange &particles_range, const LocalDynamicsFunction &local_dynamics_function)
+template <class UnaryFunc>
+void particle_for(const ParallelDevicePolicy &par_device,
+                  const IndexRange &particles_range,
+                  const UnaryFunc &unary_func)
 {
     auto &sycl_queue = execution_instance.getQueue();
     const size_t particles_size = particles_range.size();
@@ -44,26 +45,40 @@ inline void particle_for(const ParallelDevicePolicy &par_device,
                       { cgh.parallel_for(execution_instance.getUniformNdRange(particles_size), [=](sycl::nd_item<1> index)
                                          {
                                  if(index.get_global_id(0) < particles_size)
-                                     local_dynamics_function(index.get_global_id(0)); }); })
+                                     unary_func(index.get_global_id(0)); }); })
         .wait_and_throw();
 }
 
-template <class ReturnType, typename Operation, class LocalDynamicsFunction>
-inline ReturnType particle_reduce(const ParallelDevicePolicy &par_device,
-                                  const IndexRange &particles_range, ReturnType temp, Operation &&operation,
-                                  const LocalDynamicsFunction &local_dynamics_function)
+template <class DynamicsIdentifier, class UnaryFunc>
+void particle_for(const LoopRangeCK<ParallelDevicePolicy, DynamicsIdentifier> &loop_range,
+                  const UnaryFunc &unary_func)
 {
     auto &sycl_queue = execution_instance.getQueue();
-    const size_t particles_size = particles_range.size();
+    const size_t particles_size = loop_range.LoopBound();
+    sycl_queue.submit([&](sycl::handler &cgh)
+                      { cgh.parallel_for(execution_instance.getUniformNdRange(particles_size), [=](sycl::nd_item<1> index)
+                                         {
+                                 if(index.get_global_id(0) < particles_size)
+                                     loop_range.template computeUnit<void>(unary_func, index.get_global_id(0)); }); })
+        .wait_and_throw();
+}
+
+template <typename Operation, class DynamicsIdentifier, class ReturnType, class UnaryFunc>
+ReturnType particle_reduce(const LoopRangeCK<ParallelDevicePolicy, DynamicsIdentifier> &loop_range,
+                           ReturnType temp, const UnaryFunc &unary_func)
+{
+    auto &sycl_queue = execution_instance.getQueue();
+    const size_t particles_size = loop_range.LoopBound();
     {
         sycl::buffer<ReturnType> buffer_result(&temp, 1);
         sycl_queue.submit([&](sycl::handler &cgh)
                           {
-                              auto reduction_operator = sycl::reduction(buffer_result, cgh, operation);
+                              auto reduction_operator = sycl::reduction(buffer_result, cgh, Operation());
                               cgh.parallel_for(execution_instance.getUniformNdRange(particles_size), reduction_operator,
                                                [=](sycl::nd_item<1> item, auto& reduction) {
                                                    if(item.get_global_id() < particles_size)
-                                                       reduction.combine(local_dynamics_function(item.get_global_id(0)));
+                                                       reduction.combine(loop_range.template computeUnit<ReturnType>(
+                                                        unary_func, item.get_global_id(0)));
                                                }); })
             .wait_and_throw();
     } // buffer_result goes out of scope, so the result (of temp) is updated

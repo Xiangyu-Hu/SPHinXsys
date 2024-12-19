@@ -31,7 +31,7 @@
 
 #include "base_configuration_dynamics.h"
 
-#include "execution_sycl.h"
+#include "implementation_sycl.h"
 
 namespace SPH
 {

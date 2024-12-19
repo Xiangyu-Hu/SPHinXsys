@@ -34,7 +34,7 @@
 #include "base_geometry.h"
 #include "base_particles.h"
 #include "cell_linked_list.h"
-#include "execution.h"
+#include "base_implementation.h"
 #include "neighborhood.h"
 
 namespace SPH

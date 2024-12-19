@@ -8,6 +8,8 @@
  */
 
 #include "sphinxsys.h"
+
+#include <numeric>
 #include <gtest/gtest.h>
 
 using namespace SPH;

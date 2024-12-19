@@ -79,7 +79,6 @@ void ConstraintBySimBody<DynamicsIdentifier>::updateSimbodyState(const SimTK::St
 template <class DynamicsIdentifier>
 void ConstraintBySimBody<DynamicsIdentifier>::update(size_t index_i, Real dt)
 {
-    /** Change to SimTK::Vector. */
     Vec3d pos, vel, acc, n;
     simbody_state_.findStationLocationVelocityAndAccelerationInGround(
         upgradeToVec3d(this->pos0_[index_i]), upgradeToVec3d(n0_[index_i]), pos, vel, acc, n);
