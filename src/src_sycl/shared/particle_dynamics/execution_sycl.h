@@ -145,11 +145,10 @@ class Implementation<ParallelDevicePolicy, LocalDynamicsType, ComputingKernelTyp
     }
 
     template <typename... Args>
-    ComputingKernelType *getComputingKernel(Args &&... args)
+    ComputingKernelType *getComputingKernel(Args &&...args)
     {
         if (computing_kernel_ == nullptr)
         {
-            local_dynamics_.registerComputingKernel(this, std::forward<Args>(args)...);
             computing_kernel_ = allocateDeviceOnly<ComputingKernelType>(1);
             ComputingKernelType *host_kernel =
                 kernel_ptr_keeper_.template createPtr<ComputingKernelType>(
@@ -167,7 +166,7 @@ class Implementation<ParallelDevicePolicy, LocalDynamicsType, ComputingKernelTyp
     }
 
     template <typename... Args>
-    void overwriteComputingKernel(Args &&... args)
+    void overwriteComputingKernel(Args &&...args)
     {
         ComputingKernelType *host_kernel =
             kernel_ptr_keeper_.template createPtr<ComputingKernelType>(
