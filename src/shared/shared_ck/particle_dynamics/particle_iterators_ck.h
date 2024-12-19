@@ -62,11 +62,11 @@ void particle_for(const LoopRangeCK<ParallelPolicy, DynamicsIdentifier> &loop_ra
         ap);
 };
 
-template <class DynamicsIdentifier, class ReturnType, typename Operation, class UnaryFunc>
+template <typename Operation, class DynamicsIdentifier, class ReturnType, class UnaryFunc>
 ReturnType particle_reduce(const LoopRangeCK<SequencedPolicy, DynamicsIdentifier> &loop_range,
-                           ReturnType temp, Operation &&operation,
-                           const UnaryFunc &unary_func)
+                           ReturnType temp, const UnaryFunc &unary_func)
 {
+    Operation operation;
     for (size_t i = 0; i < loop_range.LoopBound(); ++i)
     {
         temp = operation(temp, loop_range.template computeUnit<ReturnType>(unary_func, i));
@@ -74,11 +74,11 @@ ReturnType particle_reduce(const LoopRangeCK<SequencedPolicy, DynamicsIdentifier
     return temp;
 }
 
-template <class DynamicsIdentifier, class ReturnType, typename Operation, class UnaryFunc>
+template <typename Operation, class DynamicsIdentifier, class ReturnType, class UnaryFunc>
 ReturnType particle_reduce(const LoopRangeCK<ParallelPolicy, DynamicsIdentifier> &loop_range,
-                           ReturnType temp, Operation &&operation,
-                           const UnaryFunc &unary_func)
+                           ReturnType temp, const UnaryFunc &unary_func)
 {
+    Operation operation;
     return parallel_reduce(
         IndexRange(0, loop_range.LoopBound()),
         temp, [&](const IndexRange &r, ReturnType temp0) -> ReturnType

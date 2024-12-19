@@ -50,7 +50,7 @@ class StateDynamics : public UpdateType, public BaseDynamics<void>
     StateDynamics(Args &&...args)
         : UpdateType(std::forward<Args>(args)...),
           BaseDynamics<void>(), kernel_implementation_(*this){};
-    virtual ~StateDynamics(){};
+    virtual ~StateDynamics() {};
 
     virtual void exec(Real dt = 0.0) override
     {
@@ -70,6 +70,7 @@ class ReduceDynamicsCK : public ReduceType,
     using Identifier = typename ReduceType::Identifier;
     using ReduceKernel = typename ReduceType::ReduceKernel;
     using ReturnType = typename ReduceType::ReturnType;
+    using Operation = typename ReduceType::OperationType;
     using KernelImplementation =
         Implementation<ExecutionPolicy, ReduceType, ReduceKernel>;
     KernelImplementation kernel_implementation_;
@@ -79,7 +80,7 @@ class ReduceDynamicsCK : public ReduceType,
     ReduceDynamicsCK(Args &&...args)
         : ReduceType(std::forward<Args>(args)...),
           BaseDynamics<ReturnType>(), kernel_implementation_(*this){};
-    virtual ~ReduceDynamicsCK(){};
+    virtual ~ReduceDynamicsCK() {};
 
     std::string QuantityName() { return this->quantity_name_; };
     std::string DynamicsIdentifierName() { return this->identifier_.getName(); };
@@ -88,10 +89,10 @@ class ReduceDynamicsCK : public ReduceType,
     {
         this->setupDynamics(dt);
         ReduceKernel *reduce_kernel = kernel_implementation_.getComputingKernel();
-        ReturnType temp = particle_reduce(
+        ReturnType temp = particle_reduce<Operation>(
             LoopRangeCK<ExecutionPolicy, Identifier>(this->identifier_),
-            this->Reference(), this->getOperation(),
-            [=](size_t i) -> ReturnType
+            ReduceReference<Operation>::value,
+            [=](size_t i)
             { return reduce_kernel->reduce(i, dt); });
         return this->outputResult(temp);
     };

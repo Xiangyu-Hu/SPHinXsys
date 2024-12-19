@@ -27,7 +27,10 @@ TEST(particle_reduce, test_sycl)
     SimTK::SpatialVec sum = particle_reduce(SequencedPolicy{}, IndexRange(0, torques.size()),
                                             ZeroData<SimTK::SpatialVec>::value, ReduceSum<SimTK::SpatialVec>(),
                                             [&](size_t i)
-                                            { return SimTK::SpatialVec(torques[i], forces[i]); });
+                                            {
+                                                SimTKVec3 a = SimTK::cross(torques[i], forces[i]);
+                                                return SimTK::SpatialVec(a, forces[i]);
+                                            });
 
     DiscreteVariable<SimTKVec3> dv_torque("Torque", torques.size());
     DiscreteVariable<SimTKVec3> dv_force("Force", forces.size());
@@ -43,19 +46,25 @@ TEST(particle_reduce, test_sycl)
 
     SimTKVec3 *torque_ck = dv_torque.DelegatedDataField(ParallelPolicy{});
     SimTKVec3 *force_ck = dv_force.DelegatedDataField(ParallelPolicy{});
-    SimTK::SpatialVec sum_ck = particle_reduce(LoopRangeCK<ParallelPolicy, SPHBody>(&sv_total_particles),
-                                               ZeroData<SimTK::SpatialVec>::value,
-                                               ReduceSum<SimTK::SpatialVec>(),
-                                               [=](size_t i)
-                                               { return SimTK::SpatialVec(torque_ck[i], force_ck[i]); });
+    SimTK::SpatialVec sum_ck = particle_reduce<ReduceSum<SimTK::SpatialVec>>(
+        LoopRangeCK<ParallelPolicy, SPHBody>(&sv_total_particles),
+        ReduceReference<ReduceSum<SimTK::SpatialVec>>::value,
+        [=](size_t i)
+        {
+            SimTKVec3 a = SimTK::cross(torque_ck[i], force_ck[i]);
+            return SimTK::SpatialVec(a, force_ck[i]);
+        });
 
     SimTKVec3 *torque_sycl = dv_torque.DelegatedDataField(ParallelDevicePolicy{});
     SimTKVec3 *force_sycl = dv_force.DelegatedDataField(ParallelDevicePolicy{});
-    SimTK::SpatialVec sum_sycl = particle_reduce(LoopRangeCK<ParallelDevicePolicy, SPHBody>(&sv_total_particles),
-                                                 ZeroData<SimTK::SpatialVec>::value,
-                                                 ReduceSum<SimTK::SpatialVec>(),
-                                                 [=](size_t i)
-                                                 { return SimTK::SpatialVec(torque_sycl[i], force_sycl[i]); });
+    SimTK::SpatialVec sum_sycl = particle_reduce<ReduceSum<SimTK::SpatialVec>>(
+        LoopRangeCK<ParallelDevicePolicy, SPHBody>(&sv_total_particles),
+        ReduceReference<ReduceSum<SimTK::SpatialVec>>::value,
+        [=](size_t i)
+        {
+            SimTKVec3 a = SimTK::cross(torque_sycl[i], force_sycl[i]);
+            return SimTK::SpatialVec(a, force_sycl[i]);
+        });
     EXPECT_EQ(sum, sum_ck);
     EXPECT_EQ(sum, sum_sycl);
 }

@@ -33,8 +33,23 @@
 
 namespace sycl
 {
+    template <>
+struct is_device_copyable<SPH::SimTKVec3> : std::true_type
+{
+};
+
 template <>
-struct is_device_copyable<SimTK::SpatialVec> : std::true_type
+struct is_device_copyable<SimTK::Vec<2, SPH::SimTKVec3>> : std::true_type
+{
+};
+
+template <>
+struct is_device_copyable<SPH::Vec2d> : std::true_type
+{
+};
+
+template <>
+struct is_device_copyable<SPH::Vec3d> : std::true_type
 {
 };
 } // namespace sycl

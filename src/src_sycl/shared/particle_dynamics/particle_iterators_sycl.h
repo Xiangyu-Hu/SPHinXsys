@@ -63,10 +63,9 @@ void particle_for(const LoopRangeCK<ParallelDevicePolicy, DynamicsIdentifier> &l
         .wait_and_throw();
 }
 
-template <class DynamicsIdentifier, class ReturnType, typename Operation, class UnaryFunc>
+template <typename Operation, class DynamicsIdentifier, class ReturnType, class UnaryFunc>
 ReturnType particle_reduce(const LoopRangeCK<ParallelDevicePolicy, DynamicsIdentifier> &loop_range,
-                           ReturnType temp, Operation &&operation,
-                           const UnaryFunc &unary_func)
+                           ReturnType temp, const UnaryFunc &unary_func)
 {
     auto &sycl_queue = execution_instance.getQueue();
     const size_t particles_size = loop_range.LoopBound();
@@ -74,7 +73,7 @@ ReturnType particle_reduce(const LoopRangeCK<ParallelDevicePolicy, DynamicsIdent
         sycl::buffer<ReturnType> buffer_result(&temp, 1);
         sycl_queue.submit([&](sycl::handler &cgh)
                           {
-                              auto reduction_operator = sycl::reduction(buffer_result, cgh, operation);
+                              auto reduction_operator = sycl::reduction(buffer_result, cgh, Operation());
                               cgh.parallel_for(execution_instance.getUniformNdRange(particles_size), reduction_operator,
                                                [=](sycl::nd_item<1> item, auto& reduction) {
                                                    if(item.get_global_id() < particles_size)

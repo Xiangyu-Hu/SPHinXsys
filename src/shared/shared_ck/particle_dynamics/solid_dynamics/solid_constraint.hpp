@@ -89,7 +89,7 @@ TotalForceForSimBodyCK<DynamicsIdentifier>::
       dv_force_prior_(this->particles_->template getVariableByName<Vecd>("ForcePrior")),
       dv_pos_(this->particles_->template getVariableByName<Vecd>("Position")),
       sv_current_origin_location_(
-          this->particles_->template addUniqueSingularVariableOnly<SimTKVec3>(
+          this->particles_->template addUniqueSingularVariableOnly<Vecd>(
               identifier.getName() + "OriginLocation"))
 {
     this->quantity_name_ = "TotalForceForSimBody";
@@ -100,7 +100,7 @@ void TotalForceForSimBodyCK<DynamicsIdentifier>::setupDynamics(Real dt)
 {
     const SimTK::State *state = &integ_.getState();
     MBsystem_.realize(*state, SimTK::Stage::Acceleration);
-    sv_current_origin_location_->setValue(mobod_.getBodyOriginLocation(*state));
+    sv_current_origin_location_->setValue(degradeToVecd(SimTKToEigen(mobod_.getBodyOriginLocation(*state))));
 }
 //=================================================================================================//
 template <class DynamicsIdentifier>
@@ -117,10 +117,10 @@ SimTK::SpatialVec TotalForceForSimBodyCK<DynamicsIdentifier>::
     ReduceKernel::reduce(size_t index_i, Real dt)
 {
     Vecd force = force_[index_i] + force_prior_[index_i];
-    SimTKVec3 force_from_particle = EigenToSimTK(upgradeToVec3d(force));
-    SimTKVec3 displacement = EigenToSimTK(upgradeToVec3d(pos_[index_i])) - *current_origin_location_;
-    SimTKVec3 torque_from_particle = SimTK::cross(displacement, force_from_particle);
-    return SimTK::SpatialVec(torque_from_particle, force_from_particle);
+    Vec3d force_from_particle = upgradeToVec3d(force);
+    Vecd displacement = pos_[index_i] - *current_origin_location_;
+    Vec3d torque_from_particle = upgradeToVec3d(displacement).cross(force_from_particle);
+    return SimTK::SpatialVec(EigenToSimTK(torque_from_particle), EigenToSimTK(force_from_particle));
 }
 //=================================================================================================//
 } // namespace solid_dynamics

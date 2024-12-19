@@ -84,6 +84,7 @@ template <typename Operation, class DynamicsIdentifier>
 class BaseLocalDynamicsReduce : public BaseLocalDynamics<DynamicsIdentifier>
 {
   public:
+    typedef Operation OperationType;
     using ReturnType = typename Operation::ReturnType;
     explicit BaseLocalDynamicsReduce(DynamicsIdentifier &identifier)
         : BaseLocalDynamics<DynamicsIdentifier>(identifier),
