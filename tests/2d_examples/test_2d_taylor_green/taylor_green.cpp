@@ -98,7 +98,7 @@ int main(int ac, char *av[])
     // boundary condition and other constraints should be defined.
     //----------------------------------------------------------------------
     SimpleDynamics<TaylorGreenInitialCondition> initial_condition(water_block);
-    /** Pressure relaxation algorithm by using verlet time stepping. */
+    /** Pressure relaxation algorithm by using Verlet time stepping. */
     /** Here, we do not use Riemann solver for pressure as the flow is viscous.
      * The other reason is that we are using transport velocity formulation,
      * which will also introduce numerical dissipation slightly. */

@@ -99,7 +99,7 @@ class BaseParticles
     // particles_bound_ gives the total number of particles in all groups.
     //----------------------------------------------------------------------
   protected:
-    SingularVariable<UnsignedInt> *v_total_real_particles_;
+    SingularVariable<UnsignedInt> *sv_total_real_particles_;
     UnsignedInt real_particles_bound_;
     UnsignedInt particles_bound_;
 
@@ -109,9 +109,10 @@ class BaseParticles
     //----------------------------------------------------------------------
     // Generalized particle manipulation
     //----------------------------------------------------------------------
-    UnsignedInt TotalRealParticles() { return *v_total_real_particles_->ValueAddress(); };
-    void incrementTotalRealParticles(UnsignedInt increment = 1) { *v_total_real_particles_->ValueAddress() += increment; };
-    void decrementTotalRealParticles(UnsignedInt decrement = 1) { *v_total_real_particles_->ValueAddress() -= decrement; };
+    SingularVariable<UnsignedInt> *svTotalRealParticles() { return sv_total_real_particles_; };
+    UnsignedInt TotalRealParticles() { return *sv_total_real_particles_->ValueAddress(); };
+    void incrementTotalRealParticles(UnsignedInt increment = 1) { *sv_total_real_particles_->ValueAddress() += increment; };
+    void decrementTotalRealParticles(UnsignedInt decrement = 1) { *sv_total_real_particles_->ValueAddress() -= decrement; };
     UnsignedInt RealParticlesBound() { return real_particles_bound_; };
     UnsignedInt ParticlesBound() { return particles_bound_; };
     void initializeAllParticlesBounds(size_t total_real_particles);
@@ -136,6 +137,8 @@ class BaseParticles
   public:
     template <class DataType, typename... Args>
     DataType *addUniqueDiscreteVariable(const std::string &name, size_t data_size, Args &&...args);
+    template <class DataType, typename... Args>
+    DiscreteVariable<DataType> *addUniqueDiscreteVariableOnly(const std::string &name, size_t data_size, Args &&...args);
     template <typename DataType, typename... Args>
     DataType *registerDiscreteVariable(const std::string &name, size_t data_size, Args &&...args);
 
@@ -158,7 +161,11 @@ class BaseParticles
     DiscreteVariable<DataType> *registerDiscreteVariableOnly(const std::string &name, size_t data_size, Args &&...args);
     template <typename DataType, typename... Args>
     DiscreteVariable<DataType> *registerStateVariableOnly(const std::string &name, Args &&...args);
+    template <typename DataType>
+    DiscreteVariable<DataType> *registerStateVariableOnlyFrom(const std::string &new_name, const std::string &old_name);
 
+    template <typename DataType>
+    SingularVariable<DataType> *addUniqueSingularVariableOnly(const std::string &name, DataType initial_value = ZeroData<DataType>::value);
     template <typename DataType>
     SingularVariable<DataType> *registerSingularVariable(const std::string &name, DataType initial_value = ZeroData<DataType>::value);
     template <typename DataType>

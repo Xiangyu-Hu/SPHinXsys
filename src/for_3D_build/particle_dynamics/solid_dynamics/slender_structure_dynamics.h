@@ -260,7 +260,7 @@ class BarStressRelaxationFirstHalf : public BaseBarRelaxation
 
 /**
  * @class BarStressRelaxationSecondHalf
- * @brief computing stress relaxation process by verlet time stepping
+ * @brief computing stress relaxation process by Verlet time stepping
  * This is the second step
  */
 class BarStressRelaxationSecondHalf : public BaseBarRelaxation
