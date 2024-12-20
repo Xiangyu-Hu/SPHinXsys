@@ -21,17 +21,16 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	base_relax_dynamics.h
- * @brief 	This is the classes of particle relaxation in order to produce body fitted
- * 			initial particle distribution.
- * @author	Chi Zhang and Xiangyu Hu
+ * @file    mesh_local_dynamics.h
+ * @brief   This class encapsulates functions related to mesh dynamics,
+ *          including initialization and manipulation of level set data.
+ * @author  Chi Zhang and Xiangyu Hu
  */
 
 #ifndef MESH_LOCAL_DYNAMICS_H
 #define MESH_LOCAL_DYNAMICS_H
 
 #include "sphinxsys_variable.h"
-// #include "triangle_mesh_shape.h"
 #include "mesh_with_data_packages.hpp"
 #include "base_geometry.h"
 #include "base_kernel.h"
@@ -44,30 +43,6 @@ using MeshWithGridDataPackagesType = MeshWithGridDataPackages<4>;
 
 template <class T>
 using MeshVariableData = PackageDataMatrix<T, 4>;
-
-class FindSignedDistance
-{
-  public:
-    template <class ExecutionPolicy, class ShapeType>
-    FindSignedDistance(const ExecutionPolicy &ex_policy, const ShapeType &shape)
-        : shape_(shape){};
-    ~FindSignedDistance(){};
-
-    Real exec(const Vecd &probe_point){ return shape_.findSignedDistance(probe_point); };
-
-  private:
-    Shape &shape_;
-};
-
-// template <class ExecutionPolicy>
-// class FindSignedDistance<ExecutionPolicy, TriangleMeshShapeSTL>
-// {
-//   public:
-//     FindSignedDistance(const ExecutionPolicy &ex_policy, TriangleMeshShapeSTL &shape_){};
-//     ~FindSignedDistance(){};
-
-//     Real exec(const Vecd &probe_point);
-// };
 
 /**
  * @class BaseMeshLocalDynamics
@@ -139,6 +114,10 @@ class BaseMeshLocalDynamics
                            CellNeighborhood &neighborhood);
 };
 
+/**
+ * @class InitializeDataForSingularPackage
+ * @brief Update function for singular data initialization.
+ */
 class InitializeDataForSingularPackage : public BaseMeshLocalDynamics
 {
   public:
@@ -149,6 +128,10 @@ class InitializeDataForSingularPackage : public BaseMeshLocalDynamics
     void update(const size_t package_index, Real far_field_level_set);
 };
 
+/**
+ * @class InitializeDataInACell
+ * @brief Distinguish and categorize the core data packages within the level set mesh.
+ */
 class InitializeDataInACell : public BaseMeshLocalDynamics
 {
   public:
@@ -179,6 +162,10 @@ class InitializeDataInACell : public BaseMeshLocalDynamics
     Shape &shape_;
 };
 
+/**
+ * @class TagACellIsInnerPackage
+ * @brief Distinguish and categorize the inner data packages within the level set mesh.
+ */
 class TagACellIsInnerPackage : public BaseMeshLocalDynamics
 {
   public:
@@ -205,6 +192,10 @@ class TagACellIsInnerPackage : public BaseMeshLocalDynamics
     };
 };
 
+/**
+ * @class InitializeIndexMesh
+ * @brief Store the 1-D array package index for each occupied cell on the mesh.
+ */
 class InitializeIndexMesh : public BaseMeshLocalDynamics
 {
   public:
@@ -227,6 +218,10 @@ class InitializeIndexMesh : public BaseMeshLocalDynamics
     };
 };
 
+/**
+ * @class InitializeCellNeighborhood
+ * @brief Store the indices of neighboring cells in a 1-D array for each occupied cell.
+ */
 class InitializeCellNeighborhood : public BaseMeshLocalDynamics
 {
   public:
@@ -253,6 +248,10 @@ class InitializeCellNeighborhood : public BaseMeshLocalDynamics
     };
 };
 
+/**
+ * @class InitializeBasicDataForAPackage
+ * @brief Initialize the `phi` and `near_interface_id` mesh data for each occupied cell.
+ */
 class InitializeBasicDataForAPackage : public BaseMeshLocalDynamics
 {
   public:
@@ -287,6 +286,10 @@ class InitializeBasicDataForAPackage : public BaseMeshLocalDynamics
     Shape &shape_;
 };
 
+/**
+ * @class InitializeBasicDataForAPackage
+ * @brief Calculate the `phi_gradient_` mesh data base on the `phi_` state for each occupied cell.
+ */
 class UpdateLevelSetGradient : public BaseMeshLocalDynamics
 {
   public:
