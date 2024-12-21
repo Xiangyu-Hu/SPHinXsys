@@ -35,7 +35,7 @@ DeviceSharedDiscreteVariableArray<DataType>::
 }
 //=================================================================================================//
 template <typename DataType>
-DeviceSharedSingularVariable<DataType>::~DeviceSharedSingularVariable()
+DeviceSharedDiscreteVariableArray<DataType>:: ::~DeviceSharedDiscreteVariableArray()
 {
     freeDeviceData(device_shared_field_array_);
 }
