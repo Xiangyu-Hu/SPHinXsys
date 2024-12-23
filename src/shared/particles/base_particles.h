@@ -110,9 +110,9 @@ class BaseParticles
     // Generalized particle manipulation
     //----------------------------------------------------------------------
     SingularVariable<UnsignedInt> *svTotalRealParticles() { return sv_total_real_particles_; };
-    UnsignedInt TotalRealParticles() { return *sv_total_real_particles_->ValueAddress(); };
-    void incrementTotalRealParticles(UnsignedInt increment = 1) { *sv_total_real_particles_->ValueAddress() += increment; };
-    void decrementTotalRealParticles(UnsignedInt decrement = 1) { *sv_total_real_particles_->ValueAddress() -= decrement; };
+    UnsignedInt TotalRealParticles() { return *sv_total_real_particles_->Data(); };
+    void incrementTotalRealParticles(UnsignedInt increment = 1) { *sv_total_real_particles_->Data() += increment; };
+    void decrementTotalRealParticles(UnsignedInt decrement = 1) { *sv_total_real_particles_->Data() -= decrement; };
     UnsignedInt RealParticlesBound() { return real_particles_bound_; };
     UnsignedInt ParticlesBound() { return particles_bound_; };
     void initializeAllParticlesBounds(size_t total_real_particles);

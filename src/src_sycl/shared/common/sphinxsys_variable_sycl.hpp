@@ -11,22 +11,22 @@ template <typename DataType>
 DeviceSharedSingularVariable<DataType>::
     DeviceSharedSingularVariable(SingularVariable<DataType> *host_variable)
     : Entity(host_variable->Name()),
-      device_shared_value_(allocateDeviceShared<DataType>(1))
+      device_shared_data_(allocateDeviceShared<DataType>(1))
 {
-    *device_shared_value_ = *host_variable->ValueAddress();
-    host_variable->setDelegateValueAddress(device_shared_value_);
+    *device_shared_data_ = *host_variable->Data();
+    host_variable->setDelegateData(device_shared_data_);
 }
 //=================================================================================================//
 template <typename DataType>
 DeviceSharedSingularVariable<DataType>::~DeviceSharedSingularVariable()
 {
-    freeDeviceData(device_shared_value_);
+    freeDeviceData(device_shared_data_);
 }
 //=================================================================================================//
 template <typename DataType>
 void DiscreteVariable<DataType>::synchronizeWithDevice()
 {
-    if (existDeviceDataField())
+    if (isDataDelegated())
     {
         copyFromDevice(data_field_, device_data_field_, data_size_);
     }
@@ -35,7 +35,7 @@ void DiscreteVariable<DataType>::synchronizeWithDevice()
 template <typename DataType>
 void DiscreteVariable<DataType>::synchronizeToDevice()
 {
-    if (existDeviceDataField())
+    if (isDataDelegated())
     {
         copyToDevice(data_field_, device_data_field_, data_size_);
     }
@@ -69,9 +69,9 @@ void DeviceOnlyDiscreteVariable<DataType>::
 }
 //=================================================================================================//
 template <typename DataType>
-DataType *DiscreteVariable<DataType>::DelegatedDataField(const ParallelDevicePolicy &par_device)
+DataType *DiscreteVariable<DataType>::DelegatedData(const ParallelDevicePolicy &par_device)
 {
-    if (!existDeviceDataField())
+    if (!isDataDelegated())
     {
         device_only_variable_ =
             device_only_variable_keeper_

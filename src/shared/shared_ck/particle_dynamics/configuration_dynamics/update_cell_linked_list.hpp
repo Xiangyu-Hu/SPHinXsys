@@ -32,10 +32,10 @@ UpdateCellLinkedList<ExecutionPolicy, CellLinkedListType>::ComputingKernel::
                     UpdateCellLinkedList<ExecutionPolicy, CellLinkedListType> &encloser)
     : mesh_(encloser.mesh_),
       cell_offset_list_size_(encloser.cell_offset_list_size_),
-      pos_(encloser.dv_pos_->DelegatedDataField(ex_policy)),
-      particle_index_(encloser.dv_particle_index_->DelegatedDataField(ex_policy)),
-      cell_offset_(encloser.dv_cell_offset_->DelegatedDataField(ex_policy)),
-      current_cell_size_(encloser.dv_current_cell_size_.DelegatedDataField(ex_policy)) {}
+      pos_(encloser.dv_pos_->DelegatedData(ex_policy)),
+      particle_index_(encloser.dv_particle_index_->DelegatedData(ex_policy)),
+      cell_offset_(encloser.dv_cell_offset_->DelegatedData(ex_policy)),
+      current_cell_size_(encloser.dv_current_cell_size_.DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <class ExecutionPolicy, typename CellLinkedListType>
 void UpdateCellLinkedList<ExecutionPolicy, CellLinkedListType>::ComputingKernel::
@@ -84,8 +84,8 @@ void UpdateCellLinkedList<ExecutionPolicy, CellLinkedListType>::exec(Real dt)
                  [=](size_t i)
                  { computing_kernel->incrementCellSize(i); });
 
-    UnsignedInt *particle_index = this->dv_particle_index_->DelegatedDataField(ex_policy_);
-    UnsignedInt *cell_offset = this->dv_cell_offset_->DelegatedDataField(ex_policy_);
+    UnsignedInt *particle_index = this->dv_particle_index_->DelegatedData(ex_policy_);
+    UnsignedInt *cell_offset = this->dv_cell_offset_->DelegatedData(ex_policy_);
     exclusive_scan(ex_policy_, particle_index, cell_offset,
                    this->cell_offset_list_size_,
                    typename PlusUnsignedInt<ExecutionPolicy>::type());

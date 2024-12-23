@@ -27,9 +27,9 @@ Interpolation<Contact<DataType>>::InteractKernel::
     InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt contact_index)
     : Interaction<Contact<>>::InteractKernel(ex_policy, encloser, contact_index),
       zero_value_(ZeroData<DataType>::value),
-      interpolated_quantities_(encloser.dv_interpolated_quantities_->DelegatedDataField(ex_policy)),
-      contact_Vol_(encloser.dv_contact_Vol_[contact_index]->DelegatedDataField(ex_policy)),
-      contact_data_(encloser.dv_contact_data_[contact_index]->DelegatedDataField(ex_policy)) {}
+      interpolated_quantities_(encloser.dv_interpolated_quantities_->DelegatedData(ex_policy)),
+      contact_Vol_(encloser.dv_contact_Vol_[contact_index]->DelegatedData(ex_policy)),
+      contact_data_(encloser.dv_contact_data_[contact_index]->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <typename DataType>
 void Interpolation<Contact<DataType>>::InteractKernel::interact(size_t index_i, Real dt)

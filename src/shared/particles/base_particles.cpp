@@ -58,7 +58,7 @@ void BaseParticles::registerPositionAndVolumetricMeasureFromReload()
 //=================================================================================================//
 void BaseParticles::initializeAllParticlesBounds(size_t number_of_particles)
 {
-    UnsignedInt *total_real_particles = sv_total_real_particles_->ValueAddress();
+    UnsignedInt *total_real_particles = sv_total_real_particles_->Data();
     *total_real_particles = number_of_particles;
     real_particles_bound_ = number_of_particles;
     particles_bound_ = real_particles_bound_;

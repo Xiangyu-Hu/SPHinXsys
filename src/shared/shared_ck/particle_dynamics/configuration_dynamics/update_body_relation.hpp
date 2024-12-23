@@ -73,8 +73,8 @@ void UpdateRelation<ExecutionPolicy, Inner<Parameters...>>::exec(Real dt)
                  [=](size_t i)
                  { computing_kernel->incrementNeighborSize(i); });
 
-    UnsignedInt *neighbor_index = this->dv_neighbor_index_->DelegatedDataField(ex_policy_);
-    UnsignedInt *particle_offset = this->dv_particle_offset_->DelegatedDataField(ex_policy_);
+    UnsignedInt *neighbor_index = this->dv_neighbor_index_->DelegatedData(ex_policy_);
+    UnsignedInt *particle_offset = this->dv_particle_offset_->DelegatedData(ex_policy_);
     UnsignedInt current_neighbor_index_size =
         exclusive_scan(ex_policy_, neighbor_index, particle_offset,
                        this->particle_offset_list_size_,
@@ -160,8 +160,8 @@ void UpdateRelation<ExecutionPolicy, Contact<Parameters...>>::exec(Real dt)
                      [=](size_t i)
                      { computing_kernel->incrementNeighborSize(i); });
 
-        UnsignedInt *neighbor_index = this->dv_contact_neighbor_index_[k]->DelegatedDataField(ex_policy_);
-        UnsignedInt *particle_offset = this->dv_contact_particle_offset_[k]->DelegatedDataField(ex_policy_);
+        UnsignedInt *neighbor_index = this->dv_contact_neighbor_index_[k]->DelegatedData(ex_policy_);
+        UnsignedInt *particle_offset = this->dv_contact_particle_offset_[k]->DelegatedData(ex_policy_);
         UnsignedInt current_neighbor_index_size =
             exclusive_scan(ex_policy_, neighbor_index, particle_offset,
                            this->particle_offset_list_size_,

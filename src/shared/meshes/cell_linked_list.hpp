@@ -21,9 +21,9 @@ template <class ExecutionPolicy>
 NeighborSearch::NeighborSearch(
     const ExecutionPolicy &ex_policy, CellLinkedList &cell_linked_list, DiscreteVariable<Vecd> *pos)
     : Mesh(cell_linked_list), grid_spacing_squared_(grid_spacing_ * grid_spacing_),
-      pos_(pos->DelegatedDataField(ex_policy)),
-      particle_index_(cell_linked_list.getParticleIndex()->DelegatedDataField(ex_policy)),
-      cell_offset_(cell_linked_list.getCellOffset()->DelegatedDataField(ex_policy)) {}
+      pos_(pos->DelegatedData(ex_policy)),
+      particle_index_(cell_linked_list.getParticleIndex()->DelegatedData(ex_policy)),
+      cell_offset_(cell_linked_list.getCellOffset()->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <typename FunctionOnEach>
 void NeighborSearch::forEachSearch(UnsignedInt index_i, const Vecd *source_pos,

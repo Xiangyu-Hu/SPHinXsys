@@ -28,9 +28,9 @@ ViscousForceCK<Base, ViscosityType, KernelCorrectionType, RelationType<Parameter
     : Interaction<RelationType<Parameters...>>::InteractKernel(ex_policy, encloser, std::forward<Args>(args)...),
       viscosity_(ex_policy, encloser.viscosity_method_),
       correction_(ex_policy, encloser.kernel_correction_),
-      Vol_(encloser.dv_Vol_->DelegatedDataField(ex_policy)),
-      vel_(encloser.dv_vel_->DelegatedDataField(ex_policy)),
-      viscous_force_(encloser.dv_viscous_force_->DelegatedDataField(ex_policy)),
+      Vol_(encloser.dv_Vol_->DelegatedData(ex_policy)),
+      vel_(encloser.dv_vel_->DelegatedData(ex_policy)),
+      viscous_force_(encloser.dv_viscous_force_->DelegatedData(ex_policy)),
       smoothing_length_sq_(encloser.smoothing_length_sq_) {}
 //=================================================================================================//
 template <typename ViscosityType, class KernelCorrectionType, typename... Parameters>

@@ -23,8 +23,8 @@ LinearCorrectionMatrix<Base, RelationType<Parameters...>>::InteractKernel::
                    Args &&...args)
     : Interaction<RelationType<Parameters...>>::
           InteractKernel(ex_policy, encloser, std::forward<Args>(args)...),
-      Vol_(encloser.dv_Vol_->DelegatedDataField(ex_policy)),
-      B_(encloser.dv_B_->DelegatedDataField(ex_policy)) {}
+      Vol_(encloser.dv_Vol_->DelegatedData(ex_policy)),
+      B_(encloser.dv_B_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <typename... Parameters>
 template <class ExecutionPolicy>
@@ -86,7 +86,7 @@ LinearCorrectionMatrix<Contact<Parameters...>>::InteractKernel::
                    size_t contact_index)
     : LinearCorrectionMatrix<Base, Contact<Parameters...>>::
           InteractKernel(ex_policy, encloser, contact_index),
-      contact_Vol_k_(encloser.dv_contact_Vol_[contact_index]->DelegatedDataField(ex_policy)) {}
+      contact_Vol_k_(encloser.dv_contact_Vol_[contact_index]->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <typename... Parameters>
 void LinearCorrectionMatrix<Contact<Parameters...>>::

@@ -70,8 +70,8 @@ class DiscreteConstant : public Entity
     void setDeviceDataField(DataType *data_field) { delegated_data_field_ = data_field; };
 
     template <class ExecutionPolicy>
-    DataType *DelegatedDataField(const ExecutionPolicy &ex_policy) { return delegated_data_field_; };
-    DataType *DelegatedDataField(const ParallelDevicePolicy &par_device)
+    DataType *DelegatedData(const ExecutionPolicy &ex_policy) { return delegated_data_field_; };
+    DataType *DelegatedData(const ParallelDevicePolicy &par_device)
     {
         if (!isDataFieldDelegated())
         {

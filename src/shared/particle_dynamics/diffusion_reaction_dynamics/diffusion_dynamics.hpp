@@ -294,7 +294,7 @@ DiffusionRelaxation<Robin<ContactKernelGradientType>, DiffusionType>::
             contact_convection_[k].push_back(
                 contact_particles_k->template registerStateVariable<Real>(diffusion_species_name + "Convection"));
             contact_species_infinity_[k].push_back(
-                contact_particles_k->template registerSingularVariable<Real>(diffusion_species_name + "Infinity")->ValueAddress());
+                contact_particles_k->template registerSingularVariable<Real>(diffusion_species_name + "Infinity")->Data());
         }
     }
 }
