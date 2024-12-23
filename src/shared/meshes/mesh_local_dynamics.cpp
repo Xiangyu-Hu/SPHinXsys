@@ -75,18 +75,18 @@ void InitializeIndexMesh::UpdateKernel::update(const size_t &package_index)
 void UpdateKernelIntegrals::UpdateKernel::update(const size_t &package_index)
 {
     Arrayi cell_index = meta_data_cell_[package_index].first;
-    base_dynamics->assignByPosition(
-        kernel_weight_, cell_index, [&](const Vecd &position) -> Real
+    assignByPosition(
+        kernel_weight_, cell_index, mesh_data_, [&](const Vecd &position) -> Real
         { return computeKernelIntegral(position); });
-    base_dynamics->assignByPosition(
-        kernel_gradient_, cell_index, [&](const Vecd &position) -> Vecd
+    assignByPosition(
+        kernel_gradient_, cell_index, mesh_data_, [&](const Vecd &position) -> Vecd
         { return computeKernelGradientIntegral(position); });
 }
 //=================================================================================================//
 void InitializeDataInACellFromCoarse::UpdateKernel::update(const Arrayi &cell_index)
 {
     Vecd cell_position = mesh_data_->CellPositionFromIndex(cell_index);
-    size_t package_index = base_dynamics_->probeMesh(*coarse_mesh_, coarse_phi_, cell_position) < 0.0 ? 0 : 1;
+    size_t package_index = BaseMeshLocalDynamics::probeMesh(*coarse_mesh_, coarse_phi_, cell_position) < 0.0 ? 0 : 1;
     mesh_data_->assignDataPackageIndex(cell_index, package_index);
     if(coarse_mesh_->isWithinCorePackage(cell_position))
     {

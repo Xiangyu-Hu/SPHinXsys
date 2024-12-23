@@ -36,7 +36,7 @@ DataType BaseMeshLocalDynamics::probeDataPackage(MeshWithGridDataPackagesType &p
 {
     Arrayi data_index = probe_mesh_.DataIndexFromPosition(cell_index, position);
     Vecd data_position = probe_mesh_.DataPositionFromIndex(cell_index, data_index);
-    Vecd alpha = (position - data_position) / data_spacing_;
+    Vecd alpha = (position - data_position) / probe_mesh_.DataSpacing();
     Vecd beta = Vecd::Ones() - alpha;
 
     auto &neighborhood = probe_mesh_.cell_neighborhood_[package_index];
@@ -53,24 +53,10 @@ DataType BaseMeshLocalDynamics::probeDataPackage(MeshWithGridDataPackagesType &p
     return bilinear;
 }
 //=============================================================================================//
-template <typename DataType, typename FunctionByPosition>
-void BaseMeshLocalDynamics::assignByPosition(MeshVariableData<DataType> *mesh_variable_data,
-                                            const Arrayi &cell_index,
-                                            const FunctionByPosition &function_by_position)
-{
-    size_t package_index = mesh_data_.PackageIndexFromCellIndex(cell_index);
-    auto &pkg_data = mesh_variable_data[package_index];
-    for (int i = 0; i != pkg_size; ++i)
-        for (int j = 0; j != pkg_size; ++j)
-        {
-            Vec2d position = mesh_data_.DataPositionFromIndex(cell_index, Arrayi(i, j));
-            pkg_data[i][j] = function_by_position(position);
-        }
-}
-//=============================================================================================//
 template <typename DataType>
 DataType BaseMeshLocalDynamics::DataValueFromGlobalIndex(MeshVariableData<DataType> *mesh_variable_data,
-                                                        const Arrayi &global_grid_index)
+                                                         const Arrayi &global_grid_index,
+                                                         MeshWithGridDataPackagesType *data_mesh)
 {
     Arrayi cell_index_on_mesh_ = Arrayi::Zero();
     Arrayi local_data_index = Arrayi::Zero();
@@ -80,7 +66,7 @@ DataType BaseMeshLocalDynamics::DataValueFromGlobalIndex(MeshVariableData<DataTy
         cell_index_on_mesh_[n] = cell_index_in_this_direction;
         local_data_index[n] = global_grid_index[n] - cell_index_in_this_direction * pkg_size;
     }
-    size_t package_index = mesh_data_.PackageIndexFromCellIndex(cell_index_on_mesh_);
+    size_t package_index = data_mesh->PackageIndexFromCellIndex(cell_index_on_mesh_);
     auto &data = mesh_variable_data[package_index];
     return data[local_data_index[0]][local_data_index[1]];
 }
@@ -102,31 +88,20 @@ DataType BaseMeshLocalDynamics::CornerAverage(MeshVariableData<DataType> *mesh_v
     return average * 0.25;
 }
 //=============================================================================================//
-template <typename InDataType, typename OutDataType>
-void UpdateLevelSetGradient::computeGradient(MeshVariable<InDataType> &in_variable,
-                                             MeshVariable<OutDataType> &out_variable,
-                                             const size_t package_index)
+template <typename DataType, typename FunctionByPosition>
+void UpdateKernelIntegrals::UpdateKernel::assignByPosition(MeshVariableData<DataType> *mesh_variable_data,
+                                            const Arrayi &cell_index,
+                                            MeshWithGridDataPackagesType *data_mesh,
+                                            const FunctionByPosition &function_by_position)
 {
-    auto in_variable_data = in_variable.DataField();
-    auto out_variable_data = out_variable.DataField();
-
-    auto &neighborhood = cell_neighborhood_[package_index];
-    auto &pkg_data = out_variable_data[package_index];
-
-    for_each_cell_data(
-        [&](int i, int j)
+    size_t package_index = data_mesh_->PackageIndexFromCellIndex(cell_index);
+    auto &pkg_data = mesh_variable_data[package_index];
+    for (int i = 0; i != pkg_size; ++i)
+        for (int j = 0; j != pkg_size; ++j)
         {
-            std::pair<size_t, Arrayi> x1 = NeighbourIndexShift(Arrayi(i + 1, j), neighborhood);
-            std::pair<size_t, Arrayi> x2 = NeighbourIndexShift(Arrayi(i - 1, j), neighborhood);
-            std::pair<size_t, Arrayi> y1 = NeighbourIndexShift(Arrayi(i, j + 1), neighborhood);
-            std::pair<size_t, Arrayi> y2 = NeighbourIndexShift(Arrayi(i, j - 1), neighborhood);
-            Real dphidx = (in_variable_data[x1.first][x1.second[0]][x1.second[1]] -
-                           in_variable_data[x2.first][x2.second[0]][x2.second[1]]);
-            Real dphidy = (in_variable_data[y1.first][y1.second[0]][y1.second[1]] -
-                           in_variable_data[y2.first][y2.second[0]][y2.second[1]]);
-
-            pkg_data[i][j] = 0.5 * Vecd(dphidx, dphidy) / data_spacing_;
-        });
+            Vec2d position = data_mesh_->DataPositionFromIndex(cell_index, Arrayi(i, j));
+            pkg_data[i][j] = function_by_position(position);
+        }
 }
 //=============================================================================================//
 } // namespace SPH

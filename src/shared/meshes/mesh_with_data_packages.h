@@ -82,8 +82,6 @@ class MeshWithGridDataPackages : public Mesh
     Real DataSpacing() { return data_spacing_; };
     Real GridSpacing() { return grid_spacing_; };
     size_t BufferWidth() { return buffer_width_; };
-
-  public:
     Mesh global_mesh_;                                         /**< the mesh for the locations of all possible data points. */
     size_t num_grid_pkgs_ = 2;                                 /**< the number of all distinct packages, initially only 2 singular packages. */
     std::pair<Arrayi, int> *meta_data_cell_;                   /**< metadata for each occupied cell: (arrayi)cell index, (int)core1/inner0. */
