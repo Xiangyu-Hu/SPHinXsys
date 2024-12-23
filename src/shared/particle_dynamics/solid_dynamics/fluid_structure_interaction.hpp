@@ -24,6 +24,7 @@ PressureForceFromFluid<FluidIntegration2ndHalfType>::
         contact_Vol_.push_back(contact_particles_[k]->template getVariableDataByName<Real>("VolumetricMeasure"));
         contact_p_.push_back(contact_particles_[k]->template getVariableDataByName<Real>("Pressure"));
         contact_force_prior_.push_back(contact_particles_[k]->template getVariableDataByName<Vecd>("ForcePrior"));
+        contact_correction_.push_back(contact_particles_[k]->template getVariableDataByName<Matd>("LinearGradientCorrectionMatrix"));
         riemann_solvers_.push_back(RiemannSolverType(*contact_fluids_[k], *contact_fluids_[k]));
     }
 }
@@ -40,6 +41,7 @@ void PressureForceFromFluid<FluidIntegration2ndHalfType>::interaction(size_t ind
         Real *p_k = contact_p_[k];
         Vecd *vel_k = contact_vel_[k];
         Vecd *force_prior_k = contact_force_prior_[k];
+        Matd *correction_k = contact_correction_[k];
         RiemannSolverType &riemann_solvers_k = riemann_solvers_[k];
         Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
         for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
@@ -51,7 +53,7 @@ void PressureForceFromFluid<FluidIntegration2ndHalfType>::interaction(size_t ind
                 (force_prior_k[index_j] / mass_k[index_j] - acc_ave_[index_i]).dot(e_ij);
             Real p_in_wall = p_k[index_j] + rho_k[index_j] * r_ij * SMAX(Real(0), face_wall_external_acceleration);
             Real u_jump = 2.0 * (vel_k[index_j] - vel_ave_[index_i]).dot(n_[index_i]);
-            force -= (riemann_solvers_k.DissipativePJump(u_jump) * n_[index_i] + (p_in_wall + p_k[index_j]) * e_ij) *
+            force -= (riemann_solvers_k.DissipativePJump(u_jump) * n_[index_i] + (p_in_wall * Matd::Identity() + p_k[index_j] * Matd::Identity()) * e_ij) *
                      contact_neighborhood.dW_ij_[n] * Vol_k[index_j];
         }
     }

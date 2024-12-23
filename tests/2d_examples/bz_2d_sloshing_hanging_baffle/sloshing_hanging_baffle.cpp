@@ -1,11 +1,6 @@
 /**
- * @file fsi2.cpp
- * @brief This is the benchmark test of fluid-structure interaction.
- * @details We consider a flow-induced vibration of an elastic beam behind a cylinder in 2D.
- * The case can be found in Chi Zhang, Massoud Rezavand, Xiangyu Hu,
- * Dual-criteria time stepping for weakly compressible smoothed particle hydrodynamics.
- * Journal of Computation Physics 404 (2020) 109135.
- * @author Chi Zhang and Xiangyu Hu
+ * @file sloshing_hanging_baffle.cpp
+ * @author Bo Zhang and Xiangyu Hu
  */
 #include "fsi2.h" // case file to setup the test case
 #include "sphinxsys.h"

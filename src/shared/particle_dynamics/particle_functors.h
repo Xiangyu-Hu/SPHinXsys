@@ -218,9 +218,9 @@ class NoKernelCorrection : public KernelCorrection
 {
   public:
     NoKernelCorrection(BaseParticles *particles) : KernelCorrection(){};
-    Real operator()(size_t index_i)
+    Matd operator()(size_t index_i)
     {
-        return 1.0;
+        return Matd::Identity();
     };
 };
 

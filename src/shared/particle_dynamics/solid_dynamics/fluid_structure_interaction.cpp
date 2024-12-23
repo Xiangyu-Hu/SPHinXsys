@@ -26,6 +26,7 @@ ViscousForceFromFluid::ViscousForceFromFluid(BaseContactRelation &contact_relati
     {
         contact_vel_.push_back(contact_particles_[k]->getVariableDataByName<Vecd>("Velocity"));
         contact_Vol_.push_back(contact_particles_[k]->getVariableDataByName<Real>("VolumetricMeasure"));
+        contact_correction_.push_back(contact_particles_[k]->getVariableDataByName<Matd>("LinearGradientCorrectionMatrix"));
         mu_.push_back(contact_fluids_[k]->ReferenceViscosity());
         smoothing_length_.push_back(contact_bodies_[k]->sph_adaptation_->ReferenceSmoothingLength());
     }
@@ -41,13 +42,16 @@ void ViscousForceFromFluid::interaction(size_t index_i, Real dt)
         Real smoothing_length_k = smoothing_length_[k];
         Vecd *vel_n_k = contact_vel_[k];
         Real *Vol_k = contact_Vol_[k];
+        Matd* correction_k = contact_correction_[k];
         Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
         for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
         {
             size_t index_j = contact_neighborhood.j_[n];
+            const Vecd& e_ij = contact_neighborhood.e_ij_[n];
 
-            Vecd vel_derivative = 2.0 * (vel_ave_[index_i] - vel_n_k[index_j]) /
-                                  (contact_neighborhood.r_ij_[n] + 0.01 * smoothing_length_k);
+            Vecd vel_derivative = 2.0 * (vel_ave_[index_i] - vel_n_k[index_j]) * 
+                e_ij.dot((correction_k[index_j]) * e_ij) 
+                / (contact_neighborhood.r_ij_[n] + 0.01 * smoothing_length_k);
             force += 2.0 * mu_k * vel_derivative * contact_neighborhood.dW_ij_[n] * Vol_k[index_j];
         }
     }
