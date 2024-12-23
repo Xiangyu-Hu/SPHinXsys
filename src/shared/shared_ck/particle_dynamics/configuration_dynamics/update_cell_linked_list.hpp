@@ -6,6 +6,7 @@
 #include "adaptation.hpp"
 #include "base_particles.hpp"
 #include "mesh_iterators.hpp"
+#include "particle_iterators_ck.h"
 
 namespace SPH
 {

@@ -88,6 +88,9 @@ class AcousticStep2ndHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionTyp
     };
 
   protected:
+    template <typename...>
+    friend class FSI::PressureForceFromFluid;
+
     KernelCorrectionType kernel_correction_;
     RiemannSolverType riemann_solver_;
 };

@@ -35,20 +35,29 @@
 namespace SPH
 {
 
-template <class DynamicsIdentifier>
-class BaseForcePriorCK : public BaseLocalDynamics<DynamicsIdentifier>
+class ForcePriorCK
 {
   public:
-    BaseForcePriorCK(DynamicsIdentifier &identifier, const std::string &force_name);
-    virtual ~BaseForcePriorCK(){};
+    ForcePriorCK(BaseParticles *particles, const std::string &force_name)
+        : dv_force_prior_(particles->registerStateVariableOnly<Vecd>("ForcePrior")),
+          dv_current_force_(particles->registerStateVariableOnly<Vecd>(force_name)),
+          dv_previous_force_(particles->registerStateVariableOnly<Vecd>("Previous" + force_name))
+    {
+        particles->addVariableToRestart<Vecd>("Previous" + force_name);
+        particles->addVariableToSort<Vecd>("Previous" + force_name);
+    };
+    virtual ~ForcePriorCK(){};
 
     class UpdateKernel
     {
       public:
-        template <class ExecutionPolicy>
-        UpdateKernel(const ExecutionPolicy &ex_policy,
-                     BaseForcePriorCK<DynamicsIdentifier> &encloser);
-        void update(size_t index_i, Real dt = 0.0);
+        template <class ExecutionPolicy, class EncloserType>
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+        void update(size_t index_i, Real dt = 0.0)
+        {
+            force_prior_[index_i] += current_force_[index_i] - previous_force_[index_i];
+            previous_force_[index_i] = current_force_[index_i];
+        };
 
       protected:
         Vecd *force_prior_, *current_force_, *previous_force_;
@@ -57,10 +66,9 @@ class BaseForcePriorCK : public BaseLocalDynamics<DynamicsIdentifier>
   protected:
     DiscreteVariable<Vecd> *dv_force_prior_, *dv_current_force_, *dv_previous_force_;
 };
-using ForcePriorCK = BaseForcePriorCK<SPHBody>;
 
 template <class GravityType>
-class GravityForceCK : public ForcePriorCK
+class GravityForceCK : public LocalDynamics, public ForcePriorCK
 {
   public:
     GravityForceCK(SPHBody &sph_body, const GravityType &gravity);
@@ -69,9 +77,8 @@ class GravityForceCK : public ForcePriorCK
     class UpdateKernel : public ForcePriorCK::UpdateKernel
     {
       public:
-        template <class ExecutionPolicy>
-        UpdateKernel(const ExecutionPolicy &ex_policy,
-                     GravityForceCK<GravityType> &encloser);
+        template <class ExecutionPolicy, class EncloserType>
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
         void update(size_t index_i, Real dt = 0.0);
 
       protected:

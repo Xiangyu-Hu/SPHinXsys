@@ -21,17 +21,17 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	execution_sycl.h
+ * @file 	implementation_sycl.h
  * @brief 	Here we define the execution policy relevant to parallel computing.
  * @details This analog of the standard library on the same functions.
  * @author	Alberto Guarnieri and Xiangyu Hu
  */
 
-#ifndef EXECUTION_SYCL_H
-#define EXECUTION_SYCL_H
+#ifndef IMPLEMENTATION_SYCL_H
+#define IMPLEMENTATION_SYCL_H
 
-#include "execution.h"
 #include "execution_policy.h"
+#include "implementation.h"
 
 #include "ownership.h"
 #include <sycl/sycl.hpp>
@@ -55,7 +55,12 @@ class ExecutionInstance
     sycl::queue &getQueue()
     {
         if (!sycl_queue_)
+        {
             sycl_queue_ = makeUnique<sycl::queue>(sycl::default_selector_v);
+            auto device = sycl_queue_->get_device();
+            size_t max_workgroup_size = device.get_info<sycl::info::device::max_work_group_size>();
+            work_group_size_ = std::min(max_workgroup_size, 64UL);
+        }
         return *sycl_queue_;
     }
 
@@ -137,28 +142,27 @@ class Implementation<ParallelDevicePolicy, LocalDynamicsType, ComputingKernelTyp
 
   public:
     explicit Implementation(LocalDynamicsType &local_dynamics)
-        : Implementation<Base>(),
-          local_dynamics_(local_dynamics), computing_kernel_(nullptr) {}
+        : Implementation<Base>(), local_dynamics_(local_dynamics),
+          computing_kernel_(nullptr) {}
     ~Implementation()
     {
         freeDeviceData(computing_kernel_);
     }
 
     template <typename... Args>
-    ComputingKernelType *getComputingKernel(Args &&... args)
+    ComputingKernelType *getComputingKernel(Args &&...args)
     {
         if (computing_kernel_ == nullptr)
         {
-            local_dynamics_.registerComputingKernel(this, std::forward<Args>(args)...);
             computing_kernel_ = allocateDeviceOnly<ComputingKernelType>(1);
             ComputingKernelType *host_kernel =
                 kernel_ptr_keeper_.template createPtr<ComputingKernelType>(
-                    ParallelDevicePolicy{}, local_dynamics_, std::forward<Args>(args)...);
+                    ParallelDevicePolicy{}, this->local_dynamics_, std::forward<Args>(args)...);
             copyToDevice(host_kernel, computing_kernel_, 1);
-            setUpdated();
+            this->setUpdated();
         }
 
-        if (!isUpdated())
+        if (!this->isUpdated())
         {
             overwriteComputingKernel(std::forward<Args>(args)...);
         }
@@ -167,19 +171,19 @@ class Implementation<ParallelDevicePolicy, LocalDynamicsType, ComputingKernelTyp
     }
 
     template <typename... Args>
-    void overwriteComputingKernel(Args &&... args)
+    void overwriteComputingKernel(Args &&...args)
     {
         ComputingKernelType *host_kernel =
             kernel_ptr_keeper_.template createPtr<ComputingKernelType>(
-                ParallelDevicePolicy{}, local_dynamics_, std::forward<Args>(args)...);
+                ParallelDevicePolicy{}, this->local_dynamics_, std::forward<Args>(args)...);
         copyToDevice(host_kernel, computing_kernel_, 1);
-        setUpdated();
+        this->setUpdated();
     }
 
-  private:
+  protected:
     LocalDynamicsType &local_dynamics_;
     ComputingKernelType *computing_kernel_;
 };
 } // namespace execution
 } // namespace SPH
-#endif // EXECUTION_SYCL_H
+#endif // IMPLEMENTATION_SYCL_H

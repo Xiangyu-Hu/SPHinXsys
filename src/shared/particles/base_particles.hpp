@@ -64,6 +64,17 @@ DataType *BaseParticles::
     return variable->DataField();
 }
 //=================================================================================================//
+template <class DataType, typename... Args>
+DiscreteVariable<DataType> *BaseParticles::
+    addUniqueDiscreteVariableOnly(const std::string &name, size_t data_size, Args &&...args)
+{
+
+    DiscreteVariable<DataType> *variable =
+        unique_variable_ptrs_.createPtr<DiscreteVariable<DataType>>(name, data_size);
+    initializeVariable(variable, std::forward<Args>(args)...);
+    return variable;
+}
+//=================================================================================================//
 template <typename DataType, typename... Args>
 DataType *BaseParticles::registerDiscreteVariable(const std::string &name,
                                                   size_t data_size, Args &&...args)
@@ -143,6 +154,24 @@ DataType *BaseParticles::registerStateVariableFrom(
 }
 //=================================================================================================//
 template <typename DataType>
+DiscreteVariable<DataType> *BaseParticles::registerStateVariableOnlyFrom(
+    const std::string &new_name, const std::string &old_name)
+{
+    DiscreteVariable<DataType> *variable = findVariableByName<DataType>(all_discrete_variables_, old_name);
+
+    if (variable == nullptr)
+    {
+        std::cout << "\nError: the old variable '" << old_name << "' is not registered!\n";
+        std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+        exit(1);
+    }
+
+    DataType *old_data_field = variable->DataField();
+    return registerStateVariableOnly<DataType>(new_name, [&](size_t index)
+                                               { return old_data_field[index]; });
+}
+//=================================================================================================//
+template <typename DataType>
 DataType *BaseParticles::registerStateVariableFrom(
     const std::string &name, const StdLargeVec<DataType> &geometric_data)
 {
@@ -196,6 +225,16 @@ DataType *BaseParticles::getVariableDataByName(const std::string &name)
     }
 
     return variable->DataField();
+}
+//=================================================================================================//
+template <class DataType>
+SingularVariable<DataType> *BaseParticles::
+    addUniqueSingularVariableOnly(const std::string &name, DataType initial_value)
+{
+
+    SingularVariable<DataType> *variable =
+        unique_variable_ptrs_.createPtr<SingularVariable<DataType>>(name, initial_value);
+    return variable;
 }
 //=================================================================================================//
 template <typename DataType>
