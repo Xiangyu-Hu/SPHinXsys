@@ -70,8 +70,8 @@ ExtendedFluidStarState SecondOrderUpwind::
     FluidStateOut star_state = AcousticRiemannSolver::InterfaceState(fluid_state_i, fluid_state_j, e_ij);
 
     Real vel_dot_eij = star_state.vel_.dot(e_ij);
-    Real phi = 0.0;
-    Real r = 0.0;
+    //Real phi = 0.0;
+    //Real r = 0.0;
     Vecd K_grad_limited = Vecd::Zero();
     Vecd Eps_grad_limited = Vecd::Zero();
     Real k_star = 0.0;

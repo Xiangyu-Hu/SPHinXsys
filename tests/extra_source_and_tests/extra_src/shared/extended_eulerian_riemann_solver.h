@@ -47,7 +47,7 @@ struct ExendedFluidState : FluidStateIn
 struct FluidStateSecondOrderUpwind : ExendedFluidState
 {
     Vecd &K_grad_, &Eps_grad_;
-    FluidStateSecondOrderUpwind(Real &rho, Vecd &vel, Real &p, Real &K, Real &Eps, Real &r_ij, Vecd &K_grad, Vecd &Eps_grad)
+    FluidStateSecondOrderUpwind(Real &rho, Vecd &vel, Real &p, Real &K, Real &Eps, Vecd &K_grad, Vecd &Eps_grad)
         : ExendedFluidState(rho, vel, p, K, Eps), K_grad_(K_grad), Eps_grad_(Eps_grad){};
 };
 

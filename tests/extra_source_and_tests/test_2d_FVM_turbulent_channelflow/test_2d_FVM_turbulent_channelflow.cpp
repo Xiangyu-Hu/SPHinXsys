@@ -49,8 +49,8 @@ int main(int ac, char *av[])
     InteractionWithUpdate<fluid_dynamics::KEpsilonStd1stHalfExtendedHLLCRiemannSolver> tke(water_block_inner, ghost_creation, 0.0);
     InteractionWithUpdate<fluid_dynamics::KEpsilonStd2ndHalfExtendedHLLCRiemannSolver> dissipationrate(water_block_inner, ghost_creation, 0.0);
 
-    //InteractionWithUpdate<fluid_dynamics::KEpsilonStd1stHalfSecondOrderUpwind> tke(water_block_inner, ghost_creation, 0.0);
-    //InteractionWithUpdate<fluid_dynamics::KEpsilonStd2ndHalfSecondOrderUpwind> dissipationrate(water_block_inner, ghost_creation, 0.0);
+    /*InteractionWithUpdate<fluid_dynamics::KEpsilonStd1stHalfSecondOrderUpwind> tke(water_block_inner, ghost_creation, 0.0);
+    InteractionWithUpdate<fluid_dynamics::KEpsilonStd2ndHalfSecondOrderUpwind> dissipationrate(water_block_inner, ghost_creation, 0.0);*/
 
     TCFBoundaryConditionSetup boundary_condition_setup(water_block_inner, ghost_creation);
     /** Time step size with considering sound wave speed. */
