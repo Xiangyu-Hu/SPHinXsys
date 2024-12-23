@@ -30,7 +30,7 @@
 #define PARTICLE_SORT_SYCL_H
 
 #include "base_configuration_dynamics_sycl.h"
-#include "execution_sycl.h"
+#include "implementation_sycl.h"
 #include "particle_sort_ck.h"
 
 namespace SPH

@@ -4,6 +4,7 @@
 #include "update_body_relation.h"
 
 #include "cell_linked_list.hpp"
+#include "particle_iterators_ck.h"
 
 namespace SPH
 {

@@ -187,6 +187,7 @@ class DensityRegularization<Contact<Parameters...>>
     StdVec<DiscreteVariable<Real> *> dv_contact_mass_;
 };
 
+using DensityRegularizationComplex = DensityRegularization<Inner<WithUpdate, Internal>, Contact<>>;
 using DensityRegularizationComplexFreeSurface = DensityRegularization<Inner<WithUpdate, FreeSurface>, Contact<>>;
 
 } // namespace fluid_dynamics
