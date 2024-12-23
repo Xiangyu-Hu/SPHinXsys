@@ -27,7 +27,7 @@ namespace SPH
         void KEpsilonStd1stHalf<RiemannSolverType>::interaction(size_t index_i, Real dt)
         {
             ExendedFluidState state_i(rho_[index_i], vel_[index_i], p_[index_i], K_[index_i], Eps_[index_i]);
-            //FluidStateIn state_i(rho_[index_i], vel_[index_i], p_[index_i]);
+            //FluidStateSecondOrderUpwind state_i(rho_[index_i], vel_[index_i], p_[index_i], K_[index_i], Eps_[index_i], K_grad_[index_i], Eps_grad_[index_i]);
             Neighborhood& inner_neighborhood = inner_configuration_[index_i];
             Matd K_prod = Matd::Zero();
             Matd vel_matrix = Matd::Zero();
@@ -50,10 +50,12 @@ namespace SPH
                     Real r_ij = inner_neighborhood.r_ij_[n];
                     Vecd &e_ij = inner_neighborhood.e_ij_[n];
                     ExendedFluidState state_j(rho_[index_j], vel_[index_j], p_[index_j], K_[index_j], Eps_[index_j]);
+                    //FluidStateSecondOrderUpwind state_j(rho_[index_j], vel_[index_j], p_[index_j], K_[index_j], Eps_[index_j], K_grad_[index_j], Eps_grad_[index_j]);
                     ExtendedFluidStarState interface_state = riemann_solver_.getExtendedInterfaceState(state_i, state_j, e_ij);
+                    //ExtendedFluidStarState interface_state = riemann_solver_.getExtendedInterfaceState(state_i, state_j, e_ij, r_ij);
                     
                     Real mu_t_avg = (2.0 * mu_t_[index_i] * mu_t_[index_j]) / (mu_t_[index_i] + mu_t_[index_j]);
-                    
+                   
                     K_adv_[index_i] += -2.0 * (dW_ij * Vol_[index_j] * interface_state.rho_) * (interface_state.K_) * (interface_state.vel_.dot(e_ij));
                     K_lap_[index_i] += 2.0 * dW_ij * Vol_[index_j] * ((fluid_.ReferenceViscosity() + mu_t_avg / sigma_k_) * (K_[index_i] - K_[index_j]) / (r_ij));
                 }
@@ -80,16 +82,17 @@ namespace SPH
                     Real r_ij = inner_neighborhood.r_ij_[n];
                     Vecd &e_ij = inner_neighborhood.e_ij_[n];
                     ExendedFluidState state_j(rho_[index_j], vel_[index_j], p_[index_j], K_[index_j], Eps_[index_j]);
+                    // FluidStateSecondOrderUpwind state_j(rho_[index_j], vel_[index_j], p_[index_j], K_[index_j], Eps_[index_j], K_grad_[index_j], Eps_grad_[index_j]);
                     ExtendedFluidStarState interface_state = riemann_solver_.getExtendedInterfaceState(state_i, state_j, e_ij);
+                    // ExtendedFluidStarState interface_state = riemann_solver_.getExtendedInterfaceState(state_i, state_j, e_ij, r_ij);
 
                     Real mu_t_avg = (2.0 * mu_t_[index_i] * mu_t_[index_j]) / (mu_t_[index_i] + mu_t_[index_j]);
-                   
+                    
                     K_adv_[index_i] += -2.0 * (dW_ij * Vol_[index_j] * interface_state.rho_) * (interface_state.K_) * (interface_state.vel_.dot(e_ij));
                     K_lap_[index_i] += 2.0 * dW_ij * Vol_[index_j] * ((fluid_.ReferenceViscosity() + mu_t_avg / sigma_k_) * (K_[index_i] - K_[index_j]) / (r_ij));
                     
                     vel_matrix = (vel_[index_i] - vel_[index_j]) * e_ij.transpose();
                     vel_gradient_mat_[index_i] += dW_ij * Vol_[index_j] * vel_matrix;
-
                 }
                 strain_tensor = 0.5 * (vel_gradient_mat_[index_i] + vel_gradient_mat_[index_i].transpose());
                 strain_rate_modulus = 2.0 * strain_tensor.array() * strain_tensor.array();
@@ -131,6 +134,7 @@ namespace SPH
         void KEpsilonStd2ndHalf<RiemannSolverType>::interaction(size_t index_i, Real dt)
         {
             ExendedFluidState state_i(rho_[index_i], vel_[index_i], p_[index_i], K_[index_i], Eps_[index_i]);
+            // FluidStateSecondOrderUpwind state_i(rho_[index_i], vel_[index_i], p_[index_i], K_[index_i], Eps_[index_i], K_grad_[index_i], Eps_grad_[index_i]);
             Real Eps_changerate = 0.0;
             Eps_adv_[index_i] = 0.0, Eps_lap_[index_i] = 0.0, Eps_prod_[index_i] = 0.0, Eps_destruction_[index_i] = 0.0;
             Neighborhood &inner_neighborhood = inner_configuration_[index_i];
@@ -148,13 +152,15 @@ namespace SPH
                     Real r_ij = inner_neighborhood.r_ij_[n];
                     Vecd &e_ij = inner_neighborhood.e_ij_[n];
                     ExendedFluidState state_j(rho_[index_j], vel_[index_j], p_[index_j], K_[index_j], Eps_[index_j]);
+                    // FluidStateSecondOrderUpwind state_j(rho_[index_j], vel_[index_j], p_[index_j], K_[index_j], Eps_[index_j], K_grad_[index_j], Eps_grad_[index_j]);
                     ExtendedFluidStarState interface_state = riemann_solver_.getExtendedInterfaceState(state_i, state_j, e_ij);
+                    // ExtendedFluidStarState interface_state = riemann_solver_.getExtendedInterfaceState(state_i, state_j, e_ij, r_ij);
+
                     Real mu_t_avg = (2.0 * mu_t_[index_i] * mu_t_[index_j]) / (mu_t_[index_i] + mu_t_[index_j]);
-                    Real Eps_avg = 0.5 * (Eps_[index_i] + Eps_[index_j]);
                     
-                    Eps_lap_[index_i] += 2.0 * dW_ij * Vol_[index_j] * (fluid_.ReferenceViscosity() + mu_t_avg / sigma_eps_) * ((Eps_[index_i] - Eps_[index_j]) / (r_ij));
                     Eps_adv_[index_i] += -2.0 * (dW_ij * Vol_[index_j] * interface_state.rho_) * (interface_state.Eps_) * (interface_state.vel_.dot(e_ij));
-                    
+                    Eps_lap_[index_i] += 2.0 * dW_ij * Vol_[index_j] * (fluid_.ReferenceViscosity() + mu_t_avg / sigma_eps_) * ((Eps_[index_i] - Eps_[index_j]) / (r_ij));
+                      
                     Eps_changerate = Eps_adv_[index_i] + Eps_lap_[index_i];
                 }
                 Eps_prod_[index_i] = C1_eps_ * (Eps_[index_i] / (K_[index_i])) * K_prod_[index_i];

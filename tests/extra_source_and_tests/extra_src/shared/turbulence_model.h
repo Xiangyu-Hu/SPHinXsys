@@ -90,7 +90,7 @@ namespace SPH
             Vecd *K_grad_, *Eps_grad_;
         };
         using KEpsilonStd1stHalfExtendedHLLCRiemannSolver = KEpsilonStd1stHalf<ExtendedHLLCRiemannSolver>;
-        using KEpsilonStd1stHalfAcousticRiemannSolver = KEpsilonStd1stHalf<AcousticRiemannSolver>;
+        using KEpsilonStd1stHalfSecondOrderUpwind = KEpsilonStd1stHalf<SecondOrderUpwind>;
         //=================================================================================================//
         template <class RiemannSolverType>
         class KEpsilonStd2ndHalf : public BaseTurbulence
@@ -107,7 +107,7 @@ namespace SPH
             Vecd *K_grad_, *Eps_grad_;
         };
         using KEpsilonStd2ndHalfExtendedHLLCRiemannSolver = KEpsilonStd2ndHalf<ExtendedHLLCRiemannSolver>;
-        using KEpsilonStd2dnHalfAcousticRiemannSolver = KEpsilonStd2ndHalf<AcousticRiemannSolver>;
+        using KEpsilonStd2ndHalfSecondOrderUpwind = KEpsilonStd2ndHalf<SecondOrderUpwind>;
         //=================================================================================================//
         
     }// namespace fluid_dynamics

@@ -49,6 +49,9 @@ int main(int ac, char *av[])
     InteractionWithUpdate<fluid_dynamics::KEpsilonStd1stHalfExtendedHLLCRiemannSolver> tke(water_block_inner, ghost_creation, 0.0);
     InteractionWithUpdate<fluid_dynamics::KEpsilonStd2ndHalfExtendedHLLCRiemannSolver> dissipationrate(water_block_inner, ghost_creation, 0.0);
 
+    //InteractionWithUpdate<fluid_dynamics::KEpsilonStd1stHalfSecondOrderUpwind> tke(water_block_inner, ghost_creation, 0.0);
+    //InteractionWithUpdate<fluid_dynamics::KEpsilonStd2ndHalfSecondOrderUpwind> dissipationrate(water_block_inner, ghost_creation, 0.0);
+
     TCFBoundaryConditionSetup boundary_condition_setup(water_block_inner, ghost_creation);
     /** Time step size with considering sound wave speed. */
     ReduceDynamics<fluid_dynamics::WCAcousticTimeStepSizeInFVM> get_fluid_time_step_size(water_block, read_mesh_data.MinMeshEdge());
@@ -69,31 +72,10 @@ int main(int ac, char *av[])
     write_real_body_states.addToWrite<Real>(water_block, "TKE");
     write_real_body_states.addToWrite<Real>(water_block, "Dissipation");
     write_real_body_states.addToWrite<Real>(water_block, "TurblunetViscosity");
-    write_real_body_states.addToWrite<Vecd>(water_block, "MomentumChangeRate");
-    write_real_body_states.addToWrite<Real>(water_block, "MassChangeRate");
-    write_real_body_states.addToWrite<Vecd>(water_block, "ViscousForce");
-    
-    write_real_body_states.addToWrite<Vecd>(water_block, "TurbulentViscousForce");
     write_real_body_states.addToWrite<Real>(water_block, "TKEProduction");
-    write_real_body_states.addToWrite<Real>(water_block, "TKEChangeRate");
-    write_real_body_states.addToWrite<Real>(water_block, "DissipationChangeRate");
-    write_real_body_states.addToWrite<Real>(water_block, "TKEAdvection");
-    write_real_body_states.addToWrite<Real>(water_block, "TKELaplacian");
-    write_real_body_states.addToWrite<Real>(water_block, "DissipationAdvection");
-    write_real_body_states.addToWrite<Real>(water_block, "DissipationLaplacian");
-    write_real_body_states.addToWrite<Real>(water_block, "DissipationProd");
-    write_real_body_states.addToWrite<Real>(water_block, "DissipationDestruction");
     write_real_body_states.addToWrite<Real>(water_block, "WallShearStress");
-    write_real_body_states.addToWrite<Vecd>(water_block, "TkeGradientForce");
     write_real_body_states.addToWrite<Real>(water_block, "Ystar");
     write_real_body_states.addToWrite<Real>(water_block, "StrainRate");
-    write_real_body_states.addToWrite<Real>(water_block, "dudx");
-    write_real_body_states.addToWrite<Real>(water_block, "dudy");
-    write_real_body_states.addToWrite<Real>(water_block, "dvdx");
-    write_real_body_states.addToWrite<Real>(water_block, "dvdy");
-    write_real_body_states.addToWrite<Matd>(water_block, "VelocityGradient");
-    write_real_body_states.addToWrite<Vecd>(water_block, "TKEGradient");
-    write_real_body_states.addToWrite<Vecd>(water_block, "DissipationGradient");
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
@@ -142,6 +124,7 @@ int main(int ac, char *av[])
                     << "	dt = " << dt << "\n";
             }
             number_of_iterations++;
+            //write_real_body_states.writeToFile();
         }
         TickCount t2 = TickCount::now();
         write_real_body_states.writeToFile();

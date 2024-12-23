@@ -110,7 +110,6 @@ namespace SPH
             {
                 size_t index_j = inner_neighborhood.j_[n];
                 Real dW_ij = inner_neighborhood.dW_ij_[n];
-                Real r_ij = inner_neighborhood.r_ij_[n];
                 Vecd &e_ij = inner_neighborhood.e_ij_[n];
 
                 K_grad_[index_i] += dW_ij * Vol_[index_j] * (K_[index_i] - K_[index_j]) * e_ij;
