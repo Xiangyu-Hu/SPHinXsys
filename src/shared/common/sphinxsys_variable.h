@@ -107,7 +107,7 @@ class DeviceOnlyDiscreteVariable : public Entity
   public:
     DeviceOnlyDiscreteVariable(DiscreteVariable<DataType> *host_variable);
     ~DeviceOnlyDiscreteVariable();
-    void reallocateDataField(DiscreteVariable<DataType> *host_variable);
+    void reallocateData(DiscreteVariable<DataType> *host_variable);
 
   protected:
     DataType *device_only_data_field_;
@@ -127,26 +127,26 @@ class DiscreteVariable : public Entity
         data_field_ = new DataType[data_size];
     };
     ~DiscreteVariable() { delete[] data_field_; };
-    DataType *DataField() { return data_field_; };
+    DataType *Data() { return data_field_; };
 
     template <class ExecutionPolicy>
     DataType *DelegatedData(const ExecutionPolicy &ex_policy) { return data_field_; };
     DataType *DelegatedData(const ParallelDevicePolicy &par_device);
 
     bool isDataDelegated() { return device_data_field_ != nullptr; };
-    size_t getDataFieldSize() { return data_size_; }
-    void setDeviceDataField(DataType *data_field) { device_data_field_ = data_field; };
+    size_t getDataSize() { return data_size_; }
+    void setDeviceData(DataType *data_field) { device_data_field_ = data_field; };
 
     template <class ExecutionPolicy>
-    void reallocateDataField(const ExecutionPolicy &ex_policy, size_t tentative_size)
+    void reallocateData(const ExecutionPolicy &ex_policy, size_t tentative_size)
     {
         if (data_size_ < tentative_size)
         {
-            reallocateDataField(tentative_size);
+            reallocateData(tentative_size);
         }
     };
 
-    void reallocateDataField(const ParallelDevicePolicy &par_device, size_t tentative_size);
+    void reallocateData(const ParallelDevicePolicy &par_device, size_t tentative_size);
 
     void synchronizeWithDevice();
     void synchronizeToDevice();
@@ -161,7 +161,7 @@ class DiscreteVariable : public Entity
     DeviceOnlyDiscreteVariable<DataType> *device_only_variable_;
     DataType *device_data_field_;
 
-    void reallocateDataField(size_t tentative_size)
+    void reallocateData(size_t tentative_size)
     {
         delete[] data_field_;
         data_size_ = tentative_size + tentative_size / 4;
@@ -178,8 +178,7 @@ class MeshVariable : public Entity
         : Entity(name), data_field_(nullptr){};
     ~MeshVariable() { delete[] data_field_; };
 
-    // void setDataField(PackageData* mesh_data){ data_field_ = mesh_data; };
-    PackageData *DataField() { return data_field_; };
+    PackageData *Data() { return data_field_; };
     void allocateAllMeshVariableData(const size_t size)
     {
         data_field_ = new PackageData[size];

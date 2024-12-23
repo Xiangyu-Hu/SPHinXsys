@@ -46,10 +46,10 @@ DeviceOnlyDiscreteVariable<DataType>::
     DeviceOnlyDiscreteVariable(DiscreteVariable<DataType> *host_variable)
     : Entity(host_variable->Name()), device_only_data_field_(nullptr)
 {
-    size_t data_size = host_variable->getDataFieldSize();
+    size_t data_size = host_variable->getDataSize();
     device_only_data_field_ = allocateDeviceOnly<DataType>(data_size);
-    copyToDevice(host_variable->DataField(), device_only_data_field_, data_size);
-    host_variable->setDeviceDataField(device_only_data_field_);
+    copyToDevice(host_variable->Data(), device_only_data_field_, data_size);
+    host_variable->setDeviceData(device_only_data_field_);
 }
 //=================================================================================================//
 template <typename DataType>
@@ -60,12 +60,12 @@ DeviceOnlyDiscreteVariable<DataType>::~DeviceOnlyDiscreteVariable()
 //=================================================================================================//
 template <typename DataType>
 void DeviceOnlyDiscreteVariable<DataType>::
-    reallocateDataField(DiscreteVariable<DataType> *host_variable)
+    reallocateData(DiscreteVariable<DataType> *host_variable)
 {
     freeDeviceData(device_only_data_field_);
-    size_t new_host_variable_size = host_variable->getDataFieldSize();
+    size_t new_host_variable_size = host_variable->getDataSize();
     device_only_data_field_ = allocateDeviceOnly<DataType>(new_host_variable_size);
-    host_variable->setDeviceDataField(device_only_data_field_);
+    host_variable->setDeviceData(device_only_data_field_);
 }
 //=================================================================================================//
 template <typename DataType>
@@ -81,13 +81,13 @@ DataType *DiscreteVariable<DataType>::DelegatedData(const ParallelDevicePolicy &
 }
 //=================================================================================================//
 template <typename DataType>
-void DiscreteVariable<DataType>::reallocateDataField(
+void DiscreteVariable<DataType>::reallocateData(
     const ParallelDevicePolicy &par_device, size_t tentative_size)
 {
     if (data_size_ < tentative_size)
     {
-        reallocateDataField(tentative_size);
-        device_only_variable_->reallocateDataField(this);
+        reallocateData(tentative_size);
+        device_only_variable_->reallocateData(this);
     }
 }
 //=================================================================================================//

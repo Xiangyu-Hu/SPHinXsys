@@ -37,7 +37,7 @@ template <typename DataType>
 using VariableData = DataType *;
 
 template <typename DataType>
-using VariableDataArray = std::pair<VariableData *, UnsignedInt>;
+using VariableDataArray = std::pair<VariableData<DataType> *, UnsignedInt>;
 
 class DeviceShared;
 
@@ -72,19 +72,19 @@ class VariableArray<VariableType<DataType>> : public Entity
         }
         delegated_data_array_ = data_array_;
     };
-    ~DiscreteVariableArray() { delete[] data_array_; };
+    ~VariableArray() { delete[] data_array_; };
     StdVec<VariableType<DataType> *> getVariables() { return variables_; };
-    DataType *VariableArray() { return data_array_; };
+    VariableData<DataType> *DataArray() { return data_array_; };
 
     template <class ExecutionPolicy>
-    VariableDataArray DelegatedVariableDataArray(const ExecutionPolicy &ex_policy)
+    VariableDataArray<DataType> DelegatedVariableDataArray(const ExecutionPolicy &ex_policy)
     {
-        return VariableDataArray(data_array_, getArraySize());
+        return VariableDataArray<DataType>(data_array_, getArraySize());
     };
-    VariableDataArray DelegatedVariableDataArray(const ParallelDevicePolicy &par_device);
+    VariableDataArray<DataType> DelegatedVariableDataArray(const ParallelDevicePolicy &par_device);
     size_t getArraySize() { return variables_.size(); }
 
-    bool isFieldArrayDelegated() { return data_array_ != delegated_data_array_; };
+    bool isDataArrayDelegated() { return data_array_ != delegated_data_array_; };
     void setDelegateDataArray(VariableData<DataType> *data_array_)
     {
         delegated_data_array_ = data_array_;

@@ -80,9 +80,9 @@ void UpdateRelation<ExecutionPolicy, Inner<Parameters...>>::exec(Real dt)
                        this->particle_offset_list_size_,
                        typename PlusUnsignedInt<ExecutionPolicy>::type());
 
-    if (current_neighbor_index_size > this->dv_neighbor_index_->getDataFieldSize())
+    if (current_neighbor_index_size > this->dv_neighbor_index_->getDataSize())
     {
-        this->dv_neighbor_index_->reallocateDataField(ex_policy_, current_neighbor_index_size);
+        this->dv_neighbor_index_->reallocateData(ex_policy_, current_neighbor_index_size);
         this->inner_relation_.resetComputingKernelUpdated();
         kernel_implementation_.overwriteComputingKernel();
     }
@@ -167,9 +167,9 @@ void UpdateRelation<ExecutionPolicy, Contact<Parameters...>>::exec(Real dt)
                            this->particle_offset_list_size_,
                            typename PlusUnsignedInt<ExecutionPolicy>::type());
 
-        if (current_neighbor_index_size > this->dv_contact_neighbor_index_[k]->getDataFieldSize())
+        if (current_neighbor_index_size > this->dv_contact_neighbor_index_[k]->getDataSize())
         {
-            this->dv_contact_neighbor_index_[k]->reallocateDataField(ex_policy_, current_neighbor_index_size);
+            this->dv_contact_neighbor_index_[k]->reallocateData(ex_policy_, current_neighbor_index_size);
             this->contact_relation_.resetComputingKernelUpdated(k);
             contact_kernel_implementation_[k]->overwriteComputingKernel(k);
         }

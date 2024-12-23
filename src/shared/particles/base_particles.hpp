@@ -20,8 +20,8 @@ void BaseParticles::checkReloadFileRead(OwnerType *owner)
 template <typename DataType>
 DataType *BaseParticles::initializeVariable(DiscreteVariable<DataType> *variable, DataType initial_value)
 {
-    DataType *data_field = variable->DataField();
-    for (size_t i = 0; i != variable->getDataFieldSize(); ++i)
+    DataType *data_field = variable->Data();
+    for (size_t i = 0; i != variable->getDataSize(); ++i)
     {
         data_field[i] = initial_value;
     }
@@ -33,7 +33,7 @@ DataType *BaseParticles::
     initializeVariable(DiscreteVariable<DataType> *variable, const InitializationFunction &initialization)
 {
     DataType *data_field = initializeVariable(variable);
-    for (size_t i = 0; i != variable->getDataFieldSize(); ++i)
+    for (size_t i = 0; i != variable->getDataSize(); ++i)
     {
         data_field[i] = initialization(i); // Here, function object is applied for initialization.
     }
@@ -44,9 +44,9 @@ template <typename DataType>
 DataType *BaseParticles::initializeVariable(
     DiscreteVariable<DataType> *variable, DiscreteVariable<DataType> *old_variable)
 {
-    DataType *data_field = variable->DataField();
-    DataType *old_data_field = old_variable->DataField();
-    for (size_t i = 0; i != variable->getDataFieldSize(); ++i)
+    DataType *data_field = variable->Data();
+    DataType *old_data_field = old_variable->Data();
+    for (size_t i = 0; i != variable->getDataSize(); ++i)
     {
         data_field[i] = old_data_field[i];
     }
@@ -61,7 +61,7 @@ DataType *BaseParticles::
     DiscreteVariable<DataType> *variable =
         unique_variable_ptrs_.createPtr<DiscreteVariable<DataType>>(name, data_size);
     initializeVariable(variable, std::forward<Args>(args)...);
-    return variable->DataField();
+    return variable->Data();
 }
 //=================================================================================================//
 template <class DataType, typename... Args>
@@ -86,7 +86,7 @@ DataType *BaseParticles::registerDiscreteVariable(const std::string &name,
                                                    name, data_size);
         initializeVariable(variable, std::forward<Args>(args)...);
     }
-    return variable->DataField();
+    return variable->Data();
 }
 //=================================================================================================//
 template <typename DataType, typename... Args>
@@ -148,7 +148,7 @@ DataType *BaseParticles::registerStateVariableFrom(
         exit(1);
     }
 
-    DataType *old_data_field = variable->DataField();
+    DataType *old_data_field = variable->Data();
     return registerStateVariable<DataType>(new_name, [&](size_t index)
                                            { return old_data_field[index]; });
 }
@@ -166,7 +166,7 @@ DiscreteVariable<DataType> *BaseParticles::registerStateVariableOnlyFrom(
         exit(1);
     }
 
-    DataType *old_data_field = variable->DataField();
+    DataType *old_data_field = variable->Data();
     return registerStateVariableOnly<DataType>(new_name, [&](size_t index)
                                                { return old_data_field[index]; });
 }
@@ -217,14 +217,14 @@ DataType *BaseParticles::getVariableDataByName(const std::string &name)
 {
     DiscreteVariable<DataType> *variable = getVariableByName<DataType>(name);
 
-    if (variable->DataField() == nullptr)
+    if (variable->Data() == nullptr)
     {
         std::cout << "\nError: the variable '" << name << "' has not been allocated yet!\n";
         std::cout << __FILE__ << ':' << __LINE__ << std::endl;
         exit(1);
     }
 
-    return variable->DataField();
+    return variable->Data();
 }
 //=================================================================================================//
 template <class DataType>
@@ -283,10 +283,10 @@ template <typename DataType>
 DiscreteVariable<DataType> *BaseParticles::
     addVariableToList(ParticleVariables &variable_set, DiscreteVariable<DataType> *variable)
 {
-    if (variable->getDataFieldSize() < real_particles_bound_)
+    if (variable->getDataSize() < real_particles_bound_)
     {
         std::cout << "\n Error: The variable '" << variable->Name() << "' can not be treated as a particle variable," << std::endl;
-        std::cout << "\n because the data size " << variable->getDataFieldSize() << " is too less!" << std::endl;
+        std::cout << "\n because the data size " << variable->getDataSize() << " is too less!" << std::endl;
         std::cout << __FILE__ << ':' << __LINE__ << std::endl;
         exit(1);
     }
@@ -309,7 +309,7 @@ void BaseParticles::addVariableToSort(const std::string &name)
     if (new_sortable != nullptr)
     {
         constexpr int type_index = DataTypeIndex<DataType>::value;
-        DataType *data_field = new_sortable->DataField();
+        DataType *data_field = new_sortable->Data();
         std::get<type_index>(sortable_data_).push_back(data_field);
     }
 }
@@ -355,7 +355,7 @@ operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables)
     for (size_t i = 0; i != variables.size(); ++i)
     {
         size_t index = 0;
-        DataType *data_field = variables[i]->DataField();
+        DataType *data_field = variables[i]->Data();
         for (auto child = xml_parser_.first_element_->FirstChildElement(); child; child = child->NextSiblingElement())
         {
             xml_parser_.setAttributeToElement(child, variables[i]->Name(), data_field[index]);
@@ -371,8 +371,8 @@ operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables, Ba
     for (size_t i = 0; i != variables.size(); ++i)
     {
         size_t index = 0;
-        DataType *data_field = variables[i]->DataField() != nullptr
-                                   ? variables[i]->DataField()
+        DataType *data_field = variables[i]->Data() != nullptr
+                                   ? variables[i]->Data()
                                    : base_particles->initializeVariable<DataType>(variables[i]);
         for (auto child = xml_parser_.first_element_->FirstChildElement(); child; child = child->NextSiblingElement())
         {
