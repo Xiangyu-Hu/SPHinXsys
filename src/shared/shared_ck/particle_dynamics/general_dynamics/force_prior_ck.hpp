@@ -9,9 +9,9 @@ namespace SPH
 template <class ExecutionPolicy, class EncloserType>
 ForcePriorCK::UpdateKernel::
     UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-    : force_prior_(encloser.dv_force_prior_->DelegatedDataField(ex_policy)),
-      current_force_(encloser.dv_current_force_->DelegatedDataField(ex_policy)),
-      previous_force_(encloser.dv_previous_force_->DelegatedDataField(ex_policy)) {}
+    : force_prior_(encloser.dv_force_prior_->DelegatedData(ex_policy)),
+      current_force_(encloser.dv_current_force_->DelegatedData(ex_policy)),
+      previous_force_(encloser.dv_previous_force_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <class GravityType>
 GravityForceCK<GravityType>::GravityForceCK(SPHBody &sph_body, const GravityType &gravity)
@@ -28,8 +28,8 @@ GravityForceCK<GravityType>::UpdateKernel::
     : ForcePriorCK::UpdateKernel(ex_policy, encloser),
       gravity_(encloser.gravity_),
       physical_time_(encloser.sv_physical_time_->DelegatedData(ex_policy)),
-      pos_(encloser.dv_pos_->DelegatedDataField(ex_policy)),
-      mass_(encloser.dv_mass_->DelegatedDataField(ex_policy)) {}
+      pos_(encloser.dv_pos_->DelegatedData(ex_policy)),
+      mass_(encloser.dv_mass_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <class GravityType>
 void GravityForceCK<GravityType>::UpdateKernel::update(size_t index_i, Real dt)

@@ -47,7 +47,7 @@ DataType *SPHSystem::getSystemVariableDataByName(const std::string &name)
         std::cout << __FILE__ << ':' << __LINE__ << std::endl;
     }
 
-    return variable->ValueAddress();
+    return variable->Data();
 }
 //=================================================================================================//
 } // namespace SPH

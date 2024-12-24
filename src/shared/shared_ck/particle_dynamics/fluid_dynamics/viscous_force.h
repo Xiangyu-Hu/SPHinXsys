@@ -119,8 +119,8 @@ class ViscousForceCK<Contact<Wall, ViscosityType, KernelCorrectionType, Paramete
         template <class ExecutionPolicy, class EncloserType>
         InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, size_t contact_index)
             : BaseViscousForceType::InteractKernel(ex_policy, encloser, contact_index),
-              wall_Vol_(encloser.dv_wall_Vol_[contact_index]->DelegatedDataField(ex_policy)),
-              wall_vel_ave_(encloser.dv_wall_vel_ave_[contact_index]->DelegatedDataField(ex_policy)){};
+              wall_Vol_(encloser.dv_wall_Vol_[contact_index]->DelegatedData(ex_policy)),
+              wall_vel_ave_(encloser.dv_wall_vel_ave_[contact_index]->DelegatedData(ex_policy)){};
         void interact(size_t index_i, Real dt = 0.0);
 
       protected:
@@ -163,7 +163,7 @@ class Viscosity<Variable>
       public:
         template <class ExecutionPolicy, class EncloserType>
         ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : ParameterVariable<Real>(encloser.dv_mu_->DelegatedDataField(ex_policy)){};
+            : ParameterVariable<Real>(encloser.dv_mu_->DelegatedData(ex_policy)){};
     };
 
   protected:

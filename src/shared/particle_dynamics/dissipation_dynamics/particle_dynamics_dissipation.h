@@ -57,8 +57,8 @@ class FixedDampingRate
 {
   public:
     FixedDampingRate(BaseParticles *particles, Real eta, Real c = 1.0)
-        : damping_rate_(particles->registerSingularVariable<Real>("DampingRate", eta)->ValueAddress()),
-          specific_capacity_(particles->registerSingularVariable<Real>("SpecificCapacity", c)->ValueAddress()),
+        : damping_rate_(particles->registerSingularVariable<Real>("DampingRate", eta)->Data()),
+          specific_capacity_(particles->registerSingularVariable<Real>("SpecificCapacity", c)->Data()),
           mass_(particles->getVariableDataByName<Real>("Mass")){};
     virtual ~FixedDampingRate(){};
 

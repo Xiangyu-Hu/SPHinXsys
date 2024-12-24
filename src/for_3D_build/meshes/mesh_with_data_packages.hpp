@@ -28,7 +28,7 @@ DataType MeshWithGridDataPackages<PKG_SIZE>::
         local_data_index[n] = global_grid_index[n] - cell_index_in_this_direction * pkg_size;
     }
     size_t package_index = PackageIndexFromCellIndex(cell_index_on_mesh_);
-    auto &data = mesh_variable.DataField()[package_index];
+    auto &data = mesh_variable.Data()[package_index];
     return data[local_data_index[0]][local_data_index[1]][local_data_index[2]];
 }
 //=================================================================================================//
@@ -52,7 +52,7 @@ DataType MeshWithGridDataPackages<PKG_SIZE>::
     Arrayi cell_index = CellIndexFromPosition(position);
     size_t package_index = PackageIndexFromCellIndex(cell_index);
     return isInnerDataPackage(cell_index) ? probeDataPackage<DataType>(mesh_variable, package_index, cell_index, position)
-                                          : mesh_variable.DataField()[package_index][0][0][0];
+                                          : mesh_variable.Data()[package_index][0][0][0];
 }
 //=================================================================================================//
 template <int PKG_SIZE>
@@ -116,7 +116,7 @@ void MeshWithGridDataPackages<PKG_SIZE>::
                      const FunctionByPosition &function_by_position)
 {
     size_t package_index = PackageIndexFromCellIndex(cell_index);
-    auto &pkg_data = mesh_variable.DataField()[package_index];
+    auto &pkg_data = mesh_variable.Data()[package_index];
     for (int i = 0; i != pkg_size; ++i)
         for (int j = 0; j != pkg_size; ++j)
             for (int k = 0; k != pkg_size; ++k)
@@ -133,8 +133,8 @@ void MeshWithGridDataPackages<PKG_SIZE>::
                     MeshVariable<OutDataType> &out_variable,
                     const size_t package_index)
 {
-    auto in_variable_data = in_variable.DataField();
-    auto out_variable_data = out_variable.DataField();
+    auto in_variable_data = in_variable.Data();
+    auto out_variable_data = out_variable.Data();
 
     auto &neighborhood = cell_neighborhood_[package_index];
     auto &pkg_data = out_variable_data[package_index];
@@ -164,7 +164,7 @@ DataType MeshWithGridDataPackages<PKG_SIZE>::
     CornerAverage(MeshVariable<DataType> &mesh_variable, Arrayi addrs_index, Arrayi corner_direction, CellNeighborhood &neighborhood)
 {
     DataType average = ZeroData<DataType>::value;
-    auto mesh_variable_data = mesh_variable.DataField();
+    auto mesh_variable_data = mesh_variable.Data();
     for (int i = 0; i != 2; ++i)
         for (int j = 0; j != 2; ++j)
             for (int k = 0; k != 2; ++k)
@@ -189,7 +189,7 @@ DataType MeshWithGridDataPackages<PKG_SIZE>::
     Vecd beta = Vecd::Ones() - alpha;
 
     auto &neighborhood = cell_neighborhood_[package_index];
-    auto mesh_variable_data = mesh_variable.DataField();
+    auto mesh_variable_data = mesh_variable.Data();
     NeighbourIndex neighbour_index_1 = NeighbourIndexShift(Arrayi(data_index[0], data_index[1], data_index[2]), neighborhood);
     NeighbourIndex neighbour_index_2 = NeighbourIndexShift(Arrayi(data_index[0] + 1, data_index[1], data_index[2]), neighborhood);
     NeighbourIndex neighbour_index_3 = NeighbourIndexShift(Arrayi(data_index[0], data_index[1] + 1, data_index[2]), neighborhood);

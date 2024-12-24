@@ -59,7 +59,7 @@ class LoopRangeCK<ExecutionPolicy, BodyPartType>
 {
   public:
     LoopRangeCK(BodyPartType &body_part)
-        : index_list_(body_part.dvIndexList()->DelegatedDataField(ExecutionPolicy{})),
+        : index_list_(body_part.dvIndexList()->DelegatedData(ExecutionPolicy{})),
           loop_bound_(body_part.svRangeSize()->DelegatedData(ExecutionPolicy{})){};
     template <class ReturnType, class UnaryFunc>
     ReturnType computeUnit(const UnaryFunc &f, UnsignedInt i) const { return f(index_list_[i]); };
