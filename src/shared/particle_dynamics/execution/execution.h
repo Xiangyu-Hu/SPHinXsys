@@ -71,11 +71,10 @@ class Implementation<ExecutionPolicy, LocalDynamicsType, ComputingKernelType>
     }
 
     template <typename... Args>
-    ComputingKernelType *getComputingKernel(Args &&... args)
+    ComputingKernelType *getComputingKernel(Args &&...args)
     {
         if (computing_kernel_ == nullptr)
         {
-            local_dynamics_.registerComputingKernel(this, std::forward<Args>(args)...);
             computing_kernel_ = new ComputingKernelType(
                 ExecutionPolicy{}, local_dynamics_, std::forward<Args>(args)...);
             setUpdated();
@@ -90,7 +89,7 @@ class Implementation<ExecutionPolicy, LocalDynamicsType, ComputingKernelType>
     }
 
     template <typename... Args>
-    void overwriteComputingKernel(Args &&... args)
+    void overwriteComputingKernel(Args &&...args)
     {
         *computing_kernel_ = ComputingKernelType(
             ExecutionPolicy{}, local_dynamics_, std::forward<Args>(args)...);

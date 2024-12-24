@@ -135,3 +135,10 @@ endif()
 # ------ Extra scripts to install
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/PythonScriptStore/RegressionTest/regression_test_base_tool.py
     DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/PythonScriptStore/RegressionTest)
+
+# # 设定正确的目标架构
+# if(SPHINXSYS_USE_SYCL)
+#     # 确保所有目标都使用正确的编译选项
+#     target_compile_options(sphinxsys_core INTERFACE -fsycl -fsycl-targets=nvptx64-nvidia-cuda:sm_61)
+#     target_link_options(sphinxsys_core INTERFACE -fsycl -fsycl-targets=nvptx64-nvidia-cuda:sm_61)
+# endif()

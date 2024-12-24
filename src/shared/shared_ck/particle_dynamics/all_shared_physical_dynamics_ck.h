@@ -41,4 +41,9 @@
 #include "particle_sort_ck.hpp"
 #include "simple_algorithms_ck.h"
 
+//soil mechanics
+#include "continuum_integration_1st_ck.h"
+#include "continuum_integration_1st_ck.hpp"
+#include "continuum_integration_2nd_ck.h"
+#include "continuum_integration_2nd_ck.hpp"
 #endif // ALL_SHARED_PHYSICAL_DYNAMICS_CK_H

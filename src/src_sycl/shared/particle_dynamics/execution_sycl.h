@@ -149,7 +149,6 @@ class Implementation<ParallelDevicePolicy, LocalDynamicsType, ComputingKernelTyp
     {
         if (computing_kernel_ == nullptr)
         {
-            local_dynamics_.registerComputingKernel(this, std::forward<Args>(args)...);
             computing_kernel_ = allocateDeviceOnly<ComputingKernelType>(1);
             ComputingKernelType *host_kernel =
                 kernel_ptr_keeper_.template createPtr<ComputingKernelType>(
