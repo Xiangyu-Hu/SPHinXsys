@@ -10,7 +10,7 @@ from regression_test_base_tool import SphinxsysRegressionTest
 case name: test_2d_dambreak
 """
 
-case_name = "test_2d_dambreak"
+case_name = "test_2d_collumn_collaspe_ck"
 body_name = "WaterBody"
 parameter_name = "TotalMechanicalEnergy"
 body_name_1 = "FluidObserver"
