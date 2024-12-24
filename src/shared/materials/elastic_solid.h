@@ -162,6 +162,7 @@ class SaintVenantKirchhoffSolid : public LinearElasticSolid
 
     /** second Piola-Kirchhoff stress related with green-lagrangian deformation tensor */
     virtual Matd StressPK2(Matd &deformation, size_t particle_index_i) override;
+    virtual Matd StressCauchy(Matd &almansi_strain, size_t particle_index_i) override;
 };
 
 /**
