@@ -116,7 +116,7 @@ class Average : public ReduceSumType
     template <class DynamicsIdentifier, typename... Args>
     Average(DynamicsIdentifier &identifier, Args &&...args)
         : ReduceSumType(identifier, std::forward<Args>(args)...){};
-    virtual ~Average() {};
+    virtual ~Average(){};
     using ReturnType = typename ReduceSumType::ReturnType;
 
     virtual ReturnType outputResult(ReturnType reduced_value)
@@ -139,7 +139,7 @@ struct ConstructorArgs
     std::tuple<OtherArgs...> others_;
     SPHBody &getSPHBody() { return body_relation_.getSPHBody(); };
     ConstructorArgs(BodyRelationType &body_relation, OtherArgs... other_args)
-        : body_relation_(body_relation), others_(other_args...) {};
+        : body_relation_(body_relation), others_(other_args...){};
 };
 
 /**
