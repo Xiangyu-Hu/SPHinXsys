@@ -68,7 +68,6 @@ class GeneralContinuum : public WeaklyCompressibleFluid
 
     virtual GeneralContinuum *ThisObjectPtr() override { return this; };
 
-     //add
     class GeneralContinuumKernel
     {
       public:
@@ -78,9 +77,6 @@ class GeneralContinuum : public WeaklyCompressibleFluid
         Real E_;                 /* Youngs or tensile modules  */
         Real G_;                 /* shear modules  */
         Real K_;                 /* bulk modules  */
-        // Real nu_;                /* Poisson ratio  */
-        // Real contact_stiffness_; /* contact-force stiffness related to bulk modulus*/
-        //,nu_(encloser.nu_),contact_stiffness_(encloser.contact_stiffness_)
     };
 };
 
@@ -113,7 +109,6 @@ class PlasticContinuum : public GeneralContinuum
 
     virtual GeneralContinuum *ThisObjectPtr() override { return this; };
 
-    //add
     class PlasticKernel:GeneralContinuum::GeneralContinuumKernel
     {
       public:
@@ -167,8 +162,6 @@ class PlasticContinuum : public GeneralContinuum
 
 
       protected:
-          //Real c_;                            /* cohesion  */
-          //Real phi_;                          /* friction angle  */
           Real psi_;                          /* dilatancy angle  */
           Real alpha_phi_;                    /* Drucker-Prager's constants */
           Real k_c_;                          /* Drucker-Prager's constants */

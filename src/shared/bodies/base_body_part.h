@@ -44,23 +44,22 @@ using namespace std::placeholders;
 class BodyPart
 {
   public:
-    BodyPart(SPHBody &sph_body, const std::string &body_part_name)
-        : sph_body_(sph_body), part_id_(sph_body.getNewBodyPartID()),
-          body_part_name_(body_part_name),
-          base_particles_(sph_body.getBaseParticles()),
-          pos_(base_particles_.getVariableDataByName<Vecd>("Position")){};
+    BodyPart(SPHBody &sph_body, const std::string &body_part_name);
     virtual ~BodyPart(){};
-
     SPHBody &getSPHBody() { return sph_body_; };
     SPHSystem &getSPHSystem() { return sph_body_.getSPHSystem(); };
     std::string getName() { return body_part_name_; };
     int getPartID() { return part_id_; };
+    DiscreteVariable<UnsignedInt> *dvIndexList() { return dv_index_list_; };
+    SingularVariable<UnsignedInt> *svRangeSize() { return sv_range_size_; };
 
   protected:
     SPHBody &sph_body_;
     int part_id_;
     std::string body_part_name_;
     BaseParticles &base_particles_;
+    DiscreteVariable<UnsignedInt> *dv_index_list_;
+    SingularVariable<UnsignedInt> *sv_range_size_;
     Vecd *pos_;
 };
 
@@ -75,10 +74,7 @@ class BodyPartByParticle : public BodyPart
     BaseParticles &getBaseParticles() { return base_particles_; };
     IndexVector &LoopRange() { return body_part_particles_; };
     size_t SizeOfLoopRange() { return body_part_particles_.size(); };
-
-    BodyPartByParticle(SPHBody &sph_body, const std::string &body_part_name)
-        : BodyPart(sph_body, body_part_name),
-          body_part_bounds_(Vecd::Zero(), Vecd::Zero()), body_part_bounds_set_(false){};
+    BodyPartByParticle(SPHBody &sph_body, const std::string &body_part_name);
     virtual ~BodyPartByParticle(){};
 
     void setBodyPartBounds(BoundingBox bbox)

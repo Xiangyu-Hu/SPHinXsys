@@ -23,8 +23,7 @@
 /**
  * @file 	continuum_integration.h
  * @brief 	Here, we define the algorithm classes for continuum dynamics within the body.
- * @details We consider here weakly compressible assumption to model elastic and
- * 			plastic materials with the updated Lagrangian framework.
+ * @details CK and SYCL version.
  * @author	Shuang Li, Xiangyu Hu and Shuaihao Zhang
  */
 #ifndef CONTINUUM_INTEGRATION_2ND_CK_H

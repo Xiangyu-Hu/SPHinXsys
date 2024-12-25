@@ -1,4 +1,7 @@
 #include "heart_volume_change.h"
+
+#include <numeric>
+
 using namespace SPH;
 
 void write_csv_files(

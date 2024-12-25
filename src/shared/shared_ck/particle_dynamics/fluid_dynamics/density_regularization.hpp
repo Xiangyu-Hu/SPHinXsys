@@ -30,10 +30,10 @@ DensityRegularization<Base, RelationType<Parameters...>>::InteractKernel::
                    Args &&...args)
     : Interaction<RelationType<Parameters...>>::
           InteractKernel(ex_policy, encloser, std::forward<Args>(args)...),
-      rho_(encloser.dv_rho_->DelegatedDataField(ex_policy)),
-      mass_(encloser.dv_mass_->DelegatedDataField(ex_policy)),
-      rho_sum_(encloser.dv_rho_sum_->DelegatedDataField(ex_policy)),
-      Vol_(encloser.dv_Vol_->DelegatedDataField(ex_policy)),
+      rho_(encloser.dv_rho_->DelegatedData(ex_policy)),
+      mass_(encloser.dv_mass_->DelegatedData(ex_policy)),
+      rho_sum_(encloser.dv_rho_sum_->DelegatedData(ex_policy)),
+      Vol_(encloser.dv_Vol_->DelegatedData(ex_policy)),
       rho0_(encloser.rho0_), inv_sigma0_(encloser.inv_sigma0_) {}
 //=================================================================================================//
 template <typename RegularizationType, typename... Parameters>
@@ -98,7 +98,7 @@ DensityRegularization<Contact<Parameters...>>::InteractKernel::
     : DensityRegularization<Base, Contact<Parameters...>>::
           InteractKernel(ex_policy, encloser, contact_index),
       contact_inv_rho0_k_(encloser.contact_inv_rho0_[contact_index]),
-      contact_mass_k_(encloser.dv_contact_mass_[contact_index]->DelegatedDataField(ex_policy)) {}
+      contact_mass_k_(encloser.dv_contact_mass_[contact_index]->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <typename... Parameters>
 void DensityRegularization<Contact<Parameters...>>::

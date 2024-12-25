@@ -1,9 +1,8 @@
 /**
  * @file 	column_collapse.cpp
  * @brief 	2D column collapse.
- * @details This is the one of the basic test cases, also the first case for understanding
- * 			SPH method for modelling granular materials such as soils and sands.
- * @author Shuaihao Zhang and Xiangyu Hu
+ * @details column collapse example using SYCL.
+ * @author Shuang Li, Xiangyu Hu and Shuaihao Zhang 
  */
 #include "sphinxsys_sycl.h"
 using namespace SPH;   // Namespace cite here.
@@ -183,7 +182,6 @@ int main(int ac, char *av[])
             time_instance = TickCount::now();
             Real relaxation_time = 0.0;
             Real acoustic_dt = 0.0;
-            size_t tmp_count = 0;
             while (relaxation_time < Dt)
             {
                 acoustic_dt = soil_acoustic_time_step.exec();
@@ -192,19 +190,6 @@ int main(int ac, char *av[])
                 relaxation_time += acoustic_dt;
                 integration_time += acoustic_dt;
                 sv_physical_time->incrementValue(acoustic_dt);
-
-                if(acoustic_dt >= 0)
-                {
-                    tmp_count += 1 ;
-                }  
-                else
-                {
-                    std::cout << "tmp_count:"  <<tmp_count <<std::endl;
-                    std::cout << "acoustic_dt" <<acoustic_dt <<std::endl;
-                    return 1;
-                }
-                //body_states_recording.writeToFile(tmp_count);
-
             }
             interval_acoustic_steps += TickCount::now() - time_instance;
 
@@ -216,7 +201,6 @@ int main(int ac, char *av[])
                           << "	advection_dt = " << Dt << "	acoustic_dt = " << acoustic_dt << "\n";
                 if (number_of_iterations % restart_output_interval == 0)
                     restart_io.writeToFile(MyExecutionPolicy{}, number_of_iterations);
-                //body_states_recording.writeToFile(MyExecutionPolicy{});
             }
             number_of_iterations++;
 

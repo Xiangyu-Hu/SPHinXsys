@@ -20,14 +20,14 @@ void UpdateSortableVariables::operator()(
     DiscreteVariable<UnsignedInt> *dv_index_permutation)
 {
     constexpr int type_index = DataTypeIndex<DataType>::value;
-    DataType *temp_data_field = std::get<type_index>(temp_variables_)->DelegatedDataField(ex_policy);
+    DataType *temp_data_field = std::get<type_index>(temp_variables_)->DelegatedData(ex_policy);
 
-    UnsignedInt *index_permutation = dv_index_permutation->DelegatedDataField(ex_policy);
+    UnsignedInt *index_permutation = dv_index_permutation->DelegatedData(ex_policy);
 
     UnsignedInt total_real_particles = particles->TotalRealParticles();
     for (size_t k = 0; k != variables.size(); ++k)
     {
-        DataType *sorted_data_field = variables[k]->DelegatedDataField(ex_policy);
+        DataType *sorted_data_field = variables[k]->DelegatedData(ex_policy);
         particle_for(ex_policy, IndexRange(0, total_real_particles),
                      [=](size_t i)
                      { temp_data_field[i] = sorted_data_field[i]; });
@@ -41,8 +41,8 @@ template <class ExecutionPolicy>
 QuickSort::QuickSort(const ExecutionPolicy &ex_policy,
                      DiscreteVariable<UnsignedInt> *dv_sequence,
                      DiscreteVariable<UnsignedInt> *dv_index_permutation)
-    : sequence_(dv_sequence->DelegatedDataField(ex_policy)),
-      index_permutation_(dv_index_permutation->DelegatedDataField(ex_policy)),
+    : sequence_(dv_sequence->DelegatedData(ex_policy)),
+      index_permutation_(dv_index_permutation->DelegatedData(ex_policy)),
       swap_particle_index_(sequence_, index_permutation_), compare_(),
       quick_sort_particle_range_(sequence_, 0, compare_, swap_particle_index_),
       quick_sort_particle_body_() {}
@@ -71,11 +71,11 @@ template <class ExecutionPolicy, class SortMethodType>
 ParticleSortCK<ExecutionPolicy, SortMethodType>::ComputingKernel::
     ComputingKernel(const ExecutionPolicy &ex_policy,
                     ParticleSortCK<ExecutionPolicy, SortMethodType> &encloser)
-    : mesh_(encloser.mesh_), pos_(encloser.dv_pos_->DelegatedDataField(ex_policy)),
-      sequence_(encloser.dv_sequence_->DelegatedDataField(ex_policy)),
-      index_permutation_(encloser.dv_index_permutation_->DelegatedDataField(ex_policy)),
-      original_id_(encloser.dv_original_id_->DelegatedDataField(ex_policy)),
-      sorted_id_(encloser.dv_sorted_id_->DelegatedDataField(ex_policy)) {}
+    : mesh_(encloser.mesh_), pos_(encloser.dv_pos_->DelegatedData(ex_policy)),
+      sequence_(encloser.dv_sequence_->DelegatedData(ex_policy)),
+      index_permutation_(encloser.dv_index_permutation_->DelegatedData(ex_policy)),
+      original_id_(encloser.dv_original_id_->DelegatedData(ex_policy)),
+      sorted_id_(encloser.dv_sorted_id_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <class ExecutionPolicy, class SortMethodType>
 void ParticleSortCK<ExecutionPolicy, SortMethodType>::ComputingKernel::

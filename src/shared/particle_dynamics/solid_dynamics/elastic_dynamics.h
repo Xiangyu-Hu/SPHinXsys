@@ -147,7 +147,7 @@ class BaseElasticIntegration : public LocalDynamics, public DataDelegateInner
 
 /**
  * @class BaseIntegration1stHalf
- * @brief computing stress relaxation process by verlet time stepping
+ * @brief computing stress relaxation process by Verlet time stepping
  * This is the first step
  */
 class BaseIntegration1stHalf : public BaseElasticIntegration
@@ -167,7 +167,7 @@ class BaseIntegration1stHalf : public BaseElasticIntegration
 
 /**
  * @class Integration1stHalf
- * @brief computing stress relaxation process by verlet time stepping
+ * @brief computing stress relaxation process by Verlet time stepping
  * This is the first step
  */
 class Integration1stHalf : public BaseIntegration1stHalf
@@ -321,7 +321,7 @@ class Integration1stHalfPK2RightCauchy : public Integration1stHalfPK2
 
 /**
  * @class Integration2ndHalf
- * @brief computing stress relaxation process by verlet time stepping
+ * @brief computing stress relaxation process by Verlet time stepping
  * This is the second step
  */
 class Integration2ndHalf : public BaseElasticIntegration

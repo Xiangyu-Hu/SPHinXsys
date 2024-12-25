@@ -163,7 +163,7 @@ class LinearCorrectionCK : public KernelCorrection
       public:
         template <class ExecutionPolicy>
         ComputingKernel(const ExecutionPolicy &ex_policy, LinearCorrectionCK &encloser)
-            : ParameterVariable<Matd>(encloser.dv_B_->DelegatedDataField(ex_policy)){};
+            : ParameterVariable<Matd>(encloser.dv_B_->DelegatedData(ex_policy)){};
     };
 
   protected:

@@ -21,11 +21,10 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	continuum_integration.h
+ * @file 	continuum_integration_1st_ck.h
  * @brief 	Here, we define the algorithm classes for continuum dynamics within the body.
- * @details We consider here weakly compressible assumption to model elastic and
- * 			plastic materials with the updated Lagrangian framework.
- * @author	Shuang Li,Xiangyu Hu  and Shuaihao Zhang
+ * @details CK and SYCL version.
+ * @author	Shuang Li,Xiangyu Hu and Shuaihao Zhang
  */
 #ifndef CONTINUUM_INTEGRATION_1ST_CK_H
 #define CONTINUUM_INTEGRATION_1ST_CK_H
@@ -93,8 +92,6 @@ class PlasticAcousticStep1stHalf<Inner<OneLevel, RiemannSolverType, KernelCorrec
         RiemannSolverType riemann_solver_;
         Real *Vol_, *rho_, *p_, *drho_dt_, *mass_;
         Vecd *force_;
-
-        //add
         Mat3d *stress_tensor_3D_;
     };
 
@@ -138,16 +135,13 @@ class PlasticAcousticStep1stHalf<Contact<Wall, RiemannSolverType, KernelCorrecti
         RiemannSolverType riemann_solver_;
         Real *Vol_, *rho_, *mass_, *p_, *drho_dt_;
         Vecd *force_, *force_prior_;
-        Real *wall_Vol_;
-        Vecd *wall_acc_ave_;
-
-        //add
+        Matd *velocity_gradient_;
         Mat3d *stress_tensor_3D_;
 
-        //2nd
+        Real *wall_Vol_;
+        Vecd *wall_acc_ave_;
         Vecd *wall_vel_ave_, *wall_n_;
 
-        Matd *velocity_gradient_;
     };
 
   protected:

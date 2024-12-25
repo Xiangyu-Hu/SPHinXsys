@@ -22,8 +22,8 @@ template <class RiemannSolverType, class KernelCorrectionType, typename... Param
 template <class ExecutionPolicy, class EncloserType>
 PlasticAcousticStep2ndHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType, Parameters...>>::
     InitializeKernel::InitializeKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-    : vel_(encloser.dv_vel_->DelegatedDataField(ex_policy)),
-      dpos_(encloser.dv_dpos_->DelegatedDataField(ex_policy)) {}
+    : vel_(encloser.dv_vel_->DelegatedData(ex_policy)),
+      dpos_(encloser.dv_dpos_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
 void PlasticAcousticStep2ndHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType, Parameters...>>::
@@ -39,12 +39,12 @@ PlasticAcousticStep2ndHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionTy
     : BaseInteraction::InteractKernel(ex_policy, encloser),
       correction_(encloser.correction_),
       riemann_solver_(encloser.riemann_solver_),
-      Vol_(encloser.dv_Vol_->DelegatedDataField(ex_policy)),
-      rho_(encloser.dv_rho_->DelegatedDataField(ex_policy)),
-      drho_dt_(encloser.dv_drho_dt_->DelegatedDataField(ex_policy)),
-      vel_(encloser.dv_vel_->DelegatedDataField(ex_policy)),
-      force_(encloser.dv_force_->DelegatedDataField(ex_policy)),
-      velocity_gradient_(encloser.dv_velocity_gradient_->DelegatedDataField(ex_policy)) {}
+      Vol_(encloser.dv_Vol_->DelegatedData(ex_policy)),
+      rho_(encloser.dv_rho_->DelegatedData(ex_policy)),
+      drho_dt_(encloser.dv_drho_dt_->DelegatedData(ex_policy)),
+      vel_(encloser.dv_vel_->DelegatedData(ex_policy)),
+      force_(encloser.dv_force_->DelegatedData(ex_policy)),
+      velocity_gradient_(encloser.dv_velocity_gradient_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
 void PlasticAcousticStep2ndHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType, Parameters...>>::
@@ -73,13 +73,13 @@ template <class RiemannSolverType, class KernelCorrectionType, typename... Param
 template <class ExecutionPolicy, class EncloserType>
 PlasticAcousticStep2ndHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType, Parameters...>>::
     UpdateKernel::UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-    : rho_(encloser.dv_rho_->DelegatedDataField(ex_policy)),
-      drho_dt_(encloser.dv_drho_dt_->DelegatedDataField(ex_policy)),
-      stress_tensor_3D_(encloser.dv_stress_tensor_3D_->DelegatedDataField(ex_policy)), 
-      strain_tensor_3D_(encloser.dv_strain_tensor_3D_->DelegatedDataField(ex_policy)),
-      stress_rate_3D_(encloser.dv_stress_rate_3D_->DelegatedDataField(ex_policy)),
-      strain_rate_3D_(encloser.dv_strain_rate_3D_->DelegatedDataField(ex_policy)),
-      velocity_gradient_(encloser.dv_velocity_gradient_->DelegatedDataField(ex_policy)),
+    : rho_(encloser.dv_rho_->DelegatedData(ex_policy)),
+      drho_dt_(encloser.dv_drho_dt_->DelegatedData(ex_policy)),
+      stress_tensor_3D_(encloser.dv_stress_tensor_3D_->DelegatedData(ex_policy)), 
+      strain_tensor_3D_(encloser.dv_strain_tensor_3D_->DelegatedData(ex_policy)),
+      stress_rate_3D_(encloser.dv_stress_rate_3D_->DelegatedData(ex_policy)),
+      strain_rate_3D_(encloser.dv_strain_rate_3D_->DelegatedData(ex_policy)),
+      velocity_gradient_(encloser.dv_velocity_gradient_->DelegatedData(ex_policy)),
       plastic_kernel_(encloser.plastic_continuum_)
       {}
 //=================================================================================================//
@@ -113,15 +113,15 @@ PlasticAcousticStep2ndHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType
     : BaseInteraction::InteractKernel(ex_policy, encloser, contact_index),
       correction_(encloser.correction_),
       riemann_solver_(encloser.riemann_solver_),
-      Vol_(encloser.dv_Vol_->DelegatedDataField(ex_policy)),
-      rho_(encloser.dv_rho_->DelegatedDataField(ex_policy)),
-      drho_dt_(encloser.dv_drho_dt_->DelegatedDataField(ex_policy)),
-      vel_(encloser.dv_vel_->DelegatedDataField(ex_policy)),
-      force_(encloser.dv_force_->DelegatedDataField(ex_policy)),
-      wall_Vol_(encloser.dv_wall_Vol_[contact_index]->DelegatedDataField(ex_policy)),
-      wall_vel_ave_(encloser.dv_wall_vel_ave_[contact_index]->DelegatedDataField(ex_policy)),
-      wall_n_(encloser.dv_wall_n_[contact_index]->DelegatedDataField(ex_policy)),
-      velocity_gradient_(encloser.dv_velocity_gradient_->DelegatedDataField(ex_policy)) {}
+      Vol_(encloser.dv_Vol_->DelegatedData(ex_policy)),
+      rho_(encloser.dv_rho_->DelegatedData(ex_policy)),
+      drho_dt_(encloser.dv_drho_dt_->DelegatedData(ex_policy)),
+      vel_(encloser.dv_vel_->DelegatedData(ex_policy)),
+      force_(encloser.dv_force_->DelegatedData(ex_policy)),
+      wall_Vol_(encloser.dv_wall_Vol_[contact_index]->DelegatedData(ex_policy)),
+      wall_vel_ave_(encloser.dv_wall_vel_ave_[contact_index]->DelegatedData(ex_policy)),
+      wall_n_(encloser.dv_wall_n_[contact_index]->DelegatedData(ex_policy)),
+      velocity_gradient_(encloser.dv_velocity_gradient_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
 void PlasticAcousticStep2ndHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType, Parameters...>>::

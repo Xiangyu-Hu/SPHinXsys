@@ -35,6 +35,7 @@
 #include "execution_policy.h"
 #include "reduce_functors.h"
 #include "sphinxsys_containers.h"
+
 #include <type_traits>
 
 namespace SPH
@@ -59,12 +60,13 @@ class BaseLocalDynamics
     explicit BaseLocalDynamics(DynamicsIdentifier &identifier)
         : identifier_(identifier), sph_system_(identifier.getSPHSystem()),
           sph_body_(identifier.getSPHBody()),
-          particles_(&sph_body_.getBaseParticles()) {};
-    virtual ~BaseLocalDynamics() {};
+          particles_(&sph_body_.getBaseParticles()){};
+    virtual ~BaseLocalDynamics(){};
+    typedef DynamicsIdentifier Identifier;
     DynamicsIdentifier &getDynamicsIdentifier() { return identifier_; };
     SPHBody &getSPHBody() { return sph_body_; };
     BaseParticles *getParticles() { return particles_; };
-    virtual void setupDynamics(Real dt = 0.0) {}; // setup global parameters
+    virtual void setupDynamics(Real dt = 0.0){}; // setup global parameters
 
   protected:
     DynamicsIdentifier &identifier_;
@@ -82,12 +84,13 @@ template <typename Operation, class DynamicsIdentifier>
 class BaseLocalDynamicsReduce : public BaseLocalDynamics<DynamicsIdentifier>
 {
   public:
+    typedef Operation OperationType;
     using ReturnType = typename Operation::ReturnType;
     explicit BaseLocalDynamicsReduce(DynamicsIdentifier &identifier)
         : BaseLocalDynamics<DynamicsIdentifier>(identifier),
           reference_(ReduceReference<Operation>::value),
-          quantity_name_("ReducedQuantity") {};
-    virtual ~BaseLocalDynamicsReduce() {};
+          quantity_name_("ReducedQuantity"){};
+    virtual ~BaseLocalDynamicsReduce(){};
 
     ReturnType Reference() { return reference_; };
     std::string QuantityName() { return quantity_name_; };

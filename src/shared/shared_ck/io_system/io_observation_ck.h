@@ -62,7 +62,7 @@ class ObservedQuantityRecording<ExecutionPolicy, DataType>
           dynamics_identifier_name_(contact_relation.getSPHBody().getName()),
           quantity_name_(quantity_name)
     {
-        DataType *interpolated_quantities = this->dv_interpolated_quantities_->DataField();
+        DataType *interpolated_quantities = this->dv_interpolated_quantities_->Data();
         /** Output for .dat file. */
         filefullpath_output_ = io_environment_.output_folder_ + "/" + dynamics_identifier_name_ + "_" + quantity_name + ".dat";
         std::ofstream out_file(filefullpath_output_.c_str(), std::ios::app);
@@ -83,7 +83,7 @@ class ObservedQuantityRecording<ExecutionPolicy, DataType>
     {
         this->exec();
         this->dv_interpolated_quantities_->prepareForOutput(ExecutionPolicy{});
-        DataType *interpolated_quantities = this->dv_interpolated_quantities_->DataField();
+        DataType *interpolated_quantities = this->dv_interpolated_quantities_->Data();
         std::ofstream out_file(filefullpath_output_.c_str(), std::ios::app);
         out_file << sv_physical_time_.getValue() << "   ";
         for (size_t i = 0; i != base_particles_.TotalRealParticles(); ++i)
