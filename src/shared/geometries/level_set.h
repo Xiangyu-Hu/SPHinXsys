@@ -31,7 +31,7 @@
 
 #include "adaptation.h"
 #include "base_geometry.h"
-#include "mesh_with_data_packages.hpp"
+#include "mesh_with_data_packages.h"
 #include "mesh_dynamics.h"
 #include "mesh_local_dynamics.hpp"
 #include "all_mesh_dynamics.h"

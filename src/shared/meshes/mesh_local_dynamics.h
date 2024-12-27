@@ -31,7 +31,7 @@
 #define MESH_LOCAL_DYNAMICS_H
 
 #include "sphinxsys_variable.h"
-#include "mesh_with_data_packages.hpp"
+#include "mesh_with_data_packages.h"
 #include "base_geometry.h"
 #include "base_kernel.h"
 #include "data_type.h"
@@ -548,12 +548,12 @@ class InitializeDataInACellFromCoarse : public BaseMeshLocalDynamics
         void update(const Arrayi &cell_index);
 
       protected:
-        BaseMeshLocalDynamics *base_dynamics_;
         Shape *shape_;
         Real grid_spacing_;
         MeshWithGridDataPackagesType *mesh_data_;
         MeshWithGridDataPackagesType *coarse_mesh_;
         MeshVariableData<Real> *coarse_phi_;
+        BaseMeshLocalDynamics *base_dynamics_;
     };
 
   private:

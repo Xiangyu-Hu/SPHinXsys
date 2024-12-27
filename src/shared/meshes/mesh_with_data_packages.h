@@ -59,9 +59,6 @@ namespace SPH
 template <int PKG_SIZE>
 class MeshWithGridDataPackages : public Mesh
 {
-  private:
-    DataContainerUniquePtrAssemble<MeshVariable> mesh_variable_ptrs_;
-
   public:
     template <typename... Args>
     explicit MeshWithGridDataPackages(BoundingBox tentative_bounds, Real data_spacing, size_t buffer_size)
@@ -69,13 +66,13 @@ class MeshWithGridDataPackages : public Mesh
           global_mesh_(mesh_lower_bound_ + 0.5 * data_spacing * Vecd::Ones(), data_spacing, all_cells_ * pkg_size),
           data_spacing_(data_spacing)
     {
-        allocateIndexDataMatrix();
+        allocateIndexDataMatrix(all_cells_);
     };
     virtual ~MeshWithGridDataPackages()
     {
-        deleteIndexDataMatrix();
         delete[] cell_neighborhood_;
         delete[] meta_data_cell_;
+        delete[] cell_package_index_;
     };
 
     /** spacing between the data, which is 1/ pkg_size of this grid spacing */
@@ -88,14 +85,16 @@ class MeshWithGridDataPackages : public Mesh
     CellNeighborhood *cell_neighborhood_;                      /**< 3*3(*3) array to store indicies of neighborhood cells. */
     ConcurrentVec<std::pair<size_t, int>> occupied_data_pkgs_; /**< (size_t)sort_index, (int)core1/inner0. */
 
-  protected:
+  private:
+    DataContainerUniquePtrAssemble<MeshVariable> mesh_variable_ptrs_;
     MeshVariableAssemble all_mesh_variables_;         /**< all mesh variables on this mesh. */
-    static constexpr int pkg_size = PKG_SIZE;         /**< the size of the data package matrix*/
-    const Real data_spacing_;                         /**< spacing of data in the data packages*/
-    MeshDataMatrix<size_t> index_data_mesh_;          /**< metadata for all cells. */
+    static constexpr int pkg_size = PKG_SIZE;         /**< the size of the data package matrix. */
+    const Real data_spacing_;                         /**< spacing of data in the data packages. */
+    size_t *cell_package_index_;                      /**< the package index for each cell in a 1-d array. */
 
-    void allocateIndexDataMatrix(); /**< allocate memories for metadata of data packages. */
-    void deleteIndexDataMatrix();   /**< delete memories for metadata of data packages. */
+    /**< allocate memories for metadata of data packages. */
+    void allocateIndexDataMatrix(Array2i mesh_size){ cell_package_index_ = new size_t[all_cells_[0] * all_cells_[1]]; };
+    void allocateIndexDataMatrix(Array3i mesh_size){ cell_package_index_ = new size_t[all_cells_[0] * all_cells_[1] * all_cells_[2]]; };
 
     /** resize all mesh variable data field with `num_grid_pkgs_` size(initially only singular data) */
     struct ResizeMeshVariableData
@@ -161,7 +160,11 @@ class MeshWithGridDataPackages : public Mesh
         meta_data_cell_ = new std::pair<Arrayi, int>[num_grid_pkgs_];
     }
 
-    bool isInnerDataPackage(const Arrayi &cell_index);
+    bool isInnerDataPackage(const Arrayi &cell_index)
+    {
+        size_t index_1d = transferMeshIndexTo1D(all_cells_, cell_index);
+        return cell_package_index_[index_1d] > 1;
+    }
     bool isCoreDataPackage(const Arrayi &cell_index)
     {
         size_t package_index = PackageIndexFromCellIndex(cell_index);
@@ -189,8 +192,15 @@ class MeshWithGridDataPackages : public Mesh
     }
 
     /** return the package index in the data array from the cell index it belongs to. */
-    size_t PackageIndexFromCellIndex(const Arrayi &cell_index);
-    void assignDataPackageIndex(const Arrayi &cell_index, const size_t package_index);
+    size_t PackageIndexFromCellIndex(const Arrayi &cell_index)
+    {
+        size_t index_1d = transferMeshIndexTo1D(all_cells_, cell_index);
+        return cell_package_index_[index_1d];
+    }
+    void assignDataPackageIndex(const Arrayi &cell_index, const size_t package_index){
+        size_t index_1d = transferMeshIndexTo1D(all_cells_, cell_index);
+        cell_package_index_[index_1d] = package_index;
+    }
 
     Arrayi CellIndexFromPositionOnGlobalMesh(const Vecd &position) { return global_mesh_.CellIndexFromPosition(position); }
     Vecd GridPositionFromIndexOnGlobalMesh(const Arrayi &cell_index) { return global_mesh_.GridPositionFromIndex(cell_index); }

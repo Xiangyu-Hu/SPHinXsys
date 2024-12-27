@@ -1,5 +1,5 @@
 #include "mesh_local_dynamics.hpp"
-#include "mesh_iterators.h"
+#include "mesh_iterators.hpp"
 
 namespace SPH
 {

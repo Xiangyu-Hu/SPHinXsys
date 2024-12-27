@@ -4,7 +4,7 @@
 #include "base_particles.hpp"
 #include "cell_linked_list.h"
 #include "level_set.h"
-#include "mesh_with_data_packages.hpp"
+#include "mesh_with_data_packages.h"
 #include "vector_functions.h"
 
 namespace SPH
