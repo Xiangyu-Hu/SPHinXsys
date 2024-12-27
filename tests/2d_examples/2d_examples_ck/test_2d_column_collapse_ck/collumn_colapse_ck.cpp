@@ -4,7 +4,7 @@
  * @details Column collapse using computing kernels.
  * @author Shuang Li, Xiangyu Hu and Shuaihao Zhang 
  */
-#include "sphinxsys_sycl.h"
+#include "sphinxsys_ck.h"
 using namespace SPH;   // Namespace cite here.
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
