@@ -181,6 +181,9 @@ class MeshVariable : public Entity
     ~MeshVariable() {};
 
     PackageData *DataField() { return discrete_variable_.DelegatedDataField(execution::par); };
+    template <class ExecutionPolicy>
+    PackageData *DelegatedDataField(const ExecutionPolicy &ex_policy) { return discrete_variable_.DelegatedDataField(ex_policy); };
+
     void allocateAllMeshVariableData(const size_t size)
     {
         discrete_variable_.reallocateDataField(execution::par, size);

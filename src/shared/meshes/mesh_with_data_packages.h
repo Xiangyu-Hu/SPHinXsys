@@ -64,13 +64,13 @@ class MeshWithGridDataPackages : public Mesh
     explicit MeshWithGridDataPackages(BoundingBox tentative_bounds, Real data_spacing, size_t buffer_size)
         : Mesh(tentative_bounds, pkg_size * data_spacing, buffer_size),
           global_mesh_(mesh_lower_bound_ + 0.5 * data_spacing * Vecd::Ones(), data_spacing, all_cells_ * pkg_size),
+          cell_neighborhood_("mesh_cell_neighbor_hood", 2),
           data_spacing_(data_spacing)
     {
         allocateIndexDataMatrix(all_cells_);
     };
     virtual ~MeshWithGridDataPackages()
     {
-        delete[] cell_neighborhood_;
         delete[] meta_data_cell_;
         delete[] cell_package_index_;
     };
@@ -82,7 +82,7 @@ class MeshWithGridDataPackages : public Mesh
     Mesh global_mesh_;                                         /**< the mesh for the locations of all possible data points. */
     size_t num_grid_pkgs_ = 2;                                 /**< the number of all distinct packages, initially only 2 singular packages. */
     std::pair<Arrayi, int> *meta_data_cell_;                   /**< metadata for each occupied cell: (arrayi)cell index, (int)core1/inner0. */
-    CellNeighborhood *cell_neighborhood_;                      /**< 3*3(*3) array to store indicies of neighborhood cells. */
+    DiscreteVariable<CellNeighborhood> cell_neighborhood_;     /**< 3*3(*3) array to store indicies of neighborhood cells. */
     ConcurrentVec<std::pair<size_t, int>> occupied_data_pkgs_; /**< (size_t)sort_index, (int)core1/inner0. */
 
   private:
@@ -156,7 +156,7 @@ class MeshWithGridDataPackages : public Mesh
                           return a.first < b.first; 
                       });
         num_grid_pkgs_ = occupied_data_pkgs_.size() + 2;
-        cell_neighborhood_ = new CellNeighborhood[num_grid_pkgs_];
+        cell_neighborhood_.reallocateDataField(par, num_grid_pkgs_);
         meta_data_cell_ = new std::pair<Arrayi, int>[num_grid_pkgs_];
     }
 
@@ -201,9 +201,6 @@ class MeshWithGridDataPackages : public Mesh
         size_t index_1d = transferMeshIndexTo1D(all_cells_, cell_index);
         cell_package_index_[index_1d] = package_index;
     }
-
-    Arrayi CellIndexFromPositionOnGlobalMesh(const Vecd &position) { return global_mesh_.CellIndexFromPosition(position); }
-    Vecd GridPositionFromIndexOnGlobalMesh(const Arrayi &cell_index) { return global_mesh_.GridPositionFromIndex(cell_index); }
 };
 } // namespace SPH
 #endif // MESH_WITH_DATA_PACKAGES_H

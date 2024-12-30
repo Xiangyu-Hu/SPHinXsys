@@ -23,7 +23,7 @@ DataType BaseMeshLocalDynamics::probeMesh(MeshWithGridDataPackagesType &probe_me
 {
     Arrayi cell_index = probe_mesh_.CellIndexFromPosition(position);
     size_t package_index = probe_mesh_.PackageIndexFromCellIndex(cell_index);
-    return probe_mesh_.isInnerDataPackage(cell_index) ? probeDataPackage(probe_mesh_, mesh_variable_data, package_index, cell_index, position)
+    return package_index > 1 ? probeDataPackage(probe_mesh_, mesh_variable_data, package_index, cell_index, position)
                                                       : mesh_variable_data[package_index][0][0];
 }
 //=============================================================================================//

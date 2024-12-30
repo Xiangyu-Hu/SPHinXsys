@@ -123,7 +123,7 @@ Real UpdateKernelIntegrals::UpdateKernel::computeKernelIntegral(const Vecd &posi
     Real integral(0);
     if (fabs(phi) < threshold)
     {
-        Arrayi global_index_ = mesh_data_->CellIndexFromPositionOnGlobalMesh(position);
+        Arrayi global_index_ = global_mesh_->CellIndexFromPosition(position);
         mesh_for_each3d<-3, 4>(
             [&](int i, int j, int k)
             {
@@ -132,7 +132,7 @@ Real UpdateKernelIntegrals::UpdateKernel::computeKernelIntegral(const Vecd &posi
                 if (phi_neighbor > -data_spacing_)
                 {
                     Vecd phi_gradient = BaseMeshLocalDynamics::DataValueFromGlobalIndex(phi_gradient_, neighbor_index, mesh_data_);
-                    Vecd integral_position = mesh_data_->GridPositionFromIndexOnGlobalMesh(neighbor_index);
+                    Vecd integral_position = global_mesh_->GridPositionFromIndex(neighbor_index);
                     Vecd displacement = position - integral_position;
                     Real distance = displacement.norm();
                     if (distance < cutoff_radius)
@@ -153,7 +153,7 @@ Vecd UpdateKernelIntegrals::UpdateKernel::computeKernelGradientIntegral(const Ve
     Vecd integral = Vecd::Zero();
     if (fabs(phi) < threshold)
     {
-        Arrayi global_index_ = mesh_data_->CellIndexFromPositionOnGlobalMesh(position);
+        Arrayi global_index_ = global_mesh_->CellIndexFromPosition(position);
         mesh_for_each3d<-3, 4>(
             [&](int i, int j, int k)
             {
@@ -162,7 +162,7 @@ Vecd UpdateKernelIntegrals::UpdateKernel::computeKernelGradientIntegral(const Ve
                 if (phi_neighbor > -data_spacing_)
                 {
                     Vecd phi_gradient = BaseMeshLocalDynamics::DataValueFromGlobalIndex(phi_gradient_, neighbor_index, mesh_data_);
-                    Vecd integral_position = mesh_data_->GridPositionFromIndexOnGlobalMesh(neighbor_index);
+                    Vecd integral_position = global_mesh_->GridPositionFromIndex(neighbor_index);
                     Vecd displacement = position - integral_position;
                     Real distance = displacement.norm();
                     if (distance < cutoff_radius)

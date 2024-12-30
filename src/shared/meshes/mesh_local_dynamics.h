@@ -39,10 +39,10 @@
 
 namespace SPH
 {
-using MeshWithGridDataPackagesType = MeshWithGridDataPackages<4>;
 
 template <class T>
 using MeshVariableData = PackageDataMatrix<T, 4>;
+using MeshWithGridDataPackagesType = MeshWithGridDataPackages<4>;
 
 /**
  * @class BaseMeshLocalDynamics
@@ -71,7 +71,7 @@ class BaseMeshLocalDynamics
     Real grid_spacing_;
     Real data_spacing_;
     std::pair<Arrayi, int>* &meta_data_cell_;
-    CellNeighborhood* &cell_neighborhood_;
+    DiscreteVariable<CellNeighborhood> &cell_neighborhood_;
 
     MeshVariable<Real> &phi_;
     MeshVariable<Vecd> &phi_gradient_;
@@ -91,10 +91,15 @@ class BaseMeshLocalDynamics
 
     /** This function probe a mesh value */
     template <class DataType>
-    static DataType probeMesh(MeshWithGridDataPackagesType &probe_mesh_, MeshVariableData<DataType> *mesh_variable_data, const Vecd &position);
+    static DataType probeMesh(MeshWithGridDataPackagesType &probe_mesh_,
+                              MeshVariableData<DataType> *mesh_variable_data,
+                              const Vecd &position);
     /** probe by applying bi and tri-linear interpolation within the package. */
     template <class DataType>
-    static DataType probeDataPackage(MeshWithGridDataPackagesType &probe_mesh_, MeshVariableData<DataType> *mesh_variable_data, size_t package_index, const Arrayi &cell_index, const Vecd &position);
+    static DataType probeDataPackage(MeshWithGridDataPackagesType &probe_mesh_,
+                                     MeshVariableData<DataType> *mesh_variable_data,
+                                     size_t package_index,
+                                     const Arrayi &cell_index, const Vecd &position);
 
     /** This function find the value of data from its index from global mesh. */
     template <typename DataType>
@@ -105,8 +110,8 @@ class BaseMeshLocalDynamics
     /** obtain averaged value at a corner of a data cell */
     template <typename DataType>
     static DataType CornerAverage(MeshVariableData<DataType> *mesh_variable,
-                           Arrayi addrs_index, Arrayi corner_direction,
-                           CellNeighborhood &neighborhood);
+                                  Arrayi addrs_index, Arrayi corner_direction,
+                                  CellNeighborhood &neighborhood);
 };
 
 /**
@@ -230,7 +235,7 @@ class InitializeCellNeighborhood : public BaseMeshLocalDynamics
         template <class ExecutionPolicy, class EncloserType>
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
             : meta_data_cell_(encloser.meta_data_cell_),
-              cell_neighborhood_(encloser.cell_neighborhood_),
+              cell_neighborhood_(encloser.cell_neighborhood_.DataField()),
               mesh_data_(&encloser.mesh_data_),
               base_dynamics(&encloser){};
         void update(const size_t &package_index);
@@ -298,9 +303,9 @@ class UpdateLevelSetGradient : public BaseMeshLocalDynamics
         template <class ExecutionPolicy, class EncloserType>
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
             : data_spacing_(encloser.data_spacing_),
-              phi_(encloser.phi_.DataField()),
-              phi_gradient_(encloser.phi_gradient_.DataField()),
-              cell_neighborhood_(encloser.cell_neighborhood_){};
+              phi_(encloser.phi_.DelegatedDataField(ex_policy)),
+              phi_gradient_(encloser.phi_gradient_.DelegatedDataField(ex_policy)),
+              cell_neighborhood_(encloser.cell_neighborhood_.DelegatedDataField(ex_policy)){};
         void update(const size_t &index);
 
       protected:
@@ -328,13 +333,14 @@ class UpdateKernelIntegrals : public BaseMeshLocalDynamics
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
             : data_spacing_(encloser.data_spacing_),
               global_h_ratio_(encloser.global_h_ratio_),
-              phi_(encloser.phi_.DataField()),
-              phi_gradient_(encloser.phi_gradient_.DataField()),
-              kernel_weight_(encloser.kernel_weight_.DataField()),
-              kernel_gradient_(encloser.kernel_gradient_.DataField()),
+              phi_(encloser.phi_.DelegatedDataField(ex_policy)),
+              phi_gradient_(encloser.phi_gradient_.DelegatedDataField(ex_policy)),
+              kernel_weight_(encloser.kernel_weight_.DelegatedDataField(ex_policy)),
+              kernel_gradient_(encloser.kernel_gradient_.DelegatedDataField(ex_policy)),
               meta_data_cell_(encloser.meta_data_cell_),
               kernel_(&encloser.kernel_),
-              mesh_data_(&encloser.mesh_data_){};
+              mesh_data_(&encloser.mesh_data_),
+              global_mesh_(&mesh_data_->global_mesh_){};
         void update(const size_t &index);
 
       protected:
@@ -348,6 +354,7 @@ class UpdateKernelIntegrals : public BaseMeshLocalDynamics
 
         Kernel *kernel_;
         MeshWithGridDataPackagesType *mesh_data_;
+        Mesh *global_mesh_;
         Real computeKernelIntegral(const Vecd &position);
         Vecd computeKernelGradientIntegral(const Vecd &position);
 
@@ -394,9 +401,9 @@ class ReinitializeLevelSet : public BaseMeshLocalDynamics
         template <class ExecutionPolicy, class EncloserType>
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
             : data_spacing_(encloser.data_spacing_),
-              phi_(encloser.phi_.DataField()),
-              near_interface_id_(encloser.near_interface_id_.DataField()),
-              cell_neighborhood_(encloser.cell_neighborhood_){};
+              phi_(encloser.phi_.DelegatedDataField(ex_policy)),
+              near_interface_id_(encloser.near_interface_id_.DelegatedDataField(ex_policy)),
+              cell_neighborhood_(encloser.cell_neighborhood_.DelegatedDataField(ex_policy)){};
         void update(const size_t &index);
 
       protected:
@@ -440,9 +447,9 @@ class MarkNearInterface : public BaseMeshLocalDynamics
         template <class ExecutionPolicy, class EncloserType>
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
             : data_spacing_(encloser.data_spacing_),
-              phi_(encloser.phi_.DataField()),
-              near_interface_id_(encloser.near_interface_id_.DataField()),
-              cell_neighborhood_(encloser.cell_neighborhood_){};
+              phi_(encloser.phi_.DelegatedDataField(ex_policy)),
+              near_interface_id_(encloser.near_interface_id_.DelegatedDataField(ex_policy)),
+              cell_neighborhood_(encloser.cell_neighborhood_.DelegatedDataField(ex_policy)){};
         void update(const size_t &index, Real small_shift_factor);
 
       protected:
@@ -466,10 +473,10 @@ class RedistanceInterface : public BaseMeshLocalDynamics
         template <class ExecutionPolicy, class EncloserType>
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
             : data_spacing_(encloser.data_spacing_),
-              phi_(encloser.phi_.DataField()),
-              phi_gradient_(encloser.phi_gradient_.DataField()),
-              near_interface_id_(encloser.near_interface_id_.DataField()),
-              cell_neighborhood_(encloser.cell_neighborhood_){};
+              phi_(encloser.phi_.DelegatedDataField(ex_policy)),
+              phi_gradient_(encloser.phi_gradient_.DelegatedDataField(ex_policy)),
+              near_interface_id_(encloser.near_interface_id_.DelegatedDataField(ex_policy)),
+              cell_neighborhood_(encloser.cell_neighborhood_.DelegatedDataField(ex_policy)){};
         void update(const size_t &index);
 
       protected:
@@ -513,9 +520,9 @@ class DiffuseLevelSetSign : public BaseMeshLocalDynamics
       public:
         template <class ExecutionPolicy, class EncloserType>
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : phi_(encloser.phi_.DataField()),
-              near_interface_id_(encloser.near_interface_id_.DataField()),
-              cell_neighborhood_(encloser.cell_neighborhood_){};
+            : phi_(encloser.phi_.DelegatedDataField(ex_policy)),
+              near_interface_id_(encloser.near_interface_id_.DelegatedDataField(ex_policy)),
+              cell_neighborhood_(encloser.cell_neighborhood_.DelegatedDataField(ex_policy)){};
         void update(const size_t &index);
 
       protected:

@@ -24,7 +24,7 @@ DataType BaseMeshLocalDynamics::probeMesh(MeshWithGridDataPackagesType &probe_me
 {
     Arrayi cell_index = probe_mesh_.CellIndexFromPosition(position);
     size_t package_index = probe_mesh_.PackageIndexFromCellIndex(cell_index);
-    return probe_mesh_.isInnerDataPackage(cell_index) ? probeDataPackage(probe_mesh_, mesh_variable_data, package_index, cell_index, position)
+    return package_index > 1 ? probeDataPackage(probe_mesh_, mesh_variable_data, package_index, cell_index, position)
                                                       : mesh_variable_data[package_index][0][0][0];
 }
 //=============================================================================================//
@@ -40,7 +40,7 @@ DataType BaseMeshLocalDynamics::probeDataPackage(MeshWithGridDataPackagesType &p
     Vecd alpha = (position - data_position) / probe_mesh_.DataSpacing();
     Vecd beta = Vecd::Ones() - alpha;
 
-    auto &neighborhood = probe_mesh_.cell_neighborhood_[package_index];
+    auto &neighborhood = probe_mesh_.cell_neighborhood_.DataField()[package_index];
     std::pair<size_t, Arrayi> neighbour_index_1 = NeighbourIndexShift(Arrayi(data_index[0], data_index[1], data_index[2]), neighborhood);
     std::pair<size_t, Arrayi> neighbour_index_2 = NeighbourIndexShift(Arrayi(data_index[0] + 1, data_index[1], data_index[2]), neighborhood);
     std::pair<size_t, Arrayi> neighbour_index_3 = NeighbourIndexShift(Arrayi(data_index[0], data_index[1] + 1, data_index[2]), neighborhood);
