@@ -34,57 +34,51 @@
 
 namespace SPH
 {
-template <typename DataType>
-class DiscreteConstant;
-
-template <typename DataType>
-using SingularConstant = SingularVariable<DataType>;
-
-template <typename DataType>
-using DeviceSharedSingularConstant = DeviceSharedSingularVariable<DataType>;
-
-template <typename DataType>
-class DeviceSharedDiscreteConstant : public Entity
-{
-  public:
-    DeviceSharedDiscreteConstant(DiscreteConstant<DataType> *host_variable);
-    ~DeviceSharedDiscreteConstant();
-
-  protected:
-    DataType *device_shared_data_field_;
-};
-
-template <typename DataType>
-class DiscreteConstant : public Entity
+template <typename GeneratorType, typename FunctionType>
+class Constant : public Entity
 {
     UniquePtrKeeper<Entity> device_shared_constant_keeper_;
 
   public:
-    DiscreteConstant(const std::string &name, size_t data_size)
-        : Entity(name), data_size_(data_size), data_field_(new DataType[data_size]),
-          delegated_data_field_(data_field_){};
-    ~DiscreteConstant() { delete[] data_field_; };
-    bool isDataDelegated() { return data_field_ != delegated_data_field_; };
-    size_t getDataSize() { return data_size_; }
-    DataType *Data() { return delegated_data_field_; };
-    void setDeviceData(DataType *data_field) { delegated_data_field_ = data_field; };
-
-    template <class ExecutionPolicy>
-    DataType *DelegatedData(const ExecutionPolicy &ex_policy) { return delegated_data_field_; };
-    DataType *DelegatedData(const ParallelDevicePolicy &par_device)
+    using DataType = typename GeneratorType::FunctionType;
+    Constant(GeneratorType *generator, size_t data_size = 1)
+        : Entity(generator->getFunctionName<DataType>()),
+          generator_(generator), data_size_(data_size),
+          data_(new DataType[data_size]), delegated_(data_)
     {
-        if (!isDataDelegated())
+        for (size_t i = 0; i != data_size_; ++i)
         {
-            device_shared_constant_keeper_
-                .createPtr<DeviceSharedDiscreteConstant<DataType>>(this);
+            data_[i] = generator_[i]->getFunction<DataType>();
         }
-        return delegated_data_field_;
     };
+    ~Constant() { delete[] data_; };
+    GeneratorType *getGenerator() { return generator_; }
+    size_t getDataSize() { return data_size_; }
+    DataType *Data() { return data_; };
+    template <class ExecutionPolicy>
+    DataType *DelegatedData(const ExecutionPolicy &ex_policy) { return delegated_; };
+    DataType *DelegatedData(const ParallelDevicePolicy &par_device);
+    bool isDataDelegated() { return data_ != delegated_; };
+    void setDelegateData(DataType *new_delegated) { delegated_ = new_delegated; };
 
-  private:
+  protected:
+    GeneratorType *generator_;
     size_t data_size_;
-    DataType *data_field_;
-    DataType *delegated_data_field_;
+    DataType *data_;
+    DataType *delegated_;
+};
+
+template <typename GeneratorType, typename FunctionType>
+class DeviceOnlyConstant : public Entity
+{
+    using DataType = typename GeneratorType::FunctionType;
+
+  public:
+    DeviceOnlyConstant(Constant<GeneratorType, FunctionType> *host_constant);
+    ~DeviceOnlyConstant();
+
+  protected:
+    DataType *device_only_data_;
 };
 } // namespace SPH
 #endif // SPHINXSYS_CONSTANT_H

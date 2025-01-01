@@ -7,21 +7,39 @@
 namespace SPH
 {
 //=================================================================================================//
-template <typename DataType>
-DeviceSharedDiscreteConstant<DataType>::
-    DeviceSharedDiscreteConstant(DiscreteConstant<DataType> *host_variable)
-    : Entity(host_variable->Name()), device_shared_data_field_(nullptr)
+template <typename GeneratorType, typename FunctionType>
+DataType *Constant<GeneratorType, FunctionType>::
+    DelegatedData(const ParallelDevicePolicy &par_device)
 {
-    size_t data_size = host_variable->getDataSize();
-    device_shared_data_field_ = allocateDeviceShared<DataType>(data_size);
-    copyToDevice(host_variable->Data(), device_shared_data_field_, data_size);
-    host_variable->setDeviceData(device_shared_data_field_);
+    if (!isDataDelegated())
+    {
+        device_shared_singular_constant_keeper_
+            .createPtr<DeviceOnlyConstant<GeneratorType, FunctionType>>(this);
+    }
+    return delegated_;
+};
+//=================================================================================================//
+template <typename GeneratorType, typename FunctionType>
+DeviceOnlyConstant<GeneratorType, FunctionType>::
+    DeviceOnlyConstant(DiscreteConstant<GeneratorType, FunctionType> *host_constant)
+    : Entity(host_constant->Name()), device_only_data_(nullptr)
+{
+    GeneratorType *generator = host_constant->getGenerator();
+    size_t data_size = host_constant->getDataSize();
+    device_only_data_ = allocateDeviceShared<DataType>(data_size);
+    for (size_t i = 0; i != data_size; ++i)
+    {
+        DataType data = generator[i]->getFunction<DataType>(ParallelDevicePolicy{});
+        copyToDevice(data, device_only_data_ + i, 1);
+    }
+
+    host_constant->setDeviceData(device_only_data_);
 }
 //=================================================================================================//
-template <typename DataType>
-DeviceSharedDiscreteConstant<DataType>::~DeviceSharedDiscreteConstant()
+template <typename GeneratorType, typename FunctionType>
+DeviceOnlyConstant<GeneratorType, FunctionType>::~DeviceOnlyConstant()
 {
-    freeDeviceData(device_shared_data_field_);
+    freeDeviceData(device_only_data_);
 }
 //=================================================================================================//
 } // namespace SPH
