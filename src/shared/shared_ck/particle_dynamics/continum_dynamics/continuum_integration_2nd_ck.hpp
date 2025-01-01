@@ -75,13 +75,12 @@ PlasticAcousticStep2ndHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionTy
     UpdateKernel::UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : rho_(encloser.dv_rho_->DelegatedData(ex_policy)),
       drho_dt_(encloser.dv_drho_dt_->DelegatedData(ex_policy)),
+      velocity_gradient_(encloser.dv_velocity_gradient_->DelegatedData(ex_policy)),
       stress_tensor_3D_(encloser.dv_stress_tensor_3D_->DelegatedData(ex_policy)), 
       strain_tensor_3D_(encloser.dv_strain_tensor_3D_->DelegatedData(ex_policy)),
       stress_rate_3D_(encloser.dv_stress_rate_3D_->DelegatedData(ex_policy)),
       strain_rate_3D_(encloser.dv_strain_rate_3D_->DelegatedData(ex_policy)),
-      velocity_gradient_(encloser.dv_velocity_gradient_->DelegatedData(ex_policy)),
-      plastic_kernel_(encloser.plastic_continuum_)
-      {}
+      plastic_kernel_(encloser.plastic_continuum_) {}
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
 void PlasticAcousticStep2ndHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType, Parameters...>>::

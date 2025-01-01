@@ -69,10 +69,9 @@ PlasticAcousticStep1stHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionTy
       rho_(encloser.dv_rho_->DelegatedData(ex_policy)),
       p_(encloser.dv_p_->DelegatedData(ex_policy)),
       drho_dt_(encloser.dv_drho_dt_->DelegatedData(ex_policy)),
+      mass_(encloser.dv_mass_->DelegatedData(ex_policy)),
       force_(encloser.dv_force_->DelegatedData(ex_policy)),
-      stress_tensor_3D_(encloser.dv_stress_tensor_3D_->DelegatedData(ex_policy)),
-      mass_(encloser.dv_mass_->DelegatedData(ex_policy))
-       {}
+      stress_tensor_3D_(encloser.dv_stress_tensor_3D_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
 void PlasticAcousticStep1stHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType, Parameters...>>::
@@ -134,9 +133,9 @@ PlasticAcousticStep1stHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType
       drho_dt_(encloser.dv_drho_dt_->DelegatedData(ex_policy)),
       force_(encloser.dv_force_->DelegatedData(ex_policy)),
       force_prior_(encloser.dv_force_prior_->DelegatedData(ex_policy)),
+      stress_tensor_3D_(encloser.dv_stress_tensor_3D_->DelegatedData(ex_policy)), 
       wall_Vol_(encloser.dv_wall_Vol_[contact_index]->DelegatedData(ex_policy)),
-      wall_acc_ave_(encloser.dv_wall_acc_ave_[contact_index]->DelegatedData(ex_policy)),
-      stress_tensor_3D_(encloser.dv_stress_tensor_3D_->DelegatedData(ex_policy)) {}
+      wall_acc_ave_(encloser.dv_wall_acc_ave_[contact_index]->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
 void PlasticAcousticStep1stHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType, Parameters...>>::
