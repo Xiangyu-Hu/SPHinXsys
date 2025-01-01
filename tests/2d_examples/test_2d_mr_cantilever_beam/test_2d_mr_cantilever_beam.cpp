@@ -198,7 +198,7 @@ return_data beam_multi_resolution(double dp_factor, bool damping_on, int refinem
     if (refinement_level > 0)
         beam_body.defineAdaptation<ParticleRefinementWithinShape>(1.15, 1.0, refinement_level);
     beam_body.defineBodyLevelSetShape()->cleanLevelSet(0);
-    beam_body.assignMaterial(material.get());
+    beam_body.defineMaterial<NeoHookeanSolid>(*material.get());
     if (refinement_level > 0)
         beam_body.generateParticles<BaseParticles, Lattice, Adaptive>(refinement_region);
     else
