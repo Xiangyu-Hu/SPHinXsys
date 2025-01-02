@@ -189,7 +189,7 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     FluidBody thermofluid_body(sph_system, makeShared<ThermofluidBody>("ThermofluidBody"));
-    thermofluid_body.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
+    thermofluid_body.defineClosure<WeaklyCompressibleFluid, Viscosity>(ConstructArgs(rho0_f, c_f), mu_f);
     thermofluid_body.generateParticles<BaseParticles, Lattice>();
 
     SolidBody thermosolid_body(sph_system, makeShared<ThermosolidBody>("ThermosolidBody"));

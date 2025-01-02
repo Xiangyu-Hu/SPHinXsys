@@ -133,7 +133,8 @@ int main(int ac, char *av[])
 
     //	Creating bodies with corresponding materials and particles
     FluidBody fluid(sph_system, makeShared<FluidFilling>("FluidBody"));
-    fluid.defineMaterial<HerschelBulkleyFluid>(rho, SOS, min_shear_rate, max_shear_rate, K, n, tau_y);
+    fluid.defineClosure<WeaklyCompressibleFluid, HerschelBulkleyViscosity>(
+        ConstructArgs(rho, SOS), ConstructArgs(min_shear_rate, max_shear_rate, K, n, tau_y));
     fluid.generateParticles<BaseParticles, Lattice>();
 
     SolidBody no_slip_boundary(sph_system, makeShared<No_Slip_Boundary>("NoSlipWall"));

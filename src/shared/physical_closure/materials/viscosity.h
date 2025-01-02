@@ -33,7 +33,7 @@
 #include "particle_functors.h"
 namespace SPH
 {
-class  BaseParticles;
+class BaseParticles;
 
 class Viscosity
 {
@@ -45,7 +45,7 @@ class Viscosity
     Real ReferenceViscosity() { return mu_; };
     virtual void registerLocalParameters(BaseParticles *base_particles) {};
     virtual void registerLocalParametersFromReload(BaseParticles *base_particles) {};
-  
+
     class ComputingKernel : public ParameterFixed<Real>
     {
       public:
@@ -98,6 +98,7 @@ class HerschelBulkleyViscosity : public GeneralizedNewtonianViscosity
   public:
     HerschelBulkleyViscosity(Real min_shear_rate, Real max_shear_rate,
                              Real consistency_index, Real power_index, Real yield_stress);
+    explicit HerschelBulkleyViscosity(ConstructArgs<Real, Real, Real, Real, Real> args);
     virtual ~HerschelBulkleyViscosity() {};
     Real getConsistencyIndex() { return consistency_index_; };
     Real getPowerIndex() { return power_index_; };

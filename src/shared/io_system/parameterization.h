@@ -48,7 +48,7 @@ class ParameterizationIO
     std::string filefullpath_;
 
     explicit ParameterizationIO(const std::string &input_path);
-    ~ParameterizationIO(){};
+    ~ParameterizationIO() {};
 
     void writeProjectParameters();
 };
@@ -61,9 +61,11 @@ class BaseParameterization : public BaseClassType
 {
   public:
     template <typename... Args>
-    explicit BaseParameterization(ParameterizationIO &parameterization_io, Args... args) : BaseClassType(std::forward<Args>(args)...), xml_parameters_(parameterization_io.xml_parameters_),
-                                                                                                      filefullpath_(parameterization_io.filefullpath_){};
-    ~BaseParameterization(){};
+    explicit BaseParameterization(ParameterizationIO *parameterization_io, Args... args)
+        : BaseClassType(std::forward<Args>(args)...),
+          xml_parameters_(parameterization_io->xml_parameters_),
+          filefullpath_(parameterization_io->filefullpath_){};
+    ~BaseParameterization() {};
 
   protected:
     XmlEngine &xml_parameters_;

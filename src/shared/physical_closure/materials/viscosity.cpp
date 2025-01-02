@@ -21,6 +21,10 @@ HerschelBulkleyViscosity::HerschelBulkleyViscosity(
     : GeneralizedNewtonianViscosity(min_shear_rate, max_shear_rate),
       consistency_index_(consistency_index), power_index_(power_index), yield_stress_(yield_stress) {}
 //=================================================================================================//
+HerschelBulkleyViscosity::HerschelBulkleyViscosity(ConstructArgs<Real, Real, Real, Real, Real> args)
+    : HerschelBulkleyViscosity(std::get<0>(args), std::get<1>(args),
+                               std::get<2>(args), std::get<3>(args), std::get<4>(args)) {}
+//=================================================================================================//
 Real HerschelBulkleyViscosity::getViscosity(Real shear_rate)
 {
 
