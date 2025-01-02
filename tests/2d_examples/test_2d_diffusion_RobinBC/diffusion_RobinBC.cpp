@@ -58,9 +58,9 @@ int main(int ac, char *av[])
     SimpleDynamics<NormalDirectionFromBodyShape> Robin_normal_direction(wall_boundary_Robin);
 
     DiffusionBodyRelaxation temperature_relaxation(
-        ConstructorArgs(diffusion_inner, diffusion),
-        ConstructorArgs(contact_Dirichlet, diffusion),
-        ConstructorArgs(contact_Robin, diffusion));
+        InteractArgs(diffusion_inner, diffusion),
+        InteractArgs(contact_Dirichlet, diffusion),
+        InteractArgs(contact_Robin, diffusion));
 
     GetDiffusionTimeStepSize get_time_step_size(diffusion_body, *diffusion);
     SimpleDynamics<DiffusionInitialCondition> setup_diffusion_initial_condition(diffusion_body);

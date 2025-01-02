@@ -151,7 +151,7 @@ int main(int ac, char *av[])
 
     //	Define the numerical methods used in the simulation
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(no_slip_boundary);
-    InteractionWithUpdate<LinearGradientCorrectionMatrixComplex> corrected_configuration_fluid(ConstructorArgs(fluid_inner, 0.3), fluid_all_walls);
+    InteractionWithUpdate<LinearGradientCorrectionMatrixComplex> corrected_configuration_fluid(InteractArgs(fluid_inner, 0.3), fluid_all_walls);
     Dynamics1Level<fluid_dynamics::Integration1stHalfWithWall<AcousticRiemannSolver, LinearGradientCorrection>> pressure_relaxation(fluid_inner, fluid_all_walls);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWall<NoRiemannSolver>> density_relaxation(fluid_inner, fluid_all_walls);
     InteractionWithUpdate<fluid_dynamics::DensitySummationComplex> update_density_by_summation(fluid_inner, fluid_all_walls);

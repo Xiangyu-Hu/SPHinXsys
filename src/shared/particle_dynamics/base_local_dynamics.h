@@ -127,18 +127,18 @@ class Average : public ReduceSumType
 };
 
 /**
- * @class ConstructorArgs
- * @brief Class template argument deduction (CTAD) for constructor arguments.
+ * @class InteractArgs
+ * @brief Class template argument deduction (CTAD) for constructing interaction dynamics.
  * @details Note that the form "XXX" is not std::string type, so we need to use
  * std::string("XXX") to convert it to std::string type.
  */
 template <typename BodyRelationType, typename... OtherArgs>
-struct ConstructorArgs
+struct InteractArgs
 {
     BodyRelationType &body_relation_;
     std::tuple<OtherArgs...> others_;
     SPHBody &getSPHBody() { return body_relation_.getSPHBody(); };
-    ConstructorArgs(BodyRelationType &body_relation, OtherArgs... other_args)
+    InteractArgs(BodyRelationType &body_relation, OtherArgs... other_args)
         : body_relation_(body_relation), others_(other_args...){};
 };
 

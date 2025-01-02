@@ -245,8 +245,8 @@ int main(int ac, char *av[])
     IsotropicDiffusion diffusion("Phi", "Phi", diffusion_coeff);
     GetDiffusionTimeStepSize get_thermal_time_step(thermofluid_body, diffusion);
     ThermalRelaxationComplex thermal_relaxation_complex(
-        ConstructorArgs(fluid_body_inner, &diffusion),
-        ConstructorArgs(fluid_body_contact, &diffusion));
+        InteractArgs(fluid_body_inner, &diffusion),
+        InteractArgs(fluid_body_contact, &diffusion));
     SimpleDynamics<ThermosolidBodyInitialCondition> thermosolid_condition(thermosolid_body);
     SimpleDynamics<ThermofluidBodyInitialCondition> thermofluid_initial_condition(thermofluid_body);
 

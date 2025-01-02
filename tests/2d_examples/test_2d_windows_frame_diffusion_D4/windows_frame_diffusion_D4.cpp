@@ -66,8 +66,8 @@ int main(int ac, char *av[])
     SimpleDynamics<LocalDiffusivityDefinition> ac1_open_diffusivity(ac_open_body1, ac1_open_cond);
 
     DiffusionBodyRelaxation temperature_relaxation(
-        ConstructorArgs(inner_relation, frame_diffusion),
-        ConstructorArgs(contact_Robin, frame_diffusion));
+        InteractArgs(inner_relation, frame_diffusion),
+        InteractArgs(contact_Robin, frame_diffusion));
 
     LocalIsotropicDiffusion maximum_thermal_diffusivity("Phi", "Phi", epdm_cond);
     GetDiffusionTimeStepSize get_time_step_size(diffusion_body, maximum_thermal_diffusivity);

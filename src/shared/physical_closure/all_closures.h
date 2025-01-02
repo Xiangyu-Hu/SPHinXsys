@@ -21,25 +21,14 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	sphinxsys.h
- * @brief 	This is the header file that user code should include to pick up all SPHinXsys capabilities.
- * @author	Chi Zhang and Xiangyu Hu
+ * @file 	all_closures.h
+ * @brief 	This is the header file for physical closures 
+ * which includes material models, such equation of state, 
+ * constitute relation, rheolgogy and turbulence models.
+ * @author	Xiangyu Hu
  */
-#ifndef SPHINXSYS_H
-#define SPHINXSYS_H
 
-#include "all_bodies.h"
-#include "all_body_relations.h"
-#include "all_geometries.h"
-#include "all_kernels.h"
-#include "all_closures.h"
-#include "all_particle_generators.h"
-#include "all_particles.h"
-#include "all_physical_dynamics.h"
-#include "all_regression_test_methods.h"
-#include "all_simbody.h"
-#include "io_all.h"
-#include "parameterization.h"
-#include "sph_system.hpp"
+#pragma once
 
-#endif // SPHINXSYS_H
+#include "all_materials.h"
+#include "general_closure.h"

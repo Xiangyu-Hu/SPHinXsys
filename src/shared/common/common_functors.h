@@ -34,6 +34,10 @@
 
 namespace SPH
 {
+
+template <typename... Args>
+using ConstructArgs = std::tuple<Args...>;
+
 struct AssignIndex
 {
     UnsignedInt operator()(UnsignedInt i) const { return i; }

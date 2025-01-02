@@ -73,7 +73,7 @@ class DiffusionRelaxation<DataDelegationType, DiffusionType>
     explicit DiffusionRelaxation(BodyRelationType &body_relation, DiffusionType *diffusion);
 
     template <typename BodyRelationType, typename FirstArg>
-    explicit DiffusionRelaxation(ConstructorArgs<BodyRelationType, FirstArg> parameters)
+    explicit DiffusionRelaxation(InteractArgs<BodyRelationType, FirstArg> parameters)
         : DiffusionRelaxation(parameters.body_relation_, std::get<0>(parameters.others_)){};
 
     /** So that contact diffusion can be integrated independently without inner interaction. */

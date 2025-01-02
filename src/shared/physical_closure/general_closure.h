@@ -21,25 +21,39 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	sphinxsys.h
- * @brief 	This is the header file that user code should include to pick up all SPHinXsys capabilities.
- * @author	Chi Zhang and Xiangyu Hu
+ * @file 	general_closure.h
+ * @brief 	tbd.
+ * @author	Xiangyu Hu
  */
-#ifndef SPHINXSYS_H
-#define SPHINXSYS_H
 
-#include "all_bodies.h"
-#include "all_body_relations.h"
-#include "all_geometries.h"
-#include "all_kernels.h"
-#include "all_closures.h"
-#include "all_particle_generators.h"
-#include "all_particles.h"
-#include "all_physical_dynamics.h"
-#include "all_regression_test_methods.h"
-#include "all_simbody.h"
-#include "io_all.h"
-#include "parameterization.h"
-#include "sph_system.hpp"
+#ifndef GENERAL_CLOSURE_H
+#define GENERAL_CLOSURE_H
 
-#endif // SPHINXSYS_H
+#include "base_data_package.h"
+#include "sphinxsys_containers.h"
+
+namespace SPH
+{
+template <typename...>
+class Closure;
+
+template <>
+class Closure<>
+{
+  public:
+    Closure() {};
+};
+
+template <class BaseModel, class... AuxiliaryModels>
+class Closure<BaseModel, AuxiliaryModels...>
+    : public BaseModel, public Closure<AuxiliaryModels...>
+{
+  public:
+    template <class FirstParameterSet, typename... OtherParameterSets>
+    explicit Closure(FirstParameterSet &&first_parameter_set,
+                     OtherParameterSets &&...other_parameter_sets)
+        : BaseModel(first_parameter_set),
+          Closure<AuxiliaryModels...>(std::forward<OtherParameterSets>(other_parameter_sets)...){};
+};
+} // namespace SPH
+#endif // GENERAL_CLOSURE_H

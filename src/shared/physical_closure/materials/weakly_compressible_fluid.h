@@ -49,7 +49,9 @@ class WeaklyCompressibleFluid : public Fluid
     {
         material_type_name_ = "WeaklyCompressibleFluid";
     };
-    virtual ~WeaklyCompressibleFluid(){};
+    explicit WeaklyCompressibleFluid(ConstructArgs<Real, Real, Real> args)
+        : WeaklyCompressibleFluid(std::get<0>(args), std::get<1>(args), std::get<2>(args)) {};
+    virtual ~WeaklyCompressibleFluid() {};
 
     virtual Real getPressure(Real rho) override;
     virtual Real DensityFromPressure(Real p) override;
@@ -100,7 +102,7 @@ class WeaklyCompressibleFluidFreeSurface : public WeaklyCompressibleFluidType
     {
         WeaklyCompressibleFluidType::material_type_ += "FreeSurface";
     };
-    virtual ~WeaklyCompressibleFluidFreeSurface(){};
+    virtual ~WeaklyCompressibleFluidFreeSurface() {};
 
     virtual Real getPressure(Real rho) override
     {
@@ -122,7 +124,7 @@ class SymmetricTaitFluid : public WeaklyCompressibleFluid
     {
         material_type_name_ = "SymmetricTaitFluid";
     };
-    virtual ~SymmetricTaitFluid(){};
+    virtual ~SymmetricTaitFluid() {};
 
     virtual Real getPressure(Real rho) override;
     virtual Real DensityFromPressure(Real p) override;
@@ -145,7 +147,7 @@ class Oldroyd_B_Fluid : public WeaklyCompressibleFluid
     {
         material_type_name_ = "Oldroyd_B_Fluid";
     };
-    virtual ~Oldroyd_B_Fluid(){};
+    virtual ~Oldroyd_B_Fluid() {};
 
     Real getReferenceRelaxationTime() { return lambda_; };
     Real ReferencePolymericViscosity() { return mu_p_; };
@@ -167,7 +169,7 @@ class GeneralizedNewtonianFluid : public WeaklyCompressibleFluid
         : WeaklyCompressibleFluid(rho0, c0),
           min_shear_rate_(min_shear_rate), max_shear_rate_(max_shear_rate) {}
 
-    virtual ~GeneralizedNewtonianFluid(){};
+    virtual ~GeneralizedNewtonianFluid() {};
 
     virtual Real getViscosity(Real shear_rate) = 0;
 
@@ -194,7 +196,7 @@ class HerschelBulkleyFluid : public GeneralizedNewtonianFluid
     {
         material_type_name_ = "HerschelBulkleyFluid";
     };
-    virtual ~HerschelBulkleyFluid(){};
+    virtual ~HerschelBulkleyFluid() {};
 
     Real getConsistencyIndex() { return consistency_index_; };
     Real getPowerIndex() { return power_index_; };
@@ -225,7 +227,7 @@ class CarreauFluid : public GeneralizedNewtonianFluid
     {
         material_type_name_ = "CarreauFluid";
     };
-    virtual ~CarreauFluid(){};
+    virtual ~CarreauFluid() {};
 
     Real getCharacteristicTime() { return characteristic_time_; };
     Real getMuInfty() { return mu_infty_; };

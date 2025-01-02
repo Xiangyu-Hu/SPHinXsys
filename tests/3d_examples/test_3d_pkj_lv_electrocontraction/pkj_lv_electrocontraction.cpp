@@ -163,8 +163,8 @@ int main(int ac, char *av[])
     GetDiffusionTimeStepSize get_myocardium_physiology_time_step(physiology_heart, *myocardium_physiology);
     /** Diffusion process for diffusion body. */
     electro_physiology::ElectroPhysiologyDiffusionRelaxationComplex<LocalDirectionalDiffusion, Dirichlet> myocardium_diffusion_relaxation(
-        ConstructorArgs(physiology_heart_inner, myocardium_physiology->AllDiffusions()),
-        ConstructorArgs(physiology_heart_contact_with_pkj_leaves, myocardium_physiology->AllDiffusions()));
+        InteractArgs(physiology_heart_inner, myocardium_physiology->AllDiffusions()),
+        InteractArgs(physiology_heart_contact_with_pkj_leaves, myocardium_physiology->AllDiffusions()));
     /** Solvers for ODE system */
     electro_physiology::ElectroPhysiologyReactionRelaxationForward myocardium_reaction_relaxation_forward(physiology_heart, aliev_panfilow_model);
     electro_physiology::ElectroPhysiologyReactionRelaxationBackward myocardium_reaction_relaxation_backward(physiology_heart, aliev_panfilow_model);
