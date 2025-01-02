@@ -34,6 +34,7 @@
 #include "force_prior_ck.h"
 #include "interaction_ck.hpp"
 #include "kernel_correction_ck.hpp"
+#include "viscosity.h"
 
 namespace SPH
 {
@@ -129,50 +130,9 @@ class ViscousForceCK<Contact<Wall, ViscosityType, KernelCorrectionType, Paramete
     };
 };
 
-template <typename...>
-class Viscosity;
-
-template <>
-class Viscosity<Constant>
-{
-  public:
-    Viscosity(BaseParticles *particles)
-        : mu_(DynamicCast<Fluid>(this, particles->getBaseMaterial()).ReferenceViscosity()) {};
-
-    class ComputingKernel : public ParameterFixed<Real>
-    {
-      public:
-        template <class ExecutionPolicy, class EncloserType>
-        ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : ParameterFixed<Real>(encloser.mu_){};
-    };
-
-  protected:
-    Real mu_;
-};
-
-template <>
-class Viscosity<Variable>
-{
-  public:
-    Viscosity(BaseParticles *particles)
-        : dv_mu_(particles->getVariableByName<Real>("VariableViscosity")) {};
-
-    class ComputingKernel : public ParameterVariable<Real>
-    {
-      public:
-        template <class ExecutionPolicy, class EncloserType>
-        ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : ParameterVariable<Real>(encloser.dv_mu_->DelegatedData(ex_policy)){};
-    };
-
-  protected:
-    DiscreteVariable<Real> *dv_mu_;
-};
-
-using ViscousForceInnerCK = ViscousForceCK<Inner<WithUpdate, Viscosity<Constant>, NoKernelCorrectionCK>>;
-using ViscousForceWithWallCK = ViscousForceCK<Inner<WithUpdate, Viscosity<Constant>, NoKernelCorrectionCK>,
-                                              Contact<Wall, Viscosity<Constant>, NoKernelCorrectionCK>>;
+using ViscousForceInnerCK = ViscousForceCK<Inner<WithUpdate, Viscosity, NoKernelCorrectionCK>>;
+using ViscousForceWithWallCK = ViscousForceCK<Inner<WithUpdate, Viscosity, NoKernelCorrectionCK>,
+                                              Contact<Wall, Viscosity, NoKernelCorrectionCK>>;
 } // namespace fluid_dynamics
 } // namespace SPH
 #endif // VISCOUS_FORCE_H

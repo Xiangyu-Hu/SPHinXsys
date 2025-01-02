@@ -30,21 +30,29 @@
 #define VISCOSITY_H
 
 #include "base_data_package.h"
-
+#include "particle_functors.h"
 namespace SPH
 {
 
-class ConstantViscosity
+class Viscosity
 {
   protected:
     Real mu_; /**< reference viscosity. */
   public:
-    explicit ConstantViscosity(Real mu) : mu_(mu) {};
-    virtual ~ConstantViscosity() {};
+    explicit Viscosity(Real mu) : mu_(mu) {};
+    virtual ~Viscosity() {};
     Real ReferenceViscosity() { return mu_; };
+
+    class ComputingKernel : public ParameterFixed<Real>
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+            : ParameterFixed<Real>(encloser.mu_){};
+    };
 };
 
-class OldroydBViscosity : public ConstantViscosity
+class OldroydBViscosity : public Viscosity
 {
   protected:
     Real lambda_; /**< relaxation time */
@@ -58,7 +66,7 @@ class OldroydBViscosity : public ConstantViscosity
     Real ReferencePolymericViscosity() { return mu_p_; };
 };
 
-class GeneralizedNewtonianViscosity
+class GeneralizedNewtonianViscosity : public Viscosity
 {
   protected:
     Real min_shear_rate_;
@@ -70,6 +78,7 @@ class GeneralizedNewtonianViscosity
     virtual ~GeneralizedNewtonianViscosity() {};
     Real getMinShearRate() { return min_shear_rate_; };
     Real getMaxShearRate() { return max_shear_rate_; };
+    virtual Real getViscosity(Real shear_rate) = 0;
 };
 
 /**
@@ -90,7 +99,7 @@ class HerschelBulkleyViscosity : public GeneralizedNewtonianViscosity
     Real getConsistencyIndex() { return consistency_index_; };
     Real getPowerIndex() { return power_index_; };
     Real getYieldStress() { return yield_stress_; };
-    Real getViscosity(Real shear_rate);
+    Real getViscosity(Real shear_rate) override;
 };
 
 /**
@@ -113,7 +122,7 @@ class CarreauViscosity : public GeneralizedNewtonianViscosity
     Real getMuInfty() { return mu_infty_; };
     Real getMu0() { return mu0_; };
     Real getPowerIndex() { return power_index_; };
-    Real getViscosity(Real shear_rate);
+    Real getViscosity(Real shear_rate) override;
 };
 } // namespace SPH
 #endif // VISCOSITY_H

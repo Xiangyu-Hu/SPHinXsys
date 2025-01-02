@@ -121,9 +121,6 @@ class AdvectionTimeStepCK
  */
 class AdvectionViscousTimeStepCK : public AdvectionTimeStepCK
 {
-  protected:
-    Fluid &fluid_;
-
   public:
     AdvectionViscousTimeStepCK(SPHBody &sph_body, Real U_ref, Real advectionCFL = 0.25);
     virtual ~AdvectionViscousTimeStepCK(){};

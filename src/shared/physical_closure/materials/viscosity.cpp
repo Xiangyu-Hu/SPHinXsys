@@ -4,13 +4,14 @@ namespace SPH
 {
 //=================================================================================================//
 OldroydBViscosity::OldroydBViscosity(Real mu, Real lambda, Real mu_p)
-    : ConstantViscosity(mu), lambda_(lambda), mu_p_(mu_p) {}
+    : Viscosity(mu), lambda_(lambda), mu_p_(mu_p) {}
 //=================================================================================================//
 OldroydBViscosity::OldroydBViscosity(ConstructArgs<Real, Real, Real> args)
     : OldroydBViscosity(std::get<0>(args), std::get<1>(args), std::get<2>(args)) {}
 //=================================================================================================//
 GeneralizedNewtonianViscosity::GeneralizedNewtonianViscosity(Real min_shear_rate, Real max_shear_rate)
-    : min_shear_rate_(min_shear_rate), max_shear_rate_(max_shear_rate) {}
+    : Viscosity(max_shear_rate),
+      min_shear_rate_(min_shear_rate), max_shear_rate_(max_shear_rate) {}
 //=================================================================================================//
 GeneralizedNewtonianViscosity::GeneralizedNewtonianViscosity(ConstructArgs<Real, Real> args)
     : GeneralizedNewtonianViscosity(std::get<0>(args), std::get<1>(args)) {}
