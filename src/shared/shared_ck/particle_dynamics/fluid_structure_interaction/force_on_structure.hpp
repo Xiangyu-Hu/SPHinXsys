@@ -47,7 +47,8 @@ ViscousForceFromFluid<Contact<WithUpdate, ViscousForceType, Parameters...>>::
 {
     for (size_t k = 0; k != this->contact_particles_.size(); ++k)
     {
-        contact_viscosity_method_.push_back(ViscosityType(this->contact_particles_[k]));
+        ViscosityType *viscosity_model_k = DynamicCast<ViscosityType>(this, &this->contact_particles_[k]->getBaseMaterial());
+        contact_viscosity_model_.push_back(viscosity_model_k);
         contact_smoothing_length_sq_.push_back(pow(this->contact_bodies_[k]->sph_adaptation_->ReferenceSmoothingLength(), 2));
     }
 }
@@ -57,7 +58,7 @@ template <class ExecutionPolicy, class EncloserType>
 ViscousForceFromFluid<Contact<WithUpdate, ViscousForceType, Parameters...>>::InteractKernel::
     InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt contact_index)
     : BaseForceFromFluid::InteractKernel(ex_policy, encloser, contact_index),
-      viscosity_(ex_policy, encloser.contact_viscosity_method_[contact_index]),
+      viscosity_(ex_policy, *encloser.contact_viscosity_model_[contact_index]),
       smoothing_length_sq_(encloser.contact_smoothing_length_sq_[contact_index]) {}
 //=================================================================================================//
 template <typename ViscousForceType, typename... Parameters>

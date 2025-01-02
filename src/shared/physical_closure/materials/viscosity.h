@@ -33,6 +33,7 @@
 #include "particle_functors.h"
 namespace SPH
 {
+class  BaseParticles;
 
 class Viscosity
 {
@@ -42,7 +43,9 @@ class Viscosity
     explicit Viscosity(Real mu) : mu_(mu) {};
     virtual ~Viscosity() {};
     Real ReferenceViscosity() { return mu_; };
-
+    virtual void registerLocalParameters(BaseParticles *base_particles) {};
+    virtual void registerLocalParametersFromReload(BaseParticles *base_particles) {};
+  
     class ComputingKernel : public ParameterFixed<Real>
     {
       public:

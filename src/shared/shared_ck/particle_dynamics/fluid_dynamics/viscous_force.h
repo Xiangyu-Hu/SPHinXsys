@@ -74,8 +74,9 @@ class ViscousForceCK<Base, ViscosityType, KernelCorrectionType, RelationType<Par
   protected:
     template <typename...>
     friend class FSI::ViscousForceFromFluid;
-
-    ViscosityType viscosity_method_;
+    using ViscosityModel = ViscosityType;
+    
+    ViscosityType &viscosity_model_;
     KernelCorrectionType kernel_correction_;
     DiscreteVariable<Real> *dv_Vol_;
     DiscreteVariable<Vecd> *dv_vel_, *dv_viscous_force_;
