@@ -66,7 +66,6 @@ class BaseMaterial
      */
     virtual void initializeLocalParameters(BaseParticles *base_particles){};
     void setLocalParameters(bool is_reload, BaseParticles *base_particles);
-    virtual BaseMaterial *ThisObjectPtr() { return this; };
 
   protected:
     std::string material_type_name_;
@@ -80,19 +79,15 @@ class Fluid : public BaseMaterial
 {
   protected:
     Real c0_; /**< reference sound speed and pressure */
-    Real mu_; /**< reference viscosity. */
 
   public:
-    explicit Fluid(Real rho0, Real c0, Real mu);
-    Fluid(Real rho0, Real mu) : Fluid(rho0, 1.0, mu) {}
+    explicit Fluid(Real rho0, Real c0);
     virtual ~Fluid(){};
-    Real ReferenceViscosity() { return mu_; };
     Real ReferenceSoundSpeed() { return c0_; };
     virtual Real getPressure(Real rho) = 0;
     virtual Real getPressure(Real rho, Real rho_e) { return getPressure(rho); };
     virtual Real DensityFromPressure(Real p) = 0;
     virtual Real getSoundSpeed(Real p = 0.0, Real rho = 1.0) = 0;
-    virtual Fluid *ThisObjectPtr() override { return this; };
 
     class EosKernel
     {
@@ -122,7 +117,6 @@ class Solid : public BaseMaterial
 
     Real ContactFriction() { return contact_friction_; };
     Real ContactStiffness() { return contact_stiffness_; };
-    virtual Solid *ThisObjectPtr() override { return this; };
     /** Get average velocity when interacting with fluid. */
     virtual Vecd *AverageVelocity(BaseParticles *base_particles);
     /** Get average acceleration when interacting with fluid. */
@@ -136,7 +130,6 @@ class Solid : public BaseMaterial
   protected:
     Real contact_stiffness_; /**< contact-force stiffness related to bulk modulus*/
     Real contact_friction_;  /**< friction property mimic fluid viscosity*/
-
     void setContactStiffness(Real c0) { contact_stiffness_ = rho0_ * c0 * c0; };
 };
 } // namespace SPH

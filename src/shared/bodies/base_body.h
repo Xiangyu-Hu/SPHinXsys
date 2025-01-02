@@ -181,7 +181,6 @@ class SPHBody
     virtual void writeParticlesToXmlForRestart(std::string &filefullpath);
     virtual void readParticlesFromXmlForRestart(std::string &filefullpath);
     virtual void writeToXmlForReloadParticle(std::string &filefullpath);
-    virtual SPHBody *ThisObjectPtr() { return this; };
 };
 
 /**

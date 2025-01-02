@@ -29,6 +29,7 @@
 #pragma once
 
 #include "base_material.h"
+#include "viscosity.h"
 #include "complex_solid.h"
 #include "complex_solid.hpp"
 #include "compressible_fluid.h"

@@ -34,6 +34,8 @@
 
 namespace SPH
 {
+  class BaseParticles;
+
 template <typename...>
 class Closure;
 
@@ -42,6 +44,9 @@ class Closure<>
 {
   public:
     Closure() {};
+    virtual ~Closure(){};
+    virtual void registerLocalParameters(BaseParticles *base_particles){};
+    virtual void registerLocalParametersFromReload(BaseParticles *base_particles){};
 };
 
 template <class BaseModel, class... AuxiliaryModels>
@@ -54,6 +59,17 @@ class Closure<BaseModel, AuxiliaryModels...>
                      OtherParameterSets &&...other_parameter_sets)
         : BaseModel(first_parameter_set),
           Closure<AuxiliaryModels...>(std::forward<OtherParameterSets>(other_parameter_sets)...){};
+
+    virtual void registerLocalParameters(BaseParticles *base_particles) override
+    {
+        BaseModel::registerLocalParameters(base_particles);
+        Closure<AuxiliaryModels...>::registerLocalParameters(base_particles);
+    };
+    virtual void registerLocalParametersFromReload(BaseParticles *base_particles) override
+    {
+        BaseModel::registerLocalParametersFromReload(base_particles);
+        Closure<AuxiliaryModels...>::registerLocalParametersFromReload(base_particles);
+    };
 };
 } // namespace SPH
 #endif // GENERAL_CLOSURE_H

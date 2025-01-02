@@ -110,7 +110,6 @@ class ElasticSolid : public Solid
     virtual DiscreteVariable<Vecd> *AverageVelocityVariable(BaseParticles *base_particles) override;
     /** Get average acceleration when interacting with fluid. */
     virtual DiscreteVariable<Vecd> *AverageAccelerationVariable(BaseParticles *base_particles) override;
-    virtual ElasticSolid *ThisObjectPtr() override { return this; };
 };
 
 /**
@@ -292,8 +291,6 @@ class Muscle : public NeoHookeanSolid
     virtual Real VolumetricKirchhoff(Real J) override;
     /** Define the calculation of the stress matrix for postprocessing */
     virtual std::string getRelevantStressMeasureName() override { return "Cauchy"; };
-
-    virtual Muscle *ThisObjectPtr() override { return this; };
 
   protected:
     Vecd f0_, s0_;            /**< Reference fiber and sheet directions as basic parameter. */

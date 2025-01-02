@@ -55,6 +55,5 @@ class CompressibleFluid : public Fluid
     virtual Real getPressure(Real rho) override { return 0.0; };
     virtual Real DensityFromPressure(Real p) override { return 0.0; };
     virtual Real getSoundSpeed(Real p, Real rho) override;
-    virtual CompressibleFluid *ThisObjectPtr() override { return this; };
 };
 } // namespace SPH

@@ -53,8 +53,6 @@ class PlasticSolid : public NeoHookeanSolid
     Real YieldStress() { return yield_stress_; };
     /** compute the elastic part of normalized left Cauchy-Green deformation gradient tensor. */
     virtual Matd ElasticLeftCauchy(const Matd &deformation, size_t index_i, Real dt = 0.0) = 0;
-
-    virtual PlasticSolid *ThisObjectPtr() override { return this; };
 };
 
 /**
@@ -83,8 +81,6 @@ class HardeningPlasticSolid : public PlasticSolid
     Real HardeningModulus() { return hardening_modulus_; };
     /** compute the elastic part of normalized left Cauchy-Green deformation gradient tensor. */
     virtual Matd ElasticLeftCauchy(const Matd &deformation, size_t index_i, Real dt = 0.0) override;
-
-    virtual HardeningPlasticSolid *ThisObjectPtr() override { return this; };
 };
 
 /**
@@ -118,8 +114,6 @@ class NonLinearHardeningPlasticSolid : public HardeningPlasticSolid
     };
     /** compute the elastic part of normalized left Cauchy-Green deformation gradient tensor. */
     virtual Matd ElasticLeftCauchy(const Matd &deformation, size_t index_i, Real dt = 0.0) override;
-
-    virtual NonLinearHardeningPlasticSolid *ThisObjectPtr() override { return this; };
 };
 
 /**
@@ -147,7 +141,5 @@ class ViscousPlasticSolid : public PlasticSolid
     Real ViscousModulus() { return viscous_modulus_; };
     /** compute the elastic part of normalized left Cauchy-Green deformation gradient tensor. */
     virtual Matd ElasticLeftCauchy(const Matd &deformation, size_t index_i, Real dt = 0.0) override;
-
-    virtual ViscousPlasticSolid *ThisObjectPtr() override { return this; };
 };
 } // namespace SPH
