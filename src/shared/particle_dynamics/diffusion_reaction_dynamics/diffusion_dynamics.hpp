@@ -14,9 +14,9 @@ namespace SPH
 //=================================================================================================//
 template <class DiffusionType>
 GetDiffusionTimeStepSize<DiffusionType>::
-    GetDiffusionTimeStepSize(SPHBody &sph_body, DiffusionType &diffusion)
-    : BaseDynamics<Real>()
+    GetDiffusionTimeStepSize(SPHBody &sph_body) : BaseDynamics<Real>()
 {
+    DiffusionType &diffusion = DynamicCast<DiffusionType>(this, sph_body.getMaterial());
     Real smoothing_length = sph_body.sph_adaptation_->ReferenceSmoothingLength();
     diff_time_step_ = diffusion.getDiffusionTimeStepSize(smoothing_length);
 }
@@ -24,11 +24,12 @@ GetDiffusionTimeStepSize<DiffusionType>::
 template <class DataDelegationType, class DiffusionType>
 template <class BodyRelationType>
 DiffusionRelaxation<DataDelegationType, DiffusionType>::
-    DiffusionRelaxation(BodyRelationType &body_relation, StdVec<DiffusionType *> diffusions)
+    DiffusionRelaxation(BodyRelationType &body_relation)
     : LocalDynamics(body_relation.getSPHBody()), DataDelegationType(body_relation),
-      diffusions_(diffusions),
       Vol_(this->particles_->template getVariableDataByName<Real>("VolumetricMeasure"))
 {
+    getDiffusions();
+
     for (auto &diffusion : diffusions_)
     {
         std::string diffusion_species_name = diffusion->DiffusionSpeciesName();
@@ -45,14 +46,14 @@ DiffusionRelaxation<DataDelegationType, DiffusionType>::
 }
 //=================================================================================================//
 template <class DataDelegationType, class DiffusionType>
-template <class BodyRelationType>
-DiffusionRelaxation<DataDelegationType, DiffusionType>::
-    DiffusionRelaxation(BodyRelationType &body_relation, DiffusionType *diffusion)
-    : DiffusionRelaxation(body_relation, StdVec<DiffusionType *>{diffusion}) {}
-//=================================================================================================//
-template <class DataDelegationType, class DiffusionType>
-void DiffusionRelaxation<DataDelegationType, DiffusionType>::registerSpecies()
+void DiffusionRelaxation<DataDelegationType, DiffusionType>::getDiffusions()
 {
+    AbstractDiffusion &abstract_diffusion = DynamicCast<AbstractDiffusion>(this, this->sph_body.getMaterial());
+    StdVec<AbstractDiffusion *> all_diffusions = abstract_diffusion.AllDiffusions();
+    for (auto &diffusion : all_diffusions)
+    {
+        diffusions_.push_back(DynamicCast<DiffusionType>(this, diffusion));
+    }
 }
 //=================================================================================================//
 template <class DataDelegationType, class DiffusionType>

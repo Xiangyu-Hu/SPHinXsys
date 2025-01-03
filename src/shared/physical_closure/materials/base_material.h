@@ -51,20 +51,21 @@ class BaseMaterial
 {
   public:
     explicit BaseMaterial(Real rho0)
-        : material_type_name_("BaseMaterial"), rho0_(rho0){};
-    BaseMaterial() : BaseMaterial(1.0){};
-    virtual ~BaseMaterial(){};
+        : material_type_name_("BaseMaterial"), rho0_(rho0) {};
+    BaseMaterial() : BaseMaterial(1.0) {};
+    virtual ~BaseMaterial() {};
     std::string MaterialType() { return material_type_name_; }
     Real ReferenceDensity() { return rho0_; };
-    virtual void registerLocalParameters(BaseParticles *base_particles){};
-    virtual void registerLocalParametersFromReload(BaseParticles *base_particles){};
+    virtual void registerLocalParameters(BaseParticles *base_particles) {};
+    virtual void registerLocalParametersFromReload(BaseParticles *base_particles) {};
+    virtual void initializeLocalParameters(BaseParticles *base_particles) {};
     /**
      * This will be called after particles generation
      * and is important because particles are not defined yet when material is constructed.
      * For a composite material, i.e. there is a material pointer with another material,
      * one need assign the base particle to that material too.
      */
-    virtual void initializeLocalParameters(BaseParticles *base_particles){};
+    virtual void initializeLocalParameters(BaseParticles *base_particles) {};
     void setLocalParameters(bool is_reload, BaseParticles *base_particles);
 
   protected:
@@ -82,7 +83,7 @@ class Fluid : public BaseMaterial
 
   public:
     explicit Fluid(Real rho0, Real c0);
-    virtual ~Fluid(){};
+    virtual ~Fluid() {};
     Real ReferenceSoundSpeed() { return c0_; };
     virtual Real getPressure(Real rho) = 0;
     virtual Real getPressure(Real rho, Real rho_e) { return getPressure(rho); };
@@ -111,9 +112,9 @@ class Solid : public BaseMaterial
     {
         material_type_name_ = "Solid";
     };
-    explicit Solid(Real rho0) : Solid(rho0, 1.0){};
-    Solid() : Solid(1.0){};
-    virtual ~Solid(){};
+    explicit Solid(Real rho0) : Solid(rho0, 1.0) {};
+    Solid() : Solid(1.0) {};
+    virtual ~Solid() {};
 
     Real ContactFriction() { return contact_friction_; };
     Real ContactStiffness() { return contact_stiffness_; };

@@ -6,12 +6,9 @@ namespace SPH
 //=================================================================================================//
 BaseDiffusion::BaseDiffusion(const std::string &diffusion_species_name,
                              const std::string &gradient_species_name)
-    : BaseMaterial(),
+    : AbstractDiffusion(),
       diffusion_species_name_(diffusion_species_name),
-      gradient_species_name_(gradient_species_name)
-{
-    material_type_name_ = "BaseDiffusion";
-}
+      gradient_species_name_(gradient_species_name) {}
 //=================================================================================================//
 BaseDiffusion::BaseDiffusion(const std::string &species_name)
     : BaseDiffusion(species_name, species_name) {}
@@ -25,10 +22,7 @@ IsotropicDiffusion::IsotropicDiffusion(const std::string &diffusion_species_name
                                        const std::string &gradient_species_name,
                                        Real diff_cf)
     : BaseDiffusion(diffusion_species_name, gradient_species_name),
-      diff_cf_(diff_cf)
-{
-    material_type_name_ = "IsotropicDiffusion";
-}
+      diff_cf_(diff_cf) {}
 //=================================================================================================//
 IsotropicDiffusion::IsotropicDiffusion(const std::string &species_name, Real diff_cf)
     : IsotropicDiffusion(species_name, species_name, diff_cf) {}
@@ -37,10 +31,7 @@ LocalIsotropicDiffusion::LocalIsotropicDiffusion(const std::string &diffusion_sp
                                                  const std::string &gradient_species_name,
                                                  Real diff_cf)
     : IsotropicDiffusion(diffusion_species_name, gradient_species_name, diff_cf),
-      local_diffusivity_(nullptr)
-{
-    material_type_name_ = "LocalIsotropicDiffusion";
-}
+      local_diffusivity_(nullptr) {}
 //=================================================================================================//
 LocalIsotropicDiffusion::LocalIsotropicDiffusion(const std::string &species_name, Real diff_cf)
     : LocalIsotropicDiffusion(species_name, species_name, diff_cf) {}
@@ -60,13 +51,15 @@ DirectionalDiffusion::DirectionalDiffusion(const std::string &diffusion_species_
       bias_direction_(bias_direction), bias_diff_cf_(bias_diff_cf),
       transformed_diffusivity_(Matd::Identity())
 {
-    material_type_name_ = "DirectionalDiffusion";
     initializeDirectionalDiffusivity(diff_cf, bias_diff_cf, bias_direction);
 }
 //=================================================================================================//
 DirectionalDiffusion::DirectionalDiffusion(const std::string &species_name,
                                            Real diff_cf, Real bias_diff_cf, Vecd bias_direction)
     : DirectionalDiffusion(species_name, species_name, diff_cf, bias_diff_cf, bias_direction) {}
+//=================================================================================================//
+DirectionalDiffusion::DirectionalDiffusion(ConstructArgs<std::string, Real, Real, Vecd> args)
+    : DirectionalDiffusion(std::get<0>(args), std::get<1>(args), std::get<2>(args), std::get<3>(args)) {}
 //=================================================================================================//
 void DirectionalDiffusion::initializeDirectionalDiffusivity(Real diff_cf, Real bias_diff_cf, Vecd bias_direction)
 {
@@ -81,10 +74,7 @@ LocalDirectionalDiffusion::LocalDirectionalDiffusion(const std::string &diffusio
                                                      Real diff_cf, Real bias_diff_cf, Vecd bias_direction)
     : DirectionalDiffusion(diffusion_species_name, gradient_species_name,
                            diff_cf, bias_diff_cf, bias_direction),
-      local_bias_direction_(nullptr), local_transformed_diffusivity_(nullptr)
-{
-    material_type_name_ = "LocalDirectionalDiffusion";
-}
+      local_bias_direction_(nullptr), local_transformed_diffusivity_(nullptr) {}
 //=================================================================================================//
 LocalDirectionalDiffusion::LocalDirectionalDiffusion(const std::string &species_name,
                                                      Real diff_cf, Real bias_diff_cf, Vecd bias_direction)
