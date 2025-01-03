@@ -12,15 +12,6 @@
 namespace SPH
 {
 //=================================================================================================//
-template <class DiffusionType>
-GetDiffusionTimeStepSize<DiffusionType>::
-    GetDiffusionTimeStepSize(SPHBody &sph_body) : BaseDynamics<Real>()
-{
-    DiffusionType &diffusion = DynamicCast<DiffusionType>(this, sph_body.getMaterial());
-    Real smoothing_length = sph_body.sph_adaptation_->ReferenceSmoothingLength();
-    diff_time_step_ = diffusion.getDiffusionTimeStepSize(smoothing_length);
-}
-//=================================================================================================//
 template <class DataDelegationType, class DiffusionType>
 template <class BodyRelationType>
 DiffusionRelaxation<DataDelegationType, DiffusionType>::
@@ -48,7 +39,7 @@ DiffusionRelaxation<DataDelegationType, DiffusionType>::
 template <class DataDelegationType, class DiffusionType>
 void DiffusionRelaxation<DataDelegationType, DiffusionType>::getDiffusions()
 {
-    AbstractDiffusion &abstract_diffusion = DynamicCast<AbstractDiffusion>(this, this->sph_body.getMaterial());
+    AbstractDiffusion &abstract_diffusion = DynamicCast<AbstractDiffusion>(this, this->sph_body_.getBaseMaterial());
     StdVec<AbstractDiffusion *> all_diffusions = abstract_diffusion.AllDiffusions();
     for (auto &diffusion : all_diffusions)
     {

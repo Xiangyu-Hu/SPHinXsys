@@ -56,17 +56,16 @@ class BaseMaterial
     virtual ~BaseMaterial() {};
     std::string MaterialType() { return material_type_name_; }
     Real ReferenceDensity() { return rho0_; };
-    virtual void registerLocalParameters(BaseParticles *base_particles) {};
-    virtual void registerLocalParametersFromReload(BaseParticles *base_particles) {};
-    virtual void initializeLocalParameters(BaseParticles *base_particles) {};
     /**
      * This will be called after particles generation
      * and is important because particles are not defined yet when material is constructed.
      * For a composite material, i.e. there is a material pointer with another material,
      * one need assign the base particle to that material too.
      */
-    virtual void initializeLocalParameters(BaseParticles *base_particles) {};
     void setLocalParameters(bool is_reload, BaseParticles *base_particles);
+    virtual void registerLocalParameters(BaseParticles *base_particles) {};
+    virtual void registerLocalParametersFromReload(BaseParticles *base_particles) {};
+    virtual void initializeLocalParameters(BaseParticles *base_particles) {};
 
   protected:
     std::string material_type_name_;

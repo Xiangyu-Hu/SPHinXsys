@@ -162,7 +162,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     SolidBody diffusion_body(sph_system, makeShared<MultiPolygonShape>(createDiffusionDomain(), "DiffusionBody"));
     diffusion_body.defineClosure<Solid, DirectionalDiffusion>(
-        ConstructArgs(diffusion_species_name, diffusion_coeff, bias_coeff, bias_direction));
+       Solid(), ConstructArgs(diffusion_species_name, diffusion_coeff, bias_coeff, bias_direction));
     diffusion_body.generateParticles<BaseParticles, Lattice>();
     //----------------------------------------------------------------------
     //	Observer body

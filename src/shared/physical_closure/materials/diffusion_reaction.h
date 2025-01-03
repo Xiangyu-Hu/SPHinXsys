@@ -259,7 +259,6 @@ class ReactionDiffusion : public AbstractDiffusion
     ReactionDiffusion(ReactionType &reaction_model)
         : AbstractDiffusion(), reaction_model_(reaction_model) {};
     virtual ~ReactionDiffusion() {};
-    StdVec<DiffusionType *> AllDiffusions() { return all_diffusions_; };
     ReactionType &ReactionModel() { return reaction_model_; };
     virtual StdVec<AbstractDiffusion *> AllDiffusions() override { return all_diffusions_; };
 
