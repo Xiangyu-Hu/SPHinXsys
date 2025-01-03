@@ -43,11 +43,8 @@ class CompressibleFluid : public Fluid
     Real gamma_; /** heat capacity ratio */
 
   public:
-    explicit CompressibleFluid(Real rho0, Real gamma, Real mu = 0.0)
-        : Fluid(rho0, mu), gamma_(gamma)
-    {
-        material_type_name_ = "CompressibleFluid";
-    };
+    CompressibleFluid(Real rho0, Real gamma);
+    explicit CompressibleFluid(ConstructArgs<Real, Real> args);
     virtual ~CompressibleFluid(){};
 
     Real HeatCapacityRatio() { return gamma_; };
