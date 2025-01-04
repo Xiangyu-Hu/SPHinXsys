@@ -61,7 +61,7 @@ class IOEnvironment
 
     explicit IOEnvironment(SPHSystem &sph_system, bool delete_output = true);
     virtual ~IOEnvironment(){};
-    ParameterizationIO &defineParameterizationIO();
+    ParameterizationIO *defineParameterizationIO();
 };
 } // namespace SPH
 #endif // IO_ENVIRONMENT_H

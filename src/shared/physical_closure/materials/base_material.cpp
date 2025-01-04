@@ -19,7 +19,7 @@ void BaseMaterial::setLocalParameters(bool is_reload, BaseParticles *base_partic
     initializeLocalParameters(base_particles);
 }
 //=================================================================================================//
-Fluid::Fluid(Real rho0, Real c0, Real mu) : BaseMaterial(rho0), c0_(c0), mu_(mu)
+Fluid::Fluid(Real rho0, Real c0) : BaseMaterial(rho0), c0_(c0)
 {
     material_type_name_ = "Fluid";
 }

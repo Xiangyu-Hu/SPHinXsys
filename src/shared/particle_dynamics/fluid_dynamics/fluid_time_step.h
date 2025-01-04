@@ -84,9 +84,6 @@ class AdvectionTimeStep
  */
 class AdvectionViscousTimeStep : public AdvectionTimeStep
 {
-  protected:
-    Fluid &fluid_;
-
   public:
     AdvectionViscousTimeStep(SPHBody &sph_body, Real U_ref, Real advectionCFL = 0.25);
     virtual ~AdvectionViscousTimeStep(){};

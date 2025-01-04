@@ -135,7 +135,7 @@ int main(int ac, char *av[])
     InteractionWithUpdate<continuum_dynamics::ShearStressRelaxationHourglassControl1stHalf> beam_shear_stress(beam_body_inner);
     InteractionDynamics<continuum_dynamics::ShearStressRelaxationHourglassControl2ndHalf> beam_shear_acceleration(beam_body_inner);
     SimpleDynamics<fluid_dynamics::ContinuumVolumeUpdate> beam_volume_update(beam_body);
-    ReduceDynamics<fluid_dynamics::AdvectionViscousTimeStep> advection_time_step(beam_body, U_ref, 0.2);
+    ReduceDynamics<fluid_dynamics::AdvectionTimeStep> advection_time_step(beam_body, U_ref, 0.2);
     ReduceDynamics<fluid_dynamics::AcousticTimeStep> acoustic_time_step(beam_body, 0.4);
     // clamping a solid body part.
     BodyRegionByParticle beam_base(beam_body, makeShared<MultiPolygonShape>(createBeamConstrainShape()));

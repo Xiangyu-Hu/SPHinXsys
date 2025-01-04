@@ -21,71 +21,20 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file    common_functors.h
- * @brief 	TBD.
- * @author	Xiangyu Hu
+ * @file 	all_materials.h
+ * @brief 	This is the header file for materials.
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
-#ifndef COMMON_FUNCTORS_H
-#define COMMON_FUNCTORS_H
+#pragma once
 
-#include "base_data_type.h"
-#include "scalar_functions.h"
-
-namespace SPH
-{
-
-template <typename... Args>
-struct ConstructArgs : public std::tuple<Args...>
-{
-    ConstructArgs(Args... args) : std::tuple<Args...>(args...) {}
-};
-
-struct AssignIndex
-{
-    UnsignedInt operator()(UnsignedInt i) const { return i; }
-};
-
-/**
- * @class Limiter
- * Base class introduce the concept of limiter,
- * which limits the magnitude of a value with a fraction.
- * The derived class should implement the operator Real()
- * to indicate limiting fraction.
- * Generally, the object of the derived class
- * should be named as "limiter" or "limiter_" (class member)
- * so that the code can be more readable.
- */
-class Limiter
-{
-};
-
-class NoLimiter : public Limiter
-{
-  public:
-    template <typename... Args>
-    NoLimiter(Args &&...args) : Limiter(){};
-
-    template <typename... Args>
-    Real operator()(Args &&...args)
-    {
-        return 1.0;
-    };
-};
-
-class TruncatedLinear : public Limiter
-{
-    Real ref_, slope_;
-
-  public:
-    TruncatedLinear(Real ref, Real slope = 100.0)
-        : Limiter(), ref_(ref), slope_(slope) {};
-    Real operator()(Real measure)
-    {
-        Real measure_scale = measure * ref_;
-        return SMIN(slope_ * measure_scale, Real(1));
-    };
-};
-
-} // namespace SPH
-#endif // COMMON_FUNCTORS_H
+#include "base_material.h"
+#include "viscosity.h"
+#include "complex_solid.h"
+#include "complex_solid.hpp"
+#include "compressible_fluid.h"
+#include "diffusion_reaction.h"
+#include "elastic_solid.h"
+#include "general_continuum.h"
+#include "inelastic_solid.h"
+#include "weakly_compressible_fluid.h"

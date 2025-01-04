@@ -65,7 +65,7 @@ class LinearGradientCorrectionMatrix<Inner<>>
     explicit LinearGradientCorrectionMatrix(BaseInnerRelation &inner_relation, Real alpha = Real(0))
         : LinearGradientCorrectionMatrix<DataDelegateInner>(inner_relation), alpha_(alpha){};
     template <typename BodyRelationType, typename FirstArg>
-    explicit LinearGradientCorrectionMatrix(ConstructorArgs<BodyRelationType, FirstArg> parameters)
+    explicit LinearGradientCorrectionMatrix(InteractArgs<BodyRelationType, FirstArg> parameters)
         : LinearGradientCorrectionMatrix(parameters.body_relation_, std::get<0>(parameters.others_)){};
     virtual ~LinearGradientCorrectionMatrix(){};
     void interaction(size_t index_i, Real dt = 0.0);

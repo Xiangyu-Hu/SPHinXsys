@@ -29,9 +29,9 @@ ViscousForceFromFluidInFVM::
     ViscousForceFromFluidInFVM(BaseInnerRelation &inner_relation,
                                StdVec<StdVec<size_t>> each_boundary_type_contact_real_index)
     : BaseForceFromFluidInFVM(inner_relation),
-      fluid_(DynamicCast<WeaklyCompressibleFluid>(this, particles_->getBaseMaterial())),
+      viscosity_(DynamicCast<Viscosity>(this, particles_->getBaseMaterial())),
       vel_(particles_->getVariableDataByName<Vecd>("Velocity")),
-      mu_(fluid_.ReferenceViscosity()),
+      mu_(viscosity_.ReferenceViscosity()),
       each_boundary_type_contact_real_index_(each_boundary_type_contact_real_index)
 {
     force_from_fluid_ = particles_->registerStateVariable<Vecd>("ViscousForceOnSolid");

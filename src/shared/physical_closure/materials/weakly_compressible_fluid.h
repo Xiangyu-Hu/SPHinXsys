@@ -21,71 +21,60 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file    common_functors.h
- * @brief 	TBD.
- * @author	Xiangyu Hu
+ * @file 	weakly_compressible_fluid.h
+ * @brief 	Describe the weakly compressible fluid which is used
+ * 			model incompressible fluids. Here, we have included several equation of states.
+ * 			Futhermore, A typical non-newtonian fluid model is included.
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
-#ifndef COMMON_FUNCTORS_H
-#define COMMON_FUNCTORS_H
+#ifndef WEAKLY_COMPRESSIBLE_FLUID_H
+#define WEAKLY_COMPRESSIBLE_FLUID_H
 
-#include "base_data_type.h"
-#include "scalar_functions.h"
+#include "base_material.h"
 
 namespace SPH
 {
-
-template <typename... Args>
-struct ConstructArgs : public std::tuple<Args...>
-{
-    ConstructArgs(Args... args) : std::tuple<Args...>(args...) {}
-};
-
-struct AssignIndex
-{
-    UnsignedInt operator()(UnsignedInt i) const { return i; }
-};
-
 /**
- * @class Limiter
- * Base class introduce the concept of limiter,
- * which limits the magnitude of a value with a fraction.
- * The derived class should implement the operator Real()
- * to indicate limiting fraction.
- * Generally, the object of the derived class
- * should be named as "limiter" or "limiter_" (class member)
- * so that the code can be more readable.
+ * @class WeaklyCompressibleFluid
+ * @brief Linear equation of state (EOS).
  */
-class Limiter
+class WeaklyCompressibleFluid : public Fluid
 {
-};
-
-class NoLimiter : public Limiter
-{
+  protected:
+    Real p0_; /**< reference pressure */
   public:
-    template <typename... Args>
-    NoLimiter(Args &&...args) : Limiter(){};
+    explicit WeaklyCompressibleFluid(Real rho0, Real c0);
+    explicit WeaklyCompressibleFluid(ConstructArgs<Real, Real> args);
+    virtual ~WeaklyCompressibleFluid() {};
 
-    template <typename... Args>
-    Real operator()(Args &&...args)
+    virtual Real getPressure(Real rho) override;
+    virtual Real DensityFromPressure(Real p) override;
+    virtual Real getSoundSpeed(Real p = 0.0, Real rho = 1.0) override;
+
+    class EosKernel : Fluid::EosKernel
     {
-        return 1.0;
+      public:
+        EosKernel(WeaklyCompressibleFluid &encloser);
+
+        Real getPressure(Real rho)
+        {
+            return p0_ * (rho / rho0_ - 1.0);
+        };
+
+        Real DensityFromPressure(Real p)
+        {
+            return rho0_ * (p / p0_ + 1.0);
+        };
+
+        Real getSoundSpeed(Real p = 0.0, Real rho = 1.0)
+        {
+            return c0_;
+        };
+
+      protected:
+        Real p0_;
     };
 };
-
-class TruncatedLinear : public Limiter
-{
-    Real ref_, slope_;
-
-  public:
-    TruncatedLinear(Real ref, Real slope = 100.0)
-        : Limiter(), ref_(ref), slope_(slope) {};
-    Real operator()(Real measure)
-    {
-        Real measure_scale = measure * ref_;
-        return SMIN(slope_ * measure_scale, Real(1));
-    };
-};
-
 } // namespace SPH
-#endif // COMMON_FUNCTORS_H
+#endif // WEAKLY_COMPRESSIBLE_FLUID_H

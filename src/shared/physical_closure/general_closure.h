@@ -21,71 +21,63 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file    common_functors.h
- * @brief 	TBD.
+ * @file 	general_closure.h
+ * @brief 	tbd.
  * @author	Xiangyu Hu
  */
 
-#ifndef COMMON_FUNCTORS_H
-#define COMMON_FUNCTORS_H
+#ifndef GENERAL_CLOSURE_H
+#define GENERAL_CLOSURE_H
 
-#include "base_data_type.h"
-#include "scalar_functions.h"
+#include "base_data_package.h"
+#include "sphinxsys_containers.h"
 
 namespace SPH
 {
+class BaseParticles;
 
-template <typename... Args>
-struct ConstructArgs : public std::tuple<Args...>
-{
-    ConstructArgs(Args... args) : std::tuple<Args...>(args...) {}
-};
+template <typename...>
+class Closure;
 
-struct AssignIndex
-{
-    UnsignedInt operator()(UnsignedInt i) const { return i; }
-};
-
-/**
- * @class Limiter
- * Base class introduce the concept of limiter,
- * which limits the magnitude of a value with a fraction.
- * The derived class should implement the operator Real()
- * to indicate limiting fraction.
- * Generally, the object of the derived class
- * should be named as "limiter" or "limiter_" (class member)
- * so that the code can be more readable.
- */
-class Limiter
-{
-};
-
-class NoLimiter : public Limiter
+template <>
+class Closure<>
 {
   public:
-    template <typename... Args>
-    NoLimiter(Args &&...args) : Limiter(){};
-
-    template <typename... Args>
-    Real operator()(Args &&...args)
-    {
-        return 1.0;
-    };
+    Closure() {};
+    virtual ~Closure() {};
+    virtual void registerLocalParameters(BaseParticles *base_particles) {};
+    virtual void registerLocalParametersFromReload(BaseParticles *base_particles) {};
+    virtual void initializeLocalParameters(BaseParticles *base_particles) {};
 };
 
-class TruncatedLinear : public Limiter
+template <class BaseModel, class... AuxiliaryModels>
+class Closure<BaseModel, AuxiliaryModels...>
+    : public BaseModel, public Closure<AuxiliaryModels...>
 {
-    Real ref_, slope_;
-
   public:
-    TruncatedLinear(Real ref, Real slope = 100.0)
-        : Limiter(), ref_(ref), slope_(slope) {};
-    Real operator()(Real measure)
+    template <class FirstParameterSet, typename... OtherParameterSets>
+    explicit Closure(FirstParameterSet &&first_parameter_set,
+                     OtherParameterSets &&...other_parameter_sets)
+        : BaseModel(first_parameter_set),
+          Closure<AuxiliaryModels...>(std::forward<OtherParameterSets>(other_parameter_sets)...){};
+
+    virtual void registerLocalParameters(BaseParticles *base_particles) override
     {
-        Real measure_scale = measure * ref_;
-        return SMIN(slope_ * measure_scale, Real(1));
+        BaseModel::registerLocalParameters(base_particles);
+        Closure<AuxiliaryModels...>::registerLocalParameters(base_particles);
+    };
+
+    virtual void registerLocalParametersFromReload(BaseParticles *base_particles) override
+    {
+        BaseModel::registerLocalParametersFromReload(base_particles);
+        Closure<AuxiliaryModels...>::registerLocalParametersFromReload(base_particles);
+    };
+
+    virtual void initializeLocalParameters(BaseParticles *base_particles) override
+    {
+        BaseModel::initializeLocalParameters(base_particles);
+        Closure<AuxiliaryModels...>::initializeLocalParameters(base_particles);
     };
 };
-
 } // namespace SPH
-#endif // COMMON_FUNCTORS_H
+#endif // GENERAL_CLOSURE_H

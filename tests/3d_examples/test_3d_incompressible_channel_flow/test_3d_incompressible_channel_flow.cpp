@@ -23,7 +23,7 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     FluidBody air_block(sph_system, makeShared<AirBody>("AirBody"));
-    air_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
+    air_block.defineClosure<WeaklyCompressibleFluid, Viscosity>(ConstructArgs(rho0_f, c_f), mu_f);
     Ghost<ReserveSizeFactor> ghost_boundary(0.5);
     air_block.generateParticlesWithReserve<BaseParticles, UnstructuredMesh>(ghost_boundary, read_mesh_data);
     GhostCreationFromMesh ghost_creation(air_block, read_mesh_data, ghost_boundary);

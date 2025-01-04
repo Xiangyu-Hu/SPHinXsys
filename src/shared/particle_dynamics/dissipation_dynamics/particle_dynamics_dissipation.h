@@ -83,10 +83,10 @@ class Damping<Base, DataType, DampingRateType, DataDelegationType>
     template <class BaseRelationType, typename... Args>
     explicit Damping(BaseRelationType &base_relation, const std::string &name, Args &&...args);
     template <typename BodyRelationType, typename... Args, size_t... Is>
-    Damping(ConstructorArgs<BodyRelationType, Args...> parameters, std::index_sequence<Is...>)
+    Damping(InteractArgs<BodyRelationType, Args...> parameters, std::index_sequence<Is...>)
         : Damping(parameters.body_relation_, std::get<Is>(parameters.others_)...){};
     template <class BodyRelationType, typename... Args>
-    explicit Damping(ConstructorArgs<BodyRelationType, Args...> parameters)
+    explicit Damping(InteractArgs<BodyRelationType, Args...> parameters)
         : Damping(parameters, std::make_index_sequence<std::tuple_size_v<decltype(parameters.others_)>>{}){};
     virtual ~Damping(){};
 

@@ -19,7 +19,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     TransformShape<GeometricShapeBox> water_block_shape(Transform(water_block_translation), water_block_halfsize, "WaterBody");
     FluidBody water_block(sph_system, water_block_shape);
-    water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
+    water_block.defineClosure<WeaklyCompressibleFluid, Viscosity>(ConstructArgs(rho0_f, c_f), mu_f);
     water_block.generateParticles<BaseParticles, Lattice>();
 
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));

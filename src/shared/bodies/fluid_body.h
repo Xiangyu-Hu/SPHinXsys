@@ -45,7 +45,6 @@ class FluidBody : public RealBody
     template <typename... Args>
     FluidBody(Args &&...args) : RealBody(std::forward<Args>(args)...){};
     virtual ~FluidBody(){};
-    virtual FluidBody *ThisObjectPtr() override { return this; };
 };
 } // namespace SPH
 #endif // FLUID_BODY_H
