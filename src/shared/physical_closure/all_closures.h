@@ -22,8 +22,8 @@
  * ------------------------------------------------------------------------- */
 /**
  * @file 	all_closures.h
- * @brief 	This is the header file for physical closures 
- * which includes material models, such equation of state, 
+ * @brief 	This is the header file for physical closures
+ * which includes material models, such equation of state,
  * constitute relation, rheolgogy and turbulence models.
  * @author	Xiangyu Hu
  */
@@ -31,4 +31,4 @@
 #pragma once
 
 #include "all_materials.h"
-#include "general_closure.h"
+#include "closure_wrapper.h"

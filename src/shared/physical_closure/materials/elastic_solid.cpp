@@ -200,8 +200,8 @@ Matd FeneNeoHookeanSolid::StressPK2(Matd &F, size_t index_i)
            (lambda0_ * (J - 1.0) - G0_) * J * right_cauchy.inverse();
 }
 //=================================================================================================//
-Muscle::Muscle(Real rho0, Real bulk_modulus,
-               const Vecd &f0, const Vecd &s0, const std::array<Real, 4> &a0, const std::array<Real, 4> &b0)
+Muscle::Muscle(Real rho0, Real bulk_modulus, const Vecd &f0, const Vecd &s0,
+               const std::array<Real, 4> &a0, const std::array<Real, 4> &b0)
     : NeoHookeanSolid(rho0, this->getYoungsModulus(bulk_modulus, a0[0], b0[0]),
                       this->getPoissonRatio(bulk_modulus, a0[0], b0[0])),
       f0_(f0), s0_(s0), f0f0_(f0_ * f0_.transpose()), s0s0_(s0_ * s0_.transpose()),

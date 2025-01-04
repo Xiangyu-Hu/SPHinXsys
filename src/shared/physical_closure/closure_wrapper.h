@@ -21,13 +21,13 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	general_closure.h
+ * @file 	closure_wrapper.h
  * @brief 	tbd.
  * @author	Xiangyu Hu
  */
 
-#ifndef GENERAL_CLOSURE_H
-#define GENERAL_CLOSURE_H
+#ifndef CLOSURE_WRAPPER_H
+#define CLOSURE_WRAPPER_H
 
 #include "base_data_package.h"
 #include "sphinxsys_containers.h"
@@ -80,4 +80,4 @@ class Closure<BaseModel, AuxiliaryModels...>
     };
 };
 } // namespace SPH
-#endif // GENERAL_CLOSURE_H
+#endif // CLOSURE_WRAPPER_H
