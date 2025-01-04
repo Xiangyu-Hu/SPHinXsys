@@ -21,8 +21,8 @@ Vecd translation_holder(-0.5 * SL, 0.5 * PH, 0.5 * PW);
 //	Material parameters.
 //----------------------------------------------------------------------
 Real rho0_s = 1.0;
-Real a0[4] = {0.059, 0.0, 0.0, 0.0};
-Real b0[4] = {8.023, 0.0, 0.0, 0.0};
+std::array<Real, 4> a0 = {0.059, 0.0, 0.0, 0.0};
+std::array<Real, 4> b0 = {8.023, 0.0, 0.0, 0.0};
 Vec3d fiber_direction(1.0, 0.0, 0.0);
 Vec3d sheet_direction(0.0, 1.0, 0.0);
 Real reference_voltage = 30.0;

@@ -24,17 +24,24 @@ IsotropicDiffusion::IsotropicDiffusion(const std::string &diffusion_species_name
     : BaseDiffusion(diffusion_species_name, gradient_species_name),
       diff_cf_(diff_cf) {}
 //=================================================================================================//
+IsotropicDiffusion::IsotropicDiffusion(ConstructArgs<std::string, Real> args)
+    : IsotropicDiffusion(std::get<0>(args), std::get<1>(args)) {}
+//=================================================================================================//
 IsotropicDiffusion::IsotropicDiffusion(const std::string &species_name, Real diff_cf)
     : IsotropicDiffusion(species_name, species_name, diff_cf) {}
 //=================================================================================================//
 LocalIsotropicDiffusion::LocalIsotropicDiffusion(const std::string &diffusion_species_name,
                                                  const std::string &gradient_species_name,
-                                                 Real diff_cf)
-    : IsotropicDiffusion(diffusion_species_name, gradient_species_name, diff_cf),
-      local_diffusivity_(nullptr) {}
+                                                 Real diff_background, Real diff_max)
+    : IsotropicDiffusion(diffusion_species_name, gradient_species_name, diff_background),
+      diff_max_(diff_max), local_diffusivity_(nullptr) {}
 //=================================================================================================//
-LocalIsotropicDiffusion::LocalIsotropicDiffusion(const std::string &species_name, Real diff_cf)
-    : LocalIsotropicDiffusion(species_name, species_name, diff_cf) {}
+LocalIsotropicDiffusion::LocalIsotropicDiffusion(const std::string &species_name,
+                                                 Real diff_background, Real diff_max)
+    : LocalIsotropicDiffusion(species_name, species_name, diff_background, diff_max) {}
+//=================================================================================================//
+LocalIsotropicDiffusion::LocalIsotropicDiffusion(ConstructArgs<std::string, Real, Real> args)
+    : LocalIsotropicDiffusion(std::get<0>(args), std::get<1>(args), std::get<2>(args)) {}
 //=================================================================================================//
 void LocalIsotropicDiffusion::initializeLocalParameters(BaseParticles *base_particles)
 {

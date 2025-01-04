@@ -1,6 +1,6 @@
 ﻿/**
  * @file	water entry and exit.cpp
- * @brief	2D water entry and exit example with surface wettability considered.
+ * @brief	2D water entry and exit example with surface wetting considered.
  * @details	This is the one of FSI test cases, also one case for
  * 			understanding spatial temporal identification approach,
  *          especially when coupled with the wetting.
@@ -35,6 +35,7 @@ Real mu_f = 8.9e-7;                      /**< Water dynamics viscosity. */
 //----------------------------------------------------------------------
 //	Wetting parameters
 //----------------------------------------------------------------------
+std::string diffusion_species_name = "Phi";
 Real diffusion_coeff = 100.0 * pow(particle_spacing_ref, 2); /**< Wetting coefficient. */
 Real fluid_moisture = 1.0;                                   /**< fluid moisture. */
 Real cylinder_moisture = 0.0;                                /**< cylinder moisture. */
@@ -68,7 +69,7 @@ class WettingFluidBodyInitialCondition : public LocalDynamics
     explicit WettingFluidBodyInitialCondition(SPHBody &sph_body)
         : LocalDynamics(sph_body),
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
-          phi_(particles_->registerStateVariable<Real>("Phi")){};
+          phi_(particles_->registerStateVariable<Real>(diffusion_species_name)){};
 
     void update(size_t index_i, Real dt)
     {
@@ -119,7 +120,7 @@ class WettingWallBodyInitialCondition : public LocalDynamics
     explicit WettingWallBodyInitialCondition(SPHBody &sph_body)
         : LocalDynamics(sph_body),
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
-          phi_(particles_->registerStateVariable<Real>("Phi")){};
+          phi_(particles_->registerStateVariable<Real>(diffusion_species_name)){};
 
     void update(size_t index_i, Real dt)
     {
@@ -147,7 +148,7 @@ class WettingCylinderBodyInitialCondition : public LocalDynamics
     explicit WettingCylinderBodyInitialCondition(SPHBody &sph_body)
         : LocalDynamics(sph_body),
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
-          phi_(particles_->registerStateVariable<Real>("Phi")){};
+          phi_(particles_->registerStateVariable<Real>(diffusion_species_name)){};
 
     void update(size_t index_i, Real dt)
     {
@@ -200,7 +201,8 @@ int main(int ac, char *av[])
     SolidBody cylinder(sph_system, makeShared<WettingCylinderBody>("Cylinder"));
     cylinder.defineAdaptationRatios(1.15, 1.0);
     cylinder.defineBodyLevelSetShape();
-    cylinder.defineMaterial<Solid>(rho0_s);
+    cylinder.defineClosure<Solid, IsotropicDiffusion>(
+        rho0_s, ConstructArgs(diffusion_species_name, diffusion_coeff));
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
         ? cylinder.generateParticles<BaseParticles, Reload>(cylinder.getName())
         : cylinder.generateParticles<BaseParticles, Lattice>();
@@ -276,9 +278,8 @@ int main(int ac, char *av[])
     //	Define the fluid dynamics used in the simulation.
     //	Note that there may be data dependence on the sequence of constructions.
     //----------------------------------------------------------------------
-    IsotropicDiffusion diffusion("Phi", "Phi", diffusion_coeff);
-    GetDiffusionTimeStepSize get_thermal_time_step(cylinder, diffusion);
-    CylinderFluidDiffusionDirichlet cylinder_wetting(cylinder_contact, &diffusion);
+    GetDiffusionTimeStepSize get_thermal_time_step(cylinder);
+    CylinderFluidDiffusionDirichlet cylinder_wetting(cylinder_contact);
     SimpleDynamics<WettingFluidBodyInitialCondition> wetting_water_initial_condition(water_block);
     SimpleDynamics<WettingWallBodyInitialCondition> wetting_wall_initial_condition(wall_boundary);
     SimpleDynamics<WettingCylinderBodyInitialCondition> wetting_cylinder_initial_condition(cylinder);
@@ -329,7 +330,7 @@ int main(int ac, char *av[])
     SimTK::MobilizedBody::Planar tethered_spot(fixed_spot,
                                                SimTK::Transform(SimTKVec3(displacement0[0], displacement0[1], 0.0)),
                                                tethered_spot_info, SimTK::Transform(SimTKVec3(0)));
-    // discreted forces acting on the bodies
+    // discrete forces acting on the bodies
     SimTK::Force::UniformGravity sim_gravity(forces, matter, SimTK::Vec3(0.0, Real(-9.81), 0.0), 0.0);
     SimTK::Force::DiscreteForces force_on_bodies(forces, matter);
     fixed_spot_info.addDecoration(SimTK::Transform(), SimTK::DecorativeSphere(0.02));

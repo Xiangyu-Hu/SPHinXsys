@@ -60,7 +60,7 @@ class ElasticSolid : public Solid
     {
         material_type_name_ = "ElasticSolid";
     };
-    virtual ~ElasticSolid(){};
+    virtual ~ElasticSolid() {};
 
     Real ReferenceSoundSpeed() { return c0_; };
     Real TensileWaveSpeed() { return ct0_; };
@@ -121,7 +121,7 @@ class LinearElasticSolid : public ElasticSolid
 {
   public:
     explicit LinearElasticSolid(Real rho0, Real youngs_modulus, Real poisson_ratio);
-    virtual ~LinearElasticSolid(){};
+    virtual ~LinearElasticSolid() {};
 
     virtual Matd StressPK1(Matd &deformation, size_t particle_index_i) override;
     virtual Matd StressPK2(Matd &deformation, size_t particle_index_i) override;
@@ -157,7 +157,7 @@ class SaintVenantKirchhoffSolid : public LinearElasticSolid
     {
         material_type_name_ = "SaintVenantKirchhoffSolid";
     };
-    virtual ~SaintVenantKirchhoffSolid(){};
+    virtual ~SaintVenantKirchhoffSolid() {};
 
     /** second Piola-Kirchhoff stress related with green-lagrangian deformation tensor */
     virtual Matd StressPK2(Matd &deformation, size_t particle_index_i) override;
@@ -175,7 +175,7 @@ class NeoHookeanSolid : public LinearElasticSolid
     {
         material_type_name_ = "NeoHookeanSolid";
     };
-    virtual ~NeoHookeanSolid(){};
+    virtual ~NeoHookeanSolid() {};
 
     /** second Piola-Kirchhoff stress related with green-lagrangian deformation tensor */
     virtual Matd StressPK2(Matd &deformation, size_t particle_index_i) override;
@@ -199,7 +199,7 @@ class NeoHookeanSolidIncompressible : public LinearElasticSolid
     {
         material_type_name_ = "NeoHookeanSolidIncompressible";
     };
-    virtual ~NeoHookeanSolidIncompressible(){};
+    virtual ~NeoHookeanSolidIncompressible() {};
 
     /** second Piola-Kirchhoff stress related with green-lagrangian deformation tensor */
     virtual Matd StressPK2(Matd &deformation, size_t particle_index_i) override;
@@ -258,7 +258,7 @@ class FeneNeoHookeanSolid : public LinearElasticSolid
     {
         material_type_name_ = "FeneNeoHookeanSolid";
     };
-    virtual ~FeneNeoHookeanSolid(){};
+    virtual ~FeneNeoHookeanSolid() {};
     virtual Matd StressPK2(Matd &deformation, size_t particle_index_i) override;
     /** Define the calculation of the stress matrix for postprocessing */
     virtual std::string getRelevantStressMeasureName() override { return "Cauchy"; };
@@ -271,18 +271,9 @@ class FeneNeoHookeanSolid : public LinearElasticSolid
 class Muscle : public NeoHookeanSolid
 {
   public:
-    explicit Muscle(Real rho0, Real bulk_modulus,
-                    const Vecd &f0, const Vecd &s0, const Real (&a0)[4], const Real (&b0)[4])
-        : NeoHookeanSolid(rho0, this->getYoungsModulus(bulk_modulus, a0, b0),
-                          this->getPoissonRatio(bulk_modulus, a0, b0)),
-          f0_(f0), s0_(s0), f0f0_(f0_ * f0_.transpose()), s0s0_(s0_ * s0_.transpose()),
-          f0s0_(f0_ * s0_.transpose() + s0_ * f0_.transpose())
-    {
-        material_type_name_ = "Muscle";
-        std::copy(a0, a0 + 4, a0_);
-        std::copy(b0, b0 + 4, b0_);
-    };
-    virtual ~Muscle(){};
+    Muscle(Real rho0, Real bulk_modulus, const Vecd &f0, const Vecd &s0,
+           const std::array<Real, 4> &a0, const std::array<Real, 4> &b0);
+    virtual ~Muscle() {};
 
     virtual Matd MuscleFiberDirection(size_t particle_index_i) { return f0f0_; };
     /** compute the stress through Constitutive relation. */
@@ -293,14 +284,14 @@ class Muscle : public NeoHookeanSolid
     virtual std::string getRelevantStressMeasureName() override { return "Cauchy"; };
 
   protected:
-    Vecd f0_, s0_;            /**< Reference fiber and sheet directions as basic parameter. */
-    Matd f0f0_, s0s0_, f0s0_; /**< Tensor products of fiber and sheet directions as basic parameter.. */
-    Real a0_[4], b0_[4];      /**< constitutive parameters  as basic parameter.*/
+    Vecd f0_, s0_;                /**< Reference fiber and sheet directions as basic parameter. */
+    Matd f0f0_, s0s0_, f0s0_;     /**< Tensor products of fiber and sheet directions as basic parameter.. */
+    std::array<Real, 4> a0_, b0_; /**< constitutive parameters  as basic parameter.*/
 
   private:
-    Real getPoissonRatio(Real bulk_modulus, const Real (&a0)[4], const Real (&b0)[4]);
-    Real getShearModulus(const Real (&a0)[4], const Real (&b0)[4]);
-    Real getYoungsModulus(Real bulk_modulus, const Real (&a0)[4], const Real (&b0)[4]);
+    Real getPoissonRatio(Real bulk_modulus, Real a0, Real b0);
+    Real getShearModulus(Real a0, Real b0);
+    Real getYoungsModulus(Real bulk_modulus, Real a0, Real b0);
 };
 
 /**
@@ -320,14 +311,11 @@ class LocallyOrthotropicMuscle : public Muscle
     Vecd *local_f0_; /**< local fiber direction. */
     Vecd *local_s0_; /**< local sheet direction. */
 
-    explicit LocallyOrthotropicMuscle(Real rho0, Real bulk_modulus,
-                                      const Vecd &f0, const Vecd &s0, const Real (&a0)[4], const Real (&b0)[4])
-        : Muscle(rho0, bulk_modulus, f0, s0, a0, b0),
-          local_f0f0_(nullptr), local_s0s0_(nullptr), local_f0s0_(nullptr), local_f0_(nullptr), local_s0_(nullptr)
-    {
-        material_type_name_ = "LocallyOrthotropicMuscle";
-    };
-    virtual ~LocallyOrthotropicMuscle(){};
+    LocallyOrthotropicMuscle(Real rho0, Real bulk_modulus, const Vecd &f0, const Vecd &s0,
+                             const std::array<Real, 4> &a0, const std::array<Real, 4> &b0);
+    explicit LocallyOrthotropicMuscle(ConstructArgs<Real, Real, Vecd, Vecd, 
+    std::array<Real, 4>, std::array<Real, 4>> args);
+    virtual ~LocallyOrthotropicMuscle() {};
 
     virtual void registerLocalParameters(BaseParticles *base_particles) override;
     virtual void registerLocalParametersFromReload(BaseParticles *base_particles) override;

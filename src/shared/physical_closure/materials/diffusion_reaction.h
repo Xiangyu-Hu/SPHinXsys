@@ -89,6 +89,7 @@ class IsotropicDiffusion : public BaseDiffusion
                        const std::string &gradient_species_name,
                        Real diff_cf = 1.0);
     IsotropicDiffusion(const std::string &species_name, Real diff_cf = 1.0);
+    explicit IsotropicDiffusion(ConstructArgs<std::string, Real> args);
     virtual ~IsotropicDiffusion() {};
 
     virtual Real getReferenceDiffusivity() override { return diff_cf_; };
@@ -107,18 +108,20 @@ class IsotropicDiffusion : public BaseDiffusion
 class LocalIsotropicDiffusion : public IsotropicDiffusion
 {
   protected:
+    Real diff_max_; /**< maximum diffusion coefficient. */
     Real *local_diffusivity_;
 
   public:
     LocalIsotropicDiffusion(const std::string &diffusion_species_name,
                             const std::string &gradient_species_name,
-                            Real diff_cf = 1.0);
-    LocalIsotropicDiffusion(const std::string &species_name, Real diff_cf = 1.0);
+                            Real diff_background, Real diff_max);
+    LocalIsotropicDiffusion(const std::string &species_name, Real diff_background, Real diff_max);
+    explicit LocalIsotropicDiffusion(ConstructArgs<std::string, Real, Real> args);
     virtual ~LocalIsotropicDiffusion() {};
 
     virtual void initializeLocalParameters(BaseParticles *base_particles) override;
 
-    virtual Real getReferenceDiffusivity() override { return diff_cf_; };
+    virtual Real getReferenceDiffusivity() override { return diff_max_; };
     virtual Real getDiffusionCoeffWithBoundary(size_t index_i) override { return local_diffusivity_[index_i]; };
     virtual Real getInterParticleDiffusionCoeff(size_t index_i, size_t index_j, const Vecd &e_ij) override
     {
@@ -251,15 +254,15 @@ class ReactionDiffusion : public AbstractDiffusion
     UniquePtrsKeeper<DiffusionType> diffusion_ptrs_keeper_;
 
   protected:
-    ReactionType &reaction_model_;
+    ReactionType *reaction_model_;
     StdVec<AbstractDiffusion *> all_diffusions_;
 
   public:
     /** Constructor for material with diffusion and reaction. */
-    ReactionDiffusion(ReactionType &reaction_model)
+    ReactionDiffusion(ReactionType *reaction_model)
         : AbstractDiffusion(), reaction_model_(reaction_model) {};
     virtual ~ReactionDiffusion() {};
-    ReactionType &ReactionModel() { return reaction_model_; };
+    ReactionType &ReactionModel() { return *reaction_model_; };
     virtual StdVec<AbstractDiffusion *> AllDiffusions() override { return all_diffusions_; };
 
     virtual void registerLocalParameters(BaseParticles *base_particles) override
@@ -296,7 +299,7 @@ class ReactionDiffusion : public AbstractDiffusion
     void addDiffusion(const std::string &diffusion_species_name,
                       const std::string &gradient_species_name, Args &&...args)
     {
-        auto species_names = reaction_model_.getSpeciesNames();
+        auto species_names = reaction_model_->getSpeciesNames();
 
         if (std::find(species_names.begin(), species_names.end(), diffusion_species_name) != std::end(species_names) &&
             std::find(species_names.begin(), species_names.end(), gradient_species_name) != std::end(species_names))

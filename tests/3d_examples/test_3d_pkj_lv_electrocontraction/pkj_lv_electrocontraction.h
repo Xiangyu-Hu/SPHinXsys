@@ -57,8 +57,8 @@ BoundingBox system_domain_bounds(domain_lower_bound, domain_upper_bound);
 Real rho0_s = 1.06e-3;
 /** Active stress factor */
 Real k_a = 150 * stress_scale;
-Real a0[4] = {Real(496.0 * stress_scale), Real(15196.0 * stress_scale), Real(3283.0 * stress_scale), Real(662.0 * stress_scale)};
-Real b0[4] = {Real(7.209), Real(20.417), Real(11.176), Real(9.466)};
+std::array<Real, 4> a0 = {Real(496.0 * stress_scale), Real(15196.0 * stress_scale), Real(3283.0 * stress_scale), Real(662.0 * stress_scale)};
+std::array<Real, 4> b0 = {Real(7.209), Real(20.417), Real(11.176), Real(9.466)};
 /** reference stress to achieve weakly compressible condition */
 Real poisson = 0.4995;
 Real bulk_modulus = 2.0 * a0[0] * (1.0 + poisson) / (3.0 * (1.0 - 2.0 * poisson));
@@ -67,7 +67,7 @@ Real acceleration_factor = 27.5; /** Acceleration factor for fast diffusion on p
 Real diffusion_coeff = 0.8;
 Real bias_coeff = 0.0;
 /** Electrophysiology parameters. */
-std::array<std::string, 1> species_name_list{"Phi"};
+std::string diffusion_species_name = "Phi";
 Real c_m = 1.0;
 Real k = 8.0;
 Real a = 0.01;
