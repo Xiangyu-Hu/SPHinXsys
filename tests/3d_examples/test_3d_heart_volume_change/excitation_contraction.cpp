@@ -33,7 +33,7 @@ int main(int ac, char *av[])
     //	SPH Particle relaxation section
     //----------------------------------------------------------------------
     /** check whether run particle relaxation for body fitted particle distribution. */
-    if (sph_system.RunParticleRelaxation() && !sph_system.ReloadParticles())
+    if (sph_system.RunParticleRelaxation())
     {
         SolidBody herat_model(sph_system, makeShared<Heart>("HeartModel"));
         herat_model.defineBodyLevelSetShape()->correctLevelSetSign()->writeLevelSet(sph_system);

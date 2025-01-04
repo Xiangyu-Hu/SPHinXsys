@@ -91,7 +91,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Run particle relaxation for body-fitted distribution if chosen.
     //----------------------------------------------------------------------
-    if (sph_system.RunParticleRelaxation() && !sph_system.ReloadParticles())
+    if (sph_system.RunParticleRelaxation())
     {
         //----------------------------------------------------------------------
         //	Define body relation map used for particle relaxation.

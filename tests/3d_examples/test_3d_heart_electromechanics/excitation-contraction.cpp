@@ -247,17 +247,13 @@ int main(int ac, char *av[])
     //	SPHSystem section
     //----------------------------------------------------------------------
     SPHSystem sph_system(system_domain_bounds, dp_0);
-    sph_system.setRunParticleRelaxation(false); // Tag for run particle relaxation for body-fitted distribution
-    sph_system.setReloadParticles(true);        // Tag for computation with save particles distribution
-#ifdef BOOST_AVAILABLE
-    sph_system.handleCommandlineOptions(ac, av); // handle command line arguments
-#endif
-    IOEnvironment io_environment(sph_system);
+    sph_system.setRunParticleRelaxation(false);                      // Tag for run particle relaxation for body-fitted distribution
+    sph_system.setReloadParticles(true);                             // Tag for computation with save particles distribution
+    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment(); // handle command line arguments
     //----------------------------------------------------------------------
-    //	SPH Particle relaxation section
+    //	SPH Particle relaxation for body fitted particle distribution.
     //----------------------------------------------------------------------
-    /** check whether run particle relaxation for body fitted particle distribution. */
-    if (sph_system.RunParticleRelaxation() && !sph_system.ReloadParticles())
+    if (sph_system.RunParticleRelaxation())
     {
         SolidBody herat_model(sph_system, makeShared<Heart>("HeartModel"));
         herat_model.defineBodyLevelSetShape()->correctLevelSetSign()->writeLevelSet(sph_system);
@@ -526,11 +522,13 @@ int main(int ac, char *av[])
 
     if (sph_system.GenerateRegressionData())
     {
+        std::cout << "Generate regression data ..." << std::endl;
         write_voltage.generateDataBase(1.0e-3);
         write_displacement.generateDataBase(1.0e-3);
     }
     else
     {
+        std::cout << "Regression test ..." << std::endl;
         write_voltage.testResult();
         write_displacement.testResult();
     }
