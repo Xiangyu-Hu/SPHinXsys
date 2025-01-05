@@ -34,24 +34,23 @@
 
 namespace SPH
 {
-template <typename GeneratorType, typename FunctionType>
-class Constant : public Entity
+template <typename GeneratorType, typename DataType>
+class ConstantArray : public Entity
 {
-    UniquePtrKeeper<Entity> device_shared_constant_keeper_;
+    UniquePtrKeeper<Entity> device_only_constant_array_keeper_;
 
   public:
-    using DataType = typename GeneratorType::FunctionType;
-    Constant(GeneratorType *generator, size_t data_size = 1)
-        : Entity(generator->getFunctionName<DataType>()),
+    ConstantArray(GeneratorType *generator, size_t data_size = 1)
+        : Entity(DataType::Name()),
           generator_(generator), data_size_(data_size),
           data_(new DataType[data_size]), delegated_(data_)
     {
         for (size_t i = 0; i != data_size_; ++i)
         {
-            data_[i] = generator_[i]->getFunction<DataType>();
+            data_[i] = DataType(generator_[i]);
         }
     };
-    ~Constant() { delete[] data_; };
+    ~ConstantArray() { delete[] data_; };
     GeneratorType *getGenerator() { return generator_; }
     size_t getDataSize() { return data_size_; }
     DataType *Data() { return data_; };
@@ -68,14 +67,12 @@ class Constant : public Entity
     DataType *delegated_;
 };
 
-template <typename GeneratorType, typename FunctionType>
-class DeviceOnlyConstant : public Entity
+template <typename GeneratorType, typename DataType>
+class DeviceOnlyConstantArray : public Entity
 {
-    using DataType = typename GeneratorType::FunctionType;
-
   public:
-    DeviceOnlyConstant(Constant<GeneratorType, FunctionType> *host_constant);
-    ~DeviceOnlyConstant();
+    DeviceOnlyConstantArray(ConstantArray<GeneratorType, DataType> *host_constant);
+    ~DeviceOnlyConstantArray();
 
   protected:
     DataType *device_only_data_;
