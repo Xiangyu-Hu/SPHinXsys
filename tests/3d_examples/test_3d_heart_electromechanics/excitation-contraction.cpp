@@ -29,13 +29,13 @@ BoundingBox system_domain_bounds(domain_lower_bound, domain_upper_bound);
 Real rho0_s = 1.06e-3;
 /** Active stress factor */
 Real k_a = 100 * stress_scale;
-Real a0[4] = {Real(496.0) * stress_scale, Real(15196.0) * stress_scale, Real(3283.0) * stress_scale, Real(662.0) * stress_scale};
-Real b0[4] = {Real(7.209), Real(20.417), Real(11.176), Real(9.466)};
+std::array<Real, 4> a0 = {Real(496.0) * stress_scale, Real(15196.0) * stress_scale, Real(3283.0) * stress_scale, Real(662.0) * stress_scale};
+std::array<Real, 4> b0 = {Real(7.209), Real(20.417), Real(11.176), Real(9.466)};
 /** reference stress to achieve weakly compressible condition */
 Real poisson = 0.4995;
 Real bulk_modulus = 2.0 * a0[0] * (1.0 + poisson) / (3.0 * (1.0 - 2.0 * poisson));
 /** Electrophysiology parameters. */
-std::array<std::string, 1> species_name_list{"Phi"};
+std::string diffusion_species_name = "Phi";
 Real diffusion_coeff = 0.8;
 Real bias_coeff = 0.0;
 /** Electrophysiology parameters. */
@@ -73,8 +73,8 @@ class DiffusionBCs : public BaseLocalDynamics<BodyPartByParticle>
     explicit DiffusionBCs(BodyPartByParticle &body_part, const std::string &species_name)
         : BaseLocalDynamics<BodyPartByParticle>(body_part),
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
-          phi_(particles_->registerStateVariable<Real>(species_name)){};
-    virtual ~DiffusionBCs(){};
+          phi_(particles_->registerStateVariable<Real>(species_name)) {};
+    virtual ~DiffusionBCs() {};
 
     void update(size_t index_i, Real dt = 0.0)
     {
@@ -119,7 +119,7 @@ class ComputeFiberAndSheetDirections : public LocalDynamics
         beta_epi_ = -(70.0 / 180.0) * M_PI;
         beta_endo_ = (80.0 / 180.0) * M_PI;
     };
-    virtual ~ComputeFiberAndSheetDirections(){};
+    virtual ~ComputeFiberAndSheetDirections() {};
 
     void update(size_t index_i, Real dt = 0.0)
     {
@@ -176,7 +176,7 @@ class ApplyStimulusCurrentSI : public LocalDynamics
     explicit ApplyStimulusCurrentSI(SPHBody &sph_body)
         : LocalDynamics(sph_body),
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
-          voltage_(particles_->registerStateVariable<Real>("Voltage")){};
+          voltage_(particles_->registerStateVariable<Real>("Voltage")) {};
 
     void update(size_t index_i, Real dt)
     {
@@ -205,7 +205,7 @@ class ApplyStimulusCurrentSII : public LocalDynamics
     explicit ApplyStimulusCurrentSII(SPHBody &sph_body)
         : LocalDynamics(sph_body),
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
-          voltage_(particles_->registerStateVariable<Real>("Voltage")){};
+          voltage_(particles_->registerStateVariable<Real>("Voltage")) {};
 
     void update(size_t index_i, Real dt)
     {
@@ -247,21 +247,19 @@ int main(int ac, char *av[])
     //	SPHSystem section
     //----------------------------------------------------------------------
     SPHSystem sph_system(system_domain_bounds, dp_0);
-    sph_system.setRunParticleRelaxation(false); // Tag for run particle relaxation for body-fitted distribution
-    sph_system.setReloadParticles(true);        // Tag for computation with save particles distribution
-#ifdef BOOST_AVAILABLE
-    sph_system.handleCommandlineOptions(ac, av); // handle command line arguments
-#endif
-    IOEnvironment io_environment(sph_system);
+    sph_system.setRunParticleRelaxation(false);                      // Tag for run particle relaxation for body-fitted distribution
+    sph_system.setReloadParticles(true);                             // Tag for computation with save particles distribution
+    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment(); // handle command line arguments
     //----------------------------------------------------------------------
-    //	SPH Particle relaxation section
+    //	SPH Particle relaxation for body fitted particle distribution.
     //----------------------------------------------------------------------
-    /** check whether run particle relaxation for body fitted particle distribution. */
-    if (sph_system.RunParticleRelaxation() && !sph_system.ReloadParticles())
+    if (sph_system.RunParticleRelaxation())
     {
         SolidBody herat_model(sph_system, makeShared<Heart>("HeartModel"));
         herat_model.defineBodyLevelSetShape()->correctLevelSetSign()->writeLevelSet(sph_system);
-        herat_model.defineMaterial<LocallyOrthotropicMuscle>(rho0_s, bulk_modulus, fiber_direction, sheet_direction, a0, b0);
+        herat_model.defineClosure<LocallyOrthotropicMuscle, IsotropicDiffusion>(
+            ConstructArgs(rho0_s, bulk_modulus, fiber_direction, sheet_direction, a0, b0),
+            ConstructArgs(diffusion_species_name, diffusion_coeff));
         herat_model.generateParticles<BaseParticles, Lattice>();
         /** topology */
         InnerRelation herat_model_inner(herat_model);
@@ -299,14 +297,13 @@ int main(int ac, char *av[])
         //----------------------------------------------------------------------
         //	Diffusion process to initialize fiber direction
         //----------------------------------------------------------------------
-        IsotropicDiffusion diffusion("Phi", "Phi", diffusion_coeff);
-        GetDiffusionTimeStepSize get_time_step_size(herat_model, diffusion);
-        FiberDirectionDiffusionRelaxation diffusion_relaxation(herat_model_inner, &diffusion);
-        SimpleDynamics<ComputeFiberAndSheetDirections> compute_fiber_sheet(herat_model, "Phi");
+        GetDiffusionTimeStepSize get_time_step_size(herat_model);
+        FiberDirectionDiffusionRelaxation diffusion_relaxation(herat_model_inner);
+        SimpleDynamics<ComputeFiberAndSheetDirections> compute_fiber_sheet(herat_model, diffusion_species_name);
         BodySurface surface_part(herat_model);
-        SimpleDynamics<DiffusionBCs> impose_diffusion_bc(surface_part, "Phi");
+        SimpleDynamics<DiffusionBCs> impose_diffusion_bc(surface_part, diffusion_species_name);
         impose_diffusion_bc.exec();
-        write_herat_model_state_to_vtp.addToWrite<Real>(herat_model, "Phi");
+        write_herat_model_state_to_vtp.addToWrite<Real>(herat_model, diffusion_species_name);
         write_herat_model_state_to_vtp.writeToFile(ite);
 
         int diffusion_step = 100;
@@ -341,9 +338,8 @@ int main(int ac, char *av[])
 
     SolidBody physiology_heart(sph_system, makeShared<Heart>("PhysiologyHeart"));
     AlievPanfilowModel aliev_panfilow_model(k_a, c_m, k, a, b, mu_1, mu_2, epsilon);
-    MonoFieldElectroPhysiology<LocalDirectionalDiffusion> *mono_field_electro_physiology =
-        physiology_heart.defineMaterial<MonoFieldElectroPhysiology<LocalDirectionalDiffusion>>(
-            aliev_panfilow_model, diffusion_coeff, bias_coeff, fiber_direction);
+    physiology_heart.defineClosure<Solid, MonoFieldElectroPhysiology<LocalDirectionalDiffusion>>(
+        Solid(), ConstructArgs(&aliev_panfilow_model, ConstructArgs(diffusion_coeff, bias_coeff, fiber_direction)));
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
         ? physiology_heart.generateParticles<BaseParticles, Reload>("HeartModel")
         : physiology_heart.generateParticles<BaseParticles, Lattice>();
@@ -371,10 +367,10 @@ int main(int ac, char *av[])
     // Corrected configuration.
     InteractionWithUpdate<LinearGradientCorrectionMatrixInner> correct_configuration_excitation(physiology_heart_inner);
     // Time step size calculation.
-    GetDiffusionTimeStepSize get_physiology_time_step(physiology_heart, *mono_field_electro_physiology);
+    GetDiffusionTimeStepSize get_physiology_time_step(physiology_heart);
     // Diffusion process for diffusion body.
     electro_physiology::ElectroPhysiologyDiffusionInnerRK2<LocalDirectionalDiffusion>
-        diffusion_relaxation(physiology_heart_inner, mono_field_electro_physiology->AllDiffusions());
+        diffusion_relaxation(physiology_heart_inner);
     // Solvers for ODE system.
     electro_physiology::ElectroPhysiologyReactionRelaxationForward reaction_relaxation_forward(physiology_heart, aliev_panfilow_model);
     electro_physiology::ElectroPhysiologyReactionRelaxationBackward reaction_relaxation_backward(physiology_heart, aliev_panfilow_model);
@@ -526,11 +522,13 @@ int main(int ac, char *av[])
 
     if (sph_system.GenerateRegressionData())
     {
+        std::cout << "Generate regression data ..." << std::endl;
         write_voltage.generateDataBase(1.0e-3);
         write_displacement.generateDataBase(1.0e-3);
     }
     else
     {
+        std::cout << "Regression test ..." << std::endl;
         write_voltage.testResult();
         write_displacement.testResult();
     }

@@ -23,7 +23,8 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     SolidBody diffusion_body(sph_system, makeShared<MultiPolygonShape>(createOverallStructureBody(), "DiffusionBody"));
-    LocalIsotropicDiffusion *frame_diffusion = diffusion_body.defineMaterial<LocalIsotropicDiffusion>("Phi", "Phi", wood_cond);
+    diffusion_body.defineClosure<Solid, LocalIsotropicDiffusion>(
+        Solid(), ConstructArgs(diffusion_species_name, wood_cond, epdm_cond));
     diffusion_body.generateParticles<BaseParticles, Lattice>();
 
     SolidBody boundary_Robin_in(sph_system, makeShared<MultiPolygonShape>(createInternalAirBody(), "InternalConvectionBoundary"));
@@ -65,12 +66,8 @@ int main(int ac, char *av[])
     SimpleDynamics<LocalDiffusivityDefinition> ac2_diffusivity(ac_body2, ac2_cond);
     SimpleDynamics<LocalDiffusivityDefinition> ac1_open_diffusivity(ac_open_body1, ac1_open_cond);
 
-    DiffusionBodyRelaxation temperature_relaxation(
-        ConstructorArgs(inner_relation, frame_diffusion),
-        ConstructorArgs(contact_Robin, frame_diffusion));
-
-    LocalIsotropicDiffusion maximum_thermal_diffusivity("Phi", "Phi", epdm_cond);
-    GetDiffusionTimeStepSize get_time_step_size(diffusion_body, maximum_thermal_diffusivity);
+    DiffusionBodyRelaxation temperature_relaxation(inner_relation, contact_Robin);
+    GetDiffusionTimeStepSize get_time_step_size(diffusion_body);
 
     SimpleDynamics<DiffusionInitialCondition> setup_diffusion_initial_condition(diffusion_body);
     SimpleDynamics<RobinBoundaryDefinition> robin_boundary_condition_in(boundary_Robin_in);
@@ -82,11 +79,11 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp write_states(sph_system);
     ReducedQuantityRecording<Average<QuantitySummation<Real, SPHBody>>>
-        write_heat_transfer_from_internal_boundary(diffusion_body, "PhiTransferFromInternalConvectionBoundary");
+        write_heat_transfer_from_internal_boundary(diffusion_body, diffusion_species_name + "TransferFromInternalConvectionBoundary");
     ReducedQuantityRecording<Average<QuantitySummation<Real, SPHBody>>>
-        write_heat_transfer_from_external_boundary(diffusion_body, "PhiTransferFromExternalConvectionBoundary");
+        write_heat_transfer_from_external_boundary(diffusion_body, diffusion_species_name + "TransferFromExternalConvectionBoundary");
     RegressionTestEnsembleAverage<ObservedQuantityRecording<Real>>
-        write_solid_temperature("Phi", temperature_observer_contact);
+        write_solid_temperature(diffusion_species_name, temperature_observer_contact);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.

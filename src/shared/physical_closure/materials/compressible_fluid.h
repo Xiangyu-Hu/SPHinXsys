@@ -21,19 +21,36 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	all_materials.h
- * @brief 	This is the header file for materials.
- * @author	Chi Zhang and Xiangyu Hu
+ * @file 	compressible_fluid.h
+ * @brief 	Describe the compressible fluid which is used
+ * 			model compressible fluids. Here, we have ideal gas equation of states.
+ * @author	Chi Zhang, Zhentong Wang and Xiangyu Hu
  */
 
 #pragma once
 
 #include "base_material.h"
-#include "complex_solid.h"
-#include "complex_solid.hpp"
-#include "compressible_fluid.h"
-#include "diffusion_reaction.h"
-#include "elastic_solid.h"
-#include "general_continuum.h"
-#include "inelastic_solid.h"
-#include "weakly_compressible_fluid.h"
+
+namespace SPH
+{
+/**
+ * @class CompressibleFluid
+ * @brief Ideal gas equation of state (EOS).
+ */
+class CompressibleFluid : public Fluid
+{
+  protected:
+    Real gamma_; /** heat capacity ratio */
+
+  public:
+    CompressibleFluid(Real rho0, Real gamma);
+    explicit CompressibleFluid(ConstructArgs<Real, Real> args);
+    virtual ~CompressibleFluid(){};
+
+    Real HeatCapacityRatio() { return gamma_; };
+    virtual Real getPressure(Real rho, Real rho_e) override;
+    virtual Real getPressure(Real rho) override { return 0.0; };
+    virtual Real DensityFromPressure(Real p) override { return 0.0; };
+    virtual Real getSoundSpeed(Real p, Real rho) override;
+};
+} // namespace SPH

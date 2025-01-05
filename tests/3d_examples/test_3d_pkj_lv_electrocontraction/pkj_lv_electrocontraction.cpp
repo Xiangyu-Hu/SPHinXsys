@@ -41,10 +41,12 @@ int main(int ac, char *av[])
     //	SPH Particle relaxation section
     //----------------------------------------------------------------------
     /** check whether run particle relaxation for body fitted particle distribution. */
-    if (sph_system.RunParticleRelaxation() && !sph_system.ReloadParticles())
+    if (sph_system.RunParticleRelaxation())
     {
         SolidBody herat_model(sph_system, level_set_heart_model);
-        herat_model.defineMaterial<LocallyOrthotropicMuscle>(rho0_s, bulk_modulus, fiber_direction, sheet_direction, a0, b0);
+        herat_model.defineClosure<LocallyOrthotropicMuscle, IsotropicDiffusion>(
+            ConstructArgs(rho0_s, bulk_modulus, fiber_direction, sheet_direction, a0, b0),
+            ConstructArgs(diffusion_species_name, diffusion_coeff));
         herat_model.generateParticles<BaseParticles, Lattice>();
         /** topology */
         InnerRelation herat_model_inner(herat_model);
@@ -79,14 +81,13 @@ int main(int ac, char *av[])
         //----------------------------------------------------------------------
         //	Diffusion process to initialize fiber direction
         //----------------------------------------------------------------------
-        IsotropicDiffusion diffusion("Phi", "Phi", diffusion_coeff);
-        GetDiffusionTimeStepSize get_time_step_size(herat_model, diffusion);
-        FiberDirectionDiffusionRelaxation diffusion_relaxation(herat_model_inner, &diffusion);
-        SimpleDynamics<ComputeFiberAndSheetDirections> compute_fiber_sheet(herat_model, "Phi");
+        GetDiffusionTimeStepSize get_time_step_size(herat_model);
+        FiberDirectionDiffusionRelaxation diffusion_relaxation(herat_model_inner);
+        SimpleDynamics<ComputeFiberAndSheetDirections> compute_fiber_sheet(herat_model, diffusion_species_name);
         BodySurface surface_part(herat_model);
-        SimpleDynamics<DiffusionBCs> impose_diffusion_bc(surface_part, "Phi");
+        SimpleDynamics<DiffusionBCs> impose_diffusion_bc(surface_part, diffusion_species_name);
         impose_diffusion_bc.exec();
-        write_herat_model_state_to_vtp.addToWrite<Real>(herat_model, "Phi");
+        write_herat_model_state_to_vtp.addToWrite<Real>(herat_model, diffusion_species_name);
         write_herat_model_state_to_vtp.writeToFile(ite);
 
         int diffusion_step = 100;
@@ -116,9 +117,8 @@ int main(int ac, char *av[])
     /** create a SPH body, material and particles */
     SolidBody physiology_heart(sph_system, level_set_heart_model, "PhysiologyHeart");
     AlievPanfilowModel aliev_panfilow_model(k_a, c_m, k, a, b, mu_1, mu_2, epsilon);
-    MonoFieldElectroPhysiology<LocalDirectionalDiffusion> *myocardium_physiology =
-        physiology_heart.defineMaterial<MonoFieldElectroPhysiology<LocalDirectionalDiffusion>>(
-            aliev_panfilow_model, diffusion_coeff, bias_coeff, fiber_direction);
+    physiology_heart.defineClosure<Solid, MonoFieldElectroPhysiology<LocalDirectionalDiffusion>>(
+        Solid(), ConstructArgs(&aliev_panfilow_model, ConstructArgs(diffusion_coeff, bias_coeff, fiber_direction)));
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
         ? physiology_heart.generateParticles<BaseParticles, Reload>("HeartModel")
         : physiology_heart.generateParticles<BaseParticles, Lattice>();
@@ -132,9 +132,8 @@ int main(int ac, char *av[])
 
     /** Creat a Purkinje network for fast diffusion, material and particles */
     TreeBody pkj_body(sph_system, level_set_heart_model, "Purkinje");
-    MonoFieldElectroPhysiology<IsotropicDiffusion> *pkj_physiology =
-        pkj_body.defineMaterial<MonoFieldElectroPhysiology<IsotropicDiffusion>>(
-            aliev_panfilow_model, diffusion_coeff * acceleration_factor);
+    pkj_body.defineClosure<Solid, MonoFieldElectroPhysiology<IsotropicDiffusion>>(
+        Solid(), ConstructArgs(&aliev_panfilow_model, ConstructArgs(diffusion_coeff * acceleration_factor)));
     pkj_body.generateParticles<BaseParticles, NetworkWithExtraCheck>(starting_point, second_point, 50, 1.0);
     TreeTerminates pkj_leaves(pkj_body);
     //----------------------------------------------------------------------
@@ -160,18 +159,17 @@ int main(int ac, char *av[])
     /** Corrected configuration. */
     InteractionWithUpdate<LinearGradientCorrectionMatrixInner> correct_configuration_excitation(physiology_heart_inner);
     /** Time step size calculation. */
-    GetDiffusionTimeStepSize get_myocardium_physiology_time_step(physiology_heart, *myocardium_physiology);
+    GetDiffusionTimeStepSize get_myocardium_physiology_time_step(physiology_heart);
     /** Diffusion process for diffusion body. */
     electro_physiology::ElectroPhysiologyDiffusionRelaxationComplex<LocalDirectionalDiffusion, Dirichlet> myocardium_diffusion_relaxation(
-        ConstructorArgs(physiology_heart_inner, myocardium_physiology->AllDiffusions()),
-        ConstructorArgs(physiology_heart_contact_with_pkj_leaves, myocardium_physiology->AllDiffusions()));
+        physiology_heart_inner, physiology_heart_contact_with_pkj_leaves);
     /** Solvers for ODE system */
     electro_physiology::ElectroPhysiologyReactionRelaxationForward myocardium_reaction_relaxation_forward(physiology_heart, aliev_panfilow_model);
     electro_physiology::ElectroPhysiologyReactionRelaxationBackward myocardium_reaction_relaxation_backward(physiology_heart, aliev_panfilow_model);
     /** Physiology for PKJ*/
     /** Time step size calculation. */
-    GetDiffusionTimeStepSize get_pkj_physiology_time_step(pkj_body, *pkj_physiology);
-    electro_physiology::ElectroPhysiologyDiffusionNetworkRK2 pkj_diffusion_relaxation(pkj_inner, pkj_physiology->AllDiffusions());
+    GetDiffusionTimeStepSize get_pkj_physiology_time_step(pkj_body);
+    electro_physiology::ElectroPhysiologyDiffusionNetworkRK2 pkj_diffusion_relaxation(pkj_inner);
     /** Solvers for ODE system */
     electro_physiology::ElectroPhysiologyReactionRelaxationForward pkj_reaction_relaxation_forward(pkj_body, aliev_panfilow_model);
     electro_physiology::ElectroPhysiologyReactionRelaxationBackward pkj_reaction_relaxation_backward(pkj_body, aliev_panfilow_model);

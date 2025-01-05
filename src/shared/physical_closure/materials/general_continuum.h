@@ -65,8 +65,6 @@ class GeneralContinuum : public WeaklyCompressibleFluid
     Real ContactStiffness() { return contact_stiffness_; };
 
     virtual Matd ConstitutiveRelationShearStress(Matd &velocity_gradient, Matd &shear_stress);
-
-    virtual GeneralContinuum *ThisObjectPtr() override { return this; };
 };
 
 class PlasticContinuum : public GeneralContinuum
@@ -95,8 +93,6 @@ class PlasticContinuum : public GeneralContinuum
 
     virtual Mat3d ConstitutiveRelation(Mat3d &velocity_gradient, Mat3d &stress_tensor);
     virtual Mat3d ReturnMapping(Mat3d &stress_tensor);
-
-    virtual GeneralContinuum *ThisObjectPtr() override { return this; };
 };
 
 class J2Plasticity : public GeneralContinuum
@@ -122,7 +118,6 @@ class J2Plasticity : public GeneralContinuum
     virtual Matd ReturnMappingShearStress(Matd &shear_stress,  Real &hardening_factor);
     virtual Real ScalePenaltyForce(Matd &shear_stress, Real &hardening_factor);
     virtual Real HardeningFactorRate(const Matd &shear_stress, Real &hardening_factor);
-    virtual J2Plasticity *ThisObjectPtr() override { return this; };
 };
 } // namespace SPH
 #endif // GENERAL_CONTINUUM_H

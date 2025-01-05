@@ -21,7 +21,7 @@ BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(L + BW, H + BW));
 //	Basic parameters for material properties.
 //----------------------------------------------------------------------
 Real diffusion_coeff = 1;
-std::array<std::string, 1> species_name_list{"Phi"};
+std::string diffusion_species_name = "Phi";
 //----------------------------------------------------------------------
 //	Initial and boundary conditions.
 //----------------------------------------------------------------------
@@ -101,7 +101,7 @@ class DiffusionInitialCondition : public LocalDynamics
   public:
     explicit DiffusionInitialCondition(SPHBody &sph_body)
         : LocalDynamics(sph_body),
-          phi_(particles_->registerStateVariable<Real>("Phi")){};
+          phi_(particles_->registerStateVariable<Real>(diffusion_species_name)){};
 
     void update(size_t index_i, Real dt)
     {
@@ -118,7 +118,7 @@ class DirichletWallBoundaryInitialCondition : public LocalDynamics
     explicit DirichletWallBoundaryInitialCondition(SPHBody &sph_body)
         : LocalDynamics(sph_body),
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
-          phi_(particles_->registerStateVariable<Real>("Phi")){};
+          phi_(particles_->registerStateVariable<Real>(diffusion_species_name)){};
 
     void update(size_t index_i, Real dt)
     {
@@ -145,8 +145,8 @@ class NeumannWallBoundaryInitialCondition : public LocalDynamics
     explicit NeumannWallBoundaryInitialCondition(SPHBody &sph_body)
         : LocalDynamics(sph_body),
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
-          phi_(particles_->registerStateVariable<Real>("Phi")),
-          phi_flux_(particles_->getVariableDataByName<Real>("PhiFlux")) {}
+          phi_(particles_->registerStateVariable<Real>(diffusion_species_name)),
+          phi_flux_(particles_->getVariableDataByName<Real>(diffusion_species_name + "Flux")) {}
 
     void update(size_t index_i, Real dt)
     {

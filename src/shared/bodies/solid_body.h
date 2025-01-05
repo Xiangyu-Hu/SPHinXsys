@@ -54,7 +54,6 @@ class SolidBody : public RealBody
         defineAdaptation<SPHAdaptation>(1.15);
     };
     virtual ~SolidBody(){};
-    virtual SolidBody *ThisObjectPtr() override { return this; };
 };
 
 /**

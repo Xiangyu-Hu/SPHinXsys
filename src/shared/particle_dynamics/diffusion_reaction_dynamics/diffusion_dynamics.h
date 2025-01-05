@@ -37,11 +37,10 @@ namespace SPH
  * @class GetDiffusionTimeStepSize
  * @brief Computing the time step size based on diffusion coefficient and particle smoothing length
  */
-template <class DiffusionType>
 class GetDiffusionTimeStepSize : public BaseDynamics<Real>
 {
   public:
-    explicit GetDiffusionTimeStepSize(SPHBody &sph_body, DiffusionType &diffusion);
+    explicit GetDiffusionTimeStepSize(SPHBody &sph_body);
     virtual ~GetDiffusionTimeStepSize(){};
 
     virtual Real exec(Real dt = 0.0) override { return diff_time_step_; };
@@ -59,29 +58,20 @@ class DiffusionRelaxation<DataDelegationType, DiffusionType>
       public DataDelegationType
 {
   protected:
-    StdVec<DiffusionType *> diffusions_;
     Real *Vol_;
+    StdVec<DiffusionType *> diffusions_;
     StdVec<Real *> diffusion_species_;
     StdVec<Real *> gradient_species_;
     StdVec<Real *> diffusion_dt_;
 
   public:
     template <class BodyRelationType>
-    explicit DiffusionRelaxation(BodyRelationType &body_relation, StdVec<DiffusionType *> diffusions);
-
-    template <class BodyRelationType>
-    explicit DiffusionRelaxation(BodyRelationType &body_relation, DiffusionType *diffusion);
-
-    template <typename BodyRelationType, typename FirstArg>
-    explicit DiffusionRelaxation(ConstructorArgs<BodyRelationType, FirstArg> parameters)
-        : DiffusionRelaxation(parameters.body_relation_, std::get<0>(parameters.others_)){};
-
-    /** So that contact diffusion can be integrated independently without inner interaction. */
-    void initialization(size_t index_i, Real dt = 0.0);
+    explicit DiffusionRelaxation(BodyRelationType &body_relation);
+    void initialization(size_t index_i, Real dt = 0.0); // for contact diffusion integrated independently.
     void update(size_t index_i, Real dt = 0.0);
 
   private:
-    void registerSpecies();
+    void getDiffusions();
 };
 
 class KernelGradientInner

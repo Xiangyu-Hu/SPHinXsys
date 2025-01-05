@@ -200,22 +200,32 @@ Matd FeneNeoHookeanSolid::StressPK2(Matd &F, size_t index_i)
            (lambda0_ * (J - 1.0) - G0_) * J * right_cauchy.inverse();
 }
 //=================================================================================================//
-Real Muscle::getShearModulus(const Real (&a0)[4], const Real (&b0)[4])
+Muscle::Muscle(Real rho0, Real bulk_modulus, const Vecd &f0, const Vecd &s0,
+               const std::array<Real, 4> &a0, const std::array<Real, 4> &b0)
+    : NeoHookeanSolid(rho0, this->getYoungsModulus(bulk_modulus, a0[0], b0[0]),
+                      this->getPoissonRatio(bulk_modulus, a0[0], b0[0])),
+      f0_(f0), s0_(s0), f0f0_(f0_ * f0_.transpose()), s0s0_(s0_ * s0_.transpose()),
+      f0s0_(f0_ * s0_.transpose() + s0_ * f0_.transpose()), a0_(a0), b0_(b0)
+{
+    material_type_name_ = "Muscle";
+}
+//=================================================================================================//
+Real Muscle::getShearModulus(Real a0, Real b0)
 {
     // This is only the background material property.
     // The previous version seems not correct because it leads to
     // that shear modulus is even bigger than bulk modulus.
-    return a0[0];
+    return a0;
 }
 //=================================================================================================//
-Real Muscle::getPoissonRatio(Real bulk_modulus, const Real (&a0)[4], const Real (&b0)[4])
+Real Muscle::getPoissonRatio(Real bulk_modulus, Real a0, Real b0)
 {
     Real shear_modulus = getShearModulus(a0, b0);
     return 0.5 * (3.0 * bulk_modulus - 2.0 * shear_modulus) /
            (3.0 * bulk_modulus + shear_modulus);
 }
 //=================================================================================================//
-Real Muscle::getYoungsModulus(Real bulk_modulus, const Real (&a0)[4], const Real (&b0)[4])
+Real Muscle::getYoungsModulus(Real bulk_modulus, Real a0, Real b0)
 {
     return 3.0 * bulk_modulus * (1.0 - 2.0 * getPoissonRatio(bulk_modulus, a0, b0));
 }
@@ -239,6 +249,21 @@ Real Muscle::VolumetricKirchhoff(Real J)
 {
     return K0_ * J * (J - 1);
 }
+//=================================================================================================//
+LocallyOrthotropicMuscle::LocallyOrthotropicMuscle(
+    Real rho0, Real bulk_modulus, const Vecd &f0, const Vecd &s0,
+    const std::array<Real, 4> &a0, const std::array<Real, 4> &b0)
+    : Muscle(rho0, bulk_modulus, f0, s0, a0, b0),
+      local_f0f0_(nullptr), local_s0s0_(nullptr), local_f0s0_(nullptr),
+      local_f0_(nullptr), local_s0_(nullptr)
+{
+    material_type_name_ = "LocallyOrthotropicMuscle";
+}
+//=================================================================================================//
+LocallyOrthotropicMuscle::LocallyOrthotropicMuscle(
+    ConstructArgs<Real, Real, Vecd, Vecd, std::array<Real, 4>, std::array<Real, 4>> args)
+    : LocallyOrthotropicMuscle(std::get<0>(args), std::get<1>(args), std::get<2>(args), std::get<3>(args),
+                               std::get<4>(args), std::get<5>(args)) {}
 //=================================================================================================//
 Matd LocallyOrthotropicMuscle::StressPK2(Matd &F, size_t i)
 {
