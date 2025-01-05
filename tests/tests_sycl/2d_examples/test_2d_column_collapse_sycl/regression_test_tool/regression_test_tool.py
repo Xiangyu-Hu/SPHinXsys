@@ -7,19 +7,17 @@ sys.path.append(path)
 from regression_test_base_tool import SphinxsysRegressionTest
 
 """
-case name: test_2d_dambreak
+case name: test_2d_column_collapse_sycl
 """
 
-case_name = "test_2d_collumn_collaspe_sycl"
-body_name = "WaterBody"
+case_name = "test_2d_column_collapse_sycl"
+body_name = "GranularBody"
 parameter_name = "TotalMechanicalEnergy"
-body_name_1 = "FluidObserver"
-parameter_name_1 = "Pressure"
 
 number_of_run_times = 0
 converged = 0
 sphinxsys = SphinxsysRegressionTest(case_name, body_name, parameter_name)
-sphinxsys_1 = SphinxsysRegressionTest(case_name, body_name_1, parameter_name_1)
+clean_input_folder(sphinxsys.input_file_path)
 
 
 while True:
@@ -27,17 +25,13 @@ while True:
     sphinxsys.run_case()
     number_of_run_times += 1
     converged = sphinxsys.read_dat_file()
-    converged_1 = sphinxsys_1.read_dat_file()
     print("Please note: This is the", number_of_run_times, "run!")
     if number_of_run_times <= 200:
-        if (converged == "true") and (converged_1 == "true"):
+        if converged == "true":
             print("The tested parameters of all variables are converged, and the run will stop here!")
             break
         elif converged != "true":
             print("The tested parameters of", sphinxsys.sphinxsys_parameter_name, "are not converged!")
-            continue
-        elif converged_1 != "true":
-            print("The tested parameters of", sphinxsys_1.sphinxsys_parameter_name, "are not converged!")
             continue
     else:
         print("It's too many runs but still not converged, please try again!")

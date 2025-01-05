@@ -127,6 +127,8 @@ int main(int ac, char *av[])
     body_states_recording.addToWrite<Vecd>(wall_boundary, "NormalDirection");
     body_states_recording.addToWrite<Real>(soil_block, "Density");
     RestartIO restart_io(sph_system);
+    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalMechanicalEnergy>>
+    write_mechanical_energy(soil_block, gravity);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
@@ -147,6 +149,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------    
     size_t number_of_iterations = 0;
     int screen_output_interval = 50;
+    int observation_sample_interval = screen_output_interval * 2;
     int restart_output_interval = screen_output_interval * 10;
     Real End_Time = 1.0;         /**< End time. */
     Real D_Time = End_Time / 40; /**< Time stamps for output of body states. */
@@ -165,6 +168,7 @@ int main(int ac, char *av[])
     //	First output before the main loop.
     //----------------------------------------------------------------------
     body_states_recording.writeToFile(MyExecutionPolicy{});
+    write_mechanical_energy.writeToFile(number_of_iterations);
     //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------
@@ -199,6 +203,11 @@ int main(int ac, char *av[])
                 std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
                           << sv_physical_time->getValue()
                           << "	advection_dt = " << Dt << "	acoustic_dt = " << acoustic_dt << "\n";
+                
+                if (number_of_iterations % observation_sample_interval == 0 && number_of_iterations != sph_system.RestartStep())
+                {
+                    write_mechanical_energy.writeToFile(number_of_iterations);
+                }
                 if (number_of_iterations % restart_output_interval == 0)
                     restart_io.writeToFile(MyExecutionPolicy{}, number_of_iterations);
             }
@@ -232,6 +241,15 @@ int main(int ac, char *av[])
               << interval_computing_time_step.seconds() << "\n";
     std::cout << std::fixed << std::setprecision(9) << "interval_updating_configuration = "
               << interval_updating_configuration.seconds() << "\n";
+
+    if (sph_system.GenerateRegressionData())
+    {
+        write_mechanical_energy.generateDataBase(1.0e-3);
+    }
+    else if (sph_system.RestartStep() == 0)
+    {
+        write_mechanical_energy.testResult();
+    }
 
     return 0;
 };
