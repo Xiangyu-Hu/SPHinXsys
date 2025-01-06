@@ -75,6 +75,7 @@ class DiffusionRelaxationCK<Base, DiffusionType, BaseInteractionType> : public B
     VariableArray<Real, DiscreteVariable> dv_diffusion_species_array_;
     VariableArray<Real, DiscreteVariable> dv_gradient_species_array_;
     VariableArray<Real, DiscreteVariable> dv_diffusion_dt_array_;
+    Real smoothing_length_sq_;
 
   private:
     void getDiffusions();
@@ -104,6 +105,7 @@ class DiffusionRelaxationCK<Inner<OneLevel, DiffusionType, KernelGradientType, P
         UnsignedInt number_of_species_;
         GradientKernel gradient_;
         Real *Vol_;
+        Real smoothing_length_sq_;
     };
 
   protected:

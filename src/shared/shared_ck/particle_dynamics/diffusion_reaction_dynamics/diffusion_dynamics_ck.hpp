@@ -15,7 +15,8 @@ namespace SPH
 template <class DiffusionType, class BaseInteractionType>
 template <class DynamicsIdentifier>
 DiffusionRelaxationCK<Base, DiffusionType, BaseInteractionType>::
-    DiffusionRelaxationCK(DynamicsIdentifier &identifier) : BaseInteractionType(identifier)
+    DiffusionRelaxationCK(DynamicsIdentifier &identifier) : BaseInteractionType(identifier),
+                                                            smoothing_length_sq_(pow(this->sph_body_.sph_adaptation_->ReferenceSmoothingLength(), 2))
 {
     getDiffusions();
 
@@ -102,7 +103,8 @@ DiffusionRelaxationCK<Inner<OneLevel, DiffusionType, KernelGradientType, Paramet
       diffusion_dt_(encloser.dv_diffusion_dt_array_.DelegatedVariableArrayData(ex_policy)),
       number_of_species_(encloser.diffusions_.size()),
       gradient_(ex_policy, encloser.kernel_gradient_),
-      Vol_(encloser.dv_Vol_->DelegatedData(ex_policy)) {}
+      Vol_(encloser.dv_Vol_->DelegatedData(ex_policy)),
+      smoothing_length_sq_(encloser.smoothing_length_sq_) {}
 //=================================================================================================//
 template <class DiffusionType, class KernelGradientType, typename... Parameters>
 void DiffusionRelaxationCK<Inner<OneLevel, DiffusionType, KernelGradientType, Parameters...>>::
@@ -115,11 +117,11 @@ void DiffusionRelaxationCK<Inner<OneLevel, DiffusionType, KernelGradientType, Pa
         {
             UnsignedInt index_j = this->neighbor_index_[n];
             Real dW_ijV_j = this->dW_ij(index_i, index_j) * Vol_[index_j];
-            Real r_ij = this->vec_r_ij(index_i, index_j).norm();
             Vecd e_ij = this->e_ij(index_i, index_j);
+            Vecd vec_r_ij = this->vec_r_ij(index_i, index_j);
 
-            const Vecd grad_ijV_j = gradient_(index_i, index_j, dW_ijV_j, e_ij);
-            Real surface_area_ij = 2.0 * grad_ijV_j.dot(e_ij) / r_ij;
+            Real surface_area_ij = 2.0 * gradient_(index_i, index_j, dW_ijV_j, e_ij).dot(vec_r_ij) /
+                                   (vec_r_ij.squaredNorm() + 0.01 * smoothing_length_sq_);
             Real phi_ij = gradient_species_[m][index_i] - gradient_species_[m][index_j];
             d_species += inter_particle_diffusion_coeff_[m](index_i, index_j, e_ij) * phi_ij * surface_area_ij;
         }
