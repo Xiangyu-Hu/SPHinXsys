@@ -1,5 +1,5 @@
 /**
- * @file egression_test.cpp
+ * @file regression_test.cpp
  * @brief This is a test case based on diffusion and using computing kernel, which can be used to
  * validate the generation of the converged database in a regression test.
  * It can be run successfully (using CMake's CTest) in Linux system installed with Python 3.
