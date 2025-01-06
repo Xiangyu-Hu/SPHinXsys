@@ -101,6 +101,7 @@ class SPHBody
     StdVec<SPHRelation *> &getBodyRelations() { return body_relations_; };
     IndexRange LoopRange() { return IndexRange(0, base_particles_->TotalRealParticles()); };
     size_t SizeOfLoopRange() { return base_particles_->TotalRealParticles(); };
+    SingularVariable<UnsignedInt> *getTotalSize() { return base_particles_->svTotalRealParticles(); };
     Real getSPHBodyResolutionRef() { return sph_adaptation_->ReferenceSpacing(); };
     void setNewlyUpdated() { newly_updated_ = true; };
     void setNotNewlyUpdated() { newly_updated_ = false; };

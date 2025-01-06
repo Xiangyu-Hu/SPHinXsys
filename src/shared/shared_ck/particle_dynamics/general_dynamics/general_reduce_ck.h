@@ -42,7 +42,7 @@ class VariableNormCK : public BaseLocalDynamicsReduce<NormType, DynamicsIdentifi
 {
   public:
     VariableNormCK(DynamicsIdentifier &identifier, const std::string &variable_name);
-    virtual ~VariableNormCK(){};
+    virtual ~VariableNormCK() {};
     virtual Real outputResult(Real reduced_value) override { return std::sqrt(reduced_value); }
 
     class ReduceKernel
@@ -66,7 +66,7 @@ class TotalKineticEnergyCK
 
   public:
     explicit TotalKineticEnergyCK(SPHBody &sph_body);
-    virtual ~TotalKineticEnergyCK(){};
+    virtual ~TotalKineticEnergyCK() {};
 
     class ReduceKernel
     {
@@ -93,7 +93,7 @@ class TotalMechanicalEnergyCK : public TotalKineticEnergyCK
 
   public:
     explicit TotalMechanicalEnergyCK(SPHBody &sph_body, Gravity &gravity);
-    virtual ~TotalMechanicalEnergyCK(){};
+    virtual ~TotalMechanicalEnergyCK() {};
 
     class ReduceKernel : public TotalKineticEnergyCK::ReduceKernel
     {
@@ -116,5 +116,48 @@ class TotalMechanicalEnergyCK : public TotalKineticEnergyCK
     DiscreteVariable<Vecd> *dv_pos_;
 };
 
+template <typename DataType, class DynamicsIdentifier = SPHBody>
+class QuantitySum : public BaseLocalDynamicsReduce<ReduceSum<DataType>, DynamicsIdentifier>
+{
+  public:
+    QuantitySum(DynamicsIdentifier &identifier, const std::string &variable_name);
+    virtual ~QuantitySum() {};
+
+    class ReduceKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        ReduceKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+        DataType reduce(size_t index_i, Real dt = 0.0)
+        {
+            return variable_[index_i];
+        };
+
+      protected:
+        DataType *variable_;
+    };
+
+  protected:
+    DiscreteVariable<DataType> *dv_variable_;
+};
+
+template <class ReduceSumType>
+class AverageCK : public ReduceSumType
+{
+    using DataType = typename ReduceSumType::ReturnType;
+
+  public:
+    template <class DynamicsIdentifier>
+    AverageCK(DynamicsIdentifier &identifier, const std::string &variable_name);
+    virtual ~AverageCK() {};
+
+    virtual DataType outputResult(DataType reduced_value) override
+    {
+        return ReduceSumType::outputResult(reduced_value) / Real(sv_total_sample_size_->getValue());
+    }
+
+  protected:
+    SingularVariable<UnsignedInt> *sv_total_sample_size_;
+};
 } // namespace SPH
 #endif // GENERAL_REDUCE_CK_H

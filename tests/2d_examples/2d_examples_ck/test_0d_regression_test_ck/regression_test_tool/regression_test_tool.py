@@ -69,7 +69,7 @@ case name: test_0d_regression_test_ck
 
 case_name = "test_0d_regression_test_ck"
 body_name = "InnerDomain"
-parameter_name = "TotalPhi"
+parameter_name = "AveragePhi"
 body_name_1 = "TemperatureObserver"
 parameter_name_1 = "Phi"
 

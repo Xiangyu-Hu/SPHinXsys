@@ -204,8 +204,8 @@ int main(int ac, char *av[])
     RegressionTestEnsembleAverage<ObservedQuantityRecording<MainExecutionPolicy, Real>>
         write_solid_temperature(diffusion_species_name, observer_contact);
     BodyRegionByParticle inner_domain(diffusion_body, makeShared<MultiPolygonShape>(createInnerDomain(), "InnerDomain"));
-    //    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<MainExecutionPolicy, Average<QuantitySummation<Real, BodyPartByParticle>>>>
-    //        write_solid_average_temperature_part(inner_domain, diffusion_species_name);
+    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<MainExecutionPolicy, AverageCK<QuantitySum<Real, BodyPartByParticle>>>>
+        write_solid_average_temperature_part(inner_domain, diffusion_species_name);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
@@ -266,7 +266,7 @@ int main(int ac, char *av[])
                 if (ite % 100 == 0)
                 {
                     write_solid_temperature.writeToFile(ite);
-                    //                    write_solid_average_temperature_part.writeToFile(ite);
+                    write_solid_average_temperature_part.writeToFile(ite);
                     write_states.writeToFile(MainExecutionPolicy{});
                 }
             }
@@ -290,7 +290,7 @@ int main(int ac, char *av[])
     //	@dynamic_time_warping_method.
     //	The value is the threshold of dynamic time warping (dtw) distance.
     //----------------------------------------------------------------------
-    //    write_solid_average_temperature_part.generateDataBase(0.001);
+    write_solid_average_temperature_part.generateDataBase(0.001);
 
     return 0;
 }
