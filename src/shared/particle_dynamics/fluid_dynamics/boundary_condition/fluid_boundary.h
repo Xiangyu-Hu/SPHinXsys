@@ -43,15 +43,15 @@ namespace fluid_dynamics
  * @class BaseFlowBoundaryCondition
  * @brief Base class for all boundary conditions.
  */
-class BaseFlowBoundaryCondition : public BaseLocalDynamics<BodyPartByCell>, public DataDelegateSimple
+class BaseFlowBoundaryCondition : public BaseLocalDynamics<BodyPartByCell>
 {
   public:
     BaseFlowBoundaryCondition(BodyPartByCell &body_part);
     virtual ~BaseFlowBoundaryCondition(){};
 
   protected:
-    StdLargeVec<Real> &rho_, &p_;
-    StdLargeVec<Vecd> &pos_, &vel_;
+    Real *rho_, *p_;
+    Vecd *pos_, *vel_;
 };
 
 /**
@@ -80,7 +80,7 @@ class FlowVelocityBuffer : public BaseFlowBoundaryCondition
  * @class   InflowVelocityCondition
  * @brief   Inflow boundary condition which imposes directly to a given velocity profile.
  *          TargetVelocity gives the velocity profile along the inflow direction,
- *          i.e. x direction in local frame.
+ *          i.e. the upper bound direction of the aligned box in local frame.
  */
 template <typename TargetVelocity>
 class InflowVelocityCondition : public BaseFlowBoundaryCondition
@@ -89,19 +89,20 @@ class InflowVelocityCondition : public BaseFlowBoundaryCondition
     /** default parameter indicates prescribe velocity */
     explicit InflowVelocityCondition(BodyAlignedBoxByCell &aligned_box_part, Real relaxation_rate = 1.0)
         : BaseFlowBoundaryCondition(aligned_box_part),
-          relaxation_rate_(relaxation_rate), aligned_box_(aligned_box_part.aligned_box_),
+          relaxation_rate_(relaxation_rate), aligned_box_(aligned_box_part.getAlignedBoxShape()),
           transform_(aligned_box_.getTransform()), halfsize_(aligned_box_.HalfSize()),
-          target_velocity(*this){};
+          target_velocity(*this),
+          physical_time_(sph_system_.getSystemVariableDataByName<Real>("PhysicalTime")){};
     virtual ~InflowVelocityCondition(){};
     AlignedBoxShape &getAlignedBox() { return aligned_box_; };
 
     void update(size_t index_i, Real dt = 0.0)
     {
-        if (aligned_box_.checkInBounds(0, pos_[index_i]))
+        if (aligned_box_.checkInBounds(pos_[index_i]))
         {
             Vecd frame_position = transform_.shiftBaseStationToFrame(pos_[index_i]);
             Vecd frame_velocity = transform_.xformBaseVecToFrame(vel_[index_i]);
-            Vecd relaxed_frame_velocity = target_velocity(frame_position, frame_velocity) * relaxation_rate_ +
+            Vecd relaxed_frame_velocity = target_velocity(frame_position, frame_velocity, *physical_time_) * relaxation_rate_ +
                                           frame_velocity * (1.0 - relaxation_rate_);
             vel_[index_i] = transform_.xformFrameVecToBase(relaxed_frame_velocity);
         }
@@ -113,6 +114,7 @@ class InflowVelocityCondition : public BaseFlowBoundaryCondition
     Transform &transform_;
     Vecd halfsize_;
     TargetVelocity target_velocity;
+    Real *physical_time_;
 };
 
 /**
@@ -122,25 +124,27 @@ class InflowVelocityCondition : public BaseFlowBoundaryCondition
  *          i.e. x direction in local frame.
  */
 template <typename TargetVelocity>
-class FreeStreamVelocityCorrection : public LocalDynamics, public DataDelegateSimple
+class FreeStreamVelocityCorrection : public LocalDynamics
 {
   protected:
     Transform transform_;
     Real rho0_;
-    StdLargeVec<Real> &rho_sum_;
-    StdLargeVec<Vecd> &pos_, &vel_;
-    StdLargeVec<int> &indicator_;
+    Real *rho_sum_;
+    Vecd *pos_, *vel_;
+    int *indicator_;
     TargetVelocity target_velocity;
+    Real *physical_time_;
 
   public:
     explicit FreeStreamVelocityCorrection(SPHBody &sph_body, const Transform &transform = Transform())
-        : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
+        : LocalDynamics(sph_body),
           transform_(transform), rho0_(DynamicCast<Fluid>(this, particles_->getBaseMaterial()).ReferenceDensity()),
-          rho_sum_(*particles_->getVariableByName<Real>("DensitySummation")),
-          pos_(*particles_->getVariableByName<Vecd>("Position")),
-          vel_(*particles_->getVariableByName<Vecd>("Velocity")),
-          indicator_(*particles_->getVariableByName<int>("Indicator")),
-          target_velocity(*this){};
+          rho_sum_(particles_->getVariableDataByName<Real>("DensitySummation")),
+          pos_(particles_->getVariableDataByName<Vecd>("Position")),
+          vel_(particles_->getVariableDataByName<Vecd>("Velocity")),
+          indicator_(particles_->getVariableDataByName<int>("Indicator")),
+          target_velocity(*this),
+          physical_time_(sph_system_.getSystemVariableDataByName<Real>("PhysicalTime")){};
     virtual ~FreeStreamVelocityCorrection(){};
 
     void update(size_t index_i, Real dt = 0.0)
@@ -150,7 +154,7 @@ class FreeStreamVelocityCorrection : public LocalDynamics, public DataDelegateSi
             Vecd frame_position = transform_.shiftBaseStationToFrame(pos_[index_i]);
             Vecd frame_velocity = transform_.xformBaseVecToFrame(vel_[index_i]);
             Real frame_u_stream_direction = frame_velocity[0];
-            Real u_freestream = target_velocity(frame_position, frame_velocity)[0];
+            Real u_freestream = target_velocity(frame_position, frame_velocity, *physical_time_)[0];
             frame_velocity[0] = u_freestream + (frame_u_stream_direction - u_freestream) *
                                                    SMIN(rho_sum_[index_i], rho0_) / rho0_;
             vel_[index_i] = transform_.xformFrameVecToBase(frame_velocity);
@@ -183,20 +187,20 @@ class DampingBoundaryCondition : public BaseFlowBoundaryCondition
  * @brief Inflow boundary condition imposed on an emitter, in which pressure and density profile are imposed too.
  * The body part region is required to have parallel lower- and upper-bound surfaces.
  */
-class EmitterInflowCondition : public BaseLocalDynamics<BodyPartByParticle>, public DataDelegateSimple
+class EmitterInflowCondition : public BaseLocalDynamics<BodyPartByParticle>
 {
   public:
     explicit EmitterInflowCondition(BodyAlignedBoxByParticle &aligned_box_part);
     virtual ~EmitterInflowCondition(){};
 
     virtual void setupDynamics(Real dt = 0.0) override { updateTransform(); };
-    void update(size_t unsorted_index_i, Real dt = 0.0);
+    void update(size_t original_index_i, Real dt = 0.0);
 
   protected:
     Fluid &fluid_;
-    StdLargeVec<size_t> &sorted_id_;
-    StdLargeVec<Vecd> &pos_, &vel_, &force_;
-    StdLargeVec<Real> &rho_, &p_, &drho_dt_;
+    UnsignedInt *sorted_id_;
+    Vecd *pos_, *vel_, *force_;
+    Real *rho_, *p_, *drho_dt_;
     /** inflow pressure condition */
     Real inflow_pressure_;
     Real rho0_;
@@ -204,7 +208,7 @@ class EmitterInflowCondition : public BaseLocalDynamics<BodyPartByParticle>, pub
     Transform &updated_transform_, old_transform_;
 
     /** no transform by default */
-    virtual void updateTransform() {};
+    virtual void updateTransform(){};
     virtual Vecd getTargetVelocity(Vecd &position, Vecd &velocity) = 0;
 };
 
@@ -214,22 +218,22 @@ class EmitterInflowCondition : public BaseLocalDynamics<BodyPartByParticle>, pub
  * Note that the axis is at the local coordinate and upper bound direction is
  * the local positive direction.
  */
-class EmitterInflowInjection : public BaseLocalDynamics<BodyPartByParticle>, public DataDelegateSimple
+class EmitterInflowInjection : public BaseLocalDynamics<BodyPartByParticle>
 {
   public:
-    EmitterInflowInjection(BodyAlignedBoxByParticle &aligned_box_part, ParticleBuffer<Base> &buffer, int axis);
+    EmitterInflowInjection(BodyAlignedBoxByParticle &aligned_box_part, ParticleBuffer<Base> &buffer);
     virtual ~EmitterInflowInjection(){};
 
-    void update(size_t unsorted_index_i, Real dt = 0.0);
+    void update(size_t original_index_i, Real dt = 0.0);
 
   protected:
     std::mutex mutex_switch_to_real_; /**< mutex exclusion for memory conflict */
     Fluid &fluid_;
-    StdLargeVec<size_t> &sorted_id_;
-    StdLargeVec<Vecd> &pos_;
-    StdLargeVec<Real> &rho_, &p_;
+    UnsignedInt *original_id_;
+    UnsignedInt *sorted_id_;
+    Vecd *pos_;
+    Real *rho_, *p_;
     ParticleBuffer<Base> &buffer_;
-    const int axis_; /**< the axis direction for bounding*/
     AlignedBoxShape &aligned_box_;
 };
 
@@ -237,18 +241,17 @@ class EmitterInflowInjection : public BaseLocalDynamics<BodyPartByParticle>, pub
  * @class DisposerOutflowDeletion
  * @brief Delete particles who ruing out the computational domain.
  */
-class DisposerOutflowDeletion : public BaseLocalDynamics<BodyPartByCell>, public DataDelegateSimple
+class DisposerOutflowDeletion : public BaseLocalDynamics<BodyPartByCell>
 {
   public:
-    DisposerOutflowDeletion(BodyAlignedBoxByCell &aligned_box_part, int axis);
+    DisposerOutflowDeletion(BodyAlignedBoxByCell &aligned_box_part);
     virtual ~DisposerOutflowDeletion(){};
 
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
     std::mutex mutex_switch_to_buffer_; /**< mutex exclusion for memory conflict */
-    StdLargeVec<Vecd> &pos_;
-    const int axis_; /**< the axis direction for bounding*/
+    Vecd *pos_;
     AlignedBoxShape &aligned_box_;
 };
 } // namespace fluid_dynamics

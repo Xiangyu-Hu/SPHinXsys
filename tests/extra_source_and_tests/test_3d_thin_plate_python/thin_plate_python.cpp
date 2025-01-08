@@ -45,11 +45,11 @@ namespace SPH
 /** Define application dependent particle generator for thin structure. */
 class Plate;
 template <>
-class ParticleGenerator<Plate> : public ParticleGenerator<Surface>, public Parameter
+class ParticleGenerator<SurfaceParticles, Plate> : public ParticleGenerator<SurfaceParticles>, public Parameter
 {
   public:
-    explicit ParticleGenerator(SPHBody &sph_body) : ParticleGenerator<Surface>(sph_body){};
-    virtual void initializeGeometricVariables() override
+    explicit ParticleGenerator(SPHBody &sph_body, SurfaceParticles &surface_particles) : ParticleGenerator<SurfaceParticles>(sph_body, surface_particles){};
+    virtual void prepareGeometricData() override
     {
         // the plate and boundary
         for (int i = 0; i < (particle_number + 2 * BWD); i++)
@@ -58,8 +58,8 @@ class ParticleGenerator<Plate> : public ParticleGenerator<Surface>, public Param
             {
                 Real x = resolution_ref * i - BW + resolution_ref * 0.5;
                 Real y = resolution_ref * j - BW + resolution_ref * 0.5;
-                initializePositionAndVolumetricMeasure(Vecd(x, y, 0.0), resolution_ref * resolution_ref);
-                initializeSurfaceProperties(n_0, PT);
+                addPositionAndVolumetricMeasure(Vecd(x, y, 0.0), resolution_ref * resolution_ref);
+                addSurfaceProperties(n_0, PT);
             }
         }
     }
@@ -105,22 +105,6 @@ class BoundaryGeometryParallelToYAxis : public BodyPartByParticle, public Parame
         }
     };
 };
-/**
- * define time dependent external force
- */
-class TimeDependentExternalForce : public Gravity, public Parameter
-{
-  public:
-    explicit TimeDependentExternalForce(Vecd external_force)
-        : Gravity(external_force) {}
-    virtual Vecd InducedAcceleration(const Vecd &position) override
-    {
-        Real current_time = GlobalStaticVariables::physical_time_;
-        return current_time < time_to_full_external_force
-                   ? current_time * global_acceleration_ / time_to_full_external_force
-                   : global_acceleration_;
-    }
-};
 //----------------------------------------------------------------------
 //  Define system, geometry, material, particles and all other things.
 //----------------------------------------------------------------------
@@ -153,7 +137,7 @@ class PreSettingCase : public Parameter
         plate_body.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
         plate_body.generateParticles<SurfaceParticles, Plate>();
 
-        plate_observer.generateParticles<BaseParticles, Observer>(observation_location);
+        plate_observer.generateParticles<ObserverParticles>(observation_location);
     }
 };
 Real observed_quantity_0 = 0.0;
@@ -171,6 +155,7 @@ TEST(Plate, MaxDisplacement)
 class Environment : public PreSettingCase
 {
   protected:
+    SPHSystem &sph_system_;
     Real loading_factor;
     /** Set body contact map
      *  The contact map gives the data connections between the bodies
@@ -179,8 +164,8 @@ class Environment : public PreSettingCase
     InnerRelation plate_body_inner;
     ContactRelation plate_observer_contact;
 
-    TimeDependentExternalForce time_dependent_external_force;
-    SimpleDynamics<GravityForce> apply_time_dependent_external_force;
+    IncreaseToFullGravity time_dependent_external_force;
+    SimpleDynamics<GravityForce<IncreaseToFullGravity>> apply_time_dependent_external_force;
     /**
      * This section define all numerical methods will be used in this case.
      */
@@ -198,9 +183,9 @@ class Environment : public PreSettingCase
     BoundaryGeometryParallelToYAxis boundary_geometry_y;
     SimpleDynamics<thin_structure_dynamics::ConstrainShellBodyRegionAlongAxis>
         constrain_holder_y;
-    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d>>>
+    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d, FixedDampingRate>>>
         plate_position_damping;
-    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d>>>
+    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d, FixedDampingRate>>>
         plate_rotation_damping;
     /** Output */
     IOEnvironment io_environment;
@@ -212,25 +197,28 @@ class Environment : public PreSettingCase
     TimeInterval interval;
 
   public:
-    explicit Environment(Real loading_factor_new) : PreSettingCase(),
-                                                    loading_factor(loading_factor_new),
-                                                    plate_body_inner(plate_body),
-                                                    plate_observer_contact(plate_observer, {&plate_body}),
-                                                    time_dependent_external_force(Vec3d(0.0, 0.0, q * loading_factor / (PT * rho0_s) - gravitational_acceleration)),
-                                                    apply_time_dependent_external_force(plate_body, time_dependent_external_force),
-                                                    stress_relaxation_first_half(plate_body_inner),
-                                                    stress_relaxation_second_half(plate_body_inner),
-                                                    corrected_configuration(plate_body_inner),
-                                                    computing_time_step_size(plate_body),
-                                                    boundary_geometry_x(plate_body, "BoundaryGeometryParallelToXAxis"),
-                                                    constrain_holder_x(boundary_geometry_x, 0),
-                                                    boundary_geometry_y(plate_body, "BoundaryGeometryParallelToYAxis"),
-                                                    constrain_holder_y(boundary_geometry_y, 1),
-                                                    plate_position_damping(0.5, plate_body_inner, "Velocity", physical_viscosity),
-                                                    plate_rotation_damping(0.5, plate_body_inner, "AngularVelocity", physical_viscosity),
-                                                    io_environment(system),
-                                                    write_states(system.real_bodies_),
-                                                    write_plate_max_displacement("Position", plate_observer_contact)
+    explicit Environment(Real loading_factor_new)
+        : PreSettingCase(), sph_system_(system),
+          loading_factor(loading_factor_new),
+          plate_body_inner(plate_body),
+          plate_observer_contact(plate_observer, {&plate_body}),
+          time_dependent_external_force(
+              Vec3d(0.0, 0.0, q * loading_factor / (PT * rho0_s) - gravitational_acceleration),
+              time_to_full_external_force),
+          apply_time_dependent_external_force(plate_body, time_dependent_external_force),
+          stress_relaxation_first_half(plate_body_inner),
+          stress_relaxation_second_half(plate_body_inner),
+          corrected_configuration(plate_body_inner),
+          computing_time_step_size(plate_body),
+          boundary_geometry_x(plate_body, "BoundaryGeometryParallelToXAxis"),
+          constrain_holder_x(boundary_geometry_x, 0),
+          boundary_geometry_y(plate_body, "BoundaryGeometryParallelToYAxis"),
+          constrain_holder_y(boundary_geometry_y, 1),
+          plate_position_damping(0.5, plate_body_inner, "Velocity", physical_viscosity),
+          plate_rotation_damping(0.5, plate_body_inner, "AngularVelocity", physical_viscosity),
+          io_environment(system),
+          write_states(system),
+          write_plate_max_displacement("Position", plate_observer_contact)
     {
         if (loading_factor == 200.0)
             displ_max_reference = 2.5681;
@@ -262,7 +250,7 @@ class Environment : public PreSettingCase
         /** Set the starting time.
          * From here the time stepping begins.
          */
-        GlobalStaticVariables::physical_time_ = 0.0;
+        Real &physical_time = *sph_system_.getSystemVariableDataByName<Real>("PhysicalTime");
         /** Setup physical parameters. */
         int ite = 0;
         Real end_time = 0.8;
@@ -272,7 +260,7 @@ class Environment : public PreSettingCase
         /**
          * Main loop
          */
-        while (GlobalStaticVariables::physical_time_ < end_time)
+        while (physical_time < end_time)
         {
             Real integral_time = 0.0;
             while (integral_time < output_period)
@@ -280,7 +268,7 @@ class Environment : public PreSettingCase
                 if (ite % 100 == 0)
                 {
                     std::cout << "N=" << ite << " Time: "
-                              << GlobalStaticVariables::physical_time_ << "	dt: "
+                              << physical_time << "	dt: "
                               << dt << "\n";
                 }
                 apply_time_dependent_external_force.exec();
@@ -296,7 +284,7 @@ class Environment : public PreSettingCase
                 ite++;
                 dt = computing_time_step_size.exec();
                 integral_time += dt;
-                GlobalStaticVariables::physical_time_ += dt;
+                physical_time += dt;
             }
             write_plate_max_displacement.writeToFile(ite);
 
@@ -311,7 +299,7 @@ class Environment : public PreSettingCase
         TimeInterval tt;
         tt = t4 - t1 - interval;
         std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
-        observed_quantity_n = (*write_plate_max_displacement.getObservedQuantity())[0][2];
+        observed_quantity_n = write_plate_max_displacement.getObservedQuantity()[0][2];
 
         testing::InitGoogleTest();
         return RUN_ALL_TESTS();

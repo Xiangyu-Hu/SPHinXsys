@@ -3,53 +3,75 @@
 #include "base_kernel.h"
 #include "base_particle_dynamics.h"
 #include "base_particles.h"
+#include "mesh_iterators.hpp"
 #include "particle_iterators.h"
 
 namespace SPH
 {
 //=================================================================================================//
 BaseCellLinkedList::
-    BaseCellLinkedList(SPHAdaptation &sph_adaptation)
-    : BaseMeshField("CellLinkedList"),
-      kernel_(*sph_adaptation.getKernel()) {}
-//=================================================================================================//
-SplitCellLists *BaseCellLinkedList::getSplitCellLists()
-{
-    std::cout << "\n Error: SplitCellList not defined!" << std::endl;
-    std::cout << __FILE__ << ':' << __LINE__ << std::endl;
-    exit(1);
-    return nullptr;
-}
-//=================================================================================================//
-void BaseCellLinkedList::setUseSplitCellLists()
-{
-    std::cout << "\n Error: SplitCellList not defined!" << std::endl;
-    std::cout << __FILE__ << ':' << __LINE__ << std::endl;
-    exit(1);
-};
-//=================================================================================================//
-void BaseCellLinkedList::clearSplitCellLists(SplitCellLists &split_cell_lists)
-{
-    for (size_t i = 0; i < split_cell_lists.size(); i++)
-        split_cell_lists[i].clear();
-}
+    BaseCellLinkedList(BaseParticles &base_particles, SPHAdaptation &sph_adaptation)
+    : BaseMeshField("CellLinkedList"), kernel_(*sph_adaptation.getKernel()) {}
 //=================================================================================================//
 CellLinkedList::CellLinkedList(BoundingBox tentative_bounds, Real grid_spacing,
-                               SPHAdaptation &sph_adaptation)
-    : BaseCellLinkedList(sph_adaptation), Mesh(tentative_bounds, grid_spacing, 2),
-      use_split_cell_lists_(false)
+                               BaseParticles &base_particles, SPHAdaptation &sph_adaptation)
+    : BaseCellLinkedList(base_particles, sph_adaptation), Mesh(tentative_bounds, grid_spacing, 2),
+      cell_offset_list_size_(NumberOfCells() + 1),
+      index_list_size_(SMAX(base_particles.ParticlesBound(), cell_offset_list_size_)),
+      dv_particle_index_(base_particles.registerDiscreteVariableOnly<UnsignedInt>("ParticleIndex", index_list_size_)),
+      dv_cell_offset_(base_particles.registerDiscreteVariableOnly<UnsignedInt>("CellOffset", cell_offset_list_size_)),
+      cell_index_lists_(nullptr), cell_data_lists_(nullptr),
+      number_of_split_cell_lists_(static_cast<size_t>(pow(3, Dimensions)))
 {
     allocateMeshDataMatrix();
     single_cell_linked_list_level_.push_back(this);
-    size_t number_of_split_cell_lists = pow(3, Dimensions);
-    split_cell_lists_.resize(number_of_split_cell_lists);
+}
+//=================================================================================================//
+void CellLinkedList ::allocateMeshDataMatrix()
+{
+    size_t number_of_all_cells = transferMeshIndexTo1D(all_cells_, all_cells_);
+    cell_index_lists_ = new ConcurrentIndexVector[number_of_all_cells];
+    cell_data_lists_ = new ListDataVector[number_of_all_cells];
+}
+//=================================================================================================//
+void CellLinkedList ::deleteMeshDataMatrix()
+{
+    delete[] cell_index_lists_;
+    delete[] cell_data_lists_;
+}
+//=================================================================================================//
+void CellLinkedList::clearCellLists()
+{
+    mesh_parallel_for(MeshRange(Arrayi::Zero(), all_cells_),
+                      [&](const Arrayi &cell_index)
+                      {
+                          getCellDataList(cell_index_lists_, cell_index).clear();
+                      });
+}
+//=================================================================================================//
+void CellLinkedList::UpdateCellListData(BaseParticles &base_particles)
+{
+    Vecd *pos = base_particles.ParticlePositions();
+    mesh_parallel_for(
+        MeshRange(Arrayi::Zero(), all_cells_),
+        [&](const Arrayi &cell_index)
+        {
+            ListDataVector &cell_data_list = getCellDataList(cell_data_lists_, cell_index);
+            cell_data_list.clear();
+            ConcurrentIndexVector &cell_list = getCellDataList(cell_index_lists_, cell_index);
+            for (size_t s = 0; s != cell_list.size(); ++s)
+            {
+                size_t index = cell_list[s];
+                cell_data_list.emplace_back(std::make_pair(index, pos[index]));
+            }
+        });
 }
 //=================================================================================================//
 void CellLinkedList::UpdateCellLists(BaseParticles &base_particles)
 {
     clearCellLists();
-    StdLargeVec<Vecd> &pos_n = base_particles.ParticlePositions();
-    size_t total_real_particles = base_particles.total_real_particles_;
+    Vecd *pos_n = base_particles.ParticlePositions();
+    size_t total_real_particles = base_particles.TotalRealParticles();
     parallel_for(
         IndexRange(0, total_real_particles),
         [&](const IndexRange &r)
@@ -62,37 +84,91 @@ void CellLinkedList::UpdateCellLists(BaseParticles &base_particles)
         ap);
 
     UpdateCellListData(base_particles);
-
-    if (use_split_cell_lists_)
-    {
-        updateSplitCellLists(split_cell_lists_);
-    }
 }
 //=================================================================================================//
-StdLargeVec<size_t> &CellLinkedList::computingSequence(BaseParticles &base_particles)
+void CellLinkedList ::insertParticleIndex(size_t particle_index, const Vecd &particle_position)
 {
-    StdLargeVec<Vecd> &pos = base_particles.ParticlePositions();
-    StdLargeVec<size_t> &sequence = base_particles.sequence_;
-    size_t total_real_particles = base_particles.total_real_particles_;
-    particle_for(execution::ParallelPolicy(), IndexRange(0, total_real_particles), [&](size_t i)
-                 { sequence[i] = transferMeshIndexToMortonOrder(CellIndexFromPosition(pos[i])); });
-    return sequence;
+    Arrayi cell_index = CellIndexFromPosition(particle_position);
+    getCellDataList(cell_index_lists_, cell_index).emplace_back(particle_index);
 }
 //=================================================================================================//
-MultilevelCellLinkedList::MultilevelCellLinkedList(
-    BoundingBox tentative_bounds, Real reference_grid_spacing,
-    size_t total_levels, SPHAdaptation &sph_adaptation)
-    : MultilevelMesh<BaseCellLinkedList, CellLinkedList, RefinedMesh<CellLinkedList>>(
-          tentative_bounds, reference_grid_spacing, total_levels, sph_adaptation),
-      h_ratio_(DynamicCast<ParticleWithLocalRefinement>(this, &sph_adaptation)->h_ratio_)
+void CellLinkedList ::InsertListDataEntry(size_t particle_index, const Vecd &particle_position)
+{
+    Arrayi cell_index = CellIndexFromPosition(particle_position);
+    getCellDataList(cell_data_lists_, cell_index)
+        .emplace_back(std::make_pair(particle_index, particle_position));
+}
+//=================================================================================================//
+ListData CellLinkedList::findNearestListDataEntry(const Vecd &position)
+{
+    Real min_distance_sqr = MaxReal;
+    ListData nearest_entry = std::make_pair(MaxSize_t, MaxReal * Vecd::Ones());
+
+    Arrayi cell = CellIndexFromPosition(position);
+    mesh_for_each(
+        Arrayi::Zero().max(cell - Arrayi::Ones()),
+        all_cells_.min(cell + 2 * Arrayi::Ones()),
+        [&](const Arrayi &cell_index)
+        {
+            ListDataVector &target_particles = getCellDataList(cell_data_lists_, cell_index);
+            for (const ListData &list_data : target_particles)
+            {
+                Real distance_sqr = (position - std::get<1>(list_data)).squaredNorm();
+                if (distance_sqr < min_distance_sqr)
+                {
+                    min_distance_sqr = distance_sqr;
+                    nearest_entry = list_data;
+                }
+            }
+        });
+    return nearest_entry;
+}
+//=================================================================================================//
+void CellLinkedList::
+    tagBodyPartByCell(ConcurrentCellLists &cell_lists, std::function<bool(Vecd, Real)> &check_included)
+{
+    mesh_parallel_for(
+        MeshRange(Arrayi::Zero(), all_cells_),
+        [&](const Arrayi &cell_index)
+        {
+            bool is_included = false;
+            mesh_for_each(
+                Arrayi::Zero().max(cell_index - Arrayi::Ones()),
+                all_cells_.min(cell_index + 2 * Arrayi::Ones()),
+                [&](const Arrayi &neighbor_cell_index)
+                {
+                    if (check_included(CellPositionFromIndex(neighbor_cell_index), grid_spacing_))
+                    {
+                        is_included = true;
+                    }
+                });
+            if (is_included == true)
+                cell_lists.push_back(&getCellDataList(cell_index_lists_, cell_index));
+        });
+}
+//=================================================================================================//
+UnsignedInt CellLinkedList::computingSequence(Vecd &position, size_t index_i)
+{
+    return transferMeshIndexToMortonOrder(CellIndexFromPosition(position));
+}
+//=================================================================================================//
+MultilevelCellLinkedList::MultilevelCellLinkedList(BoundingBox tentative_bounds,
+                                                   Real reference_grid_spacing, size_t total_levels,
+                                                   BaseParticles &base_particles, SPHAdaptation &sph_adaptation)
+    : MultilevelMesh<BaseCellLinkedList, CellLinkedList>(
+          tentative_bounds, reference_grid_spacing, total_levels, base_particles, sph_adaptation),
+      h_ratio_(DynamicCast<ParticleWithLocalRefinement>(this, &sph_adaptation)->h_ratio_),
+      level_(DynamicCast<ParticleWithLocalRefinement>(this, &sph_adaptation)->level_)
 {
 }
 //=================================================================================================//
 size_t MultilevelCellLinkedList::getMeshLevel(Real particle_cutoff_radius)
 {
     for (size_t level = total_levels_; level != 0; --level)
-        if (particle_cutoff_radius - mesh_levels_[level - 1]->GridSpacing() < Eps)
-            return level - 1; // jump out the loop!
+    {
+        if (particle_cutoff_radius - mesh_levels_[level - 1]->GridSpacing() < SqrtEps)
+            return level - 1;
+    }
 
     std::cout << "\n Error: CellLinkedList level searching out of bound!" << std::endl;
     std::cout << __FILE__ << ':' << __LINE__ << std::endl;
@@ -103,6 +179,7 @@ size_t MultilevelCellLinkedList::getMeshLevel(Real particle_cutoff_radius)
 void MultilevelCellLinkedList::insertParticleIndex(size_t particle_index, const Vecd &particle_position)
 {
     size_t level = getMeshLevel(kernel_.CutOffRadius(h_ratio_[particle_index]));
+    level_[particle_index] = level;
     mesh_levels_[level]->insertParticleIndex(particle_index, particle_position);
 }
 //=================================================================================================//
@@ -117,8 +194,8 @@ void MultilevelCellLinkedList::UpdateCellLists(BaseParticles &base_particles)
     for (size_t level = 0; level != total_levels_; ++level)
         mesh_levels_[level]->clearCellLists();
 
-    StdLargeVec<Vecd> &pos_n = base_particles.ParticlePositions();
-    size_t total_real_particles = base_particles.total_real_particles_;
+    Vecd *pos_n = base_particles.ParticlePositions();
+    size_t total_real_particles = base_particles.TotalRealParticles();
     // rebuild the corresponding particle list.
     parallel_for(
         IndexRange(0, total_real_particles),
@@ -137,19 +214,11 @@ void MultilevelCellLinkedList::UpdateCellLists(BaseParticles &base_particles)
     }
 }
 //=================================================================================================//
-StdLargeVec<size_t> &MultilevelCellLinkedList::computingSequence(BaseParticles &base_particles)
+UnsignedInt MultilevelCellLinkedList::computingSequence(Vecd &position, size_t index_i)
 {
-    StdLargeVec<Vecd> &pos = base_particles.ParticlePositions();
-    StdLargeVec<size_t> &sequence = base_particles.sequence_;
-    size_t total_real_particles = base_particles.total_real_particles_;
-    particle_for(execution::ParallelPolicy(), IndexRange(0, total_real_particles),
-                 [&](size_t i)
-                 {
-						 size_t level = getMeshLevel(kernel_.CutOffRadius(h_ratio_[i]));
-						 sequence[i] = mesh_levels_[level]->transferMeshIndexToMortonOrder(
-						 mesh_levels_[level]->CellIndexFromPosition(pos[i])); });
-
-    return sequence;
+    size_t level = getMeshLevel(kernel_.CutOffRadius(h_ratio_[index_i]));
+    return mesh_levels_[level]->transferMeshIndexToMortonOrder(
+        mesh_levels_[level]->CellIndexFromPosition(position));
 }
 //=================================================================================================//
 void MultilevelCellLinkedList::

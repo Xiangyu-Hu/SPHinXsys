@@ -9,7 +9,7 @@ namespace SPH
 //=================================================================================================//
 SPHBody::SPHBody(SPHSystem &sph_system, Shape &shape, const std::string &name)
     : sph_system_(sph_system), body_name_(name), newly_updated_(true),
-      base_particles_(nullptr), is_bound_set_(false), initial_shape_(&shape),
+      base_particles_(nullptr), is_bound_set_(false), initial_shape_(&shape), total_body_parts_(0),
       sph_adaptation_(sph_adaptation_ptr_keeper_.createPtr<SPHAdaptation>(sph_system.ReferenceResolution())),
       base_material_(base_material_ptr_keeper_.createPtr<BaseMaterial>())
 {
@@ -35,6 +35,12 @@ BoundingBox SPHBody::getSPHSystemBounds()
 {
     return sph_system_.system_domain_bounds_;
 }
+//=================================================================================================//
+int SPHBody::getNewBodyPartID()
+{
+    total_body_parts_++;
+    return total_body_parts_;
+};
 //=================================================================================================//
 SPHSystem &SPHBody::getSPHSystem()
 {
@@ -79,26 +85,6 @@ void SPHBody::defineAdaptationRatios(Real h_spacing_ratio, Real new_system_refin
     sph_adaptation_->resetAdaptationRatios(h_spacing_ratio, new_system_refinement_ratio);
 }
 //=================================================================================================//
-void SPHBody::writeParticlesToVtuFile(std::ostream &output_file)
-{
-    base_particles_->writeParticlesToVtk(output_file);
-}
-//=================================================================================================//
-void SPHBody::writeParticlesToVtpFile(std::ofstream &output_file)
-{
-    base_particles_->writeParticlesToVtk(output_file);
-}
-//=================================================================================================//
-void SPHBody::writeSurfaceParticlesToVtuFile(std::ofstream &output_file, BodySurface &surface_particles)
-{
-    base_particles_->writeSurfaceParticlesToVtuFile(output_file, surface_particles);
-}
-//=================================================================================================//
-void SPHBody::writeParticlesToPltFile(std::ofstream &output_file)
-{
-    base_particles_->writeParticlesToPltFile(output_file);
-}
-//=================================================================================================//
 void SPHBody::writeParticlesToXmlForRestart(std::string &filefullpath)
 {
     base_particles_->writeParticlesToXmlForRestart(filefullpath);
@@ -114,16 +100,12 @@ void SPHBody::writeToXmlForReloadParticle(std::string &filefullpath)
     base_particles_->writeToXmlForReloadParticle(filefullpath);
 }
 //=================================================================================================//
-void SPHBody::readFromXmlForReloadParticle(std::string &filefullpath)
-{
-    base_particles_->readFromXmlForReloadParticle(filefullpath);
-}
-//=================================================================================================//
 BaseCellLinkedList &RealBody::getCellLinkedList()
 {
     if (!cell_linked_list_created_)
     {
-        cell_linked_list_ptr_ = sph_adaptation_->createCellLinkedList(getSPHSystemBounds());
+        cell_linked_list_ptr_ =
+            sph_adaptation_->createCellLinkedList(getSPHSystemBounds(), *base_particles_);
         cell_linked_list_created_ = true;
     }
     return *cell_linked_list_ptr_.get();
@@ -132,17 +114,6 @@ BaseCellLinkedList &RealBody::getCellLinkedList()
 void RealBody::updateCellLinkedList()
 {
     getCellLinkedList().UpdateCellLists(*base_particles_);
-}
-//=================================================================================================//
-void RealBody::updateCellLinkedListWithParticleSort(size_t particle_sorting_period)
-{
-    if (iteration_count_ % particle_sorting_period == 0)
-    {
-        base_particles_->sortParticles(getCellLinkedList());
-    }
-
-    iteration_count_++;
-    updateCellLinkedList();
 }
 //=================================================================================================//
 } // namespace SPH

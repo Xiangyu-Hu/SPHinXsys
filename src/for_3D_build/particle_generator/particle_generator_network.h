@@ -31,7 +31,7 @@
 #define PARTICLE_GENERATOR_NETWORK_H
 
 #include "base_particle_generator.h"
-#include "sph_data_containers.h"
+#include "sphinxsys_containers.h"
 #include "tree_body.h"
 
 namespace SPH
@@ -39,15 +39,16 @@ namespace SPH
 class Network;
 
 template <> // Generate a tree-shape network using particles
-class ParticleGenerator<Network> : public ParticleGenerator<Base>
+class ParticleGenerator<BaseParticles, Network> : public ParticleGenerator<BaseParticles>
 {
   public:
-    ParticleGenerator(SPHBody &sph_body, const Vecd &starting_pnt,
+    ParticleGenerator(SPHBody &sph_body, BaseParticles &base_particles,
+                      const Vecd &starting_pnt,
                       const Vecd &second_pnt, int iterator, Real grad_factor);
     virtual ~ParticleGenerator(){};
 
     /** Created base particles based on edges in branch */
-    virtual void initializeGeometricVariables() override;
+    virtual void prepareGeometricData() override;
 
   protected:
     Vecd starting_pnt_;                                 /**< Starting point for net work. */

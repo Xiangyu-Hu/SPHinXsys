@@ -52,7 +52,7 @@ class PlasticSolid : public NeoHookeanSolid
 
     Real YieldStress() { return yield_stress_; };
     /** compute the elastic part of normalized left Cauchy-Green deformation gradient tensor. */
-    virtual Matd ElasticLeftCauchy(const Matd& deformation, size_t index_i, Real dt = 0.0) = 0;
+    virtual Matd ElasticLeftCauchy(const Matd &deformation, size_t index_i, Real dt = 0.0) = 0;
 
     virtual PlasticSolid *ThisObjectPtr() override { return this; };
 };
@@ -66,13 +66,14 @@ class HardeningPlasticSolid : public PlasticSolid
   protected:
     Real hardening_modulus_;
     const Real sqrt_2_over_3_ = sqrt(2.0 / 3.0);
-    StdLargeVec<Matd> inverse_plastic_strain_; /**< inverse of plastic right cauchy green strain tensor */
-    StdLargeVec<Real> hardening_parameter_;    /**< hardening parameter */
+    Matd *inverse_plastic_strain_; /**< inverse of plastic right cauchy green strain tensor */
+    Real *hardening_parameter_;    /**< hardening parameter */
 
   public:
     /** Constructor */
     explicit HardeningPlasticSolid(Real rho0, Real youngs_modulus, Real poisson_ratio, Real yield_stress, Real hardening_modulus)
-        : PlasticSolid(rho0, youngs_modulus, poisson_ratio, yield_stress), hardening_modulus_(hardening_modulus)
+        : PlasticSolid(rho0, youngs_modulus, poisson_ratio, yield_stress), hardening_modulus_(hardening_modulus),
+          inverse_plastic_strain_(nullptr), hardening_parameter_(nullptr)
     {
         material_type_name_ = "HardeningPlasticSolid";
     };
@@ -81,7 +82,7 @@ class HardeningPlasticSolid : public PlasticSolid
     virtual void initializeLocalParameters(BaseParticles *base_particles) override;
     Real HardeningModulus() { return hardening_modulus_; };
     /** compute the elastic part of normalized left Cauchy-Green deformation gradient tensor. */
-    virtual Matd ElasticLeftCauchy(const Matd& deformation, size_t index_i, Real dt = 0.0) override;
+    virtual Matd ElasticLeftCauchy(const Matd &deformation, size_t index_i, Real dt = 0.0) override;
 
     virtual HardeningPlasticSolid *ThisObjectPtr() override { return this; };
 };
@@ -92,35 +93,33 @@ class HardeningPlasticSolid : public PlasticSolid
  */
 class NonLinearHardeningPlasticSolid : public HardeningPlasticSolid
 {
-protected:
-	Real saturation_flow_stress_, saturation_exponent_;
-public:
-	/** Constructor */
-	explicit NonLinearHardeningPlasticSolid(Real rho0, Real youngs_modulus, Real poisson_ratio, Real yield_stress,
-		Real hardening_modulus, Real saturation_flow_stress, Real saturation_exponent)
-		: HardeningPlasticSolid(rho0, youngs_modulus, poisson_ratio, yield_stress, hardening_modulus),
-		saturation_flow_stress_(saturation_flow_stress), saturation_exponent_(saturation_exponent)
-	{
-		material_type_name_ = "NonLinearHardeningPlasticSolid";
+  protected:
+    Real saturation_flow_stress_, saturation_exponent_;
 
-	};
-	virtual ~NonLinearHardeningPlasticSolid() {};
+  public:
+    /** Constructor */
+    explicit NonLinearHardeningPlasticSolid(Real rho0, Real youngs_modulus, Real poisson_ratio, Real yield_stress,
+                                            Real hardening_modulus, Real saturation_flow_stress, Real saturation_exponent)
+        : HardeningPlasticSolid(rho0, youngs_modulus, poisson_ratio, yield_stress, hardening_modulus),
+          saturation_flow_stress_(saturation_flow_stress), saturation_exponent_(saturation_exponent)
+    {
+        material_type_name_ = "NonLinearHardeningPlasticSolid";
+    };
+    virtual ~NonLinearHardeningPlasticSolid(){};
 
-	Real NonlinearHardening(Real hardening_parameter_pre)
-	{
-		return  (hardening_modulus_ * hardening_parameter_pre + yield_stress_
-			+ (saturation_flow_stress_ - yield_stress_) * (1 - exp(-saturation_exponent_ * hardening_parameter_pre)));
-	};
+    Real NonlinearHardening(Real hardening_parameter_pre)
+    {
+        return (hardening_modulus_ * hardening_parameter_pre + yield_stress_ + (saturation_flow_stress_ - yield_stress_) * (1 - exp(-saturation_exponent_ * hardening_parameter_pre)));
+    };
 
-	Real NonlinearHardeningDerivative(Real hardening_parameter_pre)
-	{
-		return  (hardening_modulus_ + saturation_exponent_ * (saturation_flow_stress_ - yield_stress_)
-			* exp(-saturation_exponent_ * hardening_parameter_pre));
-	};
-	/** compute the elastic part of normalized left Cauchy-Green deformation gradient tensor. */
-	virtual Matd ElasticLeftCauchy(const Matd& deformation, size_t index_i, Real dt = 0.0) override;
+    Real NonlinearHardeningDerivative(Real hardening_parameter_pre)
+    {
+        return (hardening_modulus_ + saturation_exponent_ * (saturation_flow_stress_ - yield_stress_) * exp(-saturation_exponent_ * hardening_parameter_pre));
+    };
+    /** compute the elastic part of normalized left Cauchy-Green deformation gradient tensor. */
+    virtual Matd ElasticLeftCauchy(const Matd &deformation, size_t index_i, Real dt = 0.0) override;
 
-	virtual NonLinearHardeningPlasticSolid* ThisObjectPtr() override { return this; };
+    virtual NonLinearHardeningPlasticSolid *ThisObjectPtr() override { return this; };
 };
 
 /**
@@ -129,26 +128,26 @@ public:
  */
 class ViscousPlasticSolid : public PlasticSolid
 {
-protected:
-	Real viscous_modulus_;
-	Real Herschel_Bulkley_power_;
-	const Real sqrt_2_over_3_ = sqrt(2.0 / 3.0);
-	StdLargeVec<Matd> inverse_plastic_strain_; /**< inverse of plastic right cauchy green strain tensor */
+  protected:
+    Real viscous_modulus_;
+    Real Herschel_Bulkley_power_;
+    const Real sqrt_2_over_3_ = sqrt(2.0 / 3.0);
+    Matd *inverse_plastic_strain_; /**< inverse of plastic right cauchy green strain tensor */
 
-public:
-	/** Constructor */
-	explicit ViscousPlasticSolid(Real rho0, Real youngs_modulus, Real poisson_ratio, Real yield_stress, Real viscous_modulus, Real herschel_bulkley_power)
-		: PlasticSolid(rho0, youngs_modulus, poisson_ratio, yield_stress), viscous_modulus_(viscous_modulus), Herschel_Bulkley_power_(herschel_bulkley_power)
-	{
-		material_type_name_ = "ViscousPlasticSolid";
-	};
-	virtual ~ViscousPlasticSolid() {};
+  public:
+    /** Constructor */
+    explicit ViscousPlasticSolid(Real rho0, Real youngs_modulus, Real poisson_ratio, Real yield_stress, Real viscous_modulus, Real herschel_bulkley_power)
+        : PlasticSolid(rho0, youngs_modulus, poisson_ratio, yield_stress), viscous_modulus_(viscous_modulus), Herschel_Bulkley_power_(herschel_bulkley_power)
+    {
+        material_type_name_ = "ViscousPlasticSolid";
+    };
+    virtual ~ViscousPlasticSolid(){};
 
-	virtual void initializeLocalParameters(BaseParticles* base_particles) override;
-	Real ViscousModulus() { return viscous_modulus_; };
-	/** compute the elastic part of normalized left Cauchy-Green deformation gradient tensor. */
-	virtual Matd ElasticLeftCauchy(const Matd& deformation, size_t index_i, Real dt = 0.0) override;
+    virtual void initializeLocalParameters(BaseParticles *base_particles) override;
+    Real ViscousModulus() { return viscous_modulus_; };
+    /** compute the elastic part of normalized left Cauchy-Green deformation gradient tensor. */
+    virtual Matd ElasticLeftCauchy(const Matd &deformation, size_t index_i, Real dt = 0.0) override;
 
-	virtual ViscousPlasticSolid* ThisObjectPtr() override { return this; };
+    virtual ViscousPlasticSolid *ThisObjectPtr() override { return this; };
 };
 } // namespace SPH

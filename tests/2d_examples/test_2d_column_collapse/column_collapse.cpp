@@ -17,8 +17,6 @@ Real LH = 0.1;                       /**< Soil column height. */
 Real particle_spacing_ref = LH / 50; /**< Initial reference particle spacing. */
 Real BW = particle_spacing_ref * 4;  /**< Extending width for boundary conditions. */
 BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
-// observer location
-StdVec<Vecd> observation_location = {Vecd(DL, 0.2)};
 //----------------------------------------------------------------------
 //	Material properties of the soil.
 //----------------------------------------------------------------------
@@ -97,26 +95,25 @@ int main(int ac, char *av[])
     //	Note that there may be data dependence on the constructors of these methods.
     //----------------------------------------------------------------------
     Gravity gravity(Vecd(0.0, -gravity_g));
-    SimpleDynamics<GravityForce> constant_gravity(soil_block, gravity);
+    SimpleDynamics<GravityForce<Gravity>> constant_gravity(soil_block, gravity);
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
-
     Dynamics1Level<continuum_dynamics::PlasticIntegration1stHalfWithWallRiemann> granular_stress_relaxation(soil_block_inner, soil_block_contact);
     Dynamics1Level<continuum_dynamics::PlasticIntegration2ndHalfWithWallRiemann> granular_density_relaxation(soil_block_inner, soil_block_contact);
     InteractionWithUpdate<fluid_dynamics::DensitySummationComplexFreeSurface> soil_density_by_summation(soil_block_inner, soil_block_contact);
     InteractionDynamics<continuum_dynamics::StressDiffusion> stress_diffusion(soil_block_inner);
-
-    ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> soil_acoustic_time_step(soil_block, 0.4);
+    ReduceDynamics<fluid_dynamics::AcousticTimeStep> soil_acoustic_time_step(soil_block, 0.4);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
-    soil_block.addBodyStateForRecording<Real>("Pressure");
-    soil_block.addBodyStateForRecording<Real>("Density");
-    soil_block.addBodyStateForRecording<Real>("VerticalStress");
-    soil_block.addBodyStateForRecording<Real>("AccDeviatoricPlasticStrain");
-    wall_boundary.addBodyStateForRecording<Vecd>("NormalDirection");
-    BodyStatesRecordingToVtp body_states_recording(sph_system.real_bodies_);
-    RestartIO restart_io(sph_system.real_bodies_);
+    BodyStatesRecordingToVtp body_states_recording(sph_system);
+    body_states_recording.addToWrite<Real>(soil_block, "Pressure");
+    body_states_recording.addToWrite<Real>(soil_block, "Density");
+    SimpleDynamics<continuum_dynamics::VerticalStress> vertical_stress(soil_block);
+    body_states_recording.addToWrite<Real>(soil_block, "VerticalStress");
+    SimpleDynamics<continuum_dynamics::AccDeviatoricPlasticStrain> accumulated_deviatoric_plastic_strain(soil_block);
+    body_states_recording.addToWrite<Real>(soil_block, "AccDeviatoricPlasticStrain");
+    RestartIO restart_io(sph_system);
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalMechanicalEnergy>>
         write_mechanical_energy(soil_block, gravity);
     //----------------------------------------------------------------------
@@ -130,12 +127,13 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
-    size_t number_of_iterations = sph_system.RestartStep();
+    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
+    size_t number_of_iterations = 0;
     int screen_output_interval = 500;
     int observation_sample_interval = screen_output_interval * 2;
     int restart_output_interval = screen_output_interval * 10;
-    Real End_Time = 1.0;         /**< End time. */
-    Real D_Time = End_Time / 50; /**< Time stamps for output of body states. */
+    Real End_Time = 0.8;         /**< End time. */
+    Real D_Time = End_Time / 40; /**< Time stamps for output of body states. */
     Real Dt = 0.1 * D_Time;
     //----------------------------------------------------------------------
     //	Statistics for CPU time
@@ -154,7 +152,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------
-    while (GlobalStaticVariables::physical_time_ < End_Time)
+    while (physical_time < End_Time)
     {
         Real integration_time = 0.0;
         /** Integrate time (loop) until the next output time. */
@@ -176,7 +174,7 @@ int main(int ac, char *av[])
                 granular_density_relaxation.exec(dt);
                 relaxation_time += dt;
                 integration_time += dt;
-                GlobalStaticVariables::physical_time_ += dt;
+                physical_time += dt;
 
                 interval_computing_soil_stress_relaxation += TickCount::now() - time_instance;
 
@@ -184,7 +182,7 @@ int main(int ac, char *av[])
                 if (number_of_iterations % screen_output_interval == 0)
                 {
                     std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << std::setprecision(4) << "	Time = "
-                              << GlobalStaticVariables::physical_time_
+                              << physical_time
                               << std::scientific << "	dt = " << dt << "\n";
 
                     if (number_of_iterations % observation_sample_interval == 0 && number_of_iterations != sph_system.RestartStep())
@@ -195,15 +193,16 @@ int main(int ac, char *av[])
                         restart_io.writeToFile(number_of_iterations);
                 }
                 number_of_iterations++;
+                time_instance = TickCount::now();
                 /** Update cell linked list and configuration. */
                 soil_block.updateCellLinkedList();
                 soil_block_complex.updateConfiguration();
-            }
-            time_instance = TickCount::now();
-
-            interval_updating_configuration += TickCount::now() - time_instance;
+                interval_updating_configuration += TickCount::now() - time_instance;
+            } 
         }
         TickCount t2 = TickCount::now();
+        vertical_stress.exec();
+        accumulated_deviatoric_plastic_strain.exec();
         body_states_recording.writeToFile();
         TickCount t3 = TickCount::now();
         interval += t3 - t2;

@@ -100,7 +100,7 @@ int main(int ac, char *av[])
     else
     {
         shell.defineBodyLevelSetShape(level_set_refinement_ratio)->writeLevelSet(sph_system);
-        shell.generateParticles<SurfaceParticles, ThickSurface, Lattice>(thickness);
+        shell.generateParticles<SurfaceParticles, Lattice>(thickness);
     }
 
     if (!sph_system.RunParticleRelaxation() && !sph_system.ReloadParticles())
@@ -122,7 +122,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     InnerRelation beam_inner(beam);
     SurfaceContactRelation shell_contact(shell, {&beam});
-    SurfaceContactRelation beam_contact(beam, {&shell});
+    ShellSurfaceContactRelation beam_contact(beam, {&shell});
     //----------------------------------------------------------------------
     //	Run particle relaxation for body-fitted distribution if chosen.
     //----------------------------------------------------------------------
@@ -139,13 +139,13 @@ int main(int ac, char *av[])
         SimpleDynamics<RandomizeParticlePosition> shell_random_particles(shell);
         ShellRelaxationStep relaxation_step_shell_inner(shell_inner);
         ShellNormalDirectionPrediction shell_normal_prediction(shell_inner, thickness, cos(Pi / 3.75));
-        shell.addBodyStateForRecording<int>("UpdatedIndicator");
         //----------------------------------------------------------------------
         //	Output for particle relaxation.
         //----------------------------------------------------------------------
-        BodyStatesRecordingToVtp write_relaxed_particles(sph_system.real_bodies_);
+        BodyStatesRecordingToVtp write_relaxed_particles(sph_system);
+        write_relaxed_particles.addToWrite<int>(shell, "UpdatedIndicator");
         MeshRecordingToPlt write_mesh_cell_linked_list(sph_system, shell.getCellLinkedList());
-        ReloadParticleIO write_particle_reload_files({&shell});
+        ReloadParticleIO write_particle_reload_files(shell);
         //----------------------------------------------------------------------
         //	Particle relaxation starts here.
         //----------------------------------------------------------------------
@@ -186,18 +186,18 @@ int main(int ac, char *av[])
     Dynamics1Level<solid_dynamics::DecomposedIntegration1stHalf> beam_stress_relaxation_first_half(beam_inner);
     Dynamics1Level<solid_dynamics::Integration2ndHalf> beam_stress_relaxation_second_half(beam_inner);
     /** Algorithms for shell-solid contact. */
-    InteractionDynamics<solid_dynamics::ContactDensitySummation> beam_shell_update_contact_density(beam_contact);
+    InteractionDynamics<solid_dynamics::ShellContactFactor> beam_shell_update_contact_density(beam_contact);
     InteractionWithUpdate<solid_dynamics::ContactForceFromWall> beam_compute_solid_contact_forces(beam_contact);
     InteractionWithUpdate<solid_dynamics::ContactForceToWall> shell_compute_solid_contact_forces(shell_contact);
-    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d>>> beam_damping(0.5, beam_inner, "Velocity", physical_viscosity);
+    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d, FixedDampingRate>>> beam_damping(0.5, beam_inner, "Velocity", physical_viscosity);
 
-    ReduceDynamics<solid_dynamics::AcousticTimeStepSize> shell_get_time_step_size(beam, 0.5);
+    ReduceDynamics<solid_dynamics::AcousticTimeStep> shell_get_time_step_size(beam, 0.5);
     BodyRegionByParticle holder(beam, makeShared<MultiPolygonShape>(createBeamConstrainShape()));
     SimpleDynamics<FixBodyPartConstraint> constraint_holder(holder);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp body_states_recording(sph_system.real_bodies_);
+    BodyStatesRecordingToVtp body_states_recording(sph_system);
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalKineticEnergy>>
         write_beam_kinetic_energy(beam);
     //----------------------------------------------------------------------
@@ -237,6 +237,7 @@ int main(int ac, char *av[])
     /** Initial states output. */
     body_states_recording.writeToFile(0);
     /** Main loop. */
+    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     int ite = 0;
     Real T0 = 1.0;
     Real end_time = T0;
@@ -250,7 +251,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------
-    while (GlobalStaticVariables::physical_time_ < end_time)
+    while (physical_time < end_time)
     {
         Real integration_time = 0.0;
         while (integration_time < output_interval)
@@ -258,7 +259,7 @@ int main(int ac, char *av[])
             if (ite % 100 == 0)
             {
                 std::cout << "N=" << ite << " Time: "
-                          << GlobalStaticVariables::physical_time_ << "	dt: " << dt << "\n";
+                          << physical_time << "	dt: " << dt << "\n";
                 write_beam_kinetic_energy.writeToFile(ite);
             }
             beam_shell_update_contact_density.exec();
@@ -288,7 +289,7 @@ int main(int ac, char *av[])
             Real dt_free = shell_get_time_step_size.exec();
             dt = dt_free;
             integration_time += dt;
-            GlobalStaticVariables::physical_time_ += dt;
+            physical_time += dt;
         }
         TickCount t2 = TickCount::now();
         body_states_recording.writeToFile(ite);

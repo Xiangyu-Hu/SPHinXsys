@@ -35,17 +35,24 @@ namespace SPH
 Vec2d FirstAxisVector(const Vec2d &zero_vector);
 Vec3d FirstAxisVector(const Vec3d &zero_vector);
 
-Vec3d upgradeToVec3d(const Real &input);
-Vec3d upgradeToVec3d(const Vec2d &input);
-Vec3d upgradeToVec3d(const Vec3d &input);
-Mat3d upgradeToMat3d(const Mat2d &input);
-Mat3d upgradeToMat3d(const Mat3d &input);
+inline Vec3d upgradeToVec3d(const Real &input)
+{
+    return Vec3d(input, 0.0, 0.0);
+};
+inline Vec3d upgradeToVec3d(const Vec2d &input)
+{
+    return Vec3d(input[0], input[1], 0.0);
+};
+inline Vec3d upgradeToVec3d(const Vec3d &input) { return input; };
 
-Vecd degradeToVecd(const Vec3d &input);
-Matd degradeToMatd(const Mat3d &input);
+inline Mat3d upgradeToMat3d(const Mat2d &input)
+{
+    Mat3d output = Mat3d::Zero();
+    output.block<2, 2>(0, 0) = input;
+    return output;
+};
+inline Mat3d upgradeToMat3d(const Mat3d &input) { return input; };
 
-Mat2d getInverse(const Mat2d &A);
-Mat3d getInverse(const Mat3d &A);
 Mat2d getAverageValue(const Mat2d &A, const Mat2d &B);
 Mat3d getAverageValue(const Mat3d &A, const Mat3d &B);
 Mat2d inverseCholeskyDecomposition(const Mat2d &A);
@@ -61,13 +68,25 @@ Real CalculateBiDotProduct(Mat3d Matrix1, Mat3d Matrix2); // calculate Real dot
 Mat2d getTransformationMatrix(const Vec2d &direction_of_y);
 Mat3d getTransformationMatrix(const Vec3d &direction_of_z);
 Mat3d getTransformationMatrix(const Vec3d &direction_of_z, const Vec3d &direction_of_y);
-/** get angle between two vectors. */
-Real getCosineOfAngleBetweenTwoVectors(const Vec2d &vector_1, const Vec2d &vector_2);
-Real getCosineOfAngleBetweenTwoVectors(const Vec3d &vector_1, const Vec3d &vector_2);
 
-/** get orthogonal projection of a vector. */
-Vec2d getVectorProjectionOfVector(const Vec2d &vector_1, const Vec2d &vector_2);
-Vec3d getVectorProjectionOfVector(const Vec3d &vector_1, const Vec3d &vector_2);
+template <typename VecType>
+Real getCosineOfAngleBetweenTwoVectors(const VecType &vector_1, const VecType &vector_2)
+{
+    return vector_1.dot(vector_2) / (vector_1.norm() * vector_2.norm() + TinyReal);
+};
+
+/** get the projection of the vector_1 on vector 2,
+ *  which is parallel to the vector_2, meaning it is the vector_2 * scalar */
+template <typename VecType>
+VecType getVectorProjectionOfVector(const VecType &vector_1, const VecType &vector_2)
+{
+    return vector_1.dot(vector_2) * vector_2 / (vector_2.squaredNorm() + TinyReal);
+};
+
+template <typename Datatype>
+Real getSquaredNorm(const Datatype &variable) { return variable.squaredNorm(); };
+
+inline Real getSquaredNorm(const Real &variable) { return variable * variable; };
 
 /** von Mises stress from stress matrix */
 Real getVonMisesStressFromMatrix(const Mat2d &sigma);
@@ -80,5 +99,8 @@ Vec3d getPrincipalValuesFromMatrix(const Mat3d &A);
 /** get transformation matrix. */
 Real getCrossProduct(const Vec2d &vector_1, const Vec2d &vector_2);
 Vec3d getCrossProduct(const Vec3d &vector_1, const Vec3d &vector_2);
+/** Modulo operation for Arrayi */
+Array2i mod(const Array2i &input, int modulus);
+Array3i mod(const Array3i &input, int modulus);
 } // namespace SPH
 #endif // VECTOR_FUNCTIONS_H

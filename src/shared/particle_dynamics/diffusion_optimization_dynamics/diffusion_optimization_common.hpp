@@ -16,10 +16,10 @@ ThermalConductivityConstraint<DynamicsIdentifier>::
     ThermalConductivityConstraint(DynamicsIdentifier &identifier, const std::string &variable_name,
                                   Real initial_thermal_conductivity)
     : LocalDynamics(identifier.getSPHBody()),
-      DataDelegateSimple(identifier.getSPHBody()),
+
       initial_thermal_conductivity_(initial_thermal_conductivity),
       new_average_thermal_conductivity_(0.0),
-      local_diffusivity_(*this->particles_->template getVariableByName<Real>(variable_name)){};
+      local_diffusivity_(this->particles_->template getVariableDataByName<Real>(variable_name)){};
 //=================================================================================================//
 template <class DynamicsIdentifier>
 void ThermalConductivityConstraint<DynamicsIdentifier>::

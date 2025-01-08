@@ -5,8 +5,7 @@ namespace SPH
 //=================================================================================================//
 void LinearGradientCorrectionMatrix<Inner<>>::interaction(size_t index_i, Real dt)
 {
-    Matd local_configuration = Eps * Matd::Identity();
-
+    Matd local_configuration = ZeroData<Matd>::value;
     const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
     for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
     {
@@ -21,7 +20,8 @@ void LinearGradientCorrectionMatrix<Inner<>>::interaction(size_t index_i, Real d
 void LinearGradientCorrectionMatrix<Inner<>>::update(size_t index_i, Real dt)
 {
     Real det_sqr = SMAX(alpha_ - B_[index_i].determinant(), Real(0));
-    Matd inverse = B_[index_i].inverse();
+    Matd B_T = B_[index_i].transpose(); //for Tikhonov regularization
+    Matd inverse = (B_T * B_[index_i] + SqrtEps * Matd::Identity()).inverse() * B_T;
     Real weight1_ = B_[index_i].determinant() / (B_[index_i].determinant() + det_sqr);
     Real weight2_ = det_sqr / (B_[index_i].determinant() + det_sqr);
     B_[index_i] = weight1_ * inverse + weight2_ * Matd::Identity();
@@ -33,8 +33,8 @@ LinearGradientCorrectionMatrix<Contact<>>::
 {
     for (size_t k = 0; k != contact_particles_.size(); ++k)
     {
-        contact_mass_.push_back(contact_particles_[k]->getVariableByName<Real>("Mass"));
-        contact_Vol_.push_back(contact_particles_[k]->getVariableByName<Real>("VolumetricMeasure"));
+        contact_mass_.push_back(contact_particles_[k]->getVariableDataByName<Real>("Mass"));
+        contact_Vol_.push_back(contact_particles_[k]->getVariableDataByName<Real>("VolumetricMeasure"));
     }
 }
 //=================================================================================================//
@@ -43,7 +43,7 @@ void LinearGradientCorrectionMatrix<Contact<>>::interaction(size_t index_i, Real
     Matd local_configuration = ZeroData<Matd>::value;
     for (size_t k = 0; k < contact_configuration_.size(); ++k)
     {
-        StdLargeVec<Real> &Vol_k = *(contact_Vol_[k]);
+        Real *Vol_k = contact_Vol_[k];
         Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
         for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
         {
@@ -59,7 +59,7 @@ void LinearGradientCorrectionMatrix<Contact<>>::interaction(size_t index_i, Real
 KernelGradientCorrection<Inner<>>::
     KernelGradientCorrection(BaseInnerRelation &inner_relation)
     : KernelGradientCorrection<DataDelegateInner>(inner_relation),
-      average_correction_matrix_(*particles_->getVariableByName<Matd>("LinearGradientCorrectionMatrix")){};
+      average_correction_matrix_(particles_->getVariableDataByName<Matd>("LinearGradientCorrectionMatrix")){};
 //=================================================================================================//
 void KernelGradientCorrection<Inner<>>::interaction(size_t index_i, Real dt)
 {
@@ -75,8 +75,8 @@ KernelGradientCorrection<Contact<>>::
     {
         contact_average_correction_matrix_.push_back(
             PairAverageVariable<Matd>(
-                *particles_->getVariableByName<Matd>("LinearGradientCorrectionMatrix"),
-                *contact_particles_[k]->getVariableByName<Matd>("LinearGradientCorrectionMatrix")));
+                particles_->getVariableDataByName<Matd>("LinearGradientCorrectionMatrix"),
+                contact_particles_[k]->getVariableDataByName<Matd>("LinearGradientCorrectionMatrix")));
     }
 }
 //=================================================================================================//

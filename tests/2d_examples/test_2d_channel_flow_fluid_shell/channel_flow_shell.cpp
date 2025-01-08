@@ -38,7 +38,7 @@ class WaterBlock : public MultiPolygonShape
 /** Particle generator and constraint boundary for shell baffle. */
 class WallBoundary;
 template <>
-class ParticleGenerator<WallBoundary> : public ParticleGenerator<Surface>
+class ParticleGenerator<SurfaceParticles, WallBoundary> : public ParticleGenerator<SurfaceParticles>
 {
     Real DL_sponge_;
     Real BW_;
@@ -46,10 +46,12 @@ class ParticleGenerator<WallBoundary> : public ParticleGenerator<Surface>
     Real wall_thickness_;
 
   public:
-    explicit ParticleGenerator(SPHBody &sph_body, Real resolution_ref, Real wall_thickness)
-        : ParticleGenerator<Surface>(sph_body), DL_sponge_(20 * resolution_ref), BW_(4 * resolution_ref),
+    explicit ParticleGenerator(SPHBody &sph_body, SurfaceParticles &surface_particles,
+                               Real resolution_ref, Real wall_thickness)
+        : ParticleGenerator<SurfaceParticles>(sph_body, surface_particles),
+          DL_sponge_(20 * resolution_ref), BW_(4 * resolution_ref),
           resolution_ref_(resolution_ref), wall_thickness_(wall_thickness){};
-    void initializeGeometricVariables() override
+    void prepareGeometricData() override
     {
         auto particle_number_mid_surface = int((DL + DL_sponge_ + 2 * BW_) / resolution_ref_);
         for (int i = 0; i < particle_number_mid_surface; i++)
@@ -57,14 +59,14 @@ class ParticleGenerator<WallBoundary> : public ParticleGenerator<Surface>
             Real x = -DL_sponge_ - BW_ + (Real(i) + 0.5) * resolution_ref_;
             // upper wall
             Real y1 = DH + 0.5 * resolution_ref_;
-            initializePositionAndVolumetricMeasure(Vecd(x, y1), resolution_ref_);
+            addPositionAndVolumetricMeasure(Vecd(x, y1), resolution_ref_);
             Vec2d normal_direction_1 = Vec2d(0, 1.0);
-            initializeSurfaceProperties(normal_direction_1, wall_thickness_);
+            addSurfaceProperties(normal_direction_1, wall_thickness_);
             // lower wall
             Real y2 = -0.5 * resolution_ref_; // lower wall
-            initializePositionAndVolumetricMeasure(Vecd(x, y2), resolution_ref_);
+            addPositionAndVolumetricMeasure(Vecd(x, y2), resolution_ref_);
             Vec2d normal_direction_2 = Vec2d(0, -1.0);
-            initializeSurfaceProperties(normal_direction_2, wall_thickness_);
+            addSurfaceProperties(normal_direction_2, wall_thickness_);
         }
     }
 };
@@ -84,12 +86,11 @@ struct InflowVelocity
           aligned_box_(boundary_condition.getAlignedBox()),
           halfsize_(aligned_box_.HalfSize()) {}
 
-    Vecd operator()(Vecd &position, Vecd &velocity)
+    Vecd operator()(Vecd &position, Vecd &velocity, Real current_time)
     {
         Vecd target_velocity = velocity;
-        Real run_time = GlobalStaticVariables::physical_time_;
-        Real u_ave = run_time < t_ref_ ? 0.5 * u_ref_ * (1.0 - cos(Pi * run_time / t_ref_)) : u_ref_;
-        if (aligned_box_.checkInBounds(0, position))
+        Real u_ave = current_time < t_ref_ ? 0.5 * u_ref_ * (1.0 - cos(Pi * current_time / t_ref_)) : u_ref_;
+        if (aligned_box_.checkInBounds(position))
         {
             target_velocity[0] = 1.5 * u_ave * (1.0 - position[1] * position[1] / halfsize_[1] / halfsize_[1]);
         }
@@ -97,49 +98,38 @@ struct InflowVelocity
     }
 };
 
-/** fluid observer particle generator */
-class FluidAxialObserver;
-template <>
-class ParticleGenerator<FluidAxialObserver> : public ParticleGenerator<Observer>
+StdVec<Vecd> createFluidAxialObservationPoints(Real resolution_ref)
 {
-  public:
-    explicit ParticleGenerator(SPHBody &sph_body, Real resolution_ref)
-        : ParticleGenerator<Observer>(sph_body)
+    StdVec<Vecd> observation_points;
+    /** A line of measuring points at the entrance of the channel. */
+    size_t number_observation_points = 51;
+    Real range_of_measure = DL - resolution_ref * 4.0;
+    Real start_of_measure = resolution_ref * 2.0;
+    Real y_position = 0.5 * DH;
+    /** the measuring locations */
+    for (size_t i = 0; i < number_observation_points; ++i)
     {
-        /** A line of measuring points at the entrance of the channel. */
-        size_t number_observation_points = 51;
-        Real range_of_measure = DL - resolution_ref * 4.0;
-        Real start_of_measure = resolution_ref * 2.0;
-        Real y_position = 0.5 * DH;
-        /** the measuring locations */
-        for (size_t i = 0; i < number_observation_points; ++i)
-        {
-            Vec2d point_coordinate(range_of_measure * (Real)i / (Real)(number_observation_points - 1) + start_of_measure, y_position);
-            positions_.push_back(point_coordinate);
-        }
+        Vec2d point_coordinate(range_of_measure * (Real)i / (Real)(number_observation_points - 1) + start_of_measure, y_position);
+        observation_points.push_back(point_coordinate);
     }
+    return observation_points;
 };
 
-class FluidRadialObserver;
-template <>
-class ParticleGenerator<FluidRadialObserver> : public ParticleGenerator<Observer>
+StdVec<Vecd> createFluidRadialObservationPoints(Real resolution_ref)
 {
-  public:
-    explicit ParticleGenerator(SPHBody &sph_body, Real resolution_ref)
-        : ParticleGenerator<Observer>(sph_body)
+    StdVec<Vecd> observation_points;
+    /** A line of measuring points at the entrance of the channel. */
+    size_t number_observation_points = 21;
+    Real range_of_measure = DH - resolution_ref * 4.0;
+    Real start_of_measure = resolution_ref * 2.0;
+    Real x_position = 0.5 * DL;
+    /** the measuring locations */
+    for (size_t i = 0; i < number_observation_points; ++i)
     {
-        /** A line of measuring points at the entrance of the channel. */
-        size_t number_observation_points = 21;
-        Real range_of_measure = DH - resolution_ref * 4.0;
-        Real start_of_measure = resolution_ref * 2.0;
-        Real x_position = 0.5 * DL;
-        /** the measuring locations */
-        for (size_t i = 0; i < number_observation_points; ++i)
-        {
-            Vec2d point_coordinate(x_position, range_of_measure * (Real)i / (Real)(number_observation_points - 1) + start_of_measure);
-            positions_.push_back(point_coordinate);
-        }
+        Vec2d point_coordinate(x_position, range_of_measure * (Real)i / (Real)(number_observation_points - 1) + start_of_measure);
+        observation_points.push_back(point_coordinate);
     }
+    return observation_points;
 };
 } // namespace SPH
 
@@ -185,10 +175,10 @@ void channel_flow_shell(const Real resolution_ref, const Real wall_thickness)
     wall_boundary.generateParticles<SurfaceParticles, WallBoundary>(resolution_ref, wall_thickness);
 
     ObserverBody fluid_axial_observer(sph_system, "FluidAxialObserver");
-    fluid_axial_observer.generateParticles<BaseParticles, FluidAxialObserver>(resolution_ref);
+    fluid_axial_observer.generateParticles<ObserverParticles>(createFluidAxialObservationPoints(resolution_ref));
 
     ObserverBody fluid_radial_observer(sph_system, "FluidRadialObserver");
-    fluid_radial_observer.generateParticles<BaseParticles, FluidRadialObserver>(resolution_ref);
+    fluid_radial_observer.generateParticles<ObserverParticles>(createFluidRadialObservationPoints(resolution_ref));
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -199,7 +189,7 @@ void channel_flow_shell(const Real resolution_ref, const Real wall_thickness)
     ShellInnerRelationWithContactKernel shell_curvature_inner(wall_boundary, water_block);
     // shell normal should point from fluid to shell
     // normal corrector set to false if shell normal is already pointing from fluid to shell
-    ContactRelationToShell water_block_contact(water_block, {&wall_boundary}, {false});
+    ContactRelationFromShellToFluid water_block_contact(water_block, {&wall_boundary}, {false});
     ContactRelation fluid_axial_observer_contact(fluid_axial_observer, {&water_block});
     ContactRelation fluid_radial_observer_contact(fluid_radial_observer, {&water_block});
     //----------------------------------------------------------------------
@@ -211,22 +201,22 @@ void channel_flow_shell(const Real resolution_ref, const Real wall_thickness)
     //	Define the main numerical methods used in the simulation.
     //	Note that there may be data dependence on the constructors of these methods.
     //----------------------------------------------------------------------
-    /** Pressure relaxation using verlet time stepping. */
+    /** Pressure relaxation using Verlet time stepping. */
     /** Here, we do not use Riemann solver for pressure as the flow is viscous. */
     Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation(water_block_inner, water_block_contact);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallNoRiemann> density_relaxation(water_block_inner, water_block_contact);
     /** Evaluation of density by summation approach. */
     InteractionWithUpdate<fluid_dynamics::DensitySummationComplex> update_density_by_summation(water_block_inner, water_block_contact);
     /** Time step size without considering sound wave speed. */
-    ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, 1.5 * U_f);
+    ReduceDynamics<fluid_dynamics::AdvectionViscousTimeStep> get_fluid_advection_time_step_size(water_block, 1.5 * U_f);
     /** Time step size with considering sound wave speed. */
-    ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
+    ReduceDynamics<fluid_dynamics::AcousticTimeStep> get_fluid_time_step_size(water_block);
     /** viscous acceleration and transport velocity correction can be combined because they are independent dynamics. */
     InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionComplex<AllParticles>> transport_correction(water_block_inner, water_block_contact);
     InteractionWithUpdate<fluid_dynamics::ViscousForceWithWall> viscous_acceleration(water_block_inner, water_block_contact);
     /** Inflow boundary condition. */
     BodyAlignedBoxByCell inflow_buffer(
-        water_block, makeShared<AlignedBoxShape>(Transform(Vec2d(buffer_translation)), buffer_halfsize));
+        water_block, makeShared<AlignedBoxShape>(xAxis, Transform(Vec2d(buffer_translation)), buffer_halfsize));
     SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>> parabolic_inflow(inflow_buffer);
     /** Periodic BCs in x direction. */
     PeriodicAlongAxis periodic_along_x(water_block.getSPHBodyBounds(), xAxis);
@@ -234,10 +224,14 @@ void channel_flow_shell(const Real resolution_ref, const Real wall_thickness)
     // Curvature calculation
     SimpleDynamics<thin_structure_dynamics::AverageShellCurvature> shell_curvature(shell_curvature_inner);
     //----------------------------------------------------------------------
+    //	Define the configuration related particles dynamics.
+    //----------------------------------------------------------------------
+    ParticleSorting particle_sorting(water_block);
+    //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
-    wall_boundary.addBodyStateForRecording<Real>("Average1stPrincipleCurvature");
-    BodyStatesRecordingToVtp write_real_body_states(sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_real_body_states(sph_system);
+    write_real_body_states.addToWrite<Real>(wall_boundary, "Average1stPrincipleCurvature");
     ObservedQuantityRecording<Vecd> write_fluid_axial_velocity("Velocity", fluid_axial_observer_contact);
     ObservedQuantityRecording<Vecd> write_fluid_radial_velocity("Velocity", fluid_radial_observer_contact);
     //----------------------------------------------------------------------
@@ -258,6 +252,7 @@ void channel_flow_shell(const Real resolution_ref, const Real wall_thickness)
     //----------------------------------------------------------------------
     //	Setup computing and initial conditions.
     //----------------------------------------------------------------------
+    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     size_t number_of_iterations = 0;
     int screen_output_interval = 100;
     Real end_time = 10.0;
@@ -274,7 +269,7 @@ void channel_flow_shell(const Real resolution_ref, const Real wall_thickness)
     //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------
-    while (GlobalStaticVariables::physical_time_ < end_time)
+    while (physical_time < end_time)
     {
         Real integration_time = 0.0;
         /** Integrate time (loop) until the next output time. */
@@ -299,7 +294,7 @@ void channel_flow_shell(const Real resolution_ref, const Real wall_thickness)
 
                 relaxation_time += dt;
                 integration_time += dt;
-                GlobalStaticVariables::physical_time_ += dt;
+                physical_time += dt;
 
                 inner_ite_dt++;
             }
@@ -307,15 +302,18 @@ void channel_flow_shell(const Real resolution_ref, const Real wall_thickness)
             if (number_of_iterations % screen_output_interval == 0)
             {
                 std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
-                          << GlobalStaticVariables::physical_time_
+                          << physical_time
                           << "	Dt = " << Dt << "	Dt / dt = " << inner_ite_dt << "\n";
             }
             number_of_iterations++;
 
             /** Water block configuration and periodic condition. */
             periodic_condition.bounding_.exec();
-
-            water_block.updateCellLinkedListWithParticleSort(100);
+            if (number_of_iterations % 100 == 0 && number_of_iterations != 1)
+            {
+                particle_sorting.exec();
+            }
+            water_block.updateCellLinkedList();
             periodic_condition.update_cell_linked_list_.exec();
             water_block_complex.updateConfiguration();
         }
@@ -347,16 +345,18 @@ void channel_flow_shell(const Real resolution_ref, const Real wall_thickness)
     };
     /* Compare all simulation to the analytical solution. */
     // Axial direction.
-    StdLargeVec<Vecd> &pos_axial = fluid_axial_observer.getBaseParticles().ParticlePositions();
-    StdLargeVec<Vecd> &vel_axial = *fluid_axial_observer.getBaseParticles().getVariableByName<Vecd>("Velocity");
-    for (size_t i = 0; i < pos_axial.size(); i++)
+    BaseParticles &fluid_axial_particles = fluid_axial_observer.getBaseParticles();
+    Vecd *pos_axial = fluid_axial_particles.ParticlePositions();
+    Vecd *vel_axial = fluid_axial_particles.getVariableDataByName<Vecd>("Velocity");
+    for (size_t i = 0; i < fluid_axial_particles.TotalRealParticles(); i++)
     {
         EXPECT_NEAR(inflow_velocity(pos_axial[i])[1], vel_axial[i][1], U_f * 5e-2);
     }
     // Radial direction
-    StdLargeVec<Vecd> &pos_radial = fluid_radial_observer.getBaseParticles().ParticlePositions();
-    StdLargeVec<Vecd> &vel_radial = *fluid_radial_observer.getBaseParticles().getVariableByName<Vecd>("Velocity");
-    for (size_t i = 0; i < pos_radial.size(); i++)
+    BaseParticles &fluid_radial_particles = fluid_radial_observer.getBaseParticles();
+    Vecd *pos_radial = fluid_radial_particles.ParticlePositions();
+    Vecd *vel_radial = fluid_radial_particles.getVariableDataByName<Vecd>("Velocity");
+    for (size_t i = 0; i < fluid_radial_particles.TotalRealParticles(); i++)
     {
         EXPECT_NEAR(inflow_velocity(pos_radial[i])[1], vel_radial[i][1], U_f * 5e-2);
     }

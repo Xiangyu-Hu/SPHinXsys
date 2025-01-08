@@ -114,9 +114,9 @@ int main(int ac, char *av[])
     //	Define the methods for I/O operations, observations of the simulation.
     //	Regression tests are also defined here.
     //----------------------------------------------------------------------
-    wave_body.addBodyStateForRecording<Real>("TotalEnergy");
-    wave_body.addBodyStateForRecording<Real>("Density");
-    BodyStatesRecordingToPlt body_states_recording(sph_system.real_bodies_);
+    BodyStatesRecordingToPlt body_states_recording(sph_system);
+    body_states_recording.addToWrite<Real>(wave_body, "TotalEnergy");
+    body_states_recording.addToWrite<Real>(wave_body, "Density");
     RegressionTestEnsembleAverage<ReducedQuantityRecording<MaximumSpeed>>
         write_maximum_speed(wave_body);
     //----------------------------------------------------------------------
@@ -132,6 +132,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
+    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     size_t number_of_iterations = 0;
     int screen_output_interval = 100;
     Real end_time = 0.2;
@@ -148,7 +149,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------
-    while (GlobalStaticVariables::physical_time_ < end_time)
+    while (physical_time < end_time)
     {
         Real integration_time = 0.0;
         //	Integrate time (loop) until the next output time.
@@ -159,13 +160,13 @@ int main(int ac, char *av[])
             integration_time += dt;
             pressure_relaxation.exec(dt);
             density_and_energy_relaxation.exec(dt);
-            GlobalStaticVariables::physical_time_ += dt;
+            physical_time += dt;
 
             if (number_of_iterations % screen_output_interval == 0)
             {
                 write_maximum_speed.writeToFile(number_of_iterations);
                 std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
-                          << GlobalStaticVariables::physical_time_
+                          << physical_time
                           << "	dt = " << dt << "\n";
             }
             number_of_iterations++;

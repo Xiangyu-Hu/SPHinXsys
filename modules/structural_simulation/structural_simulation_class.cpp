@@ -22,18 +22,18 @@ BodyPartFromMesh::BodyPartFromMesh(SPHBody &body, SharedPtr<TriangleMeshShape> t
 
 SolidBodyFromMesh::SolidBodyFromMesh(
     SPHSystem &system, SharedPtr<TriangleMeshShape> triangle_mesh_shape, Real resolution,
-    SharedPtr<SaintVenantKirchhoffSolid> material_model, StdLargeVec<Vecd> &pos_0, StdLargeVec<Real> &volume)
+    SharedPtr<SaintVenantKirchhoffSolid> material_model, Vecd *pos_0, Real *volume)
     : SolidBody(system, triangle_mesh_shape)
 {
     defineAdaptationRatios(1.15, system.resolution_ref_ / resolution);
     defineBodyLevelSetShape()->cleanLevelSet();
-    assignMaterial(material_model.get());
+    defineMaterial<SaintVenantKirchhoffSolid>(*material_model.get());
     generateParticles<BaseParticles, Lattice>();
 }
 
 SolidBodyForSimulation::SolidBodyForSimulation(
     SPHSystem &system, SharedPtr<TriangleMeshShape> triangle_mesh_shape, Real resolution,
-    Real physical_viscosity, SharedPtr<SaintVenantKirchhoffSolid> material_model, StdLargeVec<Vecd> &pos_0, StdLargeVec<Real> &volume)
+    Real physical_viscosity, SharedPtr<SaintVenantKirchhoffSolid> material_model, Vecd *pos_0, Real *volume)
     : solid_body_from_mesh_(system, triangle_mesh_shape, resolution, material_model, pos_0, volume),
       inner_body_relation_(solid_body_from_mesh_),
       initial_normal_direction_(SimpleDynamics<NormalDirectionFromBodyShape>(solid_body_from_mesh_)),
@@ -103,7 +103,7 @@ void relaxParticlesSingleResolution(bool write_particle_relaxation_data,
     std::cout << "The physics relaxation process of the imported model finished !" << std::endl;
 }
 
-std::tuple<StdLargeVec<Vecd>, StdLargeVec<Real>> generateAndRelaxParticlesFromMesh(
+std::tuple<Vecd *, Real *> generateAndRelaxParticlesFromMesh(
     SharedPtr<TriangleMeshShape> triangle_mesh_shape, Real resolution, bool particle_relaxation, bool write_particle_relaxation_data)
 {
     BoundingBox bb = triangle_mesh_shape->getBounds();
@@ -120,7 +120,7 @@ std::tuple<StdLargeVec<Vecd>, StdLargeVec<Real>> generateAndRelaxParticlesFromMe
         relaxParticlesSingleResolution(write_particle_relaxation_data, model, inner_relation);
     }
 
-    return std::tuple<StdLargeVec<Vecd>, StdLargeVec<Real>>(model.getBaseParticles().ParticlePositions(), model.getBaseParticles().VolumetricMeasures());
+    return std::tuple<Vecd *, Real *>(model.getBaseParticles().ParticlePositions(), model.getBaseParticles().VolumetricMeasures());
 }
 
 BodyPartByParticle *createBodyPartFromMesh(SPHBody &body, const StlList &stl_list, size_t body_index, SharedPtr<TriangleMeshShape> tmesh)
@@ -199,6 +199,7 @@ StructuralSimulation::StructuralSimulation(const StructuralSimulationInput &inpu
       system_(SPHSystem(BoundingBox(Vec3d::Zero(), Vec3d::Zero()), system_resolution_)),
       scale_system_boundaries_(input.scale_system_boundaries_),
       io_environment_(system_),
+      physical_time_(*system_.getSystemVariableDataByName<Real>("PhysicalTime")),
 
       // optional: boundary conditions
       non_zero_gravity_(input.non_zero_gravity_),
@@ -325,12 +326,12 @@ void StructuralSimulation::initializeElasticSolidBodies()
        // we delete the .stl ending
         temp_name.erase(temp_name.size() - 4);
         // create the initial particles from the triangle mesh shape with particle relaxation option
-        std::tuple<StdLargeVec<Vecd>, StdLargeVec<Real>> particles =
+        std::tuple<Vecd *, Real *> particles =
             generateAndRelaxParticlesFromMesh(body_mesh_list_[i], resolution_list_[i], particle_relaxation_list_[i], write_particle_relaxation_data_);
 
         // get the particles' initial position and their volume
-        StdLargeVec<Vecd> &pos_0 = std::get<0>(particles);
-        StdLargeVec<Real> &volume = std::get<1>(particles);
+        Vecd *pos_0 = std::get<0>(particles);
+        Real *volume = std::get<1>(particles);
 
         // create the SolidBodyForSimulation
         solid_body_list_.emplace_back(makeShared<SolidBodyForSimulation>(
@@ -350,8 +351,8 @@ void StructuralSimulation::initializeContactBetweenTwoBodies(int first, int seco
     contact_list_.emplace_back(makeShared<SurfaceContactRelation>(*second_body, RealBodyVector({first_body})));
 
     int last = contact_list_.size() - 1;
-    contact_density_list_.push_back(makeShared<InteractionDynamics<solid_dynamics::ContactDensitySummation>>(*contact_list_[last - 1]));
-    contact_density_list_.push_back(makeShared<InteractionDynamics<solid_dynamics::ContactDensitySummation>>(*contact_list_[last]));
+    contact_density_list_.push_back(makeShared<InteractionDynamics<solid_dynamics::ContactFactorSummation>>(*contact_list_[last - 1]));
+    contact_density_list_.push_back(makeShared<InteractionDynamics<solid_dynamics::ContactFactorSummation>>(*contact_list_[last]));
 
     contact_force_list_.push_back(makeShared<InteractionWithUpdate<solid_dynamics::ContactForce>>(*contact_list_[last - 1]));
     contact_force_list_.push_back(makeShared<InteractionWithUpdate<solid_dynamics::ContactForce>>(*contact_list_[last]));
@@ -375,7 +376,7 @@ void StructuralSimulation::initializeAllContacts()
 
         contact_list_.emplace_back(makeShared<SurfaceContactRelation>(*contact_body, target_list));
         int last = contact_list_.size() - 1;
-        contact_density_list_.emplace_back(makeShared<InteractionDynamics<solid_dynamics::ContactDensitySummation>>(*contact_list_[last]));
+        contact_density_list_.emplace_back(makeShared<InteractionDynamics<solid_dynamics::ContactFactorSummation>>(*contact_list_[last]));
         contact_force_list_.emplace_back(makeShared<InteractionWithUpdate<solid_dynamics::ContactForce>>(*contact_list_[last]));
     }
     // continue appending the lists with the time dependent contacts
@@ -405,7 +406,8 @@ void StructuralSimulation::initializeGravity()
         {
             SharedPtr<Gravity> gravity_ptr = makeShared<Gravity>(non_zero_gravity_[gravity_index_i].second);
             gravity_list_.emplace_back(non_zero_gravity_[gravity_index_i].second);
-            initialize_gravity_.emplace_back(makeShared<SimpleDynamics<GravityForce>>(*solid_body_list_[i]->getSolidBodyFromMesh(), gravity_list_.back()));
+            initialize_gravity_.emplace_back(makeShared<SimpleDynamics<GravityForce<Gravity>>>(
+                *solid_body_list_[i]->getSolidBodyFromMesh(), gravity_list_.back()));
             gravity_index_i++;
         }
     }
@@ -657,7 +659,7 @@ void StructuralSimulation::executeSpringNormalOnSurfaceParticles()
     }
 }
 
-void StructuralSimulation::executeContactDensitySummation()
+void StructuralSimulation::executeContactFactorSummation()
 {
     // number of contacts that are not time dependent: contact pairs * 2
     size_t number_of_general_contacts = contacting_body_pairs_list_.size();
@@ -674,7 +676,7 @@ void StructuralSimulation::executeContactDensitySummation()
             int index = (i - number_of_general_contacts) / 2;
             Real start_time = time_dep_contacting_body_pairs_list_[index].second[0];
             Real end_time = time_dep_contacting_body_pairs_list_[index].second[1];
-            if (GlobalStaticVariables::physical_time_ >= start_time && GlobalStaticVariables::physical_time_ <= end_time)
+            if (physical_time_ >= start_time && physical_time_ <= end_time)
             {
                 contact_density_list_[i]->exec();
             }
@@ -699,7 +701,7 @@ void StructuralSimulation::executeContactForce()
             int index = (i - number_of_general_contacts) / 2;
             Real start_time = time_dep_contacting_body_pairs_list_[index].second[0];
             Real end_time = time_dep_contacting_body_pairs_list_[index].second[1];
-            if (GlobalStaticVariables::physical_time_ >= start_time && GlobalStaticVariables::physical_time_ <= end_time)
+            if (physical_time_ >= start_time && physical_time_ <= end_time)
             {
                 contact_force_list_[i]->exec();
             }
@@ -806,7 +808,7 @@ void StructuralSimulation::executeContactUpdateConfiguration()
             int index = (i - number_of_general_contacts) / 2;
             Real start_time = time_dep_contacting_body_pairs_list_[index].second[0];
             Real end_time = time_dep_contacting_body_pairs_list_[index].second[1];
-            if (GlobalStaticVariables::physical_time_ >= start_time && GlobalStaticVariables::physical_time_ <= end_time)
+            if (physical_time_ >= start_time && physical_time_ <= end_time)
             {
                 contact_list_[i]->updateConfiguration();
             }
@@ -816,7 +818,7 @@ void StructuralSimulation::executeContactUpdateConfiguration()
 
 void StructuralSimulation::initializeSimulation()
 {
-    GlobalStaticVariables::physical_time_ = 0.0;
+    physical_time_ = 0.0;
 
     /** INITIALIZE SYSTEM */
     system_.initializeSystemCellLinkedLists();
@@ -829,7 +831,7 @@ void StructuralSimulation::initializeSimulation()
 void StructuralSimulation::runSimulationStep(Real &dt, Real &integration_time)
 {
     if (iteration_ % 100 == 0)
-        std::cout << "N=" << iteration_ << " Time: " << GlobalStaticVariables::physical_time_ << "	dt: " << dt << "\n";
+        std::cout << "N=" << iteration_ << " Time: " << physical_time_ << "	dt: " << dt << "\n";
 
     /** UPDATE NORMAL DIRECTIONS */
     executeUpdateElasticNormalDirection();
@@ -844,7 +846,7 @@ void StructuralSimulation::runSimulationStep(Real &dt, Real &integration_time)
     executeSpringNormalOnSurfaceParticles();
 
     /** CONTACT */
-    executeContactDensitySummation();
+    executeContactFactorSummation();
     executeContactForce();
 
     /** STRESS RELAXATION, DAMPING, POSITIONAL CONSTRAINTS */
@@ -873,7 +875,7 @@ void StructuralSimulation::runSimulationStep(Real &dt, Real &integration_time)
     iteration_++;
     dt = system_.getSmallestTimeStepAmongSolidBodies();
     integration_time += dt;
-    GlobalStaticVariables::physical_time_ += dt;
+    physical_time_ += dt;
 
     /** UPDATE BODIES CELL LINKED LISTS */
     executeUpdateCellLinkedList();
@@ -884,7 +886,7 @@ void StructuralSimulation::runSimulationStep(Real &dt, Real &integration_time)
 
 void StructuralSimulation::runSimulation(Real end_time)
 {
-    BodyStatesRecordingToVtp write_states(system_.real_bodies_);
+    BodyStatesRecordingToVtp write_states(system_);
 
     /** Statistics for computing time. */
     write_states.writeToFile(0);
@@ -893,7 +895,7 @@ void StructuralSimulation::runSimulation(Real end_time)
     TickCount t1 = TickCount::now();
     TimeInterval interval;
     /** Main loop */
-    while (GlobalStaticVariables::physical_time_ < end_time)
+    while (physical_time_ < end_time)
     {
         Real integration_time = 0.0;
         while (integration_time < output_period)
@@ -915,8 +917,8 @@ void StructuralSimulation::runSimulation(Real end_time)
 
 double StructuralSimulation::runSimulationFixedDurationJS(int number_of_steps)
 {
-    BodyStatesRecordingToVtp write_states(system_.real_bodies_);
-    GlobalStaticVariables::physical_time_ = 0.0;
+    BodyStatesRecordingToVtp write_states(system_);
+    physical_time_ = 0.0;
 
     /** Statistics for computing time. */
     write_states.writeToFile(0);
@@ -947,10 +949,11 @@ double StructuralSimulation::runSimulationFixedDurationJS(int number_of_steps)
 
 Real StructuralSimulation::getMaxDisplacement(int body_index)
 {
-    StdLargeVec<Vecd> &pos = solid_body_list_[body_index].get()->getElasticSolidParticles()->ParticlePositions();
-    StdLargeVec<Vecd> &pos0 = *solid_body_list_[body_index].get()->getElasticSolidParticles()->registerSharedVariableFrom<Vecd>("InitialPosition", "Position");
+    BaseParticles *base_particles = solid_body_list_[body_index].get()->getElasticSolidParticles();
+    Vecd *pos = base_particles->ParticlePositions();
+    Vecd *pos0 = base_particles->registerStateVariableFrom<Vecd>("InitialPosition", "Position");
     Real displ_max = 0;
-    for (size_t i = 0; i < pos0.size(); i++)
+    for (size_t i = 0; i < base_particles->TotalRealParticles(); i++)
     {
         Real displ = (pos[i] - pos0[i]).norm();
         if (displ > displ_max)
@@ -961,11 +964,11 @@ Real StructuralSimulation::getMaxDisplacement(int body_index)
 
 StructuralSimulationJS::StructuralSimulationJS(const StructuralSimulationInput &input)
     : StructuralSimulation(input),
-      write_states_(system_.real_bodies_),
+      write_states_(system_),
       dt(0.0)
 {
     write_states_.writeToFile(0);
-    GlobalStaticVariables::physical_time_ = 0.0;
+    physical_time_ = 0.0;
 }
 
 void StructuralSimulationJS::runSimulationFixedDuration(int number_of_steps)

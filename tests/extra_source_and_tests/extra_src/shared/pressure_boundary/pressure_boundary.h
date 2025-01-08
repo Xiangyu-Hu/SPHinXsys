@@ -43,27 +43,31 @@ class PressureCondition : public BaseFlowBoundaryCondition
     /** default parameter indicates prescribe pressure */
     explicit PressureCondition(BodyAlignedBoxByCell &aligned_box_part)
         : BaseFlowBoundaryCondition(aligned_box_part),
-          aligned_box_(aligned_box_part.aligned_box_),
-          transform_(aligned_box_.getTransform()), 
+          aligned_box_(aligned_box_part.getAlignedBoxShape()),
+          alignment_axis_(aligned_box_.AlignmentAxis()),
+          transform_(aligned_box_.getTransform()),
           target_pressure_(*this),
-          kernel_sum_(*particles_->getVariableByName<Vecd>("KernelSummation")){};
+          kernel_sum_(particles_->getVariableDataByName<Vecd>("KernelSummation")),
+          physical_time_(sph_system_.getSystemVariableDataByName<Real>("PhysicalTime")){};
     virtual ~PressureCondition(){};
     AlignedBoxShape &getAlignedBox() { return aligned_box_; };
 
     void update(size_t index_i, Real dt = 0.0)
     {
-            vel_[index_i] += 2.0 * kernel_sum_[index_i] * target_pressure_(p_[index_i]) / rho_[index_i] * dt;
+        vel_[index_i] += 2.0 * kernel_sum_[index_i] * target_pressure_(p_[index_i], *physical_time_) / rho_[index_i] * dt;
 
-            Vecd frame_velocity = Vecd::Zero();
-            frame_velocity[0] = transform_.xformBaseVecToFrame(vel_[index_i])[0];
-            vel_[index_i] = transform_.xformFrameVecToBase(frame_velocity);
+        Vecd frame_velocity = Vecd::Zero();
+        frame_velocity[alignment_axis_] = transform_.xformBaseVecToFrame(vel_[index_i])[alignment_axis_];
+        vel_[index_i] = transform_.xformFrameVecToBase(frame_velocity);
     };
 
   protected:
     AlignedBoxShape &aligned_box_;
+    const int alignment_axis_;
     Transform &transform_;
     TargetPressure target_pressure_;
-    StdLargeVec<Vecd> &kernel_sum_;
+    Vecd *kernel_sum_;
+    Real *physical_time_;
 };
 } // namespace fluid_dynamics
 } // namespace SPH

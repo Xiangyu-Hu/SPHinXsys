@@ -96,12 +96,12 @@ class NeumannWallBoundary : public MultiPolygonShape
 //----------------------------------------------------------------------
 //	Application dependent initial condition.
 //----------------------------------------------------------------------
-class DiffusionInitialCondition : public LocalDynamics, public DataDelegateSimple
+class DiffusionInitialCondition : public LocalDynamics
 {
   public:
     explicit DiffusionInitialCondition(SPHBody &sph_body)
-        : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
-          phi_(*particles_->registerSharedVariable<Real>("Phi")){};
+        : LocalDynamics(sph_body),
+          phi_(particles_->registerStateVariable<Real>("Phi")){};
 
     void update(size_t index_i, Real dt)
     {
@@ -109,16 +109,16 @@ class DiffusionInitialCondition : public LocalDynamics, public DataDelegateSimpl
     };
 
   protected:
-    StdLargeVec<Real> &phi_;
+    Real *phi_;
 };
 
-class DirichletWallBoundaryInitialCondition : public LocalDynamics, public DataDelegateSimple
+class DirichletWallBoundaryInitialCondition : public LocalDynamics
 {
   public:
     explicit DirichletWallBoundaryInitialCondition(SPHBody &sph_body)
-        : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
-          pos_(*particles_->getVariableByName<Vecd>("Position")),
-          phi_(*particles_->registerSharedVariable<Real>("Phi")){};
+        : LocalDynamics(sph_body),
+          pos_(particles_->getVariableDataByName<Vecd>("Position")),
+          phi_(particles_->registerStateVariable<Real>("Phi")){};
 
     void update(size_t index_i, Real dt)
     {
@@ -135,18 +135,18 @@ class DirichletWallBoundaryInitialCondition : public LocalDynamics, public DataD
     }
 
   protected:
-    StdLargeVec<Vecd> &pos_;
-    StdLargeVec<Real> &phi_;
+    Vecd *pos_;
+    Real *phi_;
 };
 
-class NeumannWallBoundaryInitialCondition : public LocalDynamics, public DataDelegateSimple
+class NeumannWallBoundaryInitialCondition : public LocalDynamics
 {
   public:
     explicit NeumannWallBoundaryInitialCondition(SPHBody &sph_body)
-        : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
-          pos_(*particles_->getVariableByName<Vecd>("Position")),
-          phi_(*particles_->registerSharedVariable<Real>("Phi")),
-          phi_flux_(*particles_->getVariableByName<Real>("PhiFlux")) {}
+        : LocalDynamics(sph_body),
+          pos_(particles_->getVariableDataByName<Vecd>("Position")),
+          phi_(particles_->registerStateVariable<Real>("Phi")),
+          phi_flux_(particles_->getVariableDataByName<Real>("PhiFlux")) {}
 
     void update(size_t index_i, Real dt)
     {
@@ -159,36 +159,31 @@ class NeumannWallBoundaryInitialCondition : public LocalDynamics, public DataDel
     }
 
   protected:
-    StdLargeVec<Vecd> &pos_;
-    StdLargeVec<Real> &phi_, &phi_flux_;
+    Vecd *pos_;
+    Real *phi_, *phi_flux_;
 };
 //----------------------------------------------------------------------
 //	Specify diffusion relaxation method.
 //----------------------------------------------------------------------
 using DiffusionBodyRelaxation = DiffusionBodyRelaxationComplex<
     IsotropicDiffusion, KernelGradientInner, KernelGradientContact, Dirichlet, Neumann>;
-//----------------------------------------------------------------------
-//	An observer body to measure temperature at given positions.
-//----------------------------------------------------------------------
-template <>
-class ParticleGenerator<ObserverBody> : public ParticleGenerator<Observer>
-{
-  public:
-    ParticleGenerator(SPHBody &sph_body) : ParticleGenerator<Observer>(sph_body)
-    {
-        /** A line of measuring points at the middle line. */
-        size_t number_of_observation_points = 5;
-        Real range_of_measure = L;
-        Real start_of_measure = 0;
 
-        for (size_t i = 0; i < number_of_observation_points; ++i)
-        {
-            Vec2d point_coordinate(0.5 * L, range_of_measure * Real(i) /
-                                                    Real(number_of_observation_points - 1) +
-                                                start_of_measure);
-            positions_.push_back(point_coordinate);
-        }
+StdVec<Vecd> createObservationPoints()
+{
+    StdVec<Vecd> observation_points;
+    /** A line of measuring points at the middle line. */
+    size_t number_of_observation_points = 5;
+    Real range_of_measure = L;
+    Real start_of_measure = 0;
+
+    for (size_t i = 0; i < number_of_observation_points; ++i)
+    {
+        Vec2d point_coordinate(0.5 * L, range_of_measure * Real(i) /
+                                                Real(number_of_observation_points - 1) +
+                                            start_of_measure);
+        observation_points.push_back(point_coordinate);
     }
+    return observation_points;
 };
 } // namespace SPH
 #endif // DIFFUSION_NEUMANN_BC_H

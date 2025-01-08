@@ -38,8 +38,9 @@ namespace po = boost::program_options;
 #endif
 
 #include "base_data_package.h"
+#include "execution_policy.h"
 #include "io_environment.h"
-#include "sph_data_containers.h"
+#include "sphinxsys_containers.h"
 
 #include <filesystem>
 #include <fstream>
@@ -48,9 +49,7 @@ namespace fs = std::filesystem;
 
 namespace SPH
 {
-/**
- * Pre-claimed classes.
- */
+using namespace execution;
 class SPHBody;
 class ComplexShape;
 
@@ -61,6 +60,8 @@ class ComplexShape;
 class SPHSystem
 {
     UniquePtrKeeper<IOEnvironment> io_ptr_keeper_;
+    DataContainerUniquePtrAssemble<SingularVariable> all_system_variable_ptrs_;
+    UniquePtrsKeeper<Entity> unique_system_variable_ptrs_;
 
   public:
     BoundingBox system_domain_bounds_;       /**< Lower and Upper domain bounds. */
@@ -68,7 +69,6 @@ class SPHSystem
     tbb::global_control tbb_global_control_; /**< global controlling on the total number parallel threads */
     SPHBodyVector sph_bodies_;               /**< All sph bodies. */
     SPHBodyVector observation_bodies_;       /**< The bodies without inner particle configuration. */
-    SPHBodyVector real_bodies_;              /**< The bodies with inner particle configuration. */
     SolidBodyVector solid_bodies_;           /**< The bodies with inner particle configuration and acoustic time steps . */
 
     SPHSystem(BoundingBox system_domain_bounds, Real resolution_ref,
@@ -96,16 +96,29 @@ class SPHSystem
     void initializeSystemConfigurations();
     /** get the min time step from all bodies. */
     Real getSmallestTimeStepAmongSolidBodies(Real CFL = 0.6);
-    Real ReferenceResolution(){return resolution_ref_;};
+    Real ReferenceResolution() { return resolution_ref_; };
+    SPHBodyVector getRealBodies() { return real_bodies_; };
+    void addRealBody(SPHBody *sph_body) { real_bodies_.push_back(sph_body); };
+
+    template <typename DataType>
+    SingularVariable<DataType> *registerSystemVariable(const std::string &name,
+                                                       DataType initial_value = ZeroData<DataType>::value);
+    template <typename DataType>
+    SingularVariable<DataType> *getSystemVariableByName(const std::string &name);
+
+    template <typename DataType>
+    DataType *getSystemVariableDataByName(const std::string &name);
 
   protected:
     friend class IOEnvironment;
     IOEnvironment *io_environment_; /**< io environment */
+    SPHBodyVector real_bodies_;     /**< The bodies with inner particle configuration. */
     bool run_particle_relaxation_;  /**< run particle relaxation for body fitted particle distribution */
     bool reload_particles_;         /**< start the simulation with relaxed particles. */
     size_t restart_step_;           /**< restart step */
     bool generate_regression_data_; /**< run and generate or enhance the regression test data set. */
     bool state_recording_;          /**< Record state in output folder. */
+    SingularVariables all_system_variables_;
 };
 } // namespace SPH
 #endif // SPH_SYSTEM_H

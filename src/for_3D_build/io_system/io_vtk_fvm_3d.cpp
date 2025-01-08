@@ -1,6 +1,7 @@
+#include "io_vtk.hpp"
 #include "io_vtk_fvm.h"
-
 #include "mesh_helper.h"
+
 namespace SPH
 {
 //=================================================================================================//
@@ -31,7 +32,10 @@ void BodyStatesRecordingInMeshToVtu::writeWithFileName(const std::string &sequen
 
             // write Particle data to vtu file
             out_file << "<CellData>\n";
-            body->writeParticlesToVtuFile(out_file);
+
+            BaseParticles &particles = body->getBaseParticles();
+            writeParticlesToVtk(out_file, particles);
+
             out_file << "</CellData>\n";
             // Write VTU file footer
             out_file << "</Piece>\n";

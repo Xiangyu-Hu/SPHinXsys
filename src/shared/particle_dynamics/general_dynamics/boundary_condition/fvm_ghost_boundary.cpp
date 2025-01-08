@@ -7,12 +7,12 @@ namespace SPH
 //=================================================================================================//
 GhostCreationFromMesh::GhostCreationFromMesh(RealBody &real_body, ANSYSMesh &ansys_mesh,
                                              Ghost<ReserveSizeFactor> &ghost_boundary)
-    : DataDelegateSimple(real_body),
+    : LocalDynamics(real_body),
       ghost_boundary_(ghost_boundary),
       node_coordinates_(ansys_mesh.node_coordinates_),
       mesh_topology_(ansys_mesh.mesh_topology_),
-      pos_(*particles_->getVariableByName<Vecd>("Position")),
-      Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")),
+      pos_(particles_->getVariableDataByName<Vecd>("Position")),
+      Vol_(particles_->getVariableDataByName<Real>("VolumetricMeasure")),
       ghost_bound_(ghost_boundary.GhostBound())
 {
     ghost_boundary.checkParticlesReserved();
@@ -24,14 +24,14 @@ GhostCreationFromMesh::GhostCreationFromMesh(RealBody &real_body, ANSYSMesh &ans
 //=================================================================================================//
 BoundaryConditionSetupInFVM::
     BoundaryConditionSetupInFVM(BaseInnerRelationInFVM &inner_relation, GhostCreationFromMesh &ghost_creation)
-    : DataDelegateInner(inner_relation),
-      rho_(*particles_->getVariableByName<Real>("Density")),
-      Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")),
-      mass_(*particles_->getVariableByName<Real>("Mass")),
-      p_(*particles_->getVariableByName<Real>("Pressure")),
-      vel_(*particles_->getVariableByName<Vecd>("Velocity")),
-      pos_(*particles_->getVariableByName<Vecd>("Position")),
-      mom_(*particles_->getVariableByName<Vecd>("Momentum")),
+    : LocalDynamics(inner_relation.getSPHBody()), DataDelegateInner(inner_relation),
+      rho_(particles_->getVariableDataByName<Real>("Density")),
+      Vol_(particles_->getVariableDataByName<Real>("VolumetricMeasure")),
+      mass_(particles_->getVariableDataByName<Real>("Mass")),
+      p_(particles_->getVariableDataByName<Real>("Pressure")),
+      vel_(particles_->getVariableDataByName<Vecd>("Velocity")),
+      pos_(particles_->getVariableDataByName<Vecd>("Position")),
+      mom_(particles_->getVariableDataByName<Vecd>("Momentum")),
       ghost_bound_(ghost_creation.ghost_bound_),
       each_boundary_type_with_all_ghosts_index_(ghost_creation.each_boundary_type_with_all_ghosts_index_),
       each_boundary_type_with_all_ghosts_eij_(ghost_creation.each_boundary_type_with_all_ghosts_eij_),

@@ -5,7 +5,8 @@ namespace SPH
 //=================================================================================================//
 NablaWV<Inner<>>::
     NablaWV(BaseInnerRelation &inner_relation)
-    : NablaWV<DataDelegateInner>(inner_relation), Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")) {}
+    : NablaWV<DataDelegateInner>(inner_relation),
+      Vol_(particles_->getVariableDataByName<Real>("VolumetricMeasure")) {}
 //=================================================================================================//
 void NablaWV<Inner<>>::interaction(size_t index_i, Real dt)
 {
@@ -22,7 +23,7 @@ void NablaWV<Contact<>>::interaction(size_t index_i, Real dt)
 {
     for (size_t k = 0; k < contact_configuration_.size(); ++k)
     {
-        StdLargeVec<Real> &Vol_k = *(contact_Vol_[k]);
+        Real *Vol_k = contact_Vol_[k];
         Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
         for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
         {

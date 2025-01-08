@@ -100,7 +100,7 @@ int main(int ac, char *av[])
         : cream.generateParticles<BaseParticles, Lattice>();
 
     ObserverBody cream_observer(sph_system, "CreamObserver");
-    cream_observer.generateParticles<BaseParticles, Observer>(observation_location);
+    cream_observer.generateParticles<ObserverParticles>(observation_location);
     //----------------------------------------------------------------------
     //	Run particle relaxation for body-fitted distribution if chosen.
     //----------------------------------------------------------------------
@@ -119,7 +119,7 @@ int main(int ac, char *av[])
         //----------------------------------------------------------------------
         //	Output for particle relaxation.
         //----------------------------------------------------------------------
-        BodyStatesRecordingToVtp write_cream_state(sph_system.real_bodies_);
+        BodyStatesRecordingToVtp write_cream_state(sph_system);
         ReloadParticleIO write_particle_reload_files(cream);
         //----------------------------------------------------------------------
         //	Particle relaxation starts here.
@@ -157,19 +157,19 @@ int main(int ac, char *av[])
     //	Note that there may be data dependence on the constructors of these methods.
     //----------------------------------------------------------------------
     Gravity gravity(Vecd(0.0, -gravity_g));
-    SimpleDynamics<GravityForce> constant_gravity(cream, gravity);
+    SimpleDynamics<GravityForce<Gravity>> constant_gravity(cream, gravity);
     InteractionWithUpdate<LinearGradientCorrectionMatrixInner> cream_corrected_configuration(cream_inner);
 
     Dynamics1Level<solid_dynamics::DecomposedPlasticIntegration1stHalf> cream_stress_relaxation_first_half(cream_inner);
     Dynamics1Level<solid_dynamics::Integration2ndHalf> cream_stress_relaxation_second_half(cream_inner);
 
-    ReduceDynamics<solid_dynamics::AcousticTimeStepSize> cream_get_time_step_size(cream, 0.2);
+    ReduceDynamics<solid_dynamics::AcousticTimeStep> cream_get_time_step_size(cream, 0.2);
     BodyRegionByParticle platform(cream, makeShared<MultiPolygonShape>(createPlatformConstraint()));
     SimpleDynamics<FixBodyPartConstraint> platform_constraint(platform);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp body_states_recording(sph_system.real_bodies_);
+    BodyStatesRecordingToVtp body_states_recording(sph_system);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
         cream_displacement_recording("Position", cream_observer_contact);
     //----------------------------------------------------------------------
@@ -188,6 +188,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
+    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     int ite = 0;
     Real T0 = 0.75;
     Real end_time = T0;
@@ -203,7 +204,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------
-    while (GlobalStaticVariables::physical_time_ < end_time)
+    while (physical_time < end_time)
     {
         Real integration_time = 0.0;
         while (integration_time < output_interval)
@@ -211,7 +212,7 @@ int main(int ac, char *av[])
             if (ite % screen_output_interval == 0)
             {
                 std::cout << "N=" << ite << " Time: "
-                          << GlobalStaticVariables::physical_time_ << "	dt: "
+                          << physical_time << "	dt: "
                           << dt << "\n";
 
                 if (ite != 0 && ite % observation_sample_interval == 0)
@@ -226,7 +227,7 @@ int main(int ac, char *av[])
             ite++;
             dt = cream_get_time_step_size.exec();
             integration_time += dt;
-            GlobalStaticVariables::physical_time_ += dt;
+            physical_time += dt;
         }
         TickCount t2 = TickCount::now();
         body_states_recording.writeToFile();

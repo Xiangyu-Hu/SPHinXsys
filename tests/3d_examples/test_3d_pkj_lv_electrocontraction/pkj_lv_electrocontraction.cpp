@@ -23,8 +23,6 @@ int main(int ac, char *av[])
      * Build up context -- a SPHSystem.
      */
     SPHSystem sph_system(system_domain_bounds, dp_0);
-    /** Set the starting time. */
-    GlobalStaticVariables::physical_time_ = 0.0;
     /** Tag for run particle relaxation for the initial body fitted distribution. */
     sph_system.setRunParticleRelaxation(false);
     /** Tag for reload initially relaxed particles. */
@@ -55,6 +53,8 @@ int main(int ac, char *av[])
         RelaxationStepInner relaxation_step_inner(herat_model_inner);
         BodyStatesRecordingToVtp write_herat_model_state_to_vtp({herat_model});
         ReloadParticleIO write_particle_reload_files(herat_model);
+        write_particle_reload_files.addToReload<Vecd>(herat_model, "Fiber");
+        write_particle_reload_files.addToReload<Vecd>(herat_model, "Sheet");
         //----------------------------------------------------------------------
         //	Physics relaxation starts here.
         //----------------------------------------------------------------------
@@ -86,7 +86,7 @@ int main(int ac, char *av[])
         BodySurface surface_part(herat_model);
         SimpleDynamics<DiffusionBCs> impose_diffusion_bc(surface_part, "Phi");
         impose_diffusion_bc.exec();
-        herat_model.addBodyStateForRecording<Real>("Phi");
+        write_herat_model_state_to_vtp.addToWrite<Real>(herat_model, "Phi");
         write_herat_model_state_to_vtp.writeToFile(ite);
 
         int diffusion_step = 100;
@@ -141,10 +141,10 @@ int main(int ac, char *av[])
     //	SPH Observation section
     //----------------------------------------------------------------------
     ObserverBody voltage_observer(sph_system, "VoltageObserver");
-    voltage_observer.generateParticles<BaseParticles, HeartObserver>();
+    voltage_observer.generateParticles<ObserverParticles>(createObservationPoints());
 
     ObserverBody myocardium_observer(sph_system, "MyocardiumObserver");
-    myocardium_observer.generateParticles<BaseParticles, HeartObserver>();
+    myocardium_observer.generateParticles<ObserverParticles>(createObservationPoints());
 
     /** topology */
     InnerRelation physiology_heart_inner(physiology_heart);
@@ -194,18 +194,18 @@ int main(int ac, char *av[])
     Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half(mechanics_heart_inner);
 
     /** Time step size calculation. */
-    ReduceDynamics<solid_dynamics::AcousticTimeStepSize> get_mechanics_time_step(mechanics_heart);
+    ReduceDynamics<solid_dynamics::AcousticTimeStep> get_mechanics_time_step(mechanics_heart);
     /** Constrain region of the inserted body. */
     MuscleBaseShapeParameters muscle_base_parameters;
     BodyRegionByParticle muscle_base(mechanics_heart, makeShared<TriangleMeshShapeBrick>(muscle_base_parameters, "Holder"));
     SimpleDynamics<FixBodyPartConstraint> constraint_holder(muscle_base);
 
     /**IO for observer.*/
-    physiology_heart.addBodyStateForRecording<Real>("Voltage");
-    physiology_heart.addBodyStateForRecording<Real>("GateVariable");
-    physiology_heart.addBodyStateForRecording<Real>("ActiveContractionStress");
-    mechanics_heart.addBodyStateForRecording<Real>("ActiveContractionStress");
-    BodyStatesRecordingToVtp write_states(sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_states(sph_system);
+    write_states.addToWrite<Real>(physiology_heart, "Voltage");
+    write_states.addToWrite<Real>(physiology_heart, "GateVariable");
+    write_states.addToWrite<Real>(physiology_heart, "ActiveContractionStress");
+    write_states.addToWrite<Real>(mechanics_heart, "ActiveContractionStress");
     ObservedQuantityRecording<Real> write_voltage("Voltage", voltage_observer_contact);
     ObservedQuantityRecording<Vecd> write_displacement("Position", myocardium_observer_contact);
     /**
@@ -224,6 +224,7 @@ int main(int ac, char *av[])
     /**
      * main loop.
      */
+    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     int screen_output_interval = 10;
     int ite = 0;
     int reaction_step = 2;
@@ -239,7 +240,7 @@ int main(int ac, char *av[])
     std::cout << "Main Loop Starts Here : "
               << "\n";
     /** Main loop starts here. */
-    while (GlobalStaticVariables::physical_time_ < end_time)
+    while (physical_time < end_time)
     {
         Real integration_time = 0.0;
         while (integration_time < Ouput_T)
@@ -250,14 +251,14 @@ int main(int ac, char *av[])
                 if (ite % screen_output_interval == 0)
                 {
                     std::cout << std::fixed << std::setprecision(9) << "N=" << ite << "	Time = "
-                              << GlobalStaticVariables::physical_time_
+                              << physical_time
                               << "	dt_pkj = " << dt_pkj
                               << "	dt_myocardium = " << dt_myocardium
                               << "	dt_muscle = " << dt_muscle << "\n";
                 }
                 /** Apply stimulus excitation. */
-                // if( 0 <= GlobalStaticVariables::physical_time_
-                // 	&&  GlobalStaticVariables::physical_time_ <= 0.5)
+                // if( 0 <= physical_time
+                // 	&&  physical_time <= 0.5)
                 // {
                 // 	apply_stimulus_myocardium.exec(dt_myocardium);
                 // }
@@ -273,7 +274,7 @@ int main(int ac, char *av[])
                     if (dt_myocardium - dt_pkj_sum < dt_pkj)
                         dt_pkj = dt_myocardium - dt_pkj_sum;
 
-                    if (0 <= GlobalStaticVariables::physical_time_ && GlobalStaticVariables::physical_time_ <= 0.5)
+                    if (0 <= physical_time && physical_time <= 0.5)
                     {
                         apply_stimulus_pkj.exec(dt_pkj);
                     }
@@ -333,7 +334,7 @@ int main(int ac, char *av[])
 
                 relaxation_time += dt_myocardium;
                 integration_time += dt_myocardium;
-                GlobalStaticVariables::physical_time_ += dt_myocardium;
+                physical_time += dt_myocardium;
             }
             write_voltage.writeToFile(ite);
             write_displacement.writeToFile(ite);

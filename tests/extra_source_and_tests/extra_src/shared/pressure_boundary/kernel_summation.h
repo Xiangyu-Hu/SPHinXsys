@@ -47,7 +47,7 @@ class NablaWV<DataDelegationType>
     virtual ~NablaWV(){};
 
   protected:
-    StdLargeVec<Vecd> &kernel_sum_;
+    Vecd *kernel_sum_;
 };
 
 template <>
@@ -60,7 +60,7 @@ class NablaWV<Inner<>>
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
-    StdLargeVec<Real> &Vol_;
+    Real *Vol_;
 };
 
 template <>
@@ -73,13 +73,13 @@ class NablaWV<Contact<>>
     {
         for (size_t k = 0; k < contact_configuration_.size(); ++k)
         {
-            contact_Vol_.push_back(contact_particles_[k]->getVariableByName<Real>("VolumetricMeasure"));
+            contact_Vol_.push_back(contact_particles_[k]->getVariableDataByName<Real>("VolumetricMeasure"));
         }
     };
     virtual ~NablaWV(){};
     void interaction(size_t index_i, Real dt = 0.0);
 
-    StdVec<StdLargeVec<Real> *> contact_Vol_;
+    StdVec<Real *> contact_Vol_;
 };
 
 using NablaWVComplex = ComplexInteraction<NablaWV<Inner<>, Contact<>>>;

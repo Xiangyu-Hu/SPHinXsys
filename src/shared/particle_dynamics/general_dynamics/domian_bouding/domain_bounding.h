@@ -83,7 +83,7 @@ class BasePeriodicCondition
      * @class PeriodicBounding
      * @brief Periodic bounding particle position in an axis direction
      */
-    class PeriodicBounding : public LocalDynamics, public DataDelegateSimple, public BaseDynamics<void>
+    class PeriodicBounding : public LocalDynamics, public BaseDynamics<void>
     {
       protected:
         BoundingBox bounding_bounds_;
@@ -91,7 +91,7 @@ class BasePeriodicCondition
         Vecd periodic_translation_;
         Real cut_off_radius_max_; /**< maximum cut off radius to avoid boundary particle depletion */
         StdVec<CellLists> &bound_cells_data_;
-        StdLargeVec<Vecd> &pos_;
+        Vecd *pos_;
 
         virtual void checkLowerBound(size_t index_i, Real dt = 0.0)
         {
@@ -108,12 +108,12 @@ class BasePeriodicCondition
       public:
         PeriodicBounding(StdVec<CellLists> &bound_cells_data,
                          RealBody &real_body, PeriodicAlongAxis &periodic_box)
-            : LocalDynamics(real_body), DataDelegateSimple(real_body), BaseDynamics<void>(real_body),
+            : LocalDynamics(real_body), BaseDynamics<void>(),
               bounding_bounds_(periodic_box.getBoundingBox()), axis_(periodic_box.getAxis()),
               periodic_translation_(periodic_box.getPeriodicTranslation()),
               cut_off_radius_max_(real_body.sph_adaptation_->getKernel()->CutOffRadius()),
               bound_cells_data_(bound_cells_data),
-              pos_(*particles_->getVariableByName<Vecd>("Position")){};
+              pos_(particles_->getVariableDataByName<Vecd>("Position")){};
         virtual ~PeriodicBounding(){};
 
         virtual void exec(Real dt = 0.0) override

@@ -30,8 +30,8 @@
 #define PARTICLE_ITERATORS_H
 
 #include "base_data_package.h"
-#include "execution_policy.h"
-#include "sph_data_containers.h"
+#include "implementation.h"
+#include "sphinxsys_containers.h"
 
 namespace SPH
 {
@@ -73,6 +73,7 @@ inline void particle_for(const ParallelPolicy &par, const IndexRange &particles_
         },
         ap);
 };
+
 /**
  * Bodypart By Particle-wise iterators (for sequential and parallel computing).
  */
@@ -161,86 +162,6 @@ inline void particle_for(const ParallelPolicy &par, const DataListsInCells &body
         },
         ap);
 };
-/**
- * Splitting algorithm (for sequential and parallel computing).
- */
-template <class LocalDynamicsFunction>
-inline void particle_for(const SequencedPolicy &seq, const SplitCellLists &split_cell_lists,
-                         const LocalDynamicsFunction &local_dynamics_function)
-{
-    // forward sweeping
-    for (size_t k = 0; k != split_cell_lists.size(); ++k)
-    {
-        const ConcurrentCellLists &cell_lists = split_cell_lists[k];
-        for (size_t l = 0; l != cell_lists.size(); ++l)
-        {
-            const ConcurrentIndexVector &particle_indexes = *cell_lists[l];
-            for (size_t i = 0; i != particle_indexes.size(); ++i)
-            {
-                local_dynamics_function(particle_indexes[i]);
-            }
-        }
-    }
-
-    // backward sweeping
-    for (size_t k = split_cell_lists.size(); k != 0; --k)
-    {
-        const ConcurrentCellLists &cell_lists = split_cell_lists[k - 1];
-        for (size_t l = 0; l != cell_lists.size(); ++l)
-        {
-            const ConcurrentIndexVector &particle_indexes = *cell_lists[l];
-            for (size_t i = particle_indexes.size(); i != 0; --i)
-            {
-                local_dynamics_function(particle_indexes[i - 1]);
-            }
-        }
-    }
-}
-
-template <class LocalDynamicsFunction>
-inline void particle_for(const ParallelPolicy &par, const SplitCellLists &split_cell_lists,
-                         const LocalDynamicsFunction &local_dynamics_function)
-{
-    // forward sweeping
-    for (size_t k = 0; k != split_cell_lists.size(); ++k)
-    {
-        const ConcurrentCellLists &cell_lists = split_cell_lists[k];
-        parallel_for(
-            IndexRange(0, cell_lists.size()),
-            [&](const IndexRange &r)
-            {
-                for (size_t l = r.begin(); l < r.end(); ++l)
-                {
-                    const ConcurrentIndexVector &particle_indexes = *cell_lists[l];
-                    for (size_t i = 0; i < particle_indexes.size(); ++i)
-                    {
-                        local_dynamics_function(particle_indexes[i]);
-                    }
-                }
-            },
-            ap);
-    }
-
-    // backward sweeping
-    for (size_t k = split_cell_lists.size(); k != 0; --k)
-    {
-        const ConcurrentCellLists &cell_lists = split_cell_lists[k - 1];
-        parallel_for(
-            IndexRange(0, cell_lists.size()),
-            [&](const IndexRange &r)
-            {
-                for (size_t l = r.begin(); l < r.end(); ++l)
-                {
-                    const ConcurrentIndexVector &particle_indexes = *cell_lists[l];
-                    for (size_t i = particle_indexes.size(); i != 0; --i)
-                    {
-                        local_dynamics_function(particle_indexes[i - 1]);
-                    }
-                }
-            },
-            ap);
-    }
-}
 
 template <class ExecutionPolicy, typename DynamicsRange, class ReturnType,
           typename Operation, class LocalDynamicsFunction>
@@ -322,6 +243,7 @@ inline ReturnType particle_reduce(const ParallelPolicy &par, const IndexVector &
             return operation(x, y);
         });
 };
+
 /**
  * BodypartByCell-wise reduce iterators (for sequential and parallel computing).
  */

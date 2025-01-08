@@ -38,15 +38,31 @@ namespace SPH
 {
 namespace continuum_dynamics
 {
-class ContinuumInitialCondition : public LocalDynamics, public DataDelegateSimple
+class ContinuumInitialCondition : public LocalDynamics
 {
   public:
     explicit ContinuumInitialCondition(SPHBody &sph_body);
     virtual ~ContinuumInitialCondition(){};
 
   protected:
-    StdLargeVec<Vecd> &pos_, &vel_;
-    StdLargeVec<Mat3d> &stress_tensor_3D_;
+    Vecd *pos_, *vel_;
+    Mat3d *stress_tensor_3D_;
+};
+
+class AcousticTimeStep : public LocalDynamicsReduce<ReduceMax>
+{
+  public:
+    explicit AcousticTimeStep(SPHBody &sph_body, Real acousticCFL = 0.6);
+    virtual ~AcousticTimeStep(){};
+    Real reduce(size_t index_i, Real dt = 0.0);
+    virtual Real outputResult(Real reduced_value) override;
+
+  protected:
+    Fluid &fluid_;
+    Real *rho_, *p_;
+    Vecd *vel_;
+    Real smoothing_length_min_;
+    Real acousticCFL_;
 };
 
 template <class FluidDynamicsType>
@@ -58,39 +74,10 @@ class BaseIntegration1stHalf : public FluidDynamicsType
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
-    StdLargeVec<Vecd> &acc_shear_;
+    Vecd *acc_shear_;
 };
 using Integration1stHalf = BaseIntegration1stHalf<fluid_dynamics::Integration1stHalfInnerNoRiemann>;
 using Integration1stHalfRiemann = BaseIntegration1stHalf<fluid_dynamics::Integration1stHalfInnerRiemann>;
-
-class ShearAccelerationRelaxation : public fluid_dynamics::BaseIntegration<DataDelegateInner>
-{
-  public:
-    explicit ShearAccelerationRelaxation(BaseInnerRelation &inner_relation);
-    virtual ~ShearAccelerationRelaxation(){};
-    void interaction(size_t index_i, Real dt = 0.0);
-
-  protected:
-    GeneralContinuum &continuum_;
-    Real G_, smoothing_length_;
-    StdLargeVec<Vecd> &acc_shear_;
-};
-
-class ShearStressRelaxation : public fluid_dynamics::BaseIntegration<DataDelegateInner>
-{
-  public:
-    explicit ShearStressRelaxation(BaseInnerRelation &inner_relation);
-    virtual ~ShearStressRelaxation(){};
-    void initialization(size_t index_i, Real dt = 0.0);
-    void interaction(size_t index_i, Real dt = 0.0);
-    void update(size_t index_i, Real dt = 0.0);
-
-  protected:
-    GeneralContinuum &continuum_;
-    StdLargeVec<Matd> &shear_stress_, &shear_stress_rate_, &velocity_gradient_, &strain_tensor_, &strain_tensor_rate_;
-    StdLargeVec<Real> &von_mises_stress_, &von_mises_strain_, &Vol_;
-    StdLargeVec<Matd> &B_;
-};
 
 template <class DataDelegationType>
 class BasePlasticIntegration : public fluid_dynamics::BaseIntegration<DataDelegationType>
@@ -102,9 +89,8 @@ class BasePlasticIntegration : public fluid_dynamics::BaseIntegration<DataDelega
 
   protected:
     PlasticContinuum &plastic_continuum_;
-    StdLargeVec<Mat3d> &stress_tensor_3D_, &strain_tensor_3D_, &stress_rate_3D_, &strain_rate_3D_;
-    StdLargeVec<Mat3d> &elastic_strain_tensor_3D_, &elastic_strain_rate_3D_;
-    StdLargeVec<Matd> &velocity_gradient_;
+    Mat3d *stress_tensor_3D_, *strain_tensor_3D_, *stress_rate_3D_, *strain_rate_3D_;
+    Matd *velocity_gradient_;
 };
 
 template <typename... InteractionTypes>
@@ -165,11 +151,7 @@ class PlasticIntegration2ndHalf<Inner<>, RiemannSolverType>
 
   protected:
     RiemannSolverType riemann_solver_;
-    StdLargeVec<Real> &acc_deviatoric_plastic_strain_, &vertical_stress_;
-    StdLargeVec<Real> &Vol_, &mass_;
-    Real E_, nu_;
-
-    Real getDeviatoricPlasticStrain(Mat3d &strain_tensor);
+    Real *Vol_, *mass_;
 };
 using PlasticIntegration2ndHalfInnerNoRiemann = PlasticIntegration2ndHalf<Inner<>, NoRiemannSolver>;
 using PlasticIntegration2ndHalfInnerRiemann = PlasticIntegration2ndHalf<Inner<>, AcousticRiemannSolver>;
@@ -200,8 +182,48 @@ class StressDiffusion : public BasePlasticIntegration<DataDelegateInner>
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
-    Real zeta_ = 0.1, fai_; /*diffusion coefficient*/
+    Real zeta_ = 0.1, phi_; /*diffusion coefficient*/
     Real smoothing_length_, sound_speed_;
+};
+
+class ShearStressRelaxationHourglassControl1stHalf : public fluid_dynamics::BaseIntegration<DataDelegateInner>
+{
+  public:
+    explicit ShearStressRelaxationHourglassControl1stHalf(BaseInnerRelation &inner_relation, Real xi = 4.0);
+    virtual ~ShearStressRelaxationHourglassControl1stHalf(){};
+    void interaction(size_t index_i, Real dt = 0.0);
+    void update(size_t index_i, Real dt = 0.0);
+
+  protected:
+    GeneralContinuum &continuum_;
+    Matd *shear_stress_, *velocity_gradient_, *strain_tensor_, *B_;
+    Real *scale_penalty_force_, xi_;
+};
+
+class ShearStressRelaxationHourglassControl2ndHalf : public fluid_dynamics::BaseIntegration<DataDelegateInner>
+{
+  public:
+    explicit ShearStressRelaxationHourglassControl2ndHalf(BaseInnerRelation &inner_relation);
+    virtual ~ShearStressRelaxationHourglassControl2ndHalf(){};
+    void interaction(size_t index_i, Real dt = 0.0);
+
+  protected:
+    GeneralContinuum &continuum_;
+    Matd *shear_stress_, *velocity_gradient_;
+    Vecd *acc_shear_, *acc_hourglass_;
+    Real *scale_penalty_force_, G_;
+};
+
+class ShearStressRelaxationHourglassControl1stHalfJ2Plasticity : public ShearStressRelaxationHourglassControl1stHalf
+{
+  public:
+    explicit ShearStressRelaxationHourglassControl1stHalfJ2Plasticity(BaseInnerRelation &inner_relation, Real xi = 0.2);
+    virtual ~ShearStressRelaxationHourglassControl1stHalfJ2Plasticity(){};
+    void update(size_t index_i, Real dt = 0.0);
+
+  protected:
+    J2Plasticity &J2_plasticity_;
+    Real *hardening_factor_;
 };
 } // namespace continuum_dynamics
 } // namespace SPH

@@ -70,14 +70,13 @@ class Heart : public ComplexShape
 using FiberDirectionDiffusionRelaxation =
     DiffusionRelaxationRK2<DiffusionRelaxation<Inner<KernelGradientInner>, IsotropicDiffusion>>;
 /** Imposing diffusion boundary condition */
-class DiffusionBCs : public BaseLocalDynamics<BodyPartByParticle>, public DataDelegateSimple
+class DiffusionBCs : public BaseLocalDynamics<BodyPartByParticle>
 {
   public:
     explicit DiffusionBCs(BodyPartByParticle &body_part, const std::string &species_name)
         : BaseLocalDynamics<BodyPartByParticle>(body_part),
-          DataDelegateSimple(body_part.getSPHBody()),
-          pos_(*particles_->getVariableByName<Vecd>("Position")),
-          phi_(*particles_->registerSharedVariable<Real>(species_name)){};
+          pos_(particles_->getVariableDataByName<Vecd>("Position")),
+          phi_(particles_->registerStateVariable<Real>(species_name)){};
     virtual ~DiffusionBCs(){};
 
     void update(size_t index_i, Real dt = 0.0)
@@ -100,25 +99,25 @@ class DiffusionBCs : public BaseLocalDynamics<BodyPartByParticle>, public DataDe
     };
 
   protected:
-    StdLargeVec<Vecd> &pos_;
-    StdLargeVec<Real> &phi_;
+    Vecd *pos_;
+    Real *phi_;
 };
 /** Compute Fiber and Sheet direction after diffusion */
-class ComputeFiberAndSheetDirections : public LocalDynamics, public DataDelegateSimple
+class ComputeFiberAndSheetDirections : public LocalDynamics
 {
   protected:
     LocallyOrthotropicMuscle &muscle_material_;
-    StdLargeVec<Vecd> &pos_;
-    StdLargeVec<Real> &phi_;
+    Vecd *pos_;
+    Real *phi_;
     Real beta_epi_, beta_endo_;
     Vecd center_line_vector_; // parallel to the ventricular centerline and pointing  apex-to-base
 
   public:
     explicit ComputeFiberAndSheetDirections(SPHBody &sph_body, const std::string &species_name)
-        : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
+        : LocalDynamics(sph_body),
           muscle_material_(DynamicCast<LocallyOrthotropicMuscle>(this, sph_body_.getBaseMaterial())),
-          pos_(*particles_->getVariableByName<Vecd>("Position")),
-          phi_(*particles_->registerSharedVariable<Real>(species_name))
+          pos_(particles_->getVariableDataByName<Vecd>("Position")),
+          phi_(particles_->registerStateVariable<Real>(species_name))
     {
         center_line_vector_ = Vecd(0.0, 1.0, 0.0);
         beta_epi_ = -(70.0 / 180.0) * M_PI;
@@ -177,13 +176,13 @@ class MuscleBaseShapeParameters : public TriangleMeshShapeBrick::ShapeParameters
 };
 
 //	application dependent initial condition
-class ApplyStimulusCurrentSI : public LocalDynamics, public DataDelegateSimple
+class ApplyStimulusCurrentSI : public LocalDynamics
 {
   public:
     explicit ApplyStimulusCurrentSI(SPHBody &sph_body)
-        : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
-          pos_(*particles_->getVariableByName<Vecd>("Position")),
-          voltage_(*particles_->registerSharedVariable<Real>("Voltage")){};
+        : LocalDynamics(sph_body),
+          pos_(particles_->getVariableDataByName<Vecd>("Position")),
+          voltage_(particles_->registerStateVariable<Real>("Voltage")){};
 
     void update(size_t index_i, Real dt)
     {
@@ -200,19 +199,19 @@ class ApplyStimulusCurrentSI : public LocalDynamics, public DataDelegateSimple
     };
 
   protected:
-    StdLargeVec<Vecd> &pos_;
-    StdLargeVec<Real> &voltage_;
+    Vecd *pos_;
+    Real *voltage_;
 };
 /**
  * application dependent initial condition
  */
-class ApplyStimulusCurrentSII : public LocalDynamics, public DataDelegateSimple
+class ApplyStimulusCurrentSII : public LocalDynamics
 {
   public:
     explicit ApplyStimulusCurrentSII(SPHBody &sph_body)
-        : LocalDynamics(sph_body), DataDelegateSimple(sph_body),
-          pos_(*particles_->getVariableByName<Vecd>("Position")),
-          voltage_(*particles_->registerSharedVariable<Real>("Voltage")){};
+        : LocalDynamics(sph_body),
+          pos_(particles_->getVariableDataByName<Vecd>("Position")),
+          voltage_(particles_->registerStateVariable<Real>("Voltage")){};
 
     void update(size_t index_i, Real dt)
     {
@@ -229,25 +228,18 @@ class ApplyStimulusCurrentSII : public LocalDynamics, public DataDelegateSimple
     };
 
   protected:
-    StdLargeVec<Vecd> &pos_;
-    StdLargeVec<Real> &voltage_;
+    Vecd *pos_;
+    Real *voltage_;
 };
-/**
- * define observer particle generator.
- */
-class HeartObserver;
-template <>
-class ParticleGenerator<HeartObserver> : public ParticleGenerator<Observer>
+
+StdVec<Vecd> createObservationPoints()
 {
-  public:
-    explicit ParticleGenerator(SPHBody &sph_body) : ParticleGenerator<Observer>(sph_body)
-    {
-        /** position and volume. */
-        positions_.push_back(Vecd(-45.0 * length_scale, -30.0 * length_scale, 0.0));
-        positions_.push_back(Vecd(0.0, -30.0 * length_scale, 26.0 * length_scale));
-        positions_.push_back(Vecd(-30.0 * length_scale, -50.0 * length_scale, 0.0));
-        positions_.push_back(Vecd(0.0, -50.0 * length_scale, 20.0 * length_scale));
-        positions_.push_back(Vecd(0.0, -70.0 * length_scale, 0.0));
-    }
+    StdVec<Vecd> observation_points;
+    observation_points.push_back(Vecd(-45.0 * length_scale, -30.0 * length_scale, 0.0));
+    observation_points.push_back(Vecd(0.0, -30.0 * length_scale, 26.0 * length_scale));
+    observation_points.push_back(Vecd(-30.0 * length_scale, -50.0 * length_scale, 0.0));
+    observation_points.push_back(Vecd(0.0, -50.0 * length_scale, 20.0 * length_scale));
+    observation_points.push_back(Vecd(0.0, -70.0 * length_scale, 0.0));
+    return observation_points;
 };
 } // namespace SPH

@@ -1,4 +1,7 @@
 #include "heart_volume_change.h"
+
+#include <numeric>
+
 using namespace SPH;
 
 void write_csv_files(
@@ -57,7 +60,7 @@ void MeshData::translate(const Vec3d &translation)
     }
 }
 
-IndexVector MeshData::get_ids_close_to_surface(const StdLargeVec<Vec3d> &pos_0, const IndexVector &all_surface_ids, Real distance) const
+IndexVector MeshData::get_ids_close_to_surface(Vec3d *pos_0, const IndexVector &all_surface_ids, Real distance) const
 {
     // the ids are returned in ascending order naturally
     // very important for later algorithms
@@ -71,12 +74,12 @@ IndexVector MeshData::get_ids_close_to_surface(const StdLargeVec<Vec3d> &pos_0, 
     return ids;
 }
 
-IndexVector MeshData::get_ids_close_to_surface(const StdLargeVec<Vec3d> &pos_0, Real distance) const
+IndexVector MeshData::get_ids_close_to_surface(Vec3d *pos_0, size_t total_real_particles, Real distance) const
 {
     // the ids are returned in ascending order naturally
     // very important for later algorithms
     IndexVector ids;
-    for (size_t i = 0; i < pos_0.size(); ++i)
+    for (size_t i = 0; i < total_real_particles; ++i)
     {
         tmd::Result result = mesh_sdf.unsigned_distance(pos_0[i]);
         if (result.distance <= distance)
@@ -94,7 +97,7 @@ void MyocardiumSurfaces::init_surfaces(
     // using 0.7 multiplier to smoothing length - surface particles should be 0.5*dp away from the surface
     // myo_surface_ids_ will be sorted by default
     // the particles were generated based on this mesh so no offset needed
-    myo_surface_ids_ = myocardium_mesh.get_ids_close_to_surface(pos0_, smoothing_length * 0.7);
+    myo_surface_ids_ = myocardium_mesh.get_ids_close_to_surface(pos0_, particles_.TotalRealParticles(), smoothing_length * 0.7);
 
     // step 1.
     // first layer of particles are dp/2 away from the surface

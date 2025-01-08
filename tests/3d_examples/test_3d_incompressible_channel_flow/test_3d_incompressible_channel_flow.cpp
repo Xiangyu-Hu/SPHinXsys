@@ -45,10 +45,9 @@ int main(int ac, char *av[])
     /** Boundary conditions set up */
     InvCFBoundaryConditionSetup boundary_condition_setup(air_block_inner, ghost_creation);
     //----------------------------------------------------------------------
-    // Visualization in FVM with date in cell.
-    air_block.addBodyStateForRecording<Real>("Density");
-    air_block.addBodyStateForRecording<Real>("Pressure");
     BodyStatesRecordingInMeshToVtu write_real_body_states(air_block, read_mesh_data);
+    write_real_body_states.addToWrite<Real>(air_block, "Density");
+    write_real_body_states.addToWrite<Real>(air_block, "Pressure");
     ReducedQuantityRecording<MaximumSpeed> write_maximum_speed(air_block);
 
     air_block_inner.updateConfiguration();
@@ -56,6 +55,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
+    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     size_t number_of_iterations = 0;
     int screen_output_interval = 1000;
     Real end_time = 30;
@@ -72,7 +72,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------
-    while (GlobalStaticVariables::physical_time_ < end_time)
+    while (physical_time < end_time)
     {
         Real integration_time = 0.0;
         while (integration_time < output_interval)
@@ -84,12 +84,12 @@ int main(int ac, char *av[])
             density_relaxation.exec(dt);
 
             integration_time += dt;
-            GlobalStaticVariables::physical_time_ += dt;
+            physical_time += dt;
             if (number_of_iterations % screen_output_interval == 0)
             {
                 write_maximum_speed.writeToFile(number_of_iterations);
                 std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
-                          << GlobalStaticVariables::physical_time_
+                          << physical_time
                           << "	dt = " << dt << "\n";
                 write_maximum_speed.writeToFile(number_of_iterations);
             }

@@ -10,8 +10,8 @@ void Ghost<PeriodicAlongAxis>::reserveGhostParticles(BaseParticles &base_particl
 {
     ghost_size_ = calculateGhostSize(particle_spacing);
 
-    lower_ghost_bound_.first = allocateGhostParticles(base_particles, ghost_size_);
-    upper_ghost_bound_.first = allocateGhostParticles(base_particles, ghost_size_);
+    lower_ghost_bound_.first = base_particles.allocateGhostParticles(ghost_size_);
+    upper_ghost_bound_.first = base_particles.allocateGhostParticles(ghost_size_);
 
     is_particles_reserved_ = true;
 }
@@ -42,7 +42,7 @@ PeriodicConditionUsingGhostParticles::CreatPeriodicGhostParticles::
       lower_ghost_bound_(ghost_boundary.LowerGhostBound()),
       upper_ghost_bound_(ghost_boundary.UpperGhostBound()),
       cell_linked_list_(real_body.getCellLinkedList()),
-      Vol_(*particles_->getVariableByName<Real>("VolumetricMeasure")) {}
+      Vol_(particles_->getVariableDataByName<Real>("VolumetricMeasure")) {}
 //=================================================================================================//
 void PeriodicConditionUsingGhostParticles::CreatPeriodicGhostParticles::setupDynamics(Real dt)
 {
@@ -105,7 +105,7 @@ PeriodicConditionUsingGhostParticles::UpdatePeriodicGhostParticles::
       ghost_boundary_(ghost_boundary),
       lower_ghost_bound_(ghost_boundary.LowerGhostBound()),
       upper_ghost_bound_(ghost_boundary.UpperGhostBound()),
-      sorted_id_(particles_->sorted_id_) {}
+      sorted_id_(particles_->ParticleSortedIds()) {}
 //=================================================================================================//
 void PeriodicConditionUsingGhostParticles::UpdatePeriodicGhostParticles::checkLowerBound(size_t index_i, Real dt)
 {

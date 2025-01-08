@@ -109,7 +109,6 @@ int main(int ac, char *av[])
     // which is only used for update configuration.
     //----------------------------------------------------------------------
     ComplexRelation soil_block_complex(soil_block_inner, soil_block_contact);
-    BodyStatesRecordingToVtp body_states_recording(sph_system.real_bodies_);
     //----------------------------------------------------------------------
     //	Run particle relaxation for body-fitted distribution if chosen.
     //----------------------------------------------------------------------
@@ -131,7 +130,7 @@ int main(int ac, char *av[])
         //----------------------------------------------------------------------
         random_column_particles.exec(0.25);
         relaxation_step_inner.SurfaceBounding().exec();
-        body_states_recording.writeToFile(0.0);
+        write_column_to_vtp.writeToFile(0);
         //----------------------------------------------------------------------
         //	From here iteration for particle relaxation begins.
         //----------------------------------------------------------------------
@@ -155,7 +154,7 @@ int main(int ac, char *av[])
     //	Note that there may be data dependence on the sequence of constructions.
     //----------------------------------------------------------------------
     Gravity gravity(Vec3d(0.0, -gravity_g, 0.0));
-    SimpleDynamics<GravityForce> constant_gravity(soil_block, gravity);
+    SimpleDynamics<GravityForce<Gravity>> constant_gravity(soil_block, gravity);
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
     SimpleDynamics<SoilInitialCondition> soil_initial_condition(soil_block);
 
@@ -164,16 +163,19 @@ int main(int ac, char *av[])
     InteractionWithUpdate<fluid_dynamics::DensitySummationComplexFreeSurface> soil_density_by_summation(soil_block_inner, soil_block_contact);
     InteractionDynamics<continuum_dynamics::StressDiffusion> stress_diffusion(soil_block_inner);
 
-    ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> soil_acoustic_time_step(soil_block, 0.4);
+    ReduceDynamics<fluid_dynamics::AcousticTimeStep> soil_acoustic_time_step(soil_block, 0.4);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
-    soil_block.addBodyStateForRecording<Real>("Pressure");
-    soil_block.addBodyStateForRecording<Real>("Density");
-    soil_block.addBodyStateForRecording<Real>("VerticalStress");
-    soil_block.addBodyStateForRecording<Real>("AccDeviatoricPlasticStrain");
-    RestartIO restart_io(sph_system.real_bodies_);
+    BodyStatesRecordingToVtp body_states_recording(sph_system);
+    body_states_recording.addToWrite<Real>(soil_block, "Density");
+    body_states_recording.addToWrite<Real>(soil_block, "Pressure");
+    SimpleDynamics<continuum_dynamics::VerticalStress> vertical_stress(soil_block);
+    body_states_recording.addToWrite<Real>(soil_block, "VerticalStress");
+    SimpleDynamics<continuum_dynamics::AccDeviatoricPlasticStrain> accumulated_deviatoric_plastic_strain(soil_block);
+    body_states_recording.addToWrite<Real>(soil_block, "AccDeviatoricPlasticStrain");
+    RestartIO restart_io(sph_system);
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalMechanicalEnergy>> write_soil_mechanical_energy(soil_block, gravity);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
@@ -185,18 +187,10 @@ int main(int ac, char *av[])
     soil_initial_condition.exec();
     constant_gravity.exec();
     //----------------------------------------------------------------------
-    //	Load restart file if necessary.
-    //----------------------------------------------------------------------
-    if (sph_system.RestartStep() != 0)
-    {
-        GlobalStaticVariables::physical_time_ = restart_io.readRestartFiles(sph_system.RestartStep());
-        soil_block.updateCellLinkedList();
-        soil_block_complex.updateConfiguration();
-    }
-    //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
-    size_t number_of_iterations = sph_system.RestartStep();
+    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
+    size_t number_of_iterations = 0;
     int screen_output_interval = 500;
     int observation_sample_interval = screen_output_interval * 2;
     int restart_output_interval = screen_output_interval * 10;
@@ -220,7 +214,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------
-    while (GlobalStaticVariables::physical_time_ < End_Time)
+    while (physical_time < End_Time)
     {
         Real integration_time = 0.0;
         /** Integrate time (loop) until the next output time. */
@@ -244,7 +238,7 @@ int main(int ac, char *av[])
 
                 relaxation_time += dt;
                 integration_time += dt;
-                GlobalStaticVariables::physical_time_ += dt;
+                physical_time += dt;
 
                 interval_computing_soil_stress_relaxation += TickCount::now() - time_instance;
 
@@ -252,7 +246,7 @@ int main(int ac, char *av[])
                 if (number_of_iterations % screen_output_interval == 0)
                 {
                     std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << std::setprecision(4) << "	Time = "
-                              << GlobalStaticVariables::physical_time_
+                              << physical_time
                               << std::scientific << "	dt = " << dt << "\n";
 
                     if (number_of_iterations % observation_sample_interval == 0 && number_of_iterations != sph_system.RestartStep())
@@ -271,6 +265,8 @@ int main(int ac, char *av[])
             interval_updating_configuration += TickCount::now() - time_instance;
         }
         TickCount t2 = TickCount::now();
+        vertical_stress.exec();
+        accumulated_deviatoric_plastic_strain.exec();
         body_states_recording.writeToFile();
         TickCount t3 = TickCount::now();
         interval += t3 - t2;

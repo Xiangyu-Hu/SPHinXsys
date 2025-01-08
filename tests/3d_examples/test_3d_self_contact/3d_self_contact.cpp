@@ -93,7 +93,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Define simple file input and outputs functions.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp write_states(sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_states(sph_system);
     //----------------------------------------------------------------------
     //	check whether run particle relaxation for body fitted particle distribution.
     //----------------------------------------------------------------------
@@ -137,7 +137,7 @@ int main(int ac, char *av[])
     //	This section define all numerical methods will be used in this case.
     //----------------------------------------------------------------------
     Gravity gravity(Vec3d(0.0, -1.0, 0.0));
-    SimpleDynamics<GravityForce> coil_constant_gravity(coil, gravity);
+    SimpleDynamics<GravityForce<Gravity>> coil_constant_gravity(coil, gravity);
     // Corrected configuration for reproducing rigid rotation.
     InteractionWithUpdate<LinearGradientCorrectionMatrixInner> corrected_configuration(coil_inner);
 
@@ -145,15 +145,15 @@ int main(int ac, char *av[])
     Dynamics1Level<solid_dynamics::Integration1stHalfPK2> stress_relaxation_first_half(coil_inner);
     Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half(coil_inner);
     // Algorithms for solid-solid contacts.
-    InteractionDynamics<solid_dynamics::ContactDensitySummation> coil_update_contact_density(coil_contact);
+    InteractionDynamics<solid_dynamics::ContactFactorSummation> coil_update_contact_density(coil_contact);
     InteractionWithUpdate<solid_dynamics::ContactForceFromWall> coil_compute_solid_contact_forces(coil_contact);
-    InteractionDynamics<solid_dynamics::SelfContactDensitySummation> coil_self_contact_density(coil_self_contact);
+    InteractionDynamics<solid_dynamics::SelfContactFactorSummation> coil_self_contact_density(coil_self_contact);
     InteractionWithUpdate<solid_dynamics::SelfContactForce> coil_self_contact_forces(coil_self_contact);
 
-    ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(coil);
+    ReduceDynamics<solid_dynamics::AcousticTimeStep> computing_time_step_size(coil);
 
     // Damping the velocity field for quasi-static solution
-    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d>>>
+    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d, FixedDampingRate>>>
         coil_damping(0.2, coil_inner, "Velocity", physical_viscosity);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
@@ -169,6 +169,7 @@ int main(int ac, char *av[])
     coil_constant_gravity.exec();
     write_states.writeToFile(0);
     // Setup time stepping control parameters.
+    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     int ite = 0;
     Real end_time = 10.0;
     Real output_period = end_time / 100.0;
@@ -179,7 +180,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Main loop
     //----------------------------------------------------------------------
-    while (GlobalStaticVariables::physical_time_ < end_time)
+    while (physical_time < end_time)
     {
         Real integration_time = 0.0;
         while (integration_time < output_period)
@@ -187,7 +188,7 @@ int main(int ac, char *av[])
             if (ite % 100 == 0)
             {
                 std::cout << "N=" << ite << " Time: "
-                          << GlobalStaticVariables::physical_time_ << "	dt: "
+                          << physical_time << "	dt: "
                           << dt << "\n";
                 write_coil_kinetic_energy.writeToFile(ite);
             }
@@ -204,7 +205,7 @@ int main(int ac, char *av[])
             ite++;
             dt = computing_time_step_size.exec();
             integration_time += dt;
-            GlobalStaticVariables::physical_time_ += dt;
+            physical_time += dt;
 
             // update particle neighbor relations for contact dynamics
             coil.updateCellLinkedList();

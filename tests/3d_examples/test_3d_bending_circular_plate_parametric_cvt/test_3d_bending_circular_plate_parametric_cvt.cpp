@@ -8,8 +8,9 @@
  */
 
 #include "sphinxsys.h"
-#include <gtest/gtest.h>
+
 #include <numeric>
+#include <gtest/gtest.h>
 
 using namespace SPH;
 
@@ -20,7 +21,7 @@ namespace SPH
 {
 class ShellCircle;
 template <>
-class ParticleGenerator<ShellCircle> : public ParticleGenerator<Surface>
+class ParticleGenerator<SurfaceParticles, ShellCircle> : public ParticleGenerator<SurfaceParticles>
 {
     const StdVec<Vec3d> &pos_0_;
     const Vec3d normal_;
@@ -28,18 +29,19 @@ class ParticleGenerator<ShellCircle> : public ParticleGenerator<Surface>
     const Real thickness_;
 
   public:
-    explicit ParticleGenerator(SPHBody &sph_body, const StdVec<Vec3d> &pos_0, const Vec3d &normal, Real particle_area, Real thickness)
-        : ParticleGenerator<Surface>(sph_body),
+    explicit ParticleGenerator(SPHBody &sph_body, SurfaceParticles &surface_particles,
+                               const StdVec<Vec3d> &pos_0, const Vec3d &normal, Real particle_area, Real thickness)
+        : ParticleGenerator<SurfaceParticles>(sph_body, surface_particles),
           pos_0_(pos_0),
           normal_(normal),
           particle_area_(particle_area),
           thickness_(thickness){};
-    virtual void initializeGeometricVariables() override
+    virtual void prepareGeometricData() override
     {
         for (const auto &pos : pos_0_)
         {
-            initializePositionAndVolumetricMeasure(pos, particle_area_);
-            initializeSurfaceProperties(normal_, thickness_);
+            addPositionAndVolumetricMeasure(pos, particle_area_);
+            addSurfaceProperties(normal_, thickness_);
         }
     }
 };
@@ -91,17 +93,17 @@ StdVec<Vec3d> read_obj_vertices(const std::string &file_name)
     return pos_0;
 }
 
-template <typename VariableType>
-VariableType interpolate_observer(
+template <typename DataType>
+DataType interpolate_observer(
     SurfaceParticles &particles,
     const IndexVector &neighbor_ids,
     const Vec3d &observer_pos_0,
-    std::function<VariableType(size_t)> get_variable_value)
+    std::function<DataType(size_t)> get_variable_value)
 {
     Kernel *kernel_ptr = particles.getSPHBody().sph_adaptation_->getKernel();
     Real smoothing_length = particles.getSPHBody().sph_adaptation_->ReferenceSmoothingLength();
-    StdLargeVec<Vecd> &pos0_ = *particles.registerSharedVariableFrom<Vecd>("InitialPosition", "Position");
-    VariableType variable_sum = VariableType::Zero();
+    Vecd *pos0_ = particles.registerStateVariableFrom<Vecd>("InitialPosition", "Position");
+    DataType variable_sum = DataType::Zero();
     Real kernel_sum = 0;
     for (auto id : neighbor_ids)
     {
@@ -130,18 +132,18 @@ struct observer_point_shell
     {
         ElasticSolid &elastic_solid_ = DynamicCast<ElasticSolid>(this, particles.getBaseMaterial());
         pos_n = interpolate_observer<Vec3d>(particles, neighbor_ids, pos_0, [&](size_t id)
-                                            { return (*particles.getVariableByName<Vec3d>("Position"))[id]; });
+                                            { return (particles.getVariableDataByName<Vec3d>("Position"))[id]; });
         displacement = interpolate_observer<Vec3d>(particles, neighbor_ids, pos_0, [&](size_t id)
-                                                   { return (*particles.getVariableByName<Vec3d>("Displacement"))[id]; });
+                                                   { return (particles.getVariableDataByName<Vec3d>("Displacement"))[id]; });
         global_shear_stress = interpolate_observer<Vec3d>(particles, neighbor_ids, pos_0, [&](size_t id)
-                                                          { return (*particles.getVariableByName<Vec3d>("GlobalShearStress"))[id]; });
+                                                          { return (particles.getVariableDataByName<Vec3d>("GlobalShearStress"))[id]; });
         global_stress = interpolate_observer<Mat3d>(particles, neighbor_ids, pos_0, [&](size_t id)
-                                                    { return (*particles.getVariableByName<Mat3d>("GlobalStress"))[id]; });
+                                                    { return (particles.getVariableDataByName<Mat3d>("GlobalStress"))[id]; });
         def_gradient = interpolate_observer<Mat3d>(particles, neighbor_ids, pos_0, [&](size_t id)
-                                                   { return (*particles.getVariableByName<Mat3d>("DeformationGradient"))[id]; });
+                                                   { return (particles.getVariableDataByName<Mat3d>("DeformationGradient"))[id]; });
         pk2_stress = interpolate_observer<Mat3d>(particles, neighbor_ids, pos_0, [&](size_t id)
                                                  {
-			Mat3d F = (*particles.getVariableByName<Mat3d>("DeformationGradient"))[id];
+			Mat3d F = (particles.getVariableDataByName<Mat3d>("DeformationGradient"))[id];
 			return elastic_solid_.StressPK2(F, id); });
         cauchy_stress = (1.0 / def_gradient.determinant()) * def_gradient * pk2_stress * def_gradient.transpose();
     }
@@ -240,24 +242,21 @@ return_data bending_circular_plate(Real dp_ratio)
     shell_body.defineMaterial<LinearElasticSolid>(rho, E, mu);
     shell_body.generateParticles<SurfaceParticles, ShellCircle>(obj_vertices, sym_vec, particle_area, thickness);
     auto shell_particles = dynamic_cast<SurfaceParticles *>(&shell_body.getBaseParticles());
-    shell_body.addBodyStateForRecording<Vec3d>("NormalDirection");
-    shell_body.addDerivedBodyStateForRecording<Displacement>();
 
     // methods
     InnerRelation shell_body_inner(shell_body);
     Gravity constant_gravity(gravity);
-    SimpleDynamics<GravityForce> constant_gravity_force(shell_body, constant_gravity);
+    SimpleDynamics<GravityForce<Gravity>> constant_gravity_force(shell_body, constant_gravity);
     InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration> corrected_configuration(shell_body_inner);
 
     Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationFirstHalf> stress_relaxation_first_half(shell_body_inner, 3, false);
     Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationSecondHalf> stress_relaxation_second_half(shell_body_inner);
 
     ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> computing_time_step_size(shell_body);
-    ReduceDynamics<VariableNorm<Vecd, ReduceMax>> maximum_displace_norm(shell_body, "Displacement");
     BodyPartByParticle constrained_edges(shell_body, "constrained_edges");
     auto constrained_edge_ids = [&]() { // brute force finding the edges
         IndexVector ids;
-        for (size_t i = 0; i < shell_body.getBaseParticles().ParticlePositions().size(); ++i)
+        for (size_t i = 0; i < shell_body.getBaseParticles().TotalRealParticles(); ++i)
             if (shell_body.getBaseParticles().ParticlePositions()[i].norm() > radius - dp / 2)
                 ids.push_back(i);
         return ids;
@@ -265,9 +264,9 @@ return_data bending_circular_plate(Real dp_ratio)
     constrained_edges.body_part_particles_ = constrained_edge_ids;
 
     SimpleDynamics<thin_structure_dynamics::ConstrainShellBodyRegion> constrain_holder(constrained_edges);
-    DampingWithRandomChoice<InteractionSplit<DampingBySplittingInner<Vec3d>>>
+    DampingWithRandomChoice<InteractionSplit<DampingProjectionInner<Vec3d, FixedDampingRate>>>
         shell_velocity_damping(0.2, shell_body_inner, "Velocity", physical_viscosity);
-    DampingWithRandomChoice<InteractionSplit<DampingBySplittingInner<Vec3d>>>
+    DampingWithRandomChoice<InteractionSplit<DampingProjectionInner<Vec3d, FixedDampingRate>>>
         shell_rotation_damping(0.2, shell_body_inner, "AngularVelocity", physical_viscosity);
 
     /** Apply initial condition. */
@@ -276,16 +275,20 @@ return_data bending_circular_plate(Real dp_ratio)
     corrected_configuration.exec();
     constant_gravity_force.exec();
 
-    // output
+    // file and screen outputs
     BodyStatesRecordingToVtp vtp_output({shell_body});
+    vtp_output.addToWrite<Vec3d>(shell_body, "NormalDirection");
+    vtp_output.addDerivedVariableRecording<SimpleDynamics<Displacement>>(shell_body);
+    ReduceDynamics<VariableNorm<Vecd, ReduceMax>> maximum_displace_norm(shell_body, "Displacement");
     vtp_output.writeToFile(0);
-    StdLargeVec<Vecd> &pos0_ = *shell_particles->registerSharedVariableFrom<Vecd>("InitialPosition", "Position");
+
+    Vecd *pos0_ = shell_particles->registerStateVariableFrom<Vecd>("InitialPosition", "Position");
     // observer point
     point_center.neighbor_ids = [&]() { // full neighborhood
         IndexVector ids;
         Real smoothing_length = shell_particles->getSPHBody().sph_adaptation_->ReferenceSmoothingLength();
 
-        for (size_t i = 0; i < pos0_.size(); ++i)
+        for (size_t i = 0; i < shell_particles->TotalRealParticles(); ++i)
         {
             if ((pos0_[i] - point_center.pos_0).norm() < 2 * smoothing_length)
                 ids.push_back(i);
@@ -298,7 +301,7 @@ return_data bending_circular_plate(Real dp_ratio)
     { // tests on initialization
         // checking particle distances - avoid bugs of reading file
         Real min_rij = MaxReal;
-        for (size_t index_i = 0; index_i < pos0_.size(); ++index_i)
+        for (size_t index_i = 0; index_i < shell_particles->TotalRealParticles(); ++index_i)
         {
             Neighborhood &inner_neighborhood = shell_body_inner.inner_configuration_[index_i];
             for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
@@ -308,11 +311,11 @@ return_data bending_circular_plate(Real dp_ratio)
         EXPECT_GT(min_rij, dp / 2);
 
         // test volume
-        StdLargeVec<Real> &Vol_ = shell_particles->VolumetricMeasures();
-        StdLargeVec<Real> &mass_ = *shell_particles->getVariableByName<Real>("Mass");
-        Real total_volume = std::accumulate(Vol_.begin(), Vol_.end(), 0.0);
+        Real *Vol_ = shell_particles->VolumetricMeasures();
+        Real *mass_ = shell_particles->getVariableDataByName<Real>("Mass");
+        Real total_volume = std::accumulate(Vol_, Vol_ + shell_particles->TotalRealParticles(), 0.0);
         std::cout << "total_volume: " << total_volume << std::endl;
-        Real total_mass = std::accumulate(mass_.begin(), mass_.end(), 0.0);
+        Real total_mass = std::accumulate(mass_, mass_ + shell_particles->TotalRealParticles(), 0.0);
         std::cout << "total_mass: " << total_mass << std::endl;
         EXPECT_FLOAT_EQ(total_volume, total_area);
         EXPECT_FLOAT_EQ(total_mass, total_area * rho * thickness);
@@ -322,7 +325,7 @@ return_data bending_circular_plate(Real dp_ratio)
      * From here the time stepping begins.
      * Set the starting time.
      */
-    GlobalStaticVariables::physical_time_ = 0.0;
+    Real &physical_time = *system.getSystemVariableDataByName<Real>("PhysicalTime");
     int ite = 0;
     Real end_time = 0.001;
     Real output_period = end_time / 100.0;
@@ -334,7 +337,7 @@ return_data bending_circular_plate(Real dp_ratio)
     Real max_dt = 0.0;
     try
     {
-        while (GlobalStaticVariables::physical_time_ < end_time)
+        while (physical_time < end_time)
         {
             Real integral_time = 0.0;
             while (integral_time < output_period)
@@ -342,7 +345,7 @@ return_data bending_circular_plate(Real dp_ratio)
                 if (ite % 1000 == 0)
                 {
                     std::cout << "N=" << ite << " Time: "
-                              << GlobalStaticVariables::physical_time_ << "	dt: "
+                              << physical_time << "	dt: "
                               << dt << "\n";
                 }
 
@@ -363,13 +366,14 @@ return_data bending_circular_plate(Real dp_ratio)
 
                 ++ite;
                 integral_time += dt;
-                GlobalStaticVariables::physical_time_ += dt;
+                physical_time += dt;
 
                 // shell_body.updateCellLinkedList();
 
                 { // checking if any position has become nan
-                    for (const auto &pos : shell_body.getBaseParticles().ParticlePositions())
-                        if (std::isnan(pos[0]) || std::isnan(pos[1]) || std::isnan(pos[2]))
+                    Vecd *pos_ = shell_particles->getVariableDataByName<Vecd>("Position");
+                    for (size_t index_i = 0; index_i < shell_particles->TotalRealParticles(); ++index_i)
+                        if (std::isnan(pos_[index_i][0]) || std::isnan(pos_[index_i][1]) || std::isnan(pos_[index_i][2]))
                             throw std::runtime_error("position has become nan");
                 }
             }

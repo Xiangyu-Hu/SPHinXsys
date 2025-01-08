@@ -7,15 +7,16 @@ namespace SPH
 void HardeningPlasticSolid::initializeLocalParameters(BaseParticles *base_particles)
 {
     PlasticSolid::initializeLocalParameters(base_particles);
-    base_particles->registerVariable(inverse_plastic_strain_, "InversePlasticRightCauchyStrain",
-                                     [&](size_t i) -> Matd
-                                     { return Matd::Identity(); });
-    base_particles->registerVariable(hardening_parameter_, "HardeningParameter");
+    inverse_plastic_strain_ = base_particles->registerStateVariable<Matd>(
+        "InversePlasticRightCauchyStrain",
+        [&](size_t i) -> Matd
+        { return Matd::Identity(); });
+    hardening_parameter_ = base_particles->registerStateVariable<Real>("HardeningParameter");
     base_particles->addVariableToRestart<Matd>("InversePlasticRightCauchyStrain");
     base_particles->addVariableToRestart<Real>("HardeningParameter");
 }
 //=================================================================================================//
-Matd HardeningPlasticSolid::ElasticLeftCauchy(const Matd& F, size_t index_i, Real dt)
+Matd HardeningPlasticSolid::ElasticLeftCauchy(const Matd &F, size_t index_i, Real dt)
 {
     Matd be = F * inverse_plastic_strain_[index_i] * F.transpose();
     Matd normalized_be = be * pow(be.determinant(), -OneOverDimensions);
@@ -23,7 +24,7 @@ Matd HardeningPlasticSolid::ElasticLeftCauchy(const Matd& F, size_t index_i, Rea
     Matd deviatoric_Kirchhoff = DeviatoricKirchhoff(normalized_be - normalized_be_isentropic * Matd::Identity());
     Real deviatoric_Kirchhoff_norm = deviatoric_Kirchhoff.norm();
     Real trial_function = deviatoric_Kirchhoff_norm -
-        sqrt_2_over_3_ * (hardening_modulus_ * hardening_parameter_[index_i] + yield_stress_);
+                          sqrt_2_over_3_ * (hardening_modulus_ * hardening_parameter_[index_i] + yield_stress_);
     if (trial_function > 0.0)
     {
         Real renormalized_shear_modulus = normalized_be_isentropic * G0_;
@@ -40,7 +41,7 @@ Matd HardeningPlasticSolid::ElasticLeftCauchy(const Matd& F, size_t index_i, Rea
     return normalized_be;
 }
 //=================================================================================================//
-Matd NonLinearHardeningPlasticSolid::ElasticLeftCauchy(const Matd& F, size_t index_i, Real dt)
+Matd NonLinearHardeningPlasticSolid::ElasticLeftCauchy(const Matd &F, size_t index_i, Real dt)
 {
     Matd normalized_F = F * pow(F.determinant(), -OneOverDimensions);
     Matd normalized_be = normalized_F * inverse_plastic_strain_[index_i] * normalized_F.transpose();
@@ -55,13 +56,13 @@ Matd NonLinearHardeningPlasticSolid::ElasticLeftCauchy(const Matd& F, size_t ind
         Real renormalized_shear_modulus = normalized_be_isentropic * G0_;
         while (trial_function > 0.0)
         {
-            Real function_relax_increment_derivative = -2.0 * renormalized_shear_modulus
-                * (1.0 + NonlinearHardeningDerivative(hardening_parameter_[index_i] + sqrt_2_over_3_ * relax_increment) / 3.0 / renormalized_shear_modulus);
+            Real function_relax_increment_derivative = -2.0 * renormalized_shear_modulus *
+                                                       (1.0 + NonlinearHardeningDerivative(hardening_parameter_[index_i] + sqrt_2_over_3_ * relax_increment) /
+                                                                  3.0 / renormalized_shear_modulus);
             relax_increment -= trial_function / function_relax_increment_derivative;
 
-            trial_function = deviatoric_Kirchhoff_norm
-                - sqrt_2_over_3_ * NonlinearHardening(hardening_parameter_[index_i] + sqrt_2_over_3_ * relax_increment)
-                - 2.0 * renormalized_shear_modulus * relax_increment;
+            trial_function = deviatoric_Kirchhoff_norm - sqrt_2_over_3_ * NonlinearHardening(hardening_parameter_[index_i] + sqrt_2_over_3_ * relax_increment) -
+                             2.0 * renormalized_shear_modulus * relax_increment;
         }
         hardening_parameter_[index_i] += sqrt_2_over_3_ * relax_increment;
         deviatoric_Kirchhoff -= 2.0 * renormalized_shear_modulus * relax_increment * deviatoric_Kirchhoff / deviatoric_Kirchhoff_norm;
@@ -76,16 +77,17 @@ Matd NonLinearHardeningPlasticSolid::ElasticLeftCauchy(const Matd& F, size_t ind
     return normalized_be;
 }
 //=================================================================================================//
-void ViscousPlasticSolid::initializeLocalParameters(BaseParticles* base_particles)
+void ViscousPlasticSolid::initializeLocalParameters(BaseParticles *base_particles)
 {
     PlasticSolid::initializeLocalParameters(base_particles);
-    base_particles->registerVariable(inverse_plastic_strain_, "InversePlasticRightCauchyStrain",
+    inverse_plastic_strain_ = base_particles->registerStateVariable<Matd>(
+        "InversePlasticRightCauchyStrain",
         [&](size_t i) -> Matd
         { return Matd::Identity(); });
     base_particles->addVariableToRestart<Matd>("InversePlasticRightCauchyStrain");
 };
 //=================================================================================================//
-Matd ViscousPlasticSolid::ElasticLeftCauchy(const Matd& F, size_t index_i, Real dt)
+Matd ViscousPlasticSolid::ElasticLeftCauchy(const Matd &F, size_t index_i, Real dt)
 {
     Matd be = F * inverse_plastic_strain_[index_i] * F.transpose();
     Matd normalized_be = be * pow(be.determinant(), -OneOverDimensions);
@@ -106,7 +108,7 @@ Matd ViscousPlasticSolid::ElasticLeftCauchy(const Matd& F, size_t index_i, Real 
         {
             deviatoric_Kirchhoff_norm_Mid = (deviatoric_Kirchhoff_norm_Max + deviatoric_Kirchhoff_norm_Min) / 2.0;
             predicted_func = pow(viscous_modulus_, 1.0 / Herschel_Bulkley_power_) * (deviatoric_Kirchhoff_norm_Mid - deviatoric_Kirchhoff_norm) +
-                2.0 * renormalized_shear_modulus * dt * pow((deviatoric_Kirchhoff_norm_Mid - sqrt_2_over_3_ * yield_stress_), 1.0 / Herschel_Bulkley_power_);
+                             2.0 * renormalized_shear_modulus * dt * pow((deviatoric_Kirchhoff_norm_Mid - sqrt_2_over_3_ * yield_stress_), 1.0 / Herschel_Bulkley_power_);
             if (predicted_func < 0.0)
             {
                 deviatoric_Kirchhoff_norm_Min = deviatoric_Kirchhoff_norm_Mid;

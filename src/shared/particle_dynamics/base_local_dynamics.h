@@ -32,40 +32,47 @@
 
 #include "base_data_package.h"
 #include "base_particle_dynamics.h"
-#include "sph_data_containers.h"
+#include "execution_policy.h"
+#include "reduce_functors.h"
+#include "sphinxsys_containers.h"
+
+#include <type_traits>
 
 namespace SPH
 {
-//----------------------------------------------------------------------
-// Interaction type identifies
-//----------------------------------------------------------------------
-template <typename... InnerParameters>
-class Inner; /**< Inner interaction: interaction within a body*/
-
-template <typename... ContactParameters>
-class Contact; /**< Contact interaction: interaction between a body with one or several another bodies */
-
-class Boundary;        /**< Interaction with boundary */
-class Wall;            /**< Interaction with wall boundary */
-class Extended;        /**< An extened method of an interaction type */
-class SpatialTemporal; /**< A interaction considering spatial temporal correlations */
-class Dynamic;         /**< A dynamic interaction */
-
 /**
  * @class BaseLocalDynamics
  * @brief The base class for all local particle dynamics.
+ * @details The basic design idea is define local dynamics for local particle operations.
+ * We split a general local dynamics into two parts in respect of functionality:
+ * one is the action on singular data, which is carried within the function setupDynamics,
+ * the other is the action on discrete variables, which will be carried out
+ * by the computing kernel. In the scenarios of offloading computing,
+ * the first function is generally carried on the host and the other on computing device.
+ * We also split the local dynamics into two part in respect of memory management.
  */
 template <class DynamicsIdentifier>
 class BaseLocalDynamics
 {
+    UniquePtrsKeeper<Entity> constant_entity_ptrs_;
+
   public:
     explicit BaseLocalDynamics(DynamicsIdentifier &identifier)
-        : identifier_(identifier){};
+        : identifier_(identifier), sph_system_(identifier.getSPHSystem()),
+          sph_body_(identifier.getSPHBody()),
+          particles_(&sph_body_.getBaseParticles()){};
     virtual ~BaseLocalDynamics(){};
+    typedef DynamicsIdentifier Identifier;
     DynamicsIdentifier &getDynamicsIdentifier() { return identifier_; };
-    virtual void setupDynamics(Real dt = 0.0) {}; // setup global parameters
+    SPHBody &getSPHBody() { return sph_body_; };
+    BaseParticles *getParticles() { return particles_; };
+    virtual void setupDynamics(Real dt = 0.0){}; // setup global parameters
+
   protected:
     DynamicsIdentifier &identifier_;
+    SPHSystem &sph_system_;
+    SPHBody &sph_body_;
+    BaseParticles *particles_;
 };
 using LocalDynamics = BaseLocalDynamics<SPHBody>;
 
@@ -77,19 +84,22 @@ template <typename Operation, class DynamicsIdentifier>
 class BaseLocalDynamicsReduce : public BaseLocalDynamics<DynamicsIdentifier>
 {
   public:
+    typedef Operation OperationType;
+    using ReturnType = typename Operation::ReturnType;
     explicit BaseLocalDynamicsReduce(DynamicsIdentifier &identifier)
         : BaseLocalDynamics<DynamicsIdentifier>(identifier),
+          reference_(ReduceReference<Operation>::value),
           quantity_name_("ReducedQuantity"){};
     virtual ~BaseLocalDynamicsReduce(){};
 
-    using ReturnType = decltype(Operation::reference_);
-    ReturnType Reference() { return operation_.reference_; };
+    ReturnType Reference() { return reference_; };
     std::string QuantityName() { return quantity_name_; };
     Operation &getOperation() { return operation_; };
     virtual ReturnType outputResult(ReturnType reduced_value) { return reduced_value; }
 
   protected:
     Operation operation_;
+    ReturnType reference_;
     std::string quantity_name_;
 };
 template <typename Operation>
@@ -147,7 +157,7 @@ class ComplexInteraction<LocalDynamicsName<>, CommonParameters...>
   public:
     ComplexInteraction(){};
 
-    void interaction(size_t index_i, Real dt = 0.0) {};
+    void interaction(size_t index_i, Real dt = 0.0){};
 };
 
 template <typename... CommonParameters, template <typename... InteractionTypes> class LocalDynamicsName,

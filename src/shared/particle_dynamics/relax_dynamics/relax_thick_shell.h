@@ -48,8 +48,7 @@ namespace relax_dynamics
  * because if level_set_refinement_ratio > particle_spacing_ref_ / (0.05 * thickness_),
  * there will be no level set field.
  */
-class ShellMidSurfaceBounding : public BaseLocalDynamics<BodyPartByCell>,
-                                public DataDelegateSimple
+class ShellMidSurfaceBounding : public BaseLocalDynamics<BodyPartByCell>
 {
   public:
     explicit ShellMidSurfaceBounding(NearShapeSurface &body_part);
@@ -57,7 +56,7 @@ class ShellMidSurfaceBounding : public BaseLocalDynamics<BodyPartByCell>,
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
-    StdLargeVec<Vecd> &pos_;
+    Vecd *pos_;
     Real constrained_distance_;
     Real particle_spacing_ref_;
     LevelSetShape *level_set_shape_;
@@ -82,11 +81,11 @@ class ShellNormalDirectionPrediction : public BaseDynamics<void>
     virtual void exec(Real dt = 0.0) override;
 
   protected:
-    class NormalPrediction : public DataDelegateSimple, public LocalDynamics
+    class NormalPrediction : public LocalDynamics
     {
         Real thickness_;
         LevelSetShape *level_set_shape_;
-        StdLargeVec<Vecd> &pos_, &n_, n_temp_;
+        Vecd *pos_, *n_, *n_temp_;
 
       public:
         NormalPrediction(SPHBody &sph_body, Real thickness);
@@ -94,12 +93,11 @@ class ShellNormalDirectionPrediction : public BaseDynamics<void>
         void update(size_t index_i, Real dt = 0.0);
     };
 
-    class PredictionConvergenceCheck : public LocalDynamicsReduce<ReduceAND>,
-                                       public DataDelegateSimple
+    class PredictionConvergenceCheck : public LocalDynamicsReduce<ReduceAND>
     {
       protected:
         const Real convergence_criterion_;
-        StdLargeVec<Vecd> &n_, &n_temp_;
+        Vecd *n_, *n_temp_;
 
       public:
         PredictionConvergenceCheck(SPHBody &sph_body, Real convergence_criterion);
@@ -119,15 +117,14 @@ class ShellNormalDirectionPrediction : public BaseDynamics<void>
       protected:
         std::mutex mutex_modify_neighbor_; /**< mutex exclusion for memory conflict */
         const Real consistency_criterion_;
-        StdLargeVec<int> updated_indicator_; /**> 0 not updated, 1 updated with reliable prediction, 2 updated from a reliable neighbor */
-        StdLargeVec<Vecd> &n_;
+        Vecd *n_;
+        int *updated_indicator_; /**> 0 not updated, 1 updated with reliable prediction, 2 updated from a reliable neighbor */
     };
 
-    class ConsistencyUpdatedCheck : public LocalDynamicsReduce<ReduceAND>,
-                                    public DataDelegateSimple
+    class ConsistencyUpdatedCheck : public LocalDynamicsReduce<ReduceAND>
     {
       protected:
-        StdLargeVec<int> &updated_indicator_;
+        int *updated_indicator_;
 
       public:
         explicit ConsistencyUpdatedCheck(SPHBody &sph_body);

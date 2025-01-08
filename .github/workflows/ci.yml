@@ -9,7 +9,17 @@ on:
     branches: [master]
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
-
+    inputs:
+      linux_test_debug_enabled:
+        type: boolean
+        description: "Run the linux test with VS Code Sever debugging enabled"
+        required: false
+        default: false
+      windows_build_debug_enabled:
+        type: boolean
+        description: "Run the windows build with VS Code Sever debugging enabled"
+        required: false
+        default: false
 env:
   VCPKG_VERSION: "2023.10.19"
   CTEST_PARALLEL_LEVEL: "1"
@@ -17,7 +27,8 @@ env:
 # A workflow is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   ###############################################################################
-  Linux-float:
+  Linux-sycl:
+    if: ${{ github.event_name != 'workflow_dispatch' }}
     runs-on: ubuntu-22.04
     env:
       VCPKG_DEFAULT_TRIPLET: x64-linux
@@ -40,6 +51,11 @@ jobs:
             libfontconfig1-dev `# From here required for vcpkg opencascade`\
             libx11-dev \
             libgl-dev
+          wget -O- https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB | gpg --dearmor | sudo tee /usr/share/keyrings/oneapi-archive-keyring.gpg > /dev/null
+          echo "deb [signed-by=/usr/share/keyrings/oneapi-archive-keyring.gpg] https://apt.repos.intel.com/oneapi all main" | sudo tee /etc/apt/sources.list.d/oneAPI.list
+          sudo apt update
+          sudo apt install intel-basekit \
+            intel-oneapi-runtime-opencl
 
       - uses: hendrikmuhs/ccache-action@v1.2
         with:
@@ -48,7 +64,7 @@ jobs:
       - uses: friendlyanon/setup-vcpkg@v1 # Setup vcpkg into ${{github.workspace}}
         with:
           committish: ${{ env.VCPKG_VERSION }}
-          cache: false
+          cache-version: ${{env.VCPKG_VERSION}}
 
       - name: Install dependencies
         run: |
@@ -62,27 +78,74 @@ jobs:
             boost-geometry \
             simbody \
             gtest \
-            xsimd \
-            pybind11 \
-            opencascade
+            pybind11
 
-      - name: Generate buildsystem using float (No test)
+      - name: Generate buildsystem
         run: |
+          # sycl environment has to be setup for each session
+          source /opt/intel/oneapi/setvars.sh --include-intel-llvm
           cmake -G Ninja \
             -D CMAKE_BUILD_TYPE=Release \
+            -D CMAKE_C_COMPILER=icx -D CMAKE_CXX_COMPILER=icpx \
             -D CMAKE_TOOLCHAIN_FILE="${{github.workspace}}/vcpkg/scripts/buildsystems/vcpkg.cmake" \
             -D CMAKE_C_COMPILER_LAUNCHER=ccache -D CMAKE_CXX_COMPILER_LAUNCHER=ccache \
-            -D SPHINXSYS_USE_FLOAT=ON \
-            -D SPHINXSYS_MODULE_OPENCASCADE=ON \
             -D SPHINXSYS_CI=ON \
+            -D SPHINXSYS_USE_SYCL=ON \
+            -D TEST_STATE_RECORDING=OFF \
             -S ${{github.workspace}} \
             -B ${{github.workspace}}/build
 
-      - name: Build using float
-        run: cmake --build build --config Release --verbose
+      - name: Build libraries and tests which are using SYCL
+        run: |
+          # sycl environment has to be setup for each session        
+          source /opt/intel/oneapi/setvars.sh --include-intel-llvm
+          cmake --build build --config Release --verbose
+
+      - name: Test with the first try
+        id: first-try
+        run: |
+          source /opt/intel/oneapi/setvars.sh --include-intel-llvm
+          cd build/tests/tests_sycl
+          ctest  --output-on-failure --timeout 1000
+        continue-on-error: true
+
+      - name: Test with the second try for failed cases
+        id: second-try
+        if: ${{ steps.first-try.outcome == 'failure' }}
+        run: |
+          source /opt/intel/oneapi/setvars.sh --include-intel-llvm        
+          cd build/tests/tests_sycl
+          ctest --rerun-failed --output-on-failure --timeout 1000
+        continue-on-error: true
+
+      - name: Test with the third try for failed cases
+        id: third-try
+        if: ${{ steps.second-try.outcome == 'failure' }}
+        run: |
+          source /opt/intel/oneapi/setvars.sh --include-intel-llvm
+          cd build/tests/tests_sycl
+          ctest --rerun-failed --output-on-failure --timeout 1000
+        continue-on-error: true
+
+      - name: Test with the fourth try for failed cases
+        id: fourth-try
+        if: ${{ steps.third-try.outcome == 'failure' }}
+        run: |
+          source /opt/intel/oneapi/setvars.sh --include-intel-llvm
+          cd build/tests/tests_sycl
+          ctest --rerun-failed --output-on-failure --timeout 1000
+        continue-on-error: true
+
+      - name: Test with the last try for failed cases
+        if: ${{ steps.fourth-try.outcome == 'failure' }}
+        run: |
+          source /opt/intel/oneapi/setvars.sh --include-intel-llvm
+          cd build/tests/tests_sycl
+          ctest --rerun-failed --output-on-failure --timeout 1000
 
   ###############################################################################
   Linux-build:
+    if: ${{ github.event_name != 'workflow_dispatch' }}
     runs-on: ubuntu-22.04
     env:
       VCPKG_DEFAULT_TRIPLET: x64-linux
@@ -158,8 +221,14 @@ jobs:
           retention-days: 1
 
   Linux-test:
+    if: ${{ github.event_name != 'workflow_dispatch' || inputs.linux_test_debug_enabled }}
     needs: Linux-build
     runs-on: ubuntu-22.04
+    # make sure these permissions are set so that
+    # VS Code can connect to the machine
+    permissions:
+      actions: read
+      contents: read
     env:
       VCPKG_DEFAULT_TRIPLET: x64-linux
 
@@ -246,10 +315,20 @@ jobs:
           cd build 
           ctest --rerun-failed --output-on-failure --timeout 1000
 
+      - name: 🐛 If failed in dispatch work flow, initialize VS Code Server for debug
+        uses: stateful/vscode-server-action@v1
+        if: ${{ failure() && github.event_name != 'workflow_dispatch' || inputs.linux_test_debug_enabled }}
+
   ###############################################################################
 
   Windows-build:
+    if: ${{ github.event_name != 'workflow_dispatch' || inputs.windows_build_debug_enabled }}
     runs-on: windows-latest
+    # make sure these permissions are set so that
+    # VS Code can connect to the machine
+    permissions:
+      actions: read
+      contents: read
     env:
       VCPKG_DEFAULT_TRIPLET: x64-windows
 
@@ -262,6 +341,7 @@ jobs:
           choco install ccache
           choco install ninja
           choco install 7zip
+          choco install wget
 
       - uses: hendrikmuhs/ccache-action@v1.2
         with:
@@ -297,6 +377,15 @@ jobs:
             -S ${{github.workspace}} `
             -B C:\build
 
+      # Enable VS code server debugging of manually-triggered workflows if the input option was provided
+      - name: 🐛 Initialize VS Code Server for debug in dispatch work flow only
+        shell: pwsh
+        run: |
+          wget https://update.code.visualstudio.com/1.90.0/win32-x64-archive/stable
+          7z.exe x stable
+          .\bin\code tunnel
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.windows_build_debug_enabled }}
+
       - name: Build
         run: cmake.exe --build C:\build --config Release --verbose
 
@@ -311,6 +400,7 @@ jobs:
           retention-days: 1
 
   Windows-test:
+    if: ${{ github.event_name != 'workflow_dispatch' }}
     needs: Windows-build
     runs-on: windows-latest
     env:
@@ -394,7 +484,8 @@ jobs:
   ###############################################################################
 
   macOS-build:
-    runs-on: macos-12
+    if: ${{ github.event_name != 'workflow_dispatch' }}
+    runs-on: macos-13
     env:
       VCPKG_DEFAULT_TRIPLET: x64-osx
 
@@ -460,8 +551,9 @@ jobs:
           retention-days: 1
 
   macOS-test:
+    if: ${{ github.event_name != 'workflow_dispatch' }}
     needs: macOS-build
-    runs-on: macos-12
+    runs-on: macos-13
     env:
       VCPKG_DEFAULT_TRIPLET: x64-osx
 

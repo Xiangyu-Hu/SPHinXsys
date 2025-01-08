@@ -21,9 +21,9 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	base_geometry.h
- * @brief 	Define the base classes Shape, BinaryShape and Edge,
- * 			which are the base classes for all geometries.
+ * @file base_geometry.h
+ * @brief Define the base classes Shape, BinaryShape and Edge,
+ * which are the base classes for all geometries.
  * @author	Chi Zhang, Yongchuan Yu and Xiangyu Hu
  */
 
@@ -31,7 +31,7 @@
 #define BASE_GEOMETRY_H
 
 #include "base_data_package.h"
-#include "sph_data_containers.h"
+#include "sphinxsys_containers.h"
 #include <string>
 
 namespace SPH
@@ -92,11 +92,10 @@ class Shape
 using SubShapeAndOp = std::pair<Shape *, ShapeBooleanOps>;
 /**
  * @class BinaryShapes
- * @brief a collections of shapes with binary operations
+ * @brief A collections of shapes with binary operations.
  * This class has ownership of all shapes by using a unique pointer vector.
  * In this way, add or subtract a shape will call the shape's constructor other than
  * passing the shape pointer.
- * For now, partially overlapped the shapes are not allowed for binary operations.
  */
 class BinaryShapes : public Shape
 {
@@ -106,7 +105,7 @@ class BinaryShapes : public Shape
     virtual ~BinaryShapes(){};
 
     template <class SubShapeType, typename... Args>
-    void add(Args &&...args)
+    void add(Args &&... args)
     {
         Shape *sub_shape = sub_shape_ptrs_keeper_.createPtr<SubShapeType>(std::forward<Args>(args)...);
         SubShapeAndOp sub_shape_and_op(sub_shape, ShapeBooleanOps::add);
@@ -114,7 +113,7 @@ class BinaryShapes : public Shape
     };
 
     template <class SubShapeType, typename... Args>
-    void subtract(Args &&...args)
+    void subtract(Args &&... args)
     {
         Shape *sub_shape = sub_shape_ptrs_keeper_.createPtr<SubShapeType>(std::forward<Args>(args)...);
         SubShapeAndOp sub_shape_and_op(sub_shape, ShapeBooleanOps::sub);

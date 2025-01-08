@@ -20,7 +20,7 @@ void TreeBody::buildParticleConfiguration(ParticleConfiguration &particle_config
     neighboring_ids.push_back(branches_[1]->inner_particles_[0]);
     neighboring_ids.push_back(branches_[1]->inner_particles_[1]);
     /** Build configuration. */
-    const StdLargeVec<Vecd> &pos = base_particles_->ParticlePositions();
+    Vecd *pos = base_particles_->ParticlePositions();
     NeighborBuilderInner neighbor_relation_inner(*this);
     for (size_t n = 0; n != neighboring_ids.size(); ++n)
     {
@@ -211,9 +211,9 @@ void TreeBody::buildParticleConfiguration(ParticleConfiguration &particle_config
     }
 }
 //=================================================================================================//
-size_t TreeBody::BranchLocation(size_t particle_idx)
+size_t TreeBody::BranchLocation(size_t total_particles, size_t particle_idx)
 {
-    return particle_idx < base_particles_->total_real_particles_ ? branch_locations_[particle_idx] : MaxSize_t;
+    return particle_idx < total_particles ? branch_locations_[particle_idx] : MaxSize_t;
 }
 //=================================================================================================//
 TreeBody::Branch::Branch(TreeBody *tree)

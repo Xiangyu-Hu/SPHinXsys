@@ -13,66 +13,6 @@ Vec3d FirstAxisVector(const Vec3d &zero_vector)
     return Vec3d(1.0, 0.0, 0.0);
 };
 //=================================================================================================//
-Vec3d upgradeToVec3d(const Real &input)
-{
-    return Vec3d(input, 0.0, 0.0);
-}
-//=================================================================================================//
-Vec3d upgradeToVec3d(const Vec2d &input)
-{
-    return Vec3d(input[0], input[1], 0.0);
-}
-//=================================================================================================//
-Vec3d upgradeToVec3d(const Vec3d &input)
-{
-    return input;
-}
-//=================================================================================================//
-Mat3d upgradeToMat3d(const Mat2d &input)
-{
-    Mat3d output = Mat3d::Zero();
-    output.block<2, 2>(0, 0) = input;
-    return output;
-}
-//=================================================================================================//
-Mat3d upgradeToMat3d(const Mat3d &input)
-{
-    return input;
-}
-//=================================================================================================//
-Mat2d getInverse(const Mat2d &A)
-{
-    Mat2d minv = Mat2d::Zero();
-    Real det = A(0, 0) * A(1, 1) - A(0, 1) * A(1, 0);
-    Real invdet = 1.0 / det;
-    minv(0, 0) = A(1, 1) * invdet;
-    minv(0, 1) = -A(0, 1) * invdet;
-    minv(1, 0) = -A(1, 0) * invdet;
-    minv(1, 1) = A(0, 0) * invdet;
-    return minv;
-}
-//=================================================================================================//
-Mat3d getInverse(const Mat3d &A)
-{
-    Real det = A(0, 0) * (A(1, 1) * A(2, 2) - A(2, 1) * A(1, 2)) -
-               A(0, 1) * (A(1, 0) * A(2, 2) - A(1, 2) * A(2, 0)) +
-               A(0, 2) * (A(1, 0) * A(2, 1) - A(1, 1) * A(2, 0));
-
-    Real invdet = 1 / det;
-    Mat3d minv = Mat3d::Zero();
-    minv(0, 0) = (A(1, 1) * A(2, 2) - A(2, 1) * A(1, 2)) * invdet;
-    minv(0, 1) = (A(0, 2) * A(2, 1) - A(0, 1) * A(2, 2)) * invdet;
-    minv(0, 2) = (A(0, 1) * A(1, 2) - A(0, 2) * A(1, 1)) * invdet;
-    minv(1, 0) = (A(1, 2) * A(2, 0) - A(1, 0) * A(2, 2)) * invdet;
-    minv(1, 1) = (A(0, 0) * A(2, 2) - A(0, 2) * A(2, 0)) * invdet;
-    minv(1, 2) = (A(1, 0) * A(0, 2) - A(0, 0) * A(1, 2)) * invdet;
-    minv(2, 0) = (A(1, 0) * A(2, 1) - A(2, 0) * A(1, 1)) * invdet;
-    minv(2, 1) = (A(2, 0) * A(0, 1) - A(0, 0) * A(2, 1)) * invdet;
-    minv(2, 2) = (A(0, 0) * A(1, 1) - A(1, 0) * A(0, 1)) * invdet;
-
-    return minv;
-}
-//=================================================================================================//
 Mat2d getAverageValue(const Mat2d &A, const Mat2d &B)
 {
     Mat2d C = Mat2d::Identity();
@@ -241,64 +181,6 @@ Real CalculateBiDotProduct(Mat3d Matrix1, Mat3d Matrix2)
     return product;
 }
 //=================================================================================================//
-Real getCosineOfAngleBetweenTwoVectors(const Vec2d &vector_1, const Vec2d &vector_2)
-{
-    // returns the cosine of the angle between two vectors
-    Real dot_product_1 = 0.0;
-    for (int i = 0; i < vector_1.size(); i++)
-    {
-        dot_product_1 += vector_1[i] * vector_2[i];
-    }
-    Real cos_theta = dot_product_1 / (vector_1.norm() * vector_2.norm());
-
-    return cos_theta;
-}
-//=================================================================================================//
-Real getCosineOfAngleBetweenTwoVectors(const Vec3d &vector_1, const Vec3d &vector_2)
-{
-    // returns the cosine of the angle between two vectors
-    Real dot_product_1 = 0.0;
-    for (int i = 0; i < vector_1.size(); i++)
-    {
-        dot_product_1 += vector_1[i] * vector_2[i];
-    }
-    Real cos_theta = dot_product_1 / (vector_1.norm() * vector_2.norm());
-
-    return cos_theta;
-}
-//=================================================================================================//
-Vec2d getVectorProjectionOfVector(const Vec2d &vector_1, const Vec2d &vector_2)
-{
-    // get the projection of the vector_1 on vector 2, which is parallel to the vector_2, meaning it is the vector_2 * scalar
-    Real dot_product_1 = 0.0;
-    Real dot_product_2 = vector_2.squaredNorm();
-    for (int i = 0; i < vector_1.size(); i++)
-    {
-        dot_product_1 += vector_1[i] * vector_2[i];
-    }
-    // get scalar, which to multiply n_0 with
-    Real lambda = dot_product_1 / dot_product_2;
-    Vec2d proj_vector_1 = lambda * vector_2;
-
-    return proj_vector_1;
-}
-//=================================================================================================//
-Vec3d getVectorProjectionOfVector(const Vec3d &vector_1, const Vec3d &vector_2)
-{
-    // get the projection of the vector_1 on vector 2, which is parallel to the vector_2, meaning it is the vector_2 * scalar
-    Real dot_product_1 = 0.0;
-    Real dot_product_2 = vector_2.squaredNorm();
-    for (int i = 0; i < vector_1.size(); i++)
-    {
-        dot_product_1 += vector_1[i] * vector_2[i];
-    }
-    // get scalar, which to multiply n_0 with
-    Real lambda = dot_product_1 / dot_product_2;
-    Vec3d proj_vector_1 = lambda * vector_2;
-
-    return proj_vector_1;
-}
-//=================================================================================================//
 Real getVonMisesStressFromMatrix(const Mat2d &sigma)
 {
     Real sigmaxx = sigma(0, 0);
@@ -324,7 +206,7 @@ Real getVonMisesStressFromMatrix(const Mat3d &sigma)
 //=================================================================================================//
 Vec2d getPrincipalValuesFromMatrix(const Mat2d &A)
 {
-    Eigen::EigenSolver<EigMat> ces(A, /* computeEigenvectors = */ false);
+    Eigen::EigenSolver<MatXd> ces(A, /* computeEigenvectors = */ false);
     auto eigen_values = ces.eigenvalues();
 
     std::vector<Real> sorted_values = {
@@ -339,7 +221,7 @@ Vec2d getPrincipalValuesFromMatrix(const Mat2d &A)
 //=================================================================================================//
 Vec3d getPrincipalValuesFromMatrix(const Mat3d &A)
 {
-    Eigen::EigenSolver<EigMat> ces(A, /* computeEigenvectors = */ false);
+    Eigen::EigenSolver<MatXd> ces(A, /* computeEigenvectors = */ false);
     auto eigen_values = ces.eigenvalues();
 
     std::vector<Real> sorted_values = {
@@ -361,6 +243,16 @@ Real getCrossProduct(const Vec2d &vector_1, const Vec2d &vector_2)
 Vec3d getCrossProduct(const Vec3d &vector_1, const Vec3d &vector_2)
 { // Eigen cross product for only have 3D vector
     return vector_1.cross(vector_2);
+}
+//=================================================================================================//
+Array2i mod(const Array2i &input, int modulus)
+{
+    return Array2i(input[0] % modulus, input[1] % modulus);
+}
+//=================================================================================================//
+Array3i mod(const Array3i &input, int modulus)
+{
+    return Array3i(input[0] % modulus, input[1] % modulus, input[2] % modulus);
 }
 //=================================================================================================//
 } // namespace SPH

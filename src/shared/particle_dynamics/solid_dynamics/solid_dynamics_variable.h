@@ -30,11 +30,8 @@
 #ifndef SOLID_DYNAMICS_VARIABLE_H
 #define SOLID_DYNAMICS_VARIABLE_H
 
-#include "all_body_relations.h"
-#include "base_particles.hpp"
+#include "base_general_dynamics.h"
 #include "elastic_solid.h"
-#include "particle_dynamics_algorithms.h"
-#include "solid_body.h"
 
 namespace SPH
 {
@@ -42,9 +39,7 @@ namespace SPH
  * @class Displacement
  * @brief computing displacement from current and initial particle position
  */
-class Displacement : public BaseDerivedVariable<Vecd>,
-                     public DataDelegateSimple,
-                     public LocalDynamics
+class Displacement : public BaseDerivedVariable<Vecd>
 {
   public:
     explicit Displacement(SPHBody &sph_body);
@@ -52,15 +47,14 @@ class Displacement : public BaseDerivedVariable<Vecd>,
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
-    StdLargeVec<Vecd> &pos_, &pos0_;
+    Vecd *pos_, *pos0_;
 };
 
 /**
  * @class OffsetInitialPosition
  * @brief offset initial particle position
  */
-class OffsetInitialPosition : public DataDelegateSimple,
-                              public LocalDynamics
+class OffsetInitialPosition : public LocalDynamics
 {
   public:
     explicit OffsetInitialPosition(SPHBody &sph_body, Vecd &offset);
@@ -69,15 +63,14 @@ class OffsetInitialPosition : public DataDelegateSimple,
 
   protected:
     Vecd offset_;
-    StdLargeVec<Vecd> &pos_, &pos0_;
+    Vecd *pos_, *pos0_;
 };
 
 /**
  * @class TranslationAndRotation
  * @brief transformation on particle position and rotation
  */
-class TranslationAndRotation : public DataDelegateSimple,
-                               public LocalDynamics
+class TranslationAndRotation : public LocalDynamics
 {
   public:
     explicit TranslationAndRotation(SPHBody &sph_body, Transform &transform);
@@ -86,12 +79,10 @@ class TranslationAndRotation : public DataDelegateSimple,
 
   protected:
     Transform &transform_;
-    StdLargeVec<Vecd> &pos_, &pos0_;
+    Vecd *pos_, *pos0_;
 };
 
-class GreenLagrangeStrain : public BaseDerivedVariable<Matd>,
-                            public DataDelegateSimple,
-                            public LocalDynamics
+class GreenLagrangeStrain : public BaseDerivedVariable<Matd>
 {
   public:
     explicit GreenLagrangeStrain(SPHBody &sph_body);
@@ -99,16 +90,14 @@ class GreenLagrangeStrain : public BaseDerivedVariable<Matd>,
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
-    StdLargeVec<Matd> &F_;
+    Matd *F_;
 };
 
 /**
  * @class VonMisesStress
  * @brief computing von_Mises_stress
  */
-class VonMisesStress : public BaseDerivedVariable<Real>,
-                       public DataDelegateSimple,
-                       public LocalDynamics
+class VonMisesStress : public BaseDerivedVariable<Real>
 {
   public:
     explicit VonMisesStress(SPHBody &sph_body);
@@ -117,8 +106,8 @@ class VonMisesStress : public BaseDerivedVariable<Real>,
 
   protected:
     Real rho0_;
-    StdLargeVec<Real> &rho_;
-    StdLargeVec<Matd> &F_;
+    Real *rho_;
+    Matd *F_;
     ElasticSolid &elastic_solid_;
 };
 
@@ -126,9 +115,7 @@ class VonMisesStress : public BaseDerivedVariable<Real>,
  * @class VonMisesStrain
  * @brief computing von Mises strain
  */
-class VonMisesStrain : public BaseDerivedVariable<Real>,
-                       public DataDelegateSimple,
-                       public LocalDynamics
+class VonMisesStrain : public BaseDerivedVariable<Real>
 {
   public:
     explicit VonMisesStrain(SPHBody &sph_body);
@@ -136,16 +123,14 @@ class VonMisesStrain : public BaseDerivedVariable<Real>,
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
-    StdLargeVec<Matd> &F_;
+    Matd *F_;
 };
 
 /**
  * @class VonMisesStrain
  * @brief update von Mises strain
  */
-class VonMisesStrainDynamic : public BaseDerivedVariable<Real>,
-                              public DataDelegateSimple,
-                              public LocalDynamics
+class VonMisesStrainDynamic : public BaseDerivedVariable<Real>
 {
   public:
     explicit VonMisesStrainDynamic(SPHBody &sph_body);
@@ -155,16 +140,14 @@ class VonMisesStrainDynamic : public BaseDerivedVariable<Real>,
   protected:
     ElasticSolid &elastic_solid_;
     Real poisson_ratio_;
-    StdLargeVec<Matd> &F_;
+    Matd *F_;
 };
 
 /**
  * @class MidSurfaceVonMisesStress
  * @brief computing mid-surface von Mises stress of shells
  */
-class MidSurfaceVonMisesStress : public BaseDerivedVariable<Real>,
-                                 public DataDelegateSimple,
-                                 public LocalDynamics
+class MidSurfaceVonMisesStress : public BaseDerivedVariable<Real>
 {
   public:
     explicit MidSurfaceVonMisesStress(SPHBody &sph_body);
@@ -172,7 +155,7 @@ class MidSurfaceVonMisesStress : public BaseDerivedVariable<Real>,
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
-    StdLargeVec<Matd> &mid_surface_cauchy_stress_;
+    Matd *mid_surface_cauchy_stress_;
 };
 } // namespace SPH
 #endif // SOLID_DYNAMICS_VARIABLE_H

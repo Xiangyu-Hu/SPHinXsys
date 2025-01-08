@@ -38,13 +38,13 @@
 #include "adaptation.h"
 #include "all_geometries.h"
 #include "base_data_package.h"
+#include "base_implementation.h"
 #include "base_material.h"
 #include "base_particle_generator.h"
 #include "base_particles.h"
 #include "cell_linked_list.h"
-#include "particle_sorting.h"
-#include "sph_data_containers.h"
 #include "sph_system.h"
+#include "sphinxsys_containers.h"
 
 #include <string>
 
@@ -76,6 +76,7 @@ class SPHBody
     bool is_bound_set_;             /**< whether the bounding box is set */
     BoundingBox bound_;             /**< bounding box of the body */
     Shape *initial_shape_;          /**< initial volumetric geometry enclosing the body */
+    int total_body_parts_;          /**< total number of body parts */
 
   public:
     SPHAdaptation *sph_adaptation_;        /**< numerical adaptation policy */
@@ -93,11 +94,12 @@ class SPHBody
     SPHSystem &getSPHSystem();
     SPHBody &getSPHBody() { return *this; };
     Shape &getInitialShape() { return *initial_shape_; };
+    void assignBaseParticles(BaseParticles *base_particles) { base_particles_ = base_particles; };
     BaseParticles &getBaseParticles();
     BaseMaterial &getBaseMaterial();
     StdVec<SPHRelation *> &getBodyRelations() { return body_relations_; };
-    IndexRange LoopRange() { return IndexRange(0, base_particles_->total_real_particles_); };
-    size_t SizeOfLoopRange() { return base_particles_->total_real_particles_; };
+    IndexRange LoopRange() { return IndexRange(0, base_particles_->TotalRealParticles()); };
+    size_t SizeOfLoopRange() { return base_particles_->TotalRealParticles(); };
     Real getSPHBodyResolutionRef() { return sph_adaptation_->ReferenceSpacing(); };
     void setNewlyUpdated() { newly_updated_ = true; };
     void setNotNewlyUpdated() { newly_updated_ = false; };
@@ -105,6 +107,8 @@ class SPHBody
     void setSPHBodyBounds(const BoundingBox &bound);
     BoundingBox getSPHBodyBounds();
     BoundingBox getSPHSystemBounds();
+    int getNewBodyPartID();
+    int getTotalBodyParts() { return total_body_parts_; };
     //----------------------------------------------------------------------
     //		Object factory template functions
     //----------------------------------------------------------------------
@@ -134,17 +138,11 @@ class SPHBody
         return level_set_shape;
     };
 
-    template <class MaterialType>
-    void assignMaterial(MaterialType *material)
-    {
-        base_material_ = material;
-    };
-
     template <class MaterialType = BaseMaterial, typename... Args>
     MaterialType *defineMaterial(Args &&...args)
     {
         MaterialType *material = base_material_ptr_keeper_.createPtr<MaterialType>(std::forward<Args>(args)...);
-        assignMaterial(material);
+        base_material_ = material;
         return material;
     };
     //----------------------------------------------------------------------
@@ -155,53 +153,24 @@ class SPHBody
     template <class ParticleType, class... Parameters, typename... Args>
     void generateParticles(Args &&...args)
     {
-        base_particles_ = base_particles_ptr_keeper_.createPtr<ParticleType>(*this, base_material_);
-        ParticleGenerator<Parameters...> particle_generator(*this, std::forward<Args>(args)...);
-        particle_generator.generateParticlesWithBasicVariables();
-        base_particles_->initializeOtherVariables();
-        sph_adaptation_->initializeAdaptationVariables(*base_particles_);
-        base_material_->setLocalParameters(sph_system_.ReloadParticles(), base_particles_);
+        ParticleType *particles = base_particles_ptr_keeper_.createPtr<ParticleType>(*this, base_material_);
+        ParticleGenerator<ParticleType, Parameters...> particle_generator(*this, *particles, std::forward<Args>(args)...);
+        particle_generator.generateParticlesWithGeometricVariables();
+        particles->initializeBasicParticleVariables();
+        sph_adaptation_->initializeAdaptationVariables(*particles);
+        base_material_->setLocalParameters(sph_system_.ReloadParticles(), particles);
     };
 
     // Buffer or ghost particles can be generated together with real particles
-    template <class ParticleType, class... Parameters, class ReserveType, typename... Args>
+    template <class ParticleType, typename... Parameters, class ReserveType, typename... Args>
     void generateParticlesWithReserve(ReserveType &particle_reserve, Args &&...args)
     {
         generateParticles<ParticleType, ReserveType, Parameters...>(particle_reserve, std::forward<Args>(args)...);
     };
 
-    template <typename DataType>
-    void addBodyState(StdLargeVec<DataType> &variable_addrs, const std::string &variable_name)
-    {
-        base_particles_->template registerVariable<DataType>(variable_addrs, variable_name);
-    };
-
-    template <typename VariableType>
-    void addBodyStateForRecording(const std::string &variable_name)
-    {
-        base_particles_->template addVariableToWrite<VariableType>(variable_name);
-    };
-
-    template <class DerivedVariableMethod, typename... Args>
-    void addDerivedBodyStateForRecording(Args &&...args)
-    {
-        base_particles_->template addDerivedVariableToWrite<DerivedVariableMethod>(*this, std::forward<Args>(args)...);
-    };
-
-    template <typename VariableType>
-    void addBodyStateToRestart(const std::string &variable_name)
-    {
-        base_particles_->template addVariableToRestart<VariableType>(variable_name);
-    };
-
-    virtual void writeParticlesToVtuFile(std::ostream &output_file);
-    virtual void writeParticlesToVtpFile(std::ofstream &output_file);
-    virtual void writeParticlesToPltFile(std::ofstream &output_file);
-    virtual void writeSurfaceParticlesToVtuFile(std::ofstream &output_file, BodySurface &surface_particles);
     virtual void writeParticlesToXmlForRestart(std::string &filefullpath);
     virtual void readParticlesFromXmlForRestart(std::string &filefullpath);
     virtual void writeToXmlForReloadParticle(std::string &filefullpath);
-    virtual void readFromXmlForReloadParticle(std::string &filefullpath);
     virtual SPHBody *ThisObjectPtr() { return this; };
 };
 
@@ -214,21 +183,19 @@ class RealBody : public SPHBody
 {
   private:
     UniquePtr<BaseCellLinkedList> cell_linked_list_ptr_;
-    size_t iteration_count_;
     bool cell_linked_list_created_;
 
   public:
     template <typename... Args>
     RealBody(Args &&...args)
         : SPHBody(std::forward<Args>(args)...),
-          iteration_count_(1), cell_linked_list_created_(false)
+          cell_linked_list_created_(false)
     {
-        this->getSPHSystem().real_bodies_.push_back(this);
+        this->getSPHSystem().addRealBody(this);
     };
     virtual ~RealBody(){};
     BaseCellLinkedList &getCellLinkedList();
     void updateCellLinkedList();
-    void updateCellLinkedListWithParticleSort(size_t particle_sort_period);
 };
 } // namespace SPH
 #endif // BASE_BODY_H

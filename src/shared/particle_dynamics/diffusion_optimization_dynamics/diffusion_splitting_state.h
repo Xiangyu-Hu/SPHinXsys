@@ -24,6 +24,8 @@
 /**
  * @file 	diffusion_splitting_state.h
  * @brief 	This is the splitting method for solving state field in optimization problem.
+ * Note that here inner interaction and that with boundary are derived from the inner interaction.
+ * This is because the error and parameters are computed based on both.
  * @author   Bo Zhang and Xiangyu H
  */
 
@@ -39,17 +41,17 @@ namespace SPH
  * @class TemperatureSplittingByPDEInner
  * @brief The temperature on each particle will be modified innerly to satisfy the PDEs.
  */
-template <typename VariableType>
+template <typename DataType>
 class TemperatureSplittingByPDEInner
-    : public OptimizationBySplittingAlgorithmBase<VariableType>
+    : public OptimizationBySplittingAlgorithmBase<DataType>
 {
   public:
     TemperatureSplittingByPDEInner(BaseInnerRelation &inner_relation, const std::string &variable_name);
     virtual ~TemperatureSplittingByPDEInner(){};
 
   protected:
-    virtual ErrorAndParameters<VariableType> computeErrorAndParameters(size_t index_i, Real dt = 0.0);
-    virtual void updateStatesByError(size_t index_i, Real dt, const ErrorAndParameters<VariableType> &error_and_parameters);
+    virtual ErrorAndParameters<DataType> computeErrorAndParameters(size_t index_i, Real dt = 0.0);
+    virtual void updateStatesByError(size_t index_i, Real dt, const ErrorAndParameters<DataType> &error_and_parameters);
     virtual void interaction(size_t index_i, Real dt = 0.0) override;
 };
 
@@ -57,10 +59,10 @@ class TemperatureSplittingByPDEInner
  * @class TemperatureSplittingByPDEWithBoundary
  * @brief The temperature on each particle will be modified with boundary to satisfy the PDEs.
  */
-template <typename VariableType>
+template <typename DataType>
 class TemperatureSplittingByPDEWithBoundary
-    : public TemperatureSplittingByPDEInner<VariableType>,
-      public DataDelegateContactOnly
+    : public TemperatureSplittingByPDEInner<DataType>,
+      public DataDelegateContact
 {
   public:
     TemperatureSplittingByPDEWithBoundary(BaseInnerRelation &inner_relation,
@@ -69,10 +71,10 @@ class TemperatureSplittingByPDEWithBoundary
     virtual ~TemperatureSplittingByPDEWithBoundary(){};
 
   protected:
-    StdVec<StdLargeVec<VariableType> *> boundary_variable_;
-    StdVec<StdLargeVec<Real> *> boundary_heat_flux_, boundary_Vol_;
-    StdVec<StdLargeVec<Vecd> *> boundary_normal_vector_;
-    virtual ErrorAndParameters<VariableType> computeErrorAndParameters(size_t index_i, Real dt = 0.0) override;
+    StdVec<DataType *> boundary_variable_;
+    StdVec<Real *> boundary_heat_flux_, boundary_Vol_;
+    StdVec<Vecd *> boundary_normal_vector_;
+    virtual ErrorAndParameters<DataType> computeErrorAndParameters(size_t index_i, Real dt = 0.0) override;
 };
 
 /**

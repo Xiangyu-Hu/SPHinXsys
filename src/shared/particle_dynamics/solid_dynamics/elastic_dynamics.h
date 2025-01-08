@@ -46,26 +46,26 @@ namespace solid_dynamics
  * @brief  set initial condition for a solid body with different material
  * This is a abstract class to be override for case specific initial conditions.
  */
-class ElasticDynamicsInitialCondition : public LocalDynamics, public DataDelegateSimple
+class ElasticDynamicsInitialCondition : public LocalDynamics
 {
   public:
     explicit ElasticDynamicsInitialCondition(SPHBody &sph_body);
     virtual ~ElasticDynamicsInitialCondition(){};
 
   protected:
-    StdLargeVec<Vecd> &pos_, &vel_;
+    Vecd *pos_, *vel_;
 };
 
 /**
  * @class UpdateElasticNormalDirection
  * @brief update particle normal directions for elastic solid
  */
-class UpdateElasticNormalDirection : public LocalDynamics, public DataDelegateSimple
+class UpdateElasticNormalDirection : public LocalDynamics
 {
   protected:
-    StdLargeVec<Vecd> &n_, &n0_;
-    StdLargeVec<Real> &phi_, &phi0_;
-    StdLargeVec<Matd> &F_;
+    Vecd *n_, *n0_;
+    Real *phi_, *phi0_;
+    Matd *F_;
     Vecd getRotatedNormalDirection(const Matd &F, const Vecd &n0);
 
   public:
@@ -76,23 +76,22 @@ class UpdateElasticNormalDirection : public LocalDynamics, public DataDelegateSi
 };
 
 /**
- * @class AcousticTimeStepSize
+ * @class AcousticTimeStep
  * @brief Computing the acoustic time step size
  * computing time step size
  */
-class AcousticTimeStepSize : public LocalDynamicsReduce<ReduceMin>,
-                             public DataDelegateSimple
+class AcousticTimeStep : public LocalDynamicsReduce<ReduceMin>
 {
   protected:
     Real CFL_;
     ElasticSolid &elastic_solid_;
-    StdLargeVec<Vecd> &vel_, &force_, &force_prior_;
-    StdLargeVec<Real> &mass_;
-    Real smoothing_length_, c0_;
+    Vecd *vel_, *force_, *force_prior_;
+    Real *mass_;
+    Real smoothing_length_min_, c0_;
 
   public:
-    explicit AcousticTimeStepSize(SPHBody &sph_body, Real CFL = 0.6);
-    virtual ~AcousticTimeStepSize(){};
+    explicit AcousticTimeStep(SPHBody &sph_body, Real CFL = 0.6);
+    virtual ~AcousticTimeStep(){};
 
     Real reduce(size_t index_i, Real dt = 0.0);
 };
@@ -125,9 +124,9 @@ class DeformationGradientBySummation : public LocalDynamics, public DataDelegate
     };
 
   protected:
-    StdLargeVec<Real> &Vol_;
-    StdLargeVec<Vecd> &pos_;
-    StdLargeVec<Matd> &B_, &F_;
+    Real *Vol_;
+    Vecd *pos_;
+    Matd *B_, *F_;
 };
 
 /**
@@ -141,14 +140,14 @@ class BaseElasticIntegration : public LocalDynamics, public DataDelegateInner
     virtual ~BaseElasticIntegration(){};
 
   protected:
-    StdLargeVec<Real> &Vol_;
-    StdLargeVec<Vecd> &pos_, &vel_, &force_;
-    StdLargeVec<Matd> &B_, &F_, &dF_dt_;
+    Real *Vol_;
+    Vecd *pos_, *vel_, *force_;
+    Matd *B_, *F_, *dF_dt_;
 };
 
 /**
  * @class BaseIntegration1stHalf
- * @brief computing stress relaxation process by verlet time stepping
+ * @brief computing stress relaxation process by Verlet time stepping
  * This is the first step
  */
 class BaseIntegration1stHalf : public BaseElasticIntegration
@@ -161,14 +160,14 @@ class BaseIntegration1stHalf : public BaseElasticIntegration
   protected:
     ElasticSolid &elastic_solid_;
     Real rho0_, inv_rho0_;
-    StdLargeVec<Real> &rho_, &mass_;
-    StdLargeVec<Vecd> &force_prior_;
+    Real *rho_, *mass_;
+    Vecd *force_prior_;
     Real smoothing_length_;
 };
 
 /**
  * @class Integration1stHalf
- * @brief computing stress relaxation process by verlet time stepping
+ * @brief computing stress relaxation process by Verlet time stepping
  * This is the first step
  */
 class Integration1stHalf : public BaseIntegration1stHalf
@@ -204,7 +203,7 @@ class Integration1stHalf : public BaseIntegration1stHalf
     };
 
   protected:
-    StdLargeVec<Matd> stress_PK1_B_;
+    Matd *stress_PK1_B_;
     Real numerical_dissipation_factor_;
     Real inv_W0_ = 1.0 / sph_body_.sph_adaptation_->getKernel()->W0(ZeroVecd);
 };
@@ -284,14 +283,45 @@ class DecomposedIntegration1stHalf : public BaseIntegration1stHalf
     };
 
   protected:
-    StdLargeVec<Real> J_to_minus_2_over_dimension_;
-    StdLargeVec<Matd> stress_on_particle_, inverse_F_T_;
+    Real *J_to_minus_2_over_dimension_;
+    Matd *stress_on_particle_, *inverse_F_T_;
     const Real correction_factor_ = 1.07;
 };
 
 /**
+ * @class Integration1stHalfPK2RightCauchy
+ * @brief Using PK2 stress constitute relation and right Cauchy damping
+ */
+class Integration1stHalfPK2RightCauchy : public Integration1stHalfPK2
+{
+  public:
+    explicit Integration1stHalfPK2RightCauchy(BaseInnerRelation &inner_relation)
+        : Integration1stHalfPK2(inner_relation),
+          h_ratio_(particles_->registerStateVariable<Real>("SmoothingLengthRatio", Real(1.0))){};
+    void initialization(size_t index_i, Real dt = 0.0);
+    inline void interaction(size_t index_i, Real dt = 0.0)
+    {
+        // including gravity and force from fluid
+        Vecd force = Vecd::Zero();
+        const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
+        for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+        {
+            size_t index_j = inner_neighborhood.j_[n];
+            Vecd e_ij = inner_neighborhood.e_ij_[n];
+            force += mass_[index_i] * inv_rho0_ * inner_neighborhood.dW_ij_[n] * Vol_[index_j] *
+                     (stress_PK1_B_[index_i] + stress_PK1_B_[index_j]) * e_ij;
+        }
+
+        force_[index_i] = force;
+    }
+
+  private:
+    Real *h_ratio_;
+};
+
+/**
  * @class Integration2ndHalf
- * @brief computing stress relaxation process by verlet time stepping
+ * @brief computing stress relaxation process by Verlet time stepping
  * This is the second step
  */
 class Integration2ndHalf : public BaseElasticIntegration

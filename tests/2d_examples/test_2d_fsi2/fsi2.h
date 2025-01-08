@@ -154,37 +154,32 @@ struct InflowVelocity
           aligned_box_(boundary_condition.getAlignedBox()),
           halfsize_(aligned_box_.HalfSize()) {}
 
-    Vecd operator()(Vecd &position, Vecd &velocity)
+    Vecd operator()(Vecd &position, Vecd &velocity, Real current_time)
     {
         Vecd target_velocity = velocity;
-        Real run_time = GlobalStaticVariables::physical_time_;
-        Real u_ave = run_time < t_ref_ ? 0.5 * u_ref_ * (1.0 - cos(Pi * run_time / t_ref_)) : u_ref_;
-        if (aligned_box_.checkInBounds(0, position))
+        Real u_ave = current_time < t_ref_ ? 0.5 * u_ref_ * (1.0 - cos(Pi * current_time / t_ref_)) : u_ref_;
+        if (aligned_box_.checkInBounds(position))
         {
             target_velocity[0] = 1.5 * u_ave * (1.0 - position[1] * position[1] / halfsize_[1] / halfsize_[1]);
         }
         return target_velocity;
     }
 };
-/** fluid observer particle generator */
-class FluidObserver;
-template <>
-class ParticleGenerator<FluidObserver> : public ParticleGenerator<Observer>
+
+StdVec<Vecd> createObservationPoints()
 {
-  public:
-    explicit ParticleGenerator(SPHBody &sph_body) : ParticleGenerator<Observer>(sph_body)
+    StdVec<Vecd> observation_points;
+    /** A line of measuring points at the entrance of the channel. */
+    size_t number_observation_points = 21;
+    Real range_of_measure = DH - resolution_ref * 4.0;
+    Real start_of_measure = resolution_ref * 2.0;
+    /** the measuring locations */
+    for (size_t i = 0; i < number_observation_points; ++i)
     {
-        /** A line of measuring points at the entrance of the channel. */
-        size_t number_observation_points = 21;
-        Real range_of_measure = DH - resolution_ref * 4.0;
-        Real start_of_measure = resolution_ref * 2.0;
-        /** the measuring locations */
-        for (size_t i = 0; i < number_observation_points; ++i)
-        {
-            Vec2d point_coordinate(0.0, range_of_measure * (Real)i / (Real)(number_observation_points - 1) + start_of_measure);
-            positions_.push_back(point_coordinate);
-        }
+        Vec2d point_coordinate(0.0, range_of_measure * (Real)i / (Real)(number_observation_points - 1) + start_of_measure);
+        observation_points.push_back(point_coordinate);
     }
+    return observation_points;
 };
 } // namespace SPH
 #endif // FSI2_CASE_H

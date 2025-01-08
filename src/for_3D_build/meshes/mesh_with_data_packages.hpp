@@ -8,152 +8,15 @@
 #define MESH_WITH_DATA_PACKAGES_3D_HPP
 
 #include "mesh_with_data_packages.h"
+#include "mesh_iterators.hpp"
 
 namespace SPH
 {
 //=================================================================================================//
-template <int PKG_SIZE, int ADDRS_BUFFER>
-template <typename FunctionOnData>
-void GridDataPackage<PKG_SIZE, ADDRS_BUFFER>::
-    for_each_data(const FunctionOnData &function)
-{
-    for (int i = 0; i != pkg_size; ++i)
-        for (int j = 0; j != pkg_size; ++j)
-            for (int k = 0; k != pkg_size; ++k)
-            {
-                function(i, j, k);
-            }
-}
-//=================================================================================================//
-template <int PKG_SIZE, int ADDRS_BUFFER>
-template <typename FunctionOnAddress>
-void GridDataPackage<PKG_SIZE, ADDRS_BUFFER>::
-    for_each_addrs(const FunctionOnAddress &function)
-{
-    for (int i = pkg_addrs_buffer; i != pkg_ops_end; ++i)
-        for (int j = pkg_addrs_buffer; j != pkg_ops_end; ++j)
-            for (int k = pkg_addrs_buffer; k != pkg_ops_end; ++k)
-            {
-                function(i, j, k);
-            }
-}
-//=================================================================================================//
-template <int PKG_SIZE, int ADDRS_BUFFER>
-template <class DataType>
-DataType GridDataPackage<PKG_SIZE, ADDRS_BUFFER>::
-    probeDataPackage(PackageDataAddress<DataType> &pkg_data_addrs, const Vecd &position)
-{
-    Arrayi grid_idx = CellIndexFromPosition(position);
-    Vecd grid_pos = GridPositionFromIndex(grid_idx);
-    Vecd alpha = (position - grid_pos) / grid_spacing_;
-    Vecd beta = Vecd::Ones() - alpha;
-
-    DataType bilinear_1 = *pkg_data_addrs[grid_idx[0]][grid_idx[1]][grid_idx[2]] * beta[0] * beta[1] +
-                          *pkg_data_addrs[grid_idx[0] + 1][grid_idx[1]][grid_idx[2]] * alpha[0] * beta[1] +
-                          *pkg_data_addrs[grid_idx[0]][grid_idx[1] + 1][grid_idx[2]] * beta[0] * alpha[1] +
-                          *pkg_data_addrs[grid_idx[0] + 1][grid_idx[1] + 1][grid_idx[2]] * alpha[0] * alpha[1];
-    DataType bilinear_2 = *pkg_data_addrs[grid_idx[0]][grid_idx[1]][grid_idx[2] + 1] * beta[0] * beta[1] +
-                          *pkg_data_addrs[grid_idx[0] + 1][grid_idx[1]][grid_idx[2] + 1] * alpha[0] * beta[1] +
-                          *pkg_data_addrs[grid_idx[0]][grid_idx[1] + 1][grid_idx[2] + 1] * beta[0] * alpha[1] +
-                          *pkg_data_addrs[grid_idx[0] + 1][grid_idx[1] + 1][grid_idx[2] + 1] * alpha[0] * alpha[1];
-    return bilinear_1 * beta[2] + bilinear_2 * alpha[2];
-}
-//=================================================================================================//
-template <int PKG_SIZE, int ADDRS_BUFFER>
-template <typename InDataType, typename OutDataType>
-void GridDataPackage<PKG_SIZE, ADDRS_BUFFER>::
-    computeGradient(const MeshVariable<InDataType> &in_variable,
-                    const MeshVariable<OutDataType> &out_variable)
-{
-    auto &in_variable_addrs = getPackageDataAddress(in_variable);
-    auto &out_variable_addrs = getPackageDataAddress(out_variable);
-
-    for_each_addrs(
-        [&](int i, int j, int k)
-        {
-            Real dphidx = (*in_variable_addrs[i + 1][j][k] - *in_variable_addrs[i - 1][j][k]);
-            Real dphidy = (*in_variable_addrs[i][j + 1][k] - *in_variable_addrs[i][j - 1][k]);
-            Real dphidz = (*in_variable_addrs[i][j][k + 1] - *in_variable_addrs[i][j][k - 1]);
-            *out_variable_addrs[i][j][k] = 0.5 * Vecd(dphidx, dphidy, dphidz) / grid_spacing_;
-        });
-}
-//=================================================================================================//
-template <int PKG_SIZE, int ADDRS_BUFFER>
-template <typename DataType, typename FunctionByPosition>
-void GridDataPackage<PKG_SIZE, ADDRS_BUFFER>::
-    assignByPosition(const MeshVariable<DataType> &mesh_variable,
-                     const FunctionByPosition &function_by_position)
-{
-    auto &pkg_data = getPackageData(mesh_variable);
-    for (int i = 0; i != pkg_size; ++i)
-        for (int j = 0; j != pkg_size; ++j)
-            for (int k = 0; k != pkg_size; ++k)
-            {
-                Vec3d position = DataPositionFromIndex(Vec3d(i, j, k));
-                pkg_data[i][j][k] = function_by_position(position);
-            }
-}
-//=================================================================================================//
-template <int PKG_SIZE, int ADDRS_BUFFER>
+template <int PKG_SIZE>
 template <typename DataType>
-void GridDataPackage<PKG_SIZE, ADDRS_BUFFER>::AssignSingularPackageDataAddress<DataType>::
-operator()(DataContainerAssemble<PackageData> &all_pkg_data,
-           DataContainerAssemble<PackageDataAddress> &all_pkg_data_addrs)
-{
-    constexpr int type_index = DataTypeIndex<DataType>::value;
-    for (size_t l = 0; l != std::get<type_index>(all_pkg_data).size(); ++l)
-    {
-        PackageData<DataType> &pkg_data = std::get<type_index>(all_pkg_data)[l];
-        PackageDataAddress<DataType> &pkg_data_addrs = std::get<type_index>(all_pkg_data_addrs)[l];
-        for (int i = 0; i != pkg_addrs_size; ++i)
-            for (int j = 0; j != pkg_addrs_size; ++j)
-                for (int k = 0; k != pkg_addrs_size; ++k)
-                {
-                    pkg_data_addrs[i][j][k] = &pkg_data[0][0][0];
-                }
-    }
-}
-//=================================================================================================//
-template <int PKG_SIZE, int ADDRS_BUFFER>
-template <typename DataType>
-void GridDataPackage<PKG_SIZE, ADDRS_BUFFER>::AssignPackageDataAddress<DataType>::
-operator()(DataContainerAssemble<PackageDataAddress> &all_pkg_data_addrs,
-           const Arrayi &addrs_index,
-           DataContainerAssemble<PackageData> &all_pkg_data,
-           const Arrayi &data_index)
-{
-    constexpr int type_index = DataTypeIndex<DataType>::value;
-    for (size_t l = 0; l != std::get<type_index>(all_pkg_data).size(); ++l)
-    {
-        PackageData<DataType> &pkg_data = std::get<type_index>(all_pkg_data)[l];
-        PackageDataAddress<DataType> &pkg_data_addrs = std::get<type_index>(all_pkg_data_addrs)[l];
-        pkg_data_addrs[addrs_index[0]][addrs_index[1]][addrs_index[2]] =
-            &pkg_data[data_index[0]][data_index[1]][data_index[2]];
-    }
-}
-//=================================================================================================//
-template <int PKG_SIZE, int ADDRS_BUFFER>
-template <typename DataType>
-DataType GridDataPackage<PKG_SIZE, ADDRS_BUFFER>::
-    CornerAverage(PackageDataAddress<DataType> &pkg_data_addrs, Arrayi addrs_index, Arrayi corner_direction)
-{
-    DataType average = ZeroData<DataType>::value;
-    for (int i = 0; i != 2; ++i)
-        for (int j = 0; j != 2; ++j)
-            for (int k = 0; k != 2; ++k)
-            {
-                int x_index = addrs_index[0] + i * corner_direction[0];
-                int y_index = addrs_index[1] + j * corner_direction[1];
-                int z_index = addrs_index[2] + k * corner_direction[2];
-                average += *pkg_data_addrs[x_index][y_index][z_index];
-            }
-    return average * 0.125;
-}
-//=================================================================================================//
-template <class GridDataPackageType>
-template <typename DataType>
-DataType MeshWithGridDataPackages<GridDataPackageType>::
-    DataValueFromGlobalIndex(const MeshVariable<DataType> &mesh_variable,
+DataType MeshWithGridDataPackages<PKG_SIZE>::
+    DataValueFromGlobalIndex(MeshVariable<DataType> &mesh_variable,
                              const Arrayi &global_grid_index)
 {
     Arrayi cell_index_on_mesh_ = Arrayi::Zero();
@@ -164,75 +27,189 @@ DataType MeshWithGridDataPackages<GridDataPackageType>::
         cell_index_on_mesh_[n] = cell_index_in_this_direction;
         local_data_index[n] = global_grid_index[n] - cell_index_in_this_direction * pkg_size;
     }
-    auto &data = data_pkg_addrs_[cell_index_on_mesh_[0]][cell_index_on_mesh_[1]][cell_index_on_mesh_[2]]
-                     ->getPackageData(mesh_variable);
+    size_t package_index = PackageIndexFromCellIndex(cell_index_on_mesh_);
+    auto &data = mesh_variable.Data()[package_index];
     return data[local_data_index[0]][local_data_index[1]][local_data_index[2]];
 }
 //=================================================================================================//
-template <class GridDataPackageType>
-void MeshWithGridDataPackages<GridDataPackageType>::
-    initializePackageAddressesInACell(const Arrayi &cell_index)
+template <int PKG_SIZE>
+void MeshWithGridDataPackages<PKG_SIZE>::allocateIndexDataMatrix()
 {
-    int i = cell_index[0];
-    int j = cell_index[1];
-    int k = cell_index[2];
-
-    GridDataPackageType *data_pkg = data_pkg_addrs_[i][j][k];
-    if (data_pkg->isInnerPackage())
-    {
-        for (int l = 0; l != pkg_addrs_size; ++l)
-            for (int m = 0; m != pkg_addrs_size; ++m)
-                for (int n = 0; n != pkg_addrs_size; ++n)
-                {
-                    std::pair<int, int> x_pair = CellShiftAndDataIndex(l);
-                    std::pair<int, int> y_pair = CellShiftAndDataIndex(m);
-                    std::pair<int, int> z_pair = CellShiftAndDataIndex(n);
-
-                    data_pkg->assignPackageDataAddress(
-                        Arrayi(l, m, n),
-                        data_pkg_addrs_[i + x_pair.first][j + y_pair.first][k + z_pair.first],
-                        Arrayi(x_pair.second, y_pair.second, z_pair.second));
-                }
-    }
+    Allocate3dArray(index_data_mesh_, all_cells_);
 }
 //=================================================================================================//
-template <class GridDataPackageType>
-void MeshWithGridDataPackages<GridDataPackageType>::allocateMeshDataMatrix()
+template <int PKG_SIZE>
+void MeshWithGridDataPackages<PKG_SIZE>::deleteIndexDataMatrix()
 {
-    Allocate3dArray(data_pkg_addrs_, all_cells_);
+    Delete3dArray(index_data_mesh_, all_cells_);
 }
 //=================================================================================================//
-template <class GridDataPackageType>
-void MeshWithGridDataPackages<GridDataPackageType>::deleteMeshDataMatrix()
-{
-    Delete3dArray(data_pkg_addrs_, all_cells_);
-}
-//=================================================================================================//
-template <class GridDataPackageType>
-void MeshWithGridDataPackages<GridDataPackageType>::
-    assignDataPackageAddress(const Arrayi &cell_index, GridDataPackageType *data_pkg)
-{
-    data_pkg_addrs_[cell_index[0]][cell_index[1]][cell_index[2]] = data_pkg;
-}
-//=================================================================================================//
-template <class GridDataPackageType>
-GridDataPackageType *MeshWithGridDataPackages<GridDataPackageType>::
-    DataPackageFromCellIndex(const Arrayi &cell_index)
-{
-    return data_pkg_addrs_[cell_index[0]][cell_index[1]][cell_index[2]];
-}
-//=================================================================================================//
-template <class GridDataPackageType>
+template <int PKG_SIZE>
 template <class DataType>
-DataType MeshWithGridDataPackages<GridDataPackageType>::
-    probeMesh(const MeshVariable<DataType> &mesh_variable, const Vecd &position)
+DataType MeshWithGridDataPackages<PKG_SIZE>::
+    probeMesh(MeshVariable<DataType> &mesh_variable, const Vecd &position)
 {
-    Arrayi index = CellIndexFromPosition(position);
-    GridDataPackageType *data_pkg = data_pkg_addrs_[index[0]][index[1]][index[2]];
-    auto &pkg_data_addrs = data_pkg->getPackageDataAddress(mesh_variable);
-    return data_pkg->isInnerPackage() ? data_pkg->GridDataPackageType::
-                                            template probeDataPackage<DataType>(pkg_data_addrs, position)
-                                      : *pkg_data_addrs[0][0][0];
+    Arrayi cell_index = CellIndexFromPosition(position);
+    size_t package_index = PackageIndexFromCellIndex(cell_index);
+    return isInnerDataPackage(cell_index) ? probeDataPackage<DataType>(mesh_variable, package_index, cell_index, position)
+                                          : mesh_variable.Data()[package_index][0][0][0];
+}
+//=================================================================================================//
+template <int PKG_SIZE>
+template <typename FunctionOnData>
+void MeshWithGridDataPackages<PKG_SIZE>::
+    for_each_cell_data(const FunctionOnData &function)
+{
+    for (int i = 0; i != pkg_size; ++i)
+        for (int j = 0; j != pkg_size; ++j)
+            for (int k = 0; k != pkg_size; ++k)
+            {
+                function(i, j, k);
+            }
+}
+//=================================================================================================//
+template <int PKG_SIZE>
+void MeshWithGridDataPackages<PKG_SIZE>::
+    assignDataPackageIndex(const Arrayi &cell_index, const size_t package_index)
+{
+    index_data_mesh_[cell_index[0]][cell_index[1]][cell_index[2]] = package_index;
+}
+//=================================================================================================//
+template <int PKG_SIZE>
+size_t MeshWithGridDataPackages<PKG_SIZE>::
+    PackageIndexFromCellIndex(const Arrayi &cell_index)
+{
+    return index_data_mesh_[cell_index[0]][cell_index[1]][cell_index[2]];
+}
+//=================================================================================================//
+template <int PKG_SIZE>
+bool MeshWithGridDataPackages<PKG_SIZE>::
+    isSingularDataPackage(const Arrayi &cell_index)
+{
+    return index_data_mesh_[cell_index[0]][cell_index[1]][cell_index[2]] < 2;
+}
+//=================================================================================================//
+template <int PKG_SIZE>
+bool MeshWithGridDataPackages<PKG_SIZE>::
+    isInnerDataPackage(const Arrayi &cell_index)
+{
+    return index_data_mesh_[cell_index[0]][cell_index[1]][cell_index[2]] > 1;
+}
+//=================================================================================================//
+template <int PKG_SIZE>
+std::pair<size_t, Arrayi> MeshWithGridDataPackages<PKG_SIZE>::
+    NeighbourIndexShift(const Arrayi shift_index, const CellNeighborhood &neighbour)
+{
+    std::pair<size_t, Arrayi> result;
+    Arrayi neighbour_index = (shift_index + pkg_size * Arrayi::Ones()) / pkg_size;
+    result.first = neighbour[neighbour_index[0]][neighbour_index[1]][neighbour_index[2]];
+    result.second = (shift_index + pkg_size * Arrayi::Ones()) - neighbour_index * pkg_size;
+
+    return result;
+}
+//=================================================================================================//
+template <int PKG_SIZE>
+template <typename DataType, typename FunctionByPosition>
+void MeshWithGridDataPackages<PKG_SIZE>::
+    assignByPosition(MeshVariable<DataType> &mesh_variable,
+                     const Arrayi &cell_index,
+                     const FunctionByPosition &function_by_position)
+{
+    size_t package_index = PackageIndexFromCellIndex(cell_index);
+    auto &pkg_data = mesh_variable.Data()[package_index];
+    for (int i = 0; i != pkg_size; ++i)
+        for (int j = 0; j != pkg_size; ++j)
+            for (int k = 0; k != pkg_size; ++k)
+            {
+                Vec3d position = DataPositionFromIndex(cell_index, Arrayi(i, j, k));
+                pkg_data[i][j][k] = function_by_position(position);
+            }
+}
+//=================================================================================================//
+template <int PKG_SIZE>
+template <typename InDataType, typename OutDataType>
+void MeshWithGridDataPackages<PKG_SIZE>::
+    computeGradient(MeshVariable<InDataType> &in_variable,
+                    MeshVariable<OutDataType> &out_variable,
+                    const size_t package_index)
+{
+    auto in_variable_data = in_variable.Data();
+    auto out_variable_data = out_variable.Data();
+
+    auto &neighborhood = cell_neighborhood_[package_index];
+    auto &pkg_data = out_variable_data[package_index];
+
+    for_each_cell_data(
+        [&](int i, int j, int k)
+        {
+            std::pair<size_t, Arrayi> x1 = NeighbourIndexShift(Arrayi(i + 1, j, k), neighborhood);
+            std::pair<size_t, Arrayi> x2 = NeighbourIndexShift(Arrayi(i - 1, j, k), neighborhood);
+            std::pair<size_t, Arrayi> y1 = NeighbourIndexShift(Arrayi(i, j + 1, k), neighborhood);
+            std::pair<size_t, Arrayi> y2 = NeighbourIndexShift(Arrayi(i, j - 1, k), neighborhood);
+            std::pair<size_t, Arrayi> z1 = NeighbourIndexShift(Arrayi(i, j, k + 1), neighborhood);
+            std::pair<size_t, Arrayi> z2 = NeighbourIndexShift(Arrayi(i, j, k - 1), neighborhood);
+            Real dphidx = (in_variable_data[x1.first][x1.second[0]][x1.second[1]][x1.second[2]] -
+                           in_variable_data[x2.first][x2.second[0]][x2.second[1]][x2.second[2]]);
+            Real dphidy = (in_variable_data[y1.first][y1.second[0]][y1.second[1]][y1.second[2]] -
+                           in_variable_data[y2.first][y2.second[0]][y2.second[1]][y2.second[2]]);
+            Real dphidz = (in_variable_data[z1.first][z1.second[0]][z1.second[1]][z1.second[2]] -
+                           in_variable_data[z2.first][z2.second[0]][z2.second[1]][z2.second[2]]);
+            pkg_data[i][j][k] = 0.5 * Vecd(dphidx, dphidy, dphidz) / data_spacing_;
+        });
+}
+//=================================================================================================//
+template <int PKG_SIZE>
+template <typename DataType>
+DataType MeshWithGridDataPackages<PKG_SIZE>::
+    CornerAverage(MeshVariable<DataType> &mesh_variable, Arrayi addrs_index, Arrayi corner_direction, CellNeighborhood &neighborhood)
+{
+    DataType average = ZeroData<DataType>::value;
+    auto mesh_variable_data = mesh_variable.Data();
+    for (int i = 0; i != 2; ++i)
+        for (int j = 0; j != 2; ++j)
+            for (int k = 0; k != 2; ++k)
+            {
+                int x_index = addrs_index[0] + i * corner_direction[0];
+                int y_index = addrs_index[1] + j * corner_direction[1];
+                int z_index = addrs_index[2] + k * corner_direction[2];
+                NeighbourIndex neighbour_index = NeighbourIndexShift(Arrayi(x_index, y_index, z_index), neighborhood);
+                average += mesh_variable_data[neighbour_index.first][neighbour_index.second[0]][neighbour_index.second[1]][neighbour_index.second[2]];
+            }
+    return average * 0.125;
+}
+//=================================================================================================//
+template <int PKG_SIZE>
+template <class DataType>
+DataType MeshWithGridDataPackages<PKG_SIZE>::
+    probeDataPackage(MeshVariable<DataType> &mesh_variable, size_t package_index, const Arrayi &cell_index, const Vecd &position)
+{
+    Arrayi data_index = DataIndexFromPosition(cell_index, position);
+    Vecd data_position = DataPositionFromIndex(cell_index, data_index);
+    Vecd alpha = (position - data_position) / data_spacing_;
+    Vecd beta = Vecd::Ones() - alpha;
+
+    auto &neighborhood = cell_neighborhood_[package_index];
+    auto mesh_variable_data = mesh_variable.Data();
+    NeighbourIndex neighbour_index_1 = NeighbourIndexShift(Arrayi(data_index[0], data_index[1], data_index[2]), neighborhood);
+    NeighbourIndex neighbour_index_2 = NeighbourIndexShift(Arrayi(data_index[0] + 1, data_index[1], data_index[2]), neighborhood);
+    NeighbourIndex neighbour_index_3 = NeighbourIndexShift(Arrayi(data_index[0], data_index[1] + 1, data_index[2]), neighborhood);
+    NeighbourIndex neighbour_index_4 = NeighbourIndexShift(Arrayi(data_index[0] + 1, data_index[1] + 1, data_index[2]), neighborhood);
+
+    DataType bilinear_1 = mesh_variable_data[neighbour_index_1.first][neighbour_index_1.second[0]][neighbour_index_1.second[1]][neighbour_index_1.second[2]] * beta[0] * beta[1] +
+                          mesh_variable_data[neighbour_index_2.first][neighbour_index_2.second[0]][neighbour_index_2.second[1]][neighbour_index_2.second[2]] * alpha[0] * beta[1] +
+                          mesh_variable_data[neighbour_index_3.first][neighbour_index_3.second[0]][neighbour_index_3.second[1]][neighbour_index_3.second[2]] * beta[0] * alpha[1] +
+                          mesh_variable_data[neighbour_index_4.first][neighbour_index_4.second[0]][neighbour_index_4.second[1]][neighbour_index_4.second[2]] * alpha[0] * alpha[1];
+
+    neighbour_index_1 = NeighbourIndexShift(Arrayi(data_index[0], data_index[1], data_index[2] + 1), neighborhood);
+    neighbour_index_2 = NeighbourIndexShift(Arrayi(data_index[0] + 1, data_index[1], data_index[2] + 1), neighborhood);
+    neighbour_index_3 = NeighbourIndexShift(Arrayi(data_index[0], data_index[1] + 1, data_index[2] + 1), neighborhood);
+    neighbour_index_4 = NeighbourIndexShift(Arrayi(data_index[0] + 1, data_index[1] + 1, data_index[2] + 1), neighborhood);
+
+    DataType bilinear_2 = mesh_variable_data[neighbour_index_1.first][neighbour_index_1.second[0]][neighbour_index_1.second[1]][neighbour_index_1.second[2]] * beta[0] * beta[1] +
+                          mesh_variable_data[neighbour_index_2.first][neighbour_index_2.second[0]][neighbour_index_2.second[1]][neighbour_index_2.second[2]] * alpha[0] * beta[1] +
+                          mesh_variable_data[neighbour_index_3.first][neighbour_index_3.second[0]][neighbour_index_3.second[1]][neighbour_index_3.second[2]] * beta[0] * alpha[1] +
+                          mesh_variable_data[neighbour_index_4.first][neighbour_index_4.second[0]][neighbour_index_4.second[1]][neighbour_index_4.second[2]] * alpha[0] * alpha[1];
+    return bilinear_1 * beta[2] + bilinear_2 * alpha[2];
 }
 //=================================================================================================//
 } // namespace SPH

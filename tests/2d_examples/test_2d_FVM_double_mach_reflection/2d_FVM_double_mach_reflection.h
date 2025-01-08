@@ -107,7 +107,8 @@ class DMFBoundaryConditionSetup : public BoundaryConditionSetupInFVM
   public:
     DMFBoundaryConditionSetup(BaseInnerRelationInFVM &inner_relation, GhostCreationFromMesh &ghost_creation)
         : BoundaryConditionSetupInFVM(inner_relation, ghost_creation),
-          E_(*particles_->getVariableByName<Real>("TotalEnergy")){};
+          E_(particles_->getVariableDataByName<Real>("TotalEnergy")),
+          physical_time_(sph_system_.getSystemVariableDataByName<Real>("PhysicalTime")){};
     virtual ~DMFBoundaryConditionSetup(){};
 
     // Override these methods to define the specific boundary conditions
@@ -152,8 +153,7 @@ class DMFBoundaryConditionSetup : public BoundaryConditionSetupInFVM
 
     void applyTopBoundary(size_t ghost_index, size_t index_i) override
     {
-        Real run_time = GlobalStaticVariables::physical_time_;
-        Real x_1 = 1.0 / 6.0 + run_time * 10.0 / sin(3.14159 / 3.0);
+        Real x_1 = 1.0 / 6.0 + *physical_time_ * 10.0 / sin(3.14159 / 3.0);
         if (pos_[index_i][1] > tan(3.14159 / 3.0) * (pos_[index_i][0] - x_1))
         {
             rho_[ghost_index] = rho0_another;
@@ -183,6 +183,7 @@ class DMFBoundaryConditionSetup : public BoundaryConditionSetupInFVM
     }
 
   protected:
-    StdLargeVec<Real> &E_;
+    Real *E_;
+    Real *physical_time_;
 };
 #endif // FVM_DOUBLE_MACH_REFLECTION_H

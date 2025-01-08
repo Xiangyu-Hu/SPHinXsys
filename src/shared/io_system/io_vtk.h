@@ -44,11 +44,13 @@ class BodyStatesRecordingToVtp : public BodyStatesRecording
 {
   public:
     BodyStatesRecordingToVtp(SPHBody &body) : BodyStatesRecording(body){};
-    BodyStatesRecordingToVtp(SPHBodyVector bodies) : BodyStatesRecording(bodies){};
+    BodyStatesRecordingToVtp(SPHSystem &sph_system) : BodyStatesRecording(sph_system){};
     virtual ~BodyStatesRecordingToVtp(){};
 
   protected:
     virtual void writeWithFileName(const std::string &sequence) override;
+    template <typename OutStreamType>
+    void writeParticlesToVtk(OutStreamType &output_stream, BaseParticles &particles);
 };
 
 /**
@@ -57,11 +59,11 @@ class BodyStatesRecordingToVtp : public BodyStatesRecording
  * the output is map of strings with VTK XML format can visualized by ParaView
  * the data type vtkUnstructedGrid
  */
-class BodyStatesRecordingToVtpString : public BodyStatesRecording
+class BodyStatesRecordingToVtpString : public BodyStatesRecordingToVtp
 {
   public:
-    BodyStatesRecordingToVtpString(SPHBodyVector bodies)
-        : BodyStatesRecording(bodies){};
+    BodyStatesRecordingToVtpString(SPHSystem &sph_system)
+        : BodyStatesRecordingToVtp(sph_system){};
     virtual ~BodyStatesRecordingToVtpString() = default;
 
     const VtuStringData &GetVtuData() const;
@@ -72,7 +74,7 @@ class BodyStatesRecordingToVtpString : public BodyStatesRecording
 
   protected:
     virtual void writeWithFileName(const std::string &sequence) override;
-    virtual void writeVtu(std::ostream &stream, SPHBody *body) const;
+    virtual void writeVtu(std::ostream &stream, SPHBody *body);
 
   private:
     VtuStringData _vtuData;
@@ -95,8 +97,20 @@ class WriteToVtpIfVelocityOutOfBound
     virtual void writeWithFileName(const std::string &sequence) override;
 
   public:
-    WriteToVtpIfVelocityOutOfBound(SPHBodyVector bodies, Real velocity_bound);
+    WriteToVtpIfVelocityOutOfBound(SPHSystem &sph_system, Real velocity_bound);
     virtual ~WriteToVtpIfVelocityOutOfBound(){};
+};
+
+class ParticleGenerationRecordingToVtp : public ParticleGenerationRecording
+{
+  public:
+    ParticleGenerationRecordingToVtp(SPHBody &body, StdLargeVec<Vecd> &position)
+        : ParticleGenerationRecording(body), position_(position){};
+    virtual ~ParticleGenerationRecordingToVtp(){};
+
+  protected:
+    StdLargeVec<Vecd> &position_;
+    virtual void writeWithFileName(const std::string &sequence) override;
 };
 } // namespace SPH
 #endif // IO_VTK_H

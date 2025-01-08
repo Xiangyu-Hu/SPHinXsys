@@ -38,26 +38,29 @@ namespace SPH
 {
 /**
  * @class BodyPart
- * @brief An auxillary class for SPHBody to indicate a part of the body.
+ * @brief An auxiliary class for SPHBody to indicate a part of the body.
  */
 using namespace std::placeholders;
 class BodyPart
 {
   public:
-    BodyPart(SPHBody &sph_body, const std::string &body_part_name)
-        : sph_body_(sph_body), body_part_name_(body_part_name),
-          base_particles_(sph_body.getBaseParticles()),
-          pos_(*base_particles_.getVariableByName<Vecd>("Position")){};
+    BodyPart(SPHBody &sph_body, const std::string &body_part_name);
     virtual ~BodyPart(){};
-
     SPHBody &getSPHBody() { return sph_body_; };
+    SPHSystem &getSPHSystem() { return sph_body_.getSPHSystem(); };
     std::string getName() { return body_part_name_; };
+    int getPartID() { return part_id_; };
+    DiscreteVariable<UnsignedInt> *dvIndexList() { return dv_index_list_; };
+    SingularVariable<UnsignedInt> *svRangeSize() { return sv_range_size_; };
 
   protected:
     SPHBody &sph_body_;
+    int part_id_;
     std::string body_part_name_;
     BaseParticles &base_particles_;
-    StdLargeVec<Vecd> &pos_;
+    DiscreteVariable<UnsignedInt> *dv_index_list_;
+    SingularVariable<UnsignedInt> *sv_range_size_;
+    Vecd *pos_;
 };
 
 /**
@@ -71,10 +74,7 @@ class BodyPartByParticle : public BodyPart
     BaseParticles &getBaseParticles() { return base_particles_; };
     IndexVector &LoopRange() { return body_part_particles_; };
     size_t SizeOfLoopRange() { return body_part_particles_.size(); };
-
-    BodyPartByParticle(SPHBody &sph_body, const std::string &body_part_name)
-        : BodyPart(sph_body, body_part_name),
-          body_part_bounds_(Vecd::Zero(), Vecd::Zero()), body_part_bounds_set_(false){};
+    BodyPartByParticle(SPHBody &sph_body, const std::string &body_part_name);
     virtual ~BodyPartByParticle(){};
 
     void setBodyPartBounds(BoundingBox bbox)
@@ -222,13 +222,15 @@ template <class BodyRegionType>
 class AlignedBoxRegion : public BodyRegionType
 {
   public:
-    AlignedBoxShape &aligned_box_;
-
     AlignedBoxRegion(RealBody &real_body, AlignedBoxShape &aligned_box)
         : BodyRegionType(real_body, aligned_box), aligned_box_(aligned_box){};
     AlignedBoxRegion(RealBody &real_body, SharedPtr<AlignedBoxShape> aligned_box_ptr)
         : BodyRegionType(real_body, aligned_box_ptr), aligned_box_(*aligned_box_ptr.get()){};
     virtual ~AlignedBoxRegion(){};
+    AlignedBoxShape &getAlignedBoxShape() { return aligned_box_; };
+
+  protected:
+    AlignedBoxShape &aligned_box_;
 };
 
 using BodyAlignedBoxByParticle = AlignedBoxRegion<BodyRegionByParticle>;

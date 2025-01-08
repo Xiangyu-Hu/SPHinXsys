@@ -58,10 +58,12 @@ class BodyStatesRecordingToPlt : public BodyStatesRecording
 {
   public:
     BodyStatesRecordingToPlt(SPHBody &body) : BodyStatesRecording(body){};
-    BodyStatesRecordingToPlt(SPHBodyVector bodies) : BodyStatesRecording(bodies){};
+    BodyStatesRecordingToPlt(SPHSystem &sph_system) : BodyStatesRecording(sph_system){};
     virtual ~BodyStatesRecordingToPlt(){};
 
   protected:
+    void writePltFileHeader(std::ofstream &output_file, ParticleVariables &variables_to_write);
+    void writePltFileParticleData(std::ofstream &output_file, ParticleVariables &variables_to_write, Vecd *position, size_t index);
     virtual void writeWithFileName(const std::string &sequence) override;
 };
 

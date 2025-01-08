@@ -36,7 +36,8 @@ IsotropicDiffusion::IsotropicDiffusion(const std::string &species_name, Real dif
 LocalIsotropicDiffusion::LocalIsotropicDiffusion(const std::string &diffusion_species_name,
                                                  const std::string &gradient_species_name,
                                                  Real diff_cf)
-    : IsotropicDiffusion(diffusion_species_name, gradient_species_name, diff_cf)
+    : IsotropicDiffusion(diffusion_species_name, gradient_species_name, diff_cf),
+      local_diffusivity_(nullptr)
 {
     material_type_name_ = "LocalIsotropicDiffusion";
 }
@@ -46,7 +47,9 @@ LocalIsotropicDiffusion::LocalIsotropicDiffusion(const std::string &species_name
 //=================================================================================================//
 void LocalIsotropicDiffusion::initializeLocalParameters(BaseParticles *base_particles)
 {
-    base_particles->registerVariable(local_diffusivity_, "ThermalConductivity", [&](size_t i) -> Real { return diff_cf_; });
+    local_diffusivity_ = base_particles->registerStateVariable<Real>(
+        "ThermalConductivity", [&](size_t i) -> Real
+        { return diff_cf_; });
     base_particles->addVariableToWrite<Real>("ThermalConductivity");
 }
 //=================================================================================================//
@@ -77,7 +80,8 @@ LocalDirectionalDiffusion::LocalDirectionalDiffusion(const std::string &diffusio
                                                      const std::string &gradient_species_name,
                                                      Real diff_cf, Real bias_diff_cf, Vecd bias_direction)
     : DirectionalDiffusion(diffusion_species_name, gradient_species_name,
-                           diff_cf, bias_diff_cf, bias_direction)
+                           diff_cf, bias_diff_cf, bias_direction),
+      local_bias_direction_(nullptr), local_transformed_diffusivity_(nullptr)
 {
     material_type_name_ = "LocalDirectionalDiffusion";
 }
@@ -86,18 +90,23 @@ LocalDirectionalDiffusion::LocalDirectionalDiffusion(const std::string &species_
                                                      Real diff_cf, Real bias_diff_cf, Vecd bias_direction)
     : LocalDirectionalDiffusion(species_name, species_name, diff_cf, bias_diff_cf, bias_direction) {}
 //=================================================================================================//
-void LocalDirectionalDiffusion::registerReloadLocalParameters(BaseParticles *base_particles)
+void LocalDirectionalDiffusion::registerLocalParameters(BaseParticles *base_particles)
 {
-    base_particles->registerVariable(local_bias_direction_, "Fiber");
-    base_particles->addVariableToReload<Vecd>("Fiber");
+    local_bias_direction_ = base_particles->registerStateVariable<Vecd>("Fiber");
+}
+//=================================================================================================//
+void LocalDirectionalDiffusion::registerLocalParametersFromReload(BaseParticles *base_particles)
+{
+    local_bias_direction_ = base_particles->registerStateVariableFromReload<Vecd>("Fiber");
 }
 //=================================================================================================//
 void LocalDirectionalDiffusion::initializeLocalParameters(BaseParticles *base_particles)
 {
     DirectionalDiffusion::initializeLocalParameters(base_particles);
-    base_particles->registerVariable(
-        local_transformed_diffusivity_, "LocalTransformedDiffusivity",
-        [&](size_t i) -> Matd {
+    local_transformed_diffusivity_ = base_particles->registerStateVariable<Matd>(
+        "LocalTransformedDiffusivity",
+        [&](size_t i) -> Matd
+        {
             Matd diff_i = diff_cf_ * Matd::Identity() +
                           bias_diff_cf_ * local_bias_direction_[i] * local_bias_direction_[i].transpose();
             return inverseCholeskyDecomposition(diff_i);

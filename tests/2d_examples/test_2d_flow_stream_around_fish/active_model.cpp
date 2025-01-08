@@ -6,7 +6,8 @@ namespace SPH
 {
 //=================================================================================================//
 ActiveModelSolid::ActiveModelSolid(Real rho0, Real youngs_modulus, Real poisson_ratio)
-    : SaintVenantKirchhoffSolid(rho0, youngs_modulus, poisson_ratio)
+    : SaintVenantKirchhoffSolid(rho0, youngs_modulus, poisson_ratio),
+      active_strain_(nullptr)
 {
     material_type_name_ = "ActiveModelSolid";
 }
@@ -14,7 +15,7 @@ ActiveModelSolid::ActiveModelSolid(Real rho0, Real youngs_modulus, Real poisson_
 void ActiveModelSolid::initializeLocalParameters(BaseParticles *base_particles)
 {
     SaintVenantKirchhoffSolid::initializeLocalParameters(base_particles);
-    base_particles->registerVariable(active_strain_, "ActiveStrain");
+    active_strain_ = base_particles->registerStateVariable<Matd>("ActiveStrain");
 }
 //=================================================================================================//
 Matd ActiveModelSolid::StressPK1(Matd &F, size_t index_i)
