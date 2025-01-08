@@ -33,33 +33,6 @@
 
 namespace SPH
 {
-/**
- * @class VariableNormCK
- * @brief  obtained the maximum norm of a variable
- */
-template <typename DataType, typename NormType, class DynamicsIdentifier = SPHBody>
-class VariableNormCK : public BaseLocalDynamicsReduce<NormType, DynamicsIdentifier>
-{
-  public:
-    VariableNormCK(DynamicsIdentifier &identifier, const std::string &variable_name);
-    virtual ~VariableNormCK() {};
-    virtual Real outputResult(Real reduced_value) override { return std::sqrt(reduced_value); }
-
-    class ReduceKernel
-    {
-      public:
-        template <class ExecutionPolicy, class EncloserType>
-        ReduceKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-        Real reduce(size_t index_i, Real dt = 0.0) { return getSquaredNorm(variable_[index_i]); };
-
-      protected:
-        DataType *variable_;
-    };
-
-  protected:
-    DiscreteVariable<DataType> *dv_variable_;
-};
-
 class TotalKineticEnergyCK
     : public LocalDynamicsReduce<ReduceSum<Real>>
 {
@@ -100,6 +73,7 @@ class TotalMechanicalEnergyCK : public TotalKineticEnergyCK
       public:
         template <class ExecutionPolicy, class EncloserType>
         ReduceKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+
         Real reduce(size_t index_i, Real dt = 0.0)
         {
             return TotalKineticEnergyCK::ReduceKernel::reduce(index_i, dt) +
@@ -128,6 +102,7 @@ class QuantitySum : public BaseLocalDynamicsReduce<ReduceSum<DataType>, Dynamics
       public:
         template <class ExecutionPolicy, class EncloserType>
         ReduceKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+
         DataType reduce(size_t index_i, Real dt = 0.0)
         {
             return variable_[index_i];
@@ -141,23 +116,45 @@ class QuantitySum : public BaseLocalDynamicsReduce<ReduceSum<DataType>, Dynamics
     DiscreteVariable<DataType> *dv_variable_;
 };
 
-template <class ReduceSumType>
-class AverageCK : public ReduceSumType
+template <typename DataType, class DynamicsIdentifier = SPHBody>
+class QuantityAverage : public BaseLocalDynamicsReduce<ReduceSum<std::pair<DataType, Real>>, DynamicsIdentifier>
 {
-    using DataType = typename ReduceSumType::ReturnType;
+    using ReduceReturnType = std::pair<DataType, Real>;
+    using BaseDynamicsType = BaseLocalDynamicsReduce<ReduceSum<ReduceReturnType>, DynamicsIdentifier>;
 
   public:
-    template <class DynamicsIdentifier>
-    AverageCK(DynamicsIdentifier &identifier, const std::string &variable_name);
-    virtual ~AverageCK() {};
+    QuantityAverage(DynamicsIdentifier &identifier, const std::string &variable_name);
+    virtual ~QuantityAverage() {};
 
-    virtual DataType outputResult(DataType reduced_value) override
+    class FinalOutput
     {
-        return ReduceSumType::outputResult(reduced_value) / Real(sv_total_sample_size_->getValue());
-    }
+      public:
+        using OutputType = DataType;
+        template <class EncloserType>
+        FinalOutput(EncloserType &encloser){};
+        OutputType Result(const ReduceReturnType &reduced_value)
+        {
+            return reduced_value.first / reduced_value.second;
+        }
+    };
+
+    class ReduceKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        ReduceKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+
+        ReduceReturnType reduce(size_t index_i, Real dt = 0.0)
+        {
+            return ReduceReturnType(variable_[index_i], Real(1));
+        };
+
+      protected:
+        DataType *variable_;
+    };
 
   protected:
-    SingularVariable<UnsignedInt> *sv_total_sample_size_;
+    DiscreteVariable<DataType> *dv_variable_;
 };
 } // namespace SPH
 #endif // GENERAL_REDUCE_CK_H

@@ -36,8 +36,11 @@ namespace SPH
 template <typename...>
 struct ReduceReference;
 
+template <typename...>
+struct ReduceSum;
+
 template <class DataType>
-struct ReduceSum : ReturnFunction<DataType>
+struct ReduceSum<DataType> : ReturnFunction<DataType>
 {
     DataType operator()(const DataType &x, const DataType &y) const { return x + y; };
 };
@@ -46,6 +49,22 @@ template <typename DataType>
 struct ReduceReference<ReduceSum<DataType>>
 {
     static inline DataType value = ZeroData<DataType>::value;
+};
+
+template <typename DataType>
+struct ReduceSum<std::pair<DataType, Real>> : ReturnFunction<std::pair<DataType, Real>>
+{
+    using PairType = std::pair<DataType, Real>;
+    PairType operator()(const PairType &x, const PairType &y) const
+    {
+        return PairType(x.first + y.first, x.second + y.second);
+    };
+};
+
+template <typename DataType>
+struct ReduceReference<ReduceSum<std::pair<DataType, Real>>>
+{
+    static inline std::pair<DataType, Real> value = std::make_pair(ZeroData<DataType>::value, Real(0));
 };
 
 struct ReduceMax : ReturnFunction<Real>

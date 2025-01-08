@@ -204,7 +204,7 @@ int main(int ac, char *av[])
     RegressionTestEnsembleAverage<ObservedQuantityRecording<MainExecutionPolicy, Real>>
         write_solid_temperature(diffusion_species_name, observer_contact);
     BodyRegionByParticle inner_domain(diffusion_body, makeShared<MultiPolygonShape>(createInnerDomain(), "InnerDomain"));
-    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<MainExecutionPolicy, AverageCK<QuantitySum<Real, BodyPartByParticle>>>>
+    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<MainExecutionPolicy, QuantityAverage<Real, BodyPartByParticle>>>
         write_solid_average_temperature_part(inner_domain, diffusion_species_name);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration

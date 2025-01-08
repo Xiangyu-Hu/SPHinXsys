@@ -6,18 +6,6 @@
 namespace SPH
 {
 //=================================================================================================//
-template <typename DataType, typename NormType, class DynamicsIdentifier>
-VariableNormCK<DataType, NormType, DynamicsIdentifier>::
-    VariableNormCK(DynamicsIdentifier &identifier, const std::string &variable_name)
-    : BaseLocalDynamicsReduce<NormType, DynamicsIdentifier>(identifier),
-      dv_variable_(this->particles_->template getVariableByName<DataType>(variable_name)) {}
-//=================================================================================================//
-template <typename DataType, typename NormType, class DynamicsIdentifier>
-template <class ExecutionPolicy, class EncloserType>
-VariableNormCK<DataType, NormType, DynamicsIdentifier>::ReduceKernel::
-    ReduceKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-    : variable_(encloser.dv_variable_->DelegatedData(ex_policy)) {}
-//=================================================================================================//
 template <class ExecutionPolicy, class EncloserType>
 TotalKineticEnergyCK::ReduceKernel::
     ReduceKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
@@ -46,14 +34,20 @@ QuantitySum<DataType, DynamicsIdentifier>::ReduceKernel::
     ReduceKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : variable_(encloser.dv_variable_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
-template <class ReduceSumType>
-template <class DynamicsIdentifier>
-AverageCK<ReduceSumType>::AverageCK(DynamicsIdentifier &identifier, const std::string &variable_name)
-    : ReduceSumType(identifier, variable_name),
-      sv_total_sample_size_(identifier.getTotalSize())
+template <typename DataType, class DynamicsIdentifier>
+QuantityAverage<DataType, DynamicsIdentifier>::
+    QuantityAverage(DynamicsIdentifier &identifier, const std::string &variable_name)
+    : BaseDynamicsType(identifier),
+      dv_variable_(this->particles_->template getVariableByName<DataType>(variable_name))
 {
     this->quantity_name_ = "Average" + variable_name;
 }
+//=================================================================================================//
+template <typename DataType, class DynamicsIdentifier>
+template <class ExecutionPolicy, class EncloserType>
+QuantityAverage<DataType, DynamicsIdentifier>::ReduceKernel::
+    ReduceKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+    : variable_(encloser.dv_variable_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 } // namespace SPH
 #endif // GENERAL_REDUCE_CK_HPP
