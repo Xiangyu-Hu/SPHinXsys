@@ -47,13 +47,13 @@ class AcousticTimeStepCK : public LocalDynamicsReduce<ReduceMax>
     explicit AcousticTimeStepCK(SPHBody &sph_body, Real acousticCFL = 0.6);
     virtual ~AcousticTimeStepCK() {};
 
-    class FinalOuput
+    class FinalOutput
     {
         Real h_min_, acousticCFL_;
 
       public:
         using OutputType = Real;
-        FinalOuput(AcousticTimeStepCK &encloser);
+        FinalOutput(AcousticTimeStepCK &encloser);
         Real Result(Real reduced_value);
     };
 
@@ -91,14 +91,14 @@ class AdvectionTimeStepCK : public LocalDynamicsReduce<ReduceMax>
     AdvectionTimeStepCK(SPHBody &sph_body, Real U_ref, Real advectionCFL = 0.25);
     virtual ~AdvectionTimeStepCK() {};
 
-    class FinalOuput
+    class FinalOutput
     {
         Real h_min_;
         Real speed_ref_, advectionCFL_;
 
       public:
         using OutputType = Real;
-        FinalOuput(AdvectionTimeStepCK &encloser);
+        FinalOutput(AdvectionTimeStepCK &encloser);
         Real Result(Real reduced_value);
     };
 

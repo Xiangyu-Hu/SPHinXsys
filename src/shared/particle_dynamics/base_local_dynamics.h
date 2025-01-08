@@ -97,12 +97,12 @@ class BaseLocalDynamicsReduce : public BaseLocalDynamics<DynamicsIdentifier>
     Operation &getOperation() { return operation_; };
     virtual ReturnType outputResult(ReturnType reduced_value) { return reduced_value; }
 
-    class FinalOuput
+    class FinalOutput
     {
       public:
         using OutputType = ReturnType;
         template <class EncloserType>
-        FinalOuput(EncloserType &encloser){};
+        FinalOutput(EncloserType &encloser){};
         ReturnType Result(ReturnType reduced_value)
         {
             return reduced_value;

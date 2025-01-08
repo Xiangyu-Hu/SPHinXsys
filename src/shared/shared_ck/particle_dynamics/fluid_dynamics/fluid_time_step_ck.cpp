@@ -19,10 +19,10 @@ AcousticTimeStepCK::AcousticTimeStepCK(SPHBody &sph_body, Real acousticCFL)
       h_min_(sph_body.sph_adaptation_->MinimumSmoothingLength()),
       acousticCFL_(acousticCFL) {}
 //=================================================================================================//
-AcousticTimeStepCK::FinalOuput::FinalOuput(AcousticTimeStepCK &encloser)
+AcousticTimeStepCK::FinalOutput::FinalOutput(AcousticTimeStepCK &encloser)
     : h_min_(encloser.h_min_), acousticCFL_(encloser.acousticCFL_) {}
 //=================================================================================================//
-Real AcousticTimeStepCK::FinalOuput::Result(Real reduced_value)
+Real AcousticTimeStepCK::FinalOutput::Result(Real reduced_value)
 {
     // since the particle does not change its configuration in the acoustic time steps
     // I chose a time-step size according to Eulerian method
@@ -39,11 +39,11 @@ AdvectionTimeStepCK::
       dv_force_(particles_->getVariableByName<Vecd>("Force")),
       dv_force_prior_(particles_->getVariableByName<Vecd>("ForcePrior")) {}
 //=================================================================================================//
-AdvectionTimeStepCK::FinalOuput::FinalOuput(AdvectionTimeStepCK &encloser)
+AdvectionTimeStepCK::FinalOutput::FinalOutput(AdvectionTimeStepCK &encloser)
     : h_min_(encloser.h_min_), speed_ref_(encloser.speed_ref_),
       advectionCFL_(encloser.advectionCFL_) {}
 //=================================================================================================//
-Real AdvectionTimeStepCK::FinalOuput::Result(Real reduced_value)
+Real AdvectionTimeStepCK::FinalOutput::Result(Real reduced_value)
 {
     return advectionCFL_ * h_min_ / (SMAX(sqrt(reduced_value), speed_ref_) + TinyReal);
 }
