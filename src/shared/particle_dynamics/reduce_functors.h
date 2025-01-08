@@ -64,7 +64,8 @@ struct ReduceSum<std::pair<DataType, Real>> : ReturnFunction<std::pair<DataType,
 template <typename DataType>
 struct ReduceReference<ReduceSum<std::pair<DataType, Real>>>
 {
-    static inline std::pair<DataType, Real> value = std::make_pair(ZeroData<DataType>::value, Real(0));
+    using PairType = std::pair<DataType, Real>;
+    static inline PairType value = ZeroData<PairType>::value;
 };
 
 struct ReduceMax : ReturnFunction<Real>

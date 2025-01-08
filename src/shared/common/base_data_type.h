@@ -102,6 +102,14 @@ struct ZeroData<UnsignedInt>
     static inline UnsignedInt value = 0;
 };
 
+template <typename FirstDataType, typename SecondDataType>
+struct ZeroData<std::pair<FirstDataType, SecondDataType>>
+{
+    using PairType = std::pair<FirstDataType, SecondDataType>;
+    static inline PairType value = PairType(
+        ZeroData<FirstDataType>::value, ZeroData<SecondDataType>::value);
+};
+
 template <typename DataType>
 struct IdentityMatrix
 {
