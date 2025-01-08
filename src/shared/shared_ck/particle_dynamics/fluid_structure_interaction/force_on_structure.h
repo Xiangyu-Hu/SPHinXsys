@@ -26,8 +26,8 @@
  * @author	Xiangyu Hu
  */
 
-#ifndef FORCE_ON_STRUCTRUCTURE_H
-#define FORCE_ON_STRUCTRUCTURE_H
+#ifndef FORCE_ON_STRUCTURE_H
+#define FORCE_ON_STRUCTURE_H
 
 #include "base_material.h"
 #include "force_prior_ck.hpp"
@@ -150,4 +150,4 @@ template <typename AcousticStep2ndHalfType>
 using PressureForceOnStructure = PressureForceFromFluid<Contact<WithUpdate, AcousticStep2ndHalfType>>;
 } // namespace FSI
 } // namespace SPH
-#endif // FORCE_ON_STRUCTRUCTURE_H
+#endif // FORCE_ON_STRUCTURE_H
