@@ -1,12 +1,21 @@
 # ![SPHinXsys Logo](assets/logo.png) SPHinXsys
 
-## Notice on the transformation to heterogeneous computational platform
+## Welcome to test and comment the heterogeneous parallelism in SPHinXsys
 
-SPHinXsys is set to undergo a major transformation, moving from traditional CPU parallelism to a new era of heterogeneous parallelism, where compute-intensive tasks can harness the power of both CPUs and GPUs. This evolution will be driven by SYCL (via Intel's DPC++), enabling us to leverage heterogeneous architectures with standard C++. Importantly, this transformation will be achieved with minimal disruption to the existing codebase, ensuring seamless continuity for current users.
+SPHinXsys is undergoing a major transformation,
+moving from traditional CPU parallelism to a new era of heterogeneous parallelism,
+where compute-intensive tasks can harness the power of both CPUs and GPUs.
+This evolution will be driven by SYCL (via Intel's DPC++), enabling us to leverage heterogeneous architectures with standard C++. 
+What's unique about this framework is that it allows for the development
+and testing of numerical methods even in environments without GPUs or DPC++ installed.
+If these methods are crafted following our specified guidelines and prove functional,
+they will seamlessly operate in environments equipped with DPC++ and GPU support.
 
-The groundwork for this shift is already laid out. A 2D dambreak test case has been added to the `test/test_sycl` folder, showcasing the capabilities of our specially designed framework. What's unique about this framework is that it allows for the development and testing of numerical methods even in environments without GPUs or DPC++ installed. If these methods are crafted following our specified guidelines and prove functional, they will seamlessly operate in environments equipped with DPC++ and GPU support.
+The groundwork for this shift is already laid out.
+Test cases following heterogeneous parallelism have been added to the `test/test_sycl` folder,
+showcasing the capabilities of our specially designed framework.
 
-By embracing this new paradigm, SPHinXsys is positioning itself at the forefront of multi-physics modeling, where performance meets versatility.
+Your tests, comments and modification of these test cases would be very welcomed!
 
 **Project status**  
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
@@ -20,12 +29,6 @@ By embracing this new paradigm, SPHinXsys is positioning itself at the forefront
 [![YouTube](https://img.shields.io/badge/YouTube-FF0000.svg?style=flat&logo=YouTube&logoColor=white)](https://www.youtube.com/channel/UCexdJbxOn9dvim6Jg1dnCFQ)
 [![Bilibili](https://img.shields.io/badge/bilibili-%E5%93%94%E5%93%A9%E5%93%94%E5%93%A9-critical)](https://space.bilibili.com/1761273682/video)
 [![QQ](https://img.shields.io/badge/QQ_Group-blue?logo=tencentqq&logoColor=white)](https://qm.qq.com/q/BZDAqz70Iw)
-## Master and stable branches
-
-The most active development (or default) branch of this repository is `master`.
-This branch gives the updated development of SPHinXsys using heterogeneous (using TBB and SYCL) parallelism.
-
-The most stable branch of the repository is `version1.0`, which is based on CPU (using TBB) parallelism.
 
 ## Repository Description
 
