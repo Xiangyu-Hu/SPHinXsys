@@ -112,7 +112,7 @@ Real SRDViscousTimeStepSize::reduce(size_t index_i, Real dt)
 ShearRateDependentViscosity::ShearRateDependentViscosity(SPHBody &sph_body)
     : LocalDynamics(sph_body),
       vel_grad_(particles_->getVariableDataByName<Matd>("VelocityGradient")),
-      generalized_viscoisty_(DynamicCast<GeneralizedNewtonianViscosity>(this, this->particles_->getBaseMaterial())),
+      generalized_viscosity_(DynamicCast<GeneralizedNewtonianViscosity>(this, this->particles_->getBaseMaterial())),
       mu_srd_(particles_->registerStateVariable<Real>("VariableViscosity"))
 {
     particles_->addVariableToWrite<Real>("VariableViscosity");
@@ -123,7 +123,7 @@ void ShearRateDependentViscosity::update(size_t index_i, Real dt)
     Matd D = 0.5 * (vel_grad_[index_i] + vel_grad_[index_i].transpose());
     D -= D.trace() / Real(Dimensions) * Matd::Identity();
     Real shear_rate = (Real)std::sqrt(2.0 * (D * D).trace());
-    mu_srd_[index_i] = generalized_viscoisty_.getViscosity(shear_rate);
+    mu_srd_[index_i] = generalized_viscosity_.getViscosity(shear_rate);
 }
 //=================================================================================================//
 } // namespace fluid_dynamics

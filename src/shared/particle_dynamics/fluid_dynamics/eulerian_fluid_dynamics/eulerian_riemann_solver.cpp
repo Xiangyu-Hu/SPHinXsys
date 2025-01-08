@@ -89,15 +89,15 @@ CompressibleFluidStarState HLLCWithLimiterRiemannSolver::
     Vecd vl = state_i.vel_ - ul * (-e_ij);
     Vecd vr = state_j.vel_ - ur * (-e_ij);
     Real R_lf = state_j.rho_ / state_i.rho_;
-    Real u_tlide = (ul + ur * R_lf) / (1.0 + R_lf);
-    Real v_tlide = (vl.norm() + vr.norm() * R_lf) / (1.0 + R_lf);
-    Real q_tlide = u_tlide;
+    Real u_tilde = (ul + ur * R_lf) / (1.0 + R_lf);
+    Real v_tilde = (vl.norm() + vr.norm() * R_lf) / (1.0 + R_lf);
+    Real q_tilde = u_tilde;
     Real hl = (state_i.E_ + state_i.p_) / state_i.rho_;
     Real hr = (state_j.E_ + state_j.p_) / state_j.rho_;
-    Real h_tlide = (hl + hr * R_lf) / (1.0 + R_lf);
-    Real sound_tlide = sqrt((1.4 - 1.0) * (h_tlide - 0.5 * (u_tlide * u_tlide + v_tlide * v_tlide)));
-    Real s_l = SMIN(ul - compressible_fluid_i_.getSoundSpeed(state_i.p_, state_i.rho_), q_tlide - sound_tlide);
-    Real s_r = SMAX(ur + compressible_fluid_j_.getSoundSpeed(state_j.p_, state_j.rho_), q_tlide + sound_tlide);
+    Real h_tilde = (hl + hr * R_lf) / (1.0 + R_lf);
+    Real sound_tilde = sqrt((1.4 - 1.0) * (h_tilde - 0.5 * (u_tilde * u_tilde + v_tilde * v_tilde)));
+    Real s_l = SMIN(ul - compressible_fluid_i_.getSoundSpeed(state_i.p_, state_i.rho_), q_tilde - sound_tilde);
+    Real s_r = SMAX(ur + compressible_fluid_j_.getSoundSpeed(state_j.p_, state_j.rho_), q_tilde + sound_tilde);
 
     //obtain the middle wave velocity
     Real rhol_cl = compressible_fluid_i_.getSoundSpeed(state_i.p_, state_i.rho_) * state_i.rho_;

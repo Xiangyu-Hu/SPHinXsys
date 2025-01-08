@@ -130,7 +130,7 @@ class ShearRateDependentViscosity : public LocalDynamics
 
   protected:
     Matd *vel_grad_;
-    GeneralizedNewtonianViscosity &generalized_viscoisty_;
+    GeneralizedNewtonianViscosity &generalized_viscosity_;
     Real *mu_srd_;
 };
 

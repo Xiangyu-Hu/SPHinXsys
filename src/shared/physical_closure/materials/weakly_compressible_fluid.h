@@ -24,7 +24,7 @@
  * @file 	weakly_compressible_fluid.h
  * @brief 	Describe the weakly compressible fluid which is used
  * 			model incompressible fluids. Here, we have included several equation of states.
- * 			Futhermore, A typical non-newtonian fluid model is included.
+ * 			Furthermore, A typical non-newtonian fluid model is included.
  * @author	Chi Zhang and Xiangyu Hu
  */
 
