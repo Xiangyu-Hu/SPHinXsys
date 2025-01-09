@@ -5,7 +5,7 @@
 SPHinXsys is undergoing a major transformation,
 moving from traditional CPU parallelism to a new era of heterogeneous parallelism,
 where compute-intensive tasks can harness the power of both CPUs and GPUs.
-This evolution will be driven by SYCL (via Intel's DPC++), enabling us to leverage heterogeneous architectures with standard C++. 
+This evolution will be driven by SYCL (via Intel's DPC++), enabling us to leverage heterogeneous architectures with standard C++.
 What's unique about this framework is that it allows for the development
 and testing of numerical methods even in environments without GPUs or DPC++ installed.
 If these methods are crafted following our specified guidelines and prove functional,
@@ -17,7 +17,7 @@ showcasing the capabilities of our specially designed framework.
 
 Your tests, comments and modification of these test cases would be very welcomed!
 
-**Project status**  
+**Project status**
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Linux](https://img.shields.io/badge/os-Linux-green.svg)](https://shields.io/)
 [![Windows](https://img.shields.io/badge/os-Windows-green.svg)](https://shields.io/)
