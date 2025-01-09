@@ -59,7 +59,7 @@ class ElectroPhysiologyReaction : public BaseReactionModel<3>
         reaction_model_ = "ElectroPhysiologyReaction";
         initializeElectroPhysiologyReaction();
     };
-    virtual ~ElectroPhysiologyReaction(){};
+    virtual ~ElectroPhysiologyReaction() {};
 
     void initializeElectroPhysiologyReaction();
 };
@@ -88,7 +88,7 @@ class AlievPanfilowModel : public ElectroPhysiologyReaction
     {
         reaction_model_ = "AlievPanfilowModel";
     };
-    virtual ~AlievPanfilowModel(){};
+    virtual ~AlievPanfilowModel() {};
 };
 
 /**
@@ -100,14 +100,17 @@ class MonoFieldElectroPhysiology
     : public ReactionDiffusion<ElectroPhysiologyReaction, DirectionalDiffusionType>
 {
   public:
-    template <typename... Args>
-    MonoFieldElectroPhysiology(ElectroPhysiologyReaction &electro_physiology_reaction, Args &&... args)
+    template <typename... Args, size_t... Is>
+    MonoFieldElectroPhysiology(ElectroPhysiologyReaction *electro_physiology_reaction,
+                               ConstructArgs<Args...> args, std::index_sequence<Is...>)
         : ReactionDiffusion<ElectroPhysiologyReaction, DirectionalDiffusionType>(electro_physiology_reaction)
     {
-        this->material_type_name_ = "MonoFieldElectroPhysiology";
-        this->addDiffusion("Voltage", "Voltage", std::forward<Args>(args)...);
+        this->addDiffusion("Voltage", "Voltage", std::get<Is>(args)...);
     };
-    virtual ~MonoFieldElectroPhysiology(){};
+    template <class ElectroPhysiologyReactionType, typename... OtherArgs>
+    explicit MonoFieldElectroPhysiology(ConstructArgs<ElectroPhysiologyReactionType *, ConstructArgs<OtherArgs...>> args)
+        : MonoFieldElectroPhysiology(std::get<0>(args), std::get<1>(args), std::index_sequence_for<OtherArgs...>{}){};
+    virtual ~MonoFieldElectroPhysiology() {};
 };
 
 namespace electro_physiology

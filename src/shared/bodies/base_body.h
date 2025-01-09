@@ -43,6 +43,7 @@
 #include "base_particle_generator.h"
 #include "base_particles.h"
 #include "cell_linked_list.h"
+#include "closure_wrapper.h"
 #include "sph_system.h"
 #include "sphinxsys_containers.h"
 
@@ -88,7 +89,7 @@ class SPHBody
     SPHBody(SPHSystem &sph_system, const std::string &name);
     SPHBody(SPHSystem &sph_system, SharedPtr<Shape> shape_ptr, const std::string &name);
     SPHBody(SPHSystem &sph_system, SharedPtr<Shape> shape_ptr);
-    virtual ~SPHBody(){};
+    virtual ~SPHBody() {};
 
     std::string getName() { return body_name_; };
     SPHSystem &getSPHSystem();
@@ -145,6 +146,15 @@ class SPHBody
         base_material_ = material;
         return material;
     };
+
+    template <class BaseModel, typename... AuxiliaryModels, typename... Args>
+    Closure<BaseModel, AuxiliaryModels...> *defineClosure(Args &&...args)
+    {
+        Closure<BaseModel, AuxiliaryModels...> *closure =
+            base_material_ptr_keeper_.createPtr<Closure<BaseModel, AuxiliaryModels...>>(std::forward<Args>(args)...);
+        base_material_ = closure;
+        return closure;
+    };
     //----------------------------------------------------------------------
     // Particle generating methods
     // Initialize particle data using a particle generator for geometric data.
@@ -171,7 +181,6 @@ class SPHBody
     virtual void writeParticlesToXmlForRestart(std::string &filefullpath);
     virtual void readParticlesFromXmlForRestart(std::string &filefullpath);
     virtual void writeToXmlForReloadParticle(std::string &filefullpath);
-    virtual SPHBody *ThisObjectPtr() { return this; };
 };
 
 /**
@@ -193,7 +202,7 @@ class RealBody : public SPHBody
     {
         this->getSPHSystem().addRealBody(this);
     };
-    virtual ~RealBody(){};
+    virtual ~RealBody() {};
     BaseCellLinkedList &getCellLinkedList();
     void updateCellLinkedList();
 };

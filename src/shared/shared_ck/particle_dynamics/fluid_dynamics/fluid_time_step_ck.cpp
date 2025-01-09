@@ -1,5 +1,7 @@
 #include "fluid_time_step_ck.h"
 
+#include "viscosity.h"
+
 namespace SPH
 {
 namespace fluid_dynamics
@@ -41,10 +43,11 @@ Real AdvectionTimeStepCK::outputResult(Real reduced_value)
 }
 //=================================================================================================//
 AdvectionViscousTimeStepCK::AdvectionViscousTimeStepCK(SPHBody &sph_body, Real U_ref, Real advectionCFL)
-    : AdvectionTimeStepCK(sph_body, U_ref, advectionCFL),
-      fluid_(DynamicCast<Fluid>(this, particles_->getBaseMaterial()))
+    : AdvectionTimeStepCK(sph_body, U_ref, advectionCFL)
 {
-    Real viscous_speed = fluid_.ReferenceViscosity() / fluid_.ReferenceDensity() / h_min_;
+    BaseMaterial &material = particles_->getBaseMaterial();
+    Viscosity &viscosity = DynamicCast<Viscosity>(this, material);
+    Real viscous_speed = viscosity.ReferenceViscosity() / material.ReferenceDensity() / h_min_;
     speed_ref_ = SMAX(viscous_speed, speed_ref_);
 }
 //=================================================================================================//

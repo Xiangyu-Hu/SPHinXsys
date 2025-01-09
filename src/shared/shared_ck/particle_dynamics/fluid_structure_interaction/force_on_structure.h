@@ -26,13 +26,14 @@
  * @author	Xiangyu Hu
  */
 
-#ifndef FORCE_ON_STRUCTRUCTURE_H
-#define FORCE_ON_STRUCTRUCTURE_H
+#ifndef FORCE_ON_STRUCTURE_H
+#define FORCE_ON_STRUCTURE_H
 
 #include "base_material.h"
 #include "force_prior_ck.hpp"
 #include "interaction_ck.hpp"
 #include "riemann_solver.h"
+#include "viscosity.h"
 
 namespace SPH
 {
@@ -82,7 +83,7 @@ class ViscousForceFromFluid<Contact<WithUpdate, ViscousForceType, Parameters...>
     : public ForceFromFluid<decltype(ViscousForceType::kernel_correction_), Parameters...>
 {
 
-    using ViscosityType = decltype(ViscousForceType::viscosity_method_);
+    using ViscosityType = typename ViscousForceType::ViscosityModel;
     using ViscosityKernel = typename ViscosityType::ComputingKernel;
     using BaseForceFromFluid = ForceFromFluid<decltype(ViscousForceType::kernel_correction_), Parameters...>;
 
@@ -103,7 +104,7 @@ class ViscousForceFromFluid<Contact<WithUpdate, ViscousForceType, Parameters...>
     };
 
   protected:
-    StdVec<ViscosityType> contact_viscosity_method_;
+    StdVec<ViscosityType *> contact_viscosity_model_;
     StdVec<Real> contact_smoothing_length_sq_;
 };
 template <typename ViscousForceType>
@@ -149,4 +150,4 @@ template <typename AcousticStep2ndHalfType>
 using PressureForceOnStructure = PressureForceFromFluid<Contact<WithUpdate, AcousticStep2ndHalfType>>;
 } // namespace FSI
 } // namespace SPH
-#endif // FORCE_ON_STRUCTRUCTURE_H
+#endif // FORCE_ON_STRUCTURE_H

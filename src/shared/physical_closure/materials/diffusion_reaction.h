@@ -31,7 +31,8 @@
 #ifndef DIFFUSION_REACTION_H
 #define DIFFUSION_REACTION_H
 
-#include "base_material.h"
+#include "base_data_package.h"
+#include "particle_functors.h"
 
 #include <functional>
 #include <map>
@@ -39,24 +40,35 @@ using namespace std::placeholders;
 
 namespace SPH
 {
-/**
- * @class BaseDiffusion
- * @brief diffusion property abstract base class.
- */
-class BaseDiffusion : public BaseMaterial
+class BaseParticles;
+
+class AbstractDiffusion
+{
+  public:
+    AbstractDiffusion() {};
+    virtual ~AbstractDiffusion() {};
+    virtual StdVec<AbstractDiffusion *> AllDiffusions() = 0;
+    virtual Real getDiffusionTimeStepSize(Real smoothing_length) = 0;
+    virtual void registerLocalParameters(BaseParticles *base_particles) {};
+    virtual void registerLocalParametersFromReload(BaseParticles *base_particles) {};
+    virtual void initializeLocalParameters(BaseParticles *base_particles) {};
+};
+
+class BaseDiffusion : public AbstractDiffusion
 {
   public:
     BaseDiffusion(const std::string &diffusion_species_name,
                   const std::string &gradient_species_name);
     BaseDiffusion(const std::string &species_name);
-    virtual ~BaseDiffusion(){};
+    virtual ~BaseDiffusion() {};
 
     std::string DiffusionSpeciesName() { return diffusion_species_name_; };
     std::string GradientSpeciesName() { return gradient_species_name_; };
-    Real getDiffusionTimeStepSize(Real smoothing_length);
+    virtual Real getDiffusionTimeStepSize(Real smoothing_length) override;
     virtual Real getReferenceDiffusivity() = 0;
     virtual Real getDiffusionCoeffWithBoundary(size_t index_i) = 0;
     virtual Real getInterParticleDiffusionCoeff(size_t index_i, size_t index_j, const Vecd &e_ij) = 0;
+    virtual StdVec<AbstractDiffusion *> AllDiffusions() override { return {this}; };
 
   protected:
     std::string diffusion_species_name_;
@@ -77,7 +89,8 @@ class IsotropicDiffusion : public BaseDiffusion
                        const std::string &gradient_species_name,
                        Real diff_cf = 1.0);
     IsotropicDiffusion(const std::string &species_name, Real diff_cf = 1.0);
-    virtual ~IsotropicDiffusion(){};
+    explicit IsotropicDiffusion(ConstructArgs<std::string, Real> args);
+    virtual ~IsotropicDiffusion() {};
 
     virtual Real getReferenceDiffusivity() override { return diff_cf_; };
     virtual Real getDiffusionCoeffWithBoundary(size_t index_i) override { return diff_cf_; }
@@ -95,18 +108,20 @@ class IsotropicDiffusion : public BaseDiffusion
 class LocalIsotropicDiffusion : public IsotropicDiffusion
 {
   protected:
+    Real diff_max_; /**< maximum diffusion coefficient. */
     Real *local_diffusivity_;
 
   public:
     LocalIsotropicDiffusion(const std::string &diffusion_species_name,
                             const std::string &gradient_species_name,
-                            Real diff_cf = 1.0);
-    LocalIsotropicDiffusion(const std::string &species_name, Real diff_cf = 1.0);
-    virtual ~LocalIsotropicDiffusion(){};
+                            Real diff_background, Real diff_max);
+    LocalIsotropicDiffusion(const std::string &species_name, Real diff_background, Real diff_max);
+    explicit LocalIsotropicDiffusion(ConstructArgs<std::string, Real, Real> args);
+    virtual ~LocalIsotropicDiffusion() {};
 
     virtual void initializeLocalParameters(BaseParticles *base_particles) override;
 
-    virtual Real getReferenceDiffusivity() override { return diff_cf_; };
+    virtual Real getReferenceDiffusivity() override { return diff_max_; };
     virtual Real getDiffusionCoeffWithBoundary(size_t index_i) override { return local_diffusivity_[index_i]; };
     virtual Real getInterParticleDiffusionCoeff(size_t index_i, size_t index_j, const Vecd &e_ij) override
     {
@@ -133,7 +148,8 @@ class DirectionalDiffusion : public IsotropicDiffusion
                          Real diff_cf, Real bias_diff_cf, Vecd bias_direction);
     DirectionalDiffusion(const std::string &species_name,
                          Real diff_cf, Real bias_diff_cf, Vecd bias_direction);
-    virtual ~DirectionalDiffusion(){};
+    explicit DirectionalDiffusion(ConstructArgs<std::string, Real, Real, Vecd> args);
+    virtual ~DirectionalDiffusion() {};
 
     virtual Real getReferenceDiffusivity() override
     {
@@ -163,7 +179,7 @@ class LocalDirectionalDiffusion : public DirectionalDiffusion
                               Real diff_cf, Real bias_diff_cf, Vecd bias_direction);
     LocalDirectionalDiffusion(const std::string &species_name,
                               Real diff_cf, Real bias_diff_cf, Vecd bias_direction);
-    virtual ~LocalDirectionalDiffusion(){};
+    virtual ~LocalDirectionalDiffusion() {};
 
     virtual void registerLocalParameters(BaseParticles *base_particles) override;
     virtual void registerLocalParametersFromReload(BaseParticles *base_particles) override;
@@ -215,7 +231,7 @@ class BaseReactionModel
             }
         }
     };
-    virtual ~BaseReactionModel(){};
+    virtual ~BaseReactionModel() {};
     SpeciesNames &getSpeciesNames() { return species_names_; };
 
   protected:
@@ -229,7 +245,7 @@ class BaseReactionModel
  * @brief Complex material for reaction and diffusion.
  */
 template <class ReactionType, class DiffusionType>
-class ReactionDiffusion : public BaseMaterial
+class ReactionDiffusion : public AbstractDiffusion
 {
   public:
     static constexpr int NumReactiveSpecies = ReactionType::NumSpecies;
@@ -238,19 +254,16 @@ class ReactionDiffusion : public BaseMaterial
     UniquePtrsKeeper<DiffusionType> diffusion_ptrs_keeper_;
 
   protected:
-    ReactionType &reaction_model_;
-    StdVec<DiffusionType *> all_diffusions_;
+    ReactionType *reaction_model_;
+    StdVec<AbstractDiffusion *> all_diffusions_;
 
   public:
     /** Constructor for material with diffusion and reaction. */
-    ReactionDiffusion(ReactionType &reaction_model)
-        : BaseMaterial(), reaction_model_(reaction_model)
-    {
-        material_type_name_ = "ReactionDiffusion";
-    };
-    virtual ~ReactionDiffusion(){};
-    StdVec<DiffusionType *> AllDiffusions() { return all_diffusions_; };
-    ReactionType &ReactionModel() { return reaction_model_; };
+    ReactionDiffusion(ReactionType *reaction_model)
+        : AbstractDiffusion(), reaction_model_(reaction_model) {};
+    virtual ~ReactionDiffusion() {};
+    ReactionType &ReactionModel() { return *reaction_model_; };
+    virtual StdVec<AbstractDiffusion *> AllDiffusions() override { return all_diffusions_; };
 
     virtual void registerLocalParameters(BaseParticles *base_particles) override
     {
@@ -274,7 +287,7 @@ class ReactionDiffusion : public BaseMaterial
      * @brief Get diffusion time step size. Here, I follow the reference:
      * https://www.uni-muenster.de/imperia/md/content/physik_tp/lectures/ws2016-2017/num_methods_i/heat.pdf
      */
-    Real getDiffusionTimeStepSize(Real smoothing_length)
+    virtual Real getDiffusionTimeStepSize(Real smoothing_length) override
     {
         Real dt = MaxReal;
         for (size_t k = 0; k < all_diffusions_.size(); ++k)
@@ -286,7 +299,7 @@ class ReactionDiffusion : public BaseMaterial
     void addDiffusion(const std::string &diffusion_species_name,
                       const std::string &gradient_species_name, Args &&...args)
     {
-        auto species_names = reaction_model_.getSpeciesNames();
+        auto species_names = reaction_model_->getSpeciesNames();
 
         if (std::find(species_names.begin(), species_names.end(), diffusion_species_name) != std::end(species_names) &&
             std::find(species_names.begin(), species_names.end(), gradient_species_name) != std::end(species_names))

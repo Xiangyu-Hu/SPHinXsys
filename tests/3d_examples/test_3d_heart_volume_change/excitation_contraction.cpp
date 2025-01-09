@@ -33,11 +33,13 @@ int main(int ac, char *av[])
     //	SPH Particle relaxation section
     //----------------------------------------------------------------------
     /** check whether run particle relaxation for body fitted particle distribution. */
-    if (sph_system.RunParticleRelaxation() && !sph_system.ReloadParticles())
+    if (sph_system.RunParticleRelaxation())
     {
         SolidBody herat_model(sph_system, makeShared<Heart>("HeartModel"));
         herat_model.defineBodyLevelSetShape()->correctLevelSetSign()->writeLevelSet(sph_system);
-        herat_model.defineMaterial<LocallyOrthotropicMuscle>(rho0_s, bulk_modulus, fiber_direction, sheet_direction, a0, b0);
+        herat_model.defineClosure<LocallyOrthotropicMuscle, IsotropicDiffusion>(
+            ConstructArgs(rho0_s, bulk_modulus, fiber_direction, sheet_direction, a0, b0),
+            ConstructArgs(diffusion_species_name, diffusion_coeff));
         herat_model.generateParticles<BaseParticles, Lattice>();
         /** topology */
         InnerRelation herat_model_inner(herat_model);
@@ -72,9 +74,8 @@ int main(int ac, char *av[])
         //----------------------------------------------------------------------
         //	Diffusion process to initialize fiber direction
         //----------------------------------------------------------------------
-        IsotropicDiffusion diffusion("Phi", "Phi", diffusion_coeff);
-        GetDiffusionTimeStepSize get_time_step_size(herat_model, diffusion);
-        FiberDirectionDiffusionRelaxation diffusion_relaxation(herat_model_inner, &diffusion);
+        GetDiffusionTimeStepSize get_time_step_size(herat_model);
+        FiberDirectionDiffusionRelaxation diffusion_relaxation(herat_model_inner);
         SimpleDynamics<ComputeFiberAndSheetDirections> compute_fiber_sheet(herat_model, "Phi");
         BodySurface surface_part(herat_model);
         SimpleDynamics<DiffusionBCs> impose_diffusion_bc(surface_part, "Phi");
@@ -114,9 +115,8 @@ int main(int ac, char *av[])
 
     SolidBody physiology_heart(sph_system, makeShared<Heart>("PhysiologyHeart"));
     AlievPanfilowModel aliev_panfilow_model(k_a, c_m, k, a, b, mu_1, mu_2, epsilon);
-    MonoFieldElectroPhysiology<LocalDirectionalDiffusion> *mono_field_electro_physiology =
-        physiology_heart.defineMaterial<MonoFieldElectroPhysiology<LocalDirectionalDiffusion>>(
-            aliev_panfilow_model, diffusion_coeff, bias_coeff, fiber_direction);
+    physiology_heart.defineClosure<Solid, MonoFieldElectroPhysiology<LocalDirectionalDiffusion>>(
+        Solid(), ConstructArgs(&aliev_panfilow_model, ConstructArgs(diffusion_coeff, bias_coeff, fiber_direction)));
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
         ? physiology_heart.generateParticles<BaseParticles, Reload>("HeartModel")
         : physiology_heart.generateParticles<BaseParticles, Lattice>();
@@ -144,10 +144,10 @@ int main(int ac, char *av[])
     // Corrected configuration.
     InteractionWithUpdate<LinearGradientCorrectionMatrixInner> correct_configuration_excitation(physiology_heart_inner);
     // Time step size calculation.
-    GetDiffusionTimeStepSize get_physiology_time_step(physiology_heart, *mono_field_electro_physiology);
+    GetDiffusionTimeStepSize get_physiology_time_step(physiology_heart);
     // Diffusion process for diffusion body.
     electro_physiology::ElectroPhysiologyDiffusionInnerRK2<LocalDirectionalDiffusion>
-        diffusion_relaxation(physiology_heart_inner, mono_field_electro_physiology->AllDiffusions());
+        diffusion_relaxation(physiology_heart_inner);
     // Solvers for ODE system.
     electro_physiology::ElectroPhysiologyReactionRelaxationForward reaction_relaxation_forward(physiology_heart, aliev_panfilow_model);
     electro_physiology::ElectroPhysiologyReactionRelaxationBackward reaction_relaxation_backward(physiology_heart, aliev_panfilow_model);

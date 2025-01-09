@@ -55,7 +55,7 @@ class DepolarizationInitialCondition : public LocalDynamics
     explicit DepolarizationInitialCondition(SPHBody &sph_body)
         : LocalDynamics(sph_body),
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
-          voltage_(particles_->registerStateVariable<Real>("Voltage")){};
+          voltage_(particles_->registerStateVariable<Real>("Voltage")) {};
 
     void update(size_t index_i, Real dt)
     {
@@ -81,9 +81,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     SolidBody muscle_body(sph_system, makeShared<MuscleBlock>("MuscleBlock"));
     AlievPanfilowModel muscle_reaction_model(k_a, c_m, k, a, b, mu_1, mu_2, epsilon);
-    MonoFieldElectroPhysiology<DirectionalDiffusion> *mono_field_electro_physiology =
-        muscle_body.defineMaterial<MonoFieldElectroPhysiology<DirectionalDiffusion>>(
-            muscle_reaction_model, diffusion_coeff, bias_coeff, fiber_direction);
+    muscle_body.defineClosure<Solid, MonoFieldElectroPhysiology<DirectionalDiffusion>>(
+        Solid(), ConstructArgs(&muscle_reaction_model, ConstructArgs(diffusion_coeff, bias_coeff, fiber_direction)));
     muscle_body.generateParticles<BaseParticles, Lattice>();
 
     ObserverBody voltage_observer(sph_system, "VoltageObserver");
@@ -104,10 +103,10 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     SimpleDynamics<DepolarizationInitialCondition> initialization(muscle_body);
     InteractionWithUpdate<LinearGradientCorrectionMatrixInner> correct_configuration(muscle_body_inner_relation);
-    GetDiffusionTimeStepSize get_time_step_size(muscle_body, *mono_field_electro_physiology);
+    GetDiffusionTimeStepSize get_time_step_size(muscle_body);
     // Diffusion process for diffusion body.
     electro_physiology::ElectroPhysiologyDiffusionInnerRK2<DirectionalDiffusion>
-        diffusion_relaxation(muscle_body_inner_relation, mono_field_electro_physiology->AllDiffusions());
+        diffusion_relaxation(muscle_body_inner_relation);
     // Solvers for ODE system or reactions
     electro_physiology::ElectroPhysiologyReactionRelaxationForward reaction_relaxation_forward(muscle_body, muscle_reaction_model);
     electro_physiology::ElectroPhysiologyReactionRelaxationBackward reaction_relaxation_backward(muscle_body, muscle_reaction_model);

@@ -24,12 +24,13 @@ int main(int ac, char *av[])
     sph_system.handleCommandlineOptions(ac, av);
 #endif
     IOEnvironment io_environment(sph_system);
-    ParameterizationIO &parameterization_io = io_environment.defineParameterizationIO();
+    ParameterizationIO *parameterization_io = io_environment.defineParameterizationIO();
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBlock"));
-    water_block.defineMaterial<ParameterizedWaterMaterial>(parameterization_io, rho0_f, c_f, mu_f);
+    water_block.defineClosure<WeaklyCompressibleFluid, ParameterizedViscosity>(
+        ConstructArgs(rho0_f, c_f), ConstructArgs(parameterization_io, mu_f));
     water_block.generateParticles<BaseParticles, Lattice>();
 
     SolidBody cylinder(sph_system, makeShared<Cylinder>("Cylinder"));

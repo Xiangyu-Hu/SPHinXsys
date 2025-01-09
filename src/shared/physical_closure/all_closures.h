@@ -21,40 +21,14 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	compressible_fluid.h
- * @brief 	Describe the compressible fluid which is used
- * 			model compressible fluids. Here, we have ideal gas equation of states.
- * @author	Chi Zhang, Zhentong Wang and Xiangyu Hu
+ * @file 	all_closures.h
+ * @brief 	This is the header file for physical closures
+ * which includes material models, such equation of state,
+ * constitute relation, rheolgogy and turbulence models.
+ * @author	Xiangyu Hu
  */
 
 #pragma once
 
-#include "base_material.h"
-
-namespace SPH
-{
-/**
- * @class CompressibleFluid
- * @brief Ideal gas equation of state (EOS).
- */
-class CompressibleFluid : public Fluid
-{
-  protected:
-    Real gamma_; /** heat capacity ratio */
-
-  public:
-    explicit CompressibleFluid(Real rho0, Real gamma, Real mu = 0.0)
-        : Fluid(rho0, mu), gamma_(gamma)
-    {
-        material_type_name_ = "CompressibleFluid";
-    };
-    virtual ~CompressibleFluid(){};
-
-    Real HeatCapacityRatio() { return gamma_; };
-    virtual Real getPressure(Real rho, Real rho_e) override;
-    virtual Real getPressure(Real rho) override { return 0.0; };
-    virtual Real DensityFromPressure(Real p) override { return 0.0; };
-    virtual Real getSoundSpeed(Real p, Real rho) override;
-    virtual CompressibleFluid *ThisObjectPtr() override { return this; };
-};
-} // namespace SPH
+#include "all_materials.h"
+#include "closure_wrapper.h"

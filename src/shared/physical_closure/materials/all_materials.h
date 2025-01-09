@@ -21,42 +21,20 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	base_data_type.h
- * @brief 	This is the class for Wenland kernel.
+ * @file 	all_materials.h
+ * @brief 	This is the header file for materials.
  * @author	Chi Zhang and Xiangyu Hu
  */
 
-#ifndef KERNEL_WENLAND_C2_H
-#define KERNEL_WENLAND_C2_H
+#pragma once
 
-#include "base_kernel.h"
-
-namespace SPH
-{
-/**
- * @class KernelWendlandC2
- * @brief Kernel WendlandC2
- */
-class KernelWendlandC2 : public Kernel
-{
-  public:
-    explicit KernelWendlandC2(Real h);
-
-    /**
-     * Calculates the kernel value for
-     * the given distance of two particles
-     */
-    virtual Real W_1D(const Real q) const override;
-    virtual Real W_2D(const Real q) const override;
-    virtual Real W_3D(const Real q) const override;
-
-    virtual Real dW_1D(const Real q) const override;
-    virtual Real dW_2D(const Real q) const override;
-    virtual Real dW_3D(const Real q) const override;
-
-    virtual Real d2W_1D(const Real q) const override;
-    virtual Real d2W_2D(const Real q) const override;
-    virtual Real d2W_3D(const Real q) const override;
-};
-} // namespace SPH
-#endif // KERNEL_WENLAND_C2_H
+#include "base_material.h"
+#include "viscosity.h"
+#include "complex_solid.h"
+#include "complex_solid.hpp"
+#include "compressible_fluid.h"
+#include "diffusion_reaction.h"
+#include "elastic_solid.h"
+#include "general_continuum.h"
+#include "inelastic_solid.h"
+#include "weakly_compressible_fluid.h"

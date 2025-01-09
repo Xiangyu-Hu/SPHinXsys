@@ -32,7 +32,7 @@
 #include "all_body_relations.h"
 #include "all_geometries.h"
 #include "all_kernels.h"
-#include "all_materials.h"
+#include "all_closures.h"
 #include "all_particle_generators.h"
 #include "all_particles.h"
 #include "all_physical_dynamics.h"
