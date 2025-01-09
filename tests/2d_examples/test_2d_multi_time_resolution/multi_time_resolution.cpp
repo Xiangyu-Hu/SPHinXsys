@@ -42,24 +42,13 @@ SPH::BoundingBox union_bounding_box(const SPH::BoundingBox &a, const SPH::Boundi
         return out;
 }
 
-class RectangularShapeGenerator : public MultiPolygonShape
-{
-  public:
-    RectangularShapeGenerator(const std::string &shape_name, const Vec2d &center, const Vec2d &halfsize, Real angle = 0.0)
-        : MultiPolygonShape(shape_name)
-    {
-        Transform transform2d(Rotation2d(-to_rad(angle)), center);
-        multi_polygon_.addABox(transform2d, halfsize, ShapeBooleanOps::add);
-    }
-};
-
 struct SolidAlgorithm
 {
     InteractionWithUpdate<LinearGradientCorrectionMatrixInner> corrected_configuration_;
     Dynamics1Level<solid_dynamics::Integration1stHalfPK2> stress_relaxation_first_half_;
     Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half_;
-    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d>>> position_damping_;
-    ReduceDynamics<solid_dynamics::AcousticTimeStepSize> time_step_size_;
+    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d, FixedDampingRate>>> position_damping_;
+    ReduceDynamics<solid_dynamics::AcousticTimeStep> time_step_size_;
 
     SolidAlgorithm(InnerRelation &inner_relation, Real physical_viscosity)
         : corrected_configuration_(inner_relation),
@@ -74,43 +63,33 @@ struct SolidAlgorithm
     inline void correct_config() { corrected_configuration_.exec(); }
     inline void stress_first_half(Real dt) { stress_relaxation_first_half_.exec(dt); }
     inline void stress_second_half(Real dt) { stress_relaxation_second_half_.exec(dt); }
-    inline void damping() { position_damping_.exec(); }
-
-    inline void exec_all(Real dt)
-    {
-        stress_first_half(dt);
-        damping();
-        stress_second_half(dt);
-    }
+    inline void damping(Real dt) { position_damping_.exec(dt); }
 };
 
 struct SolidContact
 {
     SurfaceContactRelation contact_relation_;
-    std::unique_ptr<InteractionDynamics<solid_dynamics::ContactDensitySummation>> contact_density_;
+    std::unique_ptr<InteractionDynamics<solid_dynamics::ContactFactorSummation>> contact_factor_;
     std::unique_ptr<InteractionWithUpdate<solid_dynamics::ContactForce>> contact_forces_;
 
     explicit SolidContact(SolidBody &contact_to, SolidBody &contact_from)
         : contact_relation_(contact_to, {&contact_from})
     {
-        contact_to.getBaseParticles().registerSharedVariable<Real>("RepulsionDensity");
-        contact_from.getBaseParticles().registerSharedVariable<Real>("RepulsionDensity");
-        contact_density_ = std::make_unique<InteractionDynamics<solid_dynamics::ContactDensitySummation>>(contact_relation_);
+        contact_to.getBaseParticles().registerStateVariable<Real>("RepulsionFactor");
+        contact_from.getBaseParticles().registerStateVariable<Real>("RepulsionFactor");
+        contact_factor_ = std::make_unique<InteractionDynamics<solid_dynamics::ContactFactorSummation>>(contact_relation_);
         contact_forces_ = std::make_unique<InteractionWithUpdate<solid_dynamics::ContactForce>>(contact_relation_);
     }
     inline void update_config() { contact_relation_.updateConfiguration(); }
-    inline void exec()
-    {
-        contact_density_->exec();
-        contact_forces_->exec();
-    }
+    inline void update_factor() { contact_factor_->exec(); }
+    inline void update_force() { contact_forces_->exec(); }
 };
 
 void relax_body(SPHBody &body, InnerRelation &inner_relation)
 {
     using namespace relax_dynamics;
     SimpleDynamics<RandomizeParticlePosition> random_particles(body);
-    RelaxationStepLevelSetCorrectionInner relaxation_step(inner_relation);
+    RelaxationStepInner relaxation_step(inner_relation);
 
     random_particles.exec(0.25);
     relaxation_step.SurfaceBounding().exec();
@@ -125,30 +104,55 @@ void relax_body(SPHBody &body, InnerRelation &inner_relation)
     }
 }
 
-class CatheterVelBC : public ForcePrior,
-                      public LocalDynamics,
-                      public DataDelegateSimple
+class CatheterVelBC : public ForcePrior
 {
   private:
     Vec2d targer_vel_;
-    StdLargeVec<Vec2d> *vel_;
-    StdLargeVec<Real> *mass_;
+    std::function<bool(SPH::Vec2d)> contains_func_ = nullptr;
+    Vec2d *pos_;
+    Vec2d *vel_;
+    Real *mass_;
 
   public:
-    CatheterVelBC(SPHBody &body, Vec2d target_vel)
-        : ForcePrior(&body.getBaseParticles(), "CatheterVelForce"),
-          LocalDynamics(body),
-          DataDelegateSimple(body),
+    CatheterVelBC(SPHBody &body, Vec2d target_vel, std::function<bool(SPH::Vec2d)> contains)
+        : ForcePrior(body, "CatheterVelForce"),
           targer_vel_(std::move(target_vel)),
-          vel_(body.getBaseParticles().getVariableByName<Vec2d>("Velocity")),
-          mass_(body.getBaseParticles().getVariableByName<Real>("Mass")) {}
+          contains_func_(std::move(contains)),
+          pos_(body.getBaseParticles().getVariableDataByName<Vec2d>("Position")),
+          vel_(body.getBaseParticles().registerStateVariable<Vec2d>("Velocity")),
+          mass_(body.getBaseParticles().registerStateVariable<Real>("Mass")) {}
     inline void update(size_t index_i, Real dt = 0.0)
     {
         if (dt < std::numeric_limits<double>::epsilon())
             return;
-        current_force_[index_i] = (targer_vel_ - (*vel_)[index_i]) / dt * (*mass_)[index_i];
+        if (contains_func_(pos_[index_i]))
+            current_force_[index_i] = (targer_vel_ - vel_[index_i]) / dt * mass_[index_i];
+        else
+            current_force_[index_i] = Vec2d::Zero();
         ForcePrior::update(index_i, dt);
     }
+};
+
+class FixParticles : public BodyPartByParticle
+{
+  private:
+    std::function<bool(SPH::Vec2d)> contains_func_ = nullptr;
+
+  public:
+    FixParticles(SPHBody &body, const std::string &body_part_name, std::function<bool(SPH::Vec2d)> contains)
+        : BodyPartByParticle(body, body_part_name),
+          contains_func_(std::move(contains))
+    {
+        TaggingParticleMethod tagging_particle_method = std::bind(&FixParticles::tagManually, this, _1);
+        tagParticles(tagging_particle_method);
+    };
+
+  private:
+    void tagManually(size_t index_i)
+    {
+        if (contains_func_(pos_[index_i]))
+            body_part_particles_.push_back(index_i);
+    };
 };
 
 void solid_contact_multi_cycle(int res_factor_1, int res_factor_2, bool dual_loop)
@@ -158,52 +162,74 @@ void solid_contact_multi_cycle(int res_factor_1, int res_factor_2, bool dual_loo
 
     // geometry properties
     const Real aorta_radius = 12.5 * scale;
-    const Real aorta_half_length = 25 * scale;
+    const Real aorta_curve_radius = 25 * scale;
     const Real aorta_thickness = 4 * scale;
     const Real catheter_radius = 2.5 * scale;
-    const Real catheter_half_length = 10 * scale;
-    const Real catheter_angle = 30;
+    const Real catheter_half_length = 30 * scale;
+    const Real insertion_length = 55 * scale;
 
     // resolution
     const Real res_ref = aorta_thickness / 4.0;
     const Real res_aorta = res_ref / Real(res_factor_1);
     const Real res_catheter = res_ref / Real(res_factor_2);
 
-    // velocity
-    Transform transform2d(Rotation2d(-to_rad(catheter_angle)));
-    const Vec2d velocity_vector = transform2d.shiftBaseStationToFrame(5.0 * Vec2d::UnitX());
-    const Real end_time = 5.0;
-
     // material properties
     const Real rho0_s = 1000.0 * std::pow(unit_mm, 2);
-    const Real poisson = 0.3;
-    const Real Youngs_modulus_aorta = 0.2e6 * std::pow(unit_mm, 2);
-    const Real Youngs_modulus_catheter = 1000e6 * std::pow(unit_mm, 2);
+    const Real poisson_aorta = 0.45;
+    const Real poisson_catheter = 0.4;
+    const Real Youngs_modulus_aorta = 0.98;     // MPa
+    const Real Youngs_modulus_catheter = 71205; // MPa
+
+    auto aorta_material = std::make_shared<NeoHookeanSolid>(rho0_s, Youngs_modulus_aorta, poisson_aorta);
+    auto catheter_material = std::make_shared<NeoHookeanSolid>(rho0_s, Youngs_modulus_catheter, poisson_catheter);
+
+    // velocity
+    const Vec2d velocity_vec = std::min(aorta_material->ReferenceSoundSpeed(), catheter_material->ReferenceSoundSpeed()) / 20.0 * Vec2d::UnitY();
+    const Real end_time = insertion_length / velocity_vec.norm();
+
+    std::cout << "Aorta sound speed: " << aorta_material->ReferenceSoundSpeed() << "\n";
+    std::cout << "Catheter sound speed: " << catheter_material->ReferenceSoundSpeed() << "\n";
+    std::cout << "Insertion speed: " << velocity_vec.norm() << "\n";
+    std::cout << "End time: " << end_time << "\n";
 
     // shape
-    const Vec2d aorta_translation(aorta_radius, aorta_half_length);
-    const Vec2d aorta_halfsize(0.5 * aorta_thickness, aorta_half_length);
-    auto aorta_shape = std::make_shared<RectangularShapeGenerator>("Aorta", aorta_translation, aorta_halfsize);
+    auto aorta_mesh = [&]()
+    {
+        MultiPolygon aorta_shape{};
+        Real half_length = aorta_curve_radius + aorta_radius + aorta_thickness;
+        aorta_shape.addACircle(Vec2d::Zero(), aorta_curve_radius + aorta_radius + aorta_thickness, 100, ShapeBooleanOps::add);
+        aorta_shape.addACircle(Vec2d::Zero(), aorta_curve_radius + aorta_radius, 100, ShapeBooleanOps::sub);
+        aorta_shape.addABox(Transform(-half_length * Vec2d::UnitX()), half_length * Vec2d::Ones(), ShapeBooleanOps::sub);
+        aorta_shape.addABox(Transform(-half_length * Vec2d::UnitY()), half_length * Vec2d::Ones(), ShapeBooleanOps::sub);
+        return std::make_shared<MultiPolygonShape>(aorta_shape, "Aorta");
+    }();
 
-    const Vec2d catheter_translation(0, catheter_half_length);
-    const Vec2d catheter_halfsize(catheter_radius, catheter_half_length);
-    auto catheter_shape = std::make_shared<RectangularShapeGenerator>("Catheter", catheter_translation, catheter_halfsize, catheter_angle);
+    auto catheter_mesh = [&]()
+    {
+        MultiPolygon catheter_shape{};
+        const Vec2d halfsize(catheter_radius, catheter_half_length);
+        const Vec2d translation(aorta_curve_radius + aorta_radius - catheter_radius - 2 * res_catheter, -catheter_half_length);
+        catheter_shape.addABox(Transform(translation), halfsize, ShapeBooleanOps::add);
+        const Vec2d tip_center = translation.x() * Vec2d::UnitX();
+        catheter_shape.addACircle(tip_center, catheter_radius, 100, ShapeBooleanOps::add);
+        return std::make_shared<MultiPolygonShape>(catheter_shape, "Catheter");
+    }();
 
     // System
-    const auto bb_box = union_bounding_box(aorta_shape->getBounds(), catheter_shape->getBounds());
+    const auto bb_box = union_bounding_box(aorta_mesh->getBounds(), catheter_mesh->getBounds());
     SPHSystem sph_system(bb_box, res_aorta);
     IOEnvironment io_environment(sph_system);
 
     // Body
-    SolidBody aorta(sph_system, aorta_shape);
+    SolidBody aorta(sph_system, *aorta_mesh, "Aorta");
     aorta.defineBodyLevelSetShape();
-    aorta.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus_aorta, poisson);
+    aorta.defineMaterial<NeoHookeanSolid>(rho0_s, Youngs_modulus_aorta, poisson_aorta);
     aorta.generateParticles<BaseParticles, Lattice>();
 
-    SolidBody catheter(sph_system, catheter_shape);
+    SolidBody catheter(sph_system, *catheter_mesh, "Catheter");
     catheter.defineAdaptationRatios(1.15, res_aorta / res_catheter);
     catheter.defineBodyLevelSetShape();
-    catheter.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus_catheter, poisson);
+    catheter.defineMaterial<NeoHookeanSolid>(rho0_s, Youngs_modulus_catheter, poisson_catheter);
     catheter.generateParticles<BaseParticles, Lattice>();
 
     // Inner relation
@@ -223,12 +249,16 @@ void solid_contact_multi_cycle(int res_factor_1, int res_factor_2, bool dual_loo
     SolidContact catheter_contact(catheter, aorta);
 
     // Boundary condition
-    SimpleDynamics<CatheterVelBC> catheter_vel_bc(catheter, velocity_vector);
+    FixParticles fix_aorta_ids(aorta, "Aorta", [&](Vec2d pos)
+                               { return pos.y() < 4 * res_aorta; });
+    SimpleDynamics<FixBodyPartConstraint> fix_bc_aorta(fix_aorta_ids);
+    SimpleDynamics<CatheterVelBC> catheter_vel_bc(catheter, velocity_vec, [&](Vec2d pos)
+                                                  { return pos.y() < 0; });
 
     // Output
-    catheter.addBodyStateForRecording<Vec2d>("Velocity");
-    aorta.addBodyStateForRecording<Vec2d>("Velocity");
-    BodyStatesRecordingToVtp body_states_recording(sph_system.real_bodies_);
+    catheter.getBaseParticles().addVariableToWrite<Vec2d>("Velocity");
+    aorta.getBaseParticles().addVariableToWrite<Vec2d>("Velocity");
+    BodyStatesRecordingToVtp body_states_recording(sph_system);
     body_states_recording.writeToFile(0);
 
     // Initialization
@@ -250,22 +280,24 @@ void solid_contact_multi_cycle(int res_factor_1, int res_factor_2, bool dual_loo
         Real dt = 0;
         size_t ite = 0;
 
-        GlobalStaticVariables::physical_time_ = 0;
+        Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
         TickCount t1 = TickCount::now();
         TimeInterval interval;
-        while (GlobalStaticVariables::physical_time_ < end_time)
+        while (physical_time < end_time)
         {
             Real integration_time = 0.0;
             while (integration_time < output_period)
             {
                 if (ite % 100 == 0)
-                    std::cout << "N=" << ite << " Time: " << GlobalStaticVariables::physical_time_ << "	dt: " << dt
+                    std::cout << "N=" << ite << " Time: " << physical_time << "	dt: " << dt
                               << "\n";
 
                 catheter_vel_bc.exec(dt);
 
-                aorta_contact.exec();
-                catheter_contact.exec();
+                aorta_contact.update_factor();
+                catheter_contact.update_factor();
+                catheter_contact.update_force();
+                aorta_contact.update_force();
 
                 // time step computation
                 dt = SMIN(aorta_algs.get_time_step_size(), catheter_algs.get_time_step_size());
@@ -277,8 +309,15 @@ void solid_contact_multi_cycle(int res_factor_1, int res_factor_2, bool dual_loo
                 }
 
                 // stress and damping
-                aorta_algs.exec_all(dt);
-                catheter_algs.exec_all(dt);
+                aorta_algs.stress_first_half(dt);
+                fix_bc_aorta.exec();
+                aorta_algs.damping(dt);
+                fix_bc_aorta.exec();
+                aorta_algs.stress_second_half(dt);
+
+                catheter_algs.stress_first_half(dt);
+                catheter_algs.damping(dt);
+                catheter_algs.stress_second_half(dt);
 
                 // update
                 aorta.updateCellLinkedList();
@@ -289,7 +328,7 @@ void solid_contact_multi_cycle(int res_factor_1, int res_factor_2, bool dual_loo
                 // timestepping
                 ++ite;
                 integration_time += dt;
-                GlobalStaticVariables::physical_time_ += dt;
+                physical_time += dt;
             }
 
             // output
@@ -307,8 +346,6 @@ void solid_contact_multi_cycle(int res_factor_1, int res_factor_2, bool dual_loo
 
     auto run_dual_simulation = [&]()
     {
-        StdLargeVec<Vec2d> contact_force_ave(aorta.getBaseParticles().total_real_particles_);
-
         output_iteration = 0;
         const Real dt_aorta_ref = aorta_algs.get_time_step_size();
         const Real dt_catheter_ref = catheter_algs.get_time_step_size();
@@ -316,65 +353,62 @@ void solid_contact_multi_cycle(int res_factor_1, int res_factor_2, bool dual_loo
         double dt_aorta = 0;
         double dt_catheter = 0;
 
-        GlobalStaticVariables::physical_time_ = 0;
+        Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
         TickCount t1 = TickCount::now();
         TimeInterval interval;
 
-        while (GlobalStaticVariables::physical_time_ < end_time)
+        while (physical_time < end_time)
         {
             Real integration_time = 0.0;
             while (integration_time < output_period)
             {
-                auto force_prior = *aorta.getBaseParticles().getVariableByName<Vec2d>("ForcePrior");
-                force_prior = contact_force_ave;
+                aorta_contact.update_factor();
+                catheter_contact.update_factor();
+                catheter_contact.update_force();
+                aorta_contact.update_force();
 
                 dt_aorta = aorta_algs.get_time_step_size();
                 if (dt_aorta < dt_aorta_ref / 1e2)
                     throw std::runtime_error("The aorta time step decreased too much, stopping simulation\n");
 
-                aorta_algs.exec_all(dt_aorta);
+                aorta_algs.stress_first_half(dt_aorta);
+                fix_bc_aorta.exec();
+                aorta_algs.damping(dt_aorta);
+                fix_bc_aorta.exec();
+                aorta_algs.stress_second_half(dt_aorta);
 
-                std::fill(contact_force_ave.begin(), contact_force_ave.end(), Vec2d::Zero());
                 Real dt_catheter_sum = 0.0;
                 while (dt_catheter_sum < dt_aorta)
                 {
                     catheter_vel_bc.exec(dt_catheter);
 
-                    catheter_contact.exec();
-                    aorta_contact.exec();
-                    const auto &contact_force = *aorta.getBaseParticles().getVariableByName<Vec2d>("RepulsionForce");
-                    std::transform(contact_force_ave.begin(), contact_force_ave.end(), contact_force.begin(), contact_force_ave.begin(), [&](const Vec2d &f1, const Vec2d &f2)
-                                   { return f1 + f2 * dt_catheter; });
-
                     const Real dt_catheter_temp = catheter_algs.get_time_step_size();
                     if (dt_catheter_temp < dt_catheter_ref / 1e2)
                         throw std::runtime_error("The catheter time step decreased too much, stopping simulation\n");
                     dt_catheter = std::min(dt_catheter_temp, dt_aorta - dt_catheter_sum);
-                    catheter_algs.exec_all(dt_catheter);
 
-                    catheter.updateCellLinkedList();
-                    catheter_contact.update_config();
-                    aorta_contact.update_config();
+                    catheter_algs.stress_first_half(dt_catheter);
+                    catheter_algs.damping(dt_catheter);
+                    catheter_algs.stress_second_half(dt_catheter);
 
                     dt_catheter_sum += dt_catheter;
                 }
-                std::transform(contact_force_ave.begin(), contact_force_ave.end(),
-                               contact_force_ave.begin(),
-                               [&](const Vec2d &f)
-                               { return f / dt_catheter_sum; });
+
+                // update
+                aorta.updateCellLinkedList();
+                catheter.updateCellLinkedList();
+                aorta_contact.update_config();
+                catheter_contact.update_config();
 
                 // timestepping
                 ++ite;
                 integration_time += dt_aorta;
-                GlobalStaticVariables::physical_time_ += dt_aorta;
+                physical_time += dt_aorta;
 
                 if (ite % 10 == 0)
-                    std::cout << "N=" << ite << " Time: " << GlobalStaticVariables::physical_time_
+                    std::cout << "N=" << ite << " Time: " << physical_time
                               << "	dt_aorta: " << dt_aorta
                               << "	dt_catheter: " << dt_catheter << "\n";
-
-                // update contact configurations
-                aorta.updateCellLinkedList();
             }
             // output
             ++output_iteration;
@@ -389,6 +423,7 @@ void solid_contact_multi_cycle(int res_factor_1, int res_factor_2, bool dual_loo
         tt = t4 - t1 - interval;
         std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
     };
+
     try
     { // try and catch errors, especially decreased timestep
         if (dual_loop)
