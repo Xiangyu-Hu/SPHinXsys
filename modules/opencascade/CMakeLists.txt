@@ -21,11 +21,11 @@ target_include_directories(sphinxsys_opencascade PUBLIC $<BUILD_INTERFACE:${CMAK
 target_link_libraries(sphinxsys_opencascade PUBLIC sphinxsys_3d)
 
 # Must list all dependent packages given here https://dev.opencascade.org/doc/refman/html/toolkit_tkstep.html because improper CMake target link visibility
-if(OCC_VERSION_STRING VERSION_LESS 7.8.0)
-    target_link_libraries(sphinxsys_opencascade PRIVATE TKSTEP TKSTEPAttr TKSTEP209 TKSTEPBase TKXSBase TKShHealing TKTopAlgo TKGeomAlgo TKBRep TKGeomBase) 
-else(OCC_VERSION_STRING VERSION_LESS 7.8.0)
+#if(OCC_VERSION_STRING VERSION_LESS 7.8.0)
+#    target_link_libraries(sphinxsys_opencascade PRIVATE TKSTEP TKSTEPAttr TKSTEP209 TKSTEPBase TKXSBase TKShHealing TKTopAlgo TKGeomAlgo TKBRep TKGeomBase) 
+#else(OCC_VERSION_STRING VERSION_LESS 7.8.0)
   target_link_libraries(sphinxsys_opencascade PRIVATE TKDESTEP TKXSBase TKShHealing TKTopAlgo TKGeomAlgo TKBRep TKGeomBase) 
-endif(OCC_VERSION_STRING VERSION_LESS 7.8.0)
+#endif(OCC_VERSION_STRING VERSION_LESS 7.8.0)
 
 target_link_libraries(sphinxsys_opencascade PUBLIC TKG3d TKG2d TKMath TKernel) 
 
