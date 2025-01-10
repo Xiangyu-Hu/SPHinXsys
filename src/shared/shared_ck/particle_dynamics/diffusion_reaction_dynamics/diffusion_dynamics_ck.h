@@ -67,9 +67,6 @@ template <class DiffusionType, class BaseInteractionType>
 class DiffusionRelaxationCK<ForwardEuler, DiffusionType, BaseInteractionType>
     : public BaseInteractionType
 {
-  protected:
-    UniquePtrsKeeper<Entity> variable_array_ptrs_;
-
   public:
     template <class DynamicsIdentifier>
     explicit DiffusionRelaxationCK(DynamicsIdentifier &identifier);
@@ -101,13 +98,16 @@ class DiffusionRelaxationCK<ForwardEuler, DiffusionType, BaseInteractionType>
 
   protected:
     StdVec<DiffusionType *> diffusions_;
-    DiscreteVariableArray<Real> *dv_diffusion_species_array_;
-    DiscreteVariableArray<Real> *dv_gradient_species_array_;
-    DiscreteVariableArray<Real> *dv_diffusion_dt_array_;
+    DiscreteVariableArray<Real> dv_diffusion_species_array_;
+    DiscreteVariableArray<Real> dv_gradient_species_array_;
+    DiscreteVariableArray<Real> dv_diffusion_dt_array_;
     Real smoothing_length_sq_;
 
   private:
-    void getDiffusions();
+    StdVec<DiffusionType *> getConcreteDiffusions(BaseMaterial &base_material);
+    StdVec<DiscreteVariable<Real> *> getDiffusionSpecies(StdVec<DiffusionType *> diffusions);
+    StdVec<DiscreteVariable<Real> *> getGradientSpecies(StdVec<DiffusionType *> diffusions);
+    StdVec<DiscreteVariable<Real> *> getSpeciesChangeRates(StdVec<DiffusionType *> diffusions);
 };
 
 template <class DiffusionType, class BaseInteractionType>
@@ -122,7 +122,10 @@ class DiffusionRelaxationCK<RungeKutta, DiffusionType, BaseInteractionType>
     virtual ~DiffusionRelaxationCK() {};
 
   protected:
-    DiscreteVariableArray<Real> *dv_diffusion_species_array_s_;
+    DiscreteVariableArray<Real> dv_diffusion_species_array_s_;
+
+  private:
+    StdVec<DiscreteVariable<Real> *> getIntermediateSpecies(StdVec<DiffusionType *> diffusions);
 };
 
 template <class DiffusionType, class BaseInteractionType>
