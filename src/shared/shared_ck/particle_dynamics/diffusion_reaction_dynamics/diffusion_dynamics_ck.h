@@ -42,7 +42,7 @@ class CorrectedKernelGradientInnerCK
 
   public:
     explicit CorrectedKernelGradientInnerCK(BaseParticles *particles)
-        : dv_B_(particles->getVariableByName<Matd>("LinearGradientCorrectionMatrix")) {};
+        : dv_B_(particles->getVariableByName<Matd>("LinearCorrectionMatrix")) {};
 
     class ComputingKernel
     {
