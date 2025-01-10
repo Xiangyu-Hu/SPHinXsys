@@ -188,10 +188,10 @@ int main(int ac, char *av[])
     StateDynamics<MainExecutionPolicy, InitialCondition<SPHBody, UniformTemperature>>
         diffusion_initial_condition(diffusion_body, diffusion_species_name);
     GetDiffusionTimeStepSize get_time_step_size(diffusion_body);
-    SequencedCombination<InteractionDynamicsCK<
+    DynamicsSequence<InteractionDynamicsCK<
         MainExecutionPolicy,
-        DiffusionRelaxationCK<Inner<OneLevel, RungeKuttaFirstStage, DirectionalDiffusion, CorrectedKernelGradientInnerCK>,
-                              Inner<OneLevel, RungeKuttaSecondStage, DirectionalDiffusion, CorrectedKernelGradientInnerCK>>>>
+        DiffusionRelaxationCK<Inner<OneLevel, RungeKutta1stStage, DirectionalDiffusion, CorrectedKernelGradientInnerCK>>,
+        DiffusionRelaxationCK<Inner<OneLevel, RungeKutta2ndStage, DirectionalDiffusion, CorrectedKernelGradientInnerCK>>>>
         diffusion_relaxation_rk2(diffusion_body_inner, diffusion_body_inner);
 
     BodyRegionByParticle left_boundary(diffusion_body, makeShared<MultiPolygonShape>(createLeftSideBoundary()));
@@ -258,7 +258,7 @@ int main(int ac, char *av[])
                     std::cout << "N=" << ite << " Time: " << sv_physical_time->getValue() << "	dt: " << dt << "\n";
                 }
 
-                diffusion_relaxation.exec(dt);
+                diffusion_relaxation_rk2.exec(dt);
                 left_boundary_condition.exec();
                 other_boundary_condition.exec();
                 ite++;

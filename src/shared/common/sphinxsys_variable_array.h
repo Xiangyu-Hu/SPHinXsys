@@ -87,5 +87,8 @@ class DeviceOnlyVariableArray : public Entity
   protected:
     DataArray<DataType> *device_only_data_array_;
 };
+
+template <typename DataType>
+using DiscreteVariableArray = VariableArray<DataType, DiscreteVariable>;
 } // namespace SPH
 #endif // SPHINXSYS_VARIABLE_ARRAY_H
