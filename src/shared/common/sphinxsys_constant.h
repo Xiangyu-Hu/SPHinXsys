@@ -40,18 +40,18 @@ class ConstantArray : public Entity
     UniquePtrKeeper<Entity> device_only_constant_array_keeper_;
 
   public:
-    ConstantArray(GeneratorType *generator, size_t data_size = 1)
-        : Entity(DataType::Name()),
-          generator_(generator), data_size_(data_size),
-          data_(new DataType[data_size]), delegated_(data_)
+    ConstantArray(StdVec<GeneratorType *> generators)
+        : Entity("ConstantArray"), generators_(generators),
+          data_size_(generators.size()),
+          data_(new DataType[data_size_]), delegated_(data_)
     {
         for (size_t i = 0; i != data_size_; ++i)
         {
-            data_[i] = DataType(generator_[i]);
+            data_[i] = DataType(*generators_[i]);
         }
     };
     ~ConstantArray() { delete[] data_; };
-    GeneratorType *getGenerator() { return generator_; }
+    StdVec<GeneratorType *> getGenerators() { return generators_; }
     size_t getDataSize() { return data_size_; }
     DataType *Data() { return data_; };
     template <class ExecutionPolicy>
@@ -61,7 +61,7 @@ class ConstantArray : public Entity
     void setDelegateData(DataType *new_delegated) { delegated_ = new_delegated; };
 
   protected:
-    GeneratorType *generator_;
+    StdVec<GeneratorType *> generators_;
     size_t data_size_;
     DataType *data_;
     DataType *delegated_;
