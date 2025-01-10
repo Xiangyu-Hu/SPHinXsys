@@ -167,9 +167,12 @@ class DirectionalDiffusion : public IsotropicDiffusion
         Matd transformed_diffusivity_;
 
       public:
-        template <class ExecutionPolicy, class EncloserType>
-        InterParticleDiffusionCoeff(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : transformed_diffusivity_(encloser.encloser){};
+        InterParticleDiffusionCoeff() {};
+        InterParticleDiffusionCoeff(DirectionalDiffusion &encloser)
+            : transformed_diffusivity_(encloser.transformed_diffusivity_) {};
+        template <class ExecutionPolicy>
+        InterParticleDiffusionCoeff(const ExecutionPolicy &ex_policy, DirectionalDiffusion &encloser)
+            : InterParticleDiffusionCoeff(encloser){};
         Real operator()(size_t index_i, size_t index_j, const Vecd &e_ij)
         {
             Vecd grad_ij = transformed_diffusivity_ * e_ij;

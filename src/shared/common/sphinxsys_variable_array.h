@@ -42,8 +42,8 @@ class VariableArray : public Entity
     UniquePtrKeeper<Entity> device_only_variable_array_keeper_;
 
   public:
-    VariableArray(const std::string &name, StdVec<VariableType<DataType> *> variables)
-        : Entity(name), variables_(variables),
+    VariableArray(StdVec<VariableType<DataType> *> variables)
+        : Entity("VariableArray"), variables_(variables),
           data_array_(nullptr), delegated_data_array_(nullptr)
     {
         data_array_ = new DataArray<DataType>[variables.size()];
