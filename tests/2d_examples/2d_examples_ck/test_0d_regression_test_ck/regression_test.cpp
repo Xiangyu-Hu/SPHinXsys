@@ -189,10 +189,10 @@ int main(int ac, char *av[])
         diffusion_initial_condition(diffusion_body, diffusion_species_name);
     GetDiffusionTimeStepSize get_time_step_size(diffusion_body);
     DynamicsSequence<InteractionDynamicsCK<
-        MainExecutionPolicy,
-        DiffusionRelaxationCK<Inner<OneLevel, RungeKutta1stStage, DirectionalDiffusion, CorrectedKernelGradientInnerCK>>,
-        DiffusionRelaxationCK<Inner<OneLevel, RungeKutta2ndStage, DirectionalDiffusion, CorrectedKernelGradientInnerCK>>>>
-        diffusion_relaxation_rk2(diffusion_body_inner, diffusion_body_inner);
+         MainExecutionPolicy,
+         DiffusionRelaxationCK<Inner<OneLevel, RungeKutta1stStage, DirectionalDiffusion, CorrectedKernelGradientInnerCK>>,
+         DiffusionRelaxationCK<Inner<OneLevel, RungeKutta2ndStage, DirectionalDiffusion, CorrectedKernelGradientInnerCK>>>>
+    diffusion_relaxation_rk2(diffusion_body_inner, diffusion_body_inner);
 
     BodyRegionByParticle left_boundary(diffusion_body, makeShared<MultiPolygonShape>(createLeftSideBoundary()));
     StateDynamics<MainExecutionPolicy, ConstantConstraintCK<BodyRegionByParticle, Real>>

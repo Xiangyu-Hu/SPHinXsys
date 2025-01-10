@@ -147,8 +147,8 @@ class DiffusionRelaxationCK<RungeKutta1stStage, DiffusionType, BaseInteractionTy
         void initialize(size_t index_i, Real dt = 0.0);
 
       protected:
-        DataArray<Real> *diffusion_species_s_;
         DataArray<Real> *diffusion_species_;
+        DataArray<Real> *diffusion_species_s_;
     };
 };
 

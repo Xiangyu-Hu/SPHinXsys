@@ -87,7 +87,7 @@ template <class DiffusionType, class BaseInteractionType>
 template <class ExecutionPolicy, class EncloserType>
 DiffusionRelaxationCK<ForwardEuler, DiffusionType, BaseInteractionType>::
     InitializeKernel::InitializeKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-    : diffusion_dt_(encloser.dv_diffusion_species_array_.DelegatedDataArray(ex_policy)),
+    : diffusion_dt_(encloser.dv_diffusion_dt_array_.DelegatedDataArray(ex_policy)),
       number_of_species_(encloser.diffusions_.size()) {}
 //=================================================================================================//
 template <class DiffusionType, class BaseInteractionType>
@@ -150,8 +150,8 @@ template <class ExecutionPolicy, class EncloserType>
 DiffusionRelaxationCK<RungeKutta1stStage, DiffusionType, BaseInteractionType>::
     InitializeKernel::InitializeKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : BaseDynamicsType::InitializeKernel(ex_policy, encloser),
-      diffusion_species_s_(encloser.dv_diffusion_species_array_s_.DelegatedDataArray(ex_policy)),
-      diffusion_species_(encloser.dv_diffusion_species_array_.DelegatedDataArray(ex_policy)) {}
+      diffusion_species_(encloser.dv_diffusion_species_array_.DelegatedDataArray(ex_policy)),
+      diffusion_species_s_(encloser.dv_diffusion_species_array_s_.DelegatedDataArray(ex_policy)) {}
 //=================================================================================================//
 template <class DiffusionType, class BaseInteractionType>
 void DiffusionRelaxationCK<RungeKutta1stStage, DiffusionType, BaseInteractionType>::
@@ -161,7 +161,7 @@ void DiffusionRelaxationCK<RungeKutta1stStage, DiffusionType, BaseInteractionTyp
 
     for (size_t m = 0; m < this->number_of_species_; ++m)
     {
-        diffusion_species_s_[m][index_i] = this->diffusion_species_[m][index_i];
+        diffusion_species_s_[m][index_i] = diffusion_species_[m][index_i];
     }
 }
 //=================================================================================================//
@@ -185,7 +185,7 @@ void DiffusionRelaxationCK<RungeKutta2ndStage, DiffusionType, BaseInteractionTyp
     BaseDynamicsType::UpdateKernel::update(index_i, dt);
     for (size_t m = 0; m < this->number_of_species_; ++m)
     {
-        this->diffusion_species_[m][index_i] = 0.5 * this->diffusion_species_s_[m][index_i] +
+        this->diffusion_species_[m][index_i] = 0.5 * diffusion_species_s_[m][index_i] +
                                                0.5 * this->diffusion_species_[m][index_i];
     }
 }
