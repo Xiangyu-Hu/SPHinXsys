@@ -106,14 +106,15 @@ namespace SPH
 //----------------------------------------------------------------------
 struct UniformTemperature : ReturnFunction<Real>
 {
+    Real initial_temperature_;
 
     template <class ExecutionPolicy, class EncloserType>
     UniformTemperature(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-        : ReturnFunction<Real>(){};
+        : ReturnFunction<Real>(), initial_temperature_(initial_temperature){};
 
     Real operator()(const Vecd &position)
     {
-        return initial_temperature;
+        return initial_temperature_;
     }
 };
 StdVec<Vecd> createObservationPoints()

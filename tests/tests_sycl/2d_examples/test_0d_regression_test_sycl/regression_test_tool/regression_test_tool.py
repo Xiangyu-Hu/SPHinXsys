@@ -64,10 +64,10 @@ except ImportError as e:
 
 
 """
-case name: test_0d_regression_test_ck
+case name: test_0d_regression_test_sycl
 """
 
-case_name = "test_0d_regression_test_ck"
+case_name = "test_0d_regression_test_sycl"
 body_name = "InnerDomain"
 parameter_name = "AveragePhi"
 body_name_1 = "TemperatureObserver"

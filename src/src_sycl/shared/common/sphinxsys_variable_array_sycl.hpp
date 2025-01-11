@@ -25,11 +25,13 @@ DeviceOnlyVariableArray<DataType, VariableType>::
     : Entity(host_variable_array->Name()), device_only_data_array_(nullptr)
 {
     StdVec<VariableType<DataType> *> host_variables = host_variable_array->getVariables();
-    device_only_data_array_ = allocateDeviceOnly<DataArray<DataType>>(host_variables.size());
-
-    for (size_t i = 0; i != host_variables.size(); ++i)
+    size_t data_size = host_variable_array->getArraySize();
+    DataArray<DataType> *host_data = host_variable_array->Data();
+    device_only_data_array_ = allocateDeviceOnly<DataArray<DataType>>(data_size);
+    for (size_t i = 0; i != data_size; ++i)
     {
-        device_only_data_array_[i] = host_variables[i]->DelegatedData(ParallelDevicePolicy{});
+        DataType *data = host_variables[i]->DelegatedData(ParallelDevicePolicy{});
+        copyToDevice(data, device_only_data_array_ + i, 1);
     }
     host_variable_array->setDelegateDataArray(device_only_data_array_);
 }
