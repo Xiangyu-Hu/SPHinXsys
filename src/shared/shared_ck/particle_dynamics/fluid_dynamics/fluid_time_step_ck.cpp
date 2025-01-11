@@ -45,7 +45,7 @@ AdvectionTimeStepCK::FinalOutput::FinalOutput(AdvectionTimeStepCK &encloser)
 //=================================================================================================//
 Real AdvectionTimeStepCK::FinalOutput::Result(Real reduced_value)
 {
-    return advectionCFL_ * h_min_ / (SMAX(sqrt(reduced_value), speed_ref_) + TinyReal);
+    return advectionCFL_ * h_min_ / (SMAX(std::sqrt(reduced_value), speed_ref_) + TinyReal);
 }
 //=================================================================================================//
 AdvectionViscousTimeStepCK::AdvectionViscousTimeStepCK(SPHBody &sph_body, Real U_ref, Real advectionCFL)
