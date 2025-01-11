@@ -64,7 +64,6 @@ class MeshWithGridDataPackages : public Mesh
     explicit MeshWithGridDataPackages(BoundingBox tentative_bounds, Real data_spacing, size_t buffer_size)
         : Mesh(tentative_bounds, pkg_size * data_spacing, buffer_size),
           global_mesh_(mesh_lower_bound_ + 0.5 * data_spacing * Vecd::Ones(), data_spacing, all_cells_ * pkg_size),
-          cell_neighborhood_("mesh_cell_neighbor_hood", 2),
           data_spacing_(data_spacing)
     {
         allocateIndexDataMatrix(all_cells_);
@@ -72,7 +71,6 @@ class MeshWithGridDataPackages : public Mesh
     virtual ~MeshWithGridDataPackages()
     {
         delete[] meta_data_cell_;
-        delete[] cell_package_index_;
     };
 
     /** spacing between the data, which is 1/ pkg_size of this grid spacing */
@@ -82,7 +80,8 @@ class MeshWithGridDataPackages : public Mesh
     Mesh global_mesh_;                                         /**< the mesh for the locations of all possible data points. */
     size_t num_grid_pkgs_ = 2;                                 /**< the number of all distinct packages, initially only 2 singular packages. */
     std::pair<Arrayi, int> *meta_data_cell_;                   /**< metadata for each occupied cell: (arrayi)cell index, (int)core1/inner0. */
-    DiscreteVariable<CellNeighborhood> cell_neighborhood_;     /**< 3*3(*3) array to store indicies of neighborhood cells. */
+    DiscreteVariable<CellNeighborhood> cell_neighborhood_{"mesh_cell_neighborhood", 2};     /**< 3*3(*3) array to store indicies of neighborhood cells. */
+    DiscreteVariable<size_t> cell_package_index_{"cell_package_index_", 2};                      /**< the package index for each cell in a 1-d array. */
     ConcurrentVec<std::pair<size_t, int>> occupied_data_pkgs_; /**< (size_t)sort_index, (int)core1/inner0. */
 
   private:
@@ -90,11 +89,10 @@ class MeshWithGridDataPackages : public Mesh
     MeshVariableAssemble all_mesh_variables_;         /**< all mesh variables on this mesh. */
     static constexpr int pkg_size = PKG_SIZE;         /**< the size of the data package matrix. */
     const Real data_spacing_;                         /**< spacing of data in the data packages. */
-    size_t *cell_package_index_;                      /**< the package index for each cell in a 1-d array. */
 
     /**< allocate memories for metadata of data packages. */
-    void allocateIndexDataMatrix(Array2i mesh_size){ cell_package_index_ = new size_t[all_cells_[0] * all_cells_[1]]; };
-    void allocateIndexDataMatrix(Array3i mesh_size){ cell_package_index_ = new size_t[all_cells_[0] * all_cells_[1] * all_cells_[2]]; };
+    void allocateIndexDataMatrix(Array2i mesh_size){ cell_package_index_.reallocateDataField(par, all_cells_[0] * all_cells_[1]); };
+    void allocateIndexDataMatrix(Array3i mesh_size){ cell_package_index_.reallocateDataField(par, all_cells_[0] * all_cells_[1] * all_cells_[2]); };
 
     /** resize all mesh variable data field with `num_grid_pkgs_` size(initially only singular data) */
     struct ResizeMeshVariableData
@@ -163,7 +161,11 @@ class MeshWithGridDataPackages : public Mesh
     bool isInnerDataPackage(const Arrayi &cell_index)
     {
         size_t index_1d = transferMeshIndexTo1D(all_cells_, cell_index);
-        return cell_package_index_[index_1d] > 1;
+        /**
+         * NOTE currently this func is only used in non-device mode;
+         *      use the `DelegatedDataField` version when needed.
+         */
+        return cell_package_index_.DataField()[index_1d] > 1;
     }
     bool isCoreDataPackage(const Arrayi &cell_index)
     {
@@ -192,14 +194,19 @@ class MeshWithGridDataPackages : public Mesh
     }
 
     /** return the package index in the data array from the cell index it belongs to. */
+    //todo currently only the cpu version, consider how to pass the execution policy
     size_t PackageIndexFromCellIndex(const Arrayi &cell_index)
     {
         size_t index_1d = transferMeshIndexTo1D(all_cells_, cell_index);
-        return cell_package_index_[index_1d];
+        return cell_package_index_.DataField()[index_1d];
     }
     void assignDataPackageIndex(const Arrayi &cell_index, const size_t package_index){
         size_t index_1d = transferMeshIndexTo1D(all_cells_, cell_index);
-        cell_package_index_[index_1d] = package_index;
+        /**
+         * NOTE currently the `cell_package_index_` is only assigned in the host;
+         *      use the `DelegatedDataField` version when needed.
+         */
+        cell_package_index_.DataField()[index_1d] = package_index;
     }
 };
 } // namespace SPH

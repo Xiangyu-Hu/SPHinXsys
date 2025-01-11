@@ -58,6 +58,7 @@ class BaseMeshLocalDynamics
           data_spacing_(mesh_data.DataSpacing()),
           meta_data_cell_(mesh_data.meta_data_cell_),
           cell_neighborhood_(mesh_data.cell_neighborhood_),
+          cell_package_index_(mesh_data.cell_package_index_),
           phi_(*mesh_data.getMeshVariable<Real>("Levelset")),
           phi_gradient_(*mesh_data.getMeshVariable<Vecd>("LevelsetGradient")),
           near_interface_id_(*mesh_data.getMeshVariable<int>("NearInterfaceID")),
@@ -72,6 +73,7 @@ class BaseMeshLocalDynamics
     Real data_spacing_;
     std::pair<Arrayi, int>* &meta_data_cell_;
     DiscreteVariable<CellNeighborhood> &cell_neighborhood_;
+    DiscreteVariable<size_t> &cell_package_index_;
 
     MeshVariable<Real> &phi_;
     MeshVariable<Vecd> &phi_gradient_;
@@ -269,17 +271,15 @@ class InitializeBasicDataForAPackage : public BaseMeshLocalDynamics
               meta_data_cell_(encloser.meta_data_cell_),
               shape_(&encloser.shape_),
               phi_(encloser.phi_.DataField()),
-              near_interface_id_(encloser.near_interface_id_.DataField()),
-              base_dynamics(&encloser){};
+              near_interface_id_(encloser.near_interface_id_.DataField()){};
         void update(const size_t &index);
 
       protected:
         MeshWithGridDataPackagesType *mesh_data_;
-        std::pair<Arrayi, int>* meta_data_cell_;
+        std::pair<Arrayi, int> *meta_data_cell_;
         Shape *shape_;
         MeshVariableData<Real> *phi_;
         MeshVariableData<int> *near_interface_id_;
-        BaseMeshLocalDynamics *base_dynamics;
     };
 
   private:
@@ -287,8 +287,8 @@ class InitializeBasicDataForAPackage : public BaseMeshLocalDynamics
 };
 
 /**
- * @class InitializeBasicDataForAPackage
- * @brief Compute the `phi_gradient_` mesh data base on the `phi_` state for each occupied cell.
+ * @class UpdateLevelSetGradient
+ * @brief Compute `phi_gradient_` mesh data base on `phi_` state for each occupied cell.
  */
 class UpdateLevelSetGradient : public BaseMeshLocalDynamics
 {
