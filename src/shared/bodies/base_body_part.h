@@ -74,7 +74,6 @@ class BodyPartByParticle : public BodyPart
     BaseParticles &getBaseParticles() { return base_particles_; };
     IndexVector &LoopRange() { return body_part_particles_; };
     size_t SizeOfLoopRange() { return body_part_particles_.size(); };
-    SingularVariable<UnsignedInt> *getTotalSize() { return sv_range_size_; };
     BodyPartByParticle(SPHBody &sph_body, const std::string &body_part_name);
     virtual ~BodyPartByParticle(){};
 
