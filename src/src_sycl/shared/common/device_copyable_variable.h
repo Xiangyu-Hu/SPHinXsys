@@ -21,19 +21,19 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	simbody_variable_sycl.h
+ * @file 	device_copyable_variable.h
  * @brief 	TBD.
  * @author	Xiangyu Hu
  */
-#ifndef SIMBODY_VARIABLE_SYCL_H
-#define SIMBODY_VARIABLE_SYCL_H
+#ifndef DEVICE_COPYABLE_VARIABLE_H
+#define DEVICE_COPYABLE_VARIABLE_H
 
 #include "all_simbody.h"
-#include "implementation_sycl.h"
+#include "base_data_package.h"
 
 namespace sycl
 {
-    template <>
+template <>
 struct is_device_copyable<SPH::SimTKVec3> : std::true_type
 {
 };
@@ -43,14 +43,14 @@ struct is_device_copyable<SimTK::Vec<2, SPH::SimTKVec3>> : std::true_type
 {
 };
 
-template <>
-struct is_device_copyable<SPH::Vec2d> : std::true_type
+template <int N, int M>
+struct is_device_copyable<Eigen::Matrix<SPH::Real, N, M>> : std::true_type
 {
 };
 
 template <>
-struct is_device_copyable<SPH::Vec3d> : std::true_type
+struct is_device_copyable<SPH::Mat2d> : std::true_type
 {
 };
 } // namespace sycl
-#endif // SIMBODY_VARIABLE_SYCL_H
+#endif // DEVICE_COPYABLE_VARIABLE_H

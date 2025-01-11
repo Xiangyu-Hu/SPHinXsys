@@ -8,38 +8,37 @@ namespace SPH
 {
 //=================================================================================================//
 template <typename DataType, template <typename> class VariableType>
-VariableDataArray<DataType> VariableArray<VariableType<DataType>>::
-    DelegatedVariableDataArray(const ParallelDevicePolicy &par_device)
+DataArray<DataType> *VariableArray<DataType, VariableType>::
+    DelegatedDataArray(const ParallelDevicePolicy &par_device)
 {
     if (!isDataArrayDelegated())
     {
-        device_shared_variable_array_keeper_
-            .createPtr<VariableArray<DeviceShared, VariableType<DataType>>>(this);
+        device_only_variable_array_keeper_
+            .createPtr<DeviceOnlyVariableArray<DataType, VariableType>>(this);
     }
-    return VariableDataArray<DataType>(delegated_data_array_, getArraySize());
-};
+    return delegated_data_array_;
+}
 //=================================================================================================//
 template <typename DataType, template <typename> class VariableType>
-VariableArray<DeviceShared, VariableType<DataType>>::
-    VariableArray(VariableArray<VariableType<DataType>> *host_variable_array)
-    : Entity(host_variable_array->Name()), device_shared_data_array_(nullptr)
+DeviceOnlyVariableArray<DataType, VariableType>::
+    DeviceOnlyVariableArray(VariableArray<DataType, VariableType> *host_variable_array)
+    : Entity(host_variable_array->Name()), device_only_data_array_(nullptr)
 {
     StdVec<VariableType<DataType> *> host_variables = host_variable_array->getVariables();
-    device_shared_data_array_ = allocateDeviceShared<VariableData<DataType>>(host_variables.size());
+    device_only_data_array_ = allocateDeviceOnly<DataArray<DataType>>(host_variables.size());
 
     for (size_t i = 0; i != host_variables.size(); ++i)
     {
-        device_shared_data_array_[i] = host_variables[i]->DelegatedData(ParallelDevicePolicy{});
+        device_only_data_array_[i] = host_variables[i]->DelegatedData(ParallelDevicePolicy{});
     }
-    host_variable_array->setDelegateDataArray(device_shared_data_array_);
+    host_variable_array->setDelegateDataArray(device_only_data_array_);
 }
 //=================================================================================================//
 template <typename DataType, template <typename> class VariableType>
-VariableArray<DeviceShared, VariableType<DataType>>::~VariableArray()
+DeviceOnlyVariableArray<DataType, VariableType>::~DeviceOnlyVariableArray()
 {
-    freeDeviceData(device_shared_data_array_);
+    freeDeviceData(device_only_data_array_);
 }
 //=================================================================================================//
 } // namespace SPH
-
 #endif // SPHINXSYS_VARIABLE_ARRAY_SYCL_HPP

@@ -167,7 +167,7 @@ class DirectionalDiffusion : public IsotropicDiffusion
         Matd transformed_diffusivity_;
 
       public:
-        InterParticleDiffusionCoeff() {};
+        InterParticleDiffusionCoeff() : transformed_diffusivity_(ZeroData<Matd>::value) {};
         InterParticleDiffusionCoeff(DirectionalDiffusion &encloser)
             : transformed_diffusivity_(encloser.transformed_diffusivity_) {};
         template <class ExecutionPolicy>

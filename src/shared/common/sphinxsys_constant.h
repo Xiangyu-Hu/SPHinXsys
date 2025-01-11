@@ -48,7 +48,7 @@ class ConstantArray : public Entity
         for (size_t i = 0; i != data_size_; ++i)
         {
             data_[i] = DataType(*generators_[i]);
-        }
+       }
     };
     ~ConstantArray() { delete[] data_; };
     StdVec<GeneratorType *> getGenerators() { return generators_; }

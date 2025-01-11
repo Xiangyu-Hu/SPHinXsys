@@ -32,7 +32,7 @@
 #include "particle_iterators_sycl.h"
 #include "particle_sort_sycl.h"
 #include "particle_sort_sycl.hpp"
-#include "simbody_variable_sycl.h"
+#include "device_copyable_variable.h"
 #include "sphinxsys_ck.h"
 #include "sphinxsys_constant_sycl.hpp"
 #include "sphinxsys_variable_array_sycl.hpp"
