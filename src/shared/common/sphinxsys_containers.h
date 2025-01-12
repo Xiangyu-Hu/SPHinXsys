@@ -97,9 +97,7 @@ typedef DataContainerAssemble<AllocatedData> ParticleData;
 typedef DataContainerAddressAssemble<DiscreteVariable> ParticleVariables;
 /** Generalized particle variable type*/
 typedef DataContainerAddressAssemble<SingularVariable> SingularVariables;
-
 /** Generalized mesh data type */
-// template <typename DataType>
 typedef DataContainerAddressAssemble<MeshVariable> MeshVariableAssemble;
 
 } // namespace SPH

@@ -90,5 +90,35 @@ class DeviceOnlyVariableArray : public Entity
 
 template <typename DataType>
 using DiscreteVariableArray = VariableArray<DataType, DiscreteVariable>;
+
+template <typename DataType>
+using AllocatedDataArray = DataArray<DataType> *;
+
+template <typename AllocationType>
+using VariableAllocationSizePair = std::pair<AllocationType, UnsignedInt>;
+
+typedef DataAssemble<VariableAllocationSizePair, AllocatedDataArray> VariableDataArrays;
+typedef DataAssemble<UniquePtr, DiscreteVariableArray> DiscreteVariableArrays;
+
+struct DiscreteVariableArraysInitialization
+{
+    template <typename DataType>
+    void operator()(const StdVec<DiscreteVariable<DataType> *> &variables,
+                    UniquePtr<DiscreteVariableArray<DataType>> &variable_array_ptr)
+    {
+        variable_array_ptr = std::make_unique<DiscreteVariableArray<DataType>>(variables);
+    }
+};
+
+struct VariableDataArraysInitialization
+{
+    template <typename DataType, class ExecutionPolicy>
+    void operator()(const UniquePtr<DiscreteVariableArray<DataType>> &variable_array_ptr,
+                    VariableAllocationSizePair<AllocatedDataArray<DataType>> &variable_allocation_size_pair)
+    {
+        variable_allocation_size_pair =
+            std::make_pair(variable_array_ptr->DelegatedDataArray(ExecutionPolicy{}), variable_array_ptr->getArraySize());
+    }
+};
 } // namespace SPH
 #endif // SPHINXSYS_VARIABLE_ARRAY_H
