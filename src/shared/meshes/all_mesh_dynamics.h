@@ -101,11 +101,13 @@ class FinishDataPackages : public BaseMeshDynamics
     MeshInnerDynamicsCK<execution::ParallelPolicy, UpdateKernelIntegrals> update_kernel_integrals{mesh_data_, kernel_, global_h_ratio_};
 };
 
-class ProbeNormalDirection : public BaseMeshLocalDynamics
+class ProbeNormalDirection
 {
   public:
-    explicit ProbeNormalDirection(MeshWithGridDataPackagesType &mesh_data)
-        : BaseMeshLocalDynamics(mesh_data){};
+    template <class ExecutionPolicy>
+    explicit ProbeNormalDirection(const ExecutionPolicy &ex_policy, MeshWithGridDataPackagesType *mesh_data)
+        : data_spacing_(mesh_data->DataSpacing()),
+          probe_level_set_gradient(ex_policy, mesh_data){};
     virtual ~ProbeNormalDirection(){};
 
     Vecd update(const Vecd &position)
@@ -124,7 +126,8 @@ class ProbeNormalDirection : public BaseMeshLocalDynamics
     }
 
   private:
-    ProbeLevelSetGradient probe_level_set_gradient{mesh_data_};
+    Real data_spacing_;
+    ProbeLevelSetGradient probe_level_set_gradient;
 };
 
 class CleanInterface : public BaseMeshDynamics

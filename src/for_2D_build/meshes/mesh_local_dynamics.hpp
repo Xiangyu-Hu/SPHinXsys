@@ -16,43 +16,6 @@ void BaseMeshLocalDynamics::for_each_cell_data(const FunctionOnData &function)
         }
 }
 //=============================================================================================//
-template <class DataType>
-DataType BaseMeshLocalDynamics::probeMesh(MeshWithGridDataPackagesType &probe_mesh_,
-                                          MeshVariableData<DataType> *mesh_variable_data,
-                                          const Vecd &position)
-{
-    Arrayi cell_index = probe_mesh_.CellIndexFromPosition(position);
-    size_t package_index = probe_mesh_.PackageIndexFromCellIndex(cell_index);
-    return package_index > 1 ? probeDataPackage(probe_mesh_, mesh_variable_data, package_index, cell_index, position)
-                                                      : mesh_variable_data[package_index][0][0];
-}
-//=============================================================================================//
-template <class DataType>
-DataType BaseMeshLocalDynamics::probeDataPackage(MeshWithGridDataPackagesType &probe_mesh_,
-                                                 MeshVariableData<DataType> *mesh_variable_data,
-                                                 size_t package_index,
-                                                 const Arrayi &cell_index,
-                                                 const Vecd &position)
-{
-    Arrayi data_index = probe_mesh_.DataIndexFromPosition(cell_index, position);
-    Vecd data_position = probe_mesh_.DataPositionFromIndex(cell_index, data_index);
-    Vecd alpha = (position - data_position) / probe_mesh_.DataSpacing();
-    Vecd beta = Vecd::Ones() - alpha;
-
-    auto &neighborhood = probe_mesh_.cell_neighborhood_.DataField()[package_index];
-    std::pair<size_t, Arrayi> neighbour_index_1 = NeighbourIndexShift(Arrayi(data_index[0], data_index[1]), neighborhood);
-    std::pair<size_t, Arrayi> neighbour_index_2 = NeighbourIndexShift(Arrayi(data_index[0] + 1, data_index[1]), neighborhood);
-    std::pair<size_t, Arrayi> neighbour_index_3 = NeighbourIndexShift(Arrayi(data_index[0], data_index[1] + 1), neighborhood);
-    std::pair<size_t, Arrayi> neighbour_index_4 = NeighbourIndexShift(Arrayi(data_index[0] + 1, data_index[1] + 1), neighborhood);
-
-    DataType bilinear = mesh_variable_data[neighbour_index_1.first][neighbour_index_1.second[0]][neighbour_index_1.second[1]] * beta[0] * beta[1] +
-                        mesh_variable_data[neighbour_index_2.first][neighbour_index_2.second[0]][neighbour_index_2.second[1]] * alpha[0] * beta[1] +
-                        mesh_variable_data[neighbour_index_3.first][neighbour_index_3.second[0]][neighbour_index_3.second[1]] * beta[0] * alpha[1] +
-                        mesh_variable_data[neighbour_index_4.first][neighbour_index_4.second[0]][neighbour_index_4.second[1]] * alpha[0] * alpha[1];
-
-    return bilinear;
-}
-//=============================================================================================//
 template <typename DataType>
 DataType BaseMeshLocalDynamics::DataValueFromGlobalIndex(MeshVariableData<DataType> *mesh_variable_data,
                                                          const Arrayi &global_grid_index,
@@ -86,6 +49,40 @@ DataType BaseMeshLocalDynamics::CornerAverage(MeshVariableData<DataType> *mesh_v
             average += mesh_variable_data[neighbour_index.first][neighbour_index.second[0]][neighbour_index.second[1]];
         }
     return average * 0.25;
+}
+//=============================================================================================//
+template <class DataType>
+DataType ProbeMesh::probeMesh(MeshVariableData<DataType> *mesh_variable_data, const Vecd &position)
+{
+    Arrayi cell_index = probe_mesh_->CellIndexFromPosition(position);
+    size_t package_index = probe_mesh_->PackageIndexFromCellIndex(cell_package_index_, cell_index);
+    return package_index > 1 ? probeDataPackage(mesh_variable_data, package_index, cell_index, position)
+                             : mesh_variable_data[package_index][0][0];
+}
+//=============================================================================================//
+template <class DataType>
+DataType ProbeMesh::probeDataPackage(MeshVariableData<DataType> *mesh_variable_data,
+                                     size_t package_index,
+                                     const Arrayi &cell_index,
+                                     const Vecd &position)
+{
+    Arrayi data_index = probe_mesh_->DataIndexFromPosition(cell_index, position);
+    Vecd data_position = probe_mesh_->DataPositionFromIndex(cell_index, data_index);
+    Vecd alpha = (position - data_position) / probe_mesh_->DataSpacing();
+    Vecd beta = Vecd::Ones() - alpha;
+
+    auto &neighborhood = cell_neighborhood_[package_index];
+    std::pair<size_t, Arrayi> neighbour_index_1 = NeighbourIndexShift(Arrayi(data_index[0], data_index[1]), neighborhood);
+    std::pair<size_t, Arrayi> neighbour_index_2 = NeighbourIndexShift(Arrayi(data_index[0] + 1, data_index[1]), neighborhood);
+    std::pair<size_t, Arrayi> neighbour_index_3 = NeighbourIndexShift(Arrayi(data_index[0], data_index[1] + 1), neighborhood);
+    std::pair<size_t, Arrayi> neighbour_index_4 = NeighbourIndexShift(Arrayi(data_index[0] + 1, data_index[1] + 1), neighborhood);
+
+    DataType bilinear = mesh_variable_data[neighbour_index_1.first][neighbour_index_1.second[0]][neighbour_index_1.second[1]] * beta[0] * beta[1] +
+                        mesh_variable_data[neighbour_index_2.first][neighbour_index_2.second[0]][neighbour_index_2.second[1]] * alpha[0] * beta[1] +
+                        mesh_variable_data[neighbour_index_3.first][neighbour_index_3.second[0]][neighbour_index_3.second[1]] * beta[0] * alpha[1] +
+                        mesh_variable_data[neighbour_index_4.first][neighbour_index_4.second[0]][neighbour_index_4.second[1]] * alpha[0] * alpha[1];
+
+    return bilinear;
 }
 //=============================================================================================//
 template <typename DataType, typename FunctionByPosition>

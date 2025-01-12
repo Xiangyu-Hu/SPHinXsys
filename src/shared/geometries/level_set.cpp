@@ -69,19 +69,19 @@ void MultilevelLevelSet::registerProbes(size_t level)
 {
     probe_signed_distance_set_.push_back(
         probe_signed_distance_vector_keeper_
-            .template createPtr<ProbeSignedDistance>(*mesh_data_set_[level]));
+            .template createPtr<ProbeSignedDistance>(par, mesh_data_set_[level]));
     probe_normal_direction_set_.push_back(
         probe_normal_direction_vector_keeper_
-            .template createPtr<ProbeNormalDirection>(*mesh_data_set_[level]));
+            .template createPtr<ProbeNormalDirection>(par, mesh_data_set_[level]));
     probe_level_set_gradient_set_.push_back(
         probe_level_set_gradient_vector_keeper_
-            .template createPtr<ProbeLevelSetGradient>(*mesh_data_set_[level]));
+            .template createPtr<ProbeLevelSetGradient>(par, mesh_data_set_[level]));
     probe_kernel_integral_set_.push_back(
         probe_kernel_integral_vector_keeper_
-            .template createPtr<ProbeKernelIntegral>(*mesh_data_set_[level]));
+            .template createPtr<ProbeKernelIntegral>(par, mesh_data_set_[level]));
     probe_kernel_gradient_integral_set_.push_back(
         probe_kernel_gradient_integral_vector_keeper_
-            .template createPtr<ProbeKernelGradientIntegral>(*mesh_data_set_[level]));
+            .template createPtr<ProbeKernelGradientIntegral>(par, mesh_data_set_[level]));
 }
 //=================================================================================================//
 size_t MultilevelLevelSet::getCoarseLevel(Real h_ratio)

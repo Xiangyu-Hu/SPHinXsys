@@ -69,7 +69,7 @@ void InitializeCellNeighborhood::UpdateKernel::update(const size_t &package_inde
     for (int l = -1; l < 2; l++)
         for (int m = -1; m < 2; m++)
         {
-            current[l + 1][m + 1] = mesh_data_->PackageIndexFromCellIndex(cell_index + Arrayi(l, m));
+            current[l + 1][m + 1] = mesh_data_->PackageIndexFromCellIndex(par, cell_index + Arrayi(l, m));
         }
 }
 //=============================================================================================//

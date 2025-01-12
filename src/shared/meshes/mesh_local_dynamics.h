@@ -91,18 +91,6 @@ class BaseMeshLocalDynamics
     static std::pair<size_t, Arrayi> NeighbourIndexShift(const Arrayi shift_index, const CellNeighborhood &neighbour);
     static void registerComputingKernel(execution::Implementation<Base> *implementation){};
 
-    /** This function probe a mesh value */
-    template <class DataType>
-    static DataType probeMesh(MeshWithGridDataPackagesType &probe_mesh_,
-                              MeshVariableData<DataType> *mesh_variable_data,
-                              const Vecd &position);
-    /** probe by applying bi and tri-linear interpolation within the package. */
-    template <class DataType>
-    static DataType probeDataPackage(MeshWithGridDataPackagesType &probe_mesh_,
-                                     MeshVariableData<DataType> *mesh_variable_data,
-                                     size_t package_index,
-                                     const Arrayi &cell_index, const Vecd &position);
-
     /** This function find the value of data from its index from global mesh. */
     template <typename DataType>
     static DataType DataValueFromGlobalIndex(MeshVariableData<DataType> *mesh_variable_data,
@@ -114,6 +102,91 @@ class BaseMeshLocalDynamics
     static DataType CornerAverage(MeshVariableData<DataType> *mesh_variable,
                                   Arrayi addrs_index, Arrayi corner_direction,
                                   CellNeighborhood &neighborhood);
+};
+
+class ProbeMesh
+{
+  public:
+    template <class ExecutionPolicy>
+    explicit ProbeMesh(const ExecutionPolicy &ex_policy, MeshWithGridDataPackagesType *mesh_data)
+        : probe_mesh_(mesh_data),
+          cell_package_index_(mesh_data->cell_package_index_.DelegatedDataField(ex_policy)),
+          cell_neighborhood_(mesh_data->cell_neighborhood_.DelegatedDataField(ex_policy)){};
+
+    /** This function probe a mesh value */
+    template <class DataType>
+    DataType probeMesh(MeshVariableData<DataType> *mesh_variable_data, const Vecd &position);
+
+  private:
+    MeshWithGridDataPackagesType *probe_mesh_;
+    size_t *cell_package_index_;
+    CellNeighborhood *cell_neighborhood_;
+
+    /** probe by applying bi and tri-linear interpolation within the package. */
+    template <class DataType>
+    DataType probeDataPackage(MeshVariableData<DataType> *mesh_variable_data,
+                              size_t package_index,
+                              const Arrayi &cell_index, const Vecd &position);
+};
+
+class ProbeSignedDistance : public ProbeMesh
+{
+  public:
+    template <class ExcutionPolicy>
+    explicit ProbeSignedDistance(const ExcutionPolicy &ex_policy, MeshWithGridDataPackagesType *mesh_data)
+        : ProbeMesh(ex_policy, mesh_data),
+          phi_(mesh_data->getMeshVariable<Real>("Levelset")->DelegatedDataField(ex_policy)){};
+    ~ProbeSignedDistance(){};
+
+    Real update(const Vecd &position) { return probeMesh(phi_, position); };
+
+  private:
+    MeshVariableData<Real> *phi_;
+};
+
+class ProbeLevelSetGradient : public ProbeMesh
+{
+  public:
+    template <class ExcutionPolicy>
+    explicit ProbeLevelSetGradient(const ExcutionPolicy &ex_policy, MeshWithGridDataPackagesType *mesh_data)
+        : ProbeMesh(ex_policy, mesh_data),
+          phi_gradient_(mesh_data->getMeshVariable<Vecd>("LevelsetGradient")->DelegatedDataField(ex_policy)){};
+    ~ProbeLevelSetGradient(){};
+
+    Vecd update(const Vecd &position) { return probeMesh(phi_gradient_, position); };
+
+  private:
+    MeshVariableData<Vecd> *phi_gradient_;
+};
+
+class ProbeKernelIntegral : public ProbeMesh
+{
+  public:
+    template <class ExcutionPolicy>
+    explicit ProbeKernelIntegral(const ExcutionPolicy &ex_policy, MeshWithGridDataPackagesType *mesh_data)
+        : ProbeMesh(ex_policy, mesh_data),
+          kernel_weight_(mesh_data->getMeshVariable<Real>("KernelWeight")->DelegatedDataField(ex_policy)){};
+    ~ProbeKernelIntegral(){};
+
+    Real update(const Vecd &position) { return probeMesh(kernel_weight_, position); };
+
+  private:
+    MeshVariableData<Real> *kernel_weight_;
+};
+
+class ProbeKernelGradientIntegral : public ProbeMesh
+{
+  public:
+    template <class ExcutionPolicy>
+    explicit ProbeKernelGradientIntegral(const ExcutionPolicy &ex_policy, MeshWithGridDataPackagesType *mesh_data)
+        : ProbeMesh(ex_policy, mesh_data),
+          kernel_gradient_(mesh_data->getMeshVariable<Vecd>("KernelGradient")->DelegatedDataField(ex_policy)){};
+    ~ProbeKernelGradientIntegral(){};
+
+    Vecd update(const Vecd &position) { return probeMesh(kernel_gradient_, position); };
+
+  private:
+    MeshVariableData<Vecd> *kernel_gradient_;
 };
 
 /**
@@ -338,9 +411,11 @@ class UpdateKernelIntegrals : public BaseMeshLocalDynamics
               kernel_weight_(encloser.kernel_weight_.DelegatedDataField(ex_policy)),
               kernel_gradient_(encloser.kernel_gradient_.DelegatedDataField(ex_policy)),
               meta_data_cell_(encloser.meta_data_cell_),
+              cell_package_index_(encloser.cell_package_index_.DelegatedDataField(ex_policy)),
               kernel_(&encloser.kernel_),
               mesh_data_(&encloser.mesh_data_),
-              global_mesh_(&mesh_data_->global_mesh_){};
+              global_mesh_(&mesh_data_->global_mesh_),
+              probe_signed_distance_(ex_policy, &encloser.mesh_data_){};
         void update(const size_t &index);
 
       protected:
@@ -351,10 +426,12 @@ class UpdateKernelIntegrals : public BaseMeshLocalDynamics
         MeshVariableData<Real> *kernel_weight_;
         MeshVariableData<Vecd> *kernel_gradient_;
         std::pair<Arrayi, int> *meta_data_cell_;
+        size_t *cell_package_index_;  /* This variable is not actually used in the execution, just for correct offloading before use. */
 
         Kernel *kernel_;
         MeshWithGridDataPackagesType *mesh_data_;
         Mesh *global_mesh_;
+        ProbeSignedDistance probe_signed_distance_;
         Real computeKernelIntegral(const Vecd &position);
         Vecd computeKernelGradientIntegral(const Vecd &position);
 
@@ -380,7 +457,7 @@ class UpdateKernelIntegrals : public BaseMeshLocalDynamics
             }
             return volume_fraction;
         }
-        Real probeSignedDistance(const Vecd &position) { return BaseMeshLocalDynamics::probeMesh(*mesh_data_, phi_, position); };
+        Real probeSignedDistance(const Vecd &position) { return probe_signed_distance_.update(position); };
     };
 
   private:
@@ -550,8 +627,8 @@ class InitializeDataInACellFromCoarse : public BaseMeshLocalDynamics
               grid_spacing_(encloser.grid_spacing_),
               mesh_data_(&encloser.mesh_data_),
               coarse_mesh_(&encloser.coarse_mesh_),
-              coarse_phi_(coarse_mesh_->getMeshVariable<Real>("Levelset")->DataField()),
-              base_dynamics_(&encloser){};
+              base_dynamics_(&encloser),
+              probe_coarse_phi_(ex_policy, coarse_mesh_){};
         void update(const Arrayi &cell_index);
 
       protected:
@@ -559,53 +636,13 @@ class InitializeDataInACellFromCoarse : public BaseMeshLocalDynamics
         Real grid_spacing_;
         MeshWithGridDataPackagesType *mesh_data_;
         MeshWithGridDataPackagesType *coarse_mesh_;
-        MeshVariableData<Real> *coarse_phi_;
         BaseMeshLocalDynamics *base_dynamics_;
+        ProbeSignedDistance probe_coarse_phi_;
     };
 
   private:
     MeshWithGridDataPackagesType &coarse_mesh_;
     Shape &shape_;
-};
-
-class ProbeSignedDistance : public BaseMeshLocalDynamics
-{
-  public:
-    explicit ProbeSignedDistance(MeshWithGridDataPackagesType &mesh_data)
-        : BaseMeshLocalDynamics(mesh_data){};
-    ~ProbeSignedDistance(){};
-
-    Real update(const Vecd &position) { return probeMesh(mesh_data_, phi_.DataField(), position); };
-};
-
-class ProbeLevelSetGradient : public BaseMeshLocalDynamics
-{
-  public:
-    explicit ProbeLevelSetGradient(MeshWithGridDataPackagesType &mesh_data)
-        : BaseMeshLocalDynamics(mesh_data){};
-    ~ProbeLevelSetGradient(){};
-
-    Vecd update(const Vecd &position) { return probeMesh(mesh_data_, phi_gradient_.DataField(), position); };
-};
-
-class ProbeKernelIntegral : public BaseMeshLocalDynamics
-{
-  public:
-    explicit ProbeKernelIntegral(MeshWithGridDataPackagesType &mesh_data)
-        : BaseMeshLocalDynamics(mesh_data){};
-    ~ProbeKernelIntegral(){};
-
-    Real update(const Vecd &position) { return probeMesh(mesh_data_, kernel_weight_.DataField(), position); };
-};
-
-class ProbeKernelGradientIntegral : public BaseMeshLocalDynamics
-{
-  public:
-    explicit ProbeKernelGradientIntegral(MeshWithGridDataPackagesType &mesh_data)
-        : BaseMeshLocalDynamics(mesh_data){};
-    ~ProbeKernelGradientIntegral(){};
-
-    Vecd update(const Vecd &position) { return probeMesh(mesh_data_, kernel_gradient_.DataField(), position); };
 };
 
 class ProbeIsWithinMeshBound : public BaseMeshLocalDynamics

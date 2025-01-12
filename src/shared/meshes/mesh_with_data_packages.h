@@ -200,6 +200,12 @@ class MeshWithGridDataPackages : public Mesh
         size_t index_1d = transferMeshIndexTo1D(all_cells_, cell_index);
         return cell_package_index_.DataField()[index_1d];
     }
+    template <class ExecutionPolicy>
+    size_t PackageIndexFromCellIndex(const ExecutionPolicy &ex_policy, const Arrayi &cell_index)
+    {
+        size_t index_1d = transferMeshIndexTo1D(all_cells_, cell_index);
+        return cell_package_index_.DelegatedDataField(ex_policy)[index_1d];
+    }
     void assignDataPackageIndex(const Arrayi &cell_index, const size_t package_index){
         size_t index_1d = transferMeshIndexTo1D(all_cells_, cell_index);
         /**

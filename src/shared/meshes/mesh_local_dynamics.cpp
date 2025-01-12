@@ -75,6 +75,7 @@ void InitializeIndexMesh::UpdateKernel::update(const size_t &package_index)
 void UpdateKernelIntegrals::UpdateKernel::update(const size_t &package_index)
 {
     Arrayi cell_index = meta_data_cell_[package_index].first;
+    //HACK problem with '&'?
     assignByPosition(
         kernel_weight_, cell_index, mesh_data_, [&](const Vecd &position) -> Real
         { return computeKernelIntegral(position); });
@@ -86,7 +87,7 @@ void UpdateKernelIntegrals::UpdateKernel::update(const size_t &package_index)
 void InitializeDataInACellFromCoarse::UpdateKernel::update(const Arrayi &cell_index)
 {
     Vecd cell_position = mesh_data_->CellPositionFromIndex(cell_index);
-    size_t package_index = BaseMeshLocalDynamics::probeMesh(*coarse_mesh_, coarse_phi_, cell_position) < 0.0 ? 0 : 1;
+    size_t package_index = probe_coarse_phi_.update(cell_position) < 0.0 ? 0 : 1;
     mesh_data_->assignDataPackageIndex(cell_index, package_index);
     if(coarse_mesh_->isWithinCorePackage(cell_position))
     {
