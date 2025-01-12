@@ -157,4 +157,23 @@ bool NearShapeSurface::checkNearSurface(Vecd cell_position, Real threshold)
     return level_set_shape_.checkNearSurface(cell_position, threshold);
 }
 //=================================================================================================//
+BodyAlignedBoxByParticle::BodyAlignedBoxByParticle(RealBody &real_body, const AlignedBox &aligned_box)
+    : BodyPartByParticle(real_body, "AlignedBoxByParticle"), aligned_box_(aligned_box) {}
+//=================================================================================================//
+void BodyAlignedBoxByParticle::tagByContain(size_t particle_index)
+{
+    if (aligned_box_.checkContain(pos_[particle_index]))
+    {
+        body_part_particles_.push_back(particle_index);
+    }
+}
+//=================================================================================================//
+BodyAlignedBoxByCell::BodyAlignedBoxByCell(RealBody &real_body, const AlignedBox &aligned_box)
+    : BodyPartByCell(real_body, "AlignedBoxByCell"), aligned_box_(aligned_box) {}
+//=================================================================================================//
+bool BodyAlignedBoxByCell::checkNotFar(Vecd cell_position, Real threshold)
+{
+    return aligned_box_.checkNotFar(cell_position, threshold);
+}
+//=================================================================================================//
 } // namespace SPH

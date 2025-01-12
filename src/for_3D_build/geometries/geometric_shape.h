@@ -31,6 +31,7 @@
 
 #include "all_simbody.h"
 #include "base_geometry.h"
+#include "geometric_element.h"
 
 namespace SPH
 {

@@ -61,7 +61,7 @@ class BidirectionalBuffer
             : BaseLocalDynamics<BodyPartByCell>(aligned_box_part),
               part_id_(aligned_box_part.getPartID()),
               pos_(particles_->getVariableDataByName<Vecd>("Position")),
-              aligned_box_(aligned_box_part.getAlignedBoxShape()),
+              aligned_box_(aligned_box_part.getAlignedBox()),
               buffer_particle_indicator_(particles_->registerStateVariable<int>("BufferParticleIndicator"))
         {
             particles_->addVariableToSort<int>("BufferParticleIndicator");
@@ -79,7 +79,7 @@ class BidirectionalBuffer
       protected:
         int part_id_;
         Vecd *pos_;
-        AlignedBoxShape &aligned_box_;
+        AlignedBox &aligned_box_;
         int *buffer_particle_indicator_;
     };
 
@@ -91,7 +91,7 @@ class BidirectionalBuffer
             : BaseLocalDynamics<BodyPartByCell>(aligned_box_part),
               part_id_(aligned_box_part.getPartID()),
               particle_buffer_(particle_buffer),
-              aligned_box_(aligned_box_part.getAlignedBoxShape()),
+              aligned_box_(aligned_box_part.getAlignedBox()),
               fluid_(DynamicCast<Fluid>(this, particles_->getBaseMaterial())),
               pos_(particles_->getVariableDataByName<Vecd>("Position")),
               rho_(particles_->getVariableDataByName<Real>("Density")),
@@ -134,7 +134,7 @@ class BidirectionalBuffer
         int part_id_;
         std::mutex mutex_switch;
         ParticleBuffer<Base> &particle_buffer_;
-        AlignedBoxShape &aligned_box_;
+        AlignedBox &aligned_box_;
         Fluid &fluid_;
         Vecd *pos_;
         Real *rho_, *p_;
@@ -152,7 +152,7 @@ class BidirectionalBuffer
         Deletion(BodyAlignedBoxByCell &aligned_box_part)
             : BaseLocalDynamics<BodyPartByCell>(aligned_box_part),
               part_id_(aligned_box_part.getPartID()),
-              aligned_box_(aligned_box_part.getAlignedBoxShape()),
+              aligned_box_(aligned_box_part.getAlignedBox()),
               pos_(particles_->getVariableDataByName<Vecd>("Position")),
               buffer_particle_indicator_(particles_->getVariableDataByName<int>("BufferParticleIndicator")) {};
         virtual ~Deletion() {};
@@ -175,7 +175,7 @@ class BidirectionalBuffer
       protected:
         int part_id_;
         std::mutex mutex_switch;
-        AlignedBoxShape &aligned_box_;
+        AlignedBox &aligned_box_;
         Vecd *pos_;
         int *buffer_particle_indicator_;
     };

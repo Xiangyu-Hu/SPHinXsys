@@ -89,12 +89,12 @@ class InflowVelocityCondition : public BaseFlowBoundaryCondition
     /** default parameter indicates prescribe velocity */
     explicit InflowVelocityCondition(BodyAlignedBoxByCell &aligned_box_part, Real relaxation_rate = 1.0)
         : BaseFlowBoundaryCondition(aligned_box_part),
-          relaxation_rate_(relaxation_rate), aligned_box_(aligned_box_part.getAlignedBoxShape()),
+          relaxation_rate_(relaxation_rate), aligned_box_(aligned_box_part.getAlignedBox()),
           transform_(aligned_box_.getTransform()), halfsize_(aligned_box_.HalfSize()),
           target_velocity(*this),
           physical_time_(sph_system_.getSystemVariableDataByName<Real>("PhysicalTime")){};
     virtual ~InflowVelocityCondition(){};
-    AlignedBoxShape &getAlignedBox() { return aligned_box_; };
+    AlignedBox &getAlignedBox() { return aligned_box_; };
 
     void update(size_t index_i, Real dt = 0.0)
     {
@@ -110,7 +110,7 @@ class InflowVelocityCondition : public BaseFlowBoundaryCondition
 
   protected:
     Real relaxation_rate_;
-    AlignedBoxShape &aligned_box_;
+    AlignedBox &aligned_box_;
     Transform &transform_;
     Vecd halfsize_;
     TargetVelocity target_velocity;
@@ -204,7 +204,7 @@ class EmitterInflowCondition : public BaseLocalDynamics<BodyPartByParticle>
     /** inflow pressure condition */
     Real inflow_pressure_;
     Real rho0_;
-    AlignedBoxShape &aligned_box_;
+    AlignedBox &aligned_box_;
     Transform &updated_transform_, old_transform_;
 
     /** no transform by default */
@@ -234,7 +234,7 @@ class EmitterInflowInjection : public BaseLocalDynamics<BodyPartByParticle>
     Vecd *pos_;
     Real *rho_, *p_;
     ParticleBuffer<Base> &buffer_;
-    AlignedBoxShape &aligned_box_;
+    AlignedBox &aligned_box_;
 };
 
 /**
@@ -252,7 +252,7 @@ class DisposerOutflowDeletion : public BaseLocalDynamics<BodyPartByCell>
   protected:
     std::mutex mutex_switch_to_buffer_; /**< mutex exclusion for memory conflict */
     Vecd *pos_;
-    AlignedBoxShape &aligned_box_;
+    AlignedBox &aligned_box_;
 };
 } // namespace fluid_dynamics
 } // namespace SPH

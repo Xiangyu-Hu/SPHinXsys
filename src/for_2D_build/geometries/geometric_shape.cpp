@@ -4,7 +4,7 @@ namespace SPH
 {
 //=================================================================================================//
 GeometricShapeBox::GeometricShapeBox(const Vec2d &halfsize, const std::string &shape_name)
-    : Shape(shape_name), halfsize_(halfsize),
+    : GeometricBox(halfsize), Shape(shape_name),
       multi_polygon_({-halfsize, Vec2d(-halfsize[0], halfsize[1]), halfsize,
                       Vec2d(halfsize[0], -halfsize[1]), -halfsize})
 {
@@ -18,7 +18,7 @@ GeometricShapeBox::GeometricShapeBox(const Vec2d &halfsize, const std::string &s
 //=================================================================================================//
 bool GeometricShapeBox::checkContain(const Vec2d &probe_point, bool BOUNDARY_INCLUDED)
 {
-    return ABS(probe_point[0]) < halfsize_[0] && ABS(probe_point[1]) < halfsize_[1];
+    return GeometricBox::checkContain(probe_point);
 }
 //=================================================================================================//
 Vec2d GeometricShapeBox::findClosestPoint(const Vec2d &probe_point)
