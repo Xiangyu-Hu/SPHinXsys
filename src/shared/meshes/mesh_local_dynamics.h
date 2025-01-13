@@ -95,7 +95,8 @@ class BaseMeshLocalDynamics
     template <typename DataType>
     static DataType DataValueFromGlobalIndex(MeshVariableData<DataType> *mesh_variable_data,
                                              const Arrayi &global_grid_index,
-                                             MeshWithGridDataPackagesType *data_mesh);
+                                             MeshWithGridDataPackagesType *data_mesh,
+                                             size_t *cell_package_index);
 
     /** obtain averaged value at a corner of a data cell */
     template <typename DataType>
@@ -132,8 +133,8 @@ class ProbeMesh
 class ProbeSignedDistance : public ProbeMesh
 {
   public:
-    template <class ExcutionPolicy>
-    explicit ProbeSignedDistance(const ExcutionPolicy &ex_policy, MeshWithGridDataPackagesType *mesh_data)
+    template <class ExecutionPolicy>
+    explicit ProbeSignedDistance(const ExecutionPolicy &ex_policy, MeshWithGridDataPackagesType *mesh_data)
         : ProbeMesh(ex_policy, mesh_data),
           phi_(mesh_data->getMeshVariable<Real>("Levelset")->DelegatedDataField(ex_policy)){};
     ~ProbeSignedDistance(){};
@@ -147,8 +148,8 @@ class ProbeSignedDistance : public ProbeMesh
 class ProbeLevelSetGradient : public ProbeMesh
 {
   public:
-    template <class ExcutionPolicy>
-    explicit ProbeLevelSetGradient(const ExcutionPolicy &ex_policy, MeshWithGridDataPackagesType *mesh_data)
+    template <class ExecutionPolicy>
+    explicit ProbeLevelSetGradient(const ExecutionPolicy &ex_policy, MeshWithGridDataPackagesType *mesh_data)
         : ProbeMesh(ex_policy, mesh_data),
           phi_gradient_(mesh_data->getMeshVariable<Vecd>("LevelsetGradient")->DelegatedDataField(ex_policy)){};
     ~ProbeLevelSetGradient(){};
@@ -162,8 +163,8 @@ class ProbeLevelSetGradient : public ProbeMesh
 class ProbeKernelIntegral : public ProbeMesh
 {
   public:
-    template <class ExcutionPolicy>
-    explicit ProbeKernelIntegral(const ExcutionPolicy &ex_policy, MeshWithGridDataPackagesType *mesh_data)
+    template <class ExecutionPolicy>
+    explicit ProbeKernelIntegral(const ExecutionPolicy &ex_policy, MeshWithGridDataPackagesType *mesh_data)
         : ProbeMesh(ex_policy, mesh_data),
           kernel_weight_(mesh_data->getMeshVariable<Real>("KernelWeight")->DelegatedDataField(ex_policy)){};
     ~ProbeKernelIntegral(){};
@@ -177,8 +178,8 @@ class ProbeKernelIntegral : public ProbeMesh
 class ProbeKernelGradientIntegral : public ProbeMesh
 {
   public:
-    template <class ExcutionPolicy>
-    explicit ProbeKernelGradientIntegral(const ExcutionPolicy &ex_policy, MeshWithGridDataPackagesType *mesh_data)
+    template <class ExecutionPolicy>
+    explicit ProbeKernelGradientIntegral(const ExecutionPolicy &ex_policy, MeshWithGridDataPackagesType *mesh_data)
         : ProbeMesh(ex_policy, mesh_data),
           kernel_gradient_(mesh_data->getMeshVariable<Vecd>("KernelGradient")->DelegatedDataField(ex_policy)){};
     ~ProbeKernelGradientIntegral(){};
@@ -311,6 +312,7 @@ class InitializeCellNeighborhood : public BaseMeshLocalDynamics
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
             : meta_data_cell_(encloser.meta_data_cell_),
               cell_neighborhood_(encloser.cell_neighborhood_.DataField()),
+              cell_package_index_(encloser.cell_package_index_.DataField()),
               mesh_data_(&encloser.mesh_data_),
               base_dynamics(&encloser){};
         void update(const size_t &package_index);
@@ -318,6 +320,7 @@ class InitializeCellNeighborhood : public BaseMeshLocalDynamics
       protected:
         std::pair<Arrayi, int> *meta_data_cell_;
         CellNeighborhood *cell_neighborhood_;
+        size_t *cell_package_index_;
         MeshWithGridDataPackagesType *mesh_data_;
         BaseMeshLocalDynamics *base_dynamics;
     };
@@ -426,7 +429,7 @@ class UpdateKernelIntegrals : public BaseMeshLocalDynamics
         MeshVariableData<Real> *kernel_weight_;
         MeshVariableData<Vecd> *kernel_gradient_;
         std::pair<Arrayi, int> *meta_data_cell_;
-        size_t *cell_package_index_;  /* This variable is not actually used in the execution, just for correct offloading before use. */
+        size_t *cell_package_index_;
 
         Kernel *kernel_;
         MeshWithGridDataPackagesType *mesh_data_;
@@ -667,6 +670,9 @@ class ProbeIsWithinMeshBound : public BaseMeshLocalDynamics
     }
 };
 
+
+
+//todo synchronization needed to get results updated from gpu
 class WriteMeshFieldToPlt : public BaseMeshLocalDynamics
 {
   public:

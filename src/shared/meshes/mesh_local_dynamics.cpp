@@ -89,7 +89,7 @@ void InitializeDataInACellFromCoarse::UpdateKernel::update(const Arrayi &cell_in
     Vecd cell_position = mesh_data_->CellPositionFromIndex(cell_index);
     size_t package_index = probe_coarse_phi_.update(cell_position) < 0.0 ? 0 : 1;
     mesh_data_->assignDataPackageIndex(cell_index, package_index);
-    if(coarse_mesh_->isWithinCorePackage(cell_position))
+    if(coarse_mesh_->isWithinCorePackage(coarse_mesh_->cell_package_index_.DataField(), cell_position))
     {
         Real signed_distance = shape_->findSignedDistance(cell_position);
         Vecd normal_direction = shape_->findNormalDirection(cell_position);

@@ -9,12 +9,29 @@ namespace SPH
 MultilevelLevelSet::MultilevelLevelSet(
     BoundingBox tentative_bounds, Real reference_data_spacing, size_t total_levels,
     Shape &shape, SPHAdaptation &sph_adaptation)
+    : MultilevelLevelSet(par, tentative_bounds, reference_data_spacing, total_levels, shape, sph_adaptation){};
+//=================================================================================================//
+MultilevelLevelSet::MultilevelLevelSet(
+    BoundingBox tentative_bounds, MeshWithGridDataPackagesType* coarse_data, Shape &shape, SPHAdaptation &sph_adaptation)
+    : MultilevelLevelSet(par, tentative_bounds, coarse_data, shape, sph_adaptation){};
+//=================================================================================================//
+template <class ExecutionPolicy>
+MultilevelLevelSet::MultilevelLevelSet(
+    const ExecutionPolicy &ex_policy, BoundingBox tentative_bounds, MeshWithGridDataPackagesType* coarse_data,
+    Shape &shape, SPHAdaptation &sph_adaptation)
+    : MultilevelLevelSet(ex_policy, tentative_bounds, coarse_data->DataSpacing() * 0.5, 1, shape, sph_adaptation){};
+//=================================================================================================//
+template <class ExecutionPolicy>
+MultilevelLevelSet::MultilevelLevelSet(
+    const ExecutionPolicy &ex_policy, BoundingBox tentative_bounds, Real reference_data_spacing,
+    size_t total_levels, Shape &shape, SPHAdaptation &sph_adaptation)
     : BaseMeshField("LevelSet_" + shape.getName()), kernel_(*sph_adaptation.getKernel()), shape_(shape), total_levels_(total_levels)
 {
     Real global_h_ratio = sph_adaptation.ReferenceSpacing() / reference_data_spacing;
     global_h_ratio_vec_.push_back(global_h_ratio);
 
     initializeLevel(0, reference_data_spacing, global_h_ratio, tentative_bounds);
+    cell_package_index_set_.push_back(mesh_data_set_[0]->cell_package_index_.DelegatedDataField(ex_policy));
 
     for (size_t level = 1; level < total_levels_; ++level) {
         reference_data_spacing *= 0.5;  // Halve the data spacing
@@ -22,21 +39,8 @@ MultilevelLevelSet::MultilevelLevelSet(
         global_h_ratio_vec_.push_back(global_h_ratio);
 
         initializeLevel(level, reference_data_spacing, global_h_ratio, tentative_bounds);
+        cell_package_index_set_.push_back(mesh_data_set_[level]->cell_package_index_.DelegatedDataField(ex_policy));
     }
-
-    clean_interface = makeUnique<CleanInterface>(*mesh_data_set_.back(), kernel_, global_h_ratio_vec_.back());
-    correct_topology = makeUnique<CorrectTopology>(*mesh_data_set_.back(), kernel_, global_h_ratio_vec_.back());
-}
-//=================================================================================================//
-MultilevelLevelSet::MultilevelLevelSet(
-    BoundingBox tentative_bounds, MeshWithGridDataPackagesType* coarse_data, Shape &shape, SPHAdaptation &sph_adaptation)
-    : BaseMeshField("LevelSet_" + shape.getName()), kernel_(*sph_adaptation.getKernel()), shape_(shape), total_levels_(1)
-{
-    Real reference_data_spacing = coarse_data->DataSpacing() * 0.5;
-    Real global_h_ratio = sph_adaptation.ReferenceSpacing() / reference_data_spacing;
-    global_h_ratio_vec_.push_back(global_h_ratio);
-
-    initializeLevel(0, reference_data_spacing, global_h_ratio, tentative_bounds, coarse_data);
 
     clean_interface = makeUnique<CleanInterface>(*mesh_data_set_.back(), kernel_, global_h_ratio_vec_.back());
     correct_topology = makeUnique<CorrectTopology>(*mesh_data_set_.back(), kernel_, global_h_ratio_vec_.back());
@@ -48,8 +52,7 @@ void MultilevelLevelSet::initializeLevel(size_t level, Real reference_data_spaci
             mesh_data_ptr_vector_keeper_
                 .template createPtr<MeshWithGridDataPackagesType>(tentative_bounds, reference_data_spacing, 4));
 
-    RegisterMeshVariable register_mesh_variable;
-    register_mesh_variable.exec(mesh_data_set_[level]);
+    RegisterMeshVariable().exec(mesh_data_set_[level]);
 
     if (coarse_data == nullptr) {
         MeshAllDynamicsCK<execution::ParallelPolicy, InitializeDataInACell> initialize_data_in_a_cell(*mesh_data_set_[level], shape_);
@@ -124,7 +127,7 @@ Vecd MultilevelLevelSet::probeLevelSetGradient(const Vecd &position)
 size_t MultilevelLevelSet::getProbeLevel(const Vecd &position)
 {
     for (size_t level = total_levels_; level != 0; --level){
-        if(mesh_data_set_[level - 1]->isWithinCorePackage(position))
+        if(mesh_data_set_[level - 1]->isWithinCorePackage(cell_package_index_set_[level - 1], position))
             return level - 1; // jump out of the loop!
     }
     return 0;

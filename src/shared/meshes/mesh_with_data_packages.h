@@ -167,15 +167,11 @@ class MeshWithGridDataPackages : public Mesh
          */
         return cell_package_index_.DataField()[index_1d] > 1;
     }
-    bool isCoreDataPackage(const Arrayi &cell_index)
-    {
-        size_t package_index = PackageIndexFromCellIndex(cell_index);
-        return meta_data_cell_[package_index].second == 1;
-    }
-    bool isWithinCorePackage(Vecd position)
+    bool isWithinCorePackage(size_t *cell_package_index, Vecd position)
     {
         Arrayi cell_index = CellIndexFromPosition(position);
-        return isCoreDataPackage(cell_index);
+        size_t package_index = PackageIndexFromCellIndex(cell_package_index, cell_index);
+        return meta_data_cell_[package_index].second == 1;
     }
 
     /** return the grid index from its position and the index of the cell it belongs to. */
@@ -194,17 +190,10 @@ class MeshWithGridDataPackages : public Mesh
     }
 
     /** return the package index in the data array from the cell index it belongs to. */
-    //todo currently only the cpu version, consider how to pass the execution policy
-    size_t PackageIndexFromCellIndex(const Arrayi &cell_index)
+    size_t PackageIndexFromCellIndex(size_t *cell_package_index, const Arrayi &cell_index)
     {
         size_t index_1d = transferMeshIndexTo1D(all_cells_, cell_index);
-        return cell_package_index_.DataField()[index_1d];
-    }
-    template <class ExecutionPolicy>
-    size_t PackageIndexFromCellIndex(const ExecutionPolicy &ex_policy, const Arrayi &cell_index)
-    {
-        size_t index_1d = transferMeshIndexTo1D(all_cells_, cell_index);
-        return cell_package_index_.DelegatedDataField(ex_policy)[index_1d];
+        return cell_package_index[index_1d];
     }
     void assignDataPackageIndex(const Arrayi &cell_index, const size_t package_index){
         size_t index_1d = transferMeshIndexTo1D(all_cells_, cell_index);

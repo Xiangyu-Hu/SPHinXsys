@@ -47,6 +47,10 @@ class MultilevelLevelSet : public BaseMeshField
   public:
     MultilevelLevelSet(BoundingBox tentative_bounds, Real reference_data_spacing, size_t total_levels, Shape &shape, SPHAdaptation &sph_adaptation);
     MultilevelLevelSet(BoundingBox tentative_bounds, MeshWithGridDataPackagesType* coarse_data, Shape &shape, SPHAdaptation &sph_adaptation);
+    template <class ExecutionPolicy>
+    MultilevelLevelSet(const ExecutionPolicy &ex_policy, BoundingBox tentative_bounds, Real reference_data_spacing, size_t total_levels, Shape &shape, SPHAdaptation &sph_adaptation);
+    template <class ExecutionPolicy>
+    MultilevelLevelSet(const ExecutionPolicy &ex_policy, BoundingBox tentative_bounds, MeshWithGridDataPackagesType* coarse_data, Shape &shape, SPHAdaptation &sph_adaptation);
     ~MultilevelLevelSet(){};
 
     void cleanInterface(Real small_shift_factor);
@@ -77,6 +81,7 @@ class MultilevelLevelSet : public BaseMeshField
     Kernel &kernel_;
     Shape &shape_;                           /**< the geometry is described by the level set. */
     size_t total_levels_;                    /**< level 0 is the coarsest */
+    StdVec<size_t *> cell_package_index_set_;
     StdVec<Real> global_h_ratio_vec_;
     StdVec<MeshWithGridDataPackagesType *> mesh_data_set_;
     StdVec<ProbeSignedDistance *> probe_signed_distance_set_;

@@ -19,7 +19,8 @@ void BaseMeshLocalDynamics::for_each_cell_data(const FunctionOnData &function)
 template <typename DataType>
 DataType BaseMeshLocalDynamics::DataValueFromGlobalIndex(MeshVariableData<DataType> *mesh_variable_data,
                                                          const Arrayi &global_grid_index,
-                                                         MeshWithGridDataPackagesType *data_mesh)
+                                                         MeshWithGridDataPackagesType *data_mesh,
+                                                         size_t *cell_package_index)
 {
     Arrayi cell_index_on_mesh_ = Arrayi::Zero();
     Arrayi local_data_index = Arrayi::Zero();
@@ -29,7 +30,7 @@ DataType BaseMeshLocalDynamics::DataValueFromGlobalIndex(MeshVariableData<DataTy
         cell_index_on_mesh_[n] = cell_index_in_this_direction;
         local_data_index[n] = global_grid_index[n] - cell_index_in_this_direction * pkg_size;
     }
-    size_t package_index = data_mesh->PackageIndexFromCellIndex(cell_index_on_mesh_);
+    size_t package_index = data_mesh->PackageIndexFromCellIndex(cell_package_index, cell_index_on_mesh_);
     auto &data = mesh_variable_data[package_index];
     return data[local_data_index[0]][local_data_index[1]];
 }
@@ -91,7 +92,7 @@ void UpdateKernelIntegrals::UpdateKernel::assignByPosition(MeshVariableData<Data
                                             MeshWithGridDataPackagesType *data_mesh,
                                             const FunctionByPosition &function_by_position)
 {
-    size_t package_index = data_mesh_->PackageIndexFromCellIndex(cell_index);
+    size_t package_index = data_mesh_->PackageIndexFromCellIndex(cell_package_index_, cell_index);
     auto &pkg_data = mesh_variable_data[package_index];
     for (int i = 0; i != pkg_size; ++i)
         for (int j = 0; j != pkg_size; ++j)

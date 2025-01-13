@@ -72,7 +72,7 @@ void InitializeCellNeighborhood::UpdateKernel::update(const size_t &package_inde
         for (int m = -1; m < 2; m++)
             for (int n = -1; n < 2; n++)
             {
-                current[l + 1][m + 1][n + 1] = mesh_data_->PackageIndexFromCellIndex(par, cell_index + Arrayi(l, m, n));
+                current[l + 1][m + 1][n + 1] = mesh_data_->PackageIndexFromCellIndex(cell_package_index_, cell_index + Arrayi(l, m, n));
             }
 }
 //=============================================================================================//
@@ -128,10 +128,10 @@ Real UpdateKernelIntegrals::UpdateKernel::computeKernelIntegral(const Vecd &posi
             [&](int i, int j, int k)
             {
                 Arrayi neighbor_index = Arrayi(global_index_[0] + i, global_index_[1] + j, global_index_[2] + k);
-                Real phi_neighbor = BaseMeshLocalDynamics::DataValueFromGlobalIndex(phi_, neighbor_index, mesh_data_);
+                Real phi_neighbor = BaseMeshLocalDynamics::DataValueFromGlobalIndex(phi_, neighbor_index, mesh_data_, cell_package_index_);
                 if (phi_neighbor > -data_spacing_)
                 {
-                    Vecd phi_gradient = BaseMeshLocalDynamics::DataValueFromGlobalIndex(phi_gradient_, neighbor_index, mesh_data_);
+                    Vecd phi_gradient = BaseMeshLocalDynamics::DataValueFromGlobalIndex(phi_gradient_, neighbor_index, mesh_data_, cell_package_index_);
                     Vecd integral_position = global_mesh_->GridPositionFromIndex(neighbor_index);
                     Vecd displacement = position - integral_position;
                     Real distance = displacement.norm();
@@ -158,10 +158,10 @@ Vecd UpdateKernelIntegrals::UpdateKernel::computeKernelGradientIntegral(const Ve
             [&](int i, int j, int k)
             {
                 Arrayi neighbor_index = Arrayi(global_index_[0] + i, global_index_[1] + j, global_index_[2] + k);
-                Real phi_neighbor = BaseMeshLocalDynamics::DataValueFromGlobalIndex(phi_, neighbor_index, mesh_data_);
+                Real phi_neighbor = BaseMeshLocalDynamics::DataValueFromGlobalIndex(phi_, neighbor_index, mesh_data_, cell_package_index_);
                 if (phi_neighbor > -data_spacing_)
                 {
-                    Vecd phi_gradient = BaseMeshLocalDynamics::DataValueFromGlobalIndex(phi_gradient_, neighbor_index, mesh_data_);
+                    Vecd phi_gradient = BaseMeshLocalDynamics::DataValueFromGlobalIndex(phi_gradient_, neighbor_index, mesh_data_, cell_package_index_);
                     Vecd integral_position = global_mesh_->GridPositionFromIndex(neighbor_index);
                     Vecd displacement = position - integral_position;
                     Real distance = displacement.norm();
@@ -409,7 +409,7 @@ void WriteMeshFieldToPlt::update(std::ofstream &output_file)
         {
             for (int i = 0; i != number_of_operation[0]; ++i)
             {
-                output_file << DataValueFromGlobalIndex(phi_.DataField(), Arrayi(i, j, k), &mesh_data_)
+                output_file << DataValueFromGlobalIndex(phi_.DataField(), Arrayi(i, j, k), &mesh_data_, cell_package_index_.DataField())
                             << " ";
             }
             output_file << " \n";
@@ -420,7 +420,7 @@ void WriteMeshFieldToPlt::update(std::ofstream &output_file)
         {
             for (int i = 0; i != number_of_operation[0]; ++i)
             {
-                output_file << DataValueFromGlobalIndex(phi_gradient_.DataField(), Arrayi(i, j, k), &mesh_data_)[0]
+                output_file << DataValueFromGlobalIndex(phi_gradient_.DataField(), Arrayi(i, j, k), &mesh_data_, cell_package_index_.DataField())[0]
                             << " ";
             }
             output_file << " \n";
@@ -431,7 +431,7 @@ void WriteMeshFieldToPlt::update(std::ofstream &output_file)
         {
             for (int i = 0; i != number_of_operation[0]; ++i)
             {
-                output_file << DataValueFromGlobalIndex(phi_gradient_.DataField(), Arrayi(i, j, k), &mesh_data_)[1]
+                output_file << DataValueFromGlobalIndex(phi_gradient_.DataField(), Arrayi(i, j, k), &mesh_data_, cell_package_index_.DataField())[1]
                             << " ";
             }
             output_file << " \n";
@@ -442,7 +442,7 @@ void WriteMeshFieldToPlt::update(std::ofstream &output_file)
         {
             for (int i = 0; i != number_of_operation[0]; ++i)
             {
-                output_file << DataValueFromGlobalIndex(phi_gradient_.DataField(), Arrayi(i, j, k), &mesh_data_)[2]
+                output_file << DataValueFromGlobalIndex(phi_gradient_.DataField(), Arrayi(i, j, k), &mesh_data_, cell_package_index_.DataField())[2]
                             << " ";
             }
             output_file << " \n";
@@ -453,7 +453,7 @@ void WriteMeshFieldToPlt::update(std::ofstream &output_file)
         {
             for (int i = 0; i != number_of_operation[0]; ++i)
             {
-                output_file << DataValueFromGlobalIndex(near_interface_id_.DataField(), Arrayi(i, j, k), &mesh_data_)
+                output_file << DataValueFromGlobalIndex(near_interface_id_.DataField(), Arrayi(i, j, k), &mesh_data_, cell_package_index_.DataField())
                             << " ";
             }
             output_file << " \n";
