@@ -85,6 +85,7 @@ class MultilevelLevelSet : public BaseMeshField
     Shape &shape_;                           /**< the geometry is described by the level set. */
     size_t total_levels_;                    /**< level 0 is the coarsest */
     StdVec<size_t *> cell_package_index_set_;
+    StdVec<std::pair<Arrayi, int> *> meta_data_cell_set_;
     StdVec<Real> global_h_ratio_vec_;
     StdVec<MeshWithGridDataPackagesType *> mesh_data_set_;
     StdVec<ProbeSignedDistance *> probe_signed_distance_set_;

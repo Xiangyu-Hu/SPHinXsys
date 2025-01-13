@@ -71,7 +71,7 @@ class BaseMeshLocalDynamics
     Arrayi all_cells_;
     Real grid_spacing_;
     Real data_spacing_;
-    std::pair<Arrayi, int>* &meta_data_cell_;
+    DiscreteVariable<std::pair<Arrayi, int>> &meta_data_cell_;
     DiscreteVariable<CellNeighborhood> &cell_neighborhood_;
     DiscreteVariable<size_t> &cell_package_index_;
 
@@ -310,7 +310,7 @@ class InitializeCellNeighborhood : public BaseMeshLocalDynamics
       public:
         template <class ExecutionPolicy, class EncloserType>
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : meta_data_cell_(encloser.meta_data_cell_),
+            : meta_data_cell_(encloser.meta_data_cell_.DataField()),
               cell_neighborhood_(encloser.cell_neighborhood_.DataField()),
               cell_package_index_(encloser.cell_package_index_.DataField()),
               mesh_data_(&encloser.mesh_data_),
@@ -344,7 +344,7 @@ class InitializeBasicDataForAPackage : public BaseMeshLocalDynamics
         template <class ExecutionPolicy, class EncloserType>
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
             : mesh_data_(&encloser.mesh_data_),
-              meta_data_cell_(encloser.meta_data_cell_),
+              meta_data_cell_(encloser.meta_data_cell_.DataField()),
               shape_(&encloser.shape_),
               phi_(encloser.phi_.DataField()),
               near_interface_id_(encloser.near_interface_id_.DataField()){};
@@ -413,7 +413,7 @@ class UpdateKernelIntegrals : public BaseMeshLocalDynamics
               phi_gradient_(encloser.phi_gradient_.DelegatedDataField(ex_policy)),
               kernel_weight_(encloser.kernel_weight_.DelegatedDataField(ex_policy)),
               kernel_gradient_(encloser.kernel_gradient_.DelegatedDataField(ex_policy)),
-              meta_data_cell_(encloser.meta_data_cell_),
+              meta_data_cell_(encloser.meta_data_cell_.DelegatedDataField(ex_policy)),
               cell_package_index_(encloser.cell_package_index_.DelegatedDataField(ex_policy)),
               kernel_(&encloser.kernel_),
               mesh_data_(&encloser.mesh_data_),

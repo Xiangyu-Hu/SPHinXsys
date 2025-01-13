@@ -54,18 +54,28 @@ class BaseMeshDynamics
     BaseMeshDynamics(MeshWithGridDataPackages<4> &mesh_data)
         : mesh_data_(mesh_data),
           all_cells_(mesh_data.AllCells()),
-          num_grid_pkgs_(mesh_data.num_grid_pkgs_),
-          meta_data_cell_(mesh_data.meta_data_cell_){};
+          num_grid_pkgs_(mesh_data.num_grid_pkgs_){};
     virtual ~BaseMeshDynamics(){};
 
   protected:
     MeshWithGridDataPackages<4> &mesh_data_;
     Arrayi all_cells_;
     size_t &num_grid_pkgs_;
-    std::pair<Arrayi, int>* &meta_data_cell_; 
 
+    /***********************************************
+     *         Iterators for All Mesh Cells        *
+     ***********************************************/
     template <typename FunctionOnData>
-    void grid_parallel_for(const FunctionOnData &function)
+    void grid_parallel_for(const execution::SequencedPolicy &seq, const FunctionOnData &function)
+    {
+        mesh_for(MeshRange(Arrayi::Zero(), all_cells_),
+                          [&](Arrayi cell_index)
+                          {
+                              function(cell_index);
+                          });
+    }
+    template <typename FunctionOnData>
+    void grid_parallel_for(const execution::ParallelPolicy &par, const FunctionOnData &function)
     {
         mesh_parallel_for(MeshRange(Arrayi::Zero(), all_cells_),
                           [&](Arrayi cell_index)
@@ -74,9 +84,17 @@ class BaseMeshDynamics
                           });
     }
 
-    /** Iterator on a collection of mesh data packages. parallel computing. */
+    /***********************************************
+     *       Iterators for Only Occupied Cells      *
+     ***********************************************/
     template <typename FunctionOnData>
-    void package_parallel_for(const FunctionOnData &function)
+    void package_parallel_for(const execution::SequencedPolicy &seq, const FunctionOnData &function)
+    {
+        for (size_t i = 2; i != num_grid_pkgs_; ++i)
+            function(i);
+    }
+    template <typename FunctionOnData>
+    void package_parallel_for(const execution::ParallelPolicy &par, const FunctionOnData &function)
     {
         parallel_for(IndexRange(2, num_grid_pkgs_),
                     [&](const IndexRange &r)
@@ -88,36 +106,23 @@ class BaseMeshDynamics
                     },
                     ap);
     }
+
+    // template <typename FunctionOnData>
+    // void package_parallel_for(const execution::ParallelDevicePolicy &par_device, const FunctionOnData &function)
+    // {
+    //     auto &sycl_queue = execution_instance.getQueue();
+    //     sycl_queue.submit([&](sycl::handler &cgh)
+    //                       { cgh.parallel_for(execution_instance.getUniformNdRange(num_grid_pkgs_ - 2), [=](sycl::nd_item<1> index)
+    //                                         {
+    //                                 if(index.get_global_id(0) + 2< num_grid_pkgs_)
+    //                                     local_dynamics_function(index.get_global_id(0) + 2); }); })
+    //         .wait_and_throw();
+    // }
 };
 
 /**
  * @class MeshAllDynamics
- * @brief Mesh dynamics for all cell on the mesh
- */
-template <class LocalDynamicsType>
-class MeshAllDynamics : public LocalDynamicsType, public BaseMeshDynamics
-{
-  public:
-    template <typename... Args>
-    MeshAllDynamics(MeshWithGridDataPackages<4> &mesh_data, Args &&...args)
-        : LocalDynamicsType(mesh_data, std::forward<Args>(args)...),
-          BaseMeshDynamics(mesh_data){};
-    virtual ~MeshAllDynamics(){};
-
-    void exec()
-    {
-        grid_parallel_for(
-            [&](Arrayi cell_index)
-            {
-              this->update(cell_index);
-            }
-        );
-    };
-};
-
-/**
- * @class MeshInnerDynamicsCK
- * @brief Mesh dynamics for only inner cells on the mesh (SYCL version)
+ * @brief Mesh dynamics for all cell on the mesh (SYCL version)
  */
 template <class ExecutionPolicy, class LocalDynamicsType>
 class MeshAllDynamicsCK : public LocalDynamicsType, public BaseMeshDynamics
@@ -135,7 +140,7 @@ class MeshAllDynamicsCK : public LocalDynamicsType, public BaseMeshDynamics
     void exec()
     {
         UpdateKernel *update_kernel = kernel_implementation_.getComputingKernel();
-        grid_parallel_for(
+        grid_parallel_for(ExecutionPolicy(),
             [&](Arrayi cell_index)
             {
               update_kernel->update(cell_index);
@@ -147,31 +152,6 @@ class MeshAllDynamicsCK : public LocalDynamicsType, public BaseMeshDynamics
 /**
  * @class MeshInnerDynamics
  * @brief Mesh dynamics for only inner cells on the mesh
- */
-template <class LocalDynamicsType>
-class MeshInnerDynamics : public LocalDynamicsType, public BaseMeshDynamics
-{
-  public:
-    template <typename... Args>
-    MeshInnerDynamics(MeshWithGridDataPackages<4> &mesh_data, Args &&...args)
-        : LocalDynamicsType(mesh_data, std::forward<Args>(args)...),
-          BaseMeshDynamics(mesh_data){};
-    virtual ~MeshInnerDynamics(){};
-
-    void exec()
-    {
-        package_parallel_for(
-            [&](size_t package_index)
-            {
-              this->update(package_index);
-            }
-        );
-    };
-};
-
-/**
- * @class MeshInnerDynamicsCK
- * @brief Mesh dynamics for only inner cells on the mesh (SYCL version)
  */
 template <class ExecutionPolicy, class LocalDynamicsType>
 class MeshInnerDynamicsCK : public LocalDynamicsType, public BaseMeshDynamics
@@ -190,39 +170,10 @@ class MeshInnerDynamicsCK : public LocalDynamicsType, public BaseMeshDynamics
     void exec(Args &&...args)
     {
         UpdateKernel *update_kernel = kernel_implementation_.getComputingKernel();
-        package_parallel_for(
+        package_parallel_for(ExecutionPolicy(),
             [&](size_t package_index)
             {
               update_kernel->update(package_index, std::forward<Args>(args)...);
-            }
-        );
-    };
-};
-
-template <class ExecutionPolicy, class LocalDynamicsType>
-class MeshCoreDynamicsCK : public LocalDynamicsType, public BaseMeshDynamics
-{
-    using UpdateKernel = typename LocalDynamicsType::UpdateKernel;
-    using KernelImplementation = Implementation<ExecutionPolicy, LocalDynamicsType, UpdateKernel>;
-    KernelImplementation kernel_implementation_;
-  public:
-    template <typename... Args>
-    MeshCoreDynamicsCK(MeshWithGridDataPackages<4> &mesh_data, Args &&...args)
-        : LocalDynamicsType(mesh_data, std::forward<Args>(args)...),
-          BaseMeshDynamics(mesh_data), kernel_implementation_(*this){};
-    virtual ~MeshCoreDynamicsCK(){};
-
-    void exec()
-    {
-        UpdateKernel *update_kernel = kernel_implementation_.getComputingKernel();
-        package_parallel_for(
-            [&](size_t package_index)
-            {
-              std::pair<Arrayi, int> &metadata = meta_data_cell_[package_index];
-              if (metadata.second == 1)
-              {
-                  update_kernel->update(package_index);
-              }
             }
         );
     };
@@ -232,27 +183,32 @@ class MeshCoreDynamicsCK : public LocalDynamicsType, public BaseMeshDynamics
  * @class MeshCoreDynamics
  * @brief Mesh dynamics for only core cells on the mesh
  */
-template <class LocalDynamicsType>
-class MeshCoreDynamics : public LocalDynamicsType, public BaseMeshDynamics
+template <class ExecutionPolicy, class LocalDynamicsType>
+class MeshCoreDynamicsCK : public LocalDynamicsType, public BaseMeshDynamics
 {
+    using UpdateKernel = typename LocalDynamicsType::UpdateKernel;
+    using KernelImplementation = Implementation<ExecutionPolicy, LocalDynamicsType, UpdateKernel>;
+    KernelImplementation kernel_implementation_;
+
+    std::pair<Arrayi, int> *meta_data_cell_;
   public:
-    template <class DynamicsIdentifier, typename... Args>
-    MeshCoreDynamics(DynamicsIdentifier &identifier, Args &&...args)
-        : LocalDynamicsType(identifier, std::forward<Args>(args)...),
-          BaseMeshDynamics(identifier){};
-    virtual ~MeshCoreDynamics(){};
+    template <typename... Args>
+    MeshCoreDynamicsCK(MeshWithGridDataPackages<4> &mesh_data, Args &&...args)
+        : LocalDynamicsType(mesh_data, std::forward<Args>(args)...),
+          BaseMeshDynamics(mesh_data),
+          meta_data_cell_(mesh_data.meta_data_cell_.DelegatedDataField(ExecutionPolicy())),
+          kernel_implementation_(*this){};
+    virtual ~MeshCoreDynamicsCK(){};
 
     void exec()
     {
-        package_parallel_for(
-          [&](size_t package_index)
-          {
-              std::pair<Arrayi, int> &metadata = meta_data_cell_[package_index];
-              if (metadata.second == 1)
-              {
-                  this->update(package_index);
-              }
-          }
+        UpdateKernel *update_kernel = kernel_implementation_.getComputingKernel();
+        package_parallel_for(ExecutionPolicy(),
+            [&](size_t package_index)
+            {
+              if (meta_data_cell_[package_index].second == 1)
+                  update_kernel->update(package_index);
+            }
         );
     };
 };

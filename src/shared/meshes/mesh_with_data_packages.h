@@ -68,10 +68,7 @@ class MeshWithGridDataPackages : public Mesh
     {
         allocateIndexDataMatrix(all_cells_);
     };
-    virtual ~MeshWithGridDataPackages()
-    {
-        delete[] meta_data_cell_;
-    };
+    virtual ~MeshWithGridDataPackages(){};
 
     /** spacing between the data, which is 1/ pkg_size of this grid spacing */
     Real DataSpacing() { return data_spacing_; };
@@ -79,9 +76,9 @@ class MeshWithGridDataPackages : public Mesh
     size_t BufferWidth() { return buffer_width_; };
     Mesh global_mesh_;                                         /**< the mesh for the locations of all possible data points. */
     size_t num_grid_pkgs_ = 2;                                 /**< the number of all distinct packages, initially only 2 singular packages. */
-    std::pair<Arrayi, int> *meta_data_cell_;                   /**< metadata for each occupied cell: (arrayi)cell index, (int)core1/inner0. */
+    DiscreteVariable<std::pair<Arrayi, int>> meta_data_cell_{"meta_data_cell", 2};          /**< metadata for each occupied cell: (arrayi)cell index, (int)core1/inner0. */
     DiscreteVariable<CellNeighborhood> cell_neighborhood_{"mesh_cell_neighborhood", 2};     /**< 3*3(*3) array to store indicies of neighborhood cells. */
-    DiscreteVariable<size_t> cell_package_index_{"cell_package_index_", 2};                      /**< the package index for each cell in a 1-d array. */
+    DiscreteVariable<size_t> cell_package_index_{"cell_package_index", 2};                  /**< the package index for each cell in a 1-d array. */
     ConcurrentVec<std::pair<size_t, int>> occupied_data_pkgs_; /**< (size_t)sort_index, (int)core1/inner0. */
 
   private:
@@ -155,7 +152,7 @@ class MeshWithGridDataPackages : public Mesh
                       });
         num_grid_pkgs_ = occupied_data_pkgs_.size() + 2;
         cell_neighborhood_.reallocateDataField(par, num_grid_pkgs_);
-        meta_data_cell_ = new std::pair<Arrayi, int>[num_grid_pkgs_];
+        meta_data_cell_.reallocateDataField(par, num_grid_pkgs_);
     }
 
     bool isInnerDataPackage(const Arrayi &cell_index)
@@ -167,11 +164,11 @@ class MeshWithGridDataPackages : public Mesh
          */
         return cell_package_index_.DataField()[index_1d] > 1;
     }
-    bool isWithinCorePackage(size_t *cell_package_index, Vecd position)
+    bool isWithinCorePackage(size_t *cell_package_index, std::pair<Arrayi, int> *meta_data_cell, Vecd position)
     {
         Arrayi cell_index = CellIndexFromPosition(position);
         size_t package_index = PackageIndexFromCellIndex(cell_package_index, cell_index);
-        return meta_data_cell_[package_index].second == 1;
+        return meta_data_cell[package_index].second == 1;
     }
 
     /** return the grid index from its position and the index of the cell it belongs to. */

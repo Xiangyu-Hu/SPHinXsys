@@ -32,6 +32,7 @@ MultilevelLevelSet::MultilevelLevelSet(
 
     initializeLevel(ex_policy, 0, reference_data_spacing, global_h_ratio, tentative_bounds);
     cell_package_index_set_.push_back(mesh_data_set_[0]->cell_package_index_.DelegatedDataField(ex_policy));
+    meta_data_cell_set_.push_back(mesh_data_set_[0]->meta_data_cell_.DelegatedDataField(ex_policy));
 
     for (size_t level = 1; level < total_levels_; ++level) {
         reference_data_spacing *= 0.5;  // Halve the data spacing
@@ -40,6 +41,7 @@ MultilevelLevelSet::MultilevelLevelSet(
 
         initializeLevel(ex_policy, level, reference_data_spacing, global_h_ratio, tentative_bounds);
         cell_package_index_set_.push_back(mesh_data_set_[level]->cell_package_index_.DelegatedDataField(ex_policy));
+        meta_data_cell_set_.push_back(mesh_data_set_[level]->meta_data_cell_.DelegatedDataField(ex_policy));
     }
 
     clean_interface = makeUnique<CleanInterface>(*mesh_data_set_.back(), kernel_, global_h_ratio_vec_.back());
@@ -134,7 +136,9 @@ Vecd MultilevelLevelSet::probeLevelSetGradient(const Vecd &position)
 size_t MultilevelLevelSet::getProbeLevel(const Vecd &position)
 {
     for (size_t level = total_levels_; level != 0; --level){
-        if(mesh_data_set_[level - 1]->isWithinCorePackage(cell_package_index_set_[level - 1], position))
+        if(mesh_data_set_[level - 1]->isWithinCorePackage(cell_package_index_set_[level - 1],
+                                                          meta_data_cell_set_[level - 1],
+                                                          position))
             return level - 1; // jump out of the loop!
     }
     return 0;
