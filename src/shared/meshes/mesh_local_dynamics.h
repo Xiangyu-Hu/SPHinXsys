@@ -310,9 +310,9 @@ class InitializeCellNeighborhood : public BaseMeshLocalDynamics
       public:
         template <class ExecutionPolicy, class EncloserType>
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : meta_data_cell_(encloser.meta_data_cell_.DataField()),
-              cell_neighborhood_(encloser.cell_neighborhood_.DataField()),
-              cell_package_index_(encloser.cell_package_index_.DataField()),
+            : meta_data_cell_(encloser.meta_data_cell_.DelegatedDataField(ex_policy)),
+              cell_neighborhood_(encloser.cell_neighborhood_.DelegatedDataField(ex_policy)),
+              cell_package_index_(encloser.cell_package_index_.DelegatedDataField(ex_policy)),
               mesh_data_(&encloser.mesh_data_),
               base_dynamics(&encloser){};
         void update(const size_t &package_index);
@@ -344,10 +344,10 @@ class InitializeBasicDataForAPackage : public BaseMeshLocalDynamics
         template <class ExecutionPolicy, class EncloserType>
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
             : mesh_data_(&encloser.mesh_data_),
-              meta_data_cell_(encloser.meta_data_cell_.DataField()),
+              meta_data_cell_(encloser.meta_data_cell_.DelegatedDataField(ex_policy)),
               shape_(&encloser.shape_),
-              phi_(encloser.phi_.DataField()),
-              near_interface_id_(encloser.near_interface_id_.DataField()){};
+              phi_(encloser.phi_.DelegatedDataField(ex_policy)),
+              near_interface_id_(encloser.near_interface_id_.DelegatedDataField(ex_policy)){};
         void update(const size_t &index);
 
       protected:
