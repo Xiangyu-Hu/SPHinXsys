@@ -158,7 +158,12 @@ bool NearShapeSurface::checkNearSurface(Vecd cell_position, Real threshold)
 }
 //=================================================================================================//
 BodyAlignedBoxByParticle::BodyAlignedBoxByParticle(RealBody &real_body, const AlignedBox &aligned_box)
-    : BodyPartByParticle(real_body, "AlignedBoxByParticle"), aligned_box_(aligned_box) {}
+    : BodyPartByParticle(real_body, "AlignedBoxByParticle"), aligned_box_(aligned_box)
+{
+    TaggingParticleMethod tagging_particle_method =
+        std::bind(&BodyAlignedBoxByParticle::tagByContain, this, _1);
+    tagParticles(tagging_particle_method);
+}
 //=================================================================================================//
 void BodyAlignedBoxByParticle::tagByContain(size_t particle_index)
 {
@@ -169,7 +174,12 @@ void BodyAlignedBoxByParticle::tagByContain(size_t particle_index)
 }
 //=================================================================================================//
 BodyAlignedBoxByCell::BodyAlignedBoxByCell(RealBody &real_body, const AlignedBox &aligned_box)
-    : BodyPartByCell(real_body, "AlignedBoxByCell"), aligned_box_(aligned_box) {}
+    : BodyPartByCell(real_body, "AlignedBoxByCell"), aligned_box_(aligned_box)
+{
+    TaggingCellMethod tagging_cell_method =
+        std::bind(&BodyAlignedBoxByCell::checkNotFar, this, _1, _2);
+    tagCells(tagging_cell_method);
+}
 //=================================================================================================//
 bool BodyAlignedBoxByCell::checkNotFar(Vecd cell_position, Real threshold)
 {

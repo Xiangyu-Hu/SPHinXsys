@@ -52,8 +52,8 @@ class ComplexShape : public BinaryShapes
 {
   public:
     explicit ComplexShape(const std::string &shape_name)
-        : BinaryShapes(shape_name){};
-    virtual ~ComplexShape(){};
+        : BinaryShapes(shape_name) {};
+    virtual ~ComplexShape() {};
 
     template <typename... Args>
     LevelSetShape *defineLevelSetShape(SPHBody &sph_body, const std::string &shape_name, Args &&...args)
@@ -90,11 +90,11 @@ class AlignedBox : public TransformGeometry<GeometricBox>
               Transform(Vecd(0.5 * (shape.bounding_box_.second_ + shape.bounding_box_.first_))),
               0.5 * (shape.bounding_box_.second_ - shape.bounding_box_.first_), std::forward<Args>(args)...),
           alignment_axis_(upper_bound_axis){};
-    ~AlignedBox(){};
+    ~AlignedBox() {};
 
     Vecd HalfSize() { return halfsize_; }
-        bool checkNearSurface(const Vecd &probe_point, Real threshold);
-                bool checkNotFar(const Vecd &probe_point, Real threshold);
+    bool checkNearSurface(const Vecd &probe_point, Real threshold);
+    bool checkNotFar(const Vecd &probe_point, Real threshold);
     bool checkInBounds(const Vecd &probe_point, Real lower_bound_fringe = 0.0, Real upper_bound_fringe = 0.0);
     bool checkUpperBound(const Vecd &probe_point, Real upper_bound_fringe = 0.0);
     bool checkLowerBound(const Vecd &probe_point, Real lower_bound_fringe = 0.0);
