@@ -50,16 +50,12 @@ class RegisterMeshVariable
         mesh_data->registerMeshVariable<Vecd>("KernelGradient");
     }
 };
-class FinishDataPackages : public BaseMeshDynamics
+class FinishDataPackages
 {
   public:
-    explicit FinishDataPackages(MeshWithGridDataPackages<4> &mesh_data, Shape &shape, Kernel &kernel, Real global_h_ratio)
-        : BaseMeshDynamics(mesh_data),
-          shape_(shape),
-          kernel_(kernel),
-          global_h_ratio_(global_h_ratio),
-          grid_spacing_(mesh_data.GridSpacing()),
-          buffer_width_(mesh_data.BufferWidth()){};
+    explicit FinishDataPackages(MeshWithGridDataPackages<4> &mesh_data, Shape &shape)
+        : mesh_data_(mesh_data), shape_(shape),
+          far_field_distance(mesh_data.GridSpacing() * (Real)mesh_data.BufferWidth()){};
     virtual ~FinishDataPackages(){};
 
     void exec(){
@@ -70,21 +66,17 @@ class FinishDataPackages : public BaseMeshDynamics
         initialize_cell_neighborhood.exec();
         mesh_data_.resizeMeshVariableData();
 
-        Real far_field_distance = grid_spacing_ * (Real)buffer_width_;
         initialize_data_for_singular_package.update(0, -far_field_distance);
         initialize_data_for_singular_package.update(1, far_field_distance);
 
         initialize_basic_data_for_a_package.exec();
         update_level_set_gradient.exec();
-        update_kernel_integrals.exec();
     };
 
   private:
+    MeshWithGridDataPackagesType &mesh_data_;
     Shape &shape_;
-    Kernel &kernel_;
-    Real global_h_ratio_;
-    Real grid_spacing_;
-    size_t buffer_width_;
+    Real far_field_distance;
 
     InitializeDataForSingularPackage initialize_data_for_singular_package{mesh_data_};
     // MeshAllDynamics<TagACellIsInnerPackage> tag_a_cell_is_inner_package{mesh_data_};
@@ -98,7 +90,6 @@ class FinishDataPackages : public BaseMeshDynamics
     MeshInnerDynamicsCK<execution::ParallelPolicy, InitializeCellNeighborhood> initialize_cell_neighborhood{mesh_data_};
     MeshInnerDynamicsCK<execution::ParallelPolicy, InitializeBasicDataForAPackage> initialize_basic_data_for_a_package{mesh_data_, shape_};
     MeshInnerDynamicsCK<execution::ParallelPolicy, UpdateLevelSetGradient> update_level_set_gradient{mesh_data_};
-    MeshInnerDynamicsCK<execution::ParallelPolicy, UpdateKernelIntegrals> update_kernel_integrals{mesh_data_, kernel_, global_h_ratio_};
 };
 
 class ProbeNormalDirection

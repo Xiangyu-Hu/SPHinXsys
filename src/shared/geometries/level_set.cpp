@@ -30,7 +30,7 @@ MultilevelLevelSet::MultilevelLevelSet(
     Real global_h_ratio = sph_adaptation.ReferenceSpacing() / reference_data_spacing;
     global_h_ratio_vec_.push_back(global_h_ratio);
 
-    initializeLevel(0, reference_data_spacing, global_h_ratio, tentative_bounds);
+    initializeLevel(ex_policy, 0, reference_data_spacing, global_h_ratio, tentative_bounds);
     cell_package_index_set_.push_back(mesh_data_set_[0]->cell_package_index_.DelegatedDataField(ex_policy));
 
     for (size_t level = 1; level < total_levels_; ++level) {
@@ -38,7 +38,7 @@ MultilevelLevelSet::MultilevelLevelSet(
         global_h_ratio *= 2;            // Double the ratio
         global_h_ratio_vec_.push_back(global_h_ratio);
 
-        initializeLevel(level, reference_data_spacing, global_h_ratio, tentative_bounds);
+        initializeLevel(ex_policy, level, reference_data_spacing, global_h_ratio, tentative_bounds);
         cell_package_index_set_.push_back(mesh_data_set_[level]->cell_package_index_.DelegatedDataField(ex_policy));
     }
 
@@ -46,7 +46,10 @@ MultilevelLevelSet::MultilevelLevelSet(
     correct_topology = makeUnique<CorrectTopology>(*mesh_data_set_.back(), kernel_, global_h_ratio_vec_.back());
 }
 //=================================================================================================//
-void MultilevelLevelSet::initializeLevel(size_t level, Real reference_data_spacing, Real global_h_ratio, BoundingBox tentative_bounds, MeshWithGridDataPackagesType* coarse_data)
+template <class ExecutionPolicy>
+void MultilevelLevelSet::initializeLevel(const ExecutionPolicy &ex_policy, size_t level,
+                                         Real reference_data_spacing, Real global_h_ratio,
+                                         BoundingBox tentative_bounds, MeshWithGridDataPackagesType* coarse_data)
 {
     mesh_data_set_.push_back(
             mesh_data_ptr_vector_keeper_
@@ -62,29 +65,33 @@ void MultilevelLevelSet::initializeLevel(size_t level, Real reference_data_spaci
         initialize_data_in_a_cell_from_coarse.exec();
     }
 
-    FinishDataPackages finish_data_packages(*mesh_data_set_[level], shape_, kernel_, global_h_ratio);
+    /* All initializations in `FinishDataPackages` are achieved on CPU. */
+    FinishDataPackages finish_data_packages(*mesh_data_set_[level], shape_);
+    MeshInnerDynamicsCK<ExecutionPolicy, UpdateKernelIntegrals> update_kernel_integrals{*mesh_data_set_[level], kernel_, global_h_ratio};
     finish_data_packages.exec();
+    update_kernel_integrals.exec();
 
-    registerProbes(level);
+    registerProbes(ex_policy, level);
 }
 //=================================================================================================//
-void MultilevelLevelSet::registerProbes(size_t level)
+template <class ExecutionPolicy>
+void MultilevelLevelSet::registerProbes(const ExecutionPolicy &ex_policy, size_t level)
 {
     probe_signed_distance_set_.push_back(
         probe_signed_distance_vector_keeper_
-            .template createPtr<ProbeSignedDistance>(par, mesh_data_set_[level]));
+            .template createPtr<ProbeSignedDistance>(ex_policy, mesh_data_set_[level]));
     probe_normal_direction_set_.push_back(
         probe_normal_direction_vector_keeper_
-            .template createPtr<ProbeNormalDirection>(par, mesh_data_set_[level]));
+            .template createPtr<ProbeNormalDirection>(ex_policy, mesh_data_set_[level]));
     probe_level_set_gradient_set_.push_back(
         probe_level_set_gradient_vector_keeper_
-            .template createPtr<ProbeLevelSetGradient>(par, mesh_data_set_[level]));
+            .template createPtr<ProbeLevelSetGradient>(ex_policy, mesh_data_set_[level]));
     probe_kernel_integral_set_.push_back(
         probe_kernel_integral_vector_keeper_
-            .template createPtr<ProbeKernelIntegral>(par, mesh_data_set_[level]));
+            .template createPtr<ProbeKernelIntegral>(ex_policy, mesh_data_set_[level]));
     probe_kernel_gradient_integral_set_.push_back(
         probe_kernel_gradient_integral_vector_keeper_
-            .template createPtr<ProbeKernelGradientIntegral>(par, mesh_data_set_[level]));
+            .template createPtr<ProbeKernelGradientIntegral>(ex_policy, mesh_data_set_[level]));
 }
 //=================================================================================================//
 size_t MultilevelLevelSet::getCoarseLevel(Real h_ratio)
