@@ -74,7 +74,7 @@ public:
                        FreeSurfaceIndicationCK<Base, RelationType<Parameters...>> &encloser,
                        Args &&...args);
 
-        virtual void interact(size_t index_i, Real dt = 0.0) {}
+        void interact(size_t index_i, Real dt = 0.0) {}
 
     protected:
         int *indicator_;
@@ -107,7 +107,7 @@ public:
         InteractKernel(const ExecutionPolicy &ex_policy,
                        FreeSurfaceIndicationCK<Inner<WithUpdate, FlowType, Parameters...>> &encloser);
 
-        void interact(size_t index_i, Real dt = 0.0) override;
+        void interact(size_t index_i, Real dt = 0.0);
         int *previous_surface_indicator_;
     };
 
