@@ -46,9 +46,6 @@ class GeometricShapeBox : public GeometricBox, public Shape
     virtual Vec2d findClosestPoint(const Vec2d &probe_point) override;
 
   protected:
-    Vec2d halfsize_;
-    MultiPolygon multi_polygon_;
-
     virtual BoundingBox findBounds() override;
 };
 
