@@ -10,12 +10,24 @@ namespace SPH
 namespace fluid_dynamics
 {
 
+
 template <typename...>
 class IndicatorCK;
+/**
+ * @class FreeSurfaceIndicationCK
+ * @brief A free-surface indication class for specialized relation types.
+ */
 
 template <typename... RelationTypes>
 class FreeSurfaceIndicationCK;
 
+/**
+ * @class IndicatorCK
+ * @brief This class template can be specialized for different relation types. 
+ * Currently, this is not useful as this class was firstly construct for scenario with free surface + spatial.
+ * Can be extend further once other type of surface indication is required. 
+ * 
+ */
 template <>
 class IndicatorCK<>
 {
