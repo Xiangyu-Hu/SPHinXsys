@@ -79,7 +79,7 @@ int main(int ac, char *av[])
     InteractionWithUpdate<continuum_dynamics::ShearStressRelaxationHourglassControl1stHalfJ2Plasticity> column_shear_stress(column_inner);
     InteractionDynamics<continuum_dynamics::ShearStressRelaxationHourglassControl2ndHalf> column_shear_acceleration(column_inner);
     SimpleDynamics<fluid_dynamics::ContinuumVolumeUpdate> column_volume_update(column);
-    ReduceDynamics<fluid_dynamics::AdvectionViscousTimeStep> advection_time_step(column, U_max, 0.2);
+    ReduceDynamics<fluid_dynamics::AdvectionTimeStep> advection_time_step(column, U_max, 0.2);
     ReduceDynamics<continuum_dynamics::AcousticTimeStep> acoustic_time_step(column, 0.4);
     InteractionDynamics<DynamicContactForceWithWall> column_wall_contact_force(column_wall_contact);
     //----------------------------------------------------------------------

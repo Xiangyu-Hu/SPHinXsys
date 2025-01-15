@@ -76,7 +76,7 @@ class LinearCorrectionMatrix<Inner<WithUpdate, Parameters...>>
     explicit LinearCorrectionMatrix(Relation<Inner<Parameters...>> &inner_relation, Real alpha = Real(0))
         : LinearCorrectionMatrix<Base, Inner<Parameters...>>(inner_relation), alpha_(alpha){};
     template <typename BodyRelationType, typename FirstArg>
-    explicit LinearCorrectionMatrix(ConstructorArgs<BodyRelationType, FirstArg> parameters)
+    explicit LinearCorrectionMatrix(InteractArgs<BodyRelationType, FirstArg> parameters)
         : LinearCorrectionMatrix(parameters.body_relation_, std::get<0>(parameters.others_)){};
     virtual ~LinearCorrectionMatrix(){};
 
@@ -163,7 +163,7 @@ class LinearCorrectionCK : public KernelCorrection
       public:
         template <class ExecutionPolicy>
         ComputingKernel(const ExecutionPolicy &ex_policy, LinearCorrectionCK &encloser)
-            : ParameterVariable<Matd>(encloser.dv_B_->DelegatedDataField(ex_policy)){};
+            : ParameterVariable<Matd>(encloser.dv_B_->DelegatedData(ex_policy)){};
     };
 
   protected:

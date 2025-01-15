@@ -27,7 +27,7 @@ int main(int ac, char *av[])
     FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
     water_block.defineAdaptation<ParticleRefinementWithinShape>(1.3, 1.0, 1);
     water_block.defineComponentLevelSetShape("OuterBoundary")->writeLevelSet(sph_system);
-    water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
+    water_block.defineClosure<WeaklyCompressibleFluid, Viscosity>(ConstructArgs(rho0_f, c_f), mu_f);
     MultiPolygonShape refinement_region(MultiPolygon(initial_refinement_region), "RefinementRegion");
     ParticleBuffer<ReserveSizeFactor> inlet_particle_buffer(0.5);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
@@ -79,7 +79,7 @@ int main(int ac, char *av[])
         /** A  Physics relaxation step. */
         RelaxationStepLevelSetCorrectionInner relaxation_step_inner(cylinder_inner);
         RelaxationStepLevelSetCorrectionComplex relaxation_step_complex(
-            ConstructorArgs(water_block_inner, std::string("OuterBoundary")), water_contact);
+            InteractArgs(water_block_inner, std::string("OuterBoundary")), water_contact);
         SimpleDynamics<UpdateSmoothingLengthRatioByShape> update_smoothing_length_ratio(water_block, refinement_region);
         //----------------------------------------------------------------------
         //	Particle relaxation starts here.

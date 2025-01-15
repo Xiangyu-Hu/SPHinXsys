@@ -16,20 +16,20 @@ template <typename DataType, typename NormType, class DynamicsIdentifier>
 template <class ExecutionPolicy, class EncloserType>
 VariableNormCK<DataType, NormType, DynamicsIdentifier>::ReduceKernel::
     ReduceKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-    : variable_(encloser.dv_variable_->DelegatedDataField(ex_policy)) {}
+    : variable_(encloser.dv_variable_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <class ExecutionPolicy, class EncloserType>
 TotalKineticEnergyCK::ReduceKernel::
     ReduceKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-    : mass_(encloser.dv_mass_->DelegatedDataField(ex_policy)),
-      vel_(encloser.dv_vel_->DelegatedDataField(ex_policy)) {}
+    : mass_(encloser.dv_mass_->DelegatedData(ex_policy)),
+      vel_(encloser.dv_vel_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <class ExecutionPolicy, class EncloserType>
 TotalMechanicalEnergyCK::ReduceKernel::
     ReduceKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : TotalKineticEnergyCK::ReduceKernel(ex_policy, encloser),
       gravity_(encloser.gravity_),
-      pos_(encloser.dv_pos_->DelegatedDataField(ex_policy)) {}
+      pos_(encloser.dv_pos_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 } // namespace SPH
 #endif // GENERAL_REDUCE_CK_HPP

@@ -133,7 +133,7 @@ int main(int ac, char *av[])
 
     Gravity gravity(Vecd(0.0, -gravity_g));
     SimpleDynamics<GravityForce<Gravity>> constant_gravity(water_body, gravity);
-    ReduceDynamics<fluid_dynamics::AdvectionViscousTimeStep> get_fluid_advection_time_step_size(water_body, U_f);
+    ReduceDynamics<fluid_dynamics::AdvectionTimeStep> get_fluid_advection_time_step_size(water_body, U_f);
     ReduceDynamics<fluid_dynamics::AcousticTimeStep> get_fluid_time_step_size(water_body);
 
     BodyAlignedBoxByParticle emitter(water_body, makeShared<AlignedBoxShape>(xAxis, Transform(inlet_translation), inlet_halfsize));

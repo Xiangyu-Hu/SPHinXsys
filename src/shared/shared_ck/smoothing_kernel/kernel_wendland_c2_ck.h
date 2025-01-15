@@ -21,13 +21,13 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	kernel_wenland_c2_ck.h
- * @brief 	This is the class for Wenland kernel.
+ * @file 	kernel_wendland_c2_ck.h
+ * @brief 	This is the class for Wendland kernel.
  * @author	Xiangyu Hu
  */
 
-#ifndef KERNEL_WENLAND_C2_CK_H
-#define KERNEL_WENLAND_C2_CK_H
+#ifndef KERNEL_WENDLAND_C2_CK_H
+#define KERNEL_WENDLAND_C2_CK_H
 
 #include "base_kernel.h"
 
@@ -124,4 +124,4 @@ class KernelWendlandC2CK
         factor_dW_1D_, factor_dW_2D_, factor_dW_3D_;
 };
 } // namespace SPH
-#endif // KERNEL_WENLAND_C2_CK_H
+#endif // KERNEL_WENDLAND_C2_CK_H

@@ -34,6 +34,7 @@
 #include "force_prior_ck.h"
 #include "interaction_ck.hpp"
 #include "kernel_correction_ck.hpp"
+#include "viscosity.h"
 
 namespace SPH
 {
@@ -73,8 +74,9 @@ class ViscousForceCK<Base, ViscosityType, KernelCorrectionType, RelationType<Par
   protected:
     template <typename...>
     friend class FSI::ViscousForceFromFluid;
-
-    ViscosityType viscosity_method_;
+    using ViscosityModel = ViscosityType;
+    
+    ViscosityType &viscosity_model_;
     KernelCorrectionType kernel_correction_;
     DiscreteVariable<Real> *dv_Vol_;
     DiscreteVariable<Vecd> *dv_vel_, *dv_viscous_force_;
@@ -119,8 +121,8 @@ class ViscousForceCK<Contact<Wall, ViscosityType, KernelCorrectionType, Paramete
         template <class ExecutionPolicy, class EncloserType>
         InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, size_t contact_index)
             : BaseViscousForceType::InteractKernel(ex_policy, encloser, contact_index),
-              wall_Vol_(encloser.dv_wall_Vol_[contact_index]->DelegatedDataField(ex_policy)),
-              wall_vel_ave_(encloser.dv_wall_vel_ave_[contact_index]->DelegatedDataField(ex_policy)){};
+              wall_Vol_(encloser.dv_wall_Vol_[contact_index]->DelegatedData(ex_policy)),
+              wall_vel_ave_(encloser.dv_wall_vel_ave_[contact_index]->DelegatedData(ex_policy)){};
         void interact(size_t index_i, Real dt = 0.0);
 
       protected:
@@ -129,50 +131,9 @@ class ViscousForceCK<Contact<Wall, ViscosityType, KernelCorrectionType, Paramete
     };
 };
 
-template <typename...>
-class Viscosity;
-
-template <>
-class Viscosity<Constant>
-{
-  public:
-    Viscosity(BaseParticles *particles)
-        : mu_(DynamicCast<Fluid>(this, particles->getBaseMaterial()).ReferenceViscosity()) {};
-
-    class ComputingKernel : public ParameterFixed<Real>
-    {
-      public:
-        template <class ExecutionPolicy, class EncloserType>
-        ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : ParameterFixed<Real>(encloser.mu_){};
-    };
-
-  protected:
-    Real mu_;
-};
-
-template <>
-class Viscosity<Variable>
-{
-  public:
-    Viscosity(BaseParticles *particles)
-        : dv_mu_(particles->getVariableByName<Real>("VariableViscosity")) {};
-
-    class ComputingKernel : public ParameterVariable<Real>
-    {
-      public:
-        template <class ExecutionPolicy, class EncloserType>
-        ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : ParameterVariable<Real>(encloser.dv_mu_->DelegatedDataField(ex_policy)){};
-    };
-
-  protected:
-    DiscreteVariable<Real> *dv_mu_;
-};
-
-using ViscousForceInnerCK = ViscousForceCK<Inner<WithUpdate, Viscosity<Constant>, NoKernelCorrectionCK>>;
-using ViscousForceWithWallCK = ViscousForceCK<Inner<WithUpdate, Viscosity<Constant>, NoKernelCorrectionCK>,
-                                              Contact<Wall, Viscosity<Constant>, NoKernelCorrectionCK>>;
+using ViscousForceInnerCK = ViscousForceCK<Inner<WithUpdate, Viscosity, NoKernelCorrectionCK>>;
+using ViscousForceWithWallCK = ViscousForceCK<Inner<WithUpdate, Viscosity, NoKernelCorrectionCK>,
+                                              Contact<Wall, Viscosity, NoKernelCorrectionCK>>;
 } // namespace fluid_dynamics
 } // namespace SPH
 #endif // VISCOUS_FORCE_H

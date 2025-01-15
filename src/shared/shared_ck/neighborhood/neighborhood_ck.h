@@ -31,7 +31,7 @@
 #ifndef NEIGHBORHOOD_CK_H
 #define NEIGHBORHOOD_CK_H
 
-#include "kernel_wenland_c2_ck.h"
+#include "kernel_wendland_c2_ck.h"
 #include "neighborhood.h"
 
 namespace SPH

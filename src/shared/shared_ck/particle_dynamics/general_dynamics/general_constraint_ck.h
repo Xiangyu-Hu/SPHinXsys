@@ -50,7 +50,7 @@ class ConstantConstraintCK : public BaseLocalDynamics<DynamicsIdentifier>
       public:
         template <class ExecutionPolicy, class EncloserType>
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : variable_(encloser.dv_variable_->DelegatedDataField(ex_policy)),
+            : variable_(encloser.dv_variable_->DelegatedData(ex_policy)),
               constrained_value_(encloser.constrained_value_){};
 
         void update(size_t index_i, Real dt = 0.0)

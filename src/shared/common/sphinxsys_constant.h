@@ -64,16 +64,16 @@ class DiscreteConstant : public Entity
         : Entity(name), data_size_(data_size), data_field_(new DataType[data_size]),
           delegated_data_field_(data_field_){};
     ~DiscreteConstant() { delete[] data_field_; };
-    bool isDataFieldDelegated() { return data_field_ != delegated_data_field_; };
-    size_t getDataFieldSize() { return data_size_; }
-    DataType *DataField() { return delegated_data_field_; };
-    void setDeviceDataField(DataType *data_field) { delegated_data_field_ = data_field; };
+    bool isDataDelegated() { return data_field_ != delegated_data_field_; };
+    size_t getDataSize() { return data_size_; }
+    DataType *Data() { return delegated_data_field_; };
+    void setDeviceData(DataType *data_field) { delegated_data_field_ = data_field; };
 
     template <class ExecutionPolicy>
-    DataType *DelegatedDataField(const ExecutionPolicy &ex_policy) { return delegated_data_field_; };
-    DataType *DelegatedDataField(const ParallelDevicePolicy &par_device)
+    DataType *DelegatedData(const ExecutionPolicy &ex_policy) { return delegated_data_field_; };
+    DataType *DelegatedData(const ParallelDevicePolicy &par_device)
     {
-        if (!isDataFieldDelegated())
+        if (!isDataDelegated())
         {
             device_shared_constant_keeper_
                 .createPtr<DeviceSharedDiscreteConstant<DataType>>(this);

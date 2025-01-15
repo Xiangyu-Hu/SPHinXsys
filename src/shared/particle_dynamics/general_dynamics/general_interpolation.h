@@ -98,7 +98,7 @@ class InterpolatingAQuantity : public BaseInterpolation<DataType>
     {
         this->dv_interpolated_quantities_ =
             this->particles_->template getVariableByName<DataType>(interpolated_variable);
-        this->interpolated_quantities_ = this->dv_interpolated_quantities_->DataField();
+        this->interpolated_quantities_ = this->dv_interpolated_quantities_->Data();
     };
     virtual ~InterpolatingAQuantity(){};
 };
@@ -115,7 +115,7 @@ class ObservingAQuantity : public InteractionDynamics<BaseInterpolation<DataType
         : InteractionDynamics<BaseInterpolation<DataType>>(contact_relation, variable_name)
     {
         this->dv_interpolated_quantities_ = this->particles_->template registerStateVariableOnly<DataType>(variable_name);
-        this->interpolated_quantities_ = this->dv_interpolated_quantities_->DataField();
+        this->interpolated_quantities_ = this->dv_interpolated_quantities_->Data();
     };
     virtual ~ObservingAQuantity(){};
 };

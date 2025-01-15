@@ -35,17 +35,17 @@ TEST(particle_reduce, test_sycl)
     DiscreteVariable<SimTKVec3> dv_torque("Torque", torques.size());
     DiscreteVariable<SimTKVec3> dv_force("Force", forces.size());
 
-    SimTKVec3 *torque = dv_torque.DataField();
-    SimTKVec3 *force = dv_force.DataField();
-    for (UnsignedInt i = 0; i != dv_torque.getDataFieldSize(); ++i)
+    SimTKVec3 *torque = dv_torque.Data();
+    SimTKVec3 *force = dv_force.Data();
+    for (UnsignedInt i = 0; i != dv_torque.getDataSize(); ++i)
     {
         torque[i] = torques[i];
         force[i] = forces[i];
     }
-    SingularVariable<UnsignedInt> sv_total_particles("TotalParticles", dv_torque.getDataFieldSize());
+    SingularVariable<UnsignedInt> sv_total_particles("TotalParticles", dv_torque.getDataSize());
 
-    SimTKVec3 *torque_ck = dv_torque.DelegatedDataField(ParallelPolicy{});
-    SimTKVec3 *force_ck = dv_force.DelegatedDataField(ParallelPolicy{});
+    SimTKVec3 *torque_ck = dv_torque.DelegatedData(ParallelPolicy{});
+    SimTKVec3 *force_ck = dv_force.DelegatedData(ParallelPolicy{});
     SimTK::SpatialVec sum_ck = particle_reduce<ReduceSum<SimTK::SpatialVec>>(
         LoopRangeCK<ParallelPolicy, SPHBody>(&sv_total_particles),
         ReduceReference<ReduceSum<SimTK::SpatialVec>>::value,
@@ -55,8 +55,8 @@ TEST(particle_reduce, test_sycl)
             return SimTK::SpatialVec(a, force_ck[i]);
         });
 
-    SimTKVec3 *torque_sycl = dv_torque.DelegatedDataField(ParallelDevicePolicy{});
-    SimTKVec3 *force_sycl = dv_force.DelegatedDataField(ParallelDevicePolicy{});
+    SimTKVec3 *torque_sycl = dv_torque.DelegatedData(ParallelDevicePolicy{});
+    SimTKVec3 *force_sycl = dv_force.DelegatedData(ParallelDevicePolicy{});
     SimTK::SpatialVec sum_sycl = particle_reduce<ReduceSum<SimTK::SpatialVec>>(
         LoopRangeCK<ParallelDevicePolicy, SPHBody>(&sv_total_particles),
         ReduceReference<ReduceSum<SimTK::SpatialVec>>::value,

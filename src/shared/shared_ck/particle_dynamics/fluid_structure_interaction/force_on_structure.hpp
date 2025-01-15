@@ -32,12 +32,12 @@ template <class ExecutionPolicy, class EncloserType>
 ForceFromFluid<KernelCorrectionType, Parameters...>::InteractKernel::
     InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt contact_index)
     : Interaction<Contact<Parameters...>>::InteractKernel(ex_policy, encloser, contact_index),
-      Vol_(encloser.dv_Vol_->DelegatedDataField(ex_policy)),
-      force_from_fluid_(encloser.dv_force_from_fluid_->DelegatedDataField(ex_policy)),
-      vel_ave_(encloser.dv_vel_ave_->DelegatedDataField(ex_policy)),
+      Vol_(encloser.dv_Vol_->DelegatedData(ex_policy)),
+      force_from_fluid_(encloser.dv_force_from_fluid_->DelegatedData(ex_policy)),
+      vel_ave_(encloser.dv_vel_ave_->DelegatedData(ex_policy)),
       contact_correction_(ex_policy, encloser.contact_kernel_correction_[contact_index]),
-      contact_Vol_(encloser.contact_Vol_[contact_index]->DelegatedDataField(ex_policy)),
-      contact_vel_(encloser.contact_vel_[contact_index]->DelegatedDataField(ex_policy)) {}
+      contact_Vol_(encloser.contact_Vol_[contact_index]->DelegatedData(ex_policy)),
+      contact_vel_(encloser.contact_vel_[contact_index]->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <typename ViscousForceType, typename... Parameters>
 template <class ContactRelationType>
@@ -47,7 +47,8 @@ ViscousForceFromFluid<Contact<WithUpdate, ViscousForceType, Parameters...>>::
 {
     for (size_t k = 0; k != this->contact_particles_.size(); ++k)
     {
-        contact_viscosity_method_.push_back(ViscosityType(this->contact_particles_[k]));
+        ViscosityType *viscosity_model_k = DynamicCast<ViscosityType>(this, &this->contact_particles_[k]->getBaseMaterial());
+        contact_viscosity_model_.push_back(viscosity_model_k);
         contact_smoothing_length_sq_.push_back(pow(this->contact_bodies_[k]->sph_adaptation_->ReferenceSmoothingLength(), 2));
     }
 }
@@ -57,7 +58,7 @@ template <class ExecutionPolicy, class EncloserType>
 ViscousForceFromFluid<Contact<WithUpdate, ViscousForceType, Parameters...>>::InteractKernel::
     InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt contact_index)
     : BaseForceFromFluid::InteractKernel(ex_policy, encloser, contact_index),
-      viscosity_(ex_policy, encloser.contact_viscosity_method_[contact_index]),
+      viscosity_(ex_policy, *encloser.contact_viscosity_model_[contact_index]),
       smoothing_length_sq_(encloser.contact_smoothing_length_sq_[contact_index]) {}
 //=================================================================================================//
 template <typename ViscousForceType, typename... Parameters>
@@ -104,13 +105,13 @@ template <class ExecutionPolicy, class EncloserType>
 PressureForceFromFluid<Contact<WithUpdate, AcousticStep2ndHalfType, Parameters...>>::InteractKernel::
     InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt contact_index)
     : BaseForceFromFluid::InteractKernel(ex_policy, encloser, contact_index),
-      acc_ave_(encloser.dv_acc_ave_->DelegatedDataField(ex_policy)),
-      n_(encloser.dv_n_->DelegatedDataField(ex_policy)),
+      acc_ave_(encloser.dv_acc_ave_->DelegatedData(ex_policy)),
+      n_(encloser.dv_n_->DelegatedData(ex_policy)),
       riemann_solver_(encloser.contact_riemann_solver_[contact_index]),
-      contact_rho_(encloser.dv_contact_rho_[contact_index]->DelegatedDataField(ex_policy)),
-      contact_mass_(encloser.dv_contact_mass_[contact_index]->DelegatedDataField(ex_policy)),
-      contact_p_(encloser.dv_contact_p_[contact_index]->DelegatedDataField(ex_policy)),
-      contact_force_prior_(encloser.dv_contact_force_prior_[contact_index]->DelegatedDataField(ex_policy)) {}
+      contact_rho_(encloser.dv_contact_rho_[contact_index]->DelegatedData(ex_policy)),
+      contact_mass_(encloser.dv_contact_mass_[contact_index]->DelegatedData(ex_policy)),
+      contact_p_(encloser.dv_contact_p_[contact_index]->DelegatedData(ex_policy)),
+      contact_force_prior_(encloser.dv_contact_force_prior_[contact_index]->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <class AcousticStep2ndHalfType, typename... Parameters>
 void PressureForceFromFluid<Contact<WithUpdate, AcousticStep2ndHalfType, Parameters...>>::

@@ -90,10 +90,10 @@ class AdvectionTimeStepCK
         template <class ExecutionPolicy>
         ReduceKernel(const ExecutionPolicy &ex_policy, AdvectionTimeStepCK &encloser)
             : h_min_(encloser.h_min_),
-              mass_(encloser.dv_mass_->DelegatedDataField(ex_policy)),
-              vel_(encloser.dv_vel_->DelegatedDataField(ex_policy)),
-              force_(encloser.dv_force_->DelegatedDataField(ex_policy)),
-              force_prior_(encloser.dv_force_prior_->DelegatedDataField(ex_policy)){};
+              mass_(encloser.dv_mass_->DelegatedData(ex_policy)),
+              vel_(encloser.dv_vel_->DelegatedData(ex_policy)),
+              force_(encloser.dv_force_->DelegatedData(ex_policy)),
+              force_prior_(encloser.dv_force_prior_->DelegatedData(ex_policy)){};
 
         Real reduce(size_t index_i, Real dt)
         {
@@ -121,9 +121,6 @@ class AdvectionTimeStepCK
  */
 class AdvectionViscousTimeStepCK : public AdvectionTimeStepCK
 {
-  protected:
-    Fluid &fluid_;
-
   public:
     AdvectionViscousTimeStepCK(SPHBody &sph_body, Real U_ref, Real advectionCFL = 0.25);
     virtual ~AdvectionViscousTimeStepCK(){};

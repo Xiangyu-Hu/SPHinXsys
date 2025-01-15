@@ -34,6 +34,13 @@
 
 namespace SPH
 {
+
+template <typename... Args>
+struct ConstructArgs : public std::tuple<Args...>
+{
+    ConstructArgs(Args... args) : std::tuple<Args...>(args...) {}
+};
+
 struct AssignIndex
 {
     UnsignedInt operator()(UnsignedInt i) const { return i; }
@@ -72,7 +79,7 @@ class TruncatedLinear : public Limiter
 
   public:
     TruncatedLinear(Real ref, Real slope = 100.0)
-        : Limiter(), ref_(ref), slope_(slope){};
+        : Limiter(), ref_(ref), slope_(slope) {};
     Real operator()(Real measure)
     {
         Real measure_scale = measure * ref_;

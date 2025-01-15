@@ -14,7 +14,8 @@ ViscousForceCK<Base, ViscosityType, KernelCorrectionType, RelationType<Parameter
     ViscousForceCK(BaseRelationType &base_relation)
     : Interaction<RelationType<Parameters...>>(base_relation),
       ForcePriorCK(this->particles_, "ViscousForce"),
-      viscosity_method_(this->particles_), kernel_correction_(this->particles_),
+      viscosity_model_(DynamicCast<ViscosityType>(this, this->particles_->getBaseMaterial())), 
+      kernel_correction_(this->particles_),
       dv_Vol_(this->particles_->template getVariableByName<Real>("VolumetricMeasure")),
       dv_vel_(this->particles_->template getVariableByName<Vecd>("Velocity")),
       dv_viscous_force_(this->dv_current_force_),
@@ -26,11 +27,11 @@ template <class ExecutionPolicy, class EncloserType, typename... Args>
 ViscousForceCK<Base, ViscosityType, KernelCorrectionType, RelationType<Parameters...>>::InteractKernel::
     InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, Args &&...args)
     : Interaction<RelationType<Parameters...>>::InteractKernel(ex_policy, encloser, std::forward<Args>(args)...),
-      viscosity_(ex_policy, encloser.viscosity_method_),
+      viscosity_(ex_policy, encloser.viscosity_model_),
       correction_(ex_policy, encloser.kernel_correction_),
-      Vol_(encloser.dv_Vol_->DelegatedDataField(ex_policy)),
-      vel_(encloser.dv_vel_->DelegatedDataField(ex_policy)),
-      viscous_force_(encloser.dv_viscous_force_->DelegatedDataField(ex_policy)),
+      Vol_(encloser.dv_Vol_->DelegatedData(ex_policy)),
+      vel_(encloser.dv_vel_->DelegatedData(ex_policy)),
+      viscous_force_(encloser.dv_viscous_force_->DelegatedData(ex_policy)),
       smoothing_length_sq_(encloser.smoothing_length_sq_) {}
 //=================================================================================================//
 template <typename ViscosityType, class KernelCorrectionType, typename... Parameters>

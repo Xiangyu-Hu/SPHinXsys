@@ -39,14 +39,14 @@ template <class DynamicsIdentifier>
 void ConstraintBySimBodyCK<DynamicsIdentifier>::initializeSimbodyState(const SimTK::State &state)
 {
     updateSimbodyState(state);
-    SimbodyState *simbody_state = sv_simbody_state_->ValueAddress();
+    SimbodyState *simbody_state = sv_simbody_state_->Data();
     simbody_state->initial_origin_location_ = simbody_state->origin_location_;
 }
 //=================================================================================================//
 template <class DynamicsIdentifier>
 void ConstraintBySimBodyCK<DynamicsIdentifier>::updateSimbodyState(const SimTK::State &state)
 {
-    SimbodyState *simbody_state = sv_simbody_state_->ValueAddress();
+    SimbodyState *simbody_state = sv_simbody_state_->Data();
     simbody_state->origin_location_ = SimTKToEigen(mobod_.getBodyOriginLocation(state));
     simbody_state->origin_velocity_ = SimTKToEigen(mobod_.getBodyOriginVelocity(state));
     simbody_state->origin_acceleration_ = SimTKToEigen(mobod_.getBodyOriginAcceleration(state));
@@ -59,12 +59,12 @@ template <class DynamicsIdentifier>
 template <class ExecutionPolicy, class EncloserType>
 ConstraintBySimBodyCK<DynamicsIdentifier>::UpdateKernel::
     UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-    : pos_(encloser.dv_pos_->DelegatedDataField(ex_policy)),
-      pos0_(encloser.dv_pos0_->DelegatedDataField(ex_policy)),
-      vel_(encloser.dv_vel_->DelegatedDataField(ex_policy)),
-      n_(encloser.dv_n_->DelegatedDataField(ex_policy)),
-      n0_(encloser.dv_n0_->DelegatedDataField(ex_policy)),
-      acc_(encloser.dv_acc_->DelegatedDataField(ex_policy)),
+    : pos_(encloser.dv_pos_->DelegatedData(ex_policy)),
+      pos0_(encloser.dv_pos0_->DelegatedData(ex_policy)),
+      vel_(encloser.dv_vel_->DelegatedData(ex_policy)),
+      n_(encloser.dv_n_->DelegatedData(ex_policy)),
+      n0_(encloser.dv_n0_->DelegatedData(ex_policy)),
+      acc_(encloser.dv_acc_->DelegatedData(ex_policy)),
       simbody_state_(encloser.sv_simbody_state_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <class DynamicsIdentifier>
@@ -107,9 +107,9 @@ template <class DynamicsIdentifier>
 template <class ExecutionPolicy, class EncloserType>
 TotalForceForSimBodyCK<DynamicsIdentifier>::
     ReduceKernel::ReduceKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-    : force_(encloser.dv_force_->DelegatedDataField(ex_policy)),
-      force_prior_(encloser.dv_force_prior_->DelegatedDataField(ex_policy)),
-      pos_(encloser.dv_pos_->DelegatedDataField(ex_policy)),
+    : force_(encloser.dv_force_->DelegatedData(ex_policy)),
+      force_prior_(encloser.dv_force_prior_->DelegatedData(ex_policy)),
+      pos_(encloser.dv_pos_->DelegatedData(ex_policy)),
       current_origin_location_(encloser.sv_current_origin_location_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <class DynamicsIdentifier>

@@ -1,4 +1,4 @@
-#include "kernel_wenland_c2.h"
+#include "kernel_wendland_c2.h"
 
 #include <cmath>
 
