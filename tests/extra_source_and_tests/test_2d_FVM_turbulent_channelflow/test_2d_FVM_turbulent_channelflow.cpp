@@ -1,8 +1,7 @@
 /**
- * @file 	2d_FVM_flow_around_cylinder.cpp
- * @brief 	This is the test file for the weakly compressible viscous flow around a cylinder in FVM.
- * @details We consider a flow passing by a cylinder in 2D in FVM framework.
- * @author 	Zhentong Wang and Xiangyu Hu
+ * @file 	test_2d_FVM_turbulent_channelflow.h
+ * @brief 	This is a test to show high reynolds number turbulent channel flow in FVM.
+ * @author 	Yash Mandaokar, Feng Wang and Xiangyu Hu
  */
 
 #include "test_2d_FVM_turbulent_channelflow.h"
@@ -21,12 +20,11 @@ int main(int ac, char *av[])
     SPHSystem sph_system(system_domain_bounds, read_mesh_data.MinMeshEdge());
     // Handle command line arguments and override the tags for particle relaxation and reload.
     sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
-    //IOEnvironment io_environment(sph_system);
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     FluidBody water_block(sph_system, makeShared<WaterBlock>("TurbulentChannelFlow"));
-    water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
+    water_block.defineClosure<WeaklyCompressibleFluid, Viscosity>(ConstructArgs(rho0_f, c_f), mu_f);
     Ghost<ReserveSizeFactor> ghost_boundary(0.5);
     water_block.generateParticlesWithReserve<BaseParticles, UnstructuredMesh>(ghost_boundary, read_mesh_data);
     GhostCreationFromMesh ghost_creation(water_block, read_mesh_data, ghost_boundary);
@@ -40,17 +38,18 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     /** Here we introduce the limiter in the Riemann solver and 0 means the no extra numerical dissipation.
     the value is larger, the numerical dissipation larger*/
-    SimpleDynamics<TCFInitialCondition> initial_condition(water_block);
     InteractionWithUpdate<fluid_dynamics::EulerianIntegration1stHalfInnerRiemann> pressure_relaxation(water_block_inner, 1.0);
     InteractionWithUpdate<fluid_dynamics::EulerianIntegration2ndHalfInnerRiemann> density_relaxation(water_block_inner, 10000.0);
+    SimpleDynamics<TCFInitialCondition> initial_condition(water_block);
     SimpleDynamics<fluid_dynamics::WallAdjacentCells> wall_adj_cell(water_block_inner, ghost_creation);
     SimpleDynamics<fluid_dynamics::TurbuleceVariablesGradient> turbulence_gradients(water_block_inner, ghost_creation); //For second order upwind
    
-    /*InteractionWithUpdate<fluid_dynamics::KEpsilonStd1stHalfExtendedHLLCRiemannSolver> tke(water_block_inner, ghost_creation, 0.0);
-    InteractionWithUpdate<fluid_dynamics::KEpsilonStd2ndHalfExtendedHLLCRiemannSolver> dissipationrate(water_block_inner, ghost_creation, 0.0);*/
+    InteractionWithUpdate<fluid_dynamics::KEpsilonStd1stHalfExtendedHLLCRiemannSolver> tke(water_block_inner, ghost_creation, 0.0);
+    InteractionWithUpdate<fluid_dynamics::KEpsilonStd2ndHalfExtendedHLLCRiemannSolver> dissipationrate(water_block_inner, ghost_creation, 0.0);
 
-    InteractionWithUpdate<fluid_dynamics::KEpsilonStd1stHalfSecondOrderUpwind> tke(water_block_inner, ghost_creation, 0.0);
-    InteractionWithUpdate<fluid_dynamics::KEpsilonStd2ndHalfSecondOrderUpwind> dissipationrate(water_block_inner, ghost_creation, 0.0);
+    /*
+     InteractionWithUpdate<fluid_dynamics::KEpsilonStd1stHalfSecondOrderUpwind> tke(water_block_inner, ghost_creation, 0.0);
+    InteractionWithUpdate<fluid_dynamics::KEpsilonStd2ndHalfSecondOrderUpwind> dissipationrate(water_block_inner, ghost_creation, 0.0);*/
 
     TCFBoundaryConditionSetup boundary_condition_setup(water_block_inner, ghost_creation);
     /** Time step size with considering sound wave speed. */
@@ -82,9 +81,9 @@ int main(int ac, char *av[])
     Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     size_t number_of_iterations = 0;
 
-    int screen_output_interval = 5000;
+    int screen_output_interval = 8000;
     Real end_time = 200.0;
-    Real output_interval = 4.0; /**< time stamps for output. */ 
+    Real output_interval = 8.0; /**< time stamps for output. */ 
     //----------------------------------------------------------------------
     //	Statistics for CPU time
     //----------------------------------------------------------------------
@@ -124,7 +123,6 @@ int main(int ac, char *av[])
                     << "	dt = " << dt << "\n";
             }
             number_of_iterations++;
-            //write_real_body_states.writeToFile();
         }
         TickCount t2 = TickCount::now();
         write_real_body_states.writeToFile();

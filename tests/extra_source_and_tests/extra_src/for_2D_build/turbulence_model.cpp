@@ -26,15 +26,15 @@ namespace SPH
           K_(this->particles_->template getVariableDataByName<Real>("TKE")),
           Eps_(this->particles_->template getVariableDataByName<Real>("Dissipation")),
           mu_t_(this->particles_->template getVariableDataByName<Real>("TurblunetViscosity")),
-          ghost_creator_(ghost_creator)
+          ghost_creator_(ghost_creator),
+          viscosity_(DynamicCast<Viscosity>(this, particles_->getBaseMaterial()))
           {}
         //=================================================================================================//
-            WallAdjacentCells::WallAdjacentCells(BaseInnerRelation &inner_relation, GhostCreationFromMesh &ghost_creator)
+         WallAdjacentCells::WallAdjacentCells(BaseInnerRelation &inner_relation, GhostCreationFromMesh &ghost_creator)
               : BaseTurbulence(inner_relation, ghost_creator), wall_normal_(this->particles_->template registerStateVariable<Vecd>("WallNormal")),
                 wall_adjacent_cell_flag_(this->particles_->template registerStateVariable<Real>("FlagForWallAdjacentCells")),
                 yp_(this->particles_->template registerStateVariable<Real>("WallNormalDistance")),
-                ymax_(0.0), 
-                bounds_(inner_relation.getSPHBody())
+                ymax_(0.0)
                 {
                     walladjacentcellyp();
                 }
@@ -76,11 +76,6 @@ namespace SPH
             Vecd upper_wall = {pos_[index_i][0], 2.0};
             Vecd lower_wall_normal = {0.0, 1.0};
             Vecd upper_wall_normal = {0.0, -1.0};
-            /*
-            BoundingBox bounds = bounds_.getSPHSystemBounds();
-            Real channelheight = bounds.second_[1];
-            Real halfwidth = 0.5 * channelheight;
-            */ 
 
             bool lower_wall_condition = ((pos_[index_i] - lower_wall).dot(lower_wall_normal) <= 1.0 * ymax_);
             bool upper_wall_condition = ((pos_[index_i] - upper_wall).dot(upper_wall_normal) <= 1.0 * ymax_);
@@ -127,14 +122,14 @@ namespace SPH
         //=================================================================================================//
         void StdWallFunctionFVM::nearwallquantities(size_t index_i)
         {
-            y_star_[index_i] = (rho_[index_i] * std::pow(C_mu_, 0.25) * std::pow(K_[index_i], 0.5) * yp_[index_i]) / (fluid_.ReferenceViscosity());
+            y_star_[index_i] = (rho_[index_i] * std::pow(C_mu_, 0.25) * std::pow(K_[index_i], 0.5) * yp_[index_i]) / (viscosity_.ReferenceViscosity());
             Real u_star;
             Vecd veltangential = (vel_[index_i] - wall_normal_[index_i].dot(vel_[index_i]) * (wall_normal_[index_i]));
 
             if (y_star_[index_i] >= 11.225)
             {
                 u_star = (1.0 / von_kar_) * std::log(E_ * y_star_[index_i]);
-                mu_t_[index_i] = fluid_.ReferenceViscosity() * ((y_star_[index_i]) / (1 / von_kar_ * std::log(E_ * y_star_[index_i])) - 1.0);
+                mu_t_[index_i] = viscosity_.ReferenceViscosity() * ((y_star_[index_i]) / (1 / von_kar_ * std::log(E_ * y_star_[index_i])) - 1.0);
 
                 Tau_wall_[index_i] = (veltangential.norm() * std::pow(C_mu_, 0.25) * std::pow(K_[index_i], 0.5) * rho_[index_i]) / (u_star);
                 vel_gradient_mat_[index_i] = Matd::Zero();
@@ -147,11 +142,11 @@ namespace SPH
             else if (y_star_[index_i] < 11.225)
             {
                 u_star = y_star_[index_i];
-                Tau_wall_[index_i] = fluid_.ReferenceViscosity() * veltangential.norm() / yp_[index_i];
+                Tau_wall_[index_i] = viscosity_.ReferenceViscosity() * veltangential.norm() / yp_[index_i];
                 vel_gradient_mat_[index_i] = Matd::Zero();
-                vel_gradient_mat_[index_i](0, 1) = Tau_wall_[index_i] / fluid_.ReferenceViscosity();
+                vel_gradient_mat_[index_i](0, 1) = Tau_wall_[index_i] / viscosity_.ReferenceViscosity();
                 K_prod_p_[index_i] = 0.0;
-                Eps_p_[index_i] = (K_[index_i] * 2.0 * fluid_.ReferenceViscosity()) / (rho_[index_i] * yp_[index_i] * yp_[index_i]);
+                Eps_p_[index_i] = (K_[index_i] * 2.0 * viscosity_.ReferenceViscosity()) / (rho_[index_i] * yp_[index_i] * yp_[index_i]);
             }  
         }
         //=================================================================================================// 

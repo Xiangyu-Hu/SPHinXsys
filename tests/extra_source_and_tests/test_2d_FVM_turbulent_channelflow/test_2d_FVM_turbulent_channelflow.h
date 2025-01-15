@@ -1,15 +1,14 @@
 /**
- * @file 	2d_FVM_flow_around_cylinder.h
- * @brief 	This is a test to show the flow around cylinder case in FVM.
- * @details See https://doi.org/10.1016/j.jcp.2010.08.019 for the detailed problem setup.
- * @author 	Zhentong Wang and Xiangyu Hu
+ * @file 	test_2d_FVM_turbulent_channelflow.h
+ * @brief 	This is a test to show high reynolds number turbulent channel flow in FVM.
+ * @author 	Yash Mandaokar, Feng Wang and Xiangyu Hu
  */
 
 #ifndef FVM_TURBULENT_CHANNEL_FLOW_H
 #define FVM_TURBULENT_CHANNEL_FLOW_H             
 #include "common_weakly_compressible_FVM_classes.h"
 #include "turbulence_model.hpp"
-#include "rans_dynamics.hpp"
+#include "rans_turbulence_dynamics.hpp"
 #include "extended_eulerian_riemann_solver.cpp"
 
 using namespace SPH;
@@ -17,8 +16,8 @@ using namespace std;
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real DL = 120;                   /**< Channel length. */
-Real DH = 2;                  /**< Channel height. */
+Real DL = 120.0;                   /**< Channel length. */
+Real DH = 2.0;                  /**< Channel height. */
 Real resolution_ref = 1.0 / 5.0; /**< Initial reference particle spacing. */
 BoundingBox system_domain_bounds(Vec2d(0.0, 0.0), Vec2d(DL, DH));
 //----------------------------------------------------------------------
@@ -26,17 +25,17 @@ BoundingBox system_domain_bounds(Vec2d(0.0, 0.0), Vec2d(DL, DH));
 //----------------------------------------------------------------------
 Real rho0_f = 1.0;
 Real U_f = 1.0;
-Real rey_bulk = 20000;
+Real rey_bulk = 20000.0;
 Real mu_f = (rho0_f * U_f * DH * 0.5) / rey_bulk;       /**< Dynamic Viscosity. */
 Real c_f = 10.0 * U_f;                               /**< Reference sound speed. */
+Real C_mu = 0.09;
 
 Real I = 0.05;
-Real length_scale = 0.07 * 2 * DH / pow(0.09, 0.75);
+Real length_scale = 0.07 * 2 * DH / pow(C_mu, 0.75);
 //----------------------------------------------------------------------
 //	Set the file path to the data file.
 //----------------------------------------------------------------------
-//std::string mesh_file_path = "./input/meshL120M.msh";
-std::string mesh_file_path = "./input/L120MRefined1.msh";
+std::string mesh_file_path = "./input/Channel_mesh.msh";
 //	Define geometries and body shapes
 //----------------------------------------------------------------------
 std::vector<Vecd> createWaterBlockShape()
@@ -73,9 +72,9 @@ class TCFInitialCondition
             Eps_(this->particles_->template registerStateVariable<Real>("Dissipation")),
             mu_t_(this->particles_->template registerStateVariable<Real>("TurblunetViscosity")),
             rho_(this->particles_->template getVariableDataByName<Real>("Density")), 
-            p_(this->particles_->template registerStateVariable<Real>("Pressure")),
-            mass_(this->particles_->template registerStateVariable<Real>("Mass")),
-            mom_(this->particles_->template registerStateVariable<Vecd>("Momentum"))
+            p_(this->particles_->template getVariableDataByName<Real>("Pressure")),
+            mass_(this->particles_->template getVariableDataByName<Real>("Mass")),
+            mom_(this->particles_->template getVariableDataByName<Vecd>("Momentum"))
         {};
 
     void update(size_t index_i, Real dt)
@@ -150,7 +149,7 @@ public:
             K_grad_[ghost_index] = Vecd::Zero();
             Eps_grad_[ghost_index] = Vecd::Zero();
         }
-        else
+        else //Incase of reverse flow
         {
             vel_[ghost_index] = vel_[index_i];
             p_[ghost_index] = 0.0;

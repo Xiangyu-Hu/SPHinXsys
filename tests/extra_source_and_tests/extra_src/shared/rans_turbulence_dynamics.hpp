@@ -1,6 +1,6 @@
-#ifndef RANS_DYNAMICS_HPP
-#define RANS_DYNAMICS_HPP
-#include "rans_dynamics.h"
+#ifndef RANS_TURBULENCE_DYNAMICS_HPP
+#define RANS_TURBULENCE_DYNAMICS_HPP
+#include "rans_turbulence_dynamics.h"
 
 namespace SPH
 {
@@ -75,4 +75,4 @@ namespace SPH
     }
     }// namespace SPH
 }// namespace SPH
-#endif // RANS_DYNAMICS_HPP
+#endif // RANS_TURBULENCE_DYNAMICS_HPP

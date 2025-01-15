@@ -83,7 +83,7 @@ namespace SPH
             void interaction(size_t index_i, Real dt = 0.0);
 
         protected:
-            Fluid& fluid_;
+            Viscosity &viscosity_;
             Vecd *vel_;
             Real mu_;
             StdVec<StdVec<size_t>> each_boundary_type_contact_real_index_;

@@ -21,9 +21,9 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file eulerian_riemann_solvers.h
- * @brief This is the collection of Riemann solvers for Eulerian fluid dynamics.
- * @author Zhentong Wang, Chi Zhang and Xiangyu Hu
+ * @file extended_eulerian_riemann_solvers.h
+ * @brief This file make changes to the eulerian_riemann_solver.h in order to
+    accomodate the turbulence variables in riemann solver .
  */
 
 #ifndef EXTENDED_EULERIAN_RIEMANN_SOLVER_H

@@ -16,7 +16,7 @@ template <typename... InteractionTypes>
 class TurbulentViscousForceInFVM;
 
     template <class DataDelegationType>
-class TurbulentViscousForceInFVM<DataDelegationType>
+    class TurbulentViscousForceInFVM<DataDelegationType>
     : public ForcePrior, public DataDelegationType
     {
       public:
@@ -28,7 +28,7 @@ class TurbulentViscousForceInFVM<DataDelegationType>
         Real *rho_, *mass_, *Vol_, *mu_t_, *wall_adjacent_cell_flag_;
         Vecd *vel_, *turbulent_viscous_force_;
         Real smoothing_length_;
-};
+    };
 
     template <>
     class TurbulentViscousForceInFVM<Inner<>>
@@ -68,9 +68,7 @@ class TurbulentViscousForceInFVM<DataDelegationType>
         void interaction(size_t index_i, Real dt = 0.0);
     };
     using TkeGradientForceInner = TkeGradientForceInFVM<Inner<>>;
-//=================================================================================================//  
-    }// namespace fluid_dynamics
-    
-
+    //=================================================================================================//  
+}// namespace fluid_dynamics
 }// namespace SPH
 #endif // RANS_DYNAMICS_H

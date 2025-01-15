@@ -4,8 +4,8 @@
  * @author 	Yash Mandaokar, Zhentong Wang and Xiangyu Hu
  */
 
-#ifndef TEST_3D_INCOMPRESSIBLE_CHANNEL_FLOW_H
-#define TEST_3D_INCOMPRESSIBLE_CHANNEL_FLOW_H
+#ifndef TEST_3D_FVM_INCOMPRESSIBLE_CHANNEL_FLOW_H
+#define TEST_3D_FVM_INCOMPRESSIBLE_CHANNEL_FLOW_H
 
 #include "common_weakly_compressible_FVM_classes.h"
 
