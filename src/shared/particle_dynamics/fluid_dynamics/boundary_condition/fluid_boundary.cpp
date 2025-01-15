@@ -43,7 +43,7 @@ EmitterInflowCondition::
       p_(particles_->getVariableDataByName<Real>("Pressure")),
       drho_dt_(particles_->getVariableDataByName<Real>("DensityChangeRate")),
       inflow_pressure_(0), rho0_(fluid_.ReferenceDensity()),
-      aligned_box_(aligned_box_part.getAlignedBoxShape()),
+      aligned_box_(aligned_box_part.getAlignedBox()),
       updated_transform_(aligned_box_.getTransform()),
       old_transform_(updated_transform_) {}
 //=================================================================================================//
@@ -67,7 +67,7 @@ EmitterInflowInjection::
       pos_(particles_->getVariableDataByName<Vecd>("Position")),
       rho_(particles_->getVariableDataByName<Real>("Density")),
       p_(particles_->getVariableDataByName<Real>("Pressure")),
-      buffer_(buffer), aligned_box_(aligned_box_part.getAlignedBoxShape())
+      buffer_(buffer), aligned_box_(aligned_box_part.getAlignedBox())
 {
     buffer_.checkParticlesReserved();
 }
@@ -93,7 +93,7 @@ DisposerOutflowDeletion::
     DisposerOutflowDeletion(BodyAlignedBoxByCell &aligned_box_part)
     : BaseLocalDynamics<BodyPartByCell>(aligned_box_part),
       pos_(particles_->getVariableDataByName<Vecd>("Position")),
-      aligned_box_(aligned_box_part.getAlignedBoxShape()) {}
+      aligned_box_(aligned_box_part.getAlignedBox()) {}
 //=================================================================================================//
 void DisposerOutflowDeletion::update(size_t index_i, Real dt)
 {
