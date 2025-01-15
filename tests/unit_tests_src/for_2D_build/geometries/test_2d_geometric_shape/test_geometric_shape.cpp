@@ -1,7 +1,7 @@
 #include "base_data_type.h"
-#include "complex_shape.h"
+#include "complex_geometry.h"
 #include "geometric_shape.h"
-#include "transform_shape.h"
+#include "transform_geometry.h"
 #include <gtest/gtest.h>
 
 using namespace SPH;

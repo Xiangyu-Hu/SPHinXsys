@@ -43,14 +43,14 @@ class PressureCondition : public BaseFlowBoundaryCondition
     /** default parameter indicates prescribe pressure */
     explicit PressureCondition(BodyAlignedBoxByCell &aligned_box_part)
         : BaseFlowBoundaryCondition(aligned_box_part),
-          aligned_box_(aligned_box_part.getAlignedBoxShape()),
+          aligned_box_(aligned_box_part.getAlignedBox()),
           alignment_axis_(aligned_box_.AlignmentAxis()),
           transform_(aligned_box_.getTransform()),
           target_pressure_(*this),
           kernel_sum_(particles_->getVariableDataByName<Vecd>("KernelSummation")),
           physical_time_(sph_system_.getSystemVariableDataByName<Real>("PhysicalTime")){};
     virtual ~PressureCondition(){};
-    AlignedBoxShape &getAlignedBox() { return aligned_box_; };
+    AlignedBox &getAlignedBox() { return aligned_box_; };
 
     void update(size_t index_i, Real dt = 0.0)
     {
@@ -62,7 +62,7 @@ class PressureCondition : public BaseFlowBoundaryCondition
     };
 
   protected:
-    AlignedBoxShape &aligned_box_;
+    AlignedBox &aligned_box_;
     const int alignment_axis_;
     Transform &transform_;
     TargetPressure target_pressure_;

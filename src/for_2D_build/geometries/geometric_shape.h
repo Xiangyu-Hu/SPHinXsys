@@ -31,10 +31,11 @@
 
 #include "base_geometry.h"
 #include "multi_polygon_shape.h"
+#include "geometric_element.h"
 
 namespace SPH
 {
-class GeometricShapeBox : public Shape
+class GeometricShapeBox : public GeometricBox, public Shape
 {
   public:
     explicit GeometricShapeBox(const Vec2d &halfsize,
@@ -45,9 +46,6 @@ class GeometricShapeBox : public Shape
     virtual Vec2d findClosestPoint(const Vec2d &probe_point) override;
 
   protected:
-    Vec2d halfsize_;
-    MultiPolygon multi_polygon_;
-
     virtual BoundingBox findBounds() override;
 };
 

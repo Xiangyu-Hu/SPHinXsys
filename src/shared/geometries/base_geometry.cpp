@@ -10,6 +10,14 @@ BoundingBox Shape::getBounds()
         bounding_box_ = findBounds();
         is_bounds_found_ = true;
     }
+
+    if (bounding_box_.getBoundSize().norm() < SqrtEps)
+    {
+        std::cout << "\n Error: the Bounding box is unreasonably small! " << std::endl;
+        std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+        exit(1);
+    }
+    
     return bounding_box_;
 }
 //=================================================================================================//
