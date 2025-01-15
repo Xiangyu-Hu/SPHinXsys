@@ -44,14 +44,6 @@ struct ExendedFluidState : FluidStateIn
         : FluidStateIn(rho, vel, p), K_(K), Eps_(Eps){};
 };
 
-struct FluidStateSecondOrderUpwind : ExendedFluidState
-{
-    Vecd &K_grad_, &Eps_grad_;
-    Matd &vel_gradient_mat_;
-    FluidStateSecondOrderUpwind(Real &rho, Vecd &vel, Real &p, Real &K, Real &Eps, Vecd &K_grad, Vecd &Eps_grad, Matd &Vel_grad)
-        : ExendedFluidState(rho, vel, p, K, Eps), K_grad_(K_grad), Eps_grad_(Eps_grad), vel_gradient_mat_(Vel_grad){};
-};
-
 struct ExtendedFluidStarState : FluidStateOut
 {
     Real K_;
@@ -69,17 +61,6 @@ class ExtendedHLLCRiemannSolver : AcousticRiemannSolver
     template <class FluidI, class FluidJ>
     ExtendedHLLCRiemannSolver(FluidI &fluid_i, FluidJ &fluid_j, Real limiter_parameter = 0.0);
     ExtendedFluidStarState getExtendedInterfaceState(const ExendedFluidState &state_i, const ExendedFluidState &state_j, const Vecd &e_ij);
-};
-
-class SecondOrderUpwind : AcousticRiemannSolver
-{
-    Fluid &fluid_i_, &fluid_j_;
-    Real limiter_parameter_;
-
-  public:
-    template <class FluidI, class FluidJ>
-    SecondOrderUpwind(FluidI &fluid_i, FluidJ &fluid_j, Real limiter_parameter = 0.0);
-    ExtendedFluidStarState getExtendedInterfaceState(const FluidStateSecondOrderUpwind &state_i, const FluidStateSecondOrderUpwind &state_j, const Vecd &e_ij, const Real &r_ij);
 };
 } // namespace fluid_dynamics
 } // namespace SPH

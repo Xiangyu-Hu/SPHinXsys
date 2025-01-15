@@ -42,14 +42,10 @@ int main(int ac, char *av[])
     InteractionWithUpdate<fluid_dynamics::EulerianIntegration2ndHalfInnerRiemann> density_relaxation(water_block_inner, 10000.0);
     SimpleDynamics<TCFInitialCondition> initial_condition(water_block);
     SimpleDynamics<fluid_dynamics::WallAdjacentCells> wall_adj_cell(water_block_inner, ghost_creation);
-    SimpleDynamics<fluid_dynamics::TurbuleceVariablesGradient> turbulence_gradients(water_block_inner, ghost_creation); //For second order upwind
    
     InteractionWithUpdate<fluid_dynamics::KEpsilonStd1stHalfExtendedHLLCRiemannSolver> tke(water_block_inner, ghost_creation, 0.0);
     InteractionWithUpdate<fluid_dynamics::KEpsilonStd2ndHalfExtendedHLLCRiemannSolver> dissipationrate(water_block_inner, ghost_creation, 0.0);
 
-    /*
-     InteractionWithUpdate<fluid_dynamics::KEpsilonStd1stHalfSecondOrderUpwind> tke(water_block_inner, ghost_creation, 0.0);
-    InteractionWithUpdate<fluid_dynamics::KEpsilonStd2ndHalfSecondOrderUpwind> dissipationrate(water_block_inner, ghost_creation, 0.0);*/
 
     TCFBoundaryConditionSetup boundary_condition_setup(water_block_inner, ghost_creation);
     /** Time step size with considering sound wave speed. */
@@ -102,7 +98,6 @@ int main(int ac, char *av[])
         while (integration_time < output_interval)
         {
             Real dt = get_fluid_time_step_size.exec();
-            turbulence_gradients.exec(); //For second order upwind
             boundary_condition_setup.resetBoundaryConditions();
             tke.exec(dt);
             boundary_condition_setup.resetBoundaryConditions();

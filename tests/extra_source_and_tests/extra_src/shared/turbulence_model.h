@@ -50,8 +50,7 @@ namespace SPH
             protected:
             Vecd *mom_, *dmom_dt_;
             Real *dmass_dt_;
-            Real *K_prod_p_, *K_prod_, *Eps_p_, *K_adv_, *K_lap_;
-            Real *Eps_adv_, *Eps_lap_, *Eps_prod_, *Eps_destruction_, *Tau_wall_;
+            Real *K_prod_p_, *K_prod_, *Eps_p_, *Tau_wall_;
             Real C_mu_, sigma_k_;
             Real sigma_eps_, C1_eps_, C2_eps_, *K_, *Eps_, *mu_t_;
             GhostCreationFromMesh& ghost_creator_;
@@ -73,18 +72,6 @@ namespace SPH
           Real ymax_;
 
            void walladjacentcellyp();
-           void update(size_t index_i, Real dt);
-        };  
-        //=================================================================================================//
-        class TurbuleceVariablesGradient : public BaseTurbulence
-        {
-         public:
-           explicit TurbuleceVariablesGradient(BaseInnerRelation &inner_relation, GhostCreationFromMesh &ghost_creator);
-           virtual ~TurbuleceVariablesGradient(){};
-
-         protected:
-           Vecd *K_grad_, *Eps_grad_;
-
            void update(size_t index_i, Real dt);
         };
         //=================================================================================================//
@@ -113,12 +100,9 @@ namespace SPH
 
             protected:
             Real *dK_dt_, *wall_adjacent_cell_flag_, *strain_rate_;
-            Real *dudx_, *dudy_, *dvdx_, *dvdy_;
             RiemannSolverType riemann_solver_;
-            Vecd *K_grad_, *Eps_grad_;
         };
         using KEpsilonStd1stHalfExtendedHLLCRiemannSolver = KEpsilonStd1stHalf<ExtendedHLLCRiemannSolver>;
-        using KEpsilonStd1stHalfSecondOrderUpwind = KEpsilonStd1stHalf<SecondOrderUpwind>;
         //=================================================================================================//
         template <class RiemannSolverType>
         class KEpsilonStd2ndHalf : public BaseTurbulence
@@ -132,11 +116,9 @@ namespace SPH
             protected:
             Real *dEps_dt_, *wall_adjacent_cell_flag_;
             RiemannSolverType riemann_solver_;
-            Vecd *K_grad_, *Eps_grad_;
             Matd *vel_gradient_mat_;
         };
         using KEpsilonStd2ndHalfExtendedHLLCRiemannSolver = KEpsilonStd2ndHalf<ExtendedHLLCRiemannSolver>;
-        using KEpsilonStd2ndHalfSecondOrderUpwind = KEpsilonStd2ndHalf<SecondOrderUpwind>;
         //=================================================================================================//
         
     }// namespace fluid_dynamics

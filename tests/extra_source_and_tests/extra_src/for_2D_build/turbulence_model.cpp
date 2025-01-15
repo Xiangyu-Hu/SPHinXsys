@@ -14,13 +14,7 @@ namespace SPH
           dmass_dt_(this->particles_->template getVariableDataByName<Real>("MassChangeRate")),
           K_prod_p_(this->particles_->template registerStateVariable<Real>("TKEProductionInWallAdjCell")),
           K_prod_(this->particles_->template registerStateVariable<Real>("TKEProduction")),
-          Eps_p_(this->particles_->template registerStateVariable<Real>("DissipationRateInWallAdjCell")),
-          K_adv_(this->particles_->template registerStateVariable<Real>("TKEAdvection")),
-          K_lap_(this->particles_->template registerStateVariable<Real>("TKELaplacian")),
-          Eps_adv_(this->particles_->template registerStateVariable<Real>("DissipationAdvection")),
-          Eps_lap_(this->particles_->template registerStateVariable<Real>("DissipationLaplacian")),
-          Eps_prod_(this->particles_->template registerStateVariable<Real>("DissipationProd")),
-          Eps_destruction_(this->particles_->template registerStateVariable<Real>("DissipationDestruction")),
+          Eps_p_(this->particles_->template registerStateVariable<Real>("DissipationRateInWallAdjCell")), 
           Tau_wall_(this->particles_->template registerStateVariable<Real>("WallShearStress")),
           C_mu_(0.09), sigma_k_(1.0), sigma_eps_(1.3), C1_eps_(1.44), C2_eps_(1.92),
           K_(this->particles_->template getVariableDataByName<Real>("TKE")),
@@ -89,26 +83,6 @@ namespace SPH
             {
                 yp_[index_i] = (pos_[index_i] - upper_wall).dot(upper_wall_normal);   
                 wall_normal_[index_i] = upper_wall_normal;
-            }
-        }
-        //=================================================================================================//
-        TurbuleceVariablesGradient::TurbuleceVariablesGradient(BaseInnerRelation &inner_relation, GhostCreationFromMesh &ghost_creator)
-            : BaseTurbulence(inner_relation, ghost_creator), K_grad_(this->particles_->template registerStateVariable<Vecd>("TKEGradient")),
-              Eps_grad_(this->particles_->template registerStateVariable<Vecd>("DissipationGradient"))
-        {}
-        //=================================================================================================//
-        void TurbuleceVariablesGradient::update(size_t index_i, Real dt)
-        {
-            K_grad_[index_i] = Vecd::Zero(), Eps_grad_[index_i] = Vecd::Zero();
-            Neighborhood &inner_neighborhood = inner_configuration_[index_i];
-            for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
-            {
-                size_t index_j = inner_neighborhood.j_[n];
-                Real dW_ij = inner_neighborhood.dW_ij_[n];
-                Vecd &e_ij = inner_neighborhood.e_ij_[n];
-
-                K_grad_[index_i] += dW_ij * Vol_[index_j] * (K_[index_i] - K_[index_j]) * e_ij;
-                Eps_grad_[index_i] += dW_ij * Vol_[index_j] * (Eps_[index_i] - Eps_[index_j]) * e_ij;
             }
         }
         //=================================================================================================//

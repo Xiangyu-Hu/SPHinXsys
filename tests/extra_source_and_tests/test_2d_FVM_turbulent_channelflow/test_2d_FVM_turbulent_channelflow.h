@@ -106,8 +106,6 @@ public:
         K_(this->particles_->template getVariableDataByName<Real>("TKE")),
         Eps_(this->particles_->template getVariableDataByName<Real>("Dissipation")),
         mu_t_(this->particles_->template getVariableDataByName<Real>("TurblunetViscosity")),
-        K_grad_(this->particles_->template getVariableDataByName<Vecd>("TKEGradient")),
-        Eps_grad_(this->particles_->template getVariableDataByName<Vecd>("DissipationGradient")),
         fluid_(DynamicCast<WeaklyCompressibleFluid>(this, particles_->getBaseMaterial())),
         C_mu_(0.09){};
     virtual ~TCFBoundaryConditionSetup() {};
@@ -120,8 +118,6 @@ public:
         K_[ghost_index] = K_[index_i];
         Eps_[ghost_index] = Eps_[index_i];
         mu_t_[ghost_index] = mu_t_[index_i];
-        K_grad_[ghost_index] = Vecd::Zero();
-        Eps_grad_[ghost_index] = Vecd::Zero();
     }
     void applyVelocityInletFlow(size_t ghost_index, size_t index_i) override
     {
@@ -133,8 +129,6 @@ public:
         K_[ghost_index] = (3.0 / 2.0) * (vel_[ghost_index].squaredNorm()) * (I * I);
         Eps_[ghost_index] = pow(K_[ghost_index], 1.5) / length_scale;
         mu_t_[ghost_index] = C_mu_ * rho_[ghost_index] * pow(K_[ghost_index], 2.0) / Eps_[ghost_index];
-        K_grad_[ghost_index] = Vecd::Zero();
-        Eps_grad_[ghost_index] = Vecd::Zero();
     }
     void applyPressureOutletBC(size_t ghost_index, size_t index_i) override
     {
@@ -146,8 +140,6 @@ public:
             K_[ghost_index] = K_[index_i];
             Eps_[ghost_index] = Eps_[index_i];
             mu_t_[ghost_index] = mu_t_[index_i];
-            K_grad_[ghost_index] = Vecd::Zero();
-            Eps_grad_[ghost_index] = Vecd::Zero();
         }
         else //Incase of reverse flow
         {
@@ -157,13 +149,10 @@ public:
             K_[ghost_index] = (3.0 / 2.0) * (vel_[ghost_index].squaredNorm()) * (I * I);
             Eps_[ghost_index] = pow(K_[ghost_index], 1.5) / length_scale;
             mu_t_[ghost_index] = C_mu_ * rho_[ghost_index] * pow(K_[ghost_index], 2.0) / Eps_[ghost_index];
-            K_grad_[ghost_index] = Vecd::Zero();
-            Eps_grad_[ghost_index] = Vecd::Zero();
         }
     }
 protected:
     Real *K_, *Eps_, *mu_t_;
-    Vecd *K_grad_, *Eps_grad_;
     Fluid& fluid_;
     Real C_mu_;
 };
