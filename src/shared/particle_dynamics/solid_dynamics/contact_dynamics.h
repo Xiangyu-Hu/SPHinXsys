@@ -65,13 +65,13 @@ class SelfContactDensitySummation : public ContactDensityAccessor, public LocalD
         for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
         {
             Real corrected_W_ij = std::max(inner_neighborhood.W_ij_[n] - offset_W_ij_, Real(0));
-            sigma += corrected_W_ij * mass_[inner_neighborhood.j_[n]];
+            sigma += corrected_W_ij * Vol_[inner_neighborhood.j_[n]];
         }
         contact_density_[index_i] = sigma;
     };
 
   protected:
-    StdLargeVec<Real> &mass_;
+    StdLargeVec<Real> &Vol_;
     Real offset_W_ij_;
 };
 
@@ -91,21 +91,21 @@ class ContactDensitySummation : public ContactDensityAccessor, public LocalDynam
         Real sigma = 0.0;
         for (size_t k = 0; k < contact_configuration_.size(); ++k)
         {
-            StdLargeVec<Real> &contact_mass_k = *(contact_mass_[k]);
+            StdLargeVec<Real> &contact_Vol_k = *(contact_Vol_[k]);
             Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
 
             for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
             {
                 Real corrected_W_ij = std::max(contact_neighborhood.W_ij_[n] - offset_W_ij_[k], Real(0));
-                sigma += corrected_W_ij * contact_mass_k[contact_neighborhood.j_[n]];
+                sigma += corrected_W_ij * contact_Vol_k[contact_neighborhood.j_[n]];
             }
         }
         contact_density_[index_i] = sigma;
     };
 
   protected:
-    StdLargeVec<Real> &mass_;
-    StdVec<StdLargeVec<Real> *> contact_mass_;
+    StdLargeVec<Real> &Vol_;
+    StdVec<StdLargeVec<Real> *> contact_Vol_;
     StdVec<Real> offset_W_ij_;
 };
 
@@ -210,24 +210,26 @@ class ContactForce : public LocalDynamics, public ContactDynamicsData
     inline void interaction(size_t index_i, Real dt = 0.0)
     {
         Real Vol_i = Vol_[index_i];
-        Real p_i = contact_density_[index_i] * solid_.ContactStiffness();
+        Real sigma_i = contact_density_[index_i];
         /** Contact interaction. */
         Vecd force = Vecd::Zero();
         for (size_t k = 0; k < contact_configuration_.size(); ++k)
         {
             StdLargeVec<Real> &contact_density_k = *(contact_contact_density_[k]);
-            Solid *solid_k = contact_solids_[k];
 
             Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
+
+            Vecd force_k = Vecd::Zero();
             for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
             {
                 size_t index_j = contact_neighborhood.j_[n];
                 Vecd e_ij = contact_neighborhood.e_ij_[n];
 
-                Real p_star = 0.5 * (p_i + contact_density_k[index_j] * solid_k->ContactStiffness());
+                Real sigma_star = 0.5 * (sigma_i + contact_density_k[index_j]);
                 // force due to pressure
-                force -= 2.0 * p_star * e_ij * Vol_i * contact_neighborhood.dW_ijV_j_[n];
+                force_k -= 2.0 * sigma_star * e_ij * Vol_i * contact_neighborhood.dW_ijV_j_[n];
             }
+            force += contact_stiffness_[k] * force_k;
         }
         acc_prior_[index_i] += force / mass_[index_i];
     };
@@ -238,6 +240,7 @@ class ContactForce : public LocalDynamics, public ContactDynamicsData
     StdLargeVec<Vecd> &acc_prior_;
     StdVec<Solid *> contact_solids_;
     StdVec<StdLargeVec<Real> *> contact_contact_density_;
+    SPH::StdVec<double> contact_stiffness_;
 };
 
 /**

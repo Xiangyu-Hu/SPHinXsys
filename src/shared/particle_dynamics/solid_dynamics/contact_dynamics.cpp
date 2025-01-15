@@ -15,7 +15,7 @@ SelfContactDensitySummation::
     : ContactDensityAccessor(self_contact_relation.base_particles_, "SelfContactDensity"),
       LocalDynamics(self_contact_relation.getSPHBody()),
       SolidDataInner(self_contact_relation),
-      mass_(particles_->mass_)
+      Vol_(particles_->Vol_)
 {
     Real dp_1 = self_contact_relation.getSPHBody().sph_adaptation_->ReferenceSpacing();
     offset_W_ij_ = self_contact_relation.getSPHBody().sph_adaptation_->getKernel()->W(dp_1, ZeroVecd);
@@ -25,12 +25,12 @@ ContactDensitySummation::
     ContactDensitySummation(SurfaceContactRelation &solid_body_contact_relation)
     : ContactDensityAccessor(solid_body_contact_relation.base_particles_, "ContactDensity"),
       LocalDynamics(solid_body_contact_relation.getSPHBody()),
-      ContactDynamicsData(solid_body_contact_relation), mass_(particles_->mass_),
+      ContactDynamicsData(solid_body_contact_relation), Vol_(particles_->Vol_),
       offset_W_ij_(StdVec<Real>(contact_configuration_.size(), 0.0))
 {
     for (size_t k = 0; k != contact_particles_.size(); ++k)
     {
-        contact_mass_.push_back(&(contact_particles_[k]->mass_));
+        contact_Vol_.push_back(&(contact_particles_[k]->Vol_));
     }
 
     // we modify the default formulation by an offset, so that exactly touching bodies produce 0 initial force
@@ -70,7 +70,7 @@ ShellContactDensity::ShellContactDensity(SurfaceContactRelation &solid_body_cont
             contact_max += Dimensions == 2 ? contact_temp : contact_temp * Pi * temp;
         }
         /** a calibration factor to avoid particle penetration into shell structure */
-        calibration_factor_.push_back(solid_.ReferenceDensity() / (contact_max + Eps));
+        calibration_factor_.push_back(1.0 / (contact_max + Eps));
 
         contact_Vol_.push_back(&(contact_particles_[k]->Vol_));
     }
@@ -94,10 +94,13 @@ ContactForce::ContactForce(SurfaceContactRelation &solid_body_contact_relation)
       Vol_(particles_->Vol_), mass_(particles_->mass_),
       acc_prior_(particles_->acc_prior_)
 {
+    Real K_1 = solid_.ContactStiffness();
     for (size_t k = 0; k != contact_particles_.size(); ++k)
     {
         contact_solids_.push_back(&contact_particles_[k]->solid_);
         contact_contact_density_.push_back(contact_particles_[k]->getVariableByName<Real>("ContactDensity"));
+        Real K_2 = contact_solids_[k]->ContactStiffness();
+        contact_stiffness_.emplace_back(2 * K_1 * K_2 / (K_1 + K_2));
     }
 }
 //=================================================================================================//
