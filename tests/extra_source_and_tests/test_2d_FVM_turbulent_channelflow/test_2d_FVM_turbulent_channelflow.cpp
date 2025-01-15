@@ -46,11 +46,11 @@ int main(int ac, char *av[])
     SimpleDynamics<fluid_dynamics::WallAdjacentCells> wall_adj_cell(water_block_inner, ghost_creation);
     SimpleDynamics<fluid_dynamics::TurbuleceVariablesGradient> turbulence_gradients(water_block_inner, ghost_creation); //For second order upwind
    
-    InteractionWithUpdate<fluid_dynamics::KEpsilonStd1stHalfExtendedHLLCRiemannSolver> tke(water_block_inner, ghost_creation, 0.0);
-    InteractionWithUpdate<fluid_dynamics::KEpsilonStd2ndHalfExtendedHLLCRiemannSolver> dissipationrate(water_block_inner, ghost_creation, 0.0);
+    /*InteractionWithUpdate<fluid_dynamics::KEpsilonStd1stHalfExtendedHLLCRiemannSolver> tke(water_block_inner, ghost_creation, 0.0);
+    InteractionWithUpdate<fluid_dynamics::KEpsilonStd2ndHalfExtendedHLLCRiemannSolver> dissipationrate(water_block_inner, ghost_creation, 0.0);*/
 
-    /*InteractionWithUpdate<fluid_dynamics::KEpsilonStd1stHalfSecondOrderUpwind> tke(water_block_inner, ghost_creation, 0.0);
-    InteractionWithUpdate<fluid_dynamics::KEpsilonStd2ndHalfSecondOrderUpwind> dissipationrate(water_block_inner, ghost_creation, 0.0);*/
+    InteractionWithUpdate<fluid_dynamics::KEpsilonStd1stHalfSecondOrderUpwind> tke(water_block_inner, ghost_creation, 0.0);
+    InteractionWithUpdate<fluid_dynamics::KEpsilonStd2ndHalfSecondOrderUpwind> dissipationrate(water_block_inner, ghost_creation, 0.0);
 
     TCFBoundaryConditionSetup boundary_condition_setup(water_block_inner, ghost_creation);
     /** Time step size with considering sound wave speed. */
@@ -84,7 +84,7 @@ int main(int ac, char *av[])
 
     int screen_output_interval = 5000;
     Real end_time = 200.0;
-    Real output_interval = 2.0; /**< time stamps for output. */ 
+    Real output_interval = 4.0; /**< time stamps for output. */ 
     //----------------------------------------------------------------------
     //	Statistics for CPU time
     //----------------------------------------------------------------------

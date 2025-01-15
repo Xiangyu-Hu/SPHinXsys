@@ -105,6 +105,7 @@ namespace SPH
             Real *dEps_dt_, *wall_adjacent_cell_flag_;
             RiemannSolverType riemann_solver_;
             Vecd *K_grad_, *Eps_grad_;
+            Matd *vel_gradient_mat_;
         };
         using KEpsilonStd2ndHalfExtendedHLLCRiemannSolver = KEpsilonStd2ndHalf<ExtendedHLLCRiemannSolver>;
         using KEpsilonStd2ndHalfSecondOrderUpwind = KEpsilonStd2ndHalf<SecondOrderUpwind>;

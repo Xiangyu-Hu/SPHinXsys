@@ -135,7 +135,7 @@ namespace SPH
             {
                 u_star = (1.0 / von_kar_) * std::log(E_ * y_star_[index_i]);
                 mu_t_[index_i] = fluid_.ReferenceViscosity() * ((y_star_[index_i]) / (1 / von_kar_ * std::log(E_ * y_star_[index_i])) - 1.0);
-                
+
                 Tau_wall_[index_i] = (veltangential.norm() * std::pow(C_mu_, 0.25) * std::pow(K_[index_i], 0.5) * rho_[index_i]) / (u_star);
                 vel_gradient_mat_[index_i] = Matd::Zero();
                 vel_gradient_mat_[index_i](0, 1) = Tau_wall_[index_i] / (rho_[index_i] * pow(C_mu_, 0.25) * pow(K_[index_i], 0.5) * von_kar_ * yp_[index_i]);

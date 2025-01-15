@@ -1,9 +1,9 @@
 /**
- * @file 	test_3d_incompressible_channel_flow.cpp
+ * @file 	test_3d_FVM_incompressible_channel_flow.cpp
  * @brief 	This is the inviscid incompressible channel flow test for the realization of FVM in the SPHinXsys.
  * @author 	Yash Mandaokar, Zhentong Wang and Xiangyu Hu
  */
-#include "test_3d_incompressible_channel_flow.h"
+#include "test_3d_FVM_incompressible_channel_flow.h"
 
 using namespace SPH;
 //----------------------------------------------------------------------
@@ -35,11 +35,11 @@ int main(int ac, char *av[])
     //	Define the main numerical methods used in the simulation.
     //	Note that there may be data dependence on the constructors of these methods.
     //----------------------------------------------------------------------
-    SimpleDynamics<InvCFInitialCondition> initial_condition(air_block);
     /** Here we introduce the limiter in the Riemann solver and 0 means the no extra numerical dissipation.
      * the value is larger, the numerical dissipation larger. */
     InteractionWithUpdate<fluid_dynamics::EulerianIntegration1stHalfInnerRiemann> pressure_relaxation(air_block_inner, 500.0);
     InteractionWithUpdate<fluid_dynamics::EulerianIntegration2ndHalfInnerRiemann> density_relaxation(air_block_inner, 8000.0);
+    SimpleDynamics<InvCFInitialCondition> initial_condition(air_block);
     /** Time step size with considering sound wave speed. */
     ReduceDynamics<fluid_dynamics::WCAcousticTimeStepSizeInFVM> get_fluid_time_step_size(air_block, read_mesh_data.MinMeshEdge(), 0.6);
     /** Boundary conditions set up */
@@ -48,7 +48,6 @@ int main(int ac, char *av[])
     BodyStatesRecordingInMeshToVtu write_real_body_states(air_block, read_mesh_data);
     write_real_body_states.addToWrite<Real>(air_block, "Density");
     write_real_body_states.addToWrite<Real>(air_block, "Pressure");
-    write_real_body_states.addToWrite<Vecd>(air_block, "Velocity");
     ReducedQuantityRecording<MaximumSpeed> write_maximum_speed(air_block);
 
     air_block_inner.updateConfiguration();
@@ -58,9 +57,9 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     size_t number_of_iterations = 0;
-    int screen_output_interval = 1000;
-    Real end_time = 30;
-    Real output_interval = 2; /**< time stamps for output. */
+    int screen_output_interval = 5000;
+    Real end_time = 15;
+    Real output_interval = 3; /**< time stamps for output. */
     //----------------------------------------------------------------------
     //	Statistics for CPU time
     //----------------------------------------------------------------------
