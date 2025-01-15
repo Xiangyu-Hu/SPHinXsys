@@ -29,43 +29,43 @@
 #ifndef FLUID_BOUNDARY_CK_H
 #define FLUID_BOUNDARY_CK_H
 
+#include "base_data_package.h"
 #include "base_fluid_dynamics.h"
 #include "particle_reserve.h"
 #include "sphinxsys_variable_array.h"
-#include "base_data_package.h"
 
 namespace SPH
 {
 namespace fluid_dynamics
 {
-/**
- * @class EmitterInflowConditionCK
- * @brief Inflow boundary condition imposed on an emitter, in which pressure and density profile are imposed too.
- * The body part region is required to have parallel lower- and upper-bound surfaces.
- */
-class EmitterInflowConditionCK : public BaseLocalDynamics<BodyPartByParticle>
-{
-  public:
-    explicit EmitterInflowConditionCK(BodyAlignedBoxByParticle &aligned_box_part);
-    virtual ~EmitterInflowConditionCK() {};
 
-    virtual void setupDynamics(Real dt = 0.0) override { updateTransform(); };
-    void update(size_t original_index_i, Real dt = 0.0);
+template <typename... T>
+class InflowConditionCK;
+
+template <class AlignedBoxPartType, class ConditionFunction>
+class InflowConditionCK<AlignedBoxPartType, ConditionFunction>
+    : public BaseLocalDynamics<AlignedBoxPartType>
+{
+    using ConditionKernel = typename ConditionFunction::ComputingKernel;
+
+  public:
+    InflowConditionCK(AlignedBoxPartType &aligned_box_part);
+
+    class UpdateKernel
+    {
+      public:
+        template <class ExecutionPolicy>
+        UpdateKernel(const ExecutionPolicy &ex_policy, AdvectionStepSetup &encloser);
+        void update(size_t index_i, Real dt = 0.0);
+
+      protected:
+        AlignedBox *aligned_box_;
+        ConditionKernel condition_;
+    };
 
   protected:
-    Fluid &fluid_;
-    UnsignedInt *sorted_id_;
-    Vecd *pos_, *vel_, *force_;
-    Real *rho_, *p_, *drho_dt_;
-    /** inflow pressure condition */
-    Real inflow_pressure_;
-    Real rho0_;
-    AlignedBoxShape &aligned_box_;
-    Transform &updated_transform_, old_transform_;
-
-    /** no transform by default */
-    virtual void updateTransform() {};
-    virtual Vecd getTargetVelocity(Vecd &position, Vecd &velocity) = 0;
+    SingularVariable<AlignedBox> *sv_aligned_box_;
+    ConditionFunction condition_function_;
 };
 
 /**
