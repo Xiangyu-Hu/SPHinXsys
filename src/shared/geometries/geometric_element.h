@@ -21,21 +21,32 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	all_geometries.h
- * @brief 	This is the header file that user code should include to pick up all
- *          geometry classes used in SPHinXsys.
- * @author	Chi Zhang and Xiangyu Hu
+ * @file 	geometric_element.h
+ * @brief tbd.
+ * @author Xiangyu Hu
  */
 
-#ifndef ALL_GEOMETRIES_H
-#define ALL_GEOMETRIES_H
+#ifndef GEOMETRIC_ELEMENT_H
+#define GEOMETRIC_ELEMENT_H
 
-#include "complex_geometry.h"
-#include "mapping_shape.h"
-#include "geometric_shape.h"
-#include "image_shape.h"
-#include "level_set_shape.h"
-#include "transform_geometry.h"
-#include "triangle_mesh_shape.h"
+#include "base_data_package.h"
 
-#endif // ALL_GEOMETRIES_H
+namespace SPH
+{
+
+class GeometricBox
+{
+  public:
+    explicit GeometricBox(const Vecd &halfsize);
+    ~GeometricBox() {};
+
+    bool checkContain(const Vecd &probe_point);
+    Vecd findClosestPoint(const Vecd &probe_point);
+
+  protected:
+    Vecd halfsize_;
+};
+
+} // namespace SPH
+
+#endif // GEOMETRIC_ELEMENT_H

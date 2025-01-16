@@ -1,9 +1,20 @@
-#include "complex_shape.h"
+#include "complex_geometry.h"
 
 namespace SPH
 {
 //=================================================================================================//
-bool AlignedBoxShape::checkInBounds(const Vecd &probe_point, Real lower_bound_fringe, Real upper_bound_fringe)
+bool AlignedBox::checkNotFar(const Vecd &probe_point, Real threshold)
+{
+    return checkContain(probe_point) || checkNearSurface(probe_point, threshold) ? true : false;
+}
+//=================================================================================================//
+bool AlignedBox::checkNearSurface(const Vecd &probe_point, Real threshold)
+{
+    Vecd distance = probe_point - findClosestPoint(probe_point);
+    return distance.cwiseAbs().maxCoeff() < threshold ? true : false;
+}
+//=================================================================================================//
+bool AlignedBox::checkInBounds(const Vecd &probe_point, Real lower_bound_fringe, Real upper_bound_fringe)
 {
     Vecd position_in_frame = transform_.shiftBaseStationToFrame(probe_point);
     return position_in_frame[alignment_axis_] >= -halfsize_[alignment_axis_] - lower_bound_fringe &&
@@ -12,31 +23,31 @@ bool AlignedBoxShape::checkInBounds(const Vecd &probe_point, Real lower_bound_fr
                : false;
 }
 //=================================================================================================//
-bool AlignedBoxShape::checkUpperBound(const Vecd &probe_point, Real upper_bound_fringe)
+bool AlignedBox::checkUpperBound(const Vecd &probe_point, Real upper_bound_fringe)
 {
     Vecd position_in_frame = transform_.shiftBaseStationToFrame(probe_point);
     return position_in_frame[alignment_axis_] > halfsize_[alignment_axis_] + upper_bound_fringe ? true : false;
 }
 //=================================================================================================//
-bool AlignedBoxShape::checkLowerBound(const Vecd &probe_point, Real lower_bound_fringe)
+bool AlignedBox::checkLowerBound(const Vecd &probe_point, Real lower_bound_fringe)
 {
     Vecd position_in_frame = transform_.shiftBaseStationToFrame(probe_point);
     return position_in_frame[alignment_axis_] < -halfsize_[alignment_axis_] - lower_bound_fringe ? true : false;
 }
 //=================================================================================================//
-bool AlignedBoxShape::checkNearUpperBound(const Vecd &probe_point, Real threshold)
+bool AlignedBox::checkNearUpperBound(const Vecd &probe_point, Real threshold)
 {
     Vecd position_in_frame = transform_.shiftBaseStationToFrame(probe_point);
     return ABS(position_in_frame[alignment_axis_] - halfsize_[alignment_axis_]) <= threshold ? true : false;
 }
 //=================================================================================================//
-bool AlignedBoxShape::checkNearLowerBound(const Vecd &probe_point, Real threshold)
+bool AlignedBox::checkNearLowerBound(const Vecd &probe_point, Real threshold)
 {
     Vecd position_in_frame = transform_.shiftBaseStationToFrame(probe_point);
     return ABS(position_in_frame[alignment_axis_] + halfsize_[alignment_axis_]) <= threshold ? true : false;
 }
 //=================================================================================================//
-Vecd AlignedBoxShape::getUpperPeriodic(const Vecd &probe_point)
+Vecd AlignedBox::getUpperPeriodic(const Vecd &probe_point)
 {
     Vecd position_in_frame = transform_.shiftBaseStationToFrame(probe_point);
     Vecd shift = Vecd::Zero();
@@ -44,7 +55,7 @@ Vecd AlignedBoxShape::getUpperPeriodic(const Vecd &probe_point)
     return transform_.shiftFrameStationToBase(position_in_frame + shift);
 }
 //=================================================================================================//
-Vecd AlignedBoxShape::getLowerPeriodic(const Vecd &probe_point)
+Vecd AlignedBox::getLowerPeriodic(const Vecd &probe_point)
 {
     Vecd position_in_frame = transform_.shiftBaseStationToFrame(probe_point);
     Vecd shift = Vecd::Zero();
