@@ -89,10 +89,6 @@ namespace SPH
         void KEpsilonStd1stHalf<RiemannSolverType> ::update(size_t index_i, Real dt)
         {
             K_[index_i] += (dK_dt_[index_i] / rho_[index_i]) * dt;
-            if (K_[index_i] < 0.0)
-            {
-                K_[index_i] = 1e-6;
-            }
         }
         //=================================================================================================//
         template <class RiemannSolverType>
@@ -143,10 +139,6 @@ namespace SPH
             if (wall_adjacent_cell_flag_[index_i] != 1)
             {
                 Eps_[index_i] += (dEps_dt_[index_i] / rho_[index_i]) * dt;
-            }
-            if (Eps_[index_i] < 0)
-            {
-                Eps_[index_i] = 1e-6;
             }
         }
     }// namespace fluid_dynamics
