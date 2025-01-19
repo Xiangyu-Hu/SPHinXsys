@@ -32,7 +32,7 @@ void DampingBoundaryCondition::update(size_t index_i, Real dt)
 }
 //=================================================================================================//
 EmitterInflowCondition::
-    EmitterInflowCondition(BodyAlignedBoxByParticle &aligned_box_part)
+    EmitterInflowCondition(AlignedBoxPartByParticle &aligned_box_part)
     : BaseLocalDynamics<BodyPartByParticle>(aligned_box_part),
       fluid_(DynamicCast<Fluid>(this, particles_->getBaseMaterial())),
       sorted_id_(particles_->ParticleSortedIds()),
@@ -59,7 +59,7 @@ void EmitterInflowCondition ::update(size_t original_index_i, Real dt)
 }
 //=================================================================================================//
 EmitterInflowInjection::
-    EmitterInflowInjection(BodyAlignedBoxByParticle &aligned_box_part, ParticleBuffer<Base> &buffer)
+    EmitterInflowInjection(AlignedBoxPartByParticle &aligned_box_part, ParticleBuffer<Base> &buffer)
     : BaseLocalDynamics<BodyPartByParticle>(aligned_box_part),
       fluid_(DynamicCast<Fluid>(this, particles_->getBaseMaterial())),
       original_id_(particles_->ParticleOriginalIds()),
@@ -90,7 +90,7 @@ void EmitterInflowInjection::update(size_t original_index_i, Real dt)
 }
 //=================================================================================================//
 DisposerOutflowDeletion::
-    DisposerOutflowDeletion(BodyAlignedBoxByCell &aligned_box_part)
+    DisposerOutflowDeletion(AlignedBoxPartByCell &aligned_box_part)
     : BaseLocalDynamics<BodyPartByCell>(aligned_box_part),
       pos_(particles_->getVariableDataByName<Vecd>("Position")),
       aligned_box_(aligned_box_part.getAlignedBox()) {}
