@@ -49,7 +49,7 @@ int main(int ac, char *av[])
 
     TCFBoundaryConditionSetup boundary_condition_setup(water_block_inner, ghost_creation);
     /** Time step size with considering sound wave speed. */
-    ReduceDynamics<fluid_dynamics::WCAcousticTimeStepSizeInFVM> get_fluid_time_step_size(water_block, read_mesh_data.MinMeshEdge());
+    ReduceDynamics<fluid_dynamics::WCAcousticTimeStepSizeInFVM> get_fluid_time_step_size(water_block, read_mesh_data.MinMeshEdge(), 1.0);
     InteractionWithUpdate<fluid_dynamics::TurbulentViscousForceInner> turbulent_viscous_force(water_block_inner);
     InteractionWithUpdate<fluid_dynamics::ViscousForceInner> viscous_force(water_block_inner);
     InteractionWithUpdate<fluid_dynamics::TkeGradientForceInner> tke_gradient_force(water_block_inner); 
@@ -78,8 +78,8 @@ int main(int ac, char *av[])
     size_t number_of_iterations = 0;
 
     int screen_output_interval = 8000;
-    Real end_time = 200.0;
-    Real output_interval = 8.0; /**< time stamps for output. */ 
+    Real end_time = 120.0;
+    Real output_interval = 10.0; /**< time stamps for output. */ 
     //----------------------------------------------------------------------
     //	Statistics for CPU time
     //----------------------------------------------------------------------
