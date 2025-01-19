@@ -211,7 +211,7 @@ void MarkNearInterface::UpdateKernel::update(const size_t &package_index, Real s
     mesh_for_each2d<0, 5>( //[notion] same pkg_size problem above
         [&](int i, int j)
         {
-            corner_averages[i][j] = BaseMeshLocalDynamics::CornerAverage(phi_, Arrayi(i, j), Arrayi(-1, -1), *cell_neighborhood_);
+            corner_averages[i][j] = BaseMeshLocalDynamics::CornerAverage(phi_, Arrayi(i, j), Arrayi(-1, -1), cell_neighborhood_[package_index]);
         });
 
     BaseMeshLocalDynamics::for_each_cell_data(
@@ -262,7 +262,7 @@ void RedistanceInterface::UpdateKernel::update(const size_t &package_index)
                 mesh_for_each2d<-1, 2>(
                     [&](int r, int s)
                     {
-                        NeighbourIndex neighbour_index = BaseMeshLocalDynamics::NeighbourIndexShift(Arrayi(i + r, j + s), *cell_neighborhood_);
+                        NeighbourIndex neighbour_index = BaseMeshLocalDynamics::NeighbourIndexShift(Arrayi(i + r, j + s), cell_neighborhood_[package_index]);
                         int neighbor_near_interface_id = near_interface_id_[neighbour_index.first][neighbour_index.second[0]][neighbour_index.second[1]];
                         if (neighbor_near_interface_id >= 1)
                             positive_band = true;
@@ -275,7 +275,7 @@ void RedistanceInterface::UpdateKernel::update(const size_t &package_index)
                     mesh_for_each2d<-4, 5>(
                         [&](int x, int y)
                         {
-                            NeighbourIndex neighbour_index = BaseMeshLocalDynamics::NeighbourIndexShift(Arrayi(i + x, j + y), *cell_neighborhood_);
+                            NeighbourIndex neighbour_index = BaseMeshLocalDynamics::NeighbourIndexShift(Arrayi(i + x, j + y), cell_neighborhood_[package_index]);
                             auto &neighbor_phi = phi_[neighbour_index.first];
                             auto &neighbor_phi_gradient = phi_gradient_[neighbour_index.first];
                             auto &neighbor_near_interface_id = near_interface_id_[neighbour_index.first];
@@ -299,7 +299,7 @@ void RedistanceInterface::UpdateKernel::update(const size_t &package_index)
                     mesh_for_each2d<-4, 5>(
                         [&](int x, int y)
                         {
-                            NeighbourIndex neighbour_index = BaseMeshLocalDynamics::NeighbourIndexShift(Arrayi(i + x, j + y), *cell_neighborhood_);
+                            NeighbourIndex neighbour_index = BaseMeshLocalDynamics::NeighbourIndexShift(Arrayi(i + x, j + y), cell_neighborhood_[package_index]);
                             auto &neighbor_phi = phi_[neighbour_index.first];
                             auto &neighbor_phi_gradient = phi_gradient_[neighbour_index.first];
                             auto &neighbor_near_interface_id = near_interface_id_[neighbour_index.first];
@@ -332,7 +332,7 @@ void DiffuseLevelSetSign::UpdateKernel::update(const size_t &package_index)
                 mesh_find_if2d<-1, 2>(
                     [&](int l, int m) -> bool
                     {
-                        std::pair<size_t, Arrayi> neighbour_index = BaseMeshLocalDynamics::NeighbourIndexShift(Arrayi(i + l, j + m), *cell_neighborhood_);
+                        std::pair<size_t, Arrayi> neighbour_index = BaseMeshLocalDynamics::NeighbourIndexShift(Arrayi(i + l, j + m), cell_neighborhood_[package_index]);
                         int near_interface_id = near_interface_id_[neighbour_index.first][neighbour_index.second[0]][neighbour_index.second[1]];
                         bool is_found = abs(near_interface_id) == 1;
                         if (is_found)
