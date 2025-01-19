@@ -36,6 +36,18 @@
 
 namespace SPH
 {
+
+struct CopyParticleStateCK
+{
+    template <typename DataType>
+    void operator()(VariableAllocationPair<AllocatedDataArray<DataType>> &variable_allocation_pair, size_t index, size_t another_index)
+    {
+        for (size_t i = 0; i != variable_allocation_pair.second; ++i)
+        {
+            variable_allocation_pair.first[i][index] = variable_allocation_pair.first[i][another_index];
+        }
+    };
+};
 namespace fluid_dynamics
 {
 
@@ -54,8 +66,8 @@ class InflowConditionCK<AlignedBoxPartType, ConditionFunction>
     class UpdateKernel
     {
       public:
-        template <class ExecutionPolicy>
-        UpdateKernel(const ExecutionPolicy &ex_policy, AdvectionStepSetup &encloser);
+        template <class ExecutionPolicy, class EncloserType>
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
         void update(size_t index_i, Real dt = 0.0);
 
       protected:
@@ -68,29 +80,36 @@ class InflowConditionCK<AlignedBoxPartType, ConditionFunction>
     ConditionFunction condition_function_;
 };
 
-/**
- * @class EmitterInflowInjectionCK
- * @brief Inject particles into the computational domain.
- * Note that the axis is at the local coordinate and upper bound direction is
- * the local positive direction.
- */
-class EmitterInflowInjectionCK : public BaseLocalDynamics<BodyPartByParticle>
+class EmitterInflowInjectionCK : public BaseLocalDynamics<BodyAlignedBoxByParticle>
 {
   public:
     EmitterInflowInjectionCK(BodyAlignedBoxByParticle &aligned_box_part, ParticleBuffer<Base> &buffer);
     virtual ~EmitterInflowInjectionCK() {};
+    virtual void setupDynamics(Real dt = 0.0) override;
 
-    void update(size_t original_index_i, Real dt = 0.0);
+    class UpdateKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+        void update(size_t original_index_i, Real dt = 0.0); //only works in sequenced policy
+
+      protected:
+        AlignedBox *aligned_box_;
+        UnsignedInt *sorted_id_;
+        Vecd *pos_;
+        VariableDataArrays state_data_arrays_;
+        OperationOnDataAssemble<VariableDataArrays, CopyParticleStateCK> copy_particle_state_;
+
+    };
 
   protected:
-    std::mutex mutex_switch_to_real_; /**< mutex exclusion for memory conflict */
-    Fluid &fluid_;
-    UnsignedInt *original_id_;
-    UnsignedInt *sorted_id_;
-    Vecd *pos_;
-    Real *rho_, *p_;
     ParticleBuffer<Base> &buffer_;
-    AlignedBoxShape &aligned_box_;
+    SingularVariable<AlignedBox> *sv_aligned_box_;
+    DiscreteVariable<UnsignedInt> *dv_sorted_id_;
+    DiscreteVariable<Vecd> *dv_pos_;
+    DiscreteVariableArrays copyable_states_;
+
 };
 } // namespace fluid_dynamics
 } // namespace SPH

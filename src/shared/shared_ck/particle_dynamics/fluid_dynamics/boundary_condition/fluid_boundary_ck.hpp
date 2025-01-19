@@ -8,28 +8,60 @@ namespace SPH
 namespace fluid_dynamics
 {
 //=================================================================================================//
-template <class AlignedBoxPartType, class ConditionFunction, class TransformFunction>
-InflowConditionCK<AlignedBoxPartType, ConditionFunction, TransformFunction>::
+template <class AlignedBoxPartType, class ConditionFunction>
+InflowConditionCK<AlignedBoxPartType, ConditionFunction>::
     InflowConditionCK(AlignedBoxPartType &aligned_box_part)
     : BaseLocalDynamics<AlignedBoxPartType>(aligned_box_part),
       sv_aligned_box_(this->particles_->addUniqueSingularVariable<AlignedBox>(
           "AlignedBox", aligned_box_part.getAlignedBox())),
-      condition_function_(this->particles_),
-      dv_pos_(this->particles_->getStateVariableByName<Vecd>("Position")) {}
+      condition_function_(this->particles_) {}
 //=================================================================================================//
-template <class AlignedBoxPartType, class ConditionFunction, class TransformFunction>
+template <class AlignedBoxPartType, class ConditionFunction>
 template <class ExecutionPolicy, class EncloserType>
-InflowConditionCK<AlignedBoxPartType, ConditionFunction, TransformFunction>::
+InflowConditionCK<AlignedBoxPartType, ConditionFunction>::
     UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser),
     aligned_box_(encloser.sv_aligned_box_->DelegatedData(ex_policy)),
-    condition_(ex_policy, encloser.condition_function_){}
+    condition_(ex_policy, encloser.condition_function_) {}
 //=================================================================================================//
-template <class AlignedBoxPartType, class ConditionFunction, class TransformFunction>
-
-void InflowConditionCK<AlignedBoxPartType, ConditionFunction, TransformFunction>::
+template <class AlignedBoxPartType, class ConditionFunction>
+void InflowConditionCK<AlignedBoxPartType, ConditionFunction>::
     UpdateKernel::update(size_t index_i, Real dt)
 {
     condition_(aligned_box_, index_i);
+}
+//=================================================================================================//
+EmitterInflowInjectionCK::
+    EmitterInflowInjectionCK(BodyAlignedBoxByParticle &aligned_box_part, ParticleBuffer<Base> &buffer)
+    : BaseLocalDynamics<BodyAlignedBoxByParticle>(aligned_box_part),
+      sorted_id_(particles_->ParticleSortedIds()),
+      pos_(particles_->getVariableDataByName<Vecd>("Position")),
+      rho_(particles_->getVariableDataByName<Real>("Density")),
+      p_(particles_->getVariableDataByName<Real>("Pressure")),
+      buffer_(buffer), aligned_box_(aligned_box_part.getAlignedBox())
+{
+    buffer_.checkParticlesReserved();
+}
+//=================================================================================================//
+template <class ExecutionPolicy, class EncloserType>
+EmitterInflowInjectionCK::UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser),
+    aligned_box_(encloser.sv_aligned_box_->DelegatedData(ex_policy)),
+    condition_(ex_policy, encloser.condition_function_) {}
+//=================================================================================================//
+void EmitterInflowInjectionCK::update(size_t original_index_i, Real dt)
+{
+    size_t sorted_index_i = sorted_id_[original_index_i];
+    if (aligned_box_.checkUpperBound(pos_[sorted_index_i]))
+    {
+        mutex_switch_to_real_.lock();
+        buffer_.checkEnoughBuffer(*particles_);
+        particles_->createRealParticleFrom(sorted_index_i);
+        mutex_switch_to_real_.unlock();
+
+        /** Periodic bounding. */
+        pos_[sorted_index_i] = aligned_box_.getUpperPeriodic(pos_[sorted_index_i]);
+        rho_[sorted_index_i] = fluid_.ReferenceDensity();
+        p_[sorted_index_i] = fluid_.getPressure(rho_[sorted_index_i]);
+    }
 }
 //=================================================================================================//
 } // namespace fluid_dynamics

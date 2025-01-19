@@ -95,9 +95,9 @@ template <typename DataType>
 using AllocatedDataArray = DataArray<DataType> *;
 
 template <typename AllocationType>
-using VariableAllocationSizePair = std::pair<AllocationType, UnsignedInt>;
+using VariableAllocationPair = std::pair<AllocationType, UnsignedInt>;
 
-typedef DataAssemble<VariableAllocationSizePair, AllocatedDataArray> VariableDataArrays;
+typedef DataAssemble<VariableAllocationPair, AllocatedDataArray> VariableDataArrays;
 typedef DataAssemble<UniquePtr, DiscreteVariableArray> DiscreteVariableArrays;
 
 struct DiscreteVariableArraysInitialization
@@ -114,7 +114,7 @@ struct VariableDataArraysInitialization
 {
     template <typename DataType, class ExecutionPolicy>
     void operator()(const UniquePtr<DiscreteVariableArray<DataType>> &variable_array_ptr,
-                    VariableAllocationSizePair<AllocatedDataArray<DataType>> &variable_allocation_size_pair)
+                    VariableAllocationPair<AllocatedDataArray<DataType>> &variable_allocation_size_pair)
     {
         variable_allocation_size_pair =
             std::make_pair(variable_array_ptr->DelegatedDataArray(ExecutionPolicy{}), variable_array_ptr->getArraySize());
