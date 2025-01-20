@@ -181,3 +181,4 @@ interact(size_t index_i, Real dt)
 
 } // namespace fluid_dynamics
 } // namespace SPH
+#endif // SURFACE_INDICATION_CK_HPP
