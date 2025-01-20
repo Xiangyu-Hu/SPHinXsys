@@ -1,4 +1,5 @@
-#pragma once
+#ifndef SURFACE_INDICATION_CK_HPP
+#define SURFACE_INDICATION_CK_HPP
 
 #include "surface_indication_ck.h"
 #include "base_particles.hpp"
