@@ -1,0 +1,27 @@
+STRING(REGEX REPLACE ".*/(.*)" "\\1" CURRENT_FOLDER ${CMAKE_CURRENT_SOURCE_DIR})
+PROJECT("${CURRENT_FOLDER}" LANGUAGES CXX)
+
+SET(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
+SET(EXECUTABLE_OUTPUT_PATH "${PROJECT_BINARY_DIR}/bin/")
+SET(BUILD_INPUT_PATH "${EXECUTABLE_OUTPUT_PATH}/input")
+SET(BUILD_RELOAD_PATH "${EXECUTABLE_OUTPUT_PATH}/reload")
+
+set(ORIGIN_SRC_DIR "/Users/frances/Local/vcpkg/idp/SPHinXsys/tests/3d_examples/test_3d_taylor_bar")
+
+file(MAKE_DIRECTORY ${BUILD_INPUT_PATH})
+execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory ${BUILD_INPUT_PATH})
+file(COPY ${ORIGIN_SRC_DIR}/regression_test_tool/ DESTINATION ${BUILD_INPUT_PATH})
+
+add_executable(${PROJECT_NAME} ${CMAKE_CURRENT_SOURCE_DIR}/levelset_test.cpp)
+# aux_source_directory(. DIR_SRCS)
+target_sources(${PROJECT_NAME} PRIVATE ${DIR_SRCS})
+target_link_libraries(${PROJECT_NAME} sphinxsys_3d)
+set_target_properties(${PROJECT_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${EXECUTABLE_OUTPUT_PATH}")
+
+# add_test(NAME ${PROJECT_NAME}_particle_relaxation COMMAND ${PROJECT_NAME} --relax=true --state_recording=${TEST_STATE_RECORDING}
+#     WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH})
+add_test(NAME ${PROJECT_NAME} COMMAND ${PROJECT_NAME} WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH})
+
+# set_tests_properties(${PROJECT_NAME} PROPERTIES DEPENDS "${PROJECT_NAME}_particle_relaxation")
+
+# set_tests_properties(${PROJECT_NAME} PROPERTIES LABELS "solid_dynamics; contact")
