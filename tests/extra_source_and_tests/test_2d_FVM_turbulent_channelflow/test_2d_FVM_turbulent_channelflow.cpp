@@ -40,14 +40,14 @@ int main(int ac, char *av[])
     the value is larger, the numerical dissipation larger*/
     InteractionWithUpdate<fluid_dynamics::EulerianIntegration1stHalfInnerRiemann> pressure_relaxation(water_block_inner, 1.0);
     InteractionWithUpdate<fluid_dynamics::EulerianIntegration2ndHalfInnerRiemann> density_relaxation(water_block_inner, 10000.0);
-    SimpleDynamics<TCFInitialCondition> initial_condition(water_block);
+    SimpleDynamics<TurbulentChannelFlowInitialCondition> initial_condition(water_block);
     SimpleDynamics<fluid_dynamics::WallAdjacentCells> wall_adj_cell(water_block_inner, ghost_creation);
    
     InteractionWithUpdate<fluid_dynamics::KEpsilonStd1stHalfExtendedHLLCRiemannSolver> tke(water_block_inner, ghost_creation, 0.0);
     InteractionWithUpdate<fluid_dynamics::KEpsilonStd2ndHalfExtendedHLLCRiemannSolver> dissipationrate(water_block_inner, ghost_creation, 0.0);
 
 
-    TCFBoundaryConditionSetup boundary_condition_setup(water_block_inner, ghost_creation);
+    TurbulentChannelFlowBoundaryConditionSetup boundary_condition_setup(water_block_inner, ghost_creation);
     /** Time step size with considering sound wave speed. */
     ReduceDynamics<fluid_dynamics::WCAcousticTimeStepSizeInFVM> get_fluid_time_step_size(water_block, read_mesh_data.MinMeshEdge(), 1.0);
     InteractionWithUpdate<fluid_dynamics::TurbulentViscousForceInner> turbulent_viscous_force(water_block_inner);
@@ -77,9 +77,9 @@ int main(int ac, char *av[])
     Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     size_t number_of_iterations = 0;
 
-    int screen_output_interval = 8000;
-    Real end_time = 120.0;
-    Real output_interval = 10.0; /**< time stamps for output. */ 
+    int screen_output_interval = 10000;
+    Real end_time = 140.0;
+    Real output_interval = 20.0; /**< time stamps for output. */ 
     //----------------------------------------------------------------------
     //	Statistics for CPU time
     //----------------------------------------------------------------------

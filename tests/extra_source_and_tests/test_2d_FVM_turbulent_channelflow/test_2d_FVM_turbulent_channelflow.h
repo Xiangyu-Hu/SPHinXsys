@@ -30,7 +30,7 @@ Real mu_f = (rho0_f * U_f * DH * 0.5) / rey_bulk;       /**< Dynamic Viscosity. 
 Real c_f = 10.0 * U_f;                               /**< Reference sound speed. */
 Real C_mu = 0.09;
 
-Real I = 0.05;
+Real turbulent_intensity = 0.05;
 Real length_scale = 0.07 * 2 * DH / pow(C_mu, 0.75);
 //----------------------------------------------------------------------
 //	Set the file path to the data file.
@@ -62,11 +62,11 @@ class WaterBlock : public ComplexShape
 //	Initialization
 //----------------------------------------------------------------------
 
-class TCFInitialCondition
+class TurbulentChannelFlowInitialCondition
     : public fluid_dynamics::FluidInitialCondition
 {
     public:
-        explicit TCFInitialCondition(SPHBody& sph_body)
+    explicit TurbulentChannelFlowInitialCondition(SPHBody &sph_body)
           : FluidInitialCondition(sph_body), C_mu_(0.09), Vol_(this->particles_->template getVariableDataByName<Real>("VolumetricMeasure")),
             K_(this->particles_->template registerStateVariable<Real>("TKE")),
             Eps_(this->particles_->template registerStateVariable<Real>("Dissipation")),
@@ -83,7 +83,7 @@ class TCFInitialCondition
         p_[index_i] = 0.2;
         Vecd initial_velocity(1.0, 0.0);
         vel_[index_i] = initial_velocity;
-        K_[index_i] = (3.0 / 2.0) * (initial_velocity.squaredNorm()) * (I * I);
+        K_[index_i] = (3.0 / 2.0) * (initial_velocity.squaredNorm()) * pow(turbulent_intensity, 2.0);
         Eps_[index_i] = pow(K_[index_i], 1.5) / length_scale;
         mu_t_[index_i] = C_mu_ * rho_[index_i] * pow(K_[index_i], 2.0) / Eps_[index_i];
         mass_[index_i] = rho_[index_i] * Vol_[index_i];
@@ -97,18 +97,18 @@ protected:
 //----------------------------------------------------------------------
 //	Case dependent boundary condition
 //----------------------------------------------------------------------
-class TCFBoundaryConditionSetup : public BoundaryConditionSetupInFVM
+class TurbulentChannelFlowBoundaryConditionSetup : public BoundaryConditionSetupInFVM
 {
 public:
 
-    TCFBoundaryConditionSetup(BaseInnerRelationInFVM& inner_relation, GhostCreationFromMesh& ghost_creation)
+    TurbulentChannelFlowBoundaryConditionSetup(BaseInnerRelationInFVM &inner_relation, GhostCreationFromMesh &ghost_creation)
         :BoundaryConditionSetupInFVM(inner_relation, ghost_creation), 
         K_(this->particles_->template getVariableDataByName<Real>("TKE")),
         Eps_(this->particles_->template getVariableDataByName<Real>("Dissipation")),
         mu_t_(this->particles_->template getVariableDataByName<Real>("TurblunetViscosity")),
         fluid_(DynamicCast<WeaklyCompressibleFluid>(this, particles_->getBaseMaterial())),
         C_mu_(0.09){};
-    virtual ~TCFBoundaryConditionSetup() {};
+    virtual ~TurbulentChannelFlowBoundaryConditionSetup(){};
 
     void applyNonSlipWallBoundary(size_t ghost_index, size_t index_i) override
     {
@@ -126,7 +126,7 @@ public:
         vel_[ghost_index] = inlet_velocity;
         p_[ghost_index] = p_[index_i];
         rho_[ghost_index] = rho_[index_i]; 
-        K_[ghost_index] = (3.0 / 2.0) * (vel_[ghost_index].squaredNorm()) * (I * I);
+        K_[ghost_index] = (3.0 / 2.0) * (vel_[ghost_index].squaredNorm()) * pow(turbulent_intensity, 2.0);
         Eps_[ghost_index] = pow(K_[ghost_index], 1.5) / length_scale;
         mu_t_[ghost_index] = C_mu_ * rho_[ghost_index] * pow(K_[ghost_index], 2.0) / Eps_[ghost_index];
     }
@@ -146,7 +146,7 @@ public:
             vel_[ghost_index] = vel_[index_i];
             p_[ghost_index] = 0.0;
             rho_[ghost_index] = rho_[index_i];
-            K_[ghost_index] = (3.0 / 2.0) * (vel_[ghost_index].squaredNorm()) * (I * I);
+            K_[ghost_index] = (3.0 / 2.0) * (vel_[ghost_index].squaredNorm()) * pow(turbulent_intensity, 2.0);
             Eps_[ghost_index] = pow(K_[ghost_index], 1.5) / length_scale;
             mu_t_[ghost_index] = C_mu_ * rho_[ghost_index] * pow(K_[ghost_index], 2.0) / Eps_[ghost_index];
         }
