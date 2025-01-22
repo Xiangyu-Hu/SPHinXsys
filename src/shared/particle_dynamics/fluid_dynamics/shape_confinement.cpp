@@ -53,8 +53,8 @@ StaticConfinementIntegration2ndHalf::StaticConfinementIntegration2ndHalf(NearSha
 void StaticConfinementIntegration2ndHalf::update(size_t index_i, Real dt)
 {
     Vecd kernel_gradient = level_set_shape_->computeKernelGradientIntegral(pos_[index_i]);
-    Vecd vel_in_wall = -vel_[index_i];
-    drho_dt_[index_i] += rho_[index_i] * (vel_[index_i] - vel_in_wall).dot(kernel_gradient);
+    Vecd vel_j_in_wall = -vel_[index_i];
+    drho_dt_[index_i] += rho_[index_i] * (vel_[index_i] - vel_j_in_wall).dot(kernel_gradient);
 }
 //=================================================================================================//
 StaticConfinement::StaticConfinement(NearShapeSurface &near_surface)

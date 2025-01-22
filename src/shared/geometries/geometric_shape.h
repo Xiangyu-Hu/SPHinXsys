@@ -30,7 +30,6 @@
 #define GEOMETRIC_SHAPE_H
 
 #include "base_geometry.h"
-#include "multi_polygon_shape.h"
 #include "geometric_element.h"
 
 namespace SPH
@@ -38,29 +37,28 @@ namespace SPH
 class GeometricShapeBox : public GeometricBox, public Shape
 {
   public:
-    explicit GeometricShapeBox(const Vec2d &halfsize,
+    explicit GeometricShapeBox(const Vecd &halfsize,
                                const std::string &shape_name = "GeometricShapeBox");
     virtual ~GeometricShapeBox(){};
 
-    virtual bool checkContain(const Vec2d &probe_point, bool BOUNDARY_INCLUDED = true) override;
-    virtual Vec2d findClosestPoint(const Vec2d &probe_point) override;
+    virtual bool checkContain(const Vecd &probe_point, bool BOUNDARY_INCLUDED = true) override;
+    virtual Vecd findClosestPoint(const Vecd &probe_point) override;
 
   protected:
     virtual BoundingBox findBounds() override;
 };
 
-class GeometricShapeBall : public Shape
+class GeometricShapeBall : public GeometricBall, public Shape
 {
-    Vec2d center_;
-    Real radius_;
+    Vecd center_;
 
   public:
-    explicit GeometricShapeBall(const Vec2d &center, Real radius,
+    explicit GeometricShapeBall(const Vecd &center, Real radius,
                                 const std::string &shape_name = "GeometricShapeBall");
     virtual ~GeometricShapeBall(){};
 
-    virtual bool checkContain(const Vec2d &probe_point, bool BOUNDARY_INCLUDED = true) override;
-    virtual Vec2d findClosestPoint(const Vec2d &probe_point) override;
+    virtual bool checkContain(const Vecd &probe_point, bool BOUNDARY_INCLUDED = true) override;
+    virtual Vecd findClosestPoint(const Vecd &probe_point) override;
 
   protected:
     virtual BoundingBox findBounds() override;
