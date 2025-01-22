@@ -3,6 +3,7 @@
  * @brief This is an example of rigid-flexible coupling simulation.
  * @author Weiyi Kong
  */
+#include "test_3d_twisting_rigid_elastic_bar.hpp"
 #include "sphinxsys.h"
 using namespace SPH;
 
@@ -13,59 +14,79 @@ int main(int ac, char *av[])
     run_rigid_elastic_coupling(1);
 }
 
-struct solid_algs
+struct base_solid_algs
 {
     InnerRelation inner_relation;
-    InteractionWithUpdate<LinearGradientCorrectionMatrixInner> corrected_configuration;
-    Dynamics1Level<solid_dynamics::Integration1stHalfPK2RightCauchy> stress_relaxation_first_half;
-    Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half;
-    ReduceDynamics<solid_dynamics::AcousticTimeStep> time_step;
+    ContactRelation contact_relation;
+    InteractionWithUpdate<LinearGradientCorrectionMatrixComplex> corrected_configuration;
 
-    explicit solid_algs(RealBody &body)
+    explicit base_solid_algs(RealBody &body, RealBody &contact_body)
         : inner_relation(body),
-          corrected_configuration(inner_relation),
-          stress_relaxation_first_half(inner_relation),
-          stress_relaxation_second_half(inner_relation),
-          time_step(body){};
+          contact_relation(body, {&contact_body}),
+          corrected_configuration(inner_relation, contact_relation)
+    {
+        body.getBaseParticles().registerStateVariable<Vecd>("Velocity");
+        contact_body.getBaseParticles().registerStateVariable<Vecd>("Velocity");
+    };
 
     void corrected_config() { corrected_configuration.exec(); }
-    void stress_relaxation_first(Real dt) { stress_relaxation_first_half.exec(dt); }
-    void stress_relaxation_second(Real dt) { stress_relaxation_second_half.exec(dt); }
-    double get_time_step() { return time_step.exec(); }
 };
 
-BoundingBox union_bounding_box(const BoundingBox &a, const BoundingBox &b)
+struct elastic_solid_algs
 {
-    BoundingBox out = a;
-    out.first_[0] = std::min(a.first_[0], b.first_[0]);
-    out.first_[1] = std::min(a.first_[1], b.first_[1]);
-    out.first_[2] = std::min(a.first_[2], b.first_[2]);
-    out.second_[0] = std::max(a.second_[0], b.second_[0]);
-    out.second_[1] = std::max(a.second_[1], b.second_[1]);
-    out.second_[2] = std::max(a.second_[2], b.second_[2]);
-    return out;
-}
+    base_solid_algs base_algs;
+    Dynamics1Level<solid_dynamics::Integration1stHalfPK2RightCauchy> stress_relaxation_first_half;
+    Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half;
+    DampingWithRandomChoice<InteractionSplit<DampingPairwiseWithWall<Vec3d, FixedDampingRate>>> damping;
+    ReduceDynamics<solid_dynamics::AcousticTimeStep> time_step;
 
-class FixPart : public BodyPartByParticle
+    explicit elastic_solid_algs(RealBody &body, RealBody &contact_body, Real physical_damping)
+        : base_algs(body, contact_body),
+          stress_relaxation_first_half(base_algs.inner_relation),
+          stress_relaxation_second_half(base_algs.inner_relation),
+          damping(0.2, InteractArgs(base_algs.inner_relation, "Velocity", physical_damping), InteractArgs(base_algs.contact_relation, "Velocity", physical_damping)),
+          time_step(body){};
+
+    void corrected_config() { base_algs.corrected_configuration.exec(); }
+    void stress_relaxation_first(Real dt) { stress_relaxation_first_half.exec(dt); }
+    void stress_relaxation_second(Real dt) { stress_relaxation_second_half.exec(dt); }
+    void damping_exec(Real dt) { damping.exec(dt); }
+    Real get_time_step() { return time_step.exec(); }
+};
+
+struct elastic_rigid_coupling_algs
 {
-  private:
-    std::function<bool(Vec3d &)> contains_;
+    CouplingPart coupling_part;
+    InteractionWithUpdate<SolidRigidCouplingStressFirst> coupling_stress_first;
+    InteractionWithUpdate<SolidRigidCouplingStressSecond> coupling_stress_second;
 
-  public:
-    FixPart(SPHBody &body, const std::string &body_part_name, std::function<bool(Vec3d &)> contains)
-        : BodyPartByParticle(body, body_part_name),
-          contains_(std::move(contains))
-    {
-        TaggingParticleMethod tagging_particle_method = std::bind(&FixPart::tagManually, this, _1);
-        tagParticles(tagging_particle_method);
-    };
+    explicit elastic_rigid_coupling_algs(BaseContactRelation &contact_relation)
+        : coupling_part(contact_relation),
+          coupling_stress_first(coupling_part),
+          coupling_stress_second(coupling_part){};
 
-  private:
-    void tagManually(size_t index_i)
-    {
-        if (contains_(pos_[index_i]))
-            body_part_particles_.push_back(index_i);
-    };
+    inline void reset_coupling_particles() { coupling_part.reset_ids(); }
+    void coupling_first(Real dt) { coupling_stress_first.exec(dt); }
+    void coupling_second(Real dt) { coupling_stress_second.exec(dt); }
+};
+
+struct rigid_elastic_coupling_algs
+{
+    CouplingPart coupling_part;
+    InteractionWithUpdate<RigidBodyPseudoDeformationGradient> deformation_gradient;
+    SimpleDynamics<RigidBodyPseudoPK1Stress> pk1_stress;
+    InteractionWithUpdate<RigidSolidCoupling> coupling_force;
+
+    explicit rigid_elastic_coupling_algs(BaseInnerRelation &inner_relation, BaseContactRelation &contact_relation)
+        : coupling_part(contact_relation),
+          deformation_gradient(coupling_part, inner_relation),
+          pk1_stress(coupling_part, *dynamic_cast<ElasticSolid *>(contact_relation.getContactBodies()[0]->base_material_)),
+          coupling_force(coupling_part){};
+
+    inline void reset_coupling_particles() { coupling_part.reset_ids(); }
+    inline void update_deformation_gradient(Real dt) { deformation_gradient.exec(dt); }
+    inline void update_pseudo_stress(Real dt) { pk1_stress.exec(dt); }
+    inline void update_coupling_force(Real dt) { coupling_force.exec(dt); }
 };
 
 void run_rigid_elastic_coupling(int res_factor)
@@ -99,9 +120,9 @@ void run_rigid_elastic_coupling(int res_factor)
     auto get_force_p = [&](Real t)
     {
         if (t < 0.1)
-            return 0.5 * t;
+            return 5 * t;
         else if (t < 0.2)
-            return 0.5 * (0.2 - t);
+            return 5 * (0.2 - t);
         else
             return 0.0;
     };
@@ -136,11 +157,22 @@ void run_rigid_elastic_coupling(int res_factor)
     SimpleDynamics<NormalDirectionFromBodyShape>{rigid_body}.exec();
 
     // Methods
-    solid_algs elastic_algs(elastic_body);
+    elastic_solid_algs elastic_algs(elastic_body, rigid_body, get_physical_viscosity_general(rho, youngs_modulus, width));
+    base_solid_algs rigid_algs(rigid_body, elastic_body);
+
+    // Initialization
+    system.initializeSystemCellLinkedLists();
+    system.initializeSystemConfigurations();
+    elastic_algs.corrected_config();
+    rigid_algs.corrected_config();
+
+    // Coupling algs
+    elastic_rigid_coupling_algs elastic_rigid_coupling(elastic_algs.base_algs.contact_relation);
+    rigid_elastic_coupling_algs rigid_elastic_coupling(rigid_algs.inner_relation, rigid_algs.contact_relation);
 
     // Boundary conditions
     FixPart fix_elastic_part(elastic_body, "ClampingPart", [&, x0 = mesh_elastic->getBounds().first_.x()](Vec3d &pos)
-                             { return pos.x() < x0 + 0.5 * dp; });
+                             { return pos.x() < x0 + dp; });
     SimpleDynamics<FixBodyPartConstraint> fix_elastic_bc(fix_elastic_part);
 
     // Multibody system
@@ -153,8 +185,10 @@ void run_rigid_elastic_coupling(int res_factor)
     SolidBodyPartForSimbody rigid_multibody(rigid_body, mesh_rigid);
     SimTK::Body::Rigid rigid_info(*rigid_multibody.body_part_mass_properties_);
     SimTK::MobilizedBody::Free rigidMBody(matter.Ground(), SimTK::Transform(SimTKVec3(0)), rigid_info, SimTK::Transform(SimTKVec3(0)));
+    // SimTK::MobilizedBody::Planar rigidMBody(matter.Ground(), SimTK::Transform(SimTKVec3(mesh_rigid->getBounds().first_.x(), mesh_rigid->getBounds().first_.y())), rigid_info, SimTK::Transform(SimTKVec3(0)));
 
     /** discrete forces acting on the bodies. */
+    // SimTK::Force::UniformGravity sim_gravity(forces, matter, SimTKVec3(Real(20), 0.0, 0.0));
     SimTK::Force::DiscreteForces force_on_bodies(forces, matter);
 
     /** Time stepping method for multibody system.*/
@@ -165,21 +199,25 @@ void run_rigid_elastic_coupling(int res_factor)
     integ.initialize(state);
 
     /** Coupling between SimBody and SPH.*/
-    // ReduceDynamics<solid_dynamics::TotalForceOnBodyPartForSimBody> force_on_rigid_bar(rigid_multibody, MBsystem, rigidMBody, integ);
+    ReduceDynamics<solid_dynamics::TotalForceOnBodyPartForSimBody> force_on_rigid_bar(rigid_multibody, MBsystem, rigidMBody, integ);
     SimpleDynamics<solid_dynamics::ConstraintBodyPartBySimBody> constraint_rigid_bar(rigid_multibody, MBsystem, rigidMBody, integ);
 
     // output
     BodyStatesRecordingToVtp vtp_output(system);
     vtp_output.addToWrite<Vec3d>(elastic_body, "Velocity");
     vtp_output.addToWrite<Vec3d>(rigid_body, "Velocity");
+    vtp_output.addToWrite<Mat3d>(elastic_body, "LinearGradientCorrectionMatrix");
+    vtp_output.addToWrite<Mat3d>(rigid_body, "LinearGradientCorrectionMatrix");
+    vtp_output.addToWrite<Mat3d>(elastic_body, "DeformationGradient");
+    vtp_output.addToWrite<Mat3d>(rigid_body, "DeformationGradient");
+    vtp_output.addToWrite<Mat3d>(elastic_body, "StressPK1OnParticle");
+    vtp_output.addToWrite<Mat3d>(rigid_body, "StressPK1OnParticle");
+    vtp_output.addToWrite<Vec3d>(rigid_body, "ForcePrior");
+    vtp_output.addToWrite<Vec3d>(elastic_body, "CouplingForce");
+    vtp_output.addToWrite<Vec3d>(rigid_body, "CouplingForce");
     vtp_output.addDerivedVariableRecording<SimpleDynamics<Displacement>>(elastic_body);
     vtp_output.addDerivedVariableRecording<SimpleDynamics<Displacement>>(rigid_body);
     vtp_output.writeToFile(0);
-
-    // Initialization
-    system.initializeSystemCellLinkedLists();
-    system.initializeSystemConfigurations();
-    elastic_algs.corrected_config();
 
     // Simulation
     Real &physical_time = *system.getSystemVariableDataByName<Real>("PhysicalTime");
@@ -208,10 +246,15 @@ void run_rigid_elastic_coupling(int res_factor)
                 if (dt < dt_ref / 1e2)
                     throw std::runtime_error("time step decreased too much");
 
+                // compute the pseudo PK1 stress of the rigid body
+                rigid_elastic_coupling.update_pseudo_stress(dt);
+                // first half integration of elastic body
                 elastic_algs.stress_relaxation_first(dt);
-                fix_elastic_bc.exec();
-                elastic_algs.stress_relaxation_second(dt);
-
+                // add the first half coupling force
+                elastic_rigid_coupling.coupling_first(dt);
+                // update the coupling force on the rigid body
+                rigid_elastic_coupling.update_coupling_force(dt);
+                // update rigid body state
                 {
                     SimTK::State &state_for_update = integ.updAdvancedState();
                     force_on_bodies.clearAllBodyForces(state_for_update);
@@ -221,11 +264,19 @@ void run_rigid_elastic_coupling(int res_factor)
                     SimTKVec3 torque_vec(-force_p * height, 0, 0); // torque
                     SimTK::SpatialVec force_on_rigid_body(torque_vec, force_vec);
 
-                    force_on_bodies.setOneBodyForce(state_for_update, rigidMBody, force_on_rigid_body);
-                    //   force_on_bodies.setOneBodyForce(state_for_update, rigidMBody, force_on_rigid_bar.exec());
+                    force_on_bodies.setOneBodyForce(state_for_update, rigidMBody, force_on_rigid_body + force_on_rigid_bar.exec());
                     integ.stepBy(dt);
                     constraint_rigid_bar.exec();
                 }
+                // second half integration of elastic body
+                fix_elastic_bc.exec();
+                elastic_algs.damping_exec(dt);
+                fix_elastic_bc.exec();
+                elastic_algs.stress_relaxation_second(dt);
+                // update the deformation gradient change due to coupling
+                elastic_rigid_coupling.coupling_second(dt);
+                // update the pseudo deformation tensor of the rigid body
+                rigid_elastic_coupling.update_deformation_gradient(dt);
 
                 ++ite;
                 integral_time += dt;
