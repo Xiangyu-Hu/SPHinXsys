@@ -125,7 +125,7 @@ int main(int ac, char *av[])
     BodyStatesRecordingToVtp body_states_recording(sph_system);
     body_states_recording.addToWrite<Vecd>(wall_boundary, "NormalDirection");
     body_states_recording.addToWrite<Real>(water_block, "Density");
-    body_states_recording.addToWrite<int>(water_block, "SurfaceIndicator");
+    body_states_recording.addToWrite<int>(water_block, "Indicator");
 
     RestartIO restart_io(sph_system);
 
