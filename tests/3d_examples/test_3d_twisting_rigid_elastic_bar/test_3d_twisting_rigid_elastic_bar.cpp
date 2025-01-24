@@ -157,9 +157,9 @@ void run_rigid_elastic_coupling(int res_factor)
     auto get_force_p = [&](Real t)
     {
         if (t < 0.1)
-            return 5 * t;
+            return 5.0 * t;
         else if (t < 0.2)
-            return 5 * (0.2 - t);
+            return 5.0 * (0.2 - t);
         else
             return 0.0;
     };
