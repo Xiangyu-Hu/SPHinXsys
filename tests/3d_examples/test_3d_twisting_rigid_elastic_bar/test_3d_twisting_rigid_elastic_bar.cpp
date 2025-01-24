@@ -72,6 +72,59 @@ struct solid_algs
     Real get_time_step() { return time_step.exec(); }
 };
 
+struct rigid_algs
+{
+    // multi-body system
+    SimTK::MultibodySystem MBsystem{};
+    SimTK::SimbodyMatterSubsystem matter;
+    SimTK::GeneralForceSubsystem forces;
+
+    // rigid body
+    SolidBodyPartForSimbody rigid_multibody;
+    SimTK::Body::Rigid rigid_info;
+    SimTK::MobilizedBody::Free rigidMBody;
+    SimTK::Force::DiscreteForces force_on_bodies;
+
+    // state
+    SimTK::State state;
+    SimTK::RungeKuttaMersonIntegrator integ;
+
+    // coupling between SimBody and SPH
+    std::unique_ptr<ReduceDynamics<solid_dynamics::TotalForceOnBodyPartForSimBody>> force_on_rigid_body;
+    std::unique_ptr<SimpleDynamics<solid_dynamics::ConstraintBodyPartBySimBody>> constraint_rigid_body;
+
+    rigid_algs(RealBody &body, SharedPtr<Shape> rigid_shape)
+        : matter(MBsystem),
+          forces(MBsystem),
+          rigid_multibody(body, rigid_shape),
+          rigid_info(*rigid_multibody.body_part_mass_properties_),
+          rigidMBody(matter.Ground(), SimTK::Transform(SimTKVec3(0)), rigid_info, SimTK::Transform(SimTKVec3(0))),
+          force_on_bodies(forces, matter),
+          state(MBsystem.realizeTopology()),
+          integ(MBsystem)
+    {
+        integ.setAccuracy(1e-3);
+        integ.setAllowInterpolation(false);
+        integ.initialize(state);
+
+        force_on_rigid_body = std::make_unique<ReduceDynamics<solid_dynamics::TotalForceOnBodyPartForSimBody>>(
+            rigid_multibody, MBsystem, rigidMBody, integ);
+        constraint_rigid_body = std::make_unique<SimpleDynamics<solid_dynamics::ConstraintBodyPartBySimBody>>(
+            rigid_multibody, MBsystem, rigidMBody, integ);
+    }
+
+    void exec(const SimTK::SpatialVec &ext_force, Real dt)
+    {
+        SimTK::State &state_for_update = integ.updAdvancedState();
+        force_on_bodies.clearAllBodyForces(state_for_update);
+        force_on_bodies.setOneBodyForce(state_for_update, rigidMBody, ext_force + force_on_rigid_body->exec());
+        integ.stepBy(dt);
+        constraint_rigid_body->exec();
+    }
+
+    void apply_constraint() { constraint_rigid_body->exec(); }
+};
+
 void run_rigid_elastic_coupling(int res_factor)
 {
     // unit transformation
@@ -110,6 +163,13 @@ void run_rigid_elastic_coupling(int res_factor)
         else
             return 0.0;
     };
+    auto get_rigid_force = [&](Real time)
+    {
+        Real force_p = get_force_p(time);
+        SimTKVec3 force_vec(0, -force_p, 0);           // downward force
+        SimTKVec3 torque_vec(-force_p * height, 0, 0); // torque
+        return SimTK::SpatialVec(torque_vec, force_vec);
+    };
 
     // Import meshes
     // mesh of the total bar
@@ -136,6 +196,7 @@ void run_rigid_elastic_coupling(int res_factor)
 
     // Methods
     solid_algs algs(body, get_physical_viscosity_general(rho, youngs_modulus, width));
+    rigid_algs rigid_algs(body, mesh_rigid);
 
     // Initialization
     system.initializeSystemCellLinkedLists();
@@ -146,31 +207,6 @@ void run_rigid_elastic_coupling(int res_factor)
     FixPart fix_elastic_part(body, "ClampingPart", [&, x0 = bbox.first_.x()](Vec3d &pos)
                              { return pos.x() < x0 + dp; });
     SimpleDynamics<FixBodyPartConstraint> fix_elastic_bc(fix_elastic_part);
-
-    // Multibody system
-    SimTK::MultibodySystem MBsystem;
-    /** The bodies or matter of the MBsystem. */
-    SimTK::SimbodyMatterSubsystem matter(MBsystem);
-    /** The forces of the MBsystem.*/
-    SimTK::GeneralForceSubsystem forces(MBsystem);
-    /** Mass properties of the rigid solid box. */
-    SolidBodyPartForSimbody rigid_multibody(body, mesh_rigid);
-    SimTK::Body::Rigid rigid_info(*rigid_multibody.body_part_mass_properties_);
-    SimTK::MobilizedBody::Free rigidMBody(matter.Ground(), SimTK::Transform(SimTKVec3(0)), rigid_info, SimTK::Transform(SimTKVec3(0)));
-
-    /** discrete forces acting on the bodies. */
-    SimTK::Force::DiscreteForces force_on_bodies(forces, matter);
-
-    /** Time stepping method for multibody system.*/
-    SimTK::State state = MBsystem.realizeTopology();
-    SimTK::RungeKuttaMersonIntegrator integ(MBsystem);
-    integ.setAccuracy(1e-3);
-    integ.setAllowInterpolation(false);
-    integ.initialize(state);
-
-    /** Coupling between SimBody and SPH.*/
-    ReduceDynamics<solid_dynamics::TotalForceOnBodyPartForSimBody> force_on_rigid_bar(rigid_multibody, MBsystem, rigidMBody, integ);
-    SimpleDynamics<solid_dynamics::ConstraintBodyPartBySimBody> constraint_rigid_bar(rigid_multibody, MBsystem, rigidMBody, integ);
 
     // output
     BodyStatesRecordingToVtp vtp_output(system);
@@ -211,26 +247,19 @@ void run_rigid_elastic_coupling(int res_factor)
 
                 // first half integration of elastic body
                 algs.stress_relaxation_first(dt);
-
-                // update rigid body state based on the inner force computed in the previous step
-                {
-                    SimTK::State &state_for_update = integ.updAdvancedState();
-                    force_on_bodies.clearAllBodyForces(state_for_update);
-
-                    Real force_p = get_force_p(physical_time);
-                    SimTKVec3 force_vec(0, -force_p, 0);           // downward force
-                    SimTKVec3 torque_vec(-force_p * height, 0, 0); // torque
-                    SimTK::SpatialVec force_on_rigid_body(torque_vec, force_vec);
-
-                    force_on_bodies.setOneBodyForce(state_for_update, rigidMBody, force_on_rigid_body + force_on_rigid_bar.exec());
-                    integ.stepBy(dt);
-                    constraint_rigid_bar.exec();
-                }
-                // second half integration of elastic body
                 fix_elastic_bc.exec();
                 algs.damping_exec(dt);
                 fix_elastic_bc.exec();
+
+                // update rigid body state based on the inner force computed in the previous step
+                auto ext_force = get_rigid_force(physical_time);
+                rigid_algs.exec(ext_force, dt);
+
+                // second half integration of elastic body
                 algs.stress_relaxation_second(dt);
+
+                // impose the rigid-body constraint again
+                rigid_algs.apply_constraint();
 
                 ++ite;
                 integral_time += dt;
