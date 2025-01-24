@@ -41,7 +41,7 @@ class PressureCondition : public BaseFlowBoundaryCondition
 {
   public:
     /** default parameter indicates prescribe pressure */
-    explicit PressureCondition(BodyAlignedBoxByCell &aligned_box_part)
+    explicit PressureCondition(AlignedBoxPartByCell &aligned_box_part)
         : BaseFlowBoundaryCondition(aligned_box_part),
           aligned_box_(aligned_box_part.getAlignedBox()),
           alignment_axis_(aligned_box_.AlignmentAxis()),

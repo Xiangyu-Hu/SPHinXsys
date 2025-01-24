@@ -214,27 +214,37 @@ class NearShapeSurface : public BodyPartByCell
     bool checkNearSurface(Vecd cell_position, Real threshold);
 };
 
-class BodyAlignedBoxByParticle : public BodyPartByParticle
+class AlignedBoxPart
 {
+    UniquePtrKeeper<SingularVariable<AlignedBox>> sv_aligned_box_keeper_;
+
   public:
-    BodyAlignedBoxByParticle(RealBody &real_body, const AlignedBox &aligned_box);
-    virtual ~BodyAlignedBoxByParticle() {};
+    AlignedBoxPart(const std::string &name, const AlignedBox &aligned_box);
+    virtual ~AlignedBoxPart() {};
+    SingularVariable<AlignedBox> *svAlignedBox() { return sv_aligned_box_keeper_.getPtr(); };
     AlignedBox &getAlignedBox() { return aligned_box_; };
 
   protected:
-    AlignedBox aligned_box_;
+    AlignedBox &aligned_box_;
+};
+
+class AlignedBoxPartByParticle : public BodyPartByParticle, public AlignedBoxPart
+{
+  public:
+    AlignedBoxPartByParticle(RealBody &real_body, const AlignedBox &aligned_box);
+    virtual ~AlignedBoxPartByParticle() {};
+
+  protected:
     void tagByContain(size_t particle_index);
 };
 
-class BodyAlignedBoxByCell : public BodyPartByCell
+class AlignedBoxPartByCell : public BodyPartByCell, public AlignedBoxPart
 {
   public:
-    BodyAlignedBoxByCell(RealBody &real_body, const AlignedBox &aligned_box);
-    virtual ~BodyAlignedBoxByCell() {};
-    AlignedBox &getAlignedBox() { return aligned_box_; };
+    AlignedBoxPartByCell(RealBody &real_body, const AlignedBox &aligned_box);
+    virtual ~AlignedBoxPartByCell() {};
 
   protected:
-    AlignedBox aligned_box_;
     bool checkNotFar(Vecd cell_position, Real threshold);
 };
 } // namespace SPH
