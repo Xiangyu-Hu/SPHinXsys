@@ -47,6 +47,18 @@ class GeometricBox
     Vecd halfsize_;
 };
 
+class GeometricBall
+{
+  public:
+    explicit GeometricBall(Real radius);
+    ~GeometricBall() {};
+
+    bool checkContain(const Vecd &probe_point);
+    Vecd findClosestPoint(const Vecd &probe_point);
+
+  protected:
+    Real radius_;
+};
 } // namespace SPH
 
 #endif // GEOMETRIC_ELEMENT_H

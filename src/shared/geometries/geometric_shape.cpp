@@ -3,15 +3,15 @@
 namespace SPH
 {
 //=================================================================================================//
-GeometricShapeBox::GeometricShapeBox(const Vec2d &halfsize, const std::string &shape_name)
-    : GeometricBox(halfsize), Shape(shape_name){}
+GeometricShapeBox::GeometricShapeBox(const Vecd &halfsize, const std::string &shape_name)
+    : GeometricBox(halfsize), Shape(shape_name) {}
 //=================================================================================================//
-bool GeometricShapeBox::checkContain(const Vec2d &probe_point, bool BOUNDARY_INCLUDED)
+bool GeometricShapeBox::checkContain(const Vecd &probe_point, bool BOUNDARY_INCLUDED)
 {
     return GeometricBox::checkContain(probe_point);
 }
 //=================================================================================================//
-Vec2d GeometricShapeBox::findClosestPoint(const Vec2d &probe_point)
+Vecd GeometricShapeBox::findClosestPoint(const Vecd &probe_point)
 {
     return GeometricBox::findClosestPoint(probe_point);
 }
@@ -21,27 +21,23 @@ BoundingBox GeometricShapeBox::findBounds()
     return BoundingBox(-halfsize_, halfsize_);
 }
 //=================================================================================================//
-GeometricShapeBall::GeometricShapeBall(const Vec2d &center, Real radius,
+GeometricShapeBall::GeometricShapeBall(const Vecd &center, Real radius,
                                        const std::string &shape_name)
-    : Shape(shape_name), center_(center), radius_(radius) {}
+    : GeometricBall(radius), Shape(shape_name), center_(center) {}
 //=================================================================================================//
-bool GeometricShapeBall::checkContain(const Vec2d &probe_point, bool BOUNDARY_INCLUDED)
+bool GeometricShapeBall::checkContain(const Vecd &probe_point, bool BOUNDARY_INCLUDED)
 {
-    return (probe_point - center_).norm() < radius_;
+    return GeometricBall::checkContain(probe_point - center_);
 }
 //=================================================================================================//
-Vec2d GeometricShapeBall::findClosestPoint(const Vec2d &probe_point)
+Vecd GeometricShapeBall::findClosestPoint(const Vecd &probe_point)
 {
-    Vec2d displacement = probe_point - center_;
-    Real distance = displacement.norm();
-    Real cosine = (SGN(displacement[0]) * (ABS(displacement[0])) + TinyReal) / (distance + TinyReal);
-    Real sine = displacement[1] / (distance + TinyReal);
-    return probe_point + (radius_ - distance) * Vec2d(cosine, sine);
+    return center_ + GeometricBall::findClosestPoint(probe_point - center_);
 }
 //=================================================================================================//
 BoundingBox GeometricShapeBall::findBounds()
 {
-    Vec2d shift = Vec2d(radius_, radius_);
+    Vecd shift = radius_ * Vecd::Ones();
     return BoundingBox(center_ - shift, center_ + shift);
 }
 //=================================================================================================//

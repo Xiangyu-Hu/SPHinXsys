@@ -157,15 +157,21 @@ bool NearShapeSurface::checkNearSurface(Vecd cell_position, Real threshold)
     return level_set_shape_.checkNearSurface(cell_position, threshold);
 }
 //=================================================================================================//
-BodyAlignedBoxByParticle::BodyAlignedBoxByParticle(RealBody &real_body, const AlignedBox &aligned_box)
-    : BodyPartByParticle(real_body, "AlignedBoxByParticle"), aligned_box_(aligned_box)
+AlignedBoxPart::AlignedBoxPart(const std::string &name, const AlignedBox &aligned_box)
+    : aligned_box_(*sv_aligned_box_keeper_
+                        .createPtr<SingularVariable<AlignedBox>>("AlignedBox" + name, aligned_box)
+                        ->Data()) {}
+//=================================================================================================//
+AlignedBoxPartByParticle::AlignedBoxPartByParticle(RealBody &real_body, const AlignedBox &aligned_box)
+    : BodyPartByParticle(real_body, "AlignedBoxByParticle"),
+      AlignedBoxPart(body_part_name_, aligned_box)
 {
     TaggingParticleMethod tagging_particle_method =
-        std::bind(&BodyAlignedBoxByParticle::tagByContain, this, _1);
+        std::bind(&AlignedBoxPartByParticle::tagByContain, this, _1);
     tagParticles(tagging_particle_method);
 }
 //=================================================================================================//
-void BodyAlignedBoxByParticle::tagByContain(size_t particle_index)
+void AlignedBoxPartByParticle::tagByContain(size_t particle_index)
 {
     if (aligned_box_.checkContain(pos_[particle_index]))
     {
@@ -173,15 +179,16 @@ void BodyAlignedBoxByParticle::tagByContain(size_t particle_index)
     }
 }
 //=================================================================================================//
-BodyAlignedBoxByCell::BodyAlignedBoxByCell(RealBody &real_body, const AlignedBox &aligned_box)
-    : BodyPartByCell(real_body, "AlignedBoxByCell"), aligned_box_(aligned_box)
+AlignedBoxPartByCell::AlignedBoxPartByCell(RealBody &real_body, const AlignedBox &aligned_box)
+    : BodyPartByCell(real_body, "AlignedBoxByCell"),
+      AlignedBoxPart(body_part_name_, aligned_box)
 {
     TaggingCellMethod tagging_cell_method =
-        std::bind(&BodyAlignedBoxByCell::checkNotFar, this, _1, _2);
+        std::bind(&AlignedBoxPartByCell::checkNotFar, this, _1, _2);
     tagCells(tagging_cell_method);
 }
 //=================================================================================================//
-bool BodyAlignedBoxByCell::checkNotFar(Vecd cell_position, Real threshold)
+bool AlignedBoxPartByCell::checkNotFar(Vecd cell_position, Real threshold)
 {
     return aligned_box_.checkNotFar(cell_position, threshold);
 }
