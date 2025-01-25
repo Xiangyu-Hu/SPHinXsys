@@ -12,16 +12,14 @@ namespace SPH
 void PltEngine::
     writeAQuantityHeader(std::ofstream &out_file, const Real &quantity, const std::string &quantity_name)
 {
-    out_file << "\"" << quantity_name << "\""
-             << "   ";
+    out_file << "\"" << quantity_name << "\"" << "   ";
 }
 //=============================================================================================//
 void PltEngine::
     writeAQuantityHeader(std::ofstream &out_file, const Vecd &quantity, const std::string &quantity_name)
 {
     for (int i = 0; i != Dimensions; ++i)
-        out_file << "\"" << quantity_name << "[" << i << "]\""
-                 << "   ";
+        out_file << "\"" << quantity_name << "[" << i << "]\"" << "   ";
 }
 //=============================================================================================//
 void PltEngine::writeAQuantity(std::ofstream &out_file, const Real &quantity)

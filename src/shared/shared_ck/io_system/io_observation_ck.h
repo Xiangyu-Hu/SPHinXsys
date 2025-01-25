@@ -112,7 +112,7 @@ class ReducedQuantityRecording<ExecutionPolicy, LocalReduceMethodType> : public 
 
   public:
     /*< deduce variable type from reduce method. */
-    using VariableType = typename LocalReduceMethodType::ReturnType;
+    using VariableType = typename LocalReduceMethodType::FinalOutput::OutputType;
     VariableType type_indicator_; /*< this is an indicator to identify the variable type. */
 
   public:
@@ -128,7 +128,7 @@ class ReducedQuantityRecording<ExecutionPolicy, LocalReduceMethodType> : public 
         std::ofstream out_file(filefullpath_output_.c_str(), std::ios::app);
         out_file << "\"run_time\""
                  << "   ";
-        plt_engine_.writeAQuantityHeader(out_file, reduce_method_.Reference(), quantity_name_);
+        plt_engine_.writeAQuantityHeader(out_file, ZeroData<VariableType>::value, quantity_name_);
         out_file << "\n";
         out_file.close();
     };

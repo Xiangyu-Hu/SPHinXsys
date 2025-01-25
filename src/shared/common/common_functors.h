@@ -41,6 +41,12 @@ struct ConstructArgs : public std::tuple<Args...>
     ConstructArgs(Args... args) : std::tuple<Args...>(args...) {}
 };
 
+template <class DataType>
+struct ReturnFunction
+{
+    typedef DataType ReturnType;
+};
+
 struct AssignIndex
 {
     UnsignedInt operator()(UnsignedInt i) const { return i; }

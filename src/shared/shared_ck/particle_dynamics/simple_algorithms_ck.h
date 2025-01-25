@@ -65,36 +65,40 @@ class StateDynamics : public UpdateType, public BaseDynamics<void>
 
 template <class ExecutionPolicy, class ReduceType>
 class ReduceDynamicsCK : public ReduceType,
-                         public BaseDynamics<typename ReduceType::ReturnType>
+                         public BaseDynamics<typename ReduceType::FinalOutput::OutputType>
 {
     using Identifier = typename ReduceType::Identifier;
     using ReduceKernel = typename ReduceType::ReduceKernel;
-    using ReturnType = typename ReduceType::ReturnType;
+    using ReduceReturnType = typename ReduceType::ReturnType;
     using Operation = typename ReduceType::OperationType;
+    using FinalOutput = typename ReduceType::FinalOutput;
+    using OutputType = typename FinalOutput::OutputType;
     using KernelImplementation =
         Implementation<ExecutionPolicy, ReduceType, ReduceKernel>;
     KernelImplementation kernel_implementation_;
+    FinalOutput final_output_;
 
   public:
     template <typename... Args>
     ReduceDynamicsCK(Args &&...args)
         : ReduceType(std::forward<Args>(args)...),
-          BaseDynamics<ReturnType>(), kernel_implementation_(*this){};
+          BaseDynamics<OutputType>(), kernel_implementation_(*this),
+          final_output_(*this){};
     virtual ~ReduceDynamicsCK() {};
 
     std::string QuantityName() { return this->quantity_name_; };
     std::string DynamicsIdentifierName() { return this->identifier_.getName(); };
 
-    virtual ReturnType exec(Real dt = 0.0) override
+    virtual OutputType exec(Real dt = 0.0) override
     {
         this->setupDynamics(dt);
         ReduceKernel *reduce_kernel = kernel_implementation_.getComputingKernel();
-        ReturnType temp = particle_reduce<Operation>(
+        ReduceReturnType temp = particle_reduce<Operation>(
             LoopRangeCK<ExecutionPolicy, Identifier>(this->identifier_),
             ReduceReference<Operation>::value,
             [=](size_t i)
             { return reduce_kernel->reduce(i, dt); });
-        return this->outputResult(temp);
+        return final_output_.Result(temp);
     };
 };
 } // namespace SPH
