@@ -139,6 +139,8 @@ class BaseParticles
     DataType *addUniqueDiscreteVariable(const std::string &name, size_t data_size, Args &&...args);
     template <class DataType, typename... Args>
     DiscreteVariable<DataType> *addUniqueDiscreteVariableOnly(const std::string &name, size_t data_size, Args &&...args);
+    template <class DataType>
+    DiscreteVariable<DataType> *addUniqueDiscreteVariableFrom(const std::string &name, DiscreteVariable<DataType> *old_variable);
     template <typename DataType, typename... Args>
     DataType *registerDiscreteVariable(const std::string &name, size_t data_size, Args &&...args);
 

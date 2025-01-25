@@ -13,7 +13,10 @@ BodyPart::BodyPart(SPHBody &sph_body, const std::string &body_part_name)
 //=================================================================================================//
 BodyPartByParticle::BodyPartByParticle(SPHBody &sph_body, const std::string &body_part_name)
     : BodyPart(sph_body, body_part_name),
-      body_part_bounds_(Vecd::Zero(), Vecd::Zero()), body_part_bounds_set_(false) {}
+      body_part_bounds_(Vecd::Zero(), Vecd::Zero()), body_part_bounds_set_(false)
+{
+    sph_body.addBodyPartByParticle(this);
+}
 //=================================================================================================//
 void BodyPartByParticle::tagParticles(TaggingParticleMethod &tagging_particle_method)
 {

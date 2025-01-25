@@ -12,8 +12,7 @@ template <class AlignedBoxPartType, class ConditionFunction>
 InflowConditionCK<AlignedBoxPartType, ConditionFunction>::
     InflowConditionCK(AlignedBoxPartType &aligned_box_part)
     : BaseLocalDynamics<AlignedBoxPartType>(aligned_box_part),
-      sv_aligned_box_(this->particles_->addUniqueSingularVariable<AlignedBox>(
-          "AlignedBox", aligned_box_part.getAlignedBox())),
+      sv_aligned_box_(aligned_box_part.svAlignedBox()),
       condition_function_(this->particles_) {}
 //=================================================================================================//
 template <class AlignedBoxPartType, class ConditionFunction>
@@ -33,11 +32,11 @@ void InflowConditionCK<AlignedBoxPartType, ConditionFunction>::
 EmitterInflowInjectionCK::
     EmitterInflowInjectionCK(BodyAlignedBoxByParticle &aligned_box_part, ParticleBuffer<Base> &buffer)
     : BaseLocalDynamics<BodyAlignedBoxByParticle>(aligned_box_part),
+      buffer_(buffer), aligned_box_(aligned_box_part.svAlignedBox()),
       sorted_id_(particles_->ParticleSortedIds()),
       pos_(particles_->getVariableDataByName<Vecd>("Position")),
       rho_(particles_->getVariableDataByName<Real>("Density")),
-      p_(particles_->getVariableDataByName<Real>("Pressure")),
-      buffer_(buffer), aligned_box_(aligned_box_part.getAlignedBox())
+      p_(particles_->getVariableDataByName<Real>("Pressure"))
 {
     buffer_.checkParticlesReserved();
 }

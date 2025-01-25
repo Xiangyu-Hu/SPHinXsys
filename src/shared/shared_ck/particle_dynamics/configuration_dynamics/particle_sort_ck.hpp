@@ -65,6 +65,25 @@ ParticleSortCK<ExecutionPolicy, SortMethodType>::ParticleSortCK(RealBody &real_b
       kernel_implementation_(*this)
 {
     particles_->addVariableToSort<UnsignedInt>("OriginalID");
+
+    body_parts_by_particle_ = real_body.getBodyPartsByParticle();
+    for (size_t i = 0; i != body_parts_by_particle_.size(); ++i)
+    {
+        DiscreteVariable<UnsignedInt> *dv_index_list = body_parts_by_particle_[i]->dvIndexList();
+        dv_index_lists_.push_back(dv_index_list);
+        DiscreteVariable<UnsignedInt> *original_id_list =
+            particles_->addUniqueDiscreteVariableFrom<UnsignedInt>(
+                dv_index_list->Name() + "Initial", dv_index_list);
+        dv_original_id_lists_.push_back(original_id_list);
+    }
+
+    for (size_t i = 0; i != body_parts_by_particle_.size(); ++i)
+    {
+        UpdateBodyPartParticleImplementation *update_body_part_by_particle_implementation =
+            update_body_part_by_particle_implementation_ptrs_
+                .template createPtr<UpdateBodyPartParticleImplementation>(*this);
+        update_body_part_by_particle_implementations_.push_back(update_body_part_by_particle_implementation);
+    }
 }
 //=================================================================================================//
 template <class ExecutionPolicy, class SortMethodType>
@@ -108,6 +127,33 @@ void ParticleSortCK<ExecutionPolicy, SortMethodType>::exec(Real dt)
     particle_for(ex_policy_, IndexRange(0, total_real_particles),
                  [=](size_t i)
                  { computing_kernel->updateSortedID(i); });
+
+    for (size_t k = 0; k != body_parts_by_particle_.size(); ++k)
+    {
+        UnsignedInt total_particles = body_parts_by_particle_[k]->svRangeSize()->getValue();
+        UpdateBodyPartByParticle *update_body_part_by_particle =
+            update_body_part_by_particle_implementations_[k]->getComputingKernel(k);
+
+        particle_for(ex_policy_, IndexRange(0, total_particles),
+                     [=](size_t i)
+                     { update_body_part_by_particle->update(i); });
+    }
+}
+//=================================================================================================//
+template <class ExecutionPolicy, class SortMethodType>
+template <class EncloserType>
+ParticleSortCK<ExecutionPolicy, SortMethodType>::UpdateBodyPartByParticle::
+    UpdateBodyPartByParticle(const ExecutionPolicy &ex_policy,
+                             EncloserType &encloser, UnsignedInt body_part_i)
+    : index_list_(encloser.dv_index_lists_[body_part_i]->DelegatedData(ex_policy)),
+      original_id_list_(encloser.dv_original_id_lists_[body_part_i]->DelegatedData(ex_policy)),
+      sorted_id_(encloser.dv_sorted_id_->DelegatedData(ex_policy)) {}
+//=================================================================================================//
+template <class ExecutionPolicy, class SortMethodType>
+void ParticleSortCK<ExecutionPolicy, SortMethodType>::UpdateBodyPartByParticle::
+    update(UnsignedInt index_i)
+{
+    index_list_[index_i] = sorted_id_[original_id_list_[index_i]];
 }
 //=================================================================================================//
 } // namespace SPH

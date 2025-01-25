@@ -92,7 +92,7 @@ class EmitterInflowInjectionCK : public BaseLocalDynamics<BodyAlignedBoxByPartic
       public:
         template <class ExecutionPolicy, class EncloserType>
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-        void update(size_t original_index_i, Real dt = 0.0); //only works in sequenced policy
+        void update(size_t original_index_i, Real dt = 0.0); // only works in sequenced policy
 
       protected:
         AlignedBox *aligned_box_;
@@ -100,7 +100,6 @@ class EmitterInflowInjectionCK : public BaseLocalDynamics<BodyAlignedBoxByPartic
         Vecd *pos_;
         VariableDataArrays state_data_arrays_;
         OperationOnDataAssemble<VariableDataArrays, CopyParticleStateCK> copy_particle_state_;
-
     };
 
   protected:
@@ -109,7 +108,6 @@ class EmitterInflowInjectionCK : public BaseLocalDynamics<BodyAlignedBoxByPartic
     DiscreteVariable<UnsignedInt> *dv_sorted_id_;
     DiscreteVariable<Vecd> *dv_pos_;
     DiscreteVariableArrays copyable_states_;
-
 };
 } // namespace fluid_dynamics
 } // namespace SPH
