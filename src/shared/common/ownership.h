@@ -111,6 +111,11 @@ class UniquePtrKeeper
         return ptr_member_.get();
     };
 
+    BaseType *getPtr()
+    {
+        return ptr_member_.get();
+    };
+
   private:
     UniquePtr<BaseType> ptr_member_;
 };

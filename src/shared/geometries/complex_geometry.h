@@ -21,7 +21,7 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file complex_shape.h
+ * @file complex_geometry.h
  * @brief Here, we define the a container of different type of shapes, which allow
  * the boolean operation between the different type of shapes. The shapes
  * can be defined previously and add to this complex shapes container.
@@ -33,7 +33,7 @@
 #include "base_geometry.h"
 #include "geometric_shape.h"
 #include "level_set_shape.h"
-#include "transform_shape.h"
+#include "transform_geometry.h"
 
 namespace SPH
 {
@@ -52,8 +52,8 @@ class ComplexShape : public BinaryShapes
 {
   public:
     explicit ComplexShape(const std::string &shape_name)
-        : BinaryShapes(shape_name){};
-    virtual ~ComplexShape(){};
+        : BinaryShapes(shape_name) {};
+    virtual ~ComplexShape() {};
 
     template <typename... Args>
     LevelSetShape *defineLevelSetShape(SPHBody &sph_body, const std::string &shape_name, Args &&...args)
@@ -69,30 +69,32 @@ class ComplexShape : public BinaryShapes
 using DefaultShape = ComplexShape;
 
 /**
- * @class AlignedBoxShape
+ * @class AlignedBox
  * @brief Used to describe a bounding box in which
  * the upper bound direction is aligned to the normal of a planar piece on a shape.
  */
-class AlignedBoxShape : public TransformShape<GeometricShapeBox>
+class AlignedBox : public TransformGeometry<GeometricBox>
 {
     const int alignment_axis_;
 
   public:
     /** construct directly */
     template <typename... Args>
-    explicit AlignedBoxShape(int upper_bound_axis, const Transform &transform, Args &&...args)
-        : TransformShape<GeometricShapeBox>(transform, std::forward<Args>(args)...),
+    explicit AlignedBox(int upper_bound_axis, const Transform &transform, Args &&...args)
+        : TransformGeometry<GeometricBox>(transform, std::forward<Args>(args)...),
           alignment_axis_(upper_bound_axis){};
     /** construct from a shape already has aligned boundaries */
     template <typename... Args>
-    explicit AlignedBoxShape(int upper_bound_axis, const Shape &shape, Args &&...args)
-        : TransformShape<GeometricShapeBox>(
+    explicit AlignedBox(int upper_bound_axis, const Shape &shape, Args &&...args)
+        : TransformGeometry<GeometricBox>(
               Transform(Vecd(0.5 * (shape.bounding_box_.second_ + shape.bounding_box_.first_))),
               0.5 * (shape.bounding_box_.second_ - shape.bounding_box_.first_), std::forward<Args>(args)...),
           alignment_axis_(upper_bound_axis){};
-    virtual ~AlignedBoxShape(){};
+    ~AlignedBox() {};
 
     Vecd HalfSize() { return halfsize_; }
+    bool checkNearSurface(const Vecd &probe_point, Real threshold);
+    bool checkNotFar(const Vecd &probe_point, Real threshold);
     bool checkInBounds(const Vecd &probe_point, Real lower_bound_fringe = 0.0, Real upper_bound_fringe = 0.0);
     bool checkUpperBound(const Vecd &probe_point, Real upper_bound_fringe = 0.0);
     bool checkLowerBound(const Vecd &probe_point, Real lower_bound_fringe = 0.0);

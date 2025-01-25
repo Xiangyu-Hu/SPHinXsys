@@ -21,71 +21,44 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	geometric_shape.h
- * @brief 	Here, we define shapes represented directly by geometric elements.
- * @author	Chi Zhang and Xiangyu Hu
+ * @file 	geometric_element.h
+ * @brief tbd.
+ * @author Xiangyu Hu
  */
 
-#ifndef GEOMETRIC_SHAPE_H
-#define GEOMETRIC_SHAPE_H
+#ifndef GEOMETRIC_ELEMENT_H
+#define GEOMETRIC_ELEMENT_H
 
-#include "all_simbody.h"
-#include "base_geometry.h"
+#include "base_data_package.h"
 
 namespace SPH
 {
-class GeometricShape : public Shape
+
+class GeometricBox
 {
   public:
-    explicit GeometricShape(const std::string &shape_name)
-        : Shape(shape_name), contact_geometry_(nullptr){};
+    explicit GeometricBox(const Vecd &halfsize);
+    ~GeometricBox() {};
 
-    virtual bool checkContain(const Vec3d &probe_point, bool BOUNDARY_INCLUDED = true) override;
-    virtual Vec3d findClosestPoint(const Vec3d &probe_point) override;
-
-    SimTK::ContactGeometry *getContactGeometry();
-
-  protected:
-    SimTK::ContactGeometry *contact_geometry_;
-};
-
-class GeometricShapeBox : public GeometricShape
-{
-  private:
-    SimTK::ContactGeometry::Brick brick_;
-
-  public:
-    explicit GeometricShapeBox(const Vecd &halfsize,
-                               const std::string &shape_name = "GeometricShapeBox");
-    virtual ~GeometricShapeBox(){};
-
-    virtual bool checkContain(const Vec3d &probe_point, bool BOUNDARY_INCLUDED = true) override;
-    virtual Vec3d findClosestPoint(const Vec3d &probe_point) override;
+    bool checkContain(const Vecd &probe_point);
+    Vecd findClosestPoint(const Vecd &probe_point);
 
   protected:
     Vecd halfsize_;
-
-    virtual BoundingBox findBounds() override;
 };
 
-class GeometricShapeBall : public GeometricShape
+class GeometricBall
 {
-  private:
-    Vecd center_;
-    SimTK::ContactGeometry::Sphere sphere_;
-
   public:
-    explicit GeometricShapeBall(const Vecd &center, const Real &radius,
-                                const std::string &shape_name = "GeometricShapeBall");
-    virtual ~GeometricShapeBall(){};
+    explicit GeometricBall(Real radius);
+    ~GeometricBall() {};
 
-    virtual bool checkContain(const Vec3d &probe_point, bool BOUNDARY_INCLUDED = true) override;
-    virtual Vec3d findClosestPoint(const Vec3d &probe_point) override;
+    bool checkContain(const Vecd &probe_point);
+    Vecd findClosestPoint(const Vecd &probe_point);
 
   protected:
-    virtual BoundingBox findBounds() override;
+    Real radius_;
 };
-
 } // namespace SPH
 
-#endif // GEOMETRIC_SHAPE_H
+#endif // GEOMETRIC_ELEMENT_H
