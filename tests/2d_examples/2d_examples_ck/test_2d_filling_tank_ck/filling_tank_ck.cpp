@@ -70,17 +70,24 @@ class WallBoundary : public MultiPolygonShape
 //----------------------------------------------------------------------
 //	Inlet inflow condition
 //----------------------------------------------------------------------
-class InletInflowCondition : public fluid_dynamics::BaseStateCondition
+class InletInflowCondition : public BaseStateCondition
 {
   public:
     InletInflowCondition(AlignedBoxPartByParticle &aligned_box_part)
-        : EmitterInflowCondition(aligned_box_part) {}
+        : BaseStateCondition(aligned_box_part) {};
 
-  protected:
-    virtual Vecd getTargetVelocity(Vecd &position, Vecd &velocity) override
+    class ComputingKernel : public BaseStateCondition::ComputingKernel
     {
-        return Vec2d(2.0, 0.0);
-    }
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+            : BaseStateCondition::ComputingKernel(ex_policy, encloser){};
+
+        void operator()(AlignedBox *aligned_box, UnsignedInt index_i)
+        {
+            vel_[index_i] = Vec2d(2.0, 0.0);
+        };
+    };
 };
 //----------------------------------------------------------------------
 //	Main program starts here.
@@ -156,8 +163,7 @@ int main(int ac, char *av[])
     ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AdvectionTimeStepCK> fluid_advection_time_step(water_body, U_ref);
     ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticTimeStepCK> fluid_acoustic_time_step(water_body);
 
-    StateDynamics<MainExecutionPolicy, fluid_dynamics::InflowConditionCK<AlignedBoxPartByParticle, ConstantStates>> 
-            inflow_condition(emitter);
+    StateDynamics<MainExecutionPolicy, fluid_dynamics::InflowConditionCK<AlignedBoxPartByParticle, InletInflowCondition>> inflow_condition(emitter);
     SimpleDynamics<fluid_dynamics::EmitterInflowInjection> emitter_injection(emitter, inlet_buffer);
     //----------------------------------------------------------------------
     //	Define the configuration related particles dynamics.

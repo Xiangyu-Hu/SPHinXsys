@@ -156,4 +156,12 @@ XmlParser &BaseParticles::readReloadXmlFile(const std::string &filefullpath)
     return reload_xml_parser_;
 }
 //=================================================================================================//
+BaseParticles::CreateRealParticleFrom::CreateRealParticleFrom(BaseParticles &base_particles)
+    : copyable_states_()
+{
+    OperationBetweenDataAssembles<ParticleVariables, DiscreteVariableArrays, DiscreteVariableArraysInitialization>
+        initialize_discrete_variable_array(base_particles.VariablesToSort(), copyable_states_);
+    initialize_discrete_variable_array();
+}
+//=================================================================================================//
 } // namespace SPH

@@ -114,10 +114,11 @@ struct VariableDataArraysInitialization
 {
     template <typename DataType, class ExecutionPolicy>
     void operator()(const UniquePtr<DiscreteVariableArray<DataType>> &variable_array_ptr,
-                    VariableAllocationPair<AllocatedDataArray<DataType>> &variable_allocation_size_pair)
+                    VariableAllocationPair<AllocatedDataArray<DataType>> &variable_allocation_size_pair,
+                    const ExecutionPolicy &ex_policy)
     {
         variable_allocation_size_pair =
-            std::make_pair(variable_array_ptr->DelegatedDataArray(ExecutionPolicy{}), variable_array_ptr->getArraySize());
+            std::make_pair(variable_array_ptr->DelegatedDataArray(ex_policy), variable_array_ptr->getArraySize());
     }
 };
 } // namespace SPH

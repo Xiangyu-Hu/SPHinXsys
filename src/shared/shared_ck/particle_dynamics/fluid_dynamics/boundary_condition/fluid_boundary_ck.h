@@ -29,48 +29,17 @@
 #ifndef FLUID_BOUNDARY_CK_H
 #define FLUID_BOUNDARY_CK_H
 
+#include "base_body_part.h"
 #include "base_data_package.h"
 #include "base_fluid_dynamics.h"
 #include "particle_reserve.h"
 #include "sphinxsys_variable_array.h"
+#include "fluid_boundary_state.hpp"
 
 namespace SPH
 {
-
-struct CopyParticleStateCK
-{
-    template <typename DataType>
-    void operator()(VariableAllocationPair<AllocatedDataArray<DataType>> &variable_allocation_pair, size_t index, size_t another_index)
-    {
-        for (size_t i = 0; i != variable_allocation_pair.second; ++i)
-        {
-            variable_allocation_pair.first[i][index] = variable_allocation_pair.first[i][another_index];
-        }
-    };
-};
 namespace fluid_dynamics
 {
-
-class BaseStateCondition
-{
-  public:
-    BaseStateCondition(BaseParticles *particles);
-
-    class ComputingKernel
-    {
-      public:
-        template <class ExecutionPolicy, class EncloserType>
-        ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-
-      protected:
-        Vecd *pos_, *vel_;
-        Real *p_, *rho_;
-    };
-
-  protected:
-    DiscreteVariable<Vecd> *dv_pos_, *dv_vel_;
-    DiscreteVariable<Real> *dv_p_, *dv_rho_;
-};
 
 template <typename... T>
 class InflowConditionCK;
@@ -101,32 +70,37 @@ class InflowConditionCK<AlignedBoxPartType, ConditionFunction>
     ConditionFunction condition_function_;
 };
 
-class EmitterInflowInjectionCK : public BaseLocalDynamics<AlignedBoxByParticle>
+class EmitterInflowInjectionCK : public BaseLocalDynamics<AlignedBoxPartByParticle>
 {
   public:
-    EmitterInflowInjectionCK(AlignedBoxByParticle &aligned_box_part, ParticleBuffer<Base> &buffer);
+    EmitterInflowInjectionCK(AlignedBoxPartByParticle &aligned_box_part, ParticleBuffer<Base> &buffer);
     virtual ~EmitterInflowInjectionCK() {};
-    virtual void setupDynamics(Real dt = 0.0) override;
 
     class UpdateKernel
     {
       public:
         template <class ExecutionPolicy, class EncloserType>
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-        void update(size_t original_index_i, Real dt = 0.0); // only works in sequenced policy
+        void update(size_t index_i, Real dt = 0.0); // only works in sequenced policy
 
       protected:
         AlignedBox *aligned_box_;
-        Vecd *pos_;
-        VariableDataArrays state_data_arrays_;
+        Real rho0_;
+        VariableDataArrays copyable_state_data_arrays_;
         OperationOnDataAssemble<VariableDataArrays, CopyParticleStateCK> copy_particle_state_;
+        Vecd *pos_;
+        Real *rho_, *p_;
+        UnsignedInt *total_real_particles_;
     };
 
   protected:
     ParticleBuffer<Base> &buffer_;
     SingularVariable<AlignedBox> *sv_aligned_box_;
-    DiscreteVariable<Vecd> *dv_pos_;
+    Real rho0_;
     DiscreteVariableArrays copyable_states_;
+    DiscreteVariable<Vecd> *dv_pos_;
+    DiscreteVariable<Real> *dv_rho_, *dv_p_;
+
 };
 } // namespace fluid_dynamics
 } // namespace SPH
