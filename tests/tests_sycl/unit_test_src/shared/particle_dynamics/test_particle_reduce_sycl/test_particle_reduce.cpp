@@ -3,7 +3,7 @@
 #include "particle_iterators.h"
 #include "particle_iterators_sycl.h"
 #include "reduce_functors.h"
-#include "simbody_variable_sycl.h"
+#include "device_copyable_variable.h"
 #include "sphinxsys_variable_sycl.hpp"
 
 #include <gtest/gtest.h>

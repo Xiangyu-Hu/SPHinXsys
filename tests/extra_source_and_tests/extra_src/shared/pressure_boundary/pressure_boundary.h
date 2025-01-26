@@ -41,7 +41,7 @@ class PressureCondition : public BaseFlowBoundaryCondition
 {
   public:
     /** default parameter indicates prescribe pressure */
-    explicit PressureCondition(BodyAlignedBoxByCell &aligned_box_part)
+    explicit PressureCondition(AlignedBoxPartByCell &aligned_box_part)
         : BaseFlowBoundaryCondition(aligned_box_part),
           aligned_box_(aligned_box_part.getAlignedBox()),
           alignment_axis_(aligned_box_.AlignmentAxis()),
@@ -54,11 +54,14 @@ class PressureCondition : public BaseFlowBoundaryCondition
 
     void update(size_t index_i, Real dt = 0.0)
     {
-        vel_[index_i] += 2.0 * kernel_sum_[index_i] * target_pressure_(p_[index_i], *physical_time_) / rho_[index_i] * dt;
+        if (aligned_box_.checkContain(pos_[index_i]))
+        {
+            vel_[index_i] += 2.0 * kernel_sum_[index_i] * target_pressure_(p_[index_i], *physical_time_) / rho_[index_i] * dt;
 
-        Vecd frame_velocity = Vecd::Zero();
-        frame_velocity[alignment_axis_] = transform_.xformBaseVecToFrame(vel_[index_i])[alignment_axis_];
-        vel_[index_i] = transform_.xformFrameVecToBase(frame_velocity);
+            Vecd frame_velocity = Vecd::Zero();
+            frame_velocity[alignment_axis_] = transform_.xformBaseVecToFrame(vel_[index_i])[alignment_axis_];
+            vel_[index_i] = transform_.xformFrameVecToBase(frame_velocity);
+        }
     };
 
   protected:

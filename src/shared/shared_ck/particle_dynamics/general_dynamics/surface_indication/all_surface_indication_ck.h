@@ -10,9 +10,9 @@
  *                                                                           *
  * SPHinXsys is partially funded by German Research Foundation               *
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
- *  HU1527/12-1 and HU1527/12-4                                              *
+ *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2022 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2023 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -20,37 +20,18 @@
  * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
  *                                                                           *
  * ------------------------------------------------------------------------- */
+
+#ifndef B9F4AD2C_8E17_4C49_BCAA_4BD2C6A6951F
+#define B9F4AD2C_8E17_4C49_BCAA_4BD2C6A6951F
 /**
- * @file 	simbody_variable_sycl.h
- * @brief 	TBD.
- * @author	Xiangyu Hu
+ * @file    all_general_dynamics.h
+ * @brief   This is the header file that user code should include to pick up all
+ *          general dynamics used in SPHinXsys.
+ * @author	Chi Zhang and Xiangyu Hu
  */
-#ifndef SIMBODY_VARIABLE_SYCL_H
-#define SIMBODY_VARIABLE_SYCL_H
 
-#include "all_simbody.h"
-#include "implementation_sycl.h"
 
-namespace sycl
-{
-    template <>
-struct is_device_copyable<SPH::SimTKVec3> : std::true_type
-{
-};
+#include "surface_indication_ck.hpp"
 
-template <>
-struct is_device_copyable<SimTK::Vec<2, SPH::SimTKVec3>> : std::true_type
-{
-};
 
-template <>
-struct is_device_copyable<SPH::Vec2d> : std::true_type
-{
-};
-
-template <>
-struct is_device_copyable<SPH::Vec3d> : std::true_type
-{
-};
-} // namespace sycl
-#endif // SIMBODY_VARIABLE_SYCL_H
+#endif /* B9F4AD2C_8E17_4C49_BCAA_4BD2C6A6951F */

@@ -30,11 +30,12 @@
 #ifndef IMPLEMENTATION_SYCL_H
 #define IMPLEMENTATION_SYCL_H
 
+#include <sycl/sycl.hpp>
 #include "execution_policy.h"
 #include "implementation.h"
-
+#include "device_copyable_variable.h"
 #include "ownership.h"
-#include <sycl/sycl.hpp>
+
 
 namespace SPH
 {

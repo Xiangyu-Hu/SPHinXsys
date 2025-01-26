@@ -10,9 +10,9 @@
  *                                                                           *
  * SPHinXsys is partially funded by German Research Foundation               *
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
- *  HU1527/12-1 and HU1527/12-4.                                             *
+ *  HU1527/12-1 and HU1527/12-4                                              *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2022 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -21,19 +21,36 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file    all_general_dynamics_ck.h
- * @brief   This is the header file that user code should include to pick up all
- *          general dynamics used in SPHinXsys.
- * @author	Chi Zhang and Xiangyu Hu
+ * @file 	device_copyable_variable.h
+ * @brief 	TBD.
+ * @author	Xiangyu Hu
  */
+#ifndef DEVICE_COPYABLE_VARIABLE_H
+#define DEVICE_COPYABLE_VARIABLE_H
 
-#pragma once
+#include "all_simbody.h"
+#include "base_data_package.h"
 
-#include "force_prior_ck.hpp"
-#include "general_constraint_ck.h"
-#include "general_reduce_ck.hpp"
-#include "geometric_dynamics.hpp"
-#include "interpolation_dynamics.hpp"
-#include "kernel_correction_ck.hpp"
-#include "general_initial_condition.h"
-#include "all_surface_indication_ck.h"
+namespace sycl
+{
+template <>
+struct is_device_copyable<SPH::SimTKVec3> : std::true_type
+{
+};
+
+template <>
+struct is_device_copyable<SimTK::Vec<2, SPH::SimTKVec3>> : std::true_type
+{
+};
+
+template <int N, int M>
+struct is_device_copyable<Eigen::Matrix<SPH::Real, N, M>> : std::true_type
+{
+};
+
+template <>
+struct is_device_copyable<SPH::Mat2d> : std::true_type
+{
+};
+} // namespace sycl
+#endif // DEVICE_COPYABLE_VARIABLE_H

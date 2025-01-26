@@ -36,14 +36,11 @@ namespace SPH
 template <typename...>
 struct ReduceReference;
 
-template <class DataType>
-struct ReduceBase
-{
-    typedef DataType ReturnType;
-};
+template <typename...>
+struct ReduceSum;
 
 template <class DataType>
-struct ReduceSum : ReduceBase<DataType>
+struct ReduceSum<DataType> : ReturnFunction<DataType>
 {
     DataType operator()(const DataType &x, const DataType &y) const { return x + y; };
 };
@@ -54,7 +51,24 @@ struct ReduceReference<ReduceSum<DataType>>
     static inline DataType value = ZeroData<DataType>::value;
 };
 
-struct ReduceMax : ReduceBase<Real>
+template <typename DataType>
+struct ReduceSum<std::pair<DataType, Real>> : ReturnFunction<std::pair<DataType, Real>>
+{
+    using PairType = std::pair<DataType, Real>;
+    PairType operator()(const PairType &x, const PairType &y) const
+    {
+        return PairType(x.first + y.first, x.second + y.second);
+    };
+};
+
+template <typename DataType>
+struct ReduceReference<ReduceSum<std::pair<DataType, Real>>>
+{
+    using PairType = std::pair<DataType, Real>;
+    static inline PairType value = ZeroData<PairType>::value;
+};
+
+struct ReduceMax : ReturnFunction<Real>
 {
     Real operator()(Real x, Real y) const { return SMAX(x, y); };
 };
@@ -65,7 +79,7 @@ struct ReduceReference<ReduceMax>
     static inline Real value = MinReal;
 };
 
-struct ReduceMin : ReduceBase<Real>
+struct ReduceMin : ReturnFunction<Real>
 {
     Real operator()(Real x, Real y) const { return SMIN(x, y); };
 };
@@ -75,7 +89,7 @@ struct ReduceReference<ReduceMin>
 {
     static inline Real value = MaxReal;
 };
-struct ReduceOR : ReduceBase<bool>
+struct ReduceOR : ReturnFunction<bool>
 {
     bool operator()(bool x, bool y) const { return x || y; };
 };
@@ -86,7 +100,7 @@ struct ReduceReference<ReduceOR>
     static inline bool value = false;
 };
 
-struct ReduceAND : ReduceBase<bool>
+struct ReduceAND : ReturnFunction<bool>
 {
     bool operator()(bool x, bool y) const { return x && y; };
 };
@@ -96,7 +110,7 @@ struct ReduceReference<ReduceAND>
 {
     static inline bool value = true;
 };
-struct ReduceLowerBound : ReduceBase<Vecd>
+struct ReduceLowerBound : ReturnFunction<Vecd>
 {
     Vecd operator()(const Vecd &x, const Vecd &y) const
     {
@@ -113,7 +127,7 @@ struct ReduceReference<ReduceLowerBound>
     static inline Vecd value = MaxReal * Vecd::Ones();
 };
 
-struct ReduceUpperBound : ReduceBase<Vecd>
+struct ReduceUpperBound : ReturnFunction<Vecd>
 {
     Vecd operator()(const Vecd &x, const Vecd &y) const
     {

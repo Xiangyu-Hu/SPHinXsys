@@ -21,19 +21,53 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file    all_general_dynamics_ck.h
- * @brief   This is the header file that user code should include to pick up all
- *          general dynamics used in SPHinXsys.
- * @author	Chi Zhang and Xiangyu Hu
+ * @file general_initial_condition.h
+ * @brief tbd.
+ * @author Xiangyu Hu
  */
 
-#pragma once
+#ifndef GENERAL_INITIAL_CONDITION_H
+#define GENERAL_INITIAL_CONDITION_H
 
-#include "force_prior_ck.hpp"
-#include "general_constraint_ck.h"
-#include "general_reduce_ck.hpp"
-#include "geometric_dynamics.hpp"
-#include "interpolation_dynamics.hpp"
-#include "kernel_correction_ck.hpp"
-#include "general_initial_condition.h"
-#include "all_surface_indication_ck.h"
+#include "base_general_dynamics.h"
+
+namespace SPH
+{
+template <class DynamicsIdentifier, typename ReturnFunctionType>
+class InitialCondition : public BaseLocalDynamics<DynamicsIdentifier>
+{
+    using DataType = typename ReturnFunctionType::ReturnType;
+
+  public:
+    InitialCondition(DynamicsIdentifier &identifier, const std::string &variable_name)
+        : BaseLocalDynamics<DynamicsIdentifier>(identifier),
+          dv_pos_(this->particles_->template getVariableByName<Vecd>("Position")),
+          dv_variable_(this->particles_->template registerStateVariableOnly<DataType>(variable_name)) {};
+    virtual ~InitialCondition() {};
+
+    class UpdateKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+            : pos_(encloser.dv_pos_->DelegatedData(ex_policy)),
+              variable_(encloser.dv_variable_->DelegatedData(ex_policy)),
+              function_(ex_policy, encloser){};
+
+        void update(size_t index_i, Real dt = 0.0)
+        {
+            variable_[index_i] = function_(pos_[index_i]);
+        };
+
+      protected:
+        Vecd *pos_;
+        DataType *variable_;
+        ReturnFunctionType function_;
+    };
+
+  protected:
+    DiscreteVariable<Vecd> *dv_pos_;
+    DiscreteVariable<DataType> *dv_variable_;
+};
+} // namespace SPH
+#endif // GENERAL_INITIAL_CONDITION_H
