@@ -139,7 +139,6 @@ class PressureForceFromFluidInFVM : public BaseForceFromFluidInFVM
         }
     };
 };
-
 } // namespace fluid_dynamics
 } // namespace SPH
 #endif // COMMON_WEAKLY_COMPRESSIBLE_FVM_CLASSES_H
