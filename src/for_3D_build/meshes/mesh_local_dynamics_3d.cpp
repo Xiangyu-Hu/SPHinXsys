@@ -90,7 +90,7 @@ void InitializeBasicDataForAPackage::UpdateKernel::update(const size_t &package_
         });
 }
 //=============================================================================================//
-void UpdateLevelSetGradient::UpdateKernel::update(const size_t &package_index)
+SYCL_EXTERNAL void UpdateLevelSetGradient::UpdateKernel::update(const size_t &package_index)
 {
     auto &neighborhood = cell_neighborhood_[package_index];
     auto &pkg_data = phi_gradient_[package_index];

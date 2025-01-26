@@ -10,7 +10,6 @@ set(ORIGIN_SRC_DIR "/Users/frances/Local/vcpkg/idp/SPHinXsys/tests/3d_examples/t
 
 file(MAKE_DIRECTORY ${BUILD_INPUT_PATH})
 execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory ${BUILD_INPUT_PATH})
-file(COPY ${ORIGIN_SRC_DIR}/regression_test_tool/ DESTINATION ${BUILD_INPUT_PATH})
 
 add_executable(${PROJECT_NAME} ${CMAKE_CURRENT_SOURCE_DIR}/levelset_test.cpp)
 # aux_source_directory(. DIR_SRCS)

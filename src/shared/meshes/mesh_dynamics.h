@@ -34,6 +34,10 @@
 #include "mesh_local_dynamics.hpp"
 #include "mesh_with_data_packages.h"
 #include "mesh_iterators.hpp"
+#if SPHINXSYS_USE_SYCL
+// #include "mesh_dynamics_sycl.hpp"
+#include "execution_sycl.h"
+#endif
 #include "execution.h"
 
 #include <functional>
@@ -107,8 +111,25 @@ class BaseMeshDynamics
                     ap);
     }
 
+    #if SPHINXSYS_USE_SYCL
+    template <typename FunctionOnData>
+    void BaseMeshDynamics::package_parallel_for(const execution::ParallelDevicePolicy &par_device, const FunctionOnData &function)
+    {
+        auto &sycl_queue = execution_instance.getQueue();
+        sycl_queue.submit([&](sycl::handler &cgh)
+        {
+            const size_t num_grid_pkgs = this->num_grid_pkgs_;
+            cgh.parallel_for(execution_instance.getUniformNdRange(num_grid_pkgs), [=](sycl::nd_item<1> index)
+            {
+                if(index.get_global_id(0) + 2 < num_grid_pkgs)
+                    function(index.get_global_id(0) + 2); 
+            });
+        }).wait_and_throw();
+    }
+    #endif
+
     // template <typename FunctionOnData>
-    // void package_parallel_for(const execution::ParallelDevicePolicy &par_device, const FunctionOnData &function)
+    // void package_parallel_for(const execution::ParallelDevicePolicy &par_device, const FunctionOnData &function);
     // {
     //     auto &sycl_queue = execution_instance.getQueue();
     //     sycl_queue.submit([&](sycl::handler &cgh)
@@ -171,9 +192,9 @@ class MeshInnerDynamicsCK : public LocalDynamicsType, public BaseMeshDynamics
     {
         UpdateKernel *update_kernel = kernel_implementation_.getComputingKernel();
         package_parallel_for(ExecutionPolicy(),
-            [&](size_t package_index)
+            [=](size_t package_index)
             {
-              update_kernel->update(package_index, std::forward<Args>(args)...);
+              update_kernel->update(package_index, args...);
             }
         );
     };
@@ -204,7 +225,7 @@ class MeshCoreDynamicsCK : public LocalDynamicsType, public BaseMeshDynamics
     {
         UpdateKernel *update_kernel = kernel_implementation_.getComputingKernel();
         package_parallel_for(ExecutionPolicy(),
-            [&](size_t package_index)
+            [=](size_t package_index)
             {
               if (meta_data_cell_[package_index].second == 1)
                   update_kernel->update(package_index);
@@ -212,5 +233,8 @@ class MeshCoreDynamicsCK : public LocalDynamicsType, public BaseMeshDynamics
         );
     };
 };
+
+
+
 } // namespace SPH
 #endif // MESH_DYNAMICS_H

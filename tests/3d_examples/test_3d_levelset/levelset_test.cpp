@@ -6,7 +6,6 @@
  * //TODO: Seems that the wall contact force should be improved.
  */
 #include "levelset_test.h" /**< Case setup for this example. */
-#include "sphinxsys.h"
 
 using namespace SPH;
 

@@ -70,7 +70,6 @@ class FinishDataPackages
         initialize_data_for_singular_package.update(1, far_field_distance);
 
         initialize_basic_data_for_a_package.exec();
-        update_level_set_gradient.exec();
     };
 
   private:
@@ -89,7 +88,6 @@ class FinishDataPackages
     MeshInnerDynamicsCK<execution::ParallelPolicy, InitializeIndexMesh> initialize_index_mesh{mesh_data_};
     MeshInnerDynamicsCK<execution::ParallelPolicy, InitializeCellNeighborhood> initialize_cell_neighborhood{mesh_data_};
     MeshInnerDynamicsCK<execution::ParallelPolicy, InitializeBasicDataForAPackage> initialize_basic_data_for_a_package{mesh_data_, shape_};
-    MeshInnerDynamicsCK<execution::ParallelPolicy, UpdateLevelSetGradient> update_level_set_gradient{mesh_data_};
 };
 
 class ProbeNormalDirection

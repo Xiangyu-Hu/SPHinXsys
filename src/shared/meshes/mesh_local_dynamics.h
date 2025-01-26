@@ -31,6 +31,9 @@
 #define MESH_LOCAL_DYNAMICS_H
 
 #include "sphinxsys_variable.h"
+#if SPHINXSYS_USE_SYCL
+#include "sphinxsys_variable_sycl.hpp"
+#endif
 #include "mesh_with_data_packages.h"
 #include "base_geometry.h"
 #include "base_kernel.h"
@@ -382,7 +385,7 @@ class UpdateLevelSetGradient : public BaseMeshLocalDynamics
               phi_(encloser.phi_.DelegatedDataField(ex_policy)),
               phi_gradient_(encloser.phi_gradient_.DelegatedDataField(ex_policy)),
               cell_neighborhood_(encloser.cell_neighborhood_.DelegatedDataField(ex_policy)){};
-        void update(const size_t &index);
+        SYCL_EXTERNAL void update(const size_t &index);
 
       protected:
         Real data_spacing_;

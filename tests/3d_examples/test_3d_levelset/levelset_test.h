@@ -5,7 +5,7 @@
  */
 #pragma once
 
-#include "sphinxsys.h"
+#include "sphinxsys_sycl.h"
 using namespace SPH;
 
 //----------------------------------------------------------------------

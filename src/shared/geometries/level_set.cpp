@@ -9,11 +9,11 @@ namespace SPH
 MultilevelLevelSet::MultilevelLevelSet(
     BoundingBox tentative_bounds, Real reference_data_spacing, size_t total_levels,
     Shape &shape, SPHAdaptation &sph_adaptation)
-    : MultilevelLevelSet(par, tentative_bounds, reference_data_spacing, total_levels, shape, sph_adaptation){};
+    : MultilevelLevelSet(par_device, tentative_bounds, reference_data_spacing, total_levels, shape, sph_adaptation){};
 //=================================================================================================//
 MultilevelLevelSet::MultilevelLevelSet(
     BoundingBox tentative_bounds, MeshWithGridDataPackagesType* coarse_data, Shape &shape, SPHAdaptation &sph_adaptation)
-    : MultilevelLevelSet(par, tentative_bounds, coarse_data, shape, sph_adaptation){};
+    : MultilevelLevelSet(par_device, tentative_bounds, coarse_data, shape, sph_adaptation){};
 //=================================================================================================//
 template <class ExecutionPolicy>
 MultilevelLevelSet::MultilevelLevelSet(
@@ -69,8 +69,10 @@ void MultilevelLevelSet::initializeLevel(const ExecutionPolicy &ex_policy, size_
 
     /* All initializations in `FinishDataPackages` are achieved on CPU. */
     FinishDataPackages finish_data_packages(*mesh_data_set_[level], shape_);
-    MeshInnerDynamicsCK<ExecutionPolicy, UpdateKernelIntegrals> update_kernel_integrals{*mesh_data_set_[level], kernel_, global_h_ratio};
+    MeshInnerDynamicsCK<ExecutionPolicy, UpdateLevelSetGradient> update_level_set_gradient{*mesh_data_set_[level]};
+    MeshInnerDynamicsCK<execution::ParallelPolicy, UpdateKernelIntegrals> update_kernel_integrals{*mesh_data_set_[level], kernel_, global_h_ratio};
     finish_data_packages.exec();
+    update_level_set_gradient.exec();
     update_kernel_integrals.exec();
 
     registerProbes(ex_policy, level);
