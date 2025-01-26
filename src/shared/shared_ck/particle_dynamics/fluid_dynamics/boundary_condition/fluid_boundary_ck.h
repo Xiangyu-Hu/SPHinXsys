@@ -51,6 +51,27 @@ struct CopyParticleStateCK
 namespace fluid_dynamics
 {
 
+class BaseStateCondition
+{
+  public:
+    BaseStateCondition(BaseParticles *particles);
+
+    class ComputingKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+
+      protected:
+        Vecd *pos_, *vel_;
+        Real *p_, *rho_;
+    };
+
+  protected:
+    DiscreteVariable<Vecd> *dv_pos_, *dv_vel_;
+    DiscreteVariable<Real> *dv_p_, *dv_rho_;
+};
+
 template <typename... T>
 class InflowConditionCK;
 
@@ -80,10 +101,10 @@ class InflowConditionCK<AlignedBoxPartType, ConditionFunction>
     ConditionFunction condition_function_;
 };
 
-class EmitterInflowInjectionCK : public BaseLocalDynamics<BodyAlignedBoxByParticle>
+class EmitterInflowInjectionCK : public BaseLocalDynamics<AlignedBoxByParticle>
 {
   public:
-    EmitterInflowInjectionCK(BodyAlignedBoxByParticle &aligned_box_part, ParticleBuffer<Base> &buffer);
+    EmitterInflowInjectionCK(AlignedBoxByParticle &aligned_box_part, ParticleBuffer<Base> &buffer);
     virtual ~EmitterInflowInjectionCK() {};
     virtual void setupDynamics(Real dt = 0.0) override;
 
@@ -96,7 +117,6 @@ class EmitterInflowInjectionCK : public BaseLocalDynamics<BodyAlignedBoxByPartic
 
       protected:
         AlignedBox *aligned_box_;
-        UnsignedInt *sorted_id_;
         Vecd *pos_;
         VariableDataArrays state_data_arrays_;
         OperationOnDataAssemble<VariableDataArrays, CopyParticleStateCK> copy_particle_state_;
@@ -105,7 +125,6 @@ class EmitterInflowInjectionCK : public BaseLocalDynamics<BodyAlignedBoxByPartic
   protected:
     ParticleBuffer<Base> &buffer_;
     SingularVariable<AlignedBox> *sv_aligned_box_;
-    DiscreteVariable<UnsignedInt> *dv_sorted_id_;
     DiscreteVariable<Vecd> *dv_pos_;
     DiscreteVariableArrays copyable_states_;
 };

@@ -8,6 +8,14 @@ namespace SPH
 namespace fluid_dynamics
 {
 //=================================================================================================//
+template <class ExecutionPolicy, class EncloserType>
+BaseStateCondition::ComputingKernel::
+    ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+    : pos_(encloser.dv_pos_->DelegatedData(ex_policy)),
+      vel_(encloser.dv_vel_->DelegatedData(ex_policy)),
+      p_(encloser.dv_p_->DelegatedData(ex_policy)),
+      rho_(encloser.dv_rho_->DelegatedData(ex_policy)) {}
+//=================================================================================================//
 template <class AlignedBoxPartType, class ConditionFunction>
 InflowConditionCK<AlignedBoxPartType, ConditionFunction>::
     InflowConditionCK(AlignedBoxPartType &aligned_box_part)
@@ -17,7 +25,7 @@ InflowConditionCK<AlignedBoxPartType, ConditionFunction>::
 //=================================================================================================//
 template <class AlignedBoxPartType, class ConditionFunction>
 template <class ExecutionPolicy, class EncloserType>
-InflowConditionCK<AlignedBoxPartType, ConditionFunction>::
+InflowConditionCK<AlignedBoxPartType, ConditionFunction>::UpdateKernel::
     UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser),
     aligned_box_(encloser.sv_aligned_box_->DelegatedData(ex_policy)),
     condition_(ex_policy, encloser.condition_function_) {}
@@ -30,10 +38,9 @@ void InflowConditionCK<AlignedBoxPartType, ConditionFunction>::
 }
 //=================================================================================================//
 EmitterInflowInjectionCK::
-    EmitterInflowInjectionCK(BodyAlignedBoxByParticle &aligned_box_part, ParticleBuffer<Base> &buffer)
-    : BaseLocalDynamics<BodyAlignedBoxByParticle>(aligned_box_part),
+    EmitterInflowInjectionCK(AlignedBoxByParticle &aligned_box_part, ParticleBuffer<Base> &buffer)
+    : BaseLocalDynamics<AlignedBoxByParticle>(aligned_box_part),
       buffer_(buffer), aligned_box_(aligned_box_part.svAlignedBox()),
-      sorted_id_(particles_->ParticleSortedIds()),
       pos_(particles_->getVariableDataByName<Vecd>("Position")),
       rho_(particles_->getVariableDataByName<Real>("Density")),
       p_(particles_->getVariableDataByName<Real>("Pressure"))
