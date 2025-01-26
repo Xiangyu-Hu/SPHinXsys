@@ -35,7 +35,7 @@ Real length_scale = 0.07 * 2 * DH / pow(C_mu, 0.75);
 //----------------------------------------------------------------------
 //	Set the file path to the data file.
 //----------------------------------------------------------------------
-std::string mesh_file_path = "./input/Channel_mesh.msh";
+std::string mesh_file_path = "./input/Channel_Mesh_short.msh";
 //	Define geometries and body shapes
 //----------------------------------------------------------------------
 std::vector<Vecd> createWaterBlockShape()
@@ -119,17 +119,66 @@ public:
         Eps_[ghost_index] = Eps_[index_i];
         mu_t_[ghost_index] = mu_t_[index_i];
     }
-    void applyVelocityInletFlow(size_t ghost_index, size_t index_i) override
-    {
+    //Fully Developed Turbulence Profiles
+    std::vector<Real> y_values = {1.95, 1.85, 1.75, 1.65, 
+                                1.55, 1.45, 1.35, 1.25, 
+                                1.15, 1.05, 0.95, 0.85,
+                                0.75, 0.65, 0.55, 0.45, 
+                                0.35, 0.25, 0.15, 0.05};
 
-        Vecd inlet_velocity(1.0, 0.0);
-        vel_[ghost_index] = inlet_velocity;
-        p_[ghost_index] = p_[index_i];
-        rho_[ghost_index] = rho_[index_i]; 
-        K_[ghost_index] = (3.0 / 2.0) * (vel_[ghost_index].squaredNorm()) * pow(turbulent_intensity, 2.0);
-        Eps_[ghost_index] = pow(K_[ghost_index], 1.5) / length_scale;
-        mu_t_[ghost_index] = C_mu_ * rho_[ghost_index] * pow(K_[ghost_index], 2.0) / Eps_[ghost_index];
+    std::vector<Real> velocity_magnitude_profile = {0.6799317, 0.86330092, 0.9300949, 0.98939854,
+                                                    1.0258716, 1.062102, 1.0885813, 1.1088117,
+                                                    1.1224763, 1.1285582, 1.1284137, 1.1219281,
+                                                    1.1083114, 1.0883181, 1.0620406, 1.029438, 
+                                                    0.98861861, 0.9312641, 0.86510468, 0.68170708};
+
+    std::vector<Real> turbulent_kinetic_energy_profile = {0.0061183018, 0.0070746327, 0.0054861265, 0.0046617105,
+                                                          0.0040161642, 0.0034167622, 0.0028720065, 0.0024708209,
+                                                          0.0021943266, 0.0020446058, 0.0020473369, 0.00221448,
+                                                          0.0025275873, 0.0029412457, 0.0033892714, 0.0038914206,
+                                                          0.0045933602, 0.0054699243, 0.007050876, 0.0061376584};
+
+    std::vector<Real> turbulent_dissipation_rate_profile = {0.0056344033, 0.0023513641, 0.0011376451, 0.00069459993,
+                                                            0.00046991525, 0.00032542294, 0.00022683406, 0.0001672248,
+                                                            0.00013027232, 0.00011116108, 0.00011085657, 0.00013127667,
+                                                            0.00017384913, 0.00023951771, 0.00032356411, 0.00043955375,
+                                                            0.00067517039, 0.0011331175, 0.0023402071, 0.0056611444};
+    // Function to find the nearest value based on the y-coordinate
+    Real nearestValue(Real y, const std::vector<Real> &y_values, const std::vector<Real> &data_values)
+    {
+        size_t closest_index = 0;
+        Real min_distance = std::abs(y - y_values[0]);
+
+        for (size_t i = 1; i < y_values.size(); ++i)
+        {
+            Real distance = std::abs(y - y_values[i]);
+            if (distance < min_distance)
+            {
+                closest_index = i;
+                min_distance = distance;
+            }
+        }
+        return data_values[closest_index];
     }
+
+        void applyVelocityInletFlow(size_t ghost_index, size_t index_i) override
+        {
+            Real y = pos_[ghost_index][1]; // pos_[ghost_index][1] contains the y-coordinate
+
+            // Find the nearest velocity magnitude and turbulence quantities
+            Real inlet_velocity_magnitude = nearestValue(y, y_values, velocity_magnitude_profile);
+            Real inlet_tke = nearestValue(y, y_values, turbulent_kinetic_energy_profile);
+            Real inlet_eps = nearestValue(y, y_values, turbulent_dissipation_rate_profile);
+
+            //Imposing the inlet profiles
+            Vecd inlet_velocity(inlet_velocity_magnitude, 0.0); 
+            vel_[ghost_index] = inlet_velocity;
+            p_[ghost_index] = p_[index_i];
+            rho_[ghost_index] = rho_[index_i]; 
+            K_[ghost_index] = inlet_tke;
+            Eps_[ghost_index] = inlet_eps;
+            mu_t_[ghost_index] = C_mu_ * rho_[ghost_index] * pow(K_[ghost_index], 2.0) / Eps_[ghost_index];
+        }
     void applyPressureOutletBC(size_t ghost_index, size_t index_i) override
     {
         if (vel_[index_i][0] >= 0.0)

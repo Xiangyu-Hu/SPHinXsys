@@ -77,9 +77,9 @@ int main(int ac, char *av[])
     Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     size_t number_of_iterations = 0;
 
-    int screen_output_interval = 10000;
-    Real end_time = 140.0;
-    Real output_interval = 20.0; /**< time stamps for output. */ 
+    int screen_output_interval = 1000;
+    Real end_time = 100.0;
+    Real output_interval = 5.0; /**< time stamps for output. */ 
     //----------------------------------------------------------------------
     //	Statistics for CPU time
     //----------------------------------------------------------------------
