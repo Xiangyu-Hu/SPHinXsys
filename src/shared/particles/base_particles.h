@@ -286,45 +286,6 @@ class BaseParticles
     OperationOnDataAssemble<ParticleData, CopyParticleState> copy_particle_state_;
     OperationOnDataAssemble<ParticleVariables, WriteAParticleVariableToXml> write_restart_variable_to_xml_, write_reload_variable_to_xml_;
     OperationOnDataAssemble<ParticleVariables, ReadAParticleVariableFromXml> read_restart_variable_from_xml_;
-
-    struct CopyParticleStateCK
-    {
-        template <typename DataType>
-        void operator()(VariableAllocationPair<AllocatedDataArray<DataType>> &variable_allocation_pair, size_t index, size_t another_index);
-    };
-
-  public:
-    class CreateRealParticleFrom
-    {
-        DiscreteVariableArrays copyable_states_;
-
-      public:
-        CreateRealParticleFrom(BaseParticles &base_particles);
-
-        class ComputingKernel
-        {
-          public:
-            template <class ExecutionPolicy, class EncloserType>
-            ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-            UnsignedInt operator()(UnsignedInt index_i)
-            {
-                UnsignedInt new_original_id = *total_real_particles_;
-                original_id_[new_original_id] = new_original_id;
-                /** Buffer Particle state copied from real particle. */
-                copyFromAnotherParticle(new_original_id, index);
-                /** Realize the buffer particle by increasing the number of real particle by one.  */
-                incrementTotalRealParticles();
-                return new_original_id;
-            };
-
-          protected:
-            UnsignedInt *total_real_particles_;
-            UnsignedInt real_particles_bound_;
-            UnsignedInt *original_id_;
-            VariableDataArrays copyable_state_data_arrays_;
-            OperationOnDataAssemble<VariableDataArrays, CopyParticleStateCK> copy_particle_state_;
-        };
-    };
 };
 } // namespace SPH
 #endif // BASE_PARTICLES_H

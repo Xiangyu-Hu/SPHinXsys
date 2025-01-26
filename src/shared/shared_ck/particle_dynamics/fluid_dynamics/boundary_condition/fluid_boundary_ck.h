@@ -32,9 +32,9 @@
 #include "base_body_part.h"
 #include "base_data_package.h"
 #include "base_fluid_dynamics.h"
-#include "particle_reserve.h"
-#include "sphinxsys_variable_array.h"
 #include "fluid_boundary_state.hpp"
+#include "particle_operation.hpp"
+#include "particle_reserve.h"
 
 namespace SPH
 {
@@ -72,6 +72,8 @@ class InflowConditionCK<AlignedBoxPartType, ConditionFunction>
 
 class EmitterInflowInjectionCK : public BaseLocalDynamics<AlignedBoxPartByParticle>
 {
+    using CreateRealParticleKernel = typename CreateRealParticleFrom::ComputingKernel;
+
   public:
     EmitterInflowInjectionCK(AlignedBoxPartByParticle &aligned_box_part, ParticleBuffer<Base> &buffer);
     virtual ~EmitterInflowInjectionCK() {};
@@ -85,22 +87,19 @@ class EmitterInflowInjectionCK : public BaseLocalDynamics<AlignedBoxPartByPartic
 
       protected:
         AlignedBox *aligned_box_;
+        CreateRealParticleKernel create_real_particle_;
         Real rho0_;
-        VariableDataArrays copyable_state_data_arrays_;
-        OperationOnDataAssemble<VariableDataArrays, CopyParticleStateCK> copy_particle_state_;
         Vecd *pos_;
         Real *rho_, *p_;
-        UnsignedInt *total_real_particles_;
     };
 
   protected:
     ParticleBuffer<Base> &buffer_;
     SingularVariable<AlignedBox> *sv_aligned_box_;
+    CreateRealParticleFrom create_real_particle_method_;
     Real rho0_;
-    DiscreteVariableArrays copyable_states_;
     DiscreteVariable<Vecd> *dv_pos_;
     DiscreteVariable<Real> *dv_rho_, *dv_p_;
-
 };
 } // namespace fluid_dynamics
 } // namespace SPH

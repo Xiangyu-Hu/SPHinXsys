@@ -21,39 +21,67 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	fluid_boundary_state.h
- * @brief 	tbd
- * @author	Xiangyu Hu
+ * @file particle_operation.h
+ * @brief tbd
+ * @author Xiangyu Hu
  */
 
-#ifndef FLUID_BOUNDARY_STATE_H
-#define FLUID_BOUNDARY_STATE_H
+#ifndef PARTICLE_OPERATION_H
+#define PARTICLE_OPERATION_H
 
-#include "base_data_package.h"
 #include "base_particles.hpp"
+#include "sphinxsys_variable_array.h"
+
 namespace SPH
 {
 
-class BaseStateCondition
+struct CopyParticleStateCK
 {
-  public:
-    BaseStateCondition(BaseParticles *particles);
+    template <typename DataType>
+    void operator()(VariableAllocationPair<AllocatedDataArray<DataType>> &variable_allocation_pair, size_t index, size_t another_index);
+};
 
-    class ComputingKernel
+class CreateRealParticleFrom
+{
+    ParticleVariables &variables_to_sort_;
+    DiscreteVariableArrays copyable_states_;
+    DiscreteVariable<UnsignedInt> *dv_original_id_;
+    SingularVariable<UnsignedInt> *sv_total_real_particles_;
+    UnsignedInt real_particles_bound_;
+
+  public:
+    CreateRealParticleFrom(BaseParticles *particles);
+
+    class ComputingKernel // only run with sequenced policy for now
     {
       public:
         template <class ExecutionPolicy, class EncloserType>
         ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
 
+        UnsignedInt operator()(UnsignedInt index_i)
+        {
+            UnsignedInt new_original_id = *total_real_particles_;
+            original_id_[new_original_id] = new_original_id;
+            /** Buffer Particle state copied from real particle. */
+            //            copy_particle_state_(new_original_id, index_i);
+            /** Realize the buffer particle by increasing the number of real particle by one.  */
+            *total_real_particles_ += 1;
+            return new_original_id;
+        };
+
       protected:
-        Vecd *pos_, *vel_;
-        Real *p_, *rho_;
+        UnsignedInt *total_real_particles_;
+        UnsignedInt real_particles_bound_;
+        UnsignedInt *original_id_;
+        VariableDataArrays copyable_state_data_arrays_;
+        OperationOnDataAssemble<VariableDataArrays, CopyParticleStateCK> copy_particle_state_;
+
+        template <class ExecutionPolicy>
+        OperationOnDataAssemble<VariableDataArrays, CopyParticleStateCK>
+        initializeCopyParticleState(const ExecutionPolicy &ex_policy,
+                                    ParticleVariables &variables_to_sort, 
+                                    DiscreteVariableArrays &copyable_states);
     };
-
-  protected:
-    DiscreteVariable<Vecd> *dv_pos_, *dv_vel_;
-    DiscreteVariable<Real> *dv_p_, *dv_rho_;
 };
-
 } // namespace SPH
-#endif // FLUID_BOUNDARY_STATE_H
+#endif // PARTICLE_OPERATION_H
