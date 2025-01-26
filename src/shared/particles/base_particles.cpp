@@ -17,10 +17,10 @@ BaseParticles::BaseParticles(SPHBody &sph_body, BaseMaterial *base_material)
       base_material_(*base_material),
       restart_xml_parser_("xml_restart", "particles"),
       reload_xml_parser_("xml_particle_reload", "particles"),
-      copy_particle_state_(all_state_data_),
-      write_restart_variable_to_xml_(variables_to_restart_, restart_xml_parser_),
-      write_reload_variable_to_xml_(variables_to_reload_, reload_xml_parser_),
-      read_restart_variable_from_xml_(variables_to_restart_, restart_xml_parser_)
+      copy_particle_state_(),
+      write_restart_variable_to_xml_(restart_xml_parser_),
+      write_reload_variable_to_xml_(reload_xml_parser_),
+      read_restart_variable_from_xml_(restart_xml_parser_)
 {
     sph_body.assignBaseParticles(this);
     sv_total_real_particles_ = registerSingularVariable<UnsignedInt>("TotalRealParticles");
@@ -77,7 +77,7 @@ void BaseParticles::increaseAllParticlesBounds(size_t buffer_size)
 //=================================================================================================//
 void BaseParticles::copyFromAnotherParticle(size_t index, size_t another_index)
 {
-    copy_particle_state_(index, another_index);
+    copy_particle_state_(all_state_data_, index, another_index);
 }
 //=================================================================================================//
 size_t BaseParticles::allocateGhostParticles(size_t ghost_size)
@@ -132,20 +132,20 @@ void BaseParticles::resizeXmlDocForParticles(XmlParser &xml_parser)
 void BaseParticles::writeParticlesToXmlForRestart(std::string &filefullpath)
 {
     resizeXmlDocForParticles(restart_xml_parser_);
-    write_restart_variable_to_xml_();
+    write_restart_variable_to_xml_(variables_to_restart_);
     restart_xml_parser_.writeToXmlFile(filefullpath);
 }
 //=================================================================================================//
 void BaseParticles::readParticleFromXmlForRestart(std::string &filefullpath)
 {
     restart_xml_parser_.loadXmlFile(filefullpath);
-    read_restart_variable_from_xml_(this);
+    read_restart_variable_from_xml_(variables_to_restart_, this);
 }
 //=================================================================================================//
 void BaseParticles::writeToXmlForReloadParticle(std::string &filefullpath)
 {
     resizeXmlDocForParticles(reload_xml_parser_);
-    write_reload_variable_to_xml_();
+    write_reload_variable_to_xml_(variables_to_reload_);
     reload_xml_parser_.writeToXmlFile(filefullpath);
 }
 //=================================================================================================//
