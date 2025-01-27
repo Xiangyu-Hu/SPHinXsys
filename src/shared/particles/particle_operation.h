@@ -38,7 +38,8 @@ namespace SPH
 struct CopyParticleStateCK
 {
     template <typename DataType>
-    void operator()(VariableAllocationPair<AllocatedDataArray<DataType>> &variable_allocation_pair, size_t index, size_t another_index);
+    void operator()(VariableAllocationPair<AllocatedDataArray<DataType>> &variable_allocation_pair,
+                    size_t index, size_t another_index);
 };
 
 class CreateRealParticleFrom
@@ -63,7 +64,7 @@ class CreateRealParticleFrom
             UnsignedInt new_original_id = *total_real_particles_;
             original_id_[new_original_id] = new_original_id;
             /** Buffer Particle state copied from real particle. */
-            //            copy_particle_state_(new_original_id, index_i);
+            copy_particle_state_(copyable_state_data_arrays_, new_original_id, index_i);
             /** Realize the buffer particle by increasing the number of real particle by one.  */
             *total_real_particles_ += 1;
             return new_original_id;
@@ -75,12 +76,6 @@ class CreateRealParticleFrom
         UnsignedInt *original_id_;
         VariableDataArrays copyable_state_data_arrays_;
         OperationOnDataAssemble<VariableDataArrays, CopyParticleStateCK> copy_particle_state_;
-
-        template <class ExecutionPolicy>
-        OperationOnDataAssemble<VariableDataArrays, CopyParticleStateCK>
-        initializeCopyParticleState(const ExecutionPolicy &ex_policy,
-                                    ParticleVariables &variables_to_sort, 
-                                    DiscreteVariableArrays &copyable_states);
     };
 };
 } // namespace SPH
