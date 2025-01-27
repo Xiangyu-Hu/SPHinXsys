@@ -64,10 +64,10 @@ void ViscousForceCK<Contact<Wall, ViscosityType, KernelCorrectionType, Parameter
         UnsignedInt index_j = this->neighbor_index_[n];
         Vecd e_ij = this->e_ij(index_i, index_j);
         Vecd vec_r_ij = this->vec_r_ij(index_i, index_j);
-        Vecd vel_derivative = (this->vel_[index_i] - this->wall_vel_ave_[index_j]) /
+        Vecd vel_derivative = 2.0*(this->vel_[index_i] - this->wall_vel_ave_[index_j]) /
                               (vec_r_ij.squaredNorm() + 0.01 * this->smoothing_length_sq_);
 
-        force += vec_r_ij.dot(this->correction_(index_i) * e_ij) *
+        force += 2.0*vec_r_ij.dot(this->correction_(index_i) * e_ij) *
                  this->viscosity_(index_i) * vel_derivative *
                  this->dW_ij(index_i, index_j) * this->wall_Vol_[index_j];
     }
