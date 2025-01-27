@@ -73,10 +73,10 @@ DataType ProbeMesh::probeDataPackage(MeshVariableData<DataType> *mesh_variable_d
     Vecd beta = Vecd::Ones() - alpha;
 
     auto &neighborhood = cell_neighborhood_[package_index];
-    std::pair<size_t, Arrayi> neighbour_index_1 = NeighbourIndexShift(Arrayi(data_index[0], data_index[1]), neighborhood);
-    std::pair<size_t, Arrayi> neighbour_index_2 = NeighbourIndexShift(Arrayi(data_index[0] + 1, data_index[1]), neighborhood);
-    std::pair<size_t, Arrayi> neighbour_index_3 = NeighbourIndexShift(Arrayi(data_index[0], data_index[1] + 1), neighborhood);
-    std::pair<size_t, Arrayi> neighbour_index_4 = NeighbourIndexShift(Arrayi(data_index[0] + 1, data_index[1] + 1), neighborhood);
+    std::pair<size_t, Arrayi> neighbour_index_1 = BaseMeshLocalDynamics::NeighbourIndexShift(Arrayi(data_index[0], data_index[1]), neighborhood);
+    std::pair<size_t, Arrayi> neighbour_index_2 = BaseMeshLocalDynamics::NeighbourIndexShift(Arrayi(data_index[0] + 1, data_index[1]), neighborhood);
+    std::pair<size_t, Arrayi> neighbour_index_3 = BaseMeshLocalDynamics::NeighbourIndexShift(Arrayi(data_index[0], data_index[1] + 1), neighborhood);
+    std::pair<size_t, Arrayi> neighbour_index_4 = BaseMeshLocalDynamics::NeighbourIndexShift(Arrayi(data_index[0] + 1, data_index[1] + 1), neighborhood);
 
     DataType bilinear = mesh_variable_data[neighbour_index_1.first][neighbour_index_1.second[0]][neighbour_index_1.second[1]] * beta[0] * beta[1] +
                         mesh_variable_data[neighbour_index_2.first][neighbour_index_2.second[0]][neighbour_index_2.second[1]] * alpha[0] * beta[1] +
@@ -84,22 +84,6 @@ DataType ProbeMesh::probeDataPackage(MeshVariableData<DataType> *mesh_variable_d
                         mesh_variable_data[neighbour_index_4.first][neighbour_index_4.second[0]][neighbour_index_4.second[1]] * alpha[0] * alpha[1];
 
     return bilinear;
-}
-//=============================================================================================//
-template <typename DataType, typename FunctionByPosition>
-void UpdateKernelIntegrals::UpdateKernel::assignByPosition(MeshVariableData<DataType> *mesh_variable_data,
-                                            const Arrayi &cell_index,
-                                            MeshWithGridDataPackagesType *data_mesh,
-                                            const FunctionByPosition &function_by_position)
-{
-    size_t package_index = data_mesh_->PackageIndexFromCellIndex(cell_package_index_, cell_index);
-    auto &pkg_data = mesh_variable_data[package_index];
-    for (int i = 0; i != pkg_size; ++i)
-        for (int j = 0; j != pkg_size; ++j)
-        {
-            Vec2d position = data_mesh_->DataPositionFromIndex(cell_index, Arrayi(i, j));
-            pkg_data[i][j] = function_by_position(position);
-        }
 }
 //=============================================================================================//
 } // namespace SPH

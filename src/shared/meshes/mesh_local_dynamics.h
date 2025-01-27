@@ -421,6 +421,7 @@ class UpdateKernelIntegrals : public BaseMeshLocalDynamics
               kernel_(&encloser.kernel_),
               mesh_data_(&encloser.mesh_data_),
               global_mesh_(&mesh_data_->global_mesh_),
+              cell_neighborhood_(encloser.cell_neighborhood_.DelegatedDataField(ex_policy)),
               probe_signed_distance_(ex_policy, &encloser.mesh_data_){};
         void update(const size_t &index);
 
@@ -437,12 +438,9 @@ class UpdateKernelIntegrals : public BaseMeshLocalDynamics
         Kernel *kernel_;
         MeshWithGridDataPackagesType *mesh_data_;
         Mesh *global_mesh_;
+        CellNeighborhood *cell_neighborhood_;
         ProbeSignedDistance probe_signed_distance_;
-        Real computeKernelIntegral(const Vecd &position);
-        Vecd computeKernelGradientIntegral(const Vecd &position);
-
-        /** assign value to data package according to the position of data */
-        void assignByPosition(const size_t package_index);
+        std::pair<Real, Vecd> computeKernelIntegral(const Vecd &position, const Arrayi &cell_index, const size_t &package_index, const Arrayi &grid_index);
 
         /** a cut cell is a cut by the level set. */
         /** "Multi-scale modeling of compressible multi-fluid flows with conservative interface method."

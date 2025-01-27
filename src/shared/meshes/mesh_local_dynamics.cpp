@@ -43,11 +43,6 @@ void InitializeIndexMesh::UpdateKernel::update(const size_t &package_index)
     mesh_data_->assignDataPackageIndex(cell_index, package_index);
 }
 //=================================================================================================//
-void UpdateKernelIntegrals::UpdateKernel::update(const size_t &package_index)
-{
-    assignByPosition(package_index);
-}
-//=================================================================================================//
 void InitializeDataInACellFromCoarse::UpdateKernel::update(const Arrayi &cell_index)
 {
     Vecd cell_position = mesh_data_->CellPositionFromIndex(cell_index);
