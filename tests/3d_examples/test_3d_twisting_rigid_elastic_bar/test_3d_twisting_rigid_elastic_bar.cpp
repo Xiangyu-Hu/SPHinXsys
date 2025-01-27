@@ -4,13 +4,14 @@
  * @author Weiyi Kong
  */
 #include "sphinxsys.h"
+#include <gtest/gtest.h>
 using namespace SPH;
 
 void run_rigid_elastic_coupling(int res_factor = 1);
 
 int main(int ac, char *av[])
 {
-    run_rigid_elastic_coupling(2);
+    run_rigid_elastic_coupling(4);
 }
 
 class FixPart : public BodyPartByParticle
@@ -44,6 +45,8 @@ Real get_physical_viscosity_general(Real rho, Real youngs_modulus, Real length_s
     return shape_constant / 4.0 * std::sqrt(rho * youngs_modulus) * length_scale;
 }
 
+Vec3d get_central_position(const BoundingBox &bbox) { return 0.5 * (bbox.first_ + bbox.second_); };
+
 struct solid_algs
 {
     InnerRelation inner_relation;
@@ -58,7 +61,7 @@ struct solid_algs
           corrected_configuration(inner_relation),
           stress_relaxation_first_half(inner_relation),
           stress_relaxation_second_half(inner_relation),
-          damping(0.2, inner_relation, "Velocity", physical_damping),
+          damping(0.5, inner_relation, "Velocity", physical_damping),
           time_step(body)
     {
         // Initial normal
@@ -98,7 +101,7 @@ struct rigid_algs
           forces(MBsystem),
           rigid_multibody(body, rigid_shape),
           rigid_info(*rigid_multibody.body_part_mass_properties_),
-          rigidMBody(matter.Ground(), SimTK::Transform(SimTKVec3(0)), rigid_info, SimTK::Transform(SimTKVec3(0))),
+          rigidMBody(matter.Ground(), SimTK::Transform(EigenToSimTK(get_central_position(rigid_shape->getBounds()))), rigid_info, SimTK::Transform(SimTKVec3(0))),
           force_on_bodies(forces, matter),
           state(MBsystem.realizeTopology()),
           integ(MBsystem)
@@ -117,13 +120,49 @@ struct rigid_algs
     {
         SimTK::State &state_for_update = integ.updAdvancedState();
         force_on_bodies.clearAllBodyForces(state_for_update);
-        force_on_bodies.setOneBodyForce(state_for_update, rigidMBody, ext_force + force_on_rigid_body->exec());
+        auto coupling_force = force_on_rigid_body->exec();
+        force_on_bodies.setOneBodyForce(state_for_update, rigidMBody, ext_force + coupling_force);
         integ.stepBy(dt);
         constraint_rigid_body->exec();
     }
 
     void apply_constraint() { constraint_rigid_body->exec(); }
 };
+
+inline std::vector<Vec3d>
+read_ref_data(const fs::path &ref_name)
+{
+    std::vector<Vec3d> variable_ref;
+
+    std::vector<std::string> row;
+    std::string line;
+    std::string word;
+
+    std::fstream file(ref_name, std::ios::in);
+    if (!file.is_open())
+        throw std::runtime_error("Could not open the file: " + ref_name.string());
+
+    double variable_x;
+    double variable_y;
+    double variable_z;
+    while (std::getline(file, line))
+    {
+        row.clear();
+        std::stringstream str(line);
+        while (std::getline(str, word, ','))
+        {
+            row.emplace_back(word);
+        }
+        // row[0] is node id, skip
+        std::stringstream(row[1]) >> variable_x;
+        std::stringstream(row[2]) >> variable_y;
+        std::stringstream(row[3]) >> variable_z;
+        // Relative position y/radius
+        variable_ref.emplace_back(variable_x, variable_y, variable_z);
+    }
+
+    return variable_ref;
+}
 
 void run_rigid_elastic_coupling(int res_factor)
 {
@@ -132,9 +171,6 @@ void run_rigid_elastic_coupling(int res_factor)
 
     //   elastic   rigid
     //|-----------|----|
-    //|           |    |
-    //|           |    |
-    //|           |    |
     //|-----------|----|
     // geometry
     const Real elastic_length = 4; // length of the elastic part
@@ -164,20 +200,20 @@ void run_rigid_elastic_coupling(int res_factor)
     auto get_rigid_force = [&](Real time)
     {
         Real force_p = get_force_p(time);
-        SimTKVec3 force_vec(0, -force_p, 0); // downward force
-        SimTKVec3 torque_vec(0, 0, 0);       // torque
+        SimTKVec3 force_vec(0, -force_p, 0);           // downward force
+        SimTKVec3 torque_vec(-force_p * height, 0, 0); // torque
         return SimTK::SpatialVec(torque_vec, force_vec);
     };
 
     // Import meshes
     // mesh of the total bar
     const Vec3d halfsize = 0.5 * Vec3d(total_length + constraint_length, height, width);
-    const Vec3d translation = (min_x_pos + halfsize.x()) * Vec3d::UnitX();
+    const Vec3d translation = (min_x_pos + halfsize.x()) * Vec3d::UnitX() + 0.5 * width * Vec3d::UnitZ();
     auto mesh = makeShared<TransformShape<GeometricShapeBox>>(Transform(translation), halfsize, "bar");
 
     // mesh of the rigid body part
     const Vec3d rigid_halfsize = 0.5 * Vec3d(rigid_length, height, width);
-    const Vec3d rigid_translation = (x0 + elastic_length + 0.5 * rigid_length) * Vec3d::UnitX();
+    const Vec3d rigid_translation = (x0 + elastic_length + 0.5 * rigid_length) * Vec3d::UnitX() + 0.5 * width * Vec3d::UnitZ();
     auto mesh_rigid = makeShared<TransformShape<GeometricShapeBox>>(Transform(rigid_translation), rigid_halfsize, "rigid_bar");
 
     // System bounding box
@@ -193,18 +229,17 @@ void run_rigid_elastic_coupling(int res_factor)
     body.generateParticles<BaseParticles, Lattice>();
 
     // Methods
-    solid_algs algs(body, get_physical_viscosity_general(rho, youngs_modulus, width));
+    solid_algs algs(body, get_physical_viscosity_general(rho, youngs_modulus, total_length));
     rigid_algs rigid_algs(body, mesh_rigid);
-
-    // Initialization
-    system.initializeSystemCellLinkedLists();
-    system.initializeSystemConfigurations();
-    algs.corrected_config();
 
     // Boundary conditions
     FixPart fix_elastic_part(body, "ClampingPart", [&](Vec3d &pos)
                              { return pos.x() < x0; });
     SimpleDynamics<FixBodyPartConstraint> fix_elastic_bc(fix_elastic_part);
+
+    // record rigid particle id for debug
+    body.getBaseParticles().registerStateVariable<int>("isRigid", [&](size_t i)
+                                                       { return mesh_rigid->checkContain(body.getBaseParticles().ParticlePositions()[i]); });
 
     // output
     BodyStatesRecordingToVtp vtp_output(system);
@@ -213,8 +248,23 @@ void run_rigid_elastic_coupling(int res_factor)
     vtp_output.addToWrite<Mat3d>(body, "StressPK1OnParticle");
     vtp_output.addToWrite<Vec3d>(body, "ForcePrior");
     vtp_output.addToWrite<Vec3d>(body, "Force");
+    vtp_output.addToWrite<int>(body, "isRigid");
     vtp_output.addDerivedVariableRecording<SimpleDynamics<Displacement>>(body);
     vtp_output.writeToFile(0);
+
+    // Observer
+    const auto observation_locations = read_ref_data("./input/initial_position");
+    ObserverBody observer(system, "InterfaceObserver");
+    observer.generateParticles<ObserverParticles>(observation_locations);
+    ContactRelation contact_observer(observer, {&body});
+    InteractionDynamics<CorrectInterpolationKernelWeights>{contact_observer}.exec();
+    ObservedQuantityRecording<Vecd> write_disp("Displacement", contact_observer);
+    write_disp.writeToFile(0);
+
+    // Initialization
+    system.initializeSystemCellLinkedLists();
+    system.initializeSystemConfigurations();
+    algs.corrected_config();
 
     // Simulation
     Real &physical_time = *system.getSystemVariableDataByName<Real>("PhysicalTime");
@@ -249,6 +299,8 @@ void run_rigid_elastic_coupling(int res_factor)
                 algs.damping_exec(dt);
                 fix_elastic_bc.exec();
 
+                // rigid_algs.apply_constraint();
+
                 // update rigid body state based on the inner force computed in the previous step
                 auto rigid_force = get_rigid_force(physical_time);
                 rigid_algs.exec(rigid_force, dt);
@@ -256,8 +308,7 @@ void run_rigid_elastic_coupling(int res_factor)
                 // second half integration of elastic body
                 algs.stress_relaxation_second(dt);
 
-                // impose the rigid-body constraint again
-                rigid_algs.apply_constraint();
+                // rigid_algs.apply_constraint();
 
                 ++ite;
                 integral_time += dt;
@@ -266,6 +317,7 @@ void run_rigid_elastic_coupling(int res_factor)
 
             ite_output++;
             vtp_output.writeToFile(ite_output);
+            write_disp.writeToFile(ite_output);
         }
         TimeInterval tt = TickCount::now() - t1;
         std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
@@ -280,5 +332,14 @@ void run_rigid_elastic_coupling(int res_factor)
         std::cerr << e.what() << '\n';
         vtp_output.writeToFile(ite_output + 1);
         exit(0);
+    }
+
+    // post-processing
+    auto *disp = write_disp.getObservedQuantity();
+    const auto disp_ref = read_ref_data("./input/displacement");
+    std::cout << "Error: " << std::endl;
+    for (size_t i = 0; i < observation_locations.size(); i++)
+    {
+        std::cout << (disp[i] - disp_ref[i]).norm() / disp_ref[i].norm() * 100 << "%" << std::endl;
     }
 }
