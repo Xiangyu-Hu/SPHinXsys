@@ -17,7 +17,7 @@ TransportVelocityCorrectionCKBase<BaseInteractionType>::
     TransportVelocityCorrectionCKBase(DynamicsIdentifier &identifier)
     : BaseInteractionType(identifier),
       dv_Vol_(this->particles_->template getVariableByName<Real>("VolumetricMeasure")),
-      dv_pos_(this->particles_->template getVariableByName<Vecd>("Position")),
+      dv_dpos_(this->particles_->template getVariableByName<Vecd>("Displacement")),
       dv_zero_gradient_residue_(
           this->particles_->template registerStateVariableOnly<Vecd>("ZeroGradientResidue"))
 {
@@ -54,7 +54,7 @@ InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : BaseInteraction::InteractKernel(ex_policy, encloser),
       correction_(ex_policy, encloser.kernel_correction_),
       Vol_(encloser.dv_Vol_->DelegatedData(ex_policy)),
-      pos_(encloser.dv_pos_->DelegatedData(ex_policy)),
+      dpos_(encloser.dv_dpos_->DelegatedData(ex_policy)),
       zero_gradient_residue_(encloser.dv_zero_gradient_residue_->DelegatedData(ex_policy)),
       within_scope_(encloser.within_scope_)
 {
@@ -98,13 +98,10 @@ UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
       correction_scaling_(encloser.correction_scaling_),
       h_ratio_(encloser.h_ratio_),
       limiter_(encloser.limiter_),
-      pos_(encloser.dv_pos_->DelegatedData(ex_policy)),
+      dpos_(encloser.dv_dpos_->DelegatedData(ex_policy)),
       zero_gradient_residue_(encloser.dv_zero_gradient_residue_->DelegatedData(ex_policy)),
       within_scope_(encloser.within_scope_)
-{
-        std::cout<<"85\n";
-
-}
+{}
 
 template <
     class KernelCorrectionType,
@@ -117,13 +114,12 @@ void TransportVelocityCorrectionCK<
 >::UpdateKernel::
 update(size_t index_i, Real dt)
 {
-    // pos_[index_i] += correction_scaling_ * zero_gradient_residue_[index_i];
 
     if (this->within_scope_(index_i))
     {
         Real inv_h_ratio = 1.0 / h_ratio_(index_i);
         Real squared_norm = this->zero_gradient_residue_[index_i].squaredNorm();
-        pos_[index_i] += correction_scaling_ * limiter_(squared_norm) *
+        dpos_[index_i] += correction_scaling_ * limiter_(squared_norm) *
                          this->zero_gradient_residue_[index_i] * inv_h_ratio * inv_h_ratio;
     }
 }
@@ -175,7 +171,7 @@ InteractKernel::interact(size_t index_i, Real dt)
             const Vecd e_ij = this->e_ij(index_i, index_j);
 
             // acceleration for transport velocity
-            inconsistency -= 2.0*(this->correction_(index_i) + this->correction_(index_j)) *
+            inconsistency -= 2.0*this->correction_(index_i) *
                              dW_ijV_j * e_ij;
 
     }

@@ -23,7 +23,7 @@ public:
 
 protected:
     DiscreteVariable<Real> *dv_Vol_;                     ///< "VolumetricMeasure"
-    DiscreteVariable<Vecd> *dv_pos_;                    ///< "Position"
+    DiscreteVariable<Vecd> *dv_dpos_;                    ///< "Position"
     DiscreteVariable<Vecd> *dv_zero_gradient_residue_;  ///< "ZeroGradientResidue"
 
 };
@@ -59,7 +59,7 @@ public:
     protected:
         CorrectionKernel correction_;
         Real *Vol_;
-        Vecd *pos_, *zero_gradient_residue_;
+        Vecd *dpos_, *zero_gradient_residue_;
         ParticleScopeType within_scope_;
 
     };
@@ -78,7 +78,7 @@ public:
         Real correction_scaling_;
         ResolutionType h_ratio_;
         LimiterType limiter_;
-        Vecd *pos_, *zero_gradient_residue_;
+        Vecd *dpos_, *zero_gradient_residue_;
         ParticleScopeType within_scope_;
     };
 
@@ -140,6 +140,10 @@ using TransportVelocityCorrectionWallNoCorrectionCK =
         Inner<WithUpdate, NoKernelCorrectionCK, SingleResolution, NoLimiter, SPH::BulkParticles>,
         Contact<Wall, NoKernelCorrectionCK, SingleResolution, NoLimiter, SPH::BulkParticles>>;
 
+using TransportVelocityLimitedCorrectionCorrectedComplexCK =
+    TransportVelocityCorrectionCK<
+        Inner<WithUpdate, LinearCorrectionCK, SingleResolution, TruncatedLinear, SPH::BulkParticles>,
+        Contact<Wall, LinearCorrectionCK, SingleResolution, TruncatedLinear, SPH::BulkParticles>>;
 // using TransportVelocityCorrectionInnerLinearCorrectionCK =
 //     TransportVelocityCorrectionCK<
 //         Inner<LinearCorrectionCK, SingleResolution, NoLimiter, ParticleScope>>;
