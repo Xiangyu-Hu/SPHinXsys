@@ -1,4 +1,4 @@
-#ifndef TRANSPORT_VELOCITY_CORRECTION_CK_HHPP
+#ifndef TRANSPORT_VELOCITY_CORRECTION_CK_HPP
 #define TRANSPORT_VELOCITY_CORRECTION_CK_HPP
 #include "transport_velocity_correction_ck.h"
 
