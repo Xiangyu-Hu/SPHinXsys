@@ -155,9 +155,9 @@ class TransportVelocityCorrectionCK<Inner<WithUpdate, KernelCorrectionType, Reso
 
 
 
-public:
+public:    
     explicit TransportVelocityCorrectionCK(Relation<Inner<Parameters...>> &inner_relation, Real coefficient = 0.2);
-
+    
     virtual ~TransportVelocityCorrectionCK() {}
 
     //====================== Interact Kernel ======================//
@@ -227,13 +227,13 @@ class TransportVelocityCorrectionCK<Contact<Wall, KernelCorrectionType, Resoluti
             void interact(size_t index_i, Real dt = 0.0);
 
         protected:
-            CorrectionKernel correction_;
+           CorrectionKernel correction_;
            Vecd  *zero_gradient_residue_;
            Real* contact_wall_Vol_;
         };
           protected:
 
-    KernelCorrectionType kernel_correction_;
+        KernelCorrectionType kernel_correction_;
         StdVec<DiscreteVariable<Real> *> dv_contact_wall_Vol_;
 
 };
@@ -242,22 +242,20 @@ class TransportVelocityCorrectionCK<Contact<Wall, KernelCorrectionType, Resoluti
 // Alias Definitions for Specific Configurations
 //--------------------------------------------------------------------------------------
 
-using TransportVelocityCorrectionInnerNoCorrectionCK =
+using TransportVelocityCorrectionInnerNoCorrectionBulkParticlesCK =
     TransportVelocityCorrectionCK<
-        Inner<WithUpdate, NoKernelCorrectionCK, SingleResolution, NoLimiter, SPH::BulkParticles>>;
+        Inner<WithUpdate, NoKernelCorrectionCK, SingleResolution, NoLimiter, BulkParticles>>;
 
-using TransportVelocityCorrectionWallNoCorrectionCK =
+using TransportVelocityCorrectionWallNoCorrectionBulkParticlesCK =
     TransportVelocityCorrectionCK<
-        Inner<WithUpdate, NoKernelCorrectionCK, SingleResolution, NoLimiter, SPH::BulkParticles>,
-        Contact<Wall, NoKernelCorrectionCK, SingleResolution, NoLimiter, SPH::BulkParticles>>;
+        Inner<WithUpdate, NoKernelCorrectionCK, SingleResolution, NoLimiter, BulkParticles>,
+        Contact<Wall, NoKernelCorrectionCK, SingleResolution, NoLimiter, BulkParticles>>;
 
-using TransportVelocityLimitedCorrectionCorrectedComplexCK =
+using TransportVelocityLimitedCorrectionCorrectedComplexBulkParticlesCK =
     TransportVelocityCorrectionCK<
-        Inner<WithUpdate, LinearCorrectionCK, SingleResolution, TruncatedLinear, SPH::BulkParticles>,
-        Contact<Wall, LinearCorrectionCK, SingleResolution, TruncatedLinear, SPH::BulkParticles>>;
-// using TransportVelocityCorrectionInnerLinearCorrectionCK =
-//     TransportVelocityCorrectionCK<
-//         Inner<LinearCorrectionCK, SingleResolution, NoLimiter, ParticleScope>>;
+        Inner<WithUpdate, LinearCorrectionCK, SingleResolution, TruncatedLinear, BulkParticles>,
+        Contact<Wall, LinearCorrectionCK, SingleResolution, TruncatedLinear, BulkParticles>>;
+
 
 }  // namespace fluid_dynamics
 }  // namespace SPH
