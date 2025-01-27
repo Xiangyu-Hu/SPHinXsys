@@ -99,23 +99,6 @@ DataType ProbeMesh::probeDataPackage(MeshVariableData<DataType> *mesh_variable_d
     return bilinear_1 * beta[2] + bilinear_2 * alpha[2];
 }
 //=============================================================================================//
-template <typename DataType, typename FunctionByPosition>
-void UpdateKernelIntegrals::UpdateKernel::assignByPosition(MeshVariableData<DataType> *mesh_variable_data,
-                                            const Arrayi &cell_index,
-                                            MeshWithGridDataPackagesType *data_mesh,
-                                            const FunctionByPosition &function_by_position)
-{
-    size_t package_index = data_mesh->PackageIndexFromCellIndex(cell_package_index_, cell_index);
-    auto &pkg_data = mesh_variable_data[package_index];
-    for (int i = 0; i != pkg_size; ++i)
-        for (int j = 0; j != pkg_size; ++j)
-            for (int k = 0; k != pkg_size; ++k)
-            {
-                Vec3d position = data_mesh->DataPositionFromIndex(cell_index, Arrayi(i, j, k));
-                pkg_data[i][j][k] = function_by_position(position);
-            }
-//=============================================================================================//
-}
 } // namespace SPH
 //=============================================================================================//
 #endif //MESH_LOCAL_DYNAMICS_3D_HPP

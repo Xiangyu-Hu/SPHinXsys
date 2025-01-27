@@ -176,6 +176,21 @@ Vecd UpdateKernelIntegrals::UpdateKernel::computeKernelGradientIntegral(const Ve
     return integral * data_spacing_ * data_spacing_ * data_spacing_;
 }
 //=============================================================================================//
+void UpdateKernelIntegrals::UpdateKernel::assignByPosition(const size_t package_index)
+{
+    auto &pkg_data_kernel_weight = kernel_weight_[package_index];
+    auto &pkg_data_kernel_gradient = kernel_gradient_[package_index];
+    Arrayi cell_index = meta_data_cell_[package_index].first;
+    for (int i = 0; i != pkg_size; ++i)
+        for (int j = 0; j != pkg_size; ++j)
+            for (int k = 0; k != pkg_size; ++k)
+            {
+                Vec3d position = mesh_data_->DataPositionFromIndex(cell_index, Arrayi(i, j, k));
+                pkg_data_kernel_weight[i][j][k] = computeKernelIntegral(position);
+                pkg_data_kernel_gradient[i][j][k] = computeKernelGradientIntegral(position);
+            }
+}
+//=============================================================================================//
 void ReinitializeLevelSet::UpdateKernel::update(const size_t &package_index)
 {
     auto &phi_addrs = phi_[package_index];

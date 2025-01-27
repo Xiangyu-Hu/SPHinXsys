@@ -442,11 +442,7 @@ class UpdateKernelIntegrals : public BaseMeshLocalDynamics
         Vecd computeKernelGradientIntegral(const Vecd &position);
 
         /** assign value to data package according to the position of data */
-        template <typename DataType, typename FunctionByPosition>
-        void assignByPosition(MeshVariableData<DataType> *mesh_variable_data,
-                              const Arrayi &cell_index,
-                              MeshWithGridDataPackagesType *data_mesh,
-                              const FunctionByPosition &function_by_position);
+        void assignByPosition(const size_t package_index);
 
         /** a cut cell is a cut by the level set. */
         /** "Multi-scale modeling of compressible multi-fluid flows with conservative interface method."
