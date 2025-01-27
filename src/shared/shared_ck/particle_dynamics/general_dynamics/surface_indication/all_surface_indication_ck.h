@@ -20,20 +20,18 @@
  * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
  *                                                                           *
  * ------------------------------------------------------------------------- */
+
+#ifndef B9F4AD2C_8E17_4C49_BCAA_4BD2C6A6951F
+#define B9F4AD2C_8E17_4C49_BCAA_4BD2C6A6951F
 /**
- * @file    all_general_dynamics_ck.h
+ * @file    all_general_dynamics.h
  * @brief   This is the header file that user code should include to pick up all
  *          general dynamics used in SPHinXsys.
  * @author	Chi Zhang and Xiangyu Hu
  */
 
-#pragma once
 
-#include "force_prior_ck.hpp"
-#include "general_constraint_ck.h"
-#include "general_reduce_ck.hpp"
-#include "geometric_dynamics.hpp"
-#include "interpolation_dynamics.hpp"
-#include "kernel_correction_ck.hpp"
-#include "general_initial_condition.h"
-#include "all_surface_indication_ck.h"
+#include "surface_indication_ck.hpp"
+
+
+#endif /* B9F4AD2C_8E17_4C49_BCAA_4BD2C6A6951F */

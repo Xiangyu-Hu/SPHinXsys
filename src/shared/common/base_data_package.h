@@ -77,24 +77,22 @@ template <typename DataAssembleType, typename OperationType>
 class OperationOnDataAssemble
 {
     static constexpr std::size_t tuple_size_ = std::tuple_size_v<DataAssembleType>;
-    DataAssembleType &assemble_;
     OperationType operation_;
 
     template <std::size_t... Is, typename... OperationArgs>
-    void operationSequence(std::index_sequence<Is...>, OperationArgs &&...operation_args)
+    void operationSequence(DataAssembleType &data_assemble, std::index_sequence<Is...>, OperationArgs &&...operation_args)
     {
-        (operation_(std::get<Is>(assemble_), std::forward<OperationArgs>(operation_args)...), ...);
+        (operation_(std::get<Is>(data_assemble), std::forward<OperationArgs>(operation_args)...), ...);
     }
 
   public:
     template <typename... Args>
-    OperationOnDataAssemble(DataAssembleType &assemble, Args &&...args)
-        : assemble_(assemble), operation_(std::forward<Args>(args)...){};
+    OperationOnDataAssemble(Args &&...args) : operation_(std::forward<Args>(args)...){};
 
     template <typename... OperationArgs>
-    void operator()(OperationArgs &&...operation_args)
+    void operator()(DataAssembleType &data_assemble, OperationArgs &&...operation_args)
     {
-        operationSequence(std::make_index_sequence<tuple_size_>{}, std::forward<OperationArgs>(operation_args)...);
+        operationSequence(data_assemble, std::make_index_sequence<tuple_size_>{}, std::forward<OperationArgs>(operation_args)...);
     }
 };
 } // namespace SPH

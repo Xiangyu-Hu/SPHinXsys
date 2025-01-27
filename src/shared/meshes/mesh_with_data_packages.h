@@ -122,7 +122,7 @@ class MeshWithGridDataPackages : public Mesh
             }
         }
     };
-    OperationOnDataAssemble<MeshVariableAssemble, ResizeMeshVariableData> resize_mesh_variable_data_{all_mesh_variables_};
+    OperationOnDataAssemble<MeshVariableAssemble, ResizeMeshVariableData> resize_mesh_variable_data_{};
 
     /** probe by applying bi and tri-linear interpolation within the package. */
     template <class DataType>
@@ -176,7 +176,7 @@ class MeshWithGridDataPackages : public Mesh
     void for_each_cell_data(const FunctionOnData &function);
     void resizeMeshVariableData()
     {
-        resize_mesh_variable_data_(num_grid_pkgs_);
+        resize_mesh_variable_data_(all_mesh_variables_, num_grid_pkgs_);
     }
 
     template <typename DataType>
