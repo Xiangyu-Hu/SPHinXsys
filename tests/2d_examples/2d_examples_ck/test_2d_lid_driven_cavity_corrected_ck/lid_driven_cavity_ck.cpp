@@ -201,17 +201,22 @@ int main(int ac, char *av[])
         fluid_acoustic_step_1st_half(water_block_inner, water_wall_contact);
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticStep2ndHalfWithWallRiemannCK>
         fluid_acoustic_step_2nd_half(water_block_inner, water_wall_contact);
-
+    /** 
+     * Free Surface Indicator and BulkParticles for Transport Velocity Correction are not required for this simulation.
+     * They are included here solely for testing and verification purposes, 
+     * and do not contribute to the primary objectives of the current case.
+     */
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::FreeSurfaceIndicationComplexCK>
         fluid_boundary_indicator(water_block_inner,water_wall_contact);        
-    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::TransportVelocityLimitedCorrectionCorrectedComplexCK>
-        tvc_ck(water_block_inner, water_wall_contact); 
+    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::TransportVelocityLimitedCorrectionCorrectedComplexBulkParticlesCK>
+        transport_correction_ck(water_block_inner, water_wall_contact); 
 
     ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AdvectionTimeStepCK> fluid_advection_time_step(water_body, U_f);
     ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticTimeStepCK> fluid_acoustic_time_step(water_body);
     /** Computing viscous acceleration with wall. */
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::ViscousForceWithWallCK>
-        fluid_viscous_force(water_block_inner, water_wall_contact);    //----------------------------------------------------------------------
+        fluid_viscous_force(water_block_inner, water_wall_contact);    
+    //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
     /** Output the body states. */
@@ -219,7 +224,6 @@ int main(int ac, char *av[])
     body_states_recording.addToWrite<Vecd>(water_body, "Velocity");
     body_states_recording.addToWrite<Real>(water_body, "Density");
     body_states_recording.addToWrite<int>(water_body, "Indicator");
-    body_states_recording.addToWrite<Real>(water_body, "PositionDivergence");  
     body_states_recording.addToWrite<Vecd>(wall_boundary, "Velocity");
 
     RestartIO restart_io(sph_system);
@@ -244,8 +248,7 @@ int main(int ac, char *av[])
     wall_cell_linked_list.exec();
     water_block_update_complex_relation.exec();
     horizontal_observer_contact_relation.exec();
-    vertical_observer_contact_relation.exec();
-    // particle_sort.exec();
+    vertical_observer_contact_relation.exec();    
     solid_initial_condition.exec();
     fluid_linear_correction_matrix.exec();
     //----------------------------------------------------------------------
@@ -283,14 +286,12 @@ int main(int ac, char *av[])
             /** outer loop for dual-time criteria time-stepping. */
             time_instance = TickCount::now();
 
-            fluid_density_regularization.exec();      
-
-
+            fluid_density_regularization.exec();
             water_advection_step_setup.exec();
             fluid_viscous_force.exec();
             fluid_linear_correction_matrix.exec();
             fluid_boundary_indicator.exec();
-            tvc_ck.exec();
+            transport_correction_ck.exec();
             
             Real advection_dt = fluid_advection_time_step.exec();
             interval_computing_time_step += TickCount::now() - time_instance;
@@ -325,10 +326,10 @@ int main(int ac, char *av[])
 
             /** Particle sort, ipdate cell linked list and configuration. */
             time_instance = TickCount::now();
-            // if (number_of_iterations % 100 == 0 && number_of_iterations != 1)
-            // {
-            //     particle_sort.exec();
-            // }
+            if (number_of_iterations % 100 == 0 && number_of_iterations != 1)
+            {
+                particle_sort.exec();
+            }
             water_cell_linked_list.exec();        
             water_block_update_complex_relation.exec();            
             interval_updating_configuration += TickCount::now() - time_instance;
