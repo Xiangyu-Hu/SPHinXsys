@@ -97,33 +97,5 @@ class OperationOnDataAssemble
         operationSequence(std::make_index_sequence<tuple_size_>{}, std::forward<OperationArgs>(operation_args)...);
     }
 };
-
-template <typename DataAssembleIn, typename DataAssembleOut, typename OperationType>
-class OperationBetweenDataAssembles
-{
-    static constexpr std::size_t tuple_size_ = std::tuple_size_v<DataAssembleIn>;
-    static constexpr std::size_t tuple_size_out_ = std::tuple_size_v<DataAssembleOut>;
-    static_assert(tuple_size_ == tuple_size_out_, "The size of input and output data assembles must be the same.");
-    DataAssembleIn &assemble_in_;
-    DataAssembleOut &assemble_out_;
-    OperationType operation_;
-
-    template <std::size_t... Is, typename... OperationArgs>
-    void operationSequence(std::index_sequence<Is...>, OperationArgs &&...operation_args)
-    {
-        (operation_(std::get<Is>(assemble_in_), std::get<Is>(assemble_out_), std::forward<OperationArgs>(operation_args)...), ...);
-    }
-
-  public:
-    template <typename... Args>
-    OperationBetweenDataAssembles(DataAssembleIn &assemble_in, DataAssembleOut &assemble_out, Args &&...args)
-        : assemble_in_(assemble_in), assemble_out_(assemble_out), operation_(std::forward<Args>(args)...){};
-
-    template <typename... OperationArgs>
-    void operator()(OperationArgs &&...operation_args)
-    {
-        operationSequence(std::make_index_sequence<tuple_size_>{}, std::forward<OperationArgs>(operation_args)...);
-    }
-};
 } // namespace SPH
 #endif // BASE_DATA_PACKAGE_H
