@@ -1,7 +1,6 @@
-#pragma once
-
+#ifndef TRANSPORT_VELOCITY_CORRECTION_CK_HHPP
+#define TRANSPORT_VELOCITY_CORRECTION_CK_HPP
 #include "transport_velocity_correction_ck.h"
-// #include "base_particles.hpp"
 
 namespace SPH
 {
@@ -20,8 +19,7 @@ TransportVelocityCorrectionCKBase<BaseInteractionType>::
       dv_dpos_(this->particles_->template getVariableByName<Vecd>("Displacement")),
       dv_zero_gradient_residue_(
           this->particles_->template registerStateVariableOnly<Vecd>("ZeroGradientResidue"))
-{
-}
+{}
 
 //========================================================================================
 //   2) Partial Specialization: 
@@ -29,12 +27,14 @@ TransportVelocityCorrectionCKBase<BaseInteractionType>::
 //========================================================================================
 template <class KernelCorrectionType, class ResolutionType, class LimiterType, class ParticleScopeType, typename... Parameters>
 TransportVelocityCorrectionCK<Inner<WithUpdate, KernelCorrectionType, ResolutionType, LimiterType, ParticleScopeType, Parameters...>>::
-    TransportVelocityCorrectionCK(Relation<Inner<Parameters...>> &inner_relation)
+    TransportVelocityCorrectionCK(Relation<Inner<Parameters...>> &inner_relation, Real coefficient)
     : TransportVelocityCorrectionCKBase<Interaction<Inner<Parameters...>>>(inner_relation),
       kernel_correction_(this->particles_),
       h_ref_(this->sph_body_.sph_adaptation_->ReferenceSmoothingLength()),
-      correction_scaling_(0.2 * h_ref_ * h_ref_),
-      h_ratio_(this->particles_), limiter_(h_ref_ * h_ref_),within_scope_(this->particles_)
+      correction_scaling_(coefficient * h_ref_ * h_ref_),
+      h_ratio_(this->particles_),
+      limiter_(h_ref_ * h_ref_),
+      within_scope_method_(this->particles_)
 {
     static_assert(std::is_base_of<WithinScope, ParticleScopeType>::value,
                   "WithinScope is not the base of ParticleScope!");
@@ -56,11 +56,10 @@ InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
       Vol_(encloser.dv_Vol_->DelegatedData(ex_policy)),
       dpos_(encloser.dv_dpos_->DelegatedData(ex_policy)),
       zero_gradient_residue_(encloser.dv_zero_gradient_residue_->DelegatedData(ex_policy)),
-      within_scope_(encloser.within_scope_)
-{
-}
+      within_scope_(ex_policy, encloser.within_scope_method_, *this)
+{}
 
-template <    class KernelCorrectionType,    class ResolutionType,    class LimiterType,    class ParticleScopeType,    typename... Parameters>
+template <class KernelCorrectionType,    class ResolutionType,    class LimiterType,    class ParticleScopeType,    typename... Parameters>
 void TransportVelocityCorrectionCK<Inner<WithUpdate, KernelCorrectionType, ResolutionType, LimiterType, ParticleScopeType, Parameters...>>::InteractKernel::
 interact(size_t index_i, Real dt)
 {    
@@ -99,8 +98,8 @@ UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
       h_ratio_(encloser.h_ratio_),
       limiter_(encloser.limiter_),
       dpos_(encloser.dv_dpos_->DelegatedData(ex_policy)),
-      zero_gradient_residue_(encloser.dv_zero_gradient_residue_->DelegatedData(ex_policy)),
-      within_scope_(encloser.within_scope_)
+      zero_gradient_residue_(encloser.dv_zero_gradient_residue_->DelegatedData(ex_policy))
+      ,      within_scope_(ex_policy, encloser.within_scope_method_, *this)
 {}
 
 template <
@@ -114,7 +113,6 @@ void TransportVelocityCorrectionCK<
 >::UpdateKernel::
 update(size_t index_i, Real dt)
 {
-
     if (this->within_scope_(index_i))
     {
         Real inv_h_ratio = 1.0 / h_ratio_(index_i);
@@ -133,19 +131,16 @@ template <class KernelCorrectionType, class ResolutionType, class LimiterType, c
 TransportVelocityCorrectionCK<Contact<Wall, KernelCorrectionType, ResolutionType, LimiterType, ParticleScopeType, Parameters...>>::
     TransportVelocityCorrectionCK(Relation<Contact<Parameters...>> &contact_relation)
     : TransportVelocityCorrectionCKBase<Interaction<Contact<Wall, Parameters...>>>(contact_relation),
-      kernel_correction_(this->particles_)
-    //   ,
-    //   h_ref_(this->sph_body_.sph_adaptation_->ReferenceSmoothingLength()),
-    //   correction_scaling_(0.2 * h_ref_ * h_ref_),
-    //   h_ratio_(this->particles_), limiter_(h_ref_ * h_ref_),within_scope_(this->particles_)
+      kernel_correction_(this->particles_)    
 {
     for (size_t k = 0; k != this->contact_particles_.size(); ++k)
     {        
         dv_contact_wall_Vol_.push_back(this->contact_particles_[k]->template getVariableByName<Real>("VolumetricMeasure"));
-    }
-        
+    }        
 }
-
+//------------------------------------------------------------------------------
+// InteractKernel Implementation
+//------------------------------------------------------------------------------
 template <class KernelCorrectionType, class ResolutionType, class LimiterType, class ParticleScopeType, typename... Parameters>
 template <class ExecutionPolicy, class EncloserType>
 TransportVelocityCorrectionCK<Contact<Wall, KernelCorrectionType, ResolutionType, LimiterType, ParticleScopeType, Parameters...>>::
@@ -154,15 +149,12 @@ InteractKernel::InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &e
       correction_(ex_policy, encloser.kernel_correction_),
      zero_gradient_residue_(encloser.dv_zero_gradient_residue_->DelegatedData(ex_policy)),
       contact_wall_Vol_(encloser.dv_contact_wall_Vol_[contact_index]->DelegatedData(ex_policy))
-{
+{}
 
-}
 template <class KernelCorrectionType, class ResolutionType, class LimiterType, class ParticleScopeType, typename... Parameters>
 void TransportVelocityCorrectionCK<Contact<Wall, KernelCorrectionType, ResolutionType, LimiterType, ParticleScopeType, Parameters...>>::
 InteractKernel::interact(size_t index_i, Real dt)
 {
-
-
     Vecd inconsistency = Vecd::Zero();
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
     {
@@ -173,11 +165,10 @@ InteractKernel::interact(size_t index_i, Real dt)
             // acceleration for transport velocity
             inconsistency -= 2.0*this->correction_(index_i) *
                              dW_ijV_j * e_ij;
-
     }
     this->zero_gradient_residue_[index_i] += inconsistency;
-
 }
 
 } // end namespace fluid_dynamics
 } // end namespace SPH
+#endif  // TRANSPORT_VELOCITY_CORRECTION_CK_HPP

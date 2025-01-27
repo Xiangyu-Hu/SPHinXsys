@@ -9,6 +9,117 @@ namespace SPH
 {
 namespace fluid_dynamics
 {
+/*
+ * ParticleScopeTypeCK determines the scope of particles for which transport 
+ * velocity correction is applied. It is a template class specialized for 
+ * different particle types, defining rules for inclusion in the computation.
+ */
+template <typename ScopeType>
+class ParticleScopeTypeCK; 
+//-------------------------------------------------------------------------------------------------
+// 1) Specialization for AllParticles
+//-------------------------------------------------------------------------------------------------
+template <>
+class ParticleScopeTypeCK<AllParticles> : public WithinScope
+{
+public:
+    // Constructor
+    explicit ParticleScopeTypeCK(BaseParticles* particles)
+        : WithinScope() 
+    {}
+
+    // Nested functor-like class:
+    class ComputingKernel
+    {
+    public:
+        // The signature typically follows the style of other SPH "ComputingKernel" constructors
+        template <class ExecutionPolicy, class ComputingKernelType>
+        ComputingKernel(const ExecutionPolicy &ex_policy,
+                        ParticleScopeTypeCK<AllParticles> &encloser,
+                        ComputingKernelType & computing_kernel)
+        {};
+
+        bool operator()(size_t index_i) const
+        {
+            return true; // Always in scope
+        };
+    };
+};
+
+//-------------------------------------------------------------------------------------------------
+// 2) Specialization for BulkParticles (which is typically IndicatedParticles<0> in SPH code)
+//    i.e. we only want particles that have indicator_[i] == 0
+//-------------------------------------------------------------------------------------------------
+template <>
+class ParticleScopeTypeCK<BulkParticles> : public WithinScope
+{
+public:
+    explicit ParticleScopeTypeCK(BaseParticles* particles)
+        : WithinScope(),
+          dv_indicator_(particles->getVariableByName<int>("Indicator"))
+    {}
+
+    // Nested class implementing the boolean check
+    class ComputingKernel
+    {
+    public:
+        // Typically, we pass the "encloser" object to get the pointer from dv_indicator_
+        template <class ExecutionPolicy, class ComputingKernelType>
+        ComputingKernel(const ExecutionPolicy &ex_policy,
+                        ParticleScopeTypeCK<BulkParticles> &encloser,
+                        ComputingKernelType & computing_kernel)
+            : indicator_(encloser.dv_indicator_->DelegatedData(ex_policy))
+        {}
+
+        bool operator()(size_t index_i) const
+        {
+            return (indicator_[index_i] == 0);
+        }
+
+    protected:
+        int* indicator_;
+    };
+
+protected:
+    DiscreteVariable<int> *dv_indicator_;
+};
+
+//-------------------------------------------------------------------------------------------------
+// 3) Specialization for NotIndicatedParticles (which is typically "indicator != 0")
+//-------------------------------------------------------------------------------------------------
+template <>
+class ParticleScopeTypeCK<NotIndicatedParticles<0>> : public WithinScope
+{
+public:
+    explicit ParticleScopeTypeCK(BaseParticles* particles)
+        : WithinScope(),
+          dv_indicator_(particles->getVariableByName<int>("Indicator"))
+    {
+    }
+
+    class ComputingKernel
+    {
+    public:
+        template <class ExecutionPolicy, class ComputingKernelType>
+        ComputingKernel(const ExecutionPolicy &ex_policy,
+                        ParticleScopeTypeCK<NotIndicatedParticles<0>> &encloser,
+                        ComputingKernelType & computing_kernel)
+            : indicator_(encloser.dv_indicator_->DelegatedData(ex_policy))
+        {}
+
+        bool operator()(size_t index_i) const
+        {
+            return (indicator_[index_i] != 0);
+        }
+
+    protected:
+        int* indicator_;
+    };
+
+protected:
+    DiscreteVariable<int> *dv_indicator_;
+};
+
 
 //--------------------------------------------------------------------------------------
 // Base class for Transport Velocity Correction
@@ -39,12 +150,13 @@ class TransportVelocityCorrectionCK<Inner<WithUpdate, KernelCorrectionType, Reso
     : public TransportVelocityCorrectionCKBase<Interaction<Inner<Parameters...>>>
 {
     using BaseInteraction = TransportVelocityCorrectionCKBase<Interaction<Inner<Parameters...>>>;
-
     using CorrectionKernel = typename KernelCorrectionType::ComputingKernel;
+    using ParticleScopeTypeKernel = typename ParticleScopeTypeCK<ParticleScopeType>::ComputingKernel;
+
+
 
 public:
-    /// Constructor: accepts `Relation<Inner<>>` and optional coefficient.
-    explicit TransportVelocityCorrectionCK(Relation<Inner<Parameters...>> &inner_relation);
+    explicit TransportVelocityCorrectionCK(Relation<Inner<Parameters...>> &inner_relation, Real coefficient = 0.2);
 
     virtual ~TransportVelocityCorrectionCK() {}
 
@@ -60,7 +172,7 @@ public:
         CorrectionKernel correction_;
         Real *Vol_;
         Vecd *dpos_, *zero_gradient_residue_;
-        ParticleScopeType within_scope_;
+        ParticleScopeTypeKernel within_scope_;
 
     };
 
@@ -79,18 +191,16 @@ public:
         ResolutionType h_ratio_;
         LimiterType limiter_;
         Vecd *dpos_, *zero_gradient_residue_;
-        ParticleScopeType within_scope_;
+        ParticleScopeTypeKernel within_scope_;
     };
 
 protected:
-    KernelCorrectionType kernel_correction_; ///< The user-chosen kernel correction policy
-
+    KernelCorrectionType kernel_correction_;
     Real h_ref_;               ///< e.g. reference smoothing length
     Real correction_scaling_;  ///< typically coefficient * h_ref^2
-
     ResolutionType h_ratio_;   ///< e.g. for adaptive resolution
     LimiterType limiter_;      ///< e.g. a limiter on the final correction step
-    ParticleScopeType within_scope_;
+    ParticleScopeTypeCK<ParticleScopeType> within_scope_method_;
 
 };
 //----------------------------------------------
@@ -102,6 +212,7 @@ class TransportVelocityCorrectionCK<Contact<Wall, KernelCorrectionType, Resoluti
 {
         using BaseInteraction = TransportVelocityCorrectionCKBase<Interaction<Contact<Wall, Parameters...>>>;
         using CorrectionKernel = typename KernelCorrectionType::ComputingKernel;
+        using ParticleScopeTypeKernel = typename ParticleScopeTypeCK<ParticleScopeType>::ComputingKernel;
 
     public:
         explicit TransportVelocityCorrectionCK(Relation<Contact<Parameters...>> &contact_relation);
