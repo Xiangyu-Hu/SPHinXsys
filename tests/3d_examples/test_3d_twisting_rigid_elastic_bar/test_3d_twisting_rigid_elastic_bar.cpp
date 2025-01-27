@@ -10,7 +10,7 @@ void run_rigid_elastic_coupling(int res_factor = 1);
 
 int main(int ac, char *av[])
 {
-    run_rigid_elastic_coupling(1);
+    run_rigid_elastic_coupling(2);
 }
 
 class FixPart : public BodyPartByParticle
@@ -137,49 +137,47 @@ void run_rigid_elastic_coupling(int res_factor)
     //|           |    |
     //|-----------|----|
     // geometry
-    const Real elastic_length = 6; // length of the elastic part
-    const Real rigid_length = 2;   // length of the rigid part
+    const Real elastic_length = 4; // length of the elastic part
+    const Real rigid_length = 1;   // length of the rigid part
     const Real total_length = elastic_length + rigid_length;
-    const Real height = 5; // height of the bar
+    const Real height = 1; // height of the bar
     const Real width = 1;  // width of the bar
+    const Real x0 = -2;    // the x-coordinate of the left end of the bar
 
     // resolution
     const Real dp = width / (4.0 * res_factor);
+    const Real constraint_length = dp;
+    const Real min_x_pos = x0 - dp;
 
     // material properties
     const Real rho = 1000 * pow(unit_mm, 2); // density
     const Real youngs_modulus = 5;           // MPa
     const Real poisson_ratio = 0.45;         // Poisson ratio
-    auto material = makeShared<SaintVenantKirchhoffSolid>(rho, youngs_modulus, poisson_ratio);
+    auto material = makeShared<NeoHookeanSolid>(rho, youngs_modulus, poisson_ratio);
 
     // load and end time
-    const Real end_time = 1.0;
+    const Real end_time = 5.0;
     auto get_force_p = [&](Real t)
     {
-        if (t < 0.1)
-            return 5.0 * t;
-        else if (t < 0.2)
-            return 5.0 * (0.2 - t);
-        else
-            return 0.0;
+        return t < 1.0 ? 0.05 * t : 0.05;
     };
     auto get_rigid_force = [&](Real time)
     {
         Real force_p = get_force_p(time);
-        SimTKVec3 force_vec(0, -force_p, 0);           // downward force
-        SimTKVec3 torque_vec(-force_p * height, 0, 0); // torque
+        SimTKVec3 force_vec(0, -force_p, 0); // downward force
+        SimTKVec3 torque_vec(0, 0, 0);       // torque
         return SimTK::SpatialVec(torque_vec, force_vec);
     };
 
     // Import meshes
     // mesh of the total bar
-    const Vec3d halfsize = 0.5 * Vec3d(total_length, height, width);
-    const Vec3d translation = halfsize.x() * Vec3d::UnitX();
+    const Vec3d halfsize = 0.5 * Vec3d(total_length + constraint_length, height, width);
+    const Vec3d translation = (min_x_pos + halfsize.x()) * Vec3d::UnitX();
     auto mesh = makeShared<TransformShape<GeometricShapeBox>>(Transform(translation), halfsize, "bar");
 
     // mesh of the rigid body part
     const Vec3d rigid_halfsize = 0.5 * Vec3d(rigid_length, height, width);
-    const Vec3d rigid_translation = (elastic_length + 0.5 * rigid_length) * Vec3d::UnitX();
+    const Vec3d rigid_translation = (x0 + elastic_length + 0.5 * rigid_length) * Vec3d::UnitX();
     auto mesh_rigid = makeShared<TransformShape<GeometricShapeBox>>(Transform(rigid_translation), rigid_halfsize, "rigid_bar");
 
     // System bounding box
@@ -191,7 +189,7 @@ void run_rigid_elastic_coupling(int res_factor)
 
     // Create objects
     SolidBody body(system, mesh);
-    body.defineMaterial<SaintVenantKirchhoffSolid>(*material.get());
+    body.defineMaterial<NeoHookeanSolid>(*material.get());
     body.generateParticles<BaseParticles, Lattice>();
 
     // Methods
@@ -204,8 +202,8 @@ void run_rigid_elastic_coupling(int res_factor)
     algs.corrected_config();
 
     // Boundary conditions
-    FixPart fix_elastic_part(body, "ClampingPart", [&, x0 = bbox.first_.x()](Vec3d &pos)
-                             { return pos.x() < x0 + dp; });
+    FixPart fix_elastic_part(body, "ClampingPart", [&](Vec3d &pos)
+                             { return pos.x() < x0; });
     SimpleDynamics<FixBodyPartConstraint> fix_elastic_bc(fix_elastic_part);
 
     // output
@@ -252,8 +250,8 @@ void run_rigid_elastic_coupling(int res_factor)
                 fix_elastic_bc.exec();
 
                 // update rigid body state based on the inner force computed in the previous step
-                auto ext_force = get_rigid_force(physical_time);
-                rigid_algs.exec(ext_force, dt);
+                auto rigid_force = get_rigid_force(physical_time);
+                rigid_algs.exec(rigid_force, dt);
 
                 // second half integration of elastic body
                 algs.stress_relaxation_second(dt);
