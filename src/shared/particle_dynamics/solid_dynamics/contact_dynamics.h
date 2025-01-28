@@ -43,7 +43,7 @@ class ContactDensityAccessor
 {
   protected:
     ContactDensityAccessor(BaseParticles &particles, const std::string &variable_name)
-        : contact_density_(*particles.registerSharedVariable<Real>(variable_name)){};
+        : contact_density_(*particles.registerSharedVariable<Real>(variable_name)) {};
     ~ContactDensityAccessor() = default;
     StdLargeVec<Real> &contact_density_;
 };
@@ -56,7 +56,7 @@ class SelfContactDensitySummation : public ContactDensityAccessor, public LocalD
 {
   public:
     explicit SelfContactDensitySummation(SelfSurfaceContactRelation &self_contact_relation);
-    virtual ~SelfContactDensitySummation(){};
+    virtual ~SelfContactDensitySummation() {};
 
     inline void interaction(size_t index_i, Real dt = 0.0)
     {
@@ -83,7 +83,7 @@ class ContactDensitySummation : public ContactDensityAccessor, public LocalDynam
 {
   public:
     explicit ContactDensitySummation(SurfaceContactRelation &solid_body_contact_relation);
-    virtual ~ContactDensitySummation(){};
+    virtual ~ContactDensitySummation() {};
 
     inline void interaction(size_t index_i, Real dt = 0.0)
     {
@@ -118,7 +118,7 @@ class ShellContactDensity : public ContactDensityAccessor, public LocalDynamics,
 {
   public:
     explicit ShellContactDensity(SurfaceContactRelation &solid_body_contact_relation);
-    virtual ~ShellContactDensity(){};
+    virtual ~ShellContactDensity() {};
 
     inline void interaction(size_t index_i, Real dt = 0.0)
     {
@@ -167,7 +167,7 @@ class SelfContactForce : public LocalDynamics, public SolidDataInner
 {
   public:
     explicit SelfContactForce(SelfSurfaceContactRelation &self_contact_relation);
-    virtual ~SelfContactForce(){};
+    virtual ~SelfContactForce() {};
 
     inline void interaction(size_t index_i, Real dt = 0.0)
     {
@@ -205,7 +205,7 @@ class ContactForce : public LocalDynamics, public ContactDynamicsData
 {
   public:
     explicit ContactForce(SurfaceContactRelation &solid_body_contact_relation);
-    virtual ~ContactForce(){};
+    virtual ~ContactForce() {};
 
     inline void interaction(size_t index_i, Real dt = 0.0)
     {
@@ -213,13 +213,16 @@ class ContactForce : public LocalDynamics, public ContactDynamicsData
         Real sigma_i = contact_density_[index_i];
         /** Contact interaction. */
         Vecd force = Vecd::Zero();
+        // contact force from particle j: f_ij = 2 * K_ij * sigma_ij * Vi * Vj * dW_ij * e_ij
         for (size_t k = 0; k < contact_configuration_.size(); ++k)
         {
             StdLargeVec<Real> &contact_density_k = *(contact_contact_density_[k]);
 
             Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
 
-            Vecd force_k = Vecd::Zero();
+            // Calculate the factor 2 * sigma_ij * Vi * Vj * dW_ij * e_ij
+            // sigma_ij = 0.5 * (sigma_i + sigma_j)
+            Vecd factor_k = Vecd::Zero();
             for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
             {
                 size_t index_j = contact_neighborhood.j_[n];
@@ -227,9 +230,9 @@ class ContactForce : public LocalDynamics, public ContactDynamicsData
 
                 Real sigma_star = 0.5 * (sigma_i + contact_density_k[index_j]);
                 // force due to pressure
-                force_k -= 2.0 * sigma_star * e_ij * Vol_i * contact_neighborhood.dW_ijV_j_[n];
+                factor_k -= 2.0 * sigma_star * e_ij * Vol_i * contact_neighborhood.dW_ijV_j_[n];
             }
-            force += contact_stiffness_[k] * force_k;
+            force += contact_stiffness_[k] * factor_k;
         }
         acc_prior_[index_i] += force / mass_[index_i];
     };
@@ -253,7 +256,7 @@ class ContactForceFromWall : public LocalDynamics, public ContactWithWallData
 {
   public:
     explicit ContactForceFromWall(SurfaceContactRelation &solid_body_contact_relation);
-    virtual ~ContactForceFromWall(){};
+    virtual ~ContactForceFromWall() {};
 
     inline void interaction(size_t index_i, Real dt = 0.0)
     {
@@ -289,7 +292,7 @@ class ContactForceToWall : public LocalDynamics, public ContactDynamicsData
 {
   public:
     explicit ContactForceToWall(SurfaceContactRelation &solid_body_contact_relation);
-    virtual ~ContactForceToWall(){};
+    virtual ~ContactForceToWall() {};
 
     inline void interaction(size_t index_i, Real dt = 0.0)
     {
@@ -333,7 +336,7 @@ class PairwiseFrictionFromWall : public LocalDynamics, public ContactWithWallDat
 {
   public:
     PairwiseFrictionFromWall(BaseContactRelation &contact_relation, Real eta);
-    virtual ~PairwiseFrictionFromWall(){};
+    virtual ~PairwiseFrictionFromWall() {};
 
     inline void interaction(size_t index_i, Real dt = 0.0)
     {
@@ -395,7 +398,7 @@ class DynamicContactForceWithWall : public LocalDynamics, public ContactDynamics
 {
   public:
     explicit DynamicContactForceWithWall(SurfaceContactRelation &solid_body_contact_relation, Real penalty_strength = 1.0);
-    virtual ~DynamicContactForceWithWall(){};
+    virtual ~DynamicContactForceWithWall() {};
 
     inline void interaction(size_t index_i, Real dt = 0.0)
     {

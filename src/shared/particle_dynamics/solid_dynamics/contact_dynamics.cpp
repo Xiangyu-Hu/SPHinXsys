@@ -94,6 +94,13 @@ ContactForce::ContactForce(SurfaceContactRelation &solid_body_contact_relation)
       Vol_(particles_->Vol_), mass_(particles_->mass_),
       acc_prior_(particles_->acc_prior_)
 {
+    // Inspired by the pinball contact algorithm which defines F2 = Gi * Gj / (Gi + Gj) * sqrt(Ri * Rj/(Ri+Rj)) * p^{3/2},
+    // where Gi, Gj are the shear modulus, Ri, Rj are the radius of the particles, and p is the penetration related to particle distance and normal direction,
+    // Ref: https://doi.org/10.1016/0045-7825(93)90064-5, The splitting pinball method for contact-impact problems
+    // We define the contact stiffness as the harmonic average K = 2 * Ki * Kj / (Ki + Kj), where K1, K2 are the contact stiffness of the two bodies.
+    // In comparison of geometric average, the harmonic average is dominant by the softer material.
+    // Empirically, the harmonic average is sufficient to prevent penetration, and matches the time-step size of the softer material.
+    // This allows us to use a different time-step size for the two materials
     Real K_1 = solid_.ContactStiffness();
     for (size_t k = 0; k != contact_particles_.size(); ++k)
     {
