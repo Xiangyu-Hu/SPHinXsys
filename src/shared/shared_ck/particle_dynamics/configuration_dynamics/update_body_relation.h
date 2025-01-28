@@ -68,7 +68,6 @@ class UpdateRelation<ExecutionPolicy, Inner<Parameters...>>
 
     ExecutionPolicy ex_policy_;
     CellLinkedList &cell_linked_list_;
-    UnsignedInt particle_offset_list_size_;
     Implementation<ExecutionPolicy, LocalDynamicsType, ComputingKernel> kernel_implementation_;
 };
 
@@ -99,7 +98,6 @@ class UpdateRelation<ExecutionPolicy, Contact<Parameters...>>
     UniquePtrsKeeper<KernelImplementation> contact_kernel_implementation_ptrs_;
 
     ExecutionPolicy ex_policy_;
-    UnsignedInt particle_offset_list_size_;
     StdVec<CellLinkedList *> contact_cell_linked_list_;
     StdVec<KernelImplementation *> contact_kernel_implementation_;
 };

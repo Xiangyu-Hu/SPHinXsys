@@ -48,7 +48,6 @@ class Relation<Base>
     explicit Relation(SPHBody &sph_body);
     virtual ~Relation(){};
     SPHBody &getSPHBody() { return sph_body_; };
-    UnsignedInt getParticleOffsetListSize() { return offset_list_size_; };
 
   protected:
     SPHBody &sph_body_;

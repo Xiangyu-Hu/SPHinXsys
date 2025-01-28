@@ -62,11 +62,11 @@ class CreateRealParticleFrom
         UnsignedInt operator()(UnsignedInt index_i)
         {
             UnsignedInt new_original_id = *total_real_particles_;
-            original_id_[new_original_id] = new_original_id;
             /** Buffer Particle state copied from real particle. */
             copy_particle_state_(copyable_state_data_arrays_, new_original_id, index_i);
             /** Realize the buffer particle by increasing the number of real particle by one.  */
             *total_real_particles_ += 1;
+            original_id_[new_original_id] = new_original_id;
             return new_original_id;
         };
 
