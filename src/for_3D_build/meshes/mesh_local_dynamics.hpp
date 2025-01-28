@@ -5,6 +5,8 @@
 
 namespace SPH
 {
+#define GET_NEIGHBOR_VAL(target, neighbor_index) \
+  target[neighbor_index.first][neighbor_index.second[0]][neighbor_index.second[1]][neighbor_index.second[2]]
 //=============================================================================================//
 template <typename FunctionOnData>
 void BaseMeshLocalDynamics::for_each_cell_data(const FunctionOnData &function)
@@ -50,7 +52,7 @@ DataType BaseMeshLocalDynamics::CornerAverage(MeshVariableData<DataType> *mesh_v
                 int y_index = addrs_index[1] + j * corner_direction[1];
                 int z_index = addrs_index[2] + k * corner_direction[2];
                 std::pair<size_t, Arrayi> neighbour_index = NeighbourIndexShift(Arrayi(x_index, y_index, z_index), neighborhood);
-                average += mesh_variable_data[neighbour_index.first][neighbour_index.second[0]][neighbour_index.second[1]][neighbour_index.second[2]];
+                average += GET_NEIGHBOR_VAL(mesh_variable_data, neighbour_index);
             }
     return average * 0.125;
 }
@@ -81,20 +83,20 @@ DataType ProbeMesh::probeDataPackage(MeshVariableData<DataType> *mesh_variable_d
     std::pair<size_t, Arrayi> neighbour_index_3 = BaseMeshLocalDynamics::NeighbourIndexShift(Arrayi(data_index[0], data_index[1] + 1, data_index[2]), neighborhood);
     std::pair<size_t, Arrayi> neighbour_index_4 = BaseMeshLocalDynamics::NeighbourIndexShift(Arrayi(data_index[0] + 1, data_index[1] + 1, data_index[2]), neighborhood);
 
-    DataType bilinear_1 = mesh_variable_data[neighbour_index_1.first][neighbour_index_1.second[0]][neighbour_index_1.second[1]][neighbour_index_1.second[2]] * beta[0] * beta[1] +
-                          mesh_variable_data[neighbour_index_2.first][neighbour_index_2.second[0]][neighbour_index_2.second[1]][neighbour_index_2.second[2]] * alpha[0] * beta[1] +
-                          mesh_variable_data[neighbour_index_3.first][neighbour_index_3.second[0]][neighbour_index_3.second[1]][neighbour_index_3.second[2]] * beta[0] * alpha[1] +
-                          mesh_variable_data[neighbour_index_4.first][neighbour_index_4.second[0]][neighbour_index_4.second[1]][neighbour_index_4.second[2]] * alpha[0] * alpha[1];
+    DataType bilinear_1 = GET_NEIGHBOR_VAL(mesh_variable_data, neighbour_index_1) * beta[0] * beta[1] +
+                          GET_NEIGHBOR_VAL(mesh_variable_data, neighbour_index_2) * alpha[0] * beta[1] +
+                          GET_NEIGHBOR_VAL(mesh_variable_data, neighbour_index_3) * beta[0] * alpha[1] +
+                          GET_NEIGHBOR_VAL(mesh_variable_data, neighbour_index_4) * alpha[0] * alpha[1];
 
     neighbour_index_1 = BaseMeshLocalDynamics::NeighbourIndexShift(Arrayi(data_index[0], data_index[1], data_index[2] + 1), neighborhood);
     neighbour_index_2 = BaseMeshLocalDynamics::NeighbourIndexShift(Arrayi(data_index[0] + 1, data_index[1], data_index[2] + 1), neighborhood);
     neighbour_index_3 = BaseMeshLocalDynamics::NeighbourIndexShift(Arrayi(data_index[0], data_index[1] + 1, data_index[2] + 1), neighborhood);
     neighbour_index_4 = BaseMeshLocalDynamics::NeighbourIndexShift(Arrayi(data_index[0] + 1, data_index[1] + 1, data_index[2] + 1), neighborhood);
 
-    DataType bilinear_2 = mesh_variable_data[neighbour_index_1.first][neighbour_index_1.second[0]][neighbour_index_1.second[1]][neighbour_index_1.second[2]] * beta[0] * beta[1] +
-                          mesh_variable_data[neighbour_index_2.first][neighbour_index_2.second[0]][neighbour_index_2.second[1]][neighbour_index_2.second[2]] * alpha[0] * beta[1] +
-                          mesh_variable_data[neighbour_index_3.first][neighbour_index_3.second[0]][neighbour_index_3.second[1]][neighbour_index_3.second[2]] * beta[0] * alpha[1] +
-                          mesh_variable_data[neighbour_index_4.first][neighbour_index_4.second[0]][neighbour_index_4.second[1]][neighbour_index_4.second[2]] * alpha[0] * alpha[1];
+    DataType bilinear_2 = GET_NEIGHBOR_VAL(mesh_variable_data, neighbour_index_1) * beta[0] * beta[1] +
+                          GET_NEIGHBOR_VAL(mesh_variable_data, neighbour_index_2) * alpha[0] * beta[1] +
+                          GET_NEIGHBOR_VAL(mesh_variable_data, neighbour_index_3) * beta[0] * alpha[1] +
+                          GET_NEIGHBOR_VAL(mesh_variable_data, neighbour_index_4) * alpha[0] * alpha[1];
 
     return bilinear_1 * beta[2] + bilinear_2 * alpha[2];
 }
