@@ -143,7 +143,7 @@ class BaseTurbulentModel<Base, DataDelegationType>
 
   protected:
     Matd *turbu_strain_rate_;
-
+    Viscosity &viscosity_;
     Real mu_, smoothing_length_, particle_spacing_min_;
     Real *rho_, *Vol_;
     Vecd *vel_;
@@ -281,6 +281,7 @@ class TurbuViscousForce<DataDelegationType> : public ViscousForce<DataDelegation
     Vecd *velo_friction_;
     Real *y_p_;
     int *is_near_wall_P2_;
+    Viscosity viscosity_;
     Real molecular_viscosity_;
     Real c0_;
 };
@@ -330,6 +331,7 @@ class TurbulentEddyViscosity : public LocalDynamics, public BaseTurbuClosureCoef
     Real *turbu_k_;
     Real *turbu_epsilon_;
     Real *wall_Y_plus_, *wall_Y_star_;
+    Viscosity &viscosity_;
     Real mu_;
 };
 //=================================================================================================//
@@ -351,6 +353,7 @@ class TurbulentAdvectionTimeStepSize : public LocalDynamicsReduce<ReduceMax>
     Real speed_ref_turbu_, advectionCFL_;
     Real *turbu_mu_;
     Fluid &fluid_;
+    Viscosity &viscosity_;
 };
 //=================================================================================================//
 /**
@@ -420,6 +423,7 @@ class StandardWallFunctionCorrection : public LocalDynamics, public DataDelegate
 
     Vecd *vel_;
     Real *rho_;
+    Viscosity &viscosity_;
     Real molecular_viscosity_;
     Real *turbu_k_;
     Real *turbu_epsilon_;
@@ -499,7 +503,7 @@ class TurbulentLinearGradientCorrectionMatrix<Inner<>>
     explicit TurbulentLinearGradientCorrectionMatrix(BaseInnerRelation &inner_relation, Real alpha = Real(0))
         : TurbulentLinearGradientCorrectionMatrix<DataDelegateInner>(inner_relation), turbu_alpha_(alpha){};
     template <typename BodyRelationType, typename FirstArg>
-    explicit TurbulentLinearGradientCorrectionMatrix(ConstructorArgs<BodyRelationType, FirstArg> parameters)
+    explicit TurbulentLinearGradientCorrectionMatrix(InteractArgs<BodyRelationType, FirstArg> parameters)
         : TurbulentLinearGradientCorrectionMatrix(parameters.body_relation_, std::get<0>(parameters.others_)){};
     virtual ~TurbulentLinearGradientCorrectionMatrix(){};
     void interaction(size_t index_i, Real dt = 0.0);

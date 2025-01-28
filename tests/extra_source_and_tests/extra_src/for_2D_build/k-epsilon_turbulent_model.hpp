@@ -40,7 +40,8 @@ template <class BaseRelationType>
 BaseTurbulentModel<Base, DataDelegationType>::BaseTurbulentModel(BaseRelationType &base_relation)
     : LocalDynamics(base_relation.getSPHBody()), DataDelegationType(base_relation),
       turbu_strain_rate_(this->particles_->template registerStateVariable<Matd>("TurbulentStrainRate")),
-      mu_(DynamicCast<Fluid>(this, this->particles_->getBaseMaterial()).ReferenceViscosity()),
+      viscosity_(DynamicCast<Viscosity>(this, this->particles_->getBaseMaterial())),
+      mu_(viscosity_.ReferenceViscosity()),
       smoothing_length_(this->sph_body_.sph_adaptation_->ReferenceSmoothingLength()),
       particle_spacing_min_(base_relation.getSPHBody().sph_adaptation_->MinimumSpacing()),
       rho_(this->particles_->template getVariableDataByName<Real>("Density")),
@@ -85,7 +86,8 @@ TurbuViscousForce<DataDelegationType>::TurbuViscousForce(BaseRelationType &base_
       velo_friction_(this->particles_->template getVariableDataByName<Vecd>("FrictionVelocity")),
       y_p_(this->particles_->template getVariableDataByName<Real>("Y_P")),
       is_near_wall_P2_(this->particles_->template getVariableDataByName<int>("IsNearWallP2")),
-      molecular_viscosity_(DynamicCast<Fluid>(this, this->particles_->getBaseMaterial()).ReferenceViscosity()),
+      viscosity_(DynamicCast<Viscosity>(this, this->particles_->getBaseMaterial())),
+      molecular_viscosity_(viscosity_.ReferenceViscosity()),
       c0_(DynamicCast<Fluid>(this, this->particles_->getBaseMaterial()).ReferenceSoundSpeed()) {}
 //=================================================================================================//
 template <class DataDelegationType>
