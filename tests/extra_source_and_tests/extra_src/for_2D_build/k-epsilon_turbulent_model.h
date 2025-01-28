@@ -456,25 +456,6 @@ class ConstrainNormalVelocityInRegionP : public LocalDynamics
     Vecd *e_nearest_normal_;
 };
 //=================================================================================================//
-template <int INDICATOR>
-class TurbulentIndicatedParticles : public WithinScope
-{
-    int *indicator_;
-    int *turbu_plug_flow_indicator_;
-
-  public:
-    explicit TurbulentIndicatedParticles(BaseParticles *base_particles)
-        : WithinScope(),
-          indicator_(*base_particles->getVariableByName<int>("Indicator")),
-          turbu_plug_flow_indicator_(*base_particles->getVariableByName<int>("TurbulentPlugFlowIndicator")){};
-    bool operator()(size_t index_i)
-    {
-        return indicator_[index_i] == INDICATOR && turbu_plug_flow_indicator_[index_i] == INDICATOR;
-    };
-};
-
-using TurbulentPlugFlowParticles = TurbulentIndicatedParticles<0>;
-//=================================================================================================//
 template <typename... InteractionTypes>
 class TurbulentLinearGradientCorrectionMatrix;
 
