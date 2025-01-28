@@ -21,71 +21,53 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	geometric_shape.h
- * @brief 	Here, we define shapes represented directly by geometric elements.
- * @author	Chi Zhang and Xiangyu Hu
+ * @file general_initial_condition.h
+ * @brief tbd.
+ * @author Xiangyu Hu
  */
 
-#ifndef GEOMETRIC_SHAPE_H
-#define GEOMETRIC_SHAPE_H
+#ifndef GENERAL_INITIAL_CONDITION_H
+#define GENERAL_INITIAL_CONDITION_H
 
-#include "all_simbody.h"
-#include "base_geometry.h"
+#include "base_general_dynamics.h"
 
 namespace SPH
 {
-class GeometricShape : public Shape
+template <class DynamicsIdentifier, typename ReturnFunctionType>
+class InitialCondition : public BaseLocalDynamics<DynamicsIdentifier>
 {
-  public:
-    explicit GeometricShape(const std::string &shape_name)
-        : Shape(shape_name), contact_geometry_(nullptr){};
-
-    virtual bool checkContain(const Vec3d &probe_point, bool BOUNDARY_INCLUDED = true) override;
-    virtual Vec3d findClosestPoint(const Vec3d &probe_point) override;
-
-    SimTK::ContactGeometry *getContactGeometry();
-
-  protected:
-    SimTK::ContactGeometry *contact_geometry_;
-};
-
-class GeometricShapeBox : public GeometricShape
-{
-  private:
-    SimTK::ContactGeometry::Brick brick_;
+    using DataType = typename ReturnFunctionType::ReturnType;
 
   public:
-    explicit GeometricShapeBox(const Vecd &halfsize,
-                               const std::string &shape_name = "GeometricShapeBox");
-    virtual ~GeometricShapeBox(){};
+    InitialCondition(DynamicsIdentifier &identifier, const std::string &variable_name)
+        : BaseLocalDynamics<DynamicsIdentifier>(identifier),
+          dv_pos_(this->particles_->template getVariableByName<Vecd>("Position")),
+          dv_variable_(this->particles_->template registerStateVariableOnly<DataType>(variable_name)) {};
+    virtual ~InitialCondition() {};
 
-    virtual bool checkContain(const Vec3d &probe_point, bool BOUNDARY_INCLUDED = true) override;
-    virtual Vec3d findClosestPoint(const Vec3d &probe_point) override;
+    class UpdateKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+            : pos_(encloser.dv_pos_->DelegatedData(ex_policy)),
+              variable_(encloser.dv_variable_->DelegatedData(ex_policy)),
+              function_(ex_policy, encloser){};
+
+        void update(size_t index_i, Real dt = 0.0)
+        {
+            variable_[index_i] = function_(pos_[index_i]);
+        };
+
+      protected:
+        Vecd *pos_;
+        DataType *variable_;
+        ReturnFunctionType function_;
+    };
 
   protected:
-    Vecd halfsize_;
-
-    virtual BoundingBox findBounds() override;
+    DiscreteVariable<Vecd> *dv_pos_;
+    DiscreteVariable<DataType> *dv_variable_;
 };
-
-class GeometricShapeBall : public GeometricShape
-{
-  private:
-    Vecd center_;
-    SimTK::ContactGeometry::Sphere sphere_;
-
-  public:
-    explicit GeometricShapeBall(const Vecd &center, const Real &radius,
-                                const std::string &shape_name = "GeometricShapeBall");
-    virtual ~GeometricShapeBall(){};
-
-    virtual bool checkContain(const Vec3d &probe_point, bool BOUNDARY_INCLUDED = true) override;
-    virtual Vec3d findClosestPoint(const Vec3d &probe_point) override;
-
-  protected:
-    virtual BoundingBox findBounds() override;
-};
-
 } // namespace SPH
-
-#endif // GEOMETRIC_SHAPE_H
+#endif // GENERAL_INITIAL_CONDITION_H

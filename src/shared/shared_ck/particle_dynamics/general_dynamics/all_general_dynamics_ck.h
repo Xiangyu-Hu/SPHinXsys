@@ -35,4 +35,5 @@
 #include "geometric_dynamics.hpp"
 #include "interpolation_dynamics.hpp"
 #include "kernel_correction_ck.hpp"
+#include "general_initial_condition.h"
 #include "all_surface_indication_ck.h"

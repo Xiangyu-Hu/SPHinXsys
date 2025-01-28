@@ -10,9 +10,9 @@
  *                                                                           *
  * SPHinXsys is partially funded by German Research Foundation               *
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
- *  HU1527/12-1 and HU1527/12-4                                              *
+ *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2022 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2023 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -21,36 +21,44 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	simbody_variable_sycl.h
- * @brief 	TBD.
- * @author	Xiangyu Hu
+ * @file 	geometric_element.h
+ * @brief tbd.
+ * @author Xiangyu Hu
  */
-#ifndef SIMBODY_VARIABLE_SYCL_H
-#define SIMBODY_VARIABLE_SYCL_H
 
-#include "all_simbody.h"
-#include "implementation_sycl.h"
+#ifndef GEOMETRIC_ELEMENT_H
+#define GEOMETRIC_ELEMENT_H
 
-namespace sycl
+#include "base_data_package.h"
+
+namespace SPH
 {
-    template <>
-struct is_device_copyable<SPH::SimTKVec3> : std::true_type
+
+class GeometricBox
 {
+  public:
+    explicit GeometricBox(const Vecd &halfsize);
+    ~GeometricBox() {};
+
+    bool checkContain(const Vecd &probe_point);
+    Vecd findClosestPoint(const Vecd &probe_point);
+
+  protected:
+    Vecd halfsize_;
 };
 
-template <>
-struct is_device_copyable<SimTK::Vec<2, SPH::SimTKVec3>> : std::true_type
+class GeometricBall
 {
-};
+  public:
+    explicit GeometricBall(Real radius);
+    ~GeometricBall() {};
 
-template <>
-struct is_device_copyable<SPH::Vec2d> : std::true_type
-{
-};
+    bool checkContain(const Vecd &probe_point);
+    Vecd findClosestPoint(const Vecd &probe_point);
 
-template <>
-struct is_device_copyable<SPH::Vec3d> : std::true_type
-{
+  protected:
+    Real radius_;
 };
-} // namespace sycl
-#endif // SIMBODY_VARIABLE_SYCL_H
+} // namespace SPH
+
+#endif // GEOMETRIC_ELEMENT_H

@@ -126,10 +126,10 @@ void PressureForceFromFluid<Contact<WithUpdate, AcousticStep2ndHalfType, Paramet
 
         Real face_wall_external_acceleration =
             (contact_force_prior_[index_j] / contact_mass_[index_j] - acc_ave_[index_i]).dot(e_ij);
-        Real p_in_wall = contact_p_[index_j] + contact_rho_[index_j] * r_ij * SMAX(Real(0), face_wall_external_acceleration);
+        Real p_j_in_wall = contact_p_[index_j] + contact_rho_[index_j] * r_ij * SMAX(Real(0), face_wall_external_acceleration);
         Real u_jump = 2.0 * (this->contact_vel_[index_j] - this->vel_ave_[index_i]).dot(n_[index_i]);
         force -= (riemann_solver_.DissipativePJump(u_jump) * n_[index_i] +
-                  (p_in_wall + contact_p_[index_j]) * this->contact_correction_(index_j) * e_ij) *
+                  (p_j_in_wall + contact_p_[index_j]) * this->contact_correction_(index_j) * e_ij) *
                  this->dW_ij(index_i, index_j) * this->contact_Vol_[index_j];
     }
 
