@@ -38,15 +38,52 @@ using SimTKVec3 = SimTK::Vec3;
 using SimTKMat22 = SimTK::Mat22;
 using SimTKMat33 = SimTK::Mat33;
 
-SimTKVec2 EigenToSimTK(const Vec2d &eigen_vector);
-SimTKVec3 EigenToSimTK(const Vec3d &eigen_vector);
-Vec2d SimTKToEigen(const SimTKVec2 &simTK_vector);
-Vec3d SimTKToEigen(const SimTKVec3 &simTK_vector);
+inline SimTKVec2 EigenToSimTK(const Vec2d &eigen_vector)
+{
+    return SimTKVec2((double)eigen_vector[0], (double)eigen_vector[1]);
+}
 
-SimTKMat22 EigenToSimTK(const Mat2d &eigen_matrix);
-SimTKMat33 EigenToSimTK(const Mat3d &eigen_matrix);
-Mat2d SimTKToEigen(const SimTKMat22 &simTK_matrix);
-Mat3d SimTKToEigen(const SimTKMat33 &simTK_matrix);
+inline SimTKVec3 EigenToSimTK(const Vec3d &eigen_vector)
+{
+    return SimTKVec3((double)eigen_vector[0], (double)eigen_vector[1], (double)eigen_vector[2]);
+}
 
+inline Vec2d SimTKToEigen(const SimTKVec2 &simTK_vector)
+{
+    return Vec2d((Real)simTK_vector[0], (Real)simTK_vector[1]);
+}
+
+inline Vec3d SimTKToEigen(const SimTKVec3 &simTK_vector)
+{
+    return Vec3d((Real)simTK_vector[0], (Real)simTK_vector[1], (Real)simTK_vector[2]);
+}
+
+inline SimTKMat22 EigenToSimTK(const Mat2d &eigen_matrix)
+{
+    return SimTKMat22((double)eigen_matrix(0, 0), (double)eigen_matrix(0, 1),
+                      (double)eigen_matrix(1, 0), (double)eigen_matrix(1, 1));
+}
+
+inline SimTKMat33 EigenToSimTK(const Mat3d &eigen_matrix)
+{
+    return SimTKMat33((double)eigen_matrix(0, 0), (double)eigen_matrix(0, 1), (double)eigen_matrix(0, 2),
+                      (double)eigen_matrix(1, 0), (double)eigen_matrix(1, 1), (double)eigen_matrix(1, 2),
+                      (double)eigen_matrix(2, 0), (double)eigen_matrix(2, 1), (double)eigen_matrix(2, 2));
+}
+
+inline Mat2d SimTKToEigen(const SimTKMat22 &simTK_matrix)
+{
+    return Mat2d{
+        {(Real)simTK_matrix(0, 0), (Real)simTK_matrix(0, 1)},
+        {(Real)simTK_matrix(1, 0), (Real)simTK_matrix(1, 1)}};
+}
+
+inline Mat3d SimTKToEigen(const SimTKMat33 &simTK_matrix)
+{
+    return Mat3d{
+        {(Real)simTK_matrix(0, 0), (Real)simTK_matrix(0, 1), (Real)simTK_matrix(0, 2)},
+        {(Real)simTK_matrix(1, 0), (Real)simTK_matrix(1, 1), (Real)simTK_matrix(1, 2)},
+        {(Real)simTK_matrix(2, 0), (Real)simTK_matrix(2, 1), (Real)simTK_matrix(2, 2)}};
+}
 } // namespace SPH
 #endif // TYPE_WRAPPER_H

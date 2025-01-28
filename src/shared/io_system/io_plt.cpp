@@ -12,16 +12,14 @@ namespace SPH
 void PltEngine::
     writeAQuantityHeader(std::ofstream &out_file, const Real &quantity, const std::string &quantity_name)
 {
-    out_file << "\"" << quantity_name << "\""
-             << "   ";
+    out_file << "\"" << quantity_name << "\"" << "   ";
 }
 //=============================================================================================//
 void PltEngine::
     writeAQuantityHeader(std::ofstream &out_file, const Vecd &quantity, const std::string &quantity_name)
 {
     for (int i = 0; i != Dimensions; ++i)
-        out_file << "\"" << quantity_name << "[" << i << "]\""
-                 << "   ";
+        out_file << "\"" << quantity_name << "[" << i << "]\"" << "   ";
 }
 //=============================================================================================//
 void PltEngine::writeAQuantity(std::ofstream &out_file, const Real &quantity)
@@ -73,14 +71,14 @@ void BodyStatesRecordingToPlt::writePltFileParticleData(
     constexpr int type_index_int = DataTypeIndex<int>::value;
     for (DiscreteVariable<int> *variable : std::get<type_index_int>(variables_to_write))
     {
-        int *data_field = variable->DataField();
+        int *data_field = variable->Data();
         output_file << data_field[index] << " ";
     };
 
     constexpr int type_index_Vecd = DataTypeIndex<Vecd>::value;
     for (DiscreteVariable<Vecd> *variable : std::get<type_index_Vecd>(variables_to_write))
     {
-        Vecd *data_field = variable->DataField();
+        Vecd *data_field = variable->Data();
         Vec3d vector_value = upgradeToVec3d(data_field[index]);
         output_file << vector_value[0] << " " << vector_value[1] << " " << vector_value[2] << " ";
     };
@@ -88,7 +86,7 @@ void BodyStatesRecordingToPlt::writePltFileParticleData(
     constexpr int type_index_Real = DataTypeIndex<Real>::value;
     for (DiscreteVariable<Real> *variable : std::get<type_index_Real>(variables_to_write))
     {
-        Real *data_field = variable->DataField();
+        Real *data_field = variable->Data();
         output_file << data_field[index] << " ";
     };
 }

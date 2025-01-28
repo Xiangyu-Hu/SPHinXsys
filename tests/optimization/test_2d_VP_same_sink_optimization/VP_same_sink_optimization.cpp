@@ -17,6 +17,7 @@ BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(L + BW, H + BW));
 //----------------------------------------------------------------------
 //	Basic parameters for material properties.
 //----------------------------------------------------------------------
+std::string diffusion_species_name = "Phi";
 Real diffusion_coeff = 1;
 //----------------------------------------------------------------------
 //	Initial and boundary conditions.
@@ -82,7 +83,7 @@ class DiffusionBodyInitialCondition : public LocalDynamics
     explicit DiffusionBodyInitialCondition(SPHBody &sph_body)
         : LocalDynamics(sph_body),
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
-          phi_(particles_->registerStateVariable<Real>("Phi")),
+          phi_(particles_->registerStateVariable<Real>(diffusion_species_name)),
           heat_source_(particles_->registerStateVariable<Real>("HeatSource")){};
 
     void update(size_t index_i, Real dt)
@@ -117,7 +118,7 @@ class WallBoundaryInitialCondition : public LocalDynamics
     explicit WallBoundaryInitialCondition(SPHBody &sph_body)
         : LocalDynamics(sph_body),
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
-          phi_(particles_->registerStateVariable<Real>("Phi")){};
+          phi_(particles_->registerStateVariable<Real>(diffusion_species_name)){};
 
     void update(size_t index_i, Real dt)
     {
@@ -144,7 +145,7 @@ class ImposeObjectiveFunction : public LocalDynamics
   public:
     explicit ImposeObjectiveFunction(SPHBody &sph_body)
         : LocalDynamics(sph_body),
-          phi_(particles_->registerStateVariable<Real>("Phi")),
+          phi_(particles_->registerStateVariable<Real>(diffusion_species_name)),
           species_modified_(particles_->getVariableDataByName<Real>("SpeciesModified")),
           species_recovery_(particles_->getVariableDataByName<Real>("SpeciesRecovery")){};
 
@@ -191,8 +192,8 @@ TEST(test_optimization, test_problem1_optimized)
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     SolidBody diffusion_body(sph_system, makeShared<DiffusionBody>("DiffusionBody"));
-    LocalIsotropicDiffusion *local_isotropic_diffusion =
-        diffusion_body.defineMaterial<LocalIsotropicDiffusion>("Phi", "Phi", diffusion_coeff);
+    diffusion_body.defineClosure<Solid, LocalIsotropicDiffusion>(
+        Solid(), ConstructArgs(diffusion_species_name, diffusion_coeff, diffusion_coeff));
     diffusion_body.generateParticles<BaseParticles, Lattice>();
 
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
@@ -212,7 +213,7 @@ TEST(test_optimization, test_problem1_optimized)
     //----------------------------------------------------------------------
     // Obtain the time step size.
     //----------------------------------------------------------------------
-    GetDiffusionTimeStepSize get_time_step_size(diffusion_body, *local_isotropic_diffusion);
+    GetDiffusionTimeStepSize get_time_step_size(diffusion_body);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
@@ -262,9 +263,9 @@ TEST(test_optimization, test_problem1_optimized)
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
 
     InteractionSplit<TemperatureSplittingByPDEWithBoundary<Real>>
-        temperature_splitting_pde_complex(diffusion_body_inner, diffusion_body_contact, "Phi");
+        temperature_splitting_pde_complex(diffusion_body_inner, diffusion_body_contact, diffusion_species_name);
     InteractionSplit<UpdateTemperaturePDEResidual<TemperatureSplittingByPDEWithBoundary<Real>>>
-        update_temperature_pde_residual(diffusion_body_inner, diffusion_body_contact, "Phi");
+        update_temperature_pde_residual(diffusion_body_inner, diffusion_body_contact, diffusion_species_name);
 
     SimpleDynamics<StoreGlobalPDEResidual> store_global_PDE_residual(diffusion_body);
     SimpleDynamics<ImposeObjectiveFunction> impose_objective_function(diffusion_body);
@@ -286,7 +287,7 @@ TEST(test_optimization, test_problem1_optimized)
     ReduceDynamics<ComputeMaximumError<SPHBody>>
         calculate_maximum_variation(diffusion_body, "VariationGlobal");
     ReduceDynamics<Average<QuantitySummation<Real, SPHBody>>>
-        calculate_averaged_opt_temperature(diffusion_body, "Phi");
+        calculate_averaged_opt_temperature(diffusion_body, diffusion_species_name);
     //----------------------------------------------------------------------
     //	Define the main numerical methods used in the simulation.
     //	Note that there may be data dependence on the constructors of these methods.

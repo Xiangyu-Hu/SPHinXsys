@@ -21,8 +21,8 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     SolidBody diffusion_body(sph_system, makeShared<DiffusionBody>("DiffusionBody"));
-    IsotropicDiffusion *diffusion =
-        diffusion_body.defineMaterial<IsotropicDiffusion>("Phi", "Phi", diffusion_coeff);
+    diffusion_body.defineClosure<Solid, IsotropicDiffusion>(
+        Solid(), ConstructArgs(diffusion_species_name, diffusion_coeff));
     diffusion_body.generateParticles<BaseParticles, Lattice>();
 
     SolidBody wall_Dirichlet(sph_system, makeShared<DirichletWallBoundary>("DirichletWallBoundary"));
@@ -54,10 +54,8 @@ int main(int ac, char *av[])
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_Neumann);
 
     DiffusionBodyRelaxation temperature_relaxation(
-        ConstructorArgs(diffusion_body_inner, diffusion),
-        ConstructorArgs(diffusion_body_contact_Dirichlet, diffusion),
-        ConstructorArgs(diffusion_body_contact_Neumann, diffusion));
-    GetDiffusionTimeStepSize get_time_step_size(diffusion_body, *diffusion);
+        diffusion_body_inner, diffusion_body_contact_Dirichlet, diffusion_body_contact_Neumann);
+    GetDiffusionTimeStepSize get_time_step_size(diffusion_body);
     SimpleDynamics<DiffusionInitialCondition> setup_diffusion_initial_condition(diffusion_body);
     SimpleDynamics<DirichletWallBoundaryInitialCondition> setup_boundary_condition_Dirichlet(wall_Dirichlet);
     SimpleDynamics<NeumannWallBoundaryInitialCondition> setup_boundary_condition_Neumann(wall_Neumann);
@@ -67,7 +65,7 @@ int main(int ac, char *av[])
     BodyStatesRecordingToVtp write_states(sph_system);
     // ObservedQuantityRecording<Real> write_solid_temperature("Phi", temperature_observer_contact);
     RegressionTestEnsembleAverage<ObservedQuantityRecording<Real>>
-        write_solid_temperature("Phi", temperature_observer_contact);
+        write_solid_temperature(diffusion_species_name, temperature_observer_contact);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.

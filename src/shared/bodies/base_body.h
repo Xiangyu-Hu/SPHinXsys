@@ -38,11 +38,12 @@
 #include "adaptation.h"
 #include "all_geometries.h"
 #include "base_data_package.h"
+#include "base_implementation.h"
 #include "base_material.h"
 #include "base_particle_generator.h"
 #include "base_particles.h"
 #include "cell_linked_list.h"
-#include "execution.h"
+#include "closure_wrapper.h"
 #include "sph_system.h"
 #include "sphinxsys_containers.h"
 
@@ -76,9 +77,7 @@ class SPHBody
     bool is_bound_set_;             /**< whether the bounding box is set */
     BoundingBox bound_;             /**< bounding box of the body */
     Shape *initial_shape_;          /**< initial volumetric geometry enclosing the body */
-    int total_body_parts_;
-    StdVec<execution::Implementation<Base> *> all_simple_reduce_computing_kernels_;
-    /**< total number of body parts */
+    int total_body_parts_;          /**< total number of body parts */
 
   public:
     SPHAdaptation *sph_adaptation_;        /**< numerical adaptation policy */
@@ -90,7 +89,7 @@ class SPHBody
     SPHBody(SPHSystem &sph_system, const std::string &name);
     SPHBody(SPHSystem &sph_system, SharedPtr<Shape> shape_ptr, const std::string &name);
     SPHBody(SPHSystem &sph_system, SharedPtr<Shape> shape_ptr);
-    virtual ~SPHBody(){};
+    virtual ~SPHBody() {};
 
     std::string getName() { return body_name_; };
     SPHSystem &getSPHSystem();
@@ -109,7 +108,6 @@ class SPHBody
     void setSPHBodyBounds(const BoundingBox &bound);
     BoundingBox getSPHBodyBounds();
     BoundingBox getSPHSystemBounds();
-    void registerComputingKernel(execution::Implementation<Base> *implementation);
     int getNewBodyPartID();
     int getTotalBodyParts() { return total_body_parts_; };
     //----------------------------------------------------------------------
@@ -141,18 +139,21 @@ class SPHBody
         return level_set_shape;
     };
 
-    template <class MaterialType>
-    void assignMaterial(MaterialType *material)
-    {
-        base_material_ = material;
-    };
-
     template <class MaterialType = BaseMaterial, typename... Args>
     MaterialType *defineMaterial(Args &&...args)
     {
         MaterialType *material = base_material_ptr_keeper_.createPtr<MaterialType>(std::forward<Args>(args)...);
-        assignMaterial(material);
+        base_material_ = material;
         return material;
+    };
+
+    template <class BaseModel, typename... AuxiliaryModels, typename... Args>
+    Closure<BaseModel, AuxiliaryModels...> *defineClosure(Args &&...args)
+    {
+        Closure<BaseModel, AuxiliaryModels...> *closure =
+            base_material_ptr_keeper_.createPtr<Closure<BaseModel, AuxiliaryModels...>>(std::forward<Args>(args)...);
+        base_material_ = closure;
+        return closure;
     };
     //----------------------------------------------------------------------
     // Particle generating methods
@@ -180,7 +181,6 @@ class SPHBody
     virtual void writeParticlesToXmlForRestart(std::string &filefullpath);
     virtual void readParticlesFromXmlForRestart(std::string &filefullpath);
     virtual void writeToXmlForReloadParticle(std::string &filefullpath);
-    virtual SPHBody *ThisObjectPtr() { return this; };
 };
 
 /**
@@ -202,7 +202,7 @@ class RealBody : public SPHBody
     {
         this->getSPHSystem().addRealBody(this);
     };
-    virtual ~RealBody(){};
+    virtual ~RealBody() {};
     BaseCellLinkedList &getCellLinkedList();
     void updateCellLinkedList();
 };

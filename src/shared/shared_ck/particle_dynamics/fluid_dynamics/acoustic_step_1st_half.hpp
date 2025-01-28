@@ -55,7 +55,7 @@ template <class RiemannSolverType, class KernelCorrectionType, typename... Param
 AcousticStep1stHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType, Parameters...>>::
     AcousticStep1stHalf(Relation<Inner<Parameters...>> &inner_relation)
     : AcousticStep<Interaction<Inner<Parameters...>>>(inner_relation),
-      correction_(this->particles_), riemann_solver_(this->fluid_, this->fluid_)
+      kernel_correction_(this->particles_), riemann_solver_(this->fluid_, this->fluid_)
 {
     static_assert(std::is_base_of<KernelCorrection, KernelCorrectionType>::value,
                   "KernelCorrection is not the base of KernelCorrectionType!");
@@ -66,11 +66,11 @@ template <class ExecutionPolicy, class EncloserType>
 AcousticStep1stHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType, Parameters...>>::
     InitializeKernel::InitializeKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : eos_(encloser.fluid_),
-      rho_(encloser.dv_rho_->DelegatedDataField(ex_policy)),
-      p_(encloser.dv_p_->DelegatedDataField(ex_policy)),
-      drho_dt_(encloser.dv_drho_dt_->DelegatedDataField(ex_policy)),
-      vel_(encloser.dv_vel_->DelegatedDataField(ex_policy)),
-      dpos_(encloser.dv_dpos_->DelegatedDataField(ex_policy)) {}
+      rho_(encloser.dv_rho_->DelegatedData(ex_policy)),
+      p_(encloser.dv_p_->DelegatedData(ex_policy)),
+      drho_dt_(encloser.dv_drho_dt_->DelegatedData(ex_policy)),
+      vel_(encloser.dv_vel_->DelegatedData(ex_policy)),
+      dpos_(encloser.dv_dpos_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
 void AcousticStep1stHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType, Parameters...>>::
@@ -86,13 +86,13 @@ template <class ExecutionPolicy, class EncloserType>
 AcousticStep1stHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType, Parameters...>>::
     InteractKernel::InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : BaseInteraction::InteractKernel(ex_policy, encloser),
-      correction_(encloser.correction_),
+      correction_(ex_policy, encloser.kernel_correction_),
       riemann_solver_(encloser.riemann_solver_),
-      Vol_(encloser.dv_Vol_->DelegatedDataField(ex_policy)),
-      rho_(encloser.dv_rho_->DelegatedDataField(ex_policy)),
-      p_(encloser.dv_p_->DelegatedDataField(ex_policy)),
-      drho_dt_(encloser.dv_drho_dt_->DelegatedDataField(ex_policy)),
-      force_(encloser.dv_force_->DelegatedDataField(ex_policy)) {}
+      Vol_(encloser.dv_Vol_->DelegatedData(ex_policy)),
+      rho_(encloser.dv_rho_->DelegatedData(ex_policy)),
+      p_(encloser.dv_p_->DelegatedData(ex_policy)),
+      drho_dt_(encloser.dv_drho_dt_->DelegatedData(ex_policy)),
+      force_(encloser.dv_force_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
 void AcousticStep1stHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType, Parameters...>>::
@@ -117,10 +117,10 @@ template <class RiemannSolverType, class KernelCorrectionType, typename... Param
 template <class ExecutionPolicy, class EncloserType>
 AcousticStep1stHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType, Parameters...>>::
     UpdateKernel::UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-    : mass_(encloser.dv_mass_->DelegatedDataField(ex_policy)),
-      vel_(encloser.dv_vel_->DelegatedDataField(ex_policy)),
-      force_(encloser.dv_force_->DelegatedDataField(ex_policy)),
-      force_prior_(encloser.dv_force_prior_->DelegatedDataField(ex_policy)) {}
+    : mass_(encloser.dv_mass_->DelegatedData(ex_policy)),
+      vel_(encloser.dv_vel_->DelegatedData(ex_policy)),
+      force_(encloser.dv_force_->DelegatedData(ex_policy)),
+      force_prior_(encloser.dv_force_prior_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
 void AcousticStep1stHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType, Parameters...>>::
@@ -133,7 +133,7 @@ template <class RiemannSolverType, class KernelCorrectionType, typename... Param
 AcousticStep1stHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType, Parameters...>>::
     AcousticStep1stHalf(Relation<Contact<Parameters...>> &wall_contact_relation)
     : AcousticStep<Interaction<Contact<Wall, Parameters...>>>(wall_contact_relation),
-      correction_(this->particles_), riemann_solver_(this->fluid_, this->fluid_) {}
+      kernel_correction_(this->particles_), riemann_solver_(this->fluid_, this->fluid_) {}
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
 template <class ExecutionPolicy, class EncloserType>
@@ -141,17 +141,17 @@ AcousticStep1stHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType, Param
     InteractKernel::InteractKernel(
         const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt contact_index)
     : BaseInteraction::InteractKernel(ex_policy, encloser, contact_index),
-      correction_(encloser.correction_),
+      correction_(ex_policy, encloser.kernel_correction_),
       riemann_solver_(encloser.riemann_solver_),
-      Vol_(encloser.dv_Vol_->DelegatedDataField(ex_policy)),
-      rho_(encloser.dv_rho_->DelegatedDataField(ex_policy)),
-      mass_(encloser.dv_mass_->DelegatedDataField(ex_policy)),
-      p_(encloser.dv_p_->DelegatedDataField(ex_policy)),
-      drho_dt_(encloser.dv_drho_dt_->DelegatedDataField(ex_policy)),
-      force_(encloser.dv_force_->DelegatedDataField(ex_policy)),
-      force_prior_(encloser.dv_force_prior_->DelegatedDataField(ex_policy)),
-      wall_Vol_(encloser.dv_wall_Vol_[contact_index]->DelegatedDataField(ex_policy)),
-      wall_acc_ave_(encloser.dv_wall_acc_ave_[contact_index]->DelegatedDataField(ex_policy)) {}
+      Vol_(encloser.dv_Vol_->DelegatedData(ex_policy)),
+      rho_(encloser.dv_rho_->DelegatedData(ex_policy)),
+      mass_(encloser.dv_mass_->DelegatedData(ex_policy)),
+      p_(encloser.dv_p_->DelegatedData(ex_policy)),
+      drho_dt_(encloser.dv_drho_dt_->DelegatedData(ex_policy)),
+      force_(encloser.dv_force_->DelegatedData(ex_policy)),
+      force_prior_(encloser.dv_force_prior_->DelegatedData(ex_policy)),
+      wall_Vol_(encloser.dv_wall_Vol_[contact_index]->DelegatedData(ex_policy)),
+      wall_acc_ave_(encloser.dv_wall_acc_ave_[contact_index]->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
 void AcousticStep1stHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType, Parameters...>>::
@@ -167,9 +167,9 @@ void AcousticStep1stHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType, 
         Real r_ij = this->vec_r_ij(index_i, index_j).norm();
 
         Real face_wall_external_acceleration = (force_prior_[index_i] / mass_[index_i] - wall_acc_ave_[index_j]).dot(-e_ij);
-        Real p_in_wall = p_[index_i] + rho_[index_i] * r_ij * SMAX(Real(0), face_wall_external_acceleration);
-        force -= (p_[index_i] + p_in_wall) * correction_(index_i) * dW_ijV_j * e_ij;
-        rho_dissipation += riemann_solver_.DissipativeUJump(p_[index_i] - p_in_wall) * dW_ijV_j;
+        Real p_j_in_wall = p_[index_i] + rho_[index_i] * r_ij * SMAX(Real(0), face_wall_external_acceleration);
+        force -= (p_[index_i] + p_j_in_wall) * correction_(index_i) * dW_ijV_j * e_ij;
+        rho_dissipation += riemann_solver_.DissipativeUJump(p_[index_i] - p_j_in_wall) * dW_ijV_j;
     }
     force_[index_i] += force * Vol_[index_i];
     drho_dt_[index_i] += rho_dissipation * rho_[index_i];

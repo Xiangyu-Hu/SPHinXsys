@@ -91,7 +91,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Run particle relaxation for body-fitted distribution if chosen.
     //----------------------------------------------------------------------
-    if (sph_system.RunParticleRelaxation() && !sph_system.ReloadParticles())
+    if (sph_system.RunParticleRelaxation())
     {
         //----------------------------------------------------------------------
         //	Define body relation map used for particle relaxation.
@@ -164,7 +164,7 @@ int main(int ac, char *av[])
     // Generally, the geometric models or simple objects without data dependencies,
     // such as gravity, should be initiated first.
     // Then the major physical particle dynamics model should be introduced.
-    // Finally, the auxillary models such as time step estimator, initial condition,
+    // Finally, the auxiliary models such as time step estimator, initial condition,
     // boundary condition and other constraints should be defined.
     //----------------------------------------------------------------------
     Gravity constant_gravity(gravity);

@@ -23,7 +23,7 @@
 /**
  * @file regression_test_base.h
  * @brief Base classes for comparisons between validated and tested results.
- * @author	Bo Zhang , Chi Zhang and Xiangyu Hu
+ * @author	Bo Zhang, Chi Zhang and Xiangyu Hu
  */
 
 #ifndef REGRESSION_TEST_BASE_H
@@ -56,8 +56,8 @@ class RegressionTestBase : public ObserveMethodType
     std::string converged;               /*< the tag for result converged, default false. */
 
     XmlMemoryIO xmlmemory_io_; /*< xml memory in_output operator, which has defined several
-                                                                              methods to read and write data from and into xml memory,
-                                                                                  including one by one, or all result in the same time. */
+                                   methods to read and write data from and into xml memory,
+                                   including one by one, or all result in the same time. */
 
     XmlEngine observe_xml_engine_;    /*< xml engine for current result io_environment. */
     XmlEngine result_xml_engine_in_;  /*< xml engine for input result. */
@@ -67,15 +67,15 @@ class RegressionTestBase : public ObserveMethodType
     StdVec<std::string> element_tag_;             /*< the container of the tag of current result. */
     BiVector<VariableType> current_result_;       /*< the container of current run result stored as snapshot * observation. */
     BiVector<VariableType> current_result_trans_; /*< the container of current run result with snapshot & observations transposed,
-                                                                                               because this data structure is required in TA and DTW method. */
+                                                  because this data structure is required in TA and DTW method. */
     BiVector<VariableType> result_in_;            /*< the temporary container of each result when reading from .xml memory, and
-                                                                                                  it may be snapshot * observations (reading all result for averaged methods),
-                                                                                                      or observations * snapshot (reading specified result for TA and DTW method.) */
+                                                  it may be snapshot * observations (reading all result for averaged methods),
+                                                  or observations * snapshot (reading specified result for TA and DTW method.) */
     TriVector<VariableType> result_;              /*< the container of results in all runs (run * snapshot * observation) */
 
     int snapshot_, observation_; /*< the size of each layer of current result vector. */
     int difference_;             /*< the length difference of snapshot between old and new result,
-                                                                                which is used to trim each new run result to be a unified length. */
+                                 which is used to trim each new run result to be a unified length. */
     int number_of_run_;          /*< the times of run. */
     int label_for_repeat_;       /*< the label used stable convergence (several convergence). */
     int number_of_snapshot_old_; /*< the snapshot size of last trimmed result. */

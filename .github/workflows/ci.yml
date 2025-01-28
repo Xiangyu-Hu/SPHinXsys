@@ -21,7 +21,7 @@ on:
         required: false
         default: false
 env:
-  VCPKG_VERSION: "2023.10.19"
+  VCPKG_VERSION: "2024.02.14"
   CTEST_PARALLEL_LEVEL: "1"
 
 # A workflow is made up of one or more jobs that can run sequentially or in parallel
@@ -213,7 +213,7 @@ jobs:
       - name: Zip build folder
         run: zip -r build.zip ./build
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: Linux-build
           path: ${{github.workspace}}/build.zip
@@ -271,7 +271,7 @@ jobs:
             pybind11 \
             opencascade
 
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: Linux-build
 
@@ -392,7 +392,7 @@ jobs:
       - name: Zip build folder
         run: 7z.exe a C:\build.7z "C:\build"
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: Windows-build
           path: C:\build.7z
@@ -437,7 +437,7 @@ jobs:
             xsimd `
             pybind11
 
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: Windows-build
 
@@ -485,7 +485,7 @@ jobs:
 
   macOS-build:
     if: ${{ github.event_name != 'workflow_dispatch' }}
-    runs-on: macos-12
+    runs-on: macos-13
     env:
       VCPKG_DEFAULT_TRIPLET: x64-osx
 
@@ -543,7 +543,7 @@ jobs:
       - name: Zip build folder
         run: zip -r build.zip ./build
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: macOS-build
           path: ${{github.workspace}}/build.zip
@@ -553,7 +553,7 @@ jobs:
   macOS-test:
     if: ${{ github.event_name != 'workflow_dispatch' }}
     needs: macOS-build
-    runs-on: macos-12
+    runs-on: macos-13
     env:
       VCPKG_DEFAULT_TRIPLET: x64-osx
 
@@ -590,7 +590,7 @@ jobs:
             xsimd \
             pybind11
 
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: macOS-build
 

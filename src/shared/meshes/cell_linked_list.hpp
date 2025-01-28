@@ -21,9 +21,9 @@ template <class ExecutionPolicy>
 NeighborSearch::NeighborSearch(
     const ExecutionPolicy &ex_policy, CellLinkedList &cell_linked_list, DiscreteVariable<Vecd> *pos)
     : Mesh(cell_linked_list), grid_spacing_squared_(grid_spacing_ * grid_spacing_),
-      pos_(pos->DelegatedDataField(ex_policy)),
-      particle_index_(cell_linked_list.getParticleIndex()->DelegatedDataField(ex_policy)),
-      cell_offset_(cell_linked_list.getCellOffset()->DelegatedDataField(ex_policy)) {}
+      pos_(pos->DelegatedData(ex_policy)),
+      particle_index_(cell_linked_list.getParticleIndex()->DelegatedData(ex_policy)),
+      cell_offset_(cell_linked_list.getCellOffset()->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <typename FunctionOnEach>
 void NeighborSearch::forEachSearch(UnsignedInt index_i, const Vecd *source_pos,
@@ -185,6 +185,20 @@ void CellLinkedList::particle_for_split(const execution::ParallelPolicy &, const
             },
             ap);
     }
+}
+//=================================================================================================//
+template <class LocalDynamicsFunction>
+void MultilevelCellLinkedList::particle_for_split(const execution::SequencedPolicy &seq, const LocalDynamicsFunction &local_dynamics_function)
+{
+    for (size_t level = 0; level != total_levels_; ++level)
+        mesh_levels_[level]->particle_for_split(seq, local_dynamics_function);
+}
+//=================================================================================================//
+template <class LocalDynamicsFunction>
+void MultilevelCellLinkedList::particle_for_split(const execution::ParallelPolicy &par, const LocalDynamicsFunction &local_dynamics_function)
+{
+    for (size_t level = 0; level != total_levels_; ++level)
+        mesh_levels_[level]->particle_for_split(par, local_dynamics_function);
 }
 //=================================================================================================//
 } // namespace SPH

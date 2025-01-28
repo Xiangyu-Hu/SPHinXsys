@@ -82,11 +82,11 @@ class WaterBlock : public ComplexShape
 //----------------------------------------------------------------------
 //	Define parametrization for this case.
 //----------------------------------------------------------------------
-class ParameterizedWaterMaterial : public BaseParameterization<WeaklyCompressibleFluid>
+class ParameterizedViscosity : public BaseParameterization<Viscosity>
 {
   public:
-    ParameterizedWaterMaterial(ParameterizationIO &parameterization_io, Real rho0, Real c0, Real mu)
-        : BaseParameterization<WeaklyCompressibleFluid>(parameterization_io, rho0, c0, mu)
+    ParameterizedViscosity(ConstructArgs<ParameterizationIO *, Real> args)
+        : BaseParameterization<Viscosity>(std::get<0>(args), std::get<1>(args))
     {
         getAParameter("WaterMaterial", "Viscosity", mu_);
     }

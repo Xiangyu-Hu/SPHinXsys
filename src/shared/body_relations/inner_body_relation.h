@@ -46,7 +46,7 @@ class InnerRelation : public BaseInnerRelation
 
   public:
     explicit InnerRelation(RealBody &real_body);
-    virtual ~InnerRelation() {};
+    virtual ~InnerRelation(){};
 
     CellLinkedList &getCellLinkedList() { return cell_linked_list_; };
     virtual void updateConfiguration() override;
@@ -69,7 +69,7 @@ class AdaptiveInnerRelation : public BaseInnerRelation
 
   public:
     explicit AdaptiveInnerRelation(RealBody &real_body);
-    virtual ~AdaptiveInnerRelation() {};
+    virtual ~AdaptiveInnerRelation(){};
 
     virtual void updateConfiguration() override;
 };
@@ -84,7 +84,7 @@ class SelfSurfaceContactRelation : public BaseInnerRelation
     BodySurfaceLayer body_surface_layer_;
 
     explicit SelfSurfaceContactRelation(RealBody &real_body);
-    virtual ~SelfSurfaceContactRelation() {};
+    virtual ~SelfSurfaceContactRelation(){};
     virtual void updateConfiguration() override;
 
   protected:
@@ -108,7 +108,7 @@ class TreeInnerRelation : public InnerRelation
 
   public:
     explicit TreeInnerRelation(RealBody &real_body);
-    virtual ~TreeInnerRelation() {};
+    virtual ~TreeInnerRelation(){};
 
     virtual void updateConfiguration() override;
 };
@@ -144,6 +144,23 @@ class ShellSelfContactRelation : public BaseInnerRelation
     SearchDepthSingleResolution get_single_search_depth_;
     NeighborBuilderShellSelfContact get_shell_self_contact_neighbor_;
     CellLinkedList &cell_linked_list_;
+};
+
+/**
+ * @class AdaptiveSplittingInnerRelation
+ * @brief The relation within a SPH body with smoothing length adaptation for splitting algorithm
+ *        a particle can only see neighbors with ascending ids or higher levels
+ */
+class AdaptiveSplittingInnerRelation : public AdaptiveInnerRelation
+{
+  public:
+    explicit AdaptiveSplittingInnerRelation(RealBody &real_body)
+        : AdaptiveInnerRelation(real_body),
+          get_adaptive_splitting_inner_neighbor_(real_body){};
+    void updateConfiguration() override;
+
+  private:
+    NeighborBuilderSplitInnerAdaptive get_adaptive_splitting_inner_neighbor_;
 };
 } // namespace SPH
 #endif // INNER_BODY_RELATION_H

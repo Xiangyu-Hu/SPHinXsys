@@ -80,7 +80,7 @@ class RelaxationResidue<Inner<LevelSetCorrection>> : public RelaxationResidue<In
     template <typename... Args>
     RelaxationResidue(Args &&...args);
     template <typename BodyRelationType, typename FirstArg>
-    explicit RelaxationResidue(ConstructorArgs<BodyRelationType, FirstArg> parameters)
+    explicit RelaxationResidue(InteractArgs<BodyRelationType, FirstArg> parameters)
         : RelaxationResidue(parameters.body_relation_, std::get<0>(parameters.others_)){};
     virtual ~RelaxationResidue(){};
     void interaction(size_t index_i, Real dt = 0.0);

@@ -72,38 +72,6 @@ using DataContainerAddressAssemble = DataAssemble<DataContainerAddressKeeper, Co
 template <template <typename> typename ContainerType>
 using DataContainerUniquePtrAssemble = DataAssemble<DataContainerUniquePtrKeeper, ContainerType>;
 
-/** a type irrelevant operation on the data assembles  */
-template <template <typename> typename OperationType>
-class DataAssembleOperation
-{
-    OperationType<int> integer_operation;
-    OperationType<Real> scalar_operation;
-    OperationType<Vec2d> vector2d_operation;
-    OperationType<Mat2d> matrix2d_operation;
-    OperationType<Vec3d> vector3d_operation;
-    OperationType<Mat3d> matrix3d_operation;
-
-  public:
-    template <typename... Args>
-    DataAssembleOperation(Args &&...args)
-        : integer_operation(std::forward<Args>(args)...),
-          scalar_operation(std::forward<Args>(args)...),
-          vector2d_operation(std::forward<Args>(args)...),
-          matrix2d_operation(std::forward<Args>(args)...),
-          vector3d_operation(std::forward<Args>(args)...),
-          matrix3d_operation(std::forward<Args>(args)...){};
-    template <typename... OperationArgs>
-    void operator()(OperationArgs &&...operation_args)
-    {
-        integer_operation(std::forward<OperationArgs>(operation_args)...);
-        scalar_operation(std::forward<OperationArgs>(operation_args)...);
-        vector2d_operation(std::forward<OperationArgs>(operation_args)...);
-        matrix2d_operation(std::forward<OperationArgs>(operation_args)...);
-        vector3d_operation(std::forward<OperationArgs>(operation_args)...);
-        matrix3d_operation(std::forward<OperationArgs>(operation_args)...);
-    }
-};
-
 // Please refer: https://www.cppstories.com/2022/tuple-iteration-basics/ for the following code
 template <typename DataAssembleType, typename OperationType>
 class OperationOnDataAssemble

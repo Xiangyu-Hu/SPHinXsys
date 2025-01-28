@@ -45,9 +45,9 @@ IOEnvironment::IOEnvironment(SPHSystem &sph_system, bool delete_output)
     sph_system.io_environment_ = this;
 }
 //=============================================================================================//
-ParameterizationIO &IOEnvironment::defineParameterizationIO()
+ParameterizationIO *IOEnvironment::defineParameterizationIO()
 {
-    return parameterization_io_ptr_keeper_.createRef<ParameterizationIO>(input_folder_);
+    return parameterization_io_ptr_keeper_.createPtr<ParameterizationIO>(input_folder_);
 }
 //=================================================================================================//
 } // namespace SPH

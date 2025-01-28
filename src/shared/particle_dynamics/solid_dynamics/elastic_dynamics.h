@@ -87,7 +87,7 @@ class AcousticTimeStep : public LocalDynamicsReduce<ReduceMin>
     ElasticSolid &elastic_solid_;
     Vecd *vel_, *force_, *force_prior_;
     Real *mass_;
-    Real smoothing_length_, c0_;
+    Real smoothing_length_min_, c0_;
 
   public:
     explicit AcousticTimeStep(SPHBody &sph_body, Real CFL = 0.6);
@@ -147,7 +147,7 @@ class BaseElasticIntegration : public LocalDynamics, public DataDelegateInner
 
 /**
  * @class BaseIntegration1stHalf
- * @brief computing stress relaxation process by verlet time stepping
+ * @brief computing stress relaxation process by Verlet time stepping
  * This is the first step
  */
 class BaseIntegration1stHalf : public BaseElasticIntegration
@@ -167,7 +167,7 @@ class BaseIntegration1stHalf : public BaseElasticIntegration
 
 /**
  * @class Integration1stHalf
- * @brief computing stress relaxation process by verlet time stepping
+ * @brief computing stress relaxation process by Verlet time stepping
  * This is the first step
  */
 class Integration1stHalf : public BaseIntegration1stHalf
@@ -289,8 +289,39 @@ class DecomposedIntegration1stHalf : public BaseIntegration1stHalf
 };
 
 /**
+ * @class Integration1stHalfPK2RightCauchy
+ * @brief Using PK2 stress constitute relation and right Cauchy damping
+ */
+class Integration1stHalfPK2RightCauchy : public Integration1stHalfPK2
+{
+  public:
+    explicit Integration1stHalfPK2RightCauchy(BaseInnerRelation &inner_relation)
+        : Integration1stHalfPK2(inner_relation),
+          h_ratio_(particles_->registerStateVariable<Real>("SmoothingLengthRatio", Real(1.0))){};
+    void initialization(size_t index_i, Real dt = 0.0);
+    inline void interaction(size_t index_i, Real dt = 0.0)
+    {
+        // including gravity and force from fluid
+        Vecd force = Vecd::Zero();
+        const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
+        for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+        {
+            size_t index_j = inner_neighborhood.j_[n];
+            Vecd e_ij = inner_neighborhood.e_ij_[n];
+            force += mass_[index_i] * inv_rho0_ * inner_neighborhood.dW_ij_[n] * Vol_[index_j] *
+                     (stress_PK1_B_[index_i] + stress_PK1_B_[index_j]) * e_ij;
+        }
+
+        force_[index_i] = force;
+    }
+
+  private:
+    Real *h_ratio_;
+};
+
+/**
  * @class Integration2ndHalf
- * @brief computing stress relaxation process by verlet time stepping
+ * @brief computing stress relaxation process by Verlet time stepping
  * This is the second step
  */
 class Integration2ndHalf : public BaseElasticIntegration

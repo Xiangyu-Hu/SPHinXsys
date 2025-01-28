@@ -45,8 +45,17 @@ class AcousticTimeStepCK : public LocalDynamicsReduce<ReduceMax>
 
   public:
     explicit AcousticTimeStepCK(SPHBody &sph_body, Real acousticCFL = 0.6);
-    virtual ~AcousticTimeStepCK(){};
-    virtual Real outputResult(Real reduced_value) override;
+    virtual ~AcousticTimeStepCK() {};
+
+    class FinalOutput
+    {
+        Real h_min_, acousticCFL_;
+
+      public:
+        using OutputType = Real;
+        FinalOutput(AcousticTimeStepCK &encloser);
+        Real Result(Real reduced_value);
+    };
 
     class ReduceKernel
     {
@@ -76,13 +85,22 @@ class AcousticTimeStepCK : public LocalDynamicsReduce<ReduceMax>
     Real acousticCFL_;
 };
 
-class AdvectionTimeStepCK
-    : public LocalDynamicsReduce<ReduceMax>
+class AdvectionTimeStepCK : public LocalDynamicsReduce<ReduceMax>
 {
   public:
     AdvectionTimeStepCK(SPHBody &sph_body, Real U_ref, Real advectionCFL = 0.25);
-    virtual ~AdvectionTimeStepCK(){};
-    virtual Real outputResult(Real reduced_value) override;
+    virtual ~AdvectionTimeStepCK() {};
+
+    class FinalOutput
+    {
+        Real h_min_;
+        Real speed_ref_, advectionCFL_;
+
+      public:
+        using OutputType = Real;
+        FinalOutput(AdvectionTimeStepCK &encloser);
+        Real Result(Real reduced_value);
+    };
 
     class ReduceKernel
     {
@@ -90,10 +108,10 @@ class AdvectionTimeStepCK
         template <class ExecutionPolicy>
         ReduceKernel(const ExecutionPolicy &ex_policy, AdvectionTimeStepCK &encloser)
             : h_min_(encloser.h_min_),
-              mass_(encloser.dv_mass_->DelegatedDataField(ex_policy)),
-              vel_(encloser.dv_vel_->DelegatedDataField(ex_policy)),
-              force_(encloser.dv_force_->DelegatedDataField(ex_policy)),
-              force_prior_(encloser.dv_force_prior_->DelegatedDataField(ex_policy)){};
+              mass_(encloser.dv_mass_->DelegatedData(ex_policy)),
+              vel_(encloser.dv_vel_->DelegatedData(ex_policy)),
+              force_(encloser.dv_force_->DelegatedData(ex_policy)),
+              force_prior_(encloser.dv_force_prior_->DelegatedData(ex_policy)){};
 
         Real reduce(size_t index_i, Real dt)
         {
@@ -121,32 +139,16 @@ class AdvectionTimeStepCK
  */
 class AdvectionViscousTimeStepCK : public AdvectionTimeStepCK
 {
-  protected:
-    Fluid &fluid_;
-
   public:
     AdvectionViscousTimeStepCK(SPHBody &sph_body, Real U_ref, Real advectionCFL = 0.25);
-    virtual ~AdvectionViscousTimeStepCK(){};
-
-    class ReduceKernel : public AdvectionTimeStepCK::ReduceKernel
-    {
-      public:
-        template <class ExecutionPolicy>
-        ReduceKernel(const ExecutionPolicy &ex_policy, AdvectionViscousTimeStepCK &encloser)
-            : AdvectionTimeStepCK::ReduceKernel(ex_policy, encloser){};
-
-        Real reduce(size_t index_i, Real dt = 0.0)
-        {
-            return AdvectionTimeStepCK::ReduceKernel::reduce(index_i, dt);
-        };
-    };
+    virtual ~AdvectionViscousTimeStepCK() {};
 };
 
 class AdvectionStepSetup : public LocalDynamics
 {
   public:
     explicit AdvectionStepSetup(SPHBody &sph_body);
-    virtual ~AdvectionStepSetup(){};
+    virtual ~AdvectionStepSetup() {};
 
     class UpdateKernel
     {
@@ -174,7 +176,7 @@ class AdvectionStepClose : public LocalDynamics
 {
   public:
     explicit AdvectionStepClose(SPHBody &sph_body);
-    virtual ~AdvectionStepClose(){};
+    virtual ~AdvectionStepClose() {};
 
     class UpdateKernel
     {

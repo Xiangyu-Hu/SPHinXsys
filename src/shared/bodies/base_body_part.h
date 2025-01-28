@@ -38,29 +38,28 @@ namespace SPH
 {
 /**
  * @class BodyPart
- * @brief An auxillary class for SPHBody to indicate a part of the body.
+ * @brief An auxiliary class for SPHBody to indicate a part of the body.
  */
 using namespace std::placeholders;
 class BodyPart
 {
   public:
-    BodyPart(SPHBody &sph_body, const std::string &body_part_name)
-        : sph_body_(sph_body), part_id_(sph_body.getNewBodyPartID()),
-          body_part_name_(body_part_name),
-          base_particles_(sph_body.getBaseParticles()),
-          pos_(base_particles_.getVariableDataByName<Vecd>("Position")){};
-    virtual ~BodyPart(){};
-
+    BodyPart(SPHBody &sph_body, const std::string &body_part_name);
+    virtual ~BodyPart() {};
     SPHBody &getSPHBody() { return sph_body_; };
     SPHSystem &getSPHSystem() { return sph_body_.getSPHSystem(); };
     std::string getName() { return body_part_name_; };
     int getPartID() { return part_id_; };
+    DiscreteVariable<UnsignedInt> *dvIndexList() { return dv_index_list_; };
+    SingularVariable<UnsignedInt> *svRangeSize() { return sv_range_size_; };
 
   protected:
     SPHBody &sph_body_;
     int part_id_;
     std::string body_part_name_;
     BaseParticles &base_particles_;
+    DiscreteVariable<UnsignedInt> *dv_index_list_;
+    SingularVariable<UnsignedInt> *sv_range_size_;
     Vecd *pos_;
 };
 
@@ -75,11 +74,8 @@ class BodyPartByParticle : public BodyPart
     BaseParticles &getBaseParticles() { return base_particles_; };
     IndexVector &LoopRange() { return body_part_particles_; };
     size_t SizeOfLoopRange() { return body_part_particles_.size(); };
-
-    BodyPartByParticle(SPHBody &sph_body, const std::string &body_part_name)
-        : BodyPart(sph_body, body_part_name),
-          body_part_bounds_(Vecd::Zero(), Vecd::Zero()), body_part_bounds_set_(false){};
-    virtual ~BodyPartByParticle(){};
+    BodyPartByParticle(SPHBody &sph_body, const std::string &body_part_name);
+    virtual ~BodyPartByParticle() {};
 
     void setBodyPartBounds(BoundingBox bbox)
     {
@@ -114,8 +110,8 @@ class BodyPartByCell : public BodyPart
     size_t SizeOfLoopRange();
 
     BodyPartByCell(RealBody &real_body, const std::string &body_part_name)
-        : BodyPart(real_body, body_part_name), cell_linked_list_(real_body.getCellLinkedList()){};
-    virtual ~BodyPartByCell(){};
+        : BodyPart(real_body, body_part_name), cell_linked_list_(real_body.getCellLinkedList()) {};
+    virtual ~BodyPartByCell() {};
 
   protected:
     BaseCellLinkedList &cell_linked_list_;
@@ -135,7 +131,7 @@ class BodyRegionByParticle : public BodyPartByParticle
   public:
     BodyRegionByParticle(SPHBody &sph_body, Shape &body_part_shape);
     BodyRegionByParticle(SPHBody &sph_body, SharedPtr<Shape> shape_ptr);
-    virtual ~BodyRegionByParticle(){};
+    virtual ~BodyRegionByParticle() {};
     Shape &getBodyPartShape() { return body_part_shape_; };
 
   protected:
@@ -151,7 +147,7 @@ class BodySurface : public BodyPartByParticle
 {
   public:
     explicit BodySurface(SPHBody &sph_body);
-    virtual ~BodySurface(){};
+    virtual ~BodySurface() {};
 
   protected:
     Real particle_spacing_min_;
@@ -166,7 +162,7 @@ class BodySurfaceLayer : public BodyPartByParticle
 {
   public:
     explicit BodySurfaceLayer(SPHBody &sph_body, Real layer_thickness = 3.0);
-    virtual ~BodySurfaceLayer(){};
+    virtual ~BodySurfaceLayer() {};
 
   private:
     Real thickness_threshold_;
@@ -185,7 +181,7 @@ class BodyRegionByCell : public BodyPartByCell
   public:
     BodyRegionByCell(RealBody &real_body, Shape &body_part_shape);
     BodyRegionByCell(RealBody &real_body, SharedPtr<Shape> shape_ptr);
-    virtual ~BodyRegionByCell(){};
+    virtual ~BodyRegionByCell() {};
     Shape &getBodyPartShape() { return body_part_shape_; };
 
   private:
@@ -210,7 +206,7 @@ class NearShapeSurface : public BodyPartByCell
     NearShapeSurface(RealBody &real_body, LevelSetShape &level_set_shape);
     explicit NearShapeSurface(RealBody &real_body);
     NearShapeSurface(RealBody &real_body, const std::string &sub_shape_name);
-    virtual ~NearShapeSurface(){};
+    virtual ~NearShapeSurface() {};
     LevelSetShape &getLevelSetShape() { return level_set_shape_; };
 
   private:
@@ -218,26 +214,38 @@ class NearShapeSurface : public BodyPartByCell
     bool checkNearSurface(Vecd cell_position, Real threshold);
 };
 
-/**
- * @class AlignedBoxRegion
- * @brief A template body part with the collection of particles within by an AlignedBoxShape.
- */
-template <class BodyRegionType>
-class AlignedBoxRegion : public BodyRegionType
+class AlignedBoxPart
 {
+    UniquePtrKeeper<SingularVariable<AlignedBox>> sv_aligned_box_keeper_;
+
   public:
-    AlignedBoxRegion(RealBody &real_body, AlignedBoxShape &aligned_box)
-        : BodyRegionType(real_body, aligned_box), aligned_box_(aligned_box){};
-    AlignedBoxRegion(RealBody &real_body, SharedPtr<AlignedBoxShape> aligned_box_ptr)
-        : BodyRegionType(real_body, aligned_box_ptr), aligned_box_(*aligned_box_ptr.get()){};
-    virtual ~AlignedBoxRegion(){};
-    AlignedBoxShape &getAlignedBoxShape() { return aligned_box_; };
+    AlignedBoxPart(const std::string &name, const AlignedBox &aligned_box);
+    virtual ~AlignedBoxPart() {};
+    SingularVariable<AlignedBox> *svAlignedBox() { return sv_aligned_box_keeper_.getPtr(); };
+    AlignedBox &getAlignedBox() { return aligned_box_; };
 
   protected:
-    AlignedBoxShape &aligned_box_;
+    AlignedBox &aligned_box_;
 };
 
-using BodyAlignedBoxByParticle = AlignedBoxRegion<BodyRegionByParticle>;
-using BodyAlignedBoxByCell = AlignedBoxRegion<BodyRegionByCell>;
+class AlignedBoxPartByParticle : public BodyPartByParticle, public AlignedBoxPart
+{
+  public:
+    AlignedBoxPartByParticle(RealBody &real_body, const AlignedBox &aligned_box);
+    virtual ~AlignedBoxPartByParticle() {};
+
+  protected:
+    void tagByContain(size_t particle_index);
+};
+
+class AlignedBoxPartByCell : public BodyPartByCell, public AlignedBoxPart
+{
+  public:
+    AlignedBoxPartByCell(RealBody &real_body, const AlignedBox &aligned_box);
+    virtual ~AlignedBoxPartByCell() {};
+
+  protected:
+    bool checkNotFar(Vecd cell_position, Real threshold);
+};
 } // namespace SPH
 #endif // BASE_BODY_PART_H
