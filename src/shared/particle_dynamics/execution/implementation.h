@@ -40,11 +40,10 @@ namespace SPH
 {
 namespace execution
 {
-template <class ExecutionPolicy, class ComputingKernelType>
-inline void allocateComputingKernel(const ExecutionPolicy &ex_policy,
-                                    ComputingKernelType *computing_kernel)
+template <class ComputingKernelType, class ExecutionPolicy>
+inline ComputingKernelType *allocateComputingKernel(const ExecutionPolicy &ex_policy)
 {
-    computing_kernel = (ComputingKernelType *)malloc(sizeof(ComputingKernelType));
+    return (ComputingKernelType *)malloc(sizeof(ComputingKernelType));
 }
 
 template <class ExecutionPolicy, class ComputingKernelType>
@@ -72,11 +71,10 @@ inline void copyComputingKernelToDevice(ComputingKernelType *host_kernel,
 template <class ComputingKernelType>
 inline void freeComputingKernelOnDevice(ComputingKernelType *device_kernel);
 
-template <class PolicyType, class ComputingKernelType>
-inline void allocateComputingKernel(const DeviceExecution<PolicyType> &ex_policy,
-                                    ComputingKernelType *computing_kernel)
+template <class ComputingKernelType, class PolicyType>
+inline ComputingKernelType *allocateComputingKernel(const DeviceExecution<PolicyType> &ex_policy)
 {
-    computing_kernel = allocateComputingKernelOnDevice<ComputingKernelType>();
+    return allocateComputingKernelOnDevice<ComputingKernelType>();
 }
 
 template <class PolicyType, class ComputingKernelType>
@@ -114,7 +112,7 @@ class Implementation<ExecutionPolicy, LocalDynamicsType, ComputingKernelType>
     {
         if (computing_kernel_ == nullptr)
         {
-            allocateComputingKernel(ExecutionPolicy{}, computing_kernel_);
+            computing_kernel_ = allocateComputingKernel<ComputingKernelType>(ExecutionPolicy{});
             ComputingKernelType *temp_kernel =
                 kernel_ptr_keeper_.template createPtr<ComputingKernelType>(
                     ExecutionPolicy{}, this->local_dynamics_, std::forward<Args>(args)...);
