@@ -50,13 +50,13 @@ class ParallelUnsequencedPolicy
 {
 };
 
-class ParallelDevicePolicy
+template <typename PolicyType>
+class DeviceExecution
 {
 };
 
-class SequencedDevicePolicy
-{
-};
+using ParallelDevicePolicy = DeviceExecution<ParallelPolicy>;
+using SequencedDevicePolicy = DeviceExecution<SequencedPolicy>;
 
 inline constexpr auto seq = SequencedPolicy{};
 inline constexpr auto unseq = UnsequencedPolicy{};

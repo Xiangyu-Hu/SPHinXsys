@@ -62,7 +62,13 @@ class VariableArray : public Entity
     {
         return data_array_;
     };
-    DataArray<DataType> *DelegatedDataArray(const ParallelDevicePolicy &par_device);
+
+    template <class PolicyType>
+    DataArray<DataType> *DelegatedOnDevice(const DeviceExecution<PolicyType> &ex_policy);
+
+    template <class PolicyType>
+    DataArray<DataType> *DelegatedDataArray(const DeviceExecution<PolicyType> &ex_policy);
+
     size_t getArraySize() { return variables_.size(); }
 
     bool isDataArrayDelegated() { return data_array_ != delegated_data_array_; };
@@ -81,7 +87,9 @@ template <typename DataType, template <typename> class VariableType>
 class DeviceOnlyVariableArray : public Entity
 {
   public:
-    DeviceOnlyVariableArray(VariableArray<DataType, VariableType> *host_variable_array);
+    template <class PolicyType>
+    DeviceOnlyVariableArray(const DeviceExecution<PolicyType> &ex_policy,
+                            VariableArray<DataType, VariableType> *host_variable_array);
     ~DeviceOnlyVariableArray();
 
   protected:

@@ -8,20 +8,23 @@ namespace SPH
 {
 //=================================================================================================//
 template <typename GeneratorType, typename DataType>
+template <class PolicyType>
 DataType *ConstantArray<GeneratorType, DataType>::
-    DelegatedData(const ParallelDevicePolicy &par_device)
+    DelegatedOnDevice(const DeviceExecution<PolicyType> &ex_policy)
 {
     if (!isDataDelegated())
     {
         device_only_constant_array_keeper_
-            .createPtr<DeviceOnlyConstantArray<GeneratorType, DataType>>(this);
+            .createPtr<DeviceOnlyConstantArray<GeneratorType, DataType>>(ex_policy, this);
     }
     return delegated_;
 };
 //=================================================================================================//
 template <typename GeneratorType, typename DataType>
+template <class PolicyType>
 DeviceOnlyConstantArray<GeneratorType, DataType>::
-    DeviceOnlyConstantArray(ConstantArray<GeneratorType, DataType> *host_constant)
+    DeviceOnlyConstantArray(const DeviceExecution<PolicyType> &ex_policy,
+                            ConstantArray<GeneratorType, DataType> *host_constant)
     : Entity(host_constant->Name()), device_only_data_(nullptr)
 {
     StdVec<GeneratorType *> generators = host_constant->getGenerators();
@@ -29,7 +32,7 @@ DeviceOnlyConstantArray<GeneratorType, DataType>::
     DataType *host_data = host_constant->Data();
     for (size_t i = 0; i != data_size; ++i)
     {
-        host_data[i] = DataType(ParallelDevicePolicy{}, *generators[i]);
+        host_data[i] = DataType(ex_policy, *generators[i]);
     }
     device_only_data_ = allocateDeviceOnly<DataType>(data_size);
     copyToDevice(host_data, device_only_data_, data_size);
