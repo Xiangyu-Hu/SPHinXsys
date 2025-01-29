@@ -241,9 +241,7 @@ int main(int ac, char *av[])
             number_of_iterations++;
 
             /** inflow emitter injection*/
-            std::cout << "Here it is 0." << std::endl;
             emitter_injection.exec();
-            std::cout << "Here it is 1." << std::endl;
             /** Update cell linked list and configuration. */
             if (number_of_iterations % 100 == 0 && number_of_iterations != 1)
             {
