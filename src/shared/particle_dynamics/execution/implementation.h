@@ -73,8 +73,8 @@ template <class ComputingKernelType>
 inline void freeComputingKernelOnDevice(ComputingKernelType *device_kernel);
 
 template <class PolicyType, class ComputingKernelType>
-inline ComputingKernelType *allocateComputingKernel(const DeviceExecution<PolicyType> &ex_policy,
-                                                    ComputingKernelType *computing_kernel)
+inline void allocateComputingKernel(const DeviceExecution<PolicyType> &ex_policy,
+                                    ComputingKernelType *computing_kernel)
 {
     computing_kernel = allocateComputingKernelOnDevice<ComputingKernelType>();
 }
