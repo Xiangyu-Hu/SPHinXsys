@@ -20,31 +20,31 @@ Real Water_height = 0.0574;              /**< Water block height. */
 Real Baffle_width = 0.004;               /**< Hanging baggle width. */
 Real particle_spacing_ref = 0.001;       /**< Global reference resolution. */
 Real BW = 4.0 * particle_spacing_ref;    /**< Extending width for BCs. */
-BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW)); 
+BoundingBox system_domain_bounds(Vec2d(-BW - 0.5 * DL, -BW), Vec2d(0.5 * DL + BW, DH + BW));
 /**< Original point is in left bottom. */
 //----------------------------------------------------------------------
 //	Define the corner point of water block geometry.
 //----------------------------------------------------------------------
-Vec2d DamP_lb(0.0, 0.0);               /**< Left bottom. */
-Vec2d DamP_lt(0.0, Water_height);      /**< Left top. */
-Vec2d DamP_rt(DL, Water_height);       /**< Right top. */
-Vec2d DamP_rb(DL, 0.0);                /**< Right bottom. */
+Vec2d DamP_lb(-DL / 2, 0.0);               /**< Left bottom. */
+Vec2d DamP_lt(-DL / 2, Water_height);      /**< Left top. */
+Vec2d DamP_rt(DL / 2, Water_height);       /**< Right top. */
+Vec2d DamP_rb(DL / 2, 0.0);                /**< Right bottom. */
 //----------------------------------------------------------------------
 //	Define the corner point of gate geometry.
 //----------------------------------------------------------------------
-Vec2d Baffle_lb(0.5 * (DL - Baffle_width), Water_height);
-Vec2d Baffle_lt(0.5 * (DL - Baffle_width), DL + BW);
-Vec2d Baffle_rt(0.5 * (DL + Baffle_width), DL + BW);
-Vec2d Baffle_rb(0.5 * (DL + Baffle_width), Water_height);
+Vec2d Baffle_lb(-0.5 * Baffle_width, Water_height);
+Vec2d Baffle_lt(-0.5 * Baffle_width, DL + BW);
+Vec2d Baffle_rt(0.5 * Baffle_width, DL + BW);
+Vec2d Baffle_rb(0.5 * Baffle_width, Water_height);
 //----------------------------------------------------------------------
 //	Define the geometry for gate constrain.
 //----------------------------------------------------------------------
-Vec2d Constrain_lb(0.5 * (DL - Baffle_width), DH);
-Vec2d Constrain_lt(0.5 * (DL - Baffle_width), DH + BW);
-Vec2d Constrain_rt(0.5 * (DL + Baffle_width), DH + BW);
-Vec2d Constrain_rb(0.5 * (DL + Baffle_width), DH);
+Vec2d Constrain_lb(-0.5 * Baffle_width, DH);
+Vec2d Constrain_lt(-0.5 * Baffle_width, DH + BW);
+Vec2d Constrain_rt(0.5 * Baffle_width, DH + BW);
+Vec2d Constrain_rb(0.5 * Baffle_width, DH);
 // observer location
-StdVec<Vecd> observation_location = { Vecd(0.5 * DL, Water_height) };
+StdVec<Vecd> observation_location = { Vecd(0.0, Water_height) };
 //----------------------------------------------------------------------
 //	Material properties of the fluid.
 //----------------------------------------------------------------------
@@ -137,11 +137,11 @@ MultiPolygon BaffleConstraint()
 std::vector<Vecd> createOuterWallShape()
 {
     std::vector<Vecd> outer_wall_shape;
-    outer_wall_shape.push_back(Vecd(-BW, -BW));
-    outer_wall_shape.push_back(Vecd(-BW, DH + BW));
-    outer_wall_shape.push_back(Vecd(BW + DL, DH + BW));
-    outer_wall_shape.push_back(Vecd(BW + DL, -BW));
-    outer_wall_shape.push_back(Vecd(-BW, -BW));
+    outer_wall_shape.push_back(Vecd(-BW - 0.5 * DL, -BW));
+    outer_wall_shape.push_back(Vecd(-BW - 0.5 * DL, DH + BW));
+    outer_wall_shape.push_back(Vecd(BW + 0.5 * DL, DH + BW));
+    outer_wall_shape.push_back(Vecd(BW + 0.5 * DL, -BW));
+    outer_wall_shape.push_back(Vecd(-BW - 0.5 * DL, -BW));
 
     return outer_wall_shape;
 }
@@ -149,11 +149,11 @@ std::vector<Vecd> createOuterWallShape()
 std::vector<Vecd> createInnerWallShape()
 {
     std::vector<Vecd> inner_wall_shape;
-    inner_wall_shape.push_back(Vecd(0.0, 0.0));
-    inner_wall_shape.push_back(Vecd(0.0, DH));
-    inner_wall_shape.push_back(Vecd(DL, DH));
-    inner_wall_shape.push_back(Vecd(DL, 0.0));
-    inner_wall_shape.push_back(Vecd(0.0, 0.0));
+    inner_wall_shape.push_back(Vecd(-0.5 * DL, 0.0));
+    inner_wall_shape.push_back(Vecd(-0.5 * DL, DH));
+    inner_wall_shape.push_back(Vecd(0.5 * DL, DH));
+    inner_wall_shape.push_back(Vecd(0.5 * DL, 0.0));
+    inner_wall_shape.push_back(Vecd(-0.5 * DL, 0.0));
 
     return inner_wall_shape;
 }
@@ -169,68 +169,40 @@ public:
     }
 }; 
 
-Real omega = 2.0 * PI * 0.5496; //period of time;
-Real Theta0 = -2.0 * PI / 180;  //maximum rotating angle
+Real omega = 2.0 * PI * 0.6075; // period of time;
+Real Theta0 = -1.0 * PI / 180;  // maximum rotating angle;
 
 class VariableGravity : public Gravity
 {
-    Real time_ = 0.0;
-
 public:
-    VariableGravity() : Gravity(Vecd(0.0, -gravity_g)) {};
-    Vecd InducedAccleration(Vecd& position)
+    VariableGravity(Vecd gravity_vector) : Gravity(gravity_vector) {};
+    Vecd InducedAcceleration(const Vecd& position, Real physical_time) const
     {
-        time_ = GlobalStaticVariables::physical_time_;
-        Real Theta = Theta0 * sin(omega * (time_ - 1.0));
-        Real ThetaV = Theta0 * omega * cos(omega * (time_ - 1.0));
-
-        Real 
-    }
-};
+        Vecd reference_acceleration_ = Vecd::Zero();
 
 
-
-
-
-
-
-
-
-Real omega = 2 * PI * 0.5496; //period of time
-Real Theta0 = -2.0 * PI / 180; //maximum angle
-
-class VariableGravity : public Gravity
-{
-    Real time_ = 0;
-public:
-    VariableGravity() : Gravity(Vecd(0.0, -gravity_g)) {};
-    virtual Vecd InducedAcceleration(Vecd& position)
-    {
-        time_ = GlobalStaticVariables::physical_time_;
-        Real Theta = Theta0 * sin(omega * (time_ - 1.0));
-        Real ThetaV = Theta0 * omega * cos(omega * (time_ - 1.0));
-
+        Real Theta = Theta0 * sin(omega * (physical_time - 1.0));
+        Real ThetaV = Theta0 * omega * cos(omega * (physical_time - 1.0));
+        
         Real alpha = std::atan2(position[1], position[0]);
         Real distance = std::sqrt(pow(position[0], 2) + pow(position[1], 2));
+
         Real Vx = Theta * distance * std::sin(alpha);
         Real Vy = Theta * distance * std::cos(alpha);
 
-        if (time_ < 1.0)
+        if (physical_time < 1.0)
         {
             reference_acceleration_[0] = 0.0;
             reference_acceleration_[1] = -gravity_g;
         }
         else
         {
-            reference_acceleration_[0] = -gravity_g * sin(Theta) - ThetaV * ThetaV * position[0] + 2 * ThetaV * Vy;
-            reference_acceleration_[1] = -gravity_g * cos(Theta) + ThetaV * ThetaV * position[1] - 2 * ThetaV * Vx;
+            reference_acceleration_[0] = -gravity_g * sin(Theta) - ThetaV * ThetaV * position[0] +  2 * ThetaV * Vy;
+            reference_acceleration_[1] = -gravity_g * cos(Theta) + ThetaV * ThetaV * position[1] -  2 * ThetaV * Vx;
         }
 
         return reference_acceleration_;
     }
 };
-
-
-
 // namespace SPH
 #endif // SLOSHING_HANGING_BAFFLE_H

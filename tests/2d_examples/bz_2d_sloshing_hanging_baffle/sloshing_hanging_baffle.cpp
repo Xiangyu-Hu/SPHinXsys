@@ -75,8 +75,9 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Algorithms of fluid dynamics.
     //----------------------------------------------------------------------
-    Gravity gravity(Vecd(0.0, -gravity_g));
-    SimpleDynamics<GravityForce<Gravity>> constant_gravity(water_block, gravity);
+    VariableGravity variablegravity(Vecd(0.0, -gravity_g));
+    SimpleDynamics<GravityForce<VariableGravity>> variable_gravity(water_block, variablegravity);
+
     InteractionWithUpdate<LinearGradientCorrectionMatrixComplex> corrected_configuration_fluid(water_block_inner, water_block_contact);
     Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation(water_block_inner, water_block_contact);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallNoRiemann> density_relaxation(water_block_inner, water_block_contact);
@@ -113,7 +114,7 @@ int main(int ac, char *av[])
     baffle_normal_direction.exec();
     /** computing linear reproducing configuration for the insert body. */
     baffle_corrected_configuration.exec();
-    //constant_gravity.exec();
+    variable_gravity.exec();
     //----------------------------------------------------------------------
     //	First output before the main loop.
     //----------------------------------------------------------------------
@@ -125,10 +126,12 @@ int main(int ac, char *av[])
     Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     size_t number_of_iterations = 0;
     int screen_output_interval = 100;
-    Real end_time = 5.0;
+    Real end_time = 11.0;
     Real output_interval = end_time / 50.0;
     Real dt = 0.0;   /**< Default acoustic time step sizes. */
     Real dt_s = 0.0; /**< Default acoustic time step sizes for solid. */
+    Real total_time = 0.0;
+    Real relax_time = 1.0;
     TickCount t1 = TickCount::now();
     TimeInterval interval;
     //----------------------------------------------------------------------
@@ -141,7 +144,9 @@ int main(int ac, char *av[])
         while (integration_time < output_interval)
         {
             Real Dt = get_fluid_advection_time_step_size.exec();
+            variable_gravity.exec();
             update_density_by_summation.exec();
+            /** Update correction matrix for fluid */
             //corrected_configuration_fluid.exec();
 
             /** Update normal direction on elastic body.*/
@@ -173,13 +178,16 @@ int main(int ac, char *av[])
                 average_velocity_and_acceleration.update_averages_.exec(dt);
                 relaxation_time += dt;
                 integration_time += dt;
-                physical_time += dt;
+                total_time += dt;
+                if(total_time >= relax_time)
+                    physical_time += dt;
             }
 
             if (number_of_iterations % screen_output_interval == 0)
             {
                 std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
-                          << physical_time
+                          << " Total Time = " << total_time
+                          << " Physical Time = " << physical_time
                           << "	Dt = " << Dt << "	dt = " << dt << "	dt_s = " << dt_s << "\n";
             }
             number_of_iterations++;
@@ -194,12 +202,20 @@ int main(int ac, char *av[])
             /** one need update configuration after periodic condition. */
             baffle.updateCellLinkedList();
             baffle_contact.updateConfiguration();
-            /** write run-time observation into file */
-            write_baffle_tip_displacement.writeToFile(number_of_iterations);
+            if (total_time >= relax_time)
+            {
+                /** write run-time observation into file */
+                write_baffle_tip_displacement.writeToFile(number_of_iterations);
+            }
+            
         }
         TickCount t2 = TickCount::now();
-        /** write run-time observation into file */
-        write_real_body_states.writeToFile();
+        if (total_time >= relax_time)
+        {
+            /** write run-time observation into file */
+            //write_baffle_tip_displacement.writeToFile(number_of_iterations);
+            write_real_body_states.writeToFile();
+        }
         TickCount t3 = TickCount::now();
         interval += t3 - t2;
     }

@@ -213,6 +213,7 @@ int main(int ac, char *av[])
         {
             Real Dt = get_fluid_advection_time_step_size.exec();
             update_density_by_summation.exec();
+            /** Update correction matrix for fluid */
             corrected_configuration_fluid.exec();
             viscous_force.exec();
             transport_correction.exec();

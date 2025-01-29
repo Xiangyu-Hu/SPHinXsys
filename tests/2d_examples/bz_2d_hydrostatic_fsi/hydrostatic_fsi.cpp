@@ -3,7 +3,7 @@
  * @brief 	structure deformation due to hydrostatic pressure under gravity.
  * @details This is the one of the basic test cases
  * for understanding SPH method for fluid-structure-interaction (FSI) simulation.
- * @author 	Yujie Zhu, Chi Zhang and Xiangyu Hu
+ * @author 	Bo Zhang, Yujie Zhu, Chi Zhang and Xiangyu Hu
  * @version 0.1
  */
 #include "sphinxsys.h"
@@ -261,7 +261,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     Gravity gravity(Vecd(0.0, -gravity_g));
     SimpleDynamics<GravityForce<Gravity>> constant_gravity(water_block, gravity);
-    Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation(water_block_inner, water_block_contact);
+    InteractionWithUpdate<LinearGradientCorrectionMatrixComplex> corrected_configuration_fluid(ConstructorArgs(water_block_inner, 0.9), water_block_contact);
+    Dynamics1Level<fluid_dynamics::Integration1stHalfCorrectionWithWallRiemann> pressure_relaxation(water_block_inner, water_block_contact);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallNoRiemann> density_relaxation(water_block_inner, water_block_contact);
     InteractionWithUpdate<fluid_dynamics::DensitySummationComplexFreeSurface> update_fluid_density(water_block_inner, water_block_contact);
     InteractionWithUpdate<fluid_dynamics::ViscousForceWithWall> viscous_force(water_block_inner, water_block_contact);
@@ -298,6 +299,7 @@ int main(int ac, char *av[])
     gate_normal_direction.exec();
     /** computing linear reproducing configuration for the insert body. */
     gate_corrected_configuration.exec();
+    corrected_configuration_fluid.exec();
     constant_gravity.exec();
     //----------------------------------------------------------------------
     //	First output before the main loop.
@@ -327,6 +329,8 @@ int main(int ac, char *av[])
         {
             Real Dt = get_fluid_advection_time_step_size.exec();
             update_fluid_density.exec();
+            /** Update correction matrix for fluid */
+            corrected_configuration_fluid.exec();
             /** Update normal direction on elastic body. */
             gate_update_normal.exec();
             Real relaxation_time = 0.0;
