@@ -2,7 +2,7 @@
 layout: post
 title:  "Towards heterogeneous parallelism for SPHinXsys (Part 1)"
 date:   2025-01-30
-categories: sph method
+categories: high performance computing 
 ---
 Xiangyu Hu and Alberto Guarnieri
 
