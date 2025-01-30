@@ -3,7 +3,7 @@
 namespace SPH
 {
 //=================================================================================================//
-CreateRealParticleFrom::CreateRealParticleFrom(BaseParticles *particles)
+SpawnRealParticle::SpawnRealParticle(BaseParticles *particles)
     : variables_to_sort_(particles->VariablesToSort()),
       copyable_states_(),
       dv_original_id_(particles->getVariableByName<UnsignedInt>("OriginalID")),

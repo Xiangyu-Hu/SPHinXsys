@@ -72,7 +72,7 @@ class InflowConditionCK<AlignedBoxPartType, ConditionFunction>
 
 class EmitterInflowInjectionCK : public BaseLocalDynamics<AlignedBoxPartByParticle>
 {
-    using CreateRealParticleKernel = typename CreateRealParticleFrom::ComputingKernel;
+    using CreateRealParticleKernel = typename SpawnRealParticle::ComputingKernel;
 
   public:
     EmitterInflowInjectionCK(AlignedBoxPartByParticle &aligned_box_part, ParticleBuffer<Base> &buffer);
@@ -93,10 +93,20 @@ class EmitterInflowInjectionCK : public BaseLocalDynamics<AlignedBoxPartByPartic
         Real *rho_, *p_;
     };
 
+    class FinishDynamics
+    {
+        BaseParticles *particles_;
+        ParticleBuffer<Base> &buffer_;
+
+      public:
+        FinishDynamics(EmitterInflowInjectionCK &encloser);
+        void operator()();
+    };
+
   protected:
     ParticleBuffer<Base> &buffer_;
     SingularVariable<AlignedBox> *sv_aligned_box_;
-    CreateRealParticleFrom create_real_particle_method_;
+    SpawnRealParticle create_real_particle_method_;
     Real rho0_;
     DiscreteVariable<Vecd> *dv_pos_;
     DiscreteVariable<Real> *dv_rho_, *dv_p_;

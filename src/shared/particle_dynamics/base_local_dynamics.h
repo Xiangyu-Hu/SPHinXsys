@@ -54,8 +54,6 @@ namespace SPH
 template <class DynamicsIdentifier>
 class BaseLocalDynamics
 {
-    UniquePtrsKeeper<Entity> constant_entity_ptrs_;
-
   public:
     explicit BaseLocalDynamics(DynamicsIdentifier &identifier)
         : identifier_(identifier), sph_system_(identifier.getSPHSystem()),
@@ -67,6 +65,14 @@ class BaseLocalDynamics
     SPHBody &getSPHBody() { return sph_body_; };
     BaseParticles *getParticles() { return particles_; };
     virtual void setupDynamics(Real dt = 0.0) {}; // setup global parameters
+
+    class FinishDynamics
+    {
+      public:
+        template <class EncloserType>
+        FinishDynamics(EncloserType &encloser){};
+        void operator()() {};
+    };
 
   protected:
     DynamicsIdentifier &identifier_;
@@ -97,12 +103,12 @@ class BaseLocalDynamicsReduce : public BaseLocalDynamics<DynamicsIdentifier>
     Operation &getOperation() { return operation_; };
     virtual ReturnType outputResult(ReturnType reduced_value) { return reduced_value; }
 
-    class FinalOutput
+    class FinishDynamics
     {
       public:
         using OutputType = ReturnType;
         template <class EncloserType>
-        FinalOutput(EncloserType &encloser){};
+        FinishDynamics(EncloserType &encloser){};
         ReturnType Result(ReturnType reduced_value)
         {
             return reduced_value;

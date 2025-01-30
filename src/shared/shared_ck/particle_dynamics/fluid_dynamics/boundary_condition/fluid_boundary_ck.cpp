@@ -18,5 +18,14 @@ EmitterInflowInjectionCK::
     buffer_.checkParticlesReserved();
 }
 //=================================================================================================//
+EmitterInflowInjectionCK::FinishDynamics::
+    FinishDynamics(EmitterInflowInjectionCK &encloser)
+    : particles_(encloser.particles_), buffer_(encloser.buffer_) {}
+//=================================================================================================//
+void EmitterInflowInjectionCK::FinishDynamics::operator()()
+{
+    buffer_.checkEnoughBuffer(*particles_);
+}
+//=================================================================================================//
 } // namespace fluid_dynamics
 } // namespace SPH

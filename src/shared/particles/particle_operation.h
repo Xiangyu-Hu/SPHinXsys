@@ -42,7 +42,7 @@ struct CopyParticleStateCK
                     size_t index, size_t another_index);
 };
 
-class CreateRealParticleFrom
+class SpawnRealParticle
 {
     ParticleVariables &variables_to_sort_;
     DiscreteVariableArrays copyable_states_;
@@ -51,7 +51,7 @@ class CreateRealParticleFrom
     UnsignedInt real_particles_bound_;
 
   public:
-    CreateRealParticleFrom(BaseParticles *particles);
+    SpawnRealParticle(BaseParticles *particles);
 
     class ComputingKernel // only run with sequenced policy for now
     {
@@ -62,11 +62,14 @@ class CreateRealParticleFrom
         UnsignedInt operator()(UnsignedInt index_i)
         {
             UnsignedInt new_original_id = *total_real_particles_;
-            /** Buffer Particle state copied from real particle. */
-            copy_particle_state_(copyable_state_data_arrays_, new_original_id, index_i);
-            /** Realize the buffer particle by increasing the number of real particle by one.  */
-            *total_real_particles_ += 1;
-            original_id_[new_original_id] = new_original_id;
+            if (new_original_id < real_particles_bound_)
+            {
+                /** Buffer Particle state copied from real particle. */
+                copy_particle_state_(copyable_state_data_arrays_, new_original_id, index_i);
+                /** Realize the buffer particle by increasing the number of real particle by one.  */
+                *total_real_particles_ += 1;
+                original_id_[new_original_id] = new_original_id;
+            }
             return new_original_id;
         };
 

@@ -51,7 +51,7 @@ class ParallelUnsequencedPolicy
 };
 
 template <typename PolicyType>
-class DeviceExecution
+class DeviceExecution : public PolicyType
 {
 };
 
