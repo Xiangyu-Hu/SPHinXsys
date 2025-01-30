@@ -4,21 +4,13 @@ namespace SPH
 
 namespace fluid_dynamics
 {
-// template <class BaseInteractionType>
-// template <class DynamicsIdentifier>
-// NablaWVCKBase<BaseInteractionType>::NablaWVCKBase(DynamicsIdentifier &identifier)
-//     : BaseInteractionType(identifier),
-//       dv_kernel_sum_(this->particles_->template registerStateVariableOnly<Vecd>("KernelSum"))
-// {
-// }
-
 //=================================================================================================//
 template <template <typename...> class RelationType, typename... Parameters>
 template <class DynamicsIdentifier>
 NablaWV<Base, RelationType<Parameters...>>::
     NablaWV(DynamicsIdentifier &identifier)
     : Interaction<RelationType<Parameters...>>(identifier),
-      dv_kernel_sum_(this->particles_->template registerStateVariableOnly<Vecd>("KernelSum"))
+      dv_kernel_sum_(this->particles_->template registerStateVariableOnly<Vecd>("KernelSummation"))
 {
 }
 //=================================================================================================//
@@ -100,6 +92,6 @@ void NablaWV<Contact<Parameters...>>::
     // std::cout << "kernel_sum: " << kernel_sum << std::endl;
     this->kernel_sum_[index_i] += kernel_sum;
 }
-//====
+//=================================================================================================//
 } // namespace fluid_dynamics
 } // namespace SPH

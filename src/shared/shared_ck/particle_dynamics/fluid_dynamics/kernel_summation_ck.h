@@ -41,21 +41,10 @@ namespace SPH
 
 namespace fluid_dynamics
 {
-// template <class BaseInteractionType>
-// class NablaWVCKBase : public BaseInteractionType
-// {
 
-//   public:
-//     template <class DynamicsIdentifier>
-//     explicit NablaWVCKBase(DynamicsIdentifier &identifier);
-//     virtual ~NablaWVCKBase() {};
-
-//   protected:
-//     DiscreteVariable<Vecd> *dv_kernel_sum_;
-// };
 template <typename... RelationTypes>
 class NablaWV;
-
+//=================================================================================================//
 template <template <typename...> class RelationType, typename... Parameters>
 class NablaWV<Base, RelationType<Parameters...>>
     : public Interaction<RelationType<Parameters...>>
@@ -82,7 +71,7 @@ class NablaWV<Base, RelationType<Parameters...>>
   protected:
     DiscreteVariable<Vecd> *dv_kernel_sum_;
 };
-
+//=================================================================================================//
 template <class FlowType, typename... Parameters>
 class NablaWV<Inner<FlowType, Parameters...>>
     : public NablaWV<Base, Inner<Parameters...>>
@@ -108,7 +97,7 @@ class NablaWV<Inner<FlowType, Parameters...>>
   protected:
     DiscreteVariable<Real> *dv_Vol_;
 };
-
+//=================================================================================================//
 template <typename... Parameters>
 class NablaWV<Contact<Parameters...>>
     : public NablaWV<Base, Contact<Parameters...>>
@@ -140,7 +129,6 @@ class NablaWV<Contact<Parameters...>>
 //--------------------------------------------------------------------------------------
 using NablaWVInnerCK = NablaWV<Inner<Internal>>;
 using NablaWVComplexCK = NablaWV<Inner<Internal>, Contact<>>;
-using NablaWVComplexFreeSurfaceCK = NablaWV<Inner<FreeSurface>, Contact<>>;
 
 } // namespace fluid_dynamics
 } // namespace SPH
