@@ -24,6 +24,8 @@ SpawnRealParticle::ComputingKernel::
       real_particles_bound_(encloser.real_particles_bound_),
       original_id_(encloser.dv_original_id_->DelegatedData(ex_policy))
 {
+    static_assert(std::is_base_of<SequencedPolicy, ExecutionPolicy>::value,
+                  "SequencedPolicy is not the base of ExecutionPolicy!");
     OperationBetweenDataAssembles<ParticleVariables, DiscreteVariableArrays, DiscreteVariableArraysInitialization>
         initialize_discrete_variable_array;
     initialize_discrete_variable_array(encloser.variables_to_sort_, encloser.copyable_states_);
