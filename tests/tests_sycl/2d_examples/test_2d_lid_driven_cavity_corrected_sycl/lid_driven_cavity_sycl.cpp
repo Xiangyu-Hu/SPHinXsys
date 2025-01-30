@@ -216,10 +216,6 @@ int main(int ac, char *av[])
     /** Computing viscous acceleration with wall. */
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::ViscousForceWithWallCK>
         fluid_viscous_force(water_block_inner, water_wall_contact);
-
-    // InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::NablaWVComplexFreeSurfaceCK> kernel_summation(water_block_inner, water_wall_contact);
-    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::NablaWVInnerCK> kernel_summation(water_block_inner);
-
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
@@ -229,7 +225,6 @@ int main(int ac, char *av[])
     body_states_recording.addToWrite<Real>(water_body, "Density");
     body_states_recording.addToWrite<int>(water_body, "Indicator");
     body_states_recording.addToWrite<Vecd>(wall_boundary, "Velocity");
-    body_states_recording.addToWrite<Vecd>(water_body, "KernelSum");
 
     RestartIO restart_io(sph_system);
 
@@ -308,7 +303,6 @@ int main(int ac, char *av[])
             {
                 /** inner loop for dual-time criteria time-stepping.  */
                 acoustic_dt = SMIN(fluid_acoustic_time_step.exec(), advection_dt);
-                kernel_summation.exec();
                 fluid_acoustic_step_1st_half.exec(acoustic_dt);
                 fluid_acoustic_step_2nd_half.exec(acoustic_dt);
                 relaxation_time += acoustic_dt;
