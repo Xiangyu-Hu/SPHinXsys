@@ -37,6 +37,8 @@
 
 namespace SPH
 {
+class PressureBoundary;
+
 namespace fluid_dynamics
 {
 
@@ -47,7 +49,7 @@ template <>
 class Regularization<Internal>
 {
   public:
-    Regularization(BaseParticles *particles){};
+    Regularization(BaseParticles *particles) {};
 
     class ComputingKernel
     {
@@ -65,7 +67,7 @@ template <>
 class Regularization<FreeSurface>
 {
   public:
-    Regularization(BaseParticles *particles){};
+    Regularization(BaseParticles *particles) {};
 
     class ComputingKernel
     {
@@ -83,6 +85,37 @@ class Regularization<FreeSurface>
     };
 };
 
+template <>
+class Regularization<PressureBoundary>
+{
+  public:
+    Regularization(BaseParticles *particles) : dv_rho_(particles->getVariableByName<Real>("Density")),
+                                               dv_buffer_particle_indicator_(particles->getVariableByName<int>("BufferParticleIndicator")) {};
+    class ComputingKernel
+    {
+      public:
+        template <class ExecutionPolicy, class ComputingKernelType>
+        ComputingKernel(const ExecutionPolicy &ex_policy,
+                        Regularization<PressureBoundary> &encloser,
+                        ComputingKernelType &computing_kernel)
+            : rho_(encloser.dv_rho_->DelegatedData(ex_policy)),
+              buffer_particle_indicator_(encloser.dv_buffer_particle_indicator_->DelegatedData(ex_policy)){};
+
+        Real operator()(size_t index_i, Real &rho_sum)
+        {
+            if (buffer_particle_indicator_[index_i] == 0)
+                return rho_sum;
+            return rho_[index_i];
+        };
+
+      protected:
+        Real *rho_;
+        int *buffer_particle_indicator_;
+    };
+    DiscreteVariable<Real> *dv_rho_;
+    DiscreteVariable<int> *dv_buffer_particle_indicator_;
+};
+
 template <typename... RelationTypes>
 class DensityRegularization;
 
@@ -94,7 +127,7 @@ class DensityRegularization<Base, RelationType<Parameters...>>
   public:
     template <class DynamicsIdentifier>
     explicit DensityRegularization(DynamicsIdentifier &identifier);
-    virtual ~DensityRegularization(){};
+    virtual ~DensityRegularization() {};
 
     class InteractKernel
         : public Interaction<RelationType<Parameters...>>::InteractKernel
@@ -125,7 +158,7 @@ class DensityRegularization<Inner<WithUpdate, FlowType, Parameters...>>
 
   public:
     explicit DensityRegularization(Relation<Inner<Parameters...>> &inner_relation);
-    virtual ~DensityRegularization(){};
+    virtual ~DensityRegularization() {};
 
     class InteractKernel
         : public DensityRegularization<Base, Inner<Parameters...>>::InteractKernel
@@ -165,7 +198,7 @@ class DensityRegularization<Contact<Parameters...>>
 {
   public:
     explicit DensityRegularization(Relation<Contact<Parameters...>> &contact_relation);
-    virtual ~DensityRegularization(){};
+    virtual ~DensityRegularization() {};
 
     class InteractKernel
         : public DensityRegularization<Base, Contact<Parameters...>>::InteractKernel
