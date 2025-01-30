@@ -35,7 +35,8 @@
 #include "acoustic_step_2nd_half.hpp"
 #include "density_regularization.hpp"
 #include "fluid_time_step_ck.hpp"
-#include "viscous_force.hpp"
+#include "kernel_summation_ck.hpp"
 #include "transport_velocity_correction_ck.hpp"
+#include "viscous_force.hpp"
 
 #endif // ALL_SHARED_FLUID_DYNAMICS_CK_H
