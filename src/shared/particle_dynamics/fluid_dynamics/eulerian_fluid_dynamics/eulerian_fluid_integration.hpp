@@ -38,6 +38,7 @@ void EulerianIntegration1stHalf<Inner<>, RiemannSolverType>::interaction(size_t 
         FluidStateIn state_j(rho_[index_j], vel_[index_j], p_[index_j]);
         FluidStateOut interface_state = riemann_solver_.InterfaceState(state_i, state_j, e_ij);
         Matd convect_flux = interface_state.rho_ * interface_state.vel_ * interface_state.vel_.transpose();
+        
         momentum_change_rate -= 2.0 * Vol_[index_i] * (convect_flux + interface_state.p_ * Matd::Identity()) * e_ij * dW_ijV_j;
     }
     dmom_dt_[index_i] = momentum_change_rate;
@@ -105,6 +106,7 @@ void EulerianIntegration2ndHalf<Inner<>, RiemannSolverType>::interaction(size_t 
 
         FluidStateIn state_j(rho_[index_j], vel_[index_j], p_[index_j]);
         FluidStateOut interface_state = riemann_solver_.InterfaceState(state_i, state_j, e_ij);
+        
         mass_change_rate -= 2.0 * Vol_[index_i] * (interface_state.rho_ * interface_state.vel_).dot(e_ij) * dW_ijV_j;
     }
     dmass_dt_[index_i] = mass_change_rate;
