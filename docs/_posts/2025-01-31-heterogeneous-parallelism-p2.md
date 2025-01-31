@@ -49,18 +49,20 @@ i.e. outer, kernel-shell and kernel,
 dependent on their distances to computing kernel
 which is the only one executed by the execution algorithms.
 
-The outer layer is the same as before and defines the physical problem.
+- The outer layer is the same as before and defines the physical problem.
 Within this layer, the global variables are defined,
 the preprocess is done by generating particles respect to geometric information.
 Third-parties environment and methods,
 e.g. Simbody environment and methods, are referred directly.
-The kernel-shell layer is the SPH method definition layer,
+
+- The kernel-shell layer is the SPH method definition layer,
 which can be obtained from the CPU computing code with minimum modification.
 This layer is used to define individual SPH method.
 At this layer, the interface data structures,
 namely `discrete_` and `singular_variables`
 are used to transfer the outer-layer data to those used in computing kernel.
-The kernel layer defines all the computing via kernels,
+
+- The kernel layer defines all the computing via kernels,
 and is obtained by splitting out the computing function from
 original method classes.
 The objects of this layer are only instantiated and dispatched
