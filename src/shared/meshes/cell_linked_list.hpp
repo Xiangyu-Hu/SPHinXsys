@@ -86,7 +86,7 @@ void CellLinkedList::searchNeighborsByParticles(
 template <class LocalDynamicsFunction>
 void CellLinkedList::particle_for_split(const execution::SequencedPolicy &, const LocalDynamicsFunction &local_dynamics_function)
 {
-    // foward sweeping
+    // forward sweeping
     for (size_t k = 0; k < number_of_split_cell_lists_; k++)
     {
         // get the corresponding 2D/3D split cell index (m, n)
@@ -138,7 +138,7 @@ void CellLinkedList::particle_for_split(const execution::SequencedPolicy &, cons
 template <class LocalDynamicsFunction>
 void CellLinkedList::particle_for_split(const execution::ParallelPolicy &, const LocalDynamicsFunction &local_dynamics_function)
 {
-    // foward sweeping
+    // forward sweeping
     for (size_t k = 0; k < number_of_split_cell_lists_; k++)
     {
         const Arrayi split_cell_index = transfer1DtoMeshIndex(3 * Arrayi::Ones(), k);

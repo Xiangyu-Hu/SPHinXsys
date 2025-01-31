@@ -50,12 +50,9 @@ class CellLinkedList;
  */
 class BaseCellLinkedList : public BaseMeshField
 {
-  protected:
-    Kernel &kernel_;
-
   public:
     BaseCellLinkedList(BaseParticles &base_particles, SPHAdaptation &sph_adaptation);
-    virtual ~BaseCellLinkedList(){};
+    virtual ~BaseCellLinkedList() {};
 
     /** access concrete cell linked list levels*/
     virtual StdVec<CellLinkedList *> CellLinkedListLevels() = 0;
@@ -69,9 +66,30 @@ class BaseCellLinkedList : public BaseMeshField
     /** computing the sequence which indicate the order of sorted particle data */
     virtual UnsignedInt computingSequence(Vecd &position, size_t index_i) = 0;
     /** Tag body part by cell, call by body part */
-    virtual void tagBodyPartByCell(ConcurrentCellLists &cell_lists, std::function<bool(Vecd, Real)> &check_included) = 0;
+    virtual void tagBodyPartByCell(ConcurrentCellLists &cell_lists,
+                                   ConcurrentIndexVector &cell_indexes,
+                                   std::function<bool(Vecd, Real)> &check_included) = 0;
     /** Tag domain bounding cells in an axis direction, called by domain bounding classes */
     virtual void tagBoundingCells(StdVec<CellLists> &cell_data_lists, const BoundingBox &bounding_bounds, int axis) = 0;
+
+  protected:
+    Kernel &kernel_;
+    size_t number_of_split_cell_lists_;
+    UnsignedInt cell_offset_list_size_;
+    UnsignedInt index_list_size_; // at least number_of_cells_pluse_one_
+    DiscreteVariable<UnsignedInt> *dv_particle_index_;
+    DiscreteVariable<UnsignedInt> *dv_cell_offset_;
+    /** using concurrent vectors due to writing conflicts when building the list */
+    ConcurrentIndexVector *cell_index_lists_;
+    /** non-concurrent list data rewritten for building neighbor list */
+    ListDataVector *cell_data_lists_;
+
+    void clearCellListsByMesh(Mesh &mesh);
+    void UpdateCellListDataByMesh(Mesh &mesh, BaseParticles &base_particles);
+    void tagBodyPartByCellByMesh(Mesh &mesh, size_t mesh_offset,
+                                 ConcurrentCellLists &cell_lists,
+                                 ConcurrentIndexVector &cell_indexes,
+                                 std::function<bool(Vecd, Real)> &check_included);
 };
 
 class NeighborSearch : public Mesh
@@ -97,47 +115,28 @@ class NeighborSearch : public Mesh
  * @brief Defining a mesh cell linked list for a body.
  * 		  The meshes for all bodies share the same global coordinates.
  */
-class CellLinkedList : public BaseCellLinkedList, public Mesh
+class CellLinkedList : public BaseCellLinkedList
 {
-    StdVec<CellLinkedList *> single_cell_linked_list_level_;
-
-    UnsignedInt cell_offset_list_size_;
-    UnsignedInt index_list_size_; // at least number_of_cells_pluse_one_
-    DiscreteVariable<UnsignedInt> *dv_particle_index_;
-    DiscreteVariable<UnsignedInt> *dv_cell_offset_;
-
   protected:
-    /** using concurrent vectors due to writing conflicts when building the list */
-    ConcurrentIndexVector *cell_index_lists_;
-    /** non-concurrent list data rewritten for building neighbor list */
-    ListDataVector *cell_data_lists_;
-    /**< number of split cell lists */
-    size_t number_of_split_cell_lists_;
-
-    void allocateMeshDataMatrix(); /**< allocate memories for addresses of data packages. */
-    void deleteMeshDataMatrix();   /**< delete memories for addresses of data packages. */
-    template <typename DataListsType>
-    DataListsType &getCellDataList(DataListsType *data_lists, const Arrayi &cell_index)
-    {
-        return data_lists[transferMeshIndexTo1D(all_cells_, cell_index)];
-    };
+    Mesh mesh_;
+    void deleteMeshDataMatrix(); /**< delete memories for addresses of data packages. */
 
   public:
     CellLinkedList(BoundingBox tentative_bounds, Real grid_spacing,
                    BaseParticles &base_particles, SPHAdaptation &sph_adaptation);
     ~CellLinkedList() { deleteMeshDataMatrix(); };
-
-    void clearCellLists();
-    void UpdateCellListData(BaseParticles &base_particles);
+    Mesh &getMesh() { return mesh_; };
+    void UpdateCellListData(BaseParticles &base_particles) { UpdateCellListDataByMesh(mesh_, base_particles); };
     virtual void UpdateCellLists(BaseParticles &base_particles) override;
     void insertParticleIndex(size_t particle_index, const Vecd &particle_position) override;
     void InsertListDataEntry(size_t particle_index, const Vecd &particle_position) override;
     virtual ListData findNearestListDataEntry(const Vecd &position) override;
     virtual UnsignedInt computingSequence(Vecd &position, size_t index_i) override;
-    virtual void tagBodyPartByCell(ConcurrentCellLists &cell_lists, std::function<bool(Vecd, Real)> &check_included) override;
+    virtual void tagBodyPartByCell(ConcurrentCellLists &cell_lists,
+                                   ConcurrentIndexVector &cell_indexes,
+                                   std::function<bool(Vecd, Real)> &check_included) override;
     virtual void tagBoundingCells(StdVec<CellLists> &cell_data_lists, const BoundingBox &bounding_bounds, int axis) override;
     virtual void writeMeshFieldToPlt(std::ofstream &output_file) override;
-    virtual StdVec<CellLinkedList *> CellLinkedListLevels() override { return single_cell_linked_list_level_; };
 
     /** generalized particle search algorithm */
     template <class DynamicsRange, typename GetSearchDepth, typename GetNeighborRelation>
@@ -157,24 +156,17 @@ class CellLinkedList : public BaseCellLinkedList, public Mesh
     void particle_for_split(const execution::ParallelPolicy &, const LocalDynamicsFunction &local_dynamics_function);
 };
 
-template <>
-class RefinedMesh<CellLinkedList> : public CellLinkedList
-{
-  public:
-    RefinedMesh(BoundingBox tentative_bounds, CellLinkedList &coarse_mesh,
-                BaseParticles &base_particles, SPHAdaptation &sph_adaptation)
-        : CellLinkedList(tentative_bounds, 0.5 * coarse_mesh.GridSpacing(),
-                         base_particles, sph_adaptation){};
-};
-
 /**
  * @class MultilevelCellLinkedList
  * @brief Defining a multilevel mesh cell linked list for a body
  * 		  for multi-resolution particle configuration.
  */
-class MultilevelCellLinkedList : public MultilevelMesh<BaseCellLinkedList, CellLinkedList>
+class MultilevelCellLinkedList : public BaseCellLinkedList
 {
   protected:
+    size_t total_levels_;
+    StdVec<Mesh> mesh_levels_;
+    StdVec<size_t> mesh_cell_offset_;
     Real *h_ratio_; /**< Smoothing length for each level. */
     int *level_;    /**< Mesh level for each particle. */
 
@@ -185,16 +177,17 @@ class MultilevelCellLinkedList : public MultilevelMesh<BaseCellLinkedList, CellL
     MultilevelCellLinkedList(BoundingBox tentative_bounds,
                              Real reference_grid_spacing, size_t total_levels,
                              BaseParticles &base_particles, SPHAdaptation &sph_adaptation);
-    virtual ~MultilevelCellLinkedList(){};
+    virtual ~MultilevelCellLinkedList() {};
 
     virtual void UpdateCellLists(BaseParticles &base_particles) override;
     void insertParticleIndex(size_t particle_index, const Vecd &particle_position) override;
     void InsertListDataEntry(size_t particle_index, const Vecd &particle_position) override;
     virtual ListData findNearestListDataEntry(const Vecd &position) override { return ListData(0, Vecd::Zero()); }; // mocking, not implemented
     virtual UnsignedInt computingSequence(Vecd &position, size_t index_i) override;
-    virtual void tagBodyPartByCell(ConcurrentCellLists &cell_lists, std::function<bool(Vecd, Real)> &check_included) override;
+    virtual void tagBodyPartByCell(ConcurrentCellLists &cell_lists,
+                                   ConcurrentIndexVector &cell_indexes,
+                                   std::function<bool(Vecd, Real)> &check_included) override;
     virtual void tagBoundingCells(StdVec<CellLists> &cell_data_lists, const BoundingBox &bounding_bounds, int axis) override {};
-    virtual StdVec<CellLinkedList *> CellLinkedListLevels() override { return getMeshLevels(); };
 
     // temp get function
     const auto *get_level() const { return level_; };

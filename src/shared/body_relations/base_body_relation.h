@@ -51,10 +51,10 @@ struct SearchDepthSingleResolution
 struct SearchDepthContact
 {
     int search_depth_;
-    SearchDepthContact(SPHBody &sph_body, CellLinkedList *target_cell_linked_list)
+    SearchDepthContact(SPHBody &sph_body, Mesh &target_mesh)
         : search_depth_(1)
     {
-        Real inv_grid_spacing_ = 1.0 / target_cell_linked_list->GridSpacing();
+        Real inv_grid_spacing_ = 1.0 / target_mesh.GridSpacing();
         Kernel *kernel_ = sph_body.sph_adaptation_->getKernel();
         search_depth_ = 1 + (int)floor(kernel_->CutOffRadius() * inv_grid_spacing_);
     };
@@ -69,10 +69,10 @@ struct SearchDepthAdaptive
     Real inv_grid_spacing_;
     Kernel *kernel_;
     Real *h_ratio_;
-    SearchDepthAdaptive(SPHBody &sph_body, CellLinkedList *target_cell_linked_list)
-        : inv_grid_spacing_(1.0 / target_cell_linked_list->GridSpacing()),
+    SearchDepthAdaptive(SPHBody &sph_body, Mesh &target_mesh)
+        : inv_grid_spacing_(1.0 / target_mesh.GridSpacing()),
           kernel_(sph_body.sph_adaptation_->getKernel()),
-          h_ratio_(sph_body.getBaseParticles().getVariableDataByName<Real>("SmoothingLengthRatio")){};
+          h_ratio_(sph_body.getBaseParticles().getVariableDataByName<Real>("SmoothingLengthRatio")) {};
     int operator()(size_t particle_index) const
     {
         return 1 + (int)floor(kernel_->CutOffRadius(h_ratio_[particle_index]) * inv_grid_spacing_);
@@ -87,10 +87,10 @@ struct SearchDepthAdaptiveContact
     Real inv_grid_spacing_;
     SPHAdaptation &sph_adaptation_;
     Kernel &kernel_;
-    SearchDepthAdaptiveContact(SPHBody &sph_body, CellLinkedList *target_cell_linked_list)
-        : inv_grid_spacing_(1.0 / target_cell_linked_list->GridSpacing()),
+    SearchDepthAdaptiveContact(SPHBody &sph_body, Mesh &target_mesh)
+        : inv_grid_spacing_(1.0 / target_mesh.GridSpacing()),
           sph_adaptation_(*sph_body.sph_adaptation_),
-          kernel_(*sph_body.sph_adaptation_->getKernel()){};
+          kernel_(*sph_body.sph_adaptation_->getKernel()) {};
     int operator()(size_t particle_index) const
     {
         return 1 + (int)floor(kernel_.CutOffRadius(sph_adaptation_.SmoothingLengthRatio(particle_index)) * inv_grid_spacing_);
