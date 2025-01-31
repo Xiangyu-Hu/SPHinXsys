@@ -13,7 +13,7 @@ void run_rigid_elastic_coupling(int res_factor = 1);
 
 int main(int ac, char *av[])
 {
-    for (auto res : {2})
+    for (auto res : {1, 2})
         run_rigid_elastic_coupling(res);
 }
 
@@ -195,7 +195,7 @@ void run_rigid_elastic_coupling(int res_factor)
     auto material = makeShared<NeoHookeanSolid>(rho, youngs_modulus, poisson_ratio);
 
     // load and end time
-    const Real max_end_time = 100.0;
+    const Real max_end_time = 10.0;
     auto get_force_p = [&](Real t)
     {
         return t < 1.0 ? 0.05 * t : 0.05;
@@ -265,47 +265,34 @@ void run_rigid_elastic_coupling(int res_factor)
     vtp_output.writeToFile(0);
 
     // Observer
-    // observer on 4 corners
-    const auto interface_observation_locations = read_ref_data("./input/initial_position");
-    ObserverBody interface_observer(system, "InterfaceObserver");
-    interface_observer.generateParticles<ObserverParticles>(interface_observation_locations);
-    ContactRelation contact_interface_observer(interface_observer, {&body});
-    InteractionDynamics<CorrectInterpolationKernelWeights>{contact_interface_observer}.exec();
-    ObservedQuantityRecording<Vecd> write_interface_disp("Displacement", contact_interface_observer);
+    const auto observation_locations = read_ref_data("./input/initial_position");
+    ObserverBody observer(system, "InterfaceObserver");
+    observer.generateParticles<ObserverParticles>(observation_locations);
+    ContactRelation contact_observer(observer, {&body});
+    InteractionDynamics<CorrectInterpolationKernelWeights>{contact_observer}.exec();
+    ObservedQuantityRecording<Vecd> write_disp("Displacement", contact_observer);
+    write_disp.writeToFile(0);
 
-    // observer of the mass center of the rigid body
-    const std::vector center_observation_locations{get_central_position(mesh_rigid->getBounds())};
-    ObserverBody center_observer(system, "CenterObserver");
-    center_observer.generateParticles<ObserverParticles>(center_observation_locations);
-    ContactRelation contact_center_observer(center_observer, {&body});
-    InteractionDynamics<CorrectInterpolationKernelWeights>{contact_center_observer}.exec();
-    ObservedQuantityRecording<Vecd> write_center_disp("Displacement", contact_center_observer);
-
-    // Observer at the center of rigid body
-    write_interface_disp.writeToFile(0);
-    write_center_disp.writeToFile(0);
-
-    // record the center displacement until convergence
-    const Real threshold = 1e-1;
-    // if the deviation of center displacement is less than threshold for 5 steps, we consider it as steady state
-    const size_t max_step = 6;
-    std::vector<Vec3d> disp_history;
+    // record the kinetic energy to determine if the simulation has reached the steady state
+    ReduceDynamics<TotalKineticEnergy> total_kinetic_energy(body);
+    // if the energy is lower than the threshold in 5 steps, the simulation is considered to have reached the steady state
+    const size_t max_step = 5;
+    const Real max_energy = 1e-5;
+    std::vector<double> energy_history;
     bool steady_state = false;
-    auto record_disp = [&]()
+    auto record_energy = [&]()
     {
-        const auto &disp = write_center_disp.getObservedQuantity()[0];
-        if (disp_history.size() < max_step)
+        Real E_k = total_kinetic_energy.exec();
+        if (energy_history.size() < max_step)
         {
-            disp_history.push_back(disp);
+            energy_history.push_back(E_k);
             return false;
         }
 
-        std::rotate(disp_history.begin(), disp_history.begin() + 1, disp_history.end());
-        disp_history.back() = disp;
-        std::vector<Vec3d> difference(max_step - 1);
-        std::adjacent_difference(disp_history.begin() + 1, disp_history.end(), difference.begin());
-        return std::all_of(difference.begin(), difference.end(), [&](Vec3d d)
-                           { return d.norm() < threshold; });
+        std::rotate(energy_history.begin(), energy_history.begin() + 1, energy_history.end());
+        energy_history.back() = E_k;
+        return std::all_of(energy_history.begin(), energy_history.end(), [&](Real e)
+                           { return e < max_energy; });
     };
 
     // Initialization
@@ -317,7 +304,7 @@ void run_rigid_elastic_coupling(int res_factor)
     Real &physical_time = *system.getSystemVariableDataByName<Real>("PhysicalTime");
     int ite = 0;
     int ite_output = 0;
-    Real output_period = 1.0;
+    Real output_period = 0.1;
     const Real dt_ref = algs.get_time_step();
     Real dt = 0.0;
     TickCount t1 = TickCount::now();
@@ -364,16 +351,12 @@ void run_rigid_elastic_coupling(int res_factor)
 
             ite_output++;
             vtp_output.writeToFile(ite_output);
-            write_interface_disp.writeToFile(ite_output);
-            write_center_disp.writeToFile(ite_output);
-            steady_state = record_disp();
+            write_disp.writeToFile(ite_output);
+            steady_state = record_energy();
         }
         TimeInterval tt = TickCount::now() - t1;
         std::cout << "Steady state reached at the physical time for the simulation: " << physical_time << std::endl;
-        std::cout << "The norm of central displacement in the last 5 steps: ";
-        for (const auto &disp : disp_history)
-            std::cout << disp.norm() << " ";
-        std::cout << std::endl;
+        std::cout << "The final energy is: " << energy_history.back() << std::endl;
         std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
     };
 
