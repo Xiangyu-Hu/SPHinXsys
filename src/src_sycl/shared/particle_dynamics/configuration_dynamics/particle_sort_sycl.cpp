@@ -1,4 +1,5 @@
 #include "particle_sort_sycl.h"
+#include "sphinxsys_variable_sycl.hpp"
 
 #include <oneapi/dpl/algorithm>
 #include <oneapi/dpl/execution>

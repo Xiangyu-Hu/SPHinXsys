@@ -69,7 +69,7 @@ void DeviceOnlyDiscreteVariable<DataType>::
 }
 //=================================================================================================//
 template <typename DataType>
-DataType *DiscreteVariable<DataType>::DelegatedData(const ParallelDevicePolicy &par_device)
+DataType *DiscreteVariable<DataType>::DelegatedOnDevice()
 {
     if (!isDataDelegated())
     {

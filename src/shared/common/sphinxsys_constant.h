@@ -48,7 +48,7 @@ class ConstantArray : public Entity
         for (size_t i = 0; i != data_size_; ++i)
         {
             data_[i] = DataType(*generators_[i]);
-       }
+        }
     };
     ~ConstantArray() { delete[] data_; };
     StdVec<GeneratorType *> getGenerators() { return generators_; }
@@ -56,7 +56,10 @@ class ConstantArray : public Entity
     DataType *Data() { return data_; };
     template <class ExecutionPolicy>
     DataType *DelegatedData(const ExecutionPolicy &ex_policy) { return delegated_; };
-    DataType *DelegatedData(const ParallelDevicePolicy &par_device);
+    template <class PolicyType>
+    DataType *DelegatedOnDevice(const DeviceExecution<PolicyType> &ex_policy);
+    template <class PolicyType>
+    DataType *DelegatedData(const DeviceExecution<PolicyType> &ex_policy) { return DelegatedOnDevice(ex_policy); };
     bool isDataDelegated() { return data_ != delegated_; };
     void setDelegateData(DataType *new_delegated) { delegated_ = new_delegated; };
 
@@ -71,7 +74,9 @@ template <typename GeneratorType, typename DataType>
 class DeviceOnlyConstantArray : public Entity
 {
   public:
-    DeviceOnlyConstantArray(ConstantArray<GeneratorType, DataType> *host_constant);
+    template <class PolicyType>
+    DeviceOnlyConstantArray(const DeviceExecution<PolicyType> &ex_policy,
+                            ConstantArray<GeneratorType, DataType> *host_constant);
     ~DeviceOnlyConstantArray();
 
   protected:

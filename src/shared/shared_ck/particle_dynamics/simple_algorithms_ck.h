@@ -41,15 +41,17 @@ class StateDynamics : public UpdateType, public BaseDynamics<void>
 {
     using Identifier = typename UpdateType::Identifier;
     using UpdateKernel = typename UpdateType::UpdateKernel;
+    using FinishDynamics = typename UpdateType::FinishDynamics;
     using KernelImplementation =
         Implementation<ExecutionPolicy, UpdateType, UpdateKernel>;
     KernelImplementation kernel_implementation_;
+    FinishDynamics finish_dynamics_;
 
   public:
     template <typename... Args>
     StateDynamics(Args &&...args)
         : UpdateType(std::forward<Args>(args)...),
-          BaseDynamics<void>(), kernel_implementation_(*this){};
+          BaseDynamics<void>(), kernel_implementation_(*this), finish_dynamics_(*this){};
     virtual ~StateDynamics() {};
 
     virtual void exec(Real dt = 0.0) override
@@ -60,23 +62,24 @@ class StateDynamics : public UpdateType, public BaseDynamics<void>
         particle_for(LoopRangeCK<ExecutionPolicy, Identifier>(this->identifier_),
                      [=](size_t i)
                      { update_kernel->update(i, dt); });
+        finish_dynamics_();
     };
 };
 
 template <class ExecutionPolicy, class ReduceType>
 class ReduceDynamicsCK : public ReduceType,
-                         public BaseDynamics<typename ReduceType::FinalOutput::OutputType>
+                         public BaseDynamics<typename ReduceType::FinishDynamics::OutputType>
 {
     using Identifier = typename ReduceType::Identifier;
     using ReduceKernel = typename ReduceType::ReduceKernel;
     using ReduceReturnType = typename ReduceType::ReturnType;
     using Operation = typename ReduceType::OperationType;
-    using FinalOutput = typename ReduceType::FinalOutput;
-    using OutputType = typename FinalOutput::OutputType;
+    using FinishDynamics = typename ReduceType::FinishDynamics;
+    using OutputType = typename FinishDynamics::OutputType;
     using KernelImplementation =
         Implementation<ExecutionPolicy, ReduceType, ReduceKernel>;
     KernelImplementation kernel_implementation_;
-    FinalOutput final_output_;
+    FinishDynamics final_output_;
 
   public:
     template <typename... Args>

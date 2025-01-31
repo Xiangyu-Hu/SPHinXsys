@@ -53,6 +53,7 @@ namespace SPH
 {
 class SPHRelation;
 class BodySurface;
+class BodyPartByParticle;
 
 /**
  * @class SPHBody
@@ -72,12 +73,13 @@ class SPHBody
   protected:
     SPHSystem &sph_system_;
     std::string body_name_;
-    bool newly_updated_;            /**< whether this body is in a newly updated state */
-    BaseParticles *base_particles_; /**< Base particles for dynamic cast DataDelegate  */
-    bool is_bound_set_;             /**< whether the bounding box is set */
-    BoundingBox bound_;             /**< bounding box of the body */
-    Shape *initial_shape_;          /**< initial volumetric geometry enclosing the body */
-    int total_body_parts_;          /**< total number of body parts */
+    bool newly_updated_;                                  /**< whether this body is in a newly updated state */
+    BaseParticles *base_particles_;                       /**< Base particles for dynamic cast DataDelegate  */
+    bool is_bound_set_;                                   /**< whether the bounding box is set */
+    BoundingBox bound_;                                   /**< bounding box of the body */
+    Shape *initial_shape_;                                /**< initial volumetric geometry enclosing the body */
+    int total_body_parts_;                                /**< total number of body parts */
+    StdVec<BodyPartByParticle *> body_parts_by_particle_; /**< all body parts by particle */
 
   public:
     SPHAdaptation *sph_adaptation_;        /**< numerical adaptation policy */
@@ -110,10 +112,13 @@ class SPHBody
     BoundingBox getSPHSystemBounds();
     int getNewBodyPartID();
     int getTotalBodyParts() { return total_body_parts_; };
-    //----------------------------------------------------------------------
-    //		Object factory template functions
-    //----------------------------------------------------------------------
-    virtual void defineAdaptationRatios(Real h_spacing_ratio, Real new_system_refinement_ratio = 1.0);
+    void addBodyPartByParticle(BodyPartByParticle *body_part) { body_parts_by_particle_.push_back(body_part); };
+    StdVec<BodyPartByParticle *> getBodyPartsByParticle() { return body_parts_by_particle_; };
+        //----------------------------------------------------------------------
+        //		Object factory template functions
+        //----------------------------------------------------------------------
+        virtual void
+        defineAdaptationRatios(Real h_spacing_ratio, Real new_system_refinement_ratio = 1.0);
 
     template <class AdaptationType, typename... Args>
     void defineAdaptation(Args &&...args)

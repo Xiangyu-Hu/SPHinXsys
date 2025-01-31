@@ -117,9 +117,21 @@ class ParticleSortCK : public LocalDynamics, public BaseDynamics<void>
         UnsignedInt *sorted_id_;
     };
 
+    class UpdateBodyPartByParticle
+    {
+      public:
+        template <class EncloserType>
+        UpdateBodyPartByParticle(const ExecutionPolicy &ex_policy,
+                                 EncloserType &encloser, UnsignedInt body_part_i);
+        void update(UnsignedInt index_i);
+
+      protected:
+        UnsignedInt *index_list_, *original_id_list_;
+        UnsignedInt *sorted_id_;
+    };
+
     virtual void exec(Real dt = 0.0) override;
     typedef ParticleSortCK<ExecutionPolicy, SortMethodType> LocalDynamicsType;
-    using ComputingKernel = typename LocalDynamicsType::ComputingKernel;
 
   protected:
     ExecutionPolicy ex_policy_;
@@ -133,6 +145,13 @@ class ParticleSortCK : public LocalDynamics, public BaseDynamics<void>
     OperationOnDataAssemble<ParticleVariables, UpdateSortableVariables> update_variables_to_sort_;
     SortMethodType sort_method_;
     Implementation<ExecutionPolicy, LocalDynamicsType, ComputingKernel> kernel_implementation_;
+
+    StdVec<BodyPartByParticle *> body_parts_by_particle_;
+    StdVec<DiscreteVariable<UnsignedInt> *> dv_index_lists_, dv_original_id_lists_;
+    using UpdateBodyPartParticleImplementation = 
+    Implementation<ExecutionPolicy, LocalDynamicsType, UpdateBodyPartByParticle>;
+    UniquePtrsKeeper<UpdateBodyPartParticleImplementation> update_body_part_by_particle_implementation_ptrs_;
+    StdVec<UpdateBodyPartParticleImplementation *> update_body_part_by_particle_implementations_;
 };
 } // namespace SPH
 #endif // PARTICLE_SORT_H
