@@ -43,7 +43,8 @@ size_t BodyPartByCell::SizeOfLoopRange()
 //=================================================================================================//
 void BodyPartByCell::tagCells(TaggingCellMethod &tagging_cell_method)
 {
-    cell_linked_list_.tagBodyPartByCell(body_part_cells_, tagging_cell_method);
+    ConcurrentIndexVector cell_indexes;
+    cell_linked_list_.tagBodyPartByCell(body_part_cells_, cell_indexes, tagging_cell_method);
 }
 //=================================================================================================//
 BodyRegionByParticle::

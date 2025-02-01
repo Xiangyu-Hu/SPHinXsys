@@ -52,10 +52,8 @@ class BaseCellLinkedList : public BaseMeshField
 {
   public:
     BaseCellLinkedList(BaseParticles &base_particles, SPHAdaptation &sph_adaptation);
-    virtual ~BaseCellLinkedList() {};
+    virtual ~BaseCellLinkedList();
 
-    /** access concrete cell linked list levels*/
-    virtual StdVec<CellLinkedList *> CellLinkedListLevels() = 0;
     virtual void UpdateCellLists(BaseParticles &base_particles) = 0;
     /** Insert a cell-linked_list entry to the concurrent index list. */
     virtual void insertParticleIndex(size_t particle_index, const Vecd &particle_position) = 0;
@@ -71,6 +69,10 @@ class BaseCellLinkedList : public BaseMeshField
                                    std::function<bool(Vecd, Real)> &check_included) = 0;
     /** Tag domain bounding cells in an axis direction, called by domain bounding classes */
     virtual void tagBoundingCells(StdVec<CellLists> &cell_data_lists, const BoundingBox &bounding_bounds, int axis) = 0;
+    /** generalized particle search algorithm */
+    template <class DynamicsRange, typename GetSearchDepth, typename GetNeighborRelation>
+    void searchNeighborsByMesh(Mesh &mesh, DynamicsRange &dynamics_range, ParticleConfiguration &particle_configuration,
+                               GetSearchDepth &get_search_depth, GetNeighborRelation &get_neighbor_relation);
 
   protected:
     Kernel &kernel_;
@@ -90,6 +92,13 @@ class BaseCellLinkedList : public BaseMeshField
                                  ConcurrentCellLists &cell_lists,
                                  ConcurrentIndexVector &cell_indexes,
                                  std::function<bool(Vecd, Real)> &check_included);
+    void writeMeshFieldToPltByMesh(Mesh &mesh, std::ofstream &output_file);
+    void tagBoundingCellsByMesh(Mesh &mesh, StdVec<CellLists> &cell_data_lists, const BoundingBox &bounding_bounds, int axis);
+    /** split algorithm */;
+    template <class LocalDynamicsFunction>
+    void particle_for_split_by_mesh(const execution::SequencedPolicy &, Mesh &mesh, const LocalDynamicsFunction &local_dynamics_function);
+    template <class LocalDynamicsFunction>
+    void particle_for_split_by_mesh(const execution::ParallelPolicy &, Mesh &mesh, const LocalDynamicsFunction &local_dynamics_function);
 };
 
 class NeighborSearch : public Mesh
@@ -119,12 +128,11 @@ class CellLinkedList : public BaseCellLinkedList
 {
   protected:
     Mesh mesh_;
-    void deleteMeshDataMatrix(); /**< delete memories for addresses of data packages. */
 
   public:
     CellLinkedList(BoundingBox tentative_bounds, Real grid_spacing,
                    BaseParticles &base_particles, SPHAdaptation &sph_adaptation);
-    ~CellLinkedList() { deleteMeshDataMatrix(); };
+    ~CellLinkedList() {};
     Mesh &getMesh() { return mesh_; };
     void UpdateCellListData(BaseParticles &base_particles) { UpdateCellListDataByMesh(mesh_, base_particles); };
     virtual void UpdateCellLists(BaseParticles &base_particles) override;
@@ -136,13 +144,10 @@ class CellLinkedList : public BaseCellLinkedList
                                    ConcurrentIndexVector &cell_indexes,
                                    std::function<bool(Vecd, Real)> &check_included) override;
     virtual void tagBoundingCells(StdVec<CellLists> &cell_data_lists, const BoundingBox &bounding_bounds, int axis) override;
-    virtual void writeMeshFieldToPlt(std::ofstream &output_file) override;
-
-    /** generalized particle search algorithm */
+    virtual void writeMeshFieldToPlt(std::ofstream &output_file) override {writeMeshFieldToPltByMesh(mesh_, output_file);};
     template <class DynamicsRange, typename GetSearchDepth, typename GetNeighborRelation>
-    void searchNeighborsByParticles(DynamicsRange &dynamics_range, ParticleConfiguration &particle_configuration,
-                                    GetSearchDepth &get_search_depth, GetNeighborRelation &get_neighbor_relation);
-
+    void searchNeighborsByParticle(DynamicsRange &dynamics_range, ParticleConfiguration &particle_configuration,
+                                   GetSearchDepth &get_search_depth, GetNeighborRelation &get_neighbor_relation);
     template <class ExecutionPolicy>
     NeighborSearch createNeighborSearch(const ExecutionPolicy &ex_policy, DiscreteVariable<Vecd> *pos);
     UnsignedInt getCellOffsetListSize() { return cell_offset_list_size_; };
@@ -164,8 +169,8 @@ class CellLinkedList : public BaseCellLinkedList
 class MultilevelCellLinkedList : public BaseCellLinkedList
 {
   protected:
-    size_t total_levels_;
-    StdVec<Mesh> mesh_levels_;
+    UnsignedInt total_levels_;
+    StdVec<Mesh> meshes_;
     StdVec<size_t> mesh_cell_offset_;
     Real *h_ratio_; /**< Smoothing length for each level. */
     int *level_;    /**< Mesh level for each particle. */
@@ -178,7 +183,7 @@ class MultilevelCellLinkedList : public BaseCellLinkedList
                              Real reference_grid_spacing, size_t total_levels,
                              BaseParticles &base_particles, SPHAdaptation &sph_adaptation);
     virtual ~MultilevelCellLinkedList() {};
-
+    StdVec<Mesh> &getMeshes() { return meshes_; };
     virtual void UpdateCellLists(BaseParticles &base_particles) override;
     void insertParticleIndex(size_t particle_index, const Vecd &particle_position) override;
     void InsertListDataEntry(size_t particle_index, const Vecd &particle_position) override;
@@ -187,11 +192,8 @@ class MultilevelCellLinkedList : public BaseCellLinkedList
     virtual void tagBodyPartByCell(ConcurrentCellLists &cell_lists,
                                    ConcurrentIndexVector &cell_indexes,
                                    std::function<bool(Vecd, Real)> &check_included) override;
-    virtual void tagBoundingCells(StdVec<CellLists> &cell_data_lists, const BoundingBox &bounding_bounds, int axis) override {};
-
-    // temp get function
-    const auto *get_level() const { return level_; };
-
+    virtual void tagBoundingCells(StdVec<CellLists> &cell_data_lists, const BoundingBox &bounding_bounds, int axis) override;
+    void writeMeshFieldToPlt(std::ofstream &output_file) override;
     /** split algorithm */;
     template <class LocalDynamicsFunction>
     void particle_for_split(const execution::SequencedPolicy &, const LocalDynamicsFunction &local_dynamics_function);

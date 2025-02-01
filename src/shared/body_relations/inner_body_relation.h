@@ -65,7 +65,7 @@ class AdaptiveInnerRelation : public BaseInnerRelation
     size_t total_levels_;
     StdVec<SearchDepthAdaptive *> get_multi_level_search_depth_;
     NeighborBuilderInnerAdaptive get_adaptive_inner_neighbor_;
-    StdVec<CellLinkedList *> cell_linked_list_levels_;
+    MultilevelCellLinkedList &multi_level_cell_linked_list_;
 
   public:
     explicit AdaptiveInnerRelation(RealBody &real_body);
