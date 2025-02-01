@@ -11,7 +11,7 @@ namespace SPH
 //=================================================================================================//
 BaseCellLinkedList::BaseCellLinkedList(BaseParticles &base_particles, SPHAdaptation &sph_adaptation)
     : BaseMeshField("CellLinkedList"), kernel_(*sph_adaptation.getKernel()),
-      number_of_split_cell_lists_(static_cast<size_t>(pow(3, Dimensions))),
+      total_levels_(1), number_of_split_cell_lists_(static_cast<size_t>(pow(3, Dimensions))),
       dv_particle_index_(nullptr), dv_cell_offset_(nullptr),
       cell_index_lists_(nullptr), cell_data_lists_(nullptr) {}
 //=================================================================================================//
@@ -21,10 +21,20 @@ BaseCellLinkedList::~BaseCellLinkedList()
     delete[] cell_data_lists_;
 }
 //=================================================================================================//
-void BaseCellLinkedList::clearCellListsByMesh(Mesh &mesh)
+void BaseCellLinkedList::initialize(BaseParticles &base_particles)
+{
+    cell_offset_list_size_ = total_number_of_cells_ + 1;
+    index_list_size_ = SMAX(base_particles.ParticlesBound(), cell_offset_list_size_);
+    dv_particle_index_ = base_particles.registerDiscreteVariableOnly<UnsignedInt>("ParticleIndex", index_list_size_);
+    dv_cell_offset_ = base_particles.registerDiscreteVariableOnly<UnsignedInt>("CellOffset", cell_offset_list_size_);
+    cell_index_lists_ = new ConcurrentIndexVector[total_number_of_cells_];
+    cell_data_lists_ = new ListDataVector[total_number_of_cells_];
+}
+//=================================================================================================//
+void BaseCellLinkedList::clearCellLists()
 {
     parallel_for(
-        IndexRange(0, mesh.NumberOfCells()),
+        IndexRange(0, total_number_of_cells_),
         [&](const IndexRange &r)
         {
             for (size_t i = r.begin(); i != r.end(); ++i)
@@ -35,11 +45,11 @@ void BaseCellLinkedList::clearCellListsByMesh(Mesh &mesh)
         ap);
 }
 //=================================================================================================//
-void BaseCellLinkedList::UpdateCellListDataByMesh(Mesh &mesh, BaseParticles &base_particles)
+void BaseCellLinkedList::UpdateCellListData(BaseParticles &base_particles)
 {
     Vecd *pos = base_particles.ParticlePositions();
     parallel_for(
-        IndexRange(0, mesh.NumberOfCells()),
+        IndexRange(0, total_number_of_cells_),
         [&](const IndexRange &r)
         {
             for (size_t i = r.begin(); i != r.end(); ++i)
@@ -79,29 +89,16 @@ void BaseCellLinkedList::tagBodyPartByCellByMesh(Mesh &mesh, size_t mesh_offset,
                 });
             if (is_included == true)
             {
-                size_t linear_index = mesh.LinearCellIndexFromCellIndex(cell_index);
+                size_t linear_index = mesh_offset + mesh.LinearCellIndexFromCellIndex(cell_index);
                 cell_lists.push_back(&cell_index_lists_[linear_index]);
                 cell_indexes.push_back(linear_index);
             }
         });
 }
 //=================================================================================================//
-CellLinkedList::CellLinkedList(BoundingBox tentative_bounds, Real grid_spacing,
-                               BaseParticles &base_particles, SPHAdaptation &sph_adaptation)
-    : BaseCellLinkedList(base_particles, sph_adaptation),
-      mesh_(tentative_bounds, grid_spacing, 2)
+void BaseCellLinkedList::UpdateCellLists(BaseParticles &base_particles)
 {
-    cell_offset_list_size_ = mesh_.NumberOfCells() + 1;
-    index_list_size_ = SMAX(base_particles.ParticlesBound(), cell_offset_list_size_);
-    dv_particle_index_ = base_particles.registerDiscreteVariableOnly<UnsignedInt>("ParticleIndex", index_list_size_);
-    dv_cell_offset_ = base_particles.registerDiscreteVariableOnly<UnsignedInt>("CellOffset", cell_offset_list_size_);
-    cell_index_lists_ = new ConcurrentIndexVector[mesh_.NumberOfCells()];
-    cell_data_lists_ = new ListDataVector[mesh_.NumberOfCells()];
-}
-//=================================================================================================//
-void CellLinkedList::UpdateCellLists(BaseParticles &base_particles)
-{
-    clearCellListsByMesh(mesh_);
+    clearCellLists();
     Vecd *pos_n = base_particles.ParticlePositions();
     size_t total_real_particles = base_particles.TotalRealParticles();
     parallel_for(
@@ -118,30 +115,17 @@ void CellLinkedList::UpdateCellLists(BaseParticles &base_particles)
     UpdateCellListData(base_particles);
 }
 //=================================================================================================//
-void CellLinkedList ::insertParticleIndex(size_t particle_index, const Vecd &particle_position)
+void BaseCellLinkedList::findNearestListDataEntryByMesh(Mesh &mesh, size_t mesh_offset,
+                                                        Real &min_distance_sqr, ListData &nearest_entry,
+                                                        const Vecd &position)
 {
-    size_t linear_index = mesh_.LinearCellIndexFromPosition(particle_position);
-    cell_index_lists_[linear_index].emplace_back(particle_index);
-}
-//=================================================================================================//
-void CellLinkedList ::InsertListDataEntry(size_t particle_index, const Vecd &particle_position)
-{
-    size_t linear_index = mesh_.LinearCellIndexFromPosition(particle_position);
-    cell_data_lists_[linear_index].emplace_back(std::make_pair(particle_index, particle_position));
-}
-//=================================================================================================//
-ListData CellLinkedList::findNearestListDataEntry(const Vecd &position)
-{
-    Real min_distance_sqr = MaxReal;
-    ListData nearest_entry = std::make_pair(MaxSize_t, MaxReal * Vecd::Ones());
-
-    Arrayi cell = mesh_.CellIndexFromPosition(position);
+    Arrayi cell = mesh.CellIndexFromPosition(position);
     mesh_for_each(
         Arrayi::Zero().max(cell - Arrayi::Ones()),
-        mesh_.AllCells().min(cell + 2 * Arrayi::Ones()),
+        mesh.AllCells().min(cell + 2 * Arrayi::Ones()),
         [&](const Arrayi &cell_index)
         {
-            size_t linear_index = mesh_.LinearCellIndexFromCellIndex(cell_index);
+            size_t linear_index = mesh_offset + mesh.LinearCellIndexFromCellIndex(cell_index);
             ListDataVector &target_particles = cell_data_lists_[linear_index];
             for (const ListData &list_data : target_particles)
             {
@@ -153,53 +137,83 @@ ListData CellLinkedList::findNearestListDataEntry(const Vecd &position)
                 }
             }
         });
-    return nearest_entry;
+}
+//=================================================================================================//
+CellLinkedList::CellLinkedList(BoundingBox tentative_bounds, Real grid_spacing,
+                               BaseParticles &base_particles, SPHAdaptation &sph_adaptation)
+    : BaseCellLinkedList(base_particles, sph_adaptation)
+{
+    meshes_.push_back(Mesh(tentative_bounds, grid_spacing, 2));
+    mesh_cell_offset_.push_back(0);
+    total_number_of_cells_ = meshes_[0].NumberOfCells();
+    initialize(base_particles);
+}
+//=================================================================================================//
+void CellLinkedList ::insertParticleIndex(size_t particle_index, const Vecd &particle_position)
+{
+    size_t linear_index = meshes_[0].LinearCellIndexFromPosition(particle_position);
+    cell_index_lists_[linear_index].emplace_back(particle_index);
+}
+//=================================================================================================//
+void CellLinkedList ::InsertListDataEntry(size_t particle_index, const Vecd &particle_position)
+{
+    size_t linear_index = meshes_[0].LinearCellIndexFromPosition(particle_position);
+    cell_data_lists_[linear_index].emplace_back(std::make_pair(particle_index, particle_position));
 }
 //=================================================================================================//
 void CellLinkedList::tagBoundingCells(StdVec<CellLists> &cell_data_lists,
                                       const BoundingBox &bounding_bounds, int axis)
 {
-    tagBoundingCellsByMesh(mesh_, cell_data_lists, bounding_bounds, axis);
+    tagBoundingCellsByMesh(meshes_[0], mesh_cell_offset_[0], cell_data_lists, bounding_bounds, axis);
+}
+//=================================================================================================//
+ListData CellLinkedList::findNearestListDataEntry(const Vecd &position)
+{
+    Real min_distance_sqr = MaxReal;
+    ListData nearest_entry = std::make_pair(MaxSize_t, MaxReal * Vecd::Ones());
+    findNearestListDataEntryByMesh(meshes_[0], 0, min_distance_sqr, nearest_entry, position);
+    return nearest_entry;
 }
 //=================================================================================================//
 UnsignedInt CellLinkedList::computingSequence(Vecd &position, size_t index_i)
 {
-    return mesh_.transferMeshIndexToMortonOrder(mesh_.CellIndexFromPosition(position));
+    return meshes_[0].transferMeshIndexToMortonOrder(meshes_[0].CellIndexFromPosition(position));
 }
 //=================================================================================================//
 void CellLinkedList::tagBodyPartByCell(ConcurrentCellLists &cell_lists,
                                        ConcurrentIndexVector &cell_indexes,
                                        std::function<bool(Vecd, Real)> &check_included)
 {
-    tagBodyPartByCellByMesh(mesh_, 0, cell_lists, cell_indexes, check_included);
+    tagBodyPartByCellByMesh(meshes_[0], 0, cell_lists, cell_indexes, check_included);
 }
 //=================================================================================================//
-MultilevelCellLinkedList::MultilevelCellLinkedList(BoundingBox tentative_bounds,
-                                                   Real reference_grid_spacing, size_t total_levels,
-                                                   BaseParticles &base_particles, SPHAdaptation &sph_adaptation)
-    : BaseCellLinkedList(base_particles, sph_adaptation), total_levels_(total_levels),
+void CellLinkedList::writeMeshFieldToPlt(std::ofstream &output_file)
+{
+    writeMeshFieldToPltByMesh(meshes_[0], 0, output_file);
+}
+//=================================================================================================//
+MultilevelCellLinkedList::MultilevelCellLinkedList(
+    BoundingBox tentative_bounds, Real reference_grid_spacing, size_t total_levels,
+    BaseParticles &base_particles, SPHAdaptation &sph_adaptation)
+    : BaseCellLinkedList(base_particles, sph_adaptation),
       h_ratio_(DynamicCast<ParticleWithLocalRefinement>(this, &sph_adaptation)->h_ratio_),
       level_(DynamicCast<ParticleWithLocalRefinement>(this, &sph_adaptation)->level_)
 {
+    total_levels_ = total_levels,
     meshes_.push_back(Mesh(tentative_bounds, reference_grid_spacing, 2));
     mesh_cell_offset_.push_back(0);
-    size_t total_cells = meshes_[0].NumberOfCells();
+    total_number_of_cells_ = meshes_[0].NumberOfCells();
 
-    for (size_t level = 1; level != total_levels; ++level)
+    for (size_t level = 1; level != total_levels_; ++level)
     {
         /** all mesh levels aligned at the lower bound of tentative_bounds */
         Real refined_spacing = meshes_[level - 1].GridSpacing() / 2.0;
         meshes_.push_back(Mesh(tentative_bounds, refined_spacing, 2));
-        mesh_cell_offset_.push_back(total_cells);
-        total_cells += meshes_[level].NumberOfCells();
+        mesh_cell_offset_.push_back(total_number_of_cells_);
+        total_number_of_cells_ += meshes_[level].NumberOfCells();
     }
 
-    cell_offset_list_size_ = total_cells + 1;
-    index_list_size_ = SMAX(base_particles.ParticlesBound(), cell_offset_list_size_);
-    dv_particle_index_ = base_particles.registerDiscreteVariableOnly<UnsignedInt>("ParticleIndex", index_list_size_);
-    dv_cell_offset_ = base_particles.registerDiscreteVariableOnly<UnsignedInt>("CellOffset", cell_offset_list_size_);
-    cell_index_lists_ = new ConcurrentIndexVector[total_cells];
-    cell_data_lists_ = new ListDataVector[total_cells];
+    initialize(base_particles);
 }
 //=================================================================================================//
 size_t MultilevelCellLinkedList::getMeshLevel(Real particle_cutoff_radius)
@@ -232,33 +246,6 @@ void MultilevelCellLinkedList::InsertListDataEntry(size_t particle_index, const 
         .emplace_back(std::make_pair(particle_index, particle_position));
 }
 //=================================================================================================//
-void MultilevelCellLinkedList::UpdateCellLists(BaseParticles &base_particles)
-{
-    for (size_t level = 0; level != total_levels_; ++level)
-    {
-        clearCellListsByMesh(meshes_[level]);
-    }
-
-    Vecd *pos_n = base_particles.ParticlePositions();
-    size_t total_real_particles = base_particles.TotalRealParticles();
-    // rebuild the corresponding particle list.
-    parallel_for(
-        IndexRange(0, total_real_particles),
-        [&](const IndexRange &r)
-        {
-            for (size_t i = r.begin(); i != r.end(); ++i)
-            {
-                insertParticleIndex(i, pos_n[i]);
-            }
-        },
-        ap);
-
-    for (size_t level = 0; level != total_levels_; ++level)
-    {
-        UpdateCellListDataByMesh(meshes_[level], base_particles);
-    }
-}
-//=================================================================================================//
 UnsignedInt MultilevelCellLinkedList::computingSequence(Vecd &position, size_t index_i)
 {
     size_t level = getMeshLevel(kernel_.CutOffRadius(h_ratio_[index_i]));
@@ -281,7 +268,7 @@ void MultilevelCellLinkedList::tagBoundingCells(StdVec<CellLists> &cell_data_lis
 {
     for (size_t l = 0; l != total_levels_; ++l)
     {
-        tagBoundingCellsByMesh(meshes_[l], cell_data_lists, bounding_bounds, axis);
+        tagBoundingCellsByMesh(meshes_[l], mesh_cell_offset_[l], cell_data_lists, bounding_bounds, axis);
     }
 }
 //=================================================================================================//
@@ -289,7 +276,7 @@ void MultilevelCellLinkedList::writeMeshFieldToPlt(std::ofstream &output_file)
 {
     for (size_t l = 0; l != total_levels_; ++l)
     {
-        writeMeshFieldToPltByMesh(meshes_[l], output_file);
+        writeMeshFieldToPltByMesh(meshes_[l], mesh_cell_offset_[l], output_file);
     }
 }
 //=================================================================================================//

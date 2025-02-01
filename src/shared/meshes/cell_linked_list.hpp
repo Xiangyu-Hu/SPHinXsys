@@ -197,14 +197,6 @@ NeighborSearch CellLinkedList::createNeighborSearch(
     return NeighborSearch(ex_policy, *this, pos);
 }
 //=================================================================================================//
-template <class DynamicsRange, typename GetSearchDepth, typename GetNeighborRelation>
-void CellLinkedList::searchNeighborsByParticle(DynamicsRange &dynamics_range, ParticleConfiguration &particle_configuration,
-                                               GetSearchDepth &get_search_depth, GetNeighborRelation &get_neighbor_relation)
-{
-    searchNeighborsByMesh(mesh_, dynamics_range, particle_configuration,
-                          get_search_depth, get_neighbor_relation);
-}
-//=================================================================================================//
 template <class LocalDynamicsFunction>
 void CellLinkedList::particle_for_split(const execution::SequencedPolicy &,
                                         const LocalDynamicsFunction &local_dynamics_function)
@@ -217,15 +209,6 @@ void CellLinkedList::particle_for_split(const execution::ParallelPolicy &,
                                         const LocalDynamicsFunction &local_dynamics_function)
 {
     particle_for_split_by_mesh(execution::ParallelPolicy(), mesh_, local_dynamics_function);
-}
-//=================================================================================================//
-template <class DynamicsRange, typename GetSearchDepth, typename GetNeighborRelation>
-void MultilevelCellLinkedList::searchNeighborsByParticle(DynamicsRange &dynamics_range, ParticleConfiguration &particle_configuration,
-                                                         GetSearchDepth &get_search_depth, GetNeighborRelation &get_neighbor_relation)
-{
-    for (size_t level = 0; level != total_levels_; ++level)
-        searchNeighborsByMesh(meshes_[level], dynamics_range, particle_configuration,
-                              get_search_depth, get_neighbor_relation);
 }
 //=================================================================================================//
 template <class LocalDynamicsFunction>
