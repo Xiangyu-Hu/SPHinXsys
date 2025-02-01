@@ -72,7 +72,8 @@ class BaseCellLinkedList : public BaseMeshField
     virtual void tagBoundingCells(StdVec<CellLists> &cell_data_lists, const BoundingBox &bounding_bounds, int axis) = 0;
     /** generalized particle search algorithm */
     template <class DynamicsRange, typename GetSearchDepth, typename GetNeighborRelation>
-    void searchNeighborsByMesh(Mesh &mesh, DynamicsRange &dynamics_range, ParticleConfiguration &particle_configuration,
+    void searchNeighborsByMesh(Mesh &mesh, size_t mesh_offset,
+                               DynamicsRange &dynamics_range, ParticleConfiguration &particle_configuration,
                                GetSearchDepth &get_search_depth, GetNeighborRelation &get_neighbor_relation);
     DiscreteVariable<UnsignedInt> *getParticleIndex() { return dv_particle_index_; };
     DiscreteVariable<UnsignedInt> *getCellOffset() { return dv_cell_offset_; };
@@ -108,9 +109,11 @@ class BaseCellLinkedList : public BaseMeshField
                                         const Vecd &position);
     /** split algorithm */;
     template <class LocalDynamicsFunction>
-    void particle_for_split_by_mesh(const execution::SequencedPolicy &, Mesh &mesh, const LocalDynamicsFunction &local_dynamics_function);
+    void particle_for_split_by_mesh(const execution::SequencedPolicy &, Mesh &mesh, size_t mesh_offset,
+                                    const LocalDynamicsFunction &local_dynamics_function);
     template <class LocalDynamicsFunction>
-    void particle_for_split_by_mesh(const execution::ParallelPolicy &, Mesh &mesh, const LocalDynamicsFunction &local_dynamics_function);
+    void particle_for_split_by_mesh(const execution::ParallelPolicy &, Mesh &mesh, size_t mesh_offset,
+                                    const LocalDynamicsFunction &local_dynamics_function);
 };
 
 class NeighborSearch : public Mesh

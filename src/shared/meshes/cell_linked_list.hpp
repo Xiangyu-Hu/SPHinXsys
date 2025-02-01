@@ -48,8 +48,8 @@ void BaseCellLinkedList::searchNeighborsByMesh(
 //=================================================================================================//
 template <class LocalDynamicsFunction>
 void BaseCellLinkedList::particle_for_split_by_mesh(
-    const execution::SequencedPolicy &,
-    Mesh &mesh, const LocalDynamicsFunction &local_dynamics_function)
+    const execution::SequencedPolicy &, Mesh &mesh, size_t mesh_offset, 
+   const LocalDynamicsFunction &local_dynamics_function)
 {
     // forward sweeping
     for (size_t k = 0; k < number_of_split_cell_lists_; k++)
@@ -71,7 +71,7 @@ void BaseCellLinkedList::particle_for_split_by_mesh(
             // e.g. all_cells = (M,N) = (6, 9), (m, n) = (1, 1), l = 0, then (i, j) = (1, 1)
             // l = 1, then (i, j) = (1, 4), l = 3, then (i, j) = (4, 1), etc.
             const Arrayi cell_index = split_cell_index + 3 * mesh.transfer1DtoMeshIndex(all_cells_k, l);
-            size_t linear_index = mesh.LinearCellIndexFromCellIndex(cell_index);
+            size_t linear_index = mesh_offset + mesh.LinearCellIndexFromCellIndex(cell_index);
             // get the list of particles in the cell (i, j)
             const ConcurrentIndexVector &cell_list = cell_index_lists_[linear_index];
             // looping over all particles in the cell (i, j)
@@ -92,7 +92,7 @@ void BaseCellLinkedList::particle_for_split_by_mesh(
         for (size_t l = 0; l < number_of_cells; l++)
         {
             const Arrayi cell_index = split_cell_index + 3 * mesh.transfer1DtoMeshIndex(all_cells_k, l);
-            size_t linear_index = mesh.LinearCellIndexFromCellIndex(cell_index);
+            size_t linear_index = mesh_offset + mesh.LinearCellIndexFromCellIndex(cell_index);
             const ConcurrentIndexVector &cell_list = cell_index_lists_[linear_index];
             for (size_t i = cell_list.size(); i != 0; --i)
             {
@@ -104,8 +104,8 @@ void BaseCellLinkedList::particle_for_split_by_mesh(
 //=================================================================================================//
 template <class LocalDynamicsFunction>
 void BaseCellLinkedList::particle_for_split_by_mesh(
-    const execution::ParallelPolicy &,
-    Mesh &mesh, const LocalDynamicsFunction &local_dynamics_function)
+    const execution::ParallelPolicy &,     Mesh &mesh, size_t mesh_offset,
+    const LocalDynamicsFunction &local_dynamics_function)
 {
     // forward sweeping
     for (size_t k = 0; k < number_of_split_cell_lists_; k++)
@@ -121,7 +121,7 @@ void BaseCellLinkedList::particle_for_split_by_mesh(
                 for (size_t l = r.begin(); l < r.end(); ++l)
                 {
                     const Arrayi cell_index = split_cell_index + 3 * mesh.transfer1DtoMeshIndex(all_cells_k, l);
-                    size_t linear_index = mesh.LinearCellIndexFromCellIndex(cell_index);
+                    size_t linear_index = mesh_offset + mesh.LinearCellIndexFromCellIndex(cell_index);
                     const ConcurrentIndexVector &cell_list = cell_index_lists_[linear_index];
                     for (const size_t index_i : cell_list)
                     {
@@ -146,7 +146,7 @@ void BaseCellLinkedList::particle_for_split_by_mesh(
                 for (size_t l = r.begin(); l < r.end(); ++l)
                 {
                     const Arrayi cell_index = split_cell_index + 3 * mesh.transfer1DtoMeshIndex(all_cells_k, l);
-                    size_t linear_index = mesh.LinearCellIndexFromCellIndex(cell_index);
+                    size_t linear_index = mesh_offset + mesh.LinearCellIndexFromCellIndex(cell_index);
                     const ConcurrentIndexVector &cell_list = cell_index_lists_[linear_index];
                     for (size_t i = cell_list.size(); i != 0; --i)
                     {
@@ -201,14 +201,14 @@ template <class LocalDynamicsFunction>
 void CellLinkedList::particle_for_split(const execution::SequencedPolicy &,
                                         const LocalDynamicsFunction &local_dynamics_function)
 {
-    particle_for_split_by_mesh(execution::SequencedPolicy(), mesh_, local_dynamics_function);
+    particle_for_split_by_mesh(execution::SequencedPolicy(), meshes_[0], 0, local_dynamics_function);
 }
 //=================================================================================================//
 template <class LocalDynamicsFunction>
 void CellLinkedList::particle_for_split(const execution::ParallelPolicy &,
                                         const LocalDynamicsFunction &local_dynamics_function)
 {
-    particle_for_split_by_mesh(execution::ParallelPolicy(), mesh_, local_dynamics_function);
+    particle_for_split_by_mesh(execution::ParallelPolicy(), meshes_[0], 0, local_dynamics_function);
 }
 //=================================================================================================//
 template <class LocalDynamicsFunction>
@@ -216,7 +216,8 @@ void MultilevelCellLinkedList::particle_for_split(const execution::SequencedPoli
                                                   const LocalDynamicsFunction &local_dynamics_function)
 {
     for (size_t level = 0; level != total_levels_; ++level)
-        particle_for_split_by_mesh(execution::SequencedPolicy(), meshes_[level], local_dynamics_function);
+        particle_for_split_by_mesh(execution::SequencedPolicy(),
+                                   meshes_[level], mesh_cell_offset_[level], local_dynamics_function);
 }
 //=================================================================================================//
 template <class LocalDynamicsFunction>
@@ -224,7 +225,8 @@ void MultilevelCellLinkedList::particle_for_split(const execution::ParallelPolic
                                                   const LocalDynamicsFunction &local_dynamics_function)
 {
     for (size_t level = 0; level != total_levels_; ++level)
-        particle_for_split_by_mesh(execution::ParallelPolicy(), meshes_[level], local_dynamics_function);
+        particle_for_split_by_mesh(execution::ParallelPolicy(), 
+        meshes_[level], mesh_cell_offset_[level], local_dynamics_function);
 }
 //=================================================================================================//
 } // namespace SPH
