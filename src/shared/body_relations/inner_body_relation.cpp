@@ -21,7 +21,7 @@ void InnerRelation::updateConfiguration()
 //=================================================================================================//
 AdaptiveInnerRelation::
     AdaptiveInnerRelation(RealBody &real_body)
-    : BaseInnerRelation(real_body), total_levels_(0),
+    : BaseInnerRelation(real_body),
       get_adaptive_inner_neighbor_(real_body),
       multi_level_cell_linked_list_(
           DynamicCast<MultilevelCellLinkedList>(this, real_body.getCellLinkedList()))
@@ -40,7 +40,7 @@ void AdaptiveInnerRelation::updateConfiguration()
     resetNeighborhoodCurrentSize();
     StdVec<Mesh *> &meshes = multi_level_cell_linked_list_.getMeshes();
     StdVec<UnsignedInt> &mesh_offsets = multi_level_cell_linked_list_.getMeshOffsets();
-    for (size_t l = 0; l != total_levels_; ++l)
+    for (size_t l = 0; l != meshes.size(); ++l)
     {
         multi_level_cell_linked_list_.searchNeighborsByMesh(
             *meshes[l], mesh_offsets[l], sph_body_, inner_configuration_,
@@ -118,7 +118,7 @@ void AdaptiveSplittingInnerRelation::updateConfiguration()
     resetNeighborhoodCurrentSize();
     StdVec<Mesh *> &meshes = multi_level_cell_linked_list_.getMeshes();
     StdVec<UnsignedInt> &mesh_offsets = multi_level_cell_linked_list_.getMeshOffsets();
-    for (size_t l = 0; l != total_levels_; ++l)
+    for (size_t l = 0; l != meshes.size(); ++l)
     {
         multi_level_cell_linked_list_.searchNeighborsByMesh(
             *meshes[l], mesh_offsets[l], sph_body_, inner_configuration_,

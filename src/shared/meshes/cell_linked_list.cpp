@@ -145,6 +145,7 @@ CellLinkedList::CellLinkedList(BoundingBox tentative_bounds, Real grid_spacing,
 {
     mesh_ = mesh_ptrs_keeper_.createPtr<Mesh>(tentative_bounds, grid_spacing, 2);
     meshes_.push_back(mesh_);
+    mesh_offsets_.push_back(0);
     total_number_of_cells_ = mesh_->NumberOfCells();
     initialize(base_particles);
 }
@@ -231,15 +232,15 @@ void MultilevelCellLinkedList::insertParticleIndex(UnsignedInt particle_index, c
 {
     UnsignedInt level = getMeshLevel(kernel_.CutOffRadius(h_ratio_[particle_index]));
     level_[particle_index] = level;
-    UnsignedInt linear_index = meshes_[level]->LinearCellIndexFromPosition(particle_position);
-    cell_index_lists_[mesh_offsets_[level] + linear_index].emplace_back(particle_index);
+    UnsignedInt linear_index = mesh_offsets_[level] + meshes_[level]->LinearCellIndexFromPosition(particle_position);
+    cell_index_lists_[linear_index].emplace_back(particle_index);
 }
 //=================================================================================================//
 void MultilevelCellLinkedList::InsertListDataEntry(UnsignedInt particle_index, const Vecd &particle_position)
 {
     UnsignedInt level = getMeshLevel(kernel_.CutOffRadius(h_ratio_[particle_index]));
-    UnsignedInt linear_index = meshes_[level]->LinearCellIndexFromPosition(particle_position);
-    cell_data_lists_[mesh_offsets_[level] + linear_index]
+    UnsignedInt linear_index = mesh_offsets_[level] + meshes_[level]->LinearCellIndexFromPosition(particle_position);
+    cell_data_lists_[linear_index]
         .emplace_back(std::make_pair(particle_index, particle_position));
 }
 //=================================================================================================//

@@ -62,7 +62,6 @@ class AdaptiveInnerRelation : public BaseInnerRelation
     UniquePtrsKeeper<SearchDepthAdaptive> adaptive_search_depth_ptr_vector_keeper_;
 
   protected:
-    size_t total_levels_;
     StdVec<SearchDepthAdaptive *> get_multi_level_search_depth_;
     NeighborBuilderInnerAdaptive get_adaptive_inner_neighbor_;
     MultilevelCellLinkedList &multi_level_cell_linked_list_;
