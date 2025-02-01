@@ -10,7 +10,7 @@
 namespace SPH
 {
 //=================================================================================================//
-void BaseCellLinkedList::writeMeshFieldToPltByMesh(Mesh &mesh, size_t mesh_offset, std::ofstream &output_file)
+void BaseCellLinkedList::writeMeshFieldToPltByMesh(Mesh &mesh, UnsignedInt mesh_offset, std::ofstream &output_file)
 {
     Array3i number_of_operation = mesh.AllCells();
 
@@ -64,14 +64,14 @@ void BaseCellLinkedList::writeMeshFieldToPltByMesh(Mesh &mesh, size_t mesh_offse
         {
             for (int i = 0; i != number_of_operation[0]; ++i)
             {
-                size_t linear_index = mesh_offset + mesh.LinearCellIndexFromCellIndex(Array3i(i, j, k));
+                UnsignedInt linear_index = mesh_offset + mesh.LinearCellIndexFromCellIndex(Array3i(i, j, k));
                 output_file << cell_data_lists_[linear_index].size() << " ";
             }
             output_file << " \n";
         }
 }
 //=================================================================================================//
-void BaseCellLinkedList::tagBoundingCellsByMesh(Mesh &mesh, size_t mesh_offset,
+void BaseCellLinkedList::tagBoundingCellsByMesh(Mesh &mesh, UnsignedInt mesh_offset,
                                                 StdVec<CellLists> &cell_data_lists,
                                                 const BoundingBox &bounding_bounds, int axis)
 {
@@ -95,7 +95,7 @@ void BaseCellLinkedList::tagBoundingCellsByMesh(Mesh &mesh, size_t mesh_offset,
                 cell[axis] = i;
                 cell[second_axis] = j;
                 cell[third_axis] = k;
-                size_t linear_index = mesh_offset + mesh.LinearCellIndexFromCellIndex(cell);
+                UnsignedInt linear_index = mesh_offset + mesh.LinearCellIndexFromCellIndex(cell);
                 cell_data_lists[0].first.push_back(&cell_index_lists_[linear_index]);
                 cell_data_lists[0].second.push_back(&cell_data_lists_[linear_index]);
             }
@@ -116,7 +116,7 @@ void BaseCellLinkedList::tagBoundingCellsByMesh(Mesh &mesh, size_t mesh_offset,
                 cell[axis] = i;
                 cell[second_axis] = j;
                 cell[third_axis] = k;
-                size_t linear_index = mesh_offset + mesh.LinearCellIndexFromCellIndex(cell);
+                UnsignedInt linear_index = mesh_offset + mesh.LinearCellIndexFromCellIndex(cell);
                 cell_data_lists[1].first.push_back(&cell_index_lists_[linear_index]);
                 cell_data_lists[1].second.push_back(&cell_data_lists_[linear_index]);
             }
