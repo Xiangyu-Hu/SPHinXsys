@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "Towards heterogeneous parallelism for SPHinXsys (Part 2)"
+title:  "Towards heterogeneous parallelism for SPHinXsys (Part 3)"
 date:   2025-02-01
 categories: high performance computing 
 ---
@@ -8,7 +8,7 @@ Xiangyu Hu and Alberto Guarnieri
 
 ## Performance Evaluation
 
-The dam-break flow simulation which very often  
+The dam-break flow simulation which very often
 has been used as reference is chosen as the benchmark test-case.
 Additionally, simulations have been executed with single
 and double floating-point precision.
