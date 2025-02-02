@@ -62,8 +62,8 @@ DataType BaseMeshLocalDynamics::CornerAverage(MeshVariableData<DataType> *mesh_v
 template <class DataType>
 DataType ProbeMesh::probeMesh(MeshVariableData<DataType> *mesh_variable_data, const Vecd &position)
 {
-    Arrayi cell_index = probe_mesh_->CellIndexFromPosition(position);
-    size_t package_index = probe_mesh_->PackageIndexFromCellIndex(cell_package_index_, cell_index);
+    Arrayi cell_index = index_handler_->CellIndexFromPosition(position);
+    size_t package_index = index_handler_->PackageIndexFromCellIndex(cell_package_index_, cell_index);
     return package_index > 1 ? probeDataPackage(mesh_variable_data, package_index, cell_index, position)
                              : mesh_variable_data[package_index][0][0][0];
 }
@@ -74,9 +74,9 @@ DataType ProbeMesh::probeDataPackage(MeshVariableData<DataType> *mesh_variable_d
                                      const Arrayi &cell_index,
                                      const Vecd &position)
 {
-    Arrayi data_index = probe_mesh_->DataIndexFromPosition(cell_index, position);
-    Vecd data_position = probe_mesh_->DataPositionFromIndex(cell_index, data_index);
-    Vecd alpha = (position - data_position) / probe_mesh_->DataSpacing();
+    Arrayi data_index = index_handler_->DataIndexFromPosition(cell_index, position);
+    Vecd data_position = index_handler_->DataPositionFromIndex(cell_index, data_index);
+    Vecd alpha = (position - data_position) / index_handler_->data_spacing_;
     Vecd beta = Vecd::Ones() - alpha;
 
     auto &neighborhood = cell_neighborhood_[package_index];

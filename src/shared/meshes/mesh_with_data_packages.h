@@ -32,6 +32,7 @@
 #include "base_mesh.h"
 #include "sphinxsys_variable.h"
 #include "tbb/parallel_sort.h"
+#include "execution_policy.h"
 
 #include <algorithm>
 #include <fstream>
@@ -68,7 +69,7 @@ class MeshWithGridDataPackages : public Mesh
     {
         allocateIndexDataMatrix(all_cells_);
     };
-    virtual ~MeshWithGridDataPackages(){};
+    virtual ~MeshWithGridDataPackages(){ delete index_position_mapper_; };
 
     /** spacing between the data, which is 1/ pkg_size of this grid spacing */
     Real DataSpacing() { return data_spacing_; };
@@ -107,11 +108,62 @@ class MeshWithGridDataPackages : public Mesh
     };
     OperationOnDataAssemble<MeshVariableAssemble, ResizeMeshVariableData> resize_mesh_variable_data_{all_mesh_variables_};
 
-    /** return the position of the lower bound data in a cell. */
-    Vecd DataLowerBoundInCell(const Arrayi &cell_index)
+  public:
+    /** wrapper for all index exchange related functions. */
+    struct IndexHandler
     {
-        return CellLowerCornerPosition(cell_index) + 0.5 * data_spacing_ * Vecd::Ones();
+        const Real data_spacing_;
+        Arrayi all_cells_;
+        Mesh mesh_;
+
+        Arrayi CellIndexFromPosition(const Vecd &position) const
+        {
+            return mesh_.CellIndexFromPosition(position);
+        }
+
+        /** return the position of the lower bound data in a cell. */
+        Vecd DataLowerBoundInCell(const Arrayi &cell_index)
+        {
+            return mesh_.CellLowerCornerPosition(cell_index) + 0.5 * data_spacing_ * Vecd::Ones();
+        }
+
+        /** return the grid index from its position and the index of the cell it belongs to. */
+        Arrayi DataIndexFromPosition(const Arrayi &cell_index, const Vecd &position)
+        {
+            return floor((position - DataLowerBoundInCell(cell_index)).array() / data_spacing_)
+                .template cast<int>()
+                .max(Arrayi::Zero())
+                .min((pkg_size - 1) * Arrayi::Ones());
+        }
+
+        /** return the position of data from its local grid index and the index of the cell it belongs to. */
+        Vecd DataPositionFromIndex(const Arrayi &cell_index, const Arrayi &data_index)
+        {
+            return DataLowerBoundInCell(cell_index) + data_index.cast<Real>().matrix() * data_spacing_;
+        }
+
+        /** return the package index in the data array from the cell index it belongs to. */
+        size_t PackageIndexFromCellIndex(size_t *cell_package_index, const Arrayi &cell_index)
+        {
+            size_t index_1d = mesh_.transferMeshIndexTo1D(all_cells_, cell_index);
+            return cell_package_index[index_1d];
+        }
+    };
+
+    template <class ExecutionPolicy>
+    IndexHandler *getIndexHandler(const ExecutionPolicy &ex_policy) const 
+    {
+        return index_position_mapper_;
     }
+
+    //TODO to be implemented
+    IndexHandler *getIndexHandler(const ParallelDevicePolicy &par_device) const;
+    
+  private:
+    IndexHandler *index_position_mapper_ = new IndexHandler{data_spacing_, all_cells_, *static_cast<Mesh*>(this)};
+    IndexHandler *device_index_position_mapper_ = nullptr;
+
+    bool existDeviceMapper() { return device_index_position_mapper_ != nullptr; };
 
   public:
     void resizeMeshVariableData() { resize_mesh_variable_data_(num_grid_pkgs_); }
@@ -171,21 +223,7 @@ class MeshWithGridDataPackages : public Mesh
         return meta_data_cell[package_index].second == 1;
     }
 
-    /** return the grid index from its position and the index of the cell it belongs to. */
-    Arrayi DataIndexFromPosition(const Arrayi &cell_index, const Vecd &position)
-    {
-        return floor((position - DataLowerBoundInCell(cell_index)).array() / data_spacing_)
-            .template cast<int>()
-            .max(Arrayi::Zero())
-            .min((pkg_size - 1) * Arrayi::Ones());
-    }
-
-    /** return the position of data from its local grid index and the index of the cell it belongs to. */
-    Vecd DataPositionFromIndex(const Arrayi &cell_index, const Arrayi &data_index)
-    {
-        return DataLowerBoundInCell(cell_index) + data_index.cast<Real>().matrix() * data_spacing_;
-    }
-
+    //TODO eliminate the function with the index handler
     /** return the package index in the data array from the cell index it belongs to. */
     size_t PackageIndexFromCellIndex(size_t *cell_package_index, const Arrayi &cell_index)
     {

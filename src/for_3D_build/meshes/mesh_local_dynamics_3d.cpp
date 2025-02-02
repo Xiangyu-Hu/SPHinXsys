@@ -84,7 +84,7 @@ void InitializeBasicDataForAPackage::UpdateKernel::update(const size_t &package_
     BaseMeshLocalDynamics::for_each_cell_data(
         [&](int i, int j, int k)
         {
-            Vec3d position = mesh_data_->DataPositionFromIndex(cell_index, Array3i(i, j, k));
+            Vec3d position = index_handler_->DataPositionFromIndex(cell_index, Array3i(i, j, k));
             phi[i][j][k] = shape_->findSignedDistance(position);
             near_interface_id[i][j][k] = phi[i][j][k] < 0.0 ? -2 : 2;
         });
@@ -134,7 +134,7 @@ void UpdateKernelIntegrals::UpdateKernel::update(const size_t &package_index)
         });
     mesh_for_each3d<0, pkg_size>(
         [&](int i, int j, int k){
-            Vec3d position = mesh_data_->DataPositionFromIndex(cell_index, Arrayi(i, j, k));
+            Vec3d position = index_handler_->DataPositionFromIndex(cell_index, Arrayi(i, j, k));
             std::pair<Real, Vecd> ret = computeKernelIntegral(position, package_index, Arrayi(i, j, k), cut_cell_volume_fraction, local_index, idx);
             pkg_data_kernel_weight[i][j][k] = ret.first;
             pkg_data_kernel_gradient[i][j][k] = ret.second;

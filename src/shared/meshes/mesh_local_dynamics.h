@@ -114,7 +114,7 @@ class ProbeMesh
   public:
     template <class ExecutionPolicy>
     explicit ProbeMesh(const ExecutionPolicy &ex_policy, MeshWithGridDataPackagesType *mesh_data)
-        : probe_mesh_(mesh_data),
+        : index_handler_(mesh_data->getIndexHandler(ex_policy)),
           cell_package_index_(mesh_data->cell_package_index_.DelegatedDataField(ex_policy)),
           cell_neighborhood_(mesh_data->cell_neighborhood_.DelegatedDataField(ex_policy)){};
 
@@ -123,7 +123,7 @@ class ProbeMesh
     DataType probeMesh(MeshVariableData<DataType> *mesh_variable_data, const Vecd &position);
 
   private:
-    MeshWithGridDataPackagesType *probe_mesh_;
+    MeshWithGridDataPackagesType::IndexHandler *index_handler_;
     size_t *cell_package_index_;
     CellNeighborhood *cell_neighborhood_;
 
@@ -347,7 +347,7 @@ class InitializeBasicDataForAPackage : public BaseMeshLocalDynamics
       public:
         template <class ExecutionPolicy, class EncloserType>
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : mesh_data_(&encloser.mesh_data_),
+            : index_handler_(encloser.mesh_data_.getIndexHandler(ex_policy)),
               meta_data_cell_(encloser.meta_data_cell_.DelegatedDataField(ex_policy)),
               shape_(&encloser.shape_),
               phi_(encloser.phi_.DelegatedDataField(ex_policy)),
@@ -355,7 +355,7 @@ class InitializeBasicDataForAPackage : public BaseMeshLocalDynamics
         void update(const size_t &index);
 
       protected:
-        MeshWithGridDataPackagesType *mesh_data_;
+        MeshWithGridDataPackagesType::IndexHandler *index_handler_;
         std::pair<Arrayi, int> *meta_data_cell_;
         Shape *shape_;
         MeshVariableData<Real> *phi_;
@@ -419,7 +419,7 @@ class UpdateKernelIntegrals : public BaseMeshLocalDynamics
               kernel_gradient_(encloser.kernel_gradient_.DelegatedDataField(ex_policy)),
               meta_data_cell_(encloser.meta_data_cell_.DelegatedDataField(ex_policy)),
               kernel_(&encloser.kernel_),
-              mesh_data_(&encloser.mesh_data_),
+              index_handler_(encloser.mesh_data_.getIndexHandler(ex_policy)),
               cell_neighborhood_(encloser.cell_neighborhood_.DelegatedDataField(ex_policy)),
               probe_signed_distance_(ex_policy, &encloser.mesh_data_),
               threshold(kernel_->CutOffRadius(global_h_ratio_) + data_spacing_){};
@@ -435,7 +435,7 @@ class UpdateKernelIntegrals : public BaseMeshLocalDynamics
         std::pair<Arrayi, int> *meta_data_cell_;
 
         Kernel *kernel_;
-        MeshWithGridDataPackagesType *mesh_data_;
+        MeshWithGridDataPackagesType::IndexHandler *index_handler_;
         CellNeighborhood *cell_neighborhood_;
         ProbeSignedDistance probe_signed_distance_;
 
