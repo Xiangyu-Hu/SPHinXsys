@@ -51,6 +51,7 @@ class CellLinkedList;
 class BaseCellLinkedList : public BaseMeshField
 {
   protected:
+    UniquePtrsKeeper<Entity> unique_variable_ptrs_;
     UniquePtrsKeeper<Mesh> mesh_ptrs_keeper_;
     StdVec<Mesh *> meshes_;
     StdVec<UnsignedInt> mesh_offsets_;

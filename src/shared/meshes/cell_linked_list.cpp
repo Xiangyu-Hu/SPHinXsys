@@ -1,7 +1,6 @@
 #include "cell_linked_list.h"
 #include "adaptation.h"
 #include "base_kernel.h"
-#include "base_particle_dynamics.h"
 #include "base_particles.h"
 #include "mesh_iterators.hpp"
 #include "particle_iterators.h"
@@ -25,8 +24,8 @@ void BaseCellLinkedList::initialize(BaseParticles &base_particles)
 {
     cell_offset_list_size_ = total_number_of_cells_ + 1;
     index_list_size_ = SMAX(base_particles.ParticlesBound(), cell_offset_list_size_);
-    dv_particle_index_ = base_particles.registerDiscreteVariableOnly<UnsignedInt>("ParticleIndex", index_list_size_);
-    dv_cell_offset_ = base_particles.registerDiscreteVariableOnly<UnsignedInt>("CellOffset", cell_offset_list_size_);
+    dv_particle_index_ = unique_variable_ptrs_.createPtr<DiscreteVariable<UnsignedInt>>("ParticleIndex", index_list_size_);
+    dv_cell_offset_ = unique_variable_ptrs_.createPtr<DiscreteVariable<UnsignedInt>>("CellOffset", cell_offset_list_size_);
     cell_index_lists_ = new ConcurrentIndexVector[total_number_of_cells_];
     cell_data_lists_ = new ListDataVector[total_number_of_cells_];
 }

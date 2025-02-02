@@ -43,6 +43,9 @@ namespace SPH
 using namespace std::placeholders;
 class BodyPart
 {
+  protected:
+    UniquePtrsKeeper<Entity> unique_variable_ptrs_;
+
   public:
     BodyPart(SPHBody &sph_body, const std::string &body_part_name);
     virtual ~BodyPart() {};
@@ -109,12 +112,13 @@ class BodyPartByCell : public BodyPart
     ConcurrentCellLists &LoopRange() { return body_part_cells_; };
     size_t SizeOfLoopRange();
 
-    BodyPartByCell(RealBody &real_body, const std::string &body_part_name)
-        : BodyPart(real_body, body_part_name), cell_linked_list_(real_body.getCellLinkedList()) {};
+    BodyPartByCell(RealBody &real_body, const std::string &body_part_name);
     virtual ~BodyPartByCell() {};
 
   protected:
     BaseCellLinkedList &cell_linked_list_;
+    DiscreteVariable<UnsignedInt> *dv_particle_index_;
+    DiscreteVariable<UnsignedInt> *dv_cell_offset_;
     typedef std::function<bool(Vecd, Real)> TaggingCellMethod;
     void tagCells(TaggingCellMethod &tagging_cell_method);
 };
