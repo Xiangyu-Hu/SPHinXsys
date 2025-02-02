@@ -59,7 +59,7 @@ void particle_for(const LoopRangeCK<SequencedDevicePolicy, DynamicsIdentifier> &
                       { cgh.single_task([=]()
                                         {
                                 for (int i = 0; i != particles_size; i++)
-                                    loop_range.template computeUnit(unary_func, i); }); })
+                                    loop_range.computeUnit(unary_func, i); }); })
         .wait_and_throw();
 }
 
@@ -73,7 +73,7 @@ void particle_for(const LoopRangeCK<ParallelDevicePolicy, DynamicsIdentifier> &l
                       { cgh.parallel_for(execution_instance.getUniformNdRange(particles_size), [=](sycl::nd_item<1> index)
                                          {
                                  if(index.get_global_id(0) < particles_size)
-                                     loop_range.template computeUnit(unary_func, index.get_global_id(0)); }); })
+                                     loop_range.computeUnit(unary_func, index.get_global_id(0)); }); })
         .wait_and_throw();
 }
 

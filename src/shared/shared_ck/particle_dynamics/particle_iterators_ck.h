@@ -43,7 +43,7 @@ void particle_for(const LoopRangeCK<SequencedPolicy, DynamicsIdentifier> &loop_r
                   const UnaryFunc &unary_func)
 {
     for (size_t i = 0; i < loop_range.LoopBound(); ++i)
-        loop_range.template computeUnit(unary_func, i);
+        loop_range.computeUnit(unary_func, i);
 };
 
 template <class DynamicsIdentifier, class UnaryFunc>
@@ -56,7 +56,7 @@ void particle_for(const LoopRangeCK<ParallelPolicy, DynamicsIdentifier> &loop_ra
         {
             for (size_t i = r.begin(); i < r.end(); ++i)
             {
-                loop_range.template computeUnit(unary_func, i);
+                loop_range.computeUnit(unary_func, i);
             }
         },
         ap);
