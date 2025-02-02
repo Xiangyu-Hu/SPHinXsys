@@ -21,10 +21,7 @@ UpdateCellLinkedList<ExecutionPolicy, CellLinkedListType>::UpdateCellLinkedList(
       dv_particle_index_(cell_linked_list_.getParticleIndex()),
       dv_cell_offset_(cell_linked_list_.getCellOffset()),
       dv_current_cell_size_(DiscreteVariable<UnsignedInt>("CurrentCellSize", cell_offset_list_size_)),
-      ex_policy_(ExecutionPolicy{}), kernel_implementation_(*this)
-{
-    particles_->addVariableToWrite<UnsignedInt>("ParticleIndex");
-}
+      ex_policy_(ExecutionPolicy{}), kernel_implementation_(*this){}
 //=================================================================================================//
 template <class ExecutionPolicy, typename CellLinkedListType>
 UpdateCellLinkedList<ExecutionPolicy, CellLinkedListType>::ComputingKernel::
