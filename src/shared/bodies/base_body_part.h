@@ -73,6 +73,7 @@ class BodyPart
 class BodyPartByParticle : public BodyPart
 {
   public:
+    typedef BodyPartByParticle BaseIdentifier;
     IndexVector body_part_particles_; /**< Collection particle in this body part. */
     BaseParticles &getBaseParticles() { return base_particles_; };
     IndexVector &LoopRange() { return body_part_particles_; };
@@ -108,13 +109,16 @@ class BodyPartByParticle : public BodyPart
 class BodyPartByCell : public BodyPart
 {
   public:
+    typedef BodyPartByCell BaseIdentifier;
     ConcurrentCellLists body_part_cells_; /**< Collection of cells to indicate the body part. */
     ConcurrentCellLists &LoopRange() { return body_part_cells_; };
     size_t SizeOfLoopRange();
 
     BodyPartByCell(RealBody &real_body, const std::string &body_part_name);
     virtual ~BodyPartByCell() {};
-
+    DiscreteVariable<UnsignedInt> *getParticleIndex() { return dv_particle_index_; };
+    DiscreteVariable<UnsignedInt> *getCellOffset() { return dv_cell_offset_; };
+    
   protected:
     BaseCellLinkedList &cell_linked_list_;
     DiscreteVariable<UnsignedInt> *dv_particle_index_;

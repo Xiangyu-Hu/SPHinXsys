@@ -79,14 +79,14 @@ class ReduceDynamicsCK : public ReduceType,
     using KernelImplementation =
         Implementation<ExecutionPolicy, ReduceType, ReduceKernel>;
     KernelImplementation kernel_implementation_;
-    FinishDynamics final_output_;
+    FinishDynamics finish_dynamics_;
 
   public:
     template <typename... Args>
     ReduceDynamicsCK(Args &&...args)
         : ReduceType(std::forward<Args>(args)...),
           BaseDynamics<OutputType>(), kernel_implementation_(*this),
-          final_output_(*this){};
+          finish_dynamics_(*this){};
     virtual ~ReduceDynamicsCK() {};
 
     std::string QuantityName() { return this->quantity_name_; };
@@ -101,7 +101,7 @@ class ReduceDynamicsCK : public ReduceType,
             ReduceReference<Operation>::value,
             [=](size_t i)
             { return reduce_kernel->reduce(i, dt); });
-        return final_output_.Result(temp);
+        return finish_dynamics_.Result(temp);
     };
 };
 } // namespace SPH
