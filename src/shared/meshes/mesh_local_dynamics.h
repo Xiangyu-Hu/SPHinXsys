@@ -46,6 +46,7 @@ namespace SPH
 template <class T>
 using MeshVariableData = PackageDataMatrix<T, 4>;
 using MeshWithGridDataPackagesType = MeshWithGridDataPackages<4>;
+using NeighbourIndex = std::pair<size_t, Arrayi>; /**< stores shifted neighbour info: (size_t)package index, (arrayi)local grid index. */
 
 /**
  * @class BaseMeshLocalDynamics
@@ -417,12 +418,11 @@ class UpdateKernelIntegrals : public BaseMeshLocalDynamics
               kernel_weight_(encloser.kernel_weight_.DelegatedDataField(ex_policy)),
               kernel_gradient_(encloser.kernel_gradient_.DelegatedDataField(ex_policy)),
               meta_data_cell_(encloser.meta_data_cell_.DelegatedDataField(ex_policy)),
-              cell_package_index_(encloser.cell_package_index_.DelegatedDataField(ex_policy)),
               kernel_(&encloser.kernel_),
               mesh_data_(&encloser.mesh_data_),
-              global_mesh_(&mesh_data_->global_mesh_),
               cell_neighborhood_(encloser.cell_neighborhood_.DelegatedDataField(ex_policy)),
-              probe_signed_distance_(ex_policy, &encloser.mesh_data_){};
+              probe_signed_distance_(ex_policy, &encloser.mesh_data_),
+              threshold(kernel_->CutOffRadius(global_h_ratio_) + data_spacing_){};
         void update(const size_t &index);
 
       protected:
@@ -433,14 +433,17 @@ class UpdateKernelIntegrals : public BaseMeshLocalDynamics
         MeshVariableData<Real> *kernel_weight_;
         MeshVariableData<Vecd> *kernel_gradient_;
         std::pair<Arrayi, int> *meta_data_cell_;
-        size_t *cell_package_index_;
 
         Kernel *kernel_;
         MeshWithGridDataPackagesType *mesh_data_;
-        Mesh *global_mesh_;
         CellNeighborhood *cell_neighborhood_;
         ProbeSignedDistance probe_signed_distance_;
-        std::pair<Real, Vecd> computeKernelIntegral(const Vecd &position, const Arrayi &cell_index, const size_t &package_index, const Arrayi &grid_index);
+
+        Real threshold;
+        std::pair<Real, Vecd> computeKernelIntegral(const Vecd &position, const size_t &package_index, const Arrayi &grid_index,
+                                                                                 Real *cut_cell_volume_fraction,
+                                                                                 Arrayi *local_index,
+                                                                                 int n);
 
         /** a cut cell is a cut by the level set. */
         /** "Multi-scale modeling of compressible multi-fluid flows with conservative interface method."
@@ -457,7 +460,6 @@ class UpdateKernelIntegrals : public BaseMeshLocalDynamics
             }
             return volume_fraction;
         }
-        Real probeSignedDistance(const Vecd &position) { return probe_signed_distance_.update(position); };
     };
 
   private:
