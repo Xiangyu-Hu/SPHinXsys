@@ -33,6 +33,9 @@
 #include "sphinxsys_variable.h"
 #if SPHINXSYS_USE_SYCL
 #include "sphinxsys_variable_sycl.hpp"
+#include "mesh_with_data_package.hpp"
+#else
+#define SYCL_EXTERNAL
 #endif
 #include "mesh_with_data_packages.h"
 #include "base_geometry.h"

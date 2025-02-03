@@ -69,7 +69,7 @@ class MeshWithGridDataPackages : public Mesh
     {
         allocateIndexDataMatrix(all_cells_);
     };
-    virtual ~MeshWithGridDataPackages(){ delete index_position_mapper_; };
+    virtual ~MeshWithGridDataPackages(){ delete index_handler_; };
 
     /** spacing between the data, which is 1/ pkg_size of this grid spacing */
     Real DataSpacing() { return data_spacing_; };
@@ -151,19 +151,12 @@ class MeshWithGridDataPackages : public Mesh
     };
 
     template <class ExecutionPolicy>
-    IndexHandler *getIndexHandler(const ExecutionPolicy &ex_policy) const 
-    {
-        return index_position_mapper_;
-    }
-
-    //TODO to be implemented
+    IndexHandler *getIndexHandler(const ExecutionPolicy &ex_policy) const { return index_handler_; };
     IndexHandler *getIndexHandler(const ParallelDevicePolicy &par_device) const;
     
   private:
-    IndexHandler *index_position_mapper_ = new IndexHandler{data_spacing_, all_cells_, *static_cast<Mesh*>(this)};
-    IndexHandler *device_index_position_mapper_ = nullptr;
-
-    bool existDeviceMapper() { return device_index_position_mapper_ != nullptr; };
+    IndexHandler *index_handler_ = new IndexHandler{data_spacing_, all_cells_, *static_cast<Mesh*>(this)};
+    IndexHandler *device_index_handler = nullptr;
 
   public:
     void resizeMeshVariableData() { resize_mesh_variable_data_(num_grid_pkgs_); }
