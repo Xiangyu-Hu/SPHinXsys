@@ -76,7 +76,7 @@ struct ReduceMax : ReturnFunction<Real>
 template <>
 struct ReduceReference<ReduceMax>
 {
-    static inline Real value = MinReal;
+    static inline const Real value = MinReal;
 };
 
 struct ReduceMin : ReturnFunction<Real>

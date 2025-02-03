@@ -77,7 +77,7 @@ using MatXd = Eigen::Matrix<Real, Eigen::Dynamic, Eigen::Dynamic>;
 template <typename DataType>
 struct ZeroData
 {
-    static inline DataType value = DataType::Zero();
+    static inline const DataType value = DataType::Zero();
 };
 
 template <>
