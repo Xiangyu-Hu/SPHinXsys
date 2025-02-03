@@ -49,5 +49,20 @@ QuantityAverage<DataType, DynamicsIdentifier>::ReduceKernel::
     ReduceKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : variable_(encloser.dv_variable_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
+template <class DynamicsIdentifier>
+UpperFrontInAxisDirectionCK<DynamicsIdentifier>::UpperFrontInAxisDirectionCK(
+    DynamicsIdentifier &identifier, const std::string &name, int axis)
+    : BaseLocalDynamicsReduce<ReduceMax, DynamicsIdentifier>(identifier),
+      axis_(axis), dv_pos_(this->particles_->template getVariableByName<Vecd>("Position"))
+{
+    this->quantity_name_ = name;
+}
+//=================================================================================================//
+template <class DynamicsIdentifier>
+template <class ExecutionPolicy, class EncloserType>
+UpperFrontInAxisDirectionCK<DynamicsIdentifier>::ReduceKernel::
+    ReduceKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+    : axis_(encloser.axis_), pos_(encloser.dv_pos_->DelegatedData(ex_policy)) {}
+//=================================================================================================//
 } // namespace SPH
 #endif // GENERAL_REDUCE_CK_HPP
