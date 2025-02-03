@@ -83,37 +83,37 @@ struct ZeroData
 template <>
 struct ZeroData<bool>
 {
-    static inline bool value = false;
+    static inline const bool value = false;
 };
 template <>
 struct ZeroData<Real>
 {
-    static inline Real value = Real(0);
+    static inline const Real value = Real(0);
 };
 template <>
 struct ZeroData<int>
 {
-    static inline int value = 0;
+    static inline const int value = 0;
 };
 
 template <>
 struct ZeroData<UnsignedInt>
 {
-    static inline UnsignedInt value = 0;
+    static inline const UnsignedInt value = 0;
 };
 
 template <typename FirstType, typename SecondType>
 struct ZeroData<std::pair<FirstType, SecondType>>
 {
     using PairType = std::pair<FirstType, SecondType>;
-    static inline PairType value = PairType(
+    static inline const PairType value = PairType(
         ZeroData<FirstType>::value, ZeroData<SecondType>::value);
 };
 
 template <typename DataType>
 struct IdentityMatrix
 {
-    static inline DataType value = DataType::Identity();
+    static inline const DataType value = DataType::Identity();
 };
 
 /** Type trait for data type index. */

@@ -48,7 +48,7 @@ struct ReduceSum<DataType> : ReturnFunction<DataType>
 template <typename DataType>
 struct ReduceReference<ReduceSum<DataType>>
 {
-    static inline DataType value = ZeroData<DataType>::value;
+    static inline const DataType value = ZeroData<DataType>::value;
 };
 
 template <typename DataType>
@@ -65,7 +65,7 @@ template <typename DataType>
 struct ReduceReference<ReduceSum<std::pair<DataType, Real>>>
 {
     using PairType = std::pair<DataType, Real>;
-    static inline PairType value = ZeroData<PairType>::value;
+    static inline const PairType value = ZeroData<PairType>::value;
 };
 
 struct ReduceMax : ReturnFunction<Real>
@@ -87,7 +87,7 @@ struct ReduceMin : ReturnFunction<Real>
 template <>
 struct ReduceReference<ReduceMin>
 {
-    static inline Real value = MaxReal;
+    static inline const Real value = MaxReal;
 };
 struct ReduceOR : ReturnFunction<bool>
 {
@@ -97,7 +97,7 @@ struct ReduceOR : ReturnFunction<bool>
 template <>
 struct ReduceReference<ReduceOR>
 {
-    static inline bool value = false;
+    static inline const bool value = false;
 };
 
 struct ReduceAND : ReturnFunction<bool>
@@ -108,7 +108,7 @@ struct ReduceAND : ReturnFunction<bool>
 template <>
 struct ReduceReference<ReduceAND>
 {
-    static inline bool value = true;
+    static inline const bool value = true;
 };
 struct ReduceLowerBound : ReturnFunction<Vecd>
 {
@@ -124,7 +124,7 @@ struct ReduceLowerBound : ReturnFunction<Vecd>
 template <>
 struct ReduceReference<ReduceLowerBound>
 {
-    static inline Vecd value = MaxReal * Vecd::Ones();
+    static inline const Vecd value = MaxReal * Vecd::Ones();
 };
 
 struct ReduceUpperBound : ReturnFunction<Vecd>
@@ -141,7 +141,7 @@ struct ReduceUpperBound : ReturnFunction<Vecd>
 template <>
 struct ReduceReference<ReduceUpperBound>
 {
-    static inline Vecd value = MinReal * Vecd::Ones();
+    static inline const Vecd value = MinReal * Vecd::Ones();
 };
 
 } // namespace SPH
