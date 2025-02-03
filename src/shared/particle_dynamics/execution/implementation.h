@@ -40,18 +40,71 @@ namespace SPH
 {
 namespace execution
 {
+template <class ComputingKernelType, class ExecutionPolicy>
+inline ComputingKernelType *allocateComputingKernel(const ExecutionPolicy &ex_policy)
+{
+    return (ComputingKernelType *)malloc(sizeof(ComputingKernelType));
+}
+
+template <class ExecutionPolicy, class ComputingKernelType>
+inline void copyComputingKernel(const ExecutionPolicy &ex_policy,
+                                ComputingKernelType *temp_kernel,
+                                ComputingKernelType *computing_kernel)
+{
+    *computing_kernel = *temp_kernel;
+}
+
+template <class ExecutionPolicy, class ComputingKernelType>
+inline void freeComputingKernel(const ExecutionPolicy &ex_policy,
+                                ComputingKernelType *computing_kernel)
+{
+    free(computing_kernel);
+}
+
+template <class ComputingKernelType>
+inline ComputingKernelType *allocateComputingKernelOnDevice();
+
+template <class ComputingKernelType>
+inline void copyComputingKernelToDevice(ComputingKernelType *host_kernel,
+                                        ComputingKernelType *device_kernel);
+
+template <class ComputingKernelType>
+inline void freeComputingKernelOnDevice(ComputingKernelType *device_kernel);
+
+template <class ComputingKernelType, class PolicyType>
+inline ComputingKernelType *allocateComputingKernel(const DeviceExecution<PolicyType> &ex_policy)
+{
+    return allocateComputingKernelOnDevice<ComputingKernelType>();
+}
+
+template <class PolicyType, class ComputingKernelType>
+inline void copyComputingKernel(const DeviceExecution<PolicyType> &ex_policy,
+                                ComputingKernelType *temp_kernel,
+                                ComputingKernelType *computing_kernel)
+{
+    copyComputingKernelToDevice(temp_kernel, computing_kernel);
+}
+
+template <class PolicyType, class ComputingKernelType>
+inline void freeComputingKernel(const DeviceExecution<PolicyType> &ex_policy,
+                                ComputingKernelType *computing_kernel)
+{
+    freeComputingKernelOnDevice(computing_kernel);
+}
 
 template <class ExecutionPolicy, class LocalDynamicsType, class ComputingKernelType>
 class Implementation<ExecutionPolicy, LocalDynamicsType, ComputingKernelType>
     : public Implementation<Base>
 {
+    UniquePtrKeeper<ComputingKernelType> kernel_ptr_keeper_;
+
   public:
     explicit Implementation(LocalDynamicsType &local_dynamics)
         : Implementation<Base>(), local_dynamics_(local_dynamics),
           computing_kernel_(nullptr) {}
     ~Implementation()
     {
-        delete computing_kernel_;
+        freeComputingKernel(ExecutionPolicy{}, computing_kernel_);
     }
 
     template <typename... Args>
@@ -59,8 +112,11 @@ class Implementation<ExecutionPolicy, LocalDynamicsType, ComputingKernelType>
     {
         if (computing_kernel_ == nullptr)
         {
-            computing_kernel_ = new ComputingKernelType(
-                ExecutionPolicy{}, this->local_dynamics_, std::forward<Args>(args)...);
+            computing_kernel_ = allocateComputingKernel<ComputingKernelType>(ExecutionPolicy{});
+            ComputingKernelType *temp_kernel =
+                kernel_ptr_keeper_.template createPtr<ComputingKernelType>(
+                    ExecutionPolicy{}, this->local_dynamics_, std::forward<Args>(args)...);
+            copyComputingKernel(ExecutionPolicy{}, temp_kernel, computing_kernel_);
             this->setUpdated();
         }
 
@@ -75,8 +131,10 @@ class Implementation<ExecutionPolicy, LocalDynamicsType, ComputingKernelType>
     template <typename... Args>
     void overwriteComputingKernel(Args &&...args)
     {
-        *computing_kernel_ = ComputingKernelType(
-            ExecutionPolicy{}, this->local_dynamics_, std::forward<Args>(args)...);
+        ComputingKernelType *temp_kernel =
+            kernel_ptr_keeper_.template createPtr<ComputingKernelType>(
+                ExecutionPolicy{}, this->local_dynamics_, std::forward<Args>(args)...);
+        copyComputingKernel(ExecutionPolicy{}, temp_kernel, computing_kernel_);
         this->setUpdated();
     }
 

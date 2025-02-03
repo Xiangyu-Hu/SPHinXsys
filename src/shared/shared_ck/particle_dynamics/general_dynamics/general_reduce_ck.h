@@ -126,12 +126,12 @@ class QuantityAverage : public BaseLocalDynamicsReduce<ReduceSum<std::pair<DataT
     QuantityAverage(DynamicsIdentifier &identifier, const std::string &variable_name);
     virtual ~QuantityAverage() {};
 
-    class FinalOutput
+    class FinishDynamics
     {
       public:
         using OutputType = DataType;
         template <class EncloserType>
-        FinalOutput(EncloserType &encloser){};
+        FinishDynamics(EncloserType &encloser){};
         OutputType Result(const ReduceReturnType &reduced_value)
         {
             return reduced_value.first / reduced_value.second;

@@ -50,6 +50,20 @@ void particle_for(const ParallelDevicePolicy &par_device,
 }
 
 template <class DynamicsIdentifier, class UnaryFunc>
+void particle_for(const LoopRangeCK<SequencedDevicePolicy, DynamicsIdentifier> &loop_range,
+                  const UnaryFunc &unary_func)
+{
+    auto &sycl_queue = execution_instance.getQueue();
+    const size_t particles_size = loop_range.LoopBound();
+    sycl_queue.submit([&](sycl::handler &cgh)
+                      { cgh.single_task([=]()
+                                        {
+                                for (int i = 0; i != particles_size; i++)
+                                    loop_range.template computeUnit<void>(unary_func, i); }); })
+        .wait_and_throw();
+}
+
+template <class DynamicsIdentifier, class UnaryFunc>
 void particle_for(const LoopRangeCK<ParallelDevicePolicy, DynamicsIdentifier> &loop_range,
                   const UnaryFunc &unary_func)
 {

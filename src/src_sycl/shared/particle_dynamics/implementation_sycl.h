@@ -30,12 +30,11 @@
 #ifndef IMPLEMENTATION_SYCL_H
 #define IMPLEMENTATION_SYCL_H
 
-#include <sycl/sycl.hpp>
+#include "device_copyable_variable.h"
 #include "execution_policy.h"
 #include "implementation.h"
-#include "device_copyable_variable.h"
 #include "ownership.h"
-
+#include <sycl/sycl.hpp>
 
 namespace SPH
 {
@@ -135,56 +134,24 @@ inline void copyFromDevice(T *host, const T *device, std::size_t size)
 
 namespace execution
 {
-template <class LocalDynamicsType, class ComputingKernelType>
-class Implementation<ParallelDevicePolicy, LocalDynamicsType, ComputingKernelType>
-    : public Implementation<Base>
+template <class ComputingKernelType>
+inline ComputingKernelType *allocateComputingKernelOnDevice()
 {
-    UniquePtrKeeper<ComputingKernelType> kernel_ptr_keeper_;
+    return allocateDeviceOnly<ComputingKernelType>(1);
+}
 
-  public:
-    explicit Implementation(LocalDynamicsType &local_dynamics)
-        : Implementation<Base>(), local_dynamics_(local_dynamics),
-          computing_kernel_(nullptr) {}
-    ~Implementation()
-    {
-        freeDeviceData(computing_kernel_);
-    }
+template <class ComputingKernelType>
+inline void copyComputingKernelToDevice(ComputingKernelType *host_kernel,
+                                        ComputingKernelType *device_kernel)
+{
+    copyToDevice(host_kernel, device_kernel, 1);
+}
 
-    template <typename... Args>
-    ComputingKernelType *getComputingKernel(Args &&...args)
-    {
-        if (computing_kernel_ == nullptr)
-        {
-            computing_kernel_ = allocateDeviceOnly<ComputingKernelType>(1);
-            ComputingKernelType *host_kernel =
-                kernel_ptr_keeper_.template createPtr<ComputingKernelType>(
-                    ParallelDevicePolicy{}, this->local_dynamics_, std::forward<Args>(args)...);
-            copyToDevice(host_kernel, computing_kernel_, 1);
-            this->setUpdated();
-        }
-
-        if (!this->isUpdated())
-        {
-            overwriteComputingKernel(std::forward<Args>(args)...);
-        }
-
-        return computing_kernel_;
-    }
-
-    template <typename... Args>
-    void overwriteComputingKernel(Args &&...args)
-    {
-        ComputingKernelType *host_kernel =
-            kernel_ptr_keeper_.template createPtr<ComputingKernelType>(
-                ParallelDevicePolicy{}, this->local_dynamics_, std::forward<Args>(args)...);
-        copyToDevice(host_kernel, computing_kernel_, 1);
-        this->setUpdated();
-    }
-
-  protected:
-    LocalDynamicsType &local_dynamics_;
-    ComputingKernelType *computing_kernel_;
-};
+template <class ComputingKernelType>
+inline void freeComputingKernelOnDevice(ComputingKernelType *device_kernel)
+{
+    freeDeviceData(device_kernel);
+}
 } // namespace execution
 } // namespace SPH
 #endif // IMPLEMENTATION_SYCL_H

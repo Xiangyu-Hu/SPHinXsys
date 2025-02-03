@@ -1,11 +1,11 @@
 /**
- * @file 	test_3d_incompressible_channel_flow.h
+ * @file 	test_3d_FVM_incompressible_channel_flow.h
  * @brief 	This is a test to show inviscid incompressible channel flow using .msh files from ICEM and FLUENT.
  * @author 	Yash Mandaokar, Zhentong Wang and Xiangyu Hu
  */
 
-#ifndef TEST_3D_INCOMPRESSIBLE_CHANNEL_FLOW_H
-#define TEST_3D_INCOMPRESSIBLE_CHANNEL_FLOW_H
+#ifndef TEST_3D_FVM_INCOMPRESSIBLE_CHANNEL_FLOW_H
+#define TEST_3D_FVM_INCOMPRESSIBLE_CHANNEL_FLOW_H
 
 #include "common_weakly_compressible_FVM_classes.h"
 
@@ -24,7 +24,6 @@ BoundingBox system_domain_bounds(Vec3d(-0.3, 0.0, 0.0), Vec3d(0.469846, 0.5, 0.0
 //----------------------------------------------------------------------
 Real rho0_f = 1.0;   /**< Density. */
 Real U_f = 1.0;      /**< freestream velocity. */
-Real P_ref = 101325; /*operating pressure fluent [Pa]*/
 Real c_f = 10.0 * U_f;
 Real mu_f = 0.0; /**< Dynamics viscosity. */
 
@@ -57,7 +56,10 @@ class InvCFInitialCondition
         : FluidInitialCondition(sph_body),
           rho_(particles_->registerStateVariable<Real>("Density")),
           p_(particles_->registerStateVariable<Real>("Pressure")),
-          vel_(particles_->registerStateVariable<Vecd>("Velocity")){};
+          vel_(particles_->registerStateVariable<Vecd>("Velocity")),
+          Vol_(this->particles_->template getVariableDataByName<Real>("VolumetricMeasure")), 
+          mass_(this->particles_->template getVariableDataByName<Real>("Mass")),
+          mom_(this->particles_->template getVariableDataByName<Vecd>("Momentum")){};
 
   protected:
     Real *rho_, *p_;
@@ -68,10 +70,14 @@ class InvCFInitialCondition
         vel_[index_i][0] = 1.0;
         vel_[index_i][1] = 0.0;
         vel_[index_i][2] = 0.0;
+        mass_[index_i] = rho_[index_i] * Vol_[index_i];
+        mom_[index_i] = mass_[index_i] * vel_[index_i];
     }
 
   protected:
     Vecd *vel_;
+    Real *Vol_, *mass_;
+    Vecd *mom_;
 };
 ///----------------------------------------------------------------------
 //	InvCFBoundaryConditionSetup

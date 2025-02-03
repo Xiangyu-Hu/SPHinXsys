@@ -77,7 +77,7 @@ class ObservedQuantityRecording<ExecutionPolicy, DataType>
         out_file << "\n";
         out_file.close();
     };
-    virtual ~ObservedQuantityRecording(){};
+    virtual ~ObservedQuantityRecording() {};
 
     virtual void writeWithFileName(const std::string &sequence) override
     {
@@ -112,7 +112,7 @@ class ReducedQuantityRecording<ExecutionPolicy, LocalReduceMethodType> : public 
 
   public:
     /*< deduce variable type from reduce method. */
-    using VariableType = typename LocalReduceMethodType::FinalOutput::OutputType;
+    using VariableType = typename LocalReduceMethodType::FinishDynamics::OutputType;
     VariableType type_indicator_; /*< this is an indicator to identify the variable type. */
 
   public:
@@ -132,7 +132,7 @@ class ReducedQuantityRecording<ExecutionPolicy, LocalReduceMethodType> : public 
         out_file << "\n";
         out_file.close();
     };
-    virtual ~ReducedQuantityRecording(){};
+    virtual ~ReducedQuantityRecording() {};
 
     virtual void writeToFile(size_t iteration_step = 0) override
     {

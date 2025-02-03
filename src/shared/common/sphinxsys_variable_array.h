@@ -62,7 +62,13 @@ class VariableArray : public Entity
     {
         return data_array_;
     };
-    DataArray<DataType> *DelegatedDataArray(const ParallelDevicePolicy &par_device);
+
+    template <class PolicyType>
+    DataArray<DataType> *DelegatedOnDevice(const DeviceExecution<PolicyType> &ex_policy);
+
+    template <class PolicyType>
+    DataArray<DataType> *DelegatedDataArray(const DeviceExecution<PolicyType> &ex_policy);
+
     size_t getArraySize() { return variables_.size(); }
 
     bool isDataArrayDelegated() { return data_array_ != delegated_data_array_; };
@@ -81,7 +87,9 @@ template <typename DataType, template <typename> class VariableType>
 class DeviceOnlyVariableArray : public Entity
 {
   public:
-    DeviceOnlyVariableArray(VariableArray<DataType, VariableType> *host_variable_array);
+    template <class PolicyType>
+    DeviceOnlyVariableArray(const DeviceExecution<PolicyType> &ex_policy,
+                            VariableArray<DataType, VariableType> *host_variable_array);
     ~DeviceOnlyVariableArray();
 
   protected:
@@ -90,5 +98,36 @@ class DeviceOnlyVariableArray : public Entity
 
 template <typename DataType>
 using DiscreteVariableArray = VariableArray<DataType, DiscreteVariable>;
+
+template <typename DataType>
+using AllocatedDataArray = DataArray<DataType> *;
+
+template <typename AllocationType>
+using VariableAllocationPair = std::pair<AllocationType, UnsignedInt>;
+
+typedef DataAssemble<VariableAllocationPair, AllocatedDataArray> VariableDataArrays;
+typedef DataAssemble<UniquePtr, DiscreteVariableArray> DiscreteVariableArrays;
+
+struct DiscreteVariableArraysInitialization
+{
+    template <typename DataType>
+    void operator()(const StdVec<DiscreteVariable<DataType> *> &variables,
+                    UniquePtr<DiscreteVariableArray<DataType>> &variable_array_ptr)
+    {
+        variable_array_ptr = std::make_unique<DiscreteVariableArray<DataType>>(variables);
+    }
+};
+
+struct VariableDataArraysInitialization
+{
+    template <typename DataType, class ExecutionPolicy>
+    void operator()(const UniquePtr<DiscreteVariableArray<DataType>> &variable_array_ptr,
+                    VariableAllocationPair<AllocatedDataArray<DataType>> &variable_allocation_size_pair,
+                    const ExecutionPolicy &ex_policy)
+    {
+        variable_allocation_size_pair =
+            std::make_pair(variable_array_ptr->DelegatedDataArray(ex_policy), variable_array_ptr->getArraySize());
+    }
+};
 } // namespace SPH
 #endif // SPHINXSYS_VARIABLE_ARRAY_H

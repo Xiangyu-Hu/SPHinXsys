@@ -36,6 +36,7 @@
 #include "base_data_package.h"
 #include "sphinxsys_containers.h"
 #include "sphinxsys_variable.h"
+#include "sphinxsys_variable_array.h"
 #include "xml_parser.h"
 
 #include <fstream>
@@ -87,7 +88,7 @@ class BaseParticles
 
   public:
     explicit BaseParticles(SPHBody &sph_body, BaseMaterial *base_material);
-    virtual ~BaseParticles(){};
+    virtual ~BaseParticles() {};
     SPHBody &getSPHBody() { return sph_body_; };
     BaseMaterial &getBaseMaterial() { return base_material_; };
 
@@ -139,6 +140,8 @@ class BaseParticles
     DataType *addUniqueDiscreteVariable(const std::string &name, size_t data_size, Args &&...args);
     template <class DataType, typename... Args>
     DiscreteVariable<DataType> *addUniqueDiscreteVariableOnly(const std::string &name, size_t data_size, Args &&...args);
+    template <class DataType>
+    DiscreteVariable<DataType> *addUniqueDiscreteVariableFrom(const std::string &name, DiscreteVariable<DataType> *old_variable);
     template <typename DataType, typename... Args>
     DataType *registerDiscreteVariable(const std::string &name, size_t data_size, Args &&...args);
 
@@ -265,7 +268,7 @@ class BaseParticles
     struct WriteAParticleVariableToXml
     {
         XmlParser &xml_parser_;
-        WriteAParticleVariableToXml(XmlParser &xml_parser) : xml_parser_(xml_parser){};
+        WriteAParticleVariableToXml(XmlParser &xml_parser) : xml_parser_(xml_parser) {};
 
         template <typename DataType>
         void operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables);
@@ -274,7 +277,7 @@ class BaseParticles
     struct ReadAParticleVariableFromXml
     {
         XmlParser &xml_parser_;
-        ReadAParticleVariableFromXml(XmlParser &xml_parser) : xml_parser_(xml_parser){};
+        ReadAParticleVariableFromXml(XmlParser &xml_parser) : xml_parser_(xml_parser) {};
 
         template <typename DataType>
         void operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables, BaseParticles *base_particles);

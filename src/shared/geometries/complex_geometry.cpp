@@ -23,12 +23,6 @@ bool AlignedBox::checkInBounds(const Vecd &probe_point, Real lower_bound_fringe,
                : false;
 }
 //=================================================================================================//
-bool AlignedBox::checkUpperBound(const Vecd &probe_point, Real upper_bound_fringe)
-{
-    Vecd position_in_frame = transform_.shiftBaseStationToFrame(probe_point);
-    return position_in_frame[alignment_axis_] > halfsize_[alignment_axis_] + upper_bound_fringe ? true : false;
-}
-//=================================================================================================//
 bool AlignedBox::checkLowerBound(const Vecd &probe_point, Real lower_bound_fringe)
 {
     Vecd position_in_frame = transform_.shiftBaseStationToFrame(probe_point);
@@ -45,14 +39,6 @@ bool AlignedBox::checkNearLowerBound(const Vecd &probe_point, Real threshold)
 {
     Vecd position_in_frame = transform_.shiftBaseStationToFrame(probe_point);
     return ABS(position_in_frame[alignment_axis_] + halfsize_[alignment_axis_]) <= threshold ? true : false;
-}
-//=================================================================================================//
-Vecd AlignedBox::getUpperPeriodic(const Vecd &probe_point)
-{
-    Vecd position_in_frame = transform_.shiftBaseStationToFrame(probe_point);
-    Vecd shift = Vecd::Zero();
-    shift[alignment_axis_] -= 2.0 * halfsize_[alignment_axis_];
-    return transform_.shiftFrameStationToBase(position_in_frame + shift);
 }
 //=================================================================================================//
 Vecd AlignedBox::getLowerPeriodic(const Vecd &probe_point)
