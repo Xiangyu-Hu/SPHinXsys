@@ -191,7 +191,7 @@ int main(int ac, char *av[])
 
     /** Initial condition with momentum field */
     SimpleDynamics<BoundaryVelocity> solid_initial_condition(wall_boundary);
-    /** Kernel correction matrix and transport velocity formulation. */
+    /** Linear reconstruction of the complex field. */
     InteractionDynamicsCK<MainExecutionPolicy, LinearCorrectionMatrixComplex>
         fluid_linear_correction_matrix(InteractArgs(water_block_inner, 0.5), water_wall_contact);
     /** Evaluation of density by summation approach. */
@@ -208,7 +208,7 @@ int main(int ac, char *av[])
      */
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::FreeSurfaceIndicationComplexCK>
         fluid_boundary_indicator(water_block_inner, water_wall_contact);
-    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::TransportVelocityLimitedCorrectionCorrectedComplexBulkParticlesCK>
+    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::TransportVelocityCorrectionWallNoCorrectionBulkParticlesWithKernelSummationCK>
         transport_correction_ck(water_block_inner, water_wall_contact);
 
     ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AdvectionTimeStepCK> fluid_advection_time_step(water_body, U_f);
@@ -222,6 +222,8 @@ int main(int ac, char *av[])
     /** Output the body states. */
     BodyStatesRecordingToVtp body_states_recording(sph_system);
     body_states_recording.addToWrite<Vecd>(water_body, "Velocity");
+    body_states_recording.addToWrite<Vecd>(water_body, "KernelSummation");
+
     body_states_recording.addToWrite<Real>(water_body, "Density");
     body_states_recording.addToWrite<int>(water_body, "Indicator");
     body_states_recording.addToWrite<Vecd>(wall_boundary, "Velocity");
