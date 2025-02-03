@@ -36,27 +36,29 @@ namespace SPH
 {
 namespace fluid_dynamics
 {
-template <typename TargetPressure>
-class PressureCondition : public BaseFlowBoundaryCondition
+template <typename TargetPressure, class KernelCorrectionType>
+class PressureBoundaryCondition : public BaseFlowBoundaryCondition
 {
   public:
     /** default parameter indicates prescribe pressure */
-    explicit PressureCondition(AlignedBoxPartByCell &aligned_box_part)
+    explicit PressureBoundaryCondition(AlignedBoxPartByCell &aligned_box_part)
         : BaseFlowBoundaryCondition(aligned_box_part),
           aligned_box_(aligned_box_part.getAlignedBox()),
           alignment_axis_(aligned_box_.AlignmentAxis()),
           transform_(aligned_box_.getTransform()),
           target_pressure_(*this),
           kernel_sum_(particles_->getVariableDataByName<Vecd>("KernelSummation")),
+          kernel_correction_(this->particles_),
           physical_time_(sph_system_.getSystemVariableDataByName<Real>("PhysicalTime")){};
-    virtual ~PressureCondition(){};
+    virtual ~PressureBoundaryCondition(){};
     AlignedBox &getAlignedBox() { return aligned_box_; };
 
     void update(size_t index_i, Real dt = 0.0)
     {
         if (aligned_box_.checkContain(pos_[index_i]))
         {
-            vel_[index_i] += 2.0 * kernel_sum_[index_i] * target_pressure_(p_[index_i], *physical_time_) / rho_[index_i] * dt;
+            //vel_[index_i] += 2.0 * kernel_sum_[index_i] * target_pressure_(p_[index_i], *physical_time_) / rho_[index_i] * dt;
+            vel_[index_i] += 2.0 * kernel_correction_(index_i) * kernel_sum_[index_i] * target_pressure_(p_[index_i], *physical_time_) / rho_[index_i] * dt;
 
             Vecd frame_velocity = Vecd::Zero();
             frame_velocity[alignment_axis_] = transform_.xformBaseVecToFrame(vel_[index_i])[alignment_axis_];
@@ -70,8 +72,16 @@ class PressureCondition : public BaseFlowBoundaryCondition
     Transform &transform_;
     TargetPressure target_pressure_;
     Vecd *kernel_sum_;
+    KernelCorrectionType kernel_correction_;
     Real *physical_time_;
 };
+
+template <typename TargetPressure>
+using PressureCondition = PressureBoundaryCondition<TargetPressure, NoKernelCorrection>;
+
+template <typename TargetPressure>
+using PressureConditionCorrection = PressureBoundaryCondition<TargetPressure, LinearGradientCorrection>;
+
 } // namespace fluid_dynamics
 } // namespace SPH
 #endif // PRESSURE_BOUNDARY_H

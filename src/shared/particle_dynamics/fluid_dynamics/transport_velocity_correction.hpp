@@ -45,7 +45,7 @@ void TransportVelocityCorrection<Inner<ResolutionType, LimiterType>, CommonContr
         {
             size_t index_j = inner_neighborhood.j_[n];
             // acceleration for transport velocity
-            inconsistency -= (this->kernel_correction_(index_i) + this->kernel_correction_(index_j)) *
+            inconsistency -= (this->kernel_correction_(index_i) + this->kernel_correction_(index_j, index_i)) *
                              inner_neighborhood.dW_ij_[n] * this->Vol_[index_j] * inner_neighborhood.e_ij_[n];
         }
         this->zero_gradient_residue_[index_i] = inconsistency;
