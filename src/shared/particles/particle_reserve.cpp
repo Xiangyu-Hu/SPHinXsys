@@ -21,7 +21,7 @@ void ParticleReserve::checkParticlesReserved()
 //=================================================================================================//
 void ParticleBuffer<Base>::checkEnoughBuffer(BaseParticles &base_particles)
 {
-    if (base_particles.TotalRealParticles() >= base_particles.RealParticlesBound())
+    if (base_particles.TotalRealParticles() >= base_particles.ParticlesBound())
     {
         std::cout << "\n ERROR: Not enough buffer particles have been reserved!" << std::endl;
         std::cout << "\n You may need to increase the particle reserve." << std::endl;

@@ -10,7 +10,7 @@ namespace SPH
 {
 //=================================================================================================//
 BaseParticles::BaseParticles(SPHBody &sph_body, BaseMaterial *base_material)
-    : sv_total_real_particles_(nullptr), real_particles_bound_(0), particles_bound_(0),
+    : sv_total_real_particles_(nullptr), particles_bound_(0),
       original_id_(nullptr), sorted_id_(nullptr),
       pos_(nullptr), Vol_(nullptr), rho_(nullptr), mass_(nullptr),
       sph_body_(sph_body), body_name_(sph_body.getName()),
@@ -60,8 +60,7 @@ void BaseParticles::initializeAllParticlesBounds(size_t number_of_particles)
 {
     UnsignedInt *total_real_particles = sv_total_real_particles_->Data();
     *total_real_particles = number_of_particles;
-    real_particles_bound_ = number_of_particles;
-    particles_bound_ = real_particles_bound_;
+    particles_bound_ = number_of_particles;
 }
 //=================================================================================================//
 void BaseParticles::initializeAllParticlesBoundsFromReloadXml()
@@ -71,7 +70,6 @@ void BaseParticles::initializeAllParticlesBoundsFromReloadXml()
 //=================================================================================================//
 void BaseParticles::increaseAllParticlesBounds(size_t buffer_size)
 {
-    real_particles_bound_ += buffer_size;
     particles_bound_ += buffer_size;
 }
 //=================================================================================================//

@@ -293,7 +293,7 @@ template <typename DataType>
 DiscreteVariable<DataType> *BaseParticles::
     addVariableToList(ParticleVariables &variable_set, DiscreteVariable<DataType> *variable)
 {
-    if (variable->getDataSize() < real_particles_bound_)
+    if (variable->getDataSize() < particles_bound_)
     {
         std::cout << "\n Error: The variable '" << variable->Name() << "' can not be treated as a particle variable," << std::endl;
         std::cout << "\n because the data size " << variable->getDataSize() << " is too less!" << std::endl;

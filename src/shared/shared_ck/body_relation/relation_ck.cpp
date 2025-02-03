@@ -6,7 +6,7 @@ namespace SPH
 Relation<Base>::Relation(SPHBody &sph_body)
     : sph_body_(sph_body),
       particles_(sph_body.getBaseParticles()),
-      offset_list_size_(particles_.RealParticlesBound() + 1) {}
+      offset_list_size_(particles_.ParticlesBound() + 1) {}
 //=================================================================================================//
 Relation<Inner<>>::Relation(RealBody &real_body)
     : Relation<Base>(real_body), real_body_(&real_body),

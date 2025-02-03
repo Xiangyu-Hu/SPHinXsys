@@ -95,13 +95,10 @@ class BaseParticles
     //----------------------------------------------------------------------
     // Global information for defining particle groups
     // total_real_particles_ gives the run-time total number of real particles.
-    // real_particles_bound_ gives the maximum possible number of real particles
-    // which is allowed in the computation.
     // particles_bound_ gives the total number of particles in all groups.
     //----------------------------------------------------------------------
   protected:
     SingularVariable<UnsignedInt> *sv_total_real_particles_;
-    UnsignedInt real_particles_bound_;
     UnsignedInt particles_bound_;
 
   public:
@@ -114,7 +111,6 @@ class BaseParticles
     UnsignedInt TotalRealParticles() { return *sv_total_real_particles_->Data(); };
     void incrementTotalRealParticles(UnsignedInt increment = 1) { *sv_total_real_particles_->Data() += increment; };
     void decrementTotalRealParticles(UnsignedInt decrement = 1) { *sv_total_real_particles_->Data() -= decrement; };
-    UnsignedInt RealParticlesBound() { return real_particles_bound_; };
     UnsignedInt ParticlesBound() { return particles_bound_; };
     void initializeAllParticlesBounds(size_t total_real_particles);
     void initializeAllParticlesBoundsFromReloadXml();

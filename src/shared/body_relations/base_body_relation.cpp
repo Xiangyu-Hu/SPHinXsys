@@ -24,7 +24,7 @@ BaseInnerRelation::BaseInnerRelation(RealBody &real_body)
     : SPHRelation(real_body), real_body_(&real_body)
 {
     subscribeToBody();
-    inner_configuration_.resize(base_particles_.RealParticlesBound(), Neighborhood());
+    inner_configuration_.resize(base_particles_.ParticlesBound(), Neighborhood());
 }
 //=================================================================================================//
 void BaseInnerRelation::resetNeighborhoodCurrentSize()
@@ -51,7 +51,7 @@ BaseContactRelation::BaseContactRelation(SPHBody &sph_body, RealBodyVector conta
         const std::string name = contact_bodies_[k]->getName();
         contact_particles_.push_back(&contact_bodies_[k]->getBaseParticles());
         contact_adaptations_.push_back(contact_bodies_[k]->sph_adaptation_);
-        contact_configuration_[k].resize(base_particles_.RealParticlesBound(), Neighborhood());
+        contact_configuration_[k].resize(base_particles_.ParticlesBound(), Neighborhood());
     }
 }
 //=================================================================================================//

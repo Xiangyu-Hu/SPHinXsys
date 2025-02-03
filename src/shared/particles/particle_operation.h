@@ -48,7 +48,7 @@ class SpawnRealParticle
     DiscreteVariableArrays copyable_states_;
     DiscreteVariable<UnsignedInt> *dv_original_id_;
     SingularVariable<UnsignedInt> *sv_total_real_particles_;
-    UnsignedInt real_particles_bound_;
+    UnsignedInt particles_bound_;
 
   public:
     SpawnRealParticle(BaseParticles *particles);
@@ -62,7 +62,7 @@ class SpawnRealParticle
         UnsignedInt operator()(UnsignedInt index_i)
         {
             UnsignedInt new_original_id = *total_real_particles_;
-            if (new_original_id < real_particles_bound_)
+            if (new_original_id < particles_bound_)
             {
                 /** Buffer Particle state copied from real particle. */
                 copy_particle_state_(copyable_state_data_arrays_, new_original_id, index_i);
@@ -75,7 +75,7 @@ class SpawnRealParticle
 
       protected:
         UnsignedInt *total_real_particles_;
-        UnsignedInt real_particles_bound_;
+        UnsignedInt particles_bound_;
         UnsignedInt *original_id_;
         VariableDataArrays copyable_state_data_arrays_;
         OperationOnDataAssemble<VariableDataArrays, CopyParticleStateCK> copy_particle_state_;
