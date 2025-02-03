@@ -58,8 +58,7 @@ void BaseParticles::registerPositionAndVolumetricMeasureFromReload()
 //=================================================================================================//
 void BaseParticles::initializeAllParticlesBounds(size_t number_of_particles)
 {
-    UnsignedInt *total_real_particles = sv_total_real_particles_->Data();
-    *total_real_particles = number_of_particles;
+    sv_total_real_particles_->setValue(number_of_particles);
     particles_bound_ = number_of_particles;
 }
 //=================================================================================================//
@@ -68,9 +67,9 @@ void BaseParticles::initializeAllParticlesBoundsFromReloadXml()
     initializeAllParticlesBounds(reload_xml_parser_.Size(reload_xml_parser_.first_element_));
 }
 //=================================================================================================//
-void BaseParticles::increaseAllParticlesBounds(size_t buffer_size)
+void BaseParticles::increaseParticlesBounds(size_t extra_size)
 {
-    particles_bound_ += buffer_size;
+    particles_bound_ += extra_size;
 }
 //=================================================================================================//
 void BaseParticles::copyFromAnotherParticle(size_t index, size_t another_index)

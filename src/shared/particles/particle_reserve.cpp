@@ -32,7 +32,7 @@ void ParticleBuffer<Base>::checkEnoughBuffer(BaseParticles &base_particles)
 //=================================================================================================//
 void ParticleBuffer<Base>::allocateBufferParticles(BaseParticles &base_particles, size_t buffer_size)
 {
-    base_particles.increaseAllParticlesBounds(buffer_size);
+    base_particles.increaseParticlesBounds(buffer_size);
 }
 //=================================================================================================//
 void Ghost<Base>::checkWithinGhostSize(const ParticlesBound &ghost_bound)

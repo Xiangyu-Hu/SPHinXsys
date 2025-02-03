@@ -114,7 +114,7 @@ class BaseParticles
     UnsignedInt ParticlesBound() { return particles_bound_; };
     void initializeAllParticlesBounds(size_t total_real_particles);
     void initializeAllParticlesBoundsFromReloadXml();
-    void increaseAllParticlesBounds(size_t buffer_size);
+    void increaseParticlesBounds(size_t extra_size);
     void copyFromAnotherParticle(size_t index, size_t another_index);
     size_t allocateGhostParticles(size_t ghost_size);
     void updateGhostParticle(size_t ghost_index, size_t index);
