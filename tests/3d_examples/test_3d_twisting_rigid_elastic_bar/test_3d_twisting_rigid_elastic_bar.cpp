@@ -13,7 +13,7 @@ void run_rigid_elastic_coupling(int res_factor = 1);
 
 int main(int ac, char *av[])
 {
-    for (auto res : {1, 2})
+    for (auto res : {1})
         run_rigid_elastic_coupling(res);
 }
 
@@ -56,15 +56,13 @@ struct solid_algs
     InteractionWithUpdate<LinearGradientCorrectionMatrixInner> corrected_configuration;
     Dynamics1Level<solid_dynamics::Integration1stHalfPK2> stress_relaxation_first_half;
     Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half;
-    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d, FixedDampingRate>>> damping;
     ReduceDynamics<solid_dynamics::AcousticTimeStep> time_step;
 
-    explicit solid_algs(RealBody &body, Real physical_damping)
+    explicit solid_algs(RealBody &body)
         : inner_relation(body),
           corrected_configuration(inner_relation),
           stress_relaxation_first_half(inner_relation),
           stress_relaxation_second_half(inner_relation),
-          damping(0.5, inner_relation, "Velocity", physical_damping),
           time_step(body)
     {
         // Initial normal
@@ -74,7 +72,6 @@ struct solid_algs
     void corrected_config() { corrected_configuration.exec(); }
     void stress_relaxation_first(Real dt) { stress_relaxation_first_half.exec(dt); }
     void stress_relaxation_second(Real dt) { stress_relaxation_second_half.exec(dt); }
-    void damping_exec(Real dt) { damping.exec(dt); }
     Real get_time_step() { return time_step.exec(); }
 };
 
@@ -167,6 +164,33 @@ read_ref_data(const fs::path &ref_name)
     return variable_ref;
 }
 
+class ExcludeRigidNeighbors : public LocalDynamics, public DataDelegateInner
+{
+  private:
+    int *is_rigid_;
+
+  public:
+    explicit ExcludeRigidNeighbors(BaseInnerRelation &inner_relation)
+        : LocalDynamics(inner_relation.getSPHBody()), DataDelegateInner(inner_relation),
+          is_rigid_(particles_->registerStateVariable<int>("isRigid")) {}
+
+    void update(size_t index_i, Real dt = 0.0)
+    {
+        Neighborhood &inner_neighborhood = inner_configuration_[index_i];
+        if (is_rigid_[index_i])
+        {
+            inner_neighborhood.current_size_ = 0;
+            return;
+        }
+        for (size_t n = inner_neighborhood.current_size_; n-- > 0;)
+        {
+            size_t index_j = inner_neighborhood.j_[n];
+            if (is_rigid_[index_j] == 1)
+                inner_neighborhood.removeANeighbor(n);
+        }
+    }
+};
+
 void run_rigid_elastic_coupling(int res_factor)
 {
     // unit transformation
@@ -195,7 +219,7 @@ void run_rigid_elastic_coupling(int res_factor)
     auto material = makeShared<NeoHookeanSolid>(rho, youngs_modulus, poisson_ratio);
 
     // load and end time
-    const Real max_end_time = 10.0;
+    const Real max_end_time = 20.0;
     auto get_force_p = [&](Real t)
     {
         return t < 1.0 ? 0.05 * t : 0.05;
@@ -241,8 +265,17 @@ void run_rigid_elastic_coupling(int res_factor)
     body.generateParticles<BaseParticles, Lattice>();
 
     // Methods
-    solid_algs algs(body, get_physical_viscosity_general(rho, youngs_modulus, total_length));
+    solid_algs algs(body);
     rigid_algs rigid_algs(body, mesh_rigid);
+
+    // damping
+    // use a different inner relation for damping to exlude the rigid body part
+    InnerRelation inner_for_damping(body);
+    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d, FixedDampingRate>>> damping(
+        0.5,
+        inner_for_damping,
+        "Velocity",
+        get_physical_viscosity_general(rho, youngs_modulus, height));
 
     // Boundary conditions
     FixPart fix_elastic_part(body, "ClampingPart", [&](Vec3d &pos)
@@ -273,38 +306,40 @@ void run_rigid_elastic_coupling(int res_factor)
     ObservedQuantityRecording<Vecd> write_disp("Displacement", contact_observer);
     write_disp.writeToFile(0);
 
-    // record the kinetic energy to determine if the simulation has reached the steady state
-    ReduceDynamics<TotalKineticEnergy> total_kinetic_energy(body);
-    // if the energy is lower than the threshold in 5 steps, the simulation is considered to have reached the steady state
-    const size_t max_step = 5;
-    const Real max_energy = 1e-5;
-    std::vector<double> energy_history;
+    // record the displacement of observer 1 until convergence
+    const Real threshold = 1e-6;
+    // if the deviation of displacement is less than threshold for 5 steps, we consider it as steady state
+    const size_t max_step = 6;
+    std::vector<Vec3d> disp_history;
     bool steady_state = false;
-    auto record_energy = [&]()
+    auto record_disp = [&]()
     {
-        Real E_k = total_kinetic_energy.exec();
-        if (energy_history.size() < max_step)
+        const auto &disp = write_disp.getObservedQuantity()[0];
+        if (disp_history.size() < max_step)
         {
-            energy_history.push_back(E_k);
+            disp_history.push_back(disp);
             return false;
         }
 
-        std::rotate(energy_history.begin(), energy_history.begin() + 1, energy_history.end());
-        energy_history.back() = E_k;
-        return std::all_of(energy_history.begin(), energy_history.end(), [&](Real e)
-                           { return e < max_energy; });
+        std::rotate(disp_history.begin(), disp_history.begin() + 1, disp_history.end());
+        disp_history.back() = disp;
+        std::vector<Vec3d> difference(max_step);
+        std::adjacent_difference(disp_history.begin(), disp_history.end(), difference.begin());
+        return std::all_of(difference.begin() + 1, difference.end(), [&](Vec3d d)
+                           { return d.norm() < threshold; });
     };
 
     // Initialization
     system.initializeSystemCellLinkedLists();
     system.initializeSystemConfigurations();
     algs.corrected_config();
+    SimpleDynamics<ExcludeRigidNeighbors>(inner_for_damping).exec();
 
     // Simulation
     Real &physical_time = *system.getSystemVariableDataByName<Real>("PhysicalTime");
     int ite = 0;
     int ite_output = 0;
-    Real output_period = 0.1;
+    Real output_period = 0.2;
     const Real dt_ref = algs.get_time_step();
     Real dt = 0.0;
     TickCount t1 = TickCount::now();
@@ -329,11 +364,12 @@ void run_rigid_elastic_coupling(int res_factor)
 
                 // first half integration of elastic body
                 algs.stress_relaxation_first(dt);
-                fix_elastic_bc.exec();
-                algs.damping_exec(dt);
-                fix_elastic_bc.exec();
+                rigid_algs.apply_constraint();
 
-                // rigid_algs.apply_constraint();
+                fix_elastic_bc.exec();
+                damping.exec(dt);
+                fix_elastic_bc.exec();
+                rigid_algs.apply_constraint();
 
                 // update rigid body state based on the inner force computed in the previous step
                 auto rigid_force = get_rigid_force(physical_time);
@@ -341,8 +377,7 @@ void run_rigid_elastic_coupling(int res_factor)
 
                 // second half integration of elastic body
                 algs.stress_relaxation_second(dt);
-
-                // rigid_algs.apply_constraint();
+                rigid_algs.apply_constraint();
 
                 ++ite;
                 integral_time += dt;
@@ -352,11 +387,14 @@ void run_rigid_elastic_coupling(int res_factor)
             ite_output++;
             vtp_output.writeToFile(ite_output);
             write_disp.writeToFile(ite_output);
-            steady_state = record_energy();
+            steady_state = record_disp();
         }
         TimeInterval tt = TickCount::now() - t1;
         std::cout << "Steady state reached at the physical time for the simulation: " << physical_time << std::endl;
-        std::cout << "The final energy is: " << energy_history.back() << std::endl;
+        std::cout << "The norm of obs1 displacement in the last 5 steps: ";
+        for (const auto &disp : disp_history)
+            std::cout << disp.norm() << " ";
+        std::cout << std::endl;
         std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
     };
 
