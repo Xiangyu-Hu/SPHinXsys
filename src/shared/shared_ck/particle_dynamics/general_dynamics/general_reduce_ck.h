@@ -156,5 +156,34 @@ class QuantityAverage : public BaseLocalDynamicsReduce<ReduceSum<std::pair<DataT
   protected:
     DiscreteVariable<DataType> *dv_variable_;
 };
+
+template <class DynamicsIdentifier>
+class UpperFrontInAxisDirectionCK : public BaseLocalDynamicsReduce<ReduceMax, DynamicsIdentifier>
+{
+  public:
+    UpperFrontInAxisDirectionCK(DynamicsIdentifier &identifier, const std::string &name, int axis = lastAxis);
+    virtual ~UpperFrontInAxisDirectionCK() {};
+
+    class ReduceKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        ReduceKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+
+        Real reduce(size_t index_i, Real dt = 0.0)
+        {
+            return pos_[index_i][axis_];
+        };
+
+      protected:
+        int axis_;
+        Vecd *pos_;
+    };
+
+  protected:
+    int axis_;
+    DiscreteVariable<Vecd> *dv_pos_;
+};
+
 } // namespace SPH
 #endif // GENERAL_REDUCE_CK_H

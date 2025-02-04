@@ -60,10 +60,8 @@ class BaseLocalDynamics
           sph_body_(identifier.getSPHBody()),
           particles_(&sph_body_.getBaseParticles()) {};
     virtual ~BaseLocalDynamics() {};
-    typedef DynamicsIdentifier Identifier;
-    DynamicsIdentifier &getDynamicsIdentifier() { return identifier_; };
+    using Identifier = typename DynamicsIdentifier::BaseIdentifier;
     SPHBody &getSPHBody() { return sph_body_; };
-    BaseParticles *getParticles() { return particles_; };
     virtual void setupDynamics(Real dt = 0.0) {}; // setup global parameters
 
     class FinishDynamics
@@ -140,7 +138,7 @@ class Average : public ReduceSumType
     virtual ReturnType outputResult(ReturnType reduced_value)
     {
         ReturnType sum = ReduceSumType::outputResult(reduced_value);
-        return sum / Real(this->getDynamicsIdentifier().SizeOfLoopRange());
+        return sum / Real(this->identifier_.SizeOfLoopRange());
     }
 };
 

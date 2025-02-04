@@ -51,7 +51,7 @@ ParticleSortCK<ExecutionPolicy, SortMethodType>::ParticleSortCK(RealBody &real_b
     : LocalDynamics(real_body), BaseDynamics<void>(),
       ex_policy_(ExecutionPolicy{}),
       cell_linked_list_(DynamicCast<CellLinkedList>(this, real_body.getCellLinkedList())),
-      mesh_(cell_linked_list_),
+      mesh_(cell_linked_list_.getMesh()),
       dv_pos_(particles_->getVariableByName<Vecd>("Position")),
       dv_sequence_(particles_->registerDiscreteVariableOnly<UnsignedInt>(
           "Sequence", particles_->ParticlesBound())),
