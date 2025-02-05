@@ -132,6 +132,16 @@ class DiscreteVariable : public Entity
     {
         data_field_ = new DataType[data_size];
     };
+    template <class InitializationFunction>
+    DiscreteVariable(const std::string &name, size_t data_size,
+                     const InitializationFunction &initialization)
+        : DiscreteVariable(name, data_size)
+    {
+        for (size_t i = 0; i < data_size; ++i)
+        {
+            data_field_[i] = initialization(i);
+        }
+    };
     ~DiscreteVariable() { delete[] data_field_; };
     DataType *Data() { return data_field_; };
 

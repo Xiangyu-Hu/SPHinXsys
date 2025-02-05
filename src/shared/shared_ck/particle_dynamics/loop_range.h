@@ -32,7 +32,7 @@
 #include "base_body.h"
 #include "base_body_part.h"
 #include "base_particles.hpp"
-
+#include "reduce_functors.h"
 namespace SPH
 {
 template <typename...>
@@ -43,26 +43,30 @@ class LoopRangeCK<ExecutionPolicy, SPHBody>
 {
   public:
     LoopRangeCK(SPHBody &sph_body)
-        : loop_bound_(sph_body.getBaseParticles().svTotalRealParticles()->DelegatedData(ExecutionPolicy{})){};
+        : loop_bound_(sph_body.getBaseParticles().svTotalRealParticles()->DelegatedData(ExecutionPolicy{})) {};
     LoopRangeCK(SingularVariable<UnsignedInt> *sv_total_particles)
-        : loop_bound_(sv_total_particles->DelegatedData(ExecutionPolicy{})){};
-    template <class ReturnType, class UnaryFunc>
-    ReturnType computeUnit(const UnaryFunc &f, UnsignedInt i) const { return f(i); };
+        : loop_bound_(sv_total_particles->DelegatedData(ExecutionPolicy{})) {};
+    template <class UnaryFunc>
+    void computeUnit(const UnaryFunc &f, UnsignedInt i) const { f(i); };
+    template <class ReturnType, class BinaryFunc, class UnaryFunc>
+    ReturnType computeUnit(const BinaryFunc &bf, const UnaryFunc &uf, UnsignedInt i) const { return uf(i); };
     UnsignedInt LoopBound() const { return *loop_bound_; };
 
   protected:
     UnsignedInt *loop_bound_;
 };
 
-template <class ExecutionPolicy, class BodyPartType>
-class LoopRangeCK<ExecutionPolicy, BodyPartType>
+template <class ExecutionPolicy>
+class LoopRangeCK<ExecutionPolicy, BodyPartByParticle>
 {
   public:
-    LoopRangeCK(BodyPartType &body_part)
+    LoopRangeCK(BodyPartByParticle &body_part)
         : index_list_(body_part.dvIndexList()->DelegatedData(ExecutionPolicy{})),
-          loop_bound_(body_part.svRangeSize()->DelegatedData(ExecutionPolicy{})){};
-    template <class ReturnType, class UnaryFunc>
-    ReturnType computeUnit(const UnaryFunc &f, UnsignedInt i) const { return f(index_list_[i]); };
+          loop_bound_(body_part.svRangeSize()->DelegatedData(ExecutionPolicy{})) {};
+    template <class UnaryFunc>
+    void computeUnit(const UnaryFunc &f, UnsignedInt i) const { f(index_list_[i]); };
+    template <class ReturnType, class BinaryFunc, class UnaryFunc>
+    ReturnType computeUnit(const BinaryFunc &bf, const UnaryFunc &uf, UnsignedInt i) const { return uf(index_list_[i]); };
     UnsignedInt LoopBound() const { return *loop_bound_; };
 
   protected:
@@ -70,5 +74,43 @@ class LoopRangeCK<ExecutionPolicy, BodyPartType>
     UnsignedInt *loop_bound_;
 };
 
+template <class ExecutionPolicy>
+class LoopRangeCK<ExecutionPolicy, BodyPartByCell>
+{
+  public:
+    LoopRangeCK(BodyPartByCell &body_part)
+        : index_list_(body_part.dvIndexList()->DelegatedData(ExecutionPolicy{})),
+          loop_bound_(body_part.svRangeSize()->DelegatedData(ExecutionPolicy{})),
+          particle_index_(body_part.getParticleIndex()->DelegatedData(ExecutionPolicy{})),
+          cell_offset_(body_part.getCellOffset()->DelegatedData(ExecutionPolicy{})) {};
+    template <class UnaryFunc>
+    void computeUnit(const UnaryFunc &uf, UnsignedInt i) const
+    {
+        UnsignedInt cell_index = index_list_[i];
+        for (size_t k = cell_offset_[cell_index]; k != cell_offset_[cell_index + 1]; ++k)
+        {
+            uf(particle_index_[k]);
+        }
+    };
+
+    template <class ReturnType, class BinaryFunc, class UnaryFunc>
+    ReturnType computeUnit(const BinaryFunc &bf, const UnaryFunc &uf, UnsignedInt i) const
+    {
+        ReturnType temp = ReduceReference<BinaryFunc>::value;
+        UnsignedInt cell_index = index_list_[i];
+        for (size_t k = cell_offset_[cell_index]; k != cell_offset_[cell_index + 1]; ++k)
+        {
+            temp = bf(temp, uf(particle_index_[k]));
+        }
+        return temp;
+    };
+    UnsignedInt LoopBound() const { return *loop_bound_; };
+
+  protected:
+    UnsignedInt *index_list_;
+    UnsignedInt *loop_bound_;
+    UnsignedInt *particle_index_;
+    UnsignedInt *cell_offset_;
+};
 } // namespace SPH
 #endif // LOOP_RANGE_H

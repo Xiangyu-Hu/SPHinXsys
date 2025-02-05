@@ -82,6 +82,7 @@ class SPHBody
     StdVec<BodyPartByParticle *> body_parts_by_particle_; /**< all body parts by particle */
 
   public:
+    typedef SPHBody BaseIdentifier;
     SPHAdaptation *sph_adaptation_;        /**< numerical adaptation policy */
     BaseMaterial *base_material_;          /**< base material for dynamic cast in DataDelegate */
     StdVec<SPHRelation *> body_relations_; /**< all contact relations centered from this body **/
