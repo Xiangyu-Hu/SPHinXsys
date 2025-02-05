@@ -54,7 +54,7 @@ int main(int ac, char *av[])
     InteractionWithUpdate<fluid_dynamics::TkeGradientForceInner> tke_gradient_force(water_block_inner);
 
     // visualization in FVM with data in cell
-    BodyStatesRecordingToMeshVtp write_real_body_states(water_block, read_mesh_data);
+    BodyStatesRecordingToMeshVtu write_real_body_states(water_block, read_mesh_data);
     ReducedQuantityRecording<MaximumSpeed> write_maximum_speed(water_block);
 
     initial_condition.exec();

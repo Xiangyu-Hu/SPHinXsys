@@ -97,7 +97,7 @@ void BodyStatesRecordingToMeshVtu::writeWithFileName(const std::string &sequence
     {
         if (body->checkNewlyUpdated() && state_recording_)
         {
-            std::string filefullpath = io_environment_.output_folder_ + "/SPHBody_" + body->getName() + "_" + sequence + ".vtu";
+            std::string filefullpath = io_environment_.output_folder_ + "/" + body->getName() + "_" + sequence + ".vtu";
             if (fs::exists(filefullpath))
             {
                 fs::remove(filefullpath);
@@ -223,7 +223,7 @@ void BodyStatesRecordingToMeshVtu::FileOffsets(std::ofstream &out_file)
 //=================================================================================================//
 void BodyStatesRecordingToMeshVtu::FileTypeOfCell(std::ofstream &out_file)
 {
-    size_t type = 10;
+    size_t type = Dimensions == 2 ? 5 : 10; // VTK_Triangle (5) in 2D, VTK_Tetrahedron(10) in 3D
     // Specifies type of cell 10 = tetrahedral
     out_file << "<DataArray type=\"UInt8\" Name=\"types\" format=\"ascii\" RangeMin=\"10\" RangeMax=\"10\">\n";
     for (const auto &types : elements_nodes_connection_)
