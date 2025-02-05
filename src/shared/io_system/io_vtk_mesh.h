@@ -65,12 +65,11 @@ class BodyStatesRecordingToMeshVtu : public BodyStatesRecordingToVtp
     SPHBody &bounds_;
 
     void FileHeader(std::ofstream &out_file);
-    void FileNodeCoordinates(std::ofstream &out_file, StdLargeVec<Vecd> &nodes_coordinates_,
-                             StdLargeVec<StdVec<size_t>> &elements_nodes_connection_, SPHBody &bounds_, Real &range_max);
+    Real FileNodeCoordinates(std::ofstream &out_file);
     void FileInformationKey(std::ofstream &out_file, Real &range_max);
-    void FileCellConnectivity(std::ofstream &out_file, StdLargeVec<StdVec<size_t>> &elements_nodes_connection_, StdLargeVec<Vecd> &node_coordinates_);
-    void FileOffsets(std::ofstream &out_file, StdLargeVec<StdVec<size_t>> &elements_nodes_connection_);
-    void FileTypeOfCell(std::ofstream &out_file, StdLargeVec<StdVec<size_t>> &elements_nodes_connection_);
+    void FileCellConnectivity(std::ofstream &out_file);
+    void FileOffsets(std::ofstream &out_file);
+    void FileTypeOfCell(std::ofstream &out_file);
 };
 } // namespace SPH
 #endif // IO_VTK_MESH_H
