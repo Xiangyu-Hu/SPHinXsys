@@ -46,7 +46,7 @@ int main(int ac, char *av[])
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
-    BodyStatesRecordingInMeshToVtp write_real_body_states(wave_block, ansys_mesh);
+    BodyStatesRecordingToMeshVtp write_real_body_states(wave_block, ansys_mesh);
     write_real_body_states.addToWrite<Real>(wave_block, "Density");
     write_real_body_states.addToWrite<Real>(wave_block, "Pressure");
     RegressionTestEnsembleAverage<ReducedQuantityRecording<MaximumSpeed>> write_maximum_speed(wave_block);

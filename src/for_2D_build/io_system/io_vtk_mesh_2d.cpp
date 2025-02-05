@@ -1,9 +1,9 @@
 #include "io_vtk.hpp"
-#include "io_vtk_fvm.h"
+#include "io_vtk_mesh.h"
 namespace SPH
 {
 //=================================================================================================//
-void BodyStatesRecordingInMeshToVtp::writeWithFileName(const std::string &sequence)
+void BodyStatesRecordingToMeshVtp::writeWithFileName(const std::string &sequence)
 {
     for (SPHBody *body : bodies_)
     {
@@ -83,10 +83,10 @@ void BodyStatesRecordingInMeshToVtp::writeWithFileName(const std::string &sequen
     }
 }
 //=================================================================================================//
-void BodyStatesRecordingInMeshToVtu::writeWithFileName(const std::string &sequence)
+void BodyStatesRecordingToMeshVtu::writeWithFileName(const std::string &sequence)
 {
     std::cout << "For 2D build:"
-              << "The method BodyStatesRecordingInMeshToVtu::writeWithFileName not implemented yet."
+              << "The method BodyStatesRecordingToMeshVtu::writeWithFileName not implemented yet."
               << std::endl;
     exit(1);
 }

@@ -1,11 +1,11 @@
 #include "io_vtk.hpp"
-#include "io_vtk_fvm.h"
+#include "io_vtk_mesh.h"
 #include "mesh_helper.h"
 
 namespace SPH
 {
 //=================================================================================================//
-void BodyStatesRecordingInMeshToVtu::writeWithFileName(const std::string &sequence)
+void BodyStatesRecordingToMeshVtu::writeWithFileName(const std::string &sequence)
 {
     for (SPHBody *body : bodies_)
     {
@@ -47,10 +47,10 @@ void BodyStatesRecordingInMeshToVtu::writeWithFileName(const std::string &sequen
     }
 }
 //=================================================================================================//
-void BodyStatesRecordingInMeshToVtp::writeWithFileName(const std::string &sequence)
+void BodyStatesRecordingToMeshVtp::writeWithFileName(const std::string &sequence)
 {
     std::cout << "For 3D build:"
-              << "The method BodyStatesRecordingInMeshToVtp::writeWithFileName not implemented yet."
+              << "The method BodyStatesRecordingToMeshVtp::writeWithFileName not implemented yet."
               << std::endl;
     exit(1);
 }
