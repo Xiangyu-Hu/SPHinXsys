@@ -71,7 +71,9 @@ void TransportVelocityCorrectionCK<Inner<WithUpdate, KernelCorrectionType, Resol
     Vecd inconsistency = Vecd::Zero();
 
     // Only define kernel_sum if we are actually using WithKernelSummationCK
-    if constexpr (std::is_same_v<NablaWVSummationType, WithKernelSummationCK>)
+    constexpr bool use_kernel_summation = std::is_same_v<NablaWVSummationType, WithKernelSummationCK>;
+
+    if constexpr (use_kernel_summation)
     {
         Vecd kernel_sum = Vecd::Zero();
         // accumulate kernel_sum in the loop ...
@@ -180,7 +182,9 @@ void TransportVelocityCorrectionCK<Contact<Wall, KernelCorrectionType, Resolutio
     Vecd inconsistency = Vecd::Zero();
 
     // Only define kernel_sum if we are actually using WithKernelSummationCK
-    if constexpr (std::is_same_v<NablaWVSummationType, WithKernelSummationCK>)
+    constexpr bool use_kernel_summation = std::is_same_v<NablaWVSummationType, WithKernelSummationCK>;
+
+    if constexpr (use_kernel_summation)
     {
         Vecd kernel_sum = Vecd::Zero();
         // accumulate kernel_sum in the loop ...
