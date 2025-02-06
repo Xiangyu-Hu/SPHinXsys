@@ -122,7 +122,7 @@ class ReducedQuantityRecording<LocalReduceMethodType> : public BaseQuantityRecor
     template <class DynamicsIdentifier, typename... Args>
     ReducedQuantityRecording(DynamicsIdentifier &identifier, Args &&...args)
         : BaseQuantityRecording(identifier.getSPHBody().getSPHSystem(),
-                                identifier.getSPHBody().getName(), ""),
+                                identifier.getName(), ""),
           reduce_method_(identifier, std::forward<Args>(args)...)
     {
         quantity_name_ = reduce_method_.QuantityName();
