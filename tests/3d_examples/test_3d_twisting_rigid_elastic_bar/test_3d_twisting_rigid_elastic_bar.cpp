@@ -11,10 +11,15 @@ using namespace SPH;
 
 void run_rigid_elastic_coupling(int res_factor = 1);
 
+TEST(rigid_elastic_coupling, dp_2)
+{
+    run_rigid_elastic_coupling(2);
+}
+
 int main(int ac, char *av[])
 {
-    for (auto res : {1})
-        run_rigid_elastic_coupling(res);
+    testing::InitGoogleTest(&ac, av);
+    return RUN_ALL_TESTS();
 }
 
 class FixPart : public BodyPartByParticle
@@ -410,11 +415,8 @@ void run_rigid_elastic_coupling(int res_factor)
     }
 
     // post-processing
-    // auto *disp = write_disp.getObservedQuantity();
-    // const auto disp_ref = read_ref_data("./input/displacement");
-    // std::cout << "Error: " << std::endl;
-    // for (size_t i = 0; i < observation_locations.size(); i++)
-    // {
-    //     std::cout << (disp[i] - disp_ref[i]).norm() / disp_ref[i].norm() * 100 << "%" << std::endl;
-    // }
+    auto *disp = write_disp.getObservedQuantity();
+    const auto disp_ref = read_ref_data("./input/displacement");
+    for (size_t i = 0; i < observation_locations.size(); i++)
+        ASSERT_LT((disp[i] - disp_ref[i]).norm() / disp_ref[i].norm(), 15e-2); // 15% error tolerance
 }
