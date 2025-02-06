@@ -125,7 +125,7 @@ class ReducedQuantityRecording<LocalReduceMethodType> : public BaseQuantityRecor
                                 identifier.getSPHBody().getName(), ""),
           reduce_method_(identifier, std::forward<Args>(args)...)
     {
-        quantity_name_(reduce_method_.QuantityName());
+        quantity_name_ = reduce_method_.QuantityName();
         std::ofstream out_file(filefullpath_output_.c_str(), std::ios::app);
         out_file << "\"run_time\"" << "   ";
         plt_engine_.writeAQuantityHeader(out_file, reduce_method_.Reference(), quantity_name_);
