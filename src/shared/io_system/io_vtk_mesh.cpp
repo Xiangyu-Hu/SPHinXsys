@@ -1,4 +1,5 @@
 #include "io_vtk_mesh.h"
+#include "io_vtk.hpp"
 
 namespace SPH
 {
@@ -13,7 +14,6 @@ void BodyStatesRecordingToMeshVtp::writeWithFileName(const std::string &sequence
     {
         if (body->checkNewlyUpdated() && state_recording_)
         {
-            // TODO: we can short the file name by without using SPHBody
             std::string filefullpath = io_environment_.output_folder_ + "/" + body->getName() + "_" + sequence + ".vtp";
             if (fs::exists(filefullpath))
             {
