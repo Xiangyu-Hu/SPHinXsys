@@ -73,7 +73,7 @@ class SPHSystem
 
     SPHSystem(BoundingBox system_domain_bounds, Real resolution_ref,
               size_t number_of_threads = std::thread::hardware_concurrency());
-    virtual ~SPHSystem(){};
+    virtual ~SPHSystem() {};
 
 #ifdef BOOST_AVAILABLE
     SPHSystem *handleCommandlineOptions(int ac, char *av[]);
@@ -101,8 +101,8 @@ class SPHSystem
     void addRealBody(SPHBody *sph_body) { real_bodies_.push_back(sph_body); };
 
     template <typename DataType>
-    SingularVariable<DataType> *registerSystemVariable(const std::string &name,
-                                                       DataType initial_value = ZeroData<DataType>::value);
+    SingularVariable<DataType> *registerSystemVariable(
+        const std::string &name, DataType initial_value = ZeroData<DataType>::value);
     template <typename DataType>
     SingularVariable<DataType> *getSystemVariableByName(const std::string &name);
 
