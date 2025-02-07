@@ -267,7 +267,8 @@ int main(int ac, char *av[])
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp write_real_body_states(sph_system);
-    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<MainExecutionPolicy, UpperFrontInAxisDirectionCK<BodyRegionByCell>>>
+    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<
+        MainExecutionPolicy, UpperFrontInAxisDirectionCK<BodyRegionByCell>>>
         wave_gauge(wave_probe_buffer, "FreeSurfaceHeight");
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<MainExecutionPolicy, Vecd>>
         write_structure_position("Position", observer_contact);
