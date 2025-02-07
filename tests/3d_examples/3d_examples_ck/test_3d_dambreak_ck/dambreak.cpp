@@ -118,7 +118,7 @@ int main(int ac, char *av[])
     UpdateRelation<MainExecutionPolicy, Contact<>> fluid_observer_contact_relation(fluid_observer_contact);
     ParticleSortCK<MainExecutionPolicy, QuickSort> particle_sort(water_block);
 
-    Gravity gravity(Vecd(0.0, -gravity_g));
+    Gravity gravity(Vec3d(0.0, -gravity_g, 0.0));
     StateDynamics<MainExecutionPolicy, GravityForceCK<Gravity>> constant_gravity(water_block, gravity);
     StateDynamics<execution::ParallelPolicy, NormalFromBodyShapeCK> wall_boundary_normal_direction(wall_boundary); // run on CPU
     StateDynamics<MainExecutionPolicy, fluid_dynamics::AdvectionStepSetup> water_advection_step_setup(water_block);
@@ -134,7 +134,7 @@ int main(int ac, char *av[])
         fluid_density_regularization(water_block_inner, water_wall_contact);
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::FreeSurfaceIndicationComplexCK>
         fluid_boundary_indicator(water_block_inner, water_wall_contact);
-    ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AdvectionTimeStepCK> fluid_advection_time_step(water_block, U_ref);
+    ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AdvectionTimeStepCK> fluid_advection_time_step(water_block, U_f);
     ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticTimeStepCK> fluid_acoustic_time_step(water_block);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
@@ -222,10 +222,10 @@ int main(int ac, char *av[])
             water_cell_linked_list.exec();
             water_block_update_complex_relation.exec();
             fluid_observer_contact_relation.exec();
-            write_recorded_water_pressure.writeToFile(number_of_iterations);
+            fluid_observer_pressure.writeToFile(number_of_iterations);
         }
 
-        write_water_mechanical_energy.writeToFile(number_of_iterations);
+        record_water_mechanical_energy.writeToFile(number_of_iterations);
 
         TickCount t2 = TickCount::now();
         body_states_recording.writeToFile(MainExecutionPolicy{});
@@ -240,13 +240,13 @@ int main(int ac, char *av[])
 
     if (sph_system.GenerateRegressionData())
     {
-        write_water_mechanical_energy.generateDataBase(1.0e-3);
-        write_recorded_water_pressure.generateDataBase(1.0e-3);
+        record_water_mechanical_energy.generateDataBase(1.0e-3);
+        fluid_observer_pressure.generateDataBase(1.0e-3);
     }
     else
     {
-        write_water_mechanical_energy.testResult();
-        write_recorded_water_pressure.testResult();
+        record_water_mechanical_energy.testResult();
+        fluid_observer_pressure.testResult();
     }
 
     return 0;
