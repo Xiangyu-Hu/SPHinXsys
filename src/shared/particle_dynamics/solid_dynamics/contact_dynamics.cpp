@@ -94,10 +94,12 @@ ContactForce::ContactForce(SurfaceContactRelation &solid_body_contact_relation)
       Vol_(particles_->Vol_), mass_(particles_->mass_),
       acc_prior_(particles_->acc_prior_)
 {
-    // Inspired by the pinball contact algorithm which defines F2 = Gi * Gj / (Gi + Gj) * sqrt(Ri * Rj/(Ri+Rj)) * p^{3/2},
-    // where Gi, Gj are the shear modulus, Ri, Rj are the radius of the particles, and p is the penetration related to particle distance and normal direction,
+    // The Hertzian theory of non-adhesive elastic contact between two balls gives the analytical solution F = 4/3* E* sqrt(R)* delta^(3/2),
+    // where the composite Young's modulus of elasticity 1/E* = (1-v1^2)/E1 + (1-v2^2)/E2, the effective radius 1/R = 1/R1 + 1/R2,
+    // Ref: https://en.wikipedia.org/wiki/Contact_mechanics#Hertzian_theory_of_non-adhesive_elastic_contact
+    // The pinball contact algorithm also defines the contact force with a similar formula F2 = Gi * Gj / (Gi + Gj) * sqrt(Ri * Rj/(Ri+Rj)) * p^{3/2}
     // Ref: https://doi.org/10.1016/0045-7825(93)90064-5, The splitting pinball method for contact-impact problems
-    // We define the contact stiffness as the harmonic average K = 2 * Ki * Kj / (Ki + Kj), where K1, K2 are the contact stiffness of the two bodies.
+    // Inspired by the composite modulus in these formulas, we define the contact stiffness as the harmonic average K = 2 * Ki * Kj / (Ki + Kj), where K1, K2 are the contact stiffness of the two bodies.
     // In comparison of geometric average, the harmonic average is dominant by the softer material.
     // Empirically, the harmonic average is sufficient to prevent penetration, and matches the time-step size of the softer material.
     // This allows us to use a different time-step size for the two materials
