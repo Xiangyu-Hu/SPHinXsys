@@ -97,7 +97,7 @@ class TotalForceForSimBodyCK
 
       protected:
         Vecd *force_, *force_prior_, *pos_;
-        Vecd *current_origin_location_;
+        Vec3d *current_origin_location_;
     };
 
   protected:
@@ -105,7 +105,7 @@ class TotalForceForSimBodyCK
     SimTK::MobilizedBody &mobod_;
     SimTK::RungeKuttaMersonIntegrator &integ_;
     DiscreteVariable<Vecd> *dv_force_, *dv_force_prior_, *dv_pos_;
-    SingularVariable<Vecd> *sv_current_origin_location_;
+    SingularVariable<Vec3d> *sv_current_origin_location_;
 };
 using TotalForceOnBodyForSimBodyCK = TotalForceForSimBodyCK<SPHBody>;
 using TotalForceOnBodyPartForSimBodyCK = TotalForceForSimBodyCK<BodyPartByParticle>;

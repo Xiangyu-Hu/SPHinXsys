@@ -89,7 +89,7 @@ TotalForceForSimBodyCK<DynamicsIdentifier>::
       dv_force_prior_(this->particles_->template getVariableByName<Vecd>("ForcePrior")),
       dv_pos_(this->particles_->template getVariableByName<Vecd>("Position")),
       sv_current_origin_location_(
-          this->particles_->template addUniqueSingularVariableOnly<Vecd>(
+          this->particles_->template addUniqueSingularVariableOnly<Vec3d>(
               identifier.getName() + "OriginLocation"))
 {
     this->quantity_name_ = "TotalForceForSimBody";
@@ -100,7 +100,7 @@ void TotalForceForSimBodyCK<DynamicsIdentifier>::setupDynamics(Real dt)
 {
     const SimTK::State *state = &integ_.getState();
     MBsystem_.realize(*state, SimTK::Stage::Acceleration);
-    sv_current_origin_location_->setValue(degradeToVecd(SimTKToEigen(mobod_.getBodyOriginLocation(*state))));
+    sv_current_origin_location_->setValue(SimTKToEigen(mobod_.getBodyOriginLocation(*state)));
 }
 //=================================================================================================//
 template <class DynamicsIdentifier>
@@ -118,7 +118,7 @@ SimTK::SpatialVec TotalForceForSimBodyCK<DynamicsIdentifier>::
 {
     Vecd force = force_[index_i] + force_prior_[index_i];
     Vec3d force_from_particle = upgradeToVec3d(force);
-    Vecd displacement = pos_[index_i] - *current_origin_location_;
+    Vecd displacement = pos_[index_i] - degradeToVecd(*current_origin_location_);
     Vec3d torque_from_particle = upgradeToVec3d(displacement).cross(force_from_particle);
     return SimTK::SpatialVec(EigenToSimTK(torque_from_particle), EigenToSimTK(force_from_particle));
 }

@@ -41,13 +41,13 @@ namespace SPH
 template <>
 struct ZeroData<SimTK::SpatialVec>
 {
-    static inline SimTK::SpatialVec value = SimTK::SpatialVec(SimTKVec3(0), SimTKVec3(0));
+    static inline const SimTK::SpatialVec value = SimTK::SpatialVec(SimTKVec3(0), SimTKVec3(0));
 };
 
 template <>
 struct ZeroData<SimTKVec3>
 {
-    static inline SimTKVec3 value = SimTKVec3(0);
+    static inline const SimTKVec3 value = SimTKVec3(0);
 };
 
 struct SimbodyState
@@ -90,7 +90,7 @@ struct SimbodyState
 template <>
 struct ZeroData<SimbodyState>
 {
-    static inline SimbodyState value = SimbodyState();
+    static inline const SimbodyState value = SimbodyState();
 };
 } // namespace SPH
 #endif // ALL_SIMBODY_H
