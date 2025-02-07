@@ -39,24 +39,24 @@ namespace solid_dynamics
 typedef DataDelegateContact<SolidParticles, SolidParticles> ContactDynamicsData;
 typedef DataDelegateContact<SolidParticles, SolidParticles> ContactWithWallData;
 
-class ContactDensityAccessor
+class RepulsionFactorAccessor
 {
   protected:
-    ContactDensityAccessor(BaseParticles &particles, const std::string &variable_name)
-        : contact_density_(*particles.registerSharedVariable<Real>(variable_name)) {};
-    ~ContactDensityAccessor() = default;
-    StdLargeVec<Real> &contact_density_;
+    RepulsionFactorAccessor(BaseParticles &particles, const std::string &variable_name)
+        : repulsion_factor_(*particles.registerSharedVariable<Real>(variable_name)) {};
+    ~RepulsionFactorAccessor() = default;
+    StdLargeVec<Real> &repulsion_factor_;
 };
 
 /**
- * @class SelfContactDensitySummation
- * @brief Computing the summation density due to solid self-contact model.
+ * @class SelfRepulsionFactorSummation
+ * @brief Computing the summation repulsion factor due to solid self-contact model.
  */
-class SelfContactDensitySummation : public ContactDensityAccessor, public LocalDynamics, public SolidDataInner
+class SelfRepulsionFactorSummation : public RepulsionFactorAccessor, public LocalDynamics, public SolidDataInner
 {
   public:
-    explicit SelfContactDensitySummation(SelfSurfaceContactRelation &self_contact_relation);
-    virtual ~SelfContactDensitySummation() {};
+    explicit SelfRepulsionFactorSummation(SelfSurfaceContactRelation &self_contact_relation);
+    virtual ~SelfRepulsionFactorSummation() {};
 
     inline void interaction(size_t index_i, Real dt = 0.0)
     {
@@ -67,7 +67,7 @@ class SelfContactDensitySummation : public ContactDensityAccessor, public LocalD
             Real corrected_W_ij = std::max(inner_neighborhood.W_ij_[n] - offset_W_ij_, Real(0));
             sigma += corrected_W_ij * Vol_[inner_neighborhood.j_[n]];
         }
-        contact_density_[index_i] = sigma;
+        repulsion_factor_[index_i] = sigma;
     };
 
   protected:
@@ -76,14 +76,14 @@ class SelfContactDensitySummation : public ContactDensityAccessor, public LocalD
 };
 
 /**
- * @class ContactDensitySummation
- * @brief Computing the summation density due to solid-solid contact model.
+ * @class RepulsionFactorSummation
+ * @brief Computing the summation repulsion factor due to solid-solid contact model.
  */
-class ContactDensitySummation : public ContactDensityAccessor, public LocalDynamics, public ContactDynamicsData
+class RepulsionFactorSummation : public RepulsionFactorAccessor, public LocalDynamics, public ContactDynamicsData
 {
   public:
-    explicit ContactDensitySummation(SurfaceContactRelation &solid_body_contact_relation);
-    virtual ~ContactDensitySummation() {};
+    explicit RepulsionFactorSummation(SurfaceContactRelation &solid_body_contact_relation);
+    virtual ~RepulsionFactorSummation() {};
 
     inline void interaction(size_t index_i, Real dt = 0.0)
     {
@@ -100,7 +100,7 @@ class ContactDensitySummation : public ContactDensityAccessor, public LocalDynam
                 sigma += corrected_W_ij * contact_Vol_k[contact_neighborhood.j_[n]];
             }
         }
-        contact_density_[index_i] = sigma;
+        repulsion_factor_[index_i] = sigma;
     };
 
   protected:
@@ -110,21 +110,21 @@ class ContactDensitySummation : public ContactDensityAccessor, public LocalDynam
 };
 
 /**
- * @class ShellContactDensity
- * @brief Computing the contact density due to shell contact using a
+ * @class ShellRepulsionFactor
+ * @brief Computing the repulsion factor due to shell contact using a
  * 		 surface integral being solved by Gauss-Legendre quadrature integration.
  */
-class ShellContactDensity : public ContactDensityAccessor, public LocalDynamics, public ContactDynamicsData
+class ShellRepulsionFactor : public RepulsionFactorAccessor, public LocalDynamics, public ContactDynamicsData
 {
   public:
-    explicit ShellContactDensity(SurfaceContactRelation &solid_body_contact_relation);
-    virtual ~ShellContactDensity() {};
+    explicit ShellRepulsionFactor(SurfaceContactRelation &solid_body_contact_relation);
+    virtual ~ShellRepulsionFactor() {};
 
     inline void interaction(size_t index_i, Real dt = 0.0)
     {
         /** shell contact interaction. */
         Real sigma = 0.0;
-        Real contact_density_i = 0.0;
+        Real repulsion_factor_i = 0.0;
 
         for (size_t k = 0; k < contact_configuration_.size(); ++k)
         {
@@ -140,9 +140,9 @@ class ShellContactDensity : public ContactDensityAccessor, public LocalDynamics,
             // The contact pressure applied to fewer particles than on solids, yielding high acceleration locally,
             // which is one source of instability. Thus, we add a heuristic_limiter
             // to maintain enough contact pressure to prevent penetration while also maintaining stability.
-            contact_density_i += heuristic_limiter * sigma * calibration_factor_[k];
+            repulsion_factor_i += heuristic_limiter * sigma * calibration_factor_[k];
         }
-        contact_density_[index_i] = contact_density_i;
+        repulsion_factor_[index_i] = repulsion_factor_i;
     };
 
   protected:
@@ -173,7 +173,7 @@ class SelfContactForce : public LocalDynamics, public SolidDataInner
     {
         Real Vol_i = Vol_[index_i];
         Vecd vel_i = vel_[index_i];
-        Real p_i = self_contact_density_[index_i] * solid_.ContactStiffness();
+        Real p_i = self_repulsion_factor_[index_i] * solid_.ContactStiffness();
 
         /** Inner interaction. */
         Vecd force = Vecd::Zero();
@@ -182,7 +182,7 @@ class SelfContactForce : public LocalDynamics, public SolidDataInner
         {
             size_t index_j = inner_neighborhood.j_[n];
             const Vecd &e_ij = inner_neighborhood.e_ij_[n];
-            Real p_star = 0.5 * (p_i + self_contact_density_[index_j] * solid_.ContactStiffness());
+            Real p_star = 0.5 * (p_i + self_repulsion_factor_[index_j] * solid_.ContactStiffness());
             Real impedance_p = 0.5 * contact_impedance_ * (vel_i - vel_[index_j]).dot(-e_ij);
             // force to mimic pressure
             force -= 2.0 * (p_star + impedance_p) * e_ij * Vol_i * inner_neighborhood.dW_ijV_j_[n];
@@ -192,7 +192,7 @@ class SelfContactForce : public LocalDynamics, public SolidDataInner
 
   protected:
     Solid &solid_;
-    StdLargeVec<Real> &mass_, &self_contact_density_, &Vol_;
+    StdLargeVec<Real> &mass_, &self_repulsion_factor_, &Vol_;
     StdLargeVec<Vecd> &acc_prior_, &vel_;
     Real contact_impedance_;
 };
@@ -210,13 +210,13 @@ class ContactForce : public LocalDynamics, public ContactDynamicsData
     inline void interaction(size_t index_i, Real dt = 0.0)
     {
         Real Vol_i = Vol_[index_i];
-        Real sigma_i = contact_density_[index_i];
+        Real sigma_i = repulsion_factor_[index_i];
         /** Contact interaction. */
         Vecd force = Vecd::Zero();
         // contact force from particle j: f_ij = 2 * K_ij * sigma_ij * Vi * Vj * dW_ij * e_ij
         for (size_t k = 0; k < contact_configuration_.size(); ++k)
         {
-            StdLargeVec<Real> &contact_density_k = *(contact_contact_density_[k]);
+            StdLargeVec<Real> &repulsion_factor_k = *(contact_repulsion_factor_[k]);
 
             Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
 
@@ -228,7 +228,7 @@ class ContactForce : public LocalDynamics, public ContactDynamicsData
                 size_t index_j = contact_neighborhood.j_[n];
                 Vecd e_ij = contact_neighborhood.e_ij_[n];
 
-                Real sigma_star = 0.5 * (sigma_i + contact_density_k[index_j]);
+                Real sigma_star = 0.5 * (sigma_i + repulsion_factor_k[index_j]);
                 // force due to pressure
                 factor_k -= 2.0 * sigma_star * e_ij * Vol_i * contact_neighborhood.dW_ijV_j_[n];
             }
@@ -239,10 +239,10 @@ class ContactForce : public LocalDynamics, public ContactDynamicsData
 
   protected:
     Solid &solid_;
-    StdLargeVec<Real> &contact_density_, &Vol_, &mass_;
+    StdLargeVec<Real> &repulsion_factor_, &Vol_, &mass_;
     StdLargeVec<Vecd> &acc_prior_;
     StdVec<Solid *> contact_solids_;
-    StdVec<StdLargeVec<Real> *> contact_contact_density_;
+    StdVec<StdLargeVec<Real> *> contact_repulsion_factor_;
     SPH::StdVec<double> contact_stiffness_;
 };
 
@@ -261,7 +261,7 @@ class ContactForceFromWall : public LocalDynamics, public ContactWithWallData
     inline void interaction(size_t index_i, Real dt = 0.0)
     {
         Real Vol_i = Vol_[index_i];
-        Real p_i = contact_density_[index_i] * solid_.ContactStiffness();
+        Real p_i = repulsion_factor_[index_i] * solid_.ContactStiffness();
         /** Contact interaction. */
         Vecd force = Vecd::Zero();
         for (size_t k = 0; k < contact_configuration_.size(); ++k)
@@ -280,7 +280,7 @@ class ContactForceFromWall : public LocalDynamics, public ContactWithWallData
 
   protected:
     Solid &solid_;
-    StdLargeVec<Real> &contact_density_, &Vol_, &mass_;
+    StdLargeVec<Real> &repulsion_factor_, &Vol_, &mass_;
     StdLargeVec<Vecd> &acc_prior_;
 };
 
@@ -301,7 +301,7 @@ class ContactForceToWall : public LocalDynamics, public ContactDynamicsData
         Vecd force = Vecd::Zero();
         for (size_t k = 0; k < contact_configuration_.size(); ++k)
         {
-            StdLargeVec<Real> &contact_density_k = *(contact_contact_density_[k]);
+            StdLargeVec<Real> &repulsion_factor_k = *(contact_repulsion_factor_[k]);
             Solid *solid_k = contact_solids_[k];
 
             Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
@@ -310,7 +310,7 @@ class ContactForceToWall : public LocalDynamics, public ContactDynamicsData
                 size_t index_j = contact_neighborhood.j_[n];
                 Vecd e_ij = contact_neighborhood.e_ij_[n];
 
-                Real p_star = contact_density_k[index_j] * solid_k->ContactStiffness();
+                Real p_star = repulsion_factor_k[index_j] * solid_k->ContactStiffness();
                 // force due to pressure
                 force -= 2.0 * p_star * e_ij * Vol_i * contact_neighborhood.dW_ijV_j_[n];
             }
@@ -322,7 +322,7 @@ class ContactForceToWall : public LocalDynamics, public ContactDynamicsData
     StdLargeVec<Real> &Vol_, &mass_;
     StdLargeVec<Vecd> &acc_prior_;
     StdVec<Solid *> contact_solids_;
-    StdVec<StdLargeVec<Real> *> contact_contact_density_;
+    StdVec<StdLargeVec<Real> *> contact_repulsion_factor_;
 };
 
 /**

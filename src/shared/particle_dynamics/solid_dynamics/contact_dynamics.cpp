@@ -10,9 +10,9 @@ namespace SPH
 namespace solid_dynamics
 {
 //=================================================================================================//
-SelfContactDensitySummation::
-    SelfContactDensitySummation(SelfSurfaceContactRelation &self_contact_relation)
-    : ContactDensityAccessor(self_contact_relation.base_particles_, "SelfContactDensity"),
+SelfRepulsionFactorSummation::
+    SelfRepulsionFactorSummation(SelfSurfaceContactRelation &self_contact_relation)
+    : RepulsionFactorAccessor(self_contact_relation.base_particles_, "SelfRepulsionFactor"),
       LocalDynamics(self_contact_relation.getSPHBody()),
       SolidDataInner(self_contact_relation),
       Vol_(particles_->Vol_)
@@ -21,9 +21,9 @@ SelfContactDensitySummation::
     offset_W_ij_ = self_contact_relation.getSPHBody().sph_adaptation_->getKernel()->W(dp_1, ZeroVecd);
 }
 //=================================================================================================//
-ContactDensitySummation::
-    ContactDensitySummation(SurfaceContactRelation &solid_body_contact_relation)
-    : ContactDensityAccessor(solid_body_contact_relation.base_particles_, "ContactDensity"),
+RepulsionFactorSummation::
+    RepulsionFactorSummation(SurfaceContactRelation &solid_body_contact_relation)
+    : RepulsionFactorAccessor(solid_body_contact_relation.base_particles_, "RepulsionFactor"),
       LocalDynamics(solid_body_contact_relation.getSPHBody()),
       ContactDynamicsData(solid_body_contact_relation), Vol_(particles_->Vol_),
       offset_W_ij_(StdVec<Real>(contact_configuration_.size(), 0.0))
@@ -47,8 +47,8 @@ ContactDensitySummation::
     }
 }
 //=================================================================================================//
-ShellContactDensity::ShellContactDensity(SurfaceContactRelation &solid_body_contact_relation)
-    : ContactDensityAccessor(solid_body_contact_relation.base_particles_, "ContactDensity"),
+ShellRepulsionFactor::ShellRepulsionFactor(SurfaceContactRelation &solid_body_contact_relation)
+    : RepulsionFactorAccessor(solid_body_contact_relation.base_particles_, "RepulsionFactor"),
       LocalDynamics(solid_body_contact_relation.getSPHBody()),
       ContactDynamicsData(solid_body_contact_relation), solid_(particles_->solid_),
       kernel_(solid_body_contact_relation.getSPHBody().sph_adaptation_->getKernel()),
@@ -81,7 +81,7 @@ SelfContactForce::
     : LocalDynamics(self_contact_relation.getSPHBody()),
       SolidDataInner(self_contact_relation),
       solid_(particles_->solid_), mass_(particles_->mass_),
-      self_contact_density_(*particles_->getVariableByName<Real>("SelfContactDensity")),
+      self_repulsion_factor_(*particles_->getVariableByName<Real>("SelfRepulsionFactor")),
       Vol_(particles_->Vol_), acc_prior_(particles_->acc_prior_),
       vel_(particles_->vel_),
       contact_impedance_(solid_.ReferenceDensity() * sqrt(solid_.ContactStiffness())) {}
@@ -90,7 +90,7 @@ ContactForce::ContactForce(SurfaceContactRelation &solid_body_contact_relation)
     : LocalDynamics(solid_body_contact_relation.getSPHBody()),
       ContactDynamicsData(solid_body_contact_relation),
       solid_(particles_->solid_),
-      contact_density_(*particles_->getVariableByName<Real>("ContactDensity")),
+      repulsion_factor_(*particles_->getVariableByName<Real>("RepulsionFactor")),
       Vol_(particles_->Vol_), mass_(particles_->mass_),
       acc_prior_(particles_->acc_prior_)
 {
@@ -107,7 +107,7 @@ ContactForce::ContactForce(SurfaceContactRelation &solid_body_contact_relation)
     for (size_t k = 0; k != contact_particles_.size(); ++k)
     {
         contact_solids_.push_back(&contact_particles_[k]->solid_);
-        contact_contact_density_.push_back(contact_particles_[k]->getVariableByName<Real>("ContactDensity"));
+        contact_repulsion_factor_.push_back(contact_particles_[k]->getVariableByName<Real>("RepulsionFactor"));
         Real K_2 = contact_solids_[k]->ContactStiffness();
         contact_stiffness_.emplace_back(2 * K_1 * K_2 / (K_1 + K_2));
     }
@@ -116,7 +116,7 @@ ContactForce::ContactForce(SurfaceContactRelation &solid_body_contact_relation)
 ContactForceFromWall::ContactForceFromWall(SurfaceContactRelation &solid_body_contact_relation)
     : LocalDynamics(solid_body_contact_relation.getSPHBody()),
       ContactWithWallData(solid_body_contact_relation), solid_(particles_->solid_),
-      contact_density_(*particles_->getVariableByName<Real>("ContactDensity")),
+      repulsion_factor_(*particles_->getVariableByName<Real>("RepulsionFactor")),
       Vol_(particles_->Vol_), mass_(particles_->mass_),
       acc_prior_(particles_->acc_prior_) {}
 //=================================================================================================//
@@ -129,7 +129,7 @@ ContactForceToWall::ContactForceToWall(SurfaceContactRelation &solid_body_contac
     for (size_t k = 0; k != contact_particles_.size(); ++k)
     {
         contact_solids_.push_back(&contact_particles_[k]->solid_);
-        contact_contact_density_.push_back(contact_particles_[k]->getVariableByName<Real>("ContactDensity"));
+        contact_repulsion_factor_.push_back(contact_particles_[k]->getVariableByName<Real>("RepulsionFactor"));
     }
 }
 //=================================================================================================//

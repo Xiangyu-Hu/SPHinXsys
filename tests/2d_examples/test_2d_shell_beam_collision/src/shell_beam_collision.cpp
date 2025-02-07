@@ -188,7 +188,7 @@ int main(int ac, char *av[])
     Dynamics1Level<solid_dynamics::Integration1stHalfPK2> beam_stress_relaxation_first_half(beam_inner);
     Dynamics1Level<solid_dynamics::Integration2ndHalf> beam_stress_relaxation_second_half(beam_inner);
     /** Algorithms for shell-solid contact. */
-    InteractionDynamics<solid_dynamics::ContactDensitySummation> beam_shell_update_contact_density(beam_contact);
+    InteractionDynamics<solid_dynamics::RepulsionFactorSummation> beam_shell_update_contact_density(beam_contact);
     InteractionDynamics<solid_dynamics::ContactForceFromWall> beam_compute_solid_contact_forces(beam_contact);
     InteractionDynamics<solid_dynamics::ContactForceToWall> shell_compute_solid_contact_forces(shell_contact);
     BodyRegionByParticle holder(beam, makeShared<MultiPolygonShape>(createBeamConstrainShape()));
