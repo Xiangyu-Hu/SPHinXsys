@@ -252,8 +252,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     ObserverBody temperature_observer(sph_system, "TemperatureObserver");
     temperature_observer.generateParticles<ObserverParticles>(createObservationPoints());
-   
-   
+
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -264,14 +263,12 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     InnerRelation diffusion_body_inner_relation(diffusion_body);
 	InnerRelation boundary_body_inner_relation(boundary_body);
-
     ContactRelation temperature_observer_contact(temperature_observer, {&diffusion_body});
-    //contact realtion???? todo or ComplexRelation
 
     ContactRelation diffusion_block_contact(diffusion_body, {&boundary_body});
     ComplexRelation diffusion_block_complex(diffusion_body_inner_relation, diffusion_block_contact);
    
-   // ContactRelation diffusion_block_complex(diffusion_body, {&boundary_body});
+ 
     //----------------------------------------------------------------------
     //	Define the main numerical methods used in the simulation.
     //	Note that there may be data dependence on the constructors of these methods.
@@ -281,18 +278,18 @@ int main(int ac, char *av[])
 	InteractionWithUpdate<AnisotropicKernelCorrectionMatrixACComplex> correct_second_configuration(diffusion_body_inner_relation, diffusion_block_contact);
     ReduceDynamics<GetLaplacianTimeStepSize> get_time_step_size(diffusion_body);
     InteractionWithUpdate<AnisotropicDiffusionRelaxationComplex> diffusion_relaxation(diffusion_body_inner_relation, diffusion_block_contact);
-    
     SimpleDynamics<DiffusionInitialCondition> setup_diffusion_initial_condition(diffusion_body_inner_relation);
+   
+    BodyStatesRecordingToVtp write_states_vtp(sph_system);
 
-/*  
     write_states_vtp.addToWrite<Real>(diffusion_body, "Phi");
     write_states_vtp.addToWrite<Real>(diffusion_body,"Laplacian_x");
     write_states_vtp.addToWrite<Real>(diffusion_body,"Laplacian_y");
-    write_states_vtp.addToWrite<Mat2d>(diffusion_body,"KernelCorrectionMatrix");
+    write_states_vtp.addToWrite<Mat2d>(diffusion_body,"LinearGradientCorrectionMatrix");
 	write_states_vtp.addToWrite<Real>(diffusion_body,"Laplacian_xy");
 	write_states_vtp.addToWrite<Real>(diffusion_body,"diffusion_dt");
     write_states_vtp.addToWrite<Vec2d>(diffusion_body,"FirstOrderCorrectionVectorE");
-*/ 	
+ 
 
     PeriodicAlongAxis periodic_along_x(diffusion_body.getSPHBodyBounds(), xAxis);
     PeriodicAlongAxis periodic_along_y(diffusion_body.getSPHBodyBounds(), yAxis);
@@ -303,7 +300,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp write_states_vtp(sph_system);
+   
    /* RegressionTestEnsembleAverage<ObservedQuantityRecording<Real>>
         write_solid_temperature("Phi", io_environment, temperature_observer_contact);*/
     //----------------------------------------------------------------------
