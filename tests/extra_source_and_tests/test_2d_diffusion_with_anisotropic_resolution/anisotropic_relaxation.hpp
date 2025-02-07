@@ -10,18 +10,40 @@
 #define ANISOTROPIC
 
 #include "base_general_dynamics.h"
+#include "sphinxsys.h"  
 namespace SPH
 {
+
+
+//TODO:: The class name. The datatype should be applicable to 6d.
+
+//material definition
+class AnisotropicDiffusionSolid : public Solid
+{
+  public:
+    AnisotropicDiffusionSolid(Real rho0, Real coeff)
+        : Solid(rho0), diffusion_coeff(coeff)
+    {
+        material_type_name_ = "AnisotropicDiffusionSolid";
+    };
+    virtual ~AnisotropicDiffusionSolid(){};
+
+    Real diffusion_coeff;
+    Real DiffusivityCoefficient() { return diffusion_coeff; };
+};
+ 
+ 
+
 template <typename... InteractionTypes>
-class NonisotropicKernelCorrectionMatrixAC;
+class AnisotropicKernelCorrectionMatrixAC;
 
 template <class DataDelegationType>
-class NonisotropicKernelCorrectionMatrixAC<DataDelegationType>
+class AnisotropicKernelCorrectionMatrixAC<DataDelegationType>
     : public LocalDynamics, public DataDelegationType
 {
   public:
     template <class BaseRelationType>
-    explicit NonisotropicKernelCorrectionMatrixAC(BaseRelationType &base_relation)
+    explicit AnisotropicKernelCorrectionMatrixAC(BaseRelationType &base_relation)
       : LocalDynamics(base_relation.getSPHBody()), DataDelegationType(base_relation),
       phi_(particles_->registerStateVariable<Real>("Phi")),
       A1_(this->particles_->template registerStateVariable<Vec2d>(
@@ -39,7 +61,7 @@ class NonisotropicKernelCorrectionMatrixAC<DataDelegationType>
         particles_->addVariableToWrite<Vec2d>("FirstOrderCorrectionVectorA3");
     }
           
-    virtual ~NonisotropicKernelCorrectionMatrixAC(){};
+    virtual ~AnisotropicKernelCorrectionMatrixAC(){};
 
   protected:
     Real *phi_;
@@ -53,16 +75,16 @@ class NonisotropicKernelCorrectionMatrixAC<DataDelegationType>
 
 
 template <>
-class NonisotropicKernelCorrectionMatrixAC<Inner<>>
-    : public NonisotropicKernelCorrectionMatrixAC<DataDelegateInner>
+class AnisotropicKernelCorrectionMatrixAC<Inner<>>
+    : public AnisotropicKernelCorrectionMatrixAC<DataDelegateInner>
 {
   public:
-    explicit NonisotropicKernelCorrectionMatrixAC(BaseInnerRelation &inner_relation)
-        : NonisotropicKernelCorrectionMatrixAC<DataDelegateInner>(inner_relation){};
+    explicit AnisotropicKernelCorrectionMatrixAC(BaseInnerRelation &inner_relation)
+        : AnisotropicKernelCorrectionMatrixAC<DataDelegateInner>(inner_relation){};
     template <typename BodyRelationType, typename FirstArg>
-    explicit NonisotropicKernelCorrectionMatrixAC(InteractArgs<BodyRelationType, FirstArg> parameters)
-        : NonisotropicKernelCorrectionMatrixAC(parameters.body_relation_, std::get<0>(parameters.others_)){};
-    virtual ~NonisotropicKernelCorrectionMatrixAC(){};
+    explicit AnisotropicKernelCorrectionMatrixAC(InteractArgs<BodyRelationType, FirstArg> parameters)
+        : AnisotropicKernelCorrectionMatrixAC(parameters.body_relation_, std::get<0>(parameters.others_)){};
+    virtual ~AnisotropicKernelCorrectionMatrixAC(){};
 
     void interaction(size_t index_i, Real dt = 0.0)
     {
@@ -86,21 +108,20 @@ class NonisotropicKernelCorrectionMatrixAC<Inner<>>
 };
   
 template <>
-class NonisotropicKernelCorrectionMatrixAC<Contact<>>
-    : public NonisotropicKernelCorrectionMatrixAC<DataDelegateContact>
+class AnisotropicKernelCorrectionMatrixAC<Contact<>>
+    : public AnisotropicKernelCorrectionMatrixAC<DataDelegateContact>
 {
   public:
-    explicit NonisotropicKernelCorrectionMatrixAC(BaseContactRelation &contact_relation)
-    : NonisotropicKernelCorrectionMatrixAC<DataDelegateContact>(contact_relation)
+    explicit AnisotropicKernelCorrectionMatrixAC(BaseContactRelation &contact_relation)
+    : AnisotropicKernelCorrectionMatrixAC<DataDelegateContact>(contact_relation)
     {
         for (size_t k = 0; k != contact_particles_.size(); ++k)
         {
-            contact_mass_.push_back(contact_particles_[k]->getVariableDataByName<Real>("Mass"));
             contact_Vol_.push_back(contact_particles_[k]->getVariableDataByName<Real>("VolumetricMeasure"));
         }
     };
 
-    virtual ~NonisotropicKernelCorrectionMatrixAC(){};
+    virtual ~AnisotropicKernelCorrectionMatrixAC(){};
 
     void interaction(size_t index_i, Real dt = 0.0)
     {
@@ -124,28 +145,27 @@ class NonisotropicKernelCorrectionMatrixAC<Contact<>>
 
   protected:
     StdVec<Real *> contact_Vol_;
-    StdVec<Real *> contact_mass_;
 };
 
-using NonisotropicKernelCorrectionMatrixACComplex = ComplexInteraction<NonisotropicKernelCorrectionMatrixAC<Inner<>, Contact<>>>;
+using AnisotropicKernelCorrectionMatrixACComplex = ComplexInteraction<AnisotropicKernelCorrectionMatrixAC<Inner<>, Contact<>>>;
 
 
 /*
 
-Class nonisotropic diffusion relaxation
+Class Anisotropic diffusion relaxation
 
 */
 
 template <typename... InteractionTypes>
-class NonisotropicDiffusionRelaxation;
+class AnisotropicDiffusionRelaxation;
 
 template <class DataDelegationType>
-class NonisotropicDiffusionRelaxation<DataDelegationType>
+class AnisotropicDiffusionRelaxation<DataDelegationType>
     : public LocalDynamics, public DataDelegationType
 {
   public:
     template <class BaseRelationType>
-    explicit NonisotropicDiffusionRelaxation(BaseRelationType &base_relation)
+    explicit AnisotropicDiffusionRelaxation(BaseRelationType &base_relation)
       : LocalDynamics(base_relation.getSPHBody()), DataDelegationType(base_relation),
       pos_(particles_->getVariableDataByName<Vecd>("Position")),
       B_(this->particles_->template getVariableDataByName<Matd>(
@@ -157,8 +177,9 @@ class NonisotropicDiffusionRelaxation<DataDelegationType>
           "FirstOrderCorrectionVectorA2")),
       A3_(this->particles_->template getVariableDataByName<Vec2d>(
           "FirstOrderCorrectionVectorA3")),
-      Vol_(this->particles_->template getVariableDataByName<Real>("VolumetricMeasure")) 
-    {  
+      Vol_(this->particles_->template getVariableDataByName<Real>("VolumetricMeasure")),
+      anisotropic_diffusion_solid_(DynamicCast<AnisotropicDiffusionSolid>(this, base_relation.getSPHBody().getBaseMaterial())) 
+      {  
         
        SC_ = particles_->registerStateVariable<Mat3d>( "FirstOrderCorrectionMatrixSC", [&](size_t i) -> Mat3d { return Eps * Mat3d::Identity(); });
         
@@ -166,20 +187,21 @@ class NonisotropicDiffusionRelaxation<DataDelegationType>
        E_= particles_->registerStateVariable<Vec2d>("FirstOrderCorrectionVectorE", [&](size_t i) -> Vec2d { return Eps * Vec2d::Identity(); });
     
        G_ =particles_->registerStateVariable<Vec3d>( "FirstOrderCorrectionVectorG", [&](size_t i) -> Vec3d { return Eps * Vec3d::Identity(); });
-     Laplacian_=  particles_->registerStateVariable<Vec3d>( "Laplacian", [&](size_t i) -> Vec3d { return Vec3d::Zero(); });
+        Laplacian_=  particles_->registerStateVariable<Vec3d>( "Laplacian", [&](size_t i) -> Vec3d { return Vec3d::Zero(); });
 
-     Laplacian_x=   particles_->registerStateVariable<Real>("Laplacian_x", [&](size_t i) -> Real { return Real(0.0); });
+       Laplacian_x=   particles_->registerStateVariable<Real>("Laplacian_x", [&](size_t i) -> Real { return Real(0.0); });
        Laplacian_y= particles_->registerStateVariable<Real>("Laplacian_y", [&](size_t i) -> Real { return Real(0.0); });
-      Laplacian_xy= particles_->registerStateVariable<Real>( "Laplacian_xy", [&](size_t i) -> Real { return Real(0.0); });
+        Laplacian_xy= particles_->registerStateVariable<Real>( "Laplacian_xy", [&](size_t i) -> Real { return Real(0.0); });
 		diffusion_dt_=particles_->registerStateVariable<Real>( "diffusion_dt", [&](size_t i) -> Real { return Real(0.0); });
 		
+        diffusion_coeff_ = anisotropic_diffusion_solid_.DiffusivityCoefficient();
 
         particles_->addVariableToWrite<Vec2d>("FirstOrderCorrectionVectorA1");
         particles_->addVariableToWrite<Vec2d>("FirstOrderCorrectionVectorA2");
         particles_->addVariableToWrite<Vec2d>("FirstOrderCorrectionVectorA3");
     }
           
-    virtual ~NonisotropicDiffusionRelaxation(){};
+    virtual ~AnisotropicDiffusionRelaxation(){};
 
   protected:
     Vec2d *pos_;
@@ -197,23 +219,27 @@ class NonisotropicDiffusionRelaxation<DataDelegationType>
     Real *Laplacian_x, *Laplacian_y, *Laplacian_xy, *diffusion_dt_;
 
     Real diffusion_coeff_;
+ 
+
+    AnisotropicDiffusionSolid &anisotropic_diffusion_solid_;
 
 };
 
 
 
 
+
 template <>
-class NonisotropicDiffusionRelaxation<Inner<>>
-    : public NonisotropicDiffusionRelaxation<DataDelegateInner>
+class AnisotropicDiffusionRelaxation<Inner<>>
+    : public AnisotropicDiffusionRelaxation<DataDelegateInner>
 {
   public:
-    explicit NonisotropicDiffusionRelaxation(BaseInnerRelation &inner_relation)
-        : NonisotropicDiffusionRelaxation<DataDelegateInner>(inner_relation){};
+    explicit AnisotropicDiffusionRelaxation(BaseInnerRelation &inner_relation)
+        : AnisotropicDiffusionRelaxation<DataDelegateInner>(inner_relation){};
     template <typename BodyRelationType, typename FirstArg>
-    explicit NonisotropicDiffusionRelaxation(InteractArgs<BodyRelationType, FirstArg> parameters)
-        : NonisotropicDiffusionRelaxation(parameters.body_relation_, std::get<0>(parameters.others_)){};
-    virtual ~NonisotropicDiffusionRelaxation(){};
+    explicit AnisotropicDiffusionRelaxation(InteractArgs<BodyRelationType, FirstArg> parameters)
+        : AnisotropicDiffusionRelaxation(parameters.body_relation_, std::get<0>(parameters.others_)){};
+    virtual ~AnisotropicDiffusionRelaxation(){};
 
     void interaction(size_t index_i, Real dt = 0.0)
     {
@@ -270,21 +296,21 @@ class NonisotropicDiffusionRelaxation<Inner<>>
 
 
 template <>
-class NonisotropicDiffusionRelaxation<Contact<>>
-    : public NonisotropicDiffusionRelaxation<DataDelegateContact>
+class AnisotropicDiffusionRelaxation<Contact<>>
+    : public AnisotropicDiffusionRelaxation<DataDelegateContact>
 {
   public:
-    explicit NonisotropicDiffusionRelaxation(BaseContactRelation &contact_relation)
-    : NonisotropicDiffusionRelaxation<DataDelegateContact>(contact_relation)
+    explicit AnisotropicDiffusionRelaxation(BaseContactRelation &contact_relation)
+    : AnisotropicDiffusionRelaxation<DataDelegateContact>(contact_relation)
     {
         for (size_t k = 0; k != contact_particles_.size(); ++k)
         {
-            contact_mass_.push_back(contact_particles_[k]->getVariableDataByName<Real>("Mass"));
+           
             contact_Vol_.push_back(contact_particles_[k]->getVariableDataByName<Real>("VolumetricMeasure"));
         }
     };
 
-    virtual ~NonisotropicDiffusionRelaxation(){};
+    virtual ~AnisotropicDiffusionRelaxation(){};
 
     void interaction(size_t index_i, Real dt = 0.0)
     {
@@ -327,12 +353,11 @@ class NonisotropicDiffusionRelaxation<Contact<>>
     };
 
   protected:
-    StdVec<Real *> contact_Vol_;
-    StdVec<Real *> contact_mass_;
+    StdVec<Real *> contact_Vol_; 
 };
 
  
-using NonisotropicDiffusionRelaxationComplex = ComplexInteraction<NonisotropicDiffusionRelaxation<Inner<>, Contact<>>>;
+using AnisotropicDiffusionRelaxationComplex = ComplexInteraction<AnisotropicDiffusionRelaxation<Inner<>, Contact<>>>;
 
 
 

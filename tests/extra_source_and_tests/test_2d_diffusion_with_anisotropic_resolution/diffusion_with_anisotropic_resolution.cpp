@@ -35,8 +35,6 @@ Real BH = 3.0 * resolution_ref;
 //----------------------------------------------------------------------
 Real diffusion_coeff = 1.0;
 Real rho0 = 1.0;
-Real youngs_modulus = 1.0;
-Real poisson_ratio = 1.0;
 //----------------------------------------------------------------------
 //	Geometric shapes used in the case.
 //----------------------------------------------------------------------
@@ -46,29 +44,27 @@ AnisotropicKernel<KernelWendlandC2>
     wendland(1.15 * resolution_ref_large, scaling_vector, Vecd(0.0, 0.0)); // no rotation introduced
 
 Mat2d transform_tensor = wendland.getCoordinateTransformationTensorG(scaling_vector, Vecd(0.0, 0.0)); // tensor
+std::vector<Vec2d> boundary{Vec2d(-BL, -BH),Vec2d(-BL, H + BH), Vec2d(L + BL, H + BH),
+  Vec2d(L + BL, -BH), Vec2d(-BL, -BH)};
 
+namespace SPH
+{
 class DiffusionBlock : public MultiPolygonShape
 {
-  public:
+public:
     explicit DiffusionBlock(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
         multi_polygon_.addAPolygon(diffusion_shape, ShapeBooleanOps::add);
     }
 };
 
-class Boundary: public MultiPolygonShape
+class DiffusionBoundary: public MultiPolygonShape
 {
-  public:
-    explicit Boundary(const std::string &shape_name) : MultiPolygonShape(shape_name)
+public:
+    explicit DiffusionBoundary(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        std::vector<Vec2d> boundary;
-        boundary.push_back(Vec2d(-BL, -BH));
-        boundary.push_back(Vec2d(-BL, H + BH));
-        boundary.push_back(Vec2d(L + BL, H + BH));
-        boundary.push_back(Vec2d(L + BL, -BH));
-        boundary.push_back(Vec2d(-BL, -BH));
+    
         multi_polygon_.addAPolygon(boundary, ShapeBooleanOps::add);
-
         multi_polygon_.addAPolygon(diffusion_shape, ShapeBooleanOps::sub);
     }
 };
@@ -97,11 +93,12 @@ StdVec<Vecd> createObservationPoints()
 
 
 //particle generator for domain particles
-class AnisotropicParticleGenerator : public ParticleGenerator<BaseParticles>
+template <>
+class ParticleGenerator<BaseParticles, DiffusionBlock>: public ParticleGenerator<BaseParticles>
 {
   public:
-  explicit  AnisotropicParticleGenerator(SPHBody &sph_body, BaseParticles &base_particles) 
-       : ParticleGenerator<BaseParticles>(sph_body, base_particles){};
+   ParticleGenerator(SPHBody &sph_body, BaseParticles &base_particles)
+        : ParticleGenerator<BaseParticles>(sph_body, base_particles){};
 
     virtual void prepareGeometricData() override
     {
@@ -119,11 +116,12 @@ class AnisotropicParticleGenerator : public ParticleGenerator<BaseParticles>
 };
 
 //particle generator for boundary particles
-class AnisotropicParticleGeneratorBoundary : public  ParticleGenerator<BaseParticles>
+template <>
+class ParticleGenerator<BaseParticles, DiffusionBoundary>: public ParticleGenerator<BaseParticles>
 {
   public:
-    AnisotropicParticleGeneratorBoundary(SPHBody &sph_body,BaseParticles &base_particles) 
-     :  ParticleGenerator<BaseParticles>(sph_body, base_particles){};
+    ParticleGenerator(SPHBody &sph_body, BaseParticles &base_particles)
+        : ParticleGenerator<BaseParticles>(sph_body, base_particles){};
 
     virtual void prepareGeometricData() override
     {
@@ -173,58 +171,6 @@ class AnisotropicParticleGeneratorBoundary : public  ParticleGenerator<BaseParti
     }
 };
 
-//material definition
-class LaplacianDiffusionSolid : public LinearElasticSolid
-{
-  public:
-    LaplacianDiffusionSolid(Real rho0, Real coeff, Real youngs_modulus, Real poisson_ratio)
-        : LinearElasticSolid(rho0, youngs_modulus, poisson_ratio), diffusion_coeff(coeff)
-    {
-        material_type_name_ = "LaplacianDiffusionSolid";
-    };
-    virtual ~LaplacianDiffusionSolid(){};
-
-    Real diffusion_coeff;
-    Real DiffusivityCoefficient() { return diffusion_coeff; };
-};
-
-
-/*
-class LaplacianDiffusionSolid;
-
-class LaplacianDiffusionParticles : public BaseParticles
-{
-  public:
-    LaplacianDiffusionSolid &laplacian_solid_;
-
-    LaplacianDiffusionParticles(SPHBody &sph_body, LaplacianDiffusionSolid *laplacian_solid)
-        : BaseParticles(sph_body, laplacian_solid), laplacian_solid_(*laplacian_solid),
-           phi_(nullptr),  A1_(nullptr),  A2_(nullptr),  A3_(nullptr){};
-        
-    virtual ~LaplacianDiffusionParticles(){};
-
-    void registerAnisotropicDiffusionProperties
-        (StdLargeVec<Real> &phi, StdLargeVec<Vecd> &A1,  
-              StdLargeVec<Vecd> &A2, StdLargeVec<Vecd> &A3)
-    {
-        phi_ = registerStateVariableFrom<Real >("Phi", phi);
-        A1_ = registerStateVariableFrom<Vecd>("FirstOrderCorrectionVectorA1", A1);
-        A2_ = registerStateVariableFrom<Vecd>("FirstOrderCorrectionVectorA2", A2);
-        A3_ = registerStateVariableFrom<Vecd>("FirstOrderCorrectionVectorA3", A3);
-    
-        addVariableToWrite<Vec2d>("FirstOrderCorrectionVectorA1");
-        addVariableToWrite<Vec2d>("FirstOrderCorrectionVectorA2");
-        addVariableToWrite<Vec2d>("FirstOrderCorrectionVectorA3");
-    }
-
-        Real *phi_;
-        Vec2d *A1_;
-        Vec2d *A2_;
-        Vec2d *A3_;
-
-};
-
-*/
 class DiffusionInitialCondition : public LocalDynamics
 {
   public:
@@ -248,31 +194,33 @@ class DiffusionInitialCondition : public LocalDynamics
     };
 };
 
- 
+
 class GetLaplacianTimeStepSize : public LocalDynamicsReduce<ReduceMin> 
                          
 {
   protected:
     Real smoothing_length;
-    Solid &laplacian_solid_;
+   
+    AnisotropicDiffusionSolid &anisotropic_diffusion_solid_;
 
   public:
     GetLaplacianTimeStepSize(SPHBody &sph_body)
         : LocalDynamicsReduce<ReduceMin>(sph_body),
-       laplacian_solid_(DynamicCast<Solid>(this, sph_body.getBaseMaterial())) 
+       anisotropic_diffusion_solid_(DynamicCast<AnisotropicDiffusionSolid>(this, sph_body.getBaseMaterial())) 
     {
         smoothing_length = sph_body.sph_adaptation_->ReferenceSmoothingLength();
     };
 
     Real reduce(size_t index_i, Real dt)
     {
-        return 0.5 * smoothing_length * smoothing_length /  1.0;
-        //todo / laplacian_solid_.DiffusivityCoefficient() / Dimensions;
+        return 0.5 * smoothing_length * smoothing_length  
+             / anisotropic_diffusion_solid_.DiffusivityCoefficient() / Dimensions;
     }
 
     virtual ~GetLaplacianTimeStepSize(){};
 };
 
+} // namespace SPH
 //----------------------------------------------------------------------
 //	Main program starts here.
 //----------------------------------------------------------------------
@@ -288,15 +236,16 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    SolidBody diffusion_body(sph_system, makeShared<DiffusionBlock>("DiffusionBlock"));
-    diffusion_body.sph_adaptation_->resetKernel<AnisotropicKernel<KernelWendlandC2>>(scaling_vector);
-    diffusion_body.defineMaterial<LaplacianDiffusionSolid>(rho0, diffusion_coeff, youngs_modulus, poisson_ratio);
-    diffusion_body.generateParticles<AnisotropicParticleGenerator>();
-
-    SolidBody boundary_body(sph_system, makeShared<Boundary>("Boundary"));
+    SolidBody boundary_body(sph_system, makeShared<DiffusionBoundary>("DiffusionBoundary"));
     boundary_body.sph_adaptation_->resetKernel<AnisotropicKernel<KernelWendlandC2>>(scaling_vector);
     boundary_body.defineMaterial<Solid>();
-    boundary_body.generateParticles<AnisotropicParticleGeneratorBoundary>();
+    boundary_body.generateParticles<BaseParticles, DiffusionBoundary>();
+
+    SolidBody diffusion_body(sph_system, makeShared<DiffusionBlock>("DiffusionBlock"));
+    diffusion_body.sph_adaptation_->resetKernel<AnisotropicKernel<KernelWendlandC2>>(scaling_vector);
+    diffusion_body.defineMaterial<AnisotropicDiffusionSolid>(rho0, diffusion_coeff);
+    diffusion_body.generateParticles<BaseParticles, DiffusionBlock>();
+
 
     //----------------------------------------------------------------------
     //	Particle and body creation of fluid observers.
@@ -328,10 +277,10 @@ int main(int ac, char *av[])
     //	Note that there may be data dependence on the constructors of these methods.
     //----------------------------------------------------------------------
 
-	Dynamics1Level<LinearGradientCorrectionMatrixComplex> correct_configuration(diffusion_body_inner_relation, diffusion_block_contact);
-	Dynamics1Level<NonisotropicKernelCorrectionMatrixACComplex> correct_second_configuration(diffusion_body_inner_relation, diffusion_block_contact);
+	InteractionWithUpdate<LinearGradientCorrectionMatrixComplex> correct_configuration(diffusion_body_inner_relation, diffusion_block_contact);
+	InteractionWithUpdate<AnisotropicKernelCorrectionMatrixACComplex> correct_second_configuration(diffusion_body_inner_relation, diffusion_block_contact);
     ReduceDynamics<GetLaplacianTimeStepSize> get_time_step_size(diffusion_body);
-    Dynamics1Level<NonisotropicDiffusionRelaxationComplex> diffusion_relaxation(diffusion_body_inner_relation, diffusion_block_contact);
+    InteractionWithUpdate<AnisotropicDiffusionRelaxationComplex> diffusion_relaxation(diffusion_body_inner_relation, diffusion_block_contact);
     
     SimpleDynamics<DiffusionInitialCondition> setup_diffusion_initial_condition(diffusion_body_inner_relation);
 
