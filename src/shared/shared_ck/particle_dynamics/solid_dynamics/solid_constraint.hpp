@@ -27,11 +27,6 @@ ConstraintBySimBodyCK<DynamicsIdentifier>::
     MBsystem_.realize(*state, SimTK::Stage::Acceleration);
     sim_tk_initial_origin_location_ = mobod_.getBodyOriginLocation(*state);
     sv_simbody_state_->setValue(SimbodyState(sim_tk_initial_origin_location_, mobod_, *state));
-    Vec3d angular_acceleration = SimTKToEigen(mobod_.getBodyAngularAcceleration(*state));
-    std::cout << std::fixed << std::setprecision(9)
-              << "  angular_acceleration[0] = " << angular_acceleration[0]
-              << "	angular_acceleration[1] = " << angular_acceleration[1]
-              << "	angular_acceleration[2] = " << angular_acceleration[2] << "\n";
 }
 //=================================================================================================//
 template <class DynamicsIdentifier>
