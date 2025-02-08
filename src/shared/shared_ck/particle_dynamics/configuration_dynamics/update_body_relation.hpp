@@ -15,10 +15,7 @@ UpdateRelation<ExecutionPolicy, Inner<Parameters...>>::
     : Interaction<Inner<Parameters...>>(inner_relation),
       BaseDynamics<void>(), ex_policy_(ExecutionPolicy{}),
       cell_linked_list_(inner_relation.getCellLinkedList()),
-      kernel_implementation_(*this)
-{
-    this->particles_->addVariableToWrite(this->dv_particle_offset_);
-}
+      kernel_implementation_(*this){}
 //=================================================================================================//
 template <class ExecutionPolicy, typename... Parameters>
 template <class EncloserType>
@@ -101,7 +98,6 @@ UpdateRelation<ExecutionPolicy, Contact<Parameters...>>::
 {
     for (size_t k = 0; k != this->contact_bodies_.size(); ++k)
     {
-        this->particles_->addVariableToWrite(this->dv_contact_particle_offset_[k]);
         contact_kernel_implementation_.push_back(
             contact_kernel_implementation_ptrs_.template createPtr<KernelImplementation>(*this));
     }

@@ -19,12 +19,19 @@ ConstraintBySimBodyCK<DynamicsIdentifier>::
       dv_vel_(this->particles_->template getVariableByName<Vecd>("Velocity")),
       dv_n_(this->particles_->template getVariableByName<Vecd>("NormalDirection")),
       dv_n0_(this->particles_->template registerStateVariableOnlyFrom<Vecd>("InitialNormalDirection", "NormalDirection")),
-      dv_acc_(this->particles_->template getVariableByName<Vecd>("Acceleration")),
+      dv_acc_(this->particles_->template registerStateVariableOnly<Vecd>("Acceleration")),
       sv_simbody_state_(this->particles_->template addUniqueSingularVariableOnly<SimbodyState>("SimbodyState"))
 {
+    this->particles_->template addVariableToWrite<Vecd>("Velocity");
     const SimTK::State *state = &integ_.getState();
     MBsystem_.realize(*state, SimTK::Stage::Acceleration);
-    initializeSimbodyState(*state);
+    sim_tk_initial_origin_location_ = mobod_.getBodyOriginLocation(*state);
+    sv_simbody_state_->setValue(SimbodyState(sim_tk_initial_origin_location_, mobod_, *state));
+    Vec3d angular_acceleration = SimTKToEigen(mobod_.getBodyAngularAcceleration(*state));
+    std::cout << std::fixed << std::setprecision(9)
+              << "  angular_acceleration[0] = " << angular_acceleration[0]
+              << "	angular_acceleration[1] = " << angular_acceleration[1]
+              << "	angular_acceleration[2] = " << angular_acceleration[2] << "\n";
 }
 //=================================================================================================//
 template <class DynamicsIdentifier>
@@ -32,28 +39,8 @@ void ConstraintBySimBodyCK<DynamicsIdentifier>::setupDynamics(Real dt)
 {
     const SimTK::State *state = &integ_.getState();
     MBsystem_.realize(*state, SimTK::Stage::Acceleration);
-    updateSimbodyState(*state);
+    sv_simbody_state_->setValue(SimbodyState(sim_tk_initial_origin_location_, mobod_, *state));
 };
-//=================================================================================================//
-template <class DynamicsIdentifier>
-void ConstraintBySimBodyCK<DynamicsIdentifier>::initializeSimbodyState(const SimTK::State &state)
-{
-    updateSimbodyState(state);
-    SimbodyState *simbody_state = sv_simbody_state_->Data();
-    simbody_state->initial_origin_location_ = simbody_state->origin_location_;
-}
-//=================================================================================================//
-template <class DynamicsIdentifier>
-void ConstraintBySimBodyCK<DynamicsIdentifier>::updateSimbodyState(const SimTK::State &state)
-{
-    SimbodyState *simbody_state = sv_simbody_state_->Data();
-    simbody_state->origin_location_ = SimTKToEigen(mobod_.getBodyOriginLocation(state));
-    simbody_state->origin_velocity_ = SimTKToEigen(mobod_.getBodyOriginVelocity(state));
-    simbody_state->origin_acceleration_ = SimTKToEigen(mobod_.getBodyOriginAcceleration(state));
-    simbody_state->angular_velocity_ = SimTKToEigen(mobod_.getBodyAngularVelocity(state));
-    simbody_state->angular_acceleration_ = SimTKToEigen(mobod_.getBodyAngularAcceleration(state));
-    simbody_state->rotation_ = SimTKToEigen(mobod_.getBodyRotation(state));
-}
 //=================================================================================================//
 template <class DynamicsIdentifier>
 template <class ExecutionPolicy, class EncloserType>

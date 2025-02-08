@@ -85,7 +85,7 @@ class ObservedQuantityRecording<ExecutionPolicy, DataType>
         this->dv_interpolated_quantities_->prepareForOutput(ExecutionPolicy{});
         DataType *interpolated_quantities = this->dv_interpolated_quantities_->Data();
         std::ofstream out_file(filefullpath_output_.c_str(), std::ios::app);
-        out_file << sv_physical_time_.getValue() << "   ";
+        out_file << sv_physical_time_->getValue() << "   ";
         for (size_t i = 0; i != base_particles_.TotalRealParticles(); ++i)
         {
             plt_engine_.writeAQuantity(out_file, interpolated_quantities[i]);
@@ -137,7 +137,7 @@ class ReducedQuantityRecording<ExecutionPolicy, LocalReduceMethodType> : public 
     virtual void writeToFile(size_t iteration_step = 0) override
     {
         std::ofstream out_file(filefullpath_output_.c_str(), std::ios::app);
-        out_file << sv_physical_time_.getValue() << "   ";
+        out_file << sv_physical_time_->getValue() << "   ";
         plt_engine_.writeAQuantity(out_file, reduce_method_.exec());
         out_file << "\n";
         out_file.close();

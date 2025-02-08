@@ -39,6 +39,7 @@ void BaseParticles::initializeBasicParticleVariables()
     //		unregistered variables and data
     //----------------------------------------------------------------------
     original_id_ = registerDiscreteVariable<UnsignedInt>("OriginalID", particles_bound_, getAssignIndex());
+    addVariableToWrite<UnsignedInt>("OriginalID");
     sorted_id_ = registerDiscreteVariable<UnsignedInt>("SortedID", particles_bound_, getAssignIndex());
 }
 //=================================================================================================//

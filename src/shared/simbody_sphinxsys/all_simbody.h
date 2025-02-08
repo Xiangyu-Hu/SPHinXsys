@@ -58,13 +58,21 @@ struct SimbodyState
     Mat3d rotation_;
 
     SimbodyState()
-        : initial_origin_location_(ZeroData<Vec3d>::value),
-          origin_location_(ZeroData<Vec3d>::value),
-          origin_velocity_(ZeroData<Vec3d>::value),
-          origin_acceleration_(ZeroData<Vec3d>::value),
-          angular_velocity_(ZeroData<Vec3d>::value),
-          angular_acceleration_(ZeroData<Vec3d>::value),
+        : initial_origin_location_(Vec3d::Zero()),
+          origin_location_(Vec3d::Zero()),
+          origin_velocity_(Vec3d::Zero()),
+          origin_acceleration_(Vec3d::Zero()),
+          angular_velocity_(Vec3d::Zero()),
+          angular_acceleration_(Vec3d::Zero()),
           rotation_(Mat3d::Identity()) {}
+    SimbodyState(const SimTKVec3 &sim_tk_initial_origin_location, SimTK::MobilizedBody &mobod, const SimTK::State &state)
+        : initial_origin_location_(SimTKToEigen(sim_tk_initial_origin_location)),
+          origin_location_(SimTKToEigen(mobod.getBodyOriginLocation(state))),
+          origin_velocity_(SimTKToEigen(mobod.getBodyOriginVelocity(state))),
+          origin_acceleration_(SimTKToEigen(mobod.getBodyOriginAcceleration(state))),
+          angular_velocity_(SimTKToEigen(mobod.getBodyAngularVelocity(state))),
+          angular_acceleration_(SimTKToEigen(mobod.getBodyAngularAcceleration(state))),
+          rotation_(SimTKToEigen(mobod.getBodyRotation(state))) {};
 
     // implemented according to the Simbody API function with the same name
     void findStationLocationVelocityAndAccelerationInGround(
