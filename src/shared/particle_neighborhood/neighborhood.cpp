@@ -20,6 +20,7 @@ void Neighborhood::removeANeighbor(size_t neighbor_n)
     dW_ij_[neighbor_n] = dW_ij_[current_size_];
     r_ij_[neighbor_n] = r_ij_[current_size_];
     e_ij_[neighbor_n] = e_ij_[current_size_];
+    r_ij_vector_[neighbor_n] = r_ij_vector_[current_size_];
 }
 //=================================================================================================//
 void NeighborBuilder::createNeighbor(Neighborhood &neighborhood, const Real &distance,
@@ -29,6 +30,7 @@ void NeighborBuilder::createNeighbor(Neighborhood &neighborhood, const Real &dis
     neighborhood.W_ij_.push_back(kernel_->W(distance, displacement));
     neighborhood.dW_ij_.push_back(kernel_->dW(distance, displacement));
     neighborhood.r_ij_.push_back(distance);
+    neighborhood.r_ij_vector_.push_back(displacement);
     neighborhood.e_ij_.push_back(kernel_->e(distance, displacement));
     neighborhood.allocated_size_++;
 }
@@ -41,6 +43,7 @@ void NeighborBuilder::initializeNeighbor(Neighborhood &neighborhood, const Real 
     neighborhood.W_ij_[current_size] = kernel_->W(distance, displacement);
     neighborhood.dW_ij_[current_size] = kernel_->dW(distance, displacement);
     neighborhood.r_ij_[current_size] = distance;
+    neighborhood.r_ij_vector_[current_size] = displacement;
     neighborhood.e_ij_[current_size] = kernel_->e(distance, displacement);
 }
 //=================================================================================================//
@@ -53,6 +56,7 @@ void NeighborBuilder::createNeighbor(Neighborhood &neighborhood, const Real &dis
     neighborhood.W_ij_.push_back(weight);
     neighborhood.dW_ij_.push_back(kernel_->dW(h_ratio_min, distance, displacement));
     neighborhood.r_ij_.push_back(distance);
+    neighborhood.r_ij_vector_.push_back(displacement);
     neighborhood.e_ij_.push_back(displacement / (distance + TinyReal));
     neighborhood.allocated_size_++;
 }
@@ -68,6 +72,7 @@ void NeighborBuilder::initializeNeighbor(Neighborhood &neighborhood, const Real 
                                            : 0.0;
     neighborhood.dW_ij_[current_size] = kernel_->dW(h_ratio_min, distance, displacement);
     neighborhood.r_ij_[current_size] = distance;
+    neighborhood.r_ij_vector_.push_back(displacement);
     neighborhood.e_ij_[current_size] = displacement / (distance + TinyReal);
 }
 //=================================================================================================//
