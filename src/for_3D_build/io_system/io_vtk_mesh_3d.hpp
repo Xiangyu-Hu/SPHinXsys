@@ -11,17 +11,6 @@ void BodyStatesRecordingToTriangleMeshVtp::writeCellsToVtk(OutStreamType &output
 {
     ParticleVariables &variables_to_write = particles.VariablesToWrite();
 
-    // write cell IDs
-    output_stream
-        << "    <DataArray Name=\"SortedParticle_ID\" type=\"Int32\" Format=\"ascii\">\n";
-    output_stream << "    ";
-    for (size_t i = 0; i != faces_.size(); ++i)
-    {
-        output_stream << i << " ";
-    }
-    output_stream << std::endl;
-    output_stream << "    </DataArray>\n";
-
     // write scalars
     constexpr int type_index_Real = DataTypeIndex<Real>::value;
     for (DiscreteVariable<Real> *variable : std::get<type_index_Real>(variables_to_write))

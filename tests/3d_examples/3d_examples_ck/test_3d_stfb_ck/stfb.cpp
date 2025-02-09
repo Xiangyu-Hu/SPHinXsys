@@ -291,7 +291,7 @@ int main(int ac, char *av[])
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp write_real_body_states(sph_system);
-    BodyStatesRecordingToTriangleMeshVtp write_structure_surface(structure, structure_mesh);
+    BodyStatesRecordingToTriangleMeshVtp write_structure_surface(structure_observer, structure_mesh);
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<
         MainExecutionPolicy, UpperFrontInAxisDirectionCK<BodyRegionByCell>>>
         wave_gauge(wave_probe_buffer, "FreeSurfaceHeight");
