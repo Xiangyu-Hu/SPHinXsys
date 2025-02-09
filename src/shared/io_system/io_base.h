@@ -103,22 +103,24 @@ class BodyStatesRecording : public BaseIO
     virtual ~BodyStatesRecording() {};
     /** write with filename indicated by physical time */
     void writeToFile();
-    
+
     void writeToFile(const ParallelDevicePolicy &ex_policy)
     {
-        for (size_t i = 0; i < bodies_.size(); ++i)
+        if (state_recording_)
         {
-            if (bodies_[i]->checkNewlyUpdated())
+            for (size_t i = 0; i < bodies_.size(); ++i)
             {
-                dv_all_pos_[i]->prepareForOutput(ex_policy);
-                BaseParticles &base_particles = bodies_[i]->getBaseParticles();
-                prepare_variable_to_write_(base_particles.VariablesToWrite(), ex_policy);
+                if (bodies_[i]->checkNewlyUpdated())
+                {
+                    dv_all_pos_[i]->prepareForOutput(ex_policy);
+                    BaseParticles &base_particles = bodies_[i]->getBaseParticles();
+                    prepare_variable_to_write_(base_particles.VariablesToWrite(), ex_policy);
+                }
             }
+            writeToFile();
         }
-
-        writeToFile();
     };
-    
+
     void writeToFile(const ParallelPolicy &ex_policy) { writeToFile(); };
     void writeToFile(const SequencedPolicy &ex_policy) { writeToFile(); };
     virtual void writeToFile(size_t iteration_step) override;
