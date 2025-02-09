@@ -148,10 +148,15 @@ int main(int ac, char *av[])
     ObserverBody observer(sph_system, "Observer");
     observer.defineAdaptationRatios(1.15, 2.0);
     observer.generateParticles<ObserverParticles>(StdVec<Vecd>{obs});
+
+    TriangleMeshShapeBrick structure_mesh(halfsize_structure, 10, structure_pos);
+    ObserverBody structure_observer(sph_system, "StructureObserver");
+    structure_observer.generateParticles<ObserverParticles>(structure_mesh);
     //----------------------------------------------------------------------
     //	Creating body parts.
     //----------------------------------------------------------------------
-    TransformShape<GeometricShapeBox> wave_probe_buffer_shape(Transform(translation_FS_gauge), FS_gauge);
+    TransformShape<GeometricShapeBox>
+        wave_probe_buffer_shape(Transform(translation_FS_gauge), FS_gauge);
     BodyRegionByCell wave_probe_buffer(water_block, wave_probe_buffer_shape);
     //----------------------------------------------------------------------
     //	Define body relation map.
@@ -286,6 +291,7 @@ int main(int ac, char *av[])
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp write_real_body_states(sph_system);
+    BodyStatesRecordingToTriangleMeshVtp write_structure_surface(structure, structure_mesh);
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<
         MainExecutionPolicy, UpperFrontInAxisDirectionCK<BodyRegionByCell>>>
         wave_gauge(wave_probe_buffer, "FreeSurfaceHeight");
@@ -325,10 +331,11 @@ int main(int ac, char *av[])
     write_real_body_states.writeToFile(MainExecutionPolicy{});
     write_structure_position.writeToFile(number_of_iterations);
     wave_gauge.writeToFile(number_of_iterations);
-    //----------------------------------------------------------------------
-    //	Main loop of time stepping starts here.
-    //----------------------------------------------------------------------
-    while (sv_physical_time->getValue() < end_time)
+    write_structure_surface.writeToFile();
+        //----------------------------------------------------------------------
+        //	Main loop of time stepping starts here.
+        //----------------------------------------------------------------------
+        while (sv_physical_time->getValue() < end_time)
     {
         Real integral_time = 0.0;
         while (integral_time < output_interval)

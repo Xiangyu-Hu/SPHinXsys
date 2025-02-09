@@ -35,21 +35,24 @@
 namespace SPH
 {
 /**
- * @class BodyStatesRecordingToMeshVtp
+ * @class BodyStatesRecordingToTriangleMeshVtp
  * @brief  Write files for bodies
  * the output file is VTK XML format can be visualized by ParaView
  * with the data type vtkPolyData
  */
-class BodyStatesRecordingToMeshVtp : public BodyStatesRecordingToVtp
+class TriangleMeshShape;
+class BodyStatesRecordingToTriangleMeshVtp : public BodyStatesRecordingToVtp
 {
   public:
-    BodyStatesRecordingToMeshVtp(SPHBody &body, ANSYSMesh &ansys_mesh);
-    virtual ~BodyStatesRecordingToMeshVtp() {};
+    BodyStatesRecordingToTriangleMeshVtp(SPHBody &body, TriangleMeshShape &triangle_mesh_shape);
+    virtual ~BodyStatesRecordingToTriangleMeshVtp() {};
 
   protected:
     virtual void writeWithFileName(const std::string &sequence) override;
-    StdLargeVec<Vecd> &node_coordinates_;
-    StdLargeVec<StdVec<size_t>> &elements_nodes_connection_;
+    StdLargeVec<std::array<int, 3>> faces_;
+
+    template <typename OutStreamType>
+    void writeCellsToVtk(OutStreamType &output_stream, BaseParticles &particles);
 };
 
 class BodyStatesRecordingToMeshVtu : public BodyStatesRecordingToVtp
