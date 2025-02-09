@@ -6,8 +6,10 @@
 #include "base_particles.h"
 #include "contact_body_relation.h"
 #include "inner_body_relation.h"
+#include "kernel_correction.h"
 #include "observer_particles.h"
-#include "anisotropic_relaxation.hpp"
+#include "anisotropic_diffusion_relaxation.hpp"
+
 
 #include "sphinxsys.h"  
 using namespace SPH;   // Namespace cite here
@@ -109,7 +111,7 @@ class ParticleGenerator<BaseParticles, DiffusionBlock>: public ParticleGenerator
             {
                 Real x = (i + 0.5) * resolution_ref_large;
                 Real y = (j + 0.5) * resolution_ref;
-                addPositionAndVolumetricMeasure(Vecd(x, y), (resolution_ref * resolution_ref_large));
+                addPositionAndVolumetricMeasure(Vecd(x, y), V_j);
             }
         }
     }
@@ -132,7 +134,7 @@ class ParticleGenerator<BaseParticles, DiffusionBoundary>: public ParticleGenera
             {
                 Real x = -BL + (i + 0.5) * resolution_ref_large;
                 Real y = -BH + (j + 0.5) * resolution_ref;
-                addPositionAndVolumetricMeasure(Vec2d(x, y), (resolution_ref * resolution_ref_large));
+                addPositionAndVolumetricMeasure(Vec2d(x, y), V_j);
             }
         }
 
@@ -143,7 +145,7 @@ class ParticleGenerator<BaseParticles, DiffusionBoundary>: public ParticleGenera
             {
                 Real x = (x_num + i + 0.5) * resolution_ref_large;
                 Real y = -BH + (j + 0.5) * resolution_ref;
-                addPositionAndVolumetricMeasure(Vec2d(x, y), (resolution_ref * resolution_ref_large));
+                addPositionAndVolumetricMeasure(Vec2d(x, y), V_j);
             }
         }
 
@@ -154,7 +156,7 @@ class ParticleGenerator<BaseParticles, DiffusionBoundary>: public ParticleGenera
             {
                 Real x = (i + 0.5) * resolution_ref_large;
                 Real y = -BH + (j + 0.5) * resolution_ref;
-                addPositionAndVolumetricMeasure(Vec2d(x, y), (resolution_ref * resolution_ref_large));
+                addPositionAndVolumetricMeasure(Vec2d(x, y), V_j);
             }
         }
 
@@ -165,7 +167,7 @@ class ParticleGenerator<BaseParticles, DiffusionBoundary>: public ParticleGenera
             {
                 Real x = (i + 0.5) * resolution_ref_large;
                 Real y = (y_num + j + 0.5) * resolution_ref;
-                addPositionAndVolumetricMeasure(Vec2d(x, y), (resolution_ref * resolution_ref_large));
+                addPositionAndVolumetricMeasure(Vec2d(x, y), V_j);
             }
         }
     }
@@ -190,13 +192,65 @@ class DiffusionInitialCondition : public LocalDynamics
         {
             phi_[index_i] = 1.0;     
         }
+    //  phi_[index_i] = pos_[index_i][0] *pos_[index_i][0] + pos_[index_i][1] * pos_[index_i][1];  
       
     };
 };
 
+/*
+This class is used to check if the gradient is correct or not with specific function given.*/
+class GradientCheck : public LocalDynamics, public DataDelegateInner
+{
+  public:
+    GradientCheck(BaseInnerRelation &inner_relation)
+        : LocalDynamics(inner_relation.getSPHBody()), DataDelegateInner(inner_relation),
+        B_(this->particles_->template getVariableDataByName<Matd>("LinearGradientCorrectionMatrix")),
+        phi_(particles_->getVariableDataByName<Real>("Phi")),
+        Vol_(this->particles_->template getVariableDataByName<Real>("VolumetricMeasure"))
+    ,show_neighbor_(particles_->registerStateVariable<Real>("ShowingNeighbor", Real(0.0)))
+ {
+       Gradient_x = particles_->registerStateVariable<Real>("Gradient_x", [&](size_t i) -> Real { return Real(0.0); });
+       Gradient_y = particles_->registerStateVariable<Real>("Gradient_y", [&](size_t i) -> Real { return Real(0.0); });
+    };
 
-class GetLaplacianTimeStepSize : public LocalDynamicsReduce<ReduceMin> 
-                         
+    virtual ~GradientCheck(){};
+  
+        
+  protected:
+    Mat2d *B_;
+    Real  *phi_;
+    Real  *Vol_;
+    Real *Gradient_x;
+    Real *Gradient_y;
+   Real *show_neighbor_;
+    void interaction(size_t index_i, Real dt = 0.0)
+    {
+        Vec2d rate_ = Vec2d::Zero();
+        Neighborhood &inner_neighborhood = inner_configuration_[index_i];
+        for (size_t n = 0; n != inner_neighborhood.current_size_; ++n) // this is ij
+        {
+            size_t index_j = inner_neighborhood.j_[n];
+            Vec2d gradW_ijV_j = inner_neighborhood.dW_ij_[n] * Vol_[index_j] * inner_neighborhood.e_ij_[n];
+            
+
+             if (index_i == 59)
+            {
+                show_neighbor_[index_j] = 1.0;
+            };
+
+            rate_ += (phi_[index_j] - phi_[index_i]) * (B_[index_i].transpose() * gradW_ijV_j);
+        }
+
+        Gradient_x[index_i] = rate_[0];
+        Gradient_y[index_i] = rate_[1];
+    };
+
+    void update(size_t index_i, Real dt = 0.0){};
+};
+ 
+
+
+class GetLaplacianTimeStepSize : public LocalDynamicsReduce<ReduceMin>                    
 {
   protected:
     Real smoothing_length;
@@ -218,9 +272,11 @@ class GetLaplacianTimeStepSize : public LocalDynamicsReduce<ReduceMin>
     }
 
     virtual ~GetLaplacianTimeStepSize(){};
-};
 
+
+};
 } // namespace SPH
+
 //----------------------------------------------------------------------
 //	Main program starts here.
 //----------------------------------------------------------------------
@@ -263,55 +319,38 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     InnerRelation diffusion_body_inner_relation(diffusion_body);
 	InnerRelation boundary_body_inner_relation(boundary_body);
-    ContactRelation temperature_observer_contact(temperature_observer, {&diffusion_body});
-
     ContactRelation diffusion_block_contact(diffusion_body, {&boundary_body});
-    ComplexRelation diffusion_block_complex(diffusion_body_inner_relation, diffusion_block_contact);
+
    
- 
     //----------------------------------------------------------------------
     //	Define the main numerical methods used in the simulation.
     //	Note that there may be data dependence on the constructors of these methods.
     //----------------------------------------------------------------------
-
-	InteractionWithUpdate<LinearGradientCorrectionMatrixComplex> correct_configuration(diffusion_body_inner_relation, diffusion_block_contact);
-	InteractionWithUpdate<AnisotropicKernelCorrectionMatrixACComplex> correct_second_configuration(diffusion_body_inner_relation, diffusion_block_contact);
+    InteractionWithUpdate<LinearGradientCorrectionMatrixComplex> correct_configuration(diffusion_body_inner_relation, diffusion_block_contact);
+   	InteractionWithUpdate<AnisotropicKernelCorrectionMatrixComplex> correct_second_configuration(diffusion_body_inner_relation, diffusion_block_contact);
     ReduceDynamics<GetLaplacianTimeStepSize> get_time_step_size(diffusion_body);
     InteractionWithUpdate<AnisotropicDiffusionRelaxationComplex> diffusion_relaxation(diffusion_body_inner_relation, diffusion_block_contact);
     SimpleDynamics<DiffusionInitialCondition> setup_diffusion_initial_condition(diffusion_body_inner_relation);
-   
+    InteractionWithUpdate<GradientCheck> gradient_check(diffusion_body_inner_relation);
+    
     BodyStatesRecordingToVtp write_states_vtp(sph_system);
 
     write_states_vtp.addToWrite<Real>(diffusion_body, "Phi");
     write_states_vtp.addToWrite<Real>(diffusion_body,"Laplacian_x");
     write_states_vtp.addToWrite<Real>(diffusion_body,"Laplacian_y");
+    //write_states_vtp.addToWrite<Real>(diffusion_body,"Gradient_x");
+   // write_states_vtp.addToWrite<Real>(diffusion_body,"Gradient_y");
     write_states_vtp.addToWrite<Mat2d>(diffusion_body,"LinearGradientCorrectionMatrix");
-	write_states_vtp.addToWrite<Real>(diffusion_body,"Laplacian_xy");
-	write_states_vtp.addToWrite<Real>(diffusion_body,"diffusion_dt");
-    write_states_vtp.addToWrite<Vec2d>(diffusion_body,"FirstOrderCorrectionVectorE");
- 
+	//write_states_vtp.addToWrite<Real>(diffusion_body,"Laplacian_xy");
+	//write_states_vtp.addToWrite<Real>(diffusion_body,"diffusion_dt");
 
-    PeriodicAlongAxis periodic_along_x(diffusion_body.getSPHBodyBounds(), xAxis);
-    PeriodicAlongAxis periodic_along_y(diffusion_body.getSPHBodyBounds(), yAxis);
-
-	PeriodicConditionUsingCellLinkedList periodic_condition_y(diffusion_body, periodic_along_y);
-	PeriodicConditionUsingCellLinkedList periodic_condition_x(diffusion_body,periodic_along_x);
-
-    //----------------------------------------------------------------------
-    //	Define the methods for I/O operations and observations of the simulation.
-    //----------------------------------------------------------------------
-   
-   /* RegressionTestEnsembleAverage<ObservedQuantityRecording<Real>>
-        write_solid_temperature("Phi", io_environment, temperature_observer_contact);*/
+    write_states_vtp.addToWrite<Real>(diffusion_body, "ShowingNeighbor");
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
     //----------------------------------------------------------------------
     sph_system.initializeSystemCellLinkedLists();
-	periodic_condition_y.update_cell_linked_list_.exec();
-	periodic_condition_x.update_cell_linked_list_.exec();
     sph_system.initializeSystemConfigurations();
-
     correct_configuration.exec();
     correct_second_configuration.exec();
     setup_diffusion_initial_condition.exec();
@@ -348,9 +387,13 @@ int main(int ac, char *av[])
             Real relaxation_time = 0.0;
             while (relaxation_time < Observe_time)
             {
-                dt = 0.1 * scaling_factor * get_time_step_size.exec();
-                diffusion_relaxation.exec(dt);
-
+              dt = 0.1 * scaling_factor * get_time_step_size.exec();
+               diffusion_relaxation.exec(dt);
+               gradient_check.exec(dt);  // for checking the first order accuracy
+               if (number_of_iterations <3) //for comparing the results with the theoretical results
+                {
+                  write_states_vtp.writeToFile(number_of_iterations);
+                }  
            
                 if (number_of_iterations % 1000 == 0)
                 {
@@ -360,7 +403,6 @@ int main(int ac, char *av[])
                 }
 
                 number_of_iterations++;
-
                 relaxation_time += dt;
                 integration_time += dt;
                 physical_time += dt;
