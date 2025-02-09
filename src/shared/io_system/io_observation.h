@@ -171,7 +171,7 @@ class SingularVariableRecording : public BaseQuantityRecording
     virtual void writeToFile(size_t iteration_step = 0) override
     {
         std::ofstream out_file(filefullpath_output_.c_str(), std::ios::app);
-        out_file << sv_physical_time_.getValue() << "   ";
+        out_file << sv_physical_time_->getValue() << "   ";
         plt_engine_.writeAQuantity(out_file, variable_->getValue());
         out_file << "\n";
         out_file.close();
