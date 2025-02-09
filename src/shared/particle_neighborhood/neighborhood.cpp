@@ -72,7 +72,7 @@ void NeighborBuilder::initializeNeighbor(Neighborhood &neighborhood, const Real 
                                            : 0.0;
     neighborhood.dW_ij_[current_size] = kernel_->dW(h_ratio_min, distance, displacement);
     neighborhood.r_ij_[current_size] = distance;
-    neighborhood.r_ij_vector_.push_back(displacement);
+    neighborhood.r_ij_vector_[current_size] = displacement;
     neighborhood.e_ij_[current_size] = displacement / (distance + TinyReal);
 }
 //=================================================================================================//
@@ -154,7 +154,7 @@ void NeighborBuilderContact::operator()(Neighborhood &neighborhood,
     size_t index_j = list_data_j.first;
     Vecd displacement = pos_i - list_data_j.second;
     Real distance = displacement.norm();
-    if (distance < kernel_->CutOffRadius())
+   if (kernel_->checkIfWithinCutOffRadius(displacement) )
     {
         neighborhood.current_size_ >= neighborhood.allocated_size_
             ? createNeighbor(neighborhood, distance, displacement, index_j)
@@ -502,6 +502,7 @@ void NeighborBuilderSurfaceContactFromSolid::createNeighbor(Neighborhood &neighb
     neighborhood.W_ij_.push_back(std::max(kernel_->W(distance, displacement) - offset_W_ij_, Real(0)));
     neighborhood.dW_ij_.push_back(kernel_->dW(distance, displacement));
     neighborhood.r_ij_.push_back(distance);
+    neighborhood.r_ij_vector_.push_back(displacement);
     neighborhood.e_ij_.push_back(kernel_->e(distance, displacement));
     neighborhood.allocated_size_++;
 }
@@ -514,6 +515,7 @@ void NeighborBuilderSurfaceContactFromSolid::initializeNeighbor(Neighborhood &ne
     neighborhood.W_ij_[current_size] = std::max(kernel_->W(distance, displacement) - offset_W_ij_, Real(0));
     neighborhood.dW_ij_[current_size] = kernel_->dW(distance, displacement);
     neighborhood.r_ij_[current_size] = distance;
+    neighborhood.r_ij_vector_[current_size] = displacement;
     neighborhood.e_ij_[current_size] = kernel_->e(distance, displacement);
 }
 //=================================================================================================//
