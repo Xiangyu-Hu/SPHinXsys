@@ -47,8 +47,8 @@ class DiscreteVariable;
 class Entity
 {
   public:
-    explicit Entity(const std::string &name) : name_(name){};
-    ~Entity(){};
+    explicit Entity(const std::string &name) : name_(name) {};
+    ~Entity() {};
     std::string Name() const { return name_; };
 
   protected:
@@ -73,7 +73,7 @@ class SingularVariable : public Entity
 
   public:
     SingularVariable(const std::string &name, const DataType &value)
-        : Entity(name), data_(new DataType(value)), delegated_(data_){};
+        : Entity(name), data_(new DataType(value)), delegated_(data_) {};
     ~SingularVariable() { delete data_; };
 
     DataType *Data() { return delegated_; };
@@ -84,7 +84,13 @@ class SingularVariable : public Entity
     template <class ExecutionPolicy>
     DataType *DelegatedData(const ExecutionPolicy &ex_policy) { return delegated_; };
 
-    DataType *DelegatedData(const ParallelDevicePolicy &par_device)
+    template <class PolicyType>
+    DataType *DelegatedData(const DeviceExecution<PolicyType> &ex_policy)
+    {
+        return DelegatedOnDevice();
+    };
+
+    DataType *DelegatedOnDevice()
     {
         if (!isDataDelegated())
         {
@@ -126,13 +132,24 @@ class DiscreteVariable : public Entity
     {
         data_field_ = new DataType[data_size];
     };
+    template <class InitializationFunction>
+    DiscreteVariable(const std::string &name, size_t data_size,
+                     const InitializationFunction &initialization)
+        : DiscreteVariable(name, data_size)
+    {
+        for (size_t i = 0; i < data_size; ++i)
+        {
+            data_field_[i] = initialization(i);
+        }
+    };
     ~DiscreteVariable() { delete[] data_field_; };
     DataType *Data() { return data_field_; };
 
     template <class ExecutionPolicy>
     DataType *DelegatedData(const ExecutionPolicy &ex_policy) { return data_field_; };
-    DataType *DelegatedData(const ParallelDevicePolicy &par_device);
-
+    DataType *DelegatedOnDevice();
+    template <class PolicyType>
+    DataType *DelegatedData(const DeviceExecution<PolicyType> &ex_policy) { return DelegatedOnDevice(); };
     bool isDataDelegated() { return device_data_field_ != nullptr; };
     size_t getDataSize() { return data_size_; }
     void setDeviceData(DataType *data_field) { device_data_field_ = data_field; };
@@ -152,7 +169,7 @@ class DiscreteVariable : public Entity
     void synchronizeToDevice();
 
     template <class ExecutionPolicy>
-    void prepareForOutput(const ExecutionPolicy &ex_policy){};
+    void prepareForOutput(const ExecutionPolicy &ex_policy) {};
     void prepareForOutput(const ParallelDevicePolicy &ex_policy) { synchronizeWithDevice(); };
 
   private:
@@ -175,7 +192,7 @@ class MeshVariable : public Entity
   public:
     using PackageData = PackageDataMatrix<DataType, 4>;
     MeshVariable(const std::string &name, size_t data_size)
-        : Entity(name), data_field_(nullptr){};
+        : Entity(name), data_field_(nullptr) {};
     ~MeshVariable() { delete[] data_field_; };
 
     PackageData *Data() { return data_field_; };

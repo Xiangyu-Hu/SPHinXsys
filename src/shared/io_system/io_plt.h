@@ -40,13 +40,15 @@ namespace SPH
 class PltEngine
 {
   public:
-    PltEngine(){};
-    virtual ~PltEngine(){};
+    PltEngine() {};
+    virtual ~PltEngine() {};
 
     void writeAQuantityHeader(std::ofstream &out_file, const Real &quantity, const std::string &quantity_name);
     void writeAQuantityHeader(std::ofstream &out_file, const Vecd &quantity, const std::string &quantity_name);
+    void writeAQuantityHeader(std::ofstream &out_file, const SimTK::SpatialVec &quantity, const std::string &quantity_name);
     void writeAQuantity(std::ofstream &out_file, const Real &quantity);
     void writeAQuantity(std::ofstream &out_file, const Vecd &quantity);
+    void writeAQuantity(std::ofstream &out_file, const SimTK::SpatialVec &quantity);
 };
 
 /**
@@ -57,9 +59,9 @@ class PltEngine
 class BodyStatesRecordingToPlt : public BodyStatesRecording
 {
   public:
-    BodyStatesRecordingToPlt(SPHBody &body) : BodyStatesRecording(body){};
-    BodyStatesRecordingToPlt(SPHSystem &sph_system) : BodyStatesRecording(sph_system){};
-    virtual ~BodyStatesRecordingToPlt(){};
+    BodyStatesRecordingToPlt(SPHBody &body) : BodyStatesRecording(body) {};
+    BodyStatesRecordingToPlt(SPHSystem &sph_system) : BodyStatesRecording(sph_system) {};
+    virtual ~BodyStatesRecordingToPlt() {};
 
   protected:
     void writePltFileHeader(std::ofstream &output_file, ParticleVariables &variables_to_write);
@@ -79,7 +81,7 @@ class MeshRecordingToPlt : public BaseIO
 
   public:
     MeshRecordingToPlt(SPHSystem &sph_system, BaseMeshField &mesh_field);
-    virtual ~MeshRecordingToPlt(){};
+    virtual ~MeshRecordingToPlt() {};
     virtual void writeToFile(size_t iteration_step = 0) override;
 };
 } // namespace SPH

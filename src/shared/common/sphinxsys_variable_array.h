@@ -34,38 +34,19 @@
 namespace SPH
 {
 template <typename DataType>
-using VariableData = DataType *;
-
-template <typename DataType>
-using VariableDataArray = std::pair<VariableData<DataType> *, UnsignedInt>;
-
-class DeviceShared;
-
-template <typename...>
-class VariableArray;
+using DataArray = DataType *;
 
 template <typename DataType, template <typename> class VariableType>
-class VariableArray<DeviceShared, VariableType<DataType>> : public Entity
+class VariableArray : public Entity
 {
-  public:
-    VariableArray(VariableArray<VariableType<DataType>> *host_variable_array);
-    ~VariableArray();
-
-  protected:
-    VariableData<DataType> *device_shared_data_array_;
-};
-
-template <typename DataType, template <typename> class VariableType>
-class VariableArray<VariableType<DataType>> : public Entity
-{
-    UniquePtrKeeper<Entity> device_shared_variable_array_keeper_;
+    UniquePtrKeeper<Entity> device_only_variable_array_keeper_;
 
   public:
-    VariableArray(const std::string &name, StdVec<VariableType<DataType> *> variables)
-        : Entity(name), variables_(variables),
+    VariableArray(StdVec<VariableType<DataType> *> variables)
+        : Entity("VariableArray"), variables_(variables),
           data_array_(nullptr), delegated_data_array_(nullptr)
     {
-        data_array_ = new VariableData<DataType>[variables.size()];
+        data_array_ = new DataArray<DataType>[variables.size()];
         for (size_t i = 0; i != variables.size(); ++i)
         {
             data_array_[i] = variables[i]->Data();
@@ -74,26 +55,79 @@ class VariableArray<VariableType<DataType>> : public Entity
     };
     ~VariableArray() { delete[] data_array_; };
     StdVec<VariableType<DataType> *> getVariables() { return variables_; };
-    VariableData<DataType> *DataArray() { return data_array_; };
+    DataArray<DataType> *Data() { return data_array_; };
 
     template <class ExecutionPolicy>
-    VariableDataArray<DataType> DelegatedVariableDataArray(const ExecutionPolicy &ex_policy)
+    DataArray<DataType> *DelegatedDataArray(const ExecutionPolicy &ex_policy)
     {
-        return VariableDataArray<DataType>(data_array_, getArraySize());
+        return data_array_;
     };
-    VariableDataArray<DataType> DelegatedVariableDataArray(const ParallelDevicePolicy &par_device);
+
+    template <class PolicyType>
+    DataArray<DataType> *DelegatedOnDevice(const DeviceExecution<PolicyType> &ex_policy);
+
+    template <class PolicyType>
+    DataArray<DataType> *DelegatedDataArray(const DeviceExecution<PolicyType> &ex_policy);
+
     size_t getArraySize() { return variables_.size(); }
 
     bool isDataArrayDelegated() { return data_array_ != delegated_data_array_; };
-    void setDelegateDataArray(VariableData<DataType> *data_array_)
+    void setDelegateDataArray(DataArray<DataType> *data_array_)
     {
         delegated_data_array_ = data_array_;
     };
 
   private:
     StdVec<VariableType<DataType> *> variables_;
-    VariableData<DataType> *data_array_;
-    VariableData<DataType> *delegated_data_array_;
+    DataArray<DataType> *data_array_;
+    DataArray<DataType> *delegated_data_array_;
+};
+
+template <typename DataType, template <typename> class VariableType>
+class DeviceOnlyVariableArray : public Entity
+{
+  public:
+    template <class PolicyType>
+    DeviceOnlyVariableArray(const DeviceExecution<PolicyType> &ex_policy,
+                            VariableArray<DataType, VariableType> *host_variable_array);
+    ~DeviceOnlyVariableArray();
+
+  protected:
+    DataArray<DataType> *device_only_data_array_;
+};
+
+template <typename DataType>
+using DiscreteVariableArray = VariableArray<DataType, DiscreteVariable>;
+
+template <typename DataType>
+using AllocatedDataArray = DataArray<DataType> *;
+
+template <typename AllocationType>
+using VariableAllocationPair = std::pair<AllocationType, UnsignedInt>;
+
+typedef DataAssemble<VariableAllocationPair, AllocatedDataArray> VariableDataArrays;
+typedef DataAssemble<UniquePtr, DiscreteVariableArray> DiscreteVariableArrays;
+
+struct DiscreteVariableArraysInitialization
+{
+    template <typename DataType>
+    void operator()(const StdVec<DiscreteVariable<DataType> *> &variables,
+                    UniquePtr<DiscreteVariableArray<DataType>> &variable_array_ptr)
+    {
+        variable_array_ptr = std::make_unique<DiscreteVariableArray<DataType>>(variables);
+    }
+};
+
+struct VariableDataArraysInitialization
+{
+    template <typename DataType, class ExecutionPolicy>
+    void operator()(const UniquePtr<DiscreteVariableArray<DataType>> &variable_array_ptr,
+                    VariableAllocationPair<AllocatedDataArray<DataType>> &variable_allocation_size_pair,
+                    const ExecutionPolicy &ex_policy)
+    {
+        variable_allocation_size_pair =
+            std::make_pair(variable_array_ptr->DelegatedDataArray(ex_policy), variable_array_ptr->getArraySize());
+    }
 };
 } // namespace SPH
 #endif // SPHINXSYS_VARIABLE_ARRAY_H

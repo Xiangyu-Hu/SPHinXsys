@@ -81,7 +81,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     // Define the main execution policy for this case.
     //----------------------------------------------------------------------
-    using MainExecutionPolicy = execution::ParallelDevicePolicy; // define
+    using MainExecutionPolicy = execution::ParallelDevicePolicy;
     //----------------------------------------------------------------------
     // Define the numerical methods used in the simulation.
     // Note that there may be data dependence on the sequence of constructions.
@@ -113,6 +113,8 @@ int main(int ac, char *av[])
         fluid_acoustic_step_2nd_half(water_block_inner, water_wall_contact);
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::DensityRegularizationComplexFreeSurface>
         fluid_density_regularization(water_block_inner, water_wall_contact);
+    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::FreeSurfaceIndicationComplexCK>
+        fluid_boundary_indicator(water_block_inner,water_wall_contact);
 
     ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AdvectionTimeStepCK> fluid_advection_time_step(water_block, U_ref);
     ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticTimeStepCK> fluid_acoustic_time_step(water_block);
@@ -123,6 +125,8 @@ int main(int ac, char *av[])
     BodyStatesRecordingToVtp body_states_recording(sph_system);
     body_states_recording.addToWrite<Vecd>(wall_boundary, "NormalDirection");
     body_states_recording.addToWrite<Real>(water_block, "Density");
+    body_states_recording.addToWrite<int>(water_block, "Indicator");
+
     RestartIO restart_io(sph_system);
 
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<MainExecutionPolicy, TotalMechanicalEnergyCK>>
@@ -185,6 +189,7 @@ int main(int ac, char *av[])
             /** outer loop for dual-time criteria time-stepping. */
             time_instance = TickCount::now();
 
+            fluid_boundary_indicator.exec();
             fluid_density_regularization.exec();
             water_advection_step_setup.exec();
             Real advection_dt = fluid_advection_time_step.exec();

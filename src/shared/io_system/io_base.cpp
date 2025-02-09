@@ -25,15 +25,13 @@ bool BaseIO::isBodyIncluded(const SPHBodyVector &bodies, SPHBody *sph_body)
 //=============================================================================================//
 BodyStatesRecording::BodyStatesRecording(SPHSystem &sph_system)
     : BaseIO(sph_system), bodies_(sph_system.getRealBodies()),
+      prepare_variable_to_write_(),
       state_recording_(sph_system_.StateRecording())
 {
     for (size_t i = 0; i < bodies_.size(); ++i)
     {
         BaseParticles &particles = bodies_[i]->getBaseParticles();
         dv_all_pos_.push_back(particles.getVariableByName<Vecd>("Position"));
-        prepare_variable_to_write_.push_back(
-            OperationOnDataAssemble<ParticleVariables, prepareVariablesToWrite>(
-                particles.VariablesToWrite()));
     }
 }
 //=============================================================================================//
@@ -61,18 +59,12 @@ void BodyStatesRecording::writeToFile(size_t iteration_step)
 //=============================================================================================//
 RestartIO::RestartIO(SPHSystem &sph_system)
     : BaseIO(sph_system), bodies_(sph_system.getRealBodies()),
-      overall_file_path_(io_environment_.restart_folder_ + "/Restart_time_")
+      overall_file_path_(io_environment_.restart_folder_ + "/Restart_time_"),
+      prepare_variable_to_restart_()
 {
     for (size_t i = 0; i < bodies_.size(); ++i)
     {
         file_names_.push_back(io_environment_.restart_folder_ + "/" + bodies_[i]->getName() + "_rst_");
-
-        // basic variable for write to restart file
-        BaseParticles &particles = bodies_[i]->getBaseParticles();
-        particles.addVariableToRestart<UnsignedInt>("OriginalID");
-        prepare_variable_to_restart_.push_back(
-            OperationOnDataAssemble<ParticleVariables, prepareVariablesToWrite>(
-                particles.VariablesToRestart()));
     }
 }
 //=============================================================================================//
@@ -135,17 +127,12 @@ void RestartIO::readFromFile(size_t restart_step)
 }
 //=============================================================================================//
 ReloadParticleIO::ReloadParticleIO(SPHBodyVector bodies)
-    : BaseIO(bodies[0]->getSPHSystem()), bodies_(bodies)
+    : BaseIO(bodies[0]->getSPHSystem()), bodies_(bodies),
+      prepare_variable_to_reload_()
 {
     for (size_t i = 0; i < bodies_.size(); ++i)
     {
         file_names_.push_back(io_environment_.reload_folder_ + "/" + bodies_[i]->getName() + "_rld.xml");
-
-        // basic variable for write to restart file
-        BaseParticles &particles = bodies_[i]->getBaseParticles();
-        prepare_variable_to_reload_.push_back(
-            OperationOnDataAssemble<ParticleVariables, prepareVariablesToWrite>(
-                particles.VariablesToReload()));
     }
 }
 //=============================================================================================//

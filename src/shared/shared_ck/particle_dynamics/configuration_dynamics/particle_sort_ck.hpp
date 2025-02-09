@@ -16,7 +16,7 @@ void UpdateSortableVariables::InitializeTemporaryVariables::operator()(
 template <class ExecutionPolicy, typename DataType>
 void UpdateSortableVariables::operator()(
     DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables,
-    ExecutionPolicy &ex_policy, BaseParticles *particles,
+    ExecutionPolicy &ex_policy, UnsignedInt total_real_particles,
     DiscreteVariable<UnsignedInt> *dv_index_permutation)
 {
     constexpr int type_index = DataTypeIndex<DataType>::value;
@@ -24,7 +24,6 @@ void UpdateSortableVariables::operator()(
 
     UnsignedInt *index_permutation = dv_index_permutation->DelegatedData(ex_policy);
 
-    UnsignedInt total_real_particles = particles->TotalRealParticles();
     for (size_t k = 0; k != variables.size(); ++k)
     {
         DataType *sorted_data_field = variables[k]->DelegatedData(ex_policy);
@@ -52,7 +51,7 @@ ParticleSortCK<ExecutionPolicy, SortMethodType>::ParticleSortCK(RealBody &real_b
     : LocalDynamics(real_body), BaseDynamics<void>(),
       ex_policy_(ExecutionPolicy{}),
       cell_linked_list_(DynamicCast<CellLinkedList>(this, real_body.getCellLinkedList())),
-      mesh_(cell_linked_list_),
+      mesh_(cell_linked_list_.getMesh()),
       dv_pos_(particles_->getVariableByName<Vecd>("Position")),
       dv_sequence_(particles_->registerDiscreteVariableOnly<UnsignedInt>(
           "Sequence", particles_->ParticlesBound())),
@@ -60,11 +59,30 @@ ParticleSortCK<ExecutionPolicy, SortMethodType>::ParticleSortCK(RealBody &real_b
           "IndexPermutation", particles_->ParticlesBound())),
       dv_original_id_(particles_->getVariableByName<UnsignedInt>("OriginalID")),
       dv_sorted_id_(particles_->getVariableByName<UnsignedInt>("SortedID")),
-      update_variables_to_sort_(particles_->VariablesToSort(), particles_),
+      update_variables_to_sort_(particles_),
       sort_method_(ExecutionPolicy{}, dv_sequence_, dv_index_permutation_),
       kernel_implementation_(*this)
 {
     particles_->addVariableToSort<UnsignedInt>("OriginalID");
+
+    body_parts_by_particle_ = real_body.getBodyPartsByParticle();
+    for (size_t i = 0; i != body_parts_by_particle_.size(); ++i)
+    {
+        DiscreteVariable<UnsignedInt> *dv_index_list = body_parts_by_particle_[i]->dvIndexList();
+        dv_index_lists_.push_back(dv_index_list);
+        DiscreteVariable<UnsignedInt> *original_id_list =
+            particles_->addUniqueDiscreteVariableFrom<UnsignedInt>(
+                dv_index_list->Name() + "Initial", dv_index_list);
+        dv_original_id_lists_.push_back(original_id_list);
+    }
+
+    for (size_t i = 0; i != body_parts_by_particle_.size(); ++i)
+    {
+        UpdateBodyPartParticleImplementation *update_body_part_by_particle_implementation =
+            update_body_part_by_particle_implementation_ptrs_
+                .template createPtr<UpdateBodyPartParticleImplementation>(*this);
+        update_body_part_by_particle_implementations_.push_back(update_body_part_by_particle_implementation);
+    }
 }
 //=================================================================================================//
 template <class ExecutionPolicy, class SortMethodType>
@@ -103,11 +121,38 @@ void ParticleSortCK<ExecutionPolicy, SortMethodType>::exec(Real dt)
                  { computing_kernel->prepareSequence(i); });
 
     sort_method_.sort(ex_policy_, particles_);
-    update_variables_to_sort_(ex_policy_, particles_, dv_index_permutation_);
+    update_variables_to_sort_(particles_->VariablesToSort(), ex_policy_, total_real_particles, dv_index_permutation_);
 
     particle_for(ex_policy_, IndexRange(0, total_real_particles),
                  [=](size_t i)
                  { computing_kernel->updateSortedID(i); });
+
+    for (size_t k = 0; k != body_parts_by_particle_.size(); ++k)
+    {
+        UnsignedInt total_particles = body_parts_by_particle_[k]->svRangeSize()->getValue();
+        UpdateBodyPartByParticle *update_body_part_by_particle =
+            update_body_part_by_particle_implementations_[k]->getComputingKernel(k);
+
+        particle_for(ex_policy_, IndexRange(0, total_particles),
+                     [=](size_t i)
+                     { update_body_part_by_particle->update(i); });
+    }
+}
+//=================================================================================================//
+template <class ExecutionPolicy, class SortMethodType>
+template <class EncloserType>
+ParticleSortCK<ExecutionPolicy, SortMethodType>::UpdateBodyPartByParticle::
+    UpdateBodyPartByParticle(const ExecutionPolicy &ex_policy,
+                             EncloserType &encloser, UnsignedInt body_part_i)
+    : index_list_(encloser.dv_index_lists_[body_part_i]->DelegatedData(ex_policy)),
+      original_id_list_(encloser.dv_original_id_lists_[body_part_i]->DelegatedData(ex_policy)),
+      sorted_id_(encloser.dv_sorted_id_->DelegatedData(ex_policy)) {}
+//=================================================================================================//
+template <class ExecutionPolicy, class SortMethodType>
+void ParticleSortCK<ExecutionPolicy, SortMethodType>::UpdateBodyPartByParticle::
+    update(UnsignedInt index_i)
+{
+    index_list_[index_i] = sorted_id_[original_id_list_[index_i]];
 }
 //=================================================================================================//
 } // namespace SPH

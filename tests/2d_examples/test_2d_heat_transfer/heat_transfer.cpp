@@ -241,7 +241,7 @@ int main(int ac, char *av[])
     ReduceDynamics<fluid_dynamics::AcousticTimeStep> get_fluid_time_step(thermofluid_body);
     PeriodicAlongAxis periodic_along_x(thermofluid_body.getSPHBodyBounds(), xAxis);
     PeriodicConditionUsingCellLinkedList periodic_condition(thermofluid_body, periodic_along_x);
-    BodyAlignedBoxByCell inflow_buffer(thermofluid_body, AlignedBox(xAxis, Transform(Vec2d(buffer_translation)), buffer_halfsize));
+    AlignedBoxPartByCell inflow_buffer(thermofluid_body, AlignedBox(xAxis, Transform(Vec2d(buffer_translation)), buffer_halfsize));
     SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>> parabolic_inflow(inflow_buffer);
 
     GetDiffusionTimeStepSize get_thermal_time_step(thermofluid_body);

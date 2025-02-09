@@ -72,4 +72,24 @@ Vecd GeometricBox::findClosestPoint(const Vecd &probe_point)
     return c;
 }
 //=================================================================================================//
+GeometricBall::GeometricBall(Real radius) : radius_(radius)
+{
+    if (radius < 0.0)
+    {
+        std::cout << "\n Error: the GeometricBall radius must be positive! " << std::endl;
+        std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+        exit(1);
+    }
+}
+//=================================================================================================//
+bool GeometricBall::checkContain(const Vecd &probe_point)
+{
+    return probe_point.norm() < radius_;
+}
+//=================================================================================================//
+Vecd GeometricBall::findClosestPoint(const Vecd &probe_point)
+{
+    return radius_ * probe_point.normalized();
+}
+//=================================================================================================//
 } // namespace SPH

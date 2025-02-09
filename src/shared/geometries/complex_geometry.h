@@ -75,7 +75,7 @@ using DefaultShape = ComplexShape;
  */
 class AlignedBox : public TransformGeometry<GeometricBox>
 {
-    const int alignment_axis_;
+    int alignment_axis_;
 
   public:
     /** construct directly */
@@ -96,11 +96,21 @@ class AlignedBox : public TransformGeometry<GeometricBox>
     bool checkNearSurface(const Vecd &probe_point, Real threshold);
     bool checkNotFar(const Vecd &probe_point, Real threshold);
     bool checkInBounds(const Vecd &probe_point, Real lower_bound_fringe = 0.0, Real upper_bound_fringe = 0.0);
-    bool checkUpperBound(const Vecd &probe_point, Real upper_bound_fringe = 0.0);
+    bool checkUpperBound(const Vecd &probe_point, Real upper_bound_fringe = 0.0)
+    {
+        Vecd position_in_frame = transform_.shiftBaseStationToFrame(probe_point);
+        return position_in_frame[alignment_axis_] > halfsize_[alignment_axis_] + upper_bound_fringe ? true : false;
+    };
     bool checkLowerBound(const Vecd &probe_point, Real lower_bound_fringe = 0.0);
     bool checkNearUpperBound(const Vecd &probe_point, Real threshold);
     bool checkNearLowerBound(const Vecd &probe_point, Real threshold);
-    Vecd getUpperPeriodic(const Vecd &probe_point);
+    Vecd getUpperPeriodic(const Vecd &probe_point)
+    {
+        Vecd position_in_frame = transform_.shiftBaseStationToFrame(probe_point);
+        Vecd shift = Vecd::Zero();
+        shift[alignment_axis_] -= 2.0 * halfsize_[alignment_axis_];
+        return transform_.shiftFrameStationToBase(position_in_frame + shift);
+    };
     Vecd getLowerPeriodic(const Vecd &probe_point);
     int AlignmentAxis() { return alignment_axis_; };
 };

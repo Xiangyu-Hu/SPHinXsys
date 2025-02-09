@@ -57,7 +57,6 @@ template <class DataType, typename... Args>
 DataType *BaseParticles::
     addUniqueDiscreteVariable(const std::string &name, size_t data_size, Args &&...args)
 {
-
     DiscreteVariable<DataType> *variable =
         unique_variable_ptrs_.createPtr<DiscreteVariable<DataType>>(name, data_size);
     initializeVariable(variable, std::forward<Args>(args)...);
@@ -68,10 +67,21 @@ template <class DataType, typename... Args>
 DiscreteVariable<DataType> *BaseParticles::
     addUniqueDiscreteVariableOnly(const std::string &name, size_t data_size, Args &&...args)
 {
-
     DiscreteVariable<DataType> *variable =
         unique_variable_ptrs_.createPtr<DiscreteVariable<DataType>>(name, data_size);
     initializeVariable(variable, std::forward<Args>(args)...);
+    return variable;
+}
+//=================================================================================================//
+template <class DataType>
+DiscreteVariable<DataType> *BaseParticles::addUniqueDiscreteVariableFrom(
+    const std::string &name, DiscreteVariable<DataType> *old_variable)
+{
+    DataType *old_data_field = old_variable->Data();
+    DiscreteVariable<DataType> *variable =
+        unique_variable_ptrs_.createPtr<DiscreteVariable<DataType>>(name, old_variable->getDataSize());
+    initializeVariable(variable, [&](size_t index)
+                       { return old_data_field[index]; });
     return variable;
 }
 //=================================================================================================//

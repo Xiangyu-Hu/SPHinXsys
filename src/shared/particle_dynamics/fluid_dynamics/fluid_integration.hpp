@@ -84,7 +84,7 @@ void Integration1stHalf<Inner<>, RiemannSolverType, KernelCorrectionType>::inter
         Real dW_ijV_j = inner_neighborhood.dW_ij_[n] * Vol_[index_j];
         const Vecd &e_ij = inner_neighborhood.e_ij_[n];
 
-        force -= (p_[index_i] * correction_(index_j) + p_[index_j] * correction_(index_i)) * dW_ijV_j * e_ij;
+        force -= (p_[index_i] * correction_(index_j, index_i) + p_[index_j] * correction_(index_i)) * dW_ijV_j * e_ij;
         rho_dissipation += riemann_solver_.DissipativeUJump(p_[index_i] - p_[index_j]) * dW_ijV_j;
     }
     force_[index_i] += force * Vol_[index_i];
@@ -115,9 +115,9 @@ void Integration1stHalf<Contact<Wall>, RiemannSolverType, KernelCorrectionType>:
             Real r_ij = wall_neighborhood.r_ij_[n];
 
             Real face_wall_external_acceleration = (force_prior_[index_i] / mass_[index_i] - wall_acc_ave_k[index_j]).dot(-e_ij);
-            Real p_in_wall = p_[index_i] + rho_[index_i] * r_ij * SMAX(Real(0), face_wall_external_acceleration);
-            force -= (p_[index_i] + p_in_wall) * correction_(index_i) * dW_ijV_j * e_ij;
-            rho_dissipation += riemann_solver_.DissipativeUJump(p_[index_i] - p_in_wall) * dW_ijV_j;
+            Real p_j_in_wall = p_[index_i] + rho_[index_i] * r_ij * SMAX(Real(0), face_wall_external_acceleration);
+            force -= (p_[index_i] + p_j_in_wall) * correction_(index_i) * dW_ijV_j * e_ij;
+            rho_dissipation += riemann_solver_.DissipativeUJump(p_[index_i] - p_j_in_wall) * dW_ijV_j;
         }
     }
     force_[index_i] += force * Vol_[index_i];
@@ -230,8 +230,8 @@ void Integration2ndHalf<Contact<Wall>, RiemannSolverType>::interaction(size_t in
             Vecd &e_ij = wall_neighborhood.e_ij_[n];
             Real dW_ijV_j = wall_neighborhood.dW_ij_[n] * wall_Vol_k[index_j];
 
-            Vecd vel_in_wall = 2.0 * vel_ave_k[index_j] - vel_[index_i];
-            density_change_rate += (vel_[index_i] - vel_in_wall).dot(e_ij) * dW_ijV_j;
+            Vecd vel_j_in_wall = 2.0 * vel_ave_k[index_j] - vel_[index_i];
+            density_change_rate += (vel_[index_i] - vel_j_in_wall).dot(e_ij) * dW_ijV_j;
             Real u_jump = 2.0 * (vel_[index_i] - vel_ave_k[index_j]).dot(n_k[index_j]);
             p_dissipation += riemann_solver_.DissipativePJump(u_jump) * dW_ijV_j * n_k[index_j];
         }

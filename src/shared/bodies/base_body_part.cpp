@@ -13,7 +13,10 @@ BodyPart::BodyPart(SPHBody &sph_body, const std::string &body_part_name)
 //=================================================================================================//
 BodyPartByParticle::BodyPartByParticle(SPHBody &sph_body, const std::string &body_part_name)
     : BodyPart(sph_body, body_part_name),
-      body_part_bounds_(Vecd::Zero(), Vecd::Zero()), body_part_bounds_set_(false) {}
+      body_part_bounds_(Vecd::Zero(), Vecd::Zero()), body_part_bounds_set_(false)
+{
+    sph_body.addBodyPartByParticle(this);
+}
 //=================================================================================================//
 void BodyPartByParticle::tagParticles(TaggingParticleMethod &tagging_particle_method)
 {
@@ -21,12 +24,17 @@ void BodyPartByParticle::tagParticles(TaggingParticleMethod &tagging_particle_me
     {
         tagging_particle_method(i);
     }
-    dv_index_list_ = base_particles_.addUniqueDiscreteVariableOnly<UnsignedInt>(
+    dv_index_list_ = unique_variable_ptrs_.createPtr<DiscreteVariable<UnsignedInt>>(
         body_part_name_, body_part_particles_.size(), [&](size_t i) -> Real
         { return body_part_particles_[i]; });
-    sv_range_size_ = base_particles_.addUniqueSingularVariableOnly<UnsignedInt>(
+    sv_range_size_ = unique_variable_ptrs_.createPtr<SingularVariable<UnsignedInt>>(
         body_part_name_ + "_Size", body_part_particles_.size());
-};
+}
+//=================================================================================================//
+BodyPartByCell::BodyPartByCell(RealBody &real_body, const std::string &body_part_name)
+    : BodyPart(real_body, body_part_name), cell_linked_list_(real_body.getCellLinkedList()),
+      dv_particle_index_(cell_linked_list_.getParticleIndex()),
+      dv_cell_offset_(cell_linked_list_.getCellOffset()) {}
 //=============================================================================================//
 size_t BodyPartByCell::SizeOfLoopRange()
 {
@@ -36,11 +44,17 @@ size_t BodyPartByCell::SizeOfLoopRange()
         size_of_loop_range += body_part_cells_[i]->size();
     }
     return size_of_loop_range;
-};
+}
 //=================================================================================================//
 void BodyPartByCell::tagCells(TaggingCellMethod &tagging_cell_method)
 {
-    cell_linked_list_.tagBodyPartByCell(body_part_cells_, tagging_cell_method);
+    ConcurrentIndexVector cell_indexes;
+    cell_linked_list_.tagBodyPartByCell(body_part_cells_, cell_indexes, tagging_cell_method);
+    dv_index_list_ = unique_variable_ptrs_.createPtr<DiscreteVariable<UnsignedInt>>(
+        body_part_name_, cell_indexes.size(), [&](size_t i) -> Real
+        { return cell_indexes[i]; });
+    sv_range_size_ = unique_variable_ptrs_.createPtr<SingularVariable<UnsignedInt>>(
+        body_part_name_ + "_Size", cell_indexes.size());
 }
 //=================================================================================================//
 BodyRegionByParticle::
@@ -157,15 +171,21 @@ bool NearShapeSurface::checkNearSurface(Vecd cell_position, Real threshold)
     return level_set_shape_.checkNearSurface(cell_position, threshold);
 }
 //=================================================================================================//
-BodyAlignedBoxByParticle::BodyAlignedBoxByParticle(RealBody &real_body, const AlignedBox &aligned_box)
-    : BodyPartByParticle(real_body, "AlignedBoxByParticle"), aligned_box_(aligned_box)
+AlignedBoxPart::AlignedBoxPart(const std::string &name, const AlignedBox &aligned_box)
+    : aligned_box_(*sv_aligned_box_keeper_
+                        .createPtr<SingularVariable<AlignedBox>>("AlignedBox" + name, aligned_box)
+                        ->Data()) {}
+//=================================================================================================//
+AlignedBoxPartByParticle::AlignedBoxPartByParticle(RealBody &real_body, const AlignedBox &aligned_box)
+    : BodyPartByParticle(real_body, "AlignedBoxByParticle"),
+      AlignedBoxPart(body_part_name_, aligned_box)
 {
     TaggingParticleMethod tagging_particle_method =
-        std::bind(&BodyAlignedBoxByParticle::tagByContain, this, _1);
+        std::bind(&AlignedBoxPartByParticle::tagByContain, this, _1);
     tagParticles(tagging_particle_method);
 }
 //=================================================================================================//
-void BodyAlignedBoxByParticle::tagByContain(size_t particle_index)
+void AlignedBoxPartByParticle::tagByContain(size_t particle_index)
 {
     if (aligned_box_.checkContain(pos_[particle_index]))
     {
@@ -173,15 +193,16 @@ void BodyAlignedBoxByParticle::tagByContain(size_t particle_index)
     }
 }
 //=================================================================================================//
-BodyAlignedBoxByCell::BodyAlignedBoxByCell(RealBody &real_body, const AlignedBox &aligned_box)
-    : BodyPartByCell(real_body, "AlignedBoxByCell"), aligned_box_(aligned_box)
+AlignedBoxPartByCell::AlignedBoxPartByCell(RealBody &real_body, const AlignedBox &aligned_box)
+    : BodyPartByCell(real_body, "AlignedBoxByCell"),
+      AlignedBoxPart(body_part_name_, aligned_box)
 {
     TaggingCellMethod tagging_cell_method =
-        std::bind(&BodyAlignedBoxByCell::checkNotFar, this, _1, _2);
+        std::bind(&AlignedBoxPartByCell::checkNotFar, this, _1, _2);
     tagCells(tagging_cell_method);
 }
 //=================================================================================================//
-bool BodyAlignedBoxByCell::checkNotFar(Vecd cell_position, Real threshold)
+bool AlignedBoxPartByCell::checkNotFar(Vecd cell_position, Real threshold)
 {
     return aligned_box_.checkNotFar(cell_position, threshold);
 }

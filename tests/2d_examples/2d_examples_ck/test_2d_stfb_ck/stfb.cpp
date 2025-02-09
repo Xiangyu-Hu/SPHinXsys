@@ -129,6 +129,11 @@ int main(int ac, char *av[])
     observer.defineAdaptationRatios(1.15, 2.0);
     observer.generateParticles<ObserverParticles>(StdVec<Vecd>{obs});
     //----------------------------------------------------------------------
+    //	Creating body parts.
+    //----------------------------------------------------------------------
+    TransformShape<GeometricShapeBox> wave_probe_buffer_shape(Transform(gauge_translation), gauge_halfsize, "FreeSurfaceGauge");
+    BodyRegionByCell wave_probe_buffer(water_block, wave_probe_buffer_shape);
+    //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
     //	Basically the the range of bodies to build neighbor particle lists.
@@ -143,7 +148,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     // Define the main execution policy for this case.
     //----------------------------------------------------------------------
-    using MainExecutionPolicy = execution::ParallelPolicy; // define
+    using MainExecutionPolicy = execution::ParallelPolicy;
     //----------------------------------------------------------------------
     // Define the numerical methods used in the simulation.
     // Note that there may be data dependence on the sequence of constructions.
@@ -260,12 +265,12 @@ int main(int ac, char *av[])
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp write_real_body_states(sph_system);
-    TransformShape<GeometricShapeBox> wave_probe_buffer_shape(Transform(gauge_translation), gauge_halfsize, "FreeSurfaceGauge");
-    // BodyRegionByCell wave_probe_buffer(water_block, wave_probe_buffer_shape);
-    //     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<UpperFrontInAxisDirection<BodyPartByCell>>>
-    //         wave_gauge(wave_probe_buffer, "FreeSurfaceHeight");
+    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<MainExecutionPolicy, UpperFrontInAxisDirectionCK<BodyRegionByCell>>>
+        wave_gauge(wave_probe_buffer, "FreeSurfaceHeight");
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<MainExecutionPolicy, Vecd>>
         write_structure_position("Position", observer_contact);
+    SingularVariable<SimTK::SpatialVec> sv_action_on_structure("ActionOnStructure", SimTK::SpatialVec(0));
+    SingularVariableRecording<SimTK::SpatialVec> action_on_structure_recording(sph_system, &sv_action_on_structure);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
@@ -299,7 +304,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     write_real_body_states.writeToFile(MainExecutionPolicy{});
     write_structure_position.writeToFile(0);
-    //    wave_gauge.writeToFile(0);
+    wave_gauge.writeToFile(0);
     //----------------------------------------------------------------------
     //	Main loop of time stepping starts here.
     //----------------------------------------------------------------------
@@ -326,7 +331,8 @@ int main(int ac, char *av[])
                 {
                     SimTK::State &state_for_update = integ.updAdvancedState();
                     force_on_bodies.clearAllBodyForces(state_for_update);
-                    force_on_bodies.setOneBodyForce(state_for_update, structure_mob, force_on_structure.exec());
+                    sv_action_on_structure.setValue(force_on_structure.exec());
+                    force_on_bodies.setOneBodyForce(state_for_update, structure_mob, sv_action_on_structure.getValue());
                     integ.stepBy(acoustic_dt);
                     constraint_on_structure.exec();
                 }
@@ -363,7 +369,8 @@ int main(int ac, char *av[])
             if (total_time >= relax_time)
             {
                 write_structure_position.writeToFile(number_of_iterations);
-                //                    wave_gauge.writeToFile(number_of_iterations);
+                wave_gauge.writeToFile(number_of_iterations);
+                action_on_structure_recording.writeToFile(number_of_iterations);
             }
         }
 
@@ -383,12 +390,12 @@ int main(int ac, char *av[])
     if (sph_system.GenerateRegressionData())
     {
         write_structure_position.generateDataBase(0.001);
-        //            wave_gauge.generateDataBase(0.001);
+        wave_gauge.generateDataBase(0.001);
     }
     else
     {
         write_structure_position.testResult();
-        //            wave_gauge.testResult();
+        wave_gauge.testResult();
     }
 
     return 0;
