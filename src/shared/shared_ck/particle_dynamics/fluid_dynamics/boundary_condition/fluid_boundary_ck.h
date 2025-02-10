@@ -43,7 +43,7 @@ namespace fluid_dynamics
 
 template <typename... T>
 class InflowConditionCK;
-
+//=================================================================================================//
 template <class AlignedBoxPartType, class ConditionFunction>
 class InflowConditionCK<AlignedBoxPartType, ConditionFunction>
     : public BaseLocalDynamics<AlignedBoxPartType>
@@ -69,7 +69,7 @@ class InflowConditionCK<AlignedBoxPartType, ConditionFunction>
     SingularVariable<AlignedBox> *sv_aligned_box_;
     ConditionFunction condition_function_;
 };
-
+//=================================================================================================//
 class EmitterInflowInjectionCK : public BaseLocalDynamics<AlignedBoxPartByParticle>
 {
     using CreateRealParticleKernel = typename SpawnRealParticle::ComputingKernel;
@@ -107,6 +107,48 @@ class EmitterInflowInjectionCK : public BaseLocalDynamics<AlignedBoxPartByPartic
     ParticleBuffer<Base> &buffer_;
     SingularVariable<AlignedBox> *sv_aligned_box_;
     SpawnRealParticle create_real_particle_method_;
+    Real rho0_;
+    DiscreteVariable<Vecd> *dv_pos_;
+    DiscreteVariable<Real> *dv_rho_, *dv_p_;
+};
+//=================================================================================================//
+class DisposerOutflowDeletionCK : public BaseLocalDynamics<AlignedBoxPartByParticle>
+{
+    using RemoveRealParticleKernel = typename DespawnRealParticle::ComputingKernel;
+
+  public:
+    DisposerOutflowDeletionCK(AlignedBoxPartByParticle &aligned_box_part, ParticleBuffer<Base> &buffer);
+    virtual ~DisposerOutflowDeletionCK() {};
+
+    class UpdateKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+        void update(size_t index_i, Real dt = 0.0); // only works in sequenced policy
+
+      protected:
+        AlignedBox *aligned_box_;
+        RemoveRealParticleKernel remove_real_particle_;
+        Real rho0_;
+        Vecd *pos_;
+        Real *rho_, *p_;
+    };
+
+    class FinishDynamics
+    {
+        BaseParticles *particles_;
+        ParticleBuffer<Base> &buffer_;
+
+      public:
+        FinishDynamics(DisposerOutflowDeletionCK &encloser);
+        void operator()();
+    };
+
+  protected:
+    ParticleBuffer<Base> &buffer_;
+    SingularVariable<AlignedBox> *sv_aligned_box_;
+    DespawnRealParticle remove_real_particle_method_;
     Real rho0_;
     DiscreteVariable<Vecd> *dv_pos_;
     DiscreteVariable<Real> *dv_rho_, *dv_p_;

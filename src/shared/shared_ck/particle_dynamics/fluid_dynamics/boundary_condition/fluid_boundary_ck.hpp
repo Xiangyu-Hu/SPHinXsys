@@ -50,6 +50,14 @@ void EmitterInflowInjectionCK::UpdateKernel::update(size_t index_i, Real dt)
     }
 }
 //=================================================================================================//
+void DisposerOutflowDeletionCK::UpdateKernel::update(size_t index_i, Real dt)
+{
+    if (aligned_box_->checkUpperBound(pos_[index_i]))
+    {
+        remove_real_particle_(index_i);
+    }
+}
+//=================================================================================================//
 } // namespace fluid_dynamics
 } // namespace SPH
 #endif // FLUID_BOUNDARY_CK_HPP
