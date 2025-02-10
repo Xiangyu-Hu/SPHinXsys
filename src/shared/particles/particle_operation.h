@@ -81,5 +81,46 @@ class SpawnRealParticle
         OperationOnDataAssemble<VariableDataArrays, CopyParticleStateCK> copy_particle_state_;
     };
 };
+
+class DespawnRealParticle
+{
+    ParticleVariables &variables_to_sort_;
+    DiscreteVariableArrays copyable_states_;
+    DiscreteVariable<UnsignedInt> *dv_original_id_;
+    SingularVariable<UnsignedInt> *sv_total_real_particles_;
+    UnsignedInt real_particles_bound_;
+
+  public:
+    DespawnRealParticle(BaseParticles *particles);
+
+    class ComputingKernel // only run with sequenced policy for now
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+
+        UnsignedInt operator()(UnsignedInt index_i)
+        {
+            UnsignedInt last_real_particle_index = *total_real_particles_ - 1;
+            if (index_i < last_real_particle_index)
+            {
+                /** Buffer Particle state copied from real particle. */
+                copy_particle_state_(copyable_state_data_arrays_, index_i, last_real_particle_index);
+                // update original and sorted_id as well
+                std::swap(original_id_[index_i], original_id_[last_real_particle_index]);
+
+                *total_real_particles_ -= 1;
+            }
+            return last_real_particle_index;
+        };
+
+      protected:
+        UnsignedInt *total_real_particles_;
+        UnsignedInt real_particles_bound_;
+        UnsignedInt *original_id_;
+        VariableDataArrays copyable_state_data_arrays_;
+        OperationOnDataAssemble<VariableDataArrays, CopyParticleStateCK> copy_particle_state_;
+    };
+};
 } // namespace SPH
 #endif // PARTICLE_OPERATION_H
