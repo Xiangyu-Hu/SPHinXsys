@@ -36,6 +36,7 @@
 #include "density_regularization.hpp"
 #include "fluid_boundary_ck.hpp"
 #include "fluid_time_step_ck.hpp"
+#include "kernel_summation_ck.hpp"
 #include "transport_velocity_correction_ck.hpp"
 #include "viscous_force.hpp"
 
