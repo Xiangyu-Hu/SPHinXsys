@@ -29,7 +29,7 @@ baseurl: "/SPHinXsys" # the subpath of your site, e.g. /blog
 url: "https://xiangyu-hu.github.io" # the base hostname & protocol for your site, e.g. http://example.com
 twitter_username: sphinxsys
 github_username:  Xiangyu-Hu
-linkedin_username: xiangyu.hu@tum.de
+linkedin_username: xiangyu-hu-6b248731
 
 comments:
   giscus:
