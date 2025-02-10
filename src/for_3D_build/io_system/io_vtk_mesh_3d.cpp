@@ -11,16 +11,13 @@ BodyStatesRecordingToTriangleMeshVtp::BodyStatesRecordingToTriangleMeshVtp(
     : BodyStatesRecordingToVtp(body)
 {
     TriangleMesh &triangle_mesh = *triangle_mesh_shape.getTriangleMesh();
-    for (int i = 0; i != triangle_mesh.getNumFaces(); ++i)
+    faces_.reserve(triangle_mesh.getNumFaces());
+    for (int i = 0; i < triangle_mesh.getNumFaces(); i++)
     {
-        faces_.reserve(triangle_mesh.getNumFaces());
-        for (int i = 0; i < triangle_mesh.getNumFaces(); i++)
-        {
-            auto f1 = triangle_mesh.getFaceVertex(i, 0);
-            auto f2 = triangle_mesh.getFaceVertex(i, 1);
-            auto f3 = triangle_mesh.getFaceVertex(i, 2);
-            faces_.push_back({f1, f2, f3});
-        }
+        auto f1 = triangle_mesh.getFaceVertex(i, 0);
+        auto f2 = triangle_mesh.getFaceVertex(i, 1);
+        auto f3 = triangle_mesh.getFaceVertex(i, 2);
+        faces_.push_back({f1, f2, f3});
     }
 }
 //=================================================================================================//

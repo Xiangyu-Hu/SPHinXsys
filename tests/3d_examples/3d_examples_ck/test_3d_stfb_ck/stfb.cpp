@@ -149,7 +149,7 @@ int main(int ac, char *av[])
     observer.defineAdaptationRatios(1.15, 2.0);
     observer.generateParticles<ObserverParticles>(StdVec<Vecd>{obs});
 
-    TriangleMeshShapeBrick structure_mesh(halfsize_structure, 10, structure_pos);
+    TriangleMeshShapeBrick structure_mesh(halfsize_structure, 1, structure_pos);
     ObserverBody structure_observer(sph_system, "StructureObserver");
     structure_observer.generateParticles<ObserverParticles>(structure_mesh);
     //----------------------------------------------------------------------
@@ -226,9 +226,11 @@ int main(int ac, char *av[])
     ArbitraryDynamicsSequence<
         StateDynamics<MainExecutionPolicy, solid_dynamics::UpdateDisplacementFromPosition>,
         ObservingAQuantityCK<MainExecutionPolicy, Vecd>,
+        ObservingAQuantityCK<MainExecutionPolicy, Vecd>,
         StateDynamics<MainExecutionPolicy, solid_dynamics::UpdatePositionFromDisplacement>>
         structure_observer_follow_structure(
             structure,
+            InteractArgs(structure_observer_contact, std::string("Velocity")),
             InteractArgs(structure_observer_contact, std::string("Displacement")),
             structure_observer);
     //----------------------------------------------------------------------
@@ -304,6 +306,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp write_real_body_states(sph_system);
     BodyStatesRecordingToTriangleMeshVtp write_structure_surface(structure_observer, structure_mesh);
+    write_structure_surface.addToWrite<Vecd>(structure_observer, "Velocity");
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<
         MainExecutionPolicy, UpperFrontInAxisDirectionCK<BodyRegionByCell>>>
         wave_gauge(wave_probe_buffer, "FreeSurfaceHeight");
