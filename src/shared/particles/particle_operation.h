@@ -68,7 +68,7 @@ class SpawnRealParticle
                 copy_particle_state_(copyable_state_data_arrays_, new_original_id, index_i);
                 /** Realize the buffer particle by increasing the number of real particle by one.  */
                 *total_real_particles_ += 1;
-                original_id_[new_original_id] = new_original_id;
+                // original_id_[new_original_id] = new_original_id;
             }
             return new_original_id;
         };
@@ -102,13 +102,12 @@ class DespawnRealParticle
         UnsignedInt operator()(UnsignedInt index_i)
         {
             UnsignedInt last_real_particle_index = *total_real_particles_ - 1;
-            if (index_i < last_real_particle_index)
+            if (index_i < *total_real_particles_)
             {
                 /** Buffer Particle state copied from real particle. */
                 copy_particle_state_(copyable_state_data_arrays_, index_i, last_real_particle_index);
                 // update original and sorted_id as well
                 std::swap(original_id_[index_i], original_id_[last_real_particle_index]);
-
                 *total_real_particles_ -= 1;
             }
             return last_real_particle_index;

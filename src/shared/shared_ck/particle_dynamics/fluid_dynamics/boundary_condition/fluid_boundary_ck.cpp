@@ -27,5 +27,25 @@ void EmitterInflowInjectionCK::FinishDynamics::operator()()
     buffer_.checkEnoughBuffer(*particles_);
 }
 //=================================================================================================//
+DisposerOutflowDeletionCK::
+    DisposerOutflowDeletionCK(AlignedBoxPartByCell &aligned_box_part, ParticleBuffer<Base> &buffer)
+    : BaseLocalDynamics<AlignedBoxPartByCell>(aligned_box_part),
+      buffer_(buffer), sv_aligned_box_(aligned_box_part.svAlignedBox()),
+      remove_real_particle_method_(particles_),
+      rho0_(particles_->getBaseMaterial().ReferenceDensity()),
+      dv_pos_(particles_->getVariableByName<Vecd>("Position")),
+      dv_rho_(particles_->getVariableByName<Real>("Density")),
+      dv_p_(particles_->getVariableByName<Real>("Pressure"))
+{
+    buffer_.checkParticlesReserved();
+}
+//=================================================================================================//
+DisposerOutflowDeletionCK::FinishDynamics::
+    FinishDynamics(DisposerOutflowDeletionCK &encloser)
+    : particles_(encloser.particles_), buffer_(encloser.buffer_) {}
+//=================================================================================================//
+void DisposerOutflowDeletionCK::FinishDynamics::operator()()
+{
+}
 } // namespace fluid_dynamics
 } // namespace SPH

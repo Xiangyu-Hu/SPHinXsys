@@ -112,12 +112,12 @@ class EmitterInflowInjectionCK : public BaseLocalDynamics<AlignedBoxPartByPartic
     DiscreteVariable<Real> *dv_rho_, *dv_p_;
 };
 //=================================================================================================//
-class DisposerOutflowDeletionCK : public BaseLocalDynamics<AlignedBoxPartByParticle>
+class DisposerOutflowDeletionCK : public BaseLocalDynamics<AlignedBoxPartByCell>
 {
     using RemoveRealParticleKernel = typename DespawnRealParticle::ComputingKernel;
 
   public:
-    DisposerOutflowDeletionCK(AlignedBoxPartByParticle &aligned_box_part, ParticleBuffer<Base> &buffer);
+    DisposerOutflowDeletionCK(AlignedBoxPartByCell &aligned_box_part, ParticleBuffer<Base> &buffer);
     virtual ~DisposerOutflowDeletionCK() {};
 
     class UpdateKernel
