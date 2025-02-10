@@ -71,9 +71,12 @@ template <class ExecutionPolicy, typename DataType>
 class ObservingAQuantityCK : public InteractionDynamicsCK<ExecutionPolicy, Interpolation<Contact<DataType>>>
 {
   public:
-    explicit ObservingAQuantityCK(Relation<Contact<>> &pair_contact_relation, const std::string &variable_name)
+    ObservingAQuantityCK(Relation<Contact<>> &pair_contact_relation, const std::string &variable_name)
         : InteractionDynamicsCK<ExecutionPolicy, Interpolation<Contact<DataType>>>(pair_contact_relation, variable_name){};
-    virtual ~ObservingAQuantityCK(){};
+    template <typename BodyRelationType, typename FirstArg>
+    explicit ObservingAQuantityCK(InteractArgs<BodyRelationType, FirstArg> parameters)
+        : ObservingAQuantityCK(parameters.body_relation_, std::get<0>(parameters.others_)){};
+     virtual ~ObservingAQuantityCK(){};
 };
 } // namespace SPH
 #endif // INTERPOLATION_DYNAMICS_H

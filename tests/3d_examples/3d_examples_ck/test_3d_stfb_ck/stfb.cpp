@@ -170,6 +170,7 @@ int main(int ac, char *av[])
     Relation<Contact<>> water_block_contact(water_block, {&wall_boundary, &structure});
     Relation<Contact<>> structure_contact(structure, {&water_block});
     Relation<Contact<>> observer_contact(observer, {&structure});
+    Relation<Contact<>> structure_observer_contact(structure_observer, {&structure});
     //----------------------------------------------------------------------
     // Define the main execution policy for this case.
     //----------------------------------------------------------------------
@@ -195,6 +196,8 @@ int main(int ac, char *av[])
         structure_update_contact_relation(structure_contact);
     UpdateRelation<MainExecutionPolicy, Contact<>>
         observer_update_contact_relation(observer_contact);
+    UpdateRelation<MainExecutionPolicy, Contact<>>
+        structure_observer_update_contact_relation(structure_observer_contact);
     ParticleSortCK<MainExecutionPolicy, QuickSort> particle_sort(water_block);
 
     Gravity gravity(Vec3d(0.0, 0.0, -gravity_g));
@@ -219,6 +222,15 @@ int main(int ac, char *av[])
 
     ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AdvectionTimeStepCK> fluid_advection_time_step(water_block, U_f);
     ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticTimeStepCK> fluid_acoustic_time_step(water_block);
+
+    ArbitraryDynamicsSequence<
+        StateDynamics<MainExecutionPolicy, solid_dynamics::UpdateDisplacementFromPosition>,
+        ObservingAQuantityCK<MainExecutionPolicy, Vecd>,
+        StateDynamics<MainExecutionPolicy, solid_dynamics::UpdatePositionFromDisplacement>>
+        structure_observer_follow_structure(
+            structure,
+            InteractArgs(structure_observer_contact, std::string("Displacement")),
+            structure_observer);
     //----------------------------------------------------------------------
     //	Define the multi-body system
     //----------------------------------------------------------------------
@@ -312,6 +324,7 @@ int main(int ac, char *av[])
     water_block_update_complex_relation.exec();
     structure_update_contact_relation.exec();
     observer_update_contact_relation.exec();
+    structure_observer_update_contact_relation.exec();
     //----------------------------------------------------------------------
     //	Basic control parameters for time stepping.
     //----------------------------------------------------------------------
@@ -331,11 +344,11 @@ int main(int ac, char *av[])
     write_real_body_states.writeToFile(MainExecutionPolicy{});
     write_structure_position.writeToFile(number_of_iterations);
     wave_gauge.writeToFile(number_of_iterations);
-    write_structure_surface.writeToFile();
-        //----------------------------------------------------------------------
-        //	Main loop of time stepping starts here.
-        //----------------------------------------------------------------------
-        while (sv_physical_time->getValue() < end_time)
+    write_structure_surface.writeToFile(MainExecutionPolicy{});
+    //----------------------------------------------------------------------
+    //	Main loop of time stepping starts here.
+    //----------------------------------------------------------------------
+    while (sv_physical_time->getValue() < end_time)
     {
         Real integral_time = 0.0;
         while (integral_time < output_interval)
@@ -397,7 +410,11 @@ int main(int ac, char *av[])
 
         TickCount t2 = TickCount::now();
         if (total_time >= relax_time)
+        {
             write_real_body_states.writeToFile(MainExecutionPolicy{});
+            structure_observer_follow_structure.exec();
+            write_structure_surface.writeToFile(MainExecutionPolicy{});
+        }
         TickCount t3 = TickCount::now();
         interval += t3 - t2;
     }
