@@ -43,7 +43,7 @@ comments:
     theme: "light"
 
 # Build settings
-theme: minima
+# theme: minima
 # theme: jekyll-theme-Architect
 plugins:
   - jekyll-feed
