@@ -148,6 +148,10 @@ int main(int ac, char *av[])
     ObserverBody observer(sph_system, "Observer");
     observer.defineAdaptationRatios(1.15, 2.0);
     observer.generateParticles<ObserverParticles>(StdVec<Vecd>{obs});
+
+    TriangleMeshShapeBrick structure_mesh(halfsize_structure, 1, structure_pos);
+    ObserverBody structure_observer(sph_system, "StructureObserver");
+    structure_observer.generateParticles<ObserverParticles>(structure_mesh);
     //----------------------------------------------------------------------
     //	Creating body parts.
     //----------------------------------------------------------------------
@@ -165,6 +169,7 @@ int main(int ac, char *av[])
     Relation<Contact<>> water_block_contact(water_block, {&wall_boundary, &structure});
     Relation<Contact<>> structure_contact(structure, {&water_block});
     Relation<Contact<>> observer_contact(observer, {&structure});
+    Relation<Contact<>> structure_observer_contact(structure_observer, {&structure});
     //----------------------------------------------------------------------
     // Define the main execution policy for this case.
     //----------------------------------------------------------------------
@@ -214,6 +219,17 @@ int main(int ac, char *av[])
 
     ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AdvectionTimeStepCK> fluid_advection_time_step(water_block, U_f);
     ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticTimeStepCK> fluid_acoustic_time_step(water_block);
+
+    ArbitraryDynamicsSequence<
+        StateDynamics<MainExecutionPolicy, solid_dynamics::UpdateDisplacementFromPosition>,
+        ObservingAQuantityCK<MainExecutionPolicy, Vecd>,
+        ObservingAQuantityCK<MainExecutionPolicy, Vecd>,
+        StateDynamics<MainExecutionPolicy, solid_dynamics::UpdatePositionFromDisplacement>>
+        update_structure_observer_states(
+            structure,
+            DynamicsArgs(structure_observer_contact, std::string("Velocity")),
+            DynamicsArgs(structure_observer_contact, std::string("Displacement")),
+            structure_observer);
     //----------------------------------------------------------------------
     //	Define the multi-body system
     //----------------------------------------------------------------------
@@ -286,6 +302,8 @@ int main(int ac, char *av[])
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp write_real_body_states(sph_system);
+    BodyStatesRecordingToTriangleMeshVtp write_structure_surface(structure_observer, structure_mesh);
+    write_structure_surface.addToWrite<Vecd>(structure_observer, "Velocity");
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<
         MainExecutionPolicy, UpperFrontInAxisDirectionCK<BodyRegionByCell>>>
         wave_gauge(wave_probe_buffer, "FreeSurfaceHeight");
@@ -306,6 +324,7 @@ int main(int ac, char *av[])
     water_block_update_complex_relation.exec();
     structure_update_contact_relation.exec();
     observer_update_contact_relation.exec();
+    structure_observer_update_contact_relation.exec();
     //----------------------------------------------------------------------
     //	Basic control parameters for time stepping.
     //----------------------------------------------------------------------
@@ -325,6 +344,7 @@ int main(int ac, char *av[])
     write_real_body_states.writeToFile(MainExecutionPolicy{});
     write_structure_position.writeToFile(number_of_iterations);
     wave_gauge.writeToFile(number_of_iterations);
+    write_structure_surface.writeToFile(MainExecutionPolicy{});
     //----------------------------------------------------------------------
     //	Main loop of time stepping starts here.
     //----------------------------------------------------------------------
@@ -390,7 +410,11 @@ int main(int ac, char *av[])
 
         TickCount t2 = TickCount::now();
         if (total_time >= relax_time)
+        {
             write_real_body_states.writeToFile(MainExecutionPolicy{});
+            update_structure_observer_states.exec();
+            write_structure_surface.writeToFile(MainExecutionPolicy{});
+        }
         TickCount t3 = TickCount::now();
         interval += t3 - t2;
     }
