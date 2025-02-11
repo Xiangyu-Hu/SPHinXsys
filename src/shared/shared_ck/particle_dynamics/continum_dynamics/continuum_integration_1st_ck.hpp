@@ -1,19 +1,19 @@
 #ifndef CONTINUUM_INTERGRATION_1ST_CK_HPP
 #define CONTINUUM_INTERGRATION_1ST_CK_HPP
 
-
 #include "continuum_integration_1st_ck.h"
 #include "base_particles.hpp"
 namespace SPH
 {
 namespace continuum_dynamics
 {
-
+//=================================================================================================//
 template <class BaseInteractionType>
 template <class DynamicsIdentifier>
 PlasticAcousticStep<BaseInteractionType>::PlasticAcousticStep(DynamicsIdentifier &identifier)
     : fluid_dynamics::AcousticStep<BaseInteractionType>(identifier),
     plastic_continuum_(DynamicCast<PlasticContinuum>(this, this->sph_body_.getBaseMaterial())),
+    dv_pos_(this->particles_->template registerStateVariableOnly<Vecd>("Position")),
     dv_stress_tensor_3D_(this->particles_->template registerStateVariableOnly<Mat3d>("StressTensor3D")),
     dv_strain_tensor_3D_(this->particles_->template registerStateVariableOnly<Mat3d>("StrainTensor3D")),
     dv_stress_rate_3D_(this->particles_->template registerStateVariableOnly<Mat3d>("StressRate3D")),
@@ -25,8 +25,6 @@ PlasticAcousticStep<BaseInteractionType>::PlasticAcousticStep(DynamicsIdentifier
     this->particles_->template addVariableToSort<Mat3d>("StressRate3D");
     this->particles_->template addVariableToSort<Mat3d>("StrainRate3D");
 }
-
-//step1-inner
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
 PlasticAcousticStep1stHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType, Parameters...>>::
@@ -110,7 +108,6 @@ void PlasticAcousticStep1stHalf<Inner<OneLevel, RiemannSolverType, KernelCorrect
     vel_[index_i] += (force_prior_[index_i] + force_[index_i]) / mass_[index_i] * dt;
 }
 
-//step1-wall
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
 PlasticAcousticStep1stHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType, Parameters...>>::

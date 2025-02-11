@@ -32,6 +32,7 @@
 #include "constraint_dynamics.h"
 #include "acoustic_step_1st_half.h"
 #include "general_continuum.h"
+#include "general_continuum.hpp"
 namespace SPH
 {
 namespace continuum_dynamics
@@ -48,12 +49,12 @@ class PlasticAcousticStep : public fluid_dynamics::AcousticStep<BaseInteractionT
 
   protected:
     PlasticContinuum &plastic_continuum_;
+    DiscreteVariable<Vecd> *dv_pos_;
     DiscreteVariable<Mat3d> *dv_stress_tensor_3D_, *dv_strain_tensor_3D_, *dv_stress_rate_3D_, *dv_strain_rate_3D_;
     DiscreteVariable<Matd> *dv_velocity_gradient_;
 
 };
 
-//Step1-Inner
 template <typename...>
 class PlasticAcousticStep1stHalf;
 
@@ -112,7 +113,6 @@ class PlasticAcousticStep1stHalf<Inner<OneLevel, RiemannSolverType, KernelCorrec
     RiemannSolverType riemann_solver_;
 };
 
-//Step1-wall
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
 class PlasticAcousticStep1stHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType, Parameters...>>
     : public PlasticAcousticStep<Interaction<Contact<Wall, Parameters...>>>

@@ -56,6 +56,7 @@ namespace SPH
 #if SPHINXSYS_USE_FLOAT
 using Real = float;
 using UnsignedInt = u_int32_t;
+using sycl::sin;
 #else
 using Real = double;
 using UnsignedInt = size_t;

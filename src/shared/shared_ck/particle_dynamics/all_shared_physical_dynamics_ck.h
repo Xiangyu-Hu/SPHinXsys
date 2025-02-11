@@ -45,4 +45,8 @@
 #include "continuum_integration_1st_ck.hpp"
 #include "continuum_integration_2nd_ck.h"
 #include "continuum_integration_2nd_ck.hpp"
+#include "continuum_dynamics_variable_ck.h"
+#include "continuum_dynamics_variable_ck.hpp"
+#include "stress_diffusion_ck.h"
+#include "stress_diffusion_ck.hpp"
 #endif // ALL_SHARED_PHYSICAL_DYNAMICS_CK_H

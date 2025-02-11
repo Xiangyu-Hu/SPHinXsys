@@ -73,24 +73,23 @@ template <class RiemannSolverType, class KernelCorrectionType, typename... Param
 template <class ExecutionPolicy, class EncloserType>
 PlasticAcousticStep2ndHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType, Parameters...>>::
     UpdateKernel::UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-    : rho_(encloser.dv_rho_->DelegatedData(ex_policy)),
+    : plastic_kernel_(encloser.plastic_continuum_),
+      rho_(encloser.dv_rho_->DelegatedData(ex_policy)),
       drho_dt_(encloser.dv_drho_dt_->DelegatedData(ex_policy)),
       velocity_gradient_(encloser.dv_velocity_gradient_->DelegatedData(ex_policy)),
       stress_tensor_3D_(encloser.dv_stress_tensor_3D_->DelegatedData(ex_policy)), 
       strain_tensor_3D_(encloser.dv_strain_tensor_3D_->DelegatedData(ex_policy)),
       stress_rate_3D_(encloser.dv_stress_rate_3D_->DelegatedData(ex_policy)),
-      strain_rate_3D_(encloser.dv_strain_rate_3D_->DelegatedData(ex_policy)),
-      plastic_kernel_(encloser.plastic_continuum_) {}
+      strain_rate_3D_(encloser.dv_strain_rate_3D_->DelegatedData(ex_policy)){}
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
 void PlasticAcousticStep2ndHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType, Parameters...>>::
     UpdateKernel::update(size_t index_i, Real dt)
 {
     rho_[index_i] += drho_dt_[index_i] * dt * 0.5;
-
     Mat3d velocity_gradient = upgradeToMat3d(velocity_gradient_[index_i]);
     Mat3d stress_tensor_rate_3D_ = plastic_kernel_.ConstitutiveRelation(velocity_gradient, stress_tensor_3D_[index_i]);
-    stress_rate_3D_[index_i] = stress_tensor_rate_3D_;
+    stress_rate_3D_[index_i] += stress_tensor_rate_3D_; //stress diffusion is on
     stress_tensor_3D_[index_i] += stress_rate_3D_[index_i] * dt;
     /*return mapping*/
     stress_tensor_3D_[index_i] = plastic_kernel_.ReturnMapping(stress_tensor_3D_[index_i]);
