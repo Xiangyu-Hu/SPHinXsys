@@ -11,7 +11,7 @@ void LinearGradientCorrectionMatrix<Inner<>>::interaction(size_t index_i, Real d
     {
         size_t index_j = inner_neighborhood.j_[n];
         Vecd gradW_ij = inner_neighborhood.dW_ij_[n] * Vol_[index_j] * inner_neighborhood.e_ij_[n];
-        Vecd r_ji = inner_neighborhood.r_ij_vector_[n];
+        Vecd r_ji = inner_neighborhood.r_ij_[n] * inner_neighborhood.e_ij_[n];
         local_configuration -= r_ji * gradW_ij.transpose();
     }
     B_[index_i] = local_configuration;
@@ -49,7 +49,7 @@ void LinearGradientCorrectionMatrix<Contact<>>::interaction(size_t index_i, Real
         {
             size_t index_j = contact_neighborhood.j_[n];
             Vecd gradW_ij = contact_neighborhood.dW_ij_[n] * Vol_k[index_j] * contact_neighborhood.e_ij_[n];
-            Vecd r_ji = contact_neighborhood.r_ij_vector_[n];
+            Vecd r_ji = contact_neighborhood.r_ij_[n] * contact_neighborhood.e_ij_[n];
             local_configuration -= r_ji * gradW_ij.transpose();
         }
     }
