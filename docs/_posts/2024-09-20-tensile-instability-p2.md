@@ -4,8 +4,6 @@ title:  "Misinterpretation of tensile instability in SPH solid dynamics (Part 2)
 date:   2024-09-20
 categories: sph method
 ---
-<head> {% include mathjax.html %} </head>
-
 Xiangyu Hu
 
 ## Remedy for hourglass modes
