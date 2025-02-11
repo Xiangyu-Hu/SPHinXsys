@@ -166,6 +166,10 @@ class BaseParticles
     DiscreteVariable<DataType> *registerStateVariableOnly(const std::string &name, Args &&...args);
     template <typename DataType>
     DiscreteVariable<DataType> *registerStateVariableOnlyFrom(const std::string &new_name, const std::string &old_name);
+    template <typename DataType>
+    DiscreteVariable<DataType> *registerStateVariableOnlyFrom(const std::string &name, const StdLargeVec<DataType> &geometric_data);
+    template <typename DataType>
+    DiscreteVariable<DataType> *registerStateVariableOnlyFromReload(const std::string &name);
 
     template <typename DataType>
     SingularVariable<DataType> *addUniqueSingularVariableOnly(const std::string &name, DataType initial_value = ZeroData<DataType>::value);
@@ -225,13 +229,14 @@ class BaseParticles
     //----------------------------------------------------------------------
     void registerPositionAndVolumetricMeasure(StdLargeVec<Vecd> &pos, StdLargeVec<Real> &Vol);
     void registerPositionAndVolumetricMeasureFromReload();
-    Vecd *ParticlePositions() { return pos_; }
+    DiscreteVariable<Vecd> *dvParticlePosition() { return dv_pos_; }
+    Vecd *ParticlePositions() { return dv_pos_->Data(); }
     Real *VolumetricMeasures() { return Vol_; }
     virtual Real ParticleVolume(size_t index) { return Vol_[index]; }
     virtual Real ParticleSpacing(size_t index) { return std::pow(Vol_[index], 1.0 / Real(Dimensions)); }
 
   protected:
-    Vecd *pos_;  /**< Position */
+    DiscreteVariable<Vecd> *dv_pos_;  /**< Discrete variable position */
     Real *Vol_;  /**< Volumetric measure, also area and length of surface and linear particle */
     Real *rho_;  /**< Density as a fundamental property of phyiscal matter */
     Real *mass_; /**< Mass as another fundamental property of physical matter */
