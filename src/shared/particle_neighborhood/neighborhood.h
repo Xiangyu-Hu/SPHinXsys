@@ -57,7 +57,7 @@ class Neighborhood
     StdLargeVec<Real> dW_ij_; /**< derivative of kernel function or inter-particle surface contribution */
     StdLargeVec<Real> r_ij_;  /**< distance between j and i. */
     StdLargeVec<Vecd> e_ij_;  /**< unit vector pointing from j to i or inter-particle surface direction */
-  
+
     Neighborhood() : current_size_(0), allocated_size_(0){};
     ~Neighborhood(){};
 

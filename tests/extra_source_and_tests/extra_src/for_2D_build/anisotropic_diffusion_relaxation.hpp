@@ -31,7 +31,114 @@ class AnisotropicDiffusionSolid : public Solid
     Real DiffusivityCoefficient() { return diffusion_coeff; };
 };
  
- 
+//----------------------------------------------------------------------
+//	calculate correction matrix B to keep the accuracy in anisotropic case
+//----------------------------------------------------------------------
+template <typename... InteractionTypes>
+class AnisotropicLinearGradientCorrectionMatrix;
+
+template <class DataDelegationType>
+class AnisotropicLinearGradientCorrectionMatrix<DataDelegationType>
+    : public LocalDynamics, public DataDelegationType
+{
+  public:
+    template <class BaseRelationType>
+    explicit AnisotropicLinearGradientCorrectionMatrix(BaseRelationType &base_relation)
+     : LocalDynamics(base_relation.getSPHBody()), DataDelegationType(base_relation),
+       Vol_(this->particles_->template getVariableDataByName<Real>("VolumetricMeasure")),
+       B_(particles_->registerStateVariable<Matd>("LinearGradientCorrectionMatrix", IdentityMatrix<Matd>::value)),
+      pos_(this->particles_->template getVariableDataByName<Vecd>("Position"))  {}
+
+    virtual ~AnisotropicLinearGradientCorrectionMatrix(){};
+
+  protected:
+    Real *Vol_;
+    Matd *B_;
+    Vecd *pos_;
+
+};
+
+template <>
+class AnisotropicLinearGradientCorrectionMatrix<Inner<>>
+    : public AnisotropicLinearGradientCorrectionMatrix<DataDelegateInner>
+{
+
+  public:
+    explicit AnisotropicLinearGradientCorrectionMatrix(BaseInnerRelation &inner_relation)
+        : AnisotropicLinearGradientCorrectionMatrix<DataDelegateInner>(inner_relation)
+        {};
+    template <typename BodyRelationType, typename FirstArg>
+    explicit AnisotropicLinearGradientCorrectionMatrix(InteractArgs<BodyRelationType, FirstArg> parameters)
+        : AnisotropicLinearGradientCorrectionMatrix(parameters.body_relation_, std::get<0>(parameters.others_)){};
+    virtual ~AnisotropicLinearGradientCorrectionMatrix(){};
+
+
+    void interaction(size_t index_i, Real dt = 0.0)
+    {
+        Matd local_configuration = ZeroData<Matd>::value;
+        const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
+        for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+        {
+            size_t index_j = inner_neighborhood.j_[n];
+            Vecd gradW_ij = inner_neighborhood.dW_ij_[n] * Vol_[index_j] * inner_neighborhood.e_ij_[n];
+            Vecd r_ji = pos_[index_i] - pos_[index_j];
+            local_configuration -= r_ji * gradW_ij.transpose();
+        }
+        B_[index_i] = local_configuration;
+    };
+    void update(size_t index_i, Real dt = 0.0)
+    {
+        Matd B_T = B_[index_i].transpose();  
+        Matd inverse = (B_T * B_[index_i] + SqrtEps * Matd::Identity()).inverse() * B_T;
+        B_[index_i] = inverse ;
+    };
+    
+
+};
+using AnisotropicLinearGradientCorrectionMatrixInner = AnisotropicLinearGradientCorrectionMatrix<Inner<>>;
+
+template <>
+class AnisotropicLinearGradientCorrectionMatrix<Contact<>>
+    : public AnisotropicLinearGradientCorrectionMatrix<DataDelegateContact>
+{
+  public:
+    explicit AnisotropicLinearGradientCorrectionMatrix(BaseContactRelation &contact_relation)
+    : AnisotropicLinearGradientCorrectionMatrix<DataDelegateContact>(contact_relation)
+{
+    for (size_t k = 0; k != contact_particles_.size(); ++k)
+    {
+        contact_Vol_.push_back(contact_particles_[k]->getVariableDataByName<Real>("VolumetricMeasure"));
+        contact_pos_.push_back(contact_particles_[k]->getVariableDataByName<Vecd>("Position"));
+      
+    }
+}virtual ~AnisotropicLinearGradientCorrectionMatrix(){};
+    void interaction(size_t index_i, Real dt = 0.0)
+    {
+    Matd local_configuration = ZeroData<Matd>::value;
+    for (size_t k = 0; k < contact_configuration_.size(); ++k)
+    {
+        Real *Vol_k = contact_Vol_[k];
+        Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
+        for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
+        {
+            size_t index_j = contact_neighborhood.j_[n];
+            Vecd gradW_ij = contact_neighborhood.dW_ij_[n] * Vol_k[index_j] * contact_neighborhood.e_ij_[n];
+            Vecd r_ji = pos_[index_i] - contact_pos_[k][index_j];
+            local_configuration -= r_ji * gradW_ij.transpose();
+        }
+    }
+    B_[index_i] += local_configuration;
+};
+
+  protected:
+    StdVec<Real *> contact_Vol_;
+    StdVec<Vecd *> contact_pos_;
+    
+};
+
+using AnisotropicLinearGradientCorrectionMatrixComplex = ComplexInteraction<AnisotropicLinearGradientCorrectionMatrix<Inner<>, Contact<>>>;
+
+
 
 template <typename... InteractionTypes>
 class AnisotropicKernelCorrectionMatrix;
@@ -48,7 +155,8 @@ class AnisotropicKernelCorrectionMatrix<DataDelegationType>
       kernel_correction2_(this->particles_->template registerStateVariable<Vec2d>("FirstOrderCorrectionVector2")),
       kernel_correction3_(this->particles_->template registerStateVariable<Vec2d>("FirstOrderCorrectionVector3")),
       Vol_(this->particles_->template getVariableDataByName<Real>("VolumetricMeasure")),
-      B_(this->particles_->template getVariableDataByName<Matd>("LinearGradientCorrectionMatrix"))  {}
+      B_(this->particles_->template getVariableDataByName<Matd>("LinearGradientCorrectionMatrix")),  
+      pos_(this->particles_->template getVariableDataByName<Vecd>("Position"))  {}
           
     virtual ~AnisotropicKernelCorrectionMatrix(){};
 
@@ -57,6 +165,7 @@ class AnisotropicKernelCorrectionMatrix<DataDelegationType>
     Vec2d *kernel_correction1_,*kernel_correction2_, *kernel_correction3_;
     Real *Vol_;
     Mat2d *B_;
+    Vecd *pos_;
 
 }; 
 
@@ -80,7 +189,8 @@ class AnisotropicKernelCorrectionMatrix<Inner<>>
             size_t index_j = inner_neighborhood.j_[n];
             Vecd gradW_ij = inner_neighborhood.dW_ij_[n] * Vol_[index_j] * inner_neighborhood.e_ij_[n];
          
-             Vec2d r_ji = -inner_neighborhood.r_ij_vector_[n];
+            // Vec2d r_ji = -inner_neighborhood.r_ij_vector_[n];
+            Vecd r_ji = pos_[index_j] - pos_[index_i];
             kernel_correction1_[index_i] += r_ji[0] * r_ji[0] * (B_[index_i].transpose() * gradW_ij);
             kernel_correction2_[index_i] += r_ji[1] * r_ji[1] * (B_[index_i].transpose() * gradW_ij);
             kernel_correction3_[index_i] += r_ji[0] * r_ji[1] * (B_[index_i].transpose() * gradW_ij);
@@ -102,6 +212,7 @@ class AnisotropicKernelCorrectionMatrix<Contact<>>
         for (size_t k = 0; k != contact_particles_.size(); ++k)
         {
             contact_Vol_.push_back(contact_particles_[k]->getVariableDataByName<Real>("VolumetricMeasure"));
+            contact_pos_.push_back(contact_particles_[k]->getVariableDataByName<Vecd>("Position"));
         }
     };
 
@@ -117,8 +228,9 @@ class AnisotropicKernelCorrectionMatrix<Contact<>>
             {
                 size_t index_j = contact_neighborhood.j_[n];
                 Vecd gradW_ij = contact_neighborhood.dW_ij_[n] * Vol_k[index_j] * contact_neighborhood.e_ij_[n];
-                Vec2d r_ji = -contact_neighborhood.r_ij_vector_[n];
-                
+               // Vec2d r_ji = -contact_neighborhood.r_ij_vector_[n];
+                 Vecd r_ji = contact_pos_[k][index_j] - pos_[index_i];
+
                 kernel_correction1_[index_i] += r_ji[0] * r_ji[0] * (B_[index_i].transpose() * gradW_ij);
                 kernel_correction2_[index_i] += r_ji[1] * r_ji[1] * (B_[index_i].transpose() * gradW_ij);
                 kernel_correction3_[index_i] += r_ji[0] * r_ji[1] * (B_[index_i].transpose() * gradW_ij);
@@ -129,6 +241,7 @@ class AnisotropicKernelCorrectionMatrix<Contact<>>
 
   protected:
     StdVec<Real *> contact_Vol_;
+    StdVec<Vecd *> contact_pos_;
 };
 
 using AnisotropicKernelCorrectionMatrixComplex = ComplexInteraction<AnisotropicKernelCorrectionMatrix<Inner<>, Contact<>>>;
@@ -157,8 +270,9 @@ class AnisotropicDiffusionRelaxation<DataDelegationType>
       kernel_correction1_(this->particles_->template getVariableDataByName<Vec2d>("FirstOrderCorrectionVector1")),
       kernel_correction2_(this->particles_->template getVariableDataByName<Vec2d>("FirstOrderCorrectionVector2")),
       kernel_correction3_(this->particles_->template getVariableDataByName<Vec2d>("FirstOrderCorrectionVector3")),
-       anisotropic_diffusion_solid_(DynamicCast<AnisotropicDiffusionSolid>(this, base_relation.getSPHBody().getBaseMaterial())) 
-      {  
+       anisotropic_diffusion_solid_(DynamicCast<AnisotropicDiffusionSolid>(this, base_relation.getSPHBody().getBaseMaterial())), 
+       pos_(this->particles_->template getVariableDataByName<Vecd>("Position")) 
+      { 
         
         total_left_ = particles_->registerStateVariable<Mat3d>( "TotalLeft", [&](size_t i) -> Mat3d { return Eps * Mat3d::Identity(); });
         species_correction_ = particles_->registerStateVariable<Vec2d>("SpeciesCorrection ", [&](size_t i) -> Vec2d { return Eps * Vec2d::Identity(); });
@@ -189,16 +303,14 @@ class AnisotropicDiffusionRelaxation<DataDelegationType>
     Vec3d *Laplacian_;
 
     Real *Laplacian_x, *Laplacian_y, *Laplacian_xy, *diffusion_dt_;
-
+   
     Real diffusion_coeff_;
  
 
     AnisotropicDiffusionSolid &anisotropic_diffusion_solid_;
-
+      Vecd *pos_;
 };
 
-
- 
 template <>
 class AnisotropicDiffusionRelaxation<Inner<>>
     : public AnisotropicDiffusionRelaxation<DataDelegateInner>
@@ -231,7 +343,8 @@ class AnisotropicDiffusionRelaxation<Inner<>>
         for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)  
         {
             size_t index_j = inner_neighborhood.j_[n];
-            Vec2d r_ji = -inner_neighborhood.r_ij_vector_[n];
+           // Vec2d r_ji = -inner_neighborhood.r_ij_vector_[n];
+            Vecd r_ji = pos_[index_j] - pos_[index_i];
             Vec2d gradW_ijV_j = inner_neighborhood.dW_ij_[n] * Vol_[index_j] * inner_neighborhood.e_ij_[n];
             Vec3d disp_quad_ = Vec3d(r_ji[0] * r_ji[0], r_ji[1] * r_ji[1], r_ji[0] * r_ji[1]);
             modified_func_  = r_ji.dot(B_[index_i].transpose() * gradW_ijV_j) / pow(r_ji.norm(), 4.0);
@@ -270,6 +383,8 @@ class AnisotropicDiffusionRelaxation<Contact<>>
         for (size_t k = 0; k != contact_particles_.size(); ++k)
         {
             contact_Vol_.push_back(contact_particles_[k]->getVariableDataByName<Real>("VolumetricMeasure"));
+            contact_pos_.push_back(contact_particles_[k]->getVariableDataByName<Vecd>("Position"));
+      
         }
     };
 
@@ -287,7 +402,9 @@ class AnisotropicDiffusionRelaxation<Contact<>>
             for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
             {
                  size_t index_j = contact_neighborhood.j_[n];
-                 Vec2d r_ji = -contact_neighborhood.r_ij_vector_[n];
+                 //Vec2d r_ji = -contact_neighborhood.r_ij_vector_[n];
+                 Vecd r_ji = contact_pos_[k][index_j] - pos_[index_i];
+
                  Vecd gradW_ij = contact_neighborhood.dW_ij_[n] * Vol_k[index_j] * contact_neighborhood.e_ij_[n];
 
                 Vec3d disp_quad_ = Vec3d(r_ji[0] * r_ji[0], r_ji[1] * r_ji[1], r_ji[0] * r_ji[1]);
@@ -317,6 +434,7 @@ class AnisotropicDiffusionRelaxation<Contact<>>
 
   protected:
     StdVec<Real *> contact_Vol_; 
+    StdVec<Vecd *> contact_pos_;
 };
 
  

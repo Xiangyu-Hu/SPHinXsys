@@ -188,11 +188,11 @@ class DiffusionInitialCondition : public LocalDynamics
   protected:
     void update(size_t index_i, Real dt = 0.0)
     {
-        if (pos_[index_i][0] >= 0.4* L && pos_[index_i][0] <= 0.6 * L)
+        /*if (pos_[index_i][0] >= 0.4* L && pos_[index_i][0] <= 0.6 * L)
         {
             phi_[index_i] = 1.0;     
-        }
-    //  phi_[index_i] = pos_[index_i][0] *pos_[index_i][0] + pos_[index_i][1] * pos_[index_i][1];  
+        }*/
+       phi_[index_i] = pos_[index_i][0] *pos_[index_i][0] + pos_[index_i][1] * pos_[index_i][1];  
       
     };
 };
@@ -326,7 +326,7 @@ int main(int ac, char *av[])
     //	Define the main numerical methods used in the simulation.
     //	Note that there may be data dependence on the constructors of these methods.
     //----------------------------------------------------------------------
-    InteractionWithUpdate<LinearGradientCorrectionMatrixComplex> correct_configuration(diffusion_body_inner_relation, diffusion_block_contact);
+    InteractionWithUpdate<AnisotropicLinearGradientCorrectionMatrixComplex> correct_configuration(diffusion_body_inner_relation, diffusion_block_contact);
    	InteractionWithUpdate<AnisotropicKernelCorrectionMatrixComplex> correct_second_configuration(diffusion_body_inner_relation, diffusion_block_contact);
     ReduceDynamics<GetLaplacianTimeStepSize> get_time_step_size(diffusion_body);
     InteractionWithUpdate<AnisotropicDiffusionRelaxationComplex> diffusion_relaxation(diffusion_body_inner_relation, diffusion_block_contact);
