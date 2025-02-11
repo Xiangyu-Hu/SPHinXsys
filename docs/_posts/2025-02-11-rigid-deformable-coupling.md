@@ -47,7 +47,7 @@ The coordinates of the points are listed in the table below:
 |y               |0.5|0.5|0.5|0.5|-0.5|-0.5|-0.5 |-0.5|-0.5|-0.5|0.5 |0.5|
 |z               |1  |1  |0  |0  |1   |0   |0    |1   |1   |0   |1   |0  |
 
-<center>Tab. 1. Coordinates of the coupled bar.</center> </p>
+<p> <center>Tab. 1. Coordinates of the coupled bar.</center> </p>
 
 ## Results
 
@@ -69,28 +69,28 @@ The convergence of the simulation results with mesh/resolution refinement is dis
   <img src="{{site.baseurl}}/assets/img/rigid_deformable_coupling/obs_0_dimension_y_disp-res.svg" alt="obs_0_y" height="200"/>
   <img src="{{site.baseurl}}/assets/img/rigid_deformable_coupling/obs_0_dimension_z_disp-res.svg" alt="obs_0_z" height="200"/>
 </p>
-<center>Fig. 2. Displacement at observer 0 against total node/particle number.</center> </p>
+<p> <center>Fig. 2. Displacement at observer 0 against total node/particle number.</center> </p>
 
 <p align="center">
   <img src="{{site.baseurl}}/assets/img/rigid_deformable_coupling/obs_1_dimension_x_disp-res.svg" alt="obs_1_x" height="200"/>
   <img src="{{site.baseurl}}/assets/img/rigid_deformable_coupling/obs_1_dimension_y_disp-res.svg" alt="obs_1_y" height="200"/>
   <img src="{{site.baseurl}}/assets/img/rigid_deformable_coupling/obs_1_dimension_z_disp-res.svg" alt="obs_1_z" height="200"/>
 </p>
-<center>Fig. 3. Displacement at observer 1 against total node/particle number.</center> </p>
+<p> <center>Fig. 3. Displacement at observer 1 against total node/particle number.</center> </p>
 
 <p align="center">
   <img src="{{site.baseurl}}/assets/img/rigid_deformable_coupling/obs_2_dimension_x_disp-res.svg" alt="obs_2_x" height="200"/>
   <img src="{{site.baseurl}}/assets/img/rigid_deformable_coupling/obs_2_dimension_y_disp-res.svg" alt="obs_2_y" height="200"/>
   <img src="{{site.baseurl}}/assets/img/rigid_deformable_coupling/obs_2_dimension_z_disp-res.svg" alt="obs_2_z" height="200"/>
 </p>
-<center>Fig. 4. Displacement at observer 2 against total node/particle number.</center> </p>
+<p> <center>Fig. 4. Displacement at observer 2 against total node/particle number.</center> </p>
 
 <p align="center">
   <img src="{{site.baseurl}}/assets/img/rigid_deformable_coupling/obs_3_dimension_x_disp-res.svg" alt="obs_3_x" height="200"/>
   <img src="{{site.baseurl}}/assets/img/rigid_deformable_coupling/obs_3_dimension_y_disp-res.svg" alt="obs_3_y" height="200"/>
   <img src="{{site.baseurl}}/assets/img/rigid_deformable_coupling/obs_3_dimension_z_disp-res.svg" alt="obs_3_z" height="200"/>
 </p>
-<center>Fig. 5. Displacement at observer 3 against total node/particle number.</center> </p>
+<p> <center>Fig. 5. Displacement at observer 3 against total node/particle number.</center> </p>
 
 With the same element/particle size,
 the total number of particles in SPHinXsys is higher than the total nodal number of FEBio,
@@ -112,7 +112,7 @@ The displacements with a resolution of 0.025m at the four observation points are
 | 2 | [-1.22377339, -2.13595798,  0.56736396] | [-1.21962 , -2.11663 ,  0.570901]  | 0.80 |
 | 3 | [-0.96827137, -1.7113192 ,  0.43213959] | [-0.959311, -1.67953 ,  0.431817]  | 1.67 |
 
-<center>Tab. 2. Displacements obtained by SPHinXsys and FEBio at observation points.</center> </p>
+<p> <center>Tab. 2. Displacements obtained by SPHinXsys and FEBio at observation points.</center> </p>
 
 The difference is defined as $|\mathbf{d_{SPH}}-\mathbf{d_{FE}}| / |\mathbf{d_{FE}}|$.
 It is observed that the maximum value is within 2%,
@@ -137,7 +137,7 @@ As shown in Table 3 and Figure 6, the computational time of SPHinXsys is longer 
 | 40400 | 35729 | 4.60286|255.339|64.9546|
 | 69696 | 60633 | 4.60267|539.735|130.239|
 
-<center>Tab. 3. Computational time of SPHinXsys and FEBio.</center> </p>
+<p> <center>Tab. 3. Computational time of SPHinXsys and FEBio.</center> </p>
 
 <p align="center"><img src="{{site.baseurl}}/assets/img/rigid_deformable_coupling/performance_analysis.svg" alt="rigid-deformable_coupling" height="300"/>
 <center>Fig. 6. Computational time of SPHinXsys and FEBio against total node/particle number.</center> </p>
