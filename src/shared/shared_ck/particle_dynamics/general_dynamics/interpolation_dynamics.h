@@ -45,7 +45,7 @@ class Interpolation<Contact<DataType>> : public Interaction<Contact<>>
 {
   public:
     Interpolation(Relation<Contact<>> &pair_contact_relation, const std::string &variable_name);
-    virtual ~Interpolation(){};
+    virtual ~Interpolation() {};
 
     class InteractKernel : public Interaction<Contact<>>::InteractKernel
     {
@@ -72,11 +72,11 @@ class ObservingAQuantityCK : public InteractionDynamicsCK<ExecutionPolicy, Inter
 {
   public:
     ObservingAQuantityCK(Relation<Contact<>> &pair_contact_relation, const std::string &variable_name)
-        : InteractionDynamicsCK<ExecutionPolicy, Interpolation<Contact<DataType>>>(pair_contact_relation, variable_name){};
+        : InteractionDynamicsCK<ExecutionPolicy, Interpolation<Contact<DataType>>>(pair_contact_relation, variable_name) {};
     template <typename BodyRelationType, typename FirstArg>
-    explicit ObservingAQuantityCK(InteractArgs<BodyRelationType, FirstArg> parameters)
-        : ObservingAQuantityCK(parameters.body_relation_, std::get<0>(parameters.others_)){};
-     virtual ~ObservingAQuantityCK(){};
+    explicit ObservingAQuantityCK(DynamicsArgs<BodyRelationType, FirstArg> parameters)
+        : ObservingAQuantityCK(parameters.identifier_, std::get<0>(parameters.others_)){};
+    virtual ~ObservingAQuantityCK() {};
 };
 } // namespace SPH
 #endif // INTERPOLATION_DYNAMICS_H

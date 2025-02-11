@@ -228,10 +228,10 @@ int main(int ac, char *av[])
         ObservingAQuantityCK<MainExecutionPolicy, Vecd>,
         ObservingAQuantityCK<MainExecutionPolicy, Vecd>,
         StateDynamics<MainExecutionPolicy, solid_dynamics::UpdatePositionFromDisplacement>>
-        structure_observer_follow_structure(
+        update_structure_observer_states(
             structure,
-            InteractArgs(structure_observer_contact, std::string("Velocity")),
-            InteractArgs(structure_observer_contact, std::string("Displacement")),
+            DynamicsArgs(structure_observer_contact, std::string("Velocity")),
+            DynamicsArgs(structure_observer_contact, std::string("Displacement")),
             structure_observer);
     //----------------------------------------------------------------------
     //	Define the multi-body system
@@ -415,7 +415,7 @@ int main(int ac, char *av[])
         if (total_time >= relax_time)
         {
             write_real_body_states.writeToFile(MainExecutionPolicy{});
-            structure_observer_follow_structure.exec();
+            update_structure_observer_states.exec();
             write_structure_surface.writeToFile(MainExecutionPolicy{});
         }
         TickCount t3 = TickCount::now();
