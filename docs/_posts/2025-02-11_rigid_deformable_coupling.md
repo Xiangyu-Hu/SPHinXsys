@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  "Rigid-deformable solid coupling validation"
-date:   2025-02-11
+date:   2025-02-10
 categories: test examples
 ---
 Xiangyu Hu and Weiyi Kong
