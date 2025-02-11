@@ -195,6 +195,8 @@ int main(int ac, char *av[])
         structure_update_contact_relation(structure_contact);
     UpdateRelation<MainExecutionPolicy, Contact<>>
         observer_update_contact_relation(observer_contact);
+    UpdateRelation<MainExecutionPolicy, Contact<>>
+        structure_observer_update_contact_relation(structure_observer_contact);
     ParticleSortCK<MainExecutionPolicy, RadixSort> particle_sort(water_block);
 
     Gravity gravity(Vec3d(0.0, 0.0, -gravity_g));
