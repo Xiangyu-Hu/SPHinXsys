@@ -23,16 +23,6 @@ void BodyStatesRecordingToVtp::writeParticlesToVtk(OutStreamType &output_stream,
     output_stream << std::endl;
     output_stream << "    </DataArray>\n";
 
-    // write original particles ID
-    output_stream << "    <DataArray Name=\"OriginalParticle_ID\" type=\"Int32\" Format=\"ascii\">\n";
-    output_stream << "    ";
-    for (size_t i = 0; i != total_real_particles; ++i)
-    {
-        output_stream << particles.ParticleOriginalIds()[i] << " ";
-    }
-    output_stream << std::endl;
-    output_stream << "    </DataArray>\n";
-
     // write particle IDs
     constexpr int type_index_UnsignedInt = DataTypeIndex<UnsignedInt>::value;
     for (DiscreteVariable<UnsignedInt> *variable : std::get<type_index_UnsignedInt>(variables_to_write))

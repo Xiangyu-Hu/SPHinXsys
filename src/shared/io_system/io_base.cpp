@@ -7,11 +7,11 @@ namespace SPH
 //=============================================================================================//
 BaseIO::BaseIO(SPHSystem &sph_system)
     : sph_system_(sph_system), io_environment_(sph_system.getIOEnvironment()),
-      sv_physical_time_(*sph_system_.getSystemVariableByName<Real>("PhysicalTime")) {}
+      sv_physical_time_(sph_system_.getSystemVariableByName<Real>("PhysicalTime")) {}
 //=============================================================================================//
 std::string BaseIO::convertPhysicalTimeToString(Real convertPhysicalTimeToStream)
 {
-    int i_time = int(sv_physical_time_.getValue() * 1.0e6);
+    int i_time = int(sv_physical_time_->getValue() * 1.0e6);
     return padValueWithZeros(i_time);
 }
 //=============================================================================================/
@@ -25,7 +25,6 @@ bool BaseIO::isBodyIncluded(const SPHBodyVector &bodies, SPHBody *sph_body)
 //=============================================================================================//
 BodyStatesRecording::BodyStatesRecording(SPHSystem &sph_system)
     : BaseIO(sph_system), bodies_(sph_system.getRealBodies()),
-      prepare_variable_to_write_(),
       state_recording_(sph_system_.StateRecording())
 {
     for (size_t i = 0; i < bodies_.size(); ++i)
@@ -37,7 +36,14 @@ BodyStatesRecording::BodyStatesRecording(SPHSystem &sph_system)
 //=============================================================================================//
 BodyStatesRecording::BodyStatesRecording(SPHBody &body)
     : BaseIO(body.getSPHSystem()), bodies_({&body}),
-      state_recording_(sph_system_.StateRecording()) {}
+      state_recording_(sph_system_.StateRecording())
+{
+    for (size_t i = 0; i < bodies_.size(); ++i)
+    {
+        BaseParticles &particles = bodies_[i]->getBaseParticles();
+        dv_all_pos_.push_back(particles.getVariableByName<Vecd>("Position"));
+    }
+}
 //=============================================================================================//
 void BodyStatesRecording::writeToFile()
 {
@@ -45,7 +51,7 @@ void BodyStatesRecording::writeToFile()
     {
         derived_variable->exec();
     }
-    writeWithFileName(convertPhysicalTimeToString(sv_physical_time_.getValue()));
+    writeWithFileName(convertPhysicalTimeToString(sv_physical_time_->getValue()));
 }
 //=============================================================================================//
 void BodyStatesRecording::writeToFile(size_t iteration_step)
@@ -76,7 +82,7 @@ void RestartIO::writeToFile(size_t iteration_step)
         fs::remove(overall_filefullpath);
     }
     std::ofstream out_file(overall_filefullpath.c_str(), std::ios::app);
-    out_file << std::fixed << std::setprecision(9) << sv_physical_time_.getValue() << "   \n";
+    out_file << std::fixed << std::setprecision(9) << sv_physical_time_->getValue() << "   \n";
     out_file.close();
 
     for (size_t i = 0; i < bodies_.size(); ++i)

@@ -79,7 +79,7 @@ int main(int ac, char *av[])
         /** A  Physics relaxation step. */
         RelaxationStepLevelSetCorrectionInner relaxation_step_inner(cylinder_inner);
         RelaxationStepLevelSetCorrectionComplex relaxation_step_complex(
-            InteractArgs(water_block_inner, std::string("OuterBoundary")), water_contact);
+            DynamicsArgs(water_block_inner, std::string("OuterBoundary")), water_contact);
         SimpleDynamics<UpdateSmoothingLengthRatioByShape> update_smoothing_length_ratio(water_block, refinement_region);
         //----------------------------------------------------------------------
         //	Particle relaxation starts here.

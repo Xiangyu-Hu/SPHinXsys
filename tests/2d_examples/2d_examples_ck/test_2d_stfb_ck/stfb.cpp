@@ -100,7 +100,9 @@ class WaterBlock : public ComplexShape
 Real h = 1.3 * particle_spacing_ref;
 Vec2d gauge_halfsize = Vec2d(0.5 * h, 0.5 * DH);
 Vec2d gauge_translation = Vec2d(DL / 3, 0.5 * DH);
-//
+//----------------------------------------------------------------------
+//	Main program starts here.
+//----------------------------------------------------------------------
 int main(int ac, char *av[])
 {
     std::cout << "Mass " << StructureMass << " str_sup " << FlStA << " rho_s " << rho_s << std::endl;
@@ -265,7 +267,8 @@ int main(int ac, char *av[])
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp write_real_body_states(sph_system);
-    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<MainExecutionPolicy, UpperFrontInAxisDirectionCK<BodyRegionByCell>>>
+    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<
+        MainExecutionPolicy, UpperFrontInAxisDirectionCK<BodyRegionByCell>>>
         wave_gauge(wave_probe_buffer, "FreeSurfaceHeight");
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<MainExecutionPolicy, Vecd>>
         write_structure_position("Position", observer_contact);
