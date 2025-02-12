@@ -48,8 +48,8 @@ class TaylorGreenInitialCondition : public fluid_dynamics::CompressibleFluidInit
 {
   public:
     explicit TaylorGreenInitialCondition(SPHBody &sph_body)
-        : fluid_dynamics::CompressibleFluidInitialCondition(sph_body){};
-    virtual ~TaylorGreenInitialCondition(){};
+        : fluid_dynamics::CompressibleFluidInitialCondition(sph_body) {};
+    virtual ~TaylorGreenInitialCondition() {};
 
     void update(size_t index_i, Real dt)
     {
@@ -83,7 +83,7 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     FluidBody water_body(sph_system, makeShared<WaterBlock>("WaterBody"));
-    water_body.sph_adaptation_->resetKernel<KernelTabulated<KernelLaguerreGauss>>(20);
+    water_body.getSPHAdaptation().resetKernel<KernelTabulated<KernelLaguerreGauss>>(20);
     water_body.defineClosure<CompressibleFluid, Viscosity>(ConstructArgs(rho0_f, heat_capacity_ratio), mu_f);
     water_body.generateParticles<BaseParticles, Lattice>();
     //----------------------------------------------------------------------

@@ -12,7 +12,7 @@ SurfaceParticles::SurfaceParticles(SPHBody &sph_body, BaseMaterial *base_materia
     //----------------------------------------------------------------------
     //		modify kernel function for surface particles
     //----------------------------------------------------------------------
-    sph_body.sph_adaptation_->getKernel()->reduceOnce();
+    sph_body.getSPHAdaptation().getKernel()->reduceOnce();
 }
 //=================================================================================================//
 void SurfaceParticles::initializeBasicParticleVariables()

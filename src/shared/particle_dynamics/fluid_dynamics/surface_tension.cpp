@@ -16,12 +16,12 @@ SurfaceTensionStress::
     particles_->addVariableToWrite<Vecd>("ColorGradient");
     particles_->addVariableToSort<Matd>("SurfaceTensionStress");
     particles_->addVariableToWrite<Matd>("SurfaceTensionStress");
-    Real rho0 = getSPHBody().base_material_->ReferenceDensity();
+    Real rho0 = getSPHBody().getBaseMaterial().ReferenceDensity();
     for (size_t k = 0; k != contact_particles_.size(); ++k)
     {
         contact_Vol_.push_back(contact_particles_[k]->getVariableDataByName<Real>("VolumetricMeasure"));
         contact_surface_tension_.push_back(contact_surface_tension[k]);
-        Real rho0_k = contact_bodies_[k]->base_material_->ReferenceDensity();
+        Real rho0_k = contact_bodies_[k]->getBaseMaterial().ReferenceDensity();
         contact_fraction_.push_back(rho0 / (rho0 + rho0_k));
     }
 }
@@ -71,10 +71,10 @@ void SurfaceStressForce<Inner<>>::interaction(size_t index_i, Real dt)
 SurfaceStressForce<Contact<>>::SurfaceStressForce(BaseContactRelation &contact_relation)
     : SurfaceStressForce<DataDelegateContact>(contact_relation)
 {
-    Real rho0 = getSPHBody().base_material_->ReferenceDensity();
+    Real rho0 = getSPHBody().getBaseMaterial().ReferenceDensity();
     for (size_t k = 0; k != contact_particles_.size(); ++k)
     {
-        Real rho0_k = contact_bodies_[k]->base_material_->ReferenceDensity();
+        Real rho0_k = contact_bodies_[k]->getBaseMaterial().ReferenceDensity();
         contact_fraction_.push_back(rho0 / (rho0 + rho0_k));
         contact_Vol_.push_back(contact_particles_[k]->getVariableDataByName<Real>("VolumetricMeasure"));
         contact_color_gradient_.push_back(

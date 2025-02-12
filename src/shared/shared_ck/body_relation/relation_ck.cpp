@@ -34,7 +34,7 @@ Relation<Contact<>>::Relation(SPHBody &sph_body, RealBodyVector contact_sph_bodi
     {
         const std::string name = contact_bodies_[k]->getName();
         contact_particles_.push_back(&contact_bodies_[k]->getBaseParticles());
-        contact_adaptations_.push_back(contact_bodies_[k]->sph_adaptation_);
+        contact_adaptations_.push_back(&contact_bodies_[k]->getSPHAdaptation());
 
         CellLinkedList *target_cell_linked_list =
             DynamicCast<CellLinkedList>(this, &contact_bodies_[k]->getCellLinkedList());

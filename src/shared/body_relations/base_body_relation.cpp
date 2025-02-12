@@ -50,7 +50,7 @@ BaseContactRelation::BaseContactRelation(SPHBody &sph_body, RealBodyVector conta
     {
         const std::string name = contact_bodies_[k]->getName();
         contact_particles_.push_back(&contact_bodies_[k]->getBaseParticles());
-        contact_adaptations_.push_back(contact_bodies_[k]->sph_adaptation_);
+        contact_adaptations_.push_back(&contact_bodies_[k]->getSPHAdaptation());
         contact_configuration_[k].resize(base_particles_.RealParticlesBound(), Neighborhood());
     }
 }

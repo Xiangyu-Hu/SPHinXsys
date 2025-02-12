@@ -7,7 +7,7 @@ GetDiffusionTimeStepSize::GetDiffusionTimeStepSize(
     SPHBody &sph_body, AbstractDiffusion &abstract_diffusion)
     : BaseDynamics<Real>()
 {
-    Real smoothing_length = sph_body.sph_adaptation_->ReferenceSmoothingLength();
+    Real smoothing_length = sph_body.getSPHAdaptation().ReferenceSmoothingLength();
     diff_time_step_ = abstract_diffusion.getDiffusionTimeStepSize(smoothing_length);
 }
 //=================================================================================================//

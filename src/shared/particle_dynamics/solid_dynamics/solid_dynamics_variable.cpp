@@ -48,7 +48,7 @@ void GreenLagrangeStrain::update(size_t index_i, Real dt)
 //=============================================================================================//
 VonMisesStress::VonMisesStress(SPHBody &sph_body)
     : BaseDerivedVariable<Real>(sph_body, "VonMisesStress"),
-      rho0_(sph_body_.base_material_->ReferenceDensity()),
+      rho0_(sph_body_.getBaseMaterial().ReferenceDensity()),
       rho_(particles_->getVariableDataByName<Real>("Density")),
       F_(particles_->getVariableDataByName<Matd>("DeformationGradient")),
       elastic_solid_(DynamicCast<ElasticSolid>(this, sph_body_.getBaseMaterial())) {}

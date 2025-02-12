@@ -17,7 +17,7 @@ AcousticTimeStep::AcousticTimeStep(SPHBody &sph_body, Real acousticCFL)
       rho_(particles_->getVariableDataByName<Real>("Density")),
       p_(particles_->getVariableDataByName<Real>("Pressure")),
       vel_(particles_->getVariableDataByName<Vecd>("Velocity")),
-      smoothing_length_min_(sph_body.sph_adaptation_->MinimumSmoothingLength()),
+      smoothing_length_min_(sph_body.getSPHAdaptation().MinimumSmoothingLength()),
       acousticCFL_(acousticCFL) {}
 //=================================================================================================//
 Real AcousticTimeStep::reduce(size_t index_i, Real dt)
@@ -33,7 +33,7 @@ Real AcousticTimeStep::outputResult(Real reduced_value)
 StressDiffusion::StressDiffusion(BaseInnerRelation &inner_relation)
     : BasePlasticIntegration<DataDelegateInner>(inner_relation),
       phi_(DynamicCast<PlasticContinuum>(this, plastic_continuum_).getFrictionAngle()),
-      smoothing_length_(sph_body_.sph_adaptation_->ReferenceSmoothingLength()),
+      smoothing_length_(sph_body_.getSPHAdaptation().ReferenceSmoothingLength()),
       sound_speed_(plastic_continuum_.ReferenceSoundSpeed()) {}
 //====================================================================================//
 void StressDiffusion::interaction(size_t index_i, Real dt)
@@ -55,7 +55,7 @@ void StressDiffusion::interaction(size_t index_i, Real dt)
         diffusion_stress(1, 1) -= density * gravity * y_ij;
         diffusion_stress(2, 2) -= (1 - sin(phi_)) * density * gravity * y_ij;
         diffusion_stress_rate += 2 * zeta_ * smoothing_length_ * sound_speed_ *
-                                  diffusion_stress * r_ij * dW_ijV_j / (r_ij * r_ij + 0.01 * smoothing_length_);
+                                 diffusion_stress * r_ij * dW_ijV_j / (r_ij * r_ij + 0.01 * smoothing_length_);
     }
     stress_rate_3D_[index_i] = diffusion_stress_rate;
 }

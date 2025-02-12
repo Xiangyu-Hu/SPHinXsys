@@ -74,7 +74,7 @@ class ParticleGenerator<BaseParticles, Beam> : public ParticleGenerator<BasePart
 {
   public:
     ParticleGenerator(SPHBody &sph_body, BaseParticles &base_particles)
-        : ParticleGenerator<BaseParticles>(sph_body, base_particles){};
+        : ParticleGenerator<BaseParticles>(sph_body, base_particles) {};
 
     virtual void prepareGeometricData() override
     {
@@ -99,7 +99,7 @@ class BeamInitialCondition
   public:
     explicit BeamInitialCondition(SPHBody &sph_body)
         : solid_dynamics::ElasticDynamicsInitialCondition(sph_body),
-          elastic_solid_(DynamicCast<ElasticSolid>(this, sph_body_.getBaseMaterial())){};
+          elastic_solid_(DynamicCast<ElasticSolid>(this, sph_body_.getBaseMaterial())) {};
 
     void update(size_t index_i, Real dt)
     {
@@ -138,8 +138,8 @@ class AnisotropicCorrectConfiguration : public LocalDynamics, public DataDelegat
           beta_(beta), alpha_(alpha), Vol_(particles_->getVariableDataByName<Real>("VolumetricMeasure")),
           B_(particles_->registerStateVariable<Matd>("LinearGradientCorrectionMatrix", IdentityMatrix<Matd>::value)),
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
-          show_neighbor_(particles_->registerStateVariable<Real>("ShowingNeighbor", Real(0.0))){};
-    virtual ~AnisotropicCorrectConfiguration(){};
+          show_neighbor_(particles_->registerStateVariable<Real>("ShowingNeighbor", Real(0.0))) {};
+    virtual ~AnisotropicCorrectConfiguration() {};
 
   protected:
   protected:
@@ -196,12 +196,12 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     SolidBody beam_body(system, makeShared<Beam>("BeamBody"));
-    beam_body.sph_adaptation_->resetKernel<AnisotropicKernel<KernelWendlandC2>>(scaling_vector);
+    beam_body.getSPHAdaptation().resetKernel<AnisotropicKernel<KernelWendlandC2>>(scaling_vector);
     beam_body.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     beam_body.generateParticles<BaseParticles, Beam>();
 
     ObserverBody beam_observer(system, "BeamObserver");
-    beam_observer.sph_adaptation_->resetKernel<AnisotropicKernel<KernelWendlandC2>>(scaling_vector);
+    beam_observer.getSPHAdaptation().resetKernel<AnisotropicKernel<KernelWendlandC2>>(scaling_vector);
     beam_observer.generateParticles<ObserverParticles>(observation_location);
     //----------------------------------------------------------------------
     //	Define body relation map.

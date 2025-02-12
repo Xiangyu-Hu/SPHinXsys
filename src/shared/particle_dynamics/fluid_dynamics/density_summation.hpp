@@ -15,13 +15,13 @@ DensitySummation<Base, DataDelegationType>::DensitySummation(BaseRelationType &b
       mass_(this->particles_->template getVariableDataByName<Real>("Mass")),
       rho_sum_(this->particles_->template registerStateVariable<Real>("DensitySummation")),
       Vol_(this->particles_->template getVariableDataByName<Real>("VolumetricMeasure")),
-      rho0_(this->sph_body_.base_material_->ReferenceDensity()),
-      inv_sigma0_(1.0 / this->sph_body_.sph_adaptation_->LatticeNumberDensity()),
-      W0_(this->sph_body_.sph_adaptation_->getKernel()->W0(ZeroVecd)) {}
+      rho0_(this->sph_body_.getBaseMaterial().ReferenceDensity()),
+      inv_sigma0_(1.0 / this->sph_body_.getSPHAdaptation().LatticeNumberDensity()),
+      W0_(this->sph_body_.getSPHAdaptation().getKernel()->W0(ZeroVecd)) {}
 //=================================================================================================//
 template <typename... SummationType>
 template <typename... Args>
-DensitySummation<Inner<FreeSurface, SummationType...>>::DensitySummation(Args &&... args)
+DensitySummation<Inner<FreeSurface, SummationType...>>::DensitySummation(Args &&...args)
     : DensitySummation<Inner<SummationType...>>(std::forward<Args>(args)...) {}
 //=================================================================================================//
 template <typename... SummationType>
@@ -32,7 +32,7 @@ void DensitySummation<Inner<FreeSurface, SummationType...>>::update(size_t index
 //=================================================================================================//
 template <typename NearSurfaceType, typename... SummationType>
 template <typename... Args>
-DensitySummation<Inner<NearSurfaceType, SummationType...>>::DensitySummation(Args &&... args)
+DensitySummation<Inner<NearSurfaceType, SummationType...>>::DensitySummation(Args &&...args)
     : DensitySummation<Inner<SummationType...>>(std::forward<Args>(args)...),
       indicator_(this->particles_->template getVariableDataByName<int>("Indicator")){};
 //=================================================================================================//

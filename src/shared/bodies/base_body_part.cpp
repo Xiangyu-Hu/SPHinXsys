@@ -82,7 +82,7 @@ void BodyRegionByParticle::tagByContain(size_t particle_index)
 //=================================================================================================//
 BodySurface::BodySurface(SPHBody &sph_body)
     : BodyPartByParticle(sph_body, "BodySurface"),
-      particle_spacing_min_(sph_body.sph_adaptation_->MinimumSpacing())
+      particle_spacing_min_(sph_body.getSPHAdaptation().MinimumSpacing())
 {
     TaggingParticleMethod tagging_particle_method = std::bind(&BodySurface::tagNearSurface, this, _1);
     tagParticles(tagging_particle_method);
@@ -98,7 +98,7 @@ void BodySurface::tagNearSurface(size_t particle_index)
 //=================================================================================================//
 BodySurfaceLayer::BodySurfaceLayer(SPHBody &sph_body, Real layer_thickness)
     : BodyPartByParticle(sph_body, "InnerLayers"),
-      thickness_threshold_(sph_body.sph_adaptation_->ReferenceSpacing() * layer_thickness)
+      thickness_threshold_(sph_body.getSPHAdaptation().ReferenceSpacing() * layer_thickness)
 {
     TaggingParticleMethod tagging_particle_method = std::bind(&BodySurfaceLayer::tagSurfaceLayer, this, _1);
     tagParticles(tagging_particle_method);

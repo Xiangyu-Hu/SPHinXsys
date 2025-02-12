@@ -123,15 +123,17 @@ class CorrectedKernelGradientContactCK
 template <typename... InteractionTypes>
 class DiffusionRelaxationCK;
 
-template <class DiffusionType, class BaseInteractionType>
-class DiffusionRelaxationCK<ForwardEuler, DiffusionType, BaseInteractionType>
-    : public BaseInteractionType
+template <class DiffusionType>
+class DiffusionRelaxationCK<ForwardEuler, DiffusionType>
 {
+    StdVec<DiffusionType *> getConcreteDiffusions(AbstractDiffusion &abstract_diffusion);
+    StdVec<DiscreteVariable<Real> *> getDiffusionSpecies(BaseParticles &particles);
+    StdVec<DiscreteVariable<Real> *> getGradientSpecies(BaseParticles &particles);
+    StdVec<DiscreteVariable<Real> *> getSpeciesChangeRates(BaseParticles &particles);
+
   public:
-    template <class DynamicsIdentifier>
-    DiffusionRelaxationCK(DynamicsIdentifier &identifier, AbstractDiffusion &abstract_diffusion);
-    template <class DynamicsIdentifier>
-    explicit DiffusionRelaxationCK(DynamicsIdentifier &identifier);
+    DiffusionRelaxationCK(SPHBody &sph_body, AbstractDiffusion &abstract_diffusion);
+    explicit DiffusionRelaxationCK(SPHBody &sph_body);
     virtual ~DiffusionRelaxationCK() {};
 
     class InitializeKernel
@@ -164,41 +166,35 @@ class DiffusionRelaxationCK<ForwardEuler, DiffusionType, BaseInteractionType>
     DiscreteVariableArray<Real> dv_gradient_species_array_;
     DiscreteVariableArray<Real> dv_diffusion_dt_array_;
     Real smoothing_length_sq_;
-
-  private:
-    StdVec<DiffusionType *> getConcreteDiffusions(AbstractDiffusion &abstract_diffusion);
-    StdVec<DiscreteVariable<Real> *> getDiffusionSpecies(StdVec<DiffusionType *> diffusions);
-    StdVec<DiscreteVariable<Real> *> getGradientSpecies(StdVec<DiffusionType *> diffusions);
-    StdVec<DiscreteVariable<Real> *> getSpeciesChangeRates(StdVec<DiffusionType *> diffusions);
 };
 
-template <class DiffusionType, class BaseInteractionType>
-class DiffusionRelaxationCK<RungeKutta, DiffusionType, BaseInteractionType>
-    : public DiffusionRelaxationCK<ForwardEuler, DiffusionType, BaseInteractionType>
+template <class DiffusionType>
+class DiffusionRelaxationCK<RungeKutta, DiffusionType>
+    : public DiffusionRelaxationCK<ForwardEuler, DiffusionType>
 {
-    using BaseDynamicsType = DiffusionRelaxationCK<ForwardEuler, DiffusionType, BaseInteractionType>;
+    using BaseDynamicsType = DiffusionRelaxationCK<ForwardEuler, DiffusionType>;
 
   public:
     template <typename... Args>
-    DiffusionRelaxationCK(Args &&...args);
+    DiffusionRelaxationCK(SPHBody &sph_body, Args &&...args);
     virtual ~DiffusionRelaxationCK() {};
 
   protected:
     DiscreteVariableArray<Real> dv_diffusion_species_array_s_;
 
   private:
-    StdVec<DiscreteVariable<Real> *> getIntermediateSpecies(StdVec<DiffusionType *> diffusions);
+    StdVec<DiscreteVariable<Real> *> getIntermediateSpecies(BaseParticles &particles);
 };
 
-template <class DiffusionType, class BaseInteractionType>
-class DiffusionRelaxationCK<RungeKutta1stStage, DiffusionType, BaseInteractionType>
-    : public DiffusionRelaxationCK<RungeKutta, DiffusionType, BaseInteractionType>
+template <class DiffusionType>
+class DiffusionRelaxationCK<RungeKutta1stStage, DiffusionType>
+    : public DiffusionRelaxationCK<RungeKutta, DiffusionType>
 {
-    using BaseDynamicsType = DiffusionRelaxationCK<RungeKutta, DiffusionType, BaseInteractionType>;
+    using BaseDynamicsType = DiffusionRelaxationCK<RungeKutta, DiffusionType>;
 
   public:
     template <typename... Args>
-    DiffusionRelaxationCK(Args &&...args);
+    DiffusionRelaxationCK(SPHBody &sph_body, Args &&...args);
     virtual ~DiffusionRelaxationCK() {};
 
     class InitializeKernel : public BaseDynamicsType::InitializeKernel
@@ -214,15 +210,15 @@ class DiffusionRelaxationCK<RungeKutta1stStage, DiffusionType, BaseInteractionTy
     };
 };
 
-template <class DiffusionType, class BaseInteractionType>
-class DiffusionRelaxationCK<RungeKutta2ndStage, DiffusionType, BaseInteractionType>
-    : public DiffusionRelaxationCK<RungeKutta, DiffusionType, BaseInteractionType>
+template <class DiffusionType>
+class DiffusionRelaxationCK<RungeKutta2ndStage, DiffusionType>
+    : public DiffusionRelaxationCK<RungeKutta, DiffusionType>
 {
-    using BaseDynamicsType = DiffusionRelaxationCK<RungeKutta, DiffusionType, BaseInteractionType>;
+    using BaseDynamicsType = DiffusionRelaxationCK<RungeKutta, DiffusionType>;
 
   public:
     template <typename... Args>
-    DiffusionRelaxationCK(Args &&...args);
+    DiffusionRelaxationCK(SPHBody &sph_body, Args &&...args);
     virtual ~DiffusionRelaxationCK() {};
 
     class UpdateKernel : public BaseDynamicsType::UpdateKernel
@@ -237,25 +233,24 @@ class DiffusionRelaxationCK<RungeKutta2ndStage, DiffusionType, BaseInteractionTy
     };
 };
 
-template <class TimeSteppingType, class DiffusionType, class KernelGradientType,
-          template <typename...> class RelationType, typename... Parameters>
-class DiffusionRelaxationCK<RelationType<OneLevel, TimeSteppingType, DiffusionType, KernelGradientType, Parameters...>>
-    : public DiffusionRelaxationCK<TimeSteppingType, DiffusionType, Interaction<RelationType<Parameters...>>>
+template <class TimeSteppingType, class DiffusionType, class KernelGradientType>
+class DiffusionRelaxationCK<TimeSteppingType, DiffusionType, KernelGradientType>
+    : public DiffusionRelaxationCK<TimeSteppingType, DiffusionType>
 {
-    using BaseInteraction = DiffusionRelaxationCK<TimeSteppingType, DiffusionType, Interaction<RelationType<Parameters...>>>;
+    using BaseRelaxation = DiffusionRelaxationCK<TimeSteppingType, DiffusionType>;
     using GradientKernel = typename KernelGradientType::ComputingKernel;
     using InterParticleDiffusionCoeff = typename DiffusionType::InterParticleDiffusionCoeff;
 
   public:
-    explicit DiffusionRelaxationCK(Relation<RelationType<Parameters...>> &relation);
+    template <typename... Args>
+    explicit DiffusionRelaxationCK(SPHBody &sph_body, Args &&...args);
     virtual ~DiffusionRelaxationCK() {};
 
-    class InteractKernel : public BaseInteraction::InteractKernel
+    class InteractKernel
     {
       public:
         template <class ExecutionPolicy, class EncloserType>
         InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-        void interact(size_t index_i, Real dt = 0.0);
 
       protected:
         InterParticleDiffusionCoeff *inter_particle_diffusion_coeff_;
@@ -270,6 +265,28 @@ class DiffusionRelaxationCK<RelationType<OneLevel, TimeSteppingType, DiffusionTy
     KernelGradientType kernel_gradient_;
     ConstantArray<DiffusionType, InterParticleDiffusionCoeff> ca_inter_particle_diffusion_coeff_;
     DiscreteVariable<Real> *dv_Vol_;
+};
+
+template <class TimeSteppingType, class DiffusionType, class KernelGradientType, typename... Parameters>
+class DiffusionRelaxationCK<Inner<OneLevel, TimeSteppingType, DiffusionType, KernelGradientType, Parameters...>>
+    : public DiffusionRelaxationCK<TimeSteppingType, DiffusionType, KernelGradientType>,
+      public Interaction<Inner<Parameters...>>
+{
+    using BaseRelaxation = DiffusionRelaxationCK<TimeSteppingType, DiffusionType, KernelGradientType>;
+    using BaseInteraction = Interaction<Inner<Parameters...>>;
+
+  public:
+    template <typename... Args>
+    explicit DiffusionRelaxationCK(Relation<Inner<Parameters...>> &relation, Args &&...args);
+    virtual ~DiffusionRelaxationCK() {};
+
+    class InteractKernel : public BaseRelaxation::InteractKernel, public BaseInteraction::InteractKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+        void interact(size_t index_i, Real dt = 0.0);
+    };
 };
 } // namespace SPH
 #endif // DIFFUSION_DYNAMICS_CK_H

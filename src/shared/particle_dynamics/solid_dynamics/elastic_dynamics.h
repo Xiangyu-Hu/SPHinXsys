@@ -50,7 +50,7 @@ class ElasticDynamicsInitialCondition : public LocalDynamics
 {
   public:
     explicit ElasticDynamicsInitialCondition(SPHBody &sph_body);
-    virtual ~ElasticDynamicsInitialCondition(){};
+    virtual ~ElasticDynamicsInitialCondition() {};
 
   protected:
     Vecd *pos_, *vel_;
@@ -70,7 +70,7 @@ class UpdateElasticNormalDirection : public LocalDynamics
 
   public:
     explicit UpdateElasticNormalDirection(SPHBody &sph_body);
-    virtual ~UpdateElasticNormalDirection(){};
+    virtual ~UpdateElasticNormalDirection() {};
 
     void update(size_t index_i, Real dt = 0.0);
 };
@@ -91,7 +91,7 @@ class AcousticTimeStep : public LocalDynamicsReduce<ReduceMin>
 
   public:
     explicit AcousticTimeStep(SPHBody &sph_body, Real CFL = 0.6);
-    virtual ~AcousticTimeStep(){};
+    virtual ~AcousticTimeStep() {};
 
     Real reduce(size_t index_i, Real dt = 0.0);
 };
@@ -104,7 +104,7 @@ class DeformationGradientBySummation : public LocalDynamics, public DataDelegate
 {
   public:
     explicit DeformationGradientBySummation(BaseInnerRelation &inner_relation);
-    virtual ~DeformationGradientBySummation(){};
+    virtual ~DeformationGradientBySummation() {};
 
     inline void interaction(size_t index_i, Real dt = 0.0)
     {
@@ -137,7 +137,7 @@ class BaseElasticIntegration : public LocalDynamics, public DataDelegateInner
 {
   public:
     explicit BaseElasticIntegration(BaseInnerRelation &inner_relation);
-    virtual ~BaseElasticIntegration(){};
+    virtual ~BaseElasticIntegration() {};
 
   protected:
     Real *Vol_;
@@ -154,7 +154,7 @@ class BaseIntegration1stHalf : public BaseElasticIntegration
 {
   public:
     explicit BaseIntegration1stHalf(BaseInnerRelation &inner_relation);
-    virtual ~BaseIntegration1stHalf(){};
+    virtual ~BaseIntegration1stHalf() {};
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
@@ -174,7 +174,7 @@ class Integration1stHalf : public BaseIntegration1stHalf
 {
   public:
     explicit Integration1stHalf(BaseInnerRelation &inner_relation);
-    virtual ~Integration1stHalf(){};
+    virtual ~Integration1stHalf() {};
 
     inline void interaction(size_t index_i, Real dt = 0.0)
     {
@@ -205,7 +205,7 @@ class Integration1stHalf : public BaseIntegration1stHalf
   protected:
     Matd *stress_PK1_B_;
     Real numerical_dissipation_factor_;
-    Real inv_W0_ = 1.0 / sph_body_.sph_adaptation_->getKernel()->W0(ZeroVecd);
+    Real inv_W0_ = 1.0 / sph_body_.getSPHAdaptation().getKernel()->W0(ZeroVecd);
 };
 
 /**
@@ -216,7 +216,7 @@ class Integration1stHalfPK2 : public Integration1stHalf
 {
   public:
     explicit Integration1stHalfPK2(BaseInnerRelation &inner_relation);
-    virtual ~Integration1stHalfPK2(){};
+    virtual ~Integration1stHalfPK2() {};
     void initialization(size_t index_i, Real dt = 0.0);
 };
 
@@ -227,7 +227,7 @@ class Integration1stHalfCauchy : public Integration1stHalf
 {
   public:
     explicit Integration1stHalfCauchy(BaseInnerRelation &inner_relation);
-    virtual ~Integration1stHalfCauchy(){};
+    virtual ~Integration1stHalfCauchy() {};
     void initialization(size_t index_i, Real dt = 0.0);
 };
 
@@ -239,7 +239,7 @@ class Integration1stHalfKirchhoff : public Integration1stHalf
 {
   public:
     explicit Integration1stHalfKirchhoff(BaseInnerRelation &inner_relation);
-    virtual ~Integration1stHalfKirchhoff(){};
+    virtual ~Integration1stHalfKirchhoff() {};
     void initialization(size_t index_i, Real dt = 0.0);
 };
 
@@ -262,7 +262,7 @@ class DecomposedIntegration1stHalf : public BaseIntegration1stHalf
 {
   public:
     explicit DecomposedIntegration1stHalf(BaseInnerRelation &inner_relation);
-    virtual ~DecomposedIntegration1stHalf(){};
+    virtual ~DecomposedIntegration1stHalf() {};
     void initialization(size_t index_i, Real dt = 0.0);
 
     inline void interaction(size_t index_i, Real dt = 0.0)
@@ -297,7 +297,7 @@ class Integration1stHalfPK2RightCauchy : public Integration1stHalfPK2
   public:
     explicit Integration1stHalfPK2RightCauchy(BaseInnerRelation &inner_relation)
         : Integration1stHalfPK2(inner_relation),
-          h_ratio_(particles_->registerStateVariable<Real>("SmoothingLengthRatio", Real(1.0))){};
+          h_ratio_(particles_->registerStateVariable<Real>("SmoothingLengthRatio", Real(1.0))) {};
     void initialization(size_t index_i, Real dt = 0.0);
     inline void interaction(size_t index_i, Real dt = 0.0)
     {
@@ -328,8 +328,8 @@ class Integration2ndHalf : public BaseElasticIntegration
 {
   public:
     explicit Integration2ndHalf(BaseInnerRelation &inner_relation)
-        : BaseElasticIntegration(inner_relation){};
-    virtual ~Integration2ndHalf(){};
+        : BaseElasticIntegration(inner_relation) {};
+    virtual ~Integration2ndHalf() {};
     void initialization(size_t index_i, Real dt = 0.0);
 
     inline void interaction(size_t index_i, Real dt = 0.0)
