@@ -15,19 +15,25 @@ namespace SPH
 template <class DiffusionType, class BaseInteractionType>
 template <class DynamicsIdentifier>
 DiffusionRelaxationCK<ForwardEuler, DiffusionType, BaseInteractionType>::
-    DiffusionRelaxationCK(DynamicsIdentifier &identifier)
+    DiffusionRelaxationCK(DynamicsIdentifier &identifier, AbstractDiffusion &abstract_diffusion)
     : BaseInteractionType(identifier),
-      diffusions_(this->getConcreteDiffusions(this->sph_body_.getBaseMaterial())),
+      diffusions_(this->getConcreteDiffusions(abstract_diffusion)),
       dv_diffusion_species_array_(this->getDiffusionSpecies(diffusions_)),
       dv_gradient_species_array_(this->getGradientSpecies(diffusions_)),
       dv_diffusion_dt_array_(this->getSpeciesChangeRates(diffusions_)),
       smoothing_length_sq_(pow(this->sph_body_.sph_adaptation_->ReferenceSmoothingLength(), 2)) {}
 //=================================================================================================//
 template <class DiffusionType, class BaseInteractionType>
+template <class DynamicsIdentifier>
+DiffusionRelaxationCK<ForwardEuler, DiffusionType, BaseInteractionType>::
+    DiffusionRelaxationCK(DynamicsIdentifier &identifier)
+    : DiffusionRelaxationCK(
+          identifier, DynamicCast<AbstractDiffusion>(this, identifier.getSPHBody().getBaseMaterial())) {}
+//=================================================================================================//
+template <class DiffusionType, class BaseInteractionType>
 StdVec<DiffusionType *> DiffusionRelaxationCK<ForwardEuler, DiffusionType, BaseInteractionType>::
-    getConcreteDiffusions(BaseMaterial &base_material)
+    getConcreteDiffusions(AbstractDiffusion &abstract_diffusion)
 {
-    AbstractDiffusion &abstract_diffusion = DynamicCast<AbstractDiffusion>(this, base_material);
     StdVec<AbstractDiffusion *> all_diffusions = abstract_diffusion.AllDiffusions();
     StdVec<DiffusionType *> diffusions;
     for (auto &diffusion : all_diffusions)
@@ -190,17 +196,18 @@ void DiffusionRelaxationCK<RungeKutta2ndStage, DiffusionType, BaseInteractionTyp
     }
 }
 //=================================================================================================//
-template <class TimeSteppingType, class DiffusionType, class KernelGradientType, typename... Parameters>
-DiffusionRelaxationCK<Inner<OneLevel, TimeSteppingType, DiffusionType, KernelGradientType, Parameters...>>::
-    DiffusionRelaxationCK(Relation<Inner<Parameters...>> &inner_relation)
-    : BaseInteraction(inner_relation),
-      kernel_gradient_(this->particles_),
+template <class TimeSteppingType, class DiffusionType, class KernelGradientType,
+          template <typename...> class RelationType, typename... Parameters>
+DiffusionRelaxationCK<RelationType<OneLevel, TimeSteppingType, DiffusionType, KernelGradientType, Parameters...>>::
+    DiffusionRelaxationCK(Relation<RelationType<Parameters...>> &relation)
+    : BaseInteraction(relation), kernel_gradient_(this->particles_),
       ca_inter_particle_diffusion_coeff_(this->diffusions_),
       dv_Vol_(this->particles_->template getVariableByName<Real>("VolumetricMeasure")) {}
 //=================================================================================================//
-template <class TimeSteppingType, class DiffusionType, class KernelGradientType, typename... Parameters>
+template <class TimeSteppingType, class DiffusionType, class KernelGradientType,
+          template <typename...> class RelationType, typename... Parameters>
 template <class ExecutionPolicy, class EncloserType>
-DiffusionRelaxationCK<Inner<OneLevel, TimeSteppingType, DiffusionType, KernelGradientType, Parameters...>>::
+DiffusionRelaxationCK<RelationType<OneLevel, TimeSteppingType, DiffusionType, KernelGradientType, Parameters...>>::
     InteractKernel::InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : BaseInteraction::InteractKernel(ex_policy, encloser),
       inter_particle_diffusion_coeff_(encloser.ca_inter_particle_diffusion_coeff_.DelegatedData(ex_policy)),
@@ -212,8 +219,9 @@ DiffusionRelaxationCK<Inner<OneLevel, TimeSteppingType, DiffusionType, KernelGra
       Vol_(encloser.dv_Vol_->DelegatedData(ex_policy)),
       smoothing_length_sq_(encloser.smoothing_length_sq_) {}
 //=================================================================================================//
-template <class TimeSteppingType, class DiffusionType, class KernelGradientType, typename... Parameters>
-void DiffusionRelaxationCK<Inner<OneLevel, TimeSteppingType, DiffusionType, KernelGradientType, Parameters...>>::
+template <class TimeSteppingType, class DiffusionType, class KernelGradientType,
+          template <typename...> class RelationType, typename... Parameters>
+void DiffusionRelaxationCK<RelationType<OneLevel, TimeSteppingType, DiffusionType, KernelGradientType, Parameters...>>::
     InteractKernel::interact(size_t index_i, Real dt)
 {
     for (size_t m = 0; m < number_of_species_; ++m)

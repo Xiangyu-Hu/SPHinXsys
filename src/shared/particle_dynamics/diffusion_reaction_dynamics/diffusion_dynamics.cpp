@@ -3,12 +3,16 @@
 namespace SPH
 {
 //=================================================================================================//
-GetDiffusionTimeStepSize::GetDiffusionTimeStepSize(SPHBody &sph_body)
+GetDiffusionTimeStepSize::GetDiffusionTimeStepSize(
+    SPHBody &sph_body, AbstractDiffusion &abstract_diffusion)
     : BaseDynamics<Real>()
 {
-    AbstractDiffusion &diffusion = DynamicCast<AbstractDiffusion>(this, sph_body.getBaseMaterial());
     Real smoothing_length = sph_body.sph_adaptation_->ReferenceSmoothingLength();
-    diff_time_step_ = diffusion.getDiffusionTimeStepSize(smoothing_length);
+    diff_time_step_ = abstract_diffusion.getDiffusionTimeStepSize(smoothing_length);
 }
+//=================================================================================================//
+GetDiffusionTimeStepSize::GetDiffusionTimeStepSize(SPHBody &sph_body)
+    : GetDiffusionTimeStepSize(
+          sph_body, DynamicCast<AbstractDiffusion>(this, sph_body.getBaseMaterial())) {}
 //=================================================================================================//
 } // namespace SPH

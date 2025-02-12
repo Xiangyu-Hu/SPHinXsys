@@ -36,6 +36,22 @@
 
 namespace SPH
 {
+class KernelGradientInnerCK
+{
+  public:
+    explicit KernelGradientInnerCK(BaseParticles *inner_particles) {};
+    class ComputingKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser){};
+        Vecd operator()(size_t index_i, size_t index_j, Real dW_ijV_j, const Vecd &e_ij)
+        {
+            return dW_ijV_j * e_ij;
+        };
+    };
+};
+
 class CorrectedKernelGradientInnerCK
 {
     DiscreteVariable<Matd> *dv_B_;
@@ -60,6 +76,50 @@ class CorrectedKernelGradientInnerCK
     };
 };
 
+class KernelGradientContactCK
+{
+  public:
+    KernelGradientContactCK(BaseParticles *inner_particles, BaseParticles *contact_particles) {};
+    class ComputingKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser){};
+        Vecd operator()(size_t index_i, size_t index_j, Real dW_ijV_j, const Vecd &e_ij)
+        {
+            return dW_ijV_j * e_ij;
+        };
+    };
+};
+
+class CorrectedKernelGradientContactCK
+{
+    DiscreteVariable<Matd> *dv_B_;
+    DiscreteVariable<Matd> *dv_contact_B_;
+
+  public:
+    CorrectedKernelGradientContactCK(BaseParticles *inner_particles, BaseParticles *contact_particles)
+        : dv_B_(inner_particles->getVariableByName<Matd>("LinearCorrectionMatrix")),
+          dv_contact_B_(contact_particles->getVariableByName<Matd>("LinearCorrectionMatrix")) {};
+
+    class ComputingKernel
+    {
+        Matd *B_;
+        Matd *contact_B_;
+
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+            : B_(encloser.dv_B_->DelegatedData(ex_policy)),
+              contact_B_(encloser.dv_contact_B_->DelegatedData(ex_policy)){};
+
+        Vecd operator()(size_t index_i, size_t index_j, Real dW_ijV_j, const Vecd &e_ij)
+        {
+            return 0.5 * dW_ijV_j * (B_[index_i] + contact_B_[index_j]) * e_ij;
+        };
+    };
+};
+
 template <typename... InteractionTypes>
 class DiffusionRelaxationCK;
 
@@ -68,6 +128,8 @@ class DiffusionRelaxationCK<ForwardEuler, DiffusionType, BaseInteractionType>
     : public BaseInteractionType
 {
   public:
+    template <class DynamicsIdentifier>
+    DiffusionRelaxationCK(DynamicsIdentifier &identifier, AbstractDiffusion &abstract_diffusion);
     template <class DynamicsIdentifier>
     explicit DiffusionRelaxationCK(DynamicsIdentifier &identifier);
     virtual ~DiffusionRelaxationCK() {};
@@ -104,7 +166,7 @@ class DiffusionRelaxationCK<ForwardEuler, DiffusionType, BaseInteractionType>
     Real smoothing_length_sq_;
 
   private:
-    StdVec<DiffusionType *> getConcreteDiffusions(BaseMaterial &base_material);
+    StdVec<DiffusionType *> getConcreteDiffusions(AbstractDiffusion &abstract_diffusion);
     StdVec<DiscreteVariable<Real> *> getDiffusionSpecies(StdVec<DiffusionType *> diffusions);
     StdVec<DiscreteVariable<Real> *> getGradientSpecies(StdVec<DiffusionType *> diffusions);
     StdVec<DiscreteVariable<Real> *> getSpeciesChangeRates(StdVec<DiffusionType *> diffusions);
@@ -175,16 +237,17 @@ class DiffusionRelaxationCK<RungeKutta2ndStage, DiffusionType, BaseInteractionTy
     };
 };
 
-template <class TimeSteppingType, class DiffusionType, class KernelGradientType, typename... Parameters>
-class DiffusionRelaxationCK<Inner<OneLevel, TimeSteppingType, DiffusionType, KernelGradientType, Parameters...>>
-    : public DiffusionRelaxationCK<TimeSteppingType, DiffusionType, Interaction<Inner<Parameters...>>>
+template <class TimeSteppingType, class DiffusionType, class KernelGradientType,
+          template <typename...> class RelationType, typename... Parameters>
+class DiffusionRelaxationCK<RelationType<OneLevel, TimeSteppingType, DiffusionType, KernelGradientType, Parameters...>>
+    : public DiffusionRelaxationCK<TimeSteppingType, DiffusionType, Interaction<RelationType<Parameters...>>>
 {
-    using BaseInteraction = DiffusionRelaxationCK<TimeSteppingType, DiffusionType, Interaction<Inner<Parameters...>>>;
+    using BaseInteraction = DiffusionRelaxationCK<TimeSteppingType, DiffusionType, Interaction<RelationType<Parameters...>>>;
     using GradientKernel = typename KernelGradientType::ComputingKernel;
     using InterParticleDiffusionCoeff = typename DiffusionType::InterParticleDiffusionCoeff;
 
   public:
-    explicit DiffusionRelaxationCK(Relation<Inner<Parameters...>> &inner_relation);
+    explicit DiffusionRelaxationCK(Relation<RelationType<Parameters...>> &relation);
     virtual ~DiffusionRelaxationCK() {};
 
     class InteractKernel : public BaseInteraction::InteractKernel
