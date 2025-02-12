@@ -4,7 +4,7 @@ title:  "Rigid-deformable solid coupling validation"
 date:   2025-02-11
 categories: test examples
 ---
-Xiangyu Hu and Weiyi Kong
+Xiangyu Hu and Weiyi Kong (Virtonomy GmbH)
 
 ## Introduction
 
