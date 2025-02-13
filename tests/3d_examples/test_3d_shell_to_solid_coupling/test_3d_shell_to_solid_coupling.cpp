@@ -10,11 +10,13 @@
 
 using namespace SPH;
 
-void test_shell_to_solid_coupling();
+void run_solid(int res_factor, Real stiffness_ratio, int load_type = 0);
+void run_shell_to_solid_coupling(int res_factor, Real stiffness_ratio, int load_type = 0);
 
 int main(int ac, char *av[])
 {
-    test_shell_to_solid_coupling();
+    // run_shell_to_solid_coupling(1, 0.1, 1);
+    run_solid(1, 0.1, 1);
 }
 
 struct solid_algs
@@ -91,32 +93,23 @@ Real get_physical_viscosity_general(Real rho, Real youngs_modulus, Real length_s
     return shape_constant / 4.0 * std::sqrt(rho * youngs_modulus) * length_scale;
 }
 
-BoundingBox union_bounding_box(const BoundingBox &a, const BoundingBox &b)
-{
-    BoundingBox out = a;
-    out.first_[0] = std::min(a.first_[0], b.first_[0]);
-    out.first_[1] = std::min(a.first_[1], b.first_[1]);
-    out.first_[2] = std::min(a.first_[2], b.first_[2]);
-    out.second_[0] = std::max(a.second_[0], b.second_[0]);
-    out.second_[1] = std::max(a.second_[1], b.second_[1]);
-    out.second_[2] = std::max(a.second_[2], b.second_[2]);
-    return out;
-}
-
 namespace SPH
 {
 class ShellPlate;
 template <>
 class ParticleGenerator<SurfaceParticles, ShellPlate> : public ParticleGenerator<SurfaceParticles>
 {
+  private:
     SharedPtr<Shape> mesh_;
     const Real thickness_;
+    Vec3d normal_;
 
   public:
-    ParticleGenerator(SPHBody &sph_body, SurfaceParticles &surface_particles, SharedPtr<Shape> mesh, Real thickness)
+    ParticleGenerator(SPHBody &sph_body, SurfaceParticles &surface_particles, SharedPtr<Shape> mesh, Real thickness, bool normal_flip = false)
         : ParticleGenerator<SurfaceParticles>(sph_body, surface_particles),
           mesh_(mesh),
-          thickness_(thickness) {};
+          thickness_(thickness),
+          normal_((normal_flip ? -1 : 1) * Vec3d::UnitZ()) {};
     void prepareGeometricData() override
     {
         Real dp = (mesh_->getBounds().second_.z() - mesh_->getBounds().first_.z());
@@ -132,7 +125,7 @@ class ParticleGenerator<SurfaceParticles, ShellPlate> : public ParticleGenerator
             while (y < y1)
             {
                 addPositionAndVolumetricMeasure(Vec3d(x, y, z0), dp);
-                addSurfaceProperties(Vec3d::UnitZ(), thickness_);
+                addSurfaceProperties(normal_, thickness_);
                 y += dp;
             }
             x += dp;
@@ -163,26 +156,27 @@ class SolidBodyPart : public BodyPartByParticle
     };
 };
 
-class ExternalForce : public BaseForcePrior<BodyPartByParticle>
+class VelocityBoundaryCondition : public MotionConstraint<BodyPartByParticle>
 {
   private:
-    Vec3d force_;
+    Real &physical_time;
+    std::function<Vec3d(Real time)> vel_func_;
 
   public:
-    ExternalForce(BodyPartByParticle &body_part, const Vec3d &force)
-        : BaseForcePrior<BodyPartByParticle>(body_part, "ExternalForce"),
-          force_(force) {};
+    VelocityBoundaryCondition(BodyPartByParticle &body_part, std::function<Vec3d(Real time)> vel_func)
+        : MotionConstraint<BodyPartByParticle>(body_part),
+          physical_time(*body_part.getSPHSystem().getSystemVariableDataByName<Real>("PhysicalTime")),
+          vel_func_(std::move(vel_func)) {};
     void update(size_t index_i, Real dt = 0.0)
     {
-        current_force_[index_i] = force_;
-        BaseForcePrior<BodyPartByParticle>::update(index_i, dt);
+        vel_[index_i] = vel_func_(physical_time);
     }
 };
 
 class CouplingConstraint : public BaseLocalDynamics<BodyPartByParticle>,
                            public DataDelegateContact
 {
-  protected:
+  private:
     int *coupling_ids_;
 
   public:
@@ -221,15 +215,13 @@ class SolidVelocityConstraint : public MotionConstraint<BodyPartByParticle>,
 {
   private:
     int *coupling_ids_;
-    Vecd *vel_;
     StdVec<Vecd *> contact_vel_;
 
   public:
     SolidVelocityConstraint(BodyPartByParticle &body_part, BaseContactRelation &contact_relation)
         : MotionConstraint<BodyPartByParticle>(body_part),
           DataDelegateContact(contact_relation),
-          coupling_ids_(particles_->getVariableDataByName<int>("CouplingID")),
-          vel_(particles_->getVariableDataByName<Vecd>("Velocity"))
+          coupling_ids_(particles_->getVariableDataByName<int>("CouplingID"))
     {
         for (auto *contact_particle : contact_particles_)
             contact_vel_.emplace_back(contact_particle->getVariableDataByName<Vecd>("Velocity"));
@@ -248,9 +240,9 @@ class ShellForceConstraint : public BaseForcePrior<BodyPartByParticle>,
   private:
     int *coupling_ids_;
     Vecd *n0_;
+    Real A0_;
     StdVec<Matd *> contact_F_;
     StdVec<Matd *> contact_B_;
-    StdVec<Real> contact_A0_;
     StdVec<ElasticSolid *> contact_materials_;
 
   public:
@@ -258,11 +250,11 @@ class ShellForceConstraint : public BaseForcePrior<BodyPartByParticle>,
         : BaseForcePrior<BodyPartByParticle>(body_part, "CouplingForce"),
           DataDelegateContact(contact_relation),
           coupling_ids_(particles_->getVariableDataByName<int>("CouplingID")),
-          n0_(particles_->getVariableDataByName<Vecd>("InitialNormalDirection"))
+          n0_(particles_->getVariableDataByName<Vecd>("InitialNormalDirection")),
+          A0_(pow(sph_body_.getSPHBodyResolutionRef(), Dimensions - 1))
     {
         for (size_t k = 0; k != contact_particles_.size(); ++k)
         {
-            contact_A0_.emplace_back(pow(contact_bodies_[k]->getSPHBodyResolutionRef(), Dimensions - 1)); // initial area
             contact_F_.emplace_back(contact_particles_[k]->getVariableDataByName<Matd>("DeformationGradient"));
             contact_B_.emplace_back(contact_particles_[k]->getVariableDataByName<Matd>("LinearGradientCorrectionMatrix"));
             contact_materials_.emplace_back(&DynamicCast<ElasticSolid>(this, contact_bodies_[k]->getBaseMaterial()));
@@ -273,42 +265,150 @@ class ShellForceConstraint : public BaseForcePrior<BodyPartByParticle>,
     {
         int coupling_id = coupling_ids_[index_i];
         const Matd stress_PK1_B = contact_materials_[0]->StressPK1(contact_F_[0][coupling_id], coupling_id) * contact_B_[0][coupling_id];
-        const Vecd force = stress_PK1_B * n0_[index_i] * contact_A0_[0];
+        const Vecd force = stress_PK1_B * n0_[index_i] * A0_;
 
         current_force_[index_i] = force;
         BaseForcePrior<BodyPartByParticle>::update(index_i, dt);
     }
 };
 
-void test_shell_to_solid_coupling()
+struct coupling_algs
 {
-    constexpr Real unit_mm = 1e-3;
-    constexpr Real scale = 1.0;
+    SolidBodyPart part;
+    ContactRelation contact_relation;
+    SimpleDynamics<CouplingConstraint> coupling;
 
+    coupling_algs(SolidBody &body, SolidBody &contact_body, std::string part_name, std::function<bool(Vec3d &)> contain)
+        : part(body, std::move(part_name), std::move(contain)),
+          contact_relation(body, {&contact_body}),
+          coupling(part, contact_relation) {}
+
+    void initialize() { coupling.exec(); }
+};
+
+struct solid_coupling_algs
+{
+    coupling_algs base_algs;
+    SimpleDynamics<SolidVelocityConstraint> vel_bc;
+
+    solid_coupling_algs(SolidBody &body, SolidBody &contact_body, std::string part_name, std::function<bool(Vec3d &)> contain)
+        : base_algs(body, contact_body, std::move(part_name), std::move(contain)),
+          vel_bc(base_algs.part, base_algs.contact_relation) {}
+
+    void initialize() { base_algs.coupling.exec(); }
+    void exec() { vel_bc.exec(); }
+};
+
+struct shell_coupling_algs
+{
+    coupling_algs base_algs;
+    SimpleDynamics<ShellForceConstraint> force_bc;
+
+    shell_coupling_algs(SolidBody &body, SolidBody &contact_body, std::string part_name, std::function<bool(Vec3d &)> contain)
+        : base_algs(body, contact_body, std::move(part_name), std::move(contain)),
+          force_bc(base_algs.part, base_algs.contact_relation) {}
+
+    void exec() { force_bc.exec(); }
+};
+
+namespace plate
+{
+constexpr Real unit_mm = 1e-3;
+constexpr Real scale = 1.0;
+
+struct plate_parameters
+{
     // Geometry
-    const Real length = 10 * scale;
-    const Real width = 5 * scale;
-    const Real thickness_solid = 2 * scale;
-    const Real dp = thickness_solid / 4.0;
-    const Real thickness_shell = dp;
+    const Real length = 50 * scale;
+    const Real width = length;
+    const Real height = 20 * scale;
+    const Real thickness_shell = 4 * scale;
 
     // Material properties
     const Real rho = 1000 * pow(unit_mm, 2);
-    const Real youngs_modulus_shell = 100; // 100 MPa
-    const Real youngs_modulus_solid = 10;  // 1 MPa
+    const Real youngs_modulus_shell = 1e9 * pow(unit_mm, 2); // 10 GPa
     const Real poisson_ratio = 0.3;
 
-    // Import meshes
-    const Vec3d solid_halfsize = 0.5 * Vec3d(length, width, thickness_solid + dp);
-    const Vec3d solid_translation = (solid_halfsize.z() - dp) * Vec3d::UnitZ();
-    auto solid_mesh = makeShared<TransformShape<GeometricShapeBox>>(Transform(solid_translation), solid_halfsize, "solid");
+    inline auto get_solid_extended_mesh(Real dp)
+    {
+        const Vec3d halfsize = 0.5 * Vec3d(length, width, height + 2 * dp);
+        return makeShared<TransformShape<GeometricShapeBox>>(Transform(Vec3d::Zero()), halfsize, "solid");
+    }
 
-    const Vec3d shell_halfsize = 0.5 * Vec3d(length, width, dp);
-    const Vec3d shell_translation = -0.5 * dp * Vec3d::UnitZ();
-    auto shell_mesh = makeShared<TransformShape<GeometricShapeBox>>(Transform(shell_translation), shell_halfsize, "shell");
+    inline auto get_whole_mesh()
+    {
+        const Vec3d halfsize = 0.5 * Vec3d(length, width, height + 2 * thickness_shell);
+        return makeShared<TransformShape<GeometricShapeBox>>(Transform(Vec3d::Zero()), halfsize, "solid");
+    }
+
+    inline auto get_upper_shell_mesh(Real dp)
+    {
+        const Vec3d halfsize = 0.5 * Vec3d(length, width, dp);
+        const Vec3d translation = 0.5 * (height + dp) * Vec3d::UnitZ();
+        return makeShared<TransformShape<GeometricShapeBox>>(Transform(translation), halfsize, "upper_shell");
+    }
+
+    inline auto get_lower_shell_mesh(Real dp)
+    {
+        const Vec3d halfsize = 0.5 * Vec3d(length, width, dp);
+        const Vec3d translation = -0.5 * (height + dp) * Vec3d::UnitZ();
+        return makeShared<TransformShape<GeometricShapeBox>>(Transform(translation), halfsize, "lower_shell");
+    }
+};
+
+struct boundary_condition
+{
+    Real max_elongation = 10 * scale;
+    Real speed = 10.0; // mm/ms
+    Real elongation_time = 0.5 * max_elongation / speed;
+
+    Vec3d direction_left;
+
+    SolidBodyPart part_left;
+    SolidBodyPart part_right;
+    SimpleDynamics<VelocityBoundaryCondition> left_bc;
+    SimpleDynamics<VelocityBoundaryCondition> right_bc;
+
+    Vec3d get_velocity(Real time, const Vec3d &direction) const
+    {
+        Real vel = time < elongation_time ? speed : 0;
+        return vel * direction;
+    }
+
+    boundary_condition(SolidBody &body, int problem_type)
+        : direction_left(problem_type == 0 ? -Vec3d::UnitX() : -Vec3d::UnitZ()),
+          part_left(body, "LeftPart", [x0 = body.getInitialShape().getBounds().first_.x(), dp = body.getSPHBodyResolutionRef()](Vec3d &pos)
+                    { return pos.x() < x0 + dp; }),
+          part_right(body, "RightPart", [x1 = body.getInitialShape().getBounds().second_.x(), dp = body.getSPHBodyResolutionRef()](Vec3d &pos)
+                     { return pos.x() > x1 - dp; }),
+          left_bc(part_left, [this](Real time)
+                  { return get_velocity(time, direction_left); }),
+          right_bc(part_right,
+                   [this](Real time)
+                   { return get_velocity(time, -direction_left); }) {};
+
+    void exec()
+    {
+        left_bc.exec();
+        right_bc.exec();
+    }
+};
+}; // namespace plate
+
+void run_shell_to_solid_coupling(int res_factor, Real stiffness_ratio, int load_type)
+{
+    // parameters
+    plate::plate_parameters params;
+    Real dp = params.thickness_shell / (4.0 * res_factor);
+    Real youngs_modulus_solid = params.youngs_modulus_shell * stiffness_ratio;
+
+    // Import meshes
+    auto solid_mesh = params.get_solid_extended_mesh(dp);
+    auto lower_shell_mesh = params.get_lower_shell_mesh(dp);
+    auto upper_shell_mesh = params.get_upper_shell_mesh(dp);
 
     // System bounding box
-    BoundingBox bb_system = union_bounding_box(solid_mesh->getBounds(), shell_mesh->getBounds());
+    BoundingBox bb_system = solid_mesh->getBounds();
 
     // System
     SPHSystem system(bb_system, dp);
@@ -316,90 +416,93 @@ void test_shell_to_solid_coupling()
 
     // Body
     SolidBody solid_body(system, solid_mesh);
-    solid_body.defineMaterial<NeoHookeanSolid>(rho, youngs_modulus_solid, poisson_ratio);
+    solid_body.defineMaterial<LinearElasticSolid>(params.rho, youngs_modulus_solid, params.poisson_ratio);
     solid_body.generateParticles<BaseParticles, Lattice>();
 
-    SolidBody shell_body(system, shell_mesh);
-    shell_body.defineMaterial<NeoHookeanSolid>(rho, youngs_modulus_shell, poisson_ratio);
-    shell_body.generateParticles<SurfaceParticles, ShellPlate>(shell_mesh, thickness_shell);
+    SolidBody upper_shell_body(system, upper_shell_mesh);
+    upper_shell_body.defineMaterial<LinearElasticSolid>(params.rho, params.youngs_modulus_shell, params.poisson_ratio);
+    upper_shell_body.generateParticles<SurfaceParticles, ShellPlate>(upper_shell_mesh, params.thickness_shell, true);
+
+    SolidBody lower_shell_body(system, lower_shell_mesh);
+    lower_shell_body.defineMaterial<LinearElasticSolid>(params.rho, params.youngs_modulus_shell, params.poisson_ratio);
+    lower_shell_body.generateParticles<SurfaceParticles, ShellPlate>(lower_shell_mesh, params.thickness_shell, false);
+
+    auto &solid_material = *dynamic_cast<ElasticSolid *>(&solid_body.getBaseMaterial());
+    std::cout << "solid sound speed: " << solid_material.ReferenceSoundSpeed() << std::endl;
 
     // algorithms
-    solid_algs algs_solid(solid_body, get_physical_viscosity_general(rho, youngs_modulus_solid, thickness_solid));
-    shell_algs algs_shell(shell_body, get_physical_viscosity_general(rho, youngs_modulus_shell, thickness_shell));
+    Real eta = get_physical_viscosity_general(params.rho, params.youngs_modulus_shell, params.height + 2 * params.thickness_shell);
+    solid_algs algs_solid(solid_body, eta);
+    shell_algs algs_shell_upper(upper_shell_body, eta);
+    shell_algs algs_shell_lower(lower_shell_body, eta);
 
     // Boundary condition
-    // fix the left end of the solid
-    SolidBodyPart solid_fix_part(solid_body, "SolidFixedPart",
-                                 [x0 = solid_mesh->getBounds().first_.x(), dp](Vec3d &pos)
-                                 { return pos.x() < x0 + dp; });
-    SimpleDynamics<FixBodyPartConstraint> fix_bc_solid(solid_fix_part);
-
-    // fix the left end of shell
-    SolidBodyPart shell_fix_part(shell_body, "ShellFixedPart",
-                                 [x0 = shell_mesh->getBounds().first_.x(), dp](Vec3d &pos)
-                                 { return pos.x() < x0 + dp; });
-    SimpleDynamics<thin_structure_dynamics::ConstrainShellBodyRegion> fix_bc_shell(shell_fix_part);
-
-    // pressure on the upper surface of solid
-    Vec3d pressure = -5e-2 * Vec3d::UnitZ(); // 2e-2 N/mm^2
-    Vec3d force = pressure * dp * dp;
-    SolidBodyPart solid_upper_surface(solid_body, "SolidUpperSurface",
-                                      [z0 = solid_mesh->getBounds().second_.z(), dp](Vec3d &pos)
-                                      { return pos.z() > z0 - dp; });
-    SimpleDynamics<ExternalForce> pressure_bc(solid_upper_surface, force);
+    plate::boundary_condition solid_bc(solid_body, load_type);
+    plate::boundary_condition lower_shell_bc(lower_shell_body, load_type);
+    plate::boundary_condition upper_shell_bc(upper_shell_body, load_type);
 
     // Coupling conditions
-    SolidBodyPart solid_coupling_part(solid_body, "SolidCouplingPart",
-                                      [z0 = solid_mesh->getBounds().first_.z(), dp](Vec3d &pos)
-                                      { return pos.z() < z0 + dp; });
-    std::cout << "Number of coupled solid ids: " << solid_coupling_part.body_part_particles_.size() << std::endl;
-    ContactRelation solid_shell_contact(solid_body, {&shell_body});
-    SimpleDynamics<CouplingConstraint> solid_coupling(solid_coupling_part, solid_shell_contact);
-    SimpleDynamics<SolidVelocityConstraint> solid_coupling_vel_bc(solid_coupling_part, solid_shell_contact);
-
-    SolidBodyPart shell_coupling_part(shell_body, "ShellCouplingPart",
-                                      [z1 = shell_mesh->getBounds().second_.z(), dp](Vec3d &pos)
-                                      { return pos.z() > z1 - dp; });
-    std::cout << "Number of coupled shell ids: " << shell_coupling_part.body_part_particles_.size() << std::endl;
-    ContactRelation shell_solid_contact(shell_body, {&solid_body});
-    SimpleDynamics<CouplingConstraint> shell_coupling(shell_coupling_part, shell_solid_contact);
-    SimpleDynamics<ShellForceConstraint> shell_coupling_force_bc(shell_coupling_part, shell_solid_contact);
+    solid_coupling_algs solid_coupling_algs_lower(solid_body, lower_shell_body, "SolidLowerCouplingPart",
+                                                  [z0 = solid_mesh->getBounds().first_.z(), dp](Vec3d &pos)
+                                                  { return pos.z() < z0 + dp; });
+    solid_coupling_algs solid_coupling_algs_upper(solid_body, upper_shell_body, "SolidUpperCouplingPart",
+                                                  [z1 = solid_mesh->getBounds().second_.z(), dp](Vec3d &pos)
+                                                  { return pos.z() > z1 - dp; });
+    shell_coupling_algs shell_coupling_algs_lower(lower_shell_body, solid_body, "LowerShellCouplingPart", [z1 = lower_shell_mesh->getBounds().second_.z(), dp](Vec3d &pos)
+                                                  { return pos.z() > z1 - dp; });
+    shell_coupling_algs shell_coupling_algs_upper(upper_shell_body, solid_body, "UpperShellCouplingPart",
+                                                  [z0 = upper_shell_mesh->getBounds().first_.z(), dp](Vec3d &pos)
+                                                  { return pos.z() < z0 + dp; });
 
     // Initialization
     system.initializeSystemCellLinkedLists();
     system.initializeSystemConfigurations();
 
     algs_solid.corrected_config();
-    algs_shell.corrected_config();
+    algs_shell_lower.corrected_config();
+    algs_shell_upper.corrected_config();
 
-    solid_coupling.exec();
-    shell_coupling.exec();
-
-    pressure_bc.exec();
+    solid_coupling_algs_upper.initialize();
+    solid_coupling_algs_lower.initialize();
+    shell_coupling_algs_upper.base_algs.coupling.exec();
+    shell_coupling_algs_lower.base_algs.coupling.exec();
 
     // Output
     solid_body.getBaseParticles().addVariableToWrite<int>("CouplingID");
-    shell_body.getBaseParticles().addVariableToWrite<int>("CouplingID");
+    upper_shell_body.getBaseParticles().addVariableToWrite<int>("CouplingID");
+    lower_shell_body.getBaseParticles().addVariableToWrite<int>("CouplingID");
     solid_body.getBaseParticles().addVariableToWrite<Vec3d>("Velocity");
-    shell_body.getBaseParticles().addVariableToWrite<Vec3d>("Velocity");
+    upper_shell_body.getBaseParticles().addVariableToWrite<Vec3d>("Velocity");
+    lower_shell_body.getBaseParticles().addVariableToWrite<Vec3d>("Velocity");
     solid_body.getBaseParticles().addVariableToWrite<Mat3d>("DeformationGradient");
-    shell_body.getBaseParticles().addVariableToWrite<Mat3d>("DeformationGradient");
+    upper_shell_body.getBaseParticles().addVariableToWrite<Mat3d>("DeformationGradient");
+    lower_shell_body.getBaseParticles().addVariableToWrite<Mat3d>("DeformationGradient");
     solid_body.getBaseParticles().addVariableToWrite<Vec3d>("InitialNormalDirection");
-    shell_body.getBaseParticles().addVariableToWrite<Vec3d>("InitialNormalDirection");
+    upper_shell_body.getBaseParticles().addVariableToWrite<Vec3d>("InitialNormalDirection");
+    lower_shell_body.getBaseParticles().addVariableToWrite<Vec3d>("InitialNormalDirection");
+    upper_shell_body.getBaseParticles().addVariableToWrite<Vec3d>("CouplingForce");
+    lower_shell_body.getBaseParticles().addVariableToWrite<Vec3d>("CouplingForce");
     BodyStatesRecordingToVtp vtp_output(system);
     vtp_output.addDerivedVariableRecording<SimpleDynamics<Displacement>>(solid_body);
-    vtp_output.addDerivedVariableRecording<SimpleDynamics<Displacement>>(shell_body);
+    vtp_output.addDerivedVariableRecording<SimpleDynamics<Displacement>>(upper_shell_body);
+    vtp_output.addDerivedVariableRecording<SimpleDynamics<Displacement>>(lower_shell_body);
+    vtp_output.addDerivedVariableRecording<SimpleDynamics<VonMisesStress>>(solid_body);
+    vtp_output.addDerivedVariableRecording<SimpleDynamics<VonMisesStress>>(upper_shell_body);
+    vtp_output.addDerivedVariableRecording<SimpleDynamics<VonMisesStress>>(lower_shell_body);
+    vtp_output.addDerivedVariableRecording<SimpleDynamics<VonMisesStrain>>(solid_body);
+    vtp_output.addDerivedVariableRecording<SimpleDynamics<VonMisesStrain>>(upper_shell_body);
+    vtp_output.addDerivedVariableRecording<SimpleDynamics<VonMisesStrain>>(lower_shell_body);
     vtp_output.writeToFile(0);
 
     // Simulation
-    const Real end_time = 2.0;
+    const Real end_time = 4.0;
     Real &physical_time = *system.getSystemVariableDataByName<Real>("PhysicalTime");
     int ite = 0;
     int ite_output = 0;
     Real output_period = end_time / 100.0;
     Real dt = 0.0;
     TickCount t1 = TickCount::now();
-    const Real dt_ref = std::min(algs_shell.time_step_size(), algs_solid.time_step_size());
+    const Real dt_ref = std::min({algs_shell_upper.time_step_size(), algs_shell_lower.time_step_size(), algs_solid.time_step_size()});
     auto run_simulation = [&]()
     {
         while (physical_time < end_time)
@@ -415,26 +518,156 @@ void test_shell_to_solid_coupling()
                 }
 
                 // compute coupling force on shell
-                shell_coupling_force_bc.exec();
+                shell_coupling_algs_lower.exec();
+                shell_coupling_algs_upper.exec();
 
-                dt = std::min(algs_shell.time_step_size(), algs_solid.time_step_size());
+                dt = std::min({algs_shell_upper.time_step_size(), algs_shell_lower.time_step_size(), algs_solid.time_step_size()});
                 if (dt < dt_ref / 1e2)
                     throw std::runtime_error("time step decreased too much");
 
                 // update shell first
-                algs_shell.stress_relaxation_first(dt);
-                fix_bc_shell.exec();
-                algs_shell.damping_exec(dt);
-                fix_bc_shell.exec();
-                algs_shell.stress_relaxation_second(dt);
+                algs_shell_upper.stress_relaxation_first(dt);
+                upper_shell_bc.exec();
+                algs_shell_upper.damping_exec(dt);
+                upper_shell_bc.exec();
+                algs_shell_upper.stress_relaxation_second(dt);
+
+                algs_shell_lower.stress_relaxation_first(dt);
+                lower_shell_bc.exec();
+                algs_shell_lower.damping_exec(dt);
+                lower_shell_bc.exec();
+                algs_shell_lower.stress_relaxation_second(dt);
 
                 // update solid
                 algs_solid.stress_relaxation_first(dt);
-                fix_bc_solid.exec();
-                solid_coupling_vel_bc.exec();
+                solid_coupling_algs_lower.exec();
+                solid_coupling_algs_upper.exec();
+                solid_bc.exec();
                 algs_solid.damping_exec(dt);
-                fix_bc_solid.exec();
-                solid_coupling_vel_bc.exec();
+                solid_coupling_algs_lower.exec();
+                solid_coupling_algs_upper.exec();
+                solid_bc.exec();
+                algs_solid.stress_relaxation_second(dt);
+
+                ++ite;
+                integral_time += dt;
+                physical_time += dt;
+            }
+
+            ite_output++;
+            vtp_output.writeToFile(ite_output);
+        }
+        TimeInterval tt = TickCount::now() - t1;
+        std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
+    };
+
+    try
+    {
+        run_simulation();
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << e.what() << '\n';
+        vtp_output.writeToFile(ite_output + 1);
+        exit(0);
+    }
+}
+
+void run_solid(int res_factor, Real stiffness_ratio, int load_type)
+{
+    // parameters
+    plate::plate_parameters params;
+    Real dp = params.thickness_shell / (4.0 * res_factor);
+    Real youngs_modulus_solid = params.youngs_modulus_shell * stiffness_ratio;
+
+    // Import meshes
+    auto solid_part_mesh = params.get_solid_extended_mesh(0);
+    auto whole_mesh = params.get_whole_mesh();
+
+    // System bounding box
+    BoundingBox bb_system = whole_mesh->getBounds();
+
+    // System
+    SPHSystem system(bb_system, dp);
+    IOEnvironment io_environment(system);
+
+    // Body
+    SolidBody solid_body(system, whole_mesh);
+    solid_body.defineMaterial<CompositeSolid>(params.rho);
+    solid_body.generateParticles<BaseParticles, Lattice>();
+    { // assign material ids
+        auto *composite_solid = dynamic_cast<CompositeSolid *>(&solid_body.getBaseMaterial());
+        composite_solid->add<LinearElasticSolid>(params.rho, youngs_modulus_solid, params.poisson_ratio);
+        composite_solid->add<LinearElasticSolid>(params.rho, params.youngs_modulus_shell, params.poisson_ratio);
+        int *material_id = solid_body.getBaseParticles().getVariableDataByName<int>("MaterialID");
+        Vec3d *pos = solid_body.getBaseParticles().getVariableDataByName<Vec3d>("Position");
+        for (size_t index_i = 0; index_i < solid_body.getBaseParticles().TotalRealParticles(); index_i++)
+        {
+            if (solid_part_mesh->checkContain(pos[index_i]))
+                material_id[index_i] = 0;
+            else
+                material_id[index_i] = 1;
+        }
+    }
+
+    // algorithms
+    Real eta = get_physical_viscosity_general(params.rho, params.youngs_modulus_shell, params.height + 2 * params.thickness_shell);
+    solid_algs algs_solid(solid_body, eta);
+
+    // Boundary condition
+    plate::boundary_condition solid_bc(solid_body, load_type);
+
+    // Initialization
+    system.initializeSystemCellLinkedLists();
+    system.initializeSystemConfigurations();
+
+    algs_solid.corrected_config();
+
+    // Output
+
+    solid_body.getBaseParticles().addVariableToWrite<Vec3d>("Velocity");
+    solid_body.getBaseParticles().addVariableToWrite<Mat3d>("DeformationGradient");
+    solid_body.getBaseParticles().addVariableToWrite<Vec3d>("InitialNormalDirection");
+    solid_body.getBaseParticles().addVariableToWrite<int>("MaterialID");
+    BodyStatesRecordingToVtp vtp_output(system);
+    vtp_output.addDerivedVariableRecording<SimpleDynamics<Displacement>>(solid_body);
+    vtp_output.addDerivedVariableRecording<SimpleDynamics<VonMisesStress>>(solid_body);
+    vtp_output.addDerivedVariableRecording<SimpleDynamics<VonMisesStrain>>(solid_body);
+    vtp_output.writeToFile(0);
+
+    // Simulation
+    const Real end_time = 4.0;
+    Real &physical_time = *system.getSystemVariableDataByName<Real>("PhysicalTime");
+    int ite = 0;
+    int ite_output = 0;
+    Real output_period = end_time / 100.0;
+    Real dt = 0.0;
+    TickCount t1 = TickCount::now();
+    const Real dt_ref = algs_solid.time_step_size();
+    auto run_simulation = [&]()
+    {
+        while (physical_time < end_time)
+        {
+            Real integral_time = 0.0;
+            while (integral_time < output_period)
+            {
+                if (ite % 100 == 0)
+                {
+                    std::cout << "N=" << ite << " Time: "
+                              << physical_time << "	dt: "
+                              << dt << "\n";
+                }
+
+                // compute coupling force on shell
+                dt = algs_solid.time_step_size();
+                if (dt < dt_ref / 1e2)
+                    throw std::runtime_error("time step decreased too much");
+
+                // update solid
+                algs_solid.stress_relaxation_first(dt);
+                solid_bc.exec();
+                algs_solid.damping_exec(dt);
+                solid_bc.exec();
                 algs_solid.stress_relaxation_second(dt);
 
                 ++ite;
