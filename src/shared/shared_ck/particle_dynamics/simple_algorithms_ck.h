@@ -88,9 +88,7 @@ class ReduceDynamicsCK : public ReduceType,
           BaseDynamics<OutputType>(), kernel_implementation_(*this),
           finish_dynamics_(*this){};
     virtual ~ReduceDynamicsCK() {};
-
     std::string QuantityName() { return this->quantity_name_; };
-    std::string DynamicsIdentifierName() { return this->identifier_.getName(); };
 
     virtual OutputType exec(Real dt = 0.0) override
     {

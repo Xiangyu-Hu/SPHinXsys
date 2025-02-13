@@ -40,7 +40,7 @@ class GeneratingMethod<UnstructuredMesh>
 {
   public:
     explicit GeneratingMethod(ANSYSMesh &ansys_mesh);
-    virtual ~GeneratingMethod(){};
+    virtual ~GeneratingMethod() {};
 
   protected:
     StdLargeVec<Vecd> &elements_centroids_;
@@ -53,9 +53,8 @@ class ParticleGenerator<BaseParticles, UnstructuredMesh>
 {
   public:
     explicit ParticleGenerator(SPHBody &sph_body, BaseParticles &base_particles, ANSYSMesh &ansys_mesh);
-    virtual ~ParticleGenerator(){};
+    virtual ~ParticleGenerator() {};
     virtual void prepareGeometricData() override;
 };
-
 } // namespace SPH
 #endif // PARTICLE_GENERATOR_MESH_H
