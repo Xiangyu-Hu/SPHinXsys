@@ -69,7 +69,7 @@ class FarFieldBoundary : public fluid_dynamics::NonReflectiveBoundaryCorrection
         sound_speed_ = c_f;
         vel_farfield_ = Vecd(U_f, 0.0);
     };
-    virtual ~FarFieldBoundary(){};
+    virtual ~FarFieldBoundary() {};
 };
 //----------------------------------------------------------------------
 //	Main program starts here.
@@ -137,7 +137,7 @@ int main(int ac, char *av[])
         ReloadParticleIO write_real_body_particle_reload_files({&cylinder, &water_block});
         RelaxationStepLevelSetCorrectionInner relaxation_step_inner(cylinder_inner);
         RelaxationStepLevelSetCorrectionComplex relaxation_step_complex(
-            InteractArgs(water_block_inner, std::string("OuterBoundary")), water_block_contact);
+            DynamicsArgs(water_block_inner, std::string("OuterBoundary")), water_block_contact);
         //----------------------------------------------------------------------
         //	Particle relaxation starts here.
         //----------------------------------------------------------------------

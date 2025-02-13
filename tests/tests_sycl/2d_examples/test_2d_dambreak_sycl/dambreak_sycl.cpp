@@ -106,15 +106,15 @@ int main(int ac, char *av[])
     StateDynamics<MainExecutionPolicy, fluid_dynamics::AdvectionStepClose> water_advection_step_close(water_block);
 
     InteractionDynamicsCK<MainExecutionPolicy, LinearCorrectionMatrixComplex>
-        fluid_linear_correction_matrix(InteractArgs(water_block_inner, 0.5), water_wall_contact);
+        fluid_linear_correction_matrix(DynamicsArgs(water_block_inner, 0.5), water_wall_contact);
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticStep1stHalfWithWallRiemannCorrectionCK>
         fluid_acoustic_step_1st_half(water_block_inner, water_wall_contact);
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticStep2ndHalfWithWallRiemannCorrectionCK>
         fluid_acoustic_step_2nd_half(water_block_inner, water_wall_contact);
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::DensityRegularizationComplexFreeSurface>
         fluid_density_regularization(water_block_inner, water_wall_contact);
-    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::FreeSurfaceIndicationComplexCK>
-        fluid_boundary_indicator(water_block_inner,water_wall_contact);
+    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::FreeSurfaceIndicationComplexSpatialTemporalCK>
+        fluid_boundary_indicator(water_block_inner, water_block_inner, water_wall_contact);
 
     ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AdvectionTimeStepCK> fluid_advection_time_step(water_block, U_ref);
     ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticTimeStepCK> fluid_acoustic_time_step(water_block);
