@@ -251,7 +251,7 @@ void DiffusionRelaxationCK<Inner<OneLevel, TimeSteppingType, DiffusionType, Kern
 //=================================================================================================//
 template <class TimeSteppingType, class DiffusionType, class KernelGradientType, typename... Parameters>
 template <typename... Args>
-DiffusionRelaxationCK<TimeSteppingType, DiffusionType, KernelGradientType, Contact<Boundary, Parameters...>>::
+DiffusionRelaxationCK<Contact<Boundary, TimeSteppingType, DiffusionType, KernelGradientType, Parameters...>>::
     DiffusionRelaxationCK(Relation<Contact<Parameters...>> &contact_relation, Args &&...args)
     : BaseInteraction(contact_relation, std::forward<Args>(args)...),
       kernel_gradient_(this->particles_),
@@ -269,7 +269,7 @@ DiffusionRelaxationCK<TimeSteppingType, DiffusionType, KernelGradientType, Conta
 //=================================================================================================//
 template <class TimeSteppingType, class DiffusionType, class KernelGradientType, typename... Parameters>
 StdVec<DiscreteVariable<Real> *>
-DiffusionRelaxationCK<TimeSteppingType, DiffusionType, KernelGradientType, Contact<Boundary, Parameters...>>::
+DiffusionRelaxationCK<Contact<Boundary, TimeSteppingType, DiffusionType, KernelGradientType, Parameters...>>::
     getContactSpeciesTransfer(SPHBody *contact_body)
 {
     StdVec<DiscreteVariable<Real> *> species_transfer;
@@ -286,7 +286,7 @@ DiffusionRelaxationCK<TimeSteppingType, DiffusionType, KernelGradientType, Conta
 //=================================================================================================//
 template <class TimeSteppingType, class DiffusionType, class KernelGradientType, typename... Parameters>
 template <class ExecutionPolicy, class EncloserType>
-DiffusionRelaxationCK<TimeSteppingType, DiffusionType, KernelGradientType, Contact<Boundary, Parameters...>>::
+DiffusionRelaxationCK<Contact<Boundary, TimeSteppingType, DiffusionType, KernelGradientType, Parameters...>>::
     InteractKernel::InteractKernel(
         const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt contact_index)
     : BaseInteraction::InteractKernel(ex_policy, encloser, contact_index),
@@ -296,7 +296,7 @@ DiffusionRelaxationCK<TimeSteppingType, DiffusionType, KernelGradientType, Conta
       contact_transfer_(encloser.contact_dv_transfer_array_[contact_index]->DelegatedDataArray(ex_policy)) {}
 //=================================================================================================//
 template <class TimeSteppingType, class DiffusionType, class KernelGradientType, typename... Parameters>
-void DiffusionRelaxationCK<TimeSteppingType, DiffusionType, KernelGradientType, Contact<Boundary, Parameters...>>::
+void DiffusionRelaxationCK<Contact<Boundary, TimeSteppingType, DiffusionType, KernelGradientType, Parameters...>>::
     InteractKernel::resetContactTransfer(UnsignedInt index_i)
 {
     for (UnsignedInt m = 0; m < this->number_of_species_; ++m)
@@ -306,7 +306,7 @@ void DiffusionRelaxationCK<TimeSteppingType, DiffusionType, KernelGradientType, 
 }
 //=================================================================================================//
 template <class TimeSteppingType, class DiffusionType, class KernelGradientType, typename... Parameters>
-void DiffusionRelaxationCK<TimeSteppingType, DiffusionType, KernelGradientType, Contact<Boundary, Parameters...>>::
+void DiffusionRelaxationCK<Contact<Boundary, TimeSteppingType, DiffusionType, KernelGradientType, Parameters...>>::
     InteractKernel::accumulateDiffusionRate(UnsignedInt index_i)
 {
     for (UnsignedInt m = 0; m < this->number_of_species_; ++m)
@@ -317,7 +317,7 @@ void DiffusionRelaxationCK<TimeSteppingType, DiffusionType, KernelGradientType, 
 //=================================================================================================//
 template <class TimeSteppingType, class DiffusionType, class KernelGradientType, typename... Parameters>
 template <typename... Args>
-DiffusionRelaxationCK<Contact<OneLevel, DirichletCK, TimeSteppingType,
+DiffusionRelaxationCK<Contact<DirichletCK, TimeSteppingType,
                               DiffusionType, KernelGradientType, Parameters...>>::
     DiffusionRelaxationCK(Relation<Contact<Parameters...>> &contact_relation, Args &&...args)
     : BaseInteraction(contact_relation, std::forward<Args>(args)...)
@@ -332,7 +332,7 @@ DiffusionRelaxationCK<Contact<OneLevel, DirichletCK, TimeSteppingType,
 //=================================================================================================//
 template <class TimeSteppingType, class DiffusionType, class KernelGradientType, typename... Parameters>
 StdVec<DiscreteVariable<Real> *>
-DiffusionRelaxationCK<Contact<OneLevel, DirichletCK, TimeSteppingType,
+DiffusionRelaxationCK<Contact<DirichletCK, TimeSteppingType,
                               DiffusionType, KernelGradientType, Parameters...>>::
     getContactGradientSpecies(BaseParticles *contact_particles)
 {
@@ -348,7 +348,7 @@ DiffusionRelaxationCK<Contact<OneLevel, DirichletCK, TimeSteppingType,
 //=================================================================================================//
 template <class TimeSteppingType, class DiffusionType, class KernelGradientType, typename... Parameters>
 template <class ExecutionPolicy, class EncloserType>
-DiffusionRelaxationCK<Contact<OneLevel, DirichletCK, TimeSteppingType,
+DiffusionRelaxationCK<Contact<DirichletCK, TimeSteppingType,
                               DiffusionType, KernelGradientType, Parameters...>>::
     InteractKernel::InteractKernel(
         const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt contact_index)
@@ -357,7 +357,7 @@ DiffusionRelaxationCK<Contact<OneLevel, DirichletCK, TimeSteppingType,
           encloser.contact_dv_gradient_species_array_[contact_index]->DelegatedDataArray(ex_policy)) {}
 //=================================================================================================//
 template <class TimeSteppingType, class DiffusionType, class KernelGradientType, typename... Parameters>
-void DiffusionRelaxationCK<Contact<OneLevel, DirichletCK, TimeSteppingType,
+void DiffusionRelaxationCK<Contact<DirichletCK, TimeSteppingType,
                                    DiffusionType, KernelGradientType, Parameters...>>::
     InteractKernel::interact(UnsignedInt index_i, Real dt)
 {
