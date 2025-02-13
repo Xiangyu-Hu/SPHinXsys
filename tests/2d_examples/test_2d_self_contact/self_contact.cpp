@@ -86,7 +86,7 @@ class BeamInitialCondition
 {
   public:
     explicit BeamInitialCondition(SPHBody &sph_body)
-        : solid_dynamics::ElasticDynamicsInitialCondition(sph_body){};
+        : solid_dynamics::ElasticDynamicsInitialCondition(sph_body) {};
 
     void update(size_t index_i, Real dt)
     {
@@ -141,7 +141,7 @@ int main(int ac, char *av[])
     ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(beam_body);
     Dynamics1Level<solid_dynamics::DecomposedIntegration1stHalf> stress_relaxation_first_half(beam_body_inner);
     Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half(beam_body_inner);
-    InteractionDynamics<solid_dynamics::SelfContactDensitySummation> beam_self_contact_density(beam_self_contact);
+    InteractionDynamics<solid_dynamics::SelfRepulsionFactorSummation> beam_self_contact_density(beam_self_contact);
     InteractionDynamics<solid_dynamics::SelfContactForce> beam_self_contact_forces(beam_self_contact);
     BodyRegionByParticle beam_base(beam_body, makeShared<MultiPolygonShape>(createBeamConstrainShape()));
     SimpleDynamics<solid_dynamics::FixBodyPartConstraint> constraint_beam_base(beam_base);
@@ -149,7 +149,7 @@ int main(int ac, char *av[])
     //	outputs
     //-----------------------------------------------------------------------------
     IOEnvironment io_environment(system);
-    beam_body.addBodyStateForRecording<Real>("SelfContactDensity");
+    beam_body.addBodyStateForRecording<Real>("SelfRepulsionFactor");
     BodyStatesRecordingToVtp write_beam_states(io_environment, system.real_bodies_);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
         write_beam_tip_displacement("Position", io_environment, beam_observer_contact);

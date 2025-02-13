@@ -35,7 +35,7 @@ Real physical_viscosity = 1.0e6;
 class CylinderParticleGenerator : public SurfaceParticleGenerator
 {
   public:
-    explicit CylinderParticleGenerator(SPHBody &sph_body) : SurfaceParticleGenerator(sph_body){};
+    explicit CylinderParticleGenerator(SPHBody &sph_body) : SurfaceParticleGenerator(sph_body) {};
     virtual void initializeGeometricVariables() override
     {
         // the cylinder and boundary
@@ -153,7 +153,7 @@ int main(int ac, char *av[])
     Dynamics1Level<solid_dynamics::DecomposedIntegration1stHalf> ball_stress_relaxation_first_half(ball_inner);
     Dynamics1Level<solid_dynamics::Integration2ndHalf> ball_stress_relaxation_second_half(ball_inner);
     /** Algorithms for solid-solid contact. */
-    InteractionDynamics<solid_dynamics::ShellContactDensity> ball_update_contact_density(ball_contact);
+    InteractionDynamics<solid_dynamics::ShellRepulsionFactor> ball_update_contact_density(ball_contact);
     InteractionDynamics<solid_dynamics::ContactForceFromWall> ball_compute_solid_contact_forces(ball_contact);
     DampingWithRandomChoice<InteractionSplit<solid_dynamics::PairwiseFrictionFromWall>>
         ball_friction(0.1, ball_contact, physical_viscosity);

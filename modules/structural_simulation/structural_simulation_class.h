@@ -73,7 +73,7 @@ class BodyPartFromMesh : public BodyRegionByParticle
 {
   public:
     BodyPartFromMesh(SPHBody &body, SharedPtr<TriangleMeshShape> triangle_mesh_shape_ptr);
-    ~BodyPartFromMesh(){};
+    ~BodyPartFromMesh() {};
 };
 
 class SolidBodyFromMesh : public SolidBody
@@ -81,7 +81,7 @@ class SolidBodyFromMesh : public SolidBody
   public:
     SolidBodyFromMesh(SPHSystem &system, SharedPtr<TriangleMeshShape> triangle_mesh_shape, Real resolution,
                       SharedPtr<SaintVenantKirchhoffSolid> material_model, StdLargeVec<Vec3d> &pos_0, StdLargeVec<Real> &volume);
-    ~SolidBodyFromMesh(){};
+    ~SolidBodyFromMesh() {};
 };
 
 class SolidBodyForSimulation
@@ -101,7 +101,7 @@ class SolidBodyForSimulation
     SolidBodyForSimulation(
         SPHSystem &system, SharedPtr<TriangleMeshShape> triangle_mesh_shape, Real resolution,
         Real physical_viscosity, SharedPtr<SaintVenantKirchhoffSolid> material_model, StdLargeVec<Vec3d> &pos_0, StdLargeVec<Real> &volume);
-    ~SolidBodyForSimulation(){};
+    ~SolidBodyForSimulation() {};
 
     SolidBodyFromMesh *getSolidBodyFromMesh() { return &solid_body_from_mesh_; };
     ElasticSolidParticles *getElasticSolidParticles() { return DynamicCast<ElasticSolidParticles>(this, &solid_body_from_mesh_.getBaseParticles()); };
@@ -206,7 +206,7 @@ class StructuralSimulation
     StdVec<SharedPtr<SimpleDynamics<solid_dynamics::UpdateElasticNormalDirection>>> particle_normal_update_;
 
     StdVec<SharedPtr<SurfaceContactRelation>> contact_list_;
-    StdVec<SharedPtr<InteractionDynamics<solid_dynamics::ContactDensitySummation>>> contact_density_list_;
+    StdVec<SharedPtr<InteractionDynamics<solid_dynamics::RepulsionFactorSummation>>> contact_density_list_;
     StdVec<SharedPtr<InteractionDynamics<solid_dynamics::ContactForce>>> contact_force_list_;
 
     // for initializeATimeStep
@@ -289,7 +289,7 @@ class StructuralSimulation
     void executeSurfacePressure();
     void executeSpringDamperConstraintParticleWise();
     void executeSpringNormalOnSurfaceParticles();
-    void executeContactDensitySummation();
+    void executeRepulsionFactorSummation();
     void executeContactForce();
     void executeStressRelaxationFirstHalf(Real dt);
     void executeConstrainSolidBody();
