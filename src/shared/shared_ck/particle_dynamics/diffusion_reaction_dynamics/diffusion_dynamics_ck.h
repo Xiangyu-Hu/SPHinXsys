@@ -149,8 +149,8 @@ class DiffusionRelaxationCK<ForwardEuler, DiffusionType, BaseInteractionType>
     class InteractKernel : public BaseInteractionType::InteractKernel
     {
       public:
-        template <class ExecutionPolicy, class EncloserType>
-        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+        template <class ExecutionPolicy, class EncloserType, typename... Args>
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, Args &&...args);
 
       protected:
         DataArray<Real> *diffusion_species_, *gradient_species_, *diffusion_dt_;

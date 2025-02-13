@@ -108,10 +108,11 @@ void DiffusionRelaxationCK<ForwardEuler, DiffusionType, BaseInteractionType>::
 }
 //=================================================================================================//
 template <class DiffusionType, class BaseInteractionType>
-template <class ExecutionPolicy, class EncloserType>
+template <class ExecutionPolicy, class EncloserType, typename... Args>
 DiffusionRelaxationCK<ForwardEuler, DiffusionType, BaseInteractionType>::
-    InteractKernel::InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-    : BaseInteractionType::InteractKernel(ex_policy, encloser),
+    InteractKernel::InteractKernel(
+        const ExecutionPolicy &ex_policy, EncloserType &encloser, Args &&...args)
+    : BaseInteractionType::InteractKernel(ex_policy, encloser, std::forward<Args>(args)...),
       diffusion_species_(encloser.dv_diffusion_species_array_.DelegatedDataArray(ex_policy)),
       gradient_species_(encloser.dv_gradient_species_array_.DelegatedDataArray(ex_policy)),
       diffusion_dt_(encloser.dv_diffusion_dt_array_.DelegatedDataArray(ex_policy)),
@@ -291,7 +292,7 @@ DiffusionRelaxationCK<TimeSteppingType, DiffusionType, KernelGradientType, Conta
     : BaseInteraction::InteractKernel(ex_policy, encloser, contact_index),
       gradient_(ex_policy, encloser.kernel_gradient_),
       inter_particle_diffusion_coeff_(encloser.ca_inter_particle_diffusion_coeff_.DelegatedData(ex_policy)),
-      contact_Vol_(encloser.dv_contact_Vol_[contact_index]),
+      contact_Vol_(encloser.dv_contact_Vol_[contact_index]->DelegatedData(ex_policy)),
       contact_transfer_(encloser.contact_dv_transfer_array_[contact_index]->DelegatedDataArray(ex_policy)) {}
 //=================================================================================================//
 template <class TimeSteppingType, class DiffusionType, class KernelGradientType, typename... Parameters>
