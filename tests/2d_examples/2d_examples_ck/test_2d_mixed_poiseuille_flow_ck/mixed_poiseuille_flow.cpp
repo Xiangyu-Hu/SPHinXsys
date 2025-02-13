@@ -4,6 +4,7 @@
  * @details This is the one of the basic test cases for mixed pressure/velocity in-/outlet boundary conditions.
  * @author 	Shuoguo Zhang and Xiangyu Hu
  */
+#include "sphinxsys.h"
 #include "sphinxsys_ck.h"
 
 using namespace SPH;
@@ -187,15 +188,22 @@ int main(int ac, char *av[])
     StateDynamics<MainExecutionPolicy, fluid_dynamics::AdvectionStepClose> water_advection_step_close(water_block);
     InteractionDynamicsCK<MainExecutionPolicy, LinearCorrectionMatrixComplex>
         fluid_linear_correction_matrix(InteractArgs(water_block_inner, 0.5), water_block_contact);
-    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticStep1stHalfWithWallRiemannCK>
+    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticStep1stHalfWithWallRiemannCorrectionCK>
         fluid_acoustic_step_1st_half(water_block_inner, water_block_contact);
-    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticStep2ndHalfWithWallRiemannCK>
+    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticStep2ndHalfWithWallRiemannCorrectionCK>
         fluid_acoustic_step_2nd_half(water_block_inner, water_block_contact);
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::DensityRegularizationComplexFreeSurface>
         fluid_density_regularization(water_block_inner, water_block_contact);
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::FreeSurfaceIndicationComplexCK>
         fluid_boundary_indicator(water_block_inner, water_block_contact);
-    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::TransportVelocityLimitedCorrectionCorrectedComplexBulkParticlesCK>
+
+    // InnerRelation water_block_inner_ori(water_block);
+    // ContactRelation water_wall_contact_ori(water_block, {&wall_boundary});
+    // ComplexRelation water_block_complex_ori(water_block_inner_ori, water_wall_contact_ori);
+
+    // InteractionWithUpdate<SpatialTemporalFreeSurfaceIndicationComplex> inlet_outlet_surface_particle_indicator(water_block_inner_ori, water_wall_contact_ori);
+
+    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::TransportVelocityCorrectionWallNoCorrectionBulkParticlesCK>
         transport_correction_ck(water_block_inner, water_block_contact);
     ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AdvectionTimeStepCK> fluid_advection_time_step(water_block, U_f);
     ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticTimeStepCK> fluid_acoustic_time_step(water_block);
@@ -217,6 +225,7 @@ int main(int ac, char *av[])
     body_states_recording.addToWrite<Real>(water_block, "Pressure");
     body_states_recording.addToWrite<int>(water_block, "Indicator");
     body_states_recording.addToWrite<Real>(water_block, "Density");
+    body_states_recording.addToWrite<Vecd>(water_block, "ZeroGradientResidue");
     // body_states_recording.addToWrite<int>(water_block, "BufferParticleIndicator");
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<MainExecutionPolicy, Vecd>> write_centerline_velocity("Velocity", velocity_observer_contact);
     //----------------------------------------------------------------------
@@ -227,7 +236,6 @@ int main(int ac, char *av[])
 
     water_cell_linked_list.exec();
     wall_cell_linked_list.exec();
-
     water_body_update_complex_relation.exec();
     fluid_observer_contact_relation.exec();
     //----------------------------------------------------------------------
@@ -260,8 +268,8 @@ int main(int ac, char *av[])
             fluid_density_regularization.exec();
             water_advection_step_setup.exec();
             Real advection_dt = fluid_advection_time_step.exec();
-            fluid_linear_correction_matrix.exec();
             fluid_viscous_force.exec();
+            fluid_linear_correction_matrix.exec();
             transport_correction_ck.exec();
             Real relaxation_time = 0.0;
             Real acoustic_dt = 0.0;
@@ -292,7 +300,7 @@ int main(int ac, char *av[])
             // std::cout << "298\n";
             /** inflow emitter injection*/
             emitter_injection.exec();
-            right_remove_particles.exec();
+            // right_remove_particles.exec();
 
             // first do injection for all buffers
             // left_bidirection_buffer.injection.exec();
@@ -300,20 +308,23 @@ int main(int ac, char *av[])
             // then do deletion for all buffers
             // left_bidirection_buffer.deletion.exec();
             // right_bidirection_buffer.deletion.exec();
-            std::cout << "number_of_iterations:" << number_of_iterations << "\n";
 
             if (number_of_iterations % 100 == 0 && number_of_iterations != 1)
             {
                 std::cout << "particle_sort\n";
-                // particle_sort.exec();
+                particle_sort.exec();
             }
-            body_states_recording.writeToFile(MainExecutionPolicy{});
 
             water_cell_linked_list.exec();
             water_body_update_complex_relation.exec();
             fluid_observer_contact_relation.exec();
+            // water_block.updateCellLinkedList();
+            // water_block_complex_ori.updateConfiguration();
+
             // std::cout << "319\n";
+            body_states_recording.writeToFile(MainExecutionPolicy{});
             fluid_boundary_indicator.exec();
+
             // std::cout << "321\n";
             // left_bidirection_buffer.tag_buffer_particles.exec();
             // right_bidirection_buffer.tag_buffer_particles.exec();
