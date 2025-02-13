@@ -281,53 +281,18 @@ class DiffusionRelaxationCK<Inner<OneLevel, TimeSteppingType, DiffusionType, Ker
     ConstantArray<DiffusionType, InterParticleDiffusionCoeff> ca_inter_particle_diffusion_coeff_;
 };
 
-template <class TimeSteppingType, class DiffusionType, class KernelGradientType, typename... Parameters>
-class DiffusionRelaxationCK<Contact<Boundary, TimeSteppingType, DiffusionType, KernelGradientType, Parameters...>>
+template <template <typename> class BoundaryType, class TimeSteppingType,
+          class DiffusionType, class KernelGradientType, typename... Parameters>
+class DiffusionRelaxationCK<Contact<BoundaryType<DiffusionType>, TimeSteppingType, KernelGradientType, Parameters...>>
     : public DiffusionRelaxationCK<TimeSteppingType, DiffusionType, Interaction<Contact<Parameters...>>>
 {
     UniquePtrsKeeper<DiscreteVariableArray<Real>> contact_transfer_array_ptrs_keeper_;
+    UniquePtrsKeeper<KernelGradientType> kernel_gradient_ptrs_keeper_;
+    UniquePtrsKeeper<BoundaryType<DiffusionType>> boundary_ptrs_keeper_;
     using BaseInteraction = DiffusionRelaxationCK<TimeSteppingType, DiffusionType, Interaction<Contact<Parameters...>>>;
     using GradientKernel = typename KernelGradientType::ComputingKernel;
-    using InterParticleDiffusionCoeff = typename DiffusionType::InterParticleDiffusionCoeff;
-
-  public:
-    template <typename... Args>
-    explicit DiffusionRelaxationCK(Relation<Contact<Parameters...>> &contact_relation, Args &&...args);
-    virtual ~DiffusionRelaxationCK() {};
-
-    class InteractKernel : public BaseInteraction::InteractKernel
-    {
-      public:
-        template <class ExecutionPolicy, class EncloserType>
-        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser,
-                       UnsignedInt contact_index);
-
-      protected:
-        GradientKernel gradient_;
-        InterParticleDiffusionCoeff *inter_particle_diffusion_coeff_;
-        Real *contact_Vol_;
-        DataArray<Real> *contact_transfer_;
-
-        void resetContactTransfer(UnsignedInt index_i);
-        void accumulateDiffusionRate(UnsignedInt index_i);
-    };
-
-  protected:
-    StdVec<DiscreteVariable<Real> *> dv_contact_Vol_;
-    StdVec<DiscreteVariableArray<Real> *> contact_dv_transfer_array_;
-    KernelGradientType kernel_gradient_;
-    ConstantArray<DiffusionType, InterParticleDiffusionCoeff> ca_inter_particle_diffusion_coeff_;
-
+    using BoundaryKernel = typename BoundaryType<DiffusionType>::ComputingKernel;
     StdVec<DiscreteVariable<Real> *> getContactSpeciesTransfer(SPHBody *contact_body);
-};
-
-class DirichletCK;
-template <class TimeSteppingType, class DiffusionType, class KernelGradientType, typename... Parameters>
-class DiffusionRelaxationCK<Contact<DirichletCK, TimeSteppingType, DiffusionType, KernelGradientType, Parameters...>>
-    : public DiffusionRelaxationCK<Contact<Boundary, TimeSteppingType, DiffusionType, KernelGradientType, Parameters...>>
-{
-    UniquePtrsKeeper<DiscreteVariableArray<Real>> contact_gradient_species_array_ptrs_keeper_;
-    using BaseInteraction = DiffusionRelaxationCK<Contact<Boundary, TimeSteppingType, DiffusionType, KernelGradientType, Parameters...>>;
 
   public:
     template <typename... Args>
@@ -343,25 +308,60 @@ class DiffusionRelaxationCK<Contact<DirichletCK, TimeSteppingType, DiffusionType
         void interact(UnsignedInt index_i, Real dt = 0.0);
 
       protected:
-        DataArray<Real> *contact_gradient_species_;
+        Real *contact_Vol_;
+        DataArray<Real> *contact_transfer_;
+        GradientKernel gradient_;
+        BoundaryKernel boundary_flux_;
     };
 
   protected:
-    StdVec<DiscreteVariableArray<Real> *> contact_dv_gradient_species_array_;
-
-    StdVec<DiscreteVariable<Real> *> getContactGradientSpecies(BaseParticles *contact_particles);
+    StdVec<DiscreteVariable<Real> *> dv_contact_Vol_;
+    StdVec<DiscreteVariableArray<Real> *> contact_dv_transfer_array_;
+    StdVec<KernelGradientType *> contact_kernel_gradient_method_;
+    StdVec<BoundaryType<DiffusionType> *> contact_boundary_method_;
 };
 
-template <typename BoundaryType, typename... OtherParameters>
-class DiffusionRelaxationCK<Contact<OneLevel, BoundaryType, OtherParameters...>>
-    : public DiffusionRelaxationCK<Contact<BoundaryType, OtherParameters...>>
+template <typename... Parameters>
+class DiffusionRelaxationCK<Contact<OneLevel, Parameters...>>
+    : public DiffusionRelaxationCK<Contact<Parameters...>>
 {
-    using BaseInteraction = DiffusionRelaxationCK<Contact<BoundaryType, OtherParameters...>>;
-
   public:
     template <typename... Args>
-    explicit DiffusionRelaxationCK(Args &&...args) : BaseInteraction(std::forward<Args>(args)...) {}
+    explicit DiffusionRelaxationCK(Args &&...args)
+        : DiffusionRelaxationCK<Contact<Parameters...>>(std::forward<Args>(args)...) {}
     virtual ~DiffusionRelaxationCK() {};
+};
+
+template <class DiffusionType>
+class Dirichlet<DiffusionType>
+{
+    using InterParticleDiffusionCoeff = typename DiffusionType::InterParticleDiffusionCoeff;
+    StdVec<DiscreteVariable<Real> *> getContactGradientSpecies(BaseParticles *contact_particles);
+
+  public:
+    explicit Dirichlet(StdVec<DiffusionType *> &diffusions, Real smoothing_length_sq,
+                       DiscreteVariableArray<Real> &dv_gradient_species_array, 
+                       BaseParticles *contact_particles);
+    class ComputingKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+        Vecd operator()(UnsignedInt m, UnsignedInt index_i, UnsignedInt index_j, const Vecd &e_ij, const Vecd &vec_r_ij);
+
+      protected:
+        Real smoothing_length_sq_;
+        DataArray<Real> *gradient_species_;
+        DataArray<Real> *contact_gradient_species_;
+        InterParticleDiffusionCoeff *inter_particle_diffusion_coeff_;
+    };
+
+  protected:
+    Real smoothing_length_sq_;
+    StdVec<DiffusionType *> &diffusions_;
+    DiscreteVariableArray<Real> &dv_gradient_species_array_;
+    DiscreteVariableArray<Real> contact_dv_gradient_species_array_;
+    ConstantArray<DiffusionType, InterParticleDiffusionCoeff> ca_inter_particle_diffusion_coeff_;
 };
 } // namespace SPH
 #endif // DIFFUSION_DYNAMICS_CK_H
