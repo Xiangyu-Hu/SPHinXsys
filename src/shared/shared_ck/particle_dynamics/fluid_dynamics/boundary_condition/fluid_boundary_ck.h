@@ -117,7 +117,7 @@ class DisposerOutflowDeletionCK : public BaseLocalDynamics<AlignedBoxPartByCell>
     using RemoveRealParticleKernel = typename DespawnRealParticle::ComputingKernel;
 
   public:
-    DisposerOutflowDeletionCK(AlignedBoxPartByCell &aligned_box_part, ParticleBuffer<Base> &buffer);
+    DisposerOutflowDeletionCK(AlignedBoxPartByCell &aligned_box_part);
     virtual ~DisposerOutflowDeletionCK() {};
 
     class UpdateKernel
@@ -138,7 +138,6 @@ class DisposerOutflowDeletionCK : public BaseLocalDynamics<AlignedBoxPartByCell>
     class FinishDynamics
     {
         BaseParticles *particles_;
-        ParticleBuffer<Base> &buffer_;
 
       public:
         FinishDynamics(DisposerOutflowDeletionCK &encloser);
@@ -146,7 +145,6 @@ class DisposerOutflowDeletionCK : public BaseLocalDynamics<AlignedBoxPartByCell>
     };
 
   protected:
-    ParticleBuffer<Base> &buffer_;
     SingularVariable<AlignedBox> *sv_aligned_box_;
     DespawnRealParticle remove_real_particle_method_;
     Real rho0_;

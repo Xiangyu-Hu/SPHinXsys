@@ -28,21 +28,20 @@ void EmitterInflowInjectionCK::FinishDynamics::operator()()
 }
 //=================================================================================================//
 DisposerOutflowDeletionCK::
-    DisposerOutflowDeletionCK(AlignedBoxPartByCell &aligned_box_part, ParticleBuffer<Base> &buffer)
+    DisposerOutflowDeletionCK(AlignedBoxPartByCell &aligned_box_part)
     : BaseLocalDynamics<AlignedBoxPartByCell>(aligned_box_part),
-      buffer_(buffer), sv_aligned_box_(aligned_box_part.svAlignedBox()),
+      sv_aligned_box_(aligned_box_part.svAlignedBox()),
       remove_real_particle_method_(particles_),
       rho0_(particles_->getBaseMaterial().ReferenceDensity()),
       dv_pos_(particles_->getVariableByName<Vecd>("Position")),
       dv_rho_(particles_->getVariableByName<Real>("Density")),
       dv_p_(particles_->getVariableByName<Real>("Pressure"))
 {
-    buffer_.checkParticlesReserved();
 }
 //=================================================================================================//
 DisposerOutflowDeletionCK::FinishDynamics::
     FinishDynamics(DisposerOutflowDeletionCK &encloser)
-    : particles_(encloser.particles_), buffer_(encloser.buffer_) {}
+    : particles_(encloser.particles_) {}
 //=================================================================================================//
 void DisposerOutflowDeletionCK::FinishDynamics::operator()()
 {

@@ -215,7 +215,7 @@ int main(int ac, char *av[])
     StateDynamics<SequencedExecutionPolicy, fluid_dynamics::EmitterInflowInjectionCK> emitter_injection(left_emitter, in_outlet_particle_buffer);
 
     AlignedBoxPartByCell right_disposer(water_block, AlignedBox(xAxis, Transform(Vec2d(right_bidirectional_translation)), bidirectional_buffer_halfsize));
-    StateDynamics<SequencedExecutionPolicy, fluid_dynamics::DisposerOutflowDeletionCK> right_remove_particles(right_disposer, in_outlet_particle_buffer);
+    StateDynamics<SequencedExecutionPolicy, fluid_dynamics::DisposerOutflowDeletionCK> right_remove_particles(right_disposer);
 
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
