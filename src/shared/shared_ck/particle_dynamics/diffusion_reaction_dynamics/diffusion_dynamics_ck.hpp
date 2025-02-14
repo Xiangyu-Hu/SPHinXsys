@@ -29,7 +29,7 @@ template <class DynamicsIdentifier>
 DiffusionRelaxationCK<ForwardEuler, DiffusionType, BaseInteractionType>::
     DiffusionRelaxationCK(DynamicsIdentifier &identifier)
     : DiffusionRelaxationCK(identifier, DynamicCast<AbstractDiffusion>(
-                                            this, identifier.getSPHBody().getBaseMaterial())) {}
+                                            this, &identifier.getSPHBody().getBaseMaterial())) {}
 //=================================================================================================//
 template <class DiffusionType, class BaseInteractionType>
 StdVec<DiffusionType *> DiffusionRelaxationCK<ForwardEuler, DiffusionType, BaseInteractionType>::
@@ -367,6 +367,41 @@ Vecd Dirichlet<DiffusionType>::ComputingKernel::operator()(
     Real phi_ij = gradient_species_[m][index_i] - contact_gradient_species_[m][index_j];
     return vec_r_ij * phi_ij * inter_particle_diffusion_coeff_[m](index_i, index_j, e_ij) /
            (vec_r_ij.squaredNorm() + 0.01 * smoothing_length_sq_);
+}
+//=================================================================================================//
+template <class DiffusionType>
+Neumann<DiffusionType>::Neumann(StdVec<DiffusionType *> &diffusions, Real smoothing_length_sq,
+                                DiscreteVariableArray<Real> &dv_gradient_species_array,
+                                BaseParticles *contact_particles)
+    : diffusions_(diffusions),
+      contact_dv_species_flux_array_(this->getContactSpeciesFlux(contact_particles)) {}
+//=================================================================================================//
+template <class DiffusionType>
+StdVec<DiscreteVariable<Real> *> Neumann<DiffusionType>::getContactSpeciesFlux(BaseParticles *contact_particles)
+{
+    StdVec<DiscreteVariable<Real> *> species_flux;
+    for (auto &diffusion : diffusions_)
+    {
+        std::string variable_name = diffusion->GradientSpeciesName() + "Flux";
+        species_flux.push_back(
+            contact_particles->template getVariableByName<Real>(variable_name));
+    }
+    return species_flux;
+};
+//=================================================================================================//
+template <class DiffusionType>
+template <class ExecutionPolicy, class EncloserType>
+Neumann<DiffusionType>::ComputingKernel::
+    ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+    : contact_species_flux_(
+          encloser.contact_dv_species_flux_array_.DelegatedDataArray(ex_policy)) {}
+//=================================================================================================//
+template <class DiffusionType>
+Vecd Neumann<DiffusionType>::ComputingKernel::operator()(
+    UnsignedInt m, UnsignedInt index_i, UnsignedInt index_j,
+    const Vecd &e_ij, const Vecd &vec_r_ij)
+{
+    return contact_species_flux_[m][index_j] * e_ij;
 }
 //=================================================================================================//
 } // namespace SPH

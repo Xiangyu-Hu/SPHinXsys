@@ -71,6 +71,10 @@ class RungeKutta1stStage;
 class RungeKutta2ndStage;
 template <typename... ControlTypes>
 class Dirichlet; /**< Contact interaction with Dirichlet boundary condition */
+template <typename... ControlTypes>
+class Neumann; /**< Contact interaction with Neumann boundary condition */
+template <typename... ControlTypes>
+class Robin; /**< Contact interaction with Neumann boundary condition */
 //----------------------------------------------------------------------
 // Spatial temporal type identifies
 //----------------------------------------------------------------------

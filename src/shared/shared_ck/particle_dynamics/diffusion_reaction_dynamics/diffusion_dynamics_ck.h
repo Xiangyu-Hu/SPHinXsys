@@ -366,5 +366,30 @@ class Dirichlet<DiffusionType>
     DiscreteVariableArray<Real> contact_dv_gradient_species_array_;
     ConstantArray<DiffusionType, InterParticleDiffusionCoeff> ca_inter_particle_diffusion_coeff_;
 };
+
+template <class DiffusionType>
+class Neumann<DiffusionType>
+{
+    StdVec<DiscreteVariable<Real> *> getContactSpeciesFlux(BaseParticles *contact_particles);
+
+  public:
+    explicit Neumann(StdVec<DiffusionType *> &diffusions, Real smoothing_length_sq,
+                     DiscreteVariableArray<Real> &dv_gradient_species_array,
+                     BaseParticles *contact_particles);
+    class ComputingKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+        Vecd operator()(UnsignedInt m, UnsignedInt index_i, UnsignedInt index_j, const Vecd &e_ij, const Vecd &vec_r_ij);
+
+      protected:
+        DataArray<Real> *contact_species_flux_;
+    };
+
+  protected:
+    StdVec<DiffusionType *> &diffusions_;
+    DiscreteVariableArray<Real> contact_dv_species_flux_array_;
+};
 } // namespace SPH
 #endif // DIFFUSION_DYNAMICS_CK_H
