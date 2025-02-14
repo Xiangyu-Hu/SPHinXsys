@@ -30,7 +30,6 @@
 #define DIFFUSION_DYNAMICS_CK_H
 
 #include "diffusion_reaction.h"
-#include "interaction_algorithms_ck.hpp"
 #include "interaction_ck.hpp"
 #include "sphinxsys_variable_array.h"
 
