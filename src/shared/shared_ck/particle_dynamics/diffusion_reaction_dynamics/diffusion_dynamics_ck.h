@@ -129,9 +129,12 @@ class DiffusionRelaxationCK<ForwardEuler, DiffusionType, BaseInteractionType>
 {
   public:
     template <class DynamicsIdentifier>
-    DiffusionRelaxationCK(DynamicsIdentifier &identifier, AbstractDiffusion &abstract_diffusion);
+    DiffusionRelaxationCK(DynamicsIdentifier &identifier, AbstractDiffusion *abstract_diffusion);
     template <class DynamicsIdentifier>
     explicit DiffusionRelaxationCK(DynamicsIdentifier &identifier);
+    template <typename BodyRelationType, typename FirstArg>
+    DiffusionRelaxationCK(DynamicsArgs<BodyRelationType, FirstArg> parameters)
+        : DiffusionRelaxationCK(parameters.identifier_, std::get<0>(parameters.others_)){};
     virtual ~DiffusionRelaxationCK() {};
 
     class InitializeKernel
@@ -261,7 +264,7 @@ class DiffusionRelaxationCK<Inner<OneLevel, TimeSteppingType, DiffusionType, Ker
 
   public:
     template <typename... Args>
-    DiffusionRelaxationCK(Relation<Inner<Parameters...>> &inner_relation, Args &&...args);
+    DiffusionRelaxationCK(Args &&...args);
     virtual ~DiffusionRelaxationCK() {};
 
     class InteractKernel : public BaseInteraction::InteractKernel
@@ -296,7 +299,7 @@ class DiffusionRelaxationCK<Contact<BoundaryType<DiffusionType>, TimeSteppingTyp
 
   public:
     template <typename... Args>
-    explicit DiffusionRelaxationCK(Relation<Contact<Parameters...>> &contact_relation, Args &&...args);
+    explicit DiffusionRelaxationCK(Args &&...args);
     virtual ~DiffusionRelaxationCK() {};
 
     class InteractKernel : public BaseInteraction::InteractKernel
@@ -340,7 +343,7 @@ class Dirichlet<DiffusionType>
 
   public:
     explicit Dirichlet(StdVec<DiffusionType *> &diffusions, Real smoothing_length_sq,
-                       DiscreteVariableArray<Real> &dv_gradient_species_array, 
+                       DiscreteVariableArray<Real> &dv_gradient_species_array,
                        BaseParticles *contact_particles);
     class ComputingKernel
     {

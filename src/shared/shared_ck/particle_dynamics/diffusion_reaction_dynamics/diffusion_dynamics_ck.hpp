@@ -15,9 +15,9 @@ namespace SPH
 template <class DiffusionType, class BaseInteractionType>
 template <class DynamicsIdentifier>
 DiffusionRelaxationCK<ForwardEuler, DiffusionType, BaseInteractionType>::
-    DiffusionRelaxationCK(DynamicsIdentifier &identifier, AbstractDiffusion &abstract_diffusion)
+    DiffusionRelaxationCK(DynamicsIdentifier &identifier, AbstractDiffusion *abstract_diffusion)
     : BaseInteractionType(identifier),
-      diffusions_(this->getConcreteDiffusions(abstract_diffusion)),
+      diffusions_(this->getConcreteDiffusions(*abstract_diffusion)),
       dv_diffusion_species_array_(this->getDiffusionSpecies()),
       dv_gradient_species_array_(this->getGradientSpecies()),
       dv_diffusion_dt_array_(this->getSpeciesChangeRates()),
@@ -213,8 +213,8 @@ void DiffusionRelaxationCK<RungeKutta2ndStage, DiffusionType, BaseInteractionTyp
 template <class TimeSteppingType, class DiffusionType, class KernelGradientType, typename... Parameters>
 template <typename... Args>
 DiffusionRelaxationCK<Inner<OneLevel, TimeSteppingType, DiffusionType, KernelGradientType, Parameters...>>::
-    DiffusionRelaxationCK(Relation<Inner<Parameters...>> &inner_relation, Args &&...args)
-    : BaseInteraction(inner_relation, std::forward<Args>(args)...),
+    DiffusionRelaxationCK(Args &&...args)
+    : BaseInteraction(std::forward<Args>(args)...),
       kernel_gradient_(this->particles_),
       ca_inter_particle_diffusion_coeff_(this->diffusions_) {}
 //=================================================================================================//
@@ -253,8 +253,8 @@ template <template <typename> class BoundaryType, class TimeSteppingType,
           class DiffusionType, class KernelGradientType, typename... Parameters>
 template <typename... Args>
 DiffusionRelaxationCK<Contact<BoundaryType<DiffusionType>, TimeSteppingType, KernelGradientType, Parameters...>>::
-    DiffusionRelaxationCK(Relation<Contact<Parameters...>> &contact_relation, Args &&...args)
-    : BaseInteraction(contact_relation, std::forward<Args>(args)...)
+    DiffusionRelaxationCK(Args &&...args)
+    : BaseInteraction(std::forward<Args>(args)...)
 {
     for (UnsignedInt k = 0; k != this->contact_particles_.size(); ++k)
     {

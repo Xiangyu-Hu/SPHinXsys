@@ -98,6 +98,23 @@ class IsotropicDiffusion : public BaseDiffusion
     {
         return diff_cf_;
     };
+
+    class InterParticleDiffusionCoeff
+    {
+        Real diff_cf_;
+
+      public:
+        InterParticleDiffusionCoeff() : diff_cf_(0) {};
+        InterParticleDiffusionCoeff(IsotropicDiffusion &encloser)
+            : diff_cf_(encloser.diff_cf_) {};
+        template <class ExecutionPolicy>
+        InterParticleDiffusionCoeff(const ExecutionPolicy &ex_policy, IsotropicDiffusion &encloser)
+            : InterParticleDiffusionCoeff(encloser){};
+        Real operator()(size_t index_i, size_t index_j, const Vecd &e_ij)
+        {
+            return diff_cf_;
+        };
+    };
 };
 
 /**

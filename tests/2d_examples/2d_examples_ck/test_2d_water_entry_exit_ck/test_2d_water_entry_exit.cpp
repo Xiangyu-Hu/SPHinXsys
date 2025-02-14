@@ -179,7 +179,7 @@ int main(int ac, char *av[])
     BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
     SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
     sph_system.setRunParticleRelaxation(false);
-    sph_system.setReloadParticles(true);
+    sph_system.setReloadParticles(false);
     sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
     //----------------------------------------------------------------------
     //	Creating bodies with corresponding materials and particles.
@@ -296,9 +296,9 @@ int main(int ac, char *av[])
         water_block_initial_condition(water_block, diffusion_species_name, fluid_moisture);
     DynamicsSequence<InteractionDynamicsCK<
         MainExecutionPolicy,
-        DiffusionRelaxationCK<Contact<OneLevel, Dirichlet<DirectionalDiffusion>, RungeKutta1stStage, KernelGradientContactCK>>,
-        DiffusionRelaxationCK<Contact<OneLevel, Dirichlet<DirectionalDiffusion>, RungeKutta2ndStage, KernelGradientContactCK>>>>
-        diffusion_relaxation_rk2(cylinder_contact, cylinder_contact);
+        DiffusionRelaxationCK<Contact<OneLevel, Dirichlet<IsotropicDiffusion>, RungeKutta1stStage, KernelGradientContactCK>>,
+        DiffusionRelaxationCK<Contact<OneLevel, Dirichlet<IsotropicDiffusion>, RungeKutta2ndStage, KernelGradientContactCK>>>>
+        diffusion_relaxation_rk2(DynamicsArgs(cylinder_contact, &diffusion), DynamicsArgs(cylinder_contact, &diffusion));
 
     return 0;
 };
