@@ -195,7 +195,7 @@ class DiffusionRelaxationCK<Inner<InteractionOnly, DiffusionType, KernelGradient
     Real smoothing_length_sq_;
 };
 
-template <class DiffusionType, template <typename> class BoundaryType, class KernelGradientType>
+template <class DiffusionType, template <typename...> class BoundaryType, class KernelGradientType>
 class DiffusionRelaxationCK<Contact<InteractionOnly, BoundaryType<DiffusionType>, KernelGradientType>>
     : public DiffusionRelaxationCK<DiffusionType, Interaction<Contact<>>>
 {

@@ -124,7 +124,7 @@ void DiffusionRelaxationCK<Inner<InteractionOnly, DiffusionType, KernelGradientT
     }
 }
 //=================================================================================================//
-template <class DiffusionType, template <typename> class BoundaryType, class KernelGradientType>
+template <class DiffusionType, template <typename...> class BoundaryType, class KernelGradientType>
 template <typename... Args>
 DiffusionRelaxationCK<Contact<InteractionOnly, BoundaryType<DiffusionType>, KernelGradientType>>::
     DiffusionRelaxationCK(Args &&...args)
@@ -146,7 +146,7 @@ DiffusionRelaxationCK<Contact<InteractionOnly, BoundaryType<DiffusionType>, Kern
     }
 }
 //=================================================================================================//
-template <class DiffusionType, template <typename> class BoundaryType, class KernelGradientType>
+template <class DiffusionType, template <typename...> class BoundaryType, class KernelGradientType>
 template <class ExecutionPolicy, class EncloserType>
 DiffusionRelaxationCK<Contact<InteractionOnly, BoundaryType<DiffusionType>, KernelGradientType>>::
     InteractKernel::InteractKernel(
@@ -157,7 +157,7 @@ DiffusionRelaxationCK<Contact<InteractionOnly, BoundaryType<DiffusionType>, Kern
       gradient_(ex_policy, *encloser.contact_kernel_gradient_method_[contact_index]),
       boundary_flux_(ex_policy, *encloser.contact_boundary_method_[contact_index]) {}
 //=================================================================================================//
-template <class DiffusionType, template <typename> class BoundaryType, class KernelGradientType>
+template <class DiffusionType, template <typename...> class BoundaryType, class KernelGradientType>
 void DiffusionRelaxationCK<Contact<InteractionOnly, BoundaryType<DiffusionType>, KernelGradientType>>::
     InteractKernel::interact(UnsignedInt index_i, Real dt)
 {
