@@ -77,11 +77,11 @@ class MultilevelLevelSet : public BaseMeshField
 
     template <class ExecutionPolicy>
     void initializeLevel(const ExecutionPolicy &ex_policy, size_t level, Real reference_data_spacing,
-                         Real global_h_ratio, BoundingBox tentative_bounds, MeshWithGridDataPackagesType* coarse_data = nullptr);
+                         Real global_h_ratio, BoundingBox tentative_bounds, Kernel *kernel,
+                         MeshWithGridDataPackagesType* coarse_data = nullptr);
     template <class ExecutionPolicy>
     void registerProbes(const ExecutionPolicy &ex_policy, size_t level);
 
-    Kernel &kernel_;
     Shape &shape_;                           /**< the geometry is described by the level set. */
     size_t total_levels_;                    /**< level 0 is the coarsest */
     StdVec<size_t *> cell_package_index_set_;

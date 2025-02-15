@@ -19,18 +19,35 @@ template <class ExecutionPolicy>
 MultilevelLevelSet::MultilevelLevelSet(
     const ExecutionPolicy &ex_policy, BoundingBox tentative_bounds, MeshWithGridDataPackagesType* coarse_data,
     Shape &shape, SPHAdaptation &sph_adaptation)
-    : MultilevelLevelSet(ex_policy, tentative_bounds, coarse_data->DataSpacing() * 0.5, 1, shape, sph_adaptation){};
+    : BaseMeshField("LevelSet_" + shape.getName()), shape_(shape), total_levels_(1)
+{
+    KernelWrapper<Kernel> kernel_wrapper(sph_adaptation.getKernel());
+    Real reference_data_spacing = coarse_data->DataSpacing() * 0.5;
+    Real global_h_ratio = sph_adaptation.ReferenceSpacing() / reference_data_spacing;
+    global_h_ratio_vec_.push_back(global_h_ratio);
+
+    initializeLevel(ex_policy, 0, reference_data_spacing, global_h_ratio,
+                    tentative_bounds, kernel_wrapper.getKernel(ex_policy),
+                    coarse_data);
+    cell_package_index_set_.push_back(mesh_data_set_[0]->cell_package_index_.DelegatedDataField(ex_policy));
+    meta_data_cell_set_.push_back(mesh_data_set_[0]->meta_data_cell_.DelegatedDataField(ex_policy));
+
+    clean_interface = makeUnique<CleanInterface>(*mesh_data_set_.back(), kernel_wrapper.getKernel(par), global_h_ratio_vec_.back());
+    correct_topology = makeUnique<CorrectTopology>(*mesh_data_set_.back(), kernel_wrapper.getKernel(par), global_h_ratio_vec_.back());
+}
 //=================================================================================================//
 template <class ExecutionPolicy>
 MultilevelLevelSet::MultilevelLevelSet(
     const ExecutionPolicy &ex_policy, BoundingBox tentative_bounds, Real reference_data_spacing,
     size_t total_levels, Shape &shape, SPHAdaptation &sph_adaptation)
-    : BaseMeshField("LevelSet_" + shape.getName()), kernel_(*sph_adaptation.getKernel()), shape_(shape), total_levels_(total_levels)
+    : BaseMeshField("LevelSet_" + shape.getName()), shape_(shape), total_levels_(total_levels)
 {
+    KernelWrapper<Kernel> kernel_wrapper(sph_adaptation.getKernel());
     Real global_h_ratio = sph_adaptation.ReferenceSpacing() / reference_data_spacing;
     global_h_ratio_vec_.push_back(global_h_ratio);
 
-    initializeLevel(ex_policy, 0, reference_data_spacing, global_h_ratio, tentative_bounds);
+    initializeLevel(ex_policy, 0, reference_data_spacing, global_h_ratio,
+                    tentative_bounds, kernel_wrapper.getKernel(ex_policy));
     cell_package_index_set_.push_back(mesh_data_set_[0]->cell_package_index_.DelegatedDataField(ex_policy));
     meta_data_cell_set_.push_back(mesh_data_set_[0]->meta_data_cell_.DelegatedDataField(ex_policy));
 
@@ -39,19 +56,21 @@ MultilevelLevelSet::MultilevelLevelSet(
         global_h_ratio *= 2;            // Double the ratio
         global_h_ratio_vec_.push_back(global_h_ratio);
 
-        initializeLevel(ex_policy, level, reference_data_spacing, global_h_ratio, tentative_bounds);
+        initializeLevel(ex_policy, level, reference_data_spacing, global_h_ratio,
+                        tentative_bounds, kernel_wrapper.getKernel(ex_policy), mesh_data_set_[level - 1]);
         cell_package_index_set_.push_back(mesh_data_set_[level]->cell_package_index_.DelegatedDataField(ex_policy));
         meta_data_cell_set_.push_back(mesh_data_set_[level]->meta_data_cell_.DelegatedDataField(ex_policy));
     }
 
-    clean_interface = makeUnique<CleanInterface>(*mesh_data_set_.back(), kernel_, global_h_ratio_vec_.back());
-    correct_topology = makeUnique<CorrectTopology>(*mesh_data_set_.back(), kernel_, global_h_ratio_vec_.back());
+    clean_interface = makeUnique<CleanInterface>(*mesh_data_set_.back(), kernel_wrapper.getKernel(par), global_h_ratio_vec_.back());
+    correct_topology = makeUnique<CorrectTopology>(*mesh_data_set_.back(), kernel_wrapper.getKernel(par), global_h_ratio_vec_.back());
 }
 //=================================================================================================//
 template <class ExecutionPolicy>
 void MultilevelLevelSet::initializeLevel(const ExecutionPolicy &ex_policy, size_t level,
                                          Real reference_data_spacing, Real global_h_ratio,
-                                         BoundingBox tentative_bounds, MeshWithGridDataPackagesType* coarse_data)
+                                         BoundingBox tentative_bounds, Kernel *kernel, 
+                                         MeshWithGridDataPackagesType* coarse_data)
 {
     mesh_data_set_.push_back(
             mesh_data_ptr_vector_keeper_
@@ -70,7 +89,7 @@ void MultilevelLevelSet::initializeLevel(const ExecutionPolicy &ex_policy, size_
     /* All initializations in `FinishDataPackages` are achieved on CPU. */
     FinishDataPackages finish_data_packages(*mesh_data_set_[level], shape_);
     MeshInnerDynamicsCK<ExecutionPolicy, UpdateLevelSetGradient> update_level_set_gradient{*mesh_data_set_[level]};
-    MeshInnerDynamicsCK<execution::ParallelPolicy, UpdateKernelIntegrals> update_kernel_integrals{*mesh_data_set_[level], kernel_, global_h_ratio};
+    MeshInnerDynamicsCK<execution::ParallelPolicy, UpdateKernelIntegrals<Kernel>> update_kernel_integrals{*mesh_data_set_[level], kernel, global_h_ratio};
     finish_data_packages.exec();
     update_level_set_gradient.exec();
     update_kernel_integrals.exec();

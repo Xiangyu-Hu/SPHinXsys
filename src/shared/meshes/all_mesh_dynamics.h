@@ -122,7 +122,7 @@ class ProbeNormalDirection
 class CleanInterface : public BaseMeshDynamics
 {
   public:
-    explicit CleanInterface(MeshWithGridDataPackagesType &mesh_data, Kernel &kernel, Real global_h_ratio)
+    explicit CleanInterface(MeshWithGridDataPackagesType &mesh_data, Kernel *kernel, Real global_h_ratio)
         : BaseMeshDynamics(mesh_data),
           kernel_(kernel),
           global_h_ratio_(global_h_ratio){};
@@ -137,14 +137,14 @@ class CleanInterface : public BaseMeshDynamics
     }
 
   private:
-    Kernel &kernel_;
+    Kernel *kernel_;
     Real global_h_ratio_;
     // MeshInnerDynamics<UpdateLevelSetGradient> update_level_set_gradient{mesh_data_};
     // MeshInnerDynamics<UpdateKernelIntegrals> update_kernel_integrals{mesh_data_, kernel_, global_h_ratio_};
     // MeshCoreDynamics<RedistanceInterface> redistance_interface{mesh_data_};
     // MeshInnerDynamics<ReinitializeLevelSet> reinitialize_level_set{mesh_data_};
     MeshInnerDynamicsCK<execution::ParallelPolicy, UpdateLevelSetGradient> update_level_set_gradient{mesh_data_};
-    MeshInnerDynamicsCK<execution::ParallelPolicy, UpdateKernelIntegrals> update_kernel_integrals{mesh_data_, kernel_, global_h_ratio_};
+    MeshInnerDynamicsCK<execution::ParallelPolicy, UpdateKernelIntegrals<Kernel>> update_kernel_integrals{mesh_data_, kernel_, global_h_ratio_};
     MeshInnerDynamicsCK<execution::ParallelPolicy, MarkNearInterface> mark_near_interface{mesh_data_};
     MeshCoreDynamicsCK<execution::ParallelPolicy, RedistanceInterface> redistance_interface{mesh_data_};
     MeshInnerDynamicsCK<execution::ParallelPolicy, ReinitializeLevelSet> reinitialize_level_set{mesh_data_};
@@ -153,7 +153,7 @@ class CleanInterface : public BaseMeshDynamics
 class CorrectTopology : public BaseMeshDynamics
 {
   public:
-    explicit CorrectTopology(MeshWithGridDataPackagesType &mesh_data, Kernel &kernel, Real global_h_ratio)
+    explicit CorrectTopology(MeshWithGridDataPackagesType &mesh_data, Kernel *kernel, Real global_h_ratio)
         : BaseMeshDynamics(mesh_data),
           kernel_(kernel),
           global_h_ratio_(global_h_ratio){};
@@ -168,13 +168,13 @@ class CorrectTopology : public BaseMeshDynamics
     }
 
   private:
-    Kernel &kernel_;
+    Kernel *kernel_;
     Real global_h_ratio_;
     // MeshInnerDynamics<UpdateLevelSetGradient> update_level_set_gradient{mesh_data_};
     // MeshInnerDynamics<UpdateKernelIntegrals> update_kernel_integrals{mesh_data_, kernel_, global_h_ratio_};
     // MeshInnerDynamics<DiffuseLevelSetSign> diffuse_level_set_sign{mesh_data_};
     MeshInnerDynamicsCK<execution::ParallelPolicy, UpdateLevelSetGradient> update_level_set_gradient{mesh_data_};
-    MeshInnerDynamicsCK<execution::ParallelPolicy, UpdateKernelIntegrals> update_kernel_integrals{mesh_data_, kernel_, global_h_ratio_};
+    MeshInnerDynamicsCK<execution::ParallelPolicy, UpdateKernelIntegrals<Kernel>> update_kernel_integrals{mesh_data_, kernel_, global_h_ratio_};
     MeshInnerDynamicsCK<execution::ParallelPolicy, MarkNearInterface> mark_near_interface{mesh_data_};
     MeshInnerDynamicsCK<execution::ParallelPolicy, DiffuseLevelSetSign> diffuse_level_set_sign{mesh_data_};
 };
