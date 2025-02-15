@@ -393,7 +393,7 @@ class DiffusionRelaxationCK<Contact<BoundaryType<DiffusionType>, KernelGradientT
 
 template <typename TimeSteppingType, template <typename> class BoundaryType,
           class DiffusionType, class KernelGradientType, typename... Parameters>
-class DiffusionRelaxationCK<Contact<OneLevel, TimeSteppingType, BoundaryType<DiffusionType>, KernelGradientType, Parameters...>>
+class DiffusionRelaxationCK<Contact<TimeSteppingType, BoundaryType<DiffusionType>, KernelGradientType, Parameters...>>
     : public DiffusionRelaxationCK<Contact<BoundaryType<DiffusionType>, KernelGradientType, Parameters...>, TimeSteppingType>
 {
     using BaseInteraction = DiffusionRelaxationCK<Contact<BoundaryType<DiffusionType>, KernelGradientType, Parameters...>, TimeSteppingType>;
