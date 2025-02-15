@@ -48,7 +48,8 @@ class Interaction<Inner<Parameters...>> : public LocalDynamics
 {
   public:
     explicit Interaction(Relation<Inner<Parameters...>> &inner_relation);
-    virtual ~Interaction(){};
+    virtual ~Interaction() {};
+    SPHAdaptation *getSPHAdaptation() { return sph_adaptation_; };
 
     class InteractKernel : public NeighborList, public Neighbor<Parameters...>
     {
@@ -74,8 +75,9 @@ class Interaction<Contact<Parameters...>> : public LocalDynamics
 {
   public:
     explicit Interaction(Relation<Contact<Parameters...>> &contact_relation);
-    virtual ~Interaction(){};
-
+    virtual ~Interaction() {};
+    SPHAdaptation *getSPHAdaptation() { return sph_adaptation_; };
+    
     class InteractKernel : public NeighborList, public Neighbor<Parameters...>
     {
       public:
@@ -105,7 +107,7 @@ class Interaction<Contact<Wall, Parameters...>> : public Interaction<Contact<Par
 {
   public:
     explicit Interaction(Relation<Contact<Parameters...>> &wall_contact_relation);
-    virtual ~Interaction(){};
+    virtual ~Interaction() {};
 
   protected:
     StdVec<DiscreteVariable<Vecd> *> dv_wall_vel_ave_, dv_wall_acc_ave_, dv_wall_n_;
