@@ -32,6 +32,7 @@
 #include "diffusion_reaction.h"
 #include "interaction_ck.hpp"
 #include "sphinxsys_variable_array.h"
+#include "sphinxsys_constant.h"
 
 namespace SPH
 {
@@ -194,14 +195,14 @@ class DiffusionRelaxationCK<Inner<InteractionOnly, DiffusionType, KernelGradient
     Real smoothing_length_sq_;
 };
 
-template <class DiffusionType, template <typename> class BoundaryType, class KernelGradientType, typename... Parameters>
-class DiffusionRelaxationCK<Contact<InteractionOnly, BoundaryType<DiffusionType>, KernelGradientType, Parameters...>>
-    : public DiffusionRelaxationCK<DiffusionType, Interaction<Contact<Parameters...>>>
+template <class DiffusionType, template <typename> class BoundaryType, class KernelGradientType>
+class DiffusionRelaxationCK<Contact<InteractionOnly, BoundaryType<DiffusionType>, KernelGradientType>>
+    : public DiffusionRelaxationCK<DiffusionType, Interaction<Contact<>>>
 {
     UniquePtrsKeeper<DiscreteVariableArray<Real>> contact_transfer_array_ptrs_keeper_;
     UniquePtrsKeeper<KernelGradientType> kernel_gradient_ptrs_keeper_;
     UniquePtrsKeeper<BoundaryType<DiffusionType>> boundary_ptrs_keeper_;
-    using BaseInteraction = DiffusionRelaxationCK<DiffusionType, Interaction<Contact<Parameters...>>>;
+    using BaseInteraction = DiffusionRelaxationCK<DiffusionType, Interaction<Contact<>>>;
     using GradientKernel = typename KernelGradientType::ComputingKernel;
     using BoundaryKernel = typename BoundaryType<DiffusionType>::ComputingKernel;
 
