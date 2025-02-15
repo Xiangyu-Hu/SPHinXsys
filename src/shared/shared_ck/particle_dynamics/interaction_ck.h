@@ -39,6 +39,7 @@ namespace SPH
 class WithUpdate;
 class WithInitialization;
 class OneLevel;
+class InteractionOnly;
 
 template <typename... T>
 class Interaction;
@@ -77,7 +78,7 @@ class Interaction<Contact<Parameters...>> : public LocalDynamics
     explicit Interaction(Relation<Contact<Parameters...>> &contact_relation);
     virtual ~Interaction() {};
     SPHAdaptation *getSPHAdaptation() { return sph_adaptation_; };
-    
+
     class InteractKernel : public NeighborList, public Neighbor<Parameters...>
     {
       public:

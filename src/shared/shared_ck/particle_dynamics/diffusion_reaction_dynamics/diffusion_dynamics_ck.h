@@ -160,7 +160,6 @@ class DiffusionRelaxationCK<DiffusionType, BaseInteractionType>
     DiscreteVariableArray<Real> dv_diffusion_dt_array_;
 };
 
-class InteractionOnly;
 template <class DiffusionType, class KernelGradientType, class... Parameters>
 class DiffusionRelaxationCK<Inner<InteractionOnly, DiffusionType, KernelGradientType, Parameters...>>
     : public DiffusionRelaxationCK<DiffusionType, Interaction<Inner<Parameters...>>>
@@ -195,7 +194,7 @@ class DiffusionRelaxationCK<Inner<InteractionOnly, DiffusionType, KernelGradient
     Real smoothing_length_sq_;
 };
 
-template <template <typename> class BoundaryType, class DiffusionType, class KernelGradientType, typename... Parameters>
+template <class DiffusionType, template <typename> class BoundaryType, class KernelGradientType, typename... Parameters>
 class DiffusionRelaxationCK<Contact<InteractionOnly, BoundaryType<DiffusionType>, KernelGradientType, Parameters...>>
     : public DiffusionRelaxationCK<DiffusionType, Interaction<Contact<Parameters...>>>
 {
