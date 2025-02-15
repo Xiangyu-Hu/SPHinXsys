@@ -220,7 +220,8 @@ template <class DiffusionType, class BaseInteractionType>
 class DiffusionRelaxationCK<Base, DiffusionType, BaseInteractionType, ForwardEuler>
     : public DiffusionRelaxationCK<Base, DiffusionType, BaseInteractionType>
 {
-  using BaseDynamicsType = DiffusionRelaxationCK<Base, DiffusionType, BaseInteractionType>;
+    using BaseDynamicsType = DiffusionRelaxationCK<Base, DiffusionType, BaseInteractionType>;
+
   public:
     template <typename... Args>
     DiffusionRelaxationCK(Args &&...args) : BaseDynamicsType(std::forward<Args>(args)...){};
@@ -399,7 +400,7 @@ class DiffusionRelaxationCK<Contact<OneLevel, TimeSteppingType, BoundaryType<Dif
 
   public:
     template <typename... Args>
-    explicit DiffusionRelaxationCK(Args &&...args)
+    DiffusionRelaxationCK(Args &&...args)
         : BaseInteraction(std::forward<Args>(args)...) {}
     virtual ~DiffusionRelaxationCK() {};
 };
