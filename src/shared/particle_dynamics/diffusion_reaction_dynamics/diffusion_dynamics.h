@@ -40,7 +40,7 @@ namespace SPH
 class GetDiffusionTimeStepSize : public BaseDynamics<Real>
 {
   public:
-    GetDiffusionTimeStepSize(SPHBody &sph_body, AbstractDiffusion &abstract_diffusion);
+    GetDiffusionTimeStepSize(SPHBody &sph_body, AbstractDiffusion *abstract_diffusion);
     explicit GetDiffusionTimeStepSize(SPHBody &sph_body);
     virtual ~GetDiffusionTimeStepSize() {};
 
