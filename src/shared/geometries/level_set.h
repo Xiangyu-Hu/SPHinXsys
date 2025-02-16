@@ -100,8 +100,18 @@ class MultilevelLevelSet : public BaseMeshField
     UniquePtrsKeeper<ProbeKernelIntegral> probe_kernel_integral_vector_keeper_;
     UniquePtrsKeeper<ProbeKernelGradientIntegral> probe_kernel_gradient_integral_vector_keeper_;
 
-    UniquePtr<CleanInterface> clean_interface;
-    UniquePtr<CorrectTopology> correct_topology;
+    UniquePtr<CleanInterface<ParallelPolicy>> host_clean_interface_;
+    UniquePtr<CleanInterface<ParallelDevicePolicy>> device_clean_interface_;
+    UniquePtr<CorrectTopology<ParallelPolicy>> host_correct_topology_;
+    UniquePtr<CorrectTopology<ParallelDevicePolicy>> device_correct_topology_;
+
+    typedef std::function<void(Real)> OperatorFunctor;
+    OperatorFunctor clean_interface_;
+    OperatorFunctor correct_topology_;
+
+    template <class ExecutionPolicy>
+    void configOperationExecutionPolicy(const ExecutionPolicy &ex_policy, Kernel *kernel);
+    void configOperationExecutionPolicy(const ParallelDevicePolicy &par_device, Kernel *kernel);
 };
 } // namespace SPH
 #endif // LEVEL_SET_H

@@ -111,25 +111,25 @@ class BaseMeshDynamics
                     ap);
     }
 
-    #if SPHINXSYS_USE_SYCL
-    template <typename FunctionOnData>
-    void BaseMeshDynamics::package_parallel_for(const execution::ParallelDevicePolicy &par_device, const FunctionOnData &function)
-    {
-        auto &sycl_queue = execution_instance.getQueue();
-        sycl_queue.submit([&](sycl::handler &cgh)
-        {
-            const size_t num_grid_pkgs = this->num_grid_pkgs_;
-            cgh.parallel_for(execution_instance.getUniformNdRange(num_grid_pkgs), [=](sycl::nd_item<1> index)
-            {
-                if(index.get_global_id(0) + 2 < num_grid_pkgs)
-                    function(index.get_global_id(0) + 2); 
-            });
-        }).wait_and_throw();
-    }
-    #endif
-
+    // #if SPHINXSYS_USE_SYCL
     // template <typename FunctionOnData>
-    // void package_parallel_for(const execution::ParallelDevicePolicy &par_device, const FunctionOnData &function);
+    // void BaseMeshDynamics::package_parallel_for(const execution::ParallelDevicePolicy &par_device, const FunctionOnData &function)
+    // {
+    //     auto &sycl_queue = execution_instance.getQueue();
+    //     sycl_queue.submit([&](sycl::handler &cgh)
+    //     {
+    //         const size_t num_grid_pkgs = this->num_grid_pkgs_;
+    //         cgh.parallel_for(execution_instance.getUniformNdRange(num_grid_pkgs), [=](sycl::nd_item<1> index)
+    //         {
+    //             if(index.get_global_id(0) + 2 < num_grid_pkgs)
+    //                 function(index.get_global_id(0) + 2); 
+    //         });
+    //     }).wait_and_throw();
+    // }
+    // #endif
+
+    template <typename FunctionOnData>
+    void package_parallel_for(const execution::ParallelDevicePolicy &par_device, const FunctionOnData &function);
     // {
     //     auto &sycl_queue = execution_instance.getQueue();
     //     sycl_queue.submit([&](sycl::handler &cgh)

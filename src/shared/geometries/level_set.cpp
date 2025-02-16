@@ -2,6 +2,7 @@
 
 #include "adaptation.h"
 #include "base_kernel.h"
+#include <type_traits>
 
 namespace SPH
 {
@@ -32,8 +33,7 @@ MultilevelLevelSet::MultilevelLevelSet(
     cell_package_index_set_.push_back(mesh_data_set_[0]->cell_package_index_.DelegatedDataField(ex_policy));
     meta_data_cell_set_.push_back(mesh_data_set_[0]->meta_data_cell_.DelegatedDataField(ex_policy));
 
-    clean_interface = makeUnique<CleanInterface>(*mesh_data_set_.back(), kernel_wrapper.getKernel(par), global_h_ratio_vec_.back());
-    correct_topology = makeUnique<CorrectTopology>(*mesh_data_set_.back(), kernel_wrapper.getKernel(par), global_h_ratio_vec_.back());
+    configOperationExecutionPolicy(ex_policy, kernel_wrapper.getKernel(ex_policy));
 }
 //=================================================================================================//
 template <class ExecutionPolicy>
@@ -62,8 +62,19 @@ MultilevelLevelSet::MultilevelLevelSet(
         meta_data_cell_set_.push_back(mesh_data_set_[level]->meta_data_cell_.DelegatedDataField(ex_policy));
     }
 
-    clean_interface = makeUnique<CleanInterface>(*mesh_data_set_.back(), kernel_wrapper.getKernel(par), global_h_ratio_vec_.back());
-    correct_topology = makeUnique<CorrectTopology>(*mesh_data_set_.back(), kernel_wrapper.getKernel(par), global_h_ratio_vec_.back());
+    configOperationExecutionPolicy(ex_policy, kernel_wrapper.getKernel(ex_policy));
+}
+//=================================================================================================//
+template <class ExecutionPolicy>
+void MultilevelLevelSet::configOperationExecutionPolicy(const ExecutionPolicy &ex_policy, Kernel *kernel)
+{
+    host_clean_interface_ = makeUnique<CleanInterface<ParallelPolicy>>(*mesh_data_set_.back(), kernel, global_h_ratio_vec_.back());
+    host_correct_topology_ = makeUnique<CorrectTopology<ParallelPolicy>>(*mesh_data_set_.back(), kernel, global_h_ratio_vec_.back());
+
+    device_clean_interface_ = nullptr;
+    device_correct_topology_ = nullptr;
+    clean_interface_ = std::bind(&CleanInterface<ParallelPolicy>::exec, host_clean_interface_.get(), _1);
+    correct_topology_ = std::bind(&CorrectTopology<ParallelPolicy>::exec, host_correct_topology_.get(), _1);
 }
 //=================================================================================================//
 template <class ExecutionPolicy>
@@ -131,12 +142,12 @@ size_t MultilevelLevelSet::getCoarseLevel(Real h_ratio)
 //=================================================================================================//
 void MultilevelLevelSet::cleanInterface(Real small_shift_factor)
 {
-    clean_interface->exec(small_shift_factor);
+    clean_interface_(small_shift_factor);
 }
 //=============================================================================================//
 void MultilevelLevelSet::correctTopology(Real small_shift_factor)
 {
-    correct_topology->exec(small_shift_factor);
+    correct_topology_(small_shift_factor);
 }
 //=============================================================================================//
 Real MultilevelLevelSet::probeSignedDistance(const Vecd &position)
