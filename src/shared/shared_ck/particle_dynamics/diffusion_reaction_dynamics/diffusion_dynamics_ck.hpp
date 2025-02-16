@@ -20,7 +20,11 @@ DiffusionRelaxationCK<DiffusionType, BaseInteractionType>::
       diffusions_(this->getConcreteDiffusions(*abstract_diffusion)),
       dv_diffusion_species_array_(this->getDiffusionVariables(this->particles_, "")),
       dv_gradient_species_array_(this->getGradientVariables(this->particles_, "")),
-      dv_diffusion_dt_array_(this->getDiffusionVariables(this->particles_, "ChangeRate")) {}
+      dv_diffusion_dt_array_(this->getDiffusionVariables(this->particles_, "ChangeRate"))
+{
+    this->particles_->template addVariableToWrite<Real>(&dv_diffusion_species_array_);
+    this->particles_->template addVariableToWrite<Real>(&dv_gradient_species_array_);
+}
 //=================================================================================================//
 template <class DiffusionType, class BaseInteractionType>
 template <class DynamicsIdentifier>
@@ -273,7 +277,10 @@ Dirichlet<DiffusionType>::Dirichlet(DiffusionDynamics &diffusion_dynamics, BaseP
           pow(diffusion_dynamics.getSPHAdaptation()->ReferenceSmoothingLength(), 2)),
       dv_gradient_species_array_(diffusion_dynamics.dvGradientSpeciesArray()),
       contact_dv_gradient_species_array_(diffusion_dynamics.getGradientVariables(contact_particles, "")),
-      ca_inter_particle_diffusion_coeff_(diffusion_dynamics.getDiffusions()) {}
+      ca_inter_particle_diffusion_coeff_(diffusion_dynamics.getDiffusions())
+{
+    contact_particles->template addVariableToWrite<Real>(&contact_dv_gradient_species_array_);
+}
 //=================================================================================================//
 template <class DiffusionType>
 template <class ExecutionPolicy, class EncloserType>
@@ -300,13 +307,15 @@ Vecd Dirichlet<DiffusionType>::ComputingKernel::operator()(
 template <class DiffusionType>
 template <class DiffusionDynamics>
 Neumann<DiffusionType>::Neumann(DiffusionDynamics &diffusion_dynamics, BaseParticles *contact_particles)
-    : contact_dv_species_flux_array_(diffusion_dynamics.getDiffusionVariables(contact_particles, "Flux")) {}
+    : dv_contact_n_(contact_particles->getVariableByName<Vecd>("NormalDirection")),
+      contact_dv_species_flux_array_(diffusion_dynamics.getDiffusionVariables(contact_particles, "Flux")) {}
 //=================================================================================================//
 template <class DiffusionType>
 template <class ExecutionPolicy, class EncloserType>
 Neumann<DiffusionType>::ComputingKernel::
     ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-    : contact_species_flux_(
+    : contact_n_(encloser.dv_contact_n_->DelegatedData(ex_policy)),
+      contact_species_flux_(
           encloser.contact_dv_species_flux_array_.DelegatedDataArray(ex_policy)) {}
 //=================================================================================================//
 template <class DiffusionType>
@@ -314,7 +323,7 @@ Vecd Neumann<DiffusionType>::ComputingKernel::operator()(
     UnsignedInt m, UnsignedInt index_i, UnsignedInt index_j,
     const Vecd &e_ij, const Vecd &vec_r_ij)
 {
-    return contact_species_flux_[m][index_j] * e_ij;
+    return -contact_species_flux_[m][index_j] * contact_n_[index_j];
 }
 //=================================================================================================//
 } // namespace SPH

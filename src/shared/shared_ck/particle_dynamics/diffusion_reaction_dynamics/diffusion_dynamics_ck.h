@@ -367,10 +367,12 @@ class Neumann<DiffusionType>
         Vecd operator()(UnsignedInt m, UnsignedInt index_i, UnsignedInt index_j, const Vecd &e_ij, const Vecd &vec_r_ij);
 
       protected:
+        Vecd *contact_n_;
         DataArray<Real> *contact_species_flux_;
     };
 
   protected:
+    DiscreteVariable<Vecd> *dv_contact_n_;
     DiscreteVariableArray<Real> contact_dv_species_flux_array_;
 };
 } // namespace SPH

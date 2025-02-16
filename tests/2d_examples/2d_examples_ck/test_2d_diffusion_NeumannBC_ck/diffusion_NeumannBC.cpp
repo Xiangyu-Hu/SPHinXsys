@@ -26,7 +26,7 @@ std::string diffusion_species_name = "Phi";
 Real initial_temperature = 100.0;
 Real left_temperature = 300.0;
 Real right_temperature = 350.0;
-Real heat_flux = 900.0;
+Real heat_flux = 900.0; //from the Nemann boundary
 //----------------------------------------------------------------------
 //	Generate 2D geometrics used in the case.
 //----------------------------------------------------------------------

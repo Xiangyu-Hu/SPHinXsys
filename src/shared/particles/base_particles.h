@@ -182,9 +182,14 @@ class BaseParticles
     template <typename DataType>
     DiscreteVariable<DataType> *addVariableToList(ParticleVariables &variable_set, DiscreteVariable<DataType> *variable);
     template <typename DataType>
+    void *addVariableToList(ParticleVariables &variable_set, DiscreteVariableArray<DataType> *variable);
+
+    template <typename DataType>
     void addVariableToWrite(const std::string &name);
     template <typename DataType>
     void addVariableToWrite(DiscreteVariable<DataType> *variable);
+    template <typename DataType>
+    void addVariableToWrite(DiscreteVariableArray<DataType> *variable_array);
     template <typename DataType>
     void addVariableToRestart(const std::string &name);
 
