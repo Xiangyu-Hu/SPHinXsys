@@ -289,7 +289,7 @@ int main(int ac, char *av[])
     ParticleSortCK<MainExecutionPolicy, QuickSort> particle_sort(water_block);
 
     IsotropicDiffusion diffusion(diffusion_species_name, diffusion_species_name, diffusion_coeff);
-    GetDiffusionTimeStepSize get_thermal_time_step(cylinder, diffusion);
+    GetDiffusionTimeStepSize get_thermal_time_step(cylinder, &diffusion);
     StateDynamics<MainExecutionPolicy, InitialCondition<SPHBody, UniformDistribution<Real>>>
         cylinder_initial_condition(cylinder, diffusion_species_name, wall_moisture);
     StateDynamics<MainExecutionPolicy, InitialCondition<SPHBody, UniformDistribution<Real>>>
