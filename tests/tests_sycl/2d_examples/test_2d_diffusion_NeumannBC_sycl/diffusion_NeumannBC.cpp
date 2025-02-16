@@ -4,7 +4,7 @@
  * @details This is the first case to validate multiple boundary conditions.
  * @author 	Chenxi Zhao, Bo Zhang, Chi Zhang and Xiangyu Hu
  */
-#include "sphinxsys_ck.h"
+#include "sphinxsys_sycl.h"
 
 using namespace SPH;
 //----------------------------------------------------------------------
@@ -141,7 +141,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     // Define the main execution policy for this case.
     //----------------------------------------------------------------------
-    using MainExecutionPolicy = execution::ParallelPolicy;
+    using MainExecutionPolicy = execution::ParallelDevicePolicy;
     //----------------------------------------------------------------------
     // Define the numerical methods used in the simulation.
     // Note that there may be data dependence on the sequence of constructions.
