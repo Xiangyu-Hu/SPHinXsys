@@ -136,7 +136,7 @@ DiffusionRelaxationCK<Contact<InteractionOnly, BoundaryType<DiffusionType>, Kern
             this->contact_particles_[k]->template getVariableByName<Real>("VolumetricMeasure"));
         contact_dv_transfer_array_.push_back(
             contact_transfer_array_ptrs_keeper_.createPtr<DiscreteVariableArray<Real>>(
-                this->getDiffusionVariables(this->contact_particles_[k], "TransferWith" + this->sph_body_.getName())));
+                this->getDiffusionVariables(this->particles_, "TransferWith" + this->sph_body_.getName())));
         contact_kernel_gradient_method_.push_back(
             kernel_gradient_ptrs_keeper_.template createPtr<KernelGradientType>(
                 this->particles_, this->contact_particles_[k]));
