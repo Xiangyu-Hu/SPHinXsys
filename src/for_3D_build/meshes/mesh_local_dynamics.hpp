@@ -21,6 +21,17 @@ void BaseMeshLocalDynamics::for_each_cell_data(const FunctionOnData &function)
             }
 }
 //=============================================================================================//
+inline std::pair<size_t, Arrayi> BaseMeshLocalDynamics::
+    NeighbourIndexShift(const Arrayi shift_index, const CellNeighborhood &neighbour)
+{
+    std::pair<size_t, Arrayi> result;
+    Arrayi neighbour_index = (shift_index + pkg_size * Arrayi::Ones()) / pkg_size;
+    result.first = neighbour[neighbour_index[0]][neighbour_index[1]][neighbour_index[2]];
+    result.second = (shift_index + pkg_size * Arrayi::Ones()) - neighbour_index * pkg_size;
+
+    return result;
+}
+//=============================================================================================//
 template <typename DataType>
 DataType BaseMeshLocalDynamics::DataValueFromGlobalIndex(MeshVariableData<DataType> *mesh_variable_data,
                                                          const Arrayi &global_grid_index,
