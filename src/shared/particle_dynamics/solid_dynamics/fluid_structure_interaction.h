@@ -72,7 +72,6 @@ class ViscousForceFromFluid : public BaseForceFromFluid
     Vecd *vel_ave_;
     StdVec<Real *> contact_Vol_;
     StdVec<Vecd *> contact_vel_;
-    StdVec<Matd *> contact_correction_;
     StdVec<Real> mu_;
     StdVec<Real> smoothing_length_;
 };
@@ -98,7 +97,6 @@ class PressureForceFromFluid : public BaseForceFromFluid
     Vecd *vel_ave_, *acc_ave_, *n_;
     StdVec<Real *> contact_rho_, contact_mass_, contact_p_, contact_Vol_;
     StdVec<Vecd *> contact_vel_, contact_force_prior_;
-    StdVec<Matd *> contact_correction_;
     StdVec<RiemannSolverType> riemann_solvers_;
 };
 
