@@ -104,13 +104,13 @@ template <typename... Parameters>
 void FreeSurfaceIndicationCK<Inner<WithUpdate, Internal, Parameters...>>::UpdateKernel::update(
     size_t index_i, Real dt)
 {
-    int new_indicator = 1;
+    // int new_indicator = 1;
     if (this->pos_div_[index_i] > this->threshold_by_dimensions_)
     {
-        new_indicator = 0;
+        this->pos_div_[index_i] = 2.0 * this->threshold_by_dimensions_;
     }
-    this->indicator_[index_i] = new_indicator;
-    this->previous_surface_indicator_[index_i] = new_indicator;
+    // this->indicator_[index_i] = new_indicator;
+    // this->previous_surface_indicator_[index_i] = new_indicator;
 }
 
 //=================================================================================================//
@@ -170,9 +170,36 @@ template <typename... Parameters>
 void FreeSurfaceIndicationCK<Inner<WithUpdate, SpatialTemporal, Parameters...>>::InteractKernel::interact(
     size_t index_i, Real dt)
 {
+    Real pos_div = 0.0;
+    for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
+    {
+        const UnsignedInt index_j = this->neighbor_index_[n];
+        const Real r_ij = this->vec_r_ij(index_i, index_j).norm();
+        pos_div -= this->dW_ij(index_i, index_j) * this->Vol_[index_j] * r_ij;
+    }
+    this->pos_div_[index_i] = pos_div;
+}
+
+template <typename... Parameters>
+template <class ExecutionPolicy>
+FreeSurfaceIndicationCK<Inner<WithUpdate, SpatialTemporal, Parameters...>>::UpdateKernel::UpdateKernel(
+    const ExecutionPolicy &ex_policy,
+    FreeSurfaceIndicationCK<Inner<WithUpdate, SpatialTemporal, Parameters...>> &encloser)
+    : FreeSurfaceIndicationCK<Base, Inner<Parameters...>>::InteractKernel(ex_policy, encloser),
+      previous_surface_indicator_(encloser.dv_previous_surface_indicator_->DelegatedData(ex_policy)),
+      is_near_surface_indicator_(
+          encloser.dv_is_near_surface_indicator_->DelegatedData(ex_policy))
+{
+}
+
+template <typename... Parameters>
+void FreeSurfaceIndicationCK<Inner<WithUpdate, SpatialTemporal, Parameters...>>::UpdateKernel::update(
+    size_t index_i, Real dt)
+{
     bool is_near_surface = false;
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
     {
+        /** Two layer particles.*/
         const UnsignedInt index_j = this->neighbor_index_[n];
         const Real r_ij = this->vec_r_ij(index_i, index_j).norm();
         if ((this->pos_div_[index_j] < this->threshold_by_dimensions_) &&
@@ -194,32 +221,17 @@ void FreeSurfaceIndicationCK<Inner<WithUpdate, SpatialTemporal, Parameters...>>:
             break;
         }
     }
-    if ((this->pos_div_[index_i] < this->threshold_by_dimensions_) &&
-        !is_near_surface && !is_near_previous_surface)
+
+    if (this->pos_div_[index_i] < this->threshold_by_dimensions_ &&
+        this->previous_surface_indicator_[index_i] != 1 &&
+        !is_near_previous_surface)
     {
         this->pos_div_[index_i] = 2.0 * this->threshold_by_dimensions_;
     }
-}
 
-template <typename... Parameters>
-template <class ExecutionPolicy>
-FreeSurfaceIndicationCK<Inner<WithUpdate, SpatialTemporal, Parameters...>>::UpdateKernel::UpdateKernel(
-    const ExecutionPolicy &ex_policy,
-    FreeSurfaceIndicationCK<Inner<WithUpdate, SpatialTemporal, Parameters...>> &encloser)
-    : FreeSurfaceIndicationCK<Base, Inner<Parameters...>>::InteractKernel(ex_policy, encloser),
-      previous_surface_indicator_(encloser.dv_previous_surface_indicator_->DelegatedData(ex_policy)),
-      is_near_surface_indicator_(
-          encloser.dv_is_near_surface_indicator_->DelegatedData(ex_policy))
-{
-}
-
-template <typename... Parameters>
-void FreeSurfaceIndicationCK<Inner<WithUpdate, SpatialTemporal, Parameters...>>::UpdateKernel::update(
-    size_t index_i, Real dt)
-{
     int new_indicator = 1;
     if ((this->pos_div_[index_i] > this->threshold_by_dimensions_) &&
-        !this->is_near_surface_indicator_[index_i])
+        !is_near_surface)
     {
         new_indicator = 0;
     }

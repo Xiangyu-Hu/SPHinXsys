@@ -240,7 +240,7 @@ class FreeSurfaceIndicationCK<Contact<Parameters...>>
 using FreeSurfaceIndicationInnerCK = FreeSurfaceIndicationCK<Inner<WithUpdate, FreeSurface>>;
 using FreeSurfaceIndicationInnerSpatialTemporalCK = FreeSurfaceIndicationCK<Inner<WithUpdate, FreeSurface>, Inner<WithUpdate, SpatialTemporal>>;
 using FreeSurfaceIndicationComplexCK = FreeSurfaceIndicationCK<Inner<WithUpdate, Internal>, Contact<>>;
-using FreeSurfaceIndicationComplexSpatialTemporalCK = FreeSurfaceIndicationCK<Inner<Base, Internal>, Inner<WithUpdate, SpatialTemporal>, Contact<>>;
+using FreeSurfaceIndicationComplexSpatialTemporalCK = FreeSurfaceIndicationCK<Inner<WithUpdate, SpatialTemporal>, Contact<>>;
 
 } // namespace fluid_dynamics
 } // namespace SPH
