@@ -54,9 +54,9 @@ DataType BaseMeshLocalDynamics::DataValueFromGlobalIndex(MeshVariableData<DataTy
 template <typename DataType>
 DataType BaseMeshLocalDynamics::CornerAverage(MeshVariableData<DataType> *mesh_variable_data,
                                               Arrayi addrs_index, Arrayi corner_direction,
-                                              CellNeighborhood &neighborhood)
+                                              CellNeighborhood &neighborhood, DataType zero)
 {
-    DataType average = ZeroData<DataType>::value;
+    DataType average = zero;
     for (int i = 0; i != 2; ++i)
         for (int j = 0; j != 2; ++j)
             for (int k = 0; k != 2; ++k)
@@ -205,7 +205,9 @@ inline void MarkNearInterface::UpdateKernel::update(const size_t &package_index,
     mesh_for_each3d<0, 5>(
         [&](int i, int j, int k)
         {
-            corner_averages[i][j][k] = BaseMeshLocalDynamics::CornerAverage(phi_, Arrayi(i, j, k), Arrayi(-1, -1, -1), cell_neighborhood_[package_index]);
+            corner_averages[i][j][k] = BaseMeshLocalDynamics::CornerAverage(phi_, Arrayi(i, j, k),
+                                                                            Arrayi(-1, -1, -1),
+                                                                            cell_neighborhood_[package_index], (Real)0);
         });
 
     BaseMeshLocalDynamics::for_each_cell_data(
