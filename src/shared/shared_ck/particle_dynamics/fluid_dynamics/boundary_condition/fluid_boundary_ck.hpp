@@ -62,12 +62,40 @@ DisposerOutflowDeletionCK::UpdateKernel::
 //=================================================================================================//
 void DisposerOutflowDeletionCK::UpdateKernel::update(size_t index_i, Real dt)
 {
-    if (aligned_box_->checkUpperBound(pos_[index_i]))
+    if (aligned_box_->checkContain(pos_[index_i]))
     {
         remove_real_particle_(index_i);
     }
 }
 //=================================================================================================//
+} // namespace fluid_dynamics
+} // namespace SPH
+namespace SPH
+{
+namespace fluid_dynamics
+{
+//=================================================================================================//
+template <class ExecutionPolicy, class EncloserType>
+TagBufferParticlesCK::UpdateKernel::
+    UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+    : aligned_box_(encloser.sv_aligned_box_->DelegatedData(ex_policy)),
+      //   part_id_(encloser.sv_part_id_->DelegatedData(ex_policy)),
+      pos_(encloser.dv_pos_->DelegatedData(ex_policy)),
+      buffer_particle_indicator_(encloser.dv_buffer_particle_indicator_->DelegatedData(ex_policy))
+{
+}
+//=================================================================================================//
+void TagBufferParticlesCK::UpdateKernel::update(size_t index_i, Real dt)
+{
+    int buffer_indicator = 0;
+    if (aligned_box_->checkContain(pos_[index_i]))
+    {
+        buffer_indicator = 1;
+    }
+    // TODO: we need a getPartID sv version!
+    // TODO: maybe a initial state to set all buffer indicator = 0 first?
+    buffer_particle_indicator_[index_i] = buffer_indicator;
+}
 } // namespace fluid_dynamics
 } // namespace SPH
 #endif // FLUID_BOUNDARY_CK_HPP

@@ -15,7 +15,7 @@ Real DH = 0.001;                                             /**< Channel height
 Real resolution_ref = DH / 20.0;                             /**< Initial reference particle spacing. */
 Real BW = resolution_ref * 4;                                /**< Extending width for BCs. */
 StdVec<Vecd> observer_location = {Vecd(0.5 * DL, 0.5 * DH)}; /**< Displacement observation point. */
-BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
+BoundingBox system_domain_bounds(Vec2d(-BW * 2, -BW * 2), Vec2d(DL + BW * 2, DH + BW * 2));
 //----------------------------------------------------------------------
 //	Material parameters.
 //----------------------------------------------------------------------
@@ -29,9 +29,11 @@ Real c_f = 10.0 * U_f;
 //----------------------------------------------------------------------
 //	Geometric shapes used in this case.
 //----------------------------------------------------------------------
-Vec2d bidirectional_buffer_halfsize = Vec2d(2.5 * resolution_ref, 0.5 * DH);
+Real bidrectional_buffer_length = 5.0 * resolution_ref;
+Vec2d bidirectional_buffer_halfsize = Vec2d(bidrectional_buffer_length * 0.5, 0.5 * DH);
 Vec2d left_bidirectional_translation = bidirectional_buffer_halfsize;
-Vec2d right_bidirectional_translation = Vec2d(DL - 2.5 * resolution_ref, 0.5 * DH);
+Vec2d right_bidirectional_translation = Vec2d(DL - 0.5 * bidrectional_buffer_length, 0.5 * DH);
+Vec2d right_disposer_translation = Vec2d(DL + 0.5 * bidrectional_buffer_length, 0.5 * DH);
 Vec2d normal = Vec2d(1.0, 0.0);
 //----------------------------------------------------------------------
 //	Pressure boundary definition.
@@ -154,6 +156,10 @@ int main(int ac, char *av[])
     //	Creating body parts.
     //----------------------------------------------------------------------
     AlignedBoxPartByParticle emitter(water_body, AlignedBox(xAxis, Transform(left_bidirectional_translation), bidirectional_buffer_halfsize));
+    AlignedBoxPartByCell emitter_by_cell(water_body, AlignedBox(xAxis, Transform(left_bidirectional_translation), bidirectional_buffer_halfsize));
+    AlignedBoxPartByCell test_right_ABPC(water_body, AlignedBox(xAxis, Transform(Vec2d(right_bidirectional_translation)), bidirectional_buffer_halfsize));
+    AlignedBoxPartByCell right_disposer(water_body, AlignedBox(xAxis, Transform(Vec2d(right_disposer_translation)), bidirectional_buffer_halfsize));
+
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -209,10 +215,11 @@ int main(int ac, char *av[])
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::ViscousForceWithWallCK>
         fluid_viscous_force(water_body_inner, water_wall_contact);
 
+    StateDynamics<SequencedExecutionPolicy, fluid_dynamics::TagBufferParticlesCK> left_tag_buffer_particle_(test_right_ABPC);
+    StateDynamics<SequencedExecutionPolicy, fluid_dynamics::TagBufferParticlesCK> right_tag_buffer_particle_(emitter_by_cell);
+
     StateDynamics<MainExecutionPolicy, fluid_dynamics::InflowConditionCK<AlignedBoxPartByParticle, InletInflowCondition>> inflow_condition(emitter);
     StateDynamics<SequencedExecutionPolicy, fluid_dynamics::EmitterInflowInjectionCK> emitter_injection(emitter, inlet_buffer);
-
-    AlignedBoxPartByCell right_disposer(water_body, AlignedBox(xAxis, Transform(Vec2d(right_bidirectional_translation)), bidirectional_buffer_halfsize));
     StateDynamics<SequencedExecutionPolicy, fluid_dynamics::DisposerOutflowDeletionCK> right_remove_particles(right_disposer);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
@@ -224,7 +231,7 @@ int main(int ac, char *av[])
     body_states_recording.addToWrite<int>(water_body, "Indicator");
     body_states_recording.addToWrite<Real>(water_body, "Density");
     body_states_recording.addToWrite<Vecd>(water_body, "ZeroGradientResidue");
-    // body_states_recording.addToWrite<int>(water_body, "BufferParticleIndicator");
+    body_states_recording.addToWrite<int>(water_body, "BufferParticleIndicator");
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<MainExecutionPolicy, Vecd>> write_centerline_velocity("Velocity", velocity_observer_contact);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
@@ -297,6 +304,8 @@ int main(int ac, char *av[])
             /** inflow emitter injection*/
             emitter_injection.exec();
             right_remove_particles.exec();
+            left_tag_buffer_particle_.exec();
+            right_tag_buffer_particle_.exec();
             /** Update cell linked list and configuration. */
             if (number_of_iterations % 100 == 0 && number_of_iterations != 1)
             {

@@ -153,4 +153,80 @@ class DisposerOutflowDeletionCK : public BaseLocalDynamics<AlignedBoxPartByCell>
 };
 } // namespace fluid_dynamics
 } // namespace SPH
+namespace SPH
+{
+namespace fluid_dynamics
+{
+struct NonPrescribedPressure
+{
+    template <class BoundaryConditionType>
+    NonPrescribedPressure(BoundaryConditionType &boundary_condition) {}
+
+    Real operator()(Real p, Real current_time)
+    {
+        return p;
+    }
+};
+
+// class TagBufferParticlesCK : public BaseLocalDynamics<AlignedBoxPartByCell>
+// {
+//     TagBufferParticlesCK(AlignedBoxPartByCell &aligned_box_part) : BaseLocalDynamics<AlignedBoxPartByCell>(aligned_box_part),
+//                                                                    sv_aligned_box_(aligned_box_part.svAlignedBox()),
+//                                                                    sv_part_id_(sv_aligned_box_->getPartID()),
+//                                                                    dv_pos_(particles_->getVariableDataByName<Vecd>("Position")),
+//                                                                    dv_buffer_particle_indicator_(particles_->registerStateVariableOnly<int>("BufferParticleIndicator"))
+//     {
+//         aligned_box_part.addVariableToSort<int>("BufferParticleIndicator");
+//     };
+//     virtual ~TagBufferParticlesCK() {};
+//     class UpdateKernel
+//     {
+//       public:
+//         template <class ExecutionPolicy, class EncloserType>
+//         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+//         void update(size_t index_i, Real dt = 0.0);
+
+//       protected:
+//         int *part_id_;
+//         Vecd *pos_;
+//         AlignedBox *aligned_box_;
+//         int *buffer_particle_indicator_;
+//     };
+
+//   protected:
+//     SingularVariable<AlignedBox> *sv_aligned_box_;
+//     SingularVariable<int> *sv_part_id_;
+//     DiscreteVariable<Vecd> *dv_pos_;
+//     DiscreteVariable<int> *dv_buffer_particle_indicator_;
+// };
+
+class TagBufferParticlesCK : public BaseLocalDynamics<AlignedBoxPartByCell>
+{
+
+  public:
+    TagBufferParticlesCK(AlignedBoxPartByCell &aligned_box_part);
+    virtual ~TagBufferParticlesCK() {};
+
+    class UpdateKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+        void update(size_t index_i, Real dt = 0.0); // only works in sequenced policy
+
+      protected:
+        AlignedBox *aligned_box_;
+        int *part_id_;
+        Vecd *pos_;
+        int *buffer_particle_indicator_;
+    };
+
+  protected:
+    SingularVariable<AlignedBox> *sv_aligned_box_;
+    DiscreteVariable<Vecd> *dv_pos_;
+    DiscreteVariable<int> *dv_buffer_particle_indicator_;
+};
+
+} // namespace fluid_dynamics
+} // namespace SPH
 #endif // FLUID_BOUNDARY_CK_H
