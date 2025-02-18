@@ -164,24 +164,6 @@ DataType *BaseParticles::registerStateVariableFrom(
 }
 //=================================================================================================//
 template <typename DataType>
-DiscreteVariable<DataType> *BaseParticles::registerStateVariableOnlyFrom(
-    const std::string &new_name, const std::string &old_name)
-{
-    DiscreteVariable<DataType> *variable = findVariableByName<DataType>(all_discrete_variables_, old_name);
-
-    if (variable == nullptr)
-    {
-        std::cout << "\nError: the old variable '" << old_name << "' is not registered!\n";
-        std::cout << __FILE__ << ':' << __LINE__ << std::endl;
-        exit(1);
-    }
-
-    DataType *old_data_field = variable->Data();
-    return registerStateVariableOnly<DataType>(new_name, [&](size_t index)
-                                               { return old_data_field[index]; });
-}
-//=================================================================================================//
-template <typename DataType>
 DataType *BaseParticles::registerStateVariableFrom(
     const std::string &name, const StdLargeVec<DataType> &geometric_data)
 {
@@ -207,6 +189,48 @@ DataType *BaseParticles::registerStateVariableFromReload(const std::string &name
     }
 
     return data_field;
+}
+//=================================================================================================//
+template <typename DataType>
+DiscreteVariable<DataType> *BaseParticles::registerStateVariableOnlyFrom(
+    const std::string &new_name, const std::string &old_name)
+{
+    DiscreteVariable<DataType> *variable = findVariableByName<DataType>(all_discrete_variables_, old_name);
+
+    if (variable == nullptr)
+    {
+        std::cout << "\nError: the old variable '" << old_name << "' is not registered!\n";
+        std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+        exit(1);
+    }
+
+    DataType *old_data_field = variable->Data();
+    return registerStateVariableOnly<DataType>(new_name, [&](size_t index)
+                                               { return old_data_field[index]; });
+}
+//=================================================================================================//
+template <typename DataType>
+DiscreteVariable<DataType> *BaseParticles::registerStateVariableOnlyFrom(
+    const std::string &name, const StdLargeVec<DataType> &geometric_data)
+{
+    return registerStateVariableOnly<DataType>(name, [&](size_t index)
+                                               { return geometric_data[index]; });
+}
+//=================================================================================================//
+template <typename DataType>
+DiscreteVariable<DataType> *BaseParticles::registerStateVariableOnlyFromReload(const std::string &name)
+{
+    DiscreteVariable<DataType> *new_variable = registerStateVariableOnly<DataType>(name);
+    DataType *data_field = new_variable->Data();
+
+    size_t index = 0;
+    for (auto child = reload_xml_parser_.first_element_->FirstChildElement(); child; child = child->NextSiblingElement())
+    {
+        reload_xml_parser_.queryAttributeValue(child, name, data_field[index]);
+        index++;
+    }
+
+    return new_variable;
 }
 //=================================================================================================//
 template <typename DataType>

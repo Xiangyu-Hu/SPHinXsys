@@ -12,7 +12,7 @@ namespace SPH
 BaseParticles::BaseParticles(SPHBody &sph_body, BaseMaterial *base_material)
     : sv_total_real_particles_(nullptr),
       particles_bound_(0), original_id_(nullptr), sorted_id_(nullptr),
-      pos_(nullptr), Vol_(nullptr), rho_(nullptr), mass_(nullptr),
+      dv_pos_(nullptr), Vol_(nullptr), rho_(nullptr), mass_(nullptr),
       sph_body_(sph_body), body_name_(sph_body.getName()),
       base_material_(*base_material),
       restart_xml_parser_("xml_restart", "particles"),
@@ -50,7 +50,7 @@ void BaseParticles::initializeBasicParticleVariables()
 //=================================================================================================//
 void BaseParticles::registerPositionAndVolumetricMeasure(StdLargeVec<Vecd> &pos, StdLargeVec<Real> &Vol)
 {
-    pos_ = registerStateVariableFrom<Vecd>("Position", pos);
+    dv_pos_ = registerStateVariableOnlyFrom<Vecd>("Position", pos);
     Vol_ = registerStateVariableFrom<Real>("VolumetricMeasure", Vol);
     addVariableToReload<Vecd>("Position");
     addVariableToReload<Real>("VolumetricMeasure");
@@ -58,7 +58,7 @@ void BaseParticles::registerPositionAndVolumetricMeasure(StdLargeVec<Vecd> &pos,
 //=================================================================================================//
 void BaseParticles::registerPositionAndVolumetricMeasureFromReload()
 {
-    pos_ = registerStateVariableFromReload<Vecd>("Position");
+    dv_pos_ = registerStateVariableOnlyFromReload<Vecd>("Position");
     Vol_ = registerStateVariableFromReload<Real>("VolumetricMeasure");
 }
 //=================================================================================================//

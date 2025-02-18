@@ -25,25 +25,11 @@ bool BaseIO::isBodyIncluded(const SPHBodyVector &bodies, SPHBody *sph_body)
 //=============================================================================================//
 BodyStatesRecording::BodyStatesRecording(SPHSystem &sph_system)
     : BaseIO(sph_system), bodies_(sph_system.getRealBodies()),
-      state_recording_(sph_system_.StateRecording())
-{
-    for (size_t i = 0; i < bodies_.size(); ++i)
-    {
-        BaseParticles &particles = bodies_[i]->getBaseParticles();
-        dv_all_pos_.push_back(particles.getVariableByName<Vecd>("Position"));
-    }
-}
+      state_recording_(sph_system_.StateRecording()) {}
 //=============================================================================================//
 BodyStatesRecording::BodyStatesRecording(SPHBody &body)
     : BaseIO(body.getSPHSystem()), bodies_({&body}),
-      state_recording_(sph_system_.StateRecording())
-{
-    for (size_t i = 0; i < bodies_.size(); ++i)
-    {
-        BaseParticles &particles = bodies_[i]->getBaseParticles();
-        dv_all_pos_.push_back(particles.getVariableByName<Vecd>("Position"));
-    }
-}
+      state_recording_(sph_system_.StateRecording()) {}
 //=============================================================================================//
 void BodyStatesRecording::writeToFile()
 {
