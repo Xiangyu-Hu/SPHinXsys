@@ -144,9 +144,9 @@ class ShellPK1Stress : public LocalDynamics
     Matd *stress_PK1_B_;
 
   public:
-    explicit ShellPK1Stress(SPHBody &sph_body)
+    explicit ShellPK1Stress(SPHBody &sph_body, BaseMaterial &material)
         : LocalDynamics(sph_body),
-          elastic_solid_(DynamicCast<ElasticSolid>(this, sph_body_.getBaseMaterial())),
+          elastic_solid_(DynamicCast<ElasticSolid>(this, material)),
           B_(particles_->getVariableDataByName<Matd>("LinearGradientCorrectionMatrix")),
           F_(particles_->getVariableDataByName<Matd>("DeformationGradient")),
           dF_dt_(particles_->getVariableDataByName<Matd>("DeformationRate")),
@@ -304,11 +304,11 @@ struct shell_coupling_alg
     InteractionWithUpdate<ShellCouplingForce> coupling_force;
 
   public:
-    shell_coupling_alg(BaseInnerRelation &inner_relation, RealBodyVector contact_bodies, const StdVec<bool> &normal_corrections)
+    shell_coupling_alg(BaseInnerRelation &inner_relation, BaseMaterial &material, RealBodyVector contact_bodies, const StdVec<bool> &normal_corrections)
         : contact_relation(inner_relation.getSPHBody(), std::move(contact_bodies), std::move(normal_corrections)),
           initial_curvature(inner_relation),
           curvature_update(inner_relation.getSPHBody()),
-          update_stress_PK1(inner_relation.getSPHBody()),
+          update_stress_PK1(inner_relation.getSPHBody(), material),
           coupling_force(contact_relation) {};
 
     void initial_curvature_exec() { initial_curvature.exec(); }
@@ -417,7 +417,7 @@ struct plate_parameters
     const Real length = 50 * scale;
     const Real width = length;
     const Real height = 20 * scale;
-    const Real thickness_shell = 1 * scale;
+    const Real thickness_shell = 4 * scale;
 
     // Material properties
     const Real rho = 1000 * pow(unit_mm, 2);
@@ -494,7 +494,7 @@ void run_shell_to_solid_coupling(int res_factor, Real stiffness_ratio, int load_
 {
     // parameters
     plate::plate_parameters params;
-    Real dp = params.thickness_shell / Real(res_factor);
+    Real dp = params.thickness_shell / Real(4 * res_factor);
     Real youngs_modulus_solid = params.youngs_modulus_shell * stiffness_ratio;
 
     // Import meshes
@@ -531,8 +531,8 @@ void run_shell_to_solid_coupling(int res_factor, Real stiffness_ratio, int load_
     solid_coupling_alg solid_coupling_algs(algs_solid.inner_relation, {&lower_shell_body, &upper_shell_body}, {true, true});
     shell_algs algs_shell_upper(upper_shell_body, eta);
     shell_algs algs_shell_lower(lower_shell_body, eta);
-    shell_coupling_alg shell_coupling_algs_lower(algs_shell_lower.inner_relation, {&solid_body}, {true});
-    shell_coupling_alg shell_coupling_algs_upper(algs_shell_upper.inner_relation, {&solid_body}, {true});
+    shell_coupling_alg shell_coupling_algs_lower(algs_shell_lower.inner_relation, solid_body.getBaseMaterial(), {&solid_body}, {true});
+    shell_coupling_alg shell_coupling_algs_upper(algs_shell_upper.inner_relation, solid_body.getBaseMaterial(), {&solid_body}, {true});
 
     // Boundary condition
     plate::boundary_condition solid_bc(solid_body, load_type);
