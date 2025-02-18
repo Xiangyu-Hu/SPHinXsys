@@ -100,7 +100,9 @@ class WaterBlock : public ComplexShape
 Real h = 1.3 * particle_spacing_ref;
 Vec2d gauge_halfsize = Vec2d(0.5 * h, 0.5 * DH);
 Vec2d gauge_translation = Vec2d(DL / 3, 0.5 * DH);
-//
+//----------------------------------------------------------------------
+//	Main program starts here.
+//----------------------------------------------------------------------
 int main(int ac, char *av[])
 {
     std::cout << "Mass " << StructureMass << " str_sup " << FlStA << " rho_s " << rho_s << std::endl;
@@ -138,8 +140,6 @@ int main(int ac, char *av[])
     //	The contact map gives the topological connections between the bodies.
     //	Basically the the range of bodies to build neighbor particle lists.
     //  Generally, we first define all the inner relations, then the contact relations.
-    //  At last, we define the complex relaxations by combining previous defined
-    //  inner and contact relations.
     //----------------------------------------------------------------------
     Relation<Inner<>> water_block_inner(water_block);
     Relation<Contact<>> water_block_contact(water_block, {&wall_boundary, &structure});
@@ -265,10 +265,13 @@ int main(int ac, char *av[])
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp write_real_body_states(sph_system);
-    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<MainExecutionPolicy, UpperFrontInAxisDirectionCK<BodyRegionByCell>>>
+    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<
+        MainExecutionPolicy, UpperFrontInAxisDirectionCK<BodyRegionByCell>>>
         wave_gauge(wave_probe_buffer, "FreeSurfaceHeight");
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<MainExecutionPolicy, Vecd>>
         write_structure_position("Position", observer_contact);
+    SingularVariable<SimTK::SpatialVec> sv_action_on_structure("ActionOnStructure", SimTK::SpatialVec(0));
+    SingularVariableRecording<SimTK::SpatialVec> action_on_structure_recording(sph_system, &sv_action_on_structure);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
@@ -329,7 +332,8 @@ int main(int ac, char *av[])
                 {
                     SimTK::State &state_for_update = integ.updAdvancedState();
                     force_on_bodies.clearAllBodyForces(state_for_update);
-                    force_on_bodies.setOneBodyForce(state_for_update, structure_mob, force_on_structure.exec());
+                    sv_action_on_structure.setValue(force_on_structure.exec());
+                    force_on_bodies.setOneBodyForce(state_for_update, structure_mob, sv_action_on_structure.getValue());
                     integ.stepBy(acoustic_dt);
                     constraint_on_structure.exec();
                 }
@@ -367,6 +371,7 @@ int main(int ac, char *av[])
             {
                 write_structure_position.writeToFile(number_of_iterations);
                 wave_gauge.writeToFile(number_of_iterations);
+                action_on_structure_recording.writeToFile(number_of_iterations);
             }
         }
 

@@ -22,8 +22,8 @@
  * ------------------------------------------------------------------------- */
 /**
  * @file 	  triangle_mesh_shape.h
- * @brief   Here, we define the 3D geometries based on the polymesh.
- * @details The idea is to define complex geometry by passing stl, obj or other polymesh files.
+ * @brief   Here, we define the 3D geometries based on the poly mesh.
+ * @details The idea is to define complex geometry by passing stl, obj or other poly mesh files.
  * @author	Chi Zhang and Xiangyu Hu
  */
 
@@ -42,6 +42,7 @@ namespace fs = std::filesystem;
 
 namespace SPH
 {
+using TriangleMesh = SimTK::ContactGeometry::TriangleMesh;
 /**
  * @class TriangleMeshShape
  * @brief Derived class for triangle shape processing.
@@ -49,28 +50,22 @@ namespace SPH
 class TriangleMeshShape : public Shape
 {
   private:
-    UniquePtrKeeper<SimTK::ContactGeometry::TriangleMesh> triangle_mesh_ptr_keeper_;
+    UniquePtrKeeper<TriangleMesh> triangle_mesh_ptr_keeper_;
 
   public:
-    explicit TriangleMeshShape(const std::string &shape_name, const SimTK::PolygonalMesh *mesh = nullptr)
-        : Shape(shape_name), triangle_mesh_(nullptr)
-    {
-        if (mesh)
-            triangle_mesh_ = generateTriangleMesh(*mesh);
-    };
+    explicit TriangleMeshShape(const std::string &shape_name);
     /** Only reliable when the probe point is close to the shape surface.
      * Need to be combined with level set shape and sign correction to avoid artifacts
      * when probe distance is far from the surface. */
     virtual bool checkContain(const Vec3d &probe_point, bool BOUNDARY_INCLUDED = true) override;
     virtual Vec3d findClosestPoint(const Vec3d &probe_point) override;
-
-    SimTK::ContactGeometry::TriangleMesh *getTriangleMesh();
+    TriangleMesh *getTriangleMesh();
 
   protected:
-    SimTK::ContactGeometry::TriangleMesh *triangle_mesh_;
-
+    TriangleMesh *triangle_mesh_;
+    tmd::TriangleMeshDistance triangle_mesh_distance_;
     /** generate triangle mesh from polygon mesh */
-    SimTK::ContactGeometry::TriangleMesh *generateTriangleMesh(const SimTK::PolygonalMesh &poly_mesh);
+    void initializeFromPolygonalMesh(const SimTK::PolygonalMesh &poly_mesh);
     virtual BoundingBox findBounds() override;
 };
 
@@ -84,7 +79,7 @@ class TriangleMeshShapeBrick : public TriangleMeshShape
     class ShapeParameters
     {
       public:
-        ShapeParameters() : halfsize_(Vec3d::Zero()), translation_(Vec3d::Zero()), resolution_(0){};
+        ShapeParameters() : halfsize_(Vec3d::Zero()), translation_(Vec3d::Zero()), resolution_(0) {};
         Vec3d halfsize_;
         Vec3d translation_;
         int resolution_;
@@ -93,7 +88,7 @@ class TriangleMeshShapeBrick : public TriangleMeshShape
                                     const std::string &shape_name = "TriangleMeshShapeBrick");
     explicit TriangleMeshShapeBrick(const TriangleMeshShapeBrick::ShapeParameters &shape_parameters,
                                     const std::string &shape_name = "TriangleMeshShapeBrick");
-    virtual ~TriangleMeshShapeBrick(){};
+    virtual ~TriangleMeshShapeBrick() {};
 };
 
 /**
@@ -105,7 +100,7 @@ class TriangleMeshShapeSphere : public TriangleMeshShape
   public:
     explicit TriangleMeshShapeSphere(Real radius, int resolution, Vec3d translation,
                                      const std::string &shape_name = "TriangleMeshShapeSphere");
-    virtual ~TriangleMeshShapeSphere(){};
+    virtual ~TriangleMeshShapeSphere() {};
 };
 
 /**
@@ -115,9 +110,10 @@ class TriangleMeshShapeSphere : public TriangleMeshShape
 class TriangleMeshShapeCylinder : public TriangleMeshShape
 {
   public:
-    explicit TriangleMeshShapeCylinder(SimTK::UnitVec3 axis, Real radius, Real halflength, int resolution, Vec3d translation,
+    explicit TriangleMeshShapeCylinder(SimTK::UnitVec3 axis, Real radius,
+                                       Real halflength, int resolution, Vec3d translation,
                                        const std::string &shape_name = "TriangleMeshShapeCylinder");
-    virtual ~TriangleMeshShapeCylinder(){};
+    virtual ~TriangleMeshShapeCylinder() {};
 };
 
 /**
@@ -129,15 +125,7 @@ class TriangleMeshShapeSTL : public TriangleMeshShape
   public:
     explicit TriangleMeshShapeSTL(const std::string &file_path_name, Vec3d translation, Real scale_factor,
                                   const std::string &shape_name = "TriangleMeshShapeSTL");
-    virtual ~TriangleMeshShapeSTL(){};
-
-    /** Here, we use the open source method TriangleMeshDistance library.
-     * https://github.com/InteractiveComputerGraphics/TriangleMeshDistance/tree/main */
-    virtual bool checkContain(const Vec3d &probe_point, bool BOUNDARY_INCLUDED = true) override;
-    virtual Vec3d findClosestPoint(const Vec3d &probe_point) override;
-
-  protected:
-    tmd::TriangleMeshDistance triangle_mesh_distance_;
+    virtual ~TriangleMeshShapeSTL() {};
 };
 } // namespace SPH
 

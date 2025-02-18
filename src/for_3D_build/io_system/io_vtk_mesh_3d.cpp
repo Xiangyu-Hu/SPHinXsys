@@ -1,38 +1,57 @@
+#include "io_vtk_mesh_3d.hpp"
 #include "io_vtk.hpp"
-#include "io_vtk_fvm.h"
+
+#include "triangle_mesh_shape.h"
+
 namespace SPH
 {
 //=================================================================================================//
-void BodyStatesRecordingInMeshToVtp::writeWithFileName(const std::string &sequence)
+BodyStatesRecordingToTriangleMeshVtp::BodyStatesRecordingToTriangleMeshVtp(
+    SPHBody &body, TriangleMeshShape &triangle_mesh_shape)
+    : BodyStatesRecordingToVtp(body)
+{
+    TriangleMesh &triangle_mesh = *triangle_mesh_shape.getTriangleMesh();
+    faces_.reserve(triangle_mesh.getNumFaces());
+    for (int i = 0; i < triangle_mesh.getNumFaces(); i++)
+    {
+        auto f1 = triangle_mesh.getFaceVertex(i, 0);
+        auto f2 = triangle_mesh.getFaceVertex(i, 1);
+        auto f3 = triangle_mesh.getFaceVertex(i, 2);
+        faces_.push_back({f1, f2, f3});
+    }
+}
+//=================================================================================================//
+void BodyStatesRecordingToTriangleMeshVtp::writeWithFileName(const std::string &sequence)
 {
     for (SPHBody *body : bodies_)
     {
         if (body->checkNewlyUpdated() && state_recording_)
         {
-            // TODO: we can short the file name by without using SPHBody
             std::string filefullpath = io_environment_.output_folder_ + "/" + body->getName() + "_" + sequence + ".vtp";
             if (fs::exists(filefullpath))
             {
                 fs::remove(filefullpath);
             }
             std::ofstream out_file(filefullpath.c_str(), std::ios::trunc);
+
+            BaseParticles &particles = body->getBaseParticles();
+
             // begin of the XML file
             out_file << "<?xml version=\"1.0\"?>\n";
             out_file << "<VTKFile type=\"PolyData\" version=\"1.0\" byte_order=\"LittleEndian\">\n";
             out_file << "<PolyData>\n";
 
             // Write point data
-            out_file << "<Piece NumberOfPoints=\"" << node_coordinates_.size()
+            out_file << "<Piece NumberOfPoints=\"" << particles.TotalRealParticles()
                      << "\" NumberOfVerts=\"0\" NumberOfLines=\"0\" NumberOfStrips=\"0\" NumberOfPolys=\""
-                     << elements_nodes_connection_.size() << "\">\n";
+                     << faces_.size() << "\">\n";
             out_file << "<Points>\n";
             out_file << "<DataArray type=\"Float64\" NumberOfComponents=\"3\" format=\"ascii\">\n";
 
-            size_t total_nodes = node_coordinates_.size();
-            for (size_t node = 0; node != total_nodes; ++node)
+            Vec3d *pos = particles.ParticlePositions();
+            for (size_t i = 0; i != particles.TotalRealParticles(); ++i)
             {
-                Vec3d particle_position = upgradeToVec3d(node_coordinates_[node]);
-                out_file << particle_position[0] << " " << particle_position[1] << " " << particle_position[2] << "\n";
+                out_file << pos[i][0] << " " << pos[i][1] << " " << pos[i][2] << "\n";
             }
 
             out_file << "</DataArray>\n";
@@ -42,9 +61,9 @@ void BodyStatesRecordingInMeshToVtp::writeWithFileName(const std::string &sequen
             out_file << "<Polys>\n";
             out_file << "<DataArray type=\"Int32\" Name=\"connectivity\" format=\"ascii\">\n";
 
-            for (const auto &element : elements_nodes_connection_)
+            for (const auto &face : faces_)
             {
-                for (const auto &vertex : element)
+                for (const auto &vertex : face)
                 {
                     out_file << vertex << " ";
                 }
@@ -55,7 +74,7 @@ void BodyStatesRecordingInMeshToVtp::writeWithFileName(const std::string &sequen
             out_file << "<DataArray type=\"Int32\" Name=\"offsets\" format=\"ascii\">\n";
 
             size_t offset = 0;
-            for (const auto &face : elements_nodes_connection_)
+            for (const auto &face : faces_)
             {
                 offset += face.size();
                 out_file << offset << " ";
@@ -67,8 +86,7 @@ void BodyStatesRecordingInMeshToVtp::writeWithFileName(const std::string &sequen
             // Write face attribute data
             out_file << "<CellData>\n";
 
-            BaseParticles &particles = body->getBaseParticles();
-            writeParticlesToVtk(out_file, particles);
+            writeCellsToVtk(out_file, particles);
 
             out_file << "</CellData>\n";
 
@@ -81,14 +99,6 @@ void BodyStatesRecordingInMeshToVtp::writeWithFileName(const std::string &sequen
         }
         body->setNotNewlyUpdated();
     }
-}
-//=================================================================================================//
-void BodyStatesRecordingInMeshToVtu::writeWithFileName(const std::string &sequence)
-{
-    std::cout << "For 2D build:"
-              << "The method BodyStatesRecordingInMeshToVtu::writeWithFileName not implemented yet."
-              << std::endl;
-    exit(1);
 }
 //=================================================================================================//
 } // namespace SPH

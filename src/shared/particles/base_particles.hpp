@@ -337,6 +337,16 @@ void BaseParticles::addVariableToWrite(DiscreteVariable<DataType> *variable)
 }
 //=================================================================================================//
 template <typename DataType>
+void BaseParticles::addVariableToWrite(DiscreteVariableArray<DataType> *variable_array)
+{
+    StdVec<DiscreteVariable<DataType> *> variables = variable_array->getVariables();
+    for (size_t i = 0; i != variables.size(); ++i)
+    {
+        addVariableToWrite<DataType>(variables[i]);
+    }
+}
+//=================================================================================================//
+template <typename DataType>
 void BaseParticles::addVariableToRestart(const std::string &name)
 {
     addVariableToList<DataType>(variables_to_restart_, name);

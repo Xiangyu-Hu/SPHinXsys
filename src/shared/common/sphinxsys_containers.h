@@ -59,6 +59,9 @@ class Contact; /**< Contact interaction: interaction between a body with one or 
 class Boundary; /**< Interaction with boundary */
 class Wall;     /**< Interaction with wall boundary */
 class Extended; /**< An extened method of an interaction type */
+
+template <typename...>
+class Dirichlet; /**< Contact interaction with Dirichlet boundary condition */
 //----------------------------------------------------------------------
 // Time stepping type identifies
 //----------------------------------------------------------------------
@@ -66,6 +69,12 @@ class ForwardEuler;
 class RungeKutta;
 class RungeKutta1stStage;
 class RungeKutta2ndStage;
+template <typename... ControlTypes>
+class Dirichlet; /**< Contact interaction with Dirichlet boundary condition */
+template <typename... ControlTypes>
+class Neumann; /**< Contact interaction with Neumann boundary condition */
+template <typename... ControlTypes>
+class Robin; /**< Contact interaction with Neumann boundary condition */
 //----------------------------------------------------------------------
 // Spatial temporal type identifies
 //----------------------------------------------------------------------

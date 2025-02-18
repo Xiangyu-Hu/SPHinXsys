@@ -21,5 +21,18 @@ void NormalFromBodyShapeCK::UpdateKernel::update(size_t index_i, Real dt)
     phi_[index_i] = signed_distance;
     phi0_[index_i] = signed_distance;
 }
+//=============================================================================================//
+SurfaceIndicationFromBodyShape::SurfaceIndicationFromBodyShape(SPHBody &sph_body)
+    : LocalDynamics(sph_body),
+      initial_shape_(&sph_body.getInitialShape()),
+      spacing_ref_(sph_body.sph_adaptation_->ReferenceSpacing()),
+      dv_indicator_(particles_->registerStateVariableOnly<int>("SurfaceIndicator")),
+      dv_pos_(particles_->getVariableByName<Vecd>("Position")) {}
+//=============================================================================================//
+void SurfaceIndicationFromBodyShape::UpdateKernel::update(size_t index_i, Real dt)
+{
+    Real signed_distance = initial_shape_->findSignedDistance(pos_[index_i]);
+    indicator_[index_i] = signed_distance > -spacing_ref_ ? 1 : 0;
+}
 //=================================================================================================//
 } // namespace SPH

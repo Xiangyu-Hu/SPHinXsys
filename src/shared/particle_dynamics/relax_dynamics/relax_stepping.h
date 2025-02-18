@@ -50,7 +50,7 @@ class RelaxationResidue<Base, DataDelegationType>
   public:
     template <class BaseRelationType>
     explicit RelaxationResidue(BaseRelationType &base_relation);
-    virtual ~RelaxationResidue(){};
+    virtual ~RelaxationResidue() {};
 
   protected:
     SPHAdaptation *sph_adaptation_;
@@ -65,7 +65,7 @@ class RelaxationResidue<Inner<>>
   public:
     explicit RelaxationResidue(BaseInnerRelation &inner_relation);
     RelaxationResidue(BaseInnerRelation &inner_relation, const std::string &sub_shape_name);
-    virtual ~RelaxationResidue(){};
+    virtual ~RelaxationResidue() {};
     Shape &getRelaxShape() { return relax_shape_; };
     void interaction(size_t index_i, Real dt = 0.0);
 
@@ -80,9 +80,9 @@ class RelaxationResidue<Inner<LevelSetCorrection>> : public RelaxationResidue<In
     template <typename... Args>
     RelaxationResidue(Args &&...args);
     template <typename BodyRelationType, typename FirstArg>
-    explicit RelaxationResidue(InteractArgs<BodyRelationType, FirstArg> parameters)
-        : RelaxationResidue(parameters.body_relation_, std::get<0>(parameters.others_)){};
-    virtual ~RelaxationResidue(){};
+    explicit RelaxationResidue(DynamicsArgs<BodyRelationType, FirstArg> parameters)
+        : RelaxationResidue(parameters.identifier_, std::get<0>(parameters.others_)){};
+    virtual ~RelaxationResidue() {};
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
@@ -103,7 +103,7 @@ class RelaxationResidue<Contact<>>
             contact_Vol_.push_back(this->contact_particles_[k]->template registerStateVariable<Real>("VolumetricMeasure"));
         }
     };
-    virtual ~RelaxationResidue(){};
+    virtual ~RelaxationResidue() {};
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
@@ -118,7 +118,7 @@ class RelaxationScaling : public LocalDynamicsReduce<ReduceMax>
 {
   public:
     explicit RelaxationScaling(SPHBody &sph_body);
-    virtual ~RelaxationScaling(){};
+    virtual ~RelaxationScaling() {};
     Real reduce(size_t index_i, Real dt = 0.0);
     virtual Real outputResult(Real reduced_value);
 
@@ -139,7 +139,7 @@ class PositionRelaxation : public LocalDynamics
 
   public:
     explicit PositionRelaxation(SPHBody &sph_body);
-    virtual ~PositionRelaxation(){};
+    virtual ~PositionRelaxation() {};
     void update(size_t index_i, Real scaling);
 };
 
@@ -155,7 +155,7 @@ class UpdateSmoothingLengthRatioByShape : public LocalDynamics
   public:
     UpdateSmoothingLengthRatioByShape(SPHBody &sph_body, Shape &target_shape);
     explicit UpdateSmoothingLengthRatioByShape(SPHBody &sph_body);
-    virtual ~UpdateSmoothingLengthRatioByShape(){};
+    virtual ~UpdateSmoothingLengthRatioByShape() {};
     void update(size_t index_i, Real dt = 0.0);
 };
 
@@ -165,7 +165,7 @@ class RelaxationStep : public BaseDynamics<void>
   public:
     template <typename FirstArg, typename... OtherArgs>
     explicit RelaxationStep(FirstArg &&first_arg, OtherArgs &&...other_args);
-    virtual ~RelaxationStep(){};
+    virtual ~RelaxationStep() {};
     SimpleDynamics<ShapeSurfaceBounding> &SurfaceBounding() { return surface_bounding_; };
     virtual void exec(Real dt = 0.0) override;
 
