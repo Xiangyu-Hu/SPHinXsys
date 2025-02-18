@@ -83,6 +83,30 @@ class InletInflowCondition : public BaseStateCondition
         };
     };
 };
+//----------------------------------------------------------------------
+//	InletInflowpPressureCondition
+//----------------------------------------------------------------------
+class InletInflowpPressureCondition : public BaseStateCondition
+{
+  public:
+    InletInflowpPressureCondition(BaseParticles *particles)
+        : BaseStateCondition(particles) {};
+
+    class ComputingKernel : public BaseStateCondition::ComputingKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+            : BaseStateCondition::ComputingKernel(ex_policy, encloser){};
+
+        Real operator()(size_t index_i, Real time)
+        {
+            Real p = 1.0;
+            p_[index_i] = p;
+            return p;
+        };
+    };
+};
 
 //----------------------------------------------------------------------
 //	Fluid body definition.
@@ -219,6 +243,7 @@ int main(int ac, char *av[])
     StateDynamics<SequencedExecutionPolicy, fluid_dynamics::TagBufferParticlesCK> right_tag_buffer_particle_(emitter_by_cell);
 
     StateDynamics<MainExecutionPolicy, fluid_dynamics::InflowConditionCK<AlignedBoxPartByParticle, InletInflowCondition>> inflow_condition(emitter);
+    StateDynamics<MainExecutionPolicy, fluid_dynamics::PressureConditionCK<AlignedBoxPartByParticle, NoKernelCorrectionCK, InletInflowpPressureCondition>> pressure_condition(emitter);
     StateDynamics<SequencedExecutionPolicy, fluid_dynamics::EmitterInflowInjectionCK> emitter_injection(emitter, inlet_buffer);
     StateDynamics<SequencedExecutionPolicy, fluid_dynamics::DisposerOutflowDeletionCK> right_remove_particles(right_disposer);
     //----------------------------------------------------------------------
@@ -286,6 +311,7 @@ int main(int ac, char *av[])
                 acoustic_dt = fluid_acoustic_time_step.exec();
                 fluid_acoustic_step_1st_half.exec(acoustic_dt);
                 inflow_condition.exec();
+                pressure_condition.exec();
                 fluid_acoustic_step_2nd_half.exec(acoustic_dt);
                 relaxation_time += acoustic_dt;
                 integration_time += acoustic_dt;

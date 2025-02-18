@@ -168,38 +168,6 @@ struct NonPrescribedPressure
     }
 };
 
-// class TagBufferParticlesCK : public BaseLocalDynamics<AlignedBoxPartByCell>
-// {
-//     TagBufferParticlesCK(AlignedBoxPartByCell &aligned_box_part) : BaseLocalDynamics<AlignedBoxPartByCell>(aligned_box_part),
-//                                                                    sv_aligned_box_(aligned_box_part.svAlignedBox()),
-//                                                                    sv_part_id_(sv_aligned_box_->getPartID()),
-//                                                                    dv_pos_(particles_->getVariableDataByName<Vecd>("Position")),
-//                                                                    dv_buffer_particle_indicator_(particles_->registerStateVariableOnly<int>("BufferParticleIndicator"))
-//     {
-//         aligned_box_part.addVariableToSort<int>("BufferParticleIndicator");
-//     };
-//     virtual ~TagBufferParticlesCK() {};
-//     class UpdateKernel
-//     {
-//       public:
-//         template <class ExecutionPolicy, class EncloserType>
-//         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-//         void update(size_t index_i, Real dt = 0.0);
-
-//       protected:
-//         int *part_id_;
-//         Vecd *pos_;
-//         AlignedBox *aligned_box_;
-//         int *buffer_particle_indicator_;
-//     };
-
-//   protected:
-//     SingularVariable<AlignedBox> *sv_aligned_box_;
-//     SingularVariable<int> *sv_part_id_;
-//     DiscreteVariable<Vecd> *dv_pos_;
-//     DiscreteVariable<int> *dv_buffer_particle_indicator_;
-// };
-
 class TagBufferParticlesCK : public BaseLocalDynamics<AlignedBoxPartByCell>
 {
 
@@ -227,6 +195,49 @@ class TagBufferParticlesCK : public BaseLocalDynamics<AlignedBoxPartByCell>
     DiscreteVariable<int> *dv_buffer_particle_indicator_;
 };
 
+template <typename... T>
+class PressureConditionCK;
+template <class AlignedBoxPartType, class KernelCorrectionType, class ConditionFunction>
+class PressureConditionCK<AlignedBoxPartType, KernelCorrectionType, ConditionFunction>
+    : public BaseLocalDynamics<AlignedBoxPartType>
+{
+    using ConditionKernel = typename ConditionFunction::ComputingKernel;
+    using CorrectionKernel = typename KernelCorrectionType::ComputingKernel;
+
+  public:
+    PressureConditionCK(AlignedBoxPartType &aligned_box_part);
+
+    class UpdateKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+        void update(size_t index_i, Real dt = 0.0);
+
+      protected:
+        AlignedBox *aligned_box_;
+        ConditionKernel condition_;
+        int *buffer_particle_indicator_;
+        Vecd *zero_gradient_residue_;
+        Vecd *pos_;
+        Real *physical_time_;
+        Vecd *vel_;
+        CorrectionKernel correction_;
+        Real *rho_;
+        Transform *transform_;
+    };
+
+  protected:
+    SingularVariable<AlignedBox> *sv_aligned_box_;
+    ConditionFunction condition_function_;
+    DiscreteVariable<int> *dv_buffer_particle_indicator_;
+    DiscreteVariable<Vecd> *dv_zero_gradient_residue_;
+    DiscreteVariable<Vecd> *dv_pos_;
+    SingularVariable<Real> *sv_physical_time_;
+    DiscreteVariable<Vecd> *dv_vel_;
+    KernelCorrectionType kernel_correction_;
+    DiscreteVariable<Real> *dv_rho_;
+};
 } // namespace fluid_dynamics
 } // namespace SPH
 #endif // FLUID_BOUNDARY_CK_H
