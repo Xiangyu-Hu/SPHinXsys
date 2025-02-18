@@ -181,13 +181,9 @@ class BaseParticles
     DiscreteVariable<DataType> *addVariableToList(ParticleVariables &variable_set, const std::string &name);
     template <typename DataType>
     DiscreteVariable<DataType> *addVariableToList(ParticleVariables &variable_set, DiscreteVariable<DataType> *variable);
-    template <typename DataType>
-    void *addVariableToList(ParticleVariables &variable_set, DiscreteVariableArray<DataType> *variable);
 
-    template <typename DataType>
-    void addVariableToWrite(const std::string &name);
-    template <typename DataType>
-    void addVariableToWrite(DiscreteVariable<DataType> *variable);
+    template <typename DataType, typename... Args>
+    void addVariableToWrite(Args &&...args);
     template <typename DataType>
     void addVariableToWrite(DiscreteVariableArray<DataType> *variable_array);
     template <typename DataType>
@@ -208,8 +204,8 @@ class BaseParticles
     ParticleVariables variables_to_sort_;
 
   public:
-    template <typename DataType>
-    void addVariableToSort(const std::string &name);
+    template <typename DataType, typename... Args>
+    void addVariableToSort(Args &&...args);
     template <typename DataType>
     void addVariableToSort(DiscreteVariableArray<DataType> *variable_array);
     UnsignedInt *ParticleOriginalIds() { return original_id_; };

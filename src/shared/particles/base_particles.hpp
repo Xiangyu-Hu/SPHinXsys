@@ -336,10 +336,11 @@ DiscreteVariable<DataType> *BaseParticles::
     return nullptr; // no variable added as sortable variable
 }
 //=================================================================================================//
-template <typename DataType>
-void BaseParticles::addVariableToSort(const std::string &name)
+template <typename DataType, typename... Args>
+void BaseParticles::addVariableToSort(Args &&...args)
 {
-    DiscreteVariable<DataType> *new_sortable = addVariableToList<DataType>(variables_to_sort_, name);
+    DiscreteVariable<DataType> *new_sortable =
+        addVariableToList<DataType>(variables_to_sort_, std::forward<Args>(args)...);
     if (new_sortable != nullptr)
     {
         constexpr int type_index = DataTypeIndex<DataType>::value;
@@ -349,7 +350,7 @@ void BaseParticles::addVariableToSort(const std::string &name)
 }
 //=================================================================================================//
 template <typename DataType>
-void addVariableToSort(DiscreteVariableArray<DataType> *variable_array)
+void BaseParticles::addVariableToSort(DiscreteVariableArray<DataType> *variable_array)
 {
     StdVec<DiscreteVariable<DataType> *> variables = variable_array->getVariables();
     for (size_t i = 0; i != variables.size(); ++i)
@@ -358,16 +359,10 @@ void addVariableToSort(DiscreteVariableArray<DataType> *variable_array)
     }
 }
 //=================================================================================================//
-template <typename DataType>
-void BaseParticles::addVariableToWrite(const std::string &name)
+template <typename DataType, typename... Args>
+void BaseParticles::addVariableToWrite(Args &&...args)
 {
-    addVariableToList<DataType>(variables_to_write_, name);
-}
-//=================================================================================================//
-template <typename DataType>
-void BaseParticles::addVariableToWrite(DiscreteVariable<DataType> *variable)
-{
-    addVariableToList<DataType>(variables_to_write_, variable);
+    addVariableToList<DataType>(variables_to_write_, std::forward<Args>(args)...);
 }
 //=================================================================================================//
 template <typename DataType>
