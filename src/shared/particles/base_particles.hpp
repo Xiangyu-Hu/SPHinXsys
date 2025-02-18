@@ -213,8 +213,13 @@ template <typename DataType>
 DiscreteVariable<DataType> *BaseParticles::registerStateVariableOnlyFrom(
     const std::string &name, const StdLargeVec<DataType> &geometric_data)
 {
-    return registerStateVariableOnly<DataType>(name, [&](size_t index)
-                                               { return geometric_data[index]; });
+    DiscreteVariable<DataType> *variable = registerStateVariableOnly<DataType>(name);
+    DataType *data_field = variable->Data();
+    for (size_t i = 0; i != geometric_data.size(); ++i)
+    {
+        data_field[i] = geometric_data[i];
+    }
+    return variable;
 }
 //=================================================================================================//
 template <typename DataType>
