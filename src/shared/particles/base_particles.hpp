@@ -349,6 +349,16 @@ void BaseParticles::addVariableToSort(const std::string &name)
 }
 //=================================================================================================//
 template <typename DataType>
+void addVariableToSort(DiscreteVariableArray<DataType> *variable_array)
+{
+    StdVec<DiscreteVariable<DataType> *> variables = variable_array->getVariables();
+    for (size_t i = 0; i != variables.size(); ++i)
+    {
+        addVariableToSort<DataType>(variables[i]);
+    }
+}
+//=================================================================================================//
+template <typename DataType>
 void BaseParticles::addVariableToWrite(const std::string &name)
 {
     addVariableToList<DataType>(variables_to_write_, name);

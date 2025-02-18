@@ -210,6 +210,8 @@ class BaseParticles
   public:
     template <typename DataType>
     void addVariableToSort(const std::string &name);
+    template <typename DataType>
+    void addVariableToSort(DiscreteVariableArray<DataType> *variable_array);
     UnsignedInt *ParticleOriginalIds() { return original_id_; };
     UnsignedInt *ParticleSortedIds() { return sorted_id_; };
     ParticleData &SortableParticleData() { return sortable_data_; };
@@ -238,10 +240,10 @@ class BaseParticles
     virtual Real ParticleSpacing(size_t index) { return std::pow(Vol_[index], 1.0 / Real(Dimensions)); }
 
   protected:
-    DiscreteVariable<Vecd> *dv_pos_;  /**< Discrete variable position */
-    Real *Vol_;  /**< Volumetric measure, also area and length of surface and linear particle */
-    Real *rho_;  /**< Density as a fundamental property of phyiscal matter */
-    Real *mass_; /**< Mass as another fundamental property of physical matter */
+    DiscreteVariable<Vecd> *dv_pos_; /**< Discrete variable position */
+    Real *Vol_;                      /**< Volumetric measure, also area and length of surface and linear particle */
+    Real *rho_;                      /**< Density as a fundamental property of phyiscal matter */
+    Real *mass_;                     /**< Mass as another fundamental property of physical matter */
 
     SPHBody &sph_body_;
     std::string body_name_;

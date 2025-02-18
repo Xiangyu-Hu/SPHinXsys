@@ -24,6 +24,8 @@ DiffusionRelaxationCK<DiffusionType, BaseInteractionType>::
 {
     this->particles_->template addVariableToWrite<Real>(&dv_diffusion_species_array_);
     this->particles_->template addVariableToWrite<Real>(&dv_gradient_species_array_);
+    this->particles_->template addVariableToSort<Real>(&dv_diffusion_species_array_);
+    this->particles_->template addVariableToSort<Real>(&dv_gradient_species_array_);
 }
 //=================================================================================================//
 template <class DiffusionType, class BaseInteractionType>
