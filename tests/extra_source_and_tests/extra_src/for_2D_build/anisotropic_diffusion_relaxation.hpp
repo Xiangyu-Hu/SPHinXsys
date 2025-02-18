@@ -68,8 +68,8 @@ class AnisotropicLinearGradientCorrectionMatrix<Inner<>>
         : AnisotropicLinearGradientCorrectionMatrix<DataDelegateInner>(inner_relation)
         {};
     template <typename BodyRelationType, typename FirstArg>
-    explicit AnisotropicLinearGradientCorrectionMatrix(InteractArgs<BodyRelationType, FirstArg> parameters)
-        : AnisotropicLinearGradientCorrectionMatrix(parameters.body_relation_, std::get<0>(parameters.others_)){};
+    explicit AnisotropicLinearGradientCorrectionMatrix(DynamicsArgs<BodyRelationType, FirstArg> parameters)
+        : AnisotropicLinearGradientCorrectionMatrix(parameters.identifier_, std::get<0>(parameters.others_)){};
     virtual ~AnisotropicLinearGradientCorrectionMatrix(){};
 
 
@@ -177,8 +177,8 @@ class AnisotropicKernelCorrectionMatrix<Inner<>>
     explicit AnisotropicKernelCorrectionMatrix(BaseInnerRelation &inner_relation)
         : AnisotropicKernelCorrectionMatrix<DataDelegateInner>(inner_relation){};
     template <typename BodyRelationType, typename FirstArg>
-    explicit AnisotropicKernelCorrectionMatrix(InteractArgs<BodyRelationType, FirstArg> parameters)
-        : AnisotropicKernelCorrectionMatrix(parameters.body_relation_, std::get<0>(parameters.others_)){};
+    explicit AnisotropicKernelCorrectionMatrix(DynamicsArgs<BodyRelationType, FirstArg> parameters)
+        : AnisotropicKernelCorrectionMatrix(parameters.identifier_, std::get<0>(parameters.others_)){};
     virtual ~AnisotropicKernelCorrectionMatrix(){};
 
     void interaction(size_t index_i, Real dt = 0.0)
@@ -320,8 +320,8 @@ class AnisotropicDiffusionRelaxation<Inner<>>
         : AnisotropicDiffusionRelaxation<DataDelegateInner>(inner_relation){};
 
     template <typename BodyRelationType, typename FirstArg>
-    explicit AnisotropicDiffusionRelaxation(InteractArgs<BodyRelationType, FirstArg> parameters)
-        : AnisotropicDiffusionRelaxation(parameters.body_relation_, std::get<0>(parameters.others_)){};
+    explicit AnisotropicDiffusionRelaxation(DynamicsArgs<BodyRelationType, FirstArg> parameters)
+        : AnisotropicDiffusionRelaxation(parameters.identifier_, std::get<0>(parameters.others_)){};
     virtual ~AnisotropicDiffusionRelaxation(){};
 
     void interaction(size_t index_i, Real dt = 0.0)
