@@ -26,6 +26,11 @@ BaseParticles::BaseParticles(SPHBody &sph_body, BaseMaterial *base_material)
     sv_total_real_particles_ = registerSingularVariable<UnsignedInt>("TotalRealParticles");
 }
 //=================================================================================================//
+SPHAdaptation &BaseParticles::getSPHAdaptation()
+{
+    return sph_body_.getSPHAdaptation();
+}
+//=================================================================================================//
 void BaseParticles::initializeBasicParticleVariables()
 {
     //----------------------------------------------------------------------
@@ -39,6 +44,7 @@ void BaseParticles::initializeBasicParticleVariables()
     //		unregistered variables and data
     //----------------------------------------------------------------------
     original_id_ = registerDiscreteVariable<UnsignedInt>("OriginalID", particles_bound_, getAssignIndex());
+    addVariableToWrite<UnsignedInt>("OriginalID");
     sorted_id_ = registerDiscreteVariable<UnsignedInt>("SortedID", particles_bound_, getAssignIndex());
 }
 //=================================================================================================//

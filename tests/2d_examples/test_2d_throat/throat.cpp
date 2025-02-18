@@ -173,7 +173,7 @@ int main(int ac, char *av[])
     Dynamics1Level<fluid_dynamics::Oldroyd_BIntegration2ndHalfWithWall> density_relaxation(fluid_block_inner, fluid_block_contact);
     InteractionWithUpdate<fluid_dynamics::DensitySummationComplex> update_density_by_summation(fluid_block_inner, fluid_block_contact);
     InteractionSplit<DampingPairwiseWithWall<Vec2d, FixedDampingRate>> implicit_viscous_damping(
-        InteractArgs(fluid_block_inner, "Velocity", mu_f), InteractArgs(fluid_block_contact, "Velocity", mu_f));
+        DynamicsArgs(fluid_block_inner, "Velocity", mu_f), DynamicsArgs(fluid_block_contact, "Velocity", mu_f));
     InteractionWithUpdate<fluid_dynamics::TransportVelocityLimitedCorrectionComplex<AllParticles>> transport_velocity_correction(fluid_block_inner, fluid_block_contact);
 
     ReduceDynamics<fluid_dynamics::AdvectionTimeStep> get_fluid_advection_time_step_size(fluid_block, U_f);

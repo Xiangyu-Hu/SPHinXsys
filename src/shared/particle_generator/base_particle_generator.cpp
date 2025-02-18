@@ -69,6 +69,10 @@ void ParticleGenerator<SurfaceParticles>::initializeParticleVariablesFromReload(
     surface_particles_.registerSurfacePropertiesFromReload();
 }
 //=================================================================================================//
+ParticleGenerator<ObserverParticles>::ParticleGenerator(
+    SPHBody &sph_body, BaseParticles &base_particles, const StdVec<Vecd> &positions)
+    : ParticleGenerator<BaseParticles>(sph_body, base_particles), positions_(positions) {}
+//=================================================================================================//
 void ParticleGenerator<ObserverParticles>::prepareGeometricData()
 {
     for (size_t i = 0; i < positions_.size(); ++i)

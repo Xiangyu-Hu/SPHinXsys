@@ -42,20 +42,19 @@ int main(int ac, char *av[])
     InteractionWithUpdate<fluid_dynamics::EulerianIntegration2ndHalfInnerRiemann> density_relaxation(water_block_inner, 10000.0);
     SimpleDynamics<TurbulentChannelFlowInitialCondition> initial_condition(water_block);
     SimpleDynamics<fluid_dynamics::WallAdjacentCells> wall_adj_cell(water_block_inner, ghost_creation);
-   
+
     InteractionWithUpdate<fluid_dynamics::KEpsilonStd1stHalfExtendedHLLCRiemannSolver> tke(water_block_inner, ghost_creation, 0.0);
     InteractionWithUpdate<fluid_dynamics::KEpsilonStd2ndHalfExtendedHLLCRiemannSolver> dissipationrate(water_block_inner, ghost_creation, 0.0);
-
 
     TurbulentChannelFlowBoundaryConditionSetup boundary_condition_setup(water_block_inner, ghost_creation);
     /** Time step size with considering sound wave speed. */
     ReduceDynamics<fluid_dynamics::WCAcousticTimeStepSizeInFVM> get_fluid_time_step_size(water_block, read_mesh_data.MinMeshEdge(), 1.0);
     InteractionWithUpdate<fluid_dynamics::TurbulentViscousForceInner> turbulent_viscous_force(water_block_inner);
     InteractionWithUpdate<fluid_dynamics::ViscousForceInner> viscous_force(water_block_inner);
-    InteractionWithUpdate<fluid_dynamics::TkeGradientForceInner> tke_gradient_force(water_block_inner); 
-    
-   // visualization in FVM with data in cell
-    BodyStatesRecordingInMeshToVtp write_real_body_states(water_block, read_mesh_data);
+    InteractionWithUpdate<fluid_dynamics::TkeGradientForceInner> tke_gradient_force(water_block_inner);
+
+    // visualization in FVM with data in cell
+    BodyStatesRecordingToMeshVtu write_real_body_states(water_block, read_mesh_data);
     ReducedQuantityRecording<MaximumSpeed> write_maximum_speed(water_block);
 
     initial_condition.exec();
@@ -79,7 +78,7 @@ int main(int ac, char *av[])
 
     int screen_output_interval = 1000;
     Real end_time = 100.0;
-    Real output_interval = 5.0; /**< time stamps for output. */ 
+    Real output_interval = 5.0; /**< time stamps for output. */
     //----------------------------------------------------------------------
     //	Statistics for CPU time
     //----------------------------------------------------------------------
@@ -114,8 +113,8 @@ int main(int ac, char *av[])
             if (number_of_iterations % screen_output_interval == 0)
             {
                 cout << fixed << setprecision(9) << "N=" << number_of_iterations << "	Time = "
-                    << physical_time
-                    << "	dt = " << dt << "\n";
+                     << physical_time
+                     << "	dt = " << dt << "\n";
             }
             number_of_iterations++;
         }

@@ -89,12 +89,13 @@ class ParticleGenerator<SurfaceParticles> : public ParticleGenerator<BaseParticl
     virtual void initializeParticleVariablesFromReload() override;
 };
 
+class TriangleMeshShape;
 template <> // generate observer particles
 class ParticleGenerator<ObserverParticles> : public ParticleGenerator<BaseParticles>
 {
   public:
-    explicit ParticleGenerator(SPHBody &sph_body, BaseParticles &base_particles, const StdVec<Vecd> &positions)
-        : ParticleGenerator<BaseParticles>(sph_body, base_particles), positions_(positions){};
+    ParticleGenerator(SPHBody &sph_body, BaseParticles &base_particles, const StdVec<Vecd> &positions);
+    ParticleGenerator(SPHBody &sph_body, BaseParticles &base_particles, TriangleMeshShape &triangle_mesh_shape);
     virtual ~ParticleGenerator(){};
     virtual void prepareGeometricData() override;
 

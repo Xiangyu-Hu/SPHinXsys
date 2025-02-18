@@ -143,19 +143,19 @@ class Average : public ReduceSumType
 };
 
 /**
- * @class InteractArgs
+ * @class DynamicsArgs
  * @brief Class template argument deduction (CTAD) for constructing interaction dynamics.
  * @details Note that the form "XXX" is not std::string type, so we need to use
  * std::string("XXX") to convert it to std::string type.
  */
-template <typename BodyRelationType, typename... OtherArgs>
-struct InteractArgs
+template <typename DynamicsIdentifier, typename... OtherArgs>
+struct DynamicsArgs
 {
-    BodyRelationType &body_relation_;
+    DynamicsIdentifier &identifier_;
     std::tuple<OtherArgs...> others_;
-    SPHBody &getSPHBody() { return body_relation_.getSPHBody(); };
-    InteractArgs(BodyRelationType &body_relation, OtherArgs... other_args)
-        : body_relation_(body_relation), others_(other_args...) {};
+    SPHBody &getSPHBody() { return identifier_.getSPHBody(); };
+    DynamicsArgs(DynamicsIdentifier &identifier, OtherArgs... other_args)
+        : identifier_(identifier), others_(other_args...) {};
 };
 
 /**

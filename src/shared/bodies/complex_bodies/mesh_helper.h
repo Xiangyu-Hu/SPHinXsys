@@ -41,8 +41,8 @@ namespace SPH
 class MeshFileHelpers
 {
   public:
-    MeshFileHelpers(){};
-    virtual ~MeshFileHelpers(){};
+    MeshFileHelpers() {};
+    virtual ~MeshFileHelpers() {};
 
     static void meshDimension(std::ifstream &mesh_file, size_t &dimension, std::string &text_line);
     static void numberOfNodes(std::ifstream &mesh_file, size_t &number_of_points, std::string &text_line);
@@ -65,14 +65,6 @@ class MeshFileHelpers
                               StdLargeVec<Vecd> &node_coordinates_, StdLargeVec<Real> &elements_volumes_);
     static void minimumDistance(StdVec<Real> &all_data_of_distance_between_nodes, StdLargeVec<Real> &elements_volumes_,
                                 StdVec<StdVec<StdVec<size_t>>> &mesh_topology_, StdLargeVec<Vecd> &node_coordinates_);
-    static void vtuFileHeader(std::ofstream &out_file);
-    static void vtuFileNodeCoordinates(std::ofstream &out_file, StdLargeVec<Vecd> &nodes_coordinates_,
-                                       StdLargeVec<StdVec<size_t>> &elements_nodes_connection_, SPHBody &bounds_, Real &range_max);
-    static void vtuFileInformationKey(std::ofstream &out_file, Real &range_max);
-    static void vtuFileCellConnectivity(std::ofstream &out_file, StdLargeVec<StdVec<size_t>> &elements_nodes_connection_, StdLargeVec<Vecd> &node_coordinates_);
-    static void vtuFileOffsets(std::ofstream &out_file, StdLargeVec<StdVec<size_t>> &elements_nodes_connection_);
-    static void vtuFileTypeOfCell(std::ofstream &out_file, StdLargeVec<StdVec<size_t>> &elements_nodes_connection_);
-
     /*Functions for .msh file from FLUENT*/
     static void numberOfNodesFluent(std::ifstream &mesh_file, size_t &number_of_points, std::string &text_line);
     static void numberOfElementsFluent(std::ifstream &mesh_file, size_t &number_of_elements, std::string &text_line);

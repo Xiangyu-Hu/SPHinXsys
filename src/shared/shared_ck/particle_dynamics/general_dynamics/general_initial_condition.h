@@ -33,16 +33,19 @@
 
 namespace SPH
 {
-template <class DynamicsIdentifier, typename ReturnFunctionType>
+template <class DynamicsIdentifier, typename InitializeFunctionType>
 class InitialCondition : public BaseLocalDynamics<DynamicsIdentifier>
 {
-    using DataType = typename ReturnFunctionType::ReturnType;
+    using DataType = typename InitializeFunctionType::ReturnType;
+    using Initialize = typename InitializeFunctionType::ComputingKernel;
 
   public:
-    InitialCondition(DynamicsIdentifier &identifier, const std::string &variable_name)
+    template <typename... Args>
+    InitialCondition(DynamicsIdentifier &identifier, const std::string &variable_name, Args &...args)
         : BaseLocalDynamics<DynamicsIdentifier>(identifier),
           dv_pos_(this->particles_->template getVariableByName<Vecd>("Position")),
-          dv_variable_(this->particles_->template registerStateVariableOnly<DataType>(variable_name)) {};
+          dv_variable_(this->particles_->template registerStateVariableOnly<DataType>(variable_name)),
+          initialize_method_(this->particles_, std::forward<Args>(args)...){};
     virtual ~InitialCondition() {};
 
     class UpdateKernel
@@ -52,22 +55,47 @@ class InitialCondition : public BaseLocalDynamics<DynamicsIdentifier>
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
             : pos_(encloser.dv_pos_->DelegatedData(ex_policy)),
               variable_(encloser.dv_variable_->DelegatedData(ex_policy)),
-              function_(ex_policy, encloser){};
+              initialize_(ex_policy, encloser.initialize_method_){};
 
         void update(size_t index_i, Real dt = 0.0)
         {
-            variable_[index_i] = function_(pos_[index_i]);
+            variable_[index_i] = initialize_(pos_[index_i]);
         };
 
       protected:
         Vecd *pos_;
         DataType *variable_;
-        ReturnFunctionType function_;
+        Initialize initialize_;
     };
 
   protected:
     DiscreteVariable<Vecd> *dv_pos_;
     DiscreteVariable<DataType> *dv_variable_;
+    InitializeFunctionType initialize_method_;
+};
+
+template <typename DataType>
+class UniformDistribution : public ReturnFunction<DataType>
+{
+  public:
+    UniformDistribution(BaseParticles *particles, DataType constant_value)
+        : constant_value_(constant_value) {};
+
+    class ComputingKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+            : constant_value_(encloser.constant_value_){};
+
+        DataType operator()(const Vecd &position) { return constant_value_; };
+
+      protected:
+        DataType constant_value_;
+    };
+
+  protected:
+    DataType constant_value_;
 };
 } // namespace SPH
 #endif // GENERAL_INITIAL_CONDITION_H

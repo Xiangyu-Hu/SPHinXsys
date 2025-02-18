@@ -134,9 +134,9 @@ int main(int ac, char *av[])
     InteractionWithUpdate<fluid_dynamics::BaseDensitySummationComplex<Inner<>, Contact<>, Contact<>>>
         update_water_density_by_summation(water_inner, water_air_contact, water_wall_contact);
     InteractionWithUpdate<fluid_dynamics::MultiPhaseTransportVelocityCorrectionComplex<AllParticles>>
-        air_transport_correction(InteractArgs(air_inner, 0.02), air_water_contact, air_wall_contact);
+        air_transport_correction(DynamicsArgs(air_inner, 0.02), air_water_contact, air_wall_contact);
     InteractionWithUpdate<fluid_dynamics::MultiPhaseTransportVelocityCorrectionComplex<AllParticles>>
-        water_transport_correction(InteractArgs(water_inner, 0.02), water_air_contact, water_wall_contact);
+        water_transport_correction(DynamicsArgs(water_inner, 0.02), water_air_contact, water_wall_contact);
 
     InteractionWithUpdate<fluid_dynamics::MultiPhaseViscousForceWithWall> water_viscous_force(water_inner, water_air_contact, water_wall_contact);
     InteractionWithUpdate<fluid_dynamics::MultiPhaseViscousForceWithWall> air_viscous_force(air_inner, air_water_contact, air_wall_contact);
