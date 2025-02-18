@@ -7,6 +7,7 @@
 #include "base_data_type.h"
 #include "large_data_containers.h"
 #include "sphinxsys.h"
+#include <gtest/gtest.h>
 
 using namespace SPH;
 
@@ -15,9 +16,200 @@ void run_shell_to_solid_coupling(int res_factor, Real stiffness_ratio, int load_
 
 int main(int ac, char *av[])
 {
-    // run_shell_to_solid_coupling(1, 0.1, 1);
-    run_solid(1, 0.1, 1);
+    run_shell_to_solid_coupling(1, 0.1, 0);
+    // run_solid(1, 0.1, 1);
 }
+
+// coupling integrations
+class Integration1stHalfPK2Contact : public LocalDynamics,
+                                     public DataDelegateContact
+{
+  private:
+    Real inv_rho0_;
+    Real *mass_;
+    Vecd *vel_;
+    Matd *stress_PK1_B_;
+    StdVec<Real *> contact_Vol_;
+    StdVec<Matd *> contact_stress_PK1_B_;
+    Vecd *contact_force_;
+
+  public:
+    explicit Integration1stHalfPK2Contact(BaseContactRelation &contact_relation)
+        : LocalDynamics(contact_relation.getSPHBody()),
+          DataDelegateContact(contact_relation),
+          inv_rho0_(1.0 / particles_->getBaseMaterial().ReferenceDensity()),
+          mass_(particles_->getVariableDataByName<Real>("Mass")),
+          vel_(particles_->registerStateVariable<Vecd>("Velocity")),
+          stress_PK1_B_(particles_->registerStateVariable<Matd>("StressPK1OnParticle")),
+          contact_force_(particles_->registerStateVariable<Vecd>("ContactForce"))
+    {
+        for (size_t k = 0; k != contact_particles_.size(); ++k)
+        {
+            contact_stress_PK1_B_.push_back(contact_particles_[k]->registerStateVariable<Matd>("StressPK1OnParticle"));
+            contact_Vol_.push_back(contact_particles_[k]->getVariableDataByName<Real>("VolumetricMeasure"));
+        }
+    }
+
+    inline void interaction(size_t index_i, Real dt = 0.0)
+    {
+        Vecd force = Vecd::Zero();
+        for (size_t k = 0; k < contact_configuration_.size(); ++k)
+        {
+            const Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
+            const Matd *stress_PK1_B_k = contact_stress_PK1_B_[k];
+            const auto *Vol_k = contact_Vol_[k];
+            for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
+            {
+                size_t index_j = contact_neighborhood.j_[n];
+                Vecd e_ij = contact_neighborhood.e_ij_[n];
+                // In Integration1stHalf, a pair-wise dissipation term is added to the stress
+                // However, tests have shown that this term leads to stress oscillations in solid-solid coupling
+                // The cause is not yet clear, but the term is omitted here to avoid the oscillations
+                force += mass_[index_i] * inv_rho0_ * contact_neighborhood.dW_ij_[n] * Vol_k[index_j] *
+                         (stress_PK1_B_[index_i] + stress_PK1_B_k[index_j]) * e_ij;
+            }
+        }
+        contact_force_[index_i] = force;
+    }
+
+    inline void update(size_t index_i, Real dt = 0.0)
+    {
+        vel_[index_i] += contact_force_[index_i] * dt / mass_[index_i];
+    }
+};
+
+class Integration2ndHalfContact : public LocalDynamics,
+                                  public DataDelegateContact
+{
+  private:
+    Vecd *vel_;
+    Matd *B_;
+    Matd *F_;
+    StdVec<Vecd *> contact_vel_;
+    StdVec<Real *> contact_Vol_;
+
+    Matd *contact_dF_dt_;
+
+  public:
+    explicit Integration2ndHalfContact(BaseContactRelation &contact_relation)
+        : LocalDynamics(contact_relation.getSPHBody()),
+          DataDelegateContact(contact_relation),
+          vel_(particles_->registerStateVariable<Vecd>("Velocity")),
+          B_(particles_->getVariableDataByName<Matd>("LinearGradientCorrectionMatrix")),
+          F_(particles_->registerStateVariable<Matd>("DeformationGradient")),
+          contact_dF_dt_(particles_->registerStateVariable<Matd>("ContactDeformationGradientChangeRate"))
+    {
+        for (size_t k = 0; k != contact_particles_.size(); ++k)
+        {
+            contact_vel_.push_back(contact_particles_[k]->registerStateVariable<Vecd>("Velocity"));
+            contact_Vol_.push_back(contact_particles_[k]->getVariableDataByName<Real>("VolumetricMeasure"));
+        }
+    }
+
+    inline void interaction(size_t index_i, Real dt = 0.0)
+    {
+        Matd deformation_gradient_change_rate = Matd::Zero();
+        for (size_t k = 0; k < contact_configuration_.size(); ++k)
+        {
+            const Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
+            const auto *Vol_k = contact_Vol_[k];
+            const auto *vel_k = contact_vel_[k];
+            for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
+            {
+                size_t index_j = contact_neighborhood.j_[n];
+
+                SPH::Vecd gradW_ij = contact_neighborhood.dW_ij_[n] * Vol_k[index_j] * contact_neighborhood.e_ij_[n];
+                deformation_gradient_change_rate -= (vel_[index_i] - vel_k[index_j]) * gradW_ij.transpose();
+            }
+        }
+        deformation_gradient_change_rate *= B_[index_i];
+        contact_dF_dt_[index_i] = deformation_gradient_change_rate;
+    }
+
+    inline void update(size_t index_i, Real dt = 0.0)
+    {
+        F_[index_i] += 0.5 * contact_dF_dt_[index_i] * dt;
+    }
+};
+
+// TODO: only update the coupled particles
+class ShellPK1Stress : public LocalDynamics
+{
+  private:
+    ElasticSolid &elastic_solid_;
+    Matd *B_;
+    Matd *F_;
+    Matd *dF_dt_;
+    Matd *transformation_matrix0_;
+    Matd *stress_PK1_B_;
+
+  public:
+    explicit ShellPK1Stress(SPHBody &sph_body)
+        : LocalDynamics(sph_body),
+          elastic_solid_(DynamicCast<ElasticSolid>(this, sph_body_.getBaseMaterial())),
+          B_(particles_->getVariableDataByName<Matd>("LinearGradientCorrectionMatrix")),
+          F_(particles_->getVariableDataByName<Matd>("DeformationGradient")),
+          dF_dt_(particles_->getVariableDataByName<Matd>("DeformationRate")),
+          transformation_matrix0_(particles_->getVariableDataByName<Matd>("TransformationMatrix")),
+          stress_PK1_B_(particles_->registerStateVariable<Matd>("StressPK1OnParticle")) {};
+
+    inline void update(size_t index_i, Real dt = 0.0)
+    {
+        Matd F_i = F_[index_i] + dF_dt_[index_i] * dt * 0.5;
+        Matd stress_PK1_B_i = elastic_solid_.StressPK1(F_i, index_i) * B_[index_i].transpose();
+        // transform the PK1 stress in initial local coordinate to the global coordinate
+        stress_PK1_B_[index_i] = transformation_matrix0_[index_i].transpose() * stress_PK1_B_i * transformation_matrix0_[index_i];
+    }
+};
+
+class ShellCouplingForce : public ForcePrior,
+                           public DataDelegateContact
+{
+  private:
+    Real *Vol_;
+    Matd *stress_PK1_B_;
+    StdVec<Real> contact_inv_rho0_;
+    StdVec<Real *> contact_mass_;
+    StdVec<Matd *> contact_stress_PK1_B_;
+
+  public:
+    explicit ShellCouplingForce(BaseContactRelation &contact_relation)
+        : ForcePrior(contact_relation.getSPHBody(), "CouplingForce"),
+          DataDelegateContact(contact_relation),
+          Vol_(particles_->getVariableDataByName<Real>("VolumetricMeasure")),
+          stress_PK1_B_(particles_->getVariableDataByName<Matd>("StressPK1OnParticle"))
+    {
+        for (size_t k = 0; k != contact_particles_.size(); ++k)
+        {
+            contact_stress_PK1_B_.push_back(contact_particles_[k]->getVariableDataByName<Matd>("StressPK1OnParticle"));
+            contact_mass_.push_back(contact_particles_[k]->getVariableDataByName<Real>("Mass"));
+            contact_inv_rho0_.push_back(1.0 / contact_particles_[k]->getBaseMaterial().ReferenceDensity());
+        }
+    }
+
+    inline void interaction(size_t index_i, Real dt = 0.0)
+    {
+        Vecd force = Vecd::Zero();
+        for (size_t k = 0; k < contact_configuration_.size(); ++k)
+        {
+            const Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
+            const Matd *stress_PK1_B_k = contact_stress_PK1_B_[k];
+            const auto *mass_k = contact_mass_[k];
+            const auto inv_rho0_k = contact_inv_rho0_[k];
+            for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
+            {
+                size_t index_j = contact_neighborhood.j_[n];
+                Vecd e_ij = contact_neighborhood.e_ij_[n];
+                // In Integration1stHalf, a pair-wise dissipation term is added to the stress
+                // However, tests have shown that this term leads to stress oscillations in solid-solid coupling
+                // The cause is not yet clear, but the term is omitted here to avoid the oscillations
+                force += mass_k[index_j] * inv_rho0_k * contact_neighborhood.dW_ij_[n] * Vol_[index_i] *
+                         (stress_PK1_B_[index_i] + stress_PK1_B_k[index_j]) * e_ij;
+            }
+        }
+        current_force_[index_i] = force;
+    }
+};
 
 struct solid_algs
 {
@@ -51,6 +243,25 @@ struct solid_algs
     Real time_step_size() { return computing_time_step_size.exec(); }
 };
 
+struct solid_coupling_alg
+{
+    ContactRelationFromShellToFluid contact_relation;
+    InteractionWithUpdate<LinearGradientCorrectionMatrixComplex> corrected_configuration;
+    InteractionWithUpdate<Integration1stHalfPK2Contact> stress_relaxation_first_half_contact;
+    InteractionWithUpdate<Integration2ndHalfContact> stress_relaxation_second_half_contact;
+
+  public:
+    solid_coupling_alg(BaseInnerRelation &inner_relation, RealBodyVector contact_bodies, const StdVec<bool> &normal_corrections)
+        : contact_relation(inner_relation.getSPHBody(), std::move(contact_bodies), std::move(normal_corrections)),
+          corrected_configuration(inner_relation, contact_relation),
+          stress_relaxation_first_half_contact(contact_relation),
+          stress_relaxation_second_half_contact(contact_relation) {};
+
+    void corrected_config() { corrected_configuration.exec(); }
+    void stress_relaxation_first(Real dt) { stress_relaxation_first_half_contact.exec(dt); }
+    void stress_relaxation_second(Real dt) { stress_relaxation_second_half_contact.exec(dt); }
+};
+
 struct shell_algs
 {
     InnerRelation inner_relation;
@@ -82,6 +293,28 @@ struct shell_algs
         rotation_damping.exec(dt);
     }
     Real time_step_size() { return computing_time_step_size.exec(); }
+};
+
+struct shell_coupling_alg
+{
+    ContactRelationFromFluidToShell contact_relation;
+    SimpleDynamics<thin_structure_dynamics::InitialShellCurvature> initial_curvature;
+    SimpleDynamics<thin_structure_dynamics::ShellCurvatureUpdate> curvature_update;
+    SimpleDynamics<ShellPK1Stress> update_stress_PK1;
+    InteractionWithUpdate<ShellCouplingForce> coupling_force;
+
+  public:
+    shell_coupling_alg(BaseInnerRelation &inner_relation, RealBodyVector contact_bodies, const StdVec<bool> &normal_corrections)
+        : contact_relation(inner_relation.getSPHBody(), std::move(contact_bodies), std::move(normal_corrections)),
+          initial_curvature(inner_relation),
+          curvature_update(inner_relation.getSPHBody()),
+          update_stress_PK1(inner_relation.getSPHBody()),
+          coupling_force(contact_relation) {};
+
+    void initial_curvature_exec() { initial_curvature.exec(); }
+    void curvature_update_exec() { curvature_update.exec(); }
+    void update_stress_PK1_exec(Real dt) { update_stress_PK1.exec(dt); }
+    void coupling_force_exec() { coupling_force.exec(); }
 };
 
 Real get_physical_viscosity_general(Real rho, Real youngs_modulus, Real length_scale, Real shape_constant = 0.4)
@@ -173,144 +406,6 @@ class VelocityBoundaryCondition : public MotionConstraint<BodyPartByParticle>
     }
 };
 
-class CouplingConstraint : public BaseLocalDynamics<BodyPartByParticle>,
-                           public DataDelegateContact
-{
-  private:
-    int *coupling_ids_;
-
-  public:
-    explicit CouplingConstraint(BodyPartByParticle &body_part, BaseContactRelation &contact_relation)
-        : BaseLocalDynamics<BodyPartByParticle>(body_part),
-          DataDelegateContact(contact_relation),
-          coupling_ids_(particles_->registerStateVariable<int>("CouplingID"))
-    {
-        if (contact_configuration_.size() != 1)
-            throw std::runtime_error("CouplingConstraint currently only supports one contact configuration.");
-    };
-
-    void update(size_t index_i, Real dt = 0.0)
-    {
-        const auto &contact_neighbors = (*contact_configuration_[0])[index_i];
-        int coupling_id = [&contact_neighbors]()
-        {
-            int id = -1;
-            Real r_min = std::numeric_limits<Real>::max();
-            for (size_t n = 0; n < contact_neighbors.current_size_; n++)
-            {
-                if (contact_neighbors.r_ij_[n] < r_min)
-                {
-                    r_min = contact_neighbors.r_ij_[n];
-                    id = contact_neighbors.j_[n];
-                }
-            }
-            return id;
-        }();
-        coupling_ids_[index_i] = coupling_id;
-    }
-};
-
-class SolidVelocityConstraint : public MotionConstraint<BodyPartByParticle>,
-                                public DataDelegateContact
-{
-  private:
-    int *coupling_ids_;
-    StdVec<Vecd *> contact_vel_;
-
-  public:
-    SolidVelocityConstraint(BodyPartByParticle &body_part, BaseContactRelation &contact_relation)
-        : MotionConstraint<BodyPartByParticle>(body_part),
-          DataDelegateContact(contact_relation),
-          coupling_ids_(particles_->getVariableDataByName<int>("CouplingID"))
-    {
-        for (auto *contact_particle : contact_particles_)
-            contact_vel_.emplace_back(contact_particle->getVariableDataByName<Vecd>("Velocity"));
-    };
-
-    void update(size_t index_i, Real dt = 0.0)
-    {
-        int coupling_id = coupling_ids_[index_i];
-        vel_[index_i] = contact_vel_[0][coupling_id];
-    }
-};
-
-class ShellForceConstraint : public BaseForcePrior<BodyPartByParticle>,
-                             public DataDelegateContact
-{
-  private:
-    int *coupling_ids_;
-    Vecd *n0_;
-    Real A0_;
-    StdVec<Matd *> contact_F_;
-    StdVec<Matd *> contact_B_;
-    StdVec<ElasticSolid *> contact_materials_;
-
-  public:
-    ShellForceConstraint(BodyPartByParticle &body_part, BaseContactRelation &contact_relation)
-        : BaseForcePrior<BodyPartByParticle>(body_part, "CouplingForce"),
-          DataDelegateContact(contact_relation),
-          coupling_ids_(particles_->getVariableDataByName<int>("CouplingID")),
-          n0_(particles_->getVariableDataByName<Vecd>("InitialNormalDirection")),
-          A0_(pow(sph_body_.getSPHBodyResolutionRef(), Dimensions - 1))
-    {
-        for (size_t k = 0; k != contact_particles_.size(); ++k)
-        {
-            contact_F_.emplace_back(contact_particles_[k]->getVariableDataByName<Matd>("DeformationGradient"));
-            contact_B_.emplace_back(contact_particles_[k]->getVariableDataByName<Matd>("LinearGradientCorrectionMatrix"));
-            contact_materials_.emplace_back(&DynamicCast<ElasticSolid>(this, contact_bodies_[k]->getBaseMaterial()));
-        }
-    };
-
-    void update(size_t index_i, Real dt = 0.0)
-    {
-        int coupling_id = coupling_ids_[index_i];
-        const Matd stress_PK1_B = contact_materials_[0]->StressPK1(contact_F_[0][coupling_id], coupling_id) * contact_B_[0][coupling_id];
-        const Vecd force = stress_PK1_B * n0_[index_i] * A0_;
-
-        current_force_[index_i] = force;
-        BaseForcePrior<BodyPartByParticle>::update(index_i, dt);
-    }
-};
-
-struct coupling_algs
-{
-    SolidBodyPart part;
-    ContactRelation contact_relation;
-    SimpleDynamics<CouplingConstraint> coupling;
-
-    coupling_algs(SolidBody &body, SolidBody &contact_body, std::string part_name, std::function<bool(Vec3d &)> contain)
-        : part(body, std::move(part_name), std::move(contain)),
-          contact_relation(body, {&contact_body}),
-          coupling(part, contact_relation) {}
-
-    void initialize() { coupling.exec(); }
-};
-
-struct solid_coupling_algs
-{
-    coupling_algs base_algs;
-    SimpleDynamics<SolidVelocityConstraint> vel_bc;
-
-    solid_coupling_algs(SolidBody &body, SolidBody &contact_body, std::string part_name, std::function<bool(Vec3d &)> contain)
-        : base_algs(body, contact_body, std::move(part_name), std::move(contain)),
-          vel_bc(base_algs.part, base_algs.contact_relation) {}
-
-    void initialize() { base_algs.coupling.exec(); }
-    void exec() { vel_bc.exec(); }
-};
-
-struct shell_coupling_algs
-{
-    coupling_algs base_algs;
-    SimpleDynamics<ShellForceConstraint> force_bc;
-
-    shell_coupling_algs(SolidBody &body, SolidBody &contact_body, std::string part_name, std::function<bool(Vec3d &)> contain)
-        : base_algs(body, contact_body, std::move(part_name), std::move(contain)),
-          force_bc(base_algs.part, base_algs.contact_relation) {}
-
-    void exec() { force_bc.exec(); }
-};
-
 namespace plate
 {
 constexpr Real unit_mm = 1e-3;
@@ -322,7 +417,7 @@ struct plate_parameters
     const Real length = 50 * scale;
     const Real width = length;
     const Real height = 20 * scale;
-    const Real thickness_shell = 4 * scale;
+    const Real thickness_shell = 1 * scale;
 
     // Material properties
     const Real rho = 1000 * pow(unit_mm, 2);
@@ -399,11 +494,11 @@ void run_shell_to_solid_coupling(int res_factor, Real stiffness_ratio, int load_
 {
     // parameters
     plate::plate_parameters params;
-    Real dp = params.thickness_shell / (4.0 * res_factor);
+    Real dp = params.thickness_shell / Real(res_factor);
     Real youngs_modulus_solid = params.youngs_modulus_shell * stiffness_ratio;
 
     // Import meshes
-    auto solid_mesh = params.get_solid_extended_mesh(dp);
+    auto solid_mesh = params.get_solid_extended_mesh(0);
     auto lower_shell_mesh = params.get_lower_shell_mesh(dp);
     auto upper_shell_mesh = params.get_upper_shell_mesh(dp);
 
@@ -433,55 +528,49 @@ void run_shell_to_solid_coupling(int res_factor, Real stiffness_ratio, int load_
     // algorithms
     Real eta = get_physical_viscosity_general(params.rho, params.youngs_modulus_shell, params.height + 2 * params.thickness_shell);
     solid_algs algs_solid(solid_body, eta);
+    solid_coupling_alg solid_coupling_algs(algs_solid.inner_relation, {&lower_shell_body, &upper_shell_body}, {true, true});
     shell_algs algs_shell_upper(upper_shell_body, eta);
     shell_algs algs_shell_lower(lower_shell_body, eta);
+    shell_coupling_alg shell_coupling_algs_lower(algs_shell_lower.inner_relation, {&solid_body}, {true});
+    shell_coupling_alg shell_coupling_algs_upper(algs_shell_upper.inner_relation, {&solid_body}, {true});
 
     // Boundary condition
     plate::boundary_condition solid_bc(solid_body, load_type);
     plate::boundary_condition lower_shell_bc(lower_shell_body, load_type);
     plate::boundary_condition upper_shell_bc(upper_shell_body, load_type);
 
-    // Coupling conditions
-    solid_coupling_algs solid_coupling_algs_lower(solid_body, lower_shell_body, "SolidLowerCouplingPart",
-                                                  [z0 = solid_mesh->getBounds().first_.z(), dp](Vec3d &pos)
-                                                  { return pos.z() < z0 + dp; });
-    solid_coupling_algs solid_coupling_algs_upper(solid_body, upper_shell_body, "SolidUpperCouplingPart",
-                                                  [z1 = solid_mesh->getBounds().second_.z(), dp](Vec3d &pos)
-                                                  { return pos.z() > z1 - dp; });
-    shell_coupling_algs shell_coupling_algs_lower(lower_shell_body, solid_body, "LowerShellCouplingPart", [z1 = lower_shell_mesh->getBounds().second_.z(), dp](Vec3d &pos)
-                                                  { return pos.z() > z1 - dp; });
-    shell_coupling_algs shell_coupling_algs_upper(upper_shell_body, solid_body, "UpperShellCouplingPart",
-                                                  [z0 = upper_shell_mesh->getBounds().first_.z(), dp](Vec3d &pos)
-                                                  { return pos.z() < z0 + dp; });
-
     // Initialization
     system.initializeSystemCellLinkedLists();
     system.initializeSystemConfigurations();
 
-    algs_solid.corrected_config();
+    solid_coupling_algs.corrected_config();
     algs_shell_lower.corrected_config();
     algs_shell_upper.corrected_config();
 
-    solid_coupling_algs_upper.initialize();
-    solid_coupling_algs_lower.initialize();
-    shell_coupling_algs_upper.base_algs.coupling.exec();
-    shell_coupling_algs_lower.base_algs.coupling.exec();
+    shell_coupling_algs_lower.initial_curvature_exec();
+    shell_coupling_algs_upper.initial_curvature_exec();
 
     // Output
-    solid_body.getBaseParticles().addVariableToWrite<int>("CouplingID");
-    upper_shell_body.getBaseParticles().addVariableToWrite<int>("CouplingID");
-    lower_shell_body.getBaseParticles().addVariableToWrite<int>("CouplingID");
     solid_body.getBaseParticles().addVariableToWrite<Vec3d>("Velocity");
     upper_shell_body.getBaseParticles().addVariableToWrite<Vec3d>("Velocity");
     lower_shell_body.getBaseParticles().addVariableToWrite<Vec3d>("Velocity");
     solid_body.getBaseParticles().addVariableToWrite<Mat3d>("DeformationGradient");
     upper_shell_body.getBaseParticles().addVariableToWrite<Mat3d>("DeformationGradient");
     lower_shell_body.getBaseParticles().addVariableToWrite<Mat3d>("DeformationGradient");
-    solid_body.getBaseParticles().addVariableToWrite<Vec3d>("InitialNormalDirection");
-    upper_shell_body.getBaseParticles().addVariableToWrite<Vec3d>("InitialNormalDirection");
-    lower_shell_body.getBaseParticles().addVariableToWrite<Vec3d>("InitialNormalDirection");
+    solid_body.getBaseParticles().addVariableToWrite<Vec3d>("NormalDirection");
+    upper_shell_body.getBaseParticles().addVariableToWrite<Vec3d>("NormalDirection");
+    lower_shell_body.getBaseParticles().addVariableToWrite<Vec3d>("NormalDirection");
+    solid_body.getBaseParticles().addVariableToWrite<Vec3d>("ContactForce");
     upper_shell_body.getBaseParticles().addVariableToWrite<Vec3d>("CouplingForce");
     lower_shell_body.getBaseParticles().addVariableToWrite<Vec3d>("CouplingForce");
+    upper_shell_body.getBaseParticles().addVariableToWrite<Real>("1stPrincipleCurvature");
+    lower_shell_body.getBaseParticles().addVariableToWrite<Real>("1stPrincipleCurvature");
+    upper_shell_body.getBaseParticles().addVariableToWrite<Real>("2ndPrincipleCurvature");
+    lower_shell_body.getBaseParticles().addVariableToWrite<Real>("2ndPrincipleCurvature");
+    solid_body.getBaseParticles().addVariableToWrite<Matd>("LinearGradientCorrectionMatrix");
+    solid_body.getBaseParticles().addVariableToWrite<Matd>("StressPK1OnParticle");
+    upper_shell_body.getBaseParticles().addVariableToWrite<Matd>("StressPK1OnParticle");
+    lower_shell_body.getBaseParticles().addVariableToWrite<Matd>("StressPK1OnParticle");
     BodyStatesRecordingToVtp vtp_output(system);
     vtp_output.addDerivedVariableRecording<SimpleDynamics<Displacement>>(solid_body);
     vtp_output.addDerivedVariableRecording<SimpleDynamics<Displacement>>(upper_shell_body);
@@ -493,6 +582,38 @@ void run_shell_to_solid_coupling(int res_factor, Real stiffness_ratio, int load_
     vtp_output.addDerivedVariableRecording<SimpleDynamics<VonMisesStrain>>(upper_shell_body);
     vtp_output.addDerivedVariableRecording<SimpleDynamics<VonMisesStrain>>(lower_shell_body);
     vtp_output.writeToFile(0);
+
+    // check if the total contact force and total coupling forces are correctly computed
+    auto *contact_force = solid_body.getBaseParticles().getVariableDataByName<Vec3d>("ContactForce");
+    auto *coupling_force_upper = upper_shell_body.getBaseParticles().getVariableDataByName<Vec3d>("CouplingForce");
+    auto *coupling_force_lower = lower_shell_body.getBaseParticles().getVariableDataByName<Vec3d>("CouplingForce");
+
+    auto check_coupling_force = [&]()
+    {
+        Vecd total_contact_force = [&]()
+        {
+            Vecd force_ttl = Vecd::Zero();
+            for (size_t i = 0; i < solid_body.getBaseParticles().TotalRealParticles(); ++i)
+                force_ttl += contact_force[i];
+            return force_ttl;
+        }();
+        Vecd total_coupling_force_upper = [&]()
+        {
+            Vecd force_ttl = Vecd::Zero();
+            for (size_t i = 0; i < upper_shell_body.getBaseParticles().TotalRealParticles(); ++i)
+                force_ttl += coupling_force_upper[i];
+            return force_ttl;
+        }();
+        Vecd total_coupling_force_lower = [&]()
+        {
+            Vecd force_ttl = Vecd::Zero();
+            for (size_t i = 0; i < lower_shell_body.getBaseParticles().TotalRealParticles(); ++i)
+                force_ttl += coupling_force_lower[i];
+            return force_ttl;
+        }();
+        Vec3d total_force = total_coupling_force_upper + total_coupling_force_lower;
+        ASSERT_LT((total_contact_force + total_force).norm(), 1e-9);
+    };
 
     // Simulation
     const Real end_time = 4.0;
@@ -517,37 +638,51 @@ void run_shell_to_solid_coupling(int res_factor, Real stiffness_ratio, int load_
                               << dt << "\n";
                 }
 
-                // compute coupling force on shell
-                shell_coupling_algs_lower.exec();
-                shell_coupling_algs_upper.exec();
-
                 dt = std::min({algs_shell_upper.time_step_size(), algs_shell_lower.time_step_size(), algs_solid.time_step_size()});
                 if (dt < dt_ref / 1e2)
                     throw std::runtime_error("time step decreased too much");
 
-                // update shell first
+                // update the PK1 stress of the shell
+                shell_coupling_algs_lower.update_stress_PK1_exec(dt);
+                shell_coupling_algs_upper.update_stress_PK1_exec(dt);
+
+                // update solid 1st half
+                algs_solid.stress_relaxation_first(dt);
+                solid_coupling_algs.stress_relaxation_first(dt);
+                solid_bc.exec();
+                algs_solid.damping_exec(dt);
+                solid_bc.exec();
+
+                // compute coupling force on shell
+                shell_coupling_algs_lower.coupling_force.exec();
+                shell_coupling_algs_upper.coupling_force.exec();
+
+                // update shell 1st half
                 algs_shell_upper.stress_relaxation_first(dt);
                 upper_shell_bc.exec();
                 algs_shell_upper.damping_exec(dt);
                 upper_shell_bc.exec();
-                algs_shell_upper.stress_relaxation_second(dt);
 
                 algs_shell_lower.stress_relaxation_first(dt);
                 lower_shell_bc.exec();
                 algs_shell_lower.damping_exec(dt);
                 lower_shell_bc.exec();
+
+                // update 2nd half
+                algs_solid.stress_relaxation_second(dt);
+                solid_coupling_algs.stress_relaxation_second(dt);
+                algs_shell_upper.stress_relaxation_second(dt);
                 algs_shell_lower.stress_relaxation_second(dt);
 
-                // update solid
-                algs_solid.stress_relaxation_first(dt);
-                solid_coupling_algs_lower.exec();
-                solid_coupling_algs_upper.exec();
-                solid_bc.exec();
-                algs_solid.damping_exec(dt);
-                solid_coupling_algs_lower.exec();
-                solid_coupling_algs_upper.exec();
-                solid_bc.exec();
-                algs_solid.stress_relaxation_second(dt);
+                // update normal and curvature
+                algs_solid.normal_update();
+                algs_shell_lower.normal_update();
+                algs_shell_upper.normal_update();
+                shell_coupling_algs_lower.curvature_update_exec();
+                shell_coupling_algs_upper.curvature_update_exec();
+
+                // check
+                check_coupling_force();
 
                 ++ite;
                 integral_time += dt;
