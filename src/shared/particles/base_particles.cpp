@@ -16,11 +16,7 @@ BaseParticles::BaseParticles(SPHBody &sph_body, BaseMaterial *base_material)
       sph_body_(sph_body), body_name_(sph_body.getName()),
       base_material_(*base_material),
       restart_xml_parser_("xml_restart", "particles"),
-      reload_xml_parser_("xml_particle_reload", "particles"),
-      copy_particle_state_(),
-      write_restart_variable_to_xml_(restart_xml_parser_),
-      write_reload_variable_to_xml_(reload_xml_parser_),
-      read_restart_variable_from_xml_(restart_xml_parser_)
+      reload_xml_parser_("xml_particle_reload", "particles")
 {
     sph_body.assignBaseParticles(this);
     sv_total_real_particles_ = registerSingularVariable<UnsignedInt>("TotalRealParticles");
@@ -135,20 +131,20 @@ void BaseParticles::resizeXmlDocForParticles(XmlParser &xml_parser)
 void BaseParticles::writeParticlesToXmlForRestart(std::string &filefullpath)
 {
     resizeXmlDocForParticles(restart_xml_parser_);
-    write_restart_variable_to_xml_(variables_to_restart_);
+    write_restart_variable_to_xml_(variables_to_restart_, restart_xml_parser_);
     restart_xml_parser_.writeToXmlFile(filefullpath);
 }
 //=================================================================================================//
 void BaseParticles::readParticleFromXmlForRestart(std::string &filefullpath)
 {
     restart_xml_parser_.loadXmlFile(filefullpath);
-    read_restart_variable_from_xml_(variables_to_restart_, this);
+    read_restart_variable_from_xml_(variables_to_restart_, this, restart_xml_parser_);
 }
 //=================================================================================================//
 void BaseParticles::writeToXmlForReloadParticle(std::string &filefullpath)
 {
     resizeXmlDocForParticles(reload_xml_parser_);
-    write_reload_variable_to_xml_(variables_to_reload_);
+    write_reload_variable_to_xml_(variables_to_reload_, reload_xml_parser_);
     reload_xml_parser_.writeToXmlFile(filefullpath);
 }
 //=================================================================================================//
