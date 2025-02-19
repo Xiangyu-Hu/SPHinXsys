@@ -278,7 +278,25 @@ void FreeSurfaceIndicationCK<Contact<Parameters...>>::InteractKernel::interact(
     }
     this->pos_div_[index_i] += pos_div;
 }
+//=================================================================================================//
+template <class ExecutionPolicy, class EncloserType>
+SurfaceIndicationByAlignedBoxCK::UpdateKernel::
+    UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+    : aligned_box_(encloser.sv_aligned_box_->DelegatedData(ex_policy)),
+      pos_(encloser.dv_pos_->DelegatedData(ex_policy)),
+      indicator_(encloser.dv_indicator_->DelegatedData(ex_policy))
+{
+}
 
+void SurfaceIndicationByAlignedBoxCK::UpdateKernel::update(size_t index_i, Real dt)
+{
+    int indicator = 0;
+    if (aligned_box_->checkContain(pos_[index_i]))
+    {
+        indicator = 1;
+    }
+    indicator_[index_i] = indicator;
+}
 } // namespace fluid_dynamics
 } // namespace SPH
 

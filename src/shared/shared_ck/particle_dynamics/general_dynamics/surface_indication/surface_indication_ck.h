@@ -242,6 +242,37 @@ using FreeSurfaceIndicationInnerSpatialTemporalCK = FreeSurfaceIndicationCK<Inne
 using FreeSurfaceIndicationComplexCK = FreeSurfaceIndicationCK<Inner<WithUpdate, Internal>, Contact<>>;
 using FreeSurfaceIndicationComplexSpatialTemporalCK = FreeSurfaceIndicationCK<Inner<WithUpdate, SpatialTemporal>, Contact<>>;
 
+class SurfaceIndicationByAlignedBoxCK : public BaseLocalDynamics<AlignedBoxPartByCell>
+{
+
+  public:
+    SurfaceIndicationByAlignedBoxCK(AlignedBoxPartByCell &aligned_box_part)
+        : BaseLocalDynamics<AlignedBoxPartByCell>(aligned_box_part),
+          sv_aligned_box_(aligned_box_part.svAlignedBox()),
+          dv_pos_(particles_->getVariableByName<Vecd>("Position")),
+          dv_indicator_(particles_->template registerStateVariableOnly<int>("Indicator"))
+    {
+    }
+    virtual ~SurfaceIndicationByAlignedBoxCK() {};
+
+    class UpdateKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+        void update(size_t index_i, Real dt = 0.0); // only works in sequenced policy
+
+      protected:
+        AlignedBox *aligned_box_;
+        Vecd *pos_;
+        int *indicator_;
+    };
+
+  protected:
+    SingularVariable<AlignedBox> *sv_aligned_box_;
+    DiscreteVariable<Vecd> *dv_pos_;
+    DiscreteVariable<int> *dv_indicator_;
+};
 } // namespace fluid_dynamics
 } // namespace SPH
 
