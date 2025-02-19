@@ -96,13 +96,10 @@ class BaseParticles
     //----------------------------------------------------------------------
     // Global information for defining particle groups
     // total_real_particles_ gives the run-time total number of real particles.
-    // real_particles_bound_ gives the maximum possible number of real particles
-    // which is allowed in the computation.
     // particles_bound_ gives the total number of particles in all groups.
     //----------------------------------------------------------------------
   protected:
     SingularVariable<UnsignedInt> *sv_total_real_particles_;
-    UnsignedInt real_particles_bound_;
     UnsignedInt particles_bound_;
 
   public:
@@ -115,11 +112,10 @@ class BaseParticles
     UnsignedInt TotalRealParticles() { return *sv_total_real_particles_->Data(); };
     void incrementTotalRealParticles(UnsignedInt increment = 1) { *sv_total_real_particles_->Data() += increment; };
     void decrementTotalRealParticles(UnsignedInt decrement = 1) { *sv_total_real_particles_->Data() -= decrement; };
-    UnsignedInt RealParticlesBound() { return real_particles_bound_; };
     UnsignedInt ParticlesBound() { return particles_bound_; };
     void initializeAllParticlesBounds(size_t total_real_particles);
     void initializeAllParticlesBoundsFromReloadXml();
-    void increaseAllParticlesBounds(size_t buffer_size);
+    void increaseParticlesBounds(size_t extra_size);
     void copyFromAnotherParticle(size_t index, size_t another_index);
     size_t allocateGhostParticles(size_t ghost_size);
     void updateGhostParticle(size_t ghost_index, size_t index);
@@ -167,6 +163,10 @@ class BaseParticles
     DiscreteVariable<DataType> *registerStateVariableOnly(const std::string &name, Args &&...args);
     template <typename DataType>
     DiscreteVariable<DataType> *registerStateVariableOnlyFrom(const std::string &new_name, const std::string &old_name);
+    template <typename DataType>
+    DiscreteVariable<DataType> *registerStateVariableOnlyFrom(const std::string &name, const StdLargeVec<DataType> &geometric_data);
+    template <typename DataType>
+    DiscreteVariable<DataType> *registerStateVariableOnlyFromReload(const std::string &name);
 
     template <typename DataType>
     SingularVariable<DataType> *addUniqueSingularVariableOnly(const std::string &name, DataType initial_value = ZeroData<DataType>::value);
@@ -181,13 +181,9 @@ class BaseParticles
     DiscreteVariable<DataType> *addVariableToList(ParticleVariables &variable_set, const std::string &name);
     template <typename DataType>
     DiscreteVariable<DataType> *addVariableToList(ParticleVariables &variable_set, DiscreteVariable<DataType> *variable);
-    template <typename DataType>
-    void *addVariableToList(ParticleVariables &variable_set, DiscreteVariableArray<DataType> *variable);
 
-    template <typename DataType>
-    void addVariableToWrite(const std::string &name);
-    template <typename DataType>
-    void addVariableToWrite(DiscreteVariable<DataType> *variable);
+    template <typename DataType, typename... Args>
+    void addVariableToWrite(Args &&...args);
     template <typename DataType>
     void addVariableToWrite(DiscreteVariableArray<DataType> *variable_array);
     template <typename DataType>
@@ -208,8 +204,10 @@ class BaseParticles
     ParticleVariables variables_to_sort_;
 
   public:
+    template <typename DataType, typename... Args>
+    void addVariableToSort(Args &&...args);
     template <typename DataType>
-    void addVariableToSort(const std::string &name);
+    void addVariableToSort(DiscreteVariableArray<DataType> *variable_array);
     UnsignedInt *ParticleOriginalIds() { return original_id_; };
     UnsignedInt *ParticleSortedIds() { return sorted_id_; };
     ParticleData &SortableParticleData() { return sortable_data_; };
@@ -231,16 +229,17 @@ class BaseParticles
     //----------------------------------------------------------------------
     void registerPositionAndVolumetricMeasure(StdLargeVec<Vecd> &pos, StdLargeVec<Real> &Vol);
     void registerPositionAndVolumetricMeasureFromReload();
-    Vecd *ParticlePositions() { return pos_; }
+    DiscreteVariable<Vecd> *dvParticlePosition() { return dv_pos_; }
+    Vecd *ParticlePositions() { return dv_pos_->Data(); }
     Real *VolumetricMeasures() { return Vol_; }
     virtual Real ParticleVolume(size_t index) { return Vol_[index]; }
     virtual Real ParticleSpacing(size_t index) { return std::pow(Vol_[index], 1.0 / Real(Dimensions)); }
 
   protected:
-    Vecd *pos_;  /**< Position */
-    Real *Vol_;  /**< Volumetric measure, also area and length of surface and linear particle */
-    Real *rho_;  /**< Density as a fundamental property of phyiscal matter */
-    Real *mass_; /**< Mass as another fundamental property of physical matter */
+    DiscreteVariable<Vecd> *dv_pos_; /**< Discrete variable position */
+    Real *Vol_;                      /**< Volumetric measure, also area and length of surface and linear particle */
+    Real *rho_;                      /**< Density as a fundamental property of phyiscal matter */
+    Real *mass_;                     /**< Mass as another fundamental property of physical matter */
 
     SPHBody &sph_body_;
     std::string body_name_;

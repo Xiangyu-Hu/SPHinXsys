@@ -147,6 +147,9 @@ class Average : public ReduceSumType
  * @brief Class template argument deduction (CTAD) for constructing interaction dynamics.
  * @details Note that the form "XXX" is not std::string type, so we need to use
  * std::string("XXX") to convert it to std::string type.
+ * Only the DynamicsIdentifier parameter is reference,
+ * the other parameters should not use it, use pointer
+ * instead.
  */
 template <typename DynamicsIdentifier, typename... OtherArgs>
 struct DynamicsArgs

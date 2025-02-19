@@ -21,7 +21,7 @@ template <class ExecutionPolicy, class EncloserType>
 SpawnRealParticle::ComputingKernel::
     ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : total_real_particles_(encloser.sv_total_real_particles_->DelegatedData(ex_policy)),
-      real_particles_bound_(encloser.real_particles_bound_),
+      particles_bound_(encloser.particles_bound_),
       original_id_(encloser.dv_original_id_->DelegatedData(ex_policy))
 {
     static_assert(std::is_base_of<SequencedPolicy, ExecutionPolicy>::value,
