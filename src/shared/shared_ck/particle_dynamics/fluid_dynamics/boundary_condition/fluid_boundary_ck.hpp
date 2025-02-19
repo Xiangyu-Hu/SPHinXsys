@@ -8,38 +8,44 @@ namespace SPH
 namespace fluid_dynamics
 {
 //=================================================================================================//
+// InflowConditionCK definitions
 template <class AlignedBoxPartType, class ConditionFunction>
 InflowConditionCK<AlignedBoxPartType, ConditionFunction>::
     InflowConditionCK(AlignedBoxPartType &aligned_box_part)
     : BaseLocalDynamics<AlignedBoxPartType>(aligned_box_part),
       sv_aligned_box_(aligned_box_part.svAlignedBox()),
       condition_function_(this->particles_) {}
-//=================================================================================================//
+
 template <class AlignedBoxPartType, class ConditionFunction>
 template <class ExecutionPolicy, class EncloserType>
 InflowConditionCK<AlignedBoxPartType, ConditionFunction>::UpdateKernel::
     UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : aligned_box_(encloser.sv_aligned_box_->DelegatedData(ex_policy)),
       condition_(ex_policy, encloser.condition_function_) {}
-//=================================================================================================//
+
 template <class AlignedBoxPartType, class ConditionFunction>
-void InflowConditionCK<AlignedBoxPartType, ConditionFunction>::
-    UpdateKernel::update(size_t index_i, Real dt)
+void InflowConditionCK<AlignedBoxPartType, ConditionFunction>::UpdateKernel::update(size_t index_i, Real dt)
 {
     condition_(aligned_box_, index_i);
 }
+
 //=================================================================================================//
+// EmitterInflowInjectionCK definitions
+template <typename AlignedBoxPartType>
 template <class ExecutionPolicy, class EncloserType>
-EmitterInflowInjectionCK::UpdateKernel::
+EmitterInflowInjectionCK<AlignedBoxPartType>::UpdateKernel::
     UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : aligned_box_(encloser.sv_aligned_box_->DelegatedData(ex_policy)),
       create_real_particle_(ex_policy, encloser.create_real_particle_method_),
       rho0_(encloser.rho0_),
       pos_(encloser.dv_pos_->DelegatedData(ex_policy)),
       rho_(encloser.dv_rho_->DelegatedData(ex_policy)),
-      p_(encloser.dv_p_->DelegatedData(ex_policy)) {}
-//=================================================================================================//
-void EmitterInflowInjectionCK::UpdateKernel::update(size_t index_i, Real dt)
+      p_(encloser.dv_p_->DelegatedData(ex_policy))
+{
+}
+
+template <typename AlignedBoxPartType>
+void EmitterInflowInjectionCK<AlignedBoxPartType>::UpdateKernel::update(size_t index_i, Real dt)
 {
     if (aligned_box_->checkUpperBound(pos_[index_i]))
     {
@@ -49,7 +55,22 @@ void EmitterInflowInjectionCK::UpdateKernel::update(size_t index_i, Real dt)
         p_[index_i] = 0.0;
     }
 }
+
+template <typename AlignedBoxPartType>
+EmitterInflowInjectionCK<AlignedBoxPartType>::FinishDynamics::
+    FinishDynamics(EmitterInflowInjectionCK<AlignedBoxPartType> &encloser)
+    : particles_(encloser.particles_), buffer_(encloser.buffer_)
+{
+}
+
+template <typename AlignedBoxPartType>
+void EmitterInflowInjectionCK<AlignedBoxPartType>::FinishDynamics::operator()()
+{
+    buffer_.checkEnoughBuffer(*particles_);
+}
+
 //=================================================================================================//
+// DisposerOutflowDeletionCK definitions
 template <class ExecutionPolicy, class EncloserType>
 DisposerOutflowDeletionCK::UpdateKernel::
     UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
@@ -58,8 +79,10 @@ DisposerOutflowDeletionCK::UpdateKernel::
       rho0_(encloser.rho0_),
       pos_(encloser.dv_pos_->DelegatedData(ex_policy)),
       rho_(encloser.dv_rho_->DelegatedData(ex_policy)),
-      p_(encloser.dv_p_->DelegatedData(ex_policy)) {}
-//=================================================================================================//
+      p_(encloser.dv_p_->DelegatedData(ex_policy))
+{
+}
+
 void DisposerOutflowDeletionCK::UpdateKernel::update(size_t index_i, Real dt)
 {
     if (aligned_box_->checkContain(pos_[index_i]))
@@ -67,24 +90,18 @@ void DisposerOutflowDeletionCK::UpdateKernel::update(size_t index_i, Real dt)
         remove_real_particle_(index_i);
     }
 }
+
 //=================================================================================================//
-} // namespace fluid_dynamics
-} // namespace SPH
-namespace SPH
-{
-namespace fluid_dynamics
-{
-//=================================================================================================//
+// TagBufferParticlesCK definitions
 template <class ExecutionPolicy, class EncloserType>
 TagBufferParticlesCK::UpdateKernel::
     UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : aligned_box_(encloser.sv_aligned_box_->DelegatedData(ex_policy)),
-      //   part_id_(encloser.sv_part_id_->DelegatedData(ex_policy)),
       pos_(encloser.dv_pos_->DelegatedData(ex_policy)),
       buffer_particle_indicator_(encloser.dv_buffer_particle_indicator_->DelegatedData(ex_policy))
 {
 }
-//=================================================================================================//
+
 void TagBufferParticlesCK::UpdateKernel::update(size_t index_i, Real dt)
 {
     int buffer_indicator = 0;
@@ -92,11 +109,11 @@ void TagBufferParticlesCK::UpdateKernel::update(size_t index_i, Real dt)
     {
         buffer_indicator = 1;
     }
-    // TODO: we need a getPartID sv version!
-    // TODO: maybe a initial state to set all buffer indicator = 0 first?
     buffer_particle_indicator_[index_i] = buffer_indicator;
 }
+
 //=================================================================================================//
+// PressureConditionCK definitions
 template <class AlignedBoxPartType, class KernelCorrectionType, class ConditionFunction>
 PressureConditionCK<AlignedBoxPartType, KernelCorrectionType, ConditionFunction>::
     PressureConditionCK(AlignedBoxPartType &aligned_box_part)
@@ -113,7 +130,6 @@ PressureConditionCK<AlignedBoxPartType, KernelCorrectionType, ConditionFunction>
 {
 }
 
-//=================================================================================================//
 template <class AlignedBoxPartType, class KernelCorrectionType, class ConditionFunction>
 template <class ExecutionPolicy, class EncloserType>
 PressureConditionCK<AlignedBoxPartType, KernelCorrectionType, ConditionFunction>::UpdateKernel::
@@ -130,26 +146,25 @@ PressureConditionCK<AlignedBoxPartType, KernelCorrectionType, ConditionFunction>
       transform_(&aligned_box_->getTransform())
 {
 }
-//=================================================================================================//
+
 template <class AlignedBoxPartType, class KernelCorrectionType, class ConditionFunction>
-void PressureConditionCK<AlignedBoxPartType, KernelCorrectionType, ConditionFunction>::
-    UpdateKernel::update(size_t index_i, Real dt)
+void PressureConditionCK<AlignedBoxPartType, KernelCorrectionType, ConditionFunction>::UpdateKernel::update(size_t index_i, Real dt)
 {
     if (buffer_particle_indicator_[index_i] != 0)
     {
         if (aligned_box_->checkContain(pos_[index_i]))
         {
-            // vel_[index_i] += 2.0 * kernel_sum_[index_i] * target_pressure_(p_[index_i], *physical_time_) / rho_[index_i] * dt;
             Real pressure = condition_(index_i, *physical_time_);
             vel_[index_i] += correction_(index_i) * this->zero_gradient_residue_[index_i] * pressure / rho_[index_i] * dt;
 
             Vecd frame_velocity = Vecd::Zero();
-
             frame_velocity[xAxis] = this->transform_->xformBaseVecToFrame(vel_[index_i])[xAxis];
             vel_[index_i] = transform_->xformFrameVecToBase(frame_velocity);
         }
     }
 }
+
 } // namespace fluid_dynamics
 } // namespace SPH
+
 #endif // FLUID_BOUNDARY_CK_HPP

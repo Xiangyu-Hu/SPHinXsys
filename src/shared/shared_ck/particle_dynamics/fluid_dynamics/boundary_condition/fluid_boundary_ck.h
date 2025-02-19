@@ -35,6 +35,7 @@
 #include "fluid_boundary_state.hpp"
 #include "particle_operation.hpp"
 #include "particle_reserve.h"
+#include "simple_algorithms_ck.h"
 
 namespace SPH
 {
@@ -70,12 +71,13 @@ class InflowConditionCK<AlignedBoxPartType, ConditionFunction>
     ConditionFunction condition_function_;
 };
 //=================================================================================================//
-class EmitterInflowInjectionCK : public BaseLocalDynamics<AlignedBoxPartByParticle>
+template <typename AlignedBoxPartType>
+class EmitterInflowInjectionCK : public BaseLocalDynamics<AlignedBoxPartType>
 {
     using CreateRealParticleKernel = typename SpawnRealParticle::ComputingKernel;
 
   public:
-    EmitterInflowInjectionCK(AlignedBoxPartByParticle &aligned_box_part, ParticleBuffer<Base> &buffer);
+    EmitterInflowInjectionCK(AlignedBoxPartType &aligned_box_part, ParticleBuffer<Base> &buffer);
     virtual ~EmitterInflowInjectionCK() {};
 
     class UpdateKernel
@@ -237,6 +239,44 @@ class PressureConditionCK<AlignedBoxPartType, KernelCorrectionType, ConditionFun
     DiscreteVariable<Vecd> *dv_vel_;
     KernelCorrectionType kernel_correction_;
     DiscreteVariable<Real> *dv_rho_;
+};
+
+template <typename ExecutionPolicy, class KernelCorrectionType, class ConditionFunction>
+class BidirectionalBufferCK
+{
+  public:
+    StateDynamics<ExecutionPolicy, TagBufferParticlesCK> tag_buffer_particles_;
+
+    StateDynamics<ExecutionPolicy,
+                  PressureConditionCK<AlignedBoxPartByCell, KernelCorrectionType, ConditionFunction>>
+        pressure_condition_;
+
+    StateDynamics<execution::SequencedPolicy, EmitterInflowInjectionCK<AlignedBoxPartByCell>> emitter_injection_;
+
+    StateDynamics<execution::SequencedPolicy, DisposerOutflowDeletionCK> disposer_outflow_deletion_;
+
+    BidirectionalBufferCK(AlignedBoxPartByCell &emitter_by_cell,
+                          ParticleBuffer<Base> &inlet_buffer)
+        : tag_buffer_particles_(emitter_by_cell),
+          pressure_condition_(emitter_by_cell),
+          emitter_injection_(emitter_by_cell, inlet_buffer),
+          disposer_outflow_deletion_(emitter_by_cell)
+    {
+    }
+
+    // Member functions to call the internal dynamics
+
+    /// Tag (or flag) particles in the buffer.
+    void tagBufferParticles() { tag_buffer_particles_.exec(); }
+
+    /// Apply the pressure condition (note that this usually takes a time-step dt).
+    void applyPressureCondition(Real dt) { pressure_condition_.exec(dt); }
+
+    /// Perform the injection step (for inflow).
+    void injectParticles() { emitter_injection_.exec(); }
+
+    /// Perform the deletion step (for outflow).
+    void deleteParticles() { disposer_outflow_deletion_.exec(); }
 };
 } // namespace fluid_dynamics
 } // namespace SPH

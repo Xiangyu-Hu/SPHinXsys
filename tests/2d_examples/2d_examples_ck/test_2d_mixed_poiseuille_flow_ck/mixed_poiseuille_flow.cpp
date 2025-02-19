@@ -32,7 +32,11 @@ Real c_f = 10.0 * U_f;
 Real bidrectional_buffer_length = 5.0 * resolution_ref;
 Vec2d bidirectional_buffer_halfsize = Vec2d(bidrectional_buffer_length * 0.5, 0.5 * DH);
 Vec2d left_bidirectional_translation = bidirectional_buffer_halfsize;
+Vec2d left_indicator_translation = Vec2d(0.0, 0.5 * DH);
+
 Vec2d right_bidirectional_translation = Vec2d(DL - 0.5 * bidrectional_buffer_length, 0.5 * DH);
+Vec2d right_indicator_translation = Vec2d(DL, 0.5 * DH);
+
 Vec2d right_disposer_translation = Vec2d(DL + 0.5 * bidrectional_buffer_length, 0.5 * DH);
 Vec2d normal = Vec2d(1.0, 0.0);
 //----------------------------------------------------------------------
@@ -179,8 +183,12 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating body parts.
     //----------------------------------------------------------------------
-    AlignedBoxPartByParticle emitter(water_body, AlignedBox(xAxis, Transform(left_bidirectional_translation), bidirectional_buffer_halfsize));
-    AlignedBoxPartByCell emitter_by_cell(water_body, AlignedBox(xAxis, Transform(left_bidirectional_translation), bidirectional_buffer_halfsize));
+    AlignedBoxPartByParticle left_emitter_by_particle(water_body, AlignedBox(xAxis, Transform(left_bidirectional_translation), bidirectional_buffer_halfsize));
+    AlignedBoxPartByCell left_emitter_by_cell(water_body, AlignedBox(xAxis, Transform(left_bidirectional_translation), bidirectional_buffer_halfsize));
+    AlignedBoxPartByCell right_emitter_by_cell(water_body, AlignedBox(xAxis, Transform(Vec2d(right_disposer_translation)), bidirectional_buffer_halfsize));
+    AlignedBoxPartByCell left_indicator_by_cell(water_body, AlignedBox(xAxis, Transform(left_indicator_translation), bidirectional_buffer_halfsize));
+    AlignedBoxPartByCell right_indicator_by_cell(water_body, AlignedBox(xAxis, Transform(Vec2d(right_indicator_translation)), bidirectional_buffer_halfsize));
+
     AlignedBoxPartByCell test_right_ABPC(water_body, AlignedBox(xAxis, Transform(Vec2d(right_bidirectional_translation)), bidirectional_buffer_halfsize));
     AlignedBoxPartByCell right_disposer(water_body, AlignedBox(xAxis, Transform(Vec2d(right_disposer_translation)), bidirectional_buffer_halfsize));
 
@@ -229,8 +237,11 @@ int main(int ac, char *av[])
         fluid_acoustic_step_2nd_half(water_body_inner, water_wall_contact);
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::DensityRegularizationComplexFreeSurface>
         fluid_density_regularization(water_body_inner, water_wall_contact);
-    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::FreeSurfaceIndicationComplexSpatialTemporalCK>
-        fluid_boundary_indicator(water_body_inner, water_wall_contact);
+    // InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::FreeSurfaceIndicationComplexSpatialTemporalCK>
+    //     fluid_boundary_indicator(water_body_inner, water_wall_contact);
+    StateDynamics<MainExecutionPolicy, fluid_dynamics::SurfaceIndicationByAlignedBoxCK> label_left_indicator(left_indicator_by_cell);
+    StateDynamics<MainExecutionPolicy, fluid_dynamics::SurfaceIndicationByAlignedBoxCK> label_right_indicator(right_indicator_by_cell);
+
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::TransportVelocityCorrectionWallNoCorrectionBulkParticlesCK>
         transport_correction_ck(water_body_inner, water_wall_contact);
 
@@ -239,13 +250,20 @@ int main(int ac, char *av[])
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::ViscousForceWithWallCK>
         fluid_viscous_force(water_body_inner, water_wall_contact);
 
-    StateDynamics<SequencedExecutionPolicy, fluid_dynamics::TagBufferParticlesCK> left_tag_buffer_particle_(test_right_ABPC);
-    StateDynamics<SequencedExecutionPolicy, fluid_dynamics::TagBufferParticlesCK> right_tag_buffer_particle_(emitter_by_cell);
+    StateDynamics<MainExecutionPolicy, fluid_dynamics::TagBufferParticlesCK> left_tag_buffer_particle_(left_emitter_by_cell);
+    StateDynamics<MainExecutionPolicy, fluid_dynamics::TagBufferParticlesCK> right_tag_buffer_particle_(right_emitter_by_cell);
 
-    StateDynamics<MainExecutionPolicy, fluid_dynamics::InflowConditionCK<AlignedBoxPartByParticle, InletInflowCondition>> inflow_condition(emitter);
-    StateDynamics<MainExecutionPolicy, fluid_dynamics::PressureConditionCK<AlignedBoxPartByParticle, NoKernelCorrectionCK, InletInflowpPressureCondition>> pressure_condition(emitter);
-    StateDynamics<SequencedExecutionPolicy, fluid_dynamics::EmitterInflowInjectionCK> emitter_injection(emitter, inlet_buffer);
+    StateDynamics<MainExecutionPolicy, fluid_dynamics::InflowConditionCK<AlignedBoxPartByCell, InletInflowCondition>> inflow_condition(left_emitter_by_cell);
+    StateDynamics<MainExecutionPolicy, fluid_dynamics::PressureConditionCK<AlignedBoxPartByCell, NoKernelCorrectionCK, InletInflowpPressureCondition>> pressure_condition(left_emitter_by_cell);
+    StateDynamics<execution::SequencedPolicy, fluid_dynamics::EmitterInflowInjectionCK<AlignedBoxPartByCell>> emitter_injection(left_emitter_by_cell, inlet_buffer);
+    // StateDynamics<execution::SequencedPolicy, fluid_dynamics::BufferEmitterInflowInjectionCK<AlignedBoxPartByCell>> emitter_injection(left_emitter_by_cell, inlet_buffer);
+    // StateDynamics<execution::SequencedPolicy, fluid_dynamics::EmitterInflowInjectionCK<AlignedBoxPartByParticle>> emitter_injection(left_emitter_by_particle, inlet_buffer);
     StateDynamics<SequencedExecutionPolicy, fluid_dynamics::DisposerOutflowDeletionCK> right_remove_particles(right_disposer);
+
+    // fluid_dynamics::BidirectionalBufferCK<MainExecutionPolicy, NoKernelCorrectionCK, InletInflowpPressureCondition>
+    //     bidirectional_buffer(left_emitter_by_cell, // for tag buffering (expects an AlignedBoxPartByCell)
+    //                          inlet_buffer);
+
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
@@ -311,7 +329,7 @@ int main(int ac, char *av[])
                 acoustic_dt = fluid_acoustic_time_step.exec();
                 fluid_acoustic_step_1st_half.exec(acoustic_dt);
                 inflow_condition.exec();
-                pressure_condition.exec();
+                // pressure_condition.exec();
                 fluid_acoustic_step_2nd_half.exec(acoustic_dt);
                 relaxation_time += acoustic_dt;
                 integration_time += acoustic_dt;
@@ -342,7 +360,9 @@ int main(int ac, char *av[])
             water_cell_linked_list.exec();
             water_body_update_complex_relation.exec();
             fluid_observer_contact_relation.exec();
-            fluid_boundary_indicator.exec();
+            // fluid_boundary_indicator.exec();
+            label_left_indicator.exec();
+            label_right_indicator.exec();
 
             body_states_recording.writeToFile(MainExecutionPolicy{});
         }
