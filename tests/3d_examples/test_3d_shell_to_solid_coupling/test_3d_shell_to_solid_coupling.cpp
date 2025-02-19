@@ -15,8 +15,8 @@ void run_shell_to_solid_coupling(int res_factor, Real stiffness_ratio, int load_
 
 int main(int ac, char *av[])
 {
-    // run_shell_to_solid_coupling(1, 0.1, 1);
-    run_solid(1, 0.1, 1);
+    run_shell_to_solid_coupling(1, 0.1, 1);
+    // run_solid(1, 0.1, 1);
 }
 
 struct solid_algs
@@ -235,40 +235,59 @@ class SolidVelocityConstraint : public MotionConstraint<BodyPartByParticle>,
 };
 
 class ShellForceConstraint : public BaseForcePrior<BodyPartByParticle>,
+                             public DataDelegateInner,
                              public DataDelegateContact
 {
   private:
     int *coupling_ids_;
-    Vecd *n0_;
-    Real A0_;
+    Real *mass_;
+    Real *Vol_;
+    Matd *B_;
+    Matd *transformation_matrix_;
     StdVec<Matd *> contact_F_;
-    StdVec<Matd *> contact_B_;
     StdVec<ElasticSolid *> contact_materials_;
+    Real inv_rho0_;
 
   public:
-    ShellForceConstraint(BodyPartByParticle &body_part, BaseContactRelation &contact_relation)
+    ShellForceConstraint(BodyPartByParticle &body_part, BaseInnerRelation &inner_relation, BaseContactRelation &contact_relation)
         : BaseForcePrior<BodyPartByParticle>(body_part, "CouplingForce"),
+          DataDelegateInner(inner_relation),
           DataDelegateContact(contact_relation),
           coupling_ids_(particles_->getVariableDataByName<int>("CouplingID")),
-          n0_(particles_->getVariableDataByName<Vecd>("InitialNormalDirection")),
-          A0_(pow(sph_body_.getSPHBodyResolutionRef(), Dimensions - 1))
+          mass_(particles_->getVariableDataByName<Real>("Mass")),
+          Vol_(particles_->getVariableDataByName<Real>("VolumetricMeasure")),
+          B_(particles_->getVariableDataByName<Matd>("LinearGradientCorrectionMatrix")),
+          transformation_matrix_(particles_->getVariableDataByName<Matd>("TransformationMatrix")),
+          inv_rho0_(1.0 / sph_body_.getBaseMaterial().ReferenceDensity())
     {
         for (size_t k = 0; k != contact_particles_.size(); ++k)
         {
             contact_F_.emplace_back(contact_particles_[k]->getVariableDataByName<Matd>("DeformationGradient"));
-            contact_B_.emplace_back(contact_particles_[k]->getVariableDataByName<Matd>("LinearGradientCorrectionMatrix"));
+            // contact_B_.emplace_back(contact_particles_[k]->getVariableDataByName<Matd>("LinearGradientCorrectionMatrix"));
             contact_materials_.emplace_back(&DynamicCast<ElasticSolid>(this, contact_bodies_[k]->getBaseMaterial()));
         }
     };
 
-    void update(size_t index_i, Real dt = 0.0)
+    void interaction(size_t index_i, Real dt = 0.0)
     {
-        int coupling_id = coupling_ids_[index_i];
-        const Matd stress_PK1_B = contact_materials_[0]->StressPK1(contact_F_[0][coupling_id], coupling_id) * contact_B_[0][coupling_id];
-        const Vecd force = stress_PK1_B * n0_[index_i] * A0_;
-
+        int coupling_id_i = coupling_ids_[index_i];
+        Vecd force = Vecd::Zero();
+        const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
+        Matd stress_i = contact_materials_[0]->StressPK1(contact_F_[0][coupling_id_i], coupling_id_i);
+        // Matd global_B_i = transformation_matrix_[index_i].transpose() * B_[index_i] * transformation_matrix_[index_i];
+        // Matd stress_B_i = stress_i * global_B_i.transpose();
+        for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+        {
+            size_t index_j = inner_neighborhood.j_[n];
+            int coupling_id_j = coupling_ids_[index_j];
+            Matd stress_j = contact_materials_[0]->StressPK1(contact_F_[0][coupling_id_j], coupling_id_j);
+            // Matd global_B_j = transformation_matrix_[index_j].transpose() * B_[index_j] * transformation_matrix_[index_j];
+            // Matd stress_B_j = stress_j * global_B_j.transpose();
+            Vecd e_ij = inner_neighborhood.e_ij_[n];
+            force += mass_[index_i] * inv_rho0_ * inner_neighborhood.dW_ij_[n] * Vol_[index_j] *
+                     (stress_i + stress_j) * e_ij;
+        }
         current_force_[index_i] = force;
-        BaseForcePrior<BodyPartByParticle>::update(index_i, dt);
     }
 };
 
@@ -302,11 +321,11 @@ struct solid_coupling_algs
 struct shell_coupling_algs
 {
     coupling_algs base_algs;
-    SimpleDynamics<ShellForceConstraint> force_bc;
+    InteractionWithUpdate<ShellForceConstraint> force_bc;
 
-    shell_coupling_algs(SolidBody &body, SolidBody &contact_body, std::string part_name, std::function<bool(Vec3d &)> contain)
-        : base_algs(body, contact_body, std::move(part_name), std::move(contain)),
-          force_bc(base_algs.part, base_algs.contact_relation) {}
+    shell_coupling_algs(BaseInnerRelation &inner, SolidBody &contact_body, std::string part_name, std::function<bool(Vec3d &)> contain)
+        : base_algs(DynamicCast<SolidBody>(this, inner.getSPHBody()), contact_body, std::move(part_name), std::move(contain)),
+          force_bc(base_algs.part, inner, base_algs.contact_relation) {}
 
     void exec() { force_bc.exec(); }
 };
@@ -448,9 +467,9 @@ void run_shell_to_solid_coupling(int res_factor, Real stiffness_ratio, int load_
     solid_coupling_algs solid_coupling_algs_upper(solid_body, upper_shell_body, "SolidUpperCouplingPart",
                                                   [z1 = solid_mesh->getBounds().second_.z(), dp](Vec3d &pos)
                                                   { return pos.z() > z1 - dp; });
-    shell_coupling_algs shell_coupling_algs_lower(lower_shell_body, solid_body, "LowerShellCouplingPart", [z1 = lower_shell_mesh->getBounds().second_.z(), dp](Vec3d &pos)
+    shell_coupling_algs shell_coupling_algs_lower(algs_shell_lower.inner_relation, solid_body, "LowerShellCouplingPart", [z1 = lower_shell_mesh->getBounds().second_.z(), dp](Vec3d &pos)
                                                   { return pos.z() > z1 - dp; });
-    shell_coupling_algs shell_coupling_algs_upper(upper_shell_body, solid_body, "UpperShellCouplingPart",
+    shell_coupling_algs shell_coupling_algs_upper(algs_shell_upper.inner_relation, solid_body, "UpperShellCouplingPart",
                                                   [z0 = upper_shell_mesh->getBounds().first_.z(), dp](Vec3d &pos)
                                                   { return pos.z() < z0 + dp; });
 
@@ -517,15 +536,18 @@ void run_shell_to_solid_coupling(int res_factor, Real stiffness_ratio, int load_
                               << dt << "\n";
                 }
 
-                // compute coupling force on shell
-                shell_coupling_algs_lower.exec();
-                shell_coupling_algs_upper.exec();
-
                 dt = std::min({algs_shell_upper.time_step_size(), algs_shell_lower.time_step_size(), algs_solid.time_step_size()});
                 if (dt < dt_ref / 1e2)
                     throw std::runtime_error("time step decreased too much");
 
-                // update shell first
+                // update solid first half
+                algs_solid.stress_relaxation_first(dt);
+
+                // compute coupling force on shell
+                shell_coupling_algs_lower.exec();
+                shell_coupling_algs_upper.exec();
+
+                // update shell
                 algs_shell_upper.stress_relaxation_first(dt);
                 upper_shell_bc.exec();
                 algs_shell_upper.damping_exec(dt);
@@ -538,8 +560,7 @@ void run_shell_to_solid_coupling(int res_factor, Real stiffness_ratio, int load_
                 lower_shell_bc.exec();
                 algs_shell_lower.stress_relaxation_second(dt);
 
-                // update solid
-                algs_solid.stress_relaxation_first(dt);
+                // update solid second half with shell kinematic constraints
                 solid_coupling_algs_lower.exec();
                 solid_coupling_algs_upper.exec();
                 solid_bc.exec();
