@@ -255,7 +255,7 @@ int main(int ac, char *av[])
 
     StateDynamics<MainExecutionPolicy, fluid_dynamics::InflowConditionCK<AlignedBoxPartByCell, InletInflowCondition>> inflow_condition(left_emitter_by_cell);
     StateDynamics<MainExecutionPolicy, fluid_dynamics::PressureConditionCK<AlignedBoxPartByCell, NoKernelCorrectionCK, InletInflowpPressureCondition>> pressure_condition(left_emitter_by_cell);
-    StateDynamics<execution::SequencedPolicy, fluid_dynamics::EmitterInflowInjectionCK<AlignedBoxPartByCell>> emitter_injection(left_emitter_by_cell, inlet_buffer);
+    StateDynamics<execution::SequencedPolicy, fluid_dynamics::BufferEmitterInflowInjectionCK<AlignedBoxPartByCell>> emitter_injection(left_emitter_by_cell, inlet_buffer);
     // StateDynamics<execution::SequencedPolicy, fluid_dynamics::BufferEmitterInflowInjectionCK<AlignedBoxPartByCell>> emitter_injection(left_emitter_by_cell, inlet_buffer);
     // StateDynamics<execution::SequencedPolicy, fluid_dynamics::EmitterInflowInjectionCK<AlignedBoxPartByParticle>> emitter_injection(left_emitter_by_particle, inlet_buffer);
     StateDynamics<SequencedExecutionPolicy, fluid_dynamics::DisposerOutflowDeletionCK> right_remove_particles(right_disposer);

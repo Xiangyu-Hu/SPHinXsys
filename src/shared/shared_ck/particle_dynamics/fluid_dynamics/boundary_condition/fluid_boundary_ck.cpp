@@ -32,6 +32,34 @@ void EmitterInflowInjectionCK<AlignedBoxPartType>::FinishDynamics::operator()()
     buffer_.checkEnoughBuffer(*particles_);
 }
 //=================================================================================================//
+template <typename AlignedBoxPartType>
+BufferEmitterInflowInjectionCK<AlignedBoxPartType>::
+    BufferEmitterInflowInjectionCK(AlignedBoxPartType &aligned_box_part, ParticleBuffer<Base> &buffer)
+    : BaseLocalDynamics<AlignedBoxPartType>(aligned_box_part),
+      buffer_(buffer), sv_aligned_box_(aligned_box_part.svAlignedBox()),
+      create_real_particle_method_(this->particles_),
+      rho0_(this->particles_->getBaseMaterial().ReferenceDensity()),
+      dv_pos_(this->particles_->template getVariableByName<Vecd>("Position")),
+      dv_rho_(this->particles_->template getVariableByName<Real>("Density")),
+      dv_p_(this->particles_->template getVariableByName<Real>("Pressure")),
+      dv_buffer_particle_indicator_(this->particles_->template getVariableByName<int>("BufferParticleIndicator"))
+{
+    buffer_.checkParticlesReserved();
+}
+//=================================================================================================//
+template <typename AlignedBoxPartType>
+BufferEmitterInflowInjectionCK<AlignedBoxPartType>::FinishDynamics::
+    FinishDynamics(BufferEmitterInflowInjectionCK<AlignedBoxPartType> &encloser)
+    : particles_(encloser.particles_), buffer_(encloser.buffer_)
+{
+}
+//=================================================================================================//
+template <typename AlignedBoxPartType>
+void BufferEmitterInflowInjectionCK<AlignedBoxPartType>::FinishDynamics::operator()()
+{
+    buffer_.checkEnoughBuffer(*particles_);
+}
+//=================================================================================================//
 DisposerOutflowDeletionCK::
     DisposerOutflowDeletionCK(AlignedBoxPartByCell &aligned_box_part)
     : BaseLocalDynamics<AlignedBoxPartByCell>(aligned_box_part),
@@ -63,5 +91,7 @@ TagBufferParticlesCK::TagBufferParticlesCK(AlignedBoxPartByCell &aligned_box_par
 
 template class EmitterInflowInjectionCK<AlignedBoxPartByCell>;
 template class EmitterInflowInjectionCK<AlignedBoxPartByParticle>;
+template class BufferEmitterInflowInjectionCK<AlignedBoxPartByCell>;
+template class BufferEmitterInflowInjectionCK<AlignedBoxPartByParticle>;
 } // namespace fluid_dynamics
 } // namespace SPH

@@ -114,6 +114,51 @@ class EmitterInflowInjectionCK : public BaseLocalDynamics<AlignedBoxPartType>
     DiscreteVariable<Real> *dv_rho_, *dv_p_;
 };
 //=================================================================================================//
+template <typename AlignedBoxPartType>
+class BufferEmitterInflowInjectionCK : public BaseLocalDynamics<AlignedBoxPartType>
+{
+    using CreateRealParticleKernel = typename SpawnRealParticle::ComputingKernel;
+
+  public:
+    BufferEmitterInflowInjectionCK(AlignedBoxPartType &aligned_box_part, ParticleBuffer<Base> &buffer);
+    virtual ~BufferEmitterInflowInjectionCK() {};
+
+    class UpdateKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+        void update(size_t index_i, Real dt = 0.0); // only works in sequenced policy
+
+      protected:
+        AlignedBox *aligned_box_;
+        CreateRealParticleKernel create_real_particle_;
+        Real rho0_;
+        Vecd *pos_;
+        Real *rho_, *p_;
+        int *buffer_particle_indicator_;
+    };
+
+    class FinishDynamics
+    {
+        BaseParticles *particles_;
+        ParticleBuffer<Base> &buffer_;
+
+      public:
+        FinishDynamics(BufferEmitterInflowInjectionCK &encloser);
+        void operator()();
+    };
+
+  protected:
+    ParticleBuffer<Base> &buffer_;
+    SingularVariable<AlignedBox> *sv_aligned_box_;
+    SpawnRealParticle create_real_particle_method_;
+    Real rho0_;
+    DiscreteVariable<Vecd> *dv_pos_;
+    DiscreteVariable<Real> *dv_rho_, *dv_p_;
+    DiscreteVariable<int> *dv_buffer_particle_indicator_;
+};
+//=================================================================================================//
 class DisposerOutflowDeletionCK : public BaseLocalDynamics<AlignedBoxPartByCell>
 {
     using RemoveRealParticleKernel = typename DespawnRealParticle::ComputingKernel;
