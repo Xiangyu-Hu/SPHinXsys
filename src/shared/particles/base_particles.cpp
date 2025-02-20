@@ -10,9 +10,9 @@ namespace SPH
 {
 //=================================================================================================//
 BaseParticles::BaseParticles(SPHBody &sph_body, BaseMaterial *base_material)
-    : sv_total_real_particles_(nullptr), real_particles_bound_(0), particles_bound_(0),
-      original_id_(nullptr), sorted_id_(nullptr),
-      pos_(nullptr), Vol_(nullptr), rho_(nullptr), mass_(nullptr),
+    : sv_total_real_particles_(nullptr),
+      particles_bound_(0), original_id_(nullptr), sorted_id_(nullptr),
+      dv_pos_(nullptr), Vol_(nullptr), rho_(nullptr), mass_(nullptr),
       sph_body_(sph_body), body_name_(sph_body.getName()),
       base_material_(*base_material),
       restart_xml_parser_("xml_restart", "particles"),
@@ -24,6 +24,11 @@ BaseParticles::BaseParticles(SPHBody &sph_body, BaseMaterial *base_material)
 {
     sph_body.assignBaseParticles(this);
     sv_total_real_particles_ = registerSingularVariable<UnsignedInt>("TotalRealParticles");
+}
+//=================================================================================================//
+SPHAdaptation &BaseParticles::getSPHAdaptation()
+{
+    return sph_body_.getSPHAdaptation();
 }
 //=================================================================================================//
 void BaseParticles::initializeBasicParticleVariables()
@@ -45,7 +50,7 @@ void BaseParticles::initializeBasicParticleVariables()
 //=================================================================================================//
 void BaseParticles::registerPositionAndVolumetricMeasure(StdLargeVec<Vecd> &pos, StdLargeVec<Real> &Vol)
 {
-    pos_ = registerStateVariableFrom<Vecd>("Position", pos);
+    dv_pos_ = registerStateVariableOnlyFrom<Vecd>("Position", pos);
     Vol_ = registerStateVariableFrom<Real>("VolumetricMeasure", Vol);
     addVariableToReload<Vecd>("Position");
     addVariableToReload<Real>("VolumetricMeasure");
@@ -53,16 +58,14 @@ void BaseParticles::registerPositionAndVolumetricMeasure(StdLargeVec<Vecd> &pos,
 //=================================================================================================//
 void BaseParticles::registerPositionAndVolumetricMeasureFromReload()
 {
-    pos_ = registerStateVariableFromReload<Vecd>("Position");
+    dv_pos_ = registerStateVariableOnlyFromReload<Vecd>("Position");
     Vol_ = registerStateVariableFromReload<Real>("VolumetricMeasure");
 }
 //=================================================================================================//
 void BaseParticles::initializeAllParticlesBounds(size_t number_of_particles)
 {
-    UnsignedInt *total_real_particles = sv_total_real_particles_->Data();
-    *total_real_particles = number_of_particles;
-    real_particles_bound_ = number_of_particles;
-    particles_bound_ = real_particles_bound_;
+    sv_total_real_particles_->setValue(number_of_particles);
+    particles_bound_ = number_of_particles;
 }
 //=================================================================================================//
 void BaseParticles::initializeAllParticlesBoundsFromReloadXml()
@@ -70,10 +73,9 @@ void BaseParticles::initializeAllParticlesBoundsFromReloadXml()
     initializeAllParticlesBounds(reload_xml_parser_.Size(reload_xml_parser_.first_element_));
 }
 //=================================================================================================//
-void BaseParticles::increaseAllParticlesBounds(size_t buffer_size)
+void BaseParticles::increaseParticlesBounds(size_t extra_size)
 {
-    real_particles_bound_ += buffer_size;
-    particles_bound_ += buffer_size;
+    particles_bound_ += extra_size;
 }
 //=================================================================================================//
 void BaseParticles::copyFromAnotherParticle(size_t index, size_t another_index)

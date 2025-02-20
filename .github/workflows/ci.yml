@@ -20,6 +20,11 @@ on:
         description: "Run the windows build with VS Code Sever debugging enabled"
         required: false
         default: false
+      macos_build_debug_enabled:
+        type: boolean
+        description: "Run the macOS build with VS Code Sever debugging enabled"
+        required: false
+        default: false
 env:
   VCPKG_VERSION: "2024.02.14"
   CTEST_PARALLEL_LEVEL: "1"
@@ -484,7 +489,7 @@ jobs:
   ###############################################################################
 
   macOS-build:
-    if: ${{ github.event_name != 'workflow_dispatch' }}
+    if: ${{ github.event_name != 'workflow_dispatch' || inputs.macos_build_debug_enabled  }}
     runs-on: macos-13
     env:
       VCPKG_DEFAULT_TRIPLET: x64-osx

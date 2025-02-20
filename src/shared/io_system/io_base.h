@@ -112,8 +112,8 @@ class BodyStatesRecording : public BaseIO
             {
                 if (bodies_[i]->checkNewlyUpdated())
                 {
-                    dv_all_pos_[i]->prepareForOutput(ex_policy);
                     BaseParticles &base_particles = bodies_[i]->getBaseParticles();
+                    base_particles.dvParticlePosition()->prepareForOutput(ex_policy);
                     prepare_variable_to_write_(base_particles.VariablesToWrite(), ex_policy);
                 }
             }
@@ -166,7 +166,6 @@ class BodyStatesRecording : public BaseIO
     StdVec<BaseDynamics<void> *> derived_variables_;
     OperationOnDataAssemble<ParticleVariables, prepareVariablesToWrite> prepare_variable_to_write_;
     bool state_recording_;
-    StdVec<DiscreteVariable<Vecd> *> dv_all_pos_;
     virtual void writeWithFileName(const std::string &sequence) = 0;
 
   private:
