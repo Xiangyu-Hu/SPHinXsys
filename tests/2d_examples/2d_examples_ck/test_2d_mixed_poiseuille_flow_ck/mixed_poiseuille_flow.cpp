@@ -235,10 +235,10 @@ int main(int ac, char *av[])
         fluid_acoustic_step_1st_half(water_body_inner, water_wall_contact);
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticStep2ndHalfWithWallRiemannCorrectionCK>
         fluid_acoustic_step_2nd_half(water_body_inner, water_wall_contact);
-    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::DensityRegularizationComplexFreeSurface>
+    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::DensityRegularizationComplexInternalPressureBoundary>
         fluid_density_regularization(water_body_inner, water_wall_contact);
-    // InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::FreeSurfaceIndicationComplexSpatialTemporalCK>
-    //     fluid_boundary_indicator(water_body_inner, water_wall_contact);
+    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::FreeSurfaceIndicationComplexSpatialTemporalCK>
+        fluid_boundary_indicator(water_body_inner, water_wall_contact);
     StateDynamics<MainExecutionPolicy, fluid_dynamics::SurfaceIndicationByAlignedBoxCK> label_left_indicator(left_indicator_by_cell);
     StateDynamics<MainExecutionPolicy, fluid_dynamics::SurfaceIndicationByAlignedBoxCK> label_right_indicator(right_indicator_by_cell);
 
@@ -356,15 +356,15 @@ int main(int ac, char *av[])
             if (number_of_iterations % 100 == 0 && number_of_iterations != 1)
             {
                 std::cout << "particle_sort.exec(); \n";
-                particle_sort.exec();
+                // particle_sort.exec();
             }
 
             water_cell_linked_list.exec();
             water_body_update_complex_relation.exec();
             fluid_observer_contact_relation.exec();
-            // fluid_boundary_indicator.exec();
-            label_left_indicator.exec();
-            label_right_indicator.exec();
+            fluid_boundary_indicator.exec();
+            // label_left_indicator.exec();
+            // label_right_indicator.exec();
 
             body_states_recording.writeToFile(MainExecutionPolicy{});
         }
