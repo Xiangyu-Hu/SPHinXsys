@@ -146,5 +146,40 @@ class ParticleScopeTypeCK<NotIndicatedParticles<0>> : public WithinScope
     DiscreteVariable<int> *dv_indicator_;
 };
 
+class ExcludeBufferParticles;
+template <>
+class ParticleScopeTypeCK<ExcludeBufferParticles> : public WithinScope
+{
+  public:
+    explicit ParticleScopeTypeCK(BaseParticles *particles)
+        : WithinScope(),
+          dv_buffer_particles_indicator_(particles->registerStateVariableOnly<int>("BufferParticleIndicator"))
+    {
+    }
+
+    class ComputingKernel
+    {
+      public:
+        template <class ExecutionPolicy, class ComputingKernelType>
+        ComputingKernel(const ExecutionPolicy &ex_policy,
+                        ParticleScopeTypeCK<ExcludeBufferParticles> &encloser,
+                        ComputingKernelType &computing_kernel)
+            : buffer_particles_indicator_(encloser.dv_buffer_particles_indicator_->DelegatedData(ex_policy))
+        {
+        }
+
+        bool operator()(size_t index_i) const
+        {
+            return (buffer_particles_indicator_[index_i] != 0);
+        }
+
+      protected:
+        int *buffer_particles_indicator_;
+    };
+
+  protected:
+    DiscreteVariable<int> *dv_buffer_particles_indicator_;
+};
+
 } // namespace SPH
 #endif // PARTICLE_FUNCTORS_CK_H
