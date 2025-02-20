@@ -190,10 +190,10 @@ class BaseParticles
     // Particle data for sorting
     //----------------------------------------------------------------------
   protected:
-    UnsignedInt *original_id_; /**< the original ids assigned just after particle is generated. */
-    UnsignedInt *sorted_id_;   /**< the current sorted particle ids of particles from original ids. */
+    UnsignedInt *original_id_;             /**< the original ids assigned just after particle is generated. */
+    UnsignedInt *sorted_id_;               /**< the current sorted particle ids of particles from original ids. */
+    ParticleVariables evolving_variables_; // particle variables which evolving during simulation
     ParticleData evolving_variables_data_;
-    ParticleVariables evolving_variables_;
 
   public:
     template <typename DataType, typename... Args>
@@ -203,6 +203,8 @@ class BaseParticles
     UnsignedInt *ParticleOriginalIds() { return original_id_; };
     UnsignedInt *ParticleSortedIds() { return sorted_id_; };
     ParticleData &EvolvingVariablesData() { return evolving_variables_data_; };
+    ParticleVariables &VariablesToWrite() { return variables_to_write_; };
+    ParticleVariables &EvolvingVariables() { return evolving_variables_; };
     //----------------------------------------------------------------------
     // Particle data ouput functions
     //----------------------------------------------------------------------
@@ -238,14 +240,11 @@ class BaseParticles
     SingularVariables all_singular_variables_;
     ParticleVariables variables_to_write_;
 
-  public:
-    ParticleVariables &VariablesToWrite() { return variables_to_write_; };
-    ParticleVariables &EvolvingVariables() { return evolving_variables_; };
+  protected:
     //----------------------------------------------------------------------
     // Small structs for generalize particle operations on
     // assembled variables and data sets
     //----------------------------------------------------------------------
-  protected:
     struct CopyParticleState
     {
         template <typename DataType>
