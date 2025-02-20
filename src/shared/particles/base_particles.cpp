@@ -29,7 +29,9 @@ SPHAdaptation &BaseParticles::getSPHAdaptation()
 //=================================================================================================//
 void BaseParticles::initializeBasicParticleVariables()
 {
-    //----------------------------------------------------------------------
+    addEvolvingVariable<Vecd>("Position");
+    addEvolvingVariable<Real>("VolumetricMeasure");
+     //----------------------------------------------------------------------
     //		register non-geometric variables
     //----------------------------------------------------------------------
     rho_ = registerStateVariable<Real>("Density", base_material_.ReferenceDensity());
