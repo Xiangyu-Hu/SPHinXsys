@@ -58,9 +58,9 @@ class BodyPartByParticle;
 /**
  * @class SPHBody
  * @brief SPHBody is a base body with basic data and functions.
- *		  Its derived class can be a real fluid body, a real deformable solid body,
- *        a static or moving solid body or an observer body.
- * 		  Note that only real bodies have cell linked list.
+ * Its derived class can be a real fluid body, a real deformable solid body,
+ * a static or moving solid body or an observer body.
+ * Note that only real bodies have cell linked list.
  */
 class SPHBody
 {
@@ -184,10 +184,6 @@ class SPHBody
     {
         generateParticles<ParticleType, ReserveType, Parameters...>(particle_reserve, std::forward<Args>(args)...);
     };
-
-    virtual void writeParticlesToXmlForRestart(std::string &filefullpath);
-    virtual void readParticlesFromXmlForRestart(std::string &filefullpath);
-    virtual void writeToXmlForReloadParticle(std::string &filefullpath);
 };
 
 /**

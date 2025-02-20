@@ -6,17 +6,6 @@
 namespace SPH
 {
 //=================================================================================================//
-template <typename OwnerType>
-void BaseParticles::checkReloadFileRead(OwnerType *owner)
-{
-    if (reload_xml_parser_.first_element_ == nullptr)
-    {
-        std::cout << "\n Error: the reload file is not read! \n";
-        std::cout << "\n This error occurs in " << typeid(*owner).name() << '\n';
-        exit(1);
-    }
-}
-//=================================================================================================//
 template <typename DataType>
 DataType *BaseParticles::initializeVariable(DiscreteVariable<DataType> *variable, DataType initial_value)
 {

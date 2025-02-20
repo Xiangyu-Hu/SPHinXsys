@@ -211,19 +211,14 @@ class BaseParticles
     UnsignedInt *ParticleOriginalIds() { return original_id_; };
     UnsignedInt *ParticleSortedIds() { return sorted_id_; };
     ParticleData &SortableParticleData() { return sortable_data_; };
-    AssignIndex getAssignIndex() { return AssignIndex(); };
-
     //----------------------------------------------------------------------
     // Particle data ouput functions
     //----------------------------------------------------------------------
-    void writeParticlesToPltFile(std::ofstream &output_file);
     void resizeXmlDocForParticles(XmlParser &xml_parser);
-    void writeParticlesToXmlForRestart(std::string &filefullpath);
-    void readParticleFromXmlForRestart(std::string &filefullpath);
-    void writeToXmlForReloadParticle(std::string &filefullpath);
-    XmlParser &readReloadXmlFile(const std::string &filefullpath);
-    template <typename OwnerType>
-    void checkReloadFileRead(OwnerType *owner);
+    void writeParticlesToXmlForRestart(const std::string &filefullpath);
+    void readParticlesFromXmlForRestart(const std::string &filefullpath);
+    void writeParticlesToXmlForReload(const std::string &filefullpath);
+    void readReloadXmlFile(const std::string &filefullpath);
     //----------------------------------------------------------------------
     // Function related to geometric variables and their relations
     //----------------------------------------------------------------------
