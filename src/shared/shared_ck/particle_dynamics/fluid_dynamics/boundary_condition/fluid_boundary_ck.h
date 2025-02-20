@@ -114,50 +114,124 @@ class EmitterInflowInjectionCK : public BaseLocalDynamics<AlignedBoxPartType>
     DiscreteVariable<Real> *dv_rho_, *dv_p_;
 };
 //=================================================================================================//
-template <typename AlignedBoxPartType>
+template <typename AlignedBoxPartType, class ConditionFunction>
 class BufferEmitterInflowInjectionCK : public BaseLocalDynamics<AlignedBoxPartType>
 {
     using CreateRealParticleKernel = typename SpawnRealParticle::ComputingKernel;
+    using ConditionKernel = typename ConditionFunction::ComputingKernel;
 
   public:
-    BufferEmitterInflowInjectionCK(AlignedBoxPartType &aligned_box_part, ParticleBuffer<Base> &buffer);
-    virtual ~BufferEmitterInflowInjectionCK() {};
+    // 1) Move constructor body here, inline:
+    BufferEmitterInflowInjectionCK(AlignedBoxPartType &aligned_box_part, ParticleBuffer<Base> &buffer)
+        : BaseLocalDynamics<AlignedBoxPartType>(aligned_box_part),
+          buffer_(buffer),
+          sv_aligned_box_(aligned_box_part.svAlignedBox()),
+          create_real_particle_method_(this->particles_),
+          rho0_(this->particles_->getBaseMaterial().ReferenceDensity()),
+          sound_speed_(0.0),
+          dv_pos_(this->particles_->template getVariableByName<Vecd>("Position")),
+          dv_rho_(this->particles_->template getVariableByName<Real>("Density")),
+          dv_p_(this->particles_->template getVariableByName<Real>("Pressure")),
+          dv_buffer_particle_indicator_(this->particles_->template getVariableByName<int>("BufferParticleIndicator")),
+          condition_function_(this->particles_),
+          dv_previous_surface_indicator_(this->particles_->template getVariableByName<int>("PreviousSurfaceIndicator")),
+          sv_physical_time_(this->sph_system_.template getSystemVariableByName<Real>("PhysicalTime"))
 
+    {
+        buffer_.checkParticlesReserved();
+        Fluid &fluid_ = DynamicCast<Fluid>(this, this->particles_->getBaseMaterial());
+        sound_speed_ = fluid_.getSoundSpeed(rho0_);
+    }
+
+    // 2) Inline definition for FinishDynamics constructor:
+    class FinishDynamics
+    {
+      public:
+        FinishDynamics(BufferEmitterInflowInjectionCK &encloser)
+            : particles_(encloser.particles_), buffer_(encloser.buffer_) {}
+
+        void operator()()
+        {
+            buffer_.checkEnoughBuffer(*particles_);
+        }
+
+      private:
+        BaseParticles *particles_;
+        ParticleBuffer<Base> &buffer_;
+    };
+
+    // 3) Inline definition for UpdateKernel constructor & update(...) if needed:
     class UpdateKernel
     {
       public:
         template <class ExecutionPolicy, class EncloserType>
-        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-        void update(size_t index_i, Real dt = 0.0); // only works in sequenced policy
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+            : aligned_box_(nullptr),
+              create_real_particle_(ex_policy, encloser.create_real_particle_method_),
+              rho0_(encloser.rho0_),
+              sound_speed_(encloser.sound_speed_),
+              pos_(encloser.dv_pos_->DelegatedData(ex_policy)),
+              rho_(encloser.dv_rho_->DelegatedData(ex_policy)),
+              p_(encloser.dv_p_->DelegatedData(ex_policy)),
+              buffer_particle_indicator_(encloser.dv_buffer_particle_indicator_->DelegatedData(ex_policy)),
+              condition_(ex_policy, encloser.condition_function_),
+              previous_surface_indicator_(encloser.dv_previous_surface_indicator_->DelegatedData(ex_policy)),
+              physical_time_(encloser.sv_physical_time_->DelegatedData(ex_policy))
+        {
+            aligned_box_ = encloser.sv_aligned_box_->DelegatedData(ex_policy);
+        }
 
-      protected:
+        void update(size_t index_i, Real dt = 0.0)
+        {
+            if (!aligned_box_->checkInBounds(pos_[index_i]))
+            {
+                if (aligned_box_->checkUpperBound(pos_[index_i]))
+                {
+                    if (buffer_particle_indicator_[index_i] == 1)
+                    {
+                        // if (index_i < this->particles_->TotalRealParticles())
+                        {
+                            create_real_particle_(index_i);
+                            pos_[index_i] = aligned_box_->getUpperPeriodic(pos_[index_i]); // Periodic bounding.
+                            rho_[index_i] = rho0_;
+                            p_[index_i] = condition_(index_i, *physical_time_);
+                            rho_[index_i] = p_[index_i] / pow(sound_speed_, 2.0) + rho0_;
+                            previous_surface_indicator_[index_i] = 1;
+                        }
+                    }
+                }
+            }
+        }
+
+      private:
         AlignedBox *aligned_box_;
         CreateRealParticleKernel create_real_particle_;
         Real rho0_;
+        Real sound_speed_;
         Vecd *pos_;
         Real *rho_, *p_;
         int *buffer_particle_indicator_;
+        ConditionKernel condition_;
+        int *previous_surface_indicator_;
+        Real *physical_time_;
     };
 
-    class FinishDynamics
-    {
-        BaseParticles *particles_;
-        ParticleBuffer<Base> &buffer_;
-
-      public:
-        FinishDynamics(BufferEmitterInflowInjectionCK &encloser);
-        void operator()();
-    };
+    virtual ~BufferEmitterInflowInjectionCK() {};
 
   protected:
     ParticleBuffer<Base> &buffer_;
     SingularVariable<AlignedBox> *sv_aligned_box_;
     SpawnRealParticle create_real_particle_method_;
     Real rho0_;
+    Real sound_speed_;
     DiscreteVariable<Vecd> *dv_pos_;
     DiscreteVariable<Real> *dv_rho_, *dv_p_;
     DiscreteVariable<int> *dv_buffer_particle_indicator_;
+    ConditionFunction condition_function_;
+    DiscreteVariable<int> *dv_previous_surface_indicator_;
+    SingularVariable<Real> *sv_physical_time_;
 };
+
 //=================================================================================================//
 class DisposerOutflowDeletionCK : public BaseLocalDynamics<AlignedBoxPartByCell>
 {
@@ -296,7 +370,7 @@ class BidirectionalBufferCK
                   PressureConditionCK<AlignedBoxPartByCell, KernelCorrectionType, ConditionFunction>>
         pressure_condition_;
 
-    StateDynamics<execution::SequencedPolicy, EmitterInflowInjectionCK<AlignedBoxPartByCell>> emitter_injection_;
+    StateDynamics<execution::SequencedPolicy, BufferEmitterInflowInjectionCK<AlignedBoxPartByCell, ConditionFunction>> emitter_injection_;
 
     StateDynamics<execution::SequencedPolicy, DisposerOutflowDeletionCK> disposer_outflow_deletion_;
 
