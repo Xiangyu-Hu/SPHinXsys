@@ -250,7 +250,8 @@ class SurfaceIndicationByAlignedBoxCK : public BaseLocalDynamics<AlignedBoxPartB
         : BaseLocalDynamics<AlignedBoxPartByCell>(aligned_box_part),
           sv_aligned_box_(aligned_box_part.svAlignedBox()),
           dv_pos_(particles_->getVariableByName<Vecd>("Position")),
-          dv_indicator_(particles_->template registerStateVariableOnly<int>("Indicator"))
+          dv_indicator_(particles_->template registerStateVariableOnly<int>("Indicator")),
+          previous_surface_indicator_(particles_->template registerStateVariableOnly<int>("PreviousSurfaceIndicator"))
     {
     }
     virtual ~SurfaceIndicationByAlignedBoxCK() {};
@@ -272,6 +273,7 @@ class SurfaceIndicationByAlignedBoxCK : public BaseLocalDynamics<AlignedBoxPartB
     SingularVariable<AlignedBox> *sv_aligned_box_;
     DiscreteVariable<Vecd> *dv_pos_;
     DiscreteVariable<int> *dv_indicator_;
+    DiscreteVariable<int> *previous_surface_indicator_;
 };
 } // namespace fluid_dynamics
 } // namespace SPH
