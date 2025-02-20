@@ -26,6 +26,11 @@ BaseParticles::BaseParticles(SPHBody &sph_body, BaseMaterial *base_material)
     sv_total_real_particles_ = registerSingularVariable<UnsignedInt>("TotalRealParticles");
 }
 //=================================================================================================//
+SPHAdaptation &BaseParticles::getSPHAdaptation()
+{
+    return sph_body_.getSPHAdaptation();
+}
+//=================================================================================================//
 void BaseParticles::initializeBasicParticleVariables()
 {
     //----------------------------------------------------------------------

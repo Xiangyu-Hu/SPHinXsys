@@ -95,28 +95,7 @@ MultiPolygon createOtherSideBoundary()
 
     return multi_polygon;
 }
-//----------------------------------------------------------------------
-// Define extra classes which are used in the main program.
-// These classes are defined under the namespace of SPH.
-//----------------------------------------------------------------------
-namespace SPH
-{
-//----------------------------------------------------------------------
-//	Case-dependent initial condition function.
-//----------------------------------------------------------------------
-struct UniformTemperature : ReturnFunction<Real>
-{
-    Real initial_temperature_;
 
-    template <class ExecutionPolicy, class EncloserType>
-    UniformTemperature(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-        : ReturnFunction<Real>(), initial_temperature_(initial_temperature){};
-
-    Real operator()(const Vecd &position)
-    {
-        return initial_temperature_;
-    }
-};
 StdVec<Vecd> createObservationPoints()
 {
     /** A line of measuring points at the middle line. */
@@ -132,8 +111,6 @@ StdVec<Vecd> createObservationPoints()
     }
     return observation_points;
 };
-
-} // namespace SPH
 //----------------------------------------------------------------------
 //	Main program starts here.
 //----------------------------------------------------------------------
@@ -186,8 +163,8 @@ int main(int ac, char *av[])
 
     InteractionDynamicsCK<MainExecutionPolicy, LinearCorrectionMatrixInner> correct_configuration(diffusion_body_inner);
 
-    StateDynamics<MainExecutionPolicy, InitialCondition<SPHBody, UniformTemperature>>
-        diffusion_initial_condition(diffusion_body, diffusion_species_name);
+    StateDynamics<MainExecutionPolicy, InitialCondition<SPHBody, UniformDistribution<Real>>>
+        diffusion_initial_condition(diffusion_body, diffusion_species_name, initial_temperature);
     GetDiffusionTimeStepSize get_time_step_size(diffusion_body);
     DynamicsSequence<InteractionDynamicsCK<
         MainExecutionPolicy,
