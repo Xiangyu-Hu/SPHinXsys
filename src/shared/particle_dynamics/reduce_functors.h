@@ -36,14 +36,11 @@ namespace SPH
 template <typename...>
 struct ReduceReference;
 
-template <class DataType>
-struct ReduceBase
-{
-    typedef DataType ReturnType;
-};
+template <typename...>
+struct ReduceSum;
 
 template <class DataType>
-struct ReduceSum : ReduceBase<DataType>
+struct ReduceSum<DataType> : ReturnFunction<DataType>
 {
     DataType operator()(const DataType &x, const DataType &y) const { return x + y; };
 };
@@ -51,10 +48,27 @@ struct ReduceSum : ReduceBase<DataType>
 template <typename DataType>
 struct ReduceReference<ReduceSum<DataType>>
 {
-    static inline DataType value = ZeroData<DataType>::value;
+    static inline const DataType value = ZeroData<DataType>::value;
 };
 
-struct ReduceMax : ReduceBase<Real>
+template <typename DataType>
+struct ReduceSum<std::pair<DataType, Real>> : ReturnFunction<std::pair<DataType, Real>>
+{
+    using PairType = std::pair<DataType, Real>;
+    PairType operator()(const PairType &x, const PairType &y) const
+    {
+        return PairType(x.first + y.first, x.second + y.second);
+    };
+};
+
+template <typename DataType>
+struct ReduceReference<ReduceSum<std::pair<DataType, Real>>>
+{
+    using PairType = std::pair<DataType, Real>;
+    static inline const PairType value = ZeroData<PairType>::value;
+};
+
+struct ReduceMax : ReturnFunction<Real>
 {
     Real operator()(Real x, Real y) const { return SMAX(x, y); };
 };
@@ -62,10 +76,10 @@ struct ReduceMax : ReduceBase<Real>
 template <>
 struct ReduceReference<ReduceMax>
 {
-    static inline Real value = MinReal;
+    static inline const Real value = MinReal;
 };
 
-struct ReduceMin : ReduceBase<Real>
+struct ReduceMin : ReturnFunction<Real>
 {
     Real operator()(Real x, Real y) const { return SMIN(x, y); };
 };
@@ -73,9 +87,9 @@ struct ReduceMin : ReduceBase<Real>
 template <>
 struct ReduceReference<ReduceMin>
 {
-    static inline Real value = MaxReal;
+    static inline const Real value = MaxReal;
 };
-struct ReduceOR : ReduceBase<bool>
+struct ReduceOR : ReturnFunction<bool>
 {
     bool operator()(bool x, bool y) const { return x || y; };
 };
@@ -83,10 +97,10 @@ struct ReduceOR : ReduceBase<bool>
 template <>
 struct ReduceReference<ReduceOR>
 {
-    static inline bool value = false;
+    static inline const bool value = false;
 };
 
-struct ReduceAND : ReduceBase<bool>
+struct ReduceAND : ReturnFunction<bool>
 {
     bool operator()(bool x, bool y) const { return x && y; };
 };
@@ -94,9 +108,9 @@ struct ReduceAND : ReduceBase<bool>
 template <>
 struct ReduceReference<ReduceAND>
 {
-    static inline bool value = true;
+    static inline const bool value = true;
 };
-struct ReduceLowerBound : ReduceBase<Vecd>
+struct ReduceLowerBound : ReturnFunction<Vecd>
 {
     Vecd operator()(const Vecd &x, const Vecd &y) const
     {
@@ -110,10 +124,10 @@ struct ReduceLowerBound : ReduceBase<Vecd>
 template <>
 struct ReduceReference<ReduceLowerBound>
 {
-    static inline Vecd value = MaxReal * Vecd::Ones();
+    static inline const Vecd value = MaxReal * Vecd::Ones();
 };
 
-struct ReduceUpperBound : ReduceBase<Vecd>
+struct ReduceUpperBound : ReturnFunction<Vecd>
 {
     Vecd operator()(const Vecd &x, const Vecd &y) const
     {
@@ -127,7 +141,7 @@ struct ReduceUpperBound : ReduceBase<Vecd>
 template <>
 struct ReduceReference<ReduceUpperBound>
 {
-    static inline Vecd value = MinReal * Vecd::Ones();
+    static inline const Vecd value = MinReal * Vecd::Ones();
 };
 
 } // namespace SPH

@@ -13,7 +13,7 @@ DeviceSharedSingularVariable<DataType>::
     : Entity(host_variable->Name()),
       device_shared_data_(allocateDeviceShared<DataType>(1))
 {
-    *device_shared_data_ = *host_variable->Data();
+    copyToDevice(host_variable->Data(), device_shared_data_, 1);
     host_variable->setDelegateData(device_shared_data_);
 }
 //=================================================================================================//
@@ -69,7 +69,7 @@ void DeviceOnlyDiscreteVariable<DataType>::
 }
 //=================================================================================================//
 template <typename DataType>
-DataType *DiscreteVariable<DataType>::DelegatedData(const ParallelDevicePolicy &par_device)
+DataType *DiscreteVariable<DataType>::DelegatedOnDevice()
 {
     if (!isDataDelegated())
     {

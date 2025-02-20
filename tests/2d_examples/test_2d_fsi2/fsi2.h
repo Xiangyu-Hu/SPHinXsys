@@ -145,7 +145,7 @@ MultiPolygon createBeamBaseShape()
 struct InflowVelocity
 {
     Real u_ref_, t_ref_;
-    AlignedBoxShape &aligned_box_;
+    AlignedBox &aligned_box_;
     Vecd halfsize_;
 
     template <class BoundaryConditionType>

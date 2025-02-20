@@ -50,7 +50,7 @@ struct ErrorAndParameters
     Real a_, c_;
     ErrorAndParameters()
         : error_(ZeroData<DataType>::value),
-          a_(0), c_(0){};
+          a_(0), c_(0) {};
 };
 
 class FixedDampingRate
@@ -59,8 +59,8 @@ class FixedDampingRate
     FixedDampingRate(BaseParticles *particles, Real eta, Real c = 1.0)
         : damping_rate_(particles->registerSingularVariable<Real>("DampingRate", eta)->Data()),
           specific_capacity_(particles->registerSingularVariable<Real>("SpecificCapacity", c)->Data()),
-          mass_(particles->getVariableDataByName<Real>("Mass")){};
-    virtual ~FixedDampingRate(){};
+          mass_(particles->getVariableDataByName<Real>("Mass")) {};
+    virtual ~FixedDampingRate() {};
 
     Real DampingRate(size_t i, size_t j) { return *damping_rate_; };
     Real DampingRate(size_t i) { return *damping_rate_; };
@@ -83,12 +83,12 @@ class Damping<Base, DataType, DampingRateType, DataDelegationType>
     template <class BaseRelationType, typename... Args>
     explicit Damping(BaseRelationType &base_relation, const std::string &name, Args &&...args);
     template <typename BodyRelationType, typename... Args, size_t... Is>
-    Damping(ConstructorArgs<BodyRelationType, Args...> parameters, std::index_sequence<Is...>)
-        : Damping(parameters.body_relation_, std::get<Is>(parameters.others_)...){};
+    Damping(DynamicsArgs<BodyRelationType, Args...> parameters, std::index_sequence<Is...>)
+        : Damping(parameters.identifier_, std::get<Is>(parameters.others_)...){};
     template <class BodyRelationType, typename... Args>
-    explicit Damping(ConstructorArgs<BodyRelationType, Args...> parameters)
+    explicit Damping(DynamicsArgs<BodyRelationType, Args...> parameters)
         : Damping(parameters, std::make_index_sequence<std::tuple_size_v<decltype(parameters.others_)>>{}){};
-    virtual ~Damping(){};
+    virtual ~Damping() {};
 
   protected:
     typedef DataType DampingVariable;
@@ -114,7 +114,7 @@ class Damping<Inner<Projection>, DataType, DampingRateType>
     template <typename... Args>
     Damping(Args &&...args)
         : Damping<Base, DataType, DampingRateType, DataDelegateInner>(std::forward<Args>(args)...){};
-    virtual ~Damping(){};
+    virtual ~Damping() {};
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
@@ -137,7 +137,7 @@ class Damping<Inner<Pairwise>, DataType, DampingRateType>
     template <typename... Args>
     Damping(Args &&...args)
         : Damping<Base, DataType, DampingRateType, DataDelegateInner>(std::forward<Args>(args)...){};
-    virtual ~Damping(){};
+    virtual ~Damping() {};
     void interaction(size_t index_i, Real dt = 0.0);
 };
 template <typename DataType, typename DampingRateType>
@@ -150,7 +150,7 @@ class Damping<Contact<Pairwise>, DataType, DampingRateType>
   public:
     template <typename... Args>
     Damping(Args &&...args);
-    virtual ~Damping(){};
+    virtual ~Damping() {};
 
   protected:
     StdVec<Real *> contact_Vol_;
@@ -164,7 +164,7 @@ class Damping<Contact<Pairwise, Wall>, DataType, DampingRateType>
     template <typename... Args>
     Damping(Args &&...args)
         : Damping<Contact<Pairwise>, DataType, DampingRateType>(std::forward<Args>(args)...){};
-    virtual ~Damping(){};
+    virtual ~Damping() {};
     void interaction(size_t index_i, Real dt = 0.0);
 };
 template <typename DataType, typename DampingRateType>
@@ -191,7 +191,7 @@ class DampingWithRandomChoice : public DampingAlgorithmType
   public:
     template <typename... Args>
     DampingWithRandomChoice(Real random_ratio, Args &&...args);
-    virtual ~DampingWithRandomChoice(){};
+    virtual ~DampingWithRandomChoice() {};
 
     virtual void exec(Real dt = 0.0) override;
 };

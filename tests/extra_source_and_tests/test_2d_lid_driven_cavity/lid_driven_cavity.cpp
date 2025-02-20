@@ -88,7 +88,7 @@ class ChangingBoundaryVelocity : public fluid_dynamics::FluidInitialCondition
 {
   public:
     ChangingBoundaryVelocity(SPHBody &sph_body)
-        : fluid_dynamics::FluidInitialCondition(sph_body){};
+        : fluid_dynamics::FluidInitialCondition(sph_body) {};
     void update(size_t index_i, Real dt)
     {
         if (vel_[index_i][0] < 1)
@@ -133,7 +133,8 @@ int main(int ac, char *av[])
 
     //	Creating bodies with corresponding materials and particles
     FluidBody fluid(sph_system, makeShared<FluidFilling>("FluidBody"));
-    fluid.defineMaterial<HerschelBulkleyFluid>(rho, SOS, min_shear_rate, max_shear_rate, K, n, tau_y);
+    fluid.defineClosure<WeaklyCompressibleFluid, HerschelBulkleyViscosity>(
+        ConstructArgs(rho, SOS), ConstructArgs(min_shear_rate, max_shear_rate, K, n, tau_y));
     fluid.generateParticles<BaseParticles, Lattice>();
 
     SolidBody no_slip_boundary(sph_system, makeShared<No_Slip_Boundary>("NoSlipWall"));
@@ -151,7 +152,7 @@ int main(int ac, char *av[])
 
     //	Define the numerical methods used in the simulation
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(no_slip_boundary);
-    InteractionWithUpdate<LinearGradientCorrectionMatrixComplex> corrected_configuration_fluid(ConstructorArgs(fluid_inner, 0.3), fluid_all_walls);
+    InteractionWithUpdate<LinearGradientCorrectionMatrixComplex> corrected_configuration_fluid(DynamicsArgs(fluid_inner, 0.3), fluid_all_walls);
     Dynamics1Level<fluid_dynamics::Integration1stHalfWithWall<AcousticRiemannSolver, LinearGradientCorrection>> pressure_relaxation(fluid_inner, fluid_all_walls);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWall<NoRiemannSolver>> density_relaxation(fluid_inner, fluid_all_walls);
     InteractionWithUpdate<fluid_dynamics::DensitySummationComplex> update_density_by_summation(fluid_inner, fluid_all_walls);
@@ -162,7 +163,7 @@ int main(int ac, char *av[])
     InteractionWithUpdate<fluid_dynamics::NonNewtonianViscousForceWithWall<AngularConservative>> viscous_acceleration(fluid_inner, fluid_all_walls);
     InteractionWithUpdate<fluid_dynamics::TransportVelocityLimitedCorrectionComplex<AllParticles>> transport_velocity_correction(fluid_inner, fluid_all_walls);
 
-    ReduceDynamics<fluid_dynamics::AdvectionViscousTimeStep> get_fluid_advection_time_step_size(fluid, u_lid);
+    ReduceDynamics<fluid_dynamics::AdvectionTimeStep> get_fluid_advection_time_step_size(fluid, u_lid);
     ReduceDynamics<fluid_dynamics::AcousticTimeStep> get_acoustic_time_step_size(fluid);
     ReduceDynamics<fluid_dynamics::SRDViscousTimeStepSize> get_viscous_time_step_size(fluid);
 

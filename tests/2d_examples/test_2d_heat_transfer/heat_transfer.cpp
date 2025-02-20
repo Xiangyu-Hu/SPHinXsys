@@ -20,6 +20,7 @@ StdVec<Vecd> observation_location = {Vecd(0.0, DH * 0.5)};
 //----------------------------------------------------------------------
 //	Global parameters on the material properties
 //----------------------------------------------------------------------
+std::string diffusion_species_name = "Phi";
 Real diffusion_coeff = 1.0e-3;
 Real rho0_f = 1.0;                  /**< Density. */
 Real U_f = 1.0;                     /**< Characteristic velocity. */
@@ -101,7 +102,7 @@ class ThermosolidBodyInitialCondition : public LocalDynamics
     explicit ThermosolidBodyInitialCondition(SPHBody &sph_body)
         : LocalDynamics(sph_body),
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
-          phi_(particles_->registerStateVariable<Real>("Phi")){};
+          phi_(particles_->registerStateVariable<Real>(diffusion_species_name)) {};
 
     void update(size_t index_i, Real dt)
     {
@@ -129,7 +130,7 @@ class ThermofluidBodyInitialCondition : public LocalDynamics
     explicit ThermofluidBodyInitialCondition(SPHBody &sph_body)
         : LocalDynamics(sph_body),
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
-          phi_(particles_->registerStateVariable<Real>("Phi")){};
+          phi_(particles_->registerStateVariable<Real>(diffusion_species_name)) {};
 
     void update(size_t index_i, Real dt)
     {
@@ -154,7 +155,7 @@ using ThermalRelaxationComplex = DiffusionBodyRelaxationComplex<
 struct InflowVelocity
 {
     Real u_ref_, t_ref_;
-    AlignedBoxShape &aligned_box_;
+    AlignedBox &aligned_box_;
     Vecd halfsize_;
 
     template <class BoundaryConditionType>
@@ -189,7 +190,8 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     FluidBody thermofluid_body(sph_system, makeShared<ThermofluidBody>("ThermofluidBody"));
-    thermofluid_body.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
+    thermofluid_body.defineClosure<WeaklyCompressibleFluid, Viscosity, IsotropicDiffusion>(
+        ConstructArgs(rho0_f, c_f), mu_f, ConstructArgs(diffusion_species_name, diffusion_coeff));
     thermofluid_body.generateParticles<BaseParticles, Lattice>();
 
     SolidBody thermosolid_body(sph_system, makeShared<ThermosolidBody>("ThermosolidBody"));
@@ -239,14 +241,11 @@ int main(int ac, char *av[])
     ReduceDynamics<fluid_dynamics::AcousticTimeStep> get_fluid_time_step(thermofluid_body);
     PeriodicAlongAxis periodic_along_x(thermofluid_body.getSPHBodyBounds(), xAxis);
     PeriodicConditionUsingCellLinkedList periodic_condition(thermofluid_body, periodic_along_x);
-    BodyAlignedBoxByCell inflow_buffer(thermofluid_body, makeShared<AlignedBoxShape>(xAxis, Transform(Vec2d(buffer_translation)), buffer_halfsize));
+    AlignedBoxPartByCell inflow_buffer(thermofluid_body, AlignedBox(xAxis, Transform(Vec2d(buffer_translation)), buffer_halfsize));
     SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>> parabolic_inflow(inflow_buffer);
 
-    IsotropicDiffusion diffusion("Phi", "Phi", diffusion_coeff);
-    GetDiffusionTimeStepSize get_thermal_time_step(thermofluid_body, diffusion);
-    ThermalRelaxationComplex thermal_relaxation_complex(
-        ConstructorArgs(fluid_body_inner, &diffusion),
-        ConstructorArgs(fluid_body_contact, &diffusion));
+    GetDiffusionTimeStepSize get_thermal_time_step(thermofluid_body);
+    ThermalRelaxationComplex thermal_relaxation_complex(fluid_body_inner, fluid_body_contact);
     SimpleDynamics<ThermosolidBodyInitialCondition> thermosolid_condition(thermosolid_body);
     SimpleDynamics<ThermofluidBodyInitialCondition> thermofluid_initial_condition(thermofluid_body);
 

@@ -56,14 +56,32 @@ class Inner; /**< Inner interaction: interaction within a body*/
 template <typename... ContactParameters>
 class Contact; /**< Contact interaction: interaction between a body with one or several another bodies */
 
-class Boundary;        /**< Interaction with boundary */
-class Wall;            /**< Interaction with wall boundary */
-class Extended;        /**< An extened method of an interaction type */
-class SpatialTemporal; /**< A interaction considering spatial temporal correlations */
-class Dynamic;         /**< A dynamic interaction */
-class Constant;        /**< A constant parameter */
-class Variable;        /**< A variable parameter */
+class Boundary; /**< Interaction with boundary */
+class Wall;     /**< Interaction with wall boundary */
+class Extended; /**< An extened method of an interaction type */
 
+template <typename...>
+class Dirichlet; /**< Contact interaction with Dirichlet boundary condition */
+//----------------------------------------------------------------------
+// Time stepping type identifies
+//----------------------------------------------------------------------
+class ForwardEuler;
+class RungeKutta;
+class RungeKutta1stStage;
+class RungeKutta2ndStage;
+template <typename... ControlTypes>
+class Dirichlet; /**< Contact interaction with Dirichlet boundary condition */
+template <typename... ControlTypes>
+class Neumann; /**< Contact interaction with Neumann boundary condition */
+template <typename... ControlTypes>
+class Robin; /**< Contact interaction with Neumann boundary condition */
+//----------------------------------------------------------------------
+// Spatial temporal type identifies
+//----------------------------------------------------------------------
+class SpatialTemporal;
+//----------------------------------------------------------------------
+// Other type identifies
+//----------------------------------------------------------------------
 using MaterialVector = StdVec<BaseMaterial *>;
 using SPHBodyVector = StdVec<SPHBody *>;
 using SolidBodyVector = StdVec<SolidBody *>;
@@ -88,9 +106,7 @@ typedef DataContainerAssemble<AllocatedData> ParticleData;
 typedef DataContainerAddressAssemble<DiscreteVariable> ParticleVariables;
 /** Generalized particle variable type*/
 typedef DataContainerAddressAssemble<SingularVariable> SingularVariables;
-
 /** Generalized mesh data type */
-// template <typename DataType>
 typedef DataContainerAddressAssemble<MeshVariable> MeshVariableAssemble;
 
 } // namespace SPH

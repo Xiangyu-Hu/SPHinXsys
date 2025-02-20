@@ -4,9 +4,9 @@ namespace SPH
 {
 //=================================================================================================//
 UpdateSortableVariables::UpdateSortableVariables(BaseParticles *particles)
-    : particles_(particles), initialize_temp_variables_(temp_variables_)
+    : initialize_temp_variables_()
 {
-    initialize_temp_variables_(particles_->ParticlesBound());
+    initialize_temp_variables_(temp_variables_, particles->ParticlesBound());
 }
 //=================================================================================================//
 QuickSort::SwapParticleIndex::SwapParticleIndex(UnsignedInt *sequence, UnsignedInt *index_permutation)

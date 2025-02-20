@@ -47,7 +47,8 @@ ViscousForceFromFluid<Contact<WithUpdate, ViscousForceType, Parameters...>>::
 {
     for (size_t k = 0; k != this->contact_particles_.size(); ++k)
     {
-        contact_viscosity_method_.push_back(ViscosityType(this->contact_particles_[k]));
+        ViscosityType *viscosity_model_k = DynamicCast<ViscosityType>(this, &this->contact_particles_[k]->getBaseMaterial());
+        contact_viscosity_model_.push_back(viscosity_model_k);
         contact_smoothing_length_sq_.push_back(pow(this->contact_bodies_[k]->sph_adaptation_->ReferenceSmoothingLength(), 2));
     }
 }
@@ -57,7 +58,7 @@ template <class ExecutionPolicy, class EncloserType>
 ViscousForceFromFluid<Contact<WithUpdate, ViscousForceType, Parameters...>>::InteractKernel::
     InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt contact_index)
     : BaseForceFromFluid::InteractKernel(ex_policy, encloser, contact_index),
-      viscosity_(ex_policy, encloser.contact_viscosity_method_[contact_index]),
+      viscosity_(ex_policy, *encloser.contact_viscosity_model_[contact_index]),
       smoothing_length_sq_(encloser.contact_smoothing_length_sq_[contact_index]) {}
 //=================================================================================================//
 template <typename ViscousForceType, typename... Parameters>
@@ -125,10 +126,10 @@ void PressureForceFromFluid<Contact<WithUpdate, AcousticStep2ndHalfType, Paramet
 
         Real face_wall_external_acceleration =
             (contact_force_prior_[index_j] / contact_mass_[index_j] - acc_ave_[index_i]).dot(e_ij);
-        Real p_in_wall = contact_p_[index_j] + contact_rho_[index_j] * r_ij * SMAX(Real(0), face_wall_external_acceleration);
+        Real p_j_in_wall = contact_p_[index_j] + contact_rho_[index_j] * r_ij * SMAX(Real(0), face_wall_external_acceleration);
         Real u_jump = 2.0 * (this->contact_vel_[index_j] - this->vel_ave_[index_i]).dot(n_[index_i]);
         force -= (riemann_solver_.DissipativePJump(u_jump) * n_[index_i] +
-                  (p_in_wall + contact_p_[index_j]) * this->contact_correction_(index_j) * e_ij) *
+                  (p_j_in_wall + contact_p_[index_j]) * this->contact_correction_(index_j) * e_ij) *
                  this->dW_ij(index_i, index_j) * this->contact_Vol_[index_j];
     }
 

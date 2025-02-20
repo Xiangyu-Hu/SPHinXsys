@@ -18,6 +18,7 @@ BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(L + BW, H + BW));
 //----------------------------------------------------------------------
 //	Global parameters on material properties
 //----------------------------------------------------------------------
+std::string diffusion_species_name = "Phi";
 Real diffusion_coeff = 1.0e-3;
 Real bias_coeff = 0.0;
 Real alpha = Pi / 4.0;
@@ -109,7 +110,7 @@ class DiffusionInitialCondition : public LocalDynamics
     explicit DiffusionInitialCondition(SPHBody &sph_body)
         : LocalDynamics(sph_body),
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
-          phi_(particles_->registerStateVariable<Real>("Phi")){};
+          phi_(particles_->registerStateVariable<Real>(diffusion_species_name)) {};
 
     void update(size_t index_i, Real dt)
     {
@@ -160,8 +161,8 @@ int main(int ac, char *av[])
     //	Create body, materials and particles.
     //----------------------------------------------------------------------
     SolidBody diffusion_body(sph_system, makeShared<MultiPolygonShape>(createDiffusionDomain(), "DiffusionBody"));
-    DirectionalDiffusion *diffusion =
-        diffusion_body.defineMaterial<DirectionalDiffusion>("Phi", diffusion_coeff, bias_coeff, bias_direction);
+    diffusion_body.defineClosure<Solid, DirectionalDiffusion>(
+       Solid(), ConstructArgs(diffusion_species_name, diffusion_coeff, bias_coeff, bias_direction));
     diffusion_body.generateParticles<BaseParticles, Lattice>();
     //----------------------------------------------------------------------
     //	Observer body
@@ -183,23 +184,23 @@ int main(int ac, char *av[])
     SimpleDynamics<DiffusionInitialCondition> setup_diffusion_initial_condition(diffusion_body);
     InteractionWithUpdate<LinearGradientCorrectionMatrixInner> correct_configuration(diffusion_body_inner_relation);
 
-    DiffusionBodyRelaxation diffusion_relaxation(diffusion_body_inner_relation, diffusion);
+    DiffusionBodyRelaxation diffusion_relaxation(diffusion_body_inner_relation);
 
-    GetDiffusionTimeStepSize get_time_step_size(diffusion_body, *diffusion);
+    GetDiffusionTimeStepSize get_time_step_size(diffusion_body);
     BodyRegionByParticle left_boundary(diffusion_body, makeShared<MultiPolygonShape>(createLeftSideBoundary()));
-    SimpleDynamics<ConstantConstraint<BodyRegionByParticle, Real>> left_boundary_condition(left_boundary, "Phi", high_temperature);
+    SimpleDynamics<ConstantConstraint<BodyRegionByParticle, Real>> left_boundary_condition(left_boundary, diffusion_species_name, high_temperature);
     BodyRegionByParticle other_boundary(diffusion_body, makeShared<MultiPolygonShape>(createOtherSideBoundary()));
-    SimpleDynamics<ConstantConstraint<BodyRegionByParticle, Real>> other_boundary_condition(other_boundary, "Phi", low_temperature);
+    SimpleDynamics<ConstantConstraint<BodyRegionByParticle, Real>> other_boundary_condition(other_boundary, diffusion_species_name, low_temperature);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations of the simulation.
     //	Regression tests are also defined here.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp write_states(sph_system);
     RegressionTestEnsembleAverage<ObservedQuantityRecording<Real>>
-        write_solid_temperature("Phi", temperature_observer_contact);
+        write_solid_temperature(diffusion_species_name, temperature_observer_contact);
     BodyRegionByParticle inner_domain(diffusion_body, makeShared<MultiPolygonShape>(createInnerDomain(), "InnerDomain"));
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<Average<QuantitySummation<Real, BodyPartByParticle>>>>
-        write_solid_average_temperature_part(inner_domain, "Phi");
+        write_solid_average_temperature_part(inner_domain, diffusion_species_name);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.

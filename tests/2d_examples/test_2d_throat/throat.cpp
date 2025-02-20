@@ -131,7 +131,8 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     FluidBody fluid_block(sph_system, makeShared<FluidBlock>("FluidBody"));
-    fluid_block.defineMaterial<Oldroyd_B_Fluid>(rho0_f, c_f, mu_f, lambda_f, mu_p_f);
+    fluid_block.defineClosure<WeaklyCompressibleFluid, OldroydBViscosity>(
+        ConstructArgs(rho0_f, c_f), ConstructArgs(mu_f, lambda_f, mu_p_f));
     Ghost<PeriodicAlongAxis> ghost_along_x(fluid_block.getSPHBodyBounds(), xAxis);
     fluid_block.generateParticlesWithReserve<BaseParticles, Lattice>(ghost_along_x);
 
@@ -172,7 +173,7 @@ int main(int ac, char *av[])
     Dynamics1Level<fluid_dynamics::Oldroyd_BIntegration2ndHalfWithWall> density_relaxation(fluid_block_inner, fluid_block_contact);
     InteractionWithUpdate<fluid_dynamics::DensitySummationComplex> update_density_by_summation(fluid_block_inner, fluid_block_contact);
     InteractionSplit<DampingPairwiseWithWall<Vec2d, FixedDampingRate>> implicit_viscous_damping(
-        ConstructorArgs(fluid_block_inner, "Velocity", mu_f), ConstructorArgs(fluid_block_contact, "Velocity", mu_f));
+        DynamicsArgs(fluid_block_inner, "Velocity", mu_f), DynamicsArgs(fluid_block_contact, "Velocity", mu_f));
     InteractionWithUpdate<fluid_dynamics::TransportVelocityLimitedCorrectionComplex<AllParticles>> transport_velocity_correction(fluid_block_inner, fluid_block_contact);
 
     ReduceDynamics<fluid_dynamics::AdvectionTimeStep> get_fluid_advection_time_step_size(fluid_block, U_f);

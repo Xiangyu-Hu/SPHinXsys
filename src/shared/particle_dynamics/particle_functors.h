@@ -54,7 +54,7 @@ class WithinScope
 class AllParticles : public WithinScope
 {
   public:
-    explicit AllParticles(BaseParticles *base_particles) : WithinScope() {};
+    explicit AllParticles(BaseParticles *base_particles) : WithinScope(){};
     bool operator()(size_t index_i)
     {
         return true;
@@ -69,7 +69,7 @@ class IndicatedParticles : public WithinScope
   public:
     explicit IndicatedParticles(BaseParticles *base_particles)
         : WithinScope(),
-          indicator_(base_particles->getVariableDataByName<int>("Indicator")) {};
+          indicator_(base_particles->getVariableDataByName<int>("Indicator")){};
     bool operator()(size_t index_i)
     {
         return indicator_[index_i] == INDICATOR;
@@ -86,7 +86,7 @@ class NotIndicatedParticles : public WithinScope
   public:
     explicit NotIndicatedParticles(BaseParticles *base_particles)
         : WithinScope(),
-          indicator_(base_particles->getVariableDataByName<int>("Indicator")) {};
+          indicator_(base_particles->getVariableDataByName<int>("Indicator")){};
     bool operator()(size_t index_i)
     {
         return indicator_[index_i] != INDICATOR;
@@ -106,7 +106,7 @@ class ParameterFixed : public ParticleParameter
     T parameter_;
 
   public:
-    explicit ParameterFixed(const T &c) : ParticleParameter(), parameter_(c) {};
+    explicit ParameterFixed(const T &c) : ParticleParameter(), parameter_(c){};
     T operator()(size_t index_i)
     {
         return parameter_;
@@ -119,7 +119,7 @@ class ParameterVariable : public ParticleParameter
     T *v_;
 
   public:
-    explicit ParameterVariable(T *v) : ParticleParameter(), v_(v) {};
+    explicit ParameterVariable(T *v) : ParticleParameter(), v_(v){};
     T operator()(size_t index_i)
     {
         return v_[index_i];
@@ -139,9 +139,9 @@ class PairAverageFixed : public ParticleAverage
 
   public:
     PairAverageFixed(const T &c1, const T &c2)
-        : ParticleAverage(), average_(0.5 * (c1 + c2)) {};
+        : ParticleAverage(), average_(0.5 * (c1 + c2)){};
     explicit PairAverageFixed(const T &c)
-        : PairAverageFixed(c, c) {};
+        : PairAverageFixed(c, c){};
     T operator()(size_t index_i, size_t index_j)
     {
         return average_;
@@ -151,7 +151,7 @@ class PairAverageFixed : public ParticleAverage
 class GeomAverage : public ParticleAverage
 {
   public:
-    GeomAverage() : ParticleAverage() {};
+    GeomAverage() : ParticleAverage(){};
 
   protected:
     Real inverse(const Real &x) { return 1.0 / x; };
@@ -167,9 +167,9 @@ class PairGeomAverageFixed : public GeomAverage
 
   public:
     PairGeomAverageFixed(const T &c1, const T &c2)
-        : GeomAverage(), geom_average_(2.0 * c1 * c2 * inverse(c1 + c2)) {};
+        : GeomAverage(), geom_average_(2.0 * c1 * c2 * inverse(c1 + c2)){};
     explicit PairGeomAverageFixed(const T &c)
-        : PairGeomAverageFixed(c, c) {};
+        : PairGeomAverageFixed(c, c){};
     T operator()(size_t index_i, size_t index_j)
     {
         return geom_average_;
@@ -183,9 +183,9 @@ class PairAverageVariable : public ParticleAverage
 
   public:
     PairAverageVariable(T *v1, T *v2)
-        : ParticleAverage(), v1_(v1), v2_(v2) {};
+        : ParticleAverage(), v1_(v1), v2_(v2){};
     explicit PairAverageVariable(T *v)
-        : PairAverageVariable(v, v) {};
+        : PairAverageVariable(v, v){};
     T operator()(size_t index_i, size_t index_j)
     {
         return 0.5 * (v1_[index_i] + v2_[index_j]);
@@ -199,9 +199,9 @@ class PairGeomAverageVariable : public GeomAverage
 
   public:
     PairGeomAverageVariable(T *v1, T *v2)
-        : GeomAverage(), v1_(v1), v2_(v2) {};
+        : GeomAverage(), v1_(v1), v2_(v2){};
     explicit PairGeomAverageVariable(T *v)
-        : PairGeomAverageVariable(v, v) {};
+        : PairGeomAverageVariable(v, v){};
 
     T operator()(size_t index_i, size_t index_j)
     {
@@ -218,7 +218,12 @@ class KernelCorrection // base class to indicate the concept of kernel correctio
 class NoKernelCorrection : public KernelCorrection
 {
   public:
-    NoKernelCorrection(BaseParticles *particles) : KernelCorrection() {};
+    NoKernelCorrection(BaseParticles *particles) : KernelCorrection(){};
+    Real operator()(size_t index_i, size_t index_j)
+    {
+        return 1.0;
+    };
+
     Real operator()(size_t index_i)
     {
         return 1.0;
@@ -230,7 +235,12 @@ class LinearGradientCorrection : public KernelCorrection
   public:
     LinearGradientCorrection(BaseParticles *particles)
         : KernelCorrection(),
-          B_(particles->getVariableDataByName<Matd>("LinearGradientCorrectionMatrix")) {};
+          B_(particles->getVariableDataByName<Matd>("LinearGradientCorrectionMatrix")){};
+
+    Matd operator()(size_t index_i, size_t index_j)
+    {
+        return B_[index_i];
+    };
 
     Matd operator()(size_t index_i)
     {
@@ -241,10 +251,33 @@ class LinearGradientCorrection : public KernelCorrection
     Matd *B_;
 };
 
+class LinearGradientCorrectionWithBulkScope : public KernelCorrection
+{
+  public:
+    LinearGradientCorrectionWithBulkScope(BaseParticles *particles)
+        : KernelCorrection(),
+          B_(particles->getVariableDataByName<Matd>("LinearGradientCorrectionMatrix")),
+          within_scope_(particles){};
+
+    Matd operator()(size_t index_j, size_t index_i)
+    {
+        return within_scope_(index_j) ? B_[index_j] : B_[index_i];
+    };
+
+    Matd operator()(size_t index_i)
+    {
+        return B_[index_i];
+    };
+
+  protected:
+    Matd *B_;
+    BulkParticles within_scope_;
+};
+
 class SingleResolution
 {
   public:
-    SingleResolution(BaseParticles *particles) {};
+    SingleResolution(BaseParticles *particles){};
     Real operator()(size_t index_i)
     {
         return 1.0;
@@ -257,7 +290,7 @@ class AdaptiveResolution
 {
   public:
     AdaptiveResolution(BaseParticles *particles)
-        : h_ratio_(particles->getVariableDataByName<Real>("SmoothingLengthRatio")) {};
+        : h_ratio_(particles->getVariableDataByName<Real>("SmoothingLengthRatio")){};
 
     Real operator()(size_t index_i)
     {

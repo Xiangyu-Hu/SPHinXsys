@@ -26,4 +26,5 @@
 
 #pragma once
 
+#include "derived_solid_state.h"
 #include "solid_constraint.hpp"

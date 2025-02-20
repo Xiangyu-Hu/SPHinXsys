@@ -9,19 +9,29 @@
 namespace SPH
 {
 //=============================================================================================//
-void PltEngine::
-    writeAQuantityHeader(std::ofstream &out_file, const Real &quantity, const std::string &quantity_name)
+void PltEngine::writeAQuantityHeader(
+    std::ofstream &out_file, const Real &quantity, const std::string &quantity_name)
 {
-    out_file << "\"" << quantity_name << "\""
-             << "   ";
+    out_file << "\"" << quantity_name << "\"" << "   ";
 }
 //=============================================================================================//
-void PltEngine::
-    writeAQuantityHeader(std::ofstream &out_file, const Vecd &quantity, const std::string &quantity_name)
+void PltEngine::writeAQuantityHeader(
+    std::ofstream &out_file, const Vecd &quantity, const std::string &quantity_name)
 {
     for (int i = 0; i != Dimensions; ++i)
-        out_file << "\"" << quantity_name << "[" << i << "]\""
-                 << "   ";
+        out_file << "\"" << quantity_name << "[" << i << "]\"" << "   ";
+}
+//=============================================================================================//
+void PltEngine::writeAQuantityHeader(
+    std::ofstream &out_file, const SimTK::SpatialVec &quantity, const std::string &quantity_name)
+{
+    std::string torque = quantity_name + "Torque";
+    for (int i = 0; i != 3; ++i)
+        out_file << "\"" << torque << "[" << i << "]\"" << "   ";
+
+    std::string force = quantity_name + "Force";
+    for (int i = 0; i != 3; ++i)
+        out_file << "\"" << force << "[" << i << "]\"" << "   ";
 }
 //=============================================================================================//
 void PltEngine::writeAQuantity(std::ofstream &out_file, const Real &quantity)
@@ -34,6 +44,15 @@ void PltEngine::writeAQuantity(std::ofstream &out_file, const Vecd &quantity)
     for (int i = 0; i < Dimensions; ++i)
         out_file << std::fixed << std::setprecision(9) << quantity[i] << "   ";
 }
+//=============================================================================================//
+void PltEngine::writeAQuantity(std::ofstream &out_file, const SimTK::SpatialVec &quantity)
+{
+    for (int i = 0; i < 3; ++i)
+        out_file << std::fixed << std::setprecision(9) << quantity[0][i] << "   ";
+    for (int i = 0; i < 3; ++i)
+        out_file << std::fixed << std::setprecision(9) << quantity[1][i] << "   ";
+}
+
 //=================================================================================================//
 void BodyStatesRecordingToPlt::writePltFileHeader(
     std::ofstream &output_file, ParticleVariables &variables_to_write)

@@ -50,6 +50,20 @@ void particle_for(const ParallelDevicePolicy &par_device,
 }
 
 template <class DynamicsIdentifier, class UnaryFunc>
+void particle_for(const LoopRangeCK<SequencedDevicePolicy, DynamicsIdentifier> &loop_range,
+                  const UnaryFunc &unary_func)
+{
+    auto &sycl_queue = execution_instance.getQueue();
+    const size_t particles_size = loop_range.LoopBound();
+    sycl_queue.submit([&](sycl::handler &cgh)
+                      { cgh.single_task([=]()
+                                        {
+                                for (int i = 0; i != particles_size; i++)
+                                    loop_range.computeUnit(unary_func, i); }); })
+        .wait_and_throw();
+}
+
+template <class DynamicsIdentifier, class UnaryFunc>
 void particle_for(const LoopRangeCK<ParallelDevicePolicy, DynamicsIdentifier> &loop_range,
                   const UnaryFunc &unary_func)
 {
@@ -59,7 +73,7 @@ void particle_for(const LoopRangeCK<ParallelDevicePolicy, DynamicsIdentifier> &l
                       { cgh.parallel_for(execution_instance.getUniformNdRange(particles_size), [=](sycl::nd_item<1> index)
                                          {
                                  if(index.get_global_id(0) < particles_size)
-                                     loop_range.template computeUnit<void>(unary_func, index.get_global_id(0)); }); })
+                                     loop_range.computeUnit(unary_func, index.get_global_id(0)); }); })
         .wait_and_throw();
 }
 
@@ -73,13 +87,15 @@ ReturnType particle_reduce(const LoopRangeCK<ParallelDevicePolicy, DynamicsIdent
         sycl::buffer<ReturnType> buffer_result(&temp, 1);
         sycl_queue.submit([&](sycl::handler &cgh)
                           {
-                              auto reduction_operator = sycl::reduction(buffer_result, cgh, Operation());
-                              cgh.parallel_for(execution_instance.getUniformNdRange(particles_size), reduction_operator,
-                                               [=](sycl::nd_item<1> item, auto& reduction) {
-                                                   if(item.get_global_id() < particles_size)
-                                                       reduction.combine(loop_range.template computeUnit<ReturnType>(
-                                                        unary_func, item.get_global_id(0)));
-                                               }); })
+                                Operation operation;
+                                auto reduction_operator = sycl::reduction(buffer_result, cgh, operation);
+                                cgh.parallel_for(execution_instance.getUniformNdRange(particles_size), reduction_operator,
+                                                 [=](sycl::nd_item<1> item, auto &reduction)
+                                                 {
+                                                     if (item.get_global_id() < particles_size)
+                                                         reduction.combine(loop_range.template computeUnit<ReturnType>(
+                                                             operation, unary_func, item.get_global_id(0)));
+                                                 }); })
             .wait_and_throw();
     } // buffer_result goes out of scope, so the result (of temp) is updated
     return temp;

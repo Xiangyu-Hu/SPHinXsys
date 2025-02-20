@@ -135,9 +135,7 @@ class ReduceDynamics : public LocalDynamicsType,
         : LocalDynamicsType(identifier, std::forward<Args>(args)...),
           BaseDynamics<ReturnType>(){};
     virtual ~ReduceDynamics(){};
-
     std::string QuantityName() { return this->quantity_name_; };
-    std::string DynamicsIdentifierName() { return this->identifier_.getName(); };
 
     virtual ReturnType exec(Real dt = 0.0) override
     {

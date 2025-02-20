@@ -81,7 +81,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     // Define the main execution policy for this case.
     //----------------------------------------------------------------------
-    using MainExecutionPolicy = execution::ParallelPolicy; // define
+    using MainExecutionPolicy = execution::ParallelPolicy;
     //----------------------------------------------------------------------
     // Define the numerical methods used in the simulation.
     // Note that there may be data dependence on the sequence of constructions.
@@ -106,14 +106,15 @@ int main(int ac, char *av[])
     StateDynamics<MainExecutionPolicy, fluid_dynamics::AdvectionStepClose> water_advection_step_close(water_block);
 
     InteractionDynamicsCK<MainExecutionPolicy, LinearCorrectionMatrixComplex>
-        fluid_linear_correction_matrix(ConstructorArgs(water_block_inner, 0.5), water_wall_contact);
+        fluid_linear_correction_matrix(DynamicsArgs(water_block_inner, 0.5), water_wall_contact);
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticStep1stHalfWithWallRiemannCorrectionCK>
         fluid_acoustic_step_1st_half(water_block_inner, water_wall_contact);
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticStep2ndHalfWithWallRiemannCorrectionCK>
         fluid_acoustic_step_2nd_half(water_block_inner, water_wall_contact);
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::DensityRegularizationComplexFreeSurface>
         fluid_density_regularization(water_block_inner, water_wall_contact);
-
+    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::FreeSurfaceIndicationComplexCK>
+        fluid_boundary_indicator(water_block_inner, water_wall_contact);
     ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AdvectionTimeStepCK> fluid_advection_time_step(water_block, U_ref);
     ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticTimeStepCK> fluid_acoustic_time_step(water_block);
     //----------------------------------------------------------------------
@@ -123,6 +124,9 @@ int main(int ac, char *av[])
     BodyStatesRecordingToVtp body_states_recording(sph_system);
     body_states_recording.addToWrite<Vecd>(wall_boundary, "NormalDirection");
     body_states_recording.addToWrite<Real>(water_block, "Density");
+    body_states_recording.addToWrite<int>(water_block, "Indicator");
+    body_states_recording.addToWrite<Real>(water_block, "PositionDivergence");
+
     RestartIO restart_io(sph_system);
 
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<MainExecutionPolicy, TotalMechanicalEnergyCK>>
@@ -142,7 +146,7 @@ int main(int ac, char *av[])
         sv_physical_time->setValue(restart_io.readRestartFiles(sph_system.RestartStep()));
     }
 
-    wall_boundary_normal_direction.exec(); // run particle dynamics on CPU first
+    wall_boundary_normal_direction.exec(); // run particle dynamics with host kernels first
     constant_gravity.exec();
 
     water_cell_linked_list.exec();
@@ -159,10 +163,10 @@ int main(int ac, char *av[])
     Real end_time = 20.0;
     Real output_interval = 0.1;
     //----------------------------------------------------------------------
-    //	Statistics for the comuting time information
+    //	Statistics for the computing time information
     //----------------------------------------------------------------------
     TickCount t1 = TickCount::now();
-    TimeInterval interval_writting_body_state;
+    TimeInterval interval_writing_body_state;
     TimeInterval interval_computing_time_step;
     TimeInterval interval_acoustic_steps;
     TimeInterval interval_updating_configuration;
@@ -187,6 +191,7 @@ int main(int ac, char *av[])
 
             fluid_density_regularization.exec();
             water_advection_step_setup.exec();
+            fluid_boundary_indicator.exec();
             Real advection_dt = fluid_advection_time_step.exec();
             fluid_linear_correction_matrix.exec();
             interval_computing_time_step += TickCount::now() - time_instance;
@@ -240,12 +245,12 @@ int main(int ac, char *av[])
         /** Output body state during the simulation according output_interval. */
         body_states_recording.writeToFile(MainExecutionPolicy{});
         TickCount t3 = TickCount::now();
-        interval_writting_body_state += t3 - t2;
+        interval_writing_body_state += t3 - t2;
     }
     TickCount t4 = TickCount::now();
 
     TimeInterval tt;
-    tt = t4 - t1 - interval_writting_body_state;
+    tt = t4 - t1 - interval_writing_body_state;
     std::cout << "Total wall time for computation: " << tt.seconds()
               << " seconds." << std::endl;
     std::cout << std::fixed << std::setprecision(9) << "interval_computing_time_step ="

@@ -21,7 +21,7 @@ DensitySummation<Base, DataDelegationType>::DensitySummation(BaseRelationType &b
 //=================================================================================================//
 template <typename... SummationType>
 template <typename... Args>
-DensitySummation<Inner<FreeSurface, SummationType...>>::DensitySummation(Args &&...args)
+DensitySummation<Inner<FreeSurface, SummationType...>>::DensitySummation(Args &&... args)
     : DensitySummation<Inner<SummationType...>>(std::forward<Args>(args)...) {}
 //=================================================================================================//
 template <typename... SummationType>
@@ -32,7 +32,7 @@ void DensitySummation<Inner<FreeSurface, SummationType...>>::update(size_t index
 //=================================================================================================//
 template <typename NearSurfaceType, typename... SummationType>
 template <typename... Args>
-DensitySummation<Inner<NearSurfaceType, SummationType...>>::DensitySummation(Args &&...args)
+DensitySummation<Inner<NearSurfaceType, SummationType...>>::DensitySummation(Args &&... args)
     : DensitySummation<Inner<SummationType...>>(std::forward<Args>(args)...),
       indicator_(this->particles_->template getVariableDataByName<int>("Indicator")){};
 //=================================================================================================//

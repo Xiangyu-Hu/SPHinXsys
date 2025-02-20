@@ -69,9 +69,7 @@ class ConstraintBySimBodyCK : public BaseLocalDynamics<DynamicsIdentifier>
     DiscreteVariable<Vecd> *dv_pos_, *dv_pos0_, *dv_vel_;
     DiscreteVariable<Vecd> *dv_n_, *dv_n0_, *dv_acc_;
     SingularVariable<SimbodyState> *sv_simbody_state_;
-
-    void initializeSimbodyState(const SimTK::State &state);
-    void updateSimbodyState(const SimTK::State &state);
+    SimTKVec3 sim_tk_initial_origin_location_;
 };
 using ConstraintBodyBySimBodyCK = ConstraintBySimBodyCK<SPHBody>;
 using ConstraintBodyPartBySimBodyCK = ConstraintBySimBodyCK<BodyPartByParticle>;
@@ -97,7 +95,7 @@ class TotalForceForSimBodyCK
 
       protected:
         Vecd *force_, *force_prior_, *pos_;
-        Vecd *current_origin_location_;
+        Vec3d *current_origin_location_;
     };
 
   protected:
@@ -105,7 +103,7 @@ class TotalForceForSimBodyCK
     SimTK::MobilizedBody &mobod_;
     SimTK::RungeKuttaMersonIntegrator &integ_;
     DiscreteVariable<Vecd> *dv_force_, *dv_force_prior_, *dv_pos_;
-    SingularVariable<Vecd> *sv_current_origin_location_;
+    SingularVariable<Vec3d> *sv_current_origin_location_;
 };
 using TotalForceOnBodyForSimBodyCK = TotalForceForSimBodyCK<SPHBody>;
 using TotalForceOnBodyPartForSimBodyCK = TotalForceForSimBodyCK<BodyPartByParticle>;
