@@ -56,10 +56,11 @@ namespace SPH
 #if SPHINXSYS_USE_FLOAT
 using Real = float;
 using UnsignedInt = u_int32_t;
-using sycl::sin;
+namespace math = sycl;
 #else
 using Real = double;
 using UnsignedInt = size_t;
+namespace math = std;
 #endif // SPHINXSYS_USE_FLOAT
 
 /** Vector with integers. */
