@@ -197,7 +197,7 @@ return_data beam_multi_resolution(Real dp_factor, bool damping_on, int refinemen
 
     data.number_of_particles = beam_body.getBaseParticles().TotalRealParticles();
     data.dp_max = beam_body.getSPHBodyResolutionRef();
-    data.dp_min = beam_body.sph_adaptation_->MinimumSpacing();
+    data.dp_min = beam_body.getSPHAdaptation().MinimumSpacing();
 
     // Inner relation
     std::unique_ptr<BaseInnerRelation> inner;

@@ -75,7 +75,7 @@ int main(int ac, char *av[])
     /** create a Cantilever body, corresponding material, particles and reaction model. */
     SolidBody cantilever_body(sph_system, makeShared<Cantilever>("CantileverBody"));
     cantilever_body.defineAdaptationRatios(1.3, 1.0);
-    cantilever_body.sph_adaptation_->resetKernel<KernelTabulated<KernelLaguerreGauss>>(20);
+    cantilever_body.getSPHAdaptation().resetKernel<KernelTabulated<KernelLaguerreGauss>>(20);
     cantilever_body.defineMaterial<Muscle>(rho0_s, bulk_modulus, fiber_direction, sheet_direction, a0, b0);
     cantilever_body.generateParticles<BaseParticles, Lattice>();
     /** Define Observer. */

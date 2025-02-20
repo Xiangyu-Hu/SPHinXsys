@@ -407,7 +407,7 @@ return_data roof_under_self_weight(Real dp, bool cvt = true, int particle_number
     // observer points A & B
     point_A.neighbor_ids = [&]() { // only neighbors on the edges
         IndexVector ids;
-        Real smoothing_length = shell_particles->getSPHBody().sph_adaptation_->ReferenceSmoothingLength();
+        Real smoothing_length = shell_particles->getSPHBody().getSPHAdaptation().ReferenceSmoothingLength();
         Real x_min = std::abs(point_A.pos_0[tangential_axis]) - dp / 2;
         for (size_t i = 0; i < shell_particles->TotalRealParticles(); ++i)
         {
@@ -419,7 +419,7 @@ return_data roof_under_self_weight(Real dp, bool cvt = true, int particle_number
     }();
     point_B.neighbor_ids = [&]() { // full neighborhood
         IndexVector ids;
-        Real smoothing_length = shell_particles->getSPHBody().sph_adaptation_->ReferenceSmoothingLength();
+        Real smoothing_length = shell_particles->getSPHBody().getSPHAdaptation().ReferenceSmoothingLength();
         for (size_t i = 0; i < shell_particles->TotalRealParticles(); ++i)
         {
             if ((pos0_[i] - point_B.pos_0).norm() < smoothing_length)

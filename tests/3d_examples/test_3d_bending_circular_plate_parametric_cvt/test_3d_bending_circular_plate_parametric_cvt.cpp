@@ -286,7 +286,7 @@ return_data bending_circular_plate(Real dp_ratio)
     // observer point
     point_center.neighbor_ids = [&]() { // full neighborhood
         IndexVector ids;
-        Real smoothing_length = shell_particles->getSPHBody().sph_adaptation_->ReferenceSmoothingLength();
+        Real smoothing_length = shell_particles->getSPHBody().getSPHAdaptation().ReferenceSmoothingLength();
 
         for (size_t i = 0; i < shell_particles->TotalRealParticles(); ++i)
         {

@@ -51,8 +51,6 @@ void BaseParticles::registerPositionAndVolumetricMeasure(StdLargeVec<Vecd> &pos,
 {
     dv_pos_ = registerStateVariableOnlyFrom<Vecd>("Position", pos);
     Vol_ = registerStateVariableFrom<Real>("VolumetricMeasure", Vol);
-    addEvolvingVariable<Vecd>("Position");
-    addEvolvingVariable<Real>("VolumetricMeasure");
 }
 //=================================================================================================//
 void BaseParticles::registerPositionAndVolumetricMeasureFromReload()
