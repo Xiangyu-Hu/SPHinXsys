@@ -398,7 +398,7 @@ void TurbuViscousForce<Inner<>>::interaction(size_t index_i, Real dt)
 //=================================================================================================//
 TurbuViscousForce<Contact<Wall>>::TurbuViscousForce(BaseContactRelation &wall_contact_relation)
     : BaseTurbuViscousForceWithWall(wall_contact_relation),
-      wall_particle_spacing_(wall_contact_relation.getSPHBody().sph_adaptation_->ReferenceSpacing()),
+      wall_particle_spacing_(wall_contact_relation.getSPHBody().getSPHAdaptation().ReferenceSpacing()),
       B_(particles_->getVariableDataByName<Matd>("LinearGradientCorrectionMatrix")),
       physical_time_(sph_system_.getSystemVariableDataByName<Real>("PhysicalTime")) {}
 //=================================================================================================//
@@ -480,7 +480,7 @@ void TurbulentEddyViscosity::update(size_t index_i, Real dt)
 TurbulentAdvectionTimeStepSize::TurbulentAdvectionTimeStepSize(SPHBody &sph_body, Real U_max, Real advectionCFL)
     : LocalDynamicsReduce<ReduceMax>(sph_body),
       vel_(particles_->getVariableDataByName<Vecd>("Velocity")),
-      smoothing_length_min_(sph_body.sph_adaptation_->MinimumSmoothingLength()),
+      smoothing_length_min_(sph_body.getSPHAdaptation().MinimumSmoothingLength()),
       speed_ref_turbu_(U_max), advectionCFL_(advectionCFL),
       turbu_mu_(particles_->getVariableDataByName<Real>("TurbulentViscosity")),
       fluid_(DynamicCast<Fluid>(this, particles_->getBaseMaterial())),
@@ -617,8 +617,8 @@ JudgeIsNearWall::
       e_nearest_normal_(particles_->registerStateVariable<Vecd>("WallNearestNormalUnitVector")),
       pos_(particles_->getVariableDataByName<Vecd>("Position")),
       dimension_(2),
-      fluid_particle_spacing_(inner_relation.getSPHBody().sph_adaptation_->ReferenceSpacing()),
-      wall_particle_spacing_(contact_relation.getSPHBody().sph_adaptation_->ReferenceSpacing()),
+      fluid_particle_spacing_(inner_relation.getSPHBody().getSPHAdaptation().ReferenceSpacing()),
+      wall_particle_spacing_(contact_relation.getSPHBody().getSPHAdaptation().ReferenceSpacing()),
       distance_from_wall_(particles_->getVariableDataByName<Vecd>("DistanceFromWall"))
 {
     for (size_t k = 0; k != contact_particles_.size(); ++k)

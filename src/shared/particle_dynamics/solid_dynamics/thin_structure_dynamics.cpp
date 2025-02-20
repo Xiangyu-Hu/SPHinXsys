@@ -34,7 +34,7 @@ ShellAcousticTimeStepSize::ShellAcousticTimeStepSize(SPHBody &sph_body, Real CFL
       E0_(elastic_solid_.YoungsModulus()),
       nu_(elastic_solid_.PoissonRatio()),
       c0_(elastic_solid_.ReferenceSoundSpeed()),
-      smoothing_length_(sph_body.sph_adaptation_->ReferenceSmoothingLength()) {}
+      smoothing_length_(sph_body.getSPHAdaptation().ReferenceSmoothingLength()) {}
 //=================================================================================================//
 Real ShellAcousticTimeStepSize::reduce(size_t index_i, Real dt)
 {
@@ -100,7 +100,7 @@ ShellStressRelaxationFirstHalf::
       elastic_solid_(DynamicCast<ElasticSolid>(this, sph_body_.getBaseMaterial())),
       rho0_(elastic_solid_.ReferenceDensity()),
       inv_rho0_(1.0 / rho0_),
-      smoothing_length_(sph_body_.sph_adaptation_->ReferenceSmoothingLength()),
+      smoothing_length_(sph_body_.getSPHAdaptation().ReferenceSmoothingLength()),
       numerical_damping_scaling_matrix_(Matd::Identity() * smoothing_length_),
       rho_(particles_->getVariableDataByName<Real>("Density")),
       mass_(particles_->getVariableDataByName<Real>("Mass")),
@@ -278,7 +278,7 @@ InitialShellCurvature::InitialShellCurvature(BaseInnerRelation &inner_relation)
       F_bending_(particles_->getVariableDataByName<Matd>("BendingDeformationGradient")),
       k1_(particles_->registerStateVariable<Real>("1stPrincipleCurvature")),
       k2_(particles_->registerStateVariable<Real>("2ndPrincipleCurvature")),
-      dn_0_(particles_->registerStateVariable<Matd>("InitialNormalGradient")){};
+      dn_0_(particles_->registerStateVariable<Matd>("InitialNormalGradient")) {};
 //=================================================================================================//
 void InitialShellCurvature::update(size_t index_i, Real)
 {
@@ -306,7 +306,7 @@ ShellCurvatureUpdate::ShellCurvatureUpdate(SPHBody &sph_body)
       F_bending_(particles_->getVariableDataByName<Matd>("BendingDeformationGradient")),
       k1_(particles_->registerStateVariable<Real>("1stPrincipleCurvature")),
       k2_(particles_->registerStateVariable<Real>("2ndPrincipleCurvature")),
-      dn_0_(particles_->registerStateVariable<Matd>("InitialNormalGradient")){};
+      dn_0_(particles_->registerStateVariable<Matd>("InitialNormalGradient")) {};
 //=================================================================================================//
 void ShellCurvatureUpdate::update(size_t index_i, Real)
 {
@@ -324,7 +324,7 @@ AverageShellCurvature::AverageShellCurvature(BaseInnerRelation &inner_relation)
       Vol_(particles_->getVariableDataByName<Real>("VolumetricMeasure")),
       n_(particles_->getVariableDataByName<Vecd>("NormalDirection")),
       k1_ave_(particles_->registerStateVariable<Real>("Average1stPrincipleCurvature")),
-      k2_ave_(particles_->registerStateVariable<Real>("Average2ndPrincipleCurvature")){};
+      k2_ave_(particles_->registerStateVariable<Real>("Average2ndPrincipleCurvature")) {};
 //=================================================================================================//
 void AverageShellCurvature::update(size_t index_i, Real)
 {

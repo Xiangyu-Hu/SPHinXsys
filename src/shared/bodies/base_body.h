@@ -80,13 +80,12 @@ class SPHBody
     Shape *initial_shape_;                                /**< initial volumetric geometry enclosing the body */
     int total_body_parts_;                                /**< total number of body parts */
     StdVec<BodyPartByParticle *> body_parts_by_particle_; /**< all body parts by particle */
+    SPHAdaptation *sph_adaptation_;                       /**< numerical adaptation policy */
+    BaseMaterial *base_material_;                         /**< base material for dynamic cast in DataDelegate */
+    StdVec<SPHRelation *> body_relations_;                /**< all contact relations centered from this body **/
 
   public:
     typedef SPHBody BaseIdentifier;
-    SPHAdaptation *sph_adaptation_;        /**< numerical adaptation policy */
-    BaseMaterial *base_material_;          /**< base material for dynamic cast in DataDelegate */
-    StdVec<SPHRelation *> body_relations_; /**< all contact relations centered from this body **/
-
     SPHBody(SPHSystem &sph_system, Shape &shape, const std::string &name);
     SPHBody(SPHSystem &sph_system, Shape &shape);
     SPHBody(SPHSystem &sph_system, const std::string &name);

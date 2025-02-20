@@ -6,7 +6,7 @@ namespace SPH
 FreeSurfaceIndication<Inner<>>::
     FreeSurfaceIndication(BaseInnerRelation &inner_relation)
     : FreeSurfaceIndication<DataDelegateInner>(inner_relation),
-      smoothing_length_(inner_relation.getSPHBody().sph_adaptation_->ReferenceSmoothingLength()) {}
+      smoothing_length_(inner_relation.getSPHBody().getSPHAdaptation().ReferenceSmoothingLength()) {}
 //=================================================================================================//
 void FreeSurfaceIndication<Inner<>>::interaction(size_t index_i, Real dt)
 {

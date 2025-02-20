@@ -93,7 +93,7 @@ class TransportVelocityCorrection<Inner<ResolutionType, LimiterType>, CommonCont
   public:
     explicit TransportVelocityCorrection(BaseInnerRelation &inner_relation, Real coefficient = 0.2)
         : fluid_dynamics::TransportVelocityCorrection<Base, DataDelegateInner, CommonControlTypes...>(inner_relation),
-          h_ref_(this->sph_body_.sph_adaptation_->ReferenceSmoothingLength()),
+          h_ref_(this->sph_body_.getSPHAdaptation().ReferenceSmoothingLength()),
           correction_scaling_(coefficient * h_ref_ * h_ref_),
           Vol_(this->particles_->template getVariableDataByName<Real>("VolumetricMeasure")),
           pos_div_(this->particles_->template registerStateVariable<Real>("PositionDivergence")),

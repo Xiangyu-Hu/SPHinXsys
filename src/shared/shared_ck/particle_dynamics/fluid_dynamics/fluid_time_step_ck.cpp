@@ -16,7 +16,7 @@ AcousticTimeStepCK::AcousticTimeStepCK(SPHBody &sph_body, Real acousticCFL)
       dv_vel_(particles_->getVariableByName<Vecd>("Velocity")),
       dv_force_(particles_->getVariableByName<Vecd>("Force")),
       dv_force_prior_(particles_->getVariableByName<Vecd>("ForcePrior")),
-      h_min_(sph_body.sph_adaptation_->MinimumSmoothingLength()),
+      h_min_(sph_body.getSPHAdaptation().MinimumSmoothingLength()),
       acousticCFL_(acousticCFL) {}
 //=================================================================================================//
 AcousticTimeStepCK::FinishDynamics::FinishDynamics(AcousticTimeStepCK &encloser)
@@ -32,7 +32,7 @@ Real AcousticTimeStepCK::FinishDynamics::Result(Real reduced_value)
 AdvectionTimeStepCK::
     AdvectionTimeStepCK(SPHBody &sph_body, Real U_ref, Real advectionCFL)
     : LocalDynamicsReduce<ReduceMax>(sph_body),
-      h_min_(sph_body.sph_adaptation_->MinimumSmoothingLength()),
+      h_min_(sph_body.getSPHAdaptation().MinimumSmoothingLength()),
       speed_ref_(U_ref), advectionCFL_(advectionCFL),
       dv_mass_(particles_->getVariableByName<Real>("Mass")),
       dv_vel_(particles_->getVariableByName<Vecd>("Velocity")),

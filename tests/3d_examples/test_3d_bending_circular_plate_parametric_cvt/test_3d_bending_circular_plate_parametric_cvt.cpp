@@ -9,8 +9,8 @@
 
 #include "sphinxsys.h"
 
-#include <numeric>
 #include <gtest/gtest.h>
+#include <numeric>
 
 using namespace SPH;
 
@@ -35,7 +35,7 @@ class ParticleGenerator<SurfaceParticles, ShellCircle> : public ParticleGenerato
           pos_0_(pos_0),
           normal_(normal),
           particle_area_(particle_area),
-          thickness_(thickness){};
+          thickness_(thickness) {};
     virtual void prepareGeometricData() override
     {
         for (const auto &pos : pos_0_)
@@ -100,8 +100,8 @@ DataType interpolate_observer(
     const Vec3d &observer_pos_0,
     std::function<DataType(size_t)> get_variable_value)
 {
-    Kernel *kernel_ptr = particles.getSPHBody().sph_adaptation_->getKernel();
-    Real smoothing_length = particles.getSPHBody().sph_adaptation_->ReferenceSmoothingLength();
+    Kernel *kernel_ptr = particles.getSPHBody().getSPHAdaptation().getKernel();
+    Real smoothing_length = particles.getSPHBody().getSPHAdaptation().ReferenceSmoothingLength();
     Vecd *pos0_ = particles.registerStateVariableFrom<Vecd>("InitialPosition", "Position");
     DataType variable_sum = DataType::Zero();
     Real kernel_sum = 0;
