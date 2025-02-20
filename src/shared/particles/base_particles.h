@@ -186,31 +186,23 @@ class BaseParticles
     void addVariableToWrite(Args &&...args);
     template <typename DataType>
     void addVariableToWrite(DiscreteVariableArray<DataType> *variable_array);
-    template <typename DataType>
-    void addVariableToRestart(const std::string &name);
-
-    inline const ParticleVariables &getVariablesToRestart() const { return variables_to_restart_; }
-    template <typename DataType>
-    void addVariableToReload(const std::string &name);
-    inline const ParticleVariables &getVariablesToReload() const { return variables_to_reload_; }
-
     //----------------------------------------------------------------------
     // Particle data for sorting
     //----------------------------------------------------------------------
   protected:
     UnsignedInt *original_id_; /**< the original ids assigned just after particle is generated. */
     UnsignedInt *sorted_id_;   /**< the current sorted particle ids of particles from original ids. */
-    ParticleData sortable_data_;
-    ParticleVariables variables_to_sort_;
+    ParticleData evolving_variables_data_;
+    ParticleVariables evolving_variables_;
 
   public:
     template <typename DataType, typename... Args>
-    void addVariableToSort(Args &&...args);
+    void addEvolvingVariable(Args &&...args);
     template <typename DataType>
-    void addVariableToSort(DiscreteVariableArray<DataType> *variable_array);
+    void addEvolvingVariable(DiscreteVariableArray<DataType> *variable_array);
     UnsignedInt *ParticleOriginalIds() { return original_id_; };
     UnsignedInt *ParticleSortedIds() { return sorted_id_; };
-    ParticleData &SortableParticleData() { return sortable_data_; };
+    ParticleData &EvolvingVariablesData() { return evolving_variables_data_; };
     //----------------------------------------------------------------------
     // Particle data ouput functions
     //----------------------------------------------------------------------
@@ -245,15 +237,10 @@ class BaseParticles
     ParticleVariables all_discrete_variables_;
     SingularVariables all_singular_variables_;
     ParticleVariables variables_to_write_;
-    ParticleVariables variables_to_restart_;
-    ParticleVariables variables_to_reload_;
-    bool is_reload_file_read_ = false;
 
   public:
     ParticleVariables &VariablesToWrite() { return variables_to_write_; };
-    ParticleVariables &VariablesToRestart() { return variables_to_restart_; };
-    ParticleVariables &VariablesToReload() { return variables_to_reload_; };
-    ParticleVariables &VariablesToSort() { return variables_to_sort_; };
+    ParticleVariables &EvolvingVariables() { return evolving_variables_; };
     //----------------------------------------------------------------------
     // Small structs for generalize particle operations on
     // assembled variables and data sets

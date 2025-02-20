@@ -12,9 +12,9 @@ SurfaceTensionStress::
       surface_tension_stress_(particles_->registerStateVariable<Matd>("SurfaceTensionStress")),
       contact_surface_tension_(contact_surface_tension)
 {
-    particles_->addVariableToSort<Vecd>("ColorGradient");
+    particles_->addEvolvingVariable<Vecd>("ColorGradient");
     particles_->addVariableToWrite<Vecd>("ColorGradient");
-    particles_->addVariableToSort<Matd>("SurfaceTensionStress");
+    particles_->addEvolvingVariable<Matd>("SurfaceTensionStress");
     particles_->addVariableToWrite<Matd>("SurfaceTensionStress");
     Real rho0 = getSPHBody().base_material_->ReferenceDensity();
     for (size_t k = 0; k != contact_particles_.size(); ++k)

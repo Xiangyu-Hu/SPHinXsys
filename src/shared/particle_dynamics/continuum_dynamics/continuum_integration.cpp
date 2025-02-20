@@ -55,7 +55,7 @@ void StressDiffusion::interaction(size_t index_i, Real dt)
         diffusion_stress(1, 1) -= density * gravity * y_ij;
         diffusion_stress(2, 2) -= (1 - sin(phi_)) * density * gravity * y_ij;
         diffusion_stress_rate += 2 * zeta_ * smoothing_length_ * sound_speed_ *
-                                  diffusion_stress * r_ij * dW_ijV_j / (r_ij * r_ij + 0.01 * smoothing_length_);
+                                 diffusion_stress * r_ij * dW_ijV_j / (r_ij * r_ij + 0.01 * smoothing_length_);
     }
     stress_rate_3D_[index_i] = diffusion_stress_rate;
 }
@@ -70,10 +70,10 @@ ShearStressRelaxationHourglassControl1stHalf ::
       B_(particles_->getVariableDataByName<Matd>("LinearGradientCorrectionMatrix")),
       scale_penalty_force_(particles_->registerStateVariable<Real>("ScalePenaltyForce")), xi_(xi)
 {
-    particles_->addVariableToSort<Matd>("ShearStress");
-    particles_->addVariableToSort<Matd>("VelocityGradient");
-    particles_->addVariableToSort<Matd>("StrainTensor");
-    particles_->addVariableToSort<Real>("ScalePenaltyForce");
+    particles_->addEvolvingVariable<Matd>("ShearStress");
+    particles_->addEvolvingVariable<Matd>("VelocityGradient");
+    particles_->addEvolvingVariable<Matd>("StrainTensor");
+    particles_->addEvolvingVariable<Real>("ScalePenaltyForce");
 }
 //====================================================================================//
 void ShearStressRelaxationHourglassControl1stHalf::interaction(size_t index_i, Real dt)
@@ -112,8 +112,8 @@ ShearStressRelaxationHourglassControl2ndHalf ::
       scale_penalty_force_(particles_->getVariableDataByName<Real>("ScalePenaltyForce")),
       G_(continuum_.getShearModulus(continuum_.getYoungsModulus(), continuum_.getPoissonRatio()))
 {
-    particles_->addVariableToSort<Vecd>("AccelerationByShear");
-    particles_->addVariableToSort<Vecd>("AccelerationHourglass");
+    particles_->addEvolvingVariable<Vecd>("AccelerationByShear");
+    particles_->addEvolvingVariable<Vecd>("AccelerationHourglass");
 }
 //====================================================================================//
 void ShearStressRelaxationHourglassControl2ndHalf::interaction(size_t index_i, Real dt)
@@ -144,7 +144,7 @@ ShearStressRelaxationHourglassControl1stHalfJ2Plasticity ::
       J2_plasticity_(DynamicCast<J2Plasticity>(this, particles_->getBaseMaterial())),
       hardening_factor_(particles_->registerStateVariable<Real>("HardeningFactor"))
 {
-    particles_->addVariableToSort<Real>("HardeningFactor");
+    particles_->addEvolvingVariable<Real>("HardeningFactor");
 }
 //====================================================================================//
 void ShearStressRelaxationHourglassControl1stHalfJ2Plasticity::update(size_t index_i, Real dt)

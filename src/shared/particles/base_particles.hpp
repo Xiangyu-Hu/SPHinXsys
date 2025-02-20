@@ -338,25 +338,25 @@ DiscreteVariable<DataType> *BaseParticles::
 }
 //=================================================================================================//
 template <typename DataType, typename... Args>
-void BaseParticles::addVariableToSort(Args &&...args)
+void BaseParticles::addEvolvingVariable(Args &&...args)
 {
     DiscreteVariable<DataType> *new_sortable =
-        addVariableToList<DataType>(variables_to_sort_, std::forward<Args>(args)...);
+        addVariableToList<DataType>(evolving_variables_, std::forward<Args>(args)...);
     if (new_sortable != nullptr)
     {
         constexpr int type_index = DataTypeIndex<DataType>::value;
         DataType *data_field = new_sortable->Data();
-        std::get<type_index>(sortable_data_).push_back(data_field);
+        std::get<type_index>(evolving_variables_data_).push_back(data_field);
     }
 }
 //=================================================================================================//
 template <typename DataType>
-void BaseParticles::addVariableToSort(DiscreteVariableArray<DataType> *variable_array)
+void BaseParticles::addEvolvingVariable(DiscreteVariableArray<DataType> *variable_array)
 {
     StdVec<DiscreteVariable<DataType> *> variables = variable_array->getVariables();
     for (size_t i = 0; i != variables.size(); ++i)
     {
-        addVariableToSort<DataType>(variables[i]);
+        addEvolvingVariable<DataType>(variables[i]);
     }
 }
 //=================================================================================================//
@@ -374,18 +374,6 @@ void BaseParticles::addVariableToWrite(DiscreteVariableArray<DataType> *variable
     {
         addVariableToWrite<DataType>(variables[i]);
     }
-}
-//=================================================================================================//
-template <typename DataType>
-void BaseParticles::addVariableToRestart(const std::string &name)
-{
-    addVariableToList<DataType>(variables_to_restart_, name);
-}
-//=================================================================================================//
-template <typename DataType>
-void BaseParticles::addVariableToReload(const std::string &name)
-{
-    addVariableToList<DataType>(variables_to_reload_, name);
 }
 //=================================================================================================//
 template <typename DataType>

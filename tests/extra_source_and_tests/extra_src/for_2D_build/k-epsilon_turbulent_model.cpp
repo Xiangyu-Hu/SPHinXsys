@@ -1,4 +1,4 @@
-//#pragma once
+// #pragma once
 #include "k-epsilon_turbulent_model.hpp"
 namespace SPH
 {
@@ -70,7 +70,7 @@ GetVelocityGradient<Inner<>>::GetVelocityGradient(BaseInnerRelation &inner_relat
       turbu_B_(particles_->getVariableDataByName<Matd>("TurbulentLinearGradientCorrectionMatrix")),
       weight_sub_nearwall_(weight_sub)
 {
-    this->particles_->addVariableToSort<Matd>("TurbulentVelocityGradient");
+    this->particles_->addEvolvingVariable<Matd>("TurbulentVelocityGradient");
 }
 //=================================================================================================//
 void GetVelocityGradient<Inner<>>::interaction(size_t index_i, Real dt)
@@ -114,7 +114,7 @@ GetVelocityGradient<Contact<Wall>>::GetVelocityGradient(BaseContactRelation &con
     : InteractionWithWall<GetVelocityGradient>(contact_relation),
       velocity_gradient_(particles_->getVariableDataByName<Matd>("TurbulentVelocityGradient"))
 {
-    this->particles_->addVariableToSort<Matd>("Velocity_Gradient_Wall");
+    this->particles_->addEvolvingVariable<Matd>("Velocity_Gradient_Wall");
 }
 //=================================================================================================//
 void GetVelocityGradient<Contact<Wall>>::interaction(size_t index_i, Real dt)
@@ -152,16 +152,16 @@ K_TurbulentModelInner::K_TurbulentModelInner(BaseInnerRelation &inner_relation, 
       k_diffusion_(particles_->registerStateVariable<Real>("K_Diffusion")),
       vel_x_(particles_->registerStateVariable<Real>("Velocity_X"))
 {
-    particles_->addVariableToSort<Real>("ChangeRateOfTKE");
-    particles_->addVariableToSort<Real>("ChangeRateOfTKEWithoutDissipation");
-    particles_->addVariableToSort<Real>("K_Production");
-    particles_->addVariableToSort<Real>("TurbulenceKineticEnergy");
-    particles_->addVariableToSort<Real>("TurbulentViscosity");
-    particles_->addVariableToSort<Real>("TurbulentDissipation");
-    particles_->addVariableToSort<Matd>("TurbulentStrainRate");
-    particles_->addVariableToSort<Real>("K_Diffusion");
-    particles_->addVariableToSort<Real>("Velocity_X");
-    particles_->addVariableToSort<int>("TurbulentIndicator");
+    particles_->addEvolvingVariable<Real>("ChangeRateOfTKE");
+    particles_->addEvolvingVariable<Real>("ChangeRateOfTKEWithoutDissipation");
+    particles_->addEvolvingVariable<Real>("K_Production");
+    particles_->addEvolvingVariable<Real>("TurbulenceKineticEnergy");
+    particles_->addEvolvingVariable<Real>("TurbulentViscosity");
+    particles_->addEvolvingVariable<Real>("TurbulentDissipation");
+    particles_->addEvolvingVariable<Matd>("TurbulentStrainRate");
+    particles_->addEvolvingVariable<Real>("K_Diffusion");
+    particles_->addEvolvingVariable<Real>("Velocity_X");
+    particles_->addEvolvingVariable<int>("TurbulentIndicator");
 }
 //=================================================================================================//
 void K_TurbulentModelInner::interaction(size_t index_i, Real dt)
@@ -238,10 +238,10 @@ E_TurbulentModelInner::E_TurbulentModelInner(BaseInnerRelation &inner_relation, 
       is_near_wall_P1_(particles_->getVariableDataByName<int>("IsNearWallP1")),
       is_STL_(is_STL)
 {
-    particles_->addVariableToSort<Real>("ChangeRateOfTDR");
-    particles_->addVariableToSort<Real>("Ep_Production");
-    particles_->addVariableToSort<Real>("Ep_Dissipation_");
-    particles_->addVariableToSort<Real>("Ep_Diffusion_");
+    particles_->addEvolvingVariable<Real>("ChangeRateOfTDR");
+    particles_->addEvolvingVariable<Real>("Ep_Production");
+    particles_->addEvolvingVariable<Real>("Ep_Dissipation_");
+    particles_->addEvolvingVariable<Real>("Ep_Diffusion_");
 }
 //=================================================================================================//
 void E_TurbulentModelInner::
@@ -627,13 +627,13 @@ JudgeIsNearWall::
         contact_Vol_.push_back(contact_particles_[k]->getVariableDataByName<Real>("VolumetricMeasure"));
     }
 
-    particles_->addVariableToSort<Real>("DistanceToDummyInterfaceUpAver");
-    particles_->addVariableToSort<Real>("DistanceToDummyInterface");
-    particles_->addVariableToSort<int>("NearestIndex");
-    particles_->addVariableToSort<int>("IsNearWallP1");
-    particles_->addVariableToSort<int>("IsNearWallP2");
-    particles_->addVariableToSort<Vecd>("WallNearestTangentialUnitVector");
-    particles_->addVariableToSort<Vecd>("WallNearestNormalUnitVector");
+    particles_->addEvolvingVariable<Real>("DistanceToDummyInterfaceUpAver");
+    particles_->addEvolvingVariable<Real>("DistanceToDummyInterface");
+    particles_->addEvolvingVariable<int>("NearestIndex");
+    particles_->addEvolvingVariable<int>("IsNearWallP1");
+    particles_->addEvolvingVariable<int>("IsNearWallP2");
+    particles_->addEvolvingVariable<Vecd>("WallNearestTangentialUnitVector");
+    particles_->addEvolvingVariable<Vecd>("WallNearestNormalUnitVector");
 };
 //=================================================================================================//
 void JudgeIsNearWall::interaction(size_t index_i, Real dt)
@@ -758,11 +758,11 @@ StandardWallFunctionCorrection::
         contact_Vol_.push_back(contact_particles_[k]->getVariableDataByName<Real>("VolumetricMeasure"));
     }
 
-    particles_->addVariableToSort<Real>("Y_P");
-    particles_->addVariableToSort<Real>("WallYplus");
-    particles_->addVariableToSort<Real>("WallYstar");
-    particles_->addVariableToSort<Real>("TangentialVelocity");
-    particles_->addVariableToSort<Vecd>("FrictionVelocity");
+    particles_->addEvolvingVariable<Real>("Y_P");
+    particles_->addEvolvingVariable<Real>("WallYplus");
+    particles_->addEvolvingVariable<Real>("WallYstar");
+    particles_->addEvolvingVariable<Real>("TangentialVelocity");
+    particles_->addEvolvingVariable<Vecd>("FrictionVelocity");
 };
 //=================================================================================================//
 void StandardWallFunctionCorrection::interaction(size_t index_i, Real dt)

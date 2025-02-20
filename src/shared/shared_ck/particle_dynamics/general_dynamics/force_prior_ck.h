@@ -43,10 +43,9 @@ class ForcePriorCK
           dv_current_force_(particles->registerStateVariableOnly<Vecd>(force_name)),
           dv_previous_force_(particles->registerStateVariableOnly<Vecd>("Previous" + force_name))
     {
-        particles->addVariableToRestart<Vecd>("Previous" + force_name);
-        particles->addVariableToSort<Vecd>("Previous" + force_name);
+        particles->addEvolvingVariable<Vecd>("Previous" + force_name);
     };
-    virtual ~ForcePriorCK(){};
+    virtual ~ForcePriorCK() {};
 
     class UpdateKernel
     {
@@ -72,7 +71,7 @@ class GravityForceCK : public LocalDynamics, public ForcePriorCK
 {
   public:
     GravityForceCK(SPHBody &sph_body, const GravityType &gravity);
-    virtual ~GravityForceCK(){};
+    virtual ~GravityForceCK() {};
 
     class UpdateKernel : public ForcePriorCK::UpdateKernel
     {

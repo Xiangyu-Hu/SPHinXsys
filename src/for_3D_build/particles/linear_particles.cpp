@@ -10,8 +10,8 @@ void LinearParticles::registerLineProperties(StdLargeVec<Vecd> &b_n, StdLargeVec
 {
     b_n_ = registerStateVariableFrom<Vecd>("BinormalDirection", b_n);
     width_ = registerStateVariableFrom<Real>("Width", width);
-    addVariableToReload<Vecd>("BinormalDirection");
-    addVariableToReload<Real>("Width");
+    addEvolvingVariable<Vecd>("BinormalDirection");
+    addEvolvingVariable<Real>("Width");
     addVariableToWrite<Vecd>("BinormalDirection");
 }
 //=================================================================================================//

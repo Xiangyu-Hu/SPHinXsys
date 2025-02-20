@@ -25,8 +25,8 @@ void SurfaceParticles::registerSurfaceProperties(StdLargeVec<Vecd> &n, StdLargeV
 {
     n_ = registerStateVariableFrom<Vecd>("NormalDirection", n);
     thickness_ = registerStateVariableFrom<Real>("Thickness", thickness);
-    addVariableToReload<Vecd>("NormalDirection");
-    addVariableToReload<Real>("Thickness");
+    addEvolvingVariable<Vecd>("NormalDirection");
+    addEvolvingVariable<Real>("Thickness");
 }
 //=================================================================================================//
 void SurfaceParticles::registerSurfacePropertiesFromReload()

@@ -11,8 +11,7 @@ Oldroyd_BIntegration1stHalf<Inner<>>::
       tau_(particles_->registerStateVariable<Matd>("ElasticStress")),
       dtau_dt_(particles_->registerStateVariable<Matd>("ElasticStressChangeRate"))
 {
-    particles_->addVariableToSort<Matd>("ElasticStress");
-    particles_->addVariableToRestart<Matd>("ElasticStress");
+    particles_->addEvolvingVariable<Matd>("ElasticStress");
 }
 //=================================================================================================//
 void Oldroyd_BIntegration1stHalf<Inner<>>::initialization(size_t index_i, Real dt)

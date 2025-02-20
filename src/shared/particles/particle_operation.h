@@ -44,7 +44,7 @@ struct CopyParticleStateCK
 
 class SpawnRealParticle
 {
-    ParticleVariables &variables_to_sort_;
+    ParticleVariables &evolving_variables_;
     DiscreteVariableArrays copyable_states_;
     DiscreteVariable<UnsignedInt> *dv_original_id_;
     SingularVariable<UnsignedInt> *sv_total_real_particles_;
