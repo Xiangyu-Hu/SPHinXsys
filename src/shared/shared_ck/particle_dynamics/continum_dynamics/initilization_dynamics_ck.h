@@ -21,25 +21,47 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file    all_shared_physical_dynamics_ck.h
- * @brief   Head file for all shared physics dynamics for both 2- and 3D build.
- *          This is the header file that user code should include to pick up all
-            particle dynamics capabilities.
- * @author	Chi Zhang and Xiangyu Hu
+ * @file 	initilization_dynamics_ck.h
+ * @brief 	Here, we define the ck_version for stress diffusion. 
+ * @details Refer to Feng et al(2021).
+ * @author	Shuang Li, Xiangyu Hu and Shuaihao Zhang
  */
+#ifndef INITILIZATION_DYNAMICS_CK_H
+#define INITILIZATION_DYNAMICS_CK_H
 
-#ifndef ALL_SHARED_PHYSICAL_DYNAMICS_CK_H
-#define ALL_SHARED_PHYSICAL_DYNAMICS_CK_H
+#include "base_continuum_dynamics.h"
+#include "constraint_dynamics.h"
+#include "fluid_integration.hpp"
+#include "general_continuum.h"
+#include "general_continuum.hpp"
 
-#include "all_fluid_structure_interactions.h"
-#include "all_general_dynamics_ck.h"
-#include "all_shared_fluid_dynamics_ck.h"
-#include "all_solid_dynamics_ck.h"
-#include "complex_algorithms_ck.h"
-#include "diffusion_dynamics_ck.hpp"
-#include "interaction_algorithms_ck.hpp"
-#include "particle_sort_ck.hpp"
-#include "simple_algorithms_ck.h"
-#include "all_continum_dynamics.h"
+namespace SPH
+{
+namespace continuum_dynamics
+{
+class ContinuumInitialConditionCK : public LocalDynamics
+{
+  public:
+    explicit ContinuumInitialConditionCK(SPHBody &sph_body);
+    virtual ~ContinuumInitialConditionCK(){};
 
-#endif // ALL_SHARED_PHYSICAL_DYNAMICS_CK_H
+    class UpdateKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+        void update(UnsignedInt index_i, Real dt = 0.0){};
+      protected:
+        Vecd *pos_, *vel_;
+        Mat3d *stress_tensor_3D_;
+    };
+
+  protected:
+
+    DiscreteVariable<Vecd> *dv_pos_, *dv_vel_;
+    DiscreteVariable<Mat3d> *dv_stress_tensor_3D_;
+};
+
+} // namespace continuum_dynamics
+} // namespace SPH
+#endif // INITILIZATION_DYNAMICS_CK_H
