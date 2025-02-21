@@ -18,7 +18,7 @@ Real Dam_H = 2.0;                             /**< Water block height. */
 Real Gate_width = 0.05;                       /**< Width of the gate. */
 Real particle_spacing_ref = Gate_width / 4.0; /**< Initial reference particle spacing. 8, 10, 12 */
 Real BW = 4.0 * particle_spacing_ref;         /**< Extending width for BCs. */
-BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
+BoundingBox system_domain_bounds(Vec2d(-BW, -Gate_width), Vec2d(DL + BW, DH + BW));
 //----------------------------------------------------------------------
 //	Define the corner point of water block geometry.
 //----------------------------------------------------------------------
@@ -45,7 +45,7 @@ Vec2d ConstrainRP_lt(Dam_L, 0.0);
 Vec2d ConstrainRP_rt(Dam_L + BW, 0.0);
 Vec2d ConstrainRP_rb(Dam_L + BW, -Gate_width);
 // observer location
-StdVec<Vecd> observation_location = {Vecd(0.5 * Dam_L, -0.5 * Gate_width)};
+StdVec<Vecd> observation_location = { Vecd(0.5 * Dam_L, -0.5 * Gate_width) };
 //----------------------------------------------------------------------
 //	Material properties of the fluid.
 //----------------------------------------------------------------------
@@ -79,8 +79,8 @@ std::vector<Vecd> createWaterBlockShape()
 }
 class WaterBlock : public MultiPolygonShape
 {
-  public:
-    explicit WaterBlock(const std::string &shape_name) : MultiPolygonShape(shape_name)
+public:
+    explicit WaterBlock(const std::string& shape_name) : MultiPolygonShape(shape_name)
     {
         multi_polygon_.addAPolygon(createWaterBlockShape(), ShapeBooleanOps::add);
     }
@@ -114,8 +114,8 @@ std::vector<Vecd> createInnerWallShape()
 
 class WallBoundary : public MultiPolygonShape
 {
-  public:
-    explicit WallBoundary(const std::string &shape_name) : MultiPolygonShape(shape_name)
+public:
+    explicit WallBoundary(const std::string& shape_name) : MultiPolygonShape(shape_name)
     {
         multi_polygon_.addAPolygon(createOuterWallShape(), ShapeBooleanOps::add);
         multi_polygon_.addAPolygon(createInnerWallShape(), ShapeBooleanOps::add);
@@ -140,8 +140,8 @@ std::vector<Vecd> createGateShape()
 //----------------------------------------------------------------------
 class Gate : public MultiPolygonShape
 {
-  public:
-    explicit Gate(const std::string &shape_name) : MultiPolygonShape(shape_name)
+public:
+    explicit Gate(const std::string& shape_name) : MultiPolygonShape(shape_name)
     {
         multi_polygon_.addAPolygon(createGateShape(), ShapeBooleanOps::add);
     }
@@ -189,7 +189,7 @@ std::vector<Vecd> createGateConstrainShapeRight()
 //----------------------------------------------------------------------
 //	Main program starts here.
 //----------------------------------------------------------------------
-int main(int ac, char *av[])
+int main(int ac, char* av[])
 {
     //----------------------------------------------------------------------
     //	Build up -- a SPHSystem
@@ -208,12 +208,14 @@ int main(int ac, char *av[])
     wall_boundary.generateParticles<BaseParticles, Lattice>();
 
     SolidBody gate(sph_system, makeShared<Gate>("Gate"));
+    gate.defineAdaptationRatios(1.3, 2.0);
     gate.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     gate.generateParticles<BaseParticles, Lattice>();
     //----------------------------------------------------------------------
     //	Particle and body creation of gate observer.
     //----------------------------------------------------------------------
     ObserverBody gate_observer(sph_system, "Observer");
+    gate_observer.defineAdaptationRatios(1.3, 2.0);
     gate_observer.generateParticles<ObserverParticles>(observation_location);
     //----------------------------------------------------------------------
     //	Define body relation map.
@@ -224,10 +226,10 @@ int main(int ac, char *av[])
     //  inner and contact relations.
     //----------------------------------------------------------------------
     InnerRelation water_block_inner(water_block);
+    ContactRelation water_block_contact(water_block, RealBodyVector{ &wall_boundary, &gate });
     InnerRelation gate_inner(gate);
-    ContactRelation water_block_contact(water_block, {&wall_boundary, &gate});
-    ContactRelation gate_contact(gate, {&water_block});
-    ContactRelation gate_observer_contact(gate_observer, {&gate});
+    ContactRelation gate_contact(gate, { &water_block });
+    ContactRelation gate_observer_contact(gate_observer, { &gate });
     //----------------------------------------------------------------------
     // Combined relations built from basic relations
     // which is only used for update configuration.
@@ -256,35 +258,46 @@ int main(int ac, char *av[])
 
     BodyRegionByParticle gate_constraint_part(gate, makeShared<MultiPolygonShape>(createGateConstrainShape()));
     SimpleDynamics<FixBodyPartConstraint> gate_constraint(gate_constraint_part);
+    SimpleDynamics<solid_dynamics::UpdateElasticNormalDirection> gate_update_normal(gate);
     //----------------------------------------------------------------------
     //	Algorithms of fluid dynamics.
     //----------------------------------------------------------------------
     Gravity gravity(Vecd(0.0, -gravity_g));
+    Gravity negative_gravity(Vecd(0.0, gravity_g));
     SimpleDynamics<GravityForce<Gravity>> constant_gravity(water_block, gravity);
-    InteractionWithUpdate<LinearGradientCorrectionMatrixComplex> corrected_configuration_fluid(ConstructorArgs(water_block_inner, 0.9), water_block_contact);
+    InteractionWithUpdate<LinearGradientCorrectionMatrixComplex> corrected_configuration_fluid(ConstructorArgs(water_block_inner, 0.95), water_block_contact);
     Dynamics1Level<fluid_dynamics::Integration1stHalfCorrectionWithWallRiemann> pressure_relaxation(water_block_inner, water_block_contact);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallNoRiemann> density_relaxation(water_block_inner, water_block_contact);
     InteractionWithUpdate<fluid_dynamics::DensitySummationComplexFreeSurface> update_fluid_density(water_block_inner, water_block_contact);
     InteractionWithUpdate<fluid_dynamics::ViscousForceWithWall> viscous_force(water_block_inner, water_block_contact);
     DampingWithRandomChoice<InteractionSplit<DampingPairwiseWithWall<Vec2d, FixedDampingRate>>>
-        fluid_damping(0.2, ConstructorArgs(water_block_inner, "Velocity", mu_f), ConstructorArgs(water_block_contact, "Velocity", mu_f));
+        fluid_damping(0.015, ConstructorArgs(water_block_inner, "Velocity", mu_f), ConstructorArgs(water_block_contact, "Velocity", mu_f));
+    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d, FixedDampingRate>>>
+        solid_damping(0.5, ConstructorArgs(gate_inner, "Velocity", mu_f));
 
     ReduceDynamics<fluid_dynamics::AdvectionViscousTimeStep> get_fluid_advection_time_step_size(water_block, U_ref);
     ReduceDynamics<fluid_dynamics::AcousticTimeStep> get_fluid_time_step_size(water_block);
     //----------------------------------------------------------------------
     //	Algorithms of FSI.
     //----------------------------------------------------------------------
-    SimpleDynamics<solid_dynamics::UpdateElasticNormalDirection> gate_update_normal(gate);
-    solid_dynamics::AverageVelocityAndAcceleration average_velocity_and_acceleration(gate);
     InteractionWithUpdate<solid_dynamics::PressureForceFromFluid<decltype(density_relaxation)>> fluid_pressure_force_on_gate(gate_contact);
+    solid_dynamics::AverageVelocityAndAcceleration average_velocity_and_acceleration(gate);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
     /** Output body states for visualization. */
     BodyStatesRecordingToVtp write_real_body_states_to_vtp(sph_system);
+    write_real_body_states_to_vtp.addToWrite<Real>(water_block, "Pressure");
+    write_real_body_states_to_vtp.addToWrite<Real>(water_block, "Density");
+    write_real_body_states_to_vtp.addToWrite<Real>(gate, "Density");
+    write_real_body_states_to_vtp.addDerivedVariableRecording<SimpleDynamics<VonMisesStress>>(gate);
     /** Output the observed displacement of gate free end. */
     RegressionTestEnsembleAverage<ObservedQuantityRecording<Vecd>>
         write_beam_tip_displacement("Position", gate_observer_contact);
+    ReducedQuantityRecording<TotalMechanicalEnergy>
+        write_water_mechanical_energy(water_block, gravity);
+    ReducedQuantityRecording<TotalMechanicalEnergy>
+        write_gate_mechanical_energy(gate, negative_gravity);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
@@ -299,20 +312,22 @@ int main(int ac, char *av[])
     gate_normal_direction.exec();
     /** computing linear reproducing configuration for the insert body. */
     gate_corrected_configuration.exec();
-    corrected_configuration_fluid.exec();
     constant_gravity.exec();
+    corrected_configuration_fluid.exec();
     //----------------------------------------------------------------------
     //	First output before the main loop.
     //----------------------------------------------------------------------
     write_real_body_states_to_vtp.writeToFile(0);
     write_beam_tip_displacement.writeToFile(0);
+    write_water_mechanical_energy.writeToFile(0);
+    write_gate_mechanical_energy.writeToFile(0);
     //----------------------------------------------------------------------
     //	Basic control parameters for time stepping.
     //----------------------------------------------------------------------
-    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
+    Real& physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     size_t number_of_iterations = 0;
     int screen_output_interval = 100;
-    Real end_time = 0.5; /**< End time. */
+    Real end_time = 3; /**< End time. */
     Real output_interval = end_time / 50.0;
     Real dt = 0.0;   /**< Default acoustic time step sizes. */
     Real dt_s = 0.0; /**< Default acoustic time step sizes for solid. */
@@ -329,14 +344,14 @@ int main(int ac, char *av[])
         {
             Real Dt = get_fluid_advection_time_step_size.exec();
             update_fluid_density.exec();
-            /** Update correction matrix for fluid */
             corrected_configuration_fluid.exec();
             /** Update normal direction on elastic body. */
             gate_update_normal.exec();
             Real relaxation_time = 0.0;
             while (relaxation_time < Dt)
             {
-                dt = SMIN(get_fluid_time_step_size.exec(), Dt);
+                //dt = SMIN(get_fluid_time_step_size.exec(), Dt);
+                dt = SMIN(0.00002, Dt);
                 fluid_damping.exec(dt);
                 /** Fluid relaxation and force computation. */
                 pressure_relaxation.exec(dt);
@@ -351,6 +366,7 @@ int main(int ac, char *av[])
                         dt_s = dt - dt_s_sum;
                     gate_stress_relaxation_first_half.exec(dt_s);
                     gate_constraint.exec();
+                    //solid_damping.exec();
                     gate_stress_relaxation_second_half.exec(dt_s);
                     dt_s_sum += dt_s;
                     dt_s = gate_computing_time_step_size.exec();
@@ -364,8 +380,8 @@ int main(int ac, char *av[])
             if (number_of_iterations % screen_output_interval == 0)
             {
                 std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
-                          << physical_time
-                          << "	Dt = " << Dt << "	dt = " << dt << "	dt_s = " << dt_s << "\n";
+                    << physical_time
+                    << "	Dt = " << Dt << "	dt = " << dt << "	dt_s = " << dt_s << "\n";
             }
             number_of_iterations++;
 
@@ -378,6 +394,8 @@ int main(int ac, char *av[])
 
             /** Output the observed data. */
             write_beam_tip_displacement.writeToFile(number_of_iterations);
+            write_water_mechanical_energy.writeToFile(0);
+            write_gate_mechanical_energy.writeToFile(0);
         }
         TickCount t2 = TickCount::now();
         write_real_body_states_to_vtp.writeToFile();
@@ -388,6 +406,8 @@ int main(int ac, char *av[])
     TimeInterval tt;
     tt = t4 - t1 - interval;
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
+
+    //write_beam_tip_displacement.testResult();
 
     return 0;
 }
