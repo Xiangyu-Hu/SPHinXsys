@@ -111,8 +111,6 @@ class SphinxsysRegressionTest:
     def run_case(self) -> None:
         print('Start case simulation...')
         print(self.enter_sphinxsys_exec_folder)
-        #Set the `LD_LIBRARY_PATH` to ensure it includes the path to `libsycl.so.7`.
-        os.environ['LD_LIBRARY_PATH'] = '/opt/intel/oneapi/compiler/2024.0/lib:' + os.environ.get('LD_LIBRARY_PATH', '')
         command = f".{os.sep}{self.sphinxsys_case_name} --regression=true"
         os.chdir(self.sphinxsys_exec_path)
         os.system(command)
