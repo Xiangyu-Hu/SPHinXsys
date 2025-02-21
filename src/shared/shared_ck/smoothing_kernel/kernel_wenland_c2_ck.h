@@ -49,6 +49,13 @@ class KernelWendlandC2CK
         rc_ref_sqr_ = kernel.CutOffRadiusSqr();
     };
 
+    Real factorW1D(const Real &h_ratio) const { return h_ratio; };
+    Real factorW2D(const Real &h_ratio) const { return h_ratio * h_ratio; };
+    Real factorW3D(const Real &h_ratio) const { return h_ratio * h_ratio * h_ratio; };
+    Real factordW1D(const Real &h_ratio) const { return factorW1D(h_ratio) * h_ratio; };
+    Real factordW2D(const Real &h_ratio) const { return factorW2D(h_ratio) * h_ratio; };
+    Real factordW3D(const Real &h_ratio) const { return factorW3D(h_ratio) * h_ratio; };
+
     Real W(const Real &displacement) const
     {
         Real q = displacement * inv_h_;
@@ -65,6 +72,24 @@ class KernelWendlandC2CK
     {
         Real q = displacement.norm() * inv_h_;
         return factor_W_3D_ * W_1D(q);
+    };
+
+    Real W(const Real &h_ratio, const Real &r_ij, const Real &displacement) const
+    {
+        Real q = r_ij * inv_h_ * h_ratio;
+        return factor_W_1D_ * W_1D(q) * factorW1D(h_ratio);
+    };
+
+    Real W(const Real &h_ratio, const Real &r_ij, const Vec2d &displacement) const
+    {
+        Real q = r_ij * inv_h_ * h_ratio;
+        return factor_W_2D_ * W_1D(q) * factorW2D(h_ratio);
+    };
+
+    Real W(const Real &h_ratio, const Real &r_ij, const Vec3d &displacement) const
+    {
+        Real q = r_ij * inv_h_ * h_ratio;
+        return factor_W_3D_ * W_1D(q) * factorW3D(h_ratio);
     };
 
     Real W_1D(Real q) const
@@ -87,6 +112,22 @@ class KernelWendlandC2CK
         Real q = displacement.norm() * inv_h_;
         return factor_dW_3D_ * dW_1D(q);
     };
+
+    Real dW(const Real &h_ratio, const Real &r_ij, const Real &displacement) const
+    {
+        Real q = r_ij * inv_h_ * h_ratio;
+        return factor_dW_1D_ * dW_1D(q) * factordW1D(h_ratio);
+    }
+    Real dW(const Real &h_ratio, const Real &r_ij, const Vec2d &displacement) const
+    {
+        Real q = r_ij * inv_h_ * h_ratio;
+        return factor_dW_2D_ * dW_1D(q) * factordW2D(h_ratio);
+    }
+    Real dW(const Real &h_ratio, const Real &r_ij, const Vec3d &displacement) const
+    {
+        Real q = r_ij * inv_h_ * h_ratio;
+        return factor_dW_3D_ * dW_1D(q) * factordW3D(h_ratio);
+    }
 
     Real dW_1D(const Real q) const
     {
@@ -117,6 +158,7 @@ class KernelWendlandC2CK
 
     inline Real CutOffRadius() const { return rc_ref_; };
     inline Real CutOffRadiusSqr() const { return rc_ref_sqr_; };
+    inline Real CutOffRadius(Real h_ratio) const { return rc_ref_ / h_ratio; };
 
   private:
     Real inv_h_, rc_ref_, rc_ref_sqr_,
