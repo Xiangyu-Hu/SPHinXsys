@@ -16,11 +16,7 @@ BaseParticles::BaseParticles(SPHBody &sph_body, BaseMaterial *base_material)
       sph_body_(sph_body), body_name_(sph_body.getName()),
       base_material_(*base_material),
       restart_xml_parser_("xml_restart", "particles"),
-      reload_xml_parser_("xml_particle_reload", "particles"),
-      copy_particle_state_(),
-      write_restart_variable_to_xml_(restart_xml_parser_),
-      write_reload_variable_to_xml_(reload_xml_parser_),
-      read_restart_variable_from_xml_(restart_xml_parser_)
+      reload_xml_parser_("xml_particle_reload", "particles")
 {
     sph_body.assignBaseParticles(this);
     sv_total_real_particles_ = registerSingularVariable<UnsignedInt>("TotalRealParticles");
@@ -33,7 +29,9 @@ SPHAdaptation &BaseParticles::getSPHAdaptation()
 //=================================================================================================//
 void BaseParticles::initializeBasicParticleVariables()
 {
-    //----------------------------------------------------------------------
+    addEvolvingVariable<Vecd>("Position");
+    addEvolvingVariable<Real>("VolumetricMeasure");
+     //----------------------------------------------------------------------
     //		register non-geometric variables
     //----------------------------------------------------------------------
     rho_ = registerStateVariable<Real>("Density", base_material_.ReferenceDensity());
@@ -43,17 +41,16 @@ void BaseParticles::initializeBasicParticleVariables()
     //----------------------------------------------------------------------
     //		unregistered variables and data
     //----------------------------------------------------------------------
-    original_id_ = registerDiscreteVariable<UnsignedInt>("OriginalID", particles_bound_, getAssignIndex());
+    original_id_ = registerDiscreteVariable<UnsignedInt>("OriginalID", particles_bound_, AssignIndex());
+    addEvolvingVariable<UnsignedInt>("OriginalID");
     addVariableToWrite<UnsignedInt>("OriginalID");
-    sorted_id_ = registerDiscreteVariable<UnsignedInt>("SortedID", particles_bound_, getAssignIndex());
+    sorted_id_ = registerDiscreteVariable<UnsignedInt>("SortedID", particles_bound_, AssignIndex());
 }
 //=================================================================================================//
 void BaseParticles::registerPositionAndVolumetricMeasure(StdLargeVec<Vecd> &pos, StdLargeVec<Real> &Vol)
 {
     dv_pos_ = registerStateVariableOnlyFrom<Vecd>("Position", pos);
     Vol_ = registerStateVariableFrom<Real>("VolumetricMeasure", Vol);
-    addVariableToReload<Vecd>("Position");
-    addVariableToReload<Real>("VolumetricMeasure");
 }
 //=================================================================================================//
 void BaseParticles::registerPositionAndVolumetricMeasureFromReload()
@@ -132,31 +129,29 @@ void BaseParticles::resizeXmlDocForParticles(XmlParser &xml_parser)
     }
 }
 //=================================================================================================//
-void BaseParticles::writeParticlesToXmlForRestart(std::string &filefullpath)
+void BaseParticles::writeParticlesToXmlForRestart(const std::string &filefullpath)
 {
     resizeXmlDocForParticles(restart_xml_parser_);
-    write_restart_variable_to_xml_(variables_to_restart_);
+    write_restart_variable_to_xml_(evolving_variables_, restart_xml_parser_);
     restart_xml_parser_.writeToXmlFile(filefullpath);
 }
 //=================================================================================================//
-void BaseParticles::readParticleFromXmlForRestart(std::string &filefullpath)
+void BaseParticles::readParticlesFromXmlForRestart(const std::string &filefullpath)
 {
     restart_xml_parser_.loadXmlFile(filefullpath);
-    read_restart_variable_from_xml_(variables_to_restart_, this);
+    read_restart_variable_from_xml_(evolving_variables_, this, restart_xml_parser_);
 }
 //=================================================================================================//
-void BaseParticles::writeToXmlForReloadParticle(std::string &filefullpath)
+void BaseParticles::writeParticlesToXmlForReload(const std::string &filefullpath)
 {
     resizeXmlDocForParticles(reload_xml_parser_);
-    write_reload_variable_to_xml_(variables_to_reload_);
+    write_reload_variable_to_xml_(evolving_variables_, reload_xml_parser_);
     reload_xml_parser_.writeToXmlFile(filefullpath);
 }
 //=================================================================================================//
-XmlParser &BaseParticles::readReloadXmlFile(const std::string &filefullpath)
+void BaseParticles::readReloadXmlFile(const std::string &filefullpath)
 {
-    is_reload_file_read_ = true;
     reload_xml_parser_.loadXmlFile(filefullpath);
-    return reload_xml_parser_;
 }
 //=================================================================================================//
 } // namespace SPH

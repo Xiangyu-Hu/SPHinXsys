@@ -71,7 +71,7 @@ GhostBoundaryConditionSetupInESPH::
       ghost_bound_(ghost_creation.ghost_bound_),
       real_and_ghost_particle_data_(ghost_creation.real_and_ghost_particle_data_),
       boundary_type_(particles_->registerStateVariable<int>("BoundaryType")),
-      W0_(sph_body_.sph_adaptation_->getKernel()->W0(ZeroVecd))
+      W0_(sph_body_.getSPHAdaptation().getKernel()->W0(ZeroVecd))
 {
     setupBoundaryTypes();
 }
@@ -119,7 +119,7 @@ GhostKernelGradientUpdate::GhostKernelGradientUpdate(BaseInnerRelation &inner_re
       Vol_(particles_->getVariableDataByName<Real>("VolumetricMeasure")),
       kernel_gradient_original_summation_(
           particles_->registerStateVariable<Vecd>("KernelGradientOriginalSummation")),
-      indicator_(particles_->getVariableDataByName<int>("Indicator")){};
+      indicator_(particles_->getVariableDataByName<int>("Indicator")) {};
 //=================================================================================================//
 void GhostKernelGradientUpdate::interaction(size_t index_i, Real dt)
 {

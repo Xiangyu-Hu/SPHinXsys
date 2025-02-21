@@ -12,7 +12,7 @@ template <class DataDelegationType>
 template <class BaseRelationType>
 RelaxationResidue<Base, DataDelegationType>::RelaxationResidue(BaseRelationType &base_relation)
     : LocalDynamics(base_relation.getSPHBody()), DataDelegationType(base_relation),
-      sph_adaptation_(this->sph_body_.sph_adaptation_),
+      sph_adaptation_(&this->sph_body_.getSPHAdaptation()),
       Vol_(this->particles_->template getVariableDataByName<Real>("VolumetricMeasure")),
       residue_(this->particles_->template registerStateVariable<Vecd>("ZeroOrderResidue")) {}
 //=================================================================================================//

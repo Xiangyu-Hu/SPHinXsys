@@ -85,21 +85,6 @@ void SPHBody::defineAdaptationRatios(Real h_spacing_ratio, Real new_system_refin
     sph_adaptation_->resetAdaptationRatios(h_spacing_ratio, new_system_refinement_ratio);
 }
 //=================================================================================================//
-void SPHBody::writeParticlesToXmlForRestart(std::string &filefullpath)
-{
-    base_particles_->writeParticlesToXmlForRestart(filefullpath);
-}
-//=================================================================================================//
-void SPHBody::readParticlesFromXmlForRestart(std::string &filefullpath)
-{
-    base_particles_->readParticleFromXmlForRestart(filefullpath);
-}
-//=================================================================================================//
-void SPHBody::writeToXmlForReloadParticle(std::string &filefullpath)
-{
-    base_particles_->writeToXmlForReloadParticle(filefullpath);
-}
-//=================================================================================================//
 BaseCellLinkedList &RealBody::getCellLinkedList()
 {
     if (!cell_linked_list_created_)

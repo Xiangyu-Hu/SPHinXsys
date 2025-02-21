@@ -59,7 +59,7 @@ class ParticleGenerator<LinearParticles, Bar> : public ParticleGenerator<LinearP
     explicit ParticleGenerator(SPHBody &sph_body, LinearParticles &linear_particles)
         : ParticleGenerator<LinearParticles>(sph_body, linear_particles)
     {
-        sph_body.sph_adaptation_->getKernel()->reduceOnce();
+        sph_body.getSPHAdaptation().getKernel()->reduceOnce();
     };
     virtual void prepareGeometricData() override
     {
@@ -85,7 +85,7 @@ class BoundaryGeometryParallelToXAxis : public BodyPartByParticle
         TaggingParticleMethod tagging_particle_method = std::bind(&BoundaryGeometryParallelToXAxis::tagManually, this, _1);
         tagParticles(tagging_particle_method);
     };
-    virtual ~BoundaryGeometryParallelToXAxis(){};
+    virtual ~BoundaryGeometryParallelToXAxis() {};
 
   private:
     void tagManually(size_t index_i)
@@ -105,7 +105,7 @@ class BoundaryGeometryParallelToYAxis : public BodyPartByParticle
         TaggingParticleMethod tagging_particle_method = std::bind(&BoundaryGeometryParallelToYAxis::tagManually, this, _1);
         tagParticles(tagging_particle_method);
     };
-    virtual ~BoundaryGeometryParallelToYAxis(){};
+    virtual ~BoundaryGeometryParallelToYAxis() {};
 
   private:
     void tagManually(size_t index_i)

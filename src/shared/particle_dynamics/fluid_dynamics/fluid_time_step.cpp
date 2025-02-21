@@ -16,7 +16,7 @@ AcousticTimeStep::AcousticTimeStep(SPHBody &sph_body, Real acousticCFL)
       vel_(particles_->getVariableDataByName<Vecd>("Velocity")),
       force_(particles_->getVariableDataByName<Vecd>("Force")),
       force_prior_(particles_->getVariableDataByName<Vecd>("ForcePrior")),
-      h_min_(sph_body.sph_adaptation_->MinimumSmoothingLength()),
+      h_min_(sph_body.getSPHAdaptation().MinimumSmoothingLength()),
       acousticCFL_(acousticCFL) {}
 //=================================================================================================//
 Real AcousticTimeStep::reduce(size_t index_i, Real dt)
@@ -40,7 +40,7 @@ AdvectionTimeStep::
       vel_(particles_->getVariableDataByName<Vecd>("Velocity")),
       force_(particles_->getVariableDataByName<Vecd>("Force")),
       force_prior_(particles_->getVariableDataByName<Vecd>("ForcePrior")),
-      h_min_(sph_body.sph_adaptation_->MinimumSmoothingLength()),
+      h_min_(sph_body.getSPHAdaptation().MinimumSmoothingLength()),
       speed_ref_(U_ref), advectionCFL_(advectionCFL) {}
 //=================================================================================================//
 Real AdvectionTimeStep::reduce(size_t index_i, Real dt)

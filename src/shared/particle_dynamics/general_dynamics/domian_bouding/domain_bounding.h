@@ -48,7 +48,7 @@ struct PeriodicAlongAxis
         periodic_translation_[axis] =
             bounding_bounds.second_[axis] - bounding_bounds.first_[axis];
     };
-    virtual ~PeriodicAlongAxis(){};
+    virtual ~PeriodicAlongAxis() {};
     BoundingBox getBoundingBox() { return bounding_bounds_; };
     int getAxis() { return axis_; };
     Vecd getPeriodicTranslation() { return periodic_translation_; };
@@ -74,7 +74,7 @@ class BasePeriodicCondition
         cell_linked_list.tagBoundingCells(bound_cells_data_, periodic_box.getBoundingBox(),
                                           periodic_box.getAxis());
     };
-    virtual ~BasePeriodicCondition(){};
+    virtual ~BasePeriodicCondition() {};
 
   protected:
     StdVec<CellLists> bound_cells_data_;
@@ -111,10 +111,10 @@ class BasePeriodicCondition
             : LocalDynamics(real_body), BaseDynamics<void>(),
               bounding_bounds_(periodic_box.getBoundingBox()), axis_(periodic_box.getAxis()),
               periodic_translation_(periodic_box.getPeriodicTranslation()),
-              cut_off_radius_max_(real_body.sph_adaptation_->getKernel()->CutOffRadius()),
+              cut_off_radius_max_(real_body.getSPHAdaptation().getKernel()->CutOffRadius()),
               bound_cells_data_(bound_cells_data),
-              pos_(particles_->getVariableDataByName<Vecd>("Position")){};
-        virtual ~PeriodicBounding(){};
+              pos_(particles_->getVariableDataByName<Vecd>("Position")) {};
+        virtual ~PeriodicBounding() {};
 
         virtual void exec(Real dt = 0.0) override
         {
@@ -154,7 +154,7 @@ class PeriodicConditionUsingCellLinkedList : public BasePeriodicCondition<execut
       public:
         PeriodicCellLinkedList(StdVec<CellLists> &bound_cells_data,
                                RealBody &real_body, PeriodicAlongAxis &periodic_box);
-        virtual ~PeriodicCellLinkedList(){};
+        virtual ~PeriodicCellLinkedList() {};
 
         virtual void exec(Real dt = 0.0) override;
     };
@@ -164,7 +164,7 @@ class PeriodicConditionUsingCellLinkedList : public BasePeriodicCondition<execut
     PeriodicCellLinkedList update_cell_linked_list_;
 
     PeriodicConditionUsingCellLinkedList(RealBody &real_body, PeriodicAlongAxis &periodic_box);
-    virtual ~PeriodicConditionUsingCellLinkedList(){};
+    virtual ~PeriodicConditionUsingCellLinkedList() {};
 };
 } // namespace SPH
 #endif // DOMAIN_BOUNDING_H

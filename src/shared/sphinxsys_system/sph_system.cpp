@@ -41,9 +41,10 @@ void SPHSystem::initializeSystemConfigurations()
 {
     for (auto &body : sph_bodies_)
     {
-        for (size_t i = 0; i < body->body_relations_.size(); i++)
+        StdVec<SPHRelation *> &body_relations = body->getBodyRelations();
+        for (size_t i = 0; i < body_relations.size(); i++)
         {
-            body->body_relations_[i]->updateConfiguration();
+            body_relations[i]->updateConfiguration();
         }
     }
 }

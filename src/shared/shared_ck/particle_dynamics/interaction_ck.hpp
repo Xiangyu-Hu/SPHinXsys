@@ -11,7 +11,7 @@ Interaction<Inner<Parameters...>>::
     Interaction(Relation<Inner<Parameters...>> &inner_relation)
     : LocalDynamics(inner_relation.getSPHBody()),
       inner_relation_(inner_relation),
-      sph_adaptation_(sph_body_.sph_adaptation_),
+      sph_adaptation_(&sph_body_.getSPHAdaptation()),
       dv_pos_(particles_->getVariableByName<Vecd>("Position")),
       dv_neighbor_index_(inner_relation.getNeighborIndex()),
       dv_particle_offset_(inner_relation.getParticleOffset()) {}
@@ -42,7 +42,7 @@ Interaction<Contact<Parameters...>>::
     Interaction(Relation<Contact<Parameters...>> &contact_relation)
     : LocalDynamics(contact_relation.getSPHBody()),
       contact_relation_(contact_relation),
-      sph_adaptation_(sph_body_.sph_adaptation_),
+      sph_adaptation_(&sph_body_.getSPHAdaptation()),
       dv_pos_(particles_->getVariableByName<Vecd>("Position")),
       contact_bodies_(contact_relation.getContactBodies()),
       contact_particles_(contact_relation.getContactParticles()),

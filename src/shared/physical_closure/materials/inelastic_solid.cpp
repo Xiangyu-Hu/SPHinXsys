@@ -12,8 +12,8 @@ void HardeningPlasticSolid::initializeLocalParameters(BaseParticles *base_partic
         [&](size_t i) -> Matd
         { return Matd::Identity(); });
     hardening_parameter_ = base_particles->registerStateVariable<Real>("HardeningParameter");
-    base_particles->addVariableToRestart<Matd>("InversePlasticRightCauchyStrain");
-    base_particles->addVariableToRestart<Real>("HardeningParameter");
+    base_particles->addEvolvingVariable<Matd>("InversePlasticRightCauchyStrain");
+    base_particles->addEvolvingVariable<Real>("HardeningParameter");
 }
 //=================================================================================================//
 Matd HardeningPlasticSolid::ElasticLeftCauchy(const Matd &F, size_t index_i, Real dt)
@@ -84,7 +84,7 @@ void ViscousPlasticSolid::initializeLocalParameters(BaseParticles *base_particle
         "InversePlasticRightCauchyStrain",
         [&](size_t i) -> Matd
         { return Matd::Identity(); });
-    base_particles->addVariableToRestart<Matd>("InversePlasticRightCauchyStrain");
+    base_particles->addEvolvingVariable<Matd>("InversePlasticRightCauchyStrain");
 };
 //=================================================================================================//
 Matd ViscousPlasticSolid::ElasticLeftCauchy(const Matd &F, size_t index_i, Real dt)
