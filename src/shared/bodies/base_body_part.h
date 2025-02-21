@@ -63,7 +63,7 @@ class BodyPart
     BaseParticles &base_particles_;
     DiscreteVariable<UnsignedInt> *dv_index_list_;
     SingularVariable<UnsignedInt> *sv_range_size_;
-    DiscreteVariable<int> *dv_body_part_id_;
+    DiscreteVariable<int> *dv_body_part_indicator_;
     Vecd *pos_;
 };
 

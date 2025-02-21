@@ -158,6 +158,31 @@ void BaseCellLinkedList::particle_for_split_by_mesh(
     }
 }
 //=================================================================================================//
+template <typename DataType>
+DataType *BaseCellLinkedList::initializeVariable(DiscreteVariable<DataType> *variable, DataType initial_value)
+{
+    DataType *data_field = variable->Data();
+    for (size_t i = 0; i != variable->getDataSize(); ++i)
+    {
+        data_field[i] = initial_value;
+    }
+    return data_field;
+}
+//=================================================================================================//
+template <typename DataType, typename... Args>
+DiscreteVariable<DataType> *BaseCellLinkedList::registerDiscreteVariableOnly(
+    const std::string &name, size_t data_size, Args &&...args)
+{
+    DiscreteVariable<DataType> *variable = findVariableByName<DataType>(all_discrete_variables_, name);
+    if (variable == nullptr)
+    {
+        variable = addVariableToAssemble<DataType>(all_discrete_variables_, all_discrete_variable_ptrs_,
+                                                   name, data_size);
+        initializeVariable(variable, std::forward<Args>(args)...);
+    }
+    return variable;
+}
+//=================================================================================================//
 template <class ExecutionPolicy>
 NeighborSearch::NeighborSearch(
     const ExecutionPolicy &ex_policy, CellLinkedList &cell_linked_list, DiscreteVariable<Vecd> *pos)

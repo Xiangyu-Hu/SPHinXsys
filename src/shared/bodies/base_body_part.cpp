@@ -1,6 +1,7 @@
 #include "base_body_part.h"
 
 #include "base_particles.hpp"
+#include "cell_linked_list.hpp"
 namespace SPH
 {
 //=================================================================================================//
@@ -9,30 +10,29 @@ BodyPart::BodyPart(SPHBody &sph_body, const std::string &body_part_name)
       body_part_name_(body_part_name),
       base_particles_(sph_body.getBaseParticles()),
       dv_index_list_(nullptr), sv_range_size_(nullptr),
-      dv_body_part_id_(base_particles_.registerStateVariableOnly<int>("BodyPartIndicator")),
-      pos_(base_particles_.getVariableDataByName<Vecd>("Position"))
-{
-    base_particles_.addEvolvingVariable<int>("BodyPartIndicator");
-}
+      dv_body_part_indicator_(nullptr),
+      pos_(base_particles_.getVariableDataByName<Vecd>("Position")) {}
 //=================================================================================================//
 BodyPartByParticle::BodyPartByParticle(SPHBody &sph_body, const std::string &body_part_name)
     : BodyPart(sph_body, body_part_name),
       body_part_bounds_(Vecd::Zero(), Vecd::Zero()), body_part_bounds_set_(false)
 {
     sph_body.addBodyPartByParticle(this);
+    dv_body_part_indicator_ = base_particles_.registerStateVariableOnly<int>("BodyPartIndicator");
+    base_particles_.addEvolvingVariable<int>("BodyPartIndicator");
 }
 //=================================================================================================//
 void BodyPartByParticle::tagParticles(TaggingParticleMethod &tagging_particle_method)
 {
-    for (size_t i = 0; i < base_particles_.TotalRealParticles(); ++i)
+    for (size_t i = 0; i != base_particles_.TotalRealParticles(); ++i)
     {
         if (tagging_particle_method(i))
         {
-            dv_body_part_id_->setValue(i, part_id_);
+            dv_body_part_indicator_->setValue(i, part_id_);
             body_part_particles_.push_back(i);
         }
     }
-    
+
     dv_index_list_ = unique_variable_ptrs_.createPtr<DiscreteVariable<UnsignedInt>>(
         body_part_name_, body_part_particles_.size(), [&](size_t i) -> Real
         { return body_part_particles_[i]; });
@@ -43,7 +43,11 @@ void BodyPartByParticle::tagParticles(TaggingParticleMethod &tagging_particle_me
 BodyPartByCell::BodyPartByCell(RealBody &real_body, const std::string &body_part_name)
     : BodyPart(real_body, body_part_name), cell_linked_list_(real_body.getCellLinkedList()),
       dv_particle_index_(cell_linked_list_.getParticleIndex()),
-      dv_cell_offset_(cell_linked_list_.getCellOffset()) {}
+      dv_cell_offset_(cell_linked_list_.getCellOffset())
+{
+    dv_body_part_indicator_ = cell_linked_list_.registerDiscreteVariableOnly<int>(
+        "BodyPartIndicator", cell_linked_list_.TotalNumberOfCells());
+}
 //=============================================================================================//
 size_t BodyPartByCell::SizeOfLoopRange()
 {
@@ -59,6 +63,11 @@ void BodyPartByCell::tagCells(TaggingCellMethod &tagging_cell_method)
 {
     ConcurrentIndexVector cell_indexes;
     cell_linked_list_.tagBodyPartByCell(body_part_cells_, cell_indexes, tagging_cell_method);
+
+    for (size_t i = 0; i != cell_indexes.size(); ++i)
+    {
+        dv_body_part_indicator_->setValue(cell_indexes[i], part_id_);
+    }
     dv_index_list_ = unique_variable_ptrs_.createPtr<DiscreteVariable<UnsignedInt>>(
         body_part_name_, cell_indexes.size(), [&](size_t i) -> Real
         { return cell_indexes[i]; });

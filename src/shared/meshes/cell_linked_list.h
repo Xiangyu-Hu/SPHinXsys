@@ -51,10 +51,11 @@ class CellLinkedList;
 class BaseCellLinkedList : public BaseMeshField
 {
   protected:
+    DataContainerUniquePtrAssemble<DiscreteVariable> all_discrete_variable_ptrs_;
     UniquePtrsKeeper<Entity> unique_variable_ptrs_;
     UniquePtrsKeeper<Mesh> mesh_ptrs_keeper_;
     StdVec<Mesh *> meshes_;
-    StdVec<UnsignedInt> mesh_offsets_; //off sets linear index for each mesh
+    StdVec<UnsignedInt> mesh_offsets_; // off sets linear index for each mesh
 
   public:
     BaseCellLinkedList(BaseParticles &base_particles, SPHAdaptation &sph_adaptation);
@@ -84,6 +85,12 @@ class BaseCellLinkedList : public BaseMeshField
     DiscreteVariable<UnsignedInt> *getParticleIndex() { return dv_particle_index_; };
     DiscreteVariable<UnsignedInt> *getCellOffset() { return dv_cell_offset_; };
 
+    UnsignedInt TotalNumberOfCells() { return total_number_of_cells_; };
+    template <typename DataType>
+    DataType *initializeVariable(DiscreteVariable<DataType> *variable, DataType initial_value = ZeroData<DataType>::value);
+    template <typename DataType, typename... Args>
+    DiscreteVariable<DataType> *registerDiscreteVariableOnly(const std::string &name, size_t data_size, Args &&...args);
+
   protected:
     Kernel &kernel_;
     UnsignedInt total_number_of_cells_;
@@ -96,6 +103,7 @@ class BaseCellLinkedList : public BaseMeshField
     ConcurrentIndexVector *cell_index_lists_;
     /** non-concurrent list data rewritten for building neighbor list */
     ListDataVector *cell_data_lists_;
+    ParticleVariables all_discrete_variables_;
 
     void initialize(BaseParticles &base_particles);
     void clearCellLists();
