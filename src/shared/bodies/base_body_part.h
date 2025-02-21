@@ -63,6 +63,7 @@ class BodyPart
     BaseParticles &base_particles_;
     DiscreteVariable<UnsignedInt> *dv_index_list_;
     SingularVariable<UnsignedInt> *sv_range_size_;
+    DiscreteVariable<int> *dv_body_part_id_;
     Vecd *pos_;
 };
 
@@ -98,7 +99,7 @@ class BodyPartByParticle : public BodyPart
     BoundingBox body_part_bounds_;
     bool body_part_bounds_set_;
 
-    typedef std::function<void(size_t)> TaggingParticleMethod;
+    typedef std::function<bool(size_t)> TaggingParticleMethod;
     void tagParticles(TaggingParticleMethod &tagging_particle_method);
 };
 
@@ -118,7 +119,7 @@ class BodyPartByCell : public BodyPart
     virtual ~BodyPartByCell() {};
     DiscreteVariable<UnsignedInt> *getParticleIndex() { return dv_particle_index_; };
     DiscreteVariable<UnsignedInt> *getCellOffset() { return dv_cell_offset_; };
-    
+
   protected:
     BaseCellLinkedList &cell_linked_list_;
     DiscreteVariable<UnsignedInt> *dv_particle_index_;
@@ -144,7 +145,7 @@ class BodyRegionByParticle : public BodyPartByParticle
 
   protected:
     Shape &body_part_shape_;
-    void tagByContain(size_t particle_index);
+    bool tagByContain(size_t particle_index);
 };
 
 /**
@@ -159,7 +160,7 @@ class BodySurface : public BodyPartByParticle
 
   protected:
     Real particle_spacing_min_;
-    void tagNearSurface(size_t particle_index);
+    bool tagNearSurface(size_t particle_index);
 };
 
 /**
@@ -174,7 +175,7 @@ class BodySurfaceLayer : public BodyPartByParticle
 
   private:
     Real thickness_threshold_;
-    void tagSurfaceLayer(size_t particle_index);
+    bool tagSurfaceLayer(size_t particle_index);
 };
 
 /**
@@ -243,7 +244,7 @@ class AlignedBoxPartByParticle : public BodyPartByParticle, public AlignedBoxPar
     virtual ~AlignedBoxPartByParticle() {};
 
   protected:
-    void tagByContain(size_t particle_index);
+    bool tagByContain(size_t particle_index);
 };
 
 class AlignedBoxPartByCell : public BodyPartByCell, public AlignedBoxPart

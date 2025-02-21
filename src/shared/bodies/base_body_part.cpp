@@ -9,7 +9,11 @@ BodyPart::BodyPart(SPHBody &sph_body, const std::string &body_part_name)
       body_part_name_(body_part_name),
       base_particles_(sph_body.getBaseParticles()),
       dv_index_list_(nullptr), sv_range_size_(nullptr),
-      pos_(base_particles_.getVariableDataByName<Vecd>("Position")) {}
+      dv_body_part_id_(base_particles_.registerStateVariableOnly<int>("BodyPartIndicator")),
+      pos_(base_particles_.getVariableDataByName<Vecd>("Position"))
+{
+    base_particles_.addEvolvingVariable<int>("BodyPartIndicator");
+}
 //=================================================================================================//
 BodyPartByParticle::BodyPartByParticle(SPHBody &sph_body, const std::string &body_part_name)
     : BodyPart(sph_body, body_part_name),
@@ -22,8 +26,13 @@ void BodyPartByParticle::tagParticles(TaggingParticleMethod &tagging_particle_me
 {
     for (size_t i = 0; i < base_particles_.TotalRealParticles(); ++i)
     {
-        tagging_particle_method(i);
+        if (tagging_particle_method(i))
+        {
+            dv_body_part_id_->setValue(i, part_id_);
+            body_part_particles_.push_back(i);
+        }
     }
+    
     dv_index_list_ = unique_variable_ptrs_.createPtr<DiscreteVariable<UnsignedInt>>(
         body_part_name_, body_part_particles_.size(), [&](size_t i) -> Real
         { return body_part_particles_[i]; });
@@ -72,12 +81,9 @@ BodyRegionByParticle::BodyRegionByParticle(SPHBody &sph_body, SharedPtr<Shape> s
     shape_ptr_keeper_.assignRef(shape_ptr);
 }
 //=================================================================================================//
-void BodyRegionByParticle::tagByContain(size_t particle_index)
+bool BodyRegionByParticle::tagByContain(size_t particle_index)
 {
-    if (body_part_shape_.checkContain(pos_[particle_index]))
-    {
-        body_part_particles_.push_back(particle_index);
-    }
+    return body_part_shape_.checkContain(pos_[particle_index]);
 }
 //=================================================================================================//
 BodySurface::BodySurface(SPHBody &sph_body)
@@ -89,11 +95,10 @@ BodySurface::BodySurface(SPHBody &sph_body)
     std::cout << "Number of surface particles : " << body_part_particles_.size() << std::endl;
 }
 //=================================================================================================//
-void BodySurface::tagNearSurface(size_t particle_index)
+bool BodySurface::tagNearSurface(size_t particle_index)
 {
     Real phi = sph_body_.getInitialShape().findSignedDistance(pos_[particle_index]);
-    if (fabs(phi) < particle_spacing_min_)
-        body_part_particles_.push_back(particle_index);
+    return fabs(phi) < particle_spacing_min_;
 }
 //=================================================================================================//
 BodySurfaceLayer::BodySurfaceLayer(SPHBody &sph_body, Real layer_thickness)
@@ -105,13 +110,10 @@ BodySurfaceLayer::BodySurfaceLayer(SPHBody &sph_body, Real layer_thickness)
     std::cout << "Number of inner layers particles : " << body_part_particles_.size() << std::endl;
 }
 //=================================================================================================//
-void BodySurfaceLayer::tagSurfaceLayer(size_t particle_index)
+bool BodySurfaceLayer::tagSurfaceLayer(size_t particle_index)
 {
     Real distance = fabs(sph_body_.getInitialShape().findSignedDistance(pos_[particle_index]));
-    if (distance < thickness_threshold_)
-    {
-        body_part_particles_.push_back(particle_index);
-    }
+    return distance < thickness_threshold_;
 }
 //=================================================================================================//
 BodyRegionByCell::BodyRegionByCell(RealBody &real_body, Shape &body_part_shape)
@@ -185,12 +187,9 @@ AlignedBoxPartByParticle::AlignedBoxPartByParticle(RealBody &real_body, const Al
     tagParticles(tagging_particle_method);
 }
 //=================================================================================================//
-void AlignedBoxPartByParticle::tagByContain(size_t particle_index)
+bool AlignedBoxPartByParticle::tagByContain(size_t particle_index)
 {
-    if (aligned_box_.checkContain(pos_[particle_index]))
-    {
-        body_part_particles_.push_back(particle_index);
-    }
+    return aligned_box_.checkContain(pos_[particle_index]);
 }
 //=================================================================================================//
 AlignedBoxPartByCell::AlignedBoxPartByCell(RealBody &real_body, const AlignedBox &aligned_box)

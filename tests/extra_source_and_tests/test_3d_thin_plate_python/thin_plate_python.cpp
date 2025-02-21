@@ -48,7 +48,7 @@ template <>
 class ParticleGenerator<SurfaceParticles, Plate> : public ParticleGenerator<SurfaceParticles>, public Parameter
 {
   public:
-    explicit ParticleGenerator(SPHBody &sph_body, SurfaceParticles &surface_particles) : ParticleGenerator<SurfaceParticles>(sph_body, surface_particles){};
+    explicit ParticleGenerator(SPHBody &sph_body, SurfaceParticles &surface_particles) : ParticleGenerator<SurfaceParticles>(sph_body, surface_particles) {};
     virtual void prepareGeometricData() override
     {
         // the plate and boundary
@@ -74,15 +74,13 @@ class BoundaryGeometryParallelToXAxis : public BodyPartByParticle, public Parame
         TaggingParticleMethod tagging_particle_method = std::bind(&BoundaryGeometryParallelToXAxis::tagManually, this, _1);
         tagParticles(tagging_particle_method);
     };
-    virtual ~BoundaryGeometryParallelToXAxis(){};
+    virtual ~BoundaryGeometryParallelToXAxis() {};
 
   private:
-    void tagManually(size_t index_i)
+    bool tagManually(size_t index_i)
     {
-        if (base_particles_.ParticlePositions()[index_i][1] < 0.0 || base_particles_.ParticlePositions()[index_i][1] > PH)
-        {
-            body_part_particles_.push_back(index_i);
-        }
+        return base_particles_.ParticlePositions()[index_i][1] < 0.0 ||
+               base_particles_.ParticlePositions()[index_i][1] > PH;
     };
 };
 class BoundaryGeometryParallelToYAxis : public BodyPartByParticle, public Parameter
@@ -94,15 +92,13 @@ class BoundaryGeometryParallelToYAxis : public BodyPartByParticle, public Parame
         TaggingParticleMethod tagging_particle_method = std::bind(&BoundaryGeometryParallelToYAxis::tagManually, this, _1);
         tagParticles(tagging_particle_method);
     };
-    virtual ~BoundaryGeometryParallelToYAxis(){};
+    virtual ~BoundaryGeometryParallelToYAxis() {};
 
   private:
-    void tagManually(size_t index_i)
+    bool tagManually(size_t index_i)
     {
-        if (base_particles_.ParticlePositions()[index_i][0] < 0.0 || base_particles_.ParticlePositions()[index_i][0] > PL)
-        {
-            body_part_particles_.push_back(index_i);
-        }
+        return base_particles_.ParticlePositions()[index_i][0] < 0.0 ||
+               base_particles_.ParticlePositions()[index_i][0] > PL;
     };
 };
 //----------------------------------------------------------------------
@@ -232,7 +228,7 @@ class Environment : public PreSettingCase
         write_plate_max_displacement.writeToFile(0);
     }
 
-    virtual ~Environment(){};
+    virtual ~Environment() {};
     //----------------------------------------------------------------------
     //	For ctest.
     //----------------------------------------------------------------------

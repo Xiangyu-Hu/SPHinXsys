@@ -39,10 +39,9 @@ class FixPart : public BodyPartByParticle
     };
 
   private:
-    void tagManually(size_t index_i)
+    bool tagManually(size_t index_i)
     {
-        if (contains_(pos_[index_i]))
-            body_part_particles_.push_back(index_i);
+        return contains_(pos_[index_i]);
     };
 };
 

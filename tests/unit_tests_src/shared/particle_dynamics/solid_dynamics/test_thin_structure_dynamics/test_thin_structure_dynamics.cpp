@@ -57,7 +57,8 @@ template <>
 class ParticleGenerator<SurfaceParticles, Plate> : public ParticleGenerator<SurfaceParticles>
 {
   public:
-    explicit ParticleGenerator(SPHBody &sph_body, SurfaceParticles &surface_particles) : ParticleGenerator<SurfaceParticles>(sph_body, surface_particles){};
+    explicit ParticleGenerator(SPHBody &sph_body, SurfaceParticles &surface_particles)
+        : ParticleGenerator<SurfaceParticles>(sph_body, surface_particles) {};
     virtual void prepareGeometricData() override
     {
         // the plate and boundary
@@ -83,12 +84,12 @@ class ControlledGeometry : public BodyPartByParticle
         TaggingParticleMethod tagging_particle_method = std::bind(&ControlledGeometry::tagManually, this, _1);
         tagParticles(tagging_particle_method);
     };
-    virtual ~ControlledGeometry(){};
+    virtual ~ControlledGeometry() {};
 
   private:
-    void tagManually(size_t index_i)
+    bool tagManually(size_t index_i)
     {
-        body_part_particles_.push_back(index_i);
+        return true;
     };
 };
 /** Define the controlled rotation. */
@@ -100,8 +101,8 @@ class ControlledRotation : public thin_structure_dynamics::ConstrainShellBodyReg
           vel_(particles_->getVariableDataByName<Vecd>("Velocity")),
           angular_vel_(particles_->getVariableDataByName<Vecd>("AngularVelocity")),
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
-          physical_time_(sph_system_.getSystemVariableDataByName<Real>("PhysicalTime")){};
-    virtual ~ControlledRotation(){};
+          physical_time_(sph_system_.getSystemVariableDataByName<Real>("PhysicalTime")) {};
+    virtual ~ControlledRotation() {};
 
   protected:
     Vecd *vel_, *angular_vel_, *pos_;
