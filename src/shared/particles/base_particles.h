@@ -84,7 +84,7 @@ class BaseParticles
 {
   private:
     DataContainerUniquePtrAssemble<DiscreteVariable> all_discrete_variable_ptrs_;
-    DataContainerUniquePtrAssemble<SingularVariable> all_global_variable_ptrs_;
+    DataContainerUniquePtrAssemble<SingularVariable> all_singular_variable_ptrs_;
     UniquePtrsKeeper<Entity> unique_variable_ptrs_;
 
   public:
