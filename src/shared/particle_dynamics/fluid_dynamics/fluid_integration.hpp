@@ -33,25 +33,13 @@ Integration1stHalf<Inner<>, RiemannSolverType, KernelCorrectionType>::
     //----------------------------------------------------------------------
     //		add sortable particle data
     //----------------------------------------------------------------------
-    particles_->addVariableToSort<Vecd>("Position");
-    particles_->addVariableToSort<Vecd>("Velocity");
-    particles_->addVariableToSort<Real>("Mass");
-    particles_->addVariableToSort<Vecd>("ForcePrior");
-    particles_->addVariableToSort<Vecd>("Force");
-    particles_->addVariableToSort<Real>("DensityChangeRate");
-    particles_->addVariableToSort<Real>("Density");
-    particles_->addVariableToSort<Real>("Pressure");
-    particles_->addVariableToSort<Real>("VolumetricMeasure");
-    //----------------------------------------------------------------------
-    //		add restart output particle data
-    //----------------------------------------------------------------------
-    particles_->addVariableToRestart<Vecd>("Position");
-    particles_->addVariableToRestart<Real>("VolumetricMeasure");
-    particles_->addVariableToRestart<Real>("Pressure");
-    particles_->addVariableToRestart<Real>("DensityChangeRate");
-    particles_->addVariableToRestart<Vecd>("Velocity");
-    particles_->addVariableToRestart<Vecd>("Force");
-    particles_->addVariableToRestart<Vecd>("ForcePrior");
+    particles_->addEvolvingVariable<Vecd>("Velocity");
+    particles_->addEvolvingVariable<Real>("Mass");
+    particles_->addEvolvingVariable<Vecd>("ForcePrior");
+    particles_->addEvolvingVariable<Vecd>("Force");
+    particles_->addEvolvingVariable<Real>("DensityChangeRate");
+    particles_->addEvolvingVariable<Real>("Density");
+    particles_->addEvolvingVariable<Real>("Pressure");
     //----------------------------------------------------------------------
     //		add output particle data
     //----------------------------------------------------------------------

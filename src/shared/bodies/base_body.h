@@ -58,9 +58,9 @@ class BodyPartByParticle;
 /**
  * @class SPHBody
  * @brief SPHBody is a base body with basic data and functions.
- *		  Its derived class can be a real fluid body, a real deformable solid body,
- *        a static or moving solid body or an observer body.
- * 		  Note that only real bodies have cell linked list.
+ * Its derived class can be a real fluid body, a real deformable solid body,
+ * a static or moving solid body or an observer body.
+ * Note that only real bodies have cell linked list.
  */
 class SPHBody
 {
@@ -80,13 +80,12 @@ class SPHBody
     Shape *initial_shape_;                                /**< initial volumetric geometry enclosing the body */
     int total_body_parts_;                                /**< total number of body parts */
     StdVec<BodyPartByParticle *> body_parts_by_particle_; /**< all body parts by particle */
+    SPHAdaptation *sph_adaptation_;                       /**< numerical adaptation policy */
+    BaseMaterial *base_material_;                         /**< base material for dynamic cast in DataDelegate */
+    StdVec<SPHRelation *> body_relations_;                /**< all contact relations centered from this body **/
 
   public:
     typedef SPHBody BaseIdentifier;
-    SPHAdaptation *sph_adaptation_;        /**< numerical adaptation policy */
-    BaseMaterial *base_material_;          /**< base material for dynamic cast in DataDelegate */
-    StdVec<SPHRelation *> body_relations_; /**< all contact relations centered from this body **/
-
     SPHBody(SPHSystem &sph_system, Shape &shape, const std::string &name);
     SPHBody(SPHSystem &sph_system, Shape &shape);
     SPHBody(SPHSystem &sph_system, const std::string &name);
@@ -184,10 +183,6 @@ class SPHBody
     {
         generateParticles<ParticleType, ReserveType, Parameters...>(particle_reserve, std::forward<Args>(args)...);
     };
-
-    virtual void writeParticlesToXmlForRestart(std::string &filefullpath);
-    virtual void readParticlesFromXmlForRestart(std::string &filefullpath);
-    virtual void writeToXmlForReloadParticle(std::string &filefullpath);
 };
 
 /**

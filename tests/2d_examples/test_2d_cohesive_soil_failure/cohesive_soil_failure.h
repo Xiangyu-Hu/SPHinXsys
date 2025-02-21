@@ -66,7 +66,7 @@ class SoilInitialCondition : public continuum_dynamics::ContinuumInitialConditio
 {
   public:
     explicit SoilInitialCondition(RealBody &granular_column)
-        : continuum_dynamics::ContinuumInitialCondition(granular_column){};
+        : continuum_dynamics::ContinuumInitialCondition(granular_column) {};
 
   protected:
     void update(size_t index_i, Real dt)
@@ -93,7 +93,7 @@ class TransportVelocityCorrection<Inner<ResolutionType, LimiterType>, CommonCont
   public:
     explicit TransportVelocityCorrection(BaseInnerRelation &inner_relation, Real coefficient = 0.2)
         : fluid_dynamics::TransportVelocityCorrection<Base, DataDelegateInner, CommonControlTypes...>(inner_relation),
-          h_ref_(this->sph_body_.sph_adaptation_->ReferenceSmoothingLength()),
+          h_ref_(this->sph_body_.getSPHAdaptation().ReferenceSmoothingLength()),
           correction_scaling_(coefficient * h_ref_ * h_ref_),
           Vol_(this->particles_->template getVariableDataByName<Real>("VolumetricMeasure")),
           pos_div_(this->particles_->template registerStateVariable<Real>("PositionDivergence")),
@@ -106,7 +106,7 @@ class TransportVelocityCorrection<Inner<ResolutionType, LimiterType>, CommonCont
         static_assert(std::is_base_of<Limiter, LimiterType>::value,
                       "Limiter is not the base of LimiterType!");
     }
-    virtual ~TransportVelocityCorrection(){};
+    virtual ~TransportVelocityCorrection() {};
     void interaction(size_t index_i, Real dt = 0.0)
     {
         if (this->within_scope_(index_i))
@@ -167,7 +167,7 @@ class TransportVelocityCorrection<Contact<Boundary>, CommonControlTypes...>
             wall_Vol_.push_back(this->contact_particles_[k]->template getVariableDataByName<Real>("VolumetricMeasure"));
         }
     };
-    virtual ~TransportVelocityCorrection(){};
+    virtual ~TransportVelocityCorrection() {};
     void interaction(size_t index_i, Real dt = 0.0)
     {
         if (this->within_scope_(index_i))
@@ -220,10 +220,10 @@ class FreeSurfaceNormal<DataDelegationType>
           indicator_(particles_->registerStateVariable<int>("Indicator")),
           Vol_(particles_->getVariableDataByName<Real>("VolumetricMeasure"))
     {
-        particles_->addVariableToSort<Vecd>("SurfaceNormal");
-        particles_->addVariableToSort<Vecd>("ColorGradient");
+        particles_->addEvolvingVariable<Vecd>("SurfaceNormal");
+        particles_->addEvolvingVariable<Vecd>("ColorGradient");
     };
-    virtual ~FreeSurfaceNormal(){};
+    virtual ~FreeSurfaceNormal() {};
 
   protected:
     Vecd *surface_normal_, *color_gradient_;
@@ -237,8 +237,8 @@ class FreeSurfaceNormal<Inner<>>
     : public FreeSurfaceNormal<DataDelegateInner>
 {
   public:
-    explicit FreeSurfaceNormal(BaseInnerRelation &inner_relation) : FreeSurfaceNormal<DataDelegateInner>(inner_relation){};
-    virtual ~FreeSurfaceNormal(){};
+    explicit FreeSurfaceNormal(BaseInnerRelation &inner_relation) : FreeSurfaceNormal<DataDelegateInner>(inner_relation) {};
+    virtual ~FreeSurfaceNormal() {};
     void interaction(size_t index_i, Real dt = 0.0)
     {
         if (indicator_[index_i])
@@ -280,7 +280,7 @@ class FreeSurfaceNormal<Contact<>>
             contact_Vol_.push_back(contact_particles_[k]->getVariableDataByName<Real>("VolumetricMeasure"));
         }
     };
-    virtual ~FreeSurfaceNormal(){};
+    virtual ~FreeSurfaceNormal() {};
     void interaction(size_t index_i, Real dt = 0.0)
     {
         if (indicator_[index_i])

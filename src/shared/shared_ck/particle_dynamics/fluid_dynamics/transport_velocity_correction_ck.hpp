@@ -21,8 +21,11 @@ TransportVelocityCorrectionCKBase<BaseInteractionType>::
           this->particles_->template registerStateVariableOnly<Vecd>("ZeroGradientResidue"))
 {
 }
+{
+}
 
 //========================================================================================
+//   2) Partial Specialization:
 //   2) Partial Specialization:
 //      <Inner<WithUpdate, KernelCorrectionType, ResolutionType, LimiterType, ParticleScope, ExtraParams...>
 //========================================================================================
@@ -31,7 +34,7 @@ TransportVelocityCorrectionCK<Inner<UpdatePolicy, KernelCorrectionType, Resoluti
     TransportVelocityCorrectionCK(Relation<Inner<Parameters...>> &inner_relation, Real coefficient)
     : TransportVelocityCorrectionCKBase<Interaction<Inner<Parameters...>>>(inner_relation),
       kernel_correction_(this->particles_),
-      h_ref_(this->sph_body_.sph_adaptation_->ReferenceSmoothingLength()),
+      h_ref_(this->sph_body_.getSPHAdaptation().ReferenceSmoothingLength()),
       correction_scaling_(coefficient * h_ref_ * h_ref_),
       h_ratio_(this->particles_),
       limiter_(h_ref_ * h_ref_),
@@ -60,6 +63,8 @@ TransportVelocityCorrectionCK<Inner<UpdatePolicy, KernelCorrectionType, Resoluti
       dpos_(encloser.dv_dpos_->DelegatedData(ex_policy)),
       zero_gradient_residue_(encloser.dv_zero_gradient_residue_->DelegatedData(ex_policy)),
       within_scope_(ex_policy, encloser.within_scope_method_, *this)
+{
+}
 {
 }
 

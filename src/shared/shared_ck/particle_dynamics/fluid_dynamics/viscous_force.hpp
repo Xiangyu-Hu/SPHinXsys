@@ -14,12 +14,12 @@ ViscousForceCK<Base, ViscosityType, KernelCorrectionType, RelationType<Parameter
     ViscousForceCK(BaseRelationType &base_relation)
     : Interaction<RelationType<Parameters...>>(base_relation),
       ForcePriorCK(this->particles_, "ViscousForce"),
-      viscosity_model_(DynamicCast<ViscosityType>(this, this->particles_->getBaseMaterial())), 
+      viscosity_model_(DynamicCast<ViscosityType>(this, this->particles_->getBaseMaterial())),
       kernel_correction_(this->particles_),
       dv_Vol_(this->particles_->template getVariableByName<Real>("VolumetricMeasure")),
       dv_vel_(this->particles_->template getVariableByName<Vecd>("Velocity")),
       dv_viscous_force_(this->dv_current_force_),
-      smoothing_length_sq_(pow(this->sph_body_.sph_adaptation_->ReferenceSmoothingLength(), 2)) {}
+      smoothing_length_sq_(pow(this->sph_body_.getSPHAdaptation().ReferenceSmoothingLength(), 2)) {}
 //=================================================================================================//
 template <typename ViscosityType, class KernelCorrectionType,
           template <typename...> class RelationType, typename... Parameters>
@@ -64,10 +64,10 @@ void ViscousForceCK<Contact<Wall, ViscosityType, KernelCorrectionType, Parameter
         UnsignedInt index_j = this->neighbor_index_[n];
         Vecd e_ij = this->e_ij(index_i, index_j);
         Vecd vec_r_ij = this->vec_r_ij(index_i, index_j);
-        Vecd vel_derivative = 2.0*(this->vel_[index_i] - this->wall_vel_ave_[index_j]) /
+        Vecd vel_derivative = 2.0 * (this->vel_[index_i] - this->wall_vel_ave_[index_j]) /
                               (vec_r_ij.squaredNorm() + 0.01 * this->smoothing_length_sq_);
 
-        force += 2.0*vec_r_ij.dot(this->correction_(index_i) * e_ij) *
+        force += 2.0 * vec_r_ij.dot(this->correction_(index_i) * e_ij) *
                  this->viscosity_(index_i) * vel_derivative *
                  this->dW_ij(index_i, index_j) * this->wall_Vol_[index_j];
     }

@@ -63,7 +63,7 @@ ParticleSortCK<ExecutionPolicy, SortMethodType>::ParticleSortCK(RealBody &real_b
       sort_method_(ExecutionPolicy{}, dv_sequence_, dv_index_permutation_),
       kernel_implementation_(*this)
 {
-    particles_->addVariableToSort<UnsignedInt>("OriginalID");
+    particles_->addEvolvingVariable<UnsignedInt>("OriginalID");
 
     body_parts_by_particle_ = real_body.getBodyPartsByParticle();
     for (size_t i = 0; i != body_parts_by_particle_.size(); ++i)
@@ -121,7 +121,7 @@ void ParticleSortCK<ExecutionPolicy, SortMethodType>::exec(Real dt)
                  { computing_kernel->prepareSequence(i); });
 
     sort_method_.sort(ex_policy_, particles_);
-    update_variables_to_sort_(particles_->VariablesToSort(), ex_policy_, total_real_particles, dv_index_permutation_);
+    update_variables_to_sort_(particles_->EvolvingVariables(), ex_policy_, total_real_particles, dv_index_permutation_);
 
     particle_for(ex_policy_, IndexRange(0, total_real_particles),
                  [=](size_t i)

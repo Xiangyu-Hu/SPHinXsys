@@ -22,7 +22,7 @@ FreeSurfaceIndicationCK<Base, RelationType<Parameters...>>::FreeSurfaceIndicatio
       dv_previous_surface_indicator_(
           this->particles_->template registerStateVariableOnly<int>("PreviousSurfaceIndicator")),
       dv_threshold_by_dimensions_(0.75 * Dimensions),
-      dv_smoothing_length_(this->sph_body_.sph_adaptation_->ReferenceSmoothingLength())
+      dv_smoothing_length_(this->sph_body_.getSPHAdaptation().ReferenceSmoothingLength())
 {
 }
 

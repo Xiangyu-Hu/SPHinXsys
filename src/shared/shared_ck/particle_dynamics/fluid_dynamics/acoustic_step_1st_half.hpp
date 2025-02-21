@@ -24,27 +24,15 @@ AcousticStep<BaseInteractionType>::AcousticStep(DynamicsIdentifier &identifier)
       dv_force_prior_(this->particles_->template registerStateVariableOnly<Vecd>("ForcePrior"))
 {
     //----------------------------------------------------------------------
-    //		add sortable particle data
+    //		add evolving variables
     //----------------------------------------------------------------------
-    this->particles_->template addVariableToSort<Vecd>("Position");
-    this->particles_->template addVariableToSort<Vecd>("Velocity");
-    this->particles_->template addVariableToSort<Real>("Mass");
-    this->particles_->template addVariableToSort<Vecd>("ForcePrior");
-    this->particles_->template addVariableToSort<Vecd>("Force");
-    this->particles_->template addVariableToSort<Real>("DensityChangeRate");
-    this->particles_->template addVariableToSort<Real>("Density");
-    this->particles_->template addVariableToSort<Real>("Pressure");
-    this->particles_->template addVariableToSort<Real>("VolumetricMeasure");
-    //----------------------------------------------------------------------
-    //		add restart output particle data
-    //----------------------------------------------------------------------
-    this->particles_->template addVariableToRestart<Vecd>("Position");
-    this->particles_->template addVariableToRestart<Real>("VolumetricMeasure");
-    this->particles_->template addVariableToRestart<Real>("Pressure");
-    this->particles_->template addVariableToRestart<Real>("DensityChangeRate");
-    this->particles_->template addVariableToRestart<Vecd>("Velocity");
-    this->particles_->template addVariableToRestart<Vecd>("Force");
-    this->particles_->template addVariableToRestart<Vecd>("ForcePrior");
+    this->particles_->template addEvolvingVariable<Vecd>("Velocity");
+    this->particles_->template addEvolvingVariable<Real>("Mass");
+    this->particles_->template addEvolvingVariable<Vecd>("ForcePrior");
+    this->particles_->template addEvolvingVariable<Vecd>("Force");
+    this->particles_->template addEvolvingVariable<Real>("DensityChangeRate");
+    this->particles_->template addEvolvingVariable<Real>("Density");
+    this->particles_->template addEvolvingVariable<Real>("Pressure");
     //----------------------------------------------------------------------
     //		add output particle data
     //----------------------------------------------------------------------
