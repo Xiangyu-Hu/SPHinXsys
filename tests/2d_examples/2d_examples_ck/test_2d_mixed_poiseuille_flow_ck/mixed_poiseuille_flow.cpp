@@ -24,12 +24,13 @@ Real Outlet_pressure = 0.1;
 Real rho0_f = 1000.0;
 Real Re = 50.0;
 Real mu_f = sqrt(rho0_f * pow(0.5 * DH, 3.0) * fabs(Inlet_pressure - Outlet_pressure) / (Re * DL));
-Real U_f = pow(0.5 * DH, 2.0) * fabs(Inlet_pressure - Outlet_pressure) / (2.0 * mu_f * DL);
+// Real U_f = pow(0.5 * DH, 2.0) * fabs(Inlet_pressure - Outlet_pressure) / (2.0 * mu_f * DL);
+Real U_f = 0.5;
 Real c_f = 10.0 * U_f;
 //----------------------------------------------------------------------
 //	Geometric shapes used in this case.
 //----------------------------------------------------------------------
-Real bidrectional_buffer_length = 5.0 * resolution_ref;
+Real bidrectional_buffer_length = 3.0 * resolution_ref;
 Vec2d bidirectional_buffer_halfsize = Vec2d(bidrectional_buffer_length * 0.5, 0.5 * DH);
 Vec2d left_bidirectional_translation = bidirectional_buffer_halfsize;
 Vec2d left_indicator_translation = Vec2d(0.0, 0.5 * DH);
@@ -37,7 +38,7 @@ Vec2d left_indicator_translation = Vec2d(0.0, 0.5 * DH);
 Vec2d right_bidirectional_translation = Vec2d(DL - 0.5 * bidrectional_buffer_length, 0.5 * DH);
 Vec2d right_indicator_translation = Vec2d(DL, 0.5 * DH);
 
-Vec2d right_disposer_translation = Vec2d(DL + 0.5 * bidrectional_buffer_length, 0.5 * DH);
+Vec2d right_disposer_translation = Vec2d(DL - 0.5 * bidrectional_buffer_length, 0.5 * DH);
 Vec2d normal = Vec2d(1.0, 0.0);
 //----------------------------------------------------------------------
 //	Pressure boundary definition.
@@ -105,8 +106,54 @@ class InletInflowpPressureCondition : public BaseStateCondition
 
         Real operator()(size_t index_i, Real time)
         {
-            Real p = 1.0;
-            p_[index_i] = p;
+            Real rise_time = 0.25; // Time duration for full sine increase
+            Real p = 0.0;
+            Real target_pressure_ = 1.0;
+
+            if (time < rise_time)
+            {
+                p = target_pressure_ * 0.5 * (1.0 - cos(M_PI * time / rise_time));
+            }
+            else
+            {
+                p = target_pressure_;
+            }
+
+            // p_[index_i] = p;
+            return p;
+        };
+    };
+};
+
+class InletInflowpPressureConditionRight : public BaseStateCondition
+{
+  public:
+    InletInflowpPressureConditionRight(BaseParticles *particles)
+        : BaseStateCondition(particles) {};
+
+    class ComputingKernel : public BaseStateCondition::ComputingKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+            : BaseStateCondition::ComputingKernel(ex_policy, encloser){};
+
+        Real operator()(size_t index_i, Real time)
+        {
+            Real rise_time = 0.25; // Time duration for full sine increase
+            Real p = 0.0;
+            Real target_pressure_ = -1.0;
+
+            if (time < rise_time)
+            {
+                p = target_pressure_ * 0.5 * (1.0 - cos(M_PI * time / rise_time));
+            }
+            else
+            {
+                p = target_pressure_;
+            }
+
+            // p_[index_i] = p;
             return p;
         };
     };
@@ -185,12 +232,10 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     AlignedBoxPartByParticle left_emitter_by_particle(water_body, AlignedBox(xAxis, Transform(left_bidirectional_translation), bidirectional_buffer_halfsize));
     AlignedBoxPartByCell left_emitter_by_cell(water_body, AlignedBox(xAxis, Transform(left_bidirectional_translation), bidirectional_buffer_halfsize));
-    AlignedBoxPartByCell right_emitter_by_cell(water_body, AlignedBox(xAxis, Transform(Vec2d(right_disposer_translation)), bidirectional_buffer_halfsize));
+    AlignedBoxPartByCell right_emitter_by_cell(water_body, AlignedBox(xAxis, Transform(Rotation2d(Pi), Vec2d(right_disposer_translation)), bidirectional_buffer_halfsize));
     AlignedBoxPartByCell left_indicator_by_cell(water_body, AlignedBox(xAxis, Transform(left_indicator_translation), bidirectional_buffer_halfsize));
     AlignedBoxPartByCell right_indicator_by_cell(water_body, AlignedBox(xAxis, Transform(Vec2d(right_indicator_translation)), bidirectional_buffer_halfsize));
-
-    AlignedBoxPartByCell test_right_ABPC(water_body, AlignedBox(xAxis, Transform(Vec2d(right_bidirectional_translation)), bidirectional_buffer_halfsize));
-    AlignedBoxPartByCell right_disposer(water_body, AlignedBox(xAxis, Transform(Vec2d(right_disposer_translation)), bidirectional_buffer_halfsize));
+    AlignedBoxPartByCell right_disposer(water_body, AlignedBox(xAxis, Transform(Rotation2d(Pi), Vec2d(right_disposer_translation)), bidirectional_buffer_halfsize));
 
     //----------------------------------------------------------------------
     //	Define body relation map.
@@ -244,6 +289,8 @@ int main(int ac, char *av[])
 
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::TransportVelocityCorrectionWallNoCorrectionBulkParticlesCK>
         transport_correction_ck(water_body_inner, water_wall_contact);
+    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::TransportVelocityLimitedCorrectionCorrectedComplexBulkParticlesCKWithoutUpdate>
+        zero_gradient_ck(water_body_inner, water_wall_contact);
 
     ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AdvectionTimeStepCK> fluid_advection_time_step(water_body, U_f);
     ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticTimeStepCK> fluid_acoustic_time_step(water_body);
@@ -262,9 +309,11 @@ int main(int ac, char *av[])
     // StateDynamics<execution::SequencedPolicy, fluid_dynamics::EmitterInflowInjectionCK<AlignedBoxPartByParticle>> emitter_injection(left_emitter_by_particle, inlet_buffer);
     StateDynamics<SequencedExecutionPolicy, fluid_dynamics::DisposerOutflowDeletionCK> right_remove_particles(right_disposer);
 
-    // fluid_dynamics::BidirectionalBufferCK<MainExecutionPolicy, NoKernelCorrectionCK, InletInflowpPressureCondition>
-    //     bidirectional_buffer(left_emitter_by_cell, // for tag buffering (expects an AlignedBoxPartByCell)
-    //                          inlet_buffer);
+    fluid_dynamics::BidirectionalBufferCK<MainExecutionPolicy, NoKernelCorrectionCK, InletInflowpPressureCondition>
+        bidirectional_buffer_left(left_emitter_by_cell, inlet_buffer);
+
+    fluid_dynamics::BidirectionalBufferCK<MainExecutionPolicy, NoKernelCorrectionCK, InletInflowpPressureConditionRight>
+        bidirectional_buffer_right(right_emitter_by_cell, inlet_buffer);
 
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
@@ -277,6 +326,10 @@ int main(int ac, char *av[])
     body_states_recording.addToWrite<Real>(water_body, "Density");
     body_states_recording.addToWrite<Vecd>(water_body, "ZeroGradientResidue");
     body_states_recording.addToWrite<int>(water_body, "BufferParticleIndicator");
+    body_states_recording.addToWrite<int>(water_body, "PreviousSurfaceIndicator");
+    body_states_recording.addToWrite<int>(water_body, "WithScopeVerify");
+    body_states_recording.addToWrite<int>(water_body, "DensitySummationVerify");
+    body_states_recording.addToWrite<Real>(water_body, "Mass");
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<MainExecutionPolicy, Vecd>> write_centerline_velocity("Velocity", velocity_observer_contact);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
@@ -288,6 +341,10 @@ int main(int ac, char *av[])
     wall_cell_linked_list.exec();
     water_body_update_complex_relation.exec();
     fluid_observer_contact_relation.exec();
+    fluid_boundary_indicator.exec();
+    bidirectional_buffer_left.tagBufferParticles();
+    bidirectional_buffer_right.tagBufferParticles();
+    // right_tag_buffer_particle_.exec();
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
@@ -321,6 +378,10 @@ int main(int ac, char *av[])
             Real advection_dt = fluid_advection_time_step.exec();
             fluid_viscous_force.exec();
             transport_correction_ck.exec();
+            water_advection_step_close.exec();
+
+            water_advection_step_setup.exec();
+
             fluid_linear_correction_matrix.exec();
 
             /** Dynamics including pressure relaxation. */
@@ -330,7 +391,10 @@ int main(int ac, char *av[])
             {
                 acoustic_dt = fluid_acoustic_time_step.exec();
                 fluid_acoustic_step_1st_half.exec(acoustic_dt);
-                inflow_condition.exec();
+                // inflow_condition.exec();
+                zero_gradient_ck.exec();
+                bidirectional_buffer_left.applyPressureCondition(acoustic_dt);
+                bidirectional_buffer_right.applyPressureCondition(acoustic_dt);
                 // pressure_condition.exec();
                 fluid_acoustic_step_2nd_half.exec(acoustic_dt);
                 relaxation_time += acoustic_dt;
@@ -348,10 +412,12 @@ int main(int ac, char *av[])
             number_of_iterations++;
 
             /** inflow emitter injection*/
-            emitter_injection.exec();
+            bidirectional_buffer_left.injectParticles();
+            bidirectional_buffer_right.injectParticles();
+            bidirectional_buffer_left.deleteParticles();
+            bidirectional_buffer_right.deleteParticles();
+            // emitter_injection.exec();
             right_remove_particles.exec();
-            left_tag_buffer_particle_.exec();
-            right_tag_buffer_particle_.exec();
             /** Update cell linked list and configuration. */
             if (number_of_iterations % 100 == 0 && number_of_iterations != 1)
             {
@@ -363,6 +429,9 @@ int main(int ac, char *av[])
             water_body_update_complex_relation.exec();
             fluid_observer_contact_relation.exec();
             fluid_boundary_indicator.exec();
+            bidirectional_buffer_left.tagBufferParticles();
+            bidirectional_buffer_right.tagBufferParticles();
+            // right_tag_buffer_particle_.exec();
             // label_left_indicator.exec();
             // label_right_indicator.exec();
 

@@ -34,8 +34,8 @@ class TransportVelocityCorrectionCKBase : public BaseInteractionType
 template <typename...>
 class TransportVelocityCorrectionCK;
 
-template <class KernelCorrectionType, class ResolutionType, class LimiterType, class ParticleScopeType, typename... Parameters>
-class TransportVelocityCorrectionCK<Inner<WithUpdate, KernelCorrectionType, ResolutionType, LimiterType, ParticleScopeType, Parameters...>>
+template <class UpdatePolicy, class KernelCorrectionType, class ResolutionType, class LimiterType, class ParticleScopeType, typename... Parameters>
+class TransportVelocityCorrectionCK<Inner<UpdatePolicy, KernelCorrectionType, ResolutionType, LimiterType, ParticleScopeType, Parameters...>>
     : public TransportVelocityCorrectionCKBase<Interaction<Inner<Parameters...>>>
 {
     using BaseInteraction = TransportVelocityCorrectionCKBase<Interaction<Inner<Parameters...>>>;
@@ -78,6 +78,7 @@ class TransportVelocityCorrectionCK<Inner<WithUpdate, KernelCorrectionType, Reso
         LimiterType limiter_;
         Vecd *dpos_, *zero_gradient_residue_;
         ParticleScopeTypeKernel within_scope_;
+        int *with_scope_verify_; ///< "ZeroGradientResidue"
     };
 
   protected:
@@ -87,6 +88,7 @@ class TransportVelocityCorrectionCK<Inner<WithUpdate, KernelCorrectionType, Reso
     ResolutionType h_ratio_;  ///< e.g. for adaptive resolution
     LimiterType limiter_;     ///< e.g. a limiter on the final correction step
     ParticleScopeTypeCK<ParticleScopeType> within_scope_method_;
+    DiscreteVariable<int> *dv_with_scope_verify_; ///< "ZeroGradientResidue"
 };
 //----------------------------------------------
 //  2) Partial specialization for Contact<...>
@@ -139,6 +141,11 @@ using TransportVelocityLimitedCorrectionCorrectedComplexBulkParticlesCK =
     TransportVelocityCorrectionCK<
         Inner<WithUpdate, LinearCorrectionCK, SingleResolution, TruncatedLinear, BulkParticles>,
         Contact<Wall, LinearCorrectionCK, SingleResolution, TruncatedLinear, BulkParticles>>;
+
+using TransportVelocityLimitedCorrectionCorrectedComplexBulkParticlesCKWithoutUpdate =
+    TransportVelocityCorrectionCK<
+        Inner<Base, LinearCorrectionCK, SingleResolution, TruncatedLinear, AllParticles>,
+        Contact<Wall, LinearCorrectionCK, SingleResolution, TruncatedLinear, AllParticles>>;
 
 } // namespace fluid_dynamics
 } // namespace SPH

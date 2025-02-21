@@ -135,7 +135,7 @@ DisposerOutflowDeletionCK::UpdateKernel::
 
 void DisposerOutflowDeletionCK::UpdateKernel::update(size_t index_i, Real dt)
 {
-    if (aligned_box_->checkContain(pos_[index_i]))
+    if (aligned_box_->checkLowerBound(pos_[index_i]))
     {
         remove_real_particle_(index_i);
     }
@@ -205,7 +205,7 @@ void PressureConditionCK<AlignedBoxPartType, KernelCorrectionType, ConditionFunc
         if (aligned_box_->checkContain(pos_[index_i]))
         {
             Real pressure = condition_(index_i, *physical_time_);
-            vel_[index_i] += correction_(index_i) * this->zero_gradient_residue_[index_i] * pressure / rho_[index_i] * dt;
+            vel_[index_i] -= correction_(index_i) * this->zero_gradient_residue_[index_i] * pressure / rho_[index_i] * dt;
 
             Vecd frame_velocity = Vecd::Zero();
             frame_velocity[xAxis] = this->transform_->xformBaseVecToFrame(vel_[index_i])[xAxis];

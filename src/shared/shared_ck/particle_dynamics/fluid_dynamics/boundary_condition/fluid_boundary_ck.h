@@ -135,7 +135,8 @@ class BufferEmitterInflowInjectionCK : public BaseLocalDynamics<AlignedBoxPartTy
           dv_buffer_particle_indicator_(this->particles_->template getVariableByName<int>("BufferParticleIndicator")),
           condition_function_(this->particles_),
           dv_previous_surface_indicator_(this->particles_->template getVariableByName<int>("PreviousSurfaceIndicator")),
-          sv_physical_time_(this->sph_system_.template getSystemVariableByName<Real>("PhysicalTime"))
+          sv_physical_time_(this->sph_system_.template getSystemVariableByName<Real>("PhysicalTime")),
+          upper_bound_fringe_(0.5 * this->sph_body_.getSPHBodyResolutionRef())
 
     {
         buffer_.checkParticlesReserved();
@@ -176,7 +177,8 @@ class BufferEmitterInflowInjectionCK : public BaseLocalDynamics<AlignedBoxPartTy
               buffer_particle_indicator_(encloser.dv_buffer_particle_indicator_->DelegatedData(ex_policy)),
               condition_(ex_policy, encloser.condition_function_),
               previous_surface_indicator_(encloser.dv_previous_surface_indicator_->DelegatedData(ex_policy)),
-              physical_time_(encloser.sv_physical_time_->DelegatedData(ex_policy))
+              physical_time_(encloser.sv_physical_time_->DelegatedData(ex_policy)),
+              upper_bound_fringe_(encloser.upper_bound_fringe_)
         {
             aligned_box_ = encloser.sv_aligned_box_->DelegatedData(ex_policy);
         }
@@ -191,9 +193,9 @@ class BufferEmitterInflowInjectionCK : public BaseLocalDynamics<AlignedBoxPartTy
                     {
                         // if (index_i < this->particles_->TotalRealParticles())
                         {
-                            create_real_particle_(index_i);
+                            size_t new_particle_index = create_real_particle_(index_i);
+                            buffer_particle_indicator_[new_particle_index] = 0;
                             pos_[index_i] = aligned_box_->getUpperPeriodic(pos_[index_i]); // Periodic bounding.
-                            rho_[index_i] = rho0_;
                             p_[index_i] = condition_(index_i, *physical_time_);
                             rho_[index_i] = p_[index_i] / pow(sound_speed_, 2.0) + rho0_;
                             previous_surface_indicator_[index_i] = 1;
@@ -214,6 +216,7 @@ class BufferEmitterInflowInjectionCK : public BaseLocalDynamics<AlignedBoxPartTy
         ConditionKernel condition_;
         int *previous_surface_indicator_;
         Real *physical_time_;
+        Real upper_bound_fringe_;
     };
 
     virtual ~BufferEmitterInflowInjectionCK() {};
@@ -230,6 +233,7 @@ class BufferEmitterInflowInjectionCK : public BaseLocalDynamics<AlignedBoxPartTy
     ConditionFunction condition_function_;
     DiscreteVariable<int> *dv_previous_surface_indicator_;
     SingularVariable<Real> *sv_physical_time_;
+    Real upper_bound_fringe_;
 };
 
 //=================================================================================================//
