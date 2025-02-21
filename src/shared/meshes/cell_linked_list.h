@@ -54,7 +54,7 @@ class BaseCellLinkedList : public BaseMeshField
     UniquePtrsKeeper<Entity> unique_variable_ptrs_;
     UniquePtrsKeeper<Mesh> mesh_ptrs_keeper_;
     StdVec<Mesh *> meshes_;
-    StdVec<UnsignedInt> mesh_offsets_;
+    StdVec<UnsignedInt> mesh_offsets_; //off sets linear index for each mesh
 
   public:
     BaseCellLinkedList(BaseParticles &base_particles, SPHAdaptation &sph_adaptation);
