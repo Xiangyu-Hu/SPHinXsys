@@ -2,16 +2,16 @@
 import os
 import sys
 
-path = os.path.abspath('../../../../../PythonScriptStore/RegressionTest')
+path = os.path.abspath('../../../../../../../PythonScriptStore/RegressionTest')
 sys.path.append(path)
 from regression_test_base_tool import SphinxsysRegressionTest
 
 
 """
-case name: test_3d_repose_angle
+case name: test_3d_repose_angle_sycl
 """
 
-case_name = "test_3d_repose_angle"
+case_name = "test_3d_repose_angle_sycl"
 body_name = "GranularBody"
 parameter_name = "TotalMechanicalEnergy"
 

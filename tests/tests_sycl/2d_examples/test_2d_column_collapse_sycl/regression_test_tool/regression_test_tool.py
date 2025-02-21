@@ -17,7 +17,7 @@ parameter_name = "TotalMechanicalEnergy"
 number_of_run_times = 0
 converged = 0
 sphinxsys = SphinxsysRegressionTest(case_name, body_name, parameter_name)
-#sphinxsys.clean_input_folder(sphinxsys.input_file_path)
+clean_input_folder(sphinxsys.input_file_path)
 
 
 while True:

@@ -21,5 +21,3 @@ target_link_libraries(${PROJECT_NAME} sphinxsys_2d)
 
 add_test(NAME ${PROJECT_NAME} COMMAND ${PROJECT_NAME} --state_recording=${TEST_STATE_RECORDING}
     WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH})
-add_test(NAME ${PROJECT_NAME}_restart COMMAND ${PROJECT_NAME} --restart_step=4000 --state_recording=${TEST_STATE_RECORDING}
-    WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH})

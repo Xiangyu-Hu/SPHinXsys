@@ -2,7 +2,7 @@
 import os
 import sys
 
-path = os.path.abspath('../../../../../PythonScriptStore/RegressionTest')
+path = os.path.abspath('../../../../../../PythonScriptStore/RegressionTest')
 sys.path.append(path)
 from regression_test_base_tool import SphinxsysRegressionTest
 

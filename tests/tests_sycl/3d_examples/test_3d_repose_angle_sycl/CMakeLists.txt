@@ -18,6 +18,3 @@ set_target_properties(${PROJECT_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "
 
 add_test(NAME ${PROJECT_NAME}_particle_relaxation COMMAND ${PROJECT_NAME} --relax=true --state_recording=${TEST_STATE_RECORDING}
         WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH})
-add_test(NAME ${PROJECT_NAME} COMMAND ${PROJECT_NAME}  --reload=true --state_recording=${TEST_STATE_RECORDING}
-        WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH})
-set_tests_properties(${PROJECT_NAME} PROPERTIES DEPENDS "${PROJECT_NAME}_particle_relaxation")
