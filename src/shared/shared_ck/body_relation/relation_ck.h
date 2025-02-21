@@ -46,7 +46,7 @@ class Relation<Base>
 
   public:
     explicit Relation(SPHBody &sph_body);
-    virtual ~Relation(){};
+    virtual ~Relation() {};
     SPHBody &getSPHBody() { return sph_body_; };
 
   protected:
@@ -63,7 +63,7 @@ class Relation<Inner<>> : public Relation<Base>
 {
   public:
     explicit Relation(RealBody &real_body);
-    virtual ~Relation(){};
+    virtual ~Relation() {};
     RealBody &getRealBody() { return *real_body_; };
     CellLinkedList &getCellLinkedList() { return cell_linked_list_; };
     DiscreteVariable<UnsignedInt> *getNeighborIndex() { return dv_neighbor_index_; };
@@ -91,9 +91,12 @@ class Relation<Contact<>> : public Relation<Base>
     StdVec<DiscreteVariable<UnsignedInt> *> dv_contact_particle_offset_;
     StdVec<StdVec<execution::Implementation<Base> *>> all_contact_computing_kernels_;
 
+    void initializeContactRelation(RealBodyVector contact_bodies);
+
   public:
+    explicit Relation(SPHBody &sph_body); // contact bodies to be added later
     Relation(SPHBody &sph_body, RealBodyVector contact_bodies);
-    virtual ~Relation(){};
+    virtual ~Relation() {};
     RealBodyVector getContactBodies() { return contact_bodies_; };
     StdVec<BaseParticles *> getContactParticles() { return contact_particles_; };
     StdVec<SPHAdaptation *> getContactAdaptations() { return contact_adaptations_; };
@@ -102,6 +105,18 @@ class Relation<Contact<>> : public Relation<Base>
     StdVec<DiscreteVariable<UnsignedInt> *> getContactParticleOffset() { return dv_contact_particle_offset_; };
     void registerComputingKernel(execution::Implementation<Base> *implementation, UnsignedInt contact_index);
     void resetComputingKernelUpdated(UnsignedInt contact_index);
+};
+
+template <typename DynamicsIdentifier, typename ContactIdentifier>
+class Relation<Contact<DynamicsIdentifier, ContactIdentifier>> : public Relation<Contact<>>
+{
+  protected:
+    DynamicsIdentifier &identifier_;
+    StdVec<ContactIdentifier *> contact_identifier_;
+
+  public:
+    Relation(DynamicsIdentifier &identifier, StdVec<ContactIdentifier *> contact_identifier);
+    virtual ~Relation() {};
 };
 } // namespace SPH
 #endif // RELATION_CK_H

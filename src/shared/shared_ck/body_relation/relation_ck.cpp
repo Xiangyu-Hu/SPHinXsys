@@ -27,9 +27,18 @@ void Relation<Inner<>>::resetComputingKernelUpdated()
     }
 }
 //=================================================================================================//
+Relation<Contact<>>::Relation(SPHBody &sph_body)
+    : Relation<Base>(sph_body) {}
+//=================================================================================================//
 Relation<Contact<>>::Relation(SPHBody &sph_body, RealBodyVector contact_sph_bodies)
-    : Relation<Base>(sph_body), contact_bodies_(contact_sph_bodies)
+    : Relation<Base>(sph_body)
 {
+    initializeContactRelation(contact_bodies_);
+}
+//=================================================================================================//
+void Relation<Contact<>>::initializeContactRelation(RealBodyVector contact_bodies)
+{
+    contact_bodies_ = contact_bodies;
     for (size_t k = 0; k != contact_bodies_.size(); ++k)
     {
         const std::string name = contact_bodies_[k]->getName();
