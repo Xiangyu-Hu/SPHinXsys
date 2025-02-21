@@ -65,7 +65,7 @@ class StressDiffusionCK<Inner<Parameters...>> : public PlasticAcousticStep<Inter
         Real zeta_, phi_;
         Real smoothing_length_, sound_speed_;
         Real *mass_, *Vol_;
-        Vecd *force_prior_, *pos_;
+        Vecd *pos_, *force_prior_;
         Mat3d *stress_tensor_3D_, *stress_rate_3D_;
     };
    protected:

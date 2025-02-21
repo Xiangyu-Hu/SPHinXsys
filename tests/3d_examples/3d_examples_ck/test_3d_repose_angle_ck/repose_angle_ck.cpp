@@ -231,7 +231,11 @@ int main(int ac, char *av[])
                  soil_advection_step_close.exec();
                 number_of_iterations++;
                 /** Update cell linked list and configuration. */
-                time_instance = TickCount::now();              
+                time_instance = TickCount::now();
+                if (number_of_iterations % 100 == 0 && number_of_iterations != 1)
+                {
+                    particle_sort.exec();
+                }                 
                 soil_cell_linked_list.exec();
                 soil_block_update_complex_relation.exec();
                 interval_updating_configuration += TickCount::now() - time_instance;

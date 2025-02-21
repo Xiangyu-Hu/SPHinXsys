@@ -231,7 +231,7 @@ int main(int ac, char *av[])
                 number_of_iterations++;
                 /** Update cell linked list and configuration. */
                 time_instance = TickCount::now();
-                if (number_of_iterations % 10 == 0 && number_of_iterations != 1)
+                if (number_of_iterations % 100 == 0 && number_of_iterations != 1)
                 {
                     particle_sort.exec();
                 }              
