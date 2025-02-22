@@ -103,7 +103,7 @@ class BaseMeshLocalDynamics
     template <typename DataType>
     static DataType CornerAverage(MeshVariableData<DataType> *mesh_variable,
                                   Arrayi addrs_index, Arrayi corner_direction,
-                                  CellNeighborhood &neighborhood);
+                                  CellNeighborhood &neighborhood, DataType zero);
 };
 
 #pragma region probe_mesh_variable_func
@@ -423,8 +423,7 @@ class UpdateKernelIntegrals : public BaseMeshLocalDynamics
               kernel_(encloser.kernel_),
               index_handler_(encloser.mesh_data_.index_handler_.DelegatedData(ex_policy)),
               cell_neighborhood_(encloser.cell_neighborhood_.DelegatedDataField(ex_policy)),
-              probe_signed_distance_(ex_policy, &encloser.mesh_data_),
-              threshold(kernel_->CutOffRadius(global_h_ratio_) + data_spacing_){};
+              probe_signed_distance_(ex_policy, &encloser.mesh_data_){};
         void update(const size_t &package_index);
 
       protected:
@@ -441,29 +440,10 @@ class UpdateKernelIntegrals : public BaseMeshLocalDynamics
         CellNeighborhood *cell_neighborhood_;
         ProbeSignedDistance probe_signed_distance_;
 
+        Real cutoff_radius_;
         Real threshold;
         std::pair<Real, Vecd> computeKernelIntegral(const Vecd &position, const size_t &package_index,
-                                                    const Arrayi &grid_index, Real *cut_cell_volume_fraction,
-                                                    Arrayi *local_index, int n)
-        {
-            Real phi = probe_signed_distance_.update(position);
-            Real integral_kernel_weight(0);
-            Vecd integral_kernel_gradient = Vecd::Zero();
-            if (fabs(phi) < threshold)
-            {
-                for(int i = 0; i < n; i++){
-                    Vecd displacement = (grid_index - local_index[i]).cast<Real>().matrix() * data_spacing_;
-                    Real distance = displacement.norm();
-                    integral_kernel_weight += kernel_->W(global_h_ratio_, distance, displacement) * cut_cell_volume_fraction[i];
-                    integral_kernel_gradient += kernel_->dW(global_h_ratio_, distance, displacement) * cut_cell_volume_fraction[i] * displacement / (distance + TinyReal);
-                }
-            }
-        
-            std::pair<Real, Vecd> ret;
-            ret.first = phi > threshold ? 1.0 : integral_kernel_weight * data_spacing_ * data_spacing_ * data_spacing_;
-            ret.second = integral_kernel_gradient * data_spacing_ * data_spacing_ * data_spacing_;
-            return ret;
-        }
+                                                    const Arrayi &grid_index);
 
         /** a cut cell is a cut by the level set. */
         /** "Multi-scale modeling of compressible multi-fluid flows with conservative interface method."
