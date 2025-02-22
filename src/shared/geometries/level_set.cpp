@@ -31,7 +31,7 @@ MultilevelLevelSet::MultilevelLevelSet(
                     tentative_bounds, kernel_->DelegatedData(ex_policy),
                     coarse_data);
 
-    configOperationExecutionPolicy(ex_policy, kernel_wrapper.getKernel(ex_policy));
+    configOperationExecutionPolicy(ex_policy, kernel_->DelegatedData(ex_policy));
 }
 //=================================================================================================//
 template <class ExecutionPolicy>
@@ -57,19 +57,19 @@ MultilevelLevelSet::MultilevelLevelSet(
                         tentative_bounds, kernel_->DelegatedData(ex_policy), mesh_data_set_[level - 1]);
     }
 
-    configOperationExecutionPolicy(ex_policy, kernel_wrapper.getKernel(ex_policy));
+    configOperationExecutionPolicy(ex_policy, kernel_->DelegatedData(ex_policy));
 }
 //=================================================================================================//
-template <class ExecutionPolicy>
-void MultilevelLevelSet::configOperationExecutionPolicy(const ExecutionPolicy &ex_policy, Kernel *kernel)
+template <class ExecutionPolicy, class KernelType>
+void MultilevelLevelSet::configOperationExecutionPolicy(const ExecutionPolicy &ex_policy, KernelType *kernel)
 {
-    host_clean_interface_ = makeUnique<CleanInterface<ParallelPolicy>>(*mesh_data_set_.back(), kernel, global_h_ratio_vec_.back());
-    host_correct_topology_ = makeUnique<CorrectTopology<ParallelPolicy>>(*mesh_data_set_.back(), kernel, global_h_ratio_vec_.back());
+    host_clean_interface_ = makeUnique<CleanInterface<ParallelPolicy, KernelType>>(*mesh_data_set_.back(), kernel, global_h_ratio_vec_.back());
+    host_correct_topology_ = makeUnique<CorrectTopology<ParallelPolicy, KernelType>>(*mesh_data_set_.back(), kernel, global_h_ratio_vec_.back());
 
     device_clean_interface_ = nullptr;
     device_correct_topology_ = nullptr;
-    clean_interface_ = std::bind(&CleanInterface<ParallelPolicy>::exec, host_clean_interface_.get(), _1);
-    correct_topology_ = std::bind(&CorrectTopology<ParallelPolicy>::exec, host_correct_topology_.get(), _1);
+    clean_interface_ = std::bind(&CleanInterface<ParallelPolicy, KernelType>::exec, host_clean_interface_.get(), _1);
+    correct_topology_ = std::bind(&CorrectTopology<ParallelPolicy, KernelType>::exec, host_correct_topology_.get(), _1);
 }
 //=================================================================================================//
 template <class ExecutionPolicy, class KernelType>

@@ -101,19 +101,21 @@ class MultilevelLevelSet : public BaseMeshField
     UniquePtrsKeeper<ProbeKernelIntegral> probe_kernel_integral_vector_keeper_;
     UniquePtrsKeeper<ProbeKernelGradientIntegral> probe_kernel_gradient_integral_vector_keeper_;
 
-    UniquePtr<CleanInterface<ParallelPolicy>> host_clean_interface_;
-    UniquePtr<CleanInterface<ParallelDevicePolicy>> device_clean_interface_;
-    UniquePtr<CorrectTopology<ParallelPolicy>> host_correct_topology_;
-    UniquePtr<CorrectTopology<ParallelDevicePolicy>> device_correct_topology_;
+    UniquePtr<CleanInterface<ParallelPolicy, KernelWendlandC2CK>> host_clean_interface_;
+    UniquePtr<CleanInterface<ParallelDevicePolicy, KernelWendlandC2CK>> device_clean_interface_;
+    UniquePtr<CorrectTopology<ParallelPolicy, KernelWendlandC2CK>> host_correct_topology_;
+    UniquePtr<CorrectTopology<ParallelDevicePolicy, KernelWendlandC2CK>> device_correct_topology_;
 
+    
     typedef std::function<void(Real)> OperatorFunctor;
     UniquePtr<SingularVariable<KernelWendlandC2CK>> kernel_;
     OperatorFunctor clean_interface_;
     OperatorFunctor correct_topology_;
 
-    template <class ExecutionPolicy>
-    void configOperationExecutionPolicy(const ExecutionPolicy &ex_policy, Kernel *kernel);
-    void configOperationExecutionPolicy(const ParallelDevicePolicy &par_device, Kernel *kernel);
+    template <class ExecutionPolicy, class KernelType>
+    void configOperationExecutionPolicy(const ExecutionPolicy &ex_policy, KernelType *kernel);
+    template <class KernelType>
+    void configOperationExecutionPolicy(const ParallelDevicePolicy &par_device, KernelType *kernel);
 };
 } // namespace SPH
 #endif // LEVEL_SET_H
