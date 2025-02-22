@@ -30,8 +30,6 @@ MultilevelLevelSet::MultilevelLevelSet(
     initializeLevel(ex_policy, 0, reference_data_spacing, global_h_ratio,
                     tentative_bounds, kernel_->DelegatedData(ex_policy),
                     coarse_data);
-    cell_package_index_set_.push_back(mesh_data_set_[0]->cell_package_index_.DelegatedDataField(ex_policy));
-    meta_data_cell_set_.push_back(mesh_data_set_[0]->meta_data_cell_.DelegatedDataField(ex_policy));
 
     configOperationExecutionPolicy(ex_policy, kernel_wrapper.getKernel(ex_policy));
 }
@@ -74,10 +72,10 @@ void MultilevelLevelSet::configOperationExecutionPolicy(const ExecutionPolicy &e
     correct_topology_ = std::bind(&CorrectTopology<ParallelPolicy>::exec, host_correct_topology_.get(), _1);
 }
 //=================================================================================================//
-template <class ExecutionPolicy>
+template <class ExecutionPolicy, class KernelType>
 void MultilevelLevelSet::initializeLevel(const ExecutionPolicy &ex_policy, size_t level,
                                          Real reference_data_spacing, Real global_h_ratio,
-                                         BoundingBox tentative_bounds, Kernel *kernel, 
+                                         BoundingBox tentative_bounds, KernelType *kernel, 
                                          MeshWithGridDataPackagesType* coarse_data)
 {
     mesh_data_set_.push_back(
@@ -96,13 +94,15 @@ void MultilevelLevelSet::initializeLevel(const ExecutionPolicy &ex_policy, size_
 
     /* All initializations in `FinishDataPackages` are achieved on CPU. */
     FinishDataPackages finish_data_packages(*mesh_data_set_[level], shape_);
-    MeshInnerDynamicsCK<ExecutionPolicy, UpdateLevelSetGradient> update_level_set_gradient{*mesh_data_set_[level]};
-    MeshInnerDynamicsCK<execution::ParallelPolicy, UpdateKernelIntegrals<Kernel>> update_kernel_integrals{*mesh_data_set_[level], kernel, global_h_ratio};
     finish_data_packages.exec();
+    MeshInnerDynamicsCK<ExecutionPolicy, UpdateLevelSetGradient> update_level_set_gradient{*mesh_data_set_[level]};
+    MeshInnerDynamicsCK<ExecutionPolicy, UpdateKernelIntegrals<KernelType>> update_kernel_integrals{*mesh_data_set_[level], kernel, global_h_ratio};
     update_level_set_gradient.exec();
     update_kernel_integrals.exec();
 
     registerProbes(ex_policy, level);
+    cell_package_index_set_.push_back(mesh_data_set_[level]->cell_package_index_.DelegatedDataField(ex_policy));
+    meta_data_cell_set_.push_back(mesh_data_set_[level]->meta_data_cell_.DelegatedDataField(ex_policy));
 }
 //=================================================================================================//
 template <class ExecutionPolicy>
