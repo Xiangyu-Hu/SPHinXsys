@@ -1,14 +1,26 @@
+#ifndef MESH_DYNAMICS_SYCL_HPP
+#define MESH_DYNAMICS_SYCL_HPP
+
+#include "mesh_dynamics.h"
+#include "execution_sycl.h"
+
 namespace SPH
 {
+//=================================================================================================//
 template <typename FunctionOnData>
-void BaseMeshDynamics::package_parallel_for(const execution::ParallelDevicePolicy &par_device, const FunctionOnData &function)
+void package_parallel_for(const ParallelDevicePolicy &par_device,
+                          size_t num_grid_pkgs, const FunctionOnData &function)
 {
     auto &sycl_queue = execution_instance.getQueue();
     sycl_queue.submit([&](sycl::handler &cgh)
-                      { cgh.parallel_for(execution_instance.getUniformNdRange(num_grid_pkgs_ - 2), [=](sycl::nd_item<1> index)
-                                        {
-                                if(index.get_global_id(0) + 2< num_grid_pkgs_)
-                                    function(index.get_global_id(0) + 2); }); })
-        .wait_and_throw();
+    {
+        cgh.parallel_for(execution_instance.getUniformNdRange(num_grid_pkgs), [=](sycl::nd_item<1> index)
+        {
+            if(index.get_global_id(0) + 2 < num_grid_pkgs)
+                function(index.get_global_id(0) + 2); 
+        });
+    }).wait_and_throw();
 }
-}
+//=================================================================================================//
+} // namespace SPH
+#endif

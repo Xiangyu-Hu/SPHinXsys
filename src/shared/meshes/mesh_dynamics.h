@@ -34,10 +34,6 @@
 #include "mesh_local_dynamics.hpp"
 #include "mesh_with_data_packages.h"
 #include "mesh_iterators.hpp"
-#if SPHINXSYS_USE_SYCL
-// #include "mesh_dynamics_sycl.hpp"
-#include "execution_sycl.h"
-#endif
 #include "execution.h"
 
 #include <functional>
@@ -46,6 +42,34 @@ using namespace std::placeholders;
 
 namespace SPH
 {
+
+/***********************************************
+ *       Iterators for Only Occupied Cells      *
+ ***********************************************/
+template <typename FunctionOnData>
+void package_parallel_for(const execution::SequencedPolicy &seq,
+                          size_t num_grid_pkgs, const FunctionOnData &function)
+{
+    for (size_t i = 2; i != num_grid_pkgs; ++i)
+        function(i);
+}
+template <typename FunctionOnData>
+void package_parallel_for(const execution::ParallelPolicy &par,
+                          size_t num_grid_pkgs, const FunctionOnData &function)
+{
+    parallel_for(IndexRange(2, num_grid_pkgs),
+                [&](const IndexRange &r)
+                {
+                    for (size_t i = r.begin(); i != r.end(); ++i)
+                    {
+                        function(i);
+                    }
+                },
+                ap);
+}
+template <typename FunctionOnData>
+void package_parallel_for(const execution::ParallelDevicePolicy &par_device,
+                          size_t num_grid_pkgs, const FunctionOnData &function);
 /**
  * @class BaseMeshDynamics
  * @brief The base class for all mesh dynamics
@@ -91,25 +115,25 @@ class BaseMeshDynamics
     /***********************************************
      *       Iterators for Only Occupied Cells      *
      ***********************************************/
-    template <typename FunctionOnData>
-    void package_parallel_for(const execution::SequencedPolicy &seq, const FunctionOnData &function)
-    {
-        for (size_t i = 2; i != num_grid_pkgs_; ++i)
-            function(i);
-    }
-    template <typename FunctionOnData>
-    void package_parallel_for(const execution::ParallelPolicy &par, const FunctionOnData &function)
-    {
-        parallel_for(IndexRange(2, num_grid_pkgs_),
-                    [&](const IndexRange &r)
-                    {
-                        for (size_t i = r.begin(); i != r.end(); ++i)
-                        {
-                            function(i);
-                        }
-                    },
-                    ap);
-    }
+    // template <typename FunctionOnData>
+    // void package_parallel_for(const execution::SequencedPolicy &seq, const FunctionOnData &function)
+    // {
+    //     for (size_t i = 2; i != num_grid_pkgs_; ++i)
+    //         function(i);
+    // }
+    // template <typename FunctionOnData>
+    // void package_parallel_for(const execution::ParallelPolicy &par, const FunctionOnData &function)
+    // {
+    //     parallel_for(IndexRange(2, num_grid_pkgs_),
+    //                 [&](const IndexRange &r)
+    //                 {
+    //                     for (size_t i = r.begin(); i != r.end(); ++i)
+    //                     {
+    //                         function(i);
+    //                     }
+    //                 },
+    //                 ap);
+    // }
 
     // #if SPHINXSYS_USE_SYCL
     // template <typename FunctionOnData>
@@ -128,8 +152,8 @@ class BaseMeshDynamics
     // }
     // #endif
 
-    template <typename FunctionOnData>
-    void package_parallel_for(const execution::ParallelDevicePolicy &par_device, const FunctionOnData &function);
+    // template <typename FunctionOnData>
+    // void package_parallel_for(const execution::ParallelDevicePolicy &par_device, const FunctionOnData &function);
     // {
     //     auto &sycl_queue = execution_instance.getQueue();
     //     sycl_queue.submit([&](sycl::handler &cgh)
@@ -191,7 +215,7 @@ class MeshInnerDynamicsCK : public LocalDynamicsType, public BaseMeshDynamics
     void exec(Args &&...args)
     {
         UpdateKernel *update_kernel = kernel_implementation_.getComputingKernel();
-        package_parallel_for(ExecutionPolicy(),
+        package_parallel_for(ExecutionPolicy(), num_grid_pkgs_,
             [=](size_t package_index)
             {
               update_kernel->update(package_index, args...);
@@ -224,10 +248,11 @@ class MeshCoreDynamicsCK : public LocalDynamicsType, public BaseMeshDynamics
     void exec()
     {
         UpdateKernel *update_kernel = kernel_implementation_.getComputingKernel();
-        package_parallel_for(ExecutionPolicy(),
+        std::pair<SPH::Arrayi, int> *meta_data_cell = meta_data_cell_;
+        package_parallel_for(ExecutionPolicy(), num_grid_pkgs_,
             [=](size_t package_index)
             {
-              if (meta_data_cell_[package_index].second == 1)
+              if (meta_data_cell[package_index].second == 1)
                   update_kernel->update(package_index);
             }
         );
