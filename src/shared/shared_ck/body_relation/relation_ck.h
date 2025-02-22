@@ -79,11 +79,13 @@ class Relation<Inner<>> : public Relation<Base>
     StdVec<execution::Implementation<Base> *> all_inner_computing_kernels_;
 };
 
-template <>
-class Relation<Contact<>> : public Relation<Base>
+template <class SourceIdentifier, class TargetIdentifier>
+class Relation<Contact<SourceIdentifier, TargetIdentifier>> : public Relation<Base>
 {
   protected:
-    RealBodyVector contact_bodies_;
+    SourceIdentifier &source_identifier_;
+    StdVec<TargetIdentifier *> contact_identifiers_;
+    StdVec<RealBody *> contact_bodies_;
     StdVec<BaseParticles *> contact_particles_;
     StdVec<SPHAdaptation *> contact_adaptations_;
     StdVec<CellLinkedList *> target_cell_linked_lists_;
@@ -91,31 +93,27 @@ class Relation<Contact<>> : public Relation<Base>
     StdVec<DiscreteVariable<UnsignedInt> *> dv_contact_particle_offset_;
     StdVec<StdVec<execution::Implementation<Base> *>> all_contact_computing_kernels_;
 
-    void initializeContactRelation(RealBodyVector contact_bodies);
-
   public:
-    explicit Relation(SPHBody &sph_body); // contact bodies to be added later
-    Relation(SPHBody &sph_body, RealBodyVector contact_bodies);
+    Relation(SourceIdentifier &source_identifier, StdVec<TargetIdentifier *> contact_identifiers);
     virtual ~Relation() {};
-    RealBodyVector getContactBodies() { return contact_bodies_; };
+    SourceIdentifier &getSourceIdentifier() { return source_identifier_; };
+    StdVec<TargetIdentifier *> getContactIdentifiers() { return contact_identifiers_; };
+    StdVec<RealBody *> getContactBodies() { return contact_bodies_; };
     StdVec<BaseParticles *> getContactParticles() { return contact_particles_; };
     StdVec<SPHAdaptation *> getContactAdaptations() { return contact_adaptations_; };
     StdVec<CellLinkedList *> getContactCellLinkedList() { return target_cell_linked_lists_; }
     StdVec<DiscreteVariable<UnsignedInt> *> getContactNeighborIndex() { return dv_contact_neighbor_index_; };
     StdVec<DiscreteVariable<UnsignedInt> *> getContactParticleOffset() { return dv_contact_particle_offset_; };
+
     void registerComputingKernel(execution::Implementation<Base> *implementation, UnsignedInt contact_index);
     void resetComputingKernelUpdated(UnsignedInt contact_index);
 };
-
-template <typename DynamicsIdentifier, typename ContactIdentifier>
-class Relation<Contact<DynamicsIdentifier, ContactIdentifier>> : public Relation<Contact<>>
+template <>
+class Relation<Contact<>> : public Relation<Contact<SPHBody, RealBody>>
 {
-  protected:
-    DynamicsIdentifier &identifier_;
-    StdVec<ContactIdentifier *> contact_identifier_;
-
   public:
-    Relation(DynamicsIdentifier &identifier, StdVec<ContactIdentifier *> contact_identifier);
+    Relation(SPHBody &sph_body, StdVec<RealBody *> contact_bodies)
+        : Relation<Contact<SPHBody, RealBody>>(sph_body, contact_bodies) {}
     virtual ~Relation() {};
 };
 } // namespace SPH

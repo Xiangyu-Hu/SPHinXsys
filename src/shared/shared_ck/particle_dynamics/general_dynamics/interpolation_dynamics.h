@@ -40,14 +40,19 @@ class Interpolation;
  * @class Interpolation
  * @brief Base class for interpolation.
  */
-template <typename DataType>
-class Interpolation<Contact<DataType>> : public Interaction<Contact<>>
+template <typename DataType, typename... Parameters>
+class Interpolation<Contact<DataType, Parameters...>> : public Interaction<Contact<Parameters...>>
 {
+    using BaseDynamicsType = Interaction<Contact<Parameters...>>;
+
   public:
-    Interpolation(Relation<Contact<>> &pair_contact_relation, const std::string &variable_name);
+    Interpolation(Relation<Contact<Parameters...>> &pair_contact_relation, const std::string &variable_name);
+    template <typename BodyRelationType, typename FirstArg>
+    explicit Interpolation(DynamicsArgs<BodyRelationType, FirstArg> parameters)
+        : Interpolation(parameters.identifier_, std::get<0>(parameters.others_)){};
     virtual ~Interpolation() {};
 
-    class InteractKernel : public Interaction<Contact<>>::InteractKernel
+    class InteractKernel : public BaseDynamicsType::InteractKernel
     {
       public:
         template <class ExecutionPolicy, class EncloserType>
@@ -70,12 +75,11 @@ class Interpolation<Contact<DataType>> : public Interaction<Contact<>>
 template <class ExecutionPolicy, typename DataType>
 class ObservingAQuantityCK : public InteractionDynamicsCK<ExecutionPolicy, Interpolation<Contact<DataType>>>
 {
+    using BaseDynamicsType = InteractionDynamicsCK<ExecutionPolicy, Interpolation<Contact<DataType>>>;
+
   public:
-    ObservingAQuantityCK(Relation<Contact<>> &pair_contact_relation, const std::string &variable_name)
-        : InteractionDynamicsCK<ExecutionPolicy, Interpolation<Contact<DataType>>>(pair_contact_relation, variable_name) {};
-    template <typename BodyRelationType, typename FirstArg>
-    explicit ObservingAQuantityCK(DynamicsArgs<BodyRelationType, FirstArg> parameters)
-        : ObservingAQuantityCK(parameters.identifier_, std::get<0>(parameters.others_)){};
+    template <typename... Args>
+    ObservingAQuantityCK(Args &&...args) : BaseDynamicsType(std::forward<Args>(args)...){};
     virtual ~ObservingAQuantityCK() {};
 };
 } // namespace SPH

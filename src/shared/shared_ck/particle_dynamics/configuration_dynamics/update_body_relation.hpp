@@ -108,7 +108,7 @@ template <class EncloserType>
 UpdateRelation<ExecutionPolicy, Contact<Parameters...>>::
     ComputingKernel::ComputingKernel(
         const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt contact_index)
-    : Interaction<Contact<>>::InteractKernel(ex_policy, encloser, contact_index),
+    : Interaction<Contact<Parameters...>>::InteractKernel(ex_policy, encloser, contact_index),
       neighbor_search_(encloser.contact_cell_linked_list_[contact_index]
                            ->createNeighborSearch(ex_policy, encloser.contact_pos_[contact_index])) {}
 //=================================================================================================//

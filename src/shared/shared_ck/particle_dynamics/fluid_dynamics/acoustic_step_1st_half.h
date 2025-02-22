@@ -47,7 +47,7 @@ class AcousticStep : public BaseInteractionType
   public:
     template <class DynamicsIdentifier>
     explicit AcousticStep(DynamicsIdentifier &identifier);
-    virtual ~AcousticStep(){};
+    virtual ~AcousticStep() {};
 
   protected:
     WeaklyCompressibleFluid &fluid_;
@@ -68,7 +68,7 @@ class AcousticStep1stHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionTyp
 
   public:
     explicit AcousticStep1stHalf(Relation<Inner<Parameters...>> &inner_relation);
-    virtual ~AcousticStep1stHalf(){};
+    virtual ~AcousticStep1stHalf() {};
 
     class InitializeKernel
     {
@@ -123,7 +123,7 @@ class AcousticStep1stHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType,
 
   public:
     explicit AcousticStep1stHalf(Relation<Contact<Parameters...>> &wall_contact_relation);
-    virtual ~AcousticStep1stHalf(){};
+    virtual ~AcousticStep1stHalf() {};
 
     class InteractKernel : public BaseInteraction::InteractKernel
     {
