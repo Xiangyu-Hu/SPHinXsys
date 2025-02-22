@@ -13,7 +13,7 @@ using namespace SPH;
 //----------------------------------------------------------------------
 //	Main program starts here.
 //----------------------------------------------------------------------
-int main(int ac, char *av[])
+int main(int ac, char* av[])
 {
     //----------------------------------------------------------------------
     //	Build up SPHSystem and IO environment.
@@ -45,7 +45,7 @@ int main(int ac, char *av[])
         : insert_body.generateParticles<BaseParticles, Lattice>();
 
     ObserverBody beam_observer(sph_system, "BeamObserver");
-    StdVec<Vecd> beam_observation_location = {0.5 * (BRT + BRB)};
+    StdVec<Vecd> beam_observation_location = { 0.5 * (BRT + BRB) };
     beam_observer.generateParticles<ObserverParticles>(beam_observation_location);
     ObserverBody fluid_observer(sph_system, "FluidObserver");
     fluid_observer.generateParticles<ObserverParticles>(createObservationPoints());
@@ -99,10 +99,10 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     InnerRelation water_block_inner(water_block);
     InnerRelation insert_body_inner(insert_body);
-    ContactRelation water_block_contact(water_block, RealBodyVector{&wall_boundary, &insert_body});
-    ContactRelation insert_body_contact(insert_body, {&water_block});
-    ContactRelation beam_observer_contact(beam_observer, {&insert_body});
-    ContactRelation fluid_observer_contact(fluid_observer, {&water_block});
+    ContactRelation water_block_contact(water_block, RealBodyVector{ &wall_boundary, &insert_body });
+    ContactRelation insert_body_contact(insert_body, { &water_block });
+    ContactRelation beam_observer_contact(beam_observer, { &insert_body });
+    ContactRelation fluid_observer_contact(fluid_observer, { &water_block });
     //----------------------------------------------------------------------
     // Combined relations built from basic relations
     // and only used for update configuration.
@@ -133,12 +133,11 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Algorithms of fluid dynamics.
     //----------------------------------------------------------------------
-    InteractionWithUpdate<LinearGradientCorrectionMatrixComplex> corrected_configuration_fluid(water_block_inner, water_block_contact);
-    Dynamics1Level<fluid_dynamics::Integration1stHalfCorrectionWithWallRiemann> pressure_relaxation(water_block_inner, water_block_contact);
+    Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation(water_block_inner, water_block_contact);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallNoRiemann> density_relaxation(water_block_inner, water_block_contact);
     InteractionWithUpdate<fluid_dynamics::DensitySummationComplex> update_density_by_summation(water_block_inner, water_block_contact);
     InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionComplex<AllParticles>> transport_correction(water_block_inner, water_block_contact);
-    InteractionWithUpdate<fluid_dynamics::ViscousForceWithWallCorrection> viscous_force(water_block_inner, water_block_contact);
+    InteractionWithUpdate<fluid_dynamics::ViscousForceWithWall> viscous_force(water_block_inner, water_block_contact);
 
     ReduceDynamics<fluid_dynamics::AdvectionViscousTimeStep> get_fluid_advection_time_step_size(water_block, U_f);
     ReduceDynamics<fluid_dynamics::AcousticTimeStep> get_fluid_time_step_size(water_block);
@@ -187,7 +186,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
-    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
+    Real& physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     size_t number_of_iterations = 0;
     int screen_output_interval = 100;
     Real end_time = 200.0;
@@ -213,8 +212,6 @@ int main(int ac, char *av[])
         {
             Real Dt = get_fluid_advection_time_step_size.exec();
             update_density_by_summation.exec();
-            /** Update correction matrix for fluid */
-            corrected_configuration_fluid.exec();
             viscous_force.exec();
             transport_correction.exec();
 
@@ -260,8 +257,8 @@ int main(int ac, char *av[])
             if (number_of_iterations % screen_output_interval == 0)
             {
                 std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
-                          << physical_time
-                          << "	Dt = " << Dt << "	Dt / dt = " << inner_ite_dt << "	dt / dt_s = " << inner_ite_dt_s << "\n";
+                    << physical_time
+                    << "	Dt = " << Dt << "	Dt / dt = " << inner_ite_dt << "	dt / dt_s = " << inner_ite_dt_s << "\n";
             }
             number_of_iterations++;
 
@@ -296,6 +293,18 @@ int main(int ac, char *av[])
     TimeInterval tt;
     tt = t4 - t1 - interval;
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
+
+    if (sph_system.GenerateRegressionData())
+    {
+        // The lift force at the cylinder is very small and not important in this case.
+        write_total_viscous_force_from_fluid.generateDataBase({ 1.0e-2, 1.0e-2 }, { 1.0e-2, 1.0e-2 });
+        write_beam_tip_displacement.generateDataBase(1.0e-2);
+    }
+    else
+    {
+        write_total_viscous_force_from_fluid.testResult();
+        write_beam_tip_displacement.testResult();
+    }
 
     return 0;
 }

@@ -100,86 +100,87 @@ Vec2d buffer_translation = Vec2d(-DL_sponge, 0.0) + buffer_halfsize;
 
 namespace SPH
 {
-//----------------------------------------------------------------------
-//	Define case dependent geometries
-//----------------------------------------------------------------------
-class WaterBlock : public MultiPolygonShape
-{
-  public:
-    explicit WaterBlock(const std::string &shape_name) : MultiPolygonShape(shape_name)
+    //----------------------------------------------------------------------
+    //	Define case dependent geometries
+    //----------------------------------------------------------------------
+    class WaterBlock : public MultiPolygonShape
     {
-        multi_polygon_.addAPolygon(createWaterBlockShape(), ShapeBooleanOps::add);
-        multi_polygon_.addACircle(insert_circle_center, insert_circle_radius, 100, ShapeBooleanOps::sub);
-        multi_polygon_.addAPolygon(createBeamShape(), ShapeBooleanOps::sub);
-    }
-};
-class WallBoundary : public MultiPolygonShape
-{
-  public:
-    explicit WallBoundary(const std::string &shape_name) : MultiPolygonShape(shape_name)
-    {
-        multi_polygon_.addAPolygon(createOuterWallShape(), ShapeBooleanOps::add);
-        multi_polygon_.addAPolygon(createInnerWallShape(), ShapeBooleanOps::sub);
-    }
-};
-class Insert : public MultiPolygonShape
-{
-  public:
-    explicit Insert(const std::string &shape_name) : MultiPolygonShape(shape_name)
-    {
-        multi_polygon_.addACircle(insert_circle_center, insert_circle_radius, 100, ShapeBooleanOps::add);
-        multi_polygon_.addAPolygon(createBeamShape(), ShapeBooleanOps::add);
-    }
-};
-/** create the beam base as constrain shape. */
-MultiPolygon createBeamBaseShape()
-{
-    MultiPolygon multi_polygon;
-    multi_polygon.addACircle(insert_circle_center, insert_circle_radius, 100, ShapeBooleanOps::add);
-    multi_polygon.addAPolygon(createBeamShape(), ShapeBooleanOps::sub);
-    return multi_polygon;
-}
-//----------------------------------------------------------------------
-//	Inflow velocity
-//----------------------------------------------------------------------
-struct InflowVelocity
-{
-    Real u_ref_, t_ref_;
-    AlignedBoxShape &aligned_box_;
-    Vecd halfsize_;
-
-    template <class BoundaryConditionType>
-    InflowVelocity(BoundaryConditionType &boundary_condition)
-        : u_ref_(U_f), t_ref_(2.0),
-          aligned_box_(boundary_condition.getAlignedBox()),
-          halfsize_(aligned_box_.HalfSize()) {}
-
-    Vecd operator()(Vecd &position, Vecd &velocity, Real current_time)
-    {
-        Vecd target_velocity = velocity;
-        Real u_ave = current_time < t_ref_ ? 0.5 * u_ref_ * (1.0 - cos(Pi * current_time / t_ref_)) : u_ref_;
-        if (aligned_box_.checkInBounds(position))
+    public:
+        explicit WaterBlock(const std::string& shape_name) : MultiPolygonShape(shape_name)
         {
-            target_velocity[0] = 1.5 * u_ave * (1.0 - position[1] * position[1] / halfsize_[1] / halfsize_[1]);
+            multi_polygon_.addAPolygon(createWaterBlockShape(), ShapeBooleanOps::add);
+            multi_polygon_.addACircle(insert_circle_center, insert_circle_radius, 100, ShapeBooleanOps::sub);
+            multi_polygon_.addAPolygon(createBeamShape(), ShapeBooleanOps::sub);
         }
-        return target_velocity;
-    }
-};
-
-StdVec<Vecd> createObservationPoints()
-{
-    StdVec<Vecd> observation_points;
-    /** A line of measuring points at the entrance of the channel. */
-    size_t number_observation_points = 21;
-    Real range_of_measure = DH - resolution_ref * 4.0;
-    Real start_of_measure = resolution_ref * 2.0;
-    /** the measuring locations */
-    for (size_t i = 0; i < number_observation_points; ++i)
+    };
+    class WallBoundary : public MultiPolygonShape
     {
-        Vec2d point_coordinate(0.0, range_of_measure * (Real)i / (Real)(number_observation_points - 1) + start_of_measure);
-        observation_points.push_back(point_coordinate);
+    public:
+        explicit WallBoundary(const std::string& shape_name) : MultiPolygonShape(shape_name)
+        {
+            multi_polygon_.addAPolygon(createOuterWallShape(), ShapeBooleanOps::add);
+            multi_polygon_.addAPolygon(createInnerWallShape(), ShapeBooleanOps::sub);
+        }
+    };
+    class Insert : public MultiPolygonShape
+    {
+    public:
+        explicit Insert(const std::string& shape_name) : MultiPolygonShape(shape_name)
+        {
+            multi_polygon_.addACircle(insert_circle_center, insert_circle_radius, 100, ShapeBooleanOps::add);
+            multi_polygon_.addAPolygon(createBeamShape(), ShapeBooleanOps::add);
+        }
+    };
+    /** create the beam base as constrain shape. */
+    MultiPolygon createBeamBaseShape()
+    {
+        MultiPolygon multi_polygon;
+        multi_polygon.addACircle(insert_circle_center, insert_circle_radius, 100, ShapeBooleanOps::add);
+        multi_polygon.addAPolygon(createBeamShape(), ShapeBooleanOps::sub);
+        return multi_polygon;
     }
-    return observation_points;
-};
+    //----------------------------------------------------------------------
+    //	Inflow velocity
+    //----------------------------------------------------------------------
+    struct InflowVelocity
+    {
+        Real u_ref_, t_ref_;
+        AlignedBoxShape& aligned_box_;
+        Vecd halfsize_;
+
+        template <class BoundaryConditionType>
+        InflowVelocity(BoundaryConditionType& boundary_condition)
+            : u_ref_(U_f), t_ref_(2.0),
+            aligned_box_(boundary_condition.getAlignedBox()),
+            halfsize_(aligned_box_.HalfSize()) {
+        }
+
+        Vecd operator()(Vecd& position, Vecd& velocity, Real current_time)
+        {
+            Vecd target_velocity = velocity;
+            Real u_ave = current_time < t_ref_ ? 0.5 * u_ref_ * (1.0 - cos(Pi * current_time / t_ref_)) : u_ref_;
+            if (aligned_box_.checkInBounds(position))
+            {
+                target_velocity[0] = 1.5 * u_ave * (1.0 - position[1] * position[1] / halfsize_[1] / halfsize_[1]);
+            }
+            return target_velocity;
+        }
+    };
+
+    StdVec<Vecd> createObservationPoints()
+    {
+        StdVec<Vecd> observation_points;
+        /** A line of measuring points at the entrance of the channel. */
+        size_t number_observation_points = 21;
+        Real range_of_measure = DH - resolution_ref * 4.0;
+        Real start_of_measure = resolution_ref * 2.0;
+        /** the measuring locations */
+        for (size_t i = 0; i < number_observation_points; ++i)
+        {
+            Vec2d point_coordinate(0.0, range_of_measure * (Real)i / (Real)(number_observation_points - 1) + start_of_measure);
+            observation_points.push_back(point_coordinate);
+        }
+        return observation_points;
+    };
 } // namespace SPH
 #endif // FSI2_CASE_H
