@@ -32,6 +32,7 @@
 #include "particle_iterators_sycl.h"
 #include "particle_sort_sycl.h"
 #include "particle_sort_sycl.hpp"
+#include "all_mesh_dynamics_sycl.h"
 #include "sphinxsys_ck.h"
 #include "sphinxsys_constant_sycl.hpp"
 #include "sphinxsys_variable_sycl.hpp"
