@@ -65,11 +65,12 @@ class MeshWithGridDataPackages : public Mesh
     explicit MeshWithGridDataPackages(BoundingBox tentative_bounds, Real data_spacing, size_t buffer_size)
         : Mesh(tentative_bounds, pkg_size * data_spacing, buffer_size),
           global_mesh_(mesh_lower_bound_ + 0.5 * data_spacing * Vecd::Ones(), data_spacing, all_cells_ * pkg_size),
-          data_spacing_(data_spacing)
+          data_spacing_(data_spacing),
+          index_handler_("index_handler", IndexHandler{data_spacing_, all_cells_, *static_cast<Mesh*>(this)})
     {
         allocateIndexDataMatrix(all_cells_);
     };
-    virtual ~MeshWithGridDataPackages(){ delete index_handler_; };
+    virtual ~MeshWithGridDataPackages(){};
 
     /** spacing between the data, which is 1/ pkg_size of this grid spacing */
     Real DataSpacing() { return data_spacing_; };
@@ -112,7 +113,7 @@ class MeshWithGridDataPackages : public Mesh
     /** wrapper for all index exchange related functions. */
     struct IndexHandler
     {
-        const Real data_spacing_;
+        Real data_spacing_;
         Arrayi all_cells_;
         Mesh mesh_;
 
@@ -150,14 +151,7 @@ class MeshWithGridDataPackages : public Mesh
         }
     };
 
-    template <class ExecutionPolicy>
-    IndexHandler *getIndexHandler(const ExecutionPolicy &ex_policy) const { return index_handler_; };
-    IndexHandler *getIndexHandler(const ParallelDevicePolicy &par_device) const;
-    
-  private:
-    IndexHandler *index_handler_ = new IndexHandler{data_spacing_, all_cells_, *static_cast<Mesh*>(this)};
-    IndexHandler *device_index_handler = nullptr;
-
+    SingularVariable<IndexHandler> index_handler_;
   public:
     void resizeMeshVariableData() { resize_mesh_variable_data_(num_grid_pkgs_); }
 

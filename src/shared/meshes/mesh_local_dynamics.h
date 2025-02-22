@@ -31,19 +31,12 @@
 #define MESH_LOCAL_DYNAMICS_H
 
 #include "sphinxsys_variable.h"
-#if SPHINXSYS_USE_SYCL
-#include "sphinxsys_variable_sycl.hpp"
-#include "mesh_with_data_package.hpp"
-#else
-#define SYCL_EXTERNAL
-#endif
 #include "mesh_with_data_packages.h"
 #include "base_geometry.h"
 #include "base_kernel.h"
 #include "data_type.h"
 #include "execution.h"
 #include "mesh_iterators.hpp"
-
 namespace SPH
 {
 
@@ -134,7 +127,7 @@ class ProbeMesh
   public:
     template <class ExecutionPolicy>
     explicit ProbeMesh(const ExecutionPolicy &ex_policy, MeshWithGridDataPackagesType *mesh_data)
-        : index_handler_(mesh_data->getIndexHandler(ex_policy)),
+        : index_handler_(mesh_data->index_handler_.DelegatedData(ex_policy)),
           cell_package_index_(mesh_data->cell_package_index_.DelegatedDataField(ex_policy)),
           cell_neighborhood_(mesh_data->cell_neighborhood_.DelegatedDataField(ex_policy)){};
 
@@ -369,7 +362,7 @@ class InitializeBasicDataForAPackage : public BaseMeshLocalDynamics
       public:
         template <class ExecutionPolicy, class EncloserType>
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : index_handler_(encloser.mesh_data_.getIndexHandler(ex_policy)),
+            : index_handler_(encloser.mesh_data_.index_handler_.DelegatedData(ex_policy)),
               meta_data_cell_(encloser.meta_data_cell_.DelegatedDataField(ex_policy)),
               shape_(&encloser.shape_),
               phi_(encloser.phi_.DelegatedDataField(ex_policy)),
@@ -443,7 +436,7 @@ class UpdateKernelIntegrals : public BaseMeshLocalDynamics
               kernel_gradient_(encloser.kernel_gradient_.DelegatedDataField(ex_policy)),
               meta_data_cell_(encloser.meta_data_cell_.DelegatedDataField(ex_policy)),
               kernel_(encloser.kernel_),
-              index_handler_(encloser.mesh_data_.getIndexHandler(ex_policy)),
+              index_handler_(encloser.mesh_data_.index_handler_.DelegatedData(ex_policy)),
               cell_neighborhood_(encloser.cell_neighborhood_.DelegatedDataField(ex_policy)),
               probe_signed_distance_(ex_policy, &encloser.mesh_data_),
               threshold(kernel_->CutOffRadius(global_h_ratio_) + data_spacing_){};
