@@ -2,7 +2,7 @@
 import os
 import sys
 
-path = os.path.abspath('../../../../../PythonScriptStore/RegressionTest')
+path = os.path.abspath('../../../../../../../PythonScriptStore/RegressionTest')
 sys.path.append(path)
 from regression_test_base_tool import SphinxsysRegressionTest
 
@@ -13,7 +13,7 @@ case name: test_2d_column_collapse_sycl
 case_name = "test_2d_column_collapse_sycl"
 body_name = "GranularBody"
 parameter_name = "TotalMechanicalEnergy"
-
+sys.path.append(path)
 number_of_run_times = 0
 converged = 0
 sphinxsys = SphinxsysRegressionTest(case_name, body_name, parameter_name)

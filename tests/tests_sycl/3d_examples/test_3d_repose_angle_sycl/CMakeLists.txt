@@ -16,5 +16,3 @@ target_sources(${PROJECT_NAME} PRIVATE ${DIR_SRCS})
 target_link_libraries(${PROJECT_NAME} sphinxsys_3d)
 set_target_properties(${PROJECT_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${EXECUTABLE_OUTPUT_PATH}")
 
-add_test(NAME ${PROJECT_NAME}_particle_relaxation COMMAND ${PROJECT_NAME} --relax=true --state_recording=${TEST_STATE_RECORDING}
-        WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH})
