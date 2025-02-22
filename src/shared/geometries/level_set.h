@@ -35,7 +35,8 @@
 #include "mesh_dynamics.h"
 #include "mesh_local_dynamics.hpp"
 #include "all_mesh_dynamics.h"
-
+#include "kernel_wenland_c2_ck.h"
+#include "sphinxsys_variable.h"
 namespace SPH
 {
 /**
@@ -106,6 +107,7 @@ class MultilevelLevelSet : public BaseMeshField
     UniquePtr<CorrectTopology<ParallelDevicePolicy>> device_correct_topology_;
 
     typedef std::function<void(Real)> OperatorFunctor;
+    UniquePtr<SingularVariable<KernelWendlandC2CK>> kernel_;
     OperatorFunctor clean_interface_;
     OperatorFunctor correct_topology_;
 

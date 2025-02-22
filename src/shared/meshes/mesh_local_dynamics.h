@@ -45,21 +45,6 @@ using MeshVariableData = PackageDataMatrix<T, 4>;
 using MeshWithGridDataPackagesType = MeshWithGridDataPackages<4>;
 using NeighbourIndex = std::pair<size_t, Arrayi>; /**< stores shifted neighbour info: (size_t)package index, (arrayi)local grid index. */
 
-template <class KernelType>
-class KernelWrapper
-{
-  public:
-    KernelWrapper(KernelType *kernel_ptr) : host_ptr_(kernel_ptr), device_ptr_(nullptr){};
-    ~KernelWrapper(){};
-
-    template <class ExecutionPolicy>
-    KernelType *getKernel(const ExecutionPolicy &ex_policy){ return host_ptr_; };
-    KernelType *getKernel(const ParallelDevicePolicy &par_device);
-  private:
-    KernelType *host_ptr_;
-    KernelType *device_ptr_;
-};
-
 /**
  * @class BaseMeshLocalDynamics
  * @brief The base class for all mesh local particle dynamics.

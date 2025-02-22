@@ -1,5 +1,4 @@
 #include "level_set.h"
-
 #include "adaptation.h"
 #include "base_kernel.h"
 #include <type_traits>
@@ -22,13 +21,14 @@ MultilevelLevelSet::MultilevelLevelSet(
     Shape &shape, SPHAdaptation &sph_adaptation)
     : BaseMeshField("LevelSet_" + shape.getName()), shape_(shape), total_levels_(1)
 {
-    KernelWrapper<Kernel> kernel_wrapper(sph_adaptation.getKernel());
+    Kernel *origin_kernel = sph_adaptation.getKernel();
+    kernel_ = makeUnique<SingularVariable<KernelWendlandC2CK>>("levelset_kernel", KernelWendlandC2CK(*origin_kernel));
     Real reference_data_spacing = coarse_data->DataSpacing() * 0.5;
     Real global_h_ratio = sph_adaptation.ReferenceSpacing() / reference_data_spacing;
     global_h_ratio_vec_.push_back(global_h_ratio);
 
     initializeLevel(ex_policy, 0, reference_data_spacing, global_h_ratio,
-                    tentative_bounds, kernel_wrapper.getKernel(ex_policy),
+                    tentative_bounds, kernel_->DelegatedData(ex_policy),
                     coarse_data);
     cell_package_index_set_.push_back(mesh_data_set_[0]->cell_package_index_.DelegatedDataField(ex_policy));
     meta_data_cell_set_.push_back(mesh_data_set_[0]->meta_data_cell_.DelegatedDataField(ex_policy));
@@ -42,14 +42,13 @@ MultilevelLevelSet::MultilevelLevelSet(
     size_t total_levels, Shape &shape, SPHAdaptation &sph_adaptation)
     : BaseMeshField("LevelSet_" + shape.getName()), shape_(shape), total_levels_(total_levels)
 {
-    KernelWrapper<Kernel> kernel_wrapper(sph_adaptation.getKernel());
+    Kernel *origin_kernel = sph_adaptation.getKernel();
+    kernel_ = makeUnique<SingularVariable<KernelWendlandC2CK>>("levelset_kernel", KernelWendlandC2CK(*origin_kernel));
     Real global_h_ratio = sph_adaptation.ReferenceSpacing() / reference_data_spacing;
     global_h_ratio_vec_.push_back(global_h_ratio);
 
     initializeLevel(ex_policy, 0, reference_data_spacing, global_h_ratio,
-                    tentative_bounds, kernel_wrapper.getKernel(ex_policy));
-    cell_package_index_set_.push_back(mesh_data_set_[0]->cell_package_index_.DelegatedDataField(ex_policy));
-    meta_data_cell_set_.push_back(mesh_data_set_[0]->meta_data_cell_.DelegatedDataField(ex_policy));
+                    tentative_bounds, kernel_->DelegatedData(ex_policy));
 
     for (size_t level = 1; level < total_levels_; ++level) {
         reference_data_spacing *= 0.5;  // Halve the data spacing
@@ -57,9 +56,7 @@ MultilevelLevelSet::MultilevelLevelSet(
         global_h_ratio_vec_.push_back(global_h_ratio);
 
         initializeLevel(ex_policy, level, reference_data_spacing, global_h_ratio,
-                        tentative_bounds, kernel_wrapper.getKernel(ex_policy), mesh_data_set_[level - 1]);
-        cell_package_index_set_.push_back(mesh_data_set_[level]->cell_package_index_.DelegatedDataField(ex_policy));
-        meta_data_cell_set_.push_back(mesh_data_set_[level]->meta_data_cell_.DelegatedDataField(ex_policy));
+                        tentative_bounds, kernel_->DelegatedData(ex_policy), mesh_data_set_[level - 1]);
     }
 
     configOperationExecutionPolicy(ex_policy, kernel_wrapper.getKernel(ex_policy));
