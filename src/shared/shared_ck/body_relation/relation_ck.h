@@ -96,11 +96,12 @@ class Relation<Contact<SourceIdentifier, TargetIdentifier>> : public Relation<Ba
   public:
     typedef SourceIdentifier SourceType;
     typedef TargetIdentifier TargetType;
-    
+
     Relation(SourceIdentifier &source_identifier, StdVec<TargetIdentifier *> contact_identifiers);
     virtual ~Relation() {};
     SourceIdentifier &getSourceIdentifier() { return source_identifier_; };
     StdVec<TargetIdentifier *> getContactIdentifiers() { return contact_identifiers_; };
+    TargetIdentifier &getContactIdentifier(UnsignedInt contact_index) { return *contact_identifiers_[contact_index]; };
     StdVec<RealBody *> getContactBodies() { return contact_bodies_; };
     StdVec<BaseParticles *> getContactParticles() { return contact_particles_; };
     StdVec<SPHAdaptation *> getContactAdaptations() { return contact_adaptations_; };

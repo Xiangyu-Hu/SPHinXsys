@@ -81,20 +81,29 @@ class BodyPartByParticle : public BodyPart
     size_t SizeOfLoopRange() { return body_part_particles_.size(); };
     BodyPartByParticle(SPHBody &sph_body, const std::string &body_part_name);
     virtual ~BodyPartByParticle() {};
+    void setBodyPartBounds(BoundingBox bbox);
+    BoundingBox getBodyPartBounds();
 
-    void setBodyPartBounds(BoundingBox bbox)
+    template <typename SearchMethod>
+    class TargetMask : public SearchMethod
     {
-        body_part_bounds_ = bbox;
-        body_part_bounds_set_ = true;
+      public:
+        template <class ExecutionPolicy, typename EnclosureType, typename... Args>
+        TargetMask(ExecutionPolicy &ex_policy, EnclosureType &encloser, Args... args)
+            : SearchMethod(std::forward<Args>(args)...), part_id_(encloser.part_id_),
+              body_part_indicator_(encloser.dv_body_part_indicator_->DelegatedData(ex_policy)) {}
+        virtual ~TargetMask() {}
+
+        bool isInRange(UnsignedInt index_i, UnsignedInt index_j)
+        {
+            return (body_part_indicator_[index_j] == part_id_) && SearchMethod::isInRange(index_i, index_j);
+        }
+
+      protected:
+        int part_id_;
+        int *body_part_indicator_;
     };
-
-    BoundingBox getBodyPartBounds()
-    {
-        if (!body_part_bounds_set_)
-            std::cout << "WARNING: the body part bounds are not set for BodyPartByParticle." << std::endl;
-        return body_part_bounds_;
-    }
-
+    
   protected:
     BoundingBox body_part_bounds_;
     bool body_part_bounds_set_;

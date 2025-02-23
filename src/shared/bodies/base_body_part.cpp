@@ -22,6 +22,19 @@ BodyPartByParticle::BodyPartByParticle(SPHBody &sph_body, const std::string &bod
     base_particles_.addEvolvingVariable<int>("BodyPartIndicator");
 }
 //=================================================================================================//
+void BodyPartByParticle::setBodyPartBounds(BoundingBox bbox)
+{
+    body_part_bounds_ = bbox;
+    body_part_bounds_set_ = true;
+}
+//=================================================================================================//
+BoundingBox BodyPartByParticle::getBodyPartBounds()
+{
+    if (!body_part_bounds_set_)
+        std::cout << "WARNING: the body part bounds are not set for BodyPartByParticle." << std::endl;
+    return body_part_bounds_;
+}
+//=================================================================================================//
 void BodyPartByParticle::tagParticles(TaggingParticleMethod &tagging_particle_method)
 {
     for (size_t i = 0; i != base_particles_.TotalRealParticles(); ++i)

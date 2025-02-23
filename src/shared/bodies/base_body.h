@@ -115,6 +115,16 @@ class SPHBody
     int getTotalBodyParts() { return total_body_parts_; };
     void addBodyPartByParticle(BodyPartByParticle *body_part) { body_parts_by_particle_.push_back(body_part); };
     StdVec<BodyPartByParticle *> getBodyPartsByParticle() { return body_parts_by_particle_; };
+
+    template <typename SearchMethod>
+    class TargetMask : public SearchMethod
+    {
+      public:
+        template <class ExecutionPolicy, typename EnclosureType, typename... Args>
+        TargetMask(ExecutionPolicy &ex_policy, EnclosureType &encloser, Args... args)
+            : SearchMethod(std::forward<Args>(args)...){}
+        virtual ~TargetMask() {}
+    };
     //----------------------------------------------------------------------
     //		Object factory template functions
     //----------------------------------------------------------------------

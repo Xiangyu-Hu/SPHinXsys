@@ -78,6 +78,18 @@ class UpdateRelation<ExecutionPolicy, Contact<Parameters...>>
 {
     using SourceType = typename Interaction<Contact<Parameters...>>::RelationType::SourceType;
     using TargetType = typename Interaction<Contact<Parameters...>>::RelationType::TargetType;
+    class SearchMethod
+    {
+      public:
+        SearchMethod(Vecd *source_pos, Vecd *target_pos, Real grid_spacing_squared);
+        bool isInRange(UnsignedInt index_i, UnsignedInt index_j);
+
+      protected:
+        Vecd *source_pos_;
+        Vecd *target_pos_;
+        Real grid_spacing_squared_;
+    };
+    using SearchWithTargetMask = typename TargetType::TargetMask<SearchMethod>;
 
   public:
     UpdateRelation(Relation<Contact<Parameters...>> &contact_relation);
@@ -95,8 +107,8 @@ class UpdateRelation<ExecutionPolicy, Contact<Parameters...>>
         void updateNeighborList(UnsignedInt index_i);
 
       protected:
+        SearchWithTargetMask search_with_target_mask_;
         NeighborSearch neighbor_search_;
-        Real grid_spacing_squared_;
     };
 
     typedef UpdateRelation<ExecutionPolicy, Contact<Parameters...>> LocalDynamicsType;

@@ -112,15 +112,31 @@ UpdateRelation<ExecutionPolicy, Contact<Parameters...>>::
 }
 //=================================================================================================//
 template <class ExecutionPolicy, typename... Parameters>
+UpdateRelation<ExecutionPolicy, Contact<Parameters...>>::
+    SearchMethod::SearchMethod(Vecd *source_pos, Vecd *target_pos, Real grid_spacing_squared)
+    : source_pos_(source_pos), target_pos_(target_pos),
+      grid_spacing_squared_(grid_spacing_squared) {}
+//=================================================================================================//
+template <class ExecutionPolicy, typename... Parameters>
+bool UpdateRelation<ExecutionPolicy, Contact<Parameters...>>::SearchMethod::isInRange(
+    UnsignedInt index_i, UnsignedInt index_j)
+{
+    return (this->source_pos_[index_i] - this->target_pos_[index_j])
+               .squaredNorm() < grid_spacing_squared_;
+}
+//=================================================================================================//
+template <class ExecutionPolicy, typename... Parameters>
 template <class EncloserType>
 UpdateRelation<ExecutionPolicy, Contact<Parameters...>>::
     ComputingKernel::ComputingKernel(
         const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt contact_index)
     : Interaction<Contact<Parameters...>>::InteractKernel(ex_policy, encloser, contact_index),
+      search_with_target_mask_(
+          ex_policy, encloser.contact_relation_.getContactIdentifier(contact_index),
+          this->source_pos_, this->target_pos_,
+          pow(encloser.contact_cell_linked_list_[contact_index]->getMesh().GridSpacing(), 2)),
       neighbor_search_(
-        encloser.contact_cell_linked_list_[contact_index]->createNeighborSearch(ex_policy)),
-      grid_spacing_squared_(
-          pow(encloser.contact_cell_linked_list_[contact_index]->getMesh().GridSpacing(), 2)) {}
+          encloser.contact_cell_linked_list_[contact_index]->createNeighborSearch(ex_policy)) {}
 //=================================================================================================//
 template <class ExecutionPolicy, typename... Parameters>
 void UpdateRelation<ExecutionPolicy, Contact<Parameters...>>::
@@ -132,8 +148,7 @@ void UpdateRelation<ExecutionPolicy, Contact<Parameters...>>::
         index_i, this->source_pos_,
         [&](size_t index_j)
         {
-            if ((this->source_pos_[index_i] - this->target_pos_[index_j])
-                    .squaredNorm() < grid_spacing_squared_)
+            if (search_with_target_mask_.isInRange(index_i, index_j))
                 neighbor_count++;
         });
     this->neighbor_index_[index_i] = neighbor_count;
@@ -148,8 +163,7 @@ void UpdateRelation<ExecutionPolicy, Contact<Parameters...>>::
         index_i, this->source_pos_,
         [&](size_t index_j)
         {
-            if ((this->source_pos_[index_i] - this->target_pos_[index_j])
-                    .squaredNorm() < grid_spacing_squared_)
+            if (search_with_target_mask_.isInRange(index_i, index_j))
             {
                 this->neighbor_index_[this->particle_offset_[index_i] + neighbor_count] = index_j;
                 neighbor_count++;
