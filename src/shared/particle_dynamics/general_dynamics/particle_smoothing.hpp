@@ -10,7 +10,7 @@ template <typename VariableType>
 ParticleSmoothing<VariableType>::
     ParticleSmoothing(BaseInnerRelation &inner_relation, const std::string &variable_name)
     : LocalDynamics(inner_relation.getSPHBody()), DataDelegateInner(inner_relation),
-      W0_(sph_body_.sph_adaptation_->getKernel()->W0(ZeroVecd)),
+      W0_(sph_body_.getSPHAdaptation().getKernel()->W0(ZeroVecd)),
       smoothed_(particles_->template getVariableDataByName<VariableType>(variable_name)),
       temp_(particles_->registerStateVariable<VariableType>(variable_name + "_temp")) {}
 //=================================================================================================//

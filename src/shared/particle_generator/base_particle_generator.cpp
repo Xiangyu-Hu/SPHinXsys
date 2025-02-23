@@ -10,7 +10,7 @@ namespace SPH
 ParticleGenerator<BaseParticles>::
     ParticleGenerator(SPHBody &sph_body, BaseParticles &base_particles)
     : base_particles_(base_particles),
-      particle_spacing_ref_(sph_body.sph_adaptation_->ReferenceSpacing()) {}
+      particle_spacing_ref_(sph_body.getSPHAdaptation().ReferenceSpacing()) {}
 //=================================================================================================//
 void ParticleGenerator<BaseParticles>::addParticlePosition(const Vecd &position)
 {

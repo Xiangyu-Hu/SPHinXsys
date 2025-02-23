@@ -79,7 +79,8 @@ void RestartIO::writeToFile(size_t iteration_step)
         {
             fs::remove(filefullpath);
         }
-        bodies_[i]->writeParticlesToXmlForRestart(filefullpath);
+        BaseParticles &base_particles = bodies_[i]->getBaseParticles();
+        base_particles.writeParticlesToXmlForRestart(filefullpath);
     }
 }
 //=============================================================================================//
@@ -113,8 +114,8 @@ void RestartIO::readFromFile(size_t restart_step)
             std::cout << __FILE__ << ':' << __LINE__ << std::endl;
             exit(1);
         }
-
-        bodies_[i]->readParticlesFromXmlForRestart(filefullpath);
+        BaseParticles &base_particles = bodies_[i]->getBaseParticles();
+        base_particles.readParticlesFromXmlForRestart(filefullpath);
     }
 }
 //=============================================================================================//
@@ -147,7 +148,8 @@ void ReloadParticleIO::writeToFile(size_t iteration_step)
         {
             fs::remove(filefullpath);
         }
-        bodies_[i]->writeToXmlForReloadParticle(filefullpath);
+        BaseParticles &base_particles = bodies_[i]->getBaseParticles();
+        base_particles.writeParticlesToXmlForReload(filefullpath);
     }
 }
 //=============================================================================================//

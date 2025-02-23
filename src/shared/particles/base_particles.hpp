@@ -6,17 +6,6 @@
 namespace SPH
 {
 //=================================================================================================//
-template <typename OwnerType>
-void BaseParticles::checkReloadFileRead(OwnerType *owner)
-{
-    if (reload_xml_parser_.first_element_ == nullptr)
-    {
-        std::cout << "\n Error: the reload file is not read! \n";
-        std::cout << "\n This error occurs in " << typeid(*owner).name() << '\n';
-        exit(1);
-    }
-}
-//=================================================================================================//
 template <typename DataType>
 DataType *BaseParticles::initializeVariable(DiscreteVariable<DataType> *variable, DataType initial_value)
 {
@@ -122,7 +111,7 @@ DiscreteVariable<DataType> *BaseParticles::
 
     DiscreteVariable<DataType> *variable =
         registerDiscreteVariableOnly<DataType>(name, particles_bound_, std::forward<Args>(args)...);
-    
+
     DataType *data_field = variable->Data();
     constexpr int type_index = DataTypeIndex<DataType>::value;
     std::get<type_index>(all_state_data_).push_back(data_field);
@@ -349,25 +338,25 @@ DiscreteVariable<DataType> *BaseParticles::
 }
 //=================================================================================================//
 template <typename DataType, typename... Args>
-void BaseParticles::addVariableToSort(Args &&...args)
+void BaseParticles::addEvolvingVariable(Args &&...args)
 {
     DiscreteVariable<DataType> *new_sortable =
-        addVariableToList<DataType>(variables_to_sort_, std::forward<Args>(args)...);
+        addVariableToList<DataType>(evolving_variables_, std::forward<Args>(args)...);
     if (new_sortable != nullptr)
     {
         constexpr int type_index = DataTypeIndex<DataType>::value;
         DataType *data_field = new_sortable->Data();
-        std::get<type_index>(sortable_data_).push_back(data_field);
+        std::get<type_index>(evolving_variables_data_).push_back(data_field);
     }
 }
 //=================================================================================================//
 template <typename DataType>
-void BaseParticles::addVariableToSort(DiscreteVariableArray<DataType> *variable_array)
+void BaseParticles::addEvolvingVariable(DiscreteVariableArray<DataType> *variable_array)
 {
     StdVec<DiscreteVariable<DataType> *> variables = variable_array->getVariables();
     for (size_t i = 0; i != variables.size(); ++i)
     {
-        addVariableToSort<DataType>(variables[i]);
+        addEvolvingVariable<DataType>(variables[i]);
     }
 }
 //=================================================================================================//
@@ -388,18 +377,6 @@ void BaseParticles::addVariableToWrite(DiscreteVariableArray<DataType> *variable
 }
 //=================================================================================================//
 template <typename DataType>
-void BaseParticles::addVariableToRestart(const std::string &name)
-{
-    addVariableToList<DataType>(variables_to_restart_, name);
-}
-//=================================================================================================//
-template <typename DataType>
-void BaseParticles::addVariableToReload(const std::string &name)
-{
-    addVariableToList<DataType>(variables_to_reload_, name);
-}
-//=================================================================================================//
-template <typename DataType>
 void BaseParticles::CopyParticleState::
 operator()(DataContainerKeeper<AllocatedData<DataType>> &data_keeper, size_t index, size_t another_index)
 {
@@ -411,15 +388,15 @@ operator()(DataContainerKeeper<AllocatedData<DataType>> &data_keeper, size_t ind
 //=================================================================================================//
 template <typename DataType>
 void BaseParticles::WriteAParticleVariableToXml::
-operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables)
+operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables, XmlParser &xml_parser)
 {
     for (size_t i = 0; i != variables.size(); ++i)
     {
         size_t index = 0;
         DataType *data_field = variables[i]->Data();
-        for (auto child = xml_parser_.first_element_->FirstChildElement(); child; child = child->NextSiblingElement())
+        for (auto child = xml_parser.first_element_->FirstChildElement(); child; child = child->NextSiblingElement())
         {
-            xml_parser_.setAttributeToElement(child, variables[i]->Name(), data_field[index]);
+            xml_parser.setAttributeToElement(child, variables[i]->Name(), data_field[index]);
             index++;
         }
     }
@@ -427,7 +404,8 @@ operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables)
 //=================================================================================================//
 template <typename DataType>
 void BaseParticles::ReadAParticleVariableFromXml::
-operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables, BaseParticles *base_particles)
+operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables,
+           BaseParticles *base_particles, XmlParser &xml_parser)
 {
     for (size_t i = 0; i != variables.size(); ++i)
     {
@@ -435,9 +413,9 @@ operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables, Ba
         DataType *data_field = variables[i]->Data() != nullptr
                                    ? variables[i]->Data()
                                    : base_particles->initializeVariable<DataType>(variables[i]);
-        for (auto child = xml_parser_.first_element_->FirstChildElement(); child; child = child->NextSiblingElement())
+        for (auto child = xml_parser.first_element_->FirstChildElement(); child; child = child->NextSiblingElement())
         {
-            xml_parser_.queryAttributeValue(child, variables[i]->Name(), data_field[index]);
+            xml_parser.queryAttributeValue(child, variables[i]->Name(), data_field[index]);
             index++;
         }
     }

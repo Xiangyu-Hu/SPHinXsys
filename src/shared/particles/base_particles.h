@@ -186,44 +186,33 @@ class BaseParticles
     void addVariableToWrite(Args &&...args);
     template <typename DataType>
     void addVariableToWrite(DiscreteVariableArray<DataType> *variable_array);
-    template <typename DataType>
-    void addVariableToRestart(const std::string &name);
-
-    inline const ParticleVariables &getVariablesToRestart() const { return variables_to_restart_; }
-    template <typename DataType>
-    void addVariableToReload(const std::string &name);
-    inline const ParticleVariables &getVariablesToReload() const { return variables_to_reload_; }
-
     //----------------------------------------------------------------------
     // Particle data for sorting
     //----------------------------------------------------------------------
   protected:
-    UnsignedInt *original_id_; /**< the original ids assigned just after particle is generated. */
-    UnsignedInt *sorted_id_;   /**< the current sorted particle ids of particles from original ids. */
-    ParticleData sortable_data_;
-    ParticleVariables variables_to_sort_;
+    UnsignedInt *original_id_;             /**< the original ids assigned just after particle is generated. */
+    UnsignedInt *sorted_id_;               /**< the current sorted particle ids of particles from original ids. */
+    ParticleVariables evolving_variables_; // particle variables which evolving during simulation
+    ParticleData evolving_variables_data_;
 
   public:
     template <typename DataType, typename... Args>
-    void addVariableToSort(Args &&...args);
+    void addEvolvingVariable(Args &&...args);
     template <typename DataType>
-    void addVariableToSort(DiscreteVariableArray<DataType> *variable_array);
+    void addEvolvingVariable(DiscreteVariableArray<DataType> *variable_array);
     UnsignedInt *ParticleOriginalIds() { return original_id_; };
     UnsignedInt *ParticleSortedIds() { return sorted_id_; };
-    ParticleData &SortableParticleData() { return sortable_data_; };
-    AssignIndex getAssignIndex() { return AssignIndex(); };
-
+    ParticleData &EvolvingVariablesData() { return evolving_variables_data_; };
+    ParticleVariables &VariablesToWrite() { return variables_to_write_; };
+    ParticleVariables &EvolvingVariables() { return evolving_variables_; };
     //----------------------------------------------------------------------
     // Particle data ouput functions
     //----------------------------------------------------------------------
-    void writeParticlesToPltFile(std::ofstream &output_file);
     void resizeXmlDocForParticles(XmlParser &xml_parser);
-    void writeParticlesToXmlForRestart(std::string &filefullpath);
-    void readParticleFromXmlForRestart(std::string &filefullpath);
-    void writeToXmlForReloadParticle(std::string &filefullpath);
-    XmlParser &readReloadXmlFile(const std::string &filefullpath);
-    template <typename OwnerType>
-    void checkReloadFileRead(OwnerType *owner);
+    void writeParticlesToXmlForRestart(const std::string &filefullpath);
+    void readParticlesFromXmlForRestart(const std::string &filefullpath);
+    void writeParticlesToXmlForReload(const std::string &filefullpath);
+    void readReloadXmlFile(const std::string &filefullpath);
     //----------------------------------------------------------------------
     // Function related to geometric variables and their relations
     //----------------------------------------------------------------------
@@ -250,20 +239,12 @@ class BaseParticles
     ParticleVariables all_discrete_variables_;
     SingularVariables all_singular_variables_;
     ParticleVariables variables_to_write_;
-    ParticleVariables variables_to_restart_;
-    ParticleVariables variables_to_reload_;
-    bool is_reload_file_read_ = false;
 
-  public:
-    ParticleVariables &VariablesToWrite() { return variables_to_write_; };
-    ParticleVariables &VariablesToRestart() { return variables_to_restart_; };
-    ParticleVariables &VariablesToReload() { return variables_to_reload_; };
-    ParticleVariables &VariablesToSort() { return variables_to_sort_; };
+  protected:
     //----------------------------------------------------------------------
     // Small structs for generalize particle operations on
     // assembled variables and data sets
     //----------------------------------------------------------------------
-  protected:
     struct CopyParticleState
     {
         template <typename DataType>
@@ -272,20 +253,14 @@ class BaseParticles
 
     struct WriteAParticleVariableToXml
     {
-        XmlParser &xml_parser_;
-        WriteAParticleVariableToXml(XmlParser &xml_parser) : xml_parser_(xml_parser) {};
-
         template <typename DataType>
-        void operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables);
+        void operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables, XmlParser &xml_parser);
     };
 
     struct ReadAParticleVariableFromXml
     {
-        XmlParser &xml_parser_;
-        ReadAParticleVariableFromXml(XmlParser &xml_parser) : xml_parser_(xml_parser) {};
-
         template <typename DataType>
-        void operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables, BaseParticles *base_particles);
+        void operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables, BaseParticles *base_particles, XmlParser &xml_parser);
     };
 
     OperationOnDataAssemble<ParticleData, CopyParticleState> copy_particle_state_;
