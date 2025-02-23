@@ -184,10 +184,8 @@ DiscreteVariable<DataType> *BaseCellLinkedList::registerDiscreteVariableOnly(
 }
 //=================================================================================================//
 template <class ExecutionPolicy>
-NeighborSearch::NeighborSearch(
-    const ExecutionPolicy &ex_policy, CellLinkedList &cell_linked_list, DiscreteVariable<Vecd> *pos)
-    : Mesh(cell_linked_list.getMesh()), grid_spacing_squared_(grid_spacing_ * grid_spacing_),
-      pos_(pos->DelegatedData(ex_policy)),
+NeighborSearch::NeighborSearch(const ExecutionPolicy &ex_policy, CellLinkedList &cell_linked_list)
+    : Mesh(cell_linked_list.getMesh()),
       particle_index_(cell_linked_list.getParticleIndex()->DelegatedData(ex_policy)),
       cell_offset_(cell_linked_list.getCellOffset()->DelegatedData(ex_policy)) {}
 //=================================================================================================//
@@ -206,20 +204,15 @@ void NeighborSearch::forEachSearch(UnsignedInt index_i, const Vecd *source_pos,
             // offset_cell_size_[0] == 0 && offset_cell_size_[linear_cell_size_] == total_real_particles_
             for (UnsignedInt n = cell_offset_[linear_index]; n < cell_offset_[linear_index + 1]; ++n)
             {
-                const UnsignedInt index_j = particle_index_[n];
-                if ((source_pos[index_i] - pos_[index_j]).squaredNorm() < grid_spacing_squared_)
-                {
-                    function(index_j);
-                }
+                function(particle_index_[n]);
             }
         });
 }
 //=================================================================================================//
 template <class ExecutionPolicy>
-NeighborSearch CellLinkedList::createNeighborSearch(
-    const ExecutionPolicy &ex_policy, DiscreteVariable<Vecd> *pos)
+NeighborSearch CellLinkedList::createNeighborSearch(const ExecutionPolicy &ex_policy)
 {
-    return NeighborSearch(ex_policy, *this, pos);
+    return NeighborSearch(ex_policy, *this);
 }
 //=================================================================================================//
 template <class LocalDynamicsFunction>

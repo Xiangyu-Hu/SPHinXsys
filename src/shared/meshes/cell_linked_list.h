@@ -131,16 +131,13 @@ class NeighborSearch : public Mesh
 {
   public:
     template <class ExecutionPolicy>
-    NeighborSearch(const ExecutionPolicy &ex_policy,
-                   CellLinkedList &cell_linked_list, DiscreteVariable<Vecd> *pos);
+    NeighborSearch(const ExecutionPolicy &ex_policy, CellLinkedList &cell_linked_list);
 
     template <typename FunctionOnEach>
     void forEachSearch(UnsignedInt index_i, const Vecd *source_pos,
                        const FunctionOnEach &function) const;
 
   protected:
-    Real grid_spacing_squared_;
-    Vecd *pos_;
     UnsignedInt *particle_index_;
     UnsignedInt *cell_offset_;
 };
@@ -171,7 +168,7 @@ class CellLinkedList : public BaseCellLinkedList
     virtual void writeMeshFieldToPlt(std::ofstream &output_file) override;
 
     template <class ExecutionPolicy>
-    NeighborSearch createNeighborSearch(const ExecutionPolicy &ex_policy, DiscreteVariable<Vecd> *pos);
+    NeighborSearch createNeighborSearch(const ExecutionPolicy &ex_policy);
     UnsignedInt getCellOffsetListSize() { return cell_offset_list_size_; };
 
     /** split algorithm */;

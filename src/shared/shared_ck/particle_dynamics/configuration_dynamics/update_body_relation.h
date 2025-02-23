@@ -62,6 +62,7 @@ class UpdateRelation<ExecutionPolicy, Inner<Parameters...>>
 
       protected:
         NeighborSearch neighbor_search_;
+        Real grid_spacing_squared_;
     };
     typedef UpdateRelation<ExecutionPolicy, Inner<Parameters...>> LocalDynamicsType;
     using KernelImplementation = Implementation<ExecutionPolicy, LocalDynamicsType, ComputingKernel>;
@@ -92,6 +93,7 @@ class UpdateRelation<ExecutionPolicy, Contact<Parameters...>>
 
       protected:
         NeighborSearch neighbor_search_;
+        Real grid_spacing_squared_;
     };
     typedef UpdateRelation<ExecutionPolicy, Contact<Parameters...>> LocalDynamicsType;
     using KernelImplementation = Implementation<ExecutionPolicy, LocalDynamicsType, ComputingKernel>;
