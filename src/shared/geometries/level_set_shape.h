@@ -53,6 +53,10 @@ class LevelSetShape : public Shape
     LevelSetShape(Shape &shape, SharedPtr<SPHAdaptation> sph_adaptation, Real refinement_ratio = 1.0);
     LevelSetShape(SPHBody &sph_body, Shape &shape, Real refinement_ratio = 1.0);
 
+    template <class ExecutionPolicy>
+    LevelSetShape(const ExecutionPolicy &ex_policy, SPHBody &sph_body, Shape &shape, Real refinement_ratio = 1.0)
+        : LevelSetShape(sph_body, shape, refinement_ratio){};
+    LevelSetShape(const ParallelDevicePolicy &par_device, SPHBody &sph_body, Shape &shape, Real refinement_ratio = 1.0);
     virtual ~LevelSetShape(){};
 
     virtual bool checkContain(const Vecd &probe_point, bool BOUNDARY_INCLUDED = true) override;

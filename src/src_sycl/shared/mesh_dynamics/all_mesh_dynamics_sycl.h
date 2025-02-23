@@ -3,5 +3,6 @@
 
 #include "mesh_dynamics_sycl.hpp"
 #include "level_set_sycl.hpp"
+#include "levelset_adaptation.hpp"
 
 #endif

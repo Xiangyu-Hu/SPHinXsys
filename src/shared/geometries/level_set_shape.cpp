@@ -25,6 +25,16 @@ LevelSetShape::LevelSetShape(SPHBody &sph_body, Shape &shape, Real refinement_ra
     is_bounds_found_ = true;
 }
 //=================================================================================================//
+LevelSetShape::LevelSetShape(const ParallelDevicePolicy &par_device, SPHBody &sph_body,
+                             Shape &shape, Real refinement_ratio)
+    : Shape(shape.getName()),
+      level_set_(*level_set_keeper_.movePtr(
+          sph_body.sph_adaptation_->createLevelSet(par_device, shape, refinement_ratio)))
+{
+    bounding_box_ = shape.getBounds();
+    is_bounds_found_ = true;
+}
+//=================================================================================================//
 void LevelSetShape::writeLevelSet(SPHSystem &sph_system)
 {
     MeshRecordingToPlt write_level_set_to_plt(sph_system, level_set_);
