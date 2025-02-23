@@ -89,7 +89,7 @@ class UpdateRelation<ExecutionPolicy, Contact<Parameters...>>
         Vecd *target_pos_;
         Real grid_spacing_squared_;
     };
-    using SearchWithTargetMask = typename TargetType::TargetMask<SearchMethod>;
+    using SearchWithTargetMask = typename TargetType::template TargetMask<SearchMethod>;
 
   public:
     UpdateRelation(Relation<Contact<Parameters...>> &contact_relation);
