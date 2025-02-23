@@ -5,7 +5,7 @@
 #include "execution_sycl.h"
 #include "sphinxsys_variable_sycl.hpp"
 #include "sphinxsys_constant_sycl.hpp"
-#include "level_set.h"
+#include "level_set.hpp"
 namespace SPH
 {
 //=================================================================================================//
