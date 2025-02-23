@@ -85,14 +85,14 @@ class BodyPartByParticle : public BodyPart
     BoundingBox getBodyPartBounds();
 
     template <typename SearchMethod>
-    class TargetMask : public SearchMethod
+    class TargetParticleMask : public SearchMethod
     {
       public:
         template <class ExecutionPolicy, typename EnclosureType, typename... Args>
-        TargetMask(ExecutionPolicy &ex_policy, EnclosureType &encloser, Args... args)
+        TargetParticleMask(ExecutionPolicy &ex_policy, EnclosureType &encloser, Args... args)
             : SearchMethod(std::forward<Args>(args)...), part_id_(encloser.part_id_),
               body_part_indicator_(encloser.dv_body_part_indicator_->DelegatedData(ex_policy)) {}
-        virtual ~TargetMask() {}
+        virtual ~TargetParticleMask() {}
 
         bool isInRange(UnsignedInt index_i, UnsignedInt index_j)
         {

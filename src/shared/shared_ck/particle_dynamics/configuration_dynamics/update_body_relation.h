@@ -51,12 +51,12 @@ class UpdateRelation<ExecutionPolicy, Inner<Parameters...>>
     virtual void exec(Real dt = 0.0) override;
 
   protected:
-    class ComputingKernel
+    class InteractKernel
         : public Interaction<Inner<Parameters...>>::InteractKernel
     {
       public:
         template <class EncloserType>
-        ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
         void incrementNeighborSize(UnsignedInt index_i);
         void updateNeighborList(UnsignedInt index_i);
 
@@ -65,31 +65,22 @@ class UpdateRelation<ExecutionPolicy, Inner<Parameters...>>
         Real grid_spacing_squared_;
     };
     typedef UpdateRelation<ExecutionPolicy, Inner<Parameters...>> LocalDynamicsType;
-    using KernelImplementation = Implementation<ExecutionPolicy, LocalDynamicsType, ComputingKernel>;
+    using KernelImplementation = Implementation<ExecutionPolicy, LocalDynamicsType, InteractKernel>;
 
     ExecutionPolicy ex_policy_;
     CellLinkedList &cell_linked_list_;
-    Implementation<ExecutionPolicy, LocalDynamicsType, ComputingKernel> kernel_implementation_;
+    Implementation<ExecutionPolicy, LocalDynamicsType, InteractKernel> kernel_implementation_;
 };
 
 template <class ExecutionPolicy, typename... Parameters>
 class UpdateRelation<ExecutionPolicy, Contact<Parameters...>>
     : public Interaction<Contact<Parameters...>>, public BaseDynamics<void>
 {
-    using SourceType = typename Interaction<Contact<Parameters...>>::RelationType::SourceType;
-    using TargetType = typename Interaction<Contact<Parameters...>>::RelationType::TargetType;
-    class SearchMethod
-    {
-      public:
-        SearchMethod(Vecd *source_pos, Vecd *target_pos, Real grid_spacing_squared);
-        bool isInRange(UnsignedInt index_i, UnsignedInt index_j);
-
-      protected:
-        Vecd *source_pos_;
-        Vecd *target_pos_;
-        Real grid_spacing_squared_;
-    };
-    using SearchWithTargetMask = typename TargetType::template TargetMask<SearchMethod>;
+    using BaseInteraction = Interaction<Contact<Parameters...>>;
+    using SearchMethod = typename BaseInteraction::InteractKernel::SearchMethod;
+    using SourceType = typename BaseInteraction::RelationType::SourceType;
+    using TargetType = typename BaseInteraction::RelationType::TargetType;
+    using SearchMask = typename TargetType::template TargetParticleMask<SearchMethod>;
 
   public:
     UpdateRelation(Relation<Contact<Parameters...>> &contact_relation);
@@ -97,22 +88,22 @@ class UpdateRelation<ExecutionPolicy, Contact<Parameters...>>
     virtual void exec(Real dt = 0.0) override;
 
   protected:
-    class ComputingKernel
+    class InteractKernel
         : public Interaction<Contact<Parameters...>>::InteractKernel
     {
       public:
         template <class EncloserType>
-        ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt contact_index);
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt contact_index);
         void incrementNeighborSize(UnsignedInt index_i);
         void updateNeighborList(UnsignedInt index_i);
 
       protected:
-        SearchWithTargetMask search_with_target_mask_;
+        SearchMask search_mask_;
         NeighborSearch neighbor_search_;
     };
 
     typedef UpdateRelation<ExecutionPolicy, Contact<Parameters...>> LocalDynamicsType;
-    using KernelImplementation = Implementation<ExecutionPolicy, LocalDynamicsType, ComputingKernel>;
+    using KernelImplementation = Implementation<ExecutionPolicy, LocalDynamicsType, InteractKernel>;
     UniquePtrsKeeper<KernelImplementation> contact_kernel_implementation_ptrs_;
     ExecutionPolicy ex_policy_;
     StdVec<CellLinkedList *> contact_cell_linked_list_;

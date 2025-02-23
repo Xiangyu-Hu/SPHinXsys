@@ -117,13 +117,13 @@ class SPHBody
     StdVec<BodyPartByParticle *> getBodyPartsByParticle() { return body_parts_by_particle_; };
 
     template <typename SearchMethod>
-    class TargetMask : public SearchMethod
+    class TargetParticleMask : public SearchMethod
     {
       public:
         template <class ExecutionPolicy, typename EnclosureType, typename... Args>
-        TargetMask(ExecutionPolicy &ex_policy, EnclosureType &encloser, Args... args)
+        TargetParticleMask(ExecutionPolicy &ex_policy, EnclosureType &encloser, Args... args)
             : SearchMethod(std::forward<Args>(args)...){}
-        virtual ~TargetMask() {}
+        virtual ~TargetParticleMask() {}
     };
     //----------------------------------------------------------------------
     //		Object factory template functions
