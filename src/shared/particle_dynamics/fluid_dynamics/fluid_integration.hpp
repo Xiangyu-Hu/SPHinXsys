@@ -116,7 +116,7 @@ void Integration1stHalf<Contact<Wall>, RiemannSolverType, KernelCorrectionType>:
 
             Real face_wall_external_acceleration = (force_prior_[index_i] / mass_[index_i] - wall_acc_ave_k[index_j]).dot(-e_ij);
             Real p_in_wall = p_[index_i] + rho_[index_i] * r_ij * SMAX(Real(0), face_wall_external_acceleration);
-            force -= (p_[index_i] * Matd::Identity() + p_in_wall * correction_(index_i)) * dW_ijV_j * e_ij;
+            force -= (p_[index_i] * correction_(index_i) + p_in_wall * Matd::Identity()) * dW_ijV_j * e_ij;
             rho_dissipation += riemann_solver_.DissipativeUJump(p_[index_i] - p_in_wall) * dW_ijV_j;
         }
     }
