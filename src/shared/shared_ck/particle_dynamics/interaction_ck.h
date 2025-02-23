@@ -76,6 +76,8 @@ class Interaction<Contact<SourceIdentifier, TargetIdentifier, Parameters...>>
     : public BaseLocalDynamics<SourceIdentifier>
 {
   public:
+    typedef Relation<Contact<SourceIdentifier, TargetIdentifier, Parameters...>> RelationType;
+    
     explicit Interaction(Relation<Contact<SourceIdentifier, TargetIdentifier, Parameters...>> &contact_relation);
     virtual ~Interaction() {};
     SPHAdaptation *getSPHAdaptation() { return sph_adaptation_; };

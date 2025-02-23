@@ -94,6 +94,9 @@ class Relation<Contact<SourceIdentifier, TargetIdentifier>> : public Relation<Ba
     StdVec<StdVec<execution::Implementation<Base> *>> all_contact_computing_kernels_;
 
   public:
+    typedef SourceIdentifier SourceType;
+    typedef TargetIdentifier TargetType;
+    
     Relation(SourceIdentifier &source_identifier, StdVec<TargetIdentifier *> contact_identifiers);
     virtual ~Relation() {};
     SourceIdentifier &getSourceIdentifier() { return source_identifier_; };

@@ -47,7 +47,7 @@ class UpdateRelation<ExecutionPolicy, Inner<Parameters...>>
 {
   public:
     UpdateRelation(Relation<Inner<Parameters...>> &inner_relation);
-    virtual ~UpdateRelation(){};
+    virtual ~UpdateRelation() {};
     virtual void exec(Real dt = 0.0) override;
 
   protected:
@@ -76,9 +76,12 @@ template <class ExecutionPolicy, typename... Parameters>
 class UpdateRelation<ExecutionPolicy, Contact<Parameters...>>
     : public Interaction<Contact<Parameters...>>, public BaseDynamics<void>
 {
+    using SourceType = typename Interaction<Contact<Parameters...>>::RelationType::SourceType;
+    using TargetType = typename Interaction<Contact<Parameters...>>::RelationType::TargetType;
+
   public:
     UpdateRelation(Relation<Contact<Parameters...>> &contact_relation);
-    virtual ~UpdateRelation(){};
+    virtual ~UpdateRelation() {};
     virtual void exec(Real dt = 0.0) override;
 
   protected:
@@ -95,10 +98,10 @@ class UpdateRelation<ExecutionPolicy, Contact<Parameters...>>
         NeighborSearch neighbor_search_;
         Real grid_spacing_squared_;
     };
+
     typedef UpdateRelation<ExecutionPolicy, Contact<Parameters...>> LocalDynamicsType;
     using KernelImplementation = Implementation<ExecutionPolicy, LocalDynamicsType, ComputingKernel>;
     UniquePtrsKeeper<KernelImplementation> contact_kernel_implementation_ptrs_;
-
     ExecutionPolicy ex_policy_;
     StdVec<CellLinkedList *> contact_cell_linked_list_;
     StdVec<KernelImplementation *> contact_kernel_implementation_;
@@ -108,8 +111,8 @@ template <class ExecutionPolicy>
 class UpdateRelation<ExecutionPolicy>
 {
   public:
-    UpdateRelation(){};
-    void exec(Real dt = 0.0){};
+    UpdateRelation() {};
+    void exec(Real dt = 0.0) {};
 };
 
 template <class ExecutionPolicy, class FirstRelation, class... Others>
