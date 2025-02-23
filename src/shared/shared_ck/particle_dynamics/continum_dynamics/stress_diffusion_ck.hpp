@@ -11,9 +11,9 @@ namespace continuum_dynamics
 template <typename... Parameters>
 StressDiffusionCK<Inner<Parameters...>> ::StressDiffusionCK(Relation<Inner<Parameters...>> &inner_relation)
 : PlasticAcousticStep<Interaction<Inner<Parameters...>>>(inner_relation),
-    phi_(DynamicCast<PlasticContinuum>(this, this->plastic_continuum_).getFrictionAngle()),
-    smoothing_length_(this->sph_body_.sph_adaptation_->ReferenceSmoothingLength()),
-    sound_speed_(this->plastic_continuum_.ReferenceSoundSpeed()){};
+    dv_phi_(DynamicCast<PlasticContinuum>(this, this->plastic_continuum_).getFrictionAngle()),
+    dv_smoothing_length_(this->sph_body_.getSPHAdaptation().ReferenceSmoothingLength()),
+    dv_sound_speed_(this->plastic_continuum_.ReferenceSoundSpeed()){};
 
 //=================================================================================================//
 template <typename... Parameters>
@@ -22,8 +22,8 @@ StressDiffusionCK<Inner<Parameters...>>::
 InteractKernel::InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser):
 BaseInteraction::InteractKernel(ex_policy, encloser),
 plastic_kernel_(encloser.plastic_continuum_),
-zeta_(encloser.zeta_),phi_(encloser.phi_),
-smoothing_length_(encloser.smoothing_length_),sound_speed_(encloser.sound_speed_),
+zeta_(encloser.dv_zeta_),phi_(encloser.dv_phi_),
+smoothing_length_(encloser.dv_smoothing_length_),sound_speed_(encloser.dv_sound_speed_),
 mass_(encloser.dv_mass_->DelegatedData(ex_policy)), Vol_(encloser.dv_Vol_->DelegatedData(ex_policy)), 
 pos_(encloser.dv_pos_->DelegatedData(ex_policy)), force_prior_(encloser.dv_force_prior_->DelegatedData(ex_policy)),
 stress_tensor_3D_(encloser.dv_stress_tensor_3D_->DelegatedData(ex_policy)),

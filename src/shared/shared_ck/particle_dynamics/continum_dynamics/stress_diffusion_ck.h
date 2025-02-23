@@ -69,8 +69,8 @@ class StressDiffusionCK<Inner<Parameters...>> : public PlasticAcousticStep<Inter
         Mat3d *stress_tensor_3D_, *stress_rate_3D_;
     };
    protected:
-    Real zeta_ = 0.1, phi_; /*diffusion coefficient*/
-    Real smoothing_length_, sound_speed_;
+    Real dv_zeta_ = 0.1, dv_phi_; /*diffusion coefficient*/
+    Real dv_smoothing_length_, dv_sound_speed_;
 };    
 
 using StressDiffusionInnerCK = StressDiffusionCK<Inner<>>;
