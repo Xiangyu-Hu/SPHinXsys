@@ -20,12 +20,12 @@ BoundingBox system_domain_bounds(Vec2d(-BW * 2, -BW * 2), Vec2d(DL + BW * 2, DH 
 //	Material parameters.
 //----------------------------------------------------------------------
 Real Inlet_pressure = 0.2;
-Real Outlet_pressure = 0.1;
+Real Outlet_pressure = -0.2;
 Real rho0_f = 1000.0;
 Real Re = 50.0;
 Real mu_f = sqrt(rho0_f * pow(0.5 * DH, 3.0) * fabs(Inlet_pressure - Outlet_pressure) / (Re * DL));
-// Real U_f = pow(0.5 * DH, 2.0) * fabs(Inlet_pressure - Outlet_pressure) / (2.0 * mu_f * DL);
-Real U_f = 0.5;
+Real U_f = pow(0.5 * DH, 2.0) * fabs(Inlet_pressure - Outlet_pressure) / (2.0 * mu_f * DL);
+// Real U_f = 0.05;
 Real c_f = 10.0 * U_f;
 //----------------------------------------------------------------------
 //	Geometric shapes used in this case.
@@ -106,9 +106,9 @@ class InletInflowpPressureCondition : public BaseStateCondition
 
         Real operator()(size_t index_i, Real time)
         {
-            Real rise_time = 0.25; // Time duration for full sine increase
+            Real rise_time = 0.0; // Time duration for full sine increase
             Real p = 0.0;
-            Real target_pressure_ = 1.0;
+            Real target_pressure_ = Inlet_pressure;
 
             if (time < rise_time)
             {
@@ -140,9 +140,9 @@ class InletInflowpPressureConditionRight : public BaseStateCondition
 
         Real operator()(size_t index_i, Real time)
         {
-            Real rise_time = 0.25; // Time duration for full sine increase
+            Real rise_time = 0.0; // Time duration for full sine increase
             Real p = 0.0;
-            Real target_pressure_ = -1.0;
+            Real target_pressure_ = Outlet_pressure;
 
             if (time < rise_time)
             {
@@ -276,9 +276,9 @@ int main(int ac, char *av[])
     InteractionDynamicsCK<MainExecutionPolicy, LinearCorrectionMatrixComplex>
         fluid_linear_correction_matrix(DynamicsArgs(water_body_inner, 0.5), water_wall_contact);
 
-    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticStep1stHalfWithWallRiemannCorrectionCK>
+    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticStep1stHalfWithWallRiemannCK>
         fluid_acoustic_step_1st_half(water_body_inner, water_wall_contact);
-    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticStep2ndHalfWithWallRiemannCorrectionCK>
+    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticStep2ndHalfWithWallRiemannCK>
         fluid_acoustic_step_2nd_half(water_body_inner, water_wall_contact);
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::DensityRegularizationComplexInternalPressureBoundary>
         fluid_density_regularization(water_body_inner, water_wall_contact);
@@ -289,7 +289,7 @@ int main(int ac, char *av[])
 
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::TransportVelocityCorrectionWallNoCorrectionBulkParticlesCK>
         transport_correction_ck(water_body_inner, water_wall_contact);
-    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::TransportVelocityLimitedCorrectionCorrectedComplexBulkParticlesCKWithoutUpdate>
+    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::TransportVelocityCorrectedComplexBulkParticlesCKWithoutUpdate>
         zero_gradient_ck(water_body_inner, water_wall_contact);
 
     ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AdvectionTimeStepCK> fluid_advection_time_step(water_body, U_f);
@@ -315,6 +315,10 @@ int main(int ac, char *av[])
     fluid_dynamics::BidirectionalBufferCK<MainExecutionPolicy, NoKernelCorrectionCK, InletInflowpPressureConditionRight>
         bidirectional_buffer_right(right_emitter_by_cell, inlet_buffer);
 
+    // InnerRelation water_block_inner(water_body);
+    // ContactRelation water_block_contact(water_body, {&wall});
+    // InteractionDynamics<NablaWVComplex> kernel_summation(water_block_inner, water_block_contact);
+
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
@@ -330,7 +334,12 @@ int main(int ac, char *av[])
     body_states_recording.addToWrite<int>(water_body, "WithScopeVerify");
     body_states_recording.addToWrite<int>(water_body, "DensitySummationVerify");
     body_states_recording.addToWrite<Real>(water_body, "Mass");
+    // body_states_recording.addToWrite<Vecd>(water_block, "KernelSummation");
+
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<MainExecutionPolicy, Vecd>> write_centerline_velocity("Velocity", velocity_observer_contact);
+    auto vel_ = water_body.getBaseParticles().getVariableDataByName<Vecd>("Velocity");
+    auto buffer_particle_indicator_ = water_body.getBaseParticles().getVariableDataByName<int>("BufferParticleIndicator");
+
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
@@ -375,12 +384,11 @@ int main(int ac, char *av[])
         {
             fluid_density_regularization.exec();
             water_advection_step_setup.exec();
-            Real advection_dt = fluid_advection_time_step.exec();
+
             fluid_viscous_force.exec();
             transport_correction_ck.exec();
-            water_advection_step_close.exec();
 
-            water_advection_step_setup.exec();
+            Real advection_dt = fluid_advection_time_step.exec();
 
             fluid_linear_correction_matrix.exec();
 
@@ -390,13 +398,13 @@ int main(int ac, char *av[])
             while (relaxation_time < advection_dt)
             {
                 acoustic_dt = fluid_acoustic_time_step.exec();
+                acoustic_dt = std::min(acoustic_dt, advection_dt - relaxation_time);
                 fluid_acoustic_step_1st_half.exec(acoustic_dt);
-                // inflow_condition.exec();
                 zero_gradient_ck.exec();
                 bidirectional_buffer_left.applyPressureCondition(acoustic_dt);
                 bidirectional_buffer_right.applyPressureCondition(acoustic_dt);
-                // pressure_condition.exec();
                 fluid_acoustic_step_2nd_half.exec(acoustic_dt);
+
                 relaxation_time += acoustic_dt;
                 integration_time += acoustic_dt;
                 sv_physical_time->incrementValue(acoustic_dt);
@@ -422,7 +430,7 @@ int main(int ac, char *av[])
             if (number_of_iterations % 100 == 0 && number_of_iterations != 1)
             {
                 std::cout << "particle_sort.exec(); \n";
-                // particle_sort.exec();
+                particle_sort.exec();
             }
 
             water_cell_linked_list.exec();
@@ -434,8 +442,7 @@ int main(int ac, char *av[])
             // right_tag_buffer_particle_.exec();
             // label_left_indicator.exec();
             // label_right_indicator.exec();
-
-            body_states_recording.writeToFile(MainExecutionPolicy{});
+            // body_states_recording.writeToFile(MainExecutionPolicy{});
         }
 
         TickCount t2 = TickCount::now();
