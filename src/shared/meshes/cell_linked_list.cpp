@@ -10,6 +10,7 @@ namespace SPH
 //=================================================================================================//
 BaseCellLinkedList::BaseCellLinkedList(BaseParticles &base_particles, SPHAdaptation &sph_adaptation)
     : BaseMeshField("CellLinkedList"), kernel_(*sph_adaptation.getKernel()),
+      total_number_of_cells_(0),
       number_of_split_cell_lists_(static_cast<UnsignedInt>(pow(3, Dimensions))),
       dv_particle_index_(nullptr), dv_cell_offset_(nullptr),
       cell_index_lists_(nullptr), cell_data_lists_(nullptr) {}
@@ -24,8 +25,10 @@ void BaseCellLinkedList::initialize(BaseParticles &base_particles)
 {
     cell_offset_list_size_ = total_number_of_cells_ + 1;
     index_list_size_ = SMAX(base_particles.ParticlesBound(), cell_offset_list_size_);
-    dv_particle_index_ = unique_variable_ptrs_.createPtr<DiscreteVariable<UnsignedInt>>("ParticleIndex", index_list_size_);
-    dv_cell_offset_ = unique_variable_ptrs_.createPtr<DiscreteVariable<UnsignedInt>>("CellOffset", cell_offset_list_size_);
+    dv_particle_index_ = unique_variable_ptrs_
+                             .createPtr<DiscreteVariable<UnsignedInt>>("ParticleIndex", index_list_size_);
+    dv_cell_offset_ = unique_variable_ptrs_
+                          .createPtr<DiscreteVariable<UnsignedInt>>("CellOffset", cell_offset_list_size_);
     cell_index_lists_ = new ConcurrentIndexVector[total_number_of_cells_];
     cell_data_lists_ = new ListDataVector[total_number_of_cells_];
 }

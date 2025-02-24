@@ -144,6 +144,8 @@ class DiscreteVariable : public Entity
     };
     ~DiscreteVariable() { delete[] data_field_; };
     DataType *Data() { return data_field_; };
+    void setValue(size_t index, const DataType &value) { data_field_[index] = value; };
+    DataType getValue(size_t index) { return data_field_[index]; };
 
     template <class ExecutionPolicy>
     DataType *DelegatedData(const ExecutionPolicy &ex_policy) { return data_field_; };

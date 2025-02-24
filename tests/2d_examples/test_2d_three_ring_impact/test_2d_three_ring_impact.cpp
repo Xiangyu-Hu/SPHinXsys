@@ -112,11 +112,10 @@ class BoundaryGeometry : public BodyPartByParticle
     };
 
   private:
-    void tagManually(size_t index_i)
+    bool tagManually(size_t index_i)
     {
         Real radius = (pos_[index_i] - center_).norm();
-        if (radius > 0.5 * diameter_ - 0.7 * dp_)
-            body_part_particles_.push_back(index_i);
+        return radius > 0.5 * diameter_ - 0.7 * dp_;
     };
 };
 

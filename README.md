@@ -1,6 +1,6 @@
 # ![SPHinXsys Logo](assets/logo.png) SPHinXsys
 
-## Welcome to test and comment the heterogeneous parallelism in SPHinXsys
+## A milestone for the heterogeneous parallelism
 
 SPHinXsys is undergoing a major transformation,
 moving from traditional CPU parallelism to a new era of heterogeneous parallelism,
@@ -11,8 +11,10 @@ and testing of numerical methods even in environments without GPUs or DPC++ inst
 If these methods are crafted following our specified guidelines and prove functional,
 they will seamlessly operate in environments equipped with DPC++ and GPU support.
 
-The groundwork for this shift is already laid out.
-Test cases following heterogeneous parallelism have been added to the `test/test_sycl` folder,
+I am excited to announce that SPHinXsys has achieved a milestone on heterogeneous parallelism.
+Now, SPHinXsys is able to run on both CPUs and GPUs for the major applications
+in fluid and thermal-fluid dynamics and their coupling with multi-body system.
+All test cases following heterogeneous parallelism have been added to the `test/test_sycl` folder,
 showcasing the capabilities of our specially designed framework.
 
 Your tests, comments and modification of these test cases would be very welcomed!
