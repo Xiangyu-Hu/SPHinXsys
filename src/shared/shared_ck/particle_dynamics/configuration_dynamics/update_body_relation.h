@@ -94,8 +94,8 @@ class UpdateRelation<ExecutionPolicy, Contact<Parameters...>>
       public:
         template <class EncloserType>
         InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt contact_index);
-        void incrementNeighborSize(UnsignedInt index_i);
-        void updateNeighborList(UnsignedInt index_i);
+        void incrementNeighborSize(UnsignedInt source_index);
+        void updateNeighborList(UnsignedInt source_index);
 
       protected:
         MaskedCriterion masked_criterion_;

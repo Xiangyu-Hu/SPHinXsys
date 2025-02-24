@@ -84,20 +84,21 @@ class BodyPartByParticle : public BodyPart
     void setBodyPartBounds(BoundingBox bbox);
     BoundingBox getBodyPartBounds();
 
-    template <typename BooleanFunction>
-    class TargetParticleMask : public BooleanFunction
+    template <typename TargetCriterion>
+    class TargetParticleMask : public TargetCriterion
     {
       public:
         template <class ExecutionPolicy, typename EnclosureType, typename... Args>
-        TargetParticleMask(ExecutionPolicy &ex_policy, EnclosureType &encloser, Args... args)
-            : BooleanFunction(std::forward<Args>(args)...), part_id_(encloser.part_id_),
+        TargetParticleMask(ExecutionPolicy &ex_policy, EnclosureType &encloser, Args &&...args)
+            : TargetCriterion(std::forward<Args>(args)...), part_id_(encloser.part_id_),
               body_part_indicator_(encloser.dv_body_part_indicator_->DelegatedData(ex_policy)) {}
         virtual ~TargetParticleMask() {}
 
-        bool operator()(UnsignedInt index_i, UnsignedInt index_j)
+        template <typename... Args>
+        bool operator()(UnsignedInt target_index, Args &&...args)
         {
-            return (body_part_indicator_[index_j] == part_id_) &&
-                   BooleanFunction::operator()(index_i, index_j);
+            return (body_part_indicator_[target_index] == part_id_) &&
+                   TargetCriterion::operator()(target_index, std::forward<Args>(args)...);
         }
 
       protected:

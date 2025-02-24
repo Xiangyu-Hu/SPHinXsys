@@ -65,10 +65,10 @@ class Neighbor<>
     class NeighborCriterion
     {
       public:
-        NeighborCriterion(Neighbor<> *neighbor);
-        bool operator()(UnsignedInt index_i, UnsignedInt index_j)
+        NeighborCriterion(Neighbor<> &neighbor);
+        bool operator()(UnsignedInt target_index, UnsignedInt source_index)
         {
-            return (source_pos_[index_i] - target_pos_[index_j]).squaredNorm() < cut_radius_square_;
+            return (source_pos_[source_index] - target_pos_[target_index]).squaredNorm() < cut_radius_square_;
         };
 
       protected:

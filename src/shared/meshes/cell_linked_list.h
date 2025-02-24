@@ -134,7 +134,7 @@ class NeighborSearch : public Mesh
     NeighborSearch(const ExecutionPolicy &ex_policy, CellLinkedList &cell_linked_list);
 
     template <typename FunctionOnEach>
-    void forEachSearch(UnsignedInt index_i, const Vecd *source_pos,
+    void forEachSearch(UnsignedInt source_index, const Vecd *source_pos,
                        const FunctionOnEach &function) const;
 
   protected:

@@ -190,10 +190,10 @@ NeighborSearch::NeighborSearch(const ExecutionPolicy &ex_policy, CellLinkedList 
       cell_offset_(cell_linked_list.getCellOffset()->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <typename FunctionOnEach>
-void NeighborSearch::forEachSearch(UnsignedInt index_i, const Vecd *source_pos,
+void NeighborSearch::forEachSearch(UnsignedInt source_index, const Vecd *source_pos,
                                    const FunctionOnEach &function) const
 {
-    const Arrayi target_cell_index = CellIndexFromPosition(source_pos[index_i]);
+    const Arrayi target_cell_index = CellIndexFromPosition(source_pos[source_index]);
     mesh_for_each(
         Arrayi::Zero().max(target_cell_index - Arrayi::Ones()),
         all_cells_.min(target_cell_index + 2 * Arrayi::Ones()),

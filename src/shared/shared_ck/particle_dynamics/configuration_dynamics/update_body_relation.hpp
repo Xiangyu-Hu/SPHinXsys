@@ -118,38 +118,38 @@ UpdateRelation<ExecutionPolicy, Contact<Parameters...>>::
         const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt contact_index)
     : Interaction<Contact<Parameters...>>::InteractKernel(ex_policy, encloser, contact_index),
       masked_criterion_(
-          ex_policy, encloser.contact_relation_.getContactIdentifier(contact_index), this),
+          ex_policy, encloser.contact_relation_.getContactIdentifier(contact_index), *this),
       neighbor_search_(
           encloser.contact_cell_linked_list_[contact_index]->createNeighborSearch(ex_policy)) {}
 //=================================================================================================//
 template <class ExecutionPolicy, typename... Parameters>
 void UpdateRelation<ExecutionPolicy, Contact<Parameters...>>::
-    InteractKernel::incrementNeighborSize(UnsignedInt index_i)
+    InteractKernel::incrementNeighborSize(UnsignedInt source_index)
 {
     // Here, neighbor_index_ takes role of temporary storage for neighbor size list.
     UnsignedInt neighbor_count = 0;
     neighbor_search_.forEachSearch(
-        index_i, this->source_pos_,
-        [&](size_t index_j)
+        source_index, this->source_pos_,
+        [&](size_t target_index)
         {
-            if (masked_criterion_(index_i, index_j))
+            if (masked_criterion_(target_index, source_index))
                 neighbor_count++;
         });
-    this->neighbor_index_[index_i] = neighbor_count;
+    this->neighbor_index_[source_index] = neighbor_count;
 }
 //=================================================================================================//
 template <class ExecutionPolicy, typename... Parameters>
 void UpdateRelation<ExecutionPolicy, Contact<Parameters...>>::
-    InteractKernel::updateNeighborList(UnsignedInt index_i)
+    InteractKernel::updateNeighborList(UnsignedInt source_index)
 {
     UnsignedInt neighbor_count = 0;
     neighbor_search_.forEachSearch(
-        index_i, this->source_pos_,
-        [&](size_t index_j)
+        source_index, this->source_pos_,
+        [&](size_t target_index)
         {
-            if (masked_criterion_(index_i, index_j))
+            if (masked_criterion_(target_index, source_index))
             {
-                this->neighbor_index_[this->particle_offset_[index_i] + neighbor_count] = index_j;
+                this->neighbor_index_[this->particle_offset_[source_index] + neighbor_count] = target_index;
                 neighbor_count++;
             }
         });
