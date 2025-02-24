@@ -65,7 +65,7 @@ class Neighbor<>
     class SearchMethod
     {
       public:
-        SearchMethod(Vecd *source_pos, Vecd *target_pos, Real cut_radius_square);
+        SearchMethod(Neighbor<> *neighbor);
         bool isInRange(UnsignedInt index_i, UnsignedInt index_j)
         {
             return (source_pos_[index_i] - target_pos_[index_j]).squaredNorm() < cut_radius_square_;

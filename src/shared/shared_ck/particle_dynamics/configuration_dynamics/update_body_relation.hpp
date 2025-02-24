@@ -118,8 +118,7 @@ UpdateRelation<ExecutionPolicy, Contact<Parameters...>>::
         const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt contact_index)
     : Interaction<Contact<Parameters...>>::InteractKernel(ex_policy, encloser, contact_index),
       search_mask_(
-          ex_policy, encloser.contact_relation_.getContactIdentifier(contact_index),
-          this->source_pos_, this->target_pos_, this->getKernel().CutOffRadiusSqr()),
+          ex_policy, encloser.contact_relation_.getContactIdentifier(contact_index), this),
       neighbor_search_(
           encloser.contact_cell_linked_list_[contact_index]->createNeighborSearch(ex_policy)) {}
 //=================================================================================================//

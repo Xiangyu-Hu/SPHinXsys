@@ -3,9 +3,8 @@
 namespace SPH
 {
 //=================================================================================================//
-Neighbor<>::SearchMethod::SearchMethod(Vecd *source_pos, Vecd *target_pos, Real cut_radius_square)
-    : source_pos_(source_pos), target_pos_(target_pos),
-      cut_radius_square_(cut_radius_square) {}
+Neighbor<>::SearchMethod::SearchMethod(Neighbor<> *neighbor)
+    : source_pos_(neighbor->source_pos_), target_pos_(neighbor->target_pos_),
+      cut_radius_square_(neighbor->getKernel().CutOffRadiusSqr()) {}
 //=================================================================================================//
 } // namespace SPH
-
