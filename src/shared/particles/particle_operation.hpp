@@ -45,7 +45,7 @@ DespawnRealParticle::ComputingKernel::
                   "SequencedPolicy is not the base of ExecutionPolicy!");
     OperationBetweenDataAssembles<ParticleVariables, DiscreteVariableArrays, DiscreteVariableArraysInitialization>
         initialize_discrete_variable_array;
-    initialize_discrete_variable_array(encloser.variables_to_sort_, encloser.copyable_states_);
+    initialize_discrete_variable_array(encloser.evolving_variables_, encloser.copyable_states_);
     OperationBetweenDataAssembles<DiscreteVariableArrays, VariableDataArrays, VariableDataArraysInitialization>
         initialize_variable_data_array;
     initialize_variable_data_array(encloser.copyable_states_, copyable_state_data_arrays_, ex_policy);
