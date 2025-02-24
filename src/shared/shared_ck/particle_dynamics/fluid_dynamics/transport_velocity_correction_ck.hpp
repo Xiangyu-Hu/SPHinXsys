@@ -21,8 +21,6 @@ TransportVelocityCorrectionCKBase<BaseInteractionType>::
           this->particles_->template registerStateVariableOnly<Vecd>("ZeroGradientResidue"))
 {
 }
-{
-}
 
 //========================================================================================
 //   2) Partial Specialization:
@@ -63,8 +61,6 @@ TransportVelocityCorrectionCK<Inner<UpdatePolicy, KernelCorrectionType, Resoluti
       dpos_(encloser.dv_dpos_->DelegatedData(ex_policy)),
       zero_gradient_residue_(encloser.dv_zero_gradient_residue_->DelegatedData(ex_policy)),
       within_scope_(ex_policy, encloser.within_scope_method_, *this)
-{
-}
 {
 }
 
