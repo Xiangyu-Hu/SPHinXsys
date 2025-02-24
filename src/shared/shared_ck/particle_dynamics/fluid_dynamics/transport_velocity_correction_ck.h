@@ -146,6 +146,10 @@ using TransportVelocityLimitedCorrectionCorrectedComplexBulkParticlesCKWithoutUp
     TransportVelocityCorrectionCK<
         Inner<Base, LinearCorrectionCK, SingleResolution, TruncatedLinear, AllParticles>,
         Contact<Wall, LinearCorrectionCK, SingleResolution, TruncatedLinear, AllParticles>>;
+using TransportVelocityCorrectedComplexBulkParticlesCKWithoutUpdate =
+    TransportVelocityCorrectionCK<
+        Inner<Base, NoKernelCorrectionCK, SingleResolution, NoLimiter, AllParticles>,
+        Contact<Wall, NoKernelCorrectionCK, SingleResolution, NoLimiter, AllParticles>>;
 
 } // namespace fluid_dynamics
 } // namespace SPH
