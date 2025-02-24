@@ -177,7 +177,7 @@ class ParticleScopeTypeCK<ExcludeBufferParticles> : public WithinScope
 
             if (buffer_particles_indicator_[index_i] == 0)
                 density_summation_verify_indicator_[index_i] = 0;
-            return (buffer_particles_indicator_[index_i] != 0);
+            return (buffer_particles_indicator_[index_i] != 1);
         }
 
       protected:
