@@ -62,11 +62,11 @@ class Neighbor<>
         return displacement / (displacement.norm() + TinyReal);
     }
 
-    class SearchMethod
+    class NeighborCriterion
     {
       public:
-        SearchMethod(Neighbor<> *neighbor);
-        bool isInRange(UnsignedInt index_i, UnsignedInt index_j)
+        NeighborCriterion(Neighbor<> *neighbor);
+        bool operator()(UnsignedInt index_i, UnsignedInt index_j)
         {
             return (source_pos_[index_i] - target_pos_[index_j]).squaredNorm() < cut_radius_square_;
         };

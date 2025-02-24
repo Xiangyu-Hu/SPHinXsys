@@ -84,26 +84,27 @@ class BodyPartByParticle : public BodyPart
     void setBodyPartBounds(BoundingBox bbox);
     BoundingBox getBodyPartBounds();
 
-    template <typename SearchMethod>
-    class TargetParticleMask : public SearchMethod
+    template <typename BooleanFunction>
+    class TargetParticleMask : public BooleanFunction
     {
       public:
         template <class ExecutionPolicy, typename EnclosureType, typename... Args>
         TargetParticleMask(ExecutionPolicy &ex_policy, EnclosureType &encloser, Args... args)
-            : SearchMethod(std::forward<Args>(args)...), part_id_(encloser.part_id_),
+            : BooleanFunction(std::forward<Args>(args)...), part_id_(encloser.part_id_),
               body_part_indicator_(encloser.dv_body_part_indicator_->DelegatedData(ex_policy)) {}
         virtual ~TargetParticleMask() {}
 
-        bool isInRange(UnsignedInt index_i, UnsignedInt index_j)
+        bool operator()(UnsignedInt index_i, UnsignedInt index_j)
         {
-            return (body_part_indicator_[index_j] == part_id_) && SearchMethod::isInRange(index_i, index_j);
+            return (body_part_indicator_[index_j] == part_id_) &&
+                   BooleanFunction::operator()(index_i, index_j);
         }
 
       protected:
         int part_id_;
         int *body_part_indicator_;
     };
-    
+
   protected:
     BoundingBox body_part_bounds_;
     bool body_part_bounds_set_;

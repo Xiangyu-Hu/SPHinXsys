@@ -117,7 +117,7 @@ UpdateRelation<ExecutionPolicy, Contact<Parameters...>>::
     InteractKernel::InteractKernel(
         const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt contact_index)
     : Interaction<Contact<Parameters...>>::InteractKernel(ex_policy, encloser, contact_index),
-      search_mask_(
+      masked_criterion_(
           ex_policy, encloser.contact_relation_.getContactIdentifier(contact_index), this),
       neighbor_search_(
           encloser.contact_cell_linked_list_[contact_index]->createNeighborSearch(ex_policy)) {}
@@ -132,7 +132,7 @@ void UpdateRelation<ExecutionPolicy, Contact<Parameters...>>::
         index_i, this->source_pos_,
         [&](size_t index_j)
         {
-            if (search_mask_.isInRange(index_i, index_j))
+            if (masked_criterion_(index_i, index_j))
                 neighbor_count++;
         });
     this->neighbor_index_[index_i] = neighbor_count;
@@ -147,7 +147,7 @@ void UpdateRelation<ExecutionPolicy, Contact<Parameters...>>::
         index_i, this->source_pos_,
         [&](size_t index_j)
         {
-            if (search_mask_.isInRange(index_i, index_j))
+            if (masked_criterion_(index_i, index_j))
             {
                 this->neighbor_index_[this->particle_offset_[index_i] + neighbor_count] = index_j;
                 neighbor_count++;

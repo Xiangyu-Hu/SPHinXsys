@@ -77,10 +77,10 @@ class UpdateRelation<ExecutionPolicy, Contact<Parameters...>>
     : public Interaction<Contact<Parameters...>>, public BaseDynamics<void>
 {
     using BaseInteraction = Interaction<Contact<Parameters...>>;
-    using SearchMethod = typename BaseInteraction::InteractKernel::SearchMethod;
+    using NeighborCriterion = typename BaseInteraction::InteractKernel::NeighborCriterion;
     using SourceType = typename BaseInteraction::RelationType::SourceType;
     using TargetType = typename BaseInteraction::RelationType::TargetType;
-    using SearchMask = typename TargetType::template TargetParticleMask<SearchMethod>;
+    using MaskedCriterion = typename TargetType::template TargetParticleMask<NeighborCriterion>;
 
   public:
     UpdateRelation(Relation<Contact<Parameters...>> &contact_relation);
@@ -98,7 +98,7 @@ class UpdateRelation<ExecutionPolicy, Contact<Parameters...>>
         void updateNeighborList(UnsignedInt index_i);
 
       protected:
-        SearchMask search_mask_;
+        MaskedCriterion masked_criterion_;
         NeighborSearch neighbor_search_;
     };
 

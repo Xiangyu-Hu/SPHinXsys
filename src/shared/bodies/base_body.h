@@ -116,13 +116,13 @@ class SPHBody
     void addBodyPartByParticle(BodyPartByParticle *body_part) { body_parts_by_particle_.push_back(body_part); };
     StdVec<BodyPartByParticle *> getBodyPartsByParticle() { return body_parts_by_particle_; };
 
-    template <typename SearchMethod>
-    class TargetParticleMask : public SearchMethod
+    template <typename BooleanFunction>
+    class TargetParticleMask : public BooleanFunction
     {
       public:
         template <class ExecutionPolicy, typename EnclosureType, typename... Args>
         TargetParticleMask(ExecutionPolicy &ex_policy, EnclosureType &encloser, Args... args)
-            : SearchMethod(std::forward<Args>(args)...){}
+            : BooleanFunction(std::forward<Args>(args)...) {}
         virtual ~TargetParticleMask() {}
     };
     //----------------------------------------------------------------------
