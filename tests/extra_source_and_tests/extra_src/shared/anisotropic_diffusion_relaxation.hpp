@@ -8,6 +8,7 @@
 #ifndef ANISOTROPIC
 #define ANISOTROPIC
 
+#include "base_data_type.h"
 #include "base_general_dynamics.h"
 #include "sphinxsys.h"  
 namespace SPH
@@ -151,9 +152,12 @@ class AnisotropicKernelCorrectionMatrix<DataDelegationType>
     template <class BaseRelationType>
     explicit AnisotropicKernelCorrectionMatrix(BaseRelationType &base_relation)
       : LocalDynamics(base_relation.getSPHBody()), DataDelegationType(base_relation),
-     kernel_correction1_(this->particles_->template registerStateVariable<Vec2d>("FirstOrderCorrectionVector1")), 
-      kernel_correction2_(this->particles_->template registerStateVariable<Vec2d>("FirstOrderCorrectionVector2")),
-      kernel_correction3_(this->particles_->template registerStateVariable<Vec2d>("FirstOrderCorrectionVector3")),
+      kernel_correction1_(this->particles_->template registerStateVariable<Vecd>("FirstOrderCorrectionVector1")), 
+      kernel_correction2_(this->particles_->template registerStateVariable<Vecd>("FirstOrderCorrectionVector2")),
+      kernel_correction3_(this->particles_->template registerStateVariable<Vecd>("FirstOrderCorrectionVector3")),
+      kernel_correction4_(this->particles_->template registerStateVariable<Vecd>("FirstOrderCorrectionVector4")),
+      kernel_correction5_(this->particles_->template registerStateVariable<Vecd>("FirstOrderCorrectionVector5")),
+      kernel_correction6_(this->particles_->template registerStateVariable<Vecd>("FirstOrderCorrectionVector6")),
       Vol_(this->particles_->template getVariableDataByName<Real>("VolumetricMeasure")),
       B_(this->particles_->template getVariableDataByName<Matd>("LinearGradientCorrectionMatrix")),  
       pos_(this->particles_->template getVariableDataByName<Vecd>("Position"))  {}
@@ -162,9 +166,10 @@ class AnisotropicKernelCorrectionMatrix<DataDelegationType>
 
   protected:
    
-    Vec2d *kernel_correction1_,*kernel_correction2_, *kernel_correction3_;
+    Vecd *kernel_correction1_,*kernel_correction2_, *kernel_correction3_;// for 2d case, and first three variables in 3d case
+    Vecd *kernel_correction4_,*kernel_correction5_, *kernel_correction6_; // another three variables in 3d case 
     Real *Vol_;
-    Mat2d *B_;
+    Matd *B_;
     Vecd *pos_;
 
 }; 
@@ -176,9 +181,11 @@ class AnisotropicKernelCorrectionMatrix<Inner<>>
   public:
     explicit AnisotropicKernelCorrectionMatrix(BaseInnerRelation &inner_relation)
         : AnisotropicKernelCorrectionMatrix<DataDelegateInner>(inner_relation){};
+
     template <typename BodyRelationType, typename FirstArg>
     explicit AnisotropicKernelCorrectionMatrix(DynamicsArgs<BodyRelationType, FirstArg> parameters)
         : AnisotropicKernelCorrectionMatrix(parameters.identifier_, std::get<0>(parameters.others_)){};
+    
     virtual ~AnisotropicKernelCorrectionMatrix(){};
 
     void interaction(size_t index_i, Real dt = 0.0)
@@ -189,16 +196,18 @@ class AnisotropicKernelCorrectionMatrix<Inner<>>
             size_t index_j = inner_neighborhood.j_[n];
             Vecd gradW_ij = inner_neighborhood.dW_ij_[n] * Vol_[index_j] * inner_neighborhood.e_ij_[n];
          
-            // Vec2d r_ji = -inner_neighborhood.r_ij_vector_[n];
-            Vecd r_ji = pos_[index_j] - pos_[index_i];
-            kernel_correction1_[index_i] += r_ji[0] * r_ji[0] * (B_[index_i].transpose() * gradW_ij);
-            kernel_correction2_[index_i] += r_ji[1] * r_ji[1] * (B_[index_i].transpose() * gradW_ij);
-            kernel_correction3_[index_i] += r_ji[0] * r_ji[1] * (B_[index_i].transpose() * gradW_ij);
-         
+            Vecd r_ji = pos_[index_j] - pos_[index_i];   
+            Vecd grad_modified = B_[index_i].transpose() * gradW_ij;
+            kernel_correction_function(r_ji, grad_modified, index_i);
+                
         }
        
     };
     void update(size_t index_i, Real dt = 0.0){};
+
+    protected:
+    void kernel_correction_function(Vecd r_ji, Vecd grad_, size_t index_i);
+     
 };
   
 template <>
@@ -228,12 +237,13 @@ class AnisotropicKernelCorrectionMatrix<Contact<>>
             {
                 size_t index_j = contact_neighborhood.j_[n];
                 Vecd gradW_ij = contact_neighborhood.dW_ij_[n] * Vol_k[index_j] * contact_neighborhood.e_ij_[n];
-               // Vec2d r_ji = -contact_neighborhood.r_ij_vector_[n];
-                 Vecd r_ji = contact_pos_[k][index_j] - pos_[index_i];
-
-                kernel_correction1_[index_i] += r_ji[0] * r_ji[0] * (B_[index_i].transpose() * gradW_ij);
-                kernel_correction2_[index_i] += r_ji[1] * r_ji[1] * (B_[index_i].transpose() * gradW_ij);
-                kernel_correction3_[index_i] += r_ji[0] * r_ji[1] * (B_[index_i].transpose() * gradW_ij);
+                Vecd r_ji = contact_pos_[k][index_j] - pos_[index_i];
+               
+                         
+                Vecd grad_modified = B_[index_i].transpose() * gradW_ij;
+                kernel_correction_function_contact(r_ji, grad_modified, index_i);
+                
+              
             }
         }
 
@@ -242,6 +252,9 @@ class AnisotropicKernelCorrectionMatrix<Contact<>>
   protected:
     StdVec<Real *> contact_Vol_;
     StdVec<Vecd *> contact_pos_;
+
+  
+    void kernel_correction_function_contact(Vecd r_ji, Vecd grad_, size_t index_i);
 };
 
 using AnisotropicKernelCorrectionMatrixComplex = ComplexInteraction<AnisotropicKernelCorrectionMatrix<Inner<>, Contact<>>>;
@@ -261,28 +274,36 @@ class AnisotropicDiffusionRelaxation<DataDelegationType>
     : public LocalDynamics, public DataDelegationType
 {
   public:
+
     template <class BaseRelationType>
-    explicit AnisotropicDiffusionRelaxation(BaseRelationType &base_relation)
+    explicit AnisotropicDiffusionRelaxation(BaseRelationType &base_relation )
       : LocalDynamics(base_relation.getSPHBody()), DataDelegationType(base_relation), 
       B_(this->particles_->template getVariableDataByName<Matd>("LinearGradientCorrectionMatrix")),
       phi_(particles_->registerStateVariable<Real>("Phi")),
       Vol_(this->particles_->template getVariableDataByName<Real>("VolumetricMeasure")),
-      kernel_correction1_(this->particles_->template getVariableDataByName<Vec2d>("FirstOrderCorrectionVector1")),
-      kernel_correction2_(this->particles_->template getVariableDataByName<Vec2d>("FirstOrderCorrectionVector2")),
-      kernel_correction3_(this->particles_->template getVariableDataByName<Vec2d>("FirstOrderCorrectionVector3")),
-       anisotropic_diffusion_solid_(DynamicCast<AnisotropicDiffusionSolid>(this, base_relation.getSPHBody().getBaseMaterial())), 
-       pos_(this->particles_->template getVariableDataByName<Vecd>("Position")) 
+      kernel_correction1_(this->particles_->template getVariableDataByName<Vecd>("FirstOrderCorrectionVector1")),
+      kernel_correction2_(this->particles_->template getVariableDataByName<Vecd>("FirstOrderCorrectionVector2")),
+      kernel_correction3_(this->particles_->template getVariableDataByName<Vecd>("FirstOrderCorrectionVector3")),
+      kernel_correction4_(this->particles_->template getVariableDataByName<Vecd>("FirstOrderCorrectionVector4")),
+      kernel_correction5_(this->particles_->template getVariableDataByName<Vecd>("FirstOrderCorrectionVector5")),
+      kernel_correction6_(this->particles_->template getVariableDataByName<Vecd>("FirstOrderCorrectionVector6")),
+      anisotropic_diffusion_solid_(DynamicCast<AnisotropicDiffusionSolid>(this, base_relation.getSPHBody().getBaseMaterial())), 
+      pos_(this->particles_->template getVariableDataByName<Vecd>("Position")) 
       { 
         
-        total_left_ = particles_->registerStateVariable<Mat3d>( "TotalLeft", [&](size_t i) -> Mat3d { return Eps * Mat3d::Identity(); });
-        species_correction_ = particles_->registerStateVariable<Vec2d>("SpeciesCorrection ", [&](size_t i) -> Vec2d { return Eps * Vec2d::Identity(); });
+        species_correction_ = particles_->registerStateVariable<Vecd>("SpeciesCorrection ", [&](size_t i) -> Vecd { return Eps * Vecd::Identity(); });
+        total_left_2d = particles_->registerStateVariable<Mat3d>( "TotalLeft2D", [&](size_t i) -> Mat3d { return Eps * Mat3d::Identity(); });
+        total_right_2d = particles_->registerStateVariable<Vec3d>( "TotalRight2D", [&](size_t i) -> Vec3d { return Eps * Vec3d::Identity(); });
+        Laplacian_2d =  particles_->registerStateVariable<Vec3d>( "Laplacian2D", [&](size_t i) -> Vec3d { return Vec3d::Zero(); });
         
-        total_right_ = particles_->registerStateVariable<Vec3d>( "TotalRight", [&](size_t i) -> Vec3d { return Eps * Vec3d::Identity(); });
-        Laplacian_=  particles_->registerStateVariable<Vec3d>( "Laplacian", [&](size_t i) -> Vec3d { return Vec3d::Zero(); });
+
+      //  total_left_3d = particles_->registerStateVariable<Mat6d>( "TotalLeft3D", [&](size_t i) -> Mat6d { return Eps * Mat6d::Identity(); });
+       // total_right_3d = particles_->registerStateVariable<Vec6d>( "TotalRight3D", [&](size_t i) -> Vec6d { return Eps * Vec6d::Identity(); });
+     //   Laplacian_3d =  particles_->registerStateVariable<Vec6d>( "Laplacian3D", [&](size_t i) -> Vec6d { return Vec6d::Zero(); });
 
         Laplacian_x =   particles_->registerStateVariable<Real>("Laplacian_x", [&](size_t i) -> Real { return Real(0.0); });
         Laplacian_y = particles_->registerStateVariable<Real>("Laplacian_y", [&](size_t i) -> Real { return Real(0.0); });
-        Laplacian_xy = particles_->registerStateVariable<Real>( "Laplacian_xy", [&](size_t i) -> Real { return Real(0.0); });
+        Laplacian_z = particles_->registerStateVariable<Real>( "Laplacian_z", [&](size_t i) -> Real { return Real(0.0); });
         diffusion_dt_=particles_->registerStateVariable<Real>( "diffusion_dt", [&](size_t i) -> Real { return Real(0.0); });
 		
         diffusion_coeff_ = anisotropic_diffusion_solid_.DiffusivityCoefficient();
@@ -293,22 +314,25 @@ class AnisotropicDiffusionRelaxation<DataDelegationType>
     virtual ~AnisotropicDiffusionRelaxation(){};
 
   protected: 
-    Mat2d *B_;
+    Matd *B_;
     Real  *phi_,*Vol_;
-    Vec2d *kernel_correction1_, *kernel_correction2_, *kernel_correction3_;
-    
-    Mat3d *total_left_;
-    Vec2d *species_correction_;
-    Vec3d *total_right_;
-    Vec3d *Laplacian_;
+    Vecd *kernel_correction1_, *kernel_correction2_, *kernel_correction3_;
+    Vecd *kernel_correction4_, *kernel_correction5_, *kernel_correction6_;
+    Vecd *species_correction_;
 
-    Real *Laplacian_x, *Laplacian_y, *Laplacian_xy, *diffusion_dt_;
-   
+    Mat3d *total_left_2d;
+    Vec3d *total_right_2d;
+    Vec3d *Laplacian_2d;
+
+  //  Mat6d *total_left_3d;
+   // Vec6d *total_right_3d;
+    Vec6d *Laplacian_3d;
+
+
+    Real *Laplacian_x, *Laplacian_y, *Laplacian_z, *diffusion_dt_;
     Real diffusion_coeff_;
- 
-
     AnisotropicDiffusionSolid &anisotropic_diffusion_solid_;
-      Vecd *pos_;
+    Vecd *pos_;
 };
 
 template <>
@@ -327,7 +351,7 @@ class AnisotropicDiffusionRelaxation<Inner<>>
     void interaction(size_t index_i, Real dt = 0.0)
     {
         const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
-        Vec2d species_correction_rate = Vec2d::Zero();
+        Vecd species_correction_rate = Vecd::Zero();
         for (size_t n = 0; n != inner_neighborhood.current_size_; ++n) 
         {
             size_t index_j = inner_neighborhood.j_[n];
@@ -336,39 +360,18 @@ class AnisotropicDiffusionRelaxation<Inner<>>
         }
 
          species_correction_[index_i] = species_correction_rate;  
-         Vec3d total_right_rate = Vec3d::Zero();
-         Mat3d total_left_rate = Mat3d::Zero();
-         Real modified_func_  = 1.0;
-
-        for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)  
-        {
-            size_t index_j = inner_neighborhood.j_[n];
-           // Vec2d r_ji = -inner_neighborhood.r_ij_vector_[n];
-            Vecd r_ji = pos_[index_j] - pos_[index_i];
-            Vec2d gradW_ijV_j = inner_neighborhood.dW_ij_[n] * Vol_[index_j] * inner_neighborhood.e_ij_[n];
-            Vec3d disp_quad_ = Vec3d(r_ji[0] * r_ji[0], r_ji[1] * r_ji[1], r_ji[0] * r_ji[1]);
-            modified_func_  = r_ji.dot(B_[index_i].transpose() * gradW_ijV_j) / pow(r_ji.norm(), 4.0);
-	
-            Real right_ = 2.0 * (phi_[index_j] - phi_[index_i] - r_ji.dot(species_correction_[index_i]));
-            total_right_rate += disp_quad_ * modified_func_  * right_;
-             
-            Vec3d left_ = Vec3d::Zero();
-            left_[0] = (r_ji[0] * r_ji[0]- r_ji.dot(kernel_correction1_[index_i]));
-            left_[1] = (r_ji[1] * r_ji[1]- r_ji.dot(kernel_correction2_[index_i]));
-            left_[2] = (r_ji[0] * r_ji[1]- r_ji.dot(kernel_correction3_[index_i]));
-            total_left_rate += disp_quad_ * modified_func_ * left_.transpose();   
-
-        }
-        
-        total_right_[index_i] = total_right_rate;
-        total_left_[index_i] = total_left_rate;
+ 
+         relaxation(inner_neighborhood, Vec2d (1.0,1.0), index_i );
+ 
     };
  
     void update(size_t index_i, Real dt = 0.0)
     {
         phi_[index_i] += dt * diffusion_dt_[index_i];
     };
-
+   
+    protected:
+    void relaxation(const Neighborhood &inner_neighborhood, Vecd dimension,size_t index_i);
 };
  
 
@@ -391,50 +394,27 @@ class AnisotropicDiffusionRelaxation<Contact<>>
     virtual ~AnisotropicDiffusionRelaxation(){};
 
     void interaction(size_t index_i, Real dt = 0.0)
-    {
-        Mat3d total_left_rate_contact = Mat3d::Zero();
-        Vec3d total_right_rate_contact = Vec3d::Zero();
-        Real modified_func_contact = 1.0;
+    {   
         for (size_t k = 0; k < contact_configuration_.size(); ++k)
-        {
-            Real *Vol_k = contact_Vol_[k];
-            Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
-            for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
-            {
-                 size_t index_j = contact_neighborhood.j_[n];
-                 //Vec2d r_ji = -contact_neighborhood.r_ij_vector_[n];
-                 Vecd r_ji = contact_pos_[k][index_j] - pos_[index_i];
+        {   
 
-                 Vecd gradW_ij = contact_neighborhood.dW_ij_[n] * Vol_k[index_j] * contact_neighborhood.e_ij_[n];
+            relaxation_contact(Vec2d (1.0,1.0), index_i, k);
 
-                Vec3d disp_quad_ = Vec3d(r_ji[0] * r_ji[0], r_ji[1] * r_ji[1], r_ji[0] * r_ji[1]);
-                Real right_ = 2.0 * (0.0 - r_ji.dot(species_correction_[index_i])); ///here when it is periodic boundary condition, should notice the 0.0
-                modified_func_contact = r_ji.dot(B_[index_i].transpose() * gradW_ij) / pow(r_ji.norm(), 4.0);
-		 
-                Vec3d left_ = Vec3d::Zero();
-                left_[0] = (r_ji[0] * r_ji[0]- r_ji.dot(kernel_correction1_[index_i]));
-                left_[1] = (r_ji[1] * r_ji[1]- r_ji.dot(kernel_correction2_[index_i]));
-                left_[2] = (r_ji[0] * r_ji[1]- r_ji.dot(kernel_correction3_[index_i]));
-
-                total_left_rate_contact += disp_quad_ * modified_func_contact * left_.transpose();
-                total_right_rate_contact += disp_quad_ * modified_func_contact * right_;
-            
-            }
-            total_left_[index_i] += total_left_rate_contact;
-            total_right_[index_i] += total_right_rate_contact;
         }
-        Laplacian_[index_i] = diffusion_coeff_ * total_left_[index_i].inverse() * total_right_[index_i];
 
-        Laplacian_x[index_i] = Laplacian_[index_i][0];
-        Laplacian_y[index_i] = Laplacian_[index_i][1];
-        Laplacian_xy[index_i] = Laplacian_[index_i][2];
-		diffusion_dt_[index_i] = Laplacian_[index_i][0] + Laplacian_[index_i][1];
+        Laplacian_2d[index_i] = diffusion_coeff_ * total_left_2d[index_i].inverse() * total_right_2d[index_i];
+
+        Laplacian_x[index_i] = Laplacian_2d[index_i][0];
+        Laplacian_y[index_i] = Laplacian_2d[index_i][1]; 
+		diffusion_dt_[index_i] = Laplacian_2d[index_i][0] + Laplacian_2d[index_i][1];
 
     };
 
   protected:
     StdVec<Real *> contact_Vol_; 
     StdVec<Vecd *> contact_pos_;
+
+    void relaxation_contact(Vecd dimension, size_t index_i, size_t k );
 };
 
  

@@ -8,7 +8,7 @@
 #include "inner_body_relation.h"
 #include "kernel_correction.h"
 #include "observer_particles.h"
-#include "anisotropic_diffusion_relaxation.hpp"
+#include "anisotropic_diffusion_relaxation_2d.cpp"
 
 
 #include "sphinxsys.h"  
