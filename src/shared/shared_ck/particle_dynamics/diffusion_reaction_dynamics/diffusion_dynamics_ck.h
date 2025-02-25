@@ -31,8 +31,8 @@
 
 #include "diffusion_reaction.h"
 #include "interaction_ck.hpp"
-#include "sphinxsys_variable_array.h"
 #include "sphinxsys_constant.h"
+#include "sphinxsys_variable_array.h"
 
 namespace SPH
 {
@@ -128,6 +128,8 @@ class DiffusionRelaxationCK<DiffusionType, BaseInteractionType>
     : public BaseInteractionType
 {
     StdVec<DiffusionType *> getConcreteDiffusions(AbstractDiffusion &abstract_diffusion);
+    StdVec<std::string> getDiffusionSpeciesNames(StdVec<DiffusionType *> &diffusions);
+    StdVec<std::string> getGradientSpeciesNames(StdVec<DiffusionType *> &diffusions);
 
   public:
     template <class DynamicsIdentifier>
@@ -139,9 +141,9 @@ class DiffusionRelaxationCK<DiffusionType, BaseInteractionType>
         : DiffusionRelaxationCK(parameters.identifier_, std::get<0>(parameters.others_)){};
     virtual ~DiffusionRelaxationCK() {};
     StdVec<DiffusionType *> &getDiffusions() { return diffusions_; };
+    StdVec<std::string> &getDiffusionSpeciesNames() { return diffusion_species_names_; };
+    StdVec<std::string> &getGradientSpeciesNames() { return gradient_species_names_; };
     DiscreteVariableArray<Real> &dvGradientSpeciesArray() { return dv_gradient_species_array_; };
-    StdVec<DiscreteVariable<Real> *> getDiffusionVariables(BaseParticles *particles, const std::string &suffix);
-    StdVec<DiscreteVariable<Real> *> getGradientVariables(BaseParticles *particles, const std::string &suffix);
 
     class InteractKernel : public BaseInteractionType::InteractKernel
     {
@@ -156,6 +158,8 @@ class DiffusionRelaxationCK<DiffusionType, BaseInteractionType>
 
   protected:
     StdVec<DiffusionType *> diffusions_;
+    StdVec<std::string> diffusion_species_names_;
+    StdVec<std::string> gradient_species_names_;
     DiscreteVariableArray<Real> dv_diffusion_species_array_;
     DiscreteVariableArray<Real> dv_gradient_species_array_;
     DiscreteVariableArray<Real> dv_diffusion_dt_array_;
