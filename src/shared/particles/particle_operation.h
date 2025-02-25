@@ -70,6 +70,24 @@ class SpawnRealParticle
                 *total_real_particles_ += 1;
                 original_id_[new_original_id] = new_original_id;
             }
+            // Use an unordered_map to count how many times each ID appears
+            std::unordered_map<unsigned int, size_t> frequency;
+
+            // Pass through the array once, counting occurrences
+            for (size_t i = 0; i < *total_real_particles_; ++i)
+            {
+                frequency[original_id_[i]]++;
+            }
+
+            // Check which IDs appeared more than once
+            for (const auto &entry : frequency)
+            {
+                if (entry.second > 1)
+                {
+                    std::cout << "Repeated ID: " << entry.first
+                              << " occurs " << entry.second << " times.\n";
+                }
+            }
             return new_original_id;
         };
 
@@ -102,17 +120,44 @@ class DespawnRealParticle
         UnsignedInt operator()(UnsignedInt index_i)
         {
             UnsignedInt last_real_particle_index = *total_real_particles_ - 1;
-            if (index_i < *total_real_particles_)
+            if (index_i < last_real_particle_index)
             {
+                auto tid = std::this_thread::get_id();
+                std::cout << "Thread ID: " << tid << std::endl;
                 /** Buffer Particle state copied from real particle. */
+                const UnsignedInt temp_original_id_index_i = original_id_[index_i];
+                std::cout << "l109 :<<" << temp_original_id_index_i << ", original_id_[index_i]:" << original_id_[index_i] << ",original_id_[last_real_particle_index]:" << original_id_[last_real_particle_index] << std::endl;
                 copy_particle_state_(copyable_state_data_arrays_, index_i, last_real_particle_index);
+                // original_id_[index_i] = original_id_[last_real_particle_index]; // sorted_id_[original_id_[index_i]] = index_i;
+                original_id_[last_real_particle_index] = original_id_[index_i]; // sorted_id_[original_id_[index_i]] = index_i;
+                std::cout << "l111 :" << ", original_id_[index_i]:" << original_id_[index_i] << ",original_id_[last_real_particle_index]:" << original_id_[last_real_particle_index] << std::flush << std::endl;
                 // update original and sorted_id as well
-                auto temp_original_id_index_i = original_id_[index_i];
-                original_id_[index_i] = original_id_[last_real_particle_index];
-                original_id_[last_real_particle_index] = temp_original_id_index_i;
+                // original_id_[index_i] = original_id_[last_real_particle_index];
+                // original_id_[last_real_particle_index] = temp_original_id_index_i;
+                std::cout << "l115 :" << ", original_id_[index_i]:" << original_id_[index_i] << ",original_id_[last_real_particle_index]:" << original_id_[last_real_particle_index] << std::flush << std::endl;
+                std::cout << "lets print sth \n";
 
                 // std::swap(original_id_[index_i], original_id_[last_real_particle_index]);
-                *total_real_particles_ -= 1;
+            }
+            // MOVE IT OUT !! TODO: Move it out if its last particle need to be removed!
+            *total_real_particles_ -= 1;
+            // Use an unordered_map to count how many times each ID appears
+            std::unordered_map<unsigned int, size_t> frequency;
+
+            // Pass through the array once, counting occurrences
+            for (size_t i = 0; i < *total_real_particles_; ++i)
+            {
+                frequency[original_id_[i]]++;
+            }
+
+            // Check which IDs appeared more than once
+            for (const auto &entry : frequency)
+            {
+                if (entry.second > 1)
+                {
+                    std::cout << "Repeated ID: " << entry.first
+                              << " occurs " << entry.second << " times.\n";
+                }
             }
             return last_real_particle_index;
         };

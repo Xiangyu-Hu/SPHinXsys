@@ -289,7 +289,7 @@ int main(int ac, char *av[])
 
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::TransportVelocityCorrectionWallNoCorrectionBulkParticlesCK>
         transport_correction_ck(water_body_inner, water_wall_contact);
-    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::TransportVelocityCorrectedComplexBulkParticlesCKWithoutUpdate>
+    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::TransportVelocityLimitedCorrectionCorrectedComplexBulkParticlesCKWithoutUpdate>
         zero_gradient_ck(water_body_inner, water_wall_contact);
 
     ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AdvectionTimeStepCK> fluid_advection_time_step(water_body, U_f);
@@ -421,16 +421,20 @@ int main(int ac, char *av[])
 
             /** inflow emitter injection*/
             bidirectional_buffer_left.injectParticles();
-            bidirectional_buffer_right.injectParticles();
-            bidirectional_buffer_left.deleteParticles();
+            // bidirectional_buffer_right.injectParticles();
+            // bidirectional_buffer_left.deleteParticles();
+            std::cout << "before remove: " << number_of_iterations << " \n";
+
             bidirectional_buffer_right.deleteParticles();
+            std::cout << "after remove: " << number_of_iterations << " \n";
+
             // emitter_injection.exec();
-            right_remove_particles.exec();
+            // right_remove_particles.exec();
             /** Update cell linked list and configuration. */
             if (number_of_iterations % 100 == 0 && number_of_iterations != 1)
             {
                 std::cout << "particle_sort.exec(); \n";
-                particle_sort.exec();
+                // particle_sort.exec();
             }
 
             water_cell_linked_list.exec();
@@ -442,7 +446,7 @@ int main(int ac, char *av[])
             // right_tag_buffer_particle_.exec();
             // label_left_indicator.exec();
             // label_right_indicator.exec();
-            // body_states_recording.writeToFile(MainExecutionPolicy{});
+            body_states_recording.writeToFile(MainExecutionPolicy{});
         }
 
         TickCount t2 = TickCount::now();
