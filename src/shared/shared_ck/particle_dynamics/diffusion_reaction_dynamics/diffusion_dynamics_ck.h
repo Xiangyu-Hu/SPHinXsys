@@ -127,9 +127,9 @@ template <class DiffusionType, class BaseInteractionType>
 class DiffusionRelaxationCK<DiffusionType, BaseInteractionType>
     : public BaseInteractionType
 {
-    StdVec<DiffusionType *> getConcreteDiffusions(AbstractDiffusion &abstract_diffusion);
-    StdVec<std::string> getDiffusionSpeciesNames(StdVec<DiffusionType *> &diffusions);
-    StdVec<std::string> getGradientSpeciesNames(StdVec<DiffusionType *> &diffusions);
+    StdVec<DiffusionType *> obtainConcreteDiffusions(AbstractDiffusion &abstract_diffusion);
+    StdVec<std::string> obtainDiffusionSpeciesNames(StdVec<DiffusionType *> &diffusions);
+    StdVec<std::string> obtainGradientSpeciesNames(StdVec<DiffusionType *> &diffusions);
 
   public:
     template <class DynamicsIdentifier>

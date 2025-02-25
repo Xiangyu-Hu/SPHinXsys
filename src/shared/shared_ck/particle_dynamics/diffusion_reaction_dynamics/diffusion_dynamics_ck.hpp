@@ -17,9 +17,9 @@ template <class DynamicsIdentifier>
 DiffusionRelaxationCK<DiffusionType, BaseInteractionType>::
     DiffusionRelaxationCK(DynamicsIdentifier &identifier, AbstractDiffusion *abstract_diffusion)
     : BaseInteractionType(identifier),
-      diffusions_(this->getConcreteDiffusions(*abstract_diffusion)),
-      diffusion_species_names_(this->getDiffusionSpeciesNames()),
-      gradient_species_names_(this->getGradientSpeciesNames()),
+      diffusions_(this->obtainConcreteDiffusions(*abstract_diffusion)),
+      diffusion_species_names_(this->obtainDiffusionSpeciesNames(diffusions_)),
+      gradient_species_names_(this->obtainGradientSpeciesNames(diffusions_)),
       dv_diffusion_species_array_(this->particles_->template getVariablesByName<Real>(
           diffusion_species_names_, "")),
       dv_gradient_species_array_(this->particles_->template getVariablesByName<Real>(
@@ -42,7 +42,7 @@ DiffusionRelaxationCK<DiffusionType, BaseInteractionType>::
 //=================================================================================================//
 template <class DiffusionType, class BaseInteractionType>
 StdVec<DiffusionType *> DiffusionRelaxationCK<DiffusionType, BaseInteractionType>::
-    getConcreteDiffusions(AbstractDiffusion &abstract_diffusion)
+    obtainConcreteDiffusions(AbstractDiffusion &abstract_diffusion)
 {
     StdVec<AbstractDiffusion *> all_diffusions = abstract_diffusion.AllDiffusions();
     StdVec<DiffusionType *> diffusions;
@@ -55,7 +55,7 @@ StdVec<DiffusionType *> DiffusionRelaxationCK<DiffusionType, BaseInteractionType
 //=================================================================================================//
 template <class DiffusionType, class BaseInteractionType>
 StdVec<std::string> DiffusionRelaxationCK<DiffusionType, BaseInteractionType>::
-    getDiffusionSpeciesNames(StdVec<DiffusionType *> &diffusions)
+    obtainDiffusionSpeciesNames(StdVec<DiffusionType *> &diffusions)
 {
     StdVec<std::string> diffusion_species_names;
     for (auto &diffusion : diffusions)
@@ -67,7 +67,7 @@ StdVec<std::string> DiffusionRelaxationCK<DiffusionType, BaseInteractionType>::
 //=================================================================================================//
 template <class DiffusionType, class BaseInteractionType>
 StdVec<std::string> DiffusionRelaxationCK<DiffusionType, BaseInteractionType>::
-    getGradientSpeciesNames(StdVec<DiffusionType *> &diffusions)
+    obtainGradientSpeciesNames(StdVec<DiffusionType *> &diffusions)
 {
     StdVec<std::string> gradient_species_names;
     for (auto &diffusion : diffusions)
@@ -254,7 +254,7 @@ template <typename... Args>
 DiffusionRelaxationCK<RelationType<OneLevel, RungeKutta2ndStage, InteractionParameters...>>::
     DiffusionRelaxationCK(Args &&...args)
     : BaseDynamicsType(std::forward<Args>(args)...),
-      dv_diffusion_species_array_s_(this->particles_->template registerStateVariables<Real>(
+      dv_diffusion_species_array_s_(this->particles_->template getVariablesByName<Real>(
           this->diffusion_species_names_, "Intermediate")) {}
 //=================================================================================================//
 template <template <typename...> class RelationType, class... InteractionParameters>
