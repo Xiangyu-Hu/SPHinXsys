@@ -281,7 +281,7 @@ SingularVariable<DataType> *BaseParticles::
     return variable != nullptr
                ? variable
                : addVariableToAssemble<DataType>(
-                     all_singular_variables_, all_global_variable_ptrs_, name, initial_value);
+                     all_singular_variables_, all_singular_variable_ptrs_, name, initial_value);
 }
 //=================================================================================================//
 template <typename DataType>

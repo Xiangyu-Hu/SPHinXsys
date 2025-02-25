@@ -45,7 +45,8 @@ template <>
 class ParticleGenerator<SurfaceParticles, Plate> : public ParticleGenerator<SurfaceParticles>
 {
   public:
-    explicit ParticleGenerator(SPHBody &sph_body, SurfaceParticles &surface_particles) : ParticleGenerator<SurfaceParticles>(sph_body, surface_particles){};
+    explicit ParticleGenerator(SPHBody &sph_body, SurfaceParticles &surface_particles)
+        : ParticleGenerator<SurfaceParticles>(sph_body, surface_particles) {};
     virtual void prepareGeometricData() override
     {
         // the plate and boundary
@@ -71,16 +72,15 @@ class BoundaryGeometry : public BodyPartByParticle
         TaggingParticleMethod tagging_particle_method = std::bind(&BoundaryGeometry::tagManually, this, _1);
         tagParticles(tagging_particle_method);
     };
-    virtual ~BoundaryGeometry(){};
+    virtual ~BoundaryGeometry() {};
 
   private:
-    void tagManually(size_t index_i)
+    bool tagManually(size_t index_i)
     {
-        if (base_particles_.ParticlePositions()[index_i][0] < 0.0 || base_particles_.ParticlePositions()[index_i][1] < 0.0 ||
-            base_particles_.ParticlePositions()[index_i][0] > PL || base_particles_.ParticlePositions()[index_i][1] > PH)
-        {
-            body_part_particles_.push_back(index_i);
-        }
+        return base_particles_.ParticlePositions()[index_i][0] < 0.0 ||
+               base_particles_.ParticlePositions()[index_i][1] < 0.0 ||
+               base_particles_.ParticlePositions()[index_i][0] > PL ||
+               base_particles_.ParticlePositions()[index_i][1] > PH;
     };
 };
 } // namespace SPH

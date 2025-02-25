@@ -51,7 +51,8 @@ template <>
 class ParticleGenerator<SurfaceParticles, Cylinder> : public ParticleGenerator<SurfaceParticles>
 {
   public:
-    explicit ParticleGenerator(SPHBody &sph_body, SurfaceParticles &surface_particles) : ParticleGenerator<SurfaceParticles>(sph_body, surface_particles){};
+    explicit ParticleGenerator(SPHBody &sph_body, SurfaceParticles &surface_particles)
+        : ParticleGenerator<SurfaceParticles>(sph_body, surface_particles) {};
     virtual void prepareGeometricData() override
     {
         // the cylinder and boundary
@@ -82,16 +83,14 @@ class DisControlGeometry : public BodyPartByParticle
         TaggingParticleMethod tagging_particle_method = std::bind(&DisControlGeometry::tagManually, this, _1);
         tagParticles(tagging_particle_method);
     };
-    virtual ~DisControlGeometry(){};
+    virtual ~DisControlGeometry() {};
 
   private:
-    void tagManually(size_t index_i)
+    bool tagManually(size_t index_i)
     {
         Vecd pos_before_rotation = rotation_matrix.transpose() * base_particles_.ParticlePositions()[index_i];
-        if (pos_before_rotation[0] < 0.5 * particle_spacing_ref && pos_before_rotation[0] > -0.5 * particle_spacing_ref)
-        {
-            body_part_particles_.push_back(index_i);
-        }
+        return pos_before_rotation[0] < 0.5 * particle_spacing_ref &&
+               pos_before_rotation[0] > -0.5 * particle_spacing_ref;
     };
 };
 
@@ -101,8 +100,8 @@ class ControlDisplacement : public thin_structure_dynamics::ConstrainShellBodyRe
   public:
     ControlDisplacement(BodyPartByParticle &body_part)
         : ConstrainShellBodyRegion(body_part),
-          vel_(particles_->getVariableDataByName<Vecd>("Velocity")){};
-    virtual ~ControlDisplacement(){};
+          vel_(particles_->getVariableDataByName<Vecd>("Velocity")) {};
+    virtual ~ControlDisplacement() {};
 
   protected:
     Vecd *vel_;
@@ -123,15 +122,12 @@ class BoundaryGeometry : public BodyPartByParticle
         TaggingParticleMethod tagging_particle_method = std::bind(&BoundaryGeometry::tagManually, this, _1);
         tagParticles(tagging_particle_method);
     };
-    virtual ~BoundaryGeometry(){};
+    virtual ~BoundaryGeometry() {};
 
   private:
-    void tagManually(size_t index_i)
+    bool tagManually(size_t index_i)
     {
-        if (base_particles_.ParticlePositions()[index_i][2] < radius_mid_surface * (Real)sin(-17.5 / 180.0 * Pi))
-        {
-            body_part_particles_.push_back(index_i);
-        }
+        return base_particles_.ParticlePositions()[index_i][2] < radius_mid_surface * (Real)sin(-17.5 / 180.0 * Pi);
     };
 };
 } // namespace SPH

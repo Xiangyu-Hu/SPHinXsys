@@ -94,7 +94,7 @@ class ParticleGenerator<SurfaceParticles, WallBoundary> : public ParticleGenerat
     explicit ParticleGenerator(SPHBody &sph_body, SurfaceParticles &surface_particles,
                                Real resolution_shell, Real shell_thickness)
         : ParticleGenerator<SurfaceParticles>(sph_body, surface_particles),
-          resolution_shell_(resolution_shell), shell_thickness_(shell_thickness){};
+          resolution_shell_(resolution_shell), shell_thickness_(shell_thickness) {};
     void prepareGeometricData() override
     {
         auto particle_number_mid_surface_01 = int((DL1 + DL_sponge) / resolution_shell_);
@@ -226,17 +226,14 @@ class BoundaryGeometry : public BodyPartByParticle
         TaggingParticleMethod tagging_particle_method = std::bind(&BoundaryGeometry::tagManually, this, _1);
         tagParticles(tagging_particle_method);
     };
-    virtual ~BoundaryGeometry(){};
+    virtual ~BoundaryGeometry() {};
 
   private:
-    void tagManually(size_t index_i)
+    bool tagManually(size_t index_i)
     {
-        if (base_particles_.ParticlePositions()[index_i][0] < -DL_sponge + buffer_width ||
-            base_particles_.ParticlePositions()[index_i][1] > 2.0 * DH - buffer_width ||
-            base_particles_.ParticlePositions()[index_i][1] < -DH + buffer_width)
-        {
-            body_part_particles_.push_back(index_i);
-        }
+        return base_particles_.ParticlePositions()[index_i][0] < -DL_sponge + buffer_width ||
+               base_particles_.ParticlePositions()[index_i][1] > 2.0 * DH - buffer_width ||
+               base_particles_.ParticlePositions()[index_i][1] < -DH + buffer_width;
     };
 };
 } // namespace SPH
