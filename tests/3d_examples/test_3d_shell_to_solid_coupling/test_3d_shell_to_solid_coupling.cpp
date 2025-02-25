@@ -223,36 +223,20 @@ class ShellForceConstraint : public BaseForcePrior<BodyPartByParticle>,
                              public DataDelegateContact
 {
   private:
-    Vecd *n0_;
-    Real A0_;
-    StdVec<bool> normal_flip_;
     StdVec<int *> contact_is_coupled_;
     StdVec<Real *> contact_Vol_;
-    StdVec<Matd *> contact_F_;
-    StdVec<Matd *> contact_B_;
-    StdVec<ElasticSolid *> contact_materials_;
+    StdVec<Vecd *> contact_force_;
 
   public:
     ShellForceConstraint(BodyPartByParticle &body_part, BaseContactRelation &contact_relation, StdVec<bool> normal_flip)
         : BaseForcePrior<BodyPartByParticle>(body_part, "CouplingForce"),
-          DataDelegateContact(contact_relation),
-          n0_(particles_->getVariableDataByName<Vecd>("InitialNormalDirection")),
-          A0_(pow(sph_body_.getSPHBodyResolutionRef(), Dimensions - 1)),
-          normal_flip_(std::move(normal_flip))
+          DataDelegateContact(contact_relation)
     {
-        if (normal_flip_.size() != contact_bodies_.size())
-        {
-            std::cout << "\n Error: the size of normal flip is not consistent with the contact bodies."
-                      << "\n Please check the input. \n";
-            exit(0);
-        }
         for (size_t k = 0; k != contact_particles_.size(); ++k)
         {
             contact_is_coupled_.emplace_back(contact_particles_[k]->getVariableDataByName<int>("IsCoupled"));
             contact_Vol_.emplace_back(contact_particles_[k]->getVariableDataByName<Real>("VolumetricMeasure"));
-            contact_F_.emplace_back(contact_particles_[k]->getVariableDataByName<Matd>("DeformationGradient"));
-            contact_B_.emplace_back(contact_particles_[k]->getVariableDataByName<Matd>("LinearGradientCorrectionMatrix"));
-            contact_materials_.emplace_back(&DynamicCast<ElasticSolid>(this, contact_bodies_[k]->getBaseMaterial()));
+            contact_force_.emplace_back(contact_particles_[k]->getVariableDataByName<Vecd>("Force"));
         }
     };
 
@@ -261,13 +245,11 @@ class ShellForceConstraint : public BaseForcePrior<BodyPartByParticle>,
         Vec3d force = Vec3d::Zero();
         for (size_t k = 0; k != contact_configuration_.size(); ++k)
         {
-            Matd stress_PK1_B_k = Matd::Zero();
+            Vecd force_ttl_k = Vecd::Zero();
             Real weight_ttl_k = 0;
             int *is_coupled_k = contact_is_coupled_[k];
             Real *Vol_k = contact_Vol_[k];
-            Matd *F_k = contact_F_[k];
-            Matd *B_k = contact_B_[k];
-            ElasticSolid *material_k = contact_materials_[k];
+            Vecd *force_k = contact_force_[k];
             Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
             for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
             {
@@ -275,14 +257,11 @@ class ShellForceConstraint : public BaseForcePrior<BodyPartByParticle>,
                 if (is_coupled_k[index_j] == 0)
                     continue;
                 Real weight_j = contact_neighborhood.W_ij_[n] * Vol_k[index_j];
-                Matd stress_PK1_B_j = material_k->StressPK1(F_k[index_j], index_j) * B_k[index_j];
-                stress_PK1_B_k += weight_j * stress_PK1_B_j;
+                force_ttl_k += weight_j * force_k[index_j];
                 weight_ttl_k += weight_j;
             }
-            stress_PK1_B_k /= (weight_ttl_k + TinyReal);
-            Vecd n0 = normal_flip_[k] ? -n0_[index_i] : n0_[index_i];
-            const Vecd force_k = stress_PK1_B_k * n0 * A0_;
-            force += force_k;
+            force_ttl_k /= (weight_ttl_k + TinyReal);
+            force += force_ttl_k;
         }
 
         current_force_[index_i] = force;
@@ -446,6 +425,16 @@ struct boundary_condition
     }
 };
 }; // namespace plate
+
+void write_particle_position(BaseParticles &particles, const std::string &file_path)
+{
+    auto *pos = particles.getVariableDataByName<Vecd>("Position");
+    std::ofstream stream;
+    stream.open(file_path);
+    for (size_t index_i = 0; index_i < particles.TotalRealParticles(); index_i++)
+        stream << index_i << " " << pos[index_i][0] << " " << pos[index_i][1] << " " << pos[index_i][2] << "\n";
+    stream.close();
+}
 
 void run_shell_to_solid_coupling(int res_factor, Real stiffness_ratio, int load_type)
 {
@@ -621,6 +610,10 @@ void run_shell_to_solid_coupling(int res_factor, Real stiffness_ratio, int load_
         vtp_output.writeToFile(ite_output + 1);
         exit(0);
     }
+
+    // write the shell particle position for post-processing
+    write_particle_position(lower_shell_body.getBaseParticles(), "./lower_shell_position.txt");
+    write_particle_position(upper_shell_body.getBaseParticles(), "./upper_shell_position.txt");
 }
 
 void run_solid(int res_factor, Real stiffness_ratio, int load_type)
