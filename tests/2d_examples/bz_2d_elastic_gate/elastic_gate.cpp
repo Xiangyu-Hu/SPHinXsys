@@ -30,16 +30,17 @@ Vec2d DamP_rt(DL, Dam_H);         /**< Right top. */
 Vec2d DamP_rb(DL, 0.0);           /**< Right bottom. */
 /** Define the corner points of the gate geometry. */
 Vec2d GateP_lb(DL - Dam_L - Gate_width, 0.0);        /**< Left bottom. */
-Vec2d GateP_lt(DL - Dam_L - Gate_width, Dam_H + BW); /**< Left top. */
-Vec2d GateP_rt(DL - Dam_L, Dam_H + BW);              /**< Right top. */
+Vec2d GateP_lt(DL - Dam_L - Gate_width, DH - BW); /**< Left top. */
+Vec2d GateP_rt(DL - Dam_L, DH - BW);              /**< Right top. */
 Vec2d GateP_rb(DL - Dam_L, 0.0);                     /**< Right bottom. */
 /** Define the corner points of the gate constrain. */
 Vec2d ConstrainP_lb(DL - Dam_L - Gate_width, Base_bottom_position); /**< Left bottom. */
-Vec2d ConstrainP_lt(DL - Dam_L - Gate_width, Dam_H + BW);           /**< Left top. */
-Vec2d ConstrainP_rt(DL - Dam_L, Dam_H + BW);                        /**< Right top. */
+Vec2d ConstrainP_lt(DL - Dam_L - Gate_width, DH - BW);           /**< Left top. */
+Vec2d ConstrainP_rt(DL - Dam_L, DH - BW);                        /**< Right top. */
 Vec2d ConstrainP_rb(DL - Dam_L, Base_bottom_position);              /**< Right bottom. */
 // observer location
-StdVec<Vecd> observation_location = {GateP_lb};
+Vec2d Observe_point(DL - Dam_L - 0.5 * Gate_width, 0.0);
+StdVec<Vecd> observation_location = { GateP_rb };
 //----------------------------------------------------------------------
 //	Material properties of the fluid.
 //----------------------------------------------------------------------
@@ -51,7 +52,7 @@ Real c_f = 20.0 * sqrt(140.0 * gravity_g); /**< Reference sound speed. */
 //	Material parameters of the elastic gate.
 //----------------------------------------------------------------------
 Real rho0_s = 1.1;   /**< Reference density of gate. */
-Real poisson = 0.47; /**< Poisson ratio. */
+Real poisson = 0.4; /**< Poisson ratio. */
 Real Ae = 7.8e3;     /**< Normalized Youngs Modulus. */
 Real Youngs_modulus = Ae * rho0_f * U_f * U_f;
 //----------------------------------------------------------------------
@@ -205,8 +206,8 @@ int main(int ac, char *av[])
 
     Gravity gravity(Vecd(0.0, -gravity_g));
     SimpleDynamics<GravityForce<Gravity>> constant_gravity(water_block, gravity);
-    InteractionWithUpdate<LinearGradientCorrectionMatrixComplex> corrected_configuration_fluid(water_block_inner, water_block_contact);
-    Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation(water_block_inner, water_block_contact);
+    InteractionWithUpdate<LinearGradientCorrectionMatrixComplex> corrected_configuration_fluid(ConstructorArgs(water_block_inner, 0.9), water_block_contact);
+    Dynamics1Level<fluid_dynamics::Integration1stHalfCorrectionWithWallRiemann> pressure_relaxation(water_block_inner, water_block_contact);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallRiemann> density_relaxation(water_block_inner, water_block_contact);
     InteractionWithUpdate<fluid_dynamics::DensitySummationComplexFreeSurface> update_density_by_summation(water_block_inner, water_block_contact);
 
@@ -224,8 +225,10 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToPlt write_real_body_states_to_plt(sph_system);
-    BodyStatesRecordingToVtp write_real_body_states_to_vtp(sph_system);
+    BodyStatesRecordingToPlt write_real_body_states_to_vtp(sph_system);
+    write_real_body_states_to_vtp.addToWrite<Real>(water_block, "Pressure");
+    write_real_body_states_to_vtp.addToWrite<Real>(water_block, "Density");
+    write_real_body_states_to_vtp.addDerivedVariableRecording<SimpleDynamics<VonMisesStress>>(gate);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
         write_beam_tip_displacement("Position", gate_observer_contact);
     // TODO: observing position is not as good observing displacement.
@@ -240,6 +243,7 @@ int main(int ac, char *av[])
     gate_normal_direction.exec();
     gate_corrected_configuration.exec();
     constant_gravity.exec();
+    corrected_configuration_fluid.exec();
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
@@ -268,6 +272,7 @@ int main(int ac, char *av[])
         {
             Real Dt = get_fluid_advection_time_step_size.exec();
             update_density_by_summation.exec();
+            corrected_configuration_fluid.exec();
             /** Update normal direction at elastic body surface. */
             gate_update_normal.exec();
             Real relaxation_time = 0.0;
