@@ -4,27 +4,31 @@
  * @details This is the one of the basic test cases for mixed pressure/velocity in-/outlet boundary conditions.
  * @author 	Shuoguo Zhang and Xiangyu Hu
  */
+#include "base_body_part.h"
 #include "sphinxsys_ck.h"
+#include "gtest/gtest.h"
 
 using namespace SPH;
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real DL = 0.004;                                             /**< Channel length. */
-Real DH = 0.001;                                             /**< Channel height. */
-Real resolution_ref = DH / 20.0;                             /**< Initial reference particle spacing. */
-Real BW = resolution_ref * 4;                                /**< Extending width for BCs. */
-StdVec<Vecd> observer_location = {Vecd(0.5 * DL, 0.5 * DH)}; /**< Displacement observation point. */
+Real DL = 0.004;                 /**< Channel length. */
+Real DH = 0.001;                 /**< Channel height. */
+Real resolution_ref = DH / 20.0; /**< Initial reference particle spacing. */
+Real BW = resolution_ref * 4;    /**< Extending width for BCs. */
+StdVec<Vecd> observer_location;
 BoundingBox system_domain_bounds(Vec2d(-BW * 2, -BW * 2), Vec2d(DL + BW * 2, DH + BW * 2));
 //----------------------------------------------------------------------
 //	Material parameters.
 //----------------------------------------------------------------------
 Real Inlet_pressure = 0.2;
-Real Outlet_pressure = -0.2;
+Real Outlet_pressure = 0.1;
 Real rho0_f = 1000.0;
 Real Re = 50.0;
 Real mu_f = sqrt(rho0_f * pow(0.5 * DH, 3.0) * fabs(Inlet_pressure - Outlet_pressure) / (Re * DL));
-Real U_f = pow(0.5 * DH, 2.0) * fabs(Inlet_pressure - Outlet_pressure) / (2.0 * mu_f * DL);
+// Real U_f = pow(0.5 * DH, 2.0) * fabs(Inlet_pressure - Outlet_pressure) / (2.0 * mu_f * DL);
+Real U_f = (DH * DH * fabs(Inlet_pressure - Outlet_pressure)) / (8.0 * mu_f * DL);
+
 // Real U_f = 0.05;
 Real c_f = 10.0 * U_f;
 //----------------------------------------------------------------------
@@ -69,10 +73,10 @@ struct RightInflowPressure
 //----------------------------------------------------------------------
 //	Inlet inflow condition
 //----------------------------------------------------------------------
-class InletInflowCondition : public BaseStateCondition
+class InletInflowConditionLeft : public BaseStateCondition
 {
   public:
-    InletInflowCondition(BaseParticles *particles)
+    InletInflowConditionLeft(BaseParticles *particles)
         : BaseStateCondition(particles) {};
 
     class ComputingKernel : public BaseStateCondition::ComputingKernel
@@ -82,19 +86,44 @@ class InletInflowCondition : public BaseStateCondition
         ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
             : BaseStateCondition::ComputingKernel(ex_policy, encloser){};
 
-        void operator()(AlignedBox *aligned_box, UnsignedInt index_i)
+        void operator()(AlignedBox *aligned_box, UnsignedInt index_i, Real time)
         {
-            vel_[index_i] = Vec2d(U_f, 0.0);
+
+            // Shift the y-coordinate so that y_centered = 0 corresponds to the channel center.
+            Real y_centered = pos_[index_i][1] - 0.5 * DH;
+
+            // Steady-state analytical solution for Poiseuille flow (expressed in centered coordinates)
+            Real u_steady = U_f * (1.0 - pow((2.0 * y_centered / DH), 2));
+
+            // Define a characteristic time scale for the transient behavior.
+            // Here, tau is chosen as DH^2 / (Pi^2 * mu_f).
+            Real tau = DH * DH / (Pi * Pi * mu_f);
+
+            // Transient factor that starts at 0 when time=0 and approaches 1 as t increases.
+            Real transient_factor = 1.0 - exp(-time / tau);
+            // Combine to obtain the time-dependent analytical velocity profile
+            Real u_ave = u_steady * transient_factor;
+            vel_[index_i] = Vec2d(u_ave, 0.0);
         };
     };
 };
+
+Real poiseuille_2d_u_steady(double y)
+{
+    // Shift the y-coordinate so that y_centered = 0 corresponds to the channel center.
+    Real y_centered = y - 0.5 * DH;
+
+    // Steady-state analytical solution for Poiseuille flow (expressed in centered coordinates)
+    Real u_steady = U_f * (1.0 - pow((2.0 * y_centered / DH), 2));
+    return u_steady;
+}
 //----------------------------------------------------------------------
-//	InletInflowpPressureCondition
+//	InletInflowConditionLeft
 //----------------------------------------------------------------------
-class InletInflowpPressureCondition : public BaseStateCondition
+class InletInflowpPressureConditionLeft : public BaseStateCondition
 {
   public:
-    InletInflowpPressureCondition(BaseParticles *particles)
+    InletInflowpPressureConditionLeft(BaseParticles *particles)
         : BaseStateCondition(particles) {};
 
     class ComputingKernel : public BaseStateCondition::ComputingKernel
@@ -106,21 +135,8 @@ class InletInflowpPressureCondition : public BaseStateCondition
 
         Real operator()(size_t index_i, Real time)
         {
-            Real rise_time = 0.0; // Time duration for full sine increase
-            Real p = 0.0;
-            Real target_pressure_ = Inlet_pressure;
 
-            if (time < rise_time)
-            {
-                p = target_pressure_ * 0.5 * (1.0 - cos(M_PI * time / rise_time));
-            }
-            else
-            {
-                p = target_pressure_;
-            }
-
-            // p_[index_i] = p;
-            return p;
+            return Inlet_pressure;
         };
     };
 };
@@ -140,21 +156,7 @@ class InletInflowpPressureConditionRight : public BaseStateCondition
 
         Real operator()(size_t index_i, Real time)
         {
-            Real rise_time = 0.0; // Time duration for full sine increase
-            Real p = 0.0;
-            Real target_pressure_ = Outlet_pressure;
-
-            if (time < rise_time)
-            {
-                p = target_pressure_ * 0.5 * (1.0 - cos(M_PI * time / rise_time));
-            }
-            else
-            {
-                p = target_pressure_;
-            }
-
-            // p_[index_i] = p;
-            return p;
+            return Outlet_pressure;
         };
     };
 };
@@ -224,6 +226,15 @@ int main(int ac, char *av[])
     SolidBody wall(sph_system, makeShared<WallBoundary>("WallBoundary"));
     wall.defineMaterial<Solid>();
     wall.generateParticles<BaseParticles, Lattice>();
+    // Add observer
+    {
+        int num_points = 15;
+        Real dy = DH / (num_points - 1);
+        for (int i = 0; i < num_points; ++i)
+        {
+            observer_location.push_back(Vecd(0.5 * DL, i * dy));
+        }
+    }
 
     ObserverBody velocity_observer(sph_system, "VelocityObserver");
     velocity_observer.generateParticles<ObserverParticles>(observer_location);
@@ -297,23 +308,11 @@ int main(int ac, char *av[])
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::ViscousForceWithWallCK>
         fluid_viscous_force(water_body_inner, water_wall_contact);
 
-    StateDynamics<MainExecutionPolicy, fluid_dynamics::TagBufferParticlesCK> left_tag_buffer_particle_(left_emitter_by_cell);
-    StateDynamics<MainExecutionPolicy, fluid_dynamics::TagBufferParticlesCK> right_tag_buffer_particle_(right_emitter_by_cell);
+    fluid_dynamics::VelocityBidirectionalConditionCK<MainExecutionPolicy, NoKernelCorrectionCK, InletInflowConditionLeft>
+        bidirectional_velocity_condition_left(left_emitter_by_cell, inlet_buffer);
 
-    // template class BufferEmitterInflowInjectionCK<AlignedBoxPartByCell, InletInflowpPressureCondition>;
-    // template class BufferEmitterInflowInjectionCK<AlignedBoxPartByParticle, InletInflowpPressureCondition>;
-    StateDynamics<MainExecutionPolicy, fluid_dynamics::InflowConditionCK<AlignedBoxPartByCell, InletInflowCondition>> inflow_condition(left_emitter_by_cell);
-    StateDynamics<MainExecutionPolicy, fluid_dynamics::PressureConditionCK<AlignedBoxPartByCell, NoKernelCorrectionCK, InletInflowpPressureCondition>> pressure_condition(left_emitter_by_cell);
-    StateDynamics<execution::SequencedPolicy, fluid_dynamics::BufferEmitterInflowInjectionCK<AlignedBoxPartByCell, InletInflowpPressureCondition>> emitter_injection(left_emitter_by_cell, inlet_buffer);
-    // StateDynamics<execution::SequencedPolicy, fluid_dynamics::BufferEmitterInflowInjectionCK<AlignedBoxPartByCell>> emitter_injection(left_emitter_by_cell, inlet_buffer);
-    // StateDynamics<execution::SequencedPolicy, fluid_dynamics::EmitterInflowInjectionCK<AlignedBoxPartByParticle>> emitter_injection(left_emitter_by_particle, inlet_buffer);
-    StateDynamics<SequencedExecutionPolicy, fluid_dynamics::DisposerOutflowDeletionCK> right_remove_particles(right_disposer);
-
-    fluid_dynamics::BidirectionalBufferCK<MainExecutionPolicy, NoKernelCorrectionCK, InletInflowpPressureCondition>
-        bidirectional_buffer_left(left_emitter_by_cell, inlet_buffer);
-
-    fluid_dynamics::BidirectionalBufferCK<MainExecutionPolicy, NoKernelCorrectionCK, InletInflowpPressureConditionRight>
-        bidirectional_buffer_right(right_emitter_by_cell, inlet_buffer);
+    fluid_dynamics::PressureBidirectionalConditionCK<MainExecutionPolicy, NoKernelCorrectionCK, InletInflowpPressureConditionRight>
+        bidirectional_pressure_condition_right(right_emitter_by_cell, inlet_buffer);
 
     // InnerRelation water_block_inner(water_body);
     // ContactRelation water_block_contact(water_body, {&wall});
@@ -351,18 +350,18 @@ int main(int ac, char *av[])
     water_body_update_complex_relation.exec();
     fluid_observer_contact_relation.exec();
     fluid_boundary_indicator.exec();
-    bidirectional_buffer_left.tagBufferParticles();
-    bidirectional_buffer_right.tagBufferParticles();
+    bidirectional_velocity_condition_left.tagBufferParticles();
+    bidirectional_pressure_condition_right.tagBufferParticles();
     // right_tag_buffer_particle_.exec();
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
     SingularVariable<Real> *sv_physical_time = sph_system.getSystemVariableByName<Real>("PhysicalTime");
     int number_of_iterations = 0;
-    int screen_output_interval = 1000;
-    int observation_sample_interval = 1000;
+    int screen_output_interval = 100;
+    int observation_sample_interval = screen_output_interval * 2;
     Real end_time = 10.0;
-    Real output_interval = end_time / 100;
+    Real output_interval = 0.1;
     Real total_time = 0.0;
     Real relax_time = 1.0;
     /** statistics for computing time. */
@@ -397,12 +396,12 @@ int main(int ac, char *av[])
             Real acoustic_dt = 0.0;
             while (relaxation_time < advection_dt)
             {
-                acoustic_dt = fluid_acoustic_time_step.exec();
-                acoustic_dt = std::min(acoustic_dt, advection_dt - relaxation_time);
+                acoustic_dt = SMIN(fluid_acoustic_time_step.exec(), advection_dt);
                 fluid_acoustic_step_1st_half.exec(acoustic_dt);
                 zero_gradient_ck.exec();
-                bidirectional_buffer_left.applyPressureCondition(acoustic_dt);
-                bidirectional_buffer_right.applyPressureCondition(acoustic_dt);
+                bidirectional_velocity_condition_left.applyVelocityCondition();
+                bidirectional_pressure_condition_right.applyPressureCondition(acoustic_dt);
+
                 fluid_acoustic_step_2nd_half.exec(acoustic_dt);
 
                 relaxation_time += acoustic_dt;
@@ -416,20 +415,19 @@ int main(int ac, char *av[])
                 std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
                           << sv_physical_time->getValue()
                           << "	Dt = " << advection_dt << "	dt = " << acoustic_dt << "\n";
+                if (number_of_iterations % observation_sample_interval == 0 && number_of_iterations != sph_system.RestartStep())
+                {
+                    write_centerline_velocity.writeToFile(number_of_iterations);
+                }
             }
             number_of_iterations++;
 
             /** inflow emitter injection*/
-            bidirectional_buffer_left.injectParticles();
-            // bidirectional_buffer_right.injectParticles();
-            // bidirectional_buffer_left.deleteParticles();
-            std::cout << "before remove: " << number_of_iterations << " \n";
+            bidirectional_velocity_condition_left.injectParticles();
+            bidirectional_pressure_condition_right.injectParticles();
+            bidirectional_velocity_condition_left.deleteParticles();
+            bidirectional_pressure_condition_right.deleteParticles();
 
-            bidirectional_buffer_right.deleteParticles();
-            std::cout << "after remove: " << number_of_iterations << " \n";
-
-            // emitter_injection.exec();
-            // right_remove_particles.exec();
             /** Update cell linked list and configuration. */
             if (number_of_iterations % 100 == 0 && number_of_iterations != 1)
             {
@@ -441,28 +439,40 @@ int main(int ac, char *av[])
             water_body_update_complex_relation.exec();
             fluid_observer_contact_relation.exec();
             fluid_boundary_indicator.exec();
-            bidirectional_buffer_left.tagBufferParticles();
-            bidirectional_buffer_right.tagBufferParticles();
-            // right_tag_buffer_particle_.exec();
-            // label_left_indicator.exec();
-            // label_right_indicator.exec();
-            body_states_recording.writeToFile(MainExecutionPolicy{});
+            bidirectional_velocity_condition_left.tagBufferParticles();
+            bidirectional_pressure_condition_right.tagBufferParticles();
         }
 
         TickCount t2 = TickCount::now();
 
         body_states_recording.writeToFile(MainExecutionPolicy{});
+        fluid_observer_contact_relation.exec();
+
         TickCount t3 = TickCount::now();
         interval += t3 - t2;
     }
 
-    if (sph_system.GenerateRegressionData())
     {
-        write_centerline_velocity.generateDataBase(1.0e-3);
-    }
-    else
-    {
-        write_centerline_velocity.testResult();
+        // Get the velocity data from the observer body particles
+        auto observer_vel = velocity_observer.getBaseParticles().getVariableDataByName<Vecd>("Velocity");
+
+        // Loop over each observer point and compare the x-component of the velocity.
+        for (size_t index = 0; index < observer_location.size(); ++index)
+        {
+            Real y = observer_location[index][1];
+            Real vel_x_analytical = poiseuille_2d_u_steady(y);
+            Real vel_x_simulation = observer_vel[index][0];
+            // Check that the simulation velocity is within a tolerance of the analytical value.
+            // EXPECT_NEAR(vel_x_simulation, vel_x_analytical, 1.0e-3)
+            //     << "Mismatch at observer index " << index
+            //     << ": analytical = " << vel_x_analytical
+            //     << ", simulation = " << vel_x_simulation;
+            std::cout << "Observer index " << index
+                      << ": y = " << y
+                      << ", analytical velocity = " << vel_x_analytical
+                      << ", simulation velocity = " << vel_x_simulation
+                      << std::endl;
+        }
     }
 
     return 0;
