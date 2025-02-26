@@ -13,20 +13,24 @@ template <class AlignedBoxPartType, class ConditionFunction>
 InflowConditionCK<AlignedBoxPartType, ConditionFunction>::
     InflowConditionCK(AlignedBoxPartType &aligned_box_part)
     : BaseLocalDynamics<AlignedBoxPartType>(aligned_box_part),
+      sv_physical_time_(this->sph_system_.template getSystemVariableByName<Real>("PhysicalTime")),
       sv_aligned_box_(aligned_box_part.svAlignedBox()),
-      condition_function_(this->particles_) {}
+      condition_function_(this->particles_)
+{
+}
 
 template <class AlignedBoxPartType, class ConditionFunction>
 template <class ExecutionPolicy, class EncloserType>
 InflowConditionCK<AlignedBoxPartType, ConditionFunction>::UpdateKernel::
     UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-    : aligned_box_(encloser.sv_aligned_box_->DelegatedData(ex_policy)),
+    : physical_time_(encloser.sv_physical_time_->DelegatedData(ex_policy)),
+      aligned_box_(encloser.sv_aligned_box_->DelegatedData(ex_policy)),
       condition_(ex_policy, encloser.condition_function_) {}
 
 template <class AlignedBoxPartType, class ConditionFunction>
 void InflowConditionCK<AlignedBoxPartType, ConditionFunction>::UpdateKernel::update(size_t index_i, Real dt)
 {
-    condition_(aligned_box_, index_i);
+    condition_(aligned_box_, index_i, *physical_time_);
 }
 
 //=================================================================================================//

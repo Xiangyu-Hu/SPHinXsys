@@ -62,11 +62,13 @@ class InflowConditionCK<AlignedBoxPartType, ConditionFunction>
         void update(size_t index_i, Real dt = 0.0);
 
       protected:
+        Real *physical_time_;
         AlignedBox *aligned_box_;
         ConditionKernel condition_;
     };
 
   protected:
+    SingularVariable<Real> *sv_physical_time_;
     SingularVariable<AlignedBox> *sv_aligned_box_;
     ConditionFunction condition_function_;
 };
