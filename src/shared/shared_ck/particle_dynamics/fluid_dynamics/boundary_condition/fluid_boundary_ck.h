@@ -284,16 +284,6 @@ namespace SPH
 {
 namespace fluid_dynamics
 {
-struct NonPrescribedPressure
-{
-    template <class BoundaryConditionType>
-    NonPrescribedPressure(BoundaryConditionType &boundary_condition) {}
-
-    Real operator()(Real p, Real current_time)
-    {
-        return p;
-    }
-};
 
 class TagBufferParticlesCK : public BaseLocalDynamics<AlignedBoxPartByCell>
 {
@@ -366,22 +356,22 @@ class PressureConditionCK<AlignedBoxPartType, KernelCorrectionType, ConditionFun
     DiscreteVariable<Real> *dv_rho_;
 };
 
-template <typename ExecutionPolicy, class KernelCorrectionType, class ConditionFunction>
-class BidirectionalBufferCK
+template <typename ExecutionPolicy, class KernelCorrectionType, class PressureConditionFunction>
+class PressureBidirectionalConditionCK
 {
   public:
     StateDynamics<ExecutionPolicy, TagBufferParticlesCK> tag_buffer_particles_;
 
     StateDynamics<ExecutionPolicy,
-                  PressureConditionCK<AlignedBoxPartByCell, KernelCorrectionType, ConditionFunction>>
+                  PressureConditionCK<AlignedBoxPartByCell, KernelCorrectionType, PressureConditionFunction>>
         pressure_condition_;
 
-    StateDynamics<execution::SequencedPolicy, BufferEmitterInflowInjectionCK<AlignedBoxPartByCell, ConditionFunction>> emitter_injection_;
+    StateDynamics<execution::SequencedPolicy, BufferEmitterInflowInjectionCK<AlignedBoxPartByCell, PressureConditionFunction>> emitter_injection_;
 
     StateDynamics<execution::SequencedPolicy, DisposerOutflowDeletionCK> disposer_outflow_deletion_;
 
-    BidirectionalBufferCK(AlignedBoxPartByCell &emitter_by_cell,
-                          ParticleBuffer<Base> &inlet_buffer)
+    PressureBidirectionalConditionCK(AlignedBoxPartByCell &emitter_by_cell,
+                                     ParticleBuffer<Base> &inlet_buffer)
         : tag_buffer_particles_(emitter_by_cell),
           pressure_condition_(emitter_by_cell),
           emitter_injection_(emitter_by_cell, inlet_buffer),
@@ -389,13 +379,65 @@ class BidirectionalBufferCK
     {
     }
 
-    // Member functions to call the internal dynamics
-
     /// Tag (or flag) particles in the buffer.
     void tagBufferParticles() { tag_buffer_particles_.exec(); }
 
     /// Apply the pressure condition (note that this usually takes a time-step dt).
     void applyPressureCondition(Real dt) { pressure_condition_.exec(dt); }
+
+    /// Perform the injection step (for inflow).
+    void injectParticles() { emitter_injection_.exec(); }
+
+    /// Perform the deletion step (for outflow).
+    void deleteParticles() { disposer_outflow_deletion_.exec(); }
+};
+class NonPrescribedPressure : public BaseStateCondition
+{
+  public:
+    NonPrescribedPressure(BaseParticles *particles)
+        : BaseStateCondition(particles) {};
+
+    // The "ComputingKernel" is what your SPHinXsys code will instantiate
+    class ComputingKernel : public BaseStateCondition::ComputingKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+            : BaseStateCondition::ComputingKernel(ex_policy, encloser) {}
+
+        // Return a fixed or trivial pressure value
+        Real operator()(size_t index_i, Real time)
+        {
+            return p_[index_i]; // Do nothing!
+        }
+    };
+};
+template <typename ExecutionPolicy, class KernelCorrectionType, class VelocityConditionFunction>
+class VelocityBidirectionalConditionCK
+{
+  public:
+    StateDynamics<ExecutionPolicy, TagBufferParticlesCK> tag_buffer_particles_;
+
+    StateDynamics<ExecutionPolicy, fluid_dynamics::InflowConditionCK<AlignedBoxPartByCell, VelocityConditionFunction>> velocity_condition_;
+
+    StateDynamics<execution::SequencedPolicy, BufferEmitterInflowInjectionCK<AlignedBoxPartByCell, NonPrescribedPressure>> emitter_injection_; // Using NonPrescribedPressure as we do not change pressure
+
+    StateDynamics<execution::SequencedPolicy, DisposerOutflowDeletionCK> disposer_outflow_deletion_;
+
+    VelocityBidirectionalConditionCK(AlignedBoxPartByCell &emitter_by_cell,
+                                     ParticleBuffer<Base> &inlet_buffer)
+        : tag_buffer_particles_(emitter_by_cell),
+          velocity_condition_(emitter_by_cell),
+          emitter_injection_(emitter_by_cell, inlet_buffer),
+          disposer_outflow_deletion_(emitter_by_cell)
+    {
+    }
+
+    /// Tag (or flag) particles in the buffer.
+    void tagBufferParticles() { tag_buffer_particles_.exec(); }
+
+    /// Apply the velocity condition.
+    void applyVelocityCondition() { velocity_condition_.exec(); }
 
     /// Perform the injection step (for inflow).
     void injectParticles() { emitter_injection_.exec(); }
