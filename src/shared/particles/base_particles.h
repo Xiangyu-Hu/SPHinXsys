@@ -167,6 +167,10 @@ class BaseParticles
     DiscreteVariable<DataType> *registerStateVariableOnlyFrom(const std::string &name, const StdLargeVec<DataType> &geometric_data);
     template <typename DataType>
     DiscreteVariable<DataType> *registerStateVariableOnlyFromReload(const std::string &name);
+    template <typename DataType>
+    StdVec<DiscreteVariable<DataType> *> registerStateVariables(const StdVec<std::string> &names, const std::string &suffix);
+    template <typename DataType>
+    StdVec<DiscreteVariable<DataType> *> getVariablesByName(const StdVec<std::string> &names, const std::string &suffix);
 
     template <typename DataType>
     SingularVariable<DataType> *addUniqueSingularVariableOnly(const std::string &name, DataType initial_value = ZeroData<DataType>::value);
