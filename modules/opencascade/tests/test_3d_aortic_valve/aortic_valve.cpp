@@ -45,12 +45,9 @@ class BoundaryGeometry : public BodyPartByParticle
     virtual ~BoundaryGeometry(){};
 
   private:
-    void tagManually(size_t index_i)
+    bool tagManually(size_t index_i)
     {
-        if (index_i >= 0 && index_i <= (2 / DELTA1 + 2 / DELTA2 - 1))
-        {
-            body_part_particles_.push_back(index_i);
-        }
+        return index_i >= 0 && index_i <= (2 / DELTA1 + 2 / DELTA2 - 1);
     };
 };
 

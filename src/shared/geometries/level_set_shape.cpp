@@ -19,7 +19,7 @@ LevelSetShape::
 LevelSetShape::LevelSetShape(SPHBody &sph_body, Shape &shape, Real refinement_ratio)
     : Shape(shape.getName()),
       level_set_(*level_set_keeper_.movePtr(
-          sph_body.sph_adaptation_->createLevelSet(shape, refinement_ratio)))
+          sph_body.getSPHAdaptation().createLevelSet(shape, refinement_ratio)))
 {
     bounding_box_ = shape.getBounds();
     is_bounds_found_ = true;

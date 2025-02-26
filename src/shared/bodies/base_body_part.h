@@ -63,6 +63,7 @@ class BodyPart
     BaseParticles &base_particles_;
     DiscreteVariable<UnsignedInt> *dv_index_list_;
     SingularVariable<UnsignedInt> *sv_range_size_;
+    DiscreteVariable<int> *dv_body_part_indicator_;
     Vecd *pos_;
 };
 
@@ -80,25 +81,36 @@ class BodyPartByParticle : public BodyPart
     size_t SizeOfLoopRange() { return body_part_particles_.size(); };
     BodyPartByParticle(SPHBody &sph_body, const std::string &body_part_name);
     virtual ~BodyPartByParticle() {};
+    void setBodyPartBounds(BoundingBox bbox);
+    BoundingBox getBodyPartBounds();
 
-    void setBodyPartBounds(BoundingBox bbox)
+    template <typename TargetCriterion>
+    class TargetParticleMask : public TargetCriterion
     {
-        body_part_bounds_ = bbox;
-        body_part_bounds_set_ = true;
+      public:
+        template <class ExecutionPolicy, typename EnclosureType, typename... Args>
+        TargetParticleMask(ExecutionPolicy &ex_policy, EnclosureType &encloser, Args &&...args)
+            : TargetCriterion(std::forward<Args>(args)...), part_id_(encloser.part_id_),
+              body_part_indicator_(encloser.dv_body_part_indicator_->DelegatedData(ex_policy)) {}
+        virtual ~TargetParticleMask() {}
+
+        template <typename... Args>
+        bool operator()(UnsignedInt target_index, Args &&...args)
+        {
+            return (body_part_indicator_[target_index] == part_id_) &&
+                   TargetCriterion::operator()(target_index, std::forward<Args>(args)...);
+        }
+
+      protected:
+        int part_id_;
+        int *body_part_indicator_;
     };
-
-    BoundingBox getBodyPartBounds()
-    {
-        if (!body_part_bounds_set_)
-            std::cout << "WARNING: the body part bounds are not set for BodyPartByParticle." << std::endl;
-        return body_part_bounds_;
-    }
 
   protected:
     BoundingBox body_part_bounds_;
     bool body_part_bounds_set_;
 
-    typedef std::function<void(size_t)> TaggingParticleMethod;
+    typedef std::function<bool(size_t)> TaggingParticleMethod;
     void tagParticles(TaggingParticleMethod &tagging_particle_method);
 };
 
@@ -118,7 +130,7 @@ class BodyPartByCell : public BodyPart
     virtual ~BodyPartByCell() {};
     DiscreteVariable<UnsignedInt> *getParticleIndex() { return dv_particle_index_; };
     DiscreteVariable<UnsignedInt> *getCellOffset() { return dv_cell_offset_; };
-    
+
   protected:
     BaseCellLinkedList &cell_linked_list_;
     DiscreteVariable<UnsignedInt> *dv_particle_index_;
@@ -144,7 +156,7 @@ class BodyRegionByParticle : public BodyPartByParticle
 
   protected:
     Shape &body_part_shape_;
-    void tagByContain(size_t particle_index);
+    bool tagByContain(size_t particle_index);
 };
 
 /**
@@ -159,7 +171,7 @@ class BodySurface : public BodyPartByParticle
 
   protected:
     Real particle_spacing_min_;
-    void tagNearSurface(size_t particle_index);
+    bool tagNearSurface(size_t particle_index);
 };
 
 /**
@@ -174,7 +186,7 @@ class BodySurfaceLayer : public BodyPartByParticle
 
   private:
     Real thickness_threshold_;
-    void tagSurfaceLayer(size_t particle_index);
+    bool tagSurfaceLayer(size_t particle_index);
 };
 
 /**
@@ -243,7 +255,7 @@ class AlignedBoxPartByParticle : public BodyPartByParticle, public AlignedBoxPar
     virtual ~AlignedBoxPartByParticle() {};
 
   protected:
-    void tagByContain(size_t particle_index);
+    bool tagByContain(size_t particle_index);
 };
 
 class AlignedBoxPartByCell : public BodyPartByCell, public AlignedBoxPart

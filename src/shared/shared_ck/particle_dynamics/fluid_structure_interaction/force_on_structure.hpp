@@ -49,7 +49,7 @@ ViscousForceFromFluid<Contact<WithUpdate, ViscousForceType, Parameters...>>::
     {
         ViscosityType *viscosity_model_k = DynamicCast<ViscosityType>(this, &this->contact_particles_[k]->getBaseMaterial());
         contact_viscosity_model_.push_back(viscosity_model_k);
-        contact_smoothing_length_sq_.push_back(pow(this->contact_bodies_[k]->sph_adaptation_->ReferenceSmoothingLength(), 2));
+        contact_smoothing_length_sq_.push_back(pow(this->contact_bodies_[k]->getSPHAdaptation().ReferenceSmoothingLength(), 2));
     }
 }
 //=================================================================================================//

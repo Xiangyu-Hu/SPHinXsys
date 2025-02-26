@@ -1,6 +1,6 @@
 #pragma once
-#include "continuum_integration.h"
 #include "base_particles.hpp"
+#include "continuum_integration.h"
 namespace SPH
 {
 namespace continuum_dynamics
@@ -28,10 +28,10 @@ BasePlasticIntegration<DataDelegationType>::BasePlasticIntegration(BaseRelationT
       strain_rate_3D_(this->particles_->template registerStateVariable<Mat3d>("StrainRate3D")),
       velocity_gradient_(this->particles_->template registerStateVariable<Matd>("VelocityGradient"))
 {
-    this->particles_->template addVariableToSort<Mat3d>("StrainTensor3D");
-    this->particles_->template addVariableToSort<Mat3d>("StressTensor3D");
-    this->particles_->template addVariableToSort<Mat3d>("StrainRate3D");
-    this->particles_->template addVariableToSort<Mat3d>("StressRate3D");
+    this->particles_->template addEvolvingVariable<Mat3d>("StrainTensor3D");
+    this->particles_->template addEvolvingVariable<Mat3d>("StressTensor3D");
+    this->particles_->template addEvolvingVariable<Mat3d>("StrainRate3D");
+    this->particles_->template addEvolvingVariable<Mat3d>("StressRate3D");
 }
 //=================================================================================================//
 template <class RiemannSolverType>

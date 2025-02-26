@@ -26,7 +26,7 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     FluidBody fluid_block(sph_system, makeShared<FluidBlock>("FluidBlock"));
-    fluid_block.sph_adaptation_->resetKernel<KernelTabulated<KernelLaguerreGauss>>(20);
+    fluid_block.getSPHAdaptation().resetKernel<KernelTabulated<KernelLaguerreGauss>>(20);
     fluid_block.defineBodyLevelSetShape();
     fluid_block.defineMaterial<CompressibleFluid>(rho_reference, heat_capacity_ratio);
     Ghost<ReserveSizeFactor> ghost_boundary(0.5);

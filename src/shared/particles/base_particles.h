@@ -84,7 +84,7 @@ class BaseParticles
 {
   private:
     DataContainerUniquePtrAssemble<DiscreteVariable> all_discrete_variable_ptrs_;
-    DataContainerUniquePtrAssemble<SingularVariable> all_global_variable_ptrs_;
+    DataContainerUniquePtrAssemble<SingularVariable> all_singular_variable_ptrs_;
     UniquePtrsKeeper<Entity> unique_variable_ptrs_;
 
   public:
@@ -96,13 +96,10 @@ class BaseParticles
     //----------------------------------------------------------------------
     // Global information for defining particle groups
     // total_real_particles_ gives the run-time total number of real particles.
-    // real_particles_bound_ gives the maximum possible number of real particles
-    // which is allowed in the computation.
     // particles_bound_ gives the total number of particles in all groups.
     //----------------------------------------------------------------------
   protected:
     SingularVariable<UnsignedInt> *sv_total_real_particles_;
-    UnsignedInt real_particles_bound_;
     UnsignedInt particles_bound_;
 
   public:
@@ -115,11 +112,10 @@ class BaseParticles
     UnsignedInt TotalRealParticles() { return *sv_total_real_particles_->Data(); };
     void incrementTotalRealParticles(UnsignedInt increment = 1) { *sv_total_real_particles_->Data() += increment; };
     void decrementTotalRealParticles(UnsignedInt decrement = 1) { *sv_total_real_particles_->Data() -= decrement; };
-    UnsignedInt RealParticlesBound() { return real_particles_bound_; };
     UnsignedInt ParticlesBound() { return particles_bound_; };
     void initializeAllParticlesBounds(size_t total_real_particles);
     void initializeAllParticlesBoundsFromReloadXml();
-    void increaseAllParticlesBounds(size_t buffer_size);
+    void increaseParticlesBounds(size_t extra_size);
     void copyFromAnotherParticle(size_t index, size_t another_index);
     size_t allocateGhostParticles(size_t ghost_size);
     void updateGhostParticle(size_t ghost_index, size_t index);
@@ -167,6 +163,14 @@ class BaseParticles
     DiscreteVariable<DataType> *registerStateVariableOnly(const std::string &name, Args &&...args);
     template <typename DataType>
     DiscreteVariable<DataType> *registerStateVariableOnlyFrom(const std::string &new_name, const std::string &old_name);
+    template <typename DataType>
+    DiscreteVariable<DataType> *registerStateVariableOnlyFrom(const std::string &name, const StdLargeVec<DataType> &geometric_data);
+    template <typename DataType>
+    DiscreteVariable<DataType> *registerStateVariableOnlyFromReload(const std::string &name);
+    template <typename DataType>
+    StdVec<DiscreteVariable<DataType> *> registerStateVariables(const StdVec<std::string> &names, const std::string &suffix);
+    template <typename DataType>
+    StdVec<DiscreteVariable<DataType> *> getVariablesByName(const StdVec<std::string> &names, const std::string &suffix);
 
     template <typename DataType>
     SingularVariable<DataType> *addUniqueSingularVariableOnly(const std::string &name, DataType initial_value = ZeroData<DataType>::value);
@@ -181,66 +185,54 @@ class BaseParticles
     DiscreteVariable<DataType> *addVariableToList(ParticleVariables &variable_set, const std::string &name);
     template <typename DataType>
     DiscreteVariable<DataType> *addVariableToList(ParticleVariables &variable_set, DiscreteVariable<DataType> *variable);
-    template <typename DataType>
-    void *addVariableToList(ParticleVariables &variable_set, DiscreteVariableArray<DataType> *variable);
 
-    template <typename DataType>
-    void addVariableToWrite(const std::string &name);
-    template <typename DataType>
-    void addVariableToWrite(DiscreteVariable<DataType> *variable);
+    template <typename DataType, typename... Args>
+    void addVariableToWrite(Args &&...args);
     template <typename DataType>
     void addVariableToWrite(DiscreteVariableArray<DataType> *variable_array);
-    template <typename DataType>
-    void addVariableToRestart(const std::string &name);
-
-    inline const ParticleVariables &getVariablesToRestart() const { return variables_to_restart_; }
-    template <typename DataType>
-    void addVariableToReload(const std::string &name);
-    inline const ParticleVariables &getVariablesToReload() const { return variables_to_reload_; }
-
     //----------------------------------------------------------------------
     // Particle data for sorting
     //----------------------------------------------------------------------
   protected:
-    UnsignedInt *original_id_; /**< the original ids assigned just after particle is generated. */
-    UnsignedInt *sorted_id_;   /**< the current sorted particle ids of particles from original ids. */
-    ParticleData sortable_data_;
-    ParticleVariables variables_to_sort_;
+    UnsignedInt *original_id_;             /**< the original ids assigned just after particle is generated. */
+    UnsignedInt *sorted_id_;               /**< the current sorted particle ids of particles from original ids. */
+    ParticleVariables evolving_variables_; // particle variables which evolving during simulation
+    ParticleData evolving_variables_data_;
 
   public:
+    template <typename DataType, typename... Args>
+    void addEvolvingVariable(Args &&...args);
     template <typename DataType>
-    void addVariableToSort(const std::string &name);
+    void addEvolvingVariable(DiscreteVariableArray<DataType> *variable_array);
     UnsignedInt *ParticleOriginalIds() { return original_id_; };
     UnsignedInt *ParticleSortedIds() { return sorted_id_; };
-    ParticleData &SortableParticleData() { return sortable_data_; };
-    AssignIndex getAssignIndex() { return AssignIndex(); };
-
+    ParticleData &EvolvingVariablesData() { return evolving_variables_data_; };
+    ParticleVariables &VariablesToWrite() { return variables_to_write_; };
+    ParticleVariables &EvolvingVariables() { return evolving_variables_; };
     //----------------------------------------------------------------------
     // Particle data ouput functions
     //----------------------------------------------------------------------
-    void writeParticlesToPltFile(std::ofstream &output_file);
     void resizeXmlDocForParticles(XmlParser &xml_parser);
-    void writeParticlesToXmlForRestart(std::string &filefullpath);
-    void readParticleFromXmlForRestart(std::string &filefullpath);
-    void writeToXmlForReloadParticle(std::string &filefullpath);
-    XmlParser &readReloadXmlFile(const std::string &filefullpath);
-    template <typename OwnerType>
-    void checkReloadFileRead(OwnerType *owner);
+    void writeParticlesToXmlForRestart(const std::string &filefullpath);
+    void readParticlesFromXmlForRestart(const std::string &filefullpath);
+    void writeParticlesToXmlForReload(const std::string &filefullpath);
+    void readReloadXmlFile(const std::string &filefullpath);
     //----------------------------------------------------------------------
     // Function related to geometric variables and their relations
     //----------------------------------------------------------------------
     void registerPositionAndVolumetricMeasure(StdLargeVec<Vecd> &pos, StdLargeVec<Real> &Vol);
     void registerPositionAndVolumetricMeasureFromReload();
-    Vecd *ParticlePositions() { return pos_; }
+    DiscreteVariable<Vecd> *dvParticlePosition() { return dv_pos_; }
+    Vecd *ParticlePositions() { return dv_pos_->Data(); }
     Real *VolumetricMeasures() { return Vol_; }
     virtual Real ParticleVolume(size_t index) { return Vol_[index]; }
     virtual Real ParticleSpacing(size_t index) { return std::pow(Vol_[index], 1.0 / Real(Dimensions)); }
 
   protected:
-    Vecd *pos_;  /**< Position */
-    Real *Vol_;  /**< Volumetric measure, also area and length of surface and linear particle */
-    Real *rho_;  /**< Density as a fundamental property of phyiscal matter */
-    Real *mass_; /**< Mass as another fundamental property of physical matter */
+    DiscreteVariable<Vecd> *dv_pos_; /**< Discrete variable position */
+    Real *Vol_;                      /**< Volumetric measure, also area and length of surface and linear particle */
+    Real *rho_;                      /**< Density as a fundamental property of phyiscal matter */
+    Real *mass_;                     /**< Mass as another fundamental property of physical matter */
 
     SPHBody &sph_body_;
     std::string body_name_;
@@ -251,20 +243,12 @@ class BaseParticles
     ParticleVariables all_discrete_variables_;
     SingularVariables all_singular_variables_;
     ParticleVariables variables_to_write_;
-    ParticleVariables variables_to_restart_;
-    ParticleVariables variables_to_reload_;
-    bool is_reload_file_read_ = false;
 
-  public:
-    ParticleVariables &VariablesToWrite() { return variables_to_write_; };
-    ParticleVariables &VariablesToRestart() { return variables_to_restart_; };
-    ParticleVariables &VariablesToReload() { return variables_to_reload_; };
-    ParticleVariables &VariablesToSort() { return variables_to_sort_; };
+  protected:
     //----------------------------------------------------------------------
     // Small structs for generalize particle operations on
     // assembled variables and data sets
     //----------------------------------------------------------------------
-  protected:
     struct CopyParticleState
     {
         template <typename DataType>
@@ -273,20 +257,14 @@ class BaseParticles
 
     struct WriteAParticleVariableToXml
     {
-        XmlParser &xml_parser_;
-        WriteAParticleVariableToXml(XmlParser &xml_parser) : xml_parser_(xml_parser) {};
-
         template <typename DataType>
-        void operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables);
+        void operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables, XmlParser &xml_parser);
     };
 
     struct ReadAParticleVariableFromXml
     {
-        XmlParser &xml_parser_;
-        ReadAParticleVariableFromXml(XmlParser &xml_parser) : xml_parser_(xml_parser) {};
-
         template <typename DataType>
-        void operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables, BaseParticles *base_particles);
+        void operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables, BaseParticles *base_particles, XmlParser &xml_parser);
     };
 
     OperationOnDataAssemble<ParticleData, CopyParticleState> copy_particle_state_;

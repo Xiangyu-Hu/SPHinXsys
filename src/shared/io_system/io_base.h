@@ -112,8 +112,8 @@ class BodyStatesRecording : public BaseIO
             {
                 if (bodies_[i]->checkNewlyUpdated())
                 {
-                    dv_all_pos_[i]->prepareForOutput(ex_policy);
                     BaseParticles &base_particles = bodies_[i]->getBaseParticles();
+                    base_particles.dvParticlePosition()->prepareForOutput(ex_policy);
                     prepare_variable_to_write_(base_particles.VariablesToWrite(), ex_policy);
                 }
             }
@@ -166,7 +166,6 @@ class BodyStatesRecording : public BaseIO
     StdVec<BaseDynamics<void> *> derived_variables_;
     OperationOnDataAssemble<ParticleVariables, prepareVariablesToWrite> prepare_variable_to_write_;
     bool state_recording_;
-    StdVec<DiscreteVariable<Vecd> *> dv_all_pos_;
     virtual void writeWithFileName(const std::string &sequence) = 0;
 
   private:
@@ -199,7 +198,7 @@ class RestartIO : public BaseIO
         for (size_t i = 0; i < bodies_.size(); ++i)
         {
             BaseParticles &base_particles = bodies_[i]->getBaseParticles();
-            prepare_variable_to_restart_(base_particles.VariablesToRestart(), ex_policy);
+            prepare_variable_to_restart_(base_particles.EvolvingVariables(), ex_policy);
         }
         writeToFile(iteration_step);
     };
@@ -235,7 +234,7 @@ class ReloadParticleIO : public BaseIO
     {
         if (isBodyIncluded(bodies_, &sph_body))
         {
-            sph_body.getBaseParticles().addVariableToReload<DataType>(name);
+            sph_body.getBaseParticles().addEvolvingVariable<DataType>(name);
         }
         else
         {
@@ -254,7 +253,7 @@ class ReloadParticleIO : public BaseIO
         for (size_t i = 0; i < bodies_.size(); ++i)
         {
             BaseParticles &base_particles = bodies_[i]->getBaseParticles();
-            prepare_variable_to_reload_(base_particles.VariablesToReload(), ex_policy);
+            prepare_variable_to_reload_(base_particles.EvolvingVariables(), ex_policy);
         }
         writeToFile(iteration_step);
     };

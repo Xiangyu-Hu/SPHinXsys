@@ -152,7 +152,7 @@ class FishBody : public MultiPolygonShape
  */
 MultiPolygon createFishHeadShape(SPHBody &sph_body)
 {
-    std::vector<Vecd> fish_shape = CreatFishShape(cx, cy, fish_length, sph_body.sph_adaptation_->ReferenceSpacing());
+    std::vector<Vecd> fish_shape = CreatFishShape(cx, cy, fish_length, sph_body.getSPHAdaptation().ReferenceSpacing());
     MultiPolygon multi_polygon;
     multi_polygon.addAPolygon(fish_shape, ShapeBooleanOps::add);
     multi_polygon.addAPolygon(createFishBlockingShape(), ShapeBooleanOps::sub);

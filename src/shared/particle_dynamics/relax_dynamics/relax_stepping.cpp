@@ -53,7 +53,7 @@ void RelaxationResidue<Contact<>>::interaction(size_t index_i, Real dt)
 RelaxationScaling::RelaxationScaling(SPHBody &sph_body)
     : LocalDynamicsReduce<ReduceMax>(sph_body),
       residue_(particles_->getVariableDataByName<Vecd>("ZeroOrderResidue")),
-      h_ref_(sph_body.sph_adaptation_->ReferenceSmoothingLength()) {}
+      h_ref_(sph_body.getSPHAdaptation().ReferenceSmoothingLength()) {}
 //=================================================================================================//
 Real RelaxationScaling::reduce(size_t index_i, Real dt)
 {
@@ -67,7 +67,7 @@ Real RelaxationScaling::outputResult(Real reduced_value)
 //=================================================================================================//
 PositionRelaxation::PositionRelaxation(SPHBody &sph_body)
     : LocalDynamics(sph_body),
-      sph_adaptation_(sph_body.sph_adaptation_),
+      sph_adaptation_(&sph_body.getSPHAdaptation()),
       pos_(particles_->getVariableDataByName<Vecd>("Position")),
       residue_(particles_->getVariableDataByName<Vecd>("ZeroOrderResidue")) {}
 //=================================================================================================//
@@ -83,7 +83,7 @@ UpdateSmoothingLengthRatioByShape::
       Vol_(particles_->getVariableDataByName<Real>("VolumetricMeasure")),
       pos_(particles_->getVariableDataByName<Vecd>("Position")),
       target_shape_(target_shape),
-      particle_adaptation_(DynamicCast<ParticleRefinementByShape>(this, sph_body.sph_adaptation_)),
+      particle_adaptation_(DynamicCast<ParticleRefinementByShape>(this, &sph_body.getSPHAdaptation())),
       reference_spacing_(particle_adaptation_->ReferenceSpacing()) {}
 //=================================================================================================//
 UpdateSmoothingLengthRatioByShape::UpdateSmoothingLengthRatioByShape(SPHBody &sph_body)
