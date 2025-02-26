@@ -229,10 +229,15 @@ int main(int ac, char *av[])
     // Add observer
     {
         int num_points = 15;
-        Real dy = DH / (num_points - 1);
+        Real y_start = 2.0 * resolution_ref;
+        Real y_end = DH - 2.0 * resolution_ref;
+        Real total_range = y_end - y_start;
+        Real dy = total_range / (num_points - 1);
+
         for (int i = 0; i < num_points; ++i)
         {
-            observer_location.push_back(Vecd(0.5 * DL, i * dy));
+            Real y_i = y_start + i * dy;
+            observer_location.push_back(Vecd(0.5 * DL, y_i));
         }
     }
 
@@ -463,15 +468,11 @@ int main(int ac, char *av[])
             Real vel_x_analytical = poiseuille_2d_u_steady(y);
             Real vel_x_simulation = observer_vel[index][0];
             // Check that the simulation velocity is within a tolerance of the analytical value.
-            // EXPECT_NEAR(vel_x_simulation, vel_x_analytical, 1.0e-3)
-            //     << "Mismatch at observer index " << index
-            //     << ": analytical = " << vel_x_analytical
-            //     << ", simulation = " << vel_x_simulation;
-            std::cout << "Observer index " << index
-                      << ": y = " << y
-                      << ", analytical velocity = " << vel_x_analytical
-                      << ", simulation velocity = " << vel_x_simulation
-                      << std::endl;
+            // less than 3 % error with 20 particles per DH
+            EXPECT_NEAR(vel_x_simulation, vel_x_analytical, 0.03 * U_f)
+                << "Mismatch at observer index " << index
+                << ": analytical = " << vel_x_analytical
+                << ", simulation = " << vel_x_simulation;
         }
     }
 
