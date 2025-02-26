@@ -18,8 +18,9 @@ BodyPartByParticle::BodyPartByParticle(SPHBody &sph_body, const std::string &bod
       body_part_bounds_(Vecd::Zero(), Vecd::Zero()), body_part_bounds_set_(false)
 {
     sph_body.addBodyPartByParticle(this);
-    dv_body_part_indicator_ = base_particles_.registerStateVariableOnly<int>("BodyPartIndicator");
-    base_particles_.addEvolvingVariable<int>("BodyPartIndicator");
+    dv_body_part_indicator_ = unique_variable_ptrs_.createPtr<DiscreteVariable<int>>(
+        body_part_name + "Indicator", base_particles_.ParticlesBound());
+    base_particles_.addEvolvingVariable<int>(dv_body_part_indicator_);
 }
 //=================================================================================================//
 void BodyPartByParticle::setBodyPartBounds(BoundingBox bbox)
@@ -58,8 +59,8 @@ BodyPartByCell::BodyPartByCell(RealBody &real_body, const std::string &body_part
       dv_particle_index_(cell_linked_list_.getParticleIndex()),
       dv_cell_offset_(cell_linked_list_.getCellOffset())
 {
-    dv_body_part_indicator_ = cell_linked_list_.registerDiscreteVariableOnly<int>(
-        "BodyPartIndicator", cell_linked_list_.TotalNumberOfCells());
+    dv_body_part_indicator_ = unique_variable_ptrs_.createPtr<DiscreteVariable<int>>(
+        body_part_name + "Indicator", cell_linked_list_.TotalNumberOfCells());
 }
 //=============================================================================================//
 size_t BodyPartByCell::SizeOfLoopRange()
