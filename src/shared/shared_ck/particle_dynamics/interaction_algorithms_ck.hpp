@@ -94,7 +94,10 @@ InteractionDynamicsCK<ExecutionPolicy, InteractionType<RelationType<WithUpdate, 
           std::forward<Args>(args)...),
       InteractionDynamicsCK<WithUpdate>(),
       BaseDynamics<void>(),
-      kernel_implementation_(*this) {}
+      kernel_implementation_(*this)
+{
+    this->registerComputingKernel(&kernel_implementation_);
+}
 //=================================================================================================//
 template <class ExecutionPolicy, template <typename...> class InteractionType,
           template <typename...> class RelationType, typename... OtherParameters>
