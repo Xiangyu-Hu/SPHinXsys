@@ -174,7 +174,7 @@ class FreeSurfaceIndicationCK<Contact<Parameters...>>
 
 //------------------------------------------------------------------------------------------//
 // Common type alias for complex free-surface indication (inner + contact).
-using FreeSurfaceIndicationComplexCK = FreeSurfaceIndicationCK<Inner<WithUpdate, Internal>, Contact<>>;
+using FreeSurfaceIndicationComplexSpatialTemporalCK = FreeSurfaceIndicationCK<Inner<WithUpdate, Internal>, Contact<>>;
 //------------------------------------------------------------------------------------------//
 
 } // namespace fluid_dynamics
