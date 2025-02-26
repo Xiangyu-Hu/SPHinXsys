@@ -18,8 +18,8 @@ BodyPartByParticle::BodyPartByParticle(SPHBody &sph_body, const std::string &bod
       body_part_bounds_(Vecd::Zero(), Vecd::Zero()), body_part_bounds_set_(false)
 {
     sph_body.addBodyPartByParticle(this);
-    dv_body_part_indicator_ = unique_variable_ptrs_.createPtr<DiscreteVariable<int>>(
-        body_part_name + "Indicator", base_particles_.ParticlesBound());
+    dv_body_part_indicator_ =
+        base_particles_.registerStateVariableOnly<int>(body_part_name + "Indicator");
     base_particles_.addEvolvingVariable<int>(dv_body_part_indicator_);
 }
 //=================================================================================================//
