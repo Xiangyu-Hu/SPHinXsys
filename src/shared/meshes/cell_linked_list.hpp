@@ -158,19 +158,42 @@ void BaseCellLinkedList::particle_for_split_by_mesh(
     }
 }
 //=================================================================================================//
+template <typename DataType>
+DataType *BaseCellLinkedList::initializeVariable(DiscreteVariable<DataType> *variable, DataType initial_value)
+{
+    DataType *data_field = variable->Data();
+    for (size_t i = 0; i != variable->getDataSize(); ++i)
+    {
+        data_field[i] = initial_value;
+    }
+    return data_field;
+}
+//=================================================================================================//
+template <typename DataType, typename... Args>
+DiscreteVariable<DataType> *BaseCellLinkedList::registerDiscreteVariableOnly(
+    const std::string &name, size_t data_size, Args &&...args)
+{
+    DiscreteVariable<DataType> *variable = findVariableByName<DataType>(all_discrete_variables_, name);
+    if (variable == nullptr)
+    {
+        variable = addVariableToAssemble<DataType>(all_discrete_variables_, all_discrete_variable_ptrs_,
+                                                   name, data_size);
+        initializeVariable(variable, std::forward<Args>(args)...);
+    }
+    return variable;
+}
+//=================================================================================================//
 template <class ExecutionPolicy>
-NeighborSearch::NeighborSearch(
-    const ExecutionPolicy &ex_policy, CellLinkedList &cell_linked_list, DiscreteVariable<Vecd> *pos)
-    : Mesh(cell_linked_list.getMesh()), grid_spacing_squared_(grid_spacing_ * grid_spacing_),
-      pos_(pos->DelegatedData(ex_policy)),
+NeighborSearch::NeighborSearch(const ExecutionPolicy &ex_policy, CellLinkedList &cell_linked_list)
+    : Mesh(cell_linked_list.getMesh()),
       particle_index_(cell_linked_list.getParticleIndex()->DelegatedData(ex_policy)),
       cell_offset_(cell_linked_list.getCellOffset()->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <typename FunctionOnEach>
-void NeighborSearch::forEachSearch(UnsignedInt index_i, const Vecd *source_pos,
+void NeighborSearch::forEachSearch(UnsignedInt source_index, const Vecd *source_pos,
                                    const FunctionOnEach &function) const
 {
-    const Arrayi target_cell_index = CellIndexFromPosition(source_pos[index_i]);
+    const Arrayi target_cell_index = CellIndexFromPosition(source_pos[source_index]);
     mesh_for_each(
         Arrayi::Zero().max(target_cell_index - Arrayi::Ones()),
         all_cells_.min(target_cell_index + 2 * Arrayi::Ones()),
@@ -181,20 +204,15 @@ void NeighborSearch::forEachSearch(UnsignedInt index_i, const Vecd *source_pos,
             // offset_cell_size_[0] == 0 && offset_cell_size_[linear_cell_size_] == total_real_particles_
             for (UnsignedInt n = cell_offset_[linear_index]; n < cell_offset_[linear_index + 1]; ++n)
             {
-                const UnsignedInt index_j = particle_index_[n];
-                if ((source_pos[index_i] - pos_[index_j]).squaredNorm() < grid_spacing_squared_)
-                {
-                    function(index_j);
-                }
+                function(particle_index_[n]);
             }
         });
 }
 //=================================================================================================//
 template <class ExecutionPolicy>
-NeighborSearch CellLinkedList::createNeighborSearch(
-    const ExecutionPolicy &ex_policy, DiscreteVariable<Vecd> *pos)
+NeighborSearch CellLinkedList::createNeighborSearch(const ExecutionPolicy &ex_policy)
 {
-    return NeighborSearch(ex_policy, *this, pos);
+    return NeighborSearch(ex_policy, *this);
 }
 //=================================================================================================//
 template <class LocalDynamicsFunction>

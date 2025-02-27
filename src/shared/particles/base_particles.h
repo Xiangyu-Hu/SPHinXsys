@@ -84,7 +84,7 @@ class BaseParticles
 {
   private:
     DataContainerUniquePtrAssemble<DiscreteVariable> all_discrete_variable_ptrs_;
-    DataContainerUniquePtrAssemble<SingularVariable> all_global_variable_ptrs_;
+    DataContainerUniquePtrAssemble<SingularVariable> all_singular_variable_ptrs_;
     UniquePtrsKeeper<Entity> unique_variable_ptrs_;
 
   public:
@@ -167,6 +167,10 @@ class BaseParticles
     DiscreteVariable<DataType> *registerStateVariableOnlyFrom(const std::string &name, const StdLargeVec<DataType> &geometric_data);
     template <typename DataType>
     DiscreteVariable<DataType> *registerStateVariableOnlyFromReload(const std::string &name);
+    template <typename DataType>
+    StdVec<DiscreteVariable<DataType> *> registerStateVariables(const StdVec<std::string> &names, const std::string &suffix);
+    template <typename DataType>
+    StdVec<DiscreteVariable<DataType> *> getVariablesByName(const StdVec<std::string> &names, const std::string &suffix);
 
     template <typename DataType>
     SingularVariable<DataType> *addUniqueSingularVariableOnly(const std::string &name, DataType initial_value = ZeroData<DataType>::value);
