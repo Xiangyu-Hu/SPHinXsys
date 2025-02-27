@@ -262,6 +262,32 @@ DataType *BaseParticles::getVariableDataByName(const std::string &name)
     return variable->Data();
 }
 //=================================================================================================//
+template <typename DataType>
+StdVec<DiscreteVariable<DataType> *> BaseParticles::registerStateVariables(
+    const StdVec<std::string> &names, const std::string &suffix)
+{
+    StdVec<DiscreteVariable<DataType> *> variables;
+    for (auto &name : names)
+    {
+        std::string variable_name = name + suffix;
+        variables.push_back(registerStateVariableOnly<DataType>(variable_name));
+    }
+    return variables;
+}
+//=================================================================================================//
+template <typename DataType>
+StdVec<DiscreteVariable<DataType> *> BaseParticles::getVariablesByName(
+    const StdVec<std::string> &names, const std::string &suffix)
+{
+    StdVec<DiscreteVariable<DataType> *> variables;
+    for (auto &name : names)
+    {
+        std::string variable_name = name + suffix;
+        variables.push_back(getVariableByName<DataType>(variable_name));
+    }
+    return variables;
+}
+//=================================================================================================//
 template <class DataType>
 SingularVariable<DataType> *BaseParticles::
     addUniqueSingularVariableOnly(const std::string &name, DataType initial_value)
