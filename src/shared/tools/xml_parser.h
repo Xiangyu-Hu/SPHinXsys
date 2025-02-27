@@ -216,7 +216,7 @@ class XmlParser
     inline tinyxml2::XMLElement *findElement(const std::string &element_tag);
 
     /** Find optional element in optional element */
-    inline tinyxml2::XMLElement *findElement(tinyxml2::XMLElement *base, const std::string &element_tag);
+    inline tinyxml2::XMLElement *findChildElement(tinyxml2::XMLElement *base, const std::string &element_tag);
 
     /** resize of Xml doc */
     inline void resize(const size_t input_size, const std::string name);
@@ -327,7 +327,7 @@ inline tinyxml2::XMLElement *XmlParser::findElement(const std::string &element_t
 }
 
 /** Find optional element in optional element */
-inline tinyxml2::XMLElement *XmlParser::findElement(tinyxml2::XMLElement *base, const std::string &element_tag)
+inline tinyxml2::XMLElement *XmlParser::findChildElement(tinyxml2::XMLElement *base, const std::string &element_tag)
 {
     tinyxml2::XMLElement *child_element = base->FirstChildElement(element_tag.c_str());
     return child_element;

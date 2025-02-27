@@ -31,9 +31,7 @@
 #define SPHINXSYS_PARAMETERIZATION_H
 
 #include "base_data_package.h"
-#include "xml_engine.h"
-
-#include <string>
+#include "xml_parser.h"
 
 namespace SPH
 {
@@ -44,7 +42,7 @@ namespace SPH
 class ParameterizationIO
 {
   public:
-    XmlEngine xml_parameters_;
+    XmlParser xml_parameters_;
     std::string filefullpath_;
 
     explicit ParameterizationIO(const std::string &input_path);
@@ -68,37 +66,22 @@ class BaseParameterization : public BaseClassType
     ~BaseParameterization() {};
 
   protected:
-    XmlEngine &xml_parameters_;
+    XmlParser &xml_parameters_;
     std::string filefullpath_;
 
     template <typename VariableType>
     void getAParameter(const std::string &element_name, const std::string &variable_name, VariableType &variable_addrs)
     {
-        SimTK::Xml::element_iterator ele_ite =
-            xml_parameters_.root_element_.element_begin(element_name);
-        if (ele_ite != xml_parameters_.root_element_.element_end())
-        {
-            xml_parameters_.getRequiredAttributeValue(ele_ite, variable_name, variable_addrs);
-        }
-        else
-        {
-            std::cout << "\n Error: the variable '" << variable_name << "' is given not in project_parameters.dat !" << std::endl;
-            std::cout << __FILE__ << ':' << __LINE__ << std::endl;
-            exit(1);
-        }
+        auto element = xml_parameters_.findChildElement(xml_parameters_.first_element_, element_name);
+        xml_parameters_.queryAttributeValue(element, variable_name, variable_addrs);
     };
 
     template <typename VariableType>
     void setAParameter(const std::string &element_name, const std::string &variable_name, VariableType &variable_addrs)
     {
-        SimTK::Xml::element_iterator ele_ite =
-            xml_parameters_.root_element_.element_begin(element_name);
-        if (ele_ite == xml_parameters_.root_element_.element_end())
-        {
-            xml_parameters_.addElementToXmlDoc(element_name);
-            ele_ite = xml_parameters_.root_element_.element_begin(element_name);
-        }
-        xml_parameters_.setAttributeToElement(ele_ite, variable_name, variable_addrs);
+        xml_parameters_.addChildToElement(xml_parameters_.first_element_, element_name);
+        auto element = xml_parameters_.findChildElement(xml_parameters_.first_element_, element_name);
+        xml_parameters_.setAttributeToElement(element, variable_name, variable_addrs);
     };
 };
 } // namespace SPH

@@ -31,6 +31,7 @@
 
 #include "base_body.h"
 #include "base_body_part.h"
+#include "all_simbody.h"
 
 namespace SPH
 {
