@@ -31,7 +31,7 @@ void BaseParticles::initializeBasicParticleVariables()
 {
     addEvolvingVariable<Vecd>("Position");
     addEvolvingVariable<Real>("VolumetricMeasure");
-     //----------------------------------------------------------------------
+    //----------------------------------------------------------------------
     //		register non-geometric variables
     //----------------------------------------------------------------------
     rho_ = registerStateVariable<Real>("Density", base_material_.ReferenceDensity());
@@ -132,7 +132,7 @@ void BaseParticles::resizeXmlDocForParticles(XmlParser &xml_parser)
 void BaseParticles::writeParticlesToXmlForRestart(const std::string &filefullpath)
 {
     resizeXmlDocForParticles(restart_xml_parser_);
-    write_restart_variable_to_xml_(evolving_variables_, restart_xml_parser_);
+    write_restart_variable_to_xml_(evolving_variables_, this, restart_xml_parser_);
     restart_xml_parser_.writeToXmlFile(filefullpath);
 }
 //=================================================================================================//
@@ -145,7 +145,7 @@ void BaseParticles::readParticlesFromXmlForRestart(const std::string &filefullpa
 void BaseParticles::writeParticlesToXmlForReload(const std::string &filefullpath)
 {
     resizeXmlDocForParticles(reload_xml_parser_);
-    write_reload_variable_to_xml_(evolving_variables_, reload_xml_parser_);
+    write_reload_variable_to_xml_(evolving_variables_, this, reload_xml_parser_);
     reload_xml_parser_.writeToXmlFile(filefullpath);
 }
 //=================================================================================================//

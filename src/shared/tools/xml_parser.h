@@ -23,7 +23,7 @@
 /**
  * @file    xml_parser.h
  * @brief   XML parser based on tinyxml2 (https://github.com/leethomason/tinyxml2)
- * @author	Chi Zhang
+ * @author	Xiangyu Hu and Chi Zhang
  */
 #pragma once
 
@@ -31,18 +31,6 @@
 
 #include "base_data_package.h"
 #include "sphinxsys_containers.h"
-
-#include <cassert>
-#include <charconv>
-#include <cstdio>
-#include <iostream>
-#include <string>
-
-#include <filesystem>
-#include <fstream>
-
-namespace fs = std::filesystem;
-#define assertm(exp, msg) assert(((void)msg, exp))
 
 namespace SPH
 {
@@ -216,7 +204,7 @@ class XmlParser
     inline void addNewElement(const std::string &element_name);
 
     /**Add child element to a given element. */
-    inline void addNewElement(tinyxml2::XMLElement *father_element, const std::string &child_name);
+    inline void addChildToElement(tinyxml2::XMLElement *father_element, const std::string &child_name);
 
     /** Get the size of Xml doc */
     inline size_t Size();
@@ -302,9 +290,9 @@ inline void XmlParser::addNewElement(const std::string &element_name)
 }
 
 /**Add child element to a given element. */
-inline void XmlParser::addNewElement(tinyxml2::XMLElement *element, const std::string &child_name)
+inline void XmlParser::addChildToElement(tinyxml2::XMLElement *father_element, const std::string &child_name)
 {
-    element->InsertNewChildElement(child_name.c_str());
+    father_element->InsertNewChildElement(child_name.c_str());
 }
 
 /** Get the size of Xml doc */
@@ -371,7 +359,7 @@ inline void XmlParser::resize(tinyxml2::XMLElement *element, const size_t input_
     if (total_elements <= input_size)
     {
         for (size_t i = total_elements; i != input_size; ++i)
-            XmlParser::addNewElement(element, name);
+            XmlParser::addChildToElement(element, name);
     }
     else
     {
