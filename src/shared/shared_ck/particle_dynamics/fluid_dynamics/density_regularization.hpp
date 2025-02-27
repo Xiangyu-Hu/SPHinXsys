@@ -36,22 +36,25 @@ DensityRegularization<Base, RelationType<Parameters...>>::InteractKernel::
       Vol_(encloser.dv_Vol_->DelegatedData(ex_policy)),
       rho0_(encloser.rho0_), inv_sigma0_(encloser.inv_sigma0_) {}
 //=================================================================================================//
-template <typename RegularizationType, typename... Parameters>
-DensityRegularization<Inner<WithUpdate, RegularizationType, Parameters...>>::
+template <typename RegularizationType, typename ParticleScopeType, typename... Parameters>
+DensityRegularization<Inner<WithUpdate, RegularizationType, ParticleScopeType, Parameters...>>::
     DensityRegularization(Relation<Inner<Parameters...>> &inner_relation)
     : DensityRegularization<Base, Inner<Parameters...>>(inner_relation),
-      regularization_method_(this->particles_) {}
+      regularization_method_(this->particles_),
+      within_scope_method_(this->particles_)
+{
+}
 //=================================================================================================//
-template <typename RegularizationType, typename... Parameters>
+template <typename RegularizationType, typename ParticleScopeType, typename... Parameters>
 template <class ExecutionPolicy>
-DensityRegularization<Inner<WithUpdate, RegularizationType, Parameters...>>::InteractKernel::
+DensityRegularization<Inner<WithUpdate, RegularizationType, ParticleScopeType, Parameters...>>::InteractKernel::
     InteractKernel(const ExecutionPolicy &ex_policy,
-                   DensityRegularization<Inner<WithUpdate, RegularizationType, Parameters...>> &encloser)
+                   DensityRegularization<Inner<WithUpdate, RegularizationType, ParticleScopeType, Parameters...>> &encloser)
     : DensityRegularization<Base, Inner<Parameters...>>::InteractKernel(ex_policy, encloser),
       W0_(this->kernel_.W(ZeroData<Vecd>::value)) {}
 //=================================================================================================//
-template <typename RegularizationType, typename... Parameters>
-void DensityRegularization<Inner<WithUpdate, RegularizationType, Parameters...>>::
+template <typename RegularizationType, typename ParticleScopeType, typename... Parameters>
+void DensityRegularization<Inner<WithUpdate, RegularizationType, ParticleScopeType, Parameters...>>::
     InteractKernel::interact(size_t index_i, Real dt)
 {
     Real sigma = W0_;
@@ -61,19 +64,23 @@ void DensityRegularization<Inner<WithUpdate, RegularizationType, Parameters...>>
     this->rho_sum_[index_i] = sigma * this->rho0_ * this->inv_sigma0_;
 }
 //=================================================================================================//
-template <typename RegularizationType, typename... Parameters>
+template <typename RegularizationType, typename ParticleScopeType, typename... Parameters>
 template <class ExecutionPolicy>
-DensityRegularization<Inner<WithUpdate, RegularizationType, Parameters...>>::UpdateKernel::
+DensityRegularization<Inner<WithUpdate, RegularizationType, ParticleScopeType, Parameters...>>::UpdateKernel::
     UpdateKernel(const ExecutionPolicy &ex_policy,
-                 DensityRegularization<Inner<WithUpdate, RegularizationType, Parameters...>> &encloser)
+                 DensityRegularization<Inner<WithUpdate, RegularizationType, ParticleScopeType, Parameters...>> &encloser)
     : DensityRegularization<Base, Inner<Parameters...>>::InteractKernel(ex_policy, encloser),
-      regularization_(ex_policy, encloser.regularization_method_, *this) {}
+      regularization_(ex_policy, encloser.regularization_method_, *this),
+      particle_scope_(ex_policy, encloser.within_scope_method_, *this)
+{
+}
 //=================================================================================================//
-template <typename RegularizationType, typename... Parameters>
-void DensityRegularization<Inner<WithUpdate, RegularizationType, Parameters...>>::
+template <typename RegularizationType, typename ParticleScopeType, typename... Parameters>
+void DensityRegularization<Inner<WithUpdate, RegularizationType, ParticleScopeType, Parameters...>>::
     UpdateKernel::update(size_t index_i, Real dt)
 {
-    this->rho_[index_i] = regularization_(this->rho_sum_[index_i]);
+    if (this->particle_scope_(index_i))
+        this->rho_[index_i] = regularization_(this->rho_sum_[index_i]);
 }
 //=================================================================================================//
 template <typename... Parameters>

@@ -14,20 +14,20 @@ bool AlignedBox::checkNearSurface(const Vecd &probe_point, Real threshold)
     return distance.cwiseAbs().maxCoeff() < threshold ? true : false;
 }
 //=================================================================================================//
-bool AlignedBox::checkInBounds(const Vecd &probe_point, Real lower_bound_fringe, Real upper_bound_fringe)
-{
-    Vecd position_in_frame = transform_.shiftBaseStationToFrame(probe_point);
-    return position_in_frame[alignment_axis_] >= -halfsize_[alignment_axis_] - lower_bound_fringe &&
-                   position_in_frame[alignment_axis_] <= halfsize_[alignment_axis_] + upper_bound_fringe
-               ? true
-               : false;
-}
+// bool AlignedBox::checkInBounds(const Vecd &probe_point, Real lower_bound_fringe, Real upper_bound_fringe)
+// {
+//     Vecd position_in_frame = transform_.shiftBaseStationToFrame(probe_point);
+//     return position_in_frame[alignment_axis_] >= -halfsize_[alignment_axis_] - lower_bound_fringe &&
+//                    position_in_frame[alignment_axis_] <= halfsize_[alignment_axis_] + upper_bound_fringe
+//                ? true
+//                : false;
+// }
 //=================================================================================================//
-bool AlignedBox::checkLowerBound(const Vecd &probe_point, Real lower_bound_fringe)
-{
-    Vecd position_in_frame = transform_.shiftBaseStationToFrame(probe_point);
-    return position_in_frame[alignment_axis_] < -halfsize_[alignment_axis_] - lower_bound_fringe ? true : false;
-}
+// bool AlignedBox::checkLowerBound(const Vecd &probe_point, Real lower_bound_fringe)
+// {
+//     Vecd position_in_frame = transform_.shiftBaseStationToFrame(probe_point);
+//     return position_in_frame[alignment_axis_] < -halfsize_[alignment_axis_] - lower_bound_fringe ? true : false;
+// }
 //=================================================================================================//
 bool AlignedBox::checkNearUpperBound(const Vecd &probe_point, Real threshold)
 {
