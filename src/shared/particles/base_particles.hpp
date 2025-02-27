@@ -403,6 +403,32 @@ void BaseParticles::addVariableToWrite(DiscreteVariableArray<DataType> *variable
 }
 //=================================================================================================//
 template <typename DataType>
+void BaseParticles::writeVariableToXml(XmlParser &xml_parser, DiscreteVariable<DataType> *variable)
+{
+    size_t index = 0;
+    DataType *data_field = variable->Data();
+    for (auto child = xml_parser.first_element_->FirstChildElement(); child; child = child->NextSiblingElement())
+    {
+        xml_parser.setAttributeToElement(child, variable->Name(), data_field[index]);
+        index++;
+    }
+}
+//=================================================================================================//
+template <typename DataType>
+void BaseParticles::readVariableFromXml(XmlParser &xml_parser, DiscreteVariable<DataType> *variable)
+{
+    size_t index = 0;
+    DataType *data_field = variable->Data() != nullptr
+                               ? variable->Data()
+                               : initializeVariable<DataType>(variable);
+    for (auto child = xml_parser.first_element_->FirstChildElement(); child; child = child->NextSiblingElement())
+    {
+        xml_parser.queryAttributeValue(child, variable->Name(), data_field[index]);
+        index++;
+    }
+}
+//=================================================================================================//
+template <typename DataType>
 void BaseParticles::CopyParticleState::
 operator()(DataContainerKeeper<AllocatedData<DataType>> &data_keeper, size_t index, size_t another_index)
 {
@@ -412,38 +438,25 @@ operator()(DataContainerKeeper<AllocatedData<DataType>> &data_keeper, size_t ind
     }
 }
 //=================================================================================================//
-template <typename DataType>
+template <typename DataType, template <typename> typename VariableType>
 void BaseParticles::WriteAParticleVariableToXml::
-operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables, XmlParser &xml_parser)
-{
-    for (size_t i = 0; i != variables.size(); ++i)
-    {
-        size_t index = 0;
-        DataType *data_field = variables[i]->Data();
-        for (auto child = xml_parser.first_element_->FirstChildElement(); child; child = child->NextSiblingElement())
-        {
-            xml_parser.setAttributeToElement(child, variables[i]->Name(), data_field[index]);
-            index++;
-        }
-    }
-}
-//=================================================================================================//
-template <typename DataType>
-void BaseParticles::ReadAParticleVariableFromXml::
-operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables,
+operator()(DataContainerAddressKeeper<VariableType<DataType>> &variables,
            BaseParticles *base_particles, XmlParser &xml_parser)
 {
     for (size_t i = 0; i != variables.size(); ++i)
     {
-        size_t index = 0;
-        DataType *data_field = variables[i]->Data() != nullptr
-                                   ? variables[i]->Data()
-                                   : base_particles->initializeVariable<DataType>(variables[i]);
-        for (auto child = xml_parser.first_element_->FirstChildElement(); child; child = child->NextSiblingElement())
-        {
-            xml_parser.queryAttributeValue(child, variables[i]->Name(), data_field[index]);
-            index++;
-        }
+        base_particles->writeVariableToXml(xml_parser, variables[i]);
+    }
+}
+//=================================================================================================//
+template <typename DataType, template <typename> typename VariableType>
+void BaseParticles::ReadAParticleVariableFromXml::
+operator()(DataContainerAddressKeeper<VariableType<DataType>> &variables,
+           BaseParticles *base_particles, XmlParser &xml_parser)
+{
+    for (size_t i = 0; i != variables.size(); ++i)
+    {
+        base_particles->readVariableFromXml(xml_parser, variables[i]);
     }
 }
 //=================================================================================================//

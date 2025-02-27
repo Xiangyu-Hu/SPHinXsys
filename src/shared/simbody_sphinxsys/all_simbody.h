@@ -32,7 +32,6 @@
 #include "simbody_middle.h"
 #include "state_engine.h"
 #include "type_wrapper.h"
-#include "xml_engine.h"
 
 #include "base_data_type.h"
 

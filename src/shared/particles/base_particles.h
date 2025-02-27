@@ -212,11 +212,15 @@ class BaseParticles
     //----------------------------------------------------------------------
     // Particle data ouput functions
     //----------------------------------------------------------------------
-    void resizeXmlDocForParticles(XmlParser &xml_parser);
     void writeParticlesToXmlForRestart(const std::string &filefullpath);
     void readParticlesFromXmlForRestart(const std::string &filefullpath);
     void writeParticlesToXmlForReload(const std::string &filefullpath);
     void readReloadXmlFile(const std::string &filefullpath);
+    void resizeXmlDocForParticles(XmlParser &xml_parser);
+    template <typename DataType>
+    void writeVariableToXml(XmlParser &xml_parser, DiscreteVariable<DataType> *variable);
+    template <typename DataType>
+    void readVariableFromXml(XmlParser &xml_parser, DiscreteVariable<DataType> *variable);
     //----------------------------------------------------------------------
     // Function related to geometric variables and their relations
     //----------------------------------------------------------------------
@@ -257,14 +261,14 @@ class BaseParticles
 
     struct WriteAParticleVariableToXml
     {
-        template <typename DataType>
-        void operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables, XmlParser &xml_parser);
+        template <typename DataType, template <typename> typename VariableType>
+        void operator()(DataContainerAddressKeeper<VariableType<DataType>> &variables, BaseParticles *base_particles, XmlParser &xml_parser);
     };
 
     struct ReadAParticleVariableFromXml
     {
-        template <typename DataType>
-        void operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables, BaseParticles *base_particles, XmlParser &xml_parser);
+        template <typename DataType, template <typename> typename VariableType>
+        void operator()(DataContainerAddressKeeper<VariableType<DataType>> &variables, BaseParticles *base_particles, XmlParser &xml_parser);
     };
 
     OperationOnDataAssemble<ParticleData, CopyParticleState> copy_particle_state_;
