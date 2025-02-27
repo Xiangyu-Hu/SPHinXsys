@@ -92,8 +92,8 @@ TagBufferParticlesCK::TagBufferParticlesCK(AlignedBoxPartByCell &aligned_box_par
 {
 }
 
-// template class EmitterInflowInjectionCK<AlignedBoxPartByCell>;
-// template class EmitterInflowInjectionCK<AlignedBoxPartByParticle>;
+template class EmitterInflowInjectionCK<AlignedBoxPartByCell>;
+template class EmitterInflowInjectionCK<AlignedBoxPartByParticle>;
 
 } // namespace fluid_dynamics
 } // namespace SPH

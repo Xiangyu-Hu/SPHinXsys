@@ -366,9 +366,9 @@ class PressureBidirectionalConditionCK
                   PressureConditionCK<AlignedBoxPartByCell, KernelCorrectionType, PressureConditionFunction>>
         pressure_condition_;
 
-    StateDynamics<execution::SequencedPolicy, BufferEmitterInflowInjectionCK<AlignedBoxPartByCell, PressureConditionFunction>> emitter_injection_;
+    StateDynamics<execution::SequencedDevicePolicy, BufferEmitterInflowInjectionCK<AlignedBoxPartByCell, PressureConditionFunction>> emitter_injection_;
 
-    StateDynamics<execution::SequencedPolicy, DisposerOutflowDeletionCK> disposer_outflow_deletion_;
+    StateDynamics<execution::SequencedDevicePolicy, DisposerOutflowDeletionCK> disposer_outflow_deletion_;
 
     PressureBidirectionalConditionCK(AlignedBoxPartByCell &emitter_by_cell,
                                      ParticleBuffer<Base> &inlet_buffer)
@@ -420,9 +420,9 @@ class VelocityBidirectionalConditionCK
 
     StateDynamics<ExecutionPolicy, fluid_dynamics::InflowConditionCK<AlignedBoxPartByCell, VelocityConditionFunction>> velocity_condition_;
 
-    StateDynamics<execution::SequencedPolicy, BufferEmitterInflowInjectionCK<AlignedBoxPartByCell, NonPrescribedPressure>> emitter_injection_; // Using NonPrescribedPressure as we do not change pressure
+    StateDynamics<execution::SequencedDevicePolicy, BufferEmitterInflowInjectionCK<AlignedBoxPartByCell, NonPrescribedPressure>> emitter_injection_; // Using NonPrescribedPressure as we do not change pressure
 
-    StateDynamics<execution::SequencedPolicy, DisposerOutflowDeletionCK> disposer_outflow_deletion_;
+    StateDynamics<execution::SequencedDevicePolicy, DisposerOutflowDeletionCK> disposer_outflow_deletion_;
 
     VelocityBidirectionalConditionCK(AlignedBoxPartByCell &emitter_by_cell,
                                      ParticleBuffer<Base> &inlet_buffer)

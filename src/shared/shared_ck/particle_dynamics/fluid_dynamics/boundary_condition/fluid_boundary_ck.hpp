@@ -159,7 +159,7 @@ TagBufferParticlesCK::UpdateKernel::
 void TagBufferParticlesCK::UpdateKernel::update(size_t index_i, Real dt)
 {
     int buffer_indicator = 0;
-    if (aligned_box_->checkContain(pos_[index_i]))
+    if (aligned_box_->checkInBounds(pos_[index_i]))
     {
         buffer_indicator = 1;
     }
@@ -206,7 +206,7 @@ void PressureConditionCK<AlignedBoxPartType, KernelCorrectionType, ConditionFunc
 {
     if (buffer_particle_indicator_[index_i] != 0)
     {
-        if (aligned_box_->checkContain(pos_[index_i]))
+        if (aligned_box_->checkInBounds(pos_[index_i]))
         {
             Real pressure = condition_(index_i, *physical_time_);
             vel_[index_i] -= correction_(index_i) * this->zero_gradient_residue_[index_i] * pressure / rho_[index_i] * dt;
