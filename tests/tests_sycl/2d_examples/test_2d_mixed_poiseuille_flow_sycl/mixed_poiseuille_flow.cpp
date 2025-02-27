@@ -278,7 +278,7 @@ int main(int ac, char *av[])
     // Define the main execution policy for this case.
     //----------------------------------------------------------------------
     using MainExecutionPolicy = execution::ParallelDevicePolicy;
-    using SequencedExecutionPolicy = execution::SequencedPolicy;
+    using SequencedExecutionPolicy = execution::SequencedDevicePolicy;
     //----------------------------------------------------------------------
     // Combined relations built from basic relations
     // which is only used for update configuration.
@@ -321,9 +321,9 @@ int main(int ac, char *av[])
     ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticTimeStepCK> fluid_acoustic_time_step(water_body);
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::ViscousForceWithWallCK>
         fluid_viscous_force(water_body_inner, water_wall_contact);
-    fluid_dynamics::VelocityBidirectionalConditionCK<MainExecutionPolicy, NoKernelCorrectionCK, InletInflowConditionLeft>
+    fluid_dynamics::VelocityBidirectionalConditionCK<MainExecutionPolicy, SequencedExecutionPolicy, NoKernelCorrectionCK, InletInflowConditionLeft>
         bidirectional_velocity_condition_left(left_emitter_by_cell, inlet_buffer);
-    fluid_dynamics::PressureBidirectionalConditionCK<MainExecutionPolicy, NoKernelCorrectionCK, InletInflowpPressureConditionRight>
+    fluid_dynamics::PressureBidirectionalConditionCK<MainExecutionPolicy, SequencedExecutionPolicy, NoKernelCorrectionCK, InletInflowpPressureConditionRight>
         bidirectional_pressure_condition_right(right_emitter_by_cell, inlet_buffer);
 
     //----------------------------------------------------------------------

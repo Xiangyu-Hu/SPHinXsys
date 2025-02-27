@@ -4,8 +4,8 @@
  * @details This is the one of the basic test cases for mixed pressure/velocity in-/outlet boundary conditions.
  * @author 	Shuoguo Zhang and Xiangyu Hu
  */
-#include "base_body_part.h"
-#include "sphinxsys_ck.h"
+// #include "base_body_part.h"
+#include "sphinxsys_ck.h" //	SPHinXsys Library.
 #include "gtest/gtest.h"
 
 using namespace SPH;
@@ -21,8 +21,8 @@ BoundingBox system_domain_bounds(Vec2d(-BW * 2, -BW * 2), Vec2d(DL + BW * 2, DH 
 //----------------------------------------------------------------------
 //	Material parameters.
 //----------------------------------------------------------------------
-Real Inlet_pressure = 0.2;
-Real Outlet_pressure = 0.1;
+const Real Inlet_pressure = 0.2;
+const Real Outlet_pressure = 0.1;
 Real rho0_f = 1000.0;
 Real Re = 50.0;
 Real mu_f = sqrt(rho0_f * pow(0.5 * DH, 3.0) * fabs(Inlet_pressure - Outlet_pressure) / (Re * DL));
@@ -34,16 +34,14 @@ Real c_f = 10.0 * U_f;
 //----------------------------------------------------------------------
 //	Geometric shapes used in this case.
 //----------------------------------------------------------------------
-Real bidrectional_buffer_length = 3.0 * resolution_ref;
-Vec2d bidirectional_buffer_halfsize = Vec2d(bidrectional_buffer_length * 0.5, 0.5 * DH);
-Vec2d left_bidirectional_translation = bidirectional_buffer_halfsize;
-Vec2d left_indicator_translation = Vec2d(0.0, 0.5 * DH);
-
-Vec2d right_bidirectional_translation = Vec2d(DL - 0.5 * bidrectional_buffer_length, 0.5 * DH);
-Vec2d right_indicator_translation = Vec2d(DL, 0.5 * DH);
-
-Vec2d right_disposer_translation = Vec2d(DL - 0.5 * bidrectional_buffer_length, 0.5 * DH);
-Vec2d normal = Vec2d(1.0, 0.0);
+const Real bidrectional_buffer_length = 3.0 * resolution_ref;
+const Vec2d bidirectional_buffer_halfsize = Vec2d(bidrectional_buffer_length * 0.5, 0.5 * DH);
+const Vec2d left_bidirectional_translation = bidirectional_buffer_halfsize;
+const Vec2d left_indicator_translation = Vec2d(0.0, 0.5 * DH);
+const Vec2d right_bidirectional_translation = Vec2d(DL - 0.5 * bidrectional_buffer_length, 0.5 * DH);
+const Vec2d right_indicator_translation = Vec2d(DL, 0.5 * DH);
+const Vec2d right_disposer_translation = Vec2d(DL - 0.5 * bidrectional_buffer_length, 0.5 * DH);
+const Vec2d normal = Vec2d(1.0, 0.0);
 //----------------------------------------------------------------------
 //	Pressure boundary definition.
 //----------------------------------------------------------------------
@@ -77,27 +75,33 @@ class InletInflowConditionLeft : public BaseStateCondition
 {
   public:
     InletInflowConditionLeft(BaseParticles *particles)
-        : BaseStateCondition(particles) {};
+        : BaseStateCondition(particles), DH_(DH), U_f_(U_f), mu_f_(mu_f) {};
 
     class ComputingKernel : public BaseStateCondition::ComputingKernel
     {
       public:
         template <class ExecutionPolicy, class EncloserType>
         ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : BaseStateCondition::ComputingKernel(ex_policy, encloser){};
+            : BaseStateCondition::ComputingKernel(ex_policy, encloser),
+              DH_ck_(encloser.DH_),
+              U_f_ck_(encloser.U_f_),
+              mu_f_ck_(encloser.mu_f_){};
 
         void operator()(AlignedBox *aligned_box, UnsignedInt index_i, Real time)
         {
 
             // Shift the y-coordinate so that y_centered = 0 corresponds to the channel center.
-            Real y_centered = pos_[index_i][1] - 0.5 * DH;
+            Real y_centered = pos_[index_i][1] - 0.5 * DH_ck_;
+            // Real y_centered = pos_[index_i][1] - 0.5 * (*DH_ck_);
 
             // Steady-state analytical solution for Poiseuille flow (expressed in centered coordinates)
-            Real u_steady = U_f * (1.0 - pow((2.0 * y_centered / DH), 2));
+            Real u_steady = U_f_ck_ * (1.0 - pow((2.0 * y_centered / DH_ck_), 2));
+            // Real u_steady = (*U_f_ck_) * (1.0 - pow((2.0 * y_centered / (*DH_ck_)), 2));
 
             // Define a characteristic time scale for the transient behavior.
             // Here, tau is chosen as DH^2 / (Pi^2 * mu_f).
-            Real tau = DH * DH / (Pi * Pi * mu_f);
+            Real tau = DH_ck_ * DH_ck_ / (Pi * Pi * mu_f_ck_);
+            // Real tau = (*DH_ck_) * (*DH_ck_) / (Pi * Pi * (*mu_f_ck_));
 
             // Transient factor that starts at 0 when time=0 and approaches 1 as t increases.
             Real transient_factor = 1.0 - exp(-time / tau);
@@ -105,7 +109,15 @@ class InletInflowConditionLeft : public BaseStateCondition
             Real u_ave = u_steady * transient_factor;
             vel_[index_i] = Vec2d(u_ave, 0.0);
         };
+
+      protected:
+        Real DH_ck_;
+        Real U_f_ck_;
+        Real mu_f_ck_;
     };
+    Real DH_;
+    Real U_f_;
+    Real mu_f_;
 };
 
 Real poiseuille_2d_u_steady(double y)
@@ -243,9 +255,9 @@ int main(int ac, char *av[])
 
     ObserverBody velocity_observer(sph_system, "VelocityObserver");
     velocity_observer.generateParticles<ObserverParticles>(observer_location);
-    //----------------------------------------------------------------------
-    //	Creating body parts.
-    //----------------------------------------------------------------------
+    // //----------------------------------------------------------------------
+    // //	Creating body parts.
+    // //----------------------------------------------------------------------
     AlignedBoxPartByParticle left_emitter_by_particle(water_body, AlignedBox(xAxis, Transform(left_bidirectional_translation), bidirectional_buffer_halfsize));
     AlignedBoxPartByCell left_emitter_by_cell(water_body, AlignedBox(xAxis, Transform(left_bidirectional_translation), bidirectional_buffer_halfsize));
     AlignedBoxPartByCell right_emitter_by_cell(water_body, AlignedBox(xAxis, Transform(Rotation2d(Pi), Vec2d(right_disposer_translation)), bidirectional_buffer_halfsize));
@@ -258,7 +270,7 @@ int main(int ac, char *av[])
     //	The contact map gives the topological connections between the bodies.
     //	Basically the the range of bodies to build neighbor particle lists.
     //  Generally, we first define all the inner relations, then the contact relations.
-    //----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
     Relation<Inner<>> water_body_inner(water_body);
     Relation<Contact<>> water_wall_contact(water_body, {&wall});
     Relation<Contact<>> velocity_observer_contact(velocity_observer, {&water_body});
@@ -291,7 +303,6 @@ int main(int ac, char *av[])
     StateDynamics<MainExecutionPolicy, fluid_dynamics::AdvectionStepClose> water_advection_step_close(water_body);
     InteractionDynamicsCK<MainExecutionPolicy, LinearCorrectionMatrixComplex>
         fluid_linear_correction_matrix(DynamicsArgs(water_body_inner, 0.5), water_wall_contact);
-
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticStep1stHalfWithWallRiemannCK>
         fluid_acoustic_step_1st_half(water_body_inner, water_wall_contact);
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticStep2ndHalfWithWallRiemannCK>
@@ -300,28 +311,20 @@ int main(int ac, char *av[])
         fluid_density_regularization(water_body_inner, water_wall_contact);
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::FreeSurfaceIndicationComplexSpatialTemporalCK>
         fluid_boundary_indicator(water_body_inner, water_wall_contact);
-    StateDynamics<MainExecutionPolicy, fluid_dynamics::SurfaceIndicationByAlignedBoxCK> label_left_indicator(left_indicator_by_cell);
-    StateDynamics<MainExecutionPolicy, fluid_dynamics::SurfaceIndicationByAlignedBoxCK> label_right_indicator(right_indicator_by_cell);
-
+    // StateDynamics<MainExecutionPolicy, fluid_dynamics::SurfaceIndicationByAlignedBoxCK> label_left_indicator(left_indicator_by_cell);
+    // StateDynamics<MainExecutionPolicy, fluid_dynamics::SurfaceIndicationByAlignedBoxCK> label_right_indicator(right_indicator_by_cell);
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::TransportVelocityCorrectionWallNoCorrectionBulkParticlesCK>
         transport_correction_ck(water_body_inner, water_wall_contact);
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::TransportVelocityLimitedCorrectionCorrectedComplexBulkParticlesCKWithoutUpdate>
         zero_gradient_ck(water_body_inner, water_wall_contact);
-
     ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AdvectionTimeStepCK> fluid_advection_time_step(water_body, U_f);
     ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticTimeStepCK> fluid_acoustic_time_step(water_body);
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::ViscousForceWithWallCK>
         fluid_viscous_force(water_body_inner, water_wall_contact);
-
-    fluid_dynamics::VelocityBidirectionalConditionCK<MainExecutionPolicy, NoKernelCorrectionCK, InletInflowConditionLeft>
+    fluid_dynamics::VelocityBidirectionalConditionCK<MainExecutionPolicy, SequencedExecutionPolicy, NoKernelCorrectionCK, InletInflowConditionLeft>
         bidirectional_velocity_condition_left(left_emitter_by_cell, inlet_buffer);
-
-    fluid_dynamics::PressureBidirectionalConditionCK<MainExecutionPolicy, NoKernelCorrectionCK, InletInflowpPressureConditionRight>
+    fluid_dynamics::PressureBidirectionalConditionCK<MainExecutionPolicy, SequencedExecutionPolicy, NoKernelCorrectionCK, InletInflowpPressureConditionRight>
         bidirectional_pressure_condition_right(right_emitter_by_cell, inlet_buffer);
-
-    // InnerRelation water_block_inner(water_body);
-    // ContactRelation water_block_contact(water_body, {&wall});
-    // InteractionDynamics<NablaWVComplex> kernel_summation(water_block_inner, water_block_contact);
 
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
@@ -338,7 +341,6 @@ int main(int ac, char *av[])
     body_states_recording.addToWrite<int>(water_body, "WithScopeVerify");
     body_states_recording.addToWrite<int>(water_body, "DensitySummationVerify");
     body_states_recording.addToWrite<Real>(water_body, "Mass");
-    // body_states_recording.addToWrite<Vecd>(water_block, "KernelSummation");
 
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<MainExecutionPolicy, Vecd>> write_centerline_velocity("Velocity", velocity_observer_contact);
     auto vel_ = water_body.getBaseParticles().getVariableDataByName<Vecd>("Velocity");
@@ -357,7 +359,7 @@ int main(int ac, char *av[])
     fluid_boundary_indicator.exec();
     bidirectional_velocity_condition_left.tagBufferParticles();
     bidirectional_pressure_condition_right.tagBufferParticles();
-    // right_tag_buffer_particle_.exec();
+
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
@@ -432,7 +434,6 @@ int main(int ac, char *av[])
             bidirectional_pressure_condition_right.injectParticles();
             bidirectional_velocity_condition_left.deleteParticles();
             bidirectional_pressure_condition_right.deleteParticles();
-
             /** Update cell linked list and configuration. */
             if (number_of_iterations % 100 == 0 && number_of_iterations != 1)
             {
@@ -446,6 +447,7 @@ int main(int ac, char *av[])
             fluid_boundary_indicator.exec();
             bidirectional_velocity_condition_left.tagBufferParticles();
             bidirectional_pressure_condition_right.tagBufferParticles();
+            body_states_recording.writeToFile(MainExecutionPolicy{});
         }
 
         TickCount t2 = TickCount::now();

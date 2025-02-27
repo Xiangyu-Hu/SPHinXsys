@@ -356,19 +356,19 @@ class PressureConditionCK<AlignedBoxPartType, KernelCorrectionType, ConditionFun
     DiscreteVariable<Real> *dv_rho_;
 };
 
-template <typename ExecutionPolicy, class KernelCorrectionType, class PressureConditionFunction>
+template <typename ParallelExecutionPolicy, typename SequencedExecutionPolicy, class KernelCorrectionType, class PressureConditionFunction>
 class PressureBidirectionalConditionCK
 {
   public:
-    StateDynamics<ExecutionPolicy, TagBufferParticlesCK> tag_buffer_particles_;
+    StateDynamics<ParallelExecutionPolicy, TagBufferParticlesCK> tag_buffer_particles_;
 
-    StateDynamics<ExecutionPolicy,
+    StateDynamics<ParallelExecutionPolicy,
                   PressureConditionCK<AlignedBoxPartByCell, KernelCorrectionType, PressureConditionFunction>>
         pressure_condition_;
 
-    StateDynamics<execution::SequencedDevicePolicy, BufferEmitterInflowInjectionCK<AlignedBoxPartByCell, PressureConditionFunction>> emitter_injection_;
+    StateDynamics<SequencedExecutionPolicy, BufferEmitterInflowInjectionCK<AlignedBoxPartByCell, PressureConditionFunction>> emitter_injection_;
 
-    StateDynamics<execution::SequencedDevicePolicy, DisposerOutflowDeletionCK> disposer_outflow_deletion_;
+    StateDynamics<SequencedExecutionPolicy, DisposerOutflowDeletionCK> disposer_outflow_deletion_;
 
     PressureBidirectionalConditionCK(AlignedBoxPartByCell &emitter_by_cell,
                                      ParticleBuffer<Base> &inlet_buffer)
@@ -412,17 +412,17 @@ class NonPrescribedPressure : public BaseStateCondition
         }
     };
 };
-template <typename ExecutionPolicy, class KernelCorrectionType, class VelocityConditionFunction>
+template <typename ParallelExecutionPolicy, typename SequencedExecutionPolicy, class KernelCorrectionType, class VelocityConditionFunction>
 class VelocityBidirectionalConditionCK
 {
   public:
-    StateDynamics<ExecutionPolicy, TagBufferParticlesCK> tag_buffer_particles_;
+    StateDynamics<ParallelExecutionPolicy, TagBufferParticlesCK> tag_buffer_particles_;
 
-    StateDynamics<ExecutionPolicy, fluid_dynamics::InflowConditionCK<AlignedBoxPartByCell, VelocityConditionFunction>> velocity_condition_;
+    StateDynamics<ParallelExecutionPolicy, fluid_dynamics::InflowConditionCK<AlignedBoxPartByCell, VelocityConditionFunction>> velocity_condition_;
 
-    StateDynamics<execution::SequencedDevicePolicy, BufferEmitterInflowInjectionCK<AlignedBoxPartByCell, NonPrescribedPressure>> emitter_injection_; // Using NonPrescribedPressure as we do not change pressure
+    StateDynamics<SequencedExecutionPolicy, BufferEmitterInflowInjectionCK<AlignedBoxPartByCell, NonPrescribedPressure>> emitter_injection_; // Using NonPrescribedPressure as we do not change pressure
 
-    StateDynamics<execution::SequencedDevicePolicy, DisposerOutflowDeletionCK> disposer_outflow_deletion_;
+    StateDynamics<SequencedExecutionPolicy, DisposerOutflowDeletionCK> disposer_outflow_deletion_;
 
     VelocityBidirectionalConditionCK(AlignedBoxPartByCell &emitter_by_cell,
                                      ParticleBuffer<Base> &inlet_buffer)
