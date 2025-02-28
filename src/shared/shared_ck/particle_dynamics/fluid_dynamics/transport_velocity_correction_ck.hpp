@@ -24,7 +24,6 @@ TransportVelocityCorrectionCKBase<BaseInteractionType>::
 
 //========================================================================================
 //   2) Partial Specialization:
-//   2) Partial Specialization:
 //      <Inner<WithUpdate, KernelCorrectionType, ResolutionType, LimiterType, ParticleScope, ExtraParams...>
 //========================================================================================
 template <class UpdatePolicy, class KernelCorrectionType, class ResolutionType, class LimiterType, class ParticleScopeType, typename... Parameters>
