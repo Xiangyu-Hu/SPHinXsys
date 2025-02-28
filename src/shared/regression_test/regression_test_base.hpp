@@ -75,8 +75,7 @@ void RegressionTestBase<ObserveMethodType>::readDataFromXmlMemory(
     int observation_index, BiVector<T> &result_container, const std::string &quantity_name)
 {
     int snapshot_index = 0;
-    SimTK::Xml::element_iterator ele_ite = element.element_begin();
-    for (; ele_ite != element.element_end(); ++ele_ite)
+    for (auto ele_ite = element.element_begin(); ele_ite != element.element_end(); ++ele_ite)
     {
         std::string attribute_name_ = quantity_name + "_" + std::to_string(observation_index);
         xml_engine.getRequiredAttributeValue(ele_ite, attribute_name_, result_container[snapshot_index][observation_index]);
@@ -89,8 +88,7 @@ void RegressionTestBase<ObserveMethodType>::readTagFromXmlMemory(
     SimTK::Xml::Element &element, StdVec<std::string> &element_tag)
 {
     size_t snapshot_index = 0;
-    SimTK::Xml::element_iterator ele_ite = element.element_begin();
-    for (; ele_ite != element.element_end(); ++ele_ite)
+    for (auto ele_ite = element.element_begin(); ele_ite != element.element_end(); ++ele_ite)
     {
         element_tag[snapshot_index] = ele_ite->getElementTag();
         snapshot_index++;
@@ -246,8 +244,7 @@ void RegressionTestBase<ObserveMethodType>::readResultFromXml(int index_of_run_)
         for (int snapshot_index = 0; snapshot_index != snapshot_; ++snapshot_index)
         {
             int observation_index = 0;
-            SimTK::Xml::element_iterator ele_ite = result_element_.element_begin();
-            for (; ele_ite != result_element_.element_end(); ++ele_ite)
+            for (auto ele_ite = result_element_.element_begin(); ele_ite != result_element_.element_end(); ++ele_ite)
             {
                 std::string attribute_name_ = "snapshot_" + std::to_string(snapshot_index);
                 result_xml_engine_in_.getRequiredAttributeValue(ele_ite, attribute_name_, result_in_[observation_index][snapshot_index]);
