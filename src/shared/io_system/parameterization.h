@@ -72,15 +72,15 @@ class BaseParameterization : public BaseClassType
     template <typename VariableType>
     void getAParameter(const std::string &element_name, const std::string &variable_name, VariableType &variable_addrs)
     {
-        auto element = xml_parameters_.findChildElement(xml_parameters_.first_element_, element_name);
+        auto element = xml_parameters_.findElement(xml_parameters_.first_element_, element_name);
         xml_parameters_.queryAttributeValue(element, variable_name, variable_addrs);
     };
 
     template <typename VariableType>
     void setAParameter(const std::string &element_name, const std::string &variable_name, VariableType &variable_addrs)
     {
-        xml_parameters_.addChildToElement(xml_parameters_.first_element_, element_name);
-        auto element = xml_parameters_.findChildElement(xml_parameters_.first_element_, element_name);
+        xml_parameters_.addNewElement(xml_parameters_.first_element_, element_name);
+        auto element = xml_parameters_.findElement(xml_parameters_.first_element_, element_name);
         xml_parameters_.setAttributeToElement(element, variable_name, variable_addrs);
     };
 };

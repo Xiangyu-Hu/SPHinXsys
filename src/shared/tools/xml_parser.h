@@ -204,7 +204,7 @@ class XmlParser
     inline void addNewElement(const std::string &element_name);
 
     /**Add child element to a given element. */
-    inline void addChildToElement(tinyxml2::XMLElement *father_element, const std::string &child_name);
+    inline void addNewElement(tinyxml2::XMLElement *father_element, const std::string &child_name);
 
     /** Get the size of Xml doc */
     inline size_t Size();
@@ -216,7 +216,7 @@ class XmlParser
     inline tinyxml2::XMLElement *findElement(const std::string &element_tag);
 
     /** Find optional element in optional element */
-    inline tinyxml2::XMLElement *findChildElement(tinyxml2::XMLElement *base, const std::string &element_tag);
+    inline tinyxml2::XMLElement *findElement(tinyxml2::XMLElement *base, const std::string &element_tag);
 
     /** resize of Xml doc */
     inline void resize(const size_t input_size, const std::string name);
@@ -290,7 +290,7 @@ inline void XmlParser::addNewElement(const std::string &element_name)
 }
 
 /**Add child element to a given element. */
-inline void XmlParser::addChildToElement(tinyxml2::XMLElement *father_element, const std::string &child_name)
+inline void XmlParser::addNewElement(tinyxml2::XMLElement *father_element, const std::string &child_name)
 {
     father_element->InsertNewChildElement(child_name.c_str());
 }
@@ -327,7 +327,7 @@ inline tinyxml2::XMLElement *XmlParser::findElement(const std::string &element_t
 }
 
 /** Find optional element in optional element */
-inline tinyxml2::XMLElement *XmlParser::findChildElement(tinyxml2::XMLElement *base, const std::string &element_tag)
+inline tinyxml2::XMLElement *XmlParser::findElement(tinyxml2::XMLElement *base, const std::string &element_tag)
 {
     tinyxml2::XMLElement *child_element = base->FirstChildElement(element_tag.c_str());
     return child_element;
@@ -359,7 +359,7 @@ inline void XmlParser::resize(tinyxml2::XMLElement *element, const size_t input_
     if (total_elements <= input_size)
     {
         for (size_t i = total_elements; i != input_size; ++i)
-            XmlParser::addChildToElement(element, name);
+            XmlParser::addNewElement(element, name);
     }
     else
     {
