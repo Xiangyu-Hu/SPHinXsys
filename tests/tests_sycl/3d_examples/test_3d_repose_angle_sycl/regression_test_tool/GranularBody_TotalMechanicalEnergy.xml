@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <TotalMechanicalEnergy>
-    <Snapshot_0 TotalMechanicalEnergy_0="4.01055241" />
-    <Snapshot_1000 TotalMechanicalEnergy_0="3.08024836" />
-    <Snapshot_2000 TotalMechanicalEnergy_0="1.90988755" />
-    <Snapshot_3000 TotalMechanicalEnergy_0="1.54604089" />
-    <Snapshot_4000 TotalMechanicalEnergy_0="1.51058662" />
+    <Snapshot_0 TotalMechanicalEnergy_0="4.01055288" />
+    <Snapshot_1000 TotalMechanicalEnergy_0="3.06534433" />
+    <Snapshot_2000 TotalMechanicalEnergy_0="1.8985672" />
+    <Snapshot_3000 TotalMechanicalEnergy_0="1.54625893" />
+    <Snapshot_4000 TotalMechanicalEnergy_0="1.51411986" />
 </TotalMechanicalEnergy>
