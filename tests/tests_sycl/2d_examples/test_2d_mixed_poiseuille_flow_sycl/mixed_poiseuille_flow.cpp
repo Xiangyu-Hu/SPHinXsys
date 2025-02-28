@@ -472,7 +472,6 @@ int main(int ac, char *av[])
             fluid_boundary_indicator.exec();
             bidirectional_velocity_condition_left.tagBufferParticles();
             bidirectional_pressure_condition_right.tagBufferParticles();
-            body_states_recording.writeToFile(MainExecutionPolicy{});
         }
 
         TickCount t2 = TickCount::now();
