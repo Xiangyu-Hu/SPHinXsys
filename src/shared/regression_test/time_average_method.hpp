@@ -529,21 +529,17 @@ void RegressionTestTimeAverage<ObserveMethodType>::updateMeanVariance()
 template <class ObserveMethodType>
 void RegressionTestTimeAverage<ObserveMethodType>::writeMeanVarianceToXml()
 {
-    mean_variance_xml_engine_out_.addElementToXmlDoc("MeanValue_Element");
-    SimTK::Xml::Element meanvalue_element_ = mean_variance_xml_engine_out_.getChildElement("MeanValue_Element");
-    mean_variance_xml_engine_out_.addChildToElement(meanvalue_element_, "Snapshot_MeanValue");
+    auto meanvalue_element_ = mean_variance_xml_engine_out_.addElementToXmlDoc("MeanValue_Element");
+    auto ele_ite_mean = mean_variance_xml_engine_out_.addChildToElement(*meanvalue_element_, "Snapshot_MeanValue");
     for (int observation_index = 0; observation_index != this->observation_; ++observation_index)
     {
-        SimTK::Xml::element_iterator ele_ite_mean = meanvalue_element_.element_begin();
         std::string attribute_name_ = this->quantity_name_ + "_" + std::to_string(observation_index);
         mean_variance_xml_engine_out_.setAttributeToElement(ele_ite_mean, attribute_name_, meanvalue_new_[observation_index]);
     }
-    mean_variance_xml_engine_out_.addElementToXmlDoc("Variance_Element");
-    SimTK::Xml::Element variance_element_ = mean_variance_xml_engine_out_.getChildElement("Variance_Element");
-    mean_variance_xml_engine_out_.addChildToElement(variance_element_, "Snapshot_Variance");
+    auto variance_element_ = mean_variance_xml_engine_out_.addElementToXmlDoc("Variance_Element");
+    auto ele_ite_variance = mean_variance_xml_engine_out_.addChildToElement(*variance_element_, "Snapshot_Variance");
     for (int observation_index = 0; observation_index != this->observation_; ++observation_index)
     {
-        SimTK::Xml::element_iterator ele_ite_variance = variance_element_.element_begin();
         std::string attribute_name_ = this->quantity_name_ + "_" + std::to_string(observation_index);
         mean_variance_xml_engine_out_.setAttributeToElement(ele_ite_variance, attribute_name_, variance_new_[observation_index]);
     }

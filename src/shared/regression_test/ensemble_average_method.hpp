@@ -282,10 +282,10 @@ void RegressionTestEnsembleAverage<ObserveMethodType>::readMeanVarianceFromXml()
         SimTK::Xml::Element variance_element_ = this->mean_variance_xml_engine_in_.getChildElement("Variance_Element");
         for (int observation_index = 0; observation_index != this->observation_; ++observation_index)
         {
-            this->xmlmemory_io_.readDataFromXmlMemory(this->mean_variance_xml_engine_in_,
-                                                      mean_element_, observation_index, this->meanvalue_, this->quantity_name_);
-            this->xmlmemory_io_.readDataFromXmlMemory(this->mean_variance_xml_engine_in_,
-                                                      variance_element_, observation_index, this->variance_, this->quantity_name_);
+            this->readDataFromXmlMemory(this->mean_variance_xml_engine_in_,
+                                        mean_element_, observation_index, this->meanvalue_, this->quantity_name_);
+            this->readDataFromXmlMemory(this->mean_variance_xml_engine_in_,
+                                        variance_element_, observation_index, this->variance_, this->quantity_name_);
         }
     }
 }
@@ -320,12 +320,12 @@ void RegressionTestEnsembleAverage<ObserveMethodType>::writeMeanVarianceToXml()
 {
     this->mean_variance_xml_engine_out_.addElementToXmlDoc("Mean_Element");
     SimTK::Xml::Element mean_element_ = this->mean_variance_xml_engine_out_.getChildElement("Mean_Element");
-    this->xmlmemory_io_.writeDataToXmlMemory(this->mean_variance_xml_engine_out_, mean_element_, this->meanvalue_new_,
-                                             SMIN(this->snapshot_, this->number_of_snapshot_old_), this->observation_, this->quantity_name_, this->element_tag_);
+    this->writeDataToXmlMemory(this->mean_variance_xml_engine_out_, mean_element_, this->meanvalue_new_,
+                               SMIN(this->snapshot_, this->number_of_snapshot_old_), this->observation_, this->quantity_name_, this->element_tag_);
     this->mean_variance_xml_engine_out_.addElementToXmlDoc("Variance_Element");
     SimTK::Xml::Element variance_element_ = this->mean_variance_xml_engine_out_.getChildElement("Variance_Element");
-    this->xmlmemory_io_.writeDataToXmlMemory(this->mean_variance_xml_engine_out_, variance_element_, this->variance_new_,
-                                             SMIN(this->snapshot_, this->number_of_snapshot_old_), this->observation_, this->quantity_name_, this->element_tag_);
+    this->writeDataToXmlMemory(this->mean_variance_xml_engine_out_, variance_element_, this->variance_new_,
+                               SMIN(this->snapshot_, this->number_of_snapshot_old_), this->observation_, this->quantity_name_, this->element_tag_);
     this->mean_variance_xml_engine_out_.writeToXmlFile(this->mean_variance_filefullpath_);
 }
 //=================================================================================================//
