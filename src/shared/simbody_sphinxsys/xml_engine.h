@@ -56,10 +56,10 @@ class XmlEngine
     SimTK::Xml::Element root_element_; /**< Root element of document. */
 
     /**Add existing element to root_element of Xml Doc. */
-    void addElementToXmlDoc(const std::string &element_name);
+    SimTK::Xml::element_iterator addElementToXmlDoc(const std::string &element_name);
 
     /**Add child element to a given element. */
-    void addChildToElement(SimTK::Xml::Element &father_element, const std::string &child_name);
+    SimTK::Xml::element_iterator addChildToElement(SimTK::Xml::Element &father_element, const std::string &child_name);
 
     //----------------------------------------------------------------------
     //	Add an attribute of type string to an xml element.

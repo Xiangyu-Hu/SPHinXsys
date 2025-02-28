@@ -9,15 +9,17 @@ XmlEngine::XmlEngine(const std::string &xml_name, const std::string &root_tag) :
     root_element_ = xmldoc_.getRootElement();
 }
 //=================================================================================================//
-void XmlEngine::addElementToXmlDoc(const std::string &element_name)
+SimTK::Xml::element_iterator XmlEngine::addElementToXmlDoc(const std::string &element_name)
 {
     root_element_.insertNodeAfter(root_element_.node_end(), SimTK::Xml::Element(element_name));
+    return root_element_.element_begin(element_name);
 }
 //=================================================================================================//
-void XmlEngine::addChildToElement(SimTK::Xml::Element &father_element,
-                                  const std::string &child_name)
+SimTK::Xml::element_iterator XmlEngine::addChildToElement(SimTK::Xml::Element &father_element,
+                                                          const std::string &child_name)
 {
     father_element.insertNodeAfter(father_element.node_end(), SimTK::Xml::Element(child_name));
+    return father_element.element_begin(child_name);
 }
 //=================================================================================================//
 void XmlEngine::writeToXmlFile(const std::string &filefullpath)

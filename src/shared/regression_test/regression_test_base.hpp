@@ -269,21 +269,17 @@ void RegressionTestBase<ObserveMethodType>::writeResultToXml(int index_of_run_)
     int total_snapshot_ = current_result_trans_[0].size();
     result_filefullpath_ = input_folder_path_ + "/" + this->dynamics_identifier_name_ + "_" + this->quantity_name_ +
                            "_Run_" + std::to_string(index_of_run_) + "_result.xml";
-    result_xml_engine_out_.addElementToXmlDoc("Snapshot_Element");
-    SimTK::Xml::Element snapshot_element_ = result_xml_engine_out_.getChildElement("Snapshot_Element");
-    result_xml_engine_out_.addChildToElement(snapshot_element_, "Snapshot");
-    SimTK::Xml::element_iterator ele_ite = snapshot_element_.element_begin();
+    auto snapshot_element_ = result_xml_engine_out_.addElementToXmlDoc("Snapshot_Element");
+    auto ele_ite = result_xml_engine_out_.addChildToElement(*snapshot_element_, "Snapshot");
     result_xml_engine_out_.setAttributeToElement(ele_ite, "number_of_snapshot_for_local_result_", total_snapshot_);
 
-    result_xml_engine_out_.addElementToXmlDoc("Result_Element");
-    SimTK::Xml::Element result_element_ = result_xml_engine_out_.getChildElement("Result_Element");
+    auto result_element_ = result_xml_engine_out_.addElementToXmlDoc("Result_Element");
     for (int observation_index = 0; observation_index != observation_; ++observation_index)
     {
         std::string element_name_ = "Particle_" + std::to_string(observation_index);
-        result_xml_engine_out_.addChildToElement(result_element_, element_name_);
+        auto ele_ite = result_xml_engine_out_.addChildToElement(*result_element_, element_name_);
         for (int snapshot_index = 0; snapshot_index != total_snapshot_; ++snapshot_index)
         {
-            SimTK::Xml::element_iterator ele_ite = result_element_.element_begin(element_name_);
             std::string attribute_name_ = "snapshot_" + std::to_string(snapshot_index);
             result_xml_engine_out_.setAttributeToElement(ele_ite, attribute_name_, current_result_trans_[observation_index][snapshot_index]);
         }
