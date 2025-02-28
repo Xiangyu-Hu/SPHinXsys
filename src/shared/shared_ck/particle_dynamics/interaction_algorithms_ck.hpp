@@ -94,7 +94,15 @@ InteractionDynamicsCK<ExecutionPolicy, InteractionType<RelationType<WithUpdate, 
           std::forward<Args>(args)...),
       InteractionDynamicsCK<WithUpdate>(),
       BaseDynamics<void>(),
-      kernel_implementation_(*this) {}
+      kernel_implementation_(*this)
+{
+    if constexpr (
+        std::is_same_v<InteractionType<RelationType<WithUpdate, OtherParameters...>>,
+                       InteractionType<Inner<WithUpdate, OtherParameters...>>>)
+    {
+        this->registerComputingKernel(&kernel_implementation_);
+    }
+}
 //=================================================================================================//
 template <class ExecutionPolicy, template <typename...> class InteractionType,
           template <typename...> class RelationType, typename... OtherParameters>
