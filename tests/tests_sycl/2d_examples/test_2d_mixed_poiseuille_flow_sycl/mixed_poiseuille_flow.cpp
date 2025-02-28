@@ -2,10 +2,9 @@
  * @file 	mixed_poiseuille_flow.cpp
  * @brief 	2D mixed Poiseuille flow example.
  * @details This is a basic test case for mixed pressure/velocity inlet and outlet boundary conditions.
- * @author 	Copyright (c)
+ * @author 	YuVirtonomy, Xiangyu Hu
  */
 
-#include "particle_sort_sycl.h"
 #include "sphinxsys_sycl.h" // SPHinXsys Library.
 #include "gtest/gtest.h"
 
@@ -18,12 +17,10 @@ Real DL = 0.004;                 /**< Channel length. */
 Real DH = 0.001;                 /**< Channel height. */
 Real resolution_ref = DH / 20.0; /**< Reference particle spacing. */
 Real BW = resolution_ref * 4;    /**< Extending width for BCs. */
-
 StdVec<Vecd> observer_location;
 BoundingBox system_domain_bounds(
     Vec2d(-2.0 * BW, -2.0 * BW),
     Vec2d(DL + 2.0 * BW, DH + 2.0 * BW));
-
 //----------------------------------------------------------------------
 //  Material parameters.
 //----------------------------------------------------------------------
@@ -57,7 +54,6 @@ Real c_f = 10.0 * U_f;
 Real bidirectional_buffer_length = 3.0 * resolution_ref;
 Vec2d bidirectional_buffer_halfsize(
     0.5 * bidirectional_buffer_length, 0.5 * DH);
-
 Vec2d left_bidirectional_translation = bidirectional_buffer_halfsize;
 Vec2d left_indicator_translation(0.0, 0.5 * DH);
 Vec2d right_bidirectional_translation(
@@ -66,7 +62,6 @@ Vec2d right_indicator_translation(DL, 0.5 * DH);
 Vec2d right_disposer_translation(
     DL - 0.5 * bidirectional_buffer_length, 0.5 * DH);
 Vec2d normal(1.0, 0.0);
-
 //----------------------------------------------------------------------
 //  Inlet velocity profile for the left boundary (Poiseuille-like).
 //----------------------------------------------------------------------
@@ -88,7 +83,6 @@ class InletInflowConditionLeft : public BaseStateCondition
               mu_f_ck_(encloser.mu_f_),
               tau_((DH_ck_ * DH_ck_) / (M_PI * M_PI * mu_f_ck_))
         {
-            std::cout << "tau = " << tau_ << std::endl;
         }
 
         void operator()(AlignedBox *aligned_box, UnsignedInt index_i, Real time)
@@ -99,8 +93,6 @@ class InletInflowConditionLeft : public BaseStateCondition
             // Steady-state analytical solution for Poiseuille flow
             Real u_steady = U_f_ck_ *
                             (1.0 - std::pow((2.0 * y_centered / DH_ck_), 2));
-
-            // Characteristic time scale for the transient behavior (suggested).
 
             // Transient factor that approaches 1 as time grows.
             Real transient_factor = 1.0 - std::exp(-time / tau_);
@@ -117,12 +109,10 @@ class InletInflowConditionLeft : public BaseStateCondition
         Real mu_f_ck_;
         Real tau_;
     };
-
     Real DH_;
     Real U_f_;
     Real mu_f_;
 };
-
 //----------------------------------------------------------------------
 //  Helper function for the analytical solution.
 //----------------------------------------------------------------------
@@ -132,7 +122,6 @@ Real poiseuille_2d_u_steady(Real y)
     Real y_centered = y - 0.5 * DH;
     return U_f * (1.0 - std::pow((2.0 * y_centered / DH), 2));
 }
-
 //----------------------------------------------------------------------
 //  Outlet pressure condition classes for right side.
 //----------------------------------------------------------------------
@@ -155,7 +144,6 @@ class InletInflowPressureConditionRight : public BaseStateCondition
         }
     };
 };
-
 //----------------------------------------------------------------------
 //  Fluid body definition.
 //----------------------------------------------------------------------
@@ -175,7 +163,6 @@ class WaterBlock : public MultiPolygonShape
         multi_polygon_.addAPolygon(water_body_shape, ShapeBooleanOps::add);
     }
 };
-
 //----------------------------------------------------------------------
 //  Wall boundary body definition.
 //----------------------------------------------------------------------
@@ -340,7 +327,6 @@ int main(int ac, char *av[])
     // Finally, the auxiliary models such as time step estimator, initial condition,
     // boundary condition and other constraints should be defined.
     //----------------------------------------------------------------------
-
     StateDynamics<execution::ParallelPolicy, NormalFromBodyShapeCK> wall_normal_direction(wall); // run on CPU
     StateDynamics<MainExecutionPolicy, fluid_dynamics::AdvectionStepSetup> water_advection_step_setup(water_body);
     StateDynamics<MainExecutionPolicy, fluid_dynamics::AdvectionStepClose> water_advection_step_close(water_body);
@@ -354,23 +340,18 @@ int main(int ac, char *av[])
         fluid_density_regularization(water_body_inner, water_wall_contact);
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::FreeSurfaceIndicationComplexSpatialTemporalCK>
         fluid_boundary_indicator(water_body_inner, water_wall_contact);
-
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::TransportVelocityCorrectionWallNoCorrectionBulkParticlesCK>
         transport_correction_ck(water_body_inner, water_wall_contact);
-
     ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AdvectionTimeStepCK> fluid_advection_time_step(water_body, U_f);
     ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticTimeStepCK> fluid_acoustic_time_step(water_body);
-
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::ViscousForceWithWallCK>
         fluid_viscous_force(water_body_inner, water_wall_contact);
-
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::TransportVelocityLimitedCorrectionCorrectedComplexBulkParticlesCKWithoutUpdate>
         zero_gradient_ck(water_body_inner, water_wall_contact);
     fluid_dynamics::VelocityBidirectionalConditionCK<MainExecutionPolicy, SequencedExecutionPolicy, NoKernelCorrectionCK, InletInflowConditionLeft>
         bidirectional_velocity_condition_left(left_emitter_by_cell, inlet_buffer);
     fluid_dynamics::PressureBidirectionalConditionCK<MainExecutionPolicy, SequencedExecutionPolicy, NoKernelCorrectionCK, InletInflowPressureConditionRight>
         bidirectional_pressure_condition_right(right_emitter_by_cell, inlet_buffer);
-
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
@@ -487,12 +468,10 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     // Get the velocity data from the observer body particles
     auto observer_vel = velocity_observer.getBaseParticles().getVariableDataByName<Vecd>("Velocity");
-
     // Validate observer velocities against analytical Poiseuille profile
     // Convert the pointer to a std::vector using the number of observer particles.
     std::vector<Vecd> observer_vel_vec(observer_vel, observer_vel + observer_location.size());
     Real error_tolerance = 3 * 0.01; // Less than 3 percent when resolution is DH/20
     velocity_validation(observer_location, observer_vel_vec, poiseuille_2d_u_steady, error_tolerance, U_f);
-
     return 0;
 }
