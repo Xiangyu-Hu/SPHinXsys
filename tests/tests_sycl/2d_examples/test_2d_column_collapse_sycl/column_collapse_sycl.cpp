@@ -230,6 +230,20 @@ int main(int ac, char *av[])
     }
     TickCount t4 = TickCount::now();
 
+    // File Name
+    std::string filename = "output/GranularBody_.dat";
+    // open
+    std::ifstream file(filename);
+
+    // Print
+    std::string line;
+    while (std::getline(file, line)) {
+        std::cout << line << std::endl;
+    }
+
+    // close
+    file.close();
+
     TimeInterval tt;
     tt = t4 - t1 - interval;
     std::cout << std::fixed << "Total wall time for computation: " << tt.seconds()
