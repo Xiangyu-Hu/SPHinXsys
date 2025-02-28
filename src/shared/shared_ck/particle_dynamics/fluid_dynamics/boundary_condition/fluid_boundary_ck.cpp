@@ -31,37 +31,6 @@ void EmitterInflowInjectionCK<AlignedBoxPartType>::FinishDynamics::operator()()
 {
     buffer_.checkEnoughBuffer(*particles_);
 }
-// //=================================================================================================//
-// template <typename AlignedBoxPartType, class ConditionFunction>
-// BufferEmitterInflowInjectionCK<AlignedBoxPartType, ConditionFunction>::
-//     BufferEmitterInflowInjectionCK(AlignedBoxPartType &aligned_box_part, ParticleBuffer<Base> &buffer)
-//     : BaseLocalDynamics<AlignedBoxPartType>(aligned_box_part),
-//       buffer_(buffer), sv_aligned_box_(aligned_box_part.svAlignedBox()),
-//       create_real_particle_method_(this->particles_),
-//       rho0_(this->particles_->getBaseMaterial().ReferenceDensity()),
-//       dv_pos_(this->particles_->template getVariableByName<Vecd>("Position")),
-//       dv_rho_(this->particles_->template getVariableByName<Real>("Density")),
-//       dv_p_(this->particles_->template getVariableByName<Real>("Pressure")),
-//       dv_buffer_particle_indicator_(this->particles_->template getVariableByName<int>("BufferParticleIndicator")),
-//       condition_function_(this->particles_)
-// {
-//     buffer_.checkParticlesReserved();
-//     Fluid &fluid_ = DynamicCast<Fluid>(this, this->particles_->getBaseMaterial());
-//     sound_speed_ = fluid_.getSoundSpeed(rho0_);
-// }
-// //=================================================================================================//
-// template <typename AlignedBoxPartType, class ConditionFunction>
-// BufferEmitterInflowInjectionCK<AlignedBoxPartType, ConditionFunction>::FinishDynamics::
-//     FinishDynamics(BufferEmitterInflowInjectionCK<AlignedBoxPartType, ConditionFunction> &encloser)
-//     : particles_(encloser.particles_), buffer_(encloser.buffer_)
-// {
-// }
-// //=================================================================================================//
-// template <typename AlignedBoxPartType, class ConditionFunction>
-// void BufferEmitterInflowInjectionCK<AlignedBoxPartType, ConditionFunction>::FinishDynamics::operator()()
-// {
-//     buffer_.checkEnoughBuffer(*particles_);
-// }
 //=================================================================================================//
 DisposerOutflowDeletionCK::
     DisposerOutflowDeletionCK(AlignedBoxPartByCell &aligned_box_part)
