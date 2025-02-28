@@ -72,57 +72,6 @@ void EmitterInflowInjectionCK<AlignedBoxPartType>::FinishDynamics::operator()()
 {
     buffer_.checkEnoughBuffer(*particles_);
 }
-// //=================================================================================================//
-// // EmitterInflowInjectionCK definitions
-// template <typename AlignedBoxPartType, class ConditionFunction>
-// template <class ExecutionPolicy, class EncloserType>
-// BufferEmitterInflowInjectionCK<AlignedBoxPartType, ConditionFunction>::UpdateKernel::
-//     UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-//     : aligned_box_(encloser.sv_aligned_box_->DelegatedData(ex_policy)),
-//       create_real_particle_(ex_policy, encloser.create_real_particle_method_),
-//       rho0_(encloser.rho0_),
-//       sound_speed_(encloser.sound_speed_),
-//       pos_(encloser.dv_pos_->DelegatedData(ex_policy)),
-//       rho_(encloser.dv_rho_->DelegatedData(ex_policy)),
-//       p_(encloser.dv_p_->DelegatedData(ex_policy)),
-//       buffer_particle_indicator_(encloser.dv_buffer_particle_indicator_->DelegatedData(ex_policy)),
-//       condition_(ex_policy, encloser.condition_function_)
-// {
-// }
-
-// template <typename AlignedBoxPartType, class ConditionFunction>
-// void BufferEmitterInflowInjectionCK<AlignedBoxPartType, ConditionFunction>::UpdateKernel::update(size_t index_i, Real dt)
-// {
-//     if (!aligned_box_->checkInBounds(pos_[index_i]))
-//     {
-//         if (aligned_box_->checkUpperBound(pos_[index_i]))
-//         {
-//             if (buffer_particle_indicator_[index_i] == 1)
-//             {
-//                 // if (index_i < this->particles_->TotalRealParticles())
-//                 {
-//                     create_real_particle_(index_i);
-//                     pos_[index_i] = aligned_box_->getUpperPeriodic(pos_[index_i]); // Periodic bounding.
-//                     rho_[index_i] = rho0_;
-//                     p_[index_i] = 0.0;
-//                 }
-//             }
-//         }
-//     }
-// }
-
-// template <typename AlignedBoxPartType, class ConditionFunction>
-// BufferEmitterInflowInjectionCK<AlignedBoxPartType, ConditionFunction>::FinishDynamics::
-//     FinishDynamics(BufferEmitterInflowInjectionCK<AlignedBoxPartType, ConditionFunction> &encloser)
-//     : particles_(encloser.particles_), buffer_(encloser.buffer_)
-// {
-// }
-
-// template <typename AlignedBoxPartType, class ConditionFunction>
-// void BufferEmitterInflowInjectionCK<AlignedBoxPartType, ConditionFunction>::FinishDynamics::operator()()
-// {
-//     buffer_.checkEnoughBuffer(*particles_);
-// }
 //=================================================================================================//
 // DisposerOutflowDeletionCK definitions
 template <class ExecutionPolicy, class EncloserType>
