@@ -153,8 +153,7 @@ class ParticleScopeTypeCK<ExcludeBufferParticles> : public WithinScope
   public:
     explicit ParticleScopeTypeCK(BaseParticles *particles)
         : WithinScope(),
-          dv_buffer_particles_indicator_(particles->registerStateVariableOnly<int>("BufferParticleIndicator")),
-          dv_density_summation_verify_indicator_(particles->registerStateVariableOnly<int>("DensitySummationVerify"))
+          dv_buffer_particles_indicator_(particles->registerStateVariableOnly<int>("BufferParticleIndicator"))
     {
     }
 
@@ -165,28 +164,21 @@ class ParticleScopeTypeCK<ExcludeBufferParticles> : public WithinScope
         ComputingKernel(const ExecutionPolicy &ex_policy,
                         ParticleScopeTypeCK<ExcludeBufferParticles> &encloser,
                         ComputingKernelType &computing_kernel)
-            : buffer_particles_indicator_(encloser.dv_buffer_particles_indicator_->DelegatedData(ex_policy)),
-              density_summation_verify_indicator_(encloser.dv_density_summation_verify_indicator_->DelegatedData(ex_policy))
+            : buffer_particles_indicator_(encloser.dv_buffer_particles_indicator_->DelegatedData(ex_policy))
         {
         }
 
         bool operator()(size_t index_i) const
         {
-            density_summation_verify_indicator_[index_i] = 1;
-
-            if (buffer_particles_indicator_[index_i] == 0)
-                density_summation_verify_indicator_[index_i] = 0;
             return (buffer_particles_indicator_[index_i] != 1);
         }
 
       protected:
         int *buffer_particles_indicator_;
-        int *density_summation_verify_indicator_;
     };
 
   protected:
     DiscreteVariable<int> *dv_buffer_particles_indicator_;
-    DiscreteVariable<int> *dv_density_summation_verify_indicator_;
 };
 
 } // namespace SPH

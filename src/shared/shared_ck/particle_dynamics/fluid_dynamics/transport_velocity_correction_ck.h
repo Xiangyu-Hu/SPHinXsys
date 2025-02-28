@@ -78,7 +78,6 @@ class TransportVelocityCorrectionCK<Inner<UpdatePolicy, KernelCorrectionType, Re
         LimiterType limiter_;
         Vecd *dpos_, *zero_gradient_residue_;
         ParticleScopeTypeKernel within_scope_;
-        int *with_scope_verify_; ///< "ZeroGradientResidue"
     };
 
   protected:
@@ -88,7 +87,6 @@ class TransportVelocityCorrectionCK<Inner<UpdatePolicy, KernelCorrectionType, Re
     ResolutionType h_ratio_;  ///< e.g. for adaptive resolution
     LimiterType limiter_;     ///< e.g. a limiter on the final correction step
     ParticleScopeTypeCK<ParticleScopeType> within_scope_method_;
-    DiscreteVariable<int> *dv_with_scope_verify_; ///< "ZeroGradientResidue"
 };
 //----------------------------------------------
 //  2) Partial specialization for Contact<...>
