@@ -90,6 +90,7 @@ TagBufferParticlesCK::TagBufferParticlesCK(AlignedBoxPartByCell &aligned_box_par
       dv_pos_(particles_->getVariableByName<Vecd>("Position")),
       dv_buffer_particle_indicator_(particles_->template registerStateVariableOnly<int>("BufferParticleIndicator"))
 {
+    particles_->template addEvolvingVariable<int>("BufferParticleIndicator");
 }
 
 template class EmitterInflowInjectionCK<AlignedBoxPartByCell>;

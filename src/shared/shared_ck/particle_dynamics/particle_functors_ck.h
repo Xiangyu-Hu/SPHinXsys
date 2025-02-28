@@ -155,7 +155,6 @@ class ParticleScopeTypeCK<ExcludeBufferParticles> : public WithinScope
         : WithinScope(),
           dv_buffer_particles_indicator_(particles->registerStateVariableOnly<int>("BufferParticleIndicator")),
           dv_density_summation_verify_indicator_(particles->registerStateVariableOnly<int>("DensitySummationVerify"))
-
     {
     }
 

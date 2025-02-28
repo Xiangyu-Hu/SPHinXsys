@@ -412,6 +412,30 @@ class NonPrescribedPressure : public BaseStateCondition
         }
     };
 };
+
+//----------------------------------------------------------------------
+//  Inlet pressure condition classes for left and right sides.
+//----------------------------------------------------------------------
+class DummyPressure : public BaseStateCondition
+{
+  public:
+    DummyPressure(BaseParticles *particles)
+        : BaseStateCondition(particles) {};
+
+    class ComputingKernel : public BaseStateCondition::ComputingKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+            : BaseStateCondition::ComputingKernel(ex_policy, encloser) {}
+
+        Real operator()(size_t index_i, Real /*time*/)
+        {
+            return p_[index_i];
+        }
+    };
+};
+
 template <typename ParallelExecutionPolicy, typename SequencedExecutionPolicy, class KernelCorrectionType, class VelocityConditionFunction>
 class VelocityBidirectionalConditionCK
 {
@@ -419,6 +443,9 @@ class VelocityBidirectionalConditionCK
     StateDynamics<ParallelExecutionPolicy, TagBufferParticlesCK> tag_buffer_particles_;
 
     StateDynamics<ParallelExecutionPolicy, fluid_dynamics::InflowConditionCK<AlignedBoxPartByCell, VelocityConditionFunction>> velocity_condition_;
+
+    StateDynamics<ParallelExecutionPolicy, PressureConditionCK<AlignedBoxPartByCell, KernelCorrectionType, DummyPressure>>
+        pressure_condition_;
 
     StateDynamics<SequencedExecutionPolicy, BufferEmitterInflowInjectionCK<AlignedBoxPartByCell, NonPrescribedPressure>> emitter_injection_; // Using NonPrescribedPressure as we do not change pressure
 
@@ -428,6 +455,7 @@ class VelocityBidirectionalConditionCK
                                      ParticleBuffer<Base> &inlet_buffer)
         : tag_buffer_particles_(emitter_by_cell),
           velocity_condition_(emitter_by_cell),
+          pressure_condition_(emitter_by_cell),
           emitter_injection_(emitter_by_cell, inlet_buffer),
           disposer_outflow_deletion_(emitter_by_cell)
     {
@@ -435,6 +463,9 @@ class VelocityBidirectionalConditionCK
 
     /// Tag (or flag) particles in the buffer.
     void tagBufferParticles() { tag_buffer_particles_.exec(); }
+
+    /// Apply the pressure condition (note that this usually takes a time-step dt).
+    void applyPressureCondition(Real dt) { pressure_condition_.exec(dt); }
 
     /// Apply the velocity condition.
     void applyVelocityCondition() { velocity_condition_.exec(); }
