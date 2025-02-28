@@ -201,10 +201,10 @@ class XmlParser
     };
 
     /**Add new element to Xml Doc. */
-    inline void addNewElement(const std::string &element_name);
+    inline tinyxml2::XMLElement *addNewElement(const std::string &element_name);
 
     /**Add child element to a given element. */
-    inline void addNewElement(tinyxml2::XMLElement *father_element, const std::string &child_name);
+    inline tinyxml2::XMLElement *addNewElement(tinyxml2::XMLElement *father_element, const std::string &child_name);
 
     /** Get the size of Xml doc */
     inline size_t Size();
@@ -284,15 +284,17 @@ class XmlParser
 };
 
 /**Add new element to Xml Doc. */
-inline void XmlParser::addNewElement(const std::string &element_name)
+inline tinyxml2::XMLElement *XmlParser::addNewElement(const std::string &element_name)
 {
-    xml_doc_->InsertEndChild(xml_doc_->NewElement(element_name.c_str()));
+    tinyxml2::XMLElement *new_element = xml_doc_->NewElement(element_name.c_str());
+    xml_doc_->InsertEndChild(new_element);
+    return new_element;
 }
 
 /**Add child element to a given element. */
-inline void XmlParser::addNewElement(tinyxml2::XMLElement *father_element, const std::string &child_name)
+inline tinyxml2::XMLElement *XmlParser::addNewElement(tinyxml2::XMLElement *father_element, const std::string &child_name)
 {
-    father_element->InsertNewChildElement(child_name.c_str());
+    return father_element->InsertNewChildElement(child_name.c_str());
 }
 
 /** Get the size of Xml doc */
