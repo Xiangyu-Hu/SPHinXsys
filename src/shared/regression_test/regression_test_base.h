@@ -80,8 +80,8 @@ class RegressionTestBase : public ObserveMethodType
     void writeDataToXmlMemory(XmlEngine &xml_engine, SimTK::Xml::Element &element, const BiVector<T> &quantity,
                               int snapshot_, int observation_, const std::string &quantity_name, StdVec<std::string> &element_tag);
     template <typename T>
-    void writeDataToXmlMemory(XmlEngine &xml_engine, SimTK::Xml::Element &element,
-                              std::string element_name, int observation_index, const T &quantity, const std::string &quantity_name);
+    void writeDataToXmlMemory(XmlEngine &xml_engine, SimTK::Xml::element_iterator ele_ite,
+                              int observation_index, const T &quantity, const std::string &quantity_name);
     template <typename T>
     void readDataFromXmlMemory(XmlEngine &xml_engine, SimTK::Xml::Element &element,
                                int observation_index, BiVector<T> &result_container, const std::string &quantity_name);
