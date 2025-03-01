@@ -85,7 +85,7 @@ class InletInflowCondition : public BaseStateCondition
 
         void operator()(AlignedBox *aligned_box, UnsignedInt index_i)
         {
-            vel_[index_i] = Vec2d(2.0, 0.0);
+            vel_[index_i] = Vec2d(U_f, 0.0);
         };
     };
 };
@@ -165,12 +165,17 @@ int main(int ac, char *av[])
 
     StateDynamics<MainExecutionPolicy, fluid_dynamics::InflowConditionCK<AlignedBoxPartByParticle, InletInflowCondition>> inflow_condition(emitter);
     StateDynamics<SequencedExecutionPolicy, fluid_dynamics::EmitterInflowInjectionCK> emitter_injection(emitter, inlet_buffer);
+    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::FreeSurfaceIndicationComplexCK_St>
+        fluid_boundary_indicator(water_body_inner, water_body_inner, water_wall_contact);
+
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
     IOEnvironment io_environment(sph_system);
     BodyStatesRecordingToVtp body_states_recording(sph_system);
+    body_states_recording.addToWrite<int>(water_body, "Indicator");
+
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<MainExecutionPolicy, TotalMechanicalEnergyCK>>
         write_water_mechanical_energy(water_body, gravity);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<MainExecutionPolicy, Real>>
@@ -214,6 +219,8 @@ int main(int ac, char *av[])
         while (integration_time < output_interval)
         {
             fluid_density_regularization.exec();
+            fluid_boundary_indicator.exec();
+
             water_advection_step_setup.exec();
             Real advection_dt = fluid_advection_time_step.exec();
 
@@ -247,6 +254,7 @@ int main(int ac, char *av[])
             {
                 particle_sort.exec();
             }
+
             water_cell_linked_list.exec();
             water_body_update_complex_relation.exec();
             fluid_observer_contact_relation.exec();
