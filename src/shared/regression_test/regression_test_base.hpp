@@ -44,16 +44,16 @@ template <class ObserveMethodType>
 template <typename T>
 void RegressionTestBase<ObserveMethodType>::writeDataToXmlMemory(
     XmlEngine &xml_engine, SimTK::Xml::Element &element, const BiVector<T> &quantity,
-    int snapshot_, int observation_, const std::string &quantity_name, StdVec<std::string> &element_tag)
+    int snapshot_, int observe_, const std::string &quantity_name, StdVec<std::string> &element_tag)
 {
     for (int snapshot_index = 0; snapshot_index != snapshot_; ++snapshot_index)
     {
         std::string element_name = element_tag[snapshot_index];
         auto ele_ite = xml_engine.addChildToElement(element, element_name);
-        for (int observation_index = 0; observation_index != observation_; ++observation_index)
+        for (int observe_k = 0; observe_k != observe_; ++observe_k)
         {
-            std::string attribute_name_ = quantity_name + "_" + std::to_string(observation_index);
-            xml_engine.setAttributeToElement(ele_ite, attribute_name_, quantity[snapshot_index][observation_index]);
+            std::string attribute_name_ = quantity_name + "_" + std::to_string(observe_k);
+            xml_engine.setAttributeToElement(ele_ite, attribute_name_, quantity[snapshot_index][observe_k]);
         }
     }
 }
@@ -62,9 +62,9 @@ template <class ObserveMethodType>
 template <typename T>
 void RegressionTestBase<ObserveMethodType>::writeDataToXmlMemory(
     XmlEngine &xml_engine, SimTK::Xml::element_iterator ele_ite,
-    int observation_index, const T &quantity, const std::string &quantity_name)
+    int observe_k, const T &quantity, const std::string &quantity_name)
 {
-    std::string attribute_name_ = quantity_name + "_" + std::to_string(observation_index);
+    std::string attribute_name_ = quantity_name + "_" + std::to_string(observe_k);
     xml_engine.setAttributeToElement(ele_ite, attribute_name_, quantity);
 }
 //=================================================================================================//
@@ -72,13 +72,13 @@ template <class ObserveMethodType>
 template <typename T>
 void RegressionTestBase<ObserveMethodType>::readDataFromXmlMemory(
     XmlEngine &xml_engine, SimTK::Xml::Element &element,
-    int observation_index, BiVector<T> &result_container, const std::string &quantity_name)
+    int observe_k, BiVector<T> &result_container, const std::string &quantity_name)
 {
     int snapshot_index = 0;
     for (auto ele_ite = element.element_begin(); ele_ite != element.element_end(); ++ele_ite)
     {
-        std::string attribute_name_ = quantity_name + "_" + std::to_string(observation_index);
-        xml_engine.getRequiredAttributeValue(ele_ite, attribute_name_, result_container[snapshot_index][observation_index]);
+        std::string attribute_name_ = quantity_name + "_" + std::to_string(observe_k);
+        xml_engine.getRequiredAttributeValue(ele_ite, attribute_name_, result_container[snapshot_index][observe_k]);
         snapshot_index++;
     }
 }
@@ -172,8 +172,8 @@ void RegressionTestBase<ObserveMethodType>::transposeTheIndex()
     BiVector<VariableType> temp(number_of_observation, StdVec<VariableType>(number_of_snapshot));
     current_result_trans_ = temp;
     for (int snapshot_index = 0; snapshot_index != number_of_snapshot; ++snapshot_index)
-        for (int observation_index = 0; observation_index != number_of_observation; ++observation_index)
-            current_result_trans_[observation_index][snapshot_index] = this->current_result_[snapshot_index][observation_index];
+        for (int observe_k = 0; observe_k != number_of_observation; ++observe_k)
+            current_result_trans_[observe_k][snapshot_index] = this->current_result_[snapshot_index][observe_k];
 };
 //=================================================================================================//
 template <class ObserveMethodType>
@@ -182,12 +182,12 @@ void RegressionTestBase<ObserveMethodType>::readResultFromXml()
     if (number_of_run_ > 1) /*only read the result from the 2nd run, because the 1st run doesn't have previous results. */
     {
         /*Here result_in is a temporary container that reloads each previous result.*/
-        BiVector<VariableType> result_in_(SMAX(snapshot_, number_of_snapshot_old_), StdVec<VariableType>(observation_));
+        BiVector<VariableType> result_in_(SMAX(snapshot_, number_of_snapshot_old_), StdVec<VariableType>(observe_));
         for (int run_index_ = 0; run_index_ != number_of_run_ - 1; ++run_index_)
         {
             std::string node_name_ = "Round_" + std::to_string(run_index_);
             SimTK::Xml::Element father_element_ = result_xml_engine_in_.getChildElement(node_name_);
-            for (int observation_index_ = 0; observation_index_ != observation_; ++observation_index_)
+            for (int observation_index_ = 0; observation_index_ != observe_; ++observation_index_)
                 readDataFromXmlMemory(result_xml_engine_in_, father_element_, observation_index_, result_in_, this->quantity_name_);
             BiVector<VariableType> result_temp_ = result_in_;
             for (int delete_ = 0; delete_ != difference_; ++delete_)
@@ -208,7 +208,7 @@ void RegressionTestBase<ObserveMethodType>::writeResultToXml()
         SimTK::Xml::Element father_element_ =
             result_xml_engine_out_.getChildElement(node_name_);
         writeDataToXmlMemory(result_xml_engine_out_, father_element_, result_[run_index_],
-                             SMIN(snapshot_, number_of_snapshot_old_), observation_, this->quantity_name_, this->element_tag_);
+                             SMIN(snapshot_, number_of_snapshot_old_), observe_, this->quantity_name_, this->element_tag_);
     }
     result_xml_engine_out_.writeToXmlFile(result_filefullpath_);
 };
@@ -238,17 +238,17 @@ void RegressionTestBase<ObserveMethodType>::readResultFromXml(int index_of_run_)
         SimTK::Xml::element_iterator ele_ite = snapshot_element_.element_begin();
         result_xml_engine_in_.getRequiredAttributeValue(ele_ite, "number_of_snapshot_for_local_result_", snapshot_);
 
-        BiVector<VariableType> result_temp_(observation_, StdVec<VariableType>(snapshot_));
+        BiVector<VariableType> result_temp_(observe_, StdVec<VariableType>(snapshot_));
         result_in_ = result_temp_;
         SimTK::Xml::Element result_element_ = result_xml_engine_in_.getChildElement("Result_Element");
         for (int snapshot_index = 0; snapshot_index != snapshot_; ++snapshot_index)
         {
-            int observation_index = 0;
+            int observe_k = 0;
             for (auto ele_ite = result_element_.element_begin(); ele_ite != result_element_.element_end(); ++ele_ite)
             {
                 std::string attribute_name_ = "snapshot_" + std::to_string(snapshot_index);
-                result_xml_engine_in_.getRequiredAttributeValue(ele_ite, attribute_name_, result_in_[observation_index][snapshot_index]);
-                observation_index++;
+                result_xml_engine_in_.getRequiredAttributeValue(ele_ite, attribute_name_, result_in_[observe_k][snapshot_index]);
+                observe_k++;
             }
         };
     }
@@ -267,14 +267,14 @@ void RegressionTestBase<ObserveMethodType>::writeResultToXml(int index_of_run_)
     result_xml_engine_out_.setAttributeToElement(ele_ite, "number_of_snapshot_for_local_result_", total_snapshot_);
 
     auto result_element_ = result_xml_engine_out_.addElementToXmlDoc("Result_Element");
-    for (int observation_index = 0; observation_index != observation_; ++observation_index)
+    for (int observe_k = 0; observe_k != observe_; ++observe_k)
     {
-        std::string element_name_ = "Particle_" + std::to_string(observation_index);
+        std::string element_name_ = "Particle_" + std::to_string(observe_k);
         auto ele_ite = result_xml_engine_out_.addChildToElement(*result_element_, element_name_);
         for (int snapshot_index = 0; snapshot_index != total_snapshot_; ++snapshot_index)
         {
             std::string attribute_name_ = "snapshot_" + std::to_string(snapshot_index);
-            result_xml_engine_out_.setAttributeToElement(ele_ite, attribute_name_, current_result_trans_[observation_index][snapshot_index]);
+            result_xml_engine_out_.setAttributeToElement(ele_ite, attribute_name_, current_result_trans_[observe_k][snapshot_index]);
         }
     }
     result_xml_engine_out_.writeToXmlFile(result_filefullpath_);

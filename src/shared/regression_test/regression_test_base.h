@@ -69,7 +69,7 @@ class RegressionTestBase : public ObserveMethodType
                                                   or observations * snapshot (reading specified result for TA and DTW method.) */
     TriVector<VariableType> result_;              /*< the container of results in all runs (run * snapshot * observation) */
 
-    int snapshot_, observation_; /*< the size of each layer of current result vector. */
+    int snapshot_, observe_; /*< the size of each layer of current result vector. */
     int difference_;             /*< the length difference of snapshot between old and new result,
                                  which is used to trim each new run result to be a unified length. */
     int number_of_run_;          /*< the times of run. */
@@ -78,13 +78,13 @@ class RegressionTestBase : public ObserveMethodType
 
     template <typename T>
     void writeDataToXmlMemory(XmlEngine &xml_engine, SimTK::Xml::Element &element, const BiVector<T> &quantity,
-                              int snapshot_, int observation_, const std::string &quantity_name, StdVec<std::string> &element_tag);
+                              int snapshot_, int observe_, const std::string &quantity_name, StdVec<std::string> &element_tag);
     template <typename T>
     void writeDataToXmlMemory(XmlEngine &xml_engine, SimTK::Xml::element_iterator ele_ite,
-                              int observation_index, const T &quantity, const std::string &quantity_name);
+                              int observe_k, const T &quantity, const std::string &quantity_name);
     template <typename T>
     void readDataFromXmlMemory(XmlEngine &xml_engine, SimTK::Xml::Element &element,
-                               int observation_index, BiVector<T> &result_container, const std::string &quantity_name);
+                               int observe_k, BiVector<T> &result_container, const std::string &quantity_name);
     void readTagFromXmlMemory(SimTK::Xml::Element &element, StdVec<std::string> &element_tag);
 
   public:

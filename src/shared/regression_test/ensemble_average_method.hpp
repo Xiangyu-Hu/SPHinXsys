@@ -17,14 +17,14 @@ void RegressionTestEnsembleAverage<ObserveMethodType>::calculateNewVariance(TriV
                                                                             BiVector<Real> &meanvalue_new, BiVector<Real> &variance, BiVector<Real> &variance_new)
 {
     for (int snapshot_index = 0; snapshot_index != SMIN(this->snapshot_, this->number_of_snapshot_old_); ++snapshot_index)
-        for (int observation_index = 0; observation_index != this->observation_; ++observation_index)
+        for (int observe_k = 0; observe_k != this->observe_; ++observe_k)
             for (int run_index = 0; run_index != this->number_of_run_; ++run_index)
             {
-                variance_new[snapshot_index][observation_index] = SMAX(
-                    (Real)variance[snapshot_index][observation_index],
-                    (Real)variance_new[snapshot_index][observation_index],
-                    (Real)pow((result[run_index][snapshot_index][observation_index] - meanvalue_new[snapshot_index][observation_index]), 2),
-                    (Real)pow(meanvalue_new[snapshot_index][observation_index] * 1.0e-2, 2));
+                variance_new[snapshot_index][observe_k] = SMAX(
+                    (Real)variance[snapshot_index][observe_k],
+                    (Real)variance_new[snapshot_index][observe_k],
+                    (Real)pow((result[run_index][snapshot_index][observe_k] - meanvalue_new[snapshot_index][observe_k]), 2),
+                    (Real)pow(meanvalue_new[snapshot_index][observe_k] * 1.0e-2, 2));
             }
 };
 //=================================================================================================//
@@ -33,15 +33,15 @@ void RegressionTestEnsembleAverage<ObserveMethodType>::calculateNewVariance(TriV
                                                                             BiVector<Vecd> &meanvalue_new, BiVector<Vecd> &variance, BiVector<Vecd> &variance_new)
 {
     for (int snapshot_index = 0; snapshot_index != SMIN(this->snapshot_, this->number_of_snapshot_old_); ++snapshot_index)
-        for (int observation_index = 0; observation_index != this->observation_; ++observation_index)
+        for (int observe_k = 0; observe_k != this->observe_; ++observe_k)
             for (int run_index = 0; run_index != this->number_of_run_; ++run_index)
                 for (int i = 0; i != variance[0][0].size(); ++i)
                 {
-                    variance_new[snapshot_index][observation_index][i] = SMAX(
-                        (Real)variance[snapshot_index][observation_index][i],
-                        (Real)variance_new[snapshot_index][observation_index][i],
-                        (Real)pow((result[run_index][snapshot_index][observation_index][i] - meanvalue_new[snapshot_index][observation_index][i]), 2),
-                        (Real)pow(meanvalue_new[snapshot_index][observation_index][i] * 1.0e-2, 2));
+                    variance_new[snapshot_index][observe_k][i] = SMAX(
+                        (Real)variance[snapshot_index][observe_k][i],
+                        (Real)variance_new[snapshot_index][observe_k][i],
+                        (Real)pow((result[run_index][snapshot_index][observe_k][i] - meanvalue_new[snapshot_index][observe_k][i]), 2),
+                        (Real)pow(meanvalue_new[snapshot_index][observe_k][i] * 1.0e-2, 2));
                 }
 };
 //=================================================================================================//
@@ -50,16 +50,16 @@ void RegressionTestEnsembleAverage<ObserveMethodType>::calculateNewVariance(TriV
                                                                             BiVector<Matd> &meanvalue_new, BiVector<Matd> &variance, BiVector<Matd> &variance_new)
 {
     for (int snapshot_index = 0; snapshot_index != SMIN(this->snapshot_, this->number_of_snapshot_old_); ++snapshot_index)
-        for (int observation_index = 0; observation_index != this->observation_; ++observation_index)
+        for (int observe_k = 0; observe_k != this->observe_; ++observe_k)
             for (int run_index = 0; run_index != this->number_of_run_; ++run_index)
                 for (size_t i = 0; i != variance[0][0].size(); ++i)
                     for (size_t j = 0; j != variance[0][0].size(); ++j)
                     {
-                        variance_new[snapshot_index][observation_index](i, j) = SMAX(
-                            (Real)variance[snapshot_index][observation_index](i, j),
-                            (Real)variance_new[snapshot_index][observation_index](i, j),
-                            (Real)pow((result[run_index][snapshot_index][observation_index](i, j) - meanvalue_new[snapshot_index][observation_index](i, j)), 2),
-                            (Real)pow(meanvalue_new[snapshot_index][observation_index](i, j) * Real(0.01), 2));
+                        variance_new[snapshot_index][observe_k](i, j) = SMAX(
+                            (Real)variance[snapshot_index][observe_k](i, j),
+                            (Real)variance_new[snapshot_index][observe_k](i, j),
+                            (Real)pow((result[run_index][snapshot_index][observe_k](i, j) - meanvalue_new[snapshot_index][observe_k](i, j)), 2),
+                            (Real)pow(meanvalue_new[snapshot_index][observe_k](i, j) * Real(0.01), 2));
                     }
 };
 //=================================================================================================//
@@ -69,13 +69,13 @@ int RegressionTestEnsembleAverage<ObserveMethodType>::compareParameter(std::stri
 {
     int count = 0;
     for (int snapshot_index = 0; snapshot_index != SMIN(this->snapshot_, this->number_of_snapshot_old_); ++snapshot_index)
-        for (int observation_index = 0; observation_index != this->observation_; ++observation_index)
+        for (int observe_k = 0; observe_k != this->observe_; ++observe_k)
         {
-            Real relative_value_ = ABS((parameter[snapshot_index][observation_index] - parameter_new[snapshot_index][observation_index]) /
-                                       (parameter_new[snapshot_index][observation_index] + TinyReal));
+            Real relative_value_ = ABS((parameter[snapshot_index][observe_k] - parameter_new[snapshot_index][observe_k]) /
+                                       (parameter_new[snapshot_index][observe_k] + TinyReal));
             if (relative_value_ > threshold)
             {
-                std::cout << par_name << ": " << this->quantity_name_ << "[" << observation_index << "] in " << this->element_tag_[snapshot_index]
+                std::cout << par_name << ": " << this->quantity_name_ << "[" << observe_k << "] in " << this->element_tag_[snapshot_index]
                           << " is not converged, and difference is " << relative_value_ << std::endl;
                 count++;
             }
@@ -89,14 +89,14 @@ int RegressionTestEnsembleAverage<ObserveMethodType>::compareParameter(std::stri
 {
     int count = 0;
     for (int snapshot_index = 0; snapshot_index != SMIN(this->snapshot_, this->number_of_snapshot_old_); ++snapshot_index)
-        for (int observation_index = 0; observation_index != this->observation_; ++observation_index)
+        for (int observe_k = 0; observe_k != this->observe_; ++observe_k)
             for (int i = 0; i != parameter[0][0].size(); ++i)
             {
-                Real relative_value_ = ABS((parameter[snapshot_index][observation_index][i] - parameter_new[snapshot_index][observation_index][i]) /
-                                           (parameter_new[snapshot_index][observation_index][i] + TinyReal));
+                Real relative_value_ = ABS((parameter[snapshot_index][observe_k][i] - parameter_new[snapshot_index][observe_k][i]) /
+                                           (parameter_new[snapshot_index][observe_k][i] + TinyReal));
                 if (relative_value_ > threshold[i])
                 {
-                    std::cout << par_name << ": " << this->quantity_name_ << "[" << observation_index << "][" << i << "] in " << this->element_tag_[snapshot_index]
+                    std::cout << par_name << ": " << this->quantity_name_ << "[" << observe_k << "][" << i << "] in " << this->element_tag_[snapshot_index]
                               << " is not converged, and difference is " << relative_value_ << std::endl;
                     count++;
                 }
@@ -110,14 +110,14 @@ int RegressionTestEnsembleAverage<ObserveMethodType>::compareParameter(std::stri
 {
     int count = 0;
     for (int snapshot_index = 0; snapshot_index != SMIN(this->snapshot_, this->number_of_snapshot_old_); ++snapshot_index)
-        for (int observation_index = 0; observation_index != this->observation_; ++observation_index)
+        for (int observe_k = 0; observe_k != this->observe_; ++observe_k)
             for (int i = 0; i != parameter[0][0].size(); ++i)
                 for (int j = 0; j != parameter[0][0].size(); ++j)
                 {
-                    Real relative_value_ = ABS(parameter[snapshot_index][observation_index](i, j) - parameter_new[snapshot_index][observation_index](i, j)) / (parameter_new[snapshot_index][observation_index](i, j) + TinyReal);
+                    Real relative_value_ = ABS(parameter[snapshot_index][observe_k](i, j) - parameter_new[snapshot_index][observe_k](i, j)) / (parameter_new[snapshot_index][observe_k](i, j) + TinyReal);
                     if (relative_value_ > threshold(i, j))
                     {
-                        std::cout << par_name << ": " << this->quantity_name_ << "[" << observation_index << "][" << i << "][" << j << " ] in "
+                        std::cout << par_name << ": " << this->quantity_name_ << "[" << observe_k << "][" << i << "][" << j << " ] in "
                                   << this->element_tag_[snapshot_index] << " is not converged, and difference is " << relative_value_ << std::endl;
                         count++;
                     }
@@ -132,14 +132,14 @@ int RegressionTestEnsembleAverage<ObserveMethodType>::testNewResult(int diff, Bi
     int count = 0;
     for (int snapshot_index = 0; snapshot_index != SMIN(this->snapshot_, this->number_of_snapshot_old_); ++snapshot_index)
     {
-        for (int observation_index = 0; observation_index != this->observation_; ++observation_index)
+        for (int observe_k = 0; observe_k != this->observe_; ++observe_k)
         {
-            Real relative_value_ = (pow(current_result[snapshot_index][observation_index] - meanvalue[snapshot_index + diff][observation_index], 2) -
-                                    variance[snapshot_index + diff][observation_index]) /
-                                   (variance[snapshot_index + diff][observation_index] + TinyReal);
+            Real relative_value_ = (pow(current_result[snapshot_index][observe_k] - meanvalue[snapshot_index + diff][observe_k], 2) -
+                                    variance[snapshot_index + diff][observe_k]) /
+                                   (variance[snapshot_index + diff][observe_k] + TinyReal);
             if (relative_value_ > 0.01)
             {
-                std::cout << this->quantity_name_ << "[" << observation_index << "] in " << this->element_tag_[snapshot_index] << " is beyond the exception, and difference is "
+                std::cout << this->quantity_name_ << "[" << observe_k << "] in " << this->element_tag_[snapshot_index] << " is beyond the exception, and difference is "
                           << relative_value_ << std::endl;
                 count++;
             }
@@ -155,20 +155,20 @@ int RegressionTestEnsembleAverage<ObserveMethodType>::testNewResult(int diff, Bi
     int count = 0;
     for (int snapshot_index = 0; snapshot_index != SMIN(this->snapshot_, this->number_of_snapshot_old_); ++snapshot_index)
     {
-        for (int observation_index = 0; observation_index != this->observation_; ++observation_index)
+        for (int observe_k = 0; observe_k != this->observe_; ++observe_k)
         {
             for (int i = 0; i != meanvalue[0][0].size(); ++i)
             {
-                Real relative_value_ = (pow(current_result[snapshot_index][observation_index][i] - meanvalue[snapshot_index + diff][observation_index][i], 2) -
-                                        variance[snapshot_index + diff][observation_index][i]) /
-                                       (variance[snapshot_index + diff][observation_index][i] + TinyReal);
+                Real relative_value_ = (pow(current_result[snapshot_index][observe_k][i] - meanvalue[snapshot_index + diff][observe_k][i], 2) -
+                                        variance[snapshot_index + diff][observe_k][i]) /
+                                       (variance[snapshot_index + diff][observe_k][i] + TinyReal);
                 if (relative_value_ > 0.01)
                 {
-                    std::cout << this->quantity_name_ << "[" << observation_index << "][" << i << "] in " << this->element_tag_[snapshot_index] << " is beyond the exception, and difference is "
+                    std::cout << this->quantity_name_ << "[" << observe_k << "][" << i << "] in " << this->element_tag_[snapshot_index] << " is beyond the exception, and difference is "
                               << relative_value_ << std::endl;
-                    std::cout << "Current: " << current_result[snapshot_index][observation_index][i] << std::endl;
-                    std::cout << "Mean " << meanvalue[snapshot_index + diff][observation_index][i] << std::endl;
-                    std::cout << "Variance" << variance[snapshot_index + diff][observation_index][i] << std::endl;
+                    std::cout << "Current: " << current_result[snapshot_index][observe_k][i] << std::endl;
+                    std::cout << "Mean " << meanvalue[snapshot_index + diff][observe_k][i] << std::endl;
+                    std::cout << "Variance" << variance[snapshot_index + diff][observe_k][i] << std::endl;
                     count++;
                 }
             }
@@ -185,20 +185,20 @@ int RegressionTestEnsembleAverage<ObserveMethodType>::testNewResult(int diff, Bi
     std::cout << "The current length difference is " << diff << "." << std::endl;
     for (int snapshot_index = 0; snapshot_index != SMIN(this->snapshot_, this->number_of_snapshot_old_); ++snapshot_index)
     {
-        for (int observation_index = 0; observation_index != this->observation_; ++observation_index)
+        for (int observe_k = 0; observe_k != this->observe_; ++observe_k)
         {
             for (int i = 0; i != meanvalue[0][0].size(); ++i)
             {
                 for (int j = 0; j != meanvalue[0][0].size(); ++j)
                 {
-                    Real relative_value_ = (pow(current_result[snapshot_index][observation_index](i, j) -
-                                                    meanvalue[snapshot_index + diff][observation_index](i, j),
+                    Real relative_value_ = (pow(current_result[snapshot_index][observe_k](i, j) -
+                                                    meanvalue[snapshot_index + diff][observe_k](i, j),
                                                 2) -
-                                            variance[snapshot_index + diff][observation_index](i, j)) /
-                                           variance[snapshot_index + diff][observation_index](i, j);
+                                            variance[snapshot_index + diff][observe_k](i, j)) /
+                                           variance[snapshot_index + diff][observe_k](i, j);
                     if (relative_value_ > 0.01)
                     {
-                        std::cout << this->quantity_name_ << "[" << observation_index << "][" << i << "] in " << this->element_tag_[snapshot_index] << " is beyond the exception, and difference is " << relative_value_ << std::endl;
+                        std::cout << this->quantity_name_ << "[" << observe_k << "][" << i << "] in " << this->element_tag_[snapshot_index] << " is beyond the exception, and difference is " << relative_value_ << std::endl;
                         count++;
                     }
                 }
@@ -218,7 +218,7 @@ void RegressionTestEnsembleAverage<ObserveMethodType>::setupAndCorrection()
         std::cout << __FILE__ << ':' << __LINE__ << std::endl;
         exit(1);
     }
-    this->observation_ = this->current_result_[0].size();
+    this->observe_ = this->current_result_[0].size();
 
     if (this->number_of_run_ > 1)
     {
@@ -246,7 +246,7 @@ void RegressionTestEnsembleAverage<ObserveMethodType>::setupAndCorrection()
             SimTK::Xml::Element mean_element_ = this->mean_variance_xml_engine_in_.getChildElement("Mean_Element");
             this->number_of_snapshot_old_ = std::distance(mean_element_.element_begin(), mean_element_.element_end());
 
-            BiVector<VariableType> temp(SMAX(this->snapshot_, this->number_of_snapshot_old_), StdVec<VariableType>(this->observation_));
+            BiVector<VariableType> temp(SMAX(this->snapshot_, this->number_of_snapshot_old_), StdVec<VariableType>(this->observe_));
             meanvalue_ = temp;
             variance_ = temp;
 
@@ -266,7 +266,7 @@ void RegressionTestEnsembleAverage<ObserveMethodType>::setupAndCorrection()
     else if (this->number_of_run_ == 1)
     {
         this->number_of_snapshot_old_ = this->snapshot_;
-        BiVector<VariableType> temp(this->snapshot_, StdVec<VariableType>(this->observation_));
+        BiVector<VariableType> temp(this->snapshot_, StdVec<VariableType>(this->observe_));
         this->result_.push_back(this->current_result_);
         meanvalue_ = temp;
         variance_ = temp;
@@ -280,12 +280,12 @@ void RegressionTestEnsembleAverage<ObserveMethodType>::readMeanVarianceFromXml()
     {
         SimTK::Xml::Element mean_element_ = this->mean_variance_xml_engine_in_.getChildElement("Mean_Element");
         SimTK::Xml::Element variance_element_ = this->mean_variance_xml_engine_in_.getChildElement("Variance_Element");
-        for (int observation_index = 0; observation_index != this->observation_; ++observation_index)
+        for (int observe_k = 0; observe_k != this->observe_; ++observe_k)
         {
             this->readDataFromXmlMemory(this->mean_variance_xml_engine_in_,
-                                        mean_element_, observation_index, this->meanvalue_, this->quantity_name_);
+                                        mean_element_, observe_k, this->meanvalue_, this->quantity_name_);
             this->readDataFromXmlMemory(this->mean_variance_xml_engine_in_,
-                                        variance_element_, observation_index, this->variance_, this->quantity_name_);
+                                        variance_element_, observe_k, this->variance_, this->quantity_name_);
         }
     }
 }
@@ -307,9 +307,9 @@ void RegressionTestEnsembleAverage<ObserveMethodType>::updateMeanVariance()
 
     /** update the meanvalue of the result. */
     for (int snapshot_index = 0; snapshot_index != SMIN(this->snapshot_, this->number_of_snapshot_old_); ++snapshot_index)
-        for (int observation_index = 0; observation_index != this->observation_; ++observation_index)
-            meanvalue_new_[snapshot_index][observation_index] = (meanvalue_[snapshot_index][observation_index] * (this->number_of_run_ - 1) +
-                                                                 this->current_result_[snapshot_index][observation_index]) /
+        for (int observe_k = 0; observe_k != this->observe_; ++observe_k)
+            meanvalue_new_[snapshot_index][observe_k] = (meanvalue_[snapshot_index][observe_k] * (this->number_of_run_ - 1) +
+                                                                 this->current_result_[snapshot_index][observe_k]) /
                                                                 this->number_of_run_;
     /** Update the variance of the result. */
     calculateNewVariance(this->result_, meanvalue_new_, variance_, variance_new_);
@@ -321,11 +321,11 @@ void RegressionTestEnsembleAverage<ObserveMethodType>::writeMeanVarianceToXml()
     this->mean_variance_xml_engine_out_.addElementToXmlDoc("Mean_Element");
     SimTK::Xml::Element mean_element_ = this->mean_variance_xml_engine_out_.getChildElement("Mean_Element");
     this->writeDataToXmlMemory(this->mean_variance_xml_engine_out_, mean_element_, this->meanvalue_new_,
-                               SMIN(this->snapshot_, this->number_of_snapshot_old_), this->observation_, this->quantity_name_, this->element_tag_);
+                               SMIN(this->snapshot_, this->number_of_snapshot_old_), this->observe_, this->quantity_name_, this->element_tag_);
     this->mean_variance_xml_engine_out_.addElementToXmlDoc("Variance_Element");
     SimTK::Xml::Element variance_element_ = this->mean_variance_xml_engine_out_.getChildElement("Variance_Element");
     this->writeDataToXmlMemory(this->mean_variance_xml_engine_out_, variance_element_, this->variance_new_,
-                               SMIN(this->snapshot_, this->number_of_snapshot_old_), this->observation_, this->quantity_name_, this->element_tag_);
+                               SMIN(this->snapshot_, this->number_of_snapshot_old_), this->observe_, this->quantity_name_, this->element_tag_);
     this->mean_variance_xml_engine_out_.writeToXmlFile(this->mean_variance_filefullpath_);
 }
 //=================================================================================================//
