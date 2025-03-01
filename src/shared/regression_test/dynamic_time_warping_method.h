@@ -32,6 +32,7 @@
 
 #include "time_average_method.hpp"
 
+#include "xml_parser.h"
 namespace SPH
 {
 /**
@@ -46,9 +47,7 @@ class RegressionTestDynamicTimeWarping : public RegressionTestTimeAverage<Observ
 
   protected:
     std::string dtw_distance_filefullpath_; /* the path for DTW distance. */
-    XmlEngine dtw_distance_xml_engine_in_;  /* xml engine for dtw distance input. */
-    XmlEngine dtw_distance_xml_engine_out_; /* xml engine for dtw distance output. */
-
+    XmlParser dtw_distance_xml_parser_;     /* xml parser for dtw distance. */
     StdVec<Real> dtw_distance_, dtw_distance_new_; /* the container of DTW distance between each pairs. */
 
     /** the local constrained method used for calculating the dtw distance between two lines. */
@@ -59,7 +58,7 @@ class RegressionTestDynamicTimeWarping : public RegressionTestTimeAverage<Observ
     explicit RegressionTestDynamicTimeWarping(Args &&...args);
     virtual ~RegressionTestDynamicTimeWarping() {};
 
-    void setupTest();                           /** setup the test and defined basic variables. */
+    void setupTest();                              /** setup the test and defined basic variables. */
     void readDTWDistanceFromXml();                 /** read the old DTW distance from the .xml file. */
     void updateDTWDistance();                      /** update the maximum DTWDistance with the new result. */
     void writeDTWDistanceToXml();                  /* write the updated DTWDistance to .xml file.*/

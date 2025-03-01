@@ -16,8 +16,7 @@ template <class ObserveMethodType>
 template <typename... Args>
 RegressionTestDynamicTimeWarping<ObserveMethodType>::RegressionTestDynamicTimeWarping(Args &&...args)
     : RegressionTestTimeAverage<ObserveMethodType>(std::forward<Args>(args)...),
-      dtw_distance_xml_engine_in_("dtw_distance_xml_engine_in", "dtw_distance"),
-      dtw_distance_xml_engine_out_("dtw_distance_xml_engine_out", "dtw_distance")
+      dtw_distance_xml_parser_("dtw_distance_xml_engine_out", "dtw_distance")
 {
     dtw_distance_filefullpath_ = this->input_folder_path_ + "/" + this->dynamics_identifier_name_ +
                                  "_" + this->quantity_name_ + "_dtwdistance.xml";
@@ -86,14 +85,14 @@ void RegressionTestDynamicTimeWarping<ObserveMethodType>::readDTWDistanceFromXml
 {
     if (this->number_of_run_ > 1)
     {
-        dtw_distance_xml_engine_in_.loadXmlFile(dtw_distance_filefullpath_);
-        SimTK::Xml::Element element_name_dtw_distance_ = dtw_distance_xml_engine_in_.root_element_;
-        for (auto ele_ite = element_name_dtw_distance_.element_begin(); ele_ite != element_name_dtw_distance_.element_end(); ++ele_ite)
-            for (int observe_k = 0; observe_k != this->observe_; ++observe_k)
-            {
-                std::string attribute_name = this->quantity_name_ + "_" + std::to_string(observe_k);
-                dtw_distance_xml_engine_in_.getRequiredAttributeValue(ele_ite, attribute_name, dtw_distance_[observe_k]);
-            }
+        dtw_distance_xml_parser_.loadXmlFile(dtw_distance_filefullpath_);
+        auto first_element = dtw_distance_xml_parser_.first_element_;
+        auto child_element = dtw_distance_xml_parser_.findElement(first_element, "DTWDistance");
+        for (int observe_k = 0; observe_k != this->observe_; ++observe_k)
+        {
+            std::string attribute_name = this->quantity_name_ + "_" + std::to_string(observe_k);
+            dtw_distance_xml_parser_.queryAttributeValue(child_element, attribute_name, dtw_distance_[observe_k]);
+        }
     }
 };
 //=================================================================================================//
@@ -116,14 +115,14 @@ void RegressionTestDynamicTimeWarping<ObserveMethodType>::updateDTWDistance()
 template <class ObserveMethodType>
 void RegressionTestDynamicTimeWarping<ObserveMethodType>::writeDTWDistanceToXml()
 {
-    SimTK::Xml::Element DTWElement = dtw_distance_xml_engine_out_.root_element_;
-    auto ele_ite = dtw_distance_xml_engine_out_.addChildToElement(DTWElement, "DTWDistance");
+    auto first_element = dtw_distance_xml_parser_.first_element_;
+    auto child_element = dtw_distance_xml_parser_.addNewElement(first_element, "DTWDistance");
     for (int observe_k = 0; observe_k != this->observe_; ++observe_k)
     {
         std::string attribute_name = this->quantity_name_ + "_" + std::to_string(observe_k);
-        dtw_distance_xml_engine_out_.setAttributeToElement(ele_ite, attribute_name, dtw_distance_new_[observe_k]);
+        dtw_distance_xml_parser_.setAttributeToElement(child_element, attribute_name, dtw_distance_new_[observe_k]);
     }
-    dtw_distance_xml_engine_out_.writeToXmlFile(dtw_distance_filefullpath_);
+    dtw_distance_xml_parser_.writeToXmlFile(dtw_distance_filefullpath_);
 };
 //=================================================================================================//
 template <class ObserveMethodType>
