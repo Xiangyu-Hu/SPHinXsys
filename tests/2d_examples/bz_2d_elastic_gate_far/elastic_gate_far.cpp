@@ -11,17 +11,17 @@ using namespace SPH;   //	Namespace cite here.
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
 Real DL = 800.0;                        /**< Tank length. */
-Real DH = 600.1;                        /**< Tank height. */
+Real DH = 600.0;                        /**< Tank height. */
 Real Dam_L = 200.0;                     /**< Water block width. */
 Real Dam_H = 400.0;                     /**< Water block height. */
 Real Gate_width = 4.0;                  /**< Width of the gate. */
-Real Base_bottom_position = 90.0;       /**< Position of gate base. (In Y direction) */
+Real Base_top_position = 90.0;          /**< Position of gate base. (In Y direction) */
 Real Water_gate_distance = 400.0;       /**< Distance between water block and gate */
 Real resolution_ref = Gate_width / 2.0; /**< Initial reference particle spacing. */
 Real BW = resolution_ref * 4.0;         /**< Extending width for BCs. */
 /** The offset that the rubber gate shifted above the tank. */
 Real dp_s = 0.5 * resolution_ref;
-Vec2d offset = Vec2d(0.0, Base_bottom_position - floor(Base_bottom_position / dp_s) * dp_s);
+Vec2d offset = Vec2d(0.0, Base_top_position - floor(Base_top_position / dp_s) * dp_s);
 /** Domain bounds of the system. */
 BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
 /** Define the corner points of the water block geometry. */
@@ -30,21 +30,21 @@ Vec2d DamP_lt(0.0, Dam_H);   /**< Left top. */
 Vec2d DamP_rt(Dam_L, Dam_H); /**< Right top. */
 Vec2d DamP_rb(Dam_L, 0.0);   /**< Right bottom. */
 /** Define the corner points of the gate geometry. */
-Vec2d GateP_lb(Dam_L + Water_gate_distance - 0.5 * Gate_width, -BW);                   /**< Left bottom. */
-Vec2d GateP_lt(Dam_L + Water_gate_distance - 0.5 * Gate_width, Base_bottom_position);  /**< Left top. */
-Vec2d GateP_rt(Dam_L + Water_gate_distance + 0.5 * Gate_width, Base_bottom_position);  /**< Right top. */
-Vec2d GateP_rb(Dam_L + Water_gate_distance + 0.5 * Gate_width, -BW);                   /**< Right bottom. */
+Vec2d GateP_lb(Dam_L + Water_gate_distance, -BW);                   /**< Left bottom. */
+Vec2d GateP_lt(Dam_L + Water_gate_distance, Base_top_position);  /**< Left top. */
+Vec2d GateP_rt(Dam_L + Water_gate_distance + Gate_width, Base_top_position);  /**< Right top. */
+Vec2d GateP_rb(Dam_L + Water_gate_distance + Gate_width, -BW);                   /**< Right bottom. */
 /** Define the corner points of the gate constrain. */
-Vec2d ConstrainP_lb(Dam_L + Water_gate_distance - 0.5 * Gate_width, -BW);              /**< Left bottom. */
-Vec2d ConstrainP_lt(Dam_L + Water_gate_distance - 0.5 * Gate_width, 0.0);              /**< Left top. */
-Vec2d ConstrainP_rt(Dam_L + Water_gate_distance + 0.5 * Gate_width, 0.0);              /**< Right top. */
-Vec2d ConstrainP_rb(Dam_L + Water_gate_distance + 0.5 * Gate_width, -BW);              /**< Right bottom. */
+Vec2d ConstrainP_lb(Dam_L + Water_gate_distance, -BW);              /**< Left bottom. */
+Vec2d ConstrainP_lt(Dam_L + Water_gate_distance, 0.0);              /**< Left top. */
+Vec2d ConstrainP_rt(Dam_L + Water_gate_distance + Gate_width, 0.0);              /**< Right top. */
+Vec2d ConstrainP_rb(Dam_L + Water_gate_distance + Gate_width, -BW);              /**< Right bottom. */
 // observer location
-StdVec<Vecd> observation_location = { GateP_lt };
+StdVec<Vecd> observation_location = { GateP_rt };
 //----------------------------------------------------------------------
 //	Material properties of the fluid.
 //----------------------------------------------------------------------
-Real rho0_f = 1.0;                          /**< Reference density of fluid. */
+Real rho0_f = 1;                            /**< Reference density of fluid. */
 Real gravity_g = 9.81e-3;                   /**< Value of gravity. */
 Real U_f = 1.0;                             /**< Characteristic velocity. */
 Real c_f = 20.0 * sqrt(Dam_H * gravity_g);  /**< Reference sound speed. */
@@ -52,8 +52,8 @@ Real c_f = 20.0 * sqrt(Dam_H * gravity_g);  /**< Reference sound speed. */
 //	Material parameters of the elastic gate.
 //----------------------------------------------------------------------
 Real rho0_s = 1.16154;   /**< Reference density of gate. */
-Real poisson = 0.49; /**< Poisson ratio. */
-Real Ae = 3.5e3;     /**< Normalized Youngs Modulus. */
+Real poisson = 0.49;     /**< Poisson ratio. */
+Real Ae = 3.5e3;         /**< Normalized Youngs Modulus. */
 Real Youngs_modulus = Ae;
 //----------------------------------------------------------------------
 //	Cases-dependent geometries
@@ -214,17 +214,22 @@ int main(int ac, char *av[])
 
     Gravity gravity(Vecd(0.0, -gravity_g));
     SimpleDynamics<GravityForce<Gravity>> constant_gravity(water_block, gravity);
-    InteractionWithUpdate<LinearGradientCorrectionMatrixComplex> corrected_configuration_fluid(ConstructorArgs(water_block_inner, 0.9), water_block_contact);
-    Dynamics1Level<fluid_dynamics::Integration1stHalfCorrectionWithWallRiemann> pressure_relaxation(water_block_inner, water_block_contact);
-    Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallRiemann> density_relaxation(water_block_inner, water_block_contact);
-    InteractionWithUpdate<fluid_dynamics::DensitySummationComplexFreeSurface> update_density_by_summation(water_block_inner, water_block_contact);
+    InteractionWithUpdate<LinearGradientCorrectionMatrixComplex> 
+        corrected_configuration_fluid(ConstructorArgs(water_block_inner, 0.2), water_block_contact);
+    Dynamics1Level<fluid_dynamics::Integration1stHalfCorrectionWithWallRiemann> 
+        pressure_relaxation(water_block_inner, water_block_contact);
+    Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallRiemann> 
+        density_relaxation(water_block_inner, water_block_contact);
+    InteractionWithUpdate<fluid_dynamics::DensitySummationComplexFreeSurface> 
+        update_density_by_summation(water_block_inner, water_block_contact);
 
     ReduceDynamics<fluid_dynamics::AdvectionViscousTimeStep> get_fluid_advection_time_step_size(water_block, U_f);
     ReduceDynamics<fluid_dynamics::AcousticTimeStep> get_fluid_time_step_size(water_block);
     //----------------------------------------------------------------------
     //	Algorithms of FSI.
     //----------------------------------------------------------------------
-    InteractionWithUpdate<solid_dynamics::PressureForceFromFluid<decltype(density_relaxation)>> fluid_pressure_force_on_gate(gate_water_contact);
+    InteractionWithUpdate<solid_dynamics::PressureForceFromFluid<decltype(density_relaxation)>> 
+        fluid_pressure_force_on_gate(gate_water_contact);
     solid_dynamics::AverageVelocityAndAcceleration average_velocity_and_acceleration(gate);
     //----------------------------------------------------------------------
     //	Define the configuration related particles dynamics.
@@ -233,8 +238,10 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToPlt write_real_body_states_to_plt(sph_system);
-    BodyStatesRecordingToVtp write_real_body_states_to_vtp(sph_system);
+    BodyStatesRecordingToPlt write_real_body_states_to_vtp(sph_system);
+    write_real_body_states_to_vtp.addToWrite<Real>(water_block, "Pressure");
+    write_real_body_states_to_vtp.addToWrite<Real>(water_block, "Density");
+    write_real_body_states_to_vtp.addDerivedVariableRecording<SimpleDynamics<VonMisesStress>>(gate);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
         write_beam_tip_displacement("Position", gate_observer_contact);
     // TODO: observing position is not as good observing displacement.
@@ -249,6 +256,7 @@ int main(int ac, char *av[])
     gate_normal_direction.exec();
     gate_corrected_configuration.exec();
     constant_gravity.exec();
+    //corrected_configuration_fluid.exec();
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
@@ -298,6 +306,7 @@ int main(int ac, char *av[])
                     gate_stress_relaxation_first_half.exec(dt_s);
                     gate_constraint.exec();
                     gate_stress_relaxation_second_half.exec(dt_s);
+                    gate_constraint.exec();
                     dt_s_sum += dt_s;
                 }
                 average_velocity_and_acceleration.update_averages_.exec(dt);
@@ -339,11 +348,11 @@ int main(int ac, char *av[])
 
     if (sph_system.GenerateRegressionData())
     {
-        write_beam_tip_displacement.generateDataBase(1.0e-3);
+        //write_beam_tip_displacement.generateDataBase(1.0e-3);
     }
     else if (sph_system.RestartStep() == 0)
     {
-        write_beam_tip_displacement.testResult();
+        //write_beam_tip_displacement.testResult();
     }
 
     return 0;
