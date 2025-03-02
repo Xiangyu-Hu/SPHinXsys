@@ -21,80 +21,59 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file continuum_dynamics_variable.h
- * @brief Here, we define the algorithm classes for computing derived solid dynamics variables.
- * @details These variable can be added into variable list for state output.
- * @author Shuaihao Zhang and Xiangyu Hu
+ * @file 	stress_diffusion.h
+ * @brief 	Here, we define the ck_version for stress diffusion. 
+ * @details Refer to Feng et al(2021).
+ * @author	Shuang Li, Xiangyu Hu and Shuaihao Zhang
  */
 
-#ifndef CONTINUUM_DYNAMICS_VARIABLE_H
-#define CONTINUUM_DYNAMICS_VARIABLE_H
+#ifndef STRESS_DIFFUSION_CK_H
+#define STRESS_DIFFUSION_CK_H
 
-#include "base_general_dynamics.h"
+#include "base_continuum_dynamics.h"
+#include "constraint_dynamics.h"
+#include "fluid_integration.hpp"
 #include "general_continuum.h"
 #include "general_continuum.hpp"
-
+#include "continuum_integration_1st_ck.h"
+#include "continuum_integration_1st_ck.hpp"
 namespace SPH
 {
 namespace continuum_dynamics
 {
-/**
- * @class VonMisesStress
- * @brief computing von_Mises_stress
- */
-class VonMisesStress : public BaseDerivedVariable<Real>
-{
-  public:
-    explicit VonMisesStress(SPHBody &sph_body);
-    virtual ~VonMisesStress(){};
-    void update(size_t index_i, Real dt = 0.0);
+template <typename...>
+class StressDiffusionCK;
 
-  protected:
-    Real *p_;
-    Matd *shear_stress_;
-};
-/**
- * @class VonMisesStrain
- * @brief computing von_Mises_strain
- */
-class VonMisesStrain : public BaseDerivedVariable<Real>
+template <typename... Parameters>
+class StressDiffusionCK<Inner<Parameters...>> : public PlasticAcousticStep<Interaction<Inner<Parameters...>>>
 {
+    using PlasticKernel = typename PlasticContinuum::PlasticKernel;
+    using BaseInteraction = PlasticAcousticStep<Interaction<Inner<Parameters...>>>;
   public:
-    explicit VonMisesStrain(SPHBody &sph_body);
-    virtual ~VonMisesStrain(){};
-    void update(size_t index_i, Real dt = 0.0);
+    explicit StressDiffusionCK(Relation<Inner<Parameters...>> &inner_relation);
+    virtual ~StressDiffusionCK(){};
+    
+    class InteractKernel: public BaseInteraction::InteractKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);       
+        void interact(size_t index_i, Real dt = 0.0);
 
-  protected:
-    Matd *strain_tensor_;
-};
-/**
- * @class VerticalStress
- */
-class VerticalStress : public BaseDerivedVariable<Real>
-{
-  public:
-    explicit VerticalStress(SPHBody &sph_body);
-    virtual ~VerticalStress(){};
-    void update(size_t index_i, Real dt = 0.0);
+      protected:
+        PlasticKernel plastic_kernel_;
+        Real zeta_, phi_;
+        Real smoothing_length_, sound_speed_;
+        Real *mass_, *Vol_;
+        Vecd *pos_, *force_prior_;
+        Mat3d *stress_tensor_3D_, *stress_rate_3D_;
+    };
+   protected:
+    Real dv_zeta_ = 0.1, dv_phi_; /*diffusion coefficient*/
+    Real dv_smoothing_length_, dv_sound_speed_;
+};    
 
-  protected:
-    Mat3d *stress_tensor_3D_;
-};
-/**
- * @class AccumulatedDeviatoricPlasticStrain
- */
-class AccDeviatoricPlasticStrain : public BaseDerivedVariable<Real>
-{
-  public:
-    explicit AccDeviatoricPlasticStrain(SPHBody &sph_body);
-    virtual ~AccDeviatoricPlasticStrain(){};
-    void update(size_t index_i, Real dt = 0.0);
-
-  protected:
-    PlasticContinuum &plastic_continuum_;
-    Mat3d *stress_tensor_3D_, *strain_tensor_3D_;
-    Real E_, nu_;
-};
+using StressDiffusionInnerCK = StressDiffusionCK<Inner<>>;
 } // namespace continuum_dynamics
 } // namespace SPH
-#endif // CONTINUUM_DYNAMICS_VARIABLE_H
+#endif // STRESS_DIFFUSION_CK_H
