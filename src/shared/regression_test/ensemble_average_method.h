@@ -30,7 +30,7 @@
 #ifndef ENSEMBLE_AVERAGE_H
 #define ENSEMBLE_AVERAGE_H
 
-#include "regression_test_base.hpp"
+#include "time_average_method.h"
 
 namespace SPH
 {
@@ -63,14 +63,44 @@ class RegressionTestEnsembleAverage : public RegressionTestTimeAverage<ObserveMe
     int testNewResult(int diff, BiVector<Vecd> &current_result, BiVector<Vecd> &meanvalue, BiVector<Vecd> &variance);
     int testNewResult(int diff, BiVector<Matd> &current_result, BiVector<Matd> &meanvalue, BiVector<Matd> &variance);
 
+    template <typename T>
+    void readDataFromXmlMemory(XmlParser &xml_parser, tinyxml2::XMLElement *element,
+                               int observe_k, BiVector<T> &result_container, const std::string &quantity_name)
+    {
+        int snapshot_index = 0;
+        for (auto child = element->FirstChildElement(); child; child = child->NextSiblingElement())
+        {
+            std::string attribute_name = quantity_name + "_" + std::to_string(observe_k);
+            xml_parser.queryAttributeValue(child, attribute_name, result_container[snapshot_index][observe_k]);
+            snapshot_index++;
+        }
+    };
+
+    template <typename T>
+    void writeDataToXmlMemory(XmlParser &xml_parser, tinyxml2::XMLElement *element, const BiVector<T> &quantity,
+                              int snapshot_, int observe_, const std::string &quantity_name, StdVec<std::string> &element_tag)
+    {
+        for (int snapshot_index = 0; snapshot_index != snapshot_; ++snapshot_index)
+        {
+            std::string child_element_name = element_tag[snapshot_index];
+            auto child_element = xml_parser.addNewElement(element, child_element_name);
+            for (int observe_k = 0; observe_k != observe_; ++observe_k)
+            {
+                std::string attribute_name = quantity_name + "_" + std::to_string(observe_k);
+                xml_parser.setAttributeToElement(child_element, attribute_name, quantity[snapshot_index][observe_k]);
+            }
+        }
+    };
+
   public:
     template <typename... Args>
     explicit RegressionTestEnsembleAverage(Args &&...args)
         : RegressionTestTimeAverage<ObserveMethodType>(std::forward<Args>(args)...)
     {
-        this->mean_variance_filefullpath_ = this->input_folder_path_ + "/" + this->dynamics_identifier_name_ + "_" + this->quantity_name_ + "_ensemble_averaged_mean_variance.xml";
+        this->mean_variance_filefullpath_ = this->input_folder_path_ + "/" + this->dynamics_identifier_name_ +
+                                            "_" + this->quantity_name_ + "_ensemble_averaged_mean_variance.xml";
     };
-    virtual ~RegressionTestEnsembleAverage(){};
+    virtual ~RegressionTestEnsembleAverage() {};
 
     void setupAndCorrection();      /** setup and correct the number of old and new result. */
     void readMeanVarianceFromXml(); /** read the meanvalue and variance from the .xml file. */
@@ -113,5 +143,5 @@ class RegressionTestEnsembleAverage : public RegressionTestTimeAverage<ObserveMe
         resultTest();
     };
 };
-};     // namespace SPH
+}; // namespace SPH
 #endif // ENSEMBLE_AVERAGE_H

@@ -21,7 +21,7 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	time_averaged_method.h
+ * @file 	time_average_method.h
  * @brief 	Classes for the comparison between validated and tested results
  *        	with time-averaged meanvalue and variance method.
  * @author	Bo Zhang , Chi Zhang and Xiangyu Hu

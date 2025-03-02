@@ -242,10 +242,10 @@ void RegressionTestEnsembleAverage<ObserveMethodType>::setupAndCorrection()
         }
         else
         {
-            this->mean_variance_xml_engine_in_.loadXmlFile(this->mean_variance_filefullpath_);
-            SimTK::Xml::Element mean_element_ = this->mean_variance_xml_engine_in_.getChildElement("Mean_Element");
-            this->number_of_snapshot_old_ = std::distance(mean_element_.element_begin(), mean_element_.element_end());
-
+            this->mean_variance_xml_parser_.loadXmlFile(this->mean_variance_filefullpath_);
+            auto first_element = this->mean_variance_xml_parser_.first_element_;
+            auto mean_element = this->mean_variance_xml_parser_.findElement(first_element, "Mean_Element");
+            this->number_of_snapshot_old_ = this->mean_variance_xml_parser_.Size(mean_element);
             BiVector<VariableType> temp(SMAX(this->snapshot_, this->number_of_snapshot_old_), StdVec<VariableType>(this->observe_));
             meanvalue_ = temp;
             variance_ = temp;
@@ -278,14 +278,15 @@ void RegressionTestEnsembleAverage<ObserveMethodType>::readMeanVarianceFromXml()
 {
     if (this->number_of_run_ > 1)
     {
-        SimTK::Xml::Element mean_element_ = this->mean_variance_xml_engine_in_.getChildElement("Mean_Element");
-        SimTK::Xml::Element variance_element_ = this->mean_variance_xml_engine_in_.getChildElement("Variance_Element");
+        auto first_element = this->mean_variance_xml_parser_.first_element_;
+        auto mean_element = this->mean_variance_xml_parser_.findElement(first_element, "Mean_Element");
+        auto variance_element = this->mean_variance_xml_parser_.findElement(first_element, "Variance_Element");
         for (int observe_k = 0; observe_k != this->observe_; ++observe_k)
         {
-            this->readDataFromXmlMemory(this->mean_variance_xml_engine_in_,
-                                        mean_element_, observe_k, this->meanvalue_, this->quantity_name_);
-            this->readDataFromXmlMemory(this->mean_variance_xml_engine_in_,
-                                        variance_element_, observe_k, this->variance_, this->quantity_name_);
+            readDataFromXmlMemory(this->mean_variance_xml_parser_,
+                                  mean_element, observe_k, this->meanvalue_, this->quantity_name_);
+            readDataFromXmlMemory(this->mean_variance_xml_parser_,
+                                  variance_element, observe_k, this->variance_, this->quantity_name_);
         }
     }
 }
@@ -309,8 +310,8 @@ void RegressionTestEnsembleAverage<ObserveMethodType>::updateMeanVariance()
     for (int snapshot_index = 0; snapshot_index != SMIN(this->snapshot_, this->number_of_snapshot_old_); ++snapshot_index)
         for (int observe_k = 0; observe_k != this->observe_; ++observe_k)
             meanvalue_new_[snapshot_index][observe_k] = (meanvalue_[snapshot_index][observe_k] * (this->number_of_run_ - 1) +
-                                                                 this->current_result_[snapshot_index][observe_k]) /
-                                                                this->number_of_run_;
+                                                         this->current_result_[snapshot_index][observe_k]) /
+                                                        this->number_of_run_;
     /** Update the variance of the result. */
     calculateNewVariance(this->result_, meanvalue_new_, variance_, variance_new_);
 }
@@ -318,15 +319,15 @@ void RegressionTestEnsembleAverage<ObserveMethodType>::updateMeanVariance()
 template <class ObserveMethodType>
 void RegressionTestEnsembleAverage<ObserveMethodType>::writeMeanVarianceToXml()
 {
-    this->mean_variance_xml_engine_out_.addElementToXmlDoc("Mean_Element");
-    SimTK::Xml::Element mean_element_ = this->mean_variance_xml_engine_out_.getChildElement("Mean_Element");
-    this->writeDataToXmlMemory(this->mean_variance_xml_engine_out_, mean_element_, this->meanvalue_new_,
+    auto first_element = this->mean_variance_xml_parser_.first_element_;
+    auto mean_element = this->mean_variance_xml_parser_.findElement(first_element, "Mean_Element");
+    this->writeDataToXmlMemory(this->mean_variance_xml_parser_, mean_element, this->meanvalue_new_,
                                SMIN(this->snapshot_, this->number_of_snapshot_old_), this->observe_, this->quantity_name_, this->element_tag_);
-    this->mean_variance_xml_engine_out_.addElementToXmlDoc("Variance_Element");
-    SimTK::Xml::Element variance_element_ = this->mean_variance_xml_engine_out_.getChildElement("Variance_Element");
-    this->writeDataToXmlMemory(this->mean_variance_xml_engine_out_, variance_element_, this->variance_new_,
+    
+    auto variance_element = this->mean_variance_xml_parser_.findElement(first_element, "Variance_Element");
+    this->writeDataToXmlMemory(this->mean_variance_xml_parser_, variance_element, this->variance_new_,
                                SMIN(this->snapshot_, this->number_of_snapshot_old_), this->observe_, this->quantity_name_, this->element_tag_);
-    this->mean_variance_xml_engine_out_.writeToXmlFile(this->mean_variance_filefullpath_);
+    this->mean_variance_xml_parser_.writeToXmlFile(this->mean_variance_filefullpath_);
 }
 //=================================================================================================//
 template <class ObserveMethodType>
