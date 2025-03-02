@@ -360,8 +360,8 @@ int RegressionTestTimeAverage<ObserveMethodType>::testNewResult(BiVector<Vecd> &
             for (int snapshot_index = snapshot_for_converged_; snapshot_index != this->snapshot_; ++snapshot_index)
             {
                 variance_new_[observe_k][i] += pow((current_result[snapshot_index][observe_k][i] -
-                                                            local_meanvalue[observe_k][i]),
-                                                           2);
+                                                    local_meanvalue[observe_k][i]),
+                                                   2);
             }
             variance_new_[observe_k][i] = variance_new_[observe_k][i] / (this->snapshot_ - snapshot_for_converged_);
             if ((ABS(meanvalue[observe_k][i]) < 0.005) && (ABS(local_meanvalue[observe_k][i]) < 0.005))
@@ -397,8 +397,8 @@ int RegressionTestTimeAverage<ObserveMethodType>::testNewResult(BiVector<Matd> &
                 for (int snapshot_index = snapshot_for_converged_; snapshot_index != this->snapshot_; ++snapshot_index)
                 {
                     variance_new_[observe_k](i, j) += pow((current_result[snapshot_index][observe_k](i, j) -
-                                                                   local_meanvalue[observe_k](i, j)),
-                                                                  2);
+                                                           local_meanvalue[observe_k](i, j)),
+                                                          2);
                 }
                 variance_new_[observe_k](i, j) = variance_new_[observe_k](i, j) / (this->snapshot_ - snapshot_for_converged_);
                 if ((ABS(meanvalue[observe_k](i, j)) < 0.005) && (ABS(local_meanvalue[observe_k](i, j)) < 0.005))
@@ -453,24 +453,24 @@ void RegressionTestTimeAverage<ObserveMethodType>::readMeanVarianceFromXml()
 {
     if (this->number_of_run_ > 1)
     {
-        mean_variance_xml_engine_in_.loadXmlFile(mean_variance_filefullpath_);
-        SimTK::Xml::Element meanvalue_element_ = mean_variance_xml_engine_in_.getChildElement("MeanValue_Element");
-        SimTK::Xml::element_iterator ele_ite_mean_ = meanvalue_element_.element_begin();
-        for (; ele_ite_mean_ != meanvalue_element_.element_end(); ++ele_ite_mean_)
-            for (int observe_k = 0; observe_k != this->observe_; ++observe_k)
-            {
-                std::string attribute_name_ = this->quantity_name_ + "_" + std::to_string(observe_k);
-                mean_variance_xml_engine_in_.getRequiredAttributeValue(ele_ite_mean_, attribute_name_, meanvalue_[observe_k]);
-            }
+        mean_variance_xml_parser_.loadXmlFile(mean_variance_filefullpath_);
+        auto first_element = mean_variance_xml_parser_.first_element_;
 
-        SimTK::Xml::Element variance_element_ = mean_variance_xml_engine_in_.getChildElement("Variance_Element");
-        SimTK::Xml::element_iterator ele_ite_variance_ = variance_element_.element_begin();
-        for (; ele_ite_variance_ != variance_element_.element_end(); ++ele_ite_variance_)
-            for (int observe_k = 0; observe_k != this->observe_; ++observe_k)
-            {
-                std::string attribute_name_ = this->quantity_name_ + "_" + std::to_string(observe_k);
-                mean_variance_xml_engine_in_.getRequiredAttributeValue(ele_ite_variance_, attribute_name_, variance_[observe_k]);
-            }
+        auto mean_element = mean_variance_xml_parser_.findElement(first_element, "MeanValue_Element");
+        auto snapshot_mean_element = mean_variance_xml_parser_.findElement(mean_element, "Snapshot_MeanValue");
+        for (int observe_k = 0; observe_k != this->observe_; ++observe_k)
+        {
+            std::string attribute_name = this->quantity_name_ + "_" + std::to_string(observe_k);
+            mean_variance_xml_parser_.queryAttributeValue(snapshot_mean_element, attribute_name, meanvalue_[observe_k]);
+        }
+
+        auto variance_element = mean_variance_xml_parser_.findElement(first_element, "Variance_Element");
+        auto snapshot_variance_element = mean_variance_xml_parser_.findElement(variance_element, "Snapshot_Variance");
+        for (int observe_k = 0; observe_k != this->observe_; ++observe_k)
+        {
+            std::string attribute_name = this->quantity_name_ + "_" + std::to_string(observe_k);
+            mean_variance_xml_parser_.queryAttributeValue(snapshot_variance_element, attribute_name, variance_[observe_k]);
+        }
     }
 }
 //=================================================================================================//
@@ -529,21 +529,25 @@ void RegressionTestTimeAverage<ObserveMethodType>::updateMeanVariance()
 template <class ObserveMethodType>
 void RegressionTestTimeAverage<ObserveMethodType>::writeMeanVarianceToXml()
 {
-    auto meanvalue_element_ = mean_variance_xml_engine_out_.addElementToXmlDoc("MeanValue_Element");
-    auto ele_ite_mean = mean_variance_xml_engine_out_.addChildToElement(*meanvalue_element_, "Snapshot_MeanValue");
+    auto first_element = mean_variance_xml_parser_.first_element_;
+
+    auto mean_element = mean_variance_xml_parser_.addNewElement(first_element, "MeanValue_Element");
+    auto snapshot_mean_element = mean_variance_xml_parser_.addNewElement(mean_element, "Snapshot_MeanValue");
     for (int observe_k = 0; observe_k != this->observe_; ++observe_k)
     {
-        std::string attribute_name_ = this->quantity_name_ + "_" + std::to_string(observe_k);
-        mean_variance_xml_engine_out_.setAttributeToElement(ele_ite_mean, attribute_name_, meanvalue_new_[observe_k]);
+        std::string attribute_name = this->quantity_name_ + "_" + std::to_string(observe_k);
+        mean_variance_xml_parser_.setAttributeToElement(snapshot_mean_element, attribute_name, meanvalue_new_[observe_k]);
     }
-    auto variance_element_ = mean_variance_xml_engine_out_.addElementToXmlDoc("Variance_Element");
-    auto ele_ite_variance = mean_variance_xml_engine_out_.addChildToElement(*variance_element_, "Snapshot_Variance");
+
+    auto variance_element = mean_variance_xml_parser_.addNewElement(first_element, "Variance_Element");
+    auto snapshot_variance_element = mean_variance_xml_parser_.addNewElement(variance_element, "Snapshot_Variance");
     for (int observe_k = 0; observe_k != this->observe_; ++observe_k)
     {
-        std::string attribute_name_ = this->quantity_name_ + "_" + std::to_string(observe_k);
-        mean_variance_xml_engine_out_.setAttributeToElement(ele_ite_variance, attribute_name_, variance_new_[observe_k]);
+        std::string attribute_name = this->quantity_name_ + "_" + std::to_string(observe_k);
+        mean_variance_xml_parser_.setAttributeToElement(snapshot_variance_element, attribute_name, variance_new_[observe_k]);
     }
-    mean_variance_xml_engine_out_.writeToXmlFile(mean_variance_filefullpath_);
+
+    mean_variance_xml_parser_.writeToXmlFile(mean_variance_filefullpath_);
 }
 //=================================================================================================//
 template <class ObserveMethodType>
