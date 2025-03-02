@@ -30,6 +30,8 @@
 
 #include "data_type.h"
 
+#include "scalar_functions.h"
+
 namespace SPH
 {
 Vec2d FirstAxisVector(const Vec2d &zero_vector);
@@ -85,8 +87,11 @@ VecType getVectorProjectionOfVector(const VecType &vector_1, const VecType &vect
 
 template <typename Datatype>
 Real getSquaredNorm(const Datatype &variable) { return variable.squaredNorm(); };
-
 inline Real getSquaredNorm(const Real &variable) { return variable * variable; };
+
+template <typename Variable>
+Real getFirstNorm(const Variable &variable) { return variable.norm(); };
+inline Real getFirstNorm(Real variable) { return ABS(variable); };
 
 /** von Mises stress from stress matrix */
 Real getVonMisesStressFromMatrix(const Mat2d &sigma);

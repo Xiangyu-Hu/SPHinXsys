@@ -21,7 +21,7 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	time_averaged_method.h
+ * @file 	time_average_method.h
  * @brief 	Classes for the comparison between validated and tested results
  *        	with time-averaged meanvalue and variance method.
  * @author	Bo Zhang , Chi Zhang and Xiangyu Hu
@@ -29,6 +29,8 @@
 
 #pragma once
 #include "regression_test_base.hpp"
+
+#include "xml_parser.h"
 
 namespace SPH
 {
@@ -46,8 +48,7 @@ class RegressionTestTimeAverage : public RegressionTestBase<ObserveMethodType>
     int snapshot_for_converged_;             /* the index of the steady converged starting point. */
     std::string mean_variance_filefullpath_; /* the file path for mean and variance. (.xml) */
     std::string filefullpath_filter_output_; /* the file path for filtered output. */
-    XmlEngine mean_variance_xml_engine_in_;  /* xml engine for mean and variance input. */
-    XmlEngine mean_variance_xml_engine_out_; /* xml engine for mean and variance output. */
+    XmlParser mean_variance_xml_parser_;     /* xml parser for mean and variance. */
 
     VariableType threshold_mean_, threshold_variance_; /* the container of threshold value for mean and variance. */
     StdVec<VariableType> meanvalue_, meanvalue_new_;   /* the container of (new) meanvalue. */
@@ -81,17 +82,18 @@ class RegressionTestTimeAverage : public RegressionTestBase<ObserveMethodType>
 
   public:
     template <typename... Args>
-    explicit RegressionTestTimeAverage(Args &&...args) : RegressionTestBase<ObserveMethodType>(std::forward<Args>(args)...),
-                                                                     mean_variance_xml_engine_in_("mean_variance_xml_engine_in_", "meanvariance"),
-                                                                     mean_variance_xml_engine_out_("mean_variance_xml_engine_out_", "meanvariance")
+    explicit RegressionTestTimeAverage(Args &&...args)
+        : RegressionTestBase<ObserveMethodType>(std::forward<Args>(args)...),
+          mean_variance_xml_parser_("mean_variance_xml_engine_in_", "meanvariance")
     {
-        mean_variance_filefullpath_ = this->input_folder_path_ + "/" + this->dynamics_identifier_name_ + "_" + this->quantity_name_ + "_time_averaged_mean_variance.xml";
+        mean_variance_filefullpath_ = this->input_folder_path_ + "/" + this->dynamics_identifier_name_ +
+                                      "_" + this->quantity_name_ + "_time_averaged_mean_variance.xml";
     };
-    virtual ~RegressionTestTimeAverage(){};
+    virtual ~RegressionTestTimeAverage() {};
 
     /** initialize the threshold of meanvalue and variance. */
     void initializeThreshold(VariableType &threshold_mean, VariableType &threshold_variance);
-    void setupTheTest();            /** setup the test environment and define basic variables. */
+    void setupTest();               /** setup the test environment and define basic variables. */
     void readMeanVarianceFromXml(); /** read the mean and variance from the .xml file. */
     void searchForStartPoint();     /** search for the starting point of the steady result. */
     void filterExtremeValues();     /** filter out the extreme values, its default is false. */
@@ -108,7 +110,7 @@ class RegressionTestTimeAverage : public RegressionTestBase<ObserveMethodType>
         initializeThreshold(threshold_mean, threshold_variance);
         if (this->converged == "false")
         {
-            setupTheTest();
+            setupTest();
             if (filter == "true")
                 filterExtremeValues(); /* Pay attention to use this filter. */
             searchForStartPoint();     /* searching starting point with snapshot*observation data structure, and it is dynamic varying. */
@@ -128,7 +130,7 @@ class RegressionTestTimeAverage : public RegressionTestBase<ObserveMethodType>
     {
         this->writeXmlToXmlFile();  /* currently defined in in_output. */
         this->readXmlFromXmlFile(); /* currently defined in in_output. */
-        setupTheTest();
+        setupTest();
         if (filter == "true")
             filterExtremeValues();
         searchForStartPoint();
