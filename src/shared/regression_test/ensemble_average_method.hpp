@@ -320,11 +320,11 @@ template <class ObserveMethodType>
 void RegressionTestEnsembleAverage<ObserveMethodType>::writeMeanVarianceToXml()
 {
     auto first_element = this->mean_variance_xml_parser_.first_element_;
-    auto mean_element = this->mean_variance_xml_parser_.findElement(first_element, "Mean_Element");
+    auto mean_element = this->mean_variance_xml_parser_.addNewElement(first_element, "Mean_Element");
     this->writeDataToXmlMemory(this->mean_variance_xml_parser_, mean_element, this->meanvalue_new_,
                                SMIN(this->snapshot_, this->number_of_snapshot_old_), this->observe_, this->quantity_name_, this->element_tag_);
-    
-    auto variance_element = this->mean_variance_xml_parser_.findElement(first_element, "Variance_Element");
+
+    auto variance_element = this->mean_variance_xml_parser_.addNewElement(first_element, "Variance_Element");
     this->writeDataToXmlMemory(this->mean_variance_xml_parser_, variance_element, this->variance_new_,
                                SMIN(this->snapshot_, this->number_of_snapshot_old_), this->observe_, this->quantity_name_, this->element_tag_);
     this->mean_variance_xml_parser_.writeToXmlFile(this->mean_variance_filefullpath_);
