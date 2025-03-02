@@ -21,14 +21,14 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file continuum_dynamics_variable.h
+ * @file continuum_dynamics_variable_ck.h
  * @brief Here, we define the algorithm classes for computing derived solid dynamics variables.
  * @details These variable can be added into variable list for state output.
- * @author Shuaihao Zhang and Xiangyu Hu
+ * @author Shuang Li, Xiangyu Hu and Xiangyu Hu
  */
 
-#ifndef CONTINUUM_DYNAMICS_VARIABLE_H
-#define CONTINUUM_DYNAMICS_VARIABLE_H
+#ifndef CONTINUUM_DYNAMICS_VARIABLE_CK_H
+#define CONTINUUM_DYNAMICS_VARIABLE_CK_H
 
 #include "base_general_dynamics.h"
 #include "general_continuum.h"
@@ -39,62 +39,61 @@ namespace SPH
 namespace continuum_dynamics
 {
 /**
- * @class VonMisesStress
- * @brief computing von_Mises_stress
- */
-class VonMisesStress : public BaseDerivedVariable<Real>
-{
-  public:
-    explicit VonMisesStress(SPHBody &sph_body);
-    virtual ~VonMisesStress(){};
-    void update(size_t index_i, Real dt = 0.0);
-
-  protected:
-    Real *p_;
-    Matd *shear_stress_;
-};
-/**
- * @class VonMisesStrain
- * @brief computing von_Mises_strain
- */
-class VonMisesStrain : public BaseDerivedVariable<Real>
-{
-  public:
-    explicit VonMisesStrain(SPHBody &sph_body);
-    virtual ~VonMisesStrain(){};
-    void update(size_t index_i, Real dt = 0.0);
-
-  protected:
-    Matd *strain_tensor_;
-};
-/**
  * @class VerticalStress
  */
-class VerticalStress : public BaseDerivedVariable<Real>
+class VerticalStressCK : public BaseDerivedVariable<Real>
 {
   public:
-    explicit VerticalStress(SPHBody &sph_body);
-    virtual ~VerticalStress(){};
-    void update(size_t index_i, Real dt = 0.0);
+    explicit VerticalStressCK(SPHBody &sph_body);
+    virtual ~VerticalStressCK(){};
+    class UpdateKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+        void update(size_t index_i, Real dt = 0.0);
 
+      protected:
+        Mat3d *stress_tensor_3D_;
+        Real *derived_variable_;
+    };
   protected:
-    Mat3d *stress_tensor_3D_;
+    DiscreteVariable<Mat3d> *dv_stress_tensor_3D_;
+    DiscreteVariable<Real> *dv_derived_variable_;
 };
+
 /**
  * @class AccumulatedDeviatoricPlasticStrain
  */
-class AccDeviatoricPlasticStrain : public BaseDerivedVariable<Real>
+class AccDeviatoricPlasticStrainCK : public BaseDerivedVariable<Real>
 {
+  using PlasticKernel = typename PlasticContinuum::PlasticKernel;
   public:
-    explicit AccDeviatoricPlasticStrain(SPHBody &sph_body);
-    virtual ~AccDeviatoricPlasticStrain(){};
-    void update(size_t index_i, Real dt = 0.0);
+    explicit AccDeviatoricPlasticStrainCK(SPHBody &sph_body);
+    virtual ~AccDeviatoricPlasticStrainCK(){};
+
+    class UpdateKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+        void update(size_t index_i, Real dt = 0.0);
+
+      protected:
+        PlasticKernel plastic_kernel_;
+        Mat3d *stress_tensor_3D_, *strain_tensor_3D_;
+        Real *derived_variable_;
+        Real E_, nu_;
+    };
 
   protected:
     PlasticContinuum &plastic_continuum_;
-    Mat3d *stress_tensor_3D_, *strain_tensor_3D_;
+    DiscreteVariable<Mat3d> *dv_stress_tensor_3D_, *dv_strain_tensor_3D_;
+    DiscreteVariable<Real> *dv_derived_variable_;
     Real E_, nu_;
 };
+
 } // namespace continuum_dynamics
 } // namespace SPH
-#endif // CONTINUUM_DYNAMICS_VARIABLE_H
+
+#endif // CONTINUUM_DYNAMICS_VARIABLE_CK_H
