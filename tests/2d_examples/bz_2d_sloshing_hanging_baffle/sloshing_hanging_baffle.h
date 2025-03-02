@@ -14,11 +14,11 @@ using namespace SPH;
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real DL = 0.609;                         /**< Channel length. */
+Real DL = 0.608;                         /**< Channel length. */
 Real DH = 0.3445;                        /**< Channel height. */
-Real Water_height = 0.0574;              /**< Water block height. */
+Real Water_height = 0.1148;              /**< Water block height. */
 Real Baffle_width = 0.004;               /**< Hanging baggle width. */
-Real particle_spacing_ref = 0.001;       /**< Global reference resolution. */
+Real particle_spacing_ref = 0.002;       /**< Global reference resolution. */
 Real BW = 4.0 * particle_spacing_ref;    /**< Extending width for BCs. */
 BoundingBox system_domain_bounds(Vec2d(-BW - 0.5 * DL, -BW), Vec2d(0.5 * DL + BW, DH + BW));
 /**< Original point is in left bottom. */
@@ -32,59 +32,35 @@ Vec2d DamP_rb(DL / 2, 0.0);                /**< Right bottom. */
 //----------------------------------------------------------------------
 //	Define the corner point of gate geometry.
 //----------------------------------------------------------------------
-Vec2d Baffle_lb(-0.5 * Baffle_width, Water_height);
-Vec2d Baffle_lt(-0.5 * Baffle_width, DL + BW);
-Vec2d Baffle_rt(0.5 * Baffle_width, DL + BW);
-Vec2d Baffle_rb(0.5 * Baffle_width, Water_height);
+Vec2d Baffle_lb(-0.5 * Baffle_width, -BW);
+Vec2d Baffle_lt(-0.5 * Baffle_width, Water_height);
+Vec2d Baffle_rt(0.5 * Baffle_width, Water_height);
+Vec2d Baffle_rb(0.5 * Baffle_width, -BW);
 //----------------------------------------------------------------------
 //	Define the geometry for gate constrain.
 //----------------------------------------------------------------------
-Vec2d Constrain_lb(-0.5 * Baffle_width, DH);
-Vec2d Constrain_lt(-0.5 * Baffle_width, DH + BW);
-Vec2d Constrain_rt(0.5 * Baffle_width, DH + BW);
-Vec2d Constrain_rb(0.5 * Baffle_width, DH);
+Vec2d Constrain_lb(-0.5 * Baffle_width, -BW);
+Vec2d Constrain_lt(-0.5 * Baffle_width, 0);
+Vec2d Constrain_rt(0.5 * Baffle_width, 0);
+Vec2d Constrain_rb(0.5 * Baffle_width, -BW);
 // observer location
 StdVec<Vecd> observation_location = { Vecd(0.0, Water_height) };
 //----------------------------------------------------------------------
 //	Material properties of the fluid.
 //----------------------------------------------------------------------
-Real rho0_f = 998.0;   /**< Reference density of fluid. */
+Real rho0_f = 917.0;   /**< Reference density of fluid. */
 Real gravity_g = 9.81; /**< Value of gravity. */
 Real U_ref = 2.0 * sqrt(Water_height * gravity_g);
 ;                                     /**< Characteristic velocity. */
 Real c_f = 10.0 * U_ref;              /**< Reference sound speed. */
-Real Re = 0.1;                        /**< Reynolds number. */
-Real mu_f = rho0_f * U_ref * DL / Re; /**< Dynamics viscosity. */
+Real mu_f = 0.00005 * rho0_f;         /**< Dynamics viscosity. */
 //----------------------------------------------------------------------
 //	Material properties of the elastic gate.
 //----------------------------------------------------------------------
-Real rho0_s = 1900.0; /**< Reference solid density. */
+Real rho0_s = 1100.0; /**< Reference solid density. */
 Real poisson = 0.49;  /**< Poisson ratio. */
-Real Ae = 4e6;        /**< Normalized Youngs Modulus : 4.0 MPa. */
+Real Ae = 6e6;        /**< Normalized Youngs Modulus : 4.0 MPa. */
 Real Youngs_modulus = Ae;
-//----------------------------------------------------------------------
-//	define geometry of SPH bodies
-//----------------------------------------------------------------------
-/** create a water block shape */
-std::vector<Vecd> createWaterBlockShape()
-{
-    std::vector<Vecd> water_block_shape;
-    water_block_shape.push_back(DamP_lb);
-    water_block_shape.push_back(DamP_lt);
-    water_block_shape.push_back(DamP_rt);
-    water_block_shape.push_back(DamP_rb);
-    water_block_shape.push_back(DamP_lb);
-
-    return water_block_shape;
-}
-class WaterBlock : public MultiPolygonShape
-{
-public:
-    explicit WaterBlock(const std::string& shape_name) : MultiPolygonShape(shape_name)
-    {
-        multi_polygon_.addAPolygon(createWaterBlockShape(), ShapeBooleanOps::add);
-    }
-};
 //----------------------------------------------------------------------
 //	Define the baffle body shape
 //----------------------------------------------------------------------
@@ -106,6 +82,30 @@ public:
     explicit Baffle(const std::string& shape_name) : MultiPolygonShape(shape_name)
     {
         multi_polygon_.addAPolygon(createBaffleShape(), ShapeBooleanOps::add);
+    }
+};
+//----------------------------------------------------------------------
+//	define geometry of SPH bodies
+//----------------------------------------------------------------------
+/** create a water block shape */
+std::vector<Vecd> createWaterBlockShape()
+{
+    std::vector<Vecd> water_block_shape;
+    water_block_shape.push_back(DamP_lb);
+    water_block_shape.push_back(DamP_lt);
+    water_block_shape.push_back(DamP_rt);
+    water_block_shape.push_back(DamP_rb);
+    water_block_shape.push_back(DamP_lb);
+
+    return water_block_shape;
+}
+class WaterBlock : public MultiPolygonShape
+{
+public:
+    explicit WaterBlock(const std::string& shape_name) : MultiPolygonShape(shape_name)
+    {
+        multi_polygon_.addAPolygon(createWaterBlockShape(), ShapeBooleanOps::add);
+        multi_polygon_.addAPolygon(createBaffleShape(), ShapeBooleanOps::sub);
     }
 };
 //----------------------------------------------------------------------
@@ -169,8 +169,8 @@ public:
     }
 }; 
 
-Real omega = 2.0 * PI * 0.6075; // period of time;
-Real Theta0 = -1.0 * PI / 180;  // maximum rotating angle;
+Real omega = 2.0 * PI * 0.82576; // period of time;
+Real Theta0 = 4.0 * PI / 180;   // maximum rotating angle;
 
 class VariableGravity : public Gravity
 {
@@ -180,25 +180,32 @@ public:
     {
         Vecd reference_acceleration_ = Vecd::Zero();
 
-
-        Real Theta = Theta0 * sin(omega * (physical_time - 1.0));
-        Real ThetaV = Theta0 * omega * cos(omega * (physical_time - 1.0));
+        Real Theta = Theta0 * sin(omega * (physical_time - 0.3));
+        Real ThetaV = Theta0 * omega * cos(omega * (physical_time - 0.3));
         
         Real alpha = std::atan2(position[1], position[0]);
         Real distance = std::sqrt(pow(position[0], 2) + pow(position[1], 2));
 
-        Real Vx = Theta * distance * std::sin(alpha);
-        Real Vy = Theta * distance * std::cos(alpha);
-
-        if (physical_time < 1.0)
+        if (physical_time <= 0.3) 
         {
             reference_acceleration_[0] = 0.0;
             reference_acceleration_[1] = -gravity_g;
         }
-        else
-        {
-            reference_acceleration_[0] = -gravity_g * sin(Theta) - ThetaV * ThetaV * position[0] +  2 * ThetaV * Vy;
-            reference_acceleration_[1] = -gravity_g * cos(Theta) + ThetaV * ThetaV * position[1] -  2 * ThetaV * Vx;
+        else {
+            // 重力分量
+            reference_acceleration_[0] = -gravity_g * sin(Theta);
+            reference_acceleration_[1] = -gravity_g * cos(Theta);
+
+            // 离心力项
+            reference_acceleration_[0] -= ThetaV * ThetaV * position[0];
+            reference_acceleration_[1] += ThetaV * ThetaV * position[1];
+
+            // 科氏力项
+            Real Vx = -ThetaV * position[1];
+            Real Vy = ThetaV * position[0];
+
+            reference_acceleration_[0] += 2 * ThetaV * Vy; // 2ω_z v'_y
+            reference_acceleration_[1] -= 2 * ThetaV * Vx; // -2ω_z v'_x
         }
 
         return reference_acceleration_;

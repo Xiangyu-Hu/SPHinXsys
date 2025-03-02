@@ -19,7 +19,7 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
-    water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
+    water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
     water_block.generateParticles<BaseParticles, Lattice>();
 
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
@@ -27,12 +27,14 @@ int main(int ac, char *av[])
     wall_boundary.generateParticles<BaseParticles, Lattice>();
 
     SolidBody baffle(sph_system, makeShared<Baffle>("Baffle"));
+    baffle.defineAdaptationRatios(1.15, 2.0);
     baffle.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     baffle.generateParticles<BaseParticles, Lattice>();
     //----------------------------------------------------------------------
     //	Particle and body creation of gate observer.
     //----------------------------------------------------------------------
     ObserverBody baffle_observer(sph_system, "Observer");
+    baffle_observer.defineAdaptationRatios(1.15, 2.0);
     baffle_observer.generateParticles<ObserverParticles>(observation_location);
     //----------------------------------------------------------------------
     //	Define body relation map.
@@ -42,7 +44,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     InnerRelation water_block_inner(water_block);
     InnerRelation baffle_inner(baffle);
-    ContactRelation water_block_contact(water_block, { &wall_boundary, &baffle });
+    ContactRelation water_block_contact(water_block, RealBodyVector{ &wall_boundary, &baffle });
     ContactRelation baffle_contact(baffle, { &water_block });
     ContactRelation baffle_observer_contact(baffle_observer, { &baffle });
     //----------------------------------------------------------------------
@@ -72,24 +74,24 @@ int main(int ac, char *av[])
     ReduceDynamics<solid_dynamics::AcousticTimeStep> baffle_computing_time_step_size(baffle);
     BodyRegionByParticle baffle_constraint_part(baffle, makeShared<MultiPolygonShape>(BaffleConstraint()));
     SimpleDynamics<FixBodyPartConstraint> baffle_constraint(baffle_constraint_part);
+    SimpleDynamics<solid_dynamics::UpdateElasticNormalDirection> insert_body_update_normal(baffle);
     //----------------------------------------------------------------------
     //	Algorithms of fluid dynamics.
     //----------------------------------------------------------------------
     VariableGravity variablegravity(Vecd(0.0, -gravity_g));
     SimpleDynamics<GravityForce<VariableGravity>> variable_gravity(water_block, variablegravity);
-
-    InteractionWithUpdate<LinearGradientCorrectionMatrixComplex> corrected_configuration_fluid(water_block_inner, water_block_contact);
-    Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation(water_block_inner, water_block_contact);
-    Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallNoRiemann> density_relaxation(water_block_inner, water_block_contact);
+    InteractionWithUpdate<LinearGradientCorrectionMatrixComplex> corrected_configuration_fluid(ConstructorArgs(water_block_inner, 0.5), water_block_contact);
+    Dynamics1Level<fluid_dynamics::Integration1stHalfCorrectionWithWallRiemann> pressure_relaxation(water_block_inner, water_block_contact);
+    Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallRiemann> density_relaxation(water_block_inner, water_block_contact);
     InteractionWithUpdate<fluid_dynamics::DensitySummationComplexFreeSurface> update_density_by_summation(water_block_inner, water_block_contact);
-    InteractionWithUpdate<fluid_dynamics::ViscousForceWithWall> viscous_force(water_block_inner, water_block_contact);
+    InteractionWithUpdate<fluid_dynamics::ViscousForceWithWallCorrection> viscous_force(water_block_inner, water_block_contact);
     ReduceDynamics<fluid_dynamics::AdvectionViscousTimeStep> get_fluid_advection_time_step_size(water_block, U_ref);
     ReduceDynamics<fluid_dynamics::AcousticTimeStep> get_fluid_time_step_size(water_block);
     //----------------------------------------------------------------------
     //	Algorithms of FSI.
     //----------------------------------------------------------------------
-    SimpleDynamics<solid_dynamics::UpdateElasticNormalDirection> insert_body_update_normal(baffle);
     solid_dynamics::AverageVelocityAndAcceleration average_velocity_and_acceleration(baffle);
+    InteractionWithUpdate<solid_dynamics::ViscousForceFromFluid> viscous_force_from_fluid(baffle_contact);
     InteractionWithUpdate<solid_dynamics::PressureForceFromFluid<decltype(density_relaxation)>> pressure_force_from_fluid(baffle_contact);
     //----------------------------------------------------------------------
     //	Define the configuration related particles dynamics.
@@ -98,7 +100,10 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp write_real_body_states(sph_system);
+    BodyStatesRecordingToPlt write_real_body_states(sph_system);
+    write_real_body_states.addToWrite<Real>(water_block, "Pressure");
+    write_real_body_states.addToWrite<Real>(water_block, "Density");
+    write_real_body_states.addDerivedVariableRecording<SimpleDynamics<VonMisesStress>>(baffle);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>> write_baffle_tip_displacement("Position", baffle_observer_contact);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
@@ -115,6 +120,7 @@ int main(int ac, char *av[])
     /** computing linear reproducing configuration for the insert body. */
     baffle_corrected_configuration.exec();
     variable_gravity.exec();
+    corrected_configuration_fluid.exec();
     //----------------------------------------------------------------------
     //	First output before the main loop.
     //----------------------------------------------------------------------
@@ -126,12 +132,10 @@ int main(int ac, char *av[])
     Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     size_t number_of_iterations = 0;
     int screen_output_interval = 100;
-    Real end_time = 11.0;
-    Real output_interval = end_time / 50.0;
+    Real end_time = 5.3;
+    Real output_interval = end_time / 530.0;
     Real dt = 0.0;   /**< Default acoustic time step sizes. */
     Real dt_s = 0.0; /**< Default acoustic time step sizes for solid. */
-    Real total_time = 0.0;
-    Real relax_time = 1.0;
     TickCount t1 = TickCount::now();
     TimeInterval interval;
     //----------------------------------------------------------------------
@@ -144,17 +148,19 @@ int main(int ac, char *av[])
         while (integration_time < output_interval)
         {
             Real Dt = get_fluid_advection_time_step_size.exec();
-            variable_gravity.exec();
             update_density_by_summation.exec();
             /** Update correction matrix for fluid */
-            //corrected_configuration_fluid.exec();
-
+            corrected_configuration_fluid.exec();
+            /** Viscous force */
+            viscous_force.exec();
+            viscous_force_from_fluid.exec();
             /** Update normal direction on elastic body.*/
             insert_body_update_normal.exec();
             Real relaxation_time = 0.0;
             while (relaxation_time < Dt)
             {
                 dt = SMIN(get_fluid_time_step_size.exec(), Dt);
+                variable_gravity.exec();
                 /** Fluid pressure relaxation */
                 pressure_relaxation.exec(dt);
                 /** FSI for pressure force. */
@@ -178,15 +184,12 @@ int main(int ac, char *av[])
                 average_velocity_and_acceleration.update_averages_.exec(dt);
                 relaxation_time += dt;
                 integration_time += dt;
-                total_time += dt;
-                if(total_time >= relax_time)
-                    physical_time += dt;
+                physical_time += dt;
             }
 
             if (number_of_iterations % screen_output_interval == 0)
             {
                 std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
-                          << " Total Time = " << total_time
                           << " Physical Time = " << physical_time
                           << "	Dt = " << Dt << "	dt = " << dt << "	dt_s = " << dt_s << "\n";
             }
@@ -202,20 +205,15 @@ int main(int ac, char *av[])
             /** one need update configuration after periodic condition. */
             baffle.updateCellLinkedList();
             baffle_contact.updateConfiguration();
-            if (total_time >= relax_time)
-            {
-                /** write run-time observation into file */
-                write_baffle_tip_displacement.writeToFile(number_of_iterations);
-            }
+            
+            /** write run-time observation into file */
+            write_baffle_tip_displacement.writeToFile(number_of_iterations);
             
         }
         TickCount t2 = TickCount::now();
-        if (total_time >= relax_time)
-        {
-            /** write run-time observation into file */
-            //write_baffle_tip_displacement.writeToFile(number_of_iterations);
-            write_real_body_states.writeToFile();
-        }
+
+        /** write run-time observation into file */
+        write_real_body_states.writeToFile();
         TickCount t3 = TickCount::now();
         interval += t3 - t2;
     }
