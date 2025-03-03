@@ -377,21 +377,40 @@ void run_shell_to_solid_coupling(int res_factor, Real stiffness_ratio, int load_
 
     // Check the coupling id
     {
-        auto *pos_solid = solid_body.getBaseParticles().getVariableDataByName<Vec3d>("Position");
-        auto *pos_upper_shell = upper_shell_body.getBaseParticles().getVariableDataByName<Vec3d>("Position");
-        auto *pos_lower_shell = lower_shell_body.getBaseParticles().getVariableDataByName<Vec3d>("Position");
-        for (auto &index_i : solid_coupling_algs.part.body_part_particles_)
+        // Check for solid
+        const auto *pos_solid = solid_body.getBaseParticles().getVariableDataByName<Vec3d>("Position");
+        for (const auto &index_i : solid_coupling_algs.part.body_part_particles_)
         {
             const auto &pos_i = pos_solid[index_i];
             auto [k, j] = solid_coupling_algs.vel_bc.get_nearest_id(index_i);
-            const auto &pos_j = k == 0 ? pos_lower_shell[j] : pos_upper_shell[j];
+            const auto *pos_shell = solid_coupling_algs.contact_relation.contact_particles_[k]->getVariableDataByName<Vec3d>("Position");
+            const auto &pos_j = pos_shell[j];
             Vec3d displacement = pos_j - pos_i;
-            if (displacement.norm() > 1e-6)
+            if (displacement.norm() > Eps)
             {
-                std::cout << "Coupling id error! " << "pos i: " << pos_i.transpose() << " pos j: " << pos_j.transpose() << std::endl;
-                std::cout << "Solid id: " << index_i << ", k = " << k << ", Coupling id: " << j << std::endl;
+                std::cout << solid_body.getName() << " coupling id is wrong!" << std::endl;
+                exit(0);
             }
         }
+        // Check for shells
+        auto check_shell_coupling = [&](shell_coupling_algs &alg)
+        {
+            const auto *pos_shell = alg.part.getBaseParticles().getVariableDataByName<Vec3d>("Position");
+            for (const auto &index_i : alg.part.body_part_particles_)
+            {
+                const auto &pos_i = pos_shell[index_i];
+                const size_t j = alg.force_bc.get_nearest_id(index_i, 0);
+                const auto &pos_j = pos_solid[j];
+                Vec3d displacement = pos_j - pos_i;
+                if (displacement.norm() > Eps)
+                {
+                    std::cout << alg.part.getSPHBody().getName() << " coupling id is wrong!" << std::endl;
+                    exit(0);
+                }
+            }
+        };
+        check_shell_coupling(shell_coupling_algs_lower);
+        check_shell_coupling(shell_coupling_algs_upper);
     }
 
     // Simulation

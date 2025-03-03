@@ -48,44 +48,10 @@ class CouplingPart : public BodyPartByParticle,
     int *is_coupled_;
 
   public:
-    CouplingPart(BaseContactRelation &contact_relation, const std::string &body_part_name, Real distance_factor = 0.5)
-        : BodyPartByParticle(contact_relation.getSPHBody(), body_part_name),
-          DataDelegateContact(contact_relation),
-          distance_factor_(distance_factor),
-          is_coupled_(base_particles_.registerStateVariable<int>("IsCoupled", 0))
-    {
-        // update contact relation before tagging particles
-        dynamic_cast<RealBody *>(&sph_body_)->updateCellLinkedList();
-        for (auto *contact_body : contact_bodies_)
-            dynamic_cast<RealBody *>(contact_body)->updateCellLinkedList();
-        contact_relation.updateConfiguration();
-
-        // tag the particles
-        TaggingParticleMethod tagging_particle_method = std::bind(&CouplingPart::tagManually, this, _1);
-        tagParticles(tagging_particle_method);
-    };
+    CouplingPart(BaseContactRelation &contact_relation, const std::string &body_part_name, Real distance_factor = 0.5);
 
   private:
-    void tagManually(size_t index_i)
-    {
-        Real dp_i = sph_body_.getSPHBodyResolutionRef();
-        for (size_t k = 0; k < contact_configuration_.size(); k++)
-        {
-            Real dp_k = contact_bodies_[k]->getSPHBodyResolutionRef();
-            Real dp = 0.5 * (dp_i + dp_k);
-            const auto &contact_neighbors = (*contact_configuration_[k])[index_i];
-            for (size_t n = 0; n < contact_neighbors.current_size_; n++)
-            {
-                if (contact_neighbors.r_ij_[n] < distance_factor_ * dp)
-                {
-                    is_coupled_[index_i] = 1;
-                    body_part_particles_.push_back(index_i);
-                    // stop searching once the particle is found to be coupled
-                    return;
-                }
-            }
-        }
-    };
+    void tagManually(size_t index_i);
 };
 
 /**@class NearestNeighborSolidVelocityConstraint
