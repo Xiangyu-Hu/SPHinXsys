@@ -38,12 +38,13 @@ namespace SPH
 {
 template <class ExecutionPolicy, typename DataType>
 class ObservedQuantityRecording<ExecutionPolicy, DataType>
-    : public BaseQuantityRecording,
-      public ObservingAQuantityCK<ExecutionPolicy, DataType>
+    : public BaseQuantityRecording
 {
   protected:
     SPHBody &observer_;
     BaseParticles &base_particles_;
+    ObservingAQuantityCK<ExecutionPolicy, DataType> observation_method_;
+    DiscreteVariable<DataType> *dv_interpolated_quantities_;
 
   public:
     DataType type_indicator_; /*< this is an indicator to identify the variable type. */
@@ -52,13 +53,14 @@ class ObservedQuantityRecording<ExecutionPolicy, DataType>
     ObservedQuantityRecording(const std::string &quantity_name, Relation<Contact<>> &contact_relation)
         : BaseQuantityRecording(contact_relation.getSPHBody().getSPHSystem(),
                                 contact_relation.getSPHBody().getName(), quantity_name),
-          ObservingAQuantityCK<ExecutionPolicy, DataType>(contact_relation, quantity_name),
           observer_(contact_relation.getSPHBody()),
-          base_particles_(observer_.getBaseParticles())
+          base_particles_(observer_.getBaseParticles()),
+          observation_method_(contact_relation, quantity_name),
+          dv_interpolated_quantities_(observation_method_.dvInterpolatedQuantities())
     {
         std::ofstream out_file(filefullpath_output_.c_str(), std::ios::app);
         out_file << "run_time" << "   ";
-        DataType *interpolated_quantities = this->dv_interpolated_quantities_->Data();
+        DataType *interpolated_quantities = getObservedQuantity();
         for (size_t i = 0; i != base_particles_.TotalRealParticles(); ++i)
         {
             std::string quantity_name_i = quantity_name + "[" + std::to_string(i) + "]";
@@ -73,9 +75,9 @@ class ObservedQuantityRecording<ExecutionPolicy, DataType>
     {
         std::ofstream out_file(filefullpath_output_.c_str(), std::ios::app);
         out_file << sv_physical_time_->getValue() << "   ";
-        this->exec();
-        this->dv_interpolated_quantities_->prepareForOutput(ExecutionPolicy{});
-        DataType *interpolated_quantities = this->dv_interpolated_quantities_->Data();
+        observation_method_.exec();
+        dv_interpolated_quantities_->prepareForOutput(ExecutionPolicy{});
+        DataType *interpolated_quantities = getObservedQuantity();
         for (size_t i = 0; i != base_particles_.TotalRealParticles(); ++i)
         {
             plt_engine_.writeAQuantity(out_file, interpolated_quantities[i]);
@@ -86,7 +88,7 @@ class ObservedQuantityRecording<ExecutionPolicy, DataType>
 
     DataType *getObservedQuantity()
     {
-        return this->interpolated_quantities_;
+        return this->dv_interpolated_quantities_->Data();
     }
 };
 
