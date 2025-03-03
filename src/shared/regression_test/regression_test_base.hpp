@@ -309,4 +309,24 @@ RegressionTestBase<ObserveMethodType>::~RegressionTestBase()
     out_file.close();
 };
 //=================================================================================================//
+template <class ObserveMethodType>
+void RegressionTestBase<ObserveMethodType>::ensureGenerateRegressionData()
+{
+    if (!generate_regression_data_)
+    {
+        std::cout << "Error: run test when command option is generate regression data! " << std::endl;
+        exit(1);
+    }
+}
+//=================================================================================================//
+template <class ObserveMethodType>
+void RegressionTestBase<ObserveMethodType>::ensureTestResult()
+{
+    if (generate_regression_data_)
+    {
+        std::cout << "Error: generate regression data when command option is run test! " << std::endl;
+        exit(1);
+    }
+}
+//=================================================================================================//
 } // namespace SPH

@@ -112,6 +112,7 @@ class RegressionTestEnsembleAverage : public RegressionTestTimeAverage<ObserveMe
     /* the interface for generating the priori converged result with M&V. */
     void generateDataBase(VariableType threshold_mean, VariableType threshold_variance, const std::string &filter = "false")
     {
+        this->ensureGenerateRegressionData();
         this->writeXmlToXmlFile();
         this->readXmlFromXmlFile();
         this->initializeThreshold(threshold_mean, threshold_variance);
@@ -134,6 +135,7 @@ class RegressionTestEnsembleAverage : public RegressionTestTimeAverage<ObserveMe
     /** the interface for testing new result. */
     void testResult(const std::string &filter = "false")
     {
+        this->ensureTestResult();
         this->writeXmlToXmlFile();
         this->readXmlFromXmlFile();
         setupAndCorrection();

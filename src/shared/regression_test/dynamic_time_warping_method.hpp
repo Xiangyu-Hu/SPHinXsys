@@ -205,6 +205,7 @@ template <class ObserveMethodType>
 void RegressionTestDynamicTimeWarping<ObserveMethodType>::generateDataBase(
     Real threshold_value, const std::string &filter)
 {
+    this->ensureGenerateRegressionData();
     this->writeXmlToXmlFile();
     this->readXmlFromXmlFile();
     this->transposeTheIndex();
@@ -231,6 +232,7 @@ void RegressionTestDynamicTimeWarping<ObserveMethodType>::generateDataBase(
 template <class ObserveMethodType>
 void RegressionTestDynamicTimeWarping<ObserveMethodType>::testResult(const std::string &filter)
 {
+    this->ensureTestResult();
     this->writeXmlToXmlFile();
     this->readXmlFromXmlFile();
     this->transposeTheIndex();

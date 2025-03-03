@@ -110,6 +110,7 @@ class RegressionTestTimeAverage : public RegressionTestBase<ObserveMethodType>
         initializeThreshold(threshold_mean, threshold_variance);
         if (this->converged == "false")
         {
+            this->ensureGenerateRegressionData();
             setupTest();
             if (filter == "true")
                 filterExtremeValues(); /* Pay attention to use this filter. */
@@ -128,6 +129,7 @@ class RegressionTestTimeAverage : public RegressionTestBase<ObserveMethodType>
     /** the interface for testing new result. */
     void testResult(const std::string &filter = "false")
     {
+        this->ensureTestResult();
         this->writeXmlToXmlFile();  /* currently defined in in_output. */
         this->readXmlFromXmlFile(); /* currently defined in in_output. */
         setupTest();

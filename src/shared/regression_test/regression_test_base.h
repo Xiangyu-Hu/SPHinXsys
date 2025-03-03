@@ -138,6 +138,9 @@ class RegressionTestBase : public ObserveMethodType
         readFromXml(this);
     };
 
+    void ensureGenerateRegressionData();
+    void ensureTestResult();
+
   private:
     size_t last_iteration_step_ = MaxSize_t;
 
