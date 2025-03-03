@@ -15,7 +15,7 @@ template <class ObserveMethodType>
 template <typename... Args>
 RegressionTestBase<ObserveMethodType>::RegressionTestBase(Args &&...args)
     : ObserveMethodType(std::forward<Args>(args)...),
-      generate_regression_data_(this->sph_body_.getSPHSystem().GenerateRegressionData()),
+      generate_regression_data_(this->sph_system_.GenerateRegressionData()),
       observe_xml_engine_("xml_observe_reduce", this->quantity_name_),
       result_xml_engine_in_("result_xml_engine_in", "result"),
       result_xml_engine_out_("result_xml_engine_out", "result")
