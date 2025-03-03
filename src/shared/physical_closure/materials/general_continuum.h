@@ -65,6 +65,30 @@ class GeneralContinuum : public WeaklyCompressibleFluid
     Real ContactStiffness() { return contact_stiffness_; };
 
     virtual Matd ConstitutiveRelationShearStress(Matd &velocity_gradient, Matd &shear_stress);
+
+
+    class GeneralContinuumKernel
+    {
+      public:
+        GeneralContinuumKernel(GeneralContinuum &encloser):
+        E_(encloser.E_), G_(encloser.G_),K_(encloser.K_),
+        nu_(encloser.nu_),contact_stiffness_(encloser.contact_stiffness_),
+        rho0_(encloser.rho0_){};
+
+        inline Real getYoungsModulus() { return E_; };
+        inline Real getPoissonRatio() { return nu_; };
+        inline Real getDensity() { return rho0_; };
+        inline Real getBulkModulus(Real youngs_modulus, Real poisson_ratio);
+        inline Real getShearModulus(Real youngs_modulus, Real poisson_ratio);
+        inline Real getLambda(Real youngs_modulus, Real poisson_ratio);
+      protected:
+        Real E_;                 /* Youngs or tensile modules  */
+        Real G_;                 /* shear modules  */
+        Real K_;                 /* bulk modules  */
+        Real nu_;                /* Poisson ratio  */
+        Real contact_stiffness_; /* contact-force stiffness related to bulk modulus*/
+        Real rho0_; /* contact-force stiffness related to bulk modulus*/
+    };
 };
 
 class PlasticContinuum : public GeneralContinuum
@@ -93,6 +117,32 @@ class PlasticContinuum : public GeneralContinuum
 
     virtual Mat3d ConstitutiveRelation(Mat3d &velocity_gradient, Mat3d &stress_tensor);
     virtual Mat3d ReturnMapping(Mat3d &stress_tensor);
+
+
+    class PlasticKernel: public GeneralContinuum::GeneralContinuumKernel
+    {
+      public:
+
+        PlasticKernel(PlasticContinuum &encloser) : GeneralContinuum::GeneralContinuumKernel(encloser),
+        c_(encloser.c_),phi_(encloser.phi_),
+        psi_(encloser.psi_),alpha_phi_(encloser.alpha_phi_),k_c_(encloser.k_c_){};
+
+        inline Real getDPConstantsA(Real friction_angle);
+        inline Mat3d ConstitutiveRelation(Mat3d &velocity_gradient, Mat3d &stress_tensor);  
+        inline Mat3d ReturnMapping(Mat3d &stress_tensor);
+        inline Real getFrictionAngle() { return phi_; };
+
+
+      protected:
+          Real c_;                            /* cohesion  */
+          Real phi_;                          /* friction angle  */
+          Real psi_;                          /* dilatancy angle  */
+          Real alpha_phi_;                    /* Drucker-Prager's constants */
+          Real k_c_;                          /* Drucker-Prager's constants */
+          Real stress_dimension_ = 3.0; /* plain strain condition */   //Temporarily cancel const --need to check
+
+
+    };
 };
 
 class J2Plasticity : public GeneralContinuum

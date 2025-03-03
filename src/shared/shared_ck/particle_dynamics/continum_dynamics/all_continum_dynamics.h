@@ -21,21 +21,19 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	all_materials.h
- * @brief 	This is the header file for materials.
- * @author	Chi Zhang and Xiangyu Hu
+ * @file    all_continum_dynamics.h
  */
+
 
 #pragma once
 
-#include "base_material.h"
-#include "viscosity.h"
-#include "complex_solid.h"
-#include "complex_solid.hpp"
-#include "compressible_fluid.h"
-#include "diffusion_reaction.h"
-#include "elastic_solid.h"
-#include "general_continuum.h"
-#include "general_continuum.hpp"
-#include "inelastic_solid.h"
-#include "weakly_compressible_fluid.h"
+#include "continuum_integration_1st_ck.h"
+#include "continuum_integration_1st_ck.hpp"
+#include "continuum_integration_2nd_ck.h"
+#include "continuum_integration_2nd_ck.hpp"
+#include "continuum_dynamics_variable_ck.h"
+#include "continuum_dynamics_variable_ck.hpp"
+#include "stress_diffusion_ck.h"
+#include "stress_diffusion_ck.hpp"
+#include "initilization_dynamics_ck.h"
+#include "initilization_dynamics_ck.hpp"

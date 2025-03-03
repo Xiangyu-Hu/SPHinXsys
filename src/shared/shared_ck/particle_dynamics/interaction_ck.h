@@ -60,6 +60,7 @@ class Interaction<Inner<Parameters...>> : public LocalDynamics
                        Interaction<Inner<Parameters...>> &encloser);
     };
 
+    typedef InteractKernel BaseInteractKernel;
     void registerComputingKernel(Implementation<Base> *implementation);
     void resetComputingKernelUpdated();
 
@@ -89,6 +90,7 @@ class Interaction<Contact<SourceIdentifier, TargetIdentifier, Parameters...>>
         InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt contact_index);
     };
 
+    typedef InteractKernel BaseInteractKernel;
     void registerComputingKernel(Implementation<Base> *implementation, UnsignedInt contact_index);
     void resetComputingKernelUpdated(UnsignedInt contact_index);
 
