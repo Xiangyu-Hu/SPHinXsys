@@ -49,6 +49,7 @@ class RegressionTestBase : public ObserveMethodType
     using VariableType = decltype(ObserveMethodType::type_indicator_);
 
   protected:
+    bool generate_regression_data_;      /*< the flag to generate regression data. */
     std::string input_folder_path_;      /*< the folder path for the input folder. (folder) */
     std::string in_output_filefullpath_; /*< the file path for current result from xml memory to xml file. */
     std::string result_filefullpath_;    /*< the file path for all run results. (.xml)*/
@@ -69,7 +70,7 @@ class RegressionTestBase : public ObserveMethodType
                                                   or observations * snapshot (reading specified result for TA and DTW method.) */
     TriVector<VariableType> result_;              /*< the container of results in all runs (run * snapshot * observation) */
 
-    int snapshot_, observe_; /*< the size of each layer of current result vector. */
+    int snapshot_, observe_;     /*< the size of each layer of current result vector. */
     int difference_;             /*< the length difference of snapshot between old and new result,
                                  which is used to trim each new run result to be a unified length. */
     int number_of_run_;          /*< the times of run. */

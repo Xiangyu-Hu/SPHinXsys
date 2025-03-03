@@ -15,6 +15,7 @@ template <class ObserveMethodType>
 template <typename... Args>
 RegressionTestBase<ObserveMethodType>::RegressionTestBase(Args &&...args)
     : ObserveMethodType(std::forward<Args>(args)...),
+      generate_regression_data_(this->sph_body_.getSPHSystem().GenerateRegressionData()),
       observe_xml_engine_("xml_observe_reduce", this->quantity_name_),
       result_xml_engine_in_("result_xml_engine_in", "result"),
       result_xml_engine_out_("result_xml_engine_out", "result")
@@ -26,9 +27,17 @@ RegressionTestBase<ObserveMethodType>::RegressionTestBase(Args &&...args)
 
     if (!fs::exists(runtimes_filefullpath_))
     {
-        converged = "false";
-        number_of_run_ = 1;
-        label_for_repeat_ = 0;
+        if (generate_regression_data_)
+        {
+            converged = "false";
+            number_of_run_ = 1;
+            label_for_repeat_ = 0;
+        }
+        else
+        {
+            std::cout << "Error: runtimes file is missing for regression test! " << std::endl;
+            exit(1);
+        }
     }
     else
     {
