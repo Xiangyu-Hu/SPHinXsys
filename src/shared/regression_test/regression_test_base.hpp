@@ -109,10 +109,10 @@ template <typename... Parameters>
 void RegressionTestBase<ObserveMethodType>::
     writeToXml(ObservedQuantityRecording<Parameters...> *observe_method, size_t iteration)
 {
-    this->exec();
+    this->observation_method_.exec();
+    VariableType *interpolated_quantities = this->getObservedQuantity();
     std::string element_name_ = "Snapshot_" + std::to_string(iteration);
     auto ele_ite = observe_xml_engine_.addElementToXmlDoc(element_name_);
-    VariableType *interpolated_quantities = this->dv_interpolated_quantities_->Data();
     for (size_t i = 0; i != this->base_particles_.TotalRealParticles(); ++i)
     {
         writeDataToXmlMemory(observe_xml_engine_, ele_ite,
