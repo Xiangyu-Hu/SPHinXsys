@@ -11,12 +11,43 @@
 using namespace SPH;
 
 void run_solid(int res_factor, Real stiffness_ratio, int load_type = 0);
-void run_shell_to_solid_coupling(int res_factor, Real stiffness_ratio, int load_type = 0);
+void run_shell_to_solid_coupling(int res_factor, Real stiffness_ratio, bool use_interpolation, int load_type = 0);
 
 int main(int ac, char *av[])
 {
-    run_shell_to_solid_coupling(1, 0.1, 0);
+    run_shell_to_solid_coupling(1, 0.1, true, 0);
     // run_solid(1, 0.1, 1);
+}
+
+//------------------------------------------------------------------------------
+void relax_solid(BaseInnerRelation &inner)
+{
+    //----------------------------------------------------------------------
+    //	Methods used for particle relaxation.
+    //----------------------------------------------------------------------
+    using namespace relax_dynamics;
+    SimpleDynamics<RandomizeParticlePosition> random_particles(inner.getSPHBody());
+    RelaxationStepInner relaxation_step_inner(inner);
+    //----------------------------------------------------------------------
+    //	Particle relaxation starts here.
+    //----------------------------------------------------------------------
+    random_particles.exec(0.25);
+    relaxation_step_inner.SurfaceBounding().exec();
+    inner.real_body_->updateCellLinkedList();
+    //----------------------------------------------------------------------
+    //	Relax particles of the insert body.
+    //----------------------------------------------------------------------
+    int ite_p = 0;
+    while (ite_p < 1000)
+    {
+        relaxation_step_inner.exec();
+        ite_p += 1;
+        if (ite_p % 100 == 0)
+        {
+            std::cout << std::fixed << std::setprecision(9) << "Relaxation steps for the inserted body N = " << ite_p << "\n";
+        }
+    }
+    std::cout << "The physics relaxation process of inserted body finish !" << std::endl;
 }
 
 struct solid_algs
@@ -177,28 +208,34 @@ struct solid_coupling_algs
 {
     ContactRelation contact_relation;
     solid_dynamics::CouplingPart part;
-    SimpleDynamics<solid_dynamics::NearestNeighborSolidVelocityConstraint> vel_bc;
+    SimpleDynamics<solid_dynamics::NearestNeighborSolidVelocityConstraint> vel_bc_nearest_neighbor;
+    SimpleDynamics<solid_dynamics::InterpolationSolidVelocityConstraint> vel_bc_interpolation;
 
     solid_coupling_algs(SolidBody &body, RealBodyVector contact_bodies)
         : contact_relation(body, std::move(contact_bodies)),
           part(contact_relation, "CouplingPart"),
-          vel_bc(part, contact_relation) {}
-    void init() { vel_bc.init(); }
-    void exec() { vel_bc.exec(); }
+          vel_bc_nearest_neighbor(part, contact_relation),
+          vel_bc_interpolation(part, contact_relation) {}
+
+    void init(bool use_interpolation) { use_interpolation ? vel_bc_interpolation.init() : vel_bc_nearest_neighbor.init(); }
+    void exec(bool use_interpolation) { use_interpolation ? vel_bc_interpolation.exec() : vel_bc_nearest_neighbor.exec(); }
 };
 
 struct shell_coupling_algs
 {
     ContactRelation contact_relation;
     solid_dynamics::CouplingPart part;
-    InteractionWithUpdate<solid_dynamics::NearestNeighborShellForceConstraint> force_bc;
+    InteractionWithUpdate<solid_dynamics::NearestNeighborShellForceConstraint> force_bc_nearest_neighbor;
+    InteractionWithUpdate<solid_dynamics::InterpolationShellForceConstraint> force_bc_interpolation;
 
     shell_coupling_algs(SolidBody &body, RealBodyVector contact_bodies)
         : contact_relation(body, std::move(contact_bodies)),
           part(contact_relation, "CouplingPart"),
-          force_bc(part, contact_relation) {}
-    void init() { force_bc.init(); }
-    void exec() { force_bc.exec(); }
+          force_bc_nearest_neighbor(part, contact_relation),
+          force_bc_interpolation(part, contact_relation) {}
+
+    void init(bool use_interpolation) { use_interpolation ? force_bc_interpolation.init() : force_bc_nearest_neighbor.init(); }
+    void exec(bool use_interpolation) { use_interpolation ? force_bc_interpolation.exec() : force_bc_nearest_neighbor.exec(); }
 };
 
 namespace plate
@@ -285,7 +322,7 @@ struct boundary_condition
 };
 }; // namespace plate
 
-void run_shell_to_solid_coupling(int res_factor, Real stiffness_ratio, int load_type)
+void run_shell_to_solid_coupling(int res_factor, Real stiffness_ratio, bool use_interpolation, int load_type)
 {
     // parameters
     plate::plate_parameters params;
@@ -306,6 +343,7 @@ void run_shell_to_solid_coupling(int res_factor, Real stiffness_ratio, int load_
 
     // Body
     SolidBody solid_body(system, solid_mesh);
+    solid_body.defineBodyLevelSetShape()->cleanLevelSet(0);
     solid_body.defineMaterial<LinearElasticSolid>(params.rho, youngs_modulus_solid, params.poisson_ratio);
     solid_body.generateParticles<BaseParticles, Lattice>();
 
@@ -326,6 +364,10 @@ void run_shell_to_solid_coupling(int res_factor, Real stiffness_ratio, int load_
     shell_algs algs_shell_upper(upper_shell_body, eta);
     shell_algs algs_shell_lower(lower_shell_body, eta);
 
+    // relaxation
+    if (use_interpolation)
+        relax_solid(algs_solid.inner_relation);
+
     // Boundary condition
     plate::boundary_condition solid_bc(solid_body, load_type);
     plate::boundary_condition lower_shell_bc(lower_shell_body, load_type);
@@ -336,9 +378,9 @@ void run_shell_to_solid_coupling(int res_factor, Real stiffness_ratio, int load_
     shell_coupling_algs shell_coupling_algs_lower(lower_shell_body, {&solid_body});
     shell_coupling_algs shell_coupling_algs_upper(upper_shell_body, {&solid_body});
 
-    solid_coupling_algs.init();
-    shell_coupling_algs_lower.init();
-    shell_coupling_algs_upper.init();
+    solid_coupling_algs.init(use_interpolation);
+    shell_coupling_algs_lower.init(use_interpolation);
+    shell_coupling_algs_upper.init(use_interpolation);
 
     // Initialization
     system.initializeSystemCellLinkedLists();
@@ -376,13 +418,14 @@ void run_shell_to_solid_coupling(int res_factor, Real stiffness_ratio, int load_
     vtp_output.writeToFile(0);
 
     // Check the coupling id
+    if (!use_interpolation)
     {
         // Check for solid
         const auto *pos_solid = solid_body.getBaseParticles().getVariableDataByName<Vec3d>("Position");
         for (const auto &index_i : solid_coupling_algs.part.body_part_particles_)
         {
             const auto &pos_i = pos_solid[index_i];
-            auto [k, j] = solid_coupling_algs.vel_bc.get_nearest_id(index_i);
+            auto [k, j] = solid_coupling_algs.vel_bc_nearest_neighbor.get_nearest_id(index_i);
             const auto *pos_shell = solid_coupling_algs.contact_relation.contact_particles_[k]->getVariableDataByName<Vec3d>("Position");
             const auto &pos_j = pos_shell[j];
             Vec3d displacement = pos_j - pos_i;
@@ -399,7 +442,7 @@ void run_shell_to_solid_coupling(int res_factor, Real stiffness_ratio, int load_
             for (const auto &index_i : alg.part.body_part_particles_)
             {
                 const auto &pos_i = pos_shell[index_i];
-                const size_t j = alg.force_bc.get_nearest_id(index_i, 0);
+                const size_t j = alg.force_bc_nearest_neighbor.get_nearest_id(index_i, 0);
                 const auto &pos_j = pos_solid[j];
                 Vec3d displacement = pos_j - pos_i;
                 if (displacement.norm() > Eps)
@@ -444,8 +487,8 @@ void run_shell_to_solid_coupling(int res_factor, Real stiffness_ratio, int load_
                 algs_solid.stress_relaxation_first(dt);
 
                 // compute shell coupling force
-                shell_coupling_algs_upper.exec();
-                shell_coupling_algs_lower.exec();
+                shell_coupling_algs_upper.exec(use_interpolation);
+                shell_coupling_algs_lower.exec(use_interpolation);
 
                 // update shell
                 algs_shell_upper.stress_relaxation_first(dt);
@@ -461,10 +504,10 @@ void run_shell_to_solid_coupling(int res_factor, Real stiffness_ratio, int load_
                 algs_shell_lower.stress_relaxation_second(dt);
 
                 // update solid kinematic constraint and 2nd half
-                solid_coupling_algs.exec();
+                solid_coupling_algs.exec(use_interpolation);
                 solid_bc.exec();
                 algs_solid.damping_exec(dt);
-                solid_coupling_algs.exec();
+                solid_coupling_algs.exec(use_interpolation);
                 solid_bc.exec();
                 algs_solid.stress_relaxation_second(dt);
 
