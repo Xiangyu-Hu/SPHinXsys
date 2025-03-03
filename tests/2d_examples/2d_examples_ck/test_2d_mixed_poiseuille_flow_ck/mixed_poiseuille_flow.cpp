@@ -415,9 +415,8 @@
                  acoustic_dt = SMIN(fluid_acoustic_time_step.exec(), advection_dt);
                  fluid_acoustic_step_1st_half.exec(acoustic_dt);
                  zero_gradient_ck.exec();
-                 // bidirectional_velocity_condition_left.applyPressureCondition(acoustic_dt);
+                 bidirectional_velocity_condition_left.applyPressureCondition(acoustic_dt);
                  bidirectional_velocity_condition_left.applyVelocityCondition();
- 
                  bidirectional_pressure_condition_right.applyPressureCondition(acoustic_dt);
                  fluid_acoustic_step_2nd_half.exec(acoustic_dt);
                  relaxation_time += acoustic_dt;
