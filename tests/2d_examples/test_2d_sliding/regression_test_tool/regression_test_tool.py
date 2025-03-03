@@ -12,13 +12,12 @@ case name: test_2d_sliding
 """
 
 case_name = "test_2d_sliding"
-body_name = "FreeBallObserver"
+body_name = "CubeObserver"
 parameter_name = "Position"
 
 number_of_run_times = 0
 converged = 0
 sphinxsys = SphinxsysRegressionTest(case_name, body_name, parameter_name)
-clean_input_folder(sphinxsys.input_file_path)
 
 
 while True:

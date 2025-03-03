@@ -7,17 +7,16 @@ sys.path.append(path)
 from regression_test_base_tool import SphinxsysRegressionTest
 
 """
-case name: test_2d_cauchy_oscillating_beam
+case name: test_2d_oscillating_beam_cauchy
 """
 
-case_name = "test_2d_cauchy_oscillating_beam"
+case_name = "test_2d_oscillating_beam_cauchy"
 body_name = "BeamObserver"
 parameter_name = "Position"
 
 number_of_run_times = 0
 converged = 0
 sphinxsys = SphinxsysRegressionTest(case_name, body_name, parameter_name)
-clean_input_folder(sphinxsys.input_file_path)
 
 
 while True:
