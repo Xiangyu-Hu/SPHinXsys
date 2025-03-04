@@ -46,18 +46,18 @@ NearestNeighborSolidVelocityConstraint::SearchNearestParticle::SearchNearestPart
     : BaseLocalDynamics<BodyPartByParticle>(body_part),
       DataDelegateContact(contact_relation)
 {
-    const auto inf = std::numeric_limits<size_t>::infinity();
+    const auto max = std::numeric_limits<size_t>::max();
     coupling_ids_.resize(particles_->TotalRealParticles(),
-                         std::make_pair(inf, inf));
+                         std::make_pair(max, max));
     for (auto *contact_particle : contact_particles_)
         contact_is_coupled_.emplace_back(contact_particle->registerStateVariable<int>("IsCoupled"));
 };
 
 void NearestNeighborSolidVelocityConstraint::SearchNearestParticle::update(size_t index_i, Real)
 {
-    const auto inf = std::numeric_limits<size_t>::infinity();
-    size_t k_min = inf;
-    size_t j_min = inf;
+    const auto max = std::numeric_limits<size_t>::max();
+    size_t k_min = max;
+    size_t j_min = max;
     Real r_min = std::numeric_limits<Real>::max();
     for (size_t k = 0; k < contact_configuration_.size(); k++)
     {
@@ -92,7 +92,7 @@ void NearestNeighborSolidVelocityConstraint::update(size_t index_i, Real)
 {
     auto [k, index_j] = search_nearest_particle_.get_nearest_id(index_i);
     // Only update the velocity when the nearest neighbor is found.
-    if (const auto inf = std::numeric_limits<size_t>::infinity(); k != inf && index_j != inf)
+    if (const auto max = std::numeric_limits<size_t>::max(); k != max && index_j != max)
         vel_[index_i] = contact_vel_[k][index_j];
 }
 
@@ -100,23 +100,23 @@ NearestNeighborShellForceConstraint::SearchNearestParticle::SearchNearestParticl
     : BaseLocalDynamics<BodyPartByParticle>(body_part),
       DataDelegateContact(contact_relation)
 {
-    const auto inf = std::numeric_limits<size_t>::infinity();
+    const auto max = std::numeric_limits<size_t>::max();
     for (auto *contact_particle : contact_particles_)
     {
-        coupling_ids_.emplace_back(particles_->TotalRealParticles(), inf);
+        coupling_ids_.emplace_back(particles_->TotalRealParticles(), max);
         contact_is_coupled_.emplace_back(contact_particle->registerStateVariable<int>("IsCoupled"));
     }
 };
 
 void NearestNeighborShellForceConstraint::SearchNearestParticle::update(size_t index_i, Real)
 {
-    const auto inf = std::numeric_limits<size_t>::infinity();
+    const auto max = std::numeric_limits<size_t>::max();
     for (size_t k = 0; k < contact_configuration_.size(); k++)
     {
         const auto &contact_neighbors = (*contact_configuration_[k])[index_i];
         const auto *is_coupled_k = contact_is_coupled_[k];
 
-        size_t j_min = inf;
+        size_t j_min = max;
         Real r_min = std::numeric_limits<Real>::max();
 
         for (size_t n = 0; n < contact_neighbors.current_size_; n++)
@@ -151,7 +151,7 @@ void NearestNeighborShellForceConstraint::interaction(size_t index_i, Real)
     {
         size_t index_j = search_nearest_particle_.get_nearest_id(index_i, k);
         // Only update the force when the nearest neighbor is found.
-        if (index_j != std::numeric_limits<size_t>::infinity())
+        if (index_j != std::numeric_limits<size_t>::max())
             force += contact_force_[k][index_j];
     }
     current_force_[index_i] = force;
