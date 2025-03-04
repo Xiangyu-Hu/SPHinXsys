@@ -40,75 +40,36 @@ RegressionTestBase<ObserveMethodType>::RegressionTestBase(Args &&...args)
 }
 //=================================================================================================//
 template <class ObserveMethodType>
-template <typename... Parameters>
-void RegressionTestBase<ObserveMethodType>::
-    writeToXml(ObservedQuantityRecording<Parameters...> *observe_method, size_t iteration)
+void RegressionTestBase<ObserveMethodType>::writeToXml(size_t iteration)
 {
     VariableType *observed_quantities = this->getObservedQuantity();
     std::string element_name_ = "Snapshot_" + std::to_string(iteration);
     SimTK::Xml::Element &element_ = observe_xml_engine_.root_element_;
     observe_xml_engine_.addElementToXmlDoc(element_name_);
-    for (size_t i = 0; i != this->base_particles_.TotalRealParticles(); ++i)
+    for (int i = 0; i != observation_; ++i)
     {
         xmlmemory_io_.writeDataToXmlMemory(observe_xml_engine_, element_,
                                            element_name_, i, observed_quantities[i], this->quantity_name_);
     };
-};
+}
 //=================================================================================================//
 template <class ObserveMethodType>
-template <typename... Parameters>
-void RegressionTestBase<ObserveMethodType>::
-    writeToXml(ReducedQuantityRecording<Parameters...> *reduce_method, size_t iteration)
-{
-    VariableType *observed_quantities = this->getObservedQuantity();
-    std::string element_name_ = "Snapshot_" + std::to_string(iteration);
-    SimTK::Xml::Element &element_ = observe_xml_engine_.root_element_;
-    observe_xml_engine_.addElementToXmlDoc(element_name_);
-    xmlmemory_io_.writeDataToXmlMemory(observe_xml_engine_, element_,
-                                       element_name_, 0, *observed_quantities, this->quantity_name_);
-};
-//=================================================================================================//
-template <class ObserveMethodType>
-template <typename... Parameters>
-void RegressionTestBase<ObserveMethodType>::
-    readFromXml(ObservedQuantityRecording<Parameters...> *observe_method)
+void RegressionTestBase<ObserveMethodType>::readFromXml()
 {
     observe_xml_engine_.loadXmlFile(in_output_filefullpath_);
-    size_t number_of_particle_ = this->base_particles_.TotalRealParticles();
     size_t number_of_snapshot_ = std::distance(observe_xml_engine_.root_element_.element_begin(),
                                                observe_xml_engine_.root_element_.element_end());
-    BiVector<VariableType> current_result_temp_(number_of_snapshot_, StdVec<VariableType>(number_of_particle_));
+    BiVector<VariableType> current_result_temp_(number_of_snapshot_, StdVec<VariableType>(observation_));
     StdVec<std::string> element_tag_temp_(number_of_snapshot_);
     current_result_ = current_result_temp_;
     element_tag_ = element_tag_temp_;
     SimTK::Xml::Element &element_ = observe_xml_engine_.root_element_;
-    for (size_t j = 0; j != number_of_particle_; ++j)
+    for (int i = 0; i != observation_; ++i)
     {
-        xmlmemory_io_.readDataFromXmlMemory(observe_xml_engine_, element_, j, current_result_, this->quantity_name_);
+        xmlmemory_io_.readDataFromXmlMemory(observe_xml_engine_, element_, i, current_result_, this->quantity_name_);
         xmlmemory_io_.readTagFromXmlMemory(element_, element_tag_);
     }
-};
-//=================================================================================================//
-template <class ObserveMethodType>
-template <typename... Parameters>
-void RegressionTestBase<ObserveMethodType>::
-    readFromXml(ReducedQuantityRecording<Parameters...> *reduce_method)
-{
-    observe_xml_engine_.loadXmlFile(in_output_filefullpath_);
-    size_t number_of_particle_ = 1;
-    size_t number_of_snapshot_ = std::distance(observe_xml_engine_.root_element_.element_begin(),
-                                               observe_xml_engine_.root_element_.element_end());
-    BiVector<VariableType> current_result_temp_(number_of_snapshot_, StdVec<VariableType>(number_of_particle_));
-    StdVec<std::string> element_tag_temp_(number_of_snapshot_);
-    current_result_ = current_result_temp_;
-    element_tag_ = element_tag_temp_;
-    SimTK::Xml::Element &element_ = observe_xml_engine_.root_element_;
-    for (size_t j = 0; j != number_of_particle_; ++j)
-    {
-        xmlmemory_io_.readDataFromXmlMemory(observe_xml_engine_, element_, j, current_result_, this->quantity_name_);
-        xmlmemory_io_.readTagFromXmlMemory(element_, element_tag_);
-    }
-};
+}
 //=================================================================================================//
 template <class ObserveMethodType>
 void RegressionTestBase<ObserveMethodType>::transposeTheIndex()

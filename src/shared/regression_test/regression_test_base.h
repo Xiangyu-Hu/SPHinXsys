@@ -86,17 +86,8 @@ class RegressionTestBase : public ObserveMethodType
     explicit RegressionTestBase(Args &&...args);
     virtual ~RegressionTestBase();
 
-    template <typename... Parameters>
-    void writeToXml(ObservedQuantityRecording<Parameters...> *observe_method, size_t iteration = 0);
-
-    template <typename... Parameters>
-    void writeToXml(ReducedQuantityRecording<Parameters...> *reduce_method, size_t iteration = 0);
-
-    template <typename... Parameters>
-    void readFromXml(ObservedQuantityRecording<Parameters...> *observe_method);
-
-    template <typename... Parameters>
-    void readFromXml(ReducedQuantityRecording<Parameters...> *reduce_method);
+    void writeToXml(size_t iteration);
+    void readFromXml();
 
     void transposeTheIndex();                  /** transpose the current result (from snapshot*observation to observation*snapshot). */
     void readResultFromXml();                  /** read the result from the .xml file. (all result) */
@@ -114,7 +105,7 @@ class RegressionTestBase : public ObserveMethodType
             exit(1);
         }
         ObserveMethodType::writeToFile(iteration); /* used for visualization (.dat)*/
-        writeToXml(this, iteration);               /* used for regression test. (.xml) */
+        writeToXml(iteration);               /* used for regression test. (.xml) */
     };
 
     /*The new run result is stored in the xml memory, and can't be copied and used directly
@@ -128,7 +119,7 @@ class RegressionTestBase : public ObserveMethodType
     /** read current result from Xml file into Xml memory. */
     void readXmlFromXmlFile()
     {
-        readFromXml(this);
+        readFromXml();
     };
 
   private:
