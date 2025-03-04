@@ -432,7 +432,6 @@ template <class ObserveMethodType>
 void RegressionTestTimeAverage<ObserveMethodType>::setupTheTest()
 {
     this->snapshot_ = this->current_result_.size();
-    this->observation_ = this->current_result_[0].size();
     StdVec<VariableType> temp(this->observation_);
     meanvalue_ = temp;
     variance_ = temp;

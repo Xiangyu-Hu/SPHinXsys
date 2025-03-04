@@ -218,7 +218,6 @@ void RegressionTestEnsembleAverage<ObserveMethodType>::setupAndCorrection()
         std::cout << __FILE__ << ':' << __LINE__ << std::endl;
         exit(1);
     }
-    this->observation_ = this->current_result_[0].size();
 
     if (this->number_of_run_ > 1)
     {
