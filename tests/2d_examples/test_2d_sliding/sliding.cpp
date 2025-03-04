@@ -161,12 +161,6 @@ int main(int ac, char *av[])
             Real relaxation_time = 0.0;
             while (relaxation_time < Dt)
             {
-                if (ite % 100 == 0)
-                {
-                    std::cout << "N=" << ite << " Time: "
-                              << physical_time << "	dt: " << dt
-                              << "\n";
-                }
                 free_cube_update_contact_density.exec();
                 free_cube_compute_solid_contact_forces.exec();
                 free_cube_stress_relaxation_first_half.exec(dt);
@@ -180,8 +174,13 @@ int main(int ac, char *av[])
                 relaxation_time += dt;
                 integration_time += dt;
                 physical_time += dt;
+
+                if (ite % 100 == 0)
+                {
+                    std::cout << "N=" << ite << " Time: " << physical_time << "	dt: " << dt << "\n";
+                    write_free_cube_displacement.writeToFile(ite);
+                }
             }
-            write_free_cube_displacement.writeToFile(ite);
         }
         TickCount t2 = TickCount::now();
         body_states_recording.writeToFile(ite);

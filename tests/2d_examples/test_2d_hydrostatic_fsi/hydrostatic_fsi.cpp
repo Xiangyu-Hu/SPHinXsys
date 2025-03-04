@@ -384,7 +384,14 @@ int main(int ac, char *av[])
     tt = t4 - t1 - interval;
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
-    write_beam_tip_displacement.testResult();
+    if (sph_system.GenerateRegressionData())
+    {
+        write_beam_tip_displacement.generateDataBase(Vec2d(1.0e-2, 1.0e-2), Vec2d(1.0e-2, 1.0e-2));
+    }
+    else
+    {
+        write_beam_tip_displacement.testResult();
+    }
 
     return 0;
 }
