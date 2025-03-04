@@ -1,65 +1,31 @@
 #include "test_3d_shell_to_solid_coupling.h"
 
-void run_shell_to_solid_coupling(int res_factor, Real stiffness_ratio, bool use_interpolation, int load_type = 0);
+void run_shell_to_solid_coupling(bool two_sided, int res_factor, Real stiffness_ratio, bool use_interpolation, int load_type = 0);
 
 int main(int ac, char *av[])
 {
-    run_shell_to_solid_coupling(1, 0.1, false, 0);
+    run_shell_to_solid_coupling(false, 1, 0.1, false, 0);
     // run_solid(1, 0.1, 1);
 }
 
-void run_shell_to_solid_coupling(int res_factor, Real stiffness_ratio, bool use_interpolation, int load_type)
+void run_shell_to_solid_coupling(bool two_sided, int res_factor, Real stiffness_ratio, bool use_interpolation, int load_type)
 {
     // parameters
     plate_parameters params;
     Real dp = params.height / (10.0 * res_factor);
-    Real youngs_modulus_solid = params.youngs_modulus_shell * stiffness_ratio;
 
     // Import input variables
-    Real eta = get_physical_viscosity_general(params.rho, params.youngs_modulus_shell, params.height + 2 * params.thickness_shell);
-    solid_input_variables solid_input{.name_ = "solid",
-                                      .dp_ = dp,
-                                      .mesh_ = params.get_solid_extended_mesh(dp),
-                                      .material_ = std::make_shared<SaintVenantKirchhoffSolid>(params.rho, youngs_modulus_solid, params.poisson_ratio),
-                                      .physical_viscosity_ = eta};
-    shell_input_variables upper_shell_input{.name_ = "upper_shell",
-                                            .dp_ = dp,
-                                            .thickness_ = params.thickness_shell,
-                                            .mesh_ = params.get_upper_shell_mesh(dp),
-                                            .material_ = std::make_shared<SaintVenantKirchhoffSolid>(params.rho, params.youngs_modulus_shell, params.poisson_ratio),
-                                            .physical_viscosity_ = eta};
-    shell_input_variables lower_shell_input{.name_ = "lower_shell",
-                                            .dp_ = dp,
-                                            .thickness_ = params.thickness_shell,
-                                            .mesh_ = params.get_lower_shell_mesh(dp),
-                                            .material_ = std::make_shared<SaintVenantKirchhoffSolid>(params.rho, params.youngs_modulus_shell, params.poisson_ratio),
-                                            .physical_viscosity_ = eta};
-    {
-        Real z_upper = 0.5 * params.height + 0.5 * dp;
-        Real z_lower = -0.5 * params.height - 0.5 * dp;
-        Real x = -0.5 * params.length + 0.5 * dp;
-        while (x < 0.5 * params.length)
-        {
-            Real y = -0.5 * params.width + 0.5 * dp;
-            while (y < 0.5 * params.width)
-            {
-                upper_shell_input.pos_.emplace_back(x, y, z_upper);
-                upper_shell_input.n_.emplace_back(Vec3d::UnitZ());
-                lower_shell_input.pos_.emplace_back(x, y, z_lower);
-                lower_shell_input.n_.emplace_back(Vec3d::UnitZ());
-                y += dp;
-            }
-            x += dp;
-        }
-    }
+    auto [solid_inputs, shell_inputs] =
+        two_sided ? two_sided_problem<SaintVenantKirchhoffSolid>{}(dp, stiffness_ratio) : one_sided_problem<SaintVenantKirchhoffSolid>{}(dp, stiffness_ratio);
 
     // System
     simulation_system simu_sys(dp);
 
     // Body
-    simu_sys.add_solid_object<SaintVenantKirchhoffSolid>(solid_input, use_interpolation);
-    simu_sys.add_shell_object<SaintVenantKirchhoffSolid>(upper_shell_input);
-    simu_sys.add_shell_object<SaintVenantKirchhoffSolid>(lower_shell_input);
+    for (const auto &solid_input : solid_inputs)
+        simu_sys.add_solid_object<SaintVenantKirchhoffSolid>(solid_input, use_interpolation);
+    for (auto &shell_input : shell_inputs)
+        simu_sys.add_shell_object<SaintVenantKirchhoffSolid>(shell_input);
 
     // Boundary condition
     simu_sys.add_bcs(params.maximum_elongation, params.speed, load_type);
@@ -94,6 +60,7 @@ void run_shell_to_solid_coupling(int res_factor, Real stiffness_ratio, bool use_
     vtp_output.writeToFile(0);
 
     // check coupling algorithm
+    if (!use_interpolation)
     {
         // Check for solid
         auto check_solid = [&](solid_coupling_algs &alg)

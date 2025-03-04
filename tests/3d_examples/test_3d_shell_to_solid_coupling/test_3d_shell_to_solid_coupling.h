@@ -196,7 +196,11 @@ struct solid_coupling_algs
           vel_bc_nearest_neighbor(part, contact_relation),
           vel_bc_interpolation(part, contact_relation) {}
 
-    void init(bool use_interpolation) { use_interpolation ? vel_bc_interpolation.init() : vel_bc_nearest_neighbor.init(); }
+    void init(bool use_interpolation)
+    {
+        if (!use_interpolation)
+            vel_bc_nearest_neighbor.init();
+    }
     void exec(bool use_interpolation) { use_interpolation ? vel_bc_interpolation.exec() : vel_bc_nearest_neighbor.exec(); }
 };
 
@@ -213,7 +217,11 @@ struct shell_coupling_algs
           force_bc_nearest_neighbor(part, contact_relation),
           force_bc_interpolation(part, contact_relation) {}
 
-    void init(bool use_interpolation) { use_interpolation ? force_bc_interpolation.init() : force_bc_nearest_neighbor.init(); }
+    void init(bool use_interpolation)
+    {
+        if (!use_interpolation)
+            force_bc_nearest_neighbor.init();
+    }
     void exec(bool use_interpolation) { use_interpolation ? force_bc_interpolation.exec() : force_bc_nearest_neighbor.exec(); }
 };
 //-------Auxiliary functions-------------------------------------------------
@@ -477,30 +485,144 @@ struct plate_parameters
     // Loading
     const Real maximum_elongation = 0.2 * length; // 20% strain
     const Real speed = 10;
+};
 
-    inline auto get_solid_extended_mesh(Real dp) const
-    {
-        const Vec3d halfsize = 0.5 * Vec3d(length, width, height + 2 * dp);
-        return makeShared<TransformShape<GeometricShapeBox>>(Transform(Vec3d::Zero()), halfsize, "solid");
-    }
+template <typename material_type>
+struct one_sided_problem
+{
+    plate_parameters params;
 
-    inline auto get_whole_mesh() const
+    inline auto get_solid_mesh(Real dp) const
     {
-        const Vec3d halfsize = 0.5 * Vec3d(length, width, height + 2 * thickness_shell);
+        const Vec3d halfsize = 0.5 * Vec3d(params.length, params.width, params.height + 2 * dp);
         return makeShared<TransformShape<GeometricShapeBox>>(Transform(Vec3d::Zero()), halfsize, "solid");
     }
 
     inline auto get_upper_shell_mesh(Real dp) const
     {
-        const Vec3d halfsize = 0.5 * Vec3d(length, width, dp);
-        const Vec3d translation = 0.5 * (height + dp) * Vec3d::UnitZ();
+        const Vec3d halfsize = 0.5 * Vec3d(params.length, params.width, dp);
+        const Vec3d translation = 0.5 * (params.height + dp) * Vec3d::UnitZ();
         return makeShared<TransformShape<GeometricShapeBox>>(Transform(translation), halfsize, "upper_shell");
     }
 
     inline auto get_lower_shell_mesh(Real dp) const
     {
-        const Vec3d halfsize = 0.5 * Vec3d(length, width, dp);
-        const Vec3d translation = -0.5 * (height + dp) * Vec3d::UnitZ();
+        const Vec3d halfsize = 0.5 * Vec3d(params.length, params.width, dp);
+        const Vec3d translation = -0.5 * (params.height + dp) * Vec3d::UnitZ();
         return makeShared<TransformShape<GeometricShapeBox>>(Transform(translation), halfsize, "lower_shell");
+    }
+
+    std::pair<std::vector<solid_input_variables>, std::vector<shell_input_variables>> operator()(Real dp, Real stiffness_ratio)
+    {
+        std::vector<solid_input_variables> solid_inputs;
+        std::vector<shell_input_variables> shell_inputs;
+        Real youngs_modulus_solid = params.youngs_modulus_shell * stiffness_ratio;
+        Real eta = get_physical_viscosity_general(params.rho, params.youngs_modulus_shell, params.height + 2 * params.thickness_shell);
+        solid_inputs.emplace_back(solid_input_variables{.name_ = "solid",
+                                                        .dp_ = dp,
+                                                        .mesh_ = get_solid_mesh(dp),
+                                                        .material_ = std::make_shared<material_type>(params.rho, youngs_modulus_solid, params.poisson_ratio),
+                                                        .physical_viscosity_ = eta});
+        shell_input_variables upper_shell_input{.name_ = "upper_shell",
+                                                .dp_ = dp,
+                                                .thickness_ = params.thickness_shell,
+                                                .mesh_ = get_upper_shell_mesh(dp),
+                                                .material_ = std::make_shared<material_type>(params.rho, params.youngs_modulus_shell, params.poisson_ratio),
+                                                .physical_viscosity_ = eta};
+        shell_input_variables lower_shell_input{.name_ = "lower_shell",
+                                                .dp_ = dp,
+                                                .thickness_ = params.thickness_shell,
+                                                .mesh_ = get_lower_shell_mesh(dp),
+                                                .material_ = std::make_shared<material_type>(params.rho, params.youngs_modulus_shell, params.poisson_ratio),
+                                                .physical_viscosity_ = eta};
+        {
+            Real z_upper = 0.5 * params.height + 0.5 * dp;
+            Real z_lower = -0.5 * params.height - 0.5 * dp;
+            Real x = -0.5 * params.length + 0.5 * dp;
+            while (x < 0.5 * params.length)
+            {
+                Real y = -0.5 * params.width + 0.5 * dp;
+                while (y < 0.5 * params.width)
+                {
+                    upper_shell_input.pos_.emplace_back(x, y, z_upper);
+                    upper_shell_input.n_.emplace_back(Vec3d::UnitZ());
+                    lower_shell_input.pos_.emplace_back(x, y, z_lower);
+                    lower_shell_input.n_.emplace_back(Vec3d::UnitZ());
+                    y += dp;
+                }
+                x += dp;
+            }
+        }
+        shell_inputs.emplace_back(upper_shell_input);
+        shell_inputs.emplace_back(lower_shell_input);
+        return std::make_pair(solid_inputs, shell_inputs);
+    }
+};
+
+template <typename material_type>
+struct two_sided_problem
+{
+    plate_parameters params;
+
+    inline auto get_upper_solid_mesh(Real dp) const
+    {
+        const Vec3d halfsize = 0.5 * Vec3d(params.length, params.width, params.height + dp);
+        const Vec3d translation = halfsize.z() * Vec3d::UnitZ();
+        return makeShared<TransformShape<GeometricShapeBox>>(Transform(translation), halfsize, "upper_solid");
+    }
+
+    inline auto get_lower_solid_mesh(Real dp) const
+    {
+        const Vec3d halfsize = 0.5 * Vec3d(params.length, params.width, params.height + dp);
+        const Vec3d translation = -halfsize.z() * Vec3d::UnitZ();
+        return makeShared<TransformShape<GeometricShapeBox>>(Transform(translation), halfsize, "lower_solid");
+    }
+
+    inline auto get_shell_mesh(Real dp) const
+    {
+        const Vec3d halfsize = 0.5 * Vec3d(params.length, params.width, dp);
+        return makeShared<TransformShape<GeometricShapeBox>>(Transform(Vec3d::Zero()), halfsize, "shell");
+    }
+
+    std::pair<std::vector<solid_input_variables>, std::vector<shell_input_variables>> operator()(Real dp, Real stiffness_ratio)
+    {
+        std::vector<solid_input_variables> solid_inputs;
+        std::vector<shell_input_variables> shell_inputs;
+        Real youngs_modulus_solid = params.youngs_modulus_shell * stiffness_ratio;
+        Real eta = get_physical_viscosity_general(params.rho, params.youngs_modulus_shell, params.height + 2 * params.thickness_shell);
+        solid_inputs.emplace_back(solid_input_variables{.name_ = "upper_solid",
+                                                        .dp_ = dp,
+                                                        .mesh_ = get_upper_solid_mesh(dp),
+                                                        .material_ = std::make_shared<material_type>(params.rho, youngs_modulus_solid, params.poisson_ratio),
+                                                        .physical_viscosity_ = eta});
+        solid_inputs.emplace_back(solid_input_variables{.name_ = "lower_solid",
+                                                        .dp_ = dp,
+                                                        .mesh_ = get_lower_solid_mesh(dp),
+                                                        .material_ = std::make_shared<material_type>(params.rho, youngs_modulus_solid, params.poisson_ratio),
+                                                        .physical_viscosity_ = eta});
+        shell_input_variables shell_input{.name_ = "shell",
+                                          .dp_ = dp,
+                                          .thickness_ = params.thickness_shell,
+                                          .mesh_ = get_shell_mesh(dp),
+                                          .material_ = std::make_shared<material_type>(params.rho, params.youngs_modulus_shell, params.poisson_ratio),
+                                          .physical_viscosity_ = eta};
+
+        {
+            Real z = 0;
+            Real x = -0.5 * params.length + 0.5 * dp;
+            while (x < 0.5 * params.length)
+            {
+                Real y = -0.5 * params.width + 0.5 * dp;
+                while (y < 0.5 * params.width)
+                {
+                    shell_input.pos_.emplace_back(x, y, z);
+                    shell_input.n_.emplace_back(Vec3d::UnitZ());
+                    y += dp;
+                }
+                x += dp;
+            }
+        }
+        shell_inputs.emplace_back(shell_input);
+        return std::make_pair(solid_inputs, shell_inputs);
     }
 };
