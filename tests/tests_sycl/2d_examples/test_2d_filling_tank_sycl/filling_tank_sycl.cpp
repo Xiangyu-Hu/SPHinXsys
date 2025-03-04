@@ -83,7 +83,7 @@ class InletInflowCondition : public BaseStateCondition
         ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
             : BaseStateCondition::ComputingKernel(ex_policy, encloser){};
 
-        void operator()(AlignedBox *aligned_box, UnsignedInt index_i)
+        void operator()(AlignedBox *aligned_box, UnsignedInt index_i, Real /*time*/)
         {
             vel_[index_i] = Vec2d(2.0, 0.0);
         };
@@ -164,7 +164,7 @@ int main(int ac, char *av[])
     ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticTimeStepCK> fluid_acoustic_time_step(water_body);
 
     StateDynamics<MainExecutionPolicy, fluid_dynamics::InflowConditionCK<AlignedBoxPartByParticle, InletInflowCondition>> inflow_condition(emitter);
-    StateDynamics<SequencedExecutionPolicy, fluid_dynamics::EmitterInflowInjectionCK> emitter_injection(emitter, inlet_buffer);
+    StateDynamics<SequencedExecutionPolicy, fluid_dynamics::EmitterInflowInjectionCK<AlignedBoxPartByParticle>> emitter_injection(emitter, inlet_buffer);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
