@@ -106,7 +106,7 @@ class RegressionTestTimeAverage : public RegressionTestBase<ObserveMethodType>
         this->writeXmlToXmlFile();  /* currently defined in in_output. */
         this->readXmlFromXmlFile(); /* currently defined in in_output. */
         initializeThreshold(threshold_mean, threshold_variance);
-        if (this->converged == "false")
+        if (this->converged_ == "false")
         {
             setupTheTest();
             if (filter == "true")

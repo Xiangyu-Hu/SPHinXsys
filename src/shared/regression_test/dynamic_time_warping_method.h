@@ -89,7 +89,7 @@ class RegressionTestDynamicTimeWarping : public RegressionTestTimeAverage<Observ
         this->writeXmlToXmlFile();
         this->readXmlFromXmlFile();
         this->transposeTheIndex();
-        if (this->converged == "false")
+        if (this->converged_ == "false")
         {
             setupTheTest();
             if (filter == "true")

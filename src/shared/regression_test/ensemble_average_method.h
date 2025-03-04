@@ -85,7 +85,7 @@ class RegressionTestEnsembleAverage : public RegressionTestTimeAverage<ObserveMe
         this->writeXmlToXmlFile();
         this->readXmlFromXmlFile();
         this->initializeThreshold(threshold_mean, threshold_variance);
-        if (this->converged == "false")
+        if (this->converged_ == "false")
         {
             setupAndCorrection();
             this->readResultFromXml();
