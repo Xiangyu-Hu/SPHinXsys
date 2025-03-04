@@ -55,27 +55,12 @@ class BaseInterpolation : public LocalDynamics, public DataDelegateContact
     };
     virtual ~BaseInterpolation(){};
 
-    inline void interaction(size_t index_i, Real dt = 0.0)
-    {
-        DataType observed_quantity = ZeroData<DataType>::value;
-        Real ttl_weight(0);
-
-        for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
-        {
-            Real *Vol_k = contact_Vol_[k];
-            DataType *data_k = contact_data_[k];
-            Neighborhood &contact_neighborhood = (*this->contact_configuration_[k])[index_i];
-            for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
-            {
-                size_t index_j = contact_neighborhood.j_[n];
-                Real weight_j = contact_neighborhood.W_ij_[n] * Vol_k[index_j];
-
-                observed_quantity += weight_j * data_k[index_j];
-                ttl_weight += weight_j;
-            }
-        }
-        interpolated_quantities_[index_i] = observed_quantity / (ttl_weight + TinyReal);
-    };
+    void interaction(size_t index_i, Real dt = 0.0);
+    /*****************************************************************************/ 
+    // The interpolation is corrected based on the finite particle method.
+    // Liu, M.B., Liu, G.R. Smoothed Particle Hydrodynamics (SPH): an Overview and 
+    // Recent Developments. Arch Computat Methods Eng 17, 25¨C76 (2010). doi.org/10.1007/s11831-010-9040-7
+    /*****************************************************************************/
 
   protected:
     DiscreteVariable<DataType> *dv_interpolated_quantities_;

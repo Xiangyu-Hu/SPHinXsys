@@ -72,6 +72,7 @@ using Vec3d = Eigen::Matrix<Real, 3, 1>;
 /** Small, 2*2 and 3*3, matrix with float point number. */
 using Mat2d = Eigen::Matrix<Real, 2, 2>;
 using Mat3d = Eigen::Matrix<Real, 3, 3>;
+using Mat4d = Eigen::Matrix<Real, 4, 4>;
 /** Dynamic matrix*/
 using MatXd = Eigen::Matrix<Real, Eigen::Dynamic, Eigen::Dynamic>;
 
