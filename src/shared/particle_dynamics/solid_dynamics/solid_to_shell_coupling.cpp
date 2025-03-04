@@ -167,12 +167,12 @@ InterpolationSolidVelocityConstraint::InterpolationSolidVelocityConstraint(BodyP
         contact_Vol_.emplace_back(contact_particle->getVariableDataByName<Real>("VolumetricMeasure"));
         contact_vel_.emplace_back(contact_particle->getVariableDataByName<Vecd>("Velocity"));
     }
-    weight_.resize(particles_->TotalRealParticles());
 };
 
 void InterpolationSolidVelocityConstraint::update(size_t index_i, Real)
 {
     Vecd vel = Vecd::Zero();
+    Real weight_ttl = 0;
     for (size_t k = 0; k != contact_configuration_.size(); ++k)
     {
         const int *is_coupled_k = contact_is_coupled_[k];
@@ -186,35 +186,11 @@ void InterpolationSolidVelocityConstraint::update(size_t index_i, Real)
                 continue;
 
             Real weight_j = contact_neighborhood.W_ij_[n] * Vol_k[index_j];
+            weight_ttl += weight_j;
             vel += weight_j * vel_k[index_j];
         }
     }
-    vel_[index_i] = vel / weight_[index_i];
-}
-
-void InterpolationSolidVelocityConstraint::compute_weight()
-{
-    particle_for(execution::ParallelPolicy(), this->identifier_.LoopRange(),
-                 [&](size_t index_i)
-                 {
-                     Real weight_ttl = 0;
-                     for (size_t k = 0; k != contact_configuration_.size(); ++k)
-                     {
-                         const int *is_coupled_k = contact_is_coupled_[k];
-                         const Real *Vol_k = contact_Vol_[k];
-                         const Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
-                         for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
-                         {
-                             size_t index_j = contact_neighborhood.j_[n];
-                             if (is_coupled_k[index_j] == 0)
-                                 continue;
-
-                             Real weight_j = contact_neighborhood.W_ij_[n] * Vol_k[index_j];
-                             weight_ttl += weight_j;
-                         }
-                     }
-                     weight_[index_i] = weight_ttl + TinyReal;
-                 });
+    vel_[index_i] = vel / weight_ttl;
 }
 
 InterpolationShellForceConstraint::InterpolationShellForceConstraint(BodyPartByParticle &body_part, BaseContactRelation &contact_relation)
@@ -226,7 +202,6 @@ InterpolationShellForceConstraint::InterpolationShellForceConstraint(BodyPartByP
         contact_is_coupled_.emplace_back(contact_particle->getVariableDataByName<int>("IsCoupled"));
         contact_Vol_.emplace_back(contact_particle->getVariableDataByName<Real>("VolumetricMeasure"));
         contact_force_.emplace_back(contact_particle->getVariableDataByName<Vecd>("Force"));
-        weight_.emplace_back(particles_->TotalRealParticles());
     }
 };
 
@@ -235,6 +210,7 @@ void InterpolationShellForceConstraint::interaction(size_t index_i, Real)
     Vecd force = Vecd::Zero();
     for (size_t k = 0; k != contact_configuration_.size(); ++k)
     {
+        Real weight_ttl_k = 0;
         Vecd force_k_ttl = Vecd::Zero();
 
         const int *is_coupled_k = contact_is_coupled_[k];
@@ -248,37 +224,13 @@ void InterpolationShellForceConstraint::interaction(size_t index_i, Real)
                 continue;
 
             Real weight_j = contact_neighborhood.W_ij_[n] * Vol_k[index_j];
+            weight_ttl_k += weight_j;
             force_k_ttl += weight_j * force_k[index_j];
         }
 
-        force += force_k_ttl / weight_[k][index_i];
+        force += force_k_ttl / weight_ttl_k;
     }
     current_force_[index_i] = force;
-}
-
-void InterpolationShellForceConstraint::compute_weight()
-{
-    particle_for(execution::ParallelPolicy(), this->identifier_.LoopRange(),
-                 [&](size_t index_i)
-                 {
-                     for (size_t k = 0; k != contact_configuration_.size(); ++k)
-                     {
-                         Real weight_ttl_k = 0;
-                         const int *is_coupled_k = contact_is_coupled_[k];
-                         const Real *Vol_k = contact_Vol_[k];
-                         const Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
-                         for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
-                         {
-                             size_t index_j = contact_neighborhood.j_[n];
-                             if (is_coupled_k[index_j] == 0)
-                                 continue;
-
-                             Real weight_j = contact_neighborhood.W_ij_[n] * Vol_k[index_j];
-                             weight_ttl_k += weight_j;
-                         }
-                         weight_[k][index_i] = weight_ttl_k + TinyReal;
-                     }
-                 });
 }
 } // namespace solid_dynamics
 } // namespace SPH

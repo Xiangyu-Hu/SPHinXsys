@@ -135,15 +135,9 @@ class InterpolationSolidVelocityConstraint : public MotionConstraint<BodyPartByP
     StdVec<Real *> contact_Vol_;
     StdVec<Vecd *> contact_vel_;
 
-    StdLargeVec<Real> weight_; // weight only needs to be calculated once
-
   public:
     InterpolationSolidVelocityConstraint(BodyPartByParticle &body_part, BaseContactRelation &contact_relation);
     void update(size_t index_i, Real dt = 0.0);
-    void init() { compute_weight(); }
-
-  private:
-    void compute_weight();
 };
 
 /**@class InterpolationShellForceConstraint
@@ -158,15 +152,9 @@ class InterpolationShellForceConstraint : public BaseForcePrior<BodyPartByPartic
     StdVec<Real *> contact_Vol_;
     StdVec<Vecd *> contact_force_;
 
-    StdVec<StdLargeVec<Real>> weight_; // weight of each body only needs to be calculated once
-
   public:
     InterpolationShellForceConstraint(BodyPartByParticle &body_part, BaseContactRelation &contact_relation);
     void interaction(size_t index_i, Real dt = 0.0);
-    void init() { compute_weight(); }
-
-  private:
-    void compute_weight();
 };
 } // namespace solid_dynamics
 } // namespace SPH
