@@ -564,14 +564,14 @@ bool RegressionTestTimeAverage<ObserveMethodType>::compareMeanVariance()
         {
             if (this->label_for_repeat_ == 4)
             {
-                this->converged = "true";
+                this->converged_ = "true";
                 this->label_for_repeat_++;
                 std::cout << "The meanvalue and variance of " << this->quantity_name_ << " are converged enough times, and run will stop now." << std::endl;
                 return true;
             }
             else
             {
-                this->converged = "false";
+                this->converged_ = "false";
                 this->label_for_repeat_++;
                 std::cout << "The variance of " << this->quantity_name_ << " are also converged, and this is the " << this->label_for_repeat_
                           << " times. They should be converged more times to be stable." << std::endl;
@@ -580,7 +580,7 @@ bool RegressionTestTimeAverage<ObserveMethodType>::compareMeanVariance()
         }
         else
         {
-            this->converged = "false";
+            this->converged_ = "false";
             this->label_for_repeat_ = 0;
             std::cout << "The variance of " << this->quantity_name_ << " are not converged " << count_not_converged_v << " times." << std::endl;
             return false;
@@ -588,7 +588,7 @@ bool RegressionTestTimeAverage<ObserveMethodType>::compareMeanVariance()
     }
     else
     {
-        this->converged = "false";
+        this->converged_ = "false";
         this->label_for_repeat_ = 0;
         std::cout << "The meanvalue of " << this->quantity_name_ << " are not converged " << count_not_converged_m << " times." << std::endl;
         return false;

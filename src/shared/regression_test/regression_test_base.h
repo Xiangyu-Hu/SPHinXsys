@@ -53,11 +53,11 @@ class RegressionTestBase : public ObserveMethodType
     std::string in_output_filefullpath_; /*< the file path for current result from xml memory to xml file. */
     std::string result_filefullpath_;    /*< the file path for all run results. (.xml)*/
     std::string runtimes_filefullpath_;  /*< the file path for run times information. (.dat)*/
-    std::string converged;               /*< the tag for result converged, default false. */
 
-    XmlMemoryIO xmlmemory_io_; /*< xml memory in_output operator, which has defined several
-                                   methods to read and write data from and into xml memory,
-                                   including one by one, or all result in the same time. */
+    XmlMemoryIO xmlmemory_io_;      /*< xml memory in_output operator, which has defined several
+                                        methods to read and write data from and into xml memory,
+                                        including one by one, or all result in the same time. */
+    bool generate_regression_data_; /*< the flag to generate regression data. */
 
     XmlEngine observe_xml_engine_;    /*< xml engine for current result io_environment. */
     XmlEngine result_xml_engine_in_;  /*< xml engine for input result. */
@@ -74,40 +74,16 @@ class RegressionTestBase : public ObserveMethodType
     TriVector<VariableType> result_;              /*< the container of results in all runs (run * snapshot * observation) */
 
     int snapshot_, observation_; /*< the size of each layer of current result vector. */
+    int number_of_snapshot_old_; /*< the snapshot size of last trimmed result. */
     int difference_;             /*< the length difference of snapshot between old and new result,
                                  which is used to trim each new run result to be a unified length. */
+    std::string converged_;       /*< the tag for result converged, default false. */
     int number_of_run_;          /*< the times of run. */
     int label_for_repeat_;       /*< the label used stable convergence (several convergence). */
-    int number_of_snapshot_old_; /*< the snapshot size of last trimmed result. */
 
   public:
     template <typename... Args>
-    explicit RegressionTestBase(Args &&...args)
-        : ObserveMethodType(std::forward<Args>(args)...), xmlmemory_io_(),
-          observe_xml_engine_("xml_observe_reduce", this->quantity_name_),
-          result_xml_engine_in_("result_xml_engine_in", "result"),
-          result_xml_engine_out_("result_xml_engine_out", "result")
-    {
-        input_folder_path_ = this->io_environment_.input_folder_;
-        in_output_filefullpath_ = input_folder_path_ + "/" + this->dynamics_identifier_name_ + "_" + this->quantity_name_ + ".xml";
-        result_filefullpath_ = input_folder_path_ + "/" + this->dynamics_identifier_name_ + "_" + this->quantity_name_ + "_result.xml";
-        runtimes_filefullpath_ = input_folder_path_ + "/" + this->dynamics_identifier_name_ + "_" + this->quantity_name_ + "_runtimes.dat";
-
-        if (!fs::exists(runtimes_filefullpath_))
-        {
-            converged = "false";
-            number_of_run_ = 1;
-            label_for_repeat_ = 0;
-        }
-        else
-        {
-            std::ifstream in_file(runtimes_filefullpath_.c_str());
-            in_file >> converged;
-            in_file >> number_of_run_;
-            in_file >> label_for_repeat_;
-            in_file.close();
-        };
-    };
+    explicit RegressionTestBase(Args &&...args);
     virtual ~RegressionTestBase();
 
     template <typename... Parameters>
@@ -168,5 +144,5 @@ class RegressionTestBase : public ObserveMethodType
         return false;
     };
 };
-};     // namespace SPH
+}; // namespace SPH
 #endif // REGRESSION_TEST_BASE_H

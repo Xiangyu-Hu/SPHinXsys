@@ -222,7 +222,7 @@ void RegressionTestEnsembleAverage<ObserveMethodType>::setupAndCorrection()
 
     if (this->number_of_run_ > 1)
     {
-        if (this->converged == "false") /*< To identify the database generation or new result testing. */
+        if (this->converged_ == "false") /*< To identify the database generation or new result testing. */
         {
             if (!fs::exists(this->result_filefullpath_))
             {
@@ -343,14 +343,14 @@ bool RegressionTestEnsembleAverage<ObserveMethodType>::compareMeanVariance()
         {
             if (this->label_for_repeat_ == 4)
             {
-                this->converged = "true";
+                this->converged_ = "true";
                 this->label_for_repeat_++;
                 std::cout << "The meanvalue and variance of " << this->quantity_name_ << " are converged enough times, and run will stop now." << std::endl;
                 return true;
             }
             else
             {
-                this->converged = "false";
+                this->converged_ = "false";
                 this->label_for_repeat_++;
                 std::cout << "The variance of " << this->quantity_name_ << " are also converged, and this is the " << this->label_for_repeat_
                           << " times. They should be converged more times to be stable." << std::endl;
@@ -359,7 +359,7 @@ bool RegressionTestEnsembleAverage<ObserveMethodType>::compareMeanVariance()
         }
         else
         {
-            this->converged = "false";
+            this->converged_ = "false";
             this->label_for_repeat_ = 0;
             std::cout << "The variance of " << this->quantity_name_ << " are not converged " << count_not_converged_v << " times." << std::endl;
             return false;
@@ -367,7 +367,7 @@ bool RegressionTestEnsembleAverage<ObserveMethodType>::compareMeanVariance()
     }
     else
     {
-        this->converged = "false";
+        this->converged_ = "false";
         this->label_for_repeat_ = 0;
         std::cout << "The meanvalue of " << this->quantity_name_ << " are not converged " << count_not_converged_m << " times." << std::endl;
         return false;

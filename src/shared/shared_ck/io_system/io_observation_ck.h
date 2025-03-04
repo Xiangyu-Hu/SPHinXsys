@@ -93,7 +93,7 @@ class ObservedQuantityRecording<ExecutionPolicy, DataType>
         return this->dv_interpolated_quantities_->Data();
     };
 
-    size_t NumberOfObserve()
+    size_t NumberOfObservedQuantity()
     {
         return number_of_observe_;
     };
@@ -143,7 +143,7 @@ class ReducedQuantityRecording<ExecutionPolicy, LocalReduceMethodType> : public 
         return &reduced_quantity_;
     };
 
-    size_t NumberOfObserve()
+    size_t NumberOfObservedQuantity()
     {
         return 1;
     };

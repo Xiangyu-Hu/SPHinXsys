@@ -134,13 +134,13 @@ bool RegressionTestDynamicTimeWarping<ObserveMethodType>::compareDTWDistance(Rea
         {
             if (this->label_for_repeat_ == 4)
             {
-                this->converged = "true";
+                this->converged_ = "true";
                 std::cout << "The DTW distance of " << this->quantity_name_ << " are converged enough times, and rum will stop now." << std::endl;
                 return true;
             }
             else
             {
-                this->converged = "false";
+                this->converged_ = "false";
                 this->label_for_repeat_++;
                 std::cout << "The DTW distance of " << this->quantity_name_ << " are converged, and this is the " << this->label_for_repeat_
                           << " times. They should be converged more times to be stable." << std::endl;
@@ -148,7 +148,7 @@ bool RegressionTestDynamicTimeWarping<ObserveMethodType>::compareDTWDistance(Rea
         }
         else if (count_not_converged_ != 0)
         {
-            this->converged = "false";
+            this->converged_ = "false";
             this->label_for_repeat_ = 0;
             return false;
         };

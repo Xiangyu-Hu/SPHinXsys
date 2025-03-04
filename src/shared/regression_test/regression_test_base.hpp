@@ -8,9 +8,36 @@
 
 #include "regression_test_base.h"
 
-//=================================================================================================//
 namespace SPH
 {
+//=================================================================================================//
+template <class ObserveMethodType>
+template <typename... Args>
+RegressionTestBase<ObserveMethodType>::RegressionTestBase(Args &&...args)
+    : ObserveMethodType(std::forward<Args>(args)...), xmlmemory_io_(),
+      generate_regression_data_(this->sph_system_.GenerateRegressionData()),
+      observe_xml_engine_("xml_observe_reduce", this->quantity_name_),
+      result_xml_engine_in_("result_xml_engine_in", "result"),
+      result_xml_engine_out_("result_xml_engine_out", "result"),
+      snapshot_(0), observation_(this->NumberOfObservedQuantity()),
+      number_of_snapshot_old_(0), difference_(0),
+      converged_("false"), number_of_run_(1), label_for_repeat_(0)
+
+{
+    input_folder_path_ = this->io_environment_.input_folder_;
+    in_output_filefullpath_ = input_folder_path_ + "/" + this->dynamics_identifier_name_ + "_" + this->quantity_name_ + ".xml";
+    result_filefullpath_ = input_folder_path_ + "/" + this->dynamics_identifier_name_ + "_" + this->quantity_name_ + "_result.xml";
+    runtimes_filefullpath_ = input_folder_path_ + "/" + this->dynamics_identifier_name_ + "_" + this->quantity_name_ + "_runtimes.dat";
+
+    if (fs::exists(runtimes_filefullpath_) && generate_regression_data_)
+    {
+        std::ifstream in_file(runtimes_filefullpath_.c_str());
+        in_file >> converged_;
+        in_file >> number_of_run_;
+        in_file >> label_for_repeat_;
+        in_file.close();
+    };
+}
 //=================================================================================================//
 template <class ObserveMethodType>
 template <typename... Parameters>
@@ -141,7 +168,7 @@ void RegressionTestBase<ObserveMethodType>::readResultFromXml(int index_of_run_)
                                "_Run_" + std::to_string(index_of_run_) + "_result.xml";
 
         /* To identify the database generation or new result test. */
-        if (converged == "false")
+        if (converged_ == "false")
         {
             if (!fs::exists(result_filefullpath_))
             {
@@ -207,7 +234,7 @@ void RegressionTestBase<ObserveMethodType>::writeResultToXml(int index_of_run_)
 template <class ObserveMethodType>
 RegressionTestBase<ObserveMethodType>::~RegressionTestBase()
 {
-    if (converged == "false")
+    if (converged_ == "false")
     {
         number_of_run_ += 1;
     }
@@ -216,7 +243,7 @@ RegressionTestBase<ObserveMethodType>::~RegressionTestBase()
         fs::remove(runtimes_filefullpath_);
     }
     std::ofstream out_file(runtimes_filefullpath_.c_str());
-    out_file << converged;
+    out_file << converged_;
     out_file << "\n";
     out_file << number_of_run_;
     out_file << "\n";
