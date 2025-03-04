@@ -17,15 +17,14 @@ template <typename... Parameters>
 void RegressionTestBase<ObserveMethodType>::
     writeToXml(ObservedQuantityRecording<Parameters...> *observe_method, size_t iteration)
 {
-    this->observation_method_.exec();
-    VariableType *interpolated_quantities = this->getObservedQuantity();
+    VariableType *observed_quantities = this->getObservedQuantity();
     std::string element_name_ = "Snapshot_" + std::to_string(iteration);
     SimTK::Xml::Element &element_ = observe_xml_engine_.root_element_;
     observe_xml_engine_.addElementToXmlDoc(element_name_);
     for (size_t i = 0; i != this->base_particles_.TotalRealParticles(); ++i)
     {
         xmlmemory_io_.writeDataToXmlMemory(observe_xml_engine_, element_,
-                                           element_name_, i, interpolated_quantities[i], this->quantity_name_);
+                                           element_name_, i, observed_quantities[i], this->quantity_name_);
     };
 };
 //=================================================================================================//
@@ -34,11 +33,12 @@ template <typename... Parameters>
 void RegressionTestBase<ObserveMethodType>::
     writeToXml(ReducedQuantityRecording<Parameters...> *reduce_method, size_t iteration)
 {
+    VariableType *observed_quantities = this->getObservedQuantity();
     std::string element_name_ = "Snapshot_" + std::to_string(iteration);
     SimTK::Xml::Element &element_ = observe_xml_engine_.root_element_;
     observe_xml_engine_.addElementToXmlDoc(element_name_);
     xmlmemory_io_.writeDataToXmlMemory(observe_xml_engine_, element_,
-                                       element_name_, 0, this->reduce_method_.exec(), this->quantity_name_);
+                                       element_name_, 0, *observed_quantities, this->quantity_name_);
 };
 //=================================================================================================//
 template <class ObserveMethodType>
