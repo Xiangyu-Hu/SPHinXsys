@@ -376,12 +376,11 @@ int main(int ac, char *av[])
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
     SingularVariable<Real> *sv_physical_time = sph_system.getSystemVariableByName<Real>("PhysicalTime");
-    int number_of_iterations = 0;
-    int screen_output_interval = 100;
-    int observation_sample_interval = screen_output_interval * 2;
+    size_t number_of_iterations = 0;
+    size_t screen_output_interval = 100;
+    size_t observation_sample_interval = screen_output_interval * 2;
     Real end_time = 2.0;
     Real output_interval = 0.1;
-    Real total_time = 0.0;
     Real relax_time = 1.0;
     /** statistics for computing time. */
     TickCount t1 = TickCount::now();
