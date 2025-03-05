@@ -13,54 +13,23 @@ namespace SPH
 {
 //=================================================================================================//
 template <class ObserveMethodType>
-void RegressionTestEnsembleAverage<ObserveMethodType>::calculateNewVariance(TriVector<Real> &result,
-                                                                            BiVector<Real> &meanvalue_new, BiVector<Real> &variance, BiVector<Real> &variance_new)
+void RegressionTestEnsembleAverage<ObserveMethodType>::calculateNewVariance(TriVector<VariableType> &result)
 {
     for (int snapshot_index = 0; snapshot_index != SMIN(this->snapshot_, this->number_of_snapshot_old_); ++snapshot_index)
         for (int observation_index = 0; observation_index != this->observation_; ++observation_index)
             for (int run_index = 0; run_index != this->number_of_run_; ++run_index)
             {
-                variance_new[snapshot_index][observation_index] = SMAX(
-                    (Real)variance[snapshot_index][observation_index],
-                    (Real)variance_new[snapshot_index][observation_index],
-                    (Real)pow((result[run_index][snapshot_index][observation_index] - meanvalue_new[snapshot_index][observation_index]), 2),
-                    (Real)pow(meanvalue_new[snapshot_index][observation_index] * 1.0e-2, 2));
+                variance_new_[snapshot_index][observation_index] = transformComponent(
+                    variance_new_[snapshot_index][observation_index],
+                    [&](Real variance_new, Real variance, Real result, Real meanvalue_new)
+                    { return SMAX(
+                          (Real)variance_new,
+                          (Real)variance,
+                          (Real)pow(result - meanvalue_new, 2),
+                          (Real)pow(meanvalue_new * Real(0.01), 2)); },
+                    variance_[snapshot_index][observation_index], result[run_index][snapshot_index][observation_index],
+                    meanvalue_new_[snapshot_index][observation_index]);
             }
-};
-//=================================================================================================//
-template <class ObserveMethodType>
-void RegressionTestEnsembleAverage<ObserveMethodType>::calculateNewVariance(TriVector<Vecd> &result,
-                                                                            BiVector<Vecd> &meanvalue_new, BiVector<Vecd> &variance, BiVector<Vecd> &variance_new)
-{
-    for (int snapshot_index = 0; snapshot_index != SMIN(this->snapshot_, this->number_of_snapshot_old_); ++snapshot_index)
-        for (int observation_index = 0; observation_index != this->observation_; ++observation_index)
-            for (int run_index = 0; run_index != this->number_of_run_; ++run_index)
-                for (int i = 0; i != variance[0][0].size(); ++i)
-                {
-                    variance_new[snapshot_index][observation_index][i] = SMAX(
-                        (Real)variance[snapshot_index][observation_index][i],
-                        (Real)variance_new[snapshot_index][observation_index][i],
-                        (Real)pow((result[run_index][snapshot_index][observation_index][i] - meanvalue_new[snapshot_index][observation_index][i]), 2),
-                        (Real)pow(meanvalue_new[snapshot_index][observation_index][i] * 1.0e-2, 2));
-                }
-};
-//=================================================================================================//
-template <class ObserveMethodType>
-void RegressionTestEnsembleAverage<ObserveMethodType>::calculateNewVariance(TriVector<Matd> &result,
-                                                                            BiVector<Matd> &meanvalue_new, BiVector<Matd> &variance, BiVector<Matd> &variance_new)
-{
-    for (int snapshot_index = 0; snapshot_index != SMIN(this->snapshot_, this->number_of_snapshot_old_); ++snapshot_index)
-        for (int observation_index = 0; observation_index != this->observation_; ++observation_index)
-            for (int run_index = 0; run_index != this->number_of_run_; ++run_index)
-                for (size_t i = 0; i != variance[0][0].size(); ++i)
-                    for (size_t j = 0; j != variance[0][0].size(); ++j)
-                    {
-                        variance_new[snapshot_index][observation_index](i, j) = SMAX(
-                            (Real)variance[snapshot_index][observation_index](i, j),
-                            (Real)variance_new[snapshot_index][observation_index](i, j),
-                            (Real)pow((result[run_index][snapshot_index][observation_index](i, j) - meanvalue_new[snapshot_index][observation_index](i, j)), 2),
-                            (Real)pow(meanvalue_new[snapshot_index][observation_index](i, j) * Real(0.01), 2));
-                    }
 };
 //=================================================================================================//
 template <class ObserveMethodType>
@@ -211,18 +180,16 @@ int RegressionTestEnsembleAverage<ObserveMethodType>::testNewResult(int diff, Bi
 template <class ObserveMethodType>
 void RegressionTestEnsembleAverage<ObserveMethodType>::setupAndCorrection()
 {
-    this->snapshot_ = this->current_result_.size();
     if (this->snapshot_ == 0)
     {
         std::cout << "\n Error: the current results for ensemble-average regression test is empty!" << std::endl;
         std::cout << __FILE__ << ':' << __LINE__ << std::endl;
         exit(1);
     }
-    this->observation_ = this->current_result_[0].size();
 
     if (this->number_of_run_ > 1)
     {
-        if (this->converged == "false") /*< To identify the database generation or new result testing. */
+        if (this->converged_ == "false") /*< To identify the database generation or new result testing. */
         {
             if (!fs::exists(this->result_filefullpath_))
             {
@@ -253,14 +220,14 @@ void RegressionTestEnsembleAverage<ObserveMethodType>::setupAndCorrection()
             /** Unify the length of current result and previous result. */
             if (this->number_of_snapshot_old_ < this->snapshot_)
             {
-                this->difference_ = this->snapshot_ - this->number_of_snapshot_old_;
-                for (int delete_ = 0; delete_ != this->difference_; ++delete_)
+                this->snapshot_difference_ = this->snapshot_ - this->number_of_snapshot_old_;
+                for (int delete_ = 0; delete_ != this->snapshot_difference_; ++delete_)
                     this->current_result_.pop_back();
             }
             else if (this->number_of_snapshot_old_ > this->snapshot_)
-                this->difference_ = this->number_of_snapshot_old_ - this->snapshot_;
+                this->snapshot_difference_ = this->number_of_snapshot_old_ - this->snapshot_;
             else
-                this->difference_ = 0;
+                this->snapshot_difference_ = 0;
         }
     }
     else if (this->number_of_run_ == 1)
@@ -296,7 +263,7 @@ void RegressionTestEnsembleAverage<ObserveMethodType>::updateMeanVariance()
     /** Unify the length of result and meanvalue. */
     if (this->number_of_run_ > 1)
     {
-        for (int delete_ = 0; delete_ != this->difference_; ++delete_)
+        for (int delete_ = 0; delete_ != this->snapshot_difference_; ++delete_)
         {
             meanvalue_.pop_back();
             variance_.pop_back();
@@ -312,7 +279,7 @@ void RegressionTestEnsembleAverage<ObserveMethodType>::updateMeanVariance()
                                                                  this->current_result_[snapshot_index][observation_index]) /
                                                                 this->number_of_run_;
     /** Update the variance of the result. */
-    calculateNewVariance(this->result_, meanvalue_new_, variance_, variance_new_);
+    calculateNewVariance(this->result_);
 }
 //=================================================================================================//
 template <class ObserveMethodType>
@@ -343,14 +310,14 @@ bool RegressionTestEnsembleAverage<ObserveMethodType>::compareMeanVariance()
         {
             if (this->label_for_repeat_ == 4)
             {
-                this->converged = "true";
+                this->converged_ = "true";
                 this->label_for_repeat_++;
                 std::cout << "The meanvalue and variance of " << this->quantity_name_ << " are converged enough times, and run will stop now." << std::endl;
                 return true;
             }
             else
             {
-                this->converged = "false";
+                this->converged_ = "false";
                 this->label_for_repeat_++;
                 std::cout << "The variance of " << this->quantity_name_ << " are also converged, and this is the " << this->label_for_repeat_
                           << " times. They should be converged more times to be stable." << std::endl;
@@ -359,7 +326,7 @@ bool RegressionTestEnsembleAverage<ObserveMethodType>::compareMeanVariance()
         }
         else
         {
-            this->converged = "false";
+            this->converged_ = "false";
             this->label_for_repeat_ = 0;
             std::cout << "The variance of " << this->quantity_name_ << " are not converged " << count_not_converged_v << " times." << std::endl;
             return false;
@@ -367,7 +334,7 @@ bool RegressionTestEnsembleAverage<ObserveMethodType>::compareMeanVariance()
     }
     else
     {
-        this->converged = "false";
+        this->converged_ = "false";
         this->label_for_repeat_ = 0;
         std::cout << "The meanvalue of " << this->quantity_name_ << " are not converged " << count_not_converged_m << " times." << std::endl;
         return false;
@@ -380,11 +347,11 @@ void RegressionTestEnsembleAverage<ObserveMethodType>::resultTest()
     /* compare the current result to the converged mean value and variance. */
     int test_wrong = 0;
     if (this->snapshot_ < this->number_of_snapshot_old_)
-        test_wrong = testNewResult(this->difference_, this->current_result_, meanvalue_, variance_);
+        test_wrong = testNewResult(this->snapshot_difference_, this->current_result_, meanvalue_, variance_);
     else
     {
         /** Unify the length of meanvalue, variance, old result, new result. */
-        for (int delete_ = 0; delete_ != this->difference_; ++delete_)
+        for (int delete_ = 0; delete_ != this->snapshot_difference_; ++delete_)
         {
             meanvalue_.pop_back();
             variance_.pop_back();
