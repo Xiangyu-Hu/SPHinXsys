@@ -381,7 +381,6 @@ int main(int ac, char *av[])
     size_t observation_sample_interval = screen_output_interval * 2;
     Real end_time = 2.0;
     Real output_interval = 0.1;
-    Real relax_time = 1.0;
     /** statistics for computing time. */
     TickCount t1 = TickCount::now();
     TimeInterval interval;
