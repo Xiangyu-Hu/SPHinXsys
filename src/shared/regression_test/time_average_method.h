@@ -55,24 +55,15 @@ class RegressionTestTimeAverage : public RegressionTestBase<ObserveMethodType>
     StdVec<VariableType> local_meanvalue_;             /* the container of meanvalue for current result. */
 
     /** the method used for filtering local extreme values. */
-    void filterLocalResult(BiVector<Real> &current_result);
-    void filterLocalResult(BiVector<Vecd> &current_result);
-    void filterLocalResult(BiVector<Matd> &current_result);
-
+    void filterLocalResult(BiVector<VariableType> &current_result);
     /** the method used for searching steady starting point. */
     void searchSteadyStart();
     /** the method used for calculating the new variance. */
     void calculateNewVariance(BiVector<VariableType> &current_result_trans);
-
     /** the method used for comparing the meanvalue and variance. */
-    int compareParameter(std::string par_name, StdVec<Real> &parameter, StdVec<Real> &parameter_new, Real &threshold);
-    int compareParameter(std::string par_name, StdVec<Vecd> &parameter, StdVec<Vecd> &parameter_new, Vecd &threshold);
-    int compareParameter(std::string par_name, StdVec<Matd> &parameter, StdVec<Matd> &parameter_new, Matd &threshold);
-
+    int compareParameter(std::string par_name, StdVec<VariableType> &parameter, StdVec<VariableType> &parameter_new, VariableType &threshold);
     /** the method used for testing the new result with meanvalue and variance. */
-    int testNewResult(BiVector<Real> &current_result, StdVec<Real> &meanvalue, StdVec<Real> &local_meanvalue, StdVec<Real> &variance);
-    int testNewResult(BiVector<Vecd> &current_result, StdVec<Vecd> &meanvalue, StdVec<Vecd> &local_meanvalue, StdVec<Vecd> &variance);
-    int testNewResult(BiVector<Matd> &current_result, StdVec<Matd> &meanvalue, StdVec<Matd> &local_meanvalue, StdVec<Matd> &variance);
+    int testNewResult(BiVector<VariableType> &current_result, StdVec<VariableType> &meanvalue, StdVec<VariableType> &local_meanvalue, StdVec<VariableType> &variance);
 
   public:
     template <typename... Args>
