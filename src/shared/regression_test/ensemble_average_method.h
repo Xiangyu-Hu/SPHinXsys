@@ -49,10 +49,7 @@ class RegressionTestEnsembleAverage : public RegressionTestTimeAverage<ObserveMe
     BiVector<VariableType> variance_, variance_new_;   /* the container of (new) variance. [different from time-averaged]*/
 
     /** the method used for calculating the new variance. */
-    void calculateNewVariance(TriVector<Real> &result, BiVector<Real> &meanvalue_new, BiVector<Real> &variance, BiVector<Real> &variance_new);
-    void calculateNewVariance(TriVector<Vecd> &result, BiVector<Vecd> &meanvalue_new, BiVector<Vecd> &variance, BiVector<Vecd> &variance_new);
-    void calculateNewVariance(TriVector<Matd> &result, BiVector<Matd> &meanvalue_new, BiVector<Matd> &variance, BiVector<Matd> &variance_new);
-
+    void calculateNewVariance(TriVector<VariableType> &result);
     /** the method used for comparing the meanvalue and variance. */
     int compareParameter(std::string par_name, BiVector<Real> &parameter, BiVector<Real> &parameter_new, Real &threshold);
     int compareParameter(std::string par_name, BiVector<Vecd> &parameter, BiVector<Vecd> &parameter_new, Vecd &threshold);

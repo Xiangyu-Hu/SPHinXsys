@@ -60,14 +60,9 @@ class RegressionTestTimeAverage : public RegressionTestBase<ObserveMethodType>
     void filterLocalResult(BiVector<Matd> &current_result);
 
     /** the method used for searching steady starting point. */
-    void searchSteadyStart(BiVector<Real> &current_result);
-    void searchSteadyStart(BiVector<Vecd> &current_result);
-    void searchSteadyStart(BiVector<Matd> &current_result);
-
+    void searchSteadyStart();
     /** the method used for calculating the new variance. */
-    void calculateNewVariance(BiVector<Real> &current_result, StdVec<Real> &local_meanvalue, StdVec<Real> &variance, StdVec<Real> &variance_new);
-    void calculateNewVariance(BiVector<Vecd> &current_result, StdVec<Vecd> &local_meanvalue, StdVec<Vecd> &variance, StdVec<Vecd> &variance_new);
-    void calculateNewVariance(BiVector<Matd> &current_result, StdVec<Matd> &local_meanvalue, StdVec<Matd> &variance, StdVec<Matd> &variance_new);
+    void calculateNewVariance(BiVector<VariableType> &current_result_trans);
 
     /** the method used for comparing the meanvalue and variance. */
     int compareParameter(std::string par_name, StdVec<Real> &parameter, StdVec<Real> &parameter_new, Real &threshold);

@@ -102,5 +102,31 @@ Vec3d getCrossProduct(const Vec3d &vector_1, const Vec3d &vector_2);
 /** Modulo operation for Arrayi */
 Array2i mod(const Array2i &input, int modulus);
 Array3i mod(const Array3i &input, int modulus);
+
+inline Real FirstComponent(const Real &input) { return input; };
+template <int Dim1, int Dim2>
+Real FirstComponent(const Eigen::Matrix<Real, Dim1, Dim2> &input) { return input(0, 0); };
+
+inline Real componentSquare(const Real &input) { return input * input; };
+
+template <int Dim1, int Dim2>
+Eigen::Matrix<Real, Dim1, Dim2> componentSquare(const Eigen::Matrix<Real, Dim1, Dim2> &input) { return input.cwiseAbs2(); };
+
+template <typename ComponentFunction, typename... Args>
+Real transformComponent(const Real &input, const ComponentFunction &function, Args &&...args)
+{
+    return function(input, std::forward<Args>(args)...);
+};
+
+template <int Dim1, int Dim2, typename ComponentFunction, typename... Args>
+Eigen::Matrix<Real, Dim1, Dim2> transformComponent(
+    const Eigen::Matrix<Real, Dim1, Dim2> &input, const ComponentFunction &function, Args &&...args)
+{
+    Eigen::Matrix<Real, Dim1, Dim2> output;
+    for (int i = 0; i < Dim1; ++i)
+        for (int j = 0; j < Dim2; ++j)
+            output(i, j) = function(input(i, j), std::forward<Args>(args)(i, j)...);
+    return output;
+};
 } // namespace SPH
 #endif // VECTOR_FUNCTIONS_H

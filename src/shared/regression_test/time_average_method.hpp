@@ -124,31 +124,7 @@ void RegressionTestTimeAverage<ObserveMethodType>::filterLocalResult(BiVector<Ma
 }
 //=================================================================================================//
 template <class ObserveMethodType>
-void RegressionTestTimeAverage<ObserveMethodType>::searchSteadyStart(BiVector<Real> &current_result)
-{
-    /* the search is only for one value. */
-    int scale = round(this->snapshot_ / 20);
-    for (int observation_index = 0; observation_index != this->observation_; ++observation_index)
-        for (int snapshot_index = this->snapshot_ - 1; snapshot_index != 3 * scale; --snapshot_index)
-        {
-            Real value_one = 0, value_two = 0;
-            for (int index = snapshot_index; index != snapshot_index - scale; --index)
-            {
-                value_one += current_result[index][observation_index] / scale;
-                value_two += current_result[index - 2 * scale][observation_index] / scale;
-            }
-
-            if (ABS(value_one - value_two) / ABS((value_one + value_two) / 2) > 0.1)
-            {
-                snapshot_for_converged_ = SMAX(snapshot_for_converged_, snapshot_index - scale);
-                break;
-            }
-        }
-    std::cout << "The scale is " << scale << "." << std::endl;
-}
-//=================================================================================================//
-template <class ObserveMethodType>
-void RegressionTestTimeAverage<ObserveMethodType>::searchSteadyStart(BiVector<Vecd> &current_result)
+void RegressionTestTimeAverage<ObserveMethodType>::searchSteadyStart()
 {
     /* the search is for each value within parameters. */
     int scale = round(this->snapshot_ / 20);
@@ -158,8 +134,8 @@ void RegressionTestTimeAverage<ObserveMethodType>::searchSteadyStart(BiVector<Ve
             Real value_one = 0, value_two = 0;
             for (int index = snapshot_index; index != snapshot_index - scale; --index)
             {
-                value_one += current_result[index][observation_index][0] / scale;
-                value_two += current_result[index - 2 * scale][observation_index][0] / scale;
+                value_one += FirstComponent(this->current_result_[index][observation_index]) / scale;
+                value_two += FirstComponent(this->current_result_[index - 2 * scale][observation_index]) / scale;
             }
 
             if (ABS(value_one - value_two) / ABS((value_one + value_two) / 2) > 0.1)
@@ -172,74 +148,24 @@ void RegressionTestTimeAverage<ObserveMethodType>::searchSteadyStart(BiVector<Ve
 }
 //=================================================================================================//
 template <class ObserveMethodType>
-void RegressionTestTimeAverage<ObserveMethodType>::searchSteadyStart(BiVector<Matd> &current_result)
-{
-    int scale = round(this->snapshot_ / 20);
-    for (int observation_index = 0; observation_index != this->observation_; ++observation_index)
-        for (int snapshot_index = this->snapshot_ - 1; snapshot_index != 3 * scale; --snapshot_index)
-        {
-            Real value_one = 0, value_two = 0;
-            for (int index = snapshot_index; index != snapshot_index - scale; --index)
-            {
-                value_one += current_result[index][observation_index](0, 0);
-                value_two += current_result[index - 2 * scale][observation_index](0, 0);
-            }
-
-            if (ABS(value_one - value_two) / ABS((value_one + value_two) / 2) > 0.1)
-            {
-                snapshot_for_converged_ = SMAX(snapshot_for_converged_, snapshot_index - scale);
-                break; /** This break just jump out of dimension iteration.  */
-            }
-        }
-    std::cout << "The scale is " << scale << "." << std::endl;
-}
-//=================================================================================================//
-template <class ObserveMethodType>
-void RegressionTestTimeAverage<ObserveMethodType>::calculateNewVariance(BiVector<Real> &current_result,
-                                                                        StdVec<Real> &local_meanvalue, StdVec<Real> &variance, StdVec<Real> &variance_new)
+void RegressionTestTimeAverage<ObserveMethodType>::calculateNewVariance(BiVector<VariableType> &current_result_trans)
 {
     for (int observation_index = 0; observation_index != this->observation_; ++observation_index)
     {
         for (int snapshot_index = snapshot_for_converged_; snapshot_index != this->snapshot_; ++snapshot_index)
-            variance_new[observation_index] += pow((current_result[observation_index][snapshot_index] - local_meanvalue[observation_index]), 2);
-        variance_new[observation_index] = SMAX(
-            (Real)(variance_new[observation_index] / (this->snapshot_ - snapshot_for_converged_)),
-            (Real)variance[observation_index],
-            (Real)pow(local_meanvalue[observation_index] * Real(0.01), 2));
-    }
-}
-//=================================================================================================//
-template <class ObserveMethodType>
-void RegressionTestTimeAverage<ObserveMethodType>::calculateNewVariance(BiVector<Vecd> &current_result,
-                                                                        StdVec<Vecd> &local_meanvalue, StdVec<Vecd> &variance, StdVec<Vecd> &variance_new)
-{
-    for (int observation_index = 0; observation_index != this->observation_; ++observation_index)
-        for (int i = 0; i != current_result[0][0].size(); ++i)
         {
-            for (int snapshot_index = snapshot_for_converged_; snapshot_index != this->snapshot_; ++snapshot_index)
-                variance_new[observation_index][i] += pow((current_result[observation_index][snapshot_index][i] - local_meanvalue[observation_index][i]), 2);
-            variance_new[observation_index][i] = SMAX(
-                (Real)(variance_new[observation_index][i] / (this->snapshot_ - snapshot_for_converged_)),
-                (Real)variance[observation_index][i],
-                (Real)pow(local_meanvalue[observation_index][i] * Real(0.01), 2));
+            VariableType deviation = current_result_trans[observation_index][snapshot_index] - local_meanvalue_[observation_index];
+            variance_new_[observation_index] += componentSquare(deviation);
         }
-}
-//=================================================================================================//
-template <class ObserveMethodType>
-void RegressionTestTimeAverage<ObserveMethodType>::calculateNewVariance(BiVector<Matd> &current_result,
-                                                                        StdVec<Matd> &local_meanvalue, StdVec<Matd> &variance, StdVec<Matd> &variance_new)
-{
-    for (int observation_index = 0; observation_index != this->observation_; ++observation_index)
-        for (int i = 0; i != current_result[0][0].size(); ++i)
-            for (int j = 0; j != current_result[0][0].size(); ++j)
-            {
-                for (int snapshot_index = snapshot_for_converged_; snapshot_index != this->snapshot_; ++snapshot_index)
-                    variance_new[observation_index](i, j) += pow((current_result[observation_index][snapshot_index](i, j) - local_meanvalue[observation_index](i, j)), 2);
-                variance_new[observation_index](i, j) = SMAX(
-                    (Real)(variance_new[observation_index](i, j) / (this->snapshot_ - snapshot_for_converged_)),
-                    (Real)variance[observation_index](i, j),
-                    (Real)pow(local_meanvalue[observation_index](i, j) * Real(0.01), 2));
-            }
+
+        variance_new_[observation_index] = transformComponent(
+            variance_new_[observation_index], [&](Real variance_new, Real variance, Real local_meanvalue)
+            { return SMAX(
+                  (Real)(variance_new / (this->snapshot_ - snapshot_for_converged_)),
+                  (Real)variance,
+                  (Real)pow(local_meanvalue * Real(0.01), 2)); },
+            variance_[observation_index], local_meanvalue_[observation_index]);
+    }
 }
 //=================================================================================================//
 template <class ObserveMethodType>
@@ -476,7 +402,7 @@ template <class ObserveMethodType>
 void RegressionTestTimeAverage<ObserveMethodType>::searchForStartPoint()
 {
     snapshot_for_converged_ = 0;
-    searchSteadyStart(this->current_result_);
+    searchSteadyStart();
     std::cout << "The snapshot for converged is " << snapshot_for_converged_ << std::endl;
 }
 //=================================================================================================//
@@ -521,7 +447,7 @@ void RegressionTestTimeAverage<ObserveMethodType>::updateMeanVariance()
         local_meanvalue_[observation_index] = local_meanvalue_[observation_index] / (this->snapshot_ - snapshot_for_converged_);
         meanvalue_new_[observation_index] = (local_meanvalue_[observation_index] + meanvalue_[observation_index] * (this->number_of_run_ - 1)) / this->number_of_run_;
     }
-    calculateNewVariance(this->current_result_trans_, local_meanvalue_, variance_, variance_new_);
+    calculateNewVariance(this->current_result_trans_);
 }
 //=================================================================================================//
 template <class ObserveMethodType>

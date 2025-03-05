@@ -13,54 +13,23 @@ namespace SPH
 {
 //=================================================================================================//
 template <class ObserveMethodType>
-void RegressionTestEnsembleAverage<ObserveMethodType>::calculateNewVariance(TriVector<Real> &result,
-                                                                            BiVector<Real> &meanvalue_new, BiVector<Real> &variance, BiVector<Real> &variance_new)
+void RegressionTestEnsembleAverage<ObserveMethodType>::calculateNewVariance(TriVector<VariableType> &result)
 {
     for (int snapshot_index = 0; snapshot_index != SMIN(this->snapshot_, this->number_of_snapshot_old_); ++snapshot_index)
         for (int observation_index = 0; observation_index != this->observation_; ++observation_index)
             for (int run_index = 0; run_index != this->number_of_run_; ++run_index)
             {
-                variance_new[snapshot_index][observation_index] = SMAX(
-                    (Real)variance[snapshot_index][observation_index],
-                    (Real)variance_new[snapshot_index][observation_index],
-                    (Real)pow((result[run_index][snapshot_index][observation_index] - meanvalue_new[snapshot_index][observation_index]), 2),
-                    (Real)pow(meanvalue_new[snapshot_index][observation_index] * 1.0e-2, 2));
+                variance_new_[snapshot_index][observation_index] = transformComponent(
+                    variance_new_[snapshot_index][observation_index],
+                    [&](Real variance_new, Real variance, Real result, Real meanvalue_new)
+                    { return SMAX(
+                          (Real)variance_new,
+                          (Real)variance,
+                          (Real)pow(result - meanvalue_new, 2),
+                          (Real)pow(meanvalue_new * Real(0.01), 2)); },
+                    variance_[snapshot_index][observation_index], result[run_index][snapshot_index][observation_index],
+                    meanvalue_new_[snapshot_index][observation_index]);
             }
-};
-//=================================================================================================//
-template <class ObserveMethodType>
-void RegressionTestEnsembleAverage<ObserveMethodType>::calculateNewVariance(TriVector<Vecd> &result,
-                                                                            BiVector<Vecd> &meanvalue_new, BiVector<Vecd> &variance, BiVector<Vecd> &variance_new)
-{
-    for (int snapshot_index = 0; snapshot_index != SMIN(this->snapshot_, this->number_of_snapshot_old_); ++snapshot_index)
-        for (int observation_index = 0; observation_index != this->observation_; ++observation_index)
-            for (int run_index = 0; run_index != this->number_of_run_; ++run_index)
-                for (int i = 0; i != variance[0][0].size(); ++i)
-                {
-                    variance_new[snapshot_index][observation_index][i] = SMAX(
-                        (Real)variance[snapshot_index][observation_index][i],
-                        (Real)variance_new[snapshot_index][observation_index][i],
-                        (Real)pow((result[run_index][snapshot_index][observation_index][i] - meanvalue_new[snapshot_index][observation_index][i]), 2),
-                        (Real)pow(meanvalue_new[snapshot_index][observation_index][i] * 1.0e-2, 2));
-                }
-};
-//=================================================================================================//
-template <class ObserveMethodType>
-void RegressionTestEnsembleAverage<ObserveMethodType>::calculateNewVariance(TriVector<Matd> &result,
-                                                                            BiVector<Matd> &meanvalue_new, BiVector<Matd> &variance, BiVector<Matd> &variance_new)
-{
-    for (int snapshot_index = 0; snapshot_index != SMIN(this->snapshot_, this->number_of_snapshot_old_); ++snapshot_index)
-        for (int observation_index = 0; observation_index != this->observation_; ++observation_index)
-            for (int run_index = 0; run_index != this->number_of_run_; ++run_index)
-                for (size_t i = 0; i != variance[0][0].size(); ++i)
-                    for (size_t j = 0; j != variance[0][0].size(); ++j)
-                    {
-                        variance_new[snapshot_index][observation_index](i, j) = SMAX(
-                            (Real)variance[snapshot_index][observation_index](i, j),
-                            (Real)variance_new[snapshot_index][observation_index](i, j),
-                            (Real)pow((result[run_index][snapshot_index][observation_index](i, j) - meanvalue_new[snapshot_index][observation_index](i, j)), 2),
-                            (Real)pow(meanvalue_new[snapshot_index][observation_index](i, j) * Real(0.01), 2));
-                    }
 };
 //=================================================================================================//
 template <class ObserveMethodType>
@@ -310,7 +279,7 @@ void RegressionTestEnsembleAverage<ObserveMethodType>::updateMeanVariance()
                                                                  this->current_result_[snapshot_index][observation_index]) /
                                                                 this->number_of_run_;
     /** Update the variance of the result. */
-    calculateNewVariance(this->result_, meanvalue_new_, variance_, variance_new_);
+    calculateNewVariance(this->result_);
 }
 //=================================================================================================//
 template <class ObserveMethodType>
