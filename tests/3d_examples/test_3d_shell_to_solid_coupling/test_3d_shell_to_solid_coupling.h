@@ -566,15 +566,15 @@ struct two_sided_problem
 
     inline auto get_upper_solid_mesh(Real dp) const
     {
-        const Vec3d halfsize = 0.5 * Vec3d(params.length, params.width, params.height + dp);
-        const Vec3d translation = halfsize.z() * Vec3d::UnitZ();
+        const Vec3d halfsize = 0.5 * Vec3d(params.length, params.width, 0.5 * params.height + dp);
+        const Vec3d translation = 0.25 * params.height * Vec3d::UnitZ();
         return makeShared<TransformShape<GeometricShapeBox>>(Transform(translation), halfsize, "upper_solid");
     }
 
     inline auto get_lower_solid_mesh(Real dp) const
     {
-        const Vec3d halfsize = 0.5 * Vec3d(params.length, params.width, params.height + dp);
-        const Vec3d translation = -halfsize.z() * Vec3d::UnitZ();
+        const Vec3d halfsize = 0.5 * Vec3d(params.length, params.width, 0.5 * params.height + dp);
+        const Vec3d translation = -0.25 * params.height * Vec3d::UnitZ();
         return makeShared<TransformShape<GeometricShapeBox>>(Transform(translation), halfsize, "lower_solid");
     }
 
