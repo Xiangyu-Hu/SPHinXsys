@@ -53,8 +53,6 @@ StdVec<Real> RegressionTestDynamicTimeWarping<ObserveMethodType>::calculateDTWDi
 template <class ObserveMethodType>
 void RegressionTestDynamicTimeWarping<ObserveMethodType>::setupTheTest()
 {
-    this->snapshot_ = this->current_result_.size();
-
     StdVec<Real> dtw_distance_temp_(this->observation_, 0);
     dtw_distance_ = dtw_distance_temp_;
     dtw_distance_new_ = dtw_distance_;

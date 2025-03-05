@@ -211,7 +211,6 @@ int RegressionTestEnsembleAverage<ObserveMethodType>::testNewResult(int diff, Bi
 template <class ObserveMethodType>
 void RegressionTestEnsembleAverage<ObserveMethodType>::setupAndCorrection()
 {
-    this->snapshot_ = this->current_result_.size();
     if (this->snapshot_ == 0)
     {
         std::cout << "\n Error: the current results for ensemble-average regression test is empty!" << std::endl;
@@ -252,14 +251,14 @@ void RegressionTestEnsembleAverage<ObserveMethodType>::setupAndCorrection()
             /** Unify the length of current result and previous result. */
             if (this->number_of_snapshot_old_ < this->snapshot_)
             {
-                this->difference_ = this->snapshot_ - this->number_of_snapshot_old_;
-                for (int delete_ = 0; delete_ != this->difference_; ++delete_)
+                this->snapshot_difference_ = this->snapshot_ - this->number_of_snapshot_old_;
+                for (int delete_ = 0; delete_ != this->snapshot_difference_; ++delete_)
                     this->current_result_.pop_back();
             }
             else if (this->number_of_snapshot_old_ > this->snapshot_)
-                this->difference_ = this->number_of_snapshot_old_ - this->snapshot_;
+                this->snapshot_difference_ = this->number_of_snapshot_old_ - this->snapshot_;
             else
-                this->difference_ = 0;
+                this->snapshot_difference_ = 0;
         }
     }
     else if (this->number_of_run_ == 1)
@@ -295,7 +294,7 @@ void RegressionTestEnsembleAverage<ObserveMethodType>::updateMeanVariance()
     /** Unify the length of result and meanvalue. */
     if (this->number_of_run_ > 1)
     {
-        for (int delete_ = 0; delete_ != this->difference_; ++delete_)
+        for (int delete_ = 0; delete_ != this->snapshot_difference_; ++delete_)
         {
             meanvalue_.pop_back();
             variance_.pop_back();
@@ -379,11 +378,11 @@ void RegressionTestEnsembleAverage<ObserveMethodType>::resultTest()
     /* compare the current result to the converged mean value and variance. */
     int test_wrong = 0;
     if (this->snapshot_ < this->number_of_snapshot_old_)
-        test_wrong = testNewResult(this->difference_, this->current_result_, meanvalue_, variance_);
+        test_wrong = testNewResult(this->snapshot_difference_, this->current_result_, meanvalue_, variance_);
     else
     {
         /** Unify the length of meanvalue, variance, old result, new result. */
-        for (int delete_ = 0; delete_ != this->difference_; ++delete_)
+        for (int delete_ = 0; delete_ != this->snapshot_difference_; ++delete_)
         {
             meanvalue_.pop_back();
             variance_.pop_back();

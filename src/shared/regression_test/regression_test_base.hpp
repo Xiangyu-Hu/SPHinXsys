@@ -19,7 +19,7 @@ RegressionTestBase<ObserveMethodType>::RegressionTestBase(Args &&...args)
       result_xml_engine_in_("result_xml_engine_in", "result"),
       result_xml_engine_out_("result_xml_engine_out", "result"),
       snapshot_(0), observation_(this->NumberOfObservedQuantity()),
-      number_of_snapshot_old_(0), difference_(0),
+      number_of_snapshot_old_(0), snapshot_difference_(0),
       converged_("false"), number_of_run_(1), label_for_repeat_(0)
 
 {
@@ -54,17 +54,15 @@ void RegressionTestBase<ObserveMethodType>::rememberObservations(size_t iteratio
     };
     current_result_.push_back(observed);
     element_tag_.push_back("Snapshot_" + std::to_string(iteration));
+    snapshot_++;
 }
 //=================================================================================================//
 template <class ObserveMethodType>
 void RegressionTestBase<ObserveMethodType>::transposeTheIndex()
 {
-    int number_of_snapshot = this->current_result_.size();
-    int number_of_observation = this->current_result_[0].size();
-    BiVector<VariableType> temp(number_of_observation, StdVec<VariableType>(number_of_snapshot));
-    current_result_trans_ = temp;
-    for (int snapshot_index = 0; snapshot_index != number_of_snapshot; ++snapshot_index)
-        for (int observation_index = 0; observation_index != number_of_observation; ++observation_index)
+    current_result_trans_ = BiVector<VariableType>(observation_, StdVec<VariableType>(snapshot_));
+    for (int snapshot_index = 0; snapshot_index != snapshot_; ++snapshot_index)
+        for (int observation_index = 0; observation_index != observation_; ++observation_index)
             current_result_trans_[observation_index][snapshot_index] = this->current_result_[snapshot_index][observation_index];
 };
 //=================================================================================================//
@@ -73,18 +71,17 @@ void RegressionTestBase<ObserveMethodType>::readResultFromXml()
 {
     if (number_of_run_ > 1) /*only read the result from the 2nd run, because the 1st run doesn't have previous results. */
     {
-        /*Here result_in is a temporary container that reloads each previous result.*/
-        BiVector<VariableType> result_in_(SMAX(snapshot_, number_of_snapshot_old_), StdVec<VariableType>(observation_));
-        for (int run_index_ = 0; run_index_ != number_of_run_ - 1; ++run_index_)
+        /*Here result_temp is a temporary container that reloads each previous result.*/
+        BiVector<VariableType> result_temp(SMAX(snapshot_, number_of_snapshot_old_), StdVec<VariableType>(observation_));
+        for (int run_index = 0; run_index != number_of_run_ - 1; ++run_index)
         {
-            std::string node_name_ = "Round_" + std::to_string(run_index_);
-            SimTK::Xml::Element father_element_ = result_xml_engine_in_.getChildElement(node_name_);
-            for (int observation_index_ = 0; observation_index_ != observation_; ++observation_index_)
-                xmlmemory_io_.readDataFromXmlMemory(result_xml_engine_in_, father_element_, observation_index_, result_in_, this->quantity_name_);
-            BiVector<VariableType> result_temp_ = result_in_;
-            for (int delete_ = 0; delete_ != difference_; ++delete_)
-                result_temp_.pop_back(); /* trim the new reading result to unify the length of all results. (number of snapshots) */
-            result_.push_back(result_temp_);
+            std::string node_name = "Round_" + std::to_string(run_index);
+            SimTK::Xml::Element father_element = result_xml_engine_in_.getChildElement(node_name);
+            for (int observation_index = 0; observation_index != observation_; ++observation_index)
+                xmlmemory_io_.readDataFromXmlMemory(result_xml_engine_in_, father_element, observation_index, result_temp, this->quantity_name_);
+            for (int delete_ = 0; delete_ != snapshot_difference_; ++delete_)
+                result_temp.pop_back(); /* trim the new reading result to unify the length of all results. (number of snapshots) */
+            result_.push_back(result_temp);
         }
         result_.push_back(this->current_result_); /* Finally, push back the current result into the result vector. */
     }
@@ -93,25 +90,25 @@ void RegressionTestBase<ObserveMethodType>::readResultFromXml()
 template <class ObserveMethodType>
 void RegressionTestBase<ObserveMethodType>::writeResultToXml()
 {
-    for (int run_index_ = 0; run_index_ != number_of_run_; ++run_index_)
+    for (int run_index = 0; run_index != number_of_run_; ++run_index)
     {
-        std::string node_name_ = "Round_" + std::to_string(run_index_);
+        std::string node_name_ = "Round_" + std::to_string(run_index);
         result_xml_engine_out_.addElementToXmlDoc(node_name_);
         SimTK::Xml::Element father_element_ =
             result_xml_engine_out_.getChildElement(node_name_);
-        xmlmemory_io_.writeDataToXmlMemory(result_xml_engine_out_, father_element_, result_[run_index_],
+        xmlmemory_io_.writeDataToXmlMemory(result_xml_engine_out_, father_element_, result_[run_index],
                                            SMIN(snapshot_, number_of_snapshot_old_), observation_, this->quantity_name_, this->element_tag_);
     }
     result_xml_engine_out_.writeToXmlFile(result_filefullpath_);
 };
 //=================================================================================================//
 template <class ObserveMethodType>
-void RegressionTestBase<ObserveMethodType>::readResultFromXml(int index_of_run_)
+void RegressionTestBase<ObserveMethodType>::readResultFromXml(int run_index)
 {
     if (number_of_run_ > 1) /*only read the result from the 2nd run, because the 1st run doesn't have previous results. */
     {
         result_filefullpath_ = input_folder_path_ + "/" + this->dynamics_identifier_name_ + "_" + this->quantity_name_ +
-                               "_Run_" + std::to_string(index_of_run_) + "_result.xml";
+                               "_Run_" + std::to_string(run_index) + "_result.xml";
 
         /* To identify the database generation or new result test. */
         if (converged_ == "false")
@@ -148,13 +145,13 @@ void RegressionTestBase<ObserveMethodType>::readResultFromXml(int index_of_run_)
 };
 //=================================================================================================//
 template <class ObserveMethodType>
-void RegressionTestBase<ObserveMethodType>::writeResultToXml(int index_of_run_)
+void RegressionTestBase<ObserveMethodType>::writeResultToXml(int run_index)
 {
     /** write result to .xml (with different data structure to Base), here is
         observation * snapshot, which can be used for TA and DTW methods. */
     int total_snapshot_ = current_result_trans_[0].size();
     result_filefullpath_ = input_folder_path_ + "/" + this->dynamics_identifier_name_ + "_" + this->quantity_name_ +
-                           "_Run_" + std::to_string(index_of_run_) + "_result.xml";
+                           "_Run_" + std::to_string(run_index) + "_result.xml";
     result_xml_engine_out_.addElementToXmlDoc("Snapshot_Element");
     SimTK::Xml::Element snapshot_element_ = result_xml_engine_out_.getChildElement("Snapshot_Element");
     result_xml_engine_out_.addChildToElement(snapshot_element_, "Snapshot");

@@ -74,8 +74,8 @@ class RegressionTestBase : public ObserveMethodType
 
     int snapshot_, observation_; /*< the size of each layer of current result vector. */
     int number_of_snapshot_old_; /*< the snapshot size of last trimmed result. */
-    int difference_;             /*< the length difference of snapshot between old and new result,
-                                 which is used to trim each new run result to be a unified length. */
+    int snapshot_difference_;    /*< the length difference of snapshot between old and new result,
+                                     which is used to trim each new run result to be a unified length. */
     std::string converged_;      /*< the tag for result converged, default false. */
     int number_of_run_;          /*< the times of run. */
     int label_for_repeat_;       /*< the label used stable convergence (several convergence). */
@@ -85,11 +85,11 @@ class RegressionTestBase : public ObserveMethodType
     explicit RegressionTestBase(Args &&...args);
     virtual ~RegressionTestBase();
     void rememberObservations(size_t iteration);
-    void transposeTheIndex();                  /** transpose the current result (from snapshot*observation to observation*snapshot). */
-    void readResultFromXml();                  /** read the result from the .xml file. (all result) */
-    void writeResultToXml();                   /** write the result to the .xml file. (all result) */
-    void readResultFromXml(int index_of_run_); /* read the result from the .xml file with the specified index. (DTW method, TA method) */
-    void writeResultToXml(int index_of_run_);  /* write the result to the .xml file with the specified index. (DTW method, TA method) */
+    void transposeTheIndex();              /** transpose the current result (from snapshot*observation to observation*snapshot). */
+    void readResultFromXml();              /** read the result from the .xml file. (all result) */
+    void writeResultToXml();               /** write the result to the .xml file. (all result) */
+    void readResultFromXml(int run_index); /* read the result from the .xml file with the specified index. (DTW method, TA method) */
+    void writeResultToXml(int run_index);  /* write the result to the .xml file with the specified index. (DTW method, TA method) */
 
     /** the interface to write observed quantity into xml memory. */
     void writeToFile(size_t iteration = 0) override
