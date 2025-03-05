@@ -73,6 +73,40 @@ struct solid_algs
     Real time_step_size() { return computing_time_step_size.exec(); }
 };
 
+struct solid_mr_algs
+{
+    AdaptiveInnerRelation inner_relation;
+    AdaptiveSplittingInnerRelation damping_inner;
+    InteractionWithUpdate<LinearGradientCorrectionMatrixInner> corrected_configuration;
+    Dynamics1Level<solid_dynamics::Integration1stHalfCauchy> stress_relaxation_first_half;
+    Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half;
+    SimpleDynamics<NormalDirectionFromBodyShape> initial_normal_direction;
+    SimpleDynamics<solid_dynamics::UpdateElasticNormalDirection> normal_direction;
+    DampingWithRandomChoice<InteractionAdaptiveSplit<DampingPairwiseInner<Vec3d, FixedDampingRate>>> damping;
+    ReduceDynamics<solid_dynamics::AcousticTimeStep> computing_time_step_size;
+
+    explicit solid_mr_algs(SolidBody &body, Real physical_viscosity)
+        : inner_relation(body),
+          damping_inner(body),
+          corrected_configuration(inner_relation),
+          stress_relaxation_first_half(inner_relation),
+          stress_relaxation_second_half(inner_relation),
+          initial_normal_direction(body),
+          normal_direction(body),
+          damping(0.5, damping_inner, "Velocity", physical_viscosity),
+          computing_time_step_size(body)
+    {
+        initial_normal_direction.exec();
+    };
+
+    void corrected_config() { corrected_configuration.exec(); }
+    void stress_relaxation_first(Real dt) { stress_relaxation_first_half.exec(dt); }
+    void stress_relaxation_second(Real dt) { stress_relaxation_second_half.exec(dt); }
+    void normal_update() { normal_direction.exec(); }
+    void damping_exec(Real dt) { damping.exec(dt); }
+    Real time_step_size() { return computing_time_step_size.exec(); }
+};
+
 struct shell_algs
 {
     InnerRelation inner_relation;
@@ -143,6 +177,25 @@ class VelocityBoundaryCondition : public MotionConstraint<BodyPartByParticle>
     {
         vel_[index_i] = vel_func_(physical_time);
     }
+};
+//-------Material property initialization-------------------------------------------------
+class SolidMaterialInitialization : public MaterialIdInitialization
+{
+  private:
+    std::function<bool(Vec3d &)> contain_;
+
+  public:
+    SolidMaterialInitialization(SolidBody &solid_body, std::function<bool(Vec3d &)> contain)
+        : MaterialIdInitialization(solid_body),
+          contain_(std::move(contain)) {};
+
+    void update(size_t index_i, Real dt = 0.0)
+    {
+        if (contain_(pos_[index_i]))
+            material_id_[index_i] = 1;
+        else
+            material_id_[index_i] = 0;
+    };
 };
 //-------Shell particle generator-------------------------------------------------
 namespace SPH
@@ -589,7 +642,7 @@ struct two_sided_problem
         std::vector<solid_input_variables> solid_inputs;
         std::vector<shell_input_variables> shell_inputs;
         Real youngs_modulus_solid = params.youngs_modulus_shell * stiffness_ratio;
-        Real eta = get_physical_viscosity_general(params.rho, params.youngs_modulus_shell, params.height + 2 * params.thickness_shell);
+        Real eta = get_physical_viscosity_general(params.rho, params.youngs_modulus_shell, params.height + params.thickness_shell);
         solid_inputs.emplace_back(solid_input_variables{.name_ = "upper_solid",
                                                         .dp_ = dp,
                                                         .mesh_ = get_upper_solid_mesh(dp),
