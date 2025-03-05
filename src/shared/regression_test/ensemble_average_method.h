@@ -70,7 +70,7 @@ class RegressionTestEnsembleAverage : public RegressionTestTimeAverage<ObserveMe
     {
         this->mean_variance_filefullpath_ = this->input_folder_path_ + "/" + this->dynamics_identifier_name_ + "_" + this->quantity_name_ + "_ensemble_averaged_mean_variance.xml";
     };
-    virtual ~RegressionTestEnsembleAverage(){};
+    virtual ~RegressionTestEnsembleAverage() {};
 
     void setupAndCorrection();      /** setup and correct the number of old and new result. */
     void readMeanVarianceFromXml(); /** read the meanvalue and variance from the .xml file. */
@@ -82,8 +82,6 @@ class RegressionTestEnsembleAverage : public RegressionTestTimeAverage<ObserveMe
     /* the interface for generating the priori converged result with M&V. */
     void generateDataBase(VariableType threshold_mean, VariableType threshold_variance, const std::string &filter = "false")
     {
-        this->writeXmlToXmlFile();
-        this->readXmlFromXmlFile();
         this->initializeThreshold(threshold_mean, threshold_variance);
         if (this->converged_ == "false")
         {
@@ -104,8 +102,6 @@ class RegressionTestEnsembleAverage : public RegressionTestTimeAverage<ObserveMe
     /** the interface for testing new result. */
     void testResult(const std::string &filter = "false")
     {
-        this->writeXmlToXmlFile();
-        this->readXmlFromXmlFile();
         setupAndCorrection();
         if (filter == "true")
             this->filterExtremeValues();
@@ -113,5 +109,5 @@ class RegressionTestEnsembleAverage : public RegressionTestTimeAverage<ObserveMe
         resultTest();
     };
 };
-};     // namespace SPH
+}; // namespace SPH
 #endif // ENSEMBLE_AVERAGE_H

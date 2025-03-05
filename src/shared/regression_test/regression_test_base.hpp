@@ -16,7 +16,6 @@ template <typename... Args>
 RegressionTestBase<ObserveMethodType>::RegressionTestBase(Args &&...args)
     : ObserveMethodType(std::forward<Args>(args)...), xmlmemory_io_(),
       generate_regression_data_(this->sph_system_.GenerateRegressionData()),
-      observe_xml_engine_("xml_observe_reduce", this->quantity_name_),
       result_xml_engine_in_("result_xml_engine_in", "result"),
       result_xml_engine_out_("result_xml_engine_out", "result"),
       snapshot_(0), observation_(this->NumberOfObservedQuantity()),
@@ -45,35 +44,16 @@ RegressionTestBase<ObserveMethodType>::RegressionTestBase(Args &&...args)
 }
 //=================================================================================================//
 template <class ObserveMethodType>
-void RegressionTestBase<ObserveMethodType>::writeToXml(size_t iteration)
+void RegressionTestBase<ObserveMethodType>::rememberObservations(size_t iteration)
 {
     VariableType *observed_quantities = this->getObservedQuantity();
-    std::string element_name_ = "Snapshot_" + std::to_string(iteration);
-    SimTK::Xml::Element &element_ = observe_xml_engine_.root_element_;
-    observe_xml_engine_.addElementToXmlDoc(element_name_);
+    StdVec<VariableType> observed;
     for (int i = 0; i != observation_; ++i)
     {
-        xmlmemory_io_.writeDataToXmlMemory(observe_xml_engine_, element_,
-                                           element_name_, i, observed_quantities[i], this->quantity_name_);
+        observed.push_back(observed_quantities[i]);
     };
-}
-//=================================================================================================//
-template <class ObserveMethodType>
-void RegressionTestBase<ObserveMethodType>::readFromXml()
-{
-    observe_xml_engine_.loadXmlFile(in_output_filefullpath_);
-    size_t number_of_snapshot_ = std::distance(observe_xml_engine_.root_element_.element_begin(),
-                                               observe_xml_engine_.root_element_.element_end());
-    BiVector<VariableType> current_result_temp_(number_of_snapshot_, StdVec<VariableType>(observation_));
-    StdVec<std::string> element_tag_temp_(number_of_snapshot_);
-    current_result_ = current_result_temp_;
-    element_tag_ = element_tag_temp_;
-    SimTK::Xml::Element &element_ = observe_xml_engine_.root_element_;
-    for (int i = 0; i != observation_; ++i)
-    {
-        xmlmemory_io_.readDataFromXmlMemory(observe_xml_engine_, element_, i, current_result_, this->quantity_name_);
-        xmlmemory_io_.readTagFromXmlMemory(element_, element_tag_);
-    }
+    current_result_.push_back(observed);
+    element_tag_.push_back("Snapshot_" + std::to_string(iteration));
 }
 //=================================================================================================//
 template <class ObserveMethodType>

@@ -82,12 +82,12 @@ class RegressionTestTimeAverage : public RegressionTestBase<ObserveMethodType>
   public:
     template <typename... Args>
     explicit RegressionTestTimeAverage(Args &&...args) : RegressionTestBase<ObserveMethodType>(std::forward<Args>(args)...),
-                                                                     mean_variance_xml_engine_in_("mean_variance_xml_engine_in_", "meanvariance"),
-                                                                     mean_variance_xml_engine_out_("mean_variance_xml_engine_out_", "meanvariance")
+                                                         mean_variance_xml_engine_in_("mean_variance_xml_engine_in_", "meanvariance"),
+                                                         mean_variance_xml_engine_out_("mean_variance_xml_engine_out_", "meanvariance")
     {
         mean_variance_filefullpath_ = this->input_folder_path_ + "/" + this->dynamics_identifier_name_ + "_" + this->quantity_name_ + "_time_averaged_mean_variance.xml";
     };
-    virtual ~RegressionTestTimeAverage(){};
+    virtual ~RegressionTestTimeAverage() {};
 
     /** initialize the threshold of meanvalue and variance. */
     void initializeThreshold(VariableType &threshold_mean, VariableType &threshold_variance);
@@ -103,8 +103,6 @@ class RegressionTestTimeAverage : public RegressionTestBase<ObserveMethodType>
     /* the interface for generating the priori converged result with time-averaged meanvalue and variance. */
     void generateDataBase(VariableType threshold_mean, VariableType threshold_variance, const std::string &filter = "false")
     {
-        this->writeXmlToXmlFile();  /* currently defined in in_output. */
-        this->readXmlFromXmlFile(); /* currently defined in in_output. */
         initializeThreshold(threshold_mean, threshold_variance);
         if (this->converged_ == "false")
         {
@@ -126,8 +124,6 @@ class RegressionTestTimeAverage : public RegressionTestBase<ObserveMethodType>
     /** the interface for testing new result. */
     void testResult(const std::string &filter = "false")
     {
-        this->writeXmlToXmlFile();  /* currently defined in in_output. */
-        this->readXmlFromXmlFile(); /* currently defined in in_output. */
         setupTheTest();
         if (filter == "true")
             filterExtremeValues();

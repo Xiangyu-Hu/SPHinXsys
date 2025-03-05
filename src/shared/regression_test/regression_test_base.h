@@ -59,7 +59,6 @@ class RegressionTestBase : public ObserveMethodType
                                         including one by one, or all result in the same time. */
     bool generate_regression_data_; /*< the flag to generate regression data. */
 
-    XmlEngine observe_xml_engine_;    /*< xml engine for current result io_environment. */
     XmlEngine result_xml_engine_in_;  /*< xml engine for input result. */
     XmlEngine result_xml_engine_out_; /*< xml engine for output result. */
                                       /*< the XmlEngine can operate the node name and elements in xml memory. */
@@ -77,7 +76,7 @@ class RegressionTestBase : public ObserveMethodType
     int number_of_snapshot_old_; /*< the snapshot size of last trimmed result. */
     int difference_;             /*< the length difference of snapshot between old and new result,
                                  which is used to trim each new run result to be a unified length. */
-    std::string converged_;       /*< the tag for result converged, default false. */
+    std::string converged_;      /*< the tag for result converged, default false. */
     int number_of_run_;          /*< the times of run. */
     int label_for_repeat_;       /*< the label used stable convergence (several convergence). */
 
@@ -85,10 +84,7 @@ class RegressionTestBase : public ObserveMethodType
     template <typename... Args>
     explicit RegressionTestBase(Args &&...args);
     virtual ~RegressionTestBase();
-
-    void writeToXml(size_t iteration);
-    void readFromXml();
-
+    void rememberObservations(size_t iteration);
     void transposeTheIndex();                  /** transpose the current result (from snapshot*observation to observation*snapshot). */
     void readResultFromXml();                  /** read the result from the .xml file. (all result) */
     void writeResultToXml();                   /** write the result to the .xml file. (all result) */
@@ -105,21 +101,7 @@ class RegressionTestBase : public ObserveMethodType
             exit(1);
         }
         ObserveMethodType::writeToFile(iteration); /* used for visualization (.dat)*/
-        writeToXml(iteration);               /* used for regression test. (.xml) */
-    };
-
-    /*The new run result is stored in the xml memory, and can't be copied and used directly
-     *so they should be output as .xml file and reloaded from .xml file into the memory.*/
-    /** the interface to write xml memory into Xml file. */
-    void writeXmlToXmlFile()
-    {
-        observe_xml_engine_.writeToXmlFile(in_output_filefullpath_); /* two method are same.*/
-    };
-
-    /** read current result from Xml file into Xml memory. */
-    void readXmlFromXmlFile()
-    {
-        readFromXml();
+        rememberObservations(iteration);           /* remember all observation used for regression test. (.xml) */
     };
 
   private:
