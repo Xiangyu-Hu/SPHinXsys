@@ -206,7 +206,7 @@ int main(int ac, char *av[])
      * They are included here solely for testing and verification purposes,
      * and do not contribute to the primary objectives of the current case.
      */
-    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::FreeSurfaceIndicationComplexCK>
+    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::FreeSurfaceIndicationComplexSpatialTemporalCK>
         fluid_boundary_indicator(water_block_inner, water_wall_contact);
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::TransportVelocityLimitedCorrectionCorrectedComplexBulkParticlesCK>
         transport_correction_ck(water_block_inner, water_wall_contact);
