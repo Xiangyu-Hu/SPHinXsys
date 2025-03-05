@@ -30,7 +30,7 @@ RegressionTestBase<ObserveMethodType>::RegressionTestBase(Args &&...args)
 
     if (!fs::exists(runtimes_filefullpath_) && !generate_regression_data_)
     {
-        std::cout << "Error: runtimes file is missing for regression test! " << std::endl;
+        std::cout << "Error: " << runtimes_filefullpath_ << " is missing for regression test! " << std::endl;
         exit(1);
     }
     else
