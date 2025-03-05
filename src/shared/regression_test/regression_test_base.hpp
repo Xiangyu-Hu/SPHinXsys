@@ -92,11 +92,11 @@ void RegressionTestBase<ObserveMethodType>::writeResultToXml()
 {
     for (int run_index = 0; run_index != number_of_run_; ++run_index)
     {
-        std::string node_name_ = "Round_" + std::to_string(run_index);
-        result_xml_engine_out_.addElementToXmlDoc(node_name_);
-        SimTK::Xml::Element father_element_ =
-            result_xml_engine_out_.getChildElement(node_name_);
-        xmlmemory_io_.writeDataToXmlMemory(result_xml_engine_out_, father_element_, result_[run_index],
+        std::string node_name = "Round_" + std::to_string(run_index);
+        result_xml_engine_out_.addElementToXmlDoc(node_name);
+        SimTK::Xml::Element father_element =
+            result_xml_engine_out_.getChildElement(node_name);
+        xmlmemory_io_.writeDataToXmlMemory(result_xml_engine_out_, father_element, result_[run_index],
                                            SMIN(snapshot_, number_of_snapshot_old_), observation_, this->quantity_name_, this->element_tag_);
     }
     result_xml_engine_out_.writeToXmlFile(result_filefullpath_);
@@ -123,21 +123,20 @@ void RegressionTestBase<ObserveMethodType>::readResultFromXml(int run_index)
 
         /*Each result has two elements, one records the length of this result, and the other one is itself.*/
         result_xml_engine_in_.loadXmlFile(result_filefullpath_);
-        SimTK::Xml::Element snapshot_element_ = result_xml_engine_in_.getChildElement("Snapshot_Element");
-        SimTK::Xml::element_iterator ele_ite = snapshot_element_.element_begin();
+        SimTK::Xml::Element snapshot_element = result_xml_engine_in_.getChildElement("Snapshot_Element");
+        SimTK::Xml::element_iterator ele_ite = snapshot_element.element_begin();
         result_xml_engine_in_.getRequiredAttributeValue(ele_ite, "number_of_snapshot_for_local_result_", snapshot_);
 
-        BiVector<VariableType> result_temp_(observation_, StdVec<VariableType>(snapshot_));
-        result_in_ = result_temp_;
-        SimTK::Xml::Element result_element_ = result_xml_engine_in_.getChildElement("Result_Element");
+        result_in_ = BiVector<VariableType>(observation_, StdVec<VariableType>(snapshot_));
+        SimTK::Xml::Element result_element = result_xml_engine_in_.getChildElement("Result_Element");
         for (int snapshot_index = 0; snapshot_index != snapshot_; ++snapshot_index)
         {
             int observation_index = 0;
-            SimTK::Xml::element_iterator ele_ite = result_element_.element_begin();
-            for (; ele_ite != result_element_.element_end(); ++ele_ite)
+            SimTK::Xml::element_iterator ele_ite = result_element.element_begin();
+            for (; ele_ite != result_element.element_end(); ++ele_ite)
             {
-                std::string attribute_name_ = "snapshot_" + std::to_string(snapshot_index);
-                result_xml_engine_in_.getRequiredAttributeValue(ele_ite, attribute_name_, result_in_[observation_index][snapshot_index]);
+                std::string attribute_name = "snapshot_" + std::to_string(snapshot_index);
+                result_xml_engine_in_.getRequiredAttributeValue(ele_ite, attribute_name, result_in_[observation_index][snapshot_index]);
                 observation_index++;
             }
         };
@@ -149,26 +148,25 @@ void RegressionTestBase<ObserveMethodType>::writeResultToXml(int run_index)
 {
     /** write result to .xml (with different data structure to Base), here is
         observation * snapshot, which can be used for TA and DTW methods. */
-    int total_snapshot_ = current_result_trans_[0].size();
     result_filefullpath_ = input_folder_path_ + "/" + this->dynamics_identifier_name_ + "_" + this->quantity_name_ +
                            "_Run_" + std::to_string(run_index) + "_result.xml";
     result_xml_engine_out_.addElementToXmlDoc("Snapshot_Element");
-    SimTK::Xml::Element snapshot_element_ = result_xml_engine_out_.getChildElement("Snapshot_Element");
-    result_xml_engine_out_.addChildToElement(snapshot_element_, "Snapshot");
-    SimTK::Xml::element_iterator ele_ite = snapshot_element_.element_begin();
-    result_xml_engine_out_.setAttributeToElement(ele_ite, "number_of_snapshot_for_local_result_", total_snapshot_);
+    SimTK::Xml::Element snapshot_element = result_xml_engine_out_.getChildElement("Snapshot_Element");
+    result_xml_engine_out_.addChildToElement(snapshot_element, "Snapshot");
+    SimTK::Xml::element_iterator ele_ite = snapshot_element.element_begin();
+    result_xml_engine_out_.setAttributeToElement(ele_ite, "number_of_snapshot_for_local_result_", snapshot_);
 
     result_xml_engine_out_.addElementToXmlDoc("Result_Element");
-    SimTK::Xml::Element result_element_ = result_xml_engine_out_.getChildElement("Result_Element");
+    SimTK::Xml::Element result_element = result_xml_engine_out_.getChildElement("Result_Element");
     for (int observation_index = 0; observation_index != observation_; ++observation_index)
     {
-        std::string element_name_ = "Particle_" + std::to_string(observation_index);
-        result_xml_engine_out_.addChildToElement(result_element_, element_name_);
-        for (int snapshot_index = 0; snapshot_index != total_snapshot_; ++snapshot_index)
+        std::string element_name = "Particle_" + std::to_string(observation_index);
+        result_xml_engine_out_.addChildToElement(result_element, element_name);
+        for (int snapshot_index = 0; snapshot_index != snapshot_; ++snapshot_index)
         {
-            SimTK::Xml::element_iterator ele_ite = result_element_.element_begin(element_name_);
-            std::string attribute_name_ = "snapshot_" + std::to_string(snapshot_index);
-            result_xml_engine_out_.setAttributeToElement(ele_ite, attribute_name_, current_result_trans_[observation_index][snapshot_index]);
+            SimTK::Xml::element_iterator ele_ite = result_element.element_begin(element_name);
+            std::string attribute_name = "snapshot_" + std::to_string(snapshot_index);
+            result_xml_engine_out_.setAttributeToElement(ele_ite, attribute_name, current_result_trans_[observation_index][snapshot_index]);
         }
     }
     result_xml_engine_out_.writeToXmlFile(result_filefullpath_);
