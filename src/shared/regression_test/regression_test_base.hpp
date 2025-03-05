@@ -29,7 +29,12 @@ RegressionTestBase<ObserveMethodType>::RegressionTestBase(Args &&...args)
     result_filefullpath_ = input_folder_path_ + "/" + this->dynamics_identifier_name_ + "_" + this->quantity_name_ + "_result.xml";
     runtimes_filefullpath_ = input_folder_path_ + "/" + this->dynamics_identifier_name_ + "_" + this->quantity_name_ + "_runtimes.dat";
 
-    if (fs::exists(runtimes_filefullpath_) && generate_regression_data_)
+    if (!fs::exists(runtimes_filefullpath_) && !generate_regression_data_)
+    {
+        std::cout << "Error: runtimes file is missing for regression test! " << std::endl;
+        exit(1);
+    }
+    else
     {
         std::ifstream in_file(runtimes_filefullpath_.c_str());
         in_file >> converged_;
