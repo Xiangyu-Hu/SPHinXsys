@@ -160,6 +160,16 @@ struct DataTypeIndex<Mat3d>
 {
     static constexpr int value = 6;
 };
+template <>
+struct DataTypeIndex<Vec6d>
+{
+    static constexpr int value = 7;
+};
+template <>
+struct DataTypeIndex<Mat6d>
+{
+    static constexpr int value = 8;
+};
 
 /** Verbal boolean for positive and negative axis directions. */
 const int xAxis = 0;

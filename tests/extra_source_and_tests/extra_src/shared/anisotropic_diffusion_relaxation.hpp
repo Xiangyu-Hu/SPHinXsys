@@ -279,7 +279,7 @@ class AnisotropicDiffusionRelaxation<DataDelegationType>
     explicit AnisotropicDiffusionRelaxation(BaseRelationType &base_relation )
       : LocalDynamics(base_relation.getSPHBody()), DataDelegationType(base_relation), 
       B_(this->particles_->template getVariableDataByName<Matd>("LinearGradientCorrectionMatrix")),
-      phi_(particles_->registerStateVariable<Real>("Phi")),
+      species_(particles_->registerStateVariable<Real>("Species")),
       Vol_(this->particles_->template getVariableDataByName<Real>("VolumetricMeasure")),
       kernel_correction1_(this->particles_->template getVariableDataByName<Vecd>("FirstOrderCorrectionVector1")),
       kernel_correction2_(this->particles_->template getVariableDataByName<Vecd>("FirstOrderCorrectionVector2")),
@@ -297,9 +297,9 @@ class AnisotropicDiffusionRelaxation<DataDelegationType>
         Laplacian_2d =  particles_->registerStateVariable<Vec3d>( "Laplacian2D", [&](size_t i) -> Vec3d { return Vec3d::Zero(); });
         
 
-      //  total_left_3d = particles_->registerStateVariable<Mat6d>( "TotalLeft3D", [&](size_t i) -> Mat6d { return Eps * Mat6d::Identity(); });
-       // total_right_3d = particles_->registerStateVariable<Vec6d>( "TotalRight3D", [&](size_t i) -> Vec6d { return Eps * Vec6d::Identity(); });
-     //   Laplacian_3d =  particles_->registerStateVariable<Vec6d>( "Laplacian3D", [&](size_t i) -> Vec6d { return Vec6d::Zero(); });
+       total_left_3d = particles_->registerStateVariable<Mat6d>( "TotalLeft3D", [&](size_t i) -> Mat6d { return Eps * Mat6d::Identity(); });
+       total_right_3d = particles_->registerStateVariable<Vec6d>( "TotalRight3D", [&](size_t i) -> Vec6d { return Eps * Vec6d::Identity(); });
+       Laplacian_3d =  particles_->registerStateVariable<Vec6d>( "Laplacian3D", [&](size_t i) -> Vec6d { return Vec6d::Zero(); });
 
         Laplacian_x =   particles_->registerStateVariable<Real>("Laplacian_x", [&](size_t i) -> Real { return Real(0.0); });
         Laplacian_y = particles_->registerStateVariable<Real>("Laplacian_y", [&](size_t i) -> Real { return Real(0.0); });
@@ -315,7 +315,7 @@ class AnisotropicDiffusionRelaxation<DataDelegationType>
 
   protected: 
     Matd *B_;
-    Real  *phi_,*Vol_;
+    Real  *species_,*Vol_;
     Vecd *kernel_correction1_, *kernel_correction2_, *kernel_correction3_;
     Vecd *kernel_correction4_, *kernel_correction5_, *kernel_correction6_;
     Vecd *species_correction_;
@@ -324,8 +324,8 @@ class AnisotropicDiffusionRelaxation<DataDelegationType>
     Vec3d *total_right_2d;
     Vec3d *Laplacian_2d;
 
-  //  Mat6d *total_left_3d;
-   // Vec6d *total_right_3d;
+    Mat6d *total_left_3d;
+    Vec6d *total_right_3d;
     Vec6d *Laplacian_3d;
 
 
@@ -356,7 +356,7 @@ class AnisotropicDiffusionRelaxation<Inner<>>
         {
             size_t index_j = inner_neighborhood.j_[n];
             Vecd gradW_ij = inner_neighborhood.dW_ij_[n] * Vol_[index_j] * inner_neighborhood.e_ij_[n];
-           species_correction_rate += (phi_[index_j] - phi_[index_i]) * (B_[index_i].transpose() * gradW_ij);      
+           species_correction_rate += (species_[index_j] - species_[index_i]) * (B_[index_i].transpose() * gradW_ij);      
         }
 
          species_correction_[index_i] = species_correction_rate;  
@@ -367,7 +367,7 @@ class AnisotropicDiffusionRelaxation<Inner<>>
  
     void update(size_t index_i, Real dt = 0.0)
     {
-        phi_[index_i] += dt * diffusion_dt_[index_i];
+        species_[index_i] += dt * diffusion_dt_[index_i];
     };
    
     protected:
@@ -395,18 +395,8 @@ class AnisotropicDiffusionRelaxation<Contact<>>
 
     void interaction(size_t index_i, Real dt = 0.0)
     {   
-        for (size_t k = 0; k < contact_configuration_.size(); ++k)
-        {   
-
-            relaxation_contact(Vec2d (1.0,1.0), index_i, k);
-
-        }
-
-        Laplacian_2d[index_i] = diffusion_coeff_ * total_left_2d[index_i].inverse() * total_right_2d[index_i];
-
-        Laplacian_x[index_i] = Laplacian_2d[index_i][0];
-        Laplacian_y[index_i] = Laplacian_2d[index_i][1]; 
-		diffusion_dt_[index_i] = Laplacian_2d[index_i][0] + Laplacian_2d[index_i][1];
+        
+            relaxation_contact(Vec2d (1.0,1.0), index_i);      
 
     };
 
@@ -414,7 +404,7 @@ class AnisotropicDiffusionRelaxation<Contact<>>
     StdVec<Real *> contact_Vol_; 
     StdVec<Vecd *> contact_pos_;
 
-    void relaxation_contact(Vecd dimension, size_t index_i, size_t k );
+    void relaxation_contact(Vecd dimension, size_t index_i );
 };
 
  

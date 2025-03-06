@@ -179,20 +179,20 @@ class DiffusionInitialCondition : public LocalDynamics
     DiffusionInitialCondition(BaseInnerRelation &inner_relation)
         : LocalDynamics(inner_relation.getSPHBody()),
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
-          phi_(particles_->getVariableDataByName<Real>("Phi")){};
+          species_(particles_->getVariableDataByName<Real>("Species")){};
     virtual ~DiffusionInitialCondition(){};
 
     Vec2d *pos_;
-    Real  *phi_;
+    Real  *species_;
 
   protected:
     void update(size_t index_i, Real dt = 0.0)
     {
         /*if (pos_[index_i][0] >= 0.4* L && pos_[index_i][0] <= 0.6 * L)
         {
-            phi_[index_i] = 1.0;     
+            species_[index_i] = 1.0;     
         }*/
-       phi_[index_i] = pos_[index_i][0] *pos_[index_i][0] + pos_[index_i][1] * pos_[index_i][1];  
+       species_[index_i] = pos_[index_i][0] *pos_[index_i][0] + pos_[index_i][1] * pos_[index_i][1];  
       
     };
 };
@@ -205,7 +205,7 @@ class GradientCheck : public LocalDynamics, public DataDelegateInner
     GradientCheck(BaseInnerRelation &inner_relation)
         : LocalDynamics(inner_relation.getSPHBody()), DataDelegateInner(inner_relation),
         B_(this->particles_->template getVariableDataByName<Matd>("LinearGradientCorrectionMatrix")),
-        phi_(particles_->getVariableDataByName<Real>("Phi")),
+        species_(particles_->getVariableDataByName<Real>("Species")),
         Vol_(this->particles_->template getVariableDataByName<Real>("VolumetricMeasure"))
     ,show_neighbor_(particles_->registerStateVariable<Real>("ShowingNeighbor", Real(0.0)))
  {
@@ -218,7 +218,7 @@ class GradientCheck : public LocalDynamics, public DataDelegateInner
         
   protected:
     Mat2d *B_;
-    Real  *phi_;
+    Real  *species_;
     Real  *Vol_;
     Real *Gradient_x;
     Real *Gradient_y;
@@ -238,7 +238,7 @@ class GradientCheck : public LocalDynamics, public DataDelegateInner
                 show_neighbor_[index_j] = 1.0;
             };
 
-            rate_ += (phi_[index_j] - phi_[index_i]) * (B_[index_i].transpose() * gradW_ijV_j);
+            rate_ += (species_[index_j] - species_[index_i]) * (B_[index_i].transpose() * gradW_ijV_j);
         }
 
         Gradient_x[index_i] = rate_[0];
@@ -335,7 +335,7 @@ int main(int ac, char *av[])
     
     BodyStatesRecordingToVtp write_states_vtp(sph_system);
 
-    write_states_vtp.addToWrite<Real>(diffusion_body, "Phi");
+    write_states_vtp.addToWrite<Real>(diffusion_body, "Species");
     write_states_vtp.addToWrite<Real>(diffusion_body,"Laplacian_x");
     write_states_vtp.addToWrite<Real>(diffusion_body,"Laplacian_y");
     //write_states_vtp.addToWrite<Real>(diffusion_body,"Gradient_x");
