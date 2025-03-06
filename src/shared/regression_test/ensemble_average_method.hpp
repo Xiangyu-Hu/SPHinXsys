@@ -19,14 +19,14 @@ void RegressionTestEnsembleAverage<ObserveMethodType>::calculateNewVariance(TriV
         for (int observation_index = 0; observation_index != this->observation_; ++observation_index)
             for (int run_index = 0; run_index != this->number_of_run_; ++run_index)
             {
-                variance_new_[snapshot_index][observation_index] = transformComponent(
+                variance_new_[snapshot_index][observation_index] = transform_component(
                     variance_new_[snapshot_index][observation_index],
                     [&](Real variance_new, Real variance, Real result, Real meanvalue_new)
                     { return SMAX(
-                          (Real)variance_new,
-                          (Real)variance,
-                          (Real)pow(result - meanvalue_new, 2),
-                          (Real)pow(meanvalue_new * Real(0.01), 2)); },
+                          variance_new,
+                          variance,
+                          pow(result - meanvalue_new, 2),
+                          pow(meanvalue_new * Real(0.01), 2)); },
                     variance_[snapshot_index][observation_index], result[run_index][snapshot_index][observation_index],
                     meanvalue_new_[snapshot_index][observation_index]);
             }

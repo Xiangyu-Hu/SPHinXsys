@@ -28,23 +28,23 @@ void RegressionTestTimeAverage<ObserveMethodType>::filterLocalResult(BiVector<Va
                 filter_meanvalue += current_result[index][observation_index];
             }
             filter_meanvalue = (filter_meanvalue - current_result[snapshot_index][observation_index]) /
-                               (SMIN(snapshot_index + scale, this->snapshot_) - SMAX(snapshot_index - scale, 0));
+                               Real(SMIN(snapshot_index + scale, this->snapshot_) - SMAX(snapshot_index - scale, 0));
             for (int index = SMAX(snapshot_index - scale, 0); index != SMIN(snapshot_index + scale, this->snapshot_); ++index)
             {
                 VariableType filter_deviation = current_result[index][observation_index] - filter_meanvalue;
-                filter_variance += componentSquare(filter_deviation);
+                filter_variance += component_square(filter_deviation);
             }
 
             VariableType current_deviation = current_result[snapshot_index][observation_index] - filter_meanvalue;
-            VariableType current_variance = componentSquare(current_deviation);
+            VariableType current_variance = component_square(current_deviation);
             filter_variance = (filter_variance - current_variance) /
-                              (SMIN(snapshot_index + scale, this->snapshot_) - SMAX(snapshot_index - scale, 0));
+                              Real(SMIN(snapshot_index + scale, this->snapshot_) - SMAX(snapshot_index - scale, 0));
 
-            current_result[snapshot_index][observation_index] = transformComponent(
+            current_result[snapshot_index][observation_index] = transform_component(
                 current_result[snapshot_index][observation_index],
                 [&](Real cur_result, Real cur_variance, Real flt_variance, Real flt_meanvalue)
                 { 
-                    if(cur_variance > 4 * flt_variance)
+                    if(cur_variance > 4.0 * flt_variance)
                     {
                         std::cout << "A component of the current " << this->quantity_name_
                                   << "[" << snapshot_index << "][" << observation_index << "] is "
@@ -69,8 +69,8 @@ void RegressionTestTimeAverage<ObserveMethodType>::searchSteadyStart()
             Real value_one = 0, value_two = 0;
             for (int index = snapshot_index; index != snapshot_index - scale; --index)
             {
-                value_one += FirstComponent(this->current_result_[index][observation_index]) / scale;
-                value_two += FirstComponent(this->current_result_[index - 2 * scale][observation_index]) / scale;
+                value_one += first_component(this->current_result_[index][observation_index]) / Real(scale);
+                value_two += first_component(this->current_result_[index - 2 * scale][observation_index]) / Real(scale);
             }
 
             if (ABS(value_one - value_two) / ABS((value_one + value_two) / 2) > 0.1)
@@ -90,15 +90,15 @@ void RegressionTestTimeAverage<ObserveMethodType>::calculateNewVariance(BiVector
         for (int snapshot_index = snapshot_for_converged_; snapshot_index != this->snapshot_; ++snapshot_index)
         {
             VariableType deviation = current_result_trans[observation_index][snapshot_index] - local_meanvalue_[observation_index];
-            variance_new_[observation_index] += componentSquare(deviation);
+            variance_new_[observation_index] += component_square(deviation);
         }
 
-        variance_new_[observation_index] = transformComponent(
+        variance_new_[observation_index] = transform_component(
             variance_new_[observation_index], [&](Real variance_new, Real variance, Real local_meanvalue)
             { return SMAX(
-                  (Real)(variance_new / (this->snapshot_ - snapshot_for_converged_)),
-                  (Real)variance,
-                  (Real)pow(local_meanvalue * Real(0.01), 2)); },
+                  variance_new / Real(this->snapshot_ - snapshot_for_converged_),
+                  variance,
+                  pow(local_meanvalue * Real(0.01), 2)); },
             variance_[observation_index], local_meanvalue_[observation_index]);
     }
 }
@@ -110,7 +110,7 @@ int RegressionTestTimeAverage<ObserveMethodType>::compareParameter(
     int count = 0;
     for (int observation_index = 0; observation_index != this->observation_; ++observation_index)
     {
-        transformComponent(
+        for_each_component(
             parameter[observation_index], [&](Real para, Real para_new, Real thr)
             { 
                 if ((par_name == "meanvalue") && (ABS(para) < 0.005) && (ABS(para_new) < 0.005))
@@ -118,14 +118,16 @@ int RegressionTestTimeAverage<ObserveMethodType>::compareParameter(
                     std::cout << "A component of the old meanvalue is " << para << ", and the new meanvalue is " << para_new
                               << ". So this component will be ignored due to its tiny effect." << std::endl;
                 }
-                Real rel_value = ABS((para - para_new) / (para_new + TinyReal));
-                if (rel_value > thr)
+                else
                 {
-                    std::cout << par_name << ": " << this->quantity_name_ << "[" << observation_index << "]"
-                              << " has a component is not converged, and difference is " << rel_value << std::endl;
-                    count++;
-                }
-                return rel_value; },
+                    Real rel_value = ABS((para - para_new) / (para_new + TinyReal));
+                    if (rel_value > thr)
+                    {
+                        std::cout << par_name << ": " << this->quantity_name_ << "[" << observation_index << "]"
+                                  << " has a component is not converged, and difference is " << rel_value << std::endl;
+                        count++;
+                    }
+                } },
             parameter_new[observation_index], threshold);
     }
     return count;
@@ -142,11 +144,11 @@ int RegressionTestTimeAverage<ObserveMethodType>::testNewResult(
         for (int snapshot_index = snapshot_for_converged_; snapshot_index != this->snapshot_; ++snapshot_index)
         {
             VariableType deviation = current_result[snapshot_index][observation_index] - local_meanvalue[observation_index];
-            variance_new_[observation_index] += componentSquare(deviation);
+            variance_new_[observation_index] += component_square(deviation);
         }
-        variance_new_[observation_index] = variance_new_[observation_index] / (this->snapshot_ - snapshot_for_converged_);
+        variance_new_[observation_index] /= Real(this->snapshot_ - snapshot_for_converged_);
 
-        transformComponent(
+        for_each_component(
             meanvalue[observation_index], [&](Real mean, Real local_mean, Real var, Real var_new)
             { 
                 if ((ABS(mean) < 0.005) && (ABS(local_mean) < 0.005))
@@ -154,16 +156,18 @@ int RegressionTestTimeAverage<ObserveMethodType>::testNewResult(
                     std::cout << "A component of the old meanvalue is " << mean << ", and the new meanvalue is " << local_mean
                               << ". So this component will be ignored due to its tiny effect." << std::endl;
                 }
-                Real rel_value = ABS((mean - local_mean) / (mean + TinyReal));
-                if (rel_value > 0.1 || var_new > (1.01 * var))
+                else
                 {
-                    std::cout << this->quantity_name_ << "[" << observation_index << "]"
-                              << " has a component beyond the exception !" << std::endl;
-                    std::cout << "The meanvalue component is " << mean << ", and the current meanvalue is " << local_mean << std::endl;
-                    std::cout << "The variance component is " << var << ", and the current variance is " << var_new << std::endl;
-                    count++;
-                }
-                return rel_value; },
+                    Real rel_value = ABS((mean - local_mean) / (mean + TinyReal));
+                    if (rel_value > 0.1 || var_new > (1.01 * var))
+                    {
+                        std::cout << this->quantity_name_ << "[" << observation_index << "]"
+                                  << " has a component beyond the exception !" << std::endl;
+                        std::cout << "The meanvalue component is " << mean << ", and the current meanvalue is " << local_mean << std::endl;
+                        std::cout << "The variance component is " << var << ", and the current variance is " << var_new << std::endl;
+                        count++;
+                    }
+                } },
             local_meanvalue[observation_index], variance[observation_index], variance_new_[observation_index]);
     }
     return count;
