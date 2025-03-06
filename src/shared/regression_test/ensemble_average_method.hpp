@@ -69,7 +69,7 @@ int RegressionTestEnsembleAverage<ObserveMethodType>::testNewResult(
             for_each_component(
                 current_result[snapshot_index][observation_index], [&](Real cur_result, Real mean, Real var)
                 {
-                    Real relative_value = (pow(cur_result - mean, 2) - var) / var ;
+                    Real relative_value = (pow(cur_result - mean, 2) - var) / (var + TinyReal);
                     if (relative_value > 0.01)
                     {
                         std::cout << this->quantity_name_ << "[" << observation_index << "]" 
