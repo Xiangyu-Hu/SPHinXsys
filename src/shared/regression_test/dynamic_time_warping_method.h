@@ -72,7 +72,8 @@ class RegressionTestDynamicTimeWarping : public RegressionTestTimeAverage<Observ
           dtw_distance_xml_engine_in_("dtw_distance_xml_engine_in", "dtw_distance"),
           dtw_distance_xml_engine_out_("dtw_distance_xml_engine_out", "dtw_distance")
     {
-        dtw_distance_filefullpath_ = this->input_folder_path_ + "/" + this->dynamics_identifier_name_ + "_" + this->quantity_name_ + "_dtwdistance.xml";
+        dtw_distance_filefullpath_ = this->input_folder_path_ + "/" +
+                                     this->dynamics_identifier_name_ + "_" + this->quantity_name_ + "_dtwdistance.xml";
     };
     virtual ~RegressionTestDynamicTimeWarping() {};
 
@@ -117,7 +118,8 @@ class RegressionTestDynamicTimeWarping : public RegressionTestTimeAverage<Observ
         readDTWDistanceFromXml();
         for (int n = 0; n != this->number_of_run_; ++n)
         {
-            this->result_filefullpath_ = this->input_folder_path_ + "/" + this->dynamics_identifier_name_ + "_" + this->quantity_name_ + "_Run_" + std::to_string(n) + "_result.xml";
+            this->result_filefullpath_ = this->input_folder_path_ + "/" + this->dynamics_identifier_name_ + "_" +
+                                         this->quantity_name_ + "_Run_" + std::to_string(n) + "_result.xml";
             if (!fs::exists(this->result_filefullpath_))
             {
                 std::cout << "This result has not been preserved and will not be compared." << std::endl;

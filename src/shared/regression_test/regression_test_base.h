@@ -54,9 +54,6 @@ class RegressionTestBase : public ObserveMethodType
     std::string result_filefullpath_;    /*< the file path for all run results. (.xml)*/
     std::string runtimes_filefullpath_;  /*< the file path for run times information. (.dat)*/
 
-    XmlMemoryIO xmlmemory_io_;      /*< xml memory in_output operator, which has defined several
-                                        methods to read and write data from and into xml memory,
-                                        including one by one, or all result in the same time. */
     bool generate_regression_data_; /*< the flag to generate regression data. */
 
     XmlEngine result_xml_engine_in_;  /*< xml engine for input result. */
@@ -79,6 +76,17 @@ class RegressionTestBase : public ObserveMethodType
     std::string converged_;      /*< the tag for result converged, default false. */
     int number_of_run_;          /*< the times of run. */
     int label_for_repeat_;       /*< the label used stable convergence (several convergence). */
+
+    template <typename T>
+    void writeDataToXmlMemory(XmlEngine &xml_engine, SimTK::Xml::Element &element, const BiVector<T> &quantity,
+                              int snapshot, int observation, const std::string &quantity_name, StdVec<std::string> &element_tag);
+    template <typename T>
+    void writeDataToXmlMemory(XmlEngine &xml_engine, SimTK::Xml::Element &element,
+                              std::string element_name, int k, const T &quantity, const std::string &quantity_name);
+    template <typename T>
+    void readDataFromXmlMemory(XmlEngine &xml_engine, SimTK::Xml::Element &element,
+                               int k, BiVector<T> &result_container, const std::string &quantity_name);
+    void readTagFromXmlMemory(SimTK::Xml::Element &element, StdVec<std::string> &element_tag);
 
   public:
     template <typename... Args>
