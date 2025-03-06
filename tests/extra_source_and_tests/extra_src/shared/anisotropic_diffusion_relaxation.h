@@ -361,7 +361,7 @@ class AnisotropicDiffusionRelaxation<Inner<>>
 
          species_correction_[index_i] = species_correction_rate;  
  
-         relaxation(inner_neighborhood, Vec2d (1.0,1.0), index_i );
+         relaxation(inner_neighborhood, Vecd::Identity(), index_i );
  
     };
  
@@ -396,7 +396,7 @@ class AnisotropicDiffusionRelaxation<Contact<>>
     void interaction(size_t index_i, Real dt = 0.0)
     {   
         
-            relaxation_contact(Vec2d (1.0,1.0), index_i);      
+            relaxation_contact(Vecd::Identity(), index_i);      
 
     };
 

@@ -1,5 +1,5 @@
 /**
- * @file anisotropic_diffusion_relaxation.hpp
+ * @file anisotropic_diffusion_relaxation_3d.cpp
  * @brief This the methods related on the corrections of SPH anisotropic smoothing kernel and anisotropic diffusion algorithm.
  * @details Two template are included, one is the improved kernel matrix, and the other one is anisotropic diffusion relaxation.
  * @author Xiaojing Tang and Xiangyu Hu
@@ -8,7 +8,7 @@
 #ifndef ANISOTROPIC_KERNEL_CORRECTION
 #define ANISOTROPIC_KERNEL_CORRECTION
  
-#include "anisotropic_diffusion_relaxation.hpp"
+#include "anisotropic_diffusion_relaxation.h"
 namespace SPH
 {
      
@@ -66,7 +66,7 @@ namespace SPH
         
 
            total_left_rate += disp_quad_ * modified_func_ * left_.transpose();   
-           total_right_rate += disp_quad_ * modified_func_  * right_;
+           total_right_rate += disp_quad_ * modified_func_ * right_;
 
        }
  

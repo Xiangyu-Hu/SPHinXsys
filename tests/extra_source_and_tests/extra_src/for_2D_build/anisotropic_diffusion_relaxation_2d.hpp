@@ -1,5 +1,5 @@
 /**
- * @file anisotropic_diffusion_relaxation.hpp
+ * @file anisotropic_diffusion_relaxation_2d.cpp
  * @brief This the methods related on the corrections of SPH anisotropic smoothing kernel and anisotropic diffusion algorithm.
  * @details Two template are included, one is the improved kernel matrix, and the other one is anisotropic diffusion relaxation.
  * @author Xiaojing Tang and Xiangyu Hu
@@ -8,7 +8,7 @@
 #ifndef ANISOTROPIC_KERNEL
 #define ANISOTROPIC_KERNEL
  
-#include "anisotropic_diffusion_relaxation.hpp"
+#include "anisotropic_diffusion_relaxation.h"
 namespace SPH
 {
      
@@ -100,11 +100,8 @@ namespace SPH
 
         Laplacian_x[index_i] = Laplacian_2d[index_i][0];
         Laplacian_y[index_i] = Laplacian_2d[index_i][1]; 
-		diffusion_dt_[index_i] = Laplacian_2d[index_i][0] + Laplacian_2d[index_i][1];Laplacian_2d[index_i] = diffusion_coeff_ * total_left_2d[index_i].inverse() * total_right_2d[index_i];
-
-        Laplacian_x[index_i] = Laplacian_2d[index_i][0];
-        Laplacian_y[index_i] = Laplacian_2d[index_i][1]; 
 		diffusion_dt_[index_i] = Laplacian_2d[index_i][0] + Laplacian_2d[index_i][1];
+        
     }
     
 };
