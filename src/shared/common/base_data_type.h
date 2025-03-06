@@ -69,9 +69,11 @@ using Array3i = Eigen::Array<int, 3, 1>;
 /** Vector with float point number.*/
 using Vec2d = Eigen::Matrix<Real, 2, 1>;
 using Vec3d = Eigen::Matrix<Real, 3, 1>;
-/** Small, 2*2 and 3*3, matrix with float point number. */
+using Vec6d = Eigen::Matrix<Real, 6, 1>;
+/** Small, 2*2 and 3*3, 6*6 matrix with float point number. */
 using Mat2d = Eigen::Matrix<Real, 2, 2>;
-using Mat3d = Eigen::Matrix<Real, 3, 3>;
+using Mat3d = Eigen::Matrix<Real, 3, 3>; 
+using Mat6d = Eigen::Matrix<Real, 6, 6>;
 /** Dynamic matrix*/
 using MatXd = Eigen::Matrix<Real, Eigen::Dynamic, Eigen::Dynamic>;
 
@@ -158,6 +160,16 @@ template <>
 struct DataTypeIndex<Mat3d>
 {
     static constexpr int value = 6;
+};
+template <>
+struct DataTypeIndex<Vec6d>
+{
+    static constexpr int value = 7;
+};
+template <>
+struct DataTypeIndex<Mat6d>
+{
+    static constexpr int value = 8;
 };
 
 /** Verbal boolean for positive and negative axis directions. */
