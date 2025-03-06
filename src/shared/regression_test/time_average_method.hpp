@@ -98,7 +98,7 @@ void RegressionTestTimeAverage<ObserveMethodType>::calculateNewVariance(BiVector
             { return SMAX(
                   variance_new / Real(this->snapshot_ - snapshot_for_converged_),
                   variance,
-                  pow(local_meanvalue * Real(0.01), 2)); },
+                  (Real)pow(local_meanvalue * Real(0.01), 2)); },
             variance_[observation_index], local_meanvalue_[observation_index]);
     }
 }

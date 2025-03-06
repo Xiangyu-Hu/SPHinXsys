@@ -25,8 +25,8 @@ void RegressionTestEnsembleAverage<ObserveMethodType>::calculateNewVariance(TriV
                     { return SMAX(
                           variance_new,
                           variance,
-                          pow(result - meanvalue_new, 2),
-                          pow(meanvalue_new * Real(0.01), 2)); },
+                          (Real)pow(result - meanvalue_new, 2),
+                          (Real)pow(meanvalue_new * Real(0.01), 2)); },
                     variance_[snapshot_index][observation_index], result[run_index][snapshot_index][observation_index],
                     meanvalue_new_[snapshot_index][observation_index]);
             }
