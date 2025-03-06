@@ -30,150 +30,56 @@ void RegressionTestEnsembleAverage<ObserveMethodType>::calculateNewVariance(TriV
                     variance_[snapshot_index][observation_index], result[run_index][snapshot_index][observation_index],
                     meanvalue_new_[snapshot_index][observation_index]);
             }
-};
+}
 //=================================================================================================//
 template <class ObserveMethodType>
-int RegressionTestEnsembleAverage<ObserveMethodType>::compareParameter(std::string par_name,
-                                                                       BiVector<Real> &parameter, BiVector<Real> &parameter_new, Real &threshold)
+int RegressionTestEnsembleAverage<ObserveMethodType>::compareParameter(
+    std::string par_name, BiVector<VariableType> &parameter, BiVector<VariableType> &parameter_new, VariableType &threshold)
 {
     int count = 0;
     for (int snapshot_index = 0; snapshot_index != SMIN(this->snapshot_, this->number_of_snapshot_old_); ++snapshot_index)
         for (int observation_index = 0; observation_index != this->observation_; ++observation_index)
         {
-            Real relative_value_ = ABS((parameter[snapshot_index][observation_index] - parameter_new[snapshot_index][observation_index]) /
-                                       (parameter_new[snapshot_index][observation_index] + TinyReal));
-            if (relative_value_ > threshold)
-            {
-                std::cout << par_name << ": " << this->quantity_name_ << "[" << observation_index << "] in " << this->element_tag_[snapshot_index]
-                          << " is not converged, and difference is " << relative_value_ << std::endl;
-                count++;
-            }
-        }
-    return count;
-}
-////=================================================================================================//
-template <class ObserveMethodType>
-int RegressionTestEnsembleAverage<ObserveMethodType>::compareParameter(std::string par_name,
-                                                                       BiVector<Vecd> &parameter, BiVector<Vecd> &parameter_new, Vecd &threshold)
-{
-    int count = 0;
-    for (int snapshot_index = 0; snapshot_index != SMIN(this->snapshot_, this->number_of_snapshot_old_); ++snapshot_index)
-        for (int observation_index = 0; observation_index != this->observation_; ++observation_index)
-            for (int i = 0; i != parameter[0][0].size(); ++i)
-            {
-                Real relative_value_ = ABS((parameter[snapshot_index][observation_index][i] - parameter_new[snapshot_index][observation_index][i]) /
-                                           (parameter_new[snapshot_index][observation_index][i] + TinyReal));
-                if (relative_value_ > threshold[i])
+            for_each_component(
+                parameter[snapshot_index][observation_index], [&](Real para, Real para_new, Real thr)
                 {
-                    std::cout << par_name << ": " << this->quantity_name_ << "[" << observation_index << "][" << i << "] in " << this->element_tag_[snapshot_index]
-                              << " is not converged, and difference is " << relative_value_ << std::endl;
-                    count++;
-                }
-            }
-    return count;
-}
-////=================================================================================================//
-template <class ObserveMethodType>
-int RegressionTestEnsembleAverage<ObserveMethodType>::compareParameter(std::string par_name,
-                                                                       BiVector<Matd> &parameter, BiVector<Matd> &parameter_new, Matd &threshold)
-{
-    int count = 0;
-    for (int snapshot_index = 0; snapshot_index != SMIN(this->snapshot_, this->number_of_snapshot_old_); ++snapshot_index)
-        for (int observation_index = 0; observation_index != this->observation_; ++observation_index)
-            for (int i = 0; i != parameter[0][0].size(); ++i)
-                for (int j = 0; j != parameter[0][0].size(); ++j)
-                {
-                    Real relative_value_ = ABS(parameter[snapshot_index][observation_index](i, j) - parameter_new[snapshot_index][observation_index](i, j)) / (parameter_new[snapshot_index][observation_index](i, j) + TinyReal);
-                    if (relative_value_ > threshold(i, j))
+                    Real relative_value = ABS(para - para_new) / (para + TinyReal);
+                    if (relative_value > thr)
                     {
-                        std::cout << par_name << ": " << this->quantity_name_ << "[" << observation_index << "][" << i << "][" << j << " ] in "
-                                  << this->element_tag_[snapshot_index] << " is not converged, and difference is " << relative_value_ << std::endl;
+                        std::cout << par_name << ": " << this->quantity_name_ << "[" << observation_index << "]"
+                                  << this->element_tag_[snapshot_index] << " is not converged, and difference is "
+                                  << relative_value << std::endl;
                         count++;
-                    }
-                }
-    return count;
-}
-//=================================================================================================//
-template <class ObserveMethodType>
-int RegressionTestEnsembleAverage<ObserveMethodType>::testNewResult(int diff, BiVector<Real> &current_result,
-                                                                    BiVector<Real> &meanvalue, BiVector<Real> &variance)
-{
-    int count = 0;
-    for (int snapshot_index = 0; snapshot_index != SMIN(this->snapshot_, this->number_of_snapshot_old_); ++snapshot_index)
-    {
-        for (int observation_index = 0; observation_index != this->observation_; ++observation_index)
-        {
-            Real relative_value_ = (pow(current_result[snapshot_index][observation_index] - meanvalue[snapshot_index + diff][observation_index], 2) -
-                                    variance[snapshot_index + diff][observation_index]) /
-                                   (variance[snapshot_index + diff][observation_index] + TinyReal);
-            if (relative_value_ > 0.01)
-            {
-                std::cout << this->quantity_name_ << "[" << observation_index << "] in " << this->element_tag_[snapshot_index] << " is beyond the exception, and difference is "
-                          << relative_value_ << std::endl;
-                count++;
-            }
+                    } },
+                parameter_new[snapshot_index][observation_index], threshold);
         }
-    }
     return count;
 }
 //=================================================================================================//
 template <class ObserveMethodType>
-int RegressionTestEnsembleAverage<ObserveMethodType>::testNewResult(int diff, BiVector<Vecd> &current_result,
-                                                                    BiVector<Vecd> &meanvalue, BiVector<Vecd> &variance)
-{
-    int count = 0;
-    for (int snapshot_index = 0; snapshot_index != SMIN(this->snapshot_, this->number_of_snapshot_old_); ++snapshot_index)
-    {
-        for (int observation_index = 0; observation_index != this->observation_; ++observation_index)
-        {
-            for (int i = 0; i != meanvalue[0][0].size(); ++i)
-            {
-                Real relative_value_ = (pow(current_result[snapshot_index][observation_index][i] - meanvalue[snapshot_index + diff][observation_index][i], 2) -
-                                        variance[snapshot_index + diff][observation_index][i]) /
-                                       (variance[snapshot_index + diff][observation_index][i] + TinyReal);
-                if (relative_value_ > 0.01)
-                {
-                    std::cout << this->quantity_name_ << "[" << observation_index << "][" << i << "] in " << this->element_tag_[snapshot_index] << " is beyond the exception, and difference is "
-                              << relative_value_ << std::endl;
-                    std::cout << "Current: " << current_result[snapshot_index][observation_index][i] << std::endl;
-                    std::cout << "Mean " << meanvalue[snapshot_index + diff][observation_index][i] << std::endl;
-                    std::cout << "Variance" << variance[snapshot_index + diff][observation_index][i] << std::endl;
-                    count++;
-                }
-            }
-        }
-    }
-    return count;
-}
-//=================================================================================================//
-template <class ObserveMethodType>
-int RegressionTestEnsembleAverage<ObserveMethodType>::testNewResult(int diff, BiVector<Matd> &current_result,
-                                                                    BiVector<Matd> &meanvalue, BiVector<Matd> &variance)
+int RegressionTestEnsembleAverage<ObserveMethodType>::testNewResult(
+    int diff, BiVector<VariableType> &current_result,
+    BiVector<VariableType> &meanvalue, BiVector<VariableType> &variance)
 {
     int count = 0;
     std::cout << "The current length difference is " << diff << "." << std::endl;
     for (int snapshot_index = 0; snapshot_index != SMIN(this->snapshot_, this->number_of_snapshot_old_); ++snapshot_index)
-    {
         for (int observation_index = 0; observation_index != this->observation_; ++observation_index)
         {
-            for (int i = 0; i != meanvalue[0][0].size(); ++i)
-            {
-                for (int j = 0; j != meanvalue[0][0].size(); ++j)
+            for_each_component(
+                current_result[snapshot_index][observation_index], [&](Real cur_result, Real mean, Real var)
                 {
-                    Real relative_value_ = (pow(current_result[snapshot_index][observation_index](i, j) -
-                                                    meanvalue[snapshot_index + diff][observation_index](i, j),
-                                                2) -
-                                            variance[snapshot_index + diff][observation_index](i, j)) /
-                                           variance[snapshot_index + diff][observation_index](i, j);
-                    if (relative_value_ > 0.01)
+                    Real relative_value = (pow(cur_result - mean, 2) - var) / var ;
+                    if (relative_value > 0.01)
                     {
-                        std::cout << this->quantity_name_ << "[" << observation_index << "][" << i << "] in " << this->element_tag_[snapshot_index] << " is beyond the exception, and difference is " << relative_value_ << std::endl;
+                        std::cout << this->quantity_name_ << "[" << observation_index << "]" 
+                        << this->element_tag_[snapshot_index] << " is beyond the exception, and difference is " 
+                        << relative_value << std::endl;
                         count++;
-                    }
-                }
-            }
+                    } },
+                meanvalue[snapshot_index + diff][observation_index],
+                variance[snapshot_index + diff][observation_index]);
         }
-    }
     return count;
 }
 //=================================================================================================//

@@ -51,21 +51,19 @@ class RegressionTestEnsembleAverage : public RegressionTestTimeAverage<ObserveMe
     /** the method used for calculating the new variance. */
     void calculateNewVariance(TriVector<VariableType> &result);
     /** the method used for comparing the meanvalue and variance. */
-    int compareParameter(std::string par_name, BiVector<Real> &parameter, BiVector<Real> &parameter_new, Real &threshold);
-    int compareParameter(std::string par_name, BiVector<Vecd> &parameter, BiVector<Vecd> &parameter_new, Vecd &threshold);
-    int compareParameter(std::string par_name, BiVector<Matd> &parameter, BiVector<Matd> &parameter_new, Matd &threshold);
-
+    int compareParameter(std::string par_name, BiVector<VariableType> &parameter,
+                         BiVector<VariableType> &parameter_new, VariableType &threshold);
     /** the method used for testing the new result with meanvalue and variance. */
-    int testNewResult(int diff, BiVector<Real> &current_result, BiVector<Real> &meanvalue, BiVector<Real> &variance);
-    int testNewResult(int diff, BiVector<Vecd> &current_result, BiVector<Vecd> &meanvalue, BiVector<Vecd> &variance);
-    int testNewResult(int diff, BiVector<Matd> &current_result, BiVector<Matd> &meanvalue, BiVector<Matd> &variance);
+    int testNewResult(int diff, BiVector<VariableType> &current_result,
+                      BiVector<VariableType> &meanvalue, BiVector<VariableType> &variance);
 
   public:
     template <typename... Args>
     explicit RegressionTestEnsembleAverage(Args &&...args)
         : RegressionTestTimeAverage<ObserveMethodType>(std::forward<Args>(args)...)
     {
-        this->mean_variance_filefullpath_ = this->input_folder_path_ + "/" + this->dynamics_identifier_name_ + "_" + this->quantity_name_ + "_ensemble_averaged_mean_variance.xml";
+        this->mean_variance_filefullpath_ = this->input_folder_path_ + "/" + this->dynamics_identifier_name_ +
+                                            "_" + this->quantity_name_ + "_ensemble_averaged_mean_variance.xml";
     };
     virtual ~RegressionTestEnsembleAverage() {};
 
