@@ -136,7 +136,7 @@ int main(int ac, char *av[])
     Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation(water_block_inner, water_block_contact);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallNoRiemann> density_relaxation(water_block_inner, water_block_contact);
     InteractionWithUpdate<fluid_dynamics::DensitySummationComplex> update_density_by_summation(water_block_inner, water_block_contact);
-    InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionComplex<AllParticles>> transport_correction(water_block_inner, water_block_contact);
+    InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionComplex<AllParticles>> transport_correction(DynamicsArgs(water_block_inner, 0.25), water_block_contact);
     InteractionWithUpdate<fluid_dynamics::ViscousForceWithWall> viscous_force(water_block_inner, water_block_contact);
 
     ReduceDynamics<fluid_dynamics::AdvectionViscousTimeStep> get_fluid_advection_time_step_size(water_block, U_f);
@@ -200,7 +200,6 @@ int main(int ac, char *av[])
     //	First output before the main loop.
     //----------------------------------------------------------------------
     write_real_body_states.writeToFile();
-    write_beam_tip_displacement.writeToFile(number_of_iterations);
     //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------
@@ -259,6 +258,7 @@ int main(int ac, char *av[])
                 std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
                           << physical_time
                           << "	Dt = " << Dt << "	Dt / dt = " << inner_ite_dt << "	dt / dt_s = " << inner_ite_dt_s << "\n";
+                write_beam_tip_displacement.writeToFile(number_of_iterations);
             }
             number_of_iterations++;
 
@@ -274,8 +274,6 @@ int main(int ac, char *av[])
             /** one need update configuration after periodic condition. */
             insert_body.updateCellLinkedList();
             insert_body_contact.updateConfiguration();
-            /** write run-time observation into file */
-            write_beam_tip_displacement.writeToFile(number_of_iterations);
         }
 
         TickCount t2 = TickCount::now();
@@ -297,7 +295,7 @@ int main(int ac, char *av[])
     if (sph_system.GenerateRegressionData())
     {
         // The lift force at the cylinder is very small and not important in this case.
-        write_total_viscous_force_from_fluid.generateDataBase({1.0e-2, 1.0e-2}, {1.0e-2, 1.0e-2});
+        write_total_viscous_force_from_fluid.generateDataBase({5.0e-3, 5.0e-3}, {5.0e-3, 5.0e-3});
         write_beam_tip_displacement.generateDataBase(1.0e-2);
     }
     else

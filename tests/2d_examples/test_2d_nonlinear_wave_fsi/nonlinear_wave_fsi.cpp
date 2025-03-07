@@ -180,7 +180,7 @@ int main(int ac, char *av[])
     BodyStatesRecordingToVtp write_real_body_states(sph_system);
     /** WaveProbe. */
     BodyRegionByCell wave_probe_buffer(water_block, makeShared<MultiPolygonShape>(createWaveGauge(), "WaveGauge"));
-    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<UpperFrontInAxisDirection<BodyPartByCell>>>
+    ReducedQuantityRecording<UpperFrontInAxisDirection<BodyPartByCell>>
         wave_gauge(wave_probe_buffer, "FreeSurfaceHeight");
     /** StructureMovement. */
     InteractionDynamics<InterpolatingAQuantity<Vecd>>
@@ -194,7 +194,7 @@ int main(int ac, char *av[])
         interpolation_fp3_position(fp3_contact_s, "Position", "Position");
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
         write_recorded_pressure_fp2("Pressure", fp2_contact_w);
-    RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
+    ObservedQuantityRecording<Real>
         write_recorded_pressure_fp3("Pressure", fp3_contact_w);
     RestartIO restart_io(sph_system);
     //----------------------------------------------------------------------

@@ -148,9 +148,9 @@ read_ref_data(const fs::path &ref_name)
     if (!file.is_open())
         throw std::runtime_error("Could not open the file: " + ref_name.string());
 
-    double variable_x;
-    double variable_y;
-    double variable_z;
+    Real variable_x;
+    Real variable_y;
+    Real variable_z;
     while (std::getline(file, line))
     {
         row.clear();
