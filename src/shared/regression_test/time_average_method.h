@@ -61,22 +61,17 @@ class RegressionTestTimeAverage : public RegressionTestBase<ObserveMethodType>
     /** the method used for calculating the new variance. */
     void calculateNewVariance(BiVector<VariableType> &current_result_trans);
     /** the method used for comparing the meanvalue and variance. */
-    int compareParameter(std::string par_name, StdVec<VariableType> &parameter,
-                         StdVec<VariableType> &parameter_new, VariableType &threshold);
+    int compareParameter(std::string par_name, StdVec<VariableType> &parameter, StdVec<VariableType> &parameter_new, VariableType &threshold);
     /** the method used for testing the new result with meanvalue and variance. */
-    int testNewResult(BiVector<VariableType> &current_result, StdVec<VariableType> &meanvalue,
-                      StdVec<VariableType> &local_meanvalue, StdVec<VariableType> &variance);
+    int testNewResult(BiVector<VariableType> &current_result, StdVec<VariableType> &meanvalue, StdVec<VariableType> &local_meanvalue, StdVec<VariableType> &variance);
 
   public:
     template <typename... Args>
-    explicit RegressionTestTimeAverage(Args &&...args)
-        : RegressionTestBase<ObserveMethodType>(std::forward<Args>(args)...),
-          mean_variance_xml_engine_in_("mean_variance_xml_engine_in_", "meanvariance"),
-          mean_variance_xml_engine_out_("mean_variance_xml_engine_out_", "meanvariance")
+    explicit RegressionTestTimeAverage(Args &&...args) : RegressionTestBase<ObserveMethodType>(std::forward<Args>(args)...),
+                                                         mean_variance_xml_engine_in_("mean_variance_xml_engine_in_", "meanvariance"),
+                                                         mean_variance_xml_engine_out_("mean_variance_xml_engine_out_", "meanvariance")
     {
-        mean_variance_filefullpath_ = this->input_folder_path_ + "/" +
-                                      this->dynamics_identifier_name_ + "_" + this->quantity_name_ +
-                                      "_time_averaged_mean_variance.xml";
+        mean_variance_filefullpath_ = this->input_folder_path_ + "/" + this->dynamics_identifier_name_ + "_" + this->quantity_name_ + "_time_averaged_mean_variance.xml";
     };
     virtual ~RegressionTestTimeAverage() {};
 

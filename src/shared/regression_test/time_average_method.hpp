@@ -17,37 +17,37 @@ void RegressionTestTimeAverage<ObserveMethodType>::filterLocalResult(BiVector<Va
 {
     int scale = round(this->snapshot_ / 200);
     std::cout << "The filter scale is " << scale * 2 << "." << std::endl;
-    for (int l = 0; l != this->snapshot_; ++l)
+    for (int snapshot_index = 0; snapshot_index != this->snapshot_; ++snapshot_index)
     {
-        for (int k = 0; k != this->observation_; ++k)
+        for (int observation_index = 0; observation_index != this->observation_; ++observation_index)
         {
             VariableType filter_meanvalue = ZeroData<VariableType>::value;
             VariableType filter_variance = ZeroData<VariableType>::value;
-            for (int index = SMAX(l - scale, 0); index != SMIN(l + scale, this->snapshot_); ++index)
+            for (int index = SMAX(snapshot_index - scale, 0); index != SMIN(snapshot_index + scale, this->snapshot_); ++index)
             {
-                filter_meanvalue += current_result[index][k];
+                filter_meanvalue += current_result[index][observation_index];
             }
-            filter_meanvalue = (filter_meanvalue - current_result[l][k]) /
-                               Real(SMIN(l + scale, this->snapshot_) - SMAX(l - scale, 0));
-            for (int index = SMAX(l - scale, 0); index != SMIN(l + scale, this->snapshot_); ++index)
+            filter_meanvalue = (filter_meanvalue - current_result[snapshot_index][observation_index]) /
+                               Real(SMIN(snapshot_index + scale, this->snapshot_) - SMAX(snapshot_index - scale, 0));
+            for (int index = SMAX(snapshot_index - scale, 0); index != SMIN(snapshot_index + scale, this->snapshot_); ++index)
             {
-                VariableType filter_deviation = current_result[index][k] - filter_meanvalue;
+                VariableType filter_deviation = current_result[index][observation_index] - filter_meanvalue;
                 filter_variance += component_square(filter_deviation);
             }
 
-            VariableType current_deviation = current_result[l][k] - filter_meanvalue;
+            VariableType current_deviation = current_result[snapshot_index][observation_index] - filter_meanvalue;
             VariableType current_variance = component_square(current_deviation);
             filter_variance = (filter_variance - current_variance) /
-                              Real(SMIN(l + scale, this->snapshot_) - SMAX(l - scale, 0));
+                              Real(SMIN(snapshot_index + scale, this->snapshot_) - SMAX(snapshot_index - scale, 0));
 
-            current_result[l][k] = transform_component(
-                current_result[l][k],
+            current_result[snapshot_index][observation_index] = transform_component(
+                current_result[snapshot_index][observation_index],
                 [&](Real cur_result, Real cur_variance, Real flt_variance, Real flt_meanvalue)
                 { 
                     if(cur_variance > 4.0 * flt_variance)
                     {
                         std::cout << "A component of the current " << this->quantity_name_
-                                  << "[" << l << "][" << k << "] is "
+                                  << "[" << snapshot_index << "][" << observation_index << "] is "
                                   << cur_result << ", but the neighbor averaged value is " << flt_meanvalue
                                   << ", and the rate is " << cur_variance / flt_variance << std::endl;
                         return flt_meanvalue;
@@ -63,19 +63,19 @@ void RegressionTestTimeAverage<ObserveMethodType>::searchSteadyStart()
 {
     /* the search is for each value within parameters. */
     int scale = round(this->snapshot_ / 20);
-    for (int k = 0; k != this->observation_; ++k)
-        for (int l = this->snapshot_ - 1; l != 3 * scale; --l)
+    for (int observation_index = 0; observation_index != this->observation_; ++observation_index)
+        for (int snapshot_index = this->snapshot_ - 1; snapshot_index != 3 * scale; --snapshot_index)
         {
             Real value_one = 0, value_two = 0;
-            for (int index = l; index != l - scale; --index)
+            for (int index = snapshot_index; index != snapshot_index - scale; --index)
             {
-                value_one += first_component(this->current_result_[index][k]) / Real(scale);
-                value_two += first_component(this->current_result_[index - 2 * scale][k]) / Real(scale);
+                value_one += first_component(this->current_result_[index][observation_index]) / Real(scale);
+                value_two += first_component(this->current_result_[index - 2 * scale][observation_index]) / Real(scale);
             }
 
             if (ABS(value_one - value_two) / ABS((value_one + value_two) / 2) > 0.1)
             {
-                snapshot_for_converged_ = SMAX(snapshot_for_converged_, l - scale);
+                snapshot_for_converged_ = SMAX(snapshot_for_converged_, snapshot_index - scale);
                 break; /** This break just jump out of dimension iteration.  */
             }
         }
@@ -85,21 +85,21 @@ void RegressionTestTimeAverage<ObserveMethodType>::searchSteadyStart()
 template <class ObserveMethodType>
 void RegressionTestTimeAverage<ObserveMethodType>::calculateNewVariance(BiVector<VariableType> &current_result_trans)
 {
-    for (int k = 0; k != this->observation_; ++k)
+    for (int observation_index = 0; observation_index != this->observation_; ++observation_index)
     {
-        for (int l = snapshot_for_converged_; l != this->snapshot_; ++l)
+        for (int snapshot_index = snapshot_for_converged_; snapshot_index != this->snapshot_; ++snapshot_index)
         {
-            VariableType deviation = current_result_trans[k][l] - local_meanvalue_[k];
-            variance_new_[k] += component_square(deviation);
+            VariableType deviation = current_result_trans[observation_index][snapshot_index] - local_meanvalue_[observation_index];
+            variance_new_[observation_index] += component_square(deviation);
         }
 
-        variance_new_[k] = transform_component(
-            variance_new_[k], [&](Real variance_new, Real variance, Real local_meanvalue)
+        variance_new_[observation_index] = transform_component(
+            variance_new_[observation_index], [&](Real variance_new, Real variance, Real local_meanvalue)
             { return SMAX(
                   variance_new / Real(this->snapshot_ - snapshot_for_converged_),
                   variance,
                   (Real)pow(local_meanvalue * Real(0.01), 2)); },
-            variance_[k], local_meanvalue_[k]);
+            variance_[observation_index], local_meanvalue_[observation_index]);
     }
 }
 //=================================================================================================//
@@ -108,10 +108,10 @@ int RegressionTestTimeAverage<ObserveMethodType>::compareParameter(
     std::string par_name, StdVec<VariableType> &parameter, StdVec<VariableType> &parameter_new, VariableType &threshold)
 {
     int count = 0;
-    for (int k = 0; k != this->observation_; ++k)
+    for (int observation_index = 0; observation_index != this->observation_; ++observation_index)
     {
         for_each_component(
-            parameter[k], [&](Real para, Real para_new, Real thr)
+            parameter[observation_index], [&](Real para, Real para_new, Real thr)
             { 
                 if ((par_name == "meanvalue") && (ABS(para) < 0.005) && (ABS(para_new) < 0.005))
                 {
@@ -123,12 +123,12 @@ int RegressionTestTimeAverage<ObserveMethodType>::compareParameter(
                     Real rel_value = ABS((para - para_new) / (para_new + TinyReal));
                     if (rel_value > thr)
                     {
-                        std::cout << par_name << ": " << this->quantity_name_ << "[" << k << "]"
+                        std::cout << par_name << ": " << this->quantity_name_ << "[" << observation_index << "]"
                                   << " has a component is not converged, and difference is " << rel_value << std::endl;
                         count++;
                     }
                 } },
-            parameter_new[k], threshold);
+            parameter_new[observation_index], threshold);
     }
     return count;
 }
@@ -139,17 +139,17 @@ int RegressionTestTimeAverage<ObserveMethodType>::testNewResult(
     StdVec<VariableType> &meanvalue, StdVec<VariableType> &local_meanvalue, StdVec<VariableType> &variance)
 {
     int count = 0;
-    for (int k = 0; k != this->observation_; ++k)
+    for (int observation_index = 0; observation_index != this->observation_; ++observation_index)
     {
-        for (int l = snapshot_for_converged_; l != this->snapshot_; ++l)
+        for (int snapshot_index = snapshot_for_converged_; snapshot_index != this->snapshot_; ++snapshot_index)
         {
-            VariableType deviation = current_result[l][k] - local_meanvalue[k];
-            variance_new_[k] += component_square(deviation);
+            VariableType deviation = current_result[snapshot_index][observation_index] - local_meanvalue[observation_index];
+            variance_new_[observation_index] += component_square(deviation);
         }
-        variance_new_[k] /= Real(this->snapshot_ - snapshot_for_converged_);
+        variance_new_[observation_index] /= Real(this->snapshot_ - snapshot_for_converged_);
 
         for_each_component(
-            meanvalue[k], [&](Real mean, Real local_mean, Real var, Real var_new)
+            meanvalue[observation_index], [&](Real mean, Real local_mean, Real var, Real var_new)
             { 
                 if ((ABS(mean) < 0.005) && (ABS(local_mean) < 0.005))
                 {
@@ -161,21 +161,20 @@ int RegressionTestTimeAverage<ObserveMethodType>::testNewResult(
                     Real rel_value = ABS((mean - local_mean) / (mean + TinyReal));
                     if (rel_value > 0.1 || var_new > (1.01 * var))
                     {
-                        std::cout << this->quantity_name_ << "[" << k << "]"
+                        std::cout << this->quantity_name_ << "[" << observation_index << "]"
                                   << " has a component beyond the exception !" << std::endl;
                         std::cout << "The meanvalue component is " << mean << ", and the current meanvalue is " << local_mean << std::endl;
                         std::cout << "The variance component is " << var << ", and the current variance is " << var_new << std::endl;
                         count++;
                     }
                 } },
-            local_meanvalue[k], variance[k], variance_new_[k]);
+            local_meanvalue[observation_index], variance[observation_index], variance_new_[observation_index]);
     }
     return count;
 }
 //=================================================================================================//
 template <class ObserveMethodType>
-void RegressionTestTimeAverage<ObserveMethodType>::initializeThreshold(
-    VariableType &threshold_mean, VariableType &threshold_variance)
+void RegressionTestTimeAverage<ObserveMethodType>::initializeThreshold(VariableType &threshold_mean, VariableType &threshold_variance)
 {
     threshold_mean_ = threshold_mean;
     threshold_variance_ = threshold_variance;
@@ -205,22 +204,22 @@ void RegressionTestTimeAverage<ObserveMethodType>::readMeanVarianceFromXml()
     if (this->number_of_run_ > 1)
     {
         mean_variance_xml_engine_in_.loadXmlFile(mean_variance_filefullpath_);
-        SimTK::Xml::Element meanvalue_element = mean_variance_xml_engine_in_.getChildElement("MeanValue_Element");
-        SimTK::Xml::element_iterator ele_ite_mean_ = meanvalue_element.element_begin();
-        for (; ele_ite_mean_ != meanvalue_element.element_end(); ++ele_ite_mean_)
-            for (int k = 0; k != this->observation_; ++k)
+        SimTK::Xml::Element meanvalue_element_ = mean_variance_xml_engine_in_.getChildElement("MeanValue_Element");
+        SimTK::Xml::element_iterator ele_ite_mean_ = meanvalue_element_.element_begin();
+        for (; ele_ite_mean_ != meanvalue_element_.element_end(); ++ele_ite_mean_)
+            for (int observation_index = 0; observation_index != this->observation_; ++observation_index)
             {
-                std::string attribute_name = this->quantity_name_ + "_" + std::to_string(k);
-                mean_variance_xml_engine_in_.getRequiredAttributeValue(ele_ite_mean_, attribute_name, meanvalue_[k]);
+                std::string attribute_name_ = this->quantity_name_ + "_" + std::to_string(observation_index);
+                mean_variance_xml_engine_in_.getRequiredAttributeValue(ele_ite_mean_, attribute_name_, meanvalue_[observation_index]);
             }
 
-        SimTK::Xml::Element variance_element = mean_variance_xml_engine_in_.getChildElement("Variance_Element");
-        SimTK::Xml::element_iterator ele_ite_variance = variance_element.element_begin();
-        for (; ele_ite_variance != variance_element.element_end(); ++ele_ite_variance)
-            for (int k = 0; k != this->observation_; ++k)
+        SimTK::Xml::Element variance_element_ = mean_variance_xml_engine_in_.getChildElement("Variance_Element");
+        SimTK::Xml::element_iterator ele_ite_variance_ = variance_element_.element_begin();
+        for (; ele_ite_variance_ != variance_element_.element_end(); ++ele_ite_variance_)
+            for (int observation_index = 0; observation_index != this->observation_; ++observation_index)
             {
-                std::string attribute_name = this->quantity_name_ + "_" + std::to_string(k);
-                mean_variance_xml_engine_in_.getRequiredAttributeValue(ele_ite_variance, attribute_name, variance_[k]);
+                std::string attribute_name_ = this->quantity_name_ + "_" + std::to_string(observation_index);
+                mean_variance_xml_engine_in_.getRequiredAttributeValue(ele_ite_variance_, attribute_name_, variance_[observation_index]);
             }
     }
 }
@@ -237,26 +236,25 @@ template <class ObserveMethodType>
 void RegressionTestTimeAverage<ObserveMethodType>::filterExtremeValues()
 {
     filterLocalResult(this->current_result_);
-    filefullpath_filter_output_ = this->input_folder_path_ + "/" +
-                                  this->dynamics_identifier_name_ + "_" + this->quantity_name_ + ".dat";
+    filefullpath_filter_output_ = this->input_folder_path_ + "/" + this->dynamics_identifier_name_ + "_" + this->quantity_name_ + ".dat";
     std::ofstream out_file(filefullpath_filter_output_.c_str(), std::ios::app);
     out_file << "run_time"
              << "   ";
-    for (int k = 0; k != this->observation_; ++k)
+    for (int observation_index = 0; observation_index != this->observation_; ++observation_index)
     {
-        std::string quantity_name_i = this->quantity_name_ + "[" + std::to_string(k) + "]";
+        std::string quantity_name_i = this->quantity_name_ + "[" + std::to_string(observation_index) + "]";
         this->plt_engine_.writeAQuantityHeader(out_file, this->current_result_[0][0], quantity_name_i);
     }
     out_file << "\n";
     out_file.close();
 
-    for (int l = 0; l != this->snapshot_; ++l)
+    for (int snapshot_index = 0; snapshot_index != this->snapshot_; ++snapshot_index)
     {
         std::ofstream out_file(filefullpath_filter_output_.c_str(), std::ios::app);
-        out_file << this->element_tag_[l] << "   ";
-        for (int k = 0; k != this->observation_; ++k)
+        out_file << this->element_tag_[snapshot_index] << "   ";
+        for (int observation_index = 0; observation_index != this->observation_; ++observation_index)
         {
-            this->plt_engine_.writeAQuantity(out_file, this->current_result_[l][k]);
+            this->plt_engine_.writeAQuantity(out_file, this->current_result_[snapshot_index][observation_index]);
         }
         out_file << "\n";
         out_file.close();
@@ -266,14 +264,14 @@ void RegressionTestTimeAverage<ObserveMethodType>::filterExtremeValues()
 template <class ObserveMethodType>
 void RegressionTestTimeAverage<ObserveMethodType>::updateMeanVariance()
 {
-    for (int k = 0; k != this->observation_; ++k)
+    for (int observation_index = 0; observation_index != this->observation_; ++observation_index)
     {
-        for (int l = snapshot_for_converged_; l != this->snapshot_; ++l)
+        for (int snapshot_index = snapshot_for_converged_; snapshot_index != this->snapshot_; ++snapshot_index)
         {
-            local_meanvalue_[k] += this->current_result_[l][k];
+            local_meanvalue_[observation_index] += this->current_result_[snapshot_index][observation_index];
         }
-        local_meanvalue_[k] = local_meanvalue_[k] / (this->snapshot_ - snapshot_for_converged_);
-        meanvalue_new_[k] = (local_meanvalue_[k] + meanvalue_[k] * (this->number_of_run_ - 1)) / this->number_of_run_;
+        local_meanvalue_[observation_index] = local_meanvalue_[observation_index] / (this->snapshot_ - snapshot_for_converged_);
+        meanvalue_new_[observation_index] = (local_meanvalue_[observation_index] + meanvalue_[observation_index] * (this->number_of_run_ - 1)) / this->number_of_run_;
     }
     calculateNewVariance(this->current_result_trans_);
 }
@@ -282,22 +280,22 @@ template <class ObserveMethodType>
 void RegressionTestTimeAverage<ObserveMethodType>::writeMeanVarianceToXml()
 {
     mean_variance_xml_engine_out_.addElementToXmlDoc("MeanValue_Element");
-    SimTK::Xml::Element meanvalue_element = mean_variance_xml_engine_out_.getChildElement("MeanValue_Element");
-    mean_variance_xml_engine_out_.addChildToElement(meanvalue_element, "Snapshot_MeanValue");
-    for (int k = 0; k != this->observation_; ++k)
+    SimTK::Xml::Element meanvalue_element_ = mean_variance_xml_engine_out_.getChildElement("MeanValue_Element");
+    mean_variance_xml_engine_out_.addChildToElement(meanvalue_element_, "Snapshot_MeanValue");
+    for (int observation_index = 0; observation_index != this->observation_; ++observation_index)
     {
-        SimTK::Xml::element_iterator ele_ite_mean = meanvalue_element.element_begin();
-        std::string attribute_name = this->quantity_name_ + "_" + std::to_string(k);
-        mean_variance_xml_engine_out_.setAttributeToElement(ele_ite_mean, attribute_name, meanvalue_new_[k]);
+        SimTK::Xml::element_iterator ele_ite_mean = meanvalue_element_.element_begin();
+        std::string attribute_name_ = this->quantity_name_ + "_" + std::to_string(observation_index);
+        mean_variance_xml_engine_out_.setAttributeToElement(ele_ite_mean, attribute_name_, meanvalue_new_[observation_index]);
     }
     mean_variance_xml_engine_out_.addElementToXmlDoc("Variance_Element");
-    SimTK::Xml::Element variance_element = mean_variance_xml_engine_out_.getChildElement("Variance_Element");
-    mean_variance_xml_engine_out_.addChildToElement(variance_element, "Snapshot_Variance");
-    for (int k = 0; k != this->observation_; ++k)
+    SimTK::Xml::Element variance_element_ = mean_variance_xml_engine_out_.getChildElement("Variance_Element");
+    mean_variance_xml_engine_out_.addChildToElement(variance_element_, "Snapshot_Variance");
+    for (int observation_index = 0; observation_index != this->observation_; ++observation_index)
     {
-        SimTK::Xml::element_iterator ele_ite_variance = variance_element.element_begin();
-        std::string attribute_name = this->quantity_name_ + "_" + std::to_string(k);
-        mean_variance_xml_engine_out_.setAttributeToElement(ele_ite_variance, attribute_name, variance_new_[k]);
+        SimTK::Xml::element_iterator ele_ite_variance = variance_element_.element_begin();
+        std::string attribute_name_ = this->quantity_name_ + "_" + std::to_string(observation_index);
+        mean_variance_xml_engine_out_.setAttributeToElement(ele_ite_variance, attribute_name_, variance_new_[observation_index]);
     }
     mean_variance_xml_engine_out_.writeToXmlFile(mean_variance_filefullpath_);
 }
@@ -318,16 +316,14 @@ bool RegressionTestTimeAverage<ObserveMethodType>::compareMeanVariance()
             {
                 this->converged_ = "true";
                 this->label_for_repeat_++;
-                std::cout << "The meanvalue and variance of " << this->quantity_name_
-                          << " are converged enough times, and run will stop now." << std::endl;
+                std::cout << "The meanvalue and variance of " << this->quantity_name_ << " are converged enough times, and run will stop now." << std::endl;
                 return true;
             }
             else
             {
                 this->converged_ = "false";
                 this->label_for_repeat_++;
-                std::cout << "The variance of " << this->quantity_name_
-                          << " are also converged, and this is the " << this->label_for_repeat_
+                std::cout << "The variance of " << this->quantity_name_ << " are also converged, and this is the " << this->label_for_repeat_
                           << " times. They should be converged more times to be stable." << std::endl;
                 return false;
             }
@@ -336,8 +332,7 @@ bool RegressionTestTimeAverage<ObserveMethodType>::compareMeanVariance()
         {
             this->converged_ = "false";
             this->label_for_repeat_ = 0;
-            std::cout << "The variance of " << this->quantity_name_ << " are not converged "
-                      << count_not_converged_v << " times." << std::endl;
+            std::cout << "The variance of " << this->quantity_name_ << " are not converged " << count_not_converged_v << " times." << std::endl;
             return false;
         };
     }
@@ -345,8 +340,7 @@ bool RegressionTestTimeAverage<ObserveMethodType>::compareMeanVariance()
     {
         this->converged_ = "false";
         this->label_for_repeat_ = 0;
-        std::cout << "The meanvalue of " << this->quantity_name_ << " are not converged "
-                  << count_not_converged_m << " times." << std::endl;
+        std::cout << "The meanvalue of " << this->quantity_name_ << " are not converged " << count_not_converged_m << " times." << std::endl;
         return false;
     }
 }
@@ -356,17 +350,16 @@ void RegressionTestTimeAverage<ObserveMethodType>::resultTest()
 {
     int test_wrong = 0;
 
-    for (int k = 0; k != this->observation_; ++k)
+    for (int observation_index = 0; observation_index != this->observation_; ++observation_index)
     {
-        for (int l = snapshot_for_converged_; l != this->snapshot_; ++l)
-            local_meanvalue_[k] += this->current_result_[l][k];
-        local_meanvalue_[k] = local_meanvalue_[k] / (this->snapshot_ - snapshot_for_converged_);
+        for (int snapshot_index = snapshot_for_converged_; snapshot_index != this->snapshot_; ++snapshot_index)
+            local_meanvalue_[observation_index] += this->current_result_[snapshot_index][observation_index];
+        local_meanvalue_[observation_index] = local_meanvalue_[observation_index] / (this->snapshot_ - snapshot_for_converged_);
     }
 
     test_wrong = testNewResult(this->current_result_, meanvalue_, local_meanvalue_, variance_);
     if (test_wrong == 0)
-        std::cout << "The result of " << this->quantity_name_
-                  << " is correct based on the time-averaged regression test!" << std::endl;
+        std::cout << "The result of " << this->quantity_name_ << " is correct based on the time-averaged regression test!" << std::endl;
     else
     {
         std::cout << "There are " << test_wrong << " particles are not within the expected range." << std::endl;
