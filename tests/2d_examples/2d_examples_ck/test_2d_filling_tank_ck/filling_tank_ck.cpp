@@ -168,8 +168,6 @@ int main(int ac, char *av[])
 
     StateDynamics<MainExecutionPolicy, fluid_dynamics::InflowConditionCK<AlignedBoxPartByParticle, InletInflowCondition>> inflow_condition(emitter);
     StateDynamics<SequencedExecutionPolicy, fluid_dynamics::EmitterInflowInjectionCK<AlignedBoxPartByParticle>> emitter_injection(emitter, inlet_buffer);
-    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::FreeSurfaceIndicationComplexSpatialTemporalCK>
-        fluid_boundary_indicator(water_body_inner, water_wall_contact);
 
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
