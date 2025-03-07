@@ -214,7 +214,7 @@ void velocity_validation(
         Real vel_x_simulation = observer_vel[index][0];
 
         // Check if within tolerance
-        if (std::abs(vel_x_simulation - vel_x_analytical) <= tolerance_factor * U_f)
+        if (std::abs((vel_x_simulation - vel_x_analytical) / vel_x_analytical) <= tolerance_factor)
         {
             total_passed++;
         }
@@ -225,7 +225,7 @@ void velocity_validation(
             msg << "Mismatch at observer index " << index
                 << " | Analytical: " << vel_x_analytical
                 << " | Simulation: " << vel_x_simulation
-                << " | Error: " << std::abs(vel_x_simulation - vel_x_analytical);
+                << " | Error: " << std::abs((vel_x_simulation - vel_x_analytical) / vel_x_analytical);
             failure_messages.push_back(msg.str());
         }
     }
