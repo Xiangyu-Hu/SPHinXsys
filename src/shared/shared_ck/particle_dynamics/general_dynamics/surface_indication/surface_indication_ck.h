@@ -9,7 +9,6 @@ namespace SPH
 {
 namespace fluid_dynamics
 {
-
 /**
  * @class FreeSurfaceIndicationCK
  * @brief Free-surface indication with configurable relationship types.
@@ -38,6 +37,7 @@ class FreeSurfaceIndicationCK<Base, RelationType<Parameters...>>
     explicit FreeSurfaceIndicationCK(BaseRelationType &base_relation);
     virtual ~FreeSurfaceIndicationCK() {}
 
+    //------------------------------------------------------------------------------------------//
     /**
      * @class InteractKernel
      * @brief Base interaction kernel that calculates positional divergence,
@@ -65,32 +65,38 @@ class FreeSurfaceIndicationCK<Base, RelationType<Parameters...>>
     DiscreteVariable<int> *dv_indicator_;
     DiscreteVariable<Real> *dv_pos_div_;
     DiscreteVariable<Real> *dv_Vol_;
-    DiscreteVariable<int> *dv_previous_surface_indicator_;
     Real dv_threshold_by_dimensions_;
     Real dv_smoothing_length_;
 };
 
 //=================================================================================================//
-// Specialization for Inner<WithUpdate, Internal, Parameters...>
+// Inner relation version with "WithUpdate"
 //=================================================================================================//
-template <typename... Parameters>
-class FreeSurfaceIndicationCK<Inner<WithUpdate, Internal, Parameters...>>
+/**
+ * @class FreeSurfaceIndicationCK<Inner<WithUpdate, FlowType, Parameters...>>
+ * @brief Extends the base free-surface indication for inner relations that also require
+ *        an updating step (e.g., "WithUpdate").
+ */
+template <class FlowType, typename... Parameters>
+class FreeSurfaceIndicationCK<Inner<WithUpdate, FlowType, Parameters...>>
     : public FreeSurfaceIndicationCK<Base, Inner<Parameters...>>
 {
   public:
     explicit FreeSurfaceIndicationCK(Relation<Inner<Parameters...>> &inner_relation);
     virtual ~FreeSurfaceIndicationCK() {}
 
+    //------------------------------------------------------------------------------------------//
     /**
      * @class InteractKernel
      * @brief Interaction kernel for detecting free surface in an inner relation.
      */
-    class InteractKernel : public FreeSurfaceIndicationCK<Base, Inner<Parameters...>>::InteractKernel
+    class InteractKernel
+        : public FreeSurfaceIndicationCK<Base, Inner<Parameters...>>::InteractKernel
     {
       public:
         template <class ExecutionPolicy>
         InteractKernel(const ExecutionPolicy &ex_policy,
-                       FreeSurfaceIndicationCK<Inner<WithUpdate, Internal, Parameters...>> &encloser);
+                       FreeSurfaceIndicationCK<Inner<WithUpdate, FlowType, Parameters...>> &encloser);
 
         void interact(size_t index_i, Real dt = 0.0);
 
@@ -98,113 +104,42 @@ class FreeSurfaceIndicationCK<Inner<WithUpdate, Internal, Parameters...>>
         int *previous_surface_indicator_;
     };
 
+    //------------------------------------------------------------------------------------------//
     /**
      * @class UpdateKernel
-     * @brief Update kernel that modifies the surface indicator based on the newly computed
-     *        positional divergences and neighbor information.
+     * @brief Post-processing/update kernel that modifies the surface indicator
+     *        based on the newly computed positional divergences and neighbor information.
      */
-    class UpdateKernel : public FreeSurfaceIndicationCK<Base, Inner<Parameters...>>::InteractKernel
+    class UpdateKernel
+        : public FreeSurfaceIndicationCK<Base, Inner<Parameters...>>::InteractKernel
     {
       public:
         template <class ExecutionPolicy>
         UpdateKernel(const ExecutionPolicy &ex_policy,
-                     FreeSurfaceIndicationCK<Inner<WithUpdate, Internal, Parameters...>> &encloser);
+                     FreeSurfaceIndicationCK<Inner<WithUpdate, FlowType, Parameters...>> &encloser);
 
         void update(size_t index_i, Real dt = 0.0);
 
       protected:
         int *previous_surface_indicator_;
+        FreeSurfaceIndicationCK<Inner<WithUpdate, FlowType, Parameters...>> *outer_;
     };
 
   protected:
     DiscreteVariable<int> *dv_previous_surface_indicator_;
 };
 
+//------------------------------------------------------------------------------------------//
+// Common type alias for internal flow with free-surface indication (with update).
+using FreeSurfaceIndicationInnerCK = FreeSurfaceIndicationCK<Inner<WithUpdate, Internal>>;
+
 //=================================================================================================//
-// Specialization for Inner<Base, Internal, Parameters...>
+// Contact relation version
 //=================================================================================================//
 /**
- * @brief Specialization for inner relations without update.
- *
- * This version omits any update kernel, so that the update step is not executed.
+ * @class FreeSurfaceIndicationCK<Contact<Parameters...>>
+ * @brief Extends the base free-surface indication for contact relations.
  */
-template <typename... Parameters>
-class FreeSurfaceIndicationCK<Inner<Base, Internal, Parameters...>>
-    : public FreeSurfaceIndicationCK<Base, Inner<Parameters...>>
-{
-  public:
-    explicit FreeSurfaceIndicationCK(Relation<Inner<Parameters...>> &inner_relation);
-    virtual ~FreeSurfaceIndicationCK() {}
-
-    // Provide only an InteractKernel (no UpdateKernel)
-    class InteractKernel : public FreeSurfaceIndicationCK<Base, Inner<Parameters...>>::InteractKernel
-    {
-      public:
-        template <class ExecutionPolicy>
-        InteractKernel(const ExecutionPolicy &ex_policy,
-                       FreeSurfaceIndicationCK<Inner<Base, Internal, Parameters...>> &encloser);
-
-        void interact(size_t index_i, Real dt = 0.0);
-    };
-};
-
-//=================================================================================================//
-// Specialization for Inner<WithUpdate, SpatialTemporal, Parameters...>
-//=================================================================================================//
-template <typename... Parameters>
-class FreeSurfaceIndicationCK<Inner<WithUpdate, SpatialTemporal, Parameters...>>
-    : public FreeSurfaceIndicationCK<Base, Inner<Parameters...>>
-{
-  public:
-    explicit FreeSurfaceIndicationCK(Relation<Inner<Parameters...>> &inner_relation);
-    virtual ~FreeSurfaceIndicationCK() {}
-
-    /**
-     * @class InteractKernel
-     * @brief Interaction kernel for detecting free surface in a spatial-temporal inner relation.
-     */
-    class InteractKernel : public FreeSurfaceIndicationCK<Base, Inner<Parameters...>>::InteractKernel
-    {
-      public:
-        template <class ExecutionPolicy>
-        InteractKernel(const ExecutionPolicy &ex_policy,
-                       FreeSurfaceIndicationCK<Inner<WithUpdate, SpatialTemporal, Parameters...>> &encloser);
-
-        void interact(size_t index_i, Real dt = 0.0);
-
-        /// Pointer to the previously stored surface indicator.
-        int *previous_surface_indicator_;
-        int *is_near_surface_indicator_;
-    };
-
-    /**
-     * @class UpdateKernel
-     * @brief Update kernel that modifies the surface indicator based on the newly computed
-     *        positional divergences and neighbor information.
-     */
-    class UpdateKernel : public FreeSurfaceIndicationCK<Base, Inner<Parameters...>>::InteractKernel
-    {
-      public:
-        template <class ExecutionPolicy>
-        UpdateKernel(const ExecutionPolicy &ex_policy,
-                     FreeSurfaceIndicationCK<Inner<WithUpdate, SpatialTemporal, Parameters...>> &encloser);
-
-        void update(size_t index_i, Real dt = 0.0);
-
-      protected:
-        int *previous_surface_indicator_;
-        int *is_near_surface_indicator_;
-    };
-
-  protected:
-    DiscreteVariable<int> *dv_previous_surface_indicator_;
-    DiscreteVariable<int> *dv_is_near_previous_surface_indicator_;
-    DiscreteVariable<int> *dv_is_near_surface_indicator_;
-};
-
-//=================================================================================================//
-// Specialization for Contact<Parameters...>
-//=================================================================================================//
 template <typename... Parameters>
 class FreeSurfaceIndicationCK<Contact<Parameters...>>
     : public FreeSurfaceIndicationCK<Base, Contact<Parameters...>>
@@ -213,11 +148,13 @@ class FreeSurfaceIndicationCK<Contact<Parameters...>>
     explicit FreeSurfaceIndicationCK(Relation<Contact<Parameters...>> &contact_relation);
     virtual ~FreeSurfaceIndicationCK() {}
 
+    //------------------------------------------------------------------------------------------//
     /**
      * @class InteractKernel
      * @brief Interaction kernel for a contact relation, combining data from multiple contact bodies.
      */
-    class InteractKernel : public FreeSurfaceIndicationCK<Base, Contact<Parameters...>>::InteractKernel
+    class InteractKernel
+        : public FreeSurfaceIndicationCK<Base, Contact<Parameters...>>::InteractKernel
     {
       public:
         template <class ExecutionPolicy>
@@ -236,45 +173,10 @@ class FreeSurfaceIndicationCK<Contact<Parameters...>>
 };
 
 //------------------------------------------------------------------------------------------//
-// Common type aliases for free-surface indication.
-using FreeSurfaceIndicationInnerCK = FreeSurfaceIndicationCK<Inner<WithUpdate, FreeSurface>>;
-using FreeSurfaceIndicationInnerSpatialTemporalCK = FreeSurfaceIndicationCK<Inner<WithUpdate, FreeSurface>, Inner<WithUpdate, SpatialTemporal>>;
-using FreeSurfaceIndicationComplexCK = FreeSurfaceIndicationCK<Inner<WithUpdate, Internal>, Contact<>>;
-using FreeSurfaceIndicationComplexSpatialTemporalCK = FreeSurfaceIndicationCK<Inner<WithUpdate, SpatialTemporal>, Contact<>>;
+// Common type alias for complex free-surface indication (inner + contact).
+using FreeSurfaceIndicationComplexSpatialTemporalCK = FreeSurfaceIndicationCK<Inner<WithUpdate, Internal>, Contact<>>;
+//------------------------------------------------------------------------------------------//
 
-class SurfaceIndicationByAlignedBoxCK : public BaseLocalDynamics<AlignedBoxPartByCell>
-{
-
-  public:
-    SurfaceIndicationByAlignedBoxCK(AlignedBoxPartByCell &aligned_box_part)
-        : BaseLocalDynamics<AlignedBoxPartByCell>(aligned_box_part),
-          sv_aligned_box_(aligned_box_part.svAlignedBox()),
-          dv_pos_(particles_->getVariableByName<Vecd>("Position")),
-          dv_indicator_(particles_->template registerStateVariableOnly<int>("Indicator")),
-          previous_surface_indicator_(particles_->template registerStateVariableOnly<int>("PreviousSurfaceIndicator"))
-    {
-    }
-    virtual ~SurfaceIndicationByAlignedBoxCK() {};
-
-    class UpdateKernel
-    {
-      public:
-        template <class ExecutionPolicy, class EncloserType>
-        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-        void update(size_t index_i, Real dt = 0.0); // only works in sequenced policy
-
-      protected:
-        AlignedBox *aligned_box_;
-        Vecd *pos_;
-        int *indicator_;
-    };
-
-  protected:
-    SingularVariable<AlignedBox> *sv_aligned_box_;
-    DiscreteVariable<Vecd> *dv_pos_;
-    DiscreteVariable<int> *dv_indicator_;
-    DiscreteVariable<int> *previous_surface_indicator_;
-};
 } // namespace fluid_dynamics
 } // namespace SPH
 

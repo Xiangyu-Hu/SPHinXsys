@@ -163,6 +163,9 @@ int main(int ac, char *av[])
     ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AdvectionTimeStepCK> fluid_advection_time_step(water_body, U_f);
     ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticTimeStepCK> fluid_acoustic_time_step(water_body);
 
+    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::FreeSurfaceIndicationComplexSpatialTemporalCK>
+        fluid_boundary_indicator(water_body_inner, water_wall_contact);
+
     StateDynamics<MainExecutionPolicy, fluid_dynamics::InflowConditionCK<AlignedBoxPartByParticle, InletInflowCondition>> inflow_condition(emitter);
     StateDynamics<SequencedExecutionPolicy, fluid_dynamics::EmitterInflowInjectionCK<AlignedBoxPartByParticle>> emitter_injection(emitter, inlet_buffer);
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::FreeSurfaceIndicationComplexSpatialTemporalCK>
@@ -223,6 +226,7 @@ int main(int ac, char *av[])
 
             water_advection_step_setup.exec();
             Real advection_dt = fluid_advection_time_step.exec();
+            fluid_boundary_indicator.exec();
 
             /** Dynamics including pressure relaxation. */
             Real relaxation_time = 0.0;
