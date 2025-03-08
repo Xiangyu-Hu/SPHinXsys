@@ -26,7 +26,7 @@ std::string diffusion_species_name = "Phi";
 Real initial_temperature = 100.0;
 Real left_temperature = 300.0;
 Real right_temperature = 350.0;
-Real heat_flux = 900.0; //from the Nemann boundary
+Real heat_flux = 900.0; // from the Nemann boundary
 //----------------------------------------------------------------------
 //	Generate 2D geometrics used in the case.
 //----------------------------------------------------------------------
@@ -177,13 +177,13 @@ int main(int ac, char *av[])
     RungeKuttaSequence<InteractionDynamicsCK<
         MainExecutionPolicy,
         DiffusionRelaxationCK<
-            Inner<OneLevel, RungeKutta1stStage, IsotropicDiffusion, LinearCorrectionCK>,
-            Contact<InteractionOnly, Dirichlet<IsotropicDiffusion>, LinearCorrectionCK>,
-            Contact<InteractionOnly, Neumann<IsotropicDiffusion>, LinearCorrectionCK>>,
+            Inner<OneLevel, RungeKutta1stStage, IsotropicDiffusion, NoKernelCorrectionCK>,
+            Contact<InteractionOnly, Dirichlet<IsotropicDiffusion>, NoKernelCorrectionCK>,
+            Contact<InteractionOnly, Neumann<IsotropicDiffusion>, NoKernelCorrectionCK>>,
         DiffusionRelaxationCK<
-            Inner<OneLevel, RungeKutta2ndStage, IsotropicDiffusion, LinearCorrectionCK>,
-            Contact<InteractionOnly, Dirichlet<IsotropicDiffusion>, LinearCorrectionCK>,
-            Contact<InteractionOnly, Neumann<IsotropicDiffusion>, LinearCorrectionCK>>>>
+            Inner<OneLevel, RungeKutta2ndStage, IsotropicDiffusion, NoKernelCorrectionCK>,
+            Contact<InteractionOnly, Dirichlet<IsotropicDiffusion>, NoKernelCorrectionCK>,
+            Contact<InteractionOnly, Neumann<IsotropicDiffusion>, NoKernelCorrectionCK>>>>
         diffusion_relaxation_rk2(DynamicsArgs(diffusion_body_inner, &isotropic_diffusion),
                                  DynamicsArgs(diffusion_body_contact_Dirichlet, &isotropic_diffusion),
                                  DynamicsArgs(diffusion_body_contact_Neumann, &isotropic_diffusion));
