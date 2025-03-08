@@ -177,13 +177,13 @@ int main(int ac, char *av[])
     RungeKuttaSequence<InteractionDynamicsCK<
         MainExecutionPolicy,
         DiffusionRelaxationCK<
-            Inner<OneLevel, RungeKutta1stStage, IsotropicDiffusion, KernelGradientInnerCK>,
-            Contact<InteractionOnly, Dirichlet<IsotropicDiffusion>, KernelGradientContactCK>,
-            Contact<InteractionOnly, Neumann<IsotropicDiffusion>, KernelGradientContactCK>>,
+            Inner<OneLevel, RungeKutta1stStage, IsotropicDiffusion, LinearCorrectionCK>,
+            Contact<InteractionOnly, Dirichlet<IsotropicDiffusion>, LinearCorrectionCK>,
+            Contact<InteractionOnly, Neumann<IsotropicDiffusion>, LinearCorrectionCK>>,
         DiffusionRelaxationCK<
-            Inner<OneLevel, RungeKutta2ndStage, IsotropicDiffusion, KernelGradientInnerCK>,
-            Contact<InteractionOnly, Dirichlet<IsotropicDiffusion>, KernelGradientContactCK>,
-            Contact<InteractionOnly, Neumann<IsotropicDiffusion>, KernelGradientContactCK>>>>
+            Inner<OneLevel, RungeKutta2ndStage, IsotropicDiffusion, LinearCorrectionCK>,
+            Contact<InteractionOnly, Dirichlet<IsotropicDiffusion>, LinearCorrectionCK>,
+            Contact<InteractionOnly, Neumann<IsotropicDiffusion>, LinearCorrectionCK>>>>
         diffusion_relaxation_rk2(DynamicsArgs(diffusion_body_inner, &isotropic_diffusion),
                                  DynamicsArgs(diffusion_body_contact_Dirichlet, &isotropic_diffusion),
                                  DynamicsArgs(diffusion_body_contact_Neumann, &isotropic_diffusion));

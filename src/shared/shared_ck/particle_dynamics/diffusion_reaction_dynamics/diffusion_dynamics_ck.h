@@ -36,90 +36,6 @@
 
 namespace SPH
 {
-class KernelGradientInnerCK
-{
-  public:
-    explicit KernelGradientInnerCK(BaseParticles *inner_particles) {};
-    class ComputingKernel
-    {
-      public:
-        template <class ExecutionPolicy, class EncloserType>
-        ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser){};
-        Vecd operator()(UnsignedInt index_i, UnsignedInt index_j, Real dW_ijV_j, const Vecd &e_ij)
-        {
-            return dW_ijV_j * e_ij;
-        };
-    };
-};
-
-class CorrectedKernelGradientInnerCK
-{
-    DiscreteVariable<Matd> *dv_B_;
-
-  public:
-    explicit CorrectedKernelGradientInnerCK(BaseParticles *particles)
-        : dv_B_(particles->getVariableByName<Matd>("LinearCorrectionMatrix")) {};
-
-    class ComputingKernel
-    {
-        Matd *B_;
-
-      public:
-        template <class ExecutionPolicy, class EncloserType>
-        ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : B_(encloser.dv_B_->DelegatedData(ex_policy)){};
-
-        Vecd operator()(UnsignedInt index_i, UnsignedInt index_j, Real dW_ijV_j, const Vecd &e_ij)
-        {
-            return 0.5 * dW_ijV_j * (B_[index_i] + B_[index_j]) * e_ij;
-        };
-    };
-};
-
-class KernelGradientContactCK
-{
-  public:
-    KernelGradientContactCK(BaseParticles *inner_particles, BaseParticles *contact_particles) {};
-    class ComputingKernel
-    {
-      public:
-        template <class ExecutionPolicy, class EncloserType>
-        ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser){};
-        Vecd operator()(UnsignedInt index_i, UnsignedInt index_j, Real dW_ijV_j, const Vecd &e_ij)
-        {
-            return dW_ijV_j * e_ij;
-        };
-    };
-};
-
-class CorrectedKernelGradientContactCK
-{
-    DiscreteVariable<Matd> *dv_B_;
-    DiscreteVariable<Matd> *dv_contact_B_;
-
-  public:
-    CorrectedKernelGradientContactCK(BaseParticles *inner_particles, BaseParticles *contact_particles)
-        : dv_B_(inner_particles->getVariableByName<Matd>("LinearCorrectionMatrix")),
-          dv_contact_B_(contact_particles->getVariableByName<Matd>("LinearCorrectionMatrix")) {};
-
-    class ComputingKernel
-    {
-        Matd *B_;
-        Matd *contact_B_;
-
-      public:
-        template <class ExecutionPolicy, class EncloserType>
-        ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : B_(encloser.dv_B_->DelegatedData(ex_policy)),
-              contact_B_(encloser.dv_contact_B_->DelegatedData(ex_policy)){};
-
-        Vecd operator()(UnsignedInt index_i, UnsignedInt index_j, Real dW_ijV_j, const Vecd &e_ij)
-        {
-            return 0.5 * dW_ijV_j * (B_[index_i] + contact_B_[index_j]) * e_ij;
-        };
-    };
-};
-
 template <typename... InteractionTypes>
 class DiffusionRelaxationCK;
 
@@ -165,12 +81,12 @@ class DiffusionRelaxationCK<DiffusionType, BaseInteractionType>
     DiscreteVariableArray<Real> dv_diffusion_dt_array_;
 };
 
-template <class DiffusionType, class KernelGradientType, class... Parameters>
-class DiffusionRelaxationCK<Inner<InteractionOnly, DiffusionType, KernelGradientType, Parameters...>>
+template <class DiffusionType, class KernelCorrectionType, class... Parameters>
+class DiffusionRelaxationCK<Inner<InteractionOnly, DiffusionType, KernelCorrectionType, Parameters...>>
     : public DiffusionRelaxationCK<DiffusionType, Interaction<Inner<Parameters...>>>
 {
     using BaseInteraction = DiffusionRelaxationCK<DiffusionType, Interaction<Inner<Parameters...>>>;
-    using GradientKernel = typename KernelGradientType::ComputingKernel;
+    using CorrectionKernel = typename KernelCorrectionType::ComputingKernel;
     using InterParticleDiffusionCoeff = typename DiffusionType::InterParticleDiffusionCoeff;
 
   public:
@@ -186,28 +102,27 @@ class DiffusionRelaxationCK<Inner<InteractionOnly, DiffusionType, KernelGradient
         void interact(UnsignedInt index_i, Real dt = 0.0);
 
       protected:
-        GradientKernel gradient_;
+        CorrectionKernel correction_;
         InterParticleDiffusionCoeff *inter_particle_diffusion_coeff_;
         Real *Vol_;
         Real smoothing_length_sq_;
     };
 
   protected:
-    KernelGradientType kernel_gradient_;
+    KernelCorrectionType kernel_correction_method_;
     ConstantArray<DiffusionType, InterParticleDiffusionCoeff> ca_inter_particle_diffusion_coeff_;
     DiscreteVariable<Real> *dv_Vol_;
     Real smoothing_length_sq_;
 };
 
-template <class DiffusionType, template <typename...> class BoundaryType, class KernelGradientType>
-class DiffusionRelaxationCK<Contact<InteractionOnly, BoundaryType<DiffusionType>, KernelGradientType>>
+template <class DiffusionType, template <typename...> class BoundaryType, class KernelCorrectionType>
+class DiffusionRelaxationCK<Contact<InteractionOnly, BoundaryType<DiffusionType>, KernelCorrectionType>>
     : public DiffusionRelaxationCK<DiffusionType, Interaction<Contact<>>>
 {
     UniquePtrsKeeper<DiscreteVariableArray<Real>> contact_transfer_array_ptrs_keeper_;
-    UniquePtrsKeeper<KernelGradientType> kernel_gradient_ptrs_keeper_;
     UniquePtrsKeeper<BoundaryType<DiffusionType>> boundary_ptrs_keeper_;
     using BaseInteraction = DiffusionRelaxationCK<DiffusionType, Interaction<Contact<>>>;
-    using GradientKernel = typename KernelGradientType::ComputingKernel;
+    using CorrectionKernel = typename KernelCorrectionType::ComputingKernel;
     using BoundaryKernel = typename BoundaryType<DiffusionType>::ComputingKernel;
 
   public:
@@ -224,16 +139,16 @@ class DiffusionRelaxationCK<Contact<InteractionOnly, BoundaryType<DiffusionType>
         void interact(UnsignedInt index_i, Real dt = 0.0);
 
       protected:
+        CorrectionKernel correction_;
         Real *contact_Vol_;
         DataArray<Real> *contact_transfer_;
-        GradientKernel gradient_;
         BoundaryKernel boundary_flux_;
     };
 
   protected:
+    KernelCorrectionType kernel_correction_method_;
     StdVec<DiscreteVariable<Real> *> dv_contact_Vol_;
     StdVec<DiscreteVariableArray<Real> *> contact_dv_transfer_array_;
-    StdVec<KernelGradientType *> contact_kernel_gradient_method_;
     StdVec<BoundaryType<DiffusionType> *> contact_boundary_method_;
 };
 
