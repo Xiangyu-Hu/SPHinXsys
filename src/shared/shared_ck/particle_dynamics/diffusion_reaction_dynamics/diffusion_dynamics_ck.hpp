@@ -25,7 +25,8 @@ DiffusionRelaxationCK<DiffusionType, BaseInteractionType>::
       dv_gradient_species_array_(this->particles_->template getVariablesByName<Real>(
           gradient_species_names_, "")),
       dv_diffusion_dt_array_(this->particles_->template registerStateVariables<Real>(
-          diffusion_species_names_, "ChangeRate"))
+          diffusion_species_names_, "ChangeRate")),
+      ca_inverse_volume_capacity_(this->diffusions_)
 {
     this->particles_->template addVariableToWrite<Real>(&dv_diffusion_species_array_);
     this->particles_->template addVariableToWrite<Real>(&dv_gradient_species_array_);
@@ -87,6 +88,12 @@ DiffusionRelaxationCK<DiffusionType, BaseInteractionType>::
       gradient_species_(encloser.dv_gradient_species_array_.DelegatedDataArray(ex_policy)),
       diffusion_dt_(encloser.dv_diffusion_dt_array_.DelegatedDataArray(ex_policy)),
       number_of_species_(encloser.diffusions_.size()) {}
+//=================================================================================================//
+template <class DiffusionType, class BaseInteractionType>
+template <class ExecutionPolicy, class EncloserType>
+DiffusionRelaxationCK<DiffusionType, BaseInteractionType>::
+    UpdateKernel::UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+    : cv1_(encloser.ca_inverse_volume_capacity_.DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <class DiffusionType, class KernelCorrectionType, class... Parameters>
 template <typename... Args>
@@ -204,7 +211,8 @@ template <template <typename...> class RelationType, class... InteractionParamet
 template <class ExecutionPolicy, class EncloserType>
 DiffusionRelaxationCK<RelationType<OneLevel, ForwardEuler, InteractionParameters...>>::
     UpdateKernel::UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-    : diffusion_species_(encloser.dv_diffusion_species_array_.DelegatedDataArray(ex_policy)),
+    : BaseDynamicsType::UpdateKernel(ex_policy, encloser),
+      diffusion_species_(encloser.dv_diffusion_species_array_.DelegatedDataArray(ex_policy)),
       diffusion_dt_(encloser.dv_diffusion_dt_array_.DelegatedDataArray(ex_policy)),
       number_of_species_(encloser.diffusions_.size()) {}
 //=================================================================================================//
@@ -214,7 +222,7 @@ void DiffusionRelaxationCK<RelationType<OneLevel, ForwardEuler, InteractionParam
 {
     for (UnsignedInt m = 0; m < number_of_species_; ++m)
     {
-        diffusion_species_[m][index_i] += dt * diffusion_dt_[m][index_i];
+        diffusion_species_[m][index_i] += this->cv1_[m](index_i) * dt * diffusion_dt_[m][index_i];
     }
 }
 //=================================================================================================//
