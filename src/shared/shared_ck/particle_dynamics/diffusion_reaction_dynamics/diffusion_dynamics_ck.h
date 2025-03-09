@@ -43,6 +43,7 @@ template <class DiffusionType, class BaseInteractionType>
 class DiffusionRelaxationCK<DiffusionType, BaseInteractionType>
     : public BaseInteractionType
 {
+    using InverseVolumetricCapacity = typename DiffusionType::InverseVolumetricCapacity;
     StdVec<DiffusionType *> obtainConcreteDiffusions(AbstractDiffusion &abstract_diffusion);
     StdVec<std::string> obtainDiffusionSpeciesNames(StdVec<DiffusionType *> &diffusions);
     StdVec<std::string> obtainGradientSpeciesNames(StdVec<DiffusionType *> &diffusions);
@@ -72,6 +73,16 @@ class DiffusionRelaxationCK<DiffusionType, BaseInteractionType>
         UnsignedInt number_of_species_;
     };
 
+    class UpdateKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+
+      protected:
+        InverseVolumetricCapacity *cv1_;
+    };
+
   protected:
     StdVec<DiffusionType *> diffusions_;
     StdVec<std::string> diffusion_species_names_;
@@ -79,6 +90,7 @@ class DiffusionRelaxationCK<DiffusionType, BaseInteractionType>
     DiscreteVariableArray<Real> dv_diffusion_species_array_;
     DiscreteVariableArray<Real> dv_gradient_species_array_;
     DiscreteVariableArray<Real> dv_diffusion_dt_array_;
+    ConstantArray<DiffusionType, InverseVolumetricCapacity> ca_inverse_volume_capacity_;
 };
 
 template <class DiffusionType, class KernelCorrectionType, class... Parameters>
@@ -175,7 +187,7 @@ class DiffusionRelaxationCK<RelationType<OneLevel, ForwardEuler, InteractionPara
         UnsignedInt number_of_species_;
     };
 
-    class UpdateKernel
+    class UpdateKernel : public BaseDynamicsType::UpdateKernel
     {
       public:
         template <class ExecutionPolicy, class EncloserType>
