@@ -296,8 +296,8 @@ int main(int ac, char *av[])
         water_block_initial_condition(water_block, diffusion_species_name, fluid_moisture);
     DynamicsSequence<InteractionDynamicsCK<
         MainExecutionPolicy,
-        DiffusionRelaxationCK<Contact<OneLevel, RungeKutta1stStage, Dirichlet<IsotropicDiffusion>, LinearCorrectionCK>>,
-        DiffusionRelaxationCK<Contact<OneLevel, RungeKutta2ndStage, Dirichlet<IsotropicDiffusion>, LinearCorrectionCK>>>>
+        DiffusionRelaxationCK<Contact<OneLevel, RungeKutta1stStage, Dirichlet<IsotropicDiffusion>, NoKernelCorrectionCK>>,
+        DiffusionRelaxationCK<Contact<OneLevel, RungeKutta2ndStage, Dirichlet<IsotropicDiffusion>, NoKernelCorrectionCK>>>>
         diffusion_relaxation_rk2(DynamicsArgs(cylinder_contact, &diffusion), DynamicsArgs(cylinder_contact, &diffusion));
 
     return 0;
