@@ -51,6 +51,7 @@ class Interpolation<Contact<DataType, Parameters...>> : public Interaction<Conta
     explicit Interpolation(DynamicsArgs<BodyRelationType, FirstArg> parameters)
         : Interpolation(parameters.identifier_, std::get<0>(parameters.others_)){};
     virtual ~Interpolation() {};
+    DiscreteVariable<DataType> *dvInterpolatedQuantities() { return dv_interpolated_quantities_; };
 
     class InteractKernel : public BaseDynamicsType::InteractKernel
     {
