@@ -222,7 +222,7 @@ class GetLaplacianTimeStepSize : public LocalDynamicsReduce<ReduceMin>
         : LocalDynamicsReduce<ReduceMin>(sph_body),
        anisotropic_diffusion_solid_(DynamicCast<AnisotropicDiffusionSolid>(this, sph_body.getBaseMaterial())) 
     {
-        smoothing_length = sph_body.sph_adaptation_->ReferenceSmoothingLength();
+        smoothing_length = this->sph_body_.getSPHAdaptation().ReferenceSmoothingLength();
     };
 
     Real reduce(size_t index_i, Real dt)
@@ -254,12 +254,12 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     SolidBody boundary_body(sph_system, makeShared<DiffusionBoundary>("DiffusionBoundary"));
-    boundary_body.sph_adaptation_->resetKernel<AnisotropicKernel<KernelWendlandC2>>(scaling_vector);
+    boundary_body.getSPHAdaptation().resetKernel<AnisotropicKernel<KernelWendlandC2>>(scaling_vector);
     boundary_body.defineMaterial<Solid>();
     boundary_body.generateParticles<BaseParticles, DiffusionBoundary>();
 
     SolidBody diffusion_body(sph_system, makeShared<DiffusionBlock>("DiffusionBlock"));
-    diffusion_body.sph_adaptation_->resetKernel<AnisotropicKernel<KernelWendlandC2>>(scaling_vector);
+    diffusion_body.getSPHAdaptation().resetKernel<AnisotropicKernel<KernelWendlandC2>>(scaling_vector);
     diffusion_body.defineMaterial<AnisotropicDiffusionSolid>(rho0, diffusion_coeff);
     diffusion_body.generateParticles<BaseParticles, DiffusionBlock>();
 

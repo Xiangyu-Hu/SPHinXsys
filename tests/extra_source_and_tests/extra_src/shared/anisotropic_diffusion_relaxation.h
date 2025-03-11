@@ -297,9 +297,9 @@ class AnisotropicDiffusionRelaxation<DataDelegationType>
         Laplacian_2d =  particles_->registerStateVariable<Vec3d>( "Laplacian2D", [&](size_t i) -> Vec3d { return Vec3d::Zero(); });
         
 
-       total_left_3d = particles_->registerStateVariable<Mat6d>( "TotalLeft3D", [&](size_t i) -> Mat6d { return Eps * Mat6d::Identity(); });
-       total_right_3d = particles_->registerStateVariable<Vec6d>( "TotalRight3D", [&](size_t i) -> Vec6d { return Eps * Vec6d::Identity(); });
-       Laplacian_3d =  particles_->registerStateVariable<Vec6d>( "Laplacian3D", [&](size_t i) -> Vec6d { return Vec6d::Zero(); });
+        total_left_3d = particles_->registerStateVariable<Mat6d>( "TotalLeft3D", [&](size_t i) -> Mat6d { return Eps * Mat6d::Identity(); });
+        total_right_3d = particles_->registerStateVariable<Vec6d>( "TotalRight3D", [&](size_t i) -> Vec6d { return Eps * Vec6d::Identity(); });
+        Laplacian_3d =  particles_->registerStateVariable<Vec6d>( "Laplacian3D", [&](size_t i) -> Vec6d { return Vec6d::Zero(); });
 
         Laplacian_x =   particles_->registerStateVariable<Real>("Laplacian_x", [&](size_t i) -> Real { return Real(0.0); });
         Laplacian_y = particles_->registerStateVariable<Real>("Laplacian_y", [&](size_t i) -> Real { return Real(0.0); });
