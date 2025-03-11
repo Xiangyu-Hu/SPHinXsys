@@ -45,7 +45,8 @@ class Relation<Base>
     UniquePtrsKeeper<Entity> relation_variable_ptrs_;
 
   public:
-    explicit Relation(SPHBody &sph_body);
+    template <class SourceIdentifier, class TargetIdentifier>
+    Relation(SourceIdentifier &source_identifier, StdVec<TargetIdentifier *> target_identifiers);
     virtual ~Relation() {};
     SPHBody &getSPHBody() { return sph_body_; };
 
@@ -53,6 +54,9 @@ class Relation<Base>
     SPHBody &sph_body_;
     BaseParticles &particles_;
     UnsignedInt offset_list_size_;
+    StdVec<DiscreteVariable<UnsignedInt> *> dv_target_neighbor_index_;
+    StdVec<DiscreteVariable<UnsignedInt> *> dv_target_particle_offset_;
+    StdVec<StdVec<execution::Implementation<Base> *>> registered_computing_kernels_;
 
     template <class DataType>
     DiscreteVariable<DataType> *addRelationVariable(const std::string &name, size_t data_size);
@@ -65,7 +69,6 @@ class Relation<Inner<>> : public Relation<Base>
     explicit Relation(RealBody &real_body);
     virtual ~Relation() {};
     RealBody &getRealBody() { return *real_body_; };
-    CellLinkedList &getCellLinkedList() { return cell_linked_list_; };
     DiscreteVariable<UnsignedInt> *getNeighborIndex() { return dv_neighbor_index_; };
     DiscreteVariable<UnsignedInt> *getParticleOffset() { return dv_particle_offset_; };
     void registerComputingKernel(execution::Implementation<Base> *implementation);
@@ -73,10 +76,8 @@ class Relation<Inner<>> : public Relation<Base>
 
   protected:
     RealBody *real_body_;
-    CellLinkedList &cell_linked_list_;
     DiscreteVariable<UnsignedInt> *dv_neighbor_index_;
     DiscreteVariable<UnsignedInt> *dv_particle_offset_;
-    StdVec<execution::Implementation<Base> *> all_inner_computing_kernels_;
 };
 
 template <class SourceIdentifier, class TargetIdentifier>
@@ -85,13 +86,11 @@ class Relation<Contact<SourceIdentifier, TargetIdentifier>> : public Relation<Ba
   protected:
     SourceIdentifier &source_identifier_;
     StdVec<TargetIdentifier *> contact_identifiers_;
+    StdVec<DiscreteVariable<UnsignedInt> *> dv_contact_neighbor_index_;
+    StdVec<DiscreteVariable<UnsignedInt> *> dv_contact_particle_offset_;
     StdVec<RealBody *> contact_bodies_;
     StdVec<BaseParticles *> contact_particles_;
     StdVec<SPHAdaptation *> contact_adaptations_;
-    StdVec<CellLinkedList *> target_cell_linked_lists_;
-    StdVec<DiscreteVariable<UnsignedInt> *> dv_contact_neighbor_index_;
-    StdVec<DiscreteVariable<UnsignedInt> *> dv_contact_particle_offset_;
-    StdVec<StdVec<execution::Implementation<Base> *>> all_contact_computing_kernels_;
 
   public:
     typedef SourceIdentifier SourceType;
@@ -105,7 +104,6 @@ class Relation<Contact<SourceIdentifier, TargetIdentifier>> : public Relation<Ba
     StdVec<RealBody *> getContactBodies() { return contact_bodies_; };
     StdVec<BaseParticles *> getContactParticles() { return contact_particles_; };
     StdVec<SPHAdaptation *> getContactAdaptations() { return contact_adaptations_; };
-    StdVec<CellLinkedList *> getContactCellLinkedList() { return target_cell_linked_lists_; }
     StdVec<DiscreteVariable<UnsignedInt> *> getContactNeighborIndex() { return dv_contact_neighbor_index_; };
     StdVec<DiscreteVariable<UnsignedInt> *> getContactParticleOffset() { return dv_contact_particle_offset_; };
 

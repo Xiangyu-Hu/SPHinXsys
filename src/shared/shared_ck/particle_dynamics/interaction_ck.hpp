@@ -11,6 +11,7 @@ Interaction<Inner<Parameters...>>::
     Interaction(Relation<Inner<Parameters...>> &inner_relation)
     : LocalDynamics(inner_relation.getSPHBody()),
       inner_relation_(inner_relation),
+      real_body_(&inner_relation.getRealBody()),
       sph_adaptation_(&sph_body_.getSPHAdaptation()),
       dv_pos_(particles_->getVariableByName<Vecd>("Position")),
       dv_neighbor_index_(inner_relation.getNeighborIndex()),

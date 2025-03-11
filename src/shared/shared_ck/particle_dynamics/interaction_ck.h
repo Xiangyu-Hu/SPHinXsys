@@ -65,7 +65,9 @@ class Interaction<Inner<Parameters...>> : public LocalDynamics
     void resetComputingKernelUpdated();
 
   protected:
-    Relation<Inner<Parameters...>> &inner_relation_;
+    typedef Relation<Inner<Parameters...>> RelationType;
+    RelationType &inner_relation_;
+    RealBody *real_body_;
     SPHAdaptation *sph_adaptation_;
     DiscreteVariable<Vecd> *dv_pos_;
     DiscreteVariable<UnsignedInt> *dv_neighbor_index_;
@@ -77,8 +79,6 @@ class Interaction<Contact<SourceIdentifier, TargetIdentifier, Parameters...>>
     : public BaseLocalDynamics<SourceIdentifier>
 {
   public:
-    typedef Relation<Contact<SourceIdentifier, TargetIdentifier, Parameters...>> RelationType;
-    
     explicit Interaction(Relation<Contact<SourceIdentifier, TargetIdentifier, Parameters...>> &contact_relation);
     virtual ~Interaction() {};
     SPHAdaptation *getSPHAdaptation() { return sph_adaptation_; };
@@ -95,7 +95,8 @@ class Interaction<Contact<SourceIdentifier, TargetIdentifier, Parameters...>>
     void resetComputingKernelUpdated(UnsignedInt contact_index);
 
   protected:
-    Relation<Contact<SourceIdentifier, TargetIdentifier, Parameters...>> &contact_relation_;
+    typedef Relation<Contact<SourceIdentifier, TargetIdentifier, Parameters...>> RelationType;
+    RelationType &contact_relation_;
     SPHAdaptation *sph_adaptation_;
     DiscreteVariable<Vecd> *dv_pos_;
     RealBodyVector contact_bodies_;
