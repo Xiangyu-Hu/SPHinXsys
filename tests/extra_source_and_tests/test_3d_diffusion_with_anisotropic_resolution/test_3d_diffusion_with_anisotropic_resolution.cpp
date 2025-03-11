@@ -40,6 +40,8 @@ Real scaling_factor = 1.0 / ratio_;
 //----------------------------------------------------------------------
 Real diffusion_coeff = 1.0;
 Real rho0 = 1.0;
+//In this case, the diffusion tensor is isotropic but the resolution is anisotropic
+Mat3d diffusion_tensor = Mat3d::Identity() * sqrt(diffusion_coeff);
 
 
 // reference particle spacing
@@ -214,6 +216,7 @@ class GetLaplacianTimeStepSize : public LocalDynamicsReduce<ReduceMin>
 {
   protected:
     Real smoothing_length;
+    Real diff_coeff;
    
     AnisotropicDiffusionSolid &anisotropic_diffusion_solid_;
 
@@ -223,12 +226,14 @@ class GetLaplacianTimeStepSize : public LocalDynamicsReduce<ReduceMin>
        anisotropic_diffusion_solid_(DynamicCast<AnisotropicDiffusionSolid>(this, sph_body.getBaseMaterial())) 
     {
         smoothing_length = this->sph_body_.getSPHAdaptation().ReferenceSmoothingLength();
-    };
+        diff_coeff = anisotropic_diffusion_solid_.DiffusivityTensor().trace() /Dimensions ;
+  
+      };
 
     Real reduce(size_t index_i, Real dt)
     {
         return 0.5 * smoothing_length * smoothing_length  * smoothing_length  
-             / anisotropic_diffusion_solid_.DiffusivityCoefficient() / Dimensions;
+             / diff_coeff / Dimensions;
     }
 
     virtual ~GetLaplacianTimeStepSize(){};
@@ -260,7 +265,7 @@ int main(int ac, char *av[])
 
     SolidBody diffusion_body(sph_system, makeShared<DiffusionBlock>("DiffusionBlock"));
     diffusion_body.getSPHAdaptation().resetKernel<AnisotropicKernel<KernelWendlandC2>>(scaling_vector);
-    diffusion_body.defineMaterial<AnisotropicDiffusionSolid>(rho0, diffusion_coeff);
+    diffusion_body.defineMaterial<AnisotropicDiffusionSolid>(rho0, diffusion_tensor);
     diffusion_body.generateParticles<BaseParticles, DiffusionBlock>();
 
     //----------------------------------------------------------------------

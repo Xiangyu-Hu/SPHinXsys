@@ -21,15 +21,15 @@ namespace SPH
 class AnisotropicDiffusionSolid : public Solid
 {
   public:
-    AnisotropicDiffusionSolid(Real rho0, Real coeff)
-        : Solid(rho0), diffusion_coeff(coeff)
+    AnisotropicDiffusionSolid(Real rho0, Matd coeff_tensor)
+        : Solid(rho0), diffusion_tensor(coeff_tensor)
     {
         material_type_name_ = "AnisotropicDiffusionSolid";
     };
     virtual ~AnisotropicDiffusionSolid(){};
 
-    Real diffusion_coeff;
-    Real DiffusivityCoefficient() { return diffusion_coeff; };
+    Matd diffusion_tensor;
+    Matd  DiffusivityTensor() { return  diffusion_tensor; };
 };
  
 //----------------------------------------------------------------------
@@ -306,9 +306,8 @@ class AnisotropicDiffusionRelaxation<DataDelegationType>
         Laplacian_z = particles_->registerStateVariable<Real>( "Laplacian_z", [&](size_t i) -> Real { return Real(0.0); });
         diffusion_dt_=particles_->registerStateVariable<Real>( "diffusion_dt", [&](size_t i) -> Real { return Real(0.0); });
 		
-        diffusion_coeff_ = anisotropic_diffusion_solid_.DiffusivityCoefficient();
-
-      
+        diffusion_coeff_tensor_  = anisotropic_diffusion_solid_.DiffusivityTensor();
+   
     }
           
     virtual ~AnisotropicDiffusionRelaxation(){};
@@ -330,7 +329,9 @@ class AnisotropicDiffusionRelaxation<DataDelegationType>
 
 
     Real *Laplacian_x, *Laplacian_y, *Laplacian_z, *diffusion_dt_;
-    Real diffusion_coeff_;
+    Matd  diffusion_coeff_tensor_;
+
+
     AnisotropicDiffusionSolid &anisotropic_diffusion_solid_;
     Vecd *pos_;
 };
