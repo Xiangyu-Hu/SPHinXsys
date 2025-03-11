@@ -50,6 +50,8 @@ class Neighbor<>
     Neighbor(const ExecutionPolicy &ex_policy, SPHAdaptation *sph_adaptation, SPHAdaptation *contact_adaptation,
              DiscreteVariable<Vecd> *dv_pos, DiscreteVariable<Vecd> *dv_target_pos);
 
+    KernelWendlandC2CK &getKernel() { return kernel_; }
+
     inline Vecd vec_r_ij(size_t i, size_t j) const { return source_pos_[i] - target_pos_[j]; };
     inline Real W_ij(size_t i, size_t j) const { return kernel_.W(vec_r_ij(i, j)); }
     inline Real dW_ij(size_t i, size_t j) const { return kernel_.dW(vec_r_ij(i, j)); }
@@ -59,6 +61,21 @@ class Neighbor<>
         Vecd displacement = vec_r_ij(i, j);
         return displacement / (displacement.norm() + TinyReal);
     }
+
+    class NeighborCriterion
+    {
+      public:
+        NeighborCriterion(Neighbor<> &neighbor);
+        bool operator()(UnsignedInt target_index, UnsignedInt source_index)
+        {
+            return (source_pos_[source_index] - target_pos_[target_index]).squaredNorm() < cut_radius_square_;
+        };
+
+      protected:
+        Vecd *source_pos_;
+        Vecd *target_pos_;
+        Real cut_radius_square_;
+    };
 
   protected:
     KernelWendlandC2CK kernel_;

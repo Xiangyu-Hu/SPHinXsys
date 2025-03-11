@@ -40,7 +40,7 @@ class ANSYSMesh
 {
   public:
     ANSYSMesh(const std::string &full_path);
-    virtual ~ANSYSMesh(){};
+    virtual ~ANSYSMesh() {};
 
     StdVec<size_t> types_of_boundary_condition_;
     StdLargeVec<Vecd> node_coordinates_;
@@ -51,7 +51,7 @@ class ANSYSMesh
     Real MinMeshEdge() { return min_distance_between_nodes_; }
 
   protected:
-    double min_distance_between_nodes_;
+    Real min_distance_between_nodes_;
 
     void getDataFromMeshFile(const std::string &full_path);
     void getElementCenterCoordinates();
@@ -70,7 +70,7 @@ class BaseInnerRelationInFVM : public BaseInnerRelation
     StdVec<StdVec<StdVec<size_t>>> &mesh_topology_;
 
     explicit BaseInnerRelationInFVM(RealBody &real_body, ANSYSMesh &ansys_mesh);
-    virtual ~BaseInnerRelationInFVM(){};
+    virtual ~BaseInnerRelationInFVM() {};
 
   protected:
     Vecd *pos_;
@@ -93,8 +93,8 @@ class NeighborBuilderInFVM
                             Vecd &interface_normal_direction, size_t j_index) const;
 
   public:
-    NeighborBuilderInFVM(){};
-    virtual ~NeighborBuilderInFVM(){};
+    NeighborBuilderInFVM() {};
+    virtual ~NeighborBuilderInFVM() {};
 };
 
 /**
@@ -104,7 +104,7 @@ class NeighborBuilderInFVM
 class NeighborBuilderInnerInFVM : public NeighborBuilderInFVM
 {
   public:
-    explicit NeighborBuilderInnerInFVM(SPHBody *body) : NeighborBuilderInFVM(){};
+    explicit NeighborBuilderInnerInFVM(SPHBody *body) : NeighborBuilderInFVM() {};
     void operator()(Neighborhood &neighborhood, Real &distance,
                     Real &dW_ij, Vecd &interface_normal_direction, size_t j_index) const
     {
@@ -133,7 +133,7 @@ class InnerRelationInFVM : public BaseInnerRelationInFVM
 
   public:
     explicit InnerRelationInFVM(RealBody &real_body, ANSYSMesh &ansys_mesh);
-    virtual ~InnerRelationInFVM(){};
+    virtual ~InnerRelationInFVM() {};
 
     /** generalized particle search algorithm */
     template <typename GetParticleIndex, typename GetNeighborRelation>

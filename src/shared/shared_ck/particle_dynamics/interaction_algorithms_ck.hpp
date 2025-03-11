@@ -94,7 +94,13 @@ InteractionDynamicsCK<ExecutionPolicy, InteractionType<RelationType<WithUpdate, 
           std::forward<Args>(args)...),
       InteractionDynamicsCK<WithUpdate>(),
       BaseDynamics<void>(),
-      kernel_implementation_(*this) {}
+      kernel_implementation_(*this)
+{
+    if constexpr (std::is_base_of_v<BaseInteractKernel, UpdateKernel>)
+    {
+        this->registerComputingKernel(&kernel_implementation_);
+    }
+}
 //=================================================================================================//
 template <class ExecutionPolicy, template <typename...> class InteractionType,
           template <typename...> class RelationType, typename... OtherParameters>
@@ -133,7 +139,18 @@ InteractionDynamicsCK<ExecutionPolicy, InteractionType<RelationType<OneLevel, Ot
     : InteractionDynamicsCK<ExecutionPolicy, Base, InteractionType<RelationType<OneLevel, OtherParameters...>>>(
           std::forward<Args>(args)...),
       InteractionDynamicsCK<OneLevel>(), BaseDynamics<void>(),
-      initialize_kernel_implementation_(*this), update_kernel_implementation_(*this) {}
+      initialize_kernel_implementation_(*this), update_kernel_implementation_(*this)
+{
+    if constexpr (std::is_base_of_v<BaseInteractKernel, InitializeKernel>)
+    {
+        this->registerComputingKernel(&initialize_kernel_implementation_);
+    }
+
+    if constexpr (std::is_base_of_v<BaseInteractKernel, UpdateKernel>)
+    {
+        this->registerComputingKernel(&update_kernel_implementation_);
+    }
+}
 //=================================================================================================//
 template <class ExecutionPolicy, template <typename...> class InteractionType,
           template <typename...> class RelationType, typename... OtherParameters>

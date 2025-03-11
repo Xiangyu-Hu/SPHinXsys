@@ -150,14 +150,16 @@ int main(int ac, char *av[])
     observer.generateParticles<ObserverParticles>(StdVec<Vecd>{obs});
 
     TriangleMeshShapeBrick structure_mesh(halfsize_structure, 1, structure_pos);
-    ObserverBody structure_observer(sph_system, "StructureObserver");
-    structure_observer.generateParticles<ObserverParticles>(structure_mesh);
+    ObserverBody structure_proxy(sph_system, "StructureProxy");
+    structure_proxy.generateParticles<ObserverParticles>(structure_mesh);
     //----------------------------------------------------------------------
     //	Creating body parts.
     //----------------------------------------------------------------------
     TransformShape<GeometricShapeBox>
         wave_probe_buffer_shape(Transform(translation_FS_gauge), FS_gauge);
     BodyRegionByCell wave_probe_buffer(water_block, wave_probe_buffer_shape);
+
+    BodySurfaceLayer structure_surface(structure, 1.0);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -170,7 +172,7 @@ int main(int ac, char *av[])
     Relation<Contact<>> water_block_contact(water_block, {&wall_boundary, &structure});
     Relation<Contact<>> structure_contact(structure, {&water_block});
     Relation<Contact<>> observer_contact(observer, {&structure});
-    Relation<Contact<>> structure_observer_contact(structure_observer, {&structure});
+    Relation<Contact<SPHBody, BodyPartByParticle>> structure_proxy_contact(structure_proxy, {&structure_surface});
     //----------------------------------------------------------------------
     // Define the main execution policy for this case.
     //----------------------------------------------------------------------
@@ -196,8 +198,8 @@ int main(int ac, char *av[])
         structure_update_contact_relation(structure_contact);
     UpdateRelation<MainExecutionPolicy, Contact<>>
         observer_update_contact_relation(observer_contact);
-    UpdateRelation<MainExecutionPolicy, Contact<>>
-        structure_observer_update_contact_relation(structure_observer_contact);
+    UpdateRelation<MainExecutionPolicy, Contact<SPHBody, BodyPartByParticle>>
+        structure_proxy_update_contact_relation(structure_proxy_contact);
     ParticleSortCK<MainExecutionPolicy, QuickSort> particle_sort(water_block);
 
     Gravity gravity(Vec3d(0.0, 0.0, -gravity_g));
@@ -225,14 +227,14 @@ int main(int ac, char *av[])
 
     ArbitraryDynamicsSequence<
         StateDynamics<MainExecutionPolicy, solid_dynamics::UpdateDisplacementFromPosition>,
-        ObservingAQuantityCK<MainExecutionPolicy, Vecd>,
-        ObservingAQuantityCK<MainExecutionPolicy, Vecd>,
+        InteractionDynamicsCK<MainExecutionPolicy, Interpolation<Contact<Vecd, SPHBody, BodyPartByParticle>>>,
+        InteractionDynamicsCK<MainExecutionPolicy, Interpolation<Contact<Vecd, SPHBody, BodyPartByParticle>>>,
         StateDynamics<MainExecutionPolicy, solid_dynamics::UpdatePositionFromDisplacement>>
-        update_structure_observer_states(
+        update_structure_proxy_states(
             structure,
-            DynamicsArgs(structure_observer_contact, std::string("Velocity")),
-            DynamicsArgs(structure_observer_contact, std::string("Displacement")),
-            structure_observer);
+            DynamicsArgs(structure_proxy_contact, std::string("Velocity")),
+            DynamicsArgs(structure_proxy_contact, std::string("Displacement")),
+            structure_proxy);
     //----------------------------------------------------------------------
     //	Define the multi-body system
     //----------------------------------------------------------------------
@@ -305,8 +307,8 @@ int main(int ac, char *av[])
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp write_real_body_states(sph_system);
-    BodyStatesRecordingToTriangleMeshVtp write_structure_surface(structure_observer, structure_mesh);
-    write_structure_surface.addToWrite<Vecd>(structure_observer, "Velocity");
+    BodyStatesRecordingToTriangleMeshVtp write_structure_surface(structure_proxy, structure_mesh);
+    write_structure_surface.addToWrite<Vecd>(structure_proxy, "Velocity");
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<
         MainExecutionPolicy, UpperFrontInAxisDirectionCK<BodyRegionByCell>>>
         wave_gauge(wave_probe_buffer, "FreeSurfaceHeight");
@@ -327,7 +329,7 @@ int main(int ac, char *av[])
     water_block_update_complex_relation.exec();
     structure_update_contact_relation.exec();
     observer_update_contact_relation.exec();
-    structure_observer_update_contact_relation.exec();
+    structure_proxy_update_contact_relation.exec();
     //----------------------------------------------------------------------
     //	Basic control parameters for time stepping.
     //----------------------------------------------------------------------
@@ -415,7 +417,7 @@ int main(int ac, char *av[])
         if (total_time >= relax_time)
         {
             write_real_body_states.writeToFile(MainExecutionPolicy{});
-            update_structure_observer_states.exec();
+            update_structure_proxy_states.exec();
             write_structure_surface.writeToFile(MainExecutionPolicy{});
         }
         TickCount t3 = TickCount::now();

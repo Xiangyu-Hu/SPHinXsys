@@ -232,12 +232,12 @@ class SwapSortableParticleData
 {
   protected:
     UnsignedInt *sequence_;
-    ParticleData &sortable_data_;
+    ParticleData &evolving_variables_data_;
     OperationOnDataAssemble<ParticleData, SwapParticleDataValue> swap_particle_data_value_;
 
   public:
     explicit SwapSortableParticleData(BaseParticles *base_particles);
-    ~SwapSortableParticleData(){};
+    ~SwapSortableParticleData() {};
 
     /** the operator overload for swapping particle data.
      *  the arguments are the same with std::iter_swap
@@ -254,7 +254,7 @@ class ParticleSequence : public LocalDynamics
 
   public:
     explicit ParticleSequence(RealBody &real_body);
-    virtual ~ParticleSequence(){};
+    virtual ~ParticleSequence() {};
     void update(size_t index_i, Real dt = 0.0);
 };
 
@@ -280,7 +280,7 @@ class ParticleDataSort<ParallelPolicy>
 
   public:
     explicit ParticleDataSort(RealBody &real_body);
-    virtual ~ParticleDataSort(){};
+    virtual ~ParticleDataSort() {};
     virtual void exec(Real dt = 0.0) override;
 };
 
@@ -292,7 +292,7 @@ class UpdateSortedID : public LocalDynamics
 
   public:
     explicit UpdateSortedID(RealBody &real_body);
-    virtual ~UpdateSortedID(){};
+    virtual ~UpdateSortedID() {};
     void update(size_t index_i, Real dt = 0.0);
 };
 
@@ -305,7 +305,7 @@ class ParticleSorting : public BaseDynamics<void>
 
   public:
     ParticleSorting(RealBody &real_body);
-    virtual ~ParticleSorting(){};
+    virtual ~ParticleSorting() {};
 
     virtual void exec(Real dt = 0.0) override;
 };

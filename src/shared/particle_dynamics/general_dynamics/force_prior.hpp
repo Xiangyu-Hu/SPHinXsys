@@ -14,8 +14,7 @@ BaseForcePrior<DynamicsIdentifier>::
       current_force_(this->particles_->template registerStateVariable<Vecd>(force_name)),
       previous_force_(this->particles_->template registerStateVariable<Vecd>("Previous" + force_name))
 {
-    this->particles_->template addVariableToRestart<Vecd>("Previous" + force_name);
-    this->particles_->template addVariableToSort<Vecd>("Previous" + force_name);
+    this->particles_->template addEvolvingVariable<Vecd>("Previous" + force_name);
 }
 //=================================================================================================//
 template <class DynamicsIdentifier>

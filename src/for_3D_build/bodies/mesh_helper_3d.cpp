@@ -372,7 +372,7 @@ void MeshFileHelpers::elementVolume(StdLargeVec<StdVec<size_t>> &elements_nodes_
     Matd M;
     M << node2_coordinate - node1_coordinate, node3_coordinate - node1_coordinate, node4_coordinate - node1_coordinate;
     Real determinant = abs(M.determinant());
-    Real element_volume = (static_cast<double>(1) / 6) * determinant;
+    Real element_volume = determinant / 6.0;
     Total_volume += element_volume;
     elements_volumes_[element] = element_volume;
 }

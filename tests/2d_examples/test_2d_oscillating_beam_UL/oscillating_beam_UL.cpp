@@ -112,7 +112,7 @@ int main(int ac, char *av[])
     beam_body.generateParticles<BaseParticles, Lattice>();
 
     ObserverBody beam_observer(sph_system, "BeamObserver");
-    beam_observer.sph_adaptation_->resetAdaptationRatios(1.15, 2.0);
+    beam_observer.getSPHAdaptation().resetAdaptationRatios(1.15, 2.0);
     beam_observer.generateParticles<ObserverParticles>(observation_location);
     //----------------------------------------------------------------------
     //	Define body relation map.

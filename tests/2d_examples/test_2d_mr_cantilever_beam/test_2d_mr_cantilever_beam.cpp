@@ -20,7 +20,7 @@ struct return_data
     Real damping_time = std::numeric_limits<Real>::max(); // time spent on damping
 };
 
-return_data beam_multi_resolution(double dp_factor, bool damping_on, int refinement_level = 1);
+return_data beam_multi_resolution(Real dp_factor, bool damping_on, int refinement_level = 1);
 
 TEST(mr_solid, dp_4)
 {
@@ -96,7 +96,7 @@ struct solid_algs
         : corrected_configuration(inner_relation),
           stress_relaxation_first_half(inner_relation),
           stress_relaxation_second_half(inner_relation),
-          normal_direction(inner_relation.getSPHBody()){};
+          normal_direction(inner_relation.getSPHBody()) {};
 
     void corrected_config() { corrected_configuration.exec(); }
     void stress_relaxation_first(Real dt) { stress_relaxation_first_half.exec(dt); }
@@ -124,10 +124,9 @@ class FixPart : public BodyPartByParticle
     };
 
   private:
-    void tagManually(size_t index_i)
+    bool tagManually(size_t index_i)
     {
-        if (pos_[index_i].x() < 0)
-            body_part_particles_.push_back(index_i);
+        return pos_[index_i].x() < 0;
     };
 };
 
@@ -153,7 +152,7 @@ struct beam_parameters
     const Real gravity = 9.8;
 };
 //------------------------------------------------------------------------------
-return_data beam_multi_resolution(double dp_factor, bool damping_on, int refinement_level)
+return_data beam_multi_resolution(Real dp_factor, bool damping_on, int refinement_level)
 {
     const beam_parameters params;
     return_data data;
@@ -206,7 +205,7 @@ return_data beam_multi_resolution(double dp_factor, bool damping_on, int refinem
 
     data.number_of_particles = beam_body.getBaseParticles().TotalRealParticles();
     data.dp_max = beam_body.getSPHBodyResolutionRef();
-    data.dp_min = beam_body.sph_adaptation_->MinimumSpacing();
+    data.dp_min = beam_body.getSPHAdaptation().MinimumSpacing();
 
     // Inner relation
     std::unique_ptr<BaseInnerRelation> inner;

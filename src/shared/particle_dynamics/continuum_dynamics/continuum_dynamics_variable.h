@@ -32,6 +32,7 @@
 
 #include "base_general_dynamics.h"
 #include "general_continuum.h"
+#include "general_continuum.hpp"
 
 namespace SPH
 {

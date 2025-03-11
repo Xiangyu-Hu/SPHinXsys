@@ -6,17 +6,6 @@
 namespace SPH
 {
 //=================================================================================================//
-template <typename OwnerType>
-void BaseParticles::checkReloadFileRead(OwnerType *owner)
-{
-    if (reload_xml_parser_.first_element_ == nullptr)
-    {
-        std::cout << "\n Error: the reload file is not read! \n";
-        std::cout << "\n This error occurs in " << typeid(*owner).name() << '\n';
-        exit(1);
-    }
-}
-//=================================================================================================//
 template <typename DataType>
 DataType *BaseParticles::initializeVariable(DiscreteVariable<DataType> *variable, DataType initial_value)
 {
@@ -120,7 +109,14 @@ DiscreteVariable<DataType> *BaseParticles::
     static_assert(DataTypeIndex<DataType>::value != DataTypeIndex<UnsignedInt>::value,
                   "\n Error: the data type UnsignedInt is not particle state variable!\n");
 
-    return registerDiscreteVariableOnly<DataType>(name, particles_bound_, std::forward<Args>(args)...);
+    DiscreteVariable<DataType> *variable =
+        registerDiscreteVariableOnly<DataType>(name, particles_bound_, std::forward<Args>(args)...);
+
+    DataType *data_field = variable->Data();
+    constexpr int type_index = DataTypeIndex<DataType>::value;
+    std::get<type_index>(all_state_data_).push_back(data_field);
+
+    return variable;
 }
 //=================================================================================================//
 template <class DataType, typename... Args>
@@ -164,24 +160,6 @@ DataType *BaseParticles::registerStateVariableFrom(
 }
 //=================================================================================================//
 template <typename DataType>
-DiscreteVariable<DataType> *BaseParticles::registerStateVariableOnlyFrom(
-    const std::string &new_name, const std::string &old_name)
-{
-    DiscreteVariable<DataType> *variable = findVariableByName<DataType>(all_discrete_variables_, old_name);
-
-    if (variable == nullptr)
-    {
-        std::cout << "\nError: the old variable '" << old_name << "' is not registered!\n";
-        std::cout << __FILE__ << ':' << __LINE__ << std::endl;
-        exit(1);
-    }
-
-    DataType *old_data_field = variable->Data();
-    return registerStateVariableOnly<DataType>(new_name, [&](size_t index)
-                                               { return old_data_field[index]; });
-}
-//=================================================================================================//
-template <typename DataType>
 DataType *BaseParticles::registerStateVariableFrom(
     const std::string &name, const StdLargeVec<DataType> &geometric_data)
 {
@@ -207,6 +185,53 @@ DataType *BaseParticles::registerStateVariableFromReload(const std::string &name
     }
 
     return data_field;
+}
+//=================================================================================================//
+template <typename DataType>
+DiscreteVariable<DataType> *BaseParticles::registerStateVariableOnlyFrom(
+    const std::string &new_name, const std::string &old_name)
+{
+    DiscreteVariable<DataType> *variable = findVariableByName<DataType>(all_discrete_variables_, old_name);
+
+    if (variable == nullptr)
+    {
+        std::cout << "\nError: the old variable '" << old_name << "' is not registered!\n";
+        std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+        exit(1);
+    }
+
+    DataType *old_data_field = variable->Data();
+    return registerStateVariableOnly<DataType>(new_name, [&](size_t index)
+                                               { return old_data_field[index]; });
+}
+//=================================================================================================//
+template <typename DataType>
+DiscreteVariable<DataType> *BaseParticles::registerStateVariableOnlyFrom(
+    const std::string &name, const StdLargeVec<DataType> &geometric_data)
+{
+    DiscreteVariable<DataType> *variable = registerStateVariableOnly<DataType>(name);
+    DataType *data_field = variable->Data();
+    for (size_t i = 0; i != geometric_data.size(); ++i)
+    {
+        data_field[i] = geometric_data[i];
+    }
+    return variable;
+}
+//=================================================================================================//
+template <typename DataType>
+DiscreteVariable<DataType> *BaseParticles::registerStateVariableOnlyFromReload(const std::string &name)
+{
+    DiscreteVariable<DataType> *new_variable = registerStateVariableOnly<DataType>(name);
+    DataType *data_field = new_variable->Data();
+
+    size_t index = 0;
+    for (auto child = reload_xml_parser_.first_element_->FirstChildElement(); child; child = child->NextSiblingElement())
+    {
+        reload_xml_parser_.queryAttributeValue(child, name, data_field[index]);
+        index++;
+    }
+
+    return new_variable;
 }
 //=================================================================================================//
 template <typename DataType>
@@ -237,6 +262,32 @@ DataType *BaseParticles::getVariableDataByName(const std::string &name)
     return variable->Data();
 }
 //=================================================================================================//
+template <typename DataType>
+StdVec<DiscreteVariable<DataType> *> BaseParticles::registerStateVariables(
+    const StdVec<std::string> &names, const std::string &suffix)
+{
+    StdVec<DiscreteVariable<DataType> *> variables;
+    for (auto &name : names)
+    {
+        std::string variable_name = name + suffix;
+        variables.push_back(registerStateVariableOnly<DataType>(variable_name));
+    }
+    return variables;
+}
+//=================================================================================================//
+template <typename DataType>
+StdVec<DiscreteVariable<DataType> *> BaseParticles::getVariablesByName(
+    const StdVec<std::string> &names, const std::string &suffix)
+{
+    StdVec<DiscreteVariable<DataType> *> variables;
+    for (auto &name : names)
+    {
+        std::string variable_name = name + suffix;
+        variables.push_back(getVariableByName<DataType>(variable_name));
+    }
+    return variables;
+}
+//=================================================================================================//
 template <class DataType>
 SingularVariable<DataType> *BaseParticles::
     addUniqueSingularVariableOnly(const std::string &name, DataType initial_value)
@@ -256,7 +307,7 @@ SingularVariable<DataType> *BaseParticles::
     return variable != nullptr
                ? variable
                : addVariableToAssemble<DataType>(
-                     all_singular_variables_, all_global_variable_ptrs_, name, initial_value);
+                     all_singular_variables_, all_singular_variable_ptrs_, name, initial_value);
 }
 //=================================================================================================//
 template <typename DataType>
@@ -293,7 +344,7 @@ template <typename DataType>
 DiscreteVariable<DataType> *BaseParticles::
     addVariableToList(ParticleVariables &variable_set, DiscreteVariable<DataType> *variable)
 {
-    if (variable->getDataSize() < real_particles_bound_)
+    if (variable->getDataSize() < particles_bound_)
     {
         std::cout << "\n Error: The variable '" << variable->Name() << "' can not be treated as a particle variable," << std::endl;
         std::cout << "\n because the data size " << variable->getDataSize() << " is too less!" << std::endl;
@@ -312,28 +363,33 @@ DiscreteVariable<DataType> *BaseParticles::
     return nullptr; // no variable added as sortable variable
 }
 //=================================================================================================//
-template <typename DataType>
-void BaseParticles::addVariableToSort(const std::string &name)
+template <typename DataType, typename... Args>
+void BaseParticles::addEvolvingVariable(Args &&...args)
 {
-    DiscreteVariable<DataType> *new_sortable = addVariableToList<DataType>(variables_to_sort_, name);
+    DiscreteVariable<DataType> *new_sortable =
+        addVariableToList<DataType>(evolving_variables_, std::forward<Args>(args)...);
     if (new_sortable != nullptr)
     {
         constexpr int type_index = DataTypeIndex<DataType>::value;
         DataType *data_field = new_sortable->Data();
-        std::get<type_index>(sortable_data_).push_back(data_field);
+        std::get<type_index>(evolving_variables_data_).push_back(data_field);
     }
 }
 //=================================================================================================//
 template <typename DataType>
-void BaseParticles::addVariableToWrite(const std::string &name)
+void BaseParticles::addEvolvingVariable(DiscreteVariableArray<DataType> *variable_array)
 {
-    addVariableToList<DataType>(variables_to_write_, name);
+    StdVec<DiscreteVariable<DataType> *> variables = variable_array->getVariables();
+    for (size_t i = 0; i != variables.size(); ++i)
+    {
+        addEvolvingVariable<DataType>(variables[i]);
+    }
 }
 //=================================================================================================//
-template <typename DataType>
-void BaseParticles::addVariableToWrite(DiscreteVariable<DataType> *variable)
+template <typename DataType, typename... Args>
+void BaseParticles::addVariableToWrite(Args &&...args)
 {
-    addVariableToList<DataType>(variables_to_write_, variable);
+    addVariableToList<DataType>(variables_to_write_, std::forward<Args>(args)...);
 }
 //=================================================================================================//
 template <typename DataType>
@@ -344,18 +400,6 @@ void BaseParticles::addVariableToWrite(DiscreteVariableArray<DataType> *variable
     {
         addVariableToWrite<DataType>(variables[i]);
     }
-}
-//=================================================================================================//
-template <typename DataType>
-void BaseParticles::addVariableToRestart(const std::string &name)
-{
-    addVariableToList<DataType>(variables_to_restart_, name);
-}
-//=================================================================================================//
-template <typename DataType>
-void BaseParticles::addVariableToReload(const std::string &name)
-{
-    addVariableToList<DataType>(variables_to_reload_, name);
 }
 //=================================================================================================//
 template <typename DataType>
@@ -370,15 +414,15 @@ operator()(DataContainerKeeper<AllocatedData<DataType>> &data_keeper, size_t ind
 //=================================================================================================//
 template <typename DataType>
 void BaseParticles::WriteAParticleVariableToXml::
-operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables)
+operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables, XmlParser &xml_parser)
 {
     for (size_t i = 0; i != variables.size(); ++i)
     {
         size_t index = 0;
         DataType *data_field = variables[i]->Data();
-        for (auto child = xml_parser_.first_element_->FirstChildElement(); child; child = child->NextSiblingElement())
+        for (auto child = xml_parser.first_element_->FirstChildElement(); child; child = child->NextSiblingElement())
         {
-            xml_parser_.setAttributeToElement(child, variables[i]->Name(), data_field[index]);
+            xml_parser.setAttributeToElement(child, variables[i]->Name(), data_field[index]);
             index++;
         }
     }
@@ -386,7 +430,8 @@ operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables)
 //=================================================================================================//
 template <typename DataType>
 void BaseParticles::ReadAParticleVariableFromXml::
-operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables, BaseParticles *base_particles)
+operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables,
+           BaseParticles *base_particles, XmlParser &xml_parser)
 {
     for (size_t i = 0; i != variables.size(); ++i)
     {
@@ -394,9 +439,9 @@ operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables, Ba
         DataType *data_field = variables[i]->Data() != nullptr
                                    ? variables[i]->Data()
                                    : base_particles->initializeVariable<DataType>(variables[i]);
-        for (auto child = xml_parser_.first_element_->FirstChildElement(); child; child = child->NextSiblingElement())
+        for (auto child = xml_parser.first_element_->FirstChildElement(); child; child = child->NextSiblingElement())
         {
-            xml_parser_.queryAttributeValue(child, variables[i]->Name(), data_field[index]);
+            xml_parser.queryAttributeValue(child, variables[i]->Name(), data_field[index]);
             index++;
         }
     }
