@@ -28,13 +28,13 @@ const Real c_f = 10.0 * U_max; /**< Reference sound speed. */
 namespace SPH
 {
 StdVec<Vecd> createAxialObservationPoints(
-    double full_length, Vec3d translation = Vec3d(0.0, 0.0, 0.0))
+    Real full_length, Vec3d translation = Vec3d(0.0, 0.0, 0.0))
 {
     StdVec<Vecd> observation_points;
     int ny = 51;
     for (int i = 0; i < ny; i++)
     {
-        double y = full_length / (ny - 1) * i;
+        Real y = full_length / (ny - 1) * i;
         Vec3d point_coordinate(0.0, y, 0.0);
         observation_points.emplace_back(point_coordinate + translation);
     }
@@ -42,17 +42,17 @@ StdVec<Vecd> createAxialObservationPoints(
 };
 
 StdVec<Vecd> createRadialObservationPoints(
-    double full_length, double diameter, int number_of_particles,
+    Real full_length, Real diameter, int number_of_particles,
     Vec3d translation = Vec3d(0.0, 0.0, 0.0))
 {
     StdVec<Vecd> observation_points;
     int n = number_of_particles + 1;
-    double y = full_length / 2.0;
+    Real y = full_length / 2.0;
     for (int i = 0; i < n - 1; i++) // we leave out the point close to the boundary as the
                                     // interpolation there is incorrect
                                     // TODO: fix the interpolation
     {
-        double z = diameter / 2.0 * i / double(n);
+        Real z = diameter / 2.0 * i / Real(n);
         observation_points.emplace_back(Vec3d(0.0, y, z) + translation);
         observation_points.emplace_back(Vec3d(0.0, y, -z) + translation);
     }
@@ -72,7 +72,7 @@ class ParticleGenerator<SurfaceParticles, ShellBoundary> : public ParticleGenera
                                Real resolution_shell, Real wall_thickness, Real shell_thickness)
         : ParticleGenerator<SurfaceParticles>(sph_body, surface_particles),
           resolution_shell_(resolution_shell),
-          wall_thickness_(wall_thickness), shell_thickness_(shell_thickness){};
+          wall_thickness_(wall_thickness), shell_thickness_(shell_thickness) {};
     void prepareGeometricData() override
     {
         const Real radius_mid_surface = fluid_radius + resolution_shell_ * 0.5;
