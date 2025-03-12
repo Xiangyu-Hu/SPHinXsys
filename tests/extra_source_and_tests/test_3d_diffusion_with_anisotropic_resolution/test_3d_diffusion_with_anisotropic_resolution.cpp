@@ -309,7 +309,7 @@ int main(int ac, char *av[])
     Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     size_t number_of_iterations = 0;
     
-    Real end_time = 1.0;
+    Real end_time = 0.4;
     Real output_interval = 0.01 * end_time;
     Real Observe_time = 0.01 * output_interval;
     Real dt = 0.0;
