@@ -3,7 +3,7 @@
  * ----------------------------------------------------------------------------*
  * This case is designed to test tensile instability and                       *
  * angular momentum conservation properties.                                   *
- * @author Shuaihao Zhang and Xiangyu Hu                              *
+ * @author Shuaihao Zhang and Xiangyu Hu                                       *
  * ----------------------------------------------------------------------------*/
 #include "sphinxsys.h"
 using namespace SPH;
