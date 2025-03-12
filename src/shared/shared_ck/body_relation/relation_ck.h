@@ -69,15 +69,13 @@ class Relation<Inner<>> : public Relation<Base>
     explicit Relation(RealBody &real_body);
     virtual ~Relation() {};
     RealBody &getRealBody() { return *real_body_; };
-    DiscreteVariable<UnsignedInt> *getNeighborIndex() { return dv_neighbor_index_; };
-    DiscreteVariable<UnsignedInt> *getParticleOffset() { return dv_particle_offset_; };
+    DiscreteVariable<UnsignedInt> *getNeighborIndex() { return dv_target_neighbor_index_[0]; };
+    DiscreteVariable<UnsignedInt> *getParticleOffset() { return dv_target_particle_offset_[0]; };
     void registerComputingKernel(execution::Implementation<Base> *implementation);
     void resetComputingKernelUpdated();
 
   protected:
     RealBody *real_body_;
-    DiscreteVariable<UnsignedInt> *dv_neighbor_index_;
-    DiscreteVariable<UnsignedInt> *dv_particle_offset_;
 };
 
 template <class SourceIdentifier, class TargetIdentifier>
@@ -86,8 +84,6 @@ class Relation<Contact<SourceIdentifier, TargetIdentifier>> : public Relation<Ba
   protected:
     SourceIdentifier &source_identifier_;
     StdVec<TargetIdentifier *> contact_identifiers_;
-    StdVec<DiscreteVariable<UnsignedInt> *> dv_contact_neighbor_index_;
-    StdVec<DiscreteVariable<UnsignedInt> *> dv_contact_particle_offset_;
     StdVec<RealBody *> contact_bodies_;
     StdVec<BaseParticles *> contact_particles_;
     StdVec<SPHAdaptation *> contact_adaptations_;
@@ -104,8 +100,8 @@ class Relation<Contact<SourceIdentifier, TargetIdentifier>> : public Relation<Ba
     StdVec<RealBody *> getContactBodies() { return contact_bodies_; };
     StdVec<BaseParticles *> getContactParticles() { return contact_particles_; };
     StdVec<SPHAdaptation *> getContactAdaptations() { return contact_adaptations_; };
-    StdVec<DiscreteVariable<UnsignedInt> *> getContactNeighborIndex() { return dv_contact_neighbor_index_; };
-    StdVec<DiscreteVariable<UnsignedInt> *> getContactParticleOffset() { return dv_contact_particle_offset_; };
+    StdVec<DiscreteVariable<UnsignedInt> *> getContactNeighborIndex() { return dv_target_neighbor_index_; };
+    StdVec<DiscreteVariable<UnsignedInt> *> getContactParticleOffset() { return dv_target_particle_offset_; };
 
     void registerComputingKernel(execution::Implementation<Base> *implementation, UnsignedInt contact_index);
     void resetComputingKernelUpdated(UnsignedInt contact_index);

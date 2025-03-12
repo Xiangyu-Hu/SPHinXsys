@@ -5,8 +5,7 @@ namespace SPH
 //=================================================================================================//
 Relation<Inner<>>::Relation(RealBody &real_body)
     : Relation<Base>(real_body, StdVec<RealBody *>{&real_body}),
-      real_body_(&real_body), dv_neighbor_index_(dv_target_neighbor_index_[0]),
-      dv_particle_offset_(dv_target_particle_offset_[0]) {}
+      real_body_(&real_body) {}
 //=================================================================================================//
 void Relation<Inner<>>::registerComputingKernel(execution::Implementation<Base> *implementation)
 {

@@ -7,7 +7,8 @@ namespace SPH
 {
 //=================================================================================================//
 template <class SourceIdentifier, class TargetIdentifier>
-Relation<Base>::Relation(SourceIdentifier &source_identifier, StdVec<TargetIdentifier *> contact_identifiers)
+Relation<Base>::Relation(
+    SourceIdentifier &source_identifier, StdVec<TargetIdentifier *> contact_identifiers)
     : sph_body_(source_identifier.getSPHBody()),
       particles_(sph_body_.getBaseParticles()),
       offset_list_size_(particles_.ParticlesBound() + 1)
@@ -32,12 +33,10 @@ DiscreteVariable<DataType> *Relation<Base>::
 }
 //=================================================================================================//
 template <class DynamicsIdentifier, class TargetIdentifier>
-Relation<Contact<DynamicsIdentifier, TargetIdentifier>>::
-    Relation(DynamicsIdentifier &source_identifier, StdVec<TargetIdentifier *> contact_identifiers)
+Relation<Contact<DynamicsIdentifier, TargetIdentifier>>::Relation(
+    DynamicsIdentifier &source_identifier, StdVec<TargetIdentifier *> contact_identifiers)
     : Relation<Base>(source_identifier, contact_identifiers),
-      source_identifier_(source_identifier), contact_identifiers_(contact_identifiers),
-      dv_contact_neighbor_index_(dv_target_neighbor_index_),
-      dv_contact_particle_offset_(dv_target_particle_offset_)
+      source_identifier_(source_identifier), contact_identifiers_(contact_identifiers)
 {
     for (size_t k = 0; k != contact_identifiers.size(); ++k)
     {
