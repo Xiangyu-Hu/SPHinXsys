@@ -48,8 +48,8 @@ Interaction<Contact<SourceIdentifier, TargetIdentifier, Parameters...>>::
       contact_bodies_(contact_relation.getContactBodies()),
       contact_particles_(contact_relation.getContactParticles()),
       contact_adaptations_(contact_relation.getContactAdaptations()),
-      dv_contact_neighbor_index_(contact_relation.getContactNeighborIndex()),
-      dv_contact_particle_offset_(contact_relation.getContactParticleOffset())
+      dv_contact_neighbor_index_(contact_relation.getTargetNeighborIndex()),
+      dv_contact_particle_offset_(contact_relation.getTargetParticleOffset())
 {
     for (size_t k = 0; k != contact_particles_.size(); ++k)
     {

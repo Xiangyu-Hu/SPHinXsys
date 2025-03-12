@@ -3,6 +3,20 @@
 namespace SPH
 {
 //=================================================================================================//
+void Relation<Base>::registerComputingKernel(
+    execution::Implementation<Base> *implementation, UnsignedInt contact_index)
+{
+    registered_computing_kernels_[contact_index].push_back(implementation);
+}
+//=================================================================================================//
+void Relation<Base>::resetComputingKernelUpdated(UnsignedInt contact_index)
+{
+    for (size_t k = 0; k != registered_computing_kernels_[contact_index].size(); ++k)
+    {
+        registered_computing_kernels_[contact_index][k]->resetUpdated();
+    }
+}    
+//=================================================================================================//
 Relation<Inner<>>::Relation(RealBody &real_body)
     : Relation<Base>(real_body, StdVec<RealBody *>{&real_body}),
       real_body_(&real_body) {}

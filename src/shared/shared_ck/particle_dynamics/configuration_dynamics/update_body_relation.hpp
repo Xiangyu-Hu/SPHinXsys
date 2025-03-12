@@ -99,7 +99,7 @@ void UpdateRelation<ExecutionPolicy, Inner<Parameters...>>::exec(Real dt)
 //=================================================================================================//
 template <class ExecutionPolicy, typename... Parameters>
 UpdateRelation<ExecutionPolicy, Contact<Parameters...>>::
-    UpdateRelation(Relation<Contact<Parameters...>> &contact_relation)
+UpdateRelation(RelationType &contact_relation)
     : Interaction<Contact<Parameters...>>(contact_relation),
       BaseDynamics<void>(), ex_policy_(ExecutionPolicy{})
 {

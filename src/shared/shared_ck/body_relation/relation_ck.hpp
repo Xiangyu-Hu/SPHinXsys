@@ -47,22 +47,5 @@ Relation<Contact<DynamicsIdentifier, TargetIdentifier>>::Relation(
     }
 }
 //=================================================================================================//
-template <class DynamicsIdentifier, class TargetIdentifier>
-void Relation<Contact<DynamicsIdentifier, TargetIdentifier>>::registerComputingKernel(
-    execution::Implementation<Base> *implementation, UnsignedInt contact_index)
-{
-    registered_computing_kernels_[contact_index].push_back(implementation);
-}
-//=================================================================================================//
-template <class DynamicsIdentifier, class TargetIdentifier>
-void Relation<Contact<DynamicsIdentifier, TargetIdentifier>>::
-    resetComputingKernelUpdated(UnsignedInt contact_index)
-{
-    for (size_t k = 0; k != registered_computing_kernels_[contact_index].size(); ++k)
-    {
-        registered_computing_kernels_[contact_index][k]->resetUpdated();
-    }
-}
-//=================================================================================================//
 } // namespace SPH
 #endif // RELATION_CK_HPP
