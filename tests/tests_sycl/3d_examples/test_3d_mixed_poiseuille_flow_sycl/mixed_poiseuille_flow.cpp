@@ -245,7 +245,11 @@ int main(int ac, char *av[])
 
     SolidBody wall(sph_system, wall_body_shape);
     wall.defineMaterial<Solid>();
+    std::cout << "248\n";
+
     wall.generateParticles<BaseParticles, Lattice>();
+    std::cout << "251\n";
+
     // Add observer
     {
         int num_points = 15;
@@ -255,6 +259,7 @@ int main(int ac, char *av[])
         Real z = 0.5 * DH;
         Real total_range = y_end - y_start;
         Real dy = total_range / (num_points - 1);
+        std::cout << "262\n";
 
         for (int i = 0; i < num_points; ++i)
         {
@@ -262,10 +267,14 @@ int main(int ac, char *av[])
             observer_location.push_back(Vec3d(0.5 * DL, y_i, z));
         }
     }
-    std::cout << "265\n";
+    std::cout << "270\n";
 
     ObserverBody velocity_observer(sph_system, "VelocityObserver");
+    std::cout << "273\n";
+
     velocity_observer.generateParticles<ObserverParticles>(observer_location);
+    std::cout << "277\n";
+
     // //----------------------------------------------------------------------
     // //	Creating body parts.
     // //----------------------------------------------------------------------
