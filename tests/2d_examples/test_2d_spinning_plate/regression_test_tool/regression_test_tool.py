@@ -7,12 +7,12 @@ sys.path.append(path)
 from regression_test_base_tool import SphinxsysRegressionTest
 
 """
-case name: test_2d_self_contact
+case name: test_2d_spinning_plate
 """
 
-case_name = "test_2d_self_contact"
-body_name = "BeamObserver"
-parameter_name = "Position"
+case_name = "test_2d_spinning_plate"
+body_name = "SquareBody"
+parameter_name = "TotalKineticEnergy"
 
 number_of_run_times = 0
 converged = 0
