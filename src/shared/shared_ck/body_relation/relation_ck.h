@@ -49,10 +49,24 @@ class Relation<Base>
     Relation(SourceIdentifier &source_identifier, StdVec<TargetIdentifier *> target_identifiers);
     virtual ~Relation() {};
     SPHBody &getSPHBody() { return sph_body_; };
-    StdVec<DiscreteVariable<UnsignedInt> *> getTargetNeighborIndex() { return dv_target_neighbor_index_; };
-    StdVec<DiscreteVariable<UnsignedInt> *> getTargetParticleOffset() { return dv_target_particle_offset_; };
-    void registerComputingKernel(execution::Implementation<Base> *implementation, UnsignedInt contact_index);
-    void resetComputingKernelUpdated(UnsignedInt contact_index);
+    DiscreteVariable<UnsignedInt> *getNeighborIndex(UnsignedInt target_index = 0);
+    DiscreteVariable<UnsignedInt> *getParticleOffset(UnsignedInt target_index = 0);
+    void registerComputingKernel(execution::Implementation<Base> *implementation, UnsignedInt target_index = 0);
+    void resetComputingKernelUpdated(UnsignedInt target_index = 0);
+
+    class NeighborList
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        NeighborList(const ExecutionPolicy &ex_policy, EncloserType &encloser,
+                     UnsignedInt target_index = 0);
+
+      protected:
+        UnsignedInt *neighbor_index_;
+        UnsignedInt *particle_offset_;
+        inline UnsignedInt FirstNeighbor(UnsignedInt i) { return particle_offset_[i]; };
+        inline UnsignedInt LastNeighbor(UnsignedInt i) { return particle_offset_[i + 1]; };
+    };
 
   protected:
     SPHBody &sph_body_;
@@ -73,10 +87,6 @@ class Relation<Inner<>> : public Relation<Base>
     explicit Relation(RealBody &real_body);
     virtual ~Relation() {};
     RealBody &getRealBody() { return *real_body_; };
-    DiscreteVariable<UnsignedInt> *getNeighborIndex() { return dv_target_neighbor_index_[0]; };
-    DiscreteVariable<UnsignedInt> *getParticleOffset() { return dv_target_particle_offset_[0]; };
-    void registerComputingKernel(execution::Implementation<Base> *implementation);
-    void resetComputingKernelUpdated();
 
   protected:
     RealBody *real_body_;
@@ -100,7 +110,7 @@ class Relation<Contact<SourceIdentifier, TargetIdentifier>> : public Relation<Ba
     virtual ~Relation() {};
     SourceIdentifier &getSourceIdentifier() { return source_identifier_; };
     StdVec<TargetIdentifier *> getContactIdentifiers() { return contact_identifiers_; };
-    TargetIdentifier &getContactIdentifier(UnsignedInt contact_index) { return *contact_identifiers_[contact_index]; };
+    TargetIdentifier &getContactIdentifier(UnsignedInt target_index) { return *contact_identifiers_[target_index]; };
     StdVec<RealBody *> getContactBodies() { return contact_bodies_; };
     StdVec<BaseParticles *> getContactParticles() { return contact_particles_; };
     StdVec<SPHAdaptation *> getContactAdaptations() { return contact_adaptations_; };

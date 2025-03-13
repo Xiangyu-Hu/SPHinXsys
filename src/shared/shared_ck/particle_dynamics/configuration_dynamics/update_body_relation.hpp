@@ -77,16 +77,18 @@ void UpdateRelation<ExecutionPolicy, Inner<Parameters...>>::exec(Real dt)
                  [=](size_t i)
                  { computing_kernel->incrementNeighborSize(i); });
 
-    UnsignedInt *neighbor_index = this->dv_neighbor_index_->DelegatedData(ex_policy_);
-    UnsignedInt *particle_offset = this->dv_particle_offset_->DelegatedData(ex_policy_);
+    auto *dv_neighbor_index = this->inner_relation_.getNeighborIndex();
+    auto *dv_particle_offset = this->inner_relation_.getParticleOffset();
+    UnsignedInt *neighbor_index = dv_neighbor_index->DelegatedData(ex_policy_);
+    UnsignedInt *particle_offset = dv_particle_offset->DelegatedData(ex_policy_);
     UnsignedInt current_offset_list_size = total_real_particles + 1;
     UnsignedInt current_neighbor_index_size =
         exclusive_scan(ex_policy_, neighbor_index, particle_offset, current_offset_list_size,
                        typename PlusUnsignedInt<ExecutionPolicy>::type());
 
-    if (current_neighbor_index_size > this->dv_neighbor_index_->getDataSize())
+    if (current_neighbor_index_size > dv_neighbor_index->getDataSize())
     {
-        this->dv_neighbor_index_->reallocateData(ex_policy_, current_neighbor_index_size);
+        dv_neighbor_index->reallocateData(ex_policy_, current_neighbor_index_size);
         this->inner_relation_.resetComputingKernelUpdated();
         kernel_implementation_.overwriteComputingKernel();
     }
@@ -99,7 +101,7 @@ void UpdateRelation<ExecutionPolicy, Inner<Parameters...>>::exec(Real dt)
 //=================================================================================================//
 template <class ExecutionPolicy, typename... Parameters>
 UpdateRelation<ExecutionPolicy, Contact<Parameters...>>::
-UpdateRelation(RelationType &contact_relation)
+    UpdateRelation(RelationType &contact_relation)
     : Interaction<Contact<Parameters...>>(contact_relation),
       BaseDynamics<void>(), ex_policy_(ExecutionPolicy{})
 {
@@ -169,16 +171,18 @@ void UpdateRelation<ExecutionPolicy, Contact<Parameters...>>::exec(Real dt)
                      [=](size_t i)
                      { computing_kernel->incrementNeighborSize(i); });
 
-        UnsignedInt *neighbor_index = this->dv_contact_neighbor_index_[k]->DelegatedData(ex_policy_);
-        UnsignedInt *particle_offset = this->dv_contact_particle_offset_[k]->DelegatedData(ex_policy_);
+        auto *dv_neighbor_index = this->contact_relation_.getNeighborIndex(k);
+        auto *dv_particle_offset = this->contact_relation_.getParticleOffset(k);
+        UnsignedInt *neighbor_index = dv_neighbor_index->DelegatedData(ex_policy_);
+        UnsignedInt *particle_offset = dv_particle_offset->DelegatedData(ex_policy_);
         UnsignedInt current_offset_list_size = total_real_particles + 1;
         UnsignedInt current_neighbor_index_size =
             exclusive_scan(ex_policy_, neighbor_index, particle_offset, current_offset_list_size,
                            typename PlusUnsignedInt<ExecutionPolicy>::type());
 
-        if (current_neighbor_index_size > this->dv_contact_neighbor_index_[k]->getDataSize())
+        if (current_neighbor_index_size > dv_neighbor_index->getDataSize())
         {
-            this->dv_contact_neighbor_index_[k]->reallocateData(ex_policy_, current_neighbor_index_size);
+            dv_neighbor_index->reallocateData(ex_policy_, current_neighbor_index_size);
             this->contact_relation_.resetComputingKernelUpdated(k);
             contact_kernel_implementation_[k]->overwriteComputingKernel(k);
         }

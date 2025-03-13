@@ -3,36 +3,33 @@
 namespace SPH
 {
 //=================================================================================================//
-void Relation<Base>::registerComputingKernel(
-    execution::Implementation<Base> *implementation, UnsignedInt contact_index)
+DiscreteVariable<UnsignedInt> *Relation<Base>::getNeighborIndex(UnsignedInt target_index)
 {
-    registered_computing_kernels_[contact_index].push_back(implementation);
+    return dv_target_neighbor_index_[target_index];
 }
 //=================================================================================================//
-void Relation<Base>::resetComputingKernelUpdated(UnsignedInt contact_index)
+DiscreteVariable<UnsignedInt> *Relation<Base>::getParticleOffset(UnsignedInt target_index)
 {
-    for (size_t k = 0; k != registered_computing_kernels_[contact_index].size(); ++k)
+    return dv_target_particle_offset_[target_index];
+}
+//=================================================================================================//
+void Relation<Base>::registerComputingKernel(
+    execution::Implementation<Base> *implementation, UnsignedInt target_index)
+{
+    registered_computing_kernels_[target_index].push_back(implementation);
+}
+//=================================================================================================//
+void Relation<Base>::resetComputingKernelUpdated(UnsignedInt target_index)
+{
+    auto &computing_kernels = registered_computing_kernels_[target_index];
+    for (size_t k = 0; k != computing_kernels.size(); ++k)
     {
-        registered_computing_kernels_[contact_index][k]->resetUpdated();
+        computing_kernels[k]->resetUpdated();
     }
-}    
+}
 //=================================================================================================//
 Relation<Inner<>>::Relation(RealBody &real_body)
     : Relation<Base>(real_body, StdVec<RealBody *>{&real_body}),
       real_body_(&real_body) {}
-//=================================================================================================//
-void Relation<Inner<>>::registerComputingKernel(execution::Implementation<Base> *implementation)
-{
-    registered_computing_kernels_[0].push_back(implementation);
-}
-//=================================================================================================//
-void Relation<Inner<>>::resetComputingKernelUpdated()
-{
-    auto &all_inner_computing_kernels = registered_computing_kernels_[0];
-    for (size_t k = 0; k != all_inner_computing_kernels.size(); ++k)
-    {
-        all_inner_computing_kernels[k]->resetUpdated();
-    }
-}
 //=================================================================================================//
 } // namespace SPH

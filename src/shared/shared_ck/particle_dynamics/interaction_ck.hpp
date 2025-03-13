@@ -13,9 +13,7 @@ Interaction<Inner<Parameters...>>::
       inner_relation_(inner_relation),
       real_body_(&inner_relation.getRealBody()),
       sph_adaptation_(&sph_body_.getSPHAdaptation()),
-      dv_pos_(particles_->getVariableByName<Vecd>("Position")),
-      dv_neighbor_index_(inner_relation.getNeighborIndex()),
-      dv_particle_offset_(inner_relation.getParticleOffset()) {}
+      dv_pos_(particles_->getVariableByName<Vecd>("Position")) {}
 //=================================================================================================//
 template <typename... Parameters>
 void Interaction<Inner<Parameters...>>::
@@ -33,9 +31,8 @@ void Interaction<Inner<Parameters...>>::resetComputingKernelUpdated()
 template <typename... Parameters>
 template <class ExecutionPolicy>
 Interaction<Inner<Parameters...>>::InteractKernel::
-    InteractKernel(const ExecutionPolicy &ex_policy,
-                   Interaction<Inner<Parameters...>> &encloser)
-    : NeighborList(ex_policy, encloser.dv_neighbor_index_, encloser.dv_particle_offset_),
+    InteractKernel(const ExecutionPolicy &ex_policy, Interaction<Inner<Parameters...>> &encloser)
+    : NeighborList(ex_policy, encloser.inner_relation_),
       Neighbor<Parameters...>(ex_policy, encloser.sph_adaptation_, encloser.dv_pos_) {}
 //=================================================================================================//
 template <class SourceIdentifier, class TargetIdentifier, typename... Parameters>
@@ -47,9 +44,7 @@ Interaction<Contact<SourceIdentifier, TargetIdentifier, Parameters...>>::
       dv_pos_(this->particles_->template getVariableByName<Vecd>("Position")),
       contact_bodies_(contact_relation.getContactBodies()),
       contact_particles_(contact_relation.getContactParticles()),
-      contact_adaptations_(contact_relation.getContactAdaptations()),
-      dv_contact_neighbor_index_(contact_relation.getTargetNeighborIndex()),
-      dv_contact_particle_offset_(contact_relation.getTargetParticleOffset())
+      contact_adaptations_(contact_relation.getContactAdaptations())
 {
     for (size_t k = 0; k != contact_particles_.size(); ++k)
     {
@@ -75,8 +70,7 @@ template <class SourceIdentifier, class TargetIdentifier, typename... Parameters
 template <class ExecutionPolicy, class EncloserType>
 Interaction<Contact<SourceIdentifier, TargetIdentifier, Parameters...>>::InteractKernel::
     InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt contact_index)
-    : NeighborList(ex_policy, encloser.dv_contact_neighbor_index_[contact_index],
-                   encloser.dv_contact_particle_offset_[contact_index]),
+    : NeighborList(ex_policy, encloser.contact_relation_, contact_index),
       Neighbor<Parameters...>(ex_policy, encloser.sph_adaptation_,
                               encloser.contact_adaptations_[contact_index],
                               encloser.dv_pos_, encloser.contact_pos_[contact_index]) {}

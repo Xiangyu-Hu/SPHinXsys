@@ -47,6 +47,8 @@ class Interaction;
 template <typename... Parameters>
 class Interaction<Inner<Parameters...>> : public LocalDynamics
 {
+    using NeighborList = typename Relation<Base, Parameters...>::NeighborList;
+
   public:
     explicit Interaction(Relation<Inner<Parameters...>> &inner_relation);
     virtual ~Interaction() {};
@@ -70,14 +72,14 @@ class Interaction<Inner<Parameters...>> : public LocalDynamics
     RealBody *real_body_;
     SPHAdaptation *sph_adaptation_;
     DiscreteVariable<Vecd> *dv_pos_;
-    DiscreteVariable<UnsignedInt> *dv_neighbor_index_;
-    DiscreteVariable<UnsignedInt> *dv_particle_offset_;
 };
 
 template <class SourceIdentifier, class TargetIdentifier, typename... Parameters>
 class Interaction<Contact<SourceIdentifier, TargetIdentifier, Parameters...>>
     : public BaseLocalDynamics<SourceIdentifier>
 {
+    using NeighborList = typename Relation<Base, Parameters...>::NeighborList;
+
   public:
     explicit Interaction(Relation<Contact<SourceIdentifier, TargetIdentifier, Parameters...>> &contact_relation);
     virtual ~Interaction() {};
@@ -103,8 +105,6 @@ class Interaction<Contact<SourceIdentifier, TargetIdentifier, Parameters...>>
     StdVec<BaseParticles *> contact_particles_;
     StdVec<SPHAdaptation *> contact_adaptations_;
     StdVec<DiscreteVariable<Vecd> *> contact_pos_;
-    StdVec<DiscreteVariable<UnsignedInt> *> dv_contact_neighbor_index_;
-    StdVec<DiscreteVariable<UnsignedInt> *> dv_contact_particle_offset_;
 };
 
 template <>
