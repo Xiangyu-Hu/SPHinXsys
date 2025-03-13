@@ -36,7 +36,7 @@ template <class ExecutionPolicy, class EncloserType>
 Relation<Base>::NeighborList::NeighborList(
     const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt target_index)
     : neighbor_index_(encloser.dv_target_neighbor_index_[target_index]->DelegatedData(ex_policy)),
-      particle_offset_(encloser.dv_target_particle_offset_[0]->DelegatedData(ex_policy)) {}
+      particle_offset_(encloser.dv_target_particle_offset_[target_index]->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <class DynamicsIdentifier, class TargetIdentifier>
 Relation<Contact<DynamicsIdentifier, TargetIdentifier>>::Relation(
