@@ -58,7 +58,8 @@ class TransportVelocityCorrectionCK<Inner<UpdatePolicy, KernelCorrectionType, Re
       protected:
         CorrectionKernel correction_;
         Real *Vol_;
-        Vecd *dpos_, *zero_gradient_residue_;
+        Vecd *dpos_;
+        Vecd *zero_gradient_residue_;
         ParticleScopeTypeKernel within_scope_;
     };
 
@@ -76,7 +77,8 @@ class TransportVelocityCorrectionCK<Inner<UpdatePolicy, KernelCorrectionType, Re
         Real correction_scaling_;
         ResolutionType h_ratio_;
         LimiterType limiter_;
-        Vecd *dpos_, *zero_gradient_residue_;
+        Vecd *dpos_;
+        Vecd *zero_gradient_residue_;
         ParticleScopeTypeKernel within_scope_;
     };
 

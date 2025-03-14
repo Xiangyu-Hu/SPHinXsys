@@ -116,7 +116,8 @@ void TransportVelocityCorrectionCK<
     if (this->within_scope_(index_i))
     {
         Real inv_h_ratio = 1.0 / h_ratio_(index_i);
-        Real squared_norm = this->zero_gradient_residue_[index_i].squaredNorm();
+        Vecd residue = this->zero_gradient_residue_[index_i];
+        Real squared_norm = residue.squaredNorm();
         dpos_[index_i] += correction_scaling_ * limiter_(squared_norm) *
                           this->zero_gradient_residue_[index_i] * inv_h_ratio * inv_h_ratio;
     }
