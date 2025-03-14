@@ -47,10 +47,11 @@ class Interaction;
 template <typename... Parameters>
 class Interaction<Inner<Parameters...>> : public LocalDynamics
 {
-    using NeighborList = typename Relation<Base, Parameters...>::NeighborList;
+    typedef Relation<Inner<Parameters...>> InnerRelationType;
+    using NeighborList = typename InnerRelationType::NeighborList;
 
   public:
-    explicit Interaction(Relation<Inner<Parameters...>> &inner_relation);
+    explicit Interaction(InnerRelationType &inner_relation);
     virtual ~Interaction() {};
     SPHAdaptation *getSPHAdaptation() { return sph_adaptation_; };
 
@@ -67,8 +68,7 @@ class Interaction<Inner<Parameters...>> : public LocalDynamics
     void resetComputingKernelUpdated();
 
   protected:
-    typedef Relation<Inner<Parameters...>> RelationType;
-    RelationType &inner_relation_;
+    InnerRelationType &inner_relation_;
     RealBody *real_body_;
     SPHAdaptation *sph_adaptation_;
     DiscreteVariable<Vecd> *dv_pos_;
@@ -78,10 +78,11 @@ template <class SourceIdentifier, class TargetIdentifier, typename... Parameters
 class Interaction<Contact<SourceIdentifier, TargetIdentifier, Parameters...>>
     : public BaseLocalDynamics<SourceIdentifier>
 {
-    using NeighborList = typename Relation<Base, Parameters...>::NeighborList;
+    typedef Relation<Contact<SourceIdentifier, TargetIdentifier, Parameters...>> ContactRelationType;
+    using NeighborList = typename ContactRelationType::NeighborList;
 
   public:
-    explicit Interaction(Relation<Contact<SourceIdentifier, TargetIdentifier, Parameters...>> &contact_relation);
+    explicit Interaction(ContactRelationType &contact_relation);
     virtual ~Interaction() {};
     SPHAdaptation *getSPHAdaptation() { return sph_adaptation_; };
 
@@ -97,8 +98,7 @@ class Interaction<Contact<SourceIdentifier, TargetIdentifier, Parameters...>>
     void resetComputingKernelUpdated(UnsignedInt contact_index);
 
   protected:
-    typedef Relation<Contact<SourceIdentifier, TargetIdentifier, Parameters...>> RelationType;
-    RelationType &contact_relation_;
+    ContactRelationType &contact_relation_;
     SPHAdaptation *sph_adaptation_;
     DiscreteVariable<Vecd> *dv_pos_;
     RealBodyVector contact_bodies_;

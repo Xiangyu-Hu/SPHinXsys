@@ -8,7 +8,7 @@ namespace SPH
 //=================================================================================================//
 template <typename... Parameters>
 Interaction<Inner<Parameters...>>::
-    Interaction(Relation<Inner<Parameters...>> &inner_relation)
+    Interaction(InnerRelationType &inner_relation)
     : LocalDynamics(inner_relation.getSPHBody()),
       inner_relation_(inner_relation),
       real_body_(&inner_relation.getRealBody()),
@@ -37,7 +37,7 @@ Interaction<Inner<Parameters...>>::InteractKernel::
 //=================================================================================================//
 template <class SourceIdentifier, class TargetIdentifier, typename... Parameters>
 Interaction<Contact<SourceIdentifier, TargetIdentifier, Parameters...>>::
-    Interaction(Relation<Contact<SourceIdentifier, TargetIdentifier, Parameters...>> &contact_relation)
+    Interaction(ContactRelationType &contact_relation)
     : BaseLocalDynamics<SourceIdentifier>(contact_relation.getSourceIdentifier()),
       contact_relation_(contact_relation),
       sph_adaptation_(&this->sph_body_.getSPHAdaptation()),
