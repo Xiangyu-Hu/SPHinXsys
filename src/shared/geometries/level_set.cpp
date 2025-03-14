@@ -9,7 +9,8 @@ namespace SPH
 MultilevelLevelSet::MultilevelLevelSet(
     BoundingBox tentative_bounds, Real reference_data_spacing, size_t total_levels,
     Shape &shape, SPHAdaptation &sph_adaptation)
-    : MultilevelLevelSet(par, tentative_bounds, reference_data_spacing, total_levels, shape, sph_adaptation){};
+    : MultilevelLevelSet(par, tentative_bounds, reference_data_spacing, total_levels,
+                         shape, sph_adaptation){};
 //=================================================================================================//
 MultilevelLevelSet::MultilevelLevelSet(
     BoundingBox tentative_bounds, MeshWithGridDataPackagesType* coarse_data, Shape &shape,

@@ -25,7 +25,7 @@ int main(int ac, char *av[])
     SolidBody column(sph_system, makeShared<Column>("Column"));
     column.defineAdaptationRatios(1.3, 1.0);
     BoundingBox bounding_box = column.getInitialShape().getBounds();
-    LevelSetShape *target = column.defineBodyLevelSetShape();
+    LevelSetShape *target = column.defineBodyLevelSetShape(execution::par_device);
 
     // std::random_device rd;
     // std::mt19937 gen(rd());
@@ -38,10 +38,10 @@ int main(int ac, char *av[])
 
     target->cleanLevelSet(1.0);
     target->correctLevelSetSign(1.0);
-    target->findClosestPoint(randomVec);
-    target->findLevelSetGradient(randomVec);
-    target->computeKernelIntegral(randomVec);
-    target->computeKernelGradientIntegral(randomVec);
+    // target->findClosestPoint(randomVec);
+    // target->findLevelSetGradient(randomVec);
+    // target->computeKernelIntegral(randomVec);
+    // target->computeKernelGradientIntegral(randomVec);
 
     return 0;
 }

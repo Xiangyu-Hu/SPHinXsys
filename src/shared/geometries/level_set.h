@@ -46,12 +46,18 @@ namespace SPH
 class MultilevelLevelSet : public BaseMeshField
 {
   public:
-    MultilevelLevelSet(BoundingBox tentative_bounds, Real reference_data_spacing, size_t total_levels, Shape &shape, SPHAdaptation &sph_adaptation);
-    MultilevelLevelSet(BoundingBox tentative_bounds, MeshWithGridDataPackagesType* coarse_data, Shape &shape, SPHAdaptation &sph_adaptation);
+    MultilevelLevelSet(BoundingBox tentative_bounds, Real reference_data_spacing, size_t total_levels,
+                       Shape &shape, SPHAdaptation &sph_adaptation);
+    MultilevelLevelSet(BoundingBox tentative_bounds, MeshWithGridDataPackagesType* coarse_data,
+                       Shape &shape, SPHAdaptation &sph_adaptation);
     template <class ExecutionPolicy>
-    MultilevelLevelSet(const ExecutionPolicy &ex_policy, BoundingBox tentative_bounds, Real reference_data_spacing, size_t total_levels, Shape &shape, SPHAdaptation &sph_adaptation);
+    MultilevelLevelSet(const ExecutionPolicy &ex_policy, BoundingBox tentative_bounds,
+                       Real reference_data_spacing, size_t total_levels, Shape &shape,
+                       SPHAdaptation &sph_adaptation);
     template <class ExecutionPolicy>
-    MultilevelLevelSet(const ExecutionPolicy &ex_policy, BoundingBox tentative_bounds, MeshWithGridDataPackagesType* coarse_data, Shape &shape, SPHAdaptation &sph_adaptation);
+    MultilevelLevelSet(const ExecutionPolicy &ex_policy, BoundingBox tentative_bounds,
+                       MeshWithGridDataPackagesType* coarse_data, Shape &shape,
+                       SPHAdaptation &sph_adaptation);
     ~MultilevelLevelSet(){};
 
     void cleanInterface(Real small_shift_factor);
