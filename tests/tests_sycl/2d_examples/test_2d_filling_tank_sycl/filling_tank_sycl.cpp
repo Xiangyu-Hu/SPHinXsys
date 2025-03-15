@@ -161,7 +161,7 @@ int main(int ac, char *av[])
         fluid_density_regularization(water_body_inner, water_wall_contact);
 
     ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AdvectionTimeStepCK> fluid_advection_time_step(water_body, U_f);
-    ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticTimeStepCK> fluid_acoustic_time_step(water_body);
+    ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticTimeStepCK<>> fluid_acoustic_time_step(water_body);
 
     StateDynamics<MainExecutionPolicy, fluid_dynamics::InflowConditionCK<AlignedBoxPartByParticle, InletInflowCondition>> inflow_condition(emitter);
     StateDynamics<SequencedExecutionPolicy, fluid_dynamics::EmitterInflowInjectionCK> emitter_injection(emitter, inlet_buffer);
