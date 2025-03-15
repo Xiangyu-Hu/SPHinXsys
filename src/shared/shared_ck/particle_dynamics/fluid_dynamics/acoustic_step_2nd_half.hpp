@@ -12,7 +12,9 @@ template <class RiemannSolverType, class KernelCorrectionType, typename... Param
 AcousticStep2ndHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType, Parameters...>>::
     AcousticStep2ndHalf(Relation<Inner<Parameters...>> &inner_relation)
     : AcousticStep<Interaction<Inner<Parameters...>>>(inner_relation),
-      kernel_correction_(this->particles_), riemann_solver_(this->fluid_, this->fluid_)
+      kernel_correction_(this->particles_),
+      fluid_(DynamicCast<FluidType>(this, this->sph_body_.getBaseMaterial())),
+      riemann_solver_(this->fluid_, this->fluid_)
 {
     static_assert(std::is_base_of<KernelCorrection, KernelCorrectionType>::value,
                   "KernelCorrection is not the base of KernelCorrectionType!");
@@ -83,7 +85,9 @@ template <class RiemannSolverType, class KernelCorrectionType, typename... Param
 AcousticStep2ndHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType, Parameters...>>::
     AcousticStep2ndHalf(Relation<Contact<Parameters...>> &wall_contact_relation)
     : AcousticStep<Interaction<Contact<Wall, Parameters...>>>(wall_contact_relation),
-      kernel_correction_(this->particles_), riemann_solver_(this->fluid_, this->fluid_) {}
+      kernel_correction_(this->particles_),
+      fluid_(DynamicCast<FluidType>(this, this->sph_body_.getBaseMaterial())),
+      riemann_solver_(this->fluid_, this->fluid_) {}
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
 template <class ExecutionPolicy, class EncloserType>

@@ -149,8 +149,8 @@ class PlasticAcousticStep1stHalf<Contact<Wall, RiemannSolverType, KernelCorrecti
 
 
 using PlasticAcousticStep1stHalfWithWallRiemannCK =
-    PlasticAcousticStep1stHalf<Inner<OneLevel, AcousticRiemannSolver, NoKernelCorrection>,
-                        Contact<Wall, AcousticRiemannSolver, NoKernelCorrection>>;
+    PlasticAcousticStep1stHalf<Inner<OneLevel, AcousticRiemannSolverCK, NoKernelCorrection>,
+                        Contact<Wall, AcousticRiemannSolverCK, NoKernelCorrection>>;
 } // namespace continuum_dynamics
 } // namespace SPH
 #endif // CONTINUUM_INTEGRATION_1ST_CK_H

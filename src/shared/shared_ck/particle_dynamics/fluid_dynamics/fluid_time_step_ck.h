@@ -39,9 +39,10 @@ namespace SPH
 {
 namespace fluid_dynamics
 {
+template <class FluidType = WeaklyCompressibleFluid>
 class AcousticTimeStepCK : public LocalDynamicsReduce<ReduceMax>
 {
-    using EosKernel = typename WeaklyCompressibleFluid::EosKernel;
+    using EosKernel = typename FluidType::EosKernel;
 
   public:
     explicit AcousticTimeStepCK(SPHBody &sph_body, Real acousticCFL = 0.6);
@@ -53,7 +54,7 @@ class AcousticTimeStepCK : public LocalDynamicsReduce<ReduceMax>
 
       public:
         using OutputType = Real;
-        FinishDynamics(AcousticTimeStepCK &encloser);
+        FinishDynamics(AcousticTimeStepCK<FluidType> &encloser);
         Real Result(Real reduced_value);
     };
 
@@ -61,7 +62,7 @@ class AcousticTimeStepCK : public LocalDynamicsReduce<ReduceMax>
     {
       public:
         template <class ExecutionPolicy>
-        ReduceKernel(const ExecutionPolicy &ex_policy, AcousticTimeStepCK &encloser);
+        ReduceKernel(const ExecutionPolicy &ex_policy, AcousticTimeStepCK<FluidType> &encloser);
 
         Real reduce(size_t index_i, Real dt = 0.0)
         {
@@ -78,7 +79,7 @@ class AcousticTimeStepCK : public LocalDynamicsReduce<ReduceMax>
     };
 
   protected:
-    WeaklyCompressibleFluid &fluid_;
+    FluidType &fluid_;
     DiscreteVariable<Real> *dv_rho_, *dv_p_, *dv_mass_;
     DiscreteVariable<Vecd> *dv_vel_, *dv_force_, *dv_force_prior_;
     Real h_min_;
