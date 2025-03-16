@@ -129,8 +129,8 @@ class PlasticAcousticStep2ndHalf<Contact<Wall, RiemannSolverType, KernelCorrecti
 };
 
 using PlasticAcousticStep2ndHalfWithWallRiemannCK =
-    PlasticAcousticStep2ndHalf<Inner<OneLevel, AcousticRiemannSolver, NoKernelCorrection>,
-                        Contact<Wall, AcousticRiemannSolver, NoKernelCorrection>>;
+    PlasticAcousticStep2ndHalf<Inner<OneLevel, AcousticRiemannSolverCK, NoKernelCorrection>,
+                        Contact<Wall, AcousticRiemannSolverCK, NoKernelCorrection>>;
 } // namespace continuum_dynamics
 } // namespace SPH
 #endif // CONTINUUM_INTEGRATION_2ND_CK_H

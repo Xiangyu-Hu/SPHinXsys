@@ -12,7 +12,6 @@ template <class BaseInteractionType>
 template <class DynamicsIdentifier>
 AcousticStep<BaseInteractionType>::AcousticStep(DynamicsIdentifier &identifier)
     : BaseInteractionType(identifier),
-      fluid_(DynamicCast<WeaklyCompressibleFluid>(this, this->sph_body_.getBaseMaterial())),
       dv_Vol_(this->particles_->template getVariableByName<Real>("VolumetricMeasure")),
       dv_rho_(this->particles_->template getVariableByName<Real>("Density")),
       dv_mass_(this->particles_->template getVariableByName<Real>("Mass")),
@@ -43,7 +42,9 @@ template <class RiemannSolverType, class KernelCorrectionType, typename... Param
 AcousticStep1stHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType, Parameters...>>::
     AcousticStep1stHalf(Relation<Inner<Parameters...>> &inner_relation)
     : AcousticStep<Interaction<Inner<Parameters...>>>(inner_relation),
-      kernel_correction_(this->particles_), riemann_solver_(this->fluid_, this->fluid_)
+      kernel_correction_(this->particles_),
+      fluid_(DynamicCast<FluidType>(this, this->sph_body_.getBaseMaterial())),
+      riemann_solver_(this->fluid_, this->fluid_)
 {
     static_assert(std::is_base_of<KernelCorrection, KernelCorrectionType>::value,
                   "KernelCorrection is not the base of KernelCorrectionType!");
@@ -121,7 +122,9 @@ template <class RiemannSolverType, class KernelCorrectionType, typename... Param
 AcousticStep1stHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType, Parameters...>>::
     AcousticStep1stHalf(Relation<Contact<Parameters...>> &wall_contact_relation)
     : AcousticStep<Interaction<Contact<Wall, Parameters...>>>(wall_contact_relation),
-      kernel_correction_(this->particles_), riemann_solver_(this->fluid_, this->fluid_) {}
+      kernel_correction_(this->particles_),
+      fluid_(DynamicCast<FluidType>(this, this->sph_body_.getBaseMaterial())),
+      riemann_solver_(this->fluid_, this->fluid_) {}
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
 template <class ExecutionPolicy, class EncloserType>
