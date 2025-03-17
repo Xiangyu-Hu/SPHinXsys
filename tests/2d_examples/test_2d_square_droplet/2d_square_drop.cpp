@@ -11,10 +11,10 @@ using namespace SPH; // Namespace cite here.
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real DL = 2.0;                         /**< Tank length. */
-Real DH = 2.0;                         /**< Tank height. */
-Real LL = 1.0;                         /**< Liquid column length. */
-Real LH = 1.0;                         /**< Liquid column height. */
+Real DL = 2.0;                         /**< Domain length. */
+Real DH = 2.0;                         /**< Domain height. */
+Real LL = 1.0;                         /**< Droplet length. */
+Real LH = 1.0;                         /**< Droplet height. */
 Real particle_spacing_ref = DL / 50.0; /**< Initial reference particle spacing. */
 Real BW = particle_spacing_ref * 4;    /**< Extending width for BCs. */
 //----------------------------------------------------------------------
@@ -26,20 +26,20 @@ Real U_ref = 1.0;         /**< Characteristic velocity. */
 Real c_f = 10.0 * U_ref;  /**< Reference sound speed. */
 Real mu_f = 5.0e-2;       /**< Water viscosity. */
 Real mu_a = 5.0e-4;       /**< Air viscosity. */
-Real surface_tension_coeff = 1.0;
+Real surface_tension_coeff = 1.0; /**< Surface tension coefficient. */
 //----------------------------------------------------------------------
 //	Geometric shapes used in this case.
 //----------------------------------------------------------------------
 Vec2d outer_wall_halfsize = Vec2d(0.5 * DL + BW, 0.5 * DH + BW);
 Vec2d inner_wall_halfsize = Vec2d(0.5 * DL, 0.5 * DH);
 Vec2d wall_translation = Vec2d(0.0, 0.0);
-Vecd air_halfsize = inner_wall_halfsize;       // local center at origin
-Vecd air_translation = Vecd(0, 0); // translation to global coordinates
+Vecd air_halfsize = inner_wall_halfsize;
+Vecd air_translation = Vecd(0, 0);
 
 Vecd droplet_center(DL / 2, DH / 2);
 Real droplet_radius = LL / 2;
-Vecd droplet_halfsize = Vec2d(droplet_radius, droplet_radius); // local center at origin
-Vecd droplet_translation = Vecd(0, 0);                     // translation to global coordinates
+Vecd droplet_halfsize = Vec2d(droplet_radius, droplet_radius);
+Vecd droplet_translation = Vecd(0, 0);
 //----------------------------------------------------------------------
 // Water body shape definition.
 //----------------------------------------------------------------------
@@ -196,10 +196,8 @@ int main(int ac, char *av[])
     while (physical_time < end_time)
     {
         Real integration_time = 0.0;
-        /** Integrate time (loop) until the next output time. */
         while (integration_time < output_interval)
         {
-            /** Force Prior due to viscous force and gravity. */
             time_instance = TickCount::now();
 
             Real Dt_f = get_water_advection_time_step_size.exec();
@@ -216,7 +214,6 @@ int main(int ac, char *av[])
 
             interval_computing_time_step += TickCount::now() - time_instance;
 
-            /** Dynamics including pressure relaxation. */
             time_instance = TickCount::now();
             Real relaxation_time = 0.0;
             while (relaxation_time < Dt)
