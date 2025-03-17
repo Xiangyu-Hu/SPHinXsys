@@ -40,6 +40,23 @@ class LevelSetShape;
 
 namespace relax_dynamics
 {
+class Explicit;
+class Implicit;
+
+template <typename ErrorDataType, typename ParameterADataType, typename ParameterCDataType>
+struct ErrorAndParameters
+{
+    ErrorDataType error_;
+    ParameterADataType a_;
+    ParameterCDataType c_;
+
+    ErrorAndParameters<ErrorDataType, ParameterADataType, ParameterCDataType>() :
+        error_(ZeroData<ErrorDataType>::value),
+        a_(ZeroData<ParameterADataType>::value),
+        c_(ZeroData<ParameterCDataType>::value) {
+    };
+};
+
 template <typename... InteractionTypes>
 class RelaxationResidue;
 
@@ -54,8 +71,9 @@ class RelaxationResidue<Base, DataDelegationType>
 
   protected:
     SPHAdaptation *sph_adaptation_;
+    Kernel* kernel_;
     Real *Vol_;
-    Vecd *residue_;
+    Vecd *pos_, *residue_;
 };
 
 template <>
@@ -88,6 +106,41 @@ class RelaxationResidue<Inner<LevelSetCorrection>> : public RelaxationResidue<In
   protected:
     Vecd *pos_;
     LevelSetShape &level_set_shape_;
+};
+
+template <>
+class RelaxationResidue<Inner<Implicit>> : 
+    public RelaxationResidue<Base, DataDelegateInner>
+{
+public:
+    explicit RelaxationResidue(BaseInnerRelation &inner_relation);
+    RelaxationResidue(BaseInnerRelation &inner_relation, const std::string &sub_shape_name);
+    virtual ~RelaxationResidue() {};
+    Shape &getRelaxShape() { return relax_shape_; };
+    void interaction(size_t index_i, Real dt = 0.0);
+
+protected:
+    Shape& relax_shape_;
+    ErrorAndParameters<Vecd, Matd, Matd> computeErrorAndParameters(size_t index_i, Real dt = 0.0);
+    void updateStates(size_t index_i, Real dt, const ErrorAndParameters<Vecd, Matd, Matd>& error_and_parameters);
+};
+
+template <>
+class RelaxationResidue<Inner<LevelSetCorrection, Implicit>> : public RelaxationResidue<Inner<Implicit>>
+{
+public:
+    template <typename... Args>
+    RelaxationResidue(Args &&... args);
+    template <typename BodyRelationType, typename FirstArg>
+    explicit RelaxationResidue(DynamicsArgs<BodyRelationType, FirstArg> parameters)
+        : RelaxationResidue(parameters.identifier_, std::get<0>(parameters.others_)) {};
+    virtual ~RelaxationResidue() {};
+    void interaction(size_t index_i, Real dt = 0.0);
+
+protected:
+    Vecd* pos_;
+    LevelSetShape& level_set_shape_;
+    ErrorAndParameters<Vecd, Matd, Matd> computeErrorAndParameters(size_t index_i, Real dt = 0.0);
 };
 
 template <>
@@ -179,10 +232,32 @@ class RelaxationStep : public BaseDynamics<void>
     SimpleDynamics<ShapeSurfaceBounding> surface_bounding_;
 };
 
+template <class RelaxationResidueType>
+class RelaxationStepImplicit : public BaseDynamics<void>
+{
+public:
+    template <typename FirstArg, typename... OtherArgs>
+    explicit RelaxationStepImplicit(FirstArg&& first_arg, OtherArgs &&...other_args);
+    virtual ~RelaxationStepImplicit() {};
+    SimpleDynamics<ShapeSurfaceBounding>& SurfaceBounding() { return surface_bounding_; };
+    virtual void exec(Real dt = 0.0) override;
+
+protected:
+    RealBody& real_body_;
+    StdVec<SPHRelation*>& body_relations_;
+    InteractionSplit<RelaxationResidueType> relaxation_residue_;
+    ReduceDynamics<RelaxationScaling> relaxation_scaling_;
+    SimpleDynamics<PositionRelaxation> position_relaxation_;
+    NearShapeSurface near_shape_surface_;
+    SimpleDynamics<ShapeSurfaceBounding> surface_bounding_;
+};
+
 using RelaxationStepInner = RelaxationStep<RelaxationResidue<Inner<>>>;
 using RelaxationStepLevelSetCorrectionInner = RelaxationStep<RelaxationResidue<Inner<LevelSetCorrection>>>;
 using RelaxationStepComplex = RelaxationStep<ComplexInteraction<RelaxationResidue<Inner<>, Contact<>>>>;
 using RelaxationStepLevelSetCorrectionComplex = RelaxationStep<ComplexInteraction<RelaxationResidue<Inner<LevelSetCorrection>, Contact<>>>>;
+using RelaxationStepInnerImplicit = RelaxationStepImplicit<RelaxationResidue<Inner<Implicit>>>;
+using RelaxationStepLevelSetCorrectionInnerImplicit = RelaxationStepImplicit<RelaxationResidue<Inner<LevelSetCorrection, Implicit>>>;
 } // namespace relax_dynamics
 } // namespace SPH
 #endif // RELAX_STEPPING_H
