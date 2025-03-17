@@ -13,10 +13,10 @@ using namespace SPH;
 //----------------------------------------------------------------------
 //  Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real DL = 0.005;                   /**< Channel length. */
-Real DH = 0.001;                   /**< Channel height. */
-Real resolution_ref = DH / 5.0;    /**< Reference particle spacing. */
-Real error_tolerance = 100 * 0.01; // Less than 3 percent when resolution is DH/20
+Real DL = 0.0075;                /**< Channel length. */
+Real DH = 0.001;                 /**< Channel height. */
+Real resolution_ref = DH / 20.0; /**< Reference particle spacing. */
+Real error_tolerance = 5 * 0.01; // Less than 3 percent when resolution is DH/20 and DL/DH = 20
 
 Real BW = resolution_ref * 4; /**< Extending width for BCs. */
 StdVec<Vec3d> observer_location;
@@ -224,7 +224,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
-    size_t SimTK_resolution = 8;
+    size_t SimTK_resolution = 12;
     auto water_body_shape = makeShared<ComplexShape>("WaterBody");
     water_body_shape->add<TriangleMeshShapeCylinder>(SimTK::UnitVec3(1., 0., 0.), DH * 0.5,
                                                      DL * 0.5, SimTK_resolution,

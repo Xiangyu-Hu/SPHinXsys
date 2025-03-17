@@ -13,10 +13,10 @@ using namespace SPH;
 //----------------------------------------------------------------------
 //  Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real DL = 0.010;                  /**< Channel length. */
-Real DH = 0.001;                  /**< Channel height. */
-Real resolution_ref = DH / 10.0;  /**< Reference particle spacing. */
-Real error_tolerance = 10 * 0.01; // Less than 3 percent when resolution is DH/20
+Real DL = 0.0075;                /**< Channel length. */
+Real DH = 0.001;                 /**< Channel height. */
+Real resolution_ref = DH / 20.0; /**< Reference particle spacing. */
+Real error_tolerance = 5 * 0.01; // Less than 3 percent when resolution is DH/20 and DL/DH = 20
 
 Real BW = resolution_ref * 4; /**< Extending width for BCs. */
 StdVec<Vec3d> observer_location;
