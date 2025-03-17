@@ -23,6 +23,9 @@ MultilevelLevelSet::MultilevelLevelSet(
                     tentative_bounds, kernel_->DelegatedData(ex_policy),
                     coarse_data);
     
+    sync_mesh_variable_data_ = [&](){
+        this->syncMeshVariableData(ex_policy);
+    };
     configOperationExecutionPolicy(ex_policy, kernel_->DelegatedData(ex_policy));
 }
 //=================================================================================================//
@@ -51,6 +54,9 @@ MultilevelLevelSet::MultilevelLevelSet(
                         mesh_data_set_[level - 1]);
     }
 
+    sync_mesh_variable_data_ = [&](){
+        this->syncMeshVariableData(ex_policy);
+    };
     configOperationExecutionPolicy(ex_policy, kernel_->DelegatedData(ex_policy));
 }
 //=================================================================================================//

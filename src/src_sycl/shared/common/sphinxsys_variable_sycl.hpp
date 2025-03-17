@@ -91,6 +91,12 @@ void DiscreteVariable<DataType>::reallocateDataField(
     }
 }
 //=================================================================================================//
+template <typename DataType>
+void MeshVariable<DataType>::synchronizeWithDevice(ParallelDevicePolicy &par_device)
+{
+    discrete_variable_.synchronizeWithDevice();
+}
+//=================================================================================================//
 } // namespace SPH
 
 #endif // SPHINXSYS_VARIABLE_SYCL_HPP

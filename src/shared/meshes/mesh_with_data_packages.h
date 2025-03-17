@@ -62,7 +62,9 @@ class MeshWithGridDataPackages : public Mesh
 {
   public:
     template <typename... Args>
-    explicit MeshWithGridDataPackages(BoundingBox tentative_bounds, Real data_spacing, size_t buffer_size)
+    explicit MeshWithGridDataPackages(BoundingBox tentative_bounds,
+                                      Real data_spacing,
+                                      size_t buffer_size)
         : Mesh(tentative_bounds, pkg_size * data_spacing, buffer_size),
           global_mesh_(mesh_lower_bound_ + 0.5 * data_spacing * Vecd::Ones(), data_spacing, all_cells_ * pkg_size),
           data_spacing_(data_spacing),
@@ -107,8 +109,24 @@ class MeshWithGridDataPackages : public Mesh
             }
         }
     };
-    OperationOnDataAssemble<MeshVariableAssemble, ResizeMeshVariableData> resize_mesh_variable_data_{all_mesh_variables_};
+    OperationOnDataAssemble<MeshVariableAssemble, ResizeMeshVariableData>
+        resize_mesh_variable_data_{all_mesh_variables_};
 
+    struct SyncMeshVariableData
+    {
+        template <typename DataType, class ExecutionPolicy>
+        void operator()(DataContainerAddressKeeper<MeshVariable<DataType>> &all_mesh_variables_,
+                        ExecutionPolicy &ex_policy)
+        {
+            for(size_t l = 0; l != all_mesh_variables_.size(); l++)
+            {
+                MeshVariable<DataType> *variable = all_mesh_variables_[l];
+                variable->synchronizeWithDevice(ex_policy);
+            }
+        }
+    };
+    OperationOnDataAssemble<MeshVariableAssemble, SyncMeshVariableData>
+        sync_mesh_variable_data_{all_mesh_variables_};
   public:
     /** wrapper for all index exchange related functions. */
     struct IndexHandler
@@ -153,7 +171,9 @@ class MeshWithGridDataPackages : public Mesh
 
     SingularVariable<IndexHandler> index_handler_;
   public:
-    void resizeMeshVariableData() { resize_mesh_variable_data_(num_grid_pkgs_); }
+    void resizeMeshVariableData() { resize_mesh_variable_data_(num_grid_pkgs_); };
+    template <class ExecutionPolicy>
+    void syncMeshVariableData(ExecutionPolicy &ex_policy) { sync_mesh_variable_data_(ex_policy); };
 
     template <typename DataType>
     MeshVariable<DataType> *registerMeshVariable(const std::string &variable_name)
@@ -203,7 +223,9 @@ class MeshWithGridDataPackages : public Mesh
          */
         return cell_package_index_.DataField()[index_1d] > 1;
     }
-    bool isWithinCorePackage(size_t *cell_package_index, std::pair<Arrayi, int> *meta_data_cell, Vecd position)
+    bool isWithinCorePackage(size_t *cell_package_index,
+                             std::pair<Arrayi, int> *meta_data_cell,
+                             Vecd position)
     {
         Arrayi cell_index = CellIndexFromPosition(position);
         size_t package_index = PackageIndexFromCellIndex(cell_package_index, cell_index);

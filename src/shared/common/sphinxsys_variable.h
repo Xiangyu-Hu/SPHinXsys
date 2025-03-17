@@ -182,12 +182,19 @@ class MeshVariable : public Entity
 
     PackageData *DataField() { return discrete_variable_.DelegatedDataField(execution::par); };
     template <class ExecutionPolicy>
-    PackageData *DelegatedDataField(const ExecutionPolicy &ex_policy) { return discrete_variable_.DelegatedDataField(ex_policy); };
+    PackageData *DelegatedDataField(const ExecutionPolicy &ex_policy)
+    {
+        return discrete_variable_.DelegatedDataField(ex_policy);
+    }
 
     void allocateAllMeshVariableData(const size_t size)
     {
         discrete_variable_.reallocateDataField(execution::par, size);
     }
+
+    template <class ExecutionPolicy>
+    void synchronizeWithDevice(ExecutionPolicy &ex_policy){};
+    void synchronizeWithDevice(ParallelDevicePolicy &par_device);
 
   private:
     DiscreteVariable<PackageData> discrete_variable_;

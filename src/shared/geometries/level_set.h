@@ -74,8 +74,16 @@ class MultilevelLevelSet : public BaseMeshField
 
     void writeMeshFieldToPlt(std::ofstream &output_file) override
     {
+        sync_mesh_variable_data_();
         for(size_t l = 0; l != total_levels_; ++l)
             WriteMeshFieldToPlt(*mesh_data_set_[l]).update(output_file);
+    }
+
+    template <class ExecutionPolicy>
+    void syncMeshVariableData(ExecutionPolicy &ex_policy)
+    {
+        for(size_t l = 0; l != total_levels_; l++)
+            mesh_data_set_[l]->syncMeshVariableData(ex_policy);
     }
 
   protected:
@@ -112,7 +120,7 @@ class MultilevelLevelSet : public BaseMeshField
     UniquePtr<CorrectTopology<ParallelPolicy, KernelWendlandC2CK>> host_correct_topology_;
     UniquePtr<CorrectTopology<ParallelDevicePolicy, KernelWendlandC2CK>> device_correct_topology_;
 
-    
+    std::function<void()> sync_mesh_variable_data_;
     typedef std::function<void(Real)> OperatorFunctor;
     UniquePtr<SingularVariable<KernelWendlandC2CK>> kernel_;
     OperatorFunctor clean_interface_;
