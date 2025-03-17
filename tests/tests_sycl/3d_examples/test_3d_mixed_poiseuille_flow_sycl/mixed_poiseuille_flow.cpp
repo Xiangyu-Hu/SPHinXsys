@@ -15,7 +15,7 @@ using namespace SPH;
 //----------------------------------------------------------------------
 Real DL = 0.0075;                /**< Channel length. */
 Real DH = 0.001;                 /**< Channel height. */
-Real resolution_ref = DH / 20.0; /**< Reference particle spacing. */
+Real resolution_ref = DH / 10.0; /**< Reference particle spacing. */
 Real error_tolerance = 5 * 0.01; // Less than 3 percent when resolution is DH/20 and DL/DH = 20
 
 Real BW = resolution_ref * 4; /**< Extending width for BCs. */
@@ -240,13 +240,15 @@ int main(int ac, char *av[])
 
     FluidBody water_body(sph_system, water_body_shape);
     water_body.defineClosure<WeaklyCompressibleFluid, Viscosity>(ConstructArgs(rho0_f, c_f), mu_f);
+    std::cout << "with viscosity\n";
+    // water_body.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
     ParticleBuffer<ReserveSizeFactor> inlet_buffer(0.5);
     water_body.generateParticlesWithReserve<BaseParticles, Lattice>(inlet_buffer);
 
     SolidBody wall(sph_system, wall_body_shape);
     wall.defineMaterial<Solid>();
     wall.generateParticles<BaseParticles, Lattice>();
-
+    std::cout << "249\n";
     // Add observer
     {
         int num_points = 15;
@@ -263,9 +265,10 @@ int main(int ac, char *av[])
             observer_location.push_back(Vec3d(0.5 * DL, y_i, z));
         }
     }
+    std::cout << "265\n";
     ObserverBody velocity_observer(sph_system, "VelocityObserver");
     velocity_observer.generateParticles<ObserverParticles>(observer_location);
-
+    std::cout << "270\n";
     // //----------------------------------------------------------------------
     // //	Creating body parts.
     // //----------------------------------------------------------------------
@@ -274,7 +277,9 @@ int main(int ac, char *av[])
     auto rotated_normal = -1 * Vec3d::UnitX();
     auto rotation_axis = Vec3d::UnitY();
     auto rot3d = Rotation3d(std::acos(defulat_normal.dot(rotated_normal)), rotation_axis);
+    std::cout << "278\n";
     AlignedBoxPartByCell right_emitter_by_cell(water_body, AlignedBox(xAxis, Transform(rot3d, right_bidirectional_translation), bidirectional_buffer_halfsize));
+    std::cout << "280\n";
     // AlignedBoxPartByCell right_emitter_by_cell(water_body, AlignedBox(xAxis, Transform(left_bidirectional_translation), bidirectional_buffer_halfsize));
     //----------------------------------------------------------------------
     //	Define body relation map.
@@ -282,24 +287,33 @@ int main(int ac, char *av[])
     //	Basically the the range of bodies to build neighbor particle lists.
     //  Generally, we first define all the inner relations, then the contact relations.
     // ----------------------------------------------------------------------
-    Relation<Inner<>>
-        water_body_inner(water_body);
+    Relation<Inner<>> water_body_inner(water_body);
+    std::cout << "289\n";
     Relation<Contact<>> water_wall_contact(water_body, {&wall});
+    std::cout << "290\n";
     Relation<Contact<>> velocity_observer_contact(velocity_observer, {&water_body});
+    std::cout << "292\n";
     //----------------------------------------------------------------------
     // Define the main execution policy for this case.
     //----------------------------------------------------------------------
     using MainExecutionPolicy = execution::ParallelDevicePolicy;
+    std::cout << "297\n";
     using SequencedExecutionPolicy = execution::SequencedDevicePolicy;
+    std::cout << "299\n";
     //----------------------------------------------------------------------
     // Combined relations built from basic relations
     // which is only used for update configuration.
     //----------------------------------------------------------------------
     UpdateCellLinkedList<MainExecutionPolicy, CellLinkedList> water_cell_linked_list(water_body);
+    std::cout << "306\n";
     UpdateCellLinkedList<MainExecutionPolicy, CellLinkedList> wall_cell_linked_list(wall);
+    std::cout << "308\n";
     UpdateRelation<MainExecutionPolicy, Inner<>, Contact<>> water_body_update_complex_relation(water_body_inner, water_wall_contact);
+    std::cout << "310\n";
     UpdateRelation<MainExecutionPolicy, Contact<>> fluid_observer_contact_relation(velocity_observer_contact);
+    std::cout << "312\n";
     ParticleSortCK<MainExecutionPolicy, RadixSort> particle_sort(water_body);
+    std::cout << "314\n";
     //----------------------------------------------------------------------
     // Define the numerical methods used in the simulation.
     // Note that there may be data dependence on the sequence of constructions.
@@ -312,50 +326,72 @@ int main(int ac, char *av[])
     StateDynamics<execution::ParallelPolicy, NormalFromBodyShapeCK> wall_normal_direction(wall); // run on CPU
     StateDynamics<MainExecutionPolicy, fluid_dynamics::AdvectionStepSetup> water_advection_step_setup(water_body);
     StateDynamics<MainExecutionPolicy, fluid_dynamics::AdvectionStepClose> water_advection_step_close(water_body);
+    std::cout << "327\n";
     InteractionDynamicsCK<MainExecutionPolicy, LinearCorrectionMatrixComplex>
         fluid_linear_correction_matrix(DynamicsArgs(water_body_inner, 0.5), water_wall_contact);
+    std::cout << "329\n";
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticStep1stHalfWithWallRiemannCK>
         fluid_acoustic_step_1st_half(water_body_inner, water_wall_contact);
+    std::cout << "331\n";
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticStep2ndHalfWithWallRiemannCK>
         fluid_acoustic_step_2nd_half(water_body_inner, water_wall_contact);
+    std::cout << "333\n";
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::DensityRegularizationComplexInternalPressureBoundary>
         fluid_density_regularization(water_body_inner, water_wall_contact);
+    std::cout << "335\n";
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::FreeSurfaceIndicationComplexSpatialTemporalCK>
         fluid_boundary_indicator(water_body_inner, water_wall_contact);
+    std::cout << "338\n";
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::TransportVelocityCorrectionWallNoCorrectionBulkParticlesCK>
         transport_correction_ck(water_body_inner, water_wall_contact);
+    std::cout << "340\n";
     ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AdvectionTimeStepCK> fluid_advection_time_step(water_body, U_f);
+    std::cout << "343\n";
     ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticTimeStepCK<>> fluid_acoustic_time_step(water_body);
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::ViscousForceWithWallCK>
         fluid_viscous_force(water_body_inner, water_wall_contact);
+    std::cout << "346\n";
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::TransportVelocityLimitedCorrectionCorrectedComplexBulkParticlesCKWithoutUpdate>
         zero_gradient_ck(water_body_inner, water_wall_contact);
+    std::cout << "350\n";
     fluid_dynamics::VelocityBidirectionalConditionCK<MainExecutionPolicy, SequencedExecutionPolicy, NoKernelCorrectionCK, InletInflowConditionLeft>
         bidirectional_velocity_condition_left(left_emitter_by_cell, inlet_buffer);
+    std::cout << "353\n";
     fluid_dynamics::PressureBidirectionalConditionCK<MainExecutionPolicy, SequencedExecutionPolicy, NoKernelCorrectionCK, InletInflowPressureConditionRight>
         bidirectional_pressure_condition_right(right_emitter_by_cell, inlet_buffer);
+    std::cout << "356\n";
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
     IOEnvironment io_environment(sph_system);
+    std::cout << "362\n";
     BodyStatesRecordingToVtp body_states_recording(sph_system);
+    std::cout << "364\n";
     body_states_recording.addToWrite<Real>(water_body, "Pressure");
     body_states_recording.addToWrite<int>(water_body, "BufferParticleIndicator");
     body_states_recording.addToWrite<int>(water_body, "Indicator");
     ObservedQuantityRecording<MainExecutionPolicy, Vec3d> write_centerline_velocity("Velocity", velocity_observer_contact);
+    std::cout << "369\n";
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
     //----------------------------------------------------------------------
     wall_normal_direction.exec();
+    std::cout << "375\n";
     water_cell_linked_list.exec();
+    std::cout << "Before wall_cell_linked_list.exec()" << std::endl;
     wall_cell_linked_list.exec();
+    std::cout << "After wall_cell_linked_list.exec()" << std::endl;
     water_body_update_complex_relation.exec();
+    std::cout << "After water_body_update_complex_relation.exec()" << std::endl;
     fluid_observer_contact_relation.exec();
     fluid_boundary_indicator.exec();
     bidirectional_velocity_condition_left.tagBufferParticles();
     bidirectional_pressure_condition_right.tagBufferParticles();
+    std::cout << "387\n"
+              << std::endl;
+
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
@@ -374,11 +410,15 @@ int main(int ac, char *av[])
     TimeInterval interval_computing_pressure_relaxation;
     TimeInterval interval_updating_configuration;
     TickCount time_instance;
+    std::cout << "406\n"
+              << std::endl;
     //----------------------------------------------------------------------
     //	First output before the main loop.
     //----------------------------------------------------------------------
     body_states_recording.writeToFile(MainExecutionPolicy{});
     write_centerline_velocity.writeToFile(number_of_iterations);
+    std::cout << "413\n"
+              << std::endl;
     //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------
@@ -390,10 +430,18 @@ int main(int ac, char *av[])
         {
             fluid_density_regularization.exec();
             water_advection_step_setup.exec();
+            std::cout << "424\n"
+                      << std::endl;
+            std::cout << "with viscosity\n";
             fluid_viscous_force.exec();
+            std::cout << "with viscosity\n";
             transport_correction_ck.exec();
+            std::cout << "428\n"
+                      << std::endl;
             Real advection_dt = fluid_advection_time_step.exec();
             fluid_linear_correction_matrix.exec();
+            std::cout << "430\n"
+                      << std::endl;
             interval_computing_time_step += TickCount::now() - time_instance;
 
             /** Dynamics including pressure relaxation. */
@@ -404,9 +452,18 @@ int main(int ac, char *av[])
                 acoustic_dt = SMIN(fluid_acoustic_time_step.exec(), advection_dt);
                 fluid_acoustic_step_1st_half.exec(acoustic_dt);
                 zero_gradient_ck.exec();
+                std::cout << "441\n"
+                          << std::endl;
+
                 bidirectional_velocity_condition_left.applyPressureCondition(acoustic_dt);
+                std::cout << "445\n"
+                          << std::endl;
                 bidirectional_velocity_condition_left.applyVelocityCondition();
+                std::cout << "447\n"
+                          << std::endl;
                 bidirectional_pressure_condition_right.applyPressureCondition(acoustic_dt);
+                std::cout << "449\n"
+                          << std::endl;
                 fluid_acoustic_step_2nd_half.exec(acoustic_dt);
                 relaxation_time += acoustic_dt;
                 integration_time += acoustic_dt;
@@ -428,21 +485,45 @@ int main(int ac, char *av[])
             number_of_iterations++;
             /** inflow emitter injection*/
             bidirectional_velocity_condition_left.injectParticles();
+            std::cout << "470\n"
+                      << std::endl;
             bidirectional_pressure_condition_right.injectParticles();
+            std::cout << "473\n"
+                      << std::endl;
             bidirectional_velocity_condition_left.deleteParticles();
+            std::cout << "475\n"
+                      << std::endl;
             bidirectional_pressure_condition_right.deleteParticles();
+            std::cout << "477\n"
+                      << std::endl;
             /** Update cell linked list and configuration. */
             if (number_of_iterations % 100 == 0 && number_of_iterations != 1)
             {
+                std::cout << "481\n"
+                          << std::endl;
                 particle_sort.exec();
+                std::cout << "483\n"
+                          << std::endl;
             }
             water_cell_linked_list.exec();
+            std::cout << "485\n"
+                      << std::endl;
             water_body_update_complex_relation.exec();
+            std::cout << "488\n"
+                      << std::endl;
             fluid_observer_contact_relation.exec();
+            std::cout << "490\n"
+                      << std::endl;
             interval_updating_configuration += TickCount::now() - time_instance;
             fluid_boundary_indicator.exec();
+            std::cout << "493\n"
+                      << std::endl;
             bidirectional_velocity_condition_left.tagBufferParticles();
+            std::cout << "494\n"
+                      << std::endl;
             bidirectional_pressure_condition_right.tagBufferParticles();
+            std::cout << "497\n"
+                      << std::endl;
         }
 
         TickCount t2 = TickCount::now();
