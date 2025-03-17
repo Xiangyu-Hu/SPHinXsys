@@ -1,6 +1,6 @@
 /**
- * @file 	droplet.cpp
- * @brief 	A square droplet deforms to circle due to surface tension.
+ * @file 	3d_cubic_drop.cpp
+ * @brief 	A cubic droplet deforms to sphere due to surface tension.
  * @details A momentum-conservative formulation for surface tension is used here
  *          to reach a long-term stable simulation.
  * @author Shuaihao Zhang and Xiangyu Hu
@@ -13,33 +13,22 @@ using namespace SPH; // Namespace cite here.
 //----------------------------------------------------------------------
 Real DL = 2.0;                         /**< Tank length. */
 Real DH = 2.0;                         /**< Tank height. */
+Real DW = 2.0;                         /**< Tank height. */
 Real LL = 1.0;                         /**< Liquid column length. */
 Real LH = 1.0;                         /**< Liquid column height. */
-Real particle_spacing_ref = DL / 40.0; /**< Initial reference particle spacing. */
+Real LW = 1.0;
+Real particle_spacing_ref = DL / 30.0; /**< Initial reference particle spacing. */
 Real BW = particle_spacing_ref * 4;    /**< Extending width for BCs. */
 //----------------------------------------------------------------------
 //	Material parameters.
 //----------------------------------------------------------------------
-Real rho0_f = 1.0;       /**< Reference density of water. */
-Real rho0_a = 0.001;     /**< Reference density of air. */
-Real U_ref = 2.0;        /**< Characteristic velocity. */
-Real c_f = 10.0 * U_ref; /**< Reference sound speed. */
-Real mu_f = 0.2;         /**< Water viscosity. */
-Real mu_a = 0.002;       /**< Air viscosity. */
-//----------------------------------------------------------------------
-//	Geometric shapes used in this case.
-//----------------------------------------------------------------------
-Vec2d outer_wall_halfsize = Vec2d(0.5 * DL + BW, 0.5 * DH + BW);
-Vec2d outer_wall_translation = Vec2d(-BW, -BW) + outer_wall_halfsize;
-Vec2d inner_wall_halfsize = Vec2d(0.5 * DL, 0.5 * DH);
-Vec2d inner_wall_translation = inner_wall_halfsize;
-Vecd air_halfsize = inner_wall_halfsize;       // local center at origin
-Vecd air_translation = inner_wall_translation; // translation to global coordinates
-
-Vecd droplet_center(DL / 2, DH / 2);
-Real droplet_radius = LL / 2;
-Vecd droplet_halfsize = Vec2d(droplet_radius, droplet_radius); // local center at origin
-Vecd droplet_translation = droplet_center;                     // translation to global coordinates
+Real rho0_f = 1.0;        /**< Reference density of water. */
+Real rho0_a = 0.001;      /**< Reference density of air. */
+Real U_ref = 1.0;         /**< Characteristic velocity. */
+Real c_f = 10.0 * U_ref;  /**< Reference sound speed. */
+Real mu_f = 5.0e-2;       /**< Water viscosity. */
+Real mu_a =5.0e-4;        /**< Air viscosity. */
+Real surface_tension_coeff = 1.0;
 //----------------------------------------------------------------------
 // Water body shape definition.
 //----------------------------------------------------------------------
@@ -48,7 +37,9 @@ class WaterBlock : public ComplexShape
   public:
     explicit WaterBlock(const std::string &shape_name) : ComplexShape(shape_name)
     {
-        add<TransformShape<GeometricShapeBox>>(Transform(droplet_translation), droplet_halfsize);
+        Vecd water_halfsize(0.5 * LL, 0.5 * LH, 0.5 * LW);
+        Transform water_translation(Vecd(0, 0, 0));
+        add<TransformShape<GeometricShapeBox>>(Transform(water_translation), water_halfsize);
     }
 };
 //----------------------------------------------------------------------
@@ -59,8 +50,12 @@ class AirBlock : public ComplexShape
   public:
     explicit AirBlock(const std::string &shape_name) : ComplexShape(shape_name)
     {
+        Vecd water_halfsize(0.5 * LL, 0.5 * LH, 0.5 * LW);
+        Transform water_translation(Vecd(0, 0, 0));
+        Vecd air_halfsize(0.5 * DL, 0.5 * DH, 0.5 * DW);
+        Transform air_translation(Vecd(0, 0, 0));
         add<TransformShape<GeometricShapeBox>>(Transform(air_translation), air_halfsize);
-        subtract<TransformShape<GeometricShapeBox>>(Transform(droplet_translation), droplet_halfsize);
+        subtract<TransformShape<GeometricShapeBox>>(Transform(water_translation), water_halfsize);
     }
 };
 //----------------------------------------------------------------------
@@ -72,8 +67,11 @@ class WallBoundary : public ComplexShape
   public:
     explicit WallBoundary(const std::string &shape_name) : ComplexShape(shape_name)
     {
-        add<TransformShape<GeometricShapeBox>>(Transform(outer_wall_translation), outer_wall_halfsize);
-        subtract<TransformShape<GeometricShapeBox>>(Transform(inner_wall_translation), inner_wall_halfsize);
+        Vecd halfsize_outer(0.5 * DL + BW, 0.5 * DH + BW, 0.5 * DW + BW);
+        Vecd halfsize_inner(0.5 * DL, 0.5 * DH, 0.5 * DW);
+        Transform translation_wall(Vecd(0, 0, 0));
+        add<TransformShape<GeometricShapeBox>>(Transform(translation_wall), halfsize_outer);
+        subtract<TransformShape<GeometricShapeBox>>(Transform(translation_wall), halfsize_inner);
     }
 };
 //----------------------------------------------------------------------
@@ -84,7 +82,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Build up an SPHSystem.
     //----------------------------------------------------------------------
-    BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
+    BoundingBox system_domain_bounds(Vecd(-DL/2-BW, -DL/2-BW, -DL/2-BW), Vecd(DL/2 + BW, DH/2 + BW, DW/2 + BW));
     SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
     sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
     //----------------------------------------------------------------------
@@ -134,22 +132,22 @@ int main(int ac, char *av[])
     InteractionWithUpdate<fluid_dynamics::BaseDensitySummationComplex<Inner<>, Contact<>, Contact<>>>
         update_water_density_by_summation(water_inner, water_air_contact, water_wall_contact);
     InteractionWithUpdate<fluid_dynamics::MultiPhaseTransportVelocityCorrectionComplex<AllParticles>>
-        air_transport_correction(DynamicsArgs(air_inner, 0.02), air_water_contact, air_wall_contact);
+        air_transport_correction(air_inner, air_water_contact, air_wall_contact);
     InteractionWithUpdate<fluid_dynamics::MultiPhaseTransportVelocityCorrectionComplex<AllParticles>>
-        water_transport_correction(DynamicsArgs(water_inner, 0.02), water_air_contact, water_wall_contact);
+        water_transport_correction(water_inner, water_air_contact, water_wall_contact);
 
     InteractionWithUpdate<fluid_dynamics::MultiPhaseViscousForceWithWall> water_viscous_force(water_inner, water_air_contact, water_wall_contact);
     InteractionWithUpdate<fluid_dynamics::MultiPhaseViscousForceWithWall> air_viscous_force(air_inner, air_water_contact, air_wall_contact);
 
-    InteractionDynamics<fluid_dynamics::SurfaceTensionStress> water_surface_tension_stress(water_air_contact, StdVec<Real>{Real(1.0)});
-    InteractionDynamics<fluid_dynamics::SurfaceTensionStress> air_surface_tension_stress(air_water_contact, StdVec<Real>{Real(1.0e-3)});
+    InteractionDynamics<fluid_dynamics::SurfaceTensionStress> water_surface_tension_stress(water_air_contact, surface_tension_coeff);
+    InteractionDynamics<fluid_dynamics::SurfaceTensionStress> air_surface_tension_stress(air_water_contact, surface_tension_coeff);
     InteractionWithUpdate<fluid_dynamics::SurfaceStressForceComplex> water_surface_tension_force(water_inner, water_air_contact);
     InteractionWithUpdate<fluid_dynamics::SurfaceStressForceComplex> air_surface_tension_force(air_inner, air_water_contact);
 
-    ReduceDynamics<fluid_dynamics::AdvectionViscousTimeStep> get_water_advection_time_step_size(water_block, U_ref);
-    ReduceDynamics<fluid_dynamics::AdvectionViscousTimeStep> get_air_advection_time_step_size(air_block, U_ref);
-    ReduceDynamics<fluid_dynamics::AcousticTimeStep> get_water_time_step_size(water_block);
-    ReduceDynamics<fluid_dynamics::AcousticTimeStep> get_air_time_step_size(air_block);
+    ReduceDynamics<fluid_dynamics::AdvectionViscousTimeStep> get_water_advection_time_step_size(water_block, U_ref, 0.1);
+    ReduceDynamics<fluid_dynamics::AdvectionViscousTimeStep> get_air_advection_time_step_size(air_block, U_ref, 0.1);
+    ReduceDynamics<fluid_dynamics::SurfaceTensionTimeStep> get_water_time_step_size(water_block, 0.6);
+    ReduceDynamics<fluid_dynamics::SurfaceTensionTimeStep> get_air_time_step_size(air_block, 0.6);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
@@ -174,9 +172,9 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     size_t number_of_iterations = 0;
-    int screen_output_interval = 500;
-    Real end_time = 10.0;
-    Real output_interval = end_time / 50; /**< Time stamps for output of body states. */
+    int screen_output_interval = 100;
+    Real end_time = 2.0;
+    Real output_interval = end_time / 40; /**< Time stamps for output of body states. */
     Real dt = 0.0;                        /**< Default acoustic time step sizes. */
     /** statistics for computing CPU time. */
     TickCount t1 = TickCount::now();
@@ -214,11 +212,6 @@ int main(int ac, char *av[])
             air_viscous_force.exec();
             water_viscous_force.exec();
 
-            water_surface_tension_stress.exec();
-            air_surface_tension_stress.exec();
-            water_surface_tension_force.exec();
-            air_surface_tension_force.exec();
-
             interval_computing_time_step += TickCount::now() - time_instance;
 
             /** Dynamics including pressure relaxation. */
@@ -226,6 +219,11 @@ int main(int ac, char *av[])
             Real relaxation_time = 0.0;
             while (relaxation_time < Dt)
             {
+                water_surface_tension_stress.exec();
+                air_surface_tension_stress.exec();
+                water_surface_tension_force.exec();
+                air_surface_tension_force.exec();
+
                 Real dt_f = get_water_time_step_size.exec();
                 Real dt_a = get_air_time_step_size.exec();
                 dt = SMIN(SMIN(dt_f, dt_a), Dt);
@@ -282,10 +280,10 @@ int main(int ac, char *av[])
               << interval_computing_pressure_relaxation.seconds() << "\n";
     std::cout << std::fixed << std::setprecision(9) << "interval_updating_configuration = "
               << interval_updating_configuration.seconds() << "\n";
-
+    
     if (sph_system.GenerateRegressionData())
     {
-        write_water_kinetic_energy.generateDataBase(1.0e-3);
+        write_water_kinetic_energy.generateDataBase(5.0e-3);
     }
     else
     {
