@@ -65,7 +65,6 @@ template <class UpdatePolicy, class KernelCorrectionType, class ResolutionType, 
 void TransportVelocityCorrectionCK<Inner<UpdatePolicy, KernelCorrectionType, ResolutionType, LimiterType, ParticleScopeType, Parameters...>>::InteractKernel::
     interact(size_t index_i, Real dt)
 {
-    // if (this->within_scope_(index_i))
     {
         Vecd inconsistency = Vecd::Zero();
         for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
