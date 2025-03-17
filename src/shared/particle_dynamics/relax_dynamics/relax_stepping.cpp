@@ -33,11 +33,6 @@ void RelaxationResidue<Inner<LevelSetCorrection>>::interaction(size_t index_i, R
                                    pos_[index_i], sph_adaptation_->SmoothingLengthRatio(index_i));
 }
 //=================================================================================================//
-RelaxationResidue<Inner<Implicit>>::
-    RelaxationResidue(BaseInnerRelation &inner_relation, const std::string &sub_shape_name)
-    : RelaxationResidue<Base, DataDelegateInner>(inner_relation),
-      relax_shape_(*DynamicCast<ComplexShape>(this, sph_body_.getInitialShape()).getSubShapeByName(sub_shape_name)) {}
-//=================================================================================================//
 void RelaxationResidue<Inner<Implicit>>::interaction(size_t index_i, Real dt)
 {
     ErrorAndParameters<Vecd, Matd, Matd> error_and_parameters = computeErrorAndParameters(index_i, dt);

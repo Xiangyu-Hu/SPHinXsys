@@ -25,6 +25,10 @@ RelaxationResidue<Inner<LevelSetCorrection>>::RelaxationResidue(Args &&...args)
       level_set_shape_(DynamicCast<LevelSetShape>(this, this->getRelaxShape())){};
 //=================================================================================================//
 template <typename... Args>
+RelaxationResidue<Inner<Implicit>>::RelaxationResidue(Args &&...args)
+    : RelaxationResidue<Inner<>>(std::forward<Args>(args)...) {};
+//=================================================================================================//
+template <typename... Args>
 RelaxationResidue<Inner<LevelSetCorrection, Implicit>>::RelaxationResidue(Args &&...args)
     : RelaxationResidue<Inner<Implicit>>(std::forward<Args>(args)...),
     pos_(particles_->getVariableDataByName<Vecd>("Position")),
@@ -72,14 +76,13 @@ RelaxationStepImplicit<RelaxationResidueType>::
 template <class RelaxationResidueType>
 void RelaxationStepImplicit<RelaxationResidueType>::exec(Real dt)
 {
+    Real scaling = SMIN(sqrt(relaxation_scaling_.exec()), 0.01);
+    relaxation_residue_.exec(scaling);
     real_body_.updateCellLinkedList();
     for (size_t k = 0; k != body_relations_.size(); ++k)
     {
         body_relations_[k]->updateConfiguration();
     }
-    relaxation_residue_.exec();
-    Real scaling = relaxation_scaling_.exec();
-    position_relaxation_.exec(scaling);
     surface_bounding_.exec();
 }
 //=================================================================================================//

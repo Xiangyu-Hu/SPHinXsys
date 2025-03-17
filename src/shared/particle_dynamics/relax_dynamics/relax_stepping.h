@@ -109,18 +109,19 @@ class RelaxationResidue<Inner<LevelSetCorrection>> : public RelaxationResidue<In
 };
 
 template <>
-class RelaxationResidue<Inner<Implicit>> : 
-    public RelaxationResidue<Base, DataDelegateInner>
+class RelaxationResidue<Inner<Implicit>> : public RelaxationResidue<Inner<>>
 {
 public:
-    explicit RelaxationResidue(BaseInnerRelation &inner_relation);
-    RelaxationResidue(BaseInnerRelation &inner_relation, const std::string &sub_shape_name);
+    template <typename... Args>
+    RelaxationResidue(Args &&...args);
+    template <typename BodyRelationType, typename FirstArg>
+    explicit RelaxationResidue(DynamicsArgs<BodyRelationType, FirstArg> parameters)
+        : RelaxationResidue(parameters.identifier_, std::get<0>(parameters.others_)) {
+    };
     virtual ~RelaxationResidue() {};
-    Shape &getRelaxShape() { return relax_shape_; };
     void interaction(size_t index_i, Real dt = 0.0);
 
 protected:
-    Shape& relax_shape_;
     ErrorAndParameters<Vecd, Matd, Matd> computeErrorAndParameters(size_t index_i, Real dt = 0.0);
     void updateStates(size_t index_i, Real dt, const ErrorAndParameters<Vecd, Matd, Matd>& error_and_parameters);
 };
