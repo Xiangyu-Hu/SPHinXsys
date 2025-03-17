@@ -42,7 +42,17 @@
 
 #if SPHINXSYS_USE_SYCL
 #include <CL/sycl.hpp>
+template <typename T>
+using AtomicRef = sycl::atomic_ref<
+    T, sycl::memory_order_relaxed, sycl::memory_scope_device,
+    sycl::access::address_space::global_space>;
+namespace mathFunc = sycl;
 #define SYCL_DEVICE_ONLY
+#else
+#include <boost/atomic/atomic_ref.hpp>
+template <typename T>
+using AtomicRef = boost::atomic_ref<T>;
+namespace mathFunc = std;
 #endif // SPHINXSYS_USE_SYCL
 
 #include <Eigen/Cholesky>
@@ -56,11 +66,9 @@ namespace SPH
 #if SPHINXSYS_USE_FLOAT
 using Real = float;
 using UnsignedInt = u_int32_t;
-namespace math = sycl;
 #else
 using Real = double;
 using UnsignedInt = size_t;
-namespace math = std;
 #endif // SPHINXSYS_USE_FLOAT
 
 /** Vector with integers. */
