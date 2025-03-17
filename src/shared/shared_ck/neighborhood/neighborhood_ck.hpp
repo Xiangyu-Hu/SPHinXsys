@@ -28,12 +28,5 @@ Neighbor<>::Neighbor(const ExecutionPolicy &ex_policy,
     }
 }
 //=================================================================================================//
-template <class ExecutionPolicy>
-NeighborList::NeighborList(const ExecutionPolicy &ex_policy,
-                           DiscreteVariable<UnsignedInt> *dv_neighbor_index,
-                           DiscreteVariable<UnsignedInt> *dv_particle_offset)
-    : neighbor_index_(dv_neighbor_index->DelegatedData(ex_policy)),
-      particle_offset_(dv_particle_offset->DelegatedData(ex_policy)) {}
-//=================================================================================================//
 } // namespace SPH
 #endif // NEIGHBORHOOD_CK_HPP

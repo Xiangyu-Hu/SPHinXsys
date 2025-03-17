@@ -32,7 +32,7 @@
 #include "base_material.h"
 #include "force_prior_ck.hpp"
 #include "interaction_ck.hpp"
-#include "riemann_solver.h"
+#include "riemann_solver_ck.hpp"
 #include "viscosity.h"
 
 namespace SPH
@@ -69,7 +69,6 @@ class ForceFromFluid : public Interaction<Contact<Parameters...>>, public ForceP
     DiscreteVariable<Real> *dv_Vol_;
     DiscreteVariable<Vecd> *dv_force_from_fluid_, *dv_vel_ave_;
 
-    StdVec<Fluid *> contact_fluid_;
     StdVec<KernelCorrectionType> contact_kernel_correction_;
     StdVec<DiscreteVariable<Real> *> contact_Vol_;
     StdVec<DiscreteVariable<Vecd> *> contact_vel_;
@@ -118,6 +117,7 @@ class PressureForceFromFluid<Contact<WithUpdate, AcousticStep2ndHalfType, Parame
     : public ForceFromFluid<decltype(AcousticStep2ndHalfType::kernel_correction_), Parameters...>
 {
     using RiemannSolverType = decltype(AcousticStep2ndHalfType::riemann_solver_);
+    using FluidType = typename RiemannSolverType::SourceFluid;
     using KernelCorrectionType = decltype(AcousticStep2ndHalfType::kernel_correction_);
     using BaseForceFromFluid = ForceFromFluid<decltype(AcousticStep2ndHalfType::kernel_correction_), Parameters...>;
 

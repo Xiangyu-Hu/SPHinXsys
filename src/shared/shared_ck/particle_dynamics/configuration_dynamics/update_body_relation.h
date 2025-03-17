@@ -78,12 +78,13 @@ class UpdateRelation<ExecutionPolicy, Contact<Parameters...>>
 {
     using BaseInteraction = Interaction<Contact<Parameters...>>;
     using NeighborCriterion = typename BaseInteraction::InteractKernel::NeighborCriterion;
-    using SourceType = typename BaseInteraction::RelationType::SourceType;
-    using TargetType = typename BaseInteraction::RelationType::TargetType;
+    using RelationType = Relation<Contact<Parameters...>>;
+    using SourceType = typename RelationType::SourceType;
+    using TargetType = typename RelationType::TargetType;
     using MaskedCriterion = typename TargetType::template TargetParticleMask<NeighborCriterion>;
 
   public:
-    UpdateRelation(Relation<Contact<Parameters...>> &contact_relation);
+    UpdateRelation(RelationType &contact_relation);
     virtual ~UpdateRelation() {};
     virtual void exec(Real dt = 0.0) override;
 

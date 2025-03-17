@@ -3,28 +3,33 @@
 namespace SPH
 {
 //=================================================================================================//
-Relation<Base>::Relation(SPHBody &sph_body)
-    : sph_body_(sph_body),
-      particles_(sph_body.getBaseParticles()),
-      offset_list_size_(particles_.ParticlesBound() + 1) {}
-//=================================================================================================//
-Relation<Inner<>>::Relation(RealBody &real_body)
-    : Relation<Base>(real_body), real_body_(&real_body),
-      cell_linked_list_(DynamicCast<CellLinkedList>(this, real_body.getCellLinkedList())),
-      dv_neighbor_index_(addRelationVariable<UnsignedInt>("NeighborIndex", offset_list_size_)),
-      dv_particle_offset_(addRelationVariable<UnsignedInt>("ParticleOffset", offset_list_size_)) {}
-//=================================================================================================//
-void Relation<Inner<>>::registerComputingKernel(execution::Implementation<Base> *implementation)
+DiscreteVariable<UnsignedInt> *Relation<Base>::getNeighborIndex(UnsignedInt target_index)
 {
-    all_inner_computing_kernels_.push_back(implementation);
+    return dv_target_neighbor_index_[target_index];
 }
 //=================================================================================================//
-void Relation<Inner<>>::resetComputingKernelUpdated()
+DiscreteVariable<UnsignedInt> *Relation<Base>::getParticleOffset(UnsignedInt target_index)
 {
-    for (size_t k = 0; k != all_inner_computing_kernels_.size(); ++k)
+    return dv_target_particle_offset_[target_index];
+}
+//=================================================================================================//
+void Relation<Base>::registerComputingKernel(
+    execution::Implementation<Base> *implementation, UnsignedInt target_index)
+{
+    registered_computing_kernels_[target_index].push_back(implementation);
+}
+//=================================================================================================//
+void Relation<Base>::resetComputingKernelUpdated(UnsignedInt target_index)
+{
+    auto &computing_kernels = registered_computing_kernels_[target_index];
+    for (size_t k = 0; k != computing_kernels.size(); ++k)
     {
-        all_inner_computing_kernels_[k]->resetUpdated();
+        computing_kernels[k]->resetUpdated();
     }
 }
+//=================================================================================================//
+Relation<Inner<>>::Relation(RealBody &real_body)
+    : Relation<Base>(real_body, StdVec<RealBody *>{&real_body}),
+      real_body_(&real_body) {}
 //=================================================================================================//
 } // namespace SPH
