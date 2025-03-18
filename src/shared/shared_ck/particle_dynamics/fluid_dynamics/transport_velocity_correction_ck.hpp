@@ -26,8 +26,8 @@ TransportVelocityCorrectionCKBase<BaseInteractionType>::
 //   2) Partial Specialization:
 //      <Inner<WithUpdate, KernelCorrectionType, ResolutionType, LimiterType, ParticleScope, ExtraParams...>
 //========================================================================================
-template <class KernelCorrectionType, class ResolutionType, class LimiterType, class ParticleScopeType, typename... Parameters>
-TransportVelocityCorrectionCK<Inner<WithUpdate, KernelCorrectionType, ResolutionType, LimiterType, ParticleScopeType, Parameters...>>::
+template <class UpdatePolicy, class KernelCorrectionType, class ResolutionType, class LimiterType, class ParticleScopeType, typename... Parameters>
+TransportVelocityCorrectionCK<Inner<UpdatePolicy, KernelCorrectionType, ResolutionType, LimiterType, ParticleScopeType, Parameters...>>::
     TransportVelocityCorrectionCK(Relation<Inner<Parameters...>> &inner_relation, Real coefficient)
     : TransportVelocityCorrectionCKBase<Interaction<Inner<Parameters...>>>(inner_relation),
       kernel_correction_(this->particles_),
@@ -48,9 +48,9 @@ TransportVelocityCorrectionCK<Inner<WithUpdate, KernelCorrectionType, Resolution
 //------------------------------------------------------------------------------
 // InteractKernel Implementation
 //------------------------------------------------------------------------------
-template <class KernelCorrectionType, class ResolutionType, class LimiterType, class ParticleScopeType, typename... Parameters>
+template <class UpdatePolicy, class KernelCorrectionType, class ResolutionType, class LimiterType, class ParticleScopeType, typename... Parameters>
 template <class ExecutionPolicy, class EncloserType>
-TransportVelocityCorrectionCK<Inner<WithUpdate, KernelCorrectionType, ResolutionType, LimiterType, ParticleScopeType, Parameters...>>::InteractKernel::
+TransportVelocityCorrectionCK<Inner<UpdatePolicy, KernelCorrectionType, ResolutionType, LimiterType, ParticleScopeType, Parameters...>>::InteractKernel::
     InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : BaseInteraction::InteractKernel(ex_policy, encloser),
       correction_(ex_policy, encloser.kernel_correction_),
@@ -61,11 +61,10 @@ TransportVelocityCorrectionCK<Inner<WithUpdate, KernelCorrectionType, Resolution
 {
 }
 
-template <class KernelCorrectionType, class ResolutionType, class LimiterType, class ParticleScopeType, typename... Parameters>
-void TransportVelocityCorrectionCK<Inner<WithUpdate, KernelCorrectionType, ResolutionType, LimiterType, ParticleScopeType, Parameters...>>::InteractKernel::
+template <class UpdatePolicy, class KernelCorrectionType, class ResolutionType, class LimiterType, class ParticleScopeType, typename... Parameters>
+void TransportVelocityCorrectionCK<Inner<UpdatePolicy, KernelCorrectionType, ResolutionType, LimiterType, ParticleScopeType, Parameters...>>::InteractKernel::
     interact(size_t index_i, Real dt)
 {
-    if (this->within_scope_(index_i))
     {
         Vecd inconsistency = Vecd::Zero();
         for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
@@ -85,14 +84,14 @@ void TransportVelocityCorrectionCK<Inner<WithUpdate, KernelCorrectionType, Resol
 //------------------------------------------------------------------------------
 // UpdateKernel Implementation
 //------------------------------------------------------------------------------
-template <
-    class KernelCorrectionType,
-    class ResolutionType,
-    class LimiterType,
-    class ParticleScopeType,
-    typename... Parameters>
+template <class UpdatePolicy,
+          class KernelCorrectionType,
+          class ResolutionType,
+          class LimiterType,
+          class ParticleScopeType,
+          typename... Parameters>
 template <class ExecutionPolicy, class EncloserType>
-TransportVelocityCorrectionCK<Inner<WithUpdate, KernelCorrectionType, ResolutionType, LimiterType, ParticleScopeType, Parameters...>>::UpdateKernel::
+TransportVelocityCorrectionCK<Inner<UpdatePolicy, KernelCorrectionType, ResolutionType, LimiterType, ParticleScopeType, Parameters...>>::UpdateKernel::
     UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : correction_(ex_policy, encloser.kernel_correction_),
       correction_scaling_(encloser.correction_scaling_),
@@ -103,20 +102,21 @@ TransportVelocityCorrectionCK<Inner<WithUpdate, KernelCorrectionType, Resolution
 {
 }
 
-template <
-    class KernelCorrectionType,
-    class ResolutionType,
-    class LimiterType,
-    class ParticleScopeType,
-    typename... ExtraParams>
+template <class UpdatePolicy,
+          class KernelCorrectionType,
+          class ResolutionType,
+          class LimiterType,
+          class ParticleScopeType,
+          typename... ExtraParams>
 void TransportVelocityCorrectionCK<
-    Inner<WithUpdate, KernelCorrectionType, ResolutionType, LimiterType, ParticleScopeType, ExtraParams...>>::UpdateKernel::
+    Inner<UpdatePolicy, KernelCorrectionType, ResolutionType, LimiterType, ParticleScopeType, ExtraParams...>>::UpdateKernel::
     update(size_t index_i, Real dt)
 {
     if (this->within_scope_(index_i))
     {
         Real inv_h_ratio = 1.0 / h_ratio_(index_i);
-        Real squared_norm = this->zero_gradient_residue_[index_i].squaredNorm();
+        Vecd residue = this->zero_gradient_residue_[index_i];
+        Real squared_norm = residue.squaredNorm();
         dpos_[index_i] += correction_scaling_ * limiter_(squared_norm) *
                           this->zero_gradient_residue_[index_i] * inv_h_ratio * inv_h_ratio;
     }

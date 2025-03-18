@@ -68,12 +68,52 @@ class SpawnRealParticle
                 copy_particle_state_(copyable_state_data_arrays_, new_original_id, index_i);
                 original_id_[new_original_id] = new_original_id;
             }
+
             return new_original_id;
         };
 
       protected:
         UnsignedInt *total_real_particles_;
         UnsignedInt particles_bound_;
+        UnsignedInt *original_id_;
+        VariableDataArrays copyable_state_data_arrays_;
+        OperationOnDataAssemble<VariableDataArrays, CopyParticleStateCK> copy_particle_state_;
+    };
+};
+
+class DespawnRealParticle
+{
+    ParticleVariables &evolving_variables_;
+    DiscreteVariableArrays copyable_states_;
+    DiscreteVariable<UnsignedInt> *dv_original_id_;
+    SingularVariable<UnsignedInt> *sv_total_real_particles_;
+    UnsignedInt real_particles_bound_;
+
+  public:
+    DespawnRealParticle(BaseParticles *particles);
+
+    class ComputingKernel // only run with sequenced policy for now
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+
+        UnsignedInt operator()(UnsignedInt index_i)
+        {
+            UnsignedInt last_real_particle_index = *total_real_particles_ - 1;
+            if (index_i < last_real_particle_index)
+            {
+                const UnsignedInt temp_original_id_index_i = original_id_[index_i];
+                copy_particle_state_(copyable_state_data_arrays_, index_i, last_real_particle_index);
+                original_id_[last_real_particle_index] = temp_original_id_index_i;
+            }
+            *total_real_particles_ -= 1;
+            return last_real_particle_index;
+        };
+
+      protected:
+        UnsignedInt *total_real_particles_;
+        UnsignedInt real_particles_bound_;
         UnsignedInt *original_id_;
         VariableDataArrays copyable_state_data_arrays_;
         OperationOnDataAssemble<VariableDataArrays, CopyParticleStateCK> copy_particle_state_;

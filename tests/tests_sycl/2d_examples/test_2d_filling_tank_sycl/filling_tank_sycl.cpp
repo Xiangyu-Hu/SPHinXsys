@@ -83,7 +83,7 @@ class InletInflowCondition : public BaseStateCondition
         ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
             : BaseStateCondition::ComputingKernel(ex_policy, encloser){};
 
-        void operator()(AlignedBox *aligned_box, UnsignedInt index_i)
+        void operator()(AlignedBox *aligned_box, UnsignedInt index_i, Real /*time*/)
         {
             vel_[index_i] = Vec2d(2.0, 0.0);
         };
