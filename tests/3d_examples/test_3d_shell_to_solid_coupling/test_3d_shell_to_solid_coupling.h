@@ -1,7 +1,7 @@
 /**
  * @file 	test_3d_shell_to_solid_coupling.cpp
  * @brief 	This is the case file for the test of solid-shell coupling.
- * @author  Weiyi Kong, Xiangyu Hu
+ * @author  Weiyi Kong (Virtonomy), Xiangyu Hu
  */
 
 #include "base_data_type.h"
@@ -236,46 +236,72 @@ class ParticleGenerator<SurfaceParticles, ShellDirectGenerator> : public Particl
 };
 } // namespace SPH
 //-------Algorithm for shell body-------------------------------------------------
+/**@class CouplingPart
+ * @brief Find the overlapping particles and set is_coupled to 1.
+ * The overlapping criteria is set to distance < factor * average_spacing.
+ */
+class CouplingPart : public BodyPartByParticle
+{
+  private:
+    int *is_coupled_;
+    std::function<bool(Vec3d &)> contain_;
+
+  public:
+    CouplingPart(SPHBody &body, const std::string &body_part_name, std::function<bool(Vec3d &)> contain)
+        : BodyPartByParticle(body, body_part_name),
+          is_coupled_(base_particles_.registerStateVariable<int>("IsCoupled", 0)),
+          contain_(std::move(contain))
+    {
+        TaggingParticleMethod tagging_particle_method = std::bind(&CouplingPart::tagManually, this, _1);
+        tagParticles(tagging_particle_method);
+    };
+
+  private:
+    void tagManually(size_t index_i)
+    {
+        if (contain_(pos_[index_i]))
+        {
+            is_coupled_[index_i] = 1;
+            body_part_particles_.push_back(index_i);
+        }
+    }
+};
+
 struct solid_coupling_algs
 {
-    ContactRelation contact_relation;
-    solid_dynamics::CouplingPart part;
-    SimpleDynamics<solid_dynamics::NearestNeighborSolidVelocityConstraint> vel_bc_nearest_neighbor;
-    SimpleDynamics<solid_dynamics::InterpolationSolidVelocityConstraint> vel_bc_interpolation;
+    NearestNeighborContactRelation contact_relation;
+    CouplingPart part;
+    SimpleDynamics<solid_dynamics::TotalWeightComputation> total_weight;
+    SimpleDynamics<solid_dynamics::InterpolationSolidVelocityConstraint> vel_bc;
 
-    solid_coupling_algs(SolidBody &body, RealBodyVector contact_bodies)
-        : contact_relation(body, std::move(contact_bodies)),
-          part(contact_relation, "CouplingPart"),
-          vel_bc_nearest_neighbor(part, contact_relation),
-          vel_bc_interpolation(part, contact_relation) {}
+    solid_coupling_algs(SolidBody &body,
+                        RealBodyVector contact_bodies,
+                        std::function<bool(Vec3d &)> contain,
+                        const std::vector<Real> &factors = {})
+        : contact_relation(body, std::move(contact_bodies), factors),
+          part(body, "CouplingPart", std::move(contain)),
+          total_weight(part, contact_relation),
+          vel_bc(part, contact_relation) {}
 
-    void init(bool use_interpolation)
-    {
-        if (!use_interpolation)
-            vel_bc_nearest_neighbor.init();
-    }
-    void exec(bool use_interpolation) { use_interpolation ? vel_bc_interpolation.exec() : vel_bc_nearest_neighbor.exec(); }
+    void initialize_total_weight() { total_weight.exec(); }
+    void exec() { vel_bc.exec(); }
 };
 
 struct shell_coupling_algs
 {
-    ContactRelation contact_relation;
-    solid_dynamics::CouplingPart part;
-    InteractionWithUpdate<solid_dynamics::NearestNeighborShellForceConstraint> force_bc_nearest_neighbor;
-    InteractionWithUpdate<solid_dynamics::InterpolationShellForceConstraint> force_bc_interpolation;
+    NearestNeighborContactRelation contact_relation;
+    CouplingPart part;
+    InteractionWithUpdate<solid_dynamics::InterpolationShellForceConstraint> force_bc;
 
-    shell_coupling_algs(SolidBody &body, RealBodyVector contact_bodies)
-        : contact_relation(body, std::move(contact_bodies)),
-          part(contact_relation, "CouplingPart"),
-          force_bc_nearest_neighbor(part, contact_relation),
-          force_bc_interpolation(part, contact_relation) {}
+    shell_coupling_algs(SolidBody &body,
+                        RealBodyVector contact_bodies,
+                        std::function<bool(Vec3d &)> contain,
+                        const std::vector<Real> &factors = {})
+        : contact_relation(body, std::move(contact_bodies), factors),
+          part(body, "CouplingPart", std::move(contain)),
+          force_bc(part, contact_relation) {}
 
-    void init(bool use_interpolation)
-    {
-        if (!use_interpolation)
-            force_bc_nearest_neighbor.init();
-    }
-    void exec(bool use_interpolation) { use_interpolation ? force_bc_interpolation.exec() : force_bc_nearest_neighbor.exec(); }
+    void exec() { force_bc.exec(); }
 };
 //-------Auxiliary functions-------------------------------------------------
 inline Real get_physical_viscosity_general(Real rho, Real youngs_modulus, Real length_scale, Real shape_constant = 0.4)
@@ -350,6 +376,7 @@ struct solid_input_variables
     std::shared_ptr<Shape> mesh_;
     std::shared_ptr<ElasticSolid> material_;
     Real physical_viscosity_;
+    std::function<bool(Vec3d &)> contain_;
 };
 
 struct shell_input_variables
@@ -362,6 +389,7 @@ struct shell_input_variables
     StdLargeVec<Vecd> pos_;
     StdLargeVec<Vecd> n_;
     Real physical_viscosity_;
+    std::function<bool(Vec3d &)> contain_;
 };
 
 struct solid_object
@@ -387,9 +415,9 @@ struct solid_object
             relax_solid(algs_->inner_relation);
     }
 
-    void add_coupling_algorithm(RealBodyVector contact_bodies)
+    void add_coupling_algorithm(RealBodyVector contact_bodies, std::function<bool(Vec3d &)> contain, const std::vector<Real> &factors)
     {
-        coupling_algs_ = std::make_unique<solid_coupling_algs>(body_, contact_bodies);
+        coupling_algs_ = std::make_unique<solid_coupling_algs>(body_, contact_bodies, std::move(contain), factors);
     }
 
     void add_bcs(Real max_elongation, Real speed, int problem_type)
@@ -417,9 +445,9 @@ struct shell_object
         algs_ = std::make_unique<shell_algs>(body_, input.physical_viscosity_);
     }
 
-    void add_coupling_algorithm(RealBodyVector contact_bodies)
+    void add_coupling_algorithm(RealBodyVector contact_bodies, std::function<bool(Vec3d &)> contain, const std::vector<Real> &factors)
     {
-        coupling_algs_ = std::make_unique<shell_coupling_algs>(body_, contact_bodies);
+        coupling_algs_ = std::make_unique<shell_coupling_algs>(body_, contact_bodies, std::move(contain), factors);
     }
 
     void add_bcs(Real max_elongation, Real speed, int problem_type)
@@ -434,6 +462,8 @@ struct simulation_system
     IOEnvironment io_environment;
     std::vector<std::unique_ptr<solid_object>> solid_objects_;
     std::vector<std::unique_ptr<shell_object>> shell_objects_;
+    std::vector<std::function<bool(Vec3d &)>> solid_coupling_parts_;
+    std::vector<std::function<bool(Vec3d &)>> shell_coupling_parts_;
 
     explicit simulation_system(Real dp = 1)
         : system(BoundingBox{}, dp),
@@ -451,6 +481,7 @@ struct simulation_system
         system.system_domain_bounds_ = union_bounding_box(system.system_domain_bounds_, input.mesh_->getBounds());
         solid_objects_.emplace_back(std::make_unique<solid_object>(system, input));
         solid_objects_.back()->particle_generation<MaterialType>(input, relax);
+        solid_coupling_parts_.emplace_back(std::move(input.contain_));
     };
 
     template <typename MaterialType>
@@ -458,6 +489,7 @@ struct simulation_system
     {
         shell_objects_.emplace_back(std::make_unique<shell_object>(system, input));
         shell_objects_.back()->particle_generation<MaterialType>(input);
+        shell_coupling_parts_.emplace_back(std::move(input.contain_));
     };
 
     void add_bcs(Real max_elongation, Real speed, int problem_type)
@@ -468,7 +500,7 @@ struct simulation_system
             shell->add_bcs(max_elongation, speed, problem_type);
     }
 
-    void add_coupling_algs()
+    void add_coupling_algs(bool use_interpolation)
     {
         RealBodyVector solid_bodies;
         for (auto &solid : solid_objects_)
@@ -477,18 +509,19 @@ struct simulation_system
         for (auto &shell : shell_objects_)
             shell_bodies.emplace_back(&shell->body_);
 
-        for (auto &solid : solid_objects_)
-            solid->add_coupling_algorithm(shell_bodies);
-        for (auto &shell : shell_objects_)
-            shell->add_coupling_algorithm(solid_bodies);
+        for (size_t i = 0; i < solid_objects_.size(); i++)
+            use_interpolation ? solid_objects_[i]->add_coupling_algorithm(shell_bodies, solid_coupling_parts_[i], std::vector<Real>(shell_bodies.size(), 2.3))
+                              : solid_objects_[i]->add_coupling_algorithm(shell_bodies, solid_coupling_parts_[i], {});
+
+        for (size_t i = 0; i < shell_objects_.size(); i++)
+            use_interpolation ? shell_objects_[i]->add_coupling_algorithm(solid_bodies, shell_coupling_parts_[i], std::vector<Real>(solid_bodies.size(), 2.3))
+                              : shell_objects_[i]->add_coupling_algorithm(solid_bodies, shell_coupling_parts_[i], {});
     }
 
-    void initialise_coupling_algs(bool use_interpolation)
+    void total_weight_initialization()
     {
         for (auto &solid : solid_objects_)
-            solid->coupling_algs_->init(use_interpolation);
-        for (auto &shell : shell_objects_)
-            shell->coupling_algs_->init(use_interpolation);
+            solid->coupling_algs_->initialize_total_weight();
     }
 
     void init_config()
@@ -508,7 +541,7 @@ struct simulation_system
             shell->body_.getBaseParticles().addVariableToWrite<Type...>(name);
     }
 
-    Real get_time_step_size()
+    Real get_time_step_size() const
     {
         Real dt = std::numeric_limits<Real>::max();
         for (auto &solid : solid_objects_)
@@ -565,45 +598,57 @@ struct one_sided_problem
         return makeShared<TransformShape<GeometricShapeBox>>(Transform(translation), halfsize, "lower_shell");
     }
 
-    std::pair<std::vector<solid_input_variables>, std::vector<shell_input_variables>> operator()(Real dp, Real stiffness_ratio)
+    std::pair<std::vector<solid_input_variables>, std::vector<shell_input_variables>> operator()(Real dp_solid, Real dp_shell, Real stiffness_ratio)
     {
         std::vector<solid_input_variables> solid_inputs;
         std::vector<shell_input_variables> shell_inputs;
         Real youngs_modulus_solid = params.youngs_modulus_shell * stiffness_ratio;
         Real eta = get_physical_viscosity_general(params.rho, params.youngs_modulus_shell, params.height + 2 * params.thickness_shell);
-        solid_inputs.emplace_back(solid_input_variables{.name_ = "solid",
-                                                        .dp_ = dp,
-                                                        .mesh_ = get_solid_mesh(dp),
-                                                        .material_ = std::make_shared<material_type>(params.rho, youngs_modulus_solid, params.poisson_ratio),
-                                                        .physical_viscosity_ = eta});
+        solid_input_variables solid_input{
+            .name_ = "solid",
+            .dp_ = dp_solid,
+            .mesh_ = get_solid_mesh(dp_solid),
+            .material_ = std::make_shared<material_type>(params.rho, youngs_modulus_solid, params.poisson_ratio),
+            .physical_viscosity_ = eta,
+        };
+        solid_input.contain_ = [z0 = solid_input.mesh_->getBounds().first_.z(),
+                                z1 = solid_input.mesh_->getBounds().second_.z(),
+                                dp_solid](Vec3d &pos)
+        { return pos.z() < z0 + 0.7 * dp_solid || pos.z() > z1 - 0.7 * dp_solid; };
+        solid_inputs.emplace_back(solid_input);
+
         shell_input_variables upper_shell_input{.name_ = "upper_shell",
-                                                .dp_ = dp,
+                                                .dp_ = dp_shell,
                                                 .thickness_ = params.thickness_shell,
-                                                .mesh_ = get_upper_shell_mesh(dp),
+                                                .mesh_ = get_upper_shell_mesh(dp_solid),
                                                 .material_ = std::make_shared<material_type>(params.rho, params.youngs_modulus_shell, params.poisson_ratio),
-                                                .physical_viscosity_ = eta};
+                                                .physical_viscosity_ = eta,
+                                                .contain_ = [](Vec3d &)
+                                                { return true; }};
         shell_input_variables lower_shell_input{.name_ = "lower_shell",
-                                                .dp_ = dp,
+                                                .dp_ = dp_shell,
                                                 .thickness_ = params.thickness_shell,
-                                                .mesh_ = get_lower_shell_mesh(dp),
+                                                .mesh_ = get_lower_shell_mesh(dp_solid),
                                                 .material_ = std::make_shared<material_type>(params.rho, params.youngs_modulus_shell, params.poisson_ratio),
-                                                .physical_viscosity_ = eta};
+                                                .physical_viscosity_ = eta,
+                                                .contain_ = [](Vec3d &)
+                                                { return true; }};
         {
-            Real z_upper = 0.5 * params.height + 0.5 * dp;
-            Real z_lower = -0.5 * params.height - 0.5 * dp;
-            Real x = -0.5 * params.length + 0.5 * dp;
+            Real z_upper = 0.5 * params.height + 0.5 * dp_solid;
+            Real z_lower = -0.5 * params.height - 0.5 * dp_solid;
+            Real x = -0.5 * params.length + 0.5 * dp_shell;
             while (x < 0.5 * params.length)
             {
-                Real y = -0.5 * params.width + 0.5 * dp;
+                Real y = -0.5 * params.width + 0.5 * dp_shell;
                 while (y < 0.5 * params.width)
                 {
                     upper_shell_input.pos_.emplace_back(x, y, z_upper);
                     upper_shell_input.n_.emplace_back(Vec3d::UnitZ());
                     lower_shell_input.pos_.emplace_back(x, y, z_lower);
                     lower_shell_input.n_.emplace_back(Vec3d::UnitZ());
-                    y += dp;
+                    y += dp_shell;
                 }
-                x += dp;
+                x += dp_shell;
             }
         }
         shell_inputs.emplace_back(upper_shell_input);
@@ -637,45 +682,120 @@ struct two_sided_problem
         return makeShared<TransformShape<GeometricShapeBox>>(Transform(Vec3d::Zero()), halfsize, "shell");
     }
 
-    std::pair<std::vector<solid_input_variables>, std::vector<shell_input_variables>> operator()(Real dp, Real stiffness_ratio)
+    std::pair<std::vector<solid_input_variables>, std::vector<shell_input_variables>> operator()(Real dp_solid, Real dp_shell, Real stiffness_ratio)
     {
         std::vector<solid_input_variables> solid_inputs;
         std::vector<shell_input_variables> shell_inputs;
         Real youngs_modulus_solid = params.youngs_modulus_shell * stiffness_ratio;
         Real eta = get_physical_viscosity_general(params.rho, params.youngs_modulus_shell, params.height + params.thickness_shell);
         solid_inputs.emplace_back(solid_input_variables{.name_ = "upper_solid",
-                                                        .dp_ = dp,
-                                                        .mesh_ = get_upper_solid_mesh(dp),
+                                                        .dp_ = dp_solid,
+                                                        .mesh_ = get_upper_solid_mesh(dp_solid),
                                                         .material_ = std::make_shared<material_type>(params.rho, youngs_modulus_solid, params.poisson_ratio),
-                                                        .physical_viscosity_ = eta});
+                                                        .physical_viscosity_ = eta,
+                                                        .contain_ = [dp_solid](Vec3d &pos)
+                                                        {
+                                                            return abs(pos.z()) < 0.5 * dp_solid;
+                                                        }});
         solid_inputs.emplace_back(solid_input_variables{.name_ = "lower_solid",
-                                                        .dp_ = dp,
-                                                        .mesh_ = get_lower_solid_mesh(dp),
+                                                        .dp_ = dp_solid,
+                                                        .mesh_ = get_lower_solid_mesh(dp_solid),
                                                         .material_ = std::make_shared<material_type>(params.rho, youngs_modulus_solid, params.poisson_ratio),
-                                                        .physical_viscosity_ = eta});
+                                                        .physical_viscosity_ = eta,
+                                                        .contain_ = [dp_solid](Vec3d &pos)
+                                                        {
+                                                            return abs(pos.z()) < 0.5 * dp_solid;
+                                                        }});
         shell_input_variables shell_input{.name_ = "shell",
-                                          .dp_ = dp,
+                                          .dp_ = dp_shell,
                                           .thickness_ = params.thickness_shell,
-                                          .mesh_ = get_shell_mesh(dp),
+                                          .mesh_ = get_shell_mesh(dp_solid),
                                           .material_ = std::make_shared<material_type>(params.rho, params.youngs_modulus_shell, params.poisson_ratio),
-                                          .physical_viscosity_ = eta};
+                                          .physical_viscosity_ = eta,
+                                          .contain_ = [](Vec3d &)
+                                          { return true; }};
 
         {
             Real z = 0;
-            Real x = -0.5 * params.length + 0.5 * dp;
+            Real x = -0.5 * params.length + 0.5 * dp_shell;
             while (x < 0.5 * params.length)
             {
-                Real y = -0.5 * params.width + 0.5 * dp;
+                Real y = -0.5 * params.width + 0.5 * dp_shell;
                 while (y < 0.5 * params.width)
                 {
                     shell_input.pos_.emplace_back(x, y, z);
                     shell_input.n_.emplace_back(Vec3d::UnitZ());
-                    y += dp;
+                    y += dp_shell;
                 }
-                x += dp;
+                x += dp_shell;
             }
         }
         shell_inputs.emplace_back(shell_input);
         return std::make_pair(solid_inputs, shell_inputs);
+    }
+};
+//-------Observers-------------------------------------------------
+class InterfaceTotalForce : public LocalDynamicsReduce<ReduceSum<Vecd>>
+{
+  private:
+    Vecd *force_;
+    int *is_coupled_;
+
+  public:
+    explicit InterfaceTotalForce(SPHBody &sph_body)
+        : LocalDynamicsReduce<ReduceSum<Vecd>>(sph_body),
+          force_(particles_->getVariableDataByName<Vecd>("Force")),
+          is_coupled_(particles_->getVariableDataByName<int>("IsCoupled"))
+    {
+        quantity_name_ = "TotalForce";
+    }
+    Vecd reduce(size_t index_i, Real dt = 0.0)
+    {
+        return is_coupled_[index_i] ? force_[index_i] : Vecd::Zero();
+    }
+};
+
+class InterfaceTotalForcePrior : public LocalDynamicsReduce<ReduceSum<Vecd>>
+{
+  private:
+    Vecd *force_prior_;
+    int *is_coupled_;
+
+  public:
+    explicit InterfaceTotalForcePrior(SPHBody &sph_body)
+        : LocalDynamicsReduce<ReduceSum<Vecd>>(sph_body),
+          force_prior_(particles_->getVariableDataByName<Vecd>("ForcePrior")),
+          is_coupled_(particles_->getVariableDataByName<int>("IsCoupled"))
+    {
+        quantity_name_ = "TotalForcePrior";
+    }
+    Vecd reduce(size_t index_i, Real dt = 0.0)
+    {
+        return is_coupled_[index_i] ? force_prior_[index_i] : Vecd::Zero();
+    }
+};
+
+class InterfaceTotalEnergy : public LocalDynamicsReduce<ReduceSum<Real>>
+{
+  private:
+    Vecd *pos_;
+    Vecd *pos0_;
+    Vecd *force_;
+    int *is_coupled_;
+
+  public:
+    explicit InterfaceTotalEnergy(SPHBody &sph_body)
+        : LocalDynamicsReduce<ReduceSum<Real>>(sph_body),
+          pos_(particles_->getVariableDataByName<Vecd>("Position")),
+          pos0_(particles_->getVariableDataByName<Vecd>("InitialPosition")),
+          force_(particles_->getVariableDataByName<Vecd>("Force")),
+          is_coupled_(particles_->getVariableDataByName<int>("IsCoupled"))
+    {
+        quantity_name_ = "TotalEnergy";
+    }
+    Real reduce(size_t index_i, Real dt = 0.0)
+    {
+        Vec3d displacement = pos_[index_i] - pos0_[index_i];
+        return is_coupled_[index_i] ? force_[index_i].dot(displacement) : 0.0;
     }
 };

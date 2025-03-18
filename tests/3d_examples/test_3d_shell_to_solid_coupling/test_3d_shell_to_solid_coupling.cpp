@@ -1,30 +1,33 @@
 #include "test_3d_shell_to_solid_coupling.h"
+#include <gtest/gtest.h>
 
-void run_shell_to_solid_coupling(bool two_sided, int res_factor, Real stiffness_ratio, bool use_interpolation, int load_type = 0);
+void run_shell_to_solid_coupling(bool two_sided, int res_factor_solid, int res_factor_shell, Real stiffness_ratio, bool use_relaxation, bool use_interpolation, int load_type = 0);
 void run_mr_solid(bool two_sided, int res_factor_1, int res_factor_2, Real stiffness_ratio, int load_type);
 
 int main(int ac, char *av[])
 {
-    // run_shell_to_solid_coupling(false, 1, 0.1, false, 0);
-    run_mr_solid(false, 1, 1, 0.1, 0);
+    run_shell_to_solid_coupling(false, 2, 1, 0.1, false, true, 0);
+    // run_mr_solid(false, 1, 1, 0.1, 0);
 }
 
-void run_shell_to_solid_coupling(bool two_sided, int res_factor, Real stiffness_ratio, bool use_interpolation, int load_type)
+void run_shell_to_solid_coupling(bool two_sided, int res_factor_solid, int res_factor_shell, Real stiffness_ratio, bool use_relaxation, bool use_interpolation, int load_type)
 {
     // parameters
     plate_parameters params;
-    Real dp = params.height / (10.0 * res_factor);
+    Real dp_solid = params.height / (10.0 * res_factor_solid);
+    Real dp_shell = params.height / (10.0 * res_factor_shell);
 
     // Import input variables
     auto [solid_inputs, shell_inputs] =
-        two_sided ? two_sided_problem<SaintVenantKirchhoffSolid>{}(dp, stiffness_ratio) : one_sided_problem<SaintVenantKirchhoffSolid>{}(dp, stiffness_ratio);
+        two_sided ? two_sided_problem<SaintVenantKirchhoffSolid>{}(dp_solid, dp_shell, stiffness_ratio)
+                  : one_sided_problem<SaintVenantKirchhoffSolid>{}(dp_solid, dp_shell, stiffness_ratio);
 
     // System
-    simulation_system simu_sys(dp);
+    simulation_system simu_sys(dp_solid);
 
     // Body
     for (const auto &solid_input : solid_inputs)
-        simu_sys.add_solid_object<SaintVenantKirchhoffSolid>(solid_input, use_interpolation);
+        simu_sys.add_solid_object<SaintVenantKirchhoffSolid>(solid_input, use_relaxation);
     for (auto &shell_input : shell_inputs)
         simu_sys.add_shell_object<SaintVenantKirchhoffSolid>(shell_input);
 
@@ -32,12 +35,12 @@ void run_shell_to_solid_coupling(bool two_sided, int res_factor, Real stiffness_
     simu_sys.add_bcs(params.maximum_elongation, params.speed, load_type);
 
     // Coupling conditions
-    simu_sys.add_coupling_algs();
-    simu_sys.initialise_coupling_algs(use_interpolation);
+    simu_sys.add_coupling_algs(use_interpolation);
 
     // Initialization
     simu_sys.system_initialize();
     simu_sys.init_config();
+    simu_sys.total_weight_initialization();
 
     // Output
     simu_sys.add_variable_to_write<int>("IsCoupled");
@@ -50,6 +53,7 @@ void run_shell_to_solid_coupling(bool two_sided, int res_factor, Real stiffness_
         vtp_output.addDerivedVariableRecording<SimpleDynamics<Displacement>>(solid->body_);
         vtp_output.addDerivedVariableRecording<SimpleDynamics<VonMisesStress>>(solid->body_);
         vtp_output.addDerivedVariableRecording<SimpleDynamics<VonMisesStrain>>(solid->body_);
+        solid->body_.getBaseParticles().addVariableToWrite<Real>("TotalWeight");
     }
     for (auto &shell : simu_sys.shell_objects_)
     {
@@ -61,51 +65,54 @@ void run_shell_to_solid_coupling(bool two_sided, int res_factor, Real stiffness_
     vtp_output.writeToFile(0);
 
     // check coupling algorithm
-    if (!use_interpolation)
+    if (!use_interpolation && res_factor_shell == res_factor_solid)
     {
         // Check for solid
-        auto check_solid = [&](solid_coupling_algs &alg)
+        auto check_pos = [&](auto &alg)
         {
-            const auto *pos_solid = alg.part.getBaseParticles().getVariableDataByName<Vec3d>("Position");
+            const auto *pos_source = alg.part.getBaseParticles().template getVariableDataByName<Vec3d>("Position");
             for (const auto &index_i : alg.part.body_part_particles_)
             {
-                const auto &pos_i = pos_solid[index_i];
-                auto [k, j] = alg.vel_bc_nearest_neighbor.get_nearest_id(index_i);
-                const auto *pos_shell = alg.contact_relation.contact_particles_[k]->getVariableDataByName<Vec3d>("Position");
-                const auto &pos_j = pos_shell[j];
-                Vec3d displacement = pos_j - pos_i;
-                if (displacement.norm() > Eps)
+                const auto &pos_i = pos_source[index_i];
+                size_t neighbor_number = 0;
+                for (size_t k = 0; k < alg.contact_relation.contact_particles_.size(); k++)
                 {
-                    std::cout << alg.part.getSPHBody().getName() << " coupling id is wrong!" << std::endl;
-                    exit(0);
-                }
-            }
-        };
-        // Check for shells
-        auto check_shell_coupling = [&](shell_coupling_algs &alg)
-        {
-            const auto *pos_shell = alg.part.getBaseParticles().getVariableDataByName<Vec3d>("Position");
-            for (const auto &index_i : alg.part.body_part_particles_)
-            {
-                const auto &pos_i = pos_shell[index_i];
-                for (size_t k = 0; k < alg.contact_relation.contact_configuration_.size(); k++)
-                {
-                    const size_t j = alg.force_bc_nearest_neighbor.get_nearest_id(index_i, k);
-                    const auto &pos_j = alg.contact_relation.contact_particles_[k]->getVariableDataByName<Vec3d>("Position")[j];
-                    Vec3d displacement = pos_j - pos_i;
-                    if (displacement.norm() > Eps)
+                    auto neighbor = alg.contact_relation.contact_configuration_[k][index_i];
+                    neighbor_number += neighbor.current_size_;
+                    for (size_t n = 0; n < neighbor.current_size_; n++)
                     {
-                        std::cout << alg.part.getSPHBody().getName() << " coupling id is wrong!" << std::endl;
-                        exit(0);
+                        const auto *pos_target = alg.contact_relation.contact_particles_[k]->template getVariableDataByName<Vec3d>("Position");
+                        size_t j = neighbor.j_[n];
+                        const auto &pos_j = pos_target[j];
+                        Vec3d displacement = pos_j - pos_i;
+                        ASSERT_LT(displacement.norm(), Eps);
                     }
                 }
+                ASSERT_EQ(neighbor_number, 1);
             }
         };
         for (auto &solid : simu_sys.solid_objects_)
-            check_solid(*solid->coupling_algs_);
+            check_pos(*solid->coupling_algs_);
         for (auto &shell : simu_sys.shell_objects_)
-            check_shell_coupling(*shell->coupling_algs_);
+            check_pos(*shell->coupling_algs_);
     }
+
+    // check force consistency
+    std::vector<std::unique_ptr<ReducedQuantityRecording<InterfaceTotalForce>>> solid_total_force_recorders;
+    std::vector<std::unique_ptr<ReducedQuantityRecording<InterfaceTotalForcePrior>>> shell_total_force_recorders;
+    for (auto &solid : simu_sys.solid_objects_)
+        solid_total_force_recorders.emplace_back(std::make_unique<ReducedQuantityRecording<InterfaceTotalForce>>(solid->body_));
+    for (auto &shell : simu_sys.shell_objects_)
+        shell_total_force_recorders.emplace_back(std::make_unique<ReducedQuantityRecording<InterfaceTotalForcePrior>>(shell->body_));
+
+    auto record_force = [&](size_t ite)
+    {
+        for (auto &recorder : solid_total_force_recorders)
+            recorder->writeToFile(ite);
+
+        for (auto &recorder : shell_total_force_recorders)
+            recorder->writeToFile(ite);
+    };
 
     // Simulation
     const Real end_time = 2.0;
@@ -140,7 +147,7 @@ void run_shell_to_solid_coupling(bool two_sided, int res_factor, Real stiffness_
 
                 // compute shell coupling force
                 for (auto &shell : simu_sys.shell_objects_)
-                    shell->coupling_algs_->exec(use_interpolation);
+                    shell->coupling_algs_->exec();
 
                 // update shell
                 for (auto &shell : simu_sys.shell_objects_)
@@ -155,10 +162,10 @@ void run_shell_to_solid_coupling(bool two_sided, int res_factor, Real stiffness_
                 // update solid kinematic constraint and 2nd half
                 for (auto &solid : simu_sys.solid_objects_)
                 {
-                    solid->coupling_algs_->exec(use_interpolation);
+                    solid->coupling_algs_->exec();
                     solid->bcs_->exec();
                     solid->algs_->damping_exec(dt);
-                    solid->coupling_algs_->exec(use_interpolation);
+                    solid->coupling_algs_->exec();
                     solid->bcs_->exec();
                     solid->algs_->stress_relaxation_second(dt);
                 }
@@ -170,6 +177,8 @@ void run_shell_to_solid_coupling(bool two_sided, int res_factor, Real stiffness_
 
             ite_output++;
             vtp_output.writeToFile(ite_output);
+
+            record_force(ite_output);
         }
         TimeInterval tt = TickCount::now() - t1;
         std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
