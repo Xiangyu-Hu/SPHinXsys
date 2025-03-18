@@ -20,7 +20,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     BoundingBox system_domain_bounds(Vec2d(-DL_sponge - BW, -BW), Vec2d(DL + BW, DH + BW));
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
-    sph_system.setRunParticleRelaxation(true);  // Tag for run particle relaxation for body-fitted distribution
+    sph_system.setRunParticleRelaxation(false);  // Tag for run particle relaxation for body-fitted distribution
     sph_system.setReloadParticles(true);         // Tag for computation with save particles distribution
     sph_system.handleCommandlineOptions(ac, av); // handle command line arguments
 
@@ -63,7 +63,7 @@ int main(int ac, char *av[])
         //----------------------------------------------------------------------
         using namespace relax_dynamics;
         SimpleDynamics<RandomizeParticlePosition> random_insert_body_particles(insert_body);
-        RelaxationStepInnerImplicit relaxation_step_inner(insert_body_inner);
+        RelaxationStepInner relaxation_step_inner(insert_body_inner);
         BodyStatesRecordingToVtp write_insert_body_to_vtp(insert_body);
         ReloadParticleIO write_particle_reload_files(insert_body);
         //----------------------------------------------------------------------
