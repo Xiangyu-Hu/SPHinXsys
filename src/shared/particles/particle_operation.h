@@ -61,14 +61,12 @@ class SpawnRealParticle
 
         UnsignedInt operator()(UnsignedInt index_i)
         {
-            UnsignedInt new_original_id = *total_real_particles_;
+            AtomicRef<UnsignedInt> total_real_particles_ref(*total_real_particles_);
+            UnsignedInt new_original_id = total_real_particles_ref.fetch_add(1);
             if (new_original_id < particles_bound_)
             {
-                const UnsignedInt temp_original_new_original_id = original_id_[new_original_id];
                 copy_particle_state_(copyable_state_data_arrays_, new_original_id, index_i);
-                original_id_[new_original_id] = temp_original_new_original_id;
-                /** Realize the buffer particle by increasing the number of real particle by one.  */
-                *total_real_particles_ += 1;
+                original_id_[new_original_id] = new_original_id;
             }
 
             return new_original_id;

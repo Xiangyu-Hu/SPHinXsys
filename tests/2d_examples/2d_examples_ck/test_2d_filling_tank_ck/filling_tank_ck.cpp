@@ -129,7 +129,6 @@ int main(int ac, char *av[])
     // Define the main execution policy for this case.
     //----------------------------------------------------------------------
     using MainExecutionPolicy = execution::ParallelPolicy;
-    using SequencedExecutionPolicy = execution::SequencedPolicy;
     //----------------------------------------------------------------------
     // Define the numerical methods used in the simulation.
     // Note that there may be data dependence on the sequence of constructions.
@@ -167,8 +166,7 @@ int main(int ac, char *av[])
         fluid_boundary_indicator(water_body_inner, water_wall_contact);
 
     StateDynamics<MainExecutionPolicy, fluid_dynamics::InflowConditionCK<AlignedBoxPartByParticle, InletInflowCondition>> inflow_condition(emitter);
-    StateDynamics<SequencedExecutionPolicy, fluid_dynamics::EmitterInflowInjectionCK<AlignedBoxPartByParticle>> emitter_injection(emitter, inlet_buffer);
-
+    StateDynamics<MainExecutionPolicy, fluid_dynamics::EmitterInflowInjectionCK> emitter_injection(emitter, inlet_buffer);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.

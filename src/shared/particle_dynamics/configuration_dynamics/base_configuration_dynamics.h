@@ -32,27 +32,11 @@
 #include "base_data_package.h"
 #include "execution_policy.h"
 
-#include <boost/atomic/atomic_ref.hpp>
 #include <functional>
 
 namespace SPH
 {
 using namespace execution;
-
-template <typename... T>
-struct AtomicUnsignedIntRef;
-
-template <>
-struct AtomicUnsignedIntRef<SequencedPolicy>
-{
-    typedef UnsignedInt &type;
-};
-
-template <>
-struct AtomicUnsignedIntRef<ParallelPolicy>
-{
-    typedef boost::atomic_ref<UnsignedInt> type;
-};
 
 template <typename... T>
 struct PlusUnsignedInt;
