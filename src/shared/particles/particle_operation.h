@@ -81,7 +81,7 @@ class SpawnRealParticle
     };
 };
 
-class DespawnRealParticle
+class DeleteRealParticle
 {
     ParticleVariables &evolving_variables_;
     DiscreteVariableArrays copyable_states_;
@@ -90,24 +90,29 @@ class DespawnRealParticle
     UnsignedInt real_particles_bound_;
 
   public:
-    DespawnRealParticle(BaseParticles *particles);
+    DeleteRealParticle(BaseParticles *particles);
 
-    class ComputingKernel // only run with sequenced policy for now
+    class ComputingKernel
     {
       public:
         template <class ExecutionPolicy, class EncloserType>
         ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
 
-        UnsignedInt operator()(UnsignedInt index_i)
+        template <class IsDeletable>
+        UnsignedInt operator()(UnsignedInt index_i, IsDeletable &is_deletable)
         {
-            UnsignedInt last_real_particle_index = *total_real_particles_ - 1;
+            AtomicRef<UnsignedInt> total_real_particles_ref(*total_real_particles_);
+            UnsignedInt last_real_particle_index = total_real_particles_ref.fetch_sub(1) - 1;
+            while (is_deletable(last_real_particle_index))
+            {
+                last_real_particle_index = total_real_particles_ref.fetch_sub(1) - 1;
+            }
+
             if (index_i < last_real_particle_index)
             {
-                const UnsignedInt temp_original_id_index_i = original_id_[index_i];
                 copy_particle_state_(copyable_state_data_arrays_, index_i, last_real_particle_index);
-                original_id_[last_real_particle_index] = temp_original_id_index_i;
+                original_id_[index_i] = original_id_[last_real_particle_index];
             }
-            *total_real_particles_ -= 1;
             return last_real_particle_index;
         };
 
