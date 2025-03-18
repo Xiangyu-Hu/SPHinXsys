@@ -36,91 +36,21 @@ namespace SPH
 {
 namespace solid_dynamics
 {
-/**@class CouplingPart
- * @brief Find the overlapping particles and set is_coupled to 1.
- * The overlapping criteria is set to distance < factor * average_spacing.
+/**@class ComputeWeight
+ * @brief Compute the total weight for each solid particle from the coupled shell particles.
+ * This weight is used for interpolation of velocity and force
  */
-class CouplingPart : public BodyPartByParticle,
-                     public DataDelegateContact
+class TotalWeightComputation : public BaseLocalDynamics<BodyPartByParticle>,
+                               public DataDelegateContact
 {
   private:
-    Real distance_factor_;
-    int *is_coupled_;
+    Real *total_weight_; // \sum_i W_ij * Vol_j for j of all contact bodies
+    StdVec<int *> contact_is_coupled_;
+    StdVec<Real *> contact_Vol_;
 
   public:
-    CouplingPart(BaseContactRelation &contact_relation, const std::string &body_part_name, Real distance_factor = 0.5);
-
-  private:
-    void tagManually(size_t index_i);
-};
-
-/**@class NearestNeighborSolidVelocityConstraint
- * @brief Constrain solid velocity by the nearest neighbor shell particle velocity.
- * When there is more than one contact body, use the nearest neighbor shell particle velocity among all contact bodies.
- */
-class NearestNeighborSolidVelocityConstraint : public MotionConstraint<BodyPartByParticle>,
-                                               public DataDelegateContact
-{
-  private:
-    /**@class NearestNeighborSolidVelocityConstraint::SearchNearestParticle
-     * @brief Find the id of the nearest neighbor shell particle among all contact bodies.
-     */
-    class SearchNearestParticle : public BaseLocalDynamics<BodyPartByParticle>,
-                                  public DataDelegateContact
-    {
-      private:
-        StdVec<int *> contact_is_coupled_;
-        StdLargeVec<std::pair<size_t, size_t>> coupling_ids_;
-
-      public:
-        SearchNearestParticle(BodyPartByParticle &body_part, BaseContactRelation &contact_relation);
-        void update(size_t index_i, Real dt = 0.0);
-        std::pair<size_t, size_t> get_nearest_id(size_t index_i) { return coupling_ids_[index_i]; };
-    };
-
-  public:
-    NearestNeighborSolidVelocityConstraint(BodyPartByParticle &body_part, BaseContactRelation &contact_relation);
-    void init() { search_nearest_particle_.exec(); }
+    TotalWeightComputation(BodyPartByParticle &body_part, BaseContactRelation &contact_relation);
     void update(size_t index_i, Real dt = 0.0);
-    std::pair<size_t, size_t> get_nearest_id(size_t index_i) { return search_nearest_particle_.get_nearest_id(index_i); };
-
-  private:
-    SimpleDynamics<SearchNearestParticle> search_nearest_particle_;
-    StdVec<Vecd *> contact_vel_;
-};
-
-/**@class NearestNeighborShellForceConstraint
- * @brief Apply the coupling force on shell from the nearest neighbor solid particles.
- * When there is more than one contact body, sum up the coupling forces from all contact bodies.
- */
-class NearestNeighborShellForceConstraint : public BaseForcePrior<BodyPartByParticle>,
-                                            public DataDelegateContact
-{
-    /**@class NearestNeighborShellForceConstraint::SearchNearestParticle
-     * @brief Find the id of the nearest neighbor solid particle for each contact body.
-     */
-    class SearchNearestParticle : public BaseLocalDynamics<BodyPartByParticle>,
-                                  public DataDelegateContact
-    {
-      private:
-        StdVec<int *> contact_is_coupled_;
-        StdVec<StdLargeVec<size_t>> coupling_ids_;
-
-      public:
-        SearchNearestParticle(BodyPartByParticle &body_part, BaseContactRelation &contact_relation);
-        void update(size_t index_i, Real dt = 0.0);
-        size_t get_nearest_id(size_t index_i, size_t k) { return coupling_ids_[k][index_i]; };
-    };
-
-  public:
-    NearestNeighborShellForceConstraint(BodyPartByParticle &body_part, BaseContactRelation &contact_relation);
-    void init() { search_nearest_particle_.exec(); }
-    void interaction(size_t index_i, Real dt = 0.0);
-    size_t get_nearest_id(size_t index_i, size_t k) { return search_nearest_particle_.get_nearest_id(index_i, k); };
-
-  private:
-    SimpleDynamics<SearchNearestParticle> search_nearest_particle_;
-    StdVec<Vecd *> contact_force_;
 };
 
 /**@class InterpolationSolidVelocityConstraint
@@ -131,6 +61,7 @@ class InterpolationSolidVelocityConstraint : public MotionConstraint<BodyPartByP
                                              public DataDelegateContact
 {
   private:
+    Real *total_weight_;
     StdVec<int *> contact_is_coupled_;
     StdVec<Real *> contact_Vol_;
     StdVec<Vecd *> contact_vel_;
@@ -148,8 +79,9 @@ class InterpolationShellForceConstraint : public BaseForcePrior<BodyPartByPartic
                                           public DataDelegateContact
 {
   private:
+    Real *Vol_;
+    StdVec<Real *> contact_total_weight_;
     StdVec<int *> contact_is_coupled_;
-    StdVec<Real *> contact_Vol_;
     StdVec<Vecd *> contact_force_;
 
   public:
