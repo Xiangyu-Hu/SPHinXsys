@@ -45,9 +45,9 @@ InteractKernel::interact(size_t index_i, Real dt)
         Real dW_ijV_j = this->dW_ij(index_i, index_j) * Vol_[index_j];
         Real y_ij = pos_[index_i](1, 0) - pos_[index_j](1, 0);
         diffusion_stress = stress_tensor_3D_[index_i] - stress_tensor_3D_[index_j];
-        diffusion_stress(0, 0) -= (1 - mathFunc::sin(phi_)) * density * gravity * y_ij;
+        diffusion_stress(0, 0) -= (1 - math::sin(phi_)) * density * gravity * y_ij;
         diffusion_stress(1, 1) -= density * gravity * y_ij;
-        diffusion_stress(2, 2) -= (1 - mathFunc::sin(phi_)) * density * gravity * y_ij;
+        diffusion_stress(2, 2) -= (1 - math::sin(phi_)) * density * gravity * y_ij;
         diffusion_stress_rate += 2 * zeta_ * smoothing_length_ * sound_speed_ *
                                 diffusion_stress * r_ij * dW_ijV_j / (r_ij * r_ij + 0.01 * smoothing_length_);
     }

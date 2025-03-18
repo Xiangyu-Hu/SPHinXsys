@@ -68,7 +68,7 @@ class SoilInitialConditionCK : public continuum_dynamics::ContinuumInitialCondit
         {
             /** initial stress */
             Real y = pos_[index_i][1];
-            Real gama = 1 - mathFunc::sin(friction_angle);
+            Real gama = 1 - math::sin(friction_angle);
             Real stress_yy = -rho0_s * gravity_g * y;
             stress_tensor_3D_[index_i](1, 1) = stress_yy;
             stress_tensor_3D_[index_i](0, 0) = stress_yy * gama;
