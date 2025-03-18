@@ -76,7 +76,7 @@ RelaxationStepImplicit<RelaxationResidueType>::
 template <class RelaxationResidueType>
 void RelaxationStepImplicit<RelaxationResidueType>::exec(Real dt)
 {
-    Real scaling = SMIN(sqrt(relaxation_scaling_.exec()), Real(0.01));
+    Real scaling = SMIN(Real(sqrt(relaxation_scaling_.exec())), Real(0.01));
     relaxation_residue_.exec(scaling);
     real_body_.updateCellLinkedList();
     for (size_t k = 0; k != body_relations_.size(); ++k)
