@@ -12,7 +12,7 @@ using namespace SPH;
 //----------------------------------------------------------------------
 Real DL = 5.366;              /**< Tank length. */
 Real DH = 5.366;              /**< Tank height. */
-Real resolution_ref = 0.025;  /**< Initial reference particle spacing. */
+Real resolution_ref = 0.0025; /**< Initial reference particle spacing. */
 Real BW = resolution_ref * 4; /**< Extending width for wall boundary. */
 Real LL = 2.0 * BW;           /**< Inflow region length. */
 Real LH = 0.125;              /**< Inflows region height. */

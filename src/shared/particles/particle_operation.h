@@ -100,14 +100,17 @@ class DespawnRealParticle
 
         UnsignedInt operator()(UnsignedInt index_i)
         {
-            UnsignedInt last_real_particle_index = *total_real_particles_ - 1;
+            AtomicRef<UnsignedInt> total_real_particles_ref(*total_real_particles_);
+
+            UnsignedInt last_real_particle_index = total_real_particles_ref.fetch_sub(1) - 1;
+
             if (index_i < last_real_particle_index)
             {
                 const UnsignedInt temp_original_id_index_i = original_id_[index_i];
+
                 copy_particle_state_(copyable_state_data_arrays_, index_i, last_real_particle_index);
-                original_id_[last_real_particle_index] = temp_original_id_index_i;
+                original_id_[index_i] = temp_original_id_index_i;
             }
-            *total_real_particles_ -= 1;
             return last_real_particle_index;
         };
 
