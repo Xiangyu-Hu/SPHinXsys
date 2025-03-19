@@ -255,7 +255,10 @@ class DisposerOutflowDeletionCK : public BaseLocalDynamics<AlignedBoxPartByCell>
             Vecd *pos_;
             CheckLowerBound(AlignedBox *aligned_box, Vecd *pos)
                 : aligned_box_(aligned_box), pos_(pos) {}
-            bool operator()(size_t index_i) { return aligned_box_->checkLowerBound(pos_[index_i]); }
+            bool operator()(size_t index_i) const
+            {
+                return aligned_box_->checkLowerBound(pos_[index_i]);
+            }
         };
 
       public:
@@ -374,7 +377,7 @@ class PressureBidirectionalConditionCK
                   PressureConditionCK<AlignedBoxPartByCell, KernelCorrectionType, PressureConditionFunction>>
         pressure_condition_;
 
-    StateDynamics<ExecutionPolicy, BufferEmitterInflowInjectionCK<AlignedBoxPartByCell, PressureConditionFunction>> emitter_injection_;
+    StateDynamics<execution::SequencedDevicePolicy, BufferEmitterInflowInjectionCK<AlignedBoxPartByCell, PressureConditionFunction>> emitter_injection_;
 
     StateDynamics<ExecutionPolicy, DisposerOutflowDeletionCK> disposer_outflow_deletion_;
 
@@ -455,7 +458,7 @@ class VelocityBidirectionalConditionCK
         pressure_condition_;
 
     // Using NonPrescribedPressure as we do not change pressure
-    StateDynamics<ExecutionPolicy, BufferEmitterInflowInjectionCK<AlignedBoxPartByCell, NonPrescribedPressure>> emitter_injection_;
+    StateDynamics<execution::SequencedDevicePolicy, BufferEmitterInflowInjectionCK<AlignedBoxPartByCell, NonPrescribedPressure>> emitter_injection_;
 
     StateDynamics<ExecutionPolicy, DisposerOutflowDeletionCK> disposer_outflow_deletion_;
 

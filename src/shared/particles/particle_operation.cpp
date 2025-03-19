@@ -14,7 +14,6 @@ DeleteRealParticle::DeleteRealParticle(BaseParticles *particles)
     : evolving_variables_(particles->EvolvingVariables()),
       copyable_states_(),
       dv_original_id_(particles->getVariableByName<UnsignedInt>("OriginalID")),
-      dv_sorted_id_(particles->getVariableByName<UnsignedInt>("SortedID")),
       sv_total_real_particles_(particles->svTotalRealParticles()),
       real_particles_bound_(particles->ParticlesBound()) {}
 } // namespace SPH
