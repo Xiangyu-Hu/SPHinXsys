@@ -1,6 +1,6 @@
 /**
- * @file 	3d_cubic_drop.cpp
- * @brief 	A cubic droplet deforms to sphere under surface tension.
+ * @file 	2d_square_droplet.cpp
+ * @brief 	A square droplet deforms to circle under surface tension.
  * @details A momentum-conservative formulation for surface tension is used here
  *          to reach a long-term stable simulation.
  * @author Shuaihao Zhang and Xiangyu Hu
@@ -13,11 +13,9 @@ using namespace SPH; // Namespace cite here.
 //----------------------------------------------------------------------
 Real DL = 2.0;                         /**< Domain length. */
 Real DH = 2.0;                         /**< Domain height. */
-Real DW = 2.0;                         /**< Domain width. */
 Real LL = 1.0;                         /**< Droplet length. */
 Real LH = 1.0;                         /**< Droplet height. */
-Real LW = 1.0;                         /**< Droplet width. */
-Real particle_spacing_ref = DL / 30.0; /**< Initial reference particle spacing. */
+Real particle_spacing_ref = DL / 50.0; /**< Initial reference particle spacing. */
 Real BW = particle_spacing_ref * 4;    /**< Extending width for BCs. */
 //----------------------------------------------------------------------
 //	Material parameters.
@@ -27,8 +25,21 @@ Real rho0_a = 0.001;      /**< Reference density of air. */
 Real U_ref = 1.0;         /**< Characteristic velocity. */
 Real c_f = 10.0 * U_ref;  /**< Reference sound speed. */
 Real mu_f = 5.0e-2;       /**< Water viscosity. */
-Real mu_a =5.0e-4;        /**< Air viscosity. */
+Real mu_a = 5.0e-4;       /**< Air viscosity. */
 Real surface_tension_coeff = 1.0; /**< Surface tension coefficient. */
+//----------------------------------------------------------------------
+//	Geometric shapes used in this case.
+//----------------------------------------------------------------------
+Vec2d outer_wall_halfsize = Vec2d(0.5 * DL + BW, 0.5 * DH + BW);
+Vec2d inner_wall_halfsize = Vec2d(0.5 * DL, 0.5 * DH);
+Vec2d wall_translation = Vec2d(0.0, 0.0);
+Vecd air_halfsize = inner_wall_halfsize;
+Vecd air_translation = Vecd(0, 0);
+
+Vecd droplet_center(DL / 2, DH / 2);
+Real droplet_radius = LL / 2;
+Vecd droplet_halfsize = Vec2d(droplet_radius, droplet_radius);
+Vecd droplet_translation = Vecd(0, 0);
 //----------------------------------------------------------------------
 // Water body shape definition.
 //----------------------------------------------------------------------
@@ -37,9 +48,7 @@ class WaterBlock : public ComplexShape
   public:
     explicit WaterBlock(const std::string &shape_name) : ComplexShape(shape_name)
     {
-        Vecd water_halfsize(0.5 * LL, 0.5 * LH, 0.5 * LW);
-        Transform water_translation(Vecd(0, 0, 0));
-        add<TransformShape<GeometricShapeBox>>(Transform(water_translation), water_halfsize);
+        add<TransformShape<GeometricShapeBox>>(Transform(droplet_translation), droplet_halfsize);
     }
 };
 //----------------------------------------------------------------------
@@ -50,12 +59,8 @@ class AirBlock : public ComplexShape
   public:
     explicit AirBlock(const std::string &shape_name) : ComplexShape(shape_name)
     {
-        Vecd water_halfsize(0.5 * LL, 0.5 * LH, 0.5 * LW);
-        Transform water_translation(Vecd(0, 0, 0));
-        Vecd air_halfsize(0.5 * DL, 0.5 * DH, 0.5 * DW);
-        Transform air_translation(Vecd(0, 0, 0));
         add<TransformShape<GeometricShapeBox>>(Transform(air_translation), air_halfsize);
-        subtract<TransformShape<GeometricShapeBox>>(Transform(water_translation), water_halfsize);
+        subtract<TransformShape<GeometricShapeBox>>(Transform(droplet_translation), droplet_halfsize);
     }
 };
 //----------------------------------------------------------------------
@@ -67,11 +72,8 @@ class WallBoundary : public ComplexShape
   public:
     explicit WallBoundary(const std::string &shape_name) : ComplexShape(shape_name)
     {
-        Vecd halfsize_outer(0.5 * DL + BW, 0.5 * DH + BW, 0.5 * DW + BW);
-        Vecd halfsize_inner(0.5 * DL, 0.5 * DH, 0.5 * DW);
-        Transform translation_wall(Vecd(0, 0, 0));
-        add<TransformShape<GeometricShapeBox>>(Transform(translation_wall), halfsize_outer);
-        subtract<TransformShape<GeometricShapeBox>>(Transform(translation_wall), halfsize_inner);
+        add<TransformShape<GeometricShapeBox>>(Transform(wall_translation), outer_wall_halfsize);
+        subtract<TransformShape<GeometricShapeBox>>(Transform(wall_translation), inner_wall_halfsize);
     }
 };
 //----------------------------------------------------------------------
@@ -82,7 +84,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Build up an SPHSystem.
     //----------------------------------------------------------------------
-    BoundingBox system_domain_bounds(Vecd(-DL/2-BW, -DL/2-BW, -DL/2-BW), Vecd(DL/2 + BW, DH/2 + BW, DW/2 + BW));
+    BoundingBox system_domain_bounds(Vec2d(-BW - DL / 2, -BW - DH / 2), Vec2d(BW + DL / 2, BW + DH / 2));
     SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
     sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
     //----------------------------------------------------------------------
@@ -172,9 +174,9 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     size_t number_of_iterations = 0;
-    int screen_output_interval = 100;
+    int screen_output_interval = 500;
     Real end_time = 2.0;
-    Real output_interval = end_time / 40; /**< Time stamps for output of body states. */
+    Real output_interval = end_time / 100; /**< Time stamps for output of body states. */
     Real dt = 0.0;                        /**< Default acoustic time step sizes. */
     /** statistics for computing CPU time. */
     TickCount t1 = TickCount::now();
@@ -277,15 +279,15 @@ int main(int ac, char *av[])
               << interval_computing_pressure_relaxation.seconds() << "\n";
     std::cout << std::fixed << std::setprecision(9) << "interval_updating_configuration = "
               << interval_updating_configuration.seconds() << "\n";
-    
+
     if (sph_system.GenerateRegressionData())
     {
-        write_water_kinetic_energy.generateDataBase(5.0e-3);
+        write_water_kinetic_energy.generateDataBase(1.0e-3);
     }
     else
     {
         write_water_kinetic_energy.testResult();
     }
-
+    
     return 0;
 }
