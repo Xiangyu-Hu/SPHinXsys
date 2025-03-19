@@ -5,6 +5,10 @@
 
 namespace SPH
 {
+#define VAR_AT(target, package_index, grid_index)  \
+  target[package_index][grid_index[0]][grid_index[1]]
+#define GET_NEIGHBOR_VAL(target, neighbor_index) \
+  VAR_AT(target, neighbor_index.first, neighbor_index.second)
 //=============================================================================================//
 template <typename FunctionOnData>
 void BaseMeshLocalDynamics::for_each_cell_data(const FunctionOnData &function)
@@ -14,6 +18,17 @@ void BaseMeshLocalDynamics::for_each_cell_data(const FunctionOnData &function)
         {
             function(i, j);
         }
+}
+//=============================================================================================//
+inline std::pair<size_t, Arrayi> BaseMeshLocalDynamics::
+    NeighbourIndexShift(const Arrayi shift_index, const CellNeighborhood &neighbour)
+{
+    std::pair<size_t, Arrayi> result;
+    Arrayi neighbour_index = (shift_index + pkg_size * Arrayi::Ones()) / pkg_size;
+    result.first = neighbour[neighbour_index[0]][neighbour_index[1]];
+    result.second = (shift_index + pkg_size * Arrayi::Ones()) - neighbour_index * pkg_size;
+
+    return result;
 }
 //=============================================================================================//
 template <typename DataType>
@@ -55,8 +70,8 @@ DataType BaseMeshLocalDynamics::CornerAverage(MeshVariableData<DataType> *mesh_v
 template <class DataType>
 DataType ProbeMesh::probeMesh(MeshVariableData<DataType> *mesh_variable_data, const Vecd &position)
 {
-    Arrayi cell_index = probe_mesh_->CellIndexFromPosition(position);
-    size_t package_index = probe_mesh_->PackageIndexFromCellIndex(cell_package_index_, cell_index);
+    Arrayi cell_index = index_handler_->CellIndexFromPosition(position);
+    size_t package_index = index_handler_->PackageIndexFromCellIndex(cell_package_index_, cell_index);
     return package_index > 1 ? probeDataPackage(mesh_variable_data, package_index, cell_index, position)
                              : mesh_variable_data[package_index][0][0];
 }
@@ -67,23 +82,294 @@ DataType ProbeMesh::probeDataPackage(MeshVariableData<DataType> *mesh_variable_d
                                      const Arrayi &cell_index,
                                      const Vecd &position)
 {
-    Arrayi data_index = probe_mesh_->DataIndexFromPosition(cell_index, position);
-    Vecd data_position = probe_mesh_->DataPositionFromIndex(cell_index, data_index);
-    Vecd alpha = (position - data_position) / probe_mesh_->DataSpacing();
+    Arrayi data_index = index_handler_->DataIndexFromPosition(cell_index, position);
+    Vecd data_position = index_handler_->DataPositionFromIndex(cell_index, data_index);
+    Vecd alpha = (position - data_position) / index_handler_->data_spacing_;
     Vecd beta = Vecd::Ones() - alpha;
 
     auto &neighborhood = cell_neighborhood_[package_index];
-    std::pair<size_t, Arrayi> neighbour_index_1 = BaseMeshLocalDynamics::NeighbourIndexShift(Arrayi(data_index[0], data_index[1]), neighborhood);
-    std::pair<size_t, Arrayi> neighbour_index_2 = BaseMeshLocalDynamics::NeighbourIndexShift(Arrayi(data_index[0] + 1, data_index[1]), neighborhood);
-    std::pair<size_t, Arrayi> neighbour_index_3 = BaseMeshLocalDynamics::NeighbourIndexShift(Arrayi(data_index[0], data_index[1] + 1), neighborhood);
-    std::pair<size_t, Arrayi> neighbour_index_4 = BaseMeshLocalDynamics::NeighbourIndexShift(Arrayi(data_index[0] + 1, data_index[1] + 1), neighborhood);
+    NeighbourIndex neighbour_index_1 = BaseMeshLocalDynamics::NeighbourIndexShift(
+        data_index + Arrayi(0, 0), neighborhood);
+    NeighbourIndex neighbour_index_2 = BaseMeshLocalDynamics::NeighbourIndexShift(
+        data_index + Arrayi(1, 0), neighborhood);
+    NeighbourIndex neighbour_index_3 = BaseMeshLocalDynamics::NeighbourIndexShift(
+        data_index + Arrayi(0, 1), neighborhood);
+    NeighbourIndex neighbour_index_4 = BaseMeshLocalDynamics::NeighbourIndexShift(
+        data_index + Arrayi(1, 1), neighborhood);
 
-    DataType bilinear = mesh_variable_data[neighbour_index_1.first][neighbour_index_1.second[0]][neighbour_index_1.second[1]] * beta[0] * beta[1] +
-                        mesh_variable_data[neighbour_index_2.first][neighbour_index_2.second[0]][neighbour_index_2.second[1]] * alpha[0] * beta[1] +
-                        mesh_variable_data[neighbour_index_3.first][neighbour_index_3.second[0]][neighbour_index_3.second[1]] * beta[0] * alpha[1] +
-                        mesh_variable_data[neighbour_index_4.first][neighbour_index_4.second[0]][neighbour_index_4.second[1]] * alpha[0] * alpha[1];
+    DataType bilinear = GET_NEIGHBOR_VAL(mesh_variable_data, neighbour_index_1) * beta[0] * beta[1] +
+                        GET_NEIGHBOR_VAL(mesh_variable_data, neighbour_index_2) * alpha[0] * beta[1] +
+                        GET_NEIGHBOR_VAL(mesh_variable_data, neighbour_index_3) * beta[0] * alpha[1] +
+                        GET_NEIGHBOR_VAL(mesh_variable_data, neighbour_index_4) * alpha[0] * alpha[1];
 
     return bilinear;
+}
+//=============================================================================================//
+inline void UpdateLevelSetGradient::UpdateKernel::update(const size_t &package_index)
+{
+    auto &neighborhood = cell_neighborhood_[package_index];
+    auto &pkg_data = phi_gradient_[package_index];
+
+    BaseMeshLocalDynamics::for_each_cell_data(
+        [&](int i, int j)
+        {
+            NeighbourIndex x1 = BaseMeshLocalDynamics::NeighbourIndexShift(
+                Arrayi(i + 1, j), neighborhood);
+            NeighbourIndex x2 = BaseMeshLocalDynamics::NeighbourIndexShift(
+                Arrayi(i - 1, j), neighborhood);
+            NeighbourIndex y1 = BaseMeshLocalDynamics::NeighbourIndexShift(
+                Arrayi(i, j + 1), neighborhood);
+            NeighbourIndex y2 = BaseMeshLocalDynamics::NeighbourIndexShift(
+                Arrayi(i, j - 1), neighborhood);
+            Real dphidx = GET_NEIGHBOR_VAL(phi_, x1) - GET_NEIGHBOR_VAL(phi_, x2);
+            Real dphidy = GET_NEIGHBOR_VAL(phi_, y1) - GET_NEIGHBOR_VAL(phi_, y2);
+            pkg_data[i][j] = 0.5 * Vecd(dphidx, dphidy) / data_spacing_;
+        });
+}
+//=============================================================================================//
+template <class KernelType>
+void UpdateKernelIntegrals<KernelType>::UpdateKernel::update(const size_t &package_index)
+{
+    auto &pkg_data_kernel_weight = kernel_weight_[package_index];
+    auto &pkg_data_kernel_gradient = kernel_gradient_[package_index];
+    Arrayi cell_index = meta_data_cell_[package_index].first;
+
+    mesh_for_each2d<0, pkg_size>(
+        [&](int i, int j){
+            Vec2d position = index_handler_->DataPositionFromIndex(cell_index, Arrayi(i, j));
+            std::pair<Real, Vecd> ret = computeKernelIntegral(position, package_index, Arrayi(i, j));
+            pkg_data_kernel_weight[i][j] = ret.first;
+            pkg_data_kernel_gradient[i][j] = ret.second;
+        });
+}
+//=============================================================================================//
+template <class KernelType>
+std::pair<Real, Vecd> UpdateKernelIntegrals<KernelType>::UpdateKernel::
+computeKernelIntegral(const Vecd &position, const size_t &package_index, const Arrayi &grid_index)
+{
+    Real phi = probe_signed_distance_.update(position);
+    Real cutoff_radius = kernel_->CutOffRadius(global_h_ratio_);
+    Real threshold = cutoff_radius + data_spacing_;
+    Real integral_kernel_weight(0);
+    Vecd integral_kernel_gradient = Vecd::Zero();
+    if (fabs(phi) < threshold)
+    {
+        mesh_for_each2d<-3, 4>(
+        [&](int i, int j)
+        {
+            NeighbourIndex neighbor_meta = BaseMeshLocalDynamics::NeighbourIndexShift(
+                Arrayi(i, j), cell_neighborhood_[package_index]);
+            Real phi_neighbor = GET_NEIGHBOR_VAL(phi_, neighbor_meta);
+            if (phi_neighbor > -data_spacing_)
+            {
+                Vecd phi_gradient = GET_NEIGHBOR_VAL(phi_gradient_, neighbor_meta);
+                Vecd displacement = (grid_index - Arrayi(i, j)).cast<Real>().matrix() * data_spacing_;
+                Real distance = displacement.norm();
+                if (distance < cutoff_radius_)
+                {
+                    integral_kernel_weight += kernel_->W(global_h_ratio_, distance, displacement) *
+                                              CutCellVolumeFraction(phi_neighbor, phi_gradient, data_spacing_);
+                    integral_kernel_gradient += kernel_->dW(global_h_ratio_, distance, displacement) *
+                                                CutCellVolumeFraction(phi_neighbor, phi_gradient, data_spacing_) *
+                                                displacement / (distance + TinyReal);
+                }
+            }
+        });
+    }
+
+    std::pair<Real, Vecd> ret;
+    ret.first = phi > threshold ? 1.0 : integral_kernel_weight * data_spacing_ * data_spacing_;
+    ret.second = integral_kernel_gradient * data_spacing_ * data_spacing_;
+    return ret;
+}
+//=============================================================================================//
+inline void ReinitializeLevelSet::UpdateKernel::update(const size_t &package_index)
+{
+    auto &phi_addrs = phi_[package_index];
+    auto &near_interface_id_addrs = near_interface_id_[package_index];
+    auto &neighborhood = cell_neighborhood_[package_index];
+
+    BaseMeshLocalDynamics::for_each_cell_data(
+        [&](int i, int j)
+        {
+            // only reinitialize non cut cells
+            if (near_interface_id_addrs[i][j] != 0)
+            {
+                Real phi_0 = phi_addrs[i][j];
+                Real sign = phi_0 / sqrt(phi_0 * phi_0 + data_spacing_ * data_spacing_);
+                NeighbourIndex x1 = BaseMeshLocalDynamics::NeighbourIndexShift(
+                    Arrayi(i + 1, j), neighborhood);
+                NeighbourIndex x2 = BaseMeshLocalDynamics::NeighbourIndexShift(
+                    Arrayi(i - 1, j), neighborhood);
+                NeighbourIndex y1 = BaseMeshLocalDynamics::NeighbourIndexShift(
+                    Arrayi(i, j + 1), neighborhood);
+                NeighbourIndex y2 = BaseMeshLocalDynamics::NeighbourIndexShift(
+                    Arrayi(i, j - 1), neighborhood);
+                Real dv_x = upwindDifference(sign, GET_NEIGHBOR_VAL(phi_, x1) - phi_0,
+                                             phi_0 - GET_NEIGHBOR_VAL(phi_, x2));
+                Real dv_y = upwindDifference(sign, GET_NEIGHBOR_VAL(phi_, y1) - phi_0,
+                                             phi_0 - GET_NEIGHBOR_VAL(phi_, y2));
+                phi_addrs[i][j] -= 0.5 * sign * (Vec2d(dv_x, dv_y).norm() - data_spacing_);
+            }
+        });
+}
+//=============================================================================================//
+inline void MarkNearInterface::UpdateKernel::update(const size_t &package_index,
+                                                    Real small_shift_factor)
+{
+    Real small_shift = data_spacing_ * small_shift_factor; 
+    auto &phi_addrs = phi_[package_index];
+    auto &near_interface_id_addrs = near_interface_id_[package_index];
+
+    // corner averages, note that the first row and first column are not used
+    PackageDataMatrix<Real, 5> corner_averages;
+    mesh_for_each2d<0, 5>(
+        [&](int i, int j)
+        {
+            corner_averages[i][j] = BaseMeshLocalDynamics::CornerAverage(phi_, Arrayi(i, j, k),
+                                                                         Arrayi(-1, -1, -1),
+                                                                         cell_neighborhood_[package_index],
+                                                                         (Real)0);
+        });
+
+    BaseMeshLocalDynamics::for_each_cell_data(
+        [&](int i, int j)
+        {
+            // first assume far cells
+            Real phi_0 = phi_addrs[i][j];
+            int near_interface_id = phi_0 > 0.0 ? 2 : -2;
+            if (fabs(phi_0) < small_shift)
+            {
+                near_interface_id = 0;
+                Real phi_average_0 = corner_averages[i][j];
+                // find inner and outer cut cells
+                mesh_for_each2d<0, 2>(
+                    [&](int l, int m)
+                    {
+                        Real phi_average = corner_averages[i + l][j + m];
+                        if ((phi_average_0 - small_shift) * (phi_average - small_shift) < 0.0)
+                            near_interface_id = 1;
+                        if ((phi_average_0 + small_shift) * (phi_average + small_shift) < 0.0)
+                            near_interface_id = -1;
+                    });
+                // find zero cut cells
+                mesh_for_each3d<0, 2>(
+                    [&](int l, int m)
+                    {
+                        Real phi_average = corner_averages[i + l][j + m];
+                        if (phi_average_0 * phi_average < 0.0)
+                            near_interface_id = 0;
+                    });
+            }
+            // assign this is to package
+            near_interface_id_addrs[i][j] = near_interface_id;
+        });
+}
+//=============================================================================================//
+inline void RedistanceInterface::UpdateKernel::update(const size_t &package_index)
+{
+    BaseMeshLocalDynamics::for_each_cell_data(
+        [&](int i, int j)
+        {
+            int near_interface_id = near_interface_id_[package_index][i][j];
+            if (near_interface_id == 0)
+            {
+                bool positive_band = false;
+                bool negative_band = false;
+                mesh_for_each2d<-1, 2>(
+                    [&](int r, int s)
+                    {
+                        NeighbourIndex neighbour_index = BaseMeshLocalDynamics::NeighbourIndexShift(
+                            Arrayi(i + r, j + s), cell_neighborhood_[package_index]);
+                        int neighbor_near_interface_id =
+                            GET_NEIGHBOR_VAL(near_interface_id_, neighbour_index);
+                        if (neighbor_near_interface_id >= 1)
+                            positive_band = true;
+                        if (neighbor_near_interface_id <= -1)
+                            negative_band = true;
+                    });
+                if (positive_band == false)
+                {
+                    Real min_distance_p = 5.0 * data_spacing_;
+                    mesh_for_each2d<-4, 5>(
+                        [&](int x, int y)
+                        {
+                            NeighbourIndex neighbour_index = BaseMeshLocalDynamics::NeighbourIndexShift(
+                                Arrayi(i + x, j + y, k + z), cell_neighborhood_[package_index]);
+                            auto &neighbor_phi = phi_[neighbour_index.first];
+                            auto &neighbor_phi_gradient = phi_gradient_[neighbour_index.first];
+                            auto &neighbor_near_interface_id = near_interface_id_[neighbour_index.first];
+                            if (neighbor_near_interface_id[neighbour_index.second[0]][neighbour_index.second[1]] >= 1)
+                            {
+                                Real phi_p_ = neighbor_phi[neighbour_index.second[0]][neighbour_index.second[1]];
+                                Vecd norm_to_face = neighbor_phi_gradient[neighbour_index.second[0]][neighbour_index.second[1]];
+                                norm_to_face /= norm_to_face.norm() + TinyReal;
+                                min_distance_p = SMIN(min_distance_p, (Vecd((Real)x, (Real)y) * data_spacing_ + phi_p_ * norm_to_face).norm());
+                            }
+                        });
+                    phi_[package_index][i][j] = -min_distance_p;
+                    // this immediate switch of near interface id
+                    // does not intervening with the identification of unresolved interface
+                    // based on the assumption that positive false_and negative bands are not close to each other
+                    near_interface_id_[package_index][i][j] = -1;
+                }
+                if (negative_band == false)
+                {
+                    Real min_distance_n = 5.0 * data_spacing_;
+                    mesh_for_each2d<-4, 5>(
+                        [&](int x, int y)
+                        {
+                            NeighbourIndex neighbour_index = BaseMeshLocalDynamics::NeighbourIndexShift(
+                                Arrayi(i + x, j + y), cell_neighborhood_[package_index]);
+                            auto &neighbor_phi = phi_[neighbour_index.first];
+                            auto &neighbor_phi_gradient = phi_gradient_[neighbour_index.first];
+                            auto &neighbor_near_interface_id = near_interface_id_[neighbour_index.first];
+                            if (neighbor_near_interface_id[neighbour_index.second[0]][neighbour_index.second[1]] <= -1)
+                            {
+                                Real phi_n_ = neighbor_phi[neighbour_index.second[0]][neighbour_index.second[1]];
+                                Vecd norm_to_face = neighbor_phi_gradient[neighbour_index.second[0]][neighbour_index.second[1]];
+                                norm_to_face /= norm_to_face.norm() + TinyReal;
+                                min_distance_n = SMIN(min_distance_n, (Vecd((Real)x, (Real)y) * data_spacing_ - phi_n_ * norm_to_face).norm());
+                            }
+                        });
+                    phi_[package_index][i][j] = min_distance_n;
+                    // this immediate switch of near interface id
+                    // does not intervening with the identification of unresolved interface
+                    // based on the assumption that positive false_and negative bands are not close to each other
+                    near_interface_id_[package_index][i][j] = 1;
+                }
+            }
+        });
+}
+//=============================================================================================//
+inline void DiffuseLevelSetSign::UpdateKernel::update(const size_t &package_index)
+{
+    BaseMeshLocalDynamics::for_each_cell_data(
+        [&](int i, int j)
+        {
+            // near interface cells are not considered
+            if (abs(near_interface_id_[package_index][i][j]) > 1)
+            {
+                mesh_find_if2d<-1, 2>(
+                    [&](int l, int m) -> bool
+                    {
+                        NeighbourIndex neighbour_index =
+                            BaseMeshLocalDynamics::NeighbourIndexShift(
+                                Arrayi(i + l, j + m), cell_neighborhood_[package_index]);
+                        int near_interface_id =
+                            GET_NEIGHBOR_VAL(near_interface_id_, neighbour_index);
+                        bool is_found = abs(near_interface_id) == 1;
+                        if (is_found)
+                        {
+                            Real phi_0 = phi_[package_index][i][j];
+                            near_interface_id_[package_index][i][j] = near_interface_id;
+                            phi_[package_index][i][j] =
+                                near_interface_id == 1 ? fabs(phi_0) : -fabs(phi_0);
+                        }
+                        return is_found;
+                    });
+            }
+        });
 }
 //=============================================================================================//
 } // namespace SPH
