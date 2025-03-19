@@ -38,10 +38,8 @@ class BaseQuantityRecording : public BaseIO
 {
   public:
     BaseQuantityRecording(SPHSystem &sph_system,
-                          const std::string &dynamics_identifier_name,
-                          const std::string &quantity_name);
-
-    void setQuantityName(const std::string &quantity_name)
+                          const std::string &dynamics_identifier_name);
+    void setFullPath(const std::string &quantity_name)
     {
         quantity_name_ = quantity_name;
         filefullpath_output_ = io_environment_.output_folder_ + "/" +
@@ -51,8 +49,8 @@ class BaseQuantityRecording : public BaseIO
   protected:
     PltEngine plt_engine_;
     std::string dynamics_identifier_name_;
-    std::string quantity_name_;
     std::string filefullpath_output_;
+    std::string quantity_name_;
 };
 
 template <typename...>
@@ -74,13 +72,14 @@ class ObservedQuantityRecording<DataType> : public BaseQuantityRecording
   public:
     ObservedQuantityRecording(const std::string &quantity_name, BaseContactRelation &contact_relation)
         : BaseQuantityRecording(contact_relation.getSPHBody().getSPHSystem(),
-                                contact_relation.getSPHBody().getName(), quantity_name),
+                                contact_relation.getSPHBody().getName()),
           observer_(contact_relation.getSPHBody()),
           base_particles_(observer_.getBaseParticles()),
           observation_method_(contact_relation, quantity_name),
           dv_interpolated_quantities_(observation_method_.dvInterpolatedQuantities()),
           number_of_observe_(base_particles_.TotalRealParticles())
     {
+        setFullPath(quantity_name);
         std::ofstream out_file(filefullpath_output_.c_str(), std::ios::app);
         out_file << "run_time" << "   ";
         DataType *interpolated_quantities = getObservedQuantity();
@@ -140,12 +139,12 @@ class ReducedQuantityRecording<LocalReduceMethodType> : public BaseQuantityRecor
     template <class DynamicsIdentifier, typename... Args>
     ReducedQuantityRecording(DynamicsIdentifier &identifier, Args &&...args)
         : BaseQuantityRecording(identifier.getSPHBody().getSPHSystem(),
-                                identifier.getName(), ""),
+                                identifier.getName()),
           reduce_method_(identifier, std::forward<Args>(args)...),
           reduced_quantity_(ZeroData<VariableType>::value)
     {
         quantity_name_ = reduce_method_.QuantityName();
-        setQuantityName(quantity_name_);
+        setFullPath(quantity_name_);
         std::ofstream out_file(filefullpath_output_.c_str(), std::ios::app);
         out_file << "\"run_time\"" << "   ";
         plt_engine_.writeAQuantityHeader(out_file, reduced_quantity_, quantity_name_);
@@ -187,9 +186,10 @@ class SingularVariableRecording : public BaseQuantityRecording
 
   public:
     SingularVariableRecording(SPHSystem &sph_system, SingularVariable<DataType> *variable)
-        : BaseQuantityRecording(sph_system, "SingularVariable", variable->Name()),
+        : BaseQuantityRecording(sph_system, "SingularVariable"),
           variable_(variable)
     {
+        setFullPath(variable->Name());
         std::ofstream out_file(filefullpath_output_.c_str(), std::ios::app);
         out_file << "\"run_time\"" << "   ";
         plt_engine_.writeAQuantityHeader(out_file, variable_->getValue(), quantity_name_);
