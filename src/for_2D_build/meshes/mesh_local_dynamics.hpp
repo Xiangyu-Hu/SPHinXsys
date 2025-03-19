@@ -53,7 +53,7 @@ DataType BaseMeshLocalDynamics::DataValueFromGlobalIndex(MeshVariableData<DataTy
 template <typename DataType>
 DataType BaseMeshLocalDynamics::CornerAverage(MeshVariableData<DataType> *mesh_variable_data,
                                               Arrayi addrs_index, Arrayi corner_direction,
-                                              CellNeighborhood &neighborhood)
+                                              CellNeighborhood &neighborhood, DataType zero)
 {
     DataType average = ZeroData<DataType>::value;
     for (int i = 0; i != 2; ++i)
@@ -226,8 +226,7 @@ inline void MarkNearInterface::UpdateKernel::update(const size_t &package_index,
     mesh_for_each2d<0, 5>(
         [&](int i, int j)
         {
-            corner_averages[i][j] = BaseMeshLocalDynamics::CornerAverage(phi_, Arrayi(i, j, k),
-                                                                         Arrayi(-1, -1, -1),
+            corner_averages[i][j] = BaseMeshLocalDynamics::CornerAverage(phi_, Arrayi(i, j), Arrayi(-1, -1),
                                                                          cell_neighborhood_[package_index],
                                                                          (Real)0);
         });
@@ -253,7 +252,7 @@ inline void MarkNearInterface::UpdateKernel::update(const size_t &package_index,
                             near_interface_id = -1;
                     });
                 // find zero cut cells
-                mesh_for_each3d<0, 2>(
+                mesh_for_each2d<0, 2>(
                     [&](int l, int m)
                     {
                         Real phi_average = corner_averages[i + l][j + m];
@@ -295,7 +294,7 @@ inline void RedistanceInterface::UpdateKernel::update(const size_t &package_inde
                         [&](int x, int y)
                         {
                             NeighbourIndex neighbour_index = BaseMeshLocalDynamics::NeighbourIndexShift(
-                                Arrayi(i + x, j + y, k + z), cell_neighborhood_[package_index]);
+                                Arrayi(i + x, j + y), cell_neighborhood_[package_index]);
                             auto &neighbor_phi = phi_[neighbour_index.first];
                             auto &neighbor_phi_gradient = phi_gradient_[neighbour_index.first];
                             auto &neighbor_near_interface_id = near_interface_id_[neighbour_index.first];
@@ -374,4 +373,4 @@ inline void DiffuseLevelSetSign::UpdateKernel::update(const size_t &package_inde
 //=============================================================================================//
 } // namespace SPH
 //=============================================================================================//
-#endif //MESH_LOCAL_DYNAMICS_3D_HPP
+#endif //MESH_LOCAL_DYNAMICS_2D_HPP

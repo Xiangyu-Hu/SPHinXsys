@@ -70,7 +70,7 @@ void InitializeBasicDataForAPackage::UpdateKernel::update(const size_t &package_
     BaseMeshLocalDynamics::for_each_cell_data(
         [&](int i, int j)
         {
-            Vec2d position = mesh_data_->DataPositionFromIndex(cell_index, Array2i(i, j));
+            Vec2d position = index_handler_->DataPositionFromIndex(cell_index, Array2i(i, j));
             phi[i][j] = shape_->findSignedDistance(position);
             near_interface_id[i][j] = phi[i][j] < 0.0 ? -2 : 2;
         });
