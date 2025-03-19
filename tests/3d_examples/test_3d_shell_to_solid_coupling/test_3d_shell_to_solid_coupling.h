@@ -18,7 +18,7 @@ inline void relax_solid(BaseInnerRelation &inner)
     //----------------------------------------------------------------------
     using namespace relax_dynamics;
     SimpleDynamics<RandomizeParticlePosition> random_particles(inner.getSPHBody());
-    RelaxationStepInner relaxation_step_inner(inner);
+    RelaxationStepLevelSetCorrectionInner relaxation_step_inner(inner);
     //----------------------------------------------------------------------
     //	Particle relaxation starts here.
     //----------------------------------------------------------------------
@@ -500,14 +500,26 @@ struct simulation_system
             shell->add_bcs(max_elongation, speed, problem_type);
     }
 
+    RealBodyVector get_all_solid_bodies()
+    {
+        RealBodyVector bodies;
+        for (auto &solid : solid_objects_)
+            bodies.emplace_back(&solid->body_);
+        return bodies;
+    }
+
+    RealBodyVector get_all_shell_bodies()
+    {
+        RealBodyVector bodies;
+        for (auto &shell : shell_objects_)
+            bodies.emplace_back(&shell->body_);
+        return bodies;
+    }
+
     void add_coupling_algs(bool use_interpolation)
     {
-        RealBodyVector solid_bodies;
-        for (auto &solid : solid_objects_)
-            solid_bodies.emplace_back(&solid->body_);
-        RealBodyVector shell_bodies;
-        for (auto &shell : shell_objects_)
-            shell_bodies.emplace_back(&shell->body_);
+        auto solid_bodies = get_all_solid_bodies();
+        auto shell_bodies = get_all_shell_bodies();
 
         for (size_t i = 0; i < solid_objects_.size(); i++)
             use_interpolation ? solid_objects_[i]->add_coupling_algorithm(shell_bodies, solid_coupling_parts_[i], std::vector<Real>(shell_bodies.size(), 2.3))
@@ -798,4 +810,23 @@ class InterfaceTotalEnergy : public LocalDynamicsReduce<ReduceSum<Real>>
         Vec3d displacement = pos_[index_i] - pos0_[index_i];
         return is_coupled_[index_i] ? force_[index_i].dot(displacement) : 0.0;
     }
+}; //-------Observer-------------------------------------------------
+struct observer_object
+{
+    ObserverBody body_;
+    std::unique_ptr<ContactRelation> contact_relation_;
+    std::unique_ptr<ObservedQuantityRecording<Vecd>> disp_recording_;
+
+    observer_object(RealBodyVector contact_bodies, const StdVec<Vecd> &positions, const std::string &name)
+        : body_(contact_bodies.back()->getSPHSystem(), name)
+    {
+        body_.defineAdaptationRatios(1.15);
+        body_.generateParticles<ObserverParticles>(positions);
+        contact_relation_ = std::make_unique<ContactRelation>(body_, std::move(contact_bodies));
+        contact_relation_->updateConfiguration();
+        InteractionDynamics<CorrectInterpolationKernelWeights>{*contact_relation_}.exec();
+        disp_recording_ = std::make_unique<ObservedQuantityRecording<Vecd>>("Displacement", *contact_relation_);
+    }
+
+    void record(size_t ite_step) { disp_recording_->writeToFile(ite_step); }
 };
