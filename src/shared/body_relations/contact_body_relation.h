@@ -60,7 +60,7 @@ class ContactRelationCrossResolution : public BaseContactRelation
                     sph_body_, target_cell_linked_list->getMesh()));
         }
     };
-    virtual ~ContactRelationCrossResolution(){};
+    virtual ~ContactRelationCrossResolution() {};
     StdVec<CellLinkedList *> getContactCellLinkedList() { return target_cell_linked_lists_; }
 
   protected:
@@ -79,7 +79,7 @@ class ContactRelation : public ContactRelationCrossResolution
 
   public:
     ContactRelation(SPHBody &sph_body, RealBodyVector contact_bodies);
-    virtual ~ContactRelation(){};
+    virtual ~ContactRelation() {};
     virtual void updateConfiguration() override;
 
   protected:
@@ -103,8 +103,8 @@ class ShellSurfaceContactRelation : public ContactRelationCrossResolution
     ShellSurfaceContactRelation(SPHBody &sph_body, RealBodyVector contact_bodies);
     ShellSurfaceContactRelation(SelfSurfaceContactRelation &solid_body_relation_self_contact,
                                 RealBodyVector contact_bodies)
-        : ShellSurfaceContactRelation(*solid_body_relation_self_contact.real_body_, contact_bodies){};
-    virtual ~ShellSurfaceContactRelation(){};
+        : ShellSurfaceContactRelation(*solid_body_relation_self_contact.real_body_, contact_bodies) {};
+    virtual ~ShellSurfaceContactRelation() {};
     virtual void updateConfiguration() override;
 
   protected:
@@ -127,7 +127,7 @@ class ContactRelationToBodyPart : public ContactRelationCrossResolution
     StdVec<NeighborBuilderContactBodyPart *> get_part_contact_neighbors_;
 
     ContactRelationToBodyPart(SPHBody &sph_body, BodyPartVector contact_body_parts_);
-    virtual ~ContactRelationToBodyPart(){};
+    virtual ~ContactRelationToBodyPart() {};
 
     virtual void updateConfiguration() override;
 };
@@ -149,7 +149,7 @@ class AdaptiveContactRelation : public BaseContactRelation
 
   public:
     AdaptiveContactRelation(SPHBody &body, RealBodyVector contact_bodies);
-    virtual ~AdaptiveContactRelation(){};
+    virtual ~AdaptiveContactRelation() {};
 
     virtual void updateConfiguration() override;
 };
@@ -211,7 +211,7 @@ class SurfaceContactRelation : public ContactRelationCrossResolution
                            StdVec<bool> normal_corrections = {})
         : SurfaceContactRelation(*solid_body_relation_self_contact.real_body_,
                                  std::move(contact_bodies),
-                                 std::move(normal_corrections)){};
+                                 std::move(normal_corrections)) {};
     ~SurfaceContactRelation() override = default;
     void updateConfiguration() override;
     BodySurfaceLayer *get_body_surface_layer() { return body_surface_layer_; }
@@ -222,6 +222,23 @@ class SurfaceContactRelation : public ContactRelationCrossResolution
     StdVec<NeighborBuilder *> get_contact_neighbors_;
 
     void resetNeighborhoodCurrentSize() override;
+};
+
+/**
+ * @class NearestNeighborContactRelationt
+ * @brief The relation between a SPH body and its contact SPH bodies, where the cut-off radius is set as factor * dp_max
+ */
+class NearestNeighborContactRelation : public ContactRelationCrossResolution
+{
+  private:
+    UniquePtrsKeeper<NearestNeighborBuilder> neighbor_builder_contact_ptrs_keeper_;
+
+  public:
+    NearestNeighborContactRelation(SPHBody &sph_body, RealBodyVector contact_bodies, const std::vector<Real> &factors = {});
+    void updateConfiguration() override;
+
+  private:
+    StdVec<NearestNeighborBuilder *> get_contact_neighbors_;
 };
 } // namespace SPH
 #endif // CONTACT_BODY_RELATION_H
