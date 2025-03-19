@@ -66,7 +66,7 @@ Hence, the conservative mapping of traction can be written as:
 $$\mathbf{T_D(x)} = \mathbf{M_{DD}^{-1}}\mathbf{H_{OD}^T}\mathbf{M_{OO}}\mathbf{T_O(x)}$$
 
 ## Direct/consistent mapping with SPH approximation
-For SPH method, a direct consistent mapping matrix is available. Using the Shepard filter, the displacement of a solid (origin) particle i can be interpolated from all the shell (destination) particles:
+For SPH method, a direct consistent mapping matrix similar to the radial-basis functions interpolation (discussed in chapter 2.3 in the reference) is available. Using the Shepard filter, the displacement of a solid (origin) particle i can be interpolated from all the shell (destination) particles:
 
 $$\mathbf{U_{O,i}} = \sum_{j\in \Gamma_D} \tilde{\omega_{ij}} \mathbf{U_{D,j}}$$
 $$\tilde{\omega_{ij}} = \frac{W_{ij}(h_{ij})V_j}{\sum_{j\in \Gamma_D} W_{ij}(h_{ij})V_j}$$
@@ -79,7 +79,7 @@ For a particle j outside of the neighborhood of i, the weight $\tilde{\omega_{ij
 
 However, for the force mapping, we cannot directly use the SPH interpolation, since this consistent mapping is not conservative.
 
-Unlike FEM, which defines the nodal force by the integration of traction, I would prefer to directly map the internal force on the particles to the other side, since it is difficult to integrate the non-piecewise SPH shape function.
+It is possible to obtain the conservative mapping matrix of the traction by integrating the shape function over the interface. However, as SPH solid solver is based on the volumetric discretization, I would prefer to map the force per particle by: 
 
 $$\mathbf{F_{D,i}} = \sum_{j\in \Gamma_O} H_{OD,ji} \mathbf{F_{O,j}}$$
 
