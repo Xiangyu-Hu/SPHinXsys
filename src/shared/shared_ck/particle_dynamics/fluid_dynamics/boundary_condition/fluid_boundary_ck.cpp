@@ -35,8 +35,10 @@ void EmitterInflowInjectionCK<AlignedBoxPartType>::FinishDynamics::operator()()
 DisposerOutflowDeletionCK::
     DisposerOutflowDeletionCK(AlignedBoxPartByCell &aligned_box_part)
     : BaseLocalDynamics<AlignedBoxPartByCell>(aligned_box_part),
+      part_id_(aligned_box_part.getPartID()),
       sv_aligned_box_(aligned_box_part.svAlignedBox()),
       remove_real_particle_method_(particles_),
+      dv_buffer_particle_indicator_(this->particles_->template getVariableByName<int>("BufferParticleIndicator")),
       rho0_(particles_->getBaseMaterial().ReferenceDensity()),
       dv_pos_(particles_->getVariableByName<Vecd>("Position")),
       dv_rho_(particles_->getVariableByName<Real>("Density")),

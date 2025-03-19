@@ -77,17 +77,22 @@ void EmitterInflowInjectionCK<AlignedBoxPartType>::FinishDynamics::operator()()
 template <class ExecutionPolicy, class EncloserType>
 DisposerOutflowDeletionCK::UpdateKernel::
     UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-    : check_lower_bound_(
+    : part_id_(encloser.part_id_),
+      check_lower_bound_(
           encloser.sv_aligned_box_->DelegatedData(ex_policy),
           encloser.dv_pos_->DelegatedData(ex_policy)),
+      total_real_particles_(encloser.sv_total_real_particles_->DelegatedData(ex_policy)),
       remove_real_particle_(ex_policy, encloser.remove_real_particle_method_),
+      buffer_particle_indicator_(encloser.dv_buffer_particle_indicator_->DelegatedData(ex_policy)),
       rho0_(encloser.rho0_),
       rho_(encloser.dv_rho_->DelegatedData(ex_policy)),
       p_(encloser.dv_p_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 void DisposerOutflowDeletionCK::UpdateKernel::update(size_t index_i, Real dt)
 {
-    if (check_lower_bound_(index_i))
+    if (check_lower_bound_(index_i) &&
+        buffer_particle_indicator_[index_i] == part_id_ &&
+        index_i < *total_real_particles_)
     {
         remove_real_particle_(index_i, check_lower_bound_);
     }

@@ -113,6 +113,7 @@ class DeleteRealParticle
                 copy_particle_state_(copyable_state_data_arrays_, index_i, last_real_particle_index);
                 UnsignedInt temp_id = original_id_[last_real_particle_index];
                 original_id_[index_i] = original_id_[last_real_particle_index];
+                return index_i;
             }
             return last_real_particle_index;
         };

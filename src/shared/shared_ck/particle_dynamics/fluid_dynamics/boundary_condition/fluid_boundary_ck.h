@@ -126,8 +126,10 @@ class BufferEmitterInflowInjectionCK : public BaseLocalDynamics<AlignedBoxPartTy
     // 1) Move constructor body here, inline:
     BufferEmitterInflowInjectionCK(AlignedBoxPartType &aligned_box_part, ParticleBuffer<Base> &buffer)
         : BaseLocalDynamics<AlignedBoxPartType>(aligned_box_part),
+          part_id_(aligned_box_part.getPartID()),
           buffer_(buffer),
           sv_aligned_box_(aligned_box_part.svAlignedBox()),
+          sv_total_real_particles_(this->particles_->svTotalRealParticles()),
           create_real_particle_method_(this->particles_),
           rho0_(this->particles_->getBaseMaterial().ReferenceDensity()),
           sound_speed_(0.0),
@@ -169,7 +171,9 @@ class BufferEmitterInflowInjectionCK : public BaseLocalDynamics<AlignedBoxPartTy
       public:
         template <class ExecutionPolicy, class EncloserType>
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : aligned_box_(nullptr),
+            : part_id_(encloser.part_id_),
+              aligned_box_(encloser.sv_aligned_box_->DelegatedData(ex_policy)),
+              total_real_particles_(encloser.sv_total_real_particles_->DelegatedData(ex_policy)),
               create_real_particle_(ex_policy, encloser.create_real_particle_method_),
               rho0_(encloser.rho0_),
               sound_speed_(encloser.sound_speed_),
@@ -180,35 +184,32 @@ class BufferEmitterInflowInjectionCK : public BaseLocalDynamics<AlignedBoxPartTy
               condition_(ex_policy, encloser.condition_function_),
               previous_surface_indicator_(encloser.dv_previous_surface_indicator_->DelegatedData(ex_policy)),
               physical_time_(encloser.sv_physical_time_->DelegatedData(ex_policy)),
-              upper_bound_fringe_(encloser.upper_bound_fringe_)
-        {
-            aligned_box_ = encloser.sv_aligned_box_->DelegatedData(ex_policy);
-        }
+              upper_bound_fringe_(encloser.upper_bound_fringe_) {}
 
         void update(size_t index_i, Real dt = 0.0)
         {
             if (!aligned_box_->checkInBounds(pos_[index_i]))
             {
-                if (aligned_box_->checkUpperBound(pos_[index_i]))
+                if (aligned_box_->checkUpperBound(pos_[index_i], upper_bound_fringe_) &&
+                    buffer_particle_indicator_[index_i] == part_id_ &&
+                    index_i < *total_real_particles_)
                 {
-                    if (buffer_particle_indicator_[index_i] == 1)
-                    {
-                        // if (index_i < this->particles_->TotalRealParticles())
-                        {
-                            size_t new_particle_index = create_real_particle_(index_i);
-                            buffer_particle_indicator_[new_particle_index] = 0;
-                            pos_[index_i] = aligned_box_->getUpperPeriodic(pos_[index_i]); // Periodic bounding.
-                            p_[index_i] = condition_(index_i, *physical_time_);
-                            rho_[index_i] = p_[index_i] / pow(sound_speed_, 2.0) + rho0_;
-                            previous_surface_indicator_[index_i] = 1;
-                        }
-                    }
+                    size_t new_particle_index = create_real_particle_(index_i);
+                    buffer_particle_indicator_[new_particle_index] = 0;
+
+                    /** Periodic bounding. */
+                    pos_[index_i] = aligned_box_->getUpperPeriodic(pos_[index_i]);
+                    p_[index_i] = condition_(index_i, *physical_time_);
+                    rho_[index_i] = p_[index_i] / pow(sound_speed_, 2.0) + rho0_;
+                    previous_surface_indicator_[index_i] = 1;
                 }
             }
         }
 
       private:
+        int part_id_;
         AlignedBox *aligned_box_;
+        UnsignedInt *total_real_particles_;
         CreateRealParticleKernel create_real_particle_;
         Real rho0_;
         Real sound_speed_;
@@ -224,8 +225,10 @@ class BufferEmitterInflowInjectionCK : public BaseLocalDynamics<AlignedBoxPartTy
     virtual ~BufferEmitterInflowInjectionCK() {};
 
   protected:
+    int part_id_;
     ParticleBuffer<Base> &buffer_;
     SingularVariable<AlignedBox> *sv_aligned_box_;
+    SingularVariable<UnsignedInt> *sv_total_real_particles_;
     SpawnRealParticle create_real_particle_method_;
     Real rho0_;
     Real sound_speed_;
@@ -267,8 +270,11 @@ class DisposerOutflowDeletionCK : public BaseLocalDynamics<AlignedBoxPartByCell>
         void update(size_t index_i, Real dt = 0.0); // only works in sequenced policy
 
       protected:
+        int part_id_;
         CheckLowerBound check_lower_bound_;
+        UnsignedInt *total_real_particles_;
         RemoveRealParticleKernel remove_real_particle_;
+        int *buffer_particle_indicator_;
         Real rho0_;
         Real *rho_, *p_;
     };
@@ -283,8 +289,11 @@ class DisposerOutflowDeletionCK : public BaseLocalDynamics<AlignedBoxPartByCell>
     };
 
   protected:
+    int part_id_;
     SingularVariable<AlignedBox> *sv_aligned_box_;
+    SingularVariable<UnsignedInt> *sv_total_real_particles_;
     DeleteRealParticle remove_real_particle_method_;
+    DiscreteVariable<int> *dv_buffer_particle_indicator_;
     Real rho0_;
     DiscreteVariable<Vecd> *dv_pos_;
     DiscreteVariable<Real> *dv_rho_, *dv_p_;
@@ -458,7 +467,7 @@ class VelocityBidirectionalConditionCK
         pressure_condition_;
 
     // Using NonPrescribedPressure as we do not change pressure
-    StateDynamics<execution::SequencedDevicePolicy, BufferEmitterInflowInjectionCK<AlignedBoxPartByCell, NonPrescribedPressure>> emitter_injection_;
+    StateDynamics<ExecutionPolicy, BufferEmitterInflowInjectionCK<AlignedBoxPartByCell, NonPrescribedPressure>> emitter_injection_;
 
     StateDynamics<ExecutionPolicy, DisposerOutflowDeletionCK> disposer_outflow_deletion_;
 
