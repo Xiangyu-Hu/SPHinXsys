@@ -91,20 +91,28 @@ DataType ProbeMesh::probeDataPackage(MeshVariableData<DataType> *mesh_variable_d
     Vecd beta = Vecd::Ones() - alpha;
 
     auto &neighborhood = cell_neighborhood_[package_index];
-    NeighbourIndex neighbour_index_1 = BaseMeshLocalDynamics::NeighbourIndexShift(data_index + Arrayi(0, 0, 0), neighborhood);
-    NeighbourIndex neighbour_index_2 = BaseMeshLocalDynamics::NeighbourIndexShift(data_index + Arrayi(1, 0, 0), neighborhood);
-    NeighbourIndex neighbour_index_3 = BaseMeshLocalDynamics::NeighbourIndexShift(data_index + Arrayi(0, 1, 0), neighborhood);
-    NeighbourIndex neighbour_index_4 = BaseMeshLocalDynamics::NeighbourIndexShift(data_index + Arrayi(1, 1, 0), neighborhood);
+    NeighbourIndex neighbour_index_1 = BaseMeshLocalDynamics::NeighbourIndexShift(
+        data_index + Arrayi(0, 0, 0), neighborhood);
+    NeighbourIndex neighbour_index_2 = BaseMeshLocalDynamics::NeighbourIndexShift(
+        data_index + Arrayi(1, 0, 0), neighborhood);
+    NeighbourIndex neighbour_index_3 = BaseMeshLocalDynamics::NeighbourIndexShift(
+        data_index + Arrayi(0, 1, 0), neighborhood);
+    NeighbourIndex neighbour_index_4 = BaseMeshLocalDynamics::NeighbourIndexShift(
+        data_index + Arrayi(1, 1, 0), neighborhood);
 
     DataType bilinear_1 = GET_NEIGHBOR_VAL(mesh_variable_data, neighbour_index_1) * beta[0] * beta[1] +
                           GET_NEIGHBOR_VAL(mesh_variable_data, neighbour_index_2) * alpha[0] * beta[1] +
                           GET_NEIGHBOR_VAL(mesh_variable_data, neighbour_index_3) * beta[0] * alpha[1] +
                           GET_NEIGHBOR_VAL(mesh_variable_data, neighbour_index_4) * alpha[0] * alpha[1];
 
-    neighbour_index_1 = BaseMeshLocalDynamics::NeighbourIndexShift(data_index + Arrayi(0, 0, 1), neighborhood);
-    neighbour_index_2 = BaseMeshLocalDynamics::NeighbourIndexShift(data_index + Arrayi(1, 0, 1), neighborhood);
-    neighbour_index_3 = BaseMeshLocalDynamics::NeighbourIndexShift(data_index + Arrayi(0, 1, 1), neighborhood);
-    neighbour_index_4 = BaseMeshLocalDynamics::NeighbourIndexShift(data_index + Arrayi(1, 1, 1), neighborhood);
+    neighbour_index_1 = BaseMeshLocalDynamics::NeighbourIndexShift(
+        data_index + Arrayi(0, 0, 1), neighborhood);
+    neighbour_index_2 = BaseMeshLocalDynamics::NeighbourIndexShift(
+        data_index + Arrayi(1, 0, 1), neighborhood);
+    neighbour_index_3 = BaseMeshLocalDynamics::NeighbourIndexShift(
+        data_index + Arrayi(0, 1, 1), neighborhood);
+    neighbour_index_4 = BaseMeshLocalDynamics::NeighbourIndexShift(
+        data_index + Arrayi(1, 1, 1), neighborhood);
 
     DataType bilinear_2 = GET_NEIGHBOR_VAL(mesh_variable_data, neighbour_index_1) * beta[0] * beta[1] +
                           GET_NEIGHBOR_VAL(mesh_variable_data, neighbour_index_2) * alpha[0] * beta[1] +
@@ -165,7 +173,8 @@ computeKernelIntegral(const Vecd &position, const size_t &package_index, const A
         mesh_for_each3d<-3, 4>(
         [&](int i, int j, int k)
         {
-            NeighbourIndex neighbor_meta = BaseMeshLocalDynamics::NeighbourIndexShift(Arrayi(i, j, k), cell_neighborhood_[package_index]);
+            NeighbourIndex neighbor_meta = BaseMeshLocalDynamics::NeighbourIndexShift(
+                Arrayi(i, j, k), cell_neighborhood_[package_index]);
             Real phi_neighbor = GET_NEIGHBOR_VAL(phi_, neighbor_meta);
             if (phi_neighbor > -data_spacing_)
             {
