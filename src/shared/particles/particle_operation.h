@@ -85,7 +85,7 @@ class DeleteRealParticle
 {
     ParticleVariables &evolving_variables_;
     DiscreteVariableArrays copyable_states_;
-    DiscreteVariable<UnsignedInt> *dv_original_id_;
+    DiscreteVariable<UnsignedInt> *dv_original_id_, *dv_sorted_id_;
     SingularVariable<UnsignedInt> *sv_total_real_particles_;
     UnsignedInt real_particles_bound_;
 
@@ -112,6 +112,7 @@ class DeleteRealParticle
             {
                 copy_particle_state_(copyable_state_data_arrays_, index_i, last_real_particle_index);
                 original_id_[index_i] = original_id_[last_real_particle_index];
+                sorted_id_[original_id_[index_i]] = index_i;
             }
             return last_real_particle_index;
         };
@@ -119,10 +120,11 @@ class DeleteRealParticle
       protected:
         UnsignedInt *total_real_particles_;
         UnsignedInt real_particles_bound_;
-        UnsignedInt *original_id_;
+        UnsignedInt *original_id_, *sorted_id_;
         VariableDataArrays copyable_state_data_arrays_;
         OperationOnDataAssemble<VariableDataArrays, CopyParticleStateCK> copy_particle_state_;
     };
 };
 } // namespace SPH
 #endif // PARTICLE_OPERATION_H
+2
