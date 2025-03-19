@@ -4,9 +4,9 @@ name: CI
 on:
   # Triggers the workflow on push or pull request events but only for the master branch
   push:
-    branches: [refac/2d]
+    branches: refac/2d
   pull_request:
-    branches: [refac/2d]
+    branches: refac/2d
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
     inputs:
@@ -213,7 +213,7 @@ jobs:
       - name: Zip build folder
         run: zip -r build.zip ./build
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: Linux-build
           path: ${{github.workspace}}/build.zip
@@ -392,7 +392,7 @@ jobs:
       - name: Zip build folder
         run: 7z.exe a C:\build.7z "C:\build"
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: Windows-build
           path: C:\build.7z
@@ -543,7 +543,7 @@ jobs:
       - name: Zip build folder
         run: zip -r build.zip ./build
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: macOS-build
           path: ${{github.workspace}}/build.zip
