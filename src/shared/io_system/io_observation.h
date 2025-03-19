@@ -41,6 +41,13 @@ class BaseQuantityRecording : public BaseIO
                           const std::string &dynamics_identifier_name,
                           const std::string &quantity_name);
 
+    void setQuantityName(const std::string &quantity_name)
+    {
+        quantity_name_ = quantity_name;
+        filefullpath_output_ = io_environment_.output_folder_ + "/" +
+                               dynamics_identifier_name_ + "_" + quantity_name + ".dat";
+    };
+
   protected:
     PltEngine plt_engine_;
     std::string dynamics_identifier_name_;
@@ -138,6 +145,7 @@ class ReducedQuantityRecording<LocalReduceMethodType> : public BaseQuantityRecor
           reduced_quantity_(ZeroData<VariableType>::value)
     {
         quantity_name_ = reduce_method_.QuantityName();
+        setQuantityName(quantity_name_);
         std::ofstream out_file(filefullpath_output_.c_str(), std::ios::app);
         out_file << "\"run_time\"" << "   ";
         plt_engine_.writeAQuantityHeader(out_file, reduced_quantity_, quantity_name_);
