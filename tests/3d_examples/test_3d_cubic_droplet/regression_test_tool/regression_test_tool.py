@@ -7,10 +7,10 @@ sys.path.append(path)
 from regression_test_base_tool import SphinxsysRegressionTest
 
 """
-case name: test_2d_square_droplet
+case name: test_3d_square_droplet
 """
 
-case_name = "test_2d_square_droplet"
+case_name = "test_3d_cubic_droplet"
 body_name = "WaterBody"
 parameter_name = "TotalKineticEnergy"
 
