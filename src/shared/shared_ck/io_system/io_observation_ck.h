@@ -53,13 +53,14 @@ class ObservedQuantityRecording<ExecutionPolicy, DataType>
   public:
     ObservedQuantityRecording(const std::string &quantity_name, Relation<Contact<>> &contact_relation)
         : BaseQuantityRecording(contact_relation.getSPHBody().getSPHSystem(),
-                                contact_relation.getSPHBody().getName(), quantity_name),
+                                contact_relation.getSPHBody().getName()),
           observer_(contact_relation.getSPHBody()),
           base_particles_(observer_.getBaseParticles()),
           observation_method_(contact_relation, quantity_name),
           dv_interpolated_quantities_(observation_method_.dvInterpolatedQuantities()),
           number_of_observe_(base_particles_.TotalRealParticles())
     {
+        setFullPath(quantity_name);
         std::ofstream out_file(filefullpath_output_.c_str(), std::ios::app);
         out_file << "run_time" << "   ";
         DataType *interpolated_quantities = getObservedQuantity();
@@ -115,11 +116,12 @@ class ReducedQuantityRecording<ExecutionPolicy, LocalReduceMethodType> : public 
     template <class DynamicsIdentifier, typename... Args>
     ReducedQuantityRecording(DynamicsIdentifier &identifier, Args &&...args)
         : BaseQuantityRecording(identifier.getSPHBody().getSPHSystem(),
-                                identifier.getName(), ""),
+                                identifier.getName()),
           reduce_method_(identifier, std::forward<Args>(args)...),
           reduced_quantity_(ZeroData<VariableType>::value)
     {
         quantity_name_ = reduce_method_.QuantityName();
+        setFullPath(quantity_name_);
         std::ofstream out_file(filefullpath_output_.c_str(), std::ios::app);
         out_file << "\"run_time\"" << "   ";
         plt_engine_.writeAQuantityHeader(out_file, reduced_quantity_, quantity_name_);
