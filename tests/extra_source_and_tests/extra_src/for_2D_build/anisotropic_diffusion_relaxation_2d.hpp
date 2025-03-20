@@ -94,13 +94,17 @@ namespace SPH
        }       
    
  
-
-
-        Laplacian_2d[index_i] = diffusion_coeff_ * total_left_2d[index_i].inverse() * total_right_2d[index_i];
-
-        Laplacian_x[index_i] = Laplacian_2d[index_i][0];
-        Laplacian_y[index_i] = Laplacian_2d[index_i][1]; 
-		diffusion_dt_[index_i] = Laplacian_2d[index_i][0] + Laplacian_2d[index_i][1];
+        Laplacian_2d[index_i] = total_left_2d[index_i].inverse() * total_right_2d[index_i];
+        
+        Mat2d Laplacian_transform = Mat2d { 
+            { Laplacian_2d[index_i][0],  0.5 *Laplacian_2d[index_i][2]},  
+               { 0.5 * Laplacian_2d[index_i][2],  Laplacian_2d[index_i][1]},
+           }; 
+         Mat2d Laplacian_transform_aniso = diffusion_coeff_tensor_[index_i]* Laplacian_transform *  diffusion_coeff_tensor_[index_i].transpose() ;
+   
+        Laplacian_x[index_i] = Laplacian_transform_aniso(0,0);
+        Laplacian_y[index_i] = Laplacian_transform_aniso(1,1);
+		diffusion_dt_[index_i] = Laplacian_x[index_i] + Laplacian_y[index_i];
         
     }
     

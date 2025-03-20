@@ -21,15 +21,25 @@ namespace SPH
 class AnisotropicDiffusionSolid : public Solid
 {
   public:
-    AnisotropicDiffusionSolid(Real rho0, Real coeff)
-        : Solid(rho0), diffusion_coeff(coeff)
+    AnisotropicDiffusionSolid(Real rho0,  Matd coeff_tensor)
+        : Solid(rho0), diffusion_tensor_uniform(coeff_tensor)
     {
-        material_type_name_ = "AnisotropicDiffusionSolid";
+        material_type_name_ = "AnisotropicDiffusionSolid"; 
     };
+
+    void registerLocalParameters(BaseParticles *base_particles) {
+        diffusion_tensor =  base_particles->registerStateVariable<Matd>( "DiffusionTensor",
+            [&](size_t i) -> Matd
+            {
+                return diffusion_tensor_uniform;
+            }); 
+    };
+
     virtual ~AnisotropicDiffusionSolid(){};
 
-    Real diffusion_coeff;
-    Real DiffusivityCoefficient() { return diffusion_coeff; };
+    Matd  *diffusion_tensor;
+    Matd  diffusion_tensor_uniform;
+
 };
  
 //----------------------------------------------------------------------
@@ -275,8 +285,8 @@ class AnisotropicDiffusionRelaxation<DataDelegationType>
 {
   public:
 
-    template <class BaseRelationType>
-    explicit AnisotropicDiffusionRelaxation(BaseRelationType &base_relation )
+    template <class BaseRelationType, class AnisotropicDiffusionSolidType = AnisotropicDiffusionSolid >
+    explicit AnisotropicDiffusionRelaxation(BaseRelationType &base_relation)
       : LocalDynamics(base_relation.getSPHBody()), DataDelegationType(base_relation), 
       B_(this->particles_->template getVariableDataByName<Matd>("LinearGradientCorrectionMatrix")),
       species_(particles_->registerStateVariable<Real>("Species")),
@@ -287,8 +297,8 @@ class AnisotropicDiffusionRelaxation<DataDelegationType>
       kernel_correction4_(this->particles_->template getVariableDataByName<Vecd>("FirstOrderCorrectionVector4")),
       kernel_correction5_(this->particles_->template getVariableDataByName<Vecd>("FirstOrderCorrectionVector5")),
       kernel_correction6_(this->particles_->template getVariableDataByName<Vecd>("FirstOrderCorrectionVector6")),
-      anisotropic_diffusion_solid_(DynamicCast<AnisotropicDiffusionSolid>(this, base_relation.getSPHBody().getBaseMaterial())), 
-      pos_(this->particles_->template getVariableDataByName<Vecd>("Position")) 
+      pos_(this->particles_->template getVariableDataByName<Vecd>("Position")),
+      diffusion_coeff_tensor_(this->particles_->template getVariableDataByName<Matd>("DiffusionTensor")) 
       { 
         
         species_correction_ = particles_->registerStateVariable<Vecd>("SpeciesCorrection ", [&](size_t i) -> Vecd { return Eps * Vecd::Identity(); });
@@ -306,9 +316,8 @@ class AnisotropicDiffusionRelaxation<DataDelegationType>
         Laplacian_z = particles_->registerStateVariable<Real>( "Laplacian_z", [&](size_t i) -> Real { return Real(0.0); });
         diffusion_dt_=particles_->registerStateVariable<Real>( "diffusion_dt", [&](size_t i) -> Real { return Real(0.0); });
 		
-        diffusion_coeff_ = anisotropic_diffusion_solid_.DiffusivityCoefficient();
-
-      
+        
+   
     }
           
     virtual ~AnisotropicDiffusionRelaxation(){};
@@ -330,9 +339,11 @@ class AnisotropicDiffusionRelaxation<DataDelegationType>
 
 
     Real *Laplacian_x, *Laplacian_y, *Laplacian_z, *diffusion_dt_;
-    Real diffusion_coeff_;
-    AnisotropicDiffusionSolid &anisotropic_diffusion_solid_;
+
     Vecd *pos_;
+    Matd  *diffusion_coeff_tensor_;
+
+    
 };
 
 template <>

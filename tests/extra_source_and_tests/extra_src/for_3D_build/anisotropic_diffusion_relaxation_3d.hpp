@@ -112,12 +112,22 @@ namespace SPH
             total_right_3d[index_i] += total_right_3d_rate_contact;
        }       
    
-        Laplacian_3d[index_i] = diffusion_coeff_ * total_left_3d[index_i].inverse() * total_right_3d[index_i];
-
-        Laplacian_x[index_i] = Laplacian_3d[index_i][0];
-        Laplacian_y[index_i] = Laplacian_3d[index_i][1]; 
-        Laplacian_z[index_i] = Laplacian_3d[index_i][2]; 
-		diffusion_dt_[index_i] = Laplacian_3d[index_i][0] + Laplacian_3d[index_i][1] + Laplacian_3d[index_i][2];
+        Laplacian_3d[index_i] =  total_left_3d[index_i].inverse() * total_right_3d[index_i];
+    
+        Mat3d Laplacian_transform = Mat3d { 
+            { Laplacian_3d[index_i][0], 0.5 * Laplacian_3d[index_i][3],  0.5 * Laplacian_3d[index_i][5] },  
+               {0.5 * Laplacian_3d[index_i][3],   Laplacian_3d[index_i][1], 0.5 * Laplacian_3d[index_i][4]},
+                {0.5 * Laplacian_3d[index_i][5],  0.5 * Laplacian_3d[index_i][4],  Laplacian_3d[index_i][2]}
+           }; 
+           
+           Mat3d Laplacian_transform_aniso = diffusion_coeff_tensor_[index_i]* Laplacian_transform *  diffusion_coeff_tensor_[index_i].transpose() ;
+   
+         
+        Laplacian_x[index_i] =  Laplacian_transform_aniso(0,0);
+        Laplacian_y[index_i] =  Laplacian_transform_aniso(1,1);
+        Laplacian_z[index_i] =  Laplacian_transform_aniso(2,2);
+		diffusion_dt_[index_i] =Laplacian_transform_aniso(0,0) + Laplacian_transform_aniso(1,1)+
+        Laplacian_transform_aniso(2,2);
       
     }
   
