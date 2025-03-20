@@ -61,6 +61,7 @@ class LevelSetShape : public Shape
     Vecd findLevelSetGradient(const Vecd &probe_point);
     Real computeKernelIntegral(const Vecd &probe_point, Real h_ratio = 1.0);
     Vecd computeKernelGradientIntegral(const Vecd &probe_point, Real h_ratio = 1.0);
+    Matd computeKernelSecondGradientIntegral(const Vecd& probe_point, Real h_ratio = 1.0);
     /** small_shift_factor = 1.0 by default, can be increased for difficult geometries for smoothing */
     LevelSetShape *cleanLevelSet(Real small_shift_factor = 1.0);
     /** required to build level set from triangular mesh in stl file format. */

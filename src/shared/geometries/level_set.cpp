@@ -159,6 +159,20 @@ Vecd MultilevelLevelSet::probeKernelGradientIntegral(const Vecd &position, Real 
     return alpha * coarse_level_value + (1.0 - alpha) * fine_level_value;
 }
 //=================================================================================================//
+Matd MultilevelLevelSet::probeKernelSecondGradientIntegral(const Vecd& position, Real h_ratio)
+{
+    if (mesh_data_set_.size() == 1) {
+        return probe_kernel_second_gradient_integral_set_[0]->update(position);
+    }
+    size_t coarse_level = getCoarseLevel(h_ratio);
+    Real alpha = (global_h_ratio_vec_[coarse_level + 1] - h_ratio) /
+        (global_h_ratio_vec_[coarse_level + 1] - global_h_ratio_vec_[coarse_level]);
+    Matd coarse_level_value = probe_kernel_second_gradient_integral_set_[coarse_level]->update(position);
+    Matd fine_level_value = probe_kernel_second_gradient_integral_set_[coarse_level + 1]->update(position);
+
+    return alpha * coarse_level_value + (1.0 - alpha) * fine_level_value;
+}
+//=================================================================================================//
 bool MultilevelLevelSet::probeIsWithinMeshBound(const Vecd &position)
 {
     bool is_bounded = true;

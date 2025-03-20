@@ -56,7 +56,8 @@ class BaseMeshLocalDynamics
           phi_gradient_(*mesh_data.getMeshVariable<Vecd>("LevelsetGradient")),
           near_interface_id_(*mesh_data.getMeshVariable<int>("NearInterfaceID")),
           kernel_weight_(*mesh_data.getMeshVariable<Real>("KernelWeight")),
-          kernel_gradient_(*mesh_data.getMeshVariable<Vecd>("KernelGradient")){};
+          kernel_gradient_(*mesh_data.getMeshVariable<Vecd>("KernelGradient")),
+          kernel_second_gradient_(*mesh_data.getMeshVariable<Matd>("KernelSecondGradient")){};
     virtual ~BaseMeshLocalDynamics(){};
 
   protected:
@@ -70,6 +71,7 @@ class BaseMeshLocalDynamics
     MeshVariable<int> &near_interface_id_;
     MeshVariable<Real> &kernel_weight_;
     MeshVariable<Vecd> &kernel_gradient_;
+    MeshVariable<Matd> &kernel_second_gradient_;
 
     size_t SortIndexFromCellIndex(const Arrayi &cell_index);
     Arrayi CellIndexFromSortIndex(const size_t &sort_index);
@@ -174,6 +176,7 @@ class UpdateKernelIntegrals : public BaseMeshLocalDynamics
     Real probeSignedDistance(const Vecd &position) { return mesh_data_.probeMesh(phi_, position); };
     Real computeKernelIntegral(const Vecd &position);
     Vecd computeKernelGradientIntegral(const Vecd &position);
+    Matd computeKernelSecondGradientIntegral(const Vecd &position);
 
     /** a cut cell is a cut by the level set. */
     /** "Multi-scale modeling of compressible multi-fluid flows with conservative interface method."
@@ -313,6 +316,16 @@ class ProbeKernelGradientIntegral : public BaseMeshLocalDynamics
     virtual ~ProbeKernelGradientIntegral(){};
 
     Vecd update(const Vecd &position) { return mesh_data_.probeMesh(kernel_gradient_, position); };
+};
+
+class ProbeKernelSecondGradientIntegral : public BaseMeshLocalDynamics
+{
+public:
+    explicit ProbeKernelSecondGradientIntegral(MeshWithGridDataPackagesType &mesh_data)
+        : BaseMeshLocalDynamics(mesh_data) {};
+    virtual ~ProbeKernelSecondGradientIntegral() {};
+
+    Matd update(const Vecd& position) { return mesh_data_.probeMesh(kernel_second_gradient_, position); };
 };
 
 class ProbeIsWithinMeshBound : public BaseMeshLocalDynamics
