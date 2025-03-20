@@ -86,7 +86,7 @@ class SPHAdaptation
     template <class ExecutionPolicy>
     UniquePtr<MultilevelLevelSet> createLevelSet(const ExecutionPolicy &ex_policy, Shape &shape, Real refinement_ratio)
     {
-        createLevelSet(shape, refinement_ratio);
+        return createLevelSet(shape, refinement_ratio);
     }
     #if SPHINXSYS_USE_SYCL
     virtual UniquePtr<MultilevelLevelSet> createLevelSet(const ParallelDevicePolicy &par_device, Shape &shape, Real refinement_ratio);
