@@ -146,7 +146,9 @@ class BufferEmitterInflowInjectionCK : public BaseLocalDynamics<AlignedBoxPartTy
         void update(size_t index_i, Real dt = 0.0);
 
       private:
+        int part_id_;
         AlignedBox *aligned_box_;
+        UnsignedInt *total_real_particles_;
         CreateRealParticleKernel create_real_particle_;
         Real rho0_;
         Real sound_speed_;
@@ -160,8 +162,10 @@ class BufferEmitterInflowInjectionCK : public BaseLocalDynamics<AlignedBoxPartTy
     };
 
   protected:
+    int part_id_;
     ParticleBuffer<Base> &buffer_;
     SingularVariable<AlignedBox> *sv_aligned_box_;
+    SingularVariable<UnsignedInt> *sv_total_real_particles_;
     SpawnRealParticle create_real_particle_method_;
     Real rho0_;
     Real sound_speed_;
@@ -190,17 +194,23 @@ class DisposerOutflowDeletionCK : public BaseLocalDynamics<AlignedBoxPartByCell>
         void update(size_t index_i, Real dt = 0.0); // only works in sequenced policy
 
       protected:
+        int part_id_;
         AlignedBox *aligned_box_;
+        UnsignedInt *total_real_particles_;
         RemoveRealParticleKernel remove_real_particle_;
+        int *buffer_particle_indicator_;
         Real rho0_;
         Vecd *pos_;
         Real *rho_, *p_;
     };
 
   protected:
+    int part_id_;
     SingularVariable<AlignedBox> *sv_aligned_box_;
+    SingularVariable<UnsignedInt> *sv_total_real_particles_;
     DespawnRealParticle remove_real_particle_method_;
     Real rho0_;
+    DiscreteVariable<int> *dv_buffer_particle_indicator_;
     DiscreteVariable<Vecd> *dv_pos_;
     DiscreteVariable<Real> *dv_rho_, *dv_p_;
 };

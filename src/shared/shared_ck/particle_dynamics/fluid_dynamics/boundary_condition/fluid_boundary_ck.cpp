@@ -33,8 +33,12 @@ void EmitterInflowInjectionCK<AlignedBoxPartType>::FinishDynamics::operator()()
 DisposerOutflowDeletionCK::
     DisposerOutflowDeletionCK(AlignedBoxPartByCell &aligned_box_part)
     : BaseLocalDynamics<AlignedBoxPartByCell>(aligned_box_part),
+      part_id_(aligned_box_part.getPartID()),
       sv_aligned_box_(aligned_box_part.svAlignedBox()),
+      sv_total_real_particles_(particles_->svTotalRealParticles()),
       remove_real_particle_method_(particles_),
+      dv_buffer_particle_indicator_(
+          particles_->registerStateVariableOnly<int>("BufferParticleIndicator")),
       rho0_(particles_->getBaseMaterial().ReferenceDensity()),
       dv_pos_(particles_->getVariableByName<Vecd>("Position")),
       dv_rho_(particles_->getVariableByName<Real>("Density")),
@@ -42,10 +46,11 @@ DisposerOutflowDeletionCK::
 //=================================================================================================//
 TagBufferParticlesCK::TagBufferParticlesCK(AlignedBoxPartByCell &aligned_box_part)
     : BaseLocalDynamics<AlignedBoxPartByCell>(aligned_box_part),
+      part_id_(aligned_box_part.getPartID()),
       sv_aligned_box_(aligned_box_part.svAlignedBox()),
       dv_pos_(particles_->getVariableByName<Vecd>("Position")),
       dv_buffer_particle_indicator_(
-        particles_->registerStateVariableOnly<int>("BufferParticleIndicator"))
+          particles_->registerStateVariableOnly<int>("BufferParticleIndicator"))
 {
     particles_->addEvolvingVariable<int>("BufferParticleIndicator");
 }
