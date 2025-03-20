@@ -22,9 +22,7 @@ EmitterInflowInjectionCK<AlignedBoxPartType>::
 template <typename AlignedBoxPartType>
 EmitterInflowInjectionCK<AlignedBoxPartType>::FinishDynamics::
     FinishDynamics(EmitterInflowInjectionCK<AlignedBoxPartType> &encloser)
-    : particles_(encloser.particles_), buffer_(encloser.buffer_)
-{
-}
+    : particles_(encloser.particles_), buffer_(encloser.buffer_) {}
 //=================================================================================================//
 template <typename AlignedBoxPartType>
 void EmitterInflowInjectionCK<AlignedBoxPartType>::FinishDynamics::operator()()
@@ -40,30 +38,17 @@ DisposerOutflowDeletionCK::
       rho0_(particles_->getBaseMaterial().ReferenceDensity()),
       dv_pos_(particles_->getVariableByName<Vecd>("Position")),
       dv_rho_(particles_->getVariableByName<Real>("Density")),
-      dv_p_(particles_->getVariableByName<Real>("Pressure"))
-{
-}
-//=================================================================================================//
-DisposerOutflowDeletionCK::FinishDynamics::
-    FinishDynamics(DisposerOutflowDeletionCK &encloser)
-    : particles_(encloser.particles_) {}
-//=================================================================================================//
-void DisposerOutflowDeletionCK::FinishDynamics::operator()()
-{
-}
-
+      dv_p_(particles_->getVariableByName<Real>("Pressure")) {}
 //=================================================================================================//
 TagBufferParticlesCK::TagBufferParticlesCK(AlignedBoxPartByCell &aligned_box_part)
     : BaseLocalDynamics<AlignedBoxPartByCell>(aligned_box_part),
       sv_aligned_box_(aligned_box_part.svAlignedBox()),
       dv_pos_(particles_->getVariableByName<Vecd>("Position")),
-      dv_buffer_particle_indicator_(particles_->template registerStateVariableOnly<int>("BufferParticleIndicator"))
+      dv_buffer_particle_indicator_(
+        particles_->registerStateVariableOnly<int>("BufferParticleIndicator"))
 {
-    particles_->template addEvolvingVariable<int>("BufferParticleIndicator");
+    particles_->addEvolvingVariable<int>("BufferParticleIndicator");
 }
-
-template class EmitterInflowInjectionCK<AlignedBoxPartByCell>;
-template class EmitterInflowInjectionCK<AlignedBoxPartByParticle>;
-
+//=================================================================================================//
 } // namespace fluid_dynamics
 } // namespace SPH
