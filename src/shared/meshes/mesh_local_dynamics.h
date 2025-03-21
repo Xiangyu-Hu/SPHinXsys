@@ -106,7 +106,6 @@ class BaseMeshLocalDynamics
                                   CellNeighborhood &neighborhood, DataType zero);
 };
 
-#pragma region probe_mesh_variable_func
 class ProbeMesh
 {
   public:
@@ -191,9 +190,7 @@ class ProbeKernelGradientIntegral : public ProbeMesh
   private:
     MeshVariableData<Vecd> *kernel_gradient_;
 };
-#pragma endregion
 
-#pragma region cpu_only_func
 /**
  * @class InitializeDataForSingularPackage
  * @brief Update function for singular data initialization.
@@ -365,7 +362,6 @@ class InitializeBasicDataForAPackage : public BaseMeshLocalDynamics
   private:
     Shape &shape_;
 };
-#pragma endregion
 
 /**
  * @class UpdateLevelSetGradient
