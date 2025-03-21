@@ -10,18 +10,28 @@
  *			Pressure pa = g * (mm)^(-1) * (ms)^(-2)
  *			diffusion d = (mm)^(2) * (ms)^(-2)
  */
+#include "anisotropic_diffusion_relaxation_3d.hpp"
+#include "base_particles.h"
+#include "contact_body_relation.h"
+#include "inner_body_relation.h"
+#include "observer_particles.h"
+#include "anisotorpic_heart_electromechanics.h"
+
 #include "sphinxsys.h" // SPHinXsys Library.
 using namespace SPH;   // Namespace cite here.
 /** Geometry parameter. */
 /** Set the file path to the stl file. */
 std::string full_path_to_stl_file = "./input/heart-new.stl";
 Real length_scale = 1.0;
-Real time_scale = 1.0 / 12.9;
 Real stress_scale = 1.0e-6;
 /** Parameters and physical properties. */
-Vec3d domain_lower_bound(-55.0 * length_scale, -75.0 * length_scale, -35.0 * length_scale);
-Vec3d domain_upper_bound(35.0 * length_scale, 5.0 * length_scale, 35.0 * length_scale);
-Real dp_0 = (domain_upper_bound[0] - domain_lower_bound[0]) / 45.0; /**< Initial particle spacing. */
+Vec3d domain_lower_bound(-65.0 * length_scale, -85.0 * length_scale, -45.0 * length_scale);
+Vec3d domain_upper_bound(45.0 * length_scale, 15.0 * length_scale, 45.0 * length_scale);
+
+Vec3d domain_lower_bound_previous(-55.0 * length_scale, -75.0 * length_scale, -35.0 * length_scale);
+Vec3d domain_upper_bound_previous(35.0 * length_scale, 5.0 * length_scale, 35.0 * length_scale);
+
+Real dp_0 = (domain_upper_bound_previous[0] - domain_lower_bound_previous[0]) / 45.0; /**< Initial particle spacing. */
 /** Domain bounds of the system. */
 BoundingBox system_domain_bounds(domain_lower_bound, domain_upper_bound);
 
@@ -36,7 +46,7 @@ Real poisson = 0.4995;
 Real bulk_modulus = 2.0 * a0[0] * (1.0 + poisson) / (3.0 * (1.0 - 2.0 * poisson));
 /** Electrophysiology parameters. */
 std::string diffusion_species_name = "Phi";
-Real diffusion_coeff = 0.8;
+Real diffusion_coeff = 1.0;
 Real bias_coeff = 0.0;
 /** Electrophysiology parameters. */
 Real c_m = 1.0;
@@ -45,10 +55,13 @@ Real a = 0.01;
 Real b = 0.15;
 Real mu_1 = 0.2;
 Real mu_2 = 0.3;
-Real epsilon = 0.002;
+Real epsilon = 0.04; //   the parameter in 2024 paper
 /** Fibers and sheet. */
 Vec3d fiber_direction(1.0, 0.0, 0.0);
 Vec3d sheet_direction(0.0, 1.0, 0.0);
+
+Vecd halfsize_boundary(50.0 * length_scale, 45.0 * length_scale, 45.0 * length_scale);
+Vecd translation_boundary(-10.0 * length_scale, -35.0 * length_scale, 0.0 * length_scale);
 
 namespace SPH
 {
@@ -64,6 +77,18 @@ class Heart : public ComplexShape
         add<TriangleMeshShapeSTL>(full_path_to_stl_file, translation, length_scale);
     }
 };
+
+class BoundaryModel : public ComplexShape
+{
+  public:
+    explicit BoundaryModel(const std::string &shape_name) : ComplexShape(shape_name)
+    {
+        add<TransformShape<GeometricShapeBox>>(Transform(translation_boundary), halfsize_boundary, "OuterBoundary");
+        Vecd translation(-53.5 * length_scale, -70.0 * length_scale, -32.5 * length_scale);
+        subtract<TriangleMeshShapeSTL>(full_path_to_stl_file, translation, length_scale);
+    }
+};
+
 using FiberDirectionDiffusionRelaxation =
     DiffusionRelaxationRK2<DiffusionRelaxation<Inner<KernelGradientInner>, IsotropicDiffusion>>;
 /** Imposing diffusion boundary condition */
@@ -98,6 +123,34 @@ class DiffusionBCs : public BaseLocalDynamics<BodyPartByParticle>
     Vecd *pos_;
     Real *phi_;
 };
+
+class AnisotropicLocalDirectionalDiffusion : public LocalDirectionalDiffusion
+{
+  protected:
+    Mat3d *decomposed_transform_tensor_;
+
+  public:
+    AnisotropicLocalDirectionalDiffusion(const std::string &diffusion_species_name,const std::string &gradient_species_name, Real diff_cf, Real bias_diff_cf, Vecd bias_direction, Real cv = 1.0)
+        : LocalDirectionalDiffusion(diffusion_species_name, gradient_species_name, diff_cf, bias_diff_cf, bias_direction, cv) {};
+
+    virtual ~AnisotropicLocalDirectionalDiffusion() {};
+
+    virtual void initializeLocalParameters(BaseParticles *base_particles)
+    {
+        LocalDirectionalDiffusion::initializeLocalParameters(base_particles);
+
+        decomposed_transform_tensor_ = base_particles->registerStateVariable<Matd>("DiffusionTensor",
+                 [&](size_t i) -> Mat3d
+             {  
+                 Mat3d decomposed_transform_tensor = inverseCholeskyDecomposition(local_transformed_diffusivity_[i]).inverse();
+                 return decomposed_transform_tensor;
+             });
+
+        std::cout << "\n Anisotropic Local diffusion parameters setup finished " << std::endl;
+    };
+
+};
+
 /** Compute Fiber and Sheet direction after diffusion */
 class ComputeFiberAndSheetDirections : public LocalDynamics
 {
@@ -186,7 +239,7 @@ class ApplyStimulusCurrentSI : public LocalDynamics
             {
                 if (-3.0 * length_scale <= pos_[index_i][2] && pos_[index_i][2] <= 3.0 * length_scale)
                 {
-                    voltage_[index_i] = 0.92;
+                    voltage_[index_i] = 1.52;
                 }
             }
         }
@@ -196,35 +249,7 @@ class ApplyStimulusCurrentSI : public LocalDynamics
     Vecd *pos_;
     Real *voltage_;
 };
-/**
- * application dependent initial condition
- */
-class ApplyStimulusCurrentSII : public LocalDynamics
-{
-  public:
-    explicit ApplyStimulusCurrentSII(SPHBody &sph_body)
-        : LocalDynamics(sph_body),
-          pos_(particles_->getVariableDataByName<Vecd>("Position")),
-          voltage_(particles_->registerStateVariable<Real>("Voltage")) {};
-
-    void update(size_t index_i, Real dt)
-    {
-        if (0.0 <= pos_[index_i][0] && pos_[index_i][0] <= 6.0 * length_scale)
-        {
-            if (-6.0 * length_scale <= pos_[index_i][1])
-            {
-                if (12.0 * length_scale <= pos_[index_i][2])
-                {
-                    voltage_[index_i] = 0.95;
-                }
-            }
-        }
-    };
-
-  protected:
-    Vecd *pos_;
-    Real *voltage_;
-};
+ 
 
 StdVec<Vecd> createObservationPoints()
 {
@@ -247,7 +272,7 @@ int main(int ac, char *av[])
     //	SPHSystem section
     //----------------------------------------------------------------------
     SPHSystem sph_system(system_domain_bounds, dp_0);
-    sph_system.setRunParticleRelaxation(false);                      // Tag for run particle relaxation for body-fitted distribution
+    sph_system.setRunParticleRelaxation(true);                       // Tag for run particle relaxation for body-fitted distribution
     sph_system.setReloadParticles(true);                             // Tag for computation with save particles distribution
     sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment(); // handle command line arguments
     //----------------------------------------------------------------------
@@ -261,24 +286,41 @@ int main(int ac, char *av[])
             ConstructArgs(rho0_s, bulk_modulus, fiber_direction, sheet_direction, a0, b0),
             ConstructArgs(diffusion_species_name, diffusion_coeff));
         herat_model.generateParticles<BaseParticles, Lattice>();
+
+        SolidBody boundary_body(sph_system, makeShared<BoundaryModel>("Boundary"));
+        boundary_body.defineBodyLevelSetShape()->correctLevelSetSign()->writeLevelSet(sph_system);
+        boundary_body.defineMaterial<Solid>();
+        boundary_body.generateParticles<BaseParticles, Lattice>();
+
         /** topology */
         InnerRelation herat_model_inner(herat_model);
+        InnerRelation boundary_model_inner(boundary_body);
+
         using namespace relax_dynamics;
         SimpleDynamics<RandomizeParticlePosition> random_particles(herat_model);
+        SimpleDynamics<RandomizeParticlePosition> random_particles_boundary(boundary_body);
+
         RelaxationStepInner relaxation_step_inner(herat_model_inner);
+        RelaxationStepInner relaxation_step_inner_boundary(boundary_model_inner);
+
         //----------------------------------------------------------------------
         //	Relaxation output
         //----------------------------------------------------------------------
         BodyStatesRecordingToVtp write_herat_model_state_to_vtp({herat_model});
+        BodyStatesRecordingToVtp write_boundary_model_state_to_vtp({boundary_body});
         ReloadParticleIO write_particle_reload_files(herat_model);
+        ReloadParticleIO write_boundary_particle_reload_files(boundary_body);
         write_particle_reload_files.addToReload<Vecd>(herat_model, "Fiber");
         write_particle_reload_files.addToReload<Vecd>(herat_model, "Sheet");
         //----------------------------------------------------------------------
         //	Physics relaxation starts here.
         //----------------------------------------------------------------------
         random_particles.exec(0.25);
+        random_particles_boundary.exec(0.01);
         relaxation_step_inner.SurfaceBounding().exec();
+        relaxation_step_inner_boundary.SurfaceBounding().exec();
         write_herat_model_state_to_vtp.writeToFile(0.0);
+        write_boundary_model_state_to_vtp.writeToFile(0.0);
         //----------------------------------------------------------------------
         // From here the time stepping begins.
         //----------------------------------------------------------------------
@@ -287,11 +329,13 @@ int main(int ac, char *av[])
         while (ite < relax_step)
         {
             relaxation_step_inner.exec();
+            relaxation_step_inner_boundary.exec();
             ite++;
             if (ite % 100 == 0)
             {
                 std::cout << std::fixed << std::setprecision(9) << "Relaxation steps N = " << ite << "\n";
                 write_herat_model_state_to_vtp.writeToFile(ite);
+                write_boundary_model_state_to_vtp.writeToFile(ite);
             }
         }
         //----------------------------------------------------------------------
@@ -305,6 +349,7 @@ int main(int ac, char *av[])
         impose_diffusion_bc.exec();
         write_herat_model_state_to_vtp.addToWrite<Real>(herat_model, diffusion_species_name);
         write_herat_model_state_to_vtp.writeToFile(ite);
+        write_boundary_model_state_to_vtp.writeToFile(ite);
 
         int diffusion_step = 100;
         Real dt = get_time_step_size.exec();
@@ -324,6 +369,7 @@ int main(int ac, char *av[])
         write_herat_model_state_to_vtp.writeToFile(ite);
         compute_fiber_sheet.exec();
         write_particle_reload_files.writeToFile(0);
+        write_boundary_particle_reload_files.writeToFile(0);
 
         return 0;
     }
@@ -336,9 +382,15 @@ int main(int ac, char *av[])
         ? mechanics_heart.generateParticles<BaseParticles, Reload>("HeartModel")
         : mechanics_heart.generateParticles<BaseParticles, Lattice>();
 
+    SolidBody boundary_condition(sph_system, makeShared<BoundaryModel>("BoundaryCondition"));
+    boundary_condition.defineMaterial<Solid>();
+    (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
+        ? boundary_condition.generateParticles<BaseParticles, Reload>("Boundary")
+        : boundary_condition.generateParticles<BaseParticles, Lattice>();
+
     SolidBody physiology_heart(sph_system, makeShared<Heart>("PhysiologyHeart"));
     AlievPanfilowModel aliev_panfilow_model(k_a, c_m, k, a, b, mu_1, mu_2, epsilon);
-    physiology_heart.defineClosure<Solid, MonoFieldElectroPhysiology<LocalDirectionalDiffusion>>(
+    physiology_heart.defineClosure<Solid, MonoFieldElectroPhysiology<AnisotropicLocalDirectionalDiffusion>>(
         Solid(), ConstructArgs(&aliev_panfilow_model, ConstructArgs(diffusion_coeff, bias_coeff, fiber_direction)));
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
         ? physiology_heart.generateParticles<BaseParticles, Reload>("HeartModel")
@@ -361,22 +413,25 @@ int main(int ac, char *av[])
     ContactRelation mechanics_body_contact(mechanics_heart, {&physiology_heart});
     ContactRelation voltage_observer_contact(voltage_observer, {&physiology_heart});
     ContactRelation myocardium_observer_contact(myocardium_observer, {&mechanics_heart});
+
+    ContactRelation diffusion_block_contact(physiology_heart, {&boundary_condition});
     //----------------------------------------------------------------------
     //	SPH Method section
     //----------------------------------------------------------------------
     // Corrected configuration.
-    InteractionWithUpdate<LinearGradientCorrectionMatrixInner> correct_configuration_excitation(physiology_heart_inner);
+    InteractionWithUpdate<AnisotropicLinearGradientCorrectionMatrixComplex> correct_configuration_excitation(physiology_heart_inner, diffusion_block_contact);
+    InteractionWithUpdate<AnisotropicKernelCorrectionMatrixComplex> correct_second_configuration(physiology_heart_inner, diffusion_block_contact);
+
     // Time step size calculation.
     GetDiffusionTimeStepSize get_physiology_time_step(physiology_heart);
     // Diffusion process for diffusion body.
-    electro_physiology::ElectroPhysiologyDiffusionInnerRK2<LocalDirectionalDiffusion>
-        diffusion_relaxation(physiology_heart_inner);
+    InteractionWithUpdate<AnisotropicVoltageDiffusionRelaxationComplex> diffusion_relaxation(physiology_heart_inner, diffusion_block_contact);
+
     // Solvers for ODE system.
     electro_physiology::ElectroPhysiologyReactionRelaxationForward reaction_relaxation_forward(physiology_heart, aliev_panfilow_model);
     electro_physiology::ElectroPhysiologyReactionRelaxationBackward reaction_relaxation_backward(physiology_heart, aliev_panfilow_model);
     //	Apply the Iron stimulus.
-    SimpleDynamics<ApplyStimulusCurrentSI> apply_stimulus_s1(physiology_heart);
-    SimpleDynamics<ApplyStimulusCurrentSII> apply_stimulus_s2(physiology_heart);
+    SimpleDynamics<ApplyStimulusCurrentSI> apply_stimulus_s1(physiology_heart); 
     //  Active mechanics.
     InteractionWithUpdate<LinearGradientCorrectionMatrixInner> correct_configuration_contraction(mechanics_body_inner);
     InteractionDynamics<CorrectInterpolationKernelWeights> correct_kernel_weights_for_interpolation(mechanics_body_contact);
@@ -415,9 +470,11 @@ int main(int ac, char *av[])
     sph_system.initializeSystemCellLinkedLists();
     sph_system.initializeSystemConfigurations();
     correct_configuration_excitation.exec();
+    correct_second_configuration.exec();
     correct_configuration_contraction.exec();
     correct_kernel_weights_for_interpolation.exec();
     /** Output initial states and observations */
+    apply_stimulus_s1.exec(0);
     write_states.writeToFile(0);
     write_voltage.writeToFile(0);
     write_displacement.writeToFile(0);
@@ -459,12 +516,6 @@ int main(int ac, char *av[])
                 {
                     apply_stimulus_s1.exec(dt);
                 }
-                /** Single spiral wave. */
-                // if( 60 <= physical_time
-                // 	&&  physical_time <= 65)
-                // {
-                // 	apply_stimulus_s2.exec(dt);
-                // }
                 /**Strong splitting method. */
                 // forward reaction
                 int ite_forward = 0;
@@ -519,19 +570,6 @@ int main(int ac, char *av[])
     TimeInterval tt;
     tt = t4 - t1 - interval;
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
-
-    if (sph_system.GenerateRegressionData())
-    {
-        std::cout << "Generate regression data ..." << std::endl;
-        write_voltage.generateDataBase(1.0e-3);
-        write_displacement.generateDataBase(1.0e-3);
-    }
-    else
-    {
-        std::cout << "Regression test ..." << std::endl;
-        write_voltage.testResult();
-        write_displacement.testResult();
-    }
 
     return 0;
 }
