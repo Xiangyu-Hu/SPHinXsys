@@ -33,7 +33,7 @@ SpawnRealParticle::ComputingKernel::
 }
 //=================================================================================================//
 template <class ExecutionPolicy, class EncloserType>
-DespawnRealParticle::ComputingKernel::
+DeleteRealParticle::ComputingKernel::
     ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : total_real_particles_(encloser.sv_total_real_particles_->DelegatedData(ex_policy)),
       real_particles_bound_(encloser.real_particles_bound_),

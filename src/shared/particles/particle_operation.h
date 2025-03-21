@@ -84,7 +84,7 @@ class SpawnRealParticle
     };
 };
 
-class DespawnRealParticle
+class DeleteRealParticle
 {
     ParticleVariables &evolving_variables_;
     DiscreteVariableArrays copyable_states_;
@@ -93,7 +93,7 @@ class DespawnRealParticle
     UnsignedInt real_particles_bound_;
 
   public:
-    DespawnRealParticle(BaseParticles *particles);
+    DeleteRealParticle(BaseParticles *particles);
 
     class ComputingKernel // only run with sequenced policy for now
     {

@@ -30,8 +30,8 @@ void EmitterInflowInjectionCK<AlignedBoxPartType>::FinishDynamics::operator()()
     buffer_.checkEnoughBuffer(*particles_);
 }
 //=================================================================================================//
-DisposerOutflowDeletionCK::
-    DisposerOutflowDeletionCK(AlignedBoxPartByCell &aligned_box_part)
+BufferOutflowDeletionCK::
+    BufferOutflowDeletionCK(AlignedBoxPartByCell &aligned_box_part)
     : BaseLocalDynamics<AlignedBoxPartByCell>(aligned_box_part),
       part_id_(aligned_box_part.getPartID()),
       sv_aligned_box_(aligned_box_part.svAlignedBox()),

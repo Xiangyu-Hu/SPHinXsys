@@ -83,7 +83,6 @@ BufferEmitterInflowInjectionCK<AlignedBoxPartType, ConditionFunction>::
       dv_previous_surface_indicator_(this->particles_->template getVariableByName<int>("PreviousSurfaceIndicator")),
       sv_physical_time_(this->sph_system_.template getSystemVariableByName<Real>("PhysicalTime")),
       upper_bound_fringe_(0.5 * this->sph_body_.getSPHBodyResolutionRef())
-
 {
     buffer_.checkParticlesReserved();
     Fluid &fluid_ = DynamicCast<Fluid>(this, this->particles_->getBaseMaterial());
@@ -130,27 +129,21 @@ void BufferEmitterInflowInjectionCK<AlignedBoxPartType, ConditionFunction>::
 }
 //=================================================================================================//
 template <class ExecutionPolicy, class EncloserType>
-DisposerOutflowDeletionCK::UpdateKernel::
+BufferOutflowDeletionCK::UpdateKernel::
     UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : part_id_(encloser.part_id_),
       aligned_box_(encloser.sv_aligned_box_->DelegatedData(ex_policy)),
-      is_delteable_(encloser.part_id_,
-                    encloser.sv_aligned_box_->DelegatedData(ex_policy),
+      is_delteable_(encloser.part_id_, aligned_box_,
                     encloser.dv_pos_->DelegatedData(ex_policy),
                     encloser.dv_buffer_particle_indicator_->DelegatedData(ex_policy)),
       total_real_particles_(encloser.sv_total_real_particles_->DelegatedData(ex_policy)),
-      remove_real_particle_(ex_policy, encloser.remove_real_particle_method_),
-      buffer_particle_indicator_(encloser.dv_buffer_particle_indicator_->DelegatedData(ex_policy)),
-      rho0_(encloser.rho0_),
-      pos_(encloser.dv_pos_->DelegatedData(ex_policy)),
-      rho_(encloser.dv_rho_->DelegatedData(ex_policy)),
-      p_(encloser.dv_p_->DelegatedData(ex_policy)) {}
+      remove_real_particle_(ex_policy, encloser.remove_real_particle_method_) {}
 //=================================================================================================//
-void DisposerOutflowDeletionCK::UpdateKernel::update(size_t index_i, Real dt)
+void BufferOutflowDeletionCK::UpdateKernel::update(size_t index_i, Real dt)
 {
     if (!aligned_box_->checkInBounds(pos_[index_i]))
     {
-        if (is_delteable_(index_i))
+        if (is_delteable_(index_i) && index_i < *total_real_particles_)
         {
             remove_real_particle_(index_i, is_delteable_);
         }
@@ -175,5 +168,4 @@ void TagBufferParticlesCK::UpdateKernel::update(size_t index_i, Real dt)
 //=================================================================================================//
 } // namespace fluid_dynamics
 } // namespace SPH
-
 #endif // FLUID_BOUNDARY_CK_HPP

@@ -178,13 +178,13 @@ class BufferEmitterInflowInjectionCK : public BaseLocalDynamics<AlignedBoxPartTy
     Real upper_bound_fringe_;
 };
 
-class DisposerOutflowDeletionCK : public BaseLocalDynamics<AlignedBoxPartByCell>
+class BufferOutflowDeletionCK : public BaseLocalDynamics<AlignedBoxPartByCell>
 {
-    using RemoveRealParticleKernel = typename DespawnRealParticle::ComputingKernel;
+    using RemoveRealParticleKernel = typename DeleteRealParticle::ComputingKernel;
 
   public:
-    DisposerOutflowDeletionCK(AlignedBoxPartByCell &aligned_box_part);
-    virtual ~DisposerOutflowDeletionCK() {};
+    BufferOutflowDeletionCK(AlignedBoxPartByCell &aligned_box_part);
+    virtual ~BufferOutflowDeletionCK() {};
 
     class UpdateKernel
     {
@@ -211,22 +211,17 @@ class DisposerOutflowDeletionCK : public BaseLocalDynamics<AlignedBoxPartByCell>
         void update(size_t index_i, Real dt = 0.0); // only works in sequenced policy
 
       protected:
-        int part_id_;
         AlignedBox *aligned_box_;
         IsDeletable is_delteable_;
         UnsignedInt *total_real_particles_;
         RemoveRealParticleKernel remove_real_particle_;
-        int *buffer_particle_indicator_;
-        Real rho0_;
-        Vecd *pos_;
-        Real *rho_, *p_;
     };
 
   protected:
     int part_id_;
     SingularVariable<AlignedBox> *sv_aligned_box_;
     SingularVariable<UnsignedInt> *sv_total_real_particles_;
-    DespawnRealParticle remove_real_particle_method_;
+    DeleteRealParticle remove_real_particle_method_;
     DiscreteVariable<int> *dv_buffer_particle_indicator_;
     Real rho0_;
     DiscreteVariable<Vecd> *dv_pos_;
