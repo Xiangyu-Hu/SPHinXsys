@@ -47,8 +47,9 @@ void EmitterInflowInjectionCK<AlignedBoxPartType>::UpdateKernel::update(size_t i
 {
     if (aligned_box_->checkUpperBound(pos_[index_i]))
     {
+        Vecd original_position = pos_[index_i];
         create_real_particle_(index_i);
-        pos_[index_i] = aligned_box_->getUpperPeriodic(pos_[index_i]); // Periodic bounding.
+        pos_[index_i] = aligned_box_->getUpperPeriodic(original_position);
         rho_[index_i] = rho0_;
         p_[index_i] = 0.0;
     }
@@ -118,11 +119,12 @@ void BufferEmitterInflowInjectionCK<AlignedBoxPartType, ConditionFunction>::
             buffer_particle_indicator_[index_i] == part_id_ &&
             index_i < *total_real_particles_)
         {
-            size_t new_particle_index = create_real_particle_(index_i);
+            Vecd original_position = pos_[index_i];
+            UnsignedInt new_particle_index = create_real_particle_(index_i);
             buffer_particle_indicator_[new_particle_index] = 0;
-            pos_[index_i] = aligned_box_->getUpperPeriodic(pos_[index_i]);
+            pos_[index_i] = aligned_box_->getUpperPeriodic(original_position);
             p_[index_i] = condition_(index_i, *physical_time_);
-            rho_[index_i] = p_[index_i] / pow(sound_speed_, 2.0) + rho0_;
+            rho_[index_i] = p_[index_i] / pow(sound_speed_, 2) + rho0_;
             previous_surface_indicator_[index_i] = 1;
         }
     }

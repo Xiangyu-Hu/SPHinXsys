@@ -138,9 +138,9 @@ class InletInflowPressureConditionRight : public BaseStateCondition
         ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
             : BaseStateCondition::ComputingKernel(ex_policy, encloser) {}
 
-        Real operator()(size_t /*index_i*/, Real /*time*/)
+        Real operator()(size_t index_i, Real time)
         {
-            return Outlet_pressure;
+            return 0.1; //Outlet_pressure;
         }
     };
 };
@@ -441,7 +441,6 @@ int main(int ac, char *av[])
                 }
             }
             number_of_iterations++;
-            /** inflow emitter injection*/
             bidirectional_velocity_condition_left.injectParticles();
             bidirectional_pressure_condition_right.injectParticles();
             bidirectional_velocity_condition_left.deleteParticles();

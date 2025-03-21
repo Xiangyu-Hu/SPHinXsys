@@ -90,7 +90,7 @@ class DummyPressure : public BaseStateCondition
         ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
             : BaseStateCondition::ComputingKernel(ex_policy, encloser) {}
 
-        Real operator()(size_t index_i, Real /*time*/)
+        Real operator()(size_t index_i, Real time)
         {
             return p_[index_i];
         }
