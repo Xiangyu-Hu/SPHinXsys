@@ -188,6 +188,23 @@ class DisposerOutflowDeletionCK : public BaseLocalDynamics<AlignedBoxPartByCell>
 
     class UpdateKernel
     {
+        struct IsDeletable
+        {
+            int part_id_;
+            AlignedBox *aligned_box_;
+            Vecd *pos_;
+            int *buffer_particle_indicator_;
+            IsDeletable(int part_id, AlignedBox *aligned_box,
+                        Vecd *pos, int *buffer_particle_indicator)
+                : part_id_(part_id), aligned_box_(aligned_box), pos_(pos),
+                  buffer_particle_indicator_(buffer_particle_indicator) {}
+            bool operator()(size_t index_i) const
+            {
+                return buffer_particle_indicator_[index_i] == part_id_ &&
+                       aligned_box_->checkLowerBound(pos_[index_i]);
+            }
+        };
+
       public:
         template <class ExecutionPolicy, class EncloserType>
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
@@ -196,6 +213,7 @@ class DisposerOutflowDeletionCK : public BaseLocalDynamics<AlignedBoxPartByCell>
       protected:
         int part_id_;
         AlignedBox *aligned_box_;
+        IsDeletable is_delteable_;
         UnsignedInt *total_real_particles_;
         RemoveRealParticleKernel remove_real_particle_;
         int *buffer_particle_indicator_;
@@ -209,8 +227,8 @@ class DisposerOutflowDeletionCK : public BaseLocalDynamics<AlignedBoxPartByCell>
     SingularVariable<AlignedBox> *sv_aligned_box_;
     SingularVariable<UnsignedInt> *sv_total_real_particles_;
     DespawnRealParticle remove_real_particle_method_;
-    Real rho0_;
     DiscreteVariable<int> *dv_buffer_particle_indicator_;
+    Real rho0_;
     DiscreteVariable<Vecd> *dv_pos_;
     DiscreteVariable<Real> *dv_rho_, *dv_p_;
 };

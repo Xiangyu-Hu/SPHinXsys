@@ -37,7 +37,8 @@ DespawnRealParticle::ComputingKernel::
     ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : total_real_particles_(encloser.sv_total_real_particles_->DelegatedData(ex_policy)),
       real_particles_bound_(encloser.real_particles_bound_),
-      original_id_(encloser.dv_original_id_->DelegatedData(ex_policy))
+      original_id_(encloser.dv_original_id_->DelegatedData(ex_policy)),
+      sorted_id_(encloser.dv_sorted_id_->DelegatedData(ex_policy))
 {
     static_assert(std::is_base_of<SequencedPolicy, ExecutionPolicy>::value,
                   "SequencedPolicy is not the base of ExecutionPolicy!");

@@ -68,7 +68,10 @@ class SpawnRealParticle
                 copy_particle_state_(copyable_state_data_arrays_, new_original_id, index_i);
                 original_id_[new_original_id] = new_original_id;
             }
-
+            else
+            {
+                return particles_bound_;
+            }
             return new_original_id;
         };
 
@@ -85,7 +88,7 @@ class DespawnRealParticle
 {
     ParticleVariables &evolving_variables_;
     DiscreteVariableArrays copyable_states_;
-    DiscreteVariable<UnsignedInt> *dv_original_id_;
+    DiscreteVariable<UnsignedInt> *dv_original_id_, *dv_sorted_id_;
     SingularVariable<UnsignedInt> *sv_total_real_particles_;
     UnsignedInt real_particles_bound_;
 
@@ -98,23 +101,28 @@ class DespawnRealParticle
         template <class ExecutionPolicy, class EncloserType>
         ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
 
-        UnsignedInt operator()(UnsignedInt index_i)
+        template <class IsDeletable>
+        void operator()(UnsignedInt index_i, const IsDeletable &is_deletable)
         {
-            UnsignedInt last_real_particle_index = *total_real_particles_ - 1;
+            AtomicRef<UnsignedInt> total_real_particles_ref(*total_real_particles_);
+            UnsignedInt last_real_particle_index = total_real_particles_ref.fetch_sub(1) - 1;
+            while (is_deletable(last_real_particle_index))
+            {
+                last_real_particle_index = total_real_particles_ref.fetch_sub(1) - 1;
+            }
+
             if (index_i < last_real_particle_index)
             {
-                const UnsignedInt temp_original_id_index_i = original_id_[index_i];
                 copy_particle_state_(copyable_state_data_arrays_, index_i, last_real_particle_index);
-                original_id_[last_real_particle_index] = temp_original_id_index_i;
+                original_id_[index_i] = original_id_[last_real_particle_index];
+                sorted_id_[original_id_[index_i]] = index_i;
             }
-            *total_real_particles_ -= 1;
-            return last_real_particle_index;
         };
 
       protected:
         UnsignedInt *total_real_particles_;
         UnsignedInt real_particles_bound_;
-        UnsignedInt *original_id_;
+        UnsignedInt *original_id_, *sorted_id_;
         VariableDataArrays copyable_state_data_arrays_;
         OperationOnDataAssemble<VariableDataArrays, CopyParticleStateCK> copy_particle_state_;
     };

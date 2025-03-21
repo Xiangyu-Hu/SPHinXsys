@@ -25,7 +25,8 @@ InflowConditionCK<AlignedBoxPartType, ConditionFunction>::UpdateKernel::
       condition_(ex_policy, encloser.condition_function_) {}
 //=================================================================================================//
 template <class AlignedBoxPartType, class ConditionFunction>
-void InflowConditionCK<AlignedBoxPartType, ConditionFunction>::UpdateKernel::update(size_t index_i, Real dt)
+void InflowConditionCK<AlignedBoxPartType, ConditionFunction>::
+    UpdateKernel::update(size_t index_i, Real dt)
 {
     condition_(aligned_box_, index_i, *physical_time_);
 }
@@ -39,9 +40,7 @@ EmitterInflowInjectionCK<AlignedBoxPartType>::UpdateKernel::
       rho0_(encloser.rho0_),
       pos_(encloser.dv_pos_->DelegatedData(ex_policy)),
       rho_(encloser.dv_rho_->DelegatedData(ex_policy)),
-      p_(encloser.dv_p_->DelegatedData(ex_policy))
-{
-}
+      p_(encloser.dv_p_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <typename AlignedBoxPartType>
 void EmitterInflowInjectionCK<AlignedBoxPartType>::UpdateKernel::update(size_t index_i, Real dt)
@@ -70,8 +69,9 @@ template <typename AlignedBoxPartType, class ConditionFunction>
 BufferEmitterInflowInjectionCK<AlignedBoxPartType, ConditionFunction>::
     BufferEmitterInflowInjectionCK(AlignedBoxPartType &aligned_box_part, ParticleBuffer<Base> &buffer)
     : BaseLocalDynamics<AlignedBoxPartType>(aligned_box_part),
-      buffer_(buffer),
+      part_id_(aligned_box_part.getPartID()), buffer_(buffer),
       sv_aligned_box_(aligned_box_part.svAlignedBox()),
+      sv_total_real_particles_(this->particles_->svTotalRealParticles()),
       create_real_particle_method_(this->particles_),
       rho0_(this->particles_->getBaseMaterial().ReferenceDensity()),
       sound_speed_(0.0),
@@ -134,6 +134,10 @@ DisposerOutflowDeletionCK::UpdateKernel::
     UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : part_id_(encloser.part_id_),
       aligned_box_(encloser.sv_aligned_box_->DelegatedData(ex_policy)),
+      is_delteable_(encloser.part_id_,
+                    encloser.sv_aligned_box_->DelegatedData(ex_policy),
+                    encloser.dv_pos_->DelegatedData(ex_policy),
+                    encloser.dv_buffer_particle_indicator_->DelegatedData(ex_policy)),
       total_real_particles_(encloser.sv_total_real_particles_->DelegatedData(ex_policy)),
       remove_real_particle_(ex_policy, encloser.remove_real_particle_method_),
       buffer_particle_indicator_(encloser.dv_buffer_particle_indicator_->DelegatedData(ex_policy)),
@@ -146,11 +150,9 @@ void DisposerOutflowDeletionCK::UpdateKernel::update(size_t index_i, Real dt)
 {
     if (!aligned_box_->checkInBounds(pos_[index_i]))
     {
-        while (aligned_box_->checkLowerBound(pos_[index_i]) &&
-               buffer_particle_indicator_[index_i] == part_id_ &&
-               index_i < *total_real_particles_)
+        if (is_delteable_(index_i))
         {
-            remove_real_particle_(index_i);
+            remove_real_particle_(index_i, is_delteable_);
         }
     }
 }

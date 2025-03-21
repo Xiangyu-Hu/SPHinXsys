@@ -41,18 +41,15 @@ template <class AlignedBoxPartType, class KernelCorrectionType, class ConditionF
 void PressureConditionCK<AlignedBoxPartType, KernelCorrectionType, ConditionFunction>::UpdateKernel::
     update(size_t index_i, Real dt)
 {
-    if (buffer_particle_indicator_[index_i] != 0)
+    if (aligned_box_->checkContain(pos_[index_i]))
     {
-        if (aligned_box_->checkInBounds(pos_[index_i]))
-        {
-            Real pressure = condition_(index_i, *physical_time_);
-            Vecd zero_gradient_residue = this->zero_gradient_residue_[index_i];
-            vel_[index_i] -= correction_(index_i) * zero_gradient_residue * pressure / rho_[index_i] * dt;
+        Real pressure = condition_(index_i, *physical_time_);
+        Vecd zero_gradient_residue = this->zero_gradient_residue_[index_i];
+        vel_[index_i] -= correction_(index_i) * zero_gradient_residue * pressure / rho_[index_i] * dt;
 
-            Vecd frame_velocity = Vecd::Zero();
-            frame_velocity[xAxis] = this->transform_->xformBaseVecToFrame(vel_[index_i])[xAxis];
-            vel_[index_i] = transform_->xformFrameVecToBase(frame_velocity);
-        }
+        Vecd frame_velocity = Vecd::Zero();
+        frame_velocity[xAxis] = this->transform_->xformBaseVecToFrame(vel_[index_i])[xAxis];
+        vel_[index_i] = transform_->xformFrameVecToBase(frame_velocity);
     }
 }
 //=================================================================================================//
