@@ -83,7 +83,7 @@ class InletInflowCondition : public BaseStateCondition
         ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
             : BaseStateCondition::ComputingKernel(ex_policy, encloser){};
 
-        void operator()(AlignedBox *aligned_box, UnsignedInt index_i)
+        void operator()(AlignedBox *aligned_box, UnsignedInt index_i, Real /*time*/)
         {
             vel_[index_i] = Vec2d(2.0, 0.0);
         };
@@ -129,7 +129,6 @@ int main(int ac, char *av[])
     // Define the main execution policy for this case.
     //----------------------------------------------------------------------
     using MainExecutionPolicy = execution::ParallelDevicePolicy;
-    using SequencedExecutionPolicy = execution::SequencedDevicePolicy;
     //----------------------------------------------------------------------
     // Define the numerical methods used in the simulation.
     // Note that there may be data dependence on the sequence of constructions.
@@ -161,10 +160,10 @@ int main(int ac, char *av[])
         fluid_density_regularization(water_body_inner, water_wall_contact);
 
     ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AdvectionTimeStepCK> fluid_advection_time_step(water_body, U_f);
-    ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticTimeStepCK> fluid_acoustic_time_step(water_body);
+    ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticTimeStepCK<>> fluid_acoustic_time_step(water_body);
 
     StateDynamics<MainExecutionPolicy, fluid_dynamics::InflowConditionCK<AlignedBoxPartByParticle, InletInflowCondition>> inflow_condition(emitter);
-    StateDynamics<SequencedExecutionPolicy, fluid_dynamics::EmitterInflowInjectionCK> emitter_injection(emitter, inlet_buffer);
+    StateDynamics<MainExecutionPolicy, fluid_dynamics::EmitterInflowInjectionCK<AlignedBoxPartByParticle>> emitter_injection(emitter, inlet_buffer);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.

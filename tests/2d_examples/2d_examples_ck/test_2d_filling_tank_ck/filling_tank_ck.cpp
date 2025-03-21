@@ -83,9 +83,9 @@ class InletInflowCondition : public BaseStateCondition
         ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
             : BaseStateCondition::ComputingKernel(ex_policy, encloser){};
 
-        void operator()(AlignedBox *aligned_box, UnsignedInt index_i)
+        void operator()(AlignedBox *aligned_box, UnsignedInt index_i, Real /*time*/)
         {
-            vel_[index_i] = Vec2d(2.0, 0.0);
+            vel_[index_i] = Vec2d(U_f, 0.0);
         };
     };
 };
@@ -129,7 +129,6 @@ int main(int ac, char *av[])
     // Define the main execution policy for this case.
     //----------------------------------------------------------------------
     using MainExecutionPolicy = execution::ParallelPolicy;
-    using SequencedExecutionPolicy = execution::SequencedPolicy;
     //----------------------------------------------------------------------
     // Define the numerical methods used in the simulation.
     // Note that there may be data dependence on the sequence of constructions.
@@ -161,19 +160,21 @@ int main(int ac, char *av[])
         fluid_density_regularization(water_body_inner, water_wall_contact);
 
     ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AdvectionTimeStepCK> fluid_advection_time_step(water_body, U_f);
-    ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticTimeStepCK> fluid_acoustic_time_step(water_body);
+    ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticTimeStepCK<>> fluid_acoustic_time_step(water_body);
 
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::FreeSurfaceIndicationComplexSpatialTemporalCK>
         fluid_boundary_indicator(water_body_inner, water_wall_contact);
 
     StateDynamics<MainExecutionPolicy, fluid_dynamics::InflowConditionCK<AlignedBoxPartByParticle, InletInflowCondition>> inflow_condition(emitter);
-    StateDynamics<SequencedExecutionPolicy, fluid_dynamics::EmitterInflowInjectionCK> emitter_injection(emitter, inlet_buffer);
+    StateDynamics<MainExecutionPolicy, fluid_dynamics::EmitterInflowInjectionCK<AlignedBoxPartByParticle>> emitter_injection(emitter, inlet_buffer);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
     IOEnvironment io_environment(sph_system);
     BodyStatesRecordingToVtp body_states_recording(sph_system);
+    body_states_recording.addToWrite<int>(water_body, "Indicator");
+
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<MainExecutionPolicy, TotalMechanicalEnergyCK>>
         write_water_mechanical_energy(water_body, gravity);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<MainExecutionPolicy, Real>>
@@ -217,6 +218,8 @@ int main(int ac, char *av[])
         while (integration_time < output_interval)
         {
             fluid_density_regularization.exec();
+            fluid_boundary_indicator.exec();
+
             water_advection_step_setup.exec();
             Real advection_dt = fluid_advection_time_step.exec();
             fluid_boundary_indicator.exec();
@@ -251,6 +254,7 @@ int main(int ac, char *av[])
             {
                 particle_sort.exec();
             }
+
             water_cell_linked_list.exec();
             water_body_update_complex_relation.exec();
             fluid_observer_contact_relation.exec();

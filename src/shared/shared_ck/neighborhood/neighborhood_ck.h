@@ -82,20 +82,5 @@ class Neighbor<>
     Vecd *source_pos_;
     Vecd *target_pos_;
 };
-
-class NeighborList
-{
-  public:
-    template <class ExecutionPolicy>
-    NeighborList(const ExecutionPolicy &ex_policy,
-                 DiscreteVariable<UnsignedInt> *dv_neighbor_index,
-                 DiscreteVariable<UnsignedInt> *dv_particle_offset);
-
-  protected:
-    UnsignedInt *neighbor_index_;
-    UnsignedInt *particle_offset_;
-    inline UnsignedInt FirstNeighbor(UnsignedInt i) { return particle_offset_[i]; };
-    inline UnsignedInt LastNeighbor(UnsignedInt i) { return particle_offset_[i + 1]; };
-};
 } // namespace SPH
 #endif // NEIGHBORHOOD_CK_H

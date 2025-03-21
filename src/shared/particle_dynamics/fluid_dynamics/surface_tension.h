@@ -24,7 +24,9 @@
  * @file surface_tension.h
  * @brief A momentum-conservative formulation for surface tension is used here
  * to reach a long-term stable simulation.
- * @details TBD.
+ * @details The zero-surface-energy modes in surface tension are identified and 
+ * sovlved by introducting a penalty force. The method can be used to simulate 
+ * surface tension in multiphase flows with extra high Reynolds numbers and Weber numbers.
  * @author	Shuaihao Zhang and Xiangyu Hu
  */
 
@@ -41,15 +43,16 @@ namespace fluid_dynamics
 class SurfaceTensionStress : public LocalDynamics, public DataDelegateContact
 {
   public:
-    explicit SurfaceTensionStress(BaseContactRelation &contact_relation, StdVec<Real> contact_surface_tension);
+    explicit SurfaceTensionStress(BaseContactRelation &contact_relation, Real surface_tension_coeff);
     virtual ~SurfaceTensionStress(){};
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
-    Vecd *color_gradient_;
+    Vecd *color_gradient_, *norm_direction_;
     Matd *surface_tension_stress_;
-    StdVec<Real> contact_surface_tension_, contact_fraction_;
+    StdVec<Real> contact_fraction_;
     StdVec<Real *> contact_Vol_;
+    Real &surface_tension_coeff_;
 };
 
 template <typename... T>
@@ -66,32 +69,45 @@ class SurfaceStressForce<DataDelegationType>
 
   protected:
     Real *rho_, *mass_, *Vol_;
-    Vecd *color_gradient_, *surface_tension_force_;
+    Vecd *color_gradient_, *surface_tension_force_, *norm_direction_;
     Matd *surface_tension_stress_;
+    Real &surface_tension_coeff_;
 };
 
 template <>
 class SurfaceStressForce<Inner<>> : public SurfaceStressForce<DataDelegateInner>
 {
   public:
-    SurfaceStressForce(BaseInnerRelation &inner_relation);
+    explicit SurfaceStressForce(BaseInnerRelation &inner_relation, Real hourglass_control_coeff = 4.5);
+    template <typename BodyRelationType, typename FirstArg>
+    explicit SurfaceStressForce(DynamicsArgs<BodyRelationType, FirstArg> parameters)
+        : SurfaceStressForce(parameters.identifier_, std::get<0>(parameters.others_)){};
     virtual ~SurfaceStressForce(){};
     void interaction(size_t index_i, Real dt = 0.0);
+
+  protected:
+    Real hourglass_control_coeff_;
 };
 
 template <>
 class SurfaceStressForce<Contact<>> : public SurfaceStressForce<DataDelegateContact>
 {
   public:
-    explicit SurfaceStressForce(BaseContactRelation &contact_relation);
+    explicit SurfaceStressForce(BaseContactRelation &contact_relation, Real hourglass_control_coeff = 4.5);
+    template <typename BodyRelationType, typename FirstArg>
+    explicit SurfaceStressForce(DynamicsArgs<BodyRelationType, FirstArg> parameters)
+        : SurfaceStressForce(parameters.identifier_, std::get<0>(parameters.others_)){};
     virtual ~SurfaceStressForce(){};
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
     StdVec<Real *> contact_Vol_;
-    StdVec<Vecd *> contact_color_gradient_;
+    StdVec<Vecd *> contact_color_gradient_, contact_norm_direction_;
     StdVec<Matd *> contact_surface_tension_stress_;
     StdVec<Real> contact_surface_tension_, contact_fraction_;
+
+  protected:
+    Real hourglass_control_coeff_;
 };
 
 using SurfaceStressForceComplex = ComplexInteraction<SurfaceStressForce<Inner<>, Contact<>>>;

@@ -95,13 +95,24 @@ class AlignedBox : public TransformGeometry<GeometricBox>
     Vecd HalfSize() { return halfsize_; }
     bool checkNearSurface(const Vecd &probe_point, Real threshold);
     bool checkNotFar(const Vecd &probe_point, Real threshold);
-    bool checkInBounds(const Vecd &probe_point, Real lower_bound_fringe = 0.0, Real upper_bound_fringe = 0.0);
+    bool checkInBounds(const Vecd &probe_point, Real lower_bound_fringe = 0.0, Real upper_bound_fringe = 0.0)
+    {
+        Vecd position_in_frame = transform_.shiftBaseStationToFrame(probe_point);
+        return position_in_frame[alignment_axis_] >= -halfsize_[alignment_axis_] - lower_bound_fringe &&
+                       position_in_frame[alignment_axis_] <= halfsize_[alignment_axis_] + upper_bound_fringe
+                   ? true
+                   : false;
+    };
     bool checkUpperBound(const Vecd &probe_point, Real upper_bound_fringe = 0.0)
     {
         Vecd position_in_frame = transform_.shiftBaseStationToFrame(probe_point);
         return position_in_frame[alignment_axis_] > halfsize_[alignment_axis_] + upper_bound_fringe ? true : false;
     };
-    bool checkLowerBound(const Vecd &probe_point, Real lower_bound_fringe = 0.0);
+    bool checkLowerBound(const Vecd &probe_point, Real lower_bound_fringe = 0.0)
+    {
+        Vecd position_in_frame = transform_.shiftBaseStationToFrame(probe_point);
+        return position_in_frame[alignment_axis_] < -halfsize_[alignment_axis_] - lower_bound_fringe ? true : false;
+    }
     bool checkNearUpperBound(const Vecd &probe_point, Real threshold);
     bool checkNearLowerBound(const Vecd &probe_point, Real threshold);
     Vecd getUpperPeriodic(const Vecd &probe_point)
