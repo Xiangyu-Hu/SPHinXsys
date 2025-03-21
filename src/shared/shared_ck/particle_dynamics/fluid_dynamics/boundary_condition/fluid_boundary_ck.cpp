@@ -39,10 +39,7 @@ BufferOutflowDeletionCK::
       remove_real_particle_method_(particles_),
       dv_buffer_particle_indicator_(
           particles_->registerStateVariableOnly<int>("BufferParticleIndicator")),
-      rho0_(particles_->getBaseMaterial().ReferenceDensity()),
-      dv_pos_(particles_->getVariableByName<Vecd>("Position")),
-      dv_rho_(particles_->getVariableByName<Real>("Density")),
-      dv_p_(particles_->getVariableByName<Real>("Pressure")) {}
+      dv_pos_(particles_->getVariableByName<Vecd>("Position")) {}
 //=================================================================================================//
 TagBufferParticlesCK::TagBufferParticlesCK(AlignedBoxPartByCell &aligned_box_part)
     : BaseLocalDynamics<AlignedBoxPartByCell>(aligned_box_part),

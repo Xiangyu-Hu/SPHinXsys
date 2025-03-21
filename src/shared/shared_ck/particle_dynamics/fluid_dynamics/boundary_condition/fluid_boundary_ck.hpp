@@ -131,11 +131,10 @@ void BufferEmitterInflowInjectionCK<AlignedBoxPartType, ConditionFunction>::
 template <class ExecutionPolicy, class EncloserType>
 BufferOutflowDeletionCK::UpdateKernel::
     UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-    : part_id_(encloser.part_id_),
-      aligned_box_(encloser.sv_aligned_box_->DelegatedData(ex_policy)),
-      is_delteable_(encloser.part_id_, aligned_box_,
-                    encloser.dv_pos_->DelegatedData(ex_policy),
-                    encloser.dv_buffer_particle_indicator_->DelegatedData(ex_policy)),
+    : aligned_box_(encloser.sv_aligned_box_->DelegatedData(ex_policy)),
+      pos_(encloser.dv_pos_->DelegatedData(ex_policy)),
+      is_deltable_(encloser.part_id_, aligned_box_, pos_,
+                   encloser.dv_buffer_particle_indicator_->DelegatedData(ex_policy)),
       total_real_particles_(encloser.sv_total_real_particles_->DelegatedData(ex_policy)),
       remove_real_particle_(ex_policy, encloser.remove_real_particle_method_) {}
 //=================================================================================================//
@@ -143,9 +142,9 @@ void BufferOutflowDeletionCK::UpdateKernel::update(size_t index_i, Real dt)
 {
     if (!aligned_box_->checkInBounds(pos_[index_i]))
     {
-        if (is_delteable_(index_i) && index_i < *total_real_particles_)
+        if (is_deltable_(index_i) && index_i < *total_real_particles_)
         {
-            remove_real_particle_(index_i, is_delteable_);
+            remove_real_particle_(index_i, is_deltable_);
         }
     }
 }

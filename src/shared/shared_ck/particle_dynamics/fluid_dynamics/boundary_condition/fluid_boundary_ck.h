@@ -212,7 +212,8 @@ class BufferOutflowDeletionCK : public BaseLocalDynamics<AlignedBoxPartByCell>
 
       protected:
         AlignedBox *aligned_box_;
-        IsDeletable is_delteable_;
+        Vecd *pos_;
+        IsDeletable is_deltable_;
         UnsignedInt *total_real_particles_;
         RemoveRealParticleKernel remove_real_particle_;
     };
@@ -223,9 +224,7 @@ class BufferOutflowDeletionCK : public BaseLocalDynamics<AlignedBoxPartByCell>
     SingularVariable<UnsignedInt> *sv_total_real_particles_;
     DeleteRealParticle remove_real_particle_method_;
     DiscreteVariable<int> *dv_buffer_particle_indicator_;
-    Real rho0_;
     DiscreteVariable<Vecd> *dv_pos_;
-    DiscreteVariable<Real> *dv_rho_, *dv_p_;
 };
 
 class TagBufferParticlesCK : public BaseLocalDynamics<AlignedBoxPartByCell>
