@@ -68,7 +68,6 @@ class SpawnRealParticle
                 copy_particle_state_(copyable_state_data_arrays_, new_original_id, index_i);
                 original_id_[new_original_id] = new_original_id;
             }
-
             return new_original_id;
         };
 

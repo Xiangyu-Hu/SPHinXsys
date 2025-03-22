@@ -195,9 +195,10 @@ class BufferEmitterInflowInjectionCK : public BaseLocalDynamics<AlignedBoxPartTy
                     {
                         // if (index_i < this->particles_->TotalRealParticles())
                         {
+                            Vecd original_position = pos_[index_i];
                             size_t new_particle_index = create_real_particle_(index_i);
                             buffer_particle_indicator_[new_particle_index] = 0;
-                            pos_[index_i] = aligned_box_->getUpperPeriodic(pos_[index_i]); // Periodic bounding.
+                            pos_[index_i] = aligned_box_->getUpperPeriodic(original_position); // Periodic bounding.
                             p_[index_i] = condition_(index_i, *physical_time_);
                             rho_[index_i] = p_[index_i] / pow(sound_speed_, 2.0) + rho0_;
                             previous_surface_indicator_[index_i] = 1;
@@ -366,7 +367,7 @@ class PressureBidirectionalConditionCK
                   PressureConditionCK<AlignedBoxPartByCell, KernelCorrectionType, PressureConditionFunction>>
         pressure_condition_;
 
-    StateDynamics<SequencedExecutionPolicy, BufferEmitterInflowInjectionCK<AlignedBoxPartByCell, PressureConditionFunction>> emitter_injection_;
+    StateDynamics<ParallelExecutionPolicy, BufferEmitterInflowInjectionCK<AlignedBoxPartByCell, PressureConditionFunction>> emitter_injection_;
 
     StateDynamics<SequencedExecutionPolicy, DisposerOutflowDeletionCK> disposer_outflow_deletion_;
 
@@ -406,7 +407,7 @@ class NonPrescribedPressure : public BaseStateCondition
             : BaseStateCondition::ComputingKernel(ex_policy, encloser) {}
 
         // Return a fixed or trivial pressure value
-        Real operator()(size_t index_i, Real time)
+        Real operator()(size_t index_i, Real time) const
         {
             return p_[index_i]; // Do nothing!
         }
@@ -429,7 +430,7 @@ class DummyPressure : public BaseStateCondition
         ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
             : BaseStateCondition::ComputingKernel(ex_policy, encloser) {}
 
-        Real operator()(size_t index_i, Real /*time*/)
+        Real operator()(size_t index_i, Real /*time*/) const
         {
             return p_[index_i];
         }
@@ -447,7 +448,7 @@ class VelocityBidirectionalConditionCK
     StateDynamics<ParallelExecutionPolicy, PressureConditionCK<AlignedBoxPartByCell, KernelCorrectionType, DummyPressure>>
         pressure_condition_;
 
-    StateDynamics<SequencedExecutionPolicy, BufferEmitterInflowInjectionCK<AlignedBoxPartByCell, NonPrescribedPressure>> emitter_injection_; // Using NonPrescribedPressure as we do not change pressure
+    StateDynamics<ParallelExecutionPolicy, BufferEmitterInflowInjectionCK<AlignedBoxPartByCell, NonPrescribedPressure>> emitter_injection_; // Using NonPrescribedPressure as we do not change pressure
 
     StateDynamics<SequencedExecutionPolicy, DisposerOutflowDeletionCK> disposer_outflow_deletion_;
 
