@@ -36,20 +36,20 @@ namespace SPH
 {
 namespace fluid_dynamics
 {
-template <typename ParallelExecutionPolicy, typename SequencedExecutionPolicy, class KernelCorrectionType, class VelocityConditionFunction>
+template <typename ExecutionPolicy, class KernelCorrectionType, class VelocityConditionFunction>
 class VelocityBidirectionalConditionCK
 {
   public:
-    StateDynamics<ParallelExecutionPolicy, TagBufferParticlesCK> tag_buffer_particles_;
+    StateDynamics<ExecutionPolicy, TagBufferParticlesCK> tag_buffer_particles_;
 
-    StateDynamics<ParallelExecutionPolicy, fluid_dynamics::InflowConditionCK<AlignedBoxPartByCell, VelocityConditionFunction>> velocity_condition_;
+    StateDynamics<ExecutionPolicy, fluid_dynamics::InflowConditionCK<AlignedBoxPartByCell, VelocityConditionFunction>> velocity_condition_;
 
-    StateDynamics<ParallelExecutionPolicy, PressureConditionCK<AlignedBoxPartByCell, KernelCorrectionType, DummyPressure>>
+    StateDynamics<ExecutionPolicy, PressureConditionCK<AlignedBoxPartByCell, KernelCorrectionType, DummyPressure>>
         pressure_condition_;
 
-    StateDynamics<ParallelExecutionPolicy, BufferEmitterInflowInjectionCK<AlignedBoxPartByCell, NonPrescribedPressure>> emitter_injection_;
+    StateDynamics<ExecutionPolicy, BufferEmitterInflowInjectionCK<AlignedBoxPartByCell, NonPrescribedPressure>> emitter_injection_;
 
-    StateDynamics<ParallelExecutionPolicy, BufferOutflowDeletionCK> disposer_outflow_deletion_;
+    StateDynamics<ExecutionPolicy, BufferOutflowDeletionCK> disposer_outflow_deletion_;
 
     VelocityBidirectionalConditionCK(AlignedBoxPartByCell &emitter_by_cell, ParticleBuffer<Base> &inlet_buffer);
 

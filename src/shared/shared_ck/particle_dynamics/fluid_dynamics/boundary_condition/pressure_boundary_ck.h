@@ -81,28 +81,21 @@ class PressureConditionCK<AlignedBoxPartType, KernelCorrectionType, ConditionFun
     DiscreteVariable<Real> *dv_rho_;
 };
 
-template <typename ParallelExecutionPolicy, typename SequencedExecutionPolicy, class KernelCorrectionType, class PressureConditionFunction>
+template <typename ExecutionPolicy, class KernelCorrectionType, class PressureConditionFunction>
 class PressureBidirectionalConditionCK
 {
   public:
-    StateDynamics<ParallelExecutionPolicy, TagBufferParticlesCK> tag_buffer_particles_;
+    StateDynamics<ExecutionPolicy, TagBufferParticlesCK> tag_buffer_particles_;
 
-    StateDynamics<ParallelExecutionPolicy,
+    StateDynamics<ExecutionPolicy,
                   PressureConditionCK<AlignedBoxPartByCell, KernelCorrectionType, PressureConditionFunction>>
         pressure_condition_;
 
-    StateDynamics<ParallelExecutionPolicy, BufferEmitterInflowInjectionCK<AlignedBoxPartByCell, PressureConditionFunction>> emitter_injection_;
+    StateDynamics<ExecutionPolicy, BufferEmitterInflowInjectionCK<AlignedBoxPartByCell, PressureConditionFunction>> emitter_injection_;
 
-    StateDynamics<SequencedExecutionPolicy, BufferOutflowDeletionCK> disposer_outflow_deletion_;
+    StateDynamics<ExecutionPolicy, BufferOutflowDeletionCK> disposer_outflow_deletion_;
 
-    PressureBidirectionalConditionCK(AlignedBoxPartByCell &emitter_by_cell,
-                                     ParticleBuffer<Base> &inlet_buffer)
-        : tag_buffer_particles_(emitter_by_cell),
-          pressure_condition_(emitter_by_cell),
-          emitter_injection_(emitter_by_cell, inlet_buffer),
-          disposer_outflow_deletion_(emitter_by_cell)
-    {
-    }
+    PressureBidirectionalConditionCK(AlignedBoxPartByCell &emitter_by_cell, ParticleBuffer<Base> &inlet_buffer);
 
     /// Tag (or flag) particles in the buffer.
     void tagBufferParticles() { tag_buffer_particles_.exec(); }

@@ -53,6 +53,15 @@ void PressureConditionCK<AlignedBoxPartType, KernelCorrectionType, ConditionFunc
     }
 }
 //=================================================================================================//
+template <typename ExecutionPolicy, class KernelCorrectionType, class PressureConditionFunction>
+PressureBidirectionalConditionCK<ExecutionPolicy, KernelCorrectionType, PressureConditionFunction>::
+    PressureBidirectionalConditionCK(AlignedBoxPartByCell &emitter_by_cell,
+                                     ParticleBuffer<Base> &inlet_buffer)
+        : tag_buffer_particles_(emitter_by_cell),
+          pressure_condition_(emitter_by_cell),
+          emitter_injection_(emitter_by_cell, inlet_buffer),
+          disposer_outflow_deletion_(emitter_by_cell){}
+//=================================================================================================//
 } // namespace fluid_dynamics
 } // namespace SPH
 #endif // PRESSURE_BOUNDARY_CK_HPP
