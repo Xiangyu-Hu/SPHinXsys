@@ -154,8 +154,8 @@ void PressureConditionCK<AlignedBoxPartType, KernelCorrectionType, ConditionFunc
         if (aligned_box_->checkInBounds(pos_[index_i]))
         {
             Real pressure = condition_(index_i, *physical_time_);
-            Vecd zero_gradient_residue = this->zero_gradient_residue_[index_i];
-            vel_[index_i] -= correction_(index_i) * zero_gradient_residue * pressure / rho_[index_i] * dt;
+            Vecd corrected_gradient_residue = correction_(index_i) * zero_gradient_residue_[index_i];
+            vel_[index_i] += pressure * dt / rho_[index_i] * corrected_gradient_residue;
 
             Vecd frame_velocity = Vecd::Zero();
             frame_velocity[xAxis] = this->transform_->xformBaseVecToFrame(vel_[index_i])[xAxis];

@@ -378,7 +378,7 @@ class PressureBidirectionalConditionCK
                   PressureConditionCK<AlignedBoxPartByCell, KernelCorrectionType, PressureConditionFunction>>
         pressure_condition_;
 
-    StateDynamics<SequencedExecutionPolicy, BufferEmitterInflowInjectionCK<AlignedBoxPartByCell, PressureConditionFunction>> emitter_injection_;
+    StateDynamics<ParallelExecutionPolicy, BufferEmitterInflowInjectionCK<AlignedBoxPartByCell, PressureConditionFunction>> emitter_injection_;
 
     StateDynamics<SequencedExecutionPolicy, DisposerOutflowDeletionCK> disposer_outflow_deletion_;
 
@@ -418,7 +418,7 @@ class NonPrescribedPressure : public BaseStateCondition
             : BaseStateCondition::ComputingKernel(ex_policy, encloser) {}
 
         // Return a fixed or trivial pressure value
-        Real operator()(size_t index_i, Real time)
+        Real operator()(size_t index_i, Real time) const
         {
             return p_[index_i]; // Do nothing!
         }
@@ -441,7 +441,7 @@ class DummyPressure : public BaseStateCondition
         ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
             : BaseStateCondition::ComputingKernel(ex_policy, encloser) {}
 
-        Real operator()(size_t index_i, Real /*time*/)
+        Real operator()(size_t index_i, Real /*time*/) const
         {
             return p_[index_i];
         }
@@ -459,7 +459,7 @@ class VelocityBidirectionalConditionCK
     StateDynamics<ParallelExecutionPolicy, PressureConditionCK<AlignedBoxPartByCell, KernelCorrectionType, DummyPressure>>
         pressure_condition_;
 
-    StateDynamics<SequencedExecutionPolicy, BufferEmitterInflowInjectionCK<AlignedBoxPartByCell, NonPrescribedPressure>> emitter_injection_; // Using NonPrescribedPressure as we do not change pressure
+    StateDynamics<ParallelExecutionPolicy, BufferEmitterInflowInjectionCK<AlignedBoxPartByCell, NonPrescribedPressure>> emitter_injection_; // Using NonPrescribedPressure as we do not change pressure
 
     StateDynamics<SequencedExecutionPolicy, DisposerOutflowDeletionCK> disposer_outflow_deletion_;
 
