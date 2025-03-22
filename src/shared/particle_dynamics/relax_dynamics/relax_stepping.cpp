@@ -38,6 +38,7 @@ void RelaxationResidue<Inner<Implicit>>::interaction(size_t index_i, Real dt)
     ErrorAndParameters<Vecd, Matd, Matd> error_and_parameters = computeErrorAndParameters(index_i, dt);
     updateStates(index_i, dt, error_and_parameters);
     residue_[index_i] = -error_and_parameters.error_ / dt / dt;
+    kinetic_energy_[index_i] = residue_[index_i].norm();
 }
 //=================================================================================================//
 ErrorAndParameters<Vecd, Matd, Matd> RelaxationResidue<Inner<Implicit>>::
@@ -81,16 +82,26 @@ void RelaxationResidue<Inner<Implicit>>::updateStates(size_t index_i, Real dt,
     }
 }
 //=================================================================================================//
+void RelaxationResidue<Inner<LevelSetCorrection, Implicit>>::interaction(size_t index_i, Real dt)
+{
+    ErrorAndParameters<Vecd, Matd, Matd> error_and_parameters = computeErrorAndParameters(index_i, dt);
+    updateStates(index_i, dt, error_and_parameters);
+    residue_[index_i] = -error_and_parameters.error_ / dt / dt;
+    kinetic_energy_[index_i] = residue_[index_i].norm();
+}
+//=================================================================================================//
 ErrorAndParameters<Vecd, Matd, Matd> RelaxationResidue<Inner<LevelSetCorrection, Implicit>>::
 computeErrorAndParameters(size_t index_i, Real dt)
 {
     ErrorAndParameters<Vecd, Matd, Matd> error_and_parameters =
         RelaxationResidue<Inner<Implicit>>::computeErrorAndParameters(index_i, dt);
+    Real overlap = level_set_shape_.computeKernelIntegral(pos_[index_i],
+        sph_adaptation_->SmoothingLengthRatio(index_i)) * dt * dt;
 
-    error_and_parameters.error_ += 2.0 * level_set_shape_.computeKernelGradientIntegral(this->pos_[index_i],
-            this->sph_adaptation_->SmoothingLengthRatio(index_i)) * dt * dt;
-    error_and_parameters.a_ -= 2.0 * level_set_shape_.computeKernelSecondGradientIntegral(this->pos_[index_i],
-            this->sph_adaptation_->SmoothingLengthRatio(index_i)) * dt * dt;
+    error_and_parameters.error_ += 2.0 * level_set_shape_.computeKernelGradientIntegral(pos_[index_i],
+            sph_adaptation_->SmoothingLengthRatio(index_i)) * dt * dt * (1 + overlap);
+    error_and_parameters.a_ -= 2.0 * level_set_shape_.computeKernelSecondGradientIntegral(pos_[index_i],
+            sph_adaptation_->SmoothingLengthRatio(index_i)) * dt * dt * (1 + overlap);
 
     return error_and_parameters;
 }

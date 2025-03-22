@@ -82,6 +82,9 @@ void MultilevelLevelSet::registerProbes(size_t level)
     probe_kernel_gradient_integral_set_.push_back(
         probe_kernel_gradient_integral_vector_keeper_
             .template createPtr<ProbeKernelGradientIntegral>(*mesh_data_set_[level]));
+    probe_kernel_second_gradient_integral_set_.push_back(
+        probe_kernel_second_gradient_integral_vector_keeper_
+            .template createPtr<ProbeKernelSecondGradientIntegral>(*mesh_data_set_[level]));
 }
 //=================================================================================================//
 size_t MultilevelLevelSet::getCoarseLevel(Real h_ratio)

@@ -15,6 +15,7 @@ RelaxationResidue<Base, DataDelegationType>::RelaxationResidue(BaseRelationType 
       sph_adaptation_(&this->sph_body_.getSPHAdaptation()),
       kernel_(base_relation.getSPHBody().getSPHAdaptation().getKernel()),
       Vol_(this->particles_->template getVariableDataByName<Real>("VolumetricMeasure")),
+      kinetic_energy_(this->particles_->template registerStateVariable<Real>("ParticleKineticEnergy")),
       pos_(this->particles_->template getVariableDataByName<Vecd>("Position")),
       residue_(this->particles_->template registerStateVariable<Vecd>("ZeroOrderResidue")){}
 //=================================================================================================//

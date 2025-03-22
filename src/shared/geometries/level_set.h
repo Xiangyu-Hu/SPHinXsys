@@ -60,6 +60,7 @@ class MultilevelLevelSet : public BaseMeshField
     Vecd probeKernelGradientIntegral(const Vecd &position, Real h_ratio = 1.0);
     Vecd probeKernelGradientIntegral(const Vecd &position);
     Matd probeKernelSecondGradientIntegral(const Vecd& position, Real h_ratio = 1.0);
+    Matd probeKerenlSecondGradientIntegral(const Vecd& position);
     StdVec<MeshWithGridDataPackagesType *> getMeshLevels() { return mesh_data_set_; };
 
     void writeMeshFieldToPlt(std::ofstream &output_file) override
@@ -92,6 +93,7 @@ class MultilevelLevelSet : public BaseMeshField
     UniquePtrsKeeper<ProbeLevelSetGradient> probe_level_set_gradient_vector_keeper_;
     UniquePtrsKeeper<ProbeKernelIntegral> probe_kernel_integral_vector_keeper_;
     UniquePtrsKeeper<ProbeKernelGradientIntegral> probe_kernel_gradient_integral_vector_keeper_;
+    UniquePtrsKeeper<ProbeKernelSecondGradientIntegral> probe_kernel_second_gradient_integral_vector_keeper_;
 
     UniquePtr<CleanInterface> clean_interface;
     UniquePtr<CorrectTopology> correct_topology;

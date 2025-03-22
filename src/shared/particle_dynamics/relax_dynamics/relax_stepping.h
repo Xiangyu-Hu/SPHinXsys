@@ -72,7 +72,7 @@ class RelaxationResidue<Base, DataDelegationType>
   protected:
     SPHAdaptation *sph_adaptation_;
     Kernel* kernel_;
-    Real *Vol_;
+    Real *Vol_, *kinetic_energy_;
     Vecd *pos_, *residue_;
 };
 
