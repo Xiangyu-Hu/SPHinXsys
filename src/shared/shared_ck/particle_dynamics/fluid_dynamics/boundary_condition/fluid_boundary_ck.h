@@ -380,7 +380,7 @@ class PressureBidirectionalConditionCK
 
     StateDynamics<ParallelExecutionPolicy, BufferEmitterInflowInjectionCK<AlignedBoxPartByCell, PressureConditionFunction>> emitter_injection_;
 
-    StateDynamics<SequencedExecutionPolicy, DisposerOutflowDeletionCK> disposer_outflow_deletion_;
+    StateDynamics<ParallelExecutionPolicy, DisposerOutflowDeletionCK> disposer_outflow_deletion_;
 
     PressureBidirectionalConditionCK(AlignedBoxPartByCell &emitter_by_cell,
                                      ParticleBuffer<Base> &inlet_buffer)
@@ -461,7 +461,7 @@ class VelocityBidirectionalConditionCK
 
     StateDynamics<ParallelExecutionPolicy, BufferEmitterInflowInjectionCK<AlignedBoxPartByCell, NonPrescribedPressure>> emitter_injection_; // Using NonPrescribedPressure as we do not change pressure
 
-    StateDynamics<SequencedExecutionPolicy, DisposerOutflowDeletionCK> disposer_outflow_deletion_;
+    StateDynamics<ParallelExecutionPolicy, DisposerOutflowDeletionCK> disposer_outflow_deletion_;
 
     VelocityBidirectionalConditionCK(AlignedBoxPartByCell &emitter_by_cell,
                                      ParticleBuffer<Base> &inlet_buffer)

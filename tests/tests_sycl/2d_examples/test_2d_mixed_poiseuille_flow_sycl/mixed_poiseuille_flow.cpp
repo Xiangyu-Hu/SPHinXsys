@@ -443,15 +443,10 @@ int main(int ac, char *av[])
             }
             number_of_iterations++;
             /** inflow emitter injection*/
-            std::cout << "I am here A." << std::endl;
             bidirectional_velocity_condition_left.injectParticles();
-            std::cout << "I am here B." << std::endl;
             bidirectional_pressure_condition_right.injectParticles();
-            std::cout << "I am here C." << std::endl;
             bidirectional_velocity_condition_left.deleteParticles();
-            std::cout << "I am here D." << std::endl;
             bidirectional_pressure_condition_right.deleteParticles();
-            std::cout << "I am here E." << std::endl;
             /** Update cell linked list and configuration. */
             if (number_of_iterations % 100 == 0 && number_of_iterations != 1)
             {
