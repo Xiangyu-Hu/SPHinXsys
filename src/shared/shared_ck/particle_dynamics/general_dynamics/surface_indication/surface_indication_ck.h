@@ -1,8 +1,8 @@
 #ifndef SURFACE_INDICATION_CK_H
 #define SURFACE_INDICATION_CK_H
 
-#include "base_general_dynamics.h"
 #include "base_fluid_dynamics.h"
+#include "base_general_dynamics.h"
 #include "interaction_ck.hpp"
 
 namespace SPH
@@ -12,7 +12,7 @@ namespace fluid_dynamics
 /**
  * @class FreeSurfaceIndicationCK
  * @brief Free-surface indication with configurable relationship types.
- * 
+ *
  * This template is specialized for different combinations of
  * "Base" + "Inner" / "Contact" relations to handle free-surface
  * detection and updating in SPH simulations.
@@ -32,7 +32,7 @@ template <template <typename...> class RelationType, typename... Parameters>
 class FreeSurfaceIndicationCK<Base, RelationType<Parameters...>>
     : public Interaction<RelationType<Parameters...>>
 {
-public:
+  public:
     template <class BaseRelationType>
     explicit FreeSurfaceIndicationCK(BaseRelationType &base_relation);
     virtual ~FreeSurfaceIndicationCK() {}
@@ -45,7 +45,7 @@ public:
      */
     class InteractKernel : public Interaction<RelationType<Parameters...>>::InteractKernel
     {
-    public:
+      public:
         template <class ExecutionPolicy, typename... Args>
         InteractKernel(const ExecutionPolicy &ex_policy,
                        FreeSurfaceIndicationCK<Base, RelationType<Parameters...>> &encloser,
@@ -53,7 +53,7 @@ public:
 
         void interact(size_t index_i, Real dt = 0.0);
 
-    protected:
+      protected:
         int *indicator_;
         Real *pos_div_;
         Real *Vol_;
@@ -61,7 +61,7 @@ public:
         Real smoothing_length_;
     };
 
-protected:
+  protected:
     DiscreteVariable<int> *dv_indicator_;
     DiscreteVariable<Real> *dv_pos_div_;
     DiscreteVariable<Real> *dv_Vol_;
@@ -81,7 +81,7 @@ template <class FlowType, typename... Parameters>
 class FreeSurfaceIndicationCK<Inner<WithUpdate, FlowType, Parameters...>>
     : public FreeSurfaceIndicationCK<Base, Inner<Parameters...>>
 {
-public:
+  public:
     explicit FreeSurfaceIndicationCK(Relation<Inner<Parameters...>> &inner_relation);
     virtual ~FreeSurfaceIndicationCK() {}
 
@@ -93,7 +93,7 @@ public:
     class InteractKernel
         : public FreeSurfaceIndicationCK<Base, Inner<Parameters...>>::InteractKernel
     {
-    public:
+      public:
         template <class ExecutionPolicy>
         InteractKernel(const ExecutionPolicy &ex_policy,
                        FreeSurfaceIndicationCK<Inner<WithUpdate, FlowType, Parameters...>> &encloser);
@@ -113,19 +113,19 @@ public:
     class UpdateKernel
         : public FreeSurfaceIndicationCK<Base, Inner<Parameters...>>::InteractKernel
     {
-    public:
+      public:
         template <class ExecutionPolicy>
         UpdateKernel(const ExecutionPolicy &ex_policy,
                      FreeSurfaceIndicationCK<Inner<WithUpdate, FlowType, Parameters...>> &encloser);
 
         void update(size_t index_i, Real dt = 0.0);
 
-    protected:
+      protected:
         int *previous_surface_indicator_;
         FreeSurfaceIndicationCK<Inner<WithUpdate, FlowType, Parameters...>> *outer_;
     };
 
-protected:
+  protected:
     DiscreteVariable<int> *dv_previous_surface_indicator_;
 };
 
@@ -144,7 +144,7 @@ template <typename... Parameters>
 class FreeSurfaceIndicationCK<Contact<Parameters...>>
     : public FreeSurfaceIndicationCK<Base, Contact<Parameters...>>
 {
-public:
+  public:
     explicit FreeSurfaceIndicationCK(Relation<Contact<Parameters...>> &contact_relation);
     virtual ~FreeSurfaceIndicationCK() {}
 
@@ -156,7 +156,7 @@ public:
     class InteractKernel
         : public FreeSurfaceIndicationCK<Base, Contact<Parameters...>>::InteractKernel
     {
-    public:
+      public:
         template <class ExecutionPolicy>
         InteractKernel(const ExecutionPolicy &ex_policy,
                        FreeSurfaceIndicationCK<Contact<Parameters...>> &encloser,
@@ -164,17 +164,17 @@ public:
 
         void interact(size_t index_i, Real dt = 0.0);
 
-    protected:
+      protected:
         Real *contact_Vol_;
     };
 
-protected:
+  protected:
     StdVec<DiscreteVariable<Real> *> dv_contact_Vol_;
 };
 
 //------------------------------------------------------------------------------------------//
 // Common type alias for complex free-surface indication (inner + contact).
-using FreeSurfaceIndicationComplexCK = FreeSurfaceIndicationCK<Inner<WithUpdate, Internal>, Contact<>>;
+using FreeSurfaceIndicationComplexSpatialTemporalCK = FreeSurfaceIndicationCK<Inner<WithUpdate, Internal>, Contact<>>;
 //------------------------------------------------------------------------------------------//
 
 } // namespace fluid_dynamics

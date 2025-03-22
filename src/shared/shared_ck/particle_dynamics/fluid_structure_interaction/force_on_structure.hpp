@@ -20,7 +20,6 @@ ForceFromFluid<KernelCorrectionType, Parameters...>::
 {
     for (size_t k = 0; k != this->contact_particles_.size(); ++k)
     {
-        contact_fluid_.push_back(DynamicCast<Fluid>(this, &this->contact_particles_[k]->getBaseMaterial()));
         contact_kernel_correction_.push_back(KernelCorrectionType(this->contact_particles_[k]));
         contact_Vol_.push_back(this->contact_particles_[k]->template getVariableByName<Real>("VolumetricMeasure"));
         contact_vel_.push_back(this->contact_particles_[k]->template getVariableByName<Vecd>("Velocity"));
@@ -92,7 +91,8 @@ PressureForceFromFluid<Contact<WithUpdate, AcousticStep2ndHalfType, Parameters..
 {
     for (size_t k = 0; k != this->contact_particles_.size(); ++k)
     {
-        contact_riemann_solver_.push_back(RiemannSolverType(*this->contact_fluid_[k], *this->contact_fluid_[k]));
+        FluidType &contact_fluid_k = DynamicCast<FluidType>(this, this->contact_particles_[k]->getBaseMaterial());
+        contact_riemann_solver_.push_back(RiemannSolverType(contact_fluid_k, contact_fluid_k));
         dv_contact_rho_.push_back(this->contact_particles_[k]->template getVariableByName<Real>("Density"));
         dv_contact_mass_.push_back(this->contact_particles_[k]->template getVariableByName<Real>("Mass"));
         dv_contact_p_.push_back(this->contact_particles_[k]->template getVariableByName<Real>("Pressure"));

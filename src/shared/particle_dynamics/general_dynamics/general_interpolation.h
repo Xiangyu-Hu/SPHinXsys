@@ -53,7 +53,8 @@ class BaseInterpolation : public LocalDynamics, public DataDelegateContact
             contact_data_.push_back(contact_data);
         }
     };
-    virtual ~BaseInterpolation(){};
+    virtual ~BaseInterpolation() {};
+    DiscreteVariable<DataType> *dvInterpolatedQuantities() { return dv_interpolated_quantities_; };
 
     void interaction(size_t index_i, Real dt = 0.0);
     /*****************************************************************************/ 
@@ -85,7 +86,7 @@ class InterpolatingAQuantity : public BaseInterpolation<DataType>
             this->particles_->template getVariableByName<DataType>(interpolated_variable);
         this->interpolated_quantities_ = this->dv_interpolated_quantities_->Data();
     };
-    virtual ~InterpolatingAQuantity(){};
+    virtual ~InterpolatingAQuantity() {};
 };
 
 /**
@@ -102,7 +103,7 @@ class ObservingAQuantity : public InteractionDynamics<BaseInterpolation<DataType
         this->dv_interpolated_quantities_ = this->particles_->template registerStateVariableOnly<DataType>(variable_name);
         this->interpolated_quantities_ = this->dv_interpolated_quantities_->Data();
     };
-    virtual ~ObservingAQuantity(){};
+    virtual ~ObservingAQuantity() {};
 };
 
 /**
@@ -115,7 +116,7 @@ class CorrectInterpolationKernelWeights : public LocalDynamics,
 {
   public:
     explicit CorrectInterpolationKernelWeights(BaseContactRelation &contact_relation);
-    virtual ~CorrectInterpolationKernelWeights(){};
+    virtual ~CorrectInterpolationKernelWeights() {};
 
     inline void interaction(size_t index_i, Real dt = 0.0)
     {
