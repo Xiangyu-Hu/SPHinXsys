@@ -195,11 +195,12 @@ class BufferEmitterInflowInjectionCK : public BaseLocalDynamics<AlignedBoxPartTy
                     {
                         // if (index_i < this->particles_->TotalRealParticles())
                         {
+                            Vecd original_position = pos_[index_i];
                             size_t new_particle_index = create_real_particle_(index_i);
                             buffer_particle_indicator_[new_particle_index] = 0;
-                            pos_[index_i] = aligned_box_->getUpperPeriodic(pos_[index_i]); // Periodic bounding.
+                            pos_[index_i] = aligned_box_->getUpperPeriodic(original_position); // Periodic bounding.
                             p_[index_i] = condition_(index_i, *physical_time_);
-                            rho_[index_i] = p_[index_i] / pow(sound_speed_, 2.0) + rho0_;
+                            rho_[index_i] = p_[index_i] / pow(sound_speed_, 2) + rho0_;
                             previous_surface_indicator_[index_i] = 1;
                         }
                     }
@@ -249,6 +250,18 @@ class DisposerOutflowDeletionCK : public BaseLocalDynamics<AlignedBoxPartByCell>
 
     class UpdateKernel
     {
+        struct IsDeletable
+        {
+            AlignedBox *aligned_box_;
+            Vecd *pos_;
+            IsDeletable(AlignedBox *aligned_box, Vecd *pos)
+                : aligned_box_(aligned_box), pos_(pos) {}
+            bool operator()(size_t index_i) const
+            {
+                return aligned_box_->checkLowerBound(pos_[index_i]);
+            }
+        };
+
       public:
         template <class ExecutionPolicy, class EncloserType>
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
@@ -257,9 +270,8 @@ class DisposerOutflowDeletionCK : public BaseLocalDynamics<AlignedBoxPartByCell>
       protected:
         AlignedBox *aligned_box_;
         RemoveRealParticleKernel remove_real_particle_;
-        Real rho0_;
         Vecd *pos_;
-        Real *rho_, *p_;
+        IsDeletable is_deletable_;
     };
 
     class FinishDynamics

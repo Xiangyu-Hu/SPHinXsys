@@ -79,18 +79,14 @@ DisposerOutflowDeletionCK::UpdateKernel::
     UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : aligned_box_(encloser.sv_aligned_box_->DelegatedData(ex_policy)),
       remove_real_particle_(ex_policy, encloser.remove_real_particle_method_),
-      rho0_(encloser.rho0_),
       pos_(encloser.dv_pos_->DelegatedData(ex_policy)),
-      rho_(encloser.dv_rho_->DelegatedData(ex_policy)),
-      p_(encloser.dv_p_->DelegatedData(ex_policy))
-{
-}
+      is_deletable_(aligned_box_, pos_) {}
 
 void DisposerOutflowDeletionCK::UpdateKernel::update(size_t index_i, Real dt)
 {
-    if (aligned_box_->checkLowerBound(pos_[index_i]))
+    if (is_deletable_(index_i))
     {
-        remove_real_particle_(index_i);
+        remove_real_particle_(index_i, is_deletable_);
     }
 }
 
