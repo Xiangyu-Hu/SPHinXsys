@@ -56,7 +56,49 @@ class BaseInterpolation : public LocalDynamics, public DataDelegateContact
     virtual ~BaseInterpolation() {};
     DiscreteVariable<DataType> *dvInterpolatedQuantities() { return dv_interpolated_quantities_; };
 
-    void interaction(size_t index_i, Real dt = 0.0);
+    void interaction(size_t index_i, Real dt = 0.0)
+    {
+        DataType observed_quantity = ZeroData<DataType>::value;
+        Vecd<DataType> prediction = Vecd<DateType>::Zero();
+        int dimension = observed_quantity.rows();
+        Eigen::Matrix<Real, dimension+1, dimension+1> restoring_matrix = Eps * Eigen::Matrix<Real, 3, 3>::Identity();
+        Eigen::Matrix<Real, dimension+1, dimension+1> restoring_mateix_inverse = Eps * Eigen::Matrix<Real, 3, 3>::Identity();
+
+        Real matrix_element_1 = 0.0;
+        Vecd matrix_element_2 = Vecd::Zero();
+        Vecd matrix_element_3 = Vecd::Zero();
+        Matd matrix_element_4 = Matd::Zero();
+
+        for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
+        {
+            Real* Vol_k = contact_Vol_[k];
+            DataType* data_k = contact_data_[k];
+            Neighborhood& contact_neighborhood = (*this->contact_configuration_[k])[index_i];
+
+            for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
+            {
+                size_t index_j = contact_neighborhood.j_[n];
+                Vecd e_ij = contact_neighborhood.e_ij_[n];
+                Vecd r_ji = contact_neighborhood.r_ij_[n] * contact_neighborhood.e_ij_[n];
+                Real W_ij = contact_neighborhood.W_ij_[n];
+                Real dW_ij = contact_neighborhood.dW_ij_[n];
+
+                Real element1 = W_ij * Vol_k[index_j];
+                Vecd element2 = W_ij * Vol_k[index_j] * r_ji;
+                Vecd element3 = dW_ij * Vol_k[index_j] * e_ij;
+                Matd element4 = dW_ij * Vol_k[index_j] * r_ji * e_ij.transpose();
+                prediction.block(0,0,1,1) += element1 * *data_k[index_j];
+                prediction.block(1, 0, dimension, 1) += element3.cwiseProduct(data_k[index_j]);
+
+                restoring_matrix.block<0, 0, 1, 1> += element1;
+                restoring_matrix.block<0, 1, 1, dimension> -= element2;
+                restoring_matrix.block<1, 0, dimension, 1> += element3;
+                restoring_matrix.block<1, 1, dimension, dimension> -= element4;
+            }
+        }
+        restoring_matrix_inverse = restoring_matrix.inverse();
+        interpolated_quantities_[index_i] = restoring_matrix_inverse.block(0, 0, 1, 4).transpose() * prediction;
+    };
     /*****************************************************************************/ 
     // The interpolation is corrected based on the finite particle method.
     // Liu, M.B., Liu, G.R. Smoothed Particle Hydrodynamics (SPH): an Overview and 
