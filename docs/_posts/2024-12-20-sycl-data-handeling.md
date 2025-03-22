@@ -22,6 +22,7 @@ Therefore, in SPHinXsys computing kernels we propose the following guidelines:
 1. Use Eigen3 math vectors and matrixes as much as possible.
 2. Keep the right-hand-side data type homogenous in each expression.
 3. Use explicit type conversion, and only converting one data type at a time.
+3. Keep the left side variable different from right-side variables 
 
 Here, we provide an example to illustrate the above guidelines.
 The following is a computing kernel function:
