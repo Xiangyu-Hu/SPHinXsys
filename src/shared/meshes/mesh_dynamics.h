@@ -231,11 +231,11 @@ class MeshInnerDynamicsCK : public LocalDynamicsType, public BaseMeshDynamics
 template <class ExecutionPolicy, class LocalDynamicsType>
 class MeshCoreDynamicsCK : public LocalDynamicsType, public BaseMeshDynamics
 {
+    std::pair<Arrayi, int> *meta_data_cell_;
     using UpdateKernel = typename LocalDynamicsType::UpdateKernel;
     using KernelImplementation = Implementation<ExecutionPolicy, LocalDynamicsType, UpdateKernel>;
     KernelImplementation kernel_implementation_;
 
-    std::pair<Arrayi, int> *meta_data_cell_;
   public:
     template <typename... Args>
     MeshCoreDynamicsCK(MeshWithGridDataPackages<4> &mesh_data, Args &&...args)
