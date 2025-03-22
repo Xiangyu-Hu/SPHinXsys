@@ -110,7 +110,7 @@ class DeleteRealParticle
             if (index_i < last_real_particle_index)
             {
                 copy_particle_state_(copyable_state_data_arrays_, index_i, last_real_particle_index);
-                original_id_[index_i] = original_id_[last_real_particle_index];
+                sorted_id_[original_id_[index_i]] = index_i;
             }
         };
 
