@@ -146,6 +146,7 @@ class BufferEmitterInflowInjectionCK : public BaseLocalDynamics<AlignedBoxPartTy
         void update(size_t index_i, Real dt = 0.0);
 
       private:
+        int part_id_;
         AlignedBox *aligned_box_;
         CreateRealParticleKernel create_real_particle_;
         Real rho0_;
@@ -160,6 +161,7 @@ class BufferEmitterInflowInjectionCK : public BaseLocalDynamics<AlignedBoxPartTy
     };
 
   protected:
+    int part_id_;
     ParticleBuffer<Base> &buffer_;
     SingularVariable<AlignedBox> *sv_aligned_box_;
     SpawnRealParticle create_real_particle_method_;
@@ -211,9 +213,7 @@ class DisposerOutflowDeletionCK : public BaseLocalDynamics<AlignedBoxPartByCell>
   protected:
     SingularVariable<AlignedBox> *sv_aligned_box_;
     DespawnRealParticle remove_real_particle_method_;
-    Real rho0_;
     DiscreteVariable<Vecd> *dv_pos_;
-    DiscreteVariable<Real> *dv_rho_, *dv_p_;
 };
 
 class TagBufferParticlesCK : public BaseLocalDynamics<AlignedBoxPartByCell>
