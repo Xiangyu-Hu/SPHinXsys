@@ -6,8 +6,6 @@
  */
 
 #include "sphinxsys_ck.h" // SPHinXsys Library.
-#include "gtest/gtest.h"
-
 using namespace SPH;
 
 //----------------------------------------------------------------------
@@ -195,7 +193,7 @@ class WallBoundary : public MultiPolygonShape
 //----------------------------------------------------------------------
 //  Validate velocity from observer with analytical solution
 //----------------------------------------------------------------------
-void velocity_validation(
+int velocity_validation(
     const std::vector<Vecd> &observer_location,
     const std::vector<Vecd> &observer_vel,
     Real (*analytical_solution)(Real),
@@ -247,7 +245,12 @@ void velocity_validation(
     }
 
     // Final assertion for unit testing
-    EXPECT_EQ(total_failed, 0) << "Test failed with " << total_failed << " mismatches. Check log for details.";
+    if (total_failed != 0)
+    {
+        std::cout << "Test failed with " << total_failed << " mismatches. Check log for details.";
+        return 1;
+    }
+    return 0;
 }
 
 //----------------------------------------------------------------------
