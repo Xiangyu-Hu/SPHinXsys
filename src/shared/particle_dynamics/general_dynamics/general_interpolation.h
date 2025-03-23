@@ -59,15 +59,11 @@ class BaseInterpolation : public LocalDynamics, public DataDelegateContact
     void interaction(size_t index_i, Real dt = 0.0)
     {
         DataType observed_quantity = ZeroData<DataType>::value;
-        Vecd<DataType> prediction = Vecd<DateType>::Zero();
-        int dimension = observed_quantity.rows();
-        Eigen::Matrix<Real, dimension+1, dimension+1> restoring_matrix = Eps * Eigen::Matrix<Real, 3, 3>::Identity();
-        Eigen::Matrix<Real, dimension+1, dimension+1> restoring_mateix_inverse = Eps * Eigen::Matrix<Real, 3, 3>::Identity();
-
-        Real matrix_element_1 = 0.0;
-        Vecd matrix_element_2 = Vecd::Zero();
-        Vecd matrix_element_3 = Vecd::Zero();
-        Matd matrix_element_4 = Matd::Zero();
+        int dimension = Vecd::Identity().rows();
+        Eigen::Matrix<DataType, Eigen::Dynamic, 1> prediction(dimension + 1, 1);  // 动态大小的矩阵
+        prediction.setZero();
+        MatXd restoring_matrix = Eps * MatXd::Identity(dimension + 1, dimension + 1);
+        MatXd restoring_matrix_inverse = Eps * MatXd::Identity(dimension + 1, dimension + 1);
 
         for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
         {
@@ -87,17 +83,23 @@ class BaseInterpolation : public LocalDynamics, public DataDelegateContact
                 Vecd element2 = W_ij * Vol_k[index_j] * r_ji;
                 Vecd element3 = dW_ij * Vol_k[index_j] * e_ij;
                 Matd element4 = dW_ij * Vol_k[index_j] * r_ji * e_ij.transpose();
-                prediction.block(0,0,1,1) += element1 * *data_k[index_j];
-                prediction.block(1, 0, dimension, 1) += element3.cwiseProduct(data_k[index_j]);
 
-                restoring_matrix.block<0, 0, 1, 1> += element1;
-                restoring_matrix.block<0, 1, 1, dimension> -= element2;
-                restoring_matrix.block<1, 0, dimension, 1> += element3;
-                restoring_matrix.block<1, 1, dimension, dimension> -= element4;
+                prediction(0, 0) += element1 * data_k[index_j];
+                for (size_t i = 1; i < prediction.rows(); ++i) {
+                    prediction(i, 0) += element3[i] * data_k[index_j];
+                }
+
+                restoring_matrix(0, 0) += element1;
+                restoring_matrix.block(0, 1, 1, dimension) -= element2.transpose();
+                restoring_matrix.block(1, 0, dimension, 1) += element3;
+                restoring_matrix.block(1, 1, dimension, dimension) -= element4;
             }
         }
         restoring_matrix_inverse = restoring_matrix.inverse();
-        interpolated_quantities_[index_i] = restoring_matrix_inverse.block(0, 0, 1, 4).transpose() * prediction;
+        for (size_t i = 0; i < prediction.rows(); ++i){
+            observed_quantity += restoring_matrix_inverse(0, i) * prediction(i, 0);
+        }
+        interpolated_quantities_[index_i] = observed_quantity;
     };
     /*****************************************************************************/ 
     // The interpolation is corrected based on the finite particle method.
