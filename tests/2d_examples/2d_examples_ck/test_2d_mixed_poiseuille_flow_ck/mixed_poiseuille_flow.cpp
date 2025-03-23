@@ -6,8 +6,6 @@
  */
 
 #include "sphinxsys_ck.h" // SPHinXsys Library.
-#include "gtest/gtest.h"
-
 using namespace SPH;
 
 //----------------------------------------------------------------------
@@ -195,7 +193,7 @@ class WallBoundary : public MultiPolygonShape
 //----------------------------------------------------------------------
 //  Validate velocity from observer with analytical solution
 //----------------------------------------------------------------------
-void velocity_validation(
+int velocity_validation(
     const std::vector<Vecd> &observer_location,
     const std::vector<Vecd> &observer_vel,
     Real (*analytical_solution)(Real),
@@ -247,7 +245,12 @@ void velocity_validation(
     }
 
     // Final assertion for unit testing
-    EXPECT_EQ(total_failed, 0) << "Test failed with " << total_failed << " mismatches. Check log for details.";
+    if (total_failed != 0)
+    {
+        std::cout << "Test failed with " << total_failed << " mismatches. Check log for details.";
+        return 1;
+    }
+    return 0;
 }
 
 //----------------------------------------------------------------------
@@ -294,6 +297,7 @@ int main(int ac, char *av[])
     // //----------------------------------------------------------------------
     AlignedBoxPartByCell left_emitter_by_cell(water_body, AlignedBox(xAxis, Transform(left_bidirectional_translation), bidirectional_buffer_halfsize));
     AlignedBoxPartByCell right_emitter_by_cell(water_body, AlignedBox(xAxis, Transform(Rotation2d(Pi), Vec2d(right_disposer_translation)), bidirectional_buffer_halfsize));
+
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -357,6 +361,7 @@ int main(int ac, char *av[])
     IOEnvironment io_environment(sph_system);
     BodyStatesRecordingToVtp body_states_recording(sph_system);
     body_states_recording.addToWrite<Real>(water_body, "Pressure");
+    body_states_recording.addToWrite<int>(water_body, "BufferParticleIndicator");
     ObservedQuantityRecording<MainExecutionPolicy, Vecd> write_centerline_velocity("Velocity", velocity_observer_contact);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
@@ -488,6 +493,5 @@ int main(int ac, char *av[])
     // Convert the pointer to a std::vector using the number of observer particles.
     std::vector<Vecd> observer_vel_vec(observer_vel, observer_vel + observer_location.size());
     Real error_tolerance = 3 * 0.01; // Less than 3 percent when resolution is DH/20
-    velocity_validation(observer_location, observer_vel_vec, poiseuille_2d_u_steady, error_tolerance, U_f);
-    return 0;
+    return velocity_validation(observer_location, observer_vel_vec, poiseuille_2d_u_steady, error_tolerance, U_f);
 }

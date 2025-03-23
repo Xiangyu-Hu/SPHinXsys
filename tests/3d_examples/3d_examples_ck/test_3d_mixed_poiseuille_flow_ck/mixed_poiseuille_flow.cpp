@@ -6,8 +6,6 @@
  */
 
 #include "sphinxsys_ck.h" // SPHinXsys Library.
-#include "gtest/gtest.h"
-
 using namespace SPH;
 
 //----------------------------------------------------------------------
@@ -155,7 +153,7 @@ class InletInflowPressureConditionRight : public BaseStateCondition
 //----------------------------------------------------------------------
 //  Validate velocity from observer with analytical solution
 //----------------------------------------------------------------------
-void velocity_validation(
+int velocity_validation(
     const std::vector<Vec3d> &observer_location,
     const std::vector<Vec3d> &observer_vel,
     Real (*analytical_solution)(Real, Real),
@@ -208,7 +206,12 @@ void velocity_validation(
     }
 
     // Final assertion for unit testing
-    EXPECT_EQ(total_failed, 0) << "Test failed with " << total_failed << " mismatches. Check log for details.";
+    if (total_failed != 0)
+    {
+        std::cout << "Test failed with " << total_failed << " mismatches. Check log for details.";
+        return 1;
+    }
+    return 0;
 }
 
 //----------------------------------------------------------------------
@@ -269,18 +272,20 @@ int main(int ac, char *av[])
     // //	Creating body parts.
     // //----------------------------------------------------------------------
     AlignedBoxPartByCell left_emitter_by_cell(water_body, AlignedBox(xAxis, Transform(left_bidirectional_translation), bidirectional_buffer_halfsize));
-    auto default_normal = Vec3d::UnitX();
+    auto defulat_normal = Vec3d::UnitX();
     auto rotated_normal = -1 * Vec3d::UnitX();
     auto rotation_axis = Vec3d::UnitY();
-    auto rot3d = Rotation3d(std::acos(default_normal.dot(rotated_normal)), rotation_axis);
+    auto rot3d = Rotation3d(std::acos(defulat_normal.dot(rotated_normal)), rotation_axis);
     AlignedBoxPartByCell right_emitter_by_cell(water_body, AlignedBox(xAxis, Transform(rot3d, right_bidirectional_translation), bidirectional_buffer_halfsize));
+    // AlignedBoxPartByCell right_emitter_by_cell(water_body, AlignedBox(xAxis, Transform(left_bidirectional_translation), bidirectional_buffer_halfsize));
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
     //	Basically the the range of bodies to build neighbor particle lists.
     //  Generally, we first define all the inner relations, then the contact relations.
     // ----------------------------------------------------------------------
-    Relation<Inner<>> water_body_inner(water_body);
+    Relation<Inner<>>
+        water_body_inner(water_body);
     Relation<Contact<>> water_wall_contact(water_body, {&wall});
     Relation<Contact<>> velocity_observer_contact(velocity_observer, {&water_body});
     //----------------------------------------------------------------------
@@ -469,6 +474,5 @@ int main(int ac, char *av[])
     // Validate observer velocities against analytical Poiseuille profile
     // Convert the pointer to a std::vector using the number of observer particles.
     std::vector<Vec3d> observer_vel_vec(observer_vel, observer_vel + observer_location.size());
-    velocity_validation(observer_location, observer_vel_vec, poiseuille_3d_u_steady, error_tolerance, U_f);
-    return 0;
+    return velocity_validation(observer_location, observer_vel_vec, poiseuille_3d_u_steady, error_tolerance, U_f);
 }
