@@ -44,8 +44,8 @@ void PressureConditionCK<AlignedBoxPartType, KernelCorrectionType, ConditionFunc
     if (aligned_box_->checkContain(pos_[index_i]))
     {
         Real pressure = condition_(index_i, *physical_time_);
-        Vecd zero_gradient_residue = this->zero_gradient_residue_[index_i];
-        vel_[index_i] -= correction_(index_i) * zero_gradient_residue * pressure / rho_[index_i] * dt;
+        Vecd corrected_gradient_residue = correction_(index_i) * zero_gradient_residue_[index_i];
+        vel_[index_i] += pressure * dt / rho_[index_i] * corrected_gradient_residue;
 
         Vecd frame_velocity = Vecd::Zero();
         frame_velocity[xAxis] = this->transform_->xformBaseVecToFrame(vel_[index_i])[xAxis];
@@ -57,10 +57,10 @@ template <typename ExecutionPolicy, class KernelCorrectionType, class PressureCo
 PressureBidirectionalConditionCK<ExecutionPolicy, KernelCorrectionType, PressureConditionFunction>::
     PressureBidirectionalConditionCK(AlignedBoxPartByCell &emitter_by_cell,
                                      ParticleBuffer<Base> &inlet_buffer)
-        : tag_buffer_particles_(emitter_by_cell),
-          pressure_condition_(emitter_by_cell),
-          emitter_injection_(emitter_by_cell, inlet_buffer),
-          disposer_outflow_deletion_(emitter_by_cell){}
+    : tag_buffer_particles_(emitter_by_cell),
+      pressure_condition_(emitter_by_cell),
+      emitter_injection_(emitter_by_cell, inlet_buffer),
+      disposer_outflow_deletion_(emitter_by_cell) {}
 //=================================================================================================//
 } // namespace fluid_dynamics
 } // namespace SPH
