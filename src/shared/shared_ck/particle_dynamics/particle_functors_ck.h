@@ -170,7 +170,7 @@ class ParticleScopeTypeCK<ExcludeBufferParticles> : public WithinScope
 
         bool operator()(size_t index_i) const
         {
-            return (buffer_particles_indicator_[index_i] != 1);
+            return (buffer_particles_indicator_[index_i] == 0);
         }
 
       protected:

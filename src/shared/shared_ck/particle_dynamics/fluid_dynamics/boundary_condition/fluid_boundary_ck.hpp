@@ -132,7 +132,7 @@ void BufferEmitterInflowInjectionCK<AlignedBoxPartType, ConditionFunction>::
     {
         if (aligned_box_->checkUpperBound(pos_[index_i]))
         {
-            if (buffer_particle_indicator_[index_i] == 1)
+            if (buffer_particle_indicator_[index_i] == part_id_)
             {
                  if (index_i < *total_real_particles_)
                 {
@@ -178,7 +178,7 @@ void TagBufferParticlesCK::UpdateKernel::update(size_t index_i, Real dt)
     int buffer_indicator = 0;
     if (aligned_box_->checkInBounds(pos_[index_i]))
     {
-        buffer_indicator = 1;
+        buffer_indicator = part_id_;
     }
     buffer_particle_indicator_[index_i] = buffer_indicator;
 }

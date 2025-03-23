@@ -43,7 +43,7 @@ template <class AlignedBoxPartType, class KernelCorrectionType, class ConditionF
 void PressureConditionCK<AlignedBoxPartType, KernelCorrectionType, ConditionFunction>::UpdateKernel::
     update(size_t index_i, Real dt)
 {
-    if (buffer_particle_indicator_[index_i] == 1)
+    if (buffer_particle_indicator_[index_i] == part_id_)
     {
         if (aligned_box_->checkInBounds(pos_[index_i]))
         {
