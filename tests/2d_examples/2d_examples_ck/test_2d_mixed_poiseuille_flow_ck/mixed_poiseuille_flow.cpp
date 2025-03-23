@@ -492,6 +492,5 @@ int main(int ac, char *av[])
     // Convert the pointer to a std::vector using the number of observer particles.
     std::vector<Vecd> observer_vel_vec(observer_vel, observer_vel + observer_location.size());
     Real error_tolerance = 3 * 0.01; // Less than 3 percent when resolution is DH/20
-    velocity_validation(observer_location, observer_vel_vec, poiseuille_2d_u_steady, error_tolerance, U_f);
-    return 0;
+    return velocity_validation(observer_location, observer_vel_vec, poiseuille_2d_u_steady, error_tolerance, U_f);
 }
