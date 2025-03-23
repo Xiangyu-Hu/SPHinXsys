@@ -81,19 +81,19 @@ class PressureConditionCK<AlignedBoxPartType, KernelCorrectionType, ConditionFun
     DiscreteVariable<Real> *dv_rho_;
 };
 
-template <typename ParallelExecutionPolicy, typename SequencedExecutionPolicy, class KernelCorrectionType, class PressureConditionFunction>
+template <typename ExecutionPolicy, class KernelCorrectionType, class PressureConditionFunction>
 class PressureBidirectionalConditionCK
 {
   public:
-    StateDynamics<ParallelExecutionPolicy, TagBufferParticlesCK> tag_buffer_particles_;
+    StateDynamics<ExecutionPolicy, TagBufferParticlesCK> tag_buffer_particles_;
 
-    StateDynamics<ParallelExecutionPolicy,
+    StateDynamics<ExecutionPolicy,
                   PressureConditionCK<AlignedBoxPartByCell, KernelCorrectionType, PressureConditionFunction>>
         pressure_condition_;
 
-    StateDynamics<SequencedExecutionPolicy, BufferEmitterInflowInjectionCK<AlignedBoxPartByCell, PressureConditionFunction>> emitter_injection_;
+    StateDynamics<ExecutionPolicy, BufferEmitterInflowInjectionCK<AlignedBoxPartByCell, PressureConditionFunction>> emitter_injection_;
 
-    StateDynamics<SequencedExecutionPolicy, DisposerOutflowDeletionCK> disposer_outflow_deletion_;
+    StateDynamics<ExecutionPolicy, DisposerOutflowDeletionCK> disposer_outflow_deletion_;
 
     PressureBidirectionalConditionCK(AlignedBoxPartByCell &emitter_by_cell,
                                      ParticleBuffer<Base> &inlet_buffer)

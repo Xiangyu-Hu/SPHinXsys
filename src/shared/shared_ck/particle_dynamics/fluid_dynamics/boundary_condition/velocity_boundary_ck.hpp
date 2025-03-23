@@ -8,10 +8,8 @@ namespace SPH
 namespace fluid_dynamics
 {
 //=================================================================================================//
-template <typename ParallelExecutionPolicy, typename SequencedExecutionPolicy,
-          class KernelCorrectionType, class VelocityConditionFunction>
-VelocityBidirectionalConditionCK<ParallelExecutionPolicy, SequencedExecutionPolicy,
-                                 KernelCorrectionType, VelocityConditionFunction>::
+template <typename ExecutionPolicy, class KernelCorrectionType, class VelocityConditionFunction>
+VelocityBidirectionalConditionCK<ExecutionPolicy, KernelCorrectionType, VelocityConditionFunction>::
     VelocityBidirectionalConditionCK(AlignedBoxPartByCell &emitter_by_cell,
                                      ParticleBuffer<Base> &inlet_buffer)
     : tag_buffer_particles_(emitter_by_cell),

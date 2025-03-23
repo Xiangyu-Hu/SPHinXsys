@@ -142,45 +142,6 @@ class BufferEmitterInflowInjectionCK : public BaseLocalDynamics<AlignedBoxPartTy
     {
       public:
         template <class ExecutionPolicy, class EncloserType>
-        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : aligned_box_(nullptr),
-              create_real_particle_(ex_policy, encloser.create_real_particle_method_),
-              rho0_(encloser.rho0_),
-              sound_speed_(encloser.sound_speed_),
-              pos_(encloser.dv_pos_->DelegatedData(ex_policy)),
-              rho_(encloser.dv_rho_->DelegatedData(ex_policy)),
-              p_(encloser.dv_p_->DelegatedData(ex_policy)),
-              buffer_particle_indicator_(encloser.dv_buffer_particle_indicator_->DelegatedData(ex_policy)),
-              condition_(ex_policy, encloser.condition_function_),
-              previous_surface_indicator_(encloser.dv_previous_surface_indicator_->DelegatedData(ex_policy)),
-              physical_time_(encloser.sv_physical_time_->DelegatedData(ex_policy)),
-              upper_bound_fringe_(encloser.upper_bound_fringe_)
-        {
-            aligned_box_ = encloser.sv_aligned_box_->DelegatedData(ex_policy);
-        }
-
-        void update(size_t index_i, Real dt = 0.0)
-        {
-            if (!aligned_box_->checkInBounds(pos_[index_i]))
-            {
-                if (aligned_box_->checkUpperBound(pos_[index_i]))
-                {
-                    if (buffer_particle_indicator_[index_i] == 1)
-                    {
-                        // if (index_i < this->particles_->TotalRealParticles())
-                        {
-                            Vecd original_position = pos_[index_i];
-                            size_t new_particle_index = create_real_particle_(index_i);
-                            buffer_particle_indicator_[new_particle_index] = 0;
-                            pos_[index_i] = aligned_box_->getUpperPeriodic(original_position); // Periodic bounding.
-                            p_[index_i] = condition_(index_i, *physical_time_);
-                            rho_[index_i] = p_[index_i] / pow(sound_speed_, 2) + rho0_;
-                            previous_surface_indicator_[index_i] = 1;
-                        }
-                    }
-                }
-            }
-        }
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
         void update(size_t index_i, Real dt = 0.0);
 
