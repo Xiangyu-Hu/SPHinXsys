@@ -57,6 +57,7 @@ class PressureConditionCK<AlignedBoxPartType, KernelCorrectionType, ConditionFun
         void update(size_t index_i, Real dt = 0.0);
 
       protected:
+        int part_id_;
         AlignedBox *aligned_box_;
         ConditionKernel condition_;
         int *buffer_particle_indicator_;
@@ -70,6 +71,7 @@ class PressureConditionCK<AlignedBoxPartType, KernelCorrectionType, ConditionFun
     };
 
   protected:
+    int part_id_;
     SingularVariable<AlignedBox> *sv_aligned_box_;
     ConditionFunction condition_function_;
     DiscreteVariable<int> *dv_buffer_particle_indicator_;

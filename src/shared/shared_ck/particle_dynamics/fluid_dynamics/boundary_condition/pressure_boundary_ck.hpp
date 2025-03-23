@@ -12,6 +12,7 @@ template <class AlignedBoxPartType, class KernelCorrectionType, class ConditionF
 PressureConditionCK<AlignedBoxPartType, KernelCorrectionType, ConditionFunction>::
     PressureConditionCK(AlignedBoxPartType &aligned_box_part)
     : BaseLocalDynamics<AlignedBoxPartType>(aligned_box_part),
+         part_id_(aligned_box_part.getPartID()),
       sv_aligned_box_(aligned_box_part.svAlignedBox()),
       condition_function_(this->particles_),
       dv_buffer_particle_indicator_(this->particles_->template getVariableByName<int>("BufferParticleIndicator")),
@@ -26,7 +27,8 @@ template <class AlignedBoxPartType, class KernelCorrectionType, class ConditionF
 template <class ExecutionPolicy, class EncloserType>
 PressureConditionCK<AlignedBoxPartType, KernelCorrectionType, ConditionFunction>::UpdateKernel::
     UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-    : aligned_box_(encloser.sv_aligned_box_->DelegatedData(ex_policy)),
+    : part_id_(encloser.part_id_),
+      aligned_box_(encloser.sv_aligned_box_->DelegatedData(ex_policy)),
       condition_(ex_policy, encloser.condition_function_),
       buffer_particle_indicator_(encloser.dv_buffer_particle_indicator_->DelegatedData(ex_policy)),
       zero_gradient_residue_(encloser.dv_zero_gradient_residue_->DelegatedData(ex_policy)),
@@ -41,7 +43,7 @@ template <class AlignedBoxPartType, class KernelCorrectionType, class ConditionF
 void PressureConditionCK<AlignedBoxPartType, KernelCorrectionType, ConditionFunction>::UpdateKernel::
     update(size_t index_i, Real dt)
 {
-    if (buffer_particle_indicator_[index_i] != 0)
+    if (buffer_particle_indicator_[index_i] == 1)
     {
         if (aligned_box_->checkInBounds(pos_[index_i]))
         {

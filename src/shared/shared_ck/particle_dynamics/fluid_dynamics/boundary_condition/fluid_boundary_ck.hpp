@@ -84,6 +84,7 @@ BufferEmitterInflowInjectionCK<AlignedBoxPartType, ConditionFunction>::
     : BaseLocalDynamics<AlignedBoxPartType>(aligned_box_part),
       part_id_(aligned_box_part.getPartID()), buffer_(buffer),
       sv_aligned_box_(aligned_box_part.svAlignedBox()),
+      sv_total_real_particles_(this->particles_->svTotalRealParticles()),
       create_real_particle_method_(this->particles_),
       rho0_(this->particles_->getBaseMaterial().ReferenceDensity()),
       sound_speed_(0.0),
@@ -108,6 +109,7 @@ BufferEmitterInflowInjectionCK<AlignedBoxPartType, ConditionFunction>::
     UpdateKernel::UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : part_id_(encloser.part_id_),
       aligned_box_(encloser.sv_aligned_box_->DelegatedData(ex_policy)),
+      total_real_particles_(encloser.sv_total_real_particles_->DelegatedData(ex_policy)),
       create_real_particle_(ex_policy, encloser.create_real_particle_method_),
       rho0_(encloser.rho0_),
       sound_speed_(encloser.sound_speed_),
@@ -118,7 +120,9 @@ BufferEmitterInflowInjectionCK<AlignedBoxPartType, ConditionFunction>::
       condition_(ex_policy, encloser.condition_function_),
       previous_surface_indicator_(encloser.dv_previous_surface_indicator_->DelegatedData(ex_policy)),
       physical_time_(encloser.sv_physical_time_->DelegatedData(ex_policy)),
-      upper_bound_fringe_(encloser.upper_bound_fringe_) {}
+      upper_bound_fringe_(encloser.upper_bound_fringe_)
+{
+}
 //=================================================================================================//
 template <typename AlignedBoxPartType, class ConditionFunction>
 void BufferEmitterInflowInjectionCK<AlignedBoxPartType, ConditionFunction>::
@@ -130,7 +134,7 @@ void BufferEmitterInflowInjectionCK<AlignedBoxPartType, ConditionFunction>::
         {
             if (buffer_particle_indicator_[index_i] == 1)
             {
-                // if (index_i < this->particles_->TotalRealParticles())
+                 if (index_i < *total_real_particles_)
                 {
                     Vecd original_position = pos_[index_i];
                     size_t new_particle_index = create_real_particle_(index_i);

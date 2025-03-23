@@ -148,6 +148,7 @@ class BufferEmitterInflowInjectionCK : public BaseLocalDynamics<AlignedBoxPartTy
       private:
         int part_id_;
         AlignedBox *aligned_box_;
+        UnsignedInt *total_real_particles_;
         CreateRealParticleKernel create_real_particle_;
         Real rho0_;
         Real sound_speed_;
@@ -164,6 +165,7 @@ class BufferEmitterInflowInjectionCK : public BaseLocalDynamics<AlignedBoxPartTy
     int part_id_;
     ParticleBuffer<Base> &buffer_;
     SingularVariable<AlignedBox> *sv_aligned_box_;
+    SingularVariable<UnsignedInt> *sv_total_real_particles_;
     SpawnRealParticle create_real_particle_method_;
     Real rho0_;
     Real sound_speed_;
