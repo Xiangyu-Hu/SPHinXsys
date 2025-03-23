@@ -60,7 +60,7 @@ class BaseInterpolation : public LocalDynamics, public DataDelegateContact
     {
         DataType observed_quantity = ZeroData<DataType>::value;
         int dimension = Vecd::Identity().rows();
-        Eigen::Matrix<DataType, Eigen::Dynamic, 1> prediction(dimension + 1, 1);  // 动态大小的矩阵
+        Eigen::Matrix<DataType, Eigen::Dynamic, 1> prediction(dimension + 1, 1);
         prediction.setZero();
         MatXd restoring_matrix = Eps * MatXd::Identity(dimension + 1, dimension + 1);
         MatXd restoring_matrix_inverse = Eps * MatXd::Identity(dimension + 1, dimension + 1);
@@ -85,7 +85,7 @@ class BaseInterpolation : public LocalDynamics, public DataDelegateContact
                 Matd element4 = dW_ij * Vol_k[index_j] * r_ji * e_ij.transpose();
 
                 prediction(0, 0) += element1 * data_k[index_j];
-                for (size_t i = 1; i < prediction.rows(); ++i) {
+                for (Eigen::Index i = 1; i < prediction.rows(); ++i) {
                     prediction(i, 0) += element3[i] * data_k[index_j];
                 }
 
@@ -96,7 +96,7 @@ class BaseInterpolation : public LocalDynamics, public DataDelegateContact
             }
         }
         restoring_matrix_inverse = restoring_matrix.inverse();
-        for (size_t i = 0; i < prediction.rows(); ++i){
+        for (Eigen::Index i = 0; i < prediction.rows(); ++i){
             observed_quantity += restoring_matrix_inverse(0, i) * prediction(i, 0);
         }
         interpolated_quantities_[index_i] = observed_quantity;
