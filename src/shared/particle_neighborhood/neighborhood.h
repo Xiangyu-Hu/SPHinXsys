@@ -58,8 +58,8 @@ class Neighborhood
     StdLargeVec<Real> r_ij_;  /**< distance between j and i. */
     StdLargeVec<Vecd> e_ij_;  /**< unit vector pointing from j to i or inter-particle surface direction */
 
-    Neighborhood() : current_size_(0), allocated_size_(0){};
-    ~Neighborhood(){};
+    Neighborhood() : current_size_(0), allocated_size_(0) {};
+    ~Neighborhood() {};
 
     void removeANeighbor(size_t neighbor_n);
 };
@@ -88,8 +88,8 @@ class NeighborBuilder
     static Kernel *chooseKernel(SPHBody &body, SPHBody &target_body);
 
   public:
-    NeighborBuilder(Kernel *kernel) : kernel_(kernel){};
-    virtual ~NeighborBuilder(){};
+    NeighborBuilder(Kernel *kernel) : kernel_(kernel) {};
+    virtual ~NeighborBuilder() {};
     virtual void operator()(Neighborhood &neighborhood,
                             const Vecd &pos_i, size_t index_i, const ListData &list_data_j) = 0;
 };
@@ -129,7 +129,7 @@ class NeighborBuilderSelfContact : public NeighborBuilder
 {
   public:
     explicit NeighborBuilderSelfContact(SPHBody &body);
-    virtual ~NeighborBuilderSelfContact(){};
+    virtual ~NeighborBuilderSelfContact() {};
     void operator()(Neighborhood &neighborhood,
                     const Vecd &pos_i, size_t index_i, const ListData &list_data_j) override;
 
@@ -145,7 +145,7 @@ class NeighborBuilderContact : public NeighborBuilder
 {
   public:
     NeighborBuilderContact(SPHBody &body, SPHBody &contact_body);
-    virtual ~NeighborBuilderContact(){};
+    virtual ~NeighborBuilderContact() {};
     virtual void operator()(Neighborhood &neighborhood,
                             const Vecd &pos_i, size_t index_i, const ListData &list_data_j) override;
 };
@@ -161,7 +161,7 @@ class NeighborBuilderSurfaceContact : public NeighborBuilderContact
 
   public:
     NeighborBuilderSurfaceContact(SPHBody &body, SPHBody &contact_body);
-    virtual ~NeighborBuilderSurfaceContact(){};
+    virtual ~NeighborBuilderSurfaceContact() {};
 };
 
 /**
@@ -172,7 +172,7 @@ class NeighborBuilderContactBodyPart : public NeighborBuilder
 {
   public:
     NeighborBuilderContactBodyPart(SPHBody &body, BodyPart &contact_body_part);
-    virtual ~NeighborBuilderContactBodyPart(){};
+    virtual ~NeighborBuilderContactBodyPart() {};
     void operator()(Neighborhood &neighborhood,
                     const Vecd &pos_i, size_t index_i, const ListData &list_data_j) override;
 
@@ -188,7 +188,7 @@ class NeighborBuilderContactAdaptive : public NeighborBuilder
 {
   public:
     explicit NeighborBuilderContactAdaptive(SPHBody &body, SPHBody &contact_body);
-    virtual ~NeighborBuilderContactAdaptive(){};
+    virtual ~NeighborBuilderContactAdaptive() {};
     void operator()(Neighborhood &neighborhood,
                     const Vecd &pos_i, size_t index_i, const ListData &list_data_j) override;
 
@@ -348,6 +348,19 @@ class NeighborBuilderSplitInnerAdaptive : public NeighborBuilder
   private:
     Real *h_ratio_;
     int *level_;
+};
+
+/**
+ * @class NearestNeighborBuilder
+ * @brief A contact neighbor builder functor, where the cut-off radius is set as factor * dp_max
+ */
+class NearestNeighborBuilder : public NeighborBuilderContact
+{
+  private:
+    UniquePtrKeeper<Kernel> kernel_keeper_;
+
+  public:
+    NearestNeighborBuilder(SPHBody &body, SPHBody &contact_body, Real factor = 1.0);
 };
 } // namespace SPH
 #endif // NEIGHBORHOOD_H
