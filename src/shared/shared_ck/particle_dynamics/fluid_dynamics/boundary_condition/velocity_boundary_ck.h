@@ -21,57 +21,53 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	geometric_element.h
- * @brief tbd.
- * @author Xiangyu Hu
+ * @file 	velocity_boundary_ck.h
+ * @brief 	tbd
+ * @author	Xiangyu Hu
  */
 
-#ifndef GEOMETRIC_ELEMENT_H
-#define GEOMETRIC_ELEMENT_H
+#ifndef VELOCITY_BOUNDARY_CK_H
+#define VELOCITY_BOUNDARY_CK_H
 
-#include "base_data_package.h"
+#include "fluid_boundary_ck.h"
+#include "fluid_boundary_state.h"
 
 namespace SPH
 {
-
-class GeometricBox
+namespace fluid_dynamics
+{
+template <typename ExecutionPolicy, class KernelCorrectionType, class VelocityConditionFunction>
+class VelocityBidirectionalConditionCK
 {
   public:
-    explicit GeometricBox(const Vecd &halfsize);
-    ~GeometricBox() {};
+    StateDynamics<ExecutionPolicy, TagBufferParticlesCK> tag_buffer_particles_;
 
-    bool checkContain(const Vecd &probe_point)
-    {
-        bool is_contained = true;
-        for (int i = 0; i != Dimensions; ++i)
-        {
-            if (ABS(probe_point[i]) > halfsize_[i]) // outside the box
-            {
-                is_contained = false;
-                break;
-            }
-        }
-        return is_contained;
-    };
-    
-    Vecd findClosestPoint(const Vecd &probe_point);
+    StateDynamics<ExecutionPolicy, fluid_dynamics::InflowConditionCK<AlignedBoxPartByCell, VelocityConditionFunction>> velocity_condition_;
 
-  protected:
-    Vecd halfsize_;
+    StateDynamics<ExecutionPolicy, PressureConditionCK<AlignedBoxPartByCell, KernelCorrectionType, DummyPressure>>
+        pressure_condition_;
+
+    StateDynamics<ExecutionPolicy, BufferEmitterInflowInjectionCK<AlignedBoxPartByCell, NonPrescribedPressure>> emitter_injection_;
+
+    StateDynamics<ExecutionPolicy, BufferOutflowDeletionCK> disposer_outflow_deletion_;
+
+    VelocityBidirectionalConditionCK(AlignedBoxPartByCell &emitter_by_cell, ParticleBuffer<Base> &inlet_buffer);
+
+    /// Tag (or flag) particles in the buffer.
+    void tagBufferParticles() { tag_buffer_particles_.exec(); }
+
+    /// Apply the pressure condition (note that this usually takes a time-step dt).
+    void applyPressureCondition(Real dt) { pressure_condition_.exec(dt); }
+
+    /// Apply the velocity condition.
+    void applyVelocityCondition() { velocity_condition_.exec(); }
+
+    /// Perform the injection step (for inflow).
+    void injectParticles() { emitter_injection_.exec(); }
+
+    /// Perform the deletion step (for outflow).
+    void deleteParticles() { disposer_outflow_deletion_.exec(); }
 };
-
-class GeometricBall
-{
-  public:
-    explicit GeometricBall(Real radius);
-    ~GeometricBall() {};
-
-    bool checkContain(const Vecd &probe_point);
-    Vecd findClosestPoint(const Vecd &probe_point);
-
-  protected:
-    Real radius_;
-};
+} // namespace fluid_dynamics
 } // namespace SPH
-
-#endif // GEOMETRIC_ELEMENT_H
+#endif // VELOCITY_BOUNDARY_CK_H

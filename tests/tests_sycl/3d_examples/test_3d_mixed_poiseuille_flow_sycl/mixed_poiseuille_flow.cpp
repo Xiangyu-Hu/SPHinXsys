@@ -6,8 +6,6 @@
  */
 
 #include "sphinxsys_sycl.h" // SPHinXsys Library.
-#include "gtest/gtest.h"
-
 using namespace SPH;
 
 //----------------------------------------------------------------------
@@ -155,7 +153,7 @@ class InletInflowPressureConditionRight : public BaseStateCondition
 //----------------------------------------------------------------------
 //  Validate velocity from observer with analytical solution
 //----------------------------------------------------------------------
-void velocity_validation(
+int velocity_validation(
     const std::vector<Vec3d> &observer_location,
     const std::vector<Vec3d> &observer_vel,
     Real (*analytical_solution)(Real, Real),
@@ -207,8 +205,12 @@ void velocity_validation(
         }
     }
 
-    // Final assertion for unit testing
-    EXPECT_EQ(total_failed, 0) << "Test failed with " << total_failed << " mismatches. Check log for details.";
+    if (total_failed != 0)
+    {
+        std::cout << "Test failed with " << total_failed << " mismatches. Check log for details.";
+        return 1;
+    }
+    return 0;
 }
 
 //----------------------------------------------------------------------
@@ -289,7 +291,6 @@ int main(int ac, char *av[])
     // Define the main execution policy for this case.
     //----------------------------------------------------------------------
     using MainExecutionPolicy = execution::ParallelDevicePolicy;
-    using SequencedExecutionPolicy = execution::SequencedDevicePolicy;
     //----------------------------------------------------------------------
     // Combined relations built from basic relations
     // which is only used for update configuration.
@@ -329,9 +330,9 @@ int main(int ac, char *av[])
         fluid_viscous_force(water_body_inner, water_wall_contact);
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::TransportVelocityLimitedCorrectionCorrectedComplexBulkParticlesCKWithoutUpdate>
         zero_gradient_ck(water_body_inner, water_wall_contact);
-    fluid_dynamics::VelocityBidirectionalConditionCK<MainExecutionPolicy, SequencedExecutionPolicy, NoKernelCorrectionCK, InletInflowConditionLeft>
+    fluid_dynamics::VelocityBidirectionalConditionCK<MainExecutionPolicy, NoKernelCorrectionCK, InletInflowConditionLeft>
         bidirectional_velocity_condition_left(left_emitter_by_cell, inlet_buffer);
-    fluid_dynamics::PressureBidirectionalConditionCK<MainExecutionPolicy, SequencedExecutionPolicy, NoKernelCorrectionCK, InletInflowPressureConditionRight>
+    fluid_dynamics::PressureBidirectionalConditionCK<MainExecutionPolicy, NoKernelCorrectionCK, InletInflowPressureConditionRight>
         bidirectional_pressure_condition_right(right_emitter_by_cell, inlet_buffer);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
@@ -472,6 +473,5 @@ int main(int ac, char *av[])
     // Validate observer velocities against analytical Poiseuille profile
     // Convert the pointer to a std::vector using the number of observer particles.
     std::vector<Vec3d> observer_vel_vec(observer_vel, observer_vel + observer_location.size());
-    velocity_validation(observer_location, observer_vel_vec, poiseuille_3d_u_steady, error_tolerance, U_f);
-    return 0;
+    return velocity_validation(observer_location, observer_vel_vec, poiseuille_3d_u_steady, error_tolerance, U_f);
 }

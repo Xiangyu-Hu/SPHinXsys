@@ -21,57 +21,18 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	geometric_element.h
- * @brief tbd.
- * @author Xiangyu Hu
+ * @file    all_fluid_boundary_condition_ck.h
+ * @brief   Head file for all shared physics dynamics for both 2- and 3D build.
+ *          This is the header file that user code should include to pick up all
+            particle dynamics capabilities.
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
-#ifndef GEOMETRIC_ELEMENT_H
-#define GEOMETRIC_ELEMENT_H
+#ifndef ALL_FLUID_BOUNDARY_CONDITION_CK_H
+#define ALL_FLUID_BOUNDARY_CONDITION_CK_H
 
-#include "base_data_package.h"
+#include "fluid_boundary_ck.hpp"
+#include "pressure_boundary_ck.hpp"
+#include "velocity_boundary_ck.hpp"
 
-namespace SPH
-{
-
-class GeometricBox
-{
-  public:
-    explicit GeometricBox(const Vecd &halfsize);
-    ~GeometricBox() {};
-
-    bool checkContain(const Vecd &probe_point)
-    {
-        bool is_contained = true;
-        for (int i = 0; i != Dimensions; ++i)
-        {
-            if (ABS(probe_point[i]) > halfsize_[i]) // outside the box
-            {
-                is_contained = false;
-                break;
-            }
-        }
-        return is_contained;
-    };
-    
-    Vecd findClosestPoint(const Vecd &probe_point);
-
-  protected:
-    Vecd halfsize_;
-};
-
-class GeometricBall
-{
-  public:
-    explicit GeometricBall(Real radius);
-    ~GeometricBall() {};
-
-    bool checkContain(const Vecd &probe_point);
-    Vecd findClosestPoint(const Vecd &probe_point);
-
-  protected:
-    Real radius_;
-};
-} // namespace SPH
-
-#endif // GEOMETRIC_ELEMENT_H
+#endif // ALL_FLUID_BOUNDARY_CONDITION_CK_H

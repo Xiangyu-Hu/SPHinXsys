@@ -55,5 +55,47 @@ class BaseStateCondition
     DiscreteVariable<Real> *dv_p_, *dv_rho_;
 };
 
+class NonPrescribedPressure : public BaseStateCondition
+{
+  public:
+    NonPrescribedPressure(BaseParticles *particles)
+        : BaseStateCondition(particles) {};
+
+    // The "ComputingKernel" is what your SPHinXsys code will instantiate
+    class ComputingKernel : public BaseStateCondition::ComputingKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+            : BaseStateCondition::ComputingKernel(ex_policy, encloser) {}
+
+        // Return a fixed or trivial pressure value
+        Real operator()(size_t index_i, Real time)
+        {
+            return p_[index_i]; // Do nothing!
+        }
+    };
+};
+
+class DummyPressure : public BaseStateCondition
+{
+  public:
+    DummyPressure(BaseParticles *particles)
+        : BaseStateCondition(particles) {};
+
+    class ComputingKernel : public BaseStateCondition::ComputingKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+            : BaseStateCondition::ComputingKernel(ex_policy, encloser) {}
+
+        Real operator()(size_t index_i, Real time)
+        {
+            return p_[index_i];
+        }
+    };
+};
+
 } // namespace SPH
 #endif // FLUID_BOUNDARY_STATE_H
