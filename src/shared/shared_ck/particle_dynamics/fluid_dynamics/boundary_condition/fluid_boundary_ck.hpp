@@ -81,8 +81,8 @@ void EmitterInflowInjectionCK<AlignedBoxPartType>::UpdateKernel::update(size_t i
 }
 //=================================================================================================//
 template <typename AlignedBoxPartType, class ConditionFunction>
-BufferEmitterInflowInjectionCK<AlignedBoxPartType, ConditionFunction>::
-    BufferEmitterInflowInjectionCK(AlignedBoxPartType &aligned_box_part, ParticleBuffer<Base> &buffer)
+BufferInflowInjectionCK<AlignedBoxPartType, ConditionFunction>::
+    BufferInflowInjectionCK(AlignedBoxPartType &aligned_box_part, ParticleBuffer<Base> &buffer)
     : BaseLocalDynamics<AlignedBoxPartType>(aligned_box_part),
       part_id_(aligned_box_part.getPartID()), buffer_(buffer),
       sv_aligned_box_(aligned_box_part.svAlignedBox()),
@@ -106,7 +106,7 @@ BufferEmitterInflowInjectionCK<AlignedBoxPartType, ConditionFunction>::
 //=================================================================================================//
 template <typename AlignedBoxPartType, class ConditionFunction>
 template <class ExecutionPolicy, class EncloserType>
-BufferEmitterInflowInjectionCK<AlignedBoxPartType, ConditionFunction>::
+BufferInflowInjectionCK<AlignedBoxPartType, ConditionFunction>::
     UpdateKernel::UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : part_id_(encloser.part_id_),
       aligned_box_(encloser.sv_aligned_box_->DelegatedData(ex_policy)),
@@ -124,7 +124,7 @@ BufferEmitterInflowInjectionCK<AlignedBoxPartType, ConditionFunction>::
       upper_bound_fringe_(encloser.upper_bound_fringe_) {}
 //=================================================================================================//
 template <typename AlignedBoxPartType, class ConditionFunction>
-void BufferEmitterInflowInjectionCK<AlignedBoxPartType, ConditionFunction>::
+void BufferInflowInjectionCK<AlignedBoxPartType, ConditionFunction>::
     UpdateKernel::update(size_t index_i, Real dt)
 {
     if (!aligned_box_->checkInBounds(pos_[index_i]))

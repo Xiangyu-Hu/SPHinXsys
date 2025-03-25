@@ -32,7 +32,6 @@
 #define ALL_FLUID_BOUNDARY_CONDITION_CK_H
 
 #include "fluid_boundary_ck.hpp"
-#include "pressure_boundary_ck.hpp"
-#include "velocity_boundary_ck.hpp"
+#include "bidirectional_boundary_ck.hpp"
 
 #endif // ALL_FLUID_BOUNDARY_CONDITION_CK_H

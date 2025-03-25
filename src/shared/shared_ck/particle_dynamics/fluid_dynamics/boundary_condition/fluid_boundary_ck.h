@@ -116,20 +116,20 @@ class EmitterInflowInjectionCK : public BaseLocalDynamics<AlignedBoxPartType>
     DiscreteVariable<Real> *dv_rho_, *dv_p_;
 };
 
-template <typename AlignedBoxPartType, class ConditionFunction>
-class BufferEmitterInflowInjectionCK : public BaseLocalDynamics<AlignedBoxPartType>
+template <class TargetPressure>
+class BufferInflowInjectionCK : public BaseLocalDynamics<AlignedBoxPartByCell>
 {
     using CreateRealParticleKernel = typename SpawnRealParticle::ComputingKernel;
-    using ConditionKernel = typename ConditionFunction::ComputingKernel;
+    using PressureKernel = typename TargetPressure::ComputingKernel;
 
   public:
-    BufferEmitterInflowInjectionCK(AlignedBoxPartType &aligned_box_part, ParticleBuffer<Base> &buffer);
-    virtual ~BufferEmitterInflowInjectionCK() {};
+    BufferInflowInjectionCK(AlignedBoxPartByCell &aligned_box_part, ParticleBuffer<Base> &buffer);
+    virtual ~BufferInflowInjectionCK() {};
 
     class FinishDynamics
     {
       public:
-        FinishDynamics(BufferEmitterInflowInjectionCK &encloser)
+        FinishDynamics(BufferInflowInjectionCK &encloser)
             : particles_(encloser.particles_), buffer_(encloser.buffer_) {}
         void operator()() { buffer_.checkEnoughBuffer(*particles_); }
 
@@ -172,7 +172,7 @@ class BufferEmitterInflowInjectionCK : public BaseLocalDynamics<AlignedBoxPartTy
     DiscreteVariable<Vecd> *dv_pos_;
     DiscreteVariable<Real> *dv_rho_, *dv_p_;
     DiscreteVariable<int> *dv_buffer_particle_indicator_;
-    ConditionFunction condition_function_;
+    TargetPressure target_pressure_method_;
     DiscreteVariable<int> *dv_previous_surface_indicator_;
     SingularVariable<Real> *sv_physical_time_;
     Real upper_bound_fringe_;
