@@ -75,6 +75,7 @@ class MultilevelLevelSet : public BaseMeshField
     void writeMeshFieldToPlt(std::ofstream &output_file) override
     {
         sync_mesh_variable_data_();
+        resetProbes();
         for(size_t l = 0; l != total_levels_; ++l)
             WriteMeshFieldToPlt(*mesh_data_set_[l]).update(output_file);
     }
@@ -86,6 +87,23 @@ class MultilevelLevelSet : public BaseMeshField
             mesh_data_set_[l]->syncMeshVariableData(ex_policy);
     }
 
+    void resetProbes(){
+        probe_signed_distance_set_.clear();
+        probe_normal_direction_set_.clear();
+        probe_level_set_gradient_set_.clear();
+        probe_kernel_integral_set_.clear();
+        probe_kernel_gradient_integral_set_.clear();
+        cell_package_index_set_.clear();
+        meta_data_cell_set_.clear();
+        for(int l = 0; l != total_levels_; l++){
+          registerProbes(execution::par, l);
+          cell_package_index_set_.push_back(
+              mesh_data_set_[l]->cell_package_index_.DelegatedDataField(execution::par));
+          meta_data_cell_set_.push_back(
+              mesh_data_set_[l]->meta_data_cell_.DelegatedDataField(execution::par));
+        }
+    }
+    
   protected:
     inline size_t getProbeLevel(const Vecd &position);
     inline size_t getCoarseLevel(Real h_ratio);

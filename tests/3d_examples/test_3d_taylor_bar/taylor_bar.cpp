@@ -6,7 +6,7 @@
  * //TODO: Seems that the wall contact force should be improved.
  */
 #include "taylor_bar.h" /**< Case setup for this example. */
-#include "sphinxsys.h"
+#include "sphinxsys_sycl.h"
 
 using namespace SPH;
 
@@ -25,16 +25,22 @@ int main(int ac, char *av[])
     /** create a body with corresponding material, particles and reaction model. */
     SolidBody column(sph_system, makeShared<Column>("Column"));
     column.defineAdaptationRatios(1.3, 1.0);
-    column.defineBodyLevelSetShape()->writeLevelSet(sph_system);
+    column.defineBodyLevelSetShape(execution::par_device)->writeLevelSet(sph_system);
+    printf("[finished]: level_set part\n");
     column.defineMaterial<HardeningPlasticSolid>(
         rho0_s, Youngs_modulus, poisson, yield_stress, hardening_modulus);
-    (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? column.generateParticles<BaseParticles, Reload>(column.getName())
-        : column.generateParticles<BaseParticles, Lattice>();
-
+    printf("[finished0]\n");
+    if(!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles()){
+      column.generateParticles<BaseParticles, Reload>(column.getName());
+    } else {
+      printf("lattice activated\n");
+      column.generateParticles<BaseParticles, Lattice>();
+    }
+    printf("[finished1]\n");
     SolidBody wall(sph_system, makeShared<WallShape>("Wall"));
     wall.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     wall.generateParticles<BaseParticles, Lattice>();
+    printf("[finished2]\n");
 
     /** Define Observer. */
     ObserverBody my_observer(sph_system, "MyObserver");
@@ -47,6 +53,7 @@ int main(int ac, char *av[])
     SurfaceContactRelation column_wall_contact(column, {&wall});
     /**define simple data file input and outputs functions. */
     BodyStatesRecordingToVtp write_states(sph_system);
+    printf("[finished3]\n");
 
     if (sph_system.RunParticleRelaxation())
     {
