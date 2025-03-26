@@ -22,8 +22,8 @@ BoundingBox system_domain_bounds(Vec2d(-BW - DL, -BW - DH), Vec2d(BW + DL, BW + 
 //----------------------------------------------------------------------
 class InputBody : public ComplexShape
 {
-public:
-    explicit InputBody(const std::string& shape_name) : ComplexShape(shape_name)
+  public:
+    explicit InputBody(const std::string &shape_name) : ComplexShape(shape_name)
     {
         MultiPolygon turbine_blade;
         turbine_blade.addAPolygonFromFile(input_body, ShapeBooleanOps::add);
@@ -31,77 +31,65 @@ public:
     }
 };
 
-int main(int ac, char* av[])
+int main(int ac, char *av[])
 {
     //----------------------------------------------------------------------
     //	Build up the environment of a SPHSystem with global controls.
     //----------------------------------------------------------------------
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
-    sph_system.setRunParticleRelaxation(true);
-#ifdef BOOST_AVAILABLE
-    sph_system.handleCommandlineOptions(ac, av); // handle command line arguments
-#endif
-    IOEnvironment io_environment(sph_system);
+    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     FluidBody insert_body(sph_system, makeShared<InputBody>("Body"));
     insert_body.defineBodyLevelSetShape()->writeLevelSet(sph_system);
-    (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? insert_body.generateParticles<BaseParticles, Reload>(insert_body.getName())
-        : insert_body.generateParticles<BaseParticles, Lattice>();
+    insert_body.generateParticles<BaseParticles, Lattice>();
     //----------------------------------------------------------------------
-    //	Run particle relaxation for body-fitted distribution if chosen.
+    //	Define body relation map used for particle relaxation.
     //----------------------------------------------------------------------
-    if (sph_system.RunParticleRelaxation())
+    InnerRelation insert_body_inner(insert_body);
+    //----------------------------------------------------------------------
+    //	Methods used for particle relaxation.
+    //----------------------------------------------------------------------
+    using namespace relax_dynamics;
+    SimpleDynamics<RandomizeParticlePosition> random_insert_body_particles(insert_body);
+    RelaxationStepLevelSetCorrectionInnerImplicit relaxation_step_inner(insert_body_inner);
+    BodyStatesRecordingToVtp write_insert_body_to_vtp(insert_body);
+    ReloadParticleIO write_particle_reload_files(insert_body);
+    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<Average<QuantitySummation<Real>>>>
+        write_average_kinetic_energy(insert_body, "ParticleKineticEnergy");
+    //----------------------------------------------------------------------
+    //	Particle relaxation starts here.
+    //----------------------------------------------------------------------
+    random_insert_body_particles.exec(0.25);
+    relaxation_step_inner.SurfaceBounding().exec();
+    write_insert_body_to_vtp.writeToFile(0);
+    //----------------------------------------------------------------------
+    //	Relax particles of the insert body.
+    //----------------------------------------------------------------------
+    int ite_p = 0;
+    while (ite_p < 1000)
     {
-        //----------------------------------------------------------------------
-        //	Define body relation map used for particle relaxation.
-        //----------------------------------------------------------------------
-        InnerRelation insert_body_inner(insert_body);
-        //----------------------------------------------------------------------
-        //	Methods used for particle relaxation.
-        //----------------------------------------------------------------------
-        using namespace relax_dynamics;
-        SimpleDynamics<RandomizeParticlePosition> random_insert_body_particles(insert_body);
-        RelaxationStepLevelSetCorrectionInnerImplicit relaxation_step_inner(insert_body_inner);
-        BodyStatesRecordingToVtp write_insert_body_to_vtp(insert_body);
-        ReloadParticleIO write_particle_reload_files(insert_body);
-        RegressionTestDynamicTimeWarping<ReducedQuantityRecording<Average<QuantitySummation<Real>>>>
-            write_average_kinetic_energy(insert_body, "ParticleKineticEnergy");
-        //----------------------------------------------------------------------
-        //	Particle relaxation starts here.
-        //----------------------------------------------------------------------
-        random_insert_body_particles.exec(0.25);
-        relaxation_step_inner.SurfaceBounding().exec();
-        write_insert_body_to_vtp.writeToFile(0);
-        //----------------------------------------------------------------------
-        //	Relax particles of the insert body.
-        //----------------------------------------------------------------------
-        int ite_p = 0;
-        while (ite_p < 1000)
+        relaxation_step_inner.exec();
+        ite_p += 1;
+        if (ite_p % 200 == 0)
         {
-            relaxation_step_inner.exec();
-            ite_p += 1;
-            if (ite_p % 200 == 0)
-            {
-                std::cout << std::fixed << std::setprecision(9) << "Relaxation steps for the inserted body N = " << ite_p << "\n";
-                write_insert_body_to_vtp.writeToFile(ite_p);
-                write_average_kinetic_energy.writeToFile(ite_p);
-            }
+            std::cout << std::fixed << std::setprecision(9) << "Relaxation steps for the inserted body N = " << ite_p << "\n";
+            write_insert_body_to_vtp.writeToFile(ite_p);
+            write_average_kinetic_energy.writeToFile(ite_p);
         }
-        std::cout << "The physics relaxation process of inserted body finish !" << std::endl;
-        /** Output results. */
-        write_particle_reload_files.writeToFile(0);
-
-        if (sph_system.GenerateRegressionData())
-        {
-            write_average_kinetic_energy.generateDataBase(0.05);
-        }
-        else
-        {
-            write_average_kinetic_energy.testResult();
-        }
-        return 0;
     }
+    std::cout << "The physics relaxation process of inserted body finish !" << std::endl;
+    /** Output results. */
+    write_particle_reload_files.writeToFile(0);
+
+    if (sph_system.GenerateRegressionData())
+    {
+        write_average_kinetic_energy.generateDataBase(0.05);
+    }
+    else
+    {
+        write_average_kinetic_energy.testResult();
+    }
+    return 0;
 };
