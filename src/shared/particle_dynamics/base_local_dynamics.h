@@ -77,6 +77,20 @@ class BaseLocalDynamics
     SPHSystem &sph_system_;
     SPHBody &sph_body_;
     BaseParticles *particles_;
+
+    template <class ExecutionPolicy, typename DataType>
+    DataType *getVariableByName(const ExecutionPolicy &ex_policy, const std::string &variable_name)
+    {
+        return particles_->getVariableByName<DataType>(variable_name)
+            ->DelegatedData(ex_policy);
+    };
+
+    template <class ExecutionPolicy, typename DataType>
+    DataType *getSingularVariableByName(const ExecutionPolicy &ex_policy, const std::string &variable_name)
+    {
+        return particles_->getSingularVariableByName<DataType>(variable_name)
+            ->DelegatedData(ex_policy);
+    };
 };
 using LocalDynamics = BaseLocalDynamics<SPHBody>;
 
