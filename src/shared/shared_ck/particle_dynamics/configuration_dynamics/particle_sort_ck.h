@@ -29,6 +29,7 @@
 #ifndef PARTICLE_SORT_H
 #define PARTICLE_SORT_H
 
+#include "base_configuration_dynamics.h"
 #include "particle_sorting.h"
 
 /**
@@ -92,9 +93,11 @@ class QuickSort
         quick_sort_particle_body_;
 };
 
-template <class ExecutionPolicy, class SortMethodType>
+template <class ExecutionPolicy>
 class ParticleSortCK : public LocalDynamics, public BaseDynamics<void>
 {
+    using SortMethodType = typename SortMethod<ExecutionPolicy>::type;
+
   public:
     explicit ParticleSortCK(RealBody &real_body);
     virtual ~ParticleSortCK() {};
@@ -103,7 +106,7 @@ class ParticleSortCK : public LocalDynamics, public BaseDynamics<void>
     {
       public:
         ComputingKernel(const ExecutionPolicy &ex_policy,
-                        ParticleSortCK<ExecutionPolicy, SortMethodType> &encloser);
+                        ParticleSortCK<ExecutionPolicy> &encloser);
         void prepareSequence(UnsignedInt index_i);
         void updateSortedID(UnsignedInt index_i);
 
@@ -131,7 +134,7 @@ class ParticleSortCK : public LocalDynamics, public BaseDynamics<void>
     };
 
     virtual void exec(Real dt = 0.0) override;
-    typedef ParticleSortCK<ExecutionPolicy, SortMethodType> LocalDynamicsType;
+    typedef ParticleSortCK<ExecutionPolicy> LocalDynamicsType;
 
   protected:
     ExecutionPolicy ex_policy_;
@@ -148,8 +151,8 @@ class ParticleSortCK : public LocalDynamics, public BaseDynamics<void>
 
     StdVec<BodyPartByParticle *> body_parts_by_particle_;
     StdVec<DiscreteVariable<UnsignedInt> *> dv_index_lists_, dv_original_id_lists_;
-    using UpdateBodyPartParticleImplementation = 
-    Implementation<ExecutionPolicy, LocalDynamicsType, UpdateBodyPartByParticle>;
+    using UpdateBodyPartParticleImplementation =
+        Implementation<ExecutionPolicy, LocalDynamicsType, UpdateBodyPartByParticle>;
     UniquePtrsKeeper<UpdateBodyPartParticleImplementation> update_body_part_by_particle_implementation_ptrs_;
     StdVec<UpdateBodyPartParticleImplementation *> update_body_part_by_particle_implementations_;
 };

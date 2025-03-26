@@ -39,6 +39,16 @@ namespace SPH
 using namespace execution;
 
 template <typename... T>
+struct SortMethod;
+
+class QuickSort;
+template <class ExecutionPolicy>
+struct SortMethod<ExecutionPolicy>
+{
+    typedef QuickSort type;
+};
+
+template <typename... T>
 struct PlusUnsignedInt;
 
 template <class ExecutionPolicy>
