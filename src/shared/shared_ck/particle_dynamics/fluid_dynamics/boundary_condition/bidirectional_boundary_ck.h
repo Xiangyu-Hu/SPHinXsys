@@ -68,14 +68,16 @@ class TagBufferParticlesCK : public BaseLocalDynamics<AlignedBoxPartByCell>
     DiscreteVariable<int> *dv_buffer_particle_indicator_;
 };
 
-template <class TargetPressure>
+template <class BoundaryConditionType>
 class BufferInflowInjectionCK : public BaseLocalDynamics<AlignedBoxPartByCell>
 {
     using CreateRealParticleKernel = typename SpawnRealParticle::ComputingKernel;
-    using PressureKernel = typename TargetPressure::ComputingKernel;
+    using ConditionKernel = typename BoundaryConditionType::ComputingKernel;
 
   public:
-    BufferInflowInjectionCK(AlignedBoxPartByCell &aligned_box_part, ParticleBuffer<Base> &buffer);
+    template <typename... Args>
+    BufferInflowInjectionCK(AlignedBoxPartByCell &aligned_box_part,
+                            ParticleBuffer<Base> &buffer, Args &&...args);
     virtual ~BufferInflowInjectionCK() {};
 
     class FinishDynamics
@@ -104,7 +106,7 @@ class BufferInflowInjectionCK : public BaseLocalDynamics<AlignedBoxPartByCell>
         CreateRealParticleKernel create_real_particle_;
         Vecd *pos_;
         int *buffer_particle_indicator_;
-        PressureKernel pressure_kernel_;
+        ConditionKernel condition_;
         Real *physical_time_;
         Real upper_bound_fringe_;
     };
@@ -117,7 +119,7 @@ class BufferInflowInjectionCK : public BaseLocalDynamics<AlignedBoxPartByCell>
     SpawnRealParticle create_real_particle_method_;
     DiscreteVariable<Vecd> *dv_pos_;
     DiscreteVariable<int> *dv_buffer_particle_indicator_;
-    TargetPressure target_pressure_method_;
+    BoundaryConditionType boundary_condition_method_;
     SingularVariable<Real> *sv_physical_time_;
     Real upper_bound_fringe_;
 };
@@ -171,13 +173,14 @@ class BufferOutflowDeletionCK : public BaseLocalDynamics<AlignedBoxPartByCell>
     DiscreteVariable<Vecd> *dv_pos_;
 };
 
-template <class TargetVelocity>
-class VelocityConditionCK : public BaseLocalDynamics<AlignedBoxPartByCell>
+template <class BoundaryConditionType>
+class BoundaryConditionCK : public BaseLocalDynamics<AlignedBoxPartByCell>
 {
-    using VelocityKernel = typename TargetVelocity::ComputingKernel;
+    using ConditionKernel = typename BoundaryConditionType::ComputingKernel;
 
   public:
-    VelocityConditionCK(AlignedBoxPartByCell &aligned_box_part);
+    template <typename... Args>
+    BoundaryConditionCK(AlignedBoxPartByCell &aligned_box_part, Args &&...args);
 
     class UpdateKernel
     {
@@ -188,82 +191,35 @@ class VelocityConditionCK : public BaseLocalDynamics<AlignedBoxPartByCell>
 
       protected:
         AlignedBox *aligned_box_;
-        Transform *transform_;
-        VelocityKernel velocity_kernel_;
-        Vecd *dv_pos_;
-        Vecd *dv_vel_;
-    };
-
-  protected:
-    SingularVariable<AlignedBox> *sv_aligned_box_;
-    TargetVelocity target_velocity_method_;
-    SingularVariable<Real> *sv_physical_time_;
-    DiscreteVariable<Vecd> *dv_pos_;
-    DiscreteVariable<Vecd> *dv_vel_;
-};
-
-template <class KernelCorrectionType, class TargetPressure>
-class PressureConditionCK : public BaseLocalDynamics<AlignedBoxPartByCell>,
-                            public ForcePriorCK
-{
-    using PressureKernel = typename TargetPressure::ComputingKernel;
-    using CorrectionKernel = typename KernelCorrectionType::ComputingKernel;
-
-  public:
-    PressureConditionCK(AlignedBoxPartByCell &aligned_box_part);
-
-    class UpdateKernel
-    {
-      public:
-        template <class ExecutionPolicy, class EncloserType>
-        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-        void update(size_t index_i, Real dt = 0.0);
-
-      protected:
-        AlignedBox *aligned_box_;
-        CorrectionKernel correction_;
-        PressureKernel pressure_kernel_;
+        ConditionKernel condition_;
         Real *physical_time_;
-        Vecd *zero_gradient_residue_;
-        Vecd *pos_;
-        Real *mass_;
+        Vecd *pos_, *vel_;
     };
 
   protected:
     SingularVariable<AlignedBox> *sv_aligned_box_;
-    KernelCorrectionType kernel_correction_;
-    TargetPressure target_pressure_method_;
+    BoundaryConditionType boundary_condition_method_;
     SingularVariable<Real> *sv_physical_time_;
-    DiscreteVariable<Vecd> *dv_zero_gradient_residue_;
-    DiscreteVariable<Vecd> *dv_pos_;
-    DiscreteVariable<Real> *dv_mass_;
+    DiscreteVariable<Vecd> *dv_pos_, *dv_vel_;
 };
 
-template <typename ExecutionPolicy, class KernelCorrectionType, class TargetPressure, class TargetVelocity>
+template <typename ExecutionPolicy, class BoundaryConditionType>
 class BidirectionalBoundaryCK
 {
     StateDynamics<ExecutionPolicy, TagBufferParticlesCK> tag_buffer_particles_;
-    StateDynamics<ExecutionPolicy, VelocityConditionCK<TargetVelocity>> velocity_condition_;
-    StateDynamics<ExecutionPolicy, PressureConditionCK<KernelCorrectionType, TargetPressure>> pressure_condition_;
-    StateDynamics<ExecutionPolicy, BufferInflowInjectionCK<TargetPressure>> inflow_injection_;
+    StateDynamics<ExecutionPolicy, BoundaryConditionCK<BoundaryConditionType>> boundary_condition_;
+    StateDynamics<ExecutionPolicy, BufferInflowInjectionCK<BoundaryConditionType>> inflow_injection_;
     StateDynamics<ExecutionPolicy, BufferOutflowDeletionCK> outflow_deletion_;
 
   public:
-    BidirectionalBoundaryCK(AlignedBoxPartByCell &emitter_by_cell, ParticleBuffer<Base> &particle_buffer);
+    template <typename... Args>
+    BidirectionalBoundaryCK(AlignedBoxPartByCell &bidirectional_boundary,
+                            ParticleBuffer<Base> &particle_buffer, Args &&...args);
     void tagBufferParticles() { tag_buffer_particles_.exec(); }
-    void applyVelocityCondition() { velocity_condition_.exec(); }
-    void applyPressureCondition() { pressure_condition_.exec(); }
+    void applyBoundaryCondition() { boundary_condition_.exec(); }
     void injectParticles() { inflow_injection_.exec(); }
     void deleteParticles() { outflow_deletion_.exec(); }
 };
-
-template <typename ExecutionPolicy, class KernelCorrectionType, class TargetPressure>
-using BidirectionalPressureBoundaryCK =
-    BidirectionalBoundaryCK<ExecutionPolicy, KernelCorrectionType, TargetPressure, AlignedVelocity>;
-
-template <typename ExecutionPolicy, class KernelCorrectionType, class TargetVelocity>
-using BidirectionalVelocityBoundaryCK =
-    BidirectionalBoundaryCK<ExecutionPolicy, KernelCorrectionType, ZeroGradientPressure, TargetVelocity>;
 } // namespace fluid_dynamics
 } // namespace SPH
 #endif // BIDIRECTIONAL_BOUNDARY_CK_H

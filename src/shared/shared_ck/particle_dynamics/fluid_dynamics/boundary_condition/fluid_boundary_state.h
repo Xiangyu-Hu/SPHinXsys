@@ -55,13 +55,13 @@ class BaseStateCondition
     DiscreteVariable<Real> *dv_p_, *dv_rho_;
 };
 
-class NonPrescribedPressure : public BaseStateCondition
+class ZeroGradientPressure : public BaseStateCondition
 {
   public:
-    NonPrescribedPressure(BaseParticles *particles)
-        : BaseStateCondition(particles) {};
+    template <typename... Args>
+    ZeroGradientPressure(BaseParticles *particles, Args &&...args)
+        : BaseStateCondition(particles){};
 
-    // The "ComputingKernel" is what your SPHinXsys code will instantiate
     class ComputingKernel : public BaseStateCondition::ComputingKernel
     {
       public:
@@ -69,8 +69,9 @@ class NonPrescribedPressure : public BaseStateCondition
         ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
             : BaseStateCondition::ComputingKernel(ex_policy, encloser) {}
 
+        void reinitializeState(size_t index_i, Real time) {};
         // Return a fixed or trivial pressure value
-        Real operator()(size_t index_i, Real time)
+        Real getTargetPressure(size_t index_i, Real time)
         {
             return p_[index_i]; // Do nothing!
         }
