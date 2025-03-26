@@ -51,7 +51,6 @@ ParticleSortCK<ExecutionPolicy>::ParticleSortCK(RealBody &real_body)
     : LocalDynamics(real_body), BaseDynamics<void>(),
       ex_policy_(ExecutionPolicy{}),
       cell_linked_list_(DynamicCast<CellLinkedList>(this, real_body.getCellLinkedList())),
-      mesh_(cell_linked_list_.getMesh()),
       dv_pos_(particles_->getVariableByName<Vecd>("Position")),
       dv_sequence_(particles_->registerDiscreteVariableOnly<UnsignedInt>(
           "Sequence", particles_->ParticlesBound())),
@@ -88,7 +87,8 @@ ParticleSortCK<ExecutionPolicy>::ParticleSortCK(RealBody &real_body)
 template <class ExecutionPolicy>
 ParticleSortCK<ExecutionPolicy>::ComputingKernel::
     ComputingKernel(const ExecutionPolicy &ex_policy, ParticleSortCK<ExecutionPolicy> &encloser)
-    : mesh_(encloser.mesh_), pos_(encloser.dv_pos_->DelegatedData(ex_policy)),
+    : mesh_(encloser.cell_linked_list_.getMesh()),
+      pos_(encloser.dv_pos_->DelegatedData(ex_policy)),
       sequence_(encloser.dv_sequence_->DelegatedData(ex_policy)),
       index_permutation_(encloser.dv_index_permutation_->DelegatedData(ex_policy)),
       original_id_(encloser.dv_original_id_->DelegatedData(ex_policy)),
