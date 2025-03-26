@@ -384,12 +384,12 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Statistics for CPU time
     //----------------------------------------------------------------------
-    TickCount t1 = TickCount::now();
-    TimeInterval interval;
-    TimeInterval interval_computing_time_step;
-    TimeInterval interval_computing_pressure_relaxation;
+    TickCount tick_start = TickCount::now();
+    TimeInterval interval_io;
+    TimeInterval interval_outer_loop;
+    TimeInterval interval_inner_loop;
     TimeInterval interval_updating_configuration;
-    TickCount time_instance;
+    TickCount tick_instance;
     //----------------------------------------------------------------------
     //	First output before the main loop.
     //----------------------------------------------------------------------
@@ -404,15 +404,16 @@ int main(int ac, char *av[])
         /** Integrate time (loop) until the next output time. */
         while (integration_time < output_interval)
         {
+            tick_instance = TickCount::now();
             fluid_density_regularization.exec();
             water_advection_step_setup.exec();
             fluid_viscous_force.exec();
             transport_correction_ck.exec();
             Real advection_dt = fluid_advection_time_step.exec();
             fluid_linear_correction_matrix.exec();
-            interval_computing_time_step += TickCount::now() - time_instance;
+            interval_outer_loop += TickCount::now() - tick_instance;
 
-            /** Dynamics including pressure relaxation. */
+            tick_instance = TickCount::now();
             Real relaxation_time = 0.0;
             Real acoustic_dt = 0.0;
             while (relaxation_time < advection_dt)
@@ -429,7 +430,7 @@ int main(int ac, char *av[])
                 sv_physical_time->incrementValue(acoustic_dt);
             }
             water_advection_step_close.exec();
-            interval_computing_pressure_relaxation += TickCount::now() - time_instance;
+            interval_inner_loop += TickCount::now() - tick_instance;
 
             if (number_of_iterations % screen_output_interval == 0)
             {
@@ -438,11 +439,14 @@ int main(int ac, char *av[])
                           << "	Dt = " << advection_dt << "	dt = " << acoustic_dt << "\n";
                 if (number_of_iterations % observation_sample_interval == 0 && number_of_iterations != sph_system.RestartStep())
                 {
+                    tick_instance = TickCount::now();
                     write_centerline_velocity.writeToFile(number_of_iterations);
+                    interval_io += TickCount::now() - tick_instance;
                 }
             }
             number_of_iterations++;
-            /** inflow emitter injection*/
+
+            tick_instance = TickCount::now();
             bidirectional_velocity_condition_left.injectParticles();
             bidirectional_pressure_condition_right.injectParticles();
             bidirectional_velocity_condition_left.deleteParticles();
@@ -455,30 +459,25 @@ int main(int ac, char *av[])
             water_cell_linked_list.exec();
             water_body_update_complex_relation.exec();
             fluid_observer_contact_relation.exec();
-            interval_updating_configuration += TickCount::now() - time_instance;
             fluid_boundary_indicator.exec();
             bidirectional_velocity_condition_left.tagBufferParticles();
             bidirectional_pressure_condition_right.tagBufferParticles();
+            interval_updating_configuration += TickCount::now() - tick_instance;
         }
 
-        TickCount t2 = TickCount::now();
-
+        tick_instance = TickCount::now();
         body_states_recording.writeToFile(MainExecutionPolicy{});
         fluid_observer_contact_relation.exec();
-
-        TickCount t3 = TickCount::now();
-        interval += t3 - t2;
+        interval_io += TickCount::now() - tick_instance;
     }
-    TickCount t4 = TickCount::now();
 
-    TimeInterval tt;
-    tt = t4 - t1 - interval;
+    TimeInterval tt = TickCount::now() - tick_start - interval_io;
     std::cout << "Total wall time for computation: " << tt.seconds()
               << " seconds." << std::endl;
-    std::cout << std::fixed << std::setprecision(9) << "interval_computing_time_step ="
-              << interval_computing_time_step.seconds() << "\n";
-    std::cout << std::fixed << std::setprecision(9) << "interval_computing_pressure_relaxation = "
-              << interval_computing_pressure_relaxation.seconds() << "\n";
+    std::cout << std::fixed << std::setprecision(9) << "interval_outer_loop ="
+              << interval_outer_loop.seconds() << "\n";
+    std::cout << std::fixed << std::setprecision(9) << "interval_inner_loop = "
+              << interval_inner_loop.seconds() << "\n";
     std::cout << std::fixed << std::setprecision(9) << "interval_updating_configuration = "
               << interval_updating_configuration.seconds() << "\n";
     //----------------------------------------------------------------------

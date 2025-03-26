@@ -259,10 +259,10 @@ int main(int ac, char *av[])
     Real end_time = 30.0;
     Real output_interval = 1.0;
     //----------------------------------------------------------------------
-    //	Statistics for the comuting time information
+    //	Statistics for the computing time information
     //----------------------------------------------------------------------
     TickCount t1 = TickCount::now();
-    TimeInterval interval_writting_body_state;
+    TimeInterval interval_writing_body_state;
     TimeInterval interval_computing_time_step;
     TimeInterval interval_acoustic_steps;
     TimeInterval interval_updating_configuration;
@@ -343,12 +343,12 @@ int main(int ac, char *av[])
         write_vertical_velocity.writeToFile(number_of_iterations);
         body_states_recording.writeToFile(MainExecutionPolicy{});
         TickCount t3 = TickCount::now();
-        interval_writting_body_state += t3 - t2;
+        interval_writing_body_state += t3 - t2;
     }
     TickCount t4 = TickCount::now();
 
     TimeInterval tt;
-    tt = t4 - t1 - interval_writting_body_state;
+    tt = t4 - t1 - interval_writing_body_state;
     std::cout << "Total wall time for computation: " << tt.seconds()
               << " seconds." << std::endl;
     std::cout << std::fixed << std::setprecision(9) << "interval_computing_time_step ="

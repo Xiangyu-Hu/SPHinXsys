@@ -163,14 +163,13 @@ int main(int ac, char *av[])
     Real end_time = 20.0;
     Real output_interval = 0.1;
     //----------------------------------------------------------------------
-    //	Statistics for the comuting time information
+    //	Statistics for the computing time information
     //----------------------------------------------------------------------
-    TickCount t1 = TickCount::now();
-    TimeInterval interval_writting_body_state;
-    TimeInterval interval_computing_time_step;
-    TimeInterval interval_acoustic_steps;
+    TimeInterval interval_io;
+    TimeInterval interval_outer_loop;
+    TimeInterval interval_inner_loop;
     TimeInterval interval_updating_configuration;
-    TickCount time_instance;
+    TickCount tick_instance;
     //----------------------------------------------------------------------
     //	First output before the main loop.
     //----------------------------------------------------------------------
@@ -187,16 +186,15 @@ int main(int ac, char *av[])
         while (integration_time < output_interval)
         {
             /** outer loop for dual-time criteria time-stepping. */
-            time_instance = TickCount::now();
-
+            tick_instance = TickCount::now();
             fluid_boundary_indicator.exec();
             fluid_density_regularization.exec();
             water_advection_step_setup.exec();
             Real advection_dt = fluid_advection_time_step.exec();
             fluid_linear_correction_matrix.exec();
-            interval_computing_time_step += TickCount::now() - time_instance;
+            interval_outer_loop += TickCount::now() - tick_instance;
 
-            time_instance = TickCount::now();
+            tick_instance = TickCount::now();
             Real relaxation_time = 0.0;
             Real acoustic_dt = 0.0;
             while (relaxation_time < advection_dt)
@@ -210,8 +208,9 @@ int main(int ac, char *av[])
                 sv_physical_time->incrementValue(acoustic_dt);
             }
             water_advection_step_close.exec();
-            interval_acoustic_steps += TickCount::now() - time_instance;
+            interval_inner_loop += TickCount::now() - tick_instance;
 
+            tick_instance = TickCount::now();
             /** screen output, write body observables and restart files  */
             if (number_of_iterations % screen_output_interval == 0)
             {
@@ -227,10 +226,11 @@ int main(int ac, char *av[])
                 if (number_of_iterations % restart_output_interval == 0)
                     restart_io.writeToFile(MainExecutionPolicy{}, number_of_iterations);
             }
+            interval_io += TickCount::now() - tick_instance;
             number_of_iterations++;
 
             /** Particle sort, ipdate cell linked list and configuration. */
-            time_instance = TickCount::now();
+            tick_instance = TickCount::now();
             if (number_of_iterations % 100 == 0 && number_of_iterations != 1)
             {
                 particle_sort.exec();
@@ -238,25 +238,24 @@ int main(int ac, char *av[])
             water_cell_linked_list.exec();
             water_block_update_complex_relation.exec();
             fluid_observer_contact_relation.exec();
-            interval_updating_configuration += TickCount::now() - time_instance;
+            interval_updating_configuration += TickCount::now() - tick_instance;
         }
 
-        TickCount t2 = TickCount::now();
+        tick_instance = TickCount::now();
         /** Output body state during the simulation according output_interval. */
         body_states_recording.writeToFile(MainExecutionPolicy{});
-        TickCount t3 = TickCount::now();
-        interval_writting_body_state += t3 - t2;
+        interval_io += TickCount::now() - tick_instance;
     }
-    TickCount t4 = TickCount::now();
 
-    TimeInterval tt;
-    tt = t4 - t1 - interval_writting_body_state;
+    TimeInterval tt = interval_outer_loop +
+                      interval_inner_loop +
+                      interval_updating_configuration;
     std::cout << "Total wall time for computation: " << tt.seconds()
               << " seconds." << std::endl;
-    std::cout << std::fixed << std::setprecision(9) << "interval_computing_time_step ="
-              << interval_computing_time_step.seconds() << "\n";
-    std::cout << std::fixed << std::setprecision(9) << "interval_acoustic_steps = "
-              << interval_acoustic_steps.seconds() << "\n";
+    std::cout << std::fixed << std::setprecision(9) << "interval_outer_loop ="
+              << interval_outer_loop.seconds() << "\n";
+    std::cout << std::fixed << std::setprecision(9) << "interval_inner_loop = "
+              << interval_inner_loop.seconds() << "\n";
     std::cout << std::fixed << std::setprecision(9) << "interval_updating_configuration = "
               << interval_updating_configuration.seconds() << "\n";
     //----------------------------------------------------------------------
