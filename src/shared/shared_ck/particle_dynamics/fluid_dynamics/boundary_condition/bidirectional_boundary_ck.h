@@ -213,7 +213,7 @@ class BidirectionalBoundaryCK
 
   public:
     template <typename... Args>
-    BidirectionalBoundaryCK(AlignedBoxPartByCell &bidirectional_boundary,
+    BidirectionalBoundaryCK(AlignedBoxPartByCell &aligned_box_part,
                             ParticleBuffer<Base> &particle_buffer, Args &&...args);
     void tagBufferParticles() { tag_buffer_particles_.exec(); }
     void applyBoundaryCondition() { boundary_condition_.exec(); }

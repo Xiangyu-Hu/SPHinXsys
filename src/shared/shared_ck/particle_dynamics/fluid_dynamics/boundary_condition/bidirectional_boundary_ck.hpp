@@ -128,12 +128,12 @@ BoundaryConditionCK<BoundaryConditionType>::UpdateKernel::update(size_t index_i,
 template <typename ExecutionPolicy, class BoundaryConditionType>
 template <typename... Args>
 BidirectionalBoundaryCK<ExecutionPolicy, BoundaryConditionType>::
-    BidirectionalBoundaryCK(AlignedBoxPartByCell &bidirectional_boundary,
+    BidirectionalBoundaryCK(AlignedBoxPartByCell &aligned_box_part,
                             ParticleBuffer<Base> &particle_buffer, Args &&...args)
-    : tag_buffer_particles_(bidirectional_boundary),
-      pressure_condition_(bidirectional_boundary, std::forward<Args>(args)...),
-      inflow_injection_(bidirectional_boundary, particle_buffer, std::forward<Args>(args)...),
-      outflow_deletion_(bidirectional_boundary) {}
+    : tag_buffer_particles_(aligned_box_part),
+      boundary_condition_(aligned_box_part, std::forward<Args>(args)...),
+      inflow_injection_(aligned_box_part, particle_buffer, std::forward<Args>(args)...),
+      outflow_deletion_(aligned_box_part) {}
 //=================================================================================================//
 } // namespace fluid_dynamics
 } // namespace SPH
