@@ -1,20 +1,9 @@
-#include "fluid_boundary_ck.h"
+#include "bidirectional_boundary_ck.h"
 
 namespace SPH
 {
 namespace fluid_dynamics
 {
-//=================================================================================================//
-BufferOutflowDeletionCK::
-    BufferOutflowDeletionCK(AlignedBoxPartByCell &aligned_box_part)
-    : BaseLocalDynamics<AlignedBoxPartByCell>(aligned_box_part),
-      part_id_(aligned_box_part.getPartID()),
-      sv_aligned_box_(aligned_box_part.svAlignedBox()),
-      sv_total_real_particles_(particles_->svTotalRealParticles()),
-      remove_real_particle_method_(particles_),
-      dv_buffer_particle_indicator_(
-          particles_->registerStateVariableOnly<int>("BufferParticleIndicator")),
-      dv_pos_(particles_->getVariableByName<Vecd>("Position")) {}
 //=================================================================================================//
 TagBufferParticlesCK::TagBufferParticlesCK(AlignedBoxPartByCell &aligned_box_part)
     : BaseLocalDynamics<AlignedBoxPartByCell>(aligned_box_part),
@@ -26,6 +15,17 @@ TagBufferParticlesCK::TagBufferParticlesCK(AlignedBoxPartByCell &aligned_box_par
 {
     particles_->addEvolvingVariable<int>("BufferParticleIndicator");
 }
+//=================================================================================================//
+BufferOutflowDeletionCK::
+    BufferOutflowDeletionCK(AlignedBoxPartByCell &aligned_box_part)
+    : BaseLocalDynamics<AlignedBoxPartByCell>(aligned_box_part),
+      part_id_(aligned_box_part.getPartID()),
+      sv_aligned_box_(aligned_box_part.svAlignedBox()),
+      sv_total_real_particles_(particles_->svTotalRealParticles()),
+      remove_real_particle_method_(particles_),
+      dv_buffer_particle_indicator_(
+          particles_->registerStateVariableOnly<int>("BufferParticleIndicator")),
+      dv_pos_(particles_->getVariableByName<Vecd>("Position")) {}
 //=================================================================================================//
 } // namespace fluid_dynamics
 } // namespace SPH
