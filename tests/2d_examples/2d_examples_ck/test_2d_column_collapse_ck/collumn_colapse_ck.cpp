@@ -2,10 +2,10 @@
  * @file 	column_collapse_ck.cpp
  * @brief 	2D column collapse.
  * @details Column collapse using computing kernels.
- * @author Shuang Li, Xiangyu Hu and Shuaihao Zhang 
+ * @author Shuang Li, Xiangyu Hu and Shuaihao Zhang
  */
 #include "sphinxsys_ck.h"
-using namespace SPH;   // Namespace cite here.
+using namespace SPH; // Namespace cite here.
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
@@ -98,7 +98,7 @@ int main(int ac, char *av[])
     Relation<Contact<>> soil_block_contact(soil_block, {&wall_boundary});
 
     UpdateRelation<MainExecutionPolicy, Inner<>, Contact<>> soil_block_update_complex_relation(soil_block_inner, soil_block_contact);
-    ParticleSortCK<MainExecutionPolicy, QuickSort> particle_sort(soil_block);
+    ParticleSortCK<MainExecutionPolicy> particle_sort(soil_block);
     //----------------------------------------------------------------------
     //	Define the main numerical methods used in the simulation.
     //	Note that there may be data dependence on the constructors of these methods.
@@ -109,15 +109,14 @@ int main(int ac, char *av[])
     StateDynamics<MainExecutionPolicy, fluid_dynamics::AdvectionStepSetup> soil_advection_step_setup(soil_block);
     StateDynamics<MainExecutionPolicy, fluid_dynamics::AdvectionStepClose> soil_advection_step_close(soil_block);
 
-
     InteractionDynamicsCK<MainExecutionPolicy, continuum_dynamics::PlasticAcousticStep1stHalfWithWallRiemannCK>
-         soil_acoustic_step_1st_half(soil_block_inner, soil_block_contact);
+        soil_acoustic_step_1st_half(soil_block_inner, soil_block_contact);
     InteractionDynamicsCK<MainExecutionPolicy, continuum_dynamics::PlasticAcousticStep2ndHalfWithWallRiemannCK>
         soil_acoustic_step_2nd_half(soil_block_inner, soil_block_contact);
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::DensityRegularizationComplexFreeSurface>
         soil_density_regularization(soil_block_inner, soil_block_contact);
     InteractionDynamicsCK<MainExecutionPolicy, continuum_dynamics::StressDiffusionInnerCK> stress_diffusion(soil_block_inner);
-    ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticTimeStepCK<>> soil_acoustic_time_step(soil_block,0.4);
+    ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticTimeStepCK<>> soil_acoustic_time_step(soil_block, 0.4);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
@@ -125,19 +124,19 @@ int main(int ac, char *av[])
     BodyStatesRecordingToVtp body_states_recording(sph_system);
     body_states_recording.addToWrite<Vecd>(wall_boundary, "NormalDirection");
     body_states_recording.addToWrite<Real>(soil_block, "Density");
-    StateDynamics<MainExecutionPolicy,continuum_dynamics::VerticalStressCK> vertical_stress(soil_block);
+    StateDynamics<MainExecutionPolicy, continuum_dynamics::VerticalStressCK> vertical_stress(soil_block);
     body_states_recording.addToWrite<Real>(soil_block, "VerticalStress");
-    StateDynamics<MainExecutionPolicy,continuum_dynamics::AccDeviatoricPlasticStrainCK> accumulated_deviatoric_plastic_strain(soil_block);
+    StateDynamics<MainExecutionPolicy, continuum_dynamics::AccDeviatoricPlasticStrainCK> accumulated_deviatoric_plastic_strain(soil_block);
     body_states_recording.addToWrite<Real>(soil_block, "AccDeviatoricPlasticStrain");
     RestartIO restart_io(sph_system);
-    
+
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<MainExecutionPolicy, TotalMechanicalEnergyCK>>
-    write_mechanical_energy(soil_block, gravity);
+        write_mechanical_energy(soil_block, gravity);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
     //----------------------------------------------------------------------
-    SingularVariable<Real> *sv_physical_time = sph_system.getSystemVariableByName<Real>("PhysicalTime");    
+    SingularVariable<Real> *sv_physical_time = sph_system.getSystemVariableByName<Real>("PhysicalTime");
     wall_boundary_normal_direction.exec();
     constant_gravity.exec();
     soil_cell_linked_list.exec();
@@ -146,7 +145,7 @@ int main(int ac, char *av[])
 
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
-    //----------------------------------------------------------------------    
+    //----------------------------------------------------------------------
     size_t number_of_iterations = 0;
     int screen_output_interval = 500;
     int observation_sample_interval = screen_output_interval * 2;
@@ -171,7 +170,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------
-    while (sv_physical_time->getValue()  < End_Time)
+    while (sv_physical_time->getValue() < End_Time)
     {
         Real integration_time = 0.0;
         /** Integrate time (loop) until the next output time. */
@@ -213,12 +212,11 @@ int main(int ac, char *av[])
                 soil_advection_step_close.exec();
                 number_of_iterations++;
                 /** Update cell linked list and configuration. */
-                time_instance = TickCount::now();              
+                time_instance = TickCount::now();
                 soil_cell_linked_list.exec();
                 soil_block_update_complex_relation.exec();
                 interval_updating_configuration += TickCount::now() - time_instance;
             }
-
         }
         vertical_stress.exec();
         accumulated_deviatoric_plastic_strain.exec();
@@ -226,7 +224,6 @@ int main(int ac, char *av[])
         TickCount t2 = TickCount::now();
         TickCount t3 = TickCount::now();
         interval += t3 - t2;
-            
     }
     TickCount t4 = TickCount::now();
 

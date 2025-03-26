@@ -181,7 +181,7 @@ int main(int ac, char *av[])
     UpdateRelation<MainExecutionPolicy, Inner<>, Contact<>> water_block_update_complex_relation(water_block_inner, water_wall_contact);
     UpdateRelation<MainExecutionPolicy, Contact<>> horizontal_observer_contact_relation(horizontal_observer_contact);
     UpdateRelation<MainExecutionPolicy, Contact<>> vertical_observer_contact_relation(vertical_observer_contact);
-    ParticleSortCK<MainExecutionPolicy, RadixSort> particle_sort(water_body);
+    ParticleSortCK<MainExecutionPolicy> particle_sort(water_body);
     //----------------------------------------------------------------------
 
     StateDynamics<execution::ParallelPolicy, NormalFromBodyShapeCK> wall_boundary_normal_direction(wall_boundary); // run on CPU
