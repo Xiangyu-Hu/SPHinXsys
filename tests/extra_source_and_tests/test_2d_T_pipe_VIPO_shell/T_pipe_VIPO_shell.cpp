@@ -353,7 +353,7 @@ int main(int ac, char *av[])
     body_states_recording.addToWrite<Real>(water_block, "Pressure");
     body_states_recording.addToWrite<int>(water_block, "Indicator");
     body_states_recording.addToWrite<Real>(water_block, "Density");
-    body_states_recording.addToWrite<int>(water_block, "BufferParticleIndicator");
+    body_states_recording.addToWrite<int>(water_block, "BufferIndicator");
     body_states_recording.addToWrite<Vecd>(shell_body, "NormalDirection");
     body_states_recording.addToWrite<Vecd>(shell_body, "PressureForceFromFluid");
     body_states_recording.addToWrite<Real>(shell_body, "Average1stPrincipleCurvature");
