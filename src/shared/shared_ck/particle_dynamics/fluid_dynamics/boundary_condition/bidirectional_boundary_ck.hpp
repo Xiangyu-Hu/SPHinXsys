@@ -57,6 +57,8 @@ BufferInflowInjectionCK<TargetPressure>::
       pos_(encloser.dv_pos_->DelegatedData(ex_policy)),
       buffer_particle_indicator_(encloser.dv_buffer_particle_indicator_->DelegatedData(ex_policy)),
       physical_time_(encloser.sv_physical_time_->DelegatedData(ex_policy)),
+      p_(encloser.dv_p_->DelegatedData(ex_policy)),
+      rho_(encloser.dv_rho_->DelegatedData(ex_policy)),
       upper_bound_fringe_(encloser.upper_bound_fringe_) {}
 //=================================================================================================//
 template <class TargetPressure>
