@@ -21,13 +21,13 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	fluid_boundary_ck.h
+ * @file 	emitter_boundary_ck.h
  * @brief 	tbd
  * @author	Xiangyu Hu
  */
 
-#ifndef FLUID_BOUNDARY_CK_H
-#define FLUID_BOUNDARY_CK_H
+#ifndef EMITTER_BOUNDARY_CK_H
+#define EMITTER_BOUNDARY_CK_H
 
 #include "base_body_part.h"
 #include "base_data_package.h"
@@ -43,16 +43,16 @@ namespace fluid_dynamics
 {
 
 template <typename... T>
-class InflowConditionCK;
+class EmitterInflowConditionCK;
 
 template <class AlignedBoxPartType, class ConditionFunction>
-class InflowConditionCK<AlignedBoxPartType, ConditionFunction>
+class EmitterInflowConditionCK<AlignedBoxPartType, ConditionFunction>
     : public BaseLocalDynamics<AlignedBoxPartType>
 {
     using ConditionKernel = typename ConditionFunction::ComputingKernel;
 
   public:
-    InflowConditionCK(AlignedBoxPartType &aligned_box_part);
+    EmitterInflowConditionCK(AlignedBoxPartType &aligned_box_part);
 
     class UpdateKernel
     {
@@ -117,4 +117,4 @@ class EmitterInflowInjectionCK : public BaseLocalDynamics<AlignedBoxPartType>
 };
 } // namespace fluid_dynamics
 } // namespace SPH
-#endif // FLUID_BOUNDARY_CK_H
+#endif // EMITTER_BOUNDARY_CK_H

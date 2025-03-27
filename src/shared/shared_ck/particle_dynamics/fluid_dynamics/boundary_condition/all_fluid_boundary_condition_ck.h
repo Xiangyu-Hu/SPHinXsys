@@ -31,7 +31,7 @@
 #ifndef ALL_FLUID_BOUNDARY_CONDITION_CK_H
 #define ALL_FLUID_BOUNDARY_CONDITION_CK_H
 
-#include "fluid_boundary_ck.hpp"
+#include "emitter_boundary_ck.hpp"
 #include "bidirectional_boundary_ck.hpp"
 
 #endif // ALL_FLUID_BOUNDARY_CONDITION_CK_H

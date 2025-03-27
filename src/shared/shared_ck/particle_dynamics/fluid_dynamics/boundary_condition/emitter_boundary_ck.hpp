@@ -1,7 +1,7 @@
-#ifndef FLUID_BOUNDARY_CK_HPP
-#define FLUID_BOUNDARY_CK_HPP
+#ifndef EMITTER_BOUNDARY_CK_HPP
+#define EMITTER_BOUNDARY_CK_HPP
 
-#include "fluid_boundary_ck.h"
+#include "emitter_boundary_ck.h"
 
 namespace SPH
 {
@@ -9,8 +9,8 @@ namespace fluid_dynamics
 {
 //=================================================================================================//
 template <class AlignedBoxPartType, class ConditionFunction>
-InflowConditionCK<AlignedBoxPartType, ConditionFunction>::
-    InflowConditionCK(AlignedBoxPartType &aligned_box_part)
+EmitterInflowConditionCK<AlignedBoxPartType, ConditionFunction>::
+    EmitterInflowConditionCK(AlignedBoxPartType &aligned_box_part)
     : BaseLocalDynamics<AlignedBoxPartType>(aligned_box_part),
       sv_physical_time_(this->sph_system_.template getSystemVariableByName<Real>("PhysicalTime")),
       sv_aligned_box_(aligned_box_part.svAlignedBox()),
@@ -18,14 +18,14 @@ InflowConditionCK<AlignedBoxPartType, ConditionFunction>::
 //=================================================================================================//
 template <class AlignedBoxPartType, class ConditionFunction>
 template <class ExecutionPolicy, class EncloserType>
-InflowConditionCK<AlignedBoxPartType, ConditionFunction>::UpdateKernel::
+EmitterInflowConditionCK<AlignedBoxPartType, ConditionFunction>::UpdateKernel::
     UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : physical_time_(encloser.sv_physical_time_->DelegatedData(ex_policy)),
       aligned_box_(encloser.sv_aligned_box_->DelegatedData(ex_policy)),
       condition_(ex_policy, encloser.condition_function_) {}
 //=================================================================================================//
 template <class AlignedBoxPartType, class ConditionFunction>
-void InflowConditionCK<AlignedBoxPartType, ConditionFunction>::
+void EmitterInflowConditionCK<AlignedBoxPartType, ConditionFunction>::
     UpdateKernel::update(size_t index_i, Real dt)
 {
     condition_(aligned_box_, index_i, *physical_time_);
@@ -82,4 +82,4 @@ void EmitterInflowInjectionCK<AlignedBoxPartType>::UpdateKernel::update(size_t i
 //=================================================================================================//
 } // namespace fluid_dynamics
 } // namespace SPH
-#endif // FLUID_BOUNDARY_CK_HPP
+#endif // EMITTER_BOUNDARY_CK_HPP
