@@ -31,6 +31,7 @@
 
 #include "base_data_package.h"
 #include "base_particles.hpp"
+#include "weakly_compressible_fluid.h"
 namespace SPH
 {
 
@@ -96,6 +97,27 @@ class DummyPressure : public BaseStateCondition
             return p_[index_i];
         }
     };
+};
+template <class FluidType = WeaklyCompressibleFluid>
+struct PressurePrescribed
+{
+    typedef FluidType Fluid;
+    Real target_pressure_;
+    PressurePrescribed(Real target_pressure) : target_pressure_(target_pressure) {};
+    Real getPressure(const Real &input_pressure, Real time) { return target_pressure_; };
+    Real getAxisVelocity(const Vecd &input_position, const Real &input_axis_velocity, Real time)
+    {
+        return input_axis_velocity;
+    };
+};
+
+template <class FluidType = WeaklyCompressibleFluid>
+struct VelocityPrescribed
+{
+    typedef FluidType Fluid;
+    Real getPressure(const Real &input_pressure, Real time) { return input_pressure; };
+    // Real operator()(const Vecd &input_position, const Real &input_axis_velocity, Real time)
+    // to be implemented in derived class
 };
 
 } // namespace SPH

@@ -1,7 +1,7 @@
-#ifndef PRESSURE_BOUNDARY_CK_HPP
-#define PRESSURE_BOUNDARY_CK_HPP
+#ifndef BIDIRECTIONAL_BOUNDARY_CK_HPP
+#define BIDIRECTIONAL_BOUNDARY_CK_HPP
 
-#include "pressure_boundary_ck.h"
+#include "bidirectional_boundary_ck.h"
 
 namespace SPH
 {
@@ -31,13 +31,16 @@ BufferInflowInjectionCK<BoundaryConditionType>::
                             ParticleBuffer<Base> &buffer, Args &&...args)
     : BaseLocalDynamics<AlignedBoxPartByCell>(aligned_box_part),
       part_id_(aligned_box_part.getPartID()), buffer_(buffer),
-      fluid_(DynamicCast<FluidType>(this, material)), condition_(std::forward<Args>(args)...),
+      fluid_(DynamicCast<FluidType>(this, sph_body_.getBaseMaterial())),
+      condition_(std::forward<Args>(args)...),
       sv_aligned_box_(aligned_box_part.svAlignedBox()),
       sv_total_real_particles_(this->particles_->svTotalRealParticles()),
       create_real_particle_method_(this->particles_),
       dv_pos_(this->particles_->template getVariableByName<Vecd>("Position")),
       dv_buffer_particle_indicator_(this->particles_->template getVariableByName<int>("BufferParticleIndicator")),
       sv_physical_time_(this->sph_system_.template getSystemVariableByName<Real>("PhysicalTime")),
+      dv_p_(this->particles_->getVariableByName<Real>("Pressure")),
+      dv_rho_(this->particles_->getVariableByName<Real>("Density")),
       upper_bound_fringe_(0.5 * this->sph_body_.getSPHBodyResolutionRef())
 {
     buffer_.checkParticlesReserved();
@@ -47,13 +50,12 @@ template <class TargetPressure>
 template <class ExecutionPolicy, class EncloserType>
 BufferInflowInjectionCK<TargetPressure>::
     UpdateKernel::UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-    : part_id_(encloser.part_id_),
+    : part_id_(encloser.part_id_), eos_(encloser.fluid_), condition_(encloser.condition_),
       aligned_box_(encloser.sv_aligned_box_->DelegatedData(ex_policy)),
       total_real_particles_(encloser.sv_total_real_particles_->DelegatedData(ex_policy)),
       create_real_particle_(ex_policy, encloser.create_real_particle_method_),
       pos_(encloser.dv_pos_->DelegatedData(ex_policy)),
       buffer_particle_indicator_(encloser.dv_buffer_particle_indicator_->DelegatedData(ex_policy)),
-      recycle_condition_(ex_policy, encloser.boundary_condition_method_),
       physical_time_(encloser.sv_physical_time_->DelegatedData(ex_policy)),
       upper_bound_fringe_(encloser.upper_bound_fringe_) {}
 //=================================================================================================//
@@ -68,7 +70,7 @@ void BufferInflowInjectionCK<TargetPressure>::UpdateKernel::update(size_t index_
         {
             UnsignedInt new_particle_index = create_real_particle_(index_i);
             buffer_particle_indicator_[new_particle_index] = 0;
-            aligned_box_->imposeUpperPeriodic(pos_[index_i]);
+            pos_[index_i] = aligned_box_->getUpperPeriodic(pos_[index_i]);
             p_[index_i] = condition_.getPressure(p_[index_i], *physical_time_);
             rho_[index_i] = eos_.DensityFromPressure(p_[index_i]);
         }
@@ -99,44 +101,48 @@ void BufferOutflowDeletionCK::UpdateKernel::update(size_t index_i, Real dt)
 template <class KernelCorrectionType, typename ConditionType>
 template <typename... Args>
 PressureVelocityCondition<KernelCorrectionType, ConditionType>::
-    BoundaryConditionCK(AlignedBoxPartByCell &aligned_box_part, Args &&...args)
+    PressureVelocityCondition(AlignedBoxPartByCell &aligned_box_part, Args &&...args)
     : BaseLocalDynamics<AlignedBoxPartByCell>(aligned_box_part),
       BaseStateCondition(this->particles_),
       sv_aligned_box_(aligned_box_part.svAlignedBox()),
       kernel_correction_method_(this->particles_),
       condition_(std::forward<Args>(args)...),
       sv_physical_time_(this->sph_system_.template getSystemVariableByName<Real>("PhysicalTime")),
-      dv_pos_(this->particles_->template getVariableByName<Vecd>("Position")) {}
+      dv_zero_gradient_residue_(this->particles_->template getVariableByName<Vecd>("ZeroGradientResidue")) {}
 //=================================================================================================//
 template <class KernelCorrectionType, typename ConditionType>
 template <class ExecutionPolicy, class EncloserType>
-BoundaryConditionCK<KernelCorrectionTypeType, TargetPressure>::UpdateKernel::
+PressureVelocityCondition<KernelCorrectionType, ConditionType>::UpdateKernel::
     UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-    : BaseStateCondition(ex_policy, encloser),
+    : BaseStateCondition::ComputingKernel(ex_policy, encloser),
       aligned_box_(encloser.sv_aligned_box_->DelegatedData(ex_policy)),
       correction_kernel_(ex_policy, encloser.kernel_correction_method_),
-      boundary_condition_(ex_policy, encloser.boundary_condition_method_),
-      physical_time_(encloser.sv_physical_time_->DelegatedData(ex_policy)) {}
+      condition_(encloser.condition_),
+      physical_time_(encloser.sv_physical_time_->DelegatedData(ex_policy)),
+      zero_gradient_residue_(encloser.dv_zero_gradient_residue_->DelegatedData(ex_policy)),
+      axis_(aligned_box_->AlignmentAxis()), transform_(&aligned_box_->getTransform()) {}
 //=================================================================================================//
 template <class KernelCorrectionType, typename ConditionType>
-PressureVelocityCondition<BoundaryConditionType>::UpdateKernel::update(size_t index_i, Real dt)
+void PressureVelocityCondition<KernelCorrectionType, ConditionType>::
+    UpdateKernel::update(size_t index_i, Real dt)
 {
     if (aligned_box_->checkContain(pos_[index_i]))
     {
-        Vecd corrected_gradient_residue = kernel_correction_(index_i) * zero_gradient_residue_[index_i];
-        vel_[index_i] += dt * getPressure(p_[index_i], time) / rho_[index_i] * corrected_gradient_residue;
+        Vecd corrected_residue = correction_kernel_(index_i) * zero_gradient_residue_[index_i];
+        vel_[index_i] += dt * condition_.getPressure(p_[index_i], *physical_time_) /
+                         rho_[index_i] * corrected_residue;
 
         Vecd frame_velocity = Vecd::Zero();
         frame_velocity[axis_] = transform_->xformBaseVecToFrame(vel_[index_i])[axis_];
         Vecd frame_position = transform_->shiftBaseStationToFrame(pos_[index_i]);
-        frame_velocity[axis_] = getAxisVelocity(frame_position, frame_velocity[axis_], time);
+        frame_velocity[axis_] = condition_.getAxisVelocity(frame_position, frame_velocity[axis_], *physical_time_);
         vel_[index_i] = transform_->xformFrameVecToBase(frame_velocity);
     }
 }
 //=================================================================================================//
-template <typename ExecutionPolicy, class BoundaryConditionType>
+template <typename ExecutionPolicy, class KernelCorrectionType, class ConditionType>
 template <typename... Args>
-BidirectionalBoundaryCK<ExecutionPolicy, BoundaryConditionType>::
+BidirectionalBoundaryCK<ExecutionPolicy, KernelCorrectionType, ConditionType>::
     BidirectionalBoundaryCK(AlignedBoxPartByCell &aligned_box_part,
                             ParticleBuffer<Base> &particle_buffer, Args &&...args)
     : tag_buffer_particles_(aligned_box_part),
@@ -146,4 +152,4 @@ BidirectionalBoundaryCK<ExecutionPolicy, BoundaryConditionType>::
 //=================================================================================================//
 } // namespace fluid_dynamics
 } // namespace SPH
-#endif // PRESSURE_BOUNDARY_CK_HPP
+#endif // BIDIRECTIONAL_BOUNDARY_CK_HPP

@@ -35,7 +35,6 @@
 #include "particle_operation.hpp"
 #include "particle_reserve.h"
 #include "simple_algorithms_ck.h"
-#include "weakly_compressible_fluid.h"
 
 namespace SPH
 {
@@ -74,7 +73,7 @@ class BufferInflowInjectionCK : public BaseLocalDynamics<AlignedBoxPartByCell>
 {
     using CreateRealParticleKernel = typename SpawnRealParticle::ComputingKernel;
     using FluidType = typename ConditionType::Fluid;
-    using EOSkernel = typename FluidType::EOSKernel;
+    using EosKernel = typename FluidType::EosKernel;
 
   public:
     template <typename... Args>
@@ -103,7 +102,7 @@ class BufferInflowInjectionCK : public BaseLocalDynamics<AlignedBoxPartByCell>
 
       private:
         int part_id_;
-        EOSkernel eos_;
+        EosKernel eos_;
         ConditionType condition_;
         AlignedBox *aligned_box_;
         UnsignedInt *total_real_particles_;
@@ -181,14 +180,11 @@ template <class KernelCorrectionType, typename ConditionType>
 class PressureVelocityCondition : public BaseLocalDynamics<AlignedBoxPartByCell>,
                                   public BaseStateCondition
 {
-    using CorrectionKernel = KernelCorrectionType::ComputingKernel;
-    KernelCorrectionType &kernel_correction_method_;
-    ConditionType condition_;
-    DiscreteVariable<Vecd> *dv_zero_gradient_residue_;
+    using CorrectionKernel = typename KernelCorrectionType::ComputingKernel;
 
   public:
     template <typename... Args>
-    BoundaryConditionCK(AlignedBoxPartByCell &aligned_box_part, Args &&...args);
+    PressureVelocityCondition(AlignedBoxPartByCell &aligned_box_part, Args &&...args);
 
     class UpdateKernel : public BaseStateCondition::ComputingKernel
     {
@@ -198,18 +194,21 @@ class PressureVelocityCondition : public BaseLocalDynamics<AlignedBoxPartByCell>
         void update(size_t index_i, Real dt = 0.0);
 
       protected:
-        ConditionType condition_;
         AlignedBox *aligned_box_;
+        CorrectionKernel correction_kernel_;
         ConditionType condition_;
         Real *physical_time_;
-        Vecd *pos_, *vel_;
+        Vecd *zero_gradient_residue_;
+        int axis_;
+        Transform *transform_;
     };
 
   protected:
     SingularVariable<AlignedBox> *sv_aligned_box_;
+    KernelCorrectionType kernel_correction_method_;
     ConditionType condition_;
     SingularVariable<Real> *sv_physical_time_;
-    DiscreteVariable<Vecd> *dv_pos_, *dv_vel_;
+    DiscreteVariable<Vecd> *dv_zero_gradient_residue_;
 };
 
 template <typename ExecutionPolicy, class KernelCorrectionType, class ConditionType>
@@ -229,28 +228,6 @@ class BidirectionalBoundaryCK
     void injectParticles() { inflow_injection_.exec(); }
     void deleteParticles() { outflow_deletion_.exec(); }
 };
-template <class FluidType = WeaklyCompressibleFluid>
-struct PressurePrescribed
-{
-    typedef FluidType Fluid;
-    Real target_pressure_;
-    PressurePrescribed(Real target_pressure) : target_pressure_(target_pressure) {};
-    Real getPressure(const Real &input_pressure, Real time) { return target_pressure_; };
-    Real getAxisVelocity(const Vecd &input_position, const Real &input_axis_velocity, Real time)
-    {
-        return input_axis_velocity;
-    };
-};
-
-template <class FluidType = WeaklyCompressibleFluid>
-struct VelocityPrescribed
-{
-    typedef FluidType Fluid;
-    Real getPressure(const Real &input_pressure, Real time) { return input_pressure; };
-    // Real operator()(const Vecd &input_position, const Real &input_axis_velocity, Real time)
-    // to be implemented in derived class
-};
-
 } // namespace fluid_dynamics
 } // namespace SPH
 #endif // BIDIRECTIONAL_BOUNDARY_CK_H

@@ -66,20 +66,20 @@ Vec2d normal(1.0, 0.0);
 class InflowVelocityPrescribed : public VelocityPrescribed<>
 {
   public:
-    InletInflowConditionLeft(Real DH, Real U_f, Real mu_f)
-        : DH_(DH), U_f_(U_f), tau_((DH * DH) / (M_PI * M_PI * mu_f)) {};
-    void Real getAxisVelocity(const Vecd &input_position, const Real &input_axis_velocity, Real time)
+    InflowVelocityPrescribed(Real DH, Real U_f, Real mu_f)
+        : VelocityPrescribed<>(),
+          DH_(DH), U_f_(U_f), tau_((DH * DH) / (M_PI * M_PI * mu_f)) {};
+
+    Real getAxisVelocity(const Vecd &input_position, const Real &input_axis_velocity, Real time)
     {
         // Shift the y-coordinate so that y_centered = 0 at the channel center.
         Real y_centered = input_position[1];
-        Real u_steady = U_f_ * (1.0 - math::pow((2.0 * y_centered / DH_), 2));
-        Real transient_factor = 1.0 - math::exp(-time / tau_);
+        Real u_steady = U_f_ * (1.0 - SPH::math::pow((2.0 * y_centered / DH_), 2));
+        Real transient_factor = 1.0 - SPH::math::exp(-time / tau_);
         return u_steady * transient_factor;
-    }
+    };
 
-    Real DH_;
-    Real U_f_;
-    Real tau_;
+    Real DH_, U_f_, tau_;
 };
 //----------------------------------------------------------------------
 //  Helper function for the analytical solution.
