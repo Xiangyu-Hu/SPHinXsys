@@ -66,7 +66,7 @@ template <typename T>
 using AtomicRef = boost::atomic_ref<T>;
 namespace math = std;
 #endif // SPHINXSYS_USE_SYCL
-    
+
 #if SPHINXSYS_USE_FLOAT
 using Real = float;
 using UnsignedInt = u_int32_t;
@@ -114,6 +114,12 @@ template <>
 struct ZeroData<UnsignedInt>
 {
     static inline const UnsignedInt value = 0;
+};
+
+template <>
+struct ZeroData<Vec3d>
+{
+    static inline const Vec3d value = Vec3d::Zero();
 };
 
 template <typename FirstType, typename SecondType>

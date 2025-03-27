@@ -31,7 +31,9 @@
 
 #include "base_body_part.h"
 #include "base_data_package.h"
+#include "base_data_type.h"
 #include "base_fluid_dynamics.h"
+#include "data_type.h"
 #include "fluid_boundary_state.hpp"
 #include "particle_operation.hpp"
 #include "particle_reserve.h"
@@ -254,6 +256,76 @@ class TagBufferParticlesCK : public BaseLocalDynamics<AlignedBoxPartByCell>
     DiscreteVariable<Vecd> *dv_pos_;
     DiscreteVariable<int> *dv_buffer_particle_indicator_;
 };
+
+class FlowrateCalculateCK
+    : public BaseLocalDynamicsReduce<ReduceSum<Vec3d>, AlignedBoxPartByCell>
+{
+  public:
+    // Constructor: note that the reduced quantity is of type Vec3d.
+    FlowrateCalculateCK(AlignedBoxPartByCell &aligned_box_part)
+        : BaseLocalDynamicsReduce<ReduceSum<Vec3d>, AlignedBoxPartByCell>(aligned_box_part),
+          sv_aligned_box_(aligned_box_part.svAlignedBox()),
+          dv_pos_(particles_->template getVariableByName<Vec3d>("Position")),
+          dv_vel_(particles_->template getVariableByName<Vec3d>("Velocity"))
+    {
+    }
+
+    virtual ~FlowrateCalculateCK() {}
+
+    // The ReduceKernel: for each particle, return its velocity if inside the box; else, zero.
+    class ReduceKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        ReduceKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+            : aligned_box_(encloser.sv_aligned_box_->DelegatedData(ex_policy)),
+              pos_(encloser.dv_pos_->DelegatedData(ex_policy)),
+              vel_(encloser.dv_vel_->DelegatedData(ex_policy))
+        {
+        }
+
+        Vec3d reduce(size_t index_i, Real dt = 0.0)
+        {
+            Vec3d result = Vec3d::Zero();
+            if (aligned_box_->checkUpperBound(pos_[index_i]) &&
+                aligned_box_->checkLowerBound(pos_[index_i]))
+            {
+                result = vel_[index_i];
+            }
+            return result;
+        }
+
+      protected:
+        AlignedBox *aligned_box_;
+        Vec3d *pos_;
+        Vec3d *vel_;
+    };
+
+    // FinishDynamics: here you can further transform the reduced result if needed.
+    // class FinishDynamics
+    // {
+    //   public:
+    //     using OutputType = Vec3d;
+
+    //     template <class EncloserType>
+    //     FinishDynamics(EncloserType &encloser)
+    //     {
+    //         // Optionally capture additional parameters from the parent.
+    //     }
+
+    //     Vec3d Result(const Vec3d &reduced_value)
+    //     {
+    //         return reduced_value; // no further transformation in this example.
+    //     }
+    // };
+
+  protected:
+    // Pointers to the needed data.
+    SingularVariable<AlignedBox> *sv_aligned_box_;
+    DiscreteVariable<Vec3d> *dv_pos_;
+    DiscreteVariable<Vec3d> *dv_vel_;
+};
+
 } // namespace fluid_dynamics
 } // namespace SPH
 #endif // FLUID_BOUNDARY_CK_H
