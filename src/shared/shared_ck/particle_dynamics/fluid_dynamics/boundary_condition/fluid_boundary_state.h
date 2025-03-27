@@ -56,48 +56,6 @@ class BaseStateCondition
     DiscreteVariable<Real> *dv_p_, *dv_rho_;
 };
 
-class ZeroGradientPressure : public BaseStateCondition
-{
-  public:
-    template <typename... Args>
-    ZeroGradientPressure(BaseParticles *particles, Args &&...args)
-        : BaseStateCondition(particles){};
-
-    class ComputingKernel : public BaseStateCondition::ComputingKernel
-    {
-      public:
-        template <class ExecutionPolicy, class EncloserType>
-        ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : BaseStateCondition::ComputingKernel(ex_policy, encloser) {}
-
-        void reinitializeState(size_t index_i, Real time) {};
-        // Return a fixed or trivial pressure value
-        Real getTargetPressure(size_t index_i, Real time)
-        {
-            return p_[index_i]; // Do nothing!
-        }
-    };
-};
-
-class DummyPressure : public BaseStateCondition
-{
-  public:
-    DummyPressure(BaseParticles *particles)
-        : BaseStateCondition(particles) {};
-
-    class ComputingKernel : public BaseStateCondition::ComputingKernel
-    {
-      public:
-        template <class ExecutionPolicy, class EncloserType>
-        ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : BaseStateCondition::ComputingKernel(ex_policy, encloser) {}
-
-        Real operator()(size_t index_i, Real time)
-        {
-            return p_[index_i];
-        }
-    };
-};
 template <class FluidType = WeaklyCompressibleFluid>
 struct PressurePrescribed
 {
