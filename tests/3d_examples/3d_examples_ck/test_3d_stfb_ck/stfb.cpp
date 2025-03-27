@@ -200,7 +200,7 @@ int main(int ac, char *av[])
         observer_update_contact_relation(observer_contact);
     UpdateRelation<MainExecutionPolicy, Contact<SPHBody, BodyPartByParticle>>
         structure_proxy_update_contact_relation(structure_proxy_contact);
-    ParticleSortCK<MainExecutionPolicy, QuickSort> particle_sort(water_block);
+    ParticleSortCK<MainExecutionPolicy> particle_sort(water_block);
 
     Gravity gravity(Vec3d(0.0, 0.0, -gravity_g));
     StateDynamics<MainExecutionPolicy, GravityForceCK<Gravity>> constant_gravity(water_block, gravity);

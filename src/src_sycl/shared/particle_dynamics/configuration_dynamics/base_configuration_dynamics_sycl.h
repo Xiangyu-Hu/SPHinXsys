@@ -22,7 +22,7 @@
  * ------------------------------------------------------------------------- */
 /**
  * @file    base_configuration_dynamics_sycl.h
- * @brief   TBD.
+ * @brief   Identify data types according to execution policy.
  * @author	Xiangyu Hu
  */
 
@@ -31,10 +31,16 @@
 
 #include "base_configuration_dynamics.h"
 
-#include "implementation_sycl.h"
-
 namespace SPH
 {
+
+class RadixSort;
+template <>
+struct SortMethod<ParallelDevicePolicy>
+{
+    typedef RadixSort type;
+};
+
 template <>
 struct PlusUnsignedInt<ParallelDevicePolicy>
 {
