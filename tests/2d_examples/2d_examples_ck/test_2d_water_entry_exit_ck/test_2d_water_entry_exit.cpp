@@ -286,7 +286,7 @@ int main(int ac, char *av[])
         cylinder_observer_update_contact_relation(cylinder_observer_contact);
     UpdateRelation<MainExecutionPolicy, Contact<>>
         wetting_observer_update_contact_relation(wetting_observer_contact);
-    ParticleSortCK<MainExecutionPolicy, QuickSort> particle_sort(water_block);
+    ParticleSortCK<MainExecutionPolicy> particle_sort(water_block);
 
     IsotropicDiffusion diffusion(diffusion_species_name, diffusion_species_name, diffusion_coeff);
     GetDiffusionTimeStepSize get_thermal_time_step(cylinder, &diffusion);
