@@ -24,9 +24,9 @@ void TagBufferParticlesCK::UpdateKernel::update(size_t index_i, Real dt)
     }
 }
 //=================================================================================================//
-template <class BoundaryConditionType>
+template <class ConditionType>
 template <typename... Args>
-BufferInflowInjectionCK<BoundaryConditionType>::
+BufferInflowInjectionCK<ConditionType>::
     BufferInflowInjectionCK(AlignedBoxPartByCell &aligned_box_part,
                             ParticleBuffer<Base> &buffer, Args &&...args)
     : BaseLocalDynamics<AlignedBoxPartByCell>(aligned_box_part),
@@ -46,9 +46,9 @@ BufferInflowInjectionCK<BoundaryConditionType>::
     buffer_.checkParticlesReserved();
 }
 //=================================================================================================//
-template <class TargetPressure>
+template <class ConditionType>
 template <class ExecutionPolicy, class EncloserType>
-BufferInflowInjectionCK<TargetPressure>::
+BufferInflowInjectionCK<ConditionType>::
     UpdateKernel::UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : part_id_(encloser.part_id_), eos_(encloser.fluid_), condition_(encloser.condition_),
       aligned_box_(encloser.sv_aligned_box_->DelegatedData(ex_policy)),
@@ -61,8 +61,8 @@ BufferInflowInjectionCK<TargetPressure>::
       rho_(encloser.dv_rho_->DelegatedData(ex_policy)),
       upper_bound_fringe_(encloser.upper_bound_fringe_) {}
 //=================================================================================================//
-template <class TargetPressure>
-void BufferInflowInjectionCK<TargetPressure>::UpdateKernel::update(size_t index_i, Real dt)
+template <class ConditionType>
+void BufferInflowInjectionCK<ConditionType>::UpdateKernel::update(size_t index_i, Real dt)
 {
     if (!aligned_box_->checkInBounds(pos_[index_i]))
     {
