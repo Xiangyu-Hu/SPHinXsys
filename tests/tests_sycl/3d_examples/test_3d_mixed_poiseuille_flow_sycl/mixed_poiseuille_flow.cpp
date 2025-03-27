@@ -334,6 +334,8 @@ int main(int ac, char *av[])
         bidirectional_velocity_condition_left(left_emitter_by_cell, inlet_buffer);
     fluid_dynamics::PressureBidirectionalConditionCK<MainExecutionPolicy, NoKernelCorrectionCK, InletInflowPressureConditionRight>
         bidirectional_pressure_condition_right(right_emitter_by_cell, inlet_buffer);
+
+    ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::FlowrateCalculateCK> flowrate_calculate(right_emitter_by_cell);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
@@ -429,12 +431,15 @@ int main(int ac, char *av[])
             /** inflow emitter injection*/
             bidirectional_velocity_condition_left.injectParticles();
             bidirectional_pressure_condition_right.injectParticles();
+
             bidirectional_velocity_condition_left.deleteParticles();
             bidirectional_pressure_condition_right.deleteParticles();
             /** Update cell linked list and configuration. */
             if (number_of_iterations % 100 == 0 && number_of_iterations != 1)
             {
                 particle_sort.exec();
+                // Vecd FR = flowrate_calculate.exec();
+                // std::cout << FR << std::endl;
             }
             water_cell_linked_list.exec();
             water_body_update_complex_relation.exec();
