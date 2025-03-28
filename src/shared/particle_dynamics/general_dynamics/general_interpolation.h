@@ -56,7 +56,49 @@ class BaseInterpolation : public LocalDynamics, public DataDelegateContact
     virtual ~BaseInterpolation() {};
     DiscreteVariable<DataType> *dvInterpolatedQuantities() { return dv_interpolated_quantities_; };
 
-    void interaction(size_t index_i, Real dt = 0.0)
+    inline void interaction(size_t index_i, Real dt = 0.0)
+    {
+        DataType observed_quantity = ZeroData<DataType>::value;
+        Real ttl_weight(0);
+
+        for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
+        {
+            Real* Vol_k = contact_Vol_[k];
+            DataType* data_k = contact_data_[k];
+            Neighborhood& contact_neighborhood = (*this->contact_configuration_[k])[index_i];
+            for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
+            {
+                size_t index_j = contact_neighborhood.j_[n];
+                Real weight_j = contact_neighborhood.W_ij_[n] * Vol_k[index_j];
+
+                observed_quantity += weight_j * data_k[index_j];
+                ttl_weight += weight_j;
+            }
+        }
+        interpolated_quantities_[index_i] = observed_quantity / (ttl_weight + TinyReal);
+    };
+
+protected:
+    DiscreteVariable<DataType>* dv_interpolated_quantities_;
+    DataType* interpolated_quantities_;
+    StdVec<Real*> contact_Vol_;
+    StdVec<DataType*> contact_data_;
+};
+
+/*****************************************************************************/
+// The interpolation is corrected based on the finite particle method.
+// Liu, M.B., Liu, G.R. Smoothed Particle Hydrodynamics (SPH): an Overview and 
+// Recent Developments. Arch Computat Methods Eng 17, 25¨C76 (2010). doi.org/10.1007/s11831-010-9040-7
+/*****************************************************************************/
+template <typename DataType>
+class BaseInterpolationCorrected : public BaseInterpolation<DataType>
+{
+public:
+    explicit BaseInterpolationCorrected(BaseContactRelation& contact_relation, const std::string& variable_name)
+        : BaseInterpolation<DataType>(contact_relation, variable_name) {}
+    virtual ~BaseInterpolationCorrected() {};
+
+    inline void interaction(size_t index_i, Real dt = 0.0) override
     {
         DataType observed_quantity = ZeroData<DataType>::value;
         int dimension = Vecd::Identity().rows();
@@ -67,8 +109,8 @@ class BaseInterpolation : public LocalDynamics, public DataDelegateContact
 
         for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
         {
-            Real* Vol_k = contact_Vol_[k];
-            DataType* data_k = contact_data_[k];
+            Real* Vol_k = this->contact_Vol_[k];
+            DataType* data_k = this->contact_data_[k];
             Neighborhood& contact_neighborhood = (*this->contact_configuration_[k])[index_i];
 
             for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
@@ -96,35 +138,24 @@ class BaseInterpolation : public LocalDynamics, public DataDelegateContact
             }
         }
         restoring_matrix_inverse = restoring_matrix.inverse();
-        for (Eigen::Index i = 0; i < prediction.rows(); ++i){
+        for (Eigen::Index i = 0; i < prediction.rows(); ++i) {
             observed_quantity += restoring_matrix_inverse(0, i) * prediction(i, 0);
         }
-        interpolated_quantities_[index_i] = observed_quantity;
+        this->interpolated_quantities_[index_i] = observed_quantity;
     };
-    /*****************************************************************************/ 
-    // The interpolation is corrected based on the finite particle method.
-    // Liu, M.B., Liu, G.R. Smoothed Particle Hydrodynamics (SPH): an Overview and 
-    // Recent Developments. Arch Computat Methods Eng 17, 25¨C76 (2010). doi.org/10.1007/s11831-010-9040-7
-    /*****************************************************************************/
-
-  protected:
-    DiscreteVariable<DataType> *dv_interpolated_quantities_;
-    DataType *interpolated_quantities_;
-    StdVec<Real *> contact_Vol_;
-    StdVec<DataType *> contact_data_;
 };
 
 /**
  * @class InterpolatingAQuantity
  * @brief Interpolate a given member data in the particles of a general body
  */
-template <typename DataType>
-class InterpolatingAQuantity : public BaseInterpolation<DataType>
+template <typename DataType, template <typename> class InterpolationType>
+class InterpolatingAQuantity : public InterpolationType<DataType>
 {
   public:
     explicit InterpolatingAQuantity(BaseContactRelation &contact_relation,
                                     const std::string &interpolated_variable, const std::string &target_variable)
-        : BaseInterpolation<DataType>(contact_relation, target_variable)
+        : InterpolationType<DataType>(contact_relation, target_variable)
     {
         this->dv_interpolated_quantities_ =
             this->particles_->template getVariableByName<DataType>(interpolated_variable);
@@ -137,12 +168,12 @@ class InterpolatingAQuantity : public BaseInterpolation<DataType>
  * @class ObservingAQuantity
  * @brief Observing a variable from contact bodies.
  */
-template <typename DataType>
-class ObservingAQuantity : public InteractionDynamics<BaseInterpolation<DataType>>
+template <typename DataType, template <typename> class InterpolationType>
+class ObservingAQuantity : public InteractionDynamics<InterpolationType<DataType>>
 {
   public:
     explicit ObservingAQuantity(BaseContactRelation &contact_relation, const std::string &variable_name)
-        : InteractionDynamics<BaseInterpolation<DataType>>(contact_relation, variable_name)
+        : InteractionDynamics<InterpolationType<DataType>>(contact_relation, variable_name)
     {
         this->dv_interpolated_quantities_ = this->particles_->template registerStateVariableOnly<DataType>(variable_name);
         this->interpolated_quantities_ = this->dv_interpolated_quantities_->Data();
