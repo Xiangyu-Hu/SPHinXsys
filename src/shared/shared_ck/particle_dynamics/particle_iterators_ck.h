@@ -69,7 +69,7 @@ ReturnType particle_reduce(const LoopRangeCK<SequencedPolicy, DynamicsIdentifier
     Operation operation;
     for (size_t i = 0; i < loop_range.LoopBound(); ++i)
     {
-        temp = operation(temp, loop_range.template computeUnit<ReturnType>(operation, unary_func, i));
+        temp = operation(temp, loop_range.computeUnit(temp, operation, unary_func, i));
     }
     return temp;
 }
@@ -80,12 +80,12 @@ ReturnType particle_reduce(const LoopRangeCK<ParallelPolicy, DynamicsIdentifier>
 {
     Operation operation;
     return parallel_reduce(
-        IndexRange(0, loop_range.LoopBound()),
-        temp, [&](const IndexRange &r, ReturnType temp0) -> ReturnType
+        IndexRange(0, loop_range.LoopBound()), temp,
+        [&](const IndexRange &r, ReturnType temp0) -> ReturnType
         {
 				for (size_t i = r.begin(); i != r.end(); ++i)
 				{
-					temp0 = operation(temp0, loop_range.template computeUnit<ReturnType>(operation, unary_func, i));
+					temp0 = operation(temp0, loop_range.computeUnit(temp0, operation, unary_func, i));
 				}
 				return temp0; },
         [&](const ReturnType &x, const ReturnType &y) -> ReturnType
