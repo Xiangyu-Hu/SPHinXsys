@@ -48,9 +48,9 @@ class BaseQuantityRecording : public BaseIO
 
   protected:
     PltEngine plt_engine_;
+    std::string quantity_name_;
     std::string dynamics_identifier_name_;
     std::string filefullpath_output_;
-    std::string quantity_name_;
 };
 
 template <typename...>
