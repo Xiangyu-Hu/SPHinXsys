@@ -153,7 +153,7 @@ class ParticleScopeTypeCK<ExcludeBufferParticles> : public WithinScope
   public:
     explicit ParticleScopeTypeCK(BaseParticles *particles)
         : WithinScope(),
-          dv_buffer_particles_indicator_(particles->registerStateVariableOnly<int>("BufferParticleIndicator"))
+          dv_buffer_particles_indicator_(particles->registerStateVariableOnly<int>("BufferIndicator"))
     {
     }
 

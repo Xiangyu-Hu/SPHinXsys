@@ -64,56 +64,24 @@ Vec3d translation_fluid(0.5 * DL, 0.5 * DH, 0.5 * DH);
 //----------------------------------------------------------------------
 //  Inlet velocity profile for the left boundary (Poiseuille-like).
 //----------------------------------------------------------------------
-class InletInflowConditionLeft : public BaseStateCondition
+class InflowVelocityPrescribed : public VelocityPrescribed<>
 {
   public:
-    InletInflowConditionLeft(BaseParticles *particles)
-        : BaseStateCondition(particles),
-          DH_(DH), U_f_(U_f), mu_f_(mu_f) {};
+    InflowVelocityPrescribed(Real DH, Real U_f, Real mu_f)
+        : VelocityPrescribed<>(),
+          DH_(DH), U_f_(U_f), tau_((DH * DH) / (M_PI * M_PI * mu_f)) {};
 
-    class ComputingKernel : public BaseStateCondition::ComputingKernel
+    Real getAxisVelocity(const Vecd &input_position, const Real &input_axis_velocity, Real time)
     {
-      public:
-        template <class ExecutionPolicy, class EncloserType>
-        ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : BaseStateCondition::ComputingKernel(ex_policy, encloser),
-              DH_ck_(encloser.DH_),
-              U_f_ck_(encloser.U_f_),
-              mu_f_ck_(encloser.mu_f_),
-              tau_((DH_ck_ * DH_ck_) / (M_PI * M_PI * mu_f_ck_))
-        {
-        }
-
-        void operator()(AlignedBox *aligned_box, UnsignedInt index_i, Real time)
-        {
-            // Calculate radial distance from the channel centerline
-            Real y_centered = pos_[index_i][1] - 0.5 * DH_ck_;
-            Real z_centered = pos_[index_i][2] - 0.5 * DH_ck_;
-
-            Real r = std::sqrt(y_centered * y_centered + z_centered * z_centered);
-
-            // Steady-state analytical solution for cylindrical Poiseuille flow
-            Real u_steady = U_f_ck_ * (1.0 - std::pow((2.0 * r / DH_ck_), 2));
-
-            // Transient factor that approaches 1 as time grows.
-            Real transient_factor = 1.0 - std::exp(-time / tau_);
-
-            // Time-dependent velocity profile
-            Real u_ave = u_steady * transient_factor;
-
-            if (aligned_box->checkInBounds(pos_[index_i]))
-                vel_[index_i] = Vec3d(u_ave, 0.0, 0.0);
-        }
-
-      protected:
-        Real DH_ck_;
-        Real U_f_ck_;
-        Real mu_f_ck_;
-        Real tau_;
+        Real y_centered = input_position[1];
+        Real z_centered = input_position[2];
+        Real r = std::sqrt(y_centered * y_centered + z_centered * z_centered);
+        Real u_steady = U_f_ * (1.0 - math::pow((2.0 * r / DH_), 2));
+        Real transient_factor = 1.0 - math::exp(-time / tau_);
+        return u_steady * transient_factor;
     };
-    Real DH_;
-    Real U_f_;
-    Real mu_f_;
+
+    Real DH_, U_f_, tau_;
 };
 //----------------------------------------------------------------------
 //  Helper function for the analytical solution.
@@ -242,8 +210,8 @@ int main(int ac, char *av[])
 
     FluidBody water_body(sph_system, water_body_shape);
     water_body.defineClosure<WeaklyCompressibleFluid, Viscosity>(ConstructArgs(rho0_f, c_f), mu_f);
-    ParticleBuffer<ReserveSizeFactor> inlet_buffer(0.5);
-    water_body.generateParticlesWithReserve<BaseParticles, Lattice>(inlet_buffer);
+    ParticleBuffer<ReserveSizeFactor> particle_buffer(0.5);
+    water_body.generateParticlesWithReserve<BaseParticles, Lattice>(particle_buffer);
 
     SolidBody wall(sph_system, wall_body_shape);
     wall.defineMaterial<Solid>();
@@ -330,10 +298,10 @@ int main(int ac, char *av[])
         fluid_viscous_force(water_body_inner, water_wall_contact);
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::TransportVelocityLimitedCorrectionCorrectedComplexBulkParticlesCKWithoutUpdate>
         zero_gradient_ck(water_body_inner, water_wall_contact);
-    fluid_dynamics::VelocityBidirectionalConditionCK<MainExecutionPolicy, NoKernelCorrectionCK, InletInflowConditionLeft>
-        bidirectional_velocity_condition_left(left_emitter_by_cell, inlet_buffer);
-    fluid_dynamics::PressureBidirectionalConditionCK<MainExecutionPolicy, NoKernelCorrectionCK, InletInflowPressureConditionRight>
-        bidirectional_pressure_condition_right(right_emitter_by_cell, inlet_buffer);
+    fluid_dynamics::BidirectionalBoundaryCK<MainExecutionPolicy, NoKernelCorrectionCK, InflowVelocityPrescribed>
+        bidirectional_velocity_condition_left(left_emitter_by_cell, particle_buffer, DH, U_f, mu_f);
+    fluid_dynamics::BidirectionalBoundaryCK<MainExecutionPolicy, NoKernelCorrectionCK, PressurePrescribed<>>
+        bidirectional_pressure_condition_right(right_emitter_by_cell, particle_buffer, Outlet_pressure);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
@@ -341,7 +309,7 @@ int main(int ac, char *av[])
     IOEnvironment io_environment(sph_system);
     BodyStatesRecordingToVtp body_states_recording(sph_system);
     body_states_recording.addToWrite<Real>(water_body, "Pressure");
-    body_states_recording.addToWrite<int>(water_body, "BufferParticleIndicator");
+    body_states_recording.addToWrite<int>(water_body, "BufferIndicator");
     body_states_recording.addToWrite<int>(water_body, "Indicator");
     ObservedQuantityRecording<MainExecutionPolicy, Vec3d> write_centerline_velocity("Velocity", velocity_observer_contact);
     //----------------------------------------------------------------------
@@ -368,12 +336,12 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Statistics for CPU time
     //----------------------------------------------------------------------
-    TickCount t1 = TickCount::now();
-    TimeInterval interval;
-    TimeInterval interval_computing_time_step;
-    TimeInterval interval_computing_pressure_relaxation;
+    TickCount tick_start = TickCount::now();
+    TimeInterval interval_io;
+    TimeInterval interval_outer_loop;
+    TimeInterval interval_inner_loop;
     TimeInterval interval_updating_configuration;
-    TickCount time_instance;
+    TickCount tick_instance;
     //----------------------------------------------------------------------
     //	First output before the main loop.
     //----------------------------------------------------------------------
@@ -388,15 +356,16 @@ int main(int ac, char *av[])
         /** Integrate time (loop) until the next output time. */
         while (integration_time < output_interval)
         {
+            tick_instance = TickCount::now();
             fluid_density_regularization.exec();
             water_advection_step_setup.exec();
             fluid_viscous_force.exec();
             transport_correction_ck.exec();
             Real advection_dt = fluid_advection_time_step.exec();
             fluid_linear_correction_matrix.exec();
-            interval_computing_time_step += TickCount::now() - time_instance;
+            interval_outer_loop += TickCount::now() - tick_instance;
 
-            /** Dynamics including pressure relaxation. */
+            tick_instance = TickCount::now();
             Real relaxation_time = 0.0;
             Real acoustic_dt = 0.0;
             while (relaxation_time < advection_dt)
@@ -404,17 +373,17 @@ int main(int ac, char *av[])
                 acoustic_dt = SMIN(fluid_acoustic_time_step.exec(), advection_dt);
                 fluid_acoustic_step_1st_half.exec(acoustic_dt);
                 zero_gradient_ck.exec();
-                bidirectional_velocity_condition_left.applyPressureCondition(acoustic_dt);
-                bidirectional_velocity_condition_left.applyVelocityCondition();
-                bidirectional_pressure_condition_right.applyPressureCondition(acoustic_dt);
+                bidirectional_velocity_condition_left.applyBoundaryCondition(acoustic_dt);
+                bidirectional_pressure_condition_right.applyBoundaryCondition(acoustic_dt);
                 fluid_acoustic_step_2nd_half.exec(acoustic_dt);
                 relaxation_time += acoustic_dt;
                 integration_time += acoustic_dt;
                 sv_physical_time->incrementValue(acoustic_dt);
             }
             water_advection_step_close.exec();
-            interval_computing_pressure_relaxation += TickCount::now() - time_instance;
+            interval_inner_loop += TickCount::now() - tick_instance;
 
+            tick_instance = TickCount::now();
             if (number_of_iterations % screen_output_interval == 0)
             {
                 std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
@@ -425,8 +394,10 @@ int main(int ac, char *av[])
                     write_centerline_velocity.writeToFile(number_of_iterations);
                 }
             }
+            interval_io += TickCount::now() - tick_instance;
             number_of_iterations++;
-            /** inflow emitter injection*/
+
+            tick_instance = TickCount::now();
             bidirectional_velocity_condition_left.injectParticles();
             bidirectional_pressure_condition_right.injectParticles();
             bidirectional_velocity_condition_left.deleteParticles();
@@ -439,30 +410,26 @@ int main(int ac, char *av[])
             water_cell_linked_list.exec();
             water_body_update_complex_relation.exec();
             fluid_observer_contact_relation.exec();
-            interval_updating_configuration += TickCount::now() - time_instance;
+            interval_updating_configuration += TickCount::now() - tick_instance;
             fluid_boundary_indicator.exec();
             bidirectional_velocity_condition_left.tagBufferParticles();
             bidirectional_pressure_condition_right.tagBufferParticles();
+            interval_updating_configuration += TickCount::now() - tick_instance;
         }
 
-        TickCount t2 = TickCount::now();
-
+        tick_instance = TickCount::now();
         body_states_recording.writeToFile(MainExecutionPolicy{});
         fluid_observer_contact_relation.exec();
-
-        TickCount t3 = TickCount::now();
-        interval += t3 - t2;
+        interval_io += TickCount::now() - tick_instance;
     }
-    TickCount t4 = TickCount::now();
 
-    TimeInterval tt;
-    tt = t4 - t1 - interval;
+    TimeInterval tt = TickCount::now() - tick_start - interval_io;
     std::cout << "Total wall time for computation: " << tt.seconds()
               << " seconds." << std::endl;
     std::cout << std::fixed << std::setprecision(9) << "interval_computing_time_step ="
-              << interval_computing_time_step.seconds() << "\n";
+              << interval_outer_loop.seconds() << "\n";
     std::cout << std::fixed << std::setprecision(9) << "interval_computing_pressure_relaxation = "
-              << interval_computing_pressure_relaxation.seconds() << "\n";
+              << interval_inner_loop.seconds() << "\n";
     std::cout << std::fixed << std::setprecision(9) << "interval_updating_configuration = "
               << interval_updating_configuration.seconds() << "\n";
     //----------------------------------------------------------------------

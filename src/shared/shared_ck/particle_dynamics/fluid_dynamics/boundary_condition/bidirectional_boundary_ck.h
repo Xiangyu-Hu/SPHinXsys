@@ -21,16 +21,15 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	fluid_boundary_ck.h
+ * @file 	bidirectional_boundary_ck.h
  * @brief 	tbd
  * @author	Xiangyu Hu
  */
 
-#ifndef FLUID_BOUNDARY_CK_H
-#define FLUID_BOUNDARY_CK_H
+#ifndef BIDIRECTIONAL_BOUNDARY_CK_H
+#define BIDIRECTIONAL_BOUNDARY_CK_H
 
 #include "base_body_part.h"
-#include "base_data_package.h"
 #include "base_fluid_dynamics.h"
 #include "fluid_boundary_state.hpp"
 #include "particle_operation.hpp"
@@ -41,18 +40,12 @@ namespace SPH
 {
 namespace fluid_dynamics
 {
-
-template <typename... T>
-class InflowConditionCK;
-
-template <class AlignedBoxPartType, class ConditionFunction>
-class InflowConditionCK<AlignedBoxPartType, ConditionFunction>
-    : public BaseLocalDynamics<AlignedBoxPartType>
+class BufferIndicationCK : public BaseLocalDynamics<AlignedBoxPartByCell>
 {
-    using ConditionKernel = typename ConditionFunction::ComputingKernel;
 
   public:
-    InflowConditionCK(AlignedBoxPartType &aligned_box_part);
+    BufferIndicationCK(AlignedBoxPartByCell &aligned_box_part);
+    virtual ~BufferIndicationCK() {};
 
     class UpdateKernel
     {
@@ -62,74 +55,36 @@ class InflowConditionCK<AlignedBoxPartType, ConditionFunction>
         void update(size_t index_i, Real dt = 0.0);
 
       protected:
-        Real *physical_time_;
+        int part_id_;
         AlignedBox *aligned_box_;
-        ConditionKernel condition_;
-    };
-
-  protected:
-    SingularVariable<Real> *sv_physical_time_;
-    SingularVariable<AlignedBox> *sv_aligned_box_;
-    ConditionFunction condition_function_;
-};
-
-template <typename AlignedBoxPartType>
-class EmitterInflowInjectionCK : public BaseLocalDynamics<AlignedBoxPartType>
-{
-    using CreateRealParticleKernel = typename SpawnRealParticle::ComputingKernel;
-
-  public:
-    EmitterInflowInjectionCK(AlignedBoxPartType &aligned_box_part, ParticleBuffer<Base> &buffer);
-    virtual ~EmitterInflowInjectionCK() {};
-
-    class UpdateKernel
-    {
-      public:
-        template <class ExecutionPolicy, class EncloserType>
-        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-        void update(size_t index_i, Real dt = 0.0);
-
-      protected:
-        AlignedBox *aligned_box_;
-        CreateRealParticleKernel create_real_particle_;
-        Real rho0_;
         Vecd *pos_;
-        Real *rho_, *p_;
-    };
-
-    class FinishDynamics
-    {
-        BaseParticles *particles_;
-        ParticleBuffer<Base> &buffer_;
-
-      public:
-        FinishDynamics(EmitterInflowInjectionCK &encloser);
-        void operator()();
+        int *buffer_indicator_;
     };
 
   protected:
-    ParticleBuffer<Base> &buffer_;
+    int part_id_;
     SingularVariable<AlignedBox> *sv_aligned_box_;
-    SpawnRealParticle create_real_particle_method_;
-    Real rho0_;
     DiscreteVariable<Vecd> *dv_pos_;
-    DiscreteVariable<Real> *dv_rho_, *dv_p_;
+    DiscreteVariable<int> *dv_buffer_indicator_;
 };
 
-template <typename AlignedBoxPartType, class ConditionFunction>
-class BufferEmitterInflowInjectionCK : public BaseLocalDynamics<AlignedBoxPartType>
+template <class ConditionType>
+class BufferInflowInjectionCK : public BaseLocalDynamics<AlignedBoxPartByCell>
 {
-    using CreateRealParticleKernel = typename SpawnRealParticle::ComputingKernel;
-    using ConditionKernel = typename ConditionFunction::ComputingKernel;
+    using SpawnRealParticleKernel = typename SpawnRealParticle::ComputingKernel;
+    using FluidType = typename ConditionType::Fluid;
+    using EosKernel = typename FluidType::EosKernel;
 
   public:
-    BufferEmitterInflowInjectionCK(AlignedBoxPartType &aligned_box_part, ParticleBuffer<Base> &buffer);
-    virtual ~BufferEmitterInflowInjectionCK() {};
+    template <typename... Args>
+    BufferInflowInjectionCK(AlignedBoxPartByCell &aligned_box_part,
+                            ParticleBuffer<Base> &buffer, Args &&...args);
+    virtual ~BufferInflowInjectionCK() {};
 
     class FinishDynamics
     {
       public:
-        FinishDynamics(BufferEmitterInflowInjectionCK &encloser)
+        FinishDynamics(BufferInflowInjectionCK &encloser)
             : particles_(encloser.particles_), buffer_(encloser.buffer_) {}
         void operator()() { buffer_.checkEnoughBuffer(*particles_); }
 
@@ -147,40 +102,36 @@ class BufferEmitterInflowInjectionCK : public BaseLocalDynamics<AlignedBoxPartTy
 
       private:
         int part_id_;
+        EosKernel eos_;
+        ConditionType condition_;
         AlignedBox *aligned_box_;
         UnsignedInt *total_real_particles_;
-        CreateRealParticleKernel create_real_particle_;
-        Real rho0_;
-        Real sound_speed_;
+        SpawnRealParticleKernel spawn_real_particle_;
         Vecd *pos_;
-        Real *rho_, *p_;
-        int *buffer_particle_indicator_;
-        ConditionKernel condition_;
-        int *previous_surface_indicator_;
+        int *buffer_indicator_;
         Real *physical_time_;
+        Real *p_, *rho_;
         Real upper_bound_fringe_;
     };
 
   protected:
     int part_id_;
     ParticleBuffer<Base> &buffer_;
+    FluidType &fluid_;
+    ConditionType condition_;
     SingularVariable<AlignedBox> *sv_aligned_box_;
     SingularVariable<UnsignedInt> *sv_total_real_particles_;
-    SpawnRealParticle create_real_particle_method_;
-    Real rho0_;
-    Real sound_speed_;
+    SpawnRealParticle spawn_real_particle_method_;
     DiscreteVariable<Vecd> *dv_pos_;
-    DiscreteVariable<Real> *dv_rho_, *dv_p_;
-    DiscreteVariable<int> *dv_buffer_particle_indicator_;
-    ConditionFunction condition_function_;
-    DiscreteVariable<int> *dv_previous_surface_indicator_;
+    DiscreteVariable<int> *dv_buffer_indicator_;
     SingularVariable<Real> *sv_physical_time_;
+    DiscreteVariable<Real> *dv_p_, *dv_rho_;
     Real upper_bound_fringe_;
 };
 
 class BufferOutflowDeletionCK : public BaseLocalDynamics<AlignedBoxPartByCell>
 {
-    using RemoveRealParticleKernel = typename DeleteRealParticle::ComputingKernel;
+    using RemoveRealParticleKernel = typename RemoveRealParticle::ComputingKernel;
 
   public:
     BufferOutflowDeletionCK(AlignedBoxPartByCell &aligned_box_part);
@@ -193,22 +144,20 @@ class BufferOutflowDeletionCK : public BaseLocalDynamics<AlignedBoxPartByCell>
             int part_id_;
             AlignedBox *aligned_box_;
             Vecd *pos_;
-            int *buffer_particle_indicator_;
-            IsDeletable(int part_id, AlignedBox *aligned_box,
-                        Vecd *pos, int *buffer_particle_indicator)
-                : part_id_(part_id), aligned_box_(aligned_box), pos_(pos),
-                  buffer_particle_indicator_(buffer_particle_indicator) {}
+            int *buffer_indicator_;
+            IsDeletable(int part_id, AlignedBox *aligned_box, Vecd *pos, int *buffer_particle_indicator);
+
             bool operator()(size_t index_i) const
             {
-                return buffer_particle_indicator_[index_i] == part_id_ &&
+                return buffer_indicator_[index_i] == part_id_ &&
                        aligned_box_->checkLowerBound(pos_[index_i]);
-            }
+            };
         };
 
       public:
         template <class ExecutionPolicy, class EncloserType>
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-        void update(size_t index_i, Real dt = 0.0); // only works in sequenced policy
+        void update(size_t index_i, Real dt = 0.0);
 
       protected:
         AlignedBox *aligned_box_;
@@ -222,19 +171,22 @@ class BufferOutflowDeletionCK : public BaseLocalDynamics<AlignedBoxPartByCell>
     int part_id_;
     SingularVariable<AlignedBox> *sv_aligned_box_;
     SingularVariable<UnsignedInt> *sv_total_real_particles_;
-    DeleteRealParticle remove_real_particle_method_;
-    DiscreteVariable<int> *dv_buffer_particle_indicator_;
+    RemoveRealParticle remove_real_particle_method_;
+    DiscreteVariable<int> *dv_buffer_indicator_;
     DiscreteVariable<Vecd> *dv_pos_;
 };
 
-class TagBufferParticlesCK : public BaseLocalDynamics<AlignedBoxPartByCell>
+template <class KernelCorrectionType, typename ConditionType>
+class PressureVelocityCondition : public BaseLocalDynamics<AlignedBoxPartByCell>,
+                                  public BaseStateCondition
 {
+    using CorrectionKernel = typename KernelCorrectionType::ComputingKernel;
 
   public:
-    TagBufferParticlesCK(AlignedBoxPartByCell &aligned_box_part);
-    virtual ~TagBufferParticlesCK() {};
+    template <typename... Args>
+    PressureVelocityCondition(AlignedBoxPartByCell &aligned_box_part, Args &&...args);
 
-    class UpdateKernel
+    class UpdateKernel : public BaseStateCondition::ComputingKernel
     {
       public:
         template <class ExecutionPolicy, class EncloserType>
@@ -242,18 +194,40 @@ class TagBufferParticlesCK : public BaseLocalDynamics<AlignedBoxPartByCell>
         void update(size_t index_i, Real dt = 0.0);
 
       protected:
-        int part_id_;
         AlignedBox *aligned_box_;
-        Vecd *pos_;
-        int *buffer_particle_indicator_;
+        CorrectionKernel correction_kernel_;
+        ConditionType condition_;
+        Real *physical_time_;
+        Vecd *zero_gradient_residue_;
+        int axis_;
+        Transform *transform_;
     };
 
   protected:
-    int part_id_;
     SingularVariable<AlignedBox> *sv_aligned_box_;
-    DiscreteVariable<Vecd> *dv_pos_;
-    DiscreteVariable<int> *dv_buffer_particle_indicator_;
+    KernelCorrectionType kernel_correction_method_;
+    ConditionType condition_;
+    SingularVariable<Real> *sv_physical_time_;
+    DiscreteVariable<Vecd> *dv_zero_gradient_residue_;
+};
+
+template <typename ExecutionPolicy, class KernelCorrectionType, class ConditionType>
+class BidirectionalBoundaryCK
+{
+    StateDynamics<ExecutionPolicy, BufferIndicationCK> tag_buffer_particles_;
+    StateDynamics<ExecutionPolicy, PressureVelocityCondition<KernelCorrectionType, ConditionType>> boundary_condition_;
+    StateDynamics<ExecutionPolicy, BufferInflowInjectionCK<ConditionType>> inflow_injection_;
+    StateDynamics<ExecutionPolicy, BufferOutflowDeletionCK> outflow_deletion_;
+
+  public:
+    template <typename... Args>
+    BidirectionalBoundaryCK(AlignedBoxPartByCell &aligned_box_part,
+                            ParticleBuffer<Base> &particle_buffer, Args &&...args);
+    void tagBufferParticles() { tag_buffer_particles_.exec(); }
+    void applyBoundaryCondition(Real dt) { boundary_condition_.exec(dt); }
+    void injectParticles() { inflow_injection_.exec(); }
+    void deleteParticles() { outflow_deletion_.exec(); }
 };
 } // namespace fluid_dynamics
 } // namespace SPH
-#endif // FLUID_BOUNDARY_CK_H
+#endif // BIDIRECTIONAL_BOUNDARY_CK_H

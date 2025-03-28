@@ -53,14 +53,16 @@
 
 BOOST_GEOMETRY_REGISTER_BOOST_TUPLE_CS(cs::cartesian)
 
-using namespace boost::geometry;
+namespace bg = boost::geometry;
 
 namespace SPH
 {
 class Kernel;
 
-typedef model::polygon<model::d2::point_xy<Real>> boost_poly;
-typedef model::multi_polygon<boost_poly> boost_multi_poly;
+typedef bg::model::d2::point_xy<Real> boost_point;
+typedef bg::model::polygon<boost_point> boost_poly;
+typedef bg::model::multi_polygon<boost_poly> boost_multi_poly;
+typedef bg::model::referring_segment<boost_point> boost_seg;
 
 /**
  * @class MultiPolygon
@@ -69,7 +71,7 @@ typedef model::multi_polygon<boost_poly> boost_multi_poly;
 class MultiPolygon
 {
   public:
-    MultiPolygon(){};
+    MultiPolygon() {};
     explicit MultiPolygon(const std::vector<Vecd> &points);
     explicit MultiPolygon(const Vecd &center, Real radius, int resolution);
     boost_multi_poly &getBoostMultiPoly() { return multi_poly_; };
@@ -101,10 +103,10 @@ class MultiPolygonShape : public Shape
 
   public:
     /** Default constructor. */
-    explicit MultiPolygonShape(const std::string &shape_name) : Shape(shape_name){};
+    explicit MultiPolygonShape(const std::string &shape_name) : Shape(shape_name) {};
     explicit MultiPolygonShape(const MultiPolygon &multi_polygon, const std::string &shape_name = "MultiPolygonShape")
-        : Shape(shape_name), multi_polygon_(multi_polygon){};
-    virtual ~MultiPolygonShape(){};
+        : Shape(shape_name), multi_polygon_(multi_polygon) {};
+    virtual ~MultiPolygonShape() {};
 
     virtual bool isValid() override;
     virtual bool checkContain(const Vecd &probe_point, bool BOUNDARY_INCLUDED = true) override;

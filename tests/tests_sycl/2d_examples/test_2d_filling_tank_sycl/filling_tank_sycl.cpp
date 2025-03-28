@@ -162,7 +162,7 @@ int main(int ac, char *av[])
     ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AdvectionTimeStepCK> fluid_advection_time_step(water_body, U_f);
     ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticTimeStepCK<>> fluid_acoustic_time_step(water_body);
 
-    StateDynamics<MainExecutionPolicy, fluid_dynamics::InflowConditionCK<AlignedBoxPartByParticle, InletInflowCondition>> inflow_condition(emitter);
+    StateDynamics<MainExecutionPolicy, fluid_dynamics::EmitterInflowConditionCK<AlignedBoxPartByParticle, InletInflowCondition>> inflow_condition(emitter);
     StateDynamics<MainExecutionPolicy, fluid_dynamics::EmitterInflowInjectionCK<AlignedBoxPartByParticle>> emitter_injection(emitter, inlet_buffer);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations

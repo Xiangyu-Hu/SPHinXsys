@@ -31,6 +31,7 @@
 
 #include "base_data_package.h"
 #include "base_particles.hpp"
+#include "weakly_compressible_fluid.h"
 namespace SPH
 {
 
@@ -55,46 +56,26 @@ class BaseStateCondition
     DiscreteVariable<Real> *dv_p_, *dv_rho_;
 };
 
-class NonPrescribedPressure : public BaseStateCondition
+template <class FluidType = WeaklyCompressibleFluid>
+struct PressurePrescribed
 {
-  public:
-    NonPrescribedPressure(BaseParticles *particles)
-        : BaseStateCondition(particles) {};
-
-    // The "ComputingKernel" is what your SPHinXsys code will instantiate
-    class ComputingKernel : public BaseStateCondition::ComputingKernel
+    typedef FluidType Fluid;
+    Real target_pressure_;
+    PressurePrescribed(Real target_pressure) : target_pressure_(target_pressure) {};
+    Real getPressure(const Real &input_pressure, Real time) { return target_pressure_; };
+    Real getAxisVelocity(const Vecd &input_position, const Real &input_axis_velocity, Real time)
     {
-      public:
-        template <class ExecutionPolicy, class EncloserType>
-        ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : BaseStateCondition::ComputingKernel(ex_policy, encloser) {}
-
-        // Return a fixed or trivial pressure value
-        Real operator()(size_t index_i, Real time)
-        {
-            return p_[index_i]; // Do nothing!
-        }
+        return input_axis_velocity;
     };
 };
 
-class DummyPressure : public BaseStateCondition
+template <class FluidType = WeaklyCompressibleFluid>
+struct VelocityPrescribed
 {
-  public:
-    DummyPressure(BaseParticles *particles)
-        : BaseStateCondition(particles) {};
-
-    class ComputingKernel : public BaseStateCondition::ComputingKernel
-    {
-      public:
-        template <class ExecutionPolicy, class EncloserType>
-        ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : BaseStateCondition::ComputingKernel(ex_policy, encloser) {}
-
-        Real operator()(size_t index_i, Real time)
-        {
-            return p_[index_i];
-        }
-    };
+    typedef FluidType Fluid;
+    Real getPressure(const Real &input_pressure, Real time) { return input_pressure; };
+    // Real operator()(const Vecd &input_position, const Real &input_axis_velocity, Real time)
+    // to be implemented in derived class
 };
 
 } // namespace SPH
