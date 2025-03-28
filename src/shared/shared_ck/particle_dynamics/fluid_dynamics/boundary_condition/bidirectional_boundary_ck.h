@@ -40,12 +40,12 @@ namespace SPH
 {
 namespace fluid_dynamics
 {
-class TagBufferIndicatorCK : public BaseLocalDynamics<AlignedBoxPartByCell>
+class BufferIndicationCK : public BaseLocalDynamics<AlignedBoxPartByCell>
 {
 
   public:
-    TagBufferIndicatorCK(AlignedBoxPartByCell &aligned_box_part);
-    virtual ~TagBufferIndicatorCK() {};
+    BufferIndicationCK(AlignedBoxPartByCell &aligned_box_part);
+    virtual ~BufferIndicationCK() {};
 
     class UpdateKernel
     {
@@ -214,7 +214,7 @@ class PressureVelocityCondition : public BaseLocalDynamics<AlignedBoxPartByCell>
 template <typename ExecutionPolicy, class KernelCorrectionType, class ConditionType>
 class BidirectionalBoundaryCK
 {
-    StateDynamics<ExecutionPolicy, TagBufferIndicatorCK> tag_buffer_particles_;
+    StateDynamics<ExecutionPolicy, BufferIndicationCK> tag_buffer_particles_;
     StateDynamics<ExecutionPolicy, PressureVelocityCondition<KernelCorrectionType, ConditionType>> boundary_condition_;
     StateDynamics<ExecutionPolicy, BufferInflowInjectionCK<ConditionType>> inflow_injection_;
     StateDynamics<ExecutionPolicy, BufferOutflowDeletionCK> outflow_deletion_;

@@ -73,8 +73,8 @@ class InflowVelocityPrescribed : public VelocityPrescribed<>
     Real getAxisVelocity(const Vecd &input_position, const Real &input_axis_velocity, Real time)
     {
         Real y_centered = input_position[1];
-        Real u_steady = U_f_ * (1.0 - SPH::math::pow((2.0 * y_centered / DH_), 2));
-        Real transient_factor = 1.0 - SPH::math::exp(-time / tau_);
+        Real u_steady = U_f_ * (1.0 - math::pow((2.0 * y_centered / DH_), 2));
+        Real transient_factor = 1.0 - math::exp(-time / tau_);
         return u_steady * transient_factor;
     };
 

@@ -76,8 +76,8 @@ class InflowVelocityPrescribed : public VelocityPrescribed<>
         Real y_centered = input_position[1];
         Real z_centered = input_position[2];
         Real r = std::sqrt(y_centered * y_centered + z_centered * z_centered);
-        Real u_steady = U_f_ * (1.0 - SPH::math::pow((2.0 * r / DH_), 2));
-        Real transient_factor = 1.0 - SPH::math::exp(-time / tau_);
+        Real u_steady = U_f_ * (1.0 - math::pow((2.0 * r / DH_), 2));
+        Real transient_factor = 1.0 - math::exp(-time / tau_);
         return u_steady * transient_factor;
     };
 
@@ -422,7 +422,7 @@ int main(int ac, char *av[])
         fluid_observer_contact_relation.exec();
         interval_io += TickCount::now() - tick_instance;
     }
- 
+
     TimeInterval tt = TickCount::now() - tick_start - interval_io;
     std::cout << "Total wall time for computation: " << tt.seconds()
               << " seconds." << std::endl;

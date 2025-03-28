@@ -74,8 +74,8 @@ class InflowVelocityPrescribed : public VelocityPrescribed<>
     {
         // Shift the y-coordinate so that y_centered = 0 at the channel center.
         Real y_centered = input_position[1];
-        Real u_steady = U_f_ * (1.0 - SPH::math::pow((2.0 * y_centered / DH_), 2));
-        Real transient_factor = 1.0 - SPH::math::exp(-time / tau_);
+        Real u_steady = U_f_ * (1.0 - math::pow((2.0 * y_centered / DH_), 2));
+        Real transient_factor = 1.0 - math::exp(-time / tau_);
         return u_steady * transient_factor;
     };
 

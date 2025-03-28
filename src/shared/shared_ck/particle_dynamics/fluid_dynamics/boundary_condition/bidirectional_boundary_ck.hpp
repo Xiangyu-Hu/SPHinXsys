@@ -9,14 +9,14 @@ namespace fluid_dynamics
 {
 //=================================================================================================//
 template <class ExecutionPolicy, class EncloserType>
-TagBufferIndicatorCK::UpdateKernel::
+BufferIndicationCK::UpdateKernel::
     UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : part_id_(encloser.part_id_),
       aligned_box_(encloser.sv_aligned_box_->DelegatedData(ex_policy)),
       pos_(encloser.dv_pos_->DelegatedData(ex_policy)),
       buffer_indicator_(encloser.dv_buffer_indicator_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
-void TagBufferIndicatorCK::UpdateKernel::update(size_t index_i, Real dt)
+void BufferIndicationCK::UpdateKernel::update(size_t index_i, Real dt)
 {
     if (aligned_box_->checkContain(pos_[index_i]))
     {
