@@ -169,10 +169,10 @@ protected:
 template <typename DataType>
 class InterpolatingAQuantity : public BaseInterpolation<DataType>
 {
-  public:
-    explicit InterpolatingAQuantity(BaseContactRelation &contact_relation,
-                                    const std::string &interpolated_variable, const std::string &target_variable)
-        : InterpolatingAQuantity<DataType>(contact_relation, target_variable)
+public:
+    explicit InterpolatingAQuantity(BaseContactRelation& contact_relation,
+                                    const std::string& interpolated_variable, const std::string& target_variable)
+        : BaseInterpolation<DataType>(contact_relation, target_variable)
     {
         this->dv_interpolated_quantities_ =
             this->particles_->template getVariableByName<DataType>(interpolated_variable);
@@ -186,8 +186,8 @@ class InterpolatingAQuantityCorrected: public BaseInterpolationCorrected<DataTyp
 {
 public:
     explicit InterpolatingAQuantityCorrected(BaseContactRelation& contact_relation,
-        const std::string& interpolated_variable, const std::string& target_variable)
-        : InterpolatingAQuantityCorrected<DataType>(contact_relation, target_variable)
+                                             const std::string& interpolated_variable, const std::string& target_variable)
+        : BaseInterpolationCorrected<DataType>(contact_relation, target_variable)
     {
         this->dv_interpolated_quantities_ =
             this->particles_->template getVariableByName<DataType>(interpolated_variable);
