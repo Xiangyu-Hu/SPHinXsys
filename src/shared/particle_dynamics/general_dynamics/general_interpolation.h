@@ -63,9 +63,9 @@ class BaseInterpolation : public LocalDynamics, public DataDelegateContact
 
         for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
         {
-            Real* Vol_k = contact_Vol_[k];
-            DataType* data_k = contact_data_[k];
-            Neighborhood& contact_neighborhood = (*this->contact_configuration_[k])[index_i];
+            Real *Vol_k = contact_Vol_[k];
+            DataType *data_k = contact_data_[k];
+            Neighborhood &contact_neighborhood = (*this->contact_configuration_[k])[index_i];
             for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
             {
                 size_t index_j = contact_neighborhood.j_[n];
@@ -78,36 +78,37 @@ class BaseInterpolation : public LocalDynamics, public DataDelegateContact
         interpolated_quantities_[index_i] = observed_quantity / (ttl_weight + TinyReal);
     };
 
-protected:
-    DiscreteVariable<DataType>* dv_interpolated_quantities_;
-    DataType* interpolated_quantities_;
-    StdVec<Real*> contact_Vol_;
-    StdVec<DataType*> contact_data_;
+  protected:
+    DiscreteVariable<DataType> *dv_interpolated_quantities_;
+    DataType *interpolated_quantities_;
+    StdVec<Real *> contact_Vol_;
+    StdVec<DataType *> contact_data_;
 };
 
 /*****************************************************************************/
 // The interpolation is corrected based on the finite particle method.
-// Liu, M.B., Liu, G.R. Smoothed Particle Hydrodynamics (SPH): an Overview and 
-// Recent Developments. Arch Computat Methods Eng 17, 25¨C76 (2010). doi.org/10.1007/s11831-010-9040-7
+// Liu, M.B., Liu, G.R. Smoothed Particle Hydrodynamics (SPH): an Overview and
+// Recent Developments. Arch Computat Methods Eng 17, 25-76 (2010).
+// doi.org/10.1007/s11831-010-9040-7
 /*****************************************************************************/
 template <typename DataType>
 class BaseInterpolationCorrected : public LocalDynamics, public DataDelegateContact
 {
-public:
-    explicit BaseInterpolationCorrected(BaseContactRelation& contact_relation, const std::string& variable_name)
+  public:
+    explicit BaseInterpolationCorrected(BaseContactRelation &contact_relation, const std::string &variable_name)
         : LocalDynamics(contact_relation.getSPHBody()), DataDelegateContact(contact_relation),
           dv_interpolated_quantities_(nullptr), interpolated_quantities_(nullptr)
     {
         for (size_t k = 0; k != this->contact_particles_.size(); ++k)
         {
             contact_Vol_.push_back(contact_particles_[k]->template getVariableDataByName<Real>("VolumetricMeasure"));
-            DataType* contact_data =
+            DataType *contact_data =
                 this->contact_particles_[k]->template getVariableDataByName<DataType>(variable_name);
             contact_data_.push_back(contact_data);
         }
     }
     virtual ~BaseInterpolationCorrected() {};
-    DiscreteVariable<DataType>* dvInterpolatedQuantities() { return dv_interpolated_quantities_; };
+    DiscreteVariable<DataType> *dvInterpolatedQuantities() { return dv_interpolated_quantities_; };
 
     inline void interaction(size_t index_i, Real dt = 0.0)
     {
@@ -120,9 +121,9 @@ public:
 
         for (size_t k = 0; k < contact_configuration_.size(); ++k)
         {
-            Real* Vol_k = contact_Vol_[k];
-            DataType* data_k = contact_data_[k];
-            Neighborhood& contact_neighborhood = (*this->contact_configuration_[k])[index_i];
+            Real *Vol_k = contact_Vol_[k];
+            DataType *data_k = contact_data_[k];
+            Neighborhood &contact_neighborhood = (*this->contact_configuration_[k])[index_i];
 
             for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
             {
@@ -138,7 +139,8 @@ public:
                 Matd element4 = dW_ij * Vol_k[index_j] * r_ji * e_ij.transpose();
 
                 prediction(0, 0) += element1 * data_k[index_j];
-                for (Eigen::Index i = 1; i < prediction.rows(); ++i) {
+                for (Eigen::Index i = 1; i < prediction.rows(); ++i)
+                {
                     prediction(i, 0) += element3[i] * data_k[index_j];
                 }
 
@@ -149,17 +151,18 @@ public:
             }
         }
         restoring_matrix_inverse = restoring_matrix.inverse();
-        for (Eigen::Index i = 0; i < prediction.rows(); ++i) {
+        for (Eigen::Index i = 0; i < prediction.rows(); ++i)
+        {
             observed_quantity += restoring_matrix_inverse(0, i) * prediction(i, 0);
         }
         interpolated_quantities_[index_i] = observed_quantity;
     };
 
-protected:
-    DiscreteVariable<DataType>* dv_interpolated_quantities_;
-    DataType* interpolated_quantities_;
-    StdVec<Real*> contact_Vol_;
-    StdVec<DataType*> contact_data_;
+  protected:
+    DiscreteVariable<DataType> *dv_interpolated_quantities_;
+    DataType *interpolated_quantities_;
+    StdVec<Real *> contact_Vol_;
+    StdVec<DataType *> contact_data_;
 };
 
 /**
@@ -169,9 +172,9 @@ protected:
 template <typename DataType>
 class InterpolatingAQuantity : public BaseInterpolation<DataType>
 {
-public:
-    explicit InterpolatingAQuantity(BaseContactRelation& contact_relation,
-                                    const std::string& interpolated_variable, const std::string& target_variable)
+  public:
+    explicit InterpolatingAQuantity(BaseContactRelation &contact_relation,
+                                    const std::string &interpolated_variable, const std::string &target_variable)
         : BaseInterpolation<DataType>(contact_relation, target_variable)
     {
         this->dv_interpolated_quantities_ =
@@ -182,11 +185,11 @@ public:
 };
 
 template <typename DataType>
-class InterpolatingAQuantityCorrected: public BaseInterpolationCorrected<DataType>
+class InterpolatingAQuantityCorrected : public BaseInterpolationCorrected<DataType>
 {
-public:
-    explicit InterpolatingAQuantityCorrected(BaseContactRelation& contact_relation,
-                                             const std::string& interpolated_variable, const std::string& target_variable)
+  public:
+    explicit InterpolatingAQuantityCorrected(BaseContactRelation &contact_relation,
+                                             const std::string &interpolated_variable, const std::string &target_variable)
         : BaseInterpolationCorrected<DataType>(contact_relation, target_variable)
     {
         this->dv_interpolated_quantities_ =
@@ -216,8 +219,8 @@ class ObservingAQuantity : public InteractionDynamics<BaseInterpolation<DataType
 template <typename DataType>
 class ObservingAQuantityCorrected : public InteractionDynamics<BaseInterpolationCorrected<DataType>>
 {
-public:
-    explicit ObservingAQuantityCorrected(BaseContactRelation& contact_relation, const std::string& variable_name)
+  public:
+    explicit ObservingAQuantityCorrected(BaseContactRelation &contact_relation, const std::string &variable_name)
         : InteractionDynamics<BaseInterpolationCorrected<DataType>>(contact_relation, variable_name)
     {
         this->dv_interpolated_quantities_ = this->particles_->template registerStateVariableOnly<DataType>(variable_name);
