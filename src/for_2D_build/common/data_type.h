@@ -40,7 +40,7 @@ using Vecd = Vec2d;
 using Matd = Mat2d;
 using RestoreMatd = RestoreMat2d;
 template<typename DataType>
-using RestoreVec = RestoreVec2<DataType>;
+using PredictVec = PredictVec2<DataType>;
 using AngularVecd = Real;
 using Rotation = Rotation2d;
 using BoundingBox = BaseBoundingBox<Vec2d>;

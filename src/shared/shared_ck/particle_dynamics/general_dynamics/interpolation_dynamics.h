@@ -65,7 +65,7 @@ class Interpolation<Contact<DataType, Parameters...>> : public Interaction<Conta
 
       protected:
         DataType zero_value_;
-        RestoreVec<DataType> zero_prediction_;
+        PredictVec<DataType> zero_prediction_;
         DataType *interpolated_quantities_;
         Real *contact_Vol_;
         DataType *contact_data_;

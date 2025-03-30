@@ -39,7 +39,7 @@ using Vecd = Vec3d;
 using Matd = Mat3d;
 using RestoreMatd = RestoreMat3d;
 template <typename DataType>
-using RestoreVec = RestoreVec3<DataType>;
+using PredictVec = PredictVec3<DataType>;
 using AngularVecd = Vec3d;
 using Rotation = Rotation3d;
 using BoundingBox = BaseBoundingBox<Vec3d>;
