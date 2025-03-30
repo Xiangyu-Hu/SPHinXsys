@@ -64,8 +64,8 @@ void Interpolation<Contact<DataType, Parameters...>>::InteractKernel::interact(s
         restoring_matrix.block(1, 1, Dimensions, Dimensions) -= element4;
     }
 
-    RestoreMatd restoring_matrix_inverse = restoring_matrix.inverse();
-    interpolated_quantities_[index_i] = restoring_matrix_inverse.row(0).transpose().dot(prediction);
+    Vecd first_row_components = restoring_matrix.inverse().row(0).transpose();
+    interpolated_quantities_[index_i] = first_row_components.dot(prediction);
 }
 //=================================================================================================//
 } // namespace SPH
