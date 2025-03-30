@@ -70,7 +70,7 @@ struct ReduceReference<ReduceSum<std::pair<DataType, Real>>>
 
 struct ReduceMax : ReturnFunction<Real>
 {
-    Real operator()(Real x, Real y) const { return SMAX(x, y); };
+    Real operator()(const Real &x, const Real &y) const { return SMAX(x, y); };
 };
 
 template <>
@@ -81,7 +81,7 @@ struct ReduceReference<ReduceMax>
 
 struct ReduceMin : ReturnFunction<Real>
 {
-    Real operator()(Real x, Real y) const { return SMIN(x, y); };
+    Real operator()(const Real &x, const Real &y) const { return SMIN(x, y); };
 };
 
 template <>
@@ -91,7 +91,7 @@ struct ReduceReference<ReduceMin>
 };
 struct ReduceOR : ReturnFunction<bool>
 {
-    bool operator()(bool x, bool y) const { return x || y; };
+    bool operator()(const bool &x, const bool &y) const { return x || y; };
 };
 
 template <>
@@ -102,7 +102,7 @@ struct ReduceReference<ReduceOR>
 
 struct ReduceAND : ReturnFunction<bool>
 {
-    bool operator()(bool x, bool y) const { return x && y; };
+    bool operator()(const bool &x, const bool &y) const { return x && y; };
 };
 
 template <>

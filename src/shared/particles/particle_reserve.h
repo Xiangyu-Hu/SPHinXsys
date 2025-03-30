@@ -23,12 +23,13 @@
 /**
  * @file particle_reserve.h
  * @brief There two types of particle reserve for runtime creating and deleting particles.
- * One is buffer particles, the other ghost particles.
- * Buffer particles are saved behind real particles.
- * They may be switched from real particles or switch to real particles.
- * Ghost particles whose states are updated according to
- * boundary condition if their indices are included in the neighbor particle list.
- * The ghost particles are saved behind the buffer particles in the form of one or more ghost bounds.
+ * One is buffer, the other is for ghost particles.
+ * Buffer is use to handle deletion and creation of real particles.
+ * Ghost particle reserve is to handle ghost particles whose states are updated according to
+ * boundary condition other than the evolving equations, 
+ * and their indices are only included in the neighbor particle list only.
+ * The ghost particles are generated for each time-step and 
+ * saved behind the real particles in the form of one or more ghost bounds.
  * @author	Xiangyu Hu
  */
 
