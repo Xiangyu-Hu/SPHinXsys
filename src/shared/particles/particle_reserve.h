@@ -26,9 +26,9 @@
  * One is for real particles, the other is for ghost particles.
  * Real particle reserve is use to handle deletion and creation of real particles.
  * Ghost particle reserve is to handle ghost particles whose states are updated according to
- * boundary condition other than the evolving equations, 
+ * boundary condition other than the evolving equations,
  * and their indices are only included in the neighbor particle list only.
- * The ghost particles are generated for each time-step and 
+ * The ghost particles are generated for each time-step and
  * saved behind the real particles in the form of one or more ghost bounds.
  * @author	Xiangyu Hu
  */
@@ -42,60 +42,50 @@ namespace SPH
 {
 template <typename... T>
 class Ghost; // Indicating with ghost particles
-template <typename... T>
-class ParticleBuffer; // Indicating with buffer particles
 
 struct ReserveSizeFactor
 {
     Real size_factor_;
-    ReserveSizeFactor(Real size_factor) : size_factor_(size_factor){};
+    ReserveSizeFactor(Real size_factor) : size_factor_(size_factor) {};
     size_t operator()(BaseParticles &base_particles, Real particle_spacing);
 };
 
 class ParticleReserve
 {
   public:
-    ParticleReserve(){};
+    ParticleReserve() {};
     void checkParticlesReserved();
-    virtual ~ParticleReserve(){};
+    virtual ~ParticleReserve() {};
 
   protected:
     bool is_particles_reserved_ = false;
 };
 
-template <>
-class ParticleBuffer<Base> : public ParticleReserve
-{
-  public:
-    ParticleBuffer() : ParticleReserve(){};
-    virtual ~ParticleBuffer(){};
-    void allocateBufferParticles(BaseParticles &base_particles, size_t buffer_size);
-};
+template <class ReserveSizeEstimator>
+class RealParticleReserve : public ParticleReserve
 
-template <class BufferSizeEstimator>
-class ParticleBuffer<BufferSizeEstimator> : public ParticleBuffer<Base>
 {
   public:
     template <typename... Args>
-    ParticleBuffer(Args &&...args) : ParticleBuffer<Base>(), buffer_size_estimator_(std::forward<Args>(args)...){};
-    virtual ~ParticleBuffer(){};
-    void reserveBufferParticles(BaseParticles &base_particles, Real particle_spacing)
+    RealParticleReserve(Args &&...args) : ParticleReserve(), reserve_size_estimator_(std::forward<Args>(args)...){};
+    virtual ~RealParticleReserve() {};
+    void reserveRealParticles(BaseParticles &base_particles, Real particle_spacing)
     {
-        size_t buffer_size = buffer_size_estimator_(base_particles, particle_spacing);
-        allocateBufferParticles(base_particles, buffer_size);
+        size_t buffer_size = reserve_size_estimator_(base_particles, particle_spacing);
+        base_particles.increaseParticlesBounds(buffer_size);
         is_particles_reserved_ = true;
     };
 
   private:
-    BufferSizeEstimator buffer_size_estimator_;
+    ReserveSizeEstimator reserve_size_estimator_;
 };
 
 template <>
 class Ghost<Base> : public ParticleReserve
 {
   public:
-    Ghost() : ParticleReserve(){};
-    virtual ~Ghost(){};
+    Ghost() : ParticleReserve() {};
+    virtual ~Ghost() {};
     size_t getGhostSize() { return ghost_size_; };
     void checkWithinGhostSize(const ParticlesBound &ghost_bound);
     IndexRange getGhostParticleRange(const ParticlesBound &ghost_bound);
@@ -110,7 +100,7 @@ class Ghost<GhostSizeEstimator> : public Ghost<Base>
   public:
     template <typename... Args>
     Ghost(Args &&...args) : Ghost<Base>(), ghost_size_estimator_(std::forward<Args>(args)...){};
-    virtual ~Ghost(){};
+    virtual ~Ghost() {};
     void reserveGhostParticles(BaseParticles &base_particles, Real particle_spacing)
     {
         ghost_size_ = ghost_size_estimator_(base_particles, particle_spacing);

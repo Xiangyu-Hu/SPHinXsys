@@ -86,7 +86,7 @@ class BidirectionalBuffer
     class Injection : public BaseLocalDynamics<BodyPartByCell>
     {
       public:
-        Injection(AlignedBoxPartByCell &aligned_box_part, ParticleBuffer<Base> &particle_buffer,
+        Injection(AlignedBoxPartByCell &aligned_box_part, ParticleReserve &particle_buffer,
                   TargetPressure &target_pressure)
             : BaseLocalDynamics<BodyPartByCell>(aligned_box_part),
               part_id_(aligned_box_part.getPartID()),
@@ -133,7 +133,7 @@ class BidirectionalBuffer
       protected:
         int part_id_;
         std::mutex mutex_switch;
-        ParticleBuffer<Base> &particle_buffer_;
+        ParticleReserve &particle_buffer_;
         AlignedBox &aligned_box_;
         Fluid &fluid_;
         Vecd *pos_;
@@ -181,7 +181,7 @@ class BidirectionalBuffer
     };
 
   public:
-    BidirectionalBuffer(AlignedBoxPartByCell &aligned_box_part, ParticleBuffer<Base> &particle_buffer)
+    BidirectionalBuffer(AlignedBoxPartByCell &aligned_box_part, ParticleReserve &particle_buffer)
         : target_pressure_(*this),
           tag_buffer_particles(aligned_box_part),
           injection(aligned_box_part, particle_buffer, target_pressure_),

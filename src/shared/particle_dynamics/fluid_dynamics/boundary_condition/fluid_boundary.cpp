@@ -59,7 +59,7 @@ void EmitterInflowCondition ::update(size_t original_index_i, Real dt)
 }
 //=================================================================================================//
 EmitterInflowInjection::
-    EmitterInflowInjection(AlignedBoxPartByParticle &aligned_box_part, ParticleBuffer<Base> &buffer)
+    EmitterInflowInjection(AlignedBoxPartByParticle &aligned_box_part, ParticleReserve &particle_reserve)
     : BaseLocalDynamics<BodyPartByParticle>(aligned_box_part),
       fluid_(DynamicCast<Fluid>(this, particles_->getBaseMaterial())),
       original_id_(particles_->ParticleOriginalIds()),
@@ -67,9 +67,9 @@ EmitterInflowInjection::
       pos_(particles_->getVariableDataByName<Vecd>("Position")),
       rho_(particles_->getVariableDataByName<Real>("Density")),
       p_(particles_->getVariableDataByName<Real>("Pressure")),
-      buffer_(buffer), aligned_box_(aligned_box_part.getAlignedBox())
+      aligned_box_(aligned_box_part.getAlignedBox())
 {
-    buffer_.checkParticlesReserved();
+    particle_reserve.checkParticlesReserved();
 }
 //=================================================================================================//
 void EmitterInflowInjection::update(size_t original_index_i, Real dt)

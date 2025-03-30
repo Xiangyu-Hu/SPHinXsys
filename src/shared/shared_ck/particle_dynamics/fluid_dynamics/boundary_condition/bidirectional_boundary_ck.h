@@ -78,19 +78,18 @@ class BufferInflowInjectionCK : public BaseLocalDynamics<AlignedBoxPartByCell>
   public:
     template <typename... Args>
     BufferInflowInjectionCK(AlignedBoxPartByCell &aligned_box_part,
-                            ParticleBuffer<Base> &buffer, Args &&...args);
+                            ParticleReserve &particle_reserve, Args &&...args);
     virtual ~BufferInflowInjectionCK() {};
 
     class FinishDynamics
     {
       public:
         FinishDynamics(BufferInflowInjectionCK &encloser)
-            : particles_(encloser.particles_), buffer_(encloser.buffer_) {}
+            : particles_(encloser.particles_){}
         void operator()() { particles_->checkRealParticleBound(); }
 
       private:
         BaseParticles *particles_;
-        ParticleBuffer<Base> &buffer_;
     };
 
     class UpdateKernel
@@ -116,7 +115,6 @@ class BufferInflowInjectionCK : public BaseLocalDynamics<AlignedBoxPartByCell>
 
   protected:
     int part_id_;
-    ParticleBuffer<Base> &buffer_;
     FluidType &fluid_;
     ConditionType condition_;
     SingularVariable<AlignedBox> *sv_aligned_box_;
@@ -222,7 +220,7 @@ class BidirectionalBoundaryCK
   public:
     template <typename... Args>
     BidirectionalBoundaryCK(AlignedBoxPartByCell &aligned_box_part,
-                            ParticleBuffer<Base> &particle_buffer, Args &&...args);
+                            ParticleReserve &particle_reserve, Args &&...args);
     void tagBufferParticles() { tag_buffer_particles_.exec(); }
     void applyBoundaryCondition(Real dt) { boundary_condition_.exec(dt); }
     void injectParticles() { inflow_injection_.exec(); }

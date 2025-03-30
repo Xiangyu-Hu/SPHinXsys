@@ -176,7 +176,7 @@ void poiseuille_flow(const Real resolution_ref, const Real resolution_shell, con
     //----------------------------------------------------------------------
     FluidBody water_block(system, water_block_shape);
     water_block.defineClosure<WeaklyCompressibleFluid, Viscosity>(ConstructArgs(rho0_f, c_f), mu_f);
-    ParticleBuffer<ReserveSizeFactor> inlet_particle_buffer(0.5);
+    RealParticleReserve<ReserveSizeFactor> inlet_particle_buffer(0.5);
     water_block.generateParticlesWithReserve<BaseParticles, Lattice>(inlet_particle_buffer);
 
     SolidBody shell_boundary(system, makeShared<DefaultShape>("Shell"));

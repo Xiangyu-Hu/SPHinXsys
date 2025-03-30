@@ -19,11 +19,6 @@ void ParticleReserve::checkParticlesReserved()
     };
 }
 //=================================================================================================//
-void ParticleBuffer<Base>::allocateBufferParticles(BaseParticles &base_particles, size_t buffer_size)
-{
-    base_particles.increaseParticlesBounds(buffer_size);
-}
-//=================================================================================================//
 void Ghost<Base>::checkWithinGhostSize(const ParticlesBound &ghost_bound)
 {
     if (ghost_bound.second - ghost_bound.first > ghost_size_)
