@@ -121,7 +121,7 @@ class MeshWithGridDataPackages : public Mesh
             for(size_t l = 0; l != all_mesh_variables_.size(); l++)
             {
                 MeshVariable<DataType> *variable = all_mesh_variables_[l];
-                variable->synchronizeWithDevice(ex_policy);
+                variable->prepareForOutput(ex_policy);
             }
         }
     };

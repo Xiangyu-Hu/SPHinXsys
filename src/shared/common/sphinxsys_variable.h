@@ -193,8 +193,7 @@ class MeshVariable : public Entity
     }
 
     template <class ExecutionPolicy>
-    void synchronizeWithDevice(ExecutionPolicy &ex_policy){};
-    void synchronizeWithDevice(ParallelDevicePolicy &par_device);
+    void prepareForOutput(const ExecutionPolicy &ex_policy) { discrete_variable_.prepareForOutput(ex_policy); };
 
   private:
     DiscreteVariable<PackageData> discrete_variable_;
