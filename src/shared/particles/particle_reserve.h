@@ -23,8 +23,8 @@
 /**
  * @file particle_reserve.h
  * @brief There two types of particle reserve for runtime creating and deleting particles.
- * One is buffer, the other is for ghost particles.
- * Buffer is use to handle deletion and creation of real particles.
+ * One is for real particles, the other is for ghost particles.
+ * Real particle reserve is use to handle deletion and creation of real particles.
  * Ghost particle reserve is to handle ghost particles whose states are updated according to
  * boundary condition other than the evolving equations, 
  * and their indices are only included in the neighbor particle list only.
@@ -69,7 +69,6 @@ class ParticleBuffer<Base> : public ParticleReserve
   public:
     ParticleBuffer() : ParticleReserve(){};
     virtual ~ParticleBuffer(){};
-    void checkEnoughBuffer(BaseParticles &base_particles);
     void allocateBufferParticles(BaseParticles &base_particles, size_t buffer_size);
 };
 

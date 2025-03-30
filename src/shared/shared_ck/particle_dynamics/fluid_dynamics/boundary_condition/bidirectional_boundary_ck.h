@@ -86,7 +86,7 @@ class BufferInflowInjectionCK : public BaseLocalDynamics<AlignedBoxPartByCell>
       public:
         FinishDynamics(BufferInflowInjectionCK &encloser)
             : particles_(encloser.particles_), buffer_(encloser.buffer_) {}
-        void operator()() { buffer_.checkEnoughBuffer(*particles_); }
+        void operator()() { particles_->checkRealParticleBound(); }
 
       private:
         BaseParticles *particles_;

@@ -51,12 +51,6 @@ EmitterInflowInjectionCK<AlignedBoxPartType>::FinishDynamics::
     : particles_(encloser.particles_), buffer_(encloser.buffer_) {}
 //=================================================================================================//
 template <typename AlignedBoxPartType>
-void EmitterInflowInjectionCK<AlignedBoxPartType>::FinishDynamics::operator()()
-{
-    buffer_.checkEnoughBuffer(*particles_);
-}
-//=================================================================================================//
-template <typename AlignedBoxPartType>
 template <class ExecutionPolicy, class EncloserType>
 EmitterInflowInjectionCK<AlignedBoxPartType>::UpdateKernel::
     UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)

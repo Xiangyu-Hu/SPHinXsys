@@ -104,7 +104,7 @@ class EmitterInflowInjectionCK : public BaseLocalDynamics<AlignedBoxPartType>
 
       public:
         FinishDynamics(EmitterInflowInjectionCK &encloser);
-        void operator()();
+        void operator()(){ particles_->checkRealParticleBound(); };
     };
 
   protected:

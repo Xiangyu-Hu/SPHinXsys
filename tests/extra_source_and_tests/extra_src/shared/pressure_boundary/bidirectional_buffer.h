@@ -115,7 +115,7 @@ class BidirectionalBuffer
                     index_i < particles_->TotalRealParticles())
                 {
                     mutex_switch.lock();
-                    particle_buffer_.checkEnoughBuffer(*particles_);
+                    particles_->checkRealParticleBound();
                     size_t new_particle_index = particles_->createRealParticleFrom(index_i);
                     buffer_indicator_[new_particle_index] = 0;
 

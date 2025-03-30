@@ -78,7 +78,7 @@ void EmitterInflowInjection::update(size_t original_index_i, Real dt)
     if (aligned_box_.checkUpperBound(pos_[sorted_index_i]))
     {
         mutex_switch_to_real_.lock();
-        buffer_.checkEnoughBuffer(*particles_);
+        particles_->checkRealParticleBound();
         particles_->createRealParticleFrom(sorted_index_i);
         mutex_switch_to_real_.unlock();
 
