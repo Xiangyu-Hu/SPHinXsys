@@ -9,21 +9,50 @@
 namespace SPH
 {
 //=================================================================================================//
-template <class KernelType>
-void MultilevelLevelSet::configOperationExecutionPolicy(const ParallelDevicePolicy &par_device,
-                                                        KernelType *kernel)
+MultilevelLevelSet::MultilevelLevelSet(
+  const ParallelDevicePolicy &par_device, BoundingBox tentative_bounds,
+  MeshWithGridDataPackagesType* coarse_data, Shape &shape, SPHAdaptation &sph_adaptation)
+  : BaseMeshField("LevelSet_" + shape.getName()), shape_(shape), total_levels_(1)
 {
-    device_clean_interface_ = makeUnique<CleanInterface<ParallelDevicePolicy, KernelType>>(
-            *mesh_data_set_.back(), kernel, global_h_ratio_vec_.back());
-    device_correct_topology_ = makeUnique<CorrectTopology<ParallelDevicePolicy, KernelType>>(
-            *mesh_data_set_.back(), kernel, global_h_ratio_vec_.back());
+    Kernel *origin_kernel = sph_adaptation.getKernel();
+    device_kernel_ = makeUnique<SingularVariable<KernelWendlandC2CK>>(
+        "levelset_kernel", KernelWendlandC2CK(*origin_kernel));
+    Real reference_data_spacing = coarse_data->DataSpacing() * 0.5;
+    Real global_h_ratio = sph_adaptation.ReferenceSpacing() / reference_data_spacing;
+    global_h_ratio_vec_.push_back(global_h_ratio);
 
-    host_clean_interface_ = nullptr;
-    host_correct_topology_ = nullptr;
-    clean_interface_ = std::bind(
-        &CleanInterface<ParallelDevicePolicy, KernelType>::exec, device_clean_interface_.get(), _1);
-    correct_topology_ = std::bind(
-        &CorrectTopology<ParallelDevicePolicy, KernelType>::exec, device_correct_topology_.get(), _1);
+    initializeLevel(par_device, 0, reference_data_spacing, global_h_ratio,
+                    tentative_bounds, device_kernel_->DelegatedData(par_device),
+                    coarse_data);
+    
+    configOperationExecutionPolicy(par_device, device_kernel_->DelegatedData(par_device));
+}
+//=================================================================================================//
+MultilevelLevelSet::MultilevelLevelSet(
+  const ParallelDevicePolicy &par_device, BoundingBox tentative_bounds, Real reference_data_spacing,
+  size_t total_levels, Shape &shape, SPHAdaptation &sph_adaptation)
+  : BaseMeshField("LevelSet_" + shape.getName()), shape_(shape), total_levels_(total_levels)
+{
+    Kernel *origin_kernel = sph_adaptation.getKernel();
+    device_kernel_ = makeUnique<SingularVariable<KernelWendlandC2CK>>(
+        "levelset_kernel", KernelWendlandC2CK(*origin_kernel));
+    Real global_h_ratio = sph_adaptation.ReferenceSpacing() / reference_data_spacing;
+    global_h_ratio_vec_.push_back(global_h_ratio);
+
+    initializeLevel(par_device, 0, reference_data_spacing, global_h_ratio,
+                    tentative_bounds, device_kernel_->DelegatedData(par_device));
+
+    for (size_t level = 1; level < total_levels_; ++level) {
+        reference_data_spacing *= 0.5;  // Halve the data spacing
+        global_h_ratio *= 2;            // Double the ratio
+        global_h_ratio_vec_.push_back(global_h_ratio);
+
+        initializeLevel(par_device, level, reference_data_spacing, global_h_ratio,
+                        tentative_bounds, device_kernel_->DelegatedData(par_device),
+                        mesh_data_set_[level - 1]);
+    }
+
+    configOperationExecutionPolicy(par_device, device_kernel_->DelegatedData(par_device));
 }
 //=================================================================================================//
 } // namespace SPH

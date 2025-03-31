@@ -13,17 +13,14 @@ MultilevelLevelSet::MultilevelLevelSet(
     : BaseMeshField("LevelSet_" + shape.getName()), shape_(shape), total_levels_(1)
 {
     Kernel *origin_kernel = sph_adaptation.getKernel();
-    kernel_ = makeUnique<SingularVariable<KernelWendlandC2CK>>(
-        "levelset_kernel", KernelWendlandC2CK(*origin_kernel));
     Real reference_data_spacing = coarse_data->DataSpacing() * 0.5;
     Real global_h_ratio = sph_adaptation.ReferenceSpacing() / reference_data_spacing;
     global_h_ratio_vec_.push_back(global_h_ratio);
 
     initializeLevel(ex_policy, 0, reference_data_spacing, global_h_ratio,
-                    tentative_bounds, kernel_->DelegatedData(ex_policy),
-                    coarse_data);
+                    tentative_bounds, origin_kernel, coarse_data);
     
-    configOperationExecutionPolicy(ex_policy, kernel_->DelegatedData(ex_policy));
+    configOperationExecutionPolicy(ex_policy, origin_kernel);
 }
 //=================================================================================================//
 template <class ExecutionPolicy>
@@ -33,13 +30,11 @@ MultilevelLevelSet::MultilevelLevelSet(
     : BaseMeshField("LevelSet_" + shape.getName()), shape_(shape), total_levels_(total_levels)
 {
     Kernel *origin_kernel = sph_adaptation.getKernel();
-    kernel_ = makeUnique<SingularVariable<KernelWendlandC2CK>>(
-        "levelset_kernel", KernelWendlandC2CK(*origin_kernel));
     Real global_h_ratio = sph_adaptation.ReferenceSpacing() / reference_data_spacing;
     global_h_ratio_vec_.push_back(global_h_ratio);
 
     initializeLevel(ex_policy, 0, reference_data_spacing, global_h_ratio,
-                    tentative_bounds, kernel_->DelegatedData(ex_policy));
+                    tentative_bounds, origin_kernel);
 
     for (size_t level = 1; level < total_levels_; ++level) {
         reference_data_spacing *= 0.5;  // Halve the data spacing
@@ -47,11 +42,10 @@ MultilevelLevelSet::MultilevelLevelSet(
         global_h_ratio_vec_.push_back(global_h_ratio);
 
         initializeLevel(ex_policy, level, reference_data_spacing, global_h_ratio,
-                        tentative_bounds, kernel_->DelegatedData(ex_policy),
-                        mesh_data_set_[level - 1]);
+                        tentative_bounds, origin_kernel, mesh_data_set_[level - 1]);
     }
 
-    configOperationExecutionPolicy(ex_policy, kernel_->DelegatedData(ex_policy));
+    configOperationExecutionPolicy(ex_policy, origin_kernel);
 }
 //=================================================================================================//
 template <class ExecutionPolicy, class KernelType>

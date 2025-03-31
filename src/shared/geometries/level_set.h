@@ -58,6 +58,12 @@ class MultilevelLevelSet : public BaseMeshField
     MultilevelLevelSet(const ExecutionPolicy &ex_policy, BoundingBox tentative_bounds,
                        MeshWithGridDataPackagesType* coarse_data, Shape &shape,
                        SPHAdaptation &sph_adaptation);
+    MultilevelLevelSet(const ParallelDevicePolicy &par_device, BoundingBox tentative_bounds,
+                       Real reference_data_spacing, size_t total_levels, Shape &shape,
+                       SPHAdaptation &sph_adaptation);
+    MultilevelLevelSet(const ParallelDevicePolicy &par_device, BoundingBox tentative_bounds,
+                       MeshWithGridDataPackagesType* coarse_data, Shape &shape,
+                       SPHAdaptation &sph_adaptation);
     ~MultilevelLevelSet(){};
 
     void cleanInterface(Real small_shift_factor);
@@ -135,9 +141,8 @@ class MultilevelLevelSet : public BaseMeshField
 
     UniquePtr<BaseExecDynamics> correct_topology_keeper_;
     UniquePtr<BaseExecDynamics> clean_interface_keeper_;
-
+    UniquePtr<SingularVariable<KernelWendlandC2CK>> device_kernel_;
     std::function<void()> sync_mesh_variable_data_;
-    UniquePtr<SingularVariable<KernelWendlandC2CK>> kernel_;
 
     template <class ExecutionPolicy, class KernelType>
     void configOperationExecutionPolicy(const ExecutionPolicy &ex_policy, KernelType *kernel);
