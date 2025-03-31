@@ -62,13 +62,14 @@ class SpawnRealParticle
         UnsignedInt operator()(UnsignedInt index_i)
         {
             AtomicRef<UnsignedInt> total_real_particles_ref(*total_real_particles_);
-            UnsignedInt new_original_id = total_real_particles_ref.fetch_add(1);
-            if (new_original_id < particles_bound_)
+            UnsignedInt last_real_particle_index = total_real_particles_ref.fetch_add(1);
+            if (last_real_particle_index < particles_bound_)
             {
-                copy_particle_state_(copyable_state_data_arrays_, new_original_id, index_i);
-                original_id_[new_original_id] = new_original_id;
+                UnsignedInt new_original_id = original_id_[last_real_particle_index];
+                copy_particle_state_(copyable_state_data_arrays_, last_real_particle_index, index_i);
+                original_id_[last_real_particle_index] = new_original_id;
             }
-            return new_original_id;
+            return last_real_particle_index;
         };
 
       protected:
@@ -109,7 +110,9 @@ class RemoveRealParticle
 
             if (index_i < last_real_particle_index)
             {
+                UnsignedInt old_original_id = original_id_[index_i];
                 copy_particle_state_(copyable_state_data_arrays_, index_i, last_real_particle_index);
+                original_id_[last_real_particle_index] = old_original_id;
                 sorted_id_[original_id_[index_i]] = index_i;
             }
         };
