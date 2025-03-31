@@ -49,7 +49,7 @@ class LoopRangeCK<ExecutionPolicy, SPHBody>
     template <class UnaryFunc>
     void computeUnit(const UnaryFunc &f, UnsignedInt i) const { f(i); };
     template <class ReturnType, class BinaryFunc, class UnaryFunc>
-    ReturnType computeUnit(const BinaryFunc &bf, const UnaryFunc &uf, UnsignedInt i) const { return uf(i); };
+    ReturnType computeUnit(ReturnType temp, const BinaryFunc &bf, const UnaryFunc &uf, UnsignedInt i) const { return uf(i); };
     UnsignedInt LoopBound() const { return *loop_bound_; };
 
   protected:
@@ -66,7 +66,7 @@ class LoopRangeCK<ExecutionPolicy, BodyPartByParticle>
     template <class UnaryFunc>
     void computeUnit(const UnaryFunc &f, UnsignedInt i) const { f(index_list_[i]); };
     template <class ReturnType, class BinaryFunc, class UnaryFunc>
-    ReturnType computeUnit(const BinaryFunc &bf, const UnaryFunc &uf, UnsignedInt i) const { return uf(index_list_[i]); };
+    ReturnType computeUnit(ReturnType temp, const BinaryFunc &bf, const UnaryFunc &uf, UnsignedInt i) const { return uf(index_list_[i]); };
     UnsignedInt LoopBound() const { return *loop_bound_; };
 
   protected:
@@ -94,9 +94,8 @@ class LoopRangeCK<ExecutionPolicy, BodyPartByCell>
     };
 
     template <class ReturnType, class BinaryFunc, class UnaryFunc>
-    ReturnType computeUnit(const BinaryFunc &bf, const UnaryFunc &uf, UnsignedInt i) const
+    ReturnType computeUnit(ReturnType temp, const BinaryFunc &bf, const UnaryFunc &uf, UnsignedInt i) const
     {
-        ReturnType temp = ReduceReference<BinaryFunc>::value;
         UnsignedInt cell_index = index_list_[i];
         for (size_t k = cell_offset_[cell_index]; k != cell_offset_[cell_index + 1]; ++k)
         {

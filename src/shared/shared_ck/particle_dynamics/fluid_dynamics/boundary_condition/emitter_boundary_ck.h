@@ -21,16 +21,21 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	pressure_boundary_ck.h
+ * @file 	emitter_boundary_ck.h
  * @brief 	tbd
  * @author	Xiangyu Hu
  */
 
-#ifndef PRESSURE_BOUNDARY_CK_H
-#define PRESSURE_BOUNDARY_CK_H
+#ifndef EMITTER_BOUNDARY_CK_H
+#define EMITTER_BOUNDARY_CK_H
 
-#include "fluid_boundary_ck.h"
-#include "fluid_boundary_state.h"
+#include "base_body_part.h"
+#include "base_data_package.h"
+#include "base_fluid_dynamics.h"
+#include "fluid_boundary_state.hpp"
+#include "particle_operation.hpp"
+#include "particle_reserve.h"
+#include "simple_algorithms_ck.h"
 
 namespace SPH
 {
@@ -38,16 +43,44 @@ namespace fluid_dynamics
 {
 
 template <typename... T>
-class PressureConditionCK;
-template <class AlignedBoxPartType, class KernelCorrectionType, class ConditionFunction>
-class PressureConditionCK<AlignedBoxPartType, KernelCorrectionType, ConditionFunction>
+class EmitterInflowConditionCK;
+
+template <class AlignedBoxPartType, class ConditionFunction>
+class EmitterInflowConditionCK<AlignedBoxPartType, ConditionFunction>
     : public BaseLocalDynamics<AlignedBoxPartType>
 {
     using ConditionKernel = typename ConditionFunction::ComputingKernel;
-    using CorrectionKernel = typename KernelCorrectionType::ComputingKernel;
 
   public:
-    PressureConditionCK(AlignedBoxPartType &aligned_box_part);
+    EmitterInflowConditionCK(AlignedBoxPartType &aligned_box_part);
+
+    class UpdateKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+        void update(size_t index_i, Real dt = 0.0);
+
+      protected:
+        Real *physical_time_;
+        AlignedBox *aligned_box_;
+        ConditionKernel condition_;
+    };
+
+  protected:
+    SingularVariable<Real> *sv_physical_time_;
+    SingularVariable<AlignedBox> *sv_aligned_box_;
+    ConditionFunction condition_function_;
+};
+
+template <typename AlignedBoxPartType>
+class EmitterInflowInjectionCK : public BaseLocalDynamics<AlignedBoxPartType>
+{
+    using SpawnRealParticleKernel = typename SpawnRealParticle::ComputingKernel;
+
+  public:
+    EmitterInflowInjectionCK(AlignedBoxPartType &aligned_box_part, ParticleBuffer<Base> &buffer);
+    virtual ~EmitterInflowInjectionCK() {};
 
     class UpdateKernel
     {
@@ -58,58 +91,30 @@ class PressureConditionCK<AlignedBoxPartType, KernelCorrectionType, ConditionFun
 
       protected:
         AlignedBox *aligned_box_;
-        ConditionKernel condition_;
-        int *buffer_particle_indicator_;
-        Vecd *zero_gradient_residue_;
+        SpawnRealParticleKernel spawn_real_particle_;
+        Real rho0_;
         Vecd *pos_;
-        Real *physical_time_;
-        Vecd *vel_;
-        CorrectionKernel correction_;
-        Real *rho_;
-        Transform *transform_;
+        Real *rho_, *p_;
+    };
+
+    class FinishDynamics
+    {
+        BaseParticles *particles_;
+        ParticleBuffer<Base> &buffer_;
+
+      public:
+        FinishDynamics(EmitterInflowInjectionCK &encloser);
+        void operator()();
     };
 
   protected:
+    ParticleBuffer<Base> &buffer_;
     SingularVariable<AlignedBox> *sv_aligned_box_;
-    ConditionFunction condition_function_;
-    DiscreteVariable<int> *dv_buffer_particle_indicator_;
-    DiscreteVariable<Vecd> *dv_zero_gradient_residue_;
+    SpawnRealParticle spawn_real_particle_method_;
+    Real rho0_;
     DiscreteVariable<Vecd> *dv_pos_;
-    SingularVariable<Real> *sv_physical_time_;
-    DiscreteVariable<Vecd> *dv_vel_;
-    KernelCorrectionType kernel_correction_;
-    DiscreteVariable<Real> *dv_rho_;
+    DiscreteVariable<Real> *dv_rho_, *dv_p_;
 };
-
-template <typename ExecutionPolicy, class KernelCorrectionType, class PressureConditionFunction>
-class PressureBidirectionalConditionCK
-{
-  public:
-    StateDynamics<ExecutionPolicy, TagBufferParticlesCK> tag_buffer_particles_;
-
-    StateDynamics<ExecutionPolicy,
-                  PressureConditionCK<AlignedBoxPartByCell, KernelCorrectionType, PressureConditionFunction>>
-        pressure_condition_;
-
-    StateDynamics<ExecutionPolicy, BufferEmitterInflowInjectionCK<AlignedBoxPartByCell, PressureConditionFunction>> emitter_injection_;
-
-    StateDynamics<ExecutionPolicy, BufferOutflowDeletionCK> disposer_outflow_deletion_;
-
-    PressureBidirectionalConditionCK(AlignedBoxPartByCell &emitter_by_cell, ParticleBuffer<Base> &inlet_buffer);
-
-    /// Tag (or flag) particles in the buffer.
-    void tagBufferParticles() { tag_buffer_particles_.exec(); }
-
-    /// Apply the pressure condition (note that this usually takes a time-step dt).
-    void applyPressureCondition(Real dt) { pressure_condition_.exec(dt); }
-
-    /// Perform the injection step (for inflow).
-    void injectParticles() { emitter_injection_.exec(); }
-
-    /// Perform the deletion step (for outflow).
-    void deleteParticles() { disposer_outflow_deletion_.exec(); }
-};
-
 } // namespace fluid_dynamics
 } // namespace SPH
-#endif // PRESSURE_BOUNDARY_CK_H
+#endif // EMITTER_BOUNDARY_CK_H
