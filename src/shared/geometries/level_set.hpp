@@ -23,7 +23,6 @@ MultilevelLevelSet::MultilevelLevelSet(
                     tentative_bounds, kernel_->DelegatedData(ex_policy),
                     coarse_data);
     
-    sync_mesh_variable_data_ = [&](){ this->syncMeshVariableData(ex_policy); };
     configOperationExecutionPolicy(ex_policy, kernel_->DelegatedData(ex_policy));
 }
 //=================================================================================================//
@@ -52,7 +51,6 @@ MultilevelLevelSet::MultilevelLevelSet(
                         mesh_data_set_[level - 1]);
     }
 
-    sync_mesh_variable_data_ = [&](){ this->syncMeshVariableData(ex_policy); };
     configOperationExecutionPolicy(ex_policy, kernel_->DelegatedData(ex_policy));
 }
 //=================================================================================================//
@@ -60,17 +58,11 @@ template <class ExecutionPolicy, class KernelType>
 void MultilevelLevelSet::configOperationExecutionPolicy(const ExecutionPolicy &ex_policy,
                                                         KernelType *kernel)
 {
-    host_clean_interface_ = makeUnique<CleanInterface<ExecutionPolicy, KernelType>>(
+    sync_mesh_variable_data_ = [&](){ this->syncMeshVariableData(ex_policy); };
+    clean_interface_keeper_ = makeUnique<CleanInterface<ExecutionPolicy, KernelType>>(
         *mesh_data_set_.back(), kernel, global_h_ratio_vec_.back());
-    host_correct_topology_ = makeUnique<CorrectTopology<ExecutionPolicy, KernelType>>(
+    correct_topology_keeper_ = makeUnique<CorrectTopology<ExecutionPolicy, KernelType>>(
         *mesh_data_set_.back(), kernel, global_h_ratio_vec_.back());
-
-    device_clean_interface_ = nullptr;
-    device_correct_topology_ = nullptr;
-    clean_interface_ = std::bind(
-        &CleanInterface<ExecutionPolicy, KernelType>::exec, host_clean_interface_.get(), _1);
-    correct_topology_ = std::bind(
-        &CorrectTopology<ExecutionPolicy, KernelType>::exec, host_correct_topology_.get(), _1);
 }
 //=================================================================================================//
 template <class ExecutionPolicy, class KernelType>

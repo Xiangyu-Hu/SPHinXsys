@@ -36,6 +36,14 @@
 
 namespace SPH
 {
+class BaseExecDynamics
+{
+  public:
+    BaseExecDynamics(){};
+    virtual ~BaseExecDynamics(){};
+
+    virtual void exec(Real small_shift_factor) = 0;
+};
 class RegisterMeshVariable
 {
   public:
@@ -114,16 +122,17 @@ class ProbeNormalDirection
 };
 
 template <class ExecutionPolicy, class KernelType>
-class CleanInterface : public BaseMeshDynamics
+class CleanInterface : public BaseMeshDynamics, public BaseExecDynamics
 {
   public:
     explicit CleanInterface(MeshWithGridDataPackagesType &mesh_data, KernelType *kernel, Real global_h_ratio)
         : BaseMeshDynamics(mesh_data),
+          BaseExecDynamics(),
           kernel_(kernel),
           global_h_ratio_(global_h_ratio){};
     virtual ~CleanInterface(){};
 
-    void exec(Real small_shift_factor){
+    void exec(Real small_shift_factor) override {
         mark_near_interface.exec(small_shift_factor);
         redistance_interface.exec();
         reinitialize_level_set.exec();
@@ -142,16 +151,17 @@ class CleanInterface : public BaseMeshDynamics
 };
 
 template <class ExecutionPolicy, class KernelType>
-class CorrectTopology : public BaseMeshDynamics
+class CorrectTopology : public BaseMeshDynamics, public BaseExecDynamics
 {
   public:
     explicit CorrectTopology(MeshWithGridDataPackagesType &mesh_data, KernelType *kernel, Real global_h_ratio)
         : BaseMeshDynamics(mesh_data),
+          BaseExecDynamics(),
           kernel_(kernel),
           global_h_ratio_(global_h_ratio){};
     virtual ~CorrectTopology(){};
 
-    void exec(Real small_shift_factor){
+    void exec(Real small_shift_factor) override {
         mark_near_interface.exec(small_shift_factor);
         for (size_t i = 0; i != 10; ++i)
             diffuse_level_set_sign.exec();

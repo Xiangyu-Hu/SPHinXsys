@@ -31,12 +31,12 @@ size_t MultilevelLevelSet::getCoarseLevel(Real h_ratio)
 //=================================================================================================//
 void MultilevelLevelSet::cleanInterface(Real small_shift_factor)
 {
-    clean_interface_(small_shift_factor);
+    clean_interface_keeper_->exec(small_shift_factor);
 }
 //=============================================================================================//
 void MultilevelLevelSet::correctTopology(Real small_shift_factor)
 {
-    correct_topology_(small_shift_factor);
+    correct_topology_keeper_->exec(small_shift_factor);
 }
 //=============================================================================================//
 Real MultilevelLevelSet::probeSignedDistance(const Vecd &position)
