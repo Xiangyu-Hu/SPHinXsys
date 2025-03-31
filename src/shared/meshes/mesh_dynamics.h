@@ -111,76 +111,24 @@ class BaseMeshDynamics
                               function(cell_index);
                           });
     }
-
-    /***********************************************
-     *       Iterators for Only Occupied Cells      *
-     ***********************************************/
-    // template <typename FunctionOnData>
-    // void package_parallel_for(const execution::SequencedPolicy &seq, const FunctionOnData &function)
-    // {
-    //     for (size_t i = 2; i != num_grid_pkgs_; ++i)
-    //         function(i);
-    // }
-    // template <typename FunctionOnData>
-    // void package_parallel_for(const execution::ParallelPolicy &par, const FunctionOnData &function)
-    // {
-    //     parallel_for(IndexRange(2, num_grid_pkgs_),
-    //                 [&](const IndexRange &r)
-    //                 {
-    //                     for (size_t i = r.begin(); i != r.end(); ++i)
-    //                     {
-    //                         function(i);
-    //                     }
-    //                 },
-    //                 ap);
-    // }
-
-    // #if SPHINXSYS_USE_SYCL
-    // template <typename FunctionOnData>
-    // void BaseMeshDynamics::package_parallel_for(const execution::ParallelDevicePolicy &par_device, const FunctionOnData &function)
-    // {
-    //     auto &sycl_queue = execution_instance.getQueue();
-    //     sycl_queue.submit([&](sycl::handler &cgh)
-    //     {
-    //         const size_t num_grid_pkgs = this->num_grid_pkgs_;
-    //         cgh.parallel_for(execution_instance.getUniformNdRange(num_grid_pkgs), [=](sycl::nd_item<1> index)
-    //         {
-    //             if(index.get_global_id(0) + 2 < num_grid_pkgs)
-    //                 function(index.get_global_id(0) + 2); 
-    //         });
-    //     }).wait_and_throw();
-    // }
-    // #endif
-
-    // template <typename FunctionOnData>
-    // void package_parallel_for(const execution::ParallelDevicePolicy &par_device, const FunctionOnData &function);
-    // {
-    //     auto &sycl_queue = execution_instance.getQueue();
-    //     sycl_queue.submit([&](sycl::handler &cgh)
-    //                       { cgh.parallel_for(execution_instance.getUniformNdRange(num_grid_pkgs_ - 2), [=](sycl::nd_item<1> index)
-    //                                         {
-    //                                 if(index.get_global_id(0) + 2< num_grid_pkgs_)
-    //                                     local_dynamics_function(index.get_global_id(0) + 2); }); })
-    //         .wait_and_throw();
-    // }
 };
 
 /**
  * @class MeshAllDynamics
- * @brief Mesh dynamics for all cell on the mesh (SYCL version)
+ * @brief Mesh dynamics for all cell on the mesh
  */
 template <class ExecutionPolicy, class LocalDynamicsType>
-class MeshAllDynamicsCK : public LocalDynamicsType, public BaseMeshDynamics
+class MeshAllDynamics : public LocalDynamicsType, public BaseMeshDynamics
 {
     using UpdateKernel = typename LocalDynamicsType::UpdateKernel;
     using KernelImplementation = Implementation<ExecutionPolicy, LocalDynamicsType, UpdateKernel>;
     KernelImplementation kernel_implementation_;
   public:
     template <typename... Args>
-    MeshAllDynamicsCK(MeshWithGridDataPackages<4> &mesh_data, Args &&...args)
+    MeshAllDynamics(MeshWithGridDataPackages<4> &mesh_data, Args &&...args)
         : LocalDynamicsType(mesh_data, std::forward<Args>(args)...),
           BaseMeshDynamics(mesh_data), kernel_implementation_(*this){};
-    virtual ~MeshAllDynamicsCK(){};
+    virtual ~MeshAllDynamics(){};
 
     void exec()
     {
@@ -199,17 +147,17 @@ class MeshAllDynamicsCK : public LocalDynamicsType, public BaseMeshDynamics
  * @brief Mesh dynamics for only inner cells on the mesh
  */
 template <class ExecutionPolicy, class LocalDynamicsType>
-class MeshInnerDynamicsCK : public LocalDynamicsType, public BaseMeshDynamics
+class MeshInnerDynamics : public LocalDynamicsType, public BaseMeshDynamics
 {
     using UpdateKernel = typename LocalDynamicsType::UpdateKernel;
     using KernelImplementation = Implementation<ExecutionPolicy, LocalDynamicsType, UpdateKernel>;
     KernelImplementation kernel_implementation_;
   public:
     template <typename... Args>
-    MeshInnerDynamicsCK(MeshWithGridDataPackages<4> &mesh_data, Args &&...args)
+    MeshInnerDynamics(MeshWithGridDataPackages<4> &mesh_data, Args &&...args)
         : LocalDynamicsType(mesh_data, std::forward<Args>(args)...),
           BaseMeshDynamics(mesh_data), kernel_implementation_(*this){};
-    virtual ~MeshInnerDynamicsCK(){};
+    virtual ~MeshInnerDynamics(){};
 
     template <typename... Args>
     void exec(Args &&...args)
@@ -229,7 +177,7 @@ class MeshInnerDynamicsCK : public LocalDynamicsType, public BaseMeshDynamics
  * @brief Mesh dynamics for only core cells on the mesh
  */
 template <class ExecutionPolicy, class LocalDynamicsType>
-class MeshCoreDynamicsCK : public LocalDynamicsType, public BaseMeshDynamics
+class MeshCoreDynamics : public LocalDynamicsType, public BaseMeshDynamics
 {
     std::pair<Arrayi, int> *meta_data_cell_;
     using UpdateKernel = typename LocalDynamicsType::UpdateKernel;
@@ -238,12 +186,12 @@ class MeshCoreDynamicsCK : public LocalDynamicsType, public BaseMeshDynamics
 
   public:
     template <typename... Args>
-    MeshCoreDynamicsCK(MeshWithGridDataPackages<4> &mesh_data, Args &&...args)
+    MeshCoreDynamics(MeshWithGridDataPackages<4> &mesh_data, Args &&...args)
         : LocalDynamicsType(mesh_data, std::forward<Args>(args)...),
           BaseMeshDynamics(mesh_data),
           meta_data_cell_(mesh_data.meta_data_cell_.DelegatedDataField(ExecutionPolicy())),
           kernel_implementation_(*this){};
-    virtual ~MeshCoreDynamicsCK(){};
+    virtual ~MeshCoreDynamics(){};
 
     void exec()
     {

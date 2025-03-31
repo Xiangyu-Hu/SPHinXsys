@@ -87,11 +87,11 @@ void MultilevelLevelSet::initializeLevel(const ExecutionPolicy &ex_policy, size_
     RegisterMeshVariable().exec(mesh_data_set_[level]);
 
     if (coarse_data == nullptr) {
-        MeshAllDynamicsCK<execution::ParallelPolicy, InitializeDataInACell>
+        MeshAllDynamics<execution::ParallelPolicy, InitializeDataInACell>
             initialize_data_in_a_cell(*mesh_data_set_[level], shape_);
         initialize_data_in_a_cell.exec();
     } else {
-        MeshAllDynamicsCK<execution::ParallelPolicy, InitializeDataInACellFromCoarse>
+        MeshAllDynamics<execution::ParallelPolicy, InitializeDataInACellFromCoarse>
             initialize_data_in_a_cell_from_coarse(*mesh_data_set_[level], *coarse_data, shape_);
         initialize_data_in_a_cell_from_coarse.exec();
     }
@@ -99,9 +99,9 @@ void MultilevelLevelSet::initializeLevel(const ExecutionPolicy &ex_policy, size_
     /* All initializations in `FinishDataPackages` are achieved on CPU. */
     FinishDataPackages finish_data_packages(*mesh_data_set_[level], shape_);
     finish_data_packages.exec();
-    MeshInnerDynamicsCK<ExecutionPolicy, UpdateLevelSetGradient>
+    MeshInnerDynamics<ExecutionPolicy, UpdateLevelSetGradient>
         update_level_set_gradient{*mesh_data_set_[level]};
-    MeshInnerDynamicsCK<ExecutionPolicy, UpdateKernelIntegrals<KernelType>>
+    MeshInnerDynamics<ExecutionPolicy, UpdateKernelIntegrals<KernelType>>
         update_kernel_integrals{*mesh_data_set_[level], kernel, global_h_ratio};
     update_level_set_gradient.exec();
     update_kernel_integrals.exec();

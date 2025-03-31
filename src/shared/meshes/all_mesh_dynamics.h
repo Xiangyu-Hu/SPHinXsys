@@ -78,10 +78,10 @@ class FinishDataPackages
     Real far_field_distance;
 
     InitializeDataForSingularPackage initialize_data_for_singular_package{mesh_data_};
-    MeshAllDynamicsCK<execution::ParallelPolicy, TagACellIsInnerPackage> tag_a_cell_is_inner_package{mesh_data_};
-    MeshInnerDynamicsCK<execution::ParallelPolicy, InitializeIndexMesh> initialize_index_mesh{mesh_data_};
-    MeshInnerDynamicsCK<execution::ParallelPolicy, InitializeCellNeighborhood> initialize_cell_neighborhood{mesh_data_};
-    MeshInnerDynamicsCK<execution::ParallelPolicy, InitializeBasicDataForAPackage> initialize_basic_data_for_a_package{mesh_data_, shape_};
+    MeshAllDynamics<execution::ParallelPolicy, TagACellIsInnerPackage> tag_a_cell_is_inner_package{mesh_data_};
+    MeshInnerDynamics<execution::ParallelPolicy, InitializeIndexMesh> initialize_index_mesh{mesh_data_};
+    MeshInnerDynamics<execution::ParallelPolicy, InitializeCellNeighborhood> initialize_cell_neighborhood{mesh_data_};
+    MeshInnerDynamics<execution::ParallelPolicy, InitializeBasicDataForAPackage> initialize_basic_data_for_a_package{mesh_data_, shape_};
 };
 
 class ProbeNormalDirection
@@ -134,11 +134,11 @@ class CleanInterface : public BaseMeshDynamics
   private:
     KernelType *kernel_;
     Real global_h_ratio_;
-    MeshInnerDynamicsCK<ExecutionPolicy, UpdateLevelSetGradient> update_level_set_gradient{mesh_data_};
-    MeshInnerDynamicsCK<ExecutionPolicy, UpdateKernelIntegrals<KernelType>> update_kernel_integrals{mesh_data_, kernel_, global_h_ratio_};
-    MeshInnerDynamicsCK<ExecutionPolicy, MarkNearInterface> mark_near_interface{mesh_data_};
-    MeshCoreDynamicsCK<ExecutionPolicy, RedistanceInterface> redistance_interface{mesh_data_};
-    MeshInnerDynamicsCK<ExecutionPolicy, ReinitializeLevelSet> reinitialize_level_set{mesh_data_};
+    MeshInnerDynamics<ExecutionPolicy, UpdateLevelSetGradient> update_level_set_gradient{mesh_data_};
+    MeshInnerDynamics<ExecutionPolicy, UpdateKernelIntegrals<KernelType>> update_kernel_integrals{mesh_data_, kernel_, global_h_ratio_};
+    MeshInnerDynamics<ExecutionPolicy, MarkNearInterface> mark_near_interface{mesh_data_};
+    MeshCoreDynamics<ExecutionPolicy, RedistanceInterface> redistance_interface{mesh_data_};
+    MeshInnerDynamics<ExecutionPolicy, ReinitializeLevelSet> reinitialize_level_set{mesh_data_};
 };
 
 template <class ExecutionPolicy, class KernelType>
@@ -162,10 +162,10 @@ class CorrectTopology : public BaseMeshDynamics
   private:
     KernelType *kernel_;
     Real global_h_ratio_;
-    MeshInnerDynamicsCK<ExecutionPolicy, UpdateLevelSetGradient> update_level_set_gradient{mesh_data_};
-    MeshInnerDynamicsCK<ExecutionPolicy, UpdateKernelIntegrals<KernelType>> update_kernel_integrals{mesh_data_, kernel_, global_h_ratio_};
-    MeshInnerDynamicsCK<ExecutionPolicy, MarkNearInterface> mark_near_interface{mesh_data_};
-    MeshInnerDynamicsCK<ExecutionPolicy, DiffuseLevelSetSign> diffuse_level_set_sign{mesh_data_};
+    MeshInnerDynamics<ExecutionPolicy, UpdateLevelSetGradient> update_level_set_gradient{mesh_data_};
+    MeshInnerDynamics<ExecutionPolicy, UpdateKernelIntegrals<KernelType>> update_kernel_integrals{mesh_data_, kernel_, global_h_ratio_};
+    MeshInnerDynamics<ExecutionPolicy, MarkNearInterface> mark_near_interface{mesh_data_};
+    MeshInnerDynamics<ExecutionPolicy, DiffuseLevelSetSign> diffuse_level_set_sign{mesh_data_};
 };
 } // namespace SPH
 #endif // ALL_MESH_DYNAMICS_H
