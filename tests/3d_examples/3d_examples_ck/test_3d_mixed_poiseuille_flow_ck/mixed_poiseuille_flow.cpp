@@ -302,6 +302,11 @@ int main(int ac, char *av[])
         bidirectional_velocity_condition_left(left_emitter_by_cell, particle_buffer, DH, U_f, mu_f);
     fluid_dynamics::BidirectionalBoundaryCK<MainExecutionPolicy, NoKernelCorrectionCK, PressurePrescribed<>>
         bidirectional_pressure_condition_right(right_emitter_by_cell, particle_buffer, Outlet_pressure);
+
+    ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::FlowrateCalculateCK> flowrate_calculate_using_FlowrateCalculateCK(right_emitter_by_cell);
+    ReduceDynamicsCK<MainExecutionPolicy, QuantityAverage<Vecd, AlignedBoxPartByCell>>
+        flowrate_calculate_using_QuantityAverage(right_emitter_by_cell, "Velocity");
+
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
@@ -406,7 +411,76 @@ int main(int ac, char *av[])
             if (number_of_iterations % 100 == 0 && number_of_iterations != 1)
             {
                 particle_sort.exec();
+                // Compute and output flowrates.
+                auto flowrate = flowrate_calculate_using_FlowrateCalculateCK.exec();
+                std::cout << "Flowrate (CK): " << flowrate.transpose() << std::endl;
+
+                auto flowrate2 = flowrate_calculate_using_QuantityAverage.exec();
+                std::cout << "Flowrate (Quantity Average): " << flowrate2.transpose() << std::endl;
+
+                // Initialize accumulators for velocity sums and particle counters.
+                // AlignedBox and NearOutlet are the same. velocitySumAlignedBox for verify right_emitter_by_cell
+                Vecd velocitySumAlignedBox = Vecd::Zero();
+                Vecd velocitySumNearOutlet = Vecd::Zero();
+                Real countAlignedBox = 0.0;
+                Real countNearOutlet = 0.0;
+
+                // Retrieve position and velocity arrays from water body particles.
+                auto pos = water_body.getBaseParticles().getVariableDataByName<Vecd>("Position");
+                auto vel = water_body.getBaseParticles().getVariableDataByName<Vecd>("Velocity");
+
+                // Convert raw arrays into std::vector for easier access.
+                size_t totalParticles = water_body.getBaseParticles().TotalRealParticles();
+                std::vector<Vecd> positions(pos, pos + totalParticles);
+                std::vector<Vecd> velocities(vel, vel + totalParticles);
+
+                // Loop through all particles.
+                for (size_t i = 0; i < totalParticles; i++)
+                {
+                    const Vecd &pos_i = positions[i];
+                    const Vecd &vel_i = velocities[i];
+
+                    // Sum velocities and count particles within the aligned box region.
+                    if (right_emitter_by_cell.getAlignedBox().checkInBounds(pos_i))
+                    {
+                        velocitySumAlignedBox += vel_i;
+                        countAlignedBox += 1.0;
+                    }
+
+                    // Sum velocities and count particles near the outlet.
+                    if (pos_i[0] > DL - bidirectional_buffer_length)
+                    {
+                        velocitySumNearOutlet += vel_i;
+                        countNearOutlet += 1.0;
+                    }
+                }
+
+                // Compute average velocities if at least one particle was found.
+                if (countAlignedBox > 0)
+                {
+                    auto avgVelocityAlignedBox = velocitySumAlignedBox / countAlignedBox;
+                    std::cout << "Average velocity in aligned box (V0): " << avgVelocityAlignedBox.transpose()
+                              << " (Total velocity sum: " << velocitySumAlignedBox.transpose()
+                              << ", Particle count: " << countAlignedBox << ")" << std::endl;
+                }
+                else
+                {
+                    std::cout << "No particles found in aligned box region." << std::endl;
+                }
+
+                if (countNearOutlet > 0)
+                {
+                    auto avgVelocityNearOutlet = velocitySumNearOutlet / countNearOutlet;
+                    std::cout << "Average velocity near outlet (V1): " << avgVelocityNearOutlet.transpose()
+                              << " (Total velocity sum: " << velocitySumNearOutlet.transpose()
+                              << ", Particle count: " << countNearOutlet << ")" << std::endl;
+                }
+                else
+                {
+                    std::cout << "No particles found near outlet region." << std::endl;
+                }
             }
+
             water_cell_linked_list.exec();
             water_body_update_complex_relation.exec();
             fluid_observer_contact_relation.exec();

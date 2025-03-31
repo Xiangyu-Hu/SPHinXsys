@@ -228,6 +228,81 @@ class BidirectionalBoundaryCK
     void injectParticles() { inflow_injection_.exec(); }
     void deleteParticles() { outflow_deletion_.exec(); }
 };
+
+// Testing ReduceSum
+class FlowrateCalculateCK
+    : public BaseLocalDynamicsReduce<ReduceSum<std::pair<Vecd, Real>>, AlignedBoxPartByCell>
+{
+  public:
+    // Constructor: Initialize variables and set the quantity name.
+    FlowrateCalculateCK(AlignedBoxPartByCell &aligned_box_part)
+        : BaseLocalDynamicsReduce<ReduceSum<std::pair<Vecd, Real>>, AlignedBoxPartByCell>(aligned_box_part),
+          sv_aligned_box_(aligned_box_part.svAlignedBox()),
+          dv_pos_(particles_->template getVariableByName<Vecd>("Position")),
+          dv_vel_(particles_->template getVariableByName<Vecd>("Velocity"))
+    {
+        this->quantity_name_ = "VelAcc";
+    }
+
+    virtual ~FlowrateCalculateCK() {}
+
+    // Modified ReduceKernel: now returns a pair (sum, count)
+    class ReduceKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        ReduceKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+            : aligned_box_(encloser.sv_aligned_box_->DelegatedData(ex_policy)),
+              pos_(encloser.dv_pos_->DelegatedData(ex_policy)),
+              vel_(encloser.dv_vel_->DelegatedData(ex_policy))
+        {
+        }
+
+        std::pair<Vecd, Real> reduce(size_t index_i, Real dt = 0.0)
+        {
+            if (aligned_box_->checkInBounds(pos_[index_i]))
+            {
+                return std::make_pair(vel_[index_i], Real(1));
+            }
+            else
+            {
+                return std::make_pair(Vecd::Zero(), Real(0));
+            }
+        }
+
+      protected:
+        AlignedBox *aligned_box_;
+        Vecd *pos_;
+        Vecd *vel_;
+    };
+
+    // Modified FinishDynamics: computes average velocity from the pair.
+    class FinishDynamics
+    {
+      public:
+        using OutputType = Vecd;
+
+        template <class EncloserType>
+        FinishDynamics(EncloserType &encloser)
+        {
+            // Optionally capture additional parameters from the parent.
+        }
+
+        Vecd Result(const std::pair<Vecd, Real> &reduced_value)
+        {
+            if (reduced_value.second == 0)
+                return Vecd::Zero();
+
+            return reduced_value.first / static_cast<Real>(reduced_value.second);
+        }
+    };
+
+  protected:
+    // Pointers to the needed data.
+    SingularVariable<AlignedBox> *sv_aligned_box_;
+    DiscreteVariable<Vecd> *dv_pos_;
+    DiscreteVariable<Vecd> *dv_vel_;
+};
 } // namespace fluid_dynamics
 } // namespace SPH
 #endif // BIDIRECTIONAL_BOUNDARY_CK_H
