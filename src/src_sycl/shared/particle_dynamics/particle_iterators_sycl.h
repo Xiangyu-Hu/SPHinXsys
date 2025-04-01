@@ -89,13 +89,14 @@ ReturnType particle_reduce(const LoopRangeCK<ParallelDevicePolicy, DynamicsIdent
                           {
                                 Operation operation;
                                 sycl::accessor acc(buffer_result, cgh, sycl::read_only);
+                                ReturnType temp0 = acc[0];
                                 auto reduction_operator = sycl::reduction(buffer_result, cgh, operation);
                                 cgh.parallel_for(execution_instance.getUniformNdRange(particles_size), reduction_operator,
-                                                 [=](sycl::nd_item<1> item, auto &reduction)
+                                                 [=, &temp0](sycl::nd_item<1> item, auto &reduction)
                                                  {
                                                      if (item.get_global_id() < particles_size)
                                                          reduction.combine(loop_range.computeUnit(
-                                                             acc[0], operation, unary_func, item.get_global_id(0)));
+                                                             temp0, operation, unary_func, item.get_global_id(0)));
                                                  }); })
             .wait_and_throw();
     } // buffer_result goes out of scope, so the result (of temp) is updated

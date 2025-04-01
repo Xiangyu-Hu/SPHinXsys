@@ -67,11 +67,12 @@ ReturnType particle_reduce(const LoopRangeCK<SequencedPolicy, DynamicsIdentifier
                            ReturnType temp, const UnaryFunc &unary_func)
 {
     Operation operation;
+    ReturnType temp0 = temp;
     for (size_t i = 0; i < loop_range.LoopBound(); ++i)
     {
-        temp = operation(temp, loop_range.computeUnit(temp, operation, unary_func, i));
+        temp0 = operation(temp0, loop_range.computeUnit(temp, operation, unary_func, i));
     }
-    return temp;
+    return temp0;
 }
 
 template <typename Operation, class DynamicsIdentifier, class ReturnType, class UnaryFunc>
@@ -85,7 +86,7 @@ ReturnType particle_reduce(const LoopRangeCK<ParallelPolicy, DynamicsIdentifier>
         {
 				for (size_t i = r.begin(); i != r.end(); ++i)
 				{
-					temp0 = operation(temp0, loop_range.computeUnit(temp0, operation, unary_func, i));
+					temp0 = operation(temp0, loop_range.computeUnit(temp, operation, unary_func, i));
 				}
 				return temp0; },
         [&](const ReturnType &x, const ReturnType &y) -> ReturnType
