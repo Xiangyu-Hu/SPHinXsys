@@ -329,6 +329,8 @@ int main(int ac, char *av[])
     BodyStatesRecordingToVtp body_states_recording(sph_system);
     body_states_recording.addToWrite<Real>(water_body, "Pressure");
     ObservedQuantityRecording<MainExecutionPolicy, Vecd> write_centerline_velocity("Velocity", velocity_observer_contact);
+    ReducedQuantityRecording<MainExecutionPolicy, QuantityAverage<Vecd, AlignedBoxPartByCell>>
+        write_average_outlet_velocity(right_emitter_by_cell, "Velocity");
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
@@ -409,6 +411,7 @@ int main(int ac, char *av[])
                 {
                     tick_instance = TickCount::now();
                     write_centerline_velocity.writeToFile(number_of_iterations);
+                    write_average_outlet_velocity.writeToFile(number_of_iterations);
                     interval_io += TickCount::now() - tick_instance;
                 }
             }
