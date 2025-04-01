@@ -306,6 +306,9 @@ int main(int ac, char *av[])
     ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::FlowrateCalculateCK> flowrate_calculate_using_FlowrateCalculateCK(right_emitter_by_cell);
     ReduceDynamicsCK<MainExecutionPolicy, QuantityAverage<Vecd, AlignedBoxPartByCell>>
         flowrate_calculate_using_QuantityAverage(right_emitter_by_cell, "Velocity");
+    ReduceDynamicsCK<execution::SequencedPolicy, fluid_dynamics::FlowrateCalculateCK> flowrate_calculate_using_FlowrateCalculateCK_seq(right_emitter_by_cell);
+    ReduceDynamicsCK<execution::SequencedPolicy, QuantityAverage<Vecd, AlignedBoxPartByCell>>
+        flowrate_calculate_using_QuantityAverage_seq(right_emitter_by_cell, "Velocity");
 
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
@@ -412,11 +415,17 @@ int main(int ac, char *av[])
             {
                 particle_sort.exec();
                 // Compute and output flowrates.
-                auto flowrate = flowrate_calculate_using_FlowrateCalculateCK.exec();
-                std::cout << "Flowrate (CK): " << flowrate.transpose() << std::endl;
+                auto flowrate_calculate_using_FlowrateCalculateCK_result = flowrate_calculate_using_FlowrateCalculateCK.exec();
 
-                auto flowrate2 = flowrate_calculate_using_QuantityAverage.exec();
-                std::cout << "Flowrate (Quantity Average): " << flowrate2.transpose() << std::endl;
+                auto flowrate_calculate_using_FlowrateCalculateCK_seq_result = flowrate_calculate_using_FlowrateCalculateCK_seq.exec();
+
+                auto flowrate_calculate_using_QuantityAverage_result = flowrate_calculate_using_QuantityAverage.exec();
+                auto flowrate_calculate_using_QuantityAverage_seq_result = flowrate_calculate_using_QuantityAverage_seq.exec();
+
+                std::cout << "Flowrate (CK): " << flowrate_calculate_using_FlowrateCalculateCK_result.transpose() << std::endl;
+                std::cout << "Flowrate (CK) Seq : " << flowrate_calculate_using_FlowrateCalculateCK_seq_result.transpose() << std::endl;
+                std::cout << "Flowrate (Quantity Average): " << flowrate_calculate_using_QuantityAverage_result.transpose() << std::endl;
+                std::cout << "Flowrate (Quantity Average): Seq " << flowrate_calculate_using_QuantityAverage_seq_result.transpose() << std::endl;
 
                 // Initialize accumulators for velocity sums and particle counters.
                 // AlignedBox and NearOutlet are the same. velocitySumAlignedBox for verify right_emitter_by_cell
