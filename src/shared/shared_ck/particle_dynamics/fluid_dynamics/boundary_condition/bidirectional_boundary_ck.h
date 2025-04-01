@@ -260,8 +260,10 @@ class FlowrateCalculateCK
 
         std::pair<Vecd, Real> reduce(size_t index_i, Real dt = 0.0)
         {
+
             if (aligned_box_->checkInBounds(pos_[index_i]))
             {
+                std::cout << "FlowrateCalculateCK index_i :" << index_i << std::endl;
                 return std::make_pair(vel_[index_i], Real(1));
             }
             else
@@ -292,8 +294,9 @@ class FlowrateCalculateCK
         {
             if (reduced_value.second == 0)
                 return Vecd::Zero();
+            std::cout << "FlowrateCalculateCK total particle counted :" << reduced_value.second << std::endl;
 
-            return reduced_value.first / static_cast<Real>(reduced_value.second);
+            return reduced_value.first / Real(reduced_value.second);
         }
     };
 

@@ -67,7 +67,7 @@ class SpawnRealParticle
             {
                 UnsignedInt new_original_id = original_id_[last_real_particle_index];
                 copy_particle_state_(copyable_state_data_arrays_, last_real_particle_index, index_i);
-                original_id_[last_real_particle_index] = new_original_id; //keep the original id
+                original_id_[last_real_particle_index] = new_original_id; // keep the original id
             }
             return last_real_particle_index;
         };

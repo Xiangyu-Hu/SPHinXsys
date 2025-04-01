@@ -146,6 +146,7 @@ class QuantityAverage : public BaseLocalDynamicsReduce<ReduceSum<std::pair<DataT
 
         ReduceReturnType reduce(size_t index_i, Real dt = 0.0)
         {
+            std::cout << " QuantityAverage reduce index:" << index_i << std::endl;
             return ReduceReturnType(variable_[index_i], Real(1));
         };
 
