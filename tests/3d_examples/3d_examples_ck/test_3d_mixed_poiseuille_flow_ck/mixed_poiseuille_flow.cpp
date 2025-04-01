@@ -433,10 +433,10 @@ int main(int ac, char *av[])
             std::cout << "Flowrate (CK): " << flowrate_calculate_using_FlowrateCalculateCK_result.transpose() << std::endl;
             // std::cout << "Flowrate (Quantity Average): " << flowrate_calculate_using_QuantityAverage_result.transpose() << std::endl;
 
-            // auto flowrate_calculate_using_FlowrateCalculateCK_seq_result = flowrate_calculate_using_FlowrateCalculateCK_seq.exec();
+            auto flowrate_calculate_using_FlowrateCalculateCK_seq_result = flowrate_calculate_using_FlowrateCalculateCK_seq.exec();
             // auto flowrate_calculate_using_QuantityAverage_seq_result = flowrate_calculate_using_QuantityAverage_seq.exec();
 
-            // std::cout << "Flowrate (CK) Seq : " << flowrate_calculate_using_FlowrateCalculateCK_seq_result.transpose() << std::endl;
+            std::cout << "Flowrate (CK) Seq : " << flowrate_calculate_using_FlowrateCalculateCK_seq_result.transpose() << std::endl;
             // std::cout << "Flowrate (Quantity Average): Seq " << flowrate_calculate_using_QuantityAverage_seq_result.transpose() << std::endl;
 
             // Initialize accumulators for velocity sums and particle counters.
