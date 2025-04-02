@@ -34,7 +34,7 @@ jobs:
   ###############################################################################
   Linux-sycl:
     if: ${{ github.event_name != 'workflow_dispatch' }}
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     env:
       VCPKG_DEFAULT_TRIPLET: x64-linux
 
@@ -151,7 +151,7 @@ jobs:
   ###############################################################################
   Linux-build:
     if: ${{ github.event_name != 'workflow_dispatch' }}
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     env:
       VCPKG_DEFAULT_TRIPLET: x64-linux
 
@@ -228,7 +228,7 @@ jobs:
   Linux-test:
     if: ${{ github.event_name != 'workflow_dispatch' || inputs.linux_test_debug_enabled }}
     needs: Linux-build
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     # make sure these permissions are set so that
     # VS Code can connect to the machine
     permissions:
@@ -490,7 +490,7 @@ jobs:
 
   macOS-build:
     if: ${{ github.event_name != 'workflow_dispatch' || inputs.macos_build_debug_enabled  }}
-    runs-on: macos-13
+    runs-on: macos-latest
     env:
       VCPKG_DEFAULT_TRIPLET: x64-osx
 
@@ -558,7 +558,7 @@ jobs:
   macOS-test:
     if: ${{ github.event_name != 'workflow_dispatch' }}
     needs: macOS-build
-    runs-on: macos-13
+    runs-on: macos-latest
     env:
       VCPKG_DEFAULT_TRIPLET: x64-osx
 
