@@ -26,7 +26,7 @@ on:
         required: false
         default: false
 env:
-  VCPKG_VERSION: "2024.02.14"
+  VCPKG_VERSION: "2024.12.16"
   CTEST_PARALLEL_LEVEL: "1"
 
 # A workflow is made up of one or more jobs that can run sequentially or in parallel
@@ -40,7 +40,7 @@ jobs:
 
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Install system dependencies
         run: |
@@ -157,7 +157,7 @@ jobs:
 
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Install system dependencies
         run: |
@@ -238,7 +238,7 @@ jobs:
       VCPKG_DEFAULT_TRIPLET: x64-linux
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Install system dependencies
         run: |
@@ -338,7 +338,7 @@ jobs:
       VCPKG_DEFAULT_TRIPLET: x64-windows
 
     steps:
-      - uses: actions/checkout@v3 # Checks-out the repository under ${{github.workspace}}
+      - uses: actions/checkout@v4 # Checks-out the repository under ${{github.workspace}}
 
       - name: Update ccache and ninja # For correct caching with ccache on Windows
         shell: bash
@@ -412,7 +412,7 @@ jobs:
       VCPKG_DEFAULT_TRIPLET: x64-windows
 
     steps:
-      - uses: actions/checkout@v3 # Checks-out the repository under ${{github.workspace}}
+      - uses: actions/checkout@v4 # Checks-out the repository under ${{github.workspace}}
 
       - name: Update ccache and ninja # For correct caching with ccache on Windows
         shell: bash
@@ -496,7 +496,7 @@ jobs:
 
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Install system dependencies
         run: |
@@ -565,7 +565,7 @@ jobs:
 
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Install system dependencies
         run: |
