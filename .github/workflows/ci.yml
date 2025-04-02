@@ -26,7 +26,7 @@ on:
         required: false
         default: false
 env:
-  VCPKG_VERSION: "master"
+  VCPKG_VERSION: "2024.02.14"
   CTEST_PARALLEL_LEVEL: "1"
 
 # A workflow is made up of one or more jobs that can run sequentially or in parallel
@@ -41,6 +41,11 @@ jobs:
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v4
+
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: '3.x'
 
       - name: Install system dependencies
         run: |
@@ -60,6 +65,7 @@ jobs:
           sudo apt update
           sudo apt install intel-basekit \
             intel-oneapi-runtime-opencl
+          sudo apt-get install autoconf automake autoconf-archive
 
       - uses: hendrikmuhs/ccache-action@v1.2
         with:
@@ -158,6 +164,11 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v4
 
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: '3.x'
+
       - name: Install system dependencies
         run: |
           sudo apt update 
@@ -171,6 +182,7 @@ jobs:
             libfontconfig1-dev `# From here required for vcpkg opencascade`\
             libx11-dev \
             libgl-dev
+          sudo apt-get install autoconf automake autoconf-archive
 
       - uses: hendrikmuhs/ccache-action@v1.2
         with:
@@ -238,6 +250,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: '3.x'
+
       - name: Install system dependencies
         run: |
           sudo apt update 
@@ -251,6 +268,7 @@ jobs:
             libfontconfig1-dev `# From here required for vcpkg opencascade`\
             libx11-dev \
             libgl-dev
+          sudo apt-get install autoconf automake autoconf-archive
 
       - uses: friendlyanon/setup-vcpkg@v1 # Setup vcpkg into ${{github.workspace}}
         with:
@@ -337,6 +355,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4 # Checks-out the repository under ${{github.workspace}}
 
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: '3.x'
+
       - name: Update ccache and ninja # For correct caching with ccache on Windows
         shell: bash
         run: |
@@ -410,6 +433,11 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4 # Checks-out the repository under ${{github.workspace}}
+
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: '3.x'
 
       - name: Update ccache and ninja # For correct caching with ccache on Windows
         shell: bash
@@ -490,7 +518,6 @@ jobs:
     runs-on: macos-13
     env:
       VCPKG_DEFAULT_TRIPLET: x64-osx
-      VCPKG_VERSION: "2024.02.14"
 
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
