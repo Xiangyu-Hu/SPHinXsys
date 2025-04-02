@@ -26,7 +26,7 @@ on:
         required: false
         default: false
 env:
-  VCPKG_VERSION: "2024.12.16"
+  VCPKG_VERSION: "master"
   CTEST_PARALLEL_LEVEL: "1"
 
 # A workflow is made up of one or more jobs that can run sequentially or in parallel
@@ -34,7 +34,7 @@ jobs:
   ###############################################################################
   Linux-sycl:
     if: ${{ github.event_name != 'workflow_dispatch' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     env:
       VCPKG_DEFAULT_TRIPLET: x64-linux
 
@@ -51,7 +51,6 @@ jobs:
             curl zip unzip tar `# when starting fresh on a WSL image for bootstrapping vcpkg`\
             pkg-config `# for installing libraries with vcpkg`\
             git \
-            cmake \
             ninja-build \
             libfontconfig1-dev `# From here required for vcpkg opencascade`\
             libx11-dev \
@@ -151,7 +150,7 @@ jobs:
   ###############################################################################
   Linux-build:
     if: ${{ github.event_name != 'workflow_dispatch' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     env:
       VCPKG_DEFAULT_TRIPLET: x64-linux
 
@@ -168,7 +167,6 @@ jobs:
             curl zip unzip tar `# when starting fresh on a WSL image for bootstrapping vcpkg`\
             pkg-config `# for installing libraries with vcpkg`\
             git \
-            cmake \
             ninja-build \
             libfontconfig1-dev `# From here required for vcpkg opencascade`\
             libx11-dev \
@@ -228,7 +226,7 @@ jobs:
   Linux-test:
     if: ${{ github.event_name != 'workflow_dispatch' || inputs.linux_test_debug_enabled }}
     needs: Linux-build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     # make sure these permissions are set so that
     # VS Code can connect to the machine
     permissions:
@@ -249,7 +247,6 @@ jobs:
             curl zip unzip tar `# when starting fresh on a WSL image for bootstrapping vcpkg`\
             pkg-config `# for installing libraries with vcpkg`\
             git \
-            cmake \
             ninja-build \
             libfontconfig1-dev `# From here required for vcpkg opencascade`\
             libx11-dev \
@@ -347,7 +344,6 @@ jobs:
           choco install ninja
           choco install 7zip
           choco install wget
-          choco install cmake
 
       - uses: hendrikmuhs/ccache-action@v1.2
         with:
@@ -421,7 +417,6 @@ jobs:
           choco install ccache
           choco install ninja
           choco install 7zip
-          choco install cmake
 
       - uses: hendrikmuhs/ccache-action@v1.2
         with:
@@ -492,9 +487,10 @@ jobs:
 
   macOS-build:
     if: ${{ github.event_name != 'workflow_dispatch' || inputs.macos_build_debug_enabled  }}
-    runs-on: macos-latest
+    runs-on: macos-13
     env:
       VCPKG_DEFAULT_TRIPLET: x64-osx
+      VCPKG_VERSION: "2024.02.14"
 
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
@@ -561,9 +557,10 @@ jobs:
   macOS-test:
     if: ${{ github.event_name != 'workflow_dispatch' }}
     needs: macOS-build
-    runs-on: macos-latest
+    runs-on: macos-13
     env:
       VCPKG_DEFAULT_TRIPLET: x64-osx
+      VCPKG_VERSION: "2024.02.14"
 
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
