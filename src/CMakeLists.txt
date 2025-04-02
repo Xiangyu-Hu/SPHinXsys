@@ -6,6 +6,9 @@ file(GLOB_RECURSE SPHINXSYS_SYCL_HEADERS CONFIGURE_DEPENDS src_sycl/*.h src_sycl
 file(GLOB_RECURSE SPHINXSYS_SYCL_SOURCES CONFIGURE_DEPENDS src_sycl/*.cpp)
 endif()
 
+# **add an option to choose whether include th extra soure files or not**
+option(SPHINXSYS_USE_EXTRA_SOURCES "Include extra source files in sphinxsys_2d and sphinxsys_3d" OFF)
+
 if(SPHINXSYS_2D)
     add_library(sphinxsys_2d)
     #Make sure in-tree projects can reference this as SPHinXsys::sphinxsys_2d
@@ -38,6 +41,21 @@ if(SPHINXSYS_2D)
         target_sources(sphinxsys_2d PRIVATE ${SPHINXSYS_SHARED_SOURCES} ${SPHINXSYS_2D_SOURCES})
     endif()
 
+    if(SPHINXSYS_USE_EXTRA_SOURCES)
+        file(GLOB_RECURSE SPHINXSYS_EXTRA_SHARED_HEADERS CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR}/tests/extra_source_and_tests/extra_src/shared/*.h 	${CMAKE_SOURCE_DIR}/tests/extra_source_and_tests/extra_src/shared/*.hpp)
+        file(GLOB_RECURSE SPHINXSYS_EXTRA_SHARED_SOURCES CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR}/tests/extra_source_and_tests/extra_src/shared/*.cpp)
+        file(GLOB_RECURSE SPHINXSYS_EXTRA_2D_HEADERS CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR}/tests/extra_source_and_tests/extra_src/for_2D_build/*.h 	${CMAKE_SOURCE_DIR}/tests/extra_source_and_tests/extra_src/for_2D_build/*.hpp)
+        file(GLOB_RECURSE SPHINXSYS_EXTRA_2D_SOURCES CONFIGURE_DEPENDS tests/extra_source_and_tests/extra_src/for_2D_build/*.cpp)
+	
+	target_sources(sphinxsys_2d PUBLIC ${SPHINXSYS_EXTRA_SHARED_HEADERS} ${SPHINXSYS_EXTRA_2D_HEADERS})
+    	target_sources(sphinxsys_2d PRIVATE ${SPHINXSYS_EXTRA_SHARED_SOURCES} ${SPHINXSYS_EXTRA_2D_SOURCES})
+
+        foreach(FILEPATH ${SPHINXSYS_EXTRA_SHARED_HEADERS} ${SPHINXSYS_EXTRA_2D_HEADERS})
+        	get_filename_component(DIR ${FILEPATH} DIRECTORY)
+        	list(APPEND SPHINXSYS_2D_INCLUDE_DIRS ${DIR})
+    	endforeach()
+
+    endif()
 
     list(REMOVE_DUPLICATES SPHINXSYS_2D_INCLUDE_DIRS)
  
@@ -80,6 +98,21 @@ if(SPHINXSYS_3D)
     else()
     target_sources(sphinxsys_3d PUBLIC ${SPHINXSYS_SHARED_HEADERS} ${SPHINXSYS_3D_HEADERS})
     target_sources(sphinxsys_3d PRIVATE ${SPHINXSYS_SHARED_SOURCES} ${SPHINXSYS_3D_SOURCES})
+    endif()
+
+    if(SPHINXSYS_USE_EXTRA_SOURCES)
+        file(GLOB_RECURSE SPHINXSYS_EXTRA_SHARED_HEADERS CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR}/tests/extra_source_and_tests/extra_src/shared/*.h 	${CMAKE_SOURCE_DIR}/tests/extra_source_and_tests/extra_src/shared/*.hpp)
+        file(GLOB_RECURSE SPHINXSYS_EXTRA_SHARED_SOURCES CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR}/tests/extra_source_and_tests/extra_src/shared/*.cpp)
+        file(GLOB_RECURSE SPHINXSYS_EXTRA_3D_HEADERS CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR}/tests/extra_source_and_tests/extra_src/for_3D_build/*.h 	${CMAKE_SOURCE_DIR}/tests/extra_source_and_tests/extra_src/for_3D_build/*.hpp)
+        file(GLOB_RECURSE SPHINXSYS_EXTRA_3D_SOURCES CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR}/tests/extra_source_and_tests/extra_src/for_3D_build/*.cpp)
+        
+	target_sources(sphinxsys_3d PUBLIC ${SPHINXSYS_EXTRA_3D_HEADERS})
+        target_sources(sphinxsys_3d PRIVATE ${SPHINXSYS_EXTRA_3D_SOURCES})
+
+        foreach(FILEPATH ${SPHINXSYS_EXTRA_SHARED_HEADERS} ${SPHINXSYS_EXTRA_3D_HEADERS})
+            get_filename_component(DIR ${FILEPATH} DIRECTORY)
+            list(APPEND SPHINXSYS_3D_INCLUDE_DIRS ${DIR})
+        endforeach() 
     endif()
 
     list(REMOVE_DUPLICATES SPHINXSYS_3D_INCLUDE_DIRS)
