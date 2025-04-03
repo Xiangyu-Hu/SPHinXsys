@@ -37,74 +37,74 @@ namespace SPH
 {
 
 template <class T>
-inline T SMIN(T a1, T a2)
+inline T SMIN(const T &a1, const T &a2)
 {
     return (a1 <= a2 ? a1 : a2);
 }
 
 template <class T>
-inline T SMIN(T a1, T a2, T a3)
+inline T SMIN(const T &a1, const T &a2, const T &a3)
 {
     return SMIN(a1, SMIN(a2, a3));
 }
 
 template <class T>
-inline T SMIN(T a1, T a2, T a3, T a4)
+inline T SMIN(const T &a1, const T &a2, const T &a3, const T &a4)
 {
     return SMIN(SMIN(a1, a2), SMIN(a3, a4));
 }
 
 template <class T>
-inline T SMIN(T a1, T a2, T a3, T a4, T a5)
+inline T SMIN(const T &a1, const T &a2, const T &a3, const T &a4, const T &a5)
 {
     return SMIN(SMIN(a1, a2), SMIN(a3, a4), a5);
 }
 
 template <class T>
-inline T SMIN(T a1, T a2, T a3, T a4, T a5, T a6)
+inline T SMIN(const T &a1, const T &a2, const T &a3, const T &a4, const T &a5, const T &a6)
 {
     return SMIN(SMIN(a1, a2), SMIN(a3, a4), SMIN(a5, a6));
 }
 
 template <class T>
-inline T SMAX(T a1, T a2)
+inline T SMAX(const T &a1, const T &a2)
 {
     return (a1 >= a2 ? a1 : a2);
 }
 
 template <class T>
-inline T SMAX(T a1, T a2, T a3)
+inline T SMAX(const T &a1, const T &a2, const T &a3)
 {
     return SMAX(a1, SMAX(a2, a3));
 }
 
 template <class T>
-inline T SMAX(T a1, T a2, T a3, T a4)
+inline T SMAX(const T &a1, const T &a2, const T &a3, const T &a4)
 {
     return SMAX(SMAX(a1, a2), SMAX(a3, a4));
 }
 
 template <class T>
-inline T SMAX(T a1, T a2, T a3, T a4, T a5)
+inline T SMAX(const T &a1, const T &a2, const T &a3, const T &a4, const T &a5)
 {
     return SMAX(SMAX(a1, a2), SMAX(a3, a4), a5);
 }
 
 template <class T>
-inline T SMAX(T a1, T a2, T a3, T a4, T a5, T a6)
+inline T SMAX(const T &a1, const T &a2, const T &a3, const T &a4, const T &a5, const T &a6)
 {
     return SMAX(SMAX(a1, a2), SMAX(a3, a4), SMAX(a5, a6));
 }
 
 template <class T>
-inline void update_minmax(T a1, T &amin, T &amax)
+inline void update_minmax(const T &a1, T &amin, T &amax)
 {
     amin = SMIN(a1, amin);
     amax = SMAX(a1, amax);
 }
 
 template <class T>
-inline void update_minmax(T a1, T a2, T &amin, T &amax)
+inline void update_minmax(const T &a1, const T &a2, T &amin, T &amax)
 {
     if (a1 > a2)
     {
@@ -131,7 +131,7 @@ inline T SGN(const T &x)
 }
 
 template <class T>
-inline T clamp(T a, T lower, T upper)
+inline T clamp(const T &a, const T &lower, const T &upper)
 {
     if (a < lower)
         return lower;

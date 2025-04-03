@@ -221,7 +221,7 @@ class EmitterInflowCondition : public BaseLocalDynamics<BodyPartByParticle>
 class EmitterInflowInjection : public BaseLocalDynamics<BodyPartByParticle>
 {
   public:
-    EmitterInflowInjection(AlignedBoxPartByParticle &aligned_box_part, ParticleBuffer<Base> &buffer);
+    EmitterInflowInjection(AlignedBoxPartByParticle &aligned_box_part, ParticleReserve &particle_reserve);
     virtual ~EmitterInflowInjection(){};
 
     void update(size_t original_index_i, Real dt = 0.0);
@@ -233,7 +233,6 @@ class EmitterInflowInjection : public BaseLocalDynamics<BodyPartByParticle>
     UnsignedInt *sorted_id_;
     Vecd *pos_;
     Real *rho_, *p_;
-    ParticleBuffer<Base> &buffer_;
     AlignedBox &aligned_box_;
 };
 
