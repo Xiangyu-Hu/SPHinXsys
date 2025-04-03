@@ -82,6 +82,9 @@ void MultilevelLevelSet::registerProbes(size_t level)
     probe_kernel_gradient_integral_set_.push_back(
         probe_kernel_gradient_integral_vector_keeper_
             .template createPtr<ProbeKernelGradientIntegral>(*mesh_data_set_[level]));
+    probe_kernel_second_gradient_integral_set_.push_back(
+        probe_kernel_second_gradient_integral_vector_keeper_
+            .template createPtr<ProbeKernelSecondGradientIntegral>(*mesh_data_set_[level]));
 }
 //=================================================================================================//
 size_t MultilevelLevelSet::getCoarseLevel(Real h_ratio)
@@ -155,6 +158,20 @@ Vecd MultilevelLevelSet::probeKernelGradientIntegral(const Vecd &position, Real 
                  (global_h_ratio_vec_[coarse_level + 1] - global_h_ratio_vec_[coarse_level]);
     Vecd coarse_level_value = probe_kernel_gradient_integral_set_[coarse_level]->update(position);
     Vecd fine_level_value = probe_kernel_gradient_integral_set_[coarse_level + 1]->update(position);
+
+    return alpha * coarse_level_value + (1.0 - alpha) * fine_level_value;
+}
+//=================================================================================================//
+Matd MultilevelLevelSet::probeKernelSecondGradientIntegral(const Vecd& position, Real h_ratio)
+{
+    if (mesh_data_set_.size() == 1) {
+        return probe_kernel_second_gradient_integral_set_[0]->update(position);
+    }
+    size_t coarse_level = getCoarseLevel(h_ratio);
+    Real alpha = (global_h_ratio_vec_[coarse_level + 1] - h_ratio) /
+        (global_h_ratio_vec_[coarse_level + 1] - global_h_ratio_vec_[coarse_level]);
+    Matd coarse_level_value = probe_kernel_second_gradient_integral_set_[coarse_level]->update(position);
+    Matd fine_level_value = probe_kernel_second_gradient_integral_set_[coarse_level + 1]->update(position);
 
     return alpha * coarse_level_value + (1.0 - alpha) * fine_level_value;
 }

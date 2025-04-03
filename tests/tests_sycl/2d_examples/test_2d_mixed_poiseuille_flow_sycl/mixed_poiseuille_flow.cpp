@@ -6,8 +6,6 @@
  */
 
 #include "sphinxsys_sycl.h" // SPHinXsys Library.
-#include "gtest/gtest.h"
-
 using namespace SPH;
 
 //----------------------------------------------------------------------
@@ -65,53 +63,22 @@ Vec2d normal(1.0, 0.0);
 //----------------------------------------------------------------------
 //  Inlet velocity profile for the left boundary (Poiseuille-like).
 //----------------------------------------------------------------------
-class InletInflowConditionLeft : public BaseStateCondition
+class InflowVelocityPrescribed : public VelocityPrescribed<>
 {
   public:
-    InletInflowConditionLeft(BaseParticles *particles)
-        : BaseStateCondition(particles),
-          DH_(DH), U_f_(U_f), mu_f_(mu_f) {};
+    InflowVelocityPrescribed(Real DH, Real U_f, Real mu_f)
+        : VelocityPrescribed<>(),
+          DH_(DH), U_f_(U_f), tau_((DH * DH) / (M_PI * M_PI * mu_f)) {};
 
-    class ComputingKernel : public BaseStateCondition::ComputingKernel
+    Real getAxisVelocity(const Vecd &input_position, const Real &input_axis_velocity, Real time)
     {
-      public:
-        template <class ExecutionPolicy, class EncloserType>
-        ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : BaseStateCondition::ComputingKernel(ex_policy, encloser),
-              DH_ck_(encloser.DH_),
-              U_f_ck_(encloser.U_f_),
-              mu_f_ck_(encloser.mu_f_),
-              tau_((DH_ck_ * DH_ck_) / (M_PI * M_PI * mu_f_ck_))
-        {
-        }
-
-        void operator()(AlignedBox *aligned_box, UnsignedInt index_i, Real time)
-        {
-            // Shift the y-coordinate so that y_centered = 0 at the channel center.
-            Real y_centered = pos_[index_i][1] - 0.5 * DH_ck_;
-
-            // Steady-state analytical solution for Poiseuille flow
-            Real u_steady = U_f_ck_ *
-                            (1.0 - std::pow((2.0 * y_centered / DH_ck_), 2));
-
-            // Transient factor that approaches 1 as time grows.
-            Real transient_factor = 1.0 - std::exp(-time / tau_);
-
-            // Time-dependent velocity profile
-            Real u_ave = u_steady * transient_factor;
-            if (aligned_box->checkInBounds(pos_[index_i]))
-                vel_[index_i] = Vec2d(u_ave, 0.0);
-        }
-
-      protected:
-        Real DH_ck_;
-        Real U_f_ck_;
-        Real mu_f_ck_;
-        Real tau_;
+        Real y_centered = input_position[1];
+        Real u_steady = U_f_ * (1.0 - math::pow((2.0 * y_centered / DH_), 2));
+        Real transient_factor = 1.0 - math::exp(-time / tau_);
+        return u_steady * transient_factor;
     };
-    Real DH_;
-    Real U_f_;
-    Real mu_f_;
+
+    Real DH_, U_f_, tau_;
 };
 //----------------------------------------------------------------------
 //  Helper function for the analytical solution.
@@ -195,7 +162,7 @@ class WallBoundary : public MultiPolygonShape
 //----------------------------------------------------------------------
 //  Validate velocity from observer with analytical solution
 //----------------------------------------------------------------------
-void velocity_validation(
+int velocity_validation(
     const std::vector<Vecd> &observer_location,
     const std::vector<Vecd> &observer_vel,
     Real (*analytical_solution)(Real),
@@ -247,9 +214,13 @@ void velocity_validation(
     }
 
     // Final assertion for unit testing
-    EXPECT_EQ(total_failed, 0) << "Test failed with " << total_failed << " mismatches. Check log for details.";
+    if (total_failed != 0)
+    {
+        std::cout << "Test failed with " << total_failed << " mismatches. Check log for details.";
+        return 1;
+    }
+    return 0;
 }
-
 //----------------------------------------------------------------------
 //	Main program starts here.
 //----------------------------------------------------------------------
@@ -265,8 +236,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     FluidBody water_body(sph_system, makeShared<WaterBlock>("WaterBody"));
     water_body.defineClosure<WeaklyCompressibleFluid, Viscosity>(ConstructArgs(rho0_f, c_f), mu_f);
-    ParticleBuffer<ReserveSizeFactor> inlet_buffer(0.5);
-    water_body.generateParticlesWithReserve<BaseParticles, Lattice>(inlet_buffer);
+    ParticleBuffer<ReserveSizeFactor> particle_buffer(0.5);
+    water_body.generateParticlesWithReserve<BaseParticles, Lattice>(particle_buffer);
 
     SolidBody wall(sph_system, makeShared<WallBoundary>("WallBoundary"));
     wall.defineMaterial<Solid>();
@@ -294,7 +265,6 @@ int main(int ac, char *av[])
     // //----------------------------------------------------------------------
     AlignedBoxPartByCell left_emitter_by_cell(water_body, AlignedBox(xAxis, Transform(left_bidirectional_translation), bidirectional_buffer_halfsize));
     AlignedBoxPartByCell right_emitter_by_cell(water_body, AlignedBox(xAxis, Transform(Rotation2d(Pi), Vec2d(right_disposer_translation)), bidirectional_buffer_halfsize));
-
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -308,7 +278,6 @@ int main(int ac, char *av[])
     // Define the main execution policy for this case.
     //----------------------------------------------------------------------
     using MainExecutionPolicy = execution::ParallelDevicePolicy;
-    using SequencedExecutionPolicy = execution::SequencedDevicePolicy;
     //----------------------------------------------------------------------
     // Combined relations built from basic relations
     // which is only used for update configuration.
@@ -317,7 +286,7 @@ int main(int ac, char *av[])
     UpdateCellLinkedList<MainExecutionPolicy, CellLinkedList> wall_cell_linked_list(wall);
     UpdateRelation<MainExecutionPolicy, Inner<>, Contact<>> water_body_update_complex_relation(water_body_inner, water_wall_contact);
     UpdateRelation<MainExecutionPolicy, Contact<>> fluid_observer_contact_relation(velocity_observer_contact);
-    ParticleSortCK<MainExecutionPolicy, RadixSort> particle_sort(water_body);
+    ParticleSortCK<MainExecutionPolicy> particle_sort(water_body);
     //----------------------------------------------------------------------
     // Define the numerical methods used in the simulation.
     // Note that there may be data dependence on the sequence of constructions.
@@ -348,10 +317,10 @@ int main(int ac, char *av[])
         fluid_viscous_force(water_body_inner, water_wall_contact);
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::TransportVelocityLimitedCorrectionCorrectedComplexBulkParticlesCKWithoutUpdate>
         zero_gradient_ck(water_body_inner, water_wall_contact);
-    fluid_dynamics::VelocityBidirectionalConditionCK<MainExecutionPolicy, SequencedExecutionPolicy, NoKernelCorrectionCK, InletInflowConditionLeft>
-        bidirectional_velocity_condition_left(left_emitter_by_cell, inlet_buffer);
-    fluid_dynamics::PressureBidirectionalConditionCK<MainExecutionPolicy, SequencedExecutionPolicy, NoKernelCorrectionCK, InletInflowPressureConditionRight>
-        bidirectional_pressure_condition_right(right_emitter_by_cell, inlet_buffer);
+    fluid_dynamics::BidirectionalBoundaryCK<MainExecutionPolicy, NoKernelCorrectionCK, InflowVelocityPrescribed>
+        bidirectional_velocity_condition_left(left_emitter_by_cell, particle_buffer, DH, U_f, mu_f);
+    fluid_dynamics::BidirectionalBoundaryCK<MainExecutionPolicy, NoKernelCorrectionCK, PressurePrescribed<>>
+        bidirectional_pressure_condition_right(right_emitter_by_cell, particle_buffer, Outlet_pressure);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
@@ -384,12 +353,12 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Statistics for CPU time
     //----------------------------------------------------------------------
-    TickCount t1 = TickCount::now();
-    TimeInterval interval;
-    TimeInterval interval_computing_time_step;
-    TimeInterval interval_computing_pressure_relaxation;
+    TickCount tick_start = TickCount::now();
+    TimeInterval interval_io;
+    TimeInterval interval_outer_loop;
+    TimeInterval interval_inner_loop;
     TimeInterval interval_updating_configuration;
-    TickCount time_instance;
+    TickCount tick_instance;
     //----------------------------------------------------------------------
     //	First output before the main loop.
     //----------------------------------------------------------------------
@@ -404,15 +373,16 @@ int main(int ac, char *av[])
         /** Integrate time (loop) until the next output time. */
         while (integration_time < output_interval)
         {
+            tick_instance = TickCount::now();
             fluid_density_regularization.exec();
             water_advection_step_setup.exec();
             fluid_viscous_force.exec();
             transport_correction_ck.exec();
             Real advection_dt = fluid_advection_time_step.exec();
             fluid_linear_correction_matrix.exec();
-            interval_computing_time_step += TickCount::now() - time_instance;
+            interval_outer_loop += TickCount::now() - tick_instance;
 
-            /** Dynamics including pressure relaxation. */
+            tick_instance = TickCount::now();
             Real relaxation_time = 0.0;
             Real acoustic_dt = 0.0;
             while (relaxation_time < advection_dt)
@@ -420,16 +390,15 @@ int main(int ac, char *av[])
                 acoustic_dt = SMIN(fluid_acoustic_time_step.exec(), advection_dt);
                 fluid_acoustic_step_1st_half.exec(acoustic_dt);
                 zero_gradient_ck.exec();
-                bidirectional_velocity_condition_left.applyPressureCondition(acoustic_dt);
-                bidirectional_velocity_condition_left.applyVelocityCondition();
-                bidirectional_pressure_condition_right.applyPressureCondition(acoustic_dt);
+                bidirectional_velocity_condition_left.applyBoundaryCondition(acoustic_dt);
+                bidirectional_pressure_condition_right.applyBoundaryCondition(acoustic_dt);
                 fluid_acoustic_step_2nd_half.exec(acoustic_dt);
                 relaxation_time += acoustic_dt;
                 integration_time += acoustic_dt;
                 sv_physical_time->incrementValue(acoustic_dt);
             }
             water_advection_step_close.exec();
-            interval_computing_pressure_relaxation += TickCount::now() - time_instance;
+            interval_inner_loop += TickCount::now() - tick_instance;
 
             if (number_of_iterations % screen_output_interval == 0)
             {
@@ -438,11 +407,14 @@ int main(int ac, char *av[])
                           << "	Dt = " << advection_dt << "	dt = " << acoustic_dt << "\n";
                 if (number_of_iterations % observation_sample_interval == 0 && number_of_iterations != sph_system.RestartStep())
                 {
+                    tick_instance = TickCount::now();
                     write_centerline_velocity.writeToFile(number_of_iterations);
+                    interval_io += TickCount::now() - tick_instance;
                 }
             }
             number_of_iterations++;
-            /** inflow emitter injection*/
+
+            tick_instance = TickCount::now();
             bidirectional_velocity_condition_left.injectParticles();
             bidirectional_pressure_condition_right.injectParticles();
             bidirectional_velocity_condition_left.deleteParticles();
@@ -455,30 +427,25 @@ int main(int ac, char *av[])
             water_cell_linked_list.exec();
             water_body_update_complex_relation.exec();
             fluid_observer_contact_relation.exec();
-            interval_updating_configuration += TickCount::now() - time_instance;
             fluid_boundary_indicator.exec();
             bidirectional_velocity_condition_left.tagBufferParticles();
             bidirectional_pressure_condition_right.tagBufferParticles();
+            interval_updating_configuration += TickCount::now() - tick_instance;
         }
 
-        TickCount t2 = TickCount::now();
-
+        tick_instance = TickCount::now();
         body_states_recording.writeToFile(MainExecutionPolicy{});
         fluid_observer_contact_relation.exec();
-
-        TickCount t3 = TickCount::now();
-        interval += t3 - t2;
+        interval_io += TickCount::now() - tick_instance;
     }
-    TickCount t4 = TickCount::now();
 
-    TimeInterval tt;
-    tt = t4 - t1 - interval;
+    TimeInterval tt = TickCount::now() - tick_start - interval_io;
     std::cout << "Total wall time for computation: " << tt.seconds()
               << " seconds." << std::endl;
-    std::cout << std::fixed << std::setprecision(9) << "interval_computing_time_step ="
-              << interval_computing_time_step.seconds() << "\n";
-    std::cout << std::fixed << std::setprecision(9) << "interval_computing_pressure_relaxation = "
-              << interval_computing_pressure_relaxation.seconds() << "\n";
+    std::cout << std::fixed << std::setprecision(9) << "interval_outer_loop ="
+              << interval_outer_loop.seconds() << "\n";
+    std::cout << std::fixed << std::setprecision(9) << "interval_inner_loop = "
+              << interval_inner_loop.seconds() << "\n";
     std::cout << std::fixed << std::setprecision(9) << "interval_updating_configuration = "
               << interval_updating_configuration.seconds() << "\n";
     //----------------------------------------------------------------------
@@ -490,6 +457,5 @@ int main(int ac, char *av[])
     // Convert the pointer to a std::vector using the number of observer particles.
     std::vector<Vecd> observer_vel_vec(observer_vel, observer_vel + observer_location.size());
     Real error_tolerance = 3 * 0.01; // Less than 3 percent when resolution is DH/20
-    velocity_validation(observer_location, observer_vel_vec, poiseuille_2d_u_steady, error_tolerance, U_f);
-    return 0;
+    return velocity_validation(observer_location, observer_vel_vec, poiseuille_2d_u_steady, error_tolerance, U_f);
 }

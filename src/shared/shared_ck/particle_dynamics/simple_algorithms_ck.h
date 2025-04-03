@@ -96,7 +96,7 @@ class ReduceDynamicsCK : public ReduceType,
         ReduceKernel *reduce_kernel = kernel_implementation_.getComputingKernel();
         ReduceReturnType temp = particle_reduce<Operation>(
             LoopRangeCK<ExecutionPolicy, Identifier>(this->identifier_),
-            ReduceReference<Operation>::value,
+            this->reference_,
             [=](size_t i)
             { return reduce_kernel->reduce(i, dt); });
         return finish_dynamics_.Result(temp);

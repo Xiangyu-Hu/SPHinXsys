@@ -142,6 +142,38 @@ Vecd UpdateKernelIntegrals::computeKernelGradientIntegral(const Vecd &position)
     return integral * data_spacing_ * data_spacing_ * data_spacing_;
 }
 //=============================================================================================//
+Matd UpdateKernelIntegrals::computeKernelSecondGradientIntegral(const Vecd& position)
+{
+    Real phi = probeSignedDistance(position);
+    Real cutoff_radius = kernel_.CutOffRadius(global_h_ratio_);
+    Real threshold = cutoff_radius + data_spacing_;
+
+    Matd integral = Matd::Zero();
+    if (fabs(phi) < threshold)
+    {
+        Arrayi global_index_ = mesh_data_.CellIndexFromPositionOnGlobalMesh(position);
+        mesh_for_each3d<-3, 4>(
+            [&](int i, int j, int k)
+            {
+                Arrayi neighbor_index = Arrayi(global_index_[0] + i, global_index_[1] + j, global_index_[2] + k);
+                Real phi_neighbor = mesh_data_.DataValueFromGlobalIndex(phi_, neighbor_index);
+                if (phi_neighbor > -data_spacing_)
+                {
+                    Vecd phi_gradient = mesh_data_.DataValueFromGlobalIndex(phi_gradient_, neighbor_index);
+                    Vecd integral_position = mesh_data_.GridPositionFromIndexOnGlobalMesh(neighbor_index);
+                    Vecd displacement = position - integral_position;
+                    Real distance = displacement.norm();
+                    if (distance < cutoff_radius)
+                        integral += kernel_.d2W(global_h_ratio_, distance, displacement) *
+                        CutCellVolumeFraction(phi_neighbor, phi_gradient, data_spacing_) *
+                        displacement * displacement.transpose() / (distance * distance + TinyReal);
+                }
+            });
+    }
+
+    return integral * data_spacing_ * data_spacing_ * data_spacing_;
+}
+//=============================================================================================//
 void ReinitializeLevelSet::update(const size_t &package_index)
 {
     auto phi_data = phi_.Data();
