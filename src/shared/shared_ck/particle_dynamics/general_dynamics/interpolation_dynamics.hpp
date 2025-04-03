@@ -55,7 +55,7 @@ void Interpolation<Contact<DataType, Parameters...>>::InteractKernel::interact(s
         prediction[0] += element1 * contact_data_[index_j];
         for (UnsignedInt i = 0; i < Dimensions; ++i)
         {
-            prediction[i + 1] += element3[i] * data_k[index_j];
+            prediction[i + 1] += element3[i] * contact_data_[index_j];
         }
 
         restoring_matrix(0, 0) += element1;
@@ -64,8 +64,13 @@ void Interpolation<Contact<DataType, Parameters...>>::InteractKernel::interact(s
         restoring_matrix.block(1, 1, Dimensions, Dimensions) -= element4;
     }
 
-    Vecd first_row_components = restoring_matrix.inverse().row(0).transpose();
-    interpolated_quantities_[index_i] = first_row_components.dot(prediction);
+    RestoreMatd restoring_matrix_inverse = restoring_matrix.inverse();
+    for (UnsignedInt i = 0; i < Dimensions + 1; ++i)
+    {
+        interpolated_quantity += restoring_matrix_inverse(0, i) * prediction[i];
+    }
+
+    interpolated_quantities_[index_i] = interpolated_quantity;
 }
 //=================================================================================================//
 } // namespace SPH
