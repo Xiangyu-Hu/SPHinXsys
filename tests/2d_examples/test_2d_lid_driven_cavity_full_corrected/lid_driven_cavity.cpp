@@ -1,6 +1,6 @@
 /**
  * @file 	Lid_driven_square_cavity.cpp
- * @brief 	2d lip driven square cavity example
+ * @brief 	2d lid driven square cavity example
  * @details This is the one of the basic test cases for the RKGC inner flow.
  * @author 	Bo Zhang, Xiangyu Hu
  */
