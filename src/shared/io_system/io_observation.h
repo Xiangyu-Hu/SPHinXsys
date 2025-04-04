@@ -56,9 +56,6 @@ class BaseQuantityRecording : public BaseIO
 template <typename...>
 class ObservedQuantityRecording;
 
-template <typename...>
-class ObservedQuantityRecordingCorrected;
-
 template <typename DataType>
 class ObservedQuantityRecording<DataType> : public BaseQuantityRecording
 {
@@ -111,67 +108,6 @@ class ObservedQuantityRecording<DataType> : public BaseQuantityRecording
     };
 
     DataType *getObservedQuantity()
-    {
-        return this->dv_interpolated_quantities_->Data();
-    };
-
-    size_t NumberOfObservedQuantity()
-    {
-        return number_of_observe_;
-    };
-};
-
-template <typename DataType>
-class ObservedQuantityRecordingCorrected<DataType> : public BaseQuantityRecording
-{
-protected:
-    SPHBody& observer_;
-    BaseParticles& base_particles_;
-    ObservingAQuantityCorrected<DataType> observation_method_;
-    DiscreteVariable<DataType>* dv_interpolated_quantities_;
-    size_t number_of_observe_;
-
-public:
-    DataType type_indicator_; /*< this is an indicator to identify the variable type. */
-
-public:
-    ObservedQuantityRecordingCorrected(const std::string& quantity_name, BaseContactRelation& contact_relation)
-        : BaseQuantityRecording(contact_relation.getSPHBody().getSPHSystem(),
-            contact_relation.getSPHBody().getName(), quantity_name),
-        observer_(contact_relation.getSPHBody()),
-        base_particles_(observer_.getBaseParticles()),
-        observation_method_(contact_relation, quantity_name),
-        dv_interpolated_quantities_(observation_method_.dvInterpolatedQuantities()),
-        number_of_observe_(base_particles_.TotalRealParticles())
-    {
-        std::ofstream out_file(filefullpath_output_.c_str(), std::ios::app);
-        out_file << "run_time" << "   ";
-        DataType* interpolated_quantities = getObservedQuantity();
-        for (size_t i = 0; i != number_of_observe_; ++i)
-        {
-            std::string quantity_name_i = quantity_name + "[" + std::to_string(i) + "]";
-            plt_engine_.writeAQuantityHeader(out_file, interpolated_quantities[i], quantity_name_i);
-        }
-        out_file << "\n";
-        out_file.close();
-    };
-    virtual ~ObservedQuantityRecordingCorrected() {};
-
-    virtual void writeToFile(size_t iteration_step = 0) override
-    {
-        std::ofstream out_file(filefullpath_output_.c_str(), std::ios::app);
-        out_file << sv_physical_time_->getValue() << "   ";
-        observation_method_.exec();
-        DataType* interpolated_quantities = getObservedQuantity();
-        for (size_t i = 0; i != number_of_observe_; ++i)
-        {
-            plt_engine_.writeAQuantity(out_file, interpolated_quantities[i]);
-        }
-        out_file << "\n";
-        out_file.close();
-    };
-
-    DataType* getObservedQuantity()
     {
         return this->dv_interpolated_quantities_->Data();
     };
