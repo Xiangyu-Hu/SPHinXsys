@@ -124,6 +124,13 @@ class AlignedBox : public TransformGeometry<GeometricBox>
     };
     Vecd getLowerPeriodic(const Vecd &probe_point);
     int AlignmentAxis() { return alignment_axis_; };
+    
+    void imposeAlignment(Vecd &value)
+    {
+        Vecd frame_velocity = Vecd::Zero();
+        frame_velocity[alignment_axis_] = transform_.xformBaseVecToFrame(value)[alignment_axis_];
+        value = transform_.xformFrameVecToBase(frame_velocity);
+    };
 };
 } // namespace SPH
 #endif // COMPLEX_SHAPE_H

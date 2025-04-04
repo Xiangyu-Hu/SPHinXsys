@@ -33,14 +33,11 @@ SpawnRealParticle::ComputingKernel::
 }
 //=================================================================================================//
 template <class ExecutionPolicy, class EncloserType>
-DespawnRealParticle::ComputingKernel::
+RemoveRealParticle::ComputingKernel::
     ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : total_real_particles_(encloser.sv_total_real_particles_->DelegatedData(ex_policy)),
-      real_particles_bound_(encloser.real_particles_bound_),
       original_id_(encloser.dv_original_id_->DelegatedData(ex_policy))
 {
-    static_assert(std::is_base_of<SequencedPolicy, ExecutionPolicy>::value,
-                  "SequencedPolicy is not the base of ExecutionPolicy!");
     OperationBetweenDataAssembles<ParticleVariables, DiscreteVariableArrays, DiscreteVariableArraysInitialization>
         initialize_discrete_variable_array;
     initialize_discrete_variable_array(encloser.evolving_variables_, encloser.copyable_states_);

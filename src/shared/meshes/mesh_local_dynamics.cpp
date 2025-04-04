@@ -96,6 +96,9 @@ void UpdateKernelIntegrals::update(const size_t &package_index)
     mesh_data_.assignByPosition(
         kernel_gradient_, cell_index, [&](const Vecd &position) -> Vecd
         { return computeKernelGradientIntegral(position); });
+    mesh_data_.assignByPosition(
+        kernel_second_gradient_, cell_index, [&](const Vecd& position) -> Matd
+        { return computeKernelSecondGradientIntegral(position); });
 }
 //=================================================================================================//
 void InitializeDataInACellFromCoarse::update(const Arrayi &cell_index)

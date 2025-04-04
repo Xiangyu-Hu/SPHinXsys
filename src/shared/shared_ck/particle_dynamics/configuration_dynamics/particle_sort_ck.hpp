@@ -46,12 +46,11 @@ QuickSort::QuickSort(const ExecutionPolicy &ex_policy,
       quick_sort_particle_range_(sequence_, 0, compare_, swap_particle_index_),
       quick_sort_particle_body_() {}
 //=================================================================================================//
-template <class ExecutionPolicy, class SortMethodType>
-ParticleSortCK<ExecutionPolicy, SortMethodType>::ParticleSortCK(RealBody &real_body)
+template <class ExecutionPolicy>
+ParticleSortCK<ExecutionPolicy>::ParticleSortCK(RealBody &real_body)
     : LocalDynamics(real_body), BaseDynamics<void>(),
       ex_policy_(ExecutionPolicy{}),
       cell_linked_list_(DynamicCast<CellLinkedList>(this, real_body.getCellLinkedList())),
-      mesh_(cell_linked_list_.getMesh()),
       dv_pos_(particles_->getVariableByName<Vecd>("Position")),
       dv_sequence_(particles_->registerDiscreteVariableOnly<UnsignedInt>(
           "Sequence", particles_->ParticlesBound())),
@@ -85,33 +84,33 @@ ParticleSortCK<ExecutionPolicy, SortMethodType>::ParticleSortCK(RealBody &real_b
     }
 }
 //=================================================================================================//
-template <class ExecutionPolicy, class SortMethodType>
-ParticleSortCK<ExecutionPolicy, SortMethodType>::ComputingKernel::
-    ComputingKernel(const ExecutionPolicy &ex_policy,
-                    ParticleSortCK<ExecutionPolicy, SortMethodType> &encloser)
-    : mesh_(encloser.mesh_), pos_(encloser.dv_pos_->DelegatedData(ex_policy)),
+template <class ExecutionPolicy>
+ParticleSortCK<ExecutionPolicy>::ComputingKernel::
+    ComputingKernel(const ExecutionPolicy &ex_policy, ParticleSortCK<ExecutionPolicy> &encloser)
+    : mesh_(encloser.cell_linked_list_.getMesh()),
+      pos_(encloser.dv_pos_->DelegatedData(ex_policy)),
       sequence_(encloser.dv_sequence_->DelegatedData(ex_policy)),
       index_permutation_(encloser.dv_index_permutation_->DelegatedData(ex_policy)),
       original_id_(encloser.dv_original_id_->DelegatedData(ex_policy)),
       sorted_id_(encloser.dv_sorted_id_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
-template <class ExecutionPolicy, class SortMethodType>
-void ParticleSortCK<ExecutionPolicy, SortMethodType>::ComputingKernel::
+template <class ExecutionPolicy>
+void ParticleSortCK<ExecutionPolicy>::ComputingKernel::
     prepareSequence(UnsignedInt index_i)
 {
     sequence_[index_i] = mesh_.transferMeshIndexToMortonOrder(mesh_.CellIndexFromPosition(pos_[index_i]));
     index_permutation_[index_i] = index_i;
 }
 //=================================================================================================//
-template <class ExecutionPolicy, class SortMethodType>
-void ParticleSortCK<ExecutionPolicy, SortMethodType>::ComputingKernel::
+template <class ExecutionPolicy>
+void ParticleSortCK<ExecutionPolicy>::ComputingKernel::
     updateSortedID(UnsignedInt index_i)
 {
     sorted_id_[original_id_[index_i]] = index_i;
 }
 //=================================================================================================//
-template <class ExecutionPolicy, class SortMethodType>
-void ParticleSortCK<ExecutionPolicy, SortMethodType>::exec(Real dt)
+template <class ExecutionPolicy>
+void ParticleSortCK<ExecutionPolicy>::exec(Real dt)
 {
     UnsignedInt total_real_particles = particles_->TotalRealParticles();
     ComputingKernel *computing_kernel = kernel_implementation_.getComputingKernel();
@@ -139,17 +138,17 @@ void ParticleSortCK<ExecutionPolicy, SortMethodType>::exec(Real dt)
     }
 }
 //=================================================================================================//
-template <class ExecutionPolicy, class SortMethodType>
+template <class ExecutionPolicy>
 template <class EncloserType>
-ParticleSortCK<ExecutionPolicy, SortMethodType>::UpdateBodyPartByParticle::
+ParticleSortCK<ExecutionPolicy>::UpdateBodyPartByParticle::
     UpdateBodyPartByParticle(const ExecutionPolicy &ex_policy,
                              EncloserType &encloser, UnsignedInt body_part_i)
     : index_list_(encloser.dv_index_lists_[body_part_i]->DelegatedData(ex_policy)),
       original_id_list_(encloser.dv_original_id_lists_[body_part_i]->DelegatedData(ex_policy)),
       sorted_id_(encloser.dv_sorted_id_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
-template <class ExecutionPolicy, class SortMethodType>
-void ParticleSortCK<ExecutionPolicy, SortMethodType>::UpdateBodyPartByParticle::
+template <class ExecutionPolicy>
+void ParticleSortCK<ExecutionPolicy>::UpdateBodyPartByParticle::
     update(UnsignedInt index_i)
 {
     index_list_[index_i] = sorted_id_[original_id_list_[index_i]];

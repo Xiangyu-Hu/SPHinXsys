@@ -153,7 +153,7 @@ class ParticleScopeTypeCK<ExcludeBufferParticles> : public WithinScope
   public:
     explicit ParticleScopeTypeCK(BaseParticles *particles)
         : WithinScope(),
-          dv_buffer_particles_indicator_(particles->registerStateVariableOnly<int>("BufferParticleIndicator"))
+          dv_buffer_particles_indicator_(particles->registerStateVariableOnly<int>("BufferIndicator"))
     {
     }
 
@@ -170,7 +170,7 @@ class ParticleScopeTypeCK<ExcludeBufferParticles> : public WithinScope
 
         bool operator()(size_t index_i) const
         {
-            return (buffer_particles_indicator_[index_i] != 1);
+            return (buffer_particles_indicator_[index_i] == 0);
         }
 
       protected:

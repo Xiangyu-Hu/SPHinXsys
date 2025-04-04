@@ -56,15 +56,15 @@ class SoilInitialConditionCK : public continuum_dynamics::ContinuumInitialCondit
 {
   public:
     explicit SoilInitialConditionCK(RealBody &granular_column)
-        : continuum_dynamics::ContinuumInitialConditionCK(granular_column){};
+        : continuum_dynamics::ContinuumInitialConditionCK(granular_column) {};
 
   protected:
-    class UpdateKernel: public ContinuumInitialConditionCK::UpdateKernel
+    class UpdateKernel : public ContinuumInitialConditionCK::UpdateKernel
     {
-    public:
+      public:
         template <class ExecutionPolicy, class EncloserType>
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-        : ContinuumInitialConditionCK::UpdateKernel(ex_policy, encloser){};
+            : ContinuumInitialConditionCK::UpdateKernel(ex_policy, encloser){};
         void update(UnsignedInt index_i, Real dt = 0.0)
         {
             /** initial stress */
@@ -115,7 +115,7 @@ int main(int ac, char *av[])
     Relation<Contact<>> soil_block_contact(soil_block, {&wall_boundary});
 
     UpdateRelation<MainExecutionPolicy, Inner<>, Contact<>> soil_block_update_complex_relation(soil_block_inner, soil_block_contact);
-    ParticleSortCK<MainExecutionPolicy, QuickSort> particle_sort(soil_block);
+    ParticleSortCK<MainExecutionPolicy> particle_sort(soil_block);
     //----------------------------------------------------------------------
     //	Define the numerical methods used in the simulation.
     //	Note that there may be data dependence on the sequence of constructions.
@@ -129,13 +129,13 @@ int main(int ac, char *av[])
     StateDynamics<MainExecutionPolicy, fluid_dynamics::AdvectionStepClose> soil_advection_step_close(soil_block);
 
     InteractionDynamicsCK<MainExecutionPolicy, continuum_dynamics::PlasticAcousticStep1stHalfWithWallRiemannCK>
-         soil_acoustic_step_1st_half(soil_block_inner, soil_block_contact);
+        soil_acoustic_step_1st_half(soil_block_inner, soil_block_contact);
     InteractionDynamicsCK<MainExecutionPolicy, continuum_dynamics::PlasticAcousticStep2ndHalfWithWallRiemannCK>
         soil_acoustic_step_2nd_half(soil_block_inner, soil_block_contact);
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::DensityRegularizationComplexFreeSurface>
         soil_density_regularization(soil_block_inner, soil_block_contact);
     InteractionDynamicsCK<MainExecutionPolicy, continuum_dynamics::StressDiffusionInnerCK> stress_diffusion(soil_block_inner);
-    ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticTimeStepCK<>> soil_acoustic_time_step(soil_block,0.4);
+    ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticTimeStepCK<>> soil_acoustic_time_step(soil_block, 0.4);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
@@ -144,18 +144,18 @@ int main(int ac, char *av[])
     BodyStatesRecordingToVtp body_states_recording(sph_system);
     body_states_recording.addToWrite<Vecd>(wall_boundary, "NormalDirection");
     body_states_recording.addToWrite<Real>(soil_block, "Density");
-    StateDynamics<MainExecutionPolicy,continuum_dynamics::VerticalStressCK> vertical_stress(soil_block);
+    StateDynamics<MainExecutionPolicy, continuum_dynamics::VerticalStressCK> vertical_stress(soil_block);
     body_states_recording.addToWrite<Real>(soil_block, "VerticalStress");
-    StateDynamics<MainExecutionPolicy,continuum_dynamics::AccDeviatoricPlasticStrainCK> accumulated_deviatoric_plastic_strain(soil_block);
+    StateDynamics<MainExecutionPolicy, continuum_dynamics::AccDeviatoricPlasticStrainCK> accumulated_deviatoric_plastic_strain(soil_block);
     body_states_recording.addToWrite<Real>(soil_block, "AccDeviatoricPlasticStrain");
     RestartIO restart_io(sph_system);
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<MainExecutionPolicy, TotalMechanicalEnergyCK>>
-    write_mechanical_energy(soil_block, gravity);
+        write_mechanical_energy(soil_block, gravity);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
     //----------------------------------------------------------------------
-    SingularVariable<Real> *sv_physical_time = sph_system.getSystemVariableByName<Real>("PhysicalTime");    
+    SingularVariable<Real> *sv_physical_time = sph_system.getSystemVariableByName<Real>("PhysicalTime");
     wall_boundary_normal_direction.exec();
     soil_initial_condition.exec();
     constant_gravity.exec();
@@ -169,8 +169,8 @@ int main(int ac, char *av[])
     int screen_output_interval = 500;
     int observation_sample_interval = screen_output_interval * 2;
     int restart_output_interval = screen_output_interval * 10;
-    Real End_Time = 0.5;         /**< End time. */
-    Real D_Time = 0.01; /**< Time stamps for output of body states. */
+    Real End_Time = 0.5; /**< End time. */
+    Real D_Time = 0.01;  /**< Time stamps for output of body states. */
     Real Dt = 0.1 * D_Time;
     //----------------------------------------------------------------------
     //	Statistics for CPU time
@@ -189,7 +189,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------
-    while (sv_physical_time->getValue()  < End_Time)
+    while (sv_physical_time->getValue() < End_Time)
     {
         Real integration_time = 0.0;
         /** Integrate time (loop) until the next output time. */
@@ -228,14 +228,14 @@ int main(int ac, char *av[])
                     if (number_of_iterations % restart_output_interval == 0)
                         restart_io.writeToFile(number_of_iterations);
                 }
-                 soil_advection_step_close.exec();
+                soil_advection_step_close.exec();
                 number_of_iterations++;
                 /** Update cell linked list and configuration. */
                 time_instance = TickCount::now();
                 if (number_of_iterations % 100 == 0 && number_of_iterations != 1)
                 {
                     particle_sort.exec();
-                }                 
+                }
                 soil_cell_linked_list.exec();
                 soil_block_update_complex_relation.exec();
                 interval_updating_configuration += TickCount::now() - time_instance;
