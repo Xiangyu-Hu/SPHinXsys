@@ -144,5 +144,17 @@ void for_each_component(const Eigen::Matrix<Real, Dim1, Dim2> &input,
         for (int j = 0; j < Dim2; ++j)
             function(input(i, j), std::forward<Args>(args)(i, j)...);
 };
+
+template <typename MatrixType>
+MatrixType inverseWithWeightedRegularization(const MatrixType &input, Real alpha)
+{
+    Real input_det = ABS(input.determinant());
+    Real det_sqr = SMAX(alpha - input_det, Real(0));
+    MatrixType input_T = input.transpose(); // for Tikhonov regularization
+    MatrixType inverse = (input_T * input + SqrtEps * MatrixType::Identity()).inverse() * input_T;
+    Real weight1 = input_det / (input_det + det_sqr);
+    Real weight2 = det_sqr / (input_det + det_sqr);
+    return weight1 * inverse + weight2 * MatrixType::Identity();
+};
 } // namespace SPH
 #endif // VECTOR_FUNCTIONS_H

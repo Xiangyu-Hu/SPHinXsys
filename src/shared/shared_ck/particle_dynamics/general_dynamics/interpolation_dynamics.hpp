@@ -64,10 +64,10 @@ void Interpolation<Contact<DataType, Parameters...>>::InteractKernel::interact(s
         restoring_matrix.block(1, 1, Dimensions, Dimensions) -= element4;
     }
 
-    RestoreMatd restoring_matrix_inverse = restoring_matrix.inverse();
+    restoring_matrix = inverseWithWeightedRegularization(restoring_matrix, 1.0e-3);
     for (UnsignedInt i = 0; i < Dimensions + 1; ++i)
     {
-        interpolated_quantity += restoring_matrix_inverse(0, i) * prediction[i];
+        interpolated_quantity += restoring_matrix(0, i) * prediction[i];
     }
 
     interpolated_quantities_[index_i] = interpolated_quantity;
