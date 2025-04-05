@@ -27,7 +27,7 @@ template <class ExecutionPolicy, class EncloserType>
 Interpolation<Contact<DataType, Parameters...>>::InteractKernel::
     InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt contact_index)
     : BaseDynamicsType::InteractKernel(ex_policy, encloser, contact_index),
-      zero_value_(ZeroData<DataType>::value),
+      zero_value_(ZeroData<DataType>::value), zero_prediction_(ZeroData<PredictVec<DataType>>::value),
       interpolated_quantities_(encloser.dv_interpolated_quantities_->DelegatedData(ex_policy)),
       contact_Vol_(encloser.dv_contact_Vol_[contact_index]->DelegatedData(ex_policy)),
       contact_data_(encloser.dv_contact_data_[contact_index]->DelegatedData(ex_policy)) {}
@@ -35,18 +35,42 @@ Interpolation<Contact<DataType, Parameters...>>::InteractKernel::
 template <typename DataType, typename... Parameters>
 void Interpolation<Contact<DataType, Parameters...>>::InteractKernel::interact(size_t index_i, Real dt)
 {
-    DataType interpolated_quantity(zero_value_);
-    Real ttl_weight(0);
+    DataType interpolated_quantity = zero_value_;
+    PredictVec<DataType> prediction = zero_prediction_;
+    RestoreMatd restoring_matrix = Eps * RestoreMatd::Identity();
 
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
     {
         UnsignedInt index_j = this->neighbor_index_[n];
-        Real weight_j = this->W_ij(index_i, index_j) * contact_Vol_[index_j];
+        Vecd e_ij = this->e_ij(index_i, index_j);
+        Vecd r_ij = this->vec_r_ij(index_i, index_j);
+        Real W_ijV_j = this->W_ij(index_i, index_j) * contact_Vol_[index_j];
+        Real dW_ijV_j = this->dW_ij(index_i, index_j) * contact_Vol_[index_j];
 
-        interpolated_quantity += weight_j * contact_data_[index_j];
-        ttl_weight += weight_j;
+        Real element1 = W_ijV_j;
+        Vecd element2 = W_ijV_j * r_ij;
+        Vecd element3 = dW_ijV_j * e_ij;
+        Matd element4 = dW_ijV_j * r_ij * e_ij.transpose();
+
+        prediction[0] += element1 * contact_data_[index_j];
+        for (UnsignedInt i = 0; i < Dimensions; ++i)
+        {
+            prediction[i + 1] += element3[i] * contact_data_[index_j];
+        }
+
+        restoring_matrix(0, 0) += element1;
+        restoring_matrix.block(0, 1, 1, Dimensions) -= element2.transpose();
+        restoring_matrix.block(1, 0, Dimensions, 1) += element3;
+        restoring_matrix.block(1, 1, Dimensions, Dimensions) -= element4;
     }
-    interpolated_quantities_[index_i] = interpolated_quantity / (ttl_weight + TinyReal);
+
+    RestoreMatd restoring_matrix_inverse = restoring_matrix.inverse();
+    for (UnsignedInt i = 0; i < Dimensions + 1; ++i)
+    {
+        interpolated_quantity += restoring_matrix_inverse(0, i) * prediction[i];
+    }
+
+    interpolated_quantities_[index_i] = interpolated_quantity;
 }
 //=================================================================================================//
 } // namespace SPH
