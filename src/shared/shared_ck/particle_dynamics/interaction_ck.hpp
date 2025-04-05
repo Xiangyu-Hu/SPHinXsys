@@ -12,8 +12,7 @@ Interaction<Inner<Parameters...>>::
     : LocalDynamics(inner_relation.getSPHBody()),
       inner_relation_(inner_relation),
       real_body_(&inner_relation.getRealBody()),
-      sph_adaptation_(&sph_body_.getSPHAdaptation()),
-      dv_pos_(particles_->getVariableByName<Vecd>("Position")) {}
+      sph_adaptation_(&sph_body_.getSPHAdaptation()) {}
 //=================================================================================================//
 template <typename... Parameters>
 void Interaction<Inner<Parameters...>>::
@@ -33,7 +32,8 @@ template <class ExecutionPolicy>
 Interaction<Inner<Parameters...>>::InteractKernel::
     InteractKernel(const ExecutionPolicy &ex_policy, Interaction<Inner<Parameters...>> &encloser)
     : NeighborList(ex_policy, encloser.inner_relation_),
-      Neighbor<Parameters...>(ex_policy, encloser.sph_adaptation_, encloser.dv_pos_) {}
+      Neighbor<Parameters...>(ex_policy, encloser.sph_adaptation_,
+                              encloser.inner_relation_.getSourcePosition()) {}
 //=================================================================================================//
 template <class SourceIdentifier, class TargetIdentifier, typename... Parameters>
 Interaction<Contact<SourceIdentifier, TargetIdentifier, Parameters...>>::
@@ -41,16 +41,9 @@ Interaction<Contact<SourceIdentifier, TargetIdentifier, Parameters...>>::
     : BaseLocalDynamics<SourceIdentifier>(contact_relation.getSourceIdentifier()),
       contact_relation_(contact_relation),
       sph_adaptation_(&this->sph_body_.getSPHAdaptation()),
-      dv_pos_(this->particles_->template getVariableByName<Vecd>("Position")),
       contact_bodies_(contact_relation.getContactBodies()),
       contact_particles_(contact_relation.getContactParticles()),
-      contact_adaptations_(contact_relation.getContactAdaptations())
-{
-    for (size_t k = 0; k != contact_particles_.size(); ++k)
-    {
-        contact_pos_.push_back(contact_particles_[k]->template getVariableByName<Vecd>("Position"));
-    }
-}
+      contact_adaptations_(contact_relation.getContactAdaptations()) {}
 //=================================================================================================//
 template <class SourceIdentifier, class TargetIdentifier, typename... Parameters>
 void Interaction<Contact<SourceIdentifier, TargetIdentifier, Parameters...>>::
@@ -73,7 +66,8 @@ Interaction<Contact<SourceIdentifier, TargetIdentifier, Parameters...>>::Interac
     : NeighborList(ex_policy, encloser.contact_relation_, contact_index),
       Neighbor<Parameters...>(ex_policy, encloser.sph_adaptation_,
                               encloser.contact_adaptations_[contact_index],
-                              encloser.dv_pos_, encloser.contact_pos_[contact_index]) {}
+                              encloser.contact_relation_.getSourcePosition(),
+                              encloser.contact_relation_.getTargetPosition(contact_index)) {}
 //=================================================================================================//
 template <typename... Parameters>
 Interaction<Contact<Wall, Parameters...>>::

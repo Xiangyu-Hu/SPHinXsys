@@ -71,7 +71,6 @@ class Interaction<Inner<Parameters...>> : public LocalDynamics
     InnerRelationType &inner_relation_;
     RealBody *real_body_;
     SPHAdaptation *sph_adaptation_;
-    DiscreteVariable<Vecd> *dv_pos_;
 };
 
 template <class SourceIdentifier, class TargetIdentifier, typename... Parameters>
@@ -100,11 +99,9 @@ class Interaction<Contact<SourceIdentifier, TargetIdentifier, Parameters...>>
   protected:
     ContactRelationType &contact_relation_;
     SPHAdaptation *sph_adaptation_;
-    DiscreteVariable<Vecd> *dv_pos_;
     RealBodyVector contact_bodies_;
     StdVec<BaseParticles *> contact_particles_;
     StdVec<SPHAdaptation *> contact_adaptations_;
-    StdVec<DiscreteVariable<Vecd> *> contact_pos_;
 };
 
 template <>
