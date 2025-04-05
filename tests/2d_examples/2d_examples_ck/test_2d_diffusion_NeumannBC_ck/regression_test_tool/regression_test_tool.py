@@ -67,7 +67,7 @@ except ImportError as e:
 case name: test_2d_diffusion_NeumannBC
 """
 
-case_name = "test_2d_diffusion_NeumannBC_ck"
+case_name = "test_2d_diffusion_NeumannBC_sycl"
 body_name = "TemperatureObserver"
 parameter_name = "Phi"
 
