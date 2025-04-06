@@ -33,7 +33,9 @@ Interaction<Inner<Parameters...>>::InteractKernel::
     InteractKernel(const ExecutionPolicy &ex_policy, Interaction<Inner<Parameters...>> &encloser)
     : NeighborList(ex_policy, encloser.inner_relation_),
       Neighbor<Parameters...>(ex_policy, encloser.sph_adaptation_,
-                              encloser.inner_relation_.getSourcePosition()) {}
+                              encloser.sph_adaptation_,
+                              encloser.inner_relation_.getSourcePosition(),
+                              encloser.inner_relation_.getTargetPosition()) {}
 //=================================================================================================//
 template <class SourceIdentifier, class TargetIdentifier, typename... Parameters>
 Interaction<Contact<SourceIdentifier, TargetIdentifier, Parameters...>>::

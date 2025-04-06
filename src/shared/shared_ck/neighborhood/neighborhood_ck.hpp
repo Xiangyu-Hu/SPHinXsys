@@ -8,13 +8,6 @@ namespace SPH
 //=================================================================================================//
 template <class ExecutionPolicy>
 Neighbor<>::Neighbor(const ExecutionPolicy &ex_policy,
-                     SPHAdaptation *sph_adaptation, DiscreteVariable<Vecd> *dv_pos)
-    : kernel_(*sph_adaptation->getKernel()),
-      source_pos_(dv_pos->DelegatedData(ex_policy)),
-      target_pos_(dv_pos->DelegatedData(ex_policy)){};
-//=================================================================================================//
-template <class ExecutionPolicy>
-Neighbor<>::Neighbor(const ExecutionPolicy &ex_policy,
                      SPHAdaptation *sph_adaptation, SPHAdaptation *contact_adaptation,
                      DiscreteVariable<Vecd> *dv_pos, DiscreteVariable<Vecd> *dv_contact_pos)
     : kernel_(*sph_adaptation->getKernel()),
