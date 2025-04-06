@@ -38,7 +38,10 @@ template <typename...>
 class Interpolation;
 /**
  * @class Interpolation
- * @brief Base class for interpolation.
+ * @brief The interpolation is corrected based on the finite particle method.
+ * Liu, M.B., Liu, G.R. Smoothed Particle Hydrodynamics (SPH): an Overview and
+ * Recent Developments. Arch Computat Methods Eng 17, 25-76 (2010).
+ * doi.org/10.1007/s11831-010-9040-7
  */
 template <typename DataType, typename... Parameters>
 class Interpolation<Contact<DataType, Parameters...>> : public Interaction<Contact<Parameters...>>
@@ -62,6 +65,7 @@ class Interpolation<Contact<DataType, Parameters...>> : public Interaction<Conta
 
       protected:
         DataType zero_value_;
+        PredictVec<DataType> zero_prediction_;
         DataType *interpolated_quantities_;
         Real *contact_Vol_;
         DataType *contact_data_;
@@ -74,14 +78,14 @@ class Interpolation<Contact<DataType, Parameters...>> : public Interaction<Conta
 };
 
 template <class ExecutionPolicy, typename DataType>
-class ObservingAQuantityCK : public InteractionDynamicsCK<ExecutionPolicy, Interpolation<Contact<DataType>>>
+class ObservingQuantityCK : public InteractionDynamicsCK<ExecutionPolicy, Interpolation<Contact<DataType>>>
 {
     using BaseDynamicsType = InteractionDynamicsCK<ExecutionPolicy, Interpolation<Contact<DataType>>>;
 
   public:
     template <typename... Args>
-    ObservingAQuantityCK(Args &&...args) : BaseDynamicsType(std::forward<Args>(args)...){};
-    virtual ~ObservingAQuantityCK() {};
+    ObservingQuantityCK(Args &&...args) : BaseDynamicsType(std::forward<Args>(args)...){};
+    virtual ~ObservingQuantityCK() {};
 };
 } // namespace SPH
 #endif // INTERPOLATION_DYNAMICS_H

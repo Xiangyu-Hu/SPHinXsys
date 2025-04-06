@@ -66,7 +66,7 @@ template <typename T>
 using AtomicRef = boost::atomic_ref<T>;
 namespace math = std;
 #endif // SPHINXSYS_USE_SYCL
-    
+
 #if SPHINXSYS_USE_FLOAT
 using Real = float;
 using UnsignedInt = u_int32_t;
@@ -84,6 +84,14 @@ using Vec3d = Eigen::Matrix<Real, 3, 1>;
 /** Small, 2*2 and 3*3, matrix with float point number. */
 using Mat2d = Eigen::Matrix<Real, 2, 2>;
 using Mat3d = Eigen::Matrix<Real, 3, 3>;
+/** linear restoring matrix and vector for particle based linear reproducing interpolation. */
+using RestoreMat2d = Mat3d;
+using RestoreMat3d = Eigen::Matrix<Real, 4, 4>;
+template <typename DataType>
+using PredictVec2 = Eigen::Matrix<DataType, 3, 1>;
+
+template <typename DataType>
+using PredictVec3 = Eigen::Matrix<DataType, 4, 1>;
 /** Dynamic matrix*/
 using MatXd = Eigen::Matrix<Real, Eigen::Dynamic, Eigen::Dynamic>;
 
@@ -122,6 +130,21 @@ struct ZeroData<std::pair<FirstType, SecondType>>
     using PairType = std::pair<FirstType, SecondType>;
     static inline const PairType value = PairType(
         ZeroData<FirstType>::value, ZeroData<SecondType>::value);
+};
+
+template <typename DataType>
+struct ZeroData<PredictVec2<DataType>>
+{
+    static inline const PredictVec2<DataType> value = PredictVec2<DataType>(
+        ZeroData<DataType>::value, ZeroData<DataType>::value, ZeroData<DataType>::value);
+};
+
+template <typename DataType>
+struct ZeroData<PredictVec3<DataType>>
+{
+    static inline const PredictVec3<DataType> value = PredictVec3<DataType>(
+        ZeroData<DataType>::value, ZeroData<DataType>::value,
+        ZeroData<DataType>::value, ZeroData<DataType>::value);
 };
 
 template <typename DataType>
