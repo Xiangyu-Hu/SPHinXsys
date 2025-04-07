@@ -82,11 +82,6 @@ class Interpolation<Contact<DataType, Parameters...>> : public Interpolation<Con
         Real *contact_Vol_;
         DataType *contact_data_;
     };
-
-  protected:
-    DiscreteVariable<DataType> *dv_interpolated_quantities_;
-    StdVec<DiscreteVariable<Real> *> dv_contact_Vol_;
-    StdVec<DiscreteVariable<DataType> *> dv_contact_data_;
 };
 /**
  * @class Interpolation
@@ -113,19 +108,12 @@ class Interpolation<Contact<DataType, RestoringCorrection, Parameters...>> : pub
         void interact(size_t index_i, Real dt = 0.0);
 
       protected:
-        bool is_corrected_;
         DataType zero_value_;
         PredictVec<DataType> zero_prediction_;
         DataType *interpolated_quantities_;
         Real *contact_Vol_;
         DataType *contact_data_;
     };
-
-  protected:
-    bool is_corrected_;
-    DiscreteVariable<DataType> *dv_interpolated_quantities_;
-    StdVec<DiscreteVariable<Real> *> dv_contact_Vol_;
-    StdVec<DiscreteVariable<DataType> *> dv_contact_data_;
 };
 
 template <class ExecutionPolicy, typename DataType, typename... Parameters>
