@@ -105,7 +105,7 @@ class MeshWithGridDataPackages : public Mesh
             for (size_t l = 0; l != all_mesh_variables_.size(); ++l)
             {
                 MeshVariable<DataType> *variable = all_mesh_variables_[l];
-                variable->allocateAllMeshVariableData(num_grid_pkgs_);
+                variable->reallocateDataField(par, num_grid_pkgs_);
             }
         }
     };
@@ -179,12 +179,12 @@ class MeshWithGridDataPackages : public Mesh
     MeshVariable<DataType> *registerMeshVariable(const std::string &variable_name)
     {
         MeshVariable<DataType> *variable =
-            findVariableByName<DataType>(all_mesh_variables_, variable_name);
+            findVariableByName<DataType, MeshVariable>(all_mesh_variables_, variable_name);
         if (variable == nullptr)
         {
             constexpr int type_index = DataTypeIndex<DataType>::value;
             size_t new_variable_index = std::get<type_index>(all_mesh_variables_).size();
-            return addVariableToAssemble<DataType>(all_mesh_variables_, mesh_variable_ptrs_,
+            return addVariableToAssemble<DataType, MeshVariable>(all_mesh_variables_, mesh_variable_ptrs_,
                                                    variable_name, new_variable_index);
         }
         return variable;
@@ -194,7 +194,7 @@ class MeshWithGridDataPackages : public Mesh
     template <typename DataType>
     MeshVariable<DataType> *getMeshVariable(const std::string &variable_name)
     {
-        return findVariableByName<DataType>(all_mesh_variables_, variable_name);
+        return findVariableByName<DataType, MeshVariable>(all_mesh_variables_, variable_name);
     }
 
     void registerOccupied(size_t sort_index, int type)

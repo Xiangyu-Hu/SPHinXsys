@@ -172,32 +172,7 @@ class DiscreteVariable : public Entity
 };
 
 template <typename DataType>
-class MeshVariable : public Entity
-{
-  public:
-    using PackageData = PackageDataMatrix<DataType, 4>;
-    MeshVariable(const std::string &name, size_t data_size)
-        : Entity(name), discrete_variable_(name, data_size){};
-    ~MeshVariable() {};
-
-    PackageData *DataField() { return discrete_variable_.DelegatedDataField(execution::par); };
-    template <class ExecutionPolicy>
-    PackageData *DelegatedDataField(const ExecutionPolicy &ex_policy)
-    {
-        return discrete_variable_.DelegatedDataField(ex_policy);
-    }
-
-    void allocateAllMeshVariableData(const size_t size)
-    {
-        discrete_variable_.reallocateDataField(execution::par, size);
-    }
-
-    template <class ExecutionPolicy>
-    void prepareForOutput(const ExecutionPolicy &ex_policy) { discrete_variable_.prepareForOutput(ex_policy); };
-
-  private:
-    DiscreteVariable<PackageData> discrete_variable_;
-};
+using MeshVariable = DiscreteVariable<PackageDataMatrix<DataType, 4>>;
 
 template <typename DataType, template <typename VariableDataType> class VariableType>
 VariableType<DataType> *findVariableByName(DataContainerAddressAssemble<VariableType> &assemble,
