@@ -27,7 +27,7 @@ Vecd approximated_coordinate(0.0, 0.0);
 Vecd reference_coordinate(rand_uniform(0.0, width), rand_uniform(0.0, height));
 TEST(Interpolation, Error)
 {
-    EXPECT_LT((approximated_coordinate - approximated_coordinate).norm(), Eps);
+    EXPECT_LT((approximated_coordinate - reference_coordinate).norm(), 1.0e-6);
     std::cout << "Reference Coordinate: " << reference_coordinate << " and "
               << "Predicted Coordinate: " << approximated_coordinate << std::endl;
 };
@@ -60,6 +60,8 @@ int main(int ac, char *av[])
     FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
     water_block.defineClosure<WeaklyCompressibleFluid, Viscosity>(ConstructArgs(rho0_f, c_f), mu_f);
     water_block.generateParticles<BaseParticles, Lattice>();
+    SimpleDynamics<relax_dynamics::RandomizeParticlePosition> random_airfoil_particles(water_block);
+    random_airfoil_particles.exec(0.5);
 
     ObserverBody fluid_observer(sph_system, "FluidObserver");
     StdVec<Vecd> observation_location = {reference_coordinate};
@@ -92,7 +94,7 @@ int main(int ac, char *av[])
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
-    ObservedQuantityRecording<MainExecutionPolicy, Vecd>
+    ObservedQuantityRecording<MainExecutionPolicy, Vecd, RestoringCorrection>
         fluid_observer_position("Position", fluid_observer_contact);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
