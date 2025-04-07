@@ -11,7 +11,8 @@ namespace SPH
 //=================================================================================================//
 BaseParticles::BaseParticles(SPHBody &sph_body, BaseMaterial *base_material)
     : sv_total_real_particles_(nullptr),
-      particles_bound_(0), original_id_(nullptr), sorted_id_(nullptr),
+      particles_bound_(0), total_ghost_domains_(0), dv_ghost_offsets_(nullptr),
+      original_id_(nullptr), sorted_id_(nullptr),
       dv_pos_(nullptr), Vol_(nullptr), rho_(nullptr), mass_(nullptr),
       sph_body_(sph_body), body_name_(sph_body.getName()),
       base_material_(*base_material),
@@ -20,6 +21,7 @@ BaseParticles::BaseParticles(SPHBody &sph_body, BaseMaterial *base_material)
 {
     sph_body.assignBaseParticles(this);
     sv_total_real_particles_ = registerSingularVariable<UnsignedInt>("TotalRealParticles");
+    sv_total_ghost_particles_ = registerSingularVariable<UnsignedInt>("TotalGhostParticles");
 }
 //=================================================================================================//
 SPHAdaptation &BaseParticles::getSPHAdaptation()
@@ -31,7 +33,8 @@ void BaseParticles::initializeBasicParticleVariables()
 {
     addEvolvingVariable<Vecd>("Position");
     addEvolvingVariable<Real>("VolumetricMeasure");
-     //----------------------------------------------------------------------
+
+    //----------------------------------------------------------------------
     //		register non-geometric variables
     //----------------------------------------------------------------------
     rho_ = registerStateVariable<Real>("Density", base_material_.ReferenceDensity());
@@ -116,6 +119,41 @@ UnsignedInt BaseParticles::createRealParticleFrom(UnsignedInt index)
     /** Realize the buffer particle by increasing the number of real particle by one.  */
     incrementTotalRealParticles();
     return new_original_id;
+}
+//=================================================================================================//
+void BaseParticles::checkRealParticleBound()
+{
+    if (TotalRealParticles() >= particles_bound_)
+    {
+        std::cout << "\n ERROR: Not enough real particles have been reserved!" << std::endl;
+        std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+        exit(1);
+    }
+}
+//=================================================================================================//
+void BaseParticles::checkTotalParticleBound()
+{
+    UnsignedInt total_particles = TotalRealParticles() + TotalGhostParticles();
+    if (total_particles >= particles_bound_)
+    {
+        std::cout << "\n ERROR: Not enough total particles have been reserved!" << std::endl;
+        std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+        exit(1);
+    }
+}
+//=================================================================================================//
+DiscreteVariable<UnsignedInt> *BaseParticles::allocateGhostOffsets()
+{
+    if (dv_ghost_offsets_ == nullptr)
+    {
+        if (total_ghost_domains_ == 0)
+        {
+            throw std::runtime_error("Error: No ghost domains are defined.");
+        }
+        dv_ghost_offsets_ =
+            addUniqueDiscreteVariableOnly<UnsignedInt>("GhostOffsets", total_ghost_domains_);
+    }
+    return dv_ghost_offsets_;
 }
 //=================================================================================================//
 void BaseParticles::resizeXmlDocForParticles(XmlParser &xml_parser)

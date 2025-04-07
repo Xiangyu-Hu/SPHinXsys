@@ -236,7 +236,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     FluidBody water_body(sph_system, makeShared<WaterBlock>("WaterBody"));
     water_body.defineClosure<WeaklyCompressibleFluid, Viscosity>(ConstructArgs(rho0_f, c_f), mu_f);
-    ParticleBuffer<ReserveSizeFactor> particle_buffer(0.5);
+    RealParticleReserve<ReserveSizeFactor> particle_buffer(0.5);
     water_body.generateParticlesWithReserve<BaseParticles, Lattice>(particle_buffer);
 
     SolidBody wall(sph_system, makeShared<WallBoundary>("WallBoundary"));
