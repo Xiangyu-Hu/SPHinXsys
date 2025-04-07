@@ -7,9 +7,9 @@ namespace SPH
 {
 //=================================================================================================//
 template <typename DataType, typename... Parameters>
-Interpolation<Contact<DataType, Parameters...>>::Interpolation(
+Interpolation<Contact<Base, DataType, Parameters...>>::Interpolation(
     Relation<Contact<Parameters...>> &pair_contact_relation, const std::string &variable_name)
-    : BaseDynamicsType(pair_contact_relation),
+    : Interaction<Contact<Parameters...>>(pair_contact_relation),
       dv_interpolated_quantities_(this->particles_->template registerStateVariableOnly<DataType>(variable_name))
 {
     if (this->contact_particles_.size() > 1)
@@ -27,13 +27,40 @@ template <class ExecutionPolicy, class EncloserType>
 Interpolation<Contact<DataType, Parameters...>>::InteractKernel::
     InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt contact_index)
     : BaseDynamicsType::InteractKernel(ex_policy, encloser, contact_index),
-      zero_value_(ZeroData<DataType>::value), zero_prediction_(ZeroData<PredictVec<DataType>>::value),
+      zero_value_(ZeroData<DataType>::value),
       interpolated_quantities_(encloser.dv_interpolated_quantities_->DelegatedData(ex_policy)),
       contact_Vol_(encloser.dv_contact_Vol_[contact_index]->DelegatedData(ex_policy)),
       contact_data_(encloser.dv_contact_data_[contact_index]->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <typename DataType, typename... Parameters>
 void Interpolation<Contact<DataType, Parameters...>>::InteractKernel::interact(size_t index_i, Real dt)
+{
+    DataType interpolated_quantity(zero_value_);
+    Real ttl_weight(0);
+
+    for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
+    {
+        UnsignedInt index_j = this->neighbor_index_[n];
+        Real weight_j = this->W_ij(index_i, index_j) * contact_Vol_[index_j];
+
+        interpolated_quantity += weight_j * contact_data_[index_j];
+        ttl_weight += weight_j;
+    }
+    interpolated_quantities_[index_i] = interpolated_quantity / (ttl_weight + TinyReal);
+}
+//=================================================================================================//
+template <typename DataType, typename... Parameters>
+template <class ExecutionPolicy, class EncloserType>
+Interpolation<Contact<DataType, RestoringCorrection, Parameters...>>::InteractKernel::
+    InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt contact_index)
+    : BaseDynamicsType::InteractKernel(ex_policy, encloser, contact_index),
+      zero_value_(ZeroData<DataType>::value), zero_prediction_(ZeroData<PredictVec<DataType>>::value),
+      interpolated_quantities_(encloser.dv_interpolated_quantities_->DelegatedData(ex_policy)),
+      contact_Vol_(encloser.dv_contact_Vol_[contact_index]->DelegatedData(ex_policy)),
+      contact_data_(encloser.dv_contact_data_[contact_index]->DelegatedData(ex_policy)) {}
+//=================================================================================================//
+template <typename DataType, typename... Parameters>
+void Interpolation<Contact<DataType, RestoringCorrection, Parameters...>>::InteractKernel::interact(size_t index_i, Real dt)
 {
     DataType interpolated_quantity = zero_value_;
     PredictVec<DataType> prediction = zero_prediction_;

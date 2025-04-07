@@ -36,14 +36,14 @@
 
 namespace SPH
 {
-template <class ExecutionPolicy, typename DataType>
-class ObservedQuantityRecording<ExecutionPolicy, DataType>
+template <class ExecutionPolicy, typename DataType, typename... Parameters>
+class ObservedQuantityRecording<ExecutionPolicy, DataType, Parameters...>
     : public BaseQuantityRecording
 {
   protected:
     SPHBody &observer_;
     BaseParticles &base_particles_;
-    ObservingQuantityCK<ExecutionPolicy, DataType> observation_method_;
+    ObservingQuantityCK<ExecutionPolicy, DataType, Parameters...> observation_method_;
     DiscreteVariable<DataType> *dv_interpolated_quantities_;
     size_t number_of_observe_;
 
