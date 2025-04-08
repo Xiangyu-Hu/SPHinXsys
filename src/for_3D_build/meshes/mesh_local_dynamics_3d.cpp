@@ -376,103 +376,73 @@ void WriteMeshFieldToPlt::update(std::ofstream &output_file)
                 << "n_y, "
                 << "n_z "
                 << "\n";
-    for (int n = 0; n != mesh_data_.AllGridPoints()[2]; ++n)
-        for (int m = 0; m != mesh_data_.AllGridPoints()[1]; ++m)
-        {
-            for (int l = 0; l != mesh_data_.AllGridPoints()[0]; ++l)
-            {
-            }
-        }
-    output_file << "zone i=" << number_of_operation[0] << "  j=" << number_of_operation[1] << "  k=" << number_of_operation[2]
-                << "  DATAPACKING=BLOCK  SOLUTIONTIME=" << 0 << "\n";
 
-    for (int k = 0; k != number_of_operation[2]; ++k)
-        for (int j = 0; j != number_of_operation[1]; ++j)
-        {
-            for (int i = 0; i != number_of_operation[0]; ++i)
-            {
-                Vecd data_position = mesh_data_.global_mesh_.GridPositionFromIndex(Arrayi(i, j, k));
-                output_file << data_position[0] << " ";
-            }
-            output_file << " \n";
-        }
+    mesh_for_each(Array3i::Zero(), mesh_data_.AllGridPoints(), [&](int l, int m, int n)
+                  { 
+                    if (mesh_data_.isCoreDataPackage(Arrayi(l, m, n)))
+                    {
+                        output_file << "zone T= 'GridPackage[" << l << "][" << m << "][" << n 
+                                << "]'  i="<< mesh_data_.DataPackageSize() << "  j=" 
+                                << mesh_data_.DataPackageSize() << "  k=" 
+                                << mesh_data_.DataPackageSize()
+                                << "  DATAPACKING=BLOCK  SOLUTIONTIME=" << 0 << "\n";
 
-    for (int k = 0; k != number_of_operation[2]; ++k)
-        for (int j = 0; j != number_of_operation[1]; ++j)
-        {
-            for (int i = 0; i != number_of_operation[0]; ++i)
-            {
-                Vecd data_position = mesh_data_.global_mesh_.GridPositionFromIndex(Arrayi(i, j, k));
-                output_file << data_position[1] << " ";
-            }
-            output_file << " \n";
-        }
+                        mesh_for_each(Array3i::Zero(), mesh_data_.DataPackageSize() * Array3i::Ones(), [&](int i, int j, int k)
+                                  { 
+                                    Vecd data_position = mesh_data_.DataPositionFromIndex(Arrayi(l, m, n), Arrayi(i, j, k));
+                                    output_file << data_position[0] << " ";
+                                });
+                        output_file << "\n";
 
-    for (int k = 0; k != number_of_operation[2]; ++k)
-        for (int j = 0; j != number_of_operation[1]; ++j)
-        {
-            for (int i = 0; i != number_of_operation[0]; ++i)
-            {
-                Vecd data_position = mesh_data_.global_mesh_.GridPositionFromIndex(Arrayi(i, j, k));
-                output_file << data_position[2] << " ";
-            }
-            output_file << " \n";
-        }
+                        mesh_for_each(Array3i::Zero(), mesh_data_.DataPackageSize() * Array3i::Ones(), [&](int i, int j, int k)
+                                  { 
+                                    Vecd data_position = mesh_data_.DataPositionFromIndex(Arrayi(l, m, n), Arrayi(i, j, k));
+                                    output_file << data_position[1] << " ";
+                                });
+                        output_file << "\n";
+                    
+                        mesh_for_each(Array3i::Zero(), mesh_data_.DataPackageSize() * Array3i::Ones(), [&](int i, int j, int k)
+                                  { 
+                                    Vecd data_position = mesh_data_.DataPositionFromIndex(Arrayi(l, m, n), Arrayi(i, j, k));
+                                    output_file << data_position[2] << " ";
+                                });
+                        output_file << "\n";
 
-    for (int k = 0; k != number_of_operation[2]; ++k)
-        for (int j = 0; j != number_of_operation[1]; ++j)
-        {
-            for (int i = 0; i != number_of_operation[0]; ++i)
-            {
-                output_file << mesh_data_.DataValueFromGlobalIndex(phi_, Arrayi(i, j, k))
-                            << " ";
-            }
-            output_file << " \n";
-        }
-
-    for (int k = 0; k != number_of_operation[2]; ++k)
-        for (int j = 0; j != number_of_operation[1]; ++j)
-        {
-            for (int i = 0; i != number_of_operation[0]; ++i)
-            {
-                output_file << mesh_data_.DataValueFromGlobalIndex(phi_gradient_, Arrayi(i, j, k))[0]
-                            << " ";
-            }
-            output_file << " \n";
-        }
-
-    for (int k = 0; k != number_of_operation[2]; ++k)
-        for (int j = 0; j != number_of_operation[1]; ++j)
-        {
-            for (int i = 0; i != number_of_operation[0]; ++i)
-            {
-                output_file << mesh_data_.DataValueFromGlobalIndex(phi_gradient_, Arrayi(i, j, k))[1]
-                            << " ";
-            }
-            output_file << " \n";
-        }
-
-    for (int k = 0; k != number_of_operation[2]; ++k)
-        for (int j = 0; j != number_of_operation[1]; ++j)
-        {
-            for (int i = 0; i != number_of_operation[0]; ++i)
-            {
-                output_file << mesh_data_.DataValueFromGlobalIndex(phi_gradient_, Arrayi(i, j, k))[2]
-                            << " ";
-            }
-            output_file << " \n";
-        }
-
-    for (int k = 0; k != number_of_operation[2]; ++k)
-        for (int j = 0; j != number_of_operation[1]; ++j)
-        {
-            for (int i = 0; i != number_of_operation[0]; ++i)
-            {
-                output_file << mesh_data_.DataValueFromGlobalIndex(near_interface_id_, Arrayi(i, j, k))
-                            << " ";
-            }
-            output_file << " \n";
-        }
+                        mesh_for_each(Array3i::Zero(), mesh_data_.DataPackageSize() * Array3i::Ones(), [&](int i, int j, int k)
+                                  { 
+                                    size_t pkg_index = mesh_data_.PackageIndexFromCellIndex(Arrayi(l, m, n));
+                                    output_file << phi_.Data()[pkg_index][i][j][k] << " "; 
+                                });
+                        output_file << "\n";
+                    
+                        mesh_for_each(Array3i::Zero(), mesh_data_.DataPackageSize() * Array3i::Ones(), [&](int i, int j, int k)
+                                  { 
+                                    size_t pkg_index = mesh_data_.PackageIndexFromCellIndex(Arrayi(l, m, n));
+                                    output_file << phi_gradient_.Data()[pkg_index][i][j][k][0] << " "; 
+                                });
+                        output_file << "\n";
+                    
+                        mesh_for_each(Array3i::Zero(), mesh_data_.DataPackageSize() * Array3i::Ones(), [&](int i, int j, int k)
+                                  { 
+                                    size_t pkg_index = mesh_data_.PackageIndexFromCellIndex(Arrayi(l, m, n));
+                                    output_file << phi_gradient_.Data()[pkg_index][i][j][k][1] << " "; 
+                                });
+                        output_file << "\n";
+                    
+                        mesh_for_each(Array3i::Zero(), mesh_data_.DataPackageSize() * Array3i::Ones(), [&](int i, int j, int k)
+                                  { 
+                                    size_t pkg_index = mesh_data_.PackageIndexFromCellIndex(Arrayi(l, m, n));
+                                    output_file << phi_gradient_.Data()[pkg_index][i][j][k][2] << " "; 
+                                });
+                        output_file << "\n";
+                    
+                        mesh_for_each(Array3i::Zero(), mesh_data_.DataPackageSize() * Array3i::Ones(), [&](int i, int j, int k)
+                                  { 
+                                    size_t pkg_index = mesh_data_.PackageIndexFromCellIndex(Arrayi(l, m, n));
+                                    output_file << near_interface_id_.Data()[pkg_index][i][j][k] << " "; 
+                                });
+                        output_file << "\n";
+                    } });
 }
 //=============================================================================================//
 } // namespace SPH
