@@ -31,7 +31,7 @@
 #ifndef NEIGHBORHOOD_CK_H
 #define NEIGHBORHOOD_CK_H
 
-#include "kernel_wendland_c2_ck.h"
+#include "kernel_tabulated_ck.h"
 #include "neighborhood.h"
 
 namespace SPH
@@ -50,7 +50,7 @@ class Neighbor<>
     Neighbor(const ExecutionPolicy &ex_policy, SPHAdaptation *sph_adaptation, SPHAdaptation *contact_adaptation,
              DiscreteVariable<Vecd> *dv_pos, DiscreteVariable<Vecd> *dv_target_pos);
 
-    KernelWendlandC2CK &getKernel() { return kernel_; }
+    KernelTabulatedCK &getKernel() { return kernel_; }
 
     inline Vecd vec_r_ij(size_t i, size_t j) const { return source_pos_[i] - target_pos_[j]; };
     inline Real W_ij(size_t i, size_t j) const { return kernel_.W(vec_r_ij(i, j)); }
@@ -78,7 +78,7 @@ class Neighbor<>
     };
 
   protected:
-    KernelWendlandC2CK kernel_;
+    KernelTabulatedCK kernel_;
     Vecd *source_pos_;
     Vecd *target_pos_;
 };

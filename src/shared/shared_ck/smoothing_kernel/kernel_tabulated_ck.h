@@ -21,107 +21,85 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	kernel_wendland_c2_ck.h
- * @brief 	This is the class for Wendland kernel.
+ * @file kernel_tabulated_ck.h
+ * @brief This is the class for tabulated kernel
+ * which is applicable for all SPH kernels.
  * @author	Xiangyu Hu
  */
 
-#ifndef KERNEL_WENDLAND_C2_CK_H
-#define KERNEL_WENDLAND_C2_CK_H
+#ifndef KERNEL_TABULATED_CK_H
+#define KERNEL_TABULATED_CK_H
 
 #include "base_kernel.h"
 
 namespace SPH
 {
-class KernelWendlandC2CK
+constexpr int kernel_resolution_ = 20;
+constexpr int tabulated_array_size_ = kernel_resolution_ + 4;
+
+class KernelTabulatedCK
 {
   public:
-    explicit KernelWendlandC2CK(Kernel &kernel)
+    explicit KernelTabulatedCK(Kernel &kernel);
+
+    Real interpolateCubic(const Real *data, Real q) const
     {
-        inv_h_ = 1.0 / kernel.SmoothingLength();
-        factor_W_1D_ = kernel.FactorW1D();
-        factor_W_2D_ = kernel.FactorW2D();
-        factor_W_3D_ = kernel.FactorW3D();
-        factor_dW_1D_ = inv_h_ * factor_W_1D_;
-        factor_dW_2D_ = inv_h_ * factor_W_2D_;
-        factor_dW_3D_ = inv_h_ * factor_W_3D_;
-        rc_ref_ = kernel.CutOffRadius();
-        rc_ref_sqr_ = kernel.CutOffRadiusSqr();
+        int location = (int)floor(q / dq_);
+        int i = location + 1;
+        Real fraction_1 = q - Real(location) * dq_; // fraction_1 correspond to i
+        Real fraction_0 = fraction_1 + dq_;         // fraction_0 correspond to i-1
+        Real fraction_2 = fraction_1 - dq_;         // fraction_2 correspond to i+1
+        Real fraction_3 = fraction_1 - 2 * dq_;     ////fraction_3 correspond to i+2
+
+        return (fraction_1 * fraction_2 * fraction_3) / delta_q_0_ * data[i - 1] +
+               (fraction_0 * fraction_2 * fraction_3) / delta_q_1_ * data[i] +
+               (fraction_0 * fraction_1 * fraction_3) / delta_q_2_ * data[i + 1] +
+               (fraction_0 * fraction_1 * fraction_2) / delta_q_3_ * data[i + 2];
     };
 
     Real W(const Real &displacement) const
     {
         Real q = displacement * inv_h_;
-        return factor_W_1D_ * W_1D(q);
+        return factor_W_1D_ * interpolateCubic(w_1d, q);
     };
 
     Real W(const Vec2d &displacement) const
     {
         Real q = displacement.norm() * inv_h_;
-        return factor_W_2D_ * W_1D(q);
+        return factor_W_2D_ * interpolateCubic(w_1d, q);
     };
 
     Real W(const Vec3d &displacement) const
     {
         Real q = displacement.norm() * inv_h_;
-        return factor_W_3D_ * W_1D(q);
-    };
-
-    Real W_1D(Real q) const
-    {
-        return pow(1.0 - 0.5 * q, 4) * (1.0 + 2.0 * q);
+        return factor_W_3D_ * interpolateCubic(w_1d, q);
     };
 
     Real dW(const Real &displacement) const
     {
         Real q = displacement * inv_h_;
-        return factor_dW_1D_ * dW_1D(q);
+        return factor_dW_1D_ * interpolateCubic(dw_1d, q);
     };
     Real dW(const Vec2d &displacement) const
     {
         Real q = displacement.norm() * inv_h_;
-        return factor_dW_2D_ * dW_1D(q);
+        return factor_dW_2D_ * interpolateCubic(dw_1d, q);
     };
     Real dW(const Vec3d &displacement) const
     {
         Real q = displacement.norm() * inv_h_;
-        return factor_dW_3D_ * dW_1D(q);
+        return factor_dW_3D_ * interpolateCubic(dw_1d, q);
     };
 
-    Real dW_1D(const Real q) const
-    {
-        return 0.625 * pow(q - 2.0, 3) * q;
-    };
-
-    Vec2d e(const Real &distance, const Vec2d &displacement) const
-    {
-        return displacement / (distance + TinyReal);
-    };
-    Vec3d e(const Real &distance, const Vec3d &displacement) const
-    {
-        return displacement / (distance + TinyReal);
-    };
-
-    bool checkIfWithinCutOffRadius(const Vec2d &displacement) const
-    {
-
-        return displacement.squaredNorm() < CutOffRadiusSqr();
-    };
-
-    bool checkIfWithinCutOffRadius(const Vec3d &displacement) const
-    {
-
-        return displacement.squaredNorm() < CutOffRadiusSqr();
-    };
-    ;
-
-    inline Real CutOffRadius() const { return rc_ref_; };
-    inline Real CutOffRadiusSqr() const { return rc_ref_sqr_; };
+    Real CutOffRadius() const { return rc_ref_; };
+    Real CutOffRadiusSqr() const { return rc_ref_sqr_; };
 
   private:
-    Real inv_h_, rc_ref_, rc_ref_sqr_,
-        factor_W_1D_, factor_W_2D_, factor_W_3D_,
-        factor_dW_1D_, factor_dW_2D_, factor_dW_3D_;
+    Real inv_h_, rc_ref_, rc_ref_sqr_;
+    Real factor_W_1D_, factor_W_2D_, factor_W_3D_;
+    Real factor_dW_1D_, factor_dW_2D_, factor_dW_3D_;
+    Real dq_, delta_q_0_, delta_q_1_, delta_q_2_, delta_q_3_;
+    Real w_1d[tabulated_array_size_], dw_1d[tabulated_array_size_];
 };
 } // namespace SPH
-#endif // KERNEL_WENDLAND_C2_CK_H
+#endif // KERNEL_TABULATED_CK_H
