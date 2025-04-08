@@ -51,10 +51,10 @@ class KernelTabulatedCK
         Real fraction_2 = fraction_1 - dq_;         // fraction_2 correspond to i+1
         Real fraction_3 = fraction_1 - 2 * dq_;     ////fraction_3 correspond to i+2
 
-        return fraction_1 * fraction_2 * fraction_3 * inv_delta_q_0_ * data[i - 1] +
-               fraction_0 * fraction_2 * fraction_3 * inv_delta_q_1_ * data[i] +
-               fraction_0 * fraction_1 * fraction_3 * inv_delta_q_2_ * data[i + 1] +
-               fraction_0 * fraction_1 * fraction_2 * inv_delta_q_3_ * data[i + 2];
+        return (fraction_1 * fraction_2 * fraction_3) / delta_q_0_ * data[i - 1] +
+               (fraction_0 * fraction_2 * fraction_3) / delta_q_1_ * data[i] +
+               (fraction_0 * fraction_1 * fraction_3) / delta_q_2_ * data[i + 1] +
+               (fraction_0 * fraction_1 * fraction_2) / delta_q_3_ * data[i + 2];
     };
 
     Real W(const Real &displacement) const
@@ -98,7 +98,7 @@ class KernelTabulatedCK
     Real inv_h_, rc_ref_, rc_ref_sqr_;
     Real factor_W_1D_, factor_W_2D_, factor_W_3D_;
     Real factor_dW_1D_, factor_dW_2D_, factor_dW_3D_;
-    Real dq_, inv_delta_q_0_, inv_delta_q_1_, inv_delta_q_2_, inv_delta_q_3_;
+    Real dq_, delta_q_0_, delta_q_1_, delta_q_2_, delta_q_3_;
     Real w_1d[tabulated_array_size_], dw_1d[tabulated_array_size_];
 };
 } // namespace SPH
