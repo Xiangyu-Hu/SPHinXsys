@@ -28,9 +28,9 @@ KernelTabulatedCK::KernelTabulatedCK(Kernel &kernel)
         dw_1d[i] = 0.0;
     }
 
-    delta_q_0_ = (-1.0 * dq_) * (-2.0 * dq_) * (-3.0 * dq_);
-    delta_q_1_ = dq_ * (-1.0 * dq_) * (-2.0 * dq_);
-    delta_q_2_ = (2.0 * dq_) * dq_ * (-1.0 * dq_);
-    delta_q_3_ = (3.0 * dq_) * (2.0 * dq_) * dq_;
+    inv_delta_q_0_ = 1.0 / ((-1.0 * dq_) * (-2.0 * dq_) * (-3.0 * dq_));
+    inv_delta_q_1_ = 1.0 / (dq_ * (-1.0 * dq_) * (-2.0 * dq_));
+    inv_delta_q_2_ = 1.0 / ((2.0 * dq_) * dq_ * (-1.0 * dq_));
+    inv_delta_q_3_ = 1.0 / ((3.0 * dq_) * (2.0 * dq_) * dq_);
 } //=================================================================================================//
 } // namespace SPH
