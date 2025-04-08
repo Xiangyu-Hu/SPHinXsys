@@ -362,8 +362,6 @@ void DiffuseLevelSetSign::update(const size_t &package_index)
 //=============================================================================================//
 void WriteMeshFieldToPlt::update(std::ofstream &output_file)
 {
-    Arrayi number_of_operation = mesh_data_.global_mesh_.AllGridPoints();
-
     output_file << "\n";
     output_file << "title='View'"
                 << "\n";
@@ -374,73 +372,69 @@ void WriteMeshFieldToPlt::update(std::ofstream &output_file)
                 << "phi, "
                 << "n_x, "
                 << "n_y, "
-                << "n_z "
+                << "n_z, "
+                << "near_interface_id "
                 << "\n";
 
-    mesh_for_each(Array3i::Zero(), mesh_data_.AllGridPoints(), [&](int l, int m, int n)
+    mesh_for_each(Array3i::Zero(), mesh_data_.AllCells(), [&](const Arrayi &cell_index)
                   { 
-                    if (mesh_data_.isCoreDataPackage(Arrayi(l, m, n)))
+                    if (mesh_data_.isCoreDataPackage(cell_index))
                     {
-                        output_file << "zone T= 'GridPackage[" << l << "][" << m << "][" << n 
-                                << "]'  i="<< mesh_data_.DataPackageSize() << "  j=" 
-                                << mesh_data_.DataPackageSize() << "  k=" 
-                                << mesh_data_.DataPackageSize()
-                                << "  DATAPACKING=BLOCK  SOLUTIONTIME=" << 0 << "\n";
+                        output_file << "zone T=\"GridPackage[" << cell_index[0] 
+                                    << "][" << cell_index[1] << "][" << cell_index[2] << "]\"  i=" 
+                                    << mesh_data_.DataPackageSize() + 2 << "  j="
+                                    << mesh_data_.DataPackageSize() + 2 << "  k="
+                                    << mesh_data_.DataPackageSize() + 2
+                                    << "  DATAPACKING=BLOCK  SOLUTIONTIME=" << 0 << "\n";
 
-                        mesh_for_each(Array3i::Zero(), mesh_data_.DataPackageSize() * Array3i::Ones(), [&](int i, int j, int k)
-                                  { 
-                                    Vecd data_position = mesh_data_.DataPositionFromIndex(Arrayi(l, m, n), Arrayi(i, j, k));
-                                    output_file << data_position[0] << " ";
-                                });
-                        output_file << "\n";
-
-                        mesh_for_each(Array3i::Zero(), mesh_data_.DataPackageSize() * Array3i::Ones(), [&](int i, int j, int k)
-                                  { 
-                                    Vecd data_position = mesh_data_.DataPositionFromIndex(Arrayi(l, m, n), Arrayi(i, j, k));
-                                    output_file << data_position[1] << " ";
-                                });
-                        output_file << "\n";
-                    
-                        mesh_for_each(Array3i::Zero(), mesh_data_.DataPackageSize() * Array3i::Ones(), [&](int i, int j, int k)
-                                  { 
-                                    Vecd data_position = mesh_data_.DataPositionFromIndex(Arrayi(l, m, n), Arrayi(i, j, k));
-                                    output_file << data_position[2] << " ";
-                                });
+                        mesh_for_each(-Array3i::Ones(), (mesh_data_.DataPackageSize() + 1) * Array3i::Ones(), [&](const Arrayi &data_index)
+                                      { 
+                                    Vecd data_position = mesh_data_.DataPositionFromIndex(cell_index, data_index);
+                                    output_file << data_position[0] << " "; });
                         output_file << "\n";
 
-                        mesh_for_each(Array3i::Zero(), mesh_data_.DataPackageSize() * Array3i::Ones(), [&](int i, int j, int k)
-                                  { 
-                                    size_t pkg_index = mesh_data_.PackageIndexFromCellIndex(Arrayi(l, m, n));
-                                    output_file << phi_.Data()[pkg_index][i][j][k] << " "; 
-                                });
+                        mesh_for_each(-Array3i::Ones(), (mesh_data_.DataPackageSize() + 1) * Array3i::Ones(), [&](const Arrayi &data_index)
+                                      { 
+                                    Vecd data_position = mesh_data_.DataPositionFromIndex(cell_index, data_index);
+                                    output_file << data_position[1] << " "; });
                         output_file << "\n";
-                    
-                        mesh_for_each(Array3i::Zero(), mesh_data_.DataPackageSize() * Array3i::Ones(), [&](int i, int j, int k)
-                                  { 
-                                    size_t pkg_index = mesh_data_.PackageIndexFromCellIndex(Arrayi(l, m, n));
-                                    output_file << phi_gradient_.Data()[pkg_index][i][j][k][0] << " "; 
-                                });
+
+                        mesh_for_each(-Array3i::Ones(), (mesh_data_.DataPackageSize() + 1) * Array3i::Ones(), [&](const Arrayi &data_index)
+                                      { 
+                                    Vecd data_position = mesh_data_.DataPositionFromIndex(cell_index, data_index);
+                                    output_file << data_position[2] << " "; });
                         output_file << "\n";
-                    
-                        mesh_for_each(Array3i::Zero(), mesh_data_.DataPackageSize() * Array3i::Ones(), [&](int i, int j, int k)
-                                  { 
-                                    size_t pkg_index = mesh_data_.PackageIndexFromCellIndex(Arrayi(l, m, n));
-                                    output_file << phi_gradient_.Data()[pkg_index][i][j][k][1] << " "; 
-                                });
+
+                        size_t pkg_index = mesh_data_.PackageIndexFromCellIndex(cell_index);
+                        auto &neighborhood = mesh_data_.cell_neighborhood_[pkg_index];
+
+                        mesh_for_each(-Array3i::Ones(), (mesh_data_.DataPackageSize() + 1) * Array3i::Ones(), [&](const Arrayi &data_index)
+                                      {
+                                    std::pair<size_t, Arrayi> a = mesh_data_.NeighbourIndexShift(data_index, neighborhood);
+                                    output_file << phi_.Data()[a.first][a.second[0]][a.second[1]][a.second[2]] << " "; });
                         output_file << "\n";
-                    
-                        mesh_for_each(Array3i::Zero(), mesh_data_.DataPackageSize() * Array3i::Ones(), [&](int i, int j, int k)
-                                  { 
-                                    size_t pkg_index = mesh_data_.PackageIndexFromCellIndex(Arrayi(l, m, n));
-                                    output_file << phi_gradient_.Data()[pkg_index][i][j][k][2] << " "; 
-                                });
+
+                        mesh_for_each(-Array3i::Ones(), (mesh_data_.DataPackageSize() + 1) * Array3i::Ones(), [&](const Arrayi &data_index)
+                                      {
+                                    std::pair<size_t, Arrayi> a = mesh_data_.NeighbourIndexShift(data_index, neighborhood);
+                                    output_file << phi_gradient_.Data()[a.first][a.second[0]][a.second[1]][a.second[2]][0] << " "; });
                         output_file << "\n";
-                    
-                        mesh_for_each(Array3i::Zero(), mesh_data_.DataPackageSize() * Array3i::Ones(), [&](int i, int j, int k)
-                                  { 
-                                    size_t pkg_index = mesh_data_.PackageIndexFromCellIndex(Arrayi(l, m, n));
-                                    output_file << near_interface_id_.Data()[pkg_index][i][j][k] << " "; 
-                                });
+
+                        mesh_for_each(-Array3i::Ones(), (mesh_data_.DataPackageSize() + 1) * Array3i::Ones(), [&](const Arrayi &data_index)
+                                      {
+                                    std::pair<size_t, Arrayi> a = mesh_data_.NeighbourIndexShift(data_index, neighborhood);
+                                    output_file << phi_gradient_.Data()[a.first][a.second[0]][a.second[1]][a.second[2]][1] << " "; });
+
+                        mesh_for_each(-Array3i::Ones(), (mesh_data_.DataPackageSize() + 1) * Array3i::Ones(), [&](const Arrayi &data_index)
+                                      {
+                                    std::pair<size_t, Arrayi> a = mesh_data_.NeighbourIndexShift(data_index, neighborhood);
+                                    output_file << phi_gradient_.Data()[a.first][a.second[0]][a.second[1]][a.second[2]][2] << " "; });
+                        output_file << "\n";
+
+                        mesh_for_each(-Array3i::Ones(), (mesh_data_.DataPackageSize() + 1) * Array3i::Ones(), [&](const Arrayi &data_index)
+                                      {
+                                    std::pair<size_t, Arrayi> a = mesh_data_.NeighbourIndexShift(data_index, neighborhood);
+                                    output_file << near_interface_id_.Data()[a.first][a.second[0]][a.second[1]][a.second[2]] << " "; });
                         output_file << "\n";
                     } });
 }
