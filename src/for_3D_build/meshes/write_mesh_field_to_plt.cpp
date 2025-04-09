@@ -112,7 +112,7 @@ void WriteMeshFieldToPlt::update(std::ofstream &output_file)
         output_file << "zone i=" << block_size[0] * mesh_data_.DataPackageSize() + 2 << "  j="
                     << block_size[1] * mesh_data_.DataPackageSize() + 2 << "  k="
                     << block_size[2] * mesh_data_.DataPackageSize() + 2
-                    << "  DATAPACKING=BLOCK  SOLUTIONTIME=" << 0 << "\n";
+                    << "  DATAPACKING=POINT  SOLUTIONTIME=" << 0 << "\n";
 
         for (int k = global_lower_bound[2]; k != global_upper_bound[2]; ++k)
             for (int j = global_lower_bound[1]; j != global_upper_bound[1]; ++j)
@@ -121,83 +121,14 @@ void WriteMeshFieldToPlt::update(std::ofstream &output_file)
                 {
                     Vecd data_position = mesh_data_.global_mesh_.GridPositionFromIndex(Arrayi(i, j, k));
                     output_file << data_position[0] << " ";
-                }
-                output_file << " \n";
-            }
-
-        for (int k = global_lower_bound[2]; k != global_upper_bound[2]; ++k)
-            for (int j = global_lower_bound[1]; j != global_upper_bound[1]; ++j)
-            {
-                for (int i = global_lower_bound[0]; i != global_upper_bound[0]; ++i)
-                {
-                    Vecd data_position = mesh_data_.global_mesh_.GridPositionFromIndex(Arrayi(i, j, k));
                     output_file << data_position[1] << " ";
-                }
-                output_file << " \n";
-            }
-
-        for (int k = global_lower_bound[2]; k != global_upper_bound[2]; ++k)
-            for (int j = global_lower_bound[1]; j != global_upper_bound[1]; ++j)
-            {
-                for (int i = global_lower_bound[0]; i != global_upper_bound[0]; ++i)
-                {
-                    Vecd data_position = mesh_data_.global_mesh_.GridPositionFromIndex(Arrayi(i, j, k));
                     output_file << data_position[2] << " ";
-                }
-                output_file << " \n";
-            }
-
-        for (int k = global_lower_bound[2]; k != global_upper_bound[2]; ++k)
-            for (int j = global_lower_bound[1]; j != global_upper_bound[1]; ++j)
-            {
-                for (int i = global_lower_bound[0]; i != global_upper_bound[0]; ++i)
-                {
-                    output_file << mesh_data_.DataValueFromGlobalIndex(phi_, Arrayi(i, j, k))
-                                << " ";
-                }
-                output_file << " \n";
-            }
-
-        for (int k = global_lower_bound[2]; k != global_upper_bound[2]; ++k)
-            for (int j = global_lower_bound[1]; j != global_upper_bound[1]; ++j)
-            {
-                for (int i = global_lower_bound[0]; i != global_upper_bound[0]; ++i)
-                {
-                    output_file << mesh_data_.DataValueFromGlobalIndex(phi_gradient_, Arrayi(i, j, k))[0]
-                                << " ";
-                }
-                output_file << " \n";
-            }
-
-        for (int k = global_lower_bound[2]; k != global_upper_bound[2]; ++k)
-            for (int j = global_lower_bound[1]; j != global_upper_bound[1]; ++j)
-            {
-                for (int i = global_lower_bound[0]; i != global_upper_bound[0]; ++i)
-                {
-                    output_file << mesh_data_.DataValueFromGlobalIndex(phi_gradient_, Arrayi(i, j, k))[1]
-                                << " ";
-                }
-                output_file << " \n";
-            }
-
-        for (int k = global_lower_bound[2]; k != global_upper_bound[2]; ++k)
-            for (int j = global_lower_bound[1]; j != global_upper_bound[1]; ++j)
-            {
-                for (int i = global_lower_bound[0]; i != global_upper_bound[0]; ++i)
-                {
-                    output_file << mesh_data_.DataValueFromGlobalIndex(phi_gradient_, Arrayi(i, j, k))[2]
-                                << " ";
-                }
-                output_file << " \n";
-            }
-
-        for (int k = global_lower_bound[2]; k != global_upper_bound[2]; ++k)
-            for (int j = global_lower_bound[1]; j != global_upper_bound[1]; ++j)
-            {
-                for (int i = global_lower_bound[0]; i != global_upper_bound[0]; ++i)
-                {
-                    output_file << mesh_data_.DataValueFromGlobalIndex(near_interface_id_, Arrayi(i, j, k))
-                                << " ";
+                    output_file << mesh_data_.DataValueFromGlobalIndex(phi_, Arrayi(i, j, k)) << " ";
+                    output_file << mesh_data_.DataValueFromGlobalIndex(phi_gradient_, Arrayi(i, j, k))[0] << " ";
+                    output_file << mesh_data_.DataValueFromGlobalIndex(phi_gradient_, Arrayi(i, j, k))[1] << " ";
+                    output_file << mesh_data_.DataValueFromGlobalIndex(phi_gradient_, Arrayi(i, j, k))[2] << " ";
+                    output_file << mesh_data_.DataValueFromGlobalIndex(near_interface_id_, Arrayi(i, j, k)) << " ";
+                    output_file << " \n";
                 }
                 output_file << " \n";
             }
