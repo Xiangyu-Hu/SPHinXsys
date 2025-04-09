@@ -51,7 +51,7 @@ void mesh_for_column_major(const Arrayi &lower, const Arrayi &upper, const Funct
     for (int l = lower[1]; l != upper[1]; ++l)
         for (int m = lower[0]; m != upper[0]; ++m)
         {
-            function(Array2i(l, m));
+            function(Array2i(m, l));
         }
 }
 //=================================================================================================//
