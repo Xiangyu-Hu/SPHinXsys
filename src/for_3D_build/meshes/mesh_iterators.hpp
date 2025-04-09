@@ -51,6 +51,17 @@ void mesh_for_each(const Array3i &lower, const Array3i &upper, const FunctionOnE
 }
 //=================================================================================================//
 template <typename FunctionOnEach>
+void mesh_for_column_major(const Arrayi &lower, const Arrayi &upper, const FunctionOnEach &function)
+{
+    for (int l = lower[2]; l != upper[2]; ++l)
+        for (int m = lower[1]; m != upper[1]; ++m)
+            for (int n = lower[0]; n != upper[0]; ++n)
+            {
+                function(Array3i(n, m, l));
+            }
+}
+//=================================================================================================//
+template <typename FunctionOnEach>
 Array3i mesh_find_if(const Array3i &lower, const Array3i &upper, const FunctionOnEach &function)
 {
     for (int l = lower[0]; l != upper[0]; ++l)

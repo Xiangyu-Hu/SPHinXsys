@@ -93,6 +93,8 @@ inline bool mesh_any_of3d(const CheckOnEach &function)
 template <typename FunctionOnEach>
 void mesh_for_each(const Arrayi &lower, const Arrayi &upper, const FunctionOnEach &function);
 template <typename FunctionOnEach>
+void mesh_for_column_major(const Arrayi &lower, const Arrayi &upper, const FunctionOnEach &function);
+template <typename FunctionOnEach>
 Arrayi mesh_find_if(const Arrayi &lower, const Arrayi &upper, const FunctionOnEach &function);
 template <typename FunctionOnEach>
 bool mesh_any_of(const Arrayi &lower, const Arrayi &upper, const FunctionOnEach &function)
