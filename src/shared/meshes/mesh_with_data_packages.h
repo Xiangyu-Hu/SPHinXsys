@@ -147,7 +147,7 @@ class MeshWithGridDataPackages : public Mesh
   public:
     std::pair<size_t, Arrayi> NeighbourIndexShift(const Arrayi shift_index, const CellNeighborhood &neighbour);
     bool isInnerDataPackage(const Arrayi &cell_index);
-    int DataPackageSize() { return pkg_size; }
+    int DataPackageSize() const { return pkg_size; }
     void assignDataPackageIndex(const Arrayi &cell_index, const size_t package_index);
     size_t PackageIndexFromCellIndex(const Arrayi &cell_index);
     /** obtain averaged value at a corner of a data cell */
