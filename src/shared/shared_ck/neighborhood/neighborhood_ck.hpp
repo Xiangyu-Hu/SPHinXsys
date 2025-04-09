@@ -14,7 +14,7 @@ Neighbor<>::Neighbor(const ExecutionPolicy &ex_policy,
       source_pos_(dv_pos->DelegatedData(ex_policy)),
       target_pos_(dv_contact_pos->DelegatedData(ex_policy))
 {
-    KernelWendlandC2CK contact_kernel(*contact_adaptation->getKernel());
+    KernelTabulatedCK contact_kernel(*contact_adaptation->getKernel());
     if (kernel_.CutOffRadius() < contact_kernel.CutOffRadius())
     {
         kernel_ = contact_kernel;
