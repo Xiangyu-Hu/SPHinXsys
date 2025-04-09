@@ -151,8 +151,8 @@ MeshRecordingToPlt ::MeshRecordingToPlt(SPHSystem &sph_system, BaseMeshField &me
 //=============================================================================================//
 void MeshRecordingToPlt::writeToFile(size_t iteration_step)
 {
-    std::string extened_name = partial_file_name_ + "_" + std::to_string(iteration_step);
-    mesh_field_.writeMeshFieldToPlt(extened_name);
+    std::string extended_name = partial_file_name_ + "_" + std::to_string(iteration_step);
+    mesh_field_.writeMeshFieldToPlt(extended_name);
 }
 //=================================================================================================//
 } // namespace SPH
