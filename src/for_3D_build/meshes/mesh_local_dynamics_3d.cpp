@@ -46,18 +46,18 @@ bool TagACellIsInnerPackage::isInnerPackage(const Arrayi &cell_index)
         all_cells_.min(cell_index + 2 * Array3i::Ones()),
         [&](int l, int m, int n)
         {
-            return mesh_data_.isInnerDataPackage(Arrayi(l, m, n));    //actually a core test here, because only core pkgs are assigned
+            return mesh_data_.isInnerDataPackage(Arrayi(l, m, n)); // actually a core test here, because only core pkgs are assigned
         });
 }
 //=============================================================================================//
 void InitializeCellNeighborhood::update(const size_t &package_index)
 {
-    size_t sort_index = mesh_data_.occupied_data_pkgs_[package_index-2].first;
+    size_t sort_index = mesh_data_.occupied_data_pkgs_[package_index - 2].first;
     Arrayi cell_index = CellIndexFromSortIndex(sort_index);
     CellNeighborhood &current = mesh_data_.cell_neighborhood_[package_index];
     std::pair<Arrayi, int> &metadata = mesh_data_.meta_data_cell_[package_index];
     metadata.first = cell_index;
-    metadata.second = mesh_data_.occupied_data_pkgs_[package_index-2].second;
+    metadata.second = mesh_data_.occupied_data_pkgs_[package_index - 2].second;
     for (int l = -1; l < 2; l++)
         for (int m = -1; m < 2; m++)
             for (int n = -1; n < 2; n++)
@@ -142,7 +142,7 @@ Vecd UpdateKernelIntegrals::computeKernelGradientIntegral(const Vecd &position)
     return integral * data_spacing_ * data_spacing_ * data_spacing_;
 }
 //=============================================================================================//
-Matd UpdateKernelIntegrals::computeKernelSecondGradientIntegral(const Vecd& position)
+Matd UpdateKernelIntegrals::computeKernelSecondGradientIntegral(const Vecd &position)
 {
     Real phi = probeSignedDistance(position);
     Real cutoff_radius = kernel_.CutOffRadius(global_h_ratio_);
@@ -165,8 +165,8 @@ Matd UpdateKernelIntegrals::computeKernelSecondGradientIntegral(const Vecd& posi
                     Real distance = displacement.norm();
                     if (distance < cutoff_radius)
                         integral += kernel_.d2W(global_h_ratio_, distance, displacement) *
-                        CutCellVolumeFraction(phi_neighbor, phi_gradient, data_spacing_) *
-                        displacement * displacement.transpose() / (distance * distance + TinyReal);
+                                    CutCellVolumeFraction(phi_neighbor, phi_gradient, data_spacing_) *
+                                    displacement * displacement.transpose() / (distance * distance + TinyReal);
                 }
             });
     }
@@ -358,114 +358,6 @@ void DiffuseLevelSetSign::update(const size_t &package_index)
                     });
             }
         });
-}
-//=============================================================================================//
-void WriteMeshFieldToPlt::update(std::ofstream &output_file)
-{
-    Arrayi number_of_operation = mesh_data_.global_mesh_.AllGridPoints();
-
-    output_file << "\n";
-    output_file << "title='View'"
-                << "\n";
-    output_file << "variables= "
-                << "x, "
-                << "y, "
-                << "z, "
-                << "phi, "
-                << "n_x, "
-                << "n_y, "
-                << "n_z "
-                << "\n";
-    output_file << "zone i=" << number_of_operation[0] << "  j=" << number_of_operation[1] << "  k=" << number_of_operation[2]
-                << "  DATAPACKING=BLOCK  SOLUTIONTIME=" << 0 << "\n";
-
-    for (int k = 0; k != number_of_operation[2]; ++k)
-        for (int j = 0; j != number_of_operation[1]; ++j)
-        {
-            for (int i = 0; i != number_of_operation[0]; ++i)
-            {
-                Vecd data_position = mesh_data_.global_mesh_.GridPositionFromIndex(Arrayi(i, j, k));
-                output_file << data_position[0] << " ";
-            }
-            output_file << " \n";
-        }
-
-    for (int k = 0; k != number_of_operation[2]; ++k)
-        for (int j = 0; j != number_of_operation[1]; ++j)
-        {
-            for (int i = 0; i != number_of_operation[0]; ++i)
-            {
-                Vecd data_position = mesh_data_.global_mesh_.GridPositionFromIndex(Arrayi(i, j, k));
-                output_file << data_position[1] << " ";
-            }
-            output_file << " \n";
-        }
-
-    for (int k = 0; k != number_of_operation[2]; ++k)
-        for (int j = 0; j != number_of_operation[1]; ++j)
-        {
-            for (int i = 0; i != number_of_operation[0]; ++i)
-            {
-                Vecd data_position = mesh_data_.global_mesh_.GridPositionFromIndex(Arrayi(i, j, k));
-                output_file << data_position[2] << " ";
-            }
-            output_file << " \n";
-        }
-
-    for (int k = 0; k != number_of_operation[2]; ++k)
-        for (int j = 0; j != number_of_operation[1]; ++j)
-        {
-            for (int i = 0; i != number_of_operation[0]; ++i)
-            {
-                output_file << mesh_data_.DataValueFromGlobalIndex(phi_, Arrayi(i, j, k))
-                            << " ";
-            }
-            output_file << " \n";
-        }
-
-    for (int k = 0; k != number_of_operation[2]; ++k)
-        for (int j = 0; j != number_of_operation[1]; ++j)
-        {
-            for (int i = 0; i != number_of_operation[0]; ++i)
-            {
-                output_file << mesh_data_.DataValueFromGlobalIndex(phi_gradient_, Arrayi(i, j, k))[0]
-                            << " ";
-            }
-            output_file << " \n";
-        }
-
-    for (int k = 0; k != number_of_operation[2]; ++k)
-        for (int j = 0; j != number_of_operation[1]; ++j)
-        {
-            for (int i = 0; i != number_of_operation[0]; ++i)
-            {
-                output_file << mesh_data_.DataValueFromGlobalIndex(phi_gradient_, Arrayi(i, j, k))[1]
-                            << " ";
-            }
-            output_file << " \n";
-        }
-
-    for (int k = 0; k != number_of_operation[2]; ++k)
-        for (int j = 0; j != number_of_operation[1]; ++j)
-        {
-            for (int i = 0; i != number_of_operation[0]; ++i)
-            {
-                output_file << mesh_data_.DataValueFromGlobalIndex(phi_gradient_, Arrayi(i, j, k))[2]
-                            << " ";
-            }
-            output_file << " \n";
-        }
-
-    for (int k = 0; k != number_of_operation[2]; ++k)
-        for (int j = 0; j != number_of_operation[1]; ++j)
-        {
-            for (int i = 0; i != number_of_operation[0]; ++i)
-            {
-                output_file << mesh_data_.DataValueFromGlobalIndex(near_interface_id_, Arrayi(i, j, k))
-                            << " ";
-            }
-            output_file << " \n";
-        }
 }
 //=============================================================================================//
 } // namespace SPH

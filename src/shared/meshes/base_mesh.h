@@ -58,7 +58,7 @@ class Mesh
   public:
     Mesh(BoundingBox tentative_bounds, Real grid_spacing, size_t buffer_width);
     Mesh(Vecd mesh_lower_bound, Real grid_spacing, Arrayi all_grid_points);
-    ~Mesh(){};
+    ~Mesh() {};
 
     Vecd MeshLowerBound() const { return mesh_lower_bound_; };
     Real GridSpacing() const { return grid_spacing_; };
@@ -149,12 +149,12 @@ class BaseMeshField
     std::string name_{};
 
   public:
-    explicit BaseMeshField(const std::string &name) : name_(name){};
-    virtual ~BaseMeshField(){};
+    explicit BaseMeshField(const std::string &name) : name_(name) {};
+    virtual ~BaseMeshField() {};
     /** Return the mesh field name. */
     std::string Name() { return name_; };
     /** output mesh data for Tecplot visualization */
-    virtual void writeMeshFieldToPlt(std::ofstream &output_file) = 0;
+    virtual void writeMeshFieldToPlt(const std::string &partial_file_name) = 0;
 };
 } // namespace SPH
 #endif // BASE_MESH_H
