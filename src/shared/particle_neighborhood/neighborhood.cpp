@@ -566,7 +566,6 @@ NearestNeighborBuilder::NearestNeighborBuilder(SPHBody &body, SPHBody &contact_b
     Real cut_off_radius = factor * dp_max;
     // smoothing length: cut_off_radius/2.0
     kernel_ = kernel_keeper_.createPtr<KernelWendlandC2>(cut_off_radius / 2.0);
-    kernel_->reduceOnce();
 }
 //=================================================================================================//
 } // namespace SPH
