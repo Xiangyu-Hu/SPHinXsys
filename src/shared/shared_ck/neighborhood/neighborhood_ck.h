@@ -44,10 +44,8 @@ class Neighbor<>
 {
   public:
     template <class ExecutionPolicy>
-    Neighbor(const ExecutionPolicy &ex_policy, SPHAdaptation *sph_adaptation, DiscreteVariable<Vecd> *dv_pos);
-
-    template <class ExecutionPolicy>
-    Neighbor(const ExecutionPolicy &ex_policy, SPHAdaptation *sph_adaptation, SPHAdaptation *contact_adaptation,
+    Neighbor(const ExecutionPolicy &ex_policy,
+             SPHAdaptation *sph_adaptation, SPHAdaptation *contact_adaptation,
              DiscreteVariable<Vecd> *dv_pos, DiscreteVariable<Vecd> *dv_target_pos);
 
     KernelTabulatedCK &getKernel() { return kernel_; }
@@ -66,7 +64,7 @@ class Neighbor<>
     {
       public:
         NeighborCriterion(Neighbor<> &neighbor);
-        bool operator()(UnsignedInt target_index, UnsignedInt source_index)
+        bool operator()(UnsignedInt target_index, UnsignedInt source_index) const
         {
             return (source_pos_[source_index] - target_pos_[target_index]).squaredNorm() < cut_radius_square_;
         };

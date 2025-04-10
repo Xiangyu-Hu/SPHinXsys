@@ -523,6 +523,11 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v4
 
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: '3.x'
+
       - name: Install system dependencies
         run: |
           brew reinstall gfortran # to force having gfortran on PATH because github runners don't have it, just the versioned aliases, i.e. gfortran-11
@@ -532,7 +537,6 @@ jobs:
           brew install \
             pkg-config `# for installing libraries with vcpkg`\
             git \
-            cmake \
             ninja \
             autoconf automake autoconf-archive
 
@@ -593,6 +597,11 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v4
 
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: '3.x'
+          
       - name: Install system dependencies
         run: |
           brew reinstall gfortran # to force having gfortran on PATH because github runners don't have it, just the versioned aliases, i.e. gfortran-11
@@ -602,7 +611,6 @@ jobs:
           brew install \
             pkg-config `# for installing libraries with vcpkg`\
             git \
-            cmake \
             ninja \
             autoconf automake autoconf-archive
 

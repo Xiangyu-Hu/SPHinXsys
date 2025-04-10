@@ -3,6 +3,25 @@
 namespace SPH
 {
 //=================================================================================================//
+DiscreteVariable<Vecd> *Relation<Base>::assignConfigPosition(
+    BaseParticles &particles, ConfigType config_type)
+{
+    if (config_type == ConfigType::Eulerian)
+    {
+        return particles.getVariableByName<Vecd>("Position");
+    }
+    else
+    {
+        return particles.registerStateVariableOnlyFrom<Vecd>(
+            "InitialPosition", "Position");
+    }
+}
+//=================================================================================================//
+DiscreteVariable<Vecd> *Relation<Base>::getTargetPosition(UnsignedInt target_index)
+{
+    return dv_target_pos_[target_index];
+}
+//=================================================================================================//
 DiscreteVariable<UnsignedInt> *Relation<Base>::getNeighborIndex(UnsignedInt target_index)
 {
     return dv_target_neighbor_index_[target_index];

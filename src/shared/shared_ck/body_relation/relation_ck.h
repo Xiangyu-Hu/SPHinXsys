@@ -35,6 +35,11 @@
 
 namespace SPH
 {
+enum class ConfigType
+{
+    Eulerian,
+    Lagrangian,
+};
 
 template <typename...>
 class Relation;
@@ -43,12 +48,16 @@ template <>
 class Relation<Base>
 {
     UniquePtrsKeeper<Entity> relation_variable_ptrs_;
+    DiscreteVariable<Vecd> *assignConfigPosition(BaseParticles &particles, ConfigType config_type);
 
   public:
     template <class SourceIdentifier, class TargetIdentifier>
-    Relation(SourceIdentifier &source_identifier, StdVec<TargetIdentifier *> target_identifiers);
+    Relation(SourceIdentifier &source_identifier, StdVec<TargetIdentifier *> target_identifiers,
+             ConfigType config_type = ConfigType::Eulerian);
     virtual ~Relation() {};
     SPHBody &getSPHBody() { return sph_body_; };
+    DiscreteVariable<Vecd> *getSourcePosition() { return dv_source_pos_; };
+    DiscreteVariable<Vecd> *getTargetPosition(UnsignedInt target_index = 0);
     DiscreteVariable<UnsignedInt> *getNeighborIndex(UnsignedInt target_index = 0);
     DiscreteVariable<UnsignedInt> *getParticleOffset(UnsignedInt target_index = 0);
     void registerComputingKernel(execution::Implementation<Base> *implementation, UnsignedInt target_index = 0);
@@ -71,6 +80,8 @@ class Relation<Base>
   protected:
     SPHBody &sph_body_;
     BaseParticles &particles_;
+    DiscreteVariable<Vecd> *dv_source_pos_;
+    StdVec<DiscreteVariable<Vecd> *> dv_target_pos_;
     UnsignedInt offset_list_size_;
     StdVec<DiscreteVariable<UnsignedInt> *> dv_target_neighbor_index_;
     StdVec<DiscreteVariable<UnsignedInt> *> dv_target_particle_offset_;
@@ -106,7 +117,8 @@ class Relation<Contact<SourceIdentifier, TargetIdentifier>> : public Relation<Ba
     typedef SourceIdentifier SourceType;
     typedef TargetIdentifier TargetType;
 
-    Relation(SourceIdentifier &source_identifier, StdVec<TargetIdentifier *> contact_identifiers);
+    template <typename... Args>
+    Relation(SourceIdentifier &source_identifier, StdVec<TargetIdentifier *> contact_identifiers, Args &&...args);
     virtual ~Relation() {};
     SourceIdentifier &getSourceIdentifier() { return source_identifier_; };
     StdVec<TargetIdentifier *> getContactIdentifiers() { return contact_identifiers_; };
@@ -119,8 +131,9 @@ template <>
 class Relation<Contact<>> : public Relation<Contact<SPHBody, RealBody>>
 {
   public:
-    Relation(SPHBody &sph_body, StdVec<RealBody *> contact_bodies)
-        : Relation<Contact<SPHBody, RealBody>>(sph_body, contact_bodies) {}
+    template <typename... Args>
+    Relation(SPHBody &sph_body, StdVec<RealBody *> contact_bodies, Args &&...args)
+        : Relation<Contact<SPHBody, RealBody>>(sph_body, contact_bodies, std::forward<Args>(args)...) {}
     virtual ~Relation() {};
 };
 } // namespace SPH

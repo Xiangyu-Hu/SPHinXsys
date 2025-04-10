@@ -7,16 +7,20 @@ namespace SPH
 {
 //=================================================================================================//
 template <class SourceIdentifier, class TargetIdentifier>
-Relation<Base>::Relation(
-    SourceIdentifier &source_identifier, StdVec<TargetIdentifier *> contact_identifiers)
+Relation<Base>::Relation(SourceIdentifier &source_identifier,
+                         StdVec<TargetIdentifier *> contact_identifiers,
+                         ConfigType config_type)
     : sph_body_(source_identifier.getSPHBody()),
       particles_(sph_body_.getBaseParticles()),
+      dv_source_pos_(this->assignConfigPosition(particles_, config_type)),
       offset_list_size_(particles_.ParticlesBound() + 1)
 {
     for (size_t k = 0; k != contact_identifiers.size(); ++k)
     {
         SPHBody &contact_body = contact_identifiers[k]->getSPHBody();
         const std::string name = contact_body.getName();
+        BaseParticles &contact_particles = contact_body.getBaseParticles();
+        dv_target_pos_.push_back(assignConfigPosition(contact_particles, config_type));
         dv_target_neighbor_index_.push_back(addRelationVariable<UnsignedInt>(
             name + "NeighborIndex", offset_list_size_));
         dv_target_particle_offset_.push_back(addRelationVariable<UnsignedInt>(
@@ -39,9 +43,10 @@ Relation<Base>::NeighborList::NeighborList(
       particle_offset_(encloser.dv_target_particle_offset_[target_index]->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <class DynamicsIdentifier, class TargetIdentifier>
+template <typename... Args>
 Relation<Contact<DynamicsIdentifier, TargetIdentifier>>::Relation(
-    DynamicsIdentifier &source_identifier, StdVec<TargetIdentifier *> contact_identifiers)
-    : Relation<Base>(source_identifier, contact_identifiers),
+    DynamicsIdentifier &source_identifier, StdVec<TargetIdentifier *> contact_identifiers, Args &&...args)
+    : Relation<Base>(source_identifier, contact_identifiers, std::forward<Args>(args)...),
       source_identifier_(source_identifier), contact_identifiers_(contact_identifiers)
 {
     for (size_t k = 0; k != contact_identifiers.size(); ++k)

@@ -30,11 +30,11 @@
 #ifndef MESH_LOCAL_DYNAMICS_H
 #define MESH_LOCAL_DYNAMICS_H
 
-#include "sphinxsys_variable.h"
-#include "mesh_with_data_packages.hpp"
 #include "base_geometry.h"
 #include "base_kernel.h"
 #include "data_type.h"
+#include "mesh_with_data_packages.hpp"
+#include "sphinxsys_variable.h"
 
 namespace SPH
 {
@@ -57,8 +57,8 @@ class BaseMeshLocalDynamics
           near_interface_id_(*mesh_data.getMeshVariable<int>("NearInterfaceID")),
           kernel_weight_(*mesh_data.getMeshVariable<Real>("KernelWeight")),
           kernel_gradient_(*mesh_data.getMeshVariable<Vecd>("KernelGradient")),
-          kernel_second_gradient_(*mesh_data.getMeshVariable<Matd>("KernelSecondGradient")){};
-    virtual ~BaseMeshLocalDynamics(){};
+          kernel_second_gradient_(*mesh_data.getMeshVariable<Matd>("KernelSecondGradient")) {};
+    virtual ~BaseMeshLocalDynamics() {};
 
   protected:
     MeshWithGridDataPackages<4> &mesh_data_;
@@ -81,8 +81,8 @@ class InitializeDataForSingularPackage : public BaseMeshLocalDynamics
 {
   public:
     explicit InitializeDataForSingularPackage(MeshWithGridDataPackages<4> &mesh_data)
-        : BaseMeshLocalDynamics(mesh_data){};
-    virtual ~InitializeDataForSingularPackage(){};
+        : BaseMeshLocalDynamics(mesh_data) {};
+    virtual ~InitializeDataForSingularPackage() {};
 
     void update(const size_t package_index, Real far_field_level_set);
 };
@@ -92,11 +92,11 @@ class InitializeDataInACell : public BaseMeshLocalDynamics
   public:
     explicit InitializeDataInACell(MeshWithGridDataPackages<4> &mesh_data, Shape &shape)
         : BaseMeshLocalDynamics(mesh_data),
-          shape_(shape){};
-    virtual ~InitializeDataInACell(){};
+          shape_(shape) {};
+    virtual ~InitializeDataInACell() {};
 
     void update(const Arrayi &index);
-  
+
   private:
     Shape &shape_;
 };
@@ -105,8 +105,8 @@ class TagACellIsInnerPackage : public BaseMeshLocalDynamics
 {
   public:
     explicit TagACellIsInnerPackage(MeshWithGridDataPackagesType &mesh_data)
-        : BaseMeshLocalDynamics(mesh_data){};
-    virtual ~TagACellIsInnerPackage(){};
+        : BaseMeshLocalDynamics(mesh_data) {};
+    virtual ~TagACellIsInnerPackage() {};
 
     void update(const Arrayi &index);
 
@@ -118,8 +118,8 @@ class InitializeIndexMesh : public BaseMeshLocalDynamics
 {
   public:
     explicit InitializeIndexMesh(MeshWithGridDataPackagesType &mesh_data)
-        : BaseMeshLocalDynamics(mesh_data){};
-    virtual ~InitializeIndexMesh(){};
+        : BaseMeshLocalDynamics(mesh_data) {};
+    virtual ~InitializeIndexMesh() {};
 
     void update(const size_t &index);
 };
@@ -128,8 +128,8 @@ class InitializeCellNeighborhood : public BaseMeshLocalDynamics
 {
   public:
     explicit InitializeCellNeighborhood(MeshWithGridDataPackagesType &mesh_data)
-        : BaseMeshLocalDynamics(mesh_data){};
-    virtual ~InitializeCellNeighborhood(){};
+        : BaseMeshLocalDynamics(mesh_data) {};
+    virtual ~InitializeCellNeighborhood() {};
 
     void update(const size_t &index);
 };
@@ -139,8 +139,8 @@ class InitializeBasicDataForAPackage : public BaseMeshLocalDynamics
   public:
     explicit InitializeBasicDataForAPackage(MeshWithGridDataPackagesType &mesh_data, Shape &shape)
         : BaseMeshLocalDynamics(mesh_data),
-          shape_(shape){};
-    virtual ~InitializeBasicDataForAPackage(){};
+          shape_(shape) {};
+    virtual ~InitializeBasicDataForAPackage() {};
 
     void update(const size_t &index);
 
@@ -152,8 +152,8 @@ class UpdateLevelSetGradient : public BaseMeshLocalDynamics
 {
   public:
     explicit UpdateLevelSetGradient(MeshWithGridDataPackages<4> &mesh_data)
-        : BaseMeshLocalDynamics(mesh_data){};
-    virtual ~UpdateLevelSetGradient(){};
+        : BaseMeshLocalDynamics(mesh_data) {};
+    virtual ~UpdateLevelSetGradient() {};
 
     void update(const size_t &index);
 };
@@ -164,8 +164,8 @@ class UpdateKernelIntegrals : public BaseMeshLocalDynamics
     explicit UpdateKernelIntegrals(MeshWithGridDataPackagesType &mesh_data, Kernel &kernel, Real global_h_ratio)
         : BaseMeshLocalDynamics(mesh_data),
           kernel_(kernel),
-          global_h_ratio_(global_h_ratio){};
-    virtual ~UpdateKernelIntegrals(){};
+          global_h_ratio_(global_h_ratio) {};
+    virtual ~UpdateKernelIntegrals() {};
 
     void update(const size_t &package_index);
 
@@ -189,7 +189,7 @@ class UpdateKernelIntegrals : public BaseMeshLocalDynamics
         for (size_t i = 0; i != Dimensions; ++i)
         {
             volume_fraction += phi_gradient[i] * phi_gradient[i] * squared_norm_inv *
-                              Heaviside(phi / (ABS(phi_gradient[i]) + TinyReal), 0.5 * data_spacing);
+                               Heaviside(phi / (ABS(phi_gradient[i]) + TinyReal), 0.5 * data_spacing);
         }
         return volume_fraction;
     }
@@ -199,8 +199,8 @@ class ReinitializeLevelSet : public BaseMeshLocalDynamics
 {
   public:
     explicit ReinitializeLevelSet(MeshWithGridDataPackagesType &mesh_data)
-        : BaseMeshLocalDynamics(mesh_data){};
-    virtual ~ReinitializeLevelSet(){};
+        : BaseMeshLocalDynamics(mesh_data) {};
+    virtual ~ReinitializeLevelSet() {};
 
     void update(const size_t &package_index);
 
@@ -231,11 +231,11 @@ class MarkNearInterface : public BaseMeshLocalDynamics
 {
   public:
     explicit MarkNearInterface(MeshWithGridDataPackagesType &mesh_data)
-        : BaseMeshLocalDynamics(mesh_data){};
-    virtual ~MarkNearInterface(){};
+        : BaseMeshLocalDynamics(mesh_data) {};
+    virtual ~MarkNearInterface() {};
 
     void update(const size_t &package_index);
-    void setSmallShiftFactor(Real small_shift_factor){ small_shift = data_spacing_ * small_shift_factor; };
+    void setSmallShiftFactor(Real small_shift_factor) { small_shift = data_spacing_ * small_shift_factor; };
 
   private:
     Real small_shift;
@@ -245,8 +245,8 @@ class RedistanceInterface : public BaseMeshLocalDynamics
 {
   public:
     explicit RedistanceInterface(MeshWithGridDataPackagesType &mesh_data)
-        : BaseMeshLocalDynamics(mesh_data){};
-    virtual ~RedistanceInterface(){};
+        : BaseMeshLocalDynamics(mesh_data) {};
+    virtual ~RedistanceInterface() {};
 
     void update(const size_t &package_index);
 };
@@ -255,8 +255,8 @@ class DiffuseLevelSetSign : public BaseMeshLocalDynamics
 {
   public:
     explicit DiffuseLevelSetSign(MeshWithGridDataPackagesType &mesh_data)
-        : BaseMeshLocalDynamics(mesh_data){};
-    virtual ~DiffuseLevelSetSign(){};
+        : BaseMeshLocalDynamics(mesh_data) {};
+    virtual ~DiffuseLevelSetSign() {};
 
     void update(const size_t &package_index);
 };
@@ -267,23 +267,22 @@ class InitializeDataInACellFromCoarse : public BaseMeshLocalDynamics
     explicit InitializeDataInACellFromCoarse(MeshWithGridDataPackagesType &mesh_data, MeshWithGridDataPackagesType &coarse_mesh, Shape &shape)
         : BaseMeshLocalDynamics(mesh_data),
           coarse_mesh_(coarse_mesh),
-          shape_(shape){};
-    virtual ~InitializeDataInACellFromCoarse(){};
+          shape_(shape) {};
+    virtual ~InitializeDataInACellFromCoarse() {};
 
     void update(const Arrayi &cell_index);
 
   private:
     MeshWithGridDataPackagesType &coarse_mesh_;
     Shape &shape_;
-
 };
 
 class ProbeSignedDistance : public BaseMeshLocalDynamics
 {
   public:
     explicit ProbeSignedDistance(MeshWithGridDataPackagesType &mesh_data)
-        : BaseMeshLocalDynamics(mesh_data){};
-    virtual ~ProbeSignedDistance(){};
+        : BaseMeshLocalDynamics(mesh_data) {};
+    virtual ~ProbeSignedDistance() {};
 
     Real update(const Vecd &position) { return mesh_data_.probeMesh(phi_, position); };
 };
@@ -292,8 +291,8 @@ class ProbeLevelSetGradient : public BaseMeshLocalDynamics
 {
   public:
     explicit ProbeLevelSetGradient(MeshWithGridDataPackagesType &mesh_data)
-        : BaseMeshLocalDynamics(mesh_data){};
-    virtual ~ProbeLevelSetGradient(){};
+        : BaseMeshLocalDynamics(mesh_data) {};
+    virtual ~ProbeLevelSetGradient() {};
 
     Vecd update(const Vecd &position) { return mesh_data_.probeMesh(phi_gradient_, position); };
 };
@@ -302,8 +301,8 @@ class ProbeKernelIntegral : public BaseMeshLocalDynamics
 {
   public:
     explicit ProbeKernelIntegral(MeshWithGridDataPackagesType &mesh_data)
-        : BaseMeshLocalDynamics(mesh_data){};
-    virtual ~ProbeKernelIntegral(){};
+        : BaseMeshLocalDynamics(mesh_data) {};
+    virtual ~ProbeKernelIntegral() {};
 
     Real update(const Vecd &position) { return mesh_data_.probeMesh(kernel_weight_, position); };
 };
@@ -312,28 +311,28 @@ class ProbeKernelGradientIntegral : public BaseMeshLocalDynamics
 {
   public:
     explicit ProbeKernelGradientIntegral(MeshWithGridDataPackagesType &mesh_data)
-        : BaseMeshLocalDynamics(mesh_data){};
-    virtual ~ProbeKernelGradientIntegral(){};
+        : BaseMeshLocalDynamics(mesh_data) {};
+    virtual ~ProbeKernelGradientIntegral() {};
 
     Vecd update(const Vecd &position) { return mesh_data_.probeMesh(kernel_gradient_, position); };
 };
 
 class ProbeKernelSecondGradientIntegral : public BaseMeshLocalDynamics
 {
-public:
+  public:
     explicit ProbeKernelSecondGradientIntegral(MeshWithGridDataPackagesType &mesh_data)
         : BaseMeshLocalDynamics(mesh_data) {};
     virtual ~ProbeKernelSecondGradientIntegral() {};
 
-    Matd update(const Vecd& position) { return mesh_data_.probeMesh(kernel_second_gradient_, position); };
+    Matd update(const Vecd &position) { return mesh_data_.probeMesh(kernel_second_gradient_, position); };
 };
 
 class ProbeIsWithinMeshBound : public BaseMeshLocalDynamics
 {
   public:
     explicit ProbeIsWithinMeshBound(MeshWithGridDataPackagesType &mesh_data)
-        : BaseMeshLocalDynamics(mesh_data){};
-    virtual ~ProbeIsWithinMeshBound(){};
+        : BaseMeshLocalDynamics(mesh_data) {};
+    virtual ~ProbeIsWithinMeshBound() {};
 
     bool update(const Vecd &position)
     {
@@ -354,8 +353,8 @@ class IsWithinCorePackage : public BaseMeshLocalDynamics
 {
   public:
     explicit IsWithinCorePackage(MeshWithGridDataPackagesType &mesh_data)
-        : BaseMeshLocalDynamics(mesh_data){};
-    virtual ~IsWithinCorePackage(){};
+        : BaseMeshLocalDynamics(mesh_data) {};
+    virtual ~IsWithinCorePackage() {};
 
     bool update(Vecd position)
     {
@@ -368,8 +367,8 @@ class WriteMeshFieldToPlt : public BaseMeshLocalDynamics
 {
   public:
     explicit WriteMeshFieldToPlt(MeshWithGridDataPackagesType &mesh_data)
-        : BaseMeshLocalDynamics(mesh_data){};
-    virtual ~WriteMeshFieldToPlt(){};
+        : BaseMeshLocalDynamics(mesh_data) {};
+    virtual ~WriteMeshFieldToPlt() {};
 
     void update(std::ofstream &output_file);
 };

@@ -332,7 +332,7 @@ int main(int ac, char *av[])
     BodyStatesRecordingToVtp body_states_recording(sph_system);
     body_states_recording.addToWrite<Real>(water_body, "Pressure");
     body_states_recording.addToWrite<int>(water_body, "BufferIndicator");
-    ObservedQuantityRecording<MainExecutionPolicy, Vecd> write_centerline_velocity("Velocity", velocity_observer_contact);
+    ObservedQuantityRecording<MainExecutionPolicy, Vecd, RestoringCorrection> write_centerline_velocity("Velocity", velocity_observer_contact);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.

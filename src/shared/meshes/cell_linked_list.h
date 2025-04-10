@@ -165,7 +165,7 @@ class CellLinkedList : public BaseCellLinkedList
                                    ConcurrentIndexVector &cell_indexes,
                                    std::function<bool(Vecd, Real)> &check_included) override;
     virtual void tagBoundingCells(StdVec<CellLists> &cell_data_lists, const BoundingBox &bounding_bounds, int axis) override;
-    virtual void writeMeshFieldToPlt(std::ofstream &output_file) override;
+    virtual void writeMeshFieldToPlt(const std::string &partial_file_name) override;
 
     template <class ExecutionPolicy>
     NeighborSearch createNeighborSearch(const ExecutionPolicy &ex_policy);
@@ -205,7 +205,7 @@ class MultilevelCellLinkedList : public BaseCellLinkedList
                                    ConcurrentIndexVector &cell_indexes,
                                    std::function<bool(Vecd, Real)> &check_included) override;
     virtual void tagBoundingCells(StdVec<CellLists> &cell_data_lists, const BoundingBox &bounding_bounds, int axis) override;
-    void writeMeshFieldToPlt(std::ofstream &output_file) override;
+    void writeMeshFieldToPlt(const std::string &partial_file_name) override;
     /** split algorithm */;
     template <class LocalDynamicsFunction>
     void particle_for_split(const execution::SequencedPolicy &, const LocalDynamicsFunction &local_dynamics_function);

@@ -164,7 +164,7 @@ int main(int ac, char *av[])
     write_real_body_states.addToWrite<Real>(water_block, "VolumetricMeasure");
     write_real_body_states.addToWrite<Real>(water_block, "SmoothingLengthRatio");
     ObservedQuantityRecording<Vecd> write_fluid_velocity("Velocity", fluid_observer_contact);
-    RegressionTestTimeAverage<ReducedQuantityRecording<QuantitySummation<Vecd>>> write_total_viscous_force_from_fluid(cylinder, "ViscousForceFromFluid");
+    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<QuantitySummation<Vecd>>> write_total_viscous_force_from_fluid(cylinder, "ViscousForceFromFluid");
     ReducedQuantityRecording<QuantitySummation<Vecd>> write_total_pressure_force_from_fluid(cylinder, "PressureForceFromFluid");
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
@@ -271,7 +271,7 @@ int main(int ac, char *av[])
     if (sph_system.GenerateRegressionData())
     {
         // The lift force at the cylinder is very small and not important in this case.
-        write_total_viscous_force_from_fluid.generateDataBase({5.0e-3, 5.0e-3}, {5.0e-3, 5.0e-3});
+        write_total_viscous_force_from_fluid.generateDataBase(1.0e-3);
     }
     else
     {

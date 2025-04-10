@@ -26,7 +26,7 @@ std::string diffusion_species_name = "Phi";
 Real initial_temperature = 100.0;
 Real left_temperature = 300.0;
 Real right_temperature = 350.0;
-Real heat_flux = 900.0; //from the Nemann boundary
+Real heat_flux = 900.0; // from the Nemann boundary
 //----------------------------------------------------------------------
 //	Generate 2D geometrics used in the case.
 //----------------------------------------------------------------------
@@ -191,7 +191,7 @@ int main(int ac, char *av[])
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp write_states(sph_system);
-    RegressionTestEnsembleAverage<ObservedQuantityRecording<MainExecutionPolicy, Real>>
+    RegressionTestEnsembleAverage<ObservedQuantityRecording<MainExecutionPolicy, Real, RestoringCorrection>>
         write_solid_temperature(diffusion_species_name, temperature_observer_contact);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
