@@ -81,19 +81,26 @@ using Array3i = Eigen::Array<int, 3, 1>;
 /** Vector with float point number.*/
 using Vec2d = Eigen::Matrix<Real, 2, 1>;
 using Vec3d = Eigen::Matrix<Real, 3, 1>;
-/** Small, 2*2 and 3*3, matrix with float point number. */
+using Vec6d = Eigen::Matrix<Real, 6, 1>;
+/** Small 2*2, 3*3, 4*4 and 6*6 matrix with float point number. */
 using Mat2d = Eigen::Matrix<Real, 2, 2>;
 using Mat3d = Eigen::Matrix<Real, 3, 3>;
-/** linear restoring matrix and vector for particle based linear reproducing interpolation. */
-using RestoreMat2d = Mat3d;
-using RestoreMat3d = Eigen::Matrix<Real, 4, 4>;
-template <typename DataType>
-using PredictVec2 = Eigen::Matrix<DataType, 3, 1>;
-
-template <typename DataType>
-using PredictVec3 = Eigen::Matrix<DataType, 4, 1>;
+using Mat6d = Eigen::Matrix<Real, 6, 6>;
 /** Dynamic matrix*/
 using MatXd = Eigen::Matrix<Real, Eigen::Dynamic, Eigen::Dynamic>;
+
+/** Unified initialize to unit for all float point types. */
+template <typename DataType>
+struct UnitData
+{
+    static inline const DataType value = DataType::Ones();
+};
+
+template <>
+struct UnitData<Real>
+{
+    static inline const Real value = Real(1);
+};
 
 /** Unified initialize to zero for all data type. */
 template <typename DataType>
@@ -130,21 +137,6 @@ struct ZeroData<std::pair<FirstType, SecondType>>
     using PairType = std::pair<FirstType, SecondType>;
     static inline const PairType value = PairType(
         ZeroData<FirstType>::value, ZeroData<SecondType>::value);
-};
-
-template <typename DataType>
-struct ZeroData<PredictVec2<DataType>>
-{
-    static inline const PredictVec2<DataType> value = PredictVec2<DataType>(
-        ZeroData<DataType>::value, ZeroData<DataType>::value, ZeroData<DataType>::value);
-};
-
-template <typename DataType>
-struct ZeroData<PredictVec3<DataType>>
-{
-    static inline const PredictVec3<DataType> value = PredictVec3<DataType>(
-        ZeroData<DataType>::value, ZeroData<DataType>::value,
-        ZeroData<DataType>::value, ZeroData<DataType>::value);
 };
 
 template <typename DataType>
