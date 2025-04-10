@@ -50,22 +50,15 @@ class MultilevelLevelSet : public BaseMeshField
                        Shape &shape, SPHAdaptation &sph_adaptation);
     MultilevelLevelSet(BoundingBox tentative_bounds, MeshWithGridDataPackagesType* coarse_data,
                        Shape &shape, SPHAdaptation &sph_adaptation);
-    template <class ExecutionPolicy>
-    MultilevelLevelSet(const ExecutionPolicy &ex_policy, BoundingBox tentative_bounds,
-                       Real reference_data_spacing, size_t total_levels, Shape &shape,
-                       SPHAdaptation &sph_adaptation);
-    template <class ExecutionPolicy>
-    MultilevelLevelSet(const ExecutionPolicy &ex_policy, BoundingBox tentative_bounds,
-                       MeshWithGridDataPackagesType* coarse_data, Shape &shape,
-                       SPHAdaptation &sph_adaptation);
-    MultilevelLevelSet(const ParallelDevicePolicy &par_device, BoundingBox tentative_bounds,
-                       Real reference_data_spacing, size_t total_levels, Shape &shape,
-                       SPHAdaptation &sph_adaptation);
-    MultilevelLevelSet(const ParallelDevicePolicy &par_device, BoundingBox tentative_bounds,
-                       MeshWithGridDataPackagesType* coarse_data, Shape &shape,
-                       SPHAdaptation &sph_adaptation);
     ~MultilevelLevelSet(){};
 
+    template <class ExecutionPolicy>
+    void finishInitialization(const ExecutionPolicy &ex_policy)
+    {
+        initializeMeshVariables(ex_policy, host_kernel_);
+        configOperationExecutionPolicy(ex_policy, host_kernel_);
+    }
+    void finishInitialization(const ParallelDevicePolicy &par_device);
     void cleanInterface(Real small_shift_factor);
     void correctTopology(Real small_shift_factor);
     bool probeIsWithinMeshBound(const Vecd &position);
@@ -114,10 +107,10 @@ class MultilevelLevelSet : public BaseMeshField
     inline size_t getProbeLevel(const Vecd &position);
     inline size_t getCoarseLevel(Real h_ratio);
 
-    template <class ExecutionPolicy, class KernelType>
-    void initializeLevel(const ExecutionPolicy &ex_policy, size_t level, Real reference_data_spacing,
-                         Real global_h_ratio, BoundingBox tentative_bounds, KernelType *kernel,
+    void initializeLevel(size_t level, Real reference_data_spacing, BoundingBox tentative_bounds,
                          MeshWithGridDataPackagesType* coarse_data = nullptr);
+    template <class ExecutionPolicy, class KernelType>
+    void initializeMeshVariables(const ExecutionPolicy &ex_policy, KernelType *kernel);
     template <class ExecutionPolicy>
     void registerProbes(const ExecutionPolicy &ex_policy, size_t level);
 
@@ -141,6 +134,7 @@ class MultilevelLevelSet : public BaseMeshField
 
     UniquePtr<BaseExecDynamics> correct_topology_keeper_;
     UniquePtr<BaseExecDynamics> clean_interface_keeper_;
+    Kernel *host_kernel_;
     UniquePtr<SingularVariable<KernelWendlandC2CK>> device_kernel_;
     std::function<void()> sync_mesh_variable_data_;
 
