@@ -53,12 +53,12 @@ class TotalWeightComputation : public BaseLocalDynamics<BodyPartByParticle>,
     void update(size_t index_i, Real dt = 0.0);
 };
 
-/**@class InterpolationSolidVelocityConstraint
- * @brief Constrain solid velocity by the interpolation from coupled shell particle velocities.
+/**@class InterpolationVelocityConstraint
+ * @brief Constrain velocity by the interpolation from coupled particle velocities.
  * When there is more than one contact body, interpolate from all contact bodies.
  */
-class InterpolationSolidVelocityConstraint : public MotionConstraint<BodyPartByParticle>,
-                                             public DataDelegateContact
+class InterpolationVelocityConstraint : public MotionConstraint<BodyPartByParticle>,
+                                        public DataDelegateContact
 {
   private:
     Real *total_weight_;
@@ -67,16 +67,16 @@ class InterpolationSolidVelocityConstraint : public MotionConstraint<BodyPartByP
     StdVec<Vecd *> contact_vel_;
 
   public:
-    InterpolationSolidVelocityConstraint(BodyPartByParticle &body_part, BaseContactRelation &contact_relation);
+    InterpolationVelocityConstraint(BodyPartByParticle &body_part, BaseContactRelation &contact_relation);
     void update(size_t index_i, Real dt = 0.0);
 };
 
-/**@class InterpolationShellForceConstraint
- * @brief Apply the coupling force on shell by the interpolation from coupled shell particle internal accelerations.
+/**@class InterpolationForceConstraint
+ * @brief Apply the coupling force by the interpolation from coupled particle internal accelerations.
  * When there is more than one contact body, interpolate force from each contact body and sum up.
  */
-class InterpolationShellForceConstraint : public BaseForcePrior<BodyPartByParticle>,
-                                          public DataDelegateContact
+class InterpolationForceConstraint : public BaseForcePrior<BodyPartByParticle>,
+                                     public DataDelegateContact
 {
   private:
     Real *Vol_;
@@ -85,7 +85,7 @@ class InterpolationShellForceConstraint : public BaseForcePrior<BodyPartByPartic
     StdVec<Vecd *> contact_force_;
 
   public:
-    InterpolationShellForceConstraint(BodyPartByParticle &body_part, BaseContactRelation &contact_relation);
+    InterpolationForceConstraint(BodyPartByParticle &body_part, BaseContactRelation &contact_relation);
     void interaction(size_t index_i, Real dt = 0.0);
 };
 } // namespace solid_dynamics

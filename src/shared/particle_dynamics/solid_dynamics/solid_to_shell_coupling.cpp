@@ -37,7 +37,7 @@ void TotalWeightComputation::update(size_t index_i, Real dt)
     total_weight_[index_i] = weight_ttl;
 }
 
-InterpolationSolidVelocityConstraint::InterpolationSolidVelocityConstraint(BodyPartByParticle &body_part, BaseContactRelation &contact_relation)
+InterpolationVelocityConstraint::InterpolationVelocityConstraint(BodyPartByParticle &body_part, BaseContactRelation &contact_relation)
     : MotionConstraint<BodyPartByParticle>(body_part),
       DataDelegateContact(contact_relation),
       total_weight_(particles_->getVariableDataByName<Real>("TotalWeight"))
@@ -50,7 +50,7 @@ InterpolationSolidVelocityConstraint::InterpolationSolidVelocityConstraint(BodyP
     }
 };
 
-void InterpolationSolidVelocityConstraint::update(size_t index_i, Real)
+void InterpolationVelocityConstraint::update(size_t index_i, Real)
 {
     Vecd vel = Vecd::Zero();
     for (size_t k = 0; k != contact_configuration_.size(); ++k)
@@ -72,7 +72,7 @@ void InterpolationSolidVelocityConstraint::update(size_t index_i, Real)
     vel_[index_i] = vel / total_weight_[index_i];
 }
 
-InterpolationShellForceConstraint::InterpolationShellForceConstraint(BodyPartByParticle &body_part, BaseContactRelation &contact_relation)
+InterpolationForceConstraint::InterpolationForceConstraint(BodyPartByParticle &body_part, BaseContactRelation &contact_relation)
     : BaseForcePrior<BodyPartByParticle>(body_part, "CouplingForce"),
       DataDelegateContact(contact_relation),
       Vol_(particles_->getVariableDataByName<Real>("VolumetricMeasure"))
@@ -85,7 +85,7 @@ InterpolationShellForceConstraint::InterpolationShellForceConstraint(BodyPartByP
     }
 };
 
-void InterpolationShellForceConstraint::interaction(size_t index_i, Real)
+void InterpolationForceConstraint::interaction(size_t index_i, Real)
 {
     Vecd force = Vecd::Zero();
     for (size_t k = 0; k != contact_configuration_.size(); ++k)
