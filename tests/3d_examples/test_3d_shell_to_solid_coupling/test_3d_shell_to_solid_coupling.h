@@ -49,7 +49,7 @@ struct solid_algs
     Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half;
     SimpleDynamics<NormalDirectionFromBodyShape> initial_normal_direction;
     SimpleDynamics<solid_dynamics::UpdateElasticNormalDirection> normal_direction;
-    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d, FixedDampingRate>>> damping;
+    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d, FixedDampingRate>>> damping;
     ReduceDynamics<solid_dynamics::AcousticTimeStep> computing_time_step_size;
 
     explicit solid_algs(SolidBody &body, Real physical_viscosity)
@@ -59,7 +59,7 @@ struct solid_algs
           stress_relaxation_second_half(inner_relation),
           initial_normal_direction(body),
           normal_direction(body),
-          damping(0.5, inner_relation, "Velocity", physical_viscosity),
+          damping(0.2, inner_relation, "Velocity", physical_viscosity),
           computing_time_step_size(body)
     {
         initial_normal_direction.exec();
