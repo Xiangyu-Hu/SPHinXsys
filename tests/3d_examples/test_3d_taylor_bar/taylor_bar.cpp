@@ -6,7 +6,7 @@
  * //TODO: Seems that the wall contact force should be improved.
  */
 #include "taylor_bar.h" /**< Case setup for this example. */
-#include "sphinxsys_sycl.h"
+#include "sphinxsys.h"
 
 using namespace SPH;
 
@@ -25,7 +25,7 @@ int main(int ac, char *av[])
     /** create a body with corresponding material, particles and reaction model. */
     SolidBody column(sph_system, makeShared<Column>("Column"));
     column.defineAdaptationRatios(1.3, 1.0);
-    column.defineBodyLevelSetShape(execution::par_device)->writeLevelSet(sph_system);
+    column.defineBodyLevelSetShape()->writeLevelSet(sph_system);
     printf("[finished]: level_set part\n");
     column.defineMaterial<HardeningPlasticSolid>(
         rho0_s, Youngs_modulus, poisson, yield_stress, hardening_modulus);
