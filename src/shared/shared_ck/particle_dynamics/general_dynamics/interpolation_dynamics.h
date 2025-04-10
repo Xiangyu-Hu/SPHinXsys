@@ -122,7 +122,6 @@ class Interpolation<Contact<DataType, RestoringCorrection, Parameters...>> : pub
         void interact(size_t index_i, Real dt = 0.0);
 
       protected:
-        Scalar<DataType> zero_value_;
         PredictVecd zero_prediction_;
         DataType *interpolated_quantities_;
         Real *contact_Vol_;
