@@ -17,7 +17,7 @@ MultilevelLevelSet::MultilevelLevelSet(
     global_h_ratio_vec_.push_back(global_h_ratio);
 
     initializeLevel(0, reference_data_spacing, tentative_bounds, coarse_data);
-    finishInitialization(par);
+    // finishInitialization(par);
 }
 //=================================================================================================//
 MultilevelLevelSet::MultilevelLevelSet(
@@ -37,7 +37,7 @@ MultilevelLevelSet::MultilevelLevelSet(
 
         initializeLevel(level, reference_data_spacing, tentative_bounds, mesh_data_set_[level - 1]);
     }
-    finishInitialization(par);
+    // finishInitialization(par);
 }
 //=================================================================================================//
 void MultilevelLevelSet::initializeLevel(size_t level, Real reference_data_spacing,

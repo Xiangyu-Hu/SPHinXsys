@@ -83,14 +83,6 @@ class SPHAdaptation
 
     virtual UniquePtr<BaseCellLinkedList> createCellLinkedList(const BoundingBox &domain_bounds, BaseParticles &base_particles);
     virtual UniquePtr<MultilevelLevelSet> createLevelSet(Shape &shape, Real refinement_ratio);
-    template <class ExecutionPolicy>
-    UniquePtr<MultilevelLevelSet> createLevelSet(const ExecutionPolicy &ex_policy, Shape &shape, Real refinement_ratio)
-    {
-        return createLevelSet(shape, refinement_ratio);
-    }
-    #if SPHINXSYS_USE_SYCL
-    virtual UniquePtr<MultilevelLevelSet> createLevelSet(const ParallelDevicePolicy &par_device, Shape &shape, Real refinement_ratio);
-    #endif
 
     template <class MeshType, typename... Args>
     MeshType createBackGroundMesh(SPHBody &sph_body, Args &&...args);
@@ -132,9 +124,6 @@ class ParticleWithLocalRefinement : public SPHAdaptation
     virtual void initializeAdaptationVariables(BaseParticles &base_particles) override;
     virtual UniquePtr<BaseCellLinkedList> createCellLinkedList(const BoundingBox &domain_bounds, BaseParticles &base_particles) override;
     virtual UniquePtr<MultilevelLevelSet> createLevelSet(Shape &shape, Real refinement_ratio) override;
-    #if SPHINXSYS_USE_SYCL
-    virtual UniquePtr<MultilevelLevelSet> createLevelSet(const ParallelDevicePolicy &par_device, Shape &shape, Real refinement_ratio) override;
-    #endif
 
   protected:
     Real finest_spacing_bound_;   /**< the adaptation bound for finest particles */
