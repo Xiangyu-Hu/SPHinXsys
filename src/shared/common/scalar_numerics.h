@@ -60,12 +60,14 @@ struct Scalar
         value -= rhs.value;
         return *this;
     }
-    Scalar &operator*=(const typename T::Scalar &s)
+    template <typename ArithmeticType>
+    Scalar &operator*=(const ArithmeticType &s)
     {
         value *= s;
         return *this;
     }
-    Scalar &operator/=(const typename T::Scalar &s)
+    template <typename ArithmeticType>
+    Scalar &operator/=(const ArithmeticType &s)
     {
         value /= s;
         return *this;
@@ -73,9 +75,12 @@ struct Scalar
 
     friend Scalar operator+(Scalar a, const Scalar &b) { return a += b; }
     friend Scalar operator-(Scalar a, const Scalar &b) { return a -= b; }
-    friend Scalar operator*(Scalar a, const typename T::Scalar &s) { return a *= s; }
-    friend Scalar operator*(const typename T::Scalar &s, Scalar a) { return a *= s; }
-    friend Scalar operator/(Scalar a, const typename T::Scalar &s) { return a /= s; }
+    template <typename ArithmeticType>
+    friend Scalar operator*(Scalar a, const ArithmeticType &s) { return a *= s; }
+    template <typename ArithmeticType>
+    friend Scalar operator*(const ArithmeticType &s, Scalar a) { return a *= s; }
+    template <typename ArithmeticType>
+    friend Scalar operator/(Scalar a, const ArithmeticType &s) { return a /= s; }
 
     // Comparison
     bool operator==(const Scalar &rhs) const { return value == rhs.value; }
