@@ -77,7 +77,7 @@ void Interpolation<Contact<DataType, RestoringCorrection, Parameters...>>::Inter
         approximation_matrix(0, 0) = W_ijV_j;
         approximation_matrix.block(0, 1, 1, Dimensions) = -W_ijV_j * r_ij.transpose();
         approximation_matrix.block(1, 0, Dimensions, 1) = dW_ijV_j * e_ij;
-        approximation_matrix.block(1, 1, Dimensions, Dimensions) = -dW_ijV_j * e_ij * e_ij.transpose();
+        approximation_matrix.block(1, 1, Dimensions, Dimensions) = -dW_ijV_j * r_ij * e_ij.transpose();
 
         RestoreVecd approximation_vector = approximation_matrix.col(0);
         prediction += scalarProduct(approximation_vector, Scalar<DataType>(contact_data_[index_j]));
