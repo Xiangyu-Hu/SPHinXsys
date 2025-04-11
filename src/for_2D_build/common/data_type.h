@@ -38,6 +38,8 @@ namespace SPH
 using Arrayi = Array2i;
 using Vecd = Vec2d;
 using Matd = Mat2d;
+using VecMatd = Vec3d; // vectorized symmetric 2x2 matrix
+using MatTend = Mat3d; // matricized symmetric 2x2x2x2 tensor
 using AngularVecd = Real;
 using Rotation = Rotation2d;
 using BoundingBox = BaseBoundingBox<Vec2d>;

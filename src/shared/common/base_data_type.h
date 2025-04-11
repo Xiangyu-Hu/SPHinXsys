@@ -89,19 +89,6 @@ using Mat6d = Eigen::Matrix<Real, 6, 6>;
 /** Dynamic matrix*/
 using MatXd = Eigen::Matrix<Real, Eigen::Dynamic, Eigen::Dynamic>;
 
-/** Unified initialize to unit for all float point types. */
-template <typename DataType>
-struct UnitData
-{
-    static inline const DataType value = DataType::Ones();
-};
-
-template <>
-struct UnitData<Real>
-{
-    static inline const Real value = Real(1);
-};
-
 /** Unified initialize to zero for all data type. */
 template <typename DataType>
 struct ZeroData
@@ -187,6 +174,16 @@ struct DataTypeIndex<Mat3d>
     static constexpr int value = 6;
 };
 
+template <>
+struct DataTypeIndex<Vec6d>
+{
+    static constexpr int value = 7;
+};
+template <>
+struct DataTypeIndex<Mat6d>
+{
+    static constexpr int value = 8;
+};
 /** Verbal boolean for positive and negative axis directions. */
 const int xAxis = 0;
 const int yAxis = 1;
