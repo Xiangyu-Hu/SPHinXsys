@@ -39,8 +39,20 @@ struct Scalar
 
     // Constructors
     Scalar() = default;
-    Scalar(const T &v) : value(v) {};
-    Scalar(const int &zero) : value(Real(zero) * UnitData<T>::value) {};
+    Scalar(const T &v) : value(v) {}
+    Scalar(int) : value(init_zero()) {}
+
+    static T init_zero()
+    {
+        if constexpr (std::is_floating_point_v<T>)
+        {
+            return 0.0;
+        }
+        else
+        {
+            return T::Zero(); // Assumes T has a static Zero() method
+        }
+    }
     // Implicit conversion
     operator const T &() const { return value; }
     operator T &() { return value; }
