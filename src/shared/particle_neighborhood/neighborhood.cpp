@@ -223,8 +223,8 @@ BaseNeighborBuilderContactShell::BaseNeighborBuilderContactShell(SPHBody &shell_
     : NeighborBuilder(shell_body.getSPHAdaptation().getKernel()),
       n_(shell_body.getBaseParticles().getVariableDataByName<Vecd>("NormalDirection")),
       thickness_(shell_body.getBaseParticles().getVariableDataByName<Real>("Thickness")),
-      k1_ave_(shell_body.getBaseParticles().registerStateVariable<Real>("Average1stPrincipleCurvature")),
-      k2_ave_(shell_body.getBaseParticles().registerStateVariable<Real>("Average2ndPrincipleCurvature")),
+      k1_ave_(shell_body.getBaseParticles().registerStateVariable<Real>("1stPrincipleCurvature")),
+      k2_ave_(shell_body.getBaseParticles().registerStateVariable<Real>("2ndPrincipleCurvature")),
       particle_distance_(shell_body.getSPHBodyResolutionRef()) {}
 //=================================================================================================//
 void BaseNeighborBuilderContactShell::createNeighbor(Neighborhood &neighborhood, const Real &distance,
@@ -557,6 +557,16 @@ operator()(Neighborhood &neighborhood, const Vecd &pos_i, size_t index_i, const 
         neighborhood.current_size_++;
     }
 };
+//=================================================================================================//
+NearestNeighborBuilder::NearestNeighborBuilder(SPHBody &body, SPHBody &contact_body, Real factor)
+    : NeighborBuilderContact(body, contact_body)
+{
+    // create a kernel with a cut-off radius of factor * dp_max
+    Real dp_max = SMAX(body.getSPHBodyResolutionRef(), contact_body.getSPHBodyResolutionRef());
+    Real cut_off_radius = factor * dp_max;
+    // smoothing length: cut_off_radius/2.0
+    kernel_ = kernel_keeper_.createPtr<KernelWendlandC2>(cut_off_radius / 2.0);
+}
 //=================================================================================================//
 } // namespace SPH
 //=================================================================================================//
