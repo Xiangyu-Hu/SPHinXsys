@@ -39,8 +39,8 @@ struct Scalar
 
     // Constructors
     Scalar() = default;
-    Scalar(const T &v) : value(v) {}
-    Scalar(const Real &s) : value(s * UnitData<T>::value) {}
+    Scalar(const T &v) : value(v) {};
+    Scalar(const int &zero) : value(Real(zero) * UnitData<T>::value) {};
     // Implicit conversion
     operator const T &() const { return value; }
     operator T &() { return value; }
