@@ -30,6 +30,7 @@
 #define INTERPOLATION_DYNAMICS_H
 
 #include "interaction_algorithms_ck.hpp"
+#include "scalar_numerics.h"
 
 namespace SPH
 {
@@ -91,10 +92,23 @@ class Interpolation<Contact<DataType, Parameters...>> : public Interpolation<Con
  * doi.org/10.1007/s11831-010-9040-7
  */
 class RestoringCorrection;
+
+template <typename DataType, int N>
+using PredictVec = Eigen::Matrix<Scalar<DataType>, N, 1>;
+template <typename DataType, int N>
+struct ZeroData<PredictVec<DataType, N>>
+{
+    static inline const PredictVec<DataType, N> value = PredictVec<DataType, N>::Zero();
+};
+
 template <typename DataType, typename... Parameters>
 class Interpolation<Contact<DataType, RestoringCorrection, Parameters...>> : public Interpolation<Contact<Base, DataType, Parameters...>>
 {
     using BaseDynamicsType = Interpolation<Contact<Base, DataType, Parameters...>>;
+    static constexpr int RestoringSize = Dimensions + 1;
+    using RestoreMatd = Eigen::Matrix<Real, RestoringSize, RestoringSize>;
+    using RestoreVecd = Eigen::Matrix<Real, RestoringSize, 1>;
+    using PredictVecd = PredictVec<DataType, RestoringSize>;
 
   public:
     template <typename... Args>
@@ -108,8 +122,7 @@ class Interpolation<Contact<DataType, RestoringCorrection, Parameters...>> : pub
         void interact(size_t index_i, Real dt = 0.0);
 
       protected:
-        DataType zero_value_;
-        PredictVec<DataType> zero_prediction_;
+        PredictVecd zero_prediction_;
         DataType *interpolated_quantities_;
         Real *contact_Vol_;
         DataType *contact_data_;
