@@ -35,14 +35,14 @@ namespace SPH
 template <typename T>
 struct Scalar
 {
-    T value;
+    T value_;
 
     // Constructors
     Scalar() = default;
-    Scalar(const T &v) : value(v) {}
-    Scalar(int) : value(init_zero()) {}
+    Scalar(const T &v) : value_(v) {}
+    Scalar(int) : value_(initZero()) {}
 
-    static T init_zero()
+    static T initZero()
     {
         if constexpr (std::is_floating_point_v<T>)
         {
@@ -54,34 +54,34 @@ struct Scalar
         }
     }
     // Implicit conversion
-    operator const T &() const { return value; }
-    operator T &() { return value; }
+    operator const T &() const { return value_; }
+    operator T &() { return value_; }
 
     // Access
-    T &ref() { return value; }
-    const T &get() const { return value; }
+    T &ref() { return value_; }
+    const T &get() const { return value_; }
 
     // Arithmetic (only if T supports it)
     Scalar &operator+=(const Scalar &rhs)
     {
-        value += rhs.value;
+        value_ += rhs.value_;
         return *this;
     }
     Scalar &operator-=(const Scalar &rhs)
     {
-        value -= rhs.value;
+        value_ -= rhs.value_;
         return *this;
     }
     template <typename ArithmeticType>
     Scalar &operator*=(const ArithmeticType &s)
     {
-        value *= s;
+        value_ *= s;
         return *this;
     }
     template <typename ArithmeticType>
     Scalar &operator/=(const ArithmeticType &s)
     {
-        value /= s;
+        value_ /= s;
         return *this;
     }
 
@@ -95,20 +95,20 @@ struct Scalar
     friend Scalar operator/(Scalar a, const ArithmeticType &s) { return a /= s; }
 
     // Comparison
-    bool operator==(const Scalar &rhs) const { return value == rhs.value; }
+    bool operator==(const Scalar &rhs) const { return value_ == rhs.value_; }
 
     // Output
     friend std::ostream &operator<<(std::ostream &os, const Scalar &s)
     {
 
-        return os << s.value;
+        return os << s.value_;
     }
 };
 
 template <typename T>
 struct ZeroData<Scalar<T>>
 {
-    static inline const Scalar<T> value = Scalar<T>(ZeroData<T>::value);
+    static inline const Scalar<T> value = Scalar<T>(ZeroData<T>::value_);
 };
 
 template <typename T, int N>
