@@ -83,7 +83,7 @@ void HessianCorrectionMatrix<Inner<WithUpdate, Parameters...>>::
         VecMatd displacement_matrix_increment = this->displacement_matrix_grad_[index_i].dot(r_ij);
 
         approximation_tensor -= (displacement_tensor + displacement_matrix_increment) *
-                                r_ij.dot(corrected_gradW_ij) / math::pow(r_ij.norm(), 2);
+                                r_ij.dot(corrected_gradW_ij) / math::pow(r_ij.squaredNorm(), 2);
     }
     this->M_[index_i] = approximation_tensor;
 }
@@ -116,7 +116,7 @@ void HessianCorrectionMatrix<Contact<Parameters...>>::
         VecMatd displacement_matrix_increment = this->displacement_matrix_grad_[index_i].dot(r_ij);
 
         approximation_tensor -= (displacement_tensor + displacement_matrix_increment) *
-                                r_ij.dot(corrected_gradW_ij) / math::pow(r_ij.norm(), 2);
+                                r_ij.dot(corrected_gradW_ij) / math::pow(r_ij.squaredNorm(), 2);
     }
     this->M_[index_i] += approximation_tensor;
 }
