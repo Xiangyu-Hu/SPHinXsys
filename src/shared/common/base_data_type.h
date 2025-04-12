@@ -86,6 +86,14 @@ using Vec6d = Eigen::Matrix<Real, 6, 1>;
 using Mat2d = Eigen::Matrix<Real, 2, 2>;
 using Mat3d = Eigen::Matrix<Real, 3, 3>;
 using Mat6d = Eigen::Matrix<Real, 6, 6>;
+
+/** More complex matrix with float point number for tensor operations. */
+using VecMat2d = Vec3d;
+using VecMat3d = Vec6d;
+using MatTen2d = Mat3d;
+using MatTen3d = Mat6d;
+using VecMatGrad2d = Eigen::Matrix<Real, 3, 2>;
+using VecMatGrad3d = Eigen::Matrix<Real, 6, 3>;
 /** Dynamic matrix*/
 using MatXd = Eigen::Matrix<Real, Eigen::Dynamic, Eigen::Dynamic>;
 
@@ -183,6 +191,16 @@ template <>
 struct DataTypeIndex<Mat6d>
 {
     static constexpr int value = 8;
+};
+template <>
+struct DataTypeIndex<VecMatGrad2d>
+{
+    static constexpr int value = 9;
+};
+template <>
+struct DataTypeIndex<VecMatGrad3d>
+{
+    static constexpr int value = 10;
 };
 /** Verbal boolean for positive and negative axis directions. */
 const int xAxis = 0;

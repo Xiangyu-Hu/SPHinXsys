@@ -37,8 +37,9 @@ namespace SPH
 using Arrayi = Array3i;
 using Vecd = Vec3d;
 using Matd = Mat3d;
-using VecMatd = Vec6d; // vectorized symmetric 3x3 matrix
-using MatTend = Mat6d; // matricized symmetric 3x3x3x3 tensor
+using VecMatd = Vec6d;           // vectorized symmetric 3x3 matrix
+using MatTend = Mat6d;           // matricized symmetric 3x3x3x3 tensor
+using VecMatGrad = VecMatGrad3d; // gradient of vectorized symmetric 3x3 matrix
 using AngularVecd = Vec3d;
 using Rotation = Rotation3d;
 using BoundingBox = BaseBoundingBox<Vec3d>;

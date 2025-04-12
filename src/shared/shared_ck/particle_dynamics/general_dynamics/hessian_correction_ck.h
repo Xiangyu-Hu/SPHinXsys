@@ -42,7 +42,6 @@ template <template <typename...> class RelationType, typename... Parameters>
 class HessianCorrectionMatrix<Base, RelationType<Parameters...>>
     : public Interaction<RelationType<Parameters...>>
 {
-
   public:
     template <class DynamicsIdentifier>
     explicit HessianCorrectionMatrix(DynamicsIdentifier &identifier);
@@ -60,45 +59,98 @@ class HessianCorrectionMatrix<Base, RelationType<Parameters...>>
       protected:
         Real *Vol_;
         Matd *B_;
+        DiscreteVariable<VecMatGrad> *displacement_matrix_grad_;
         MatTend *M_;
     };
 
   protected:
     DiscreteVariable<Real> *dv_Vol_;
     DiscreteVariable<Matd> *dv_B_;
+    DiscreteVariable<VecMatGrad> *dv_displacement_matrix_grad_;
     DiscreteVariable<MatTend> *dv_M_;
+};
+
+template <typename... RelationTypes>
+class DisplacementMatrixGradient; // preparation for hessian correction matrix
+
+template <typename... Parameters>
+class DisplacementMatrixGradient<Inner<Parameters...>>
+    : public HessianCorrectionMatrix<Base, Inner<Parameters...>>
+{
+    using BaseDynamicsType = HessianCorrectionMatrix<Base, Inner<Parameters...>>;
+
+  public:
+    explicit DisplacementMatrixGradient(Relation<Inner<Parameters...>> &inner_relation)
+        : BaseDynamicsType(inner_relation) {};
+    virtual ~DisplacementMatrixGradient() {};
+
+    class InteractKernel : public BaseDynamicsType::InteractKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+            : BaseDynamicsType::InteractKernel(ex_policy, encloser){};
+        void interact(size_t index_i, Real dt = 0.0);
+    };
+};
+
+template <typename... Parameters>
+class DisplacementMatrixGradient<Contact<Parameters...>>
+    : public HessianCorrectionMatrix<Base, Contact<Parameters...>>
+{
+    using BaseDynamicsType = HessianCorrectionMatrix<Base, Contact<Parameters...>>;
+
+  public:
+    explicit DisplacementMatrixGradient(Relation<Contact<Parameters...>> &contact_relation)
+        : BaseDynamicsType(contact_relation) {};
+    virtual ~DisplacementMatrixGradient() {};
+
+    class InteractKernel : public BaseDynamicsType::InteractKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, size_t contact_index)
+            : BaseDynamicsType::InteractKernel(ex_policy, encloser, contact_index),
+              contact_Vol_(encloser.dv_contact_Vol_->DataDelegate(ex_policy)){};
+        void interact(size_t index_i, Real dt = 0.0);
+
+      protected:
+        Real *contact_Vol_;
+    };
+
+  protected:
+    StdVec<DiscreteVariable<Real> *> dv_contact_Vol_;
 };
 
 template <typename... Parameters>
 class HessianCorrectionMatrix<Inner<WithUpdate, Parameters...>>
     : public HessianCorrectionMatrix<Base, Inner<Parameters...>>
 {
+    using BaseDynamicsType = HessianCorrectionMatrix<Base, Inner<Parameters...>>;
 
   public:
     explicit HessianCorrectionMatrix(Relation<Inner<Parameters...>> &inner_relation, Real alpha = Real(0))
-        : HessianCorrectionMatrix<Base, Inner<Parameters...>>(inner_relation), alpha_(alpha) {};
+        : BaseDynamicsType(inner_relation), alpha_(alpha) {};
     template <typename BodyRelationType, typename FirstArg>
     explicit HessianCorrectionMatrix(DynamicsArgs<BodyRelationType, FirstArg> parameters)
         : HessianCorrectionMatrix(parameters.identifier_, std::get<0>(parameters.others_)){};
     virtual ~HessianCorrectionMatrix() {};
 
-    class InteractKernel
-        : public HessianCorrectionMatrix<Base, Inner<Parameters...>>::InteractKernel
+    class InteractKernel : public BaseDynamicsType::InteractKernel
     {
       public:
-        template <class ExecutionPolicy>
-        InteractKernel(const ExecutionPolicy &ex_policy,
-                       HessianCorrectionMatrix<Inner<WithUpdate, Parameters...>> &encloser);
+        template <class ExecutionPolicy, class EncloserType>
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+        : BaseDynamicsType::InteractKernel(ex_policy, encloser){};
         void interact(size_t index_i, Real dt = 0.0);
     };
 
-    class UpdateKernel
-        : public HessianCorrectionMatrix<Base, Inner<Parameters...>>::InteractKernel
+    class UpdateKernel : public InteractKernel
     {
       public:
-        template <class ExecutionPolicy>
-        UpdateKernel(const ExecutionPolicy &ex_policy,
-                     HessianCorrectionMatrix<Inner<WithUpdate, Parameters...>> &encloser);
+        template <class ExecutionPolicy, class EncloserType>
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+        : InteractKernel(ex_policy, encloser), alpha_(encloser.alpha_){};
         void update(size_t index_i, Real dt = 0.0);
 
       protected:
@@ -114,22 +166,24 @@ template <typename... Parameters>
 class HessianCorrectionMatrix<Contact<Parameters...>>
     : public HessianCorrectionMatrix<Base, Contact<Parameters...>>
 {
+    using BaseDynamicsType = HessianCorrectionMatrix<Base, Contact<Parameters...>>;
+
   public:
-    explicit HessianCorrectionMatrix(Relation<Contact<Parameters...>> &contact_relation);
+    explicit HessianCorrectionMatrix(Relation<Contact<Parameters...>> &contact_relation)
+    : BaseDynamicsType(contact_relation) {};
     virtual ~HessianCorrectionMatrix() {};
 
-    class InteractKernel
-        : public HessianCorrectionMatrix<Base, Contact<Parameters...>>::InteractKernel
+    class InteractKernel : public BaseDynamicsType::InteractKernel
     {
       public:
-        template <class ExecutionPolicy>
-        InteractKernel(const ExecutionPolicy &ex_policy,
-                       HessianCorrectionMatrix<Contact<Parameters...>> &encloser,
-                       size_t contact_index);
+        template <class ExecutionPolicy, class EncloserType>
+        InteractKernel(const ExecutionPolicy &ex_policy,EncloserType &encloser,size_t contact_index)
+        : BaseDynamicsType::InteractKernel(ex_policy, encloser, contact_index),
+          contact_Vol_(encloser.dv_contact_Vol_->DataDelegate(ex_policy)){};
         void interact(size_t index_i, Real dt = 0.0);
 
       protected:
-        Real *contact_Vol_k_;
+        Real *contact_Vol_;
     };
 
   protected:
