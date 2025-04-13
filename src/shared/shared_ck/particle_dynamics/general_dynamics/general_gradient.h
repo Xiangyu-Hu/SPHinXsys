@@ -37,34 +37,40 @@
 namespace SPH
 {
 template <typename...>
-struct Grad;
+struct GradHelper;
 
 template <int N>
-struct Grad<Eigen::Matrix<Real, N, 1>>
+struct GradHelper<Eigen::Matrix<Real, N, 1>>
 {
-    typedef Eigen::Matrix<Real, N, N> GradType;
+    using type = Eigen::Matrix<Real, N, N>;
 };
 
 template <>
-struct Grad<Real>
+struct GradHelper<Real>
 {
-    typedef Vecd GradType;
+    using type = Vecd;
 };
+
+template <typename T>
+using Grad = typename GradHelper<T>::type;
 
 template <typename...>
-struct Hessian;
+struct HessHelper;
 
 template <>
-struct Hessian<Vecd>
+struct HessHelper<Vecd>
 {
-    typedef VecMatGrad HessianType;
+    using type = VecMatGrad;
 };
 
 template <>
-struct Hessian<Real>
+struct HessHelper<Real>
 {
-    typedef VecMatd HessianType;
+    using type = VecMatd;
 };
+
+template <typename T>
+using Hess = typename HessHelper<T>::type;
 
 template <typename... RelationTypes>
 class Gradient;
@@ -74,7 +80,6 @@ class Gradient<Base, DataType, RelationType<Parameters...>>
     : public Interaction<RelationType<Parameters...>>
 {
     using BaseDynamicsType = Interaction<RelationType<Parameters...>>;
-    using GradType = typename Grad<DataType>::GradType;
 
   public:
     template <class DynamicsIdentifier>
@@ -90,31 +95,30 @@ class Gradient<Base, DataType, RelationType<Parameters...>>
       protected:
         Real *Vol_;
         DataType *variable_;
-        GradType *gradient_;
+        Grad<DataType> *gradient_;
     };
 
   protected:
     DiscreteVariable<Real> *dv_Vol_;
     DiscreteVariable<DataType> *dv_variable_;
-    DiscreteVariable<GradType> *dv_gradient_;
+    DiscreteVariable<Grad<DataType>> *dv_gradient_;
 };
 
 template <typename... RelationTypes>
-class HessianMatrix;
+class Hessian;
 
 template <typename DataType, template <typename...> class RelationType, typename... Parameters>
-class HessianMatrix<Base, DataType, RelationType<Parameters...>>
+class Hessian<Base, DataType, RelationType<Parameters...>>
     : public Gradient<Base, DataType, RelationType<Parameters...>>
 {
     using BaseDynamicsType = Gradient<Base, DataType, RelationType<Parameters...>>;
-    using HessianType = typename Hessian<DataType>::HessianType;
 
   public:
     template <class DynamicsIdentifier>
-    explicit HessianMatrix(DynamicsIdentifier &identifier, std::string &variable_name);
-    virtual ~HessianMatrix() {};
+    explicit Hessian(DynamicsIdentifier &identifier, std::string &variable_name);
+    virtual ~Hessian() {};
 
-    class InteractKernel : public BaseDynamicsTypeInteractKernel
+    class InteractKernel : public BaseDynamicsType::InteractKernel
     {
       public:
         template <class ExecutionPolicy, class EncloserType, typename... Args>
@@ -123,7 +127,7 @@ class HessianMatrix<Base, DataType, RelationType<Parameters...>>
       protected:
         Matd *B_;
         MatTend *M_;
-        HessianType *hessian_;
+        Hess<DataType> *hessian_;
 
         Eigen::Matrix<Real, 1, 1> transferToMatrix(Real value)
         {
@@ -134,26 +138,24 @@ class HessianMatrix<Base, DataType, RelationType<Parameters...>>
         {
             return value;
         };
-template <int N, int M>
-Eigen::Matrix<Scalar<Eigen::Matrix<Real, M, 1>>, N, 1> 
     };
 
   protected:
     DiscreteVariable<Matd> *dv_B_;
     DiscreteVariable<MatTend> *dv_M_;
-    DiscreteVariable<HessianType> *dv_hessian_;
+    DiscreteVariable<Hess<DataType>> *dv_hessian_;
 };
 
 template <typename DataType, typename... Parameters>
-class HessianMatrix<Inner<DataType, Parameters...>>
-    : public HessianMatrix<Base, DataType, Inner<Parameters...>>
+class Hessian<Inner<DataType, Parameters...>>
+    : public Hessian<Base, DataType, Inner<Parameters...>>
 {
-    using BaseDynamicsType = HessianMatrix<Base, DataType, Inner<Parameters...>>;
+    using BaseDynamicsType = Hessian<Base, DataType, Inner<Parameters...>>;
 
   public:
-    explicit HessianMatrix(Relation<Inner<Parameters...>> &inner_relation)
+    explicit Hessian(Relation<Inner<Parameters...>> &inner_relation)
         : BaseDynamicsType(inner_relation) {};
-    virtual ~HessianMatrix() {};
+    virtual ~Hessian() {};
 
     class InteractKernel : public BaseDynamicsType::InteractKernel
     {
@@ -166,15 +168,15 @@ class HessianMatrix<Inner<DataType, Parameters...>>
 };
 
 template <typename DataType, typename... Parameters>
-class HessianMatrix<Contact<DataType, Parameters...>>
-    : public HessianMatrix<Base, DataType, Contact<Parameters...>>
+class Hessian<Contact<DataType, Parameters...>>
+    : public Hessian<Base, DataType, Contact<Parameters...>>
 {
-    using BaseDynamicsType = HessianMatrix<Base, DataType, Contact<Parameters...>>;
+    using BaseDynamicsType = Hessian<Base, DataType, Contact<Parameters...>>;
 
   public:
-    explicit HessianMatrix(Relation<Contact<Parameters...>> &contact_relation)
+    explicit Hessian(Relation<Contact<Parameters...>> &contact_relation)
         : BaseDynamicsType(contact_relation) {};
-    virtual ~HessianMatrix() {};
+    virtual ~Hessian() {};
 
     class InteractKernel : public BaseDynamicsType::InteractKernel
     {
@@ -198,14 +200,14 @@ class SecondOrderGradient;
 
 template <typename DataType, typename... Parameters>
 class SecondOrderGradient<Inner<DataType, Parameters...>>
-    : public HessianMatrix<Base, DataType, Inner<Parameters...>>
+    : public Hessian<Base, DataType, Inner<Parameters...>>
 {
-    using BaseDynamicsType = HessianMatrix<Base, DataType, Inner<Parameters...>>;
+    using BaseDynamicsType = Hessian<Base, DataType, Inner<Parameters...>>;
 
   public:
     explicit SecondOrderGradient(Relation<Inner<Parameters...>> &inner_relation)
         : BaseDynamicsType(inner_relation) {};
-    virtual ~HessianMatrix() {};
+    virtual ~SecondOrderGradient() {};
 
     class InteractKernel : public BaseDynamicsType::InteractKernel
     {
@@ -219,14 +221,14 @@ class SecondOrderGradient<Inner<DataType, Parameters...>>
 
 template <typename DataType, typename... Parameters>
 class SecondOrderGradient<Contact<DataType, Parameters...>>
-    : public HessianMatrix<Base, DataType, Contact<Parameters...>>
+    : public Hessian<Base, DataType, Contact<Parameters...>>
 {
-    using BaseDynamicsType = HessianMatrix<Base, DataType, Contact<Parameters...>>;
+    using BaseDynamicsType = Hessian<Base, DataType, Contact<Parameters...>>;
 
   public:
-    explicit HessianMatrix(Relation<Contact<Parameters...>> &contact_relation)
+    explicit SecondOrderGradient(Relation<Contact<Parameters...>> &contact_relation)
         : BaseDynamicsType(contact_relation) {};
-    virtual ~HessianMatrix() {};
+    virtual ~SecondOrderGradient() {};
 
     class InteractKernel : public BaseDynamicsType::InteractKernel
     {

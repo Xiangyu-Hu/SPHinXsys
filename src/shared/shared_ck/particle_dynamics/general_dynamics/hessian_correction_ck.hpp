@@ -42,9 +42,8 @@ void DisplacementMatrixGradient<Inner<Parameters...>>::
         Vecd corrected_gradW_ij = this->dW_ij(index_i, index_j) * this->Vol_[index_j] *
                                   this->B_[index_i] * this->e_ij(index_i, index_j);
         Vecd r_ij = this->vec_r_ij(index_i, index_j);
-        VecMatd displacement_matrix = vectorizeSymMatrix(Matd(r_ij * r_ij.transpose()));
 
-        grad_displacement_matrix -= (displacement_matrix * corrected_gradW_ij.transpose());
+        grad_displacement_matrix -= (vectorizeTensorSquare(r_ij) * corrected_gradW_ij.transpose());
     }
     this->displacement_matrix_grad_[index_i] = grad_displacement_matrix;
 }
@@ -60,9 +59,8 @@ void DisplacementMatrixGradient<Contact<Parameters...>>::
         Vecd corrected_gradW_ij = this->dW_ij(index_i, index_j) * contact_Vol_[index_j] *
                                   this->B_[index_i] * this->e_ij(index_i, index_j);
         Vecd r_ij = this->vec_r_ij(index_i, index_j);
-        VecMatd displacement_matrix = vectorizeSymMatrix(Matd(r_ij * r_ij.transpose()));
 
-        grad_displacement_matrix -= (displacement_matrix * corrected_gradW_ij.transpose());
+        grad_displacement_matrix -= (vectorizeTensorSquare(r_ij) * corrected_gradW_ij.transpose());
     }
     this->displacement_matrix_grad_[index_i] += grad_displacement_matrix;
 }
@@ -78,7 +76,7 @@ void HessianCorrectionMatrix<Inner<WithUpdate, Parameters...>>::
         Vecd corrected_gradW_ij = this->dW_ij(index_i, index_j) * this->Vol_[index_j] *
                                   this->B_[index_i] * this->e_ij(index_i, index_j);
         Vecd r_ij = this->vec_r_ij(index_i, index_j);
-        VecMatd displacement_matrix = vectorizeSymMatrix(Matd(r_ij * r_ij.transpose()));
+        VecMatd displacement_matrix = vectorizeTensorSquare(r_ij);
         MatTend displacement_tensor = displacement_matrix * displacement_matrix.transpose();
         VecMatd displacement_matrix_increment = this->displacement_matrix_grad_[index_i].dot(r_ij);
 
@@ -111,7 +109,7 @@ void HessianCorrectionMatrix<Contact<Parameters...>>::
         Vecd corrected_gradW_ij = this->dW_ij(index_i, index_j) * contact_Vol_[index_j] *
                                   this->B_[index_i] * this->e_ij(index_i, index_j);
         Vecd r_ij = this->vec_r_ij(index_i, index_j);
-        VecMatd displacement_matrix = vectorizeSymMatrix(Matd(r_ij * r_ij.transpose()));
+        VecMatd displacement_matrix = vectorizeTensorSquare(r_ij);
         MatTend displacement_tensor = displacement_matrix * displacement_matrix.transpose();
         VecMatd displacement_matrix_increment = this->displacement_matrix_grad_[index_i].dot(r_ij);
 
