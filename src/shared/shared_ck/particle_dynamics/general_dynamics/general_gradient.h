@@ -134,8 +134,8 @@ class HessianMatrix<Base, DataType, RelationType<Parameters...>>
         {
             return value;
         };
-
-        
+template <int N, int M>
+Eigen::Matrix<Scalar<Eigen::Matrix<Real, M, 1>>, N, 1> 
     };
 
   protected:

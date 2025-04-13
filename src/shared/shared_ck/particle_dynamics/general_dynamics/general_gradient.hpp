@@ -1,7 +1,7 @@
 #ifndef HESSIAN_CORRECTION_CK_HPP
 #define HESSIAN_CORRECTION_CK_HPP
 
-#include "hessian_correction_ck.h"
+#include "general_gradient.h"
 
 namespace SPH
 {
@@ -86,21 +86,36 @@ template <typename DataType, typename... Parameters>
 void SecondOrderGradient<Inner<DataType, Parameters...>>::
     InteractKernel::interact(size_t index_i, Real dt)
 {
-    GradType summation = GradType::Zero();
+    auto summation = MatrixToScalarVecVec(GradType::Zero());
+    auto hessian_scalar = MatrixToScalarVecVec(this->hessian_[index_i]);
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
     {
         UnsignedInt index_j = this->neighbor_index_[n];
         Vecd r_ij = this->vec_r_ij(index_i, index_j);
         Vecd corrected_gradW_ij = this->dW_ij(index_i, index_j) * this->Vol_[index_j] *
                                   B_[index_i] * this->e_ij(index_i, index_j);
-        VecMatd displacement_matrix = vectorizeSymMatrix(r_ij * r_ij.transpose());
-
-        summation -= corrected_gradW_ij;
-
-                     displacement_matrix *
-                     transferToMatrix(corrected_difference).transpose();
+        auto difference = (vectorizeSymMatrix(r_ij * r_ij.transpose())).dotProduct(hessian_scalar);
+        summation -= 0.5 * scalarProduct(corrected_gradW_ij, difference);
     }
-    hessian_[index_i] = summation;
+    this->gradient_[index_i] += ScalarVecVecToMatrix(summation);
+}
+//=================================================================================================//
+template <typename DataType, typename... Parameters>
+void SecondOrderGradient<Contact<DataType, Parameters...>>::
+    InteractKernel::interact(size_t index_i, Real dt)
+{
+    auto summation = MatrixToScalarVecVec(GradType::Zero());
+    auto hessian_scalar = MatrixToScalarVecVec(this->hessian_[index_i]);
+    for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
+    {
+        UnsignedInt index_j = this->neighbor_index_[n];
+        Vecd r_ij = this->vec_r_ij(index_i, index_j);
+        Vecd corrected_gradW_ij = this->dW_ij(index_i, index_j) * contact_Vol_[index_j] *
+                                  B_[index_i] * this->e_ij(index_i, index_j);
+        auto difference = (vectorizeSymMatrix(r_ij * r_ij.transpose())).dotProduct(hessian_scalar);
+        summation -= 0.5 * scalarProduct(corrected_gradW_ij, difference);
+    }
+    this->gradient_[index_i] += ScalarVecVecToMatrix(summation);
 }
 //=================================================================================================//
 } // namespace SPH

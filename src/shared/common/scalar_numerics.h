@@ -120,6 +120,53 @@ struct ZeroData<ScalarVec<T, N>>
     static inline const ScalarVec<T, N> value = ScalarVec<T, N>::Zero();
 };
 
+template <int N, int M>
+using ScalarVecVec = ScalarVec<Eigen::Matrix<Real, M, 1>, N>; // vector of generalized scalar of vector
+
+template <int N, int M>
+ScalarVecVec<N, M> MatrixToScalarVecVec(const Eigen::Matrix<Real, N, M> &input)
+{
+    auto result = ScalarVecVec<N, M>::Zero();
+    for (UnsignedInt i = 0; i < N; ++i)
+    {
+        result[i] = Scalar<Eigen::Matrix<Real, M, 1>>(input.row(i).transpose());
+    }
+    return result;
+};
+
+template <int N>
+ScalarVec<Real, N> MatrixToScalarVecVec(const Eigen::Matrix<Real, N, 1> &input)
+{
+    auto result = ScalarVec<Real, N>::Zero();
+    for (UnsignedInt i = 0; i < N; ++i)
+    {
+        result[i] = Scalar<Real>(input[i]);
+    }
+    return result;
+};
+
+template <int N, int M>
+Eigen::Matrix<Real, N, M> ScalarVecVecToMatrix(const ScalarVecVec<N, M> &input)
+{
+    auto result = Eigen::Matrix<Real, N, M>::Zero();
+    for (UnsignedInt i = 0; i < N; ++i)
+    {
+        result.row(i) = input[i].get().transpose();
+    }
+    return result;
+};
+
+template <int N>
+Eigen::Matrix<Real, N, 1> ScalarVecVecToMatrix(const ScalarVec<Real, N> &input)
+{
+    auto result = Eigen::Matrix<Real, N, 1>::Zero();
+    for (UnsignedInt i = 0; i < N; ++i)
+    {
+        result[i] = input[i].get();
+    }
+    return result;
+};
+
 template <typename T, int N>
 Scalar<T> dotProduct(const Eigen::Matrix<Real, N, 1> &real_vector, const ScalarVec<T, N> &scalar_vector)
 {
