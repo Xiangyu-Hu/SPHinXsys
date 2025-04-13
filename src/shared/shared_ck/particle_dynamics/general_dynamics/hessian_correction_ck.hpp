@@ -49,6 +49,18 @@ void DisplacementMatrixGradient<Inner<Parameters...>>::
 }
 //=================================================================================================//
 template <typename... Parameters>
+DisplacementMatrixGradient<Contact<Parameters...>>::
+    DisplacementMatrixGradient(Relation<Contact<Parameters...>> &contact_relation)
+    : BaseDynamicsType(contact_relation)
+{
+    for (UnsignedInt k = 0; k != this->contact_particles_.size(); ++k)
+    {
+        dv_contact_Vol_.push_back(
+            this->contact_particles_[k]->template getVariableByName<Real>("VolumetricMeasure"));
+    }
+}
+//=================================================================================================//
+template <typename... Parameters>
 void DisplacementMatrixGradient<Contact<Parameters...>>::
     InteractKernel::interact(size_t index_i, Real dt)
 {
@@ -78,10 +90,11 @@ void HessianCorrectionMatrix<Inner<WithUpdate, Parameters...>>::
         Vecd r_ij = this->vec_r_ij(index_i, index_j);
         VecMatd displacement_matrix = vectorizeTensorSquare(r_ij);
         MatTend displacement_tensor = displacement_matrix * displacement_matrix.transpose();
-        VecMatd displacement_matrix_increment = this->displacement_matrix_grad_[index_i].dot(r_ij);
+        MatTend displacement_increment_tensor =
+            displacement_matrix * (this->displacement_matrix_grad_[index_i] * r_ij).transpose();
 
-        approximation_tensor -= (displacement_tensor + displacement_matrix_increment) *
-                                r_ij.dot(corrected_gradW_ij) / math::pow(r_ij.squaredNorm(), 2);
+        approximation_tensor -= r_ij.dot(corrected_gradW_ij) / math::pow(r_ij.squaredNorm(), 2) *
+                                (displacement_tensor + displacement_increment_tensor);
     }
     this->M_[index_i] = approximation_tensor;
 }
@@ -92,10 +105,22 @@ void HessianCorrectionMatrix<Inner<WithUpdate, Parameters...>>::
 {
     Real determinant = this->M_[index_i].determinant();
     Real det_sqr = SMAX(alpha_ - determinant, Real(0));
-    Matd M_T = this->M_[index_i].transpose(); // for Tikhonov regularization
-    Matd inverse = (M_T * this->M_[index_i] + SqrtEps * Matd::Identity()).inverse() * M_T;
+    MatTend M_T = this->M_[index_i].transpose(); // for Tikhonov regularization
+    MatTend inverse = (M_T * this->M_[index_i] + SqrtEps * MatTend::Identity()).inverse() * M_T;
     Real weight = determinant / (determinant + det_sqr);
-    this->M_[index_i] = weight * inverse + (1.0 - weight) * Matd::Identity();
+    this->M_[index_i] = weight * inverse + (1.0 - weight) * MatTend::Identity();
+}
+//=================================================================================================//
+template <typename... Parameters>
+HessianCorrectionMatrix<Contact<Parameters...>>::
+    HessianCorrectionMatrix(Relation<Contact<Parameters...>> &contact_relation)
+    : BaseDynamicsType(contact_relation)
+{
+    for (UnsignedInt k = 0; k != this->contact_particles_.size(); ++k)
+    {
+        dv_contact_Vol_.push_back(
+            this->contact_particles_[k]->template getVariableByName<Real>("VolumetricMeasure"));
+    }
 }
 //=================================================================================================//
 template <typename... Parameters>
@@ -111,10 +136,11 @@ void HessianCorrectionMatrix<Contact<Parameters...>>::
         Vecd r_ij = this->vec_r_ij(index_i, index_j);
         VecMatd displacement_matrix = vectorizeTensorSquare(r_ij);
         MatTend displacement_tensor = displacement_matrix * displacement_matrix.transpose();
-        VecMatd displacement_matrix_increment = this->displacement_matrix_grad_[index_i].dot(r_ij);
+        MatTend displacement_increment_tensor =
+            displacement_matrix * (this->displacement_matrix_grad_[index_i] * r_ij).transpose();
 
-        approximation_tensor -= (displacement_tensor + displacement_matrix_increment) *
-                                r_ij.dot(corrected_gradW_ij) / math::pow(r_ij.squaredNorm(), 2);
+        approximation_tensor -= r_ij.dot(corrected_gradW_ij) / math::pow(r_ij.squaredNorm(), 2) *
+                                (displacement_tensor + displacement_increment_tensor);
     }
     this->M_[index_i] += approximation_tensor;
 }

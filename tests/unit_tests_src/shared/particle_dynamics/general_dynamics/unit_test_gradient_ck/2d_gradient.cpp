@@ -120,6 +120,12 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     InteractionDynamicsCK<MainExecutionPolicy, LinearCorrectionMatrix<Inner<WithUpdate>, Contact<>>>
         fluid_linear_correction_matrix(DynamicsArgs(water_block_inner, 0.0), water_wall_contact);
+
+    InteractionDynamicsCK<MainExecutionPolicy, DisplacementMatrixGradient<Inner<>, Contact<>>>
+        displacement_matrix_gradient(water_block_inner, water_wall_contact);
+    InteractionDynamicsCK<MainExecutionPolicy, HessianCorrectionMatrix<Inner<WithUpdate>, Contact<>>>
+        hessian_correction_matrix(DynamicsArgs(water_block_inner, 0.0), water_wall_contact);
+
     InteractionDynamicsCK<MainExecutionPolicy, LinearGradient<Inner<Vecd>, Contact<Vecd>>>
         position_linear_gradient(
             DynamicsArgs(water_block_inner, std::string("Position")),
@@ -137,6 +143,8 @@ int main(int ac, char *av[])
     update_fluid_observer_contact.exec();
 
     fluid_linear_correction_matrix.exec();
+    displacement_matrix_gradient.exec();
+    hessian_correction_matrix.exec();
     position_linear_gradient.exec();
 
     observed_position_gradient.writeToFile(0);
