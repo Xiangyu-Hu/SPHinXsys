@@ -96,12 +96,66 @@ class Gradient<Base, DataType, RelationType<Parameters...>>
         Real *Vol_;
         DataType *variable_;
         Grad<DataType> *gradient_;
+        Matd *B_;
     };
 
   protected:
     DiscreteVariable<Real> *dv_Vol_;
     DiscreteVariable<DataType> *dv_variable_;
     DiscreteVariable<Grad<DataType>> *dv_gradient_;
+    DiscreteVariable<Matd> *dv_B_;
+};
+
+template <typename... RelationTypes>
+class LinearGradient;
+
+template <typename DataType, typename... Parameters>
+class LinearGradient<Inner<DataType, Parameters...>>
+    : public Gradient<Base, DataType, Inner<Parameters...>>
+{
+    using BaseDynamicsType = Gradient<Base, DataType, Inner<Parameters...>>;
+
+  public:
+    explicit LinearGradient(Relation<Inner<Parameters...>> &inner_relation)
+        : BaseDynamicsType(inner_relation) {};
+    virtual ~LinearGradient() {};
+
+    class InteractKernel : public BaseDynamicsType::InteractKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+            : BaseDynamicsType::InteractKernel(ex_policy, encloser){};
+        void interact(size_t index_i, Real dt = 0.0);
+    };
+};
+
+template <typename DataType, typename... Parameters>
+class LinearGradient<Contact<DataType, Parameters...>>
+    : public Gradient<Base, DataType, Contact<Parameters...>>
+{
+    using BaseDynamicsType = Gradient<Base, DataType, Contact<Parameters...>>;
+
+  public:
+    explicit LinearGradient(Relation<Contact<Parameters...>> &contact_relation)
+        : BaseDynamicsType(contact_relation) {};
+    virtual ~LinearGradient() {};
+
+    class InteractKernel : public BaseDynamicsType::InteractKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, size_t contact_index)
+            : BaseDynamicsType::InteractKernel(ex_policy, encloser, contact_index),
+              contact_Vol_(encloser.dv_contact_Vol_->DataDelegate(ex_policy)){};
+        void interact(size_t index_i, Real dt = 0.0);
+
+      protected:
+        Real *contact_Vol_;
+    };
+
+  protected:
+    StdVec<DiscreteVariable<Real> *> dv_contact_Vol_;
 };
 
 template <typename... RelationTypes>
@@ -125,7 +179,6 @@ class Hessian<Base, DataType, RelationType<Parameters...>>
         InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, Args &&...args);
 
       protected:
-        Matd *B_;
         MatTend *M_;
         Hess<DataType> *hessian_;
 
@@ -141,7 +194,6 @@ class Hessian<Base, DataType, RelationType<Parameters...>>
     };
 
   protected:
-    DiscreteVariable<Matd> *dv_B_;
     DiscreteVariable<MatTend> *dv_M_;
     DiscreteVariable<Hess<DataType>> *dv_hessian_;
 };
