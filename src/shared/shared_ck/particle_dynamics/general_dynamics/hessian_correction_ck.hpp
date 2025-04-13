@@ -40,9 +40,9 @@ void DisplacementMatrixGradient<Inner<Parameters...>>::
     {
         UnsignedInt index_j = this->neighbor_index_[n];
         Vecd corrected_gradW_ij = this->dW_ij(index_i, index_j) * this->Vol_[index_j] *
-                                  B_[index_i] * this->e_ij(index_i, index_j);
+                                  this->B_[index_i] * this->e_ij(index_i, index_j);
         Vecd r_ij = this->vec_r_ij(index_i, index_j);
-        VecMatd displacement_matrix = vectorizeSymMatrix(r_ij * r_ij.transpose());
+        VecMatd displacement_matrix = vectorizeSymMatrix(Matd(r_ij * r_ij.transpose()));
 
         grad_displacement_matrix -= (displacement_matrix * corrected_gradW_ij.transpose());
     }
@@ -58,9 +58,9 @@ void DisplacementMatrixGradient<Contact<Parameters...>>::
     {
         UnsignedInt index_j = this->neighbor_index_[n];
         Vecd corrected_gradW_ij = this->dW_ij(index_i, index_j) * contact_Vol_[index_j] *
-                                  B_[index_i] * this->e_ij(index_i, index_j);
+                                  this->B_[index_i] * this->e_ij(index_i, index_j);
         Vecd r_ij = this->vec_r_ij(index_i, index_j);
-        VecMatd displacement_matrix = vectorizeSymMatrix(r_ij * r_ij.transpose());
+        VecMatd displacement_matrix = vectorizeSymMatrix(Matd(r_ij * r_ij.transpose()));
 
         grad_displacement_matrix -= (displacement_matrix * corrected_gradW_ij.transpose());
     }
@@ -76,9 +76,9 @@ void HessianCorrectionMatrix<Inner<WithUpdate, Parameters...>>::
     {
         UnsignedInt index_j = this->neighbor_index_[n];
         Vecd corrected_gradW_ij = this->dW_ij(index_i, index_j) * this->Vol_[index_j] *
-                                  B_[index_i] * this->e_ij(index_i, index_j);
+                                  this->B_[index_i] * this->e_ij(index_i, index_j);
         Vecd r_ij = this->vec_r_ij(index_i, index_j);
-        VecMatd displacement_matrix = vectorizeSymMatrix(r_ij * r_ij.transpose());
+        VecMatd displacement_matrix = vectorizeSymMatrix(Matd(r_ij * r_ij.transpose()));
         MatTend displacement_tensor = displacement_matrix * displacement_matrix.transpose();
         VecMatd displacement_matrix_increment = this->displacement_matrix_grad_[index_i].dot(r_ij);
 
@@ -109,9 +109,9 @@ void HessianCorrectionMatrix<Contact<Parameters...>>::
     {
         UnsignedInt index_j = this->neighbor_index_[n];
         Vecd corrected_gradW_ij = this->dW_ij(index_i, index_j) * contact_Vol_[index_j] *
-                                  B_[index_i] * this->e_ij(index_i, index_j);
+                                  this->B_[index_i] * this->e_ij(index_i, index_j);
         Vecd r_ij = this->vec_r_ij(index_i, index_j);
-        VecMatd displacement_matrix = vectorizeSymMatrix(r_ij * r_ij.transpose());
+        VecMatd displacement_matrix = vectorizeSymMatrix(Matd(r_ij * r_ij.transpose()));
         MatTend displacement_tensor = displacement_matrix * displacement_matrix.transpose();
         VecMatd displacement_matrix_increment = this->displacement_matrix_grad_[index_i].dot(r_ij);
 

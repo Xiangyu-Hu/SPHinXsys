@@ -189,42 +189,6 @@ class HessianCorrectionMatrix<Contact<Parameters...>>
   protected:
     StdVec<DiscreteVariable<Real> *> dv_contact_Vol_;
 };
-
 using HessianCorrectionMatrixComplex = HessianCorrectionMatrix<Inner<WithUpdate>, Contact<>>;
-
-class NoKernelCorrectionCK : public KernelCorrection
-{
-  public:
-    NoKernelCorrectionCK(BaseParticles *particles) : KernelCorrection() {};
-
-    class ComputingKernel : public ParameterFixed<Real>
-    {
-      public:
-        template <class ExecutionPolicy>
-        ComputingKernel(const ExecutionPolicy &ex_policy,
-                        NoKernelCorrectionCK &encloser)
-            : ParameterFixed<Real>(1.0){};
-    };
-};
-
-class LinearCorrectionCK : public KernelCorrection
-{
-  public:
-    LinearCorrectionCK(BaseParticles *particles)
-        : KernelCorrection(),
-          dv_B_(particles->getVariableByName<Matd>("HessianCorrectionMatrix")) {};
-
-    class ComputingKernel : public ParameterVariable<Matd>
-    {
-      public:
-        template <class ExecutionPolicy>
-        ComputingKernel(const ExecutionPolicy &ex_policy, LinearCorrectionCK &encloser)
-            : ParameterVariable<Matd>(encloser.dv_B_->DelegatedData(ex_policy)){};
-    };
-
-  protected:
-    DiscreteVariable<Matd> *dv_B_;
-};
-
 } // namespace SPH
 #endif // HESSIAN_CORRECTION_CK_H
