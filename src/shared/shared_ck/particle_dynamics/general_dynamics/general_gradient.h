@@ -84,6 +84,9 @@ class Gradient<Base, DataType, RelationType<Parameters...>>
   public:
     template <class DynamicsIdentifier>
     explicit Gradient(DynamicsIdentifier &identifier, std::string &variable_name);
+    template <typename BodyRelationType, typename FirstArg>
+    explicit Gradient(DynamicsArgs<BodyRelationType, FirstArg> parameters)
+        : Gradient(parameters.identifier_, std::get<0>(parameters.others_)){};
     virtual ~Gradient() {};
 
     class InteractKernel : public BaseDynamicsType::InteractKernel
@@ -116,8 +119,8 @@ class LinearGradient<Inner<DataType, Parameters...>>
     using BaseDynamicsType = Gradient<Base, DataType, Inner<Parameters...>>;
 
   public:
-    explicit LinearGradient(Relation<Inner<Parameters...>> &inner_relation)
-        : BaseDynamicsType(inner_relation) {};
+    template <typename... Args>
+    explicit LinearGradient(Args &&...args) : BaseDynamicsType(std::forward<Args>(args)...){};
     virtual ~LinearGradient() {};
 
     class InteractKernel : public BaseDynamicsType::InteractKernel
@@ -137,8 +140,8 @@ class LinearGradient<Contact<DataType, Parameters...>>
     using BaseDynamicsType = Gradient<Base, DataType, Contact<Parameters...>>;
 
   public:
-    explicit LinearGradient(Relation<Contact<Parameters...>> &contact_relation)
-        : BaseDynamicsType(contact_relation) {};
+    template <typename... Args>
+    explicit LinearGradient(Args &&...args) : BaseDynamicsType(std::forward<Args>(args)...){};
     virtual ~LinearGradient() {};
 
     class InteractKernel : public BaseDynamicsType::InteractKernel
@@ -147,7 +150,7 @@ class LinearGradient<Contact<DataType, Parameters...>>
         template <class ExecutionPolicy, class EncloserType>
         InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, size_t contact_index)
             : BaseDynamicsType::InteractKernel(ex_policy, encloser, contact_index),
-              contact_Vol_(encloser.dv_contact_Vol_->DataDelegate(ex_policy)){};
+              contact_Vol_(encloser.dv_contact_Vol_[contact_index]->DelegatedData(ex_policy)){};
         void interact(size_t index_i, Real dt = 0.0);
 
       protected:
@@ -236,7 +239,7 @@ class Hessian<Contact<DataType, Parameters...>>
         template <class ExecutionPolicy, class EncloserType>
         InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, size_t contact_index)
             : BaseDynamicsType::InteractKernel(ex_policy, encloser, contact_index),
-              contact_Vol_(encloser.dv_contact_Vol_->DataDelegate(ex_policy)){};
+              contact_Vol_(encloser.dv_contact_Vol_[contact_index]->DelegatedData(ex_policy)){};
         void interact(size_t index_i, Real dt = 0.0);
 
       protected:
@@ -288,7 +291,7 @@ class SecondOrderGradient<Contact<DataType, Parameters...>>
         template <class ExecutionPolicy, class EncloserType>
         InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, size_t contact_index)
             : BaseDynamicsType::InteractKernel(ex_policy, encloser, contact_index),
-              contact_Vol_(encloser.dv_contact_Vol_->DataDelegate(ex_policy)){};
+              contact_Vol_(encloser.dv_contact_Vol_[contact_index]->DelegatedData(ex_policy)){};
         void interact(size_t index_i, Real dt = 0.0);
 
       protected:

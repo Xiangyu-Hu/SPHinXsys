@@ -45,9 +45,11 @@ class PltEngine
 
     void writeAQuantityHeader(std::ofstream &out_file, const Real &quantity, const std::string &quantity_name);
     void writeAQuantityHeader(std::ofstream &out_file, const Vecd &quantity, const std::string &quantity_name);
+    void writeAQuantityHeader(std::ofstream &out_file, const Matd &quantity, const std::string &quantity_name);
     void writeAQuantityHeader(std::ofstream &out_file, const SimTK::SpatialVec &quantity, const std::string &quantity_name);
     void writeAQuantity(std::ofstream &out_file, const Real &quantity);
     void writeAQuantity(std::ofstream &out_file, const Vecd &quantity);
+    void writeAQuantity(std::ofstream &out_file, const Matd &quantity);
     void writeAQuantity(std::ofstream &out_file, const SimTK::SpatialVec &quantity);
 };
 

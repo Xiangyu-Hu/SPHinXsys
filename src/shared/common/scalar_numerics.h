@@ -126,7 +126,7 @@ using ScalarVecVec = ScalarVec<Eigen::Matrix<Real, M, 1>, N>; // vector of gener
 template <int N, int M>
 ScalarVecVec<N, M> MatrixToScalarVecVec(const Eigen::Matrix<Real, N, M> &input)
 {
-    auto result = ScalarVecVec<N, M>::Zero();
+    ScalarVecVec<N, M> result = ScalarVecVec<N, M>::Zero();
     for (UnsignedInt i = 0; i < N; ++i)
     {
         result[i] = Scalar<Eigen::Matrix<Real, M, 1>>(input.row(i).transpose());
@@ -137,7 +137,7 @@ ScalarVecVec<N, M> MatrixToScalarVecVec(const Eigen::Matrix<Real, N, M> &input)
 template <int N>
 ScalarVec<Real, N> MatrixToScalarVecVec(const Eigen::Matrix<Real, N, 1> &input)
 {
-    auto result = ScalarVec<Real, N>::Zero();
+    ScalarVec<Real, N> result = ScalarVec<Real, N>::Zero();
     for (UnsignedInt i = 0; i < N; ++i)
     {
         result[i] = Scalar<Real>(input[i]);
@@ -148,7 +148,7 @@ ScalarVec<Real, N> MatrixToScalarVecVec(const Eigen::Matrix<Real, N, 1> &input)
 template <int N, int M>
 Eigen::Matrix<Real, N, M> ScalarVecVecToMatrix(const ScalarVecVec<N, M> &input)
 {
-    auto result = Eigen::Matrix<Real, N, M>::Zero();
+    Eigen::Matrix<Real, N, M> result = Eigen::Matrix<Real, N, M>::Zero();
     for (UnsignedInt i = 0; i < N; ++i)
     {
         result.row(i) = input[i].get().transpose();
@@ -159,7 +159,7 @@ Eigen::Matrix<Real, N, M> ScalarVecVecToMatrix(const ScalarVecVec<N, M> &input)
 template <int N>
 Eigen::Matrix<Real, N, 1> ScalarVecVecToMatrix(const ScalarVec<Real, N> &input)
 {
-    auto result = Eigen::Matrix<Real, N, 1>::Zero();
+    Eigen::Matrix<Real, N, 1> result = Eigen::Matrix<Real, N, 1>::Zero();
     for (UnsignedInt i = 0; i < N; ++i)
     {
         result[i] = input[i].get();

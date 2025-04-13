@@ -21,6 +21,13 @@ void PltEngine::writeAQuantityHeader(
     for (int i = 0; i != Dimensions; ++i)
         out_file << "\"" << quantity_name << "[" << i << "]\"" << "   ";
 }
+void PltEngine::writeAQuantityHeader(
+    std::ofstream &out_file, const Matd &quantity, const std::string &quantity_name)
+{
+    for (int i = 0; i != Dimensions; ++i)
+        for (int j = 0; j != Dimensions; ++j)
+            out_file << "\"" << quantity_name << "[" << i << "][" << j << "]\"" << "   ";
+}
 //=============================================================================================//
 void PltEngine::writeAQuantityHeader(
     std::ofstream &out_file, const SimTK::SpatialVec &quantity, const std::string &quantity_name)
@@ -43,6 +50,12 @@ void PltEngine::writeAQuantity(std::ofstream &out_file, const Vecd &quantity)
 {
     for (int i = 0; i < Dimensions; ++i)
         out_file << std::fixed << std::setprecision(9) << quantity[i] << "   ";
+}
+void PltEngine::writeAQuantity(std::ofstream &out_file, const Matd &quantity)
+{
+    for (int i = 0; i < Dimensions; ++i)
+        for (int j = 0; j < Dimensions; ++j)
+            out_file << std::fixed << std::setprecision(9) << quantity(i, j) << "   ";
 }
 //=============================================================================================//
 void PltEngine::writeAQuantity(std::ofstream &out_file, const SimTK::SpatialVec &quantity)
