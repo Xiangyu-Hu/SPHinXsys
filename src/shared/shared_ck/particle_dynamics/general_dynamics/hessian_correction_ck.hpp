@@ -43,7 +43,7 @@ void DisplacementMatrixGradient<Inner<Parameters...>>::
                                   this->B_[index_i] * this->e_ij(index_i, index_j);
         Vecd r_ij = this->vec_r_ij(index_i, index_j);
 
-        grad_displacement_matrix -= (vectorizeTensorSquare(r_ij) * corrected_gradW_ij.transpose());
+        grad_displacement_matrix -= vectorizeTensorSquare(r_ij) * corrected_gradW_ij.transpose();
     }
     this->displacement_matrix_grad_[index_i] = grad_displacement_matrix;
 }
@@ -72,7 +72,7 @@ void DisplacementMatrixGradient<Contact<Parameters...>>::
                                   this->B_[index_i] * this->e_ij(index_i, index_j);
         Vecd r_ij = this->vec_r_ij(index_i, index_j);
 
-        grad_displacement_matrix -= (vectorizeTensorSquare(r_ij) * corrected_gradW_ij.transpose());
+        grad_displacement_matrix -= vectorizeTensorSquare(r_ij) * corrected_gradW_ij.transpose();
     }
     this->displacement_matrix_grad_[index_i] += grad_displacement_matrix;
 }
