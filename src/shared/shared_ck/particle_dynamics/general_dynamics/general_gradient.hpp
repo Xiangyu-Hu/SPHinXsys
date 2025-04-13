@@ -11,10 +11,11 @@ template <class DynamicsIdentifier>
 Gradient<Base, DataType, RelationType<Parameters...>>::
     Gradient(DynamicsIdentifier &identifier, std::string &variable_name)
     : BaseDynamicsType(identifier),
+      variable_name_(variable_name), gradient_name_(variable_name + "Gradient"),
       dv_Vol_(this->particles_->template getVariableByName<Real>("VolumetricMeasure")),
       dv_variable_(this->particles_->template getVariableByName<DataType>(variable_name)),
       dv_gradient_(this->particles_->template registerStateVariableOnly<Grad<DataType>>(
-          variable_name + "Gradient", ZeroData<Grad<DataType>>::value)),
+          gradient_name_, ZeroData<Grad<DataType>>::value)),
       dv_B_(this->particles_->template getVariableByName<Matd>("LinearCorrectionMatrix")) {}
 //=================================================================================================//
 template <typename DataType, template <typename...> class RelationType, typename... Parameters>
@@ -31,32 +32,54 @@ template <typename DataType, typename... Parameters>
 void LinearGradient<Inner<DataType, Parameters...>>::
     InteractKernel::interact(size_t index_i, Real dt)
 {
-    ScalarVec<DataType, Dimensions> summation = ScalarVec<DataType, Dimensions>::Zero();
+    Grad<DataType> summation = Grad<DataType>::Zero();
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
     {
         UnsignedInt index_j = this->neighbor_index_[n];
         Vecd corrected_gradW_ijV_j = this->dW_ij(index_i, index_j) * this->Vol_[index_j] *
                                      this->B_[index_i] * this->e_ij(index_i, index_j);
-        Scalar<DataType> difference(this->variable_[index_i] - this->variable_[index_j]);
-        summation -= scalarProduct(corrected_gradW_ijV_j, difference);
+        DataType difference = this->variable_[index_i] - this->variable_[index_j];
+        summation -= corrected_gradW_ijV_j * transferToMatrix(difference).transpose();
     }
-    this->gradient_[index_i] = ScalarVecVecToMatrix(summation);
+    this->gradient_[index_i] = summation;
 }
+//=================================================================================================//
+template <typename DataType, typename... Parameters>
+template <typename... Args>
+LinearGradient<Contact<DataType, Parameters...>>::LinearGradient(Args &&...args)
+    : BaseDynamicsType(std::forward<Args>(args)...)
+{
+    for (UnsignedInt k = 0; k != this->contact_particles_.size(); ++k)
+    {
+        dv_contact_Vol_.push_back(
+            this->contact_particles_[k]->template getVariableByName<Real>("VolumetricMeasure"));
+        dv_contact_variable_.push_back(
+            this->contact_particles_[k]->template getVariableByName<DataType>(this->variable_name_));
+    }
+}
+//=================================================================================================//
+template <typename DataType, typename... Parameters>
+template <class ExecutionPolicy, class EncloserType>
+LinearGradient<Contact<DataType, Parameters...>>::InteractKernel::
+    InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, size_t contact_index)
+    : BaseDynamicsType::InteractKernel(ex_policy, encloser, contact_index),
+      contact_Vol_(encloser.dv_contact_Vol_[contact_index]->DelegatedData(ex_policy)),
+      contact_variable_(encloser.dv_contact_variable_[contact_index]->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <typename DataType, typename... Parameters>
 void LinearGradient<Contact<DataType, Parameters...>>::
     InteractKernel::interact(size_t index_i, Real dt)
 {
-    ScalarVec<DataType, Dimensions> summation = ScalarVec<DataType, Dimensions>::Zero();
+    Grad<DataType> summation = Grad<DataType>::Zero();
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
     {
         UnsignedInt index_j = this->neighbor_index_[n];
         Vecd corrected_gradW_ijV_j = this->dW_ij(index_i, index_j) * contact_Vol_[index_j] *
                                      this->B_[index_i] * this->e_ij(index_i, index_j);
-        Scalar<DataType> difference(this->variable_[index_i] - this->variable_[index_j]);
-        summation -= scalarProduct(corrected_gradW_ijV_j, difference);
+        DataType difference = this->variable_[index_i] - contact_variable_[index_j];
+        summation -= corrected_gradW_ijV_j * transferToMatrix(difference).transpose();
     }
-    this->gradient_[index_i] += ScalarVecVecToMatrix(summation);
+    this->gradient_[index_i] += summation;
 }
 //=================================================================================================//
 template <typename DataType, template <typename...> class RelationType, typename... Parameters>
@@ -95,6 +118,28 @@ void Hessian<Inner<DataType, Parameters...>>::
 }
 //=================================================================================================//
 template <typename DataType, typename... Parameters>
+template <typename... Args>
+Hessian<Contact<DataType, Parameters...>>::Hessian(Args &&...args)
+    : BaseDynamicsType(std::forward<Args>(args)...)
+{
+    for (UnsignedInt k = 0; k != this->contact_particles_.size(); ++k)
+    {
+        dv_contact_Vol_.push_back(
+            this->contact_particles_[k]->template getVariableByName<Real>("VolumetricMeasure"));
+        dv_contact_variable_.push_back(
+            this->contact_particles_[k]->template getVariableByName<DataType>(this->variable_name_));
+    }
+}
+//=================================================================================================//
+template <typename DataType, typename... Parameters>
+template <class ExecutionPolicy, class EncloserType>
+Hessian<Contact<DataType, Parameters...>>::InteractKernel::
+    InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, size_t contact_index)
+    : BaseDynamicsType::InteractKernel(ex_policy, encloser, contact_index),
+      contact_Vol_(encloser.dv_contact_Vol_[contact_index]->DelegatedData(ex_policy)),
+      contact_variable_(encloser.dv_contact_variable_[contact_index]->DelegatedData(ex_policy)) {}
+//=================================================================================================//
+template <typename DataType, typename... Parameters>
 void Hessian<Contact<DataType, Parameters...>>::
     InteractKernel::interact(size_t index_i, Real dt)
 {
@@ -105,7 +150,7 @@ void Hessian<Contact<DataType, Parameters...>>::
         Vecd r_ij = this->vec_r_ij(index_i, index_j);
         Real corrected_dW_ijV_j = this->dW_ij(index_i, index_j) * contact_Vol_[index_j] *
                                   (this->B_[index_i] * this->e_ij(index_i, index_j)).dot(r_ij);
-        DataType corrected_difference = this->variable_[index_i] - this->variable_[index_j] +
+        DataType corrected_difference = this->variable_[index_i] - contact_variable_[index_j] +
                                         this->gradient_[index_i].dot(r_ij);
         summation += corrected_dW_ijV_j / math::pow(r_ij.squaredNorm(), 2) *
                      vectorizeTensorSquare(r_ij) * transferToMatrix(corrected_difference).transpose();
@@ -130,6 +175,28 @@ void SecondOrderGradient<Inner<DataType, Parameters...>>::
     }
     this->gradient_[index_i] += ScalarVecVecToMatrix(summation);
 }
+//=================================================================================================//
+template <typename DataType, typename... Parameters>
+template <typename... Args>
+SecondOrderGradient<Contact<DataType, Parameters...>>::SecondOrderGradient(Args &&...args)
+    : BaseDynamicsType(std::forward<Args>(args)...)
+{
+    for (UnsignedInt k = 0; k != this->contact_particles_.size(); ++k)
+    {
+        dv_contact_Vol_.push_back(
+            this->contact_particles_[k]->template getVariableByName<Real>("VolumetricMeasure"));
+        dv_contact_variable_.push_back(
+            this->contact_particles_[k]->template getVariableByName<DataType>(this->variable_name_));
+    }
+}
+//=================================================================================================//
+template <typename DataType, typename... Parameters>
+template <class ExecutionPolicy, class EncloserType>
+SecondOrderGradient<Contact<DataType, Parameters...>>::InteractKernel::
+    InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, size_t contact_index)
+    : BaseDynamicsType::InteractKernel(ex_policy, encloser, contact_index),
+      contact_Vol_(encloser.dv_contact_Vol_[contact_index]->DelegatedData(ex_policy)),
+      contact_variable_(encloser.dv_contact_variable_[contact_index]->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <typename DataType, typename... Parameters>
 void SecondOrderGradient<Contact<DataType, Parameters...>>::

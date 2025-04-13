@@ -97,7 +97,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     // Define the main execution policy for this case.
     //----------------------------------------------------------------------
-    using MainExecutionPolicy = execution::ParallelPolicy;
+    using MainExecutionPolicy = execution::SequencedPolicy;
     //----------------------------------------------------------------------
     // Define the numerical methods used in the simulation.
     // Note that there may be data dependence on the sequence of constructions.
@@ -119,13 +119,13 @@ int main(int ac, char *av[])
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
     InteractionDynamicsCK<MainExecutionPolicy, LinearCorrectionMatrix<Inner<WithUpdate>, Contact<>>>
-        fluid_linear_correction_matrix(DynamicsArgs(water_block_inner, 0.5), water_wall_contact);
+        fluid_linear_correction_matrix(DynamicsArgs(water_block_inner, 0.0), water_wall_contact);
     InteractionDynamicsCK<MainExecutionPolicy, LinearGradient<Inner<Vecd>, Contact<Vecd>>>
         position_linear_gradient(
             DynamicsArgs(water_block_inner, std::string("Position")),
             DynamicsArgs(water_wall_contact, std::string("Position")));
     ObservedQuantityRecording<MainExecutionPolicy, Matd, RestoringCorrection>
-        fluid_observer_position("PositionGradient", fluid_observer_contact);
+        observed_position_gradient("PositionGradient", fluid_observer_contact);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
@@ -139,7 +139,8 @@ int main(int ac, char *av[])
     fluid_linear_correction_matrix.exec();
     position_linear_gradient.exec();
 
-    approximated_gradient = *fluid_observer_position.getObservedQuantity();
+    observed_position_gradient.writeToFile(0);
+    approximated_gradient = *observed_position_gradient.getObservedQuantity();
     testing::InitGoogleTest(&ac, av);
     return RUN_ALL_TESTS();
 }

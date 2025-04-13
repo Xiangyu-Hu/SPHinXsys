@@ -154,5 +154,16 @@ inline Vec6d vectorizeTensorSquare(const Vec3d &input)
 {
     return Vec6d(input(0, 0), input(1, 1), input(2, 2), input(0, 1), input(1, 2), input(2, 0));
 };
+
+inline Eigen::Matrix<Real, 1, 1> transferToMatrix(Real value)
+{
+    return Eigen::Matrix<Real, 1, 1>::Identity() * value;
+};
+
+template <int N, int M>
+Eigen::Matrix<Real, N, M> transferToMatrix(const Eigen::Matrix<Real, N, M> &value)
+{
+    return value;
+};
 } // namespace SPH
 #endif // VECTOR_FUNCTIONS_H

@@ -103,6 +103,8 @@ class Gradient<Base, DataType, RelationType<Parameters...>>
     };
 
   protected:
+    std::string variable_name_;
+    std::string gradient_name_;
     DiscreteVariable<Real> *dv_Vol_;
     DiscreteVariable<DataType> *dv_variable_;
     DiscreteVariable<Grad<DataType>> *dv_gradient_;
@@ -141,24 +143,24 @@ class LinearGradient<Contact<DataType, Parameters...>>
 
   public:
     template <typename... Args>
-    explicit LinearGradient(Args &&...args) : BaseDynamicsType(std::forward<Args>(args)...){};
+    explicit LinearGradient(Args &&...args);
     virtual ~LinearGradient() {};
 
     class InteractKernel : public BaseDynamicsType::InteractKernel
     {
       public:
         template <class ExecutionPolicy, class EncloserType>
-        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, size_t contact_index)
-            : BaseDynamicsType::InteractKernel(ex_policy, encloser, contact_index),
-              contact_Vol_(encloser.dv_contact_Vol_[contact_index]->DelegatedData(ex_policy)){};
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, size_t contact_index);
         void interact(size_t index_i, Real dt = 0.0);
 
       protected:
         Real *contact_Vol_;
+        DataType *contact_variable_;
     };
 
   protected:
     StdVec<DiscreteVariable<Real> *> dv_contact_Vol_;
+    StdVec<DiscreteVariable<DataType> *> dv_contact_variable_;
 };
 
 template <typename... RelationTypes>
@@ -184,16 +186,6 @@ class Hessian<Base, DataType, RelationType<Parameters...>>
       protected:
         MatTend *M_;
         Hess<DataType> *hessian_;
-
-        Eigen::Matrix<Real, 1, 1> transferToMatrix(Real value)
-        {
-            return Eigen::Matrix<Real, 1, 1>::Identity() * value;
-        };
-
-        Vecd transferToMatrix(const Vecd &value)
-        {
-            return value;
-        };
     };
 
   protected:
@@ -229,25 +221,25 @@ class Hessian<Contact<DataType, Parameters...>>
     using BaseDynamicsType = Hessian<Base, DataType, Contact<Parameters...>>;
 
   public:
-    explicit Hessian(Relation<Contact<Parameters...>> &contact_relation)
-        : BaseDynamicsType(contact_relation) {};
+    template <typename... Args>
+    explicit Hessian(Args &&...args);
     virtual ~Hessian() {};
 
     class InteractKernel : public BaseDynamicsType::InteractKernel
     {
       public:
         template <class ExecutionPolicy, class EncloserType>
-        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, size_t contact_index)
-            : BaseDynamicsType::InteractKernel(ex_policy, encloser, contact_index),
-              contact_Vol_(encloser.dv_contact_Vol_[contact_index]->DelegatedData(ex_policy)){};
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, size_t contact_index);
         void interact(size_t index_i, Real dt = 0.0);
 
       protected:
         Real *contact_Vol_;
+        DataType *contact_variable_;
     };
 
   protected:
     StdVec<DiscreteVariable<Real> *> dv_contact_Vol_;
+    StdVec<DiscreteVariable<DataType> *> dv_contact_variable_;
 };
 
 template <typename... RelationTypes>
@@ -281,25 +273,25 @@ class SecondOrderGradient<Contact<DataType, Parameters...>>
     using BaseDynamicsType = Hessian<Base, DataType, Contact<Parameters...>>;
 
   public:
-    explicit SecondOrderGradient(Relation<Contact<Parameters...>> &contact_relation)
-        : BaseDynamicsType(contact_relation) {};
+    template <typename... Args>
+    explicit SecondOrderGradient(Args &&...args);
     virtual ~SecondOrderGradient() {};
 
     class InteractKernel : public BaseDynamicsType::InteractKernel
     {
       public:
         template <class ExecutionPolicy, class EncloserType>
-        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, size_t contact_index)
-            : BaseDynamicsType::InteractKernel(ex_policy, encloser, contact_index),
-              contact_Vol_(encloser.dv_contact_Vol_[contact_index]->DelegatedData(ex_policy)){};
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, size_t contact_index);
         void interact(size_t index_i, Real dt = 0.0);
 
       protected:
         Real *contact_Vol_;
+        DataType *contact_variable_;
     };
 
   protected:
     StdVec<DiscreteVariable<Real> *> dv_contact_Vol_;
+    StdVec<DiscreteVariable<DataType> *> dv_contact_variable_;
 };
 } // namespace SPH
 #endif // GENERAL_GRADIENT_H
