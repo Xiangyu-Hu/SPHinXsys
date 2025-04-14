@@ -108,9 +108,9 @@ void Hessian<Inner<DataType, Parameters...>>::
         Vecd r_ij = this->vec_r_ij(index_i, index_j);
         Real corrected_dW_ijV_j = this->dW_ij(index_i, index_j) * this->Vol_[index_j] *
                                   (this->B_[index_i] * this->e_ij(index_i, index_j)).dot(r_ij);
-        DataType corrected_difference = this->variable_[index_i] - this->variable_[index_j] +
+        DataType corrected_difference = this->variable_[index_i] - this->variable_[index_j] -
                                         this->gradient_[index_i].dot(r_ij);
-        summation += corrected_dW_ijV_j / math::pow(r_ij.squaredNorm(), 2) *
+        summation += 2.0 * corrected_dW_ijV_j / math::pow(r_ij.squaredNorm(), 2) *
                      vectorizeTensorSquare(r_ij) * transferToMatrix(corrected_difference).transpose();
     }
     this->hessian_[index_i] = this->M_[index_i] * summation;
@@ -149,9 +149,9 @@ void Hessian<Contact<DataType, Parameters...>>::
         Vecd r_ij = this->vec_r_ij(index_i, index_j);
         Real corrected_dW_ijV_j = this->dW_ij(index_i, index_j) * contact_Vol_[index_j] *
                                   (this->B_[index_i] * this->e_ij(index_i, index_j)).dot(r_ij);
-        DataType corrected_difference = this->variable_[index_i] - contact_variable_[index_j] +
+        DataType corrected_difference = this->variable_[index_i] - contact_variable_[index_j] -
                                         this->gradient_[index_i].dot(r_ij);
-        summation += corrected_dW_ijV_j / math::pow(r_ij.squaredNorm(), 2) *
+        summation += 2.0 * corrected_dW_ijV_j / math::pow(r_ij.squaredNorm(), 2) *
                      vectorizeTensorSquare(r_ij) * transferToMatrix(corrected_difference).transpose();
     }
     this->hessian_[index_i] += this->M_[index_i] * summation;

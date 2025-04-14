@@ -65,7 +65,7 @@ class ParabolicProfile : public ReturnFunction<Real>
 };
 
 VecMat2d approximated_hessian = VecMat2d::Zero();
-VecMat2d reference_hessian = {1.0, 1.0, 0.0};
+VecMat2d reference_hessian = {2.0, 2.0, 0.0};
 TEST(Hessian, Error)
 {
     EXPECT_LT((reference_hessian - approximated_hessian).norm(), 1.0e-6);
@@ -172,6 +172,10 @@ int main(int ac, char *av[])
         water_block_initial_condition(water_block, "Phi");
     StateDynamics<MainExecutionPolicy, InitialCondition<SPHBody, ParabolicProfile>>
         wall_initial_condition(wall, "Phi");
+    InteractionDynamicsCK<MainExecutionPolicy, LinearGradient<Inner<Real>, Contact<Real>>>
+        variable_linear_gradient(
+            DynamicsArgs(water_block_inner, std::string("Phi")),
+            DynamicsArgs(water_wall_contact, std::string("Phi")));
     InteractionDynamicsCK<MainExecutionPolicy, Hessian<Inner<Real>, Contact<Real>>>
         variable_hessian(
             DynamicsArgs(water_block_inner, std::string("Phi")),
@@ -197,6 +201,7 @@ int main(int ac, char *av[])
     hessian_correction_matrix.exec();
     water_block_initial_condition.exec();
     wall_initial_condition.exec();
+    variable_linear_gradient.exec();
     variable_hessian.exec();
     observed_hessian.writeToFile(0);
     approximated_hessian = *observed_hessian.getObservedQuantity();

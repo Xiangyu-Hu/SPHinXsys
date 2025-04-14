@@ -147,12 +147,13 @@ void for_each_component(const Eigen::Matrix<Real, Dim1, Dim2> &input,
 
 inline Vec3d vectorizeTensorSquare(const Vec2d &input)
 {
-    return Vec3d(input(0, 0), input(1, 1), input(0, 1));
+    return Vec3d(input[0] * input[0], input[1] * input[1], input[0] * input[1]);
 };
 
 inline Vec6d vectorizeTensorSquare(const Vec3d &input)
 {
-    return Vec6d(input(0, 0), input(1, 1), input(2, 2), input(0, 1), input(1, 2), input(2, 0));
+    return Vec6d(input[0] * input[0], input[1] * input[1], input[2] * input[2],
+                 input[0] * input[1], input[1] * input[2], input[2] * input[0]);
 };
 
 inline Eigen::Matrix<Real, 1, 1> transferToMatrix(Real value)

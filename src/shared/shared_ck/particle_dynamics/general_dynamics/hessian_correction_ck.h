@@ -144,12 +144,12 @@ class HessianCorrectionMatrix<Inner<WithUpdate, Parameters...>>
         void interact(size_t index_i, Real dt = 0.0);
     };
 
-    class UpdateKernel : public InteractKernel
+    class UpdateKernel : public BaseDynamicsType::InteractKernel
     {
       public:
         template <class ExecutionPolicy, class EncloserType>
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : InteractKernel(ex_policy, encloser), alpha_(encloser.alpha_){};
+            : BaseDynamicsType::InteractKernel(ex_policy, encloser), alpha_(encloser.alpha_){};
         void update(size_t index_i, Real dt = 0.0);
 
       protected:
