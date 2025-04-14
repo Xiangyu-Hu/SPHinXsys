@@ -33,40 +33,13 @@
 
 namespace SPH
 {
-/**
- * @class VariableNormCK
- * @brief  obtained the maximum norm of a variable
- */
-template <typename DataType, typename NormType, class DynamicsIdentifier = SPHBody>
-class VariableNormCK : public BaseLocalDynamicsReduce<NormType, DynamicsIdentifier>
-{
-  public:
-    VariableNormCK(DynamicsIdentifier &identifier, const std::string &variable_name);
-    virtual ~VariableNormCK(){};
-    virtual Real outputResult(Real reduced_value) override { return std::sqrt(reduced_value); }
-
-    class ReduceKernel
-    {
-      public:
-        template <class ExecutionPolicy, class EncloserType>
-        ReduceKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-        Real reduce(size_t index_i, Real dt = 0.0) { return getSquaredNorm(variable_[index_i]); };
-
-      protected:
-        DataType *variable_;
-    };
-
-  protected:
-    DiscreteVariable<DataType> *dv_variable_;
-};
-
 class TotalKineticEnergyCK
     : public LocalDynamicsReduce<ReduceSum<Real>>
 {
 
   public:
     explicit TotalKineticEnergyCK(SPHBody &sph_body);
-    virtual ~TotalKineticEnergyCK(){};
+    virtual ~TotalKineticEnergyCK() {};
 
     class ReduceKernel
     {
@@ -93,13 +66,14 @@ class TotalMechanicalEnergyCK : public TotalKineticEnergyCK
 
   public:
     explicit TotalMechanicalEnergyCK(SPHBody &sph_body, Gravity &gravity);
-    virtual ~TotalMechanicalEnergyCK(){};
+    virtual ~TotalMechanicalEnergyCK() {};
 
     class ReduceKernel : public TotalKineticEnergyCK::ReduceKernel
     {
       public:
         template <class ExecutionPolicy, class EncloserType>
         ReduceKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+
         Real reduce(size_t index_i, Real dt = 0.0)
         {
             return TotalKineticEnergyCK::ReduceKernel::reduce(index_i, dt) +
@@ -113,6 +87,101 @@ class TotalMechanicalEnergyCK : public TotalKineticEnergyCK
 
   protected:
     Gravity &gravity_;
+    DiscreteVariable<Vecd> *dv_pos_;
+};
+
+template <typename DataType, class DynamicsIdentifier = SPHBody>
+class QuantitySum : public BaseLocalDynamicsReduce<ReduceSum<DataType>, DynamicsIdentifier>
+{
+  public:
+    QuantitySum(DynamicsIdentifier &identifier, const std::string &variable_name);
+    virtual ~QuantitySum() {};
+
+    class ReduceKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        ReduceKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+
+        DataType reduce(size_t index_i, Real dt = 0.0)
+        {
+            return variable_[index_i];
+        };
+
+      protected:
+        DataType *variable_;
+    };
+
+  protected:
+    DiscreteVariable<DataType> *dv_variable_;
+};
+
+template <typename DataType, class DynamicsIdentifier = SPHBody>
+class QuantityAverage : public BaseLocalDynamicsReduce<ReduceSum<std::pair<DataType, Real>>, DynamicsIdentifier>
+{
+    using ReduceReturnType = std::pair<DataType, Real>;
+    using BaseDynamicsType = BaseLocalDynamicsReduce<ReduceSum<ReduceReturnType>, DynamicsIdentifier>;
+
+  public:
+    QuantityAverage(DynamicsIdentifier &identifier, const std::string &variable_name);
+    virtual ~QuantityAverage() {};
+
+    class FinishDynamics
+    {
+      public:
+        using OutputType = DataType;
+        template <class EncloserType>
+        FinishDynamics(EncloserType &encloser){};
+        OutputType Result(const ReduceReturnType &reduced_value)
+        {
+            return reduced_value.first / reduced_value.second;
+        }
+    };
+
+    class ReduceKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        ReduceKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+
+        ReduceReturnType reduce(size_t index_i, Real dt = 0.0)
+        {
+            return ReduceReturnType(variable_[index_i], Real(1));
+        };
+
+      protected:
+        DataType *variable_;
+    };
+
+  protected:
+    DiscreteVariable<DataType> *dv_variable_;
+};
+
+template <class DynamicsIdentifier>
+class UpperFrontInAxisDirectionCK : public BaseLocalDynamicsReduce<ReduceMax, DynamicsIdentifier>
+{
+  public:
+    UpperFrontInAxisDirectionCK(DynamicsIdentifier &identifier, const std::string &name, int axis = lastAxis);
+    virtual ~UpperFrontInAxisDirectionCK() {};
+
+    class ReduceKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        ReduceKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+
+        Real reduce(size_t index_i, Real dt = 0.0)
+        {
+            return pos_[index_i][axis_];
+        };
+
+      protected:
+        int axis_;
+        Vecd *pos_;
+    };
+
+  protected:
+    int axis_;
     DiscreteVariable<Vecd> *dv_pos_;
 };
 

@@ -12,7 +12,9 @@ template <class RiemannSolverType, class KernelCorrectionType, typename... Param
 AcousticStep2ndHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType, Parameters...>>::
     AcousticStep2ndHalf(Relation<Inner<Parameters...>> &inner_relation)
     : AcousticStep<Interaction<Inner<Parameters...>>>(inner_relation),
-      correction_(this->particles_), riemann_solver_(this->fluid_, this->fluid_)
+      kernel_correction_(this->particles_),
+      fluid_(DynamicCast<FluidType>(this, this->sph_body_.getBaseMaterial())),
+      riemann_solver_(this->fluid_, this->fluid_)
 {
     static_assert(std::is_base_of<KernelCorrection, KernelCorrectionType>::value,
                   "KernelCorrection is not the base of KernelCorrectionType!");
@@ -22,8 +24,8 @@ template <class RiemannSolverType, class KernelCorrectionType, typename... Param
 template <class ExecutionPolicy, class EncloserType>
 AcousticStep2ndHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType, Parameters...>>::
     InitializeKernel::InitializeKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-    : vel_(encloser.dv_vel_->DelegatedDataField(ex_policy)),
-      dpos_(encloser.dv_dpos_->DelegatedDataField(ex_policy)) {}
+    : vel_(encloser.dv_vel_->DelegatedData(ex_policy)),
+      dpos_(encloser.dv_dpos_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
 void AcousticStep2ndHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType, Parameters...>>::
@@ -37,13 +39,13 @@ template <class ExecutionPolicy, class EncloserType>
 AcousticStep2ndHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType, Parameters...>>::
     InteractKernel::InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : BaseInteraction::InteractKernel(ex_policy, encloser),
-      correction_(encloser.correction_),
+      correction_(ex_policy, encloser.kernel_correction_),
       riemann_solver_(encloser.riemann_solver_),
-      Vol_(encloser.dv_Vol_->DelegatedDataField(ex_policy)),
-      rho_(encloser.dv_rho_->DelegatedDataField(ex_policy)),
-      drho_dt_(encloser.dv_drho_dt_->DelegatedDataField(ex_policy)),
-      vel_(encloser.dv_vel_->DelegatedDataField(ex_policy)),
-      force_(encloser.dv_force_->DelegatedDataField(ex_policy)) {}
+      Vol_(encloser.dv_Vol_->DelegatedData(ex_policy)),
+      rho_(encloser.dv_rho_->DelegatedData(ex_policy)),
+      drho_dt_(encloser.dv_drho_dt_->DelegatedData(ex_policy)),
+      vel_(encloser.dv_vel_->DelegatedData(ex_policy)),
+      force_(encloser.dv_force_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
 void AcousticStep2ndHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType, Parameters...>>::
@@ -69,8 +71,8 @@ template <class RiemannSolverType, class KernelCorrectionType, typename... Param
 template <class ExecutionPolicy, class EncloserType>
 AcousticStep2ndHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType, Parameters...>>::
     UpdateKernel::UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-    : rho_(encloser.dv_rho_->DelegatedDataField(ex_policy)),
-      drho_dt_(encloser.dv_drho_dt_->DelegatedDataField(ex_policy)) {}
+    : rho_(encloser.dv_rho_->DelegatedData(ex_policy)),
+      drho_dt_(encloser.dv_drho_dt_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
 void AcousticStep2ndHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType, Parameters...>>::
@@ -83,7 +85,9 @@ template <class RiemannSolverType, class KernelCorrectionType, typename... Param
 AcousticStep2ndHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType, Parameters...>>::
     AcousticStep2ndHalf(Relation<Contact<Parameters...>> &wall_contact_relation)
     : AcousticStep<Interaction<Contact<Wall, Parameters...>>>(wall_contact_relation),
-      correction_(this->particles_), riemann_solver_(this->fluid_, this->fluid_) {}
+      kernel_correction_(this->particles_),
+      fluid_(DynamicCast<FluidType>(this, this->sph_body_.getBaseMaterial())),
+      riemann_solver_(this->fluid_, this->fluid_) {}
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
 template <class ExecutionPolicy, class EncloserType>
@@ -91,16 +95,16 @@ AcousticStep2ndHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType, Param
     InteractKernel::InteractKernel(
         const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt contact_index)
     : BaseInteraction::InteractKernel(ex_policy, encloser, contact_index),
-      correction_(encloser.correction_),
+      correction_(ex_policy, encloser.kernel_correction_),
       riemann_solver_(encloser.riemann_solver_),
-      Vol_(encloser.dv_Vol_->DelegatedDataField(ex_policy)),
-      rho_(encloser.dv_rho_->DelegatedDataField(ex_policy)),
-      drho_dt_(encloser.dv_drho_dt_->DelegatedDataField(ex_policy)),
-      vel_(encloser.dv_vel_->DelegatedDataField(ex_policy)),
-      force_(encloser.dv_force_->DelegatedDataField(ex_policy)),
-      wall_Vol_(encloser.dv_wall_Vol_[contact_index]->DelegatedDataField(ex_policy)),
-      wall_vel_ave_(encloser.dv_wall_vel_ave_[contact_index]->DelegatedDataField(ex_policy)),
-      wall_n_(encloser.dv_wall_n_[contact_index]->DelegatedDataField(ex_policy)) {}
+      Vol_(encloser.dv_Vol_->DelegatedData(ex_policy)),
+      rho_(encloser.dv_rho_->DelegatedData(ex_policy)),
+      drho_dt_(encloser.dv_drho_dt_->DelegatedData(ex_policy)),
+      vel_(encloser.dv_vel_->DelegatedData(ex_policy)),
+      force_(encloser.dv_force_->DelegatedData(ex_policy)),
+      wall_Vol_(encloser.dv_wall_Vol_[contact_index]->DelegatedData(ex_policy)),
+      wall_vel_ave_(encloser.dv_wall_vel_ave_[contact_index]->DelegatedData(ex_policy)),
+      wall_n_(encloser.dv_wall_n_[contact_index]->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
 void AcousticStep2ndHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType, Parameters...>>::
@@ -114,8 +118,8 @@ void AcousticStep2ndHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType, 
         Real dW_ijV_j = this->dW_ij(index_i, index_j) * wall_Vol_[index_j];
         Vecd corrected_e_ij = correction_(index_i) * this->e_ij(index_i, index_j);
 
-        Vecd vel_in_wall = 2.0 * wall_vel_ave_[index_j] - vel_[index_i];
-        density_change_rate += (vel_[index_i] - vel_in_wall).dot(corrected_e_ij) * dW_ijV_j;
+        Vecd vel_j_in_wall = 2.0 * wall_vel_ave_[index_j] - vel_[index_i];
+        density_change_rate += (vel_[index_i] - vel_j_in_wall).dot(corrected_e_ij) * dW_ijV_j;
         Real u_jump = 2.0 * (vel_[index_i] - wall_vel_ave_[index_j]).dot(wall_n_[index_j]);
         p_dissipation += riemann_solver_.DissipativePJump(u_jump) * dW_ijV_j * wall_n_[index_j];
     }

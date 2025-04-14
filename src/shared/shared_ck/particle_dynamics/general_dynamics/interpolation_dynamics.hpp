@@ -6,9 +6,10 @@
 namespace SPH
 {
 //=================================================================================================//
-template <typename DataType>
-Interpolation<Contact<DataType>>::Interpolation(Relation<Contact<>> &pair_contact_relation, const std::string &variable_name)
-    : Interaction<Contact<>>(pair_contact_relation),
+template <typename DataType, typename... Parameters>
+Interpolation<Contact<DataType, Parameters...>>::Interpolation(
+    Relation<Contact<Parameters...>> &pair_contact_relation, const std::string &variable_name)
+    : BaseDynamicsType(pair_contact_relation),
       dv_interpolated_quantities_(this->particles_->template registerStateVariableOnly<DataType>(variable_name))
 {
     if (this->contact_particles_.size() > 1)
@@ -21,18 +22,18 @@ Interpolation<Contact<DataType>>::Interpolation(Relation<Contact<>> &pair_contac
     dv_contact_data_.push_back(this->contact_particles_[0]->template getVariableByName<DataType>(variable_name));
 }
 //=================================================================================================//
-template <typename DataType>
+template <typename DataType, typename... Parameters>
 template <class ExecutionPolicy, class EncloserType>
-Interpolation<Contact<DataType>>::InteractKernel::
+Interpolation<Contact<DataType, Parameters...>>::InteractKernel::
     InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt contact_index)
-    : Interaction<Contact<>>::InteractKernel(ex_policy, encloser, contact_index),
+    : BaseDynamicsType::InteractKernel(ex_policy, encloser, contact_index),
       zero_value_(ZeroData<DataType>::value),
-      interpolated_quantities_(encloser.dv_interpolated_quantities_->DelegatedDataField(ex_policy)),
-      contact_Vol_(encloser.dv_contact_Vol_[contact_index]->DelegatedDataField(ex_policy)),
-      contact_data_(encloser.dv_contact_data_[contact_index]->DelegatedDataField(ex_policy)) {}
+      interpolated_quantities_(encloser.dv_interpolated_quantities_->DelegatedData(ex_policy)),
+      contact_Vol_(encloser.dv_contact_Vol_[contact_index]->DelegatedData(ex_policy)),
+      contact_data_(encloser.dv_contact_data_[contact_index]->DelegatedData(ex_policy)) {}
 //=================================================================================================//
-template <typename DataType>
-void Interpolation<Contact<DataType>>::InteractKernel::interact(size_t index_i, Real dt)
+template <typename DataType, typename... Parameters>
+void Interpolation<Contact<DataType, Parameters...>>::InteractKernel::interact(size_t index_i, Real dt)
 {
     DataType interpolated_quantity(zero_value_);
     Real ttl_weight(0);

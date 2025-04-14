@@ -40,14 +40,20 @@ class Interpolation;
  * @class Interpolation
  * @brief Base class for interpolation.
  */
-template <typename DataType>
-class Interpolation<Contact<DataType>> : public Interaction<Contact<>>
+template <typename DataType, typename... Parameters>
+class Interpolation<Contact<DataType, Parameters...>> : public Interaction<Contact<Parameters...>>
 {
-  public:
-    Interpolation(Relation<Contact<>> &pair_contact_relation, const std::string &variable_name);
-    virtual ~Interpolation(){};
+    using BaseDynamicsType = Interaction<Contact<Parameters...>>;
 
-    class InteractKernel : public Interaction<Contact<>>::InteractKernel
+  public:
+    Interpolation(Relation<Contact<Parameters...>> &pair_contact_relation, const std::string &variable_name);
+    template <typename BodyRelationType, typename FirstArg>
+    explicit Interpolation(DynamicsArgs<BodyRelationType, FirstArg> parameters)
+        : Interpolation(parameters.identifier_, std::get<0>(parameters.others_)){};
+    virtual ~Interpolation() {};
+    DiscreteVariable<DataType> *dvInterpolatedQuantities() { return dv_interpolated_quantities_; };
+
+    class InteractKernel : public BaseDynamicsType::InteractKernel
     {
       public:
         template <class ExecutionPolicy, class EncloserType>
@@ -70,10 +76,12 @@ class Interpolation<Contact<DataType>> : public Interaction<Contact<>>
 template <class ExecutionPolicy, typename DataType>
 class ObservingAQuantityCK : public InteractionDynamicsCK<ExecutionPolicy, Interpolation<Contact<DataType>>>
 {
+    using BaseDynamicsType = InteractionDynamicsCK<ExecutionPolicy, Interpolation<Contact<DataType>>>;
+
   public:
-    explicit ObservingAQuantityCK(Relation<Contact<>> &pair_contact_relation, const std::string &variable_name)
-        : InteractionDynamicsCK<ExecutionPolicy, Interpolation<Contact<DataType>>>(pair_contact_relation, variable_name){};
-    virtual ~ObservingAQuantityCK(){};
+    template <typename... Args>
+    ObservingAQuantityCK(Args &&...args) : BaseDynamicsType(std::forward<Args>(args)...){};
+    virtual ~ObservingAQuantityCK() {};
 };
 } // namespace SPH
 #endif // INTERPOLATION_DYNAMICS_H

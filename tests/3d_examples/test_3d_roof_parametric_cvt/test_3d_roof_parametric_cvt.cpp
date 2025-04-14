@@ -7,7 +7,9 @@
  */
 
 #include "sphinxsys.h"
+
 #include <gtest/gtest.h>
+#include <numeric>
 
 using namespace SPH;
 
@@ -62,7 +64,7 @@ class ParticleGenerator<SurfaceParticles, ShellRoof> : public ParticleGenerator<
           pos_0_(pos_0),
           center_(center),
           particle_area_(particle_area),
-          thickness_(thickness){};
+          thickness_(thickness) {};
     virtual void prepareGeometricData() override
     {
         for (const auto &pos : pos_0_)
@@ -148,8 +150,8 @@ DataType interpolate_observer(
     const Vec3d &observer_pos_0,
     std::function<DataType(size_t)> get_variable_value)
 {
-    Kernel *kernel_ptr = particles.getSPHBody().sph_adaptation_->getKernel();
-    Real smoothing_length = particles.getSPHBody().sph_adaptation_->ReferenceSmoothingLength();
+    Kernel *kernel_ptr = particles.getSPHBody().getSPHAdaptation().getKernel();
+    Real smoothing_length = particles.getSPHBody().getSPHAdaptation().ReferenceSmoothingLength();
     Vecd *pos0_ = particles.registerStateVariableFrom<Vecd>("InitialPosition", "Position");
     DataType variable_sum = DataType::Zero();
     Real kernel_sum = 0;
@@ -235,7 +237,7 @@ class ParticleGenerator<SurfaceParticles, Cylinder> : public ParticleGenerator<S
     explicit ParticleGenerator(SPHBody &sph_body, SurfaceParticles &surface_particles,
                                Real particle_number = 16)
         : ParticleGenerator<SurfaceParticles>(sph_body, surface_particles),
-          particle_number_(particle_number){};
+          particle_number_(particle_number) {};
     virtual void prepareGeometricData() override
     {
         // Real radius = 24.875;								/** Radius of the inner boundary of the cylinder. */
@@ -405,7 +407,7 @@ return_data roof_under_self_weight(Real dp, bool cvt = true, int particle_number
     // observer points A & B
     point_A.neighbor_ids = [&]() { // only neighbors on the edges
         IndexVector ids;
-        Real smoothing_length = shell_particles->getSPHBody().sph_adaptation_->ReferenceSmoothingLength();
+        Real smoothing_length = shell_particles->getSPHBody().getSPHAdaptation().ReferenceSmoothingLength();
         Real x_min = std::abs(point_A.pos_0[tangential_axis]) - dp / 2;
         for (size_t i = 0; i < shell_particles->TotalRealParticles(); ++i)
         {
@@ -417,7 +419,7 @@ return_data roof_under_self_weight(Real dp, bool cvt = true, int particle_number
     }();
     point_B.neighbor_ids = [&]() { // full neighborhood
         IndexVector ids;
-        Real smoothing_length = shell_particles->getSPHBody().sph_adaptation_->ReferenceSmoothingLength();
+        Real smoothing_length = shell_particles->getSPHBody().getSPHAdaptation().ReferenceSmoothingLength();
         for (size_t i = 0; i < shell_particles->TotalRealParticles(); ++i)
         {
             if ((pos0_[i] - point_B.pos_0).norm() < smoothing_length)

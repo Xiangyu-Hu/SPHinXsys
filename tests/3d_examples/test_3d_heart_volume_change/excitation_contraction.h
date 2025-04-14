@@ -32,13 +32,13 @@ BoundingBox system_domain_bounds(domain_lower_bound, domain_upper_bound);
 Real rho0_s = 1.06e-3;
 /** Active stress factor */
 Real k_a = 100 * stress_scale;
-Real a0[4] = {Real(496.0) * stress_scale, Real(15196.0) * stress_scale, Real(3283.0) * stress_scale, Real(662.0) * stress_scale};
-Real b0[4] = {Real(7.209), Real(20.417), Real(11.176), Real(9.466)};
+std::array<Real, 4> a0 = {Real(496.0) * stress_scale, Real(15196.0) * stress_scale, Real(3283.0) * stress_scale, Real(662.0) * stress_scale};
+std::array<Real, 4> b0 = {Real(7.209), Real(20.417), Real(11.176), Real(9.466)};
 /** reference stress to achieve weakly compressible condition */
 Real poisson = 0.4995;
 Real bulk_modulus = 2.0 * a0[0] * (1.0 + poisson) / (3.0 * (1.0 - 2.0 * poisson));
 /** Electrophysiology parameters. */
-std::array<std::string, 1> species_name_list{"Phi"};
+std::string diffusion_species_name = "Phi";
 Real diffusion_coeff = 0.8;
 Real bias_coeff = 0.0;
 /** Electrophysiology parameters. */
@@ -76,8 +76,8 @@ class DiffusionBCs : public BaseLocalDynamics<BodyPartByParticle>
     explicit DiffusionBCs(BodyPartByParticle &body_part, const std::string &species_name)
         : BaseLocalDynamics<BodyPartByParticle>(body_part),
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
-          phi_(particles_->registerStateVariable<Real>(species_name)){};
-    virtual ~DiffusionBCs(){};
+          phi_(particles_->registerStateVariable<Real>(species_name)) {};
+    virtual ~DiffusionBCs() {};
 
     void update(size_t index_i, Real dt = 0.0)
     {
@@ -93,7 +93,7 @@ class DiffusionBCs : public BaseLocalDynamics<BodyPartByParticle>
         }
         else
         {
-            if (pos_[index_i][1] < -sph_body_.sph_adaptation_->ReferenceSpacing())
+            if (pos_[index_i][1] < -sph_body_.getSPHAdaptation().ReferenceSpacing())
                 phi_[index_i] = 0.0;
         }
     };
@@ -123,7 +123,7 @@ class ComputeFiberAndSheetDirections : public LocalDynamics
         beta_epi_ = -(70.0 / 180.0) * M_PI;
         beta_endo_ = (80.0 / 180.0) * M_PI;
     };
-    virtual ~ComputeFiberAndSheetDirections(){};
+    virtual ~ComputeFiberAndSheetDirections() {};
 
     void update(size_t index_i, Real dt = 0.0)
     {
@@ -148,7 +148,7 @@ class ComputeFiberAndSheetDirections : public LocalDynamics
         Vecd f_0 = cos(beta) * cd_norm + sin(beta) * getCrossProduct(face_norm, cd_norm) +
                    face_norm.dot(cd_norm) * (1.0 - cos(beta)) * face_norm;
 
-        if (pos_[index_i][1] < -sph_body_.sph_adaptation_->ReferenceSpacing())
+        if (pos_[index_i][1] < -sph_body_.getSPHAdaptation().ReferenceSpacing())
         {
             muscle_material_.local_f0_[index_i] = f_0 / (f_0.norm() + 1.0e-15);
             muscle_material_.local_s0_[index_i] = face_norm;
@@ -182,7 +182,7 @@ class ApplyStimulusCurrentSI : public LocalDynamics
     explicit ApplyStimulusCurrentSI(SPHBody &sph_body)
         : LocalDynamics(sph_body),
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
-          voltage_(particles_->registerStateVariable<Real>("Voltage")){};
+          voltage_(particles_->registerStateVariable<Real>("Voltage")) {};
 
     void update(size_t index_i, Real dt)
     {
@@ -211,7 +211,7 @@ class ApplyStimulusCurrentSII : public LocalDynamics
     explicit ApplyStimulusCurrentSII(SPHBody &sph_body)
         : LocalDynamics(sph_body),
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
-          voltage_(particles_->registerStateVariable<Real>("Voltage")){};
+          voltage_(particles_->registerStateVariable<Real>("Voltage")) {};
 
     void update(size_t index_i, Real dt)
     {

@@ -83,7 +83,7 @@ class ViscousForceFromFluidInFVM : public BaseForceFromFluidInFVM
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
-    Fluid &fluid_;
+    Viscosity &viscosity_;
     Vecd *vel_;
     Real mu_;
     StdVec<StdVec<size_t>> each_boundary_type_contact_real_index_;
@@ -139,7 +139,6 @@ class PressureForceFromFluidInFVM : public BaseForceFromFluidInFVM
         }
     };
 };
-
 } // namespace fluid_dynamics
 } // namespace SPH
 #endif // COMMON_WEAKLY_COMPRESSIBLE_FVM_CLASSES_H

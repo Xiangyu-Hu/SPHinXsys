@@ -60,7 +60,7 @@ class BarAcousticTimeStepSize : public LocalDynamicsReduce<ReduceMin>
 
   public:
     explicit BarAcousticTimeStepSize(SPHBody &sph_body, Real CFL = 0.6);
-    virtual ~BarAcousticTimeStepSize(){};
+    virtual ~BarAcousticTimeStepSize() {};
 
     Real reduce(size_t index_i, Real dt = 0.0);
 };
@@ -73,7 +73,7 @@ class BarCorrectConfiguration : public LocalDynamics, public DataDelegateInner
 {
   public:
     explicit BarCorrectConfiguration(BaseInnerRelation &inner_relation);
-    virtual ~BarCorrectConfiguration(){};
+    virtual ~BarCorrectConfiguration() {};
 
     inline void interaction(size_t index_i, Real dt = 0.0)
     {
@@ -109,7 +109,7 @@ class BarDeformationGradientTensor : public LocalDynamics, public DataDelegateIn
 {
   public:
     explicit BarDeformationGradientTensor(BaseInnerRelation &inner_relation);
-    virtual ~BarDeformationGradientTensor(){};
+    virtual ~BarDeformationGradientTensor() {};
 
     inline void interaction(size_t index_i, Real dt = 0.0)
     {
@@ -154,7 +154,7 @@ class BaseBarRelaxation : public LocalDynamics, public DataDelegateInner
 {
   public:
     explicit BaseBarRelaxation(BaseInnerRelation &inner_relation);
-    virtual ~BaseBarRelaxation(){};
+    virtual ~BaseBarRelaxation() {};
 
   protected:
     Real *Vol_, *thickness_, *width_;
@@ -179,7 +179,7 @@ class BarStressRelaxationFirstHalf : public BaseBarRelaxation
   public:
     explicit BarStressRelaxationFirstHalf(BaseInnerRelation &inner_relation,
                                           int number_of_gaussian_points = 4, bool hourglass_control = false);
-    virtual ~BarStressRelaxationFirstHalf(){};
+    virtual ~BarStressRelaxationFirstHalf() {};
     void initialization(size_t index_i, Real dt = 0.0);
 
     inline void interaction(size_t index_i, Real dt = 0.0)
@@ -232,7 +232,7 @@ class BarStressRelaxationFirstHalf : public BaseBarRelaxation
 
     Real E0_, G0_, nu_, hourglass_control_factor_;
     bool hourglass_control_;
-    const Real inv_W0_ = 1.0 / sph_body_.sph_adaptation_->getKernel()->W0(ZeroVecd);
+    const Real inv_W0_ = 1.0 / sph_body_.getSPHAdaptation().getKernel()->W0(ZeroVecd);
     const Real shear_correction_factor_ = 5.0 / 6.0;
 
     Real gpt = sqrt(3.0 / 5.0);
@@ -260,15 +260,15 @@ class BarStressRelaxationFirstHalf : public BaseBarRelaxation
 
 /**
  * @class BarStressRelaxationSecondHalf
- * @brief computing stress relaxation process by verlet time stepping
+ * @brief computing stress relaxation process by Verlet time stepping
  * This is the second step
  */
 class BarStressRelaxationSecondHalf : public BaseBarRelaxation
 {
   public:
     explicit BarStressRelaxationSecondHalf(BaseInnerRelation &inner_relation)
-        : BaseBarRelaxation(inner_relation){};
-    virtual ~BarStressRelaxationSecondHalf(){};
+        : BaseBarRelaxation(inner_relation) {};
+    virtual ~BarStressRelaxationSecondHalf() {};
     void initialization(size_t index_i, Real dt = 0.0);
 
     inline void interaction(size_t index_i, Real dt = 0.0)
@@ -311,7 +311,7 @@ class ConstrainBarBodyRegion : public BaseLocalDynamics<BodyPartByParticle>
 {
   public:
     ConstrainBarBodyRegion(BodyPartByParticle &body_part);
-    virtual ~ConstrainBarBodyRegion(){};
+    virtual ~ConstrainBarBodyRegion() {};
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
@@ -327,7 +327,7 @@ class ConstrainBarBodyRegionAlongAxis : public BaseLocalDynamics<BodyPartByParti
 {
   public:
     ConstrainBarBodyRegionAlongAxis(BodyPartByParticle &body_part, int axis);
-    virtual ~ConstrainBarBodyRegionAlongAxis(){};
+    virtual ~ConstrainBarBodyRegionAlongAxis() {};
     void update(size_t index_i, Real dt = 0.0);
 
   protected:

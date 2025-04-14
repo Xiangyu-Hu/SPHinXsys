@@ -12,47 +12,39 @@
 namespace SPH
 {
 //=================================================================================================//
-template <class DiffusionType>
-GetDiffusionTimeStepSize<DiffusionType>::
-    GetDiffusionTimeStepSize(SPHBody &sph_body, DiffusionType &diffusion)
-    : BaseDynamics<Real>()
-{
-    Real smoothing_length = sph_body.sph_adaptation_->ReferenceSmoothingLength();
-    diff_time_step_ = diffusion.getDiffusionTimeStepSize(smoothing_length);
-}
-//=================================================================================================//
 template <class DataDelegationType, class DiffusionType>
 template <class BodyRelationType>
 DiffusionRelaxation<DataDelegationType, DiffusionType>::
-    DiffusionRelaxation(BodyRelationType &body_relation, StdVec<DiffusionType *> diffusions)
+    DiffusionRelaxation(BodyRelationType &body_relation)
     : LocalDynamics(body_relation.getSPHBody()), DataDelegationType(body_relation),
-      diffusions_(diffusions),
       Vol_(this->particles_->template getVariableDataByName<Real>("VolumetricMeasure"))
 {
+    getDiffusions();
+
     for (auto &diffusion : diffusions_)
     {
         std::string diffusion_species_name = diffusion->DiffusionSpeciesName();
         diffusion_species_.push_back(this->particles_->template registerStateVariable<Real>(diffusion_species_name));
-        this->particles_->template addVariableToSort<Real>(diffusion_species_name);
+        this->particles_->template addEvolvingVariable<Real>(diffusion_species_name);
         this->particles_->template addVariableToWrite<Real>(diffusion_species_name);
         diffusion_dt_.push_back(this->particles_->template registerStateVariable<Real>(diffusion_species_name + "ChangeRate"));
 
         std::string gradient_species_name = diffusion->GradientSpeciesName();
         gradient_species_.push_back(this->particles_->template registerStateVariable<Real>(gradient_species_name));
-        this->particles_->template addVariableToSort<Real>(gradient_species_name);
+        this->particles_->template addEvolvingVariable<Real>(gradient_species_name);
         this->particles_->template addVariableToWrite<Real>(gradient_species_name);
     }
 }
 //=================================================================================================//
 template <class DataDelegationType, class DiffusionType>
-template <class BodyRelationType>
-DiffusionRelaxation<DataDelegationType, DiffusionType>::
-    DiffusionRelaxation(BodyRelationType &body_relation, DiffusionType *diffusion)
-    : DiffusionRelaxation(body_relation, StdVec<DiffusionType *>{diffusion}) {}
-//=================================================================================================//
-template <class DataDelegationType, class DiffusionType>
-void DiffusionRelaxation<DataDelegationType, DiffusionType>::registerSpecies()
+void DiffusionRelaxation<DataDelegationType, DiffusionType>::getDiffusions()
 {
+    AbstractDiffusion &abstract_diffusion = DynamicCast<AbstractDiffusion>(this, this->sph_body_.getBaseMaterial());
+    StdVec<AbstractDiffusion *> all_diffusions = abstract_diffusion.AllDiffusions();
+    for (auto &diffusion : all_diffusions)
+    {
+        diffusions_.push_back(DynamicCast<DiffusionType>(this, diffusion));
+    }
 }
 //=================================================================================================//
 template <class DataDelegationType, class DiffusionType>
@@ -294,7 +286,7 @@ DiffusionRelaxation<Robin<ContactKernelGradientType>, DiffusionType>::
             contact_convection_[k].push_back(
                 contact_particles_k->template registerStateVariable<Real>(diffusion_species_name + "Convection"));
             contact_species_infinity_[k].push_back(
-                contact_particles_k->template registerSingularVariable<Real>(diffusion_species_name + "Infinity")->ValueAddress());
+                contact_particles_k->template registerSingularVariable<Real>(diffusion_species_name + "Infinity")->Data());
         }
     }
 }

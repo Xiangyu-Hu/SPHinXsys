@@ -58,8 +58,8 @@ class FACBoundaryConditionSetup : public BoundaryConditionSetupInFVM
   public:
     FACBoundaryConditionSetup(BaseInnerRelationInFVM &inner_relation, GhostCreationFromMesh &ghost_creation)
         : BoundaryConditionSetupInFVM(inner_relation, ghost_creation),
-          fluid_(DynamicCast<WeaklyCompressibleFluid>(this, particles_->getBaseMaterial())){};
-    virtual ~FACBoundaryConditionSetup(){};
+          fluid_(DynamicCast<WeaklyCompressibleFluid>(this, particles_->getBaseMaterial())) {};
+    virtual ~FACBoundaryConditionSetup() {};
 
     void applyNonSlipWallBoundary(size_t ghost_index, size_t index_i) override
     {
@@ -98,7 +98,7 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBlock"));
-    water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
+    water_block.defineClosure<WeaklyCompressibleFluid, Viscosity>(ConstructArgs(rho0_f, c_f), mu_f);
     Ghost<ReserveSizeFactor> ghost_boundary(0.5);
     water_block.generateParticlesWithReserve<BaseParticles, UnstructuredMesh>(ghost_boundary, ansys_mesh);
     GhostCreationFromMesh ghost_creation(water_block, ansys_mesh, ghost_boundary);
@@ -125,7 +125,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
-    BodyStatesRecordingInMeshToVtp write_real_body_states(water_block, ansys_mesh);
+    BodyStatesRecordingToMeshVtu write_real_body_states(water_block, ansys_mesh);
     write_real_body_states.addToWrite<Real>(water_block, "Density");
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<QuantitySummation<Vecd>>> write_total_viscous_force_on_inserted_body(water_block, "ViscousForceOnSolid");
     ReducedQuantityRecording<QuantitySummation<Vecd>> write_total_pressure_force_on_inserted_body(water_block, "PressureForceOnSolid");

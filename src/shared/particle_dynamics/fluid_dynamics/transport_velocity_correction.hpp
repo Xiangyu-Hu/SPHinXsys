@@ -23,7 +23,7 @@ template <class ResolutionType, class LimiterType, typename... CommonControlType
 TransportVelocityCorrection<Inner<ResolutionType, LimiterType>, CommonControlTypes...>::
     TransportVelocityCorrection(BaseInnerRelation &inner_relation, Real coefficient)
     : TransportVelocityCorrection<Base, DataDelegateInner, CommonControlTypes...>(inner_relation),
-      h_ref_(this->sph_body_.sph_adaptation_->ReferenceSmoothingLength()),
+      h_ref_(this->sph_body_.getSPHAdaptation().ReferenceSmoothingLength()),
       correction_scaling_(coefficient * h_ref_ * h_ref_),
       Vol_(this->particles_->template getVariableDataByName<Real>("VolumetricMeasure")),
       pos_(this->particles_->template getVariableDataByName<Vecd>("Position")),
@@ -45,7 +45,7 @@ void TransportVelocityCorrection<Inner<ResolutionType, LimiterType>, CommonContr
         {
             size_t index_j = inner_neighborhood.j_[n];
             // acceleration for transport velocity
-            inconsistency -= (this->kernel_correction_(index_i) + this->kernel_correction_(index_j)) *
+            inconsistency -= (this->kernel_correction_(index_i) + this->kernel_correction_(index_j, index_i)) *
                              inner_neighborhood.dW_ij_[n] * this->Vol_[index_j] * inner_neighborhood.e_ij_[n];
         }
         this->zero_gradient_residue_[index_i] = inconsistency;

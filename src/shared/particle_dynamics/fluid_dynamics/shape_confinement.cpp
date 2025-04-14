@@ -7,8 +7,8 @@ namespace fluid_dynamics
 //=================================================================================================//
 StaticConfinementDensity::StaticConfinementDensity(NearShapeSurface &near_surface)
     : BaseLocalDynamics<BodyPartByCell>(near_surface),
-      rho0_(sph_body_.base_material_->ReferenceDensity()),
-      inv_sigma0_(1.0 / sph_body_.sph_adaptation_->LatticeNumberDensity()),
+      rho0_(sph_body_.getBaseMaterial().ReferenceDensity()),
+      inv_sigma0_(1.0 / sph_body_.getSPHAdaptation().LatticeNumberDensity()),
       mass_(particles_->getVariableDataByName<Real>("Mass")),
       rho_sum_(particles_->getVariableDataByName<Real>("DensitySummation")),
       pos_(particles_->getVariableDataByName<Vecd>("Position")),
@@ -53,8 +53,8 @@ StaticConfinementIntegration2ndHalf::StaticConfinementIntegration2ndHalf(NearSha
 void StaticConfinementIntegration2ndHalf::update(size_t index_i, Real dt)
 {
     Vecd kernel_gradient = level_set_shape_->computeKernelGradientIntegral(pos_[index_i]);
-    Vecd vel_in_wall = -vel_[index_i];
-    drho_dt_[index_i] += rho_[index_i] * (vel_[index_i] - vel_in_wall).dot(kernel_gradient);
+    Vecd vel_j_in_wall = -vel_[index_i];
+    drho_dt_[index_i] += rho_[index_i] * (vel_[index_i] - vel_j_in_wall).dot(kernel_gradient);
 }
 //=================================================================================================//
 StaticConfinement::StaticConfinement(NearShapeSurface &near_surface)

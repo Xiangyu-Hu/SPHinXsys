@@ -73,13 +73,13 @@ void NeighborBuilder::initializeNeighbor(Neighborhood &neighborhood, const Real 
 //=================================================================================================//
 Kernel *NeighborBuilder::chooseKernel(SPHBody &body, SPHBody &target_body)
 {
-    Kernel *kernel = body.sph_adaptation_->getKernel();
-    Kernel *target_kernel = target_body.sph_adaptation_->getKernel();
+    Kernel *kernel = body.getSPHAdaptation().getKernel();
+    Kernel *target_kernel = target_body.getSPHAdaptation().getKernel();
     return kernel->SmoothingLength() > target_kernel->SmoothingLength() ? kernel : target_kernel;
 }
 //=================================================================================================//
 NeighborBuilderInner::NeighborBuilderInner(SPHBody &body)
-    : NeighborBuilder(body.sph_adaptation_->getKernel()) {}
+    : NeighborBuilder(body.getSPHAdaptation().getKernel()) {}
 //=================================================================================================//
 void NeighborBuilderInner::operator()(Neighborhood &neighborhood,
                                       const Vecd &pos_i, size_t index_i, const ListData &list_data_j)
@@ -98,7 +98,7 @@ void NeighborBuilderInner::operator()(Neighborhood &neighborhood,
 //=================================================================================================//
 NeighborBuilderInnerAdaptive::
     NeighborBuilderInnerAdaptive(SPHBody &body)
-    : NeighborBuilder(body.sph_adaptation_->getKernel()),
+    : NeighborBuilder(body.getSPHAdaptation().getKernel()),
       h_ratio_(body.getBaseParticles().getVariableDataByName<Real>("SmoothingLengthRatio")) {}
 //=================================================================================================//
 void NeighborBuilderInnerAdaptive::
@@ -121,7 +121,7 @@ operator()(Neighborhood &neighborhood, const Vecd &pos_i, size_t index_i, const 
 //=================================================================================================//
 NeighborBuilderSelfContact::
     NeighborBuilderSelfContact(SPHBody &body)
-    : NeighborBuilder(body.sph_adaptation_->getKernel()),
+    : NeighborBuilder(body.getSPHAdaptation().getKernel()),
       pos0_(body.getBaseParticles().registerStateVariableFrom<Vecd>("InitialPosition", "Position")) {}
 //=================================================================================================//
 void NeighborBuilderSelfContact::operator()(Neighborhood &neighborhood,
@@ -149,7 +149,7 @@ void NeighborBuilderContact::operator()(Neighborhood &neighborhood,
     size_t index_j = list_data_j.first;
     Vecd displacement = pos_i - list_data_j.second;
     Real distance = displacement.norm();
-    if (distance < kernel_->CutOffRadius())
+    if (kernel_->checkIfWithinCutOffRadius(displacement))
     {
         neighborhood.current_size_ >= neighborhood.allocated_size_
             ? createNeighbor(neighborhood, distance, displacement, index_j)
@@ -161,8 +161,8 @@ void NeighborBuilderContact::operator()(Neighborhood &neighborhood,
 NeighborBuilderSurfaceContact::NeighborBuilderSurfaceContact(SPHBody &body, SPHBody &contact_body)
     : NeighborBuilderContact(body, contact_body)
 {
-    Real source_smoothing_length = body.sph_adaptation_->ReferenceSmoothingLength();
-    Real target_smoothing_length = contact_body.sph_adaptation_->ReferenceSmoothingLength();
+    Real source_smoothing_length = body.getSPHAdaptation().ReferenceSmoothingLength();
+    Real target_smoothing_length = contact_body.getSPHAdaptation().ReferenceSmoothingLength();
     kernel_ = kernel_keeper_.createPtr<KernelWendlandC2>(0.5 * (source_smoothing_length + target_smoothing_length));
 }
 //=================================================================================================//
@@ -195,8 +195,8 @@ void NeighborBuilderContactBodyPart::operator()(Neighborhood &neighborhood,
 }
 //=================================================================================================//
 NeighborBuilderContactAdaptive::NeighborBuilderContactAdaptive(SPHBody &body, SPHBody &contact_body)
-    : NeighborBuilder(body.sph_adaptation_->getKernel()), adaptation_(*body.sph_adaptation_),
-      contact_adaptation_(*contact_body.sph_adaptation_),
+    : NeighborBuilder(body.getSPHAdaptation().getKernel()), adaptation_(body.getSPHAdaptation()),
+      contact_adaptation_(contact_body.getSPHAdaptation()),
       relative_h_ref_(adaptation_.ReferenceSmoothingLength() /
                       contact_adaptation_.ReferenceSmoothingLength()) {}
 //=================================================================================================//
@@ -220,7 +220,7 @@ void NeighborBuilderContactAdaptive::operator()(Neighborhood &neighborhood,
 }
 //=================================================================================================//
 BaseNeighborBuilderContactShell::BaseNeighborBuilderContactShell(SPHBody &shell_body)
-    : NeighborBuilder(shell_body.sph_adaptation_->getKernel()),
+    : NeighborBuilder(shell_body.getSPHAdaptation().getKernel()),
       n_(shell_body.getBaseParticles().getVariableDataByName<Vecd>("NormalDirection")),
       thickness_(shell_body.getBaseParticles().getVariableDataByName<Real>("Thickness")),
       k1_ave_(shell_body.getBaseParticles().registerStateVariable<Real>("Average1stPrincipleCurvature")),
@@ -317,11 +317,11 @@ void BaseNeighborBuilderContactFromShell::update_neighbors(Neighborhood &neighbo
 NeighborBuilderContactFromShellToFluid::NeighborBuilderContactFromShellToFluid(SPHBody &body, SPHBody &contact_body, bool normal_correction)
     : BaseNeighborBuilderContactFromShell(body, contact_body, normal_correction)
 {
-    Real fluid_reference_spacing = body.sph_adaptation_->ReferenceSpacing();
-    Real shell_reference_spacing = contact_body.sph_adaptation_->ReferenceSpacing();
+    Real fluid_reference_spacing = body.getSPHAdaptation().ReferenceSpacing();
+    Real shell_reference_spacing = contact_body.getSPHAdaptation().ReferenceSpacing();
     if (fluid_reference_spacing < shell_reference_spacing)
         throw std::runtime_error("NeighborBuilderContactToShell: fluid spacing should be larger or equal than shell spacing...");
-    kernel_ = body.sph_adaptation_->getKernel();
+    kernel_ = body.getSPHAdaptation().getKernel();
 }
 //=================================================================================================//
 NeighborBuilderContactFromFluidToShell::NeighborBuilderContactFromFluidToShell(SPHBody &body, SPHBody &contact_body, bool normal_correction)
@@ -394,7 +394,7 @@ void NeighborBuilderContactFromFluidToShell::operator()(Neighborhood &neighborho
 ShellNeighborBuilderInnerWithContactKernel::ShellNeighborBuilderInnerWithContactKernel(SPHBody &body, SPHBody &contact_body) : NeighborBuilderInner(body)
 {
     // create a reduced kernel with refined smoothing length for shell
-    Real smoothing_length = contact_body.sph_adaptation_->ReferenceSmoothingLength();
+    Real smoothing_length = contact_body.getSPHAdaptation().ReferenceSmoothingLength();
     kernel_ = kernel_keeper_.createPtr<KernelWendlandC2>(smoothing_length);
     kernel_->reduceOnce();
 }
@@ -407,7 +407,7 @@ NeighborBuilderShellSelfContact::
       pos0_(body.getBaseParticles().registerStateVariableFrom<Vecd>("InitialPosition", "Position"))
 {
     // create a unreduced kernel for shell self contact
-    Real smoothing_length = body.sph_adaptation_->ReferenceSmoothingLength();
+    Real smoothing_length = body.getSPHAdaptation().ReferenceSmoothingLength();
     kernel_ = kernel_keeper_.createPtr<KernelWendlandC2>(smoothing_length);
 }
 //=================================================================================================//
@@ -477,8 +477,8 @@ void NeighborBuilderShellSelfContact::operator()(Neighborhood &neighborhood,
 NeighborBuilderSurfaceContactFromShell::NeighborBuilderSurfaceContactFromShell(SPHBody &body, SPHBody &contact_body, bool normal_correction)
     : BaseNeighborBuilderContactFromShell(body, contact_body, normal_correction)
 {
-    Real source_smoothing_length = body.sph_adaptation_->ReferenceSmoothingLength();
-    Real target_smoothing_length = contact_body.sph_adaptation_->ReferenceSmoothingLength();
+    Real source_smoothing_length = body.getSPHAdaptation().ReferenceSmoothingLength();
+    Real target_smoothing_length = contact_body.getSPHAdaptation().ReferenceSmoothingLength();
     kernel_ = kernel_keeper_.createPtr<KernelWendlandC2>(0.5 * (source_smoothing_length + target_smoothing_length));
 }
 //=================================================================================================//
@@ -526,6 +526,37 @@ void NeighborBuilderSurfaceContactFromSolid::operator()(Neighborhood &neighborho
         neighborhood.current_size_++;
     }
 }
+//=================================================================================================//
+NeighborBuilderSplitInnerAdaptive::
+    NeighborBuilderSplitInnerAdaptive(SPHBody &body)
+    : NeighborBuilder(body.getSPHAdaptation().getKernel()),
+      h_ratio_(body.getBaseParticles().getVariableDataByName<Real>("SmoothingLengthRatio")),
+      level_(body.getBaseParticles().getVariableDataByName<int>("ParticleMeshLevel")) {}
+//=================================================================================================//
+void NeighborBuilderSplitInnerAdaptive::
+operator()(Neighborhood &neighborhood, const Vecd &pos_i, size_t index_i, const ListData &list_data_j)
+{
+    size_t index_j = list_data_j.first;
+
+    // Only add neighbors when dp_i >= dp_j
+    // When dp_i == dp_j, only add neighbors when i < j
+    size_t level_i = level_[index_i];
+    if (size_t level_j = level_[index_j]; level_i > level_j || (level_i == level_j && index_i >= index_j))
+        return;
+
+    Vecd displacement = pos_i - list_data_j.second;
+    Real distance = displacement.norm();
+    Real i_h_ratio = h_ratio_[index_i];
+    Real h_ratio_min = SMIN(i_h_ratio, h_ratio_[index_j]);
+    Real cutoff_radius = kernel_->CutOffRadius(h_ratio_min);
+    if (distance < cutoff_radius && index_i != index_j)
+    {
+        neighborhood.current_size_ >= neighborhood.allocated_size_
+            ? createNeighbor(neighborhood, distance, displacement, index_j, i_h_ratio, h_ratio_min)
+            : initializeNeighbor(neighborhood, distance, displacement, index_j, i_h_ratio, h_ratio_min);
+        neighborhood.current_size_++;
+    }
+};
 //=================================================================================================//
 } // namespace SPH
 //=================================================================================================//

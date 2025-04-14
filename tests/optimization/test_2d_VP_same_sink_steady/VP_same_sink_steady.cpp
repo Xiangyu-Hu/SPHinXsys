@@ -17,6 +17,7 @@ BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(L + BW, H + BW));
 //----------------------------------------------------------------------
 //	Basic parameters for material properties.
 //----------------------------------------------------------------------
+std::string diffusion_species_name = "Phi";
 Real diffusion_coeff = 1;
 //----------------------------------------------------------------------
 //	Initial and boundary conditions.
@@ -85,7 +86,7 @@ class DiffusionBodyInitialCondition : public LocalDynamics
     explicit DiffusionBodyInitialCondition(SPHBody &sph_body)
         : LocalDynamics(sph_body),
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
-          phi_(particles_->registerStateVariable<Real>("Phi")),
+          phi_(particles_->registerStateVariable<Real>(diffusion_species_name)),
           heat_source_(particles_->registerStateVariable<Real>("HeatSource")){};
 
     void update(size_t index_i, Real dt)
@@ -105,7 +106,7 @@ class WallBoundaryInitialCondition : public LocalDynamics
     explicit WallBoundaryInitialCondition(SPHBody &sph_body)
         : LocalDynamics(sph_body),
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
-          phi_(particles_->registerStateVariable<Real>("Phi")){};
+          phi_(particles_->registerStateVariable<Real>(diffusion_species_name)){};
 
     void update(size_t index_i, Real dt)
     {
@@ -157,8 +158,8 @@ TEST(test_optimization, test_problem1_non_optimized)
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     SolidBody diffusion_body(sph_system, makeShared<DiffusionBody>("DiffusionBody"));
-    LocalIsotropicDiffusion *local_isotropic_diffusion =
-        diffusion_body.defineMaterial<LocalIsotropicDiffusion>("Phi", "Phi", diffusion_coeff);
+    diffusion_body.defineClosure<Solid, LocalIsotropicDiffusion>(
+        Solid(), ConstructArgs(diffusion_species_name, diffusion_coeff, diffusion_coeff));
     diffusion_body.generateParticles<BaseParticles, Lattice>();
 
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
@@ -188,17 +189,17 @@ TEST(test_optimization, test_problem1_non_optimized)
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
 
     InteractionSplit<TemperatureSplittingByPDEWithBoundary<Real>>
-        temperature_splitting(diffusion_body_inner, diffusion_body_contact, "Phi");
-    GetDiffusionTimeStepSize get_time_step_size(diffusion_body, *local_isotropic_diffusion);
+        temperature_splitting(diffusion_body_inner, diffusion_body_contact, diffusion_species_name);
+    GetDiffusionTimeStepSize get_time_step_size(diffusion_body);
     SimpleDynamics<DiffusionBodyInitialCondition> setup_diffusion_initial_condition(diffusion_body);
     SimpleDynamics<WallBoundaryInitialCondition> setup_boundary_condition(wall_boundary);
-    ReduceDynamics<Average<QuantitySummation<Real, SPHBody>>> calculate_averaged_temperature(diffusion_body, "Phi");
+    ReduceDynamics<Average<QuantitySummation<Real, SPHBody>>> calculate_averaged_temperature(diffusion_body, diffusion_species_name);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp write_states(sph_system);
     RestartIO restart_io(sph_system);
-    ObservedQuantityRecording<Real> write_solid_temperature("Phi", temperature_observer_contact);
+    ObservedQuantityRecording<Real> write_solid_temperature(diffusion_species_name, temperature_observer_contact);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.

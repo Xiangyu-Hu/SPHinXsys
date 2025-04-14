@@ -28,13 +28,13 @@ const Real c_f = 10.0 * U_max; /**< Reference sound speed. */
 namespace SPH
 {
 StdVec<Vecd> createAxialObservationPoints(
-    double full_length, Vec3d translation = Vec3d(0.0, 0.0, 0.0))
+    Real full_length, Vec3d translation = Vec3d(0.0, 0.0, 0.0))
 {
     StdVec<Vecd> observation_points;
     int ny = 51;
     for (int i = 0; i < ny; i++)
     {
-        double y = full_length / (ny - 1) * i;
+        Real y = full_length / (ny - 1) * i;
         Vec3d point_coordinate(0.0, y, 0.0);
         observation_points.emplace_back(point_coordinate + translation);
     }
@@ -42,17 +42,17 @@ StdVec<Vecd> createAxialObservationPoints(
 };
 
 StdVec<Vecd> createRadialObservationPoints(
-    double full_length, double diameter, int number_of_particles,
+    Real full_length, Real diameter, int number_of_particles,
     Vec3d translation = Vec3d(0.0, 0.0, 0.0))
 {
     StdVec<Vecd> observation_points;
     int n = number_of_particles + 1;
-    double y = full_length / 2.0;
+    Real y = full_length / 2.0;
     for (int i = 0; i < n - 1; i++) // we leave out the point close to the boundary as the
                                     // interpolation there is incorrect
                                     // TODO: fix the interpolation
     {
-        double z = diameter / 2.0 * i / double(n);
+        Real z = diameter / 2.0 * i / Real(n);
         observation_points.emplace_back(Vec3d(0.0, y, z) + translation);
         observation_points.emplace_back(Vec3d(0.0, y, -z) + translation);
     }
@@ -72,7 +72,7 @@ class ParticleGenerator<SurfaceParticles, ShellBoundary> : public ParticleGenera
                                Real resolution_shell, Real wall_thickness, Real shell_thickness)
         : ParticleGenerator<SurfaceParticles>(sph_body, surface_particles),
           resolution_shell_(resolution_shell),
-          wall_thickness_(wall_thickness), shell_thickness_(shell_thickness){};
+          wall_thickness_(wall_thickness), shell_thickness_(shell_thickness) {};
     void prepareGeometricData() override
     {
         const Real radius_mid_surface = fluid_radius + resolution_shell_ * 0.5;
@@ -103,7 +103,7 @@ class ParticleGenerator<SurfaceParticles, ShellBoundary> : public ParticleGenera
 struct InflowVelocity
 {
     Real u_ref_, t_ref_;
-    AlignedBoxShape &aligned_box_;
+    AlignedBox &aligned_box_;
     Vec3d halfsize_;
 
     template <class BoundaryConditionType>
@@ -175,7 +175,7 @@ void poiseuille_flow(const Real resolution_ref, const Real resolution_shell, con
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
     FluidBody water_block(system, water_block_shape);
-    water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
+    water_block.defineClosure<WeaklyCompressibleFluid, Viscosity>(ConstructArgs(rho0_f, c_f), mu_f);
     ParticleBuffer<ReserveSizeFactor> inlet_particle_buffer(0.5);
     water_block.generateParticlesWithReserve<BaseParticles, Lattice>(inlet_particle_buffer);
 
@@ -214,7 +214,7 @@ void poiseuille_flow(const Real resolution_ref, const Real resolution_shell, con
     // Generally, the geometric models or simple objects without data dependencies,
     // such as gravity, should be initiated first.
     // Then the major physical particle dynamics model should be introduced.
-    // Finally, the auxillary models such as time step estimator, initial condition,
+    // Finally, the auxiliary models such as time step estimator, initial condition,
     // boundary condition and other constraints should be defined.
     //----------------------------------------------------------------------
     InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration> wall_corrected_configuration(shell_boundary_inner);
@@ -233,11 +233,11 @@ void poiseuille_flow(const Real resolution_ref, const Real resolution_shell, con
     //----------------------------------------------------------------------
     //	Boundary conditions. Inflow & Outflow in Y-direction
     //----------------------------------------------------------------------
-    BodyAlignedBoxByParticle emitter(water_block, makeShared<AlignedBoxShape>(yAxis, Transform(Vec3d(emitter_translation)), emitter_halfsize));
+    AlignedBoxPartByParticle emitter(water_block, AlignedBox(yAxis, Transform(Vec3d(emitter_translation)), emitter_halfsize));
     SimpleDynamics<fluid_dynamics::EmitterInflowInjection> emitter_inflow_injection(emitter, inlet_particle_buffer);
-    BodyAlignedBoxByCell emitter_buffer(water_block, makeShared<AlignedBoxShape>(yAxis, Transform(Vec3d(emitter_buffer_translation)), emitter_buffer_halfsize));
+    AlignedBoxPartByCell emitter_buffer(water_block, AlignedBox(yAxis, Transform(Vec3d(emitter_buffer_translation)), emitter_buffer_halfsize));
     SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>> emitter_buffer_inflow_condition(emitter_buffer);
-    BodyAlignedBoxByCell disposer(water_block, makeShared<AlignedBoxShape>(yAxis, Transform(Vec3d(disposer_translation)), disposer_halfsize));
+    AlignedBoxPartByCell disposer(water_block, AlignedBox(yAxis, Transform(Vec3d(disposer_translation)), disposer_halfsize));
     SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion> disposer_outflow_deletion(disposer);
     //----------------------------------------------------------------------
     //	Define the configuration related particles dynamics.

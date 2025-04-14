@@ -33,7 +33,10 @@
 #include "base_data_package.h"
 #include "base_particle_dynamics.h"
 #include "execution_policy.h"
+#include "reduce_functors.h"
 #include "sphinxsys_containers.h"
+
+#include <type_traits>
 
 namespace SPH
 {
@@ -51,21 +54,22 @@ namespace SPH
 template <class DynamicsIdentifier>
 class BaseLocalDynamics
 {
-    UniquePtrsKeeper<Entity> constant_entity_ptrs_;
-
   public:
     explicit BaseLocalDynamics(DynamicsIdentifier &identifier)
         : identifier_(identifier), sph_system_(identifier.getSPHSystem()),
           sph_body_(identifier.getSPHBody()),
-          particles_(&sph_body_.getBaseParticles()){};
-    virtual ~BaseLocalDynamics(){};
-    DynamicsIdentifier &getDynamicsIdentifier() { return identifier_; };
+          particles_(&sph_body_.getBaseParticles()) {};
+    virtual ~BaseLocalDynamics() {};
+    using Identifier = typename DynamicsIdentifier::BaseIdentifier;
     SPHBody &getSPHBody() { return sph_body_; };
-    BaseParticles *getParticles() { return particles_; };
-    virtual void setupDynamics(Real dt = 0.0){}; // setup global parameters
-    void registerComputingKernel(Implementation<Base> *implementation)
+    virtual void setupDynamics(Real dt = 0.0) {}; // setup global parameters
+
+    class FinishDynamics
     {
-        sph_body_.registerComputingKernel(implementation);
+      public:
+        template <class EncloserType>
+        FinishDynamics(EncloserType &encloser){};
+        void operator()() {};
     };
 
   protected:
@@ -84,19 +88,34 @@ template <typename Operation, class DynamicsIdentifier>
 class BaseLocalDynamicsReduce : public BaseLocalDynamics<DynamicsIdentifier>
 {
   public:
+    typedef Operation OperationType;
+    using ReturnType = typename Operation::ReturnType;
     explicit BaseLocalDynamicsReduce(DynamicsIdentifier &identifier)
         : BaseLocalDynamics<DynamicsIdentifier>(identifier),
-          quantity_name_("ReducedQuantity"){};
-    virtual ~BaseLocalDynamicsReduce(){};
+          reference_(ReduceReference<Operation>::value),
+          quantity_name_("ReducedQuantity") {};
+    virtual ~BaseLocalDynamicsReduce() {};
 
-    using ReturnType = decltype(Operation::reference_);
-    ReturnType Reference() { return operation_.reference_; };
+    ReturnType Reference() { return reference_; };
     std::string QuantityName() { return quantity_name_; };
     Operation &getOperation() { return operation_; };
     virtual ReturnType outputResult(ReturnType reduced_value) { return reduced_value; }
 
+    class FinishDynamics
+    {
+      public:
+        using OutputType = ReturnType;
+        template <class EncloserType>
+        FinishDynamics(EncloserType &encloser){};
+        ReturnType Result(ReturnType reduced_value)
+        {
+            return reduced_value;
+        }
+    };
+
   protected:
     Operation operation_;
+    ReturnType reference_;
     std::string quantity_name_;
 };
 template <typename Operation>
@@ -113,30 +132,33 @@ class Average : public ReduceSumType
     template <class DynamicsIdentifier, typename... Args>
     Average(DynamicsIdentifier &identifier, Args &&...args)
         : ReduceSumType(identifier, std::forward<Args>(args)...){};
-    virtual ~Average(){};
+    virtual ~Average() {};
     using ReturnType = typename ReduceSumType::ReturnType;
 
     virtual ReturnType outputResult(ReturnType reduced_value)
     {
         ReturnType sum = ReduceSumType::outputResult(reduced_value);
-        return sum / Real(this->getDynamicsIdentifier().SizeOfLoopRange());
+        return sum / Real(this->identifier_.SizeOfLoopRange());
     }
 };
 
 /**
- * @class ConstructorArgs
- * @brief Class template argument deduction (CTAD) for constructor arguments.
+ * @class DynamicsArgs
+ * @brief Class template argument deduction (CTAD) for constructing interaction dynamics.
  * @details Note that the form "XXX" is not std::string type, so we need to use
  * std::string("XXX") to convert it to std::string type.
+ * Only the DynamicsIdentifier parameter is reference,
+ * the other parameters should not use it, use pointer
+ * instead.
  */
-template <typename BodyRelationType, typename... OtherArgs>
-struct ConstructorArgs
+template <typename DynamicsIdentifier, typename... OtherArgs>
+struct DynamicsArgs
 {
-    BodyRelationType &body_relation_;
+    DynamicsIdentifier &identifier_;
     std::tuple<OtherArgs...> others_;
-    SPHBody &getSPHBody() { return body_relation_.getSPHBody(); };
-    ConstructorArgs(BodyRelationType &body_relation, OtherArgs... other_args)
-        : body_relation_(body_relation), others_(other_args...){};
+    SPHBody &getSPHBody() { return identifier_.getSPHBody(); };
+    DynamicsArgs(DynamicsIdentifier &identifier, OtherArgs... other_args)
+        : identifier_(identifier), others_(other_args...) {};
 };
 
 /**
@@ -152,9 +174,9 @@ template <typename... CommonParameters, template <typename... InteractionTypes> 
 class ComplexInteraction<LocalDynamicsName<>, CommonParameters...>
 {
   public:
-    ComplexInteraction(){};
+    ComplexInteraction() {};
 
-    void interaction(size_t index_i, Real dt = 0.0){};
+    void interaction(size_t index_i, Real dt = 0.0) {};
 };
 
 template <typename... CommonParameters, template <typename... InteractionTypes> class LocalDynamicsName,

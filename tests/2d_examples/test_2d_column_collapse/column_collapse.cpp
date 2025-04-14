@@ -17,8 +17,6 @@ Real LH = 0.1;                       /**< Soil column height. */
 Real particle_spacing_ref = LH / 50; /**< Initial reference particle spacing. */
 Real BW = particle_spacing_ref * 4;  /**< Extending width for boundary conditions. */
 BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
-// observer location
-StdVec<Vecd> observation_location = {Vecd(DL, 0.2)};
 //----------------------------------------------------------------------
 //	Material properties of the soil.
 //----------------------------------------------------------------------
@@ -195,13 +193,12 @@ int main(int ac, char *av[])
                         restart_io.writeToFile(number_of_iterations);
                 }
                 number_of_iterations++;
+                time_instance = TickCount::now();
                 /** Update cell linked list and configuration. */
                 soil_block.updateCellLinkedList();
                 soil_block_complex.updateConfiguration();
-            }
-            time_instance = TickCount::now();
-
-            interval_updating_configuration += TickCount::now() - time_instance;
+                interval_updating_configuration += TickCount::now() - time_instance;
+            } 
         }
         TickCount t2 = TickCount::now();
         vertical_stress.exec();

@@ -43,6 +43,8 @@
 #if SPHINXSYS_USE_SYCL
 #include <CL/sycl.hpp>
 #define SYCL_DEVICE_ONLY
+#else
+#include <boost/atomic/atomic_ref.hpp>
 #endif // SPHINXSYS_USE_SYCL
 
 #include <Eigen/Cholesky>
@@ -53,6 +55,18 @@
 
 namespace SPH
 {
+#if SPHINXSYS_USE_SYCL
+template <typename T>
+using AtomicRef = sycl::atomic_ref<
+    T, sycl::memory_order_relaxed, sycl::memory_scope_device,
+    sycl::access::address_space::global_space>;
+namespace math = sycl;
+#else
+template <typename T>
+using AtomicRef = boost::atomic_ref<T>;
+namespace math = std;
+#endif // SPHINXSYS_USE_SYCL
+    
 #if SPHINXSYS_USE_FLOAT
 using Real = float;
 using UnsignedInt = u_int32_t;
@@ -77,35 +91,43 @@ using MatXd = Eigen::Matrix<Real, Eigen::Dynamic, Eigen::Dynamic>;
 template <typename DataType>
 struct ZeroData
 {
-    static inline DataType value = DataType::Zero();
+    static inline const DataType value = DataType::Zero();
 };
 
 template <>
 struct ZeroData<bool>
 {
-    static inline bool value = false;
+    static inline const bool value = false;
 };
 template <>
 struct ZeroData<Real>
 {
-    static inline Real value = Real(0);
+    static inline const Real value = Real(0);
 };
 template <>
 struct ZeroData<int>
 {
-    static inline int value = 0;
+    static inline const int value = 0;
 };
 
 template <>
 struct ZeroData<UnsignedInt>
 {
-    static inline UnsignedInt value = 0;
+    static inline const UnsignedInt value = 0;
+};
+
+template <typename FirstType, typename SecondType>
+struct ZeroData<std::pair<FirstType, SecondType>>
+{
+    using PairType = std::pair<FirstType, SecondType>;
+    static inline const PairType value = PairType(
+        ZeroData<FirstType>::value, ZeroData<SecondType>::value);
 };
 
 template <typename DataType>
 struct IdentityMatrix
 {
-    static inline DataType value = DataType::Identity();
+    static inline const DataType value = DataType::Identity();
 };
 
 /** Type trait for data type index. */

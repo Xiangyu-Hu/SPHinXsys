@@ -34,12 +34,16 @@
 
 #include "base_fluid_dynamics.h"
 #include "interaction_ck.hpp"
+#include "particle_functors_ck.h" // or wherever ParticleScopeTypeCK is defined
 
 namespace SPH
 {
 namespace fluid_dynamics
 {
 
+//------------------------------------------------------------------
+// forward declarations of Regularization<FlowType>
+//------------------------------------------------------------------
 template <typename...>
 class Regularization;
 
@@ -47,7 +51,7 @@ template <>
 class Regularization<Internal>
 {
   public:
-    Regularization(BaseParticles *particles){};
+    Regularization(BaseParticles *particles) {};
 
     class ComputingKernel
     {
@@ -65,7 +69,7 @@ template <>
 class Regularization<FreeSurface>
 {
   public:
-    Regularization(BaseParticles *particles){};
+    Regularization(BaseParticles *particles) {};
 
     class ComputingKernel
     {
@@ -90,14 +94,12 @@ template <template <typename...> class RelationType, typename... Parameters>
 class DensityRegularization<Base, RelationType<Parameters...>>
     : public Interaction<RelationType<Parameters...>>
 {
-
   public:
     template <class DynamicsIdentifier>
     explicit DensityRegularization(DynamicsIdentifier &identifier);
-    virtual ~DensityRegularization(){};
+    virtual ~DensityRegularization() {};
 
-    class InteractKernel
-        : public Interaction<RelationType<Parameters...>>::InteractKernel
+    class InteractKernel : public Interaction<RelationType<Parameters...>>::InteractKernel
     {
       public:
         template <class ExecutionPolicy, typename... Args>
@@ -116,16 +118,16 @@ class DensityRegularization<Base, RelationType<Parameters...>>
     Real rho0_, inv_sigma0_;
 };
 
-template <class FlowType, typename... Parameters>
-class DensityRegularization<Inner<WithUpdate, FlowType, Parameters...>>
+template <class FlowType, class ParticleScopeType, typename... Parameters>
+class DensityRegularization<Inner<WithUpdate, FlowType, ParticleScopeType, Parameters...>>
     : public DensityRegularization<Base, Inner<Parameters...>>
 {
-    using RegularizationKernel =
-        typename Regularization<FlowType>::ComputingKernel;
+    using RegularizationKernel = typename Regularization<FlowType>::ComputingKernel;
+    using ParticleScopeTypeKernel = typename ParticleScopeTypeCK<ParticleScopeType>::ComputingKernel;
 
   public:
     explicit DensityRegularization(Relation<Inner<Parameters...>> &inner_relation);
-    virtual ~DensityRegularization(){};
+    virtual ~DensityRegularization() {};
 
     class InteractKernel
         : public DensityRegularization<Base, Inner<Parameters...>>::InteractKernel
@@ -133,7 +135,7 @@ class DensityRegularization<Inner<WithUpdate, FlowType, Parameters...>>
       public:
         template <class ExecutionPolicy>
         InteractKernel(const ExecutionPolicy &ex_policy,
-                       DensityRegularization<Inner<WithUpdate, FlowType, Parameters...>> &encloser);
+                       DensityRegularization<Inner<WithUpdate, FlowType, ParticleScopeType, Parameters...>> &encloser);
         void interact(size_t index_i, Real dt = 0.0);
 
       protected:
@@ -146,18 +148,18 @@ class DensityRegularization<Inner<WithUpdate, FlowType, Parameters...>>
       public:
         template <class ExecutionPolicy>
         UpdateKernel(const ExecutionPolicy &ex_policy,
-                     DensityRegularization<Inner<WithUpdate, FlowType, Parameters...>> &encloser);
+                     DensityRegularization<Inner<WithUpdate, FlowType, ParticleScopeType, Parameters...>> &encloser);
         void update(size_t index_i, Real dt = 0.0);
 
       protected:
         RegularizationKernel regularization_;
+        ParticleScopeTypeKernel particle_scope_;
     };
 
   protected:
     Regularization<FlowType> regularization_method_;
+    ParticleScopeTypeCK<ParticleScopeType> within_scope_method_;
 };
-using DensitySummationCKInner = DensityRegularization<Inner<WithUpdate, Internal>>;
-using DensitySummationCKInnerFreeSurface = DensityRegularization<Inner<WithUpdate, FreeSurface>>;
 
 template <typename... Parameters>
 class DensityRegularization<Contact<Parameters...>>
@@ -165,7 +167,7 @@ class DensityRegularization<Contact<Parameters...>>
 {
   public:
     explicit DensityRegularization(Relation<Contact<Parameters...>> &contact_relation);
-    virtual ~DensityRegularization(){};
+    virtual ~DensityRegularization() {};
 
     class InteractKernel
         : public DensityRegularization<Base, Contact<Parameters...>>::InteractKernel
@@ -187,8 +189,11 @@ class DensityRegularization<Contact<Parameters...>>
     StdVec<DiscreteVariable<Real> *> dv_contact_mass_;
 };
 
-using DensityRegularizationComplexFreeSurface = DensityRegularization<Inner<WithUpdate, FreeSurface>, Contact<>>;
+using DensityRegularizationComplex = DensityRegularization<Inner<WithUpdate, Internal, AllParticles>, Contact<>>;
+using DensityRegularizationComplexFreeSurface = DensityRegularization<Inner<WithUpdate, FreeSurface, AllParticles>, Contact<>>;
+using DensityRegularizationComplexInternalPressureBoundary = DensityRegularization<Inner<WithUpdate, Internal, ExcludeBufferParticles>, Contact<>>;
 
 } // namespace fluid_dynamics
 } // namespace SPH
+
 #endif // DENSITY_REGULARIZATION_H

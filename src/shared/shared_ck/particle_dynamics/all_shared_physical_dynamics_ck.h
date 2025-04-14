@@ -31,14 +31,16 @@
 #ifndef ALL_SHARED_PHYSICAL_DYNAMICS_CK_H
 #define ALL_SHARED_PHYSICAL_DYNAMICS_CK_H
 
-#include "acoustic_step_1st_half.hpp"
-#include "acoustic_step_2nd_half.hpp"
+#include "all_fluid_structure_interactions.h"
 #include "all_general_dynamics_ck.h"
+#include "all_shared_fluid_dynamics_ck.h"
+#include "all_solid_dynamics_ck.h"
 #include "complex_algorithms_ck.h"
-#include "density_regularization.hpp"
-#include "fluid_time_step_ck.hpp"
+#include "diffusion_dynamics_ck.hpp"
 #include "interaction_algorithms_ck.hpp"
+#include "particle_functors_ck.h"
 #include "particle_sort_ck.hpp"
 #include "simple_algorithms_ck.h"
+#include "all_continum_dynamics.h"
 
 #endif // ALL_SHARED_PHYSICAL_DYNAMICS_CK_H

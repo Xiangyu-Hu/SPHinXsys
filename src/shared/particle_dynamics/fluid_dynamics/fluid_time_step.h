@@ -57,7 +57,19 @@ class AcousticTimeStep : public LocalDynamicsReduce<ReduceMax>
     Real h_min_;
     Real acousticCFL_;
 };
-
+/**
+ * @class SurfaceTensionTimeStep
+ * @brief Computing the acoustic time step size considering surface tension
+ */
+class SurfaceTensionTimeStep : public AcousticTimeStep
+{
+  public:
+    explicit SurfaceTensionTimeStep(SPHBody &sph_body, Real acousticCFL = 0.6);
+    virtual ~SurfaceTensionTimeStep(){};
+    Real reduce(size_t index_i, Real dt = 0.0);
+  protected:
+    Real rho0_, &surface_tension_coeff_;
+};
 /**
  * @class AdvectionTimeStep
  * @brief Computing the advection time step size when viscosity is handled implicitly
@@ -84,9 +96,6 @@ class AdvectionTimeStep
  */
 class AdvectionViscousTimeStep : public AdvectionTimeStep
 {
-  protected:
-    Fluid &fluid_;
-
   public:
     AdvectionViscousTimeStep(SPHBody &sph_body, Real U_ref, Real advectionCFL = 0.25);
     virtual ~AdvectionViscousTimeStep(){};

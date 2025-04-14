@@ -35,17 +35,24 @@ namespace SPH
 Vec2d FirstAxisVector(const Vec2d &zero_vector);
 Vec3d FirstAxisVector(const Vec3d &zero_vector);
 
-Vec3d upgradeToVec3d(const Real &input);
-Vec3d upgradeToVec3d(const Vec2d &input);
-Vec3d upgradeToVec3d(const Vec3d &input);
-Mat3d upgradeToMat3d(const Mat2d &input);
-Mat3d upgradeToMat3d(const Mat3d &input);
+inline Vec3d upgradeToVec3d(const Real &input)
+{
+    return Vec3d(input, 0.0, 0.0);
+};
+inline Vec3d upgradeToVec3d(const Vec2d &input)
+{
+    return Vec3d(input[0], input[1], 0.0);
+};
+inline Vec3d upgradeToVec3d(const Vec3d &input) { return input; };
 
-Vecd degradeToVecd(const Vec3d &input);
-Matd degradeToMatd(const Mat3d &input);
+inline Mat3d upgradeToMat3d(const Mat2d &input)
+{
+    Mat3d output = Mat3d::Zero();
+    output.block<2, 2>(0, 0) = input;
+    return output;
+};
+inline Mat3d upgradeToMat3d(const Mat3d &input) { return input; };
 
-Mat2d getInverse(const Mat2d &A);
-Mat3d getInverse(const Mat3d &A);
 Mat2d getAverageValue(const Mat2d &A, const Mat2d &B);
 Mat3d getAverageValue(const Mat3d &A, const Mat3d &B);
 Mat2d inverseCholeskyDecomposition(const Mat2d &A);
@@ -95,5 +102,47 @@ Vec3d getCrossProduct(const Vec3d &vector_1, const Vec3d &vector_2);
 /** Modulo operation for Arrayi */
 Array2i mod(const Array2i &input, int modulus);
 Array3i mod(const Array3i &input, int modulus);
+
+inline Real first_component(const Real &input) { return input; };
+template <int Dim1, int Dim2>
+Real first_component(const Eigen::Matrix<Real, Dim1, Dim2> &input) { return input(0, 0); };
+
+inline Real component_square(const Real &input) { return input * input; };
+
+template <int Dim1, int Dim2>
+Eigen::Matrix<Real, Dim1, Dim2> component_square(const Eigen::Matrix<Real, Dim1, Dim2> &input) { return input.cwiseAbs2(); };
+
+template <typename ComponentFunction, typename... Args>
+Real transform_component(const Real &input, const ComponentFunction &function, Args &&...args)
+{
+    return function(input, std::forward<Args>(args)...);
+};
+
+template <int Dim1, int Dim2, typename ComponentFunction, typename... Args>
+Eigen::Matrix<Real, Dim1, Dim2> transform_component(
+    const Eigen::Matrix<Real, Dim1, Dim2> &input, const ComponentFunction &function, Args &&...args)
+{
+    Eigen::Matrix<Real, Dim1, Dim2> output;
+    for (int i = 0; i < Dim1; ++i)
+        for (int j = 0; j < Dim2; ++j)
+            output(i, j) = function(input(i, j), std::forward<Args>(args)(i, j)...);
+    return output;
+};
+
+template <typename ComponentFunction, typename... Args>
+void for_each_component(const Real &input, const ComponentFunction &function, Args &&...args)
+{
+    function(input, std::forward<Args>(args)...);
+};
+
+template <int Dim1, int Dim2, typename ComponentFunction, typename... Args>
+void for_each_component(const Eigen::Matrix<Real, Dim1, Dim2> &input,
+                        const ComponentFunction &function, Args &&...args)
+{
+    Eigen::Matrix<Real, Dim1, Dim2> output;
+    for (int i = 0; i < Dim1; ++i)
+        for (int j = 0; j < Dim2; ++j)
+            function(input(i, j), std::forward<Args>(args)(i, j)...);
+};
 } // namespace SPH
 #endif // VECTOR_FUNCTIONS_H

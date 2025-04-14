@@ -15,7 +15,7 @@ AcousticTimeStep::AcousticTimeStep(SPHBody &sph_body, Real CFL)
       force_(particles_->getVariableDataByName<Vecd>("Force")),
       force_prior_(particles_->getVariableDataByName<Vecd>("ForcePrior")),
       mass_(particles_->getVariableDataByName<Real>("Mass")),
-      smoothing_length_(sph_body.sph_adaptation_->ReferenceSmoothingLength()),
+      smoothing_length_min_(sph_body.getSPHAdaptation().MinimumSmoothingLength()),
       c0_(elastic_solid_.ReferenceSoundSpeed()) {}
 //=================================================================================================//
 Real AcousticTimeStep::reduce(size_t index_i, Real dt)
@@ -23,8 +23,8 @@ Real AcousticTimeStep::reduce(size_t index_i, Real dt)
     // since the particle does not change its configuration in pressure relaxation step
     // I chose a time-step size according to Eulerian method
     Real acceleration_norm = ((force_[index_i] + force_prior_[index_i]) / mass_[index_i]).norm();
-    return CFL_ * SMIN((Real)sqrt(smoothing_length_ / (acceleration_norm + TinyReal)),
-                       smoothing_length_ / (c0_ + vel_[index_i].norm()));
+    return CFL_ * SMIN((Real)sqrt(smoothing_length_min_ / (acceleration_norm + TinyReal)),
+                       smoothing_length_min_ / (c0_ + vel_[index_i].norm()));
 }
 //=================================================================================================//
 ElasticDynamicsInitialCondition::ElasticDynamicsInitialCondition(SPHBody &sph_body)
@@ -76,7 +76,7 @@ BaseIntegration1stHalf::
       rho_(particles_->getVariableDataByName<Real>("Density")),
       mass_(particles_->getVariableDataByName<Real>("Mass")),
       force_prior_(particles_->registerStateVariable<Vecd>("ForcePrior")),
-      smoothing_length_(sph_body_.sph_adaptation_->ReferenceSmoothingLength()) {}
+      smoothing_length_(sph_body_.getSPHAdaptation().ReferenceSmoothingLength()) {}
 //=================================================================================================//
 void BaseIntegration1stHalf::update(size_t index_i, Real dt)
 {
@@ -89,7 +89,7 @@ Integration1stHalf::Integration1stHalf(BaseInnerRelation &inner_relation)
       numerical_dissipation_factor_(0.25) {}
 //=================================================================================================//
 Integration1stHalfPK2::Integration1stHalfPK2(BaseInnerRelation &inner_relation)
-    : Integration1stHalf(inner_relation){};
+    : Integration1stHalf(inner_relation) {};
 //=================================================================================================//
 void Integration1stHalfPK2::initialization(size_t index_i, Real dt)
 {
@@ -103,7 +103,7 @@ void Integration1stHalfPK2::initialization(size_t index_i, Real dt)
 //=================================================================================================//
 Integration1stHalfKirchhoff::
     Integration1stHalfKirchhoff(BaseInnerRelation &inner_relation)
-    : Integration1stHalf(inner_relation){};
+    : Integration1stHalf(inner_relation) {};
 //=================================================================================================//
 void Integration1stHalfKirchhoff::initialization(size_t index_i, Real dt)
 {
@@ -175,6 +175,14 @@ void Integration2ndHalf::initialization(size_t index_i, Real dt)
 void Integration2ndHalf::update(size_t index_i, Real dt)
 {
     F_[index_i] += dF_dt_[index_i] * dt * 0.5;
+}
+//=================================================================================================//
+void Integration1stHalfPK2RightCauchy::initialization(size_t index_i, Real dt)
+{
+    Integration1stHalfPK2::initialization(index_i, dt);
+    // add damping stress
+    const Matd numerical_damping_stress = elastic_solid_.NumericalDampingRightCauchy(F_[index_i], dF_dt_[index_i], smoothing_length_ / h_ratio_[index_i], index_i);
+    stress_PK1_B_[index_i] += F_[index_i] * 0.5 * numerical_dissipation_factor_ * numerical_damping_stress;
 }
 //=================================================================================================//
 } // namespace solid_dynamics

@@ -31,7 +31,7 @@
 #ifndef NEIGHBORHOOD_CK_H
 #define NEIGHBORHOOD_CK_H
 
-#include "kernel_wenland_c2_ck.h"
+#include "kernel_wendland_c2_ck.h"
 #include "neighborhood.h"
 
 namespace SPH
@@ -50,6 +50,8 @@ class Neighbor<>
     Neighbor(const ExecutionPolicy &ex_policy, SPHAdaptation *sph_adaptation, SPHAdaptation *contact_adaptation,
              DiscreteVariable<Vecd> *dv_pos, DiscreteVariable<Vecd> *dv_target_pos);
 
+    KernelWendlandC2CK &getKernel() { return kernel_; }
+
     inline Vecd vec_r_ij(size_t i, size_t j) const { return source_pos_[i] - target_pos_[j]; };
     inline Real W_ij(size_t i, size_t j) const { return kernel_.W(vec_r_ij(i, j)); }
     inline Real dW_ij(size_t i, size_t j) const { return kernel_.dW(vec_r_ij(i, j)); }
@@ -60,25 +62,25 @@ class Neighbor<>
         return displacement / (displacement.norm() + TinyReal);
     }
 
+    class NeighborCriterion
+    {
+      public:
+        NeighborCriterion(Neighbor<> &neighbor);
+        bool operator()(UnsignedInt target_index, UnsignedInt source_index)
+        {
+            return (source_pos_[source_index] - target_pos_[target_index]).squaredNorm() < cut_radius_square_;
+        };
+
+      protected:
+        Vecd *source_pos_;
+        Vecd *target_pos_;
+        Real cut_radius_square_;
+    };
+
   protected:
     KernelWendlandC2CK kernel_;
     Vecd *source_pos_;
     Vecd *target_pos_;
-};
-
-class NeighborList
-{
-  public:
-    template <class ExecutionPolicy>
-    NeighborList(const ExecutionPolicy &ex_policy,
-                 DiscreteVariable<UnsignedInt> *dv_neighbor_index,
-                 DiscreteVariable<UnsignedInt> *dv_particle_offset);
-
-  protected:
-    UnsignedInt *neighbor_index_;
-    UnsignedInt *particle_offset_;
-    inline UnsignedInt FirstNeighbor(UnsignedInt i) { return particle_offset_[i]; };
-    inline UnsignedInt LastNeighbor(UnsignedInt i) { return particle_offset_[i + 1]; };
 };
 } // namespace SPH
 #endif // NEIGHBORHOOD_CK_H

@@ -65,6 +65,7 @@ class BaseMeshLocalDynamics
           near_interface_id_(*mesh_data.getMeshVariable<int>("NearInterfaceID")),
           kernel_weight_(*mesh_data.getMeshVariable<Real>("KernelWeight")),
           kernel_gradient_(*mesh_data.getMeshVariable<Vecd>("KernelGradient")){};
+          kernel_second_gradient_(*mesh_data.getMeshVariable<Matd>("KernelSecondGradient")){};
     ~BaseMeshLocalDynamics(){};
 
     MeshWithGridDataPackagesType &mesh_data_;
@@ -81,6 +82,7 @@ class BaseMeshLocalDynamics
     MeshVariable<int> &near_interface_id_;
     MeshVariable<Real> &kernel_weight_;
     MeshVariable<Vecd> &kernel_gradient_;
+    MeshVariable<Matd> &kernel_second_gradient_;
 
     size_t SortIndexFromCellIndex(const Arrayi &cell_index);
     Arrayi CellIndexFromSortIndex(const size_t &sort_index);
@@ -440,7 +442,9 @@ class UpdateKernelIntegrals : public BaseMeshLocalDynamics
         Real threshold;
         std::pair<Real, Vecd> computeKernelIntegral(const Vecd &position, const size_t &package_index,
                                                     const Arrayi &grid_index);
-
+        Real computeKernelIntegral(const Vecd &position);
+        Vecd computeKernelGradientIntegral(const Vecd &position);
+        Matd computeKernelSecondGradientIntegral(const Vecd &position);
         /** a cut cell is a cut by the level set. */
         /** "Multi-scale modeling of compressible multi-fluid flows with conservative interface method."
          * Hu, X. Y., et al., Proceedings of the Summer Program. Vol. 301. Stanford, CA, USA:
@@ -457,10 +461,6 @@ class UpdateKernelIntegrals : public BaseMeshLocalDynamics
             return volume_fraction;
         }
     };
-
-  private:
-    KernelType *kernel_;
-    Real global_h_ratio_;
 };
 
 class ReinitializeLevelSet : public BaseMeshLocalDynamics
@@ -641,6 +641,16 @@ class InitializeDataInACellFromCoarse : public BaseMeshLocalDynamics
   private:
     MeshWithGridDataPackagesType &coarse_mesh_;
     Shape &shape_;
+};
+
+class ProbeKernelSecondGradientIntegral : public BaseMeshLocalDynamics
+{
+public:
+    explicit ProbeKernelSecondGradientIntegral(MeshWithGridDataPackagesType &mesh_data)
+        : BaseMeshLocalDynamics(mesh_data) {};
+    virtual ~ProbeKernelSecondGradientIntegral() {};
+
+    Matd update(const Vecd& position) { return mesh_data_.probeMesh(kernel_second_gradient_, position); };
 };
 
 class ProbeIsWithinMeshBound : public BaseMeshLocalDynamics

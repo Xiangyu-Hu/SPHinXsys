@@ -11,15 +11,17 @@ template <typename... Args>
 InteractionDynamicsCK<ExecutionPolicy, Base, InteractionType<Inner<Parameters...>>>::
     InteractionDynamicsCK(Args &&...args)
     : InteractionType<Inner<Parameters...>>(std::forward<Args>(args)...),
-      kernel_implementation_(*this) {}
+      kernel_implementation_(*this)
+{
+    this->registerComputingKernel(&kernel_implementation_);
+}
 //=================================================================================================//
 template <class ExecutionPolicy, template <typename...> class InteractionType, typename... Parameters>
 void InteractionDynamicsCK<ExecutionPolicy, Base, InteractionType<Inner<Parameters...>>>::
     runInteraction(Real dt)
 {
     InteractKernel *interact_kernel = kernel_implementation_.getComputingKernel();
-    particle_for(ExecutionPolicy{},
-                 this->identifier_.LoopRange(),
+    particle_for(LoopRangeCK<ExecutionPolicy, Identifier>(this->identifier_),
                  [=](size_t i)
                  { interact_kernel->interact(i, dt); });
 }
@@ -35,6 +37,7 @@ InteractionDynamicsCK<ExecutionPolicy, Base, InteractionType<Contact<Parameters.
         contact_kernel_implementation_.push_back(
             contact_kernel_implementation_ptrs_
                 .template createPtr<KernelImplementation>(*this));
+        this->registerComputingKernel(contact_kernel_implementation_.back(), k);
     }
 }
 //=================================================================================================//
@@ -47,8 +50,7 @@ void InteractionDynamicsCK<ExecutionPolicy, Base, InteractionType<Contact<Parame
         InteractKernel *interact_kernel =
             contact_kernel_implementation_[k]->getComputingKernel(k);
 
-        particle_for(ExecutionPolicy{},
-                     this->identifier_.LoopRange(),
+        particle_for(LoopRangeCK<ExecutionPolicy, Identifier>(this->identifier_),
                      [=](size_t i)
                      { interact_kernel->interact(i, dt); });
     }
@@ -92,7 +94,13 @@ InteractionDynamicsCK<ExecutionPolicy, InteractionType<RelationType<WithUpdate, 
           std::forward<Args>(args)...),
       InteractionDynamicsCK<WithUpdate>(),
       BaseDynamics<void>(),
-      kernel_implementation_(*this) {}
+      kernel_implementation_(*this)
+{
+    if constexpr (std::is_base_of_v<BaseInteractKernel, UpdateKernel>)
+    {
+        this->registerComputingKernel(&kernel_implementation_);
+    }
+}
 //=================================================================================================//
 template <class ExecutionPolicy, template <typename...> class InteractionType,
           template <typename...> class RelationType, typename... OtherParameters>
@@ -118,8 +126,7 @@ void InteractionDynamicsCK<ExecutionPolicy, InteractionType<RelationType<WithUpd
     runUpdateStep(Real dt)
 {
     UpdateKernel *update_kernel = kernel_implementation_.getComputingKernel();
-    particle_for(ExecutionPolicy{},
-                 this->identifier_.LoopRange(),
+    particle_for(LoopRangeCK<ExecutionPolicy, Identifier>(this->identifier_),
                  [=](size_t i)
                  { update_kernel->update(i, dt); });
 }
@@ -132,7 +139,18 @@ InteractionDynamicsCK<ExecutionPolicy, InteractionType<RelationType<OneLevel, Ot
     : InteractionDynamicsCK<ExecutionPolicy, Base, InteractionType<RelationType<OneLevel, OtherParameters...>>>(
           std::forward<Args>(args)...),
       InteractionDynamicsCK<OneLevel>(), BaseDynamics<void>(),
-      initialize_kernel_implementation_(*this), update_kernel_implementation_(*this) {}
+      initialize_kernel_implementation_(*this), update_kernel_implementation_(*this)
+{
+    if constexpr (std::is_base_of_v<BaseInteractKernel, InitializeKernel>)
+    {
+        this->registerComputingKernel(&initialize_kernel_implementation_);
+    }
+
+    if constexpr (std::is_base_of_v<BaseInteractKernel, UpdateKernel>)
+    {
+        this->registerComputingKernel(&update_kernel_implementation_);
+    }
+}
 //=================================================================================================//
 template <class ExecutionPolicy, template <typename...> class InteractionType,
           template <typename...> class RelationType, typename... OtherParameters>
@@ -158,8 +176,7 @@ void InteractionDynamicsCK<ExecutionPolicy, InteractionType<RelationType<OneLeve
     runInitializationStep(Real dt)
 {
     InitializeKernel *initialize_kernel = initialize_kernel_implementation_.getComputingKernel();
-    particle_for(ExecutionPolicy{},
-                 this->identifier_.LoopRange(),
+    particle_for(LoopRangeCK<ExecutionPolicy, Identifier>(this->identifier_),
                  [=](size_t i)
                  { initialize_kernel->initialize(i, dt); });
 }
@@ -170,8 +187,7 @@ void InteractionDynamicsCK<ExecutionPolicy, InteractionType<RelationType<OneLeve
     runUpdateStep(Real dt)
 {
     UpdateKernel *update_kernel = update_kernel_implementation_.getComputingKernel();
-    particle_for(ExecutionPolicy{},
-                 this->identifier_.LoopRange(),
+    particle_for(LoopRangeCK<ExecutionPolicy, Identifier>(this->identifier_),
                  [=](size_t i)
                  { update_kernel->update(i, dt); });
 }

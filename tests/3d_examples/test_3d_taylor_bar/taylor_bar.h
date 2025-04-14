@@ -63,7 +63,7 @@ class InitialCondition
 {
   public:
     explicit InitialCondition(SPHBody &sph_body)
-        : solid_dynamics::ElasticDynamicsInitialCondition(sph_body){};
+        : solid_dynamics::ElasticDynamicsInitialCondition(sph_body) {};
 
     void update(size_t index_i, Real dt)
     {
@@ -99,15 +99,15 @@ class DynamicContactForceWithWall : public LocalDynamics,
             contact_n_.push_back(contact_particles_[k]->template getVariableDataByName<Vecd>("NormalDirection"));
         }
     };
-    virtual ~DynamicContactForceWithWall(){};
+    virtual ~DynamicContactForceWithWall() {};
     void interaction(size_t index_i, Real dt = 0.0)
     {
         Vecd force = Vecd::Zero();
         for (size_t k = 0; k < contact_configuration_.size(); ++k)
         {
-            Real particle_spacing_j1 = 1.0 / contact_bodies_[k]->sph_adaptation_->ReferenceSpacing();
+            Real particle_spacing_j1 = 1.0 / contact_bodies_[k]->getSPHAdaptation().ReferenceSpacing();
             Real particle_spacing_ratio2 =
-                1.0 / (sph_body_.sph_adaptation_->ReferenceSpacing() * particle_spacing_j1);
+                1.0 / (sph_body_.getSPHAdaptation().ReferenceSpacing() * particle_spacing_j1);
             particle_spacing_ratio2 *= 0.1 * particle_spacing_ratio2;
 
             Vecd *n_k = contact_n_[k];

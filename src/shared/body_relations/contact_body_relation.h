@@ -57,7 +57,7 @@ class ContactRelationCrossResolution : public BaseContactRelation
             target_cell_linked_lists_.push_back(target_cell_linked_list);
             get_search_depths_.push_back(
                 search_depth_ptrs_keeper_.createPtr<SearchDepthContact>(
-                    sph_body_, target_cell_linked_list));
+                    sph_body_, target_cell_linked_list->getMesh()));
         }
     };
     virtual ~ContactRelationCrossResolution(){};
@@ -144,7 +144,7 @@ class AdaptiveContactRelation : public BaseContactRelation
 
   protected:
     StdVec<StdVec<SearchDepthAdaptiveContact *>> get_multi_level_search_range_;
-    StdVec<StdVec<CellLinkedList *>> cell_linked_list_levels_;
+    StdVec<BaseCellLinkedList *> cell_linked_lists_;
     StdVec<StdVec<NeighborBuilderContactAdaptive *>> get_contact_neighbors_adaptive_;
 
   public:

@@ -41,7 +41,7 @@ class EulerianIntegration : public BaseIntegration<DataDelegationType>
   public:
     template <class BaseRelationType>
     explicit EulerianIntegration(BaseRelationType &base_relation);
-    virtual ~EulerianIntegration(){};
+    virtual ~EulerianIntegration() {};
 
   protected:
     Vecd *mom_, *dmom_dt_;
@@ -58,9 +58,9 @@ class EulerianIntegration1stHalf<Inner<>, RiemannSolverType>
   public:
     explicit EulerianIntegration1stHalf(BaseInnerRelation &inner_relation, Real limiter_parameter = 15.0);
     template <typename BodyRelationType, typename FirstArg>
-    explicit EulerianIntegration1stHalf(ConstructorArgs<BodyRelationType, FirstArg> parameters)
-        : EulerianIntegration1stHalf(parameters.body_relation_, std::get<0>(parameters.others_)){};
-    virtual ~EulerianIntegration1stHalf(){};
+    explicit EulerianIntegration1stHalf(DynamicsArgs<BodyRelationType, FirstArg> parameters)
+        : EulerianIntegration1stHalf(parameters.identifier_, std::get<0>(parameters.others_)){};
+    virtual ~EulerianIntegration1stHalf() {};
     void interaction(size_t index_i, Real dt = 0.0);
     void update(size_t index_i, Real dt = 0.0);
 
@@ -77,9 +77,9 @@ class EulerianIntegration1stHalf<Contact<Wall>, RiemannSolverType>
   public:
     EulerianIntegration1stHalf(BaseContactRelation &wall_contact_relation, Real limiter_parameter = 15.0);
     template <typename BodyRelationType, typename FirstArg>
-    explicit EulerianIntegration1stHalf(ConstructorArgs<BodyRelationType, FirstArg> parameters)
-        : EulerianIntegration1stHalf(parameters.body_relation_, std::get<0>(parameters.others_)){};
-    virtual ~EulerianIntegration1stHalf(){};
+    explicit EulerianIntegration1stHalf(DynamicsArgs<BodyRelationType, FirstArg> parameters)
+        : EulerianIntegration1stHalf(parameters.identifier_, std::get<0>(parameters.others_)){};
+    virtual ~EulerianIntegration1stHalf() {};
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
@@ -100,9 +100,9 @@ class EulerianIntegration2ndHalf<Inner<>, RiemannSolverType>
 
     explicit EulerianIntegration2ndHalf(BaseInnerRelation &inner_relation, Real limiter_parameter = 15.0);
     template <typename BodyRelationType, typename FirstArg>
-    explicit EulerianIntegration2ndHalf(ConstructorArgs<BodyRelationType, FirstArg> parameters)
-        : EulerianIntegration2ndHalf(parameters.body_relation_, std::get<0>(parameters.others_)){};
-    virtual ~EulerianIntegration2ndHalf(){};
+    explicit EulerianIntegration2ndHalf(DynamicsArgs<BodyRelationType, FirstArg> parameters)
+        : EulerianIntegration2ndHalf(parameters.identifier_, std::get<0>(parameters.others_)){};
+    virtual ~EulerianIntegration2ndHalf() {};
     void interaction(size_t index_i, Real dt = 0.0);
     void update(size_t index_i, Real dt = 0.0);
 
@@ -122,9 +122,9 @@ class EulerianIntegration2ndHalf<Contact<Wall>, RiemannSolverType>
   public:
     EulerianIntegration2ndHalf(BaseContactRelation &wall_contact_relation, Real limiter_parameter = 15.0);
     template <typename BodyRelationType, typename FirstArg>
-    explicit EulerianIntegration2ndHalf(ConstructorArgs<BodyRelationType, FirstArg> parameters)
-        : EulerianIntegration2ndHalf(parameters.body_relation_, std::get<0>(parameters.others_)){};
-    virtual ~EulerianIntegration2ndHalf(){};
+    explicit EulerianIntegration2ndHalf(DynamicsArgs<BodyRelationType, FirstArg> parameters)
+        : EulerianIntegration2ndHalf(parameters.identifier_, std::get<0>(parameters.others_)){};
+    virtual ~EulerianIntegration2ndHalf() {};
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:

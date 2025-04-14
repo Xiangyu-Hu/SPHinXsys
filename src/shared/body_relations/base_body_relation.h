@@ -32,9 +32,9 @@
 #include "base_body.h"
 #include "base_body_part.h"
 #include "base_geometry.h"
+#include "base_implementation.h"
 #include "base_particles.h"
 #include "cell_linked_list.h"
-#include "execution.h"
 #include "neighborhood.h"
 
 namespace SPH
@@ -51,11 +51,11 @@ struct SearchDepthSingleResolution
 struct SearchDepthContact
 {
     int search_depth_;
-    SearchDepthContact(SPHBody &sph_body, CellLinkedList *target_cell_linked_list)
+    SearchDepthContact(SPHBody &sph_body, Mesh &target_mesh)
         : search_depth_(1)
     {
-        Real inv_grid_spacing_ = 1.0 / target_cell_linked_list->GridSpacing();
-        Kernel *kernel_ = sph_body.sph_adaptation_->getKernel();
+        Real inv_grid_spacing_ = 1.0 / target_mesh.GridSpacing();
+        Kernel *kernel_ = sph_body.getSPHAdaptation().getKernel();
         search_depth_ = 1 + (int)floor(kernel_->CutOffRadius() * inv_grid_spacing_);
     };
     int operator()(size_t particle_index) const { return search_depth_; };
@@ -69,10 +69,10 @@ struct SearchDepthAdaptive
     Real inv_grid_spacing_;
     Kernel *kernel_;
     Real *h_ratio_;
-    SearchDepthAdaptive(SPHBody &sph_body, CellLinkedList *target_cell_linked_list)
-        : inv_grid_spacing_(1.0 / target_cell_linked_list->GridSpacing()),
-          kernel_(sph_body.sph_adaptation_->getKernel()),
-          h_ratio_(sph_body.getBaseParticles().getVariableDataByName<Real>("SmoothingLengthRatio")){};
+    SearchDepthAdaptive(SPHBody &sph_body, Mesh &target_mesh)
+        : inv_grid_spacing_(1.0 / target_mesh.GridSpacing()),
+          kernel_(sph_body.getSPHAdaptation().getKernel()),
+          h_ratio_(sph_body.getBaseParticles().getVariableDataByName<Real>("SmoothingLengthRatio")) {};
     int operator()(size_t particle_index) const
     {
         return 1 + (int)floor(kernel_->CutOffRadius(h_ratio_[particle_index]) * inv_grid_spacing_);
@@ -87,10 +87,10 @@ struct SearchDepthAdaptiveContact
     Real inv_grid_spacing_;
     SPHAdaptation &sph_adaptation_;
     Kernel &kernel_;
-    SearchDepthAdaptiveContact(SPHBody &sph_body, CellLinkedList *target_cell_linked_list)
-        : inv_grid_spacing_(1.0 / target_cell_linked_list->GridSpacing()),
-          sph_adaptation_(*sph_body.sph_adaptation_),
-          kernel_(*sph_body.sph_adaptation_->getKernel()){};
+    SearchDepthAdaptiveContact(SPHBody &sph_body, Mesh &target_mesh)
+        : inv_grid_spacing_(1.0 / target_mesh.GridSpacing()),
+          sph_adaptation_(sph_body.getSPHAdaptation()),
+          kernel_(*sph_adaptation_.getKernel()) {};
     int operator()(size_t particle_index) const
     {
         return 1 + (int)floor(kernel_.CutOffRadius(sph_adaptation_.SmoothingLengthRatio(particle_index)) * inv_grid_spacing_);
@@ -109,9 +109,9 @@ class SPHRelation
   public:
     SPHBody &getSPHBody() { return sph_body_; };
     explicit SPHRelation(SPHBody &sph_body);
-    virtual ~SPHRelation(){};
+    virtual ~SPHRelation() {};
 
-    void subscribeToBody() { sph_body_.body_relations_.push_back(this); };
+    void subscribeToBody() { sph_body_.getBodyRelations().push_back(this); };
     virtual void updateConfiguration() = 0;
 
   protected:
@@ -129,7 +129,7 @@ class BaseInnerRelation : public SPHRelation
     RealBody *real_body_;
     ParticleConfiguration inner_configuration_; /**< inner configuration for the neighbor relations. */
     explicit BaseInnerRelation(RealBody &real_body);
-    virtual ~BaseInnerRelation(){};
+    virtual ~BaseInnerRelation() {};
     BaseInnerRelation &getRelation() { return *this; };
 
   protected:
@@ -153,8 +153,8 @@ class BaseContactRelation : public SPHRelation
 
     BaseContactRelation(SPHBody &sph_body, RealBodyVector contact_bodies);
     BaseContactRelation(SPHBody &sph_body, BodyPartVector contact_body_parts)
-        : BaseContactRelation(sph_body, BodyPartsToRealBodies(contact_body_parts)){};
-    virtual ~BaseContactRelation(){};
+        : BaseContactRelation(sph_body, BodyPartsToRealBodies(contact_body_parts)) {};
+    virtual ~BaseContactRelation() {};
     BaseContactRelation &getRelation() { return *this; };
     RealBodyVector getContactBodies() { return contact_bodies_; };
     StdVec<BaseParticles *> getContactParticles() { return contact_particles_; };

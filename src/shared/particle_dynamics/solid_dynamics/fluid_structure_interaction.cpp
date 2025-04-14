@@ -1,5 +1,7 @@
 #include "fluid_structure_interaction.hpp"
 
+#include "viscosity.h"
+
 namespace SPH
 {
 //=====================================================================================================//
@@ -26,8 +28,9 @@ ViscousForceFromFluid::ViscousForceFromFluid(BaseContactRelation &contact_relati
     {
         contact_vel_.push_back(contact_particles_[k]->getVariableDataByName<Vecd>("Velocity"));
         contact_Vol_.push_back(contact_particles_[k]->getVariableDataByName<Real>("VolumetricMeasure"));
-        mu_.push_back(contact_fluids_[k]->ReferenceViscosity());
-        smoothing_length_.push_back(contact_bodies_[k]->sph_adaptation_->ReferenceSmoothingLength());
+        Viscosity &viscosity_k = DynamicCast<Viscosity>(this, contact_particles_[k]->getBaseMaterial());
+        mu_.push_back(viscosity_k.ReferenceViscosity());
+        smoothing_length_.push_back(contact_bodies_[k]->getSPHAdaptation().ReferenceSmoothingLength());
     }
 }
 //=================================================================================================//

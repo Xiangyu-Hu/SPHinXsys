@@ -21,9 +21,10 @@ void ParticleReserve::checkParticlesReserved()
 //=================================================================================================//
 void ParticleBuffer<Base>::checkEnoughBuffer(BaseParticles &base_particles)
 {
-    if (base_particles.TotalRealParticles() >= base_particles.RealParticlesBound())
+    if (base_particles.TotalRealParticles() >= base_particles.ParticlesBound())
     {
         std::cout << "\n ERROR: Not enough buffer particles have been reserved!" << std::endl;
+        std::cout << "\n You may need to increase the particle reserve." << std::endl;
         std::cout << __FILE__ << ':' << __LINE__ << std::endl;
         exit(1);
     }
@@ -31,7 +32,7 @@ void ParticleBuffer<Base>::checkEnoughBuffer(BaseParticles &base_particles)
 //=================================================================================================//
 void ParticleBuffer<Base>::allocateBufferParticles(BaseParticles &base_particles, size_t buffer_size)
 {
-    base_particles.increaseAllParticlesBounds(buffer_size);
+    base_particles.increaseParticlesBounds(buffer_size);
 }
 //=================================================================================================//
 void Ghost<Base>::checkWithinGhostSize(const ParticlesBound &ghost_bound)

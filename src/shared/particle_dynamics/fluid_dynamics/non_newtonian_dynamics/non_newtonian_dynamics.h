@@ -32,6 +32,7 @@
 
 #include "base_fluid_dynamics.h"
 #include "fluid_integration.hpp"
+#include "viscosity.h"
 
 namespace SPH
 {
@@ -80,7 +81,6 @@ class Oldroyd_BIntegration2ndHalf<Inner<>> : public Integration2ndHalfInnerRiema
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
-    Oldroyd_B_Fluid &oldroyd_b_fluid_;
     Matd *vel_grad_, *tau_, *dtau_dt_;
     Real mu_p_, lambda_;
 };
@@ -130,7 +130,7 @@ class ShearRateDependentViscosity : public LocalDynamics
 
   protected:
     Matd *vel_grad_;
-    GeneralizedNewtonianFluid &generalized_newtonian_fluid_;
+    GeneralizedNewtonianViscosity &generalized_viscosity_;
     Real *mu_srd_;
 };
 

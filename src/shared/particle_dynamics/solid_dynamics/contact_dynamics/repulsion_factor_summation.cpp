@@ -9,8 +9,8 @@ RepulsionFactorSummation<Inner<>>::
     RepulsionFactorSummation(SelfSurfaceContactRelation &self_contact_relation)
     : RepulsionFactorSummation<Base, DataDelegateInner>(self_contact_relation, "SelfRepulsionFactor")
 {
-    Real dp_1 = self_contact_relation.getSPHBody().sph_adaptation_->ReferenceSpacing();
-    offset_W_ij_ = self_contact_relation.getSPHBody().sph_adaptation_->getKernel()->W(dp_1, ZeroVecd);
+    Real dp_1 = self_contact_relation.getSPHBody().getSPHAdaptation().ReferenceSpacing();
+    offset_W_ij_ = self_contact_relation.getSPHBody().getSPHAdaptation().getKernel()->W(dp_1, ZeroVecd);
 }
 //=================================================================================================//
 void RepulsionFactorSummation<Inner<>>::interaction(size_t index_i, Real dt)
@@ -48,12 +48,12 @@ void RepulsionFactorSummation<Contact<>>::interaction(size_t index_i, Real dt)
 ShellContactFactor::ShellContactFactor(ShellSurfaceContactRelation &solid_body_contact_relation)
     : RepulsionFactorSummation<Base, DataDelegateContact>(solid_body_contact_relation, "RepulsionFactor"),
       solid_(DynamicCast<Solid>(this, sph_body_.getBaseMaterial())),
-      kernel_(solid_body_contact_relation.getSPHBody().sph_adaptation_->getKernel()),
-      particle_spacing_(solid_body_contact_relation.getSPHBody().sph_adaptation_->ReferenceSpacing())
+      kernel_(solid_body_contact_relation.getSPHBody().getSPHAdaptation().getKernel()),
+      particle_spacing_(solid_body_contact_relation.getSPHBody().getSPHAdaptation().ReferenceSpacing())
 {
     for (size_t k = 0; k != contact_particles_.size(); ++k)
     {
-        Real dp_k = solid_body_contact_relation.contact_bodies_[k]->sph_adaptation_->ReferenceSpacing();
+        Real dp_k = solid_body_contact_relation.contact_bodies_[k]->getSPHAdaptation().ReferenceSpacing();
         Real average_spacing_k = 0.5 * particle_spacing_ + 0.5 * dp_k;
         Real h_ratio_k = particle_spacing_ / average_spacing_k;
         offset_W_ij_.push_back(kernel_->W(h_ratio_k, average_spacing_k, ZeroVecd));

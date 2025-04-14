@@ -52,7 +52,7 @@ class GetSaturationTimeStepSize
 
   public:
     explicit GetSaturationTimeStepSize(SPHBody &sph_body);
-    virtual ~GetSaturationTimeStepSize(){};
+    virtual ~GetSaturationTimeStepSize() {};
 
     Real reduce(size_t index_i, Real dt = 0.0)
     {
@@ -68,7 +68,7 @@ class MomentumConstraint : public BaseLocalDynamics<BodyPartByParticle>
 {
   public:
     explicit MomentumConstraint(BodyPartByParticle &body_part);
-    virtual ~MomentumConstraint(){};
+    virtual ~MomentumConstraint() {};
 
     void update(size_t index_i, Real dt = 0.0) { total_momentum_[index_i] = Vecd::Zero(); };
 
@@ -84,7 +84,7 @@ class BasePorousMediaRelaxation : public LocalDynamics, public DataDelegateInner
 {
   public:
     explicit BasePorousMediaRelaxation(BaseInnerRelation &inner_relation);
-    virtual ~BasePorousMediaRelaxation(){};
+    virtual ~BasePorousMediaRelaxation() {};
 
   protected:
     PorousMediaSolid &porous_solid_;
@@ -97,7 +97,7 @@ class BasePorousMediaRelaxation : public LocalDynamics, public DataDelegateInner
 
 /**
  * @class PorousMediaStressRelaxationFirstHalf
- * @brief computing Porous Media stress relaxation process by verlet time stepping
+ * @brief computing Porous Media stress relaxation process by Verlet time stepping
  * This is the first step
  */
 class PorousMediaStressRelaxationFirstHalf
@@ -105,7 +105,7 @@ class PorousMediaStressRelaxationFirstHalf
 {
   public:
     PorousMediaStressRelaxationFirstHalf(BaseInnerRelation &body_inner_relation);
-    virtual ~PorousMediaStressRelaxationFirstHalf(){};
+    virtual ~PorousMediaStressRelaxationFirstHalf() {};
 
   protected:
     Real *Vol_update_, *fluid_saturation_, *total_mass_, *fluid_mass_, *dfluid_mass_dt_;
@@ -116,7 +116,7 @@ class PorousMediaStressRelaxationFirstHalf
 
     const Real one_over_dimensions_ = 1.0 / (Real)Dimensions;
     Real numerical_dissipation_factor_ = 0.25;
-    Real inv_W0_ = 1.0 / sph_body_.sph_adaptation_->getKernel()->W0(ZeroVecd);
+    Real inv_W0_ = 1.0 / sph_body_.getSPHAdaptation().getKernel()->W0(ZeroVecd);
 
     void initialization(size_t index_i, Real dt = 0.0);
     void interaction(size_t index_i, Real dt = 0.0)
@@ -152,7 +152,7 @@ class PorousMediaStressRelaxationFirstHalf
 
 /**
  * @class PorousMediaStressRelaxationSecondHalf
- * @brief computing Porous Media stress relaxation process by verlet time stepping
+ * @brief computing Porous Media stress relaxation process by Verlet time stepping
  * This is the second step
  */
 class PorousMediaStressRelaxationSecondHalf
@@ -160,8 +160,8 @@ class PorousMediaStressRelaxationSecondHalf
 {
   public:
     PorousMediaStressRelaxationSecondHalf(BaseInnerRelation &body_inner_relation)
-        : PorousMediaStressRelaxationFirstHalf(body_inner_relation){};
-    virtual ~PorousMediaStressRelaxationSecondHalf(){};
+        : PorousMediaStressRelaxationFirstHalf(body_inner_relation) {};
+    virtual ~PorousMediaStressRelaxationSecondHalf() {};
 
   protected:
     void initialization(size_t index_i, Real dt = 0.0);
@@ -197,9 +197,9 @@ class PorousMediaSaturationDynamicsInitialCondition : public BaseLocalDynamics<B
           total_mass_(particles_->getVariableDataByName<Real>("TotalMass")),
           rho_n_(particles_->getVariableDataByName<Real>("Density")),
           Vol_update_(particles_->getVariableDataByName<Real>("UpdateVolume")),
-          pos_(particles_->getVariableDataByName<Vecd>("Position")){};
+          pos_(particles_->getVariableDataByName<Vecd>("Position")) {};
 
-    virtual ~PorousMediaSaturationDynamicsInitialCondition(){};
+    virtual ~PorousMediaSaturationDynamicsInitialCondition() {};
 
   protected:
     Real *fluid_mass_, *fluid_saturation_, *total_mass_, *rho_n_, *Vol_update_;
@@ -215,8 +215,8 @@ class SaturationRelaxationInPorousMedia
 {
   public:
     SaturationRelaxationInPorousMedia(BaseInnerRelation &body_inner_relation)
-        : PorousMediaStressRelaxationFirstHalf(body_inner_relation){};
-    virtual ~SaturationRelaxationInPorousMedia(){};
+        : PorousMediaStressRelaxationFirstHalf(body_inner_relation) {};
+    virtual ~SaturationRelaxationInPorousMedia() {};
 
   protected:
     void initialization(size_t index_i, Real Dt = 0.0);

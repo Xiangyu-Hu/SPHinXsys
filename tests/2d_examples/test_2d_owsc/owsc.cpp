@@ -18,7 +18,7 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
-    water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
+    water_block.defineClosure<WeaklyCompressibleFluid, Viscosity>(ConstructArgs(rho0_f, c_f), mu_f);
     water_block.generateParticles<BaseParticles, Lattice>();
 
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
@@ -56,7 +56,7 @@ int main(int ac, char *av[])
     // Generally, the geometric models or simple objects without data dependencies,
     // such as gravity, should be initiated first.
     // Then the major physical particle dynamics model should be introduced.
-    // Finally, the auxillary models such as time step estimator, initial condition,
+    // Finally, the auxiliary models such as time step estimator, initial condition,
     // boundary condition and other constraints should be defined.
     // For typical fluid-structure interaction, we first define structure dynamics,
     // Then fluid dynamics and the corresponding coupling dynamics.
@@ -253,9 +253,8 @@ int main(int ac, char *av[])
                 if (total_time >= relax_time)
                 {
                     SimTK::State &state_for_update = integ.updAdvancedState();
-                    Real angle = pin_spot.getAngle(state_for_update);
                     force_on_bodies.clearAllBodyForces(state_for_update);
-                    force_on_bodies.setOneBodyForce(state_for_update, pin_spot, force_on_spot_flap.exec(angle));
+                    force_on_bodies.setOneBodyForce(state_for_update, pin_spot, force_on_spot_flap.exec());
                     integ.stepBy(dt);
                     constraint_spot_flap.exec();
                     wave_making.exec(dt);

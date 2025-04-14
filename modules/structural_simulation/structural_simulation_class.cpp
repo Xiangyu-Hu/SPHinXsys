@@ -27,7 +27,7 @@ SolidBodyFromMesh::SolidBodyFromMesh(
 {
     defineAdaptationRatios(1.15, system.resolution_ref_ / resolution);
     defineBodyLevelSetShape()->cleanLevelSet();
-    assignMaterial(material_model.get());
+    defineMaterial<SaintVenantKirchhoffSolid>(*material_model.get());
     generateParticles<BaseParticles, Lattice>();
 }
 

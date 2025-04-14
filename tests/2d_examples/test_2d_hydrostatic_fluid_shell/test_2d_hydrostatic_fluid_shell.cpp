@@ -34,7 +34,7 @@ class ParticleGenerator<SurfaceParticles, WallBoundary> : public ParticleGenerat
     explicit ParticleGenerator(SPHBody &sph_body, SurfaceParticles &surface_particles,
                                Real DH, Real DL, Real particle_spacing_gate)
         : ParticleGenerator<SurfaceParticles>(sph_body, surface_particles),
-          DH(DH), DL(DL), particle_spacing_gate(particle_spacing_gate){};
+          DH(DH), DL(DL), particle_spacing_gate(particle_spacing_gate) {};
     void prepareGeometricData() override
     {
         const auto particle_number_wall = int(DH / particle_spacing_gate);
@@ -68,7 +68,7 @@ class ParticleGenerator<SurfaceParticles, Gate> : public ParticleGenerator<Surfa
     explicit ParticleGenerator(SPHBody &sph_body, SurfaceParticles &surface_particles,
                                Real DL, Real BW, Real particle_spacing_gate, Real Gate_thickness)
         : ParticleGenerator<SurfaceParticles>(sph_body, surface_particles),
-          DL(DL), BW(BW), particle_spacing_gate(particle_spacing_gate), Gate_thickness(Gate_thickness){};
+          DL(DL), BW(BW), particle_spacing_gate(particle_spacing_gate), Gate_thickness(Gate_thickness) {};
     void prepareGeometricData() override
     {
         const auto particle_number_gate = int((DL + 2 * BW) / particle_spacing_gate);
@@ -229,7 +229,7 @@ void hydrostatic_fsi(const Real particle_spacing_gate, const Real particle_spaci
     // Generally, the geometric models or simple objects without data dependencies,
     // such as gravity, should be initiated first.
     // Then the major physical particle dynamics model should be introduced.
-    // Finally, the auxillary models such as time step estimator, initial condition,
+    // Finally, the auxiliary models such as time step estimator, initial condition,
     // boundary condition and other constraints should be defined.
     // For typical fluid-structure interaction, we first define structure dynamics,
     // Then fluid dynamics and the corresponding coupling dynamics.
@@ -257,11 +257,11 @@ void hydrostatic_fsi(const Real particle_spacing_gate, const Real particle_spaci
     InteractionWithUpdate<fluid_dynamics::DensitySummationComplexFreeSurface> update_fluid_density(water_block_inner, water_block_contact);
 
     /** Compute time step size without considering sound wave speed. */
-    ReduceDynamics<fluid_dynamics::AdvectionViscousTimeStep> get_fluid_advection_time_step_size(water_block, U_ref);
+    ReduceDynamics<fluid_dynamics::AdvectionTimeStep> get_fluid_advection_time_step_size(water_block, U_ref);
     /** Compute time step size with considering sound wave speed. */
     ReduceDynamics<fluid_dynamics::AcousticTimeStep> get_fluid_time_step_size(water_block);
     DampingWithRandomChoice<InteractionSplit<DampingPairwiseWithWall<Vec2d, FixedDampingRate>>>
-        fluid_damping(0.2, ConstructorArgs(water_block_inner, "Velocity", mu_f), ConstructorArgs(water_block_contact, "Velocity", mu_f));
+        fluid_damping(0.2, DynamicsArgs(water_block_inner, "Velocity", mu_f), DynamicsArgs(water_block_contact, "Velocity", mu_f));
     //----------------------------------------------------------------------
     //	Define fsi methods which are used in this case.
     //----------------------------------------------------------------------

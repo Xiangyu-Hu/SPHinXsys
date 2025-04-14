@@ -22,7 +22,7 @@ int resolution(20);
 //	Material properties and global parameters
 //----------------------------------------------------------------------
 Real rho0_s = 2700.0; /**< Reference density. */
-Real poisson = 0.3;  /**< Poisson ratio. */
+Real poisson = 0.3;   /**< Poisson ratio. */
 Real Youngs_modulus = 78.2e9;
 Real yield_stress = 0.29e9;
 Real vel_0 = 373.0;
@@ -42,12 +42,12 @@ class WallBoundary : public ComplexShape
 /** Define the body. */
 class Column : public ComplexShape
 {
-public:
-    explicit Column(const std::string& shape_name) : ComplexShape(shape_name)
+  public:
+    explicit Column(const std::string &shape_name) : ComplexShape(shape_name)
     {
         Vecd translation_column(0.0, 0.0, 0.5 * PW + particle_spacing_ref);
         add<TriangleMeshShapeCylinder>(SimTK::UnitVec3(0, 0, 1.0), inner_circle_radius,
-            0.5 * PW, resolution, translation_column);
+                                       0.5 * PW, resolution, translation_column);
     }
 };
 /**
@@ -58,7 +58,7 @@ class InitialCondition
 {
   public:
     explicit InitialCondition(SPHBody &sph_body)
-        : fluid_dynamics::FluidInitialCondition(sph_body){};
+        : fluid_dynamics::FluidInitialCondition(sph_body) {};
 
     void update(size_t index_i, Real dt)
     {
@@ -88,15 +88,15 @@ class DynamicContactForceWithWall : public LocalDynamics,
             contact_n_.push_back(contact_particles_[k]->template getVariableDataByName<Vecd>("NormalDirection"));
         }
     };
-    virtual ~DynamicContactForceWithWall(){};
+    virtual ~DynamicContactForceWithWall() {};
     void interaction(size_t index_i, Real dt = 0.0)
     {
         Vecd force = Vecd::Zero();
         for (size_t k = 0; k < contact_configuration_.size(); ++k)
         {
-            Real particle_spacing_j1 = 1.0 / contact_bodies_[k]->sph_adaptation_->ReferenceSpacing();
+            Real particle_spacing_j1 = 1.0 / contact_bodies_[k]->getSPHAdaptation().ReferenceSpacing();
             Real particle_spacing_ratio2 =
-                1.0 / (sph_body_.sph_adaptation_->ReferenceSpacing() * particle_spacing_j1);
+                1.0 / (sph_body_.getSPHAdaptation().ReferenceSpacing() * particle_spacing_j1);
             particle_spacing_ratio2 *= 0.1 * particle_spacing_ratio2;
 
             Vecd *n_k = contact_n_[k];

@@ -29,8 +29,8 @@ Real poisson = 0.45;
 Real Youngs_modulus = 1.7e7;
 Real a = Youngs_modulus / (2.0 * (1.0 + poisson));
 Real a_f = 0.0 * a;
-Real a0[4] = {a, a_f, 0.0, 0.0};
-Real b0[4] = {1.0, 0.0, 0.0, 0.0};
+std::array<Real, 4> a0 = {a, a_f, 0.0, 0.0};
+std::array<Real, 4> b0 = {1.0, 0.0, 0.0, 0.0};
 Vec3d fiber_direction(1.0, 0.0, 0.0);
 Vec3d sheet_direction(0.0, 1.0, 0.0);
 Real bulk_modulus = Youngs_modulus / 3.0 / (1.0 - 2.0 * poisson);
@@ -75,7 +75,7 @@ int main(int ac, char *av[])
     /** create a Cantilever body, corresponding material, particles and reaction model. */
     SolidBody cantilever_body(sph_system, makeShared<Cantilever>("CantileverBody"));
     cantilever_body.defineAdaptationRatios(1.3, 1.0);
-    cantilever_body.sph_adaptation_->resetKernel<KernelTabulated<KernelLaguerreGauss>>(20);
+    cantilever_body.getSPHAdaptation().resetKernel<KernelTabulated<KernelLaguerreGauss>>(20);
     cantilever_body.defineMaterial<Muscle>(rho0_s, bulk_modulus, fiber_direction, sheet_direction, a0, b0);
     cantilever_body.generateParticles<BaseParticles, Lattice>();
     /** Define Observer. */

@@ -10,8 +10,8 @@ namespace SPH
 //=================================================================================================//
 SwapSortableParticleData::SwapSortableParticleData(BaseParticles *base_particles)
     : sequence_(base_particles->getVariableDataByName<UnsignedInt>("Sequence")),
-      sortable_data_(base_particles->SortableParticleData()),
-      swap_particle_data_value_(sortable_data_) {}
+      evolving_variables_data_(base_particles->EvolvingVariablesData()),
+      swap_particle_data_value_() {}
 //=================================================================================================//
 void SwapSortableParticleData::operator()(UnsignedInt *a, UnsignedInt *b)
 {
@@ -19,7 +19,7 @@ void SwapSortableParticleData::operator()(UnsignedInt *a, UnsignedInt *b)
 
     UnsignedInt index_a = a - sequence_;
     UnsignedInt index_b = b - sequence_;
-    swap_particle_data_value_(index_a, index_b);
+    swap_particle_data_value_(evolving_variables_data_, index_a, index_b);
 }
 //=================================================================================================//
 ParticleSequence::ParticleSequence(RealBody &real_body)
@@ -38,10 +38,7 @@ ParticleDataSort<ParallelPolicy>::ParticleDataSort(RealBody &real_body)
       sequence_(particles_->getVariableDataByName<UnsignedInt>("Sequence")),
       swap_sortable_particle_data_(particles_), compare_(),
       quick_sort_particle_range_(sequence_, 0, compare_, swap_sortable_particle_data_),
-      quick_sort_particle_body_()
-{
-    particles_->addVariableToSort<UnsignedInt>("OriginalID");
-}
+      quick_sort_particle_body_() {}
 //=================================================================================================//
 void ParticleDataSort<ParallelPolicy>::exec(Real dt)
 {

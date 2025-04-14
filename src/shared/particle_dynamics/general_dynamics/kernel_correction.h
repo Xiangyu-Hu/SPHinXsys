@@ -48,7 +48,7 @@ class LinearGradientCorrectionMatrix<DataDelegationType>
   public:
     template <class BaseRelationType>
     explicit LinearGradientCorrectionMatrix(BaseRelationType &base_relation);
-    virtual ~LinearGradientCorrectionMatrix(){};
+    virtual ~LinearGradientCorrectionMatrix() {};
 
   protected:
     Real *Vol_;
@@ -63,11 +63,11 @@ class LinearGradientCorrectionMatrix<Inner<>>
 
   public:
     explicit LinearGradientCorrectionMatrix(BaseInnerRelation &inner_relation, Real alpha = Real(0))
-        : LinearGradientCorrectionMatrix<DataDelegateInner>(inner_relation), alpha_(alpha){};
+        : LinearGradientCorrectionMatrix<DataDelegateInner>(inner_relation), alpha_(alpha) {};
     template <typename BodyRelationType, typename FirstArg>
-    explicit LinearGradientCorrectionMatrix(ConstructorArgs<BodyRelationType, FirstArg> parameters)
-        : LinearGradientCorrectionMatrix(parameters.body_relation_, std::get<0>(parameters.others_)){};
-    virtual ~LinearGradientCorrectionMatrix(){};
+    explicit LinearGradientCorrectionMatrix(DynamicsArgs<BodyRelationType, FirstArg> parameters)
+        : LinearGradientCorrectionMatrix(parameters.identifier_, std::get<0>(parameters.others_)){};
+    virtual ~LinearGradientCorrectionMatrix() {};
     void interaction(size_t index_i, Real dt = 0.0);
     void update(size_t index_i, Real dt = 0.0);
 };
@@ -79,7 +79,7 @@ class LinearGradientCorrectionMatrix<Contact<>>
 {
   public:
     explicit LinearGradientCorrectionMatrix(BaseContactRelation &contact_relation);
-    virtual ~LinearGradientCorrectionMatrix(){};
+    virtual ~LinearGradientCorrectionMatrix() {};
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
@@ -99,7 +99,7 @@ class KernelGradientCorrection<DataDelegationType>
   public:
     template <class BaseRelationType>
     explicit KernelGradientCorrection(BaseRelationType &base_relation);
-    virtual ~KernelGradientCorrection(){};
+    virtual ~KernelGradientCorrection() {};
 
   protected:
     template <class PairAverageType>
@@ -114,7 +114,7 @@ class KernelGradientCorrection<Inner<>>
 
   public:
     explicit KernelGradientCorrection(BaseInnerRelation &inner_relation);
-    virtual ~KernelGradientCorrection(){};
+    virtual ~KernelGradientCorrection() {};
     void interaction(size_t index_i, Real dt = 0.0);
 };
 using KernelGradientCorrectionInner = KernelGradientCorrection<Inner<>>;
@@ -127,7 +127,7 @@ class KernelGradientCorrection<Contact<>>
 
   public:
     KernelGradientCorrection(BaseContactRelation &contact_relation);
-    virtual ~KernelGradientCorrection(){};
+    virtual ~KernelGradientCorrection() {};
     void interaction(size_t index_i, Real dt = 0.0);
 };
 

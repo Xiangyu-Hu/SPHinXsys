@@ -34,57 +34,53 @@
 
 namespace SPH
 {
-template <typename DataType>
-class DiscreteConstant;
-
-template <typename DataType>
-using SingularConstant = SingularVariable<DataType>;
-
-template <typename DataType>
-using DeviceSharedSingularConstant = DeviceSharedSingularVariable<DataType>;
-
-template <typename DataType>
-class DeviceSharedDiscreteConstant : public Entity
+template <typename GeneratorType, typename DataType>
+class ConstantArray : public Entity
 {
+    UniquePtrKeeper<Entity> device_only_constant_array_keeper_;
+
   public:
-    DeviceSharedDiscreteConstant(DiscreteConstant<DataType> *host_variable);
-    ~DeviceSharedDiscreteConstant();
+    ConstantArray(StdVec<GeneratorType *> generators)
+        : Entity("ConstantArray"), generators_(generators),
+          data_size_(generators.size()),
+          data_(new DataType[data_size_]), delegated_(data_)
+    {
+        for (size_t i = 0; i != data_size_; ++i)
+        {
+            data_[i] = DataType(*generators_[i]);
+        }
+    };
+    ~ConstantArray() { delete[] data_; };
+    StdVec<GeneratorType *> getGenerators() { return generators_; }
+    size_t getDataSize() { return data_size_; }
+    DataType *Data() { return data_; };
+    template <class ExecutionPolicy>
+    DataType *DelegatedData(const ExecutionPolicy &ex_policy) { return delegated_; };
+    template <class PolicyType>
+    DataType *DelegatedOnDevice(const DeviceExecution<PolicyType> &ex_policy);
+    template <class PolicyType>
+    DataType *DelegatedData(const DeviceExecution<PolicyType> &ex_policy) { return DelegatedOnDevice(ex_policy); };
+    bool isDataDelegated() { return data_ != delegated_; };
+    void setDelegateData(DataType *new_delegated) { delegated_ = new_delegated; };
 
   protected:
-    DataType *device_shared_data_field_;
+    StdVec<GeneratorType *> generators_;
+    size_t data_size_;
+    DataType *data_;
+    DataType *delegated_;
 };
 
-template <typename DataType>
-class DiscreteConstant : public Entity
+template <typename GeneratorType, typename DataType>
+class DeviceOnlyConstantArray : public Entity
 {
-    UniquePtrKeeper<Entity> device_shared_constant_keeper_;
-
   public:
-    DiscreteConstant(const std::string &name, size_t data_size)
-        : Entity(name), data_size_(data_size), data_field_(new DataType[data_size]),
-          delegated_data_field_(data_field_){};
-    ~DiscreteConstant() { delete[] data_field_; };
-    bool isDataFieldDelegated() { return data_field_ != delegated_data_field_; };
-    size_t getDataFieldSize() { return data_size_; }
-    DataType *DataField() { return delegated_data_field_; };
-    void setDeviceDataField(DataType *data_field) { delegated_data_field_ = data_field; };
+    template <class PolicyType>
+    DeviceOnlyConstantArray(const DeviceExecution<PolicyType> &ex_policy,
+                            ConstantArray<GeneratorType, DataType> *host_constant);
+    ~DeviceOnlyConstantArray();
 
-    template <class ExecutionPolicy>
-    DataType *DelegatedDataField(const ExecutionPolicy &ex_policy) { return delegated_data_field_; };
-    DataType *DelegatedDataField(const ParallelDevicePolicy &par_device)
-    {
-        if (!isDataFieldDelegated())
-        {
-            device_shared_constant_keeper_
-                .createPtr<DeviceSharedDiscreteConstant<DataType>>(this);
-        }
-        return delegated_data_field_;
-    };
-
-  private:
-    size_t data_size_;
-    DataType *data_field_;
-    DataType *delegated_data_field_;
+  protected:
+    DataType *device_only_data_;
 };
 } // namespace SPH
 #endif // SPHINXSYS_CONSTANT_H

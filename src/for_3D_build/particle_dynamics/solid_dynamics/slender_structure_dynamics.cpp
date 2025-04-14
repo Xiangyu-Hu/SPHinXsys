@@ -20,7 +20,7 @@ BarAcousticTimeStepSize::BarAcousticTimeStepSize(SPHBody &sph_body, Real CFL)
       E0_(elastic_solid_.YoungsModulus()),
       nu_(elastic_solid_.PoissonRatio()),
       c0_(elastic_solid_.ReferenceSoundSpeed()),
-      smoothing_length_(sph_body.sph_adaptation_->ReferenceSmoothingLength()),
+      smoothing_length_(sph_body.getSPHAdaptation().ReferenceSmoothingLength()),
       angular_b_vel_(particles_->getVariableDataByName<Vecd>("BinormalAngularVelocity")),
       dangular_b_vel_dt_(particles_->getVariableDataByName<Vecd>("BinormalAngularAcceleration")),
       width_(particles_->getVariableDataByName<Real>("Width")) {}
@@ -100,7 +100,7 @@ BarStressRelaxationFirstHalf::
     : BaseBarRelaxation(inner_relation),
       elastic_solid_(DynamicCast<ElasticSolid>(this, sph_body_.getBaseMaterial())),
       rho0_(elastic_solid_.ReferenceDensity()), inv_rho0_(1.0 / rho0_),
-      smoothing_length_(sph_body_.sph_adaptation_->ReferenceSmoothingLength()),
+      smoothing_length_(sph_body_.getSPHAdaptation().ReferenceSmoothingLength()),
       numerical_damping_scaling_matrix_(Matd::Identity() * smoothing_length_),
       rho_(particles_->getVariableDataByName<Real>("Density")),
       mass_(particles_->getVariableDataByName<Real>("Mass")),

@@ -52,7 +52,7 @@ class TransportVelocityCorrection<Base, DataDelegationType, KernelCorrectionType
   public:
     template <class BaseRelationType>
     explicit TransportVelocityCorrection(BaseRelationType &base_relation);
-    virtual ~TransportVelocityCorrection(){};
+    virtual ~TransportVelocityCorrection() {};
 
   protected:
     Vecd *zero_gradient_residue_;
@@ -67,9 +67,9 @@ class TransportVelocityCorrection<Inner<ResolutionType, LimiterType>, CommonCont
   public:
     explicit TransportVelocityCorrection(BaseInnerRelation &inner_relation, Real coefficient = 0.2);
     template <typename BodyRelationType, typename FirstArg>
-    explicit TransportVelocityCorrection(ConstructorArgs<BodyRelationType, FirstArg> parameters)
-        : TransportVelocityCorrection(parameters.body_relation_, std::get<0>(parameters.others_)){};
-    virtual ~TransportVelocityCorrection(){};
+    explicit TransportVelocityCorrection(DynamicsArgs<BodyRelationType, FirstArg> parameters)
+        : TransportVelocityCorrection(parameters.identifier_, std::get<0>(parameters.others_)){};
+    virtual ~TransportVelocityCorrection() {};
     void interaction(size_t index_i, Real dt = 0.0);
     void update(size_t index_i, Real dt = 0.0);
 
@@ -90,7 +90,7 @@ class TransportVelocityCorrection<Contact<Boundary>, CommonControlTypes...>
 {
   public:
     explicit TransportVelocityCorrection(BaseContactRelation &contact_relation);
-    virtual ~TransportVelocityCorrection(){};
+    virtual ~TransportVelocityCorrection() {};
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
@@ -103,7 +103,7 @@ class TransportVelocityCorrection<Contact<>, KernelCorrectionType, CommonControl
 {
   public:
     explicit TransportVelocityCorrection(BaseContactRelation &contact_relation);
-    virtual ~TransportVelocityCorrection(){};
+    virtual ~TransportVelocityCorrection() {};
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
@@ -122,6 +122,14 @@ using TransportVelocityCorrectionComplex =
 template <class ParticleScope>
 using TransportVelocityCorrectionCorrectedComplex =
     BaseTransportVelocityCorrectionComplex<SingleResolution, NoLimiter, LinearGradientCorrection, ParticleScope>;
+
+template <class ParticleScope>
+using TransportVelocityCorrectionCorrectedForOpenBoundaryFlowComplex =
+    BaseTransportVelocityCorrectionComplex<SingleResolution, NoLimiter, LinearGradientCorrectionWithBulkScope, ParticleScope>;
+
+template <class ParticleScope>
+using TransportVelocityLimitedCorrectionCorrectedForOpenBoundaryFlowComplex =
+    BaseTransportVelocityCorrectionComplex<SingleResolution, TruncatedLinear, LinearGradientCorrectionWithBulkScope, ParticleScope>;
 
 template <class ParticleScope>
 using TransportVelocityLimitedCorrectionComplex =

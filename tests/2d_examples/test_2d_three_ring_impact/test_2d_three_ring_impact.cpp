@@ -112,11 +112,10 @@ class BoundaryGeometry : public BodyPartByParticle
     };
 
   private:
-    void tagManually(size_t index_i)
+    bool tagManually(size_t index_i)
     {
         Real radius = (pos_[index_i] - center_).norm();
-        if (radius > 0.5 * diameter_ - 0.7 * dp_)
-            body_part_particles_.push_back(index_i);
+        return radius > 0.5 * diameter_ - 0.7 * dp_;
     };
 };
 
@@ -191,19 +190,19 @@ void three_ring_impact(int resolution_factor_l, int resolution_factor_m, int res
     // Body
     SolidBody ring_l_body(system, makeShared<Ring>("RingLarge", center_l, 0.5 * diameter_inner_l, 0.5 * diameter_outer_l));
     ring_l_body.defineBodyLevelSetShape();
-    ring_l_body.assignMaterial(material_l.get());
+    ring_l_body.defineMaterial<NeoHookeanSolid>(*material_l.get());
     ring_l_body.generateParticles<BaseParticles, Lattice>();
     auto particles_l = &ring_l_body.getBaseParticles();
 
     SolidBody ring_m_body(system, makeShared<DefaultShape>("RingMedium"));
     ring_m_body.defineAdaptationRatios(1.15, dp_l / dp_m);
-    ring_m_body.assignMaterial(material_m.get());
+    ring_m_body.defineMaterial<NeoHookeanSolid>(*material_m.get());
     ring_m_body.generateParticles<SurfaceParticles, ShellRing>(center_m, 0.5 * mid_srf_diameter_m, dp_m, thickness_m);
     auto particles_m = &ring_m_body.getBaseParticles();
 
     SolidBody ring_s_body(system, makeShared<DefaultShape>("RingSmall"));
     ring_s_body.defineAdaptationRatios(1.15, dp_l / dp_s);
-    ring_s_body.assignMaterial(material_s.get());
+    ring_s_body.defineMaterial<NeoHookeanSolid>(*material_s.get());
     ring_s_body.generateParticles<SurfaceParticles, ShellRing>(center_s, 0.5 * mid_srf_diameter_s, dp_s, thickness_s);
     auto particles_s = &ring_s_body.getBaseParticles();
 

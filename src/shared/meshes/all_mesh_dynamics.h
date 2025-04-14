@@ -56,6 +56,7 @@ class RegisterMeshVariable
         mesh_data->registerMeshVariable<Vecd>("LevelsetGradient");
         mesh_data->registerMeshVariable<Real>("KernelWeight");
         mesh_data->registerMeshVariable<Vecd>("KernelGradient");
+        mesh_data->registerMeshVariable<Matd>("KernelSecondGradient");
     }
 };
 class FinishDataPackages
