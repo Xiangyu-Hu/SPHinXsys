@@ -6,8 +6,8 @@ void run_solid(size_t res_factor, Real stiffness_ratio, bool run_relax);
 
 int main(int ac, char *av[])
 {
-    // run_solid_to_shell_coupling(1, 1, 1.0, true);
-    run_solid(1, 1.0, false);
+    run_solid_to_shell_coupling(1, 1, 0.01, false);
+    // run_solid(1, 0.01, false);
 }
 
 //-------Relaxation for the solid body-------------------------------------------------
@@ -44,10 +44,10 @@ inline void relax_solid(BaseInnerRelation &inner)
 class SolidMaterialInitialization : public MaterialIdInitialization
 {
   private:
-    std::function<bool(Vec2d &)> contain_;
+    std::function<bool(Vec3d &)> contain_;
 
   public:
-    SolidMaterialInitialization(SolidBody &solid_body, std::function<bool(Vec2d &)> contain)
+    SolidMaterialInitialization(SolidBody &solid_body, std::function<bool(Vec3d &)> contain)
         : MaterialIdInitialization(solid_body),
           contain_(std::move(contain)) {};
 
@@ -68,7 +68,7 @@ struct solid_algs
     Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half;
     SimpleDynamics<NormalDirectionFromBodyShape> initial_normal_direction;
     SimpleDynamics<solid_dynamics::UpdateElasticNormalDirection> normal_direction;
-    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d, FixedDampingRate>>> damping;
+    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d, FixedDampingRate>>> damping;
     ReduceDynamics<solid_dynamics::AcousticTimeStep> computing_time_step_size;
 
     explicit solid_algs(SolidBody &body, Real physical_viscosity)
@@ -99,8 +99,8 @@ struct shell_algs
     Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationFirstHalf> stress_relaxation_first_half;
     Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationSecondHalf> stress_relaxation_second_half;
     SimpleDynamics<thin_structure_dynamics::UpdateShellNormalDirection> normal_direction;
-    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d, FixedDampingRate>>> velocity_damping;
-    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d, FixedDampingRate>>> rotation_damping;
+    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d, FixedDampingRate>>> velocity_damping;
+    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d, FixedDampingRate>>> rotation_damping;
     ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> computing_time_step_size;
 
     explicit shell_algs(SolidBody &body, Real physical_viscosity)
@@ -128,10 +128,10 @@ struct shell_algs
 class SolidBodyPart : public BodyPartByParticle
 {
   private:
-    std::function<bool(Vec2d &)> contain_;
+    std::function<bool(Vec3d &)> contain_;
 
   public:
-    SolidBodyPart(SPHBody &body, const std::string &body_part_name, std::function<bool(Vec2d &)> contain)
+    SolidBodyPart(SPHBody &body, const std::string &body_part_name, std::function<bool(Vec3d &)> contain)
         : BodyPartByParticle(body, body_part_name),
           contain_(std::move(contain))
     {
@@ -189,10 +189,10 @@ class CouplingPart : public BodyPartByParticle
 {
   private:
     int *is_coupled_;
-    std::function<bool(Vec2d &)> contain_;
+    std::function<bool(Vec3d &)> contain_;
 
   public:
-    CouplingPart(SPHBody &body, const std::string &body_part_name, std::function<bool(Vec2d &)> contain)
+    CouplingPart(SPHBody &body, const std::string &body_part_name, std::function<bool(Vec3d &)> contain)
         : BodyPartByParticle(body, body_part_name),
           is_coupled_(base_particles_.registerStateVariable<int>("IsCoupled", 0)),
           contain_(std::move(contain))
@@ -220,7 +220,7 @@ struct solid_coupling_algs
 
     solid_coupling_algs(SolidBody &body,
                         RealBodyVector contact_bodies,
-                        std::function<bool(Vec2d &)> contain,
+                        std::function<bool(Vec3d &)> contain,
                         const std::vector<Real> &factors = {})
         : contact_relation(body, std::move(contact_bodies), factors),
           part(body, "CouplingPart", std::move(contain)),
@@ -238,7 +238,7 @@ struct shell_coupling_algs
 
     shell_coupling_algs(SolidBody &body,
                         RealBodyVector contact_bodies,
-                        std::function<bool(Vec2d &)> contain,
+                        std::function<bool(Vec3d &)> contain,
                         const std::vector<Real> &factors = {})
         : contact_relation(body, std::move(contact_bodies), factors),
           part(body, "CouplingPart", std::move(contain)),
@@ -267,26 +267,33 @@ void run_solid_to_shell_coupling(size_t res_factor_solid, size_t res_factor_shel
     const Real cube_length = 1.0;
     const Real shell_thickness = 0.1;
     const Real shell_length = 5.0;
+    const Real shell_width = cube_length;
 
     const Real dp_ref = cube_length / 10.0;
     const Real dp_solid = dp_ref / Real(res_factor_solid);
     const Real dp_shell = dp_ref / Real(res_factor_shell);
 
     // import model
-    MultiPolygon cube_shape{};
-    cube_shape.addABox(Transform((0.5 * cube_length + dp_shell) * Vec2d::UnitY()), 0.5 * cube_length * Vec2d::Ones(), SPH::ShapeBooleanOps::add);
-    MultiPolygonShape cube_mesh(cube_shape, "Cube");
+    auto cube_mesh = makeShared<TransformShape<GeometricShapeBox>>(
+        Transform(0.5 * (cube_length + dp_shell) * Vec3d::UnitY()),
+        0.5 * Vec3d(cube_length, cube_length + dp_shell, cube_length),
+        "cube");
 
     // shell positions
     StdLargeVec<Vecd> shell_pos;
     StdLargeVec<Vecd> shell_n;
     {
         Real x = -0.5 * shell_length + 0.5 * dp_shell;
-        Real y = 0.5 * dp_solid;
+        Real y = 0.5 * dp_shell;
         while (x < 0.5 * shell_length)
         {
-            shell_pos.emplace_back(x, y);
-            shell_n.emplace_back(0, 1);
+            Real z = -0.5 * shell_width + 0.5 * dp_shell;
+            while (z < 0.5 * shell_width)
+            {
+                shell_pos.emplace_back(x, y, z);
+                shell_n.emplace_back(0, 0, 1);
+                z += dp_shell;
+            }
             x += dp_shell;
         }
     }
@@ -301,7 +308,7 @@ void run_solid_to_shell_coupling(size_t res_factor_solid, size_t res_factor_shel
     auto material_shell = makeShared<NeoHookeanSolid>(rho, youngs_modulus_shell, poisson_ratio);
 
     // System bounding box
-    BoundingBox bb_system = cube_mesh.getBounds();
+    BoundingBox bb_system = cube_mesh->getBounds();
 
     // System
     SPHSystem system(bb_system, dp_solid);
@@ -322,23 +329,26 @@ void run_solid_to_shell_coupling(size_t res_factor_solid, size_t res_factor_shel
     solid_algs algs_solid(cube_body, physical_viscosity);
     shell_algs algs_shell(shell_body, physical_viscosity);
 
+    std::cout << "Reference dt of solid: " << algs_solid.time_step_size() << std::endl;
+    std::cout << "Reference dt of shell: " << algs_shell.time_step_size() << std::endl;
+
     // Relax
     if (run_relax)
         relax_solid(algs_solid.inner_relation);
 
     // Boundary conditions
-    SolidBodyPart shell_fixed_part(shell_body, "ShellFixedPart", [&](Vec2d &pos)
+    SolidBodyPart shell_fixed_part(shell_body, "ShellFixedPart", [&](Vec3d &pos)
                                    { return pos.x() < -0.5 * shell_length + 0.7 * dp_shell || pos.x() > 0.5 * shell_length - 0.7 * dp_shell; });
     SimpleDynamics<thin_structure_dynamics::ConstrainShellBodyRegion> fix_shell_bc(shell_fixed_part);
 
     // Gravity
-    Gravity gravity(-1 * Vec2d::UnitY());
+    Gravity gravity(-20 * Vec3d::UnitY());
     SimpleDynamics<GravityForce<Gravity>> constant_gravity(cube_body, gravity);
 
     // Coupling
-    shell_coupling_algs shell_coupling(shell_body, {&cube_body}, [&](Vec2d &pos)
+    shell_coupling_algs shell_coupling(shell_body, {&cube_body}, [&](Vec3d &pos)
                                        { return pos.x() > bb_system.first_.x() && pos.x() < bb_system.second_.x(); }, {2.3});
-    solid_coupling_algs solid_coupling(cube_body, {&shell_body}, [&](Vec2d &pos)
+    solid_coupling_algs solid_coupling(cube_body, {&shell_body}, [&](Vec3d &pos)
                                        { return true; }, {2.3});
 
     // Initialization
@@ -360,10 +370,12 @@ void run_solid_to_shell_coupling(size_t res_factor_solid, size_t res_factor_shel
     BodyStatesRecordingToVtp vtp_output(system);
     vtp_output.addDerivedVariableRecording<SimpleDynamics<Displacement>>(cube_body);
     vtp_output.addDerivedVariableRecording<SimpleDynamics<Displacement>>(shell_body);
+    vtp_output.addDerivedVariableRecording<SimpleDynamics<VonMisesStress>>(cube_body);
+    vtp_output.addDerivedVariableRecording<SimpleDynamics<VonMisesStress>>(shell_body);
     vtp_output.writeToFile(0);
 
     // Observer
-    StdVec<Vecd> observation_locations{Vec2d(0, 0.5 * shell_thickness)};
+    StdVec<Vecd> observation_locations{Vec3d(0, 0.5 * shell_thickness, 0)};
     ObserverBody observer_body(system, "Observer");
     observer_body.generateParticles<ObserverParticles>(observation_locations);
     ContactRelation obs_contact(observer_body, {&shell_body});
@@ -478,14 +490,14 @@ void run_solid(size_t res_factor, Real stiffness_ratio, bool run_relax)
     const Real cube_length = 1.0;
     const Real shell_thickness = 0.1;
     const Real shell_length = 5.0;
+    const Real shell_width = cube_length;
 
     const Real dp = shell_thickness / (4.0 * res_factor);
 
     // import model
-    MultiPolygon shape{};
-    shape.addABox(Transform((0.5 * cube_length + shell_thickness) * Vec2d::UnitY()), 0.5 * cube_length * Vec2d::Ones(), SPH::ShapeBooleanOps::add);
-    shape.addABox(Transform(0.5 * shell_thickness * Vec2d::UnitY()), 0.5 * Vec2d(shell_length, shell_thickness), SPH::ShapeBooleanOps::add);
-    MultiPolygonShape mesh(shape, "Solid");
+    auto mesh = makeShared<ComplexShape>("solid");
+    mesh->add<TransformShape<GeometricShapeBox>>(Transform((0.5 * cube_length + shell_thickness) * Vec3d::UnitY()), 0.5 * cube_length * Vec3d::Ones());
+    mesh->add<TransformShape<GeometricShapeBox>>(Transform(0.5 * shell_thickness * Vec3d::UnitY()), 0.5 * Vec3d(shell_length, shell_thickness, shell_width));
 
     // Material
     Real rho = 1000 * pow(unit_mm, 2);
@@ -495,7 +507,7 @@ void run_solid(size_t res_factor, Real stiffness_ratio, bool run_relax)
     Real physical_viscosity = get_physical_viscosity_general(rho, youngs_modulus_solid, cube_length);
 
     // System bounding box
-    BoundingBox bb_system = mesh.getBounds();
+    BoundingBox bb_system = mesh->getBounds();
 
     // System
     SPHSystem system(bb_system, dp);
@@ -518,18 +530,18 @@ void run_solid(size_t res_factor, Real stiffness_ratio, bool run_relax)
         relax_solid(algs_solid.inner_relation);
 
     // assign material ids
-    SimpleDynamics<SolidMaterialInitialization> material_id_initialization(body, [&](Vec2d &pos) -> bool
+    SimpleDynamics<SolidMaterialInitialization> material_id_initialization(body, [&](Vec3d &pos) -> bool
                                                                            { return pos.y() < shell_thickness; });
     material_id_initialization.exec();
 
     // Boundary conditions
-    SolidBodyPart shell_fixed_part(body, "ShellFixedPart", [&](Vec2d &pos)
+    SolidBodyPart shell_fixed_part(body, "ShellFixedPart", [&](Vec3d &pos)
                                    { return pos.x() < -0.5 * shell_length + 0.7 * dp || pos.x() > 0.5 * shell_length - 0.7 * dp; });
     SimpleDynamics<FixBodyPartConstraint> fix_shell_bc(shell_fixed_part);
 
     // Gravity
-    auto gravity(-1 * Vec2d::UnitY());
-    SolidBodyPart cube_part(body, "CubePart", [&](Vec2d &pos)
+    auto gravity(-1 * Vec3d::UnitY());
+    SolidBodyPart cube_part(body, "CubePart", [&](Vec3d &pos)
                             { return pos.y() > shell_thickness; });
     SimpleDynamics<ForcePartByParticle> constant_gravity(cube_part, "Gravity", gravity);
 
@@ -549,7 +561,7 @@ void run_solid(size_t res_factor, Real stiffness_ratio, bool run_relax)
     vtp_output.writeToFile(0);
 
     // Observer
-    StdVec<Vecd> observation_locations{Vec2d(0, 0.5 * shell_thickness)};
+    StdVec<Vecd> observation_locations{Vec3d(0, 0.5 * shell_thickness, 0)};
     ObserverBody observer_body(system, "Observer");
     observer_body.generateParticles<ObserverParticles>(observation_locations);
     ContactRelation obs_contact(observer_body, {&body});
