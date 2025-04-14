@@ -169,7 +169,9 @@ int main(int ac, char *av[])
         hessian_correction_matrix(DynamicsArgs(water_block_inner, 0.0), water_wall_contact);
 
     StateDynamics<MainExecutionPolicy, InitialCondition<SPHBody, ParabolicProfile>>
-        initial_condition(water_block, "Phi");
+        water_block_initial_condition(water_block, "Phi");
+    StateDynamics<MainExecutionPolicy, InitialCondition<SPHBody, ParabolicProfile>>
+        wall_initial_condition(wall, "Phi");
     InteractionDynamicsCK<MainExecutionPolicy, Hessian<Inner<Real>, Contact<Real>>>
         variable_hessian(
             DynamicsArgs(water_block_inner, std::string("Phi")),
@@ -193,6 +195,8 @@ int main(int ac, char *av[])
 
     displacement_matrix_gradient.exec();
     hessian_correction_matrix.exec();
+    water_block_initial_condition.exec();
+    wall_initial_condition.exec();
     variable_hessian.exec();
     observed_hessian.writeToFile(0);
     approximated_hessian = *observed_hessian.getObservedQuantity();
