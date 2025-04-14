@@ -156,6 +156,16 @@ inline Vec6d vectorizeTensorSquare(const Vec3d &input)
                  input[0] * input[1], input[1] * input[2], input[2] * input[0]);
 };
 
+inline Vec3d vectorizeSymMatrix(const Mat2d &input)
+{
+    return Vec3d(input(0, 0), input(1, 1), input(0, 1));
+};
+
+inline Vec6d vectorizeSymMatrix(const Mat3d &input)
+{
+    return Vec6d(input(0, 0), input(1, 1), input(2, 2), input(0, 1), input(1, 2), input(2, 0));
+};
+
 inline Eigen::Matrix<Real, 1, 1> transferToMatrix(Real value)
 {
     return Eigen::Matrix<Real, 1, 1>::Identity() * value;

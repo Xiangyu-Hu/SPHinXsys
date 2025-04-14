@@ -23,6 +23,8 @@ Real boundary_width = particle_spacing * 4; // boundary width
 //----------------------------------------------------------------------
 //	Google test item.
 //----------------------------------------------------------------------
+Vec2d random_observation(rand_uniform(0.0, width), rand_uniform(0.0, height));
+
 Matd approximated_gradient(Matd::Zero());
 Matd reference_gradient(Matd::Identity());
 TEST(LinearGradient, Error)
@@ -32,14 +34,8 @@ TEST(LinearGradient, Error)
               << "Predicted Gradient: " << approximated_gradient << std::endl;
 };
 
-Vec2d random_coordinate(rand_uniform(0.0, width), rand_uniform(0.0, height));
-
-/*Vec2d first_coefficient(rand_uniform(-1.0, 1.0), rand_uniform(-1.0, 1.0));
-Mat2d second_coefficient{
-    {rand_uniform(-1.0, 1.0), rand_uniform(-1.0, 1.0)},
-    {rand_uniform(-1.0, 1.0), rand_uniform(-1.0, 1.0)}};*/
-Vec2d first_coefficient(1.0, 1.0);
-Mat2d second_coefficient{{1.0, 0.0}, {0.0, 1.0}};
+Vec2d first_coefficient(rand_uniform(-1.0, 1.0), rand_uniform(-1.0, 1.0));
+VecMat2d second_coefficient{rand_uniform(-1.0, 1.0), rand_uniform(-1.0, 1.0), rand_uniform(-1.0, 1.0)};
 class ParabolicProfile : public ReturnFunction<Real>
 {
   public:
@@ -55,17 +51,17 @@ class ParabolicProfile : public ReturnFunction<Real>
         Real operator()(const Vec2d &position)
         {
             return first_coefficient_.dot(position) +
-                   (second_coefficient_ * position).dot(second_coefficient_ * position);
+                   second_coefficient.dot(vectorizeTensorSquare(position));
         }
 
       protected:
         Vec2d first_coefficient_;
-        Mat2d second_coefficient_;
+        VecMat2d second_coefficient_;
     };
 };
 
 VecMat2d approximated_hessian = VecMat2d::Zero();
-VecMat2d reference_hessian = {2.0, 2.0, 0.0};
+VecMat2d reference_hessian = 2.0 * second_coefficient;
 TEST(Hessian, Error)
 {
     EXPECT_LT((reference_hessian - approximated_hessian).norm(), 1.0e-6);
@@ -74,7 +70,9 @@ TEST(Hessian, Error)
 };
 
 Vec2d approximated_2nd_order_gradient = Vec2d::Zero();
-Vec2d reference_2nd_order_gradient = first_coefficient + 2.0 * random_coordinate;
+Vec2d reference_2nd_order_gradient = first_coefficient +
+                                     Vec2d(2.0 * random_observation[0] * second_coefficient[0] + random_observation[1] * second_coefficient[2],
+                                           2.0 * random_observation[1] * second_coefficient[1] + random_observation[0] * second_coefficient[2]);
 TEST(SecondOrderGradient, Error)
 {
     EXPECT_LT((reference_2nd_order_gradient - approximated_2nd_order_gradient).norm(), 1.0e-6);
@@ -132,7 +130,7 @@ int main(int ac, char *av[])
     wall.generateParticles<BaseParticles, Lattice>();
 
     ObserverBody fluid_observer(sph_system, "FluidObserver");
-    StdVec<Vec2d> observation_location = {random_coordinate};
+    StdVec<Vec2d> observation_location = {random_observation};
     fluid_observer.generateParticles<ObserverParticles>(observation_location);
     //----------------------------------------------------------------------
     //	Define body relation map.
