@@ -61,7 +61,7 @@ class Regularization<Internal>
                         Regularization<Internal> &encloser,
                         ComputingKernelType &computing_kernel){};
 
-        Real operator()(Real &rho_sum) { return rho_sum; };
+        Real operator()(size_t index_i, const Real &rho_sum) { return rho_sum; };
     };
 };
 
@@ -80,10 +80,43 @@ class Regularization<FreeSurface>
                         ComputingKernelType &computing_kernel)
             : rho0_(computing_kernel.InitialDensity()){};
 
-        Real operator()(Real &rho_sum) { return SMAX(rho_sum, rho0_); };
+        Real operator()(size_t index_i, const Real &rho_sum) { return SMAX(rho_sum, rho0_); };
 
       protected:
         Real rho0_;
+    };
+};
+
+template <class ParticleScopeType>
+class Regularization<ParticleScopeType>
+{
+    using ParticleScopeKernel = typename ParticleScopeType::ComputingKernel;
+    ParticleScopeType particle_scope_method;
+
+  public:
+    Regularization(BaseParticles *particles)
+        : particle_scope_method(particles) {};
+
+    class ComputingKernel
+    {
+      public:
+        template <class ExecutionPolicy, class ComputingKernelType>
+        ComputingKernel(const ExecutionPolicy &ex_policy,
+                        Regularization<ParticleScopeType> &encloser,
+                        ComputingKernelType &computing_kernel)
+            : particle_scope_(ex_policy, encloser.particle_scope_method),
+              rho0_(computing_kernel.InitialDensity()),
+              rho_(computing_kernel.Density()){};
+
+        Real operator()(size_t index_i, const Real &rho_sum)
+        {
+            return particle_scope_(index_i) ? rho_sum : rho_[index_i];
+        };
+
+      protected:
+        ParticleScopeKernel particle_scope_;
+        Real rho0_;
+        Real *rho_;
     };
 };
 
@@ -107,6 +140,7 @@ class DensityRegularization<Base, RelationType<Parameters...>>
                        DensityRegularization<Base, RelationType<Parameters...>> &encloser,
                        Args &&...args);
         Real InitialDensity() { return rho0_; };
+        Real *Density() { return rho_; };
 
       protected:
         Real *rho_, *mass_, *rho_sum_, *Vol_;
@@ -118,12 +152,11 @@ class DensityRegularization<Base, RelationType<Parameters...>>
     Real rho0_, inv_sigma0_;
 };
 
-template <class FlowType, class ParticleScopeType, typename... Parameters>
-class DensityRegularization<Inner<WithUpdate, FlowType, ParticleScopeType, Parameters...>>
+template <class FlowType, typename... Parameters>
+class DensityRegularization<Inner<WithUpdate, FlowType, Parameters...>>
     : public DensityRegularization<Base, Inner<Parameters...>>
 {
     using RegularizationKernel = typename Regularization<FlowType>::ComputingKernel;
-    using ParticleScopeTypeKernel = typename ParticleScopeTypeCK<ParticleScopeType>::ComputingKernel;
 
   public:
     explicit DensityRegularization(Relation<Inner<Parameters...>> &inner_relation);
@@ -133,9 +166,8 @@ class DensityRegularization<Inner<WithUpdate, FlowType, ParticleScopeType, Param
         : public DensityRegularization<Base, Inner<Parameters...>>::InteractKernel
     {
       public:
-        template <class ExecutionPolicy>
-        InteractKernel(const ExecutionPolicy &ex_policy,
-                       DensityRegularization<Inner<WithUpdate, FlowType, ParticleScopeType, Parameters...>> &encloser);
+        template <class ExecutionPolicy, class EncloserType>
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
         void interact(size_t index_i, Real dt = 0.0);
 
       protected:
@@ -146,19 +178,16 @@ class DensityRegularization<Inner<WithUpdate, FlowType, ParticleScopeType, Param
         : public DensityRegularization<Base, Inner<Parameters...>>::InteractKernel
     {
       public:
-        template <class ExecutionPolicy>
-        UpdateKernel(const ExecutionPolicy &ex_policy,
-                     DensityRegularization<Inner<WithUpdate, FlowType, ParticleScopeType, Parameters...>> &encloser);
+        template <class ExecutionPolicy, class EncloserType>
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
         void update(size_t index_i, Real dt = 0.0);
 
       protected:
         RegularizationKernel regularization_;
-        ParticleScopeTypeKernel particle_scope_;
     };
 
   protected:
     Regularization<FlowType> regularization_method_;
-    ParticleScopeTypeCK<ParticleScopeType> within_scope_method_;
 };
 
 template <typename... Parameters>
@@ -189,9 +218,9 @@ class DensityRegularization<Contact<Parameters...>>
     StdVec<DiscreteVariable<Real> *> dv_contact_mass_;
 };
 
-using DensityRegularizationComplex = DensityRegularization<Inner<WithUpdate, Internal, AllParticles>, Contact<>>;
-using DensityRegularizationComplexFreeSurface = DensityRegularization<Inner<WithUpdate, FreeSurface, AllParticles>, Contact<>>;
-using DensityRegularizationComplexInternalPressureBoundary = DensityRegularization<Inner<WithUpdate, Internal, ExcludeBufferParticles>, Contact<>>;
+using DensityRegularizationComplex = DensityRegularization<Inner<WithUpdate, Internal>, Contact<>>;
+using DensityRegularizationComplexFreeSurface = DensityRegularization<Inner<WithUpdate, FreeSurface>, Contact<>>;
+using DensityRegularizationComplexInternalPressureBoundary = DensityRegularization<Inner<WithUpdate, ExcludeBufferParticles>, Contact<>>;
 
 } // namespace fluid_dynamics
 } // namespace SPH
