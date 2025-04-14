@@ -104,7 +104,6 @@ class Gradient<Base, DataType, RelationType<Parameters...>>
 
   protected:
     std::string variable_name_;
-    std::string gradient_name_;
     DiscreteVariable<Real> *dv_Vol_;
     DiscreteVariable<DataType> *dv_variable_;
     DiscreteVariable<Grad<DataType>> *dv_gradient_;
@@ -173,8 +172,8 @@ class Hessian<Base, DataType, RelationType<Parameters...>>
     using BaseDynamicsType = Gradient<Base, DataType, RelationType<Parameters...>>;
 
   public:
-    template <class DynamicsIdentifier>
-    explicit Hessian(DynamicsIdentifier &identifier, std::string &variable_name);
+    template <typename... Args>
+    explicit Hessian(Args &&...args);
     virtual ~Hessian() {};
 
     class InteractKernel : public BaseDynamicsType::InteractKernel
@@ -200,8 +199,8 @@ class Hessian<Inner<DataType, Parameters...>>
     using BaseDynamicsType = Hessian<Base, DataType, Inner<Parameters...>>;
 
   public:
-    explicit Hessian(Relation<Inner<Parameters...>> &inner_relation)
-        : BaseDynamicsType(inner_relation) {};
+    template <typename... Args>
+    explicit Hessian(Args &&...args) : BaseDynamicsType(std::forward<Args>(args)...){};
     virtual ~Hessian() {};
 
     class InteractKernel : public BaseDynamicsType::InteractKernel

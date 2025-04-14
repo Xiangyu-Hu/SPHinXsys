@@ -44,12 +44,16 @@ class PltEngine
     virtual ~PltEngine() {};
 
     void writeAQuantityHeader(std::ofstream &out_file, const Real &quantity, const std::string &quantity_name);
-    void writeAQuantityHeader(std::ofstream &out_file, const Vecd &quantity, const std::string &quantity_name);
-    void writeAQuantityHeader(std::ofstream &out_file, const Matd &quantity, const std::string &quantity_name);
+    template <int N>
+    void writeAQuantityHeader(std::ofstream &out_file, const Eigen::Matrix<Real, N, 1> &quantity, const std::string &quantity_name);
+    template <int N, int M>
+    void writeAQuantityHeader(std::ofstream &out_file, const Eigen::Matrix<Real, N, M> &quantity, const std::string &quantity_name);
     void writeAQuantityHeader(std::ofstream &out_file, const SimTK::SpatialVec &quantity, const std::string &quantity_name);
     void writeAQuantity(std::ofstream &out_file, const Real &quantity);
-    void writeAQuantity(std::ofstream &out_file, const Vecd &quantity);
-    void writeAQuantity(std::ofstream &out_file, const Matd &quantity);
+    template <int N>
+    void writeAQuantity(std::ofstream &out_file, const Eigen::Matrix<Real, N, 1> &quantity);
+    template <int N, int M>
+    void writeAQuantity(std::ofstream &out_file, const Eigen::Matrix<Real, N, M> &quantity);
     void writeAQuantity(std::ofstream &out_file, const SimTK::SpatialVec &quantity);
 };
 

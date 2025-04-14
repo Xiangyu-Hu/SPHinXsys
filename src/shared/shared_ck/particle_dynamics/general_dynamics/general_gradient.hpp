@@ -10,12 +10,11 @@ template <typename DataType, template <typename...> class RelationType, typename
 template <class DynamicsIdentifier>
 Gradient<Base, DataType, RelationType<Parameters...>>::
     Gradient(DynamicsIdentifier &identifier, std::string &variable_name)
-    : BaseDynamicsType(identifier),
-      variable_name_(variable_name), gradient_name_(variable_name + "Gradient"),
+    : BaseDynamicsType(identifier), variable_name_(variable_name),
       dv_Vol_(this->particles_->template getVariableByName<Real>("VolumetricMeasure")),
       dv_variable_(this->particles_->template getVariableByName<DataType>(variable_name)),
       dv_gradient_(this->particles_->template registerStateVariableOnly<Grad<DataType>>(
-          gradient_name_, ZeroData<Grad<DataType>>::value)),
+          variable_name + "Gradient", ZeroData<Grad<DataType>>::value)),
       dv_B_(this->particles_->template getVariableByName<Matd>("LinearCorrectionMatrix")) {}
 //=================================================================================================//
 template <typename DataType, template <typename...> class RelationType, typename... Parameters>
@@ -83,12 +82,12 @@ void LinearGradient<Contact<DataType, Parameters...>>::
 }
 //=================================================================================================//
 template <typename DataType, template <typename...> class RelationType, typename... Parameters>
-template <class DynamicsIdentifier>
-Hessian<Base, DataType, RelationType<Parameters...>>::
-    Hessian(DynamicsIdentifier &identifier, std::string &variable_name)
-    : BaseDynamicsType(identifier, variable_name),
+template <typename... Args>
+Hessian<Base, DataType, RelationType<Parameters...>>::Hessian(Args &&...args)
+    : BaseDynamicsType(std::forward<Args>(args)...),
       dv_M_(this->particles_->template getVariableByName<MatTend>("HessianCorrectionMatrix")),
-      dv_hessian_(this->particles_->template getVariableByName<Hess<DataType>>(variable_name + "Hessian")) {}
+      dv_hessian_(this->particles_->template registerStateVariableOnly<Hess<DataType>>(
+          this->variable_name_ + "Hessian")) {}
 //=================================================================================================//
 template <typename DataType, template <typename...> class RelationType, typename... Parameters>
 template <class ExecutionPolicy, class EncloserType, typename... Args>
@@ -114,7 +113,7 @@ void Hessian<Inner<DataType, Parameters...>>::
         summation += corrected_dW_ijV_j / math::pow(r_ij.squaredNorm(), 2) *
                      vectorizeTensorSquare(r_ij) * transferToMatrix(corrected_difference).transpose();
     }
-    this->hessian_[index_i] = summation;
+    this->hessian_[index_i] = this->M_[index_i] * summation;
 }
 //=================================================================================================//
 template <typename DataType, typename... Parameters>
@@ -155,7 +154,7 @@ void Hessian<Contact<DataType, Parameters...>>::
         summation += corrected_dW_ijV_j / math::pow(r_ij.squaredNorm(), 2) *
                      vectorizeTensorSquare(r_ij) * transferToMatrix(corrected_difference).transpose();
     }
-    this->hessian_[index_i] += summation;
+    this->hessian_[index_i] += this->M_[index_i] * summation;
 }
 //=================================================================================================//
 template <typename DataType, typename... Parameters>

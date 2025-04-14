@@ -81,22 +81,21 @@ template <typename... Parameters>
 void HessianCorrectionMatrix<Inner<WithUpdate, Parameters...>>::
     InteractKernel::interact(size_t index_i, Real dt)
 {
-    MatTend approximation_tensor = MatTend::Zero();
+    MatTend summation = MatTend::Zero();
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
     {
         UnsignedInt index_j = this->neighbor_index_[n];
         Vecd corrected_gradW_ij = this->dW_ij(index_i, index_j) * this->Vol_[index_j] *
                                   this->B_[index_i] * this->e_ij(index_i, index_j);
         Vecd r_ij = this->vec_r_ij(index_i, index_j);
-        VecMatd displacement_matrix = vectorizeTensorSquare(r_ij);
-        MatTend displacement_tensor = displacement_matrix * displacement_matrix.transpose();
-        MatTend displacement_increment_tensor =
-            displacement_matrix * (this->displacement_matrix_grad_[index_i] * r_ij).transpose();
 
-        approximation_tensor -= r_ij.dot(corrected_gradW_ij) / math::pow(r_ij.squaredNorm(), 2) *
-                                (displacement_tensor + displacement_increment_tensor);
+        VecMatd displacement_matrix = vectorizeTensorSquare(r_ij);
+        VecMatd linearly_corrected_matrix =
+            displacement_matrix - this->displacement_matrix_grad_[index_i] * r_ij;
+        summation -= r_ij.dot(corrected_gradW_ij) / math::pow(r_ij.squaredNorm(), 2) *
+                     displacement_matrix * linearly_corrected_matrix.transpose();
     }
-    this->M_[index_i] = approximation_tensor;
+    this->M_[index_i] = summation;
 }
 //=================================================================================================//
 template <typename... Parameters>
@@ -127,22 +126,21 @@ template <typename... Parameters>
 void HessianCorrectionMatrix<Contact<Parameters...>>::
     InteractKernel::interact(size_t index_i, Real dt)
 {
-    MatTend approximation_tensor = MatTend::Zero();
+    MatTend summation = MatTend::Zero();
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
     {
         UnsignedInt index_j = this->neighbor_index_[n];
         Vecd corrected_gradW_ij = this->dW_ij(index_i, index_j) * contact_Vol_[index_j] *
                                   this->B_[index_i] * this->e_ij(index_i, index_j);
         Vecd r_ij = this->vec_r_ij(index_i, index_j);
-        VecMatd displacement_matrix = vectorizeTensorSquare(r_ij);
-        MatTend displacement_tensor = displacement_matrix * displacement_matrix.transpose();
-        MatTend displacement_increment_tensor =
-            displacement_matrix * (this->displacement_matrix_grad_[index_i] * r_ij).transpose();
 
-        approximation_tensor -= r_ij.dot(corrected_gradW_ij) / math::pow(r_ij.squaredNorm(), 2) *
-                                (displacement_tensor + displacement_increment_tensor);
+        VecMatd displacement_matrix = vectorizeTensorSquare(r_ij);
+        VecMatd linearly_corrected_matrix =
+            displacement_matrix - this->displacement_matrix_grad_[index_i] * r_ij;
+        summation -= r_ij.dot(corrected_gradW_ij) / math::pow(r_ij.squaredNorm(), 2) *
+                     displacement_matrix * linearly_corrected_matrix.transpose();
     }
-    this->M_[index_i] += approximation_tensor;
+    this->M_[index_i] += summation;
 }
 //=================================================================================================//
 } // namespace SPH

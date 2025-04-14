@@ -32,6 +32,46 @@ TEST(LinearGradient, Error)
               << "Predicted Gradient: " << approximated_gradient << std::endl;
 };
 
+Vec2d random_coordinate(rand_uniform(0.0, width), rand_uniform(0.0, height));
+
+/*Vec2d first_coefficient(rand_uniform(-1.0, 1.0), rand_uniform(-1.0, 1.0));
+Mat2d second_coefficient{
+    {rand_uniform(-1.0, 1.0), rand_uniform(-1.0, 1.0)},
+    {rand_uniform(-1.0, 1.0), rand_uniform(-1.0, 1.0)}};*/
+Vec2d first_coefficient(1.0, 1.0);
+Mat2d second_coefficient{{1.0, 0.0}, {0.0, 1.0}};
+class ParabolicProfile : public ReturnFunction<Real>
+{
+  public:
+    ParabolicProfile(BaseParticles *particles) {};
+    class ComputingKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+            : first_coefficient_(first_coefficient),
+              second_coefficient_(second_coefficient){};
+
+        Real operator()(const Vec2d &position)
+        {
+            return first_coefficient_.dot(position) +
+                   (second_coefficient_ * position).dot(second_coefficient_ * position);
+        }
+
+      protected:
+        Vec2d first_coefficient_;
+        Mat2d second_coefficient_;
+    };
+};
+
+VecMat2d approximated_hessian = VecMat2d::Zero();
+VecMat2d reference_hessian = {1.0, 1.0, 0.0};
+TEST(Hessian, Error)
+{
+    EXPECT_LT((reference_hessian - approximated_hessian).norm(), 1.0e-6);
+    std::cout << "Reference Hessian: " << reference_hessian << " and "
+              << "Predicted Hessian: " << approximated_hessian << std::endl;
+};
 class WaterBlock : public ComplexShape
 {
   public:
@@ -82,8 +122,7 @@ int main(int ac, char *av[])
     wall.generateParticles<BaseParticles, Lattice>();
 
     ObserverBody fluid_observer(sph_system, "FluidObserver");
-    Vecd random_coordinate(rand_uniform(0.0, width), rand_uniform(0.0, height));
-    StdVec<Vecd> observation_location = {random_coordinate};
+    StdVec<Vec2d> observation_location = {random_coordinate};
     fluid_observer.generateParticles<ObserverParticles>(observation_location);
     //----------------------------------------------------------------------
     //	Define body relation map.
@@ -114,24 +153,29 @@ int main(int ac, char *av[])
     UpdateRelation<MainExecutionPolicy, Inner<>> update_water_block_inner(water_block_inner);
     UpdateRelation<MainExecutionPolicy, Contact<>> update_water_wall_contact(water_wall_contact);
     UpdateRelation<MainExecutionPolicy, Contact<>> update_fluid_observer_contact(fluid_observer_contact);
-    //----------------------------------------------------------------------
-    //	Define the methods for I/O operations, observations
-    //	and regression tests of the simulation.
-    //----------------------------------------------------------------------
+
     InteractionDynamicsCK<MainExecutionPolicy, LinearCorrectionMatrix<Inner<WithUpdate>, Contact<>>>
         fluid_linear_correction_matrix(DynamicsArgs(water_block_inner, 0.0), water_wall_contact);
-
-    InteractionDynamicsCK<MainExecutionPolicy, DisplacementMatrixGradient<Inner<>, Contact<>>>
-        displacement_matrix_gradient(water_block_inner, water_wall_contact);
-    InteractionDynamicsCK<MainExecutionPolicy, HessianCorrectionMatrix<Inner<WithUpdate>, Contact<>>>
-        hessian_correction_matrix(DynamicsArgs(water_block_inner, 0.0), water_wall_contact);
-
     InteractionDynamicsCK<MainExecutionPolicy, LinearGradient<Inner<Vecd>, Contact<Vecd>>>
         position_linear_gradient(
             DynamicsArgs(water_block_inner, std::string("Position")),
             DynamicsArgs(water_wall_contact, std::string("Position")));
     ObservedQuantityRecording<MainExecutionPolicy, Matd, RestoringCorrection>
         observed_position_gradient("PositionGradient", fluid_observer_contact);
+
+    InteractionDynamicsCK<MainExecutionPolicy, DisplacementMatrixGradient<Inner<>, Contact<>>>
+        displacement_matrix_gradient(water_block_inner, water_wall_contact);
+    InteractionDynamicsCK<MainExecutionPolicy, HessianCorrectionMatrix<Inner<WithUpdate>, Contact<>>>
+        hessian_correction_matrix(DynamicsArgs(water_block_inner, 0.0), water_wall_contact);
+
+    StateDynamics<MainExecutionPolicy, InitialCondition<SPHBody, ParabolicProfile>>
+        initial_condition(water_block, "Phi");
+    InteractionDynamicsCK<MainExecutionPolicy, Hessian<Inner<Real>, Contact<Real>>>
+        variable_hessian(
+            DynamicsArgs(water_block_inner, std::string("Phi")),
+            DynamicsArgs(water_wall_contact, std::string("Phi")));
+    ObservedQuantityRecording<MainExecutionPolicy, VecMat2d, RestoringCorrection>
+        observed_hessian("PhiHessian", fluid_observer_contact);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
@@ -143,12 +187,16 @@ int main(int ac, char *av[])
     update_fluid_observer_contact.exec();
 
     fluid_linear_correction_matrix.exec();
-    displacement_matrix_gradient.exec();
-    hessian_correction_matrix.exec();
     position_linear_gradient.exec();
-
     observed_position_gradient.writeToFile(0);
     approximated_gradient = *observed_position_gradient.getObservedQuantity();
+
+    displacement_matrix_gradient.exec();
+    hessian_correction_matrix.exec();
+    variable_hessian.exec();
+    observed_hessian.writeToFile(0);
+    approximated_hessian = *observed_hessian.getObservedQuantity();
+
     testing::InitGoogleTest(&ac, av);
     return RUN_ALL_TESTS();
 }
