@@ -161,18 +161,17 @@ template <typename DataType, typename... Parameters>
 void SecondOrderGradient<Inner<DataType, Parameters...>>::
     InteractKernel::interact(size_t index_i, Real dt)
 {
-    auto summation = MatrixToScalarVecVec(Grad<DataType>::Zero());
-    auto hessian_scalar = MatrixToScalarVecVec(this->hessian_[index_i]);
+    Grad<DataType> summation = Grad<DataType>::Zero();
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
     {
         UnsignedInt index_j = this->neighbor_index_[n];
         Vecd r_ij = this->vec_r_ij(index_i, index_j);
         Vecd corrected_gradW_ij = this->dW_ij(index_i, index_j) * this->Vol_[index_j] *
                                   this->B_[index_i] * this->e_ij(index_i, index_j);
-        auto difference = dotProduct(vectorizeTensorSquare(r_ij), hessian_scalar);
-        summation -= 0.5 * scalarProduct(corrected_gradW_ij, difference);
+        auto difference = vectorizeTensorSquare(r_ij).transpose() * this->hessian_[index_i];
+        summation -= 0.5 * corrected_gradW_ij * difference;
     }
-    this->gradient_[index_i] += ScalarVecVecToMatrix(summation);
+    this->gradient_[index_i] += summation;
 }
 //=================================================================================================//
 template <typename DataType, typename... Parameters>
@@ -201,18 +200,17 @@ template <typename DataType, typename... Parameters>
 void SecondOrderGradient<Contact<DataType, Parameters...>>::
     InteractKernel::interact(size_t index_i, Real dt)
 {
-    auto summation = MatrixToScalarVecVec(Grad<DataType>::Zero());
-    auto hessian_scalar = MatrixToScalarVecVec(this->hessian_[index_i]);
+    Grad<DataType> summation = Grad<DataType>::Zero();
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
     {
         UnsignedInt index_j = this->neighbor_index_[n];
         Vecd r_ij = this->vec_r_ij(index_i, index_j);
         Vecd corrected_gradW_ij = this->dW_ij(index_i, index_j) * contact_Vol_[index_j] *
                                   this->B_[index_i] * this->e_ij(index_i, index_j);
-        auto difference = dotProduct(vectorizeTensorSquare(r_ij), hessian_scalar);
-        summation -= 0.5 * scalarProduct(corrected_gradW_ij, difference);
+        auto difference = vectorizeTensorSquare(r_ij).transpose() * this->hessian_[index_i];
+        summation -= 0.5 * corrected_gradW_ij * difference;
     }
-    this->gradient_[index_i] += ScalarVecVecToMatrix(summation);
+    this->gradient_[index_i] += summation;
 }
 //=================================================================================================//
 } // namespace SPH

@@ -72,6 +72,16 @@ TEST(Hessian, Error)
     std::cout << "Reference Hessian: " << reference_hessian << " and "
               << "Predicted Hessian: " << approximated_hessian << std::endl;
 };
+
+Vec2d approximated_2nd_order_gradient = Vec2d::Zero();
+Vec2d reference_2nd_order_gradient = first_coefficient + 2.0 * random_coordinate;
+TEST(SecondOrderGradient, Error)
+{
+    EXPECT_LT((reference_2nd_order_gradient - approximated_2nd_order_gradient).norm(), 1.0e-6);
+    std::cout << "Reference Second Order Gradient: " << reference_2nd_order_gradient << " and "
+              << "Predicted Second Order Gradient: " << approximated_2nd_order_gradient << std::endl;
+};
+
 class WaterBlock : public ComplexShape
 {
   public:
@@ -182,6 +192,13 @@ int main(int ac, char *av[])
             DynamicsArgs(water_wall_contact, std::string("Phi")));
     ObservedQuantityRecording<MainExecutionPolicy, VecMat2d, RestoringCorrection>
         observed_hessian("PhiHessian", fluid_observer_contact);
+
+    InteractionDynamicsCK<MainExecutionPolicy, SecondOrderGradient<Inner<Real>, Contact<Real>>>
+        variable_2nd_order_gradient(
+            DynamicsArgs(water_block_inner, std::string("Phi")),
+            DynamicsArgs(water_wall_contact, std::string("Phi")));
+    ObservedQuantityRecording<MainExecutionPolicy, Vec2d, RestoringCorrection>
+        observed_2nd_order_gradient("PhiGradient", fluid_observer_contact);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
@@ -206,6 +223,9 @@ int main(int ac, char *av[])
     observed_hessian.writeToFile(0);
     approximated_hessian = *observed_hessian.getObservedQuantity();
 
+    variable_2nd_order_gradient.exec();
+    observed_2nd_order_gradient.writeToFile(0);
+    approximated_2nd_order_gradient = *observed_2nd_order_gradient.getObservedQuantity();
     testing::InitGoogleTest(&ac, av);
     return RUN_ALL_TESTS();
 }

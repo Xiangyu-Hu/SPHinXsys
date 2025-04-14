@@ -32,7 +32,6 @@
 #define GENERAL_GRADIENT_H
 
 #include "base_general_dynamics.h"
-#include "scalar_numerics.h"
 
 namespace SPH
 {
@@ -251,8 +250,8 @@ class SecondOrderGradient<Inner<DataType, Parameters...>>
     using BaseDynamicsType = Hessian<Base, DataType, Inner<Parameters...>>;
 
   public:
-    explicit SecondOrderGradient(Relation<Inner<Parameters...>> &inner_relation)
-        : BaseDynamicsType(inner_relation) {};
+    template <typename... Args>
+    explicit SecondOrderGradient(Args &&...args) : BaseDynamicsType(std::forward<Args>(args)...){};
     virtual ~SecondOrderGradient() {};
 
     class InteractKernel : public BaseDynamicsType::InteractKernel
