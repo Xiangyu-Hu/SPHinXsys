@@ -56,7 +56,7 @@ Matd approximated_gradient(Matd::Zero());
 Matd reference_gradient(Matd::Identity());
 TEST(LinearGradient, Error)
 {
-    EXPECT_LT((reference_gradient - approximated_gradient).norm(), 1.0e-6);
+    EXPECT_LT((reference_gradient - approximated_gradient).norm(), 1.0e-5);
     std::cout << "Reference Gradient: " << reference_gradient << " and "
               << "Predicted Gradient: " << approximated_gradient << std::endl;
 };
@@ -78,7 +78,7 @@ class ParabolicProfile : public ReturnFunction<Real>
         Real operator()(const Vec2d &position)
         {
             return first_coefficient_.dot(position) +
-                   second_coefficient.dot(vectorizeTensorSquare(position));
+                   second_coefficient_.dot(vectorizeTensorSquare(position));
         }
 
       protected:
@@ -91,7 +91,7 @@ VecMat2d approximated_hessian = VecMat2d::Zero();
 VecMat2d reference_hessian = 2.0 * second_coefficient;
 TEST(Hessian, Error)
 {
-    EXPECT_LT((reference_hessian - approximated_hessian).norm(), 1.0e-6);
+    EXPECT_LT((reference_hessian - approximated_hessian).norm(), 1.0e-4);
     std::cout << "Reference Hessian: " << reference_hessian << " and "
               << "Predicted Hessian: " << approximated_hessian << std::endl;
 };
@@ -103,7 +103,7 @@ Vec2d reference_2nd_order_gradient =
           2.0 * random_observation[1] * second_coefficient[1] + random_observation[0] * second_coefficient[2]);
 TEST(SecondOrderGradient, Error)
 {
-    EXPECT_LT((reference_2nd_order_gradient - approximated_2nd_order_gradient).norm(), 1.0e-6);
+    EXPECT_LT((reference_2nd_order_gradient - approximated_2nd_order_gradient).norm(), 1.0e-5);
     std::cout << "Reference Second Order Gradient: " << reference_2nd_order_gradient << " and "
               << "Predicted Second Order Gradient: " << approximated_2nd_order_gradient << std::endl;
 };

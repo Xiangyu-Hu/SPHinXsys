@@ -78,7 +78,7 @@ class ParabolicProfile : public ReturnFunction<Real>
         Real operator()(const Vec2d &position)
         {
             return first_coefficient_.dot(position) +
-                   second_coefficient.dot(vectorizeTensorSquare(position));
+                   second_coefficient_.dot(vectorizeTensorSquare(position));
         }
 
       protected:
