@@ -29,7 +29,7 @@
 #ifndef IO_OBSERVATION_H
 #define IO_OBSERVATION_H
 
-#include "io_plt.h"
+#include "io_plt.hpp"
 
 namespace SPH
 {

@@ -103,11 +103,11 @@ inline void StringToData(std::string &value_str, Eigen::Matrix<Real, DIMENSION, 
         value[j] = temp[j];
 }
 
-template <int DIMENSION, auto... Rest>
-inline void StringToData(std::string &value_str, Eigen::Matrix<Real, DIMENSION, DIMENSION, Rest...> &value)
+template <int DIMENSION1, int DIMENSION2, auto... Rest>
+inline void StringToData(std::string &value_str, Eigen::Matrix<Real, DIMENSION1, DIMENSION2, Rest...> &value)
 {
     std::vector<Real> temp;
-    temp.resize(DIMENSION * DIMENSION);
+    temp.resize(DIMENSION1 * DIMENSION2);
     std::istringstream value_stream(value_str);
 
     int i = 0;
@@ -117,11 +117,11 @@ inline void StringToData(std::string &value_str, Eigen::Matrix<Real, DIMENSION, 
         i++;
     }
 
-    assert(i == DIMENSION * DIMENSION);
+    assert(i == DIMENSION1 * DIMENSION2);
 
-    for (int j = 0; j != DIMENSION; j++)
-        for (int k = 0; k != DIMENSION; k++)
-            value(j, k) = temp[j * DIMENSION + k];
+    for (int j = 0; j != DIMENSION1; j++)
+        for (int k = 0; k != DIMENSION2; k++)
+            value(j, k) = temp[j * DIMENSION2 + k];
 }
 
 /**
@@ -153,7 +153,7 @@ class XmlParser
     /**
      * Functions & Parameters
      */
-    /** First element of the xml doc, also noted as root elemeng in tinyxml-1. */
+    /** First element of the xml doc, also noted as root element in tinyxml-1. */
     tinyxml2::XMLElement *first_element_;
 
     /** Write to XML file */

@@ -92,15 +92,6 @@ class Interpolation<Contact<DataType, Parameters...>> : public Interpolation<Con
  * doi.org/10.1007/s11831-010-9040-7
  */
 class RestoringCorrection;
-
-template <typename DataType, int N>
-using PredictVec = Eigen::Matrix<Scalar<DataType>, N, 1>;
-template <typename DataType, int N>
-struct ZeroData<PredictVec<DataType, N>>
-{
-    static inline const PredictVec<DataType, N> value = PredictVec<DataType, N>::Zero();
-};
-
 template <typename DataType, typename... Parameters>
 class Interpolation<Contact<DataType, RestoringCorrection, Parameters...>> : public Interpolation<Contact<Base, DataType, Parameters...>>
 {
@@ -108,7 +99,7 @@ class Interpolation<Contact<DataType, RestoringCorrection, Parameters...>> : pub
     static constexpr int RestoringSize = Dimensions + 1;
     using RestoreMatd = Eigen::Matrix<Real, RestoringSize, RestoringSize>;
     using RestoreVecd = Eigen::Matrix<Real, RestoringSize, 1>;
-    using PredictVecd = PredictVec<DataType, RestoringSize>;
+    using PredictVecd = ScalarVec<DataType, RestoringSize>;
 
   public:
     template <typename... Args>

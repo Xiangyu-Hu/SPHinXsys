@@ -112,7 +112,63 @@ struct ZeroData<Scalar<T>>
 };
 
 template <typename T, int N>
-Scalar<T> dotProduct(const Eigen::Matrix<Real, N, 1> &real_vector, const Eigen::Matrix<Scalar<T>, N, 1> &scalar_vector)
+using ScalarVec = Eigen::Matrix<Scalar<T>, N, 1>; // vector of generalized scalar
+
+template <typename T, int N>
+struct ZeroData<ScalarVec<T, N>>
+{
+    static inline const ScalarVec<T, N> value = ScalarVec<T, N>::Zero();
+};
+
+template <int N, int M>
+using ScalarVecVec = ScalarVec<Eigen::Matrix<Real, M, 1>, N>; // vector of generalized scalar of vector
+
+template <int N, int M>
+ScalarVecVec<N, M> MatrixToScalarVecVec(const Eigen::Matrix<Real, N, M> &input)
+{
+    ScalarVecVec<N, M> result = ScalarVecVec<N, M>::Zero();
+    for (UnsignedInt i = 0; i < N; ++i)
+    {
+        result[i] = Scalar<Eigen::Matrix<Real, M, 1>>(input.row(i).transpose());
+    }
+    return result;
+};
+
+template <int N>
+ScalarVec<Real, N> MatrixToScalarVecVec(const Eigen::Matrix<Real, N, 1> &input)
+{
+    ScalarVec<Real, N> result = ScalarVec<Real, N>::Zero();
+    for (UnsignedInt i = 0; i < N; ++i)
+    {
+        result[i] = Scalar<Real>(input[i]);
+    }
+    return result;
+};
+
+template <int N, int M>
+Eigen::Matrix<Real, N, M> ScalarVecVecToMatrix(const ScalarVecVec<N, M> &input)
+{
+    Eigen::Matrix<Real, N, M> result = Eigen::Matrix<Real, N, M>::Zero();
+    for (UnsignedInt i = 0; i < N; ++i)
+    {
+        result.row(i) = input[i].get().transpose();
+    }
+    return result;
+};
+
+template <int N>
+Eigen::Matrix<Real, N, 1> ScalarVecVecToMatrix(const ScalarVec<Real, N> &input)
+{
+    Eigen::Matrix<Real, N, 1> result = Eigen::Matrix<Real, N, 1>::Zero();
+    for (UnsignedInt i = 0; i < N; ++i)
+    {
+        result[i] = input[i].get();
+    }
+    return result;
+};
+
+template <typename T, int N>
+Scalar<T> dotProduct(const Eigen::Matrix<Real, N, 1> &real_vector, const ScalarVec<T, N> &scalar_vector)
 {
     Scalar<T> scalar = Scalar<T>(0);
     for (UnsignedInt i = 0; i < N; ++i)
@@ -123,9 +179,12 @@ Scalar<T> dotProduct(const Eigen::Matrix<Real, N, 1> &real_vector, const Eigen::
 };
 
 template <typename T, int N, int M>
-Eigen::Matrix<Scalar<T>, N, M> scalarProduct(const Eigen::Matrix<Real, N, M> &real_matrix, const Scalar<T> &scalar)
+using ScalarMat = Eigen::Matrix<Scalar<T>, N, M>; // matrix of generalized scalar
+
+template <typename T, int N, int M>
+ScalarMat<T, N, M> scalarProduct(const Eigen::Matrix<Real, N, M> &real_matrix, const Scalar<T> &scalar)
 {
-    Eigen::Matrix<Scalar<T>, N, M> scalar_matrix = Eigen::Matrix<Scalar<T>, N, M>::Zero();
+    ScalarMat<T, N, M> scalar_matrix = ScalarMat<T, N, M>::Zero();
     for (UnsignedInt i = 0; i < N; ++i)
         for (UnsignedInt j = 0; j < M; ++j)
         {

@@ -61,7 +61,11 @@ using DataAssemble = std::tuple<KeeperType<ContainerType<UnsignedInt>>,
                                 KeeperType<ContainerType<Vec2d>>,
                                 KeeperType<ContainerType<Mat2d>>,
                                 KeeperType<ContainerType<Vec3d>>,
-                                KeeperType<ContainerType<Mat3d>>>;
+                                KeeperType<ContainerType<Mat3d>>,
+                                KeeperType<ContainerType<Vec6d>>,
+                                KeeperType<ContainerType<Mat6d>>,
+                                KeeperType<ContainerType<VecMatGrad2d>>,
+                                KeeperType<ContainerType<VecMatGrad3d>>>;
 /** Generalized data container assemble type */
 template <template <typename> typename ContainerType>
 using DataContainerAssemble = DataAssemble<DataContainerKeeper, ContainerType>;

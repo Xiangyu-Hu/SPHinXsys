@@ -31,23 +31,14 @@ add_library(sphinxsys_core INTERFACE)
 # ------ Local properties
 target_compile_features(sphinxsys_core INTERFACE cxx_std_17) # Requires a compiler supporting at least C++17
 
-# ## Generic properties below enabled for INTERFACE targets only for CMake>=3.19
-# set_target_properties(sphinxsys_core PROPERTIES CXX_EXTENSIONS OFF) # Disable any non-standard compiler specific C++ extensions
-# set_target_properties(sphinxsys_core PROPERTIES CXX_STANDARD_REQUIRED ON) # C++ standard requirement for targets is NOT optional
-# set_target_properties(sphinxsys_core PROPERTIES CXX_STANDARD 17)
 if(${CMAKE_SYSTEM_NAME} MATCHES Windows)
     set_target_properties(sphinxsys_core PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON) # For correct DLL generation on Windows
     target_compile_definitions(sphinxsys_core INTERFACE _USE_MATH_DEFINES NOMINMAX)
     target_compile_options(sphinxsys_core INTERFACE /MP)
     target_compile_options(sphinxsys_core INTERFACE /permissive-)
-
-# target_compile_options(sphinxsys_core INTERFACE $<$<BOOL:${SPHINXSYS_DEVELOPER_MODE}>:/W4 /WX>) # TODO: For when one gets rid of Simbody
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     target_compile_options(sphinxsys_core INTERFACE $<$<BOOL:${SPHINXSYS_DEVELOPER_MODE}>:-Werror>)
     target_compile_options(sphinxsys_core INTERFACE $<$<BOOL:${SPHINXSYS_DEVELOPER_MODE}>:-Wall>)
-
-    # target_compile_options(sphinxsys_core INTERFACE  $<$<BOOL:${SPHINXSYS_DEVELOPER_MODE}>:-Wextra>) # TODO:
-    # target_compile_options(sphinxsys_core INTERFACE $<$<BOOL:${SPHINXSYS_DEVELOPER_MODE}>:-Wpedantic>) # For strict C++ standard compliance # TODO:
 endif()
 
 if(SPHINXSYS_USE_SYCL)
