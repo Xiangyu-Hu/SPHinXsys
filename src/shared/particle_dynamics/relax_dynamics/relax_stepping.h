@@ -50,11 +50,10 @@ struct ErrorAndParameters
     ParameterADataType a_;
     ParameterCDataType c_;
 
-    ErrorAndParameters<ErrorDataType, ParameterADataType, ParameterCDataType>() :
-        error_(ZeroData<ErrorDataType>::value),
-        a_(ZeroData<ParameterADataType>::value),
-        c_(ZeroData<ParameterCDataType>::value) {
-    };
+    ErrorAndParameters()
+        : error_(ZeroData<ErrorDataType>::value),
+          a_(ZeroData<ParameterADataType>::value),
+          c_(ZeroData<ParameterCDataType>::value) {};
 };
 
 template <typename... InteractionTypes>
@@ -71,7 +70,7 @@ class RelaxationResidue<Base, DataDelegationType>
 
   protected:
     SPHAdaptation *sph_adaptation_;
-    Kernel* kernel_;
+    Kernel *kernel_;
     Real *Vol_, *kinetic_energy_;
     Vecd *pos_, *residue_;
 };
@@ -111,36 +110,35 @@ class RelaxationResidue<Inner<LevelSetCorrection>> : public RelaxationResidue<In
 template <>
 class RelaxationResidue<Inner<Implicit>> : public RelaxationResidue<Inner<>>
 {
-public:
+  public:
     template <typename... Args>
     RelaxationResidue(Args &&...args);
     template <typename BodyRelationType, typename FirstArg>
     explicit RelaxationResidue(DynamicsArgs<BodyRelationType, FirstArg> parameters)
-        : RelaxationResidue(parameters.identifier_, std::get<0>(parameters.others_)) {
-    };
+        : RelaxationResidue(parameters.identifier_, std::get<0>(parameters.others_)){};
     virtual ~RelaxationResidue() {};
     void interaction(size_t index_i, Real dt = 0.0);
 
-protected:
+  protected:
     ErrorAndParameters<Vecd, Matd, Matd> computeErrorAndParameters(size_t index_i, Real dt = 0.0);
-    void updateStates(size_t index_i, Real dt, const ErrorAndParameters<Vecd, Matd, Matd>& error_and_parameters);
+    void updateStates(size_t index_i, Real dt, const ErrorAndParameters<Vecd, Matd, Matd> &error_and_parameters);
 };
 
 template <>
 class RelaxationResidue<Inner<LevelSetCorrection, Implicit>> : public RelaxationResidue<Inner<Implicit>>
 {
-public:
+  public:
     template <typename... Args>
-    RelaxationResidue(Args &&... args);
+    RelaxationResidue(Args &&...args);
     template <typename BodyRelationType, typename FirstArg>
     explicit RelaxationResidue(DynamicsArgs<BodyRelationType, FirstArg> parameters)
-        : RelaxationResidue(parameters.identifier_, std::get<0>(parameters.others_)) {};
+        : RelaxationResidue(parameters.identifier_, std::get<0>(parameters.others_)){};
     virtual ~RelaxationResidue() {};
     void interaction(size_t index_i, Real dt = 0.0);
 
-protected:
-    Vecd* pos_;
-    LevelSetShape& level_set_shape_;
+  protected:
+    Vecd *pos_;
+    LevelSetShape &level_set_shape_;
     ErrorAndParameters<Vecd, Matd, Matd> computeErrorAndParameters(size_t index_i, Real dt = 0.0);
 };
 
@@ -236,16 +234,16 @@ class RelaxationStep : public BaseDynamics<void>
 template <class RelaxationResidueType>
 class RelaxationStepImplicit : public BaseDynamics<void>
 {
-public:
+  public:
     template <typename FirstArg, typename... OtherArgs>
-    explicit RelaxationStepImplicit(FirstArg&& first_arg, OtherArgs &&...other_args);
+    explicit RelaxationStepImplicit(FirstArg &&first_arg, OtherArgs &&...other_args);
     virtual ~RelaxationStepImplicit() {};
-    SimpleDynamics<ShapeSurfaceBounding>& SurfaceBounding() { return surface_bounding_; };
+    SimpleDynamics<ShapeSurfaceBounding> &SurfaceBounding() { return surface_bounding_; };
     virtual void exec(Real dt = 0.0) override;
 
-protected:
-    RealBody& real_body_;
-    StdVec<SPHRelation*>& body_relations_;
+  protected:
+    RealBody &real_body_;
+    StdVec<SPHRelation *> &body_relations_;
     InteractionSplit<RelaxationResidueType> relaxation_residue_;
     ReduceDynamics<RelaxationScaling> relaxation_scaling_;
     SimpleDynamics<PositionRelaxation> position_relaxation_;
