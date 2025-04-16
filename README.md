@@ -95,7 +95,7 @@ While SPHinXsys is written in C++, it provides a python interface for users to w
 including carry out regression tests for continuous integration (CI) and other tasks.
 One example is given below for the dambreak case.
 Please check the source code of
-[2D Dambreak case with python interface](https://github.com/Xiangyu-Hu/SPHinXsys/tree/master/tests/2d_examples/test_2d_dambreak_python)
+[2D Dambreak case with python interface](https://github.com/Xiangyu-Hu/SPHinXsys/blob/master/tests/test_python_interface/test_2d_dambreak_python/dambreak_python.cpp)
 for the usage.
 
 ## Publications
