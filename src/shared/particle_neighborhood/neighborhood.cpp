@@ -562,7 +562,7 @@ SolidShellCouplingNeighborBuilder::SolidShellCouplingNeighborBuilder(SPHBody &bo
     : NeighborBuilderContact(body, contact_body)
 {
     // create a kernel with a cut-off radius of factor * dp_max
-    Real h_max = SMAX(body.sph_adaptation_->ReferenceSmoothingLength(), contact_body.sph_adaptation_->ReferenceSmoothingLength());
+    Real h_max = SMAX(body.getSPHAdaptation().ReferenceSmoothingLength(), contact_body.getSPHAdaptation().ReferenceSmoothingLength());
     Real h = factor * h_max;
     // smoothing length: cut_off_radius/2.0
     kernel_ = kernel_keeper_.createPtr<KernelWendlandC2>(h);

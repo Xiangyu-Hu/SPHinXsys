@@ -131,10 +131,14 @@ class SolidBodyPart : public BodyPartByParticle
     SolidBodyPart(SPHBody &body, const std::string &body_part_name, std::function<bool(Vec3d &)> contain)
         : BodyPartByParticle(body, body_part_name)
     {
-        TaggingParticleMethod tagging_particle_method = [&](size_t index_i)
+        TaggingParticleMethod tagging_particle_method = [&](size_t index_i) -> bool
         {
             if (contain(pos_[index_i]))
+            {
                 body_part_particles_.push_back(index_i);
+                return true;
+            }
+            return false;
         };
         tagParticles(tagging_particle_method);
     };
