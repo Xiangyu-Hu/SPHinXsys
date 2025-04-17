@@ -558,14 +558,14 @@ operator()(Neighborhood &neighborhood, const Vecd &pos_i, size_t index_i, const 
     }
 };
 //=================================================================================================//
-NearestNeighborBuilder::NearestNeighborBuilder(SPHBody &body, SPHBody &contact_body, Real factor)
+SolidShellCouplingNeighborBuilder::SolidShellCouplingNeighborBuilder(SPHBody &body, SPHBody &contact_body, Real factor)
     : NeighborBuilderContact(body, contact_body)
 {
     // create a kernel with a cut-off radius of factor * dp_max
-    Real dp_max = SMAX(body.getSPHBodyResolutionRef(), contact_body.getSPHBodyResolutionRef());
-    Real cut_off_radius = factor * dp_max;
+    Real h_max = SMAX(body.sph_adaptation_->ReferenceSmoothingLength(), contact_body.sph_adaptation_->ReferenceSmoothingLength());
+    Real h = factor * h_max;
     // smoothing length: cut_off_radius/2.0
-    kernel_ = kernel_keeper_.createPtr<KernelWendlandC2>(cut_off_radius / 2.0);
+    kernel_ = kernel_keeper_.createPtr<KernelWendlandC2>(h);
 }
 //=================================================================================================//
 } // namespace SPH

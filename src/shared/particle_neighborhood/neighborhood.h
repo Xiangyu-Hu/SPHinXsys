@@ -351,16 +351,16 @@ class NeighborBuilderSplitInnerAdaptive : public NeighborBuilder
 };
 
 /**
- * @class NearestNeighborBuilder
- * @brief A contact neighbor builder functor, where the cut-off radius is set as factor * dp_max
+ * @class SolidShellCouplingNeighborBuilder
+ * @brief A contact neighbor builder functor, where the cut-off radius is set as factor * 2h_max
  */
-class NearestNeighborBuilder : public NeighborBuilderContact
+class SolidShellCouplingNeighborBuilder : public NeighborBuilderContact
 {
   private:
     UniquePtrKeeper<Kernel> kernel_keeper_;
 
   public:
-    NearestNeighborBuilder(SPHBody &body, SPHBody &contact_body, Real factor = 1.0);
+    SolidShellCouplingNeighborBuilder(SPHBody &body, SPHBody &contact_body, Real factor = 1.0);
 };
 } // namespace SPH
 #endif // NEIGHBORHOOD_H

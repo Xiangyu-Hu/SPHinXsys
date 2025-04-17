@@ -40,16 +40,16 @@ namespace solid_dynamics
  * @brief Compute the total weight for each solid particle from the coupled shell particles.
  * This weight is used for interpolation of velocity and force
  */
-class TotalWeightComputation : public BaseLocalDynamics<BodyPartByParticle>,
+template <class DynamicsIdentifier>
+class TotalWeightComputation : public BaseLocalDynamics<DynamicsIdentifier>,
                                public DataDelegateContact
 {
   private:
     Real *total_weight_; // \sum_i W_ij * Vol_j for j of all contact bodies
-    StdVec<int *> contact_is_coupled_;
     StdVec<Real *> contact_Vol_;
 
   public:
-    TotalWeightComputation(BodyPartByParticle &body_part, BaseContactRelation &contact_relation);
+    TotalWeightComputation(DynamicsIdentifier &identifier, BaseContactRelation &contact_relation);
     void update(size_t index_i, Real dt = 0.0);
 };
 
@@ -57,17 +57,17 @@ class TotalWeightComputation : public BaseLocalDynamics<BodyPartByParticle>,
  * @brief Constrain velocity by the interpolation from coupled particle velocities.
  * When there is more than one contact body, interpolate from all contact bodies.
  */
-class InterpolationVelocityConstraint : public MotionConstraint<BodyPartByParticle>,
+template <class DynamicsIdentifier>
+class InterpolationVelocityConstraint : public MotionConstraint<DynamicsIdentifier>,
                                         public DataDelegateContact
 {
   private:
     Real *total_weight_;
-    StdVec<int *> contact_is_coupled_;
     StdVec<Real *> contact_Vol_;
     StdVec<Vecd *> contact_vel_;
 
   public:
-    InterpolationVelocityConstraint(BodyPartByParticle &body_part, BaseContactRelation &contact_relation);
+    InterpolationVelocityConstraint(DynamicsIdentifier &identifier, BaseContactRelation &contact_relation);
     void update(size_t index_i, Real dt = 0.0);
 };
 
@@ -75,17 +75,17 @@ class InterpolationVelocityConstraint : public MotionConstraint<BodyPartByPartic
  * @brief Apply the coupling force by the interpolation from coupled particle internal accelerations.
  * When there is more than one contact body, interpolate force from each contact body and sum up.
  */
-class InterpolationForceConstraint : public BaseForcePrior<BodyPartByParticle>,
+template <class DynamicsIdentifier>
+class InterpolationForceConstraint : public BaseForcePrior<DynamicsIdentifier>,
                                      public DataDelegateContact
 {
   private:
     Real *Vol_;
     StdVec<Real *> contact_total_weight_;
-    StdVec<int *> contact_is_coupled_;
     StdVec<Vecd *> contact_force_;
 
   public:
-    InterpolationForceConstraint(BodyPartByParticle &body_part, BaseContactRelation &contact_relation);
+    InterpolationForceConstraint(DynamicsIdentifier &identifier, BaseContactRelation &contact_relation);
     void interaction(size_t index_i, Real dt = 0.0);
 };
 } // namespace solid_dynamics
