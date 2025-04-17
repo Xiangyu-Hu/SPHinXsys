@@ -233,7 +233,7 @@ void run_solid_to_shell_coupling(size_t res_factor_solid, size_t res_factor_shel
 
     // geometry
     const Real cube_length = 1.0;
-    const Real shell_thickness = 0.1;
+    const Real shell_thickness = 0.02;
     const Real shell_length = 5.0;
     const Real shell_width = cube_length;
 
@@ -307,7 +307,7 @@ void run_solid_to_shell_coupling(size_t res_factor_solid, size_t res_factor_shel
     SimpleDynamics<thin_structure_dynamics::ConstrainShellBodyRegion> fix_shell_bc(shell_fixed_part);
 
     // Gravity
-    Gravity gravity(-20 * Vec3d::UnitY());
+    Gravity gravity(-4 * Vec3d::UnitY());
     SimpleDynamics<GravityForce<Gravity>> constant_gravity(cube_body, gravity);
 
     // Coupling
@@ -452,7 +452,7 @@ void run_solid(size_t res_factor, Real stiffness_ratio, bool run_relax)
 
     // geometry
     const Real cube_length = 1.0;
-    const Real shell_thickness = 0.1;
+    const Real shell_thickness = 0.02;
     const Real shell_length = 5.0;
     const Real shell_width = cube_length;
 
@@ -504,7 +504,7 @@ void run_solid(size_t res_factor, Real stiffness_ratio, bool run_relax)
     SimpleDynamics<FixBodyPartConstraint> fix_shell_bc(shell_fixed_part);
 
     // Gravity
-    auto gravity(-1 * Vec3d::UnitY());
+    auto gravity(-4 * Vec3d::UnitY());
     SolidBodyPart cube_part(body, "CubePart", [&](Vec3d &pos)
                             { return pos.y() > shell_thickness; });
     SimpleDynamics<ForcePartByParticle> constant_gravity(cube_part, "Gravity", gravity);
