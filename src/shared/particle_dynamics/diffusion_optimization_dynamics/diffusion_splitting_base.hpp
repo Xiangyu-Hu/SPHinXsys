@@ -49,7 +49,7 @@ OptimizationBySplittingAlgorithmBase<DataType>::
     this->particles_->template addVariableToWrite<Real>("VariationLocal");
     this->particles_->template addVariableToWrite<Real>("VariationGlobal");
     this->particles_->template addVariableToWrite<Real>("ResidualAfterSplitting");
-    this->particles_->template addVariableToRestart<Real>("ThermalConductivity");
+    this->particles_->template addEvolvingVariable<Real>("ThermalConductivity");
 }
 //=================================================================================================//
 template <typename DataType>

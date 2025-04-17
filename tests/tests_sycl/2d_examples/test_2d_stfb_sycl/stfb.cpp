@@ -170,7 +170,7 @@ int main(int ac, char *av[])
         structure_update_contact_relation(structure_contact);
     UpdateRelation<MainExecutionPolicy, Contact<>>
         observer_update_contact_relation(observer_contact);
-    ParticleSortCK<MainExecutionPolicy, RadixSort> particle_sort(water_block);
+    ParticleSortCK<MainExecutionPolicy> particle_sort(water_block);
 
     Gravity gravity(Vecd(0.0, -gravity_g));
     StateDynamics<MainExecutionPolicy, GravityForceCK<Gravity>> constant_gravity(water_block, gravity);
@@ -193,7 +193,7 @@ int main(int ac, char *av[])
         pressure_force_on_structure(structure_contact);
 
     ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AdvectionTimeStepCK> fluid_advection_time_step(water_block, U_f);
-    ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticTimeStepCK> fluid_acoustic_time_step(water_block);
+    ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticTimeStepCK<>> fluid_acoustic_time_step(water_block);
     //----------------------------------------------------------------------
     //	Define the multi-body system
     //----------------------------------------------------------------------

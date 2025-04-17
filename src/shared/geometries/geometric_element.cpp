@@ -16,20 +16,6 @@ GeometricBox::GeometricBox(const Vecd &halfsize) : halfsize_(halfsize)
     }
 }
 //=================================================================================================//
-bool GeometricBox::checkContain(const Vecd &probe_point)
-{
-    bool is_contained = true;
-    for (int i = 0; i != Dimensions; ++i)
-    {
-        if (ABS(probe_point[i]) > halfsize_[i]) // outside the box
-        {
-            is_contained = false;
-            break;
-        }
-    }
-    return is_contained;
-}
-//=================================================================================================//
 Vecd GeometricBox::findClosestPoint(const Vecd &probe_point)
 {
     //This is from Simbody, Geo_Box.h

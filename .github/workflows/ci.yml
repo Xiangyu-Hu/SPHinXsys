@@ -20,6 +20,11 @@ on:
         description: "Run the windows build with VS Code Sever debugging enabled"
         required: false
         default: false
+      macos_build_debug_enabled:
+        type: boolean
+        description: "Run the macOS build with VS Code Sever debugging enabled"
+        required: false
+        default: false
 env:
   VCPKG_VERSION: "2024.02.14"
   CTEST_PARALLEL_LEVEL: "1"
@@ -35,7 +40,12 @@ jobs:
 
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
+
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: '3.x'
 
       - name: Install system dependencies
         run: |
@@ -46,7 +56,6 @@ jobs:
             curl zip unzip tar `# when starting fresh on a WSL image for bootstrapping vcpkg`\
             pkg-config `# for installing libraries with vcpkg`\
             git \
-            cmake \
             ninja-build \
             libfontconfig1-dev `# From here required for vcpkg opencascade`\
             libx11-dev \
@@ -56,6 +65,7 @@ jobs:
           sudo apt update
           sudo apt install intel-basekit \
             intel-oneapi-runtime-opencl
+          sudo apt-get install autoconf automake autoconf-archive
 
       - uses: hendrikmuhs/ccache-action@v1.2
         with:
@@ -152,7 +162,12 @@ jobs:
 
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
+
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: '3.x'
 
       - name: Install system dependencies
         run: |
@@ -163,11 +178,11 @@ jobs:
             curl zip unzip tar `# when starting fresh on a WSL image for bootstrapping vcpkg`\
             pkg-config `# for installing libraries with vcpkg`\
             git \
-            cmake \
             ninja-build \
             libfontconfig1-dev `# From here required for vcpkg opencascade`\
             libx11-dev \
             libgl-dev
+          sudo apt-get install autoconf automake autoconf-archive
 
       - uses: hendrikmuhs/ccache-action@v1.2
         with:
@@ -233,7 +248,12 @@ jobs:
       VCPKG_DEFAULT_TRIPLET: x64-linux
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
+
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: '3.x'
 
       - name: Install system dependencies
         run: |
@@ -244,11 +264,11 @@ jobs:
             curl zip unzip tar `# when starting fresh on a WSL image for bootstrapping vcpkg`\
             pkg-config `# for installing libraries with vcpkg`\
             git \
-            cmake \
             ninja-build \
             libfontconfig1-dev `# From here required for vcpkg opencascade`\
             libx11-dev \
             libgl-dev
+          sudo apt-get install autoconf automake autoconf-archive
 
       - uses: friendlyanon/setup-vcpkg@v1 # Setup vcpkg into ${{github.workspace}}
         with:
@@ -333,7 +353,12 @@ jobs:
       VCPKG_DEFAULT_TRIPLET: x64-windows
 
     steps:
-      - uses: actions/checkout@v3 # Checks-out the repository under ${{github.workspace}}
+      - uses: actions/checkout@v4 # Checks-out the repository under ${{github.workspace}}
+
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: '3.x'
 
       - name: Update ccache and ninja # For correct caching with ccache on Windows
         shell: bash
@@ -407,7 +432,12 @@ jobs:
       VCPKG_DEFAULT_TRIPLET: x64-windows
 
     steps:
-      - uses: actions/checkout@v3 # Checks-out the repository under ${{github.workspace}}
+      - uses: actions/checkout@v4 # Checks-out the repository under ${{github.workspace}}
+
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: '3.x'
 
       - name: Update ccache and ninja # For correct caching with ccache on Windows
         shell: bash
@@ -484,14 +514,19 @@ jobs:
   ###############################################################################
 
   macOS-build:
-    if: ${{ github.event_name != 'workflow_dispatch' }}
+    if: ${{ github.event_name != 'workflow_dispatch' || inputs.macos_build_debug_enabled  }}
     runs-on: macos-13
     env:
       VCPKG_DEFAULT_TRIPLET: x64-osx
 
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
+
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: '3.x'
 
       - name: Install system dependencies
         run: |
@@ -502,8 +537,8 @@ jobs:
           brew install \
             pkg-config `# for installing libraries with vcpkg`\
             git \
-            cmake \
-            ninja
+            ninja \
+            autoconf automake autoconf-archive
 
       - uses: hendrikmuhs/ccache-action@v1.2
         with:
@@ -556,11 +591,17 @@ jobs:
     runs-on: macos-13
     env:
       VCPKG_DEFAULT_TRIPLET: x64-osx
+      VCPKG_VERSION: "2024.02.14"
 
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: '3.x'
+          
       - name: Install system dependencies
         run: |
           brew reinstall gfortran # to force having gfortran on PATH because github runners don't have it, just the versioned aliases, i.e. gfortran-11
@@ -570,8 +611,8 @@ jobs:
           brew install \
             pkg-config `# for installing libraries with vcpkg`\
             git \
-            cmake \
-            ninja
+            ninja \
+            autoconf automake autoconf-archive
 
       - uses: friendlyanon/setup-vcpkg@v1 # Setup vcpkg into ${{github.workspace}}
         with:

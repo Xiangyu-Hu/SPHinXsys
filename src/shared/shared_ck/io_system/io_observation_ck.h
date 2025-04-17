@@ -36,14 +36,16 @@
 
 namespace SPH
 {
-template <class ExecutionPolicy, typename DataType>
-class ObservedQuantityRecording<ExecutionPolicy, DataType>
-    : public BaseQuantityRecording,
-      public ObservingAQuantityCK<ExecutionPolicy, DataType>
+template <class ExecutionPolicy, typename DataType, typename... Parameters>
+class ObservedQuantityRecording<ExecutionPolicy, DataType, Parameters...>
+    : public BaseQuantityRecording
 {
   protected:
     SPHBody &observer_;
     BaseParticles &base_particles_;
+    ObservingQuantityCK<ExecutionPolicy, DataType, Parameters...> observation_method_;
+    DiscreteVariable<DataType> *dv_interpolated_quantities_;
+    size_t number_of_observe_;
 
   public:
     DataType type_indicator_; /*< this is an indicator to identify the variable type. */
@@ -51,15 +53,18 @@ class ObservedQuantityRecording<ExecutionPolicy, DataType>
   public:
     ObservedQuantityRecording(const std::string &quantity_name, Relation<Contact<>> &contact_relation)
         : BaseQuantityRecording(contact_relation.getSPHBody().getSPHSystem(),
-                                contact_relation.getSPHBody().getName(), quantity_name),
-          ObservingAQuantityCK<ExecutionPolicy, DataType>(contact_relation, quantity_name),
+                                contact_relation.getSPHBody().getName()),
           observer_(contact_relation.getSPHBody()),
-          base_particles_(observer_.getBaseParticles())
+          base_particles_(observer_.getBaseParticles()),
+          observation_method_(contact_relation, quantity_name),
+          dv_interpolated_quantities_(observation_method_.dvInterpolatedQuantities()),
+          number_of_observe_(base_particles_.TotalRealParticles())
     {
+        setFullPath(quantity_name);
         std::ofstream out_file(filefullpath_output_.c_str(), std::ios::app);
         out_file << "run_time" << "   ";
-        DataType *interpolated_quantities = this->dv_interpolated_quantities_->Data();
-        for (size_t i = 0; i != base_particles_.TotalRealParticles(); ++i)
+        DataType *interpolated_quantities = getObservedQuantity();
+        for (size_t i = 0; i != number_of_observe_; ++i)
         {
             std::string quantity_name_i = quantity_name + "[" + std::to_string(i) + "]";
             plt_engine_.writeAQuantityHeader(out_file, interpolated_quantities[i], quantity_name_i);
@@ -73,10 +78,10 @@ class ObservedQuantityRecording<ExecutionPolicy, DataType>
     {
         std::ofstream out_file(filefullpath_output_.c_str(), std::ios::app);
         out_file << sv_physical_time_->getValue() << "   ";
-        this->exec();
-        this->dv_interpolated_quantities_->prepareForOutput(ExecutionPolicy{});
-        DataType *interpolated_quantities = this->dv_interpolated_quantities_->Data();
-        for (size_t i = 0; i != base_particles_.TotalRealParticles(); ++i)
+        observation_method_.exec();
+        dv_interpolated_quantities_->prepareForOutput(ExecutionPolicy{});
+        DataType *interpolated_quantities = getObservedQuantity();
+        for (size_t i = 0; i != number_of_observe_; ++i)
         {
             plt_engine_.writeAQuantity(out_file, interpolated_quantities[i]);
         }
@@ -86,8 +91,13 @@ class ObservedQuantityRecording<ExecutionPolicy, DataType>
 
     DataType *getObservedQuantity()
     {
-        return this->interpolated_quantities_;
-    }
+        return this->dv_interpolated_quantities_->Data();
+    };
+
+    size_t NumberOfObservedQuantity()
+    {
+        return number_of_observe_;
+    };
 };
 
 template <class ExecutionPolicy, class LocalReduceMethodType>
@@ -100,18 +110,21 @@ class ReducedQuantityRecording<ExecutionPolicy, LocalReduceMethodType> : public 
     /*< deduce variable type from reduce method. */
     using VariableType = typename LocalReduceMethodType::FinishDynamics::OutputType;
     VariableType type_indicator_; /*< this is an indicator to identify the variable type. */
+    VariableType reduced_quantity_;
 
   public:
     template <class DynamicsIdentifier, typename... Args>
     ReducedQuantityRecording(DynamicsIdentifier &identifier, Args &&...args)
         : BaseQuantityRecording(identifier.getSPHBody().getSPHSystem(),
-                                identifier.getName(), ""),
-          reduce_method_(identifier, std::forward<Args>(args)...)
+                                identifier.getName()),
+          reduce_method_(identifier, std::forward<Args>(args)...),
+          reduced_quantity_(ZeroData<VariableType>::value)
     {
         quantity_name_ = reduce_method_.QuantityName();
+        setFullPath(quantity_name_);
         std::ofstream out_file(filefullpath_output_.c_str(), std::ios::app);
         out_file << "\"run_time\"" << "   ";
-        plt_engine_.writeAQuantityHeader(out_file, ZeroData<VariableType>::value, quantity_name_);
+        plt_engine_.writeAQuantityHeader(out_file, reduced_quantity_, quantity_name_);
         out_file << "\n";
         out_file.close();
     };
@@ -121,9 +134,20 @@ class ReducedQuantityRecording<ExecutionPolicy, LocalReduceMethodType> : public 
     {
         std::ofstream out_file(filefullpath_output_.c_str(), std::ios::app);
         out_file << sv_physical_time_->getValue() << "   ";
-        plt_engine_.writeAQuantity(out_file, reduce_method_.exec());
+        reduced_quantity_ = reduce_method_.exec();
+        plt_engine_.writeAQuantity(out_file, reduced_quantity_);
         out_file << "\n";
         out_file.close();
+    };
+
+    VariableType *getObservedQuantity()
+    {
+        return &reduced_quantity_;
+    };
+
+    size_t NumberOfObservedQuantity()
+    {
+        return 1;
     };
 };
 } // namespace SPH

@@ -147,13 +147,12 @@ void BodyStatesRecordingToPlt::writeWithFileName(const std::string &sequence)
 //=============================================================================================//
 MeshRecordingToPlt ::MeshRecordingToPlt(SPHSystem &sph_system, BaseMeshField &mesh_field)
     : BaseIO(sph_system), mesh_field_(mesh_field),
-      filefullpath_(io_environment_.output_folder_ + "/" + mesh_field.Name() + ".dat") {}
+      partial_file_name_(io_environment_.output_folder_ + "/" + mesh_field.Name()) {}
 //=============================================================================================//
 void MeshRecordingToPlt::writeToFile(size_t iteration_step)
 {
-    std::ofstream out_file(filefullpath_.c_str(), std::ios::app);
-    mesh_field_.writeMeshFieldToPlt(out_file);
-    out_file.close();
+    std::string extended_name = partial_file_name_ + "_" + std::to_string(iteration_step);
+    mesh_field_.writeMeshFieldToPlt(extended_name);
 }
 //=================================================================================================//
 } // namespace SPH

@@ -30,7 +30,7 @@ ViscousForceFromFluid::ViscousForceFromFluid(BaseContactRelation &contact_relati
         contact_Vol_.push_back(contact_particles_[k]->getVariableDataByName<Real>("VolumetricMeasure"));
         Viscosity &viscosity_k = DynamicCast<Viscosity>(this, contact_particles_[k]->getBaseMaterial());
         mu_.push_back(viscosity_k.ReferenceViscosity());
-        smoothing_length_.push_back(contact_bodies_[k]->sph_adaptation_->ReferenceSmoothingLength());
+        smoothing_length_.push_back(contact_bodies_[k]->getSPHAdaptation().ReferenceSmoothingLength());
     }
 }
 //=================================================================================================//

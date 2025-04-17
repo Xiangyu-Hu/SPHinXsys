@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8" ?>
-<meanvariance>
-    <MeanValue_Element>
-        <Snapshot_MeanValue TotalViscousForceFromFluid_0="~[0.35255,0.00014313]" />
-    </MeanValue_Element>
-    <Variance_Element>
-        <Snapshot_Variance TotalViscousForceFromFluid_0="~[0.00326208,0.000992866]" />
-    </Variance_Element>
-</meanvariance>

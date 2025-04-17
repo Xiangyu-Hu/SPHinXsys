@@ -12,7 +12,6 @@ template <class BaseInteractionType>
 template <class DynamicsIdentifier>
 AcousticStep<BaseInteractionType>::AcousticStep(DynamicsIdentifier &identifier)
     : BaseInteractionType(identifier),
-      fluid_(DynamicCast<WeaklyCompressibleFluid>(this, this->sph_body_.getBaseMaterial())),
       dv_Vol_(this->particles_->template getVariableByName<Real>("VolumetricMeasure")),
       dv_rho_(this->particles_->template getVariableByName<Real>("Density")),
       dv_mass_(this->particles_->template getVariableByName<Real>("Mass")),
@@ -24,27 +23,15 @@ AcousticStep<BaseInteractionType>::AcousticStep(DynamicsIdentifier &identifier)
       dv_force_prior_(this->particles_->template registerStateVariableOnly<Vecd>("ForcePrior"))
 {
     //----------------------------------------------------------------------
-    //		add sortable particle data
+    //		add evolving variables
     //----------------------------------------------------------------------
-    this->particles_->template addVariableToSort<Vecd>("Position");
-    this->particles_->template addVariableToSort<Vecd>("Velocity");
-    this->particles_->template addVariableToSort<Real>("Mass");
-    this->particles_->template addVariableToSort<Vecd>("ForcePrior");
-    this->particles_->template addVariableToSort<Vecd>("Force");
-    this->particles_->template addVariableToSort<Real>("DensityChangeRate");
-    this->particles_->template addVariableToSort<Real>("Density");
-    this->particles_->template addVariableToSort<Real>("Pressure");
-    this->particles_->template addVariableToSort<Real>("VolumetricMeasure");
-    //----------------------------------------------------------------------
-    //		add restart output particle data
-    //----------------------------------------------------------------------
-    this->particles_->template addVariableToRestart<Vecd>("Position");
-    this->particles_->template addVariableToRestart<Real>("VolumetricMeasure");
-    this->particles_->template addVariableToRestart<Real>("Pressure");
-    this->particles_->template addVariableToRestart<Real>("DensityChangeRate");
-    this->particles_->template addVariableToRestart<Vecd>("Velocity");
-    this->particles_->template addVariableToRestart<Vecd>("Force");
-    this->particles_->template addVariableToRestart<Vecd>("ForcePrior");
+    this->particles_->template addEvolvingVariable<Vecd>("Velocity");
+    this->particles_->template addEvolvingVariable<Real>("Mass");
+    this->particles_->template addEvolvingVariable<Vecd>("ForcePrior");
+    this->particles_->template addEvolvingVariable<Vecd>("Force");
+    this->particles_->template addEvolvingVariable<Real>("DensityChangeRate");
+    this->particles_->template addEvolvingVariable<Real>("Density");
+    this->particles_->template addEvolvingVariable<Real>("Pressure");
     //----------------------------------------------------------------------
     //		add output particle data
     //----------------------------------------------------------------------
@@ -55,7 +42,9 @@ template <class RiemannSolverType, class KernelCorrectionType, typename... Param
 AcousticStep1stHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType, Parameters...>>::
     AcousticStep1stHalf(Relation<Inner<Parameters...>> &inner_relation)
     : AcousticStep<Interaction<Inner<Parameters...>>>(inner_relation),
-      kernel_correction_(this->particles_), riemann_solver_(this->fluid_, this->fluid_)
+      kernel_correction_(this->particles_),
+      fluid_(DynamicCast<FluidType>(this, this->sph_body_.getBaseMaterial())),
+      riemann_solver_(this->fluid_, this->fluid_)
 {
     static_assert(std::is_base_of<KernelCorrection, KernelCorrectionType>::value,
                   "KernelCorrection is not the base of KernelCorrectionType!");
@@ -133,7 +122,9 @@ template <class RiemannSolverType, class KernelCorrectionType, typename... Param
 AcousticStep1stHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType, Parameters...>>::
     AcousticStep1stHalf(Relation<Contact<Parameters...>> &wall_contact_relation)
     : AcousticStep<Interaction<Contact<Wall, Parameters...>>>(wall_contact_relation),
-      kernel_correction_(this->particles_), riemann_solver_(this->fluid_, this->fluid_) {}
+      kernel_correction_(this->particles_),
+      fluid_(DynamicCast<FluidType>(this, this->sph_body_.getBaseMaterial())),
+      riemann_solver_(this->fluid_, this->fluid_) {}
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
 template <class ExecutionPolicy, class EncloserType>

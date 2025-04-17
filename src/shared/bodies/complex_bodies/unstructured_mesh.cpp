@@ -14,7 +14,7 @@ BaseInnerRelationInFVM::BaseInnerRelationInFVM(RealBody &real_body, ANSYSMesh &a
       Vol_(base_particles_.getVariableDataByName<Real>("VolumetricMeasure"))
 {
     subscribeToBody();
-    inner_configuration_.resize(base_particles_.RealParticlesBound(), Neighborhood());
+    inner_configuration_.resize(base_particles_.ParticlesBound(), Neighborhood());
 };
 //=============================================================================================//
 } // namespace SPH

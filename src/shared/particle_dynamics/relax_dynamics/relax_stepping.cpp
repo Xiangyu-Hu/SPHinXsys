@@ -12,8 +12,7 @@ RelaxationResidue<Inner<>>::RelaxationResidue(BaseInnerRelation &inner_relation)
 RelaxationResidue<Inner<>>::
     RelaxationResidue(BaseInnerRelation &inner_relation, const std::string &sub_shape_name)
     : RelaxationResidue<Base, DataDelegateInner>(inner_relation),
-      relax_shape_(*DynamicCast<ComplexShape>(this, sph_body_.getInitialShape())
-                        .getSubShapeByName(sub_shape_name)) {}
+      relax_shape_(*DynamicCast<ComplexShape>(this, sph_body_.getInitialShape()).getSubShapeByName(sub_shape_name)) {}
 //=================================================================================================//
 void RelaxationResidue<Inner<>>::interaction(size_t index_i, Real dt)
 {
@@ -32,6 +31,79 @@ void RelaxationResidue<Inner<LevelSetCorrection>>::interaction(size_t index_i, R
     RelaxationResidue<Inner<>>::interaction(index_i, dt);
     residue_[index_i] -= 2.0 * level_set_shape_.computeKernelGradientIntegral(
                                    pos_[index_i], sph_adaptation_->SmoothingLengthRatio(index_i));
+}
+//=================================================================================================//
+void RelaxationResidue<Inner<Implicit>>::interaction(size_t index_i, Real dt)
+{
+    ErrorAndParameters<Vecd, Matd, Matd> error_and_parameters = computeErrorAndParameters(index_i, dt);
+    updateStates(index_i, dt, error_and_parameters);
+    residue_[index_i] = -error_and_parameters.error_ / dt / dt;
+    kinetic_energy_[index_i] = residue_[index_i].norm();
+}
+//=================================================================================================//
+ErrorAndParameters<Vecd, Matd, Matd> RelaxationResidue<Inner<Implicit>>::
+computeErrorAndParameters(size_t index_i, Real dt)
+{
+    ErrorAndParameters<Vecd, Matd, Matd> error_and_parameters;
+    Neighborhood& inner_neighborhood = inner_configuration_[index_i];
+    for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+    {
+        size_t index_j = inner_neighborhood.j_[n];
+        Matd parameter_b = 2.0 * inner_neighborhood.e_ij_[n] * inner_neighborhood.e_ij_[n].transpose() *
+            kernel_->d2W(inner_neighborhood.r_ij_[n], inner_neighborhood.e_ij_[n]) *
+            Vol_[index_j] * dt * dt;
+
+        error_and_parameters.error_ += 2.0 * inner_neighborhood.dW_ij_[n] * Vol_[index_j] * 
+            inner_neighborhood.e_ij_[n] * dt * dt;
+        error_and_parameters.a_ -= parameter_b;
+        error_and_parameters.c_ += parameter_b * parameter_b;
+    }
+
+    Matd evolution = Matd::Identity();
+    error_and_parameters.a_ -= evolution;
+    return error_and_parameters;
+}
+//=================================================================================================//
+void RelaxationResidue<Inner<Implicit>>::updateStates(size_t index_i, Real dt,
+    const ErrorAndParameters<Vecd, Matd, Matd>& error_and_parameters)
+{
+    Matd parameter_l = error_and_parameters.a_ * error_and_parameters.a_ + error_and_parameters.c_;
+    Vecd parameter_k = parameter_l.inverse() * error_and_parameters.error_;
+
+    pos_[index_i] += error_and_parameters.a_ * parameter_k;
+
+    Neighborhood& inner_neighborhood = inner_configuration_[index_i];
+    for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+    {
+        size_t index_j = inner_neighborhood.j_[n];
+        Matd parameter_b = 2.0 * inner_neighborhood.e_ij_[n] * inner_neighborhood.e_ij_[n].transpose() *
+            kernel_->d2W(inner_neighborhood.r_ij_[n], inner_neighborhood.e_ij_[n]) * Vol_[index_j] * dt * dt;
+        pos_[index_j] -= parameter_b * parameter_k;
+    }
+}
+//=================================================================================================//
+void RelaxationResidue<Inner<LevelSetCorrection, Implicit>>::interaction(size_t index_i, Real dt)
+{
+    ErrorAndParameters<Vecd, Matd, Matd> error_and_parameters = computeErrorAndParameters(index_i, dt);
+    updateStates(index_i, dt, error_and_parameters);
+    residue_[index_i] = -error_and_parameters.error_ / dt / dt;
+    kinetic_energy_[index_i] = residue_[index_i].norm();
+}
+//=================================================================================================//
+ErrorAndParameters<Vecd, Matd, Matd> RelaxationResidue<Inner<LevelSetCorrection, Implicit>>::
+computeErrorAndParameters(size_t index_i, Real dt)
+{
+    ErrorAndParameters<Vecd, Matd, Matd> error_and_parameters =
+        RelaxationResidue<Inner<Implicit>>::computeErrorAndParameters(index_i, dt);
+    Real overlap = level_set_shape_.computeKernelIntegral(pos_[index_i],
+        sph_adaptation_->SmoothingLengthRatio(index_i)) * dt * dt;
+
+    error_and_parameters.error_ += 2.0 * level_set_shape_.computeKernelGradientIntegral(pos_[index_i],
+            sph_adaptation_->SmoothingLengthRatio(index_i)) * dt * dt * (1 + overlap);
+    error_and_parameters.a_ -= 2.0 * level_set_shape_.computeKernelSecondGradientIntegral(pos_[index_i],
+            sph_adaptation_->SmoothingLengthRatio(index_i)) * dt * dt * (1 + overlap);
+
+    return error_and_parameters;
 }
 //=================================================================================================//
 void RelaxationResidue<Contact<>>::interaction(size_t index_i, Real dt)
@@ -53,7 +125,7 @@ void RelaxationResidue<Contact<>>::interaction(size_t index_i, Real dt)
 RelaxationScaling::RelaxationScaling(SPHBody &sph_body)
     : LocalDynamicsReduce<ReduceMax>(sph_body),
       residue_(particles_->getVariableDataByName<Vecd>("ZeroOrderResidue")),
-      h_ref_(sph_body.sph_adaptation_->ReferenceSmoothingLength()) {}
+      h_ref_(sph_body.getSPHAdaptation().ReferenceSmoothingLength()) {}
 //=================================================================================================//
 Real RelaxationScaling::reduce(size_t index_i, Real dt)
 {
@@ -67,7 +139,7 @@ Real RelaxationScaling::outputResult(Real reduced_value)
 //=================================================================================================//
 PositionRelaxation::PositionRelaxation(SPHBody &sph_body)
     : LocalDynamics(sph_body),
-      sph_adaptation_(sph_body.sph_adaptation_),
+      sph_adaptation_(&sph_body.getSPHAdaptation()),
       pos_(particles_->getVariableDataByName<Vecd>("Position")),
       residue_(particles_->getVariableDataByName<Vecd>("ZeroOrderResidue")) {}
 //=================================================================================================//
@@ -83,7 +155,7 @@ UpdateSmoothingLengthRatioByShape::
       Vol_(particles_->getVariableDataByName<Real>("VolumetricMeasure")),
       pos_(particles_->getVariableDataByName<Vecd>("Position")),
       target_shape_(target_shape),
-      particle_adaptation_(DynamicCast<ParticleRefinementByShape>(this, sph_body.sph_adaptation_)),
+      particle_adaptation_(DynamicCast<ParticleRefinementByShape>(this, &sph_body.getSPHAdaptation())),
       reference_spacing_(particle_adaptation_->ReferenceSpacing()) {}
 //=================================================================================================//
 UpdateSmoothingLengthRatioByShape::UpdateSmoothingLengthRatioByShape(SPHBody &sph_body)

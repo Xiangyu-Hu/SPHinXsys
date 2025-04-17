@@ -39,10 +39,9 @@ class FixPart : public BodyPartByParticle
     };
 
   private:
-    void tagManually(size_t index_i)
+    bool tagManually(size_t index_i)
     {
-        if (contains_(pos_[index_i]))
-            body_part_particles_.push_back(index_i);
+        return contains_(pos_[index_i]);
     };
 };
 
@@ -149,9 +148,9 @@ read_ref_data(const fs::path &ref_name)
     if (!file.is_open())
         throw std::runtime_error("Could not open the file: " + ref_name.string());
 
-    double variable_x;
-    double variable_y;
-    double variable_z;
+    Real variable_x;
+    Real variable_y;
+    Real variable_z;
     while (std::getline(file, line))
     {
         row.clear();

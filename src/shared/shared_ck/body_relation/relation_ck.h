@@ -35,6 +35,11 @@
 
 namespace SPH
 {
+enum class ConfigType
+{
+    Eulerian,
+    Lagrangian,
+};
 
 template <typename...>
 class Relation;
@@ -43,16 +48,44 @@ template <>
 class Relation<Base>
 {
     UniquePtrsKeeper<Entity> relation_variable_ptrs_;
+    DiscreteVariable<Vecd> *assignConfigPosition(BaseParticles &particles, ConfigType config_type);
 
   public:
-    explicit Relation(SPHBody &sph_body);
-    virtual ~Relation(){};
+    template <class SourceIdentifier, class TargetIdentifier>
+    Relation(SourceIdentifier &source_identifier, StdVec<TargetIdentifier *> target_identifiers,
+             ConfigType config_type = ConfigType::Eulerian);
+    virtual ~Relation() {};
     SPHBody &getSPHBody() { return sph_body_; };
+    DiscreteVariable<Vecd> *getSourcePosition() { return dv_source_pos_; };
+    DiscreteVariable<Vecd> *getTargetPosition(UnsignedInt target_index = 0);
+    DiscreteVariable<UnsignedInt> *getNeighborIndex(UnsignedInt target_index = 0);
+    DiscreteVariable<UnsignedInt> *getParticleOffset(UnsignedInt target_index = 0);
+    void registerComputingKernel(execution::Implementation<Base> *implementation, UnsignedInt target_index = 0);
+    void resetComputingKernelUpdated(UnsignedInt target_index = 0);
+
+    class NeighborList
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        NeighborList(const ExecutionPolicy &ex_policy, EncloserType &encloser,
+                     UnsignedInt target_index = 0);
+
+      protected:
+        UnsignedInt *neighbor_index_;
+        UnsignedInt *particle_offset_;
+        inline UnsignedInt FirstNeighbor(UnsignedInt i) { return particle_offset_[i]; };
+        inline UnsignedInt LastNeighbor(UnsignedInt i) { return particle_offset_[i + 1]; };
+    };
 
   protected:
     SPHBody &sph_body_;
     BaseParticles &particles_;
+    DiscreteVariable<Vecd> *dv_source_pos_;
+    StdVec<DiscreteVariable<Vecd> *> dv_target_pos_;
     UnsignedInt offset_list_size_;
+    StdVec<DiscreteVariable<UnsignedInt> *> dv_target_neighbor_index_;
+    StdVec<DiscreteVariable<UnsignedInt> *> dv_target_particle_offset_;
+    StdVec<StdVec<execution::Implementation<Base> *>> registered_computing_kernels_;
 
     template <class DataType>
     DiscreteVariable<DataType> *addRelationVariable(const std::string &name, size_t data_size);
@@ -63,45 +96,45 @@ class Relation<Inner<>> : public Relation<Base>
 {
   public:
     explicit Relation(RealBody &real_body);
-    virtual ~Relation(){};
+    virtual ~Relation() {};
     RealBody &getRealBody() { return *real_body_; };
-    CellLinkedList &getCellLinkedList() { return cell_linked_list_; };
-    DiscreteVariable<UnsignedInt> *getNeighborIndex() { return dv_neighbor_index_; };
-    DiscreteVariable<UnsignedInt> *getParticleOffset() { return dv_particle_offset_; };
-    void registerComputingKernel(execution::Implementation<Base> *implementation);
-    void resetComputingKernelUpdated();
 
   protected:
     RealBody *real_body_;
-    CellLinkedList &cell_linked_list_;
-    DiscreteVariable<UnsignedInt> *dv_neighbor_index_;
-    DiscreteVariable<UnsignedInt> *dv_particle_offset_;
-    StdVec<execution::Implementation<Base> *> all_inner_computing_kernels_;
 };
 
-template <>
-class Relation<Contact<>> : public Relation<Base>
+template <class SourceIdentifier, class TargetIdentifier>
+class Relation<Contact<SourceIdentifier, TargetIdentifier>> : public Relation<Base>
 {
   protected:
-    RealBodyVector contact_bodies_;
+    SourceIdentifier &source_identifier_;
+    StdVec<TargetIdentifier *> contact_identifiers_;
+    StdVec<RealBody *> contact_bodies_;
     StdVec<BaseParticles *> contact_particles_;
     StdVec<SPHAdaptation *> contact_adaptations_;
-    StdVec<CellLinkedList *> target_cell_linked_lists_;
-    StdVec<DiscreteVariable<UnsignedInt> *> dv_contact_neighbor_index_;
-    StdVec<DiscreteVariable<UnsignedInt> *> dv_contact_particle_offset_;
-    StdVec<StdVec<execution::Implementation<Base> *>> all_contact_computing_kernels_;
 
   public:
-    Relation(SPHBody &sph_body, RealBodyVector contact_bodies);
-    virtual ~Relation(){};
-    RealBodyVector getContactBodies() { return contact_bodies_; };
+    typedef SourceIdentifier SourceType;
+    typedef TargetIdentifier TargetType;
+
+    template <typename... Args>
+    Relation(SourceIdentifier &source_identifier, StdVec<TargetIdentifier *> contact_identifiers, Args &&...args);
+    virtual ~Relation() {};
+    SourceIdentifier &getSourceIdentifier() { return source_identifier_; };
+    StdVec<TargetIdentifier *> getContactIdentifiers() { return contact_identifiers_; };
+    TargetIdentifier &getContactIdentifier(UnsignedInt target_index) { return *contact_identifiers_[target_index]; };
+    StdVec<RealBody *> getContactBodies() { return contact_bodies_; };
     StdVec<BaseParticles *> getContactParticles() { return contact_particles_; };
     StdVec<SPHAdaptation *> getContactAdaptations() { return contact_adaptations_; };
-    StdVec<CellLinkedList *> getContactCellLinkedList() { return target_cell_linked_lists_; }
-    StdVec<DiscreteVariable<UnsignedInt> *> getContactNeighborIndex() { return dv_contact_neighbor_index_; };
-    StdVec<DiscreteVariable<UnsignedInt> *> getContactParticleOffset() { return dv_contact_particle_offset_; };
-    void registerComputingKernel(execution::Implementation<Base> *implementation, UnsignedInt contact_index);
-    void resetComputingKernelUpdated(UnsignedInt contact_index);
+};
+template <>
+class Relation<Contact<>> : public Relation<Contact<SPHBody, RealBody>>
+{
+  public:
+    template <typename... Args>
+    Relation(SPHBody &sph_body, StdVec<RealBody *> contact_bodies, Args &&...args)
+        : Relation<Contact<SPHBody, RealBody>>(sph_body, contact_bodies, std::forward<Args>(args)...) {}
+    virtual ~Relation() {};
 };
 } // namespace SPH
 #endif // RELATION_CK_H

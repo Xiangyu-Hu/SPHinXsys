@@ -21,7 +21,7 @@ UpdateCellLinkedList<ExecutionPolicy, CellLinkedListType>::UpdateCellLinkedList(
       dv_particle_index_(cell_linked_list_.getParticleIndex()),
       dv_cell_offset_(cell_linked_list_.getCellOffset()),
       dv_current_cell_size_(DiscreteVariable<UnsignedInt>("CurrentCellSize", cell_offset_list_size_)),
-      ex_policy_(ExecutionPolicy{}), kernel_implementation_(*this){}
+      ex_policy_(ExecutionPolicy{}), kernel_implementation_(*this) {}
 //=================================================================================================//
 template <class ExecutionPolicy, typename CellLinkedListType>
 UpdateCellLinkedList<ExecutionPolicy, CellLinkedListType>::ComputingKernel::
@@ -49,8 +49,7 @@ void UpdateCellLinkedList<ExecutionPolicy, CellLinkedListType>::ComputingKernel:
 {
     // Here, particle_index_ takes role of current_cell_size_list_.
     const UnsignedInt linear_index = mesh_.LinearCellIndexFromPosition(pos_[index_i]);
-    typename AtomicUnsignedIntRef<ExecutionPolicy>::type
-        atomic_cell_size(particle_index_[linear_index]);
+    AtomicRef<UnsignedInt> atomic_cell_size(particle_index_[linear_index]);
     ++atomic_cell_size;
 }
 //=================================================================================================//
@@ -60,8 +59,7 @@ void UpdateCellLinkedList<ExecutionPolicy, CellLinkedListType>::ComputingKernel:
 {
     // Here, particle_index_ takes its original role.
     const UnsignedInt linear_index = mesh_.LinearCellIndexFromPosition(pos_[index_i]);
-    typename AtomicUnsignedIntRef<ExecutionPolicy>::type
-        atomic_current_cell_size(current_cell_size_[linear_index]);
+    AtomicRef<UnsignedInt> atomic_current_cell_size(current_cell_size_[linear_index]);
     particle_index_[cell_offset_[linear_index] + atomic_current_cell_size++] = index_i;
 }
 //=================================================================================================//

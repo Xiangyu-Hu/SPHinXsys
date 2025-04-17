@@ -77,7 +77,7 @@ class MeshRecordingToPlt : public BaseIO
 {
   protected:
     BaseMeshField &mesh_field_;
-    std::string filefullpath_;
+    std::string partial_file_name_;
 
   public:
     MeshRecordingToPlt(SPHSystem &sph_system, BaseMeshField &mesh_field);

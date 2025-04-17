@@ -43,6 +43,8 @@
 #if SPHINXSYS_USE_SYCL
 #include <CL/sycl.hpp>
 #define SYCL_DEVICE_ONLY
+#else
+#include <boost/atomic/atomic_ref.hpp>
 #endif // SPHINXSYS_USE_SYCL
 
 #include <Eigen/Cholesky>
@@ -53,6 +55,18 @@
 
 namespace SPH
 {
+#if SPHINXSYS_USE_SYCL
+template <typename T>
+using AtomicRef = sycl::atomic_ref<
+    T, sycl::memory_order_relaxed, sycl::memory_scope_device,
+    sycl::access::address_space::global_space>;
+namespace math = sycl;
+#else
+template <typename T>
+using AtomicRef = boost::atomic_ref<T>;
+namespace math = std;
+#endif // SPHINXSYS_USE_SYCL
+
 #if SPHINXSYS_USE_FLOAT
 using Real = float;
 using UnsignedInt = u_int32_t;
@@ -67,11 +81,26 @@ using Array3i = Eigen::Array<int, 3, 1>;
 /** Vector with float point number.*/
 using Vec2d = Eigen::Matrix<Real, 2, 1>;
 using Vec3d = Eigen::Matrix<Real, 3, 1>;
-/** Small, 2*2 and 3*3, matrix with float point number. */
+using Vec6d = Eigen::Matrix<Real, 6, 1>;
+/** Small 2*2, 3*3, 4*4 and 6*6 matrix with float point number. */
 using Mat2d = Eigen::Matrix<Real, 2, 2>;
 using Mat3d = Eigen::Matrix<Real, 3, 3>;
+using Mat6d = Eigen::Matrix<Real, 6, 6>;
 /** Dynamic matrix*/
 using MatXd = Eigen::Matrix<Real, Eigen::Dynamic, Eigen::Dynamic>;
+
+/** Unified initialize to unit for all float point types. */
+template <typename DataType>
+struct UnitData
+{
+    static inline const DataType value = DataType::Ones();
+};
+
+template <>
+struct UnitData<Real>
+{
+    static inline const Real value = Real(1);
+};
 
 /** Unified initialize to zero for all data type. */
 template <typename DataType>

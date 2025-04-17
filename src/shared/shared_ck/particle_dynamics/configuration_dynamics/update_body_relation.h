@@ -47,56 +47,65 @@ class UpdateRelation<ExecutionPolicy, Inner<Parameters...>>
 {
   public:
     UpdateRelation(Relation<Inner<Parameters...>> &inner_relation);
-    virtual ~UpdateRelation(){};
+    virtual ~UpdateRelation() {};
     virtual void exec(Real dt = 0.0) override;
 
   protected:
-    class ComputingKernel
+    class InteractKernel
         : public Interaction<Inner<Parameters...>>::InteractKernel
     {
       public:
         template <class EncloserType>
-        ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
         void incrementNeighborSize(UnsignedInt index_i);
         void updateNeighborList(UnsignedInt index_i);
 
       protected:
         NeighborSearch neighbor_search_;
+        Real grid_spacing_squared_;
     };
     typedef UpdateRelation<ExecutionPolicy, Inner<Parameters...>> LocalDynamicsType;
-    using KernelImplementation = Implementation<ExecutionPolicy, LocalDynamicsType, ComputingKernel>;
+    using KernelImplementation = Implementation<ExecutionPolicy, LocalDynamicsType, InteractKernel>;
 
     ExecutionPolicy ex_policy_;
     CellLinkedList &cell_linked_list_;
-    Implementation<ExecutionPolicy, LocalDynamicsType, ComputingKernel> kernel_implementation_;
+    Implementation<ExecutionPolicy, LocalDynamicsType, InteractKernel> kernel_implementation_;
 };
 
 template <class ExecutionPolicy, typename... Parameters>
 class UpdateRelation<ExecutionPolicy, Contact<Parameters...>>
     : public Interaction<Contact<Parameters...>>, public BaseDynamics<void>
 {
+    using BaseInteraction = Interaction<Contact<Parameters...>>;
+    using NeighborCriterion = typename BaseInteraction::InteractKernel::NeighborCriterion;
+    using RelationType = Relation<Contact<Parameters...>>;
+    using SourceType = typename RelationType::SourceType;
+    using TargetType = typename RelationType::TargetType;
+    using MaskedCriterion = typename TargetType::template TargetParticleMask<NeighborCriterion>;
+
   public:
-    UpdateRelation(Relation<Contact<Parameters...>> &contact_relation);
-    virtual ~UpdateRelation(){};
+    UpdateRelation(RelationType &contact_relation);
+    virtual ~UpdateRelation() {};
     virtual void exec(Real dt = 0.0) override;
 
   protected:
-    class ComputingKernel
+    class InteractKernel
         : public Interaction<Contact<Parameters...>>::InteractKernel
     {
       public:
         template <class EncloserType>
-        ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt contact_index);
-        void incrementNeighborSize(UnsignedInt index_i);
-        void updateNeighborList(UnsignedInt index_i);
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt contact_index);
+        void incrementNeighborSize(UnsignedInt source_index);
+        void updateNeighborList(UnsignedInt source_index);
 
       protected:
+        MaskedCriterion masked_criterion_;
         NeighborSearch neighbor_search_;
     };
-    typedef UpdateRelation<ExecutionPolicy, Contact<Parameters...>> LocalDynamicsType;
-    using KernelImplementation = Implementation<ExecutionPolicy, LocalDynamicsType, ComputingKernel>;
-    UniquePtrsKeeper<KernelImplementation> contact_kernel_implementation_ptrs_;
 
+    typedef UpdateRelation<ExecutionPolicy, Contact<Parameters...>> LocalDynamicsType;
+    using KernelImplementation = Implementation<ExecutionPolicy, LocalDynamicsType, InteractKernel>;
+    UniquePtrsKeeper<KernelImplementation> contact_kernel_implementation_ptrs_;
     ExecutionPolicy ex_policy_;
     StdVec<CellLinkedList *> contact_cell_linked_list_;
     StdVec<KernelImplementation *> contact_kernel_implementation_;
@@ -106,8 +115,8 @@ template <class ExecutionPolicy>
 class UpdateRelation<ExecutionPolicy>
 {
   public:
-    UpdateRelation(){};
-    void exec(Real dt = 0.0){};
+    UpdateRelation() {};
+    void exec(Real dt = 0.0) {};
 };
 
 template <class ExecutionPolicy, class FirstRelation, class... Others>

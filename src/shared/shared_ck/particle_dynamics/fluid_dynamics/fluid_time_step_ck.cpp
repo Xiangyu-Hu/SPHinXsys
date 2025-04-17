@@ -7,32 +7,10 @@ namespace SPH
 namespace fluid_dynamics
 {
 //=================================================================================================//
-AcousticTimeStepCK::AcousticTimeStepCK(SPHBody &sph_body, Real acousticCFL)
-    : LocalDynamicsReduce<ReduceMax>(sph_body),
-      fluid_(DynamicCast<WeaklyCompressibleFluid>(this, particles_->getBaseMaterial())),
-      dv_rho_(particles_->getVariableByName<Real>("Density")),
-      dv_p_(particles_->getVariableByName<Real>("Pressure")),
-      dv_mass_(particles_->getVariableByName<Real>("Mass")),
-      dv_vel_(particles_->getVariableByName<Vecd>("Velocity")),
-      dv_force_(particles_->getVariableByName<Vecd>("Force")),
-      dv_force_prior_(particles_->getVariableByName<Vecd>("ForcePrior")),
-      h_min_(sph_body.sph_adaptation_->MinimumSmoothingLength()),
-      acousticCFL_(acousticCFL) {}
-//=================================================================================================//
-AcousticTimeStepCK::FinishDynamics::FinishDynamics(AcousticTimeStepCK &encloser)
-    : h_min_(encloser.h_min_), acousticCFL_(encloser.acousticCFL_) {}
-//=================================================================================================//
-Real AcousticTimeStepCK::FinishDynamics::Result(Real reduced_value)
-{
-    // since the particle does not change its configuration in the acoustic time steps
-    // I chose a time-step size according to Eulerian method
-    return acousticCFL_ * h_min_ / (reduced_value + TinyReal);
-}
-//=================================================================================================//
 AdvectionTimeStepCK::
     AdvectionTimeStepCK(SPHBody &sph_body, Real U_ref, Real advectionCFL)
     : LocalDynamicsReduce<ReduceMax>(sph_body),
-      h_min_(sph_body.sph_adaptation_->MinimumSmoothingLength()),
+      h_min_(sph_body.getSPHAdaptation().MinimumSmoothingLength()),
       speed_ref_(U_ref), advectionCFL_(advectionCFL),
       dv_mass_(particles_->getVariableByName<Real>("Mass")),
       dv_vel_(particles_->getVariableByName<Vecd>("Velocity")),

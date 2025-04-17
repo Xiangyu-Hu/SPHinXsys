@@ -58,9 +58,9 @@ class BodyPartByParticle;
 /**
  * @class SPHBody
  * @brief SPHBody is a base body with basic data and functions.
- *		  Its derived class can be a real fluid body, a real deformable solid body,
- *        a static or moving solid body or an observer body.
- * 		  Note that only real bodies have cell linked list.
+ * Its derived class can be a real fluid body, a real deformable solid body,
+ * a static or moving solid body or an observer body.
+ * Note that only real bodies have cell linked list.
  */
 class SPHBody
 {
@@ -80,13 +80,12 @@ class SPHBody
     Shape *initial_shape_;                                /**< initial volumetric geometry enclosing the body */
     int total_body_parts_;                                /**< total number of body parts */
     StdVec<BodyPartByParticle *> body_parts_by_particle_; /**< all body parts by particle */
+    SPHAdaptation *sph_adaptation_;                       /**< numerical adaptation policy */
+    BaseMaterial *base_material_;                         /**< base material for dynamic cast in DataDelegate */
+    StdVec<SPHRelation *> body_relations_;                /**< all contact relations centered from this body **/
 
   public:
     typedef SPHBody BaseIdentifier;
-    SPHAdaptation *sph_adaptation_;        /**< numerical adaptation policy */
-    BaseMaterial *base_material_;          /**< base material for dynamic cast in DataDelegate */
-    StdVec<SPHRelation *> body_relations_; /**< all contact relations centered from this body **/
-
     SPHBody(SPHSystem &sph_system, Shape &shape, const std::string &name);
     SPHBody(SPHSystem &sph_system, Shape &shape);
     SPHBody(SPHSystem &sph_system, const std::string &name);
@@ -99,6 +98,7 @@ class SPHBody
     SPHBody &getSPHBody() { return *this; };
     Shape &getInitialShape() { return *initial_shape_; };
     void assignBaseParticles(BaseParticles *base_particles) { base_particles_ = base_particles; };
+    SPHAdaptation &getSPHAdaptation() { return *sph_adaptation_; };
     BaseParticles &getBaseParticles();
     BaseMaterial &getBaseMaterial();
     StdVec<SPHRelation *> &getBodyRelations() { return body_relations_; };
@@ -115,11 +115,21 @@ class SPHBody
     int getTotalBodyParts() { return total_body_parts_; };
     void addBodyPartByParticle(BodyPartByParticle *body_part) { body_parts_by_particle_.push_back(body_part); };
     StdVec<BodyPartByParticle *> getBodyPartsByParticle() { return body_parts_by_particle_; };
-        //----------------------------------------------------------------------
-        //		Object factory template functions
-        //----------------------------------------------------------------------
-        virtual void
-        defineAdaptationRatios(Real h_spacing_ratio, Real new_system_refinement_ratio = 1.0);
+
+    template <typename TargetCriterion>
+    class TargetParticleMask : public TargetCriterion
+    {
+      public:
+        template <class ExecutionPolicy, typename EnclosureType, typename... Args>
+        TargetParticleMask(ExecutionPolicy &ex_policy, EnclosureType &encloser, Args &&...args)
+            : TargetCriterion(std::forward<Args>(args)...) {}
+        virtual ~TargetParticleMask() {}
+    };
+    //----------------------------------------------------------------------
+    //		Object factory template functions
+    //----------------------------------------------------------------------
+    virtual void
+    defineAdaptationRatios(Real h_spacing_ratio, Real new_system_refinement_ratio = 1.0);
 
     template <class AdaptationType, typename... Args>
     void defineAdaptation(Args &&...args)
@@ -183,10 +193,6 @@ class SPHBody
     {
         generateParticles<ParticleType, ReserveType, Parameters...>(particle_reserve, std::forward<Args>(args)...);
     };
-
-    virtual void writeParticlesToXmlForRestart(std::string &filefullpath);
-    virtual void readParticlesFromXmlForRestart(std::string &filefullpath);
-    virtual void writeToXmlForReloadParticle(std::string &filefullpath);
 };
 
 /**

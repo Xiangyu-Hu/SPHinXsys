@@ -36,7 +36,7 @@
 namespace SPH
 {
 template <typename... T>
-class DynamicsSequence;
+class DynamicsSequence;  // same DynamicsType with the different constructor arguments
 
 template <class ExecutionPolicy,
           template <typename... LocalDynamicsType> class DynamicsType>
@@ -70,7 +70,7 @@ class DynamicsSequence<DynamicsType<ExecutionPolicy, FirstLocalDynamics, OtherLo
 };
 
 template <typename... T>
-class ArbitraryDynamicsSequence;
+class ArbitraryDynamicsSequence; // different DynamicsType with the different constructor arguments
 
 template <>
 class ArbitraryDynamicsSequence<> : public BaseDynamics<void>
@@ -95,6 +95,41 @@ class ArbitraryDynamicsSequence<FistDynamicsType, OtherDynamicsTypes...> : publi
     virtual void exec(Real dt = 0.0) override
     {
         FistDynamicsType::exec(dt);
+        other_dynamics_.exec(dt);
+    };
+};
+
+template <typename... T>
+class RungeKuttaSequence; // same DynamicsType with the same constructor arguments
+
+template <class ExecutionPolicy,
+          template <typename... LocalDynamicsType> class DynamicsType>
+class RungeKuttaSequence<DynamicsType<ExecutionPolicy>> : public BaseDynamics<void>
+{
+  public:
+    template <typename... Args>
+    RungeKuttaSequence(Args &&...args) : BaseDynamics<void>(){};
+    virtual void exec(Real dt = 0.0) override {};
+};
+
+template <class ExecutionPolicy,
+          template <typename... LocalDynamicsType> class DynamicsType,
+          class FirstLocalDynamics, class... OtherLocalDynamics>
+class RungeKuttaSequence<DynamicsType<ExecutionPolicy, FirstLocalDynamics, OtherLocalDynamics...>>
+    : public DynamicsType<ExecutionPolicy, FirstLocalDynamics>
+{
+  protected:
+    RungeKuttaSequence<DynamicsType<ExecutionPolicy, OtherLocalDynamics...>> other_dynamics_;
+
+  public:
+    template <typename... Args>
+    explicit RungeKuttaSequence(Args &&...args)
+        : DynamicsType<ExecutionPolicy, FirstLocalDynamics>(std::forward<Args>(args)...),
+          other_dynamics_(std::forward<Args>(args)...){};
+
+    virtual void exec(Real dt = 0.0) override
+    {
+        DynamicsType<ExecutionPolicy, FirstLocalDynamics>::exec(dt);
         other_dynamics_.exec(dt);
     };
 };

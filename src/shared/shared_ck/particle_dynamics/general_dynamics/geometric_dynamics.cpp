@@ -25,7 +25,7 @@ void NormalFromBodyShapeCK::UpdateKernel::update(size_t index_i, Real dt)
 SurfaceIndicationFromBodyShape::SurfaceIndicationFromBodyShape(SPHBody &sph_body)
     : LocalDynamics(sph_body),
       initial_shape_(&sph_body.getInitialShape()),
-      spacing_ref_(sph_body.sph_adaptation_->ReferenceSpacing()),
+      spacing_ref_(sph_body.getSPHAdaptation().ReferenceSpacing()),
       dv_indicator_(particles_->registerStateVariableOnly<int>("SurfaceIndicator")),
       dv_pos_(particles_->getVariableByName<Vecd>("Position")) {}
 //=============================================================================================//
