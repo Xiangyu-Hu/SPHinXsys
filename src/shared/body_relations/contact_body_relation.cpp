@@ -250,4 +250,30 @@ void SurfaceContactRelation::updateConfiguration()
     }
 }
 //=================================================================================================//
+SolidShellCouplingContactRelation::SolidShellCouplingContactRelation(SPHBody &sph_body,
+                                                                     RealBodyVector contact_bodies,
+                                                                     const std::vector<Real> &factors)
+    : ContactRelationCrossResolution(sph_body, contact_bodies)
+{
+    for (size_t k = 0; k != contact_bodies_.size(); ++k)
+    {
+        Real factor = factors.empty() ? 1 : factors[k];
+        get_contact_neighbors_.push_back(
+            neighbor_builder_contact_ptrs_keeper_.createPtr<SolidShellCouplingNeighborBuilder>(
+                sph_body_, *contact_bodies_[k], factor));
+    }
+}
+//=================================================================================================//
+void SolidShellCouplingContactRelation::updateConfiguration()
+{
+    resetNeighborhoodCurrentSize();
+    for (size_t k = 0; k != contact_bodies_.size(); ++k)
+    {
+        Mesh &mesh = target_cell_linked_lists_[k]->getMesh();
+        target_cell_linked_lists_[k]->searchNeighborsByMesh(
+            mesh, 0, sph_body_, contact_configuration_[k],
+            *get_search_depths_[k], *get_contact_neighbors_[k]);
+    }
+}
+//=================================================================================================//
 } // namespace SPH
