@@ -11,8 +11,7 @@ Interaction<Inner<Parameters...>>::
     Interaction(InnerRelationType &inner_relation)
     : LocalDynamics(inner_relation.getSPHBody()),
       inner_relation_(inner_relation),
-      real_body_(&inner_relation.getRealBody()),
-      sph_adaptation_(&sph_body_.getSPHAdaptation()) {}
+      real_body_(&inner_relation.getRealBody()) {}
 //=================================================================================================//
 template <typename... Parameters>
 void Interaction<Inner<Parameters...>>::

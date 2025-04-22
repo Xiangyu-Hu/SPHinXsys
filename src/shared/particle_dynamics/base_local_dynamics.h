@@ -58,6 +58,7 @@ class BaseLocalDynamics
     explicit BaseLocalDynamics(DynamicsIdentifier &identifier)
         : identifier_(identifier), sph_system_(identifier.getSPHSystem()),
           sph_body_(identifier.getSPHBody()),
+          sph_adaptation_(&sph_body_.getSPHAdaptation()),
           particles_(&sph_body_.getBaseParticles()) {};
     virtual ~BaseLocalDynamics() {};
     using Identifier = typename DynamicsIdentifier::BaseIdentifier;
@@ -76,6 +77,7 @@ class BaseLocalDynamics
     DynamicsIdentifier &identifier_;
     SPHSystem &sph_system_;
     SPHBody &sph_body_;
+    SPHAdaptation *sph_adaptation_;
     BaseParticles *particles_;
 };
 using LocalDynamics = BaseLocalDynamics<SPHBody>;

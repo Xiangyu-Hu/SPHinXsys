@@ -70,7 +70,6 @@ class Interaction<Inner<Parameters...>> : public LocalDynamics
   protected:
     InnerRelationType &inner_relation_;
     RealBody *real_body_;
-    SPHAdaptation *sph_adaptation_;
 };
 
 template <class SourceIdentifier, class TargetIdentifier, typename... Parameters>
