@@ -12,12 +12,15 @@ categories: sycl examples
 ## Introduction  
 
 ### Aim  
+
 This project focuses on **heterogeneous SPH simulation of granular materials**, particularly leveraging **GPU acceleration**.  
 
 ### Development Route  
+
 We rewrote the existing **plasticity-related functions** in **SYCL** to achieve efficient GPU computation.  
 
 ### What You Can Gain  
+
 - Access to an **open-source heterogeneous SPH simulation** framework for granular materials.  
 - Insights into **SYCL-based development**, including errors I met and solutions.  
 
@@ -26,7 +29,8 @@ We rewrote the existing **plasticity-related functions** in **SYCL** to achieve 
 ## New Test Cases  
 
 ### 1. **test_2d_column_collapse_sycl**  and **test_2d_column_collapse_ck**
-### 2. **test_3d_repose_angle_sycl**   and **test_3d_repose_angle_ck** 
+
+### 2. **test_3d_repose_angle_sycl**   and **test_3d_repose_angle_ck**
 
 > **Note:** These cases are SYCL-based implementations of their original versions.  
 
@@ -73,17 +77,19 @@ CMAKE_CXX_FLAGS: "-Werror=reorder"
 **Solution:** Use SYCL's built-in math functions explicitly.  
 
 #### **Modification in `base_data_type.h`**
-#if SPHINXSYS_USE_FLOAT  
+
+# if SPHINXSYS_USE_FLOAT  
 using Real = float;  
 using UnsignedInt = u_int32_t;  
 namespace math = sycl;  
-#else  
+# else  
 using Real = double;  
 using UnsignedInt = size_t;  
 namespace math = std;  
-#endif  
+# endif  
 
 #### **Usage in Code**
+
 Real sin_x = math::sin(x);  
 
 ---
@@ -93,6 +99,7 @@ Real sin_x = math::sin(x);
 **Issue:** GitHub CI/CD only supports CPU-based testing, but the project requires SYCL-based regression tests.  
 
 **Solution:**  
+
 1. Generate the regression test database using **CPU**.  
 2. Modify `CMAKEPRESETS.json` by removing the following line:  
 
@@ -104,4 +111,4 @@ Real sin_x = math::sin(x);
 
 ## Conclusion  
 
-This work demonstrates the feasibility and advantages of **SYCL-based GPU acceleration** in **granular material simulations**. 
+This work demonstrates the feasibility and advantages of **SYCL-based GPU acceleration** in **granular material simulations**.
