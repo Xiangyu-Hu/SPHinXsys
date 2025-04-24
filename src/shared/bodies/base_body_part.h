@@ -136,8 +136,8 @@ class BodyPartByCell : public BodyPart
     BodyPartByCell(RealBody &real_body);
     virtual ~BodyPartByCell() {};
     DiscreteVariable<UnsignedInt> *dvCellList() { return dv_cell_list_; };
-    DiscreteVariable<UnsignedInt> *getParticleIndex() { return dv_particle_index_; };
-    DiscreteVariable<UnsignedInt> *getCellOffset() { return dv_cell_offset_; };
+    DiscreteVariable<UnsignedInt> *dvParticleIndex() { return dv_particle_index_; };
+    DiscreteVariable<UnsignedInt> *dvCellOffset() { return dv_cell_offset_; };
 
   protected:
     BaseCellLinkedList &cell_linked_list_;

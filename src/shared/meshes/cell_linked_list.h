@@ -82,8 +82,8 @@ class BaseCellLinkedList : public BaseMeshField
     void searchNeighborsByMesh(Mesh &mesh, UnsignedInt mesh_offset,
                                DynamicsRange &dynamics_range, ParticleConfiguration &particle_configuration,
                                GetSearchDepth &get_search_depth, GetNeighborRelation &get_neighbor_relation);
-    DiscreteVariable<UnsignedInt> *getParticleIndex() { return dv_particle_index_; };
-    DiscreteVariable<UnsignedInt> *getCellOffset() { return dv_cell_offset_; };
+    DiscreteVariable<UnsignedInt> *dvParticleIndex() { return dv_particle_index_; };
+    DiscreteVariable<UnsignedInt> *dvCellOffset() { return dv_cell_offset_; };
 
     UnsignedInt TotalNumberOfCells() { return total_number_of_cells_; };
     template <typename DataType>

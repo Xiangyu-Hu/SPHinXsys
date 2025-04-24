@@ -59,8 +59,8 @@ void BodyPartByParticle::tagParticles(TaggingParticleMethod &tagging_particle_me
 BodyPartByCell::BodyPartByCell(RealBody &real_body)
     : BodyPart(real_body), cell_linked_list_(real_body.getCellLinkedList()),
       dv_cell_list_(nullptr),
-      dv_particle_index_(cell_linked_list_.getParticleIndex()),
-      dv_cell_offset_(cell_linked_list_.getCellOffset()) {}
+      dv_particle_index_(cell_linked_list_.dvParticleIndex()),
+      dv_cell_offset_(cell_linked_list_.dvCellOffset()) {}
 //=============================================================================================//
 size_t BodyPartByCell::SizeOfLoopRange()
 {

@@ -84,8 +84,8 @@ class LoopRangeCK<ExecutionPolicy, BodyPartByCell>
     LoopRangeCK(BodyPartByCell &body_part)
         : cell_list_(body_part.dvCellList()->DelegatedData(ExecutionPolicy{})),
           loop_bound_(body_part.svRangeSize()->DelegatedData(ExecutionPolicy{})),
-          particle_index_(body_part.getParticleIndex()->DelegatedData(ExecutionPolicy{})),
-          cell_offset_(body_part.getCellOffset()->DelegatedData(ExecutionPolicy{})) {};
+          particle_index_(body_part.dvParticleIndex()->DelegatedData(ExecutionPolicy{})),
+          cell_offset_(body_part.dvCellOffset()->DelegatedData(ExecutionPolicy{})) {};
     template <class UnaryFunc>
     void computeUnit(const UnaryFunc &uf, UnsignedInt i) const
     {
