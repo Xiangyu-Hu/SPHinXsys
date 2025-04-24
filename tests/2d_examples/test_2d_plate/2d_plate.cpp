@@ -62,8 +62,7 @@ class ParticleGenerator<SurfaceParticles, Plate> : public ParticleGenerator<Surf
 class BoundaryGeometry : public BodyPartByParticle
 {
   public:
-    BoundaryGeometry(SPHBody &body, const std::string &body_part_name)
-        : BodyPartByParticle(body, body_part_name)
+    BoundaryGeometry(SPHBody &body) : BodyPartByParticle(body)
     {
         TaggingParticleMethod tagging_particle_method = std::bind(&BoundaryGeometry::tagManually, this, _1);
         tagParticles(tagging_particle_method);
@@ -118,7 +117,7 @@ int main(int ac, char *av[])
     SimpleDynamics<solid_dynamics::DistributingPointForces>
         apply_point_force(plate_body, point_force, reference_position, time_to_full_external_force, resolution_ref);
     /** Constrain the Boundary. */
-    BoundaryGeometry boundary_geometry(plate_body, "BoundaryGeometry");
+    BoundaryGeometry boundary_geometry(plate_body);
     SimpleDynamics<thin_structure_dynamics::ConstrainShellBodyRegion> constrain_holder(boundary_geometry);
     DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d, FixedDampingRate>>>
         plate_position_damping(0.2, plate_body_inner, "Velocity", physical_viscosity);

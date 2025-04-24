@@ -116,8 +116,7 @@ class ParticleGenerator<SurfaceParticles, Plate> : public ParticleGenerator<Surf
 class BoundaryGeometry : public BodyPartByParticle
 {
   public:
-    BoundaryGeometry(SPHBody &body, const std::string &body_part_name)
-        : BodyPartByParticle(body, body_part_name)
+    BoundaryGeometry(SPHBody &body) : BodyPartByParticle(body)
     {
         TaggingParticleMethod tagging_particle_method = std::bind(&BoundaryGeometry::tagManually, this, _1);
         tagParticles(tagging_particle_method);
@@ -222,7 +221,7 @@ int main(int ac, char *av[])
     SimpleDynamics<thin_structure_dynamics::AverageShellCurvature> plate_average_curvature(plate_curvature_inner);
     SimpleDynamics<thin_structure_dynamics::UpdateShellNormalDirection> plate_update_normal(plate);
     /** constraint and damping */
-    BoundaryGeometry plate_boundary_geometry(plate, "BoundaryGeometry");
+    BoundaryGeometry plate_boundary_geometry(plate);
     SimpleDynamics<thin_structure_dynamics::ConstrainShellBodyRegion> plate_constraint(plate_boundary_geometry);
     // fluid
     Gravity gravity(Vec3d(0.0, -gravity_g, 0.0));

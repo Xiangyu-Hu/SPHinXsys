@@ -79,10 +79,10 @@ class ParticleGenerator<LinearParticles, Bar> : public ParticleGenerator<LinearP
 class BoundaryGeometryParallelToXAxis : public BodyPartByParticle
 {
   public:
-    BoundaryGeometryParallelToXAxis(SPHBody &body, const std::string &body_part_name)
-        : BodyPartByParticle(body, body_part_name)
+    BoundaryGeometryParallelToXAxis(SPHBody &body) : BodyPartByParticle(body)
     {
-        TaggingParticleMethod tagging_particle_method = std::bind(&BoundaryGeometryParallelToXAxis::tagManually, this, _1);
+        TaggingParticleMethod tagging_particle_method =
+            std::bind(&BoundaryGeometryParallelToXAxis::tagManually, this, _1);
         tagParticles(tagging_particle_method);
     };
     virtual ~BoundaryGeometryParallelToXAxis() {};
@@ -97,8 +97,8 @@ class BoundaryGeometryParallelToXAxis : public BodyPartByParticle
 class BoundaryGeometryParallelToYAxis : public BodyPartByParticle
 {
   public:
-    BoundaryGeometryParallelToYAxis(SPHBody &body, const std::string &body_part_name)
-        : BodyPartByParticle(body, body_part_name)
+    BoundaryGeometryParallelToYAxis(SPHBody &body)
+        : BodyPartByParticle(body)
     {
         TaggingParticleMethod tagging_particle_method = std::bind(&BoundaryGeometryParallelToYAxis::tagManually, this, _1);
         tagParticles(tagging_particle_method);
@@ -152,10 +152,10 @@ int main(int ac, char *av[])
     /** Time step size calculation. */
     ReduceDynamics<slender_structure_dynamics::BarAcousticTimeStepSize> computing_time_step_size(bar_body);
     /** Constrain the Boundary. */
-    BoundaryGeometryParallelToXAxis boundary_geometry_x(bar_body, "BoundaryGeometryParallelToXAxis");
+    BoundaryGeometryParallelToXAxis boundary_geometry_x(bar_body);
     SimpleDynamics<slender_structure_dynamics::ConstrainBarBodyRegionAlongAxis>
         constrain_holder_x(boundary_geometry_x, 0);
-    BoundaryGeometryParallelToYAxis boundary_geometry_y(bar_body, "BoundaryGeometryParallelToYAxis");
+    BoundaryGeometryParallelToYAxis boundary_geometry_y(bar_body);
     SimpleDynamics<slender_structure_dynamics::ConstrainBarBodyRegionAlongAxis>
         constrain_holder_y(boundary_geometry_y, 1);
     DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d, FixedDampingRate>>>

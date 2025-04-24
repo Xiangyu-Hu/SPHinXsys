@@ -78,8 +78,7 @@ class ParticleGenerator<SurfaceParticles, Plate> : public ParticleGenerator<Surf
 class ControlledGeometry : public BodyPartByParticle
 {
   public:
-    ControlledGeometry(SPHBody &body, const std::string &body_part_name)
-        : BodyPartByParticle(body, body_part_name)
+    ControlledGeometry(SPHBody &body) : BodyPartByParticle(body)
     {
         TaggingParticleMethod tagging_particle_method = std::bind(&ControlledGeometry::tagManually, this, _1);
         tagParticles(tagging_particle_method);
@@ -155,7 +154,7 @@ int main(int ac, char *av[])
     /** Time step size calculation. */
     ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> computing_time_step_size(plate_body);
     /** Constrain the Boundary. */
-    ControlledGeometry controlled_geometry(plate_body, "ControlledGeometry");
+    ControlledGeometry controlled_geometry(plate_body);
     SimpleDynamics<ControlledRotation> controlled_rotation(controlled_geometry);
     SimpleDynamics<thin_structure_dynamics::UpdateShellNormalDirection> update_normal(plate_body);
     /** File and screen outputs */

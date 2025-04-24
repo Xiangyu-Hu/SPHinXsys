@@ -31,7 +31,7 @@ class FixPart : public BodyPartByParticle
 
   public:
     FixPart(SPHBody &body, const std::string &body_part_name, std::function<bool(Vec3d &)> contains)
-        : BodyPartByParticle(body, body_part_name),
+        : BodyPartByParticle(body),
           contains_(std::move(contains))
     {
         TaggingParticleMethod tagging_particle_method = std::bind(&FixPart::tagManually, this, _1);
