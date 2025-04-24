@@ -167,13 +167,13 @@ return_data beam_multi_resolution(Real dp_factor, bool damping_on, int refinemen
     // Import meshes
     const Vec3d halfsize = 0.5 * (Vec3d(params.length, params.height, params.width) + extension_length * Vec3d::UnitX());
     const Vec3d translation = 0.5 * (params.length - extension_length) * Vec3d::UnitX();
-    auto mesh = makeShared<TransformShape<GeometricShapeBox>>(Transform(translation), halfsize, "beam");
+    auto mesh = makeShared<GeometricShapeBox>(Transform(translation), halfsize, "beam");
 
     // refinement region
     const Real refinement_region_length = 0.5 * params.length;
     const Vec3d refinement_halfsize = 0.5 * Vec3d(refinement_region_length, params.height, params.width);
     const Vec3d refinement_translation = (params.length - 0.5 * refinement_region_length) * Vec3d::UnitX();
-    auto refinement_region = makeShared<TransformShape<GeometricShapeBox>>(Transform(refinement_translation), refinement_halfsize);
+    auto refinement_region = makeShared<GeometricShapeBox>(Transform(refinement_translation), refinement_halfsize);
 
     // System bounding box
     BoundingBox bb_system = mesh->getBounds();

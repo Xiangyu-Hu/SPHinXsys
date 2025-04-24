@@ -44,8 +44,8 @@ class WallBoundary : public ComplexShape
         Vecd outer_wall_translation = Vecd(-BW, -BW, -BW) + outer_wall_halfsize;
         Vecd inner_wall_halfsize = Vecd(0.5 * DL, 0.5 * DH, 0.5 * DW);
         Vecd inner_wall_translation = inner_wall_halfsize;
-        add<TransformShape<GeometricShapeBox>>(Transform(outer_wall_translation), outer_wall_halfsize);
-        subtract<TransformShape<GeometricShapeBox>>(Transform(inner_wall_translation), inner_wall_halfsize);
+        add<GeometricShapeBox>(Transform(outer_wall_translation), outer_wall_halfsize);
+        subtract<GeometricShapeBox>(Transform(inner_wall_translation), inner_wall_halfsize);
     }
 };
 //----------------------------------------------------------------------

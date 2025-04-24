@@ -242,12 +242,12 @@ void run_rigid_elastic_coupling(int res_factor)
     // mesh of the total bar
     const Vec3d halfsize = 0.5 * Vec3d(total_length + constraint_length, height, width);
     const Vec3d translation = (min_x_pos + halfsize.x()) * Vec3d::UnitX() + 0.5 * width * Vec3d::UnitZ();
-    auto mesh = makeShared<TransformShape<GeometricShapeBox>>(Transform(translation), halfsize, "bar");
+    auto mesh = makeShared<GeometricShapeBox>(Transform(translation), halfsize, "bar");
 
     // mesh of the rigid body part
     const Vec3d rigid_halfsize = 0.5 * Vec3d(rigid_length, height, width);
     const Vec3d rigid_translation = (x0 + elastic_length + 0.5 * rigid_length) * Vec3d::UnitX() + 0.5 * width * Vec3d::UnitZ();
-    auto mesh_rigid = makeShared<TransformShape<GeometricShapeBox>>(Transform(rigid_translation), rigid_halfsize, "rigid_bar");
+    auto mesh_rigid = makeShared<GeometricShapeBox>(Transform(rigid_translation), rigid_halfsize, "rigid_bar");
 
     // System bounding box
     auto bbox = mesh->getBounds();

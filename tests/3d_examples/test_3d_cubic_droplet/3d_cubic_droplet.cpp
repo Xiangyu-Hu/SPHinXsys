@@ -39,7 +39,7 @@ class WaterBlock : public ComplexShape
     {
         Vecd water_halfsize(0.5 * LL, 0.5 * LH, 0.5 * LW);
         Transform water_translation(Vecd(0, 0, 0));
-        add<TransformShape<GeometricShapeBox>>(Transform(water_translation), water_halfsize);
+        add<GeometricShapeBox>(Transform(water_translation), water_halfsize);
     }
 };
 //----------------------------------------------------------------------
@@ -54,8 +54,8 @@ class AirBlock : public ComplexShape
         Transform water_translation(Vecd(0, 0, 0));
         Vecd air_halfsize(0.5 * DL, 0.5 * DH, 0.5 * DW);
         Transform air_translation(Vecd(0, 0, 0));
-        add<TransformShape<GeometricShapeBox>>(Transform(air_translation), air_halfsize);
-        subtract<TransformShape<GeometricShapeBox>>(Transform(water_translation), water_halfsize);
+        add<GeometricShapeBox>(Transform(air_translation), air_halfsize);
+        subtract<GeometricShapeBox>(Transform(water_translation), water_halfsize);
     }
 };
 //----------------------------------------------------------------------
@@ -70,8 +70,8 @@ class WallBoundary : public ComplexShape
         Vecd halfsize_outer(0.5 * DL + BW, 0.5 * DH + BW, 0.5 * DW + BW);
         Vecd halfsize_inner(0.5 * DL, 0.5 * DH, 0.5 * DW);
         Transform translation_wall(Vecd(0, 0, 0));
-        add<TransformShape<GeometricShapeBox>>(Transform(translation_wall), halfsize_outer);
-        subtract<TransformShape<GeometricShapeBox>>(Transform(translation_wall), halfsize_inner);
+        add<GeometricShapeBox>(Transform(translation_wall), halfsize_outer);
+        subtract<GeometricShapeBox>(Transform(translation_wall), halfsize_inner);
     }
 };
 //----------------------------------------------------------------------

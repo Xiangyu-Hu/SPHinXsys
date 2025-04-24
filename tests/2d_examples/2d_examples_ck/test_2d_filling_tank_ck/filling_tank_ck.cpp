@@ -100,7 +100,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    TransformShape<GeometricShapeBox> water_inlet_shape(Transform(inlet_translation), inlet_halfsize);
+    GeometricShapeBox water_inlet_shape(Transform(inlet_translation), inlet_halfsize);
     FluidBody water_body(sph_system, water_inlet_shape, "WaterBody");
     water_body.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
     ParticleBuffer<ReserveSizeFactor> inlet_buffer(350.0);
