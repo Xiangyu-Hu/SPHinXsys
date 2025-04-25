@@ -27,7 +27,7 @@ BoundingBox system_domain_bounds(
 const Real Inlet_pressure = 0.1;
 const Real Outlet_pressure = 0.0;
 Real rho0_f = 1000.0;
-Real Re = 50;
+Real Re = 25;
 Real mu_f = std::sqrt(rho0_f * std::pow(DH, 3.0) * std::abs(Inlet_pressure - Outlet_pressure) / (32.0 * Re * DL));
 
 /**
@@ -46,7 +46,7 @@ Real U_f = (DH * DH * std::abs(Inlet_pressure - Outlet_pressure)) /
 
 // Compute speed of sound (c0) based on the pressure difference between inlet and outlet boundaries.
 // Ensures density variations are limited to ~1% (WCSPH criterion), multiplied by 4 as a safety factor.
-Real c_f = std::max(10.0 * U_f, sqrt(4 * (Inlet_pressure - Outlet_pressure) / (rho0_f * 0.01))); //
+Real c_f = std::max(10.0 * U_f, sqrt(2 * (Inlet_pressure - Outlet_pressure) / (rho0_f * 0.01))); //
 
 //----------------------------------------------------------------------
 //  Geometric shapes for the channel and boundaries.
