@@ -84,5 +84,38 @@ Since $W_{ij}$ is zero outside of the neighborhood of i, we only need to conside
 To implement this conservative mapping for the solid, we need to first compute and record $\sum_{k\in V} W_{jk}(h_{jk})V_k$ for each couplied shell particle j. This value should be computed from the contact relation shell-solid, instead of solid-shell. 
 
 ## Example
-An example is used to prove the feasibility of this coupling method, where a solid cube is placed on a shell stripe. The cube is subjected to a constant gravity force.
+An example is used to prove the feasibility of this coupling method, where a solid cube is placed on a shell stripe. The cube is subjected to a constant gravity force $4\mathrm{mm/{ms}^2}$. The shell is fixed at the left and right end. Neo-Hookean is used as the material model.
+
+![example_geometry](./img/example_geometry.svg)
+
+The geometrical and material parameters are listed below:
+
+| Cube length [$\mathrm{mm}$] |  Shell length [$\mathrm{mm}$]| Shell width [$\mathrm{mm}$] | Shell thickness [$\mathrm{mm}$]|
+|------------------|-------------------|------------------|---------------------|
+| 1                | 5                 | 1                | 0.02                |
+
+| Density [$\mathrm{kg/m^3}$] | Poisson ratio [-] | Young's modulus [$\mathrm{MPa}$] | 
+|------------------|-------------------|------------------|
+| 1000             | 0.45              | 3                |             
+
+When the solid and shell particles have the same resolution and are uniformly distributed, i.e., overlapping on the coupling layer, the deflection and Von-Mises stress at the mid-point of the shell with different resolutions are listed in the table below. To avoid the error caused by the difference between the velocity and force on the surface and the mid-plane of the shell, we only consider the resolutions larger than the thickness. The end time is set as 30ms, when the semi-steady state is reached. As the resolution increases, the deflection and stress converge to 0.21 mm and 0.007 MPa respectively.
+
+| Resolution [$\mathrm{mm}$]        | Deflection [$\mathrm{mm}$] | Von-Mises Stress [$\mathrm{MPa}$] |
+|-----------------------------------|----------------------------|-----------------------------------|
+| 0.1   |0.237  |0.00552 |
+| 0.05   |0.221  |0.0062  |                                                                       
+| 0.033   |0.214  |0.0064  |
+| 0.025   |0.213  |0.0067  |
+| 0.02   |0.212  |0.0068  |
+
+To show that the mapping is capable of dealing with unmatching particle position, the deflection and stress of solid and shell with different resolutions and relaxed particle distribution are listed in the table below. The deflections and stresses of unmatching interfaces are consistent with the results of matching interfaces.
+
+| Solid resolution [$\mathrm{mm}$]   | Shell resolution [$\mathrm{mm}$] | Deflection [$\mathrm{mm}$] | Von-Mises Stress [$\mathrm{MPa}$] |
+|---------|-------|------|-------|
+|0.033  | 0.033| 0.214 | 0.0064 |
+|0.033  | 0.025| 0.214 | 0.0065 |
+|0.025  | 0.033| 0.209 | 0.0062 |
+
+TODO: add fully solid-discretized result as a reference value
+
 
