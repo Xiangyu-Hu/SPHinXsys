@@ -31,8 +31,9 @@
 
 #pragma once
 
-#include "base_body_part.h"
 #include "all_complex_bodies.h"
+#include "base_body_part.h"
+#include "body_partition.h"
 #include "fluid_body.h"
 #include "observer_body.h"
 #include "solid_body.h"

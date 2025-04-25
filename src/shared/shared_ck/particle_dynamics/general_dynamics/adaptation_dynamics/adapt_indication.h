@@ -35,25 +35,24 @@
 namespace SPH
 {
 template <typename IndicationCriterion>
-class AdaptIndication : public LocalDynamics
+class AdaptLevelIndication : public LocalDynamics
 {
-    using IndicationKernel = typename IndicationCriterion::IndicationKernel;
+    using IndicationKernel = typename IndicationCriterion::ComputingKernel;
 
   public:
-    explicit AdaptIndication(SPHBody &sph_body)
+    explicit AdaptLevelIndication(SPHBody &sph_body)
         : LocalDynamics(sph_body),
           indication_method_(sph_adaptation_, particles_),
-          dv_adapt_indicator_(
-              particles_->registerStateVariableOnly(
-                  indication_method_.getName() + "Indicator"))
+          dv_adapt_level_(
+              particles_->registerStateVariableOnly<int>("AdaptLevel"))
     {
         if (indication_method_.isFixedIndication())
         {
-            particles_->addEvolvingVariable(dv_adapt_indicator_);
+            particles_->addEvolvingVariable<int>(dv_adapt_level_);
         }
-        particles_.addVariableToWrite(dv_adapt_indicator_);
+        particles_->addVariableToWrite<int>(dv_adapt_level_);
     };
-    virtual ~AdaptIndication() {};
+    virtual ~AdaptLevelIndication() {};
 
     class UpdateKernel
     {
@@ -61,22 +60,22 @@ class AdaptIndication : public LocalDynamics
         template <class ExecutionPolicy, class EncloserType>
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
             : indication_(ex_policy, encloser.indication_method_),
-              adaptation_indicator_(
-                  encloser.dv_adapt_indicator_->DelegatedData(ex_policy)){};
+              adapt_level_(
+                  encloser.dv_adapt_level_->DelegatedData(ex_policy)){};
 
         void update(size_t index_i, Real dt = 0.0)
         {
-            adaptation_indicator_[index_i] = indication_(index_i);
+            adapt_level_[index_i] = indication_(index_i);
         };
 
       protected:
         IndicationKernel indication_;
-        int *adaptation_indicator_;
+        int *adapt_level_;
     };
 
   protected:
     IndicationCriterion indication_method_;
-    DiscreteVariable<int> *dv_adapt_indicator_;
+    DiscreteVariable<int> *dv_adapt_level_;
 };
 } // namespace SPH
 #endif // ADAPT_INDICATION_H

@@ -48,7 +48,7 @@ class WaterBlock : public ComplexShape
   public:
     explicit WaterBlock(const std::string &shape_name) : ComplexShape(shape_name)
     {
-        add<TransformShape<GeometricShapeBox>>(
+        add<GeometricShapeBox>(
             Transform(water_block_translation), water_block_halfsize, "OuterBoundary");
         subtract<GeometricShapeBall>(circle_center, radius);
     }
@@ -94,7 +94,7 @@ int main(int ac, char *av[])
     water_block.defineAdaptation<ParticleRefinementWithinShape>(1.3, 1.0, 1);
     water_block.defineComponentLevelSetShape("OuterBoundary")->writeLevelSet(sph_system);
     water_block.defineClosure<WeaklyCompressibleFluid, Viscosity>(ConstructArgs(rho0_f, c_f), mu_f);
-    TransformShape<GeometricShapeBox> refinement_region(
+    GeometricShapeBox refinement_region(
         Transform(refinement_region_translation), refinement_region_halfsize, "RefinementRegion");
     ParticleBuffer<ReserveSizeFactor> inlet_particle_buffer(0.5);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
@@ -163,6 +163,11 @@ int main(int ac, char *av[])
         return 0;
     }
     //----------------------------------------------------------------------
+    //	Body partitioning for multi-resolution simulation.
+    //----------------------------------------------------------------------
+    BodyPartitionSpatial water_low_resolution_level(water_block, 0);
+    BodyPartitionSpatial water_high_resolution_level(water_block, 1);
+    //----------------------------------------------------------------------
     // Define the main execution policy for this case.
     //----------------------------------------------------------------------
     using MainExecutionPolicy = execution::ParallelPolicy;
@@ -177,8 +182,10 @@ int main(int ac, char *av[])
     // Finally, the auxiliary models such as time step estimator, initial condition,
     // boundary condition and other constraints should be defined.
     //----------------------------------------------------------------------
-    UpdateCellLinkedList<MainExecutionPolicy, CellLinkedList> water_cell_linked_list(cylinder);
-    UpdateCellLinkedList<MainExecutionPolicy, MultilevelCellLinkedList> wall_cell_linked_list(water_block);
+    StateDynamics<MainExecutionPolicy, AdaptLevelIndication<Refinement<Fixed>>> water_adapt_level_indication(water_block);
+    UpdateCellLinkedList<MainExecutionPolicy, BodyPartitionSpatial> water_low_resolution_cell_linked_list(water_low_resolution_level);
+    UpdateCellLinkedList<MainExecutionPolicy, BodyPartitionSpatial> water_high_resolution_cell_linked_list(water_high_resolution_level);
+    UpdateCellLinkedList<MainExecutionPolicy, RealBody> cylinder_cell_linked_list(cylinder);
 
     return 0;
 }

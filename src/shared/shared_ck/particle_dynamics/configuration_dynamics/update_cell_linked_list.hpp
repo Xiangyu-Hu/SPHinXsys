@@ -11,31 +11,31 @@
 namespace SPH
 {
 //=================================================================================================//
-template <class ExecutionPolicy, typename CellLinkedListType>
-UpdateCellLinkedList<ExecutionPolicy, CellLinkedListType>::UpdateCellLinkedList(RealBody &real_body)
-    : LocalDynamics(real_body), BaseDynamics<void>(),
-      cell_linked_list_(DynamicCast<CellLinkedListType>(this, real_body.getCellLinkedList())),
+template <class ExecutionPolicy, typename DynamicsIdentifier>
+UpdateCellLinkedList<ExecutionPolicy, DynamicsIdentifier>::
+    UpdateCellLinkedList(DynamicsIdentifier &identifier)
+    : BaseLocalDynamics<DynamicsIdentifier>(identifier), BaseDynamics<void>(),
+      cell_linked_list_(DynamicCast<CellLinkedList>(this, identifier.getCellLinkedList())),
       mesh_(cell_linked_list_.getMesh()),
       cell_offset_list_size_(cell_linked_list_.getCellOffsetListSize()),
-      dv_pos_(particles_->getVariableByName<Vecd>("Position")),
+      dv_pos_(this->particles_->template getVariableByName<Vecd>("Position")),
       dv_particle_index_(cell_linked_list_.dvParticleIndex()),
       dv_cell_offset_(cell_linked_list_.dvCellOffset()),
       dv_current_cell_size_(DiscreteVariable<UnsignedInt>("CurrentCellSize", cell_offset_list_size_)),
-      ex_policy_(ExecutionPolicy{}), kernel_implementation_(*this) {}
+      identifier_(identifier), kernel_implementation_(*this) {}
 //=================================================================================================//
-template <class ExecutionPolicy, typename CellLinkedListType>
-UpdateCellLinkedList<ExecutionPolicy, CellLinkedListType>::ComputingKernel::
-    ComputingKernel(const ExecutionPolicy &ex_policy,
-                    UpdateCellLinkedList<ExecutionPolicy, CellLinkedListType> &encloser)
-    : mesh_(encloser.mesh_),
+template <class ExecutionPolicy, typename DynamicsIdentifier>
+UpdateCellLinkedList<ExecutionPolicy, DynamicsIdentifier>::ComputingKernel::
+    ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+    : mesh_(encloser.mesh_), source_mask_(ex_policy, encloser.identifier_),
       cell_offset_list_size_(encloser.cell_offset_list_size_),
       pos_(encloser.dv_pos_->DelegatedData(ex_policy)),
       particle_index_(encloser.dv_particle_index_->DelegatedData(ex_policy)),
       cell_offset_(encloser.dv_cell_offset_->DelegatedData(ex_policy)),
       current_cell_size_(encloser.dv_current_cell_size_.DelegatedData(ex_policy)) {}
 //=================================================================================================//
-template <class ExecutionPolicy, typename CellLinkedListType>
-void UpdateCellLinkedList<ExecutionPolicy, CellLinkedListType>::ComputingKernel::
+template <class ExecutionPolicy, typename DynamicsIdentifier>
+void UpdateCellLinkedList<ExecutionPolicy, DynamicsIdentifier>::ComputingKernel::
     clearAllLists(UnsignedInt index_i)
 {
     cell_offset_[index_i] = 0;
@@ -43,49 +43,55 @@ void UpdateCellLinkedList<ExecutionPolicy, CellLinkedListType>::ComputingKernel:
     particle_index_[index_i] = 0;
 }
 //=================================================================================================//
-template <class ExecutionPolicy, typename CellLinkedListType>
-void UpdateCellLinkedList<ExecutionPolicy, CellLinkedListType>::ComputingKernel::
+template <class ExecutionPolicy, typename DynamicsIdentifier>
+void UpdateCellLinkedList<ExecutionPolicy, DynamicsIdentifier>::ComputingKernel::
     incrementCellSize(UnsignedInt index_i)
 {
-    // Here, particle_index_ takes role of current_cell_size_list_.
-    const UnsignedInt linear_index = mesh_.LinearCellIndexFromPosition(pos_[index_i]);
-    AtomicRef<UnsignedInt> atomic_cell_size(particle_index_[linear_index]);
-    ++atomic_cell_size;
+    if (source_mask_(index_i))
+    {
+        // Here, particle_index_ takes role of current_cell_size_list_.
+        const UnsignedInt linear_index = mesh_.LinearCellIndexFromPosition(pos_[index_i]);
+        AtomicRef<UnsignedInt> atomic_cell_size(particle_index_[linear_index]);
+        ++atomic_cell_size;
+    }
 }
 //=================================================================================================//
-template <class ExecutionPolicy, typename CellLinkedListType>
-void UpdateCellLinkedList<ExecutionPolicy, CellLinkedListType>::ComputingKernel::
+template <class ExecutionPolicy, typename DynamicsIdentifier>
+void UpdateCellLinkedList<ExecutionPolicy, DynamicsIdentifier>::ComputingKernel::
     updateCellList(UnsignedInt index_i)
 {
-    // Here, particle_index_ takes its original role.
-    const UnsignedInt linear_index = mesh_.LinearCellIndexFromPosition(pos_[index_i]);
-    AtomicRef<UnsignedInt> atomic_current_cell_size(current_cell_size_[linear_index]);
-    particle_index_[cell_offset_[linear_index] + atomic_current_cell_size++] = index_i;
+    if (source_mask_(index_i))
+    {
+        // Here, particle_index_ takes its original role.
+        const UnsignedInt linear_index = mesh_.LinearCellIndexFromPosition(pos_[index_i]);
+        AtomicRef<UnsignedInt> atomic_current_cell_size(current_cell_size_[linear_index]);
+        particle_index_[cell_offset_[linear_index] + atomic_current_cell_size++] = index_i;
+    }
 }
 //=================================================================================================//
-template <class ExecutionPolicy, class CellLinkedListType>
-void UpdateCellLinkedList<ExecutionPolicy, CellLinkedListType>::exec(Real dt)
+template <class ExecutionPolicy, typename DynamicsIdentifier>
+void UpdateCellLinkedList<ExecutionPolicy, DynamicsIdentifier>::exec(Real dt)
 {
     UnsignedInt total_real_particles = this->particles_->TotalRealParticles();
     ComputingKernel *computing_kernel = kernel_implementation_.getComputingKernel();
 
-    particle_for(ex_policy_,
+    particle_for(ExecutionPolicy{},
                  IndexRange(0, this->cell_offset_list_size_),
                  [=](size_t i)
                  { computing_kernel->clearAllLists(i); });
 
-    particle_for(ex_policy_,
+    particle_for(ExecutionPolicy{},
                  IndexRange(0, total_real_particles),
                  [=](size_t i)
                  { computing_kernel->incrementCellSize(i); });
 
-    UnsignedInt *particle_index = this->dv_particle_index_->DelegatedData(ex_policy_);
-    UnsignedInt *cell_offset = this->dv_cell_offset_->DelegatedData(ex_policy_);
-    exclusive_scan(ex_policy_, particle_index, cell_offset,
+    UnsignedInt *particle_index = this->dv_particle_index_->DelegatedData(ExecutionPolicy{});
+    UnsignedInt *cell_offset = this->dv_cell_offset_->DelegatedData(ExecutionPolicy{});
+    exclusive_scan(ExecutionPolicy{}, particle_index, cell_offset,
                    this->cell_offset_list_size_,
                    typename PlusUnsignedInt<ExecutionPolicy>::type());
 
-    particle_for(ex_policy_,
+    particle_for(ExecutionPolicy{},
                  IndexRange(0, total_real_particles),
                  [=](size_t i)
                  { computing_kernel->updateCellList(i); });

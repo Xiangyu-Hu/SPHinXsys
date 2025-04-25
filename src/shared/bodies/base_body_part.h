@@ -64,7 +64,7 @@ class BodyPart
         TargetParticleMask(ExecutionPolicy &ex_policy, EnclosureType &encloser, Args &&...args)
             : TargetCriterion(std::forward<Args>(args)...), part_id_(encloser.part_id_),
               body_part_id_(encloser.dv_body_part_id_->DelegatedData(ex_policy)) {}
-        virtual ~TargetParticleMask() {}
+        ~TargetParticleMask() {}
 
         template <typename... Args>
         bool operator()(UnsignedInt target_index, Args &&...args)

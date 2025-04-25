@@ -30,29 +30,54 @@
 #ifndef BODY_PARTITION_H
 #define BODY_PARTITION_H
 
-#include "base_body_part.h"
+#include "base_body.h"
 
 namespace SPH
 {
-class BodyPartition : public BodyPartByID
+class BodyPartition
 {
   public:
-    BodyPartition(SPHBody &sph_body, UnsignedInt adaptation_level);
+    typedef BodyPartition BaseIdentifier;
+    BodyPartition(SPHBody &sph_body, UnsignedInt partition_adapt_level_);
     virtual ~BodyPartition() {};
-    UnsignedInt AdaptationLevel() { return adaptation_level_; };
+    SPHBody &getSPHBody() { return sph_body_; };
+    SPHSystem &getSPHSystem() { return sph_body_.getSPHSystem(); };
+    UnsignedInt PartitionAdaptationLevel() { return partition_adapt_level_; };
     virtual BaseCellLinkedList &getCellLinkedList() = 0;
 
+    class SourceParticleMask
+    {
+      public:
+        template <class ExecutionPolicy, typename EnclosureType>
+        SourceParticleMask(ExecutionPolicy &ex_policy, EnclosureType &encloser)
+            : partition_adapt_level_(encloser.partition_adapt_level_),
+              adapt_level_(encloser.dv_adapt_level_->DelegatedData(ex_policy)) {}
+        ~SourceParticleMask() {}
+
+        bool operator()(UnsignedInt source_index)
+        {
+            return adapt_level_[source_index] == partition_adapt_level_;
+        }
+
+      protected:
+        int partition_adapt_level_;
+        int *adapt_level_;
+    };
+
   protected:
+    SPHBody &sph_body_;
+    SPHAdaptation &sph_adaptation_;
+    BaseParticles &base_particles_;
     UniquePtr<BaseCellLinkedList> cell_linked_list_ptr_;
     bool cell_linked_list_created_;
-    UnsignedInt adaptation_level_;
-    SPHAdaptation &sph_adaptation_;
+    UnsignedInt partition_adapt_level_;
+    DiscreteVariable<int> *dv_adapt_level_;
 };
 
 class BodyPartitionTemporal : public BodyPartition
 {
   public:
-    BodyPartitionTemporal(SPHBody &sph_body, UnsignedInt adaptation_level);
+    BodyPartitionTemporal(SPHBody &sph_body, UnsignedInt adapt_level);
     virtual ~BodyPartitionTemporal() {};
     virtual BaseCellLinkedList &getCellLinkedList() override;
 };
@@ -60,7 +85,7 @@ class BodyPartitionTemporal : public BodyPartition
 class BodyPartitionSpatial : public BodyPartition
 {
   public:
-    BodyPartitionSpatial(SPHBody &sph_body, UnsignedInt adaptation_level);
+    BodyPartitionSpatial(SPHBody &sph_body, UnsignedInt adapt_level);
     virtual ~BodyPartitionSpatial() {};
     virtual BaseCellLinkedList &getCellLinkedList() override;
 };

@@ -34,15 +34,15 @@
 namespace SPH
 {
 template <typename...>
-class AdaptCriterion;
+class Refinement;
 
 template <>
-class AdaptCriterion<Base>
+class Refinement<Base>
 {
   public:
-    AdaptCriterion(const std::string &name, bool is_fixed_indication)
+    Refinement(const std::string &name, bool is_fixed_indication)
         : name_(name), is_fixed_indication_(is_fixed_indication) {};
-    virtual ~AdaptCriterion() {};
+    virtual ~Refinement() {};
     std::string getName() { return name_; };
     bool isFixedIndication() { return is_fixed_indication_; };
 
@@ -52,22 +52,22 @@ class AdaptCriterion<Base>
 };
 
 template <typename T>
-class AdaptCriterion<Refinement<T>> : public AdaptCriterion<Base>
+class Refinement<T> : public Refinement<Base>
 {
   public:
-    AdaptCriterion(SPHAdaptation &sph_adaptation, BaseParticles *particles)
-        : AdaptCriterion<Base>("Refinement", T::is_fixed),
-          refinement_level_(sph_adaptation.getLocalRefinementLevel()),
-          h_ref(sph_adaptation.ReferenceSmoothingLength()),
+    Refinement(SPHAdaptation *sph_adaptation, BaseParticles *particles)
+        : Refinement<Base>("Refinement", T::is_fixed),
+          refinement_level_(sph_adaptation->LocalRefinementLevel()),
+          h_ref_(sph_adaptation->ReferenceSmoothingLength()),
           dv_h_ratio_(particles->getVariableByName<Real>("SmoothingLengthRatio")) {};
-    virtual ~AdaptCriterion() {};
+    virtual ~Refinement() {};
 
     class ComputingKernel
     {
       public:
         template <class ExecutionPolicy, class EncloserType>
         ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : refinement_level_(encloser.refinement_level_), h_ref_(encloser.h_ref),
+            : refinement_level_(encloser.refinement_level_), h_ref_(encloser.h_ref_),
               h_ratio_(encloser.dv_h_ratio_->DelegatedData(ex_policy)){};
         int operator()(size_t index_i, Real dt = 0.0)
         {

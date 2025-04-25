@@ -3,13 +3,14 @@
 namespace SPH
 {
 //=================================================================================================//
-BodyPartition::BodyPartition(SPHBody &sph_body, UnsignedInt adaptation_level)
-    : BodyPartByID(sph_body), cell_linked_list_created_(false),
-      adaptation_level_(adaptation_level),
-      sph_adaptation_(sph_body.getSPHAdaptation()) {}
+BodyPartition::BodyPartition(SPHBody &sph_body, UnsignedInt partition_adapt_level)
+    : sph_body_(sph_body), sph_adaptation_(sph_body.getSPHAdaptation()),
+      base_particles_(sph_body.getBaseParticles()),
+      cell_linked_list_created_(false), partition_adapt_level_(partition_adapt_level),
+      dv_adapt_level_(base_particles_.registerStateVariableOnly<int>("AdaptLevel")) {}
 //=================================================================================================//
-BodyPartitionTemporal::BodyPartitionTemporal(SPHBody &sph_body, UnsignedInt adaptation_level)
-    : BodyPartition(sph_body, adaptation_level) {}
+BodyPartitionTemporal::BodyPartitionTemporal(SPHBody &sph_body, UnsignedInt partition_adapt_level)
+    : BodyPartition(sph_body, partition_adapt_level) {}
 //=================================================================================================//
 BaseCellLinkedList &BodyPartitionTemporal::getCellLinkedList()
 {
@@ -22,8 +23,8 @@ BaseCellLinkedList &BodyPartitionTemporal::getCellLinkedList()
     return *cell_linked_list_ptr_.get();
 }
 //=================================================================================================//
-BodyPartitionSpatial::BodyPartitionSpatial(SPHBody &sph_body, UnsignedInt adaptation_level)
-    : BodyPartition(sph_body, adaptation_level) {}
+BodyPartitionSpatial::BodyPartitionSpatial(SPHBody &sph_body, UnsignedInt partition_adapt_level_)
+    : BodyPartition(sph_body, partition_adapt_level_) {}
 //=================================================================================================//
 BaseCellLinkedList &BodyPartitionSpatial::getCellLinkedList()
 {
@@ -31,7 +32,7 @@ BaseCellLinkedList &BodyPartitionSpatial::getCellLinkedList()
     {
         cell_linked_list_ptr_ =
             sph_adaptation_.createRefinedCellLinkedList(
-                adaptation_level_, sph_body_.getSPHSystemBounds(), base_particles_);
+                partition_adapt_level_, sph_body_.getSPHSystemBounds(), base_particles_);
         cell_linked_list_created_ = true;
     }
     return *cell_linked_list_ptr_.get();
