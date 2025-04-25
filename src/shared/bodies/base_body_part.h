@@ -32,6 +32,7 @@
 
 #include "base_body.h"
 
+#include <optional>
 #include <string>
 
 namespace SPH
@@ -51,7 +52,7 @@ class BodyPart
     virtual ~BodyPart() {};
     SPHBody &getSPHBody() { return sph_body_; };
     SPHSystem &getSPHSystem() { return sph_body_.getSPHSystem(); };
-    std::string getName() { return part_name_; };
+    std::string getName() const { return alias_.value_or(part_name_); };
     int getPartID() { return part_id_; };
     SingularVariable<UnsignedInt> *svRangeSize() { return sv_range_size_; };
 
@@ -81,6 +82,7 @@ class BodyPart
     SPHBody &sph_body_;
     int part_id_;
     std::string part_name_;
+    std::optional<std::string> alias_;
     BaseParticles &base_particles_;
     SingularVariable<UnsignedInt> *sv_range_size_;
     DiscreteVariable<int> *dv_body_part_id_;
