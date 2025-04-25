@@ -131,6 +131,9 @@ class AcousticStep2ndHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType,
     RiemannSolverType riemann_solver_;
 };
 
+using AcousticStep2ndHalfWithWallNoRiemannCK =
+    AcousticStep2ndHalf<Inner<OneLevel, NoRiemannSolverCK, NoKernelCorrectionCK>,
+                        Contact<Wall, NoRiemannSolverCK, NoKernelCorrectionCK>>;
 using AcousticStep2ndHalfWithWallRiemannCK =
     AcousticStep2ndHalf<Inner<OneLevel, AcousticRiemannSolverCK, NoKernelCorrectionCK>,
                         Contact<Wall, AcousticRiemannSolverCK, NoKernelCorrectionCK>>;
