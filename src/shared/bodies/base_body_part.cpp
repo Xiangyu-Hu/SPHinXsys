@@ -50,7 +50,7 @@ void BodyPartByParticle::tagParticles(TaggingParticleMethod &tagging_particle_me
     }
 
     dv_particle_list_ = unique_variable_ptrs_.createPtr<DiscreteVariable<UnsignedInt>>(
-        part_name_, body_part_particles_.size(), [&](size_t i) -> Real
+        part_name_, body_part_particles_.size(), [&](size_t i)
         { return body_part_particles_[i]; });
     sv_range_size_ = unique_variable_ptrs_.createPtr<SingularVariable<UnsignedInt>>(
         part_name_ + "_Size", body_part_particles_.size());
@@ -86,7 +86,7 @@ void BodyPartByCell::tagCells(TaggingCellMethod &tagging_cell_method)
         }
     }
     dv_cell_list_ = unique_variable_ptrs_.createPtr<DiscreteVariable<UnsignedInt>>(
-        part_name_, cell_indexes.size(), [&](size_t i) -> Real
+        part_name_, cell_indexes.size(), [&](size_t i)
         { return cell_indexes[i]; });
     sv_range_size_ = unique_variable_ptrs_.createPtr<SingularVariable<UnsignedInt>>(
         part_name_ + "_Size", cell_indexes.size());
