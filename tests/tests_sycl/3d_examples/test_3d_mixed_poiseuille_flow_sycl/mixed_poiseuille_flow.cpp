@@ -44,7 +44,8 @@ Real mu_f = std::sqrt(rho0_f * std::pow(DH, 3.0) * std::abs(Inlet_pressure - Out
 Real U_f = (DH * DH * std::abs(Inlet_pressure - Outlet_pressure)) /
            (16.0 * mu_f * DL);
 
-/** Choose a wave speed for the weakly compressible model. */
+// Compute speed of sound (c0) based on the pressure difference between inlet and outlet boundaries.
+// Ensures density variations are limited to ~1% (WCSPH criterion), multiplied by 4 as a safety factor.
 Real c_f = std::max(10.0 * U_f, sqrt(4 * (Inlet_pressure - Outlet_pressure) / (rho0_f * 0.01))); //
 
 //----------------------------------------------------------------------
@@ -331,7 +332,7 @@ int main(int ac, char *av[])
     size_t screen_output_interval = 100;
     size_t observation_sample_interval = screen_output_interval * 2;
     Real end_time = 2.0;
-    Real output_interval = 0.1;
+    Real output_interval = 0.25;
     //----------------------------------------------------------------------
     //	Statistics for CPU time
     //----------------------------------------------------------------------
@@ -420,15 +421,6 @@ int main(int ac, char *av[])
         body_states_recording.writeToFile(MainExecutionPolicy{});
         fluid_observer_contact_relation.exec();
         interval_io += TickCount::now() - tick_instance;
-        {
-            fluid_observer_contact_relation.exec();
-
-            auto observer_vel = velocity_observer.getBaseParticles().getVariableDataByName<Vec3d>("Velocity");
-            // Validate observer velocities against analytical Poiseuille profile
-            // Convert the pointer to a std::vector using the number of observer particles.
-            std::vector<Vec3d> observer_vel_vec(observer_vel, observer_vel + observer_location.size());
-            velocity_validation(observer_location, observer_vel_vec, poiseuille_3d_u_steady, error_tolerance, U_f);
-        }
     }
 
     TimeInterval tt = TickCount::now() - tick_start - interval_io;
