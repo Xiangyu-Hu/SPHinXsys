@@ -5,8 +5,8 @@ namespace SPH
 namespace fluid_dynamics
 {
 //=================================================================================================//
-BufferIndicationCK::BufferIndicationCK(AlignedBoxPartByCell &aligned_box_part)
-    : BaseLocalDynamics<AlignedBoxPartByCell>(aligned_box_part),
+BufferIndicationCK::BufferIndicationCK(AlignedBoxByCell &aligned_box_part)
+    : BaseLocalDynamics<AlignedBoxByCell>(aligned_box_part),
       part_id_(aligned_box_part.getPartID()),
       sv_aligned_box_(aligned_box_part.svAlignedBox()),
       dv_pos_(particles_->getVariableByName<Vecd>("Position")),
@@ -15,8 +15,8 @@ BufferIndicationCK::BufferIndicationCK(AlignedBoxPartByCell &aligned_box_part)
     particles_->addEvolvingVariable<int>("BufferIndicator");
 }
 //=================================================================================================//
-BufferOutflowDeletionCK::BufferOutflowDeletionCK(AlignedBoxPartByCell &aligned_box_part)
-    : BaseLocalDynamics<AlignedBoxPartByCell>(aligned_box_part),
+BufferOutflowDeletionCK::BufferOutflowDeletionCK(AlignedBoxByCell &aligned_box_part)
+    : BaseLocalDynamics<AlignedBoxByCell>(aligned_box_part),
       part_id_(aligned_box_part.getPartID()),
       sv_aligned_box_(aligned_box_part.svAlignedBox()),
       sv_total_real_particles_(particles_->svTotalRealParticles()),

@@ -232,7 +232,7 @@ TreeBody::Branch::Branch(size_t parent_id, TreeBody *tree)
 }
 //=================================================================================================//
 TreeTerminates::TreeTerminates(SPHBody &sph_body)
-    : BodyPartByParticle(sph_body, "Leaves"),
+    : BodyPartByParticle(sph_body),
       tree_(DynamicCast<TreeBody>(this, sph_body))
 {
     for (const auto *branch : tree_.branches_)

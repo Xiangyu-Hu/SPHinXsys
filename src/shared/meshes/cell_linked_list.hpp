@@ -186,8 +186,8 @@ DiscreteVariable<DataType> *BaseCellLinkedList::registerDiscreteVariableOnly(
 template <class ExecutionPolicy>
 NeighborSearch::NeighborSearch(const ExecutionPolicy &ex_policy, CellLinkedList &cell_linked_list)
     : Mesh(cell_linked_list.getMesh()),
-      particle_index_(cell_linked_list.getParticleIndex()->DelegatedData(ex_policy)),
-      cell_offset_(cell_linked_list.getCellOffset()->DelegatedData(ex_policy)) {}
+      particle_index_(cell_linked_list.dvParticleIndex()->DelegatedData(ex_policy)),
+      cell_offset_(cell_linked_list.dvCellOffset()->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <typename FunctionOnEach>
 void NeighborSearch::forEachSearch(UnsignedInt source_index, const Vecd *source_pos,

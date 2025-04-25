@@ -40,11 +40,11 @@ namespace SPH
 {
 namespace fluid_dynamics
 {
-class BufferIndicationCK : public BaseLocalDynamics<AlignedBoxPartByCell>
+class BufferIndicationCK : public BaseLocalDynamics<AlignedBoxByCell>
 {
 
   public:
-    BufferIndicationCK(AlignedBoxPartByCell &aligned_box_part);
+    BufferIndicationCK(AlignedBoxByCell &aligned_box_part);
     virtual ~BufferIndicationCK() {};
 
     class UpdateKernel
@@ -69,7 +69,7 @@ class BufferIndicationCK : public BaseLocalDynamics<AlignedBoxPartByCell>
 };
 
 template <class ConditionType>
-class BufferInflowInjectionCK : public BaseLocalDynamics<AlignedBoxPartByCell>
+class BufferInflowInjectionCK : public BaseLocalDynamics<AlignedBoxByCell>
 {
     using SpawnRealParticleKernel = typename SpawnRealParticle::ComputingKernel;
     using FluidType = typename ConditionType::Fluid;
@@ -77,7 +77,7 @@ class BufferInflowInjectionCK : public BaseLocalDynamics<AlignedBoxPartByCell>
 
   public:
     template <typename... Args>
-    BufferInflowInjectionCK(AlignedBoxPartByCell &aligned_box_part,
+    BufferInflowInjectionCK(AlignedBoxByCell &aligned_box_part,
                             ParticleBuffer<Base> &buffer, Args &&...args);
     virtual ~BufferInflowInjectionCK() {};
 
@@ -129,12 +129,12 @@ class BufferInflowInjectionCK : public BaseLocalDynamics<AlignedBoxPartByCell>
     Real upper_bound_fringe_;
 };
 
-class BufferOutflowDeletionCK : public BaseLocalDynamics<AlignedBoxPartByCell>
+class BufferOutflowDeletionCK : public BaseLocalDynamics<AlignedBoxByCell>
 {
     using RemoveRealParticleKernel = typename RemoveRealParticle::ComputingKernel;
 
   public:
-    BufferOutflowDeletionCK(AlignedBoxPartByCell &aligned_box_part);
+    BufferOutflowDeletionCK(AlignedBoxByCell &aligned_box_part);
     virtual ~BufferOutflowDeletionCK() {};
 
     class UpdateKernel
@@ -177,14 +177,14 @@ class BufferOutflowDeletionCK : public BaseLocalDynamics<AlignedBoxPartByCell>
 };
 
 template <class KernelCorrectionType, typename ConditionType>
-class PressureVelocityCondition : public BaseLocalDynamics<AlignedBoxPartByCell>,
+class PressureVelocityCondition : public BaseLocalDynamics<AlignedBoxByCell>,
                                   public BaseStateCondition
 {
     using CorrectionKernel = typename KernelCorrectionType::ComputingKernel;
 
   public:
     template <typename... Args>
-    PressureVelocityCondition(AlignedBoxPartByCell &aligned_box_part, Args &&...args);
+    PressureVelocityCondition(AlignedBoxByCell &aligned_box_part, Args &&...args);
 
     class UpdateKernel : public BaseStateCondition::ComputingKernel
     {
@@ -221,7 +221,7 @@ class BidirectionalBoundaryCK
 
   public:
     template <typename... Args>
-    BidirectionalBoundaryCK(AlignedBoxPartByCell &aligned_box_part,
+    BidirectionalBoundaryCK(AlignedBoxByCell &aligned_box_part,
                             ParticleBuffer<Base> &particle_buffer, Args &&...args);
     void tagBufferParticles() { tag_buffer_particles_.exec(); }
     void applyBoundaryCondition(Real dt) { boundary_condition_.exec(dt); }

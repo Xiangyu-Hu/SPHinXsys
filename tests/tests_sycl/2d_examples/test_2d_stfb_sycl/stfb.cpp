@@ -81,8 +81,8 @@ class WallBoundary : public ComplexShape
   public:
     explicit WallBoundary(const std::string &shape_name) : ComplexShape(shape_name)
     {
-        add<TransformShape<GeometricShapeBox>>(Transform(outer_wall_translation), outer_wall_halfsize);
-        subtract<TransformShape<GeometricShapeBox>>(Transform(inner_wall_translation), inner_wall_halfsize);
+        add<GeometricShapeBox>(Transform(outer_wall_translation), outer_wall_halfsize);
+        subtract<GeometricShapeBox>(Transform(inner_wall_translation), inner_wall_halfsize);
     }
 };
 class WaterBlock : public ComplexShape
@@ -90,8 +90,8 @@ class WaterBlock : public ComplexShape
   public:
     explicit WaterBlock(const std::string &shape_name) : ComplexShape(shape_name)
     {
-        add<TransformShape<GeometricShapeBox>>(Transform(water_block_translation), water_block_halfsize);
-        subtract<TransformShape<GeometricShapeBox>>(Transform(structure_translation), structure_halfsize);
+        add<GeometricShapeBox>(Transform(water_block_translation), water_block_halfsize);
+        subtract<GeometricShapeBox>(Transform(structure_translation), structure_halfsize);
     }
 };
 //----------------------------------------------------------------------
@@ -120,7 +120,7 @@ int main(int ac, char *av[])
     wall_boundary.defineMaterial<Solid>();
     wall_boundary.generateParticles<BaseParticles, Lattice>();
 
-    TransformShape<GeometricShapeBox> structure_shape(Transform(structure_translation), structure_halfsize, "Structure");
+    GeometricShapeBox structure_shape(Transform(structure_translation), structure_halfsize, "Structure");
     SolidBody structure(sph_system, structure_shape);
     structure.defineMaterial<Solid>(rho_s);
     structure.generateParticles<BaseParticles, Lattice>();
@@ -131,7 +131,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating body parts.
     //----------------------------------------------------------------------
-    TransformShape<GeometricShapeBox> wave_probe_buffer_shape(Transform(gauge_translation), gauge_halfsize, "FreeSurfaceGauge");
+    GeometricShapeBox wave_probe_buffer_shape(Transform(gauge_translation), gauge_halfsize, "FreeSurfaceGauge");
     BodyRegionByCell wave_probe_buffer(water_block, wave_probe_buffer_shape);
     //----------------------------------------------------------------------
     //	Define body relation map.

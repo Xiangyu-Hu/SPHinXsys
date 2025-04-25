@@ -253,7 +253,7 @@ return_data bending_circular_plate(Real dp_ratio)
     Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationSecondHalf> stress_relaxation_second_half(shell_body_inner);
 
     ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> computing_time_step_size(shell_body);
-    BodyPartByParticle constrained_edges(shell_body, "constrained_edges");
+    BodyPartByParticle constrained_edges(shell_body);
     auto constrained_edge_ids = [&]() { // brute force finding the edges
         IndexVector ids;
         for (size_t i = 0; i < shell_body.getBaseParticles().TotalRealParticles(); ++i)

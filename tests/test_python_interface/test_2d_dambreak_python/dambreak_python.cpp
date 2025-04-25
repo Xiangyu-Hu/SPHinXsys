@@ -47,8 +47,8 @@ class WallBoundary : public ComplexShape, public Parameter
   public:
     explicit WallBoundary(const std::string &shape_name) : ComplexShape(shape_name)
     {
-        add<TransformShape<GeometricShapeBox>>(Transform(outer_wall_translation), outer_wall_halfsize);
-        subtract<TransformShape<GeometricShapeBox>>(Transform(inner_wall_translation), inner_wall_halfsize);
+        add<GeometricShapeBox>(Transform(outer_wall_translation), outer_wall_halfsize);
+        subtract<GeometricShapeBox>(Transform(inner_wall_translation), inner_wall_halfsize);
     }
 };
 //----------------------------------------------------------------------
@@ -70,7 +70,7 @@ class PreSettingCase : public Parameter
         : system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW)),
           sph_system(system_domain_bounds, particle_spacing_ref),
           io_environment(sph_system),
-          water_block(sph_system, makeShared<TransformShape<GeometricShapeBox>>(
+          water_block(sph_system, makeShared<GeometricShapeBox>(
                                       Transform(water_block_translation), water_block_halfsize, "WaterBody")),
           wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary")),
           observation_location({Vecd(DL, 0.2)}),

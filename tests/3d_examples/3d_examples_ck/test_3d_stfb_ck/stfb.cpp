@@ -60,7 +60,7 @@ class FloatingStructure : public ComplexShape
   public:
     explicit FloatingStructure(const std::string &shape_name) : ComplexShape(shape_name)
     {
-        add<TransformShape<GeometricShapeBox>>(Transform(translation_str), halfsize_structure);
+        add<GeometricShapeBox>(Transform(translation_str), halfsize_structure);
     }
 };
 
@@ -89,8 +89,8 @@ class WaterBlock : public ComplexShape
         Vecd halfsize_water(0.5 * DW, 0.5 * DL, 0.5 * WH);
         Vecd water_pos(0.5 * DW, 0.5 * DL, 0.5 * WH);
         Transform translation_water(water_pos);
-        add<TransformShape<GeometricShapeBox>>(Transform(translation_water), halfsize_water);
-        subtract<TransformShape<GeometricShapeBox>>(Transform(translation_str), halfsize_structure);
+        add<GeometricShapeBox>(Transform(translation_water), halfsize_water);
+        subtract<GeometricShapeBox>(Transform(translation_str), halfsize_structure);
     }
 };
 //----------------------------------------------------------------------
@@ -104,12 +104,12 @@ class WallBoundary : public ComplexShape
         Vecd halfsize_wall_outer(0.5 * DW + BW, 0.5 * DL + BW, 0.5 * DH + BW);
         Vecd wall_outer_pos(0.5 * DW, 0.5 * DL, 0.5 * DH);
         Transform translation_wall_outer(wall_outer_pos);
-        add<TransformShape<GeometricShapeBox>>(Transform(translation_wall_outer), halfsize_wall_outer);
+        add<GeometricShapeBox>(Transform(translation_wall_outer), halfsize_wall_outer);
 
         Vecd halfsize_wall_inner(0.5 * DW, 0.5 * DL, 0.5 * DH + BW);
         Vecd wall_inner_pos(0.5 * DW, 0.5 * DL, 0.5 * DH + BW);
         Transform translation_wall_inner(wall_inner_pos);
-        subtract<TransformShape<GeometricShapeBox>>(Transform(translation_wall_inner), halfsize_wall_inner);
+        subtract<GeometricShapeBox>(Transform(translation_wall_inner), halfsize_wall_inner);
     }
 };
 //----------------------------------------------------------------------
@@ -155,7 +155,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating body parts.
     //----------------------------------------------------------------------
-    TransformShape<GeometricShapeBox>
+    GeometricShapeBox
         wave_probe_buffer_shape(Transform(translation_FS_gauge), FS_gauge);
     BodyRegionByCell wave_probe_buffer(water_block, wave_probe_buffer_shape);
 
@@ -245,7 +245,7 @@ int main(int ac, char *av[])
     /** the forces of the system. */
     SimTK::GeneralForceSubsystem forces(MBsystem);
     /** mass properties of the fixed spot. */
-    TransformShape<GeometricShapeBox> fix_spot_shape(Transform(translation_str), halfsize_structure);
+    GeometricShapeBox fix_spot_shape(Transform(translation_str), halfsize_structure);
     StructureSystemForSimbody structure_multibody(structure, fix_spot_shape);
     /** Mass properties of the constrained spot.
      * SimTK::MassProperties(mass, center of mass, inertia)

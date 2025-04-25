@@ -65,7 +65,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
-    TransformShape<GeometricShapeBox> muscle_body_shape(Transform(translation_myocardium), halfsize_myocardium, "MyocardiumMuscleBody");
+    GeometricShapeBox muscle_body_shape(Transform(translation_myocardium), halfsize_myocardium, "MyocardiumMuscleBody");
     SolidBody muscle_body(sph_system, muscle_body_shape);
     muscle_body.defineMaterial<ActiveMuscle<Muscle>>(rho0_s, bulk_modulus, fiber_direction, sheet_direction, a0, b0);
     muscle_body.generateParticles<BaseParticles, Lattice>();
@@ -89,7 +89,7 @@ int main(int ac, char *av[])
 
     ReduceDynamics<solid_dynamics::AcousticTimeStep> computing_time_step_size(muscle_body);
     SimpleDynamics<MyocardiumActivation> myocardium_activation(muscle_body);
-    BodyRegionByParticle holder(muscle_body, makeShared<TransformShape<GeometricShapeBox>>(Transform(translation_holder), halfsize_holder));
+    BodyRegionByParticle holder(muscle_body, makeShared<GeometricShapeBox>(Transform(translation_holder), halfsize_holder));
     SimpleDynamics<FixedInAxisDirection> constrain_holder(holder, Vecd(0.0, 1.0, 1.0));
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations

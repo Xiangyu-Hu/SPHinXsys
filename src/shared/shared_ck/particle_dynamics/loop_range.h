@@ -61,16 +61,19 @@ class LoopRangeCK<ExecutionPolicy, BodyPartByParticle>
 {
   public:
     LoopRangeCK(BodyPartByParticle &body_part)
-        : index_list_(body_part.dvIndexList()->DelegatedData(ExecutionPolicy{})),
+        : particle_list_(body_part.dvParticleList()->DelegatedData(ExecutionPolicy{})),
           loop_bound_(body_part.svRangeSize()->DelegatedData(ExecutionPolicy{})) {};
     template <class UnaryFunc>
-    void computeUnit(const UnaryFunc &f, UnsignedInt i) const { f(index_list_[i]); };
+    void computeUnit(const UnaryFunc &f, UnsignedInt i) const { f(particle_list_[i]); };
     template <class ReturnType, class BinaryFunc, class UnaryFunc>
-    ReturnType computeUnit(ReturnType temp, const BinaryFunc &bf, const UnaryFunc &uf, UnsignedInt i) const { return uf(index_list_[i]); };
+    ReturnType computeUnit(ReturnType temp, const BinaryFunc &bf, const UnaryFunc &uf, UnsignedInt i) const
+    {
+        return uf(particle_list_[i]);
+    };
     UnsignedInt LoopBound() const { return *loop_bound_; };
 
   protected:
-    UnsignedInt *index_list_;
+    UnsignedInt *particle_list_;
     UnsignedInt *loop_bound_;
 };
 
@@ -79,14 +82,14 @@ class LoopRangeCK<ExecutionPolicy, BodyPartByCell>
 {
   public:
     LoopRangeCK(BodyPartByCell &body_part)
-        : index_list_(body_part.dvIndexList()->DelegatedData(ExecutionPolicy{})),
+        : cell_list_(body_part.dvCellList()->DelegatedData(ExecutionPolicy{})),
           loop_bound_(body_part.svRangeSize()->DelegatedData(ExecutionPolicy{})),
-          particle_index_(body_part.getParticleIndex()->DelegatedData(ExecutionPolicy{})),
-          cell_offset_(body_part.getCellOffset()->DelegatedData(ExecutionPolicy{})) {};
+          particle_index_(body_part.dvParticleIndex()->DelegatedData(ExecutionPolicy{})),
+          cell_offset_(body_part.dvCellOffset()->DelegatedData(ExecutionPolicy{})) {};
     template <class UnaryFunc>
     void computeUnit(const UnaryFunc &uf, UnsignedInt i) const
     {
-        UnsignedInt cell_index = index_list_[i];
+        UnsignedInt cell_index = cell_list_[i];
         for (size_t k = cell_offset_[cell_index]; k != cell_offset_[cell_index + 1]; ++k)
         {
             uf(particle_index_[k]);
@@ -96,7 +99,7 @@ class LoopRangeCK<ExecutionPolicy, BodyPartByCell>
     template <class ReturnType, class BinaryFunc, class UnaryFunc>
     ReturnType computeUnit(ReturnType temp, const BinaryFunc &bf, const UnaryFunc &uf, UnsignedInt i) const
     {
-        UnsignedInt cell_index = index_list_[i];
+        UnsignedInt cell_index = cell_list_[i];
         for (size_t k = cell_offset_[cell_index]; k != cell_offset_[cell_index + 1]; ++k)
         {
             temp = bf(temp, uf(particle_index_[k]));
@@ -106,7 +109,7 @@ class LoopRangeCK<ExecutionPolicy, BodyPartByCell>
     UnsignedInt LoopBound() const { return *loop_bound_; };
 
   protected:
-    UnsignedInt *index_list_;
+    UnsignedInt *cell_list_;
     UnsignedInt *loop_bound_;
     UnsignedInt *particle_index_;
     UnsignedInt *cell_offset_;

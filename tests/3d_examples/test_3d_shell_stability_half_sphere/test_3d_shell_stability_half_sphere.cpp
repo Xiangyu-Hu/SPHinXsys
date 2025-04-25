@@ -161,7 +161,7 @@ void sphere_compression(int dp_ratio, Real pressure, Real gravity_z)
     SimpleDynamics<thin_structure_dynamics::UpdateShellNormalDirection> normal_update(shell_body);
     SimpleDynamics<solid_dynamics::PressureForceOnShell> apply_pressure(shell_body, pressure * pow(unit_mm, 2));
 
-    BodyPartByParticle constrained_edges(shell_body, "constrained_edges");
+    BodyPartByParticle constrained_edges(shell_body);
     Vec3d *position = shell_particles->getVariableDataByName<Vec3d>("Position");
     auto constrained_edge_ids = [&]() { // brute force finding the edges
         IndexVector ids;

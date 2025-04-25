@@ -26,7 +26,7 @@ int main(int ac, char *av[])
     wall_boundary.defineMaterial<Solid>();
     wall_boundary.generateParticles<BaseParticles, Lattice>();
 
-    TransformShape<GeometricShapeBox> structure_shape(Transform(structure_translation), structure_halfsize, "Structure");
+    GeometricShapeBox structure_shape(Transform(structure_translation), structure_halfsize, "Structure");
     SolidBody structure(sph_system, structure_shape);
     structure.defineMaterial<Solid>(rho_s);
     structure.generateParticles<BaseParticles, Lattice>();
@@ -152,7 +152,7 @@ int main(int ac, char *av[])
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp write_real_body_states(sph_system);
-    TransformShape<GeometricShapeBox> wave_probe_buffer_shape(Transform(gauge_translation), gauge_halfsize, "FreeSurfaceGauge");
+    GeometricShapeBox wave_probe_buffer_shape(Transform(gauge_translation), gauge_halfsize, "FreeSurfaceGauge");
     BodyRegionByCell wave_probe_buffer(water_block, wave_probe_buffer_shape);
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<UpperFrontInAxisDirection<BodyPartByCell>>>
         wave_gauge(wave_probe_buffer, "FreeSurfaceHeight");

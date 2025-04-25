@@ -21,47 +21,48 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	geometric_shape.h
- * @brief 	Here, we define shapes represented directly by geometric elements.
- * @author	Chi Zhang and Xiangyu Hu
+ * @file 	body_partition.h
+ * @brief 	A part of the body for adaptation.
+ * @details	TBD.
+ * @author	Xiangyu Hu
  */
 
-#ifndef GEOMETRIC_SHAPE_H
-#define GEOMETRIC_SHAPE_H
+#ifndef BODY_PARTITION_H
+#define BODY_PARTITION_H
 
-#include "base_geometry.h"
-#include "geometric_element.h"
-#include "transform_geometry.h"
+#include "base_body_part.h"
 
 namespace SPH
 {
-class GeometricShapeBox : public TransformShape<GeometricBox>
+class BodyPartition : public BodyPartByID
 {
   public:
-    GeometricShapeBox(const Transform &transform, const Vecd &halfsize,
-                      const std::string &name = "GeometricShapeBox");
-    explicit GeometricShapeBox(const BoundingBox &bounding_box,
-                               const std::string &name = "GeometricShapeBox");
-    GeometricShapeBox(const Vecd &lower_bound, const Vecd &upper_bound,
-                      const std::string &name = "GeometricShapeBox");
-    virtual ~GeometricShapeBox() {};
-};
-
-class GeometricShapeBall : public GeometricBall, public Shape
-{
-    Vecd center_;
-
-  public:
-    explicit GeometricShapeBall(const Vecd &center, Real radius,
-                                const std::string &name = "GeometricShapeBall");
-    virtual ~GeometricShapeBall() {};
-
-    virtual bool checkContain(const Vecd &probe_point, bool BOUNDARY_INCLUDED = true) override;
-    virtual Vecd findClosestPoint(const Vecd &probe_point) override;
+    BodyPartition(SPHBody &sph_body, UnsignedInt adaptation_level);
+    virtual ~BodyPartition() {};
+    UnsignedInt AdaptationLevel() { return adaptation_level_; };
+    virtual BaseCellLinkedList &getCellLinkedList() = 0;
 
   protected:
-    virtual BoundingBox findBounds() override;
+    UniquePtr<BaseCellLinkedList> cell_linked_list_ptr_;
+    bool cell_linked_list_created_;
+    UnsignedInt adaptation_level_;
+    SPHAdaptation &sph_adaptation_;
+};
+
+class BodyPartitionTemporal : public BodyPartition
+{
+  public:
+    BodyPartitionTemporal(SPHBody &sph_body, UnsignedInt adaptation_level);
+    virtual ~BodyPartitionTemporal() {};
+    virtual BaseCellLinkedList &getCellLinkedList() override;
+};
+
+class BodyPartitionSpatial : public BodyPartition
+{
+  public:
+    BodyPartitionSpatial(SPHBody &sph_body, UnsignedInt adaptation_level);
+    virtual ~BodyPartitionSpatial() {};
+    virtual BaseCellLinkedList &getCellLinkedList() override;
 };
 } // namespace SPH
-
-#endif // GEOMETRIC_SHAPE_H
+#endif // BODY_PARTITION_H

@@ -42,7 +42,7 @@ class AirBody : public ComplexShape
     {
         Vecd halfsize_wave(0.5 * DH, 0.5 * DL, 0.5 * DW);
         Transform translation_wave(halfsize_wave);
-        add<TransformShape<GeometricShapeBox>>(Transform(translation_wave), halfsize_wave);
+        add<GeometricShapeBox>(Transform(translation_wave), halfsize_wave);
     }
 };
 ///----------------------------------------------------------------------
