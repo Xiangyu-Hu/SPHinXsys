@@ -223,8 +223,8 @@ BaseNeighborBuilderContactShell::BaseNeighborBuilderContactShell(SPHBody &shell_
     : NeighborBuilder(shell_body.getSPHAdaptation().getKernel()),
       n_(shell_body.getBaseParticles().getVariableDataByName<Vecd>("NormalDirection")),
       thickness_(shell_body.getBaseParticles().getVariableDataByName<Real>("Thickness")),
-      k1_ave_(shell_body.getBaseParticles().registerStateVariable<Real>("1stPrincipleCurvature")),
-      k2_ave_(shell_body.getBaseParticles().registerStateVariable<Real>("2ndPrincipleCurvature")),
+      k1_ave_(shell_body.getBaseParticles().registerStateVariable<Real>("Average1stPrincipleCurvature")),
+      k2_ave_(shell_body.getBaseParticles().registerStateVariable<Real>("Average2ndPrincipleCurvature")),
       particle_distance_(shell_body.getSPHBodyResolutionRef()) {}
 //=================================================================================================//
 void BaseNeighborBuilderContactShell::createNeighbor(Neighborhood &neighborhood, const Real &distance,
