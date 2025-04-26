@@ -42,6 +42,11 @@ Relation<Base>::NeighborList::NeighborList(
     : neighbor_index_(encloser.dv_target_neighbor_index_[target_index]->DelegatedData(ex_policy)),
       particle_offset_(encloser.dv_target_particle_offset_[target_index]->DelegatedData(ex_policy)) {}
 //=================================================================================================//
+template <typename DynamicsIdentifier>
+Relation<Inner<DynamicsIdentifier>>::Relation(DynamicsIdentifier &identifier)
+    : Relation<Base>(identifier, StdVec<DynamicsIdentifier *>{&identifier}),
+      identifier_(&identifier) {}
+//=================================================================================================//
 template <class DynamicsIdentifier, class TargetIdentifier>
 template <typename... Args>
 Relation<Contact<DynamicsIdentifier, TargetIdentifier>>::Relation(

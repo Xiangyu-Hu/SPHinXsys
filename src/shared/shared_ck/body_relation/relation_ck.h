@@ -103,6 +103,18 @@ class Relation<Inner<>> : public Relation<Base>
     RealBody *real_body_;
 };
 
+template <typename DynamicsIdentifier>
+class Relation<Inner<DynamicsIdentifier>> : public Relation<Base>
+{
+  public:
+    explicit Relation(DynamicsIdentifier &identifier);
+    virtual ~Relation() {};
+    RealBody &getRealBody() { return *identifier_; };
+
+  protected:
+    DynamicsIdentifier *identifier_;
+};
+
 template <class SourceIdentifier, class TargetIdentifier>
 class Relation<Contact<SourceIdentifier, TargetIdentifier>> : public Relation<Base>
 {
