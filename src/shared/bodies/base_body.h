@@ -117,13 +117,13 @@ class SPHBody
     StdVec<BodyPartByParticle *> getBodyPartsByParticle() { return body_parts_by_particle_; };
 
     template <typename TargetCriterion>
-    class SourceParticleMask : public TargetCriterion
+    class TargetParticleMask : public TargetCriterion
     {
       public:
         template <class ExecutionPolicy, typename EnclosureType, typename... Args>
-        SourceParticleMask(ExecutionPolicy &ex_policy, EnclosureType &encloser, Args &&...args)
+        TargetParticleMask(ExecutionPolicy &ex_policy, EnclosureType &encloser, Args &&...args)
             : TargetCriterion(std::forward<Args>(args)...) {}
-        virtual ~SourceParticleMask() {}
+        virtual ~TargetParticleMask() {}
     };
     //----------------------------------------------------------------------
     //		Object factory template functions
@@ -218,12 +218,12 @@ class RealBody : public SPHBody
     BaseCellLinkedList &getCellLinkedList();
     void updateCellLinkedList();
 
-    class SourceParticleMask
+    class ListedParticleMask
     {
       public:
         template <class ExecutionPolicy, typename EnclosureType>
-        SourceParticleMask(ExecutionPolicy &ex_policy, EnclosureType &encloser) {}
-        ~SourceParticleMask() {}
+        ListedParticleMask(ExecutionPolicy &ex_policy, EnclosureType &encloser) {}
+        ~ListedParticleMask() {}
 
         bool operator()(UnsignedInt source_index)
         {

@@ -31,8 +31,8 @@
 
 #include "base_configuration_dynamics.h"
 
-#include "all_particle_dynamics.h"
 #include "all_bodies.h"
+#include "all_particle_dynamics.h"
 
 namespace SPH
 {
@@ -44,7 +44,7 @@ class UpdateCellLinkedList<ExecutionPolicy, DynamicsIdentifier>
     : public BaseLocalDynamics<DynamicsIdentifier>, public BaseDynamics<void>
 {
     typedef UpdateCellLinkedList<ExecutionPolicy, DynamicsIdentifier> EncloserType;
-    using SourceParticleMask = typename DynamicsIdentifier::SourceParticleMask;
+    using ParticleMask = typename DynamicsIdentifier::ListedParticleMask;
 
   protected:
     CellLinkedList &cell_linked_list_;
@@ -69,7 +69,7 @@ class UpdateCellLinkedList<ExecutionPolicy, DynamicsIdentifier>
 
       protected:
         Mesh mesh_;
-        SourceParticleMask source_mask_;
+        ParticleMask particle_mask_;
         UnsignedInt cell_offset_list_size_;
 
         Vecd *pos_;

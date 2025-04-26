@@ -285,8 +285,8 @@ int main(int ac, char *av[])
     // Combined relations built from basic relations
     // which is only used for update configuration.
     //----------------------------------------------------------------------
-    UpdateCellLinkedList<MainExecutionPolicy, CellLinkedList> water_cell_linked_list(water_body);
-    UpdateCellLinkedList<MainExecutionPolicy, CellLinkedList> wall_cell_linked_list(wall);
+    UpdateCellLinkedList<MainExecutionPolicy, RealBody> water_cell_linked_list(water_body);
+    UpdateCellLinkedList<MainExecutionPolicy, RealBody> wall_cell_linked_list(wall);
     UpdateRelation<MainExecutionPolicy, Inner<>, Contact<>> water_body_update_complex_relation(water_body_inner, water_wall_contact);
     UpdateRelation<MainExecutionPolicy, Contact<>> fluid_observer_contact_relation(velocity_observer_contact);
     ParticleSortCK<MainExecutionPolicy> particle_sort(water_body);

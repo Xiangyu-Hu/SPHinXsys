@@ -27,7 +27,7 @@ UpdateCellLinkedList<ExecutionPolicy, DynamicsIdentifier>::
 template <class ExecutionPolicy, typename DynamicsIdentifier>
 UpdateCellLinkedList<ExecutionPolicy, DynamicsIdentifier>::ComputingKernel::
     ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-    : mesh_(encloser.mesh_), source_mask_(ex_policy, encloser.identifier_),
+    : mesh_(encloser.mesh_), particle_mask_(ex_policy, encloser.identifier_),
       cell_offset_list_size_(encloser.cell_offset_list_size_),
       pos_(encloser.dv_pos_->DelegatedData(ex_policy)),
       particle_index_(encloser.dv_particle_index_->DelegatedData(ex_policy)),
@@ -47,7 +47,7 @@ template <class ExecutionPolicy, typename DynamicsIdentifier>
 void UpdateCellLinkedList<ExecutionPolicy, DynamicsIdentifier>::ComputingKernel::
     incrementCellSize(UnsignedInt index_i)
 {
-    if (source_mask_(index_i))
+    if (particle_mask_(index_i))
     {
         // Here, particle_index_ takes role of current_cell_size_list_.
         const UnsignedInt linear_index = mesh_.LinearCellIndexFromPosition(pos_[index_i]);
@@ -60,7 +60,7 @@ template <class ExecutionPolicy, typename DynamicsIdentifier>
 void UpdateCellLinkedList<ExecutionPolicy, DynamicsIdentifier>::ComputingKernel::
     updateCellList(UnsignedInt index_i)
 {
-    if (source_mask_(index_i))
+    if (particle_mask_(index_i))
     {
         // Here, particle_index_ takes its original role.
         const UnsignedInt linear_index = mesh_.LinearCellIndexFromPosition(pos_[index_i]);

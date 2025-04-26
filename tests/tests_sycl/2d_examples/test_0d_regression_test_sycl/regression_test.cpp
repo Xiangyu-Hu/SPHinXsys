@@ -156,7 +156,7 @@ int main(int ac, char *av[])
     // Finally, the auxiliary models such as time step estimator, initial condition,
     // boundary condition and other constraints should be defined.
     //----------------------------------------------------------------------
-    UpdateCellLinkedList<MainExecutionPolicy, CellLinkedList> diffusion_body_cell_linked_list(diffusion_body);
+    UpdateCellLinkedList<MainExecutionPolicy, RealBody> diffusion_body_cell_linked_list(diffusion_body);
 
     UpdateRelation<MainExecutionPolicy, Inner<>> water_block_update_complex_relation(diffusion_body_inner);
     UpdateRelation<MainExecutionPolicy, Contact<>> observer_update_contact_relation(observer_contact);

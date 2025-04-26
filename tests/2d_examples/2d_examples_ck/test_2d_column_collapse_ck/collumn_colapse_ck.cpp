@@ -87,8 +87,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     using MainExecutionPolicy = execution::ParallelPolicy; // define execution policy for this case
 
-    UpdateCellLinkedList<MainExecutionPolicy, CellLinkedList> soil_cell_linked_list(soil_block);
-    UpdateCellLinkedList<MainExecutionPolicy, CellLinkedList> wall_cell_linked_list(wall_boundary);
+    UpdateCellLinkedList<MainExecutionPolicy, RealBody> soil_cell_linked_list(soil_block);
+    UpdateCellLinkedList<MainExecutionPolicy, RealBody> wall_cell_linked_list(wall_boundary);
 
     //----------------------------------------------------------------------
     // Combined relations built from basic relations
