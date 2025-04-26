@@ -6,29 +6,29 @@
 namespace SPH
 {
 //=================================================================================================//
-template <typename... Parameters>
-Interaction<Inner<Parameters...>>::
+template <class DynamicsIdentifier, typename... Parameters>
+Interaction<Inner<DynamicsIdentifier, Parameters...>>::
     Interaction(InnerRelationType &inner_relation)
-    : BaseDynamics(inner_relation.getDynamicsIdentifier()),
+    : BaseLocalDynamics<DynamicsIdentifier>(inner_relation.getDynamicsIdentifier()),
       inner_relation_(inner_relation) {}
 //=================================================================================================//
-template <typename... Parameters>
-void Interaction<Inner<Parameters...>>::
+template <class DynamicsIdentifier, typename... Parameters>
+void Interaction<Inner<DynamicsIdentifier, Parameters...>>::
     registerComputingKernel(Implementation<Base> *implementation)
 {
     inner_relation_.registerComputingKernel(implementation);
 }
 //=================================================================================================//
-template <typename... Parameters>
-void Interaction<Inner<Parameters...>>::resetComputingKernelUpdated()
+template <class DynamicsIdentifier, typename... Parameters>
+void Interaction<Inner<DynamicsIdentifier, Parameters...>>::resetComputingKernelUpdated()
 {
     inner_relation_.resetComputingKernelUpdated();
 }
 //=================================================================================================//
-template <typename... Parameters>
-template <class ExecutionPolicy>
-Interaction<Inner<Parameters...>>::InteractKernel::
-    InteractKernel(const ExecutionPolicy &ex_policy, Interaction<Inner<Parameters...>> &encloser)
+template <class DynamicsIdentifier, typename... Parameters>
+template <class ExecutionPolicy, class EncloserType>
+Interaction<Inner<DynamicsIdentifier, Parameters...>>::InteractKernel::
+    InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : NeighborList(ex_policy, encloser.inner_relation_),
       Neighbor<Parameters...>(ex_policy, encloser.sph_adaptation_,
                               encloser.sph_adaptation_,

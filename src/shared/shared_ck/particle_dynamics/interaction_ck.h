@@ -44,12 +44,11 @@ class InteractionOnly;
 template <typename... T>
 class Interaction;
 
-template <typename... Parameters>
-class Interaction<Inner<Parameters...>>
-    : public BaseLocalDynamics<typename Relation<Inner<Parameters...>>::Identifier>
+template <class DynamicsIdentifier, typename... Parameters>
+class Interaction<Inner<DynamicsIdentifier, Parameters...>>
+    : public BaseLocalDynamics<DynamicsIdentifier>
 {
-    typedef Relation<Inner<Parameters...>> InnerRelationType;
-    typedef BaseLocalDynamics<typename InnerRelationType::Identifier> BaseDynamics;
+    typedef Relation<Inner<DynamicsIdentifier, Parameters...>> InnerRelationType;
     using NeighborList = typename InnerRelationType::NeighborList;
 
   public:
@@ -59,9 +58,8 @@ class Interaction<Inner<Parameters...>>
     class InteractKernel : public NeighborList, public Neighbor<Parameters...>
     {
       public:
-        template <class ExecutionPolicy>
-        InteractKernel(const ExecutionPolicy &ex_policy,
-                       Interaction<Inner<Parameters...>> &encloser);
+        template <class ExecutionPolicy, class EncloserType>
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
     };
 
     typedef InteractKernel BaseInteractKernel;
@@ -70,6 +68,15 @@ class Interaction<Inner<Parameters...>>
 
   protected:
     InnerRelationType &inner_relation_;
+};
+
+template <>
+class Interaction<Inner<>> : public Interaction<Inner<RealBody>>
+{
+  public:
+    explicit Interaction(Relation<Inner<>> &inner_relation)
+        : Interaction<Inner<RealBody>>(inner_relation) {};
+    virtual ~Interaction() {};
 };
 
 template <class SourceIdentifier, class TargetIdentifier, typename... Parameters>
