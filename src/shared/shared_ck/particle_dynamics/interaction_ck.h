@@ -45,15 +45,16 @@ template <typename... T>
 class Interaction;
 
 template <typename... Parameters>
-class Interaction<Inner<Parameters...>> : public LocalDynamics
+class Interaction<Inner<Parameters...>>
+    : public BaseLocalDynamics<typename Relation<Inner<Parameters...>>::Identifier>
 {
     typedef Relation<Inner<Parameters...>> InnerRelationType;
+    typedef BaseLocalDynamics<typename InnerRelationType::Identifier> BaseDynamics;
     using NeighborList = typename InnerRelationType::NeighborList;
 
   public:
     explicit Interaction(InnerRelationType &inner_relation);
     virtual ~Interaction() {};
-    SPHAdaptation *getSPHAdaptation() { return sph_adaptation_; };
 
     class InteractKernel : public NeighborList, public Neighbor<Parameters...>
     {
@@ -69,7 +70,6 @@ class Interaction<Inner<Parameters...>> : public LocalDynamics
 
   protected:
     InnerRelationType &inner_relation_;
-    RealBody *real_body_;
 };
 
 template <class SourceIdentifier, class TargetIdentifier, typename... Parameters>
@@ -82,7 +82,6 @@ class Interaction<Contact<SourceIdentifier, TargetIdentifier, Parameters...>>
   public:
     explicit Interaction(ContactRelationType &contact_relation);
     virtual ~Interaction() {};
-    SPHAdaptation *getSPHAdaptation() { return sph_adaptation_; };
 
     class InteractKernel : public NeighborList, public Neighbor<Parameters...>
     {
@@ -97,8 +96,7 @@ class Interaction<Contact<SourceIdentifier, TargetIdentifier, Parameters...>>
 
   protected:
     ContactRelationType &contact_relation_;
-    SPHAdaptation *sph_adaptation_;
-    RealBodyVector contact_bodies_;
+    StdVec<SPHBody *> contact_bodies_;
     StdVec<BaseParticles *> contact_particles_;
     StdVec<SPHAdaptation *> contact_adaptations_;
 };

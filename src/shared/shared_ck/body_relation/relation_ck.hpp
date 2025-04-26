@@ -56,7 +56,7 @@ Relation<Contact<DynamicsIdentifier, TargetIdentifier>>::Relation(
 {
     for (size_t k = 0; k != contact_identifiers.size(); ++k)
     {
-        RealBody *contact_body = DynamicCast<RealBody>(this, &contact_identifiers[k]->getSPHBody());
+        SPHBody *contact_body = &contact_identifiers[k]->getSPHBody();
         contact_bodies_.push_back(contact_body);
         contact_particles_.push_back(&contact_body->getBaseParticles());
         contact_adaptations_.push_back(&contact_body->getSPHAdaptation());

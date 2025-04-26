@@ -47,8 +47,4 @@ void Relation<Base>::resetComputingKernelUpdated(UnsignedInt target_index)
     }
 }
 //=================================================================================================//
-Relation<Inner<>>::Relation(RealBody &real_body)
-    : Relation<Base>(real_body, StdVec<RealBody *>{&real_body}),
-      real_body_(&real_body) {}
-//=================================================================================================//
 } // namespace SPH

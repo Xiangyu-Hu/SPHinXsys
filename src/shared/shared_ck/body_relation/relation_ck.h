@@ -91,28 +91,25 @@ class Relation<Base>
     DiscreteVariable<DataType> *addRelationVariable(const std::string &name, size_t data_size);
 };
 
-template <>
-class Relation<Inner<>> : public Relation<Base>
-{
-  public:
-    explicit Relation(RealBody &real_body);
-    virtual ~Relation() {};
-    RealBody &getRealBody() { return *real_body_; };
-
-  protected:
-    RealBody *real_body_;
-};
-
 template <typename DynamicsIdentifier>
 class Relation<Inner<DynamicsIdentifier>> : public Relation<Base>
 {
   public:
+    typedef DynamicsIdentifier Identifier;
     explicit Relation(DynamicsIdentifier &identifier);
     virtual ~Relation() {};
-    RealBody &getRealBody() { return *identifier_; };
+    DynamicsIdentifier &getDynamicsIdentifier() { return *identifier_; };
 
   protected:
     DynamicsIdentifier *identifier_;
+};
+
+template <>
+class Relation<Inner<>> : public Relation<Inner<RealBody>>
+{
+  public:
+    Relation(RealBody &real_body) : Relation<Inner<RealBody>>(real_body) {}
+    virtual ~Relation() {};
 };
 
 template <class SourceIdentifier, class TargetIdentifier>
@@ -121,7 +118,7 @@ class Relation<Contact<SourceIdentifier, TargetIdentifier>> : public Relation<Ba
   protected:
     SourceIdentifier &source_identifier_;
     StdVec<TargetIdentifier *> contact_identifiers_;
-    StdVec<RealBody *> contact_bodies_;
+    StdVec<SPHBody *> contact_bodies_;
     StdVec<BaseParticles *> contact_particles_;
     StdVec<SPHAdaptation *> contact_adaptations_;
 
@@ -135,7 +132,7 @@ class Relation<Contact<SourceIdentifier, TargetIdentifier>> : public Relation<Ba
     SourceIdentifier &getSourceIdentifier() { return source_identifier_; };
     StdVec<TargetIdentifier *> getContactIdentifiers() { return contact_identifiers_; };
     TargetIdentifier &getContactIdentifier(UnsignedInt target_index) { return *contact_identifiers_[target_index]; };
-    StdVec<RealBody *> getContactBodies() { return contact_bodies_; };
+    StdVec<SPHBody *> getContactBodies() { return contact_bodies_; };
     StdVec<BaseParticles *> getContactParticles() { return contact_particles_; };
     StdVec<SPHAdaptation *> getContactAdaptations() { return contact_adaptations_; };
 };
