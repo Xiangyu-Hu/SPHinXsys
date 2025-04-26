@@ -285,7 +285,7 @@ template <class DiffusionType>
 template <class DiffusionDynamics>
 Dirichlet<DiffusionType>::Dirichlet(DiffusionDynamics &diffusion_dynamics, BaseParticles *contact_particles)
     : smoothing_length_sq_(
-          pow(diffusion_dynamics.getSPHAdaptation()->ReferenceSmoothingLength(), 2)),
+          pow(diffusion_dynamics.getSPHAdaptation().ReferenceSmoothingLength(), 2)),
       dv_gradient_species_array_(diffusion_dynamics.dvGradientSpeciesArray()),
       contact_dv_gradient_species_array_(contact_particles->template registerStateVariables<Real>(
           diffusion_dynamics.getGradientSpeciesNames(), "")),

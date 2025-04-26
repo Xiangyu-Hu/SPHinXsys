@@ -116,6 +116,19 @@ class SPHBody
     void addBodyPartByParticle(BodyPartByParticle *body_part) { body_parts_by_particle_.push_back(body_part); };
     StdVec<BodyPartByParticle *> getBodyPartsByParticle() { return body_parts_by_particle_; };
 
+    class SourceParticleMask
+    {
+      public:
+        template <class ExecutionPolicy, typename EnclosureType>
+        SourceParticleMask(ExecutionPolicy &ex_policy, EnclosureType &encloser) {}
+        ~SourceParticleMask() {}
+
+        constexpr bool operator()(UnsignedInt /*source_index*/) const
+        {
+            return true;
+        }
+    };
+
     template <typename TargetCriterion>
     class TargetParticleMask : public TargetCriterion
     {
@@ -217,19 +230,7 @@ class RealBody : public SPHBody
     virtual ~RealBody() {};
     BaseCellLinkedList &getCellLinkedList();
     void updateCellLinkedList();
-
-    class ListedParticleMask
-    {
-      public:
-        template <class ExecutionPolicy, typename EnclosureType>
-        ListedParticleMask(ExecutionPolicy &ex_policy, EnclosureType &encloser) {}
-        ~ListedParticleMask() {}
-
-        bool operator()(UnsignedInt source_index)
-        {
-            return true;
-        }
-    };
+    using ListedParticleMask = typename SPHBody::SourceParticleMask;
 };
 } // namespace SPH
 #endif // BASE_BODY_H

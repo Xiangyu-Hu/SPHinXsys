@@ -63,6 +63,7 @@ class BaseLocalDynamics
     virtual ~BaseLocalDynamics() {};
     using Identifier = typename DynamicsIdentifier::BaseIdentifier;
     SPHBody &getSPHBody() { return sph_body_; };
+    SPHAdaptation &getSPHAdaptation() { return *sph_adaptation_; };
     virtual void setupDynamics(Real dt = 0.0) {}; // setup global parameters
 
     class FinishDynamics

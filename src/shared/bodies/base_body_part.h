@@ -55,6 +55,7 @@ class BodyPart
     std::string getName() const { return alias_.value_or(part_name_); };
     int getPartID() { return part_id_; };
     SingularVariable<UnsignedInt> *svRangeSize() { return sv_range_size_; };
+    BaseCellLinkedList &getCellLinkedList();
 
     template <typename TargetCriterion>
     class TargetParticleMask : public TargetCriterion

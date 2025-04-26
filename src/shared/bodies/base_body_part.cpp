@@ -12,6 +12,12 @@ BodyPart::BodyPart(SPHBody &sph_body)
       dv_body_part_id_(base_particles_.registerStateVariableOnly<int>(part_name_ + "ID")),
       pos_(base_particles_.getVariableDataByName<Vecd>("Position")) {}
 //=================================================================================================//
+BaseCellLinkedList &BodyPart::getCellLinkedList()
+{
+    RealBody &real_body = DynamicCast<RealBody>(this, sph_body_);
+    return real_body.getCellLinkedList();
+}
+//=================================================================================================//
 BodyPartByID::BodyPartByID(SPHBody &sph_body) : BodyPart(sph_body)
 {
     sv_range_size_ = base_particles_.svTotalRealParticles();

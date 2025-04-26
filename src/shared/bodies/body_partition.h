@@ -45,14 +45,14 @@ class BodyPartition
     UnsignedInt PartitionAdaptationLevel() { return partition_adapt_level_; };
     virtual BaseCellLinkedList &getCellLinkedList() = 0;
 
-    class ListedParticleMask
+    class SourceParticleMask
     {
       public:
         template <class ExecutionPolicy, typename EnclosureType>
-        ListedParticleMask(ExecutionPolicy &ex_policy, EnclosureType &encloser)
+        SourceParticleMask(ExecutionPolicy &ex_policy, EnclosureType &encloser)
             : partition_adapt_level_(encloser.partition_adapt_level_),
               adapt_level_(encloser.dv_adapt_level_->DelegatedData(ex_policy)) {}
-        ~ListedParticleMask() {}
+        ~SourceParticleMask() {}
 
         bool operator()(UnsignedInt source_index)
         {
@@ -63,6 +63,7 @@ class BodyPartition
         int partition_adapt_level_;
         int *adapt_level_;
     };
+    using ListedParticleMask = SourceParticleMask;
 
   protected:
     SPHBody &sph_body_;
