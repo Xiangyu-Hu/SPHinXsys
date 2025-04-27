@@ -40,19 +40,16 @@ template <typename... T>
 class Neighbor;
 
 template <>
-class Neighbor<>
+class Neighbor<Base>
 {
   public:
     template <class ExecutionPolicy>
     Neighbor(const ExecutionPolicy &ex_policy,
-             SPHAdaptation *sph_adaptation, SPHAdaptation *contact_adaptation,
+             SPHAdaptation *sph_adaptation, SPHAdaptation *target_adaptation,
              DiscreteVariable<Vecd> *dv_pos, DiscreteVariable<Vecd> *dv_target_pos);
 
     KernelTabulatedCK &getKernel() { return kernel_; }
-
     inline Vecd vec_r_ij(size_t i, size_t j) const { return source_pos_[i] - target_pos_[j]; };
-    inline Real W_ij(size_t i, size_t j) const { return kernel_.W(vec_r_ij(i, j)); }
-    inline Real dW_ij(size_t i, size_t j) const { return kernel_.dW(vec_r_ij(i, j)); }
 
     inline Vecd e_ij(size_t i, size_t j) const
     {
@@ -60,25 +57,44 @@ class Neighbor<>
         return displacement / (displacement.norm() + TinyReal);
     }
 
+  protected:
+    KernelTabulatedCK kernel_;
+    Real kernel_size_square_;
+    Vecd *source_pos_;
+    Vecd *target_pos_;
+};
+
+template <>
+class Neighbor<> : public Neighbor<Base>
+{
+  public:
+    template <class ExecutionPolicy>
+    Neighbor(const ExecutionPolicy &ex_policy,
+             SPHAdaptation *sph_adaptation, SPHAdaptation *target_adaptation,
+             DiscreteVariable<Vecd> *dv_pos, DiscreteVariable<Vecd> *dv_target_pos);
+    inline Vecd normalizedVecRij(size_t i, size_t j) const { return inv_h_ * (source_pos_[i] - target_pos_[j]); }
+    inline Real W_ij(size_t i, size_t j) const { return kernel_.W(normalizedVecRij(i, j)); }
+    inline Real dW_ij(size_t i, size_t j) const { return inv_h_ * kernel_.dW(normalizedVecRij(i, j)); }
+
     class NeighborCriterion
     {
       public:
         NeighborCriterion(Neighbor<> &neighbor);
         bool operator()(UnsignedInt target_index, UnsignedInt source_index) const
         {
-            return (source_pos_[source_index] - target_pos_[target_index]).squaredNorm() < cut_radius_square_;
+            Vecd normalized_displacement = inv_h_ * (source_pos_[source_index] - target_pos_[target_index]);
+            return normalized_displacement.squaredNorm() < kernel_size_square_;
         };
 
       protected:
         Vecd *source_pos_;
         Vecd *target_pos_;
-        Real cut_radius_square_;
+        Real inv_h_;
+        Real kernel_size_square_;
     };
 
   protected:
-    KernelTabulatedCK kernel_;
-    Vecd *source_pos_;
-    Vecd *target_pos_;
+    Real inv_h_;
 };
 } // namespace SPH
 #endif // NEIGHBORHOOD_CK_H
