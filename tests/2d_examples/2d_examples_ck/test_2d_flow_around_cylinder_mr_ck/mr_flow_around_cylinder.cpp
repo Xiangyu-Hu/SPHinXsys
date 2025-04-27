@@ -201,7 +201,7 @@ int main(int ac, char *av[])
     UpdateCellLinkedList<MainExecutionPolicy, BodyPartitionSpatial> water_low_resolution_cell_linked_list(water_low_resolution_level);
     UpdateCellLinkedList<MainExecutionPolicy, BodyPartitionSpatial> water_high_resolution_cell_linked_list(water_high_resolution_level);
     UpdateCellLinkedList<MainExecutionPolicy, RealBody> cylinder_cell_linked_list(cylinder);
-/*
+
     UpdateRelation<
         MainExecutionPolicy,
         Inner<BodyPartitionSpatial>,
@@ -218,7 +218,7 @@ int main(int ac, char *av[])
             water_low_resolution_inner, water_increase_resolution_contact);
 
     UpdateRelation<MainExecutionPolicy, Contact<SPHBody, BodyPartitionSpatial>>
-        fluid_observer_update_contact_relation(fluid_observer_contact); */
+        fluid_observer_update_contact_relation(fluid_observer_contact);
 
     return 0;
 }

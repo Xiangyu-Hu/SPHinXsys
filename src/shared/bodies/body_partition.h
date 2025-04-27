@@ -65,6 +65,16 @@ class BodyPartition
     };
     using ListedParticleMask = SourceParticleMask;
 
+    template <typename TargetCriterion>
+    class TargetParticleMask : public TargetCriterion
+    {
+      public:
+        template <class ExecutionPolicy, typename EnclosureType, typename... Args>
+        TargetParticleMask(ExecutionPolicy &ex_policy, EnclosureType &encloser, Args &&...args)
+            : TargetCriterion(std::forward<Args>(args)...) {}
+        virtual ~TargetParticleMask() {}
+    };
+
   protected:
     SPHBody &sph_body_;
     SPHAdaptation &sph_adaptation_;
