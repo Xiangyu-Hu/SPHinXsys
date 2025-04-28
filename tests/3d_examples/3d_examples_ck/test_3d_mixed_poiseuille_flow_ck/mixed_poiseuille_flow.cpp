@@ -13,7 +13,7 @@ using namespace SPH;
 //----------------------------------------------------------------------
 Real DL = 0.0075;                /**< Channel length. */
 Real DH = 0.001;                 /**< Channel height. */
-Real resolution_ref = DH / 20.0; /**< Reference particle spacing. */
+Real resolution_ref = DH / 15.0; /**< Reference particle spacing. */
 Real error_tolerance = 5 * 0.01; // Less than 3 percent when resolution is DH/20 and DL/DH = 20
 
 Real BW = resolution_ref * 4; /**< Extending width for BCs. */
@@ -27,7 +27,7 @@ BoundingBox system_domain_bounds(
 const Real Inlet_pressure = 0.1;
 const Real Outlet_pressure = 0.0;
 Real rho0_f = 1000.0;
-Real Re = 25;
+Real Re = 10;
 Real mu_f = std::sqrt(rho0_f * std::pow(DH, 3.0) * std::abs(Inlet_pressure - Outlet_pressure) / (32.0 * Re * DL));
 
 /**
@@ -194,7 +194,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
-    size_t SimTK_resolution = 20;
+    size_t SimTK_resolution = 15;
     auto water_body_shape = makeShared<ComplexShape>("WaterBody");
     water_body_shape->add<TriangleMeshShapeCylinder>(SimTK::UnitVec3(1., 0., 0.), DH * 0.5,
                                                      DL * 0.5, SimTK_resolution,
