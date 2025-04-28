@@ -48,7 +48,7 @@ template <class DynamicsIdentifier, typename... Parameters>
 class Interaction<Inner<DynamicsIdentifier, Parameters...>>
     : public BaseLocalDynamics<DynamicsIdentifier>
 {
-    typedef Relation<Inner<DynamicsIdentifier, Parameters...>> InnerRelationType;
+    typedef Relation<Inner<DynamicsIdentifier>> InnerRelationType;
     using NeighborList = typename InnerRelationType::NeighborList;
 
   public:
@@ -59,7 +59,7 @@ class Interaction<Inner<DynamicsIdentifier, Parameters...>>
     {
       public:
         template <class ExecutionPolicy, class EncloserType>
-        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, Parameters &&...parameters);
     };
 
     typedef InteractKernel BaseInteractKernel;
@@ -83,7 +83,7 @@ template <class SourceIdentifier, class TargetIdentifier, typename... Parameters
 class Interaction<Contact<SourceIdentifier, TargetIdentifier, Parameters...>>
     : public BaseLocalDynamics<SourceIdentifier>
 {
-    typedef Relation<Contact<SourceIdentifier, TargetIdentifier, Parameters...>> ContactRelationType;
+    typedef Relation<Contact<SourceIdentifier, TargetIdentifier>> ContactRelationType;
     using NeighborList = typename ContactRelationType::NeighborList;
 
   public:
@@ -94,7 +94,8 @@ class Interaction<Contact<SourceIdentifier, TargetIdentifier, Parameters...>>
     {
       public:
         template <class ExecutionPolicy, class EncloserType>
-        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt contact_index);
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser,
+                       UnsignedInt contact_index, Parameters &&...parameters);
     };
 
     typedef InteractKernel BaseInteractKernel;

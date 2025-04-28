@@ -28,12 +28,13 @@ void Interaction<Inner<DynamicsIdentifier, Parameters...>>::resetComputingKernel
 template <class DynamicsIdentifier, typename... Parameters>
 template <class ExecutionPolicy, class EncloserType>
 Interaction<Inner<DynamicsIdentifier, Parameters...>>::InteractKernel::
-    InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+    InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, Parameters &&...parameters)
     : NeighborList(ex_policy, encloser.inner_relation_),
       Neighbor<Parameters...>(ex_policy, encloser.sph_adaptation_,
                               encloser.sph_adaptation_,
                               encloser.inner_relation_.getSourcePosition(),
-                              encloser.inner_relation_.getTargetPosition()) {}
+                              encloser.inner_relation_.getTargetPosition(),
+                              std::forward<Parameters>(parameters)...) {}
 //=================================================================================================//
 template <class SourceIdentifier, class TargetIdentifier, typename... Parameters>
 Interaction<Contact<SourceIdentifier, TargetIdentifier, Parameters...>>::
@@ -61,12 +62,14 @@ void Interaction<Contact<SourceIdentifier, TargetIdentifier, Parameters...>>::
 template <class SourceIdentifier, class TargetIdentifier, typename... Parameters>
 template <class ExecutionPolicy, class EncloserType>
 Interaction<Contact<SourceIdentifier, TargetIdentifier, Parameters...>>::InteractKernel::
-    InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt contact_index)
+    InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser,
+                   UnsignedInt contact_index, Parameters &&...parameters)
     : NeighborList(ex_policy, encloser.contact_relation_, contact_index),
       Neighbor<Parameters...>(ex_policy, encloser.sph_adaptation_,
                               encloser.contact_adaptations_[contact_index],
                               encloser.contact_relation_.getSourcePosition(),
-                              encloser.contact_relation_.getTargetPosition(contact_index)) {}
+                              encloser.contact_relation_.getTargetPosition(contact_index),
+                              std::forward<Parameters>(parameters)...) {}
 //=================================================================================================//
 template <typename... Parameters>
 Interaction<Contact<Wall, Parameters...>>::
