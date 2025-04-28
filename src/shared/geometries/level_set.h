@@ -35,7 +35,7 @@
 #include "mesh_dynamics.h"
 #include "mesh_local_dynamics.hpp"
 #include "all_mesh_dynamics.h"
-#include "kernel_wenland_c2_ck.h"
+#include "kernel_wendland_c2_ck.h"
 #include "sphinxsys_variable.h"
 namespace SPH
 {
@@ -99,9 +99,9 @@ class MultilevelLevelSet : public BaseMeshField
         for(int l = 0; l != total_levels_; l++){
           registerProbes(execution::par, l);
           cell_package_index_set_.push_back(
-              mesh_data_set_[l]->cell_package_index_.DelegatedDataField(execution::par));
+              mesh_data_set_[l]->cell_package_index_.DelegatedData(execution::par));
           meta_data_cell_set_.push_back(
-              mesh_data_set_[l]->meta_data_cell_.DelegatedDataField(execution::par));
+              mesh_data_set_[l]->meta_data_cell_.DelegatedData(execution::par));
         }
     }
     

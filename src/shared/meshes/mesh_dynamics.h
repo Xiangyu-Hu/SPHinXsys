@@ -34,7 +34,8 @@
 #include "mesh_local_dynamics.hpp"
 #include "mesh_with_data_packages.h"
 #include "mesh_iterators.hpp"
-#include "execution.h"
+#include "execution_policy.h"
+#include "implementation.h"
 
 #include <functional>
 
@@ -189,7 +190,7 @@ class MeshCoreDynamics : public LocalDynamicsType, public BaseMeshDynamics
     MeshCoreDynamics(MeshWithGridDataPackages<4> &mesh_data, Args &&...args)
         : LocalDynamicsType(mesh_data, std::forward<Args>(args)...),
           BaseMeshDynamics(mesh_data),
-          meta_data_cell_(mesh_data.meta_data_cell_.DelegatedDataField(ExecutionPolicy())),
+          meta_data_cell_(mesh_data.meta_data_cell_.DelegatedData(ExecutionPolicy())),
           kernel_implementation_(*this){};
     virtual ~MeshCoreDynamics(){};
 

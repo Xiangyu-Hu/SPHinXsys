@@ -92,8 +92,8 @@ class MeshWithGridDataPackages : public Mesh
     const Real data_spacing_;                         /**< spacing of data in the data packages. */
 
     /**< allocate memories for metadata of data packages. */
-    void allocateIndexDataMatrix(Array2i mesh_size){ cell_package_index_.reallocateDataField(par, all_cells_[0] * all_cells_[1]); };
-    void allocateIndexDataMatrix(Array3i mesh_size){ cell_package_index_.reallocateDataField(par, all_cells_[0] * all_cells_[1] * all_cells_[2]); };
+    void allocateIndexDataMatrix(Array2i mesh_size){ cell_package_index_.reallocateData(par, all_cells_[0] * all_cells_[1]); };
+    void allocateIndexDataMatrix(Array3i mesh_size){ cell_package_index_.reallocateData(par, all_cells_[0] * all_cells_[1] * all_cells_[2]); };
 
     /** resize all mesh variable data field with `num_grid_pkgs_` size(initially only singular data) */
     struct ResizeMeshVariableData
@@ -105,12 +105,12 @@ class MeshWithGridDataPackages : public Mesh
             for (size_t l = 0; l != all_mesh_variables_.size(); ++l)
             {
                 MeshVariable<DataType> *variable = all_mesh_variables_[l];
-                variable->reallocateDataField(par, num_grid_pkgs_);
+                variable->reallocateData(par, num_grid_pkgs_);
             }
         }
     };
     OperationOnDataAssemble<MeshVariableAssemble, ResizeMeshVariableData>
-        resize_mesh_variable_data_{all_mesh_variables_};
+        resize_mesh_variable_data_{};
 
     struct SyncMeshVariableData
     {
@@ -126,7 +126,7 @@ class MeshWithGridDataPackages : public Mesh
         }
     };
     OperationOnDataAssemble<MeshVariableAssemble, SyncMeshVariableData>
-        sync_mesh_variable_data_{all_mesh_variables_};
+        sync_mesh_variable_data_{};
   public:
     /** wrapper for all index exchange related functions. */
     struct IndexHandler
@@ -171,9 +171,9 @@ class MeshWithGridDataPackages : public Mesh
 
     SingularVariable<IndexHandler> index_handler_;
   public:
-    void resizeMeshVariableData() { resize_mesh_variable_data_(num_grid_pkgs_); };
+    void resizeMeshVariableData() { resize_mesh_variable_data_(all_mesh_variables_, num_grid_pkgs_); };
     template <class ExecutionPolicy>
-    void syncMeshVariableData(ExecutionPolicy &ex_policy) { sync_mesh_variable_data_(ex_policy); };
+    void syncMeshVariableData(ExecutionPolicy &ex_policy) { sync_mesh_variable_data_(all_mesh_variables_, ex_policy); };
 
     template <typename DataType>
     MeshVariable<DataType> *registerMeshVariable(const std::string &variable_name)
@@ -210,8 +210,8 @@ class MeshWithGridDataPackages : public Mesh
                           return a.first < b.first; 
                       });
         num_grid_pkgs_ = occupied_data_pkgs_.size() + 2;
-        cell_neighborhood_.reallocateDataField(par, num_grid_pkgs_);
-        meta_data_cell_.reallocateDataField(par, num_grid_pkgs_);
+        cell_neighborhood_.reallocateData(par, num_grid_pkgs_);
+        meta_data_cell_.reallocateData(par, num_grid_pkgs_);
     }
 
     bool isInnerDataPackage(const Arrayi &cell_index)
@@ -221,7 +221,7 @@ class MeshWithGridDataPackages : public Mesh
          * NOTE currently this func is only used in non-device mode;
          *      use the `DelegatedDataField` version when needed.
          */
-        return cell_package_index_.DataField()[index_1d] > 1;
+        return cell_package_index_.Data()[index_1d] > 1;
     }
     bool isWithinCorePackage(size_t *cell_package_index,
                              std::pair<Arrayi, int> *meta_data_cell,
@@ -245,7 +245,7 @@ class MeshWithGridDataPackages : public Mesh
          * NOTE currently the `cell_package_index_` is only assigned in the host;
          *      use the `DelegatedDataField` version when needed.
          */
-        cell_package_index_.DataField()[index_1d] = package_index;
+        cell_package_index_.Data()[index_1d] = package_index;
     }
 };
 } // namespace SPH
