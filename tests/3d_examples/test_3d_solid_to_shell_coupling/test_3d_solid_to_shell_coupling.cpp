@@ -134,10 +134,7 @@ class SolidBodyPart : public BodyPartByParticle
         TaggingParticleMethod tagging_particle_method = [&](size_t index_i) -> bool
         {
             if (contain(pos_[index_i]))
-            {
-                body_part_particles_.push_back(index_i);
                 return true;
-            }
             return false;
         };
         tagParticles(tagging_particle_method);
