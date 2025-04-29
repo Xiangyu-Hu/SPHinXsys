@@ -29,6 +29,10 @@ Relation<Base>::Relation(SourceIdentifier &source_identifier,
     registered_computing_kernels_.resize(contact_identifiers.size());
 }
 //=================================================================================================//
+template <class DynamicsIdentifier>
+Relation<Base>::Relation(DynamicsIdentifier &identifier, ConfigType config_type)
+    : Relation(identifier, StdVec<DynamicsIdentifier *>{&identifier}, config_type) {}
+//=================================================================================================//
 template <class DataType>
 DiscreteVariable<DataType> *Relation<Base>::
     addRelationVariable(const std::string &name, size_t data_size)
@@ -46,15 +50,15 @@ template <typename DynamicsIdentifier, typename NeighborMethod>
 template <typename... Args>
 Relation<Inner<DynamicsIdentifier, NeighborMethod>>::
     Relation(DynamicsIdentifier &identifier, Args &&...args)
-    : Relation<Inner<DynamicsIdentifier>>(identifier),
-      identifier_(identifier), neighbor_method_(identifier, std::forward<Args>(args)...) {}
+    : Relation<Base>(identifier, std::forward<Args>(args)...),
+      identifier_(identifier), neighbor_method_(identifier) {}
 //=================================================================================================//
 template <class SourceIdentifier, class TargetIdentifier, typename NeighborMethod>
 template <typename... Args>
 Relation<Contact<SourceIdentifier, TargetIdentifier, NeighborMethod>>::
-    Relation(DynamicsIdentifier &source_identifier,
+    Relation(SourceIdentifier &source_identifier,
              StdVec<TargetIdentifier *> contact_identifiers, Args &&...args)
-    : Relation<Base>(source_identifier, contact_identifiers),
+    : Relation<Base>(source_identifier, contact_identifiers, std::forward<Args>(args)...),
       source_identifier_(source_identifier), contact_identifiers_(contact_identifiers)
 {
     for (size_t k = 0; k != contact_identifiers.size(); ++k)
@@ -63,8 +67,8 @@ Relation<Contact<SourceIdentifier, TargetIdentifier, NeighborMethod>>::
         contact_bodies_.push_back(contact_body);
         contact_particles_.push_back(&contact_body->getBaseParticles());
         contact_adaptations_.push_back(&contact_body->getSPHAdaptation());
-        neighbor_methods_.push_back(neighbor_method_ptrs_.createPtr<NeighborMethod>(
-            source_identifier, contact_identifiers[k], std::forward<Args>(args)...));
+        neighbor_methods_.push_back(neighbor_method_ptrs_.template createPtr<NeighborMethod>(
+            source_identifier, contact_identifiers[k]));
     }
 }
 //=================================================================================================//

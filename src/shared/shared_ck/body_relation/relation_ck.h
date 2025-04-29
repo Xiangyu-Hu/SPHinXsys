@@ -55,6 +55,8 @@ class Relation<Base>
     template <class SourceIdentifier, class TargetIdentifier>
     Relation(SourceIdentifier &source_identifier, StdVec<TargetIdentifier *> target_identifiers,
              ConfigType config_type = ConfigType::Eulerian);
+    template <class DynamicsIdentifier>
+    Relation(DynamicsIdentifier &identifier, ConfigType config_type = ConfigType::Eulerian);
     virtual ~Relation() {};
     SPHBody &getSPHBody() { return sph_body_; };
     DiscreteVariable<Vecd> *getSourcePosition() { return dv_source_pos_; };
@@ -93,14 +95,12 @@ class Relation<Base>
 };
 
 template <typename DynamicsIdentifier, typename NeighborMethod>
-class Relation<Inner<DynamicsIdentifier, NeighborMethod>>
-    : public Relation<Inner<DynamicsIdentifier>>
+class Relation<Inner<DynamicsIdentifier, NeighborMethod>> : public Relation<Base>
 {
   public:
+    typedef NeighborMethod NeighborMethodType;
     template <typename... Args>
-    explicit Relation(DynamicsIdentifier &identifier, Args &&...args)
-        : Relation<Inner<DynamicsIdentifier>>(identifier),
-          identifier_(identifier), neighbor_method_(identifier, std::forward<Args>(args)...){};
+    explicit Relation(DynamicsIdentifier &identifier, Args &&...args);
     virtual ~Relation() {};
     NeighborMethod &getNeighborMethod() { return neighbor_method_; };
 
@@ -114,8 +114,8 @@ class Relation<Inner<DynamicsIdentifier>>
     : public Relation<Inner<DynamicsIdentifier, ConstantSmoothingLength>>
 {
   public:
-    Relation(RealBody &real_body)
-        : Relation<Inner<DynamicsIdentifier, ConstantSmoothingLength>>(real_body) {}
+    Relation(DynamicsIdentifier &identifier)
+        : Relation<Inner<DynamicsIdentifier, ConstantSmoothingLength>>(identifier) {}
     virtual ~Relation() {};
 };
 
@@ -128,7 +128,7 @@ class Relation<Inner<>> : public Relation<Inner<RealBody>>
 };
 
 template <class SourceIdentifier, class TargetIdentifier, typename NeighborMethod>
-class Relation<Inner<SourceIdentifier, TargetIdentifier, NeighborMethod>> : public Relation<Base>
+class Relation<Contact<SourceIdentifier, TargetIdentifier, NeighborMethod>> : public Relation<Base>
 {
     UniquePtrsKeeper<NeighborMethod> neighbor_method_ptrs_;
 

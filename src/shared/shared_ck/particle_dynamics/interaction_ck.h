@@ -51,7 +51,7 @@ class Interaction<Inner<DynamicsIdentifier, Parameters...>>
     typedef Relation<Inner<DynamicsIdentifier, Parameters...>> InnerRelationType;
     using NeighborList = typename InnerRelationType::NeighborList;
     using NeighborMethod = typename InnerRelationType::NeighborMethodType;
-    using Neighborhood = typename Neighbor<NeighborMethod>;
+    using Neighborhood = Neighbor<NeighborMethod>;
 
   public:
     explicit Interaction(InnerRelationType &inner_relation);
@@ -88,7 +88,7 @@ class Interaction<Contact<SourceIdentifier, TargetIdentifier, Parameters...>>
     typedef Relation<Contact<SourceIdentifier, TargetIdentifier, Parameters...>> ContactRelationType;
     using NeighborList = typename ContactRelationType::NeighborList;
     using NeighborMethod = typename ContactRelationType::NeighborMethodType;
-    using Neighborhood = typename Neighbor<NeighborMethod>;
+    using Neighborhood = Neighbor<NeighborMethod>;
 
   public:
     explicit Interaction(ContactRelationType &contact_relation);

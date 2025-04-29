@@ -39,12 +39,12 @@ class ConstantSmoothingLength
   public:
     template <class DynamicsIdentifier>
     ConstantSmoothingLength(DynamicsIdentifier &identifier)
-        : inv_h_(1.0 / identifier.getSPHAdaption().ReferenceSmoothingLength()){};
+        : inv_h_(1.0 / identifier.getSPHAdaptation().ReferenceSmoothingLength()){};
 
     template <class SourceIdentifier, class TargetIdentifier>
     ConstantSmoothingLength(SourceIdentifier &source_identifier, TargetIdentifier &contact_identifier)
-        : inv_h_(1.0 / SMAX(source_identifier.getSPHAdaption().ReferenceSmoothingLength(),
-                            contact_identifier.getSPHAdaption().ReferenceSmoothingLength())){};
+        : inv_h_(1.0 / SMAX(source_identifier.getSPHAdaptation().ReferenceSmoothingLength(),
+                            contact_identifier.getSPHAdaptation().ReferenceSmoothingLength())){};
 
     class ComputingKernel
     {
@@ -67,13 +67,13 @@ class VariableSmoothingLength
   public:
     template <class DynamicsIdentifier>
     VariableSmoothingLength(DynamicsIdentifier &identifier)
-        : dv_target_h_(identifier.getBaseParticle().getVariableByName<Real>("SmoothingLength")),
-          dv_target_h_(dv_target_h_){};
+        : dv_source_h_(identifier.getBaseParticle().template getVariableByName<Real>("SmoothingLength")),
+          dv_target_h_(dv_source_h_){};
 
     template <class SourceIdentifier, class TargetIdentifier>
     VariableSmoothingLength(SourceIdentifier &source_identifier, TargetIdentifier &contact_identifier)
-        : dv_target_h_(source_identifier.getBaseParticle().getVariableByName<Real>("SmoothingLength")),
-          dv_target_h_(contact_identifier.getBaseParticle().getVariableByName<Real>("SmoothingLength")){};
+        : dv_source_h_(source_identifier.getBaseParticle().template getVariableByName<Real>("SmoothingLength")),
+          dv_target_h_(contact_identifier.getBaseParticle().template getVariableByName<Real>("SmoothingLength")){};
 
     class ComputingKernel
     {
