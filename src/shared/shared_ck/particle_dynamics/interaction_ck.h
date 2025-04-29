@@ -48,18 +48,20 @@ template <class DynamicsIdentifier, typename... Parameters>
 class Interaction<Inner<DynamicsIdentifier, Parameters...>>
     : public BaseLocalDynamics<DynamicsIdentifier>
 {
-    typedef Relation<Inner<DynamicsIdentifier>> InnerRelationType;
+    typedef Relation<Inner<DynamicsIdentifier, Parameters...>> InnerRelationType;
     using NeighborList = typename InnerRelationType::NeighborList;
+    using NeighborMethod = typename InnerRelationType::NeighborMethodType;
+    using Neighborhood = typename Neighbor<NeighborMethod>;
 
   public:
     explicit Interaction(InnerRelationType &inner_relation);
     virtual ~Interaction() {};
 
-    class InteractKernel : public NeighborList, public Neighbor<Parameters...>
+    class InteractKernel : public NeighborList, public Neighborhood
     {
       public:
         template <class ExecutionPolicy, class EncloserType>
-        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, Parameters &&...parameters);
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
     };
 
     typedef InteractKernel BaseInteractKernel;
@@ -83,19 +85,21 @@ template <class SourceIdentifier, class TargetIdentifier, typename... Parameters
 class Interaction<Contact<SourceIdentifier, TargetIdentifier, Parameters...>>
     : public BaseLocalDynamics<SourceIdentifier>
 {
-    typedef Relation<Contact<SourceIdentifier, TargetIdentifier>> ContactRelationType;
+    typedef Relation<Contact<SourceIdentifier, TargetIdentifier, Parameters...>> ContactRelationType;
     using NeighborList = typename ContactRelationType::NeighborList;
+    using NeighborMethod = typename ContactRelationType::NeighborMethodType;
+    using Neighborhood = typename Neighbor<NeighborMethod>;
 
   public:
     explicit Interaction(ContactRelationType &contact_relation);
     virtual ~Interaction() {};
 
-    class InteractKernel : public NeighborList, public Neighbor<Parameters...>
+    class InteractKernel : public NeighborList, public Neighborhood
     {
       public:
         template <class ExecutionPolicy, class EncloserType>
         InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser,
-                       UnsignedInt contact_index, Parameters &&...parameters);
+                       UnsignedInt contact_index);
     };
 
     typedef InteractKernel BaseInteractKernel;

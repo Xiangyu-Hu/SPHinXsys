@@ -15,27 +15,19 @@ Neighbor<Base>::Neighbor(const ExecutionPolicy &ex_policy,
       source_pos_(dv_pos->DelegatedData(ex_policy)),
       target_pos_(dv_contact_pos->DelegatedData(ex_policy)) {}
 //=================================================================================================//
+template <class NeighborMethod>
 template <class ExecutionPolicy>
-Neighbor<>::Neighbor(const ExecutionPolicy &ex_policy,
-                     SPHAdaptation *sph_adaptation, SPHAdaptation *contact_adaptation,
-                     DiscreteVariable<Vecd> *dv_pos, DiscreteVariable<Vecd> *dv_contact_pos)
-    : Neighbor<Base>(ex_policy, sph_adaptation, contact_adaptation, dv_pos, dv_contact_pos),
-      inv_h_(1.0 / SMAX(sph_adaptation->ReferenceSmoothingLength(),
-                        contact_adaptation->ReferenceSmoothingLength())) {}
-//=================================================================================================//
-template <class SmoothingLengthType>
-template <class ExecutionPolicy>
-Neighbor<SmoothingLengthType>::Neighbor(
+Neighbor<NeighborMethod>::Neighbor(
     const ExecutionPolicy &ex_policy,
     SPHAdaptation *sph_adaptation, SPHAdaptation *contact_adaptation,
     DiscreteVariable<Vecd> *dv_pos, DiscreteVariable<Vecd> *dv_contact_pos,
-    SmoothingLengthType &smoothing_length)
+    NeighborMethod &smoothing_length)
     : Neighbor<Base>(ex_policy, sph_adaptation, contact_adaptation, dv_pos, dv_contact_pos),
-      inv_h_(smoothing_length.getInvH()) {}
+      inv_h_(smoothing_length) {}
 //=================================================================================================//
-template <class SmoothingLengthType>
-Neighbor<SmoothingLengthType>::NeighborCriterion::
-    NeighborCriterion(Neighbor<SmoothingLengthType> &neighbor)
+template <class NeighborMethod>
+Neighbor<NeighborMethod>::NeighborCriterion::
+    NeighborCriterion(Neighbor<NeighborMethod> &neighbor)
     : source_pos_(neighbor.source_pos_), target_pos_(neighbor.target_pos_),
       inv_h_(neighbor.inv_h_), kernel_size_square_(neighbor.kernel_size_square_) {}
 //=================================================================================================//

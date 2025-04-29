@@ -64,49 +64,16 @@ class Neighbor<Base>
     Vecd *target_pos_;
 };
 
-template <>
-class Neighbor<> : public Neighbor<Base>
+template <class NeighborMethod>
+class Neighbor<NeighborMethod> : public Neighbor<Base>
 {
-  public:
-    template <class ExecutionPolicy>
-    Neighbor(const ExecutionPolicy &ex_policy,
-             SPHAdaptation *sph_adaptation, SPHAdaptation *target_adaptation,
-             DiscreteVariable<Vecd> *dv_pos, DiscreteVariable<Vecd> *dv_target_pos);
-    inline Vecd normalizedVecRij(UnsignedInt i, UnsignedInt j) const { return inv_h_ * (source_pos_[i] - target_pos_[j]); }
-    inline Real W_ij(UnsignedInt i, UnsignedInt j) const { return kernel_.W(normalizedVecRij(i, j)); }
-    inline Real dW_ij(UnsignedInt i, UnsignedInt j) const { return inv_h_ * kernel_.dW(normalizedVecRij(i, j)); }
-
-    class NeighborCriterion
-    {
-      public:
-        NeighborCriterion(Neighbor<> &neighbor);
-        bool operator()(UnsignedInt target_index, UnsignedInt source_index) const
-        {
-            Vecd normalized_displacement = inv_h_ * (source_pos_[source_index] - target_pos_[target_index]);
-            return normalized_displacement.squaredNorm() < kernel_size_square_;
-        };
-
-      protected:
-        Vecd *source_pos_;
-        Vecd *target_pos_;
-        Real inv_h_;
-        Real kernel_size_square_;
-    };
-
-  protected:
-    Real inv_h_;
-};
-
-template <class SmoothingLengthType>
-class Neighbor<SmoothingLengthType> : public Neighbor<Base>
-{
-    using InverseSmoothingLength = typename SmoothingLengthType::InverseSmoothingLength;
+    using ScalingFactor = typename NeighborMethod::ComputingKernel;
 
   public:
     template <class ExecutionPolicy>
     Neighbor(const ExecutionPolicy &ex_policy,
              SPHAdaptation *sph_adaptation, SPHAdaptation *target_adaptation,
-             DiscreteVariable<Vecd> *dv_pos, DiscreteVariable<Vecd> *dv_target_pos, SmoothingLengthType &smoothing_length);
+             DiscreteVariable<Vecd> *dv_pos, DiscreteVariable<Vecd> *dv_target_pos, NeighborMethod &smoothing_length);
     inline Vecd normalizedVecRij(UnsignedInt i, UnsignedInt j) const { return inv_h_(i, j) * (source_pos_[i] - target_pos_[j]); }
     inline Real W_ij(UnsignedInt i, UnsignedInt j) const { return kernel_.W(normalizedVecRij(i, j)); }
     inline Real dW_ij(UnsignedInt i, UnsignedInt j) const { return inv_h_(i, j) * kernel_.dW(normalizedVecRij(i, j)); }
@@ -114,7 +81,7 @@ class Neighbor<SmoothingLengthType> : public Neighbor<Base>
     class NeighborCriterion
     {
       public:
-        NeighborCriterion(Neighbor<SmoothingLengthType> &neighbor);
+        NeighborCriterion(Neighbor<NeighborMethod> &neighbor);
         bool operator()(UnsignedInt target_index, UnsignedInt source_index) const
         {
             Vecd normalized_displacement = inv_h_(source_index, target_index) *
@@ -125,12 +92,12 @@ class Neighbor<SmoothingLengthType> : public Neighbor<Base>
       protected:
         Vecd *source_pos_;
         Vecd *target_pos_;
-        InverseSmoothingLength inv_h_;
+        ScalingFactor inv_h_;
         Real kernel_size_square_;
     };
 
   protected:
-    InverseSmoothingLength inv_h_;
+    ScalingFactor inv_h_;
 };
 } // namespace SPH
 #endif // NEIGHBORHOOD_CK_H

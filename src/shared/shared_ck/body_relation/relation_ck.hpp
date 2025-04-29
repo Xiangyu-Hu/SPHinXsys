@@ -42,16 +42,19 @@ Relation<Base>::NeighborList::NeighborList(
     : neighbor_index_(encloser.dv_target_neighbor_index_[target_index]->DelegatedData(ex_policy)),
       particle_offset_(encloser.dv_target_particle_offset_[target_index]->DelegatedData(ex_policy)) {}
 //=================================================================================================//
-template <typename DynamicsIdentifier>
-Relation<Inner<DynamicsIdentifier>>::Relation(DynamicsIdentifier &identifier)
-    : Relation<Base>(identifier, StdVec<DynamicsIdentifier *>{&identifier}),
-      identifier_(&identifier) {}
-//=================================================================================================//
-template <class DynamicsIdentifier, class TargetIdentifier>
+template <typename DynamicsIdentifier, typename NeighborMethod>
 template <typename... Args>
-Relation<Contact<DynamicsIdentifier, TargetIdentifier>>::Relation(
-    DynamicsIdentifier &source_identifier, StdVec<TargetIdentifier *> contact_identifiers, Args &&...args)
-    : Relation<Base>(source_identifier, contact_identifiers, std::forward<Args>(args)...),
+Relation<Inner<DynamicsIdentifier, NeighborMethod>>::
+    Relation(DynamicsIdentifier &identifier, Args &&...args)
+    : Relation<Inner<DynamicsIdentifier>>(identifier),
+      identifier_(identifier), neighbor_method_(identifier, std::forward<Args>(args)...) {}
+//=================================================================================================//
+template <class SourceIdentifier, class TargetIdentifier, typename NeighborMethod>
+template <typename... Args>
+Relation<Contact<SourceIdentifier, TargetIdentifier, NeighborMethod>>::
+    Relation(DynamicsIdentifier &source_identifier,
+             StdVec<TargetIdentifier *> contact_identifiers, Args &&...args)
+    : Relation<Base>(source_identifier, contact_identifiers),
       source_identifier_(source_identifier), contact_identifiers_(contact_identifiers)
 {
     for (size_t k = 0; k != contact_identifiers.size(); ++k)
@@ -60,6 +63,8 @@ Relation<Contact<DynamicsIdentifier, TargetIdentifier>>::Relation(
         contact_bodies_.push_back(contact_body);
         contact_particles_.push_back(&contact_body->getBaseParticles());
         contact_adaptations_.push_back(&contact_body->getSPHAdaptation());
+        neighbor_methods_.push_back(neighbor_method_ptrs_.createPtr<NeighborMethod>(
+            source_identifier, contact_identifiers[k], std::forward<Args>(args)...));
     }
 }
 //=================================================================================================//

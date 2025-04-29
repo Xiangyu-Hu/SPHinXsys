@@ -32,6 +32,7 @@
 #include "base_body.h"
 #include "base_particles.h"
 #include "implementation.h"
+#include "neighbor_method.h"
 
 namespace SPH
 {
@@ -91,17 +92,31 @@ class Relation<Base>
     DiscreteVariable<DataType> *addRelationVariable(const std::string &name, size_t data_size);
 };
 
-template <typename DynamicsIdentifier>
-class Relation<Inner<DynamicsIdentifier>> : public Relation<Base>
+template <typename DynamicsIdentifier, typename NeighborMethod>
+class Relation<Inner<DynamicsIdentifier, NeighborMethod>>
+    : public Relation<Inner<DynamicsIdentifier>>
 {
   public:
-    typedef DynamicsIdentifier Identifier;
-    explicit Relation(DynamicsIdentifier &identifier);
+    template <typename... Args>
+    explicit Relation(DynamicsIdentifier &identifier, Args &&...args)
+        : Relation<Inner<DynamicsIdentifier>>(identifier),
+          identifier_(identifier), neighbor_method_(identifier, std::forward<Args>(args)...){};
     virtual ~Relation() {};
-    DynamicsIdentifier &getDynamicsIdentifier() { return *identifier_; };
+    NeighborMethod &getNeighborMethod() { return neighbor_method_; };
 
   protected:
-    DynamicsIdentifier *identifier_;
+    DynamicsIdentifier &identifier_;
+    NeighborMethod neighbor_method_;
+};
+
+template <typename DynamicsIdentifier>
+class Relation<Inner<DynamicsIdentifier>>
+    : public Relation<Inner<DynamicsIdentifier, ConstantSmoothingLength>>
+{
+  public:
+    Relation(RealBody &real_body)
+        : Relation<Inner<DynamicsIdentifier, ConstantSmoothingLength>>(real_body) {}
+    virtual ~Relation() {};
 };
 
 template <>
@@ -112,19 +127,23 @@ class Relation<Inner<>> : public Relation<Inner<RealBody>>
     virtual ~Relation() {};
 };
 
-template <class SourceIdentifier, class TargetIdentifier>
-class Relation<Contact<SourceIdentifier, TargetIdentifier>> : public Relation<Base>
+template <class SourceIdentifier, class TargetIdentifier, typename NeighborMethod>
+class Relation<Inner<SourceIdentifier, TargetIdentifier, NeighborMethod>> : public Relation<Base>
 {
+    UniquePtrsKeeper<NeighborMethod> neighbor_method_ptrs_;
+
   protected:
     SourceIdentifier &source_identifier_;
     StdVec<TargetIdentifier *> contact_identifiers_;
     StdVec<SPHBody *> contact_bodies_;
     StdVec<BaseParticles *> contact_particles_;
     StdVec<SPHAdaptation *> contact_adaptations_;
+    StdVec<NeighborMethod *> neighbor_methods_;
 
   public:
     typedef SourceIdentifier SourceType;
     typedef TargetIdentifier TargetType;
+    typedef NeighborMethod NeighborMethodType;
 
     template <typename... Args>
     Relation(SourceIdentifier &source_identifier, StdVec<TargetIdentifier *> contact_identifiers, Args &&...args);
@@ -135,14 +154,26 @@ class Relation<Contact<SourceIdentifier, TargetIdentifier>> : public Relation<Ba
     StdVec<SPHBody *> getContactBodies() { return contact_bodies_; };
     StdVec<BaseParticles *> getContactParticles() { return contact_particles_; };
     StdVec<SPHAdaptation *> getContactAdaptations() { return contact_adaptations_; };
+    NeighborMethod &getNeighborMethod(UnsignedInt target_index) { return neighbor_methods_[target_index]; };
 };
+
+template <class SourceIdentifier, class TargetIdentifier>
+class Relation<Contact<SourceIdentifier, TargetIdentifier>>
+    : public Relation<Contact<SourceIdentifier, TargetIdentifier, ConstantSmoothingLength>>
+{
+  public:
+    Relation(SourceIdentifier &source_identifier, StdVec<TargetIdentifier *> contact_identifiers)
+        : Relation<Contact<SourceIdentifier, TargetIdentifier, ConstantSmoothingLength>>(
+              source_identifier, contact_identifiers) {};
+    virtual ~Relation() {};
+};
+
 template <>
 class Relation<Contact<>> : public Relation<Contact<SPHBody, RealBody>>
 {
   public:
-    template <typename... Args>
-    Relation(SPHBody &sph_body, StdVec<RealBody *> contact_bodies, Args &&...args)
-        : Relation<Contact<SPHBody, RealBody>>(sph_body, contact_bodies, std::forward<Args>(args)...) {}
+    Relation(SPHBody &sph_body, StdVec<RealBody *> contact_bodies)
+        : Relation<Contact<SPHBody, RealBody>>(sph_body, contact_bodies) {}
     virtual ~Relation() {};
 };
 } // namespace SPH
