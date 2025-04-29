@@ -558,7 +558,7 @@ operator()(Neighborhood &neighborhood, const Vecd &pos_i, size_t index_i, const 
     }
 };
 //=================================================================================================//
-SolidShellCouplingNeighborBuilder::SolidShellCouplingNeighborBuilder(SPHBody &body, SPHBody &contact_body, Real factor)
+MaxSmoothingLengthNeighborBuilder::MaxSmoothingLengthNeighborBuilder(SPHBody &body, SPHBody &contact_body, Real factor)
     : NeighborBuilderContact(body, contact_body)
 {
     // create a kernel with a cut-off radius of factor * dp_max

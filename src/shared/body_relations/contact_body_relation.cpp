@@ -250,7 +250,7 @@ void SurfaceContactRelation::updateConfiguration()
     }
 }
 //=================================================================================================//
-SolidShellCouplingContactRelation::SolidShellCouplingContactRelation(SPHBody &sph_body,
+MaxSmoothingLengthContactRelation::MaxSmoothingLengthContactRelation(SPHBody &sph_body,
                                                                      RealBodyVector contact_bodies,
                                                                      const std::vector<Real> &factors)
     : ContactRelationCrossResolution(sph_body, contact_bodies)
@@ -259,12 +259,12 @@ SolidShellCouplingContactRelation::SolidShellCouplingContactRelation(SPHBody &sp
     {
         Real factor = factors.empty() ? 1 : factors[k];
         get_contact_neighbors_.push_back(
-            neighbor_builder_contact_ptrs_keeper_.createPtr<SolidShellCouplingNeighborBuilder>(
+            neighbor_builder_contact_ptrs_keeper_.createPtr<MaxSmoothingLengthNeighborBuilder>(
                 sph_body_, *contact_bodies_[k], factor));
     }
 }
 //=================================================================================================//
-void SolidShellCouplingContactRelation::updateConfiguration()
+void MaxSmoothingLengthContactRelation::updateConfiguration()
 {
     resetNeighborhoodCurrentSize();
     for (size_t k = 0; k != contact_bodies_.size(); ++k)

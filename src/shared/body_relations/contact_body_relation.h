@@ -225,20 +225,20 @@ class SurfaceContactRelation : public ContactRelationCrossResolution
 };
 
 /**
- * @class SolidShellCouplingContactRelation
+ * @class MaxSmoothingLengthContactRelation
  * @brief The relation between a SPH body and its contact SPH bodies, where the cut-off radius is set as factor * 2h_max
  */
-class SolidShellCouplingContactRelation : public ContactRelationCrossResolution
+class MaxSmoothingLengthContactRelation : public ContactRelationCrossResolution
 {
   private:
-    UniquePtrsKeeper<SolidShellCouplingNeighborBuilder> neighbor_builder_contact_ptrs_keeper_;
+    UniquePtrsKeeper<MaxSmoothingLengthNeighborBuilder> neighbor_builder_contact_ptrs_keeper_;
 
   public:
-    SolidShellCouplingContactRelation(SPHBody &sph_body, RealBodyVector contact_bodies, const std::vector<Real> &factors = {});
+    MaxSmoothingLengthContactRelation(SPHBody &sph_body, RealBodyVector contact_bodies, const std::vector<Real> &factors = {});
     void updateConfiguration() override;
 
   private:
-    StdVec<SolidShellCouplingNeighborBuilder *> get_contact_neighbors_;
+    StdVec<MaxSmoothingLengthNeighborBuilder *> get_contact_neighbors_;
 };
 } // namespace SPH
 #endif // CONTACT_BODY_RELATION_H
