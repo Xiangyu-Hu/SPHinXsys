@@ -115,6 +115,8 @@ class SPHBody
     int getTotalBodyParts() { return total_body_parts_; };
     void addBodyPartByParticle(BodyPartByParticle *body_part) { body_parts_by_particle_.push_back(body_part); };
     StdVec<BodyPartByParticle *> getBodyPartsByParticle() { return body_parts_by_particle_; };
+    Real getFixedSmoothingLength() { return sph_adaptation_->ReferenceSmoothingLength(); };
+    DiscreteVariable<Real> *getAdaptiveSmoothingLength();
 
     class SourceParticleMask
     {

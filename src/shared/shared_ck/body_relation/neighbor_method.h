@@ -43,12 +43,12 @@ class SmoothingLength<Fixed>
   public:
     template <class DynamicsIdentifier>
     SmoothingLength(DynamicsIdentifier &identifier)
-        : inv_h_(1.0 / identifier.getSPHAdaptation().ReferenceSmoothingLength()){};
+        : inv_h_(1.0 / identifier.getFixedSmoothingLength()){};
 
     template <class SourceIdentifier, class TargetIdentifier>
     SmoothingLength(SourceIdentifier &source_identifier, TargetIdentifier &contact_identifier)
-        : inv_h_(1.0 / SMAX(source_identifier.getSPHAdaptation().ReferenceSmoothingLength(),
-                            contact_identifier.getSPHAdaptation().ReferenceSmoothingLength())){};
+        : inv_h_(1.0 / SMAX(source_identifier.getFixedSmoothingLength(),
+                            contact_identifier.getFixedSmoothingLength())){};
 
     class ComputingKernel
     {
@@ -71,13 +71,13 @@ class SmoothingLength<Adaptive>
   public:
     template <class DynamicsIdentifier>
     SmoothingLength(DynamicsIdentifier &identifier)
-        : dv_source_h_(identifier.getBaseParticle().template getVariableByName<Real>("SmoothingLength")),
+        : dv_source_h_(identifier.getAdaptiveSmoothingLength()),
           dv_target_h_(dv_source_h_){};
 
     template <class SourceIdentifier, class TargetIdentifier>
     SmoothingLength(SourceIdentifier &source_identifier, TargetIdentifier &contact_identifier)
-        : dv_source_h_(source_identifier.getBaseParticle().template getVariableByName<Real>("SmoothingLength")),
-          dv_target_h_(contact_identifier.getBaseParticle().template getVariableByName<Real>("SmoothingLength")){};
+        : dv_source_h_(source_identifier.getAdaptiveSmoothingLength()),
+          dv_target_h_(contact_identifier.getAdaptiveSmoothingLength()){};
 
     class ComputingKernel
     {
@@ -103,8 +103,8 @@ class SmoothingLength<Fixed, Adaptive>
   public:
     template <class SourceIdentifier, class TargetIdentifier>
     SmoothingLength(SourceIdentifier &source_identifier, TargetIdentifier &contact_identifier)
-        : source_h_(source_identifier.getSPHAdaptation().ReferenceSmoothingLength()),
-          dv_target_h_(contact_identifier.getBaseParticle().template getVariableByName<Real>("SmoothingLength")){};
+        : source_h_(source_identifier.getFixedSmoothingLength()),
+          dv_target_h_(contact_identifier.getAdaptiveSmoothingLength()){};
 
     class ComputingKernel
     {
@@ -113,7 +113,7 @@ class SmoothingLength<Fixed, Adaptive>
 
       public:
         template <class ExecutionPolicy>
-        ComputingKernel(const ExecutionPolicy &ex_policy, SmoothingLength<Adaptive> &smoothing_length)
+        ComputingKernel(const ExecutionPolicy &ex_policy, SmoothingLength<Fixed, Adaptive> &smoothing_length)
             : source_h_(smoothing_length.source_h_),
               target_h_(smoothing_length.dv_target_h_->DelegatedData(ex_policy)){};
         Real operator()(UnsignedInt i, UnsignedInt j) const { return 1.0 / SMAX(source_h_, target_h_[j]); };
@@ -130,8 +130,8 @@ class SmoothingLength<Adaptive, Fixed>
   public:
     template <class SourceIdentifier, class TargetIdentifier>
     SmoothingLength(SourceIdentifier &source_identifier, TargetIdentifier &contact_identifier)
-        : dv_source_h_(source_identifier.getBaseParticle().template getVariableByName<Real>("SmoothingLength")),
-          target_h_(contact_identifier.getSPHAdaptation().ReferenceSmoothingLength()){};
+        : dv_source_h_(source_identifier.getAdaptiveSmoothingLength()),
+          target_h_(contact_identifier.getFixedSmoothingLength()){};
 
     class ComputingKernel
     {
@@ -140,7 +140,7 @@ class SmoothingLength<Adaptive, Fixed>
 
       public:
         template <class ExecutionPolicy>
-        ComputingKernel(const ExecutionPolicy &ex_policy, SmoothingLength<Adaptive> &smoothing_length)
+        ComputingKernel(const ExecutionPolicy &ex_policy, SmoothingLength<Adaptive, Fixed> &smoothing_length)
             : source_h_(smoothing_length.dv_source_h_->DelegatedData(ex_policy)),
               target_h_(smoothing_length.target_h_){};
         Real operator()(UnsignedInt i, UnsignedInt j) const { return 1.0 / SMAX(source_h_[i], target_h_); };

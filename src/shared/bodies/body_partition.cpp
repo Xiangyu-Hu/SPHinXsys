@@ -9,6 +9,11 @@ BodyPartition::BodyPartition(SPHBody &sph_body, UnsignedInt partition_adapt_leve
       cell_linked_list_created_(false), partition_adapt_level_(partition_adapt_level),
       dv_adapt_level_(base_particles_.registerStateVariableOnly<int>("AdaptLevel")) {}
 //=================================================================================================//
+DiscreteVariable<Real> *BodyPartition::getAdaptiveSmoothingLength()
+{
+    return base_particles_.getVariableByName<Real>("SmoothingLength");
+}
+//=================================================================================================//
 BodyPartitionTemporal::BodyPartitionTemporal(SPHBody &sph_body, UnsignedInt partition_adapt_level)
     : BodyPartition(sph_body, partition_adapt_level) {}
 //=================================================================================================//

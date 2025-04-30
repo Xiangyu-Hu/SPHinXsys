@@ -45,6 +45,7 @@ class BodyPartition
     SPHAdaptation &getSPHAdaptation() { return sph_adaptation_; };
     BaseParticles &getBaseParticles() { return base_particles_; };
     UnsignedInt PartitionAdaptationLevel() { return partition_adapt_level_; };
+    DiscreteVariable<Real> *getAdaptiveSmoothingLength();
     virtual BaseCellLinkedList &getCellLinkedList() = 0;
 
     class SourceParticleMask
@@ -92,6 +93,7 @@ class BodyPartitionTemporal : public BodyPartition
   public:
     BodyPartitionTemporal(SPHBody &sph_body, UnsignedInt adapt_level);
     virtual ~BodyPartitionTemporal() {};
+    Real getFixedSmoothingLength() { return sph_adaptation_.ReferenceSmoothingLength(); };
     virtual BaseCellLinkedList &getCellLinkedList() override;
 };
 
@@ -100,6 +102,7 @@ class BodyPartitionSpatial : public BodyPartition
   public:
     BodyPartitionSpatial(SPHBody &sph_body, UnsignedInt adapt_level);
     virtual ~BodyPartitionSpatial() {};
+    Real getFixedSmoothingLength() { return sph_adaptation_.SmoothingLengthByLevel(partition_adapt_level_); };
     virtual BaseCellLinkedList &getCellLinkedList() override;
 };
 } // namespace SPH
