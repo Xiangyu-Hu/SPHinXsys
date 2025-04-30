@@ -7,7 +7,6 @@ void run_solid(size_t res_factor, Real stiffness_ratio, bool run_relax);
 int main(int ac, char *av[])
 {
     run_solid_to_shell_coupling(1, 1, 1, false);
-    // run_solid(1, 0.01, false);
 }
 
 //-------Relaxation for the solid body-------------------------------------------------
@@ -40,25 +39,6 @@ inline void relax_solid(BaseInnerRelation &inner)
     }
     std::cout << "The physics relaxation process of inserted body finish !" << std::endl;
 }
-
-class SolidMaterialInitialization : public MaterialIdInitialization
-{
-  private:
-    std::function<bool(Vec3d &)> contain_;
-
-  public:
-    SolidMaterialInitialization(SolidBody &solid_body, std::function<bool(Vec3d &)> contain)
-        : MaterialIdInitialization(solid_body),
-          contain_(std::move(contain)) {};
-
-    void update(size_t index_i, Real dt = 0.0)
-    {
-        if (contain_(pos_[index_i]))
-            material_id_[index_i] = 1;
-        else
-            material_id_[index_i] = 0;
-    };
-};
 
 struct solid_algs
 {
@@ -128,10 +108,10 @@ struct shell_algs
 class SolidBodyPart : public BodyPartByParticle
 {
   public:
-    SolidBodyPart(SPHBody &body, const std::string &body_part_name, std::function<bool(Vec3d &)> contain)
+    SolidBodyPart(SPHBody &body, const std::string &body_part_name, const std::function<bool(Vec3d &)> &contain)
         : BodyPartByParticle(body, body_part_name)
     {
-        TaggingParticleMethod tagging_particle_method = [&](size_t index_i) -> bool
+        TaggingParticleMethod tagging_particle_method = [this, &contain](size_t index_i) -> bool
         {
             if (contain(pos_[index_i]))
                 return true;
@@ -181,34 +161,42 @@ class ParticleGenerator<SurfaceParticles, ShellDirectGenerator> : public Particl
 
 struct solid_coupling_algs
 {
-    SolidShellCouplingContactRelation contact_relation;
+    MaxSmoothingLengthContactRelation contact_relation;
     SolidBodyPart part;
-    InteractionWithUpdate<solid_dynamics::InterpolationForceConstraint<BodyPartByParticle>> force_bc;
+    SimpleDynamics<solid_dynamics::ConservativeMapping<BodyPartByParticle, Vec3d>> force_bc;
+    SimpleDynamics<BaseForcePrior<BodyPartByParticle>> coupling_force;
 
     solid_coupling_algs(SolidBody &body,
                         RealBodyVector contact_bodies,
-                        std::function<bool(Vec3d &)> contain)
-        : contact_relation(body, std::move(contact_bodies)),
+                        std::function<bool(Vec3d &)> contain,
+                        const std::vector<Real> &factors = {})
+        : contact_relation(body, std::move(contact_bodies), factors),
           part(body, "CouplingPart", std::move(contain)),
-          force_bc(part, contact_relation) {}
+          force_bc(part, contact_relation, "SolidToShellCouplingForce", "Force"),
+          coupling_force(part, "SolidToShellCouplingForce") {}
 
-    void exec() { force_bc.exec(); }
+    void exec()
+    {
+        force_bc.exec();
+        coupling_force.exec();
+    }
 };
 
 struct shell_coupling_algs
 {
-    SolidShellCouplingContactRelation contact_relation;
+    MaxSmoothingLengthContactRelation contact_relation;
     SolidBodyPart part;
     SimpleDynamics<solid_dynamics::TotalWeightComputation<BodyPartByParticle>> total_weight;
-    SimpleDynamics<solid_dynamics::InterpolationVelocityConstraint<BodyPartByParticle>> vel_bc;
+    SimpleDynamics<solid_dynamics::ConsistentMapping<BodyPartByParticle, Vec3d>> vel_bc;
 
     shell_coupling_algs(SolidBody &body,
                         RealBodyVector contact_bodies,
-                        std::function<bool(Vec3d &)> contain)
-        : contact_relation(body, std::move(contact_bodies)),
+                        std::function<bool(Vec3d &)> contain,
+                        const std::vector<Real> &factors = {})
+        : contact_relation(body, std::move(contact_bodies), factors),
           part(body, "CouplingPart", std::move(contain)),
           total_weight(part, contact_relation),
-          vel_bc(part, contact_relation) {}
+          vel_bc(part, contact_relation, "Velocity", "Velocity") {}
 
     void initialize_total_weight() { total_weight.exec(); }
     void exec() { vel_bc.exec(); }
@@ -223,6 +211,25 @@ inline Real get_physical_viscosity_general(Real rho, Real youngs_modulus, Real l
     return shape_constant / 4.0 * std::sqrt(rho * youngs_modulus) * length_scale;
 }
 
+class ForcePartByParticle : public BaseForcePrior<BodyPartByParticle>
+{
+  private:
+    Vecd acc_;
+    Real *mass_;
+
+  public:
+    ForcePartByParticle(BodyPartByParticle &body_part, const std::string &force_name, const Vecd &acc)
+        : BaseForcePrior<BodyPartByParticle>(body_part, force_name),
+          acc_(acc),
+          mass_(particles_->registerStateVariable<Real>("Mass")) {}
+
+    void update(size_t index_i, Real dt = 0.0)
+    {
+        current_force_[index_i] = mass_[index_i] * acc_;
+        BaseForcePrior<BodyPartByParticle>::update(index_i, dt);
+    };
+};
+
 void run_solid_to_shell_coupling(size_t res_factor_solid, size_t res_factor_shell, Real stiffness_ratio, bool run_relax)
 {
     // unit
@@ -233,10 +240,10 @@ void run_solid_to_shell_coupling(size_t res_factor_solid, size_t res_factor_shel
     const Real shell_thickness = 0.02;
     const Real shell_length = 5.0;
     const Real shell_width = cube_length;
-
     const Real dp_ref = cube_length / 10.0;
     const Real dp_solid = dp_ref / Real(res_factor_solid);
     const Real dp_shell = dp_ref / Real(res_factor_shell);
+    const Real constraint_length = 2 * cube_length / 10.0;
 
     // import model
     auto cube_mesh = makeShared<TransformShape<GeometricShapeBox>>(
@@ -256,7 +263,7 @@ void run_solid_to_shell_coupling(size_t res_factor_solid, size_t res_factor_shel
             while (z < 0.5 * shell_width)
             {
                 shell_pos.emplace_back(x, y, z);
-                shell_n.emplace_back(0, 0, 1);
+                shell_n.emplace_back(Vec3d::UnitY());
                 z += dp_shell;
             }
             x += dp_shell;
@@ -279,6 +286,14 @@ void run_solid_to_shell_coupling(size_t res_factor_solid, size_t res_factor_shel
     SPHSystem system(bb_system, dp_solid);
     IOEnvironment io_environment(system);
 
+    // change output path
+    {
+        std::string path = "./output_resv_x" + std::to_string(res_factor_solid) + "_ress_x" + std::to_string(res_factor_shell) + "_relax" + std::to_string(run_relax);
+        fs::remove_all(path);
+        fs::create_directory(path);
+        io_environment.output_folder_ = path;
+    }
+
     // Create objects
     SolidBody cube_body(system, cube_mesh, "Cube");
     cube_body.defineBodyLevelSetShape()->cleanLevelSet(0);
@@ -300,16 +315,18 @@ void run_solid_to_shell_coupling(size_t res_factor_solid, size_t res_factor_shel
 
     // Boundary conditions
     SolidBodyPart shell_fixed_part(shell_body, "ShellFixedPart", [&](Vec3d &pos)
-                                   { return pos.x() < -0.5 * shell_length + 0.7 * dp_shell || pos.x() > 0.5 * shell_length - 0.7 * dp_shell; });
+                                   { return pos.x() < -0.5 * shell_length + constraint_length || pos.x() > 0.5 * shell_length - constraint_length; });
     SimpleDynamics<thin_structure_dynamics::ConstrainShellBodyRegion> fix_shell_bc(shell_fixed_part);
 
     // Gravity
-    Gravity gravity(-4 * Vec3d::UnitY());
-    SimpleDynamics<GravityForce<Gravity>> constant_gravity(cube_body, gravity);
+    Vec3d gravity(-0.5 * Vec3d::UnitY());
+    SolidBodyPart cube_part(cube_body, "CubeFircePart", [&](Vec3d &pos)
+                            { return pos.y() > shell_thickness; });
+    SimpleDynamics<ForcePartByParticle> constant_gravity(cube_part, "Gravity", gravity);
 
     // Coupling
     shell_coupling_algs shell_coupling(shell_body, {&cube_body}, [&](Vec3d &pos)
-                                       { return pos.x() > bb_system.first_.x() && pos.x() < bb_system.second_.x(); });
+                                       { return pos.x() > -0.5 * cube_length && pos.x() < 0.5 * cube_length; });
     solid_coupling_algs solid_coupling(cube_body, {&shell_body}, [&](Vec3d &pos)
                                        { return true; });
 
@@ -324,11 +341,13 @@ void run_solid_to_shell_coupling(size_t res_factor_solid, size_t res_factor_shel
     // Output
     cube_body.getBaseParticles().addVariableToWrite<Vecd>("SolidToShellCouplingForce");
     cube_body.getBaseParticles().addVariableToWrite<Vecd>("ForcePrior");
+    cube_body.getBaseParticles().addVariableToWrite<Vecd>("Force");
     shell_body.getBaseParticles().addVariableToWrite<Real>("TotalWeight");
     shell_body.getBaseParticles().addVariableToWrite<Vecd>("Force");
     cube_body.getBaseParticles().addVariableToWrite<Vecd>("Velocity");
     shell_body.getBaseParticles().addVariableToWrite<Vecd>("Velocity");
     BodyStatesRecordingToVtp vtp_output(system);
+    RestartIO restart_io(system);
     vtp_output.addDerivedVariableRecording<SimpleDynamics<Displacement>>(cube_body);
     vtp_output.addDerivedVariableRecording<SimpleDynamics<Displacement>>(shell_body);
     vtp_output.addDerivedVariableRecording<SimpleDynamics<VonMisesStress>>(cube_body);
@@ -347,18 +366,31 @@ void run_solid_to_shell_coupling(size_t res_factor_solid, size_t res_factor_shel
     disp_recorder.writeToFile(0);
     stress_recorder.writeToFile(0);
 
+    // record the data until the semi-steady state is reached
+    const Real threshold = 5e-4;
+    auto *vel_cube = cube_body.getBaseParticles().getVariableDataByName<Vec3d>("Velocity");
+    auto get_U_max = [&]()
+    {
+        Real U_max = particle_reduce(ParallelPolicy(),
+                                     cube_body.LoopRange(), 0.0, ReduceMax{},
+                                     [&](size_t i) -> Real
+                                     { return vel_cube[i].norm(); });
+        return U_max;
+    };
+
     // Simulation
-    const Real end_time = 10.0;
+    const Real min_end_time = 5.0;
+    const Real max_end_time = 100.0;
     Real &physical_time = *system.getSystemVariableDataByName<Real>("PhysicalTime");
     int ite = 0;
     int ite_output = 0;
-    Real output_period = end_time / 100.0;
+    Real output_period = max_end_time / 100.0;
     Real dt = 0.0;
     TickCount t1 = TickCount::now();
     const Real dt_ref = std::min(algs_solid.time_step_size(), algs_shell.time_step_size());
     auto run_simulation = [&]()
     {
-        while (physical_time < end_time)
+        while (physical_time < min_end_time || (physical_time < max_end_time && get_U_max() > threshold))
         {
             Real integral_time = 0.0;
             while (integral_time < output_period)
@@ -418,27 +450,30 @@ void run_solid_to_shell_coupling(size_t res_factor_solid, size_t res_factor_shel
         exit(0);
     }
 
+    // write restart file
+    restart_io.writeToFile();
+
     // Output results
     std::cout << "Deflection: " << disp_recorder.getObservedQuantity()[0].y() << std::endl;
     std::cout << "Von Mises Stress: " << stress_recorder.getObservedQuantity()[0] << std::endl;
 }
 
-class ForcePartByParticle : public BaseForcePrior<BodyPartByParticle>
+class SolidMaterialInitialization : public MaterialIdInitialization
 {
   private:
-    Vecd acc_;
-    Real *mass_;
+    std::function<bool(Vec3d &)> contain_;
 
   public:
-    ForcePartByParticle(BodyPartByParticle &body_part, const std::string &force_name, const Vecd &acc)
-        : BaseForcePrior<BodyPartByParticle>(body_part, force_name),
-          acc_(acc),
-          mass_(particles_->registerStateVariable<Real>("Mass")) {}
+    SolidMaterialInitialization(SolidBody &solid_body, std::function<bool(Vec3d &)> contain)
+        : MaterialIdInitialization(solid_body),
+          contain_(std::move(contain)) {};
 
     void update(size_t index_i, Real dt = 0.0)
     {
-        current_force_[index_i] = mass_[index_i] * acc_;
-        BaseForcePrior<BodyPartByParticle>::update(index_i, dt);
+        if (contain_(pos_[index_i]))
+            material_id_[index_i] = 1;
+        else
+            material_id_[index_i] = 0;
     };
 };
 
@@ -452,6 +487,7 @@ void run_solid(size_t res_factor, Real stiffness_ratio, bool run_relax)
     const Real shell_thickness = 0.02;
     const Real shell_length = 5.0;
     const Real shell_width = cube_length;
+    const Real constraint_length = 2 * cube_length / 10.0;
 
     const Real dp = shell_thickness / (4.0 * res_factor);
 
@@ -474,6 +510,14 @@ void run_solid(size_t res_factor, Real stiffness_ratio, bool run_relax)
     SPHSystem system(bb_system, dp);
     IOEnvironment io_environment(system);
 
+    // change output path
+    {
+        std::string path = "./single_output_resv_x" + std::to_string(res_factor) + "_relax" + std::to_string(run_relax);
+        fs::remove_all(path);
+        fs::create_directory(path);
+        io_environment.output_folder_ = path;
+    }
+
     // Create objects
     SolidBody body(system, mesh, "solid");
     body.defineBodyLevelSetShape()->cleanLevelSet(0);
@@ -492,16 +536,17 @@ void run_solid(size_t res_factor, Real stiffness_ratio, bool run_relax)
 
     // assign material ids
     SimpleDynamics<SolidMaterialInitialization> material_id_initialization(body, [&](Vec3d &pos) -> bool
-                                                                           { return pos.y() < shell_thickness; });
+                                                                           { return pos.y() < shell_thickness &&
+                                                                                    (pos.x() < -0.5 * cube_length || pos.x() > 0.5 * cube_length); });
     material_id_initialization.exec();
 
     // Boundary conditions
     SolidBodyPart shell_fixed_part(body, "ShellFixedPart", [&](Vec3d &pos)
-                                   { return pos.x() < -0.5 * shell_length + 0.7 * dp || pos.x() > 0.5 * shell_length - 0.7 * dp; });
+                                   { return pos.x() < -0.5 * shell_length + constraint_length || pos.x() > 0.5 * shell_length - constraint_length; });
     SimpleDynamics<FixBodyPartConstraint> fix_shell_bc(shell_fixed_part);
 
     // Gravity
-    auto gravity(-4 * Vec3d::UnitY());
+    Vec3d gravity(-0.5 * Vec3d::UnitY());
     SolidBodyPart cube_part(body, "CubePart", [&](Vec3d &pos)
                             { return pos.y() > shell_thickness; });
     SimpleDynamics<ForcePartByParticle> constant_gravity(cube_part, "Gravity", gravity);
@@ -517,6 +562,7 @@ void run_solid(size_t res_factor, Real stiffness_ratio, bool run_relax)
     body.getBaseParticles().addVariableToWrite<Vecd>("ForcePrior");
     body.getBaseParticles().addVariableToWrite<Vecd>("Velocity");
     BodyStatesRecordingToVtp vtp_output(system);
+    RestartIO restart_io(system);
     vtp_output.addDerivedVariableRecording<SimpleDynamics<Displacement>>(body);
     vtp_output.addDerivedVariableRecording<SimpleDynamics<VonMisesStress>>(body);
     vtp_output.writeToFile(0);
@@ -533,18 +579,31 @@ void run_solid(size_t res_factor, Real stiffness_ratio, bool run_relax)
     disp_recorder.writeToFile(0);
     stress_recorder.writeToFile(0);
 
+    // record the data until the semi-steady state is reached
+    const Real threshold = 5e-4;
+    auto *vel = body.getBaseParticles().getVariableDataByName<Vec3d>("Velocity");
+    auto get_U_max = [&]()
+    {
+        Real U_max = particle_reduce(ParallelPolicy(),
+                                     body.LoopRange(), 0.0, ReduceMax{},
+                                     [&](size_t i) -> Real
+                                     { return vel[i].norm(); });
+        return U_max;
+    };
+
     // Simulation
-    const Real end_time = 10.0;
+    const Real min_end_time = 5.0;
+    const Real max_end_time = 100.0;
     Real &physical_time = *system.getSystemVariableDataByName<Real>("PhysicalTime");
     int ite = 0;
     int ite_output = 0;
-    Real output_period = end_time / 100.0;
+    Real output_period = max_end_time / 100.0;
     Real dt = 0.0;
     TickCount t1 = TickCount::now();
     const Real dt_ref = algs_solid.time_step_size();
     auto run_simulation = [&]()
     {
-        while (physical_time < end_time)
+        while (physical_time < min_end_time || (physical_time < max_end_time && get_U_max() > threshold))
         {
             Real integral_time = 0.0;
             while (integral_time < output_period)
@@ -590,6 +649,9 @@ void run_solid(size_t res_factor, Real stiffness_ratio, bool run_relax)
         vtp_output.writeToFile(ite_output + 1);
         exit(0);
     }
+
+    // write restart file
+    restart_io.writeToFile();
 
     // Output results
     std::cout << "Deflection: " << disp_recorder.getObservedQuantity()[0].y() << std::endl;
