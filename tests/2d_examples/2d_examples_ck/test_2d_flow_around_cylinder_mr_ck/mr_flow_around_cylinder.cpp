@@ -173,11 +173,11 @@ int main(int ac, char *av[])
     //	Basically the the range of bodies to build neighbor particle lists.
     //  Generally, we first define all the inner relations, then the contact relations.
     //----------------------------------------------------------------------
-    Relation<Inner<BodyPartitionSpatial>> water_low_resolution_inner(water_low_resolution_level);
-    Relation<Inner<BodyPartitionSpatial>> water_high_resolution_inner(water_high_resolution_level);
-    Relation<Contact<BodyPartitionSpatial, BodyPartitionSpatial>>
+    Relation<Inner<BodyPartitionSpatial, VariableSmoothingLength>> water_low_resolution_inner(water_low_resolution_level);
+    Relation<Inner<BodyPartitionSpatial, VariableSmoothingLength>> water_high_resolution_inner(water_high_resolution_level);
+    Relation<Contact<BodyPartitionSpatial, BodyPartitionSpatial, VariableSmoothingLength>>
         water_increase_resolution_contact(water_low_resolution_level, {&water_high_resolution_level});
-    Relation<Contact<BodyPartitionSpatial, BodyPartitionSpatial>>
+    Relation<Contact<BodyPartitionSpatial, BodyPartitionSpatial, VariableSmoothingLength>>
         water_decrease_resolution_contact(water_high_resolution_level, {&water_low_resolution_level});
     Relation<Contact<BodyPartitionSpatial, RealBody>> water_cylinder_contact(water_high_resolution_level, {&cylinder});
     Relation<Contact<SPHBody, BodyPartitionSpatial>> fluid_observer_contact(fluid_observer, {&water_high_resolution_level});

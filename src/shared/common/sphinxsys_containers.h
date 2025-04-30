@@ -36,7 +36,7 @@
 
 namespace SPH
 {
-class Base; // Indicating base class
+class Base;  // Indicating base class
 struct Fixed // Indicating with fixed adaptation
 {
     static inline const bool is_adaptive = false;

@@ -34,15 +34,19 @@
 
 namespace SPH
 {
-class ConstantSmoothingLength
+template <typename...>
+class SmoothingLength;
+
+template <>
+class SmoothingLength<Fixed>
 {
   public:
     template <class DynamicsIdentifier>
-    ConstantSmoothingLength(DynamicsIdentifier &identifier)
+    SmoothingLength(DynamicsIdentifier &identifier)
         : inv_h_(1.0 / identifier.getSPHAdaptation().ReferenceSmoothingLength()){};
 
     template <class SourceIdentifier, class TargetIdentifier>
-    ConstantSmoothingLength(SourceIdentifier &source_identifier, TargetIdentifier &contact_identifier)
+    SmoothingLength(SourceIdentifier &source_identifier, TargetIdentifier &contact_identifier)
         : inv_h_(1.0 / SMAX(source_identifier.getSPHAdaptation().ReferenceSmoothingLength(),
                             contact_identifier.getSPHAdaptation().ReferenceSmoothingLength())){};
 
@@ -52,7 +56,7 @@ class ConstantSmoothingLength
 
       public:
         template <class ExecutionPolicy>
-        ComputingKernel(const ExecutionPolicy &ex_policy, ConstantSmoothingLength &smoothing_length)
+        ComputingKernel(const ExecutionPolicy &ex_policy, SmoothingLength<Fixed> &smoothing_length)
             : inv_h_(smoothing_length.inv_h_){};
         Real operator()(UnsignedInt i, UnsignedInt j) const { return inv_h_; };
     };
@@ -61,16 +65,17 @@ class ConstantSmoothingLength
     Real inv_h_;
 };
 
-class VariableSmoothingLength
+template <>
+class SmoothingLength<Adaptive>
 {
   public:
     template <class DynamicsIdentifier>
-    VariableSmoothingLength(DynamicsIdentifier &identifier)
+    SmoothingLength(DynamicsIdentifier &identifier)
         : dv_source_h_(identifier.getBaseParticle().template getVariableByName<Real>("SmoothingLength")),
           dv_target_h_(dv_source_h_){};
 
     template <class SourceIdentifier, class TargetIdentifier>
-    VariableSmoothingLength(SourceIdentifier &source_identifier, TargetIdentifier &contact_identifier)
+    SmoothingLength(SourceIdentifier &source_identifier, TargetIdentifier &contact_identifier)
         : dv_source_h_(source_identifier.getBaseParticle().template getVariableByName<Real>("SmoothingLength")),
           dv_target_h_(contact_identifier.getBaseParticle().template getVariableByName<Real>("SmoothingLength")){};
 
@@ -81,7 +86,7 @@ class VariableSmoothingLength
 
       public:
         template <class ExecutionPolicy>
-        ComputingKernel(const ExecutionPolicy &ex_policy, VariableSmoothingLength &smoothing_length)
+        ComputingKernel(const ExecutionPolicy &ex_policy, SmoothingLength<Adaptive> &smoothing_length)
             : source_h_(smoothing_length.dv_source_h_->DelegatedData(ex_policy)),
               target_h_(smoothing_length.dv_target_h_->DelegatedData(ex_policy)){};
         Real operator()(UnsignedInt i, UnsignedInt j) const { return 1.0 / SMAX(source_h_[i], target_h_[j]); };
@@ -92,5 +97,58 @@ class VariableSmoothingLength
     DiscreteVariable<Real> *dv_target_h_;
 };
 
+template <>
+class SmoothingLength<Fixed, Adaptive>
+{
+  public:
+    template <class SourceIdentifier, class TargetIdentifier>
+    SmoothingLength(SourceIdentifier &source_identifier, TargetIdentifier &contact_identifier)
+        : source_h_(source_identifier.getSPHAdaptation().ReferenceSmoothingLength()),
+          dv_target_h_(contact_identifier.getBaseParticle().template getVariableByName<Real>("SmoothingLength")){};
+
+    class ComputingKernel
+    {
+        Real source_h_;
+        Real *target_h_;
+
+      public:
+        template <class ExecutionPolicy>
+        ComputingKernel(const ExecutionPolicy &ex_policy, SmoothingLength<Adaptive> &smoothing_length)
+            : source_h_(smoothing_length.source_h_),
+              target_h_(smoothing_length.dv_target_h_->DelegatedData(ex_policy)){};
+        Real operator()(UnsignedInt i, UnsignedInt j) const { return 1.0 / SMAX(source_h_, target_h_[j]); };
+    };
+
+  protected:
+    Real source_h_;
+    DiscreteVariable<Real> *dv_target_h_;
+};
+
+template <>
+class SmoothingLength<Adaptive, Fixed>
+{
+  public:
+    template <class SourceIdentifier, class TargetIdentifier>
+    SmoothingLength(SourceIdentifier &source_identifier, TargetIdentifier &contact_identifier)
+        : dv_source_h_(source_identifier.getBaseParticle().template getVariableByName<Real>("SmoothingLength")),
+          target_h_(contact_identifier.getSPHAdaptation().ReferenceSmoothingLength()){};
+
+    class ComputingKernel
+    {
+        Real *source_h_;
+        Real target_h_;
+
+      public:
+        template <class ExecutionPolicy>
+        ComputingKernel(const ExecutionPolicy &ex_policy, SmoothingLength<Adaptive> &smoothing_length)
+            : source_h_(smoothing_length.dv_source_h_->DelegatedData(ex_policy)),
+              target_h_(smoothing_length.target_h_){};
+        Real operator()(UnsignedInt i, UnsignedInt j) const { return 1.0 / SMAX(source_h_[i], target_h_); };
+    };
+
+  protected:
+    DiscreteVariable<Real> *dv_source_h_;
+    Real target_h_;
+};
 } // namespace SPH
 #endif // NEIGHBOR_METHOD_H
