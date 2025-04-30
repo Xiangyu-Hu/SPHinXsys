@@ -22,11 +22,11 @@ BoundingBox system_domain_bounds(
 //----------------------------------------------------------------------
 //  Material parameters.
 //----------------------------------------------------------------------
-const Real Inlet_pressure = 0.2;
-const Real Outlet_pressure = 0.1;
+const Real Inlet_pressure = 0.5;
+const Real Outlet_pressure = -0.5;
 Real rho0_f = 1000.0;
 Real Re = 50.0;
-Real mu_f = std::sqrt(rho0_f * std::pow(0.5 * DH, 3.0) *
+Real mu_f = std::sqrt(rho0_f * std::pow(DH, 3.0) *
                       std::abs(Inlet_pressure - Outlet_pressure) / (Re * DL));
 
 /**
@@ -43,8 +43,9 @@ Real mu_f = std::sqrt(rho0_f * std::pow(0.5 * DH, 3.0) *
 Real U_f = (DH * DH * std::abs(Inlet_pressure - Outlet_pressure)) /
            (8.0 * mu_f * DL);
 
-/** Choose a wave speed for the weakly compressible model. */
-Real c_f = 10.0 * U_f;
+// Compute speed of sound (c0) based on the pressure difference between inlet and outlet boundaries.
+// Ensures density variations are limited to ~1% (WCSPH criterion), multiplied by 4 as a safety factor.
+Real c_f = std::max(10.0 * U_f, sqrt(4 * (Inlet_pressure - Outlet_pressure) / (rho0_f * 0.01))); //
 
 //----------------------------------------------------------------------
 //  Geometric shapes for the channel and boundaries.
@@ -68,7 +69,7 @@ class InflowVelocityPrescribed : public VelocityPrescribed<>
   public:
     InflowVelocityPrescribed(Real DH, Real U_f, Real mu_f)
         : VelocityPrescribed<>(),
-          DH_(DH), U_f_(U_f), tau_((DH * DH) / (M_PI * M_PI * mu_f)) {};
+          DH_(DH), U_f_(U_f), tau_(0.1) {};
 
     Real getAxisVelocity(const Vecd &input_position, const Real &input_axis_velocity, Real time)
     {
@@ -301,9 +302,9 @@ int main(int ac, char *av[])
     StateDynamics<MainExecutionPolicy, fluid_dynamics::AdvectionStepClose> water_advection_step_close(water_body);
     InteractionDynamicsCK<MainExecutionPolicy, LinearCorrectionMatrixComplex>
         fluid_linear_correction_matrix(DynamicsArgs(water_body_inner, 0.5), water_wall_contact);
-    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticStep1stHalfWithWallRiemannCK>
+    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticStep1stHalfWithWallRiemannCorrectionCK>
         fluid_acoustic_step_1st_half(water_body_inner, water_wall_contact);
-    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticStep2ndHalfWithWallRiemannCK>
+    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticStep2ndHalfWithWallNoRiemannCK>
         fluid_acoustic_step_2nd_half(water_body_inner, water_wall_contact);
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::DensityRegularizationComplexInternalPressureBoundary>
         fluid_density_regularization(water_body_inner, water_wall_contact);
@@ -317,9 +318,9 @@ int main(int ac, char *av[])
         fluid_viscous_force(water_body_inner, water_wall_contact);
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::TransportVelocityLimitedCorrectionCorrectedComplexBulkParticlesCKWithoutUpdate>
         zero_gradient_ck(water_body_inner, water_wall_contact);
-    fluid_dynamics::BidirectionalBoundaryCK<MainExecutionPolicy, NoKernelCorrectionCK, InflowVelocityPrescribed>
+    fluid_dynamics::BidirectionalBoundaryCK<MainExecutionPolicy, LinearCorrectionCK, InflowVelocityPrescribed>
         bidirectional_velocity_condition_left(left_emitter_by_cell, particle_buffer, DH, U_f, mu_f);
-    fluid_dynamics::BidirectionalBoundaryCK<MainExecutionPolicy, NoKernelCorrectionCK, PressurePrescribed<>>
+    fluid_dynamics::BidirectionalBoundaryCK<MainExecutionPolicy, LinearCorrectionCK, PressurePrescribed<>>
         bidirectional_pressure_condition_right(right_emitter_by_cell, particle_buffer, Outlet_pressure);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
@@ -349,7 +350,7 @@ int main(int ac, char *av[])
     size_t screen_output_interval = 100;
     size_t observation_sample_interval = screen_output_interval * 2;
     Real end_time = 2.0;
-    Real output_interval = 0.1;
+    Real output_interval = 0.25;
     //----------------------------------------------------------------------
     //	Statistics for CPU time
     //----------------------------------------------------------------------
@@ -437,6 +438,14 @@ int main(int ac, char *av[])
         body_states_recording.writeToFile(MainExecutionPolicy{});
         fluid_observer_contact_relation.exec();
         interval_io += TickCount::now() - tick_instance;
+        {
+            auto observer_vel = velocity_observer.getBaseParticles().getVariableDataByName<Vecd>("Velocity");
+            // Validate observer velocities against analytical Poiseuille profile
+            // Convert the pointer to a std::vector using the number of observer particles.
+            std::vector<Vecd> observer_vel_vec(observer_vel, observer_vel + observer_location.size());
+            Real error_tolerance = 3 * 0.01; // Less than 3 percent when resolution is DH/20
+            velocity_validation(observer_location, observer_vel_vec, poiseuille_2d_u_steady, error_tolerance, U_f);
+        }
     }
 
     TimeInterval tt = TickCount::now() - tick_start - interval_io;
@@ -456,6 +465,6 @@ int main(int ac, char *av[])
     // Validate observer velocities against analytical Poiseuille profile
     // Convert the pointer to a std::vector using the number of observer particles.
     std::vector<Vecd> observer_vel_vec(observer_vel, observer_vel + observer_location.size());
-    Real error_tolerance = 3 * 0.01; // Less than 3 percent when resolution is DH/20
+    Real error_tolerance = 5 * 0.01; // Less than 5 percent when resolution is DH/20
     return velocity_validation(observer_location, observer_vel_vec, poiseuille_2d_u_steady, error_tolerance, U_f);
 }

@@ -131,7 +131,7 @@ void PressureVelocityCondition<KernelCorrectionType, ConditionType>::
     if (aligned_box_->checkContain(pos_[index_i]))
     {
         Vecd corrected_residue = correction_kernel_(index_i) * zero_gradient_residue_[index_i];
-        vel_[index_i] += dt * condition_.getPressure(p_[index_i], *physical_time_) /
+        vel_[index_i] -= dt * condition_.getPressure(p_[index_i], *physical_time_) /
                          rho_[index_i] * corrected_residue;
 
         Vecd frame_velocity = Vecd::Zero();
