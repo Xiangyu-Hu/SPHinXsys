@@ -5,12 +5,12 @@ namespace SPH
 //=================================================================================================//
 KernelTabulatedCK::KernelTabulatedCK(Kernel &kernel)
     : kernel_size_(kernel.KernelSize()),
-      factor1D_(kernel.FactorW1D()), factor2D_(kernel.FactorW2D()), factor3D_(kernel.FactorW3D()),
+      factor1d_(kernel.FactorW1D()), factor2d_(kernel.FactorW2D()), factor3d_(kernel.FactorW3D()),
       dq_(kernel_size_ / Real(KernelResolution)),
-      delta_q_0_((-1.0 * dq_) * (-2.0 * dq_) * (-3.0 * dq_)),
-      delta_q_1_(dq_ * (-1.0 * dq_) * (-2.0 * dq_)),
-      delta_q_2_((2.0 * dq_) * dq_ * (-1.0 * dq_)),
-      delta_q_3_((3.0 * dq_) * (2.0 * dq_) * dq_)
+      dq0_((-1.0 * dq_) * (-2.0 * dq_) * (-3.0 * dq_)),
+      dq1_(dq_ * (-1.0 * dq_) * (-2.0 * dq_)),
+      dq2_((2.0 * dq_) * dq_ * (-1.0 * dq_)),
+      dq3_((3.0 * dq_) * (2.0 * dq_) * dq_)
 {
     for (int i = 0; i < KernelResolution; i++)
     {

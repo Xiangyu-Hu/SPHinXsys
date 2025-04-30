@@ -46,15 +46,15 @@ class KernelTabulatedCK
     {
         int location = (int)floor(q / dq_);
         int i = location + 1;
-        Real fraction_1 = q - Real(location) * dq_; // fraction_1 correspond to i
-        Real fraction_0 = fraction_1 + dq_;         // fraction_0 correspond to i-1
-        Real fraction_2 = fraction_1 - dq_;         // fraction_2 correspond to i+1
-        Real fraction_3 = fraction_1 - 2 * dq_;     ////fraction_3 correspond to i+2
+        Real shift1 = q - Real(location) * dq_; // shift1 correspond to i
+        Real shift0 = shift1 + dq_;             // shift0 correspond to i-1
+        Real shift2 = shift1 - dq_;             // shift2 correspond to i+1
+        Real shift3 = shift1 - 2 * dq_;         ////shift3 correspond to i+2
 
-        return (fraction_1 * fraction_2 * fraction_3) / delta_q_0_ * data[i - 1] +
-               (fraction_0 * fraction_2 * fraction_3) / delta_q_1_ * data[i] +
-               (fraction_0 * fraction_1 * fraction_3) / delta_q_2_ * data[i + 1] +
-               (fraction_0 * fraction_1 * fraction_2) / delta_q_3_ * data[i + 2];
+        return (shift1 * shift2 * shift3) / dq0_ * data[i - 1] +
+               (shift0 * shift2 * shift3) / dq1_ * data[i] +
+               (shift0 * shift1 * shift3) / dq2_ * data[i + 1] +
+               (shift0 * shift1 * shift2) / dq3_ * data[i + 2];
     };
 
     Real KernelSize() const { return kernel_size_; };
@@ -62,41 +62,41 @@ class KernelTabulatedCK
     Real W(const Real &displacement) const
     {
         Real q = displacement;
-        return factor1D_ * interpolateCubic(w_1d, q);
+        return factor1d_ * interpolateCubic(w_1d, q);
     };
 
     Real W(const Vec2d &displacement) const
     {
         Real q = displacement.norm();
-        return factor2D_ * interpolateCubic(w_1d, q);
+        return factor2d_ * interpolateCubic(w_1d, q);
     };
 
     Real W(const Vec3d &displacement) const
     {
         Real q = displacement.norm();
-        return factor3D_ * interpolateCubic(w_1d, q);
+        return factor3d_ * interpolateCubic(w_1d, q);
     };
 
     Real dW(const Real &displacement) const
     {
         Real q = displacement;
-        return factor1D_ * interpolateCubic(dw_1d, q);
+        return factor1d_ * interpolateCubic(dw_1d, q);
     };
     Real dW(const Vec2d &displacement) const
     {
         Real q = displacement.norm();
-        return factor2D_ * interpolateCubic(dw_1d, q);
+        return factor2d_ * interpolateCubic(dw_1d, q);
     };
     Real dW(const Vec3d &displacement) const
     {
         Real q = displacement.norm();
-        return factor3D_ * interpolateCubic(dw_1d, q);
+        return factor3d_ * interpolateCubic(dw_1d, q);
     };
 
   private:
     Real kernel_size_;
-    Real factor1D_, factor2D_, factor3D_;
-    Real dq_, delta_q_0_, delta_q_1_, delta_q_2_, delta_q_3_;
+    Real factor1d_, factor2d_, factor3d_;
+    Real dq_, dq0_, dq1_, dq2_, dq3_;
     Real w_1d[TabulatedArraySize], dw_1d[TabulatedArraySize];
 };
 } // namespace SPH
