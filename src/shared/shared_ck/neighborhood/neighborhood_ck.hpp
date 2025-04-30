@@ -23,13 +23,14 @@ Neighbor<NeighborMethod>::Neighbor(
     DiscreteVariable<Vecd> *dv_pos, DiscreteVariable<Vecd> *dv_contact_pos,
     NeighborMethod &smoothing_length)
     : Neighbor<Base>(ex_policy, sph_adaptation, contact_adaptation, dv_pos, dv_contact_pos),
-      inv_h_(ex_policy, smoothing_length) {}
+      scaling_factor_(ex_policy, smoothing_length) {}
 //=================================================================================================//
 template <class NeighborMethod>
 Neighbor<NeighborMethod>::NeighborCriterion::
     NeighborCriterion(Neighbor<NeighborMethod> &neighbor)
     : source_pos_(neighbor.source_pos_), target_pos_(neighbor.target_pos_),
-      inv_h_(neighbor.inv_h_), kernel_size_square_(neighbor.kernel_size_square_) {}
+      scaling_factor_(neighbor.scaling_factor_),
+      kernel_size_square_(neighbor.kernel_size_square_) {}
 //=================================================================================================//
 } // namespace SPH
 #endif // NEIGHBORHOOD_CK_HPP

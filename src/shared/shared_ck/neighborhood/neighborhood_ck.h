@@ -74,9 +74,9 @@ class Neighbor<NeighborMethod> : public Neighbor<Base>
     Neighbor(const ExecutionPolicy &ex_policy,
              SPHAdaptation *sph_adaptation, SPHAdaptation *target_adaptation,
              DiscreteVariable<Vecd> *dv_pos, DiscreteVariable<Vecd> *dv_target_pos, NeighborMethod &smoothing_length);
-    inline Vecd normalizedVecRij(UnsignedInt i, UnsignedInt j) const { return inv_h_(i, j) * (source_pos_[i] - target_pos_[j]); }
-    inline Real W_ij(UnsignedInt i, UnsignedInt j) const { return kernel_.W(normalizedVecRij(i, j)); }
-    inline Real dW_ij(UnsignedInt i, UnsignedInt j) const { return inv_h_(i, j) * kernel_.dW(normalizedVecRij(i, j)); }
+    inline Vecd scaleVecRij(UnsignedInt i, UnsignedInt j) const { return scaling_factor_(i, j) * (source_pos_[i] - target_pos_[j]); }
+    inline Real W_ij(UnsignedInt i, UnsignedInt j) const { return kernel_.W(scaleVecRij(i, j)); }
+    inline Real dW_ij(UnsignedInt i, UnsignedInt j) const { return scaling_factor_(i, j) * kernel_.dW(scaleVecRij(i, j)); }
 
     class NeighborCriterion
     {
@@ -84,20 +84,20 @@ class Neighbor<NeighborMethod> : public Neighbor<Base>
         NeighborCriterion(Neighbor<NeighborMethod> &neighbor);
         bool operator()(UnsignedInt target_index, UnsignedInt source_index) const
         {
-            Vecd normalized_displacement = inv_h_(source_index, target_index) *
-                                           (source_pos_[source_index] - target_pos_[target_index]);
-            return normalized_displacement.squaredNorm() < kernel_size_square_;
+            Vecd scaled_displacement = scaling_factor_(source_index, target_index) *
+                                       (source_pos_[source_index] - target_pos_[target_index]);
+            return scaled_displacement.squaredNorm() < kernel_size_square_;
         };
 
       protected:
         Vecd *source_pos_;
         Vecd *target_pos_;
-        ScalingFactor inv_h_;
+        ScalingFactor scaling_factor_;
         Real kernel_size_square_;
     };
 
   protected:
-    ScalingFactor inv_h_;
+    ScalingFactor scaling_factor_;
 };
 } // namespace SPH
 #endif // NEIGHBORHOOD_CK_H
