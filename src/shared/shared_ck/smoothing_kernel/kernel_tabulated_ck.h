@@ -34,8 +34,8 @@
 
 namespace SPH
 {
-constexpr int kernel_resolution_ = 20;
-constexpr int tabulated_array_size_ = kernel_resolution_ + 4;
+constexpr int KernelResolution = 20;
+constexpr int TabulatedArraySize = KernelResolution + 4;
 
 class KernelTabulatedCK
 {
@@ -97,7 +97,7 @@ class KernelTabulatedCK
     Real kernel_size_;
     Real factor1D_, factor2D_, factor3D_;
     Real dq_, delta_q_0_, delta_q_1_, delta_q_2_, delta_q_3_;
-    Real w_1d[tabulated_array_size_], dw_1d[tabulated_array_size_];
+    Real w_1d[TabulatedArraySize], dw_1d[TabulatedArraySize];
 };
 } // namespace SPH
 #endif // KERNEL_TABULATED_CK_H
