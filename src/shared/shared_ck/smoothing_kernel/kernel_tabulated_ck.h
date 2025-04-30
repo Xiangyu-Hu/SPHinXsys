@@ -61,37 +61,37 @@ class KernelTabulatedCK
 
     Real W(const Real &displacement) const
     {
-        return factor1d_ * interpolateCubic(w_1d, ABS(displacement));
+        return factor1d_ * interpolateCubic(w1d_, ABS(displacement));
     };
 
     Real W(const Vec2d &displacement) const
     {
-        return factor2d_ * interpolateCubic(w_1d, displacement.norm());
+        return factor2d_ * interpolateCubic(w1d_, displacement.norm());
     };
 
     Real W(const Vec3d &displacement) const
     {
-        return factor3d_ * interpolateCubic(w_1d, displacement.norm());
+        return factor3d_ * interpolateCubic(w1d_, displacement.norm());
     };
 
     Real dW(const Real &displacement) const
     {
-        return factor1d_ * interpolateCubic(dw_1d, ABS(displacement));
+        return factor1d_ * interpolateCubic(dw1d_, ABS(displacement));
     };
     Real dW(const Vec2d &displacement) const
     {
-        return factor2d_ * interpolateCubic(dw_1d, displacement.norm());
+        return factor2d_ * interpolateCubic(dw1d_, displacement.norm());
     };
     Real dW(const Vec3d &displacement) const
     {
-        return factor3d_ * interpolateCubic(dw_1d, displacement.norm());
+        return factor3d_ * interpolateCubic(dw1d_, displacement.norm());
     };
 
   private:
     Real kernel_size_;
     Real factor1d_, factor2d_, factor3d_;
     Real dq_, dq0_, dq1_, dq2_, dq3_;
-    Real w_1d[TabulatedArraySize], dw_1d[TabulatedArraySize];
+    Real w1d_[TabulatedArraySize], dw1d_[TabulatedArraySize];
 };
 } // namespace SPH
 #endif // KERNEL_TABULATED_CK_H

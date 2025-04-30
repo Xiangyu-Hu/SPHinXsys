@@ -14,14 +14,14 @@ KernelTabulatedCK::KernelTabulatedCK(Kernel &kernel)
 {
     for (int i = 0; i < KernelResolution; i++)
     {
-        w_1d[i] = kernel.W_1D(Real(i - 1) * dq_);
-        dw_1d[i] = kernel.dW_1D(Real(i - 1) * dq_);
+        w1d_[i] = kernel.W_1D(Real(i - 1) * dq_);
+        dw1d_[i] = kernel.dW_1D(Real(i - 1) * dq_);
     }
     // kernel trailing zeros
     for (int i = KernelResolution; i < TabulatedArraySize; i++)
     {
-        w_1d[i] = 0.0;
-        dw_1d[i] = 0.0;
+        w1d_[i] = 0.0;
+        dw1d_[i] = 0.0;
     }
 } //=================================================================================================//
 } // namespace SPH
