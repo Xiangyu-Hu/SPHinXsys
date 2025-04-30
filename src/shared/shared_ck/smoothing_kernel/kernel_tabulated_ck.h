@@ -61,36 +61,30 @@ class KernelTabulatedCK
 
     Real W(const Real &displacement) const
     {
-        Real q = displacement;
-        return factor1d_ * interpolateCubic(w_1d, q);
+        return factor1d_ * interpolateCubic(w_1d, ABS(displacement));
     };
 
     Real W(const Vec2d &displacement) const
     {
-        Real q = displacement.norm();
-        return factor2d_ * interpolateCubic(w_1d, q);
+        return factor2d_ * interpolateCubic(w_1d, displacement.norm());
     };
 
     Real W(const Vec3d &displacement) const
     {
-        Real q = displacement.norm();
-        return factor3d_ * interpolateCubic(w_1d, q);
+        return factor3d_ * interpolateCubic(w_1d, displacement.norm());
     };
 
     Real dW(const Real &displacement) const
     {
-        Real q = displacement;
-        return factor1d_ * interpolateCubic(dw_1d, q);
+        return factor1d_ * interpolateCubic(dw_1d, ABS(displacement));
     };
     Real dW(const Vec2d &displacement) const
     {
-        Real q = displacement.norm();
-        return factor2d_ * interpolateCubic(dw_1d, q);
+        return factor2d_ * interpolateCubic(dw_1d, displacement.norm());
     };
     Real dW(const Vec3d &displacement) const
     {
-        Real q = displacement.norm();
-        return factor3d_ * interpolateCubic(dw_1d, q);
+        return factor3d_ * interpolateCubic(dw_1d, displacement.norm());
     };
 
   private:
