@@ -68,7 +68,7 @@ Relation<Contact<SourceIdentifier, TargetIdentifier, NeighborMethod>>::
         contact_particles_.push_back(&contact_body->getBaseParticles());
         contact_adaptations_.push_back(&contact_body->getSPHAdaptation());
         neighbor_methods_.push_back(neighbor_method_ptrs_.template createPtr<NeighborMethod>(
-            source_identifier, contact_identifiers[k]));
+            source_identifier, *contact_identifiers[k]));
     }
 }
 //=================================================================================================//

@@ -54,8 +54,7 @@ class ConstantSmoothingLength
         template <class ExecutionPolicy>
         ComputingKernel(const ExecutionPolicy &ex_policy, ConstantSmoothingLength &smoothing_length)
             : inv_h_(smoothing_length.inv_h_){};
-        Real
-        operator()(UnsignedInt i, UnsignedInt j) const { return inv_h_; };
+        Real operator()(UnsignedInt i, UnsignedInt j) const { return inv_h_; };
     };
 
   protected:
@@ -85,8 +84,7 @@ class VariableSmoothingLength
         ComputingKernel(const ExecutionPolicy &ex_policy, VariableSmoothingLength &smoothing_length)
             : source_h_(smoothing_length.dv_source_h_->DelegatedData(ex_policy)),
               target_h_(smoothing_length.dv_target_h_->DelegatedData(ex_policy)){};
-        Real
-        operator()(UnsignedInt i, UnsignedInt j) const { return 1.0 / SMAX(source_h_[i], target_h_[j]); };
+        Real operator()(UnsignedInt i, UnsignedInt j) const { return 1.0 / SMAX(source_h_[i], target_h_[j]); };
     };
 
   protected:

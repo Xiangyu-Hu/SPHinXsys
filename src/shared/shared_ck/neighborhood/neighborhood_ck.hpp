@@ -23,7 +23,7 @@ Neighbor<NeighborMethod>::Neighbor(
     DiscreteVariable<Vecd> *dv_pos, DiscreteVariable<Vecd> *dv_contact_pos,
     NeighborMethod &smoothing_length)
     : Neighbor<Base>(ex_policy, sph_adaptation, contact_adaptation, dv_pos, dv_contact_pos),
-      inv_h_(smoothing_length) {}
+      inv_h_(ex_policy, smoothing_length) {}
 //=================================================================================================//
 template <class NeighborMethod>
 Neighbor<NeighborMethod>::NeighborCriterion::

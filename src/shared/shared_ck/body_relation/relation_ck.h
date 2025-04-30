@@ -102,6 +102,7 @@ class Relation<Inner<DynamicsIdentifier, NeighborMethod>> : public Relation<Base
     template <typename... Args>
     explicit Relation(DynamicsIdentifier &identifier, Args &&...args);
     virtual ~Relation() {};
+    DynamicsIdentifier &getDynamicsIdentifier() { return identifier_; };
     NeighborMethod &getNeighborMethod() { return neighbor_method_; };
 
   protected:
@@ -154,7 +155,7 @@ class Relation<Contact<SourceIdentifier, TargetIdentifier, NeighborMethod>> : pu
     StdVec<SPHBody *> getContactBodies() { return contact_bodies_; };
     StdVec<BaseParticles *> getContactParticles() { return contact_particles_; };
     StdVec<SPHAdaptation *> getContactAdaptations() { return contact_adaptations_; };
-    NeighborMethod &getNeighborMethod(UnsignedInt target_index) { return neighbor_methods_[target_index]; };
+    NeighborMethod &getNeighborMethod(UnsignedInt target_index) { return *neighbor_methods_[target_index]; };
 };
 
 template <class SourceIdentifier, class TargetIdentifier>

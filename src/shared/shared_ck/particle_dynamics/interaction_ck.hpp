@@ -28,7 +28,7 @@ void Interaction<Inner<DynamicsIdentifier, Parameters...>>::resetComputingKernel
 template <class DynamicsIdentifier, typename... Parameters>
 template <class ExecutionPolicy, class EncloserType>
 Interaction<Inner<DynamicsIdentifier, Parameters...>>::InteractKernel::
-    InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, Parameters &&...parameters)
+    InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : NeighborList(ex_policy, encloser.inner_relation_),
       Neighborhood(ex_policy, encloser.sph_adaptation_,
                    encloser.sph_adaptation_,
@@ -62,14 +62,13 @@ void Interaction<Contact<SourceIdentifier, TargetIdentifier, Parameters...>>::
 template <class SourceIdentifier, class TargetIdentifier, typename... Parameters>
 template <class ExecutionPolicy, class EncloserType>
 Interaction<Contact<SourceIdentifier, TargetIdentifier, Parameters...>>::InteractKernel::
-    InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser,
-                   UnsignedInt contact_index, Parameters &&...parameters)
+    InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt contact_index)
     : NeighborList(ex_policy, encloser.contact_relation_, contact_index),
       Neighborhood(ex_policy, encloser.sph_adaptation_,
                    encloser.contact_adaptations_[contact_index],
                    encloser.contact_relation_.getSourcePosition(),
                    encloser.contact_relation_.getTargetPosition(contact_index),
-                   encloser.inner_relation_.getNeighborMethod(contact_index)) {}
+                   encloser.contact_relation_.getNeighborMethod(contact_index)) {}
 //=================================================================================================//
 template <typename... Parameters>
 Interaction<Contact<Wall, Parameters...>>::
