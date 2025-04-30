@@ -36,64 +36,72 @@ void TotalWeightComputation<DynamicsIdentifier>::update(size_t index_i, Real dt)
     total_weight_[index_i] = weight_ttl;
 }
 //=================================================================================================//
-template <class DynamicsIdentifier>
-InterpolationVelocityConstraint<DynamicsIdentifier>::
-    InterpolationVelocityConstraint(DynamicsIdentifier &identifier, BaseContactRelation &contact_relation)
-    : MotionConstraint<DynamicsIdentifier>(identifier),
+template <class DynamicsIdentifier, typename DataType>
+ConsistentMapping<DynamicsIdentifier, DataType>::
+    ConsistentMapping(DynamicsIdentifier &identifier,
+                      BaseContactRelation &contact_relation,
+                      const std::string &variable_name,
+                      const std::string &contact_variable_name)
+    : BaseLocalDynamics<DynamicsIdentifier>(identifier),
       DataDelegateContact(contact_relation),
+      interpolated_quantities_(this->particles_->template registerStateVariable<DataType>(variable_name)),
       total_weight_(this->particles_->template getVariableDataByName<Real>("TotalWeight"))
 {
     for (auto *contact_particle : contact_particles_)
     {
         contact_Vol_.emplace_back(contact_particle->template getVariableDataByName<Real>("VolumetricMeasure"));
-        contact_vel_.emplace_back(contact_particle->template getVariableDataByName<Vecd>("Velocity"));
+        contact_data_.emplace_back(contact_particle->template getVariableDataByName<DataType>(contact_variable_name));
     }
 };
 
-template <class DynamicsIdentifier>
-void InterpolationVelocityConstraint<DynamicsIdentifier>::update(size_t index_i, Real)
+template <class DynamicsIdentifier, typename DataType>
+void ConsistentMapping<DynamicsIdentifier, DataType>::update(size_t index_i, Real)
 {
     // only consider particles with contact neighbors
     if (total_weight_[index_i] < TinyReal)
         return;
 
-    Vecd vel = Vecd::Zero();
+    DataType interpolated_quantities = ZeroData<DataType>::value;
     for (size_t k = 0; k != contact_configuration_.size(); ++k)
     {
         const Real *Vol_k = contact_Vol_[k];
-        const Vecd *vel_k = contact_vel_[k];
+        const DataType *data_k = contact_data_[k];
         const Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
         for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
         {
             size_t index_j = contact_neighborhood.j_[n];
             Real weight_j = contact_neighborhood.W_ij_[n] * Vol_k[index_j];
-            vel += weight_j * vel_k[index_j];
+            interpolated_quantities += weight_j * data_k[index_j];
         }
     }
-    this->vel_[index_i] = vel / total_weight_[index_i];
+    interpolated_quantities_[index_i] = interpolated_quantities / total_weight_[index_i];
 }
 //=================================================================================================//
-template <class DynamicsIdentifier>
-InterpolationForceConstraint<DynamicsIdentifier>::
-    InterpolationForceConstraint(DynamicsIdentifier &identifier, BaseContactRelation &contact_relation)
-    : BaseForcePrior<DynamicsIdentifier>(identifier, "SolidToShellCouplingForce"),
+template <class DynamicsIdentifier, typename DataType>
+ConservativeMapping<DynamicsIdentifier, DataType>::
+    ConservativeMapping(DynamicsIdentifier &identifier,
+                        BaseContactRelation &contact_relation,
+                        const std::string &variable_name,
+                        const std::string &contact_variable_name)
+    : BaseLocalDynamics<DynamicsIdentifier>(identifier),
       DataDelegateContact(contact_relation),
+      interpolated_quantities_(this->particles_->template registerStateVariable<DataType>(variable_name)),
       Vol_(this->particles_->template getVariableDataByName<Real>("VolumetricMeasure"))
 {
     for (auto *contact_particle : contact_particles_)
     {
         contact_total_weight_.emplace_back(contact_particle->template getVariableDataByName<Real>("TotalWeight"));
-        contact_force_.emplace_back(contact_particle->template getVariableDataByName<Vecd>("Force"));
+        contact_data_.emplace_back(contact_particle->template getVariableDataByName<DataType>(contact_variable_name));
     }
 };
 
-template <class DynamicsIdentifier>
-void InterpolationForceConstraint<DynamicsIdentifier>::interaction(size_t index_i, Real)
+template <class DynamicsIdentifier, typename DataType>
+void ConservativeMapping<DynamicsIdentifier, DataType>::update(size_t index_i, Real)
 {
-    Vecd force = Vecd::Zero();
+    DataType interpolated_quantities = ZeroData<DataType>::value;
     for (size_t k = 0; k != contact_configuration_.size(); ++k)
     {
-        const Vecd *force_k = contact_force_[k];
+        const Vecd *data_k = contact_data_[k];
         const Real *total_weight_k = contact_total_weight_[k];
         const Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
         for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
@@ -102,10 +110,10 @@ void InterpolationForceConstraint<DynamicsIdentifier>::interaction(size_t index_
             if (total_weight_k[index_j] < TinyReal)
                 continue;
             Real weight_j = contact_neighborhood.W_ij_[n] * Vol_[index_i] / total_weight_k[index_j];
-            force += weight_j * force_k[index_j];
+            interpolated_quantities += weight_j * data_k[index_j];
         }
     }
-    this->current_force_[index_i] = force;
+    interpolated_quantities_[index_i] = interpolated_quantities;
 }
 } // namespace solid_dynamics
 } // namespace SPH

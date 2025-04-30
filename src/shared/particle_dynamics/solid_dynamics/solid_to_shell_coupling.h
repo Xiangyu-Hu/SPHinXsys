@@ -53,40 +53,50 @@ class TotalWeightComputation : public BaseLocalDynamics<DynamicsIdentifier>,
     void update(size_t index_i, Real dt = 0.0);
 };
 
-/**@class InterpolationVelocityConstraint
- * @brief Constrain velocity by the interpolation from coupled particle velocities.
+/**@class ConsistentMapping
+ * @brief Constrain the variable by the interpolation from coupled particle velocities with consistent mapping.
+ * Usually used for velocity.
  * When there is more than one contact body, interpolate from all contact bodies.
  */
-template <class DynamicsIdentifier>
-class InterpolationVelocityConstraint : public MotionConstraint<DynamicsIdentifier>,
-                                        public DataDelegateContact
+template <class DynamicsIdentifier, typename DataType>
+class ConsistentMapping : public BaseLocalDynamics<DynamicsIdentifier>,
+                          public DataDelegateContact
 {
   private:
+    DataType *interpolated_quantities_;
     Real *total_weight_;
     StdVec<Real *> contact_Vol_;
-    StdVec<Vecd *> contact_vel_;
+    StdVec<DataType *> contact_data_;
 
   public:
-    InterpolationVelocityConstraint(DynamicsIdentifier &identifier, BaseContactRelation &contact_relation);
+    ConsistentMapping(DynamicsIdentifier &identifier,
+                      BaseContactRelation &contact_relation,
+                      const std::string &variable_name,          // variable name of the source body, e.g., "Velocity"
+                      const std::string &contact_variable_name); // variable name of the contact body, e.g., "Velocity"
     void update(size_t index_i, Real dt = 0.0);
 };
 
-/**@class InterpolationForceConstraint
- * @brief Apply the coupling force by the interpolation from coupled particle internal accelerations.
+/**@class ConservativeMapping
+ * @brief Constrain the variable by the interpolation from coupled particle with conservative mapping.
+ * Usually used for force. Note that for prior force, the force needs to be registered as a new prior force.
  * When there is more than one contact body, interpolate force from each contact body and sum up.
  */
-template <class DynamicsIdentifier>
-class InterpolationForceConstraint : public BaseForcePrior<DynamicsIdentifier>,
-                                     public DataDelegateContact
+template <class DynamicsIdentifier, typename DataType>
+class ConservativeMapping : public BaseLocalDynamics<DynamicsIdentifier>,
+                            public DataDelegateContact
 {
   private:
+    DataType *interpolated_quantities_;
     Real *Vol_;
     StdVec<Real *> contact_total_weight_;
-    StdVec<Vecd *> contact_force_;
+    StdVec<DataType *> contact_data_;
 
   public:
-    InterpolationForceConstraint(DynamicsIdentifier &identifier, BaseContactRelation &contact_relation);
-    void interaction(size_t index_i, Real dt = 0.0);
+    ConservativeMapping(DynamicsIdentifier &identifier,
+                        BaseContactRelation &contact_relation,
+                        const std::string &variable_name,          // variable name of the source body, e.g., "CouplingForce"
+                        const std::string &contact_variable_name); // variable name of the contact body, e.g., "Force"
+    void update(size_t index_i, Real dt = 0.0);
 };
 } // namespace solid_dynamics
 } // namespace SPH
