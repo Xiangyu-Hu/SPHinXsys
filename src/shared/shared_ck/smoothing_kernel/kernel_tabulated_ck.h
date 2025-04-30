@@ -49,7 +49,7 @@ class KernelTabulatedCK
         Real shift1 = q - Real(location) * dq_; // shift1 correspond to i
         Real shift0 = shift1 + dq_;             // shift0 correspond to i-1
         Real shift2 = shift1 - dq_;             // shift2 correspond to i+1
-        Real shift3 = shift1 - 2 * dq_;         ////shift3 correspond to i+2
+        Real shift3 = shift1 - 2 * dq_;         // shift3 correspond to i+2
 
         return (shift1 * shift2 * shift3) / dq0_ * data[i - 1] +
                (shift0 * shift2 * shift3) / dq1_ * data[i] +
