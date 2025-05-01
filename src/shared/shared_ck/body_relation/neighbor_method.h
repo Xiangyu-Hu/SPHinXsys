@@ -34,21 +34,49 @@
 
 namespace SPH
 {
+class BodyPartitionSpatial;
+
 template <typename...>
 class SmoothingLength;
 
 template <>
-class SmoothingLength<Fixed>
+class SmoothingLength<Base>
+{
+  public:
+    template <typename... Args>
+    SmoothingLength(Args &&...args){};
+
+  protected:
+    template <class DynamicsIdentifier>
+    Real getSmoothingLength(const Fixed &fixed, DynamicsIdentifier &identifier)
+    {
+        return identifier.getSPHAdaptation().ReferenceSmoothingLength();
+    };
+    Real getSmoothingLength(const Fixed &fixed, BodyPartitionSpatial &body_partition_spatial);
+
+    template <class DynamicsIdentifier>
+    DiscreteVariable<Real> *getSmoothingLength(const Adaptive &adaptive, DynamicsIdentifier &identifier)
+    {
+        Real smoothing_length = identifier.getSPHAdaptation().ReferenceSmoothingLength();
+        return identifier.getBaseParticles()
+            .template registerStateVariableOnly<Real>("SmoothingLength", smoothing_length);
+    };
+};
+
+template <>
+class SmoothingLength<Fixed> : public SmoothingLength<Base>
 {
   public:
     template <class DynamicsIdentifier>
     SmoothingLength(DynamicsIdentifier &identifier)
-        : inv_h_(1.0 / identifier.getFixedSmoothingLength()){};
+        : SmoothingLength<Base>(identifier),
+          inv_h_(1.0 / getSmoothingLength(Fixed{}, identifier)){};
 
     template <class SourceIdentifier, class TargetIdentifier>
     SmoothingLength(SourceIdentifier &source_identifier, TargetIdentifier &contact_identifier)
-        : inv_h_(1.0 / SMAX(source_identifier.getFixedSmoothingLength(),
-                            contact_identifier.getFixedSmoothingLength())){};
+        : SmoothingLength<Base>(source_identifier, contact_identifier),
+          inv_h_(1.0 / SMAX(getSmoothingLength(Fixed{}, source_identifier),
+                            getSmoothingLength(Fixed{}, contact_identifier))){};
 
     class ComputingKernel
     {
@@ -66,18 +94,20 @@ class SmoothingLength<Fixed>
 };
 
 template <>
-class SmoothingLength<Adaptive>
+class SmoothingLength<Adaptive> : public SmoothingLength<Base>
 {
   public:
     template <class DynamicsIdentifier>
     SmoothingLength(DynamicsIdentifier &identifier)
-        : dv_source_h_(identifier.getAdaptiveSmoothingLength()),
+        : SmoothingLength<Base>(identifier),
+          dv_source_h_(getSmoothingLength(Adaptive{}, identifier)),
           dv_target_h_(dv_source_h_){};
 
     template <class SourceIdentifier, class TargetIdentifier>
     SmoothingLength(SourceIdentifier &source_identifier, TargetIdentifier &contact_identifier)
-        : dv_source_h_(source_identifier.getAdaptiveSmoothingLength()),
-          dv_target_h_(contact_identifier.getAdaptiveSmoothingLength()){};
+        : SmoothingLength<Base>(source_identifier, contact_identifier),
+          dv_source_h_(getSmoothingLength(Adaptive{}, source_identifier)),
+          dv_target_h_(getSmoothingLength(Adaptive{}, contact_identifier)){};
 
     class ComputingKernel
     {
@@ -98,13 +128,14 @@ class SmoothingLength<Adaptive>
 };
 
 template <>
-class SmoothingLength<Fixed, Adaptive>
+class SmoothingLength<Fixed, Adaptive> : public SmoothingLength<Base>
 {
   public:
     template <class SourceIdentifier, class TargetIdentifier>
     SmoothingLength(SourceIdentifier &source_identifier, TargetIdentifier &contact_identifier)
-        : source_h_(source_identifier.getFixedSmoothingLength()),
-          dv_target_h_(contact_identifier.getAdaptiveSmoothingLength()){};
+        : SmoothingLength<Base>(source_identifier, contact_identifier),
+          source_h_(getSmoothingLength(Fixed{}, source_identifier)),
+          dv_target_h_(getSmoothingLength(Adaptive{}, contact_identifier)){};
 
     class ComputingKernel
     {
@@ -125,13 +156,14 @@ class SmoothingLength<Fixed, Adaptive>
 };
 
 template <>
-class SmoothingLength<Adaptive, Fixed>
+class SmoothingLength<Adaptive, Fixed> : public SmoothingLength<Base>
 {
   public:
     template <class SourceIdentifier, class TargetIdentifier>
     SmoothingLength(SourceIdentifier &source_identifier, TargetIdentifier &contact_identifier)
-        : dv_source_h_(source_identifier.getAdaptiveSmoothingLength()),
-          target_h_(contact_identifier.getFixedSmoothingLength()){};
+        : SmoothingLength<Base>(source_identifier, contact_identifier),
+          dv_source_h_(getSmoothingLength(Adaptive{}, source_identifier)),
+          target_h_(getSmoothingLength(Fixed{}, contact_identifier)){};
 
     class ComputingKernel
     {

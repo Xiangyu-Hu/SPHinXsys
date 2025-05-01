@@ -55,8 +55,7 @@ class BodyPart
     std::string getName() const { return alias_.value_or(part_name_); };
     int getPartID() { return part_id_; };
     SingularVariable<UnsignedInt> *svRangeSize() { return sv_range_size_; };
-    Real getFixedSmoothingLength() { return sph_body_.getFixedSmoothingLength(); };
-    DiscreteVariable<Real> *getAdaptiveSmoothingLength() { return sph_body_.getAdaptiveSmoothingLength(); };
+    SPHAdaptation &getSPHAdaptation() { return sph_adaptation_; };
     BaseCellLinkedList &getCellLinkedList();
 
     template <typename TargetCriterion>

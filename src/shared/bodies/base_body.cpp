@@ -85,17 +85,6 @@ void SPHBody::defineAdaptationRatios(Real h_spacing_ratio, Real new_system_refin
     sph_adaptation_->resetAdaptationRatios(h_spacing_ratio, new_system_refinement_ratio);
 }
 //=================================================================================================//
-DiscreteVariable<Real> *SPHBody::getAdaptiveSmoothingLength()
-{
-    if (base_particles_ == nullptr)
-    {
-        std::cout << "\n Error: BaseParticle not generated yet! \n";
-        std::cout << __FILE__ << ':' << __LINE__ << std::endl;
-        exit(1);
-    }
-    return base_particles_->getVariableByName<Real>("SmoothingLength");
-}
-//=================================================================================================//
 BaseCellLinkedList &RealBody::getCellLinkedList()
 {
     if (!cell_linked_list_created_)
