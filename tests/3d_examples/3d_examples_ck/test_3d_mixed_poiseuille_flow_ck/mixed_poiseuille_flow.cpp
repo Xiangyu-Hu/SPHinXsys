@@ -27,7 +27,7 @@ BoundingBox system_domain_bounds(
 const Real Inlet_pressure = 0.1;
 const Real Outlet_pressure = 0.0;
 Real rho0_f = 1000.0;
-Real Re = 10;
+Real Re = 50;
 Real mu_f = std::sqrt(rho0_f * std::pow(DH, 3.0) * std::abs(Inlet_pressure - Outlet_pressure) / (32.0 * Re * DL));
 
 /**
@@ -130,7 +130,7 @@ int velocity_validation(
 {
     size_t total_passed = 0;
     size_t total_failed = 0;
-    std::vector<std::string> failure_messages;
+    std::vector<std::string> messages;
 
     // Loop over each observer point and compare the x-component of the velocity.
     for (size_t index = 0; index < observer_location.size(); ++index)
@@ -140,39 +140,36 @@ int velocity_validation(
         Real vel_x_analytical = analytical_solution(y, z);
         Real vel_x_simulation = observer_vel[index][0];
 
-        // Check if within tolerance
-        if (std::abs((vel_x_simulation - vel_x_analytical) / vel_x_analytical) <= tolerance_factor)
+        Real error = std::abs((vel_x_simulation - vel_x_analytical) / U_f);
+        std::ostringstream msg;
+        msg << "Mismatch at observer index " << index
+            << " | Analytical: " << vel_x_analytical
+            << " | Simulation: " << vel_x_simulation
+            << " | Error: " << error;
+        messages.push_back(msg.str());
+
+        if (error <= tolerance_factor)
         {
             total_passed++;
         }
         else
         {
             total_failed++;
-            std::ostringstream msg;
-            msg << "Mismatch at observer index " << index
-                << " | Analytical: " << vel_x_analytical
-                << " | Simulation: " << vel_x_simulation
-                << " | Error: " << std::abs((vel_x_simulation - vel_x_analytical) / vel_x_analytical);
-            failure_messages.push_back(msg.str());
         }
     }
 
     // Print summary
+    std::cout << "Detailed error measures:\n";
+    for (const auto &msg : messages)
+    {
+        std::cout << msg << "\n";
+    }
     std::cout << "[TEST SUMMARY] Velocity Validation:\n"
               << "Total Observations: " << observer_location.size() << "\n"
               << "Passed: " << total_passed << "\n"
               << "Failed: " << total_failed << "\n";
 
-    // Print detailed failure messages if any
-    if (!failure_messages.empty())
-    {
-        std::cout << "Detailed Failures:\n";
-        for (const auto &msg : failure_messages)
-        {
-            std::cout << msg << "\n";
-        }
-    }
-
+    // Final assertion for unit testing
     if (total_failed != 0)
     {
         std::cout << "Test failed with " << total_failed << " mismatches. Check log for details.";
@@ -359,10 +356,10 @@ int main(int ac, char *av[])
             tick_instance = TickCount::now();
             fluid_density_regularization.exec();
             water_advection_step_setup.exec();
-            fluid_viscous_force.exec();
-            transport_correction_ck.exec();
-            Real advection_dt = fluid_advection_time_step.exec();
             fluid_linear_correction_matrix.exec();
+            transport_correction_ck.exec();
+            fluid_viscous_force.exec();
+            Real advection_dt = fluid_advection_time_step.exec();
             interval_outer_loop += TickCount::now() - tick_instance;
 
             tick_instance = TickCount::now();
