@@ -112,11 +112,11 @@ class Relation<Inner<DynamicsIdentifier, NeighborMethod>> : public Relation<Base
 
 template <typename DynamicsIdentifier>
 class Relation<Inner<DynamicsIdentifier>>
-    : public Relation<Inner<DynamicsIdentifier, SmoothingLength<Fixed>>>
+    : public Relation<Inner<DynamicsIdentifier, SmoothingLength<SingleValued>>>
 {
   public:
     Relation(DynamicsIdentifier &identifier)
-        : Relation<Inner<DynamicsIdentifier, SmoothingLength<Fixed>>>(identifier) {}
+        : Relation<Inner<DynamicsIdentifier, SmoothingLength<SingleValued>>>(identifier) {}
     virtual ~Relation() {};
 };
 
@@ -160,11 +160,11 @@ class Relation<Contact<SourceIdentifier, TargetIdentifier, NeighborMethod>> : pu
 
 template <class SourceIdentifier, class TargetIdentifier>
 class Relation<Contact<SourceIdentifier, TargetIdentifier>>
-    : public Relation<Contact<SourceIdentifier, TargetIdentifier, SmoothingLength<Fixed>>>
+    : public Relation<Contact<SourceIdentifier, TargetIdentifier, SmoothingLength<SingleValued>>>
 {
   public:
     Relation(SourceIdentifier &source_identifier, StdVec<TargetIdentifier *> contact_identifiers)
-        : Relation<Contact<SourceIdentifier, TargetIdentifier, SmoothingLength<Fixed>>>(
+        : Relation<Contact<SourceIdentifier, TargetIdentifier, SmoothingLength<SingleValued>>>(
               source_identifier, contact_identifiers) {};
     virtual ~Relation() {};
 };

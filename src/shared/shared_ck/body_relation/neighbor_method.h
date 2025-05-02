@@ -48,35 +48,38 @@ class SmoothingLength<Base>
 
   protected:
     template <class DynamicsIdentifier>
-    Real getSmoothingLength(const Fixed &fixed, DynamicsIdentifier &identifier)
+    Real getSmoothingLength(const SingleValued &single_valued, DynamicsIdentifier &identifier)
     {
         return identifier.getSPHAdaptation().ReferenceSmoothingLength();
     };
-    Real getSmoothingLength(const Fixed &fixed, BodyPartitionSpatial &body_partition_spatial);
+    Real getSmoothingLength(const SingleValued &single_valued, BodyPartitionSpatial &body_partition_spatial);
 
     template <class DynamicsIdentifier>
-    DiscreteVariable<Real> *getSmoothingLength(const Adaptive &adaptive, DynamicsIdentifier &identifier)
+    DiscreteVariable<Real> *getSmoothingLength(const Continuous &continuous, DynamicsIdentifier &identifier)
     {
-        Real smoothing_length = identifier.getSPHAdaptation().ReferenceSmoothingLength();
+        Real h_spacing_ratio = identifier.getSPHAdaptation().SmoothingLengthSpacingRatio();
         return identifier.getBaseParticles()
-            .template registerStateVariableOnly<Real>("SmoothingLength", smoothing_length);
+            .template registerStateVariableOnly<Real>(
+                "SmoothingLength",
+                [&](size_t i)
+                { return h_spacing_ratio * identifier.getBaseParticles().ParticleSpacing(i); });
     };
 };
 
 template <>
-class SmoothingLength<Fixed> : public SmoothingLength<Base>
+class SmoothingLength<SingleValued> : public SmoothingLength<Base>
 {
   public:
     template <class DynamicsIdentifier>
     SmoothingLength(DynamicsIdentifier &identifier)
         : SmoothingLength<Base>(identifier),
-          inv_h_(1.0 / getSmoothingLength(Fixed{}, identifier)){};
+          inv_h_(1.0 / getSmoothingLength(SingleValued{}, identifier)){};
 
     template <class SourceIdentifier, class TargetIdentifier>
     SmoothingLength(SourceIdentifier &source_identifier, TargetIdentifier &contact_identifier)
         : SmoothingLength<Base>(source_identifier, contact_identifier),
-          inv_h_(1.0 / SMAX(getSmoothingLength(Fixed{}, source_identifier),
-                            getSmoothingLength(Fixed{}, contact_identifier))){};
+          inv_h_(1.0 / SMAX(getSmoothingLength(SingleValued{}, source_identifier),
+                            getSmoothingLength(SingleValued{}, contact_identifier))){};
 
     class ComputingKernel
     {
@@ -84,7 +87,7 @@ class SmoothingLength<Fixed> : public SmoothingLength<Base>
 
       public:
         template <class ExecutionPolicy>
-        ComputingKernel(const ExecutionPolicy &ex_policy, SmoothingLength<Fixed> &smoothing_length)
+        ComputingKernel(const ExecutionPolicy &ex_policy, SmoothingLength<SingleValued> &smoothing_length)
             : inv_h_(smoothing_length.inv_h_){};
         Real operator()(UnsignedInt i, UnsignedInt j) const { return inv_h_; };
     };
@@ -94,20 +97,20 @@ class SmoothingLength<Fixed> : public SmoothingLength<Base>
 };
 
 template <>
-class SmoothingLength<Adaptive> : public SmoothingLength<Base>
+class SmoothingLength<Continuous> : public SmoothingLength<Base>
 {
   public:
     template <class DynamicsIdentifier>
     SmoothingLength(DynamicsIdentifier &identifier)
         : SmoothingLength<Base>(identifier),
-          dv_source_h_(getSmoothingLength(Adaptive{}, identifier)),
+          dv_source_h_(getSmoothingLength(Continuous{}, identifier)),
           dv_target_h_(dv_source_h_){};
 
     template <class SourceIdentifier, class TargetIdentifier>
     SmoothingLength(SourceIdentifier &source_identifier, TargetIdentifier &contact_identifier)
         : SmoothingLength<Base>(source_identifier, contact_identifier),
-          dv_source_h_(getSmoothingLength(Adaptive{}, source_identifier)),
-          dv_target_h_(getSmoothingLength(Adaptive{}, contact_identifier)){};
+          dv_source_h_(getSmoothingLength(Continuous{}, source_identifier)),
+          dv_target_h_(getSmoothingLength(Continuous{}, contact_identifier)){};
 
     class ComputingKernel
     {
@@ -116,7 +119,7 @@ class SmoothingLength<Adaptive> : public SmoothingLength<Base>
 
       public:
         template <class ExecutionPolicy>
-        ComputingKernel(const ExecutionPolicy &ex_policy, SmoothingLength<Adaptive> &smoothing_length)
+        ComputingKernel(const ExecutionPolicy &ex_policy, SmoothingLength<Continuous> &smoothing_length)
             : source_h_(smoothing_length.dv_source_h_->DelegatedData(ex_policy)),
               target_h_(smoothing_length.dv_target_h_->DelegatedData(ex_policy)){};
         Real operator()(UnsignedInt i, UnsignedInt j) const { return 1.0 / SMAX(source_h_[i], target_h_[j]); };
@@ -128,14 +131,14 @@ class SmoothingLength<Adaptive> : public SmoothingLength<Base>
 };
 
 template <>
-class SmoothingLength<Fixed, Adaptive> : public SmoothingLength<Base>
+class SmoothingLength<SingleValued, Continuous> : public SmoothingLength<Base>
 {
   public:
     template <class SourceIdentifier, class TargetIdentifier>
     SmoothingLength(SourceIdentifier &source_identifier, TargetIdentifier &contact_identifier)
         : SmoothingLength<Base>(source_identifier, contact_identifier),
-          source_h_(getSmoothingLength(Fixed{}, source_identifier)),
-          dv_target_h_(getSmoothingLength(Adaptive{}, contact_identifier)){};
+          source_h_(getSmoothingLength(SingleValued{}, source_identifier)),
+          dv_target_h_(getSmoothingLength(Continuous{}, contact_identifier)){};
 
     class ComputingKernel
     {
@@ -144,7 +147,7 @@ class SmoothingLength<Fixed, Adaptive> : public SmoothingLength<Base>
 
       public:
         template <class ExecutionPolicy>
-        ComputingKernel(const ExecutionPolicy &ex_policy, SmoothingLength<Fixed, Adaptive> &smoothing_length)
+        ComputingKernel(const ExecutionPolicy &ex_policy, SmoothingLength<SingleValued, Continuous> &smoothing_length)
             : source_h_(smoothing_length.source_h_),
               target_h_(smoothing_length.dv_target_h_->DelegatedData(ex_policy)){};
         Real operator()(UnsignedInt i, UnsignedInt j) const { return 1.0 / SMAX(source_h_, target_h_[j]); };
@@ -156,14 +159,14 @@ class SmoothingLength<Fixed, Adaptive> : public SmoothingLength<Base>
 };
 
 template <>
-class SmoothingLength<Adaptive, Fixed> : public SmoothingLength<Base>
+class SmoothingLength<Continuous, SingleValued> : public SmoothingLength<Base>
 {
   public:
     template <class SourceIdentifier, class TargetIdentifier>
     SmoothingLength(SourceIdentifier &source_identifier, TargetIdentifier &contact_identifier)
         : SmoothingLength<Base>(source_identifier, contact_identifier),
-          dv_source_h_(getSmoothingLength(Adaptive{}, source_identifier)),
-          target_h_(getSmoothingLength(Fixed{}, contact_identifier)){};
+          dv_source_h_(getSmoothingLength(Continuous{}, source_identifier)),
+          target_h_(getSmoothingLength(SingleValued{}, contact_identifier)){};
 
     class ComputingKernel
     {
@@ -172,7 +175,7 @@ class SmoothingLength<Adaptive, Fixed> : public SmoothingLength<Base>
 
       public:
         template <class ExecutionPolicy>
-        ComputingKernel(const ExecutionPolicy &ex_policy, SmoothingLength<Adaptive, Fixed> &smoothing_length)
+        ComputingKernel(const ExecutionPolicy &ex_policy, SmoothingLength<Continuous, SingleValued> &smoothing_length)
             : source_h_(smoothing_length.dv_source_h_->DelegatedData(ex_policy)),
               target_h_(smoothing_length.target_h_){};
         Real operator()(UnsignedInt i, UnsignedInt j) const { return 1.0 / SMAX(source_h_[i], target_h_); };

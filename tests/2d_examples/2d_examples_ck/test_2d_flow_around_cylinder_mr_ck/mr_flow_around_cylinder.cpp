@@ -173,14 +173,14 @@ int main(int ac, char *av[])
     //	Basically the the range of bodies to build neighbor particle lists.
     //  Generally, we first define all the inner relations, then the contact relations.
     //----------------------------------------------------------------------
-    Relation<Inner<BodyPartitionSpatial, SmoothingLength<Adaptive>>> water_low_resolution_inner(water_low_resolution_level);
-    Relation<Inner<BodyPartitionSpatial, SmoothingLength<Adaptive>>> water_high_resolution_inner(water_high_resolution_level);
-    Relation<Contact<BodyPartitionSpatial, BodyPartitionSpatial, SmoothingLength<Adaptive>>>
+    Relation<Inner<BodyPartitionSpatial, SmoothingLength<Continuous>>> water_low_resolution_inner(water_low_resolution_level);
+    Relation<Inner<BodyPartitionSpatial, SmoothingLength<Continuous>>> water_high_resolution_inner(water_high_resolution_level);
+    Relation<Contact<BodyPartitionSpatial, BodyPartitionSpatial, SmoothingLength<Continuous>>>
         water_increase_resolution_contact(water_low_resolution_level, {&water_high_resolution_level});
-    Relation<Contact<BodyPartitionSpatial, BodyPartitionSpatial, SmoothingLength<Adaptive>>>
+    Relation<Contact<BodyPartitionSpatial, BodyPartitionSpatial, SmoothingLength<Continuous>>>
         water_decrease_resolution_contact(water_high_resolution_level, {&water_low_resolution_level});
-    Relation<Contact<BodyPartitionSpatial, RealBody, SmoothingLength<Adaptive, Fixed>>> water_cylinder_contact(water_high_resolution_level, {&cylinder});
-    Relation<Contact<SPHBody, BodyPartitionSpatial, SmoothingLength<Fixed, Adaptive>>> fluid_observer_contact(fluid_observer, {&water_high_resolution_level});
+    Relation<Contact<BodyPartitionSpatial, RealBody, SmoothingLength<Continuous, SingleValued>>> water_cylinder_contact(water_high_resolution_level, {&cylinder});
+    Relation<Contact<SPHBody, BodyPartitionSpatial, SmoothingLength<SingleValued, Continuous>>> fluid_observer_contact(fluid_observer, {&water_high_resolution_level});
     //----------------------------------------------------------------------
     //----------------------------------------------------------------------
     // Define the main execution policy for this case.
@@ -197,28 +197,28 @@ int main(int ac, char *av[])
     // Finally, the auxiliary models such as time step estimator, initial condition,
     // boundary condition and other constraints should be defined.
     //----------------------------------------------------------------------
-    StateDynamics<MainExecutionPolicy, AdaptLevelIndication<Refinement<Fixed>>> water_adapt_level_indication(water_block);
     UpdateCellLinkedList<MainExecutionPolicy, BodyPartitionSpatial> water_low_resolution_cell_linked_list(water_low_resolution_level);
     UpdateCellLinkedList<MainExecutionPolicy, BodyPartitionSpatial> water_high_resolution_cell_linked_list(water_high_resolution_level);
     UpdateCellLinkedList<MainExecutionPolicy, RealBody> cylinder_cell_linked_list(cylinder);
 
     UpdateRelation<
         MainExecutionPolicy,
-        Inner<BodyPartitionSpatial, SmoothingLength<Adaptive>>,
-        Contact<BodyPartitionSpatial, BodyPartitionSpatial, SmoothingLength<Adaptive>>,
-        Contact<BodyPartitionSpatial, RealBody, SmoothingLength<Adaptive, Fixed>>>
+        Inner<BodyPartitionSpatial, SmoothingLength<Continuous>>,
+        Contact<BodyPartitionSpatial, BodyPartitionSpatial, SmoothingLength<Continuous>>,
+        Contact<BodyPartitionSpatial, RealBody, SmoothingLength<Continuous, SingleValued>>>
         water_high_resolution_update_complex_relation(
             water_high_resolution_inner, water_decrease_resolution_contact, water_cylinder_contact);
 
     UpdateRelation<
         MainExecutionPolicy,
-        Inner<BodyPartitionSpatial, SmoothingLength<Adaptive>>,
-        Contact<BodyPartitionSpatial, BodyPartitionSpatial, SmoothingLength<Adaptive>>>
+        Inner<BodyPartitionSpatial, SmoothingLength<Continuous>>,
+        Contact<BodyPartitionSpatial, BodyPartitionSpatial, SmoothingLength<Continuous>>>
         water_low_resolution_update_complex_relation(
             water_low_resolution_inner, water_increase_resolution_contact);
 
-    UpdateRelation<MainExecutionPolicy, Contact<SPHBody, BodyPartitionSpatial, SmoothingLength<Fixed, Adaptive>>>
+    UpdateRelation<MainExecutionPolicy, Contact<SPHBody, BodyPartitionSpatial, SmoothingLength<SingleValued, Continuous>>>
         fluid_observer_update_contact_relation(fluid_observer_contact);
 
+    StateDynamics<MainExecutionPolicy, AdaptLevelIndication<Refinement<Continuous, Fixed>>> water_adapt_level_indication(water_block);
     return 0;
 }

@@ -49,6 +49,8 @@ struct Adaptive // Indicating with adaptive resolution
     static inline const bool is_fixed = false;
     static inline const bool is_dynamic = true;
 };
+class SingleValued{};
+class Continuous{};
 class Lattice;          // Indicating with lattice points
 class UnstructuredMesh; // Indicating with unstructured mesh
 class BaseMaterial;

@@ -52,14 +52,14 @@ class Refinement<Base>
 };
 
 template <typename T>
-class Refinement<T> : public Refinement<Base>
+class Refinement<Continuous, T> : public Refinement<Base>
 {
   public:
     Refinement(SPHAdaptation *sph_adaptation, BaseParticles *particles)
         : Refinement<Base>("Refinement", T::is_fixed),
           refinement_level_(sph_adaptation->LocalRefinementLevel()),
           h_ref_(sph_adaptation->ReferenceSmoothingLength()),
-          dv_h_ratio_(particles->getVariableByName<Real>("SmoothingLengthRatio")) {};
+          dv_h_(particles->getVariableByName<Real>("SmoothingLength")) {};
     virtual ~Refinement() {};
 
     class ComputingKernel
@@ -68,11 +68,11 @@ class Refinement<T> : public Refinement<Base>
         template <class ExecutionPolicy, class EncloserType>
         ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
             : refinement_level_(encloser.refinement_level_), h_ref_(encloser.h_ref_),
-              h_ratio_(encloser.dv_h_ratio_->DelegatedData(ex_policy)){};
+              h_(encloser.dv_h_->DelegatedData(ex_policy)){};
         int operator()(size_t index_i, Real dt = 0.0)
         {
             Real h_level = h_ref_;
-            Real h_current = h_ratio_[index_i] / h_ref_;
+            Real h_current = h_[index_i];
             for (int j = 0; j < refinement_level_; ++j)
             {
                 h_level *= 0.5;
@@ -87,13 +87,13 @@ class Refinement<T> : public Refinement<Base>
       protected:
         int refinement_level_;
         Real h_ref_;
-        Real *h_ratio_;
+        Real *h_;
     };
 
   protected:
     int refinement_level_;
     Real h_ref_;
-    DiscreteVariable<Real> *dv_h_ratio_;
+    DiscreteVariable<Real> *dv_h_;
 };
 } // namespace SPH
 #endif // ADAPT_CRITERION_H

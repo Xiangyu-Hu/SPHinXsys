@@ -69,6 +69,7 @@ class SPHAdaptation
     virtual ~SPHAdaptation() {};
 
     int LocalRefinementLevel() { return local_refinement_level_; };
+    Real SmoothingLengthSpacingRatio() { return h_spacing_ratio_; };
     Real ReferenceSpacing() { return spacing_ref_; };
     Real MinimumSpacing() { return spacing_min_; };
     Real ReferenceSmoothingLength() { return h_ref_; };
