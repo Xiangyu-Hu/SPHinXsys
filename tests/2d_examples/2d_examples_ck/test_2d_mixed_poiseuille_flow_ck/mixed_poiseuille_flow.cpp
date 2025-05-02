@@ -13,7 +13,7 @@ using namespace SPH;
 //----------------------------------------------------------------------
 Real DL = 0.004;                 /**< Channel length. */
 Real DH = 0.001;                 /**< Channel height. */
-Real resolution_ref = DH / 20.0; /**< Reference particle spacing. */
+Real resolution_ref = DH / 10.0; /**< Reference particle spacing. */
 Real BW = resolution_ref * 4;    /**< Extending width for BCs. */
 StdVec<Vecd> observer_location;
 BoundingBox system_domain_bounds(
@@ -172,7 +172,7 @@ int velocity_validation(
 {
     size_t total_passed = 0;
     size_t total_failed = 0;
-    std::vector<std::string> failure_messages;
+    std::vector<std::string> messages;
 
     // Loop over each observer point and compare the x-component of the velocity.
     for (size_t index = 0; index < observer_location.size(); ++index)
@@ -181,38 +181,34 @@ int velocity_validation(
         Real vel_x_analytical = analytical_solution(y);
         Real vel_x_simulation = observer_vel[index][0];
 
-        // Check if within tolerance
-        if (std::abs((vel_x_simulation - vel_x_analytical) / vel_x_analytical) <= tolerance_factor)
+        Real error = std::abs((vel_x_simulation - vel_x_analytical) / vel_x_analytical);
+        std::ostringstream msg;
+        msg << "Mismatch at observer index " << index
+            << " | Analytical: " << vel_x_analytical
+            << " | Simulation: " << vel_x_simulation
+            << " | Error: " << error;
+        messages.push_back(msg.str());
+
+        if (error <= tolerance_factor)
         {
             total_passed++;
         }
         else
         {
             total_failed++;
-            std::ostringstream msg;
-            msg << "Mismatch at observer index " << index
-                << " | Analytical: " << vel_x_analytical
-                << " | Simulation: " << vel_x_simulation
-                << " | Error: " << std::abs((vel_x_simulation - vel_x_analytical) / vel_x_analytical);
-            failure_messages.push_back(msg.str());
         }
     }
 
     // Print summary
+    std::cout << "Detailed error measures:\n";
+    for (const auto &msg : messages)
+    {
+        std::cout << msg << "\n";
+    }
     std::cout << "[TEST SUMMARY] Velocity Validation:\n"
               << "Total Observations: " << observer_location.size() << "\n"
               << "Passed: " << total_passed << "\n"
               << "Failed: " << total_failed << "\n";
-
-    // Print detailed failure messages if any
-    if (!failure_messages.empty())
-    {
-        std::cout << "Detailed Failures:\n";
-        for (const auto &msg : failure_messages)
-        {
-            std::cout << msg << "\n";
-        }
-    }
 
     // Final assertion for unit testing
     if (total_failed != 0)
@@ -330,6 +326,7 @@ int main(int ac, char *av[])
     BodyStatesRecordingToVtp body_states_recording(sph_system);
     body_states_recording.addToWrite<Real>(water_body, "Pressure");
     body_states_recording.addToWrite<int>(water_body, "BufferIndicator");
+    body_states_recording.addToWrite<Real>(water_body, "Density");
     ObservedQuantityRecording<MainExecutionPolicy, Vecd, RestoringCorrection> write_centerline_velocity("Velocity", velocity_observer_contact);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
@@ -375,12 +372,12 @@ int main(int ac, char *av[])
         /** Integrate time (loop) until the next output time. */
         while (integration_time < output_interval)
         {
+            fluid_linear_correction_matrix.exec();
+            transport_correction_ck.exec();
             fluid_density_regularization.exec();
             water_advection_step_setup.exec();
             fluid_viscous_force.exec();
-            transport_correction_ck.exec();
             Real advection_dt = fluid_advection_time_step.exec();
-            fluid_linear_correction_matrix.exec();
             interval_computing_time_step += TickCount::now() - time_instance;
 
             /** Dynamics including pressure relaxation. */

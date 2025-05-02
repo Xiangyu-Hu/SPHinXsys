@@ -24,7 +24,7 @@ class TransportVelocityCorrectionCKBase : public BaseInteractionType
 
   protected:
     DiscreteVariable<Real> *dv_Vol_;                   ///< "VolumetricMeasure"
-    DiscreteVariable<Vecd> *dv_dpos_;                  ///< "Position"
+    DiscreteVariable<Vecd> *dv_pos_;                   ///< "Position"
     DiscreteVariable<Vecd> *dv_zero_gradient_residue_; ///< "ZeroGradientResidue"
 };
 
@@ -58,7 +58,7 @@ class TransportVelocityCorrectionCK<Inner<UpdatePolicy, KernelCorrectionType, Re
       protected:
         CorrectionKernel correction_;
         Real *Vol_;
-        Vecd *dpos_;
+        Vecd *pos_;
         Vecd *zero_gradient_residue_;
         ParticleScopeTypeKernel within_scope_;
     };
@@ -77,7 +77,7 @@ class TransportVelocityCorrectionCK<Inner<UpdatePolicy, KernelCorrectionType, Re
         Real correction_scaling_;
         ResolutionType h_ratio_;
         LimiterType limiter_;
-        Vecd *dpos_;
+        Vecd *pos_;
         Vecd *zero_gradient_residue_;
         ParticleScopeTypeKernel within_scope_;
     };

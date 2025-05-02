@@ -16,7 +16,7 @@ TransportVelocityCorrectionCKBase<BaseInteractionType>::
     TransportVelocityCorrectionCKBase(DynamicsIdentifier &identifier)
     : BaseInteractionType(identifier),
       dv_Vol_(this->particles_->template getVariableByName<Real>("VolumetricMeasure")),
-      dv_dpos_(this->particles_->template getVariableByName<Vecd>("Displacement")),
+      dv_pos_(this->particles_->template getVariableByName<Vecd>("Position")),
       dv_zero_gradient_residue_(
           this->particles_->template registerStateVariableOnly<Vecd>("ZeroGradientResidue"))
 {
@@ -55,7 +55,7 @@ TransportVelocityCorrectionCK<Inner<UpdatePolicy, KernelCorrectionType, Resoluti
     : BaseInteraction::InteractKernel(ex_policy, encloser),
       correction_(ex_policy, encloser.kernel_correction_),
       Vol_(encloser.dv_Vol_->DelegatedData(ex_policy)),
-      dpos_(encloser.dv_dpos_->DelegatedData(ex_policy)),
+      pos_(encloser.dv_pos_->DelegatedData(ex_policy)),
       zero_gradient_residue_(encloser.dv_zero_gradient_residue_->DelegatedData(ex_policy)),
       within_scope_(ex_policy, encloser.within_scope_method_, *this)
 {
@@ -97,7 +97,7 @@ TransportVelocityCorrectionCK<Inner<UpdatePolicy, KernelCorrectionType, Resoluti
       correction_scaling_(encloser.correction_scaling_),
       h_ratio_(encloser.h_ratio_),
       limiter_(encloser.limiter_),
-      dpos_(encloser.dv_dpos_->DelegatedData(ex_policy)),
+      pos_(encloser.dv_pos_->DelegatedData(ex_policy)),
       zero_gradient_residue_(encloser.dv_zero_gradient_residue_->DelegatedData(ex_policy)), within_scope_(ex_policy, encloser.within_scope_method_, *this)
 {
 }
@@ -117,8 +117,8 @@ void TransportVelocityCorrectionCK<
         Real inv_h_ratio = 1.0 / h_ratio_(index_i);
         Vecd residue = this->zero_gradient_residue_[index_i];
         Real squared_norm = residue.squaredNorm();
-        dpos_[index_i] += correction_scaling_ * limiter_(squared_norm) *
-                          this->zero_gradient_residue_[index_i] * inv_h_ratio * inv_h_ratio;
+        pos_[index_i] += correction_scaling_ * limiter_(squared_norm) *
+                         this->zero_gradient_residue_[index_i] * inv_h_ratio * inv_h_ratio;
     }
 }
 
