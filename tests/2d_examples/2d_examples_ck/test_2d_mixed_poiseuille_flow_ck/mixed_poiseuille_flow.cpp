@@ -183,7 +183,7 @@ int velocity_validation(
 
         Real error = std::abs((vel_x_simulation - vel_x_analytical) / U_f);
         std::ostringstream msg;
-        msg << "Mismatch at observer index " << index
+        msg << "Measure at observer index " << index
             << " | Analytical: " << vel_x_analytical
             << " | Simulation: " << vel_x_simulation
             << " | Error: " << error;
@@ -312,8 +312,6 @@ int main(int ac, char *av[])
     ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticTimeStepCK<>> fluid_acoustic_time_step(water_body);
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::ViscousForceWithWallCK>
         fluid_viscous_force(water_body_inner, water_wall_contact);
-    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::TransportVelocityLimitedCorrectionCorrectedComplexBulkParticlesCKWithoutUpdate>
-        zero_gradient_ck(water_body_inner, water_wall_contact);
     fluid_dynamics::BidirectionalBoundaryCK<MainExecutionPolicy, LinearCorrectionCK, InflowVelocityPrescribed>
         bidirectional_velocity_condition_left(left_emitter_by_cell, particle_buffer, DH, U_f, mu_f);
     fluid_dynamics::BidirectionalBoundaryCK<MainExecutionPolicy, LinearCorrectionCK, PressurePrescribed<>>
@@ -386,7 +384,6 @@ int main(int ac, char *av[])
             {
                 acoustic_dt = SMIN(fluid_acoustic_time_step.exec(), advection_dt);
                 fluid_acoustic_step_1st_half.exec(acoustic_dt);
-                zero_gradient_ck.exec();
                 bidirectional_velocity_condition_left.applyBoundaryCondition(acoustic_dt);
                 bidirectional_pressure_condition_right.applyBoundaryCondition(acoustic_dt);
                 fluid_acoustic_step_2nd_half.exec(acoustic_dt);
