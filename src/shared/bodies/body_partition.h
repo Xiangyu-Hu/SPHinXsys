@@ -38,14 +38,15 @@ class BodyPartition
 {
   public:
     typedef BodyPartition BaseIdentifier;
-    BodyPartition(SPHBody &sph_body, UnsignedInt partition_adapt_level_);
+    BodyPartition(SPHBody &sph_body, UnsignedInt present_adapt_level_);
     virtual ~BodyPartition() {};
     SPHBody &getSPHBody() { return sph_body_; };
     SPHSystem &getSPHSystem() { return sph_body_.getSPHSystem(); };
     std::string getName();
     SPHAdaptation &getSPHAdaptation() { return sph_adaptation_; };
     BaseParticles &getBaseParticles() { return base_particles_; };
-    UnsignedInt PartitionAdaptationLevel() { return partition_adapt_level_; };
+    UnsignedInt PresentAdaptationLevel() { return present_adapt_level_; };
+    DiscreteVariable<int> *dvAdaptationLevel() { return dv_adapt_level_; };
     virtual BaseCellLinkedList &getCellLinkedList() = 0;
 
     class SourceParticleMask
@@ -53,17 +54,17 @@ class BodyPartition
       public:
         template <class ExecutionPolicy, typename EnclosureType>
         SourceParticleMask(ExecutionPolicy &ex_policy, EnclosureType &encloser)
-            : partition_adapt_level_(encloser.partition_adapt_level_),
+            : present_adapt_level_(encloser.present_adapt_level_),
               adapt_level_(encloser.dv_adapt_level_->DelegatedData(ex_policy)) {}
         ~SourceParticleMask() {}
 
         bool operator()(UnsignedInt source_index)
         {
-            return adapt_level_[source_index] == partition_adapt_level_;
+            return adapt_level_[source_index] == present_adapt_level_;
         }
 
       protected:
-        int partition_adapt_level_;
+        int present_adapt_level_;
         int *adapt_level_;
     };
     using ListedParticleMask = SourceParticleMask;
@@ -84,7 +85,7 @@ class BodyPartition
     BaseParticles &base_particles_;
     UniquePtr<BaseCellLinkedList> cell_linked_list_ptr_;
     bool cell_linked_list_created_;
-    UnsignedInt partition_adapt_level_;
+    UnsignedInt present_adapt_level_;
     DiscreteVariable<int> *dv_adapt_level_;
 };
 
@@ -101,7 +102,7 @@ class BodyPartitionSpatial : public BodyPartition
   public:
     BodyPartitionSpatial(SPHBody &sph_body, UnsignedInt adapt_level);
     virtual ~BodyPartitionSpatial() {};
-    Real getReferenceSmoothingLength() { return sph_adaptation_.SmoothingLengthByLevel(partition_adapt_level_); };
+    Real getReferenceSmoothingLength() { return sph_adaptation_.SmoothingLengthByLevel(present_adapt_level_); };
     virtual BaseCellLinkedList &getCellLinkedList() override;
 };
 } // namespace SPH

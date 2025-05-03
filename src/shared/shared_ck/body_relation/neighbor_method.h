@@ -62,7 +62,7 @@ class SmoothingLength<Base>
             .template registerStateVariableOnly<Real>(
                 "SmoothingLength",
                 [&](size_t i)
-                { return h_spacing_ratio * identifier.getBaseParticles().ParticleSpacing(i); });
+                { return 0.99 * h_spacing_ratio * identifier.getBaseParticles().ParticleSpacing(i); });
     };
 };
 

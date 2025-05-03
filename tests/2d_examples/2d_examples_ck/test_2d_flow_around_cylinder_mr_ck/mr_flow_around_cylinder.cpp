@@ -82,16 +82,16 @@ int main(int ac, char *av[])
     BoundingBox system_domain_bounds(Vec2d(-DL_sponge, -0.25 * DH), Vec2d(DL, 1.25 * DH));
     SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
     /** Tag for run particle relaxation for the initial body fitted distribution. */
-    sph_system.setRunParticleRelaxation(true);
+    sph_system.setRunParticleRelaxation(false);
     /** Tag for computation start with relaxed body fitted particles distribution. */
-    sph_system.setReloadParticles(false);
+    sph_system.setReloadParticles(true);
     /** handle command line arguments. */
     sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     FluidBody water_body(sph_system, makeShared<WaterBlock>("WaterBody"));
-    water_body.defineAdaptation<ParticleRefinementWithinShape>(1.3, 1.0, 2);
+    water_body.defineAdaptation<ParticleRefinementWithinShape>(1.3, 1.0, 1);
     water_body.defineComponentLevelSetShape("OuterBoundary")->writeLevelSet(sph_system);
     water_body.defineClosure<WeaklyCompressibleFluid, Viscosity>(ConstructArgs(rho0_f, c_f), mu_f);
     GeometricShapeBox refinement_region(
@@ -219,11 +219,29 @@ int main(int ac, char *av[])
     UpdateRelation<MainExecutionPolicy, Contact<SPHBody, BodyPartitionSpatial, SmoothingLength<SingleValued, Continuous>>>
         fluid_observer_update_contact_relation(fluid_observer_contact);
 
-    StateDynamics<MainExecutionPolicy, AdaptLevelIndication<Refinement<Continuous, Fixed>>> water_adapt_level_indication(water_body);
+    StateDynamics<execution::SequencedPolicy, AdaptLevelIndication<Refinement<Continuous, Fixed>>> water_adapt_level_indication(water_body);
+    StartupAcceleration time_dependent_acceleration(Vec2d(U_f, 0.0), 2.0);
+    StateDynamics<MainExecutionPolicy, GravityForceCK<StartupAcceleration>> constant_gravity(water_body, time_dependent_acceleration);
+    StateDynamics<execution::ParallelPolicy, NormalFromBodyShapeCK> cylinder_normal_direction(cylinder); // run on CPU
+
+    InteractionDynamicsCK<
+        MainExecutionPolicy,
+        fluid_dynamics::FreeSurfaceIndicationCK<
+            Inner<WithUpdate, Internal, BodyPartitionSpatial, SmoothingLength<Continuous>>,
+            Contact<BodyPartitionSpatial, BodyPartitionSpatial, SmoothingLength<Continuous>>,
+            Contact<BodyPartitionSpatial, RealBody, SmoothingLength<Continuous, SingleValued>>>>
+        water_high_resolution_boundary_indicator(
+            water_high_resolution_inner, water_decrease_resolution_contact, water_cylinder_contact);
+    InteractionDynamicsCK<
+        MainExecutionPolicy,
+        fluid_dynamics::FreeSurfaceIndicationCK<
+            Inner<WithUpdate, Internal, BodyPartitionSpatial, SmoothingLength<Continuous>>,
+            Contact<BodyPartitionSpatial, BodyPartitionSpatial, SmoothingLength<Continuous>>>>
+        water_low_resolution_boundary_indicator(
+            water_low_resolution_inner, water_increase_resolution_contact);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
-    /** Output the body states. */
     BodyStatesRecordingToVtp body_states_recording(sph_system);
     body_states_recording.addToWrite<int>(water_body, "AdaptLevel");
     body_states_recording.addToWrite<Real>(water_body, "SmoothingLength");

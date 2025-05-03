@@ -81,7 +81,7 @@ class Refinement<Continuous, T> : public Refinement<Base>
                     return j;
                 }
             }
-            return refinement_level_ - 1;
+            return refinement_level_;
         };
 
       protected:
