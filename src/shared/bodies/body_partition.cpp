@@ -9,6 +9,11 @@ BodyPartition::BodyPartition(SPHBody &sph_body, UnsignedInt partition_adapt_leve
       cell_linked_list_created_(false), partition_adapt_level_(partition_adapt_level),
       dv_adapt_level_(base_particles_.registerStateVariableOnly<int>("AdaptLevel")) {}
 //=================================================================================================//
+std::string BodyPartition::getName()
+{
+    return sph_body_.getName() + "Partition" + std::to_string(partition_adapt_level_);
+}
+//=================================================================================================//
 BodyPartitionTemporal::BodyPartitionTemporal(SPHBody &sph_body, UnsignedInt partition_adapt_level)
     : BodyPartition(sph_body, partition_adapt_level) {}
 //=================================================================================================//

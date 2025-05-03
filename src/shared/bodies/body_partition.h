@@ -42,6 +42,7 @@ class BodyPartition
     virtual ~BodyPartition() {};
     SPHBody &getSPHBody() { return sph_body_; };
     SPHSystem &getSPHSystem() { return sph_body_.getSPHSystem(); };
+    std::string getName();
     SPHAdaptation &getSPHAdaptation() { return sph_adaptation_; };
     BaseParticles &getBaseParticles() { return base_particles_; };
     UnsignedInt PartitionAdaptationLevel() { return partition_adapt_level_; };

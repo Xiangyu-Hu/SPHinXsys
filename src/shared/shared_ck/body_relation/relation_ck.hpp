@@ -18,13 +18,14 @@ Relation<Base>::Relation(SourceIdentifier &source_identifier,
     for (size_t k = 0; k != contact_identifiers.size(); ++k)
     {
         SPHBody &contact_body = contact_identifiers[k]->getSPHBody();
-        const std::string name = contact_body.getName();
+        const std::string name = source_identifier.getName() + contact_identifiers[k]->getName();
         BaseParticles &contact_particles = contact_body.getBaseParticles();
         dv_target_pos_.push_back(assignConfigPosition(contact_particles, config_type));
         dv_target_neighbor_index_.push_back(addRelationVariable<UnsignedInt>(
             name + "NeighborIndex", offset_list_size_));
         dv_target_particle_offset_.push_back(addRelationVariable<UnsignedInt>(
             name + "ParticleOffset", offset_list_size_));
+        particles_.addVariableToWrite<UnsignedInt>(dv_target_particle_offset_[k]);
     }
     registered_computing_kernels_.resize(contact_identifiers.size());
 }

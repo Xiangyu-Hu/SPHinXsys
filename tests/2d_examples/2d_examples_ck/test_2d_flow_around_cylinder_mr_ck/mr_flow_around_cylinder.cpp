@@ -30,8 +30,8 @@ Real mu_f = rho0_f * U_f * (2.0 * radius) / Re; /**< Dynamics viscosity. */
 //----------------------------------------------------------------------
 //	define geometric parameters
 //----------------------------------------------------------------------
-Vecd water_block_halfsize = Vecd(0.5 * (DL_sponge + DL), 0.5 * DH);
-Vecd water_block_translation = Vec2d(-DL_sponge, 0.0) + water_block_halfsize;
+Vecd water_body_halfsize = Vecd(0.5 * (DL_sponge + DL), 0.5 * DH);
+Vecd water_body_translation = Vec2d(-DL_sponge, 0.0) + water_body_halfsize;
 Vecd refinement_region_halfsize = Vec2d(0.5 * (DL_sponge + DL) + BW, 0.25 * DH);
 Vec2d refinement_region_translation = Vec2d(-DL_sponge - BW, 0.25 * DH) + refinement_region_halfsize;
 Vec2d emitter_halfsize = Vec2d(0.5 * BW, 0.5 * DH);
@@ -49,7 +49,7 @@ class WaterBlock : public ComplexShape
     explicit WaterBlock(const std::string &shape_name) : ComplexShape(shape_name)
     {
         add<GeometricShapeBox>(
-            Transform(water_block_translation), water_block_halfsize, "OuterBoundary");
+            Transform(water_body_translation), water_body_halfsize, "OuterBoundary");
         subtract<GeometricShapeBall>(circle_center, radius);
     }
 };
@@ -90,16 +90,16 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
-    water_block.defineAdaptation<ParticleRefinementWithinShape>(1.3, 1.0, 1);
-    water_block.defineComponentLevelSetShape("OuterBoundary")->writeLevelSet(sph_system);
-    water_block.defineClosure<WeaklyCompressibleFluid, Viscosity>(ConstructArgs(rho0_f, c_f), mu_f);
+    FluidBody water_body(sph_system, makeShared<WaterBlock>("WaterBody"));
+    water_body.defineAdaptation<ParticleRefinementWithinShape>(1.3, 1.0, 2);
+    water_body.defineComponentLevelSetShape("OuterBoundary")->writeLevelSet(sph_system);
+    water_body.defineClosure<WeaklyCompressibleFluid, Viscosity>(ConstructArgs(rho0_f, c_f), mu_f);
     GeometricShapeBox refinement_region(
         Transform(refinement_region_translation), refinement_region_halfsize, "RefinementRegion");
     ParticleBuffer<ReserveSizeFactor> inlet_particle_buffer(0.5);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? water_block.generateParticlesWithReserve<BaseParticles, Reload>(inlet_particle_buffer, water_block.getName())
-        : water_block.generateParticles<BaseParticles, Lattice, Adaptive>(refinement_region);
+        ? water_body.generateParticlesWithReserve<BaseParticles, Reload>(inlet_particle_buffer, water_body.getName())
+        : water_body.generateParticles<BaseParticles, Lattice, Adaptive>(refinement_region);
 
     SolidBody cylinder(sph_system, makeShared<GeometricShapeBall>(circle_center, radius, "Cylinder"));
     cylinder.defineAdaptationRatios(1.15, 4.0);
@@ -118,21 +118,21 @@ int main(int ac, char *av[])
     {
         /** body topology only for particle relaxation */
         InnerRelation cylinder_inner(cylinder);
-        AdaptiveInnerRelation water_block_inner(water_block);
-        AdaptiveContactRelation water_contact(water_block, {&cylinder});
+        AdaptiveInnerRelation water_body_inner(water_body);
+        AdaptiveContactRelation water_contact(water_body, {&cylinder});
         //----------------------------------------------------------------------
         //	Methods used for particle relaxation.
         //----------------------------------------------------------------------
         using namespace relax_dynamics;
         SimpleDynamics<RandomizeParticlePosition> random_inserted_body_particles(cylinder);
-        SimpleDynamics<RandomizeParticlePosition> random_water_body_particles(water_block);
+        SimpleDynamics<RandomizeParticlePosition> random_water_body_particles(water_body);
         BodyStatesRecordingToVtp write_real_body_states(sph_system);
-        ReloadParticleIO write_real_body_particle_reload_files({&water_block, &cylinder});
+        ReloadParticleIO write_real_body_particle_reload_files({&water_body, &cylinder});
         /** A  Physics relaxation step. */
         RelaxationStepLevelSetCorrectionInner relaxation_step_inner(cylinder_inner);
         RelaxationStepLevelSetCorrectionComplex relaxation_step_complex(
-            DynamicsArgs(water_block_inner, std::string("OuterBoundary")), water_contact);
-        SimpleDynamics<UpdateSmoothingLengthRatioByShape> update_smoothing_length_ratio(water_block, refinement_region);
+            DynamicsArgs(water_body_inner, std::string("OuterBoundary")), water_contact);
+        SimpleDynamics<UpdateSmoothingLengthRatioByShape> update_smoothing_length_ratio(water_body, refinement_region);
         //----------------------------------------------------------------------
         //	Particle relaxation starts here.
         //----------------------------------------------------------------------
@@ -165,8 +165,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Body partitioning for multi-resolution simulation.
     //----------------------------------------------------------------------
-    BodyPartitionSpatial water_low_resolution_level(water_block, 0);
-    BodyPartitionSpatial water_high_resolution_level(water_block, 1);
+    BodyPartitionSpatial water_low_resolution_level(water_body, 0);
+    BodyPartitionSpatial water_high_resolution_level(water_body, 1);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -219,6 +219,26 @@ int main(int ac, char *av[])
     UpdateRelation<MainExecutionPolicy, Contact<SPHBody, BodyPartitionSpatial, SmoothingLength<SingleValued, Continuous>>>
         fluid_observer_update_contact_relation(fluid_observer_contact);
 
-    StateDynamics<MainExecutionPolicy, AdaptLevelIndication<Refinement<Continuous, Fixed>>> water_adapt_level_indication(water_block);
+    StateDynamics<MainExecutionPolicy, AdaptLevelIndication<Refinement<Continuous, Fixed>>> water_adapt_level_indication(water_body);
+    //----------------------------------------------------------------------
+    //	Define the methods for I/O operations and observations of the simulation.
+    //----------------------------------------------------------------------
+    /** Output the body states. */
+    BodyStatesRecordingToVtp body_states_recording(sph_system);
+    body_states_recording.addToWrite<int>(water_body, "AdaptLevel");
+    body_states_recording.addToWrite<Real>(water_body, "SmoothingLength");
+    //----------------------------------------------------------------------
+    //	Prepare the simulation with cell linked list, configuration
+    //	and case specified initial condition if necessary.
+    //----------------------------------------------------------------------
+    water_adapt_level_indication.exec();
+    water_low_resolution_cell_linked_list.exec();
+    water_high_resolution_cell_linked_list.exec();
+    cylinder_cell_linked_list.exec();
+    water_low_resolution_update_complex_relation.exec();
+    water_high_resolution_update_complex_relation.exec();
+    fluid_observer_update_contact_relation.exec();
+
+    body_states_recording.writeToFile(MainExecutionPolicy{});
     return 0;
 }
