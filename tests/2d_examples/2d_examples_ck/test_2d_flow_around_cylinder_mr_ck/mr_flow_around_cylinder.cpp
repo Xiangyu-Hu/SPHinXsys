@@ -14,11 +14,6 @@ Real DL_sponge = particle_spacing_ref * 20.0; /**< Sponge region to impose emitt
 Real BW = 4.0 * particle_spacing_ref;         /**< Sponge region to impose injection. */
 Vec2d circle_center(10.0, 0.5 * DH);          /**< Location of the cylinder center. */
 Real radius = 1.0;                            /**< Radius of the cylinder. */
-// Observation locations
-Vec2d point_coordinate_1(3.0, 5.0);
-Vec2d point_coordinate_2(4.0, 5.0);
-Vec2d point_coordinate_3(5.0, 5.0);
-StdVec<Vecd> observation_locations = {point_coordinate_1, point_coordinate_2, point_coordinate_3};
 //----------------------------------------------------------------------
 //	Global parameters on the fluid properties
 //----------------------------------------------------------------------
@@ -108,9 +103,6 @@ int main(int ac, char *av[])
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
         ? cylinder.generateParticles<BaseParticles, Reload>(cylinder.getName())
         : cylinder.generateParticles<BaseParticles, Lattice>();
-
-    ObserverBody fluid_observer(sph_system, "FluidObserver");
-    fluid_observer.generateParticles<ObserverParticles>(observation_locations);
     //----------------------------------------------------------------------
     //	Run particle relaxation for body-fitted distribution if chosen.
     //----------------------------------------------------------------------
@@ -180,7 +172,6 @@ int main(int ac, char *av[])
     Relation<Contact<BodyPartitionSpatial, BodyPartitionSpatial, SmoothingLength<Continuous>>>
         water_decrease_resolution_contact(water_high_resolution_level, {&water_low_resolution_level});
     Relation<Contact<BodyPartitionSpatial, RealBody, SmoothingLength<Continuous, SingleValued>>> water_cylinder_contact(water_high_resolution_level, {&cylinder});
-    Relation<Contact<SPHBody, BodyPartitionSpatial, SmoothingLength<SingleValued, Continuous>>> fluid_observer_contact(fluid_observer, {&water_high_resolution_level});
     //----------------------------------------------------------------------
     //----------------------------------------------------------------------
     // Define the main execution policy for this case.
@@ -216,9 +207,6 @@ int main(int ac, char *av[])
         water_low_resolution_update_complex_relation(
             water_low_resolution_inner, water_increase_resolution_contact);
 
-    UpdateRelation<MainExecutionPolicy, Contact<SPHBody, BodyPartitionSpatial, SmoothingLength<SingleValued, Continuous>>>
-        fluid_observer_update_contact_relation(fluid_observer_contact);
-
     StateDynamics<execution::SequencedPolicy, AdaptLevelIndication<Refinement<Continuous, Fixed>>> water_adapt_level_indication(water_body);
     StartupAcceleration time_dependent_acceleration(Vec2d(U_f, 0.0), 2.0);
     StateDynamics<MainExecutionPolicy, GravityForceCK<StartupAcceleration>> constant_gravity(water_body, time_dependent_acceleration);
@@ -228,15 +216,15 @@ int main(int ac, char *av[])
         MainExecutionPolicy,
         fluid_dynamics::FreeSurfaceIndicationCK<
             Inner<WithUpdate, Internal, BodyPartitionSpatial, SmoothingLength<Continuous>>,
-            Contact<BodyPartitionSpatial, BodyPartitionSpatial, SmoothingLength<Continuous>>,
-            Contact<BodyPartitionSpatial, RealBody, SmoothingLength<Continuous, SingleValued>>>>
+            Contact<BodyPartitionSpatial, SmoothingLength<Continuous>>,
+            Contact<BodyPartitionSpatial, SmoothingLength<Continuous, SingleValued>>>>
         water_high_resolution_boundary_indicator(
             water_high_resolution_inner, water_decrease_resolution_contact, water_cylinder_contact);
     InteractionDynamicsCK<
         MainExecutionPolicy,
         fluid_dynamics::FreeSurfaceIndicationCK<
             Inner<WithUpdate, Internal, BodyPartitionSpatial, SmoothingLength<Continuous>>,
-            Contact<BodyPartitionSpatial, BodyPartitionSpatial, SmoothingLength<Continuous>>>>
+            Contact<BodyPartitionSpatial, SmoothingLength<Continuous>>>>
         water_low_resolution_boundary_indicator(
             water_low_resolution_inner, water_increase_resolution_contact);
 
@@ -247,15 +235,15 @@ int main(int ac, char *av[])
         MainExecutionPolicy,
         LinearCorrectionMatrix<
             Inner<WithUpdate, BodyPartitionSpatial, SmoothingLength<Continuous>>,
-            Contact<BodyPartitionSpatial, BodyPartitionSpatial, SmoothingLength<Continuous>>,
-            Contact<BodyPartitionSpatial, RealBody, SmoothingLength<Continuous, SingleValued>>>>
+            Contact<BodyPartitionSpatial, SmoothingLength<Continuous>>,
+            Contact<BodyPartitionSpatial, SmoothingLength<Continuous, SingleValued>>>>
         water_high_resolution_linear_correction_matrix(
             water_high_resolution_inner, water_decrease_resolution_contact, water_cylinder_contact);
     InteractionDynamicsCK<
         MainExecutionPolicy,
         LinearCorrectionMatrix<
             Inner<WithUpdate, BodyPartitionSpatial, SmoothingLength<Continuous>>,
-            Contact<BodyPartitionSpatial, BodyPartitionSpatial, SmoothingLength<Continuous>>>>
+            Contact<BodyPartitionSpatial, SmoothingLength<Continuous>>>>
         water_low_resolution_linear_correction_matrix(
             water_low_resolution_inner, water_increase_resolution_contact);
 
@@ -263,8 +251,8 @@ int main(int ac, char *av[])
         MainExecutionPolicy,
         fluid_dynamics::DensityRegularization<
             Inner<WithUpdate, Internal, AllParticles, BodyPartitionSpatial, SmoothingLength<Continuous>>,
-            Contact<BodyPartitionSpatial, BodyPartitionSpatial, SmoothingLength<Continuous>>,
-            Contact<BodyPartitionSpatial, RealBody, SmoothingLength<Continuous, SingleValued>>>>
+            Contact<BodyPartitionSpatial, SmoothingLength<Continuous>>,
+            Contact<BodyPartitionSpatial, SmoothingLength<Continuous, SingleValued>>>>
         water_high_resolution_density_regularization(
             water_high_resolution_inner, water_decrease_resolution_contact, water_cylinder_contact);
 
@@ -272,7 +260,7 @@ int main(int ac, char *av[])
         MainExecutionPolicy,
         fluid_dynamics::DensityRegularization<
             Inner<WithUpdate, Internal, AllParticles, BodyPartitionSpatial, SmoothingLength<Continuous>>,
-            Contact<BodyPartitionSpatial, BodyPartitionSpatial, SmoothingLength<Continuous>>>>
+            Contact<BodyPartitionSpatial, SmoothingLength<Continuous>>>>
         water_low_resolution_density_regularization(
             water_low_resolution_inner, water_increase_resolution_contact);
 
@@ -280,8 +268,8 @@ int main(int ac, char *av[])
         MainExecutionPolicy,
         fluid_dynamics::AcousticStep1stHalf<
             Inner<OneLevel, AcousticRiemannSolverCK, LinearCorrectionCK, BodyPartitionSpatial, SmoothingLength<Continuous>>,
-            Contact<AcousticRiemannSolverCK, LinearCorrectionCK, BodyPartitionSpatial, BodyPartitionSpatial, SmoothingLength<Continuous>>,
-            Contact<Wall, AcousticRiemannSolverCK, LinearCorrectionCK, BodyPartitionSpatial, RealBody, SmoothingLength<Continuous, SingleValued>>>>
+            Contact<AcousticRiemannSolverCK, LinearCorrectionCK, BodyPartitionSpatial, SmoothingLength<Continuous>>,
+            Contact<Wall, AcousticRiemannSolverCK, LinearCorrectionCK, BodyPartitionSpatial, SmoothingLength<Continuous, SingleValued>>>>
         water_high_resolution_acoustic_step_1st_half(
             water_high_resolution_inner, water_decrease_resolution_contact, water_cylinder_contact);
 
@@ -289,8 +277,8 @@ int main(int ac, char *av[])
         MainExecutionPolicy,
         fluid_dynamics::AcousticStep2ndHalf<
             Inner<OneLevel, AcousticRiemannSolverCK, LinearCorrectionCK, BodyPartitionSpatial, SmoothingLength<Continuous>>,
-            Contact<AcousticRiemannSolverCK, LinearCorrectionCK, BodyPartitionSpatial, BodyPartitionSpatial, SmoothingLength<Continuous>>,
-            Contact<Wall, AcousticRiemannSolverCK, LinearCorrectionCK, BodyPartitionSpatial, RealBody, SmoothingLength<Continuous, SingleValued>>>>
+            Contact<AcousticRiemannSolverCK, LinearCorrectionCK, BodyPartitionSpatial, SmoothingLength<Continuous>>,
+            Contact<Wall, AcousticRiemannSolverCK, LinearCorrectionCK, BodyPartitionSpatial, SmoothingLength<Continuous, SingleValued>>>>
         water_high_resolution_acoustic_step_2nd_half(
             water_high_resolution_inner, water_decrease_resolution_contact, water_cylinder_contact);
 
@@ -298,7 +286,7 @@ int main(int ac, char *av[])
         MainExecutionPolicy,
         fluid_dynamics::AcousticStep1stHalf<
             Inner<OneLevel, AcousticRiemannSolverCK, LinearCorrectionCK, BodyPartitionSpatial, SmoothingLength<Continuous>>,
-            Contact<AcousticRiemannSolverCK, LinearCorrectionCK, BodyPartitionSpatial, BodyPartitionSpatial, SmoothingLength<Continuous>>>>
+            Contact<AcousticRiemannSolverCK, LinearCorrectionCK, BodyPartitionSpatial, SmoothingLength<Continuous>>>>
         water_low_resolution_acoustic_step_1st_half(
             water_low_resolution_inner, water_increase_resolution_contact);
 
@@ -306,7 +294,7 @@ int main(int ac, char *av[])
         MainExecutionPolicy,
         fluid_dynamics::AcousticStep2ndHalf<
             Inner<OneLevel, AcousticRiemannSolverCK, LinearCorrectionCK, BodyPartitionSpatial, SmoothingLength<Continuous>>,
-            Contact<AcousticRiemannSolverCK, LinearCorrectionCK, BodyPartitionSpatial, BodyPartitionSpatial, SmoothingLength<Continuous>>>>
+            Contact<AcousticRiemannSolverCK, LinearCorrectionCK, BodyPartitionSpatial, SmoothingLength<Continuous>>>>
         water_low_resolution_acoustic_step_2nd_half(
             water_low_resolution_inner, water_increase_resolution_contact);
 
@@ -326,7 +314,6 @@ int main(int ac, char *av[])
     cylinder_cell_linked_list.exec();
     water_low_resolution_update_complex_relation.exec();
     water_high_resolution_update_complex_relation.exec();
-    fluid_observer_update_contact_relation.exec();
 
     body_states_recording.writeToFile(MainExecutionPolicy{});
     return 0;

@@ -36,8 +36,8 @@ Interaction<Inner<DynamicsIdentifier, Parameters...>>::InteractKernel::
                    encloser.inner_relation_.getTargetPosition(),
                    encloser.inner_relation_.getNeighborMethod()) {}
 //=================================================================================================//
-template <class SourceIdentifier, class TargetIdentifier, typename... Parameters>
-Interaction<Contact<SourceIdentifier, TargetIdentifier, Parameters...>>::
+template <class SourceIdentifier, typename... Parameters>
+Interaction<Contact<SourceIdentifier, Parameters...>>::
     Interaction(ContactRelationType &contact_relation)
     : BaseLocalDynamics<SourceIdentifier>(contact_relation.getSourceIdentifier()),
       contact_relation_(contact_relation),
@@ -45,23 +45,23 @@ Interaction<Contact<SourceIdentifier, TargetIdentifier, Parameters...>>::
       contact_particles_(contact_relation.getContactParticles()),
       contact_adaptations_(contact_relation.getContactAdaptations()) {}
 //=================================================================================================//
-template <class SourceIdentifier, class TargetIdentifier, typename... Parameters>
-void Interaction<Contact<SourceIdentifier, TargetIdentifier, Parameters...>>::
+template <class SourceIdentifier, typename... Parameters>
+void Interaction<Contact<SourceIdentifier, Parameters...>>::
     registerComputingKernel(Implementation<Base> *implementation, UnsignedInt contact_index)
 {
     contact_relation_.registerComputingKernel(implementation, contact_index);
 }
 //=================================================================================================//
-template <class SourceIdentifier, class TargetIdentifier, typename... Parameters>
-void Interaction<Contact<SourceIdentifier, TargetIdentifier, Parameters...>>::
+template <class SourceIdentifier, typename... Parameters>
+void Interaction<Contact<SourceIdentifier, Parameters...>>::
     resetComputingKernelUpdated(UnsignedInt contact_index)
 {
     contact_relation_.resetComputingKernelUpdated(contact_index);
 }
 //=================================================================================================//
-template <class SourceIdentifier, class TargetIdentifier, typename... Parameters>
+template <class SourceIdentifier, typename... Parameters>
 template <class ExecutionPolicy, class EncloserType>
-Interaction<Contact<SourceIdentifier, TargetIdentifier, Parameters...>>::InteractKernel::
+Interaction<Contact<SourceIdentifier, Parameters...>>::InteractKernel::
     InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt contact_index)
     : NeighborList(ex_policy, encloser.contact_relation_, contact_index),
       Neighborhood(ex_policy, encloser.sph_adaptation_,
