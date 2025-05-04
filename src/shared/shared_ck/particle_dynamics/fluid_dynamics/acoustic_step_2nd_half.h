@@ -131,6 +131,42 @@ class AcousticStep2ndHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType,
     RiemannSolverType riemann_solver_;
 };
 
+template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
+class AcousticStep2ndHalf<Contact<RiemannSolverType, KernelCorrectionType, Parameters...>>
+    : public AcousticStep<Interaction<Contact<Parameters...>>>
+{
+    using SourceFluidType = typename RiemannSolverType::SourceFluid;
+    using TargetFluidType = typename RiemannSolverType::TargetFluid;
+    using BaseInteraction = AcousticStep<Interaction<Contact<Parameters...>>>;
+    using CorrectionKernel = typename KernelCorrectionType::ComputingKernel;
+
+  public:
+    explicit AcousticStep2ndHalf(Relation<Contact<Parameters...>> &wall_contact_relation);
+    virtual ~AcousticStep2ndHalf() {};
+
+    class InteractKernel : public BaseInteraction::InteractKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt contact_index);
+        void interact(size_t index_i, Real dt = 0.0);
+
+      protected:
+        CorrectionKernel correction_;
+        RiemannSolverType riemann_solver_;
+        Real *Vol_, *rho_, *drho_dt_;
+        Vecd *vel_, *force_;
+        Real *contact_Vol_;
+        Vecd *contact_vel_;
+    };
+
+  protected:
+    KernelCorrectionType kernel_correction_;
+    StdVec<RiemannSolverType> riemann_solvers_;
+    StdVec<DiscreteVariable<Real> *> dv_contact_Vol_;
+    StdVec<DiscreteVariable<Vecd> *> dv_contact_vel_;
+};
+
 using AcousticStep2ndHalfWithWallNoRiemannCK =
     AcousticStep2ndHalf<Inner<OneLevel, NoRiemannSolverCK, NoKernelCorrectionCK>,
                         Contact<Wall, NoRiemannSolverCK, NoKernelCorrectionCK>>;

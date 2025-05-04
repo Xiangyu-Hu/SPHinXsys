@@ -267,6 +267,7 @@ int main(int ac, char *av[])
             Contact<BodyPartitionSpatial, RealBody, SmoothingLength<Continuous, SingleValued>>>>
         water_high_resolution_density_regularization(
             water_high_resolution_inner, water_decrease_resolution_contact, water_cylinder_contact);
+
     InteractionDynamicsCK<
         MainExecutionPolicy,
         fluid_dynamics::DensityRegularization<
@@ -284,39 +285,31 @@ int main(int ac, char *av[])
         water_high_resolution_acoustic_step_1st_half(
             water_high_resolution_inner, water_decrease_resolution_contact, water_cylinder_contact);
 
-    /*
-        InteractionDynamicsCK<
-            MainExecutionPolicy,
-            fluid_dynamics::AcousticStep1stHalf<
-                Inner<OneLevel, AcousticRiemannSolverCK, LinearCorrectionCK, BodyPartitionSpatial, SmoothingLength<Continuous>>,
-                Contact<BodyPartitionSpatial, BodyPartitionSpatial, SmoothingLength<Continuous>>,
-                Contact<Wall, BodyPartitionSpatial, RealBody, SmoothingLength<Continuous, SingleValued>>>>
-            water_high_resolution_acoustic_step_1st_half(
-                water_high_resolution_inner, water_decrease_resolution_contact, );
-        InteractionDynamicsCK<
-            MainExecutionPolicy,
-            fluid_dynamics::AcousticStep1stHalf<
-                Inner<OneLevel, AcousticRiemannSolverCK, LinearCorrectionCK, BodyPartitionSpatial, SmoothingLength<Continuous>>,
-                Contact<BodyPartitionSpatial, BodyPartitionSpatial, SmoothingLength<Continuous>>>>
-            water_low_resolution_acoustic_step_1st_half(
-                water_low_resolution_inner, water_increase_resolution_contact);
+    InteractionDynamicsCK<
+        MainExecutionPolicy,
+        fluid_dynamics::AcousticStep2ndHalf<
+            Inner<OneLevel, AcousticRiemannSolverCK, LinearCorrectionCK, BodyPartitionSpatial, SmoothingLength<Continuous>>,
+            Contact<AcousticRiemannSolverCK, LinearCorrectionCK, BodyPartitionSpatial, BodyPartitionSpatial, SmoothingLength<Continuous>>,
+            Contact<Wall, AcousticRiemannSolverCK, LinearCorrectionCK, BodyPartitionSpatial, RealBody, SmoothingLength<Continuous, SingleValued>>>>
+        water_high_resolution_acoustic_step_2nd_half(
+            water_high_resolution_inner, water_decrease_resolution_contact, water_cylinder_contact);
 
-        InteractionDynamicsCK<
-            MainExecutionPolicy,
-            fluid_dynamics::AcousticStep2ndHalf<
-                Inner<OneLevel, AcousticRiemannSolverCK, LinearCorrectionCK, BodyPartitionSpatial, SmoothingLength<Continuous>>,
-                Contact<BodyPartitionSpatial, BodyPartitionSpatial, SmoothingLength<Continuous>>,
-                Contact<BodyPartitionSpatial, RealBody, SmoothingLength<Continuous, SingleValued>>>>
-            water_high_resolution_acoustic_step_2nd_half(
-                water_high_resolution_inner, water_decrease_resolution_contact, water_cylinder_contact);
-        InteractionDynamicsCK<
-            MainExecutionPolicy,
-            fluid_dynamics::AcousticStep2ndHalf<
-                Inner<OneLevel, AcousticRiemannSolverCK, LinearCorrectionCK, BodyPartitionSpatial, SmoothingLength<Continuous>>,
-                Contact<BodyPartitionSpatial, BodyPartitionSpatial, SmoothingLength<Continuous>>>>
-            water_low_resolution_acoustic_step_2nd_half(
-                water_low_resolution_inner, water_increase_resolution_contact);
-    */
+    InteractionDynamicsCK<
+        MainExecutionPolicy,
+        fluid_dynamics::AcousticStep1stHalf<
+            Inner<OneLevel, AcousticRiemannSolverCK, LinearCorrectionCK, BodyPartitionSpatial, SmoothingLength<Continuous>>,
+            Contact<AcousticRiemannSolverCK, LinearCorrectionCK, BodyPartitionSpatial, BodyPartitionSpatial, SmoothingLength<Continuous>>>>
+        water_low_resolution_acoustic_step_1st_half(
+            water_low_resolution_inner, water_increase_resolution_contact);
+
+    InteractionDynamicsCK<
+        MainExecutionPolicy,
+        fluid_dynamics::AcousticStep2ndHalf<
+            Inner<OneLevel, AcousticRiemannSolverCK, LinearCorrectionCK, BodyPartitionSpatial, SmoothingLength<Continuous>>,
+            Contact<AcousticRiemannSolverCK, LinearCorrectionCK, BodyPartitionSpatial, BodyPartitionSpatial, SmoothingLength<Continuous>>>>
+        water_low_resolution_acoustic_step_2nd_half(
+            water_low_resolution_inner, water_increase_resolution_contact);
+
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
