@@ -121,7 +121,7 @@ void AcousticStep1stHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
 AcousticStep1stHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType, Parameters...>>::
     AcousticStep1stHalf(Relation<Contact<Parameters...>> &wall_contact_relation)
-    : AcousticStep<Interaction<Contact<Wall, Parameters...>>>(wall_contact_relation),
+    : BaseInteraction(wall_contact_relation), Interaction<Wall>(wall_contact_relation),
       kernel_correction_(this->particles_),
       fluid_(DynamicCast<FluidType>(this, this->sph_body_.getBaseMaterial())),
       riemann_solver_(this->fluid_, this->fluid_) {}
