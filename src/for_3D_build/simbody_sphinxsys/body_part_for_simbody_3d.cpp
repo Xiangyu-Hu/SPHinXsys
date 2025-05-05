@@ -1,4 +1,4 @@
-#include "solid_body.h"
+#include "body_part_for_simbody.h"
 
 #include "base_particles.hpp"
 namespace SPH
