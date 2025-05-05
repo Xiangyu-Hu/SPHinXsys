@@ -32,8 +32,6 @@
 
 #include "base_body.h"
 
-#include <string>
-
 namespace SPH
 {
 /**

@@ -10,9 +10,9 @@
  *                                                                           *
  * SPHinXsys is partially funded by German Research Foundation               *
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
- *  HU1527/12-1 and HU1527/12-4                                              *
+ *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2022 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2023 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -21,36 +21,44 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	device_copyable_variable.h
- * @brief 	TBD.
+ * @file    body_part_for_simbody.h
+ * @brief 	This is the class for bodies used for solid BCs or Elastic structure.
  * @author	Xiangyu Hu
  */
-#ifndef DEVICE_COPYABLE_VARIABLE_H
-#define DEVICE_COPYABLE_VARIABLE_H
 
-#include "base_data_package.h"
-#include "simtk_wrapper.h"
+#ifndef BODY_PART_FOR_SIMBODY_H
+#define BODY_PART_FOR_SIMBODY_H
 
-namespace sycl
+#include "base_body_part.h"
+
+namespace SPH
 {
-template <>
-struct is_device_copyable<SPH::SimTKVec3> : std::true_type
+/**
+ * @class SolidBodyPartForSimbody
+ * @brief A SolidBodyPart for coupling with Simbody.
+ * The mass, origin, and unit inertial matrix are computed.
+ * Note: In Simbody, all spatial vectors are three dimensional.
+ */
+class SolidBodyPartForSimbody : public BodyRegionByParticle
 {
+  protected:
+    UniquePtrKeeper<SimTK::MassProperties> mass_properties_ptr_keeper_;
+
+  public:
+    Vecd initial_mass_center_;
+    SimTK::MassProperties *body_part_mass_properties_;
+
+    SolidBodyPartForSimbody(SPHBody &body, Shape &body_part_shape);
+    SolidBodyPartForSimbody(SPHBody &body, SharedPtr<Shape> shape_ptr);
+    virtual ~SolidBodyPartForSimbody() {};
+
+  protected:
+    Real rho0_;
+    Real *Vol_;
+    Vecd *pos_;
+
+  private:
+    void setMassProperties();
 };
-
-template <>
-struct is_device_copyable<SimTK::Vec<2, SPH::SimTKVec3>> : std::true_type
-{
-};
-
-template <int N, int M>
-struct is_device_copyable<Eigen::Matrix<SPH::Real, N, M>> : std::true_type
-{
-};
-
-template <>
-struct is_device_copyable<SPH::Mat2d> : std::true_type
-{
-};
-} // namespace sycl
-#endif // DEVICE_COPYABLE_VARIABLE_H
+} // namespace SPH
+#endif // BODY_PART_FOR_SIMBODY_H

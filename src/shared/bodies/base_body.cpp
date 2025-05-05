@@ -2,7 +2,6 @@
 
 #include "base_body_relation.h"
 #include "base_particles.hpp"
-#include "sph_system.h"
 
 namespace SPH
 {
