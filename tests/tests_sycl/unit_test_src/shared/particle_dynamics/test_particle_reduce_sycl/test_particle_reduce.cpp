@@ -1,9 +1,9 @@
-#include "all_simbody.h"
+#include "device_copyable_variable.h"
 #include "loop_range.h"
 #include "particle_iterators.h"
 #include "particle_iterators_sycl.h"
 #include "reduce_functors.h"
-#include "device_copyable_variable.h"
+#include "simtk_wrapper.h"
 #include "sphinxsys_variable_sycl.hpp"
 
 #include <gtest/gtest.h>
