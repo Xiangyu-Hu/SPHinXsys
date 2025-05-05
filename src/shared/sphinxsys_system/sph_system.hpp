@@ -50,5 +50,11 @@ DataType *SPHSystem::getSystemVariableDataByName(const std::string &name)
     return variable->Data();
 }
 //=================================================================================================//
+template <typename BodyType, typename... Args>
+BodyType &SPHSystem::addBody(Args &&...args)
+{
+    return *sph_body_ptrs_.createPtr<BodyType>(*this, std::forward<Args>(args)...);
+}
+//=================================================================================================//
 } // namespace SPH
 #endif // SPH_SYSTEM_HPP

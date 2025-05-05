@@ -85,7 +85,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    FluidBody water_body(sph_system, makeShared<WaterBlock>("WaterBody"));
+    auto &water_body = sph_system.addBody<FluidBody>(makeShared<WaterBlock>("WaterBody"));
     water_body.defineAdaptation<ParticleRefinementWithinShape>(1.3, 1.0, 1);
     water_body.defineComponentLevelSetShape("OuterBoundary")->writeLevelSet(sph_system);
     water_body.defineClosure<WeaklyCompressibleFluid, Viscosity>(ConstructArgs(rho0_f, c_f), mu_f);
@@ -96,7 +96,7 @@ int main(int ac, char *av[])
         ? water_body.generateParticlesWithReserve<BaseParticles, Reload>(inlet_particle_buffer, water_body.getName())
         : water_body.generateParticles<BaseParticles, Lattice, Adaptive>(refinement_region);
 
-    SolidBody cylinder(sph_system, makeShared<GeometricShapeBall>(circle_center, radius, "Cylinder"));
+    auto &cylinder = sph_system.addBody<SolidBody>(makeShared<GeometricShapeBall>(circle_center, radius, "Cylinder"));
     cylinder.defineAdaptationRatios(1.15, 4.0);
     cylinder.defineBodyLevelSetShape();
     cylinder.defineMaterial<Solid>();
@@ -211,93 +211,93 @@ int main(int ac, char *av[])
     StartupAcceleration time_dependent_acceleration(Vec2d(U_f, 0.0), 2.0);
     StateDynamics<MainExecutionPolicy, GravityForceCK<StartupAcceleration>> constant_gravity(water_body, time_dependent_acceleration);
     StateDynamics<execution::ParallelPolicy, NormalFromBodyShapeCK> cylinder_normal_direction(cylinder); // run on CPU
-
-    InteractionDynamicsCK<
-        MainExecutionPolicy,
-        fluid_dynamics::FreeSurfaceIndicationCK<
-            Inner<WithUpdate, Internal, BodyPartitionSpatial, SmoothingLength<Continuous>>,
-            Contact<BodyPartitionSpatial, SmoothingLength<Continuous>>,
-            Contact<BodyPartitionSpatial, SmoothingLength<Continuous, SingleValued>>>>
-        water_high_resolution_boundary_indicator(
-            water_high_resolution_inner, water_decrease_resolution_contact, water_cylinder_contact);
-    InteractionDynamicsCK<
-        MainExecutionPolicy,
-        fluid_dynamics::FreeSurfaceIndicationCK<
-            Inner<WithUpdate, Internal, BodyPartitionSpatial, SmoothingLength<Continuous>>,
-            Contact<BodyPartitionSpatial, SmoothingLength<Continuous>>>>
-        water_low_resolution_boundary_indicator(
-            water_low_resolution_inner, water_increase_resolution_contact);
-
-    StateDynamics<MainExecutionPolicy, fluid_dynamics::AdvectionStepSetup> water_advection_step_setup(water_body);
-    StateDynamics<MainExecutionPolicy, fluid_dynamics::AdvectionStepClose> water_advection_step_close(water_body);
-
-    InteractionDynamicsCK<
-        MainExecutionPolicy,
-        LinearCorrectionMatrix<
-            Inner<WithUpdate, BodyPartitionSpatial, SmoothingLength<Continuous>>,
-            Contact<BodyPartitionSpatial, SmoothingLength<Continuous>>,
-            Contact<BodyPartitionSpatial, SmoothingLength<Continuous, SingleValued>>>>
-        water_high_resolution_linear_correction_matrix(
-            water_high_resolution_inner, water_decrease_resolution_contact, water_cylinder_contact);
-    InteractionDynamicsCK<
-        MainExecutionPolicy,
-        LinearCorrectionMatrix<
-            Inner<WithUpdate, BodyPartitionSpatial, SmoothingLength<Continuous>>,
-            Contact<BodyPartitionSpatial, SmoothingLength<Continuous>>>>
-        water_low_resolution_linear_correction_matrix(
-            water_low_resolution_inner, water_increase_resolution_contact);
-
-    InteractionDynamicsCK<
-        MainExecutionPolicy,
-        fluid_dynamics::DensityRegularization<
-            Inner<WithUpdate, Internal, AllParticles, BodyPartitionSpatial, SmoothingLength<Continuous>>,
-            Contact<BodyPartitionSpatial, SmoothingLength<Continuous>>,
-            Contact<BodyPartitionSpatial, SmoothingLength<Continuous, SingleValued>>>>
-        water_high_resolution_density_regularization(
-            water_high_resolution_inner, water_decrease_resolution_contact, water_cylinder_contact);
-
-    InteractionDynamicsCK<
-        MainExecutionPolicy,
-        fluid_dynamics::DensityRegularization<
-            Inner<WithUpdate, Internal, AllParticles, BodyPartitionSpatial, SmoothingLength<Continuous>>,
-            Contact<BodyPartitionSpatial, SmoothingLength<Continuous>>>>
-        water_low_resolution_density_regularization(
-            water_low_resolution_inner, water_increase_resolution_contact);
-
-    InteractionDynamicsCK<
-        MainExecutionPolicy,
-        fluid_dynamics::AcousticStep1stHalf<
-            Inner<OneLevel, AcousticRiemannSolverCK, LinearCorrectionCK, BodyPartitionSpatial, SmoothingLength<Continuous>>,
-            Contact<AcousticRiemannSolverCK, LinearCorrectionCK, BodyPartitionSpatial, SmoothingLength<Continuous>>,
-            Contact<Wall, AcousticRiemannSolverCK, LinearCorrectionCK, BodyPartitionSpatial, SmoothingLength<Continuous, SingleValued>>>>
-        water_high_resolution_acoustic_step_1st_half(
-            water_high_resolution_inner, water_decrease_resolution_contact, water_cylinder_contact);
-
-    InteractionDynamicsCK<
-        MainExecutionPolicy,
-        fluid_dynamics::AcousticStep2ndHalf<
-            Inner<OneLevel, AcousticRiemannSolverCK, LinearCorrectionCK, BodyPartitionSpatial, SmoothingLength<Continuous>>,
-            Contact<AcousticRiemannSolverCK, LinearCorrectionCK, BodyPartitionSpatial, SmoothingLength<Continuous>>,
-            Contact<Wall, AcousticRiemannSolverCK, LinearCorrectionCK, BodyPartitionSpatial, SmoothingLength<Continuous, SingleValued>>>>
-        water_high_resolution_acoustic_step_2nd_half(
-            water_high_resolution_inner, water_decrease_resolution_contact, water_cylinder_contact);
-
-    InteractionDynamicsCK<
-        MainExecutionPolicy,
-        fluid_dynamics::AcousticStep1stHalf<
-            Inner<OneLevel, AcousticRiemannSolverCK, LinearCorrectionCK, BodyPartitionSpatial, SmoothingLength<Continuous>>,
-            Contact<AcousticRiemannSolverCK, LinearCorrectionCK, BodyPartitionSpatial, SmoothingLength<Continuous>>>>
-        water_low_resolution_acoustic_step_1st_half(
-            water_low_resolution_inner, water_increase_resolution_contact);
-
-    InteractionDynamicsCK<
-        MainExecutionPolicy,
-        fluid_dynamics::AcousticStep2ndHalf<
-            Inner<OneLevel, AcousticRiemannSolverCK, LinearCorrectionCK, BodyPartitionSpatial, SmoothingLength<Continuous>>,
-            Contact<AcousticRiemannSolverCK, LinearCorrectionCK, BodyPartitionSpatial, SmoothingLength<Continuous>>>>
-        water_low_resolution_acoustic_step_2nd_half(
-            water_low_resolution_inner, water_increase_resolution_contact);
-
+                                                                                                         /*
+                                                                                                             InteractionDynamicsCK<
+                                                                                                                 MainExecutionPolicy,
+                                                                                                                 fluid_dynamics::FreeSurfaceIndicationCK<
+                                                                                                                     Inner<WithUpdate, Internal, BodyPartitionSpatial, SmoothingLength<Continuous>>,
+                                                                                                                     Contact<BodyPartitionSpatial, SmoothingLength<Continuous>>,
+                                                                                                                     Contact<BodyPartitionSpatial, SmoothingLength<Continuous, SingleValued>>>>
+                                                                                                                 water_high_resolution_boundary_indicator(
+                                                                                                                     water_high_resolution_inner, water_decrease_resolution_contact, water_cylinder_contact);
+                                                                                                             InteractionDynamicsCK<
+                                                                                                                 MainExecutionPolicy,
+                                                                                                                 fluid_dynamics::FreeSurfaceIndicationCK<
+                                                                                                                     Inner<WithUpdate, Internal, BodyPartitionSpatial, SmoothingLength<Continuous>>,
+                                                                                                                     Contact<BodyPartitionSpatial, SmoothingLength<Continuous>>>>
+                                                                                                                 water_low_resolution_boundary_indicator(
+                                                                                                                     water_low_resolution_inner, water_increase_resolution_contact);
+                                                                                                     
+                                                                                                             StateDynamics<MainExecutionPolicy, fluid_dynamics::AdvectionStepSetup> water_advection_step_setup(water_body);
+                                                                                                             StateDynamics<MainExecutionPolicy, fluid_dynamics::AdvectionStepClose> water_advection_step_close(water_body);
+                                                                                                     
+                                                                                                             InteractionDynamicsCK<
+                                                                                                                 MainExecutionPolicy,
+                                                                                                                 LinearCorrectionMatrix<
+                                                                                                                     Inner<WithUpdate, BodyPartitionSpatial, SmoothingLength<Continuous>>,
+                                                                                                                     Contact<BodyPartitionSpatial, SmoothingLength<Continuous>>,
+                                                                                                                     Contact<BodyPartitionSpatial, SmoothingLength<Continuous, SingleValued>>>>
+                                                                                                                 water_high_resolution_linear_correction_matrix(
+                                                                                                                     water_high_resolution_inner, water_decrease_resolution_contact, water_cylinder_contact);
+                                                                                                             InteractionDynamicsCK<
+                                                                                                                 MainExecutionPolicy,
+                                                                                                                 LinearCorrectionMatrix<
+                                                                                                                     Inner<WithUpdate, BodyPartitionSpatial, SmoothingLength<Continuous>>,
+                                                                                                                     Contact<BodyPartitionSpatial, SmoothingLength<Continuous>>>>
+                                                                                                                 water_low_resolution_linear_correction_matrix(
+                                                                                                                     water_low_resolution_inner, water_increase_resolution_contact);
+                                                                                                     
+                                                                                                             InteractionDynamicsCK<
+                                                                                                                 MainExecutionPolicy,
+                                                                                                                 fluid_dynamics::DensityRegularization<
+                                                                                                                     Inner<WithUpdate, Internal, AllParticles, BodyPartitionSpatial, SmoothingLength<Continuous>>,
+                                                                                                                     Contact<BodyPartitionSpatial, SmoothingLength<Continuous>>,
+                                                                                                                     Contact<BodyPartitionSpatial, SmoothingLength<Continuous, SingleValued>>>>
+                                                                                                                 water_high_resolution_density_regularization(
+                                                                                                                     water_high_resolution_inner, water_decrease_resolution_contact, water_cylinder_contact);
+                                                                                                     
+                                                                                                             InteractionDynamicsCK<
+                                                                                                                 MainExecutionPolicy,
+                                                                                                                 fluid_dynamics::DensityRegularization<
+                                                                                                                     Inner<WithUpdate, Internal, AllParticles, BodyPartitionSpatial, SmoothingLength<Continuous>>,
+                                                                                                                     Contact<BodyPartitionSpatial, SmoothingLength<Continuous>>>>
+                                                                                                                 water_low_resolution_density_regularization(
+                                                                                                                     water_low_resolution_inner, water_increase_resolution_contact);
+                                                                                                     
+                                                                                                             InteractionDynamicsCK<
+                                                                                                                 MainExecutionPolicy,
+                                                                                                                 fluid_dynamics::AcousticStep1stHalf<
+                                                                                                                     Inner<OneLevel, AcousticRiemannSolverCK, LinearCorrectionCK, BodyPartitionSpatial, SmoothingLength<Continuous>>,
+                                                                                                                     Contact<AcousticRiemannSolverCK, LinearCorrectionCK, BodyPartitionSpatial, SmoothingLength<Continuous>>,
+                                                                                                                     Contact<Wall, AcousticRiemannSolverCK, LinearCorrectionCK, BodyPartitionSpatial, SmoothingLength<Continuous, SingleValued>>>>
+                                                                                                                 water_high_resolution_acoustic_step_1st_half(
+                                                                                                                     water_high_resolution_inner, water_decrease_resolution_contact, water_cylinder_contact);
+                                                                                                     
+                                                                                                             InteractionDynamicsCK<
+                                                                                                                 MainExecutionPolicy,
+                                                                                                                 fluid_dynamics::AcousticStep2ndHalf<
+                                                                                                                     Inner<OneLevel, AcousticRiemannSolverCK, LinearCorrectionCK, BodyPartitionSpatial, SmoothingLength<Continuous>>,
+                                                                                                                     Contact<AcousticRiemannSolverCK, LinearCorrectionCK, BodyPartitionSpatial, SmoothingLength<Continuous>>,
+                                                                                                                     Contact<Wall, AcousticRiemannSolverCK, LinearCorrectionCK, BodyPartitionSpatial, SmoothingLength<Continuous, SingleValued>>>>
+                                                                                                                 water_high_resolution_acoustic_step_2nd_half(
+                                                                                                                     water_high_resolution_inner, water_decrease_resolution_contact, water_cylinder_contact);
+                                                                                                     
+                                                                                                             InteractionDynamicsCK<
+                                                                                                                 MainExecutionPolicy,
+                                                                                                                 fluid_dynamics::AcousticStep1stHalf<
+                                                                                                                     Inner<OneLevel, AcousticRiemannSolverCK, LinearCorrectionCK, BodyPartitionSpatial, SmoothingLength<Continuous>>,
+                                                                                                                     Contact<AcousticRiemannSolverCK, LinearCorrectionCK, BodyPartitionSpatial, SmoothingLength<Continuous>>>>
+                                                                                                                 water_low_resolution_acoustic_step_1st_half(
+                                                                                                                     water_low_resolution_inner, water_increase_resolution_contact);
+                                                                                                     
+                                                                                                             InteractionDynamicsCK<
+                                                                                                                 MainExecutionPolicy,
+                                                                                                                 fluid_dynamics::AcousticStep2ndHalf<
+                                                                                                                     Inner<OneLevel, AcousticRiemannSolverCK, LinearCorrectionCK, BodyPartitionSpatial, SmoothingLength<Continuous>>,
+                                                                                                                     Contact<AcousticRiemannSolverCK, LinearCorrectionCK, BodyPartitionSpatial, SmoothingLength<Continuous>>>>
+                                                                                                                 water_low_resolution_acoustic_step_2nd_half(
+                                                                                                                     water_low_resolution_inner, water_increase_resolution_contact);
+                                                                                                         */
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------

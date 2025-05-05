@@ -115,12 +115,12 @@ class Relation<Inner<>> : public Relation<Inner<RealBody, SmoothingLength<Single
     virtual ~Relation() {};
 };
 
-template <typename SourceIdentifier, typename NeighborMethod>
-class Relation<Contact<SourceIdentifier, NeighborMethod>> : public Relation<NeighborMethod>
+template <typename SourceIdentifier, class TargetIdentifier, typename NeighborMethod>
+class Relation<Contact<SourceIdentifier, TargetIdentifier, NeighborMethod>> : public Relation<NeighborMethod>
 {
   public:
     typedef SourceIdentifier SourceType;
-    template <class TargetIdentifier>
+    typedef TargetIdentifier TargetType;
     explicit Relation(SourceIdentifier &source_identifier, StdVec<TargetIdentifier *> target_identifiers,
                       ConfigType config_type = ConfigType::Eulerian);
     virtual ~Relation() {};
@@ -128,29 +128,26 @@ class Relation<Contact<SourceIdentifier, NeighborMethod>> : public Relation<Neig
     StdVec<SPHBody *> getContactBodies() { return contact_bodies_; };
     StdVec<BaseParticles *> getContactParticles() { return contact_particles_; };
     StdVec<SPHAdaptation *> getContactAdaptations() { return contact_adaptations_; };
+    StdVec<TargetIdentifier *> getContactIdentifiers() { return contact_identifiers_; };
+    TargetIdentifier &getContactIdentifier(UnsignedInt target_index) { return *contact_identifiers_[target_index]; };
 
   protected:
     SourceIdentifier &source_identifier_;
     StdVec<SPHBody *> contact_bodies_;
     StdVec<BaseParticles *> contact_particles_;
     StdVec<SPHAdaptation *> contact_adaptations_;
+    StdVec<TargetIdentifier *> contact_identifiers_;
 };
 
-template <class SourceIdentifier, class TargetIdentifier, typename NeighborMethod>
-class Relation<Contact<SourceIdentifier, TargetIdentifier, NeighborMethod>>
-    : public Relation<Contact<SourceIdentifier, NeighborMethod>>
+template <class SourceIdentifier, class TargetIdentifier>
+class Relation<Contact<SourceIdentifier, TargetIdentifier>>
+    : public Relation<Contact<SourceIdentifier, TargetIdentifier, SmoothingLength<SingleValued>>>
 {
   public:
-    typedef TargetIdentifier TargetType;
-
-    template <typename... Args>
-    Relation(SourceIdentifier &source_identifier, StdVec<TargetIdentifier *> contact_identifiers, Args &&...args);
+    Relation(SourceIdentifier &source_identifier, StdVec<TargetIdentifier *> contact_identifiers)
+        : Relation<Contact<SourceIdentifier, TargetIdentifier, SmoothingLength<SingleValued>>>(
+              source_identifier, contact_identifiers) {}
     virtual ~Relation() {};
-    StdVec<TargetIdentifier *> getContactIdentifiers() { return contact_identifiers_; };
-    TargetIdentifier &getContactIdentifier(UnsignedInt target_index) { return *contact_identifiers_[target_index]; };
-
-  protected:
-    StdVec<TargetIdentifier *> contact_identifiers_;
 };
 
 template <>

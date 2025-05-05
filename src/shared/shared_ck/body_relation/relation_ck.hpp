@@ -86,12 +86,11 @@ Relation<Inner<DynamicsIdentifier, NeighborMethod>>::
           identifier, StdVec<DynamicsIdentifier *>{&identifier}, std::forward<Args>(args)...),
       identifier_(identifier) {}
 //=================================================================================================//
-template <typename SourceIdentifier, typename NeighborMethod>
-template <class TargetIdentifier>
-Relation<Contact<SourceIdentifier, NeighborMethod>>::Relation(
+template <class SourceIdentifier, class TargetIdentifier, typename NeighborMethod>
+Relation<Contact<SourceIdentifier, TargetIdentifier, NeighborMethod>>::Relation(
     SourceIdentifier &source_identifier, StdVec<TargetIdentifier *> contact_identifiers, ConfigType config_type)
     : Relation<NeighborMethod>(source_identifier, contact_identifiers, config_type),
-    source_identifier_(source_identifier)
+    source_identifier_(source_identifier), contact_identifiers_(contact_identifiers) 
 {
     for (size_t k = 0; k != contact_identifiers.size(); ++k)
     {
@@ -101,14 +100,6 @@ Relation<Contact<SourceIdentifier, NeighborMethod>>::Relation(
         contact_adaptations_.push_back(&contact_body->getSPHAdaptation());
     }
 }
-//=================================================================================================//
-template <class SourceIdentifier, class TargetIdentifier, typename NeighborMethod>
-template <typename... Args>
-Relation<Contact<SourceIdentifier, TargetIdentifier, NeighborMethod>>::
-    Relation(SourceIdentifier &source_identifier,
-             StdVec<TargetIdentifier *> contact_identifiers, Args &&...args)
-    : Relation<Contact<SourceIdentifier, NeighborMethod>>(source_identifier, contact_identifiers, std::forward<Args>(args)...),
-      contact_identifiers_(contact_identifiers) {}
 //=================================================================================================//
 } // namespace SPH
 #endif // RELATION_CK_HPP

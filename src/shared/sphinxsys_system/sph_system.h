@@ -63,6 +63,7 @@ class SPHSystem
     UniquePtrKeeper<IOEnvironment> io_ptr_keeper_;
     DataContainerUniquePtrAssemble<SingularVariable> all_system_variable_ptrs_;
     UniquePtrsKeeper<Entity> unique_system_variable_ptrs_;
+    UniquePtrsKeeper<SPHBody> sph_body_ptrs_;
 
   public:
     BoundingBox system_domain_bounds_;       /**< Lower and Upper domain bounds. */
@@ -109,6 +110,9 @@ class SPHSystem
 
     template <typename DataType>
     DataType *getSystemVariableDataByName(const std::string &name);
+
+    template <typename BodyType, typename... Args>
+    BodyType &addBody(Args &&...args);
 
   protected:
     friend class IOEnvironment;
