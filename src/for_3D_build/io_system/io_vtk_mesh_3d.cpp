@@ -1,6 +1,7 @@
 #include "io_vtk_mesh_3d.hpp"
 #include "io_vtk.hpp"
 
+#include "io_environment.h"
 #include "triangle_mesh_shape.h"
 
 namespace SPH

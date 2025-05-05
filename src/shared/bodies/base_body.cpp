@@ -2,6 +2,7 @@
 
 #include "base_body_relation.h"
 #include "base_particles.hpp"
+#include "sph_system.h"
 
 namespace SPH
 {
@@ -13,6 +14,16 @@ SPHBody::SPHBody(SPHSystem &sph_system, Shape &shape, const std::string &name)
       base_material_(base_material_ptr_keeper_.createPtr<BaseMaterial>())
 {
     sph_system_.sph_bodies_.push_back(this);
+}
+//=================================================================================================//
+Real SPHBody::SPHSystemReferenceResolution()
+{
+    return sph_system_.ReferenceResolution();
+}
+//=================================================================================================//
+bool SPHBody::SPHSystemReloadParticles()
+{
+    return sph_system_.ReloadParticles();
 }
 //=================================================================================================//
 SPHBody::SPHBody(SPHSystem &sph_system, Shape &shape)
@@ -98,6 +109,11 @@ BaseCellLinkedList &RealBody::getCellLinkedList()
 void RealBody::updateCellLinkedList()
 {
     getCellLinkedList().UpdateCellLists(*base_particles_);
+}
+//=================================================================================================//
+void RealBody::addRealBodyToSPHSystem()
+{
+    sph_system_.sph_bodies_.push_back(this);
 }
 //=================================================================================================//
 } // namespace SPH

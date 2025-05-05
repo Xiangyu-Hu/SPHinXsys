@@ -32,6 +32,7 @@
 
 #include "base_fluid_dynamics.h"
 #include "particle_reserve.h"
+#include "sph_system.h"
 
 #include <mutex>
 

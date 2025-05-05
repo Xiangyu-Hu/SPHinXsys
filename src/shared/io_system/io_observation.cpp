@@ -14,4 +14,11 @@ BaseQuantityRecording::BaseQuantityRecording(SPHSystem &sph_system,
       filefullpath_output_(io_environment_.output_folder_ + "/" +
                            dynamics_identifier_name_ + "_" + "NeedAQuantityName" + ".dat") {}
 //=================================================================================================//
+void BaseQuantityRecording::setFullPath(const std::string &quantity_name)
+{
+    quantity_name_ = quantity_name;
+    filefullpath_output_ = io_environment_.output_folder_ + "/" +
+                           dynamics_identifier_name_ + "_" + quantity_name + ".dat";
+}
+//=================================================================================================//
 } // namespace SPH

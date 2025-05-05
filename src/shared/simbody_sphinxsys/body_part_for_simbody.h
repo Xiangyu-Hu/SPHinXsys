@@ -31,6 +31,7 @@
 
 #include "base_body_part.h"
 
+#include "simtk_wrapper.h"
 namespace SPH
 {
 /**
