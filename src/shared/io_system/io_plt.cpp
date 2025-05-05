@@ -1,10 +1,7 @@
 
-/**
- * @file 	io_plt.cpp
- * @author	Luhui Han, Chi Zhang and Xiangyu Hu
- */
-
 #include "io_plt.h"
+
+#include "io_environment.h"
 
 namespace SPH
 {

@@ -45,12 +45,14 @@ class BaseParticles;
  */
 class SolidBody : public RealBody
 {
+    void addSolidBodyToSPHSystem();
+
   public:
     template <typename... Args>
     SolidBody(Args &&...args)
         : RealBody(std::forward<Args>(args)...)
     {
-        sph_system_.solid_bodies_.push_back(this);
+        addSolidBodyToSPHSystem();
         defineAdaptation<SPHAdaptation>(1.15);
     };
     virtual ~SolidBody() {};

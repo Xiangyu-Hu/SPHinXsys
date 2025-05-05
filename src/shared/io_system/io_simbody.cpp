@@ -1,7 +1,13 @@
 #include "io_simbody.h"
+#include "io_environment.h"
+#include "sph_system.hpp"
 
 namespace SPH
 {
+//=============================================================================================//
+SimBodyStatesIO::SimBodyStatesIO(SPHSystem &sph_system)
+    : io_environment_(sph_system.getIOEnvironment()),
+      physical_time_(*sph_system.getSystemVariableDataByName<Real>("PhysicalTime")) {}
 //=============================================================================================//
 WriteSimBodyPinData::
     WriteSimBodyPinData(SPHSystem &sph_system, SimTK::RungeKuttaMersonIntegrator &integ,

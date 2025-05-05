@@ -38,6 +38,7 @@ namespace po = boost::program_options;
 #endif
 
 #include "base_data_package.h"
+#include "base_body.h"
 #include "execution_policy.h"
 #include "io_environment.h"
 #include "sphinxsys_containers.h"
