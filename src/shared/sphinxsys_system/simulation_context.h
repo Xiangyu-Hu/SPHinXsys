@@ -48,7 +48,7 @@ using namespace execution;
 class SimulationContext
 {
     UniquePtrKeeper<IOEnvironment> io_ptr_keeper_;
-    DataContainerUniquePtrAssemble<SingularVariable> all_context_variable_ptrs_;
+    DataContainerUniquePtrAssemble<SingularVariable> context_variable_ptrs_;
     UniquePtrsKeeper<Entity> unique_context_variable_ptrs_;
 
   public:
@@ -80,19 +80,19 @@ class SimulationContext
         const std::string &name, DataType initial_value = ZeroData<DataType>::value)
     {
         SingularVariable<DataType> *variable =
-            findVariableByName<DataType>(all_system_variables_, name);
+            findVariableByName<DataType>(all_context_variables_, name);
 
         return variable != nullptr
                    ? variable
                    : addVariableToAssemble<DataType>(
-                         all_system_variables_, all_system_variable_ptrs_, name, initial_value);
+                         all_context_variables_, context_variable_ptrs_, name, initial_value);
     };
 
     template <typename DataType>
     SingularVariable<DataType> *getContextVariableByName(const std::string &name)
     {
         SingularVariable<DataType> *variable =
-            findVariableByName<DataType>(all_system_variables_, name);
+            findVariableByName<DataType>(all_context_variables_, name);
 
         if (variable == nullptr)
         {
@@ -107,7 +107,7 @@ class SimulationContext
     DataType *getContextVariableDataByName(const std::string &name)
     {
         SingularVariable<DataType> *variable =
-            findVariableByName<DataType>(all_system_variables_, name);
+            findVariableByName<DataType>(all_context_variables_, name);
 
         if (variable == nullptr)
         {
@@ -119,6 +119,8 @@ class SimulationContext
     };
 
   protected:
+    friend class IOEnvironment;
+    IOEnvironment *io_environment_;          /**< io environment */
     BoundingBox system_domain_bounds_;       /**< Lower and Upper domain bounds. */
     Real resolution_ref_;                    /**< reference resolution of the SPH system */
     tbb::global_control tbb_global_control_; /**< global controlling on the total number parallel threads */
@@ -127,6 +129,7 @@ class SimulationContext
     size_t restart_step_;                    /**< restart step */
     bool generate_regression_data_;          /**< run and generate or enhance the regression test data set. */
     bool state_recording_;                   /**< Record state in output folder. */
+    SingularVariables all_context_variables_;
 };
 } // namespace SPH
 #endif // SIMULATION_CONTEXT_H

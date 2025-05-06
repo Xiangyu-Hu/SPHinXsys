@@ -1,13 +1,13 @@
 
 #include "io_environment.h"
 
-#include "sph_system.h"
+#include "simulation_context.h"
 
 namespace SPH
 {
 //=============================================================================================//
-IOEnvironment::IOEnvironment(SPHSystem &sph_system, bool delete_output)
-    : sph_system_(sph_system),
+IOEnvironment::IOEnvironment(SimulationContext &simulation_context, bool delete_output)
+    : simulation_context_(simulation_context),
       input_folder_("./input"), output_folder_("./output"),
       restart_folder_("./restart"), reload_folder_("./reload")
 {
@@ -31,7 +31,7 @@ IOEnvironment::IOEnvironment(SPHSystem &sph_system, bool delete_output)
         fs::create_directory(reload_folder_);
     }
 
-    if (sph_system.RestartStep() == 0)
+    if (simulation_context.RestartStep() == 0)
     {
         fs::remove_all(restart_folder_);
         fs::create_directory(restart_folder_);
@@ -41,8 +41,6 @@ IOEnvironment::IOEnvironment(SPHSystem &sph_system, bool delete_output)
             fs::create_directory(output_folder_);
         }
     }
-
-    sph_system.io_environment_ = this;
 }
 //=============================================================================================//
 ParameterizationIO *IOEnvironment::defineParameterizationIO()

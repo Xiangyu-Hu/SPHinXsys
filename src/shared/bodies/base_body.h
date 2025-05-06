@@ -68,11 +68,8 @@ class SPHBody
     UniquePtrKeeper<BaseParticles> base_particles_ptr_keeper_;
     UniquePtrKeeper<BaseMaterial> base_material_ptr_keeper_;
 
-    Real SPHSystemReferenceResolution();
-    bool SPHSystemReloadParticles();
-
   protected:
-    SPHSystem &sph_system_;
+    SimulationContext &simulation_context_;
     std::string body_name_;
     bool newly_updated_;                                  /**< whether this body is in a newly updated state */
     BaseParticles *base_particles_;                       /**< Base particles for dynamic cast DataDelegate  */
@@ -95,7 +92,7 @@ class SPHBody
     virtual ~SPHBody() {};
 
     std::string getName() { return body_name_; };
-    SPHSystem &getSPHSystem();
+    SimulationContext &getSimulationContext();
     SPHBody &getSPHBody() { return *this; };
     Shape &getInitialShape() { return *initial_shape_; };
     void assignBaseParticles(BaseParticles *base_particles) { base_particles_ = base_particles; };
@@ -132,11 +129,11 @@ class SPHBody
     virtual void defineAdaptationRatios(Real h_spacing_ratio, Real new_system_refinement_ratio = 1.0);
 
     template <class AdaptationType, typename... Args>
-    void defineAdaptation(const SimulationContext &context, Args &&...args)
+    void defineAdaptation(Args &&...args)
     {
         sph_adaptation_ =
             sph_adaptation_ptr_keeper_.createPtr<AdaptationType>(
-                context.ReferenceResolution(), std::forward<Args>(args)...);
+                simulation_context_.ReferenceResolution(), std::forward<Args>(args)...);
     };
 
     template <typename... Args>
@@ -185,7 +182,7 @@ class SPHBody
         particle_generator.generateParticlesWithGeometricVariables();
         particles->initializeBasicParticleVariables();
         sph_adaptation_->initializeAdaptationVariables(*particles);
-        base_material_->setLocalParameters(SPHSystemReloadParticles(), particles);
+        base_material_->setLocalParameters(simulation_context_.ReloadParticles(), particles);
     };
 
     // Buffer or ghost particles can be generated together with real particles
@@ -206,15 +203,15 @@ class RealBody : public SPHBody
   private:
     UniquePtr<BaseCellLinkedList> cell_linked_list_ptr_;
     bool cell_linked_list_created_;
-    void addRealBodyToSPHSystem();
+    void addRealBodyToSPHSystem(SPHSystem &sph_system);
 
   public:
     template <typename... Args>
-    RealBody(Args &&...args)
+    RealBody(SPHSystem &sph_system, Args &&...args)
         : SPHBody(std::forward<Args>(args)...),
           cell_linked_list_created_(false)
     {
-        addRealBodyToSPHSystem();
+        addRealBodyToSPHSystem(sph_system);
     };
     virtual ~RealBody() {};
     BaseCellLinkedList &getCellLinkedList();

@@ -40,27 +40,22 @@ namespace fs = std::filesystem;
 
 namespace SPH
 {
-class SPHSystem;
+class SimulationContext;
 
-/**
- * @class IOEnvironment
- * @brief The base class which defines folders for output,
- * restart and particle reload folders.
- */
 class IOEnvironment
 {
   private:
     UniquePtrKeeper<ParameterizationIO> parameterization_io_ptr_keeper_;
 
   public:
-    SPHSystem &sph_system_;
+    SimulationContext &simulation_context_;
     std::string input_folder_;
     std::string output_folder_;
     std::string restart_folder_;
     std::string reload_folder_;
 
-    explicit IOEnvironment(SPHSystem &sph_system, bool delete_output = true);
-    virtual ~IOEnvironment(){};
+    explicit IOEnvironment(SimulationContext &sinulation_context, bool delete_output = true);
+    virtual ~IOEnvironment() {};
     ParameterizationIO *defineParameterizationIO();
 };
 } // namespace SPH

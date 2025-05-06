@@ -48,7 +48,7 @@ class BodyPart
     BodyPart(SPHBody &sph_body, const std::string &body_part_name);
     virtual ~BodyPart() {};
     SPHBody &getSPHBody() { return sph_body_; };
-    SPHSystem &getSPHSystem() { return sph_body_.getSPHSystem(); };
+    SimulationContext &getSimulationContext() { return sph_body_.getSimulationContext(); };
     std::string getName() { return body_part_name_; };
     int getPartID() { return part_id_; };
     DiscreteVariable<UnsignedInt> *dvIndexList() { return dv_index_list_; };

@@ -5,7 +5,8 @@ namespace SPH
 //=================================================================================================//
 SimulationContext::SimulationContext(
     BoundingBox system_domain_bounds, Real resolution_ref, size_t number_of_threads)
-    : system_domain_bounds_(system_domain_bounds), resolution_ref_(resolution_ref),
+    : io_environment_(nullptr), system_domain_bounds_(system_domain_bounds),
+      resolution_ref_(resolution_ref),
       tbb_global_control_(tbb::global_control::max_allowed_parallelism, number_of_threads),
       run_particle_relaxation_(false), reload_particles_(false),
       restart_step_(0), generate_regression_data_(false), state_recording_(true) {}

@@ -8,14 +8,15 @@ namespace SPH
 {
 //=================================================================================================//
 SPHBody::SPHBody(SPHSystem &sph_system, Shape &shape, const std::string &name)
-    : sph_system_(sph_system), body_name_(name), newly_updated_(true),
-      base_particles_(nullptr), is_bound_set_(false), initial_shape_(&shape), total_body_parts_(0),
+    : simulation_context_(sph_system.getSimulationContext()), body_name_(name),
+      newly_updated_(true), base_particles_(nullptr), is_bound_set_(false),
+      initial_shape_(&shape), total_body_parts_(0),
       sph_adaptation_(
           sph_adaptation_ptr_keeper_.createPtr<SPHAdaptation>(
-              sph_system.getSimulationContext().ReferenceResolution())),
+              simulation_context_.ReferenceResolution())),
       base_material_(base_material_ptr_keeper_.createPtr<BaseMaterial>())
 {
-    sph_system_.addSPHBody(this);
+    sph_system.addSPHBody(this);
 }
 //=================================================================================================//
 SPHBody::SPHBody(SPHSystem &sph_system, Shape &shape)
@@ -39,9 +40,9 @@ int SPHBody::getNewBodyPartID()
     return total_body_parts_;
 };
 //=================================================================================================//
-SPHSystem &SPHBody::getSPHSystem()
+SimulationContext &SPHBody::getSimulationContext()
 {
-    return sph_system_;
+    return simulation_context_;
 }
 //=================================================================================================//
 BaseParticles &SPHBody::getBaseParticles()
@@ -98,9 +99,9 @@ void RealBody::updateCellLinkedList()
     getCellLinkedList().UpdateCellLists(*base_particles_);
 }
 //=================================================================================================//
-void RealBody::addRealBodyToSPHSystem()
+void RealBody::addRealBodyToSPHSystem(SPHSystem &sph_system)
 {
-    sph_system_.addRealBody(this);
+    sph_system.addRealBody(this);
 }
 //=================================================================================================//
 } // namespace SPH
