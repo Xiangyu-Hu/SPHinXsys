@@ -5,10 +5,6 @@
 namespace SPH
 {
 //=============================================================================================//
-SimBodyStatesIO::SimBodyStatesIO(SPHSystem &sph_system)
-    : io_environment_(sph_system.getIOEnvironment()),
-      physical_time_(*sph_system.getSystemVariableDataByName<Real>("PhysicalTime")) {}
-//=============================================================================================//
 WriteSimBodyPinData::
     WriteSimBodyPinData(SPHSystem &sph_system, SimTK::RungeKuttaMersonIntegrator &integ,
                         SimTK::MobilizedBody::Pin &pinbody)
@@ -33,7 +29,7 @@ WriteSimBodyPinData::
 void WriteSimBodyPinData::writeToFile(size_t iteration_step)
 {
     std::ofstream out_file(filefullpath_.c_str(), std::ios::app);
-    out_file << physical_time_ << "   ";
+    out_file << sv_physical_time_->getValue() << "   ";
     const SimTK::State &state = integ_.getState();
 
     out_file << "  " << mobody_.getAngle(state) << "  " << mobody_.getRate(state) << "  ";
@@ -78,7 +74,7 @@ WriteSimBodyCableData::
 void WriteSimBodyCableData::writeToFile(size_t iteration_step)
 {
     std::ofstream out_file(filefullpath_.c_str(), std::ios::app);
-    out_file << physical_time_ << "   ";
+    out_file << sv_physical_time_->getValue() << "   ";
 
     const SimTK::State &state = integ_.getState();
     const SimTK::CablePath &path1 = mobody_.getCablePath();
@@ -120,7 +116,7 @@ WriteSimBodyPlanarData::
 void WriteSimBodyPlanarData::writeToFile(size_t iteration_step)
 {
     std::ofstream out_file(filefullpath_.c_str(), std::ios::app);
-    out_file << physical_time_ << "   ";
+    out_file << sv_physical_time_->getValue() << "   ";
     const SimTK::State &state = integ_.getState();
 
     out_file << "  " << mobody_.getTranslation(state)[0] << "  ";
@@ -175,7 +171,7 @@ WriteSimBodyFreeRotationMatrix::
 void WriteSimBodyFreeRotationMatrix::writeToFile(size_t iteration_step)
 {
     std::ofstream out_file(filefullpath_.c_str(), std::ios::app);
-    out_file << physical_time_ << "   ";
+    out_file << sv_physical_time_->getValue() << "   ";
     const SimTK::State &state = integ_.getState();
 
     out_file << "  " << mobody_.getBodyRotation(state)[0][0] << "  ";
@@ -220,7 +216,7 @@ WriteSimBodyVelocity::
 void WriteSimBodyVelocity::writeToFile(size_t iteration_step)
 {
     std::ofstream out_file(filefullpath_.c_str(), std::ios::app);
-    out_file << physical_time_ << "   ";
+    out_file << sv_physical_time_->getValue() << "   ";
     const SimTK::State &state = integ_.getState();
 
     out_file << "  " << mobody_.getBodyOriginVelocity(state)[0] << "  ";

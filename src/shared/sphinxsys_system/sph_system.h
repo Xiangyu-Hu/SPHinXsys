@@ -37,9 +37,8 @@
 namespace po = boost::program_options;
 #endif
 
-#include "base_data_package.h"
 #include "base_body.h"
-#include "execution_policy.h"
+#include "base_data_package.h"
 #include "io_environment.h"
 #include "sphinxsys_containers.h"
 
@@ -50,10 +49,6 @@ namespace fs = std::filesystem;
 
 namespace SPH
 {
-using namespace execution;
-class SPHBody;
-class ComplexShape;
-
 /**
  * @class SPHSystem
  * @brief The SPH system managing objects in the system level.
@@ -65,13 +60,6 @@ class SPHSystem
     UniquePtrsKeeper<Entity> unique_system_variable_ptrs_;
 
   public:
-    BoundingBox system_domain_bounds_;       /**< Lower and Upper domain bounds. */
-    Real resolution_ref_;                    /**< reference resolution of the SPH system */
-    tbb::global_control tbb_global_control_; /**< global controlling on the total number parallel threads */
-    SPHBodyVector sph_bodies_;               /**< All sph bodies. */
-    SPHBodyVector observation_bodies_;       /**< The bodies without inner particle configuration. */
-    SolidBodyVector solid_bodies_;           /**< The bodies with inner particle configuration and acoustic time steps . */
-
     SPHSystem(BoundingBox system_domain_bounds, Real resolution_ref,
               size_t number_of_threads = std::thread::hardware_concurrency());
     virtual ~SPHSystem() {};
@@ -98,12 +86,19 @@ class SPHSystem
     /** get the min time step from all bodies. */
     Real getSmallestTimeStepAmongSolidBodies(Real CFL = 0.6);
     Real ReferenceResolution() { return resolution_ref_; };
+    void setReferenceResolution(Real resolution_ref) { resolution_ref_ = resolution_ref; };
     SPHBodyVector getRealBodies() { return real_bodies_; };
-    void addRealBody(SPHBody *sph_body) { real_bodies_.push_back(sph_body); };
+    void addSPHBody(SPHBody *sph_body) { sph_bodies_.push_back(sph_body); };
+    void addRealBody(RealBody *real_body) { real_bodies_.push_back(real_body); };
+    void addObservationBody(SPHBody *sph_body) { observation_bodies_.push_back(sph_body); };
+    void addSolidBody(SolidBody *solid_body) { solid_bodies_.push_back(solid_body); };
+    BoundingBox getSystemDomainBounds() { return system_domain_bounds_; };
+    void setSystemDomainBounds(const BoundingBox &domain_bounds) { system_domain_bounds_ = domain_bounds; };
 
     template <typename DataType>
     SingularVariable<DataType> *registerSystemVariable(
         const std::string &name, DataType initial_value = ZeroData<DataType>::value);
+
     template <typename DataType>
     SingularVariable<DataType> *getSystemVariableByName(const std::string &name);
 
@@ -112,13 +107,19 @@ class SPHSystem
 
   protected:
     friend class IOEnvironment;
-    IOEnvironment *io_environment_; /**< io environment */
-    SPHBodyVector real_bodies_;     /**< The bodies with inner particle configuration. */
-    bool run_particle_relaxation_;  /**< run particle relaxation for body fitted particle distribution */
-    bool reload_particles_;         /**< start the simulation with relaxed particles. */
-    size_t restart_step_;           /**< restart step */
-    bool generate_regression_data_; /**< run and generate or enhance the regression test data set. */
-    bool state_recording_;          /**< Record state in output folder. */
+    BoundingBox system_domain_bounds_;       /**< Lower and Upper domain bounds. */
+    Real resolution_ref_;                    /**< reference resolution of the SPH system */
+    tbb::global_control tbb_global_control_; /**< global controlling on the total number parallel threads */
+    SPHBodyVector sph_bodies_;               /**< All sph bodies. */
+    SPHBodyVector observation_bodies_;       /**< The bodies without inner particle configuration. */
+    SolidBodyVector solid_bodies_;           /**< The bodies with inner particle configuration and acoustic time steps . */
+    IOEnvironment *io_environment_;          /**< io environment */
+    SPHBodyVector real_bodies_;              /**< The bodies with inner particle configuration. */
+    bool run_particle_relaxation_;           /**< run particle relaxation for body fitted particle distribution */
+    bool reload_particles_;                  /**< start the simulation with relaxed particles. */
+    size_t restart_step_;                    /**< restart step */
+    bool generate_regression_data_;          /**< run and generate or enhance the regression test data set. */
+    bool state_recording_;                   /**< Record state in output folder. */
     SingularVariables all_system_variables_;
 };
 } // namespace SPH

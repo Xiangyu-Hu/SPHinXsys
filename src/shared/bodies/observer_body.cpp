@@ -7,7 +7,7 @@ namespace SPH
 //=================================================================================================//
 void ObserverBody::addObserverBodyToSPHSystem()
 {
-    sph_system_.observation_bodies_.push_back(this);
+    sph_system_.addObservationBody(this);
 }
 //=================================================================================================//
 } // namespace SPH

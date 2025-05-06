@@ -9,7 +9,7 @@ namespace SPH
 //=================================================================================================//
 void SolidBody::addSolidBodyToSPHSystem()
 {
-    sph_system_.solid_bodies_.push_back(this);
+    sph_system_.addSolidBody(this);
 }
 //=================================================================================================//
 } // namespace SPH
