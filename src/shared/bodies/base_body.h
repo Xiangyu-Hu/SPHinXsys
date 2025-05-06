@@ -44,9 +44,8 @@
 #include "base_particles.h"
 #include "cell_linked_list.h"
 #include "closure_wrapper.h"
+#include "simulation_context.h"
 #include "sphinxsys_containers.h"
-
-#include <string>
 
 namespace SPH
 {
@@ -130,15 +129,14 @@ class SPHBody
     //----------------------------------------------------------------------
     //		Object factory template functions
     //----------------------------------------------------------------------
-    virtual void
-    defineAdaptationRatios(Real h_spacing_ratio, Real new_system_refinement_ratio = 1.0);
+    virtual void defineAdaptationRatios(Real h_spacing_ratio, Real new_system_refinement_ratio = 1.0);
 
     template <class AdaptationType, typename... Args>
-    void defineAdaptation(Args &&...args)
+    void defineAdaptation(const SimulationContext &context, Args &&...args)
     {
         sph_adaptation_ =
             sph_adaptation_ptr_keeper_.createPtr<AdaptationType>(
-                SPHSystemReferenceResolution(), std::forward<Args>(args)...);
+                context.ReferenceResolution(), std::forward<Args>(args)...);
     };
 
     template <typename... Args>
