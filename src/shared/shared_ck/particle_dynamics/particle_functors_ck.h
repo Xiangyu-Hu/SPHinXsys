@@ -146,27 +146,21 @@ class ParticleScopeTypeCK<NotIndicatedParticles<0>> : public WithinScope
     DiscreteVariable<int> *dv_indicator_;
 };
 
-class ExcludeBufferParticles;
-template <>
-class ParticleScopeTypeCK<ExcludeBufferParticles> : public WithinScope
+class ExcludeBufferParticles : public WithinScope
 {
   public:
-    explicit ParticleScopeTypeCK(BaseParticles *particles)
+    explicit ExcludeBufferParticles(BaseParticles *particles)
         : WithinScope(),
-          dv_buffer_particles_indicator_(particles->registerStateVariableOnly<int>("BufferIndicator"))
-    {
-    }
+          dv_buffer_particles_indicator_(
+              particles->registerStateVariableOnly<int>("BufferIndicator")) {};
 
     class ComputingKernel
     {
       public:
-        template <class ExecutionPolicy, class ComputingKernelType>
-        ComputingKernel(const ExecutionPolicy &ex_policy,
-                        ParticleScopeTypeCK<ExcludeBufferParticles> &encloser,
-                        ComputingKernelType &computing_kernel)
-            : buffer_particles_indicator_(encloser.dv_buffer_particles_indicator_->DelegatedData(ex_policy))
-        {
-        }
+        template <class ExecutionPolicy>
+        ComputingKernel(const ExecutionPolicy &ex_policy, ExcludeBufferParticles &encloser)
+            : buffer_particles_indicator_(
+                  encloser.dv_buffer_particles_indicator_->DelegatedData(ex_policy)){};
 
         bool operator()(size_t index_i) const
         {
