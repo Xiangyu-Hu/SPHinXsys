@@ -113,7 +113,7 @@ void RealBody::updateCellLinkedList()
 //=================================================================================================//
 void RealBody::addRealBodyToSPHSystem()
 {
-    sph_system_.sph_bodies_.push_back(this);
+    sph_system_.addRealBody(this);
 }
 //=================================================================================================//
 } // namespace SPH
