@@ -10,16 +10,13 @@ Requirements
 
 SPHinXsys depends on the following:
 
-* CMake 3.16 or later
+* CMake 3.16 or later but before 4.0
 * C++17 compliant compiler
 
 * Visual Studio 2017 15.7 or later (Windows)
 * GCC 8 or later (Linux)
-* Boost libraries
-* Intel Thread Building Blocks
-* Simbody 3.6.0 or later
-* Eigen 3.4 or later
-* GoogleTest
+* Python3
+* Git
 
 Installing on Ubuntu
 ---------------------------------------
@@ -93,11 +90,14 @@ To install the *shared* versions, do the following:
 
 Otherwise, please refer to the official `vcpkg documentation <https://vcpkg.io/en/docs/examples/overlay-triplets-linux-dynamic.html>`_
 
+Also Note that, if you encounter an error, you may need to check the exact log file to find the detailed error message.
+
 Building SPHinXsys
 ^^^^^^^^^^^^^^^^^^^^^
 
 ..  code-block:: bash
     
+    cd $HOME
     git clone https://github.com/Xiangyu-Hu/SPHinXsys.git sphinxsys
     cd sphinxsys
     cmake   -G "Unix Makefiles"                                                         \
@@ -263,7 +263,7 @@ Pre-requisites
 
 * Windows 7 or newer
 * `Git <https://git-scm.com/download/win>`_
-* `Visual Studio 2017 or newer <https://visualstudio.microsoft.com/vs/community/>`_ 
+* `Visual Studio 2017 or newer <https://visualstudio.microsoft.com/vs/community/>`_ with C++ environment installed
 * `CMake <https://cmake.org/>`_
 * `Python3 <https://www.python.org/>`_
 
@@ -271,6 +271,8 @@ Installing dependencies
 ^^^^^^^^^^^^^^^^^^^^^^^
 Open Windows PowerShell or Git CMD, and then run the commands below one by one. 
 (Before you run these commands, you can change the installation path by using the command :code:`cd ..`, etc.)
+
+First clone the vcpkg repository to your home directory.
 
 ..  code-block:: pwsh
     
@@ -323,29 +325,16 @@ To install the *static* versions, replace the former install line by the followi
         pybind11:x64-windows-static
 
 For any other combination, please refer to the official `architecture documentation <https://vcpkg.io/en/docs/users/triplets.html>` .
-
-If you have difficulty to install these packages, you can use the pre-compiled vcpkg files for windows as follows:
-
-..  code-block:: pwsh
- 
-    git clone  https://github.com/Xiangyu-Hu/SPHinXsys_install_vcpkg_windows
-
-To use the pre-compiled package, 
-simply extract the two-volume zip file into the directory where the SPHinXsys root directory will be also located, 
-then follow the rest steps to continue.
+Also Note that, if you encounter an error, you may need to check the exact log file to find the detailed error message.
 
 Building SPHinXsys with Visual Studio
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-First clone the repository:
+First clone the repository to your home directory:
 
 ..  code-block:: pwsh
     
     git clone https://github.com/Xiangyu-Hu/SPHinXsys.git sphinxsys
-
-
-Then, just open Visual Studio and follow the procedure given 
-`Visual Studio document <https://learn.microsoft.com/en-us/cpp/build/cmake-projects-in-visual-studio>` .
 
 
 Building SPHinXsys via cmake-gui.exe
@@ -427,4 +416,3 @@ Running the tests and examples
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 They are the same as in Ubuntu Linux (See above).  
-
