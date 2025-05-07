@@ -52,7 +52,7 @@ class GeneralContinuum : public WeaklyCompressibleFluid
         K_ = getBulkModulus(youngs_modulus, poisson_ratio);
         lambda0_ = getLambda(youngs_modulus, poisson_ratio);
     };
-    virtual ~GeneralContinuum(){};
+    virtual ~GeneralContinuum() {};
 
     Real lambda0_; /* first Lame parameter */
     Real getYoungsModulus() { return E_; };
@@ -66,14 +66,12 @@ class GeneralContinuum : public WeaklyCompressibleFluid
 
     virtual Matd ConstitutiveRelationShearStress(Matd &velocity_gradient, Matd &shear_stress);
 
-
     class GeneralContinuumKernel
     {
       public:
-        GeneralContinuumKernel(GeneralContinuum &encloser):
-        E_(encloser.E_), G_(encloser.G_),K_(encloser.K_),
-        nu_(encloser.nu_),contact_stiffness_(encloser.contact_stiffness_),
-        rho0_(encloser.rho0_){};
+        GeneralContinuumKernel(GeneralContinuum &encloser) : E_(encloser.E_), G_(encloser.G_), K_(encloser.K_),
+                                                             nu_(encloser.nu_), contact_stiffness_(encloser.contact_stiffness_),
+                                                             rho0_(encloser.rho0_) {};
 
         inline Real getYoungsModulus() { return E_; };
         inline Real getPoissonRatio() { return nu_; };
@@ -81,13 +79,14 @@ class GeneralContinuum : public WeaklyCompressibleFluid
         inline Real getBulkModulus(Real youngs_modulus, Real poisson_ratio);
         inline Real getShearModulus(Real youngs_modulus, Real poisson_ratio);
         inline Real getLambda(Real youngs_modulus, Real poisson_ratio);
+
       protected:
         Real E_;                 /* Youngs or tensile modules  */
         Real G_;                 /* shear modules  */
         Real K_;                 /* bulk modules  */
         Real nu_;                /* Poisson ratio  */
         Real contact_stiffness_; /* contact-force stiffness related to bulk modulus*/
-        Real rho0_; /* contact-force stiffness related to bulk modulus*/
+        Real rho0_;              /* contact-force stiffness related to bulk modulus*/
     };
 };
 
@@ -109,7 +108,7 @@ class PlasticContinuum : public GeneralContinuum
         alpha_phi_ = getDPConstantsA(friction_angle);
         k_c_ = getDPConstantsK(cohesion, friction_angle);
     };
-    virtual ~PlasticContinuum(){};
+    virtual ~PlasticContinuum() {};
 
     Real getDPConstantsA(Real friction_angle);
     Real getDPConstantsK(Real cohesion, Real friction_angle);
@@ -118,30 +117,25 @@ class PlasticContinuum : public GeneralContinuum
     virtual Mat3d ConstitutiveRelation(Mat3d &velocity_gradient, Mat3d &stress_tensor);
     virtual Mat3d ReturnMapping(Mat3d &stress_tensor);
 
-
-    class PlasticKernel: public GeneralContinuum::GeneralContinuumKernel
+    class PlasticKernel : public GeneralContinuum::GeneralContinuumKernel
     {
       public:
-
         PlasticKernel(PlasticContinuum &encloser) : GeneralContinuum::GeneralContinuumKernel(encloser),
-        c_(encloser.c_),phi_(encloser.phi_),
-        psi_(encloser.psi_),alpha_phi_(encloser.alpha_phi_),k_c_(encloser.k_c_){};
+                                                    c_(encloser.c_), phi_(encloser.phi_),
+                                                    psi_(encloser.psi_), alpha_phi_(encloser.alpha_phi_), k_c_(encloser.k_c_) {};
 
         inline Real getDPConstantsA(Real friction_angle);
-        inline Mat3d ConstitutiveRelation(Mat3d &velocity_gradient, Mat3d &stress_tensor);  
+        inline Mat3d ConstitutiveRelation(Mat3d &velocity_gradient, Mat3d &stress_tensor);
         inline Mat3d ReturnMapping(Mat3d &stress_tensor);
         inline Real getFrictionAngle() { return phi_; };
 
-
       protected:
-          Real c_;                            /* cohesion  */
-          Real phi_;                          /* friction angle  */
-          Real psi_;                          /* dilatancy angle  */
-          Real alpha_phi_;                    /* Drucker-Prager's constants */
-          Real k_c_;                          /* Drucker-Prager's constants */
-          Real stress_dimension_ = 3.0; /* plain strain condition */   //Temporarily cancel const --need to check
-
-
+        Real c_;                                                   /* cohesion  */
+        Real phi_;                                                 /* friction angle  */
+        Real psi_;                                                 /* dilatancy angle  */
+        Real alpha_phi_;                                           /* Drucker-Prager's constants */
+        Real k_c_;                                                 /* Drucker-Prager's constants */
+        Real stress_dimension_ = 3.0; /* plain strain condition */ // Temporarily cancel const --need to check
     };
 };
 
@@ -159,13 +153,13 @@ class J2Plasticity : public GeneralContinuum
     {
         material_type_name_ = "J2Plasticity";
     };
-    virtual ~J2Plasticity(){};
+    virtual ~J2Plasticity() {};
 
     Real YieldStress() { return yield_stress_; };
     Real HardeningModulus() { return hardening_modulus_; };
 
-    virtual Matd ConstitutiveRelationShearStress(Matd &velocity_gradient, Matd &shear_stress, Real &hardening_factor);
-    virtual Matd ReturnMappingShearStress(Matd &shear_stress,  Real &hardening_factor);
+    Matd ConstitutiveRelationShearStressWithHardening(Matd &velocity_gradient, Matd &shear_stress, Real &hardening_factor);
+    virtual Matd ReturnMappingShearStress(Matd &shear_stress, Real &hardening_factor);
     virtual Real ScalePenaltyForce(Matd &shear_stress, Real &hardening_factor);
     virtual Real HardeningFactorRate(const Matd &shear_stress, Real &hardening_factor);
 };
