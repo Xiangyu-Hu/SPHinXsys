@@ -116,6 +116,11 @@ ParticleWithLocalRefinement::
     coarsest_spacing_bound_ = spacing_ref_ - Eps;
 }
 //=================================================================================================//
+ParticleWithLocalRefinement::ParticleWithLocalRefinement(
+    SPHSystem &sph_system, Real h_spacing_ratio_, Real system_refinement_ratio, int local_refinement_level)
+    : ParticleWithLocalRefinement(sph_system.ReferenceResolution(), h_spacing_ratio_, system_refinement_ratio,
+                                  local_refinement_level) {}
+//=================================================================================================//
 void ParticleWithLocalRefinement::initializeAdaptationVariables(BaseParticles &base_particles)
 {
     SPHAdaptation::initializeAdaptationVariables(base_particles);
