@@ -1,6 +1,7 @@
 #include "sph_system.hpp"
 
 #include "all_body_relations.h"
+#include "base_body.h"
 #include "elastic_dynamics.h"
 
 namespace SPH
@@ -25,6 +26,16 @@ IOEnvironment &SPHSystem::getIOEnvironment()
         exit(1);
     }
     return *io_environment_;
+}
+//=================================================================================================//
+void SPHSystem::addRealBody(RealBody *real_body)
+{
+    real_bodies_.push_back(real_body);
+}
+//=================================================================================================//
+void SPHSystem::addSolidBody(SolidBody *solid_body)
+{
+    solid_bodies_.push_back(solid_body);
 }
 //=================================================================================================//
 

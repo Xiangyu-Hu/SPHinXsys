@@ -69,9 +69,6 @@ class SPHBody
     UniquePtrKeeper<BaseParticles> base_particles_ptr_keeper_;
     UniquePtrKeeper<BaseMaterial> base_material_ptr_keeper_;
 
-    Real SPHSystemReferenceResolution();
-    bool SPHSystemReloadParticles();
-
   protected:
     SPHSystem &sph_system_;
     std::string body_name_;
@@ -151,7 +148,7 @@ class SPHBody
     {
         sph_adaptation_ =
             sph_adaptation_ptr_keeper_.createPtr<AdaptationType>(
-                SPHSystemReferenceResolution(), std::forward<Args>(args)...);
+                sph_system_, std::forward<Args>(args)...);
     };
 
     template <typename... Args>
@@ -200,7 +197,7 @@ class SPHBody
         particle_generator.generateParticlesWithGeometricVariables();
         particles->initializeBasicParticleVariables();
         sph_adaptation_->initializeAdaptationVariables(*particles);
-        base_material_->setLocalParameters(SPHSystemReloadParticles(), particles);
+        base_material_->setLocalParameters(sph_system_, particles);
     };
 
     // Buffer or ghost particles can be generated together with real particles

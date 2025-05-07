@@ -13,17 +13,7 @@ SPHBody::SPHBody(SPHSystem &sph_system, Shape &shape, const std::string &name)
       sph_adaptation_(sph_adaptation_ptr_keeper_.createPtr<SPHAdaptation>(sph_system.ReferenceResolution())),
       base_material_(base_material_ptr_keeper_.createPtr<BaseMaterial>())
 {
-    sph_system_.sph_bodies_.push_back(this);
-}
-//=================================================================================================//
-Real SPHBody::SPHSystemReferenceResolution()
-{
-    return sph_system_.ReferenceResolution();
-}
-//=================================================================================================//
-bool SPHBody::SPHSystemReloadParticles()
-{
-    return sph_system_.ReloadParticles();
+    sph_system_.addSPHBody(this);
 }
 //=================================================================================================//
 SPHBody::SPHBody(SPHSystem &sph_system, Shape &shape)
@@ -43,7 +33,7 @@ SPHBody::SPHBody(SPHSystem &sph_system, SharedPtr<Shape> shape_ptr)
 //=================================================================================================//
 BoundingBox SPHBody::getSPHSystemBounds()
 {
-    return sph_system_.system_domain_bounds_;
+    return sph_system_.getSystemDomainBounds();
 }
 //=================================================================================================//
 int SPHBody::getNewBodyPartID()
@@ -114,7 +104,7 @@ void RealBody::updateCellLinkedList()
 //=================================================================================================//
 void RealBody::addRealBodyToSPHSystem()
 {
-    sph_system_.sph_bodies_.push_back(this);
+    sph_system_.addRealBody(this);
 }
 //=================================================================================================//
 } // namespace SPH

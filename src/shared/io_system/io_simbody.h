@@ -34,34 +34,17 @@
 namespace SPH
 {
 /**
- * @class SimBodyStatesIO
- * @brief base class for write and read SimBody states.
- */
-class SimBodyStatesIO
-{
-  protected:
-    IOEnvironment &io_environment_;
-    Real &physical_time_;
-
-  public:
-    SimBodyStatesIO(SPHSystem &sph_system);
-    virtual ~SimBodyStatesIO() {};
-};
-
-/**
  * @class WriteSimBodyStates
  * @brief base class for write SimBody states.
  */
 template <class MobilizedBodyType>
-class WriteSimBodyStates : public SimBodyStatesIO
+class WriteSimBodyStates : public BaseIO
 {
   public:
     WriteSimBodyStates(SPHSystem &sph_system, SimTK::RungeKuttaMersonIntegrator &integ,
                        MobilizedBodyType &mobody)
-        : SimBodyStatesIO(sph_system), integ_(integ), mobody_(mobody) {};
+        : BaseIO(sph_system), integ_(integ), mobody_(mobody) {};
     virtual ~WriteSimBodyStates() {};
-
-    virtual void writeToFile(size_t iteration_step) = 0;
 
   protected:
     SimTK::RungeKuttaMersonIntegrator &integ_;

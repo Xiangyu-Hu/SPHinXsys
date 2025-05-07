@@ -37,6 +37,7 @@
 namespace SPH
 {
 
+class SPHSystem;
 class Shape;
 class BaseParticles;
 class BodyRegionByCell;
@@ -66,6 +67,7 @@ class SPHAdaptation
 
   public:
     explicit SPHAdaptation(Real resolution_ref, Real h_spacing_ratio = 1.3, Real system_refinement_ratio = 1.0);
+    explicit SPHAdaptation(SPHSystem &sph_system, Real h_spacing_ratio = 1.3, Real system_refinement_ratio = 1.0);
     virtual ~SPHAdaptation() {};
 
     int LocalRefinementLevel() { return local_refinement_level_; };
