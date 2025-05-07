@@ -95,6 +95,7 @@ jobs:
           # sycl environment has to be setup for each session
           source /opt/intel/oneapi/setvars.sh --include-intel-llvm
           cmake -G Ninja \
+            -D BUILD_SHARED_LIBS=ON\
             -D CMAKE_BUILD_TYPE=Release \
             -D CMAKE_C_COMPILER=icx -D CMAKE_CXX_COMPILER=icpx \
             -D CMAKE_TOOLCHAIN_FILE="${{github.workspace}}/vcpkg/scripts/buildsystems/vcpkg.cmake" \
@@ -212,6 +213,7 @@ jobs:
       - name: Generate buildsystem using double
         run: |
           cmake -G Ninja \
+            -D BUILD_SHARED_LIBS=ON\
             -D CMAKE_BUILD_TYPE=Release \
             -D CMAKE_TOOLCHAIN_FILE="${{github.workspace}}/vcpkg/scripts/buildsystems/vcpkg.cmake" \
             -D CMAKE_C_COMPILER_LAUNCHER=ccache -D CMAKE_CXX_COMPILER_LAUNCHER=ccache \
@@ -564,6 +566,7 @@ jobs:
       - name: Generate buildsystem
         run: |
           cmake -G Ninja \
+            -D BUILD_SHARED_LIBS=ON\
             -D CMAKE_C_COMPILER=clang -D CMAKE_CXX_COMPILER=clang++ \
             -D CMAKE_BUILD_TYPE=Release \
             -D CMAKE_TOOLCHAIN_FILE="${{github.workspace}}/vcpkg/scripts/buildsystems/vcpkg.cmake" \
