@@ -21,41 +21,45 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file    solid_body.h
+ * @file    body_part_for_simbody.h
  * @brief 	This is the class for bodies used for solid BCs or Elastic structure.
- * @author	Chi Zhang and Xiangyu Hu
+ * @author	Xiangyu Hu
  */
 
-#ifndef SOLID_BODY_H
-#define SOLID_BODY_H
+#ifndef BODY_PART_FOR_SIMBODY_H
+#define BODY_PART_FOR_SIMBODY_H
 
-#include "base_body.h"
 #include "base_body_part.h"
 
+#include "simtk_wrapper.h"
 namespace SPH
 {
 /**
- * @brief pre-claimed class.
+ * @class SolidBodyPartForSimbody
+ * @brief A SolidBodyPart for coupling with Simbody.
+ * The mass, origin, and unit inertial matrix are computed.
+ * Note: In Simbody, all spatial vectors are three dimensional.
  */
-class SPHSystem;
-class BaseParticles;
-/**
- * @class SolidBody
- * @brief Declaration of solid body which is used for Solid BCs and derived from RealBody.
- */
-class SolidBody : public RealBody
+class SolidBodyPartForSimbody : public BodyRegionByParticle
 {
-    void addSolidBodyToSPHSystem();
+  protected:
+    UniquePtrKeeper<SimTK::MassProperties> mass_properties_ptr_keeper_;
 
   public:
-    template <typename... Args>
-    SolidBody(Args &&...args)
-        : RealBody(std::forward<Args>(args)...)
-    {
-        addSolidBodyToSPHSystem();
-        defineAdaptation<SPHAdaptation>(1.15);
-    };
-    virtual ~SolidBody() {};
+    Vecd initial_mass_center_;
+    SimTK::MassProperties *body_part_mass_properties_;
+
+    SolidBodyPartForSimbody(SPHBody &body, Shape &body_part_shape);
+    SolidBodyPartForSimbody(SPHBody &body, SharedPtr<Shape> shape_ptr);
+    virtual ~SolidBodyPartForSimbody() {};
+
+  protected:
+    Real rho0_;
+    Real *Vol_;
+    Vecd *pos_;
+
+  private:
+    void setMassProperties();
 };
 } // namespace SPH
-#endif // SOLID_BODY_H
+#endif // BODY_PART_FOR_SIMBODY_H
