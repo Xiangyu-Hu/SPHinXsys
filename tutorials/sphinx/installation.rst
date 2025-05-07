@@ -112,6 +112,13 @@ Building SPHinXsys
 If you prefer to use other installed compiler in your Linux system, 
 you can just change :code:`gcc` and :code:`g++` to your favorite ones. 
 
+If you are using VS Code as your development platform, please make sure the CMake Tool plugin is installed 
+and the corresponding icon shown in the GUI. 
+Please choose Configure as :code:`unspecified` 
+as you will let the above CMake script decide how to build SPHinXsys.
+Note that, if you face an issue and need to rerun the above script, please make sure the CMakeCache.txt 
+in :code:`build` folder is deleted as it saves the last run information and may lead to the same issue as before.            
+
 Running the tests and examples
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
