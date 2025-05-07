@@ -79,6 +79,10 @@ target_link_libraries(sphinxsys_core INTERFACE TBB::tbb TBB::tbbmalloc $<$<PLATF
 find_package(Threads REQUIRED)
 target_link_libraries(sphinxsys_core INTERFACE Threads::Threads)
 
+# ## Threads
+find_package(Taskflow REQUIRED)
+target_link_libraries(sphinxsys_core INTERFACE Taskflow::Taskflow)
+
 # ## Boost
 set(Boost_NO_WARN_NEW_VERSIONS TRUE) # In case your CMake version is older than the release of Boost found
 
