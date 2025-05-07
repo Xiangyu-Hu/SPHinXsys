@@ -85,7 +85,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    auto &water_body = sph_system.addBody<FluidBody>(makeShared<WaterBlock>("WaterBody"));
+    FluidBody water_body(sph_system, makeShared<WaterBlock>("WaterBody"));
     water_body.defineAdaptation<ParticleRefinementWithinShape>(1.3, 1.0, 1);
     water_body.defineComponentLevelSetShape("OuterBoundary")->writeLevelSet(sph_system);
     water_body.defineClosure<WeaklyCompressibleFluid, Viscosity>(ConstructArgs(rho0_f, c_f), mu_f);
@@ -96,7 +96,7 @@ int main(int ac, char *av[])
         ? water_body.generateParticlesWithReserve<BaseParticles, Reload>(inlet_particle_buffer, water_body.getName())
         : water_body.generateParticles<BaseParticles, Lattice, Adaptive>(refinement_region);
 
-    auto &cylinder = sph_system.addBody<SolidBody>(makeShared<GeometricShapeBall>(circle_center, radius, "Cylinder"));
+    SolidBody cylinder(sph_system, makeShared<GeometricShapeBall>(circle_center, radius, "Cylinder"));
     cylinder.defineAdaptationRatios(1.15, 4.0);
     cylinder.defineBodyLevelSetShape();
     cylinder.defineMaterial<Solid>();

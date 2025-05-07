@@ -118,6 +118,7 @@ class ParticleWithLocalRefinement : public SPHAdaptation
     int *level_;    /**< the mesh level of the particle */
 
     ParticleWithLocalRefinement(Real resolution_ref, Real h_spacing_ratio_, Real system_refinement_ratio, int local_refinement_level);
+    ParticleWithLocalRefinement(SPHSystem &sph_system, Real h_spacing_ratio_, Real system_refinement_ratio, int local_refinement_level);
     virtual ~ParticleWithLocalRefinement() {};
 
     virtual size_t getCellLinkedListTotalLevel();

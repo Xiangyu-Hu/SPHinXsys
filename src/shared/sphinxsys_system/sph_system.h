@@ -52,7 +52,6 @@ class SPHSystem
     UniquePtrKeeper<IOEnvironment> io_ptr_keeper_;
     DataContainerUniquePtrAssemble<SingularVariable> all_system_variable_ptrs_;
     UniquePtrsKeeper<Entity> unique_system_variable_ptrs_;
-    UniquePtrsKeeper<SPHBody> sph_body_ptrs_;
 
   public:
     SPHSystem(BoundingBox system_domain_bounds, Real resolution_ref,
