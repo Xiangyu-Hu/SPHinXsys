@@ -16,16 +16,6 @@ SPHBody::SPHBody(SPHSystem &sph_system, Shape &shape, const std::string &name)
     sph_system_.addSPHBody(this);
 }
 //=================================================================================================//
-Real SPHBody::SPHSystemReferenceResolution()
-{
-    return sph_system_.ReferenceResolution();
-}
-//=================================================================================================//
-bool SPHBody::SPHSystemReloadParticles()
-{
-    return sph_system_.ReloadParticles();
-}
-//=================================================================================================//
 SPHBody::SPHBody(SPHSystem &sph_system, Shape &shape)
     : SPHBody(sph_system, shape, shape.getName()) {}
 //=================================================================================================//

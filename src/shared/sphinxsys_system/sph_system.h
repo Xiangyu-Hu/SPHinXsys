@@ -37,7 +37,6 @@
 namespace po = boost::program_options;
 #endif
 
-#include "base_body.h"
 #include "base_data_package.h"
 #include "io_environment.h"
 #include "sphinxsys_containers.h"
@@ -89,9 +88,9 @@ class SPHSystem
     void setReferenceResolution(Real resolution_ref) { resolution_ref_ = resolution_ref; };
     SPHBodyVector getRealBodies() { return real_bodies_; };
     void addSPHBody(SPHBody *sph_body) { sph_bodies_.push_back(sph_body); };
-    void addRealBody(RealBody *real_body) { real_bodies_.push_back(real_body); };
+    void addRealBody(RealBody *real_body);
     void addObservationBody(SPHBody *sph_body) { observation_bodies_.push_back(sph_body); };
-    void addSolidBody(SolidBody *solid_body) { solid_bodies_.push_back(solid_body); };
+    void addSolidBody(SolidBody *solid_body);
     BoundingBox getSystemDomainBounds() { return system_domain_bounds_; };
     void setSystemDomainBounds(const BoundingBox &domain_bounds) { system_domain_bounds_ = domain_bounds; };
 
