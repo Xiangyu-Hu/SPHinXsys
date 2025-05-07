@@ -36,8 +36,8 @@ class Column : public ComplexShape
   public:
     explicit Column(const std::string &shape_name) : ComplexShape(shape_name)
     {
-        add<TransformShape<GeometricShapeBox>>(Transform(translation_column), halfsize_column);
-        add<TransformShape<GeometricShapeBox>>(Transform(translation_holder), halfsize_holder);
+        add<GeometricShapeBox>(Transform(translation_column), halfsize_column);
+        add<GeometricShapeBox>(Transform(translation_holder), halfsize_holder);
     }
 };
 //----------------------------------------------------------------------
@@ -110,7 +110,7 @@ int main(int ac, char *av[])
     ReduceDynamics<solid_dynamics::AcousticTimeStep> computing_time_step_size(column, 0.5);
     SimpleDynamics<InitialCondition> initial_condition(column);
 
-    TransformShape<GeometricShapeBox> holder_shape(Transform(translation_holder), halfsize_holder, "Holder");
+    GeometricShapeBox holder_shape(Transform(translation_holder), halfsize_holder, "Holder");
     BodyRegionByParticle holder(column, holder_shape);
     SimpleDynamics<FixBodyPartConstraint> constraint_holder(holder);
     //----------------------------------------------------------------------

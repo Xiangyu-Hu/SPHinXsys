@@ -52,7 +52,7 @@ class WaterBlock : public ComplexShape
     {
         Vec3d halfsize_water(0.5 * LL, 0.5 * LH, 0.5 * LW);
         Transform translation_water(halfsize_water);
-        add<TransformShape<GeometricShapeBox>>(Transform(translation_water), halfsize_water);
+        add<GeometricShapeBox>(Transform(translation_water), halfsize_water);
     }
 };
 //	define the static solid wall boundary shape
@@ -64,12 +64,12 @@ class WallBoundary : public ComplexShape
         Vec3d halfsize_outer(0.5 * DL + BW, 0.5 * DH + BW, 0.5 * DW + BW);
         Vec3d halfsize_inner(0.5 * DL, 0.5 * DH, 0.5 * DW);
         Transform translation_wall(halfsize_inner);
-        add<TransformShape<GeometricShapeBox>>(Transform(translation_wall), halfsize_outer);
-        subtract<TransformShape<GeometricShapeBox>>(Transform(translation_wall), halfsize_inner);
+        add<GeometricShapeBox>(Transform(translation_wall), halfsize_outer);
+        subtract<GeometricShapeBox>(Transform(translation_wall), halfsize_inner);
 
         Vec3d halfsize_plate(0.5 * resolution_ref, 0.5 * plate_width, 0.5 * (plate_height + BW));
         Transform translation_plate(halfsize_plate + Vec3d(plate_x_pos, -BW, (DW - plate_width) * 0.5));
-        subtract<TransformShape<GeometricShapeBox>>(Transform(translation_plate), halfsize_plate);
+        subtract<GeometricShapeBox>(Transform(translation_plate), halfsize_plate);
     }
 };
 //	define the rigid solid gate shape
@@ -80,7 +80,7 @@ class MovingGate : public ComplexShape
     {
         Vec3d halfsize_gate(0.5 * BW, 0.5 * DH, 0.5 * DW);
         Transform translation_gate(Vec3d(LL, 0, 0) + halfsize_gate);
-        add<TransformShape<GeometricShapeBox>>(Transform(translation_gate), halfsize_gate);
+        add<GeometricShapeBox>(Transform(translation_gate), halfsize_gate);
     }
 };
 //	define the elastic plate shape
@@ -116,8 +116,7 @@ class ParticleGenerator<SurfaceParticles, Plate> : public ParticleGenerator<Surf
 class BoundaryGeometry : public BodyPartByParticle
 {
   public:
-    BoundaryGeometry(SPHBody &body, const std::string &body_part_name)
-        : BodyPartByParticle(body, body_part_name)
+    BoundaryGeometry(SPHBody &body) : BodyPartByParticle(body)
     {
         TaggingParticleMethod tagging_particle_method = std::bind(&BoundaryGeometry::tagManually, this, _1);
         tagParticles(tagging_particle_method);
@@ -222,7 +221,7 @@ int main(int ac, char *av[])
     SimpleDynamics<thin_structure_dynamics::AverageShellCurvature> plate_average_curvature(plate_curvature_inner);
     SimpleDynamics<thin_structure_dynamics::UpdateShellNormalDirection> plate_update_normal(plate);
     /** constraint and damping */
-    BoundaryGeometry plate_boundary_geometry(plate, "BoundaryGeometry");
+    BoundaryGeometry plate_boundary_geometry(plate);
     SimpleDynamics<thin_structure_dynamics::ConstrainShellBodyRegion> plate_constraint(plate_boundary_geometry);
     // fluid
     Gravity gravity(Vec3d(0.0, -gravity_g, 0.0));

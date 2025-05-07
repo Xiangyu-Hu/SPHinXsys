@@ -30,7 +30,7 @@ class WaterBlock : public ComplexShape
     {
         Vecd container(0.5 * width, 0.5 * height);
         Transform translate_to_origin(container);
-        add<TransformShape<GeometricShapeBox>>(Transform(translate_to_origin), container);
+        add<GeometricShapeBox>(Transform(translate_to_origin), container);
     }
 };
 class WallBoundary : public ComplexShape
@@ -43,8 +43,8 @@ class WallBoundary : public ComplexShape
         Transform translate_to_origin_outer(Vec2d(-boundary_width, -boundary_width) + container_outer);
         Transform translate_to_origin_inner(Vec2d(-boundary_width, 0.0) + container);
 
-        add<TransformShape<GeometricShapeBox>>(Transform(translate_to_origin_outer), container_outer);
-        subtract<TransformShape<GeometricShapeBox>>(Transform(translate_to_origin_inner), container);
+        add<GeometricShapeBox>(Transform(translate_to_origin_outer), container_outer);
+        subtract<GeometricShapeBox>(Transform(translate_to_origin_inner), container);
     }
 };
 //----------------------------------------------------------------------

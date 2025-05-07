@@ -18,8 +18,8 @@ GeometricBox::GeometricBox(const Vecd &halfsize) : halfsize_(halfsize)
 //=================================================================================================//
 Vecd GeometricBox::findClosestPoint(const Vecd &probe_point)
 {
-    //This is from Simbody, Geo_Box.h
-    // first step to find the closest point for the point outside the box
+    // This is from Simbody, Geo_Box.h
+    //  first step to find the closest point for the point outside the box
     Vecd c(probe_point); // tentatively inside
     bool ptWasInside = true;
     for (int i = 0; i < Dimensions; ++i)
@@ -38,7 +38,7 @@ Vecd GeometricBox::findClosestPoint(const Vecd &probe_point)
 
     // second step to find the closest point for the point inside the box
     if (ptWasInside)
-    {                                              
+    {
         Real dToSide = halfsize_[0] - std::abs(c[0]);
 
         int which = 0; // tentatively the nearest side
@@ -56,6 +56,11 @@ Vecd GeometricBox::findClosestPoint(const Vecd &probe_point)
         c[which] = c[which] < 0 ? -halfsize_[which] : halfsize_[which];
     }
     return c;
+}
+//=================================================================================================//
+BoundingBox GeometricBox::findBounds()
+{
+    return BoundingBox(-halfsize_, halfsize_);
 }
 //=================================================================================================//
 GeometricBall::GeometricBall(Real radius) : radius_(radius)
@@ -76,6 +81,12 @@ bool GeometricBall::checkContain(const Vecd &probe_point)
 Vecd GeometricBall::findClosestPoint(const Vecd &probe_point)
 {
     return radius_ * probe_point.normalized();
+}
+//=================================================================================================//
+BoundingBox GeometricBall::findBounds()
+{
+    Vecd shift = radius_ * Vecd::Ones();
+    return BoundingBox(-shift, shift);
 }
 //=================================================================================================//
 } // namespace SPH

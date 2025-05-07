@@ -27,9 +27,9 @@ void BufferIndicationCK::UpdateKernel::update(size_t index_i, Real dt)
 template <class ConditionType>
 template <typename... Args>
 BufferInflowInjectionCK<ConditionType>::
-    BufferInflowInjectionCK(AlignedBoxPartByCell &aligned_box_part,
+    BufferInflowInjectionCK(AlignedBoxByCell &aligned_box_part,
                             ParticleBuffer<Base> &buffer, Args &&...args)
-    : BaseLocalDynamics<AlignedBoxPartByCell>(aligned_box_part),
+    : BaseLocalDynamics<AlignedBoxByCell>(aligned_box_part),
       part_id_(aligned_box_part.getPartID()), buffer_(buffer),
       fluid_(DynamicCast<FluidType>(this, sph_body_.getBaseMaterial())),
       condition_(std::forward<Args>(args)...),
@@ -103,8 +103,8 @@ void BufferOutflowDeletionCK::UpdateKernel::update(size_t index_i, Real dt)
 template <class KernelCorrectionType, typename ConditionType>
 template <typename... Args>
 PressureVelocityCondition<KernelCorrectionType, ConditionType>::
-    PressureVelocityCondition(AlignedBoxPartByCell &aligned_box_part, Args &&...args)
-    : BaseLocalDynamics<AlignedBoxPartByCell>(aligned_box_part),
+    PressureVelocityCondition(AlignedBoxByCell &aligned_box_part, Args &&...args)
+    : BaseLocalDynamics<AlignedBoxByCell>(aligned_box_part),
       BaseStateCondition(this->particles_),
       sv_aligned_box_(aligned_box_part.svAlignedBox()),
       kernel_correction_method_(this->particles_),
@@ -145,7 +145,7 @@ void PressureVelocityCondition<KernelCorrectionType, ConditionType>::
 template <typename ExecutionPolicy, class KernelCorrectionType, class ConditionType>
 template <typename... Args>
 BidirectionalBoundaryCK<ExecutionPolicy, KernelCorrectionType, ConditionType>::
-    BidirectionalBoundaryCK(AlignedBoxPartByCell &aligned_box_part,
+    BidirectionalBoundaryCK(AlignedBoxByCell &aligned_box_part,
                             ParticleBuffer<Base> &particle_buffer, Args &&...args)
     : tag_buffer_particles_(aligned_box_part),
       boundary_condition_(aligned_box_part, std::forward<Args>(args)...),

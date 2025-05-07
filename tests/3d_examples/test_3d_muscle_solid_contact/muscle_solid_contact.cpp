@@ -36,8 +36,8 @@ class Myocardium : public ComplexShape
   public:
     explicit Myocardium(const std::string &shape_name) : ComplexShape(shape_name)
     {
-        add<TransformShape<GeometricShapeBox>>(Transform(translation_myocardium), halfsize_myocardium);
-        add<TransformShape<GeometricShapeBox>>(Transform(translation_stationary_plate), halfsize_stationary_plate);
+        add<GeometricShapeBox>(Transform(translation_myocardium), halfsize_myocardium);
+        add<GeometricShapeBox>(Transform(translation_stationary_plate), halfsize_stationary_plate);
     }
 };
 
@@ -46,7 +46,7 @@ class MovingPlate : public ComplexShape
   public:
     explicit MovingPlate(const std::string &shape_name) : ComplexShape(shape_name)
     {
-        add<TransformShape<GeometricShapeBox>>(Transform(translation_moving_plate), halfsize_moving_plate);
+        add<GeometricShapeBox>(Transform(translation_moving_plate), halfsize_moving_plate);
     }
 };
 //----------------------------------------------------------------------
@@ -95,7 +95,7 @@ int main(int ac, char *av[])
     /** Time step size calculation. */
     ReduceDynamics<solid_dynamics::AcousticTimeStep> computing_time_step_size(myocardium_body);
     /** Constrain the holder. */
-    TransformShape<GeometricShapeBox> holder_shape(Transform(translation_stationary_plate), halfsize_stationary_plate, "Holder");
+    GeometricShapeBox holder_shape(Transform(translation_stationary_plate), halfsize_stationary_plate, "Holder");
     BodyRegionByParticle holder(myocardium_body, holder_shape);
     SimpleDynamics<FixBodyPartConstraint> constraint_holder(holder);
     /** Damping with the solid body*/
@@ -117,7 +117,7 @@ int main(int ac, char *av[])
     SimTK::GeneralForceSubsystem forces(MBsystem);
     SimTK::CableTrackerSubsystem cables(MBsystem);
     /** mass properties of the fixed spot. */
-    TransformShape<GeometricShapeBox> moving_plate_shape(Transform(translation_moving_plate), halfsize_moving_plate, "Plate");
+    GeometricShapeBox moving_plate_shape(Transform(translation_moving_plate), halfsize_moving_plate, "Plate");
     SimpleDynamics<NormalDirectionFromBodyShape> moving_plate_normal_direction(moving_plate);
     SolidBodyPartForSimbody plate_multibody(moving_plate, moving_plate_shape);
     /** Mass properties of the constrained spot.

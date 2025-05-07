@@ -50,7 +50,7 @@ class ParticleGenerator<SurfaceParticles, WallBoundary> : public ParticleGenerat
                                Real resolution_ref, Real wall_thickness)
         : ParticleGenerator<SurfaceParticles>(sph_body, surface_particles),
           DL_sponge_(20 * resolution_ref), BW_(4 * resolution_ref),
-          resolution_ref_(resolution_ref), wall_thickness_(wall_thickness){};
+          resolution_ref_(resolution_ref), wall_thickness_(wall_thickness) {};
     void prepareGeometricData() override
     {
         auto particle_number_mid_surface = int((DL + DL_sponge_ + 2 * BW_) / resolution_ref_);
@@ -215,7 +215,7 @@ void channel_flow_shell(const Real resolution_ref, const Real wall_thickness)
     InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionComplex<AllParticles>> transport_correction(water_block_inner, water_block_contact);
     InteractionWithUpdate<fluid_dynamics::ViscousForceWithWall> viscous_acceleration(water_block_inner, water_block_contact);
     /** Inflow boundary condition. */
-    AlignedBoxPartByCell inflow_buffer(
+    AlignedBoxByCell inflow_buffer(
         water_block, AlignedBox(xAxis, Transform(Vec2d(buffer_translation)), buffer_halfsize));
     SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>> parabolic_inflow(inflow_buffer);
     /** Periodic BCs in x direction. */

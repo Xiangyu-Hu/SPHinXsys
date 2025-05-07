@@ -159,7 +159,7 @@ int main(int ac, char *av[])
     /** Damp waves */
     Vecd translation_damping(0.5 * DW, 9.5, 0.5 * HWM);
     Vecd damping(0.5 * DW, 0.5, 0.5 * HWM);
-    TransformShape<GeometricShapeBox> damping_buffer_shape(Transform(translation_damping), damping);
+    GeometricShapeBox damping_buffer_shape(Transform(translation_damping), damping);
     BodyRegionByCell damping_buffer(water_block, damping_buffer_shape);
     SimpleDynamics<fluid_dynamics::DampingBoundaryCondition> damping_wave(damping_buffer);
 
@@ -167,7 +167,7 @@ int main(int ac, char *av[])
     InteractionWithUpdate<solid_dynamics::ViscousForceFromFluid> viscous_force_on_solid(structure_contact);
     InteractionWithUpdate<solid_dynamics::PressureForceFromFluid<decltype(density_relaxation)>> pressure_force_on_structure(structure_contact);
     /** constrain region of the part of wall boundary. */
-    TransformShape<GeometricShapeBox> transform_wave_maker_shape(Transform(translation_wave_maker), wave_maker_shape);
+    GeometricShapeBox transform_wave_maker_shape(Transform(translation_wave_maker), wave_maker_shape);
     BodyRegionByParticle wave_maker(wall_boundary, transform_wave_maker_shape);
     SimpleDynamics<WaveMaking> wave_making(wave_maker);
     //----------------------------------------------------------------------
@@ -264,7 +264,7 @@ int main(int ac, char *av[])
     BodyStatesRecordingToVtp write_real_body_states(sph_system);
     write_real_body_states.addToWrite<Real>(water_block, "Pressure");
     /** WaveProbes. */
-    BodyRegionByCell wave_probe_buffer(water_block, makeShared<TransformShape<GeometricShapeBox>>(Transform(translation_WGauge), WGaugeDim));
+    BodyRegionByCell wave_probe_buffer(water_block, makeShared<GeometricShapeBox>(Transform(translation_WGauge), WGaugeDim));
     ReducedQuantityRecording<UpperFrontInAxisDirection<BodyPartByCell>>
         wave_gauge(wave_probe_buffer, "FreeSurfaceHeight");
 

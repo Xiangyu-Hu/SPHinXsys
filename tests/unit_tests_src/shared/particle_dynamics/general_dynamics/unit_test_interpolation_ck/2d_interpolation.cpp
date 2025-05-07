@@ -39,7 +39,7 @@ class WaterBlock : public ComplexShape
     {
         Vecd scaled_container(0.5 * width, 0.5 * height);
         Transform translate_to_origin(scaled_container);
-        add<TransformShape<GeometricShapeBox>>(Transform(translate_to_origin), scaled_container);
+        add<GeometricShapeBox>(Transform(translate_to_origin), scaled_container);
     }
 };
 //----------------------------------------------------------------------
