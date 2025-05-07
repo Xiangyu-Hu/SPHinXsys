@@ -71,18 +71,17 @@ Interaction<Contact<SourceIdentifier, TargetIdentifier, Parameters...>>::Interac
                               encloser.contact_relation_.getSourcePosition(),
                               encloser.contact_relation_.getTargetPosition(contact_index)) {}
 //=================================================================================================//
-template <typename... Parameters>
-Interaction<Contact<Wall, Parameters...>>::
-    Interaction(Relation<Contact<Parameters...>> &wall_contact_relation)
-    : Interaction<Contact<Parameters...>>(wall_contact_relation)
+template <class WallContactRelationType>
+Interaction<Wall>::Interaction(WallContactRelationType &wall_contact_relation)
 {
-    for (size_t k = 0; k != this->contact_particles_.size(); ++k)
+    StdVec<BaseParticles *> contact_particles = wall_contact_relation.getContactParticles();
+    for (size_t k = 0; k != contact_particles.size(); ++k)
     {
-        Solid &solid_material = DynamicCast<Solid>(this, this->contact_particles_[k]->getBaseMaterial());
-        dv_wall_vel_ave_.push_back(solid_material.AverageVelocityVariable(this->contact_particles_[k]));
-        dv_wall_acc_ave_.push_back(solid_material.AverageAccelerationVariable(this->contact_particles_[k]));
-        dv_wall_n_.push_back(this->contact_particles_[k]->template getVariableByName<Vecd>("NormalDirection"));
-        dv_wall_Vol_.push_back(this->contact_particles_[k]->template getVariableByName<Real>("VolumetricMeasure"));
+        Solid &solid_material = DynamicCast<Solid>(this, contact_particles[k]->getBaseMaterial());
+        dv_wall_vel_ave_.push_back(solid_material.AverageVelocityVariable(contact_particles[k]));
+        dv_wall_acc_ave_.push_back(solid_material.AverageAccelerationVariable(contact_particles[k]));
+        dv_wall_n_.push_back(contact_particles[k]->template getVariableByName<Vecd>("NormalDirection"));
+        dv_wall_Vol_.push_back(contact_particles[k]->template getVariableByName<Real>("VolumetricMeasure"));
     }
 }
 //=================================================================================================//

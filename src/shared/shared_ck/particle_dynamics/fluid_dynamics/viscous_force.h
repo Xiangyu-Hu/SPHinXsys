@@ -75,7 +75,7 @@ class ViscousForceCK<Base, ViscosityType, KernelCorrectionType, RelationType<Par
     template <typename...>
     friend class FSI::ViscousForceFromFluid;
     using ViscosityModel = ViscosityType;
-    
+
     ViscosityType &viscosity_model_;
     KernelCorrectionType kernel_correction_;
     DiscreteVariable<Real> *dv_Vol_;
@@ -106,13 +106,14 @@ class ViscousForceCK<Inner<WithUpdate, ViscosityType, KernelCorrectionType, Para
 
 template <typename ViscosityType, class KernelCorrectionType, typename... Parameters>
 class ViscousForceCK<Contact<Wall, ViscosityType, KernelCorrectionType, Parameters...>>
-    : public ViscousForceCK<Base, ViscosityType, KernelCorrectionType, Contact<Wall, Parameters...>>
+    : public ViscousForceCK<Base, ViscosityType, KernelCorrectionType, Contact<Parameters...>>,
+      public Interaction<Wall>
 {
-    using BaseViscousForceType = ViscousForceCK<Base, ViscosityType, KernelCorrectionType, Contact<Wall, Parameters...>>;
+    using BaseViscousForceType = ViscousForceCK<Base, ViscosityType, KernelCorrectionType, Contact<Parameters...>>;
 
   public:
     explicit ViscousForceCK(Relation<Contact<Parameters...>> &contact_relation)
-        : BaseViscousForceType(contact_relation) {};
+        : BaseViscousForceType(contact_relation), Interaction<Wall>(contact_relation) {};
     virtual ~ViscousForceCK() {};
 
     class InteractKernel : public BaseViscousForceType::InteractKernel
