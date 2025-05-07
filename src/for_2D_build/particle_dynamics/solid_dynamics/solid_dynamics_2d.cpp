@@ -1,17 +1,4 @@
-#include "all_solid_dynamics.h"
-#include "base_data_package.h"
-#include "base_kernel.h"
-#include "base_particles.hpp"
-#include "cell_linked_list.h"
-#include "elastic_solid.h"
-#include "external_force.h"
-#include "neighborhood.h"
-#include "solid_body.h"
-#include "weakly_compressible_fluid.h"
-
-#include "SimTKcommon.h"
-#include "SimTKmath.h"
-#include "Simbody.h"
+#include "elastic_dynamics.h"
 
 namespace SPH
 {

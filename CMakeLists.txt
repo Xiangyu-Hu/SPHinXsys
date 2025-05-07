@@ -29,7 +29,7 @@ set(CMAKE_POSITION_INDEPENDENT_CODE TRUE) # Enable for all targets, needed for p
 add_library(sphinxsys_core INTERFACE)
 
 # ------ Local properties
-target_compile_features(sphinxsys_core INTERFACE cxx_std_17) # Requires a compiler supporting at least C++17
+target_compile_features(sphinxsys_core INTERFACE cxx_std_20) # Requires a compiler supporting at least C++17
 
 if(${CMAKE_SYSTEM_NAME} MATCHES Windows)
     set_target_properties(sphinxsys_core PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON) # For correct DLL generation on Windows
