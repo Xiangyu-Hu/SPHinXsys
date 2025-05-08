@@ -34,40 +34,21 @@
 namespace SPH
 {
 /**
- * @class SimBodyStatesIO
- * @brief base class for write and read SimBody states.
- */
-template <class MobilizedBodyType>
-class SimBodyStatesIO
-{
-  protected:
-    IOEnvironment &io_environment_;
-    SimTK::RungeKuttaMersonIntegrator &integ_;
-    MobilizedBodyType &mobody_;
-    Real &physical_time_;
-
-  public:
-    SimBodyStatesIO(SPHSystem &sph_system, SimTK::RungeKuttaMersonIntegrator &integ,
-                    MobilizedBodyType &mobody)
-        : io_environment_(sph_system.getIOEnvironment()), integ_(integ), mobody_(mobody),
-          physical_time_(*sph_system.getSystemVariableDataByName<Real>("PhysicalTime")){};
-    virtual ~SimBodyStatesIO(){};
-};
-
-/**
  * @class WriteSimBodyStates
  * @brief base class for write SimBody states.
  */
 template <class MobilizedBodyType>
-class WriteSimBodyStates : public SimBodyStatesIO<MobilizedBodyType>
+class WriteSimBodyStates : public BaseIO
 {
   public:
     WriteSimBodyStates(SPHSystem &sph_system, SimTK::RungeKuttaMersonIntegrator &integ,
                        MobilizedBodyType &mobody)
-        : SimBodyStatesIO<MobilizedBodyType>(sph_system, integ, mobody){};
-    virtual ~WriteSimBodyStates(){};
+        : BaseIO(sph_system), integ_(integ), mobody_(mobody) {};
+    virtual ~WriteSimBodyStates() {};
 
-    virtual void writeToFile(size_t iteration_step) = 0;
+  protected:
+    SimTK::RungeKuttaMersonIntegrator &integ_;
+    MobilizedBodyType &mobody_;
 };
 
 /**
@@ -82,7 +63,7 @@ class WriteSimBodyPinData : public WriteSimBodyStates<SimTK::MobilizedBody::Pin>
   public:
     WriteSimBodyPinData(SPHSystem &sph_system, SimTK::RungeKuttaMersonIntegrator &integ,
                         SimTK::MobilizedBody::Pin &pinbody);
-    virtual ~WriteSimBodyPinData(){};
+    virtual ~WriteSimBodyPinData() {};
     virtual void writeToFile(size_t iteration_step = 0) override;
 };
 
@@ -98,7 +79,7 @@ class WriteSimBodyCableData : public WriteSimBodyStates<SimTK::CableSpring>
   public:
     WriteSimBodyCableData(SPHSystem &sph_system, SimTK::RungeKuttaMersonIntegrator &integ,
                           SimTK::CableSpring &cable1, std::string cable_inf);
-    virtual ~WriteSimBodyCableData(){};
+    virtual ~WriteSimBodyCableData() {};
     virtual void writeToFile(size_t iteration_step = 0) override;
 };
 
@@ -114,7 +95,7 @@ class WriteSimBodyPlanarData : public WriteSimBodyStates<SimTK::MobilizedBody::P
   public:
     WriteSimBodyPlanarData(SPHSystem &sph_system, SimTK::RungeKuttaMersonIntegrator &integ,
                            SimTK::MobilizedBody::Planar &planar_body);
-    virtual ~WriteSimBodyPlanarData(){};
+    virtual ~WriteSimBodyPlanarData() {};
     virtual void writeToFile(size_t iteration_step = 0) override;
 };
 
@@ -130,7 +111,7 @@ class WriteSimBodyFreeRotationMatrix : public WriteSimBodyStates<SimTK::Mobilize
   public:
     WriteSimBodyFreeRotationMatrix(SPHSystem &sph_system, SimTK::RungeKuttaMersonIntegrator &integ,
                                    SimTK::MobilizedBody::Free &free_body);
-    virtual ~WriteSimBodyFreeRotationMatrix(){};
+    virtual ~WriteSimBodyFreeRotationMatrix() {};
     virtual void writeToFile(size_t iteration_step = 0) override;
 };
 
@@ -146,7 +127,7 @@ class WriteSimBodyVelocity : public WriteSimBodyStates<SimTK::MobilizedBody::Fre
   public:
     WriteSimBodyVelocity(SPHSystem &sph_system, SimTK::RungeKuttaMersonIntegrator &integ,
                          SimTK::MobilizedBody::Free &free_body);
-    virtual ~WriteSimBodyVelocity(){};
+    virtual ~WriteSimBodyVelocity() {};
     virtual void writeToFile(size_t iteration_step = 0) override;
 };
 } // namespace SPH

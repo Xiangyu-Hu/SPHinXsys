@@ -29,8 +29,8 @@
 #ifndef IO_BASE_H
 #define IO_BASE_H
 
-#include "all_physical_dynamics.h"
 #include "base_body.h"
+#include "base_particle_dynamics.h"
 #include "base_data_package.h"
 #include "parameterization.h"
 #include "sphinxsys_containers.h"
@@ -40,11 +40,12 @@
 #include <fstream>
 #include <iomanip>
 #include <sstream>
-namespace fs = std::filesystem;
+    namespace fs = std::filesystem;
 
 namespace SPH
 {
 class SPHSystem;
+class IOEnvironment;
 
 /**
  * @class BaseIO

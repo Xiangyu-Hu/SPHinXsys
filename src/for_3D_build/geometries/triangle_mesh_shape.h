@@ -31,8 +31,8 @@
 #define TRIANGULAR_MESH_SHAPE_H
 
 #include "TriangleMeshDistance.h"
-#include "all_simbody.h"
 #include "base_geometry.h"
+#include "simtk_wrapper.h"
 
 #include <filesystem>
 #include <fstream>

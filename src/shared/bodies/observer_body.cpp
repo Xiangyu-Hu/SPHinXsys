@@ -1,15 +1,13 @@
-#include "solid_body.h"
+#include "observer_body.h"
 
-#include "base_material.h"
-#include "base_particles.hpp"
 #include "sph_system.h"
 
 namespace SPH
 {
 //=================================================================================================//
-void SolidBody::addSolidBodyToSPHSystem()
+void ObserverBody::addObserverBodyToSPHSystem()
 {
-    sph_system_.addSolidBody(this);
+    sph_system_.addObservationBody(this);
 }
 //=================================================================================================//
 } // namespace SPH

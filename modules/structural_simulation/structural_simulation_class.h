@@ -114,7 +114,7 @@ class SolidBodyForSimulation
     DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d, FixedDampingRate>>> *getDampingWithRandomChoice() { return &damping_random_; };
 };
 
-void expandBoundingBox(BoundingBox *original, BoundingBox *additional);
+BoundingBox expandBoundingBox(const BoundingBox &original, const BoundingBox &additional);
 
 void relaxParticlesSingleResolution(bool write_particles_to_file,
                                     SolidBodyFromMesh &solid_body_from_mesh,

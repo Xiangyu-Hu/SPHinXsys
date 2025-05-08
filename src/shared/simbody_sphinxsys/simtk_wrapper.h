@@ -21,12 +21,12 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	type_wrapper.h
+ * @file 	simtk_wrapper.h
  * @brief 	type wrapper between eigen and SimTK.
  * @author	Chi Zhang and Xiangyu Hu
  */
-#ifndef TYPE_WRAPPER_H
-#define TYPE_WRAPPER_H
+#ifndef SIMTK_WRAPPER_H
+#define SIMTK_WRAPPER_H
 
 #include "base_data_type.h"
 #include "simbody_middle.h"
@@ -85,5 +85,68 @@ inline Mat3d SimTKToEigen(const SimTKMat33 &simTK_matrix)
         {(Real)simTK_matrix(1, 0), (Real)simTK_matrix(1, 1), (Real)simTK_matrix(1, 2)},
         {(Real)simTK_matrix(2, 0), (Real)simTK_matrix(2, 1), (Real)simTK_matrix(2, 2)}};
 }
+
+template <>
+struct ZeroData<SimTK::SpatialVec>
+{
+    static inline const SimTK::SpatialVec value = SimTK::SpatialVec(SimTKVec3(0), SimTKVec3(0));
+};
+
+template <>
+struct ZeroData<SimTKVec3>
+{
+    static inline const SimTKVec3 value = SimTKVec3(0);
+};
+
+struct SimbodyState
+{
+    Vec3d initial_origin_location_;
+    Vec3d origin_location_, origin_velocity_, origin_acceleration_;
+    Vec3d angular_velocity_, angular_acceleration_;
+    Mat3d rotation_;
+
+    SimbodyState()
+        : initial_origin_location_(Vec3d::Zero()),
+          origin_location_(Vec3d::Zero()),
+          origin_velocity_(Vec3d::Zero()),
+          origin_acceleration_(Vec3d::Zero()),
+          angular_velocity_(Vec3d::Zero()),
+          angular_acceleration_(Vec3d::Zero()),
+          rotation_(Mat3d::Identity()) {}
+    SimbodyState(const SimTKVec3 &sim_tk_initial_origin_location, SimTK::MobilizedBody &mobod, const SimTK::State &state)
+        : initial_origin_location_(SimTKToEigen(sim_tk_initial_origin_location)),
+          origin_location_(SimTKToEigen(mobod.getBodyOriginLocation(state))),
+          origin_velocity_(SimTKToEigen(mobod.getBodyOriginVelocity(state))),
+          origin_acceleration_(SimTKToEigen(mobod.getBodyOriginAcceleration(state))),
+          angular_velocity_(SimTKToEigen(mobod.getBodyAngularVelocity(state))),
+          angular_acceleration_(SimTKToEigen(mobod.getBodyAngularAcceleration(state))),
+          rotation_(SimTKToEigen(mobod.getBodyRotation(state))) {};
+
+    // implemented according to the Simbody API function with the same name
+    void findStationLocationVelocityAndAccelerationInGround(
+        const Vec3d &initial_location,
+        const Vec3d &initial_normal,
+        Vec3d &locationOnGround,
+        Vec3d &velocityInGround,
+        Vec3d &accelerationInGround,
+        Vec3d &normalInGround)
+    {
+        Vec3d temp_location = rotation_ * (initial_location - initial_origin_location_);
+        locationOnGround = origin_location_ + temp_location;
+
+        Vec3d temp_velocity = angular_velocity_.cross(temp_location);
+        velocityInGround = origin_velocity_ + temp_velocity;
+        accelerationInGround = origin_acceleration_ +
+                               angular_acceleration_.cross(temp_location) +
+                               angular_velocity_.cross(temp_velocity);
+        normalInGround = rotation_ * initial_normal;
+    };
+};
+
+template <>
+struct ZeroData<SimbodyState>
+{
+    static inline const SimbodyState value = SimbodyState();
+};
 } // namespace SPH
-#endif // TYPE_WRAPPER_H
+#endif // SIMTK_WRAPPER_H

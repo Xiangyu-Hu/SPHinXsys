@@ -100,7 +100,7 @@ void PlasticAcousticStep2ndHalf<Inner<OneLevel, RiemannSolverType, KernelCorrect
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
 PlasticAcousticStep2ndHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType, Parameters...>>::
     PlasticAcousticStep2ndHalf(Relation<Contact<Parameters...>> &wall_contact_relation)
-    : PlasticAcousticStep<Interaction<Contact<Wall, Parameters...>>>(wall_contact_relation),
+    : BaseInteraction(wall_contact_relation), Interaction<Wall>(wall_contact_relation),
       correction_(this->particles_), riemann_solver_(this->plastic_continuum_, this->plastic_continuum_) {}
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>

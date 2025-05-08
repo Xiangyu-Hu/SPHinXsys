@@ -28,8 +28,8 @@
 #ifndef DEVICE_COPYABLE_VARIABLE_H
 #define DEVICE_COPYABLE_VARIABLE_H
 
-#include "all_simbody.h"
 #include "base_data_package.h"
+#include "simtk_wrapper.h"
 
 namespace sycl
 {

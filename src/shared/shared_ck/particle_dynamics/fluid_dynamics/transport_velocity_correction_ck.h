@@ -95,9 +95,9 @@ class TransportVelocityCorrectionCK<Inner<UpdatePolicy, KernelCorrectionType, Re
 //----------------------------------------------
 template <class KernelCorrectionType, class ResolutionType, class LimiterType, class ParticleScopeType, typename... Parameters>
 class TransportVelocityCorrectionCK<Contact<Wall, KernelCorrectionType, ResolutionType, LimiterType, ParticleScopeType, Parameters...>>
-    : public TransportVelocityCorrectionCKBase<Interaction<Contact<Wall, Parameters...>>>
+    : public TransportVelocityCorrectionCKBase<Interaction<Contact<Parameters...>>>, public Interaction<Wall>
 {
-    using BaseInteraction = TransportVelocityCorrectionCKBase<Interaction<Contact<Wall, Parameters...>>>;
+    using BaseInteraction = TransportVelocityCorrectionCKBase<Interaction<Contact<Parameters...>>>;
     using CorrectionKernel = typename KernelCorrectionType::ComputingKernel;
     using ParticleScopeTypeKernel = typename ParticleScopeTypeCK<ParticleScopeType>::ComputingKernel;
 
