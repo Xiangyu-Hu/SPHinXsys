@@ -154,12 +154,12 @@ class BufferOutflowDeletionCK : public BaseLocalDynamics<AlignedBoxByCell>
             };
         };
 
-        class IsMovable
+        class IsUsable
         {
             int *buffer_indicator_;
 
           public:
-            IsMovable(int *buffer_indicator);
+            IsUsable(int *buffer_indicator);
             bool operator()(UnsignedInt index_i) const
             {
                 return buffer_indicator_[index_i] == 0; // not a buffer particle
@@ -175,7 +175,7 @@ class BufferOutflowDeletionCK : public BaseLocalDynamics<AlignedBoxByCell>
         AlignedBox *aligned_box_;
         Vecd *pos_;
         IsDeletable is_deltable_;
-        IsMovable is_movable_;
+        IsUsable is_usable_;
         UnsignedInt *total_real_particles_;
         RemoveRealParticleKernel remove_real_particle_;
     };

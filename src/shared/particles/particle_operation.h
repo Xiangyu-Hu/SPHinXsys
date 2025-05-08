@@ -97,12 +97,12 @@ class RemoveRealParticle
         template <class ExecutionPolicy, class EncloserType>
         ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
 
-        template <class IsDeletable, class IsMovable>
-        void operator()(UnsignedInt index_i, const IsDeletable &is_deletable, const IsMovable &is_movable)
+        template <class IsDeletable, class IsUsable>
+        void operator()(UnsignedInt index_i, const IsDeletable &is_deletable, const IsUsable &is_usable)
         {
             AtomicRef<UnsignedInt> total_real_particles_ref(*total_real_particles_);
             UnsignedInt last_real_particle_index = total_real_particles_ref.fetch_sub(1) - 1;
-            while (is_deletable(last_real_particle_index) || !is_movable(last_real_particle_index))
+            while (is_deletable(last_real_particle_index) || !is_usable(last_real_particle_index))
             {
                 last_real_particle_index = total_real_particles_ref.fetch_sub(1) - 1;
             }

@@ -86,7 +86,7 @@ BufferOutflowDeletionCK::UpdateKernel::
       pos_(encloser.dv_pos_->DelegatedData(ex_policy)),
       is_deltable_(encloser.part_id_, aligned_box_, pos_,
                    encloser.dv_buffer_indicator_->DelegatedData(ex_policy)),
-      is_movable_(encloser.dv_buffer_indicator_->DelegatedData(ex_policy)),
+      is_usable_(encloser.dv_buffer_indicator_->DelegatedData(ex_policy)),
       total_real_particles_(encloser.sv_total_real_particles_->DelegatedData(ex_policy)),
       remove_real_particle_(ex_policy, encloser.remove_real_particle_method_) {}
 //=================================================================================================//
@@ -96,7 +96,7 @@ void BufferOutflowDeletionCK::UpdateKernel::update(UnsignedInt index_i, Real dt)
     {
         if (is_deltable_(index_i) && index_i < *total_real_particles_)
         {
-            remove_real_particle_(index_i, is_deltable_, is_movable_);
+            remove_real_particle_(index_i, is_deltable_, is_usable_);
         }
     }
 }

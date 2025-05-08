@@ -32,7 +32,7 @@ BufferOutflowDeletionCK::UpdateKernel::
       buffer_indicator_(buffer_indicator) {}
 //=================================================================================================//
 BufferOutflowDeletionCK::UpdateKernel::
-    IsMovable::IsMovable(int *buffer_indicator)
+    IsUsable::IsUsable(int *buffer_indicator)
     : buffer_indicator_(buffer_indicator) {}
 //=================================================================================================//
 } // namespace fluid_dynamics
