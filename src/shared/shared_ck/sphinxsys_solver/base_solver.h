@@ -63,13 +63,13 @@ class SPHSolver
             first_relation, std::forward<OtherRelations>(other_relations)...);
     };
 
-    template <typename ExecutePolicy, template <typename...> class LocalDynamicsType,
+    template <typename ExecutePolicy, template <typename...> class InteractionType,
               class ControlType, class RelationType, typename... Args>
-    auto &addInteractionDynamics(RelationType &relation, Args &&...args)
+    auto &addInteractionDynamics(Inner<RelationType> &inner_relation, Args &&...args)
     {
         return *particle_dynamics_keeper_.createPtr<
-            InteractionDynamicsCK<ExecutePolicy, LocalDynamicsType<ControlType, RelationType>>>(
-            relation, std::forward<Args>(args)...);
+            InteractionDynamicsCK<ExecutePolicy, InteractionType<ControlType, RelationType>>>(
+            inner_relation, std::forward<Args>(args)...);
     };
 };
 } // namespace SPH
