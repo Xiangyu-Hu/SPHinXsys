@@ -22,7 +22,7 @@
  * ------------------------------------------------------------------------- */
 /**
  * @file base_solver.h
- * @brief Collection of particle dynamics.
+ * @brief Graph base solver with the help of the Taskflow library.
  * @author	Xiangyu Hu
  */
 
@@ -30,9 +30,11 @@
 #define BASE_SOLVER_H
 
 #include "base_particle_dynamics.h"
+#include "interaction_algorithms_ck.h"
 #include "simple_algorithms_ck.h"
 #include "update_cell_linked_list.h"
-#include "interaction_algorithms_ck.h"
+
+#include <taskflow/taskflow.hpp>
 
 namespace SPH
 {
@@ -45,24 +47,28 @@ class SPHSolver
     virtual ~SPHSolver() {};
 
     template <typename ExecutePolicy, class DynamicsIdentifier, typename... Args>
-    BaseDynamics<void> &addCellLinkedListDynamics(DynamicsIdentifier &identifier, Args &&...args)
+    auto &addCellLinkedListDynamics(DynamicsIdentifier &identifier, Args &&...args)
     {
-        BaseDynamics<void> *cell_linked_List_dynamics =
-            particle_dynamics_keeper_.createPtr<
-                UpdateCellLinkedList<ExecutePolicy, DynamicsIdentifier>>(
-                identifier, std::forward<Args>(args)...);
-        return *cell_linked_List_dynamics;
+        return particle_dynamics_keeper_.createRef<
+            UpdateCellLinkedList<ExecutePolicy, DynamicsIdentifier>>(
+            identifier, std::forward<Args>(args)...);
     };
 
-
-        template <typename ExecutePolicy, class DynamicsIdentifier, typename... Args>
-    BaseDynamics<void> &addInteractionDynamics(DynamicsIdentifier &identifier, Args &&...args)
+    template <typename ExecutePolicy, typename... RelationTypes>
+    auto &addRelationDynamics(RelationTypes &&...relations)
     {
-        BaseDynamics<void> *interaction_dynamics =
-            particle_dynamics_keeper_.createPtr<
-                InteractionDynamicsCK<ExecutePolicy, DynamicsIdentifier>>(
-                identifier, std::forward<Args>(args)...);
-        return *cell_linked_List_dynamics;
+        return particle_dynamics_keeper_.createRef<
+            UpdateRelation<ExecutePolicy, DynamicsIdentifier>>(
+            identifier, std::forward<Args>(args)...);
+    };
+
+    template <typename ExecutePolicy, template <typename...> class LocalDynamicsType,
+              class ControlType, class RelationType, typename... Args>
+    auto &addInteractionDynamics(RelationType &relation, Args &&...args)
+    {
+        return particle_dynamics_keeper_.createRef<
+            InteractionDynamicsCK<ExecutePolicy, LocalDynamicsType<ControlType, RelationType>>>(
+            relation, std::forward<Args>(args)...);
     };
 };
 } // namespace SPH

@@ -41,10 +41,43 @@ class InteractionDynamicsCK;
 template <>
 class InteractionDynamicsCK<Base>
 {
+    UniquePtrsKeeper<BaseDynamics<void>> supplementary_dynamics_keeper_;
+
   public:
     InteractionDynamicsCK() {};
-    void addPreProcess(BaseDynamics<void> *pre_process) { pre_processes_.push_back(pre_process); };
-    void addPostProcess(BaseDynamics<void> *post_process) { post_processes_.push_back(post_process); };
+
+    template <typename ExecutePolicy, template <typename...> class LocalDynamicsType,
+              class ControlType, class RelationType, typename... Args>
+    auto &addContactInteraction(RelationType &relation, Args &&...args)
+    {
+        post_processes_.push_back(
+            supplementary_dynamics_keeper_.createPtr<
+                InteractionDynamicsCK<ExecutePolicy, LocalDynamicsType<ControlType, RelationType>>>(
+                relation, std::forward<Args>(args)...));
+        return *this;
+    };
+
+    template <typename ExecutePolicy, template <typename...> class LocalDynamicsType,
+              typename... ControlTypes, class DynamicsIdentifier, typename... Args>
+    auto &addPostStateDynamics(DynamicsIdentifier &identifier, Args &&...args)
+    {
+        post_processes_.push_back(
+            supplementary_dynamics_keeper_.createPtr<
+                StateDynamics<ExecutePolicy, LocalDynamicsType<ControlTypes..., DynamicsIdentifier>>>(
+                identifier, std::forward<Args>(args)...));
+        return *this;
+    };
+
+    template <typename ExecutePolicy, template <typename...> class LocalDynamicsType,
+              typename... ControlTypes, class DynamicsIdentifier, typename... Args>
+    auto &addPreStateDynamics(DynamicsIdentifier &identifier, Args &&...args)
+    {
+        pre_processes_.push_back(
+            supplementary_dynamics_keeper_.createPtr<
+                StateDynamics<ExecutePolicy, LocalDynamicsType<ControlTypes..., DynamicsIdentifier>>>(
+                identifier, std::forward<Args>(args)...));
+        return *this;
+    };
 
   protected:
     /** pre process such as update ghost state */
