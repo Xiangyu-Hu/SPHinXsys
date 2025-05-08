@@ -193,10 +193,7 @@ int main(int ac, char *av[])
     auto &water_high_resolution_cell_linked_list = solver.addCellLinkedListDynamics<MainExecutionPolicy>(water_high_resolution_level);
     auto &cylinder_cell_linked_list = solver.addCellLinkedListDynamics<MainExecutionPolicy>(cylinder);
 
-    UpdateCellLinkedList<MainExecutionPolicy, BodyPartitionSpatial> water_low_resolution_cell_linked_list(water_low_resolution_level);
-    UpdateCellLinkedList<MainExecutionPolicy, BodyPartitionSpatial> water_high_resolution_cell_linked_list(water_high_resolution_level);
-    UpdateCellLinkedList<MainExecutionPolicy, RealBody> cylinder_cell_linked_list(cylinder);
-
+    
     UpdateRelation<
         MainExecutionPolicy,
         Inner<BodyPartitionSpatial, SmoothingLength<Continuous>>,

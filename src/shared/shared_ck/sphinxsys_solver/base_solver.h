@@ -60,7 +60,7 @@ class SPHSolver
     {
         BaseDynamics<void> *interaction_dynamics =
             particle_dynamics_keeper_.createPtr<
-                UpdateCellLinkedList<ExecutePolicy, DynamicsIdentifier>>(
+                InteractionDynamicsCK<ExecutePolicy, DynamicsIdentifier>>(
                 identifier, std::forward<Args>(args)...);
         return *cell_linked_List_dynamics;
     };
