@@ -126,7 +126,7 @@ class DensityRegularization<Inner<WithUpdate, FlowType, ParticleScopeType, Param
     using ParticleScopeTypeKernel = typename ParticleScopeTypeCK<ParticleScopeType>::ComputingKernel;
 
   public:
-    explicit DensityRegularization(Relation<Inner<Parameters...>> &inner_relation);
+    explicit DensityRegularization(Inner<Parameters...> &inner_relation);
     virtual ~DensityRegularization() {};
 
     class InteractKernel
@@ -166,7 +166,7 @@ class DensityRegularization<Contact<Parameters...>>
     : public DensityRegularization<Base, Contact<Parameters...>>
 {
   public:
-    explicit DensityRegularization(Relation<Contact<Parameters...>> &contact_relation);
+    explicit DensityRegularization(Contact<Parameters...> &contact_relation);
     virtual ~DensityRegularization() {};
 
     class InteractKernel

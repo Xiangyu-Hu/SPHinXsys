@@ -22,7 +22,7 @@
  * ------------------------------------------------------------------------- */
 /**
  * @file 	stress_diffusion.h
- * @brief 	Here, we define the ck_version for stress diffusion. 
+ * @brief 	Here, we define the ck_version for stress diffusion.
  * @details Refer to Feng et al(2021).
  * @author	Shuang Li, Xiangyu Hu and Shuaihao Zhang
  */
@@ -32,11 +32,11 @@
 
 #include "base_continuum_dynamics.h"
 #include "constraint_dynamics.h"
+#include "continuum_integration_1st_ck.h"
+#include "continuum_integration_1st_ck.hpp"
 #include "fluid_integration.hpp"
 #include "general_continuum.h"
 #include "general_continuum.hpp"
-#include "continuum_integration_1st_ck.h"
-#include "continuum_integration_1st_ck.hpp"
 namespace SPH
 {
 namespace continuum_dynamics
@@ -49,15 +49,16 @@ class StressDiffusionCK<Inner<Parameters...>> : public PlasticAcousticStep<Inter
 {
     using PlasticKernel = typename PlasticContinuum::PlasticKernel;
     using BaseInteraction = PlasticAcousticStep<Interaction<Inner<Parameters...>>>;
+
   public:
-    explicit StressDiffusionCK(Relation<Inner<Parameters...>> &inner_relation);
-    virtual ~StressDiffusionCK(){};
-    
-    class InteractKernel: public BaseInteraction::InteractKernel
+    explicit StressDiffusionCK(Inner<Parameters...> &inner_relation);
+    virtual ~StressDiffusionCK() {};
+
+    class InteractKernel : public BaseInteraction::InteractKernel
     {
       public:
         template <class ExecutionPolicy, class EncloserType>
-        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);       
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
         void interact(size_t index_i, Real dt = 0.0);
 
       protected:
@@ -68,11 +69,12 @@ class StressDiffusionCK<Inner<Parameters...>> : public PlasticAcousticStep<Inter
         Vecd *pos_, *force_prior_;
         Mat3d *stress_tensor_3D_, *stress_rate_3D_;
     };
-   protected:
+
+  protected:
     Real dv_zeta_ = 0.1, dv_phi_; /*diffusion coefficient*/
     Real dv_smoothing_length_, dv_sound_speed_;
     DiscreteVariable<Vecd> *dv_pos_;
-};    
+};
 
 using StressDiffusionInnerCK = StressDiffusionCK<Inner<>>;
 } // namespace continuum_dynamics

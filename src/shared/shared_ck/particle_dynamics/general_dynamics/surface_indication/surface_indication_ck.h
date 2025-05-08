@@ -82,7 +82,7 @@ class FreeSurfaceIndicationCK<Inner<WithUpdate, FlowType, Parameters...>>
     : public FreeSurfaceIndicationCK<Base, Inner<Parameters...>>
 {
   public:
-    explicit FreeSurfaceIndicationCK(Relation<Inner<Parameters...>> &inner_relation);
+    explicit FreeSurfaceIndicationCK(Inner<Parameters...> &inner_relation);
     virtual ~FreeSurfaceIndicationCK() {}
 
     //------------------------------------------------------------------------------------------//
@@ -145,7 +145,7 @@ class FreeSurfaceIndicationCK<Contact<Parameters...>>
     : public FreeSurfaceIndicationCK<Base, Contact<Parameters...>>
 {
   public:
-    explicit FreeSurfaceIndicationCK(Relation<Contact<Parameters...>> &contact_relation);
+    explicit FreeSurfaceIndicationCK(Contact<Parameters...> &contact_relation);
     virtual ~FreeSurfaceIndicationCK() {}
 
     //------------------------------------------------------------------------------------------//

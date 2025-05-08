@@ -73,7 +73,7 @@ class LinearCorrectionMatrix<Inner<WithUpdate, Parameters...>>
 {
 
   public:
-    explicit LinearCorrectionMatrix(Relation<Inner<Parameters...>> &inner_relation, Real alpha = Real(0))
+    explicit LinearCorrectionMatrix(Inner<Parameters...> &inner_relation, Real alpha = Real(0))
         : LinearCorrectionMatrix<Base, Inner<Parameters...>>(inner_relation), alpha_(alpha) {};
     template <typename BodyRelationType, typename FirstArg>
     explicit LinearCorrectionMatrix(DynamicsArgs<BodyRelationType, FirstArg> parameters)
@@ -113,7 +113,7 @@ class LinearCorrectionMatrix<Contact<Parameters...>>
     : public LinearCorrectionMatrix<Base, Contact<Parameters...>>
 {
   public:
-    explicit LinearCorrectionMatrix(Relation<Contact<Parameters...>> &contact_relation);
+    explicit LinearCorrectionMatrix(Contact<Parameters...> &contact_relation);
     virtual ~LinearCorrectionMatrix() {};
 
     class InteractKernel

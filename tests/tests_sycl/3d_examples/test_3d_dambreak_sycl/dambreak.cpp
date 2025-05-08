@@ -94,9 +94,9 @@ int main(int ac, char *av[])
     //	Basically the the range of bodies to build neighbor particle lists.
     //  Generally, we first define all the inner relations, then the contact relations.
     //----------------------------------------------------------------------
-    Relation<Inner<>> water_block_inner(water_block);
-    Relation<Contact<>> water_wall_contact(water_block, {&wall_boundary});
-    Relation<Contact<>> fluid_observer_contact(fluid_observer, {&water_block});
+    Inner<> water_block_inner(water_block);
+    Contact<> water_wall_contact(water_block, {&wall_boundary});
+    Contact<> fluid_observer_contact(fluid_observer, {&water_block});
     //----------------------------------------------------------------------
     // Define the main execution policy for this case.
     //----------------------------------------------------------------------

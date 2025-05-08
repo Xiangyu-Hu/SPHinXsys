@@ -32,6 +32,7 @@
 #include "base_particle_dynamics.h"
 #include "interaction_algorithms_ck.h"
 #include "simple_algorithms_ck.h"
+#include "update_body_relation.h"
 #include "update_cell_linked_list.h"
 
 #include <taskflow/taskflow.hpp>
@@ -49,24 +50,24 @@ class SPHSolver
     template <typename ExecutePolicy, class DynamicsIdentifier, typename... Args>
     auto &addCellLinkedListDynamics(DynamicsIdentifier &identifier, Args &&...args)
     {
-        return particle_dynamics_keeper_.createRef<
+        return *particle_dynamics_keeper_.createPtr<
             UpdateCellLinkedList<ExecutePolicy, DynamicsIdentifier>>(
             identifier, std::forward<Args>(args)...);
     };
 
-    template <typename ExecutePolicy, typename... RelationTypes>
-    auto &addRelationDynamics(RelationTypes &&...relations)
+    template <typename ExecutePolicy, class FirstRelation, typename... OtherRelations>
+    auto &addRelationDynamics(FirstRelation &first_relation, OtherRelations &&...other_relations)
     {
-        return particle_dynamics_keeper_.createRef<
-            UpdateRelation<ExecutePolicy, DynamicsIdentifier>>(
-            identifier, std::forward<Args>(args)...);
+        return *particle_dynamics_keeper_.createPtr<
+            UpdateRelation<ExecutePolicy, FirstRelation, OtherRelations...>>(
+            first_relation, std::forward<OtherRelations>(other_relations)...);
     };
 
     template <typename ExecutePolicy, template <typename...> class LocalDynamicsType,
               class ControlType, class RelationType, typename... Args>
     auto &addInteractionDynamics(RelationType &relation, Args &&...args)
     {
-        return particle_dynamics_keeper_.createRef<
+        return *particle_dynamics_keeper_.createPtr<
             InteractionDynamicsCK<ExecutePolicy, LocalDynamicsType<ControlType, RelationType>>>(
             relation, std::forward<Args>(args)...);
     };

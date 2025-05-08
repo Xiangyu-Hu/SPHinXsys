@@ -44,7 +44,7 @@ FreeSurfaceIndicationCK<Base, RelationType<Parameters...>>::InteractKernel::
 //=================================================================================================//
 template <class FlowType, typename... Parameters>
 FreeSurfaceIndicationCK<Inner<WithUpdate, FlowType, Parameters...>>::
-    FreeSurfaceIndicationCK(Relation<Inner<Parameters...>> &inner_relation)
+    FreeSurfaceIndicationCK(Inner<Parameters...> &inner_relation)
     : FreeSurfaceIndicationCK<Base, Inner<Parameters...>>(inner_relation),
       dv_previous_surface_indicator_(
           this->particles_->template registerStateVariableOnly<int>("PreviousSurfaceIndicator"))
@@ -144,7 +144,7 @@ void FreeSurfaceIndicationCK<Inner<WithUpdate, FlowType, Parameters...>>::Update
 //=================================================================================================//
 template <typename... Parameters>
 FreeSurfaceIndicationCK<Contact<Parameters...>>::
-    FreeSurfaceIndicationCK(Relation<Contact<Parameters...>> &contact_relation)
+    FreeSurfaceIndicationCK(Contact<Parameters...> &contact_relation)
     : FreeSurfaceIndicationCK<Base, Contact<Parameters...>>(contact_relation)
 {
     for (size_t k = 0; k != this->contact_particles_.size(); ++k)

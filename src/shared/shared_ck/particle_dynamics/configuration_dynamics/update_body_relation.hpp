@@ -11,7 +11,7 @@ namespace SPH
 //=================================================================================================//
 template <class ExecutionPolicy, typename... Parameters>
 UpdateRelation<ExecutionPolicy, Inner<Parameters...>>::
-    UpdateRelation(Relation<Inner<Parameters...>> &inner_relation)
+    UpdateRelation(Inner<Parameters...> &inner_relation)
     : Interaction<Inner<Parameters...>>(inner_relation),
       BaseDynamics<void>(), ex_policy_(ExecutionPolicy{}),
       cell_linked_list_(DynamicCast<CellLinkedList>(

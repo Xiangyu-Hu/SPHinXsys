@@ -48,13 +48,13 @@ class UpdateRelation<ExecutionPolicy, Inner<Parameters...>>
 {
     using BaseInteraction = Interaction<Inner<Parameters...>>;
     using NeighborCriterion = typename BaseInteraction::InteractKernel::NeighborCriterion;
-    using RelationType = Relation<Inner<Parameters...>>;
+    using RelationType = Inner<Parameters...>;
     using Identifier = typename BaseInteraction::Identifier;
     using MaskedSource = typename Identifier::SourceParticleMask;
     using MaskedCriterion = typename Identifier::template TargetParticleMask<NeighborCriterion>;
 
   public:
-    UpdateRelation(Relation<Inner<Parameters...>> &inner_relation);
+    UpdateRelation(Inner<Parameters...> &inner_relation);
     virtual ~UpdateRelation() {};
     virtual void exec(Real dt = 0.0) override;
 
@@ -86,7 +86,7 @@ class UpdateRelation<ExecutionPolicy, Contact<Parameters...>>
 {
     using BaseInteraction = Interaction<Contact<Parameters...>>;
     using NeighborCriterion = typename BaseInteraction::InteractKernel::NeighborCriterion;
-    using RelationType = Relation<Contact<Parameters...>>;
+    using RelationType = Contact<Parameters...>;
     using SourceType = typename RelationType::SourceType;
     using TargetType = typename RelationType::TargetType;
     using MaskedSource = typename SourceType::SourceParticleMask;

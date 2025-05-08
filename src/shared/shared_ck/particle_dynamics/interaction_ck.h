@@ -48,7 +48,7 @@ template <class DynamicsIdentifier, typename... Parameters>
 class Interaction<Inner<DynamicsIdentifier, Parameters...>>
     : public BaseLocalDynamics<DynamicsIdentifier>
 {
-    typedef Relation<Inner<DynamicsIdentifier, Parameters...>> InnerRelationType;
+    typedef Inner<DynamicsIdentifier, Parameters...> InnerRelationType;
     using NeighborList = typename InnerRelationType::NeighborList;
     using NeighborMethod = typename InnerRelationType::NeighborMethodType;
     using Neighborhood = Neighbor<NeighborMethod>;
@@ -76,7 +76,7 @@ template <>
 class Interaction<Inner<>> : public Interaction<Inner<RealBody, SmoothingLength<SingleValued>>>
 {
   public:
-    explicit Interaction(Relation<Inner<RealBody, SmoothingLength<SingleValued>>> &inner_relation)
+    explicit Interaction(Inner<RealBody, SmoothingLength<SingleValued>> &inner_relation)
         : Interaction<Inner<RealBody, SmoothingLength<SingleValued>>>(inner_relation) {};
     virtual ~Interaction() {};
 };
@@ -85,7 +85,7 @@ template <class SourceIdentifier, typename... Parameters>
 class Interaction<Contact<SourceIdentifier, Parameters...>>
     : public BaseLocalDynamics<SourceIdentifier>
 {
-    typedef Relation<Contact<SourceIdentifier, Parameters...>> ContactRelationType;
+    typedef Contact<SourceIdentifier, Parameters...> ContactRelationType;
     using NeighborList = typename ContactRelationType::NeighborList;
     using NeighborMethod = typename ContactRelationType::NeighborMethodType;
     using Neighborhood = Neighbor<NeighborMethod>;
@@ -117,7 +117,7 @@ template <>
 class Interaction<Contact<>> : public Interaction<Contact<SPHBody, RealBody, SmoothingLength<SingleValued>>>
 {
   public:
-    explicit Interaction(Relation<Contact<>> &contact_relation)
+    explicit Interaction(Contact<> &contact_relation)
         : Interaction<Contact<SPHBody, RealBody, SmoothingLength<SingleValued>>>(contact_relation) {};
     virtual ~Interaction() {};
 };

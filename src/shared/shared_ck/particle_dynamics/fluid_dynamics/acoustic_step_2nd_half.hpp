@@ -10,7 +10,7 @@ namespace fluid_dynamics
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
 AcousticStep2ndHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType, Parameters...>>::
-    AcousticStep2ndHalf(Relation<Inner<Parameters...>> &inner_relation)
+    AcousticStep2ndHalf(Inner<Parameters...> &inner_relation)
     : AcousticStep<Interaction<Inner<Parameters...>>>(inner_relation),
       kernel_correction_(this->particles_),
       fluid_(DynamicCast<FluidType>(this, this->sph_body_.getBaseMaterial())),
@@ -83,7 +83,7 @@ void AcousticStep2ndHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
 AcousticStep2ndHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType, Parameters...>>::
-    AcousticStep2ndHalf(Relation<Contact<Parameters...>> &wall_contact_relation)
+    AcousticStep2ndHalf(Contact<Parameters...> &wall_contact_relation)
     : BaseInteraction(wall_contact_relation), Interaction<Wall>(wall_contact_relation),
       kernel_correction_(this->particles_),
       fluid_(DynamicCast<FluidType>(this, this->sph_body_.getBaseMaterial())),
@@ -129,7 +129,7 @@ void AcousticStep2ndHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType, 
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
 AcousticStep2ndHalf<Contact<RiemannSolverType, KernelCorrectionType, Parameters...>>::
-    AcousticStep2ndHalf(Relation<Contact<Parameters...>> &wall_contact_relation)
+    AcousticStep2ndHalf(Contact<Parameters...> &wall_contact_relation)
     : BaseInteraction(wall_contact_relation), kernel_correction_(this->particles_)
 {
     SourceFluidType &source_fluid =
@@ -180,7 +180,7 @@ void AcousticStep2ndHalf<Contact<RiemannSolverType, KernelCorrectionType, Parame
     }
     drho_dt_[index_i] += density_change_rate * rho_[index_i];
     force_[index_i] += p_dissipation * Vol_[index_i];
-}      
+}
 //=================================================================================================//
 } // namespace fluid_dynamics
 } // namespace SPH

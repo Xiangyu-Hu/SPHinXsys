@@ -80,17 +80,17 @@ Relation<NeighborMethod>::NeighborList::NeighborList(
 //=================================================================================================//
 template <typename DynamicsIdentifier, typename NeighborMethod>
 template <typename... Args>
-Relation<Inner<DynamicsIdentifier, NeighborMethod>>::
-    Relation(DynamicsIdentifier &identifier, Args &&...args)
+Inner<DynamicsIdentifier, NeighborMethod>::
+    Inner(DynamicsIdentifier &identifier, Args &&...args)
     : Relation<NeighborMethod>(
           identifier, StdVec<DynamicsIdentifier *>{&identifier}, std::forward<Args>(args)...),
       identifier_(identifier) {}
 //=================================================================================================//
 template <class SourceIdentifier, class TargetIdentifier, typename NeighborMethod>
-Relation<Contact<SourceIdentifier, TargetIdentifier, NeighborMethod>>::Relation(
+Contact<SourceIdentifier, TargetIdentifier, NeighborMethod>::Contact(
     SourceIdentifier &source_identifier, StdVec<TargetIdentifier *> contact_identifiers, ConfigType config_type)
     : Relation<NeighborMethod>(source_identifier, contact_identifiers, config_type),
-    source_identifier_(source_identifier), contact_identifiers_(contact_identifiers) 
+      source_identifier_(source_identifier), contact_identifiers_(contact_identifiers)
 {
     for (size_t k = 0; k != contact_identifiers.size(); ++k)
     {

@@ -95,12 +95,12 @@ class Relation<NeighborMethod>
 };
 
 template <typename DynamicsIdentifier, typename NeighborMethod>
-class Relation<Inner<DynamicsIdentifier, NeighborMethod>> : public Relation<NeighborMethod>
+class Inner<DynamicsIdentifier, NeighborMethod> : public Relation<NeighborMethod>
 {
   public:
     template <typename... Args>
-    explicit Relation(DynamicsIdentifier &identifier, Args &&...args);
-    virtual ~Relation() {};
+    explicit Inner(DynamicsIdentifier &identifier, Args &&...args);
+    virtual ~Inner() {};
     DynamicsIdentifier &getDynamicsIdentifier() { return identifier_; };
 
   protected:
@@ -108,22 +108,22 @@ class Relation<Inner<DynamicsIdentifier, NeighborMethod>> : public Relation<Neig
 };
 
 template <>
-class Relation<Inner<>> : public Relation<Inner<RealBody, SmoothingLength<SingleValued>>>
+class Inner<> : public Inner<RealBody, SmoothingLength<SingleValued>>
 {
   public:
-    Relation(RealBody &real_body) : Relation<Inner<RealBody, SmoothingLength<SingleValued>>>(real_body) {}
-    virtual ~Relation() {};
+    Inner(RealBody &real_body) : Inner<RealBody, SmoothingLength<SingleValued>>(real_body) {}
+    virtual ~Inner() {};
 };
 
 template <typename SourceIdentifier, class TargetIdentifier, typename NeighborMethod>
-class Relation<Contact<SourceIdentifier, TargetIdentifier, NeighborMethod>> : public Relation<NeighborMethod>
+class Contact<SourceIdentifier, TargetIdentifier, NeighborMethod> : public Relation<NeighborMethod>
 {
   public:
     typedef SourceIdentifier SourceType;
     typedef TargetIdentifier TargetType;
-    explicit Relation(SourceIdentifier &source_identifier, StdVec<TargetIdentifier *> target_identifiers,
-                      ConfigType config_type = ConfigType::Eulerian);
-    virtual ~Relation() {};
+    explicit Contact(SourceIdentifier &source_identifier, StdVec<TargetIdentifier *> target_identifiers,
+                     ConfigType config_type = ConfigType::Eulerian);
+    virtual ~Contact() {};
     SourceIdentifier &getSourceIdentifier() { return source_identifier_; };
     StdVec<SPHBody *> getContactBodies() { return contact_bodies_; };
     StdVec<BaseParticles *> getContactParticles() { return contact_particles_; };
@@ -140,23 +140,23 @@ class Relation<Contact<SourceIdentifier, TargetIdentifier, NeighborMethod>> : pu
 };
 
 template <class SourceIdentifier, class TargetIdentifier>
-class Relation<Contact<SourceIdentifier, TargetIdentifier>>
-    : public Relation<Contact<SourceIdentifier, TargetIdentifier, SmoothingLength<SingleValued>>>
+class Contact<SourceIdentifier, TargetIdentifier>
+    : public Contact<SourceIdentifier, TargetIdentifier, SmoothingLength<SingleValued>>
 {
   public:
-    Relation(SourceIdentifier &source_identifier, StdVec<TargetIdentifier *> contact_identifiers)
-        : Relation<Contact<SourceIdentifier, TargetIdentifier, SmoothingLength<SingleValued>>>(
+    Contact(SourceIdentifier &source_identifier, StdVec<TargetIdentifier *> contact_identifiers)
+        : Contact<SourceIdentifier, TargetIdentifier, SmoothingLength<SingleValued>>(
               source_identifier, contact_identifiers) {}
-    virtual ~Relation() {};
+    virtual ~Contact() {};
 };
 
 template <>
-class Relation<Contact<>> : public Relation<Contact<SPHBody, RealBody, SmoothingLength<SingleValued>>>
+class Contact<> : public Contact<SPHBody, RealBody, SmoothingLength<SingleValued>>
 {
   public:
-    Relation(SPHBody &sph_body, StdVec<RealBody *> contact_bodies)
-        : Relation<Contact<SPHBody, RealBody, SmoothingLength<SingleValued>>>(sph_body, contact_bodies) {}
-    virtual ~Relation() {};
+    Contact(SPHBody &sph_body, StdVec<RealBody *> contact_bodies)
+        : Contact<SPHBody, RealBody, SmoothingLength<SingleValued>>(sph_body, contact_bodies) {}
+    virtual ~Contact() {};
 };
 } // namespace SPH
 #endif // RELATION_CK_H

@@ -155,10 +155,10 @@ int main(int ac, char *av[])
     //	The contact map gives the topological connections between the bodies.
     //	Basically the the range of bodies to build neighbor particle lists.
     //----------------------------------------------------------------------
-    Relation<Inner<>> water_block_inner(water_body);
-    Relation<Contact<>> water_wall_contact(water_body, {&wall_boundary});
-    Relation<Contact<>> horizontal_observer_contact(horizontal_observer, {&water_body});
-    Relation<Contact<>> vertical_observer_contact(vertical_observer, {&water_body});
+    Inner<> water_block_inner(water_body);
+    Contact<> water_wall_contact(water_body, {&wall_boundary});
+    Contact<> horizontal_observer_contact(horizontal_observer, {&water_body});
+    Contact<> vertical_observer_contact(vertical_observer, {&water_body});
     //----------------------------------------------------------------------
     // Define the main execution policy for this case.
     //----------------------------------------------------------------------

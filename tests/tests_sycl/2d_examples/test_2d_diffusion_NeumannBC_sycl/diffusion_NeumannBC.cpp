@@ -134,10 +134,10 @@ int main(int ac, char *av[])
     //	Basically the the range of bodies to build neighbor particle lists.
     //  Generally, we first define all the inner relations, then the contact relations.
     //----------------------------------------------------------------------
-    Relation<Inner<>> diffusion_body_inner(diffusion_body);
-    Relation<Contact<>> diffusion_body_contact_Dirichlet(diffusion_body, {&wall_Dirichlet});
-    Relation<Contact<>> diffusion_body_contact_Neumann(diffusion_body, {&wall_Neumann});
-    Relation<Contact<>> temperature_observer_contact(temperature_observer, {&diffusion_body});
+    Inner<> diffusion_body_inner(diffusion_body);
+    Contact<> diffusion_body_contact_Dirichlet(diffusion_body, {&wall_Dirichlet});
+    Contact<> diffusion_body_contact_Neumann(diffusion_body, {&wall_Neumann});
+    Contact<> temperature_observer_contact(temperature_observer, {&diffusion_body});
     //----------------------------------------------------------------------
     // Define the main execution policy for this case.
     //----------------------------------------------------------------------

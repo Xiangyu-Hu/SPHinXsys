@@ -165,13 +165,14 @@ int main(int ac, char *av[])
     //	Basically the the range of bodies to build neighbor particle lists.
     //  Generally, we first define all the inner relations, then the contact relations.
     //----------------------------------------------------------------------
-    Relation<Inner<BodyPartitionSpatial, SmoothingLength<Continuous>>> water_low_resolution_inner(water_low_resolution_level);
-    Relation<Inner<BodyPartitionSpatial, SmoothingLength<Continuous>>> water_high_resolution_inner(water_high_resolution_level);
-    Relation<Contact<BodyPartitionSpatial, BodyPartitionSpatial, SmoothingLength<Continuous>>>
+    Inner<BodyPartitionSpatial, SmoothingLength<Continuous>> water_low_resolution_inner(water_low_resolution_level);
+    Inner<BodyPartitionSpatial, SmoothingLength<Continuous>> water_high_resolution_inner(water_high_resolution_level);
+    Contact<BodyPartitionSpatial, BodyPartitionSpatial, SmoothingLength<Continuous>>
         water_increase_resolution_contact(water_low_resolution_level, {&water_high_resolution_level});
-    Relation<Contact<BodyPartitionSpatial, BodyPartitionSpatial, SmoothingLength<Continuous>>>
+    Contact<BodyPartitionSpatial, BodyPartitionSpatial, SmoothingLength<Continuous>>
         water_decrease_resolution_contact(water_high_resolution_level, {&water_low_resolution_level});
-    Relation<Contact<BodyPartitionSpatial, RealBody, SmoothingLength<Continuous, SingleValued>>> water_cylinder_contact(water_high_resolution_level, {&cylinder});
+    Contact<BodyPartitionSpatial, RealBody, SmoothingLength<Continuous, SingleValued>>
+        water_cylinder_contact(water_high_resolution_level, {&cylinder});
     //----------------------------------------------------------------------
     //----------------------------------------------------------------------
     // Define the main execution policy for this case.
@@ -193,7 +194,6 @@ int main(int ac, char *av[])
     auto &water_high_resolution_cell_linked_list = solver.addCellLinkedListDynamics<MainExecutionPolicy>(water_high_resolution_level);
     auto &cylinder_cell_linked_list = solver.addCellLinkedListDynamics<MainExecutionPolicy>(cylinder);
 
-    
     UpdateRelation<
         MainExecutionPolicy,
         Inner<BodyPartitionSpatial, SmoothingLength<Continuous>>,

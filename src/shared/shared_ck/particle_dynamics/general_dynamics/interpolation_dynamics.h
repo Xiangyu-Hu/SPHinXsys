@@ -48,7 +48,7 @@ template <typename DataType, typename... Parameters>
 class Interpolation<Contact<Base, DataType, Parameters...>> : public Interaction<Contact<Parameters...>>
 {
   public:
-    Interpolation(Relation<Contact<Parameters...>> &pair_contact_relation, const std::string &variable_name);
+    Interpolation(Contact<Parameters...> &pair_contact_relation, const std::string &variable_name);
     template <typename BodyRelationType, typename FirstArg>
     explicit Interpolation(DynamicsArgs<BodyRelationType, FirstArg> parameters)
         : Interpolation(parameters.identifier_, std::get<0>(parameters.others_)){};

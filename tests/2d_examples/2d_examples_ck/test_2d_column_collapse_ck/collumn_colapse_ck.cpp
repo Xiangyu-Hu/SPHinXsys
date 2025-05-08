@@ -94,8 +94,8 @@ int main(int ac, char *av[])
     // Combined relations built from basic relations
     // which is only used for update configuration.
     //----------------------------------------------------------------------
-    Relation<Inner<>> soil_block_inner(soil_block);
-    Relation<Contact<>> soil_block_contact(soil_block, {&wall_boundary});
+    Inner<> soil_block_inner(soil_block);
+    Contact<> soil_block_contact(soil_block, {&wall_boundary});
 
     UpdateRelation<MainExecutionPolicy, Inner<>, Contact<>> soil_block_update_complex_relation(soil_block_inner, soil_block_contact);
     ParticleSortCK<MainExecutionPolicy> particle_sort(soil_block);

@@ -28,7 +28,7 @@ TransportVelocityCorrectionCKBase<BaseInteractionType>::
 //========================================================================================
 template <class UpdatePolicy, class KernelCorrectionType, class ResolutionType, class LimiterType, class ParticleScopeType, typename... Parameters>
 TransportVelocityCorrectionCK<Inner<UpdatePolicy, KernelCorrectionType, ResolutionType, LimiterType, ParticleScopeType, Parameters...>>::
-    TransportVelocityCorrectionCK(Relation<Inner<Parameters...>> &inner_relation, Real coefficient)
+    TransportVelocityCorrectionCK(Inner<Parameters...> &inner_relation, Real coefficient)
     : TransportVelocityCorrectionCKBase<Interaction<Inner<Parameters...>>>(inner_relation),
       kernel_correction_(this->particles_),
       h_ref_(this->sph_body_.getSPHAdaptation().ReferenceSmoothingLength()),
@@ -129,7 +129,7 @@ void TransportVelocityCorrectionCK<
 
 template <class KernelCorrectionType, class ResolutionType, class LimiterType, class ParticleScopeType, typename... Parameters>
 TransportVelocityCorrectionCK<Contact<Wall, KernelCorrectionType, ResolutionType, LimiterType, ParticleScopeType, Parameters...>>::
-    TransportVelocityCorrectionCK(Relation<Contact<Parameters...>> &contact_relation)
+    TransportVelocityCorrectionCK(Contact<Parameters...> &contact_relation)
     : BaseInteraction(contact_relation), Interaction<Wall>(contact_relation),
       kernel_correction_(this->particles_)
 {
