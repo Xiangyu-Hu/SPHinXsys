@@ -27,9 +27,13 @@ BufferOutflowDeletionCK::BufferOutflowDeletionCK(AlignedBoxByCell &aligned_box_p
 //=================================================================================================//
 BufferOutflowDeletionCK::UpdateKernel::
     IsDeletable::IsDeletable(int part_id, AlignedBox *aligned_box,
-                             Vecd *pos, int *buffer_particle_indicator)
+                             Vecd *pos, int *buffer_indicator)
     : part_id_(part_id), aligned_box_(aligned_box), pos_(pos),
-      buffer_indicator_(buffer_particle_indicator) {}
+      buffer_indicator_(buffer_indicator) {}
+//=================================================================================================//
+BufferOutflowDeletionCK::UpdateKernel::
+    IsMovable::IsMovable(int *buffer_indicator)
+    : buffer_indicator_(buffer_indicator) {}
 //=================================================================================================//
 } // namespace fluid_dynamics
 } // namespace SPH

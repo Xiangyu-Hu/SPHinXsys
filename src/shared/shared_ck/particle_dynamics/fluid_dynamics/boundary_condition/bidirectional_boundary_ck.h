@@ -52,7 +52,7 @@ class BufferIndicationCK : public BaseLocalDynamics<AlignedBoxByCell>
       public:
         template <class ExecutionPolicy, class EncloserType>
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-        void update(size_t index_i, Real dt = 0.0);
+        void update(UnsignedInt index_i, Real dt = 0.0);
 
       protected:
         int part_id_;
@@ -98,7 +98,7 @@ class BufferInflowInjectionCK : public BaseLocalDynamics<AlignedBoxByCell>
       public:
         template <class ExecutionPolicy, class EncloserType>
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-        void update(size_t index_i, Real dt = 0.0);
+        void update(UnsignedInt index_i, Real dt = 0.0);
 
       private:
         int part_id_;
@@ -145,24 +145,37 @@ class BufferOutflowDeletionCK : public BaseLocalDynamics<AlignedBoxByCell>
             AlignedBox *aligned_box_;
             Vecd *pos_;
             int *buffer_indicator_;
-            IsDeletable(int part_id, AlignedBox *aligned_box, Vecd *pos, int *buffer_particle_indicator);
+            IsDeletable(int part_id, AlignedBox *aligned_box, Vecd *pos, int *buffer_indicator);
 
-            bool operator()(size_t index_i) const
+            bool operator()(UnsignedInt index_i) const
             {
                 return buffer_indicator_[index_i] == part_id_ &&
                        aligned_box_->checkLowerBound(pos_[index_i]);
             };
         };
 
+        class IsMovable
+        {
+            int *buffer_indicator_;
+
+          public:
+            IsMovable(int *buffer_indicator);
+            bool operator()(UnsignedInt index_i) const
+            {
+                return buffer_indicator_[index_i] == 0; // not a buffer particle
+            };
+        };
+
       public:
         template <class ExecutionPolicy, class EncloserType>
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-        void update(size_t index_i, Real dt = 0.0);
+        void update(UnsignedInt index_i, Real dt = 0.0);
 
       protected:
         AlignedBox *aligned_box_;
         Vecd *pos_;
         IsDeletable is_deltable_;
+        IsMovable is_movable_;
         UnsignedInt *total_real_particles_;
         RemoveRealParticleKernel remove_real_particle_;
     };
@@ -191,7 +204,7 @@ class PressureVelocityCondition : public BaseLocalDynamics<AlignedBoxByCell>,
       public:
         template <class ExecutionPolicy, class EncloserType>
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-        void update(size_t index_i, Real dt = 0.0);
+        void update(UnsignedInt index_i, Real dt = 0.0);
 
       protected:
         AlignedBox *aligned_box_;

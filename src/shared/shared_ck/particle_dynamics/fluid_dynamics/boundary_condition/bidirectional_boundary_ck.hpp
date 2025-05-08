@@ -16,7 +16,7 @@ BufferIndicationCK::UpdateKernel::
       pos_(encloser.dv_pos_->DelegatedData(ex_policy)),
       buffer_indicator_(encloser.dv_buffer_indicator_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
-void BufferIndicationCK::UpdateKernel::update(size_t index_i, Real dt)
+void BufferIndicationCK::UpdateKernel::update(UnsignedInt index_i, Real dt)
 {
     if (aligned_box_->checkContain(pos_[index_i]))
     {
@@ -62,7 +62,7 @@ BufferInflowInjectionCK<ConditionType>::
       upper_bound_fringe_(encloser.upper_bound_fringe_) {}
 //=================================================================================================//
 template <class ConditionType>
-void BufferInflowInjectionCK<ConditionType>::UpdateKernel::update(size_t index_i, Real dt)
+void BufferInflowInjectionCK<ConditionType>::UpdateKernel::update(UnsignedInt index_i, Real dt)
 {
     if (!aligned_box_->checkInBounds(pos_[index_i]))
     {
@@ -86,16 +86,17 @@ BufferOutflowDeletionCK::UpdateKernel::
       pos_(encloser.dv_pos_->DelegatedData(ex_policy)),
       is_deltable_(encloser.part_id_, aligned_box_, pos_,
                    encloser.dv_buffer_indicator_->DelegatedData(ex_policy)),
+      is_movable_(encloser.dv_buffer_indicator_->DelegatedData(ex_policy)),
       total_real_particles_(encloser.sv_total_real_particles_->DelegatedData(ex_policy)),
       remove_real_particle_(ex_policy, encloser.remove_real_particle_method_) {}
 //=================================================================================================//
-void BufferOutflowDeletionCK::UpdateKernel::update(size_t index_i, Real dt)
+void BufferOutflowDeletionCK::UpdateKernel::update(UnsignedInt index_i, Real dt)
 {
     if (!aligned_box_->checkInBounds(pos_[index_i]))
     {
         if (is_deltable_(index_i) && index_i < *total_real_particles_)
         {
-            remove_real_particle_(index_i, is_deltable_);
+            remove_real_particle_(index_i, is_deltable_, is_movable_);
         }
     }
 }
@@ -126,7 +127,7 @@ PressureVelocityCondition<KernelCorrectionType, ConditionType>::UpdateKernel::
 //=================================================================================================//
 template <class KernelCorrectionType, typename ConditionType>
 void PressureVelocityCondition<KernelCorrectionType, ConditionType>::
-    UpdateKernel::update(size_t index_i, Real dt)
+    UpdateKernel::update(UnsignedInt index_i, Real dt)
 {
     if (aligned_box_->checkContain(pos_[index_i]))
     {
