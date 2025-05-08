@@ -372,7 +372,7 @@ return_data roof_under_self_weight(Real dp, bool cvt = true, int particle_number
 
     ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> computing_time_step_size(shell_body);
 
-    BodyPartByParticle constrained_edges(shell_body, "constrained_edges");
+    BodyPartByParticle constrained_edges(shell_body);
     BaseParticles &base_particles = shell_body.getBaseParticles();
     auto constrained_edge_ids = [&]() { // brute force finding the edges
         IndexVector ids;

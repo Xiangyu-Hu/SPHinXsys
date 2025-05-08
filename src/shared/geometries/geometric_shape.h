@@ -31,21 +31,20 @@
 
 #include "base_geometry.h"
 #include "geometric_element.h"
+#include "transform_geometry.h"
 
 namespace SPH
 {
-class GeometricShapeBox : public GeometricBox, public Shape
+class GeometricShapeBox : public TransformShape<GeometricBox>
 {
   public:
-    explicit GeometricShapeBox(const Vecd &halfsize,
-                               const std::string &shape_name = "GeometricShapeBox");
-    virtual ~GeometricShapeBox(){};
-
-    virtual bool checkContain(const Vecd &probe_point, bool BOUNDARY_INCLUDED = true) override;
-    virtual Vecd findClosestPoint(const Vecd &probe_point) override;
-
-  protected:
-    virtual BoundingBox findBounds() override;
+    GeometricShapeBox(const Transform &transform, const Vecd &halfsize,
+                      const std::string &name = "GeometricShapeBox");
+    explicit GeometricShapeBox(const BoundingBox &bounding_box,
+                               const std::string &name = "GeometricShapeBox");
+    GeometricShapeBox(const Vecd &lower_bound, const Vecd &upper_bound,
+                      const std::string &name = "GeometricShapeBox");
+    virtual ~GeometricShapeBox() {};
 };
 
 class GeometricShapeBall : public GeometricBall, public Shape
@@ -54,8 +53,8 @@ class GeometricShapeBall : public GeometricBall, public Shape
 
   public:
     explicit GeometricShapeBall(const Vecd &center, Real radius,
-                                const std::string &shape_name = "GeometricShapeBall");
-    virtual ~GeometricShapeBall(){};
+                                const std::string &name = "GeometricShapeBall");
+    virtual ~GeometricShapeBall() {};
 
     virtual bool checkContain(const Vecd &probe_point, bool BOUNDARY_INCLUDED = true) override;
     virtual Vecd findClosestPoint(const Vecd &probe_point) override;

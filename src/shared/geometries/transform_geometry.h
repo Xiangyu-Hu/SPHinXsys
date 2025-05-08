@@ -71,25 +71,26 @@ class TransformGeometry : public GeometryType
  * before or/and after access the interface functions.
  * Note that this is more suitable to apply for simple geometric shapes.
  */
-template <class ShapeType>
-class TransformShape : public TransformGeometry<ShapeType>
+template <class GeometryType>
+class TransformShape : public TransformGeometry<GeometryType>, public Shape
 {
 
   public:
     /** template constructor for general shapes. */
     template <typename... Args>
-    explicit TransformShape(const Transform &transform, Args &&...args)
-        : TransformGeometry<ShapeType>(transform, std::forward<Args>(args)...){};
+    explicit TransformShape(const std::string &name, const Transform &transform, Args &&...args)
+        : TransformGeometry<GeometryType>(transform, std::forward<Args>(args)...),
+          Shape(name){};
     virtual ~TransformShape() {};
 
     virtual bool checkContain(const Vecd &probe_point, bool BOUNDARY_INCLUDED = true) override
     {
-        return TransformGeometry<ShapeType>::checkContain(probe_point);
+        return TransformGeometry<GeometryType>::checkContain(probe_point);
     };
 
     virtual Vecd findClosestPoint(const Vecd &probe_point) override
     {
-        return TransformGeometry<ShapeType>::findClosestPoint(probe_point);
+        return TransformGeometry<GeometryType>::findClosestPoint(probe_point);
     };
 
   protected:
@@ -98,7 +99,7 @@ class TransformShape : public TransformGeometry<ShapeType>
     // But at least it encloses the underlying shape fully
     virtual BoundingBox findBounds() override
     {
-        BoundingBox original_bound = TransformGeometry<ShapeType>::findBounds();
+        BoundingBox original_bound = TransformGeometry<GeometryType>::findBounds();
         Vecd bb_min = Vecd::Constant(MaxReal);
         Vecd bb_max = Vecd::Constant(-MaxReal);
         for (auto x : {original_bound.first_.x(), original_bound.second_.x()})

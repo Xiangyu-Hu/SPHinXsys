@@ -10,10 +10,10 @@ BaseFlowBoundaryCondition::BaseFlowBoundaryCondition(BodyPartByCell &body_part)
       rho_(particles_->getVariableDataByName<Real>("Density")),
       p_(particles_->getVariableDataByName<Real>("Pressure")),
       pos_(particles_->getVariableDataByName<Vecd>("Position")),
-      vel_(particles_->getVariableDataByName<Vecd>("Velocity")){};
+      vel_(particles_->getVariableDataByName<Vecd>("Velocity")) {};
 //=================================================================================================//
 FlowVelocityBuffer::FlowVelocityBuffer(BodyPartByCell &body_part, Real relaxation_rate)
-    : BaseFlowBoundaryCondition(body_part), relaxation_rate_(relaxation_rate){};
+    : BaseFlowBoundaryCondition(body_part), relaxation_rate_(relaxation_rate) {};
 //=================================================================================================//
 void FlowVelocityBuffer::update(size_t index_i, Real dt)
 {
@@ -22,7 +22,7 @@ void FlowVelocityBuffer::update(size_t index_i, Real dt)
 //=================================================================================================//
 DampingBoundaryCondition::DampingBoundaryCondition(BodyRegionByCell &body_part)
     : BaseFlowBoundaryCondition(body_part), strength_(5.0),
-      damping_zone_bounds_(body_part.getBodyPartShape().getBounds()){};
+      damping_zone_bounds_(body_part.getBodyPartShape().getBounds()) {};
 //=================================================================================================//
 void DampingBoundaryCondition::update(size_t index_i, Real dt)
 {
@@ -32,7 +32,7 @@ void DampingBoundaryCondition::update(size_t index_i, Real dt)
 }
 //=================================================================================================//
 EmitterInflowCondition::
-    EmitterInflowCondition(AlignedBoxPartByParticle &aligned_box_part)
+    EmitterInflowCondition(AlignedBoxByParticle &aligned_box_part)
     : BaseLocalDynamics<BodyPartByParticle>(aligned_box_part),
       fluid_(DynamicCast<Fluid>(this, particles_->getBaseMaterial())),
       sorted_id_(particles_->ParticleSortedIds()),
@@ -59,7 +59,7 @@ void EmitterInflowCondition ::update(size_t original_index_i, Real dt)
 }
 //=================================================================================================//
 EmitterInflowInjection::
-    EmitterInflowInjection(AlignedBoxPartByParticle &aligned_box_part, ParticleBuffer<Base> &buffer)
+    EmitterInflowInjection(AlignedBoxByParticle &aligned_box_part, ParticleBuffer<Base> &buffer)
     : BaseLocalDynamics<BodyPartByParticle>(aligned_box_part),
       fluid_(DynamicCast<Fluid>(this, particles_->getBaseMaterial())),
       original_id_(particles_->ParticleOriginalIds()),
@@ -90,7 +90,7 @@ void EmitterInflowInjection::update(size_t original_index_i, Real dt)
 }
 //=================================================================================================//
 DisposerOutflowDeletion::
-    DisposerOutflowDeletion(AlignedBoxPartByCell &aligned_box_part)
+    DisposerOutflowDeletion(AlignedBoxByCell &aligned_box_part)
     : BaseLocalDynamics<BodyPartByCell>(aligned_box_part),
       pos_(particles_->getVariableDataByName<Vecd>("Position")),
       aligned_box_(aligned_box_part.getAlignedBox()) {}

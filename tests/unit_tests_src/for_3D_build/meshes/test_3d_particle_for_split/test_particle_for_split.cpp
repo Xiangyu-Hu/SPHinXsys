@@ -8,7 +8,7 @@ TEST(test_meshes, split_for)
     Real length = 10;
     Real dp = 1;
 
-    auto shape = makeShared<GeometricShapeBox>(0.5 * length * Vec3d::Ones(), "Shape");
+    auto shape = makeShared<GeometricShapeBox>(Transform(), 0.5 * length * Vec3d::Ones(), "Shape");
 
     BoundingBox bb_system = shape->getBounds();
 

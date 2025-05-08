@@ -105,7 +105,7 @@ int main(int ac, char *av[])
     /** the forces of the system. */
     SimTK::GeneralForceSubsystem forces(MBsystem);
     /** mass properties of the fixed spot. */
-    TransformShape<GeometricShapeBox> fix_spot_shape(Transform(translation_str), halfsize_structure);
+    GeometricShapeBox fix_spot_shape(Transform(translation_str), halfsize_structure);
     StructureSystemForSimbody structure_multibody(structure, fix_spot_shape);
     /** Mass properties of the constrained spot.
      * SimTK::MassProperties(mass, center of mass, inertia)
@@ -167,7 +167,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp write_real_body_states(sph_system);
     /** WaveProbes. */
-    BodyRegionByCell wave_probe_buffer(water_block, makeShared<TransformShape<GeometricShapeBox>>(Transform(translation_FS_gauge), FS_gauge));
+    BodyRegionByCell wave_probe_buffer(water_block, makeShared<GeometricShapeBox>(Transform(translation_FS_gauge), FS_gauge));
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<UpperFrontInAxisDirection<BodyPartByCell>>>
         wave_gauge(wave_probe_buffer, "FreeSurfaceHeight");
     InteractionDynamics<InterpolatingAQuantity<Vecd>>

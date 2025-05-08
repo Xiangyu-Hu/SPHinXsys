@@ -48,7 +48,7 @@ class BaseFlowBoundaryCondition : public BaseLocalDynamics<BodyPartByCell>
 {
   public:
     BaseFlowBoundaryCondition(BodyPartByCell &body_part);
-    virtual ~BaseFlowBoundaryCondition(){};
+    virtual ~BaseFlowBoundaryCondition() {};
 
   protected:
     Real *rho_, *p_;
@@ -65,7 +65,7 @@ class FlowVelocityBuffer : public BaseFlowBoundaryCondition
 {
   public:
     FlowVelocityBuffer(BodyPartByCell &body_part, Real relaxation_rate = 0.3);
-    virtual ~FlowVelocityBuffer(){};
+    virtual ~FlowVelocityBuffer() {};
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
@@ -88,13 +88,13 @@ class InflowVelocityCondition : public BaseFlowBoundaryCondition
 {
   public:
     /** default parameter indicates prescribe velocity */
-    explicit InflowVelocityCondition(AlignedBoxPartByCell &aligned_box_part, Real relaxation_rate = 1.0)
+    explicit InflowVelocityCondition(AlignedBoxByCell &aligned_box_part, Real relaxation_rate = 1.0)
         : BaseFlowBoundaryCondition(aligned_box_part),
           relaxation_rate_(relaxation_rate), aligned_box_(aligned_box_part.getAlignedBox()),
           transform_(aligned_box_.getTransform()), halfsize_(aligned_box_.HalfSize()),
           target_velocity(*this),
-          physical_time_(sph_system_.getSystemVariableDataByName<Real>("PhysicalTime")){};
-    virtual ~InflowVelocityCondition(){};
+          physical_time_(sph_system_.getSystemVariableDataByName<Real>("PhysicalTime")) {};
+    virtual ~InflowVelocityCondition() {};
     AlignedBox &getAlignedBox() { return aligned_box_; };
 
     void update(size_t index_i, Real dt = 0.0)
@@ -145,8 +145,8 @@ class FreeStreamVelocityCorrection : public LocalDynamics
           vel_(particles_->getVariableDataByName<Vecd>("Velocity")),
           indicator_(particles_->getVariableDataByName<int>("Indicator")),
           target_velocity(*this),
-          physical_time_(sph_system_.getSystemVariableDataByName<Real>("PhysicalTime")){};
-    virtual ~FreeStreamVelocityCorrection(){};
+          physical_time_(sph_system_.getSystemVariableDataByName<Real>("PhysicalTime")) {};
+    virtual ~FreeStreamVelocityCorrection() {};
 
     void update(size_t index_i, Real dt = 0.0)
     {
@@ -174,7 +174,7 @@ class DampingBoundaryCondition : public BaseFlowBoundaryCondition
 {
   public:
     explicit DampingBoundaryCondition(BodyRegionByCell &body_part);
-    virtual ~DampingBoundaryCondition(){};
+    virtual ~DampingBoundaryCondition() {};
     void update(size_t index_particle_i, Real dt = 0.0);
 
   protected:
@@ -191,8 +191,8 @@ class DampingBoundaryCondition : public BaseFlowBoundaryCondition
 class EmitterInflowCondition : public BaseLocalDynamics<BodyPartByParticle>
 {
   public:
-    explicit EmitterInflowCondition(AlignedBoxPartByParticle &aligned_box_part);
-    virtual ~EmitterInflowCondition(){};
+    explicit EmitterInflowCondition(AlignedBoxByParticle &aligned_box_part);
+    virtual ~EmitterInflowCondition() {};
 
     virtual void setupDynamics(Real dt = 0.0) override { updateTransform(); };
     void update(size_t original_index_i, Real dt = 0.0);
@@ -209,7 +209,7 @@ class EmitterInflowCondition : public BaseLocalDynamics<BodyPartByParticle>
     Transform &updated_transform_, old_transform_;
 
     /** no transform by default */
-    virtual void updateTransform(){};
+    virtual void updateTransform() {};
     virtual Vecd getTargetVelocity(Vecd &position, Vecd &velocity) = 0;
 };
 
@@ -222,8 +222,8 @@ class EmitterInflowCondition : public BaseLocalDynamics<BodyPartByParticle>
 class EmitterInflowInjection : public BaseLocalDynamics<BodyPartByParticle>
 {
   public:
-    EmitterInflowInjection(AlignedBoxPartByParticle &aligned_box_part, ParticleBuffer<Base> &buffer);
-    virtual ~EmitterInflowInjection(){};
+    EmitterInflowInjection(AlignedBoxByParticle &aligned_box_part, ParticleBuffer<Base> &buffer);
+    virtual ~EmitterInflowInjection() {};
 
     void update(size_t original_index_i, Real dt = 0.0);
 
@@ -245,8 +245,8 @@ class EmitterInflowInjection : public BaseLocalDynamics<BodyPartByParticle>
 class DisposerOutflowDeletion : public BaseLocalDynamics<BodyPartByCell>
 {
   public:
-    DisposerOutflowDeletion(AlignedBoxPartByCell &aligned_box_part);
-    virtual ~DisposerOutflowDeletion(){};
+    DisposerOutflowDeletion(AlignedBoxByCell &aligned_box_part);
+    virtual ~DisposerOutflowDeletion() {};
 
     void update(size_t index_i, Real dt = 0.0);
 

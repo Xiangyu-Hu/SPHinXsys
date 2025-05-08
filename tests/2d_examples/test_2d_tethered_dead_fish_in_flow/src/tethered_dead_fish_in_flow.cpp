@@ -319,7 +319,7 @@ int main(int ac, char *av[])
     /** Computing vorticity in the flow. */
     InteractionDynamics<fluid_dynamics::VorticityInner> compute_vorticity(water_block_inner);
     /** Inflow boundary condition. */
-    AlignedBoxPartByCell inflow_buffer(
+    AlignedBoxByCell inflow_buffer(
         water_block, AlignedBox(xAxis, Transform(Vec2d(buffer_translation)), buffer_halfsize));
     SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>> parabolic_inflow(inflow_buffer);
 

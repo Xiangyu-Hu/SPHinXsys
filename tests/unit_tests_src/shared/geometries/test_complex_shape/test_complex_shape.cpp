@@ -12,8 +12,8 @@ TEST(test_ComplexShape, test_findNormalDirection)
     Transform transfrom(Vec3d(1.0, 0.5, 0.25));
 
     ComplexShape body_shape("TestShape");
-    body_shape.add<TransformShape<GeometricShapeBox>>(transfrom, halfsize_outer);
-    body_shape.subtract<TransformShape<GeometricShapeBox>>(transfrom, halfsize_inner);
+    body_shape.add<GeometricShapeBox>(transfrom, halfsize_outer);
+    body_shape.subtract<GeometricShapeBox>(transfrom, halfsize_inner);
     Vec3d point(1.0, 0.5, -0.095);
     Vec3d normal = body_shape.findNormalDirection(point);
 

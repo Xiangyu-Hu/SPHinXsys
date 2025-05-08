@@ -148,8 +148,8 @@ class PeriodicConditionUsingCellLinkedList : public BasePeriodicCondition<execut
         std::mutex mutex_cell_list_entry_; /**< mutex exclusion for memory conflict */
         BaseCellLinkedList &cell_linked_list_;
 
-        virtual void checkLowerBound(ListDataVector &cell_list_data, Real dt = 0.0);
-        virtual void checkUpperBound(ListDataVector &cell_list_data, Real dt = 0.0);
+        void InsertListDataNearLowerBound(ListDataVector &cell_list_data, Real dt = 0.0);
+        void InsertListDataNearUpperBound(ListDataVector &cell_list_data, Real dt = 0.0);
 
       public:
         PeriodicCellLinkedList(StdVec<CellLists> &bound_cells_data,

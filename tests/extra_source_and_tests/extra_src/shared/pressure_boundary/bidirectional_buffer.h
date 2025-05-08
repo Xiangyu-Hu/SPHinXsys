@@ -57,7 +57,7 @@ class BidirectionalBuffer
     class TagBufferParticles : public BaseLocalDynamics<BodyPartByCell>
     {
       public:
-        TagBufferParticles(AlignedBoxPartByCell &aligned_box_part)
+        TagBufferParticles(AlignedBoxByCell &aligned_box_part)
             : BaseLocalDynamics<BodyPartByCell>(aligned_box_part),
               part_id_(aligned_box_part.getPartID()),
               pos_(particles_->getVariableDataByName<Vecd>("Position")),
@@ -86,7 +86,7 @@ class BidirectionalBuffer
     class Injection : public BaseLocalDynamics<BodyPartByCell>
     {
       public:
-        Injection(AlignedBoxPartByCell &aligned_box_part, ParticleBuffer<Base> &particle_buffer,
+        Injection(AlignedBoxByCell &aligned_box_part, ParticleBuffer<Base> &particle_buffer,
                   TargetPressure &target_pressure)
             : BaseLocalDynamics<BodyPartByCell>(aligned_box_part),
               part_id_(aligned_box_part.getPartID()),
@@ -149,7 +149,7 @@ class BidirectionalBuffer
     class Deletion : public BaseLocalDynamics<BodyPartByCell>
     {
       public:
-        Deletion(AlignedBoxPartByCell &aligned_box_part)
+        Deletion(AlignedBoxByCell &aligned_box_part)
             : BaseLocalDynamics<BodyPartByCell>(aligned_box_part),
               part_id_(aligned_box_part.getPartID()),
               aligned_box_(aligned_box_part.getAlignedBox()),
@@ -181,7 +181,7 @@ class BidirectionalBuffer
     };
 
   public:
-    BidirectionalBuffer(AlignedBoxPartByCell &aligned_box_part, ParticleBuffer<Base> &particle_buffer)
+    BidirectionalBuffer(AlignedBoxByCell &aligned_box_part, ParticleBuffer<Base> &particle_buffer)
         : target_pressure_(*this),
           tag_buffer_particles(aligned_box_part),
           injection(aligned_box_part, particle_buffer, target_pressure_),

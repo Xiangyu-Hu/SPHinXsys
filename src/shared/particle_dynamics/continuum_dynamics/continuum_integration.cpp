@@ -149,7 +149,8 @@ ShearStressRelaxationHourglassControl1stHalfJ2Plasticity ::
 //====================================================================================//
 void ShearStressRelaxationHourglassControl1stHalfJ2Plasticity::update(size_t index_i, Real dt)
 {
-    Matd shear_stress_rate = J2_plasticity_.ConstitutiveRelationShearStress(velocity_gradient_[index_i], shear_stress_[index_i], hardening_factor_[index_i]);
+    Matd shear_stress_rate = J2_plasticity_.ConstitutiveRelationShearStressWithHardening(
+        velocity_gradient_[index_i], shear_stress_[index_i], hardening_factor_[index_i]);
     Matd shear_stress_try = shear_stress_[index_i] + shear_stress_rate * dt;
     Real hardening_factor_increment = J2_plasticity_.HardeningFactorRate(shear_stress_try, hardening_factor_[index_i]);
     hardening_factor_[index_i] += sqrt(2.0 / 3.0) * hardening_factor_increment;
