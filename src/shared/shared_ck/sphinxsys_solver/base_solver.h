@@ -21,16 +21,49 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	sphinxsys_ck.h
- * @brief 	This is the header file that user code should include to pick up all SPHinXsys capabilities.
- * @author	Chi Zhang and Xiangyu Hu
+ * @file base_solver.h
+ * @brief Collection of particle dynamics.
+ * @author	Xiangyu Hu
  */
-#ifndef SPHINXSYS_CK_H
-#define SPHINXSYS_CK_H
 
-#include "all_shared_physical_dynamics_ck.h"
-#include "io_all_ck.h"
-#include "base_solver.h"
-#include "sphinxsys.h"
+#ifndef BASE_SOLVER_H
+#define BASE_SOLVER_H
 
-#endif // SPHINXSYS_CK_H
+#include "base_particle_dynamics.h"
+#include "simple_algorithms_ck.h"
+#include "update_cell_linked_list.h"
+#include "interaction_algorithms_ck.h"
+
+namespace SPH
+{
+class SPHSolver
+{
+    UniquePtrsKeeper<BaseDynamics<void>> particle_dynamics_keeper_;
+
+  public:
+    SPHSolver() {};
+    virtual ~SPHSolver() {};
+
+    template <typename ExecutePolicy, class DynamicsIdentifier, typename... Args>
+    BaseDynamics<void> &addCellLinkedListDynamics(DynamicsIdentifier &identifier, Args &&...args)
+    {
+        BaseDynamics<void> *cell_linked_List_dynamics =
+            particle_dynamics_keeper_.createPtr<
+                UpdateCellLinkedList<ExecutePolicy, DynamicsIdentifier>>(
+                identifier, std::forward<Args>(args)...);
+        return *cell_linked_List_dynamics;
+    };
+
+
+        template <typename ExecutePolicy, class DynamicsIdentifier, typename... Args>
+    BaseDynamics<void> &addInteractionDynamics(DynamicsIdentifier &identifier, Args &&...args)
+    {
+        BaseDynamics<void> *interaction_dynamics =
+            particle_dynamics_keeper_.createPtr<
+                UpdateCellLinkedList<ExecutePolicy, DynamicsIdentifier>>(
+                identifier, std::forward<Args>(args)...);
+        return *cell_linked_List_dynamics;
+    };
+};
+} // namespace SPH
+#endif // BASE_SOLVER_H
