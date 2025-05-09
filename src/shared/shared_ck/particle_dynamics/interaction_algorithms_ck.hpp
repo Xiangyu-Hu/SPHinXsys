@@ -64,7 +64,7 @@ InteractionDynamicsCK<ExecutionPolicy, InteractionType<RelationType<Parameters..
     : InteractionDynamicsCK<
           ExecutionPolicy, Base,
           InteractionType<RelationType<Parameters...>>>(std::forward<Args>(args)...),
-      InteractionDynamicsCK<Base>(), BaseDynamics<void>() {}
+      InteractionDynamicsCK<ExecutionPolicy, Base, InteractionType<>>() {}
 //=================================================================================================//
 template <class ExecutionPolicy, template <typename...> class InteractionType,
           template <typename...> class RelationType, typename... Parameters>
@@ -92,8 +92,7 @@ InteractionDynamicsCK<ExecutionPolicy, InteractionType<RelationType<WithUpdate, 
     : InteractionDynamicsCK<
           ExecutionPolicy, Base, InteractionType<RelationType<WithUpdate, OtherParameters...>>>(
           std::forward<Args>(args)...),
-      InteractionDynamicsCK<WithUpdate>(),
-      BaseDynamics<void>(),
+      InteractionDynamicsCK<ExecutionPolicy, WithUpdate, InteractionType<>>(),
       kernel_implementation_(*this)
 {
     if constexpr (std::is_base_of_v<BaseInteractKernel, UpdateKernel>)
@@ -138,7 +137,7 @@ InteractionDynamicsCK<ExecutionPolicy, InteractionType<RelationType<OneLevel, Ot
     InteractionDynamicsCK(Args &&...args)
     : InteractionDynamicsCK<ExecutionPolicy, Base, InteractionType<RelationType<OneLevel, OtherParameters...>>>(
           std::forward<Args>(args)...),
-      InteractionDynamicsCK<OneLevel>(), BaseDynamics<void>(),
+      InteractionDynamicsCK<ExecutionPolicy, OneLevel, InteractionType<>>(),
       initialize_kernel_implementation_(*this), update_kernel_implementation_(*this)
 {
     if constexpr (std::is_base_of_v<BaseInteractKernel, InitializeKernel>)
