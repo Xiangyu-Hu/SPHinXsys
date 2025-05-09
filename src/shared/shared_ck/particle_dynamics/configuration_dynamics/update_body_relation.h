@@ -129,17 +129,15 @@ class UpdateRelation<ExecutionPolicy>
     void exec(Real dt = 0.0) {};
 };
 
-template <class ExecutionPolicy, class FirstRelation, class... Others>
-class UpdateRelation<ExecutionPolicy, FirstRelation, Others...>
+template <class ExecutionPolicy, class FirstRelation, class... OtherRelations>
+class UpdateRelation<ExecutionPolicy, FirstRelation, OtherRelations...>
     : public UpdateRelation<ExecutionPolicy, FirstRelation>
 {
   protected:
-    UpdateRelation<ExecutionPolicy, Others...> other_interactions_;
+    UpdateRelation<ExecutionPolicy, OtherRelations...> other_interactions_;
 
   public:
-    template <class FirstParameterSet, typename... OtherParameterSets>
-    explicit UpdateRelation(
-        FirstParameterSet &&first_parameter_set, OtherParameterSets &&...other_parameter_sets);
+    explicit UpdateRelation(FirstRelation &first_relation, OtherRelations &...other_relations);
     virtual void exec(Real dt = 0.0) override;
 };
 } // namespace SPH

@@ -56,19 +56,29 @@ class SPHSolver
     };
 
     template <typename ExecutePolicy, class FirstRelation, typename... OtherRelations>
-    auto &addRelationDynamics(FirstRelation &first_relation, OtherRelations &&...other_relations)
+    auto &addRelationDynamics(FirstRelation &first_relation, OtherRelations &...other_relations)
     {
         return *particle_dynamics_keeper_.createPtr<
             UpdateRelation<ExecutePolicy, FirstRelation, OtherRelations...>>(
-            first_relation, std::forward<OtherRelations>(other_relations)...);
+            first_relation, other_relations...);
+    };
+
+    template <typename ExecutePolicy, class UpdateType, typename... Args>
+    auto &addStateDynamics(Args &&...args)
+    {
+        return *particle_dynamics_keeper_.createPtr<
+            StateDynamics<ExecutePolicy, UpdateType>>(std::forward<Args>(args)...);
     };
 
     template <typename ExecutePolicy, template <typename...> class InteractionType,
-              class ControlType, class RelationType, typename... Args>
-    auto &addInteractionDynamics(Inner<RelationType> &inner_relation, Args &&...args)
+              template <typename...> class RelationType,
+              typename... ControlParameters,
+              typename... RelationParameters, typename... Args>
+    auto &addInteractionDynamics(RelationType<RelationParameters...> &inner_relation, Args &&...args)
     {
         return *particle_dynamics_keeper_.createPtr<
-            InteractionDynamicsCK<ExecutePolicy, InteractionType<ControlType, RelationType>>>(
+            InteractionDynamicsCK<ExecutePolicy,
+                                  InteractionType<RelationType<ControlParameters..., RelationParameters...>>>>(
             inner_relation, std::forward<Args>(args)...);
     };
 };

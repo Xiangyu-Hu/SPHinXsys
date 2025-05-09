@@ -208,15 +208,14 @@ void UpdateRelation<ExecutionPolicy, Contact<Parameters...>>::exec(Real dt)
     }
 }
 //=================================================================================================//
-template <class ExecutionPolicy, class FirstRelation, class... Others>
-template <class FirstParameterSet, typename... OtherParameterSets>
-UpdateRelation<ExecutionPolicy, FirstRelation, Others...>::UpdateRelation(
-    FirstParameterSet &&first_parameter_set, OtherParameterSets &&...other_parameter_sets)
-    : UpdateRelation<ExecutionPolicy, FirstRelation>(first_parameter_set),
-      other_interactions_(std::forward<OtherParameterSets>(other_parameter_sets)...) {}
+template <class ExecutionPolicy, class FirstRelation, class... OtherRelations>
+UpdateRelation<ExecutionPolicy, FirstRelation, OtherRelations...>::UpdateRelation(
+    FirstRelation &first_relation, OtherRelations &...other_relations)
+    : UpdateRelation<ExecutionPolicy, FirstRelation>(first_relation),
+      other_interactions_(other_relations...) {}
 //=================================================================================================//
-template <class ExecutionPolicy, class FirstRelation, class... Others>
-void UpdateRelation<ExecutionPolicy, FirstRelation, Others...>::exec(Real dt)
+template <class ExecutionPolicy, class FirstRelation, class... OtherRelations>
+void UpdateRelation<ExecutionPolicy, FirstRelation, OtherRelations...>::exec(Real dt)
 {
     UpdateRelation<ExecutionPolicy, FirstRelation>::exec(dt);
     other_interactions_.exec(dt);

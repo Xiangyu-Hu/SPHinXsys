@@ -194,25 +194,27 @@ int main(int ac, char *av[])
     auto &water_high_resolution_cell_linked_list = solver.addCellLinkedListDynamics<MainExecutionPolicy>(water_high_resolution_level);
     auto &cylinder_cell_linked_list = solver.addCellLinkedListDynamics<MainExecutionPolicy>(cylinder);
 
-    UpdateRelation<
-        MainExecutionPolicy,
-        Inner<BodyPartitionSpatial, SmoothingLength<Continuous>>,
-        Contact<BodyPartitionSpatial, BodyPartitionSpatial, SmoothingLength<Continuous>>,
-        Contact<BodyPartitionSpatial, RealBody, SmoothingLength<Continuous, SingleValued>>>
-        water_high_resolution_update_complex_relation(
+    auto &water_high_resolution_update_complex_relation =
+        solver.addRelationDynamics<MainExecutionPolicy>(
             water_high_resolution_inner, water_decrease_resolution_contact, water_cylinder_contact);
 
-    UpdateRelation<
-        MainExecutionPolicy,
-        Inner<BodyPartitionSpatial, SmoothingLength<Continuous>>,
-        Contact<BodyPartitionSpatial, BodyPartitionSpatial, SmoothingLength<Continuous>>>
-        water_low_resolution_update_complex_relation(
+    auto &water_low_resolution_update_complex_relation =
+        solver.addRelationDynamics<MainExecutionPolicy>(
             water_low_resolution_inner, water_increase_resolution_contact);
 
-    StateDynamics<execution::SequencedPolicy, AdaptLevelIndication<Refinement<Continuous, Fixed>>> water_adapt_level_indication(water_body);
+    auto &water_adapt_level_indication = solver.addStateDynamics<
+        MainExecutionPolicy, AdaptLevelIndication<Refinement<Continuous, Fixed>>>(water_body);
+
     StartupAcceleration time_dependent_acceleration(Vec2d(U_f, 0.0), 2.0);
-    StateDynamics<MainExecutionPolicy, GravityForceCK<StartupAcceleration>> constant_gravity(water_body, time_dependent_acceleration);
-    StateDynamics<execution::ParallelPolicy, NormalFromBodyShapeCK> cylinder_normal_direction(cylinder); // run on cpu
+    auto &constant_gravity = solver.addStateDynamics<
+        MainExecutionPolicy, GravityForceCK<StartupAcceleration>>(water_body, time_dependent_acceleration);
+
+    auto &cylinder_normal_direction = solver.addStateDynamics<execution::ParallelPolicy, NormalFromBodyShapeCK>(cylinder);
+
+    auto &water_low_resolution_boundary_indicator =
+        solver.addInteractionDynamics<MainExecutionPolicy, fluid_dynamics::FreeSurfaceIndicationCK,
+                                      Inner, WithUpdate, Internal>(water_low_resolution_inner)
+            .addContactInteraction(water_increase_resolution_contact);
     /*
         InteractionDynamicsCK<
             MainExecutionPolicy,
@@ -317,6 +319,9 @@ int main(int ac, char *av[])
     water_low_resolution_update_complex_relation.exec();
     water_high_resolution_update_complex_relation.exec();
 
+    constant_gravity.exec();
+    cylinder_normal_direction.exec();
+    water_low_resolution_boundary_indicator.exec();
     body_states_recording.writeToFile(MainExecutionPolicy{});
     return 0;
 }

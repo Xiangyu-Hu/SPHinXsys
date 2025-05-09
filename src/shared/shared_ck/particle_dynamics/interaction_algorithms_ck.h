@@ -42,21 +42,8 @@ class InteractionDynamicsCK;
 template <>
 class InteractionDynamicsCK<Base>
 {
-    UniquePtrsKeeper<BaseDynamics<void>> supplementary_dynamics_keeper_;
-
   public:
     InteractionDynamicsCK() {};
-
-    template <typename ExecutePolicy, template <typename...> class LocalDynamicsType,
-              class ControlType, class RelationType, typename... Args>
-    auto &addContactInteraction(RelationType &relation, Args &&...args)
-    {
-        post_processes_.push_back(
-            supplementary_dynamics_keeper_.createPtr<
-                InteractionDynamicsCK<ExecutePolicy, LocalDynamicsType<ControlType, RelationType>>>(
-                relation, std::forward<Args>(args)...));
-        return *this;
-    };
 
     template <typename ExecutePolicy, template <typename...> class LocalDynamicsType,
               typename... ControlTypes, class DynamicsIdentifier, typename... Args>
@@ -81,6 +68,7 @@ class InteractionDynamicsCK<Base>
     };
 
   protected:
+    UniquePtrsKeeper<BaseDynamics<void>> supplementary_dynamics_keeper_;
     /** pre process such as update ghost state */
     StdVec<BaseDynamics<void> *> pre_processes_;
     /** post process such as impose constraint */
@@ -125,11 +113,33 @@ class InteractionDynamicsCK<OneLevel> : public InteractionDynamicsCK<Base>
     virtual void runUpdateStep(Real dt) = 0;
 };
 
+template <class ExecutionPolicy, typename BaseType, template <typename...> class InteractionType,
+          template <typename...> class RelationType, typename... Parameters>
+class InteractionDynamicsCK<ExecutionPolicy, BaseType, InteractionType<RelationType<Parameters...>>>
+    : public InteractionType<RelationType<Parameters...>>,
+{
+  public:
+    template <typename... Args>
+    InteractionDynamicsCK(Args &&...args);
+    virtual ~InteractionDynamicsCK() {};
+
+    template <typename... ControlParameters, typename... RelationParameters, typename... Args>
+    auto &addContactInteraction(Contact<RelationParameters...> &contact_relation, Args &&...args)
+    {
+        post_processes_.push_back(
+            supplementary_dynamics_keeper_.createPtr<
+                InteractionDynamicsCK<
+                    ExecutionPolicy, InteractionType<Contact<ControlParameters..., RelationParameters...>>>>(
+                contact_relation, std::forward<Args>(args)...));
+        return *this;
+    };
+};
+
 template <class ExecutionPolicy, template <typename...> class InteractionType, typename... Parameters>
 class InteractionDynamicsCK<ExecutionPolicy, Base, InteractionType<Inner<Parameters...>>>
-    : public InteractionType<Inner<Parameters...>>
+    : public InteractionDynamicsCK<ExecutionPolicy, Interface, InteractionType<Inner<Parameters...>>>
 {
-    using LocalDynamicsType = InteractionType<Inner<Parameters...>>;
+    using LocalDynamicsType = InteractionDynamicsCK<ExecutionPolicy, Interface, InteractionType<Inner<Parameters...>>>;
     using Identifier = typename LocalDynamicsType::Identifier;
     using InteractKernel = typename LocalDynamicsType::InteractKernel;
     using KernelImplementation = Implementation<ExecutionPolicy, LocalDynamicsType, InteractKernel>;
@@ -139,16 +149,13 @@ class InteractionDynamicsCK<ExecutionPolicy, Base, InteractionType<Inner<Paramet
     template <typename... Args>
     InteractionDynamicsCK(Args &&...args);
     virtual ~InteractionDynamicsCK() {};
-
-  protected:
-    void runInteraction(Real dt);
 };
 
 template <class ExecutionPolicy, template <typename...> class InteractionType, typename... Parameters>
 class InteractionDynamicsCK<ExecutionPolicy, Base, InteractionType<Contact<Parameters...>>>
-    : public InteractionType<Contact<Parameters...>>
+    : public InteractionDynamicsCK<ExecutionPolicy, Interface, InteractionType<Contact<Parameters...>>>
 {
-    using LocalDynamicsType = InteractionType<Contact<Parameters...>>;
+    using LocalDynamicsType = InteractionDynamicsCK<ExecutionPolicy, Interface, InteractionType<Contact<Parameters...>>>;
     using Identifier = typename LocalDynamicsType::Identifier;
     using InteractKernel = typename LocalDynamicsType::InteractKernel;
     using KernelImplementation = Implementation<ExecutionPolicy, LocalDynamicsType, InteractKernel>;
@@ -176,7 +183,6 @@ class InteractionDynamicsCK<ExecutionPolicy, InteractionType<RelationType<Parame
     template <typename... Args>
     InteractionDynamicsCK(Args &&...args);
     virtual ~InteractionDynamicsCK() {};
-
     virtual void exec(Real dt = 0.0) override;
     virtual void runInteractionStep(Real dt = 0.0) override;
 };
