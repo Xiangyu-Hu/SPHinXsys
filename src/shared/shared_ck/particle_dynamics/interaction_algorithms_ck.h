@@ -139,6 +139,7 @@ class InteractionDynamicsCK<ExecutionPolicy, AlgorithmType, InteractionType<>>
   public:
     InteractionDynamicsCK() {};
 };
+
 template <class ExecutionPolicy, template <typename...> class InteractionType,
           template <typename...> class RelationType, typename... Parameters>
 class InteractionDynamicsCK<ExecutionPolicy, InteractionType<RelationType<Parameters...>>>
