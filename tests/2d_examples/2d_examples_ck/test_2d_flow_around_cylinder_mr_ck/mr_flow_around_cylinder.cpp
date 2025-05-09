@@ -270,6 +270,16 @@ int main(int ac, char *av[])
                                       Inner, OneLevel, NoRiemannSolverCK, LinearCorrectionCK>(water_high_resolution_inner)
             .addContactInteraction<AcousticRiemannSolverCK, LinearCorrectionCK>(water_decrease_resolution_contact)
             .addContactInteraction<Wall, NoRiemannSolverCK, LinearCorrectionCK>(water_cylinder_contact);
+
+    AlignedBoxByParticle emitter(water_body, AlignedBox(xAxis, Transform(Vec2d(emitter_translation)), emitter_halfsize));
+
+    /*
+SimpleDynamics<fluid_dynamics::EmitterInflowInjection> emitter_inflow_injection(emitter, inlet_particle_buffer);
+AlignedBoxByCell emitter_buffer(water_block, AlignedBox(xAxis, Transform(Vec2d(emitter_buffer_translation)), emitter_buffer_halfsize));
+SimpleDynamics<fluid_dynamics::InflowVelocityCondition<FreeStreamVelocity>> emitter_buffer_inflow_condition(emitter_buffer, 0.1);
+AlignedBoxByCell disposer(water_block, AlignedBox(xAxis, Transform(Vec2d(disposer_translation)), disposer_halfsize));
+SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion> disposer_outflow_deletion(disposer);
+*/
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
