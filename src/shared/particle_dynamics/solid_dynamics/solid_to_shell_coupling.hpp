@@ -101,7 +101,7 @@ void ConservativeMapping<DynamicsIdentifier, DataType>::update(size_t index_i, R
     DataType interpolated_quantities = ZeroData<DataType>::value;
     for (size_t k = 0; k != contact_configuration_.size(); ++k)
     {
-        const Vecd *data_k = contact_data_[k];
+        const DataType *data_k = contact_data_[k];
         const Real *total_weight_k = contact_total_weight_[k];
         const Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
         for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
