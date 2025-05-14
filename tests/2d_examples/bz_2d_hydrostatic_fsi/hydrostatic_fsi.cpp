@@ -111,7 +111,7 @@ std::vector<Vecd> createInnerWallShape()
 
     return inner_wall_shape;
 }
-
+ 
 class WallBoundary : public MultiPolygonShape
 {
 public:
@@ -265,13 +265,13 @@ int main(int ac, char* av[])
     Gravity gravity(Vecd(0.0, -gravity_g));
     Gravity negative_gravity(Vecd(0.0, gravity_g));
     SimpleDynamics<GravityForce<Gravity>> constant_gravity(water_block, gravity);
-    InteractionWithUpdate<LinearGradientCorrectionMatrixComplex> corrected_configuration_fluid(ConstructorArgs(water_block_inner, 0.95), water_block_contact);
+    InteractionWithUpdate<LinearGradientCorrectionMatrixComplex> corrected_configuration_fluid(ConstructorArgs(water_block_inner, 0.3), water_block_contact);
     Dynamics1Level<fluid_dynamics::Integration1stHalfCorrectionWithWallRiemann> pressure_relaxation(water_block_inner, water_block_contact);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallNoRiemann> density_relaxation(water_block_inner, water_block_contact);
     InteractionWithUpdate<fluid_dynamics::DensitySummationComplexFreeSurface> update_fluid_density(water_block_inner, water_block_contact);
     InteractionWithUpdate<fluid_dynamics::ViscousForceWithWall> viscous_force(water_block_inner, water_block_contact);
     DampingWithRandomChoice<InteractionSplit<DampingPairwiseWithWall<Vec2d, FixedDampingRate>>>
-        fluid_damping(0.015, ConstructorArgs(water_block_inner, "Velocity", mu_f), ConstructorArgs(water_block_contact, "Velocity", mu_f));
+        fluid_damping(0.2, ConstructorArgs(water_block_inner, "Velocity", mu_f), ConstructorArgs(water_block_contact, "Velocity", mu_f));
     DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d, FixedDampingRate>>>
         solid_damping(0.5, ConstructorArgs(gate_inner, "Velocity", mu_f));
 
@@ -351,7 +351,7 @@ int main(int ac, char* av[])
             while (relaxation_time < Dt)
             {
                 //dt = SMIN(get_fluid_time_step_size.exec(), Dt);
-                dt = SMIN(0.00002, Dt);
+                dt = SMIN(0.00005, Dt);
                 fluid_damping.exec(dt);
                 /** Fluid relaxation and force computation. */
                 pressure_relaxation.exec(dt);
