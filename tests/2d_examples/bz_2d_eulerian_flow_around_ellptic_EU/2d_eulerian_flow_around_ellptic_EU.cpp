@@ -1,22 +1,25 @@
 /**
- * @file 	2d_eulerian_flow_around_cylinder.cpp
- * @brief 	This is the test file for the weakly compressible viscous flow around a cylinder.
+ * @file 	2d_eulerian_flow_around_elliptic_cylinder.cpp
+ * @brief 	This is the test file for the weakly compressible viscous flow around a elliptic cylinder.
  * @details We consider a Eulerian flow passing by a cylinder in 2D.
  * @author 	Bo Zhang and Xiangyu Hu
  */
 #include "general_eulerian_fluid_dynamics.hpp" // eulerian classes for weakly compressible fluid only.
 #include "sphinxsys.h"
 using namespace SPH;
+#define PI 3.1415926
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real DL = 80.0;                        /**< Channel length. */
-Real DH = 80.0;                        /**< Channel height. */
-Real resolution_ref = 1.0 / 20.0;      /**< Initial reference particle spacing. */
+Real DL = 64;                          /**< Channel length. */
+Real DH = 42;                          /**< Channel height. */
+Real resolution_ref = 1.0 / 10.0;      /**< Initial reference particle spacing. */
 Real DL_sponge = resolution_ref * 2.0; /**< Sponge region to impose inflow condition. */
 Real DH_sponge = resolution_ref * 2.0; /**< Sponge region to impose inflow condition. */
-Vec2d cylinder_center(25, DH / 2.0);   /**< Location of the cylinder center. */
+Vec2d cylinder_center(21, 21);         /**< Location of the cylinder center. */
 Real cylinder_radius = 1.0;            /**< Radius of the cylinder. */
+Real aspect_ratio = 0.6;
+Real shape_resolution = 500;
 //----------------------------------------------------------------------
 //	Material properties of the fluid.
 //----------------------------------------------------------------------
@@ -25,6 +28,27 @@ Real U_f = 1.0;                                          /**< freestream velocit
 Real c_f = 10.0 * U_f;                                   /**< Speed of sound. */
 Real Re = 100.0;                                         /**< Reynolds number. */
 Real mu_f = rho0_f * U_f * (2.0 * cylinder_radius) / Re; /**< Dynamics viscosity. */
+//----------------------------------------------------------------------
+//	Create elliptic shape
+//----------------------------------------------------------------------
+std::vector<Vecd> CreateEllipticShape(Real AR, Real sample_point)
+{
+    Real a = cylinder_radius;
+    Real b = AR * cylinder_radius;
+
+    std::vector<Vecd> pnts;
+    pnts.push_back(Vecd(1, 0) + cylinder_center);
+
+    for (int n = 1; n < sample_point; ++n)
+    {
+        Real theta = 2 * PI * n / sample_point;
+        Real x = a * cos(theta);
+        Real y = b * sin(theta);
+        pnts.push_back(Vecd(x, y) + cylinder_center);
+    }
+    pnts.push_back(Vecd(1, 0) + cylinder_center);
+    return pnts;
+}
 //----------------------------------------------------------------------
 //	Define geometries and body shapes
 //----------------------------------------------------------------------
@@ -46,8 +70,8 @@ public:
     {
         MultiPolygon outer_boundary(createWaterBlockShape());
         add<MultiPolygonShape>(outer_boundary, "OuterBoundary");
-        MultiPolygon circle(cylinder_center, cylinder_radius, 100);
-        subtract<MultiPolygonShape>(circle);
+        MultiPolygon ellptic_shape(CreateEllipticShape(aspect_ratio, shape_resolution));
+        subtract<MultiPolygonShape>(ellptic_shape);
     }
 };
 class Cylinder : public MultiPolygonShape
@@ -56,7 +80,8 @@ public:
     explicit Cylinder(const std::string& shape_name) : MultiPolygonShape(shape_name)
     {
         /** Geometry definition. */
-        multi_polygon_.addACircle(cylinder_center, cylinder_radius, 100, ShapeBooleanOps::add);
+        std::vector<Vecd> ellptic_shape = CreateEllipticShape(aspect_ratio, shape_resolution);
+        multi_polygon_.addAPolygon(ellptic_shape, ShapeBooleanOps::add);
     }
 };
 
@@ -93,7 +118,7 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBlock"));
-    water_block.defineAdaptationRatios(0.9, 1.0);
+    water_block.defineAdaptationRatios(0.95, 1.0);
     water_block.defineComponentLevelSetShape("OuterBoundary")->writeLevelSet(io_environment);
     water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
@@ -102,7 +127,7 @@ int main(int ac, char *av[])
     water_block.addBodyStateForRecording<int>("Indicator");
 
     SolidBody cylinder(sph_system, makeShared<Cylinder>("Cylinder"));
-    cylinder.defineAdaptationRatios(0.8, 2.0);
+    cylinder.defineAdaptationRatios(0.95, 2.0);
     cylinder.defineBodyLevelSetShape()->writeLevelSet(io_environment);
     cylinder.defineParticlesAndMaterial<SolidParticles, Solid>();
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
@@ -162,7 +187,7 @@ int main(int ac, char *av[])
         Real dt = 1;
 
         int ite_p = 0;
-        while (water_block_average_energy > 0.01 || cylinder_average_energy > 0.01)
+        while (ite_p < 10000)
         {
             kernel_correction_inner.exec();
             relaxation_step_inner.exec();
@@ -236,7 +261,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp write_real_body_states(io_environment, sph_system.real_bodies_);
+    BodyStatesRecordingToPlt write_real_body_states(io_environment, sph_system.real_bodies_);
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<ReduceDynamics<solid_dynamics::TotalForceFromFluid>>>
         write_total_viscous_force_on_inserted_body(io_environment, viscous_force_on_solid, "TotalViscousForceOnSolid");
     ReducedQuantityRecording<ReduceDynamics<solid_dynamics::TotalForceFromFluid>>
@@ -255,16 +280,14 @@ int main(int ac, char *av[])
     variable_reset_in_boundary_condition.exec();
     kernel_correction_matrix.exec();
     kernel_gradient_update.exec();
-
     kernel_correction_matrix_correction.exec();
     kernel_correction_matrix_cylinder.exec();
-
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
     size_t number_of_iterations = 0;
     int screen_output_interval = 1000;
-    Real end_time = 300.0;
+    Real end_time = 200.0;
     Real output_interval = 1.0; /**< time stamps for output. */
     //----------------------------------------------------------------------
     //	Statistics for CPU time
