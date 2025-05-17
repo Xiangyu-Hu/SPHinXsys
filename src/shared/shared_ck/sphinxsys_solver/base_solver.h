@@ -31,6 +31,7 @@
 
 #include "base_particle_dynamics.h"
 #include "interaction_algorithms_ck.h"
+#include "ownership.h"
 #include "particle_sort_ck.h"
 #include "simple_algorithms_ck.h"
 #include "update_body_relation.h"
@@ -43,6 +44,7 @@ namespace SPH
 class SPHSolver
 {
     UniquePtrsKeeper<BaseDynamics<void>> particle_dynamics_keeper_;
+    DataContainerUniquePtrAssemble<BaseDynamics> reduce_dynamics_keeper_;
 
   public:
     SPHSolver() {};
@@ -76,6 +78,17 @@ class SPHSolver
     {
         return *particle_dynamics_keeper_.createPtr<
             StateDynamics<ExecutePolicy, UpdateType>>(std::forward<Args>(args)...);
+    };
+
+    template <class ReduceType, typename ExecutePolicy, typename... Args>
+    auto &addReduceDynamics(const ExecutePolicy &ex_policy, Args &&...args)
+    {
+        using FinishDynamics = typename ReduceType::FinishDynamics;
+        using OutputType = typename FinishDynamics::OutputType;
+        constexpr int type_index = DataTypeIndex<OutputType>::value;
+        UniquePtrsKeeper<BaseDynamics<OutputType>> &dynamics_ptrs = std::get<type_index>(reduce_dynamics_keeper_);
+        return *dynamics_ptrs.template createPtr<
+            ReduceDynamicsCK<ExecutePolicy, ReduceType>>(std::forward<Args>(args)...);
     };
 
     template <class InteractionType, typename ExecutePolicy, typename... Args>

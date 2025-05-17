@@ -107,26 +107,20 @@ int main(int ac, char *av[])
     auto &water_advection_step_close = solver.addStateDynamics<fluid_dynamics::AdvectionStepClose>(par, water_block);
 
     auto &fluid_linear_correction_matrix =
-        solver.addInteractionDynamics<LinearCorrectionMatrixComplex>(par, DynamicsArgs(water_block_inner, 0.5), water_wall_contact);
+        solver.addInteractionDynamics<LinearCorrectionMatrixComplex>(
+            par, DynamicsArgs(water_block_inner, 0.5), water_wall_contact);
+    auto &fluid_acoustic_step_1st_half =
+        solver.addInteractionDynamics<fluid_dynamics::AcousticStep1stHalfWithWallRiemannCorrectionCK>(
+            par, water_block_inner, water_wall_contact);
+    auto &fluid_acoustic_step_2nd_half =
+        solver.addInteractionDynamics<fluid_dynamics::AcousticStep2ndHalfWithWallRiemannCorrectionCK>(
+            par, water_block_inner, water_wall_contact);
+    auto &fluid_density_regularization =
+        solver.addInteractionDynamics<fluid_dynamics::DensityRegularizationComplexFreeSurface>(
+            par, water_block_inner, water_wall_contact);
 
-    /*    auto &fluid_linear_correction_matrix =
-            solver.incrementInteractionDynamics<LinearCorrectionMatrix, WithUpdate>(par, water_block_inner, 0.5)
-                .incrementContactInteraction(water_wall_contact);*/
-        auto &fluid_acoustic_step_1st_half =
-            solver.incrementInteractionDynamics<
-                      fluid_dynamics::AcousticStep1stHalf, OneLevel, AcousticRiemannSolverCK, LinearCorrectionCK>(par, water_block_inner)
-                .incrementContactInteraction<Wall, AcousticRiemannSolverCK, LinearCorrectionCK>(water_wall_contact);
-
-    /* InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticStep1stHalfWithWallRiemannCorrectionCK>
-        fluid_acoustic_step_1st_half(water_block_inner, water_wall_contact);*/
-    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticStep2ndHalfWithWallRiemannCorrectionCK>
-        fluid_acoustic_step_2nd_half(water_block_inner, water_wall_contact);
-    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::DensityRegularizationComplexFreeSurface>
-        fluid_density_regularization(water_block_inner, water_wall_contact);
-    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::FreeSurfaceIndicationComplexSpatialTemporalCK>
-        fluid_boundary_indicator(water_block_inner, water_wall_contact);
-    ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AdvectionTimeStepCK> fluid_advection_time_step(water_block, U_ref);
-    ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticTimeStepCK<>> fluid_acoustic_time_step(water_block);
+    auto &fluid_advection_time_step = solver.addReduceDynamics<fluid_dynamics::AdvectionTimeStepCK>(par, water_block, U_ref);
+    auto &fluid_acoustic_time_step = solver.addReduceDynamics<fluid_dynamics::AcousticTimeStepCK<>>(par, water_block);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
@@ -134,11 +128,7 @@ int main(int ac, char *av[])
     BodyStatesRecordingToVtp body_states_recording(sph_system);
     body_states_recording.addToWrite<Vecd>(wall_boundary, "NormalDirection");
     body_states_recording.addToWrite<Real>(water_block, "Density");
-    body_states_recording.addToWrite<int>(water_block, "Indicator");
-    body_states_recording.addToWrite<Real>(water_block, "PositionDivergence");
-
     RestartIO restart_io(sph_system);
-
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<MainExecutionPolicy, TotalMechanicalEnergyCK>>
         record_water_mechanical_energy(water_block, gravity);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<MainExecutionPolicy, Real>>
@@ -201,7 +191,6 @@ int main(int ac, char *av[])
 
             fluid_density_regularization.exec();
             water_advection_step_setup.exec();
-            fluid_boundary_indicator.exec();
             Real advection_dt = fluid_advection_time_step.exec();
             fluid_linear_correction_matrix.exec();
             interval_computing_time_step += TickCount::now() - time_instance;
