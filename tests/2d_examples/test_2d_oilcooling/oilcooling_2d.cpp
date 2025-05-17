@@ -532,7 +532,6 @@ int main(int ac, char *av[])
             Real relaxation_time = 0.0;
             while (relaxation_time < Dt)
             {
-                SimTK::State &state_for_update = integ.updAdvancedState();
                 integ.stepBy(dt);
                 constraint_rotor.exec();
 
