@@ -31,6 +31,7 @@
 
 #include "base_particle_dynamics.h"
 #include "interaction_algorithms_ck.h"
+#include "particle_sort_ck.h"
 #include "simple_algorithms_ck.h"
 #include "update_body_relation.h"
 #include "update_cell_linked_list.h"
@@ -48,7 +49,7 @@ class SPHSolver
     virtual ~SPHSolver() {};
 
     template <typename ExecutePolicy, class DynamicsIdentifier, typename... Args>
-    auto &addCellLinkedListDynamics(DynamicsIdentifier &identifier, Args &&...args)
+    auto &addCellLinkedListDynamics(const ExecutePolicy &ex_policy, DynamicsIdentifier &identifier, Args &&...args)
     {
         return *particle_dynamics_keeper_.createPtr<
             UpdateCellLinkedList<ExecutePolicy, DynamicsIdentifier>>(
@@ -56,29 +57,43 @@ class SPHSolver
     };
 
     template <typename ExecutePolicy, class FirstRelation, typename... OtherRelations>
-    auto &addRelationDynamics(FirstRelation &first_relation, OtherRelations &...other_relations)
+    auto &addRelationDynamics(const ExecutePolicy &ex_policy, FirstRelation &first_relation, OtherRelations &...other_relations)
     {
         return *particle_dynamics_keeper_.createPtr<
             UpdateRelation<ExecutePolicy, FirstRelation, OtherRelations...>>(
             first_relation, other_relations...);
     };
 
-    template <typename ExecutePolicy, class UpdateType, typename... Args>
-    auto &addStateDynamics(Args &&...args)
+    template <typename ExecutePolicy, typename... Args>
+    auto &addSortDynamics(const ExecutePolicy &ex_policy, Args &&...args)
+    {
+        return *particle_dynamics_keeper_.createPtr<
+            ParticleSortCK<ExecutePolicy>>(std::forward<Args>(args)...);
+    };
+
+    template <class UpdateType, typename ExecutePolicy, typename... Args>
+    auto &addStateDynamics(const ExecutePolicy &ex_policy, Args &&...args)
     {
         return *particle_dynamics_keeper_.createPtr<
             StateDynamics<ExecutePolicy, UpdateType>>(std::forward<Args>(args)...);
     };
 
-    template <typename ExecutePolicy, template <typename...> class InteractionType,
-              template <typename...> class RelationType,
-              typename... ControlParameters,
-              typename... RelationParameters, typename... Args>
-    auto &addInteractionDynamics(RelationType<RelationParameters...> &inner_relation, Args &&...args)
+    template <class InteractionType, typename ExecutePolicy, typename... Args>
+    auto &addInteractionDynamics(const ExecutePolicy &ex_policy, Args &&...args)
     {
         return *particle_dynamics_keeper_.createPtr<
-            InteractionDynamicsCK<ExecutePolicy,
-                                  InteractionType<RelationType<ControlParameters..., RelationParameters...>>>>(
+            InteractionDynamicsCK<ExecutePolicy, InteractionType>>(std::forward<Args>(args)...);
+    };
+
+    template <template <typename...> class InteractionType,
+              typename... ControlParameters, typename ExecutePolicy,
+              template <typename...> class RelationType, typename... RelationParameters, typename... Args>
+    auto &incrementInteractionDynamics(
+        const ExecutePolicy &ex_policy, RelationType<RelationParameters...> &inner_relation, Args &&...args)
+    {
+        return *particle_dynamics_keeper_.createPtr<
+            InteractionDynamicsCK<
+                ExecutePolicy, InteractionType<RelationType<ControlParameters..., RelationParameters...>>>>(
             inner_relation, std::forward<Args>(args)...);
     };
 };

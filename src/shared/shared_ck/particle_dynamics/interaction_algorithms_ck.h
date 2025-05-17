@@ -162,7 +162,7 @@ class InteractionDynamicsCK<ExecutionPolicy, AlgorithmType, InteractionType<>>
     InteractionDynamicsCK() {};
 
     template <typename... ControlParameters, typename... RelationParameters, typename... Args>
-    auto &addContactInteraction(Contact<RelationParameters...> &contact_relation, Args &&...args)
+    auto &incrementContactInteraction(Contact<RelationParameters...> &contact_relation, Args &&...args)
     {
         this->post_processes_.push_back(
             this->supplementary_dynamics_keeper_.template createPtr<

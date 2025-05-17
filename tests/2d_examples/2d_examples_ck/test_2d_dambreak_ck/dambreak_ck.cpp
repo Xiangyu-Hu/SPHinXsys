@@ -93,22 +93,32 @@ int main(int ac, char *av[])
     // Finally, the auxiliary models such as time step estimator, initial condition,
     // boundary condition and other constraints should be defined.
     //----------------------------------------------------------------------
-    UpdateCellLinkedList<MainExecutionPolicy, RealBody> water_cell_linked_list(water_block);
-    UpdateCellLinkedList<MainExecutionPolicy, RealBody> wall_cell_linked_list(wall_boundary);
-    UpdateRelation<MainExecutionPolicy, Inner<>, Contact<>> water_block_update_complex_relation(water_block_inner, water_wall_contact);
-    UpdateRelation<MainExecutionPolicy, Contact<>> fluid_observer_contact_relation(fluid_observer_contact);
-    ParticleSortCK<MainExecutionPolicy> particle_sort(water_block);
+    SPHSolver solver;
+    auto &water_cell_linked_list = solver.addCellLinkedListDynamics(par, water_block);
+    auto &wall_cell_linked_list = solver.addCellLinkedListDynamics(par, wall_boundary);
+    auto &water_block_update_complex_relation = solver.addRelationDynamics(par, water_block_inner, water_wall_contact);
+    auto &fluid_observer_contact_relation = solver.addRelationDynamics(par, fluid_observer_contact);
+    auto &particle_sort = solver.addSortDynamics(par, water_block);
 
     Gravity gravity(Vecd(0.0, -gravity_g));
-    StateDynamics<MainExecutionPolicy, GravityForceCK<Gravity>> constant_gravity(water_block, gravity);
-    StateDynamics<execution::ParallelPolicy, NormalFromBodyShapeCK> wall_boundary_normal_direction(wall_boundary); // run on CPU
-    StateDynamics<MainExecutionPolicy, fluid_dynamics::AdvectionStepSetup> water_advection_step_setup(water_block);
-    StateDynamics<MainExecutionPolicy, fluid_dynamics::AdvectionStepClose> water_advection_step_close(water_block);
+    auto &constant_gravity = solver.addStateDynamics<GravityForceCK<Gravity>>(par, water_block, gravity);
+    auto &wall_boundary_normal_direction = solver.addStateDynamics<NormalFromBodyShapeCK>(par, wall_boundary); // run on CPU
+    auto &water_advection_step_setup = solver.addStateDynamics<fluid_dynamics::AdvectionStepSetup>(par, water_block);
+    auto &water_advection_step_close = solver.addStateDynamics<fluid_dynamics::AdvectionStepClose>(par, water_block);
 
-    InteractionDynamicsCK<MainExecutionPolicy, LinearCorrectionMatrixComplex>
-        fluid_linear_correction_matrix(DynamicsArgs(water_block_inner, 0.5), water_wall_contact);
-    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticStep1stHalfWithWallRiemannCorrectionCK>
-        fluid_acoustic_step_1st_half(water_block_inner, water_wall_contact);
+    auto &fluid_linear_correction_matrix =
+        solver.addInteractionDynamics<LinearCorrectionMatrixComplex>(par, DynamicsArgs(water_block_inner, 0.5), water_wall_contact);
+
+    /*    auto &fluid_linear_correction_matrix =
+            solver.incrementInteractionDynamics<LinearCorrectionMatrix, WithUpdate>(par, water_block_inner, 0.5)
+                .incrementContactInteraction(water_wall_contact);*/
+        auto &fluid_acoustic_step_1st_half =
+            solver.incrementInteractionDynamics<
+                      fluid_dynamics::AcousticStep1stHalf, OneLevel, AcousticRiemannSolverCK, LinearCorrectionCK>(par, water_block_inner)
+                .incrementContactInteraction<Wall, AcousticRiemannSolverCK, LinearCorrectionCK>(water_wall_contact);
+
+    /* InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticStep1stHalfWithWallRiemannCorrectionCK>
+        fluid_acoustic_step_1st_half(water_block_inner, water_wall_contact);*/
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticStep2ndHalfWithWallRiemannCorrectionCK>
         fluid_acoustic_step_2nd_half(water_block_inner, water_wall_contact);
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::DensityRegularizationComplexFreeSurface>
