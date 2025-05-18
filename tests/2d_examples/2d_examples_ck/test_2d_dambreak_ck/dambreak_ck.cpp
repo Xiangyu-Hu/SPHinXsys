@@ -93,7 +93,7 @@ int main(int ac, char *av[])
     // Finally, the auxiliary models such as time step estimator, initial condition,
     // boundary condition and other constraints should be defined.
     //----------------------------------------------------------------------
-    SPHSolver solver;
+    SPHSolver solver(sph_system);
     auto &water_cell_linked_list = solver.addCellLinkedListDynamics(par, water_block);
     auto &wall_cell_linked_list = solver.addCellLinkedListDynamics(par, wall_boundary);
     auto &water_block_update_complex_relation = solver.addRelationDynamics(par, water_block_inner, water_wall_contact);
@@ -125,10 +125,13 @@ int main(int ac, char *av[])
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp body_states_recording(sph_system);
-    body_states_recording.addToWrite<Vecd>(wall_boundary, "NormalDirection");
-    body_states_recording.addToWrite<Real>(water_block, "Density");
-    RestartIO restart_io(sph_system);
+    auto &body_states_recording =
+        solver.addStatesRecording<BodyStatesRecordingToVtp>(sph_system)
+            .addToWrite<Vecd>(wall_boundary, "NormalDirection")
+            .addToWrite<Real>(water_block, "Density");
+
+    auto &restart_io = solver.addIODynamics<RestartIO>(sph_system);
+
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<MainExecutionPolicy, TotalMechanicalEnergyCK>>
         record_water_mechanical_energy(water_block, gravity);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<MainExecutionPolicy, Real>>

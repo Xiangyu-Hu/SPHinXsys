@@ -31,6 +31,7 @@
 
 #include "base_particle_dynamics.h"
 #include "interaction_algorithms_ck.h"
+#include "io_base.h"
 #include "ownership.h"
 #include "particle_sort_ck.h"
 #include "simple_algorithms_ck.h"
@@ -45,10 +46,17 @@ class SPHSolver
 {
     UniquePtrsKeeper<BaseDynamics<void>> particle_dynamics_keeper_;
     DataContainerUniquePtrAssemble<BaseDynamics> reduce_dynamics_keeper_;
+    UniquePtrKeeper<BodyStatesRecording> state_recording_keeper_;
+    UniquePtrsKeeper<BaseIO> io_dynamics_keeper_;
 
   public:
-    SPHSolver() {};
+    SPHSolver(SPHSystem &sph_system);
     virtual ~SPHSolver() {};
+
+    void setRestartIterationStep(size_t iteration_step)
+    {
+        iteration_step_ = iteration_step;
+    };
 
     template <typename ExecutePolicy, class DynamicsIdentifier, typename... Args>
     auto &addCellLinkedListDynamics(const ExecutePolicy &ex_policy, DynamicsIdentifier &identifier, Args &&...args)
@@ -109,6 +117,24 @@ class SPHSolver
                 ExecutePolicy, InteractionType<RelationType<ControlParameters..., RelationParameters...>>>>(
             inner_relation, std::forward<Args>(args)...);
     };
+
+    template <class StateRecordingType, typename... Args>
+    auto &addStatesRecording(Args &&...args)
+    {
+        return *state_recording_keeper_.createPtr<
+            StateRecordingType>(std::forward<Args>(args)...);
+    };
+
+    template <class DynamicsType, typename... Args>
+    auto &addIODynamics(Args &&...args)
+    {
+        return *io_dynamics_keeper_.createPtr<
+            DynamicsType>(std::forward<Args>(args)...);
+    };
+
+  protected:
+    SingularVariable<Real> *physical_time_;
+    size_t iteration_step_ = 0;
 };
 } // namespace SPH
 #endif // BASE_SOLVER_H
