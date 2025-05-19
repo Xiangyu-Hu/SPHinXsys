@@ -213,7 +213,7 @@ void DampingPairwiseInner<VariableType>::
     interaction(size_t index_i, Real dt)
 {
     Real Vol_i = Vol_[index_i];
-    Real mass_i = mass_[index_i];
+    Real mass_i = particles_->ParticleMass(index_i);
     VariableType &variable_i = variable_[index_i];
 
     std::array<Real, MaximumNeighborhoodSize> parameter_b;
@@ -222,7 +222,7 @@ void DampingPairwiseInner<VariableType>::
     for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
     {
         size_t index_j = inner_neighborhood.j_[n];
-        Real mass_j = mass_[index_j];
+        Real mass_j = particles_->ParticleMass(index_j);
 
         VariableType variable_derivative = (variable_i - variable_[index_j]);
         parameter_b[n] = eta_ * inner_neighborhood.dW_ijV_j_[n] * Vol_i * dt / inner_neighborhood.r_ij_[n];
@@ -236,7 +236,7 @@ void DampingPairwiseInner<VariableType>::
     for (size_t n = inner_neighborhood.current_size_; n != 0; --n)
     {
         size_t index_j = inner_neighborhood.j_[n - 1];
-        Real mass_j = mass_[index_j];
+        Real mass_j = particles_->ParticleMass(index_j);
 
         VariableType variable_derivative = (variable_i - variable_[index_j]);
         VariableType increment = parameter_b[n - 1] * variable_derivative / (mass_i * mass_j - parameter_b[n - 1] * (mass_i + mass_j));
