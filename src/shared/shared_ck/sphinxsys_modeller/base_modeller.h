@@ -21,13 +21,14 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file base_solver.h
- * @brief Graph base solver with the help of the Taskflow library.
+ * @file base_modeller.h
+ * @brief interface for simplify the modeling process,
+ * especially decrease the explicit usage of template by type deduction.
  * @author	Xiangyu Hu
  */
 
-#ifndef BASE_SOLVER_H
-#define BASE_SOLVER_H
+#ifndef BASE_MODELLER_H
+#define BASE_MODELLER_H
 
 #include "base_particle_dynamics.h"
 #include "interaction_algorithms_ck.h"
@@ -38,25 +39,21 @@
 #include "update_body_relation.h"
 #include "update_cell_linked_list.h"
 
-#include <taskflow/taskflow.hpp>
-
 namespace SPH
 {
-class SPHSolver
+class SPHModeller
 {
+    UniquePtrsKeeper<Shape> initial_shapes_keeper_;
+    UniquePtrsKeeper<SPHBody> real_bodies_keeper_;
+    UniquePtrsKeeper<SPHBody> observer_bodies_keeper_;
     UniquePtrsKeeper<BaseDynamics<void>> particle_dynamics_keeper_;
     DataContainerUniquePtrAssemble<BaseDynamics> reduce_dynamics_keeper_;
     UniquePtrKeeper<BodyStatesRecording> state_recording_keeper_;
     UniquePtrsKeeper<BaseIO> io_dynamics_keeper_;
 
   public:
-    SPHSolver(SPHSystem &sph_system);
-    virtual ~SPHSolver() {};
-
-    void setRestartIterationStep(size_t iteration_step)
-    {
-        iteration_step_ = iteration_step;
-    };
+    SPHModeller(SPHSystem &sph_system);
+    virtual ~SPHModeller() {};
 
     template <typename ExecutePolicy, class DynamicsIdentifier, typename... Args>
     auto &addCellLinkedListDynamics(const ExecutePolicy &ex_policy, DynamicsIdentifier &identifier, Args &&...args)
@@ -133,8 +130,7 @@ class SPHSolver
     };
 
   protected:
-    SingularVariable<Real> *physical_time_;
-    size_t iteration_step_ = 0;
+    std::map<std::string, SPHBody *> body_map_;
 };
 } // namespace SPH
-#endif // BASE_SOLVER_H
+#endif // BASE_MODELLER_H

@@ -189,7 +189,7 @@ int main(int ac, char *av[])
     // Finally, the auxiliary models such as time step estimator, initial condition,
     // boundary condition and other constraints should be defined.
     //----------------------------------------------------------------------
-    SPHSolver solver;
+    SPHModeller solver;
     auto &water_low_resolution_cell_linked_list = solver.addCellLinkedListDynamics<MainExecutionPolicy>(water_low_resolution_level);
     auto &water_high_resolution_cell_linked_list = solver.addCellLinkedListDynamics<MainExecutionPolicy>(water_high_resolution_level);
     auto &cylinder_cell_linked_list = solver.addCellLinkedListDynamics<MainExecutionPolicy>(cylinder);
