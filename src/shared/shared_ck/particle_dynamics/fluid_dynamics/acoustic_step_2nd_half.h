@@ -99,10 +99,10 @@ class AcousticStep2ndHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionTyp
 
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
 class AcousticStep2ndHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType, Parameters...>>
-    : public AcousticStep<Interaction<Contact<Wall, Parameters...>>>
+    : public AcousticStep<Interaction<Contact<Parameters...>>>, public Interaction<Wall>
 {
     using FluidType = typename RiemannSolverType::SourceFluid;
-    using BaseInteraction = AcousticStep<Interaction<Contact<Wall, Parameters...>>>;
+    using BaseInteraction = AcousticStep<Interaction<Contact<Parameters...>>>;
     using CorrectionKernel = typename KernelCorrectionType::ComputingKernel;
 
   public:
@@ -131,6 +131,9 @@ class AcousticStep2ndHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType,
     RiemannSolverType riemann_solver_;
 };
 
+using AcousticStep2ndHalfWithWallNoRiemannCK =
+    AcousticStep2ndHalf<Inner<OneLevel, NoRiemannSolverCK, NoKernelCorrectionCK>,
+                        Contact<Wall, NoRiemannSolverCK, NoKernelCorrectionCK>>;
 using AcousticStep2ndHalfWithWallRiemannCK =
     AcousticStep2ndHalf<Inner<OneLevel, AcousticRiemannSolverCK, NoKernelCorrectionCK>,
                         Contact<Wall, AcousticRiemannSolverCK, NoKernelCorrectionCK>>;

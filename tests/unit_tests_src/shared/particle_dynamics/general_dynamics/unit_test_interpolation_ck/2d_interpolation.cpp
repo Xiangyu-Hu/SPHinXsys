@@ -39,7 +39,7 @@ class WaterBlock : public ComplexShape
     {
         Vecd scaled_container(0.5 * width, 0.5 * height);
         Transform translate_to_origin(scaled_container);
-        add<TransformShape<GeometricShapeBox>>(Transform(translate_to_origin), scaled_container);
+        add<GeometricShapeBox>(Transform(translate_to_origin), scaled_container);
     }
 };
 //----------------------------------------------------------------------
@@ -60,8 +60,8 @@ int main(int ac, char *av[])
     FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
     water_block.defineClosure<WeaklyCompressibleFluid, Viscosity>(ConstructArgs(rho0_f, c_f), mu_f);
     water_block.generateParticles<BaseParticles, Lattice>();
-    SimpleDynamics<relax_dynamics::RandomizeParticlePosition> random_airfoil_particles(water_block);
-    random_airfoil_particles.exec(0.5);
+    SimpleDynamics<relax_dynamics::RandomizeParticlePosition> random_fluid_particles(water_block);
+    random_fluid_particles.exec(0.5);
 
     ObserverBody fluid_observer(sph_system, "FluidObserver");
     StdVec<Vecd> observation_location = {reference_coordinate};

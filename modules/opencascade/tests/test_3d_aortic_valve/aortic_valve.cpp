@@ -36,8 +36,7 @@ namespace SPH
 class BoundaryGeometry : public BodyPartByParticle
 {
   public:
-    BoundaryGeometry(SPHBody &body, const std::string &body_part_name)
-        : BodyPartByParticle(body, body_part_name)
+    BoundaryGeometry(SPHBody &body) : BodyPartByParticle(body)
     {
         TaggingParticleMethod tagging_particle_method = std::bind(&BoundaryGeometry::tagManually, this, _1);
         tagParticles(tagging_particle_method);
@@ -154,7 +153,7 @@ int main(int ac, char *av[])
     RelaxationStepInnerFirstHalf leaflet_relaxation_first_half(leaflet_inner);
     RelaxationStepInnerSecondHalf leaflet_relaxation_second_half(leaflet_inner);
     /** Constrain the boundary. */
-    BoundaryGeometry boundary_geometry(leaflet, "BoundaryGeometry");
+    BoundaryGeometry boundary_geometry(leaflet);
     SimpleDynamics<SurfaceNormalDirection> surface_normal_direction(leaflet);
     //----------------------------------------------------------------------
     //	Particle relaxation starts here.

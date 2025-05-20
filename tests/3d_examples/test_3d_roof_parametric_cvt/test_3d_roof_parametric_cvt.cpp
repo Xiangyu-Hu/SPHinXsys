@@ -353,7 +353,7 @@ return_data roof_under_self_weight(Real dp, bool cvt = true, int particle_number
 
     auto shell_particles = dynamic_cast<SurfaceParticles *>(&shell_body.getBaseParticles());
     bb_system = get_particles_bounding_box(shell_particles->ParticlePositions(), shell_particles->TotalRealParticles());
-    system.system_domain_bounds_ = bb_system;
+    system.setSystemDomainBounds(bb_system);
     std::cout << "bb_system.first_: " << bb_system.first_ << std::endl;
     std::cout << "bb_system.second_: " << bb_system.second_ << std::endl;
     { // recalculate the volume/area after knowing the particle positions
@@ -372,7 +372,7 @@ return_data roof_under_self_weight(Real dp, bool cvt = true, int particle_number
 
     ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> computing_time_step_size(shell_body);
 
-    BodyPartByParticle constrained_edges(shell_body, "constrained_edges");
+    BodyPartByParticle constrained_edges(shell_body);
     BaseParticles &base_particles = shell_body.getBaseParticles();
     auto constrained_edge_ids = [&]() { // brute force finding the edges
         IndexVector ids;

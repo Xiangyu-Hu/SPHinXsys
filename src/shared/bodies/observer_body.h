@@ -42,13 +42,15 @@ namespace SPH
 {
 class ObserverBody : public SPHBody
 {
+    void addObserverBodyToSPHSystem();
+
   public:
     template <typename... Args>
     ObserverBody(Args &&...args) : SPHBody(std::forward<Args>(args)...)
     {
-        sph_system_.observation_bodies_.push_back(this);
+        addObserverBodyToSPHSystem();
     };
-    virtual ~ObserverBody(){};
+    virtual ~ObserverBody() {};
 };
 } // namespace SPH
 #endif // OBSERVER_BODY_H

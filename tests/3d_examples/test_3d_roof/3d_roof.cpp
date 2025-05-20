@@ -79,8 +79,7 @@ class ParticleGenerator<SurfaceParticles, Cylinder> : public ParticleGenerator<S
 class BoundaryGeometry : public BodyPartByParticle
 {
   public:
-    BoundaryGeometry(SPHBody &body, const std::string &body_part_name)
-        : BodyPartByParticle(body, body_part_name)
+    BoundaryGeometry(SPHBody &body) : BodyPartByParticle(body)
     {
         TaggingParticleMethod tagging_particle_method = std::bind(&BoundaryGeometry::tagManually, this, _1);
         tagParticles(tagging_particle_method);
@@ -132,7 +131,7 @@ int main(int ac, char *av[])
 
     /** Time step size calculation. */
     ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> computing_time_step_size(cylinder_body);
-    BoundaryGeometry boundary_geometry(cylinder_body, "BoundaryGeometry");
+    BoundaryGeometry boundary_geometry(cylinder_body);
     SimpleDynamics<FixedInAxisDirection> constrain_holder(boundary_geometry, Vecd(0.0, 1.0, 0.0));
     DampingWithRandomChoice<InteractionSplit<DampingProjectionInner<Vec3d, FixedDampingRate>>>
         cylinder_position_damping(0.3, cylinder_body_inner, "Velocity", physical_viscosity);

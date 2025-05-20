@@ -28,6 +28,16 @@ IOEnvironment &SPHSystem::getIOEnvironment()
     return *io_environment_;
 }
 //=================================================================================================//
+void SPHSystem::addRealBody(RealBody *real_body)
+{
+    real_bodies_.push_back(real_body);
+}
+//=================================================================================================//
+void SPHSystem::addSolidBody(SolidBody *solid_body)
+{
+    solid_bodies_.push_back(solid_body);
+}
+//=================================================================================================//
 
 void SPHSystem::initializeSystemCellLinkedLists()
 {

@@ -46,8 +46,8 @@ class WallBoundary : public ComplexShape
   public:
     explicit WallBoundary(const std::string &shape_name) : ComplexShape(shape_name)
     {
-        add<TransformShape<GeometricShapeBox>>(Transform(outer_wall_translation), outer_wall_halfsize);
-        subtract<TransformShape<GeometricShapeBox>>(Transform(inner_wall_translation), inner_wall_halfsize);
+        add<GeometricShapeBox>(Transform(outer_wall_translation), outer_wall_halfsize);
+        subtract<GeometricShapeBox>(Transform(inner_wall_translation), inner_wall_halfsize);
     }
 };
 
@@ -61,7 +61,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    TransformShape<GeometricShapeBox> water_body_shape(Transform(water_body_translation), water_body_halfsize, "WaterBody");
+    GeometricShapeBox water_body_shape(Transform(water_body_translation), water_body_halfsize, "WaterBody");
     FluidBody water_body(sph_system, water_body_shape);
     water_body.defineClosure<WeaklyCompressibleFluid, Viscosity>(ConstructArgs(rho0_f, c_f), mu_f);
     water_body.generateParticles<BaseParticles, Lattice>();
@@ -72,7 +72,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating body parts.
     //----------------------------------------------------------------------
-    TransformShape<GeometricShapeBox> wave_probe_buffer_shape(Transform(gauge_translation), gauge_halfsize, "FreeSurfaceGauge");
+    GeometricShapeBox wave_probe_buffer_shape(Transform(gauge_translation), gauge_halfsize, "FreeSurfaceGauge");
     BodyRegionByCell wave_probe_buffer(water_body, wave_probe_buffer_shape);
     //----------------------------------------------------------------------
     //	Define body relation map.

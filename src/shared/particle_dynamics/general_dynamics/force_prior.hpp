@@ -2,6 +2,7 @@
 #define FORCE_PRIOR_HPP
 
 #include "force_prior.h"
+#include "sph_system.h"
 
 namespace SPH
 {

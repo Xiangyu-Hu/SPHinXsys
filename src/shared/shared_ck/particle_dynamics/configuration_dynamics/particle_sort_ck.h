@@ -129,7 +129,7 @@ class ParticleSortCK : public LocalDynamics, public BaseDynamics<void>
         void update(UnsignedInt index_i);
 
       protected:
-        UnsignedInt *index_list_, *original_id_list_;
+        UnsignedInt *particle_list_, *original_id_list_;
         UnsignedInt *sorted_id_;
     };
 
@@ -149,7 +149,7 @@ class ParticleSortCK : public LocalDynamics, public BaseDynamics<void>
     Implementation<ExecutionPolicy, LocalDynamicsType, ComputingKernel> kernel_implementation_;
 
     StdVec<BodyPartByParticle *> body_parts_by_particle_;
-    StdVec<DiscreteVariable<UnsignedInt> *> dv_index_lists_, dv_original_id_lists_;
+    StdVec<DiscreteVariable<UnsignedInt> *> dv_particle_lists_, dv_original_id_lists_;
     using UpdateBodyPartParticleImplementation =
         Implementation<ExecutionPolicy, LocalDynamicsType, UpdateBodyPartByParticle>;
     UniquePtrsKeeper<UpdateBodyPartParticleImplementation> update_body_part_by_particle_implementation_ptrs_;

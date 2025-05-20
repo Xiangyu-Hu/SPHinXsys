@@ -1,9 +1,6 @@
-/**
- * @file 	io_vtk.cpp
- * @author	Luhui Han, Chi Zhang and Xiangyu Hu
- */
-
 #include "io_vtk.hpp"
+
+#include "io_environment.h"
 
 namespace SPH
 {

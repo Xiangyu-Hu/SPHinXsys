@@ -41,8 +41,8 @@ class Cantilever : public ComplexShape
   public:
     explicit Cantilever(const std::string &shape_name) : ComplexShape(shape_name)
     {
-        add<TransformShape<GeometricShapeBox>>(Transform(translation_cantilever), halfsize_cantilever);
-        add<TransformShape<GeometricShapeBox>>(Transform(translation_holder), halfsize_holder);
+        add<GeometricShapeBox>(Transform(translation_cantilever), halfsize_cantilever);
+        add<GeometricShapeBox>(Transform(translation_holder), halfsize_holder);
     }
 };
 /**
@@ -96,7 +96,7 @@ int main(int ac, char *av[])
     /** Time step size calculation. */
     ReduceDynamics<solid_dynamics::AcousticTimeStep> computing_time_step_size(cantilever_body);
     /** Constrain the holder. */
-    TransformShape<GeometricShapeBox> holder_shape(Transform(translation_holder), halfsize_holder, "Holder");
+    GeometricShapeBox holder_shape(Transform(translation_holder), halfsize_holder, "Holder");
     BodyRegionByParticle holder(cantilever_body, holder_shape);
     SimpleDynamics<FixBodyPartConstraint> constraint_holder(holder);
     /** Output */

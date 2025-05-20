@@ -130,7 +130,7 @@ void TransportVelocityCorrectionCK<
 template <class KernelCorrectionType, class ResolutionType, class LimiterType, class ParticleScopeType, typename... Parameters>
 TransportVelocityCorrectionCK<Contact<Wall, KernelCorrectionType, ResolutionType, LimiterType, ParticleScopeType, Parameters...>>::
     TransportVelocityCorrectionCK(Relation<Contact<Parameters...>> &contact_relation)
-    : TransportVelocityCorrectionCKBase<Interaction<Contact<Wall, Parameters...>>>(contact_relation),
+    : BaseInteraction(contact_relation), Interaction<Wall>(contact_relation),
       kernel_correction_(this->particles_)
 {
     for (size_t k = 0; k != this->contact_particles_.size(); ++k)

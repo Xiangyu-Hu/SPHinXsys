@@ -1,13 +1,14 @@
 #include "base_material.h"
 
 #include "base_particles.hpp"
+#include "sph_system.h"
 
 namespace SPH
 {
 //=================================================================================================//
-void BaseMaterial::setLocalParameters(bool is_reload, BaseParticles *base_particles)
+void BaseMaterial::setLocalParameters(SPHSystem &sph_system, BaseParticles *base_particles)
 {
-    if (is_reload)
+    if (sph_system.ReloadParticles())
     {
         registerLocalParametersFromReload(base_particles);
     }

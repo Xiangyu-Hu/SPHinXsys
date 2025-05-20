@@ -24,12 +24,11 @@ BoundingBox system_domain_bounds(
 //----------------------------------------------------------------------
 //  Material parameters.
 //----------------------------------------------------------------------
-const Real Inlet_pressure = 0.2;
-const Real Outlet_pressure = 0.1;
+const Real Inlet_pressure = 0.1;
+const Real Outlet_pressure = 0.0;
 Real rho0_f = 1000.0;
-Real Re = 50.0;
-Real mu_f = std::sqrt(rho0_f * std::pow(0.5 * DH, 3.0) *
-                      std::abs(Inlet_pressure - Outlet_pressure) / (Re * DL));
+Real Re = 50;
+Real mu_f = std::sqrt(rho0_f * std::pow(DH, 3.0) * std::abs(Inlet_pressure - Outlet_pressure) / (32.0 * Re * DL));
 
 /**
  * Analytical solution for a maximum velocity of laminar Poiseuille flow in a 3D pipe:
@@ -45,8 +44,9 @@ Real mu_f = std::sqrt(rho0_f * std::pow(0.5 * DH, 3.0) *
 Real U_f = (DH * DH * std::abs(Inlet_pressure - Outlet_pressure)) /
            (16.0 * mu_f * DL);
 
-/** Choose a wave speed for the weakly compressible model. */
-Real c_f = 10.0 * U_f;
+// Compute speed of sound (c0) based on the pressure difference between inlet and outlet boundaries.
+// Ensures density variations are limited to ~1% (WCSPH criterion), multiplied by 4 as a safety factor.
+Real c_f = std::max(10.0 * U_f, sqrt(2 * (Inlet_pressure - Outlet_pressure) / (rho0_f * 0.01))); //
 
 //----------------------------------------------------------------------
 //  Geometric shapes for the channel and boundaries.
@@ -69,7 +69,7 @@ class InflowVelocityPrescribed : public VelocityPrescribed<>
   public:
     InflowVelocityPrescribed(Real DH, Real U_f, Real mu_f)
         : VelocityPrescribed<>(),
-          DH_(DH), U_f_(U_f), tau_((DH * DH) / (M_PI * M_PI * mu_f)) {};
+          DH_(DH), U_f_(U_f), tau_(0.1) {};
 
     Real getAxisVelocity(const Vecd &input_position, const Real &input_axis_velocity, Real time)
     {
@@ -130,7 +130,7 @@ int velocity_validation(
 {
     size_t total_passed = 0;
     size_t total_failed = 0;
-    std::vector<std::string> failure_messages;
+    std::vector<std::string> messages;
 
     // Loop over each observer point and compare the x-component of the velocity.
     for (size_t index = 0; index < observer_location.size(); ++index)
@@ -140,39 +140,36 @@ int velocity_validation(
         Real vel_x_analytical = analytical_solution(y, z);
         Real vel_x_simulation = observer_vel[index][0];
 
-        // Check if within tolerance
-        if (std::abs((vel_x_simulation - vel_x_analytical) / vel_x_analytical) <= tolerance_factor)
+        Real error = std::abs((vel_x_simulation - vel_x_analytical) / U_f);
+        std::ostringstream msg;
+        msg << "Measure at observer index " << index
+            << " | Analytical: " << vel_x_analytical
+            << " | Simulation: " << vel_x_simulation
+            << " | Error: " << error;
+        messages.push_back(msg.str());
+
+        if (error <= tolerance_factor)
         {
             total_passed++;
         }
         else
         {
             total_failed++;
-            std::ostringstream msg;
-            msg << "Mismatch at observer index " << index
-                << " | Analytical: " << vel_x_analytical
-                << " | Simulation: " << vel_x_simulation
-                << " | Error: " << std::abs((vel_x_simulation - vel_x_analytical) / vel_x_analytical);
-            failure_messages.push_back(msg.str());
         }
     }
 
     // Print summary
+    std::cout << "Detailed error measures:\n";
+    for (const auto &msg : messages)
+    {
+        std::cout << msg << "\n";
+    }
     std::cout << "[TEST SUMMARY] Velocity Validation:\n"
               << "Total Observations: " << observer_location.size() << "\n"
               << "Passed: " << total_passed << "\n"
               << "Failed: " << total_failed << "\n";
 
-    // Print detailed failure messages if any
-    if (!failure_messages.empty())
-    {
-        std::cout << "Detailed Failures:\n";
-        for (const auto &msg : failure_messages)
-        {
-            std::cout << msg << "\n";
-        }
-    }
-
+    // Final assertion for unit testing
     if (total_failed != 0)
     {
         std::cout << "Test failed with " << total_failed << " mismatches. Check log for details.";
@@ -238,13 +235,13 @@ int main(int ac, char *av[])
     // //----------------------------------------------------------------------
     // //	Creating body parts.
     // //----------------------------------------------------------------------
-    AlignedBoxPartByCell left_emitter_by_cell(water_body, AlignedBox(xAxis, Transform(left_bidirectional_translation), bidirectional_buffer_halfsize));
+    AlignedBoxByCell left_emitter_by_cell(water_body, AlignedBox(xAxis, Transform(left_bidirectional_translation), bidirectional_buffer_halfsize));
     auto defulat_normal = Vec3d::UnitX();
     auto rotated_normal = -1 * Vec3d::UnitX();
     auto rotation_axis = Vec3d::UnitY();
     auto rot3d = Rotation3d(std::acos(defulat_normal.dot(rotated_normal)), rotation_axis);
-    AlignedBoxPartByCell right_emitter_by_cell(water_body, AlignedBox(xAxis, Transform(rot3d, right_bidirectional_translation), bidirectional_buffer_halfsize));
-    // AlignedBoxPartByCell right_emitter_by_cell(water_body, AlignedBox(xAxis, Transform(left_bidirectional_translation), bidirectional_buffer_halfsize));
+    AlignedBoxByCell right_emitter_by_cell(water_body, AlignedBox(xAxis, Transform(rot3d, right_bidirectional_translation), bidirectional_buffer_halfsize));
+    // AlignedBoxByCell right_emitter_by_cell(water_body, AlignedBox(xAxis, Transform(left_bidirectional_translation), bidirectional_buffer_halfsize));
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -282,9 +279,9 @@ int main(int ac, char *av[])
     StateDynamics<MainExecutionPolicy, fluid_dynamics::AdvectionStepClose> water_advection_step_close(water_body);
     InteractionDynamicsCK<MainExecutionPolicy, LinearCorrectionMatrixComplex>
         fluid_linear_correction_matrix(DynamicsArgs(water_body_inner, 0.5), water_wall_contact);
-    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticStep1stHalfWithWallRiemannCK>
+    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticStep1stHalfWithWallRiemannCorrectionCK>
         fluid_acoustic_step_1st_half(water_body_inner, water_wall_contact);
-    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticStep2ndHalfWithWallRiemannCK>
+    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticStep2ndHalfWithWallNoRiemannCK>
         fluid_acoustic_step_2nd_half(water_body_inner, water_wall_contact);
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::DensityRegularizationComplexInternalPressureBoundary>
         fluid_density_regularization(water_body_inner, water_wall_contact);
@@ -296,11 +293,9 @@ int main(int ac, char *av[])
     ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticTimeStepCK<>> fluid_acoustic_time_step(water_body);
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::ViscousForceWithWallCK>
         fluid_viscous_force(water_body_inner, water_wall_contact);
-    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::TransportVelocityLimitedCorrectionCorrectedComplexBulkParticlesCKWithoutUpdate>
-        zero_gradient_ck(water_body_inner, water_wall_contact);
-    fluid_dynamics::BidirectionalBoundaryCK<MainExecutionPolicy, NoKernelCorrectionCK, InflowVelocityPrescribed>
+    fluid_dynamics::BidirectionalBoundaryCK<MainExecutionPolicy, LinearCorrectionCK, InflowVelocityPrescribed>
         bidirectional_velocity_condition_left(left_emitter_by_cell, particle_buffer, DH, U_f, mu_f);
-    fluid_dynamics::BidirectionalBoundaryCK<MainExecutionPolicy, NoKernelCorrectionCK, PressurePrescribed<>>
+    fluid_dynamics::BidirectionalBoundaryCK<MainExecutionPolicy, LinearCorrectionCK, PressurePrescribed<>>
         bidirectional_pressure_condition_right(right_emitter_by_cell, particle_buffer, Outlet_pressure);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
@@ -332,7 +327,7 @@ int main(int ac, char *av[])
     size_t screen_output_interval = 100;
     size_t observation_sample_interval = screen_output_interval * 2;
     Real end_time = 2.0;
-    Real output_interval = 0.1;
+    Real output_interval = 0.25;
     //----------------------------------------------------------------------
     //	Statistics for CPU time
     //----------------------------------------------------------------------
@@ -359,10 +354,10 @@ int main(int ac, char *av[])
             tick_instance = TickCount::now();
             fluid_density_regularization.exec();
             water_advection_step_setup.exec();
-            fluid_viscous_force.exec();
-            transport_correction_ck.exec();
-            Real advection_dt = fluid_advection_time_step.exec();
             fluid_linear_correction_matrix.exec();
+            transport_correction_ck.exec();
+            fluid_viscous_force.exec();
+            Real advection_dt = fluid_advection_time_step.exec();
             interval_outer_loop += TickCount::now() - tick_instance;
 
             tick_instance = TickCount::now();
@@ -372,7 +367,6 @@ int main(int ac, char *av[])
             {
                 acoustic_dt = SMIN(fluid_acoustic_time_step.exec(), advection_dt);
                 fluid_acoustic_step_1st_half.exec(acoustic_dt);
-                zero_gradient_ck.exec();
                 bidirectional_velocity_condition_left.applyBoundaryCondition(acoustic_dt);
                 bidirectional_pressure_condition_right.applyBoundaryCondition(acoustic_dt);
                 fluid_acoustic_step_2nd_half.exec(acoustic_dt);

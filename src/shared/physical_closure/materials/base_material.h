@@ -41,6 +41,7 @@
 namespace SPH
 {
 class BaseParticles;
+class SPHSystem;
 
 /** @class  BaseMaterial
  *  @brief Base of all materials
@@ -62,7 +63,7 @@ class BaseMaterial
      * For a composite material, i.e. there is a material pointer with another material,
      * one need assign the base particle to that material too.
      */
-    void setLocalParameters(bool is_reload, BaseParticles *base_particles);
+    void setLocalParameters(SPHSystem &sph_system, BaseParticles *base_particles);
     virtual void registerLocalParameters(BaseParticles *base_particles) {};
     virtual void registerLocalParametersFromReload(BaseParticles *base_particles) {};
     virtual void initializeLocalParameters(BaseParticles *base_particles) {};

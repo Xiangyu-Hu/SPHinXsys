@@ -39,7 +39,7 @@ TEST(BernoulliBeam20x, Pressure)
         {Real(end_time * 0.1), Real(pressure)},
         {Real(end_time), Real(pressure)}};
     input.surface_pressure_tuple_ = StdVec<PressureTuple>{PressureTuple(0, specimen, Vec3d(0.1, 0.0, 0.1), pressure_over_time)};
-    input.particle_relaxation_list_ = {true};
+    input.particle_relaxation_list_ = StdVec<bool>{true};
 
     //=================================================================================================//
     StructuralSimulation sim(input);

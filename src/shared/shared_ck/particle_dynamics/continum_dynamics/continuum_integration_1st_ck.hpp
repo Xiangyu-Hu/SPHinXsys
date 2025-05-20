@@ -1,8 +1,8 @@
 #ifndef CONTINUUM_INTERGRATION_1ST_CK_HPP
 #define CONTINUUM_INTERGRATION_1ST_CK_HPP
 
-#include "continuum_integration_1st_ck.h"
 #include "base_particles.hpp"
+#include "continuum_integration_1st_ck.h"
 namespace SPH
 {
 namespace continuum_dynamics
@@ -12,12 +12,12 @@ template <class BaseInteractionType>
 template <class DynamicsIdentifier>
 PlasticAcousticStep<BaseInteractionType>::PlasticAcousticStep(DynamicsIdentifier &identifier)
     : fluid_dynamics::AcousticStep<BaseInteractionType>(identifier),
-    plastic_continuum_(DynamicCast<PlasticContinuum>(this, this->sph_body_.getBaseMaterial())),
-    dv_stress_tensor_3D_(this->particles_->template registerStateVariableOnly<Mat3d>("StressTensor3D")),
-    dv_strain_tensor_3D_(this->particles_->template registerStateVariableOnly<Mat3d>("StrainTensor3D")),
-    dv_stress_rate_3D_(this->particles_->template registerStateVariableOnly<Mat3d>("StressRate3D")),
-    dv_strain_rate_3D_(this->particles_->template registerStateVariableOnly<Mat3d>("StrainRate3D")),
-    dv_velocity_gradient_(this->particles_->template registerStateVariableOnly<Matd>("VelocityGradient"))
+      plastic_continuum_(DynamicCast<PlasticContinuum>(this, this->sph_body_.getBaseMaterial())),
+      dv_stress_tensor_3D_(this->particles_->template registerStateVariableOnly<Mat3d>("StressTensor3D")),
+      dv_strain_tensor_3D_(this->particles_->template registerStateVariableOnly<Mat3d>("StrainTensor3D")),
+      dv_stress_rate_3D_(this->particles_->template registerStateVariableOnly<Mat3d>("StressRate3D")),
+      dv_strain_rate_3D_(this->particles_->template registerStateVariableOnly<Mat3d>("StrainRate3D")),
+      dv_velocity_gradient_(this->particles_->template registerStateVariableOnly<Matd>("VelocityGradient"))
 {
     this->particles_->template addEvolvingVariable<Mat3d>("StressTensor3D");
     this->particles_->template addEvolvingVariable<Mat3d>("StrainTensor3D");
@@ -111,7 +111,7 @@ void PlasticAcousticStep1stHalf<Inner<OneLevel, RiemannSolverType, KernelCorrect
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
 PlasticAcousticStep1stHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType, Parameters...>>::
     PlasticAcousticStep1stHalf(Relation<Contact<Parameters...>> &wall_contact_relation)
-    : PlasticAcousticStep<Interaction<Contact<Wall, Parameters...>>>(wall_contact_relation),
+    : BaseInteraction(wall_contact_relation), Interaction<Wall>(wall_contact_relation),
       correction_(this->particles_), riemann_solver_(this->plastic_continuum_, this->plastic_continuum_) {}
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
@@ -129,7 +129,7 @@ PlasticAcousticStep1stHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType
       drho_dt_(encloser.dv_drho_dt_->DelegatedData(ex_policy)),
       force_(encloser.dv_force_->DelegatedData(ex_policy)),
       force_prior_(encloser.dv_force_prior_->DelegatedData(ex_policy)),
-      stress_tensor_3D_(encloser.dv_stress_tensor_3D_->DelegatedData(ex_policy)), 
+      stress_tensor_3D_(encloser.dv_stress_tensor_3D_->DelegatedData(ex_policy)),
       wall_Vol_(encloser.dv_wall_Vol_[contact_index]->DelegatedData(ex_policy)),
       wall_acc_ave_(encloser.dv_wall_acc_ave_[contact_index]->DelegatedData(ex_policy)) {}
 //=================================================================================================//
@@ -159,4 +159,4 @@ void PlasticAcousticStep1stHalf<Contact<Wall, RiemannSolverType, KernelCorrectio
 
 } // namespace continuum_dynamics
 } // namespace SPH
-#endif //CONTINUUM_INTERGRATION_1ST_CK_HPP
+#endif // CONTINUUM_INTERGRATION_1ST_CK_HPP
