@@ -109,19 +109,19 @@ int main(int ac, char *av[])
 
     auto &fluid_linear_correction_matrix =
         main_methods.addInteractionDynamics<LinearCorrectionMatrix, WithUpdate>(water_block_inner, 0.5)
-            .incrementContactInteraction(water_wall_contact);
+            .addContactInteraction(water_wall_contact);
     auto &fluid_acoustic_step_1st_half =
         main_methods.addInteractionDynamics<
                         fluid_dynamics::AcousticStep1stHalf, OneLevel, AcousticRiemannSolverCK, LinearCorrectionCK>(water_block_inner)
-            .incrementContactInteraction<Wall, AcousticRiemannSolverCK, LinearCorrectionCK>(water_wall_contact);
+            .addContactInteraction<Wall, AcousticRiemannSolverCK, LinearCorrectionCK>(water_wall_contact);
     auto &fluid_acoustic_step_2nd_half =
         main_methods.addInteractionDynamics<
                         fluid_dynamics::AcousticStep2ndHalf, OneLevel, AcousticRiemannSolverCK, LinearCorrectionCK>(water_block_inner)
-            .incrementContactInteraction<Wall, AcousticRiemannSolverCK, LinearCorrectionCK>(water_wall_contact);
+            .addContactInteraction<Wall, AcousticRiemannSolverCK, LinearCorrectionCK>(water_wall_contact);
     auto &fluid_density_regularization =
         main_methods.addInteractionDynamics<
                         fluid_dynamics::DensityRegularization, WithUpdate, FreeSurface, AllParticles>(water_block_inner)
-            .incrementContactInteraction(water_wall_contact);
+            .addContactInteraction(water_wall_contact);
 
     auto &fluid_advection_time_step = main_methods.addReduceDynamics<fluid_dynamics::AdvectionTimeStepCK>(water_block, U_ref);
     auto &fluid_acoustic_time_step = main_methods.addReduceDynamics<fluid_dynamics::AcousticTimeStepCK<>>(water_block);

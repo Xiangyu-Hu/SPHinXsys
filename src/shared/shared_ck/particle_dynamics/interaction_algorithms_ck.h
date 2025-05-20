@@ -91,7 +91,7 @@ class InteractionDynamicsCK<OneLevel> : public InteractionDynamicsCK<Base>
 };
 
 template <class ExecutionPolicy, typename AlgorithmType, template <typename...> class InteractionType>
-class InteractionDynamicsCK<ExecutionPolicy, AlgorithmType, InteractionType<>>
+class InteractionDynamicsCK<ExecutionPolicy, InteractionType<AlgorithmType>>
     : public InteractionDynamicsCK<AlgorithmType>,
       public BaseDynamics<void>
 {
@@ -101,7 +101,7 @@ class InteractionDynamicsCK<ExecutionPolicy, AlgorithmType, InteractionType<>>
     InteractionDynamicsCK() {};
 
     template <typename... ControlParameters, typename... RelationParameters, typename... Args>
-    auto &incrementContactInteraction(Contact<RelationParameters...> &contact_relation, Args &&...args);
+    auto &addContactInteraction(Contact<RelationParameters...> &contact_relation, Args &&...args);
 
     template <template <typename...> class LocalDynamicsType,
               typename... ControlTypes, class DynamicsIdentifier, typename... Args>
@@ -156,7 +156,7 @@ template <class ExecutionPolicy, template <typename...> class InteractionType,
 class InteractionDynamicsCK<ExecutionPolicy, InteractionType<RelationType<Parameters...>>>
     : public InteractionDynamicsCK<
           ExecutionPolicy, Base, InteractionType<RelationType<Parameters...>>>,
-      public InteractionDynamicsCK<ExecutionPolicy, Base, InteractionType<>>
+      public InteractionDynamicsCK<ExecutionPolicy, InteractionType<Base>>
 {
   public:
     template <typename... Args>
@@ -172,7 +172,7 @@ class InteractionDynamicsCK<
     ExecutionPolicy, InteractionType<RelationType<WithUpdate, OtherParameters...>>>
     : public InteractionDynamicsCK<
           ExecutionPolicy, Base, InteractionType<RelationType<WithUpdate, OtherParameters...>>>,
-      public InteractionDynamicsCK<ExecutionPolicy, WithUpdate, InteractionType<>>
+      public InteractionDynamicsCK<ExecutionPolicy, InteractionType<WithUpdate>>
 {
     using LocalDynamicsType = InteractionType<RelationType<WithUpdate, OtherParameters...>>;
     using Identifier = typename LocalDynamicsType::Identifier;
@@ -198,7 +198,7 @@ class InteractionDynamicsCK<
     ExecutionPolicy, InteractionType<RelationType<OneLevel, OtherParameters...>>>
     : public InteractionDynamicsCK<
           ExecutionPolicy, Base, InteractionType<RelationType<OneLevel, OtherParameters...>>>,
-      public InteractionDynamicsCK<ExecutionPolicy, OneLevel, InteractionType<>>
+      public InteractionDynamicsCK<ExecutionPolicy, InteractionType<OneLevel>>
 {
     using LocalDynamicsType = InteractionType<RelationType<OneLevel, OtherParameters...>>;
     using Identifier = typename LocalDynamicsType::Identifier;

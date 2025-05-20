@@ -21,14 +21,14 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file base_method_container.h
+ * @file particle_method_container.h
  * @brief interface for simplify the modeling process,
  * especially decrease the explicit usage of template by type deduction.
  * @author	Xiangyu Hu
  */
 
-#ifndef BASE_METHOD_CONTAINER_H
-#define BASE_METHOD_CONTAINER_H
+#ifndef PARTICLE_METHOD_CONTAINER_H
+#define PARTICLE_METHOD_CONTAINER_H
 
 #include "base_particle_dynamics.h"
 #include "interaction_algorithms_ck.h"
@@ -44,13 +44,8 @@ namespace SPH
 template <typename ExecutePolicy>
 class ParticleMethodContainer
 {
-    UniquePtrsKeeper<Shape> initial_shapes_keeper_;
-    UniquePtrsKeeper<SPHBody> real_bodies_keeper_;
-    UniquePtrsKeeper<SPHBody> observer_bodies_keeper_;
     UniquePtrsKeeper<BaseDynamics<void>> particle_dynamics_keeper_;
     DataContainerUniquePtrAssemble<BaseDynamics> reduce_dynamics_keeper_;
-    UniquePtrKeeper<BodyStatesRecording> state_recording_keeper_;
-    UniquePtrsKeeper<BaseIO> io_dynamics_keeper_;
 
   public:
     ParticleMethodContainer(const ExecutePolicy &ex_policy) {};
@@ -108,20 +103,13 @@ class ParticleMethodContainer
               typename... ControlParameters,
               template <typename...> class RelationType, typename... RelationParameters, typename... Args>
     auto &addInteractionDynamics(
-        RelationType<RelationParameters...> &inner_relation, Args &&...args)
+        RelationType<RelationParameters...> &relation, Args &&...args)
     {
         return *particle_dynamics_keeper_.createPtr<
             InteractionDynamicsCK<
                 ExecutePolicy, InteractionType<RelationType<ControlParameters..., RelationParameters...>>>>(
-            inner_relation, std::forward<Args>(args)...);
-    };
-
-    template <class DynamicsType, typename... Args>
-    auto &addObservationDynamics(Args &&...args)
-    {
-        return *io_dynamics_keeper_.createPtr<
-            DynamicsType>(std::forward<Args>(args)...);
+            relation, std::forward<Args>(args)...);
     };
 };
 } // namespace SPH
-#endif // BASE_METHOD_CONTAINER_H
+#endif // PARTICLE_METHOD_CONTAINER_H
