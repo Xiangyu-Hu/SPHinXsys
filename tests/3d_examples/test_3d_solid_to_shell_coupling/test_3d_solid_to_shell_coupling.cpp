@@ -108,14 +108,12 @@ struct shell_algs
 class SolidBodyPart : public BodyPartByParticle
 {
   public:
-    SolidBodyPart(SPHBody &body, const std::string &body_part_name, const std::function<bool(Vec3d &)> &contain)
-        : BodyPartByParticle(body, body_part_name)
+    SolidBodyPart(SPHBody &body, const std::function<bool(Vec3d &)> &contain)
+        : BodyPartByParticle(body)
     {
         TaggingParticleMethod tagging_particle_method = [this, &contain](size_t index_i) -> bool
         {
-            if (contain(pos_[index_i]))
-                return true;
-            return false;
+            return contain(pos_[index_i]);
         };
         tagParticles(tagging_particle_method);
     };
@@ -171,7 +169,7 @@ struct solid_coupling_algs
                         std::function<bool(Vec3d &)> contain,
                         const std::vector<Real> &factors = {})
         : contact_relation(body, std::move(contact_bodies), factors),
-          part(body, "CouplingPart", std::move(contain)),
+          part(body, std::move(contain)),
           force_bc(part, contact_relation, "SolidToShellCouplingForce", "Force"),
           coupling_force(part, "SolidToShellCouplingForce") {}
 
@@ -194,7 +192,7 @@ struct shell_coupling_algs
                         std::function<bool(Vec3d &)> contain,
                         const std::vector<Real> &factors = {})
         : contact_relation(body, std::move(contact_bodies), factors),
-          part(body, "CouplingPart", std::move(contain)),
+          part(body, std::move(contain)),
           total_weight(part, contact_relation),
           vel_bc(part, contact_relation, "Velocity", "Velocity") {}
 
@@ -246,7 +244,7 @@ void run_solid_to_shell_coupling(size_t res_factor_solid, size_t res_factor_shel
     const Real constraint_length = 2 * cube_length / 10.0;
 
     // import model
-    auto cube_mesh = makeShared<TransformShape<GeometricShapeBox>>(
+    auto cube_mesh = makeShared<GeometricShapeBox>(
         Transform(0.5 * (cube_length + dp_shell) * Vec3d::UnitY()),
         0.5 * Vec3d(cube_length, cube_length + dp_shell, cube_length),
         "cube");
@@ -314,13 +312,13 @@ void run_solid_to_shell_coupling(size_t res_factor_solid, size_t res_factor_shel
         relax_solid(algs_solid.inner_relation);
 
     // Boundary conditions
-    SolidBodyPart shell_fixed_part(shell_body, "ShellFixedPart", [&](Vec3d &pos)
+    SolidBodyPart shell_fixed_part(shell_body, [&](Vec3d &pos)
                                    { return pos.x() < -0.5 * shell_length + constraint_length || pos.x() > 0.5 * shell_length - constraint_length; });
     SimpleDynamics<thin_structure_dynamics::ConstrainShellBodyRegion> fix_shell_bc(shell_fixed_part);
 
     // Gravity
     Vec3d gravity(-0.5 * Vec3d::UnitY());
-    SolidBodyPart cube_part(cube_body, "CubeFircePart", [&](Vec3d &pos)
+    SolidBodyPart cube_part(cube_body, [&](Vec3d &pos)
                             { return pos.y() > shell_thickness; });
     SimpleDynamics<ForcePartByParticle> constant_gravity(cube_part, "Gravity", gravity);
 
@@ -493,8 +491,8 @@ void run_solid(size_t res_factor, Real stiffness_ratio, bool run_relax)
 
     // import model
     auto mesh = makeShared<ComplexShape>("solid");
-    mesh->add<TransformShape<GeometricShapeBox>>(Transform((0.5 * cube_length + shell_thickness) * Vec3d::UnitY()), 0.5 * cube_length * Vec3d::Ones());
-    mesh->add<TransformShape<GeometricShapeBox>>(Transform(0.5 * shell_thickness * Vec3d::UnitY()), 0.5 * Vec3d(shell_length, shell_thickness, shell_width));
+    mesh->add<GeometricShapeBox>(Transform((0.5 * cube_length + shell_thickness) * Vec3d::UnitY()), 0.5 * cube_length * Vec3d::Ones());
+    mesh->add<GeometricShapeBox>(Transform(0.5 * shell_thickness * Vec3d::UnitY()), 0.5 * Vec3d(shell_length, shell_thickness, shell_width));
 
     // Material
     Real rho = 1000 * pow(unit_mm, 2);
@@ -541,13 +539,13 @@ void run_solid(size_t res_factor, Real stiffness_ratio, bool run_relax)
     material_id_initialization.exec();
 
     // Boundary conditions
-    SolidBodyPart shell_fixed_part(body, "ShellFixedPart", [&](Vec3d &pos)
+    SolidBodyPart shell_fixed_part(body, [&](Vec3d &pos)
                                    { return pos.x() < -0.5 * shell_length + constraint_length || pos.x() > 0.5 * shell_length - constraint_length; });
     SimpleDynamics<FixBodyPartConstraint> fix_shell_bc(shell_fixed_part);
 
     // Gravity
     Vec3d gravity(-0.5 * Vec3d::UnitY());
-    SolidBodyPart cube_part(body, "CubePart", [&](Vec3d &pos)
+    SolidBodyPart cube_part(body, [&](Vec3d &pos)
                             { return pos.y() > shell_thickness; });
     SimpleDynamics<ForcePartByParticle> constant_gravity(cube_part, "Gravity", gravity);
 
