@@ -6,6 +6,45 @@
 namespace SPH
 {
 //=================================================================================================//
+template <class ExecutionPolicy, typename AlgorithmType, template <typename...> class InteractionType>
+template <typename... ControlParameters, typename... RelationParameters, typename... Args>
+auto &InteractionDynamicsCK<ExecutionPolicy, AlgorithmType, InteractionType<>>::
+    incrementContactInteraction(Contact<RelationParameters...> &contact_relation, Args &&...args)
+{
+    this->post_processes_.push_back(
+        supplementary_dynamics_keeper_.template createPtr<
+            InteractionDynamicsCK<
+                ExecutionPolicy, InteractionType<Contact<ControlParameters..., RelationParameters...>>>>(
+            contact_relation, std::forward<Args>(args)...));
+    return *this;
+}
+//=================================================================================================//
+template <class ExecutionPolicy, typename AlgorithmType, template <typename...> class InteractionType>
+template <template <typename...> class LocalDynamicsType,
+          typename... ControlTypes, class DynamicsIdentifier, typename... Args>
+auto &InteractionDynamicsCK<ExecutionPolicy, AlgorithmType, InteractionType<>>::
+    addPostStateDynamics(DynamicsIdentifier &identifier, Args &&...args)
+{
+    this->post_processes_.push_back(
+        supplementary_dynamics_keeper_.template createPtr<
+            StateDynamics<ExecutionPolicy, LocalDynamicsType<ControlTypes..., DynamicsIdentifier>>>(
+            identifier, std::forward<Args>(args)...));
+    return *this;
+}
+//=================================================================================================//
+template <class ExecutionPolicy, typename AlgorithmType, template <typename...> class InteractionType>
+template <template <typename...> class LocalDynamicsType,
+          typename... ControlTypes, class DynamicsIdentifier, typename... Args>
+auto &InteractionDynamicsCK<ExecutionPolicy, AlgorithmType, InteractionType<>>::
+    addPreStateDynamics(DynamicsIdentifier &identifier, Args &&...args)
+{
+    this->pre_processes_.push_back(
+        supplementary_dynamics_keeper_.template createPtr<
+            StateDynamics<ExecutionPolicy, LocalDynamicsType<ControlTypes..., DynamicsIdentifier>>>(
+            identifier, std::forward<Args>(args)...));
+    return *this;
+}
+//=================================================================================================//
 template <class ExecutionPolicy, template <typename...> class InteractionType, typename... Parameters>
 template <typename... Args>
 InteractionDynamicsCK<ExecutionPolicy, Base, InteractionType<Inner<Parameters...>>>::

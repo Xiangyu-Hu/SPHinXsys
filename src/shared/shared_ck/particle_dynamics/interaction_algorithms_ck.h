@@ -45,30 +45,7 @@ class InteractionDynamicsCK<Base>
   public:
     InteractionDynamicsCK() {};
 
-    template <typename ExecutePolicy, template <typename...> class LocalDynamicsType,
-              typename... ControlTypes, class DynamicsIdentifier, typename... Args>
-    auto &addPostStateDynamics(DynamicsIdentifier &identifier, Args &&...args)
-    {
-        post_processes_.push_back(
-            supplementary_dynamics_keeper_.createPtr<
-                StateDynamics<ExecutePolicy, LocalDynamicsType<ControlTypes..., DynamicsIdentifier>>>(
-                identifier, std::forward<Args>(args)...));
-        return *this;
-    };
-
-    template <typename ExecutePolicy, template <typename...> class LocalDynamicsType,
-              typename... ControlTypes, class DynamicsIdentifier, typename... Args>
-    auto &addPreStateDynamics(DynamicsIdentifier &identifier, Args &&...args)
-    {
-        pre_processes_.push_back(
-            supplementary_dynamics_keeper_.createPtr<
-                StateDynamics<ExecutePolicy, LocalDynamicsType<ControlTypes..., DynamicsIdentifier>>>(
-                identifier, std::forward<Args>(args)...));
-        return *this;
-    };
-
   protected:
-    UniquePtrsKeeper<BaseDynamics<void>> supplementary_dynamics_keeper_;
     /** pre process such as update ghost state */
     StdVec<BaseDynamics<void> *> pre_processes_;
     /** post process such as impose constraint */
@@ -113,6 +90,28 @@ class InteractionDynamicsCK<OneLevel> : public InteractionDynamicsCK<Base>
     virtual void runUpdateStep(Real dt) = 0;
 };
 
+template <class ExecutionPolicy, typename AlgorithmType, template <typename...> class InteractionType>
+class InteractionDynamicsCK<ExecutionPolicy, AlgorithmType, InteractionType<>>
+    : public InteractionDynamicsCK<AlgorithmType>,
+      public BaseDynamics<void>
+{
+    UniquePtrsKeeper<BaseDynamics<void>> supplementary_dynamics_keeper_;
+
+  public:
+    InteractionDynamicsCK() {};
+
+    template <typename... ControlParameters, typename... RelationParameters, typename... Args>
+    auto &incrementContactInteraction(Contact<RelationParameters...> &contact_relation, Args &&...args);
+
+    template <template <typename...> class LocalDynamicsType,
+              typename... ControlTypes, class DynamicsIdentifier, typename... Args>
+    auto &addPostStateDynamics(DynamicsIdentifier &identifier, Args &&...args);
+
+    template <template <typename...> class LocalDynamicsType,
+              typename... ControlTypes, class DynamicsIdentifier, typename... Args>
+    auto &addPreStateDynamics(DynamicsIdentifier &identifier, Args &&...args);
+};
+
 template <class ExecutionPolicy, template <typename...> class InteractionType, typename... Parameters>
 class InteractionDynamicsCK<ExecutionPolicy, Base, InteractionType<Inner<Parameters...>>>
     : public InteractionType<Inner<Parameters...>>
@@ -150,27 +149,6 @@ class InteractionDynamicsCK<ExecutionPolicy, Base, InteractionType<Contact<Param
 
   protected:
     void runInteraction(Real dt);
-};
-
-template <class ExecutionPolicy, typename AlgorithmType,
-          template <typename...> class InteractionType>
-class InteractionDynamicsCK<ExecutionPolicy, AlgorithmType, InteractionType<>>
-    : public InteractionDynamicsCK<AlgorithmType>,
-      public BaseDynamics<void>
-{
-  public:
-    InteractionDynamicsCK() {};
-
-    template <typename... ControlParameters, typename... RelationParameters, typename... Args>
-    auto &incrementContactInteraction(Contact<RelationParameters...> &contact_relation, Args &&...args)
-    {
-        this->post_processes_.push_back(
-            this->supplementary_dynamics_keeper_.template createPtr<
-                InteractionDynamicsCK<
-                    ExecutionPolicy, InteractionType<Contact<ControlParameters..., RelationParameters...>>>>(
-                contact_relation, std::forward<Args>(args)...));
-        return *this;
-    };
 };
 
 template <class ExecutionPolicy, template <typename...> class InteractionType,
