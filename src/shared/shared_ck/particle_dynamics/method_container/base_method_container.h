@@ -21,14 +21,14 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file base_dynamics_container.h
+ * @file base_method_container.h
  * @brief interface for simplify the modeling process,
  * especially decrease the explicit usage of template by type deduction.
  * @author	Xiangyu Hu
  */
 
-#ifndef BASE_DYNAMICS_CONTAINER_H
-#define BASE_DYNAMICS_CONTAINER_H
+#ifndef BASE_METHOD_CONTAINER_H
+#define BASE_METHOD_CONTAINER_H
 
 #include "base_particle_dynamics.h"
 #include "interaction_algorithms_ck.h"
@@ -42,7 +42,7 @@
 namespace SPH
 {
 template <typename ExecutePolicy>
-class ParticleDynamicsContainer
+class ParticleMethodContainer
 {
     UniquePtrsKeeper<Shape> initial_shapes_keeper_;
     UniquePtrsKeeper<SPHBody> real_bodies_keeper_;
@@ -53,8 +53,8 @@ class ParticleDynamicsContainer
     UniquePtrsKeeper<BaseIO> io_dynamics_keeper_;
 
   public:
-    ParticleDynamicsContainer(const ExecutePolicy &ex_policy) {};
-    virtual ~ParticleDynamicsContainer() {};
+    ParticleMethodContainer(const ExecutePolicy &ex_policy) {};
+    virtual ~ParticleMethodContainer() {};
 
     template <class DynamicsIdentifier, typename... Args>
     auto &addCellLinkedListDynamics(DynamicsIdentifier &identifier, Args &&...args)
@@ -124,4 +124,4 @@ class ParticleDynamicsContainer
     };
 };
 } // namespace SPH
-#endif // BASE_DYNAMICS_CONTAINER_H
+#endif // BASE_METHOD_CONTAINER_H
