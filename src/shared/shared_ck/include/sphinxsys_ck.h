@@ -29,7 +29,7 @@
 #define SPHINXSYS_CK_H
 
 #include "all_shared_physical_dynamics_ck.h"
-#include "base_modeller.h"
+#include "base_dynamics_container.h"
 #include "io_all_ck.h"
 #include "sphinxsys.h"
 

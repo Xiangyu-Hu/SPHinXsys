@@ -21,14 +21,14 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file base_modeller.h
+ * @file base_dynamics_container.h
  * @brief interface for simplify the modeling process,
  * especially decrease the explicit usage of template by type deduction.
  * @author	Xiangyu Hu
  */
 
-#ifndef BASE_MODELLER_H
-#define BASE_MODELLER_H
+#ifndef BASE_DYNAMICS_CONTAINER_H
+#define BASE_DYNAMICS_CONTAINER_H
 
 #include "base_particle_dynamics.h"
 #include "interaction_algorithms_ck.h"
@@ -41,7 +41,8 @@
 
 namespace SPH
 {
-class SPHModeller
+template <typename ExecutePolicy>
+class ParticleDynamicsContainer
 {
     UniquePtrsKeeper<Shape> initial_shapes_keeper_;
     UniquePtrsKeeper<SPHBody> real_bodies_keeper_;
@@ -52,41 +53,41 @@ class SPHModeller
     UniquePtrsKeeper<BaseIO> io_dynamics_keeper_;
 
   public:
-    SPHModeller(SPHSystem &sph_system);
-    virtual ~SPHModeller() {};
+    ParticleDynamicsContainer(const ExecutePolicy &ex_policy) {};
+    virtual ~ParticleDynamicsContainer() {};
 
-    template <typename ExecutePolicy, class DynamicsIdentifier, typename... Args>
-    auto &addCellLinkedListDynamics(const ExecutePolicy &ex_policy, DynamicsIdentifier &identifier, Args &&...args)
+    template <class DynamicsIdentifier, typename... Args>
+    auto &addCellLinkedListDynamics(DynamicsIdentifier &identifier, Args &&...args)
     {
         return *particle_dynamics_keeper_.createPtr<
             UpdateCellLinkedList<ExecutePolicy, DynamicsIdentifier>>(
             identifier, std::forward<Args>(args)...);
     };
 
-    template <typename ExecutePolicy, class FirstRelation, typename... OtherRelations>
-    auto &addRelationDynamics(const ExecutePolicy &ex_policy, FirstRelation &first_relation, OtherRelations &...other_relations)
+    template <class FirstRelation, typename... OtherRelations>
+    auto &addRelationDynamics(FirstRelation &first_relation, OtherRelations &...other_relations)
     {
         return *particle_dynamics_keeper_.createPtr<
             UpdateRelation<ExecutePolicy, FirstRelation, OtherRelations...>>(
             first_relation, other_relations...);
     };
 
-    template <typename ExecutePolicy, typename... Args>
-    auto &addSortDynamics(const ExecutePolicy &ex_policy, Args &&...args)
+    template <typename... Args>
+    auto &addSortDynamics(Args &&...args)
     {
         return *particle_dynamics_keeper_.createPtr<
             ParticleSortCK<ExecutePolicy>>(std::forward<Args>(args)...);
     };
 
-    template <class UpdateType, typename ExecutePolicy, typename... Args>
-    auto &addStateDynamics(const ExecutePolicy &ex_policy, Args &&...args)
+    template <class UpdateType, typename... Args>
+    auto &addStateDynamics(Args &&...args)
     {
         return *particle_dynamics_keeper_.createPtr<
             StateDynamics<ExecutePolicy, UpdateType>>(std::forward<Args>(args)...);
     };
 
-    template <class ReduceType, typename ExecutePolicy, typename... Args>
-    auto &addReduceDynamics(const ExecutePolicy &ex_policy, Args &&...args)
+    template <class ReduceType, typename... Args>
+    auto &addReduceDynamics(Args &&...args)
     {
         using FinishDynamics = typename ReduceType::FinishDynamics;
         using OutputType = typename FinishDynamics::OutputType;
@@ -96,18 +97,18 @@ class SPHModeller
             ReduceDynamicsCK<ExecutePolicy, ReduceType>>(std::forward<Args>(args)...);
     };
 
-    template <class InteractionType, typename ExecutePolicy, typename... Args>
-    auto &addInteractionDynamics(const ExecutePolicy &ex_policy, Args &&...args)
+    template <class InteractionType, typename... Args>
+    auto &addInteractionDynamics(Args &&...args)
     {
         return *particle_dynamics_keeper_.createPtr<
             InteractionDynamicsCK<ExecutePolicy, InteractionType>>(std::forward<Args>(args)...);
     };
 
     template <template <typename...> class InteractionType,
-              typename... ControlParameters, typename ExecutePolicy,
+              typename... ControlParameters,
               template <typename...> class RelationType, typename... RelationParameters, typename... Args>
-    auto &incrementInteractionDynamics(
-        const ExecutePolicy &ex_policy, RelationType<RelationParameters...> &inner_relation, Args &&...args)
+    auto &addInteractionDynamics(
+        RelationType<RelationParameters...> &inner_relation, Args &&...args)
     {
         return *particle_dynamics_keeper_.createPtr<
             InteractionDynamicsCK<
@@ -115,22 +116,12 @@ class SPHModeller
             inner_relation, std::forward<Args>(args)...);
     };
 
-    template <class StateRecordingType, typename... Args>
-    auto &addStatesRecording(Args &&...args)
-    {
-        return *state_recording_keeper_.createPtr<
-            StateRecordingType>(std::forward<Args>(args)...);
-    };
-
     template <class DynamicsType, typename... Args>
-    auto &addIODynamics(Args &&...args)
+    auto &addObservationDynamics(Args &&...args)
     {
         return *io_dynamics_keeper_.createPtr<
             DynamicsType>(std::forward<Args>(args)...);
     };
-
-  protected:
-    std::map<std::string, SPHBody *> body_map_;
 };
 } // namespace SPH
-#endif // BASE_MODELLER_H
+#endif // BASE_DYNAMICS_CONTAINER_H

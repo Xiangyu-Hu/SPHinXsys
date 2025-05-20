@@ -82,6 +82,8 @@ int main(int ac, char *av[])
     // Define the main execution policy for this case.
     //----------------------------------------------------------------------
     using MainExecutionPolicy = execution::ParallelPolicy;
+    ParticleDynamicsContainer main_methods(par);
+    ParticleDynamicsContainer host_methods(par);
     //----------------------------------------------------------------------
     // Define the numerical methods used in the simulation.
     // Note that there may be data dependence on the sequence of constructions.
@@ -93,45 +95,44 @@ int main(int ac, char *av[])
     // Finally, the auxiliary models such as time step estimator, initial condition,
     // boundary condition and other constraints should be defined.
     //----------------------------------------------------------------------
-    SPHModeller modeller(sph_system);
-    auto &water_cell_linked_list = modeller.addCellLinkedListDynamics(par, water_block);
-    auto &wall_cell_linked_list = modeller.addCellLinkedListDynamics(par, wall_boundary);
-    auto &water_block_update_complex_relation = modeller.addRelationDynamics(par, water_block_inner, water_wall_contact);
-    auto &fluid_observer_contact_relation = modeller.addRelationDynamics(par, fluid_observer_contact);
-    auto &particle_sort = modeller.addSortDynamics(par, water_block);
+    auto &water_cell_linked_list = main_methods.addCellLinkedListDynamics(water_block);
+    auto &wall_cell_linked_list = main_methods.addCellLinkedListDynamics(wall_boundary);
+    auto &water_block_update_complex_relation = main_methods.addRelationDynamics(water_block_inner, water_wall_contact);
+    auto &fluid_observer_contact_relation = main_methods.addRelationDynamics(fluid_observer_contact);
+    auto &particle_sort = main_methods.addSortDynamics(water_block);
 
     Gravity gravity(Vecd(0.0, -gravity_g));
-    auto &constant_gravity = modeller.addStateDynamics<GravityForceCK<Gravity>>(par, water_block, gravity);
-    auto &wall_boundary_normal_direction = modeller.addStateDynamics<NormalFromBodyShapeCK>(par, wall_boundary); // run on CPU
-    auto &water_advection_step_setup = modeller.addStateDynamics<fluid_dynamics::AdvectionStepSetup>(par, water_block);
-    auto &water_advection_step_close = modeller.addStateDynamics<fluid_dynamics::AdvectionStepClose>(par, water_block);
+    auto &constant_gravity = main_methods.addStateDynamics<GravityForceCK<Gravity>>(water_block, gravity);
+    auto &wall_boundary_normal_direction = host_methods.addStateDynamics<NormalFromBodyShapeCK>(wall_boundary); // run on CPU
+    auto &water_advection_step_setup = main_methods.addStateDynamics<fluid_dynamics::AdvectionStepSetup>(water_block);
+    auto &water_advection_step_close = main_methods.addStateDynamics<fluid_dynamics::AdvectionStepClose>(water_block);
 
     auto &fluid_linear_correction_matrix =
-        modeller.addInteractionDynamics<LinearCorrectionMatrixComplex>(
-            par, DynamicsArgs(water_block_inner, 0.5), water_wall_contact);
+        main_methods.addInteractionDynamics<LinearCorrectionMatrix, WithUpdate>(water_block_inner, 0.5)
+            .incrementContactInteraction(water_wall_contact);
     auto &fluid_acoustic_step_1st_half =
-        modeller.addInteractionDynamics<fluid_dynamics::AcousticStep1stHalfWithWallRiemannCorrectionCK>(
-            par, water_block_inner, water_wall_contact);
+        main_methods.addInteractionDynamics<
+                        fluid_dynamics::AcousticStep1stHalf, OneLevel, AcousticRiemannSolverCK, LinearCorrectionCK>(water_block_inner)
+            .incrementContactInteraction<Wall, AcousticRiemannSolverCK, LinearCorrectionCK>(water_wall_contact);
     auto &fluid_acoustic_step_2nd_half =
-        modeller.addInteractionDynamics<fluid_dynamics::AcousticStep2ndHalfWithWallRiemannCorrectionCK>(
-            par, water_block_inner, water_wall_contact);
+        main_methods.addInteractionDynamics<
+                        fluid_dynamics::AcousticStep1stHalf, OneLevel, AcousticRiemannSolverCK, LinearCorrectionCK>(water_block_inner)
+            .incrementContactInteraction<Wall, AcousticRiemannSolverCK, LinearCorrectionCK>(water_wall_contact);
     auto &fluid_density_regularization =
-        modeller.addInteractionDynamics<fluid_dynamics::DensityRegularizationComplexFreeSurface>(
-            par, water_block_inner, water_wall_contact);
+        main_methods.addInteractionDynamics<
+                        fluid_dynamics::DensityRegularization, WithUpdate, FreeSurface, AllParticles>(water_block_inner)
+            .incrementContactInteraction(water_wall_contact);
 
-    auto &fluid_advection_time_step = modeller.addReduceDynamics<fluid_dynamics::AdvectionTimeStepCK>(par, water_block, U_ref);
-    auto &fluid_acoustic_time_step = modeller.addReduceDynamics<fluid_dynamics::AcousticTimeStepCK<>>(par, water_block);
+    auto &fluid_advection_time_step = main_methods.addReduceDynamics<fluid_dynamics::AdvectionTimeStepCK>(water_block, U_ref);
+    auto &fluid_acoustic_time_step = main_methods.addReduceDynamics<fluid_dynamics::AcousticTimeStepCK<>>(water_block);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
-    auto &body_states_recording =
-        modeller.addStatesRecording<BodyStatesRecordingToVtp>(sph_system)
-            .addToWrite<Vecd>(wall_boundary, "NormalDirection")
-            .addToWrite<Real>(water_block, "Density");
-
-    auto &restart_io = modeller.addIODynamics<RestartIO>(sph_system);
-
+    BodyStatesRecordingToVtp body_states_recording(sph_system);
+    body_states_recording.addToWrite<Vecd>(wall_boundary, "NormalDirection");
+    body_states_recording.addToWrite<Real>(water_block, "Density");
+    RestartIO restart_io(sph_system);
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<MainExecutionPolicy, TotalMechanicalEnergyCK>>
         record_water_mechanical_energy(water_block, gravity);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<MainExecutionPolicy, Real>>
