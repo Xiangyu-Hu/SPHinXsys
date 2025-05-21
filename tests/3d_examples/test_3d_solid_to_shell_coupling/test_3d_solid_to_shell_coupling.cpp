@@ -1,12 +1,27 @@
+/**
+ * @file 	solid_to_shell_coupling.cpp
+ * @brief 	This is the a test of solid-shell tie contact.
+ * @details  We consider a shell with a solid block on it. The validation is not finished yet, but the code is working.
+ *           Users must be careful about the limitation before using it.
+ * @author 	Weiyi Kong (Virtonomy) and Xiangyu Hu
+ */
+
 #include "sphinxsys.h"
+#include <gtest/gtest.h>
 using namespace SPH;
 
 void run_solid_to_shell_coupling(size_t res_factor_solid, size_t res_factor_shell, Real stiffness_ratio, bool run_relax);
-void run_solid(size_t res_factor, Real stiffness_ratio, bool run_relax);
+void run_solid(size_t res_factor, Real stiffness_ratio, bool run_relax); // fully solid discretization for comparison
+
+TEST(solid_to_shell_coupling, dp_1)
+{ // for CI
+    run_solid_to_shell_coupling(1, 1, 1, false);
+}
 
 int main(int ac, char *av[])
 {
-    run_solid_to_shell_coupling(1, 1, 1, false);
+    testing::InitGoogleTest(&ac, av);
+    return RUN_ALL_TESTS();
 }
 
 //-------Relaxation for the solid body-------------------------------------------------
@@ -233,9 +248,18 @@ void run_solid_to_shell_coupling(size_t res_factor_solid, size_t res_factor_shel
     // unit
     constexpr Real unit_mm = 1e-3;
 
+    // The reference deflection is obtained by the fully solid discretization case with dp = 0.025
+    // Convergence study is not performed, so the reference deflection is not accurate
+    // The test is only for consistency check
+    const Real error_tol = 10e-2; // 10% error tolerance
+    const Real deflection_ref = -0.46;
+
     // geometry
     const Real cube_length = 1.0;
-    const Real shell_thickness = 0.02;
+    // Warning: to accelerate the simulation, we use a larger shell thickness in the test
+    // Usually, the shell thickness should be smaller than dp_shell to avoid error caused by
+    // different velocity and force on shell mid-surface and top/bottom surface
+    const Real shell_thickness = 0.2;
     const Real shell_length = 5.0;
     const Real shell_width = cube_length;
     const Real dp_ref = cube_length / 10.0;
@@ -317,7 +341,7 @@ void run_solid_to_shell_coupling(size_t res_factor_solid, size_t res_factor_shel
     SimpleDynamics<thin_structure_dynamics::ConstrainShellBodyRegion> fix_shell_bc(shell_fixed_part);
 
     // Gravity
-    Vec3d gravity(-0.5 * Vec3d::UnitY());
+    Vec3d gravity(-10 * Vec3d::UnitY());
     SolidBodyPart cube_part(cube_body, [&](Vec3d &pos)
                             { return pos.y() > shell_thickness; });
     SimpleDynamics<ForcePartByParticle> constant_gravity(cube_part, "Gravity", gravity);
@@ -452,8 +476,12 @@ void run_solid_to_shell_coupling(size_t res_factor_solid, size_t res_factor_shel
     restart_io.writeToFile();
 
     // Output results
-    std::cout << "Deflection: " << disp_recorder.getObservedQuantity()[0].y() << std::endl;
+    Real deflection = disp_recorder.getObservedQuantity()[0].y();
+    std::cout << "Deflection: " << deflection << std::endl;
     std::cout << "Von Mises Stress: " << stress_recorder.getObservedQuantity()[0] << std::endl;
+
+    // check the deflection
+    EXPECT_NEAR(deflection, deflection_ref, abs(deflection) * error_tol);
 }
 
 class SolidMaterialInitialization : public MaterialIdInitialization
@@ -482,7 +510,7 @@ void run_solid(size_t res_factor, Real stiffness_ratio, bool run_relax)
 
     // geometry
     const Real cube_length = 1.0;
-    const Real shell_thickness = 0.02;
+    const Real shell_thickness = 0.2;
     const Real shell_length = 5.0;
     const Real shell_width = cube_length;
     const Real constraint_length = 2 * cube_length / 10.0;
@@ -544,7 +572,7 @@ void run_solid(size_t res_factor, Real stiffness_ratio, bool run_relax)
     SimpleDynamics<FixBodyPartConstraint> fix_shell_bc(shell_fixed_part);
 
     // Gravity
-    Vec3d gravity(-0.5 * Vec3d::UnitY());
+    Vec3d gravity(-10 * Vec3d::UnitY());
     SolidBodyPart cube_part(body, [&](Vec3d &pos)
                             { return pos.y() > shell_thickness; });
     SimpleDynamics<ForcePartByParticle> constant_gravity(cube_part, "Gravity", gravity);
