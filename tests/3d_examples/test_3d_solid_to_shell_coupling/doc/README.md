@@ -94,6 +94,10 @@ To show that the mapping is capable of dealing with unmatched particle position,
 
 To verify the coupling algorithm, we still need to add the fully solid-discretized result as a reference value. However, due to the high computational cost, we will leave the validation as a future work.
 
+## Limitation
+As mentioned in the last section, we still need a quantitative comparison between the solid-to-shell coupling and fully solid discretized case to validate the method. Also, the stability under different material stiffnesses is not tested yet.
+The users should be fully aware of the limitation between applying the method to simulations.
+
 ## Reference
 Lindner, Florian. "Data transfer in partitioned multi-physics simulations: interpolation & communication." (2019).
 
