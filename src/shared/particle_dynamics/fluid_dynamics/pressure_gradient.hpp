@@ -1,0 +1,52 @@
+// pressure_gradient.hpp
+#pragma once
+
+#include "pressure_gradient.h"
+
+namespace SPH
+{
+namespace fluid_dynamics
+{
+
+template <class DataDelegationType>
+template <class BaseRelationType>
+PressureGradient<DataDelegationType>::PressureGradient(BaseRelationType &base_relation)
+    : LocalDynamics(base_relation.getSPHBody()), DataDelegationType(base_relation),
+      Vol_(this->particles_->template getVariableDataByName<Real>("VolumetricMeasure")),
+      p_(this->particles_->template getVariableDataByName<Real>("Pressure")),
+      rho_(this->particles_->template getVariableDataByName<Real>("Density")), // YOĞUNLUK EKLENDİ
+      p_grad_(this->particles_->template registerStateVariable<Vecd>("PressureGradient")) {}
+
+template <class KernelCorrectionType>
+PressureGradient<Inner<KernelCorrectionType>>::PressureGradient(BaseInnerRelation &inner_relation)
+    : PressureGradient<DataDelegateInner>(inner_relation),
+      kernel_correction_(particles_) {}
+
+template <class KernelCorrectionType>
+void PressureGradient<Inner<KernelCorrectionType>>::interaction(size_t index_i, Real dt)
+{
+    Vecd pressure_grad = Vecd::Zero();
+    Neighborhood &inner_neighborhood = inner_configuration_[index_i];
+    Real p_i = p_[index_i];
+
+    for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+    {
+        size_t index_j = inner_neighborhood.j_[n];
+        Real p_j = p_[index_j];
+
+        Vecd nablaW_ijV_j =
+            inner_neighborhood.dW_ij_[n] * Vol_[index_j] * inner_neighborhood.e_ij_[n];
+        pressure_grad -= (p_j - p_i) * nablaW_ijV_j;  
+    }
+
+    p_grad_[index_i] = pressure_grad;
+}
+
+template <class KernelCorrectionType>
+void PressureGradient<Inner<KernelCorrectionType>>::update(size_t index_i, Real dt)
+{
+    p_grad_[index_i] = kernel_correction_(index_i) * p_grad_[index_i];
+}
+
+} // namespace fluid_dynamics
+} // namespace SPH
