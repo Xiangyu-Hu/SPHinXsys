@@ -477,7 +477,7 @@ int main(int ac, char *av[])
     SolidBodyPartForSimbody rotor_multibody(rotor, makeShared<RotorBoundary>("Rotor"));
     SimTK::Body::Rigid rigid_info(*rotor_multibody.body_part_mass_properties_);
     SimTK::MobilizedBody::Pin
-        Rotor_Pin(matter.Ground(), SimTK::Transform(SimTKVec3(0)), rigid_info, SimTK::Transform(SimTKVec3()));
+        Rotor_Pin(matter.Ground(), SimTK::Transform(SimTKVec3(0)), rigid_info, SimTK::Transform(SimTKVec3(0)));
     /** Initial angle of rotation. */
     Rotor_Pin.setDefaultAngle(0.0);
     /** Time stepping method for multibody system.*/
