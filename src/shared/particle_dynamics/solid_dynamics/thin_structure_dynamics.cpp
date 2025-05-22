@@ -32,8 +32,8 @@ Real ShellAcousticTimeStepSize::reduce(size_t index_i, Real dt)
     Real time_setp_1 = SMIN((Real)sqrt(1.0 / (dangular_vel_dt_[index_i].norm() + TinyReal)),
                             Real(1.0) / (angular_vel_[index_i].norm() + TinyReal));
     Real time_setp_2 = smoothing_length_ * (Real)sqrt(rho0_ * (1.0 - nu_ * nu_) / E0_ /
-                                                (2.0 + (Pi * Pi / 12.0) * (1.0 - nu_) *
-                                                           (1.0 + 1.5 * pow(smoothing_length_ / thickness_[index_i], 2))));
+                                                      (2.0 + (Pi * Pi / 12.0) * (1.0 - nu_) *
+                                                                 (1.0 + 1.5 * pow(smoothing_length_ / thickness_[index_i], 2))));
     return CFL_ * SMIN(time_setp_0, time_setp_1, time_setp_2);
 }
 //=================================================================================================//
@@ -167,7 +167,8 @@ void ShellStressRelaxationFirstHalf::initialization(size_t index_i, Real dt)
                 E = (s_next - s_prev) / (e_next - e_prev);
             }
             if (cauchy_stress.allFinite() == false || it == max_iterations)
-                throw std::runtime_error("[ShellStressRelaxationFirstHalf::initialization] Enforcing plane stress condition for shell failed.");
+                throw std::runtime_error("[ShellStressRelaxationFirstHalf::initialization] Enforcing plane stress condition failed for particle with unsorted_id: " + std::to_string(unsorted_id_[index_i]) + " in object: " + sph_body_.getName() + "\nWith normal stress in the out-of-plane direction: " + std::to_string(cauchy_stress(2, 2)));
+
         }
         /// Impact of including numerical damping in the algorithm above unclear
         /// Left here in absence of discriminating factors
