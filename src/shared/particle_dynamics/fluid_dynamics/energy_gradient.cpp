@@ -1,28 +1,21 @@
-// pressure_gradient.cpp
-#include "pressure_gradient.hpp"
-#include "data_type.h"
-#pragma message(".cpp is compiled")
-
-template class SPH::fluid_dynamics::PressureGradient<
-    SPH::Inner<SPH::LinearGradientCorrection>>;
+#include "energy_gradient.hpp"
 
 namespace SPH
 {
 namespace fluid_dynamics
 {
 //=================================================================================================//
-PressureGradient<Contact<Wall>>::PressureGradient(
-    BaseContactRelation &wall_contact_relation)
-    : InteractionWithWall<PressureGradient>(wall_contact_relation),
+EnergyGradient<Contact<Wall>>::EnergyGradient(BaseContactRelation &wall_contact_relation)
+    : InteractionWithWall<EnergyGradient>(wall_contact_relation),
       distance_from_wall_(particles_->getVariableDataByName<Vecd>("DistanceFromWall")),
-      p_(this->particles_->template getVariableDataByName<Real>("Pressure")),
-      p_grad_(this->particles_->template getVariableDataByName<Vecd>("PressureGradient")) {}
+      energy_(this->particles_->template getVariableDataByName<Real>("Energy")),
+      energy_grad_(this->particles_->template getVariableDataByName<Vecd>("EnergyGradient")) {}
 //=================================================================================================//
-void PressureGradient<Contact<Wall>>::interaction(size_t index_i, Real dt)
+void EnergyGradient<Contact<Wall>>::interaction(size_t index_i, Real dt)
 {
-    Vecd pressure_grad = Vecd::Zero();
+    Vecd energy_grad = Vecd::Zero();
     const Vecd &distance_from_wall = distance_from_wall_[index_i];
-    Real p_i = p_[index_i];
+    Real energy_i = energy_[index_i];
 
     for (size_t k = 0; k < contact_configuration_.size(); ++k)
     {
@@ -34,14 +27,18 @@ void PressureGradient<Contact<Wall>>::interaction(size_t index_i, Real dt)
             size_t index_j = contact_neighborhood.j_[n];
             const Vecd &e_ij = contact_neighborhood.e_ij_[n];
 
-            Real p_j = p_[index_j];
+            Vecd distance_diff = distance_from_wall - contact_neighborhood.r_ij_[n] * e_ij;
+            Real factor = 1.0 - distance_from_wall.dot(distance_diff) / distance_from_wall.squaredNorm();
+
+            Real energy_j = energy_[index_j]; // e_j değerini aldık
+
             Vecd nablaW_ijV_j = contact_neighborhood.dW_ij_[n] * Vol_k[index_j] * e_ij;
 
-            pressure_grad -= (p_i - p_j) * nablaW_ijV_j;
+            energy_grad -= factor * (energy_i - energy_j) * nablaW_ijV_j;
         }
     }
 
-    p_grad_[index_i] += pressure_grad;
+    energy_grad_[index_i] += energy_grad;
 }
 //=================================================================================================//
 } // namespace fluid_dynamics

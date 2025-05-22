@@ -109,6 +109,9 @@ int main(int ac, char *av[])
     wall_boundary.defineMaterial<Solid>();
     wall_boundary.generateParticles<BaseParticles, Lattice>();
 
+    water_block.getBaseParticles().registerStateVariable<Vecd>("PressureGradient"); // new
+
+
     // Body relation map
     InnerRelation water_block_inner(water_block);
     ContactRelation water_wall_contact(water_block, {&wall_boundary});
