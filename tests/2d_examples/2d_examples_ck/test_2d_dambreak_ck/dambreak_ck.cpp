@@ -4,6 +4,7 @@
  * @author Xiangyu Hu
  */
 #include "sphinxsys_ck.h"
+#include "time_stepper.h"
 using namespace SPH; // Namespace cite here.
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
@@ -141,13 +142,13 @@ int main(int ac, char *av[])
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
     //----------------------------------------------------------------------
-    SingularVariable<Real> *sv_physical_time = sph_system.getSystemVariableByName<Real>("PhysicalTime");
+    PhysicalTimeStepper physical_time_stepper(sph_system, 20.0);
     //----------------------------------------------------------------------
     //	Load restart file if necessary.
     //----------------------------------------------------------------------
     if (sph_system.RestartStep() != 0)
     {
-        sv_physical_time->setValue(restart_io.readRestartFiles(sph_system.RestartStep()));
+        physical_time_stepper.setPhysicalTime(restart_io.readRestartFiles(sph_system.RestartStep()));
     }
 
     wall_boundary_normal_direction.exec(); // run particle dynamics with host kernels first
@@ -164,7 +165,6 @@ int main(int ac, char *av[])
     int screen_output_interval = 100;
     int observation_sample_interval = screen_output_interval * 2;
     int restart_output_interval = screen_output_interval * 10;
-    Real end_time = 20.0;
     Real output_interval = 0.1;
     //----------------------------------------------------------------------
     //	Statistics for the computing time information
@@ -184,71 +184,76 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------
-    while (sv_physical_time->getValue() < end_time)
+    auto &update_by_advection = physical_time_stepper.addExecutionByInterval();
+    auto &interval_output = physical_time_stepper.addExecutionByInterval();
+    while (!physical_time_stepper.isEndTime())
     {
-        Real integration_time = 0.0;
-        /** Integrate time (loop) until the next output time. */
-        while (integration_time < output_interval)
-        {
-            /** outer loop for dual-time criteria time-stepping. */
-            time_instance = TickCount::now();
+        /** outer loop for dual-time criteria time-stepping. */
+        time_instance = TickCount::now();
+        bool is_advected = update_by_advection(fluid_advection_time_step,
+                                               [&]()
+                                               {
+                                                   fluid_density_regularization.exec();
+                                                   fluid_linear_correction_matrix.exec();
+                                               });
+        interval_computing_time_step += TickCount::now() - time_instance;
 
-            fluid_density_regularization.exec();
-            water_advection_step_setup.exec();
-            Real advection_dt = fluid_advection_time_step.exec();
-            fluid_linear_correction_matrix.exec();
-            interval_computing_time_step += TickCount::now() - time_instance;
-
-            time_instance = TickCount::now();
-            Real relaxation_time = 0.0;
-            Real acoustic_dt = 0.0;
-            while (relaxation_time < advection_dt)
+        /** inner loop for dual-time criteria time-stepping.  */
+        time_instance = TickCount::now();
+        update_by_advection(is_advected,
+                            [&]()
+                            { water_advection_step_setup.exec(); });
+        physical_time_stepper.incrementPhysicalTimeWithIntegration(
+            fluid_acoustic_time_step,
+            [&](Real acoustic_dt)
             {
-                /** inner loop for dual-time criteria time-stepping.  */
-                acoustic_dt = fluid_acoustic_time_step.exec();
                 fluid_acoustic_step_1st_half.exec(acoustic_dt);
                 fluid_acoustic_step_2nd_half.exec(acoustic_dt);
-                relaxation_time += acoustic_dt;
-                integration_time += acoustic_dt;
-                sv_physical_time->incrementValue(acoustic_dt);
-            }
-            water_advection_step_close.exec();
-            interval_acoustic_steps += TickCount::now() - time_instance;
+            });
+        update_by_advection(is_advected,
+                            [&]()
+                            { water_advection_step_close.exec(); });
+        interval_acoustic_steps += TickCount::now() - time_instance;
 
-            /** screen output, write body observables and restart files  */
-            if (number_of_iterations % screen_output_interval == 0)
+        /** screen output, write body observables and restart files  */
+        if (number_of_iterations % screen_output_interval == 0)
+        {
+            std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
+                      << physical_time_stepper.getPhysicalTime() << "	"
+                      << "	advection_dt = " << update_by_advection.getInterval() << "	acoustic_dt = "
+                      << physical_time_stepper.getGlobalTimeStepSize() << "\n";
+
+            if (number_of_iterations % observation_sample_interval == 0 && number_of_iterations != sph_system.RestartStep())
             {
-                std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
-                          << sv_physical_time->getValue()
-                          << "	advection_dt = " << advection_dt << "	acoustic_dt = " << acoustic_dt << "\n";
-
-                if (number_of_iterations % observation_sample_interval == 0 && number_of_iterations != sph_system.RestartStep())
-                {
-                    record_water_mechanical_energy.writeToFile(number_of_iterations);
-                    fluid_observer_pressure.writeToFile(number_of_iterations);
-                }
-                if (number_of_iterations % restart_output_interval == 0)
-                    restart_io.writeToFile(MainExecutionPolicy{}, number_of_iterations);
+                record_water_mechanical_energy.writeToFile(number_of_iterations);
+                fluid_observer_pressure.writeToFile(number_of_iterations);
             }
-            number_of_iterations++;
-
-            /** Particle sort, ipdate cell linked list and configuration. */
-            time_instance = TickCount::now();
-            if (number_of_iterations % 100 == 0 && number_of_iterations != 1)
-            {
-                particle_sort.exec();
-            }
-            water_cell_linked_list.exec();
-            water_block_update_complex_relation.exec();
-            fluid_observer_contact_relation.exec();
-            interval_updating_configuration += TickCount::now() - time_instance;
+            if (number_of_iterations % restart_output_interval == 0)
+                restart_io.writeToFile(MainExecutionPolicy{}, number_of_iterations);
         }
+        number_of_iterations++;
 
-        TickCount t2 = TickCount::now();
         /** Output body state during the simulation according output_interval. */
-        body_states_recording.writeToFile(MainExecutionPolicy{});
-        TickCount t3 = TickCount::now();
-        interval_writing_body_state += t3 - t2;
+        TickCount t2 = TickCount::now();
+        interval_output(output_interval,
+                        [&]()
+                        { body_states_recording.writeToFile(MainExecutionPolicy{}); });
+        interval_writing_body_state += TickCount::now() - t2;
+
+        /** Particle sort, ipdate cell linked list and configuration. */
+        time_instance = TickCount::now();
+        if (number_of_iterations % 100 == 0 && number_of_iterations != 1)
+        {
+            particle_sort.exec();
+        }
+        update_by_advection(is_advected,
+                            [&]()
+                            {
+                                water_cell_linked_list.exec();
+                                water_block_update_complex_relation.exec();
+                                fluid_observer_contact_relation.exec();
+                            });
+        interval_updating_configuration += TickCount::now() - time_instance;
     }
     TickCount t4 = TickCount::now();
 
