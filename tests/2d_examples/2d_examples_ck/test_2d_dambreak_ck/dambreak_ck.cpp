@@ -167,7 +167,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
-    size_t number_of_iterations = sph_system.RestartStep();
+    size_t number_of_iterations = sph_system.RestartStep() + 1;
     int screen_output_interval = 100;
     int observation_sample_interval = screen_output_interval * 2;
     int restart_output_interval = screen_output_interval * 10;
@@ -212,7 +212,7 @@ int main(int ac, char *av[])
                 number_of_iterations++; });
 
         /** screen output, write body observables and restart files  */
-        if (number_of_iterations % screen_output_interval == 0)
+        if (number_of_iterations % screen_output_interval == 0 && is_advection_triggered)
         {
             std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
                       << physical_time_stepper.getPhysicalTime() << "	"
@@ -236,7 +236,7 @@ int main(int ac, char *av[])
 
         /** Particle sort, update cell linked list and configuration. */
         time_instance = TickCount::now();
-        if (number_of_iterations % 100 == 0 && number_of_iterations != 1)
+        if (is_advection_triggered && number_of_iterations % 100 == 0)
         {
             particle_sort.exec();
         }
