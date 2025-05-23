@@ -142,18 +142,23 @@ int main(int ac, char *av[])
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
     //----------------------------------------------------------------------
-    PhysicalTimeStepper physical_time_stepper(sph_system, 20.0);
+    TimeStepper time_stepper(sph_system, 20.0);
     //----------------------------------------------------------------------
     //	Load restart file if necessary.
     //----------------------------------------------------------------------
     if (sph_system.RestartStep() != 0)
     {
-        physical_time_stepper.setPhysicalTime(restart_io.readRestartFiles(sph_system.RestartStep()));
+        time_stepper.setPhysicalTime(restart_io.readRestartFiles(sph_system.RestartStep()));
     }
-    auto &update_by_advection =
-        physical_time_stepper.addExecutionByInterval(fluid_advection_time_step.exec());
+    //----------------------------------------------------------------------
+    //	Setup for advection-step based time-stepping control
+    //----------------------------------------------------------------------
+    auto &advection_step = time_stepper.addTriggerByInterval(fluid_advection_time_step.exec());
     size_t iteration_steps = sph_system.RestartStep() + 1;
-    auto &state_recording = physical_time_stepper.addExecutionByInterval(0.1);
+    int screening_interval = 100;
+    int observation_interval = screening_interval * 2;
+    int restart_output_interval = screening_interval * 10;
+    auto &state_recording = time_stepper.addTriggerByInterval(0.1);
     //----------------------------------------------------------------------
     //	Prepare for the time integration loop.
     //----------------------------------------------------------------------
@@ -175,15 +180,9 @@ int main(int ac, char *av[])
     record_water_mechanical_energy.writeToFile(iteration_steps);
     fluid_observer_pressure.writeToFile(iteration_steps);
     //----------------------------------------------------------------------
-    //	Setup for advection-step based time-stepping control
-    //----------------------------------------------------------------------
-    int screening_interval = 100;
-    int observation_interval = screening_interval * 2;
-    int restart_output_interval = screening_interval * 10;
-    //----------------------------------------------------------------------
     //	Statistics for the computing time information
     //----------------------------------------------------------------------
-    TimeInterval interval_writing_body_state;
+    TimeInterval interval_output;
     TimeInterval interval_iteration_steps;
     TimeInterval interval_acoustic_steps;
     TimeInterval interval_updating_configuration;
@@ -191,76 +190,75 @@ int main(int ac, char *av[])
     //	Single time stepping loop is used for multi-time stepping.
     //----------------------------------------------------------------------
     TickCount t0 = TickCount::now();
-    while (!physical_time_stepper.isEndTime())
+    while (!time_stepper.isEndTime())
     {
         //----------------------------------------------------------------------
         //	the fastest and most frequent acostic time stepping.
         //----------------------------------------------------------------------
         TickCount time_instance = TickCount::now();
-        physical_time_stepper.integratePhysicalTime(
-            fluid_acoustic_time_step, [&](Real acoustic_dt)
-            {
-                fluid_acoustic_step_1st_half.exec(acoustic_dt);
-                fluid_acoustic_step_2nd_half.exec(acoustic_dt); });
+        Real acoustic_dt = time_stepper.incrementPhysicalTime(fluid_acoustic_time_step);
+        fluid_acoustic_step_1st_half.exec(acoustic_dt);
+        fluid_acoustic_step_2nd_half.exec(acoustic_dt);
         interval_acoustic_steps += TickCount::now() - time_instance;
         //----------------------------------------------------------------------
         //	the following are slower and less frequent time stepping.
         //----------------------------------------------------------------------
-        bool is_advection_triggered =
-            update_by_advection(fluid_advection_time_step, [&]()
-                                {
-                water_advection_step_close.exec();
-                iteration_steps++; });
-
-        /** screen output, write body observables and restart files  */
-        if (iteration_steps % screening_interval == 0 && is_advection_triggered)
+        if (advection_step(fluid_advection_time_step))
         {
-            std::cout << std::fixed << std::setprecision(9) << "N=" << iteration_steps << "	Time = "
-                      << physical_time_stepper.getPhysicalTime() << "	"
-                      << "	advection_dt = " << update_by_advection.getInterval() << "	acoustic_dt = "
-                      << physical_time_stepper.getGlobalTimeStepSize() << "\n";
+            iteration_steps++;
+            water_advection_step_close.exec();
 
-            if (iteration_steps % observation_interval == 0 && iteration_steps != sph_system.RestartStep())
+            /** Output body state during the simulation according output_interval. */
+            time_instance = TickCount::now();
+            /** screen output, write body observables and restart files  */
+            if (iteration_steps % screening_interval == 0)
+            {
+                std::cout << std::fixed << std::setprecision(9) << "N=" << iteration_steps
+                          << "	Time = " << time_stepper.getPhysicalTime() << "	"
+                          << "	advection_dt = " << advection_step.getInterval()
+                          << "	acoustic_dt = " << time_stepper.getGlobalTimeStepSize() << "\n";
+            }
+
+            if (iteration_steps % observation_interval == 0)
             {
                 record_water_mechanical_energy.writeToFile(iteration_steps);
                 fluid_observer_pressure.writeToFile(iteration_steps);
             }
+
             if (iteration_steps % restart_output_interval == 0)
+            {
                 restart_io.writeToFile(MainExecutionPolicy{}, iteration_steps);
+            }
+
+            if (state_recording())
+            {
+                body_states_recording.writeToFile(MainExecutionPolicy{});
+            }
+            interval_output += TickCount::now() - time_instance;
+
+            /** Particle sort, update cell linked list and configuration. */
+            time_instance = TickCount::now();
+            if (iteration_steps % 100)
+            {
+                particle_sort.exec();
+            }
+            water_cell_linked_list.exec();
+            water_block_update_complex_relation.exec();
+            fluid_observer_contact_relation.exec();
+            interval_updating_configuration += TickCount::now() - time_instance;
+
+            /** outer loop for dual-time criteria time-stepping. */
+            time_instance = TickCount::now();
+            fluid_density_regularization.exec();
+            water_advection_step_setup.exec();
+            fluid_linear_correction_matrix.exec();
+            interval_iteration_steps += TickCount::now() - time_instance;
         }
-
-        /** Output body state during the simulation according output_interval. */
-        TickCount t2 = TickCount::now();
-        state_recording([&]()
-                        { body_states_recording.writeToFile(MainExecutionPolicy{}); });
-        interval_writing_body_state += TickCount::now() - t2;
-
-        /** Particle sort, update cell linked list and configuration. */
-        time_instance = TickCount::now();
-        if (is_advection_triggered && iteration_steps % 100 == 0)
-        {
-            particle_sort.exec();
-        }
-        update_by_advection(is_advection_triggered, [&]()
-                            {
-                water_cell_linked_list.exec();
-                water_block_update_complex_relation.exec();
-                fluid_observer_contact_relation.exec(); });
-        interval_updating_configuration += TickCount::now() - time_instance;
-
-        /** outer loop for dual-time criteria time-stepping. */
-        time_instance = TickCount::now();
-        update_by_advection(is_advection_triggered, [&]()
-                            {
-                fluid_density_regularization.exec();
-                water_advection_step_setup.exec();
-                fluid_linear_correction_matrix.exec(); });
-        interval_iteration_steps += TickCount::now() - time_instance;
     }
     //----------------------------------------------------------------------
     // Summary for wall time used for the simulation.
     //----------------------------------------------------------------------
-    TimeInterval tt = TickCount::now() - t0 - interval_writing_body_state;
+    TimeInterval tt = TickCount::now() - t0 - interval_output;
     std::cout << "Total wall time for computation: " << tt.seconds()
               << " seconds." << std::endl;
     std::cout << std::fixed << std::setprecision(9) << "interval_iteration_steps ="
