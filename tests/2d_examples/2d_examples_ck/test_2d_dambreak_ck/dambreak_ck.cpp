@@ -167,16 +167,16 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
-    size_t number_of_iterations = sph_system.RestartStep() + 1;
-    int screen_output_interval = 100;
-    int observation_sample_interval = screen_output_interval * 2;
-    int restart_output_interval = screen_output_interval * 10;
+    size_t advection_steps = sph_system.RestartStep() + 1;
+    int screening_interval = 100;
+    int observation_interval = screening_interval * 2;
+    int restart_output_interval = screening_interval * 10;
     //----------------------------------------------------------------------
     //	Statistics for the computing time information
     //----------------------------------------------------------------------
     TickCount t1 = TickCount::now();
     TimeInterval interval_writing_body_state;
-    TimeInterval interval_computing_time_step;
+    TimeInterval interval_advection_steps;
     TimeInterval interval_acoustic_steps;
     TimeInterval interval_updating_configuration;
     TickCount time_instance;
@@ -184,15 +184,15 @@ int main(int ac, char *av[])
     //	First output before the main loop.
     //----------------------------------------------------------------------
     body_states_recording.writeToFile(MainExecutionPolicy{});
-    record_water_mechanical_energy.writeToFile(number_of_iterations);
-    fluid_observer_pressure.writeToFile(number_of_iterations);
+    record_water_mechanical_energy.writeToFile(advection_steps);
+    fluid_observer_pressure.writeToFile(advection_steps);
     //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------
     while (!physical_time_stepper.isEndTime())
     {
         //----------------------------------------------------------------------
-        //	the fastest acostic time stepping.
+        //	the fastest and most frequent acostic time stepping.
         //----------------------------------------------------------------------
         time_instance = TickCount::now();
         physical_time_stepper.integratePhysicalTime(
@@ -201,31 +201,30 @@ int main(int ac, char *av[])
                 fluid_acoustic_step_1st_half.exec(acoustic_dt);
                 fluid_acoustic_step_2nd_half.exec(acoustic_dt); });
         interval_acoustic_steps += TickCount::now() - time_instance;
-
         //----------------------------------------------------------------------
-        //	he following are slower time stepping.
+        //	the following are slower and less frequent time stepping.
         //----------------------------------------------------------------------
         bool is_advection_triggered =
             update_by_advection(fluid_advection_time_step, [&]()
                                 {
                 water_advection_step_close.exec();
-                number_of_iterations++; });
+                advection_steps++; });
 
         /** screen output, write body observables and restart files  */
-        if (number_of_iterations % screen_output_interval == 0 && is_advection_triggered)
+        if (advection_steps % screening_interval == 0 && is_advection_triggered)
         {
-            std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
+            std::cout << std::fixed << std::setprecision(9) << "N=" << advection_steps << "	Time = "
                       << physical_time_stepper.getPhysicalTime() << "	"
                       << "	advection_dt = " << update_by_advection.getInterval() << "	acoustic_dt = "
                       << physical_time_stepper.getGlobalTimeStepSize() << "\n";
 
-            if (number_of_iterations % observation_sample_interval == 0 && number_of_iterations != sph_system.RestartStep())
+            if (advection_steps % observation_interval == 0 && advection_steps != sph_system.RestartStep())
             {
-                record_water_mechanical_energy.writeToFile(number_of_iterations);
-                fluid_observer_pressure.writeToFile(number_of_iterations);
+                record_water_mechanical_energy.writeToFile(advection_steps);
+                fluid_observer_pressure.writeToFile(advection_steps);
             }
-            if (number_of_iterations % restart_output_interval == 0)
-                restart_io.writeToFile(MainExecutionPolicy{}, number_of_iterations);
+            if (advection_steps % restart_output_interval == 0)
+                restart_io.writeToFile(MainExecutionPolicy{}, advection_steps);
         }
 
         /** Output body state during the simulation according output_interval. */
@@ -236,16 +235,16 @@ int main(int ac, char *av[])
 
         /** Particle sort, update cell linked list and configuration. */
         time_instance = TickCount::now();
-        if (is_advection_triggered && number_of_iterations % 100 == 0)
+        if (is_advection_triggered && advection_steps % 100 == 0)
         {
             particle_sort.exec();
         }
-
         update_by_advection(is_advection_triggered, [&]()
                             {
                 water_cell_linked_list.exec();
                 water_block_update_complex_relation.exec();
                 fluid_observer_contact_relation.exec(); });
+        interval_updating_configuration += TickCount::now() - time_instance;
 
         /** outer loop for dual-time criteria time-stepping. */
         time_instance = TickCount::now();
@@ -254,8 +253,7 @@ int main(int ac, char *av[])
                 fluid_density_regularization.exec();
                 water_advection_step_setup.exec();
                 fluid_linear_correction_matrix.exec(); });
-        interval_computing_time_step += TickCount::now() - time_instance;
-        interval_updating_configuration += TickCount::now() - time_instance;
+        interval_advection_steps += TickCount::now() - time_instance;
     }
     TickCount t4 = TickCount::now();
 
@@ -263,8 +261,8 @@ int main(int ac, char *av[])
     tt = t4 - t1 - interval_writing_body_state;
     std::cout << "Total wall time for computation: " << tt.seconds()
               << " seconds." << std::endl;
-    std::cout << std::fixed << std::setprecision(9) << "interval_computing_time_step ="
-              << interval_computing_time_step.seconds() << "\n";
+    std::cout << std::fixed << std::setprecision(9) << "interval_advection_steps ="
+              << interval_advection_steps.seconds() << "\n";
     std::cout << std::fixed << std::setprecision(9) << "interval_acoustic_steps = "
               << interval_acoustic_steps.seconds() << "\n";
     std::cout << std::fixed << std::setprecision(9) << "interval_updating_configuration = "
