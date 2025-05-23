@@ -48,18 +48,16 @@ class PhysicalTimeStepper
     class ExecutionByInterval
     {
       public:
-        ExecutionByInterval(PhysicalTimeStepper &physical_time_stepper)
-            : physical_time_stepper_(physical_time_stepper),
-              present_(0.0), interval_(-1.0) {};
+        ExecutionByInterval(Real initial_interval)
+            : present_time_(0.0), interval_(initial_interval) {};
 
         template <class Executor> // first function
         bool operator()(BaseDynamics<Real> &interval_evaluator, const Executor &executor)
         {
-            present_ += physical_time_stepper_.getGlobalTimeStepSize();
-            if (present_ > interval_)
+            if (present_time_ > interval_)
             {
                 executor();
-                present_ = 0.0;
+                present_time_ = 0.0;
                 interval_ = interval_evaluator.exec();
                 return true;
             }
@@ -67,14 +65,12 @@ class PhysicalTimeStepper
         };
 
         template <class Executor> // second function
-        bool operator()(Real fix_interval, const Executor &executor)
+        bool operator()(const Executor &executor)
         {
-            present_ += physical_time_stepper_.getGlobalTimeStepSize();
-            if (present_ > interval_)
+            if (present_time_ > interval_)
             {
                 executor();
-                present_ = 0.0;
-                interval_ = fix_interval;
+                present_time_ = 0.0;
                 return true;
             }
             return false;
@@ -92,22 +88,30 @@ class PhysicalTimeStepper
             return interval_;
         };
 
+        void incrementPresentTime(Real dt)
+        {
+            present_time_ += dt;
+        };
+
       private:
-        PhysicalTimeStepper &physical_time_stepper_;
-        Real present_, interval_;
+        Real present_time_, interval_;
     };
 
     template <class Integrator>
-    void incrementPhysicalTimeWithIntegration(
+    void integratePhysicalTime( // baseline time step
         BaseDynamics<Real> &step_evaluator, const Integrator &integrator)
     {
         global_dt_ = step_evaluator.exec();
         integrator(global_dt_);
         sv_physical_time_->incrementValue(global_dt_);
+        for (auto &interval_executor : interval_executers_)
+        {
+            interval_executor->incrementPresentTime(global_dt_);
+        }
     };
 
     template <class Integrator>
-    void TimeIntervalIntegration( // designed to avoid too small last step
+    void integrateMatchedTimeInterval( // designed to avoid too small last step
         Real interval, BaseDynamics<Real> &step_evaluator, const Integrator &integrator)
     {
         Real present = 0.0;
@@ -132,10 +136,13 @@ class PhysicalTimeStepper
         }
     };
 
-    ExecutionByInterval &addExecutionByInterval()
+    ExecutionByInterval &addExecutionByInterval(Real initial_interval)
     {
-        return *execution_by_interval_keeper_
-                    .createPtr<ExecutionByInterval>(*this);
+
+        ExecutionByInterval *interval_executor =
+            execution_by_interval_keeper_.createPtr<ExecutionByInterval>(initial_interval);
+        interval_executers_.push_back(interval_executor);
+        return *interval_executor;
     };
 
     bool isEndTime()
@@ -160,6 +167,9 @@ class PhysicalTimeStepper
 
   private:
     UniquePtrsKeeper<ExecutionByInterval> execution_by_interval_keeper_;
+
+  protected:
+    StdVec<ExecutionByInterval *> interval_executers_;
     Real end_time_, start_time_;
     Real global_dt_;
     SingularVariable<Real> *sv_physical_time_;
