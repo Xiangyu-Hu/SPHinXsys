@@ -51,8 +51,7 @@ void BodyStatesRecording::writeToFile(size_t iteration_step)
 //=============================================================================================//
 RestartIO::RestartIO(SPHSystem &sph_system)
     : BaseIO(sph_system), bodies_(sph_system.getRealBodies()),
-      overall_file_path_(io_environment_.restart_folder_ + "/Restart_time_"),
-      prepare_variable_to_restart_()
+      overall_file_path_(io_environment_.restart_folder_ + "/Restart_time_")
 {
     for (size_t i = 0; i < bodies_.size(); ++i)
     {
@@ -120,8 +119,7 @@ void RestartIO::readFromFile(size_t restart_step)
 }
 //=============================================================================================//
 ReloadParticleIO::ReloadParticleIO(SPHBodyVector bodies)
-    : BaseIO(bodies[0]->getSPHSystem()), bodies_(bodies),
-      prepare_variable_to_reload_()
+    : BaseIO(bodies[0]->getSPHSystem()), bodies_(bodies)
 {
     for (size_t i = 0; i < bodies_.size(); ++i)
     {

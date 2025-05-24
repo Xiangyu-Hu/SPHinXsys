@@ -306,7 +306,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp write_real_body_states(sph_system);
+    BodyStatesRecordingToVtpCK<MainExecutionPolicy> write_real_body_states(sph_system);
     BodyStatesRecordingToTriangleMeshVtp write_structure_surface(structure_proxy, structure_mesh);
     write_structure_surface.addToWrite<Vecd>(structure_proxy, "Velocity");
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<
@@ -346,10 +346,10 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	First output before the main loop.
     //----------------------------------------------------------------------
-    write_real_body_states.writeToFile(MainExecutionPolicy{});
+    write_real_body_states.writeToFile();
     write_structure_position.writeToFile(number_of_iterations);
     wave_gauge.writeToFile(number_of_iterations);
-    write_structure_surface.writeToFile(MainExecutionPolicy{});
+    write_structure_surface.writeToFile();
     //----------------------------------------------------------------------
     //	Main loop of time stepping starts here.
     //----------------------------------------------------------------------
@@ -416,9 +416,9 @@ int main(int ac, char *av[])
         TickCount t2 = TickCount::now();
         if (total_time >= relax_time)
         {
-            write_real_body_states.writeToFile(MainExecutionPolicy{});
+            write_real_body_states.writeToFile();
             update_structure_proxy_states.exec();
-            write_structure_surface.writeToFile(MainExecutionPolicy{});
+            write_structure_surface.writeToFile();
         }
         TickCount t3 = TickCount::now();
         interval += t3 - t2;
