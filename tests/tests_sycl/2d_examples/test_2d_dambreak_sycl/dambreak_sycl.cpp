@@ -4,6 +4,7 @@
  * @author Xiangyu Hu
  */
 #include "sphinxsys_sycl.h"
+
 using namespace SPH; // Namespace cite here.
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
@@ -20,9 +21,9 @@ Real BW = particle_spacing_ref * 4; /**< Thickness of tank wall. */
 Real rho0_f = 1.0;                       /**< Reference density of fluid. */
 Real gravity_g = 1.0;                    /**< Gravity. */
 Real U_ref = 2.0 * sqrt(gravity_g * LH); /**< Characteristic velocity. */
-Real c_f = 10.0 * U_ref;                 /**< Reference sound speed. */
+Real c_f = 10.0 * U_ref;                 /**< Artificial sound speed. */
 //----------------------------------------------------------------------
-//	Geometric shapes used in this case.
+//	Parameters for the shapes.
 //----------------------------------------------------------------------
 Vec2d water_block_halfsize = Vec2d(0.5 * LL, 0.5 * LH); // local center at origin
 Vec2d water_block_translation = water_block_halfsize;   // translation to global coordinates
@@ -30,19 +31,6 @@ Vec2d outer_wall_halfsize = Vec2d(0.5 * DL + BW, 0.5 * DH + BW);
 Vec2d outer_wall_translation = Vec2d(-BW, -BW) + outer_wall_halfsize;
 Vec2d inner_wall_halfsize = Vec2d(0.5 * DL, 0.5 * DH);
 Vec2d inner_wall_translation = inner_wall_halfsize;
-//----------------------------------------------------------------------
-//	Complex shape for wall boundary, note that no partial overlap is allowed
-//	for the shapes in a complex shape.
-//----------------------------------------------------------------------
-class WallBoundary : public ComplexShape
-{
-  public:
-    explicit WallBoundary(const std::string &shape_name) : ComplexShape(shape_name)
-    {
-        add<GeometricShapeBox>(Transform(outer_wall_translation), outer_wall_halfsize);
-        subtract<GeometricShapeBox>(Transform(inner_wall_translation), inner_wall_halfsize);
-    }
-};
 //----------------------------------------------------------------------
 //	Main program starts here.
 //----------------------------------------------------------------------
@@ -55,14 +43,17 @@ int main(int ac, char *av[])
     SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
     sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
     //----------------------------------------------------------------------
-    //	Creating bodies with corresponding materials and particles.
+    //	Creating bodies with inital shape, materials and particles.
     //----------------------------------------------------------------------
     GeometricShapeBox initial_water_block(Transform(water_block_translation), water_block_halfsize, "WaterBody");
     FluidBody water_block(sph_system, initial_water_block);
     water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
     water_block.generateParticles<BaseParticles, Lattice>();
 
-    SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
+    ComplexShape wall_complex_shape("WallBoundary");
+    wall_complex_shape.add<GeometricShapeBox>(Transform(outer_wall_translation), outer_wall_halfsize);
+    wall_complex_shape.subtract<GeometricShapeBox>(Transform(inner_wall_translation), inner_wall_halfsize);
+    SolidBody wall_boundary(sph_system, wall_complex_shape);
     wall_boundary.defineMaterial<Solid>();
     wall_boundary.generateParticles<BaseParticles, Lattice>();
 
@@ -71,17 +62,19 @@ int main(int ac, char *av[])
     fluid_observer.generateParticles<ObserverParticles>(observation_location);
     //----------------------------------------------------------------------
     //	Define body relation map.
-    //	The contact map gives the topological connections between the bodies.
-    //	Basically the the range of bodies to build neighbor particle lists.
+    //	The relations give the topological connections within a body
+    //  or with other bodies within interaction range.
     //  Generally, we first define all the inner relations, then the contact relations.
     //----------------------------------------------------------------------
     Inner<> water_block_inner(water_block);
     Contact<> water_wall_contact(water_block, {&wall_boundary});
     Contact<> fluid_observer_contact(fluid_observer, {&water_block});
     //----------------------------------------------------------------------
-    // Define the main execution policy for this case.
+    // Define SPH solver with particle methods and execution policies.
     //----------------------------------------------------------------------
-    using MainExecutionPolicy = execution::ParallelDevicePolicy;
+    SPHSolver sph_solver(sph_system);
+    auto &main_methods = sph_solver.addParticleMethodContainer(par_device);
+    auto &host_methods = sph_solver.addParticleMethodContainer(par);
     //----------------------------------------------------------------------
     // Define the numerical methods used in the simulation.
     // Note that there may be data dependence on the sequence of constructions.
@@ -93,169 +86,174 @@ int main(int ac, char *av[])
     // Finally, the auxiliary models such as time step estimator, initial condition,
     // boundary condition and other constraints should be defined.
     //----------------------------------------------------------------------
-    UpdateCellLinkedList<MainExecutionPolicy, RealBody> water_cell_linked_list(water_block);
-    UpdateCellLinkedList<MainExecutionPolicy, RealBody> wall_cell_linked_list(wall_boundary);
-    UpdateRelation<MainExecutionPolicy, Inner<>, Contact<>> water_block_update_complex_relation(water_block_inner, water_wall_contact);
-    UpdateRelation<MainExecutionPolicy, Contact<>> fluid_observer_contact_relation(fluid_observer_contact);
-    ParticleSortCK<MainExecutionPolicy> particle_sort(water_block);
+    auto &water_cell_linked_list = main_methods.addCellLinkedListDynamics(water_block);
+    auto &wall_cell_linked_list = main_methods.addCellLinkedListDynamics(wall_boundary);
+    auto &water_block_update_complex_relation = main_methods.addRelationDynamics(water_block_inner, water_wall_contact);
+    auto &fluid_observer_contact_relation = main_methods.addRelationDynamics(fluid_observer_contact);
+    auto &particle_sort = main_methods.addSortDynamics(water_block);
 
     Gravity gravity(Vecd(0.0, -gravity_g));
-    StateDynamics<MainExecutionPolicy, GravityForceCK<Gravity>> constant_gravity(water_block, gravity);
-    StateDynamics<execution::ParallelPolicy, NormalFromBodyShapeCK> wall_boundary_normal_direction(wall_boundary); // run on CPU
-    StateDynamics<MainExecutionPolicy, fluid_dynamics::AdvectionStepSetup> water_advection_step_setup(water_block);
-    StateDynamics<MainExecutionPolicy, fluid_dynamics::UpdateParticlePosition> water_update_particle_position(water_block);
+    auto &constant_gravity = main_methods.addStateDynamics<GravityForceCK<Gravity>>(water_block, gravity);
+    auto &wall_boundary_normal_direction = host_methods.addStateDynamics<NormalFromBodyShapeCK>(wall_boundary); // run on CPU
+    auto &water_advection_step_setup = main_methods.addStateDynamics<fluid_dynamics::AdvectionStepSetup>(water_block);
+    auto &water_update_particle_position = main_methods.addStateDynamics<fluid_dynamics::UpdateParticlePosition>(water_block);
 
-    InteractionDynamicsCK<MainExecutionPolicy, LinearCorrectionMatrixComplex>
-        fluid_linear_correction_matrix(DynamicsArgs(water_block_inner, 0.5), water_wall_contact);
-    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticStep1stHalfWithWallRiemannCorrectionCK>
-        fluid_acoustic_step_1st_half(water_block_inner, water_wall_contact);
-    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticStep2ndHalfWithWallRiemannCorrectionCK>
-        fluid_acoustic_step_2nd_half(water_block_inner, water_wall_contact);
-    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::DensityRegularizationComplexFreeSurface>
-        fluid_density_regularization(water_block_inner, water_wall_contact);
-    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::FreeSurfaceIndicationComplexSpatialTemporalCK>
-        fluid_boundary_indicator(water_block_inner, water_wall_contact);
+    auto &fluid_linear_correction_matrix =
+        main_methods.addInteractionDynamics<LinearCorrectionMatrix, WithUpdate>(water_block_inner, 0.5)
+            .addContactInteraction(water_wall_contact);
+    auto &fluid_acoustic_step_1st_half =
+        main_methods.addInteractionDynamics<
+                        fluid_dynamics::AcousticStep1stHalf, OneLevel, AcousticRiemannSolverCK, LinearCorrectionCK>(water_block_inner)
+            .addContactInteraction<Wall, AcousticRiemannSolverCK, LinearCorrectionCK>(water_wall_contact);
+    auto &fluid_acoustic_step_2nd_half =
+        main_methods.addInteractionDynamics<
+                        fluid_dynamics::AcousticStep2ndHalf, OneLevel, AcousticRiemannSolverCK, LinearCorrectionCK>(water_block_inner)
+            .addContactInteraction<Wall, AcousticRiemannSolverCK, LinearCorrectionCK>(water_wall_contact);
+    auto &fluid_density_regularization =
+        main_methods.addInteractionDynamics<
+                        fluid_dynamics::DensityRegularization, WithUpdate, FreeSurface, AllParticles>(water_block_inner)
+            .addContactInteraction(water_wall_contact);
 
-    ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AdvectionTimeStepCK> fluid_advection_time_step(water_block, U_ref);
-    ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticTimeStepCK<>> fluid_acoustic_time_step(water_block);
+    auto &fluid_advection_time_step = main_methods.addReduceDynamics<fluid_dynamics::AdvectionTimeStepCK>(water_block, U_ref);
+    auto &fluid_acoustic_time_step = main_methods.addReduceDynamics<fluid_dynamics::AcousticTimeStepCK<>>(water_block);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtpCK<MainExecutionPolicy> body_states_recording(sph_system);
-    body_states_recording.addToWrite<Vecd>(wall_boundary, "NormalDirection");
-    body_states_recording.addToWrite<Real>(water_block, "Density");
-    body_states_recording.addToWrite<int>(water_block, "Indicator");
-
-    RestartIOCK<MainExecutionPolicy> restart_io(sph_system);
-
-    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<MainExecutionPolicy, TotalMechanicalEnergyCK>>
-        record_water_mechanical_energy(water_block, gravity);
-    RegressionTestDynamicTimeWarping<ObservedQuantityRecording<MainExecutionPolicy, Real>>
-        fluid_observer_pressure("Pressure", fluid_observer_contact);
+    auto &body_state_recorder = main_methods.addBodyStateRecorder<BodyStatesRecordingToVtpCK>(sph_system);
+    body_state_recorder.addToWrite<Vecd>(wall_boundary, "NormalDirection");
+    body_state_recorder.addToWrite<Real>(water_block, "Density");
+    auto &restart_io = main_methods.addIODynamics<RestartIOCK>(sph_system);
+    auto &record_water_mechanical_energy = main_methods.addRegressionTest<
+        RegressionTestDynamicTimeWarping, ReducedQuantityRecording, TotalMechanicalEnergyCK>(water_block, gravity);
+    auto &fluid_observer_pressure = main_methods.addRegressionTest<
+        RegressionTestDynamicTimeWarping, ObservedQuantityRecording, Real>("Pressure", fluid_observer_contact);
     //----------------------------------------------------------------------
-    //	Prepare the simulation with cell linked list, configuration
-    //	and case specified initial condition if necessary.
+    //	Define time stepper with end and start time.
     //----------------------------------------------------------------------
-    SingularVariable<Real> *sv_physical_time = sph_system.getSystemVariableByName<Real>("PhysicalTime");
+    TimeStepper &time_stepper = sph_solver.defineTimeStepper(20.0);
     //----------------------------------------------------------------------
     //	Load restart file if necessary.
     //----------------------------------------------------------------------
     if (sph_system.RestartStep() != 0)
     {
-        sv_physical_time->setValue(restart_io.readRestartFiles(sph_system.RestartStep()));
+        time_stepper.setPhysicalTime(restart_io.readRestartFiles(sph_system.RestartStep()));
     }
-
-    wall_boundary_normal_direction.exec(); // run particle dynamics on CPU first
+    //----------------------------------------------------------------------
+    //	Setup for advection-step based time-stepping control
+    //----------------------------------------------------------------------
+    auto &advection_step = time_stepper.addTriggerByInterval(fluid_advection_time_step.exec());
+    size_t advection_steps = sph_system.RestartStep() + 1;
+    int screening_interval = 100;
+    int observation_interval = screening_interval * 2;
+    int restart_output_interval = screening_interval * 10;
+    auto &state_recording = time_stepper.addTriggerByInterval(0.1);
+    //----------------------------------------------------------------------
+    //	Prepare for the time integration loop.
+    //----------------------------------------------------------------------
+    wall_boundary_normal_direction.exec(); // run particle dynamics with host kernels first
     constant_gravity.exec();
 
     water_cell_linked_list.exec();
     wall_cell_linked_list.exec();
     water_block_update_complex_relation.exec();
     fluid_observer_contact_relation.exec();
+
+    fluid_density_regularization.exec();
+    water_advection_step_setup.exec();
+    fluid_linear_correction_matrix.exec();
     //----------------------------------------------------------------------
-    //	Setup for time-stepping control
+    //	First output before the integration loop.
     //----------------------------------------------------------------------
-    size_t number_of_iterations = sph_system.RestartStep();
-    int screen_output_interval = 100;
-    int observation_sample_interval = screen_output_interval * 2;
-    int restart_output_interval = screen_output_interval * 10;
-    Real end_time = 20.0;
-    Real output_interval = 0.1;
+    body_state_recorder.writeToFile();
+    record_water_mechanical_energy.writeToFile(advection_steps);
+    fluid_observer_pressure.writeToFile(advection_steps);
     //----------------------------------------------------------------------
     //	Statistics for the computing time information
     //----------------------------------------------------------------------
-    TimeInterval interval_io;
-    TimeInterval interval_outer_loop;
-    TimeInterval interval_inner_loop;
+    TimeInterval interval_output;
+    TimeInterval interval_advection_step;
+    TimeInterval interval_acoustic_step;
     TimeInterval interval_updating_configuration;
-    TickCount tick_instance;
     //----------------------------------------------------------------------
-    //	First output before the main loop.
+    //	Single time stepping loop is used for multi-time stepping.
     //----------------------------------------------------------------------
-    body_states_recording.writeToFile();
-    record_water_mechanical_energy.writeToFile(number_of_iterations);
-    fluid_observer_pressure.writeToFile(number_of_iterations);
-    //----------------------------------------------------------------------
-    //	Main loop starts here.
-    //----------------------------------------------------------------------
-    while (sv_physical_time->getValue() < end_time)
+    TickCount t0 = TickCount::now();
+    while (!time_stepper.isEndTime())
     {
-        Real integration_time = 0.0;
-        /** Integrate time (loop) until the next output time. */
-        while (integration_time < output_interval)
+        //----------------------------------------------------------------------
+        //	the fastest and most frequent acostic time stepping.
+        //----------------------------------------------------------------------
+        TickCount time_instance = TickCount::now();
+        Real acoustic_dt = time_stepper.incrementPhysicalTime(fluid_acoustic_time_step);
+        fluid_acoustic_step_1st_half.exec(acoustic_dt);
+        fluid_acoustic_step_2nd_half.exec(acoustic_dt);
+        interval_acoustic_step += TickCount::now() - time_instance;
+        //----------------------------------------------------------------------
+        //	the following are slower and less frequent time stepping.
+        //----------------------------------------------------------------------
+        if (advection_step(fluid_advection_time_step))
         {
-            /** outer loop for dual-time criteria time-stepping. */
-            tick_instance = TickCount::now();
-            fluid_boundary_indicator.exec();
-            fluid_density_regularization.exec();
-            water_advection_step_setup.exec();
-            Real advection_dt = fluid_advection_time_step.exec();
-            fluid_linear_correction_matrix.exec();
-            interval_outer_loop += TickCount::now() - tick_instance;
-
-            tick_instance = TickCount::now();
-            Real relaxation_time = 0.0;
-            Real acoustic_dt = 0.0;
-            while (relaxation_time < advection_dt)
-            {
-                /** inner loop for dual-time criteria time-stepping.  */
-                acoustic_dt = fluid_acoustic_time_step.exec();
-                fluid_acoustic_step_1st_half.exec(acoustic_dt);
-                fluid_acoustic_step_2nd_half.exec(acoustic_dt);
-                relaxation_time += acoustic_dt;
-                integration_time += acoustic_dt;
-                sv_physical_time->incrementValue(acoustic_dt);
-            }
+            advection_steps++;
             water_update_particle_position.exec();
-            interval_inner_loop += TickCount::now() - tick_instance;
 
-            tick_instance = TickCount::now();
+            /** Output body state during the simulation according output_interval. */
+            time_instance = TickCount::now();
             /** screen output, write body observables and restart files  */
-            if (number_of_iterations % screen_output_interval == 0)
+            if (advection_steps % screening_interval == 0)
             {
-                std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
-                          << sv_physical_time->getValue()
-                          << "	advection_dt = " << advection_dt << "	acoustic_dt = " << acoustic_dt << "\n";
-
-                if (number_of_iterations % observation_sample_interval == 0 && number_of_iterations != sph_system.RestartStep())
-                {
-                    record_water_mechanical_energy.writeToFile(number_of_iterations);
-                    fluid_observer_pressure.writeToFile(number_of_iterations);
-                }
-                if (number_of_iterations % restart_output_interval == 0)
-                    restart_io.writeToFile( number_of_iterations);
+                std::cout << std::fixed << std::setprecision(9) << "N=" << advection_steps
+                          << "	Time = " << time_stepper.getPhysicalTime() << "	"
+                          << "	advection_dt = " << advection_step.getInterval()
+                          << "	acoustic_dt = " << time_stepper.getGlobalTimeStepSize() << "\n";
             }
-            interval_io += TickCount::now() - tick_instance;
-            number_of_iterations++;
 
-            /** Particle sort, ipdate cell linked list and configuration. */
-            tick_instance = TickCount::now();
-            if (number_of_iterations % 100 == 0 && number_of_iterations != 1)
+            if (advection_steps % observation_interval == 0)
+            {
+                record_water_mechanical_energy.writeToFile(advection_steps);
+                fluid_observer_contact_relation.exec();
+                fluid_observer_pressure.writeToFile(advection_steps);
+            }
+
+            if (advection_steps % restart_output_interval == 0)
+            {
+                restart_io.writeToFile(advection_steps);
+            }
+
+            if (state_recording())
+            {
+                body_state_recorder.writeToFile();
+            }
+            interval_output += TickCount::now() - time_instance;
+
+            /** Particle sort, update cell linked list and configuration. */
+            time_instance = TickCount::now();
+            if (advection_steps % 100)
             {
                 particle_sort.exec();
             }
             water_cell_linked_list.exec();
             water_block_update_complex_relation.exec();
-            fluid_observer_contact_relation.exec();
-            interval_updating_configuration += TickCount::now() - tick_instance;
+            interval_updating_configuration += TickCount::now() - time_instance;
+
+            /** outer loop for dual-time criteria time-stepping. */
+            time_instance = TickCount::now();
+            fluid_density_regularization.exec();
+            water_advection_step_setup.exec();
+            fluid_linear_correction_matrix.exec();
+            interval_advection_step += TickCount::now() - time_instance;
         }
-
-        tick_instance = TickCount::now();
-        /** Output body state during the simulation according output_interval. */
-        body_states_recording.writeToFile();
-        interval_io += TickCount::now() - tick_instance;
     }
-
-    TimeInterval tt = interval_outer_loop +
-                      interval_inner_loop +
-                      interval_updating_configuration;
+    //----------------------------------------------------------------------
+    // Summary for wall time used for the simulation.
+    //----------------------------------------------------------------------
+    TimeInterval tt = TickCount::now() - t0 - interval_output;
     std::cout << "Total wall time for computation: " << tt.seconds()
               << " seconds." << std::endl;
-    std::cout << std::fixed << std::setprecision(9) << "interval_outer_loop ="
-              << interval_outer_loop.seconds() << "\n";
-    std::cout << std::fixed << std::setprecision(9) << "interval_inner_loop = "
-              << interval_inner_loop.seconds() << "\n";
+    std::cout << std::fixed << std::setprecision(9) << "interval_advection_step ="
+              << interval_advection_step.seconds() << "\n";
+    std::cout << std::fixed << std::setprecision(9) << "interval_acoustic_step = "
+              << interval_acoustic_step.seconds() << "\n";
     std::cout << std::fixed << std::setprecision(9) << "interval_updating_configuration = "
               << interval_updating_configuration.seconds() << "\n";
     //----------------------------------------------------------------------
