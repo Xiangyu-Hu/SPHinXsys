@@ -322,7 +322,7 @@ int main(int ac, char *av[])
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
     IOEnvironment io_environment(sph_system);
-    BodyStatesRecordingToVtp body_states_recording(sph_system);
+    BodyStatesRecordingToVtpCK<MainExecutionPolicy> body_states_recording(sph_system);
     body_states_recording.addToWrite<Real>(water_body, "Pressure");
     body_states_recording.addToWrite<int>(water_body, "BufferIndicator");
     ObservedQuantityRecording<MainExecutionPolicy, Vecd, RestoringCorrection> write_centerline_velocity("Velocity", velocity_observer_contact);
@@ -359,7 +359,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	First output before the main loop.
     //----------------------------------------------------------------------
-    body_states_recording.writeToFile(MainExecutionPolicy{});
+    body_states_recording.writeToFile();
     write_centerline_velocity.writeToFile(number_of_iterations);
     //----------------------------------------------------------------------
     //	Main loop starts here.
@@ -427,7 +427,7 @@ int main(int ac, char *av[])
 
         TickCount t2 = TickCount::now();
 
-        body_states_recording.writeToFile(MainExecutionPolicy{});
+        body_states_recording.writeToFile();
         fluid_observer_contact_relation.exec();
 
         TickCount t3 = TickCount::now();
