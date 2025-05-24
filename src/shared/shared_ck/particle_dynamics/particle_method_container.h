@@ -41,14 +41,22 @@
 
 namespace SPH
 {
+
+class BaseMethodContainer
+{
+};
+
 template <typename ExecutePolicy>
-class ParticleMethodContainer
+class ParticleMethodContainer : public BaseMethodContainer
 {
     UniquePtrsKeeper<BaseDynamics<void>> particle_dynamics_keeper_;
     DataContainerUniquePtrAssemble<BaseDynamics> reduce_dynamics_keeper_;
+    UniquePtrsKeeper<BodyStatesRecording> state_recorders_keeper_;
+    UniquePtrsKeeper<BaseIO> other_io_keeper_;
 
   public:
-    ParticleMethodContainer(const ExecutePolicy &ex_policy) {};
+    ParticleMethodContainer(const ExecutePolicy &ex_policy)
+    : BaseMethodContainer() {};
     virtual ~ParticleMethodContainer() {};
 
     template <class DynamicsIdentifier, typename... Args>
@@ -109,6 +117,27 @@ class ParticleMethodContainer
             InteractionDynamicsCK<
                 ExecutePolicy, InteractionType<RelationType<ControlParameters..., RelationParameters...>>>>(
             relation, std::forward<Args>(args)...);
+    };
+
+    template <template <typename...> class RecorderType, typename... Args>
+    auto &addBodyStatesRecorder(Args &&...args)
+    {
+        return *state_recorders_keeper_.createPtr<RecorderType<ExecutePolicy>>(std::forward<Args>(args)...);
+    };
+
+    template <template <typename...> class RegressionType,
+              template <typename...> class ObservationType, typename... Parameters, typename... Args>
+    auto &addRegressionTest(Args &&...args)
+    {
+        return *other_io_keeper_.createPtr<
+            RegressionType<ObservationType<ExecutePolicy, Parameters...>>>(std::forward<Args>(args)...);
+    };
+
+    template <template <typename...> class IOType, typename... Parameters, typename... Args>
+    auto &addIODynamics(Args &&...args)
+    {
+        return *other_io_keeper_.createPtr<
+            IOType<ExecutePolicy, Parameters...>>(std::forward<Args>(args)...);
     };
 };
 } // namespace SPH

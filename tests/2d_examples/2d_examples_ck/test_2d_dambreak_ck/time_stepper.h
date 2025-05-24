@@ -161,5 +161,29 @@ class TimeStepper
     Real global_dt_;
     SingularVariable<Real> *sv_physical_time_;
 };
+
+class SPHSolver
+{
+    UniquePtrsKeeper<BaseMethodContainer> methods_keeper_;
+    UniquePtrKeeper<TimeStepper> time_stepper_keeper_;
+
+  public:
+    SPHSolver(SPHSystem &sph_system) : sph_system_(sph_system) {};
+    virtual ~SPHSolver() {};
+
+    template <typename ExecutePolicy>
+    auto &addParticleMethodContainer(const ExecutePolicy &ex_policy)
+    {
+        return *methods_keeper_.createPtr<ParticleMethodContainer<ExecutePolicy>>(ex_policy);
+    };
+
+    auto &defineTimeStepper(Real end_time, Real start_time = 0.0)
+    {
+        return *time_stepper_keeper_.createPtr<TimeStepper>(sph_system_, end_time, start_time);
+    };
+
+  protected:
+    SPHSystem &sph_system_;
+};
 } // namespace SPH
 #endif // TIME_STEPPER_H

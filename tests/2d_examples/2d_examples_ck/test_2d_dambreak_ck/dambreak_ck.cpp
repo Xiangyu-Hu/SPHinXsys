@@ -80,11 +80,11 @@ int main(int ac, char *av[])
     Contact<> water_wall_contact(water_block, {&wall_boundary});
     Contact<> fluid_observer_contact(fluid_observer, {&water_block});
     //----------------------------------------------------------------------
-    // Define the main execution policy for this case.
+    // Define SPH Solver with particle methods with execution policies.
     //----------------------------------------------------------------------
-    using MainExecutionPolicy = execution::ParallelPolicy;
-    ParticleMethodContainer main_methods(par);
-    ParticleMethodContainer host_methods(par);
+    SPHSolver sph_solver(sph_system);
+    auto &main_methods = sph_solver.addParticleMethodContainer(par);
+    auto &host_methods = sph_solver.addParticleMethodContainer(par);
     //----------------------------------------------------------------------
     // Define the numerical methods used in the simulation.
     // Note that there may be data dependence on the sequence of constructions.
@@ -130,19 +130,18 @@ int main(int ac, char *av[])
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtpCK<MainExecutionPolicy> body_states_recording(sph_system);
-    body_states_recording.addToWrite<Vecd>(wall_boundary, "NormalDirection");
-    body_states_recording.addToWrite<Real>(water_block, "Density");
-    RestartIOCK<MainExecutionPolicy> restart_io(sph_system);
-    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<MainExecutionPolicy, TotalMechanicalEnergyCK>>
-        record_water_mechanical_energy(water_block, gravity);
-    RegressionTestDynamicTimeWarping<ObservedQuantityRecording<MainExecutionPolicy, Real>>
-        fluid_observer_pressure("Pressure", fluid_observer_contact);
+    auto &body_states_recorder = main_methods.addBodyStatesRecorder<BodyStatesRecordingToVtpCK>(sph_system);
+    body_states_recorder.addToWrite<Vecd>(wall_boundary, "NormalDirection");
+    body_states_recorder.addToWrite<Real>(water_block, "Density");
+    auto &restart_io = main_methods.addIODynamics<RestartIOCK>(sph_system);
+    auto &record_water_mechanical_energy = main_methods.addRegressionTest<
+        RegressionTestDynamicTimeWarping, ReducedQuantityRecording, TotalMechanicalEnergyCK>(water_block, gravity);
+    auto &fluid_observer_pressure = main_methods.addRegressionTest<
+        RegressionTestDynamicTimeWarping, ObservedQuantityRecording, Real>("Pressure", fluid_observer_contact);
     //----------------------------------------------------------------------
-    //	Prepare the simulation with cell linked list, configuration
-    //	and case specified initial condition if necessary.
+    //	Define time stepper with end and start time.
     //----------------------------------------------------------------------
-    TimeStepper time_stepper(sph_system, 20.0);
+    TimeStepper &time_stepper = sph_solver.defineTimeStepper(20.0);
     //----------------------------------------------------------------------
     //	Load restart file if necessary.
     //----------------------------------------------------------------------
@@ -176,7 +175,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	First output before the  time integration loop.
     //----------------------------------------------------------------------
-    body_states_recording.writeToFile(MainExecutionPolicy{});
+    body_states_recorder.writeToFile();
     record_water_mechanical_energy.writeToFile(iteration_steps);
     fluid_observer_pressure.writeToFile(iteration_steps);
     //----------------------------------------------------------------------
@@ -227,12 +226,12 @@ int main(int ac, char *av[])
 
             if (iteration_steps % restart_output_interval == 0)
             {
-                restart_io.writeToFile(MainExecutionPolicy{}, iteration_steps);
+                restart_io.writeToFile(iteration_steps);
             }
 
             if (state_recording())
             {
-                body_states_recording.writeToFile(MainExecutionPolicy{});
+                body_states_recorder.writeToFile();
             }
             interval_output += TickCount::now() - time_instance;
 
