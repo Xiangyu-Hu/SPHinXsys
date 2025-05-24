@@ -220,13 +220,13 @@ int main(int ac, char *av[])
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
     /** Output the body states. */
-    BodyStatesRecordingToVtp body_states_recording(sph_system);
+    BodyStatesRecordingToVtpCK<MainExecutionPolicy> body_states_recording(sph_system);
     body_states_recording.addToWrite<Vecd>(water_body, "Velocity");
     body_states_recording.addToWrite<Real>(water_body, "Density");
     body_states_recording.addToWrite<int>(water_body, "Indicator");
     body_states_recording.addToWrite<Vecd>(wall_boundary, "Velocity");
 
-    RestartIO restart_io(sph_system);
+    RestartIOCK<MainExecutionPolicy> restart_io(sph_system);
 
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<MainExecutionPolicy, Vecd>> write_horizontal_velocity("Velocity", horizontal_observer_contact);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<MainExecutionPolicy, Vecd>> write_vertical_velocity("Velocity", vertical_observer_contact);
@@ -270,7 +270,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	First output before the main loop.
     //----------------------------------------------------------------------
-    body_states_recording.writeToFile(MainExecutionPolicy{});
+    body_states_recording.writeToFile();
     write_horizontal_velocity.writeToFile(number_of_iterations);
     write_vertical_velocity.writeToFile(number_of_iterations);
     //----------------------------------------------------------------------
@@ -320,7 +320,7 @@ int main(int ac, char *av[])
                           << "	advection_dt = " << advection_dt << "	acoustic_dt = " << acoustic_dt << "\n";
 
                 if (number_of_iterations % restart_output_interval == 0)
-                    restart_io.writeToFile(MainExecutionPolicy{}, number_of_iterations);
+                    restart_io.writeToFile( number_of_iterations);
             }
             number_of_iterations++;
 
@@ -341,7 +341,7 @@ int main(int ac, char *av[])
         vertical_observer_contact_relation.exec();
         write_horizontal_velocity.writeToFile(number_of_iterations);
         write_vertical_velocity.writeToFile(number_of_iterations);
-        body_states_recording.writeToFile(MainExecutionPolicy{});
+        body_states_recording.writeToFile();
         TickCount t3 = TickCount::now();
         interval_writing_body_state += t3 - t2;
     }

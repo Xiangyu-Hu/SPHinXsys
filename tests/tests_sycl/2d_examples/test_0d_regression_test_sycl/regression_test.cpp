@@ -182,7 +182,7 @@ int main(int ac, char *av[])
     //	Define the methods for I/O operations, observations of the simulation.
     //	Regression tests are also defined here.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp write_states(sph_system);
+    BodyStatesRecordingToVtpCK<MainExecutionPolicy> write_states(sph_system);
     RegressionTestEnsembleAverage<ObservedQuantityRecording<MainExecutionPolicy, Real>>
         write_solid_temperature(diffusion_species_name, observer_contact);
     BodyRegionByParticle inner_domain(diffusion_body, makeShared<MultiPolygonShape>(createInnerDomain(), "InnerDomain"));
@@ -218,7 +218,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	First output before the main loop.
     //----------------------------------------------------------------------
-    write_states.writeToFile(MainExecutionPolicy{});
+    write_states.writeToFile();
     write_solid_temperature.writeToFile(ite);
     //----------------------------------------------------------------------
     //	Main loop starts here.
@@ -249,7 +249,7 @@ int main(int ac, char *av[])
                 {
                     write_solid_temperature.writeToFile(ite);
                     write_solid_average_temperature_part.writeToFile(ite);
-                    write_states.writeToFile(MainExecutionPolicy{});
+                    write_states.writeToFile();
                 }
             }
         }
