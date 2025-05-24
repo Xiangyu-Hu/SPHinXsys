@@ -31,6 +31,7 @@
 #include "all_shared_physical_dynamics_ck.h"
 #include "io_all_ck.h"
 #include "particle_method_container.h"
+#include "sph_solver.h"
 #include "sphinxsys.h"
 
 #endif // SPHINXSYS_CK_H

@@ -21,16 +21,16 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	time_stepper.h
+ * @file 	sph_solver.h
  * @brief 	Here we define the execution policy relevant to parallel computing.
  * @details This analog of the standard library on the same functions.
  * @author	Xiangyu Hu and  Fabien Pean
  */
 
-#ifndef TIME_STEPPER_H
-#define TIME_STEPPER_H
+#ifndef SPH_SOLVER_H
+#define SPH_SOLVER_H
 
-#include "sphinxsys_ck.h"
+#include "particle_method_container.h"
 
 namespace SPH
 {
@@ -186,4 +186,4 @@ class SPHSolver
     SPHSystem &sph_system_;
 };
 } // namespace SPH
-#endif // TIME_STEPPER_H
+#endif // SPH_SOLVER_H
