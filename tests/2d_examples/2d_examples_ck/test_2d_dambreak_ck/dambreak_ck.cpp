@@ -21,7 +21,7 @@ Real BW = particle_spacing_ref * 4; /**< Thickness of tank wall. */
 Real rho0_f = 1.0;                       /**< Reference density of fluid. */
 Real gravity_g = 1.0;                    /**< Gravity. */
 Real U_ref = 2.0 * sqrt(gravity_g * LH); /**< Characteristic velocity. */
-Real c_f = 10.0 * U_ref;                 /**< Reference sound speed. */
+Real c_f = 10.0 * U_ref;                 /**< Artificial sound speed. */
 //----------------------------------------------------------------------
 //	Parameters for the shapes.
 //----------------------------------------------------------------------
@@ -43,7 +43,7 @@ int main(int ac, char *av[])
     SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
     sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
     //----------------------------------------------------------------------
-    //	Creating bodies with corresponding materials and particles.
+    //	Creating bodies with inital shape, materials and particles.
     //----------------------------------------------------------------------
     GeometricShapeBox initial_water_block(Transform(water_block_translation), water_block_halfsize, "WaterBody");
     FluidBody water_block(sph_system, initial_water_block);
@@ -62,7 +62,7 @@ int main(int ac, char *av[])
     fluid_observer.generateParticles<ObserverParticles>(observation_location);
     //----------------------------------------------------------------------
     //	Define body relation map.
-    //	The contact map gives the topological connections within a body
+    //	The relations give the topological connections within a body
     //  or with other bodies within interaction range.
     //  Generally, we first define all the inner relations, then the contact relations.
     //----------------------------------------------------------------------
@@ -96,7 +96,7 @@ int main(int ac, char *av[])
     auto &constant_gravity = main_methods.addStateDynamics<GravityForceCK<Gravity>>(water_block, gravity);
     auto &wall_boundary_normal_direction = host_methods.addStateDynamics<NormalFromBodyShapeCK>(wall_boundary); // run on CPU
     auto &water_advection_step_setup = main_methods.addStateDynamics<fluid_dynamics::AdvectionStepSetup>(water_block);
-    auto &water_advection_step_close = main_methods.addStateDynamics<fluid_dynamics::AdvectionStepClose>(water_block);
+    auto &water_update_particle_position = main_methods.addStateDynamics<fluid_dynamics::UpdateParticlePosition>(water_block);
 
     auto &fluid_linear_correction_matrix =
         main_methods.addInteractionDynamics<LinearCorrectionMatrix, WithUpdate>(water_block_inner, 0.5)
@@ -120,9 +120,9 @@ int main(int ac, char *av[])
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
-    auto &body_states_recorder = main_methods.addBodyStatesRecorder<BodyStatesRecordingToVtpCK>(sph_system);
-    body_states_recorder.addToWrite<Vecd>(wall_boundary, "NormalDirection");
-    body_states_recorder.addToWrite<Real>(water_block, "Density");
+    auto &body_state_recorder = main_methods.addBodyStateRecorder<BodyStatesRecordingToVtpCK>(sph_system);
+    body_state_recorder.addToWrite<Vecd>(wall_boundary, "NormalDirection");
+    body_state_recorder.addToWrite<Real>(water_block, "Density");
     auto &restart_io = main_methods.addIODynamics<RestartIOCK>(sph_system);
     auto &record_water_mechanical_energy = main_methods.addRegressionTest<
         RegressionTestDynamicTimeWarping, ReducedQuantityRecording, TotalMechanicalEnergyCK>(water_block, gravity);
@@ -165,15 +165,15 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	First output before the integration loop.
     //----------------------------------------------------------------------
-    body_states_recorder.writeToFile();
+    body_state_recorder.writeToFile();
     record_water_mechanical_energy.writeToFile(advection_steps);
     fluid_observer_pressure.writeToFile(advection_steps);
     //----------------------------------------------------------------------
     //	Statistics for the computing time information
     //----------------------------------------------------------------------
     TimeInterval interval_output;
-    TimeInterval interval_advection_steps;
-    TimeInterval interval_acoustic_steps;
+    TimeInterval interval_advection_step;
+    TimeInterval interval_acoustic_step;
     TimeInterval interval_updating_configuration;
     //----------------------------------------------------------------------
     //	Single time stepping loop is used for multi-time stepping.
@@ -188,14 +188,14 @@ int main(int ac, char *av[])
         Real acoustic_dt = time_stepper.incrementPhysicalTime(fluid_acoustic_time_step);
         fluid_acoustic_step_1st_half.exec(acoustic_dt);
         fluid_acoustic_step_2nd_half.exec(acoustic_dt);
-        interval_acoustic_steps += TickCount::now() - time_instance;
+        interval_acoustic_step += TickCount::now() - time_instance;
         //----------------------------------------------------------------------
         //	the following are slower and less frequent time stepping.
         //----------------------------------------------------------------------
         if (advection_step(fluid_advection_time_step))
         {
             advection_steps++;
-            water_advection_step_close.exec();
+            water_update_particle_position.exec();
 
             /** Output body state during the simulation according output_interval. */
             time_instance = TickCount::now();
@@ -211,6 +211,7 @@ int main(int ac, char *av[])
             if (advection_steps % observation_interval == 0)
             {
                 record_water_mechanical_energy.writeToFile(advection_steps);
+                fluid_observer_contact_relation.exec();
                 fluid_observer_pressure.writeToFile(advection_steps);
             }
 
@@ -221,7 +222,7 @@ int main(int ac, char *av[])
 
             if (state_recording())
             {
-                body_states_recorder.writeToFile();
+                body_state_recorder.writeToFile();
             }
             interval_output += TickCount::now() - time_instance;
 
@@ -233,7 +234,6 @@ int main(int ac, char *av[])
             }
             water_cell_linked_list.exec();
             water_block_update_complex_relation.exec();
-            fluid_observer_contact_relation.exec();
             interval_updating_configuration += TickCount::now() - time_instance;
 
             /** outer loop for dual-time criteria time-stepping. */
@@ -241,7 +241,7 @@ int main(int ac, char *av[])
             fluid_density_regularization.exec();
             water_advection_step_setup.exec();
             fluid_linear_correction_matrix.exec();
-            interval_advection_steps += TickCount::now() - time_instance;
+            interval_advection_step += TickCount::now() - time_instance;
         }
     }
     //----------------------------------------------------------------------
@@ -250,10 +250,10 @@ int main(int ac, char *av[])
     TimeInterval tt = TickCount::now() - t0 - interval_output;
     std::cout << "Total wall time for computation: " << tt.seconds()
               << " seconds." << std::endl;
-    std::cout << std::fixed << std::setprecision(9) << "interval_advection_steps ="
-              << interval_advection_steps.seconds() << "\n";
-    std::cout << std::fixed << std::setprecision(9) << "interval_acoustic_steps = "
-              << interval_acoustic_steps.seconds() << "\n";
+    std::cout << std::fixed << std::setprecision(9) << "interval_advection_step ="
+              << interval_advection_step.seconds() << "\n";
+    std::cout << std::fixed << std::setprecision(9) << "interval_acoustic_step = "
+              << interval_acoustic_step.seconds() << "\n";
     std::cout << std::fixed << std::setprecision(9) << "interval_updating_configuration = "
               << interval_updating_configuration.seconds() << "\n";
     //----------------------------------------------------------------------

@@ -177,7 +177,7 @@ int main(int ac, char *av[])
     StateDynamics<execution::ParallelPolicy, NormalFromBodyShapeCK> wall_boundary_normal_direction(wall_boundary);
     StateDynamics<execution::ParallelPolicy, NormalFromBodyShapeCK> structure_boundary_normal_direction(structure);
     StateDynamics<MainExecutionPolicy, fluid_dynamics::AdvectionStepSetup> water_advection_step_setup(water_block);
-    StateDynamics<MainExecutionPolicy, fluid_dynamics::AdvectionStepClose> water_advection_step_close(water_block);
+    StateDynamics<MainExecutionPolicy, fluid_dynamics::UpdateParticlePosition> water_update_particle_position(water_block);
 
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticStep1stHalfWithWallRiemannCK>
         fluid_acoustic_step_1st_half(water_block_inner, water_block_contact);
@@ -345,7 +345,7 @@ int main(int ac, char *av[])
                 if (total_time >= relax_time)
                     sv_physical_time->incrementValue(acoustic_dt);
             }
-            water_advection_step_close.exec();
+            water_update_particle_position.exec();
 
             if (number_of_iterations % screen_output_interval == 0)
             {

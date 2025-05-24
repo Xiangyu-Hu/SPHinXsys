@@ -187,7 +187,7 @@ int main(int ac, char *av[])
     StateDynamics<execution::ParallelPolicy, NormalFromBodyShapeCK> wall_boundary_normal_direction(wall_boundary); // run on CPU
     /** Time step size with considering sound wave speed. */
     StateDynamics<MainExecutionPolicy, fluid_dynamics::AdvectionStepSetup> water_advection_step_setup(water_body);
-    StateDynamics<MainExecutionPolicy, fluid_dynamics::AdvectionStepClose> water_advection_step_close(water_body);
+    StateDynamics<MainExecutionPolicy, fluid_dynamics::UpdateParticlePosition> water_update_particle_position(water_body);
 
     /** Initial condition with momentum field */
     SimpleDynamics<BoundaryVelocity> solid_initial_condition(wall_boundary);
@@ -309,7 +309,7 @@ int main(int ac, char *av[])
                 integration_time += acoustic_dt;
                 sv_physical_time->incrementValue(acoustic_dt);
             }
-            water_advection_step_close.exec();
+            water_update_particle_position.exec();
             interval_acoustic_steps += TickCount::now() - time_instance;
 
             /** screen output, write body observables and restart files  */

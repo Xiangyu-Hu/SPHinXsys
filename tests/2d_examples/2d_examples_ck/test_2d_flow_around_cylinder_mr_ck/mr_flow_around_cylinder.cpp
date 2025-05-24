@@ -224,8 +224,8 @@ int main(int ac, char *av[])
 
     auto &water_advection_step_setup =
         solver.addStateDynamics<MainExecutionPolicy, fluid_dynamics::AdvectionStepSetup>(water_body);
-    auto &water_advection_step_close =
-        solver.addStateDynamics<MainExecutionPolicy, fluid_dynamics::AdvectionStepClose>(water_body);
+    auto &water_update_particle_position =
+        solver.addStateDynamics<MainExecutionPolicy, fluid_dynamics::UpdateParticlePosition>(water_body);
 
     auto &water_low_resolution_linear_correction_matrix =
         solver.addInteractionDynamics<MainExecutionPolicy, LinearCorrectionMatrix,
@@ -302,7 +302,7 @@ SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion> disposer_outflow_deletio
     water_low_resolution_boundary_indicator.exec();
     water_high_resolution_boundary_indicator.exec();
     water_advection_step_setup.exec();
-    water_advection_step_close.exec();
+    water_update_particle_position.exec();
     water_low_resolution_linear_correction_matrix.exec();
     water_high_resolution_linear_correction_matrix.exec();
     water_low_resolution_density_regularization.exec();

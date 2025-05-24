@@ -150,7 +150,7 @@ int main(int ac, char *av[])
     StateDynamics<MainExecutionPolicy, GravityForceCK<Gravity>> constant_gravity(water_body, gravity);
     StateDynamics<execution::ParallelPolicy, NormalFromBodyShapeCK> wall_boundary_normal_direction(wall); // run on CPU
     StateDynamics<MainExecutionPolicy, fluid_dynamics::AdvectionStepSetup> water_advection_step_setup(water_body);
-    StateDynamics<MainExecutionPolicy, fluid_dynamics::AdvectionStepClose> water_advection_step_close(water_body);
+    StateDynamics<MainExecutionPolicy, fluid_dynamics::UpdateParticlePosition> water_update_particle_position(water_body);
 
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticStep1stHalfWithWallRiemannCK>
         fluid_acoustic_step_1st_half(water_body_inner, water_wall_contact);
@@ -237,7 +237,7 @@ int main(int ac, char *av[])
                 integration_time += acoustic_dt;
                 sv_physical_time->incrementValue(acoustic_dt);
             }
-            water_advection_step_close.exec();
+            water_update_particle_position.exec();
 
             if (number_of_iterations % screen_output_interval == 0)
             {

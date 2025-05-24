@@ -173,17 +173,17 @@ class AdvectionStepSetup : public LocalDynamics
     DiscreteVariable<Vecd> *dv_dpos_;
 };
 
-class AdvectionStepClose : public LocalDynamics
+class UpdateParticlePosition : public LocalDynamics
 {
   public:
-    explicit AdvectionStepClose(SPHBody &sph_body);
-    virtual ~AdvectionStepClose() {};
+    explicit UpdateParticlePosition(SPHBody &sph_body);
+    virtual ~UpdateParticlePosition() {};
 
     class UpdateKernel
     {
       public:
         template <class ExecutionPolicy>
-        UpdateKernel(const ExecutionPolicy &ex_policy, AdvectionStepClose &encloser);
+        UpdateKernel(const ExecutionPolicy &ex_policy, UpdateParticlePosition &encloser);
 
         void update(size_t index_i, Real dt = 0.0)
         {

@@ -120,7 +120,7 @@ class ParticleMethodContainer : public BaseMethodContainer
     };
 
     template <template <typename...> class RecorderType, typename... Args>
-    auto &addBodyStatesRecorder(Args &&...args)
+    auto &addBodyStateRecorder(Args &&...args)
     {
         return *state_recorders_keeper_.createPtr<RecorderType<ExecutePolicy>>(std::forward<Args>(args)...);
     };
