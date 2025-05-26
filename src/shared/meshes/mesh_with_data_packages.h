@@ -30,15 +30,13 @@
 #define MESH_WITH_DATA_PACKAGES_H
 
 #include "base_mesh.h"
-#include "my_memory_pool.h"
 #include "sphinxsys_variable.h"
 #include "tbb/parallel_sort.h"
-#include "mesh_iterators.h"
+#include "execution_policy.h"
 
 #include <algorithm>
 #include <fstream>
 #include <functional>
-#include <mutex>
 using namespace std::placeholders;
 
 namespace SPH
@@ -62,51 +60,41 @@ namespace SPH
 template <int PKG_SIZE>
 class MeshWithGridDataPackages : public Mesh
 {
-  private:
-    DataContainerUniquePtrAssemble<MeshVariable> mesh_variable_ptrs_;
-
   public:
     template <typename... Args>
-    explicit MeshWithGridDataPackages(BoundingBox tentative_bounds, Real data_spacing, size_t buffer_size)
+    explicit MeshWithGridDataPackages(BoundingBox tentative_bounds,
+                                      Real data_spacing,
+                                      size_t buffer_size)
         : Mesh(tentative_bounds, pkg_size * data_spacing, buffer_size),
           global_mesh_(mesh_lower_bound_ + 0.5 * data_spacing * Vecd::Ones(), data_spacing, all_cells_ * pkg_size),
-          data_spacing_(data_spacing)
+          data_spacing_(data_spacing),
+          index_handler_("index_handler", IndexHandler{data_spacing_, all_cells_, *static_cast<Mesh*>(this)})
     {
-        allocateIndexDataMatrix();
+        allocateIndexDataMatrix(all_cells_);
     };
-    virtual ~MeshWithGridDataPackages()
-    {
-        deleteIndexDataMatrix();
-        delete[] cell_neighborhood_;
-        delete[] meta_data_cell_;
-    };
+    virtual ~MeshWithGridDataPackages(){};
+
     /** spacing between the data, which is 1/ pkg_size of this grid spacing */
     Real DataSpacing() { return data_spacing_; };
     Real GridSpacing() { return grid_spacing_; };
     size_t BufferWidth() { return buffer_width_; };
-
-  public:
+    int DataPackageSize() { return pkg_size; };
+    Mesh global_mesh_;                                         /**< the mesh for the locations of all possible data points. */
+    size_t num_grid_pkgs_ = 2;                                 /**< the number of all distinct packages, initially only 2 singular packages. */
+    DiscreteVariable<std::pair<Arrayi, int>> meta_data_cell_{"meta_data_cell", 2};          /**< metadata for each occupied cell: (arrayi)cell index, (int)core1/inner0. */
+    DiscreteVariable<CellNeighborhood> cell_neighborhood_{"mesh_cell_neighborhood", 2};     /**< 3*3(*3) array to store indicies of neighborhood cells. */
+    DiscreteVariable<size_t> cell_package_index_{"cell_package_index", 2};                  /**< the package index for each cell in a 1-d array. */
     ConcurrentVec<std::pair<size_t, int>> occupied_data_pkgs_; /**< (size_t)sort_index, (int)core1/inner0. */
-    CellNeighborhood *cell_neighborhood_;                  /**< 3*3(*3) array to store indicies of neighborhood cells. */
-    std::pair<Arrayi, int> *meta_data_cell_;          /**< metadata for each occupied cell: (arrayi)cell index, (int)core1/inner0. */
-    Mesh global_mesh_;                            /**< the mesh for the locations of all possible data points. */
-    size_t num_grid_pkgs_ = 2;                        /**< the number of all distinct packages, initially only 2 singular packages. */
 
-  protected:
+  private:
+    DataContainerUniquePtrAssemble<MeshVariable> mesh_variable_ptrs_;
     MeshVariableAssemble all_mesh_variables_;         /**< all mesh variables on this mesh. */
-    static constexpr int pkg_size = PKG_SIZE;         /**< the size of the data package matrix*/
-    const Real data_spacing_;                         /**< spacing of data in the data packages*/
-    using MetaData = std::pair<int, size_t>;          /**< stores the metadata for each cell: (int)singular0/inner1/core2, (size_t)package data index*/
-    MeshDataMatrix<size_t> index_data_mesh_;         /**< metadata for all cells. */
-    using NeighbourIndex = std::pair<size_t, Arrayi>; /**< stores shifted neighbour info: (size_t)package index, (arrayi)local grid index. */
-    template <typename DataType>
-    using PackageData = PackageDataMatrix<DataType, pkg_size>;
-    /** Matrix data for temporary usage. */
-    template <typename DataType>
-    using PackageTemporaryData = PackageDataMatrix<DataType, pkg_size + 1>;
+    static constexpr int pkg_size = PKG_SIZE;         /**< the size of the data package matrix. */
+    const Real data_spacing_;                         /**< spacing of data in the data packages. */
 
-    void allocateIndexDataMatrix(); /**< allocate memories for metadata of data packages. */
-    void deleteIndexDataMatrix();   /**< delete memories for metadata of data packages. */
+    /**< allocate memories for metadata of data packages. */
+    void allocateIndexDataMatrix(Array2i mesh_size){ cell_package_index_.reallocateData(par, all_cells_[0] * all_cells_[1]); };
+    void allocateIndexDataMatrix(Array3i mesh_size){ cell_package_index_.reallocateData(par, all_cells_[0] * all_cells_[1] * all_cells_[2]); };
 
     /** resize all mesh variable data field with `num_grid_pkgs_` size(initially only singular data) */
     struct ResizeMeshVariableData
@@ -118,132 +106,154 @@ class MeshWithGridDataPackages : public Mesh
             for (size_t l = 0; l != all_mesh_variables_.size(); ++l)
             {
                 MeshVariable<DataType> *variable = all_mesh_variables_[l];
-                variable->allocateAllMeshVariableData(num_grid_pkgs_);
+                variable->reallocateData(par, num_grid_pkgs_);
             }
         }
     };
     OperationOnDataAssemble<MeshVariableAssemble, ResizeMeshVariableData> resize_mesh_variable_data_{};
 
-    /** probe by applying bi and tri-linear interpolation within the package. */
-    template <class DataType>
-    DataType probeDataPackage(MeshVariable<DataType> &mesh_variable, size_t package_index, const Arrayi &cell_index, const Vecd &position);
-    bool isSingularDataPackage(const Arrayi &cell_index);
-
-    /** return the position of the lower bound data in a cell. */
-    Vecd DataLowerBoundInCell(const Arrayi &cell_index)
+    struct SyncMeshVariableData
     {
-        return CellLowerCornerPosition(cell_index) + 0.5 * data_spacing_ * Vecd::Ones();
-    }
-
-    /** return the grid index from its position and the index of the cell it belongs to. */
-    Arrayi DataIndexFromPosition(const Arrayi &cell_index, const Vecd &position)
-    {
-        return floor((position - DataLowerBoundInCell(cell_index)).array() / data_spacing_)
-            .template cast<int>()
-            .max(Arrayi::Zero())
-            .min((pkg_size - 1) * Arrayi::Ones());
-    }
-
+        template <typename DataType, class ExecutionPolicy>
+        void operator()(DataContainerAddressKeeper<MeshVariable<DataType>> &all_mesh_variables_,
+                        ExecutionPolicy &ex_policy)
+        {
+            for(size_t l = 0; l != all_mesh_variables_.size(); l++)
+            {
+                MeshVariable<DataType> *variable = all_mesh_variables_[l];
+                variable->prepareForOutput(ex_policy);
+            }
+        }
+    };
+    OperationOnDataAssemble<MeshVariableAssemble, SyncMeshVariableData> sync_mesh_variable_data_{};
   public:
-    std::pair<size_t, Arrayi> NeighbourIndexShift(const Arrayi shift_index, const CellNeighborhood &neighbour);
-    bool isInnerDataPackage(const Arrayi &cell_index);
-    int DataPackageSize() const { return pkg_size; }
-    void assignDataPackageIndex(const Arrayi &cell_index, const size_t package_index);
-    size_t PackageIndexFromCellIndex(const Arrayi &cell_index);
-    /** obtain averaged value at a corner of a data cell */
-    template <typename DataType>
-    DataType CornerAverage(MeshVariable<DataType> &mesh_variable,
-                           Arrayi addrs_index, Arrayi corner_direction,
-                           CellNeighborhood &neighborhood);
-    /** This function find the value of data from its index from global mesh. */
-    template <typename DataType>
-    DataType DataValueFromGlobalIndex(MeshVariable<DataType> &mesh_variable,
-                                      const Arrayi &global_grid_index);
-    /** assign value to data package according to the position of data */
-    template <typename DataType, typename FunctionByPosition>
-    void assignByPosition(MeshVariable<DataType> &mesh_variable,
-                          const Arrayi &cell_index,
-                          const FunctionByPosition &function_by_position);
-    /** This function probe a mesh value */
-    template <class DataType>
-    DataType probeMesh(MeshVariable<DataType> &mesh_variable, const Vecd &position);
-    /** return the position of data from its local grid index and the index of the cell it belongs to. */
-    Vecd DataPositionFromIndex(const Arrayi &cell_index, const Arrayi &data_index)
+    /** wrapper for all index exchange related functions. */
+    struct IndexHandler
     {
-        return DataLowerBoundInCell(cell_index) + data_index.cast<Real>().matrix() * data_spacing_;
-    }
-    /** void (non_value_returning) function iterate on all data points by value. */
-    template <typename FunctionOnData>
-    void for_each_cell_data(const FunctionOnData &function);
-    void resizeMeshVariableData()
-    {
-        resize_mesh_variable_data_(all_mesh_variables_, num_grid_pkgs_);
-    }
+        Real data_spacing_;
+        Arrayi all_cells_;
+        Mesh mesh_;
 
-    template <typename DataType>
-    MeshVariable<DataType> *getMeshVariable(const std::string &variable_name)
-    {
-        return findVariableByName<DataType>(all_mesh_variables_, variable_name);
-    }
+        Arrayi CellIndexFromPosition(const Vecd &position) const
+        {
+            return mesh_.CellIndexFromPosition(position);
+        }
 
-    /** compute gradient transform within data package at `package_index` */
-    template <typename InDataType, typename OutDataType>
-    void computeGradient(MeshVariable<InDataType> &in_variable,
-                         MeshVariable<OutDataType> &out_variable,
-                         const size_t package_index);
+        /** return the position of the lower bound data in a cell. */
+        Vecd DataLowerBoundInCell(const Arrayi &cell_index)
+        {
+            return mesh_.CellLowerCornerPosition(cell_index) + 0.5 * data_spacing_ * Vecd::Ones();
+        }
 
-    void registerOccupied(std::pair<size_t, int> &occupied)
-    {
-        occupied_data_pkgs_.push_back(occupied);
-    }
+        /** return the grid index from its position and the index of the cell it belongs to. */
+        Arrayi DataIndexFromPosition(const Arrayi &cell_index, const Vecd &position)
+        {
+            return floor((position - DataLowerBoundInCell(cell_index)).array() / data_spacing_)
+                .template cast<int>()
+                .max(Arrayi::Zero())
+                .min((pkg_size - 1) * Arrayi::Ones());
+        }
 
-    Arrayi CellIndexFromPositionOnGlobalMesh(const Vecd &position)
-    {
-        return global_mesh_.CellIndexFromPosition(position);
-    }
+        /** return the position of data from its local grid index and the index of the cell it belongs to. */
+        Vecd DataPositionFromIndex(const Arrayi &cell_index, const Arrayi &data_index)
+        {
+            return DataLowerBoundInCell(cell_index) + data_index.cast<Real>().matrix() * data_spacing_;
+        }
 
-    Vecd GridPositionFromIndexOnGlobalMesh(const Arrayi &cell_index)
-    {
-        return global_mesh_.GridPositionFromIndex(cell_index);
-    }
+        /** return the package index in the data array from the cell index it belongs to. */
+        size_t PackageIndexFromCellIndex(size_t *cell_package_index, const Arrayi &cell_index)
+        {
+            size_t index_1d = mesh_.transferMeshIndexTo1D(all_cells_, cell_index);
+            return cell_package_index[index_1d];
+        }
+    };
 
-    bool isCoreDataPackage(const Arrayi &cell_index)
-    {
-        size_t package_index = PackageIndexFromCellIndex(cell_index);
-        return meta_data_cell_[package_index].second == 1;
-    }
-
-    void organizeOccupiedPackages(){
-        parallel_sort(occupied_data_pkgs_.begin(), occupied_data_pkgs_.end(),
-                    [](const std::pair<size_t, int>& a, const std::pair<size_t, int>& b)
-                    {
-                        return a.first < b.first; 
-                    });
-        num_grid_pkgs_ = occupied_data_pkgs_.size() + 2;
-        cell_neighborhood_ = new CellNeighborhood[num_grid_pkgs_];
-        meta_data_cell_ = new std::pair<Arrayi, int>[num_grid_pkgs_];
-    }
-
-    bool isWithinCorePackage(Vecd position)
-    {
-        Arrayi cell_index = CellIndexFromPosition(position);
-        return isCoreDataPackage(cell_index);
-    }
+    SingularVariable<IndexHandler> index_handler_;
+  public:
+    void resizeMeshVariableData() { resize_mesh_variable_data_(all_mesh_variables_, num_grid_pkgs_); };
+    template <class ExecutionPolicy>
+    void syncMeshVariableData(ExecutionPolicy &ex_policy) { sync_mesh_variable_data_(all_mesh_variables_, ex_policy); };
 
     template <typename DataType>
     MeshVariable<DataType> *registerMeshVariable(const std::string &variable_name)
     {
         MeshVariable<DataType> *variable =
-            findVariableByName<DataType>(all_mesh_variables_, variable_name);
+            findVariableByName<DataType, MeshVariable>(all_mesh_variables_, variable_name);
         if (variable == nullptr)
         {
             constexpr int type_index = DataTypeIndex<DataType>::value;
             size_t new_variable_index = std::get<type_index>(all_mesh_variables_).size();
-            return addVariableToAssemble<DataType>(all_mesh_variables_, mesh_variable_ptrs_,
+            return addVariableToAssemble<DataType, MeshVariable>(all_mesh_variables_, mesh_variable_ptrs_,
                                                    variable_name, new_variable_index);
         }
         return variable;
-    };
+    }
+
+    /** return the mesh variable according to the name registered */
+    template <typename DataType>
+    MeshVariable<DataType> *getMeshVariable(const std::string &variable_name)
+    {
+        return findVariableByName<DataType, MeshVariable>(all_mesh_variables_, variable_name);
+    }
+
+    void registerOccupied(size_t sort_index, int type)
+    {
+        occupied_data_pkgs_.push_back(std::make_pair(sort_index, type));
+    }
+
+    void organizeOccupiedPackages()
+    {
+        parallel_sort(occupied_data_pkgs_.begin(), occupied_data_pkgs_.end(),
+                      [](const std::pair<size_t, int>& a, const std::pair<size_t, int>& b)
+                      {
+                          return a.first < b.first; 
+                      });
+        num_grid_pkgs_ = occupied_data_pkgs_.size() + 2;
+        cell_neighborhood_.reallocateData(par, num_grid_pkgs_);
+        meta_data_cell_.reallocateData(par, num_grid_pkgs_);
+    }
+
+    bool isInnerDataPackage(const Arrayi &cell_index)
+    {
+        size_t index_1d = transferMeshIndexTo1D(all_cells_, cell_index);
+        /**
+         * NOTE currently this func is only used in non-device mode;
+         *      use the `DelegatedData` version when needed.
+         */
+        return cell_package_index_.Data()[index_1d] > 1;
+    }
+    bool isCoreDataPackage(const Arrayi &cell_index)
+    {
+        size_t index_1d = transferMeshIndexTo1D(all_cells_, cell_index);
+        /**
+         * NOTE currently this func is only used in non-device mode;
+         *      use the `DelegatedData` version when needed.
+         */
+        return cell_package_index_.Data()[index_1d] == 2;
+    }
+    bool isWithinCorePackage(size_t *cell_package_index,
+                             std::pair<Arrayi, int> *meta_data_cell,
+                             Vecd position)
+    {
+        Arrayi cell_index = CellIndexFromPosition(position);
+        size_t package_index = PackageIndexFromCellIndex(cell_package_index, cell_index);
+        return meta_data_cell[package_index].second == 1;
+    }
+
+    /** return the package index in the data array from the cell index it belongs to. */
+    size_t PackageIndexFromCellIndex(size_t *cell_package_index, const Arrayi &cell_index)
+    {
+        size_t index_1d = transferMeshIndexTo1D(all_cells_, cell_index);
+        return cell_package_index[index_1d];
+    }
+    void assignDataPackageIndex(const Arrayi &cell_index, const size_t package_index){
+        size_t index_1d = transferMeshIndexTo1D(all_cells_, cell_index);
+        /**
+         * NOTE currently the `cell_package_index_` is only assigned in the host;
+         *      use the `DelegatedData` version when needed.
+         */
+        cell_package_index_.Data()[index_1d] = package_index;
+    }
 };
 } // namespace SPH
 #endif // MESH_WITH_DATA_PACKAGES_H

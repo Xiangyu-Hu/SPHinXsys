@@ -181,6 +181,10 @@ Real getLeftStateInWeno(Real v1, Real v2, Real v3, Real v4);
 Real getRightStateInWeno(Real v1, Real v2, Real v3, Real v4);
 
 /** linear heaviside function.*/
-Real Heaviside(Real phi, Real half_width);
+inline Real Heaviside(Real phi, Real half_width)
+{
+    Real normalized_phi = phi / half_width;
+    return std::clamp(0.5 + 0.5 * normalized_phi, 0.0, 1.0);
+}
 } // namespace SPH
 #endif // SCALAR_FUNCTIONS_H

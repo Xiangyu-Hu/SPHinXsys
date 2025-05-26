@@ -32,10 +32,18 @@
 #define ALL_MESH_DYNAMICS_H
 
 #include "mesh_dynamics.h"
-#include "mesh_local_dynamics.h"
+#include "mesh_local_dynamics.hpp"
 
 namespace SPH
 {
+class BaseExecDynamics
+{
+  public:
+    BaseExecDynamics(){};
+    virtual ~BaseExecDynamics(){};
+
+    virtual void exec(Real small_shift_factor) = 0;
+};
 class RegisterMeshVariable
 {
   public:
@@ -51,16 +59,12 @@ class RegisterMeshVariable
         mesh_data->registerMeshVariable<Matd>("KernelSecondGradient");
     }
 };
-class FinishDataPackages : public BaseMeshDynamics
+class FinishDataPackages
 {
   public:
-    explicit FinishDataPackages(MeshWithGridDataPackages<4> &mesh_data, Shape &shape, Kernel &kernel, Real global_h_ratio)
-        : BaseMeshDynamics(mesh_data),
-          shape_(shape),
-          kernel_(kernel),
-          global_h_ratio_(global_h_ratio),
-          grid_spacing_(mesh_data.GridSpacing()),
-          buffer_width_(mesh_data.BufferWidth()){};
+    explicit FinishDataPackages(MeshWithGridDataPackages<4> &mesh_data, Shape &shape)
+        : mesh_data_(mesh_data), shape_(shape),
+          far_field_distance(mesh_data.GridSpacing() * (Real)mesh_data.BufferWidth()){};
     virtual ~FinishDataPackages(){};
 
     void exec(){
@@ -71,36 +75,31 @@ class FinishDataPackages : public BaseMeshDynamics
         initialize_cell_neighborhood.exec();
         mesh_data_.resizeMeshVariableData();
 
-        Real far_field_distance = grid_spacing_ * (Real)buffer_width_;
         initialize_data_for_singular_package.update(0, -far_field_distance);
         initialize_data_for_singular_package.update(1, far_field_distance);
 
         initialize_basic_data_for_a_package.exec();
-        update_level_set_gradient.exec();
-        update_kernel_integrals.exec();
     };
 
   private:
+    MeshWithGridDataPackagesType &mesh_data_;
     Shape &shape_;
-    Kernel &kernel_;
-    Real global_h_ratio_;
-    Real grid_spacing_;
-    size_t buffer_width_;
+    Real far_field_distance;
 
     InitializeDataForSingularPackage initialize_data_for_singular_package{mesh_data_};
-    MeshAllDynamics<TagACellIsInnerPackage> tag_a_cell_is_inner_package{mesh_data_};
-    MeshInnerDynamics<InitializeIndexMesh> initialize_index_mesh{mesh_data_};
-    MeshInnerDynamics<InitializeCellNeighborhood> initialize_cell_neighborhood{mesh_data_};
-    MeshInnerDynamics<InitializeBasicDataForAPackage> initialize_basic_data_for_a_package{mesh_data_, shape_};
-    MeshInnerDynamics<UpdateLevelSetGradient> update_level_set_gradient{mesh_data_};
-    MeshInnerDynamics<UpdateKernelIntegrals> update_kernel_integrals{mesh_data_, kernel_, global_h_ratio_};
+    MeshAllDynamics<execution::ParallelPolicy, TagACellIsInnerPackage> tag_a_cell_is_inner_package{mesh_data_};
+    MeshInnerDynamics<execution::ParallelPolicy, InitializeIndexMesh> initialize_index_mesh{mesh_data_};
+    MeshInnerDynamics<execution::ParallelPolicy, InitializeCellNeighborhood> initialize_cell_neighborhood{mesh_data_};
+    MeshInnerDynamics<execution::ParallelPolicy, InitializeBasicDataForAPackage> initialize_basic_data_for_a_package{mesh_data_, shape_};
 };
 
-class ProbeNormalDirection : public BaseMeshLocalDynamics
+class ProbeNormalDirection
 {
   public:
-    explicit ProbeNormalDirection(MeshWithGridDataPackagesType &mesh_data)
-        : BaseMeshLocalDynamics(mesh_data){};
+    template <class ExecutionPolicy>
+    explicit ProbeNormalDirection(const ExecutionPolicy &ex_policy, MeshWithGridDataPackagesType *mesh_data)
+        : data_spacing_(mesh_data->DataSpacing()),
+          probe_level_set_gradient(ex_policy, mesh_data){};
     virtual ~ProbeNormalDirection(){};
 
     Vecd update(const Vecd &position)
@@ -119,21 +118,23 @@ class ProbeNormalDirection : public BaseMeshLocalDynamics
     }
 
   private:
-    ProbeLevelSetGradient probe_level_set_gradient{mesh_data_};
+    Real data_spacing_;
+    ProbeLevelSetGradient probe_level_set_gradient;
 };
 
-class CleanInterface : public BaseMeshDynamics
+template <class ExecutionPolicy, class KernelType>
+class CleanInterface : public BaseMeshDynamics, public BaseExecDynamics
 {
   public:
-    explicit CleanInterface(MeshWithGridDataPackagesType &mesh_data, Kernel &kernel, Real global_h_ratio)
+    explicit CleanInterface(MeshWithGridDataPackagesType &mesh_data, KernelType *kernel, Real global_h_ratio)
         : BaseMeshDynamics(mesh_data),
+          BaseExecDynamics(),
           kernel_(kernel),
           global_h_ratio_(global_h_ratio){};
     virtual ~CleanInterface(){};
 
-    void exec(Real small_shift_factor){
-        mark_near_interface.setSmallShiftFactor(small_shift_factor);
-        mark_near_interface.exec();
+    void exec(Real small_shift_factor) override {
+        mark_near_interface.exec(small_shift_factor);
         redistance_interface.exec();
         reinitialize_level_set.exec();
         update_level_set_gradient.exec();
@@ -141,27 +142,28 @@ class CleanInterface : public BaseMeshDynamics
     }
 
   private:
-    Kernel &kernel_;
+    KernelType *kernel_;
     Real global_h_ratio_;
-    MeshInnerDynamics<UpdateLevelSetGradient> update_level_set_gradient{mesh_data_};
-    MeshInnerDynamics<UpdateKernelIntegrals> update_kernel_integrals{mesh_data_, kernel_, global_h_ratio_};
-    MeshInnerDynamics<MarkNearInterface> mark_near_interface{mesh_data_};
-    MeshCoreDynamics<RedistanceInterface> redistance_interface{mesh_data_};
-    MeshInnerDynamics<ReinitializeLevelSet> reinitialize_level_set{mesh_data_};
+    MeshInnerDynamics<ExecutionPolicy, UpdateLevelSetGradient> update_level_set_gradient{mesh_data_};
+    MeshInnerDynamics<ExecutionPolicy, UpdateKernelIntegrals<KernelType>> update_kernel_integrals{mesh_data_, kernel_, global_h_ratio_};
+    MeshInnerDynamics<ExecutionPolicy, MarkNearInterface> mark_near_interface{mesh_data_};
+    MeshCoreDynamics<ExecutionPolicy, RedistanceInterface> redistance_interface{mesh_data_};
+    MeshInnerDynamics<ExecutionPolicy, ReinitializeLevelSet> reinitialize_level_set{mesh_data_};
 };
 
-class CorrectTopology : public BaseMeshDynamics
+template <class ExecutionPolicy, class KernelType>
+class CorrectTopology : public BaseMeshDynamics, public BaseExecDynamics
 {
   public:
-    explicit CorrectTopology(MeshWithGridDataPackagesType &mesh_data, Kernel &kernel, Real global_h_ratio)
+    explicit CorrectTopology(MeshWithGridDataPackagesType &mesh_data, KernelType *kernel, Real global_h_ratio)
         : BaseMeshDynamics(mesh_data),
+          BaseExecDynamics(),
           kernel_(kernel),
           global_h_ratio_(global_h_ratio){};
     virtual ~CorrectTopology(){};
 
-    void exec(Real small_shift_factor){
-        mark_near_interface.setSmallShiftFactor(small_shift_factor);
-        mark_near_interface.exec();
+    void exec(Real small_shift_factor) override {
+        mark_near_interface.exec(small_shift_factor);
         for (size_t i = 0; i != 10; ++i)
             diffuse_level_set_sign.exec();
         update_level_set_gradient.exec();
@@ -169,12 +171,12 @@ class CorrectTopology : public BaseMeshDynamics
     }
 
   private:
-    Kernel &kernel_;
+    KernelType *kernel_;
     Real global_h_ratio_;
-    MeshInnerDynamics<UpdateLevelSetGradient> update_level_set_gradient{mesh_data_};
-    MeshInnerDynamics<UpdateKernelIntegrals> update_kernel_integrals{mesh_data_, kernel_, global_h_ratio_};
-    MeshInnerDynamics<MarkNearInterface> mark_near_interface{mesh_data_};
-    MeshInnerDynamics<DiffuseLevelSetSign> diffuse_level_set_sign{mesh_data_};
+    MeshInnerDynamics<ExecutionPolicy, UpdateLevelSetGradient> update_level_set_gradient{mesh_data_};
+    MeshInnerDynamics<ExecutionPolicy, UpdateKernelIntegrals<KernelType>> update_kernel_integrals{mesh_data_, kernel_, global_h_ratio_};
+    MeshInnerDynamics<ExecutionPolicy, MarkNearInterface> mark_near_interface{mesh_data_};
+    MeshInnerDynamics<ExecutionPolicy, DiffuseLevelSetSign> diffuse_level_set_sign{mesh_data_};
 };
 } // namespace SPH
 #endif // ALL_MESH_DYNAMICS_H

@@ -57,6 +57,13 @@ class KernelTabulatedCK
                (fraction_0 * fraction_1 * fraction_2) / delta_q_3_ * data[i + 2];
     };
 
+    Real factorW1D(const Real &h_ratio) const { return h_ratio; };
+    Real factorW2D(const Real &h_ratio) const { return h_ratio * h_ratio; };
+    Real factorW3D(const Real &h_ratio) const { return h_ratio * h_ratio * h_ratio; };
+    Real factordW1D(const Real &h_ratio) const { return factorW1D(h_ratio) * h_ratio; };
+    Real factordW2D(const Real &h_ratio) const { return factorW2D(h_ratio) * h_ratio; };
+    Real factordW3D(const Real &h_ratio) const { return factorW3D(h_ratio) * h_ratio; };
+
     Real W(const Real &displacement) const
     {
         Real q = displacement * inv_h_;
