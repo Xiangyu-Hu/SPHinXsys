@@ -99,7 +99,7 @@ class MultilevelLevelSet : public BaseMeshField
         probe_kernel_gradient_integral_set_.clear();
         cell_package_index_set_.clear();
         meta_data_cell_set_.clear();
-        for(int l = 0; l != total_levels_; l++){
+        for(size_t l = 0; l != total_levels_; l++){
           registerProbes(execution::par, l);
           cell_package_index_set_.push_back(
               mesh_data_set_[l]->cell_package_index_.DelegatedData(execution::par));
