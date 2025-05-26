@@ -33,7 +33,7 @@ class WaterBlock : public ComplexShape
     {
         Vecd halfsize_water(0.5 * LL, 0.5 * LH, 0.5 * LW);
         Transform translation_water(halfsize_water);
-        add<TransformShape<GeometricShapeBox>>(Transform(translation_water), halfsize_water);
+        add<GeometricShapeBox>(Transform(translation_water), halfsize_water);
     }
 };
 
@@ -45,8 +45,8 @@ class WallBoundary : public ComplexShape //	define the static solid wall boundar
         Vecd halfsize_outer(0.5 * DL + BW, 0.5 * DH + BW, 0.5 * DW + BW);
         Vecd halfsize_inner(0.5 * DL, 0.5 * DH, 0.5 * DW);
         Transform translation_wall(halfsize_inner);
-        add<TransformShape<GeometricShapeBox>>(Transform(translation_wall), halfsize_outer);
-        subtract<TransformShape<GeometricShapeBox>>(Transform(translation_wall), halfsize_inner);
+        add<GeometricShapeBox>(Transform(translation_wall), halfsize_outer);
+        subtract<GeometricShapeBox>(Transform(translation_wall), halfsize_inner);
     }
 };
 //----------------------------------------------------------------------
@@ -140,7 +140,7 @@ int main(int ac, char *av[])
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp body_states_recording(sph_system);
+    BodyStatesRecordingToVtpCK<MainExecutionPolicy> body_states_recording(sph_system);
     body_states_recording.addToWrite<Vecd>(wall_boundary, "NormalDirection");
     body_states_recording.addToWrite<Real>(water_block, "Density");
     body_states_recording.addToWrite<int>(water_block, "Indicator");
@@ -176,7 +176,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	First output before the main loop.
     //----------------------------------------------------------------------
-    body_states_recording.writeToFile(MainExecutionPolicy{});
+    body_states_recording.writeToFile();
     record_water_mechanical_energy.writeToFile(number_of_iterations);
     fluid_observer_pressure.writeToFile(number_of_iterations);
     //----------------------------------------------------------------------
@@ -228,7 +228,7 @@ int main(int ac, char *av[])
         record_water_mechanical_energy.writeToFile(number_of_iterations);
 
         TickCount t2 = TickCount::now();
-        body_states_recording.writeToFile(MainExecutionPolicy{});
+        body_states_recording.writeToFile();
         TickCount t3 = TickCount::now();
         interval += t3 - t2;
     }

@@ -25,6 +25,7 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <cstdint>
 #include <iostream>
 #include <unordered_map>
 #include <vector>
@@ -40,7 +41,7 @@ class Vec3r
   public:
     std::array<FLOAT, 3> v;
 
-    Vec3r(){};
+    Vec3r() {};
     template <typename FLOAT_I>
     Vec3r(const FLOAT_I &x, const FLOAT_I &y, const FLOAT_I &z)
     {

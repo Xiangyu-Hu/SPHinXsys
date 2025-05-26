@@ -53,8 +53,9 @@ class GeometricBox
         }
         return is_contained;
     };
-    
+
     Vecd findClosestPoint(const Vecd &probe_point);
+    BoundingBox findBounds();
 
   protected:
     Vecd halfsize_;
@@ -68,6 +69,7 @@ class GeometricBall
 
     bool checkContain(const Vecd &probe_point);
     Vecd findClosestPoint(const Vecd &probe_point);
+    BoundingBox findBounds();
 
   protected:
     Real radius_;

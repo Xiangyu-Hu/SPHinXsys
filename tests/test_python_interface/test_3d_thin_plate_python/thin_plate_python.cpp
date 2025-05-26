@@ -68,8 +68,7 @@ class ParticleGenerator<SurfaceParticles, Plate> : public ParticleGenerator<Surf
 class BoundaryGeometryParallelToXAxis : public BodyPartByParticle, public Parameter
 {
   public:
-    BoundaryGeometryParallelToXAxis(SPHBody &body, const std::string &body_part_name)
-        : BodyPartByParticle(body, body_part_name)
+    BoundaryGeometryParallelToXAxis(SPHBody &body) : BodyPartByParticle(body)
     {
         TaggingParticleMethod tagging_particle_method = std::bind(&BoundaryGeometryParallelToXAxis::tagManually, this, _1);
         tagParticles(tagging_particle_method);
@@ -86,8 +85,7 @@ class BoundaryGeometryParallelToXAxis : public BodyPartByParticle, public Parame
 class BoundaryGeometryParallelToYAxis : public BodyPartByParticle, public Parameter
 {
   public:
-    BoundaryGeometryParallelToYAxis(SPHBody &body, const std::string &body_part_name)
-        : BodyPartByParticle(body, body_part_name)
+    BoundaryGeometryParallelToYAxis(SPHBody &body) : BodyPartByParticle(body)
     {
         TaggingParticleMethod tagging_particle_method = std::bind(&BoundaryGeometryParallelToYAxis::tagManually, this, _1);
         tagParticles(tagging_particle_method);
@@ -206,9 +204,9 @@ class Environment : public PreSettingCase
           stress_relaxation_second_half(plate_body_inner),
           corrected_configuration(plate_body_inner),
           computing_time_step_size(plate_body),
-          boundary_geometry_x(plate_body, "BoundaryGeometryParallelToXAxis"),
+          boundary_geometry_x(plate_body),
           constrain_holder_x(boundary_geometry_x, 0),
-          boundary_geometry_y(plate_body, "BoundaryGeometryParallelToYAxis"),
+          boundary_geometry_y(plate_body),
           constrain_holder_y(boundary_geometry_y, 1),
           plate_position_damping(0.5, plate_body_inner, "Velocity", physical_viscosity),
           plate_rotation_damping(0.5, plate_body_inner, "AngularVelocity", physical_viscosity),

@@ -113,11 +113,12 @@ class Interaction<Contact<>> : public Interaction<Contact<SPHBody, RealBody>>
     virtual ~Interaction() {};
 };
 
-template <typename... Parameters>
-class Interaction<Contact<Wall, Parameters...>> : public Interaction<Contact<Parameters...>>
+template <>
+class Interaction<Wall>
 {
   public:
-    explicit Interaction(Relation<Contact<Parameters...>> &wall_contact_relation);
+    template <class WallContactRelationType>
+    Interaction(WallContactRelationType &wall_contact_relation);
     virtual ~Interaction() {};
 
   protected:

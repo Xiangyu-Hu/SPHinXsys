@@ -3,27 +3,26 @@
 namespace SPH
 {
 //=================================================================================================//
-GeometricShapeBox::GeometricShapeBox(const Vecd &halfsize, const std::string &shape_name)
-    : GeometricBox(halfsize), Shape(shape_name) {}
+GeometricShapeBox::GeometricShapeBox(
+    const Transform &transform, const Vecd &halfsize, const std::string &name)
+    : TransformShape<GeometricBox>(name, transform, halfsize) {}
 //=================================================================================================//
-bool GeometricShapeBox::checkContain(const Vecd &probe_point, bool BOUNDARY_INCLUDED)
-{
-    return GeometricBox::checkContain(probe_point);
-}
+GeometricShapeBox::GeometricShapeBox(const BoundingBox &bounding_box, const std::string &name)
+    : TransformShape<GeometricBox>(
+          name,
+          Transform(0.5 * (bounding_box.first_ + bounding_box.second_)),
+          0.5 * (bounding_box.second_ - bounding_box.first_)) {}
 //=================================================================================================//
-Vecd GeometricShapeBox::findClosestPoint(const Vecd &probe_point)
-{
-    return GeometricBox::findClosestPoint(probe_point);
-}
-//=================================================================================================//
-BoundingBox GeometricShapeBox::findBounds()
-{
-    return BoundingBox(-halfsize_, halfsize_);
-}
+GeometricShapeBox::GeometricShapeBox(
+    const Vecd &lower_bound, const Vecd &upper_bound, const std::string &name)
+    : TransformShape<GeometricBox>(
+          name,
+          Transform(0.5 * (lower_bound + upper_bound)),
+          0.5 * (upper_bound - lower_bound)) {}
 //=================================================================================================//
 GeometricShapeBall::GeometricShapeBall(const Vecd &center, Real radius,
-                                       const std::string &shape_name)
-    : GeometricBall(radius), Shape(shape_name), center_(center) {}
+                                       const std::string &name)
+    : GeometricBall(radius), Shape(name), center_(center) {}
 //=================================================================================================//
 bool GeometricShapeBall::checkContain(const Vecd &probe_point, bool BOUNDARY_INCLUDED)
 {

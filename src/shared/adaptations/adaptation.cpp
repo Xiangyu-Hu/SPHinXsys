@@ -5,6 +5,7 @@
 #include "cell_linked_list.h"
 #include "level_set.h"
 #include "mesh_with_data_packages.h"
+#include "sph_system.h"
 #include "vector_functions.h"
 
 namespace SPH
@@ -17,6 +18,9 @@ SPHAdaptation::SPHAdaptation(Real resolution_ref, Real h_spacing_ratio, Real sys
       sigma0_ref_(computeLatticeNumberDensity(Vecd())),
       spacing_min_(this->MostRefinedSpacingRegular(spacing_ref_, local_refinement_level_)),
       Vol_min_(pow(spacing_min_, Dimensions)), h_ratio_max_(spacing_ref_ / spacing_min_) {};
+//=================================================================================================//
+SPHAdaptation::SPHAdaptation(SPHSystem &sph_system, Real h_spacing_ratio, Real system_refinement_ratio)
+    : SPHAdaptation(sph_system.ReferenceResolution(), h_spacing_ratio, system_refinement_ratio) {}
 //=================================================================================================//
 Real SPHAdaptation::MostRefinedSpacing(Real coarse_particle_spacing, int local_refinement_level)
 {
@@ -111,6 +115,11 @@ ParticleWithLocalRefinement::
     finest_spacing_bound_ = spacing_min_ + Eps;
     coarsest_spacing_bound_ = spacing_ref_ - Eps;
 }
+//=================================================================================================//
+ParticleWithLocalRefinement::ParticleWithLocalRefinement(
+    SPHSystem &sph_system, Real h_spacing_ratio_, Real system_refinement_ratio, int local_refinement_level)
+    : ParticleWithLocalRefinement(sph_system.ReferenceResolution(), h_spacing_ratio_, system_refinement_ratio,
+                                  local_refinement_level) {}
 //=================================================================================================//
 void ParticleWithLocalRefinement::initializeAdaptationVariables(BaseParticles &base_particles)
 {

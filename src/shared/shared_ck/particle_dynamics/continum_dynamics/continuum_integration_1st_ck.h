@@ -115,9 +115,9 @@ class PlasticAcousticStep1stHalf<Inner<OneLevel, RiemannSolverType, KernelCorrec
 
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
 class PlasticAcousticStep1stHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType, Parameters...>>
-    : public PlasticAcousticStep<Interaction<Contact<Wall, Parameters...>>>
+    : public PlasticAcousticStep<Interaction<Contact<Parameters...>>>, public Interaction<Wall>
 {
-    using BaseInteraction = PlasticAcousticStep<Interaction<Contact<Wall, Parameters...>>>;
+    using BaseInteraction = PlasticAcousticStep<Interaction<Contact<Parameters...>>>;
 
   public:
     explicit PlasticAcousticStep1stHalf(Relation<Contact<Parameters...>> &wall_contact_relation);

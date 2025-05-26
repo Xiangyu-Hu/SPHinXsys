@@ -116,8 +116,7 @@ class Beam : public MultiPolygonShape
 class FixPart : public BodyPartByParticle
 {
   public:
-    FixPart(SPHBody &body, const std::string &body_part_name)
-        : BodyPartByParticle(body, body_part_name)
+    FixPart(SPHBody &body) : BodyPartByParticle(body)
     {
         TaggingParticleMethod tagging_particle_method = std::bind(&FixPart::tagManually, this, _1);
         tagParticles(tagging_particle_method);
@@ -238,7 +237,7 @@ return_data beam_multi_resolution(Real dp_factor, bool damping_on, int refinemen
     };
 
     // Boundary conditions
-    FixPart fix_bc_part(beam_body, "ClampingPart");
+    FixPart fix_bc_part(beam_body);
     SimpleDynamics<FixBodyPartConstraint> fix_bc(fix_bc_part);
 
     // gravity

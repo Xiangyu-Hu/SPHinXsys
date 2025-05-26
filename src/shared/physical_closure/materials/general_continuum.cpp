@@ -76,7 +76,7 @@ Mat3d PlasticContinuum::ReturnMapping(Mat3d &stress_tensor)
     return stress_tensor;
 }
 //=================================================================================================//
-Matd J2Plasticity::ConstitutiveRelationShearStress(Matd &velocity_gradient, Matd &shear_stress, Real &hardening_factor)
+Matd J2Plasticity::ConstitutiveRelationShearStressWithHardening(Matd &velocity_gradient, Matd &shear_stress, Real &hardening_factor)
 {
     Matd strain_rate = 0.5 * (velocity_gradient + velocity_gradient.transpose());
     Matd deviatoric_strain_rate = strain_rate - (1.0 / (Real)Dimensions) * strain_rate.trace() * Matd::Identity();

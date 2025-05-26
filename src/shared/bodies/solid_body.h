@@ -45,43 +45,17 @@ class BaseParticles;
  */
 class SolidBody : public RealBody
 {
+    void addSolidBodyToSPHSystem();
+
   public:
     template <typename... Args>
     SolidBody(Args &&...args)
         : RealBody(std::forward<Args>(args)...)
     {
-        sph_system_.solid_bodies_.push_back(this);
+        addSolidBodyToSPHSystem();
         defineAdaptation<SPHAdaptation>(1.15);
     };
-    virtual ~SolidBody(){};
-};
-
-/**
- * @class SolidBodyPartForSimbody
- * @brief A SolidBodyPart for coupling with Simbody.
- * The mass, origin, and unit inertial matrix are computed.
- * Note: In Simbody, all spatial vectors are three dimensional.
- */
-class SolidBodyPartForSimbody : public BodyRegionByParticle
-{
-  protected:
-    UniquePtrKeeper<SimTK::MassProperties> mass_properties_ptr_keeper_;
-
-  public:
-    Vecd initial_mass_center_;
-    SimTK::MassProperties *body_part_mass_properties_;
-
-    SolidBodyPartForSimbody(SPHBody &body, Shape &body_part_shape);
-    SolidBodyPartForSimbody(SPHBody &body, SharedPtr<Shape> shape_ptr);
-    virtual ~SolidBodyPartForSimbody(){};
-
-  protected:
-    Real rho0_;
-    Real *Vol_;
-    Vecd *pos_;
-
-  private:
-    void setMassProperties();
+    virtual ~SolidBody() {};
 };
 } // namespace SPH
 #endif // SOLID_BODY_H

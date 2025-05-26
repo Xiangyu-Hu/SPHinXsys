@@ -25,7 +25,7 @@ SolidBodyFromMesh::SolidBodyFromMesh(
     SharedPtr<SaintVenantKirchhoffSolid> material_model, Vecd *pos_0, Real *volume)
     : SolidBody(system, triangle_mesh_shape)
 {
-    defineAdaptationRatios(1.15, system.resolution_ref_ / resolution);
+    defineAdaptationRatios(1.15, system.ReferenceResolution() / resolution);
     defineBodyLevelSetShape()->cleanLevelSet();
     defineMaterial<SaintVenantKirchhoffSolid>(*material_model.get());
     generateParticles<BaseParticles, Lattice>();
@@ -46,19 +46,21 @@ SolidBodyForSimulation::SolidBodyForSimulation(
     std::cout << "  normal initialization done" << std::endl;
 }
 
-void expandBoundingBox(BoundingBox *original, BoundingBox *additional)
+BoundingBox expandBoundingBox(const BoundingBox &original, const BoundingBox &additional)
 {
-    for (int i = 0; i < original->first_.size(); i++)
+    BoundingBox expanded = original;
+    for (int i = 0; i < expanded.first_.size(); i++)
     {
-        if (additional->first_[i] < original->first_[i])
+        if (additional.first_[i] < expanded.first_[i])
         {
-            original->first_[i] = additional->first_[i];
+            expanded.first_[i] = additional.first_[i];
         }
-        if (additional->second_[i] > original->second_[i])
+        if (additional.second_[i] > expanded.second_[i])
         {
-            original->second_[i] = additional->second_[i];
+            expanded.second_[i] = additional.second_[i];
         }
     }
+    return expanded;
 }
 
 void relaxParticlesSingleResolution(bool write_particle_relaxation_data,
@@ -276,7 +278,7 @@ void StructuralSimulation::setSystemResolutionMax()
             system_resolution_ = resolution_list_[i];
         }
     }
-    system_.resolution_ref_ = system_resolution_;
+    system_.setReferenceResolution(system_resolution_);
 }
 
 void StructuralSimulation::calculateSystemBoundaries()
@@ -285,16 +287,16 @@ void StructuralSimulation::calculateSystemBoundaries()
     for (size_t i = 0; i < body_mesh_list_.size(); i++)
     {
         BoundingBox additional = body_mesh_list_[i]->getBounds();
-        expandBoundingBox(&system_.system_domain_bounds_, &additional);
+        system_.setSystemDomainBounds(expandBoundingBox(system_.getSystemDomainBounds(), additional));
     }
     // scale the system bounds around the center point
-    Vecd center_point = (system_.system_domain_bounds_.first_ + system_.system_domain_bounds_.second_) * 0.5;
+    Vecd center_point = (system_.getSystemDomainBounds().first_ + system_.getSystemDomainBounds().second_) * 0.5;
 
-    Vecd distance_first = system_.system_domain_bounds_.first_ - center_point;
-    Vecd distance_second = system_.system_domain_bounds_.second_ - center_point;
+    Vecd distance_first = system_.getSystemDomainBounds().first_ - center_point;
+    Vecd distance_second = system_.getSystemDomainBounds().second_ - center_point;
 
-    system_.system_domain_bounds_.first_ = center_point + distance_first * scale_system_boundaries_;
-    system_.system_domain_bounds_.second_ = center_point + distance_second * scale_system_boundaries_;
+    system_.getSystemDomainBounds().first_ = center_point + distance_first * scale_system_boundaries_;
+    system_.getSystemDomainBounds().second_ = center_point + distance_second * scale_system_boundaries_;
 }
 
 void StructuralSimulation::createBodyMeshList()

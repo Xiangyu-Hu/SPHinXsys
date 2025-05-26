@@ -44,7 +44,6 @@
 #include "base_particles.h"
 #include "cell_linked_list.h"
 #include "closure_wrapper.h"
-#include "sph_system.h"
 #include "sphinxsys_containers.h"
 
 #include <string>
@@ -134,8 +133,9 @@ class SPHBody
     template <class AdaptationType, typename... Args>
     void defineAdaptation(Args &&...args)
     {
-        sph_adaptation_ = sph_adaptation_ptr_keeper_
-                              .createPtr<AdaptationType>(sph_system_.ReferenceResolution(), std::forward<Args>(args)...);
+        sph_adaptation_ =
+            sph_adaptation_ptr_keeper_.createPtr<AdaptationType>(
+                sph_system_, std::forward<Args>(args)...);
     };
 
     template <typename... Args>
@@ -190,7 +190,7 @@ class SPHBody
         particle_generator.generateParticlesWithGeometricVariables();
         particles->initializeBasicParticleVariables();
         sph_adaptation_->initializeAdaptationVariables(*particles);
-        base_material_->setLocalParameters(sph_system_.ReloadParticles(), particles);
+        base_material_->setLocalParameters(sph_system_, particles);
     };
 
     // Buffer or ghost particles can be generated together with real particles
@@ -211,6 +211,7 @@ class RealBody : public SPHBody
   private:
     UniquePtr<BaseCellLinkedList> cell_linked_list_ptr_;
     bool cell_linked_list_created_;
+    void addRealBodyToSPHSystem();
 
   public:
     template <typename... Args>
@@ -218,7 +219,7 @@ class RealBody : public SPHBody
         : SPHBody(std::forward<Args>(args)...),
           cell_linked_list_created_(false)
     {
-        this->getSPHSystem().addRealBody(this);
+        addRealBodyToSPHSystem();
     };
     virtual ~RealBody() {};
     BaseCellLinkedList &getCellLinkedList();

@@ -28,6 +28,7 @@ io class used in SPHinXsys. **/
 #ifndef IO_ALL_CK_H
 #define IO_ALL_CK_H
 
+#include "io_base_ck.h"
 #include "io_observation_ck.h"
 
 #endif // IO_ALL_CK_H

@@ -103,9 +103,8 @@ class BoundaryGeometry : public BodyPartByParticle
     Vec2d center_;
 
   public:
-    BoundaryGeometry(SPHBody &body, const std::string &body_part_name, Real diameter, Real dp, const Vec2d &center)
-        : BodyPartByParticle(body, body_part_name),
-          diameter_(diameter), dp_(dp), center_(center)
+    BoundaryGeometry(SPHBody &body, Real diameter, Real dp, const Vec2d &center)
+        : BodyPartByParticle(body), diameter_(diameter), dp_(dp), center_(center)
     {
         TaggingParticleMethod tagging_particle_method = std::bind(&BoundaryGeometry::tagManually, this, _1);
         tagParticles(tagging_particle_method);
@@ -281,7 +280,7 @@ void three_ring_impact(int resolution_factor_l, int resolution_factor_m, int res
     SimpleDynamics<InitialVelocityCondition> vel_ic_s(ring_s_body, Vec2d(-30, 30));
 
     // Boundary condition
-    BoundaryGeometry fixed_part_l(ring_l_body, "FixedPartL", diameter_outer_l, dp_l, center_l);
+    BoundaryGeometry fixed_part_l(ring_l_body, diameter_outer_l, dp_l, center_l);
     SimpleDynamics<FixBodyPartConstraint> fix_bc_l(fixed_part_l);
 
     // Observer
