@@ -73,12 +73,12 @@ class FreeSurfaceIndicationCK<Base, RelationType<Parameters...>>
 // Inner relation version with "WithUpdate"
 //=================================================================================================//
 /**
- * @class FreeSurfaceIndicationCK<Inner<WithUpdate, FlowType, Parameters...>>
+ * @class FreeSurfaceIndicationCK<Inner<WithUpdate, Parameters...>>
  * @brief Extends the base free-surface indication for inner relations that also require
  *        an updating step (e.g., "WithUpdate").
  */
-template <class FlowType, typename... Parameters>
-class FreeSurfaceIndicationCK<Inner<WithUpdate, FlowType, Parameters...>>
+template <typename... Parameters>
+class FreeSurfaceIndicationCK<Inner<WithUpdate, Parameters...>>
     : public FreeSurfaceIndicationCK<Base, Inner<Parameters...>>
 {
   public:
@@ -96,7 +96,7 @@ class FreeSurfaceIndicationCK<Inner<WithUpdate, FlowType, Parameters...>>
       public:
         template <class ExecutionPolicy>
         InteractKernel(const ExecutionPolicy &ex_policy,
-                       FreeSurfaceIndicationCK<Inner<WithUpdate, FlowType, Parameters...>> &encloser);
+                       FreeSurfaceIndicationCK<Inner<WithUpdate, Parameters...>> &encloser);
 
         void interact(size_t index_i, Real dt = 0.0);
 
@@ -116,23 +116,18 @@ class FreeSurfaceIndicationCK<Inner<WithUpdate, FlowType, Parameters...>>
       public:
         template <class ExecutionPolicy>
         UpdateKernel(const ExecutionPolicy &ex_policy,
-                     FreeSurfaceIndicationCK<Inner<WithUpdate, FlowType, Parameters...>> &encloser);
+                     FreeSurfaceIndicationCK<Inner<WithUpdate, Parameters...>> &encloser);
 
         void update(size_t index_i, Real dt = 0.0);
 
       protected:
         int *previous_surface_indicator_;
-        FreeSurfaceIndicationCK<Inner<WithUpdate, FlowType, Parameters...>> *outer_;
+        FreeSurfaceIndicationCK<Inner<WithUpdate, Parameters...>> *outer_;
     };
 
   protected:
     DiscreteVariable<int> *dv_previous_surface_indicator_;
 };
-
-//------------------------------------------------------------------------------------------//
-// Common type alias for internal flow with free-surface indication (with update).
-using FreeSurfaceIndicationInnerCK = FreeSurfaceIndicationCK<Inner<WithUpdate, Internal>>;
-
 //=================================================================================================//
 // Contact relation version
 //=================================================================================================//
@@ -174,7 +169,7 @@ class FreeSurfaceIndicationCK<Contact<Parameters...>>
 
 //------------------------------------------------------------------------------------------//
 // Common type alias for complex free-surface indication (inner + contact).
-using FreeSurfaceIndicationComplexSpatialTemporalCK = FreeSurfaceIndicationCK<Inner<WithUpdate, Internal>, Contact<>>;
+using FreeSurfaceIndicationComplexSpatialTemporalCK = FreeSurfaceIndicationCK<Inner<WithUpdate>, Contact<>>;
 //------------------------------------------------------------------------------------------//
 
 } // namespace fluid_dynamics

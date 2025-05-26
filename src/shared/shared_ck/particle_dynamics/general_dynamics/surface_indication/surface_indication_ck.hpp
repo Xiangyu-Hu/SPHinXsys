@@ -9,8 +9,6 @@ namespace SPH
 namespace fluid_dynamics
 {
 //=================================================================================================//
-// FreeSurfaceIndicationCK<Base, RelationType<Parameters...>>
-//=================================================================================================//
 template <template <typename...> class RelationType, typename... Parameters>
 template <class BaseRelationType>
 FreeSurfaceIndicationCK<Base, RelationType<Parameters...>>::
@@ -20,10 +18,8 @@ FreeSurfaceIndicationCK<Base, RelationType<Parameters...>>::
       dv_pos_div_(this->particles_->template registerStateVariableOnly<Real>("PositionDivergence")),
       dv_Vol_(this->particles_->template getVariableByName<Real>("VolumetricMeasure")),
       dv_threshold_by_dimensions_(0.75 * Dimensions),
-      dv_smoothing_length_(this->sph_body_.getSPHAdaptation().ReferenceSmoothingLength())
-{
-}
-
+      dv_smoothing_length_(this->sph_body_.getSPHAdaptation().ReferenceSmoothingLength()) {}
+//=================================================================================================//
 template <template <typename...> class RelationType, typename... Parameters>
 template <class ExecutionPolicy, typename... Args>
 FreeSurfaceIndicationCK<Base, RelationType<Parameters...>>::InteractKernel::
@@ -35,35 +31,25 @@ FreeSurfaceIndicationCK<Base, RelationType<Parameters...>>::InteractKernel::
       pos_div_(encloser.dv_pos_div_->DelegatedData(ex_policy)),
       Vol_(encloser.dv_Vol_->DelegatedData(ex_policy)),
       threshold_by_dimensions_(encloser.dv_threshold_by_dimensions_),
-      smoothing_length_(encloser.dv_smoothing_length_)
-{
-}
-
+      smoothing_length_(encloser.dv_smoothing_length_) {}
 //=================================================================================================//
-// FreeSurfaceIndicationCK<Inner<WithUpdate, FlowType, Parameters...>>
-//=================================================================================================//
-template <class FlowType, typename... Parameters>
-FreeSurfaceIndicationCK<Inner<WithUpdate, FlowType, Parameters...>>::
+template <typename... Parameters>
+FreeSurfaceIndicationCK<Inner<WithUpdate, Parameters...>>::
     FreeSurfaceIndicationCK(Inner<Parameters...> &inner_relation)
     : FreeSurfaceIndicationCK<Base, Inner<Parameters...>>(inner_relation),
       dv_previous_surface_indicator_(
-          this->particles_->template registerStateVariableOnly<int>("PreviousSurfaceIndicator"))
-{
-}
-
-//------------------------------------------------------------------------------------------//
-template <class FlowType, typename... Parameters>
+          this->particles_->template registerStateVariableOnly<int>("PreviousSurfaceIndicator")) {}
+//=================================================================================================//
+template <typename... Parameters>
 template <class ExecutionPolicy>
-FreeSurfaceIndicationCK<Inner<WithUpdate, FlowType, Parameters...>>::InteractKernel::
+FreeSurfaceIndicationCK<Inner<WithUpdate, Parameters...>>::InteractKernel::
     InteractKernel(const ExecutionPolicy &ex_policy,
-                   FreeSurfaceIndicationCK<Inner<WithUpdate, FlowType, Parameters...>> &encloser)
+                   FreeSurfaceIndicationCK<Inner<WithUpdate, Parameters...>> &encloser)
     : FreeSurfaceIndicationCK<Base, Inner<Parameters...>>::InteractKernel(ex_policy, encloser),
-      previous_surface_indicator_(encloser.dv_previous_surface_indicator_->DelegatedData(ex_policy))
-{
-}
-
-template <class FlowType, typename... Parameters>
-void FreeSurfaceIndicationCK<Inner<WithUpdate, FlowType, Parameters...>>::InteractKernel::
+      previous_surface_indicator_(encloser.dv_previous_surface_indicator_->DelegatedData(ex_policy)) {}
+//=================================================================================================//
+template <typename... Parameters>
+void FreeSurfaceIndicationCK<Inner<WithUpdate, Parameters...>>::InteractKernel::
     interact(size_t index_i, Real dt)
 {
     Real pos_div = 0.0;
@@ -75,21 +61,18 @@ void FreeSurfaceIndicationCK<Inner<WithUpdate, FlowType, Parameters...>>::Intera
     }
     this->pos_div_[index_i] = pos_div;
 }
-
-//------------------------------------------------------------------------------------------//
-template <class FlowType, typename... Parameters>
+//=================================================================================================//
+template <typename... Parameters>
 template <class ExecutionPolicy>
-FreeSurfaceIndicationCK<Inner<WithUpdate, FlowType, Parameters...>>::UpdateKernel::
+FreeSurfaceIndicationCK<Inner<WithUpdate, Parameters...>>::UpdateKernel::
     UpdateKernel(const ExecutionPolicy &ex_policy,
-                 FreeSurfaceIndicationCK<Inner<WithUpdate, FlowType, Parameters...>> &encloser)
+                 FreeSurfaceIndicationCK<Inner<WithUpdate, Parameters...>> &encloser)
     : FreeSurfaceIndicationCK<Base, Inner<Parameters...>>::InteractKernel(ex_policy, encloser),
       previous_surface_indicator_(encloser.dv_previous_surface_indicator_->DelegatedData(ex_policy)),
-      outer_(&encloser)
-{
-}
-
-template <class FlowType, typename... Parameters>
-void FreeSurfaceIndicationCK<Inner<WithUpdate, FlowType, Parameters...>>::UpdateKernel::
+      outer_(&encloser) {}
+//=================================================================================================//
+template <typename... Parameters>
+void FreeSurfaceIndicationCK<Inner<WithUpdate, Parameters...>>::UpdateKernel::
     update(size_t index_i, Real dt)
 {
     // Detect if near surface based on neighbors
@@ -138,9 +121,6 @@ void FreeSurfaceIndicationCK<Inner<WithUpdate, FlowType, Parameters...>>::Update
     this->indicator_[index_i] = new_indicator;
     this->previous_surface_indicator_[index_i] = new_indicator;
 }
-
-//=================================================================================================//
-// FreeSurfaceIndicationCK<Contact<Parameters...>>
 //=================================================================================================//
 template <typename... Parameters>
 FreeSurfaceIndicationCK<Contact<Parameters...>>::
@@ -153,7 +133,7 @@ FreeSurfaceIndicationCK<Contact<Parameters...>>::
             this->contact_particles_[k]->template getVariableByName<Real>("VolumetricMeasure"));
     }
 }
-
+//=================================================================================================//
 template <typename... Parameters>
 template <class ExecutionPolicy>
 FreeSurfaceIndicationCK<Contact<Parameters...>>::InteractKernel::
@@ -161,10 +141,8 @@ FreeSurfaceIndicationCK<Contact<Parameters...>>::InteractKernel::
                    FreeSurfaceIndicationCK<Contact<Parameters...>> &encloser,
                    size_t contact_index)
     : FreeSurfaceIndicationCK<Base, Contact<Parameters...>>::InteractKernel(ex_policy, encloser, contact_index),
-      contact_Vol_(encloser.dv_contact_Vol_[contact_index]->DelegatedData(ex_policy))
-{
-}
-
+      contact_Vol_(encloser.dv_contact_Vol_[contact_index]->DelegatedData(ex_policy)) {}
+//=================================================================================================//
 template <typename... Parameters>
 void FreeSurfaceIndicationCK<Contact<Parameters...>>::InteractKernel::
     interact(size_t index_i, Real dt)
@@ -178,7 +156,7 @@ void FreeSurfaceIndicationCK<Contact<Parameters...>>::InteractKernel::
     }
     this->pos_div_[index_i] += pos_div;
 }
-
+//=================================================================================================//
 } // namespace fluid_dynamics
 } // namespace SPH
 #endif // SURFACE_INDICATION_CK_HPP
