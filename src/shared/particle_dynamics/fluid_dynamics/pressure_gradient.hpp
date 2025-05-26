@@ -34,18 +34,29 @@ void PressureGradient<Inner<KernelCorrectionType>>::interaction(size_t index_i, 
         size_t index_j = inner_neighborhood.j_[n];
         Real p_j = p_[index_j];
 
-        Vecd nablaW_ijV_j =
-            inner_neighborhood.dW_ij_[n] * Vol_[index_j] * inner_neighborhood.e_ij_[n];
-        pressure_grad -= (p_j - p_i) * nablaW_ijV_j;  
+        // Follow exactly the same pattern as velocity gradient
+        Vecd nablaW_ijV_j = inner_neighborhood.dW_ij_[n] * Vol_[index_j] * inner_neighborhood.e_ij_[n];
+        
+        // Note: For pressure (scalar), we don't need transpose() as in velocity (vector)
+        pressure_grad -= (p_i - p_j) * nablaW_ijV_j;
     }
 
+    // Direct assignment as in velocity gradient
     p_grad_[index_i] = pressure_grad;
 }
 
 template <class KernelCorrectionType>
 void PressureGradient<Inner<KernelCorrectionType>>::update(size_t index_i, Real dt)
 {
-    p_grad_[index_i] = kernel_correction_(index_i) * p_grad_[index_i];
+    // Get the kernel correction matrix
+    Matd correction_matrix = kernel_correction_(index_i);
+    // Extract the diagonal elements and use them as correction factors
+    Vecd correction_factors;
+    for (int i = 0; i < Dimensions; ++i)
+        correction_factors[i] = correction_matrix(i,i);
+    
+    // Apply correction component-wise
+    p_grad_[index_i] = correction_factors.cwiseProduct(p_grad_[index_i]);
 }
 
 } // namespace fluid_dynamics
