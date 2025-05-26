@@ -32,7 +32,6 @@
 #define NEIGHBORHOOD_CK_H
 
 #include "kernel_tabulated_ck.h"
-#include "neighborhood.h"
 
 namespace SPH
 {
