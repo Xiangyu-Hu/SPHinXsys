@@ -75,4 +75,4 @@ void InteractionDynamicsCK<ExecutionPolicy, InteractionType<Contact<Splitting, P
 }
 //=================================================================================================//
 } // namespace SPH
-#endif / SPLITTINGON_ALGORITHMS_CK_HPP
+#endif // SPLITTING_ALGORITHMS_CK_HPP

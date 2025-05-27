@@ -72,14 +72,7 @@ void particle_for(const LoopRangeCK<ParallelPolicy, DynamicsIdentifier, Splittin
     // forward sweeping
     for (UnsignedInt k = 0; k < array3s.prod(); k++)
     {
-        // get the corresponding 2D/3D split cell index (m, n)
-        // e.g., for k = 0, split_cell_index = (0,0), for k = 3, split_cell_index = (1,0), etc.
-        const Arrayi split_cell_index = mesh.transfer1DtoMeshIndex(array3s, k);
-        // get the number of cells belonging to the split cell k
-        // i_max = (M - m - 1) / 3 + 1, j_max = (N - n - 1) / 3 + 1
-        // e.g. all_cells = (M,N) = (6, 9), (m, n) = (1, 1), then i_max = 2, j_max = 3
-        const Arrayi all_cells_k = (mesh.AllCells() - split_cell_index - Arrayi::Ones()) / 3 + Arrayi::Ones();
-        const UnsignedInt number_of_cells = all_cells_k.prod(); // i_max * j_max
+        const UnsignedInt number_of_cells = loop_range.getSplittedCells(k);
 
         parallel_for(
             IndexRange(0, number_of_cells),
@@ -87,12 +80,7 @@ void particle_for(const LoopRangeCK<ParallelPolicy, DynamicsIdentifier, Splittin
             {
                 for (size_t i = r.begin(); i < r.end(); ++i)
                 {
-                    // get the 2D/3D cell index of the l-th cell in the split cell k
-                    // (i , j) = (m + 3 * (l / j_max), n + 3 * l % i_max)
-                    // e.g. all_cells = (M,N) = (6, 9), (m, n) = (1, 1), l = 0, then (i, j) = (1, 1)
-                    // l = 1, then (i, j) = (1, 4), l = 3, then (i, j) = (4, 1), etc.
-                    const Arrayi cell_index = split_cell_index + 3 * mesh.transfer1DtoMeshIndex(all_cells_k, l);
-                    UnsignedInt linear_index = mesh_offset + mesh.LinearCellIndexFromCellIndex(cell_index);
+                    UnsignedInt linear_index = loop_range.getSplittedLinearIndex(k, i);
                     loop_range.computeUnit(unary_func, linear_index);
                 }
             },
@@ -102,9 +90,7 @@ void particle_for(const LoopRangeCK<ParallelPolicy, DynamicsIdentifier, Splittin
     // backward sweeping
     for (UnsignedInt k = array3s.prod(); k != 0; --k)
     {
-        const Arrayi split_cell_index = mesh.transfer1DtoMeshIndex(array3s, k - 1);
-        const Arrayi all_cells_k = (mesh.AllCells() - split_cell_index - Arrayi::Ones()) / 3 + Arrayi::Ones();
-        const UnsignedInt number_of_cells = all_cells_k.prod();
+        const UnsignedInt number_of_cells = loop_range.getSplittedCells(k);
 
         parallel_for(
             IndexRange(0, number_of_cells),
@@ -112,12 +98,7 @@ void particle_for(const LoopRangeCK<ParallelPolicy, DynamicsIdentifier, Splittin
             {
                 for (size_t i = r.begin(); i < r.end(); ++i)
                 {
-                    // get the 2D/3D cell index of the l-th cell in the split cell k
-                    // (i , j) = (m + 3 * (l / j_max), n + 3 * l % i_max)
-                    // e.g. all_cells = (M,N) = (6, 9), (m, n) = (1, 1), l = 0, then (i, j) = (1, 1)
-                    // l = 1, then (i, j) = (1, 4), l = 3, then (i, j) = (4, 1), etc.
-                    const Arrayi cell_index = split_cell_index + 3 * mesh.transfer1DtoMeshIndex(all_cells_k, l);
-                    UnsignedInt linear_index = mesh_offset + mesh.LinearCellIndexFromCellIndex(cell_index);
+                    UnsignedInt linear_index = loop_range.getSplittedLinearIndex(k, i);
                     loop_range.computeUnit(unary_func, linear_index);
                 }
             },

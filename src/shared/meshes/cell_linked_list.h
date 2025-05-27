@@ -53,7 +53,7 @@ class BaseCellLinkedList : public BaseMeshField
   protected:
     DataContainerUniquePtrAssemble<DiscreteVariable> all_discrete_variable_ptrs_;
     UniquePtrsKeeper<Entity> unique_variable_ptrs_;
-    UniquePtrsKeeper<Mesh> mesh_ptrs_keeper_;
+    UniquePtrsKeeper<SingularVariable<Mesh>> mesh_ptrs_keeper_;
     StdVec<Mesh *> meshes_;
     StdVec<UnsignedInt> mesh_offsets_; // off sets linear index for each mesh
 
@@ -150,12 +150,14 @@ class CellLinkedList : public BaseCellLinkedList
 {
   protected:
     Mesh *mesh_;
+    SingularVariable<Mesh> *sv_mesh_;
 
   public:
     CellLinkedList(BoundingBox tentative_bounds, Real grid_spacing,
                    BaseParticles &base_particles, SPHAdaptation &sph_adaptation);
     ~CellLinkedList() {};
     Mesh &getMesh() { return *mesh_; };
+    SingularVariable<Mesh> *svMesh() { return sv_mesh_; };
     void insertParticleIndex(UnsignedInt particle_index, const Vecd &particle_position) override;
     void InsertListDataEntry(UnsignedInt particle_index, const Vecd &particle_position) override;
     virtual ListData findNearestListDataEntry(const Vecd &position) override;
