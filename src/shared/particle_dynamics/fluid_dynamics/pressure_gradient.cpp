@@ -16,7 +16,14 @@ PressureGradient<Contact<Wall>>::PressureGradient(
     : InteractionWithWall<PressureGradient>(wall_contact_relation),
       distance_from_wall_(particles_->getVariableDataByName<Vecd>("DistanceFromWall")),
       p_(this->particles_->template getVariableDataByName<Real>("Pressure")),
-      p_grad_(this->particles_->template getVariableDataByName<Vecd>("PressureGradient")) {}
+      p_grad_(this->particles_->template getVariableDataByName<Vecd>("PressureGradient"))
+{
+    // obtain pressure data from each wall particle set
+    for (size_t k = 0; k != this->contact_particles_.size(); ++k)
+    {
+        wall_p_.push_back(this->contact_particles_[k]->template getVariableDataByName<Real>("Pressure"));
+    }
+}
 //=================================================================================================//
 void PressureGradient<Contact<Wall>>::interaction(size_t index_i, Real dt)
 {
@@ -34,10 +41,13 @@ void PressureGradient<Contact<Wall>>::interaction(size_t index_i, Real dt)
             size_t index_j = contact_neighborhood.j_[n];
             const Vecd &e_ij = contact_neighborhood.e_ij_[n];
 
-            Real p_j = p_[index_j];
+            Real p_j = wall_p_[k][index_j];
             Vecd nablaW_ijV_j = contact_neighborhood.dW_ij_[n] * Vol_k[index_j] * e_ij;
 
-            pressure_grad -= (p_i - p_j) * nablaW_ijV_j;
+            Vecd distance_diff = distance_from_wall - contact_neighborhood.r_ij_[n] * e_ij;
+            Real factor = 1.0 - distance_from_wall.dot(distance_diff) / distance_from_wall.squaredNorm();
+
+            pressure_grad -= factor * (p_i - p_j) * nablaW_ijV_j;
         }
     }
 

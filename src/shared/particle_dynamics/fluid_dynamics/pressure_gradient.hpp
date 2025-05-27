@@ -48,15 +48,8 @@ void PressureGradient<Inner<KernelCorrectionType>>::interaction(size_t index_i, 
 template <class KernelCorrectionType>
 void PressureGradient<Inner<KernelCorrectionType>>::update(size_t index_i, Real dt)
 {
-    // Get the kernel correction matrix
-    Matd correction_matrix = kernel_correction_(index_i);
-    // Extract the diagonal elements and use them as correction factors
-    Vecd correction_factors;
-    for (int i = 0; i < Dimensions; ++i)
-        correction_factors[i] = correction_matrix(i,i);
-    
-    // Apply correction component-wise
-    p_grad_[index_i] = correction_factors.cwiseProduct(p_grad_[index_i]);
+    // Apply the full kernel correction matrix (linear reproducing condition)
+    p_grad_[index_i] = kernel_correction_(index_i) * p_grad_[index_i];
 }
 
 } // namespace fluid_dynamics

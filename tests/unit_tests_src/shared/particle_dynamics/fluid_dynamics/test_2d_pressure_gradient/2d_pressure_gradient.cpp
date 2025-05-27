@@ -94,8 +94,8 @@ class LinearPressureProfile : public fluid_dynamics::FluidInitialCondition
 
     void update(size_t index_i, Real dt)
     {
-        Real y = pos_[index_i][1];  // Use y coordinate like velocity gradient
-        p_[index_i] = y / height;   // Linear profile: p(y) = y/h (like v(y) = y/h in velocity)
+        // Exactly match the velocity profile pattern for linear reproduction
+        p_[index_i] = pos_[index_i][1] / height;  // Linear profile exactly like velocity
     }
 };
 
@@ -112,7 +112,8 @@ class BoundaryPressure : public BodyPartMotionConstraint
 
     void update(size_t index_i, Real dt = 0.0)
     {
-        p_[index_i] = 1.0;  // Fixed pressure at boundary, like fixed velocity in velocity test
+        // Upper boundary value matches velocity test
+        p_[index_i] = 1.0;  // Same as velocity at upper boundary
     }
 };
 

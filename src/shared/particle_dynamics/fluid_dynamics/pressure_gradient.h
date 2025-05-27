@@ -55,6 +55,7 @@ protected:
     Real *p_;
     Real *rho_;
     Vecd *p_grad_;
+    StdVec<Real *> wall_p_;
 };
 
 template <class KernelCorrectionType>
