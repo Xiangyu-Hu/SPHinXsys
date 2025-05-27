@@ -44,6 +44,8 @@ namespace SPH
 
 class BaseMethodContainer
 {
+  public:
+    virtual ~BaseMethodContainer(){};
 };
 
 template <typename ExecutePolicy>
