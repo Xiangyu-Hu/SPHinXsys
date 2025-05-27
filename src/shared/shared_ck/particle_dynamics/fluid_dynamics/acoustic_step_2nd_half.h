@@ -32,6 +32,8 @@
 
 #include "acoustic_step_1st_half.h"
 
+#include "force_on_structure.h"
+
 namespace SPH
 {
 namespace fluid_dynamics

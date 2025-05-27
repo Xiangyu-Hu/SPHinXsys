@@ -77,6 +77,43 @@ void particle_for(const LoopRangeCK<ParallelDevicePolicy, DynamicsIdentifier> &l
         .wait_and_throw();
 }
 
+template <class DynamicsIdentifier, class UnaryFunc>
+void particle_for(const LoopRangeCK<ParallelDevicePolicy, DynamicsIdentifier, Splitting> &loop_range,
+                  const UnaryFunc &unary_func)
+{
+    // forward sweeping
+    for (UnsignedInt k = 0; k < loop_range.getSplittedPartitions(); k++)
+    {
+        auto &sycl_queue = execution_instance.getQueue();
+        const size_t particles_size = loop_range.LoopBound(k);
+        sycl_queue.submit([&](sycl::handler &cgh)
+                          { cgh.parallel_for(execution_instance.getUniformNdRange(particles_size), [=](sycl::nd_item<1> index)
+                                             {
+                                 if(index.get_global_id(0) < particles_size)
+                                 {
+                                     UnsignedInt linear_index = loop_range.getSplittedLinearIndex(index.get_global_id(0), i);
+                                     loop_range.computeUnit(unary_func, linear_index);
+                                 } }); })
+            .wait_and_throw();
+    }
+
+    // backward sweeping
+    for (UnsignedInt k = loop_range.getSplittedPartitions(); k != 0; --k)
+    {
+        auto &sycl_queue = execution_instance.getQueue();
+        const size_t particles_size = loop_range.LoopBound(k);
+        sycl_queue.submit([&](sycl::handler &cgh)
+                          { cgh.parallel_for(execution_instance.getUniformNdRange(particles_size), [=](sycl::nd_item<1> index)
+                                             {
+                                 if(index.get_global_id(0) < particles_size)
+                                 {
+                                     UnsignedInt linear_index = loop_range.getSplittedLinearIndex(index.get_global_id(0), i);
+                                     loop_range.computeUnit(unary_func, linear_index);
+                                 } }); })
+            .wait_and_throw();
+    }
+};
+
 template <typename Operation, class DynamicsIdentifier, class ReturnType, class UnaryFunc>
 ReturnType particle_reduce(const LoopRangeCK<ParallelDevicePolicy, DynamicsIdentifier> &loop_range,
                            ReturnType temp, const UnaryFunc &unary_func)

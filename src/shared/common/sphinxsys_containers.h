@@ -93,6 +93,10 @@ class Robin; /**< Contact interaction with Neumann boundary condition */
 //----------------------------------------------------------------------
 class SpatialTemporal;
 //----------------------------------------------------------------------
+// Splitting interaction: interaction with splitting algorithm
+//----------------------------------------------------------------------
+class Splitting;
+//----------------------------------------------------------------------
 // Other type identifies
 //----------------------------------------------------------------------
 using MaterialVector = StdVec<BaseMaterial *>;

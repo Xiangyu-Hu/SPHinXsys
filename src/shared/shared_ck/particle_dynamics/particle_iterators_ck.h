@@ -47,6 +47,31 @@ void particle_for(const LoopRangeCK<SequencedPolicy, DynamicsIdentifier> &loop_r
 };
 
 template <class DynamicsIdentifier, class UnaryFunc>
+void particle_for(const LoopRangeCK<SequencedPolicy, DynamicsIdentifier, Splitting> &loop_range,
+                  const UnaryFunc &unary_func)
+{
+    // forward sweeping
+    for (UnsignedInt k = 0; k < loop_range.getSplittedPartitions(); k++)
+    {
+        for (size_t i = 0; i < loop_range.LoopBound(k); ++i)
+        {
+            UnsignedInt linear_index = loop_range.getSplittedLinearIndex(k, i);
+            loop_range.computeUnit(unary_func, linear_index);
+        }
+    }
+
+    // backward sweeping
+    for (UnsignedInt k = loop_range.getSplittedPartitions(); k != 0; --k)
+    {
+        for (size_t i = 0; i < loop_range.LoopBound(k); ++i)
+        {
+            UnsignedInt linear_index = loop_range.getSplittedLinearIndex(k, i);
+            loop_range.computeUnit(unary_func, linear_index);
+        }
+    }
+};
+
+template <class DynamicsIdentifier, class UnaryFunc>
 void particle_for(const LoopRangeCK<ParallelPolicy, DynamicsIdentifier> &loop_range,
                   const UnaryFunc &unary_func)
 {
@@ -60,6 +85,43 @@ void particle_for(const LoopRangeCK<ParallelPolicy, DynamicsIdentifier> &loop_ra
             }
         },
         ap);
+};
+
+template <class DynamicsIdentifier, class UnaryFunc>
+void particle_for(const LoopRangeCK<ParallelPolicy, DynamicsIdentifier, Splitting> &loop_range,
+                  const UnaryFunc &unary_func)
+{
+    // forward sweeping
+    for (UnsignedInt k = 0; k < loop_range.getSplittedPartitions(); k++)
+    {
+        parallel_for(
+            IndexRange(0, loop_range.LoopBound(k)),
+            [&](const IndexRange &r)
+            {
+                for (size_t i = r.begin(); i < r.end(); ++i)
+                {
+                    UnsignedInt linear_index = loop_range.getSplittedLinearIndex(k, i);
+                    loop_range.computeUnit(unary_func, linear_index);
+                }
+            },
+            ap);
+    }
+
+    // backward sweeping
+    for (UnsignedInt k = loop_range.getSplittedPartitions(); k != 0; --k)
+    {
+        parallel_for(
+            IndexRange(0, loop_range.LoopBound(k)),
+            [&](const IndexRange &r)
+            {
+                for (size_t i = r.begin(); i < r.end(); ++i)
+                {
+                    UnsignedInt linear_index = loop_range.getSplittedLinearIndex(k, i);
+                    loop_range.computeUnit(unary_func, linear_index);
+                }
+            },
+            ap);
+    }
 };
 
 template <typename Operation, class DynamicsIdentifier, class ReturnType, class UnaryFunc>
