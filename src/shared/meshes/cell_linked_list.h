@@ -94,7 +94,6 @@ class BaseCellLinkedList : public BaseMeshField
   protected:
     Kernel &kernel_;
     UnsignedInt total_number_of_cells_;
-    UnsignedInt number_of_split_cell_lists_;
     UnsignedInt cell_offset_list_size_;
     UnsignedInt index_list_size_; // at least number_of_cells_pluse_one_
     DiscreteVariable<UnsignedInt> *dv_particle_index_;

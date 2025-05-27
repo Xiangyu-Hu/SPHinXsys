@@ -10,9 +10,7 @@ namespace SPH
 //=================================================================================================//
 BaseCellLinkedList::BaseCellLinkedList(BaseParticles &base_particles, SPHAdaptation &sph_adaptation)
     : BaseMeshField("CellLinkedList"), kernel_(*sph_adaptation.getKernel()),
-      total_number_of_cells_(0),
-      number_of_split_cell_lists_(static_cast<UnsignedInt>(pow(3, Dimensions))),
-      dv_particle_index_(nullptr), dv_cell_offset_(nullptr),
+      total_number_of_cells_(0), dv_particle_index_(nullptr), dv_cell_offset_(nullptr),
       cell_index_lists_(nullptr), cell_data_lists_(nullptr) {}
 //=================================================================================================//
 BaseCellLinkedList::~BaseCellLinkedList()

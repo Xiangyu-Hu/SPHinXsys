@@ -3,8 +3,11 @@
 namespace SPH
 {
 //=================================================================================================//
+BaseMesh::BaseMesh(Arrayi all_grid_points)
+    : all_grid_points_(all_grid_points), all_cells_(all_grid_points - Arrayi::Ones()) {}
+//=================================================================================================//
 Mesh::Mesh(BoundingBox tentative_bounds, Real grid_spacing, size_t buffer_width)
-    : grid_spacing_(grid_spacing), buffer_width_(buffer_width)
+    : BaseMesh(Arrayi::Ones()), grid_spacing_(grid_spacing), buffer_width_(buffer_width)
 {
     Vecd mesh_buffer = Real(buffer_width) * grid_spacing * Vecd::Ones();
     mesh_lower_bound_ = tentative_bounds.first_ - mesh_buffer;
@@ -14,11 +17,8 @@ Mesh::Mesh(BoundingBox tentative_bounds, Real grid_spacing, size_t buffer_width)
 }
 //=================================================================================================//
 Mesh::Mesh(Vecd mesh_lower_bound, Real grid_spacing, Arrayi all_grid_points)
-    : mesh_lower_bound_{mesh_lower_bound}, grid_spacing_{grid_spacing},
-      buffer_width_(0), all_grid_points_{all_grid_points}
-{
-    all_cells_ = all_grid_points_ - Arrayi::Ones();
-}
+    : BaseMesh(all_grid_points), mesh_lower_bound_{mesh_lower_bound},
+      grid_spacing_{grid_spacing}, buffer_width_(0) {}
 //=================================================================================================//
 Vecd Mesh::CellLowerCornerPosition(const Arrayi &cell_index) const
 {

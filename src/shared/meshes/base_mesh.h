@@ -46,53 +46,41 @@ using namespace std::placeholders;
 
 namespace SPH
 {
+
 /**
- * @class Mesh
+ * @class BaseMesh
  * @brief Base class for all structured meshes which may be grid or cell based.
- * The basic properties of the mesh, such as lower bound, grid spacing
- * and number of grid points may be determined by the derived class.
- * Note that there is no mesh-based data defined here.
+ * Note that there is no geometric infomration is defined here.
  */
-class Mesh
+class BaseMesh
 {
   public:
-    Mesh(BoundingBox tentative_bounds, Real grid_spacing, size_t buffer_width);
-    Mesh(Vecd mesh_lower_bound, Real grid_spacing, Arrayi all_grid_points);
-    ~Mesh() {};
-
-    Vecd MeshLowerBound() const { return mesh_lower_bound_; };
-    Real GridSpacing() const { return grid_spacing_; };
+    BaseMesh(Arrayi all_grid_points);
+    ~BaseMesh() {};
     Arrayi AllGridPoints() const { return all_grid_points_; };
     Arrayi AllCells() const { return all_cells_; };
     size_t NumberOfGridPoints() const { return transferMeshIndexTo1D(all_grid_points_, all_grid_points_); };
     size_t NumberOfCells() const { return transferMeshIndexTo1D(all_cells_, all_cells_); };
-
-    Arrayi CellIndexFromPosition(const Vecd &position) const
-    {
-        return floor((position - mesh_lower_bound_).array() / grid_spacing_)
-            .cast<int>()
-            .max(Arrayi::Zero())
-            .min(all_grid_points_ - 2 * Arrayi::Ones());
-    };
-
-    size_t LinearCellIndexFromPosition(const Vecd &position) const
-    {
-        return transferMeshIndexTo1D(all_cells_, CellIndexFromPosition(position));
-    };
-
-    size_t LinearCellIndexFromCellIndex(const Arrayi &cell_index) const
-    {
-        return transferMeshIndexTo1D(all_cells_, cell_index);
-    };
-
-    Vecd CellPositionFromIndex(const Arrayi &cell_index) const;
-    Vecd GridPositionFromIndex(const Arrayi &grid_index) const;
-    Vecd CellLowerCornerPosition(const Arrayi &cell_index) const;
     //----------------------------------------------------------------------
     // Transferring between 1D mesh indexes.
     // Here, mesh size can be either AllGridPoints or AllCells.
     //----------------------------------------------------------------------
-    Arrayi transfer1DtoMeshIndex(const Arrayi &mesh_size, size_t i) const;
+    Array2i transfer1DtoMeshIndex(const Array2i &mesh_size, size_t i) const
+    {
+        size_t row_size = mesh_size[1];
+        size_t column = i / row_size;
+        return Array2i(column, i - column * row_size);
+    };
+
+    Array3i transfer1DtoMeshIndex(const Array3i &mesh_size, size_t i) const
+    {
+        size_t row_times_column_size = mesh_size[1] * mesh_size[2];
+        size_t page = i / row_times_column_size;
+        size_t left_over = (i - page * row_times_column_size);
+        size_t row_size = mesh_size[2];
+        size_t column = left_over / row_size;
+        return Array3i(page, column, left_over - column * row_size);
+    };
 
     size_t transferMeshIndexTo1D(const Array2i &mesh_size, const Array2i &mesh_index) const
     {
@@ -120,10 +108,12 @@ class Mesh
         return MortonCode(mesh_index[0]) | (MortonCode(mesh_index[1]) << 1) | (MortonCode(mesh_index[2]) << 2);
     };
 
+    size_t LinearCellIndexFromCellIndex(const Arrayi &cell_index) const
+    {
+        return transferMeshIndexTo1D(all_cells_, cell_index);
+    };
+
   protected:
-    Vecd mesh_lower_bound_;  /**< mesh lower bound as reference coordinate */
-    Real grid_spacing_;      /**< grid_spacing */
-    size_t buffer_width_;    /**< buffer width to avoid bound check.*/
     Arrayi all_grid_points_; /**< number of grid points by dimension */
     Arrayi all_cells_;       /**< number of cells by dimension */
 
@@ -137,6 +127,45 @@ class Mesh
         x = (x | x << 2) & 0x9249249;
         return x;
     };
+};
+
+/**
+ * @class Mesh
+ * @brief Base class for all structured meshes which may be grid or cell based.
+ * The basic geometric properties of the mesh, such as lower bound and grid spacing.
+ * Note that there is no mesh-based data defined here.
+ */
+class Mesh : public BaseMesh
+{
+  public:
+    Mesh(BoundingBox tentative_bounds, Real grid_spacing, size_t buffer_width);
+    Mesh(Vecd mesh_lower_bound, Real grid_spacing, Arrayi all_grid_points);
+    ~Mesh() {};
+
+    Vecd MeshLowerBound() const { return mesh_lower_bound_; };
+    Real GridSpacing() const { return grid_spacing_; };
+
+    Arrayi CellIndexFromPosition(const Vecd &position) const
+    {
+        return floor((position - mesh_lower_bound_).array() / grid_spacing_)
+            .cast<int>()
+            .max(Arrayi::Zero())
+            .min(all_grid_points_ - 2 * Arrayi::Ones());
+    };
+
+    size_t LinearCellIndexFromPosition(const Vecd &position) const
+    {
+        return transferMeshIndexTo1D(all_cells_, CellIndexFromPosition(position));
+    };
+
+    Vecd CellPositionFromIndex(const Arrayi &cell_index) const;
+    Vecd GridPositionFromIndex(const Arrayi &grid_index) const;
+    Vecd CellLowerCornerPosition(const Arrayi &cell_index) const;
+
+  protected:
+    Vecd mesh_lower_bound_; /**< mesh lower bound as reference coordinate */
+    Real grid_spacing_;     /**< grid_spacing */
+    size_t buffer_width_;   /**< buffer width to avoid bound check.*/
 };
 
 /**
