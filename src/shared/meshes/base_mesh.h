@@ -87,7 +87,10 @@ class Mesh
 
     Vecd CellPositionFromIndex(const Arrayi &cell_index) const;
     Vecd GridPositionFromIndex(const Arrayi &grid_index) const;
-    Vecd CellLowerCornerPosition(const Arrayi &cell_index) const;
+    Vecd CellLowerCornerPosition(const Arrayi &cell_index) const
+    {
+        return mesh_lower_bound_ + cell_index.cast<Real>().matrix() * grid_spacing_;
+    }
     //----------------------------------------------------------------------
     // Transferring between 1D mesh indexes.
     // Here, mesh size can be either AllGridPoints or AllCells.

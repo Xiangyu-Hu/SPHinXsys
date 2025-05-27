@@ -66,10 +66,4 @@ Real getRightStateInWeno(Real v_1, Real v_2, Real v_3, Real v_4)
     return right_state;
 }
 //=================================================================================================//
-Real Heaviside(Real phi, Real half_width)
-{
-    Real normalized_phi = phi / half_width;
-    return std::clamp(0.5 + 0.5 * normalized_phi, 0.0, 1.0);
-}
-//=================================================================================================//
 } // namespace SPH

@@ -33,6 +33,7 @@
 #include "particle_sort_sycl.h"
 #include "particle_sort_sycl.hpp"
 #include "device_copyable_variable.h"
+#include "all_mesh_dynamics_sycl.h"
 #include "sphinxsys_ck.h"
 #include "sphinxsys_constant_sycl.hpp"
 #include "sphinxsys_variable_array_sycl.hpp"
