@@ -31,8 +31,8 @@
 
 #include "base_body.h"
 #include "base_body_part.h"
-#include "body_partition.h"
 #include "base_particles.hpp"
+#include "body_partition.h"
 #include "reduce_functors.h"
 
 namespace SPH
@@ -147,6 +147,56 @@ class LoopRangeCK<ExecutionPolicy, BodyPartition>
     UnsignedInt *loop_bound_;
     int present_adapt_level_;
     int *adapt_level_;
+};
+
+template <class ExecutionPolicy, typename DynamicsIdendifier>
+class LoopRangeCK<ExecutionPolicy, DynamicsIdendifier, Splitting>
+{
+  public:
+    LoopRangeCK(DynamicsIdendifier &identifier)
+    {
+        CellLinkedList &cell_linked_list = identifier.getCellLinkedList();
+        mesh_ = cell_linked_list.svMesh()->DelegatedData(ExecutionPolicy{});
+        particle_index_ = cell_linked_list.dvParticleIndex()->DelegatedData(ExecutionPolicy{});
+        cell_offset_ = cell_linked_list.dvCellOffset()->DelegatedData(ExecutionPolicy{});
+    };
+
+    template <class UnaryFunc>
+    void computeUnit(UnsignedInt k, const UnaryFunc &uf, UnsignedInt i) const
+    {
+        // get the 2D/3D cell index of the l-th cell in the split cell k
+        // (i , j) = (m + 3 * (l / j_max), n + 3 * l % i_max)
+        // e.g. all_cells = (M,N) = (6, 9), (m, n) = (1, 1), l = 0, then (i, j) = (1, 1)
+        // l = 1, then (i, j) = (1, 4), l = 3, then (i, j) = (4, 1), etc.
+        Arrayi cell_index = 3 * mesh_->transfer1DtoMeshIndex(AllSplittedCells(k), i) +
+                            mesh_->transfer1DtoMeshIndex(Arrayi(3 * Arrayi::Ones()), k);
+        UnsignedInt linear_index = mesh_->LinearCellIndexFromCellIndex(cell_index);
+        for (UnsignedInt k = cell_offset_[linear_index]; k != cell_offset_[linear_index + 1]; ++k)
+        {
+            uf(particle_index_[k]);
+        }
+    };
+
+    UnsignedInt LoopBound(UnsignedInt k) const
+    {
+        return AllSplittedCells(k).prod();
+    };
+
+  protected:
+    Mesh *mesh_;
+    UnsignedInt *particle_index_;
+    UnsignedInt *cell_offset_;
+
+    Arrayi AllSplittedCells(UnsignedInt k) const
+    {
+        // get the corresponding 2D/3D split cell index (m, n)
+        // e.g., for k = 0, split_cell_index = (0,0), for k = 3, split_cell_index = (1,0), etc.
+        Arrayi split_cell_index = mesh_->transfer1DtoMeshIndex(Arrayi(3 * Arrayi::Ones()), k);
+        // get the number of cells belonging to the split cell k
+        // i_max = (M - m - 1) / 3 + 1, j_max = (N - n - 1) / 3 + 1
+        // e.g. all_cells = (M,N) = (6, 9), (m, n) = (1, 1), then i_max = 2, j_max = 3
+        return (mesh_->AllCells() - split_cell_index - Arrayi::Ones()) / 3 + Arrayi::Ones();
+    };
 };
 } // namespace SPH
 #endif // LOOP_RANGE_H
