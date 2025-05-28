@@ -20,7 +20,7 @@ Dissipation<Base, DissipationType, RelationType<Parameters...>>::InteractKernel:
     InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, Args &&...args)
     : Interaction<RelationType<Parameters...>>::InteractKernel(
           ex_policy, encloser, std::forward<Args>(args)...),
-      diss_coeff_(ex_policy, encloser.dissipation_model_),
+      dis_coeff_(ex_policy, encloser.dissipation_model_),
       Vol_(encloser.dv_Vol_->DelegatedData(ex_policy)),
       variable_(encloser.dv_variable_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
@@ -28,14 +28,14 @@ template <typename DissipationType, typename SourceType, typename... Parameters>
 Dissipation<Inner<Splitting, DissipationType, SourceType, Parameters...>>::
     Dissipation(Inner<Parameters...> &inner_relation, const std::string &variable_name)
     : Dissipation<Base, DissipationType, Inner<Parameters...>>(inner_relation, variable_name),
-      souce_model_(this->particles_) {}
+      source_model_(this->particles_) {}
 //=================================================================================================//
 template <typename DissipationType, typename SourceType, typename... Parameters>
 template <class ExecutionPolicy, class EncloserType>
 Dissipation<Inner<Splitting, DissipationType, SourceType, Parameters...>>::InteractKernel::
     InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : Dissipation<Base, DissipationType, Inner<Parameters...>>::InteractKernel(ex_policy, encloser),
-      source_(ex_policy, encloser.souce_model_) {}
+      source_(ex_policy, encloser.source_model_) {}
 //=================================================================================================//
 template <typename DissipationType, typename SourceType, typename... Parameters>
 void Dissipation<Inner<Splitting, DissipationType, SourceType, Parameters...>>::InteractKernel::
@@ -50,8 +50,8 @@ void Dissipation<Inner<Splitting, DissipationType, SourceType, Parameters...>>::
         DataType variable_diff = this->variable_[index_i] - this->variable_[index_j];
 
         // linear projection
-        Real diss_coeff_ij = harmonic_average(this->diss_coeff_(index_i), this->diss_coeff_(index_j));
-        Real parameter_b = 2.0 * diss_coeff_ij * this->dW_ij(index_i, index_j) * this->Vol_[index_j] * dt / r_ij;
+        Real dis_coeff_ij = harmonic_average(this->dis_coeff_(index_i), this->dis_coeff_(index_j));
+        Real parameter_b = 2.0 * dis_coeff_ij * this->dW_ij(index_i, index_j) * this->Vol_[index_j] * dt / r_ij;
 
         error_and_parameters.error_ -= variable_diff * parameter_b;
         error_and_parameters.a_ += parameter_b;
@@ -70,8 +70,8 @@ void Dissipation<Inner<Splitting, DissipationType, SourceType, Parameters...>>::
         UnsignedInt index_j = this->neighbor_index_[n];
         Real r_ij = this->vec_r_ij(index_i, index_j).norm();
 
-        Real diss_coeff_ij = harmonic_average(this->diss_coeff_(index_i), this->diss_coeff_(index_j));
-        Real parameter_b = 2.0 * diss_coeff_ij * this->dW_ij(index_i, index_j) * this->Vol_[index_j] * dt / r_ij;
+        Real dis_coeff_ij = harmonic_average(this->dis_coeff_(index_i), this->dis_coeff_(index_j));
+        Real parameter_b = 2.0 * dis_coeff_ij * this->dW_ij(index_i, index_j) * this->Vol_[index_j] * dt / r_ij;
         this->variable_[index_j] -= parameter_k * parameter_b;
     }
 }

@@ -58,7 +58,7 @@ class Dissipation<Base, DissipationType, RelationType<Parameters...>>
         InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, Args &&...args);
 
       protected:
-        DissipationKernel diss_coeff_;
+        DissipationKernel dis_coeff_;
         Real *Vol_;
         DataType *variable_;
     };
@@ -93,7 +93,22 @@ class Dissipation<Inner<Splitting, DissipationType, SourceType, Parameters...>>
     };
 
   protected:
-    SourceType &souce_model_;
+    SourceType &source_model_;
+};
+
+class NoSource
+{
+  public:
+    NoSource(BaseParticles *particles) {};
+
+    class ComputingKernel
+    {
+      public:
+        template <class ExecutionPolicy>
+        ComputingKernel(const ExecutionPolicy &ex_policy, NoSource &encloser){};
+
+        Real operator()(UnsignedInt index_i) { return 0.0; };
+    };
 };
 } // namespace SPH
 #endif // SPLITTING_DISSIPATION_H
