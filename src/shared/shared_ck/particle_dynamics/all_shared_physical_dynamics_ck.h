@@ -43,7 +43,7 @@
 #include "particle_sort_ck.hpp"
 #include "simple_algorithms_ck.h"
 #include "sph_solver.h"
-#include "splitting_algorithms_ck.h"
+#include "splitting_algorithms_ck.hpp"
 #include "splitting_dissipation.hpp"
 
 #endif // ALL_SHARED_PHYSICAL_DYNAMICS_CK_H

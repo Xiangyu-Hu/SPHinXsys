@@ -45,6 +45,7 @@ class BaseParticles;
 class AbstractDiffusion
 {
   public:
+    typedef Real DataType;
     AbstractDiffusion() {};
     virtual ~AbstractDiffusion() {};
     virtual StdVec<AbstractDiffusion *> AllDiffusions() = 0;

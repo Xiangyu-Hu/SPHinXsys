@@ -27,8 +27,7 @@ Dissipation<Base, DissipationType, RelationType<Parameters...>>::InteractKernel:
 template <typename DissipationType, typename SourceType, typename... Parameters>
 Dissipation<Inner<Splitting, DissipationType, SourceType, Parameters...>>::
     Dissipation(Inner<Parameters...> &inner_relation, const std::string &variable_name)
-    : Dissipation<Base, DissipationType, Inner<Parameters...>>(inner_relation, variable_name),
-      source_model_(this->particles_) {}
+    : BaseDissipationType(inner_relation, variable_name), source_model_(this->particles_) {}
 //=================================================================================================//
 template <typename DissipationType, typename SourceType, typename... Parameters>
 template <class ExecutionPolicy, class EncloserType>
@@ -50,8 +49,8 @@ void Dissipation<Inner<Splitting, DissipationType, SourceType, Parameters...>>::
         DataType variable_diff = this->variable_[index_i] - this->variable_[index_j];
 
         // linear projection
-        Real dis_coeff_ij = harmonic_average(this->dis_coeff_(index_i), this->dis_coeff_(index_j));
-        Real parameter_b = 2.0 * dis_coeff_ij * this->dW_ij(index_i, index_j) * this->Vol_[index_j] * dt / r_ij;
+        Real parameter_b = 2.0 * this->dis_coeff_(index_i, index_j) *
+                           this->dW_ij(index_i, index_j) * this->Vol_[index_j] * dt / r_ij;
 
         error_and_parameters.error_ -= variable_diff * parameter_b;
         error_and_parameters.a_ += parameter_b;
@@ -70,8 +69,8 @@ void Dissipation<Inner<Splitting, DissipationType, SourceType, Parameters...>>::
         UnsignedInt index_j = this->neighbor_index_[n];
         Real r_ij = this->vec_r_ij(index_i, index_j).norm();
 
-        Real dis_coeff_ij = harmonic_average(this->dis_coeff_(index_i), this->dis_coeff_(index_j));
-        Real parameter_b = 2.0 * dis_coeff_ij * this->dW_ij(index_i, index_j) * this->Vol_[index_j] * dt / r_ij;
+        Real parameter_b = 2.0 * this->dis_coeff_(index_i, index_j) *
+                           this->dW_ij(index_i, index_j) * this->Vol_[index_j] * dt / r_ij;
         this->variable_[index_j] -= parameter_k * parameter_b;
     }
 }

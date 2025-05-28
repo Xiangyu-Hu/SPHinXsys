@@ -10,7 +10,8 @@ template <class ExecutionPolicy, template <typename...> class InteractionType, t
 template <typename... Args>
 InteractionDynamicsCK<ExecutionPolicy, InteractionType<Inner<Splitting, Parameters...>>>::
     InteractionDynamicsCK(Args &&...args)
-    : InteractionType<Inner<Parameters...>>(std::forward<Args>(args)...),
+    : LocalDynamicsType(std::forward<Args>(args)...),
+      InteractionDynamicsCK<ExecutionPolicy, InteractionType<Base>>(),
       kernel_implementation_(*this)
 {
     this->registerComputingKernel(&kernel_implementation_);
@@ -36,10 +37,18 @@ void InteractionDynamicsCK<ExecutionPolicy, InteractionType<Inner<Splitting, Par
 }
 //=================================================================================================//
 template <class ExecutionPolicy, template <typename...> class InteractionType, typename... Parameters>
+void InteractionDynamicsCK<ExecutionPolicy, InteractionType<Inner<Splitting, Parameters...>>>::
+    runInteractionStep(Real dt)
+{
+    this->runInteraction(dt);
+}
+//=================================================================================================//
+template <class ExecutionPolicy, template <typename...> class InteractionType, typename... Parameters>
 template <typename... Args>
 InteractionDynamicsCK<ExecutionPolicy, InteractionType<Contact<Splitting, Parameters...>>>::
     InteractionDynamicsCK(Args &&...args)
-    : InteractionType<Contact<Parameters...>>(std::forward<Args>(args)...)
+    : LocalDynamicsType(std::forward<Args>(args)...),
+      InteractionDynamicsCK<ExecutionPolicy, InteractionType<Base>>()
 {
     for (size_t k = 0; k != this->contact_bodies_.size(); ++k)
     {
@@ -72,6 +81,13 @@ void InteractionDynamicsCK<ExecutionPolicy, InteractionType<Contact<Splitting, P
     this->setUpdated(this->identifier_.getSPHBody());
     this->setupDynamics(dt);
     InteractionDynamicsCK<Base>::runAllSteps(dt);
+}
+//=================================================================================================//
+template <class ExecutionPolicy, template <typename...> class InteractionType, typename... Parameters>
+void InteractionDynamicsCK<ExecutionPolicy, InteractionType<Contact<Splitting, Parameters...>>>::
+    runInteractionStep(Real dt)
+{
+    this->runInteraction(dt);
 }
 //=================================================================================================//
 } // namespace SPH

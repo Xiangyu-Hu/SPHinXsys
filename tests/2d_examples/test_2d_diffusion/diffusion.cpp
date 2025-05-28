@@ -1,10 +1,10 @@
 /**
  * @file 	diffusion.cpp
- * @brief 	This is the first test using splitting solver.
+ * @brief 	This is the first test to validate our anisotropic diffusion solver.
  * @author 	Chi Zhang and Xiangyu Hu
  */
-#include "sphinxsys_ck.h" //SPHinXsys Library
-using namespace SPH;      // Namespace cite here
+#include "sphinxsys.h" //SPHinXsys Library
+using namespace SPH;   // Namespace cite here
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
@@ -24,32 +24,57 @@ Vec2d bias_direction(cos(alpha), sin(alpha));
 // Define extra classes which are used in the main program.
 // These classes are defined under the namespace of SPH.
 //----------------------------------------------------------------------
-class InitialDistribution : public ReturnFunction<Real>
+namespace SPH
+{
+//----------------------------------------------------------------------
+//	Geometric shapes used in the case.
+//----------------------------------------------------------------------
+class DiffusionBlock : public MultiPolygonShape
 {
   public:
-    InitialDistribution(BaseParticles *particles) {};
-
-    class ComputingKernel
+    explicit DiffusionBlock(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-      public:
-        template <class ExecutionPolicy, class EncloserType>
-        ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : constant_value_(encloser.constant_value_){};
-
-        Real operator()(const Vecd &position)
-        {
-            if (position[0] >= 0.45 && position[0] <= 0.55)
-            {
-                return 1.0;
-            }
-            if (position[0] >= 1.0)
-            {
-                return exp(-2500.0 * ((position[0] - 1.5) * (position[0] - 1.5)));
-            }
-            return 0.0;
-        };
-    };
+        std::vector<Vecd> shape;
+        shape.push_back(Vecd(0.0, 0.0));
+        shape.push_back(Vecd(0.0, H));
+        shape.push_back(Vecd(L, H));
+        shape.push_back(Vecd(L, 0.0));
+        shape.push_back(Vecd(0.0, 0.0));
+        multi_polygon_.addAPolygon(shape, ShapeBooleanOps::add);
+    }
 };
+//----------------------------------------------------------------------
+//	Application dependent initial condition.
+//----------------------------------------------------------------------
+class DiffusionInitialCondition : public LocalDynamics
+{
+  public:
+    explicit DiffusionInitialCondition(SPHBody &sph_body)
+        : LocalDynamics(sph_body),
+          pos_(particles_->getVariableDataByName<Vecd>("Position")),
+          phi_(particles_->registerStateVariable<Real>(diffusion_species_name)){};
+
+    void update(size_t index_i, Real dt)
+    {
+        if (pos_[index_i][0] >= 0.45 && pos_[index_i][0] <= 0.55)
+        {
+            phi_[index_i] = 1.0;
+        }
+        if (pos_[index_i][0] >= 1.0)
+        {
+            phi_[index_i] = exp(-2500.0 * ((pos_[index_i][0] - 1.5) * (pos_[index_i][0] - 1.5)));
+        }
+    };
+
+  protected:
+    Vecd *pos_;
+    Real *phi_;
+};
+//----------------------------------------------------------------------
+//	Specify diffusion relaxation method.
+//----------------------------------------------------------------------
+using DiffusionBodyRelaxation =
+    DiffusionRelaxationRK2<DiffusionRelaxation<Inner<CorrectedKernelGradientInner>, BaseDiffusion>>;
 
 StdVec<Vecd> createObservationPoints()
 {
@@ -60,12 +85,12 @@ StdVec<Vecd> createObservationPoints()
 
     for (size_t i = 0; i < number_of_observation_points; ++i)
     {
-        Real x_shift = range_of_measure * (Real)i / (Real)(number_of_observation_points - 1);
-        Vec2d point_coordinate(start_of_measure + x_shift, 0.5 * H);
+        Vec2d point_coordinate(range_of_measure * (Real)i / (Real)(number_of_observation_points - 1) + start_of_measure, 0.5 * H);
         observation_points.push_back(point_coordinate);
     }
     return observation_points;
 };
+} // namespace SPH
 //----------------------------------------------------------------------
 //	Main program starts here.
 //----------------------------------------------------------------------
@@ -79,10 +104,9 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    GeometricShapeBox diffusion_block(BoundingBox(Vecd(0.0, 0.0), Vecd(L, H)), "DiffusionBlock");
-    SolidBody diffusion_body(sph_system, diffusion_block);
-    diffusion_body.defineClosure<Solid, IsotropicDiffusion>(
-        Solid(), ConstructArgs(diffusion_species_name, diffusion_coeff));
+    SolidBody diffusion_body(sph_system, makeShared<DiffusionBlock>("DiffusionBlock"));
+    diffusion_body.defineClosure<Solid, DirectionalDiffusion>(
+       Solid(), ConstructArgs(diffusion_species_name, diffusion_coeff, bias_coeff, bias_direction));
     diffusion_body.generateParticles<BaseParticles, Lattice>();
     //----------------------------------------------------------------------
     //	Particle and body creation of fluid observers.
@@ -97,112 +121,95 @@ int main(int ac, char *av[])
     //  At last, we define the complex relaxations by combining previous defined
     //  inner and contact relations.
     //----------------------------------------------------------------------
-    Inner<> diffusion_body_inner(diffusion_body);
-    Contact<> temperature_observer_contact(temperature_observer, {&diffusion_body});
+    InnerRelation diffusion_body_inner_relation(diffusion_body);
+    ContactRelation temperature_observer_contact(temperature_observer, {&diffusion_body});
     //----------------------------------------------------------------------
     //	Define the main numerical methods used in the simulation.
     //	Note that there may be data dependence on the constructors of these methods.
     //----------------------------------------------------------------------
-    SPHSolver sph_solver(sph_system);
-    auto &main_methods = sph_solver.addParticleMethodContainer(par);
-    auto &host_methods = sph_solver.addParticleMethodContainer(par);
-    //----------------------------------------------------------------------
-    // Define the numerical methods used in the simulation.
-    // Note that there may be data dependence on the sequence of constructions.
-    // Generally, the configuration dynamics, such as update cell linked list,
-    // update body relations, are defiend first.
-    // Then the geometric models or simple objects without data dependencies,
-    // such as gravity, initialized normal direction.
-    // After that, the major physical particle dynamics model should be introduced.
-    // Finally, the auxiliary models such as time step estimator, initial condition,
-    // boundary condition and other constraints should be defined.
-    //----------------------------------------------------------------------
-    auto &diffusion_body_cell_linked_list = main_methods.addCellLinkedListDynamics(diffusion_body);
-    auto &temperature_observer_contact_relation = main_methods.addRelationDynamics(temperature_observer);
+    InteractionWithUpdate<LinearGradientCorrectionMatrixInner> correct_configuration(diffusion_body_inner_relation);
 
-    auto &diffusion_body_linear_correction_matrix =
-        main_methods.addInteractionDynamics<LinearCorrectionMatrix, WithUpdate>(diffusion_body_inner);
-    auto &setup_diffusion_initial_condition = host_methods.addStateDynamics<InitialDistribution>(diffusion_body);
+    DiffusionBodyRelaxation diffusion_relaxation(diffusion_body_inner_relation);
+    SimpleDynamics<DiffusionInitialCondition> setup_diffusion_initial_condition(diffusion_body);
 
     GetDiffusionTimeStepSize get_time_step_size(diffusion_body);
-    auto &diffusion_relaxation =
-        main_methods.addInteractionDynamics<Dissipation, Splitting, IsotropicDiffusion, NoSource>(diffusion_body_inner);
+    PeriodicAlongAxis periodic_along_x(diffusion_body.getSPHBodyBounds(), xAxis);
+    PeriodicConditionUsingCellLinkedList periodic_condition_y(diffusion_body, periodic_along_x);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
-    auto &body_state_recorder = main_methods.addBodyStateRecorder<BodyStatesRecordingToVtpCK>(sph_system);
-    auto &observe_temperature = main_methods.addRegressionTest<
-        RegressionTestEnsembleAverage, ObservedQuantityRecording, Real>(diffusion_species_name, temperature_observer_contact);
+    RegressionTestEnsembleAverage<ObservedQuantityRecording<Real>>
+        write_solid_temperature(diffusion_species_name, temperature_observer_contact);
     //----------------------------------------------------------------------
-    //	Define time stepper with end and start time.
+    //	Prepare the simulation with cell linked list, configuration
+    //	and case specified initial condition if necessary.
     //----------------------------------------------------------------------
-    TimeStepper &time_stepper = sph_solver.defineTimeStepper(1.0);
+    sph_system.initializeSystemCellLinkedLists();
+    periodic_condition_y.update_cell_linked_list_.exec();
+    sph_system.initializeSystemConfigurations();
+    correct_configuration.exec();
+    setup_diffusion_initial_condition.exec();
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
-    size_t time_steps = 1;
-    Real output_peroid = 0.1;
-    Real observe_interval = 0.1 * output_peroid;
-    auto &state_recording = time_stepper.addTriggerByInterval(output_peroid);
-    auto &observation_recording = time_stepper.addTriggerByInterval(observe_interval);
-    //----------------------------------------------------------------------
-    //	Prepare for the time integration loop.
-    //----------------------------------------------------------------------
-    diffusion_body_cell_linked_list.exec();
-    temperature_observer_contact_relation.exec();
-
-    diffusion_body_linear_correction_matrix.exec();
-    setup_diffusion_initial_condition.exec();
+    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
+    int ite = 0;
+    Real T0 = 1.0;
+    Real end_time = T0;
+    Real Output_Time = 0.1 * end_time;
+    Real Observe_time = 0.1 * Output_Time;
+    Real dt = 0.0;
     //----------------------------------------------------------------------
     //	Statistics for CPU time
     //----------------------------------------------------------------------
     TickCount t1 = TickCount::now();
-    TimeInterval interval_computing;
-    TimeInterval interval_output;
+    TimeInterval interval;
     //----------------------------------------------------------------------
     //	First output before the main loop.
     //----------------------------------------------------------------------
-    body_state_recorder.writeToFile();
-    observe_temperature.writeToFile(time_steps);
+    write_states.writeToFile();
+    write_solid_temperature.writeToFile();
     //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------
-    while (!time_stepper.isEndTime())
+    while (physical_time < end_time)
     {
-        //----------------------------------------------------------------------
-        //	the fastest and most frequent acostic time stepping.
-        //----------------------------------------------------------------------
-        TickCount time_instance = TickCount::now();
-        Real diffusion_dt = time_stepper.incrementPhysicalTime(get_time_step_size);
-        diffusion_relaxation.exec(diffusion_dt);
-        time_steps += 1;
-        interval_computing += TickCount::now() - time_instance;
-        //----------------------------------------------------------------------
-        //	the following are slower and less frequent time stepping.
-        //----------------------------------------------------------------------
-        TickCount time_instance = TickCount::now();
-        if (state_recording())
+        Real integration_time = 0.0;
+        while (integration_time < Output_Time)
         {
-            body_state_recorder.writeToFile();
+            Real relaxation_time = 0.0;
+            while (relaxation_time < Observe_time)
+            {
+                if (ite % 1 == 0)
+                {
+                    std::cout << "N=" << ite << " Time: "
+                              << physical_time << "	dt: "
+                              << dt << "\n";
+                }
+
+                diffusion_relaxation.exec(dt);
+
+                ite++;
+                dt = get_time_step_size.exec();
+                relaxation_time += dt;
+                integration_time += dt;
+                physical_time += dt;
+            }
         }
 
-        if (observation_recording())
-        {
-            observe_temperature.writeToFile(time_steps);
-        }
-
-        if (time_steps % 1 == 0)
-        {
-            std::cout << "N=" << time_steps << " Time: "
-                      << time_stepper.getPhysicalTime() << "	dt: " << diffusion_dt << "\n";
-        }
-        interval_output += TickCount::now() - time_instance;
+        TickCount t2 = TickCount::now();
+        write_states.writeToFile();
+        write_solid_temperature.writeToFile(ite);
+        TickCount t3 = TickCount::now();
+        interval += t3 - t2;
     }
+    TickCount t4 = TickCount::now();
 
-    TimeInterval tt = TickCount::now() - t1 - interval_output;
+    TimeInterval tt;
+    tt = t4 - t1 - interval;
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
-    observe_temperature.testResult();
+    write_solid_temperature.testResult();
 
     return 0;
 }

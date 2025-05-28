@@ -44,7 +44,7 @@ class Dissipation<Base, DissipationType, RelationType<Parameters...>>
     : public Interaction<RelationType<Parameters...>>
 {
     using DataType = typename DissipationType::DataType;
-    using DissipationKernel = typename DissipationType::ComputingKernel;
+    using InterParticleDiffusionCoeff = typename DissipationType::InterParticleDiffusionCoeff;
 
   public:
     explicit Dissipation(RelationType<Parameters...> &relation, const std::string &variable_name);
@@ -58,7 +58,7 @@ class Dissipation<Base, DissipationType, RelationType<Parameters...>>
         InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, Args &&...args);
 
       protected:
-        DissipationKernel dis_coeff_;
+        InterParticleDiffusionCoeff dis_coeff_;
         Real *Vol_;
         DataType *variable_;
     };
@@ -93,7 +93,7 @@ class Dissipation<Inner<Splitting, DissipationType, SourceType, Parameters...>>
     };
 
   protected:
-    SourceType &source_model_;
+    SourceType source_model_;
 };
 
 class NoSource
