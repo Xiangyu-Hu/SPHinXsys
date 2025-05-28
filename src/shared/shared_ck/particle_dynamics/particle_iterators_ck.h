@@ -55,18 +55,16 @@ void particle_for(const LoopRangeCK<SequencedPolicy, DynamicsIdentifier, Splitti
     {
         for (size_t i = 0; i < loop_range.LoopBound(k); ++i)
         {
-            UnsignedInt linear_index = loop_range.getSplittedLinearIndex(k, i);
-            loop_range.computeUnit(unary_func, linear_index);
+            loop_range.computeUnit(k, unary_func, i);
         }
     }
 
     // backward sweeping
     for (UnsignedInt k = loop_range.getSplittedPartitions(); k != 0; --k)
     {
-        for (size_t i = 0; i < loop_range.LoopBound(k); ++i)
+        for (size_t i = 0; i < loop_range.LoopBound(k - 1); ++i)
         {
-            UnsignedInt linear_index = loop_range.getSplittedLinearIndex(k, i);
-            loop_range.computeUnit(unary_func, linear_index);
+            loop_range.computeUnit(k - 1, unary_func, i);
         }
     }
 };
@@ -100,8 +98,7 @@ void particle_for(const LoopRangeCK<ParallelPolicy, DynamicsIdentifier, Splittin
             {
                 for (size_t i = r.begin(); i < r.end(); ++i)
                 {
-                    UnsignedInt linear_index = loop_range.getSplittedLinearIndex(k, i);
-                    loop_range.computeUnit(unary_func, linear_index);
+                    loop_range.computeUnit(k, unary_func, i);
                 }
             },
             ap);
@@ -111,13 +108,12 @@ void particle_for(const LoopRangeCK<ParallelPolicy, DynamicsIdentifier, Splittin
     for (UnsignedInt k = loop_range.getSplittedPartitions(); k != 0; --k)
     {
         parallel_for(
-            IndexRange(0, loop_range.LoopBound(k)),
+            IndexRange(0, loop_range.LoopBound(k - 1)),
             [&](const IndexRange &r)
             {
                 for (size_t i = r.begin(); i < r.end(); ++i)
                 {
-                    UnsignedInt linear_index = loop_range.getSplittedLinearIndex(k, i);
-                    loop_range.computeUnit(unary_func, linear_index);
+                    loop_range.computeUnit(k - 1, unary_func, i);
                 }
             },
             ap);
