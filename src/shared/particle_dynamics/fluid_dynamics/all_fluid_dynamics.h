@@ -43,3 +43,5 @@
 #include "transport_velocity_correction.hpp"
 #include "velocity_gradient.hpp"
 #include "viscous_dynamics.hpp"
+#include "pressure_gradient.hpp"  // kursat_gradient_calculation
+
