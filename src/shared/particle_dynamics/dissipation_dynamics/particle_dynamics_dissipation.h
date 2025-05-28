@@ -38,10 +38,6 @@
 
 namespace SPH
 {
-/* Base class to indicate the concept of operator splitting */
-class OperatorSplitting
-{
-};
 
 template <typename DataType>
 struct ErrorAndParameters
@@ -77,7 +73,7 @@ class Damping;
 
 template <typename DataType, typename DampingRateType, class DataDelegationType>
 class Damping<Base, DataType, DampingRateType, DataDelegationType>
-    : public LocalDynamics, public DataDelegationType, public OperatorSplitting
+    : public LocalDynamics, public DataDelegationType
 {
   public:
     template <class BaseRelationType, typename... Args>

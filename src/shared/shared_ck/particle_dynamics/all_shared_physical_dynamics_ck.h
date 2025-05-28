@@ -44,5 +44,6 @@
 #include "simple_algorithms_ck.h"
 #include "sph_solver.h"
 #include "splitting_algorithms_ck.h"
+#include "splitting_dissipation.hpp"
 
 #endif // ALL_SHARED_PHYSICAL_DYNAMICS_CK_H
