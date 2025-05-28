@@ -23,6 +23,8 @@ protected:
     Real *Vol_;
     Real *energy_;
     Vecd *energy_grad_;
+    Real *rho_;
+
 };
 
 template <class KernelCorrectionType>
@@ -52,6 +54,11 @@ protected:
     Vecd *distance_from_wall_;
     Real *energy_;
     Vecd *energy_grad_;
+    Real *rho_;
+    StdVec<Real *> wall_E_;
+
+
+    
 };
 
 template <class KernelCorrectionType>

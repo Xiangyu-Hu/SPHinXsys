@@ -149,16 +149,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     using MainExecutionPolicy = execution::ParallelPolicy;
     //----------------------------------------------------------------------
-    // Define the numerical methods used in the simulation.
-    // Note that there may be data dependence on the sequence of constructions.
-    // Generally, the configuration dynamics, such as update cell linked list,
-    // update body relations, are defiend first.
-    // Then the geometric models or simple objects without data dependencies,
-    // such as gravity, initialized normal direction.
-    // After that, the major physical particle dynamics model should be introduced.
-    // Finally, the auxiliary models such as time step estimator, initial condition,
-    // boundary condition and other constraints should be defined.
-    //----------------------------------------------------------------------
+  
     UpdateCellLinkedList<MainExecutionPolicy, CellLinkedList>
         water_cell_linked_list(water_block);
     UpdateCellLinkedList<MainExecutionPolicy, CellLinkedList> wall_cell_linked_list(wall);
