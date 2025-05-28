@@ -57,7 +57,7 @@ void Dissipation<Inner<Splitting, DissipationType, SourceType, Parameters...>>::
         error_and_parameters.a_ += parameter_b;
         error_and_parameters.c_ += parameter_b * parameter_b;
     }
-    error_and_parameters.a_ -= 1;
+    error_and_parameters.a_ -= 1.0;
     error_and_parameters.error_ -= source_(index_i) * dt;
 
     // update the variable
