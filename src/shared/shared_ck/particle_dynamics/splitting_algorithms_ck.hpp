@@ -26,7 +26,7 @@ void InteractionDynamicsCK<ExecutionPolicy, InteractionType<Inner<Splitting, Par
         LoopRangeCK<ExecutionPolicy, Splitting>(
             DynamicCast<CellLinkedList>(this, this->identifier_.getCellLinkedList())),
         [=](size_t i)
-        { interact_kernel->interact(i, dt); });
+        { interact_kernel->interact(i, 0.5 * dt); }); // half time step for splitting
 }
 //=================================================================================================//
 template <class ExecutionPolicy, template <typename...> class InteractionType, typename... Parameters>
@@ -74,7 +74,7 @@ void InteractionDynamicsCK<ExecutionPolicy, InteractionType<Contact<Splitting, P
             LoopRangeCK<ExecutionPolicy, Splitting>(
                 DynamicCast<CellLinkedList>(this, this->identifier_.getCellLinkedList())),
             [=](size_t i)
-            { interact_kernel->interact(i, dt); });
+            { interact_kernel->interact(i, 0.5 * dt); }); // half time step for splitting
     }
 }
 //=================================================================================================//
