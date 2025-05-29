@@ -128,7 +128,7 @@ int main(int ac, char *av[])
     GetDiffusionTimeStepSize get_time_step_size(diffusion_body);
     auto &diffusion_relaxation =
         main_methods.addInteractionDynamics<
-            Dissipation, Splitting, IsotropicDiffusion, NoSource>(diffusion_body_inner, diffusion_species_name);
+            Dissipation, Splitting, IsotropicDiffusion>(diffusion_body_inner, diffusion_species_name);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
@@ -209,8 +209,6 @@ int main(int ac, char *av[])
 
     TimeInterval tt = TickCount::now() - t1 - interval_output;
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
-
-    observe_temperature.testResult();
 
     return 0;
 }

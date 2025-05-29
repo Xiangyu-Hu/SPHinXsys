@@ -25,20 +25,19 @@ Dissipation<Base, DissipationType, RelationType<Parameters...>>::InteractKernel:
       variable_(encloser.dv_variable_->DelegatedData(ex_policy)),
       zero_error_(ReduceReference<ReduceSum<DataType>>::value) {}
 //=================================================================================================//
-template <typename DissipationType, typename SourceType, typename... Parameters>
-Dissipation<Inner<Splitting, DissipationType, SourceType, Parameters...>>::
+template <typename DissipationType, typename... Parameters>
+Dissipation<Inner<Splitting, DissipationType, Parameters...>>::
     Dissipation(Inner<Parameters...> &inner_relation, const std::string &variable_name)
-    : BaseDissipationType(inner_relation, variable_name), source_model_(this->particles_) {}
+    : BaseDissipationType(inner_relation, variable_name) {}
 //=================================================================================================//
-template <typename DissipationType, typename SourceType, typename... Parameters>
+template <typename DissipationType, typename... Parameters>
 template <class ExecutionPolicy, class EncloserType>
-Dissipation<Inner<Splitting, DissipationType, SourceType, Parameters...>>::InteractKernel::
+Dissipation<Inner<Splitting, DissipationType, Parameters...>>::InteractKernel::
     InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-    : Dissipation<Base, DissipationType, Inner<Parameters...>>::InteractKernel(ex_policy, encloser),
-      source_(ex_policy, encloser.source_model_) {}
+    : BaseDissipationType::InteractKernel(ex_policy, encloser) {}
 //=================================================================================================//
-template <typename DissipationType, typename SourceType, typename... Parameters>
-void Dissipation<Inner<Splitting, DissipationType, SourceType, Parameters...>>::InteractKernel::
+template <typename DissipationType, typename... Parameters>
+void Dissipation<Inner<Splitting, DissipationType, Parameters...>>::InteractKernel::
     interact(size_t index_i, Real dt)
 {
     // compute the error and parameters
@@ -59,7 +58,6 @@ void Dissipation<Inner<Splitting, DissipationType, SourceType, Parameters...>>::
         ++neighbor_k;
     }
     parameter_a = (parameter_a - 1.0) / this->Vol_[index_i];
-    error += source_(index_i) * dt;
 
     Real parameter_c = 0.0;
     neighbor_k = 0;
@@ -73,7 +71,7 @@ void Dissipation<Inner<Splitting, DissipationType, SourceType, Parameters...>>::
     }
 
     // update the variable
-    DataType parameter_k = error / (parameter_c + TinyReal);
+    DataType parameter_k = error * parameter_c / (parameter_c * parameter_c + TinyReal);
     neighbor_k = 0;
     DataType ttl_out_flux = this->zero_error_;
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)

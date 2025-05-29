@@ -70,13 +70,12 @@ class Dissipation<Base, DissipationType, RelationType<Parameters...>>
     DiscreteVariable<DataType> *dv_variable_;
 };
 
-template <typename DissipationType, typename SourceType, typename... Parameters>
-class Dissipation<Inner<Splitting, DissipationType, SourceType, Parameters...>>
+template <typename DissipationType, typename... Parameters>
+class Dissipation<Inner<Splitting, DissipationType, Parameters...>>
     : public Dissipation<Base, DissipationType, Inner<Parameters...>>
 {
     using DataType = typename DissipationType::DataType;
     using BaseDissipationType = Dissipation<Base, DissipationType, Inner<Parameters...>>;
-    using Sourcekernel = typename SourceType::ComputingKernel;
 
   public:
     explicit Dissipation(Inner<Parameters...> &inner_relation, const std::string &variable_name);
@@ -88,27 +87,6 @@ class Dissipation<Inner<Splitting, DissipationType, SourceType, Parameters...>>
         template <class ExecutionPolicy, class EncloserType>
         InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
         void interact(size_t index_i, Real dt = 0.0);
-
-      protected:
-        Sourcekernel source_;
-    };
-
-  protected:
-    SourceType source_model_;
-};
-
-class NoSource
-{
-  public:
-    NoSource(BaseParticles *particles) {};
-
-    class ComputingKernel
-    {
-      public:
-        template <class ExecutionPolicy>
-        ComputingKernel(const ExecutionPolicy &ex_policy, NoSource &encloser){};
-
-        Real operator()(UnsignedInt index_i) { return 0.0; };
     };
 };
 } // namespace SPH
