@@ -80,10 +80,10 @@ void particle_for(const LoopRangeCK<ParallelDevicePolicy, DynamicsIdentifier> &l
 template <class UnaryFunc>
 void particle_for(const LoopRangeCK<ParallelDevicePolicy, Splitting> &loop_range, const UnaryFunc &unary_func)
 {
-    // forward sweeping
-    for (int k = 0; k < NumberOfCellNeighbor; k++)
+    auto &sycl_queue = execution_instance.getQueue();
+    
+    for (int k = 0; k < NumberOfCellNeighbor; k++) // forward sweeping
     {
-        auto &sycl_queue = execution_instance.getQueue();
         const size_t loop_bound = loop_range.LoopBound(k);
         sycl_queue.submit([&](sycl::handler &cgh)
                           { cgh.parallel_for(execution_instance.getUniformNdRange(loop_bound), [=](sycl::nd_item<1> index)
@@ -94,11 +94,9 @@ void particle_for(const LoopRangeCK<ParallelDevicePolicy, Splitting> &loop_range
                                  } }); })
             .wait_and_throw();
     }
-
-    // backward sweeping
-    for (int k = NumberOfCellNeighbor - 1; k >= 0; --k)
+    
+    for (int k = NumberOfCellNeighbor - 1; k >= 0; --k) // backward sweeping
     {
-        auto &sycl_queue = execution_instance.getQueue();
         const size_t loop_bound = loop_range.LoopBound(k);
         sycl_queue.submit([&](sycl::handler &cgh)
                           { cgh.parallel_for(execution_instance.getUniformNdRange(loop_bound), [=](sycl::nd_item<1> index)
