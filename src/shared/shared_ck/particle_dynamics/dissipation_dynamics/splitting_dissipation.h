@@ -61,6 +61,7 @@ class Dissipation<Base, DissipationType, RelationType<Parameters...>>
         InterParticleDiffusionCoeff dis_coeff_;
         Real *Vol_;
         DataType *variable_;
+        DataType zero_error_;
     };
 
   protected:
