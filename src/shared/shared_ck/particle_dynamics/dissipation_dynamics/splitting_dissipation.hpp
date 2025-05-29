@@ -42,6 +42,8 @@ void Dissipation<Inner<Splitting, DissipationType, SourceType, Parameters...>>::
 {
     // compute the error and parameters
     ErrorAndParameters<DataType> error_and_parameters;
+    std::array<Real, MaximumNeighborhoodSize> parameter_b;
+    int neighbor_k = 0;
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
     {
         UnsignedInt index_j = this->neighbor_index_[n];
@@ -49,12 +51,13 @@ void Dissipation<Inner<Splitting, DissipationType, SourceType, Parameters...>>::
         DataType variable_diff = this->variable_[index_i] - this->variable_[index_j];
 
         // linear projection
-        Real parameter_b = 2.0 * this->dis_coeff_(index_i, index_j) *
-                           this->dW_ij(index_i, index_j) * this->Vol_[index_j] * dt / r_ij;
+        parameter_b[neighbor_k] = 2.0 * this->dis_coeff_(index_i, index_j) *
+                                  this->dW_ij(index_i, index_j) * this->Vol_[index_j] * dt / r_ij;
 
-        error_and_parameters.error_ -= variable_diff * parameter_b;
-        error_and_parameters.a_ += parameter_b;
-        error_and_parameters.c_ += parameter_b * parameter_b;
+        error_and_parameters.error_ -= variable_diff * parameter_b[neighbor_k];
+        error_and_parameters.a_ += parameter_b[neighbor_k];
+        error_and_parameters.c_ += parameter_b[neighbor_k] * parameter_b[neighbor_k];
+        ++neighbor_k;
     }
     error_and_parameters.a_ -= 1.0;
     error_and_parameters.error_ -= source_(index_i) * dt;
@@ -64,14 +67,12 @@ void Dissipation<Inner<Splitting, DissipationType, SourceType, Parameters...>>::
     DataType parameter_k = error_and_parameters.error_ / (parameter_l + TinyReal);
     this->variable_[index_i] += parameter_k * error_and_parameters.a_;
 
+    neighbor_k = 0;
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
     {
         UnsignedInt index_j = this->neighbor_index_[n];
-        Real r_ij = this->vec_r_ij(index_i, index_j).norm();
-
-        Real parameter_b = 2.0 * this->dis_coeff_(index_i, index_j) *
-                           this->dW_ij(index_i, index_j) * this->Vol_[index_j] * dt / r_ij;
-        this->variable_[index_j] -= parameter_k * parameter_b;
+        this->variable_[index_j] -= parameter_k * parameter_b[neighbor_k];
+        ++neighbor_k;
     }
 }
 //=================================================================================================//
