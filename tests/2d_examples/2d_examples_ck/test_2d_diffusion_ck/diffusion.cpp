@@ -136,6 +136,7 @@ int main(int ac, char *av[])
     body_state_recorder.addToWrite<Real>(diffusion_body, diffusion_species_name);
     auto &observe_temperature = main_methods.addRegressionTest<
         RegressionTestEnsembleAverage, ObservedQuantityRecording, Real>(diffusion_species_name, observer_contact);
+    auto &reduce_total_species = main_methods.addReduceDynamics<QuantitySum<Real>>(diffusion_body, diffusion_species_name);
     //----------------------------------------------------------------------
     //	Define time stepper with end and start time.
     //----------------------------------------------------------------------
@@ -143,7 +144,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
-    size_t time_steps = 1;
+    size_t time_steps = 0;
     Real output_peroid = 0.1;
     Real observe_interval = 0.1 * output_peroid;
     auto &state_recording = time_stepper.addTriggerByInterval(output_peroid);
@@ -157,6 +158,7 @@ int main(int ac, char *av[])
 
     diffusion_body_linear_correction_matrix.exec();
     setup_diffusion_initial_condition.exec();
+    Real initial_total_species = reduce_total_species.exec();
     //----------------------------------------------------------------------
     //	Statistics for CPU time
     //----------------------------------------------------------------------
@@ -199,6 +201,8 @@ int main(int ac, char *av[])
         {
             std::cout << "N=" << time_steps << " Time: "
                       << time_stepper.getPhysicalTime() << "	dt: " << diffusion_dt << "\n";
+            std::cout << "Initial total species: " << initial_total_species
+                      << "	Present total species: " << reduce_total_species.exec() << "\n";
         }
         interval_output += TickCount::now() - time_instance;
     }
