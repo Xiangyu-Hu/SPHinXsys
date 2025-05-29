@@ -122,15 +122,18 @@ int main(int ac, char *av[])
     auto &diffusion_body_linear_correction_matrix =
         main_methods.addInteractionDynamics<LinearCorrectionMatrix, WithUpdate>(diffusion_body_inner);
     auto &setup_diffusion_initial_condition =
-        main_methods.addStateDynamics<InitialCondition<SPHBody, InitialDistribution>>(diffusion_body, diffusion_species_name);
+        main_methods.addStateDynamics<
+            InitialCondition<SPHBody, InitialDistribution>>(diffusion_body, diffusion_species_name);
 
     GetDiffusionTimeStepSize get_time_step_size(diffusion_body);
     auto &diffusion_relaxation =
-        main_methods.addInteractionDynamics<Dissipation, Splitting, IsotropicDiffusion, NoSource>(diffusion_body_inner, diffusion_species_name);
+        main_methods.addInteractionDynamics<
+            Dissipation, Splitting, IsotropicDiffusion, NoSource>(diffusion_body_inner, diffusion_species_name);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
     auto &body_state_recorder = main_methods.addBodyStateRecorder<BodyStatesRecordingToVtpCK>(sph_system);
+    body_state_recorder.addToWrite<Real>(diffusion_body, diffusion_species_name);
     auto &observe_temperature = main_methods.addRegressionTest<
         RegressionTestEnsembleAverage, ObservedQuantityRecording, Real>(diffusion_species_name, observer_contact);
     //----------------------------------------------------------------------
