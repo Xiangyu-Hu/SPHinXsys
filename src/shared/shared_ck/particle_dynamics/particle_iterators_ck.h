@@ -46,12 +46,12 @@ void particle_for(const LoopRangeCK<SequencedPolicy, DynamicsIdentifier> &loop_r
         loop_range.computeUnit(unary_func, i);
 };
 
-template <class DynamicsIdentifier, class UnaryFunc>
-void particle_for(const LoopRangeCK<SequencedPolicy, DynamicsIdentifier, Splitting> &loop_range,
+template <class UnaryFunc>
+void particle_for(const LoopRangeCK<SequencedPolicy, Splitting> &loop_range,
                   const UnaryFunc &unary_func)
 {
     // forward sweeping
-    for (UnsignedInt k = 0; k < loop_range.getSplittedPartitions(); k++)
+    for (int k = 0; k < NumberOfCellNeighbor; k++)
     {
         for (size_t i = 0; i < loop_range.LoopBound(k); ++i)
         {
@@ -60,11 +60,11 @@ void particle_for(const LoopRangeCK<SequencedPolicy, DynamicsIdentifier, Splitti
     }
 
     // backward sweeping
-    for (UnsignedInt k = loop_range.getSplittedPartitions(); k != 0; --k)
+    for (int k = NumberOfCellNeighbor - 1; k >= 0; --k)
     {
-        for (size_t i = 0; i < loop_range.LoopBound(k - 1); ++i)
+        for (size_t i = 0; i < loop_range.LoopBound(k); ++i)
         {
-            loop_range.computeUnit(k - 1, unary_func, i);
+            loop_range.computeUnit(k, unary_func, i);
         }
     }
 };
@@ -85,12 +85,12 @@ void particle_for(const LoopRangeCK<ParallelPolicy, DynamicsIdentifier> &loop_ra
         ap);
 };
 
-template <class DynamicsIdentifier, class UnaryFunc>
-void particle_for(const LoopRangeCK<ParallelPolicy, DynamicsIdentifier, Splitting> &loop_range,
+template <class UnaryFunc>
+void particle_for(const LoopRangeCK<ParallelPolicy, Splitting> &loop_range,
                   const UnaryFunc &unary_func)
 {
     // forward sweeping
-    for (UnsignedInt k = 0; k < loop_range.getSplittedPartitions(); k++)
+    for (int k = 0; k < NumberOfCellNeighbor; k++)
     {
         parallel_for(
             IndexRange(0, loop_range.LoopBound(k)),
@@ -105,15 +105,15 @@ void particle_for(const LoopRangeCK<ParallelPolicy, DynamicsIdentifier, Splittin
     }
 
     // backward sweeping
-    for (UnsignedInt k = loop_range.getSplittedPartitions(); k != 0; --k)
+    for (int k = NumberOfCellNeighbor - 1; k >= 0; --k)
     {
         parallel_for(
-            IndexRange(0, loop_range.LoopBound(k - 1)),
+            IndexRange(0, loop_range.LoopBound(k)),
             [&](const IndexRange &r)
             {
                 for (size_t i = r.begin(); i < r.end(); ++i)
                 {
-                    loop_range.computeUnit(k - 1, unary_func, i);
+                    loop_range.computeUnit(k, unary_func, i);
                 }
             },
             ap);

@@ -149,17 +149,14 @@ class LoopRangeCK<ExecutionPolicy, BodyPartition>
     int *adapt_level_;
 };
 
-template <class ExecutionPolicy, typename DynamicsIdendifier>
-class LoopRangeCK<ExecutionPolicy, DynamicsIdendifier, Splitting>
+template <class ExecutionPolicy>
+class LoopRangeCK<ExecutionPolicy, Splitting>
 {
   public:
-    LoopRangeCK(DynamicsIdendifier &identifier)
-    {
-        CellLinkedList &cell_linked_list = identifier.getCellLinkedList();
-        mesh_ = cell_linked_list.svMesh()->DelegatedData(ExecutionPolicy{});
-        particle_index_ = cell_linked_list.dvParticleIndex()->DelegatedData(ExecutionPolicy{});
-        cell_offset_ = cell_linked_list.dvCellOffset()->DelegatedData(ExecutionPolicy{});
-    };
+    LoopRangeCK(CellLinkedList &cell_linked_list)
+        : mesh_(cell_linked_list.svMesh()->DelegatedData(ExecutionPolicy{})),
+          particle_index_(cell_linked_list.dvParticleIndex()->DelegatedData(ExecutionPolicy{})),
+          cell_offset_(cell_linked_list.dvCellOffset()->DelegatedData(ExecutionPolicy{})) {};
 
     template <class UnaryFunc>
     void computeUnit(UnsignedInt k, const UnaryFunc &uf, UnsignedInt i) const

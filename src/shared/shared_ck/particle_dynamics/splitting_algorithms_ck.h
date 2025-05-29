@@ -39,7 +39,6 @@ class InteractionDynamicsCK<ExecutionPolicy, InteractionType<Inner<Splitting, Pa
       public InteractionDynamicsCK<ExecutionPolicy, InteractionType<Base>>
 {
     using LocalDynamicsType = InteractionType<Inner<Splitting, Parameters...>>;
-    using Identifier = typename LocalDynamicsType::Identifier;
     using InteractKernel = typename LocalDynamicsType::InteractKernel;
     using KernelImplementation = Implementation<ExecutionPolicy, LocalDynamicsType, InteractKernel>;
     KernelImplementation kernel_implementation_;
@@ -61,7 +60,6 @@ class InteractionDynamicsCK<ExecutionPolicy, InteractionType<Contact<Splitting, 
       public InteractionDynamicsCK<ExecutionPolicy, InteractionType<Base>>
 {
     using LocalDynamicsType = InteractionType<Contact<Splitting, Parameters...>>;
-    using Identifier = typename LocalDynamicsType::Identifier;
     using InteractKernel = typename LocalDynamicsType::InteractKernel;
     using KernelImplementation = Implementation<ExecutionPolicy, LocalDynamicsType, InteractKernel>;
     UniquePtrsKeeper<KernelImplementation> contact_kernel_implementation_ptrs_;

@@ -77,12 +77,11 @@ void particle_for(const LoopRangeCK<ParallelDevicePolicy, DynamicsIdentifier> &l
         .wait_and_throw();
 }
 
-template <class DynamicsIdentifier, class UnaryFunc>
-void particle_for(const LoopRangeCK<ParallelDevicePolicy, DynamicsIdentifier, Splitting> &loop_range,
-                  const UnaryFunc &unary_func)
+template <class UnaryFunc>
+void particle_for(const LoopRangeCK<ParallelDevicePolicy, Splitting> &loop_range, const UnaryFunc &unary_func)
 {
     // forward sweeping
-    for (UnsignedInt k = 0; k < loop_range.getSplittedPartitions(); k++)
+    for (int k = 0; k < NumberOfCellNeighbor; k++)
     {
         auto &sycl_queue = execution_instance.getQueue();
         const size_t loop_bound = loop_range.LoopBound(k);
@@ -97,16 +96,16 @@ void particle_for(const LoopRangeCK<ParallelDevicePolicy, DynamicsIdentifier, Sp
     }
 
     // backward sweeping
-    for (UnsignedInt k = loop_range.getSplittedPartitions(); k != 0; --k)
+    for (int k = NumberOfCellNeighbor - 1; k >= 0; --k)
     {
         auto &sycl_queue = execution_instance.getQueue();
-        const size_t loop_bound = loop_range.LoopBound(k - 1);
+        const size_t loop_bound = loop_range.LoopBound(k);
         sycl_queue.submit([&](sycl::handler &cgh)
                           { cgh.parallel_for(execution_instance.getUniformNdRange(loop_bound), [=](sycl::nd_item<1> index)
                                              {
                                  if(index.get_global_id(0) < loop_bound)
                                  {
-                                     loop_range.computeUnit(k - 1, unary_func, index.get_global_id(0));
+                                     loop_range.computeUnit(k, unary_func, index.get_global_id(0));
                                  } }); })
             .wait_and_throw();
     }

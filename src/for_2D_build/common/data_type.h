@@ -47,6 +47,8 @@ using BoundingBox = BaseBoundingBox<Vec2d>;
 using Transform = BaseTransform<Rotation2d, Vec2d>;
 using CellNeighborhood = std::array<std::array<int, 3>, 3>;
 
+constexpr int NumberOfCellNeighbor = 9; // 3x3 neighborhood
+
 template <class DataType, int array_size>
 using PackageDataMatrix = std::array<std::array<DataType, array_size>, array_size>;
 

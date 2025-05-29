@@ -22,9 +22,11 @@ void InteractionDynamicsCK<ExecutionPolicy, InteractionType<Inner<Splitting, Par
     runInteraction(Real dt)
 {
     InteractKernel *interact_kernel = kernel_implementation_.getComputingKernel();
-    particle_for(LoopRangeCK<ExecutionPolicy, Identifier, Splitting>(this->identifier_),
-                 [=](size_t i)
-                 { interact_kernel->interact(i, dt); });
+    particle_for(
+        LoopRangeCK<ExecutionPolicy, Splitting>(
+            DynamicCast<CellLinkedList>(this, this->identifier_.getCellLinkedList())),
+        [=](size_t i)
+        { interact_kernel->interact(i, dt); });
 }
 //=================================================================================================//
 template <class ExecutionPolicy, template <typename...> class InteractionType, typename... Parameters>
@@ -68,9 +70,11 @@ void InteractionDynamicsCK<ExecutionPolicy, InteractionType<Contact<Splitting, P
         InteractKernel *interact_kernel =
             contact_kernel_implementation_[k]->getComputingKernel(k);
 
-        particle_for(LoopRangeCK<ExecutionPolicy, Identifier, Splitting>(this->identifier_),
-                     [=](size_t i)
-                     { interact_kernel->interact(i, dt); });
+        particle_for(
+            LoopRangeCK<ExecutionPolicy, Splitting>(
+                DynamicCast<CellLinkedList>(this, this->identifier_.getCellLinkedList())),
+            [=](size_t i)
+            { interact_kernel->interact(i, dt); });
     }
 }
 //=================================================================================================//
