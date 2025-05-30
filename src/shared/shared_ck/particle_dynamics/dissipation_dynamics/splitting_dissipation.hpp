@@ -41,47 +41,47 @@ void Dissipation<Inner<Splitting, DissipationType, Parameters...>>::InteractKern
     interact(size_t index_i, Real dt)
 {
     // compute the error and parameters
-    DataType error = this->zero_error_;
     Real parameter_a = 0.0;
     std::array<Real, MaximumNeighborhoodSize> parameter_b;
-    int neighbor_k = 0;
+    int neighbor_j = 0;
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
     {
         UnsignedInt index_j = this->neighbor_index_[n];
 
-        parameter_b[neighbor_k] = 2.0 * this->dis_coeff_(index_i, index_j) *
+        parameter_b[neighbor_j] = 2.0 * this->dis_coeff_(index_i, index_j) *
                                   this->dW_ij(index_i, index_j) * this->Vol_[index_j] * dt /
                                   this->vec_r_ij(index_i, index_j).norm();
 
-        error += (this->variable_[index_i] - this->variable_[index_j]) * parameter_b[neighbor_k];
-        parameter_a += parameter_b[neighbor_k];
-        ++neighbor_k;
+        parameter_a += parameter_b[neighbor_j];
+        ++neighbor_j;
     }
     parameter_a = (parameter_a - 1.0) / this->Vol_[index_i];
+    DataType error = this->zero_error_;
     Real parameter_c = 0.0;
-    neighbor_k = 0;
+    neighbor_j = 0;
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
     {
         UnsignedInt index_j = this->neighbor_index_[n];
 
-        parameter_b[neighbor_k] += parameter_a * this->Vol_[index_j];
         DataType difference = this->variable_[index_i] - this->variable_[index_j];
-        parameter_c += parameter_b[neighbor_k] * parameter_b[neighbor_k] * difference * difference;
-        ++neighbor_k;
+        error += difference * parameter_b[neighbor_j];
+        parameter_b[neighbor_j] += parameter_a * this->Vol_[index_j];
+        parameter_c += parameter_b[neighbor_j] * parameter_b[neighbor_j] * difference * difference;
+        ++neighbor_j;
     }
 
     // update the variable
     DataType parameter_k = error / (parameter_c + TinyReal);
-    neighbor_k = 0;
+    neighbor_j = 0;
     DataType ttl_out_flux = this->zero_error_;
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
     {
         UnsignedInt index_j = this->neighbor_index_[n];
         DataType difference = this->variable_[index_i] - this->variable_[index_j];
-        DataType increment = parameter_k * parameter_b[neighbor_k] * difference * difference;
+        DataType increment = parameter_k * parameter_b[neighbor_j] * difference * difference;
         this->variable_[index_j] += increment;
         ttl_out_flux += increment * this->Vol_[index_j];
-        ++neighbor_k;
+        ++neighbor_j;
     }
     this->variable_[index_i] -= ttl_out_flux / this->Vol_[index_i];
 }

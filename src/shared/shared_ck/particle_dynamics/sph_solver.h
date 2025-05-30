@@ -86,15 +86,20 @@ class TimeStepper
         Real present_time_, interval_;
     };
 
-    Real incrementPhysicalTime(BaseDynamics<Real> &step_evaluator, Real scaling = 1.0)
+    Real incrementPhysicalTime(const Real &step_size)
     {
-        global_dt_ = scaling * step_evaluator.exec();
+        global_dt_ = step_size;
         sv_physical_time_->incrementValue(global_dt_);
         for (auto &interval_executor : interval_executers_)
         {
             interval_executor->incrementPresentTime(global_dt_);
         }
         return global_dt_;
+    };
+
+    Real incrementPhysicalTime(BaseDynamics<Real> &step_evaluator, Real scaling = 1.0)
+    {
+        return incrementPhysicalTime(scaling * step_evaluator.exec());
     };
 
     template <class Integrator>

@@ -4,7 +4,8 @@
  * @author 	Chi Zhang and Xiangyu Hu
  */
 #include "sphinxsys_ck.h" //SPHinXsys Library
-using namespace SPH;      // Namespace cite here
+#include <gtest/gtest.h>
+using namespace SPH; // Namespace cite here
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
@@ -17,9 +18,7 @@ BoundingBox system_domain_bounds(Vec2d(0.0, 0.0), Vec2d(L, H));
 //----------------------------------------------------------------------
 std::string diffusion_species_name = "Phi";
 Real diffusion_coeff = 1.0e-4;
-Real bias_coeff = 0.0;
-Real alpha = Pi / 6.0;
-Vec2d bias_direction(cos(alpha), sin(alpha));
+Real end_time = 1.0; // end time of the simulation
 //----------------------------------------------------------------------
 // Define extra classes which are used in the main program.
 // These classes are defined under the namespace of SPH.
@@ -43,27 +42,22 @@ class InitialDistribution : public ReturnFunction<Real>
             }
             if (position[0] >= 1.0)
             {
-                return exp(-2500.0 * ((position[0] - 1.5) * (position[0] - 1.5)));
+                return exp(-0.25 * ((position[0] - 1.5) * (position[0] - 1.5)) / diffusion_coeff);
             }
             return 0.0;
         };
     };
 };
-
-StdVec<Vecd> createObservationPoints()
+//----------------------------------------------------------------------
+//	Google test items
+//----------------------------------------------------------------------
+Real approximated_value(1.0);
+Real expected_value = 1.0 / sqrt(end_time + 1.0);
+TEST(Diffusion, Error)
 {
-    StdVec<Vecd> observation_points;
-    size_t number_of_observation_points = 11;
-    Real range_of_measure = 0.9 * L;
-    Real start_of_measure = 0.05 * L;
-
-    for (size_t i = 0; i < number_of_observation_points; ++i)
-    {
-        Real x_shift = range_of_measure * (Real)i / (Real)(number_of_observation_points - 1);
-        Vec2d point_coordinate(start_of_measure + x_shift, 0.5 * H);
-        observation_points.push_back(point_coordinate);
-    }
-    return observation_points;
+    EXPECT_LT(ABS(expected_value - approximated_value), 5.0e-2);
+    std::cout << "Reference Value: " << expected_value << " and "
+              << "Predicted Value: " << approximated_value << std::endl;
 };
 //----------------------------------------------------------------------
 //	Main program starts here.
@@ -87,7 +81,8 @@ int main(int ac, char *av[])
     //	Particle and body creation of fluid observers.
     //----------------------------------------------------------------------
     ObserverBody temperature_observer(sph_system, "TemperatureObserver");
-    temperature_observer.generateParticles<ObserverParticles>(createObservationPoints());
+    StdVec<Vecd> observation_location = {Vecd(1.5, 0.2)};
+    temperature_observer.generateParticles<ObserverParticles>(observation_location);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -125,7 +120,6 @@ int main(int ac, char *av[])
         main_methods.addStateDynamics<
             InitialCondition<SPHBody, InitialDistribution>>(diffusion_body, diffusion_species_name);
 
-    GetDiffusionTimeStepSize get_time_step_size(diffusion_body);
     auto &diffusion_relaxation =
         main_methods.addInteractionDynamics<
             Dissipation, Splitting, IsotropicDiffusion>(diffusion_body_inner, diffusion_species_name);
@@ -134,13 +128,13 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     auto &body_state_recorder = main_methods.addBodyStateRecorder<BodyStatesRecordingToVtpCK>(sph_system);
     body_state_recorder.addToWrite<Real>(diffusion_body, diffusion_species_name);
-    auto &observe_temperature = main_methods.addRegressionTest<
-        RegressionTestEnsembleAverage, ObservedQuantityRecording, Real>(diffusion_species_name, observer_contact);
+    auto &observe_temperature = main_methods.addIODynamics<
+        ObservedQuantityRecording, Real, RestoringCorrection>(diffusion_species_name, observer_contact);
     auto &reduce_total_species = main_methods.addReduceDynamics<QuantitySum<Real>>(diffusion_body, diffusion_species_name);
     //----------------------------------------------------------------------
     //	Define time stepper with end and start time.
     //----------------------------------------------------------------------
-    TimeStepper &time_stepper = sph_solver.defineTimeStepper(10.0);
+    TimeStepper &time_stepper = sph_solver.defineTimeStepper(end_time);
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
@@ -179,7 +173,7 @@ int main(int ac, char *av[])
         //	the fastest and most frequent acostic time stepping.
         //----------------------------------------------------------------------
         TickCount time_instance = TickCount::now();
-        Real diffusion_dt = time_stepper.incrementPhysicalTime(get_time_step_size, 10.0);
+        Real diffusion_dt = time_stepper.incrementPhysicalTime(0.5);
         diffusion_relaxation.exec(diffusion_dt);
         time_steps += 1;
         interval_computing += TickCount::now() - time_instance;
@@ -197,7 +191,7 @@ int main(int ac, char *av[])
             observe_temperature.writeToFile(time_steps);
         }
 
-        if (time_steps % 1 == 0)
+        if (time_steps % 10 == 0)
         {
             std::cout << "N=" << time_steps << " Time: "
                       << time_stepper.getPhysicalTime() << "	dt: " << diffusion_dt << "\n";
@@ -210,5 +204,7 @@ int main(int ac, char *av[])
     TimeInterval tt = TickCount::now() - t1 - interval_output;
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
-    return 0;
+    approximated_value = *observe_temperature.getObservedQuantity();
+    testing::InitGoogleTest(&ac, av);
+    return RUN_ALL_TESTS();
 }
