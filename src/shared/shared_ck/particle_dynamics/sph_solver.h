@@ -86,9 +86,9 @@ class TimeStepper
         Real present_time_, interval_;
     };
 
-    Real incrementPhysicalTime(BaseDynamics<Real> &step_evaluator)
+    Real incrementPhysicalTime(BaseDynamics<Real> &step_evaluator, Real scaling = 1.0)
     {
-        global_dt_ = step_evaluator.exec();
+        global_dt_ = scaling * step_evaluator.exec();
         sv_physical_time_->incrementValue(global_dt_);
         for (auto &interval_executor : interval_executers_)
         {

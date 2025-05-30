@@ -103,7 +103,7 @@ int main(int ac, char *av[])
     //	Note that there may be data dependence on the constructors of these methods.
     //----------------------------------------------------------------------
     SPHSolver sph_solver(sph_system);
-    auto &main_methods = sph_solver.addParticleMethodContainer(seq);
+    auto &main_methods = sph_solver.addParticleMethodContainer(par);
     //----------------------------------------------------------------------
     // Define the numerical methods used in the simulation.
     // Note that there may be data dependence on the sequence of constructions.
@@ -140,7 +140,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Define time stepper with end and start time.
     //----------------------------------------------------------------------
-    TimeStepper &time_stepper = sph_solver.defineTimeStepper(1.0);
+    TimeStepper &time_stepper = sph_solver.defineTimeStepper(10.0);
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
@@ -179,7 +179,7 @@ int main(int ac, char *av[])
         //	the fastest and most frequent acostic time stepping.
         //----------------------------------------------------------------------
         TickCount time_instance = TickCount::now();
-        Real diffusion_dt = time_stepper.incrementPhysicalTime(get_time_step_size);
+        Real diffusion_dt = time_stepper.incrementPhysicalTime(get_time_step_size, 10.0);
         diffusion_relaxation.exec(diffusion_dt);
         time_steps += 1;
         interval_computing += TickCount::now() - time_instance;

@@ -58,7 +58,6 @@ void Dissipation<Inner<Splitting, DissipationType, Parameters...>>::InteractKern
         ++neighbor_k;
     }
     parameter_a = (parameter_a - 1.0) / this->Vol_[index_i];
-
     Real parameter_c = 0.0;
     neighbor_k = 0;
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
@@ -66,18 +65,20 @@ void Dissipation<Inner<Splitting, DissipationType, Parameters...>>::InteractKern
         UnsignedInt index_j = this->neighbor_index_[n];
 
         parameter_b[neighbor_k] += parameter_a * this->Vol_[index_j];
-        parameter_c += parameter_b[neighbor_k] * parameter_b[neighbor_k];
+        DataType difference = this->variable_[index_i] - this->variable_[index_j];
+        parameter_c += parameter_b[neighbor_k] * parameter_b[neighbor_k] * difference * difference;
         ++neighbor_k;
     }
 
     // update the variable
-    DataType parameter_k = error * parameter_c / (parameter_c * parameter_c + TinyReal);
+    DataType parameter_k = error / (parameter_c + TinyReal);
     neighbor_k = 0;
     DataType ttl_out_flux = this->zero_error_;
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
     {
         UnsignedInt index_j = this->neighbor_index_[n];
-        DataType increment = parameter_k * parameter_b[neighbor_k];
+        DataType difference = this->variable_[index_i] - this->variable_[index_j];
+        DataType increment = parameter_k * parameter_b[neighbor_k] * difference * difference;
         this->variable_[index_j] += increment;
         ttl_out_flux += increment * this->Vol_[index_j];
         ++neighbor_k;
