@@ -17,7 +17,7 @@ BoundingBox system_domain_bounds(Vec2d(0.0, 0.0), Vec2d(L, H));
 //	Basic parameters for material properties.
 //----------------------------------------------------------------------
 std::string diffusion_species_name = "Phi";
-Real diffusion_coeff = 1.0e-4;
+const Real diffusion_coeff = 1.0e-4;
 Real end_time = 1.0; // end time of the simulation
 //----------------------------------------------------------------------
 // Define extra classes which are used in the main program.
