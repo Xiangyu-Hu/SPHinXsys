@@ -191,7 +191,7 @@ int main(int ac, char *av[])
             observe_temperature.writeToFile(time_steps);
         }
 
-        if (time_steps % 10 == 0)
+        if (time_steps % 1 == 0)
         {
             std::cout << "N=" << time_steps << " Time: "
                       << time_stepper.getPhysicalTime() << "	dt: " << diffusion_dt << "\n";
