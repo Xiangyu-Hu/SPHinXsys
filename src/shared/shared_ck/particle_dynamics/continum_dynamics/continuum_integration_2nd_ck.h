@@ -35,7 +35,7 @@ namespace SPH
 {
 namespace continuum_dynamics
 {
-//step2 inner
+// step2 inner
 template <typename...>
 class PlasticAcousticStep2ndHalf;
 
@@ -47,8 +47,8 @@ class PlasticAcousticStep2ndHalf<Inner<OneLevel, RiemannSolverType, KernelCorrec
     using BaseInteraction = PlasticAcousticStep<Interaction<Inner<Parameters...>>>;
 
   public:
-    explicit PlasticAcousticStep2ndHalf(Relation<Inner<Parameters...>> &inner_relation);
-    virtual ~PlasticAcousticStep2ndHalf(){};
+    explicit PlasticAcousticStep2ndHalf(Inner<Parameters...> &inner_relation);
+    virtual ~PlasticAcousticStep2ndHalf() {};
 
     class InitializeKernel
     {
@@ -87,14 +87,13 @@ class PlasticAcousticStep2ndHalf<Inner<OneLevel, RiemannSolverType, KernelCorrec
         PlasticKernel plastic_kernel_;
         Real *rho_, *drho_dt_;
         Matd *velocity_gradient_;
-        Mat3d *stress_tensor_3D_,*strain_tensor_3D_,*stress_rate_3D_,*strain_rate_3D_;
+        Mat3d *stress_tensor_3D_, *strain_tensor_3D_, *stress_rate_3D_, *strain_rate_3D_;
     };
 
   protected:
     KernelCorrectionType correction_;
     RiemannSolverType riemann_solver_;
 };
-
 
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
 class PlasticAcousticStep2ndHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType, Parameters...>>
@@ -103,8 +102,8 @@ class PlasticAcousticStep2ndHalf<Contact<Wall, RiemannSolverType, KernelCorrecti
     using BaseInteraction = PlasticAcousticStep<Interaction<Contact<Parameters...>>>;
 
   public:
-    explicit PlasticAcousticStep2ndHalf(Relation<Contact<Parameters...>> &wall_contact_relation);
-    virtual ~PlasticAcousticStep2ndHalf(){};
+    explicit PlasticAcousticStep2ndHalf(Contact<Parameters...> &wall_contact_relation);
+    virtual ~PlasticAcousticStep2ndHalf() {};
 
     class InteractKernel : public BaseInteraction::InteractKernel
     {
@@ -130,7 +129,7 @@ class PlasticAcousticStep2ndHalf<Contact<Wall, RiemannSolverType, KernelCorrecti
 
 using PlasticAcousticStep2ndHalfWithWallRiemannCK =
     PlasticAcousticStep2ndHalf<Inner<OneLevel, AcousticRiemannSolverCK, NoKernelCorrection>,
-                        Contact<Wall, AcousticRiemannSolverCK, NoKernelCorrection>>;
+                               Contact<Wall, AcousticRiemannSolverCK, NoKernelCorrection>>;
 } // namespace continuum_dynamics
 } // namespace SPH
 #endif // CONTINUUM_INTEGRATION_2ND_CK_H

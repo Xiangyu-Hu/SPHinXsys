@@ -6,6 +6,45 @@
 namespace SPH
 {
 //=================================================================================================//
+template <class ExecutionPolicy, typename AlgorithmType, template <typename...> class InteractionType>
+template <typename... ControlParameters, typename... RelationParameters, typename... Args>
+auto &InteractionDynamicsCK<ExecutionPolicy, InteractionType<AlgorithmType>>::
+    addContactInteraction(Contact<RelationParameters...> &contact_relation, Args &&...args)
+{
+    this->post_processes_.push_back(
+        supplementary_dynamics_keeper_.template createPtr<
+            InteractionDynamicsCK<
+                ExecutionPolicy, InteractionType<Contact<ControlParameters..., RelationParameters...>>>>(
+            contact_relation, std::forward<Args>(args)...));
+    return *this;
+}
+//=================================================================================================//
+template <class ExecutionPolicy, typename AlgorithmType, template <typename...> class InteractionType>
+template <template <typename...> class LocalDynamicsType,
+          typename... ControlTypes, class DynamicsIdentifier, typename... Args>
+auto &InteractionDynamicsCK<ExecutionPolicy, InteractionType<AlgorithmType>>::
+    addPostStateDynamics(DynamicsIdentifier &identifier, Args &&...args)
+{
+    this->post_processes_.push_back(
+        supplementary_dynamics_keeper_.template createPtr<
+            StateDynamics<ExecutionPolicy, LocalDynamicsType<ControlTypes..., DynamicsIdentifier>>>(
+            identifier, std::forward<Args>(args)...));
+    return *this;
+}
+//=================================================================================================//
+template <class ExecutionPolicy, typename AlgorithmType, template <typename...> class InteractionType>
+template <template <typename...> class LocalDynamicsType,
+          typename... ControlTypes, class DynamicsIdentifier, typename... Args>
+auto &InteractionDynamicsCK<ExecutionPolicy, InteractionType<AlgorithmType>>::
+    addPreStateDynamics(DynamicsIdentifier &identifier, Args &&...args)
+{
+    this->pre_processes_.push_back(
+        supplementary_dynamics_keeper_.template createPtr<
+            StateDynamics<ExecutionPolicy, LocalDynamicsType<ControlTypes..., DynamicsIdentifier>>>(
+            identifier, std::forward<Args>(args)...));
+    return *this;
+}
+//=================================================================================================//
 template <class ExecutionPolicy, template <typename...> class InteractionType, typename... Parameters>
 template <typename... Args>
 InteractionDynamicsCK<ExecutionPolicy, Base, InteractionType<Inner<Parameters...>>>::
@@ -64,7 +103,7 @@ InteractionDynamicsCK<ExecutionPolicy, InteractionType<RelationType<Parameters..
     : InteractionDynamicsCK<
           ExecutionPolicy, Base,
           InteractionType<RelationType<Parameters...>>>(std::forward<Args>(args)...),
-      InteractionDynamicsCK<Base>(), BaseDynamics<void>() {}
+      InteractionDynamicsCK<ExecutionPolicy, InteractionType<Base>>() {}
 //=================================================================================================//
 template <class ExecutionPolicy, template <typename...> class InteractionType,
           template <typename...> class RelationType, typename... Parameters>
@@ -92,8 +131,7 @@ InteractionDynamicsCK<ExecutionPolicy, InteractionType<RelationType<WithUpdate, 
     : InteractionDynamicsCK<
           ExecutionPolicy, Base, InteractionType<RelationType<WithUpdate, OtherParameters...>>>(
           std::forward<Args>(args)...),
-      InteractionDynamicsCK<WithUpdate>(),
-      BaseDynamics<void>(),
+      InteractionDynamicsCK<ExecutionPolicy, InteractionType<WithUpdate>>(),
       kernel_implementation_(*this)
 {
     if constexpr (std::is_base_of_v<BaseInteractKernel, UpdateKernel>)
@@ -138,7 +176,7 @@ InteractionDynamicsCK<ExecutionPolicy, InteractionType<RelationType<OneLevel, Ot
     InteractionDynamicsCK(Args &&...args)
     : InteractionDynamicsCK<ExecutionPolicy, Base, InteractionType<RelationType<OneLevel, OtherParameters...>>>(
           std::forward<Args>(args)...),
-      InteractionDynamicsCK<OneLevel>(), BaseDynamics<void>(),
+      InteractionDynamicsCK<ExecutionPolicy, InteractionType<OneLevel>>(),
       initialize_kernel_implementation_(*this), update_kernel_implementation_(*this)
 {
     if constexpr (std::is_base_of_v<BaseInteractKernel, InitializeKernel>)

@@ -90,7 +90,7 @@ class ViscousForceCK<Inner<WithUpdate, ViscosityType, KernelCorrectionType, Para
     using BaseViscousForceType = ViscousForceCK<Base, ViscosityType, KernelCorrectionType, Inner<Parameters...>>;
 
   public:
-    explicit ViscousForceCK(Relation<Inner<Parameters...>> &inner_relation)
+    explicit ViscousForceCK(Inner<Parameters...> &inner_relation)
         : BaseViscousForceType(inner_relation) {};
     virtual ~ViscousForceCK() {};
 
@@ -112,7 +112,7 @@ class ViscousForceCK<Contact<Wall, ViscosityType, KernelCorrectionType, Paramete
     using BaseViscousForceType = ViscousForceCK<Base, ViscosityType, KernelCorrectionType, Contact<Parameters...>>;
 
   public:
-    explicit ViscousForceCK(Relation<Contact<Parameters...>> &contact_relation)
+    explicit ViscousForceCK(Contact<Parameters...> &contact_relation)
         : BaseViscousForceType(contact_relation), Interaction<Wall>(contact_relation) {};
     virtual ~ViscousForceCK() {};
 

@@ -49,7 +49,7 @@ void DisplacementMatrixGradient<Inner<Parameters...>>::
 //=================================================================================================//
 template <typename... Parameters>
 DisplacementMatrixGradient<Contact<Parameters...>>::
-    DisplacementMatrixGradient(Relation<Contact<Parameters...>> &contact_relation)
+    DisplacementMatrixGradient(Contact<Parameters...> &contact_relation)
     : BaseDynamicsType(contact_relation)
 {
     for (UnsignedInt k = 0; k != this->contact_particles_.size(); ++k)
@@ -111,7 +111,7 @@ void HessianCorrectionMatrix<Inner<WithUpdate, Parameters...>>::
 //=================================================================================================//
 template <typename... Parameters>
 HessianCorrectionMatrix<Contact<Parameters...>>::
-    HessianCorrectionMatrix(Relation<Contact<Parameters...>> &contact_relation)
+    HessianCorrectionMatrix(Contact<Parameters...> &contact_relation)
     : BaseDynamicsType(contact_relation)
 {
     for (UnsignedInt k = 0; k != this->contact_particles_.size(); ++k)

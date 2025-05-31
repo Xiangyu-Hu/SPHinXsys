@@ -92,6 +92,7 @@ BaseCellLinkedList &RealBody::getCellLinkedList()
         cell_linked_list_ptr_ =
             sph_adaptation_->createCellLinkedList(getSPHSystemBounds(), *base_particles_);
         cell_linked_list_created_ = true;
+        cell_linked_list_ptr_.get()->setName(getName() + "CellLinkedList");
     }
     return *cell_linked_list_ptr_.get();
 }

@@ -8,9 +8,16 @@ namespace SPH
 BodyPart::BodyPart(SPHBody &sph_body)
     : sph_body_(sph_body), part_id_(sph_body.getNewBodyPartID()),
       part_name_(sph_body.getName() + "Part" + std::to_string(part_id_)),
+      sph_adaptation_(sph_body.getSPHAdaptation()),
       base_particles_(sph_body.getBaseParticles()), sv_range_size_(nullptr),
       dv_body_part_id_(base_particles_.registerStateVariableOnly<int>(part_name_ + "ID")),
       pos_(base_particles_.getVariableDataByName<Vecd>("Position")) {}
+//=================================================================================================//
+BaseCellLinkedList &BodyPart::getCellLinkedList()
+{
+    RealBody &real_body = DynamicCast<RealBody>(this, sph_body_);
+    return real_body.getCellLinkedList();
+}
 //=================================================================================================//
 BodyPartByID::BodyPartByID(SPHBody &sph_body) : BodyPart(sph_body)
 {

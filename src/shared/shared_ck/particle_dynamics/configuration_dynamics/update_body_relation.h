@@ -38,6 +38,7 @@
 
 namespace SPH
 {
+
 template <typename... T>
 class UpdateRelation;
 
@@ -45,24 +46,31 @@ template <class ExecutionPolicy, typename... Parameters>
 class UpdateRelation<ExecutionPolicy, Inner<Parameters...>>
     : public Interaction<Inner<Parameters...>>, public BaseDynamics<void>
 {
+    using BaseInteraction = Interaction<Inner<Parameters...>>;
+    using NeighborCriterion = typename BaseInteraction::InteractKernel::NeighborCriterion;
+    using RelationType = Inner<Parameters...>;
+    using Identifier = typename BaseInteraction::Identifier;
+    using MaskedSource = typename Identifier::SourceParticleMask;
+    using MaskedCriterion = typename Identifier::template TargetParticleMask<NeighborCriterion>;
+
   public:
-    UpdateRelation(Relation<Inner<Parameters...>> &inner_relation);
+    UpdateRelation(Inner<Parameters...> &inner_relation);
     virtual ~UpdateRelation() {};
     virtual void exec(Real dt = 0.0) override;
 
   protected:
-    class InteractKernel
-        : public Interaction<Inner<Parameters...>>::InteractKernel
+    class InteractKernel : public BaseInteraction::InteractKernel
     {
       public:
         template <class EncloserType>
         InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-        void incrementNeighborSize(UnsignedInt index_i);
-        void updateNeighborList(UnsignedInt index_i);
+        void incrementNeighborSize(UnsignedInt source_index);
+        void updateNeighborList(UnsignedInt source_index);
 
       protected:
+        MaskedSource masked_source_;
+        MaskedCriterion masked_criterion_;
         NeighborSearch neighbor_search_;
-        Real grid_spacing_squared_;
     };
     typedef UpdateRelation<ExecutionPolicy, Inner<Parameters...>> LocalDynamicsType;
     using KernelImplementation = Implementation<ExecutionPolicy, LocalDynamicsType, InteractKernel>;
@@ -78,9 +86,10 @@ class UpdateRelation<ExecutionPolicy, Contact<Parameters...>>
 {
     using BaseInteraction = Interaction<Contact<Parameters...>>;
     using NeighborCriterion = typename BaseInteraction::InteractKernel::NeighborCriterion;
-    using RelationType = Relation<Contact<Parameters...>>;
+    using RelationType = Contact<Parameters...>;
     using SourceType = typename RelationType::SourceType;
     using TargetType = typename RelationType::TargetType;
+    using MaskedSource = typename SourceType::SourceParticleMask;
     using MaskedCriterion = typename TargetType::template TargetParticleMask<NeighborCriterion>;
 
   public:
@@ -99,6 +108,7 @@ class UpdateRelation<ExecutionPolicy, Contact<Parameters...>>
         void updateNeighborList(UnsignedInt source_index);
 
       protected:
+        MaskedSource masked_source_;
         MaskedCriterion masked_criterion_;
         NeighborSearch neighbor_search_;
     };
@@ -119,17 +129,15 @@ class UpdateRelation<ExecutionPolicy>
     void exec(Real dt = 0.0) {};
 };
 
-template <class ExecutionPolicy, class FirstRelation, class... Others>
-class UpdateRelation<ExecutionPolicy, FirstRelation, Others...>
+template <class ExecutionPolicy, class FirstRelation, class... OtherRelations>
+class UpdateRelation<ExecutionPolicy, FirstRelation, OtherRelations...>
     : public UpdateRelation<ExecutionPolicy, FirstRelation>
 {
   protected:
-    UpdateRelation<ExecutionPolicy, Others...> other_interactions_;
+    UpdateRelation<ExecutionPolicy, OtherRelations...> other_interactions_;
 
   public:
-    template <class FirstParameterSet, typename... OtherParameterSets>
-    explicit UpdateRelation(
-        FirstParameterSet &&first_parameter_set, OtherParameterSets &&...other_parameter_sets);
+    explicit UpdateRelation(FirstRelation &first_relation, OtherRelations &...other_relations);
     virtual void exec(Real dt = 0.0) override;
 };
 } // namespace SPH

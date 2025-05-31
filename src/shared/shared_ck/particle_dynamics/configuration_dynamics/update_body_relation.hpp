@@ -11,10 +11,11 @@ namespace SPH
 //=================================================================================================//
 template <class ExecutionPolicy, typename... Parameters>
 UpdateRelation<ExecutionPolicy, Inner<Parameters...>>::
-    UpdateRelation(Relation<Inner<Parameters...>> &inner_relation)
+    UpdateRelation(Inner<Parameters...> &inner_relation)
     : Interaction<Inner<Parameters...>>(inner_relation),
       BaseDynamics<void>(), ex_policy_(ExecutionPolicy{}),
-      cell_linked_list_(DynamicCast<CellLinkedList>(this, this->real_body_->getCellLinkedList())),
+      cell_linked_list_(DynamicCast<CellLinkedList>(
+          this, inner_relation.getDynamicsIdentifier().getCellLinkedList())),
       kernel_implementation_(*this) {}
 //=================================================================================================//
 template <class ExecutionPolicy, typename... Parameters>
@@ -22,49 +23,54 @@ template <class EncloserType>
 UpdateRelation<ExecutionPolicy, Inner<Parameters...>>::InteractKernel::InteractKernel(
     const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : Interaction<Inner<Parameters...>>::InteractKernel(ex_policy, encloser),
-      neighbor_search_(encloser.cell_linked_list_.createNeighborSearch(ex_policy)),
-      grid_spacing_squared_(
-          pow(encloser.cell_linked_list_.getMesh().GridSpacing(), 2)) {}
+      masked_source_(ex_policy, encloser.inner_relation_.getDynamicsIdentifier()),
+      masked_criterion_(
+          ex_policy, encloser.inner_relation_.getDynamicsIdentifier(), *this),
+      neighbor_search_(encloser.cell_linked_list_.createNeighborSearch(ex_policy)) {}
 //=================================================================================================//
 template <class ExecutionPolicy, typename... Parameters>
 void UpdateRelation<ExecutionPolicy, Inner<Parameters...>>::
-    InteractKernel::incrementNeighborSize(UnsignedInt index_i)
+    InteractKernel::incrementNeighborSize(UnsignedInt source_index)
 {
     // Here, neighbor_index_ takes role of temporary storage for neighbor size list.
     UnsignedInt neighbor_count = 0;
-    neighbor_search_.forEachSearch(
-        index_i, this->source_pos_,
-        [&](size_t index_j)
-        {
-            if (index_i != index_j)
+    if (masked_source_(source_index))
+    {
+        neighbor_search_.forEachSearch(
+            source_index, this->source_pos_,
+            [&](size_t target_index)
             {
-                if ((this->source_pos_[index_i] - this->target_pos_[index_j])
-                        .squaredNorm() < grid_spacing_squared_)
-                    neighbor_count++;
-            }
-        });
-    this->neighbor_index_[index_i] = neighbor_count;
+                if (source_index != target_index)
+                {
+                    if (masked_criterion_(target_index, source_index))
+                        neighbor_count++;
+                }
+            });
+    }
+    this->neighbor_index_[source_index] = neighbor_count;
 }
 //=================================================================================================//
 template <class ExecutionPolicy, typename... Parameters>
 void UpdateRelation<ExecutionPolicy, Inner<Parameters...>>::
-    InteractKernel::updateNeighborList(UnsignedInt index_i)
+    InteractKernel::updateNeighborList(UnsignedInt source_index)
 {
     UnsignedInt neighbor_count = 0;
-    neighbor_search_.forEachSearch(
-        index_i, this->source_pos_,
-        [&](size_t index_j)
-        {
-            if (index_i != index_j)
+    if (masked_source_(source_index))
+    {
+        neighbor_search_.forEachSearch(
+            source_index, this->source_pos_,
+            [&](size_t target_index)
             {
-                if ((this->source_pos_[index_i] - this->target_pos_[index_j])
-                        .squaredNorm() < grid_spacing_squared_)
+                if (source_index != target_index)
                 {
-                    this->neighbor_index_[this->particle_offset_[index_i] + neighbor_count] = index_j;
-                    neighbor_count++;
+                    if (masked_criterion_(target_index, source_index))
+                    {
+                        this->neighbor_index_[this->particle_offset_[source_index] + neighbor_count] = target_index;
+                        neighbor_count++;
+                    }
                 }
-            }
-        });
+            });
+    }
 }
 //=================================================================================================//
 template <class ExecutionPolicy, typename... Parameters>
@@ -105,10 +111,11 @@ UpdateRelation<ExecutionPolicy, Contact<Parameters...>>::
     : Interaction<Contact<Parameters...>>(contact_relation),
       BaseDynamics<void>(), ex_policy_(ExecutionPolicy{})
 {
-    for (auto &contact_body : this->contact_bodies_)
+    for (size_t k = 0; k != this->contact_bodies_.size(); ++k)
     {
         contact_cell_linked_list_.push_back(
-            DynamicCast<CellLinkedList>(this, &contact_body->getCellLinkedList()));
+            DynamicCast<CellLinkedList>(
+                this, &contact_relation.getContactIdentifier(k).getCellLinkedList()));
         contact_kernel_implementation_.push_back(
             contact_kernel_implementation_ptrs_.template createPtr<KernelImplementation>(*this));
     }
@@ -120,6 +127,7 @@ UpdateRelation<ExecutionPolicy, Contact<Parameters...>>::
     InteractKernel::InteractKernel(
         const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt contact_index)
     : Interaction<Contact<Parameters...>>::InteractKernel(ex_policy, encloser, contact_index),
+      masked_source_(ex_policy, encloser.contact_relation_.getSourceIdentifier()),
       masked_criterion_(
           ex_policy, encloser.contact_relation_.getContactIdentifier(contact_index), *this),
       neighbor_search_(
@@ -131,13 +139,16 @@ void UpdateRelation<ExecutionPolicy, Contact<Parameters...>>::
 {
     // Here, neighbor_index_ takes role of temporary storage for neighbor size list.
     UnsignedInt neighbor_count = 0;
-    neighbor_search_.forEachSearch(
-        source_index, this->source_pos_,
-        [&](size_t target_index)
-        {
-            if (masked_criterion_(target_index, source_index))
-                neighbor_count++;
-        });
+    if (masked_source_(source_index))
+    {
+        neighbor_search_.forEachSearch(
+            source_index, this->source_pos_,
+            [&](size_t target_index)
+            {
+                if (masked_criterion_(target_index, source_index))
+                    neighbor_count++;
+            });
+    }
     this->neighbor_index_[source_index] = neighbor_count;
 }
 //=================================================================================================//
@@ -146,16 +157,19 @@ void UpdateRelation<ExecutionPolicy, Contact<Parameters...>>::
     InteractKernel::updateNeighborList(UnsignedInt source_index)
 {
     UnsignedInt neighbor_count = 0;
-    neighbor_search_.forEachSearch(
-        source_index, this->source_pos_,
-        [&](size_t target_index)
-        {
-            if (masked_criterion_(target_index, source_index))
+    if (masked_source_(source_index))
+    {
+        neighbor_search_.forEachSearch(
+            source_index, this->source_pos_,
+            [&](size_t target_index)
             {
-                this->neighbor_index_[this->particle_offset_[source_index] + neighbor_count] = target_index;
-                neighbor_count++;
-            }
-        });
+                if (masked_criterion_(target_index, source_index))
+                {
+                    this->neighbor_index_[this->particle_offset_[source_index] + neighbor_count] = target_index;
+                    neighbor_count++;
+                }
+            });
+    }
 }
 //=================================================================================================//
 template <class ExecutionPolicy, typename... Parameters>
@@ -194,15 +208,14 @@ void UpdateRelation<ExecutionPolicy, Contact<Parameters...>>::exec(Real dt)
     }
 }
 //=================================================================================================//
-template <class ExecutionPolicy, class FirstRelation, class... Others>
-template <class FirstParameterSet, typename... OtherParameterSets>
-UpdateRelation<ExecutionPolicy, FirstRelation, Others...>::UpdateRelation(
-    FirstParameterSet &&first_parameter_set, OtherParameterSets &&...other_parameter_sets)
-    : UpdateRelation<ExecutionPolicy, FirstRelation>(first_parameter_set),
-      other_interactions_(std::forward<OtherParameterSets>(other_parameter_sets)...) {}
+template <class ExecutionPolicy, class FirstRelation, class... OtherRelations>
+UpdateRelation<ExecutionPolicy, FirstRelation, OtherRelations...>::UpdateRelation(
+    FirstRelation &first_relation, OtherRelations &...other_relations)
+    : UpdateRelation<ExecutionPolicy, FirstRelation>(first_relation),
+      other_interactions_(other_relations...) {}
 //=================================================================================================//
-template <class ExecutionPolicy, class FirstRelation, class... Others>
-void UpdateRelation<ExecutionPolicy, FirstRelation, Others...>::exec(Real dt)
+template <class ExecutionPolicy, class FirstRelation, class... OtherRelations>
+void UpdateRelation<ExecutionPolicy, FirstRelation, OtherRelations...>::exec(Real dt)
 {
     UpdateRelation<ExecutionPolicy, FirstRelation>::exec(dt);
     other_interactions_.exec(dt);

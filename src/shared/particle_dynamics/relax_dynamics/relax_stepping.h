@@ -40,8 +40,12 @@ class LevelSetShape;
 
 namespace relax_dynamics
 {
-class Explicit;
-class Implicit;
+class Explicit
+{
+};
+class Implicit
+{
+};
 
 template <typename ErrorDataType, typename ParameterADataType, typename ParameterCDataType>
 struct ErrorAndParameters

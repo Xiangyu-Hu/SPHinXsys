@@ -21,62 +21,79 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	stress_diffusion.h
- * @brief 	Here, we define the ck_version for stress diffusion.
- * @details Refer to Feng et al(2021).
- * @author	Shuang Li, Xiangyu Hu and Shuaihao Zhang
+ * @file    adapt_criterion.h
+ * @brief   to define the criterion of indication for adaptation
+ * @author	Xiangyu Hu
  */
 
-#ifndef STRESS_DIFFUSION_CK_H
-#define STRESS_DIFFUSION_CK_H
+#ifndef ADAPT_CRITERION_H
+#define ADAPT_CRITERION_H
 
-#include "base_continuum_dynamics.h"
-#include "constraint_dynamics.h"
-#include "continuum_integration_1st_ck.h"
-#include "continuum_integration_1st_ck.hpp"
-#include "fluid_integration.hpp"
-#include "general_continuum.h"
-#include "general_continuum.hpp"
+#include "base_general_dynamics.h"
+
 namespace SPH
 {
-namespace continuum_dynamics
-{
 template <typename...>
-class StressDiffusionCK;
+class Refinement;
 
-template <typename... Parameters>
-class StressDiffusionCK<Inner<Parameters...>> : public PlasticAcousticStep<Interaction<Inner<Parameters...>>>
+template <>
+class Refinement<Base>
 {
-    using PlasticKernel = typename PlasticContinuum::PlasticKernel;
-    using BaseInteraction = PlasticAcousticStep<Interaction<Inner<Parameters...>>>;
-
   public:
-    explicit StressDiffusionCK(Inner<Parameters...> &inner_relation);
-    virtual ~StressDiffusionCK() {};
+    Refinement(const std::string &name, bool is_fixed_indication)
+        : name_(name), is_fixed_indication_(is_fixed_indication) {};
+    virtual ~Refinement() {};
+    std::string getName() { return name_; };
+    bool isFixedIndication() { return is_fixed_indication_; };
 
-    class InteractKernel : public BaseInteraction::InteractKernel
+  protected:
+    std::string name_;
+    bool is_fixed_indication_;
+};
+
+template <typename T>
+class Refinement<Continuous, T> : public Refinement<Base>
+{
+  public:
+    Refinement(SPHAdaptation *sph_adaptation, BaseParticles *particles)
+        : Refinement<Base>("Refinement", T::is_fixed),
+          refinement_level_(sph_adaptation->LocalRefinementLevel()),
+          h_ref_(sph_adaptation->ReferenceSmoothingLength()),
+          dv_h_(particles->getVariableByName<Real>("SmoothingLength")) {};
+    virtual ~Refinement() {};
+
+    class ComputingKernel
     {
       public:
         template <class ExecutionPolicy, class EncloserType>
-        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-        void interact(size_t index_i, Real dt = 0.0);
+        ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+            : refinement_level_(encloser.refinement_level_), h_ref_(encloser.h_ref_),
+              h_(encloser.dv_h_->DelegatedData(ex_policy)){};
+        int operator()(size_t index_i, Real dt = 0.0)
+        {
+            Real h_level = h_ref_;
+            Real h_current = h_[index_i];
+            for (int j = 0; j < refinement_level_; ++j)
+            {
+                h_level *= 0.5;
+                if (h_current > h_level)
+                {
+                    return j;
+                }
+            }
+            return refinement_level_;
+        };
 
       protected:
-        PlasticKernel plastic_kernel_;
-        Real zeta_, phi_;
-        Real smoothing_length_, sound_speed_;
-        Real *mass_, *Vol_;
-        Vecd *pos_, *force_prior_;
-        Mat3d *stress_tensor_3D_, *stress_rate_3D_;
+        int refinement_level_;
+        Real h_ref_;
+        Real *h_;
     };
 
   protected:
-    Real dv_zeta_ = 0.1, dv_phi_; /*diffusion coefficient*/
-    Real dv_smoothing_length_, dv_sound_speed_;
-    DiscreteVariable<Vecd> *dv_pos_;
+    int refinement_level_;
+    Real h_ref_;
+    DiscreteVariable<Real> *dv_h_;
 };
-
-using StressDiffusionInnerCK = StressDiffusionCK<Inner<>>;
-} // namespace continuum_dynamics
 } // namespace SPH
-#endif // STRESS_DIFFUSION_CK_H
+#endif // ADAPT_CRITERION_H

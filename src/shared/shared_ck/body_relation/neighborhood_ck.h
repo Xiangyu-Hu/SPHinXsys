@@ -32,7 +32,6 @@
 #define NEIGHBORHOOD_CK_H
 
 #include "kernel_tabulated_ck.h"
-#include "neighborhood.h"
 
 namespace SPH
 {
@@ -40,45 +39,64 @@ template <typename... T>
 class Neighbor;
 
 template <>
-class Neighbor<>
+class Neighbor<Base>
 {
   public:
     template <class ExecutionPolicy>
     Neighbor(const ExecutionPolicy &ex_policy,
-             SPHAdaptation *sph_adaptation, SPHAdaptation *contact_adaptation,
+             SPHAdaptation *sph_adaptation, SPHAdaptation *target_adaptation,
              DiscreteVariable<Vecd> *dv_pos, DiscreteVariable<Vecd> *dv_target_pos);
 
     KernelTabulatedCK &getKernel() { return kernel_; }
+    inline Vecd vec_r_ij(UnsignedInt i, UnsignedInt j) const { return source_pos_[i] - target_pos_[j]; };
 
-    inline Vecd vec_r_ij(size_t i, size_t j) const { return source_pos_[i] - target_pos_[j]; };
-    inline Real W_ij(size_t i, size_t j) const { return kernel_.W(vec_r_ij(i, j)); }
-    inline Real dW_ij(size_t i, size_t j) const { return kernel_.dW(vec_r_ij(i, j)); }
-
-    inline Vecd e_ij(size_t i, size_t j) const
+    inline Vecd e_ij(UnsignedInt i, UnsignedInt j) const
     {
         Vecd displacement = vec_r_ij(i, j);
         return displacement / (displacement.norm() + TinyReal);
     }
 
+  protected:
+    KernelTabulatedCK kernel_;
+    Real kernel_size_square_;
+    Vecd *source_pos_;
+    Vecd *target_pos_;
+};
+
+template <class NeighborMethod>
+class Neighbor<NeighborMethod> : public Neighbor<Base>
+{
+    using ScalingFactor = typename NeighborMethod::ComputingKernel;
+
+  public:
+    template <class ExecutionPolicy>
+    Neighbor(const ExecutionPolicy &ex_policy,
+             SPHAdaptation *sph_adaptation, SPHAdaptation *target_adaptation,
+             DiscreteVariable<Vecd> *dv_pos, DiscreteVariable<Vecd> *dv_target_pos, NeighborMethod &smoothing_length);
+    inline Vecd scaleVecRij(UnsignedInt i, UnsignedInt j) const { return scaling_factor_(i, j) * (source_pos_[i] - target_pos_[j]); }
+    inline Real W_ij(UnsignedInt i, UnsignedInt j) const { return kernel_.W(scaleVecRij(i, j)); }
+    inline Real dW_ij(UnsignedInt i, UnsignedInt j) const { return scaling_factor_(i, j) * kernel_.dW(scaleVecRij(i, j)); }
+
     class NeighborCriterion
     {
       public:
-        NeighborCriterion(Neighbor<> &neighbor);
+        NeighborCriterion(Neighbor<NeighborMethod> &neighbor);
         bool operator()(UnsignedInt target_index, UnsignedInt source_index) const
         {
-            return (source_pos_[source_index] - target_pos_[target_index]).squaredNorm() < cut_radius_square_;
+            Vecd scaled_displacement = scaling_factor_(source_index, target_index) *
+                                       (source_pos_[source_index] - target_pos_[target_index]);
+            return scaled_displacement.squaredNorm() < kernel_size_square_;
         };
 
       protected:
         Vecd *source_pos_;
         Vecd *target_pos_;
-        Real cut_radius_square_;
+        ScalingFactor scaling_factor_;
+        Real kernel_size_square_;
     };
 
   protected:
-    KernelTabulatedCK kernel_;
-    Vecd *source_pos_;
-    Vecd *target_pos_;
+    ScalingFactor scaling_factor_;
 };
 } // namespace SPH
 #endif // NEIGHBORHOOD_CK_H

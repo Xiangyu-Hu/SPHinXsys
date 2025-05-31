@@ -31,8 +31,10 @@
 
 #include "base_body.h"
 #include "base_body_part.h"
+#include "body_partition.h"
 #include "base_particles.hpp"
 #include "reduce_functors.h"
+
 namespace SPH
 {
 template <typename...>
@@ -113,6 +115,38 @@ class LoopRangeCK<ExecutionPolicy, BodyPartByCell>
     UnsignedInt *loop_bound_;
     UnsignedInt *particle_index_;
     UnsignedInt *cell_offset_;
+};
+
+template <class ExecutionPolicy>
+class LoopRangeCK<ExecutionPolicy, BodyPartition>
+{
+  public:
+    LoopRangeCK(BodyPartition &body_partition)
+        : loop_bound_(body_partition.getBaseParticles().svTotalRealParticles()->DelegatedData(ExecutionPolicy{})),
+          present_adapt_level_(body_partition.PresentAdaptationLevel()),
+          adapt_level_(body_partition.dvAdaptationLevel()->DelegatedData(ExecutionPolicy{})) {};
+
+    template <class UnaryFunc>
+    void computeUnit(const UnaryFunc &f, UnsignedInt i) const
+    {
+        if (adapt_level_[i] == present_adapt_level_)
+        {
+            f(i);
+        }
+    };
+
+    template <class ReturnType, class BinaryFunc, class UnaryFunc>
+    ReturnType computeUnit(ReturnType temp, const BinaryFunc &bf, const UnaryFunc &uf, UnsignedInt i) const
+    {
+        return adapt_level_[i] == present_adapt_level_ ? bf(temp, uf(i)) : temp;
+    };
+
+    UnsignedInt LoopBound() const { return *loop_bound_; };
+
+  protected:
+    UnsignedInt *loop_bound_;
+    int present_adapt_level_;
+    int *adapt_level_;
 };
 } // namespace SPH
 #endif // LOOP_RANGE_H

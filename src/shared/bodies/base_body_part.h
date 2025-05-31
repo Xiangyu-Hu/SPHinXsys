@@ -54,6 +54,8 @@ class BodyPart
     std::string getName() const { return alias_.value_or(part_name_); };
     int getPartID() { return part_id_; };
     SingularVariable<UnsignedInt> *svRangeSize() { return sv_range_size_; };
+    SPHAdaptation &getSPHAdaptation() { return sph_adaptation_; };
+    BaseCellLinkedList &getCellLinkedList();
 
     template <typename TargetCriterion>
     class TargetParticleMask : public TargetCriterion
@@ -63,7 +65,7 @@ class BodyPart
         TargetParticleMask(ExecutionPolicy &ex_policy, EnclosureType &encloser, Args &&...args)
             : TargetCriterion(std::forward<Args>(args)...), part_id_(encloser.part_id_),
               body_part_id_(encloser.dv_body_part_id_->DelegatedData(ex_policy)) {}
-        virtual ~TargetParticleMask() {}
+        ~TargetParticleMask() {}
 
         template <typename... Args>
         bool operator()(UnsignedInt target_index, Args &&...args)
@@ -82,6 +84,7 @@ class BodyPart
     int part_id_;
     std::string part_name_;
     std::optional<std::string> alias_;
+    SPHAdaptation &sph_adaptation_;
     BaseParticles &base_particles_;
     SingularVariable<UnsignedInt> *sv_range_size_;
     DiscreteVariable<int> *dv_body_part_id_;

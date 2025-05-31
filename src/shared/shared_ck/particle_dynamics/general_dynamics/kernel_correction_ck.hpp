@@ -69,7 +69,7 @@ void LinearCorrectionMatrix<Inner<WithUpdate, Parameters...>>::
 //=================================================================================================//
 template <typename... Parameters>
 LinearCorrectionMatrix<Contact<Parameters...>>::
-    LinearCorrectionMatrix(Relation<Contact<Parameters...>> &contact_relation)
+    LinearCorrectionMatrix(Contact<Parameters...> &contact_relation)
     : LinearCorrectionMatrix<Base, Contact<Parameters...>>(contact_relation)
 {
     for (size_t k = 0; k != this->contact_particles_.size(); ++k)

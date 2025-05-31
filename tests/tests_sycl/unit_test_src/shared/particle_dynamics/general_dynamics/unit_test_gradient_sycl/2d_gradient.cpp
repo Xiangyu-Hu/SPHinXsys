@@ -141,9 +141,9 @@ int main(int ac, char *av[])
     //	Basically the the range of bodies to build neighbor particle lists.
     //  Generally, we first define all the inner relations, then the contact relations.
     //----------------------------------------------------------------------
-    Relation<Inner<>> water_block_inner(water_block);
-    Relation<Contact<>> water_wall_contact(water_block, {&wall});
-    Relation<Contact<>> fluid_observer_contact(fluid_observer, {&water_block});
+    Inner<> water_block_inner(water_block);
+    Contact<> water_wall_contact(water_block, {&wall});
+    Contact<> fluid_observer_contact(fluid_observer, {&water_block});
     //----------------------------------------------------------------------
     // Define the main execution policy for this case.
     //----------------------------------------------------------------------
@@ -159,8 +159,8 @@ int main(int ac, char *av[])
     // Finally, the auxiliary models such as time step estimator, initial condition,
     // boundary condition and other constraints should be defined.
     //----------------------------------------------------------------------
-    UpdateCellLinkedList<MainExecutionPolicy, CellLinkedList> water_cell_linked_list(water_block);
-    UpdateCellLinkedList<MainExecutionPolicy, CellLinkedList> wall_cell_linked_list(wall);
+    UpdateCellLinkedList<MainExecutionPolicy, RealBody> water_cell_linked_list(water_block);
+    UpdateCellLinkedList<MainExecutionPolicy, RealBody> wall_cell_linked_list(wall);
     UpdateRelation<MainExecutionPolicy, Inner<>> update_water_block_inner(water_block_inner);
     UpdateRelation<MainExecutionPolicy, Contact<>> update_water_wall_contact(water_wall_contact);
     UpdateRelation<MainExecutionPolicy, Contact<>> update_fluid_observer_contact(fluid_observer_contact);

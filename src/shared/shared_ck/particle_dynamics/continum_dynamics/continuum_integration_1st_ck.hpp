@@ -27,7 +27,7 @@ PlasticAcousticStep<BaseInteractionType>::PlasticAcousticStep(DynamicsIdentifier
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
 PlasticAcousticStep1stHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType, Parameters...>>::
-    PlasticAcousticStep1stHalf(Relation<Inner<Parameters...>> &inner_relation)
+    PlasticAcousticStep1stHalf(Inner<Parameters...> &inner_relation)
     : PlasticAcousticStep<Interaction<Inner<Parameters...>>>(inner_relation),
       correction_(this->particles_), riemann_solver_(this->plastic_continuum_, this->plastic_continuum_)
 {
@@ -110,7 +110,7 @@ void PlasticAcousticStep1stHalf<Inner<OneLevel, RiemannSolverType, KernelCorrect
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
 PlasticAcousticStep1stHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType, Parameters...>>::
-    PlasticAcousticStep1stHalf(Relation<Contact<Parameters...>> &wall_contact_relation)
+    PlasticAcousticStep1stHalf(Contact<Parameters...> &wall_contact_relation)
     : BaseInteraction(wall_contact_relation), Interaction<Wall>(wall_contact_relation),
       correction_(this->particles_), riemann_solver_(this->plastic_continuum_, this->plastic_continuum_) {}
 //=================================================================================================//
