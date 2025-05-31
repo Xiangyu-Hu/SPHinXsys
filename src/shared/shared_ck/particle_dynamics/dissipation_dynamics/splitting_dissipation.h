@@ -70,18 +70,25 @@ class Dissipation<Base, DissipationType, RelationType<Parameters...>>
     DiscreteVariable<DataType> *dv_variable_;
 };
 
-template <typename DissipationType, typename... Parameters>
-class Dissipation<Inner<Splitting, DissipationType, Parameters...>>
-    : public Dissipation<Base, DissipationType, Inner<Parameters...>>
+// Note: ConservativeDamping methods are not for obtaining accurate solution,
+// but for stabilization the system with a numerical damping coefficient.
+// This method is unconditionally stable and has zero-order consistency.
+// It is used to damp the high-frequency oscillations in the system.
+template <typename...>
+class ConservativeDamping;
+
+template <typename DampingType, typename... Parameters>
+class ConservativeDamping<Inner<Splitting, DampingType, Parameters...>>
+    : public Dissipation<Base, DampingType, Inner<Parameters...>>
 {
-    using DataType = typename DissipationType::DataType;
-    using BaseDissipationType = Dissipation<Base, DissipationType, Inner<Parameters...>>;
+    using DataType = typename DampingType::DataType;
+    using BaseDampingType = Dissipation<Base, DampingType, Inner<Parameters...>>;
 
   public:
-    explicit Dissipation(Inner<Parameters...> &inner_relation, const std::string &variable_name);
-    virtual ~Dissipation() {};
+    explicit ConservativeDamping(Inner<Parameters...> &inner_relation, const std::string &variable_name);
+    virtual ~ConservativeDamping() {};
 
-    class InteractKernel : public BaseDissipationType::InteractKernel
+    class InteractKernel : public BaseDampingType::InteractKernel
     {
       public:
         template <class ExecutionPolicy, class EncloserType>

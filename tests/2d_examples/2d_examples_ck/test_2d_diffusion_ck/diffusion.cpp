@@ -122,7 +122,7 @@ int main(int ac, char *av[])
 
     auto &diffusion_relaxation =
         main_methods.addInteractionDynamics<
-            Dissipation, Splitting, IsotropicDiffusion>(diffusion_body_inner, diffusion_species_name);
+            ConservativeDamping, Splitting, IsotropicDiffusion>(diffusion_body_inner, diffusion_species_name);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
@@ -173,7 +173,7 @@ int main(int ac, char *av[])
         //	the fastest and most frequent acostic time stepping.
         //----------------------------------------------------------------------
         TickCount time_instance = TickCount::now();
-        Real diffusion_dt = time_stepper.incrementPhysicalTime(0.5);
+        Real diffusion_dt = time_stepper.incrementPhysicalTime(1.0);
         diffusion_relaxation.exec(diffusion_dt);
         time_steps += 1;
         interval_computing += TickCount::now() - time_instance;

@@ -25,19 +25,19 @@ Dissipation<Base, DissipationType, RelationType<Parameters...>>::InteractKernel:
       variable_(encloser.dv_variable_->DelegatedData(ex_policy)),
       zero_error_(ReduceReference<ReduceSum<DataType>>::value) {}
 //=================================================================================================//
-template <typename DissipationType, typename... Parameters>
-Dissipation<Inner<Splitting, DissipationType, Parameters...>>::
-    Dissipation(Inner<Parameters...> &inner_relation, const std::string &variable_name)
-    : BaseDissipationType(inner_relation, variable_name) {}
+template <typename DampingType, typename... Parameters>
+ConservativeDamping<Inner<Splitting, DampingType, Parameters...>>::
+    ConservativeDamping(Inner<Parameters...> &inner_relation, const std::string &variable_name)
+    : BaseDampingType(inner_relation, variable_name) {}
 //=================================================================================================//
-template <typename DissipationType, typename... Parameters>
+template <typename DampingType, typename... Parameters>
 template <class ExecutionPolicy, class EncloserType>
-Dissipation<Inner<Splitting, DissipationType, Parameters...>>::InteractKernel::
+ConservativeDamping<Inner<Splitting, DampingType, Parameters...>>::InteractKernel::
     InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-    : BaseDissipationType::InteractKernel(ex_policy, encloser) {}
+    : BaseDampingType::InteractKernel(ex_policy, encloser) {}
 //=================================================================================================//
-template <typename DissipationType, typename... Parameters>
-void Dissipation<Inner<Splitting, DissipationType, Parameters...>>::InteractKernel::
+template <typename DampingType, typename... Parameters>
+void ConservativeDamping<Inner<Splitting, DampingType, Parameters...>>::InteractKernel::
     interact(size_t index_i, Real dt)
 {
     // compute the error and parameters
@@ -66,7 +66,7 @@ void Dissipation<Inner<Splitting, DissipationType, Parameters...>>::InteractKern
         DataType difference = this->variable_[index_i] - this->variable_[index_j];
         error += difference * parameter_b[neighbor_j];
         parameter_b[neighbor_j] += parameter_a * this->Vol_[index_j];
-        parameter_c += parameter_b[neighbor_j] * parameter_b[neighbor_j] * difference * difference;
+        parameter_c += parameter_b[neighbor_j] * parameter_b[neighbor_j] * getSquaredNorm(difference);
         ++neighbor_j;
     }
 
@@ -77,8 +77,8 @@ void Dissipation<Inner<Splitting, DissipationType, Parameters...>>::InteractKern
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
     {
         UnsignedInt index_j = this->neighbor_index_[n];
-        DataType difference = this->variable_[index_i] - this->variable_[index_j];
-        DataType increment = parameter_k * parameter_b[neighbor_j] * difference * difference;
+        DataType increment = parameter_k * parameter_b[neighbor_j] *
+                             getSquaredNorm(this->variable_[index_i] - this->variable_[index_j]);
         this->variable_[index_j] += increment;
         ttl_out_flux += increment * this->Vol_[index_j];
         ++neighbor_j;
