@@ -148,7 +148,7 @@ template <class ExecutionPolicy, class EncloserType>
 PairwiseDissipation<Inner<Splitting, DissipationType, Parameters...>>::InteractKernel::
     InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : BaseDissipationType::InteractKernel(ex_policy, encloser),
-      capacity_(encloser.dissipation_model_) {}
+      inverse_capacity_(encloser.dissipation_model_) {}
 //=================================================================================================//
 template <typename DissipationType, typename... Parameters>
 void PairwiseDissipation<Inner<Splitting, DissipationType, Parameters...>>::InteractKernel::
@@ -162,14 +162,14 @@ void PairwiseDissipation<Inner<Splitting, DissipationType, Parameters...>>::Inte
 
         DataType pair_difference = (this->variable_[index_i] - this->variable_[index_j]);
         parameter_b[neighbor_j] = this->dis_coeff_(index_i, index_j) * this->dW_ij(index_i, index_j) *
-                                  this->Vol_[index_i] * this->Vol_[index_j] * dt /
+                                  this->Vol_[index_i] * this->Vol_[index_j] * 0.5 * dt /
                                   this->vec_r_ij(index_i, index_j).norm();
 
         DataType increment = parameter_b[neighbor_j] * pair_difference /
-                             (capacity_(index_i) * capacity_(index_j) -
-                              parameter_b[neighbor_j] * (capacity_(index_i) + capacity_(index_j)));
-        this->variable_[index_i] += increment * capacity_(index_j);
-        this->variable_[index_j] -= increment * capacity_(index_i);
+                             (this->Vol_[index_i] * this->Vol_[index_j] -
+                              parameter_b[neighbor_j] * (this->Vol_[index_i] + this->Vol_[index_j]));
+        this->variable_[index_i] += increment * inverse_capacity_(index_i) * this->Vol_[index_j];
+        this->variable_[index_j] -= increment * inverse_capacity_(index_j) * this->Vol_[index_i];
         ++neighbor_j;
     }
 
@@ -180,10 +180,10 @@ void PairwiseDissipation<Inner<Splitting, DissipationType, Parameters...>>::Inte
 
         DataType pair_difference = (this->variable_[index_i] - this->variable_[index_j]);
         DataType increment = parameter_b[neighbor_j] * pair_difference /
-                             (capacity_(index_i) * capacity_(index_j) -
-                              parameter_b[neighbor_j] * (capacity_(index_i) + capacity_(index_j)));
-        this->variable_[index_i] += increment * capacity_(index_j);
-        this->variable_[index_j] -= increment * capacity_(index_i);
+                             (this->Vol_[index_i] * this->Vol_[index_j] -
+                              parameter_b[neighbor_j] * (this->Vol_[index_i] + this->Vol_[index_j]));
+        this->variable_[index_i] += increment * inverse_capacity_(index_i) * this->Vol_[index_j];
+        this->variable_[index_j] -= increment * inverse_capacity_(index_j) * this->Vol_[index_i];
         --neighbor_j;
     }
 }

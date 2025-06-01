@@ -151,7 +151,7 @@ class PairwiseDissipation<Inner<Splitting, DissipationType, Parameters...>>
         void interact(size_t index_i, Real dt = 0.0);
 
       protected:
-        InverseVolumetricCapacity capacity_;
+        InverseVolumetricCapacity inverse_capacity_;
     };
 };
 } // namespace SPH
