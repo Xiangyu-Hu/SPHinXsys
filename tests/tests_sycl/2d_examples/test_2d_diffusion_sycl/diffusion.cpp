@@ -1,7 +1,7 @@
 /**
  * @file 	diffusion.cpp
  * @brief 	This is the first test using splitting solver.
- * @author 	Chi Zhang and Xiangyu Hu
+ * @author 	Xiangyu Hu
  */
 #include "sphinxsys_sycl.h" //SPHinXsys Library
 #include <gtest/gtest.h>
@@ -11,12 +11,14 @@ using namespace SPH; // Namespace cite here
 //----------------------------------------------------------------------
 Real L = 2.0;
 Real H = 0.4;
-Real resolution_ref = H / 40.0;
+Real resolution_ref = H / 80.0;
 BoundingBox system_domain_bounds(Vec2d(0.0, 0.0), Vec2d(L, H));
 //----------------------------------------------------------------------
 //	Basic parameters for material properties.
 //----------------------------------------------------------------------
-std::string diffusion_species_name = "Phi";
+std::string phi_pair_wise = "PhiPairWise";
+std::string phi_projection = "PhiProjection";
+std::string phi_explicit = "PhiExplicit";
 const Real diffusion_coeff = 1.0e-4;
 Real end_time = 1.0; // end time of the simulation
 //----------------------------------------------------------------------
@@ -51,13 +53,30 @@ class InitialDistribution : public ReturnFunction<Real>
 //----------------------------------------------------------------------
 //	Google test items
 //----------------------------------------------------------------------
-Real approximated_value(1.0);
 Real expected_value = 1.0 / sqrt(end_time + 1.0);
-TEST(Diffusion, Error)
+
+Real approximated_pair_wise(1.0);
+TEST(DiffusionPairWise, Error)
 {
-    EXPECT_LT(ABS(expected_value - approximated_value), 5.0e-2);
+    EXPECT_LT(ABS(expected_value - approximated_pair_wise), 1.0e-2);
     std::cout << "Reference Value: " << expected_value << " and "
-              << "Predicted Value: " << approximated_value << std::endl;
+              << "Predicted Value: " << approximated_pair_wise << std::endl;
+};
+
+Real approximated_projection(1.0);
+TEST(DiffusionProjection, Error)
+{
+    EXPECT_LT(ABS(expected_value - approximated_projection), 1.0e-2);
+    std::cout << "Reference Value: " << expected_value << " and "
+              << "Predicted Value: " << approximated_projection << std::endl;
+};
+
+Real approximated_explicit(1.0);
+TEST(DiffusionExplicit, Error)
+{
+    EXPECT_LT(ABS(expected_value - approximated_explicit), 1.0e-2);
+    std::cout << "Reference Value: " << expected_value << " and "
+              << "Predicted Value: " << approximated_explicit << std::endl;
 };
 //----------------------------------------------------------------------
 //	Main program starts here.
@@ -75,7 +94,7 @@ int main(int ac, char *av[])
     GeometricShapeBox diffusion_block(BoundingBox(Vecd(0.0, 0.0), Vecd(L, H)), "DiffusionBlock");
     SolidBody diffusion_body(sph_system, diffusion_block);
     diffusion_body.defineClosure<Solid, IsotropicDiffusion>(
-        Solid(), ConstructArgs(diffusion_species_name, diffusion_coeff));
+        Solid(), ConstructArgs(phi_pair_wise, diffusion_coeff));
     diffusion_body.generateParticles<BaseParticles, Lattice>();
     //----------------------------------------------------------------------
     //	Particle and body creation of fluid observers.
@@ -114,23 +133,45 @@ int main(int ac, char *av[])
     auto &diffusion_body_update_inner_relation = main_methods.addRelationDynamics(diffusion_body_inner);
     auto &observer_update_contact_relation = main_methods.addRelationDynamics(observer_contact);
 
-    auto &diffusion_body_linear_correction_matrix =
-        main_methods.addInteractionDynamics<LinearCorrectionMatrix, WithUpdate>(diffusion_body_inner);
-    auto &setup_diffusion_initial_condition =
+    auto &initial_condition_pair_wise =
         main_methods.addStateDynamics<
-            InitialCondition<SPHBody, InitialDistribution>>(diffusion_body, diffusion_species_name);
-
-    auto &diffusion_relaxation =
+            InitialCondition<SPHBody, InitialDistribution>>(diffusion_body, phi_pair_wise);
+    auto &diffusion_relaxation_pair_wise =
         main_methods.addInteractionDynamics<
-            Dissipation, Splitting, IsotropicDiffusion>(diffusion_body_inner, diffusion_species_name);
+            PairwiseDissipation, Splitting, IsotropicDiffusion>(diffusion_body_inner, phi_pair_wise);
+
+    auto &initial_condition_projection =
+        main_methods.addStateDynamics<
+            InitialCondition<SPHBody, InitialDistribution>>(diffusion_body, phi_projection);
+    auto &diffusion_relaxation_projection =
+        main_methods.addInteractionDynamics<
+            ProjectionDissipation, Splitting, IsotropicDiffusion>(diffusion_body_inner, phi_projection);
+
+    IsotropicDiffusion isotropic_diffusion_explict(phi_explicit, diffusion_coeff);
+    auto &initial_condition_explicit =
+        main_methods.addStateDynamics<
+            InitialCondition<SPHBody, InitialDistribution>>(diffusion_body, phi_explicit);
+    GetDiffusionTimeStepSize get_time_step_size(diffusion_body, &isotropic_diffusion_explict);
+    auto &diffusion_relaxation_explicit =
+        main_methods.addRungeKuttaSequence<
+            InteractionDynamicsCK,
+            DiffusionRelaxationCK<Inner<OneLevel, RungeKutta1stStage, IsotropicDiffusion, NoKernelCorrectionCK>>,
+            DiffusionRelaxationCK<Inner<OneLevel, RungeKutta2ndStage, IsotropicDiffusion, NoKernelCorrectionCK>>>(
+            diffusion_body_inner, &isotropic_diffusion_explict);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
     auto &body_state_recorder = main_methods.addBodyStateRecorder<BodyStatesRecordingToVtpCK>(sph_system);
-    body_state_recorder.addToWrite<Real>(diffusion_body, diffusion_species_name);
-    auto &observe_temperature = main_methods.addIODynamics<
-        ObservedQuantityRecording, Real, RestoringCorrection>(diffusion_species_name, observer_contact);
-    auto &reduce_total_species = main_methods.addReduceDynamics<QuantitySum<Real>>(diffusion_body, diffusion_species_name);
+    body_state_recorder.addToWrite<Real>(diffusion_body, phi_pair_wise);
+    body_state_recorder.addToWrite<Real>(diffusion_body, phi_projection);
+    body_state_recorder.addToWrite<Real>(diffusion_body, phi_explicit);
+
+    auto &observe_temperature_pair_wise = main_methods.addIODynamics<
+        ObservedQuantityRecording, Real>(phi_pair_wise, observer_contact);
+    auto &observe_temperature_projection = main_methods.addIODynamics<
+        ObservedQuantityRecording, Real>(phi_projection, observer_contact);
+    auto &observe_temperature_explicit = main_methods.addIODynamics<
+        ObservedQuantityRecording, Real>(phi_explicit, observer_contact);
     //----------------------------------------------------------------------
     //	Define time stepper with end and start time.
     //----------------------------------------------------------------------
@@ -150,9 +191,9 @@ int main(int ac, char *av[])
     diffusion_body_update_inner_relation.exec();
     observer_update_contact_relation.exec();
 
-    diffusion_body_linear_correction_matrix.exec();
-    setup_diffusion_initial_condition.exec();
-    Real initial_total_species = reduce_total_species.exec();
+    initial_condition_pair_wise.exec();
+    initial_condition_projection.exec();
+    initial_condition_explicit.exec();
     //----------------------------------------------------------------------
     //	Statistics for CPU time
     //----------------------------------------------------------------------
@@ -163,7 +204,9 @@ int main(int ac, char *av[])
     //	First output before the main loop.
     //----------------------------------------------------------------------
     body_state_recorder.writeToFile();
-    observe_temperature.writeToFile(time_steps);
+    observe_temperature_pair_wise.writeToFile(time_steps);
+    observe_temperature_projection.writeToFile(time_steps);
+    observe_temperature_explicit.writeToFile(time_steps);
     //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------
@@ -173,10 +216,13 @@ int main(int ac, char *av[])
         //	the fastest and most frequent acostic time stepping.
         //----------------------------------------------------------------------
         TickCount time_instance = TickCount::now();
-        Real diffusion_dt = time_stepper.incrementPhysicalTime(0.5);
-        diffusion_relaxation.exec(diffusion_dt);
+        Real diffusion_dt = time_stepper.incrementPhysicalTime(1.0 / 16.0);
+        diffusion_relaxation_pair_wise.exec(diffusion_dt);
+        time_stepper.integrateMatchedTimeInterval(diffusion_relaxation_projection, diffusion_dt, 8);
+        time_stepper.integrateMatchedTimeInterval(diffusion_relaxation_explicit, diffusion_dt, get_time_step_size);
         time_steps += 1;
         interval_computing += TickCount::now() - time_instance;
+
         //----------------------------------------------------------------------
         //	the following are slower and less frequent time stepping.
         //----------------------------------------------------------------------
@@ -188,15 +234,15 @@ int main(int ac, char *av[])
 
         if (observation_recording())
         {
-            observe_temperature.writeToFile(time_steps);
+            observe_temperature_pair_wise.writeToFile(time_steps);
+            observe_temperature_projection.writeToFile(time_steps);
+            observe_temperature_explicit.writeToFile(time_steps);
         }
 
         if (time_steps % 1 == 0)
         {
             std::cout << "N=" << time_steps << " Time: "
                       << time_stepper.getPhysicalTime() << "	dt: " << diffusion_dt << "\n";
-            std::cout << "Initial total species: " << initial_total_species
-                      << "	Present total species: " << reduce_total_species.exec() << "\n";
         }
         interval_output += TickCount::now() - time_instance;
     }
@@ -204,7 +250,10 @@ int main(int ac, char *av[])
     TimeInterval tt = TickCount::now() - t1 - interval_output;
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
-    approximated_value = *observe_temperature.getObservedQuantity();
+    approximated_pair_wise = *observe_temperature_pair_wise.getObservedQuantity();
+    approximated_projection = *observe_temperature_projection.getObservedQuantity();
+    approximated_explicit = *observe_temperature_explicit.getObservedQuantity();
+
     testing::InitGoogleTest(&ac, av);
     return RUN_ALL_TESTS();
 }
