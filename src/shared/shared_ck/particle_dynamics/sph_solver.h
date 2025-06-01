@@ -104,14 +104,14 @@ class TimeStepper
 
     template <class Integrator>
     void integrateMatchedTimeInterval( // designed to avoid too small last step
-        Real interval, BaseDynamics<Real> &step_evaluator, const Integrator &integrator)
+        Integrator &integrator, Real interval, BaseDynamics<Real> &step_evaluator)
     {
         Real integrated_time_ = 0.0;
         Real dt = step_evaluator.exec();
 
         while (interval - integrated_time_ > 1.5 * dt)
         {
-            integrator(dt);
+            integrator.exec(dt);
             dt = step_evaluator.exec();
             integrated_time_ += dt;
         }
@@ -119,15 +119,25 @@ class TimeStepper
         if (interval - integrated_time_ > dt)
         {
             Real final_dt = 0.5 * (interval - integrated_time_);
-            integrator(final_dt);
-            integrator(final_dt);
+            integrator.exec(final_dt);
+            integrator.exec(final_dt);
         }
         else
         {
-            integrator(interval - integrated_time_);
+            integrator.exec(interval - integrated_time_);
         }
     };
 
+    template <class Integrator>
+    void integrateMatchedTimeInterval(Integrator &integrator, Real interval, int sub_division)
+    {
+        Real dt = interval / static_cast<Real>(sub_division);
+        for (int i = 0; i < sub_division; ++i)
+        {
+            integrator.exec(dt);
+        }
+    };
+    
     TriggerByInterval &addTriggerByInterval(Real initial_interval)
     {
 

@@ -31,6 +31,7 @@
 #define PARTICLE_METHOD_CONTAINER_H
 
 #include "base_particle_dynamics.h"
+#include "complex_algorithms_ck.h"
 #include "interaction_algorithms_ck.h"
 #include "io_base.h"
 #include "ownership.h"
@@ -45,10 +46,10 @@ namespace SPH
 class BaseMethodContainer
 {
   public:
-    virtual ~BaseMethodContainer(){};
+    virtual ~BaseMethodContainer() {};
 };
 
-template <typename ExecutePolicy>
+template <typename ExecutionPolicy>
 class ParticleMethodContainer : public BaseMethodContainer
 {
     UniquePtrsKeeper<BaseDynamics<void>> particle_dynamics_keeper_;
@@ -57,15 +58,15 @@ class ParticleMethodContainer : public BaseMethodContainer
     UniquePtrsKeeper<BaseIO> other_io_keeper_;
 
   public:
-    ParticleMethodContainer(const ExecutePolicy &ex_policy)
-    : BaseMethodContainer() {};
+    ParticleMethodContainer(const ExecutionPolicy &ex_policy)
+        : BaseMethodContainer() {};
     virtual ~ParticleMethodContainer() {};
 
     template <class DynamicsIdentifier, typename... Args>
     auto &addCellLinkedListDynamics(DynamicsIdentifier &identifier, Args &&...args)
     {
         return *particle_dynamics_keeper_.createPtr<
-            UpdateCellLinkedList<ExecutePolicy, DynamicsIdentifier>>(
+            UpdateCellLinkedList<ExecutionPolicy, DynamicsIdentifier>>(
             identifier, std::forward<Args>(args)...);
     };
 
@@ -73,7 +74,7 @@ class ParticleMethodContainer : public BaseMethodContainer
     auto &addRelationDynamics(FirstRelation &first_relation, OtherRelations &...other_relations)
     {
         return *particle_dynamics_keeper_.createPtr<
-            UpdateRelation<ExecutePolicy, FirstRelation, OtherRelations...>>(
+            UpdateRelation<ExecutionPolicy, FirstRelation, OtherRelations...>>(
             first_relation, other_relations...);
     };
 
@@ -81,14 +82,14 @@ class ParticleMethodContainer : public BaseMethodContainer
     auto &addSortDynamics(Args &&...args)
     {
         return *particle_dynamics_keeper_.createPtr<
-            ParticleSortCK<ExecutePolicy>>(std::forward<Args>(args)...);
+            ParticleSortCK<ExecutionPolicy>>(std::forward<Args>(args)...);
     };
 
     template <class UpdateType, typename... Args>
     auto &addStateDynamics(Args &&...args)
     {
         return *particle_dynamics_keeper_.createPtr<
-            StateDynamics<ExecutePolicy, UpdateType>>(std::forward<Args>(args)...);
+            StateDynamics<ExecutionPolicy, UpdateType>>(std::forward<Args>(args)...);
     };
 
     template <class ReduceType, typename... Args>
@@ -99,14 +100,14 @@ class ParticleMethodContainer : public BaseMethodContainer
         constexpr int type_index = DataTypeIndex<OutputType>::value;
         UniquePtrsKeeper<BaseDynamics<OutputType>> &dynamics_ptrs = std::get<type_index>(reduce_dynamics_keeper_);
         return *dynamics_ptrs.template createPtr<
-            ReduceDynamicsCK<ExecutePolicy, ReduceType>>(std::forward<Args>(args)...);
+            ReduceDynamicsCK<ExecutionPolicy, ReduceType>>(std::forward<Args>(args)...);
     };
 
     template <class InteractionType, typename... Args>
     auto &addInteractionDynamics(Args &&...args)
     {
         return *particle_dynamics_keeper_.createPtr<
-            InteractionDynamicsCK<ExecutePolicy, InteractionType>>(std::forward<Args>(args)...);
+            InteractionDynamicsCK<ExecutionPolicy, InteractionType>>(std::forward<Args>(args)...);
     };
 
     template <template <typename...> class InteractionType,
@@ -117,14 +118,23 @@ class ParticleMethodContainer : public BaseMethodContainer
     {
         return *particle_dynamics_keeper_.createPtr<
             InteractionDynamicsCK<
-                ExecutePolicy, InteractionType<RelationType<ControlParameters..., RelationParameters...>>>>(
+                ExecutionPolicy, InteractionType<RelationType<ControlParameters..., RelationParameters...>>>>(
             relation, std::forward<Args>(args)...);
     };
+
+    template <template <typename... LocalDynamicsType> class DynamicsType,
+              class FirstLocalDynamics, class... OtherLocalDynamics, typename... Args>
+    auto &addRungeKuttaSequence(Args &&...args)
+    {
+        return *particle_dynamics_keeper_.createPtr<
+            RungeKuttaSequence<DynamicsType<ExecutionPolicy, FirstLocalDynamics, OtherLocalDynamics...>>>(
+            std::forward<Args>(args)...);
+    }
 
     template <template <typename...> class RecorderType, typename... Args>
     auto &addBodyStateRecorder(Args &&...args)
     {
-        return *state_recorders_keeper_.createPtr<RecorderType<ExecutePolicy>>(std::forward<Args>(args)...);
+        return *state_recorders_keeper_.createPtr<RecorderType<ExecutionPolicy>>(std::forward<Args>(args)...);
     };
 
     template <template <typename...> class RegressionType,
@@ -132,14 +142,14 @@ class ParticleMethodContainer : public BaseMethodContainer
     auto &addRegressionTest(Args &&...args)
     {
         return *other_io_keeper_.createPtr<
-            RegressionType<ObservationType<ExecutePolicy, Parameters...>>>(std::forward<Args>(args)...);
+            RegressionType<ObservationType<ExecutionPolicy, Parameters...>>>(std::forward<Args>(args)...);
     };
 
     template <template <typename...> class IOType, typename... Parameters, typename... Args>
     auto &addIODynamics(Args &&...args)
     {
         return *other_io_keeper_.createPtr<
-            IOType<ExecutePolicy, Parameters...>>(std::forward<Args>(args)...);
+            IOType<ExecutionPolicy, Parameters...>>(std::forward<Args>(args)...);
     };
 };
 } // namespace SPH
