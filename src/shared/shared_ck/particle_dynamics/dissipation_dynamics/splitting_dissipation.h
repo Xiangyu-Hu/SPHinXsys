@@ -70,33 +70,6 @@ class Dissipation<Base, DissipationType, RelationType<Parameters...>>
     DiscreteVariable<DataType> *dv_variable_;
 };
 
-// Note: ConservativeDamping method is not for obtaining accurate solution,
-// but for stabilization the system with a numerical damping coefficient.
-// This method is unconditionally stable and has zero-order consistency.
-// It is used to damp the high-frequency oscillations in the system.
-template <typename...>
-class ConservativeDamping;
-
-template <typename DampingType, typename... Parameters>
-class ConservativeDamping<Inner<Splitting, DampingType, Parameters...>>
-    : public Dissipation<Base, DampingType, Inner<Parameters...>>
-{
-    using DataType = typename DampingType::DataType;
-    using BaseDampingType = Dissipation<Base, DampingType, Inner<Parameters...>>;
-
-  public:
-    explicit ConservativeDamping(Inner<Parameters...> &inner_relation, const std::string &variable_name);
-    virtual ~ConservativeDamping() {};
-
-    class InteractKernel : public BaseDampingType::InteractKernel
-    {
-      public:
-        template <class ExecutionPolicy, class EncloserType>
-        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-        void interact(size_t index_i, Real dt = 0.0);
-    };
-};
-
 // Note: ProjectionDissipation method is for obtaining accurate solution for steady problems.
 // This method is unconditionally stable, but has small conservative errors.
 // Therefore, it is not used for transient system which requires conservation properties.
