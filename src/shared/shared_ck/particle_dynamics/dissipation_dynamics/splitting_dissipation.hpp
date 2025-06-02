@@ -88,31 +88,33 @@ template <typename DissipationType, typename... Parameters>
 void PairwiseDissipation<Inner<Splitting, DissipationType, Parameters...>>::InteractKernel::
     interact(size_t index_i, Real dt)
 {
+    Real split_dt = dt * 0.5;
     std::array<Real, MaximumNeighborhoodSize> parameter_b;
-    for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n) // forward sweep
+    // forward sweep
+    for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
     {
         UnsignedInt index_j = this->neighbor_index_[n];
         UnsignedInt neighbor_j = n - this->FirstNeighbor(index_i);
 
         DataType pair_difference = (this->variable_[index_i] - this->variable_[index_j]);
-        parameter_b[neighbor_j] = this->dis_coeff_(index_i, index_j) * this->dW_ij(index_i, index_j) *
-                                  this->Vol_[index_i] * this->Vol_[index_j] * 0.5 * dt /
+        parameter_b[neighbor_j] = 2.0 * this->dis_coeff_(index_i, index_j) * this->dW_ij(index_i, index_j) *
+                                  this->Vol_[index_i] * this->Vol_[index_j] * split_dt /
                                   this->vec_r_ij(index_i, index_j).norm();
 
-        DataType increment = parameter_b[neighbor_j] * pair_difference /
+        DataType increment = 0.5 * parameter_b[neighbor_j] * pair_difference /
                              (this->Vol_[index_i] * this->Vol_[index_j] -
                               parameter_b[neighbor_j] * (this->Vol_[index_i] + this->Vol_[index_j]));
         this->variable_[index_i] += increment * inverse_capacity_(index_i) * this->Vol_[index_j];
         this->variable_[index_j] -= increment * inverse_capacity_(index_j) * this->Vol_[index_i];
     }
-
-    for (UnsignedInt n = this->LastNeighbor(index_i); n != this->FirstNeighbor(index_i); --n) // backward sweep
+    // backward sweep
+    for (UnsignedInt n = this->LastNeighbor(index_i); n != this->FirstNeighbor(index_i); --n)
     {
         UnsignedInt index_j = this->neighbor_index_[n - 1];
         UnsignedInt neighbor_j = n - 1 - this->FirstNeighbor(index_i);
 
         DataType pair_difference = (this->variable_[index_i] - this->variable_[index_j]);
-        DataType increment = parameter_b[neighbor_j] * pair_difference /
+        DataType increment = 0.5 * parameter_b[neighbor_j] * pair_difference /
                              (this->Vol_[index_i] * this->Vol_[index_j] -
                               parameter_b[neighbor_j] * (this->Vol_[index_i] + this->Vol_[index_j]));
         this->variable_[index_i] += increment * inverse_capacity_(index_i) * this->Vol_[index_j];

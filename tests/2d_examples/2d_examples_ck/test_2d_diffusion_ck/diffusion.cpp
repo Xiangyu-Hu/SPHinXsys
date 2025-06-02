@@ -197,9 +197,10 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Statistics for CPU time
     //----------------------------------------------------------------------
-    TickCount t1 = TickCount::now();
-    TimeInterval interval_computing;
-    TimeInterval interval_output;
+    TickCount time_instance;
+    TimeInterval interval_pair_wise;
+    TimeInterval interval_projection;
+    TimeInterval interval_explicit;
     //----------------------------------------------------------------------
     //	First output before the main loop.
     //----------------------------------------------------------------------
@@ -215,18 +216,24 @@ int main(int ac, char *av[])
         //----------------------------------------------------------------------
         //	the fastest and most frequent acostic time stepping.
         //----------------------------------------------------------------------
-        TickCount time_instance = TickCount::now();
         Real diffusion_dt = time_stepper.incrementPhysicalTime(1.0 / 16.0);
+
+        time_instance = TickCount::now();
         diffusion_relaxation_pair_wise.exec(diffusion_dt);
+        interval_pair_wise += TickCount::now() - time_instance;
+
+        time_instance = TickCount::now();
         time_stepper.integrateMatchedTimeInterval(diffusion_relaxation_projection, diffusion_dt, 8);
+        interval_projection += TickCount::now() - time_instance;
+
+        time_instance = TickCount::now();
         time_stepper.integrateMatchedTimeInterval(diffusion_relaxation_explicit, diffusion_dt, get_time_step_size);
+        interval_explicit += TickCount::now() - time_instance;
         time_steps += 1;
-        interval_computing += TickCount::now() - time_instance;
 
         //----------------------------------------------------------------------
         //	the following are slower and less frequent time stepping.
         //----------------------------------------------------------------------
-        time_instance = TickCount::now();
         if (state_recording())
         {
             body_state_recorder.writeToFile();
@@ -244,11 +251,13 @@ int main(int ac, char *av[])
             std::cout << "N=" << time_steps << " Time: "
                       << time_stepper.getPhysicalTime() << "	dt: " << diffusion_dt << "\n";
         }
-        interval_output += TickCount::now() - time_instance;
     }
 
-    TimeInterval tt = TickCount::now() - t1 - interval_output;
+    TimeInterval tt = interval_pair_wise + interval_projection + interval_explicit;
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
+    std::cout << "Pair-wise diffusion time: " << interval_pair_wise.seconds() << " seconds." << std::endl;
+    std::cout << "Projection diffusion time: " << interval_projection.seconds() << " seconds." << std::endl;
+    std::cout << "Explicit diffusion time: " << interval_explicit.seconds() << " seconds." << std::endl;
 
     approximated_pair_wise = *observe_temperature_pair_wise.getObservedQuantity();
     approximated_projection = *observe_temperature_projection.getObservedQuantity();
