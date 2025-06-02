@@ -81,7 +81,7 @@ template <class UnaryFunc>
 void particle_for(const LoopRangeCK<ParallelDevicePolicy, Splitting> &loop_range, const UnaryFunc &unary_func)
 {
     auto &sycl_queue = execution_instance.getQueue();
-    
+
     for (int k = 0; k < NumberOfCellNeighbor; k++) // forward sweeping
     {
         const size_t loop_bound = loop_range.LoopBound(k);
@@ -94,7 +94,7 @@ void particle_for(const LoopRangeCK<ParallelDevicePolicy, Splitting> &loop_range
                                  } }); })
             .wait_and_throw();
     }
-    
+
     for (int k = NumberOfCellNeighbor - 1; k >= 0; --k) // backward sweeping
     {
         const size_t loop_bound = loop_range.LoopBound(k);

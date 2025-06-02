@@ -90,22 +90,22 @@ void PairwiseDissipation<Inner<Splitting, DissipationType, Parameters...>>::Inte
 {
     Real split_dt = dt * 0.5;
     std::array<Real, MaximumNeighborhoodSize> parameter_b;
+    DataType variable_i = this->variable_[index_i];
+    Real Vol_i = this->Vol_[index_i];
     // forward sweep
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
     {
         UnsignedInt index_j = this->neighbor_index_[n];
         UnsignedInt neighbor_j = n - this->FirstNeighbor(index_i);
 
-        DataType pair_difference = (this->variable_[index_i] - this->variable_[index_j]);
+        DataType pair_difference = (variable_i - this->variable_[index_j]);
         parameter_b[neighbor_j] = 2.0 * this->dis_coeff_(index_i, index_j) * this->dW_ij(index_i, index_j) *
-                                  this->Vol_[index_i] * this->Vol_[index_j] * split_dt /
-                                  this->vec_r_ij(index_i, index_j).norm();
+                                  split_dt / this->vec_r_ij(index_i, index_j).norm();
 
         DataType increment = 0.5 * parameter_b[neighbor_j] * pair_difference /
-                             (this->Vol_[index_i] * this->Vol_[index_j] -
-                              parameter_b[neighbor_j] * (this->Vol_[index_i] + this->Vol_[index_j]));
-        this->variable_[index_i] += increment * inverse_capacity_(index_i) * this->Vol_[index_j];
-        this->variable_[index_j] -= increment * inverse_capacity_(index_j) * this->Vol_[index_i];
+                             (1.0 - parameter_b[neighbor_j] * (Vol_i + this->Vol_[index_j]));
+        variable_i += increment * inverse_capacity_(index_i) * this->Vol_[index_j];
+        this->variable_[index_j] -= increment * inverse_capacity_(index_j) * Vol_i;
     }
     // backward sweep
     for (UnsignedInt n = this->LastNeighbor(index_i); n != this->FirstNeighbor(index_i); --n)
@@ -113,13 +113,13 @@ void PairwiseDissipation<Inner<Splitting, DissipationType, Parameters...>>::Inte
         UnsignedInt index_j = this->neighbor_index_[n - 1];
         UnsignedInt neighbor_j = n - 1 - this->FirstNeighbor(index_i);
 
-        DataType pair_difference = (this->variable_[index_i] - this->variable_[index_j]);
+        DataType pair_difference = (variable_i - this->variable_[index_j]);
         DataType increment = 0.5 * parameter_b[neighbor_j] * pair_difference /
-                             (this->Vol_[index_i] * this->Vol_[index_j] -
-                              parameter_b[neighbor_j] * (this->Vol_[index_i] + this->Vol_[index_j]));
-        this->variable_[index_i] += increment * inverse_capacity_(index_i) * this->Vol_[index_j];
-        this->variable_[index_j] -= increment * inverse_capacity_(index_j) * this->Vol_[index_i];
+                             (1.0 - parameter_b[neighbor_j] * (Vol_i + this->Vol_[index_j]));
+        variable_i += increment * inverse_capacity_(index_i) * this->Vol_[index_j];
+        this->variable_[index_j] -= increment * inverse_capacity_(index_j) * Vol_i;
     }
+    this->variable_[index_i] = variable_i;
 }
 //=================================================================================================//
 } // namespace SPH

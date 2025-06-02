@@ -229,6 +229,7 @@ int main(int ac, char *av[])
         time_instance = TickCount::now();
         time_stepper.integrateMatchedTimeInterval(diffusion_relaxation_explicit, diffusion_dt, get_time_step_size);
         interval_explicit += TickCount::now() - time_instance;
+
         time_steps += 1;
 
         //----------------------------------------------------------------------

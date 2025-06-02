@@ -141,6 +141,28 @@ class NeighborSearch : public Mesh
     UnsignedInt *cell_offset_;
 };
 
+class SplitMesh : public Mesh
+{
+  public:
+    SplitMesh(CellLinkedList &cell_linked_list);
+
+    UnsignedInt getSplitCellIndex(UnsignedInt k, UnsignedInt l) const
+    {
+        Arrayi cell_index = transfer1DtoMeshIndex(number_of_split_, k) +
+                            3 * transfer1DtoMeshIndex(all_splitted_cells_[k], l);
+        return LinearCellIndexFromCellIndex(cell_index);
+    };
+
+    Arrayi AllSplittedCells(UnsignedInt k) const
+    {
+        return all_splitted_cells_[k];
+    };
+
+  protected:
+    Arrayi all_splitted_cells_[NumberOfCellNeighbor];     /**< The split cell groups. */
+    Arrayi number_of_split_ = Arrayi(3 * Arrayi::Ones()); /**< The number of split cells in each dimension. */
+};
+
 /**
  * @class CellLinkedList
  * @brief Defining a mesh cell linked list for a body.
@@ -151,6 +173,7 @@ class CellLinkedList : public BaseCellLinkedList
   protected:
     Mesh *mesh_;
     SingularVariable<Mesh> *sv_mesh_;
+    SingularVariable<SplitMesh> *sv_split_mesh_; /**< Splitted mesh for the split algorithm. */
 
   public:
     CellLinkedList(BoundingBox tentative_bounds, Real grid_spacing,
@@ -158,6 +181,7 @@ class CellLinkedList : public BaseCellLinkedList
     ~CellLinkedList() {};
     Mesh &getMesh() { return *mesh_; };
     SingularVariable<Mesh> *svMesh() { return sv_mesh_; };
+    SingularVariable<SplitMesh> *svSplitMesh();
     void insertParticleIndex(UnsignedInt particle_index, const Vecd &particle_position) override;
     void InsertListDataEntry(UnsignedInt particle_index, const Vecd &particle_position) override;
     virtual ListData findNearestListDataEntry(const Vecd &position) override;
