@@ -6,25 +6,6 @@
 namespace SPH
 {
 //=================================================================================================//
-template <typename DissipationType, template <typename...> class RelationType, typename... Parameters>
-Dissipation<Base, DissipationType, RelationType<Parameters...>>::
-    Dissipation(RelationType<Parameters...> &relation, const std::string &variable_name)
-    : Interaction<RelationType<Parameters...>>(relation),
-      dissipation_model_(DynamicCast<DissipationType>(this, this->particles_->getBaseMaterial())),
-      dv_Vol_(this->particles_->template getVariableByName<Real>("VolumetricMeasure")),
-      dv_variable_(this->particles_->template getVariableByName<DataType>(variable_name)) {}
-//=================================================================================================//
-template <typename DissipationType, template <typename...> class RelationType, typename... Parameters>
-template <class ExecutionPolicy, class EncloserType, typename... Args>
-Dissipation<Base, DissipationType, RelationType<Parameters...>>::InteractKernel::
-    InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, Args &&...args)
-    : Interaction<RelationType<Parameters...>>::InteractKernel(
-          ex_policy, encloser, std::forward<Args>(args)...),
-      dis_coeff_(ex_policy, encloser.dissipation_model_),
-      Vol_(encloser.dv_Vol_->DelegatedData(ex_policy)),
-      variable_(encloser.dv_variable_->DelegatedData(ex_policy)),
-      zero_error_(ReduceReference<ReduceSum<DataType>>::value) {}
-//=================================================================================================//
 template <typename DissipationType, typename... Parameters>
 ProjectionDissipation<Inner<Splitting, DissipationType, Parameters...>>::
     ProjectionDissipation(Inner<Parameters...> &inner_relation, const std::string &variable_name)

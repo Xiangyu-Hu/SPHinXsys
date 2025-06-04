@@ -30,46 +30,10 @@
 #ifndef SPLITTING_DISSIPATION_H
 #define SPLITTING_DISSIPATION_H
 
-#include "base_general_dynamics.h"
-#include "interaction_ck.hpp"
-#include "particle_dynamics_dissipation.h"
+#include "base_dissipation.h"
 
 namespace SPH
 {
-template <typename... RelationTypes>
-class Dissipation;
-
-template <typename DissipationType, template <typename...> class RelationType, typename... Parameters>
-class Dissipation<Base, DissipationType, RelationType<Parameters...>>
-    : public Interaction<RelationType<Parameters...>>
-{
-    using DataType = typename DissipationType::DataType;
-    using InterParticleDiffusionCoeff = typename DissipationType::InterParticleDiffusionCoeff;
-
-  public:
-    explicit Dissipation(RelationType<Parameters...> &relation, const std::string &variable_name);
-    virtual ~Dissipation() {};
-
-    class InteractKernel
-        : public Interaction<RelationType<Parameters...>>::InteractKernel
-    {
-      public:
-        template <class ExecutionPolicy, class EncloserType, typename... Args>
-        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, Args &&...args);
-
-      protected:
-        InterParticleDiffusionCoeff dis_coeff_;
-        Real *Vol_;
-        DataType *variable_;
-        DataType zero_error_;
-    };
-
-  protected:
-    DissipationType &dissipation_model_;
-    DiscreteVariable<Real> *dv_Vol_;
-    DiscreteVariable<DataType> *dv_variable_;
-};
-
 // Note: ProjectionDissipation method is for obtaining accurate solution for steady problems.
 // This method is unconditionally stable, but has small conservative errors.
 // Therefore, it is not used for transient system which requires conservation properties.
