@@ -130,6 +130,17 @@ ImplicitDissipation<ExecutionPolicy, RelationType<DissipationType, TensorProduct
 //=================================================================================================//
 template <class ExecutionPolicy, template <typename...> class RelationType,
           typename DissipationType, typename TensorProductType, typename... Parameters>
+template <typename... ControlParameters, typename... RelationParameters, typename... Args>
+auto &ImplicitDissipation<ExecutionPolicy, RelationType<DissipationType, TensorProductType, Parameters...>>::
+    addContactInteraction(Contact<RelationParameters...> &contact_relation, Args &&...args)
+{
+    transformed_variable_.addContactInteraction(contact_relation, std::forward<Args>(args)...);
+    transformed_residue_.addContactInteraction(contact_relation, std::forward<Args>(args)...);
+    return *this;
+}
+//=================================================================================================//
+template <class ExecutionPolicy, template <typename...> class RelationType,
+          typename DissipationType, typename TensorProductType, typename... Parameters>
 void ImplicitDissipation<ExecutionPolicy, RelationType<DissipationType, TensorProductType, Parameters...>>::
     exec(Real dt)
 {

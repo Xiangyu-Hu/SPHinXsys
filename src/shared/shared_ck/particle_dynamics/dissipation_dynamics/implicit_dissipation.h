@@ -186,6 +186,8 @@ class ImplicitDissipation<ExecutionPolicy, RelationType<DissipationType, TensorP
     ImplicitDissipation(RelationType<Parameters...> &first_relation,
                         const std::string &variable_name,
                         Real sqr_norm_criteria);
+    template <typename... ControlParameters, typename... RelationParameters, typename... Args>
+    auto &addContactInteraction(Contact<RelationParameters...> &contact_relation, Args &&...args);
     virtual void exec(Real dt = 0.0) override;
 
   protected:
