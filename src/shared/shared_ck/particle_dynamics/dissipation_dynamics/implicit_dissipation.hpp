@@ -159,10 +159,11 @@ ImplicitDissipation<ExecutionPolicy, RelationType<DissipationType, Parameters...
       sqr_norm_criteria_(sqr_norm_criteria),
       dynamics_identifier_(first_relation.getDynamicsIdentifier()),
       sv_search_depth_("SearchDepth" + variable_name),
+      sv_total_real_particles_(dynamics_identifier_.getSPHBody().getBaseParticles().svTotalRealParticles()),
       dissipation_rhs_(dynamics_identifier_, variable_name),
       transformed_variable_(first_relation, variable_name),
-      transformed_residue_(first_relation, variable_name),
       full_dissipation_residue_(dynamics_identifier_, variable_name),
+      transformed_residue_(first_relation, "Residue" + variable_name),
       update_dissipation_residue_(dynamics_identifier_, variable_name, &sv_search_depth_),
       dissipation_residue_sum_(dynamics_identifier_, variable_name),
       transformed_dissipation_residue_sum_(dynamics_identifier_, variable_name),
@@ -194,7 +195,7 @@ void ImplicitDissipation<ExecutionPolicy, RelationType<DissipationType, Paramete
         iteration_count % 10 == 0 ? full_dissipation_residue_.exec() : update_dissipation_residue_.exec();
         transformed_residue_.exec(dt);
         TensorProductType<DataType> tensor_residue_sum = dissipation_residue_sum_.exec();
-        residue_norm = math::sqrt(getSquaredNorm(tensor_residue_sum));
+        residue_norm = math::sqrt(getSquaredNorm(tensor_residue_sum)) / sv_total_real_particles_->getValue();
         sv_search_depth_.setValue(tensor_residue_sum * getInverse(transformed_dissipation_residue_sum_.exec()));
         update_dissipation_solution_.exec();
         ++iteration_count;

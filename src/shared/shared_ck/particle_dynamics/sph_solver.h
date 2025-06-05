@@ -129,7 +129,7 @@ class TimeStepper
     };
 
     template <class Integrator>
-    void integrateMatchedTimeInterval(Integrator &integrator, Real interval, int sub_division)
+    void integrateMatchedTimeInterval(Integrator &integrator, Real interval, int sub_division = 1)
     {
         Real dt = interval / static_cast<Real>(sub_division);
         for (int i = 0; i < sub_division; ++i)
@@ -137,7 +137,7 @@ class TimeStepper
             integrator.exec(dt);
         }
     };
-    
+
     TriggerByInterval &addTriggerByInterval(Real initial_interval)
     {
 
