@@ -34,15 +34,6 @@ QuantitySum<DataType, DynamicsIdentifier>::ReduceKernel::
     ReduceKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : variable_(encloser.dv_variable_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
-template <typename DataType, typename TensorProductType, class DynamicsIdentifier>
-QuantityTensorProductSum<DataType, TensorProductType, DynamicsIdentifier>::
-    QuantityTensorProductSum(DynamicsIdentifier &identifier,
-                             const std::string &variable_name1,
-                             const std::string &variable_name2)
-    : BaseLocalDynamicsReduce<ReduceSum<TensorProductType>, DynamicsIdentifier>(identifier),
-      dv_variable1_(this->particles_->template getVariableByName<DataType>(variable_name1)),
-      dv_variable2_(this->particles_->template getVariableByName<DataType>(variable_name1)) {}
-//=================================================================================================//
 template <typename DataType, class DynamicsIdentifier>
 QuantityAverage<DataType, DynamicsIdentifier>::
     QuantityAverage(DynamicsIdentifier &identifier, const std::string &variable_name)

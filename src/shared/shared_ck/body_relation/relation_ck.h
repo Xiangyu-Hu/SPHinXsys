@@ -98,6 +98,7 @@ template <typename DynamicsIdentifier, typename NeighborMethod>
 class Inner<DynamicsIdentifier, NeighborMethod> : public Relation<NeighborMethod>
 {
   public:
+    typedef DynamicsIdentifier SourceType;
     template <typename... Args>
     explicit Inner(DynamicsIdentifier &identifier, Args &&...args);
     virtual ~Inner() {};

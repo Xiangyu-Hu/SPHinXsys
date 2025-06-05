@@ -143,9 +143,9 @@ int main(int ac, char *av[])
     auto &initial_condition_projection =
         main_methods.addStateDynamics<
             InitialCondition<SPHBody, InitialDistribution>>(diffusion_body, phi_projection);
-    auto &diffusion_relaxation_projection =
-        main_methods.addInteractionDynamics<
-            ProjectionDissipation, Splitting, IsotropicDiffusion>(diffusion_body_inner, phi_projection);
+    using MainExecutionPolicy = execution::ParallelPolicy; // define execution policy for this case
+    ImplicitDissipation<MainExecutionPolicy, Inner<IsotropicDiffusion>>
+        diffusion_relaxation_projection(diffusion_body_inner, phi_projection, 1.0e-6);
 
     IsotropicDiffusion isotropic_diffusion_explict(phi_explicit, diffusion_coeff);
     auto &initial_condition_explicit =

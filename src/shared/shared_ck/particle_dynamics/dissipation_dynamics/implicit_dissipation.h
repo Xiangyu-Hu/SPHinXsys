@@ -35,6 +35,59 @@
 
 namespace SPH
 {
+template <typename...>
+struct TensorProductReturnType;
+
+template <>
+struct TensorProductReturnType<Real>
+{
+    typedef Real type;
+};
+
+template <int N>
+struct TensorProductReturnType<Eigen::Matrix<Real, N, 1>>
+{
+    typedef Eigen::Matrix<Real, N, N> type;
+};
+
+template <typename DataType>
+using TensorProductType = typename TensorProductReturnType<DataType>::type;
+
+template <typename DataType, class DynamicsIdentifier>
+class QuantityTensorProductSum
+    : public BaseLocalDynamicsReduce<
+          ReduceSum<TensorProductType<DataType>>, DynamicsIdentifier>
+{
+    using BaseReduceDynamics = BaseLocalDynamicsReduce<
+        ReduceSum<TensorProductType<DataType>>, DynamicsIdentifier>;
+
+  public:
+    QuantityTensorProductSum(DynamicsIdentifier &identifier,
+                             const std::string &variable_name1,
+                             const std::string &variable_name2);
+    virtual ~QuantityTensorProductSum() {};
+
+    class ReduceKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        ReduceKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+
+        TensorProductType<DataType> reduce(size_t index_i, Real dt = 0.0)
+        {
+            return tensorProduct(variable1_[index_i], variable2_[index_i]);
+        };
+
+      protected:
+        DataType *variable1_;
+        DataType *variable2_;
+    };
+
+  protected:
+    DiscreteVariable<DataType> *dv_variable1_;
+    DiscreteVariable<DataType> *dv_variable2_;
+};
+
 // Note: DissipativeTransform method is for obtaining the matrix multiplication
 // between the dissipation matrix and a variable, which can be the dissipation
 // variable or residue.
@@ -68,7 +121,7 @@ class DissipativeTransform<Inner<DissipationType, Parameters...>>
 };
 
 template <typename DataType, class DynamicsIdentifier>
-class DissipationRHS : BaseLocalDynamics<DynamicsIdentifier>
+class DissipationRHS : public BaseLocalDynamics<DynamicsIdentifier>
 {
   public:
     DissipationRHS(DynamicsIdentifier &identifier, const std::string &variable_name);
@@ -92,7 +145,7 @@ class DissipationRHS : BaseLocalDynamics<DynamicsIdentifier>
 };
 
 template <typename DataType, class DynamicsIdentifier>
-class FullDissipationResidue : BaseLocalDynamics<DynamicsIdentifier>
+class FullDissipationResidue : public BaseLocalDynamics<DynamicsIdentifier>
 {
   public:
     FullDissipationResidue(DynamicsIdentifier &identifier, const std::string &variable_name);
@@ -117,13 +170,13 @@ class FullDissipationResidue : BaseLocalDynamics<DynamicsIdentifier>
     DiscreteVariable<DataType> *dv_transformed_;
 };
 
-template <typename DataType, typename TensorProductType, class DynamicsIdentifier>
-class UpdateDissipationResidue : BaseLocalDynamics<DynamicsIdentifier>
+template <typename DataType, class DynamicsIdentifier>
+class UpdateDissipationResidue : public BaseLocalDynamics<DynamicsIdentifier>
 {
   public:
     UpdateDissipationResidue(DynamicsIdentifier &identifier,
                              const std::string &variable_name,
-                             SingularVariable<TensorProductType> *sv_search_depth);
+                             SingularVariable<TensorProductType<DataType>> *sv_search_depth);
     virtual ~UpdateDissipationResidue() {};
 
     class UpdateKernel
@@ -136,22 +189,22 @@ class UpdateDissipationResidue : BaseLocalDynamics<DynamicsIdentifier>
       protected:
         DataType *residue_;
         DataType *transformed_;
-        TensorProductType *search_depth_;
+        TensorProductType<DataType> *search_depth_;
     };
 
   protected:
     DiscreteVariable<DataType> *dv_residue_;
     DiscreteVariable<DataType> *dv_transformed_;
-    SingularVariable<TensorProductType> *sv_search_depth_;
+    SingularVariable<TensorProductType<DataType>> *sv_search_depth_;
 };
 
-template <typename DataType, typename TensorProductType, class DynamicsIdentifier>
-class UpdateDissipationSolution : BaseLocalDynamics<DynamicsIdentifier>
+template <typename DataType, class DynamicsIdentifier>
+class UpdateDissipationSolution : public BaseLocalDynamics<DynamicsIdentifier>
 {
   public:
     UpdateDissipationSolution(DynamicsIdentifier &identifier,
                               const std::string &variable_name,
-                              SingularVariable<TensorProductType> *sv_search_depth);
+                              SingularVariable<TensorProductType<DataType>> *sv_search_depth);
     virtual ~UpdateDissipationSolution() {};
 
     class UpdateKernel
@@ -164,33 +217,32 @@ class UpdateDissipationSolution : BaseLocalDynamics<DynamicsIdentifier>
       protected:
         DataType *residue_;
         DataType *variable_;
-        TensorProductType *search_depth_;
+        TensorProductType<DataType> *search_depth_;
     };
 
   protected:
     DiscreteVariable<DataType> *dv_residue_;
     DiscreteVariable<DataType> *dv_variable_;
-    SingularVariable<TensorProductType> *sv_search_depth_;
+    SingularVariable<TensorProductType<DataType>> *sv_search_depth_;
 };
 
-template <typename DataType, typename TensorProductType, class DynamicsIdentifier>
-class DissipationResidueSum
-    : public QuantityTensorProductSum<DataType, TensorProductType, DynamicsIdentifier>
+template <typename DataType, class DynamicsIdentifier>
+class DissipationResidueSum : public QuantityTensorProductSum<DataType, DynamicsIdentifier>
 {
   public:
     DissipationResidueSum(DynamicsIdentifier &identifier, const std::string &variable_name)
-        : QuantityTensorProductSum<DataType, TensorProductType, DynamicsIdentifier>(
+        : QuantityTensorProductSum<DataType, DynamicsIdentifier>(
               identifier, "Residue" + variable_name, "Residue" + variable_name) {};
     virtual ~DissipationResidueSum() {};
 };
 
-template <typename DataType, typename TensorProductType, class DynamicsIdentifier>
+template <typename DataType, class DynamicsIdentifier>
 class TransformedDissipationResidueSum
-    : public QuantityTensorProductSum<DataType, TensorProductType, DynamicsIdentifier>
+    : public QuantityTensorProductSum<DataType, DynamicsIdentifier>
 {
   public:
     TransformedDissipationResidueSum(DynamicsIdentifier &identifier, const std::string &variable_name)
-        : QuantityTensorProductSum<DataType, TensorProductType, DynamicsIdentifier>(
+        : QuantityTensorProductSum<DataType, DynamicsIdentifier>(
               identifier, "Residue" + variable_name, "TransformedResidue" + variable_name) {};
     virtual ~TransformedDissipationResidueSum() {};
 };
@@ -199,12 +251,12 @@ template <typename...>
 class ImplicitDissipation;
 
 template <class ExecutionPolicy, template <typename...> class RelationType,
-          typename DissipationType, typename TensorProductType, typename... Parameters>
-class ImplicitDissipation<ExecutionPolicy, RelationType<DissipationType, TensorProductType, Parameters...>>
+          typename DissipationType, typename... Parameters>
+class ImplicitDissipation<ExecutionPolicy, RelationType<DissipationType, Parameters...>>
     : public BaseDynamics<void>
 {
     using DataType = typename DissipationType::DataType;
-    using DynamicsIdentifier = typename RelationType<Parameters...>::Identifier;
+    using DynamicsIdentifier = typename RelationType<Parameters...>::SourceType;
 
   public:
     ImplicitDissipation(RelationType<Parameters...> &first_relation,
@@ -217,28 +269,15 @@ class ImplicitDissipation<ExecutionPolicy, RelationType<DissipationType, TensorP
   protected:
     Real sqr_norm_criteria_;
     DynamicsIdentifier &dynamics_identifier_;
-    SingularVariable<TensorProductType> sv_search_depth_;
-    DissipationRHS<DataType, DynamicsIdentifier> dissipation_rhs_;
-    InteractionDynamicsCK<
-        ExecutionPolicy, DissipativeTransform<RelationType<DissipationType, Parameters...>>>
-        transformed_variable_;
-    InteractionDynamicsCK<
-        ExecutionPolicy, DissipativeTransform<RelationType<DissipationType, Parameters...>>>
-        transformed_residue_;
-    StateDynamics<ExecutionPolicy, FullDissipationResidue<DataType, DynamicsIdentifier>>
-        full_dissipation_residue_;
-    StateDynamics<
-        ExecutionPolicy, UpdateDissipationResidue<DataType, TensorProductType, DynamicsIdentifier>>
-        update_dissipation_residue_;
-    StateDynamics<
-        ExecutionPolicy, DissipationResidueSum<DataType, TensorProductType, DynamicsIdentifier>>
-        dissipation_residue_sum_;
-    StateDynamics<
-        ExecutionPolicy, TransformedDissipationResidueSum<DataType, TensorProductType, DynamicsIdentifier>>
-        transformed_dissipation_residue_sum_;
-    StateDynamics<
-        ExecutionPolicy, UpdateDissipationSolution<DataType, TensorProductType, DynamicsIdentifier>>
-        update_dissipation_solution_;
+    SingularVariable<TensorProductType<DataType>> sv_search_depth_;
+    StateDynamics<ExecutionPolicy, DissipationRHS<DataType, DynamicsIdentifier>> dissipation_rhs_;
+    InteractionDynamicsCK<ExecutionPolicy, DissipativeTransform<RelationType<DissipationType, Parameters...>>> transformed_variable_;
+    InteractionDynamicsCK<ExecutionPolicy, DissipativeTransform<RelationType<DissipationType, Parameters...>>> transformed_residue_;
+    StateDynamics<ExecutionPolicy, FullDissipationResidue<DataType, DynamicsIdentifier>> full_dissipation_residue_;
+    StateDynamics<ExecutionPolicy, UpdateDissipationResidue<DataType, DynamicsIdentifier>> update_dissipation_residue_;
+    ReduceDynamicsCK<ExecutionPolicy, DissipationResidueSum<DataType, DynamicsIdentifier>> dissipation_residue_sum_;
+    ReduceDynamicsCK<ExecutionPolicy, TransformedDissipationResidueSum<DataType, DynamicsIdentifier>> transformed_dissipation_residue_sum_;
+    StateDynamics<ExecutionPolicy, UpdateDissipationSolution<DataType, DynamicsIdentifier>> update_dissipation_solution_;
 };
 } // namespace SPH
 #endif // IMPLICIT_DISSIPATION_H

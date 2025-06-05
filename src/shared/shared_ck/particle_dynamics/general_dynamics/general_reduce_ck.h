@@ -116,38 +116,6 @@ class QuantitySum : public BaseLocalDynamicsReduce<ReduceSum<DataType>, Dynamics
     DiscreteVariable<DataType> *dv_variable_;
 };
 
-template <typename DataType, typename TensorProductType, class DynamicsIdentifier>
-class QuantityTensorProductSum
-    : public BaseLocalDynamicsReduce<ReduceSum<TensorProductType>, DynamicsIdentifier>
-{
-  public:
-    QuantityTensorProductSum(DynamicsIdentifier &identifier,
-                             const std::string &variable_name1,
-                             const std::string &variable_name2);
-    virtual ~QuantityTensorProductSum() {};
-
-    class ReduceKernel
-    {
-      public:
-        template <class ExecutionPolicy, class EncloserType>
-        ReduceKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-
-        TensorProductType reduce(size_t index_i, Real dt = 0.0)
-        {
-            return transferToMatrix(variable1_[index_i]) *
-                   transferToMatrix(variable2_[index_i]).transpose();
-        };
-
-      protected:
-        DataType *variable1_;
-        DataType *variable2_;
-    };
-
-  protected:
-    DiscreteVariable<DataType> *dv_variable1_;
-    DiscreteVariable<DataType> *dv_variable2_;
-};
-
 template <typename DataType, class DynamicsIdentifier = SPHBody>
 class QuantityAverage : public BaseLocalDynamicsReduce<ReduceSum<std::pair<DataType, Real>>, DynamicsIdentifier>
 {
