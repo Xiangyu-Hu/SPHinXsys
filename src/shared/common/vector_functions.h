@@ -166,15 +166,17 @@ inline Vec6d vectorizeSymMatrix(const Mat3d &input)
     return Vec6d(input(0, 0), input(1, 1), input(2, 2), input(0, 1), input(1, 2), input(2, 0));
 };
 
-inline Eigen::Matrix<Real, 1, 1> transferToMatrix(Real value)
+template <typename DataType>
+DataType tensorProduct(const DataType &value1, const Real &value2)
 {
-    return Eigen::Matrix<Real, 1, 1>::Identity() * value;
+    return value1 * value2;
 };
 
-template <int N, int M>
-Eigen::Matrix<Real, N, M> transferToMatrix(const Eigen::Matrix<Real, N, M> &value)
+template <int N, int M, int O>
+Eigen::Matrix<Real, N, M> tensorProduct(const Eigen::Matrix<Real, N, O> &value1,
+                                        const Eigen::Matrix<Real, M, O> &value2)
 {
-    return value;
+    return value1 * value2.transpose();
 };
 } // namespace SPH
 #endif // VECTOR_FUNCTIONS_H
