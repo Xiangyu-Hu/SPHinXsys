@@ -68,6 +68,30 @@ class DissipativeTransform<Inner<DissipationType, Parameters...>>
 };
 
 template <typename DataType, class DynamicsIdentifier>
+class DissipationRHS : BaseLocalDynamics<DynamicsIdentifier>
+{
+  public:
+    DissipationRHS(DynamicsIdentifier &identifier, const std::string &variable_name);
+    virtual ~DissipationRHS() {};
+
+    class UpdateKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+        void update(size_t index_i, Real dt = 0.0);
+
+      protected:
+        DataType *variable_;
+        DataType *old_state_;
+    };
+
+  protected:
+    DiscreteVariable<DataType> *dv_variable_;
+    DiscreteVariable<DataType> *dv_old_state_;
+};
+
+template <typename DataType, class DynamicsIdentifier>
 class FullDissipationResidue : BaseLocalDynamics<DynamicsIdentifier>
 {
   public:
@@ -83,13 +107,13 @@ class FullDissipationResidue : BaseLocalDynamics<DynamicsIdentifier>
 
       protected:
         DataType *residue_;
-        DataType *variable_;
+        DataType *old_state_;
         DataType *transformed_;
     };
 
   protected:
     DiscreteVariable<DataType> *dv_residue_;
-    DiscreteVariable<DataType> *dv_variable_;
+    DiscreteVariable<DataType> *dv_old_state_;
     DiscreteVariable<DataType> *dv_transformed_;
 };
 
@@ -194,11 +218,12 @@ class ImplicitDissipation<ExecutionPolicy, RelationType<DissipationType, TensorP
     Real sqr_norm_criteria_;
     DynamicsIdentifier &dynamics_identifier_;
     SingularVariable<TensorProductType> sv_search_depth_;
+    DissipationRHS<DataType, DynamicsIdentifier> dissipation_rhs_;
     InteractionDynamicsCK<
-        ExecutionPolicy, DissipativeTransform<RelationType<DissipationType, typename... Parameters>>>
+        ExecutionPolicy, DissipativeTransform<RelationType<DissipationType, Parameters...>>>
         transformed_variable_;
     InteractionDynamicsCK<
-        ExecutionPolicy, DissipativeTransform<RelationType<DissipationType, typename... Parameters>>>
+        ExecutionPolicy, DissipativeTransform<RelationType<DissipationType, Parameters...>>>
         transformed_residue_;
     StateDynamics<ExecutionPolicy, FullDissipationResidue<DataType, DynamicsIdentifier>>
         full_dissipation_residue_;

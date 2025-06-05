@@ -22,7 +22,7 @@ void ProjectionDissipation<Inner<Splitting, DissipationType, Parameters...>>::In
     interact(size_t index_i, Real dt)
 {
     // compute the error and parameters
-    DataType error = this->zero_error_;
+    DataType error = this->zero_value_;
     Real parameter_a = 0.0;
     std::array<Real, MaximumNeighborhoodSize> parameter_b;
     Real parameter_c = 0.0;
