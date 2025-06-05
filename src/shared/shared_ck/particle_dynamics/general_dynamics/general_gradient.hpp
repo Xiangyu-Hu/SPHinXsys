@@ -38,7 +38,7 @@ void LinearGradient<Inner<DataType, Parameters...>>::
         Vecd corrected_gradW_ijV_j = this->dW_ij(index_i, index_j) * this->Vol_[index_j] *
                                      this->B_[index_i] * this->e_ij(index_i, index_j);
         DataType difference = this->variable_[index_i] - this->variable_[index_j];
-        summation -= corrected_gradW_ijV_j * transferToMatrix(difference).transpose();
+        summation -= tensorProduct(corrected_gradW_ijV_j, difference);
     }
     this->gradient_[index_i] = summation;
 }
@@ -76,7 +76,7 @@ void LinearGradient<Contact<DataType, Parameters...>>::
         Vecd corrected_gradW_ijV_j = this->dW_ij(index_i, index_j) * contact_Vol_[index_j] *
                                      this->B_[index_i] * this->e_ij(index_i, index_j);
         DataType difference = this->variable_[index_i] - contact_variable_[index_j];
-        summation -= corrected_gradW_ijV_j * transferToMatrix(difference).transpose();
+        summation -= tensorProduct(corrected_gradW_ijV_j, difference);
     }
     this->gradient_[index_i] += summation;
 }
@@ -111,7 +111,7 @@ void Hessian<Inner<DataType, Parameters...>>::
         DataType corrected_difference = this->variable_[index_i] - this->variable_[index_j] -
                                         this->gradient_[index_i].dot(r_ij);
         summation += 2.0 * corrected_dW_ijV_j / math::pow(r_ij.squaredNorm(), 2) *
-                     vectorizeTensorSquare(r_ij) * transferToMatrix(corrected_difference).transpose();
+                     tensorProduct(vectorizeTensorSquare(r_ij), corrected_difference);
     }
     this->hessian_[index_i] = this->M_[index_i] * summation;
 }
@@ -152,7 +152,7 @@ void Hessian<Contact<DataType, Parameters...>>::
         DataType corrected_difference = this->variable_[index_i] - contact_variable_[index_j] -
                                         this->gradient_[index_i].dot(r_ij);
         summation += 2.0 * corrected_dW_ijV_j / math::pow(r_ij.squaredNorm(), 2) *
-                     vectorizeTensorSquare(r_ij) * transferToMatrix(corrected_difference).transpose();
+                     tensorProduct(vectorizeTensorSquare(r_ij), corrected_difference);
     }
     this->hessian_[index_i] += this->M_[index_i] * summation;
 }
