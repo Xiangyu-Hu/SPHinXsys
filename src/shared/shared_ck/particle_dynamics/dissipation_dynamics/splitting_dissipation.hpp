@@ -103,8 +103,8 @@ void PairwiseDissipation<Inner<Splitting, DissipationType, Parameters...>>::Inte
     this->variable_[index_i] = variable_i;
 }
 //=================================================================================================//
-template <class DissipationType, template <typename...> class BoundaryType, typename... Parameters>
-PairwiseDissipation<Contact<BoundaryType<DissipationType>, Parameters...>>::
+template <class DissipationType, typename... Parameters>
+PairwiseDissipation<Contact<Dirichlet<DissipationType>, Parameters...>>::
     PairwiseDissipation(Contact<Parameters...> &contact_relation, const std::string &variable_name)
     : BaseInteraction(contact_relation, variable_name)
 {
@@ -112,14 +112,34 @@ PairwiseDissipation<Contact<BoundaryType<DissipationType>, Parameters...>>::
     {
         dv_contact_Vol_.push_back(
             this->contact_particles_[k]->template getVariableByName<Real>("VolumetricMeasure"));
-        contact_dv_transfer_array_.push_back(
-            contact_transfer_array_ptrs_keeper_.template createPtr<DiscreteVariableArray<DataType>>(
-                this->particles_->template registerStateVariables<DataType>(
-                    variable_name, "TransferWith" + this->sph_body_.getName())));
-        contact_boundary_method_.push_back(
-            boundary_ptrs_keeper_.template createPtr<BoundaryType<DissipationType>>(
-                *this, this->contact_particles_[k]));
+        contact_dv_variable_.push_back(
+            this->contact_particles_[k]->template getVariableByName<DataType>(variable_name));
     }
+}
+//=================================================================================================//
+template <class DissipationType, typename... Parameters>
+template <class ExecutionPolicy, class EncloserType>
+PairwiseDissipation<Contact<Dirichlet<DissipationType>, Parameters...>>::
+    InteractKernel::InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+    : BaseInteraction::InteractKernel(ex_policy, encloser, contact_index),
+      inverse_capacity_(encloser.dissipation_model_),
+      contact_Vol_(encloser.dv_contact_Vol_[contact_index]->DelegatedData(ex_policy)),
+      contact_variable_(encloser.contact_dv_variable_[contact_index]->DelegatedDataArray(ex_policy)) {}
+//=================================================================================================//
+template <class DissipationType, template <typename...> class Dirichlet, typename... Parameters>
+void PairwiseDissipation<Contact<Dirichlet<DissipationType>, Parameters...>>::
+    InteractKernel::interact(UnsignedInt index_i, Real dt)
+{
+    DataType boundary_flux = this->zero_value_;
+    for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
+    {
+        UnsignedInt index_j = this->neighbor_index_[n];
+        boundary_flux += 2.0 * this->dis_coeff_(index_i, index_i) * dt *
+                         (this->variable_[index_i] - this->contact_variable_[index_j]) *
+                         this->dW_ij(index_i, index_j) * this->contact_Vol_[index_j] /
+                         this->vec_r_ij(index_i, index_j).norm();
+    }
+    this->variable[index_i] += inverse_capacity_(index_j) * boundary_flux;
 }
 //=================================================================================================//
 } // namespace SPH
