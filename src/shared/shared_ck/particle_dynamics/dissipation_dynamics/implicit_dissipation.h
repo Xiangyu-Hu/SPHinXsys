@@ -273,9 +273,9 @@ class ImplicitDissipation<ExecutionPolicy, RelationType<DissipationType, Paramet
     SingularVariable<UnsignedInt> *sv_total_real_particles_;
     StateDynamics<ExecutionPolicy, DissipationRHS<DataType, DynamicsIdentifier>> dissipation_rhs_;
     InteractionDynamicsCK<ExecutionPolicy, DissipativeTransform<RelationType<DissipationType, Parameters...>>> transformed_variable_;
-    StateDynamics<ExecutionPolicy, FullDissipationResidue<DataType, DynamicsIdentifier>> full_dissipation_residue_;
+    StateDynamics<ExecutionPolicy, FullDissipationResidue<DataType, DynamicsIdentifier>> full_residue_;
     InteractionDynamicsCK<ExecutionPolicy, DissipativeTransform<RelationType<DissipationType, Parameters...>>> transformed_residue_;
-    StateDynamics<ExecutionPolicy, UpdateDissipationResidue<DataType, DynamicsIdentifier>> update_dissipation_residue_;
+    StateDynamics<ExecutionPolicy, UpdateDissipationResidue<DataType, DynamicsIdentifier>> update_residue_;
     ReduceDynamicsCK<ExecutionPolicy, DissipationResidueSum<DataType, DynamicsIdentifier>> dissipation_residue_sum_;
     ReduceDynamicsCK<ExecutionPolicy, TransformedDissipationResidueSum<DataType, DynamicsIdentifier>> transformed_dissipation_residue_sum_;
     StateDynamics<ExecutionPolicy, UpdateDissipationSolution<DataType, DynamicsIdentifier>> update_dissipation_solution_;

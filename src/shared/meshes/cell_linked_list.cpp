@@ -156,7 +156,8 @@ SplitMesh::SplitMesh(CellLinkedList &cell_linked_list)
 //=================================================================================================//
 CellLinkedList::CellLinkedList(BoundingBox tentative_bounds, Real grid_spacing,
                                BaseParticles &base_particles, SPHAdaptation &sph_adaptation)
-    : BaseCellLinkedList(base_particles, sph_adaptation), mesh_(nullptr)
+    : BaseCellLinkedList(base_particles, sph_adaptation),
+      mesh_(nullptr), sv_split_mesh_(nullptr)
 {
     sv_mesh_ = mesh_ptrs_keeper_.createPtr<SingularVariable<Mesh>>(
         "BackgroundMesh", tentative_bounds, grid_spacing, 2);
