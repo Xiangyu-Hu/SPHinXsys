@@ -13,7 +13,7 @@ QuantityTensorProductAverage<DataType, DynamicsIdentifier>::
                                  const std::string &variable_name2)
     : BaseReduceDynamics(identifier),
       dv_variable1_(this->particles_->template getVariableByName<DataType>(variable_name1)),
-      dv_variable2_(this->particles_->template getVariableByName<DataType>(variable_name1)) {}
+      dv_variable2_(this->particles_->template getVariableByName<DataType>(variable_name2)) {}
 //=================================================================================================//
 template <typename DataType, class DynamicsIdentifier>
 template <class ExecutionPolicy, class EncloserType>
@@ -40,14 +40,14 @@ template <typename DissipationType, typename... Parameters>
 void DissipativeTransform<Inner<DissipationType, Parameters...>>::InteractKernel::
     interact(size_t index_i, Real dt)
 {
-    // compute the error and parameters
-    DataType result = -this->variable_[index_i];
+    // the transform matrix should be symmetric and positive definite
+    DataType result = this->variable_[index_i];
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
     {
         UnsignedInt index_j = this->neighbor_index_[n];
 
         DataType pair_difference = this->variable_[index_i] - this->variable_[index_j];
-        result += 2.0 * this->dis_coeff_(index_i, index_j) * pair_difference *
+        result -= 2.0 * this->dis_coeff_(index_i, index_j) * pair_difference *
                   this->dW_ij(index_i, index_j) * this->Vol_[index_j] * dt /
                   this->vec_r_ij(index_i, index_j).norm();
     }
@@ -58,30 +58,22 @@ template <typename DataType, class DynamicsIdentifier>
 DissipationRHS<DataType, DynamicsIdentifier>::
     DissipationRHS(DynamicsIdentifier &identifier, const std::string &variable_name)
     : BaseLocalDynamics<DynamicsIdentifier>(identifier),
-      dv_variable_(this->particles_->template registerStateVariableOnly<DataType>(variable_name)),
-      dv_old_state_(this->particles_->template registerStateVariableOnlyFrom<DataType>(
-          "Old" + variable_name, variable_name)) {}
+      dv_variable_(this->particles_->template getVariableByName<DataType>(variable_name)),
+      dv_rhs_(this->particles_->template registerStateVariableOnly<DataType>("RHS" + variable_name)) {}
 //=================================================================================================//
 template <typename DataType, class DynamicsIdentifier>
 template <class ExecutionPolicy, class EncloserType>
 DissipationRHS<DataType, DynamicsIdentifier>::UpdateKernel::
     UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : variable_(encloser.dv_variable_->DelegatedData(ex_policy)),
-      old_state_(encloser.dv_old_state_->DelegatedData(ex_policy)) {}
-//=================================================================================================//
-template <typename DataType, class DynamicsIdentifier>
-void DissipationRHS<DataType, DynamicsIdentifier>::UpdateKernel::
-    update(size_t index_i, Real dt)
-{
-    old_state_[index_i] = variable_[index_i];
-}
+      rhs_(encloser.dv_rhs_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <typename DataType, class DynamicsIdentifier>
 FullDissipationResidue<DataType, DynamicsIdentifier>::
     FullDissipationResidue(DynamicsIdentifier &identifier, const std::string &variable_name)
     : BaseLocalDynamics<DynamicsIdentifier>(identifier),
       dv_residue_(this->particles_->template registerStateVariableOnly<DataType>("Residue" + variable_name)),
-      dv_old_state_(this->particles_->template getVariableByName<DataType>("Old" + variable_name)),
+      dv_rhs_(this->particles_->template getVariableByName<DataType>("RHS" + variable_name)),
       dv_transformed_(this->particles_->template getVariableByName<DataType>("Transformed" + variable_name)) {}
 //=================================================================================================//
 template <typename DataType, class DynamicsIdentifier>
@@ -89,15 +81,8 @@ template <class ExecutionPolicy, class EncloserType>
 FullDissipationResidue<DataType, DynamicsIdentifier>::UpdateKernel::
     UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : residue_(encloser.dv_residue_->DelegatedData(ex_policy)),
-      old_state_(encloser.dv_old_state_->DelegatedData(ex_policy)),
+      rhs_(encloser.dv_rhs_->DelegatedData(ex_policy)),
       transformed_(encloser.dv_transformed_->DelegatedData(ex_policy)) {}
-//=================================================================================================//
-template <typename DataType, class DynamicsIdentifier>
-void FullDissipationResidue<DataType, DynamicsIdentifier>::UpdateKernel::
-    update(size_t index_i, Real dt)
-{
-    residue_[index_i] = old_state_[index_i] - transformed_[index_i];
-}
 //=================================================================================================//
 template <typename DataType, class DynamicsIdentifier>
 UpdateDissipationResidue<DataType, DynamicsIdentifier>::
@@ -105,7 +90,7 @@ UpdateDissipationResidue<DataType, DynamicsIdentifier>::
                              const std::string &variable_name,
                              SingularVariable<TensorProductType<DataType>> *sv_search_depth)
     : BaseLocalDynamics<DynamicsIdentifier>(identifier),
-      dv_residue_(this->particles_->template registerStateVariableOnly<DataType>("Residue" + variable_name)),
+      dv_residue_(this->particles_->template getVariableByName<DataType>("Residue" + variable_name)),
       dv_transformed_(this->particles_->template getVariableByName<DataType>(
           "Transformed" + dv_residue_->Name())),
       sv_search_depth_(sv_search_depth) {}
@@ -117,13 +102,6 @@ UpdateDissipationResidue<DataType, DynamicsIdentifier>::UpdateKernel::
     : residue_(encloser.dv_residue_->DelegatedData(ex_policy)),
       transformed_(encloser.dv_transformed_->DelegatedData(ex_policy)),
       search_depth_(encloser.sv_search_depth_->DelegatedData(ex_policy)) {}
-//=================================================================================================//
-template <typename DataType, class DynamicsIdentifier>
-void UpdateDissipationResidue<DataType, DynamicsIdentifier>::UpdateKernel::
-    update(size_t index_i, Real dt)
-{
-    residue_[index_i] -= (*search_depth_) * transformed_[index_i];
-}
 //=================================================================================================//
 template <typename DataType, class DynamicsIdentifier>
 UpdateDissipationSolution<DataType, DynamicsIdentifier>::
@@ -142,13 +120,6 @@ UpdateDissipationSolution<DataType, DynamicsIdentifier>::
     : residue_(encloser.dv_residue_->DelegatedData(ex_policy)),
       variable_(encloser.dv_variable_->DelegatedData(ex_policy)),
       search_depth_(encloser.sv_search_depth_->DelegatedData(ex_policy)) {}
-//=================================================================================================//
-template <typename DataType, class DynamicsIdentifier>
-void UpdateDissipationSolution<DataType, DynamicsIdentifier>::
-    UpdateKernel::update(size_t index_i, Real dt)
-{
-    variable_[index_i] += (*search_depth_) * residue_[index_i];
-}
 //=================================================================================================//
 template <class ExecutionPolicy, template <typename...> class RelationType,
           typename DissipationType, typename... Parameters>
@@ -202,10 +173,10 @@ void ImplicitDissipation<ExecutionPolicy, RelationType<DissipationType, Paramete
         TensorProductType<DataType> tensor_residue_average = residue_average_.exec();
         residue_norm = math::sqrt(getSquaredNorm(tensor_residue_average));
         transformed_residue_.exec(dt);
-        sv_search_depth_.setValue(tensor_residue_average * getInverse(transformed_residue_average_.exec()));
+        TensorProductType<DataType> tensor_transformed_residue_average = transformed_residue_average_.exec();
+        sv_search_depth_.setValue(tensor_residue_average * getInverse(tensor_transformed_residue_average));
         update_dissipation_solution_.exec();
         ++iteration_count;
-        std::cout << "Iteration: " << iteration_count << ", Residue Norm: " << residue_norm << std::endl;
         if (iteration_count > 100)
         {
             std::cout << "Implicit dissipation did not converge within 100 iterations." << std::endl;

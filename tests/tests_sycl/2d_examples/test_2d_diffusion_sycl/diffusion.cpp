@@ -143,9 +143,9 @@ int main(int ac, char *av[])
     auto &initial_condition_projection =
         main_methods.addStateDynamics<
             InitialCondition<SPHBody, InitialDistribution>>(diffusion_body, phi_projection);
-    auto &diffusion_relaxation_projection =
-        main_methods.addInteractionDynamics<
-            ProjectionDissipation, Splitting, IsotropicDiffusion>(diffusion_body_inner, phi_projection);
+    using MainExecutionPolicy = execution::ParallelPolicy; // define execution policy for this case
+    ImplicitDissipation<MainExecutionPolicy, Inner<IsotropicDiffusion>>
+        diffusion_relaxation_projection(diffusion_body_inner, phi_projection, 1.0e-6);
 
     IsotropicDiffusion isotropic_diffusion_explict(phi_explicit, diffusion_coeff);
     auto &initial_condition_explicit =
@@ -172,6 +172,7 @@ int main(int ac, char *av[])
         ObservedQuantityRecording, Real>(phi_projection, observer_contact);
     auto &observe_temperature_explicit = main_methods.addIODynamics<
         ObservedQuantityRecording, Real>(phi_explicit, observer_contact);
+    auto &reduce_total_species = main_methods.addReduceDynamics<QuantitySum<Real>>(diffusion_body, phi_projection);
     //----------------------------------------------------------------------
     //	Define time stepper with end and start time.
     //----------------------------------------------------------------------
@@ -194,6 +195,7 @@ int main(int ac, char *av[])
     initial_condition_pair_wise.exec();
     initial_condition_projection.exec();
     initial_condition_explicit.exec();
+    Real initial_total_species = reduce_total_species.exec();
     //----------------------------------------------------------------------
     //	Statistics for CPU time
     //----------------------------------------------------------------------
@@ -223,13 +225,12 @@ int main(int ac, char *av[])
         interval_pair_wise += TickCount::now() - time_instance;
 
         time_instance = TickCount::now();
-        time_stepper.integrateMatchedTimeInterval(diffusion_relaxation_projection, diffusion_dt, 8);
+        time_stepper.integrateMatchedTimeInterval(diffusion_relaxation_projection, diffusion_dt);
         interval_projection += TickCount::now() - time_instance;
 
         time_instance = TickCount::now();
         time_stepper.integrateMatchedTimeInterval(diffusion_relaxation_explicit, diffusion_dt, get_time_step_size);
         interval_explicit += TickCount::now() - time_instance;
-
         time_steps += 1;
 
         //----------------------------------------------------------------------
@@ -251,6 +252,8 @@ int main(int ac, char *av[])
         {
             std::cout << "N=" << time_steps << " Time: "
                       << time_stepper.getPhysicalTime() << "	dt: " << diffusion_dt << "\n";
+            std::cout << "Initial total species: " << initial_total_species
+                      << "	Present total species: " << reduce_total_species.exec() << "\n";
         }
     }
 

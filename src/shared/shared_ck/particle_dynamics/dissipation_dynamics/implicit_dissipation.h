@@ -146,16 +146,19 @@ class DissipationRHS : public BaseLocalDynamics<DynamicsIdentifier>
       public:
         template <class ExecutionPolicy, class EncloserType>
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-        void update(size_t index_i, Real dt = 0.0);
+        void update(size_t index_i, Real dt = 0.0)
+        {
+            rhs_[index_i] = variable_[index_i];
+        };
 
       protected:
         DataType *variable_;
-        DataType *old_state_;
+        DataType *rhs_;
     };
 
   protected:
     DiscreteVariable<DataType> *dv_variable_;
-    DiscreteVariable<DataType> *dv_old_state_;
+    DiscreteVariable<DataType> *dv_rhs_;
 };
 
 template <typename DataType, class DynamicsIdentifier>
@@ -170,17 +173,20 @@ class FullDissipationResidue : public BaseLocalDynamics<DynamicsIdentifier>
       public:
         template <class ExecutionPolicy, class EncloserType>
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-        void update(size_t index_i, Real dt = 0.0);
+        void update(size_t index_i, Real dt = 0.0)
+        {
+            residue_[index_i] = rhs_[index_i] - transformed_[index_i];
+        };
 
       protected:
         DataType *residue_;
-        DataType *old_state_;
+        DataType *rhs_;
         DataType *transformed_;
     };
 
   protected:
     DiscreteVariable<DataType> *dv_residue_;
-    DiscreteVariable<DataType> *dv_old_state_;
+    DiscreteVariable<DataType> *dv_rhs_;
     DiscreteVariable<DataType> *dv_transformed_;
 };
 
@@ -198,7 +204,10 @@ class UpdateDissipationResidue : public BaseLocalDynamics<DynamicsIdentifier>
       public:
         template <class ExecutionPolicy, class EncloserType>
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-        void update(size_t index_i, Real dt = 0.0);
+        void update(size_t index_i, Real dt = 0.0)
+        {
+            residue_[index_i] -= (*search_depth_) * transformed_[index_i];
+        };
 
       protected:
         DataType *residue_;
@@ -226,7 +235,10 @@ class UpdateDissipationSolution : public BaseLocalDynamics<DynamicsIdentifier>
       public:
         template <class ExecutionPolicy, class EncloserType>
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-        void update(size_t index_i, Real search_depth);
+        void update(size_t index_i, Real search_depth)
+        {
+            variable_[index_i] += (*search_depth_) * residue_[index_i];
+        };
 
       protected:
         DataType *residue_;
