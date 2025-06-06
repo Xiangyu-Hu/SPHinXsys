@@ -120,26 +120,47 @@ PairwiseDissipation<Contact<Dirichlet<DissipationType>, Parameters...>>::
 template <class DissipationType, typename... Parameters>
 template <class ExecutionPolicy, class EncloserType>
 PairwiseDissipation<Contact<Dirichlet<DissipationType>, Parameters...>>::
-    InteractKernel::InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+    InteractKernel::InteractKernel(
+        const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt contact_index)
     : BaseInteraction::InteractKernel(ex_policy, encloser, contact_index),
       inverse_capacity_(encloser.dissipation_model_),
       contact_Vol_(encloser.dv_contact_Vol_[contact_index]->DelegatedData(ex_policy)),
       contact_variable_(encloser.contact_dv_variable_[contact_index]->DelegatedDataArray(ex_policy)) {}
 //=================================================================================================//
-template <class DissipationType, template <typename...> class Dirichlet, typename... Parameters>
+template <class DissipationType, typename... Parameters>
 void PairwiseDissipation<Contact<Dirichlet<DissipationType>, Parameters...>>::
     InteractKernel::interact(UnsignedInt index_i, Real dt)
 {
-    DataType boundary_flux = this->zero_value_;
+    Real split_dt = dt * 0.5;
+    std::array<Real, MaximumNeighborhoodSize> parameter_b;
+    DataType variable_i = this->variable_[index_i];
+    Real Vol_i = this->Vol_[index_i];
+    // forward sweep
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
     {
         UnsignedInt index_j = this->neighbor_index_[n];
-        boundary_flux += 2.0 * this->dis_coeff_(index_i, index_i) * dt *
-                         (this->variable_[index_i] - this->contact_variable_[index_j]) *
-                         this->dW_ij(index_i, index_j) * this->contact_Vol_[index_j] /
-                         this->vec_r_ij(index_i, index_j).norm();
+        UnsignedInt neighbor_j = n - this->FirstNeighbor(index_i);
+
+        DataType pair_difference = (variable_i - contact_variable_[index_j]);
+        parameter_b[neighbor_j] = 2.0 * this->dis_coeff_(index_i, index_j) * this->dW_ij(index_i, index_j) *
+                                  split_dt / this->vec_r_ij(index_i, index_j).norm();
+
+        DataType increment = 0.5 * parameter_b[neighbor_j] * pair_difference /
+                             (1.0 - parameter_b[neighbor_j] * (Vol_i + contact_Vol_[index_j]));
+        variable_i += increment * inverse_capacity_(index_i) * contact_Vol_[index_j];
     }
-    this->variable[index_i] += inverse_capacity_(index_j) * boundary_flux;
+    // backward sweep
+    for (UnsignedInt n = this->LastNeighbor(index_i); n != this->FirstNeighbor(index_i); --n)
+    {
+        UnsignedInt index_j = this->neighbor_index_[n - 1];
+        UnsignedInt neighbor_j = n - 1 - this->FirstNeighbor(index_i);
+
+        DataType pair_difference = (variable_i - contact_variable_[index_j]);
+        DataType increment = 0.5 * parameter_b[neighbor_j] * pair_difference /
+                             (1.0 - parameter_b[neighbor_j] * (Vol_i + contact_Vol_[index_j]));
+        variable_i += increment * inverse_capacity_(index_i) * contact_Vol_[index_j];
+    }
+    this->variable_[index_i] = variable_i;
 }
 //=================================================================================================//
 } // namespace SPH

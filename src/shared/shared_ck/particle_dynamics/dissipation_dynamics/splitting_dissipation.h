@@ -114,7 +114,7 @@ class PairwiseDissipation<Contact<Dirichlet<DissipationType>, Parameters...>>
       protected:
         InverseVolumetricCapacity inverse_capacity_;
         Real *contact_Vol_;
-        DataType *contact_Variable_;
+        DataType *contact_variable_;
     };
 
   protected:

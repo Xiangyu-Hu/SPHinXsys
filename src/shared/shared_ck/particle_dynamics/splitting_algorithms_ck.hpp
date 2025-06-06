@@ -65,6 +65,7 @@ template <class ExecutionPolicy, template <typename...> class InteractionType, t
 void InteractionDynamicsCK<ExecutionPolicy, InteractionType<Contact<Splitting, Parameters...>>>::
     runInteraction(Real dt)
 {
+    Real split_dt = dt * 0.5; // half time step for splitting
     for (size_t k = 0; k != this->contact_bodies_.size(); ++k)
     {
         InteractKernel *interact_kernel =
@@ -74,7 +75,7 @@ void InteractionDynamicsCK<ExecutionPolicy, InteractionType<Contact<Splitting, P
             LoopRangeCK<ExecutionPolicy, Splitting>(
                 DynamicCast<CellLinkedList>(this, this->identifier_.getCellLinkedList())),
             [=](size_t i)
-            { interact_kernel->interact(i, 0.5 * dt); }); // half time step for splitting
+            { interact_kernel->interact(i, split_dt); });
     }
 }
 //=================================================================================================//
