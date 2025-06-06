@@ -103,5 +103,24 @@ void PairwiseDissipation<Inner<Splitting, DissipationType, Parameters...>>::Inte
     this->variable_[index_i] = variable_i;
 }
 //=================================================================================================//
+template <class DissipationType, template <typename...> class BoundaryType, typename... Parameters>
+PairwiseDissipation<Contact<BoundaryType<DissipationType>, Parameters...>>::
+    PairwiseDissipation(Contact<Parameters...> &contact_relation, const std::string &variable_name)
+    : BaseInteraction(contact_relation, variable_name)
+{
+    for (UnsignedInt k = 0; k != this->contact_particles_.size(); ++k)
+    {
+        dv_contact_Vol_.push_back(
+            this->contact_particles_[k]->template getVariableByName<Real>("VolumetricMeasure"));
+        contact_dv_transfer_array_.push_back(
+            contact_transfer_array_ptrs_keeper_.template createPtr<DiscreteVariableArray<DataType>>(
+                this->particles_->template registerStateVariables<DataType>(
+                    variable_name, "TransferWith" + this->sph_body_.getName())));
+        contact_boundary_method_.push_back(
+            boundary_ptrs_keeper_.template createPtr<BoundaryType<DissipationType>>(
+                *this, this->contact_particles_[k]));
+    }
+}
+//=================================================================================================//
 } // namespace SPH
 #endif // SPLITTING_DISSIPATION_HPP

@@ -91,5 +91,39 @@ class PairwiseDissipation<Inner<Splitting, DissipationType, Parameters...>>
         InverseVolumetricCapacity inverse_capacity_;
     };
 };
+
+template <class DissipationType, template <typename...> class BoundaryType, typename... Parameters>
+class PairwiseDissipation<Contact<BoundaryType<DissipationType>, Parameters...>>
+    : public Dissipation<Base, DissipationType, Contact<Parameters...>>
+{
+    using DataType = typename DissipationType::DataType;
+    using BaseInteraction = Dissipation<Base, DissipationType, Interaction<Contact<Parameters...>>>;
+    using BoundaryKernel = typename BoundaryType<DissipationType>::ComputingKernel;
+    UniquePtrsKeeper<DiscreteVariableArray<DataType>> contact_transfer_array_ptrs_keeper_;
+    UniquePtrsKeeper<BoundaryType<DissipationType>> boundary_ptrs_keeper_;
+
+  public:
+    PairwiseDissipation(Contact<Parameters...> &contact_relation, const std::string &variable_name);
+    virtual ~PairwiseDissipation() {};
+
+    class InteractKernel : public BaseInteraction::InteractKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser,
+                       UnsignedInt contact_index);
+        void interact(UnsignedInt index_i, Real dt = 0.0);
+
+      protected:
+        Real *contact_Vol_;
+        DataArray<DataType> *contact_transfer_;
+        BoundaryKernel boundary_flux_;
+    };
+
+  protected:
+    StdVec<DiscreteVariable<Real> *> dv_contact_Vol_;
+    StdVec<DiscreteVariableArray<DataType> *> contact_dv_transfer_array_;
+    StdVec<BoundaryType<DissipationType> *> contact_boundary_method_;
+};
 } // namespace SPH
 #endif // SPLITTING_DISSIPATION_H
