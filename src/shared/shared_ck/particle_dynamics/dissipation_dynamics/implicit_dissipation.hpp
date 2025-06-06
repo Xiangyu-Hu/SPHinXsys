@@ -7,17 +7,17 @@ namespace SPH
 {
 //=================================================================================================//
 template <typename DataType, class DynamicsIdentifier>
-QuantityTensorProductSum<DataType, DynamicsIdentifier>::
-    QuantityTensorProductSum(DynamicsIdentifier &identifier,
-                             const std::string &variable_name1,
-                             const std::string &variable_name2)
+QuantityTensorProductAverage<DataType, DynamicsIdentifier>::
+    QuantityTensorProductAverage(DynamicsIdentifier &identifier,
+                                 const std::string &variable_name1,
+                                 const std::string &variable_name2)
     : BaseReduceDynamics(identifier),
       dv_variable1_(this->particles_->template getVariableByName<DataType>(variable_name1)),
       dv_variable2_(this->particles_->template getVariableByName<DataType>(variable_name1)) {}
 //=================================================================================================//
 template <typename DataType, class DynamicsIdentifier>
 template <class ExecutionPolicy, class EncloserType>
-QuantityTensorProductSum<DataType, DynamicsIdentifier>::ReduceKernel::
+QuantityTensorProductAverage<DataType, DynamicsIdentifier>::ReduceKernel::
     ReduceKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : variable1_(encloser.dv_variable1_->DelegatedData(ex_policy)),
       variable2_(encloser.dv_variable2_->DelegatedData(ex_policy)) {}
@@ -154,19 +154,18 @@ template <class ExecutionPolicy, template <typename...> class RelationType,
           typename DissipationType, typename... Parameters>
 ImplicitDissipation<ExecutionPolicy, RelationType<DissipationType, Parameters...>>::
     ImplicitDissipation(RelationType<Parameters...> &first_relation,
-                        const std::string &variable_name, Real sqr_norm_criteria)
+                        const std::string &variable_name, Real convergence_criteria)
     : BaseDynamics<void>(),
-      sqr_norm_criteria_(sqr_norm_criteria),
+      convergence_criteria_(convergence_criteria),
       dynamics_identifier_(first_relation.getDynamicsIdentifier()),
       sv_search_depth_("SearchDepth" + variable_name),
-      sv_total_real_particles_(dynamics_identifier_.getSPHBody().getBaseParticles().svTotalRealParticles()),
       dissipation_rhs_(dynamics_identifier_, variable_name),
       transformed_variable_(first_relation, variable_name),
       full_residue_(dynamics_identifier_, variable_name),
       transformed_residue_(first_relation, "Residue" + variable_name),
       update_residue_(dynamics_identifier_, variable_name, &sv_search_depth_),
-      dissipation_residue_sum_(dynamics_identifier_, variable_name),
-      transformed_dissipation_residue_sum_(dynamics_identifier_, variable_name),
+      residue_average_(dynamics_identifier_, variable_name),
+      transformed_residue_average_(dynamics_identifier_, variable_name),
       update_dissipation_solution_(dynamics_identifier_, variable_name, &sv_search_depth_) {}
 //=================================================================================================//
 template <class ExecutionPolicy, template <typename...> class RelationType,
@@ -188,7 +187,7 @@ void ImplicitDissipation<ExecutionPolicy, RelationType<DissipationType, Paramete
     Real residue_norm = MaxReal;
     UnsignedInt iteration_count = 0;
     dissipation_rhs_.exec();
-    while (residue_norm > sqr_norm_criteria_)
+    while (residue_norm > convergence_criteria_)
     {
         if (iteration_count % 10 == 0)
         {
@@ -200,10 +199,10 @@ void ImplicitDissipation<ExecutionPolicy, RelationType<DissipationType, Paramete
             update_residue_.exec();
         }
 
-        TensorProductType<DataType> tensor_residue_sum = dissipation_residue_sum_.exec();
-        residue_norm = math::sqrt(getSquaredNorm(tensor_residue_sum)) / sv_total_real_particles_->getValue();
+        TensorProductType<DataType> tensor_residue_average = residue_average_.exec();
+        residue_norm = math::sqrt(getSquaredNorm(tensor_residue_average));
         transformed_residue_.exec(dt);
-        sv_search_depth_.setValue(tensor_residue_sum * getInverse(transformed_dissipation_residue_sum_.exec()));
+        sv_search_depth_.setValue(tensor_residue_average * getInverse(transformed_residue_average_.exec()));
         update_dissipation_solution_.exec();
         ++iteration_count;
         std::cout << "Iteration: " << iteration_count << ", Residue Norm: " << residue_norm << std::endl;

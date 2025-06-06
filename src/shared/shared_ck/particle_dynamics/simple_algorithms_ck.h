@@ -79,6 +79,7 @@ class ReduceDynamicsCK : public ReduceType,
     using KernelImplementation =
         Implementation<ExecutionPolicy, ReduceType, ReduceKernel>;
     KernelImplementation kernel_implementation_;
+    ReduceReturnType reduced_value_;
     FinishDynamics finish_dynamics_;
 
   public:
@@ -86,20 +87,21 @@ class ReduceDynamicsCK : public ReduceType,
     ReduceDynamicsCK(Args &&...args)
         : ReduceType(std::forward<Args>(args)...),
           BaseDynamics<OutputType>(), kernel_implementation_(*this),
-          finish_dynamics_(*this){};
+          reduced_value_(this->reference_), finish_dynamics_(*this){};
     virtual ~ReduceDynamicsCK() {};
     std::string QuantityName() { return this->quantity_name_; };
+    ReduceReturnType ReducedValue() { return reduced_value_; };
 
     virtual OutputType exec(Real dt = 0.0) override
     {
         this->setupDynamics(dt);
         ReduceKernel *reduce_kernel = kernel_implementation_.getComputingKernel();
-        ReduceReturnType temp = particle_reduce<Operation>(
+        reduced_value_ = particle_reduce<Operation>(
             LoopRangeCK<ExecutionPolicy, Identifier>(this->identifier_),
             this->reference_,
             [=](size_t i)
             { return reduce_kernel->reduce(i, dt); });
-        return finish_dynamics_.Result(temp);
+        return finish_dynamics_.Result(reduced_value_);
     };
 };
 } // namespace SPH

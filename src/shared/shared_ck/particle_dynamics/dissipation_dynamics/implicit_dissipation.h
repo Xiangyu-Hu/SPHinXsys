@@ -54,18 +54,31 @@ template <typename DataType>
 using TensorProductType = typename TensorProductReturnType<DataType>::type;
 
 template <typename DataType, class DynamicsIdentifier>
-class QuantityTensorProductSum
+class QuantityTensorProductAverage
     : public BaseLocalDynamicsReduce<
-          ReduceSum<TensorProductType<DataType>>, DynamicsIdentifier>
+          ReduceSum<std::pair<TensorProductType<DataType>, Real>>, DynamicsIdentifier>
 {
+    using ReduceReturnType = std::pair<TensorProductType<DataType>, Real>;
     using BaseReduceDynamics = BaseLocalDynamicsReduce<
-        ReduceSum<TensorProductType<DataType>>, DynamicsIdentifier>;
+        ReduceSum<std::pair<TensorProductType<DataType>, Real>>, DynamicsIdentifier>;
 
   public:
-    QuantityTensorProductSum(DynamicsIdentifier &identifier,
-                             const std::string &variable_name1,
-                             const std::string &variable_name2);
-    virtual ~QuantityTensorProductSum() {};
+    QuantityTensorProductAverage(DynamicsIdentifier &identifier,
+                                 const std::string &variable_name1,
+                                 const std::string &variable_name2);
+    virtual ~QuantityTensorProductAverage() {};
+
+    class FinishDynamics
+    {
+      public:
+        using OutputType = TensorProductType<DataType>;
+        template <class EncloserType>
+        FinishDynamics(EncloserType &encloser){};
+        OutputType Result(const ReduceReturnType &reduced_value)
+        {
+            return reduced_value.first / reduced_value.second;
+        }
+    };
 
     class ReduceKernel
     {
@@ -73,9 +86,10 @@ class QuantityTensorProductSum
         template <class ExecutionPolicy, class EncloserType>
         ReduceKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
 
-        TensorProductType<DataType> reduce(size_t index_i, Real dt = 0.0)
+        ReduceReturnType reduce(size_t index_i, Real dt = 0.0)
         {
-            return tensorProduct(variable1_[index_i], variable2_[index_i]);
+            return ReduceReturnType(
+                tensorProduct(variable1_[index_i], variable2_[index_i]), Real(1));
         };
 
       protected:
@@ -227,24 +241,25 @@ class UpdateDissipationSolution : public BaseLocalDynamics<DynamicsIdentifier>
 };
 
 template <typename DataType, class DynamicsIdentifier>
-class DissipationResidueSum : public QuantityTensorProductSum<DataType, DynamicsIdentifier>
+class DissipationResidueAverage
+    : public QuantityTensorProductAverage<DataType, DynamicsIdentifier>
 {
   public:
-    DissipationResidueSum(DynamicsIdentifier &identifier, const std::string &variable_name)
-        : QuantityTensorProductSum<DataType, DynamicsIdentifier>(
+    DissipationResidueAverage(DynamicsIdentifier &identifier, const std::string &variable_name)
+        : QuantityTensorProductAverage<DataType, DynamicsIdentifier>(
               identifier, "Residue" + variable_name, "Residue" + variable_name) {};
-    virtual ~DissipationResidueSum() {};
+    virtual ~DissipationResidueAverage() {};
 };
 
 template <typename DataType, class DynamicsIdentifier>
-class TransformedDissipationResidueSum
-    : public QuantityTensorProductSum<DataType, DynamicsIdentifier>
+class TransformedDissipationResidueAverage
+    : public QuantityTensorProductAverage<DataType, DynamicsIdentifier>
 {
   public:
-    TransformedDissipationResidueSum(DynamicsIdentifier &identifier, const std::string &variable_name)
-        : QuantityTensorProductSum<DataType, DynamicsIdentifier>(
+    TransformedDissipationResidueAverage(DynamicsIdentifier &identifier, const std::string &variable_name)
+        : QuantityTensorProductAverage<DataType, DynamicsIdentifier>(
               identifier, "Residue" + variable_name, "TransformedResidue" + variable_name) {};
-    virtual ~TransformedDissipationResidueSum() {};
+    virtual ~TransformedDissipationResidueAverage() {};
 };
 
 template <typename...>
@@ -261,23 +276,22 @@ class ImplicitDissipation<ExecutionPolicy, RelationType<DissipationType, Paramet
   public:
     ImplicitDissipation(RelationType<Parameters...> &first_relation,
                         const std::string &variable_name,
-                        Real sqr_norm_criteria);
+                        Real convergence_criteria);
     template <typename... ControlParameters, typename... RelationParameters, typename... Args>
     auto &addContactInteraction(Contact<RelationParameters...> &contact_relation, Args &&...args);
     virtual void exec(Real dt = 0.0) override;
 
   protected:
-    Real sqr_norm_criteria_;
+    Real convergence_criteria_;
     DynamicsIdentifier &dynamics_identifier_;
     SingularVariable<TensorProductType<DataType>> sv_search_depth_;
-    SingularVariable<UnsignedInt> *sv_total_real_particles_;
     StateDynamics<ExecutionPolicy, DissipationRHS<DataType, DynamicsIdentifier>> dissipation_rhs_;
     InteractionDynamicsCK<ExecutionPolicy, DissipativeTransform<RelationType<DissipationType, Parameters...>>> transformed_variable_;
     StateDynamics<ExecutionPolicy, FullDissipationResidue<DataType, DynamicsIdentifier>> full_residue_;
     InteractionDynamicsCK<ExecutionPolicy, DissipativeTransform<RelationType<DissipationType, Parameters...>>> transformed_residue_;
     StateDynamics<ExecutionPolicy, UpdateDissipationResidue<DataType, DynamicsIdentifier>> update_residue_;
-    ReduceDynamicsCK<ExecutionPolicy, DissipationResidueSum<DataType, DynamicsIdentifier>> dissipation_residue_sum_;
-    ReduceDynamicsCK<ExecutionPolicy, TransformedDissipationResidueSum<DataType, DynamicsIdentifier>> transformed_dissipation_residue_sum_;
+    ReduceDynamicsCK<ExecutionPolicy, DissipationResidueAverage<DataType, DynamicsIdentifier>> residue_average_;
+    ReduceDynamicsCK<ExecutionPolicy, TransformedDissipationResidueAverage<DataType, DynamicsIdentifier>> transformed_residue_average_;
     StateDynamics<ExecutionPolicy, UpdateDissipationSolution<DataType, DynamicsIdentifier>> update_dissipation_solution_;
 };
 } // namespace SPH
