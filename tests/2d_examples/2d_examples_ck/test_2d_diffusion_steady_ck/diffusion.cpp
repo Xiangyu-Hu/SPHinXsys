@@ -19,6 +19,7 @@ BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(L + BW, H + BW));
 //	Basic parameters for material properties.
 //----------------------------------------------------------------------
 std::string phi_implicit = "PhiImplicit";
+std::string phi_explicit = "PhiExplicit";
 const Real diffusion_coeff = 1.0;
 //----------------------------------------------------------------------
 //	Parameters for initial and boundary conditions.
@@ -60,14 +61,22 @@ class InitialDistribution : public ReturnFunction<Real>
 //----------------------------------------------------------------------
 //	Google test items
 //----------------------------------------------------------------------
-Real expected_value = 587.88;
+Real expected_value = 350.0;
 
 Real approximated_implicit(1.0);
-TEST(DiffusionPairWise, Error)
+TEST(DiffusionImplicit, Error)
 {
-    EXPECT_LT(ABS(expected_value - approximated_implicit), 1.0e-2);
+    EXPECT_LT(ABS(expected_value - approximated_implicit) / expected_value, 1.0e-2);
     std::cout << "Reference Value: " << expected_value << " and "
               << "Predicted Value: " << approximated_implicit << std::endl;
+};
+
+Real approximated_explicit(1.0);
+TEST(DiffusionExplicit, Error)
+{
+    EXPECT_LT(ABS(expected_value - approximated_explicit) / expected_value, 1.0e-2);
+    std::cout << "Reference Value: " << expected_value << " and "
+              << "Predicted Value: " << approximated_explicit << std::endl;
 };
 //----------------------------------------------------------------------
 //	Main program starts here.
@@ -134,22 +143,41 @@ int main(int ac, char *av[])
     ImplicitDissipation<MainExecutionPolicy, Inner<IsotropicDiffusion>>
         diffusion_relaxation_implicit(diffusion_body_inner, phi_implicit, 1.0e-6);
     diffusion_relaxation_implicit.addPostContactInteraction<Dirichlet<IsotropicDiffusion>>(diffusion_body_contact, phi_implicit);
-    auto &reduce_average_species = main_methods.addReduceDynamics<QuantityAverage<Real>>(diffusion_body, phi_implicit);
+    auto &implicit_average_species = main_methods.addReduceDynamics<QuantityAverage<Real>>(diffusion_body, phi_implicit);
+
+    IsotropicDiffusion isotropic_diffusion_explict(phi_explicit, diffusion_coeff);
+    auto &initial_condition_explicit =
+        main_methods.addStateDynamics<InitialCondition<SPHBody, UniformDistribution<Real>>>(diffusion_body, phi_explicit, initial_temperature);
+    auto &boundary_condition_explicit =
+        main_methods.addStateDynamics<InitialCondition<SPHBody, InitialDistribution>>(wall_boundary, phi_explicit);
+    GetDiffusionTimeStepSize get_time_step_size(diffusion_body, &isotropic_diffusion_explict);
+    auto &diffusion_relaxation_explicit =
+        main_methods.addRungeKuttaSequence<
+            InteractionDynamicsCK,
+            DiffusionRelaxationCK<Inner<OneLevel, RungeKutta1stStage, IsotropicDiffusion, NoKernelCorrectionCK>,
+                                  Contact<InteractionOnly, Dirichlet<IsotropicDiffusion>, NoKernelCorrectionCK>>,
+            DiffusionRelaxationCK<Inner<OneLevel, RungeKutta2ndStage, IsotropicDiffusion, NoKernelCorrectionCK>,
+                                  Contact<InteractionOnly, Dirichlet<IsotropicDiffusion>, NoKernelCorrectionCK>>>(
+            DynamicsArgs(diffusion_body_inner, &isotropic_diffusion_explict),
+            DynamicsArgs(diffusion_body_contact, &isotropic_diffusion_explict));
+    auto &explicit_average_species = main_methods.addReduceDynamics<QuantityAverage<Real>>(diffusion_body, phi_explicit);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
     auto &body_state_recorder = main_methods.addBodyStateRecorder<BodyStatesRecordingToVtpCK>(sph_system);
     body_state_recorder.addToWrite<Real>(diffusion_body, phi_implicit);
     body_state_recorder.addToWrite<Real>(wall_boundary, phi_implicit);
+    body_state_recorder.addToWrite<Real>(diffusion_body, phi_explicit);
+    body_state_recorder.addToWrite<Real>(wall_boundary, phi_explicit);
     //----------------------------------------------------------------------
     //	Define time stepper with end and start time.
     //----------------------------------------------------------------------
-    TimeStepper &time_stepper = sph_solver.defineTimeStepper(1.0);
+    TimeStepper &time_stepper = sph_solver.defineTimeStepper(5.0);
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
     size_t time_steps = 0;
-    Real output_peroid = 0.1;
+    Real output_peroid = 0.5;
     auto &state_recording = time_stepper.addTriggerByInterval(output_peroid);
     //----------------------------------------------------------------------
     //	Prepare for the time integration loop.
@@ -161,12 +189,17 @@ int main(int ac, char *av[])
     initial_condition_implicit.exec();
     boundary_condition_implicit.exec();
     zero_residue_boundary_condition.exec();
-    Real initial_average_species = reduce_average_species.exec();
+    Real initial_implicit_average_species = implicit_average_species.exec();
+
+    initial_condition_explicit.exec();
+    boundary_condition_explicit.exec();
+    Real initial_explicit_average_species = explicit_average_species.exec();
     //----------------------------------------------------------------------
     //	Statistics for CPU time
     //----------------------------------------------------------------------
     TickCount time_instance;
     TimeInterval interval_implicit;
+    TimeInterval interval_explicit;
     //----------------------------------------------------------------------
     //	First output before the main loop.
     //----------------------------------------------------------------------
@@ -184,6 +217,10 @@ int main(int ac, char *av[])
         time_instance = TickCount::now();
         time_stepper.integrateMatchedTimeInterval(diffusion_relaxation_implicit, diffusion_dt);
         interval_implicit += TickCount::now() - time_instance;
+
+        time_instance = TickCount::now();
+        time_stepper.integrateMatchedTimeInterval(diffusion_relaxation_explicit, diffusion_dt, get_time_step_size);
+        interval_explicit += TickCount::now() - time_instance;
         time_steps += 1;
 
         //----------------------------------------------------------------------
@@ -194,21 +231,25 @@ int main(int ac, char *av[])
             body_state_recorder.writeToFile();
         }
 
-        if (time_steps % 1 == 0)
+        if (time_steps % 100 == 0)
         {
             std::cout << "N=" << time_steps << " Time: "
                       << time_stepper.getPhysicalTime() << "	dt: " << diffusion_dt << "\n";
-            std::cout << "Initial average species: " << initial_average_species
-                      << "	Present average species: " << reduce_average_species.exec() << "\n";
+            std::cout << "Initial implicit average species: " << initial_implicit_average_species
+                      << "	Present implicit average species: " << implicit_average_species.exec() << "\n";
+            std::cout << "Initial explicit average species: " << initial_explicit_average_species
+                      << "	Present explicit average species: " << explicit_average_species.exec() << "\n";
         }
     }
 
-    TimeInterval tt = interval_implicit;
+    TimeInterval tt = interval_implicit + interval_explicit;
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
-    std::cout << "Pair-wise diffusion time: " << interval_implicit.seconds() << " seconds." << std::endl;
+    std::cout << "Implicit diffusion computing time: " << interval_implicit.seconds() << " seconds." << std::endl;
+    std::cout << "Explicit diffusion computing time: " << interval_explicit.seconds() << " seconds." << std::endl;
 
-    approximated_implicit = reduce_average_species.exec();
-
+    approximated_implicit = implicit_average_species.exec();
+    approximated_explicit = explicit_average_species.exec();
+    
     testing::InitGoogleTest(&ac, av);
     return RUN_ALL_TESTS();
 }
