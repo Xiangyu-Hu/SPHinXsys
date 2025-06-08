@@ -105,6 +105,7 @@ class Interaction<Contact<SourceIdentifier, Parameters...>>
     typedef InteractKernel BaseInteractKernel;
     void registerComputingKernel(Implementation<Base> *implementation, UnsignedInt contact_index);
     void resetComputingKernelUpdated(UnsignedInt contact_index);
+    auto &getContactIdentifier(UnsignedInt contact_index = 0);
 
   protected:
     ContactRelationType &contact_relation_;

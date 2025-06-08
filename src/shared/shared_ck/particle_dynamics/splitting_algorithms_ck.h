@@ -53,28 +53,5 @@ class InteractionDynamicsCK<ExecutionPolicy, InteractionType<Inner<Splitting, Pa
   protected:
     void runInteraction(Real dt);
 };
-
-template <class ExecutionPolicy, template <typename...> class InteractionType, typename... Parameters>
-class InteractionDynamicsCK<ExecutionPolicy, InteractionType<Contact<Splitting, Parameters...>>>
-    : public InteractionType<Contact<Splitting, Parameters...>>,
-      public InteractionDynamicsCK<ExecutionPolicy, InteractionType<Base>>
-{
-    using LocalDynamicsType = InteractionType<Contact<Splitting, Parameters...>>;
-    using InteractKernel = typename LocalDynamicsType::InteractKernel;
-    using KernelImplementation = Implementation<ExecutionPolicy, LocalDynamicsType, InteractKernel>;
-    UniquePtrsKeeper<KernelImplementation> contact_kernel_implementation_ptrs_;
-    StdVec<KernelImplementation *> contact_kernel_implementation_;
-
-  public:
-    template <typename... Args>
-    InteractionDynamicsCK(Args &&...args);
-    virtual ~InteractionDynamicsCK() {};
-    virtual void exec(Real dt = 0.0) override;
-    virtual void runInteractionStep(Real dt = 0.0) override;
-
-  protected:
-    void runInteraction(Real dt);
-};
-
 } // namespace SPH
 #endif // SPLITTING_ALGORITHMS_CK_H

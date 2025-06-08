@@ -1,7 +1,7 @@
 /* ------------------------------------------------------------------------- *
  *                                SPHinXsys                                  *
  * ------------------------------------------------------------------------- *
- * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle *
+ * SPHinXsys (pronunciation: s'SourceTermsis) is an acronym from Smoothed Particle *
  * Hydrodynamics for industrial compleX systems. It provides C++ APIs for    *
  * physical accurate simulation and aims to model coupled industrial dynamic *
  * systems including fluid, solid, multi-body dynamics and beyond with SPH   *
@@ -68,16 +68,19 @@ class ProjectionDissipation<Inner<Splitting, DissipationType, Parameters...>>
 template <typename...>
 class PairwiseDissipation;
 
-template <typename DissipationType, typename... Parameters>
-class PairwiseDissipation<Inner<Splitting, DissipationType, Parameters...>>
+template <typename DissipationType, typename SourceTermType, typename... Parameters>
+class PairwiseDissipation<Inner<Splitting, DissipationType, SourceTermType, Parameters...>>
     : public Dissipation<Base, DissipationType, Inner<Parameters...>>
 {
     using DataType = typename DissipationType::DataType;
     using BaseDissipationType = Dissipation<Base, DissipationType, Inner<Parameters...>>;
     using InverseVolumetricCapacity = typename DissipationType::InverseVolumetricCapacity;
+    using SourceTermKernel = typename SourceTermType::ComputingKernel;
 
   public:
-    explicit PairwiseDissipation(Inner<Parameters...> &inner_relation, const std::string &variable_name);
+    template <typename... Args>
+    explicit PairwiseDissipation(Inner<Parameters...> &inner_relation,
+                                 const std::string &variable_name, Args &&...args);
     virtual ~PairwiseDissipation() {};
 
     class InteractKernel : public BaseDissipationType::InteractKernel
@@ -89,7 +92,35 @@ class PairwiseDissipation<Inner<Splitting, DissipationType, Parameters...>>
 
       protected:
         InverseVolumetricCapacity inverse_capacity_;
+        SourceTermKernel source_term_;
     };
+
+  protected:
+    SourceTermType source_term_model_;
+};
+
+class ConstantSource
+{
+  public:
+    ConstantSource(BaseParticles *particles, Real constant_value = 0.0)
+        : constant_value_(constant_value) {};
+
+    class ComputingKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+            : constant_value_(encloser.constant_value_){};
+
+        // This function returns the constant value for all particles.
+        Real operator()(size_t) const { return constant_value_; }
+
+      private:
+        Real constant_value_;
+    };
+
+  private:
+    Real constant_value_;
 };
 
 template <class DissipationType, typename... Parameters>
@@ -97,7 +128,7 @@ class PairwiseDissipation<Contact<Dirichlet<DissipationType>, Parameters...>>
     : public Dissipation<Base, DissipationType, Contact<Parameters...>>
 {
     using DataType = typename DissipationType::DataType;
-    using BaseInteraction = Dissipation<Base, DissipationType, Interaction<Contact<Parameters...>>>;
+    using BaseInteraction = Dissipation<Base, DissipationType, Contact<Parameters...>>;
     using InverseVolumetricCapacity = typename DissipationType::InverseVolumetricCapacity;
 
   public:

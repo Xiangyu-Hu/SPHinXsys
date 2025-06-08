@@ -290,7 +290,7 @@ class ImplicitDissipation<ExecutionPolicy, RelationType<DissipationType, Paramet
                         const std::string &variable_name,
                         Real convergence_criteria);
     template <typename... ControlParameters, typename... RelationParameters, typename... Args>
-    auto &addContactInteraction(Contact<RelationParameters...> &contact_relation, Args &&...args);
+    auto &addPostContactInteraction(Contact<RelationParameters...> &contact_relation, Args &&...args);
     virtual void exec(Real dt = 0.0) override;
 
   protected:

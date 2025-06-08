@@ -60,6 +60,13 @@ void Interaction<Contact<SourceIdentifier, Parameters...>>::
 }
 //=================================================================================================//
 template <class SourceIdentifier, typename... Parameters>
+auto &Interaction<Contact<SourceIdentifier, Parameters...>>::
+    getContactIdentifier(UnsignedInt contact_index)
+{
+    return contact_relation_.getContactIdentifier(contact_index);
+}
+//=================================================================================================//
+template <class SourceIdentifier, typename... Parameters>
 template <class ExecutionPolicy, class EncloserType>
 Interaction<Contact<SourceIdentifier, Parameters...>>::InteractKernel::
     InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt contact_index)
