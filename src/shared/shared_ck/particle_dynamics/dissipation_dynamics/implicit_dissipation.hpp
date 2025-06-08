@@ -54,6 +54,49 @@ void DissipativeTransform<Inner<DissipationType, Parameters...>>::InteractKernel
     transformed_[index_i] = result;
 }
 //=================================================================================================//
+template <class DissipationType, typename... Parameters>
+DissipativeTransform<Contact<Dirichlet<DissipationType>, Parameters...>>::
+    DissipativeTransform(Contact<Parameters...> &contact_relation, const std::string &variable_name)
+    : BaseDissipationType(contact_relation, variable_name),
+      dv_transformed_(this->particles_->template registerStateVariableOnly<DataType>(
+          "Transformed" + variable_name))
+{
+    for (UnsignedInt k = 0; k != this->contact_particles_.size(); ++k)
+    {
+        dv_contact_Vol_.push_back(
+            this->contact_particles_[k]->template getVariableByName<Real>("VolumetricMeasure"));
+        contact_dv_variable_.push_back(
+            this->contact_particles_[k]->template getVariableByName<DataType>(variable_name));
+    }
+}
+//=================================================================================================//
+template <class DissipationType, typename... Parameters>
+template <class ExecutionPolicy, class EncloserType>
+DissipativeTransform<Contact<Dirichlet<DissipationType>, Parameters...>>::
+    InteractKernel::InteractKernel(
+        const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt contact_index)
+    : BaseDissipationType::InteractKernel(ex_policy, encloser, contact_index),
+      transformed_(encloser.dv_transformed_->DelegatedData(ex_policy)),
+      contact_Vol_(encloser.dv_contact_Vol_[contact_index]->DelegatedData(ex_policy)),
+      contact_variable_(encloser.contact_dv_variable_[contact_index]->DelegatedData(ex_policy)) {}
+//=================================================================================================//
+template <class DissipationType, typename... Parameters>
+void DissipativeTransform<Contact<Dirichlet<DissipationType>, Parameters...>>::
+    InteractKernel::interact(size_t index_i, Real dt)
+{
+    DataType result = this->zero_value_;
+    for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
+    {
+        UnsignedInt index_j = this->neighbor_index_[n];
+
+        DataType pair_difference = this->variable_[index_i] - contact_variable_[index_j];
+        result -= 2.0 * this->dis_coeff_(index_i, index_j) * pair_difference *
+                  this->dW_ij(index_i, index_j) * contact_Vol_[index_j] * dt /
+                  this->vec_r_ij(index_i, index_j).norm();
+    }
+    transformed_[index_i] += result;
+}
+//=================================================================================================//
 template <typename DataType, class DynamicsIdentifier>
 DissipationRHS<DataType, DynamicsIdentifier>::
     DissipationRHS(DynamicsIdentifier &identifier, const std::string &variable_name)
@@ -145,8 +188,10 @@ template <typename... ControlParameters, typename... RelationParameters, typenam
 auto &ImplicitDissipation<ExecutionPolicy, RelationType<DissipationType, Parameters...>>::
     addPostContactInteraction(Contact<RelationParameters...> &contact_relation, Args &&...args)
 {
-    transformed_variable_.addPostContactInteraction(contact_relation, std::forward<Args>(args)...);
-    transformed_residue_.addPostContactInteraction(contact_relation, std::forward<Args>(args)...);
+    transformed_variable_.template addPostContactInteraction<ControlParameters...>(
+        contact_relation, std::forward<Args>(args)...);
+    transformed_residue_.template addPostContactInteraction<ControlParameters...>(
+        contact_relation, std::forward<Args>(args)...);
     return *this;
 }
 //=================================================================================================//
@@ -160,7 +205,7 @@ void ImplicitDissipation<ExecutionPolicy, RelationType<DissipationType, Paramete
     dissipation_rhs_.exec();
     while (residue_norm > convergence_criteria_)
     {
-        if (iteration_count % 10 == 0)
+        if (iteration_count % 1 == 0)
         {
             transformed_variable_.exec(dt);
             full_residue_.exec();
@@ -177,7 +222,7 @@ void ImplicitDissipation<ExecutionPolicy, RelationType<DissipationType, Paramete
         sv_search_depth_.setValue(tensor_residue_average * getInverse(tensor_transformed_residue_average));
         update_dissipation_solution_.exec();
         ++iteration_count;
-        if (iteration_count > 100)
+        if (iteration_count > 10000)
         {
             std::cout << "Implicit dissipation did not converge within 100 iterations." << std::endl;
             break;

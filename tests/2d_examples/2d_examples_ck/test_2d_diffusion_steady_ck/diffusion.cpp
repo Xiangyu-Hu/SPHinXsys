@@ -18,14 +18,15 @@ BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(L + BW, H + BW));
 //----------------------------------------------------------------------
 //	Basic parameters for material properties.
 //----------------------------------------------------------------------
-std::string phi_pair_wise = "PhiPairWise";
+std::string phi_implicit = "PhiImplicit";
 const Real diffusion_coeff = 1.0;
 //----------------------------------------------------------------------
 //	Parameters for initial and boundary conditions.
 //----------------------------------------------------------------------
-Real initial_temperature = 0.0;
+Real initial_temperature = 300.0;
+Real zero_residue = 0.0;
 const Real high_temperature = 300.0;
-const Real low_temperature = 300.0;
+const Real low_temperature = 400.0;
 Real heat_source = 1000.0;
 //----------------------------------------------------------------------
 // Define extra classes which are used in the main program.
@@ -61,12 +62,12 @@ class InitialDistribution : public ReturnFunction<Real>
 //----------------------------------------------------------------------
 Real expected_value = 587.88;
 
-Real approximated_pair_wise(1.0);
+Real approximated_implicit(1.0);
 TEST(DiffusionPairWise, Error)
 {
-    EXPECT_LT(ABS(expected_value - approximated_pair_wise), 1.0e-2);
+    EXPECT_LT(ABS(expected_value - approximated_implicit), 1.0e-2);
     std::cout << "Reference Value: " << expected_value << " and "
-              << "Predicted Value: " << approximated_pair_wise << std::endl;
+              << "Predicted Value: " << approximated_implicit << std::endl;
 };
 //----------------------------------------------------------------------
 //	Main program starts here.
@@ -84,7 +85,7 @@ int main(int ac, char *av[])
     GeometricShapeBox diffusion_block(BoundingBox(Vecd(0.0, 0.0), Vecd(L, H)), "DiffusionBlock");
     SolidBody diffusion_body(sph_system, diffusion_block);
     diffusion_body.defineClosure<Solid, IsotropicDiffusion>(
-        Solid(), ConstructArgs(phi_pair_wise, diffusion_coeff));
+        Solid(), ConstructArgs(phi_implicit, diffusion_coeff));
     diffusion_body.generateParticles<BaseParticles, Lattice>();
 
     ComplexShape wall_complex_shape("WallBoundary");
@@ -123,30 +124,32 @@ int main(int ac, char *av[])
     auto &wall_boundary_cell_linked_list = main_methods.addCellLinkedListDynamics(wall_boundary);
     auto &diffusion_body_update_relation = main_methods.addRelationDynamics(diffusion_body_inner, diffusion_body_contact);
 
-    auto &initial_condition_pair_wise =
-        main_methods.addStateDynamics<InitialCondition<SPHBody, UniformDistribution<Real>>>(diffusion_body, phi_pair_wise, initial_temperature);
-    auto &boundary_condition_pair_wise =
-        main_methods.addStateDynamics<InitialCondition<SPHBody, InitialDistribution>>(wall_boundary, phi_pair_wise);
-    auto &diffusion_relaxation_pair_wise =
-        main_methods.addInteractionDynamics<
-                        PairwiseDissipation, Splitting, IsotropicDiffusion, ConstantSource>(diffusion_body_inner, phi_pair_wise, heat_source)
-            .addPreContactInteraction<Dirichlet<IsotropicDiffusion>>(diffusion_body_contact, phi_pair_wise);
-    auto &reduce_average_species = main_methods.addReduceDynamics<QuantityAverage<Real>>(diffusion_body, phi_pair_wise);
+    auto &initial_condition_implicit =
+        main_methods.addStateDynamics<InitialCondition<SPHBody, UniformDistribution<Real>>>(diffusion_body, phi_implicit, initial_temperature);
+    auto &boundary_condition_implicit =
+        main_methods.addStateDynamics<InitialCondition<SPHBody, InitialDistribution>>(wall_boundary, phi_implicit);
+    auto &zero_residue_boundary_condition =
+        main_methods.addStateDynamics<InitialCondition<SPHBody, UniformDistribution<Real>>>(wall_boundary, "Residue" + phi_implicit, zero_residue);
+    using MainExecutionPolicy = execution::ParallelPolicy; // define execution policy for this case
+    ImplicitDissipation<MainExecutionPolicy, Inner<IsotropicDiffusion>>
+        diffusion_relaxation_implicit(diffusion_body_inner, phi_implicit, 1.0e-6);
+    diffusion_relaxation_implicit.addPostContactInteraction<Dirichlet<IsotropicDiffusion>>(diffusion_body_contact, phi_implicit);
+    auto &reduce_average_species = main_methods.addReduceDynamics<QuantityAverage<Real>>(diffusion_body, phi_implicit);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
     auto &body_state_recorder = main_methods.addBodyStateRecorder<BodyStatesRecordingToVtpCK>(sph_system);
-    body_state_recorder.addToWrite<Real>(diffusion_body, phi_pair_wise);
-    body_state_recorder.addToWrite<Real>(wall_boundary, phi_pair_wise);
+    body_state_recorder.addToWrite<Real>(diffusion_body, phi_implicit);
+    body_state_recorder.addToWrite<Real>(wall_boundary, phi_implicit);
     //----------------------------------------------------------------------
     //	Define time stepper with end and start time.
     //----------------------------------------------------------------------
-    TimeStepper &time_stepper = sph_solver.defineTimeStepper(5.0);
+    TimeStepper &time_stepper = sph_solver.defineTimeStepper(1.0);
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
     size_t time_steps = 0;
-    Real output_peroid = 10.0;
+    Real output_peroid = 0.1;
     auto &state_recording = time_stepper.addTriggerByInterval(output_peroid);
     //----------------------------------------------------------------------
     //	Prepare for the time integration loop.
@@ -155,14 +158,15 @@ int main(int ac, char *av[])
     wall_boundary_cell_linked_list.exec();
     diffusion_body_update_relation.exec();
 
-    initial_condition_pair_wise.exec();
-    boundary_condition_pair_wise.exec();
+    initial_condition_implicit.exec();
+    boundary_condition_implicit.exec();
+    zero_residue_boundary_condition.exec();
     Real initial_average_species = reduce_average_species.exec();
     //----------------------------------------------------------------------
     //	Statistics for CPU time
     //----------------------------------------------------------------------
     TickCount time_instance;
-    TimeInterval interval_pair_wise;
+    TimeInterval interval_implicit;
     //----------------------------------------------------------------------
     //	First output before the main loop.
     //----------------------------------------------------------------------
@@ -175,11 +179,11 @@ int main(int ac, char *av[])
         //----------------------------------------------------------------------
         //	the fastest and most frequent acostic time stepping.
         //----------------------------------------------------------------------
-        Real diffusion_dt = time_stepper.incrementPhysicalTime(1.0 / 16000.0);
+        Real diffusion_dt = time_stepper.incrementPhysicalTime(1.0 / 100.0);
 
         time_instance = TickCount::now();
-        diffusion_relaxation_pair_wise.exec(diffusion_dt);
-        interval_pair_wise += TickCount::now() - time_instance;
+        time_stepper.integrateMatchedTimeInterval(diffusion_relaxation_implicit, diffusion_dt);
+        interval_implicit += TickCount::now() - time_instance;
         time_steps += 1;
 
         //----------------------------------------------------------------------
@@ -190,7 +194,7 @@ int main(int ac, char *av[])
             body_state_recorder.writeToFile();
         }
 
-        if (time_steps % 1000 == 0)
+        if (time_steps % 1 == 0)
         {
             std::cout << "N=" << time_steps << " Time: "
                       << time_stepper.getPhysicalTime() << "	dt: " << diffusion_dt << "\n";
@@ -199,11 +203,11 @@ int main(int ac, char *av[])
         }
     }
 
-    TimeInterval tt = interval_pair_wise;
+    TimeInterval tt = interval_implicit;
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
-    std::cout << "Pair-wise diffusion time: " << interval_pair_wise.seconds() << " seconds." << std::endl;
+    std::cout << "Pair-wise diffusion time: " << interval_implicit.seconds() << " seconds." << std::endl;
 
-    approximated_pair_wise = reduce_average_species.exec();
+    approximated_implicit = reduce_average_species.exec();
 
     testing::InitGoogleTest(&ac, av);
     return RUN_ALL_TESTS();

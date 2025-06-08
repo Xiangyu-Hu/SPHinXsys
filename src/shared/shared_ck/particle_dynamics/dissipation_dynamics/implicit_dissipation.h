@@ -134,6 +134,36 @@ class DissipativeTransform<Inner<DissipationType, Parameters...>>
     DiscreteVariable<DataType> *dv_transformed_;
 };
 
+template <typename DissipationType, typename... Parameters>
+class DissipativeTransform<Contact<Dirichlet<DissipationType>, Parameters...>>
+    : public Dissipation<Base, DissipationType, Contact<Parameters...>>
+{
+    using DataType = typename DissipationType::DataType;
+    using BaseDissipationType = Dissipation<Base, DissipationType, Contact<Parameters...>>;
+
+  public:
+    DissipativeTransform(Contact<Parameters...> &contact_relation, const std::string &variable_name);
+    virtual ~DissipativeTransform() {};
+
+    class InteractKernel : public BaseDissipationType::InteractKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt contact_index);
+        void interact(size_t index_i, Real dt = 0.0);
+
+      protected:
+        DataType *transformed_;
+        Real *contact_Vol_;
+        DataType *contact_variable_;
+    };
+
+  protected:
+    DiscreteVariable<DataType> *dv_transformed_;
+    StdVec<DiscreteVariable<Real> *> dv_contact_Vol_;
+    StdVec<DiscreteVariable<DataType> *> contact_dv_variable_;
+};
+
 template <typename DataType, class DynamicsIdentifier>
 class DissipationRHS : public BaseLocalDynamics<DynamicsIdentifier>
 {
