@@ -163,7 +163,7 @@ int main(int ac, char *av[])
 
     InteractionDynamicsCK<MainExecutionPolicy, LinearCorrectionMatrixInner> correct_configuration(diffusion_body_inner);
 
-    StateDynamics<MainExecutionPolicy, InitialCondition<SPHBody, UniformDistribution<Real>>>
+    StateDynamics<MainExecutionPolicy, VariableAssignment<SPHBody, ConstantValue<Real>>>
         diffusion_initial_condition(diffusion_body, diffusion_species_name, initial_temperature);
     GetDiffusionTimeStepSize get_time_step_size(diffusion_body);
     DynamicsSequence<InteractionDynamicsCK<
