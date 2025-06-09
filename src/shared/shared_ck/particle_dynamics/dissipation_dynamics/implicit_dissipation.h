@@ -314,6 +314,7 @@ class ImplicitDissipation<ExecutionPolicy, RelationType<DissipationType, Paramet
 {
     using DataType = typename DissipationType::DataType;
     using DynamicsIdentifier = typename RelationType<Parameters...>::SourceType;
+    UniquePtrsKeeper<BaseDynamics<void>> initialization_ptrs_keeper_;
 
   public:
     ImplicitDissipation(RelationType<Parameters...> &first_relation,
@@ -321,11 +322,14 @@ class ImplicitDissipation<ExecutionPolicy, RelationType<DissipationType, Paramet
                         Real convergence_criteria);
     template <typename... ControlParameters, typename... RelationParameters, typename... Args>
     auto &addPostContactInteraction(Contact<RelationParameters...> &contact_relation, Args &&...args);
+    void initializeImplicitDissipation();
     virtual void exec(Real dt = 0.0) override;
 
   protected:
+    std::string variable_name_;
     Real convergence_criteria_;
     DynamicsIdentifier &dynamics_identifier_;
+    StdVec<BaseDynamics<void> *> initialization_methods_;
     SingularVariable<TensorProductType<DataType>> sv_search_depth_;
     StateDynamics<ExecutionPolicy, DissipationRHS<DataType, DynamicsIdentifier>> dissipation_rhs_;
     InteractionDynamicsCK<ExecutionPolicy, DissipativeTransform<RelationType<DissipationType, Parameters...>>> transformed_variable_;

@@ -25,7 +25,6 @@ const Real diffusion_coeff = 1.0;
 //	Parameters for initial and boundary conditions.
 //----------------------------------------------------------------------
 Real initial_temperature = 300.0;
-Real zero_residue = 0.0;
 Real high_temperature = 300.0;
 Real low_temperature = 400.0;
 Real heat_source = 1000.0;
@@ -135,8 +134,6 @@ int main(int ac, char *av[])
         main_methods.addStateDynamics<VariableAssignment<SPHBody, ConstantValue<Real>>>(diffusion_body, phi_implicit, initial_temperature);
     auto &boundary_condition_implicit =
         main_methods.addStateDynamics<VariableAssignment<SPHBody, SpatialDistribution<InitialProfile>>>(wall_boundary, phi_implicit);
-    auto &zero_residue_boundary_condition =
-        main_methods.addStateDynamics<VariableAssignment<SPHBody, ConstantValue<Real>>>(wall_boundary, "Residue" + phi_implicit, zero_residue);
     using MainExecutionPolicy = execution::ParallelPolicy; // define execution policy for this case
     ImplicitDissipation<MainExecutionPolicy, Inner<IsotropicDiffusion>>
         diffusion_relaxation_implicit(diffusion_body_inner, phi_implicit, 1.0e-6);
@@ -186,7 +183,7 @@ int main(int ac, char *av[])
 
     initial_condition_implicit.exec();
     boundary_condition_implicit.exec();
-    zero_residue_boundary_condition.exec();
+    diffusion_relaxation_implicit.initializeImplicitDissipation();
     Real initial_implicit_average_species = implicit_average_species.exec();
 
     initial_condition_explicit.exec();

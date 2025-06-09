@@ -169,7 +169,7 @@ template <class ExecutionPolicy, template <typename...> class RelationType,
 ImplicitDissipation<ExecutionPolicy, RelationType<DissipationType, Parameters...>>::
     ImplicitDissipation(RelationType<Parameters...> &first_relation,
                         const std::string &variable_name, Real convergence_criteria)
-    : BaseDynamics<void>(),
+    : BaseDynamics<void>(), variable_name_(variable_name),
       convergence_criteria_(convergence_criteria),
       dynamics_identifier_(first_relation.getDynamicsIdentifier()),
       sv_search_depth_("SearchDepth" + variable_name),
@@ -188,11 +188,29 @@ template <typename... ControlParameters, typename... RelationParameters, typenam
 auto &ImplicitDissipation<ExecutionPolicy, RelationType<DissipationType, Parameters...>>::
     addPostContactInteraction(Contact<RelationParameters...> &contact_relation, Args &&...args)
 {
+    for (auto &identifier : contact_relation.getContactIdentifiers())
+    {
+        initialization_methods_.push_back(
+            initialization_ptrs_keeper_.createPtr<
+            StateDynamics<ExecutionPolicy, VariableAssignment<SPHBody, ConstantValue<DataType>>>>(
+                *identifier, "Residue" + variable_name_, ZeroData<DataType>::value));
+    }
     transformed_variable_.template addPostContactInteraction<ControlParameters...>(
         contact_relation, std::forward<Args>(args)...);
     transformed_residue_.template addPostContactInteraction<ControlParameters...>(
         contact_relation, std::forward<Args>(args)...);
     return *this;
+}
+//=================================================================================================//
+template <class ExecutionPolicy, template <typename...> class RelationType,
+          typename DissipationType, typename... Parameters>
+void ImplicitDissipation<ExecutionPolicy, RelationType<DissipationType, Parameters...>>::
+    initializeImplicitDissipation()
+{
+    for (auto &initialization : initialization_methods_)
+    {
+        initialization->exec();
+    }
 }
 //=================================================================================================//
 template <class ExecutionPolicy, template <typename...> class RelationType,
@@ -222,9 +240,9 @@ void ImplicitDissipation<ExecutionPolicy, RelationType<DissipationType, Paramete
         sv_search_depth_.setValue(tensor_residue_average * getInverse(tensor_transformed_residue_average));
         update_dissipation_solution_.exec();
         ++iteration_count;
-        if (iteration_count > 10000)
+        if (iteration_count > 1000)
         {
-            std::cout << "Implicit dissipation did not converge within 100 iterations." << std::endl;
+            std::cout << "Implicit dissipation did not converge within 1000 iterations." << std::endl;
             break;
         }
     }
