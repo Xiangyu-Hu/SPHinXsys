@@ -97,8 +97,8 @@ StdVec<Vecd> VelocityXObserverParticle()
 
     for (size_t i = 0; i < number_of_observation_point; ++i)
     {
-        Vec2d point_corrdinate(range_of_measure * (Real)i / (Real)(number_of_observation_point - 1) + start_of_measure, 0.5 * DL);
-        observation_points.push_back(point_corrdinate);
+        Vec2d point_coordinate(range_of_measure * (Real)i / (Real)(number_of_observation_point - 1) + start_of_measure, 0.5 * DL);
+        observation_points.push_back(point_coordinate);
     }
     return observation_points;
 }
@@ -111,10 +111,10 @@ StdVec<Vecd> VelocityYObserverParticle()
     Real start_of_measure = 0.5 * resolution_ref;
     for (size_t i = 0; i < number_of_observation_point; ++i)
     {
-        Vec2d point_corrdinate(0.5 * DH, range_of_measure * (Real)i /
+        Vec2d point_coordinate(0.5 * DH, range_of_measure * (Real)i /
                                                  (Real)(number_of_observation_point - 1) +
                                              start_of_measure);
-        observation_points.push_back(point_corrdinate);
+        observation_points.push_back(point_coordinate);
     }
     return observation_points;
 }
