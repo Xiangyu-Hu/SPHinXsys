@@ -26,36 +26,34 @@ const Real diffusion_coeff = 1.0;
 //----------------------------------------------------------------------
 Real initial_temperature = 300.0;
 Real zero_residue = 0.0;
-const Real high_temperature = 300.0;
-const Real low_temperature = 400.0;
+Real high_temperature = 300.0;
+Real low_temperature = 400.0;
 Real heat_source = 1000.0;
 //----------------------------------------------------------------------
 // Define extra classes which are used in the main program.
 // These classes are defined under the namespace of SPH.
 //----------------------------------------------------------------------
-class InitialDistribution : public ReturnFunction<Real>
+class InitialProfile : public ReturnFunction<Real>
 {
+    Real low_temperature_;
+    Real high_temperature_;
+
   public:
-    InitialDistribution(BaseParticles *particles) {};
+    InitialProfile()
+        : low_temperature_(low_temperature),
+          high_temperature_(high_temperature) {};
 
-    class ComputingKernel
+    Real operator()(const Vecd &position)
     {
-      public:
-        template <class ExecutionPolicy, class EncloserType>
-        ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser){};
-
-        Real operator()(const Vecd &position)
+        if (position[1] < 0.0)
         {
-            if (position[1] < 0.0)
-            {
-                return low_temperature;
-            }
-            if (position[1] > 1.0)
-            {
-                return high_temperature;
-            }
-            return 0.0;
-        };
+            return low_temperature_;
+        }
+        if (position[1] > 1.0)
+        {
+            return high_temperature_;
+        }
+        return 0.0;
     };
 };
 //----------------------------------------------------------------------
@@ -134,11 +132,11 @@ int main(int ac, char *av[])
     auto &diffusion_body_update_relation = main_methods.addRelationDynamics(diffusion_body_inner, diffusion_body_contact);
 
     auto &initial_condition_implicit =
-        main_methods.addStateDynamics<InitialCondition<SPHBody, UniformDistribution<Real>>>(diffusion_body, phi_implicit, initial_temperature);
+        main_methods.addStateDynamics<VariableAssignment<SPHBody, ConstantValue<Real>>>(diffusion_body, phi_implicit, initial_temperature);
     auto &boundary_condition_implicit =
-        main_methods.addStateDynamics<InitialCondition<SPHBody, InitialDistribution>>(wall_boundary, phi_implicit);
+        main_methods.addStateDynamics<VariableAssignment<SPHBody, SpatialDistribution<InitialProfile>>>(wall_boundary, phi_implicit);
     auto &zero_residue_boundary_condition =
-        main_methods.addStateDynamics<InitialCondition<SPHBody, UniformDistribution<Real>>>(wall_boundary, "Residue" + phi_implicit, zero_residue);
+        main_methods.addStateDynamics<VariableAssignment<SPHBody, ConstantValue<Real>>>(wall_boundary, "Residue" + phi_implicit, zero_residue);
     using MainExecutionPolicy = execution::ParallelPolicy; // define execution policy for this case
     ImplicitDissipation<MainExecutionPolicy, Inner<IsotropicDiffusion>>
         diffusion_relaxation_implicit(diffusion_body_inner, phi_implicit, 1.0e-6);
@@ -147,9 +145,9 @@ int main(int ac, char *av[])
 
     IsotropicDiffusion isotropic_diffusion_explict(phi_explicit, diffusion_coeff);
     auto &initial_condition_explicit =
-        main_methods.addStateDynamics<InitialCondition<SPHBody, UniformDistribution<Real>>>(diffusion_body, phi_explicit, initial_temperature);
+        main_methods.addStateDynamics<VariableAssignment<SPHBody, ConstantValue<Real>>>(diffusion_body, phi_explicit, initial_temperature);
     auto &boundary_condition_explicit =
-        main_methods.addStateDynamics<InitialCondition<SPHBody, InitialDistribution>>(wall_boundary, phi_explicit);
+        main_methods.addStateDynamics<VariableAssignment<SPHBody, SpatialDistribution<InitialProfile>>>(wall_boundary, phi_explicit);
     GetDiffusionTimeStepSize get_time_step_size(diffusion_body, &isotropic_diffusion_explict);
     auto &diffusion_relaxation_explicit =
         main_methods.addRungeKuttaSequence<
@@ -249,7 +247,7 @@ int main(int ac, char *av[])
 
     approximated_implicit = implicit_average_species.exec();
     approximated_explicit = explicit_average_species.exec();
-    
+
     testing::InitGoogleTest(&ac, av);
     return RUN_ALL_TESTS();
 }
