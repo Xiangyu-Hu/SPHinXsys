@@ -134,7 +134,7 @@ UpdateDissipationSearch<DataType, DynamicsIdentifier>::
                             SingularVariable<TensorProductType<DataType>> *sv_residue_ratio)
     : BaseLocalDynamics<DynamicsIdentifier>(identifier),
       dv_residue_(this->particles_->template getVariableByName<DataType>("Residue" + variable_name)),
-      dv_search_direction_(
+      dv_search_(
           this->particles_->template getVariableByName<DataType>("Search" + variable_name)),
       sv_residue_ratio_(sv_residue_ratio) {}
 //=================================================================================================//
@@ -143,7 +143,7 @@ template <class ExecutionPolicy, class EncloserType>
 UpdateDissipationSearch<DataType, DynamicsIdentifier>::UpdateKernel::
     UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : residue_(encloser.dv_residue_->DelegatedData(ex_policy)),
-      search_direction_(encloser.dv_search_direction_->DelegatedData(ex_policy)),
+      search_(encloser.dv_search_->DelegatedData(ex_policy)),
       residue_ratio_(encloser.sv_residue_ratio_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <typename DataType, class DynamicsIdentifier>
@@ -152,7 +152,7 @@ UpdateDissipationSolution<DataType, DynamicsIdentifier>::
                               const std::string &variable_name,
                               SingularVariable<TensorProductType<DataType>> *sv_search_depth)
     : BaseLocalDynamics<DynamicsIdentifier>(identifier),
-      dv_search_direction_(this->particles_->template registerStateVariableOnly<DataType>(
+      dv_search_(this->particles_->template registerStateVariableOnly<DataType>(
           "Search" + variable_name)),
       dv_variable_(this->particles_->template getVariableByName<DataType>(variable_name)),
       sv_search_depth_(sv_search_depth) {}
@@ -161,7 +161,7 @@ template <typename DataType, class DynamicsIdentifier>
 template <class ExecutionPolicy, class EncloserType>
 UpdateDissipationSolution<DataType, DynamicsIdentifier>::
     UpdateKernel::UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-    : search_direction_(encloser.dv_search_direction_->DelegatedData(ex_policy)),
+    : search_(encloser.dv_search_->DelegatedData(ex_policy)),
       variable_(encloser.dv_variable_->DelegatedData(ex_policy)),
       search_depth_(encloser.sv_search_depth_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
@@ -179,12 +179,12 @@ ImplicitDissipation<ExecutionPolicy, RelationType<DissipationType, Parameters...
       dissipation_rhs_(identifier_, variable_name),
       transformed_variable_(first_relation, variable_name),
       full_residue_(identifier_, variable_name),
-      initial_search_direction_(
+      initial_search_(
           identifier_, "Search" + variable_name, "Residue" + variable_name),
-      transformed_search_direction_(first_relation, "Search" + variable_name),
-      update_search_direction_(identifier_, variable_name, &sv_residue_ratio_),
+      transformed_search_(first_relation, "Search" + variable_name),
+      update_search_(identifier_, variable_name, &sv_residue_ratio_),
       residue_average_(identifier_, variable_name),
-      transformed_search_direction_average_(identifier_, variable_name),
+      transformed_search_average_(identifier_, variable_name),
       update_dissipation_solution_(identifier_, variable_name, &sv_search_depth_) {}
 //=================================================================================================//
 template <class ExecutionPolicy, template <typename...> class RelationType,
@@ -202,7 +202,7 @@ auto &ImplicitDissipation<ExecutionPolicy, RelationType<DissipationType, Paramet
     }
     transformed_variable_.template addPostContactInteraction<ControlParameters...>(
         contact_relation, std::forward<Args>(args)...);
-    transformed_search_direction_.template addPostContactInteraction<ControlParameters...>(
+    transformed_search_.template addPostContactInteraction<ControlParameters...>(
         contact_relation, std::forward<Args>(args)...);
     return *this;
 }
@@ -220,8 +220,7 @@ void ImplicitDissipation<ExecutionPolicy, RelationType<DissipationType, Paramete
 //=================================================================================================//
 template <class ExecutionPolicy, template <typename...> class RelationType,
           typename DissipationType, typename... Parameters>
-void ImplicitDissipation<ExecutionPolicy, RelationType<DissipationType, Parameters...>>::
-    exec(Real dt)
+void ImplicitDissipation<ExecutionPolicy, RelationType<DissipationType, Parameters...>>::exec(Real dt)
 {
     // initial residue and search direction
     dissipation_rhs_.exec();
@@ -229,13 +228,13 @@ void ImplicitDissipation<ExecutionPolicy, RelationType<DissipationType, Paramete
     full_residue_.exec();
     TensorProductType<DataType> present_residue_average = residue_average_.exec();
     Real residue_norm = math::sqrt(getSquaredNorm(present_residue_average));
-    initial_search_direction_.exec();
+    initial_search_.exec();
 
     UnsignedInt iteration_count = 0;
     while (residue_norm > convergence_criteria_)
     {
-        transformed_search_direction_.exec(dt);
-        TensorProductType<DataType> transformed_average = transformed_search_direction_average_.exec();
+        transformed_search_.exec(dt);
+        TensorProductType<DataType> transformed_average = transformed_search_average_.exec();
         sv_search_depth_.setValue(present_residue_average * getInverse(transformed_average));
         update_dissipation_solution_.exec();
 
@@ -248,7 +247,7 @@ void ImplicitDissipation<ExecutionPolicy, RelationType<DissipationType, Paramete
         iteration_count % 4 == 0
             ? sv_residue_ratio_.setValue(zero_residue_ratio_)
             : sv_residue_ratio_.setValue(present_residue_average * getInverse(previous_residue_average));
-        update_search_direction_.exec();
+        update_search_.exec();
 
         ++iteration_count;
         if (iteration_count > 1000)
