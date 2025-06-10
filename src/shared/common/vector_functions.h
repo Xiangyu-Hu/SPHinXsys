@@ -94,7 +94,7 @@ Eigen::Matrix<Real, Dim, Dim> getInverse(const Eigen::Matrix<Real, Dim, Dim> &va
     return variable.inverse();
 };
 
-inline Real getInverse(const Real &variable) { return 1.0 / variable; };
+inline Real getInverse(const Real &variable) { return variable / (variable * variable + TinyReal); };
 
 /** von Mises stress from stress matrix */
 Real getVonMisesStressFromMatrix(const Mat2d &sigma);

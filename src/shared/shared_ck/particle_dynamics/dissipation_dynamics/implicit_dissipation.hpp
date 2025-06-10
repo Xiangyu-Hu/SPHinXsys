@@ -128,19 +128,19 @@ FullDissipationResidue<DataType, DynamicsIdentifier>::UpdateKernel::
       transformed_(encloser.dv_transformed_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <typename DataType, class DynamicsIdentifier>
-UpdateDissipationSearchDirection<DataType, DynamicsIdentifier>::
-    UpdateDissipationSearchDirection(DynamicsIdentifier &identifier,
-                                     const std::string &variable_name,
-                                     SingularVariable<TensorProductType<DataType>> *sv_residue_ratio)
+UpdateDissipationSearch<DataType, DynamicsIdentifier>::
+    UpdateDissipationSearch(DynamicsIdentifier &identifier,
+                            const std::string &variable_name,
+                            SingularVariable<TensorProductType<DataType>> *sv_residue_ratio)
     : BaseLocalDynamics<DynamicsIdentifier>(identifier),
       dv_residue_(this->particles_->template getVariableByName<DataType>("Residue" + variable_name)),
       dv_search_direction_(
-          this->particles_->template getVariableByName<DataType>("SearchDirection" + variable_name)),
+          this->particles_->template getVariableByName<DataType>("Search" + variable_name)),
       sv_residue_ratio_(sv_residue_ratio) {}
 //=================================================================================================//
 template <typename DataType, class DynamicsIdentifier>
 template <class ExecutionPolicy, class EncloserType>
-UpdateDissipationSearchDirection<DataType, DynamicsIdentifier>::UpdateKernel::
+UpdateDissipationSearch<DataType, DynamicsIdentifier>::UpdateKernel::
     UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : residue_(encloser.dv_residue_->DelegatedData(ex_policy)),
       search_direction_(encloser.dv_search_direction_->DelegatedData(ex_policy)),
@@ -153,7 +153,7 @@ UpdateDissipationSolution<DataType, DynamicsIdentifier>::
                               SingularVariable<TensorProductType<DataType>> *sv_search_depth)
     : BaseLocalDynamics<DynamicsIdentifier>(identifier),
       dv_search_direction_(this->particles_->template registerStateVariableOnly<DataType>(
-          "SearchDirection" + variable_name)),
+          "Search" + variable_name)),
       dv_variable_(this->particles_->template getVariableByName<DataType>(variable_name)),
       sv_search_depth_(sv_search_depth) {}
 //=================================================================================================//
@@ -173,14 +173,15 @@ ImplicitDissipation<ExecutionPolicy, RelationType<DissipationType, Parameters...
     : BaseDynamics<void>(), variable_name_(variable_name),
       convergence_criteria_(convergence_criteria),
       identifier_(first_relation.getDynamicsIdentifier()),
+      zero_residue_ratio_(ZeroData<TensorProductType<DataType>>::value),
       sv_search_depth_("SearchDepth" + variable_name),
       sv_residue_ratio_("ResidueRatio" + variable_name),
       dissipation_rhs_(identifier_, variable_name),
       transformed_variable_(first_relation, variable_name),
       full_residue_(identifier_, variable_name),
       initial_search_direction_(
-          identifier_, "SearchDirection" + variable_name, "Residue" + variable_name),
-      transformed_search_direction_(first_relation, "SearchDirection" + variable_name),
+          identifier_, "Search" + variable_name, "Residue" + variable_name),
+      transformed_search_direction_(first_relation, "Search" + variable_name),
       update_search_direction_(identifier_, variable_name, &sv_residue_ratio_),
       residue_average_(identifier_, variable_name),
       transformed_search_direction_average_(identifier_, variable_name),
@@ -197,7 +198,7 @@ auto &ImplicitDissipation<ExecutionPolicy, RelationType<DissipationType, Paramet
         initialization_methods_.push_back(
             initialization_ptrs_keeper_.createPtr<
                 StateDynamics<ExecutionPolicy, VariableAssignment<SPHBody, ConstantValue<DataType>>>>(
-                *identifier, "SearchDirection" + variable_name_, ZeroData<DataType>::value));
+                *identifier, "Search" + variable_name_, ZeroData<DataType>::value));
     }
     transformed_variable_.template addPostContactInteraction<ControlParameters...>(
         contact_relation, std::forward<Args>(args)...);
@@ -244,7 +245,9 @@ void ImplicitDissipation<ExecutionPolicy, RelationType<DissipationType, Paramete
         full_residue_.exec();
         present_residue_average = residue_average_.exec();
         residue_norm = math::sqrt(getSquaredNorm(present_residue_average));
-        sv_residue_ratio_.setValue(present_residue_average * getInverse(previous_residue_average));
+        iteration_count % 4 == 0
+            ? sv_residue_ratio_.setValue(zero_residue_ratio_)
+            : sv_residue_ratio_.setValue(present_residue_average * getInverse(previous_residue_average));
         update_search_direction_.exec();
 
         ++iteration_count;

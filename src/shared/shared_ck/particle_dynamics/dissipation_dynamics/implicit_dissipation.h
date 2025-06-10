@@ -221,13 +221,13 @@ class FullDissipationResidue : public BaseLocalDynamics<DynamicsIdentifier>
 };
 
 template <typename DataType, class DynamicsIdentifier>
-class UpdateDissipationSearchDirection : public BaseLocalDynamics<DynamicsIdentifier>
+class UpdateDissipationSearch : public BaseLocalDynamics<DynamicsIdentifier>
 {
   public:
-    UpdateDissipationSearchDirection(DynamicsIdentifier &identifier,
-                                     const std::string &variable_name,
-                                     SingularVariable<TensorProductType<DataType>> *sv_residue_ratio);
-    virtual ~UpdateDissipationSearchDirection() {};
+    UpdateDissipationSearch(DynamicsIdentifier &identifier,
+                            const std::string &variable_name,
+                            SingularVariable<TensorProductType<DataType>> *sv_residue_ratio);
+    virtual ~UpdateDissipationSearch() {};
 
     class UpdateKernel
     {
@@ -294,14 +294,14 @@ class DissipationResidueAverage
 };
 
 template <typename DataType, class DynamicsIdentifier>
-class TransformedDissipationResidueAverage
+class TransformedDissipationSearchAverage
     : public QuantityTensorProductAverage<DataType, DynamicsIdentifier>
 {
   public:
-    TransformedDissipationResidueAverage(DynamicsIdentifier &identifier, const std::string &variable_name)
+    TransformedDissipationSearchAverage(DynamicsIdentifier &identifier, const std::string &variable_name)
         : QuantityTensorProductAverage<DataType, DynamicsIdentifier>(
-              identifier, "SearchDirection" + variable_name, "TransformedSearchDirection" + variable_name) {};
-    virtual ~TransformedDissipationResidueAverage() {};
+              identifier, "Search" + variable_name, "TransformedSearch" + variable_name) {};
+    virtual ~TransformedDissipationSearchAverage() {};
 };
 
 template <typename...>
@@ -330,15 +330,16 @@ class ImplicitDissipation<ExecutionPolicy, RelationType<DissipationType, Paramet
     Real convergence_criteria_;
     DynamicsIdentifier &identifier_;
     StdVec<BaseDynamics<void> *> initialization_methods_;
+    TensorProductType<DataType> zero_residue_ratio_;
     SingularVariable<TensorProductType<DataType>> sv_search_depth_, sv_residue_ratio_;
     StateDynamics<ExecutionPolicy, DissipationRHS<DataType, DynamicsIdentifier>> dissipation_rhs_;
     InteractionDynamicsCK<ExecutionPolicy, DissipativeTransform<RelationType<DissipationType, Parameters...>>> transformed_variable_;
     StateDynamics<ExecutionPolicy, FullDissipationResidue<DataType, DynamicsIdentifier>> full_residue_;
     StateDynamics<ExecutionPolicy, VariableAssignment<DynamicsIdentifier, CopyVariable<DataType>>> initial_search_direction_;
     InteractionDynamicsCK<ExecutionPolicy, DissipativeTransform<RelationType<DissipationType, Parameters...>>> transformed_search_direction_;
-    StateDynamics<ExecutionPolicy, UpdateDissipationSearchDirection<DataType, DynamicsIdentifier>> update_search_direction_;
+    StateDynamics<ExecutionPolicy, UpdateDissipationSearch<DataType, DynamicsIdentifier>> update_search_direction_;
     ReduceDynamicsCK<ExecutionPolicy, DissipationResidueAverage<DataType, DynamicsIdentifier>> residue_average_;
-    ReduceDynamicsCK<ExecutionPolicy, TransformedDissipationResidueAverage<DataType, DynamicsIdentifier>> transformed_search_direction_average_;
+    ReduceDynamicsCK<ExecutionPolicy, TransformedDissipationSearchAverage<DataType, DynamicsIdentifier>> transformed_search_direction_average_;
     StateDynamics<ExecutionPolicy, UpdateDissipationSolution<DataType, DynamicsIdentifier>> update_dissipation_solution_;
 };
 } // namespace SPH
