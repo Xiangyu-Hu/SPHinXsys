@@ -41,7 +41,7 @@ class VariableAssignment : public BaseLocalDynamics<DynamicsIdentifier>
 
   public:
     template <typename... Args>
-    VariableAssignment(DynamicsIdentifier &identifier, const std::string &variable_name, Args &...args)
+    VariableAssignment(DynamicsIdentifier &identifier, const std::string &variable_name, Args &&...args)
         : BaseLocalDynamics<DynamicsIdentifier>(identifier),
           dv_variable_(this->particles_->template registerStateVariableOnly<DataType>(variable_name)),
           assignment_method_(this->particles_, std::forward<Args>(args)...){};
@@ -81,7 +81,7 @@ class SpatialDistribution<DistributionType>
 
   public:
     template <typename... Args>
-    SpatialDistribution(BaseParticles *particles, Args &...args)
+    SpatialDistribution(BaseParticles *particles, Args &&...args)
         : dv_pos_(particles->template getVariableByName<Vecd>("Position")),
           distribution_(std::forward<Args>(args)...){};
 
@@ -134,7 +134,7 @@ class CopyVariable : public ReturnFunction<DataType>
 {
   public:
     CopyVariable(BaseParticles *particles, const std::string &copy_variable_name)
-        : dv_copy_variable_(particles->template getVariableByName<Vecd>(
+        : dv_copy_variable_(particles->template getVariableByName<DataType>(
               copy_variable_name)) {};
 
     class ComputingKernel
@@ -151,7 +151,7 @@ class CopyVariable : public ReturnFunction<DataType>
     };
 
   protected:
-    DiscreteVariable<DataType> dv_copy_variable_;
+    DiscreteVariable<DataType> *dv_copy_variable_;
 };
 } // namespace SPH
 #endif // GENERAL_ASSIGNMENT_H
