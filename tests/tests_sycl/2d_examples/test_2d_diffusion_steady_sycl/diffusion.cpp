@@ -134,7 +134,7 @@ int main(int ac, char *av[])
         main_methods.addStateDynamics<VariableAssignment<SPHBody, ConstantValue<Real>>>(diffusion_body, phi_implicit, initial_temperature);
     auto &boundary_condition_implicit =
         main_methods.addStateDynamics<VariableAssignment<SPHBody, SpatialDistribution<InitialProfile>>>(wall_boundary, phi_implicit);
-    using MainExecutionPolicy = execution::ParallelPolicy; // define execution policy for this case
+    using MainExecutionPolicy = execution::ParallelDevicePolicy; // define execution policy for this case
     ImplicitDissipation<MainExecutionPolicy, Inner<IsotropicDiffusion>>
         diffusion_relaxation_implicit(diffusion_body_inner, phi_implicit, 1.0e-6);
     diffusion_relaxation_implicit.addPostContactInteraction<Dirichlet<IsotropicDiffusion>>(diffusion_body_contact, phi_implicit);
