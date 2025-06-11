@@ -81,10 +81,8 @@ template <class UnaryFunc>
 void particle_for(const LoopRangeCK<ParallelDevicePolicy, Splitting> &loop_range, const UnaryFunc &unary_func)
 {
     auto &sycl_queue = execution_instance.getQueue();
-
-    // forward sweeping
-
     const size_t loop_bound = loop_range.LoopBound();
+
     sycl_queue.submit([&](sycl::handler &cgh)
                       { cgh.parallel_for(execution_instance.getUniformNdRange(loop_bound), [=](sycl::nd_item<1> index)
                                          {
@@ -94,7 +92,6 @@ void particle_for(const LoopRangeCK<ParallelDevicePolicy, Splitting> &loop_range
                                  } }); })
         .wait_and_throw();
 
-    const size_t loop_bound = loop_range.LoopBound();
     sycl_queue.submit([&](sycl::handler &cgh)
                       { cgh.parallel_for(execution_instance.getUniformNdRange(loop_bound), [=](sycl::nd_item<1> index)
                                          {
