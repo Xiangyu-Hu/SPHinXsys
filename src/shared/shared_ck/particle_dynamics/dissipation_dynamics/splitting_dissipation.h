@@ -34,6 +34,22 @@
 
 namespace SPH
 {
+
+void atomic_add(Real &variable, const Real &value)
+{
+    AtomicRef<Real> atomic_variable(variable);
+    atomic_variable.fetch_add(value);
+};
+
+void atomic_add(Vecd &variable, const Vecd &value)
+{
+    for (size_t i = 0; i < Dimensions; ++i)
+    {
+        AtomicRef<Real> atomic_variable(variable[i]);
+        atomic_variable.fetch_add(value[i]);
+    }
+};
+
 // Note: ProjectionDissipation method is for obtaining accurate solution for steady problems.
 // This method is unconditionally stable, but has small conservative errors.
 // Therefore, it is not used for transient system which requires conservation properties.
@@ -68,19 +84,17 @@ class ProjectionDissipation<Inner<Splitting, DissipationType, Parameters...>>
 template <typename...>
 class PairwiseDissipation;
 
-template <typename DissipationType, typename SourceTermType, typename... Parameters>
-class PairwiseDissipation<Inner<Splitting, DissipationType, SourceTermType, Parameters...>>
+template <typename DissipationType, typename... Parameters>
+class PairwiseDissipation<Inner<Splitting, DissipationType, Parameters...>>
     : public Dissipation<Base, DissipationType, Inner<Parameters...>>
 {
     using DataType = typename DissipationType::DataType;
     using BaseDissipationType = Dissipation<Base, DissipationType, Inner<Parameters...>>;
     using InverseVolumetricCapacity = typename DissipationType::InverseVolumetricCapacity;
-    using SourceTermKernel = typename SourceTermType::ComputingKernel;
 
   public:
-    template <typename... Args>
     explicit PairwiseDissipation(Inner<Parameters...> &inner_relation,
-                                 const std::string &variable_name, Args &&...args);
+                                 const std::string &variable_name);
     virtual ~PairwiseDissipation() {};
 
     class InteractKernel : public BaseDissipationType::InteractKernel
@@ -92,11 +106,7 @@ class PairwiseDissipation<Inner<Splitting, DissipationType, SourceTermType, Para
 
       protected:
         InverseVolumetricCapacity inverse_capacity_;
-        SourceTermKernel source_term_;
     };
-
-  protected:
-    SourceTermType source_term_model_;
 };
 
 class ConstantSource

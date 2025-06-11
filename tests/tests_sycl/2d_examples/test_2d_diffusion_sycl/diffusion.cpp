@@ -19,35 +19,30 @@ BoundingBox system_domain_bounds(Vec2d(0.0, 0.0), Vec2d(L, H));
 std::string phi_pair_wise = "PhiPairWise";
 std::string phi_projection = "PhiProjection";
 std::string phi_explicit = "PhiExplicit";
-const Real diffusion_coeff = 1.0e-4;
+Real diffusion_coeff = 1.0e-4;
 Real end_time = 1.0; // end time of the simulation
 //----------------------------------------------------------------------
 // Define extra classes which are used in the main program.
 // These classes are defined under the namespace of SPH.
 //----------------------------------------------------------------------
-class InitialDistribution : public ReturnFunction<Real>
+class InitialProfile : public ReturnFunction<Real>
 {
+    Real diffusion_coeff_;
+
   public:
-    InitialDistribution(BaseParticles *particles) {};
+    InitialProfile() : diffusion_coeff_(diffusion_coeff) {};
 
-    class ComputingKernel
+    Real operator()(const Vecd &position)
     {
-      public:
-        template <class ExecutionPolicy, class EncloserType>
-        ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser){};
-
-        Real operator()(const Vecd &position)
+        if (position[0] >= 0.45 && position[0] <= 0.55)
         {
-            if (position[0] >= 0.45 && position[0] <= 0.55)
-            {
-                return 1.0;
-            }
-            if (position[0] >= 1.0)
-            {
-                return exp(-0.25 * ((position[0] - 1.5) * (position[0] - 1.5)) / diffusion_coeff);
-            }
-            return 0.0;
-        };
+            return 1.0;
+        }
+        if (position[0] >= 1.0)
+        {
+            return exp(-0.25 * ((position[0] - 1.5) * (position[0] - 1.5)) / diffusion_coeff_);
+        }
+        return 0.0;
     };
 };
 //----------------------------------------------------------------------
@@ -135,22 +130,22 @@ int main(int ac, char *av[])
 
     auto &initial_condition_pair_wise =
         main_methods.addStateDynamics<
-            InitialCondition<SPHBody, InitialDistribution>>(diffusion_body, phi_pair_wise);
+            VariableAssignment<SPHBody, SpatialDistribution<InitialProfile>>>(diffusion_body, phi_pair_wise);
     auto &diffusion_relaxation_pair_wise =
         main_methods.addInteractionDynamics<
             PairwiseDissipation, Splitting, IsotropicDiffusion>(diffusion_body_inner, phi_pair_wise);
 
     auto &initial_condition_projection =
         main_methods.addStateDynamics<
-            InitialCondition<SPHBody, InitialDistribution>>(diffusion_body, phi_projection);
-    using MainExecutionPolicy = execution::ParallelPolicy; // define execution policy for this case
-    ImplicitDissipation<MainExecutionPolicy, Inner<IsotropicDiffusion>>
-        diffusion_relaxation_projection(diffusion_body_inner, phi_projection, 1.0e-6);
+            VariableAssignment<SPHBody, SpatialDistribution<InitialProfile>>>(diffusion_body, phi_projection);
+    auto &diffusion_relaxation_projection =
+        main_methods.addInteractionDynamics<
+            ProjectionDissipation, Splitting, IsotropicDiffusion>(diffusion_body_inner, phi_projection);
 
     IsotropicDiffusion isotropic_diffusion_explict(phi_explicit, diffusion_coeff);
     auto &initial_condition_explicit =
         main_methods.addStateDynamics<
-            InitialCondition<SPHBody, InitialDistribution>>(diffusion_body, phi_explicit);
+            VariableAssignment<SPHBody, SpatialDistribution<InitialProfile>>>(diffusion_body, phi_explicit);
     GetDiffusionTimeStepSize get_time_step_size(diffusion_body, &isotropic_diffusion_explict);
     auto &diffusion_relaxation_explicit =
         main_methods.addRungeKuttaSequence<
@@ -225,7 +220,7 @@ int main(int ac, char *av[])
         interval_pair_wise += TickCount::now() - time_instance;
 
         time_instance = TickCount::now();
-        time_stepper.integrateMatchedTimeInterval(diffusion_relaxation_projection, diffusion_dt);
+        time_stepper.integrateMatchedTimeInterval(diffusion_relaxation_projection, diffusion_dt, 8);
         interval_projection += TickCount::now() - time_instance;
 
         time_instance = TickCount::now();

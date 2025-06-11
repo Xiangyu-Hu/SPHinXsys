@@ -82,31 +82,27 @@ void particle_for(const LoopRangeCK<ParallelDevicePolicy, Splitting> &loop_range
 {
     auto &sycl_queue = execution_instance.getQueue();
 
-    for (int k = 0; k < NumberOfCellNeighbor; k++) // forward sweeping
-    {
-        const size_t loop_bound = loop_range.LoopBound(k);
-        sycl_queue.submit([&](sycl::handler &cgh)
-                          { cgh.parallel_for(execution_instance.getUniformNdRange(loop_bound), [=](sycl::nd_item<1> index)
-                                             {
-                                 if(index.get_global_id(0) < loop_bound)
-                                 {
-                                     loop_range.computeUnit(k, unary_func, index.get_global_id(0));
-                                 } }); })
-            .wait_and_throw();
-    }
+    // forward sweeping
 
-    for (int k = NumberOfCellNeighbor - 1; k >= 0; --k) // backward sweeping
-    {
-        const size_t loop_bound = loop_range.LoopBound(k);
-        sycl_queue.submit([&](sycl::handler &cgh)
-                          { cgh.parallel_for(execution_instance.getUniformNdRange(loop_bound), [=](sycl::nd_item<1> index)
-                                             {
+    const size_t loop_bound = loop_range.LoopBound();
+    sycl_queue.submit([&](sycl::handler &cgh)
+                      { cgh.parallel_for(execution_instance.getUniformNdRange(loop_bound), [=](sycl::nd_item<1> index)
+                                         {
                                  if(index.get_global_id(0) < loop_bound)
                                  {
-                                     loop_range.computeUnit(k, unary_func, index.get_global_id(0));
+                                     loop_range.computeUnit(unary_func, index.get_global_id(0));
                                  } }); })
-            .wait_and_throw();
-    }
+        .wait_and_throw();
+
+    const size_t loop_bound = loop_range.LoopBound();
+    sycl_queue.submit([&](sycl::handler &cgh)
+                      { cgh.parallel_for(execution_instance.getUniformNdRange(loop_bound), [=](sycl::nd_item<1> index)
+                                         {
+                                 if(index.get_global_id(0) < loop_bound)
+                                 {
+                                     loop_range.computeUnit(unary_func, index.get_global_id(0));
+                                 } }); })
+        .wait_and_throw();
 };
 
 template <typename Operation, class DynamicsIdentifier, class ReturnType, class UnaryFunc>

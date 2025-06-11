@@ -51,21 +51,15 @@ void particle_for(const LoopRangeCK<SequencedPolicy, Splitting> &loop_range,
                   const UnaryFunc &unary_func)
 {
     // forward sweeping
-    for (int k = 0; k < NumberOfCellNeighbor; k++)
+    for (size_t i = 0; i < loop_range.LoopBound(); ++i)
     {
-        for (size_t i = 0; i < loop_range.LoopBound(k); ++i)
-        {
-            loop_range.computeUnit(k, unary_func, i);
-        }
+        loop_range.computeUnit(unary_func, i);
     }
 
     // backward sweeping
-    for (int k = NumberOfCellNeighbor - 1; k >= 0; --k)
+    for (size_t i = 0; i < loop_range.LoopBound(); ++i)
     {
-        for (size_t i = 0; i < loop_range.LoopBound(k); ++i)
-        {
-            loop_range.computeUnit(k, unary_func, i);
-        }
+        loop_range.computeUnit(unary_func, i);
     }
 };
 
@@ -90,34 +84,28 @@ void particle_for(const LoopRangeCK<ParallelPolicy, Splitting> &loop_range,
                   const UnaryFunc &unary_func)
 {
     // forward sweeping
-    for (int k = 0; k < NumberOfCellNeighbor; k++)
-    {
-        parallel_for(
-            IndexRange(0, loop_range.LoopBound(k)),
-            [&](const IndexRange &r)
+    parallel_for(
+        IndexRange(0, loop_range.LoopBound()),
+        [&](const IndexRange &r)
+        {
+            for (size_t i = r.begin(); i < r.end(); ++i)
             {
-                for (size_t i = r.begin(); i < r.end(); ++i)
-                {
-                    loop_range.computeUnit(k, unary_func, i);
-                }
-            },
-            ap);
-    }
+                loop_range.computeUnit(unary_func, i);
+            }
+        },
+        ap);
 
     // backward sweeping
-    for (int k = NumberOfCellNeighbor - 1; k >= 0; --k)
-    {
-        parallel_for(
-            IndexRange(0, loop_range.LoopBound(k)),
-            [&](const IndexRange &r)
+    parallel_for(
+        IndexRange(0, loop_range.LoopBound()),
+        [&](const IndexRange &r)
+        {
+            for (size_t i = r.begin(); i < r.end(); ++i)
             {
-                for (size_t i = r.begin(); i < r.end(); ++i)
-                {
-                    loop_range.computeUnit(k, unary_func, i);
-                }
-            },
-            ap);
-    }
+                loop_range.computeUnit(unary_func, i);
+            }
+        },
+        ap);
 };
 
 template <typename Operation, class DynamicsIdentifier, class ReturnType, class UnaryFunc>
