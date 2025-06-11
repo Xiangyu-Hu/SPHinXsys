@@ -93,6 +93,7 @@ class BaseParticles
     SPHBody &getSPHBody() { return sph_body_; };
     BaseMaterial &getBaseMaterial() { return base_material_; };
     SPHAdaptation &getSPHAdaptation();
+    void printBodyName();
     //----------------------------------------------------------------------
     // Global information for defining particle groups
     // total_real_particles_ gives the run-time total number of real particles.
