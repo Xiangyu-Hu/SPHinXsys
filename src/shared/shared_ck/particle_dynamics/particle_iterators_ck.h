@@ -50,16 +50,12 @@ template <class UnaryFunc>
 void particle_for(const LoopRangeCK<SequencedPolicy, Splitting> &loop_range,
                   const UnaryFunc &unary_func)
 {
-    // forward sweeping
-    for (size_t i = 0; i < loop_range.LoopBound(); ++i)
+    for (int i = 0; i < 2; ++i) // Two iterations for the splitting
     {
-        loop_range.computeUnit(unary_func, i);
-    }
-
-    // backward sweeping
-    for (size_t i = 0; i < loop_range.LoopBound(); ++i)
-    {
-        loop_range.computeUnit(unary_func, i);
+        for (size_t i = 0; i < loop_range.LoopBound(); ++i)
+        {
+            loop_range.computeUnit(unary_func, i);
+        }
     }
 };
 
@@ -83,29 +79,19 @@ template <class UnaryFunc>
 void particle_for(const LoopRangeCK<ParallelPolicy, Splitting> &loop_range,
                   const UnaryFunc &unary_func)
 {
-    // forward sweeping
-    parallel_for(
-        IndexRange(0, loop_range.LoopBound()),
-        [&](const IndexRange &r)
-        {
-            for (size_t i = r.begin(); i < r.end(); ++i)
+    for (int i = 0; i < 2; ++i) // Two iterations for the splitting
+    {
+        parallel_for(
+            IndexRange(0, loop_range.LoopBound()),
+            [&](const IndexRange &r)
             {
-                loop_range.computeUnit(unary_func, i);
-            }
-        },
-        ap);
-
-    // backward sweeping
-    parallel_for(
-        IndexRange(0, loop_range.LoopBound()),
-        [&](const IndexRange &r)
-        {
-            for (size_t i = r.begin(); i < r.end(); ++i)
-            {
-                loop_range.computeUnit(unary_func, i);
-            }
-        },
-        ap);
+                for (size_t i = r.begin(); i < r.end(); ++i)
+                {
+                    loop_range.computeUnit(unary_func, i);
+                }
+            },
+            ap);
+    }
 };
 
 template <typename Operation, class DynamicsIdentifier, class ReturnType, class UnaryFunc>

@@ -139,25 +139,9 @@ void BaseCellLinkedList::findNearestListDataEntryByMesh(Mesh &mesh, UnsignedInt 
         });
 }
 //=================================================================================================//
-SplitMesh::SplitMesh(CellLinkedList &cell_linked_list)
-    : Mesh(cell_linked_list.getMesh())
-{
-    for (UnsignedInt k = 0; k < NumberOfCellNeighbor; ++k)
-    {
-        // get the corresponding 2D/3D split cell index (m, n)
-        // e.g., for k = 0, split_cell_index = (0,0), for k = 3, split_cell_index = (1,0), etc.
-        Arrayi split_cell_index = transfer1DtoMeshIndex(number_of_split_, k);
-        // get the number of cells belonging to the split cell k
-        // i_max = (M - m - 1) / 3 + 1, j_max = (N - n - 1) / 3 + 1
-        // e.g. all_cells = (M,N) = (6, 9), (m, n) = (1, 1), then i_max = 2, j_max = 3
-        all_splitted_cells_[k] = (AllCells() - split_cell_index - Arrayi::Ones()) / 3 + Arrayi::Ones();
-    }
-}
-//=================================================================================================//
 CellLinkedList::CellLinkedList(BoundingBox tentative_bounds, Real grid_spacing,
                                BaseParticles &base_particles, SPHAdaptation &sph_adaptation)
-    : BaseCellLinkedList(base_particles, sph_adaptation),
-      mesh_(nullptr), sv_split_mesh_(nullptr)
+    : BaseCellLinkedList(base_particles, sph_adaptation), mesh_(nullptr)
 {
     sv_mesh_ = mesh_ptrs_keeper_.createPtr<SingularVariable<Mesh>>(
         "BackgroundMesh", tentative_bounds, grid_spacing, 2);
@@ -184,16 +168,6 @@ void CellLinkedList::tagBoundingCells(StdVec<CellLists> &cell_data_lists,
                                       const BoundingBox &bounding_bounds, int axis)
 {
     tagBoundingCellsByMesh(*mesh_, 0, cell_data_lists, bounding_bounds, axis);
-}
-//=================================================================================================//
-SingularVariable<SplitMesh> *CellLinkedList::svSplitMesh()
-{
-    if (sv_split_mesh_ == nullptr)
-    {
-        sv_split_mesh_ = unique_variable_ptrs_.createPtr<SingularVariable<SplitMesh>>(
-            "SplitMesh", *this);
-    }
-    return sv_split_mesh_;
 }
 //=================================================================================================//
 ListData CellLinkedList::findNearestListDataEntry(const Vecd &position)

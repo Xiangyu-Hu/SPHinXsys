@@ -65,7 +65,7 @@ class Mesh
     Arrayi AllGridPoints() const { return all_grid_points_; };
     Arrayi AllCells() const { return all_cells_; };
     size_t NumberOfGridPoints() const { return transferMeshIndexTo1D(all_grid_points_, all_grid_points_); };
-    size_t NumberOfCells() const { return transferMeshIndexTo1D(all_cells_, all_cells_); };
+    size_t NumberOfCells() const { return all_cells_.prod(); };
 
     Arrayi CellIndexFromPosition(const Vecd &position) const
     {

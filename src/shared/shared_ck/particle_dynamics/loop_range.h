@@ -154,7 +154,7 @@ class LoopRangeCK<ExecutionPolicy, Splitting>
 {
   public:
     LoopRangeCK(CellLinkedList &cell_linked_list)
-        : split_mesh_(cell_linked_list.svSplitMesh()->DelegatedData(ExecutionPolicy{})),
+        : mesh_(cell_linked_list.svMesh()->DelegatedData(ExecutionPolicy{})),
           particle_index_(cell_linked_list.dvParticleIndex()->DelegatedData(ExecutionPolicy{})),
           cell_offset_(cell_linked_list.dvCellOffset()->DelegatedData(ExecutionPolicy{})) {};
 
@@ -169,11 +169,11 @@ class LoopRangeCK<ExecutionPolicy, Splitting>
 
     UnsignedInt LoopBound() const
     {
-        return split_mesh_->AllCells().prod();
+        return mesh_->NumberOfCells();
     };
 
   protected:
-    SplitMesh *split_mesh_;
+    Mesh *mesh_;
     UnsignedInt *particle_index_;
     UnsignedInt *cell_offset_;
 };
