@@ -18,6 +18,7 @@ BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(L + BW, H + BW));
 //----------------------------------------------------------------------
 //	Basic parameters for material properties.
 //----------------------------------------------------------------------
+std::string phi_pairwise = "PhiPairWise";
 std::string phi_implicit = "PhiImplicit";
 std::string phi_explicit = "PhiExplicit";
 const Real diffusion_coeff = 1.0;
@@ -59,6 +60,14 @@ class InitialProfile : public ReturnFunction<Real>
 //	Google test items
 //----------------------------------------------------------------------
 Real expected_value = 350.0;
+
+Real approximated_pairwise(1.0);
+TEST(DiffusionPairWise, Error)
+{
+    EXPECT_LT(ABS(expected_value - approximated_pairwise) / expected_value, 1.0e-2);
+    std::cout << "Reference Value: " << expected_value << " and "
+              << "Predicted Value: " << approximated_pairwise << std::endl;
+};
 
 Real approximated_implicit(1.0);
 TEST(DiffusionImplicit, Error)
@@ -130,6 +139,15 @@ int main(int ac, char *av[])
     auto &wall_boundary_cell_linked_list = main_methods.addCellLinkedListDynamics(wall_boundary);
     auto &diffusion_body_update_relation = main_methods.addRelationDynamics(diffusion_body_inner, diffusion_body_contact);
 
+    auto &initial_condition_pairwise =
+        main_methods.addStateDynamics<VariableAssignment<SPHBody, ConstantValue<Real>>>(diffusion_body, phi_pairwise, initial_temperature);
+    auto &boundary_condition_pairwise =
+        main_methods.addStateDynamics<VariableAssignment<SPHBody, SpatialDistribution<InitialProfile>>>(wall_boundary, phi_pairwise);
+    auto &diffusion_relaxation_pairwise =
+        main_methods.addInteractionDynamics<ProjectionDissipation, Splitting, IsotropicDiffusion>(diffusion_body_inner, phi_pairwise)
+            .addPreContactInteraction<Splitting, Dirichlet<IsotropicDiffusion>>(diffusion_body_contact, phi_pairwise);
+    auto &pairwise_average_species = main_methods.addReduceDynamics<QuantityAverage<Real>>(diffusion_body, phi_pairwise);
+
     auto &initial_condition_implicit =
         main_methods.addStateDynamics<VariableAssignment<SPHBody, ConstantValue<Real>>>(diffusion_body, phi_implicit, initial_temperature);
     auto &boundary_condition_implicit =
@@ -161,6 +179,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     auto &body_state_recorder = main_methods.addBodyStateRecorder<BodyStatesRecordingToVtpCK>(sph_system);
     body_state_recorder.addToWrite<Real>(diffusion_body, phi_implicit);
+    body_state_recorder.addToWrite<Real>(wall_boundary, phi_pairwise);
+    body_state_recorder.addToWrite<Real>(diffusion_body, phi_pairwise);
     body_state_recorder.addToWrite<Real>(wall_boundary, phi_implicit);
     body_state_recorder.addToWrite<Real>(diffusion_body, phi_explicit);
     body_state_recorder.addToWrite<Real>(wall_boundary, phi_explicit);
@@ -181,6 +201,10 @@ int main(int ac, char *av[])
     wall_boundary_cell_linked_list.exec();
     diffusion_body_update_relation.exec();
 
+    initial_condition_pairwise.exec();
+    boundary_condition_pairwise.exec();
+    Real initial_pairwise_average_species = pairwise_average_species.exec();
+
     initial_condition_implicit.exec();
     boundary_condition_implicit.exec();
     diffusion_relaxation_implicit.initializeImplicitDissipation();
@@ -193,6 +217,7 @@ int main(int ac, char *av[])
     //	Statistics for CPU time
     //----------------------------------------------------------------------
     TickCount time_instance;
+    TimeInterval interval_pairwise;
     TimeInterval interval_implicit;
     TimeInterval interval_explicit;
     //----------------------------------------------------------------------
@@ -208,6 +233,10 @@ int main(int ac, char *av[])
         //	the fastest and most frequent acostic time stepping.
         //----------------------------------------------------------------------
         Real diffusion_dt = time_stepper.incrementPhysicalTime(1.0 / 100.0);
+
+        time_instance = TickCount::now();
+        time_stepper.integrateMatchedTimeInterval(diffusion_relaxation_pairwise, diffusion_dt, 8);
+        interval_pairwise += TickCount::now() - time_instance;
 
         time_instance = TickCount::now();
         time_stepper.integrateMatchedTimeInterval(diffusion_relaxation_implicit, diffusion_dt);
@@ -230,6 +259,8 @@ int main(int ac, char *av[])
         {
             std::cout << "N=" << time_steps << " Time: "
                       << time_stepper.getPhysicalTime() << "	dt: " << diffusion_dt << "\n";
+            std::cout << "Initial pairwise average species: " << initial_pairwise_average_species
+                      << "	Present pairwise average species: " << pairwise_average_species.exec() << "\n";
             std::cout << "Initial implicit average species: " << initial_implicit_average_species
                       << "	Present implicit average species: " << implicit_average_species.exec() << "\n";
             std::cout << "Initial explicit average species: " << initial_explicit_average_species
@@ -237,11 +268,13 @@ int main(int ac, char *av[])
         }
     }
 
-    TimeInterval tt = interval_implicit + interval_explicit;
+    TimeInterval tt = interval_pairwise + interval_implicit + interval_explicit;
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
+    std::cout << "PairWise diffusion computing time: " << interval_pairwise.seconds() << " seconds." << std::endl;
     std::cout << "Implicit diffusion computing time: " << interval_implicit.seconds() << " seconds." << std::endl;
     std::cout << "Explicit diffusion computing time: " << interval_explicit.seconds() << " seconds." << std::endl;
 
+    approximated_pairwise = pairwise_average_species.exec();
     approximated_implicit = implicit_average_species.exec();
     approximated_explicit = explicit_average_species.exec();
 

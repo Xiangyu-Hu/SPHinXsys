@@ -75,6 +75,35 @@ class ProjectionDissipation<Inner<Splitting, DissipationType, Parameters...>>
         void interact(size_t index_i, Real dt = 0.0);
     };
 };
+template <class DissipationType, typename... Parameters>
+class ProjectionDissipation<Contact<Splitting, Dirichlet<DissipationType>, Parameters...>>
+    : public Dissipation<Base, DissipationType, Contact<Parameters...>>
+{
+    using DataType = typename DissipationType::DataType;
+    using BaseInteraction = Dissipation<Base, DissipationType, Contact<Parameters...>>;
+    using InverseVolumetricCapacity = typename DissipationType::InverseVolumetricCapacity;
+
+  public:
+    ProjectionDissipation(Contact<Parameters...> &contact_relation, const std::string &variable_name);
+    virtual ~ProjectionDissipation() {};
+
+    class InteractKernel : public BaseInteraction::InteractKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt contact_index);
+        void interact(UnsignedInt index_i, Real dt = 0.0);
+
+      protected:
+        InverseVolumetricCapacity inverse_capacity_;
+        Real *contact_Vol_;
+        DataType *contact_variable_;
+    };
+
+  protected:
+    StdVec<DiscreteVariable<Real> *> dv_contact_Vol_;
+    StdVec<DiscreteVariable<DataType> *> contact_dv_variable_;
+};
 
 // Note: PairwiseDissipation method is for obtaining solution for both for steady and transient problems.
 // This method is unconditionally stable, conservative and able to obtaining converged solution.
@@ -134,7 +163,7 @@ class ConstantSource
 };
 
 template <class DissipationType, typename... Parameters>
-class PairwiseDissipation<Contact<Dirichlet<DissipationType>, Parameters...>>
+class PairwiseDissipation<Contact<Splitting, Dirichlet<DissipationType>, Parameters...>>
     : public Dissipation<Base, DissipationType, Contact<Parameters...>>
 {
     using DataType = typename DissipationType::DataType;

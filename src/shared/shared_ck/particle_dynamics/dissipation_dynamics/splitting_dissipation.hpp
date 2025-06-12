@@ -46,6 +46,50 @@ void ProjectionDissipation<Inner<Splitting, DissipationType, Parameters...>>::In
     this->variable_[index_i] += parameter_k * parameter_a;
 }
 //=================================================================================================//
+template <class DissipationType, typename... Parameters>
+ProjectionDissipation<Contact<Splitting, Dirichlet<DissipationType>, Parameters...>>::
+    ProjectionDissipation(Contact<Parameters...> &contact_relation, const std::string &variable_name)
+    : BaseInteraction(contact_relation, variable_name)
+{
+    for (UnsignedInt k = 0; k != this->contact_particles_.size(); ++k)
+    {
+        dv_contact_Vol_.push_back(
+            this->contact_particles_[k]->template getVariableByName<Real>("VolumetricMeasure"));
+        contact_dv_variable_.push_back(
+            this->contact_particles_[k]->template getVariableByName<DataType>(variable_name));
+    }
+}
+//=================================================================================================//
+template <class DissipationType, typename... Parameters>
+template <class ExecutionPolicy, class EncloserType>
+ProjectionDissipation<Contact<Splitting, Dirichlet<DissipationType>, Parameters...>>::
+    InteractKernel::InteractKernel(
+        const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt contact_index)
+    : BaseInteraction::InteractKernel(ex_policy, encloser, contact_index),
+      inverse_capacity_(encloser.dissipation_model_),
+      contact_Vol_(encloser.dv_contact_Vol_[contact_index]->DelegatedData(ex_policy)),
+      contact_variable_(encloser.contact_dv_variable_[contact_index]->DelegatedData(ex_policy)) {}
+//=================================================================================================//
+template <class DissipationType, typename... Parameters>
+void ProjectionDissipation<Contact<Splitting, Dirichlet<DissipationType>, Parameters...>>::
+    InteractKernel::interact(UnsignedInt index_i, Real dt)
+{
+    DataType error = this->variable_[index_i];
+    Real parameter_a = 1.0;
+    for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
+    {
+        UnsignedInt index_j = this->neighbor_index_[n];
+
+        Real parameter_b = 2.0 * this->dis_coeff_(index_i, index_j) *
+                           this->dW_ij(index_i, index_j) * contact_Vol_[index_j] *
+                           dt * inverse_capacity_(index_i) /
+                           this->vec_r_ij(index_i, index_j).norm();
+        error -= parameter_b * contact_variable_[index_j];
+        parameter_a -= parameter_b;
+    }
+    this->variable_[index_i] = error * parameter_a / (parameter_a * parameter_a + TinyReal);
+}
+//=================================================================================================//
 template <typename DissipationType, typename... Parameters>
 PairwiseDissipation<Inner<Splitting, DissipationType, Parameters...>>::
     PairwiseDissipation(
@@ -96,7 +140,7 @@ void PairwiseDissipation<Inner<Splitting, DissipationType, Parameters...>>::
 }
 //=================================================================================================//
 template <class DissipationType, typename... Parameters>
-PairwiseDissipation<Contact<Dirichlet<DissipationType>, Parameters...>>::
+PairwiseDissipation<Contact<Splitting, Dirichlet<DissipationType>, Parameters...>>::
     PairwiseDissipation(Contact<Parameters...> &contact_relation, const std::string &variable_name)
     : BaseInteraction(contact_relation, variable_name)
 {
@@ -111,7 +155,7 @@ PairwiseDissipation<Contact<Dirichlet<DissipationType>, Parameters...>>::
 //=================================================================================================//
 template <class DissipationType, typename... Parameters>
 template <class ExecutionPolicy, class EncloserType>
-PairwiseDissipation<Contact<Dirichlet<DissipationType>, Parameters...>>::
+PairwiseDissipation<Contact<Splitting, Dirichlet<DissipationType>, Parameters...>>::
     InteractKernel::InteractKernel(
         const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt contact_index)
     : BaseInteraction::InteractKernel(ex_policy, encloser, contact_index),
@@ -120,7 +164,7 @@ PairwiseDissipation<Contact<Dirichlet<DissipationType>, Parameters...>>::
       contact_variable_(encloser.contact_dv_variable_[contact_index]->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <class DissipationType, typename... Parameters>
-void PairwiseDissipation<Contact<Dirichlet<DissipationType>, Parameters...>>::
+void PairwiseDissipation<Contact<Splitting, Dirichlet<DissipationType>, Parameters...>>::
     InteractKernel::interact(UnsignedInt index_i, Real dt)
 {
     DataType error = this->variable_[index_i];
