@@ -51,6 +51,7 @@ class CellLinkedList;
 class BaseCellLinkedList : public BaseMeshField
 {
   protected:
+    BaseParticles &base_particles_;
     DataContainerUniquePtrAssemble<DiscreteVariable> all_discrete_variable_ptrs_;
     UniquePtrsKeeper<Entity> unique_variable_ptrs_;
     UniquePtrsKeeper<SingularVariable<Mesh>> mesh_ptrs_keeper_;
@@ -62,6 +63,7 @@ class BaseCellLinkedList : public BaseMeshField
     virtual ~BaseCellLinkedList();
     StdVec<Mesh *> &getMeshes() { return meshes_; };
     StdVec<UnsignedInt> &getMeshOffsets() { return mesh_offsets_; };
+    BaseParticles &getBaseParticles() { return base_particles_; };
     void UpdateCellLists(BaseParticles &base_particles);
     /** Insert a cell-linked_list entry to the concurrent index list. */
     virtual void insertParticleIndex(UnsignedInt particle_index, const Vecd &particle_position) = 0;

@@ -154,25 +154,24 @@ class LoopRangeCK<ExecutionPolicy, Splitting>
 {
   public:
     LoopRangeCK(CellLinkedList &cell_linked_list)
-        : mesh_(cell_linked_list.svMesh()->DelegatedData(ExecutionPolicy{})),
+        : loop_bound_(cell_linked_list.getBaseParticles().svTotalRealParticles()->DelegatedData(ExecutionPolicy{})),
+          mesh_(cell_linked_list.svMesh()->DelegatedData(ExecutionPolicy{})),
           particle_index_(cell_linked_list.dvParticleIndex()->DelegatedData(ExecutionPolicy{})),
           cell_offset_(cell_linked_list.dvCellOffset()->DelegatedData(ExecutionPolicy{})) {};
 
     template <class UnaryFunc>
     void computeUnit(const UnaryFunc &uf, UnsignedInt i) const
     {
-        for (UnsignedInt l = cell_offset_[i]; l != cell_offset_[i + 1]; ++l)
-        {
-            uf(particle_index_[l]);
-        }
+        uf(particle_index_[i]);
     };
 
     UnsignedInt LoopBound() const
     {
-        return mesh_->NumberOfCells();
+        return *loop_bound_;
     };
 
   protected:
+    UnsignedInt *loop_bound_;
     Mesh *mesh_;
     UnsignedInt *particle_index_;
     UnsignedInt *cell_offset_;
