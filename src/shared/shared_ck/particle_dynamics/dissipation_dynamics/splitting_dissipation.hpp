@@ -24,20 +24,19 @@ void ProjectionDissipation<Inner<Splitting, DissipationType, Parameters...>>::In
     // compute the error and parameters
     DataType error = this->zero_value_;
     Real parameter_a = 0.0;
-    std::array<Real, MaximumNeighborhoodSize> parameter_b;
     Real parameter_c = 0.0;
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
     {
         UnsignedInt index_j = this->neighbor_index_[n];
         UnsignedInt neighbor_j = n - this->FirstNeighbor(index_i);
 
-        parameter_b[neighbor_j] = 2.0 * this->dis_coeff_(index_i, index_j) *
-                                  this->dW_ij(index_i, index_j) * this->Vol_[index_j] * dt /
-                                  this->vec_r_ij(index_i, index_j).norm();
-        error -= (this->variable_[index_i] - this->variable_[index_j]) * parameter_b[neighbor_j];
+        Real parameter_b = 2.0 * this->dis_coeff_(index_i, index_j) *
+                           this->dW_ij(index_i, index_j) * this->Vol_[index_j] * dt /
+                           this->vec_r_ij(index_i, index_j).norm();
+        error -= (this->variable_[index_i] - this->variable_[index_j]) * parameter_b;
 
-        parameter_a += parameter_b[neighbor_j];
-        parameter_c += parameter_b[neighbor_j] * parameter_b[neighbor_j];
+        parameter_a += parameter_b;
+        parameter_c += parameter_b * parameter_b;
     }
     parameter_a = (parameter_a - 1.0);
 
