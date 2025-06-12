@@ -28,7 +28,6 @@ void ProjectionDissipation<Inner<Splitting, DissipationType, Parameters...>>::In
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
     {
         UnsignedInt index_j = this->neighbor_index_[n];
-        UnsignedInt neighbor_j = n - this->FirstNeighbor(index_i);
 
         Real parameter_b = 2.0 * this->dis_coeff_(index_i, index_j) *
                            this->dW_ij(index_i, index_j) * this->Vol_[index_j] * dt /
