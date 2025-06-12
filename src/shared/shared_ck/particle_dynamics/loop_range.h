@@ -149,32 +149,13 @@ class LoopRangeCK<ExecutionPolicy, BodyPartition>
     int *adapt_level_;
 };
 
-template <class ExecutionPolicy>
-class LoopRangeCK<ExecutionPolicy, Splitting>
+template <class ExecutionPolicy, class IdentifierType>
+class LoopRangeCK<ExecutionPolicy, IdentifierType, Splitting>
+    : public LoopRangeCK<ExecutionPolicy, IdentifierType>
 {
   public:
-    LoopRangeCK(CellLinkedList &cell_linked_list)
-        : loop_bound_(cell_linked_list.getBaseParticles().svTotalRealParticles()->DelegatedData(ExecutionPolicy{})),
-          mesh_(cell_linked_list.svMesh()->DelegatedData(ExecutionPolicy{})),
-          particle_index_(cell_linked_list.dvParticleIndex()->DelegatedData(ExecutionPolicy{})),
-          cell_offset_(cell_linked_list.dvCellOffset()->DelegatedData(ExecutionPolicy{})) {};
-
-    template <class UnaryFunc>
-    void computeUnit(const UnaryFunc &uf, UnsignedInt i) const
-    {
-        uf(particle_index_[i]);
-    };
-
-    UnsignedInt LoopBound() const
-    {
-        return *loop_bound_;
-    };
-
-  protected:
-    UnsignedInt *loop_bound_;
-    Mesh *mesh_;
-    UnsignedInt *particle_index_;
-    UnsignedInt *cell_offset_;
+    LoopRangeCK(IdentifierType &identifier)
+        : LoopRangeCK<ExecutionPolicy, IdentifierType>(identifier) {};
 };
 } // namespace SPH
 #endif // LOOP_RANGE_H

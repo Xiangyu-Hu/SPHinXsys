@@ -41,16 +41,9 @@ void ProjectionDissipation<Inner<Splitting, DissipationType, Parameters...>>::In
     }
     parameter_a = (parameter_a - 1.0);
 
-    // update the variable
+    // update the variable at particle i only seems more accurate
     DataType parameter_k = error / (parameter_c + parameter_a * parameter_a + TinyReal);
-    atomic_add(this->variable_[index_i], parameter_k * parameter_a);
-    for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
-    {
-        UnsignedInt index_j = this->neighbor_index_[n];
-        UnsignedInt neighbor_j = n - this->FirstNeighbor(index_i);
-
-        atomic_add(this->variable_[index_j], -parameter_k * parameter_b[neighbor_j]);
-    }
+    this->variable_[index_i] += parameter_k * parameter_a;
 }
 //=================================================================================================//
 template <typename DissipationType, typename... Parameters>

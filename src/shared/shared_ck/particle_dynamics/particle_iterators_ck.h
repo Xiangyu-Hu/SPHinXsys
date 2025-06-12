@@ -38,16 +38,16 @@ namespace SPH
 {
 using namespace execution;
 
-template <class DynamicsIdentifier, class UnaryFunc>
-void particle_for(const LoopRangeCK<SequencedPolicy, DynamicsIdentifier> &loop_range,
+template <class Identifier, class UnaryFunc>
+void particle_for(const LoopRangeCK<SequencedPolicy, Identifier> &loop_range,
                   const UnaryFunc &unary_func)
 {
     for (size_t i = 0; i < loop_range.LoopBound(); ++i)
         loop_range.computeUnit(unary_func, i);
 };
 
-template <class UnaryFunc>
-void particle_for(const LoopRangeCK<SequencedPolicy, Splitting> &loop_range,
+template <class Identifier, class UnaryFunc>
+void particle_for(const LoopRangeCK<SequencedPolicy, Identifier, Splitting> &loop_range,
                   const UnaryFunc &unary_func)
 {
     for (int i = 0; i < 2; ++i) // Two iterations for the splitting
@@ -59,8 +59,8 @@ void particle_for(const LoopRangeCK<SequencedPolicy, Splitting> &loop_range,
     }
 };
 
-template <class DynamicsIdentifier, class UnaryFunc>
-void particle_for(const LoopRangeCK<ParallelPolicy, DynamicsIdentifier> &loop_range,
+template <class Identifier, class UnaryFunc>
+void particle_for(const LoopRangeCK<ParallelPolicy, Identifier> &loop_range,
                   const UnaryFunc &unary_func)
 {
     parallel_for(
@@ -75,8 +75,8 @@ void particle_for(const LoopRangeCK<ParallelPolicy, DynamicsIdentifier> &loop_ra
         ap);
 };
 
-template <class UnaryFunc>
-void particle_for(const LoopRangeCK<ParallelPolicy, Splitting> &loop_range,
+template <class Identifier, class UnaryFunc>
+void particle_for(const LoopRangeCK<ParallelPolicy, Identifier, Splitting> &loop_range,
                   const UnaryFunc &unary_func)
 {
     for (int i = 0; i < 2; ++i) // Two iterations for the splitting
@@ -94,8 +94,8 @@ void particle_for(const LoopRangeCK<ParallelPolicy, Splitting> &loop_range,
     }
 };
 
-template <typename Operation, class DynamicsIdentifier, class ReturnType, class UnaryFunc>
-ReturnType particle_reduce(const LoopRangeCK<SequencedPolicy, DynamicsIdentifier> &loop_range,
+template <typename Operation, class Identifier, class ReturnType, class UnaryFunc>
+ReturnType particle_reduce(const LoopRangeCK<SequencedPolicy, Identifier> &loop_range,
                            ReturnType temp, const UnaryFunc &unary_func)
 {
     Operation operation;
@@ -107,8 +107,8 @@ ReturnType particle_reduce(const LoopRangeCK<SequencedPolicy, DynamicsIdentifier
     return temp0;
 }
 
-template <typename Operation, class DynamicsIdentifier, class ReturnType, class UnaryFunc>
-ReturnType particle_reduce(const LoopRangeCK<ParallelPolicy, DynamicsIdentifier> &loop_range,
+template <typename Operation, class Identifier, class ReturnType, class UnaryFunc>
+ReturnType particle_reduce(const LoopRangeCK<ParallelPolicy, Identifier> &loop_range,
                            ReturnType temp, const UnaryFunc &unary_func)
 {
     Operation operation;

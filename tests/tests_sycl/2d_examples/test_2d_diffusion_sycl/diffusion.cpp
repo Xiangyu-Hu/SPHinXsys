@@ -224,7 +224,8 @@ int main(int ac, char *av[])
         interval_projection += TickCount::now() - time_instance;
 
         time_instance = TickCount::now();
-        time_stepper.integrateMatchedTimeInterval(diffusion_relaxation_explicit, diffusion_dt, get_time_step_size);
+        UnsignedInt sub_step_count = time_stepper.integrateMatchedTimeInterval(
+            diffusion_relaxation_explicit, diffusion_dt, get_time_step_size);
         interval_explicit += TickCount::now() - time_instance;
         time_steps += 1;
 
@@ -245,8 +246,9 @@ int main(int ac, char *av[])
 
         if (time_steps % 1 == 0)
         {
-            std::cout << "N=" << time_steps << " Time: "
-                      << time_stepper.getPhysicalTime() << "	dt: " << diffusion_dt << "\n";
+            std::cout << "N=" << time_steps << "  Time: "
+                      << time_stepper.getPhysicalTime() << "	dt: " << diffusion_dt
+                      << "  substep_count: " << sub_step_count << "\n";
             std::cout << "Initial total species: " << initial_total_species
                       << "	Present total species: " << reduce_total_species.exec() << "\n";
         }

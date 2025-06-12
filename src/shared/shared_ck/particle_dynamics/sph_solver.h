@@ -103,10 +103,11 @@ class TimeStepper
     };
 
     template <class Integrator>
-    void integrateMatchedTimeInterval( // designed to avoid too small last step
+    UnsignedInt integrateMatchedTimeInterval( // designed to avoid too small last step
         Integrator &integrator, Real interval, BaseDynamics<Real> &step_evaluator)
     {
         Real integrated_time_ = 0.0;
+        UnsignedInt sub_step_count = 0;
         Real dt = step_evaluator.exec();
 
         while (interval - integrated_time_ > 1.5 * dt)
@@ -114,6 +115,7 @@ class TimeStepper
             integrator.exec(dt);
             dt = step_evaluator.exec();
             integrated_time_ += dt;
+            sub_step_count++;
         }
 
         if (interval - integrated_time_ > dt)
@@ -121,11 +123,14 @@ class TimeStepper
             Real final_dt = 0.5 * (interval - integrated_time_);
             integrator.exec(final_dt);
             integrator.exec(final_dt);
+            sub_step_count += 2;
         }
         else
         {
             integrator.exec(interval - integrated_time_);
+            sub_step_count++;
         }
+        return sub_step_count;
     };
 
     template <class Integrator>

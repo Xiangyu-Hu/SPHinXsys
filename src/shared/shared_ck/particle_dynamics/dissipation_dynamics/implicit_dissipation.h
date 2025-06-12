@@ -22,8 +22,14 @@
  * ------------------------------------------------------------------------- */
 /**
  * @file implicit_dissipation.h
- * @brief TBD.
- * @details TBD.
+ * @brief Implicit dissipation methods are for obtaining solution for both for steady and transient problems
+ * of dissipation system. their numerical stability is dependent on the condition number of the dissipative
+ * operators. Generally, an implicit method is less accurate than explicit methods.
+ * Therefore, it is used when explicit time-step size is too small to be practical,
+ * or when the problem is too stiff for explicit methods..
+ * @details Here, we use conjugate gradient (CG) method as the starting point of implicit solver.
+ * Other methods, especially Chebyshev iteration methods should be considered as it is said has better
+ * performance on GPUs.
  * @author	Xiangyu Hu
  */
 

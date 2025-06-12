@@ -23,8 +23,7 @@ void InteractionDynamicsCK<ExecutionPolicy, InteractionType<Inner<Splitting, Par
 {
     InteractKernel *interact_kernel = kernel_implementation_.getComputingKernel();
     particle_for(
-        LoopRangeCK<ExecutionPolicy, Splitting>(
-            DynamicCast<CellLinkedList>(this, this->identifier_.getCellLinkedList())),
+        LoopRangeCK<ExecutionPolicy, Identifier, Splitting>(this->identifier_),
         [=](size_t i)
         { interact_kernel->interact(i, 0.5 * dt); }); // half time step for splitting
 }

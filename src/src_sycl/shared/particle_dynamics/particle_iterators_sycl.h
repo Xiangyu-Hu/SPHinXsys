@@ -49,8 +49,8 @@ void particle_for(const ParallelDevicePolicy &par_device,
         .wait_and_throw();
 }
 
-template <class DynamicsIdentifier, class UnaryFunc>
-void particle_for(const LoopRangeCK<SequencedDevicePolicy, DynamicsIdentifier> &loop_range,
+template <class Identifier, class UnaryFunc>
+void particle_for(const LoopRangeCK<SequencedDevicePolicy, Identifier> &loop_range,
                   const UnaryFunc &unary_func)
 {
     auto &sycl_queue = execution_instance.getQueue();
@@ -63,8 +63,8 @@ void particle_for(const LoopRangeCK<SequencedDevicePolicy, DynamicsIdentifier> &
         .wait_and_throw();
 }
 
-template <class DynamicsIdentifier, class UnaryFunc>
-void particle_for(const LoopRangeCK<ParallelDevicePolicy, DynamicsIdentifier> &loop_range,
+template <class Identifier, class UnaryFunc>
+void particle_for(const LoopRangeCK<ParallelDevicePolicy, Identifier> &loop_range,
                   const UnaryFunc &unary_func)
 {
     auto &sycl_queue = execution_instance.getQueue();
@@ -77,12 +77,12 @@ void particle_for(const LoopRangeCK<ParallelDevicePolicy, DynamicsIdentifier> &l
         .wait_and_throw();
 }
 
-template <class UnaryFunc>
-void particle_for(const LoopRangeCK<ParallelDevicePolicy, Splitting> &loop_range, const UnaryFunc &unary_func)
+template <class Identifier, class UnaryFunc>
+void particle_for(const LoopRangeCK<ParallelDevicePolicy, Identifier, Splitting> &loop_range, const UnaryFunc &unary_func)
 {
     auto &sycl_queue = execution_instance.getQueue();
     const size_t loop_bound = loop_range.LoopBound();
-    for(int i = 0; i < 2; ++i) // Two iterations for the splitting
+    for (int i = 0; i < 2; ++i) // Two iterations for the splitting
     {
         sycl_queue.submit([&](sycl::handler &cgh)
                           { cgh.parallel_for(execution_instance.getUniformNdRange(loop_bound), [=](sycl::nd_item<1> index)
@@ -95,8 +95,8 @@ void particle_for(const LoopRangeCK<ParallelDevicePolicy, Splitting> &loop_range
     }
 };
 
-template <typename Operation, class DynamicsIdentifier, class ReturnType, class UnaryFunc>
-ReturnType particle_reduce(const LoopRangeCK<ParallelDevicePolicy, DynamicsIdentifier> &loop_range,
+template <typename Operation, class Identifier, class ReturnType, class UnaryFunc>
+ReturnType particle_reduce(const LoopRangeCK<ParallelDevicePolicy, Identifier> &loop_range,
                            ReturnType temp, const UnaryFunc &unary_func)
 {
     auto &sycl_queue = execution_instance.getQueue();
