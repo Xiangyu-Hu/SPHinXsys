@@ -43,10 +43,10 @@ class ANSYSMesh
     virtual ~ANSYSMesh() {};
 
     StdVec<size_t> types_of_boundary_condition_;
-    StdLargeVec<Vecd> node_coordinates_;
-    StdLargeVec<Vecd> elements_centroids_;
-    StdLargeVec<Real> elements_volumes_;
-    StdLargeVec<StdVec<size_t>> elements_nodes_connection_;
+    StdVec<Vecd> node_coordinates_;
+    StdVec<Vecd> elements_centroids_;
+    StdVec<Real> elements_volumes_;
+    StdVec<StdVec<size_t>> elements_nodes_connection_;
     StdVec<StdVec<StdVec<size_t>>> mesh_topology_;
     Real MinMeshEdge() { return min_distance_between_nodes_; }
 
@@ -66,7 +66,7 @@ class BaseInnerRelationInFVM : public BaseInnerRelation
 {
   public:
     RealBody *real_body_;
-    StdLargeVec<Vecd> &node_coordinates_;
+    StdVec<Vecd> &node_coordinates_;
     StdVec<StdVec<StdVec<size_t>>> &mesh_topology_;
 
     explicit BaseInnerRelationInFVM(RealBody &real_body, ANSYSMesh &ansys_mesh);

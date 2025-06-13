@@ -43,8 +43,8 @@ class GeneratingMethod<UnstructuredMesh>
     virtual ~GeneratingMethod() {};
 
   protected:
-    StdLargeVec<Vecd> &elements_centroids_;
-    StdLargeVec<Real> &elements_volumes_;
+    StdVec<Vecd> &elements_centroids_;
+    StdVec<Real> &elements_volumes_;
 };
 
 template <>

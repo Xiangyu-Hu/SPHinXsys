@@ -49,7 +49,7 @@ class BodyStatesRecordingToTriangleMeshVtp : public BodyStatesRecordingToVtp
 
   protected:
     virtual void writeWithFileName(const std::string &sequence) override;
-    StdLargeVec<std::array<int, 3>> faces_;
+    StdVec<std::array<int, 3>> &faces_;
 
     template <typename OutStreamType>
     void writeCellsToVtk(OutStreamType &output_stream, BaseParticles &particles);
@@ -63,8 +63,8 @@ class BodyStatesRecordingToMeshVtu : public BodyStatesRecordingToVtp
 
   protected:
     virtual void writeWithFileName(const std::string &sequence) override;
-    StdLargeVec<Vecd> &node_coordinates_;
-    StdLargeVec<StdVec<size_t>> &elements_nodes_connection_;
+    StdVec<Vecd> &node_coordinates_;
+    StdVec<StdVec<size_t>> &elements_nodes_connection_;
     SPHBody &bounds_;
 
     void FileHeader(std::ofstream &out_file);

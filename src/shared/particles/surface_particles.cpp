@@ -21,7 +21,7 @@ void SurfaceParticles::initializeBasicParticleVariables()
     registerTransformationMatrix();
 }
 //=================================================================================================//
-void SurfaceParticles::registerSurfaceProperties(StdLargeVec<Vecd> &n, StdLargeVec<Real> &thickness)
+void SurfaceParticles::registerSurfaceProperties(StdVec<Vecd> &n, StdVec<Real> &thickness)
 {
     n_ = registerStateVariableFrom<Vecd>("NormalDirection", n);
     thickness_ = registerStateVariableFrom<Real>("Thickness", thickness);
