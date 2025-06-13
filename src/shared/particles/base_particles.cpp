@@ -27,11 +27,16 @@ SPHAdaptation &BaseParticles::getSPHAdaptation()
     return sph_body_.getSPHAdaptation();
 }
 //=================================================================================================//
+void BaseParticles::printBodyName()
+{
+    std::cout << "\nBodyName: " << sph_body_.getName() << std::endl;
+}
+//=================================================================================================//
 void BaseParticles::initializeBasicParticleVariables()
 {
     addEvolvingVariable<Vecd>("Position");
     addEvolvingVariable<Real>("VolumetricMeasure");
-     //----------------------------------------------------------------------
+    //----------------------------------------------------------------------
     //		register non-geometric variables
     //----------------------------------------------------------------------
     rho_ = registerStateVariable<Real>("Density", base_material_.ReferenceDensity());

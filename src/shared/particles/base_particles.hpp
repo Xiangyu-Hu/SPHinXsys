@@ -150,7 +150,7 @@ DataType *BaseParticles::registerStateVariableFrom(
     if (variable == nullptr)
     {
         std::cout << "\nError: the old variable '" << old_name << "' is not registered!\n";
-        std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+        printBodyName();
         exit(1);
     }
 
@@ -196,7 +196,7 @@ DiscreteVariable<DataType> *BaseParticles::registerStateVariableOnlyFrom(
     if (variable == nullptr)
     {
         std::cout << "\nError: the old variable '" << old_name << "' is not registered!\n";
-        std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+        printBodyName();
         exit(1);
     }
 
@@ -241,7 +241,7 @@ DiscreteVariable<DataType> *BaseParticles::getVariableByName(const std::string &
     if (variable == nullptr)
     {
         std::cout << "\nError: the variable '" << name << "' is not registered!\n";
-        std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+        printBodyName();
         exit(1);
     }
     return variable;
@@ -255,7 +255,7 @@ DataType *BaseParticles::getVariableDataByName(const std::string &name)
     if (variable->Data() == nullptr)
     {
         std::cout << "\nError: the variable '" << name << "' has not been allocated yet!\n";
-        std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+        printBodyName();
         exit(1);
     }
 
@@ -318,7 +318,7 @@ SingularVariable<DataType> *BaseParticles::getSingularVariableByName(const std::
     if (variable == nullptr)
     {
         std::cout << "\nError: the variable '" << name << "' is not registered!\n";
-        std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+        printBodyName();
     }
 
     return variable;
@@ -333,7 +333,7 @@ DiscreteVariable<DataType> *BaseParticles::
     if (variable == nullptr)
     {
         std::cout << "\n Error: the variable '" << name << "' is  not exist!" << std::endl;
-        std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+        printBodyName();
         exit(1);
     }
 
@@ -348,7 +348,7 @@ DiscreteVariable<DataType> *BaseParticles::
     {
         std::cout << "\n Error: The variable '" << variable->Name() << "' can not be treated as a particle variable," << std::endl;
         std::cout << "\n because the data size " << variable->getDataSize() << " is too less!" << std::endl;
-        std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+        printBodyName();
         exit(1);
     }
 
