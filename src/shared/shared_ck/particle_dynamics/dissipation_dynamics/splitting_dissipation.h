@@ -57,7 +57,7 @@ template <typename...>
 class ProjectionDissipation;
 
 template <typename DissipationType, typename... Parameters>
-class ProjectionDissipation<Inner<Splitting, DissipationType, Parameters...>>
+class ProjectionDissipation<Inner<WithUpdate, DissipationType, Parameters...>>
     : public Dissipation<Base, DissipationType, Inner<Parameters...>>
 {
     using DataType = typename DissipationType::DataType;
@@ -73,15 +73,39 @@ class ProjectionDissipation<Inner<Splitting, DissipationType, Parameters...>>
         template <class ExecutionPolicy, class EncloserType>
         InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
         void interact(size_t index_i, Real dt = 0.0);
+
+      protected:
+        DataType *residue_;
+        Real *parameter_a_;
+        Real *parameter_c_;
     };
+
+    class UpdateKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+        void update(size_t index_i, Real dt = 0.0);
+
+      protected:
+        DataType *variable_;
+        DataType *residue_;
+        Real *parameter_a_;
+        Real *parameter_c_;
+    };
+
+  protected:
+    DiscreteVariable<DataType> *dv_residue_;
+    DiscreteVariable<Real> *dv_parameter_a_;
+    DiscreteVariable<Real> *dv_parameter_c_;
 };
+
 template <class DissipationType, typename... Parameters>
-class ProjectionDissipation<Contact<Splitting, Dirichlet<DissipationType>, Parameters...>>
+class ProjectionDissipation<Contact<Dirichlet<DissipationType>, Parameters...>>
     : public Dissipation<Base, DissipationType, Contact<Parameters...>>
 {
     using DataType = typename DissipationType::DataType;
     using BaseInteraction = Dissipation<Base, DissipationType, Contact<Parameters...>>;
-    using InverseVolumetricCapacity = typename DissipationType::InverseVolumetricCapacity;
 
   public:
     ProjectionDissipation(Contact<Parameters...> &contact_relation, const std::string &variable_name);
@@ -95,12 +119,15 @@ class ProjectionDissipation<Contact<Splitting, Dirichlet<DissipationType>, Param
         void interact(UnsignedInt index_i, Real dt = 0.0);
 
       protected:
-        InverseVolumetricCapacity inverse_capacity_;
+        DataType *residue_;
+        Real *parameter_a_;
         Real *contact_Vol_;
         DataType *contact_variable_;
     };
 
   protected:
+    DiscreteVariable<DataType> *dv_residue_;
+    DiscreteVariable<Real> *dv_parameter_a_;
     StdVec<DiscreteVariable<Real> *> dv_contact_Vol_;
     StdVec<DiscreteVariable<DataType> *> contact_dv_variable_;
 };
