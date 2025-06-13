@@ -149,7 +149,7 @@ class BaseParticles
     template <typename DataType>
     DataType *registerStateVariableFrom(const std::string &new_name, const std::string &old_name);
     template <typename DataType>
-    DataType *registerStateVariableFrom(const std::string &name, const StdLargeVec<DataType> &geometric_data);
+    DataType *registerStateVariableFrom(const std::string &name, const StdVec<DataType> &geometric_data);
     template <typename DataType>
     DataType *registerStateVariableFromReload(const std::string &name);
     template <typename DataType>
@@ -164,7 +164,7 @@ class BaseParticles
     template <typename DataType>
     DiscreteVariable<DataType> *registerStateVariableOnlyFrom(const std::string &new_name, const std::string &old_name);
     template <typename DataType>
-    DiscreteVariable<DataType> *registerStateVariableOnlyFrom(const std::string &name, const StdLargeVec<DataType> &geometric_data);
+    DiscreteVariable<DataType> *registerStateVariableOnlyFrom(const std::string &name, const StdVec<DataType> &geometric_data);
     template <typename DataType>
     DiscreteVariable<DataType> *registerStateVariableOnlyFromReload(const std::string &name);
     template <typename DataType>
@@ -220,7 +220,7 @@ class BaseParticles
     //----------------------------------------------------------------------
     // Function related to geometric variables and their relations
     //----------------------------------------------------------------------
-    void registerPositionAndVolumetricMeasure(StdLargeVec<Vecd> &pos, StdLargeVec<Real> &Vol);
+    void registerPositionAndVolumetricMeasure(StdVec<Vecd> &pos, StdVec<Real> &Vol);
     void registerPositionAndVolumetricMeasureFromReload();
     DiscreteVariable<Vecd> *dvParticlePosition() { return dv_pos_; }
     Vecd *ParticlePositions() { return dv_pos_->Data(); }

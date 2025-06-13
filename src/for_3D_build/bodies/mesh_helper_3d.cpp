@@ -41,7 +41,7 @@ void MeshFileHelpers::numberOfNodes(std::ifstream &mesh_file, size_t &number_of_
     }
 }
 
-void MeshFileHelpers::nodeCoordinates(std::ifstream &mesh_file, StdLargeVec<Vecd> &node_coordinates_, std::string &text_line, size_t &dimension)
+void MeshFileHelpers::nodeCoordinates(std::ifstream &mesh_file, StdVec<Vecd> &node_coordinates_, std::string &text_line, size_t &dimension)
 {
     while (getline(mesh_file, text_line))
     {
@@ -101,7 +101,7 @@ void MeshFileHelpers::numberOfElements(std::ifstream &mesh_file, size_t &number_
     }
 }
 
-void MeshFileHelpers::dataStruct(StdVec<StdVec<StdVec<size_t>>> &mesh_topology_, StdLargeVec<StdVec<size_t>> &elements_nodes_connection_,
+void MeshFileHelpers::dataStruct(StdVec<StdVec<StdVec<size_t>>> &mesh_topology_, StdVec<StdVec<size_t>> &elements_nodes_connection_,
                                  size_t number_of_elements, size_t mesh_type, size_t dimension)
 {
 
@@ -216,7 +216,7 @@ Vec2d MeshFileHelpers::cellIndex(std::string &text_line)
     return cells;
 }
 
-void MeshFileHelpers::updateElementsNodesConnection(StdLargeVec<StdVec<size_t>> &elements_nodes_connection_, Vecd nodes, Vec2d cells,
+void MeshFileHelpers::updateElementsNodesConnection(StdVec<StdVec<size_t>> &elements_nodes_connection_, Vecd nodes, Vec2d cells,
                                                     bool &check_neighbor_cell1, bool &check_neighbor_cell2)
 {
 
@@ -247,7 +247,7 @@ void MeshFileHelpers::updateElementsNodesConnection(StdLargeVec<StdVec<size_t>> 
     }
 }
 
-void MeshFileHelpers::updateCellLists(StdVec<StdVec<StdVec<size_t>>> &mesh_topology_, StdLargeVec<StdVec<size_t>> &elements_nodes_connection_, Vecd nodes,
+void MeshFileHelpers::updateCellLists(StdVec<StdVec<StdVec<size_t>>> &mesh_topology_, StdVec<StdVec<size_t>> &elements_nodes_connection_, Vecd nodes,
                                       Vec2d cells, bool &check_neighbor_cell1, bool &check_neighbor_cell2, size_t boundary_type)
 {
     if (mesh_topology_[cells[check_neighbor_cell2]][0][0] != cells[check_neighbor_cell1] && mesh_topology_[cells[check_neighbor_cell2]][1][0] != cells[check_neighbor_cell1] && mesh_topology_[cells[check_neighbor_cell2]][2][0] != cells[check_neighbor_cell1] && mesh_topology_[cells[check_neighbor_cell2]][3][0] != cells[check_neighbor_cell1])
@@ -303,7 +303,7 @@ void MeshFileHelpers::updateCellLists(StdVec<StdVec<StdVec<size_t>>> &mesh_topol
     }
 }
 
-void MeshFileHelpers::updateBoundaryCellLists(StdVec<StdVec<StdVec<size_t>>> &mesh_topology_, StdLargeVec<StdVec<size_t>> &elements_nodes_connection_,
+void MeshFileHelpers::updateBoundaryCellLists(StdVec<StdVec<StdVec<size_t>>> &mesh_topology_, StdVec<StdVec<size_t>> &elements_nodes_connection_,
                                               Vecd nodes, Vec2d cells, bool &check_neighbor_cell1, bool &check_neighbor_cell2, size_t boundary_type)
 {
     if (mesh_topology_[cells[check_neighbor_cell2]][0][0] != static_cast<std::decay_t<decltype(elements_nodes_connection_[0][0])>>(-1) && mesh_topology_[cells[check_neighbor_cell2]][1][0] == static_cast<std::decay_t<decltype(elements_nodes_connection_[0][0])>>(0) && mesh_topology_[cells[check_neighbor_cell2]][2][0] == static_cast<std::decay_t<decltype(elements_nodes_connection_[0][0])>>(-1) && mesh_topology_[cells[check_neighbor_cell2]][3][0] == static_cast<std::decay_t<decltype(elements_nodes_connection_[0][0])>>(-1))
@@ -347,8 +347,8 @@ void MeshFileHelpers::updateBoundaryCellLists(StdVec<StdVec<StdVec<size_t>>> &me
     }
 }
 
-void MeshFileHelpers::cellCenterCoordinates(StdLargeVec<StdVec<size_t>> &elements_nodes_connection_, std::size_t &element,
-                                            StdLargeVec<Vecd> &node_coordinates_, StdLargeVec<Vecd> &elements_centroids_, Vecd &center_coordinate)
+void MeshFileHelpers::cellCenterCoordinates(StdVec<StdVec<size_t>> &elements_nodes_connection_, std::size_t &element,
+                                            StdVec<Vecd> &node_coordinates_, StdVec<Vecd> &elements_centroids_, Vecd &center_coordinate)
 {
 
     for (std::size_t node = 0; node != elements_nodes_connection_[element].size(); ++node)
@@ -358,8 +358,8 @@ void MeshFileHelpers::cellCenterCoordinates(StdLargeVec<StdVec<size_t>> &element
     elements_centroids_[element] = center_coordinate;
 }
 
-void MeshFileHelpers::elementVolume(StdLargeVec<StdVec<size_t>> &elements_nodes_connection_, std::size_t &element,
-                                    StdLargeVec<Vecd> &node_coordinates_, StdLargeVec<Real> &elements_volumes_)
+void MeshFileHelpers::elementVolume(StdVec<StdVec<size_t>> &elements_nodes_connection_, std::size_t &element,
+                                    StdVec<Vecd> &node_coordinates_, StdVec<Real> &elements_volumes_)
 {
     // get nodes position
     Real Total_volume = 0;
@@ -377,8 +377,8 @@ void MeshFileHelpers::elementVolume(StdLargeVec<StdVec<size_t>> &elements_nodes_
     elements_volumes_[element] = element_volume;
 }
 
-void MeshFileHelpers::minimumDistance(StdVec<Real> &all_data_of_distance_between_nodes, StdLargeVec<Real> &elements_volumes_, StdVec<StdVec<StdVec<size_t>>> &mesh_topology_,
-                                      StdLargeVec<Vecd> &node_coordinates_)
+void MeshFileHelpers::minimumDistance(StdVec<Real> &all_data_of_distance_between_nodes, StdVec<Real> &elements_volumes_, StdVec<StdVec<StdVec<size_t>>> &mesh_topology_,
+                                      StdVec<Vecd> &node_coordinates_)
 {
 
     for (size_t element_index = 0; element_index != elements_volumes_.size(); ++element_index)
@@ -443,7 +443,7 @@ void MeshFileHelpers::numberOfElementsFluent(std::ifstream &mesh_file, size_t &n
     }
 }
 
-void MeshFileHelpers::nodeCoordinatesFluent(std::ifstream &mesh_file, StdLargeVec<Vecd> &node_coordinates_, std::string &text_line,
+void MeshFileHelpers::nodeCoordinatesFluent(std::ifstream &mesh_file, StdVec<Vecd> &node_coordinates_, std::string &text_line,
                                             size_t &dimension)
 {
     while (getline(mesh_file, text_line))
@@ -490,7 +490,7 @@ void MeshFileHelpers::nodeCoordinatesFluent(std::ifstream &mesh_file, StdLargeVe
     }
 }
 
-void MeshFileHelpers::updateBoundaryCellListsFluent(StdVec<StdVec<StdVec<size_t>>> &mesh_topology_, StdLargeVec<StdVec<size_t>> &elements_nodes_connection_,
+void MeshFileHelpers::updateBoundaryCellListsFluent(StdVec<StdVec<StdVec<size_t>>> &mesh_topology_, StdVec<StdVec<size_t>> &elements_nodes_connection_,
                                                     Vecd nodes, Vec2d cells, bool &check_neighbor_cell1, bool &check_neighbor_cell2, size_t boundary_type)
 {
 

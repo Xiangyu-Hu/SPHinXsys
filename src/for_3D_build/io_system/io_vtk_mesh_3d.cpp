@@ -9,18 +9,7 @@ namespace SPH
 //=================================================================================================//
 BodyStatesRecordingToTriangleMeshVtp::BodyStatesRecordingToTriangleMeshVtp(
     SPHBody &body, TriangleMeshShape &triangle_mesh_shape)
-    : BodyStatesRecordingToVtp(body)
-{
-    TriangleMesh &triangle_mesh = *triangle_mesh_shape.getTriangleMesh();
-    faces_.reserve(triangle_mesh.getNumFaces());
-    for (int i = 0; i < triangle_mesh.getNumFaces(); i++)
-    {
-        auto f1 = triangle_mesh.getFaceVertex(i, 0);
-        auto f2 = triangle_mesh.getFaceVertex(i, 1);
-        auto f3 = triangle_mesh.getFaceVertex(i, 2);
-        faces_.push_back({f1, f2, f3});
-    }
-}
+    : BodyStatesRecordingToVtp(body), faces_(triangle_mesh_shape.getFaces()) {}
 //=================================================================================================//
 void BodyStatesRecordingToTriangleMeshVtp::writeWithFileName(const std::string &sequence)
 {

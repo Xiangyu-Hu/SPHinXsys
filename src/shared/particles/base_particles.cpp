@@ -31,7 +31,7 @@ void BaseParticles::initializeBasicParticleVariables()
 {
     addEvolvingVariable<Vecd>("Position");
     addEvolvingVariable<Real>("VolumetricMeasure");
-     //----------------------------------------------------------------------
+    //----------------------------------------------------------------------
     //		register non-geometric variables
     //----------------------------------------------------------------------
     rho_ = registerStateVariable<Real>("Density", base_material_.ReferenceDensity());
@@ -47,7 +47,7 @@ void BaseParticles::initializeBasicParticleVariables()
     sorted_id_ = registerDiscreteVariable<UnsignedInt>("SortedID", particles_bound_, AssignIndex());
 }
 //=================================================================================================//
-void BaseParticles::registerPositionAndVolumetricMeasure(StdLargeVec<Vecd> &pos, StdLargeVec<Real> &Vol)
+void BaseParticles::registerPositionAndVolumetricMeasure(StdVec<Vecd> &pos, StdVec<Real> &Vol)
 {
     dv_pos_ = registerStateVariableOnlyFrom<Vecd>("Position", pos);
     Vol_ = registerStateVariableFrom<Real>("VolumetricMeasure", Vol);
