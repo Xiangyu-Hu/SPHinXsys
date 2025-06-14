@@ -37,126 +37,53 @@ namespace SPH
 class TimeStepper
 {
   public:
-    TimeStepper(SPHSystem &sph_system, Real end_time, Real start_time = 0.0)
-        : end_time_(end_time), global_dt_(0.0)
-    {
-        sv_physical_time_ = sph_system.getSystemVariableByName<Real>("PhysicalTime");
-        sv_physical_time_->setValue(start_time);
-    };
+    TimeStepper(SPHSystem &sph_system, Real end_time, Real start_time = 0.0);
     ~TimeStepper() {};
+
+    class TriggerByPhysicalTime
+    {
+      public:
+        TriggerByPhysicalTime(TimeStepper &time_stepper, Real trigger_time);
+        bool operator()();
+
+      private:
+        SingularVariable<Real> *sv_physical_time_;
+        Real trigger_time_;
+    };
 
     class TriggerByInterval
     {
       public:
-        TriggerByInterval(Real initial_interval)
-            : present_time_(0.0), interval_(initial_interval) {};
-
-        bool operator()(BaseDynamics<Real> &interval_evaluator)
-        {
-            if (present_time_ > interval_)
-            {
-                present_time_ = 0.0;
-                interval_ = interval_evaluator.exec();
-                return true;
-            }
-            return false;
-        };
-
-        bool operator()()
-        {
-            if (present_time_ > interval_)
-            {
-                present_time_ = 0.0;
-                return true;
-            }
-            return false;
-        };
-
-        Real getInterval() const
-        {
-            return interval_;
-        };
-
-        void incrementPresentTime(Real dt)
-        {
-            present_time_ += dt;
-        };
+        TriggerByInterval(Real initial_interval);
+        bool operator()(BaseDynamics<Real> &interval_evaluator);
+        bool operator()();
+        Real getInterval() const;
+        void incrementPresentTime(Real dt);
 
       private:
         Real present_time_, interval_;
     };
 
-    Real incrementPhysicalTime(BaseDynamics<Real> &step_evaluator)
-    {
-        global_dt_ = step_evaluator.exec();
-        sv_physical_time_->incrementValue(global_dt_);
-        for (auto &interval_executor : interval_executers_)
-        {
-            interval_executor->incrementPresentTime(global_dt_);
-        }
-        return global_dt_;
-    };
+    Real incrementPhysicalTime(BaseDynamics<Real> &step_evaluator);
 
-    template <class Integrator>
-    void integrateMatchedTimeInterval( // designed to avoid too small last step
-        Real interval, BaseDynamics<Real> &step_evaluator, const Integrator &integrator)
-    {
-        Real integrated_time_ = 0.0;
-        Real dt = step_evaluator.exec();
+    void integrateMatchedTimeInterval(
+        Real interval, BaseDynamics<Real> &step_evaluator, BaseDynamics<void> &integrator);
 
-        while (interval - integrated_time_ > 1.5 * dt)
-        {
-            integrator(dt);
-            dt = step_evaluator.exec();
-            integrated_time_ += dt;
-        }
+    TriggerByInterval &addTriggerByInterval(Real initial_interval);
+    TriggerByPhysicalTime &addTriggerByPhysicalTime(Real trigger_time);
 
-        if (interval - integrated_time_ > dt)
-        {
-            Real final_dt = 0.5 * (interval - integrated_time_);
-            integrator(final_dt);
-            integrator(final_dt);
-        }
-        else
-        {
-            integrator(interval - integrated_time_);
-        }
-    };
-
-    TriggerByInterval &addTriggerByInterval(Real initial_interval)
-    {
-
-        TriggerByInterval *interval_executor =
-            execution_by_interval_keeper_.createPtr<TriggerByInterval>(initial_interval);
-        interval_executers_.push_back(interval_executor);
-        return *interval_executor;
-    };
-
-    bool isEndTime()
-    {
-        return (sv_physical_time_->getValue() >= end_time_);
-    };
-
-    void setPhysicalTime(Real time)
-    {
-        sv_physical_time_->setValue(time);
-    };
-
-    Real getPhysicalTime()
-    {
-        return sv_physical_time_->getValue();
-    };
-
-    Real getGlobalTimeStepSize()
-    {
-        return global_dt_;
-    };
+    bool isEndTime();
+    void setPhysicalTime(Real time);
+    Real getPhysicalTime();
+    Real getGlobalTimeStepSize();
 
   private:
     UniquePtrsKeeper<TriggerByInterval> execution_by_interval_keeper_;
+    UniquePtrsKeeper<TriggerByPhysicalTime> execution_by_physical_time_keeper_;
 
   protected:
     StdVec<TriggerByInterval *> interval_executers_;
+    StdVec<TriggerByPhysicalTime *> physical_time_executers_;
     Real end_time_, start_time_;
     Real global_dt_;
     SingularVariable<Real> *sv_physical_time_;
