@@ -350,8 +350,8 @@ int main(int ac, char *av[])
             {
                 std::cout << std::fixed << std::setprecision(9) << "N=" << advection_steps
                           << "	Physical Time = " << time_stepper.getPhysicalTime()
-                          << "	advection_dt = " << time_stepper.getGlobalTimeStepSize()
-                          << "	acoustic_dt = " << acoustic_dt << "\n";
+                          << "	advection_dt = " << advection_step.getInterval()
+                          << "	acoustic_dt = " << time_stepper.getGlobalTimeStepSize() << "\n";
             }
 
             if (trigger_FSI() && advection_steps % observation_interval)
