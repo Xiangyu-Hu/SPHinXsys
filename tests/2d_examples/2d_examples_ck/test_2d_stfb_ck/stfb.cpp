@@ -204,7 +204,7 @@ int main(int ac, char *av[])
     /** the forces of the system. */
     SimTK::GeneralForceSubsystem forces(MBsystem);
     /** mass properties of the fixed spot. */
-    SolidBodyPartForSimbody structure_multibody(structure, structure_shape);
+    StructureSystemForSimbody structure_multibody(structure, structure_shape);
     /** Mass properties of the constrained spot.
      * SimTK::MassProperties(mass, center of mass, inertia)
      */
@@ -323,7 +323,6 @@ int main(int ac, char *av[])
         TickCount time_instance = TickCount::now();
         Real acoustic_dt = time_stepper.incrementPhysicalTime(fluid_acoustic_time_step);
         fluid_acoustic_step_1st_half.exec(acoustic_dt);
-        fluid_acoustic_step_2nd_half.exec(acoustic_dt);
         interval_acoustic_step += TickCount::now() - time_instance;
 
         time_instance = TickCount::now();
@@ -338,6 +337,10 @@ int main(int ac, char *av[])
             constraint_on_structure.exec();
         }
         interval_FSI += TickCount::now() - time_instance;
+
+        time_instance = TickCount::now();
+        fluid_acoustic_step_2nd_half.exec(acoustic_dt);
+        interval_acoustic_step += TickCount::now() - time_instance;
         //----------------------------------------------------------------------
         //	the following are slower and less frequent time stepping.
         //----------------------------------------------------------------------
@@ -361,7 +364,7 @@ int main(int ac, char *av[])
                 action_on_structure_recording.writeToFile(advection_steps);
             }
 
-            if (state_recording())
+            if (trigger_FSI() && state_recording())
             {
                 write_real_body_states.writeToFile();
             }
