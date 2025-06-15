@@ -357,7 +357,7 @@ int main(int ac, char *av[])
                           << "	acoustic_dt = " << time_stepper.getGlobalTimeStepSize() << "\n";
             }
 
-            if (trigger_FSI() && advection_steps % observation_interval)
+            if (trigger_FSI() && advection_steps % observation_interval == 0)
             {
                 write_structure_position.writeToFile(advection_steps);
                 wave_gauge.writeToFile(advection_steps);
