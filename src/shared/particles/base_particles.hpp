@@ -161,7 +161,7 @@ DataType *BaseParticles::registerStateVariableFrom(
 //=================================================================================================//
 template <typename DataType>
 DataType *BaseParticles::registerStateVariableFrom(
-    const std::string &name, const StdLargeVec<DataType> &geometric_data)
+    const std::string &name, const StdVec<DataType> &geometric_data)
 {
     DataType *data_field = registerStateVariable<DataType>(name);
 
@@ -207,7 +207,7 @@ DiscreteVariable<DataType> *BaseParticles::registerStateVariableOnlyFrom(
 //=================================================================================================//
 template <typename DataType>
 DiscreteVariable<DataType> *BaseParticles::registerStateVariableOnlyFrom(
-    const std::string &name, const StdLargeVec<DataType> &geometric_data)
+    const std::string &name, const StdVec<DataType> &geometric_data)
 {
     DiscreteVariable<DataType> *variable = registerStateVariableOnly<DataType>(name);
     DataType *data_field = variable->Data();

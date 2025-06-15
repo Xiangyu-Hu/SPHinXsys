@@ -78,7 +78,7 @@ class PullingForce : public solid_dynamics::BaseLoadingForce<BodyPartByParticle>
 
   protected:
     Real *mass_n_;
-    StdLargeVec<Real> area_0_;
+    StdVec<Real> area_0_;
     Real *Vol_;
     Matd *F_;
 

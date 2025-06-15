@@ -4,50 +4,66 @@ namespace SPH
 {
 //=================================================================================================//
 TriangleMeshShape::TriangleMeshShape(const std::string &shape_name)
-    : Shape(shape_name), triangle_mesh_(nullptr) {}
+    : Shape(shape_name) {}
 //=================================================================================================//
 void TriangleMeshShape::initializeFromPolygonalMesh(const SimTK::PolygonalMesh &poly_mesh)
 {
-    triangle_mesh_ = triangle_mesh_ptr_keeper_.createPtr<TriangleMesh>(poly_mesh);
-    if (!TriangleMesh::isInstance(*triangle_mesh_))
+    SimTK::ContactGeometry::TriangleMesh triangle_mesh(poly_mesh);
+    if (!SimTK::ContactGeometry::TriangleMesh::isInstance(triangle_mesh))
     {
         std::cout << "\n Error the triangle mesh is not valid" << std::endl;
         std::cout << __FILE__ << ':' << __LINE__ << std::endl;
         throw;
     }
     std::cout << "TriangleMesh:" << name_ << std::endl;
-    std::cout << "num of vertices:" << triangle_mesh_->getNumVertices() << std::endl;
-    std::cout << "num of faces:" << triangle_mesh_->getNumFaces() << std::endl;
+    std::cout << "num of vertices:" << triangle_mesh.getNumVertices() << std::endl;
+    std::cout << "num of faces:" << triangle_mesh.getNumFaces() << std::endl;
 
-    std::vector<std::array<Real, 3>> vertices;
-    vertices.reserve(triangle_mesh_->getNumVertices());
-    for (int i = 0; i < triangle_mesh_->getNumVertices(); i++)
+    vertices_.reserve(triangle_mesh.getNumVertices());
+    for (int i = 0; i < triangle_mesh.getNumVertices(); i++)
     {
-        const auto &p = triangle_mesh_->getVertexPosition(i);
-        vertices.push_back({Real(p[0]), Real(p[1]), Real(p[2])});
+        const auto &p = triangle_mesh.getVertexPosition(i);
+        vertices_.push_back({Real(p[0]), Real(p[1]), Real(p[2])});
     }
 
-    std::vector<std::array<int, 3>> faces;
-    faces.reserve(triangle_mesh_->getNumFaces());
-    for (int i = 0; i < triangle_mesh_->getNumFaces(); i++)
+    faces_.reserve(triangle_mesh.getNumFaces());
+    for (int i = 0; i < triangle_mesh.getNumFaces(); i++)
     {
-        auto f1 = triangle_mesh_->getFaceVertex(i, 0);
-        auto f2 = triangle_mesh_->getFaceVertex(i, 1);
-        auto f3 = triangle_mesh_->getFaceVertex(i, 2);
-        faces.push_back({f1, f2, f3});
+        auto f1 = triangle_mesh.getFaceVertex(i, 0);
+        auto f2 = triangle_mesh.getFaceVertex(i, 1);
+        auto f3 = triangle_mesh.getFaceVertex(i, 2);
+        faces_.push_back({f1, f2, f3});
     }
-    triangle_mesh_distance_.construct(vertices, faces);
+    triangle_mesh_distance_.construct(vertices_, faces_);
 }
 //=================================================================================================//
-TriangleMesh *TriangleMeshShape::getTriangleMesh()
+void TriangleMeshShape::initializeFromSTLMesh(
+    const std::string &file_path_name, Vec3d translation, Real scale_factor)
 {
-    if (triangle_mesh_ == nullptr)
+    std::vector<float> coords, normals;
+    std::vector<size_t> tris, solids;
+    stl_reader::ReadStlFile(file_path_name.c_str(), coords, normals, tris, solids);
+    const size_t numVertices = coords.size() / 3;
+    const size_t numTriangles = tris.size() / 3;
+
+    vertices_.reserve(numVertices);
+    for (size_t i = 0; i < numVertices; i++)
     {
-        std::cout << "\n Error: TriangleMesh not setup yet! \n";
-        std::cout << __FILE__ << ':' << __LINE__ << std::endl;
-        exit(1);
+        Real p1 = Real(coords[i * 3]) * scale_factor + Real(translation[0]);
+        Real p2 = Real(coords[i * 3 + 1]) * scale_factor + Real(translation[1]);
+        Real p3 = Real(coords[i * 3 + 2]) * scale_factor + Real(translation[2]);
+        vertices_.push_back({p1, p2, p3});
     }
-    return triangle_mesh_;
+
+    faces_.reserve(numTriangles);
+    for (size_t i = 0; i < numTriangles; i++)
+    {
+        size_t f1 = tris[i * 3];
+        size_t f2 = tris[i * 3 + 1];
+        size_t f3 = tris[i * 3 + 2];
+        faces_.push_back({int(f1), int(f2), int(f3)});
+    }
+    triangle_mesh_distance_.construct(vertices_, faces_);
 }
 //=================================================================================================//
 bool TriangleMeshShape::checkContain(const Vec3d &probe_point, bool BOUNDARY_INCLUDED)
@@ -65,13 +81,12 @@ Vecd TriangleMeshShape::findClosestPoint(const Vecd &probe_point)
 //=================================================================================================//
 BoundingBox TriangleMeshShape::findBounds()
 {
-    int number_of_vertices = triangle_mesh_->getNumVertices();
     // initial reference values
     Vec3d lower_bound = SimTKToEigen(SimTKVec3(MaxReal));
     Vec3d upper_bound = SimTKToEigen(SimTKVec3(MinReal));
-    for (int i = 0; i != number_of_vertices; ++i)
+    for (size_t i = 0; i != vertices_.size(); ++i)
     {
-        Vec3d vertex_position = SimTKToEigen(triangle_mesh_->getVertexPosition(i));
+        Vec3d vertex_position = Vec3d(vertices_[i][0], vertices_[i][1], vertices_[i][2]);
         for (int j = 0; j != 3; ++j)
         {
             lower_bound[j] = SMIN(lower_bound[j], vertex_position[j]);
@@ -126,11 +141,7 @@ TriangleMeshShapeSTL::TriangleMeshShapeSTL(const std::string &filepathname, Vec3
         std::cout << __FILE__ << ':' << __LINE__ << std::endl;
         throw;
     }
-    SimTK::PolygonalMesh poly_mesh;
-    poly_mesh.loadStlFile(filepathname);
-    poly_mesh.scaleMesh(scale_factor);
-    poly_mesh.transformMesh(SimTKVec3(translation[0], translation[1], translation[2]));
-    initializeFromPolygonalMesh(poly_mesh);
+    initializeFromSTLMesh(filepathname, translation, scale_factor);
 }
 //=================================================================================================//
 } // namespace SPH

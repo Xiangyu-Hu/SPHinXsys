@@ -6,7 +6,7 @@ namespace SPH
 LinearParticles::LinearParticles(SPHBody &sph_body, BaseMaterial *base_material)
     : SurfaceParticles(sph_body, base_material), b_n_(nullptr), width_(nullptr) {}
 //=================================================================================================//
-void LinearParticles::registerLineProperties(StdLargeVec<Vecd> &b_n, StdLargeVec<Real> &width)
+void LinearParticles::registerLineProperties(StdVec<Vecd> &b_n, StdVec<Real> &width)
 {
     b_n_ = registerStateVariableFrom<Vecd>("BinormalDirection", b_n);
     width_ = registerStateVariableFrom<Real>("Width", width);
