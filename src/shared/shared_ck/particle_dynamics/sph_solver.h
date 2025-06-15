@@ -55,7 +55,8 @@ class TimeStepper
         UnsignedInt sub_step_count = 0;
         Real dt = step_evaluator.exec();
 
-        while (interval - integrated_time_ > 1.5 * dt)
+        constexpr Real TIME_STEP_SAFETY_FACTOR = 1.5; // Ensures the last step is not too small
+        while (interval - integrated_time_ > TIME_STEP_SAFETY_FACTOR * dt)
         {
             integrator(dt);
             dt = step_evaluator.exec();
