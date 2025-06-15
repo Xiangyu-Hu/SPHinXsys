@@ -35,7 +35,7 @@
 #include "force_prior_ck.hpp"
 #include "general_constraint_ck.h"
 #include "general_gradient.hpp"
-#include "general_initial_condition.h"
+#include "general_assignment.h"
 #include "general_reduce_ck.hpp"
 #include "geometric_dynamics.hpp"
 #include "hessian_correction_ck.hpp"

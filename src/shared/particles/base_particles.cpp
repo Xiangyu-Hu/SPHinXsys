@@ -27,6 +27,11 @@ SPHAdaptation &BaseParticles::getSPHAdaptation()
     return sph_body_.getSPHAdaptation();
 }
 //=================================================================================================//
+void BaseParticles::printBodyName()
+{
+    std::cout << "\nBodyName: " << sph_body_.getName() << std::endl;
+}
+//=================================================================================================//
 void BaseParticles::initializeBasicParticleVariables()
 {
     addEvolvingVariable<Vecd>("Position");

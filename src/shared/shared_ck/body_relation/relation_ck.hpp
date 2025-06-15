@@ -26,7 +26,6 @@ Relation<NeighborMethod>::Relation(
             name + "NeighborIndex", offset_list_size_));
         dv_target_particle_offset_.push_back(addRelationVariable<UnsignedInt>(
             name + "ParticleOffset", offset_list_size_));
-        particles_.addVariableToWrite<UnsignedInt>(dv_target_particle_offset_[k]);
     }
     registered_computing_kernels_.resize(contact_identifiers.size());
 }
