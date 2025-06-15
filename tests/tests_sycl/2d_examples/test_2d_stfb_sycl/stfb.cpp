@@ -3,7 +3,7 @@
  * @brief 	This is the test for 2D still floating body using compute kernel.
  * @author   Nicolò Salis and Xiangyu Hu
  */
-#include "sphinxsys_yscl.h"
+#include "sphinxsys_sycl.h"
 using namespace SPH;
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
