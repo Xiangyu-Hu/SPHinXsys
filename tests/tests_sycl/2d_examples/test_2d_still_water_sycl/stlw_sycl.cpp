@@ -193,7 +193,7 @@ int main(int ac, char *av[])
             }
             number_of_iterations++;
 
-            if (total_time >= relax_time && number_of_iterations % observation_interval == 0)
+            if (number_of_iterations % 100 == 0)
             {
                 particle_sort.exec();
             }
@@ -201,7 +201,7 @@ int main(int ac, char *av[])
             water_cell_linked_list.exec();
             water_body_update_complex_relation.exec();
 
-            if (total_time >= relax_time)
+            if (total_time >= relax_time && number_of_iterations % observation_interval == 0)
             {
                 wave_gauge.writeToFile(number_of_iterations);
             }
