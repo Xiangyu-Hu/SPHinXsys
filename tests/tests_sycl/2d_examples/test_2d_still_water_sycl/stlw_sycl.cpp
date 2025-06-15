@@ -143,6 +143,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     int number_of_iterations = 0;
     int screen_output_interval = 1000;
+    int observation_interval = screen_output_interval / 20;
     Real end_time = total_physical_time;
     Real output_interval = end_time / 100;
     Real total_time = 0.0;
@@ -192,7 +193,7 @@ int main(int ac, char *av[])
             }
             number_of_iterations++;
 
-            if (number_of_iterations % 100 == 0 && number_of_iterations != 1)
+            if (total_time >= relax_time && number_of_iterations % observation_interval == 0)
             {
                 particle_sort.exec();
             }
