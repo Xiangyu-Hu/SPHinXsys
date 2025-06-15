@@ -280,7 +280,7 @@ int main(int ac, char *av[])
     auto &trigger_FSI = time_stepper.addTriggerByPhysicalTime(1.0);
     size_t advection_steps = 0;
     int screening_interval = 100;
-    int observation_interval = screening_interval * 2;
+    int observation_interval = screening_interval / 2;
     auto &state_recording = time_stepper.addTriggerByInterval(total_physical_time / 100.0);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
@@ -357,7 +357,7 @@ int main(int ac, char *av[])
                           << "	acoustic_dt = " << time_stepper.getGlobalTimeStepSize() << "\n";
             }
 
-            if (trigger_FSI() && advection_steps % observation_interval)
+            if (trigger_FSI() && advection_steps % observation_interval == 0)
             {
                 write_structure_position.writeToFile(advection_steps);
                 wave_gauge.writeToFile(advection_steps);

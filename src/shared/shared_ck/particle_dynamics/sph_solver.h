@@ -40,6 +40,61 @@ class TimeStepper
     TimeStepper(SPHSystem &sph_system, Real end_time, Real start_time = 0.0);
     ~TimeStepper() {};
 
+    bool isEndTime();
+    void setPhysicalTime(Real time);
+    Real getPhysicalTime();
+    Real getGlobalTimeStepSize();
+    Real incrementPhysicalTime(Real global_time_step);
+    Real incrementPhysicalTime(BaseDynamics<Real> &step_evaluator);
+
+    template <class Integrator>
+    UnsignedInt integrateMatchedTimeInterval( // designed to avoid too small last step
+        Real interval, BaseDynamics<Real> &step_evaluator, const Integrator &integrator)
+    {
+        Real integrated_time_ = 0.0;
+        UnsignedInt sub_step_count = 0;
+        Real dt = step_evaluator.exec();
+
+        constexpr Real TIME_STEP_SAFETY_FACTOR = 1.5; // Ensures the last step is not too small
+        while (interval - integrated_time_ > TIME_STEP_SAFETY_FACTOR * dt)
+        {
+            integrator(dt);
+            dt = step_evaluator.exec();
+            integrated_time_ += dt;
+            sub_step_count++;
+        }
+
+        if (interval - integrated_time_ > dt)
+        {
+            Real final_dt = 0.5 * (interval - integrated_time_);
+            integrator(final_dt);
+            integrator(final_dt);
+            sub_step_count += 2;
+        }
+        else
+        {
+            integrator(interval - integrated_time_);
+            sub_step_count++;
+        }
+        return sub_step_count;
+    };
+
+    UnsignedInt integrateMatchedTimeInterval(BaseDynamics<void> &integrator,
+                                             Real interval, BaseDynamics<Real> &step_evaluator);
+
+    template <class Integrator>
+    void integrateMatchedTimeInterval(Real interval, int sub_division, const Integrator &integrator)
+    {
+        Real dt = interval / static_cast<Real>(sub_division);
+        for (int i = 0; i < sub_division; ++i)
+        {
+            integrator(dt);
+        }
+    };
+
+    void integrateMatchedTimeInterval(BaseDynamics<void> &integrator, Real interval, int sub_division = 1);
+
+  public: // execution triggers for time stepping
     class TriggerByPhysicalTime
     {
       public:
@@ -64,18 +119,8 @@ class TimeStepper
         Real present_time_, interval_;
     };
 
-    Real incrementPhysicalTime(BaseDynamics<Real> &step_evaluator);
-
-    void integrateMatchedTimeInterval(
-        Real interval, BaseDynamics<Real> &step_evaluator, BaseDynamics<void> &integrator);
-
     TriggerByInterval &addTriggerByInterval(Real initial_interval);
     TriggerByPhysicalTime &addTriggerByPhysicalTime(Real trigger_time);
-
-    bool isEndTime();
-    void setPhysicalTime(Real time);
-    Real getPhysicalTime();
-    Real getGlobalTimeStepSize();
 
   private:
     UniquePtrsKeeper<TriggerByInterval> execution_by_interval_keeper_;

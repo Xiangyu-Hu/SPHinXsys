@@ -60,9 +60,9 @@ void TimeStepper::TriggerByInterval::incrementPresentTime(Real dt)
     present_time_ += dt;
 }
 //=================================================================================================//
-Real TimeStepper::incrementPhysicalTime(BaseDynamics<Real> &step_evaluator)
+Real TimeStepper::incrementPhysicalTime(Real global_time_step)
 {
-    global_dt_ = step_evaluator.exec();
+    global_dt_ = global_time_step;
     sv_physical_time_->incrementValue(global_dt_);
     for (auto &interval_executor : interval_executers_)
     {
@@ -71,29 +71,25 @@ Real TimeStepper::incrementPhysicalTime(BaseDynamics<Real> &step_evaluator)
     return global_dt_;
 }
 //=================================================================================================//
-void TimeStepper::integrateMatchedTimeInterval(
-    Real interval, BaseDynamics<Real> &step_evaluator, BaseDynamics<void> &integrator)
+Real TimeStepper::incrementPhysicalTime(BaseDynamics<Real> &step_evaluator)
 {
-    Real integrated_time_ = 0.0;
-    Real dt = step_evaluator.exec();
-
-    while (interval - integrated_time_ > 1.5 * dt)
-    {
-        integrator.exec(dt);
-        dt = step_evaluator.exec();
-        integrated_time_ += dt;
-    }
-    // designed to avoid too small last step
-    if (interval - integrated_time_ > dt)
-    {
-        Real final_dt = 0.5 * (interval - integrated_time_);
-        integrator.exec(final_dt);
-        integrator.exec(final_dt);
-    }
-    else
-    {
-        integrator.exec(interval - integrated_time_);
-    }
+    return incrementPhysicalTime(step_evaluator.exec());
+}
+//=================================================================================================//
+UnsignedInt TimeStepper::integrateMatchedTimeInterval(
+    BaseDynamics<void> &integrator, Real interval, BaseDynamics<Real> &step_evaluator)
+{
+    return integrateMatchedTimeInterval(
+        interval, step_evaluator, [&](Real dt)
+        { integrator.exec(dt); });
+}
+//=================================================================================================//
+void TimeStepper::integrateMatchedTimeInterval(
+    BaseDynamics<void> &integrator, Real interval, int sub_division)
+{
+    integrateMatchedTimeInterval(
+        interval, sub_division, [&](Real dt)
+        { integrator.exec(dt); });
 }
 //=================================================================================================//
 TimeStepper::TriggerByInterval &TimeStepper::addTriggerByInterval(Real initial_interval)
