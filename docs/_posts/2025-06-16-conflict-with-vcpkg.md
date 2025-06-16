@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  Conflict with vcpkg for SYCL from intel OneAPI"
-date:   2025-06-17
+date:   2025-06-16
 categories: sphinxsys update
 ---
 
