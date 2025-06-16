@@ -7,7 +7,8 @@ categories: sphinxsys update
 
 You can do line-by-line debug of SPHinXsys in VS Code even into the vcpkg installed library.
 
-By default, the vcpkg installed debug library is in the directory of `~\vcpkg\installed\x64-windows\debug\lib`.
+By default, the vcpkg installed debug library is in the directory of `~\vcpkg\installed\x64-windows\debug\lib` 
+or `~\vcpkg\installed\x64-linux\debug\lib`.
 The source code is not included in the library,
 but you can find it in the directory of `~\vcpkg\buildtrees\<library_name>\src\<version>`.
 However, vcpkg usually does not keep the source code after the library is built.
