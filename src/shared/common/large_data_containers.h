@@ -55,9 +55,6 @@ template <typename T>
 using ConcurrentVec = tbb::concurrent_vector<T>;
 
 template <typename T>
-using StdLargeVec = std::vector<T, tbb::cache_aligned_allocator<T>>;
-
-template <typename T>
 using StdVec = std::vector<T>;
 
 template <typename T>

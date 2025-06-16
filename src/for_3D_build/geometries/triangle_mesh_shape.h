@@ -33,6 +33,7 @@
 #include "TriangleMeshDistance.h"
 #include "base_geometry.h"
 #include "simtk_wrapper.h"
+#include "stl_reader.h"
 
 #include <filesystem>
 #include <fstream>
@@ -42,16 +43,12 @@ namespace fs = std::filesystem;
 
 namespace SPH
 {
-using TriangleMesh = SimTK::ContactGeometry::TriangleMesh;
 /**
  * @class TriangleMeshShape
  * @brief Derived class for triangle shape processing.
  */
 class TriangleMeshShape : public Shape
 {
-  private:
-    UniquePtrKeeper<TriangleMesh> triangle_mesh_ptr_keeper_;
-
   public:
     explicit TriangleMeshShape(const std::string &shape_name);
     /** Only reliable when the probe point is close to the shape surface.
@@ -59,13 +56,15 @@ class TriangleMeshShape : public Shape
      * when probe distance is far from the surface. */
     virtual bool checkContain(const Vec3d &probe_point, bool BOUNDARY_INCLUDED = true) override;
     virtual Vec3d findClosestPoint(const Vec3d &probe_point) override;
-    TriangleMesh *getTriangleMesh();
+    StdVec<std::array<Real, 3>> &getVertices() { return vertices_; }
+    StdVec<std::array<int, 3>> &getFaces() { return faces_; }
 
   protected:
-    TriangleMesh *triangle_mesh_;
+    StdVec<std::array<Real, 3>> vertices_;
+    StdVec<std::array<int, 3>> faces_;
     tmd::TriangleMeshDistance triangle_mesh_distance_;
-    /** generate triangle mesh from polygon mesh */
     void initializeFromPolygonalMesh(const SimTK::PolygonalMesh &poly_mesh);
+    void initializeFromSTLMesh(const std::string &file_path_name, Vec3d translation, Real scale_factor);
     virtual BoundingBox findBounds() override;
 };
 

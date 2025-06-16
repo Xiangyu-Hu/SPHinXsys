@@ -107,12 +107,12 @@ class WriteToVtpIfVelocityOutOfBound
 class ParticleGenerationRecordingToVtp : public ParticleGenerationRecording
 {
   public:
-    ParticleGenerationRecordingToVtp(SPHBody &body, StdLargeVec<Vecd> &position)
+    ParticleGenerationRecordingToVtp(SPHBody &body, StdVec<Vecd> &position)
         : ParticleGenerationRecording(body), position_(position) {};
     virtual ~ParticleGenerationRecordingToVtp() {};
 
   protected:
-    StdLargeVec<Vecd> &position_;
+    StdVec<Vecd> &position_;
     virtual void writeWithFileName(const std::string &sequence) override;
 };
 } // namespace SPH
