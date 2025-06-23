@@ -2,19 +2,19 @@
 #define LEVEL_SET_SYCL_HPP
 
 #include "mesh_dynamics_sycl.hpp"
-#include "execution_sycl.h"
+#include "implementation_sycl.h"
 #include "sphinxsys_variable_sycl.hpp"
 #include "sphinxsys_constant_sycl.hpp"
-#include "level_set.hpp"
+#include "level_set.h"
 namespace SPH
 {
 //=================================================================================================//
-void MutilevelLevelSet::finishInitialization(const ParallelDevicePolicy &par_device)
+void MultilevelLevelSet::finishInitialization(const ParallelDevicePolicy &par_device)
 {
     device_kernel_ = makeUnique<SingularVariable<KernelTabulatedCK>>(
         "levelset_kernel", KernelTabulatedCK(*host_kernel_));
-    initializeMeshVariables(par_device, device_kernel_);
-    configOperationExecutionPolicy(par_device, device_kernel_);
+    initializeMeshVariables(par_device, device_kernel_->DelegatedData(par_device));
+    configOperationExecutionPolicy(par_device, device_kernel_->DelegatedData(par_device));
 }
 //=================================================================================================//
 } // namespace SPH

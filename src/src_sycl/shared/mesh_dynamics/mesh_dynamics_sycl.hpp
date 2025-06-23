@@ -2,7 +2,7 @@
 #define MESH_DYNAMICS_SYCL_HPP
 
 #include "mesh_dynamics.h"
-#include "execution_sycl.h"
+#include "implementation_sycl.h"
 
 namespace SPH
 {
