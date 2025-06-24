@@ -186,14 +186,12 @@ Real UpdateKernelIntegrals<KernelType>::UpdateKernel::
             [&](int i, int j, int k)
             {
                 NeighbourIndex neighbor_meta = BaseMeshLocalDynamics::NeighbourIndexShift(
-                    Arrayi(i, j, k), cell_neighborhood_[package_index]);
-                Real phi_neighbor = phi_[neighbor_meta.first][neighbor_meta.second[0]][neighbor_meta.second[1]][neighbor_meta.second[2]]
-;
+                    grid_index + Arrayi(i, j, k), cell_neighborhood_[package_index]);
+                Real phi_neighbor = phi_[neighbor_meta.first][neighbor_meta.second[0]][neighbor_meta.second[1]][neighbor_meta.second[2]];
                 if (phi_neighbor > -data_spacing_)
                 {
-                    Vecd phi_gradient = phi_gradient_[neighbor_meta.first][neighbor_meta.second[0]][neighbor_meta.second[1]][neighbor_meta.second[2]]
-;
-                    Vecd displacement = (grid_index - Arrayi(i, j, k)).cast<Real>().matrix() * data_spacing_;
+                    Vecd phi_gradient = phi_gradient_[neighbor_meta.first][neighbor_meta.second[0]][neighbor_meta.second[1]][neighbor_meta.second[2]];
+                    Vecd displacement = - Arrayi(i, j, k).cast<Real>().matrix() * data_spacing_;
                     Real distance = displacement.norm();
                     if (distance < cutoff_radius)
                         integral += kernel_->W(global_h_ratio_, distance, displacement) *
@@ -219,14 +217,14 @@ Vecd UpdateKernelIntegrals<KernelType>::UpdateKernel::
             [&](int i, int j, int k)
             {
                 NeighbourIndex neighbor_meta = BaseMeshLocalDynamics::NeighbourIndexShift(
-                    Arrayi(i, j, k), cell_neighborhood_[package_index]);
+                    grid_index + Arrayi(i, j, k), cell_neighborhood_[package_index]);
                 Real phi_neighbor = phi_[neighbor_meta.first][neighbor_meta.second[0]][neighbor_meta.second[1]][neighbor_meta.second[2]]
 ;
                 if (phi_neighbor > -data_spacing_)
                 {
                     Vecd phi_gradient = phi_gradient_[neighbor_meta.first][neighbor_meta.second[0]][neighbor_meta.second[1]][neighbor_meta.second[2]]
 ;
-                    Vecd displacement = (grid_index - Arrayi(i, j, k)).cast<Real>().matrix() * data_spacing_;
+                    Vecd displacement = - Arrayi(i, j, k).cast<Real>().matrix() * data_spacing_;
                     Real distance = displacement.norm();
                     if (distance < cutoff_radius)
                         integral += kernel_->dW(global_h_ratio_, distance, displacement) *
@@ -254,14 +252,12 @@ Matd UpdateKernelIntegrals<KernelType>::UpdateKernel::
             [&](int i, int j, int k)
             {
                 NeighbourIndex neighbor_meta = BaseMeshLocalDynamics::NeighbourIndexShift(
-                    Arrayi(i, j, k), cell_neighborhood_[package_index]);
-                Real phi_neighbor = phi_[neighbor_meta.first][neighbor_meta.second[0]][neighbor_meta.second[1]][neighbor_meta.second[2]]
-;
+                    grid_index + Arrayi(i, j, k), cell_neighborhood_[package_index]);
+                Real phi_neighbor = phi_[neighbor_meta.first][neighbor_meta.second[0]][neighbor_meta.second[1]][neighbor_meta.second[2]];
                 if (phi_neighbor > -data_spacing_)
                 {
-                    Vecd phi_gradient = phi_gradient_[neighbor_meta.first][neighbor_meta.second[0]][neighbor_meta.second[1]][neighbor_meta.second[2]]
-;
-                    Vecd displacement = (grid_index - Arrayi(i, j, k)).cast<Real>().matrix() * data_spacing_;
+                    Vecd phi_gradient = phi_gradient_[neighbor_meta.first][neighbor_meta.second[0]][neighbor_meta.second[1]][neighbor_meta.second[2]];
+                    Vecd displacement = - Arrayi(i, j, k).cast<Real>().matrix() * data_spacing_;
                     Real distance = displacement.norm();
                     if (distance < cutoff_radius)
                         integral += kernel_->d2W(global_h_ratio_, distance, displacement) *
