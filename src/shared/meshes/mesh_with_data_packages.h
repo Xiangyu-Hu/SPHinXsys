@@ -68,10 +68,8 @@ class MeshWithGridDataPackages : public Mesh
         : Mesh(tentative_bounds, pkg_size * data_spacing, buffer_size),
           global_mesh_(mesh_lower_bound_ + 0.5 * data_spacing * Vecd::Ones(), data_spacing, all_cells_ * pkg_size),
           data_spacing_(data_spacing),
-          index_handler_("index_handler", IndexHandler{data_spacing_, all_cells_, *static_cast<Mesh*>(this)})
-    {
-        allocateIndexDataMatrix(all_cells_);
-    };
+          cell_package_index_("cell_package_index", all_cells_.prod()),
+          index_handler_("index_handler", IndexHandler{data_spacing_, all_cells_, *static_cast<Mesh*>(this)}){};
     virtual ~MeshWithGridDataPackages(){};
 
     /** spacing between the data, which is 1/ pkg_size of this grid spacing */
@@ -83,7 +81,7 @@ class MeshWithGridDataPackages : public Mesh
     size_t num_grid_pkgs_ = 2;                                 /**< the number of all distinct packages, initially only 2 singular packages. */
     DiscreteVariable<std::pair<Arrayi, int>> meta_data_cell_{"meta_data_cell", 2};          /**< metadata for each occupied cell: (arrayi)cell index, (int)core1/inner0. */
     DiscreteVariable<CellNeighborhood> cell_neighborhood_{"mesh_cell_neighborhood", 2};     /**< 3*3(*3) array to store indicies of neighborhood cells. */
-    DiscreteVariable<size_t> cell_package_index_{"cell_package_index", 2};                  /**< the package index for each cell in a 1-d array. */
+    DiscreteVariable<size_t> cell_package_index_;                  /**< the package index for each cell in a 1-d array. */
     ConcurrentVec<std::pair<size_t, int>> occupied_data_pkgs_; /**< (size_t)sort_index, (int)core1/inner0. */
 
   private:
@@ -92,9 +90,6 @@ class MeshWithGridDataPackages : public Mesh
     static constexpr int pkg_size = PKG_SIZE;         /**< the size of the data package matrix. */
     const Real data_spacing_;                         /**< spacing of data in the data packages. */
 
-    /**< allocate memories for metadata of data packages. */
-    void allocateIndexDataMatrix(Array2i mesh_size){ cell_package_index_.reallocateData(par, all_cells_[0] * all_cells_[1]); };
-    void allocateIndexDataMatrix(Array3i mesh_size){ cell_package_index_.reallocateData(par, all_cells_[0] * all_cells_[1] * all_cells_[2]); };
 
     /** resize all mesh variable data field with `num_grid_pkgs_` size(initially only singular data) */
     struct ResizeMeshVariableData
