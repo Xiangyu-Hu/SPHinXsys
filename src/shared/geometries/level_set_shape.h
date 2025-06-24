@@ -52,6 +52,9 @@ class LevelSetShape : public Shape
     /** refinement_ratio is between body reference resolution and level set resolution */
     LevelSetShape(Shape &shape, SharedPtr<SPHAdaptation> sph_adaptation, Real refinement_ratio = 1.0);
     LevelSetShape(SPHBody &sph_body, Shape &shape, Real refinement_ratio = 1.0);
+    LevelSetShape(const ParallelDevicePolicy &par_device, Shape &shape, SharedPtr<SPHAdaptation> sph_adaptation, Real refinement_ratio = 1.0);
+    LevelSetShape(const ParallelDevicePolicy &par_device, SPHBody &sph_body, Shape &shape, Real refinement_ratio = 1.0);
+
     virtual ~LevelSetShape(){};
 
     virtual bool checkContain(const Vecd &probe_point, bool BOUNDARY_INCLUDED = true) override;

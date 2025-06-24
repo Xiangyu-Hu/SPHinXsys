@@ -14,6 +14,7 @@ LevelSetShape::
 {
     bounding_box_ = shape.getBounds();
     is_bounds_found_ = true;
+    finishInitialization(execution::par);
 }
 //=================================================================================================//
 LevelSetShape::LevelSetShape(SPHBody &sph_body, Shape &shape, Real refinement_ratio)
@@ -23,6 +24,7 @@ LevelSetShape::LevelSetShape(SPHBody &sph_body, Shape &shape, Real refinement_ra
 {
     bounding_box_ = shape.getBounds();
     is_bounds_found_ = true;
+    finishInitialization(execution::par);
 }
 //=================================================================================================//
 void LevelSetShape::writeLevelSet(SPHSystem &sph_system)
