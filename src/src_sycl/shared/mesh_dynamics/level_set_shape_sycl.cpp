@@ -11,7 +11,7 @@ LevelSetShape::
 }
 //=================================================================================================//
 LevelSetShape::LevelSetShape(const ParallelDevicePolicy &par_device, SPHBody &sph_body, Shape &shape, Real refinement_ratio)
-    : LevelSetShape(par_device, sph_body, shape, refinement_ratio)
+    : LevelSetShape(sph_body, shape, refinement_ratio)
 {
     finishInitialization(par_device);
 }
