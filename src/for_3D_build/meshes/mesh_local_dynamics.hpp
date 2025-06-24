@@ -218,12 +218,10 @@ Vecd UpdateKernelIntegrals<KernelType>::UpdateKernel::
             {
                 NeighbourIndex neighbor_meta = BaseMeshLocalDynamics::NeighbourIndexShift(
                     grid_index + Arrayi(i, j, k), cell_neighborhood_[package_index]);
-                Real phi_neighbor = phi_[neighbor_meta.first][neighbor_meta.second[0]][neighbor_meta.second[1]][neighbor_meta.second[2]]
-;
+                Real phi_neighbor = phi_[neighbor_meta.first][neighbor_meta.second[0]][neighbor_meta.second[1]][neighbor_meta.second[2]];
                 if (phi_neighbor > -data_spacing_)
                 {
-                    Vecd phi_gradient = phi_gradient_[neighbor_meta.first][neighbor_meta.second[0]][neighbor_meta.second[1]][neighbor_meta.second[2]]
-;
+                    Vecd phi_gradient = phi_gradient_[neighbor_meta.first][neighbor_meta.second[0]][neighbor_meta.second[1]][neighbor_meta.second[2]];
                     Vecd displacement = - Arrayi(i, j, k).cast<Real>().matrix() * data_spacing_;
                     Real distance = displacement.norm();
                     if (distance < cutoff_radius)
