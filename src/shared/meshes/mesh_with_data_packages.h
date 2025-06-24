@@ -90,7 +90,6 @@ class MeshWithGridDataPackages : public Mesh
     static constexpr int pkg_size = PKG_SIZE;         /**< the size of the data package matrix. */
     const Real data_spacing_;                         /**< spacing of data in the data packages. */
 
-
     /** resize all mesh variable data field with `num_grid_pkgs_` size(initially only singular data) */
     struct ResizeMeshVariableData
     {

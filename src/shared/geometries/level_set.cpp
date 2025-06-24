@@ -17,7 +17,6 @@ MultilevelLevelSet::MultilevelLevelSet(
     global_h_ratio_vec_.push_back(global_h_ratio);
 
     initializeLevel(0, reference_data_spacing, tentative_bounds, coarse_data);
-    // finishInitialization(par);
 }
 //=================================================================================================//
 MultilevelLevelSet::MultilevelLevelSet(
@@ -37,7 +36,6 @@ MultilevelLevelSet::MultilevelLevelSet(
 
         initializeLevel(level, reference_data_spacing, tentative_bounds, mesh_data_set_[level - 1]);
     }
-    // finishInitialization(par);
 }
 //=================================================================================================//
 void MultilevelLevelSet::initializeLevel(size_t level, Real reference_data_spacing,
@@ -116,6 +114,7 @@ size_t MultilevelLevelSet::getProbeLevel(const Vecd &position)
 //=================================================================================================//
 Real MultilevelLevelSet::probeKernelIntegral(const Vecd &position, Real h_ratio)
 {
+    // std::cout << "probe kernel integral" << std::endl;
     if(mesh_data_set_.size() == 1){
         return probe_kernel_integral_set_[0]->update(position);
     }
@@ -130,6 +129,7 @@ Real MultilevelLevelSet::probeKernelIntegral(const Vecd &position, Real h_ratio)
 //=================================================================================================//
 Vecd MultilevelLevelSet::probeKernelGradientIntegral(const Vecd &position, Real h_ratio)
 {
+    // std::cout << "probe kernel gradient integral" << std::endl;
     if(mesh_data_set_.size() == 1){
         return probe_kernel_gradient_integral_set_[0]->update(position);
     }
