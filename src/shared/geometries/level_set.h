@@ -97,6 +97,7 @@ class MultilevelLevelSet : public BaseMeshField
         probe_level_set_gradient_set_.clear();
         probe_kernel_integral_set_.clear();
         probe_kernel_gradient_integral_set_.clear();
+        probe_kernel_second_gradient_integral_set_.clear();
         cell_package_index_set_.clear();
         meta_data_cell_set_.clear();
         for(size_t l = 0; l != total_levels_; l++){

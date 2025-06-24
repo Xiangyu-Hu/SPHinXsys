@@ -54,6 +54,9 @@ void MultilevelLevelSet::registerProbes(const ExecutionPolicy &ex_policy, size_t
     probe_kernel_gradient_integral_set_.push_back(
         probe_kernel_gradient_integral_vector_keeper_
             .template createPtr<ProbeKernelGradientIntegral>(ex_policy, mesh_data_set_[level]));
+    probe_kernel_second_gradient_integral_set_.push_back(
+        probe_kernel_second_gradient_integral_vector_keeper_
+            .template createPtr<ProbeKernelSecondGradientIntegral>(ex_policy, mesh_data_set_[level]));
 }
 //=================================================================================================//
 }
