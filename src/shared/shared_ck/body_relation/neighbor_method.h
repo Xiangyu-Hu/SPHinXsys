@@ -83,13 +83,45 @@ class SmoothingLength<SingleValued> : public SmoothingLength<Base>
 
     class ComputingKernel
     {
-        Real inv_h_;
+        Real inv_h_, inv_h_squared_, inv_h_cubed_, inv_h_fourth_;
 
       public:
         template <class ExecutionPolicy>
         ComputingKernel(const ExecutionPolicy &ex_policy, SmoothingLength<SingleValued> &smoothing_length)
-            : inv_h_(smoothing_length.inv_h_){};
-        Real operator()(UnsignedInt i, UnsignedInt j) const { return inv_h_; };
+            : inv_h_(smoothing_length.inv_h_), inv_h_squared_(inv_h_ * inv_h_),
+              inv_h_cubed_(inv_h_squared_ * inv_h_), inv_h_fourth_(inv_h_cubed_ * inv_h_){};
+
+        Real displacementFactor(UnsignedInt i, UnsignedInt j) const { return inv_h_; };
+
+        Real kernelFactor(const Real &, UnsignedInt, UnsignedInt) const
+        {
+            return inv_h_;
+        };
+
+        Real kernelFactor(const Vec2d &, UnsignedInt, UnsignedInt) const
+        {
+            return inv_h_squared_;
+        };
+
+        Real kernelFactor(const Vec3d &, UnsignedInt, UnsignedInt) const
+        {
+            return inv_h_cubed_;
+        };
+
+        Real kernelGradientFactor(const Real &, UnsignedInt, UnsignedInt) const
+        {
+            return inv_h_squared_;
+        };
+
+        Real kernelGradientFactor(const Vec2d &, UnsignedInt, UnsignedInt) const
+        {
+            return inv_h_cubed_;
+        };
+
+        Real kernelGradientFactor(const Vec3d &, UnsignedInt, UnsignedInt) const
+        {
+            return inv_h_fourth_;
+        };
     };
 
   protected:
@@ -122,7 +154,7 @@ class SmoothingLength<Continuous> : public SmoothingLength<Base>
         ComputingKernel(const ExecutionPolicy &ex_policy, SmoothingLength<Continuous> &smoothing_length)
             : source_h_(smoothing_length.dv_source_h_->DelegatedData(ex_policy)),
               target_h_(smoothing_length.dv_target_h_->DelegatedData(ex_policy)){};
-        Real operator()(UnsignedInt i, UnsignedInt j) const { return 1.0 / SMAX(source_h_[i], target_h_[j]); };
+        Real displacement_factor(UnsignedInt i, UnsignedInt j) const { return 1.0 / SMAX(source_h_[i], target_h_[j]); };
     };
 
   protected:
@@ -150,7 +182,7 @@ class SmoothingLength<SingleValued, Continuous> : public SmoothingLength<Base>
         ComputingKernel(const ExecutionPolicy &ex_policy, SmoothingLength<SingleValued, Continuous> &smoothing_length)
             : source_h_(smoothing_length.source_h_),
               target_h_(smoothing_length.dv_target_h_->DelegatedData(ex_policy)){};
-        Real operator()(UnsignedInt i, UnsignedInt j) const { return 1.0 / SMAX(source_h_, target_h_[j]); };
+        Real displacement_factor(UnsignedInt i, UnsignedInt j) const { return 1.0 / SMAX(source_h_, target_h_[j]); };
     };
 
   protected:
@@ -178,7 +210,7 @@ class SmoothingLength<Continuous, SingleValued> : public SmoothingLength<Base>
         ComputingKernel(const ExecutionPolicy &ex_policy, SmoothingLength<Continuous, SingleValued> &smoothing_length)
             : source_h_(smoothing_length.dv_source_h_->DelegatedData(ex_policy)),
               target_h_(smoothing_length.target_h_){};
-        Real operator()(UnsignedInt i, UnsignedInt j) const { return 1.0 / SMAX(source_h_[i], target_h_); };
+        Real displacement_factor(UnsignedInt i, UnsignedInt j) const { return 1.0 / SMAX(source_h_[i], target_h_); };
     };
 
   protected:

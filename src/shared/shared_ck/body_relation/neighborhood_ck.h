@@ -66,6 +66,8 @@ class Neighbor<Base>
 template <class NeighborMethod>
 class Neighbor<NeighborMethod> : public Neighbor<Base>
 {
+    using ScalingFactor = typename NeighborMethod::ComputingKernel;
+
   public:
     template <class ExecutionPolicy>
     Neighbor(const ExecutionPolicy &ex_policy,
@@ -75,8 +77,19 @@ class Neighbor<NeighborMethod> : public Neighbor<Base>
 
     KernelTabulatedCK &getKernel() { return kernel_; }
 
-    inline Real W_ij(size_t i, size_t j) const { return kernel_.W(vec_r_ij(i, j)); }
-    inline Real dW_ij(size_t i, size_t j) const { return kernel_.dW(vec_r_ij(i, j)); }
+    inline Real W_ij(size_t i, size_t j) const
+    {
+        Vecd normalized_displacement = scaling_factor_.displacementFactor(i, j) * vec_r_ij(i, j);
+        return scaling_factor_.kernelFactor(normalized_displacement, i, j) *
+               kernel_.normalized_W(normalized_displacement);
+    }
+
+    inline Real dW_ij(size_t i, size_t j) const
+    {
+        Vecd normalized_displacement = scaling_factor_.displacementFactor(i, j) * vec_r_ij(i, j);
+        return scaling_factor_.kernelGradientFactor(normalized_displacement, i, j) *
+               kernel_.normalized_dW(normalized_displacement);
+    }
 
     inline Vecd e_ij(size_t i, size_t j) const
     {
@@ -102,6 +115,7 @@ class Neighbor<NeighborMethod> : public Neighbor<Base>
     };
 
   protected:
+    ScalingFactor scaling_factor_;
     Real cut_radius_square_;
 };
 } // namespace SPH

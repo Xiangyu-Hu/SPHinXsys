@@ -12,6 +12,9 @@ KernelTabulatedCK::KernelTabulatedCK(Kernel &kernel)
     factor_dW_1D_ = inv_h_ * factor_W_1D_;
     factor_dW_2D_ = inv_h_ * factor_W_2D_;
     factor_dW_3D_ = inv_h_ * factor_W_3D_;
+    dimension_factor_1D_ = kernel.DimensionFactor1D();
+    dimension_factor_2D_ = kernel.DimensionFactor2D();
+    dimension_factor_3D_ = kernel.DimensionFactor3D();
     rc_ref_ = kernel.CutOffRadius();
     rc_ref_sqr_ = kernel.CutOffRadiusSqr();
 

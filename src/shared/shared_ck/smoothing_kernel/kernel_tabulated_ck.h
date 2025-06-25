@@ -94,10 +94,29 @@ class KernelTabulatedCK
     Real CutOffRadius() const { return rc_ref_; };
     Real CutOffRadiusSqr() const { return rc_ref_sqr_; };
 
+    Real DimensionFactor(const Real &) const { return dimension_factor_1D_; };
+    Real DimensionFactor(const Vec2d &) const { return dimension_factor_2D_; };
+    Real DimensionFactor(const Vec3d &) const { return dimension_factor_3D_; };
+
+    template <typename T>
+    Real normalized_W(const T &normalized_displacement) const
+    {
+        return DimensionFactor(normalized_displacement) *
+               interpolateCubic(w_1d, getNorm(normalized_displacement));
+    };
+
+    template <typename T>
+    Real normalized_dW(const T &normalized_displacement) const
+    {
+        return DimensionFactor(normalized_displacement) *
+               interpolateCubic(dw_1d, getNorm(normalized_displacement));
+    };
+
   private:
     Real inv_h_, rc_ref_, rc_ref_sqr_;
     Real factor_W_1D_, factor_W_2D_, factor_W_3D_;
     Real factor_dW_1D_, factor_dW_2D_, factor_dW_3D_;
+    Real dimension_factor_1D_, dimension_factor_2D_, dimension_factor_3D_;
     Real dq_, delta_q_0_, delta_q_1_, delta_q_2_, delta_q_3_;
     Real w_1d[tabulated_array_size_], dw_1d[tabulated_array_size_];
 };

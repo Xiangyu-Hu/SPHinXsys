@@ -30,7 +30,7 @@ Neighbor<NeighborMethod>::Neighbor(
     DiscreteVariable<Vecd> *dv_pos, DiscreteVariable<Vecd> *dv_contact_pos,
     NeighborMethod &neighbor_method)
     : Neighbor<Base>(ex_policy, sph_adaptation, contact_adaptation, dv_pos, dv_contact_pos),
-      cut_radius_square_(kernel_.CutOffRadiusSqr()) {}
+      scaling_factor_(ex_policy, neighbor_method), cut_radius_square_(kernel_.CutOffRadiusSqr()) {}
 //=================================================================================================//
 } // namespace SPH
 #endif // NEIGHBORHOOD_CK_HPP
