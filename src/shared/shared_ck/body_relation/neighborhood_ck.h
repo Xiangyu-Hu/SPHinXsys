@@ -66,7 +66,7 @@ class Neighbor<Base>
 template <class NeighborMethod>
 class Neighbor<NeighborMethod> : public Neighbor<Base>
 {
-    using ScalingFactor = typename NeighborMethod::ComputingKernel;
+    using ScalingKernel = typename NeighborMethod::ComputingKernel;
 
   public:
     template <class ExecutionPolicy>
@@ -79,15 +79,15 @@ class Neighbor<NeighborMethod> : public Neighbor<Base>
 
     inline Real W_ij(size_t i, size_t j) const
     {
-        Vecd normalized_displacement = scaling_factor_.displacementFactor(i, j) * vec_r_ij(i, j);
-        return scaling_factor_.kernelFactor(normalized_displacement, i, j) *
+        Vecd normalized_displacement = scaling_.displacementFactor(i, j) * vec_r_ij(i, j);
+        return scaling_.kernelFactor(normalized_displacement, i, j) *
                kernel_.normalized_W(normalized_displacement);
     }
 
     inline Real dW_ij(size_t i, size_t j) const
     {
-        Vecd normalized_displacement = scaling_factor_.displacementFactor(i, j) * vec_r_ij(i, j);
-        return scaling_factor_.kernelGradientFactor(normalized_displacement, i, j) *
+        Vecd normalized_displacement = scaling_.displacementFactor(i, j) * vec_r_ij(i, j);
+        return scaling_.kernelGradientFactor(normalized_displacement, i, j) *
                kernel_.normalized_dW(normalized_displacement);
     }
 
@@ -102,21 +102,26 @@ class Neighbor<NeighborMethod> : public Neighbor<Base>
       public:
         NeighborCriterion(Neighbor<NeighborMethod> &neighbor)
             : source_pos_(neighbor.source_pos_), target_pos_(neighbor.target_pos_),
-              cut_radius_square_(neighbor.getKernel().CutOffRadiusSqr()) {};
+              kernel_size_squared_(math::pow(neighbor.getKernel().KernelSize(), 2)),
+              scaling_(neighbor.scaling_) {};
+
         bool operator()(UnsignedInt target_index, UnsignedInt source_index) const
         {
-            return (source_pos_[source_index] - target_pos_[target_index]).squaredNorm() < cut_radius_square_;
+            Vecd normalized_displacement =
+                scaling_.displacementFactor(source_index, target_index) *
+                (source_pos_[source_index] - target_pos_[target_index]);
+            return normalized_displacement.squaredNorm() < kernel_size_squared_;
         };
 
       protected:
         Vecd *source_pos_;
         Vecd *target_pos_;
-        Real cut_radius_square_;
+        Real kernel_size_squared_;
+        ScalingKernel scaling_;
     };
 
   protected:
-    ScalingFactor scaling_factor_;
-    Real cut_radius_square_;
+    ScalingKernel scaling_;
 };
 } // namespace SPH
 #endif // NEIGHBORHOOD_CK_H

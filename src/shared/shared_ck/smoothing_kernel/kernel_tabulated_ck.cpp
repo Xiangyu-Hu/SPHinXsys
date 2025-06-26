@@ -17,8 +17,9 @@ KernelTabulatedCK::KernelTabulatedCK(Kernel &kernel)
     dimension_factor_3D_ = kernel.DimensionFactor3D();
     rc_ref_ = kernel.CutOffRadius();
     rc_ref_sqr_ = kernel.CutOffRadiusSqr();
+    kernel_size_ = kernel.KernelSize();
 
-    dq_ = kernel.KernelSize() / Real(kernel_resolution_);
+    dq_ = kernel_size_ / Real(kernel_resolution_);
     for (int i = 0; i < kernel_resolution_; i++)
     {
         w_1d[i] = kernel.W_1D(Real(i - 1) * dq_);

@@ -13,14 +13,7 @@ Neighbor<Base>::Neighbor(
     DiscreteVariable<Vecd> *dv_pos, DiscreteVariable<Vecd> *dv_contact_pos)
     : kernel_(*sph_adaptation->getKernel()),
       source_pos_(dv_pos->DelegatedData(ex_policy)),
-      target_pos_(dv_contact_pos->DelegatedData(ex_policy))
-{
-    KernelTabulatedCK contact_kernel(*contact_adaptation->getKernel());
-    if (kernel_.CutOffRadius() < contact_kernel.CutOffRadius())
-    {
-        kernel_ = contact_kernel;
-    }
-}
+      target_pos_(dv_contact_pos->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <class NeighborMethod>
 template <class ExecutionPolicy>
@@ -30,7 +23,7 @@ Neighbor<NeighborMethod>::Neighbor(
     DiscreteVariable<Vecd> *dv_pos, DiscreteVariable<Vecd> *dv_contact_pos,
     NeighborMethod &neighbor_method)
     : Neighbor<Base>(ex_policy, sph_adaptation, contact_adaptation, dv_pos, dv_contact_pos),
-      scaling_factor_(ex_policy, neighbor_method), cut_radius_square_(kernel_.CutOffRadiusSqr()) {}
+      scaling_(ex_policy, neighbor_method) {}
 //=================================================================================================//
 } // namespace SPH
 #endif // NEIGHBORHOOD_CK_HPP

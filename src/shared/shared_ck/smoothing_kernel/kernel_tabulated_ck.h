@@ -93,6 +93,7 @@ class KernelTabulatedCK
 
     Real CutOffRadius() const { return rc_ref_; };
     Real CutOffRadiusSqr() const { return rc_ref_sqr_; };
+    Real KernelSize() const { return kernel_size_; };
 
     Real DimensionFactor(const Real &) const { return dimension_factor_1D_; };
     Real DimensionFactor(const Vec2d &) const { return dimension_factor_2D_; };
@@ -113,7 +114,7 @@ class KernelTabulatedCK
     };
 
   private:
-    Real inv_h_, rc_ref_, rc_ref_sqr_;
+    Real inv_h_, rc_ref_, rc_ref_sqr_, kernel_size_;
     Real factor_W_1D_, factor_W_2D_, factor_W_3D_;
     Real factor_dW_1D_, factor_dW_2D_, factor_dW_3D_;
     Real dimension_factor_1D_, dimension_factor_2D_, dimension_factor_3D_;
