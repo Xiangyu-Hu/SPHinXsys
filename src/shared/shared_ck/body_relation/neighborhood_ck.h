@@ -79,16 +79,16 @@ class Neighbor<NeighborMethod> : public Neighbor<Base>
 
     inline Real W_ij(size_t i, size_t j) const
     {
-        Vecd normalized_displacement = scaling_.normalizeDisplacement(vec_r_ij(i, j), i, j);
-        return scaling_.Factor(normalized_displacement, i, j) *
-               kernel_.normalized_W(normalized_displacement);
+        Vecd displacement = vec_r_ij(i, j);
+        return scaling_.Factor(displacement, i, j) *
+               kernel_.normalized_W(displacement, scaling_.normalizeDistance(displacement, i, j));
     }
 
     inline Real dW_ij(size_t i, size_t j) const
     {
-        Vecd normalized_displacement = scaling_.normalizeGradientDisplacement(vec_r_ij(i, j), i, j);
-        return scaling_.GradientFactor(normalized_displacement, i, j) *
-               kernel_.normalized_dW(normalized_displacement);
+        Vecd displacement = vec_r_ij(i, j);
+        return scaling_.GradientFactor(displacement, i, j) *
+               kernel_.normalized_dW(displacement, scaling_.normalizeGradientDistance(displacement, i, j));
     }
 
     inline Vecd e_ij(size_t i, size_t j) const
@@ -107,10 +107,8 @@ class Neighbor<NeighborMethod> : public Neighbor<Base>
 
         inline bool operator()(UnsignedInt target_index, UnsignedInt source_index) const
         {
-            Vecd normalized_displacement =
-                scaling_.minimumDisplacementFactor(source_index, target_index) *
-                (source_pos_[source_index] - target_pos_[target_index]);
-            return normalized_displacement.squaredNorm() < kernel_size_squared_;
+            Vecd displacement = source_pos_[source_index] - target_pos_[target_index];
+            return scaling_.normalizeSquaredDistance(displacement, source_index, target_index) < kernel_size_squared_;
         };
 
       protected:

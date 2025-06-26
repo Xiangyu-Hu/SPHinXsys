@@ -100,17 +100,15 @@ class KernelTabulatedCK
     inline Real DimensionFactor(const Vec3d &) const { return dimension_factor_3D_; };
 
     template <typename T>
-    Real normalized_W(const T &normalized_displacement) const
+    Real normalized_W(const T &displacement, Real normalized_distance) const
     {
-        return DimensionFactor(normalized_displacement) *
-               interpolateCubic(w_1d, getNorm(normalized_displacement));
+        return DimensionFactor(displacement) * interpolateCubic(w_1d, normalized_distance);
     };
 
     template <typename T>
-    Real normalized_dW(const T &normalized_displacement) const
+    Real normalized_dW(const T &displacement, Real normalized_distance) const
     {
-        return DimensionFactor(normalized_displacement) *
-               interpolateCubic(dw_1d, getNorm(normalized_displacement));
+        return DimensionFactor(displacement) * interpolateCubic(dw_1d, normalized_distance);
     };
 
   private:
