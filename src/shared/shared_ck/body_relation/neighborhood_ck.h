@@ -107,8 +107,10 @@ class Neighbor<NeighborMethod> : public Neighbor<Base>
 
         inline bool operator()(UnsignedInt target_index, UnsignedInt source_index) const
         {
-            Vecd displacement = source_pos_[source_index] - target_pos_[target_index];
-            return scaling_.normalizeSquaredDistance(displacement, source_index, target_index) < kernel_size_squared_;
+            Vecd normalized_displacement =
+                scaling_.minimumDistanceFactor(source_index, target_index) *
+                (source_pos_[source_index] - target_pos_[target_index]);
+            return normalized_displacement.squaredNorm() < kernel_size_squared_;
         };
 
       protected:

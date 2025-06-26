@@ -91,14 +91,13 @@ class SmoothingLength<SingleValued> : public SmoothingLength<Base>
             : inv_h_(smoothing_length.inv_h_), inv_h_squared_(inv_h_ * inv_h_),
               inv_h_cubed_(inv_h_squared_ * inv_h_), inv_h_fourth_(inv_h_cubed_ * inv_h_){};
 
-        template <typename T>
-        inline Real normalizeDistance(const T &displacement, UnsignedInt, UnsignedInt) const { return getNorm(inv_h_ * displacement); };
+        template <typename VecType>
+        inline Real normalizeDistance(const VecType &displacement, UnsignedInt, UnsignedInt) const { return (inv_h_ * displacement).norm(); };
 
-        template <typename T>
-        inline Real normalizeGradientDistance(const T &displacement, UnsignedInt, UnsignedInt) const { return getNorm(inv_h_ * displacement); };
+        template <typename VecType>
+        inline Real normalizeGradientDistance(const VecType &displacement, UnsignedInt, UnsignedInt) const { return (inv_h_ * displacement).norm(); };
 
-        template <typename T>
-        inline Real normalizeSquaredDistance(const T &displacement, UnsignedInt, UnsignedInt) const { return getSquaredNorm(inv_h_ * displacement); };
+        inline Real minimumDistanceFactor(UnsignedInt i, UnsignedInt j) const { return inv_h_; };
 
         inline Real Factor(const Real &, UnsignedInt, UnsignedInt) const
         {
