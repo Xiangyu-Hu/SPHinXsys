@@ -20,16 +20,48 @@
  * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
  *                                                                           *
  * ------------------------------------------------------------------------- */
+/**
+ * @file 	io_vtk_mesh_ck.h
+ * @brief Classes for input and output with vtk (Paraview) for FVM unstructured mesh.
+ * @author Xiangyu Hu
+ */
 
-/** @file io_all_ck.h
-This is the header file that user code should include to pick up all
-io class used in SPHinXsys. **/
+#ifndef IO_VTK_MESH_CK_H
+#define IO_VTK_MESH_CK_H
 
-#ifndef IO_ALL_CK_H
-#define IO_ALL_CK_H
+#include "execution_policy.h"
+#include "io_vtk_mesh.h"
 
-#include "io_base_ck.h"
-#include "io_observation_ck.h"
-#include "io_vtk_mesh_ck.h"
+namespace SPH
+{
+template <class ExecutionPolicy>
+class BodyStatesRecordingToTriangleMeshVtpCK : public BodyStatesRecordingToTriangleMeshVtp
+{
+  public:
+    template <typename... Args>
+    BodyStatesRecordingToTriangleMeshVtpCK(Args &&...args)
+        : BodyStatesRecordingToTriangleMeshVtp(std::forward<Args>(args)...){};
+    virtual ~BodyStatesRecordingToTriangleMeshVtpCK() {};
 
-#endif // IO_ALL_CK_H
+    virtual void writeToFile()
+    {
+        if (state_recording_)
+        {
+            for (size_t i = 0; i < bodies_.size(); ++i)
+            {
+                if (bodies_[i]->checkNewlyUpdated())
+                {
+                    BaseParticles &base_particles = bodies_[i]->getBaseParticles();
+                    base_particles.dvParticlePosition()->prepareForOutput(ExecutionPolicy{});
+                    prepare_variable_to_write_(base_particles.VariablesToWrite(), ExecutionPolicy{});
+                }
+            }
+            BodyStatesRecordingToVtp::writeToFile();
+        }
+    };
+
+  protected:
+    OperationOnDataAssemble<ParticleVariables, prepareVariablesToWrite> prepare_variable_to_write_;
+};
+} // namespace SPH
+#endif // IO_VTK_MESH_CK_H
