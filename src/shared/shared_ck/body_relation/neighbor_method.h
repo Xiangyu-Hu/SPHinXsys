@@ -91,34 +91,39 @@ class SmoothingLength<SingleValued> : public SmoothingLength<Base>
             : inv_h_(smoothing_length.inv_h_), inv_h_squared_(inv_h_ * inv_h_),
               inv_h_cubed_(inv_h_squared_ * inv_h_), inv_h_fourth_(inv_h_cubed_ * inv_h_){};
 
-        Real displacementFactor(UnsignedInt i, UnsignedInt j) const { return inv_h_; };
+        template <typename T>
+        inline T normalizeDisplacement(const T &displacement, UnsignedInt, UnsignedInt) const { return inv_h_ * displacement; };
 
-        Real kernelFactor(const Real &, UnsignedInt, UnsignedInt) const
+        template <typename T>
+        inline T normalizeGradientDisplacement(const T &displacement, UnsignedInt, UnsignedInt) const { return inv_h_ * displacement; };
+
+        inline Real minimumDisplacementFactor(UnsignedInt i, UnsignedInt j) const { return inv_h_; };
+        inline Real Factor(const Real &, UnsignedInt, UnsignedInt) const
         {
             return inv_h_;
         };
 
-        Real kernelFactor(const Vec2d &, UnsignedInt, UnsignedInt) const
+        inline Real Factor(const Vec2d &, UnsignedInt, UnsignedInt) const
         {
             return inv_h_squared_;
         };
 
-        Real kernelFactor(const Vec3d &, UnsignedInt, UnsignedInt) const
+        inline Real Factor(const Vec3d &, UnsignedInt, UnsignedInt) const
         {
             return inv_h_cubed_;
         };
 
-        Real kernelGradientFactor(const Real &, UnsignedInt, UnsignedInt) const
+        inline Real GradientFactor(const Real &, UnsignedInt, UnsignedInt) const
         {
             return inv_h_squared_;
         };
 
-        Real kernelGradientFactor(const Vec2d &, UnsignedInt, UnsignedInt) const
+        inline Real GradientFactor(const Vec2d &, UnsignedInt, UnsignedInt) const
         {
             return inv_h_cubed_;
         };
 
-        Real kernelGradientFactor(const Vec3d &, UnsignedInt, UnsignedInt) const
+        inline Real GradientFactor(const Vec3d &, UnsignedInt, UnsignedInt) const
         {
             return inv_h_fourth_;
         };

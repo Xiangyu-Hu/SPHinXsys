@@ -95,9 +95,9 @@ class KernelTabulatedCK
     Real CutOffRadiusSqr() const { return rc_ref_sqr_; };
     Real KernelSize() const { return kernel_size_; };
 
-    Real DimensionFactor(const Real &) const { return dimension_factor_1D_; };
-    Real DimensionFactor(const Vec2d &) const { return dimension_factor_2D_; };
-    Real DimensionFactor(const Vec3d &) const { return dimension_factor_3D_; };
+    inline Real DimensionFactor(const Real &) const { return dimension_factor_1D_; };
+    inline Real DimensionFactor(const Vec2d &) const { return dimension_factor_2D_; };
+    inline Real DimensionFactor(const Vec3d &) const { return dimension_factor_3D_; };
 
     template <typename T>
     Real normalized_W(const T &normalized_displacement) const
