@@ -148,8 +148,7 @@ class SmoothingLength<SingleValued> : public SmoothingLength<Base>
 
         inline bool operator()(UnsignedInt i, UnsignedInt j) const
         {
-            Vecd displacement = source_pos_[i] - target_pos_[j];
-            return (inv_h_ * displacement).squaredNorm() < kernel_size_squared_;
+            return (inv_h_ * (source_pos_[i] - target_pos_[j])).squaredNorm() < kernel_size_squared_;
         };
     };
 
