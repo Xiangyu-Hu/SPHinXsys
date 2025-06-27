@@ -51,7 +51,7 @@ DensityRegularization<Inner<WithUpdate, RegularizationType, ParticleScopeType, P
     InteractKernel(const ExecutionPolicy &ex_policy,
                    DensityRegularization<Inner<WithUpdate, RegularizationType, ParticleScopeType, Parameters...>> &encloser)
     : DensityRegularization<Base, Inner<Parameters...>>::InteractKernel(ex_policy, encloser),
-      W0_(this->kernel_.W(ZeroData<Vecd>::value)) {}
+      W0_(this->W(ZeroData<Vecd>::value)) {}
 //=================================================================================================//
 template <typename RegularizationType, typename ParticleScopeType, typename... Parameters>
 void DensityRegularization<Inner<WithUpdate, RegularizationType, ParticleScopeType, Parameters...>>::

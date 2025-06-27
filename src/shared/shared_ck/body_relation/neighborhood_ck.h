@@ -31,97 +31,48 @@
 #ifndef NEIGHBORHOOD_CK_H
 #define NEIGHBORHOOD_CK_H
 
-#include "kernel_tabulated_ck.h"
-
 #include "neighbor_method.h"
 
 namespace SPH
 {
-template <typename... T>
-class Neighbor;
-
-template <>
-class Neighbor<Base>
+template <class NeighborMethod>
+class Neighbor
 {
+    using SmoothingKernel = typename NeighborMethod::SmoothingKernel;
+
   public:
     template <class ExecutionPolicy>
-    Neighbor(const ExecutionPolicy &ex_policy,
-             SPHAdaptation *sph_adaptation, SPHAdaptation *contact_adaptation,
-             DiscreteVariable<Vecd> *dv_pos, DiscreteVariable<Vecd> *dv_target_pos);
+    Neighbor(const ExecutionPolicy &ex_policy, NeighborMethod &neighbor_method)
+        : smoothing_kernel_(ex_policy, neighbor_method){};
 
-    inline Vecd vec_r_ij(size_t i, size_t j) const { return source_pos_[i] - target_pos_[j]; };
-
-    inline Vecd e_ij(size_t i, size_t j) const
-    {
-        Vecd displacement = vec_r_ij(i, j);
-        return displacement / (displacement.norm() + TinyReal);
-    }
+    inline Vecd vec_r_ij(size_t i, size_t j) const { return smoothing_kernel_.vec_r_ij(i, j); };
+    inline Real W_ij(size_t i, size_t j) const { return smoothing_kernel_.W_ij(i, j); };
+    inline Real dW_ij(size_t i, size_t j) const { return smoothing_kernel_.dW_ij(i, j); };
+    inline Vecd e_ij(size_t i, size_t j) const { return smoothing_kernel_.e_ij(i, j); };
+    inline Real W(const Vecd &displacement) const { return smoothing_kernel_.W(displacement); };
 
   protected:
-    KernelTabulatedCK kernel_;
-    Vecd *source_pos_;
-    Vecd *target_pos_;
+    SmoothingKernel smoothing_kernel_;
 };
 
 template <class NeighborMethod>
-class Neighbor<NeighborMethod> : public Neighbor<Base>
+class NeighborCriterion
 {
-    using ScalingKernel = typename NeighborMethod::ComputingKernel;
+    using CriterionKernel = typename NeighborMethod::CriterionKernel;
 
   public:
     template <class ExecutionPolicy>
-    Neighbor(const ExecutionPolicy &ex_policy,
-             SPHAdaptation *sph_adaptation, SPHAdaptation *contact_adaptation,
-             DiscreteVariable<Vecd> *dv_pos, DiscreteVariable<Vecd> *dv_target_pos,
-             NeighborMethod &neighbor_method);
+    NeighborCriterion(const ExecutionPolicy &ex_policy, NeighborMethod &neighbor_method)
+        : criterion_kernel_(ex_policy, neighbor_method){};
 
-    KernelTabulatedCK &getKernel() { return kernel_; }
-
-    inline Real W_ij(size_t i, size_t j) const
+    inline bool operator()(UnsignedInt target_index, UnsignedInt source_index) const
     {
-        Vecd displacement = vec_r_ij(i, j);
-        return scaling_.Factor(displacement, i, j) *
-               kernel_.normalized_W(displacement, scaling_.normalizeDistance(displacement, i, j));
-    }
-
-    inline Real dW_ij(size_t i, size_t j) const
-    {
-        Vecd displacement = vec_r_ij(i, j);
-        return scaling_.GradientFactor(displacement, i, j) *
-               kernel_.normalized_dW(displacement, scaling_.normalizeGradientDistance(displacement, i, j));
-    }
-
-    inline Vecd e_ij(size_t i, size_t j) const
-    {
-        Vecd displacement = vec_r_ij(i, j);
-        return displacement / (displacement.norm() + TinyReal);
-    }
-
-    class NeighborCriterion
-    {
-      public:
-        NeighborCriterion(Neighbor<NeighborMethod> &neighbor)
-            : source_pos_(neighbor.source_pos_), target_pos_(neighbor.target_pos_),
-              kernel_size_squared_(math::pow(neighbor.getKernel().KernelSize(), 2)),
-              scaling_(neighbor.scaling_) {};
-
-        inline bool operator()(UnsignedInt target_index, UnsignedInt source_index) const
-        {
-            Vecd normalized_displacement =
-                scaling_.minimumDistanceFactor(source_index, target_index) *
-                (source_pos_[source_index] - target_pos_[target_index]);
-            return normalized_displacement.squaredNorm() < kernel_size_squared_;
-        };
-
-      protected:
-        Vecd *source_pos_;
-        Vecd *target_pos_;
-        Real kernel_size_squared_;
-        ScalingKernel scaling_;
+        return criterion_kernel_(source_index, target_index);
     };
 
   protected:
-    ScalingKernel scaling_;
+    CriterionKernel criterion_kernel_;
 };
+
 } // namespace SPH
 #endif // NEIGHBORHOOD_CK_H

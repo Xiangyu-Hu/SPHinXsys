@@ -31,6 +31,7 @@
 
 #include "base_body.h"
 #include "base_particles.hpp"
+#include "kernel_tabulated_ck.h"
 
 namespace SPH
 {
@@ -43,10 +44,16 @@ template <>
 class SmoothingLength<Base>
 {
   public:
-    template <typename... Args>
-    SmoothingLength(Args &&...args){};
+    SmoothingLength(Kernel &base_kernel,
+                    DiscreteVariable<Vecd> *dv_source_pos, DiscreteVariable<Vecd> *dv_target_pos)
+        : base_kernel_(base_kernel), dv_source_pos_(dv_source_pos),
+          dv_target_pos_(dv_target_pos) {};
 
   protected:
+    Kernel &base_kernel_;
+    DiscreteVariable<Vecd> *dv_source_pos_;
+    DiscreteVariable<Vecd> *dv_target_pos_;
+
     template <class DynamicsIdentifier>
     Real getSmoothingLength(const SingleValued &single_valued, DynamicsIdentifier &identifier)
     {
@@ -71,62 +78,78 @@ class SmoothingLength<SingleValued> : public SmoothingLength<Base>
 {
   public:
     template <class DynamicsIdentifier>
-    SmoothingLength(DynamicsIdentifier &identifier)
-        : SmoothingLength<Base>(identifier),
+    SmoothingLength(DiscreteVariable<Vecd> *dv_configuration_pos, DynamicsIdentifier &identifier)
+        : SmoothingLength<Base>(*identifier.getSPHAdaptation().getKernel(), dv_configuration_pos, dv_configuration_pos),
           inv_h_(1.0 / getSmoothingLength(SingleValued{}, identifier)){};
 
     template <class SourceIdentifier, class TargetIdentifier>
-    SmoothingLength(SourceIdentifier &source_identifier, TargetIdentifier &contact_identifier)
-        : SmoothingLength<Base>(source_identifier, contact_identifier),
+    SmoothingLength(DiscreteVariable<Vecd> *dv_source_pos, DiscreteVariable<Vecd> *dv_target_pos,
+                    SourceIdentifier &source_identifier, TargetIdentifier &contact_identifier)
+        : SmoothingLength<Base>(*source_identifier.getSPHAdaptation().getKernel(), dv_source_pos, dv_target_pos),
           inv_h_(1.0 / SMAX(getSmoothingLength(SingleValued{}, source_identifier),
                             getSmoothingLength(SingleValued{}, contact_identifier))){};
 
-    class ComputingKernel
+    class SmoothingKernel : public KernelTabulatedCK
     {
+        Vecd *source_pos_;
+        Vecd *target_pos_;
         Real inv_h_, inv_h_squared_, inv_h_cubed_, inv_h_fourth_;
 
       public:
-        template <class ExecutionPolicy>
-        ComputingKernel(const ExecutionPolicy &ex_policy, SmoothingLength<SingleValued> &smoothing_length)
-            : inv_h_(smoothing_length.inv_h_), inv_h_squared_(inv_h_ * inv_h_),
+        template <class ExecutionPolicy, class EncloserType>
+        SmoothingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+            : KernelTabulatedCK(encloser.base_kernel_),
+              source_pos_(encloser.dv_source_pos_->DelegatedData(ex_policy)),
+              target_pos_(encloser.dv_target_pos_->DelegatedData(ex_policy)),
+              inv_h_(encloser.inv_h_), inv_h_squared_(inv_h_ * inv_h_),
               inv_h_cubed_(inv_h_squared_ * inv_h_), inv_h_fourth_(inv_h_cubed_ * inv_h_){};
 
-        template <typename VecType>
-        inline Real normalizeDistance(const VecType &displacement, UnsignedInt, UnsignedInt) const { return (inv_h_ * displacement).norm(); };
+        inline Vecd vec_r_ij(size_t i, size_t j) const { return source_pos_[i] - target_pos_[j]; };
 
-        template <typename VecType>
-        inline Real normalizeGradientDistance(const VecType &displacement, UnsignedInt, UnsignedInt) const { return (inv_h_ * displacement).norm(); };
-
-        inline Real minimumDistanceFactor(UnsignedInt i, UnsignedInt j) const { return inv_h_; };
-
-        inline Real Factor(const Real &, UnsignedInt, UnsignedInt) const
+        inline Vecd e_ij(size_t i, size_t j) const
         {
-            return inv_h_;
+            Vecd displacement = vec_r_ij(i, j);
+            return displacement / (displacement.norm() + TinyReal);
         };
 
-        inline Real Factor(const Vec2d &, UnsignedInt, UnsignedInt) const
+        inline Real W(const Vecd &displacement) const
         {
-            return inv_h_squared_;
+            return DimensionFactor(displacement) * Factor(displacement) *
+                   normalized_W((displacement * inv_h_).norm());
         };
 
-        inline Real Factor(const Vec3d &, UnsignedInt, UnsignedInt) const
+        inline Real dW(const Vecd &displacement) const
         {
-            return inv_h_cubed_;
+            return DimensionFactor(displacement) * GradientFactor(displacement) *
+                   normalized_dW((displacement * inv_h_).norm());
         };
 
-        inline Real GradientFactor(const Real &, UnsignedInt, UnsignedInt) const
-        {
-            return inv_h_squared_;
-        };
+        inline Real W_ij(size_t i, size_t j) const { return W(vec_r_ij(i, j)); };
+        inline Real dW_ij(size_t i, size_t j) const { return dW(vec_r_ij(i, j)); };
+        inline Real Factor(const Vec2d &) const { return inv_h_squared_; };
+        inline Real Factor(const Vec3d &) const { return inv_h_cubed_; };
+        inline Real GradientFactor(const Vec2d &) const { return inv_h_cubed_; };
+        inline Real GradientFactor(const Vec3d &) const { return inv_h_fourth_; };
+    };
 
-        inline Real GradientFactor(const Vec2d &, UnsignedInt, UnsignedInt) const
-        {
-            return inv_h_cubed_;
-        };
+    class CriterionKernel
+    {
+        Vecd *source_pos_;
+        Vecd *target_pos_;
+        Real kernel_size_squared_, inv_h_;
 
-        inline Real GradientFactor(const Vec3d &, UnsignedInt, UnsignedInt) const
+      public:
+        template <class ExecutionPolicy, class EncloserTYpe>
+        CriterionKernel(const ExecutionPolicy &ex_policy, EncloserTYpe &encloser)
+            : source_pos_(encloser.dv_source_pos_->DelegatedData(ex_policy)),
+              target_pos_(encloser.dv_target_pos_->DelegatedData(ex_policy)),
+              kernel_size_squared_(math::pow(encloser.base_kernel_.KernelSize(), 2)),
+              inv_h_(encloser.inv_h_){};
+
+        inline bool operator()(UnsignedInt i, UnsignedInt j) const
         {
-            return inv_h_fourth_;
+            Vecd displacement = source_pos_[i] - target_pos_[j];
+            return (inv_h_ * displacement).squaredNorm() < kernel_size_squared_;
         };
     };
 

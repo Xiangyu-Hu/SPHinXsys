@@ -31,7 +31,7 @@
 #define INTERACTION_CK_H
 
 #include "base_local_dynamics.h"
-#include "neighborhood_ck.hpp"
+#include "neighborhood_ck.h"
 #include "relation_ck.hpp"
 
 namespace SPH
