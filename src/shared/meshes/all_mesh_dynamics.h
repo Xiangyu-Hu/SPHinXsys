@@ -62,7 +62,7 @@ class RegisterMeshVariable
 class FinishDataPackages
 {
   public:
-    explicit FinishDataPackages(MeshWithGridDataPackages<4> &mesh_data, Shape &shape)
+    explicit FinishDataPackages(MeshWithGridDataPackagesType &mesh_data, Shape &shape)
         : mesh_data_(mesh_data), shape_(shape),
           far_field_distance(mesh_data.GridSpacing() * (Real)mesh_data.BufferWidth()){};
     virtual ~FinishDataPackages(){};

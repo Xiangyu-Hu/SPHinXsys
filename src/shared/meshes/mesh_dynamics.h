@@ -80,14 +80,14 @@ void package_parallel_for(const execution::ParallelDevicePolicy &par_device,
 class BaseMeshDynamics
 {
   public:
-    BaseMeshDynamics(MeshWithGridDataPackages<4> &mesh_data)
+    BaseMeshDynamics(MeshWithGridDataPackagesType &mesh_data)
         : mesh_data_(mesh_data),
           all_cells_(mesh_data.AllCells()),
           num_grid_pkgs_(mesh_data.num_grid_pkgs_){};
     virtual ~BaseMeshDynamics(){};
 
   protected:
-    MeshWithGridDataPackages<4> &mesh_data_;
+  MeshWithGridDataPackagesType &mesh_data_;
     Arrayi all_cells_;
     size_t &num_grid_pkgs_;
 
@@ -126,7 +126,7 @@ class MeshAllDynamics : public LocalDynamicsType, public BaseMeshDynamics
     KernelImplementation kernel_implementation_;
   public:
     template <typename... Args>
-    MeshAllDynamics(MeshWithGridDataPackages<4> &mesh_data, Args &&...args)
+    MeshAllDynamics(MeshWithGridDataPackagesType &mesh_data, Args &&...args)
         : LocalDynamicsType(mesh_data, std::forward<Args>(args)...),
           BaseMeshDynamics(mesh_data), kernel_implementation_(*this){};
     virtual ~MeshAllDynamics(){};
@@ -155,7 +155,7 @@ class MeshInnerDynamics : public LocalDynamicsType, public BaseMeshDynamics
     KernelImplementation kernel_implementation_;
   public:
     template <typename... Args>
-    MeshInnerDynamics(MeshWithGridDataPackages<4> &mesh_data, Args &&...args)
+    MeshInnerDynamics(MeshWithGridDataPackagesType &mesh_data, Args &&...args)
         : LocalDynamicsType(mesh_data, std::forward<Args>(args)...),
           BaseMeshDynamics(mesh_data), kernel_implementation_(*this){};
     virtual ~MeshInnerDynamics(){};
@@ -187,7 +187,7 @@ class MeshCoreDynamics : public LocalDynamicsType, public BaseMeshDynamics
 
   public:
     template <typename... Args>
-    MeshCoreDynamics(MeshWithGridDataPackages<4> &mesh_data, Args &&...args)
+    MeshCoreDynamics(MeshWithGridDataPackagesType &mesh_data, Args &&...args)
         : LocalDynamicsType(mesh_data, std::forward<Args>(args)...),
           BaseMeshDynamics(mesh_data),
           meta_data_cell_(mesh_data.meta_data_cell_.DelegatedData(ExecutionPolicy())),

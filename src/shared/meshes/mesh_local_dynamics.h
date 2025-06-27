@@ -53,7 +53,7 @@ using NeighbourIndex = std::pair<size_t, Arrayi>; /**< stores shifted neighbour 
 class BaseMeshLocalDynamics
 {
   public:
-    explicit BaseMeshLocalDynamics(MeshWithGridDataPackages<4> &mesh_data)
+    explicit BaseMeshLocalDynamics(MeshWithGridDataPackagesType &mesh_data)
         : mesh_data_(mesh_data),
           all_cells_(mesh_data.AllCells()),
           grid_spacing_(mesh_data.GridSpacing()),
@@ -216,7 +216,7 @@ class ProbeKernelSecondGradientIntegral : public ProbeMesh
 class InitializeDataForSingularPackage : public BaseMeshLocalDynamics
 {
   public:
-    explicit InitializeDataForSingularPackage(MeshWithGridDataPackages<4> &mesh_data)
+    explicit InitializeDataForSingularPackage(MeshWithGridDataPackagesType &mesh_data)
         : BaseMeshLocalDynamics(mesh_data) {};
     virtual ~InitializeDataForSingularPackage() {};
 
@@ -230,7 +230,7 @@ class InitializeDataForSingularPackage : public BaseMeshLocalDynamics
 class InitializeDataInACell : public BaseMeshLocalDynamics
 {
   public:
-    explicit InitializeDataInACell(MeshWithGridDataPackages<4> &mesh_data, Shape &shape)
+    explicit InitializeDataInACell(MeshWithGridDataPackagesType &mesh_data, Shape &shape)
         : BaseMeshLocalDynamics(mesh_data),
           shape_(shape) {};
     virtual ~InitializeDataInACell() {};
@@ -387,7 +387,7 @@ class InitializeBasicDataForAPackage : public BaseMeshLocalDynamics
 class UpdateLevelSetGradient : public BaseMeshLocalDynamics
 {
   public:
-    explicit UpdateLevelSetGradient(MeshWithGridDataPackages<4> &mesh_data)
+    explicit UpdateLevelSetGradient(MeshWithGridDataPackagesType &mesh_data)
         : BaseMeshLocalDynamics(mesh_data) {};
     virtual ~UpdateLevelSetGradient() {};
 
