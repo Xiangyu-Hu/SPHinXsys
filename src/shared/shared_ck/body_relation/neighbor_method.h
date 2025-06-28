@@ -49,6 +49,27 @@ class SmoothingLength<Base>
         : base_kernel_(base_kernel), dv_source_pos_(dv_source_pos),
           dv_target_pos_(dv_target_pos) {};
 
+    class SmoothingKernel : public KernelTabulatedCK
+    {
+        Vecd *source_pos_;
+        Vecd *target_pos_;
+
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        SmoothingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+            : KernelTabulatedCK(encloser.base_kernel_),
+              source_pos_(encloser.dv_source_pos_->DelegatedData(ex_policy)),
+              target_pos_(encloser.dv_target_pos_->DelegatedData(ex_policy)){};
+
+        inline Vecd vec_r_ij(size_t i, size_t j) const { return source_pos_[i] - target_pos_[j]; };
+
+        inline Vecd e_ij(size_t i, size_t j) const
+        {
+            Vecd displacement = vec_r_ij(i, j);
+            return displacement / (displacement.norm() + TinyReal);
+        };
+    };
+
   protected:
     Kernel &base_kernel_;
     DiscreteVariable<Vecd> *dv_source_pos_;
@@ -89,47 +110,33 @@ class SmoothingLength<SingleValued> : public SmoothingLength<Base>
           inv_h_(1.0 / SMAX(getSmoothingLength(SingleValued{}, source_identifier),
                             getSmoothingLength(SingleValued{}, contact_identifier))){};
 
-    class SmoothingKernel : public KernelTabulatedCK
+    class SmoothingKernel : public SmoothingLength<Base>::SmoothingKernel
     {
-        Vecd *source_pos_;
-        Vecd *target_pos_;
         Real inv_h_, inv_h_squared_, inv_h_cubed_, inv_h_fourth_;
 
       public:
         template <class ExecutionPolicy, class EncloserType>
         SmoothingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : KernelTabulatedCK(encloser.base_kernel_),
-              source_pos_(encloser.dv_source_pos_->DelegatedData(ex_policy)),
-              target_pos_(encloser.dv_target_pos_->DelegatedData(ex_policy)),
+            : SmoothingLength<Base>::SmoothingKernel(ex_policy, encloser),
               inv_h_(encloser.inv_h_), inv_h_squared_(inv_h_ * inv_h_),
               inv_h_cubed_(inv_h_squared_ * inv_h_), inv_h_fourth_(inv_h_cubed_ * inv_h_){};
 
-        inline Vecd vec_r_ij(size_t i, size_t j) const { return source_pos_[i] - target_pos_[j]; };
-
-        inline Vecd e_ij(size_t i, size_t j) const
-        {
-            Vecd displacement = vec_r_ij(i, j);
-            return displacement / (displacement.norm() + TinyReal);
-        };
-
         inline Real W(const Vecd &displacement) const
         {
-            return DimensionFactor(displacement) * Factor(displacement) *
-                   normalized_W((displacement * inv_h_).norm());
+            return Factor(displacement) * normalized_W((displacement * inv_h_).norm());
         };
 
         inline Real dW(const Vecd &displacement) const
         {
-            return DimensionFactor(displacement) * GradientFactor(displacement) *
-                   normalized_dW((displacement * inv_h_).norm());
+            return GradientFactor(displacement) * normalized_dW((displacement * inv_h_).norm());
         };
 
         inline Real W_ij(size_t i, size_t j) const { return W(vec_r_ij(i, j)); };
         inline Real dW_ij(size_t i, size_t j) const { return dW(vec_r_ij(i, j)); };
-        inline Real Factor(const Vec2d &) const { return inv_h_squared_; };
-        inline Real Factor(const Vec3d &) const { return inv_h_cubed_; };
-        inline Real GradientFactor(const Vec2d &) const { return inv_h_cubed_; };
-        inline Real GradientFactor(const Vec3d &) const { return inv_h_fourth_; };
+        inline Real Factor(const Vec2d &) const { return inv_h_squared_ * dimension_factor_2D_; };
+        inline Real Factor(const Vec3d &) const { return inv_h_cubed_ * dimension_factor_3D_; };
+        inline Real GradientFactor(const Vec2d &) const { return inv_h_cubed_ * dimension_factor_2D_; };
+        inline Real GradientFactor(const Vec3d &) const { return inv_h_fourth_ * dimension_factor_3D_; };
     };
 
     class CriterionKernel
