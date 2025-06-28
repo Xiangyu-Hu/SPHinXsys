@@ -172,7 +172,7 @@ int main(int ac, char *av[])
     Contact<> water_block_contact(water_block, {&wall_boundary, &structure});
     Contact<> structure_contact(structure, {&water_block});
     Contact<> observer_contact(observer, {&structure});
-    Contact<SPHBody, BodyPartByParticle> structure_proxy_contact(structure_proxy, {&structure_surface});
+    Contact<SPHBody, BodyPartByParticle> structure_proxy_contact(structure_proxy, {&structure_surface}, ConfigType::Lagrangian);
     //----------------------------------------------------------------------
     // Define the main execution policy for this case.
     //----------------------------------------------------------------------

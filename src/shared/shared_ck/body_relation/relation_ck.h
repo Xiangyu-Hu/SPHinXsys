@@ -144,9 +144,10 @@ class Contact<SourceIdentifier, TargetIdentifier>
     : public Contact<SourceIdentifier, TargetIdentifier, SmoothingLength<SingleValued>>
 {
   public:
-    Contact(SourceIdentifier &source_identifier, StdVec<TargetIdentifier *> contact_identifiers)
+    template <typename... Args>
+    Contact(SourceIdentifier &source_identifier, StdVec<TargetIdentifier *> contact_identifiers, Args &&...args)
         : Contact<SourceIdentifier, TargetIdentifier, SmoothingLength<SingleValued>>(
-              source_identifier, contact_identifiers) {}
+              source_identifier, contact_identifiers, std::forward<Args>(args)...) {}
     virtual ~Contact() {};
 };
 
