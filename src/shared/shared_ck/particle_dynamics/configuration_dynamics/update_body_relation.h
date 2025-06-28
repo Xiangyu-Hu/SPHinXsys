@@ -46,9 +46,9 @@ class UpdateRelation;
 
 template <class ExecutionPolicy, typename... Parameters>
 class UpdateRelation<ExecutionPolicy, Inner<Parameters...>>
-    : public BaseLocalDynamics<typename Inner<Parameters...>::DynamicsIdentifierType>, public BaseDynamics<void>
+    : public BaseLocalDynamics<typename Inner<Parameters...>::SourceType>, public BaseDynamics<void>
 {
-    using BaseLocalDynamicsType = BaseLocalDynamics<typename Inner<Parameters...>::DynamicsIdentifierType>;
+    using BaseLocalDynamicsType = BaseLocalDynamics<typename Inner<Parameters...>::SourceType>;
     using InnerRelationType = Inner<Parameters...>;
     using NeighborList = typename InnerRelationType::NeighborList;
     using NeighborMethod = typename InnerRelationType::NeighborMethodType;
