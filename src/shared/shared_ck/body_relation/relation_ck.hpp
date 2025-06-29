@@ -17,7 +17,6 @@ Relation<NeighborMethod>::Relation(
 {
     for (size_t k = 0; k != contact_identifiers.size(); ++k)
     {
-        neighbor_methods_.push_back(NeighborMethod(source_identifier, *contact_identifiers[k]));
         SPHBody &contact_body = contact_identifiers[k]->getSPHBody();
         const std::string name = source_identifier.getName() + contact_identifiers[k]->getName();
         BaseParticles &contact_particles = contact_body.getBaseParticles();
@@ -26,6 +25,8 @@ Relation<NeighborMethod>::Relation(
             name + "NeighborIndex", offset_list_size_));
         dv_target_particle_offset_.push_back(addRelationVariable<UnsignedInt>(
             name + "ParticleOffset", offset_list_size_));
+        neighbor_methods_.push_back(NeighborMethod(
+            dv_source_pos_, dv_target_pos_.back(), source_identifier, *contact_identifiers[k]));
     }
     registered_computing_kernels_.resize(contact_identifiers.size());
 }

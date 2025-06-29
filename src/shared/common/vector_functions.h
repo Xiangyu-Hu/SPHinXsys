@@ -84,6 +84,11 @@ VecType getVectorProjectionOfVector(const VecType &vector_1, const VecType &vect
 };
 
 template <typename Datatype>
+Real getNorm(const Datatype &variable) { return variable.norm(); };
+
+inline Real getNorm(const Real &variable) { return ABS(variable); };
+
+template <typename Datatype>
 Real getSquaredNorm(const Datatype &variable) { return variable.squaredNorm(); };
 
 inline Real getSquaredNorm(const Real &variable) { return variable * variable; };

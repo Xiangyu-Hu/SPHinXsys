@@ -12,10 +12,14 @@ KernelTabulatedCK::KernelTabulatedCK(Kernel &kernel)
     factor_dW_1D_ = inv_h_ * factor_W_1D_;
     factor_dW_2D_ = inv_h_ * factor_W_2D_;
     factor_dW_3D_ = inv_h_ * factor_W_3D_;
+    dimension_factor_1D_ = kernel.DimensionFactor1D();
+    dimension_factor_2D_ = kernel.DimensionFactor2D();
+    dimension_factor_3D_ = kernel.DimensionFactor3D();
     rc_ref_ = kernel.CutOffRadius();
     rc_ref_sqr_ = kernel.CutOffRadiusSqr();
+    kernel_size_ = kernel.KernelSize();
 
-    dq_ = kernel.KernelSize() / Real(kernel_resolution_);
+    dq_ = kernel_size_ / Real(kernel_resolution_);
     for (int i = 0; i < kernel_resolution_; i++)
     {
         w_1d[i] = kernel.W_1D(Real(i - 1) * dq_);

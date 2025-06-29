@@ -30,11 +30,7 @@ template <class ExecutionPolicy, class EncloserType>
 Interaction<Inner<DynamicsIdentifier, Parameters...>>::InteractKernel::
     InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : NeighborList(ex_policy, encloser.inner_relation_),
-      Neighborhood(ex_policy, encloser.sph_adaptation_,
-                   encloser.sph_adaptation_,
-                   encloser.inner_relation_.getSourcePosition(),
-                   encloser.inner_relation_.getTargetPosition(),
-                   encloser.inner_relation_.getNeighborMethod()) {}
+      Neighborhood(ex_policy, encloser.inner_relation_.getNeighborMethod()) {}
 //=================================================================================================//
 template <class SourceIdentifier, typename... Parameters>
 Interaction<Contact<SourceIdentifier, Parameters...>>::
@@ -64,11 +60,7 @@ template <class ExecutionPolicy, class EncloserType>
 Interaction<Contact<SourceIdentifier, Parameters...>>::InteractKernel::
     InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt contact_index)
     : NeighborList(ex_policy, encloser.contact_relation_, contact_index),
-      Neighborhood(ex_policy, encloser.sph_adaptation_,
-                   encloser.contact_adaptations_[contact_index],
-                   encloser.contact_relation_.getSourcePosition(),
-                   encloser.contact_relation_.getTargetPosition(contact_index),
-                   encloser.contact_relation_.getNeighborMethod(contact_index)) {}
+      Neighborhood(ex_policy, encloser.contact_relation_.getNeighborMethod(contact_index)) {}
 //=================================================================================================//
 template <class WallContactRelationType>
 Interaction<Wall>::Interaction(WallContactRelationType &wall_contact_relation)

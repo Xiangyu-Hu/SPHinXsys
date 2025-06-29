@@ -12,8 +12,9 @@ namespace SPH
 template <class ExecutionPolicy, typename... Parameters>
 UpdateRelation<ExecutionPolicy, Inner<Parameters...>>::
     UpdateRelation(Inner<Parameters...> &inner_relation)
-    : Interaction<Inner<Parameters...>>(inner_relation),
+    : BaseLocalDynamicsType(inner_relation.getDynamicsIdentifier()),
       BaseDynamics<void>(), ex_policy_(ExecutionPolicy{}),
+      inner_relation_(inner_relation),
       cell_linked_list_(DynamicCast<CellLinkedList>(
           this, inner_relation.getDynamicsIdentifier().getCellLinkedList())),
       kernel_implementation_(*this) {}
@@ -22,10 +23,12 @@ template <class ExecutionPolicy, typename... Parameters>
 template <class EncloserType>
 UpdateRelation<ExecutionPolicy, Inner<Parameters...>>::InteractKernel::InteractKernel(
     const ExecutionPolicy &ex_policy, EncloserType &encloser)
-    : Interaction<Inner<Parameters...>>::InteractKernel(ex_policy, encloser),
+    : NeighborList(ex_policy, encloser.inner_relation_),
+      source_pos_(encloser.inner_relation_.getSourcePosition()->DelegatedData(ex_policy)),
       masked_source_(ex_policy, encloser.inner_relation_.getDynamicsIdentifier()),
       masked_criterion_(
-          ex_policy, encloser.inner_relation_.getDynamicsIdentifier(), *this),
+          ex_policy, encloser.inner_relation_.getDynamicsIdentifier(),
+          ex_policy, encloser.inner_relation_.getNeighborMethod()),
       neighbor_search_(encloser.cell_linked_list_.createNeighborSearch(ex_policy)) {}
 //=================================================================================================//
 template <class ExecutionPolicy, typename... Parameters>
@@ -37,7 +40,7 @@ void UpdateRelation<ExecutionPolicy, Inner<Parameters...>>::
     if (masked_source_(source_index))
     {
         neighbor_search_.forEachSearch(
-            source_index, this->source_pos_,
+            source_index, source_pos_,
             [&](size_t target_index)
             {
                 if (source_index != target_index)
@@ -58,7 +61,7 @@ void UpdateRelation<ExecutionPolicy, Inner<Parameters...>>::
     if (masked_source_(source_index))
     {
         neighbor_search_.forEachSearch(
-            source_index, this->source_pos_,
+            source_index, source_pos_,
             [&](size_t target_index)
             {
                 if (source_index != target_index)
@@ -107,11 +110,12 @@ void UpdateRelation<ExecutionPolicy, Inner<Parameters...>>::exec(Real dt)
 //=================================================================================================//
 template <class ExecutionPolicy, typename... Parameters>
 UpdateRelation<ExecutionPolicy, Contact<Parameters...>>::
-    UpdateRelation(RelationType &contact_relation)
-    : Interaction<Contact<Parameters...>>(contact_relation),
-      BaseDynamics<void>(), ex_policy_(ExecutionPolicy{})
+    UpdateRelation(ContactRelationType &contact_relation)
+    : BaseLocalDynamicsType(contact_relation.getSourceIdentifier()),
+      BaseDynamics<void>(), ex_policy_(ExecutionPolicy{}),
+      contact_relation_(contact_relation)
 {
-    for (size_t k = 0; k != this->contact_bodies_.size(); ++k)
+    for (size_t k = 0; k != contact_relation.getContactBodies().size(); ++k)
     {
         contact_cell_linked_list_.push_back(
             DynamicCast<CellLinkedList>(
@@ -126,10 +130,12 @@ template <class EncloserType>
 UpdateRelation<ExecutionPolicy, Contact<Parameters...>>::
     InteractKernel::InteractKernel(
         const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt contact_index)
-    : Interaction<Contact<Parameters...>>::InteractKernel(ex_policy, encloser, contact_index),
+    : NeighborList(ex_policy, encloser.contact_relation_, contact_index),
+      source_pos_(encloser.contact_relation_.getSourcePosition()->DelegatedData(ex_policy)),
       masked_source_(ex_policy, encloser.contact_relation_.getSourceIdentifier()),
       masked_criterion_(
-          ex_policy, encloser.contact_relation_.getContactIdentifier(contact_index), *this),
+          ex_policy, encloser.contact_relation_.getContactIdentifier(contact_index),
+          ex_policy, encloser.contact_relation_.getNeighborMethod(contact_index)),
       neighbor_search_(
           encloser.contact_cell_linked_list_[contact_index]->createNeighborSearch(ex_policy)) {}
 //=================================================================================================//
@@ -142,7 +148,7 @@ void UpdateRelation<ExecutionPolicy, Contact<Parameters...>>::
     if (masked_source_(source_index))
     {
         neighbor_search_.forEachSearch(
-            source_index, this->source_pos_,
+            source_index, source_pos_,
             [&](size_t target_index)
             {
                 if (masked_criterion_(target_index, source_index))
@@ -160,7 +166,7 @@ void UpdateRelation<ExecutionPolicy, Contact<Parameters...>>::
     if (masked_source_(source_index))
     {
         neighbor_search_.forEachSearch(
-            source_index, this->source_pos_,
+            source_index, source_pos_,
             [&](size_t target_index)
             {
                 if (masked_criterion_(target_index, source_index))
@@ -177,7 +183,7 @@ void UpdateRelation<ExecutionPolicy, Contact<Parameters...>>::exec(Real dt)
 {
     UnsignedInt total_real_particles = this->particles_->TotalRealParticles();
 
-    for (size_t k = 0; k != this->contact_bodies_.size(); ++k)
+    for (size_t k = 0; k != contact_relation_.getContactBodies().size(); ++k)
     {
         InteractKernel *computing_kernel = contact_kernel_implementation_[k]->getComputingKernel(k);
         particle_for(ex_policy_,
