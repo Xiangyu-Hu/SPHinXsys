@@ -155,8 +155,10 @@ template <>
 class Contact<> : public Contact<SPHBody, RealBody, SmoothingLength<SingleValued>>
 {
   public:
-    Contact(SPHBody &sph_body, StdVec<RealBody *> contact_bodies)
-        : Contact<SPHBody, RealBody, SmoothingLength<SingleValued>>(sph_body, contact_bodies) {}
+    template <typename... Args>
+    Contact(SPHBody &sph_body, StdVec<RealBody *> contact_bodies, Args &&...args)
+        : Contact<SPHBody, RealBody, SmoothingLength<SingleValued>>(
+              sph_body, contact_bodies, std::forward<Args>(args)...) {}
     virtual ~Contact() {};
 };
 } // namespace SPH
