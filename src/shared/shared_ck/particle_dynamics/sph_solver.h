@@ -143,10 +143,10 @@ class SPHSolver
     SPHSolver(SPHSystem &sph_system) : sph_system_(sph_system) {};
     virtual ~SPHSolver() {};
 
-    template <typename ExecutePolicy>
-    auto &addParticleMethodContainer(const ExecutePolicy &ex_policy)
+    template <typename ExecutionPolicy>
+    auto &addParticleMethodContainer(const ExecutionPolicy &ex_policy)
     {
-        return *methods_keeper_.createPtr<ParticleMethodContainer<ExecutePolicy>>(ex_policy);
+        return *methods_keeper_.createPtr<ParticleMethodContainer<ExecutionPolicy>>(ex_policy);
     };
 
     auto &defineTimeStepper(Real end_time, Real start_time = 0.0)
