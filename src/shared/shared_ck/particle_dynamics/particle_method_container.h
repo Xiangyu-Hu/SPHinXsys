@@ -45,20 +45,20 @@ namespace SPH
 class BaseMethodContainer
 {
   public:
-    virtual ~BaseMethodContainer(){};
+    virtual ~BaseMethodContainer() {};
 };
 
 template <typename ExecutePolicy>
 class ParticleMethodContainer : public BaseMethodContainer
 {
     UniquePtrsKeeper<BaseDynamics<void>> particle_dynamics_keeper_;
-    DataContainerUniquePtrAssemble<BaseDynamics> reduce_dynamics_keeper_;
+    UniquePtrsKeeper<BaseReduceDynamics> reduce_dynamics_keeper_;
     UniquePtrsKeeper<BodyStatesRecording> state_recorders_keeper_;
     UniquePtrsKeeper<BaseIO> other_io_keeper_;
 
   public:
     ParticleMethodContainer(const ExecutePolicy &ex_policy)
-    : BaseMethodContainer() {};
+        : BaseMethodContainer() {};
     virtual ~ParticleMethodContainer() {};
 
     template <class DynamicsIdentifier, typename... Args>
@@ -94,11 +94,7 @@ class ParticleMethodContainer : public BaseMethodContainer
     template <class ReduceType, typename... Args>
     auto &addReduceDynamics(Args &&...args)
     {
-        using FinishDynamics = typename ReduceType::FinishDynamics;
-        using OutputType = typename FinishDynamics::OutputType;
-        constexpr int type_index = DataTypeIndex<OutputType>::value;
-        UniquePtrsKeeper<BaseDynamics<OutputType>> &dynamics_ptrs = std::get<type_index>(reduce_dynamics_keeper_);
-        return *dynamics_ptrs.template createPtr<
+        return *reduce_dynamics_keeper_.template createPtr<
             ReduceDynamicsCK<ExecutePolicy, ReduceType>>(std::forward<Args>(args)...);
     };
 
