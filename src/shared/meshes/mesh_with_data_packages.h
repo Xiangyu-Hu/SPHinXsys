@@ -49,12 +49,8 @@ namespace SPH
  * A typical example is a level-set field which only has meaningful values near the interface,
  * while the latter is in the inner region of a mesh.
  * In this class, only some inner mesh cells are filled with data packages.
- * Each data package is again a mesh, but grid based, where two sets of data are saved on its grid points.
- * One is the field data of matrices with pkg_size, the other is corresponding address data of matrices with pkg_addrs_size.
- * For two neighboring data packages, they share the data in the buffer which is in the overlap region.
- * The filling of field data is achieved first by the data matrices by the function initializeDataInACell
- * and then the address matrix by the function initializeAddressesInACell.
- * All these data packages are indexed by a concurrent vector inner_data_pkgs_.
+ * Each data package is again a mesh, but grid based with pkg_size grids on each dimension. 
+ * The operation on field data is achieved by mesh dynamics.
  * Note that a data package should be not near the mesh bound, otherwise one will encounter the error "out of range".
  */
 template <int PKG_SIZE>
@@ -82,7 +78,7 @@ class MeshWithGridDataPackages : public Mesh
     DiscreteVariable<std::pair<Arrayi, int>> meta_data_cell_{"meta_data_cell", 2};          /**< metadata for each occupied cell: (arrayi)cell index, (int)core1/inner0. */
     DiscreteVariable<CellNeighborhood> cell_neighborhood_{"mesh_cell_neighborhood", 2};     /**< 3*3(*3) array to store indicies of neighborhood cells. */
     DiscreteVariable<size_t> cell_package_index_;                  /**< the package index for each cell in a 1-d array. */
-    ConcurrentVec<std::pair<size_t, int>> occupied_data_pkgs_; /**< (size_t)sort_index, (int)core1/inner0. */
+    ConcurrentVec<std::pair<size_t, int>> occupied_data_pkgs_;     /**< (size_t)sort_index, (int)core1/inner0. */
 
   private:
     DataContainerUniquePtrAssemble<MeshVariable> mesh_variable_ptrs_;

@@ -279,9 +279,8 @@ inline void MarkNearInterface::UpdateKernel::update(const size_t &package_index,
     mesh_for_each2d<0, 5>(
         [&](int i, int j)
         {
-            corner_averages[i][j] = BaseMeshLocalDynamics::CornerAverage(phi_, Arrayi(i, j), Arrayi(-1, -1),
-                                                                         cell_neighborhood_[package_index],
-                                                                         (Real)0);
+            corner_averages[i][j] = BaseMeshLocalDynamics::CornerAverage(
+                phi_, Arrayi(i, j), Arrayi(-1, -1), cell_neighborhood_[package_index], (Real)0);
         });
 
     BaseMeshLocalDynamics::for_each_cell_data(

@@ -26,7 +26,7 @@ void InitializeDataForSingularPackage::update(const size_t package_index, Real f
     auto &kernel_weight = kernel_weight_.Data()[package_index];
     auto &kernel_gradient = kernel_gradient_.Data()[package_index];
 
-    for_each_cell_data(
+    BaseMeshLocalDynamics::for_each_cell_data(
         [&](int i, int j, int k)
         {
             phi[i][j][k] = far_field_level_set;

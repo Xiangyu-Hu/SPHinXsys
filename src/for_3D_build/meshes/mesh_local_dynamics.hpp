@@ -60,9 +60,12 @@ DataType BaseMeshLocalDynamics::CornerAverage(MeshVariableData<DataType> *mesh_v
                 int x_index = addrs_index[0] + i * corner_direction[0];
                 int y_index = addrs_index[1] + j * corner_direction[1];
                 int z_index = addrs_index[2] + k * corner_direction[2];
-                std::pair<size_t, Arrayi> neighbour_index = NeighbourIndexShift(Arrayi(x_index, y_index, z_index), neighborhood);
-                average += mesh_variable_data[neighbour_index.first][neighbour_index.second[0]][neighbour_index.second[1]][neighbour_index.second[2]]
-;
+                std::pair<size_t, Arrayi> neighbour_index = NeighbourIndexShift(
+                    Arrayi(x_index, y_index, z_index), neighborhood);
+                average += mesh_variable_data[neighbour_index.first]
+                                             [neighbour_index.second[0]]
+                                             [neighbour_index.second[1]]
+                                             [neighbour_index.second[2]];
             }
     return average * 0.125;
 }
@@ -97,14 +100,23 @@ DataType ProbeMesh::probeDataPackage(MeshVariableData<DataType> *mesh_variable_d
     NeighbourIndex neighbour_index_4 = BaseMeshLocalDynamics::NeighbourIndexShift(
         data_index + Arrayi(1, 1, 0), neighborhood);
 
-    DataType bilinear_1 = mesh_variable_data[neighbour_index_1.first][neighbour_index_1.second[0]][neighbour_index_1.second[1]][neighbour_index_1.second[2]]
- * beta[0] * beta[1] +
-                          mesh_variable_data[neighbour_index_2.first][neighbour_index_2.second[0]][neighbour_index_2.second[1]][neighbour_index_2.second[2]]
- * alpha[0] * beta[1] +
-                          mesh_variable_data[neighbour_index_3.first][neighbour_index_3.second[0]][neighbour_index_3.second[1]][neighbour_index_3.second[2]]
- * beta[0] * alpha[1] +
-                          mesh_variable_data[neighbour_index_4.first][neighbour_index_4.second[0]][neighbour_index_4.second[1]][neighbour_index_4.second[2]]
- * alpha[0] * alpha[1];
+    DataType bilinear_1 =
+        mesh_variable_data[neighbour_index_1.first]
+                          [neighbour_index_1.second[0]]
+                          [neighbour_index_1.second[1]]
+                          [neighbour_index_1.second[2]] * beta[0] * beta[1] +
+        mesh_variable_data[neighbour_index_2.first]
+                          [neighbour_index_2.second[0]]
+                          [neighbour_index_2.second[1]]
+                          [neighbour_index_2.second[2]] * alpha[0] * beta[1] +
+        mesh_variable_data[neighbour_index_3.first]
+                          [neighbour_index_3.second[0]]
+                          [neighbour_index_3.second[1]]
+                          [neighbour_index_3.second[2]] * beta[0] * alpha[1] +
+        mesh_variable_data[neighbour_index_4.first]
+                          [neighbour_index_4.second[0]]
+                          [neighbour_index_4.second[1]]
+                          [neighbour_index_4.second[2]] * alpha[0] * alpha[1];
 
     neighbour_index_1 = BaseMeshLocalDynamics::NeighbourIndexShift(
         data_index + Arrayi(0, 0, 1), neighborhood);
@@ -115,14 +127,23 @@ DataType ProbeMesh::probeDataPackage(MeshVariableData<DataType> *mesh_variable_d
     neighbour_index_4 = BaseMeshLocalDynamics::NeighbourIndexShift(
         data_index + Arrayi(1, 1, 1), neighborhood);
 
-    DataType bilinear_2 = mesh_variable_data[neighbour_index_1.first][neighbour_index_1.second[0]][neighbour_index_1.second[1]][neighbour_index_1.second[2]]
- * beta[0] * beta[1] +
-                          mesh_variable_data[neighbour_index_2.first][neighbour_index_2.second[0]][neighbour_index_2.second[1]][neighbour_index_2.second[2]]
- * alpha[0] * beta[1] +
-                          mesh_variable_data[neighbour_index_3.first][neighbour_index_3.second[0]][neighbour_index_3.second[1]][neighbour_index_3.second[2]]
- * beta[0] * alpha[1] +
-                          mesh_variable_data[neighbour_index_4.first][neighbour_index_4.second[0]][neighbour_index_4.second[1]][neighbour_index_4.second[2]]
- * alpha[0] * alpha[1];
+    DataType bilinear_2 =
+        mesh_variable_data[neighbour_index_1.first]
+                          [neighbour_index_1.second[0]]
+                          [neighbour_index_1.second[1]]
+                          [neighbour_index_1.second[2]] * beta[0] * beta[1] +
+        mesh_variable_data[neighbour_index_2.first]
+                          [neighbour_index_2.second[0]]
+                          [neighbour_index_2.second[1]]
+                          [neighbour_index_2.second[2]] * alpha[0] * beta[1] +
+        mesh_variable_data[neighbour_index_3.first]
+                          [neighbour_index_3.second[0]]
+                          [neighbour_index_3.second[1]]
+                          [neighbour_index_3.second[2]] * beta[0] * alpha[1] +
+        mesh_variable_data[neighbour_index_4.first]
+                          [neighbour_index_4.second[0]]
+                          [neighbour_index_4.second[1]]
+                          [neighbour_index_4.second[2]] * alpha[0] * alpha[1];
 
     return bilinear_1 * beta[2] + bilinear_2 * alpha[2];
 }
@@ -135,21 +156,24 @@ inline void UpdateLevelSetGradient::UpdateKernel::update(const size_t &package_i
     BaseMeshLocalDynamics::for_each_cell_data(
         [&](int i, int j, int k)
         {
-            NeighbourIndex x1 = BaseMeshLocalDynamics::NeighbourIndexShift(Arrayi(i + 1, j, k), neighborhood);
-            NeighbourIndex x2 = BaseMeshLocalDynamics::NeighbourIndexShift(Arrayi(i - 1, j, k), neighborhood);
-            NeighbourIndex y1 = BaseMeshLocalDynamics::NeighbourIndexShift(Arrayi(i, j + 1, k), neighborhood);
-            NeighbourIndex y2 = BaseMeshLocalDynamics::NeighbourIndexShift(Arrayi(i, j - 1, k), neighborhood);
-            NeighbourIndex z1 = BaseMeshLocalDynamics::NeighbourIndexShift(Arrayi(i, j, k + 1), neighborhood);
-            NeighbourIndex z2 = BaseMeshLocalDynamics::NeighbourIndexShift(Arrayi(i, j, k - 1), neighborhood);
-            Real dphidx = phi_[x1.first][x1.second[0]][x1.second[1]][x1.second[2]]
- - phi_[x2.first][x2.second[0]][x2.second[1]][x2.second[2]]
-;
-            Real dphidy = phi_[y1.first][y1.second[0]][y1.second[1]][y1.second[2]]
- - phi_[y2.first][y2.second[0]][y2.second[1]][y2.second[2]]
-;
-            Real dphidz = phi_[z1.first][z1.second[0]][z1.second[1]][z1.second[2]]
- - phi_[z2.first][z2.second[0]][z2.second[1]][z2.second[2]]
-;
+            NeighbourIndex x1 = BaseMeshLocalDynamics::NeighbourIndexShift(
+                Arrayi(i + 1, j, k), neighborhood);
+            NeighbourIndex x2 = BaseMeshLocalDynamics::NeighbourIndexShift(
+                Arrayi(i - 1, j, k), neighborhood);
+            NeighbourIndex y1 = BaseMeshLocalDynamics::NeighbourIndexShift(
+                Arrayi(i, j + 1, k), neighborhood);
+            NeighbourIndex y2 = BaseMeshLocalDynamics::NeighbourIndexShift(
+                Arrayi(i, j - 1, k), neighborhood);
+            NeighbourIndex z1 = BaseMeshLocalDynamics::NeighbourIndexShift(
+                Arrayi(i, j, k + 1), neighborhood);
+            NeighbourIndex z2 = BaseMeshLocalDynamics::NeighbourIndexShift(
+                Arrayi(i, j, k - 1), neighborhood);
+            Real dphidx = phi_[x1.first][x1.second[0]][x1.second[1]][x1.second[2]] -
+                          phi_[x2.first][x2.second[0]][x2.second[1]][x2.second[2]];
+            Real dphidy = phi_[y1.first][y1.second[0]][y1.second[1]][y1.second[2]] -
+                          phi_[y2.first][y2.second[0]][y2.second[1]][y2.second[2]];
+            Real dphidz = phi_[z1.first][z1.second[0]][z1.second[1]][z1.second[2]] -
+                          phi_[z2.first][z2.second[0]][z2.second[1]][z2.second[2]];
             pkg_data[i][j][k] = 0.5 * Vecd(dphidx, dphidy, dphidz) / data_spacing_;
         });
 }
@@ -187,10 +211,16 @@ Real UpdateKernelIntegrals<KernelType>::UpdateKernel::
             {
                 NeighbourIndex neighbor_meta = BaseMeshLocalDynamics::NeighbourIndexShift(
                     grid_index + Arrayi(i, j, k), cell_neighborhood_[package_index]);
-                Real phi_neighbor = phi_[neighbor_meta.first][neighbor_meta.second[0]][neighbor_meta.second[1]][neighbor_meta.second[2]];
+                Real phi_neighbor = phi_[neighbor_meta.first]
+                                        [neighbor_meta.second[0]]
+                                        [neighbor_meta.second[1]]
+                                        [neighbor_meta.second[2]];
                 if (phi_neighbor > -data_spacing_)
                 {
-                    Vecd phi_gradient = phi_gradient_[neighbor_meta.first][neighbor_meta.second[0]][neighbor_meta.second[1]][neighbor_meta.second[2]];
+                    Vecd phi_gradient = phi_gradient_[neighbor_meta.first]
+                                                     [neighbor_meta.second[0]]
+                                                     [neighbor_meta.second[1]]
+                                                     [neighbor_meta.second[2]];
                     Vecd displacement = - Arrayi(i, j, k).cast<Real>().matrix() * data_spacing_;
                     Real distance = displacement.norm();
                     if (distance < cutoff_radius)
@@ -218,10 +248,16 @@ Vecd UpdateKernelIntegrals<KernelType>::UpdateKernel::
             {
                 NeighbourIndex neighbor_meta = BaseMeshLocalDynamics::NeighbourIndexShift(
                     grid_index + Arrayi(i, j, k), cell_neighborhood_[package_index]);
-                Real phi_neighbor = phi_[neighbor_meta.first][neighbor_meta.second[0]][neighbor_meta.second[1]][neighbor_meta.second[2]];
+                Real phi_neighbor = phi_[neighbor_meta.first]
+                                        [neighbor_meta.second[0]]
+                                        [neighbor_meta.second[1]]
+                                        [neighbor_meta.second[2]];
                 if (phi_neighbor > -data_spacing_)
                 {
-                    Vecd phi_gradient = phi_gradient_[neighbor_meta.first][neighbor_meta.second[0]][neighbor_meta.second[1]][neighbor_meta.second[2]];
+                    Vecd phi_gradient = phi_gradient_[neighbor_meta.first]
+                                                     [neighbor_meta.second[0]]
+                                                     [neighbor_meta.second[1]]
+                                                     [neighbor_meta.second[2]];
                     Vecd displacement = - Arrayi(i, j, k).cast<Real>().matrix() * data_spacing_;
                     Real distance = displacement.norm();
                     if (distance < cutoff_radius)
@@ -251,10 +287,16 @@ Matd UpdateKernelIntegrals<KernelType>::UpdateKernel::
             {
                 NeighbourIndex neighbor_meta = BaseMeshLocalDynamics::NeighbourIndexShift(
                     grid_index + Arrayi(i, j, k), cell_neighborhood_[package_index]);
-                Real phi_neighbor = phi_[neighbor_meta.first][neighbor_meta.second[0]][neighbor_meta.second[1]][neighbor_meta.second[2]];
+                Real phi_neighbor = phi_[neighbor_meta.first]
+                                        [neighbor_meta.second[0]]
+                                        [neighbor_meta.second[1]]
+                                        [neighbor_meta.second[2]];
                 if (phi_neighbor > -data_spacing_)
                 {
-                    Vecd phi_gradient = phi_gradient_[neighbor_meta.first][neighbor_meta.second[0]][neighbor_meta.second[1]][neighbor_meta.second[2]];
+                    Vecd phi_gradient = phi_gradient_[neighbor_meta.first]
+                                                     [neighbor_meta.second[0]]
+                                                     [neighbor_meta.second[1]]
+                                                     [neighbor_meta.second[2]];
                     Vecd displacement = - Arrayi(i, j, k).cast<Real>().matrix() * data_spacing_;
                     Real distance = displacement.norm();
                     if (distance < cutoff_radius)
@@ -281,21 +323,30 @@ inline void ReinitializeLevelSet::UpdateKernel::update(const size_t &package_ind
             {
                 Real phi_0 = phi_addrs[i][j][k];
                 Real sign = phi_0 / sqrt(phi_0 * phi_0 + data_spacing_ * data_spacing_);
-                NeighbourIndex x1 = BaseMeshLocalDynamics::NeighbourIndexShift(Arrayi(i + 1, j, k), neighborhood);
-                NeighbourIndex x2 = BaseMeshLocalDynamics::NeighbourIndexShift(Arrayi(i - 1, j, k), neighborhood);
-                NeighbourIndex y1 = BaseMeshLocalDynamics::NeighbourIndexShift(Arrayi(i, j + 1, k), neighborhood);
-                NeighbourIndex y2 = BaseMeshLocalDynamics::NeighbourIndexShift(Arrayi(i, j - 1, k), neighborhood);
-                NeighbourIndex z1 = BaseMeshLocalDynamics::NeighbourIndexShift(Arrayi(i, j, k + 1), neighborhood);
-                NeighbourIndex z2 = BaseMeshLocalDynamics::NeighbourIndexShift(Arrayi(i, j, k - 1), neighborhood);
-                Real dv_x = upwindDifference(sign, phi_[x1.first][x1.second[0]][x1.second[1]][x1.second[2]]
- - phi_0, phi_0 - phi_[x2.first][x2.second[0]][x2.second[1]][x2.second[2]]
-);
-                Real dv_y = upwindDifference(sign, phi_[y1.first][y1.second[0]][y1.second[1]][y1.second[2]]
- - phi_0, phi_0 - phi_[y2.first][y2.second[0]][y2.second[1]][y2.second[2]]
-);
-                Real dv_z = upwindDifference(sign, phi_[z1.first][z1.second[0]][z1.second[1]][z1.second[2]]
- - phi_0, phi_0 - phi_[z2.first][z2.second[0]][z2.second[1]][z2.second[2]]
-);
+                NeighbourIndex x1 = BaseMeshLocalDynamics::NeighbourIndexShift(
+                    Arrayi(i + 1, j, k), neighborhood);
+                NeighbourIndex x2 = BaseMeshLocalDynamics::NeighbourIndexShift(
+                    Arrayi(i - 1, j, k), neighborhood);
+                NeighbourIndex y1 = BaseMeshLocalDynamics::NeighbourIndexShift(
+                    Arrayi(i, j + 1, k), neighborhood);
+                NeighbourIndex y2 = BaseMeshLocalDynamics::NeighbourIndexShift(
+                    Arrayi(i, j - 1, k), neighborhood);
+                NeighbourIndex z1 = BaseMeshLocalDynamics::NeighbourIndexShift(
+                    Arrayi(i, j, k + 1), neighborhood);
+                NeighbourIndex z2 = BaseMeshLocalDynamics::NeighbourIndexShift(
+                    Arrayi(i, j, k - 1), neighborhood);
+                Real dv_x = upwindDifference(
+                    sign,
+                    phi_[x1.first][x1.second[0]][x1.second[1]][x1.second[2]] - phi_0,
+                    phi_0 - phi_[x2.first][x2.second[0]][x2.second[1]][x2.second[2]]);
+                Real dv_y = upwindDifference(
+                    sign,
+                    phi_[y1.first][y1.second[0]][y1.second[1]][y1.second[2]] - phi_0,
+                    phi_0 - phi_[y2.first][y2.second[0]][y2.second[1]][y2.second[2]]);
+                Real dv_z = upwindDifference(
+                    sign,
+                    phi_[z1.first][z1.second[0]][z1.second[1]][z1.second[2]] - phi_0,
+                    phi_0 - phi_[z2.first][z2.second[0]][z2.second[1]][z2.second[2]]);
                 phi_addrs[i][j][k] -= 0.3 * sign * (Vec3d(dv_x, dv_y, dv_z).norm() - data_spacing_);
             }
         });
@@ -312,9 +363,8 @@ inline void MarkNearInterface::UpdateKernel::update(const size_t &package_index,
     mesh_for_each3d<0, 5>(
         [&](int i, int j, int k)
         {
-            corner_averages[i][j][k] = BaseMeshLocalDynamics::CornerAverage(phi_, Arrayi(i, j, k),
-                                                                            Arrayi(-1, -1, -1),
-                                                                            cell_neighborhood_[package_index], (Real)0);
+            corner_averages[i][j][k] = BaseMeshLocalDynamics::CornerAverage(
+                phi_, Arrayi(i, j, k), Arrayi(-1, -1, -1), cell_neighborhood_[package_index], (Real)0);
         });
 
     BaseMeshLocalDynamics::for_each_cell_data(
@@ -364,9 +414,12 @@ inline void RedistanceInterface::UpdateKernel::update(const size_t &package_inde
                 mesh_for_each3d<-1, 2>(
                     [&](int r, int s, int t)
                     {
-                        NeighbourIndex neighbour_index = BaseMeshLocalDynamics::NeighbourIndexShift(Arrayi(i + r, j + s, k + t), cell_neighborhood_[package_index]);
-                        int neighbor_near_interface_id = near_interface_id_[neighbour_index.first][neighbour_index.second[0]][neighbour_index.second[1]][neighbour_index.second[2]]
-;
+                        NeighbourIndex neighbour_index = BaseMeshLocalDynamics::NeighbourIndexShift(
+                            Arrayi(i + r, j + s, k + t), cell_neighborhood_[package_index]);
+                        int neighbor_near_interface_id = near_interface_id_[neighbour_index.first]
+                                                                           [neighbour_index.second[0]]
+                                                                           [neighbour_index.second[1]]
+                                                                           [neighbour_index.second[2]];
                         if (neighbor_near_interface_id >= 1)
                             positive_band = true;
                         if (neighbor_near_interface_id <= -1)
@@ -378,16 +431,25 @@ inline void RedistanceInterface::UpdateKernel::update(const size_t &package_inde
                     mesh_for_each3d<-4, 5>(
                         [&](int x, int y, int z)
                         {
-                            NeighbourIndex neighbour_index = BaseMeshLocalDynamics::NeighbourIndexShift(Arrayi(i + x, j + y, k + z), cell_neighborhood_[package_index]);
+                            NeighbourIndex neighbour_index = BaseMeshLocalDynamics::NeighbourIndexShift(
+                                Arrayi(i + x, j + y, k + z), cell_neighborhood_[package_index]);
                             auto &neighbor_phi = phi_[neighbour_index.first];
                             auto &neighbor_phi_gradient = phi_gradient_[neighbour_index.first];
                             auto &neighbor_near_interface_id = near_interface_id_[neighbour_index.first];
-                            if (neighbor_near_interface_id[neighbour_index.second[0]][neighbour_index.second[1]][neighbour_index.second[2]] >= 1)
+                            if (neighbor_near_interface_id[neighbour_index.second[0]]
+                                                          [neighbour_index.second[1]]
+                                                          [neighbour_index.second[2]] >= 1)
                             {
-                                Real phi_p_ = neighbor_phi[neighbour_index.second[0]][neighbour_index.second[1]][neighbour_index.second[2]];
-                                Vecd norm_to_face = neighbor_phi_gradient[neighbour_index.second[0]][neighbour_index.second[1]][neighbour_index.second[2]];
+                                Real phi_p_ = neighbor_phi[neighbour_index.second[0]]
+                                                          [neighbour_index.second[1]]
+                                                          [neighbour_index.second[2]];
+                                Vecd norm_to_face = neighbor_phi_gradient[neighbour_index.second[0]]
+                                                                         [neighbour_index.second[1]]
+                                                                         [neighbour_index.second[2]];
                                 norm_to_face /= norm_to_face.norm() + TinyReal;
-                                min_distance_p = SMIN(min_distance_p, (Vecd((Real)x, (Real)y, Real(z)) * data_spacing_ + phi_p_ * norm_to_face).norm());
+                                min_distance_p = SMIN(
+                                    min_distance_p,
+                                    (Vecd((Real)x, (Real)y, Real(z)) * data_spacing_ + phi_p_ * norm_to_face).norm());
                             }
                         });
                     phi_[package_index][i][j][k] = -min_distance_p;
@@ -402,16 +464,25 @@ inline void RedistanceInterface::UpdateKernel::update(const size_t &package_inde
                     mesh_for_each3d<-4, 5>(
                         [&](int x, int y, int z)
                         {
-                            NeighbourIndex neighbour_index = BaseMeshLocalDynamics::NeighbourIndexShift(Arrayi(i + x, j + y, k + z), cell_neighborhood_[package_index]);
+                            NeighbourIndex neighbour_index = BaseMeshLocalDynamics::NeighbourIndexShift(
+                                Arrayi(i + x, j + y, k + z), cell_neighborhood_[package_index]);
                             auto &neighbor_phi = phi_[neighbour_index.first];
                             auto &neighbor_phi_gradient = phi_gradient_[neighbour_index.first];
                             auto &neighbor_near_interface_id = near_interface_id_[neighbour_index.first];
-                            if (neighbor_near_interface_id[neighbour_index.second[0]][neighbour_index.second[1]][neighbour_index.second[2]] <= -1)
+                            if (neighbor_near_interface_id[neighbour_index.second[0]]
+                                                          [neighbour_index.second[1]]
+                                                          [neighbour_index.second[2]] <= -1)
                             {
-                                Real phi_n_ = neighbor_phi[neighbour_index.second[0]][neighbour_index.second[1]][neighbour_index.second[2]];
-                                Vecd norm_to_face = neighbor_phi_gradient[neighbour_index.second[0]][neighbour_index.second[1]][neighbour_index.second[2]];
+                                Real phi_n_ = neighbor_phi[neighbour_index.second[0]]
+                                                          [neighbour_index.second[1]]
+                                                          [neighbour_index.second[2]];
+                                Vecd norm_to_face = neighbor_phi_gradient[neighbour_index.second[0]]
+                                                                         [neighbour_index.second[1]]
+                                                                         [neighbour_index.second[2]];
                                 norm_to_face /= norm_to_face.norm() + TinyReal;
-                                min_distance_n = SMIN(min_distance_n, (Vecd((Real)x, (Real)y, Real(z)) * data_spacing_ - phi_n_ * norm_to_face).norm());
+                                min_distance_n = SMIN(
+                                    min_distance_n,
+                                    (Vecd((Real)x, (Real)y, Real(z)) * data_spacing_ - phi_n_ * norm_to_face).norm());
                             }
                         });
                     phi_[package_index][i][j][k] = min_distance_n;
@@ -435,9 +506,12 @@ inline void DiffuseLevelSetSign::UpdateKernel::update(const size_t &package_inde
                 mesh_find_if3d<-1, 2>(
                     [&](int l, int m, int n) -> bool
                     {
-                        NeighbourIndex neighbour_index = BaseMeshLocalDynamics::NeighbourIndexShift(Arrayi(i + l, j + m, k + n), cell_neighborhood_[package_index]);
-                        int near_interface_id = near_interface_id_[neighbour_index.first][neighbour_index.second[0]][neighbour_index.second[1]][neighbour_index.second[2]]
-;
+                        NeighbourIndex neighbour_index = BaseMeshLocalDynamics::NeighbourIndexShift(
+                            Arrayi(i + l, j + m, k + n), cell_neighborhood_[package_index]);
+                        int near_interface_id = near_interface_id_[neighbour_index.first]
+                                                                  [neighbour_index.second[0]]
+                                                                  [neighbour_index.second[1]]
+                                                                  [neighbour_index.second[2]];
                         bool is_found = abs(near_interface_id) == 1;
                         if (is_found)
                         {
