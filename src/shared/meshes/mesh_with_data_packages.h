@@ -63,8 +63,8 @@ class MeshWithGridDataPackages : public Mesh
                                       size_t buffer_size)
         : Mesh(tentative_bounds, pkg_size * data_spacing, buffer_size),
           global_mesh_(mesh_lower_bound_ + 0.5 * data_spacing * Vecd::Ones(), data_spacing, all_cells_ * pkg_size),
-          data_spacing_(data_spacing),
           cell_package_index_("cell_package_index", all_cells_.prod()),
+          data_spacing_(data_spacing),
           index_handler_("index_handler", IndexHandler{data_spacing_, all_cells_, *static_cast<Mesh*>(this)}){};
     virtual ~MeshWithGridDataPackages(){};
 
