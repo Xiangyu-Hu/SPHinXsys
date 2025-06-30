@@ -33,64 +33,79 @@
 #include "all_particle_dynamics.h"
 #include "base_body.h"
 #include "base_configuration_dynamics.h"
+#include "base_local_dynamics.h"
 #include "base_particles.hpp"
-#include "interaction_ck.hpp"
+#include "neighborhood_ck.h"
+#include "relation_ck.hpp"
 
 namespace SPH
 {
+
 template <typename... T>
 class UpdateRelation;
 
 template <class ExecutionPolicy, typename... Parameters>
 class UpdateRelation<ExecutionPolicy, Inner<Parameters...>>
-    : public Interaction<Inner<Parameters...>>, public BaseDynamics<void>
+    : public BaseLocalDynamics<typename Inner<Parameters...>::SourceType>, public BaseDynamics<void>
 {
+    using BaseLocalDynamicsType = BaseLocalDynamics<typename Inner<Parameters...>::SourceType>;
+    using InnerRelationType = Inner<Parameters...>;
+    using NeighborList = typename InnerRelationType::NeighborList;
+    using NeighborMethod = typename InnerRelationType::NeighborMethodType;
+    using Identifier = typename BaseLocalDynamicsType::Identifier;
+    using MaskedSource = typename Identifier::SourceParticleMask;
+    using MaskedCriterion = typename Identifier::template TargetParticleMask<NeighborCriterion<NeighborMethod>>;
+
   public:
-    UpdateRelation(Relation<Inner<Parameters...>> &inner_relation);
+    UpdateRelation(Inner<Parameters...> &inner_relation);
     virtual ~UpdateRelation() {};
     virtual void exec(Real dt = 0.0) override;
 
   protected:
-    class InteractKernel
-        : public Interaction<Inner<Parameters...>>::InteractKernel
+    class InteractKernel : public NeighborList
     {
       public:
         template <class EncloserType>
         InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-        void incrementNeighborSize(UnsignedInt index_i);
-        void updateNeighborList(UnsignedInt index_i);
+        void incrementNeighborSize(UnsignedInt source_index);
+        void updateNeighborList(UnsignedInt source_index);
 
       protected:
+        Vecd *source_pos_;
+        MaskedSource masked_source_;
+        MaskedCriterion masked_criterion_;
         NeighborSearch neighbor_search_;
-        Real grid_spacing_squared_;
     };
     typedef UpdateRelation<ExecutionPolicy, Inner<Parameters...>> LocalDynamicsType;
     using KernelImplementation = Implementation<ExecutionPolicy, LocalDynamicsType, InteractKernel>;
 
     ExecutionPolicy ex_policy_;
+    InnerRelationType &inner_relation_;
     CellLinkedList &cell_linked_list_;
     Implementation<ExecutionPolicy, LocalDynamicsType, InteractKernel> kernel_implementation_;
 };
 
 template <class ExecutionPolicy, typename... Parameters>
 class UpdateRelation<ExecutionPolicy, Contact<Parameters...>>
-    : public Interaction<Contact<Parameters...>>, public BaseDynamics<void>
+    : public BaseLocalDynamics<typename Contact<Parameters...>::SourceType>, public BaseDynamics<void>
 {
-    using BaseInteraction = Interaction<Contact<Parameters...>>;
-    using NeighborCriterion = typename BaseInteraction::InteractKernel::NeighborCriterion;
-    using RelationType = Relation<Contact<Parameters...>>;
-    using SourceType = typename RelationType::SourceType;
-    using TargetType = typename RelationType::TargetType;
-    using MaskedCriterion = typename TargetType::template TargetParticleMask<NeighborCriterion>;
+    using BaseLocalDynamicsType = BaseLocalDynamics<typename Contact<Parameters...>::SourceType>;
+    using ContactRelationType = Contact<Parameters...>;
+    using NeighborList = typename ContactRelationType::NeighborList;
+    using NeighborMethod = typename ContactRelationType::NeighborMethodType;
+    using Identifier = typename BaseLocalDynamicsType::Identifier;
+    using SourceType = typename ContactRelationType::SourceType;
+    using TargetType = typename ContactRelationType::TargetType;
+    using MaskedSource = typename SourceType::SourceParticleMask;
+    using MaskedCriterion = typename TargetType::template TargetParticleMask<NeighborCriterion<NeighborMethod>>;
 
   public:
-    UpdateRelation(RelationType &contact_relation);
+    UpdateRelation(ContactRelationType &contact_relation);
     virtual ~UpdateRelation() {};
     virtual void exec(Real dt = 0.0) override;
 
   protected:
-    class InteractKernel
-        : public Interaction<Contact<Parameters...>>::InteractKernel
+    class InteractKernel : public NeighborList
     {
       public:
         template <class EncloserType>
@@ -99,6 +114,8 @@ class UpdateRelation<ExecutionPolicy, Contact<Parameters...>>
         void updateNeighborList(UnsignedInt source_index);
 
       protected:
+        Vecd *source_pos_;
+        MaskedSource masked_source_;
         MaskedCriterion masked_criterion_;
         NeighborSearch neighbor_search_;
     };
@@ -107,6 +124,7 @@ class UpdateRelation<ExecutionPolicy, Contact<Parameters...>>
     using KernelImplementation = Implementation<ExecutionPolicy, LocalDynamicsType, InteractKernel>;
     UniquePtrsKeeper<KernelImplementation> contact_kernel_implementation_ptrs_;
     ExecutionPolicy ex_policy_;
+    ContactRelationType &contact_relation_;
     StdVec<CellLinkedList *> contact_cell_linked_list_;
     StdVec<KernelImplementation *> contact_kernel_implementation_;
 };
@@ -119,17 +137,15 @@ class UpdateRelation<ExecutionPolicy>
     void exec(Real dt = 0.0) {};
 };
 
-template <class ExecutionPolicy, class FirstRelation, class... Others>
-class UpdateRelation<ExecutionPolicy, FirstRelation, Others...>
+template <class ExecutionPolicy, class FirstRelation, class... OtherRelations>
+class UpdateRelation<ExecutionPolicy, FirstRelation, OtherRelations...>
     : public UpdateRelation<ExecutionPolicy, FirstRelation>
 {
   protected:
-    UpdateRelation<ExecutionPolicy, Others...> other_interactions_;
+    UpdateRelation<ExecutionPolicy, OtherRelations...> other_interactions_;
 
   public:
-    template <class FirstParameterSet, typename... OtherParameterSets>
-    explicit UpdateRelation(
-        FirstParameterSet &&first_parameter_set, OtherParameterSets &&...other_parameter_sets);
+    explicit UpdateRelation(FirstRelation &first_relation, OtherRelations &...other_relations);
     virtual void exec(Real dt = 0.0) override;
 };
 } // namespace SPH

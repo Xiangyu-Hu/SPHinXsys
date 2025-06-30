@@ -65,26 +65,18 @@ Vec2d first_coefficient(rand_uniform(-1.0, 1.0), rand_uniform(-1.0, 1.0));
 VecMat2d second_coefficient{rand_uniform(-1.0, 1.0), rand_uniform(-1.0, 1.0), rand_uniform(-1.0, 1.0)};
 class ParabolicProfile : public ReturnFunction<Real>
 {
+    Vec2d first_coefficient_;
+    VecMat2d second_coefficient_;
+
   public:
-    ParabolicProfile(BaseParticles *particles) {};
-    class ComputingKernel
+    ParabolicProfile() : first_coefficient_(first_coefficient),
+        second_coefficient_(second_coefficient) {};
+
+    Real operator()(const Vec2d &position)
     {
-      public:
-        template <class ExecutionPolicy, class EncloserType>
-        ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : first_coefficient_(first_coefficient),
-              second_coefficient_(second_coefficient){};
-
-        Real operator()(const Vec2d &position)
-        {
-            return first_coefficient_.dot(position) +
-                   second_coefficient_.dot(vectorizeTensorSquare(position));
-        }
-
-      protected:
-        Vec2d first_coefficient_;
-        VecMat2d second_coefficient_;
-    };
+        return first_coefficient_.dot(position) +
+               second_coefficient_.dot(vectorizeTensorSquare(position));
+    }
 };
 
 VecMat2d approximated_hessian = VecMat2d::Zero();
@@ -141,9 +133,9 @@ int main(int ac, char *av[])
     //	Basically the the range of bodies to build neighbor particle lists.
     //  Generally, we first define all the inner relations, then the contact relations.
     //----------------------------------------------------------------------
-    Relation<Inner<>> water_block_inner(water_block);
-    Relation<Contact<>> water_wall_contact(water_block, {&wall});
-    Relation<Contact<>> fluid_observer_contact(fluid_observer, {&water_block});
+    Inner<> water_block_inner(water_block);
+    Contact<> water_wall_contact(water_block, {&wall});
+    Contact<> fluid_observer_contact(fluid_observer, {&water_block});
     //----------------------------------------------------------------------
     // Define the main execution policy for this case.
     //----------------------------------------------------------------------
@@ -159,9 +151,9 @@ int main(int ac, char *av[])
     // Finally, the auxiliary models such as time step estimator, initial condition,
     // boundary condition and other constraints should be defined.
     //----------------------------------------------------------------------
-    UpdateCellLinkedList<MainExecutionPolicy, CellLinkedList>
+    UpdateCellLinkedList<MainExecutionPolicy, RealBody>
         water_cell_linked_list(water_block);
-    UpdateCellLinkedList<MainExecutionPolicy, CellLinkedList> wall_cell_linked_list(wall);
+    UpdateCellLinkedList<MainExecutionPolicy, RealBody> wall_cell_linked_list(wall);
     UpdateRelation<MainExecutionPolicy, Inner<>> update_water_block_inner(water_block_inner);
     UpdateRelation<MainExecutionPolicy, Contact<>> update_water_wall_contact(water_wall_contact);
     UpdateRelation<MainExecutionPolicy, Contact<>> update_fluid_observer_contact(fluid_observer_contact);
@@ -180,9 +172,9 @@ int main(int ac, char *av[])
     InteractionDynamicsCK<MainExecutionPolicy, HessianCorrectionMatrix<Inner<WithUpdate>, Contact<>>>
         hessian_correction_matrix(DynamicsArgs(water_block_inner, 0.0), water_wall_contact);
 
-    StateDynamics<MainExecutionPolicy, InitialCondition<SPHBody, ParabolicProfile>>
+    StateDynamics<MainExecutionPolicy, VariableAssignment<SPHBody, SpatialDistribution<ParabolicProfile>>>
         water_block_initial_condition(water_block, "Phi");
-    StateDynamics<MainExecutionPolicy, InitialCondition<SPHBody, ParabolicProfile>>
+    StateDynamics<MainExecutionPolicy, VariableAssignment<SPHBody, SpatialDistribution<ParabolicProfile>>>
         wall_initial_condition(wall, "Phi");
     InteractionDynamicsCK<MainExecutionPolicy, LinearGradient<Inner<Real>, Contact<Real>>>
         variable_linear_gradient(

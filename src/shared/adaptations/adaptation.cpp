@@ -91,6 +91,13 @@ UniquePtr<BaseCellLinkedList> SPHAdaptation::
     return makeUnique<CellLinkedList>(domain_bounds, kernel_ptr_->CutOffRadius(), base_particles, *this);
 }
 //=================================================================================================//
+UniquePtr<BaseCellLinkedList> SPHAdaptation::createRefinedCellLinkedList(
+    int level, const BoundingBox &domain_bounds, BaseParticles &base_particles)
+{
+    Real grid_spacing = kernel_ptr_->CutOffRadius() / pow(2.0, level);
+    return makeUnique<CellLinkedList>(domain_bounds, grid_spacing, base_particles, *this);
+}
+//=================================================================================================//
 UniquePtr<MultilevelLevelSet> SPHAdaptation::createLevelSet(Shape &shape, Real refinement_ratio)
 {
     // estimate the required mesh levels

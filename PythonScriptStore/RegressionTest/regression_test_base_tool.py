@@ -38,7 +38,7 @@ class SphinxsysRegressionTestByCTest:
     def run_case(self) -> None:
         print('Start case simulation...')
         print(self.enter_sphinxsys_exec_folder)
-        command = f".{os.sep}{self.sphinxsys_case_name} --regression=true"
+        command = f".{os.sep}{self.sphinxsys_case_name} --regression=true --state_recording=false"
         os.system(self.enter_sphinxsys_exec_folder)
         os.system(command)
         print('Simulating case is finished...')
@@ -46,7 +46,7 @@ class SphinxsysRegressionTestByCTest:
     def run_case_with_reload(self) -> None:
         print('Start case simulation with particle reload...')
         print(self.enter_sphinxsys_exec_folder)
-        command = f".{os.sep}{self.sphinxsys_case_name} --reload=true --regression=true"
+        command = f".{os.sep}{self.sphinxsys_case_name} --reload=true --regression=true --state_recording=false"
         os.system(self.enter_sphinxsys_exec_folder)
         os.system(command)
         print('Simulating case is finished...')

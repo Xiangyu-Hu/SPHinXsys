@@ -43,7 +43,7 @@ class TransportVelocityCorrectionCK<Inner<UpdatePolicy, KernelCorrectionType, Re
     using ParticleScopeTypeKernel = typename ParticleScopeTypeCK<ParticleScopeType>::ComputingKernel;
 
   public:
-    explicit TransportVelocityCorrectionCK(Relation<Inner<Parameters...>> &inner_relation, Real coefficient = 0.2);
+    explicit TransportVelocityCorrectionCK(Inner<Parameters...> &inner_relation, Real coefficient = 0.2);
 
     virtual ~TransportVelocityCorrectionCK() {}
 
@@ -102,7 +102,7 @@ class TransportVelocityCorrectionCK<Contact<Wall, KernelCorrectionType, Resoluti
     using ParticleScopeTypeKernel = typename ParticleScopeTypeCK<ParticleScopeType>::ComputingKernel;
 
   public:
-    explicit TransportVelocityCorrectionCK(Relation<Contact<Parameters...>> &contact_relation);
+    explicit TransportVelocityCorrectionCK(Contact<Parameters...> &contact_relation);
     virtual ~TransportVelocityCorrectionCK() {}
 
     //====================== Interact Kernel ======================//

@@ -56,8 +56,8 @@ AdvectionStepSetup::UpdateKernel::
       dpos_(encloser.dv_dpos_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <class ExecutionPolicy>
-AdvectionStepClose::UpdateKernel::
-    UpdateKernel(const ExecutionPolicy &ex_policy, AdvectionStepClose &encloser)
+UpdateParticlePosition::UpdateKernel::
+    UpdateKernel(const ExecutionPolicy &ex_policy, UpdateParticlePosition &encloser)
     : pos_(encloser.dv_pos_->DelegatedData(ex_policy)),
       dpos_(encloser.dv_dpos_->DelegatedData(ex_policy)) {}
 //=================================================================================================//

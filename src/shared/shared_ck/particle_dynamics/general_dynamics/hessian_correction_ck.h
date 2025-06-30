@@ -80,7 +80,7 @@ class DisplacementMatrixGradient<Inner<Parameters...>>
     using BaseDynamicsType = HessianCorrectionMatrix<Base, Inner<Parameters...>>;
 
   public:
-    explicit DisplacementMatrixGradient(Relation<Inner<Parameters...>> &inner_relation)
+    explicit DisplacementMatrixGradient(Inner<Parameters...> &inner_relation)
         : BaseDynamicsType(inner_relation) {};
     virtual ~DisplacementMatrixGradient() {};
 
@@ -101,7 +101,7 @@ class DisplacementMatrixGradient<Contact<Parameters...>>
     using BaseDynamicsType = HessianCorrectionMatrix<Base, Contact<Parameters...>>;
 
   public:
-    explicit DisplacementMatrixGradient(Relation<Contact<Parameters...>> &contact_relation);
+    explicit DisplacementMatrixGradient(Contact<Parameters...> &contact_relation);
     virtual ~DisplacementMatrixGradient() {};
 
     class InteractKernel : public BaseDynamicsType::InteractKernel
@@ -128,7 +128,7 @@ class HessianCorrectionMatrix<Inner<WithUpdate, Parameters...>>
     using BaseDynamicsType = HessianCorrectionMatrix<Base, Inner<Parameters...>>;
 
   public:
-    explicit HessianCorrectionMatrix(Relation<Inner<Parameters...>> &inner_relation, Real alpha = Real(0))
+    explicit HessianCorrectionMatrix(Inner<Parameters...> &inner_relation, Real alpha = Real(0))
         : BaseDynamicsType(inner_relation), alpha_(alpha) {};
     template <typename BodyRelationType, typename FirstArg>
     explicit HessianCorrectionMatrix(DynamicsArgs<BodyRelationType, FirstArg> parameters)
@@ -168,7 +168,7 @@ class HessianCorrectionMatrix<Contact<Parameters...>>
     using BaseDynamicsType = HessianCorrectionMatrix<Base, Contact<Parameters...>>;
 
   public:
-    explicit HessianCorrectionMatrix(Relation<Contact<Parameters...>> &contact_relation);
+    explicit HessianCorrectionMatrix(Contact<Parameters...> &contact_relation);
     virtual ~HessianCorrectionMatrix() {};
 
     class InteractKernel : public BaseDynamicsType::InteractKernel

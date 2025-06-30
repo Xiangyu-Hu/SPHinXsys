@@ -10,9 +10,9 @@ namespace continuum_dynamics
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
 PlasticAcousticStep2ndHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType, Parameters...>>::
-    PlasticAcousticStep2ndHalf(Relation<Inner<Parameters...>> &inner_relation)
+    PlasticAcousticStep2ndHalf(Inner<Parameters...> &inner_relation)
     : PlasticAcousticStep<Interaction<Inner<Parameters...>>>(inner_relation),
-      correction_(this->particles_), riemann_solver_(this->plastic_continuum_, this->plastic_continuum_,20.0*(Real)Dimensions)
+      correction_(this->particles_), riemann_solver_(this->plastic_continuum_, this->plastic_continuum_, 20.0 * (Real)Dimensions)
 {
     static_assert(std::is_base_of<KernelCorrection, KernelCorrectionType>::value,
                   "KernelCorrection is not the base of KernelCorrectionType!");
@@ -77,10 +77,10 @@ PlasticAcousticStep2ndHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionTy
       rho_(encloser.dv_rho_->DelegatedData(ex_policy)),
       drho_dt_(encloser.dv_drho_dt_->DelegatedData(ex_policy)),
       velocity_gradient_(encloser.dv_velocity_gradient_->DelegatedData(ex_policy)),
-      stress_tensor_3D_(encloser.dv_stress_tensor_3D_->DelegatedData(ex_policy)), 
+      stress_tensor_3D_(encloser.dv_stress_tensor_3D_->DelegatedData(ex_policy)),
       strain_tensor_3D_(encloser.dv_strain_tensor_3D_->DelegatedData(ex_policy)),
       stress_rate_3D_(encloser.dv_stress_rate_3D_->DelegatedData(ex_policy)),
-      strain_rate_3D_(encloser.dv_strain_rate_3D_->DelegatedData(ex_policy)){}
+      strain_rate_3D_(encloser.dv_strain_rate_3D_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
 void PlasticAcousticStep2ndHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType, Parameters...>>::
@@ -89,7 +89,7 @@ void PlasticAcousticStep2ndHalf<Inner<OneLevel, RiemannSolverType, KernelCorrect
     rho_[index_i] += drho_dt_[index_i] * dt * 0.5;
     Mat3d velocity_gradient = upgradeToMat3d(velocity_gradient_[index_i]);
     Mat3d stress_tensor_rate_3D_ = plastic_kernel_.ConstitutiveRelation(velocity_gradient, stress_tensor_3D_[index_i]);
-    stress_rate_3D_[index_i] += stress_tensor_rate_3D_; //stress diffusion is on
+    stress_rate_3D_[index_i] += stress_tensor_rate_3D_; // stress diffusion is on
     stress_tensor_3D_[index_i] += stress_rate_3D_[index_i] * dt;
     /*return mapping*/
     stress_tensor_3D_[index_i] = plastic_kernel_.ReturnMapping(stress_tensor_3D_[index_i]);
@@ -99,7 +99,7 @@ void PlasticAcousticStep2ndHalf<Inner<OneLevel, RiemannSolverType, KernelCorrect
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
 PlasticAcousticStep2ndHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType, Parameters...>>::
-    PlasticAcousticStep2ndHalf(Relation<Contact<Parameters...>> &wall_contact_relation)
+    PlasticAcousticStep2ndHalf(Contact<Parameters...> &wall_contact_relation)
     : BaseInteraction(wall_contact_relation), Interaction<Wall>(wall_contact_relation),
       correction_(this->particles_), riemann_solver_(this->plastic_continuum_, this->plastic_continuum_) {}
 //=================================================================================================//
@@ -135,8 +135,8 @@ void PlasticAcousticStep2ndHalf<Contact<Wall, RiemannSolverType, KernelCorrectio
         Vecd e_ij = this->e_ij(index_i, index_j);
         Real dW_ijV_j = this->dW_ij(index_i, index_j) * wall_Vol_[index_j];
         Vecd vel_in_wall = 2.0 * wall_vel_ave_[index_j] - vel_[index_i];
-        density_change_rate += (vel_i- vel_in_wall).dot(e_ij) * dW_ijV_j;
-        Real u_jump = 2.0 * (vel_i- wall_vel_ave_[index_j]).dot(wall_n_[index_j]);
+        density_change_rate += (vel_i - vel_in_wall).dot(e_ij) * dW_ijV_j;
+        Real u_jump = 2.0 * (vel_i - wall_vel_ave_[index_j]).dot(wall_n_[index_j]);
         p_dissipation += riemann_solver_.DissipativePJump(u_jump) * dW_ijV_j * wall_n_[index_j];
         velocity_gradient -= (vel_i - vel_in_wall) * dW_ijV_j * e_ij.transpose();
     }
@@ -146,4 +146,4 @@ void PlasticAcousticStep2ndHalf<Contact<Wall, RiemannSolverType, KernelCorrectio
 }
 } // namespace continuum_dynamics
 } // namespace SPH
-#endif //CONTINUUM_INTERATION_2ND_CK_HPP
+#endif // CONTINUUM_INTERATION_2ND_CK_HPP

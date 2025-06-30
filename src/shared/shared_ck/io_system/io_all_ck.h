@@ -30,5 +30,6 @@ io class used in SPHinXsys. **/
 
 #include "io_base_ck.h"
 #include "io_observation_ck.h"
+#include "io_vtk_mesh_ck.h"
 
 #endif // IO_ALL_CK_H

@@ -9,10 +9,10 @@ ParticleGenerator<ObserverParticles>::ParticleGenerator(
     SPHBody &sph_body, BaseParticles &base_particles, TriangleMeshShape &triangle_mesh_shape)
     : ParticleGenerator<BaseParticles>(sph_body, base_particles)
 {
-    TriangleMesh &triangle_mesh = *triangle_mesh_shape.getTriangleMesh();
-    for (int i = 0; i != triangle_mesh.getNumVertices(); ++i)
+    StdVec<std::array<Real, 3>> &vertices = triangle_mesh_shape.getVertices();
+    for (size_t i = 0; i != vertices.size(); ++i)
     {
-        positions_.push_back(SimTKToEigen(triangle_mesh.getVertexPosition(i)));
+        positions_.push_back(Vec3d(vertices[i][0], vertices[i][1], vertices[i][2]));
     }
 }
 //=================================================================================================//

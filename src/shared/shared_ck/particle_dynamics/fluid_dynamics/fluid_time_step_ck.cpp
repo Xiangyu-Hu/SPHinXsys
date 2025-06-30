@@ -42,7 +42,7 @@ AdvectionStepSetup::AdvectionStepSetup(SPHBody &sph_body)
       dv_rho_(particles_->getVariableByName<Real>("Density")),
       dv_dpos_(particles_->registerStateVariableOnly<Vecd>("Displacement")) {}
 //=================================================================================================//
-AdvectionStepClose::AdvectionStepClose(SPHBody &sph_body)
+UpdateParticlePosition::UpdateParticlePosition(SPHBody &sph_body)
     : LocalDynamics(sph_body),
       dv_pos_(particles_->getVariableByName<Vecd>("Position")),
       dv_dpos_(particles_->getVariableByName<Vecd>("Displacement")) {}

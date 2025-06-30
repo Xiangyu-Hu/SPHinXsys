@@ -213,7 +213,7 @@ constexpr Real Pi = Real(M_PI);
 constexpr Real Eps = std::numeric_limits<Real>::epsilon();
 constexpr Real SqrtEps = Real(1.0e-8);
 constexpr Real TinyReal = Real(2.71051e-20);
-constexpr Real MinReal = std::numeric_limits<Real>::min();
+constexpr Real MinReal = std::numeric_limits<Real>::lowest();
 constexpr Real MaxReal = std::numeric_limits<Real>::max();
 constexpr size_t MaxSize_t = std::numeric_limits<size_t>::max();
 } // namespace SPH

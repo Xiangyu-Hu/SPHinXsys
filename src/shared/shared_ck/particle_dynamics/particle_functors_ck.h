@@ -62,7 +62,7 @@ class ParticleScopeTypeCK<AllParticles> : public WithinScope
                         ParticleScopeTypeCK<AllParticles> &encloser,
                         ComputingKernelType &computing_kernel){};
 
-        bool operator()(size_t index_i) const
+        constexpr bool operator()(size_t /*index_i*/) const
         {
             return true; // Always in scope
         };

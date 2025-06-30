@@ -97,8 +97,8 @@ StdVec<Vecd> VelocityXObserverParticle()
 
     for (size_t i = 0; i < number_of_observation_point; ++i)
     {
-        Vec2d point_corrdinate(range_of_measure * (Real)i / (Real)(number_of_observation_point - 1) + start_of_measure, 0.5 * DL);
-        observation_points.push_back(point_corrdinate);
+        Vec2d point_coordinate(range_of_measure * (Real)i / (Real)(number_of_observation_point - 1) + start_of_measure, 0.5 * DL);
+        observation_points.push_back(point_coordinate);
     }
     return observation_points;
 }
@@ -111,10 +111,10 @@ StdVec<Vecd> VelocityYObserverParticle()
     Real start_of_measure = 0.5 * resolution_ref;
     for (size_t i = 0; i < number_of_observation_point; ++i)
     {
-        Vec2d point_corrdinate(0.5 * DH, range_of_measure * (Real)i /
+        Vec2d point_coordinate(0.5 * DH, range_of_measure * (Real)i /
                                                  (Real)(number_of_observation_point - 1) +
                                              start_of_measure);
-        observation_points.push_back(point_corrdinate);
+        observation_points.push_back(point_coordinate);
     }
     return observation_points;
 }
@@ -155,10 +155,10 @@ int main(int ac, char *av[])
     //	The contact map gives the topological connections between the bodies.
     //	Basically the the range of bodies to build neighbor particle lists.
     //----------------------------------------------------------------------
-    Relation<Inner<>> water_block_inner(water_body);
-    Relation<Contact<>> water_wall_contact(water_body, {&wall_boundary});
-    Relation<Contact<>> horizontal_observer_contact(horizontal_observer, {&water_body});
-    Relation<Contact<>> vertical_observer_contact(vertical_observer, {&water_body});
+    Inner<> water_block_inner(water_body);
+    Contact<> water_wall_contact(water_body, {&wall_boundary});
+    Contact<> horizontal_observer_contact(horizontal_observer, {&water_body});
+    Contact<> vertical_observer_contact(vertical_observer, {&water_body});
     //----------------------------------------------------------------------
     // Define the main execution policy for this case.
     //----------------------------------------------------------------------
@@ -176,8 +176,8 @@ int main(int ac, char *av[])
     // Finally, the auxiliary models such as time step estimator, initial condition,
     // boundary condition and other constraints should be defined.
     //----------------------------------------------------------------------
-    UpdateCellLinkedList<MainExecutionPolicy, CellLinkedList> water_cell_linked_list(water_body);
-    UpdateCellLinkedList<MainExecutionPolicy, CellLinkedList> wall_cell_linked_list(wall_boundary);
+    UpdateCellLinkedList<MainExecutionPolicy, RealBody> water_cell_linked_list(water_body);
+    UpdateCellLinkedList<MainExecutionPolicy, RealBody> wall_cell_linked_list(wall_boundary);
     UpdateRelation<MainExecutionPolicy, Inner<>, Contact<>> water_block_update_complex_relation(water_block_inner, water_wall_contact);
     UpdateRelation<MainExecutionPolicy, Contact<>> horizontal_observer_contact_relation(horizontal_observer_contact);
     UpdateRelation<MainExecutionPolicy, Contact<>> vertical_observer_contact_relation(vertical_observer_contact);
@@ -187,7 +187,7 @@ int main(int ac, char *av[])
     StateDynamics<MainExecutionPolicy, NormalFromBodyShapeCK> wall_boundary_normal_direction(wall_boundary); // run on CPU
     /** Time step size with considering sound wave speed. */
     StateDynamics<MainExecutionPolicy, fluid_dynamics::AdvectionStepSetup> water_advection_step_setup(water_body);
-    StateDynamics<MainExecutionPolicy, fluid_dynamics::AdvectionStepClose> water_advection_step_close(water_body);
+    StateDynamics<MainExecutionPolicy, fluid_dynamics::UpdateParticlePosition> water_update_particle_position(water_body);
 
     /** Initial condition with momentum field */
     SimpleDynamics<BoundaryVelocity> solid_initial_condition(wall_boundary);
@@ -308,7 +308,7 @@ int main(int ac, char *av[])
                 integration_time += acoustic_dt;
                 sv_physical_time->incrementValue(acoustic_dt);
             }
-            water_advection_step_close.exec();
+            water_update_particle_position.exec();
             interval_acoustic_steps += TickCount::now() - time_instance;
 
             /** screen output, write body observables and restart files  */

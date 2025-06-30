@@ -72,6 +72,7 @@ class SPHAdaptation
     virtual ~SPHAdaptation() {};
 
     int LocalRefinementLevel() { return local_refinement_level_; };
+    Real SmoothingLengthSpacingRatio() { return h_spacing_ratio_; };
     Real ReferenceSpacing() { return spacing_ref_; };
     Real MinimumSpacing() { return spacing_min_; };
     Real ReferenceSmoothingLength() { return h_ref_; };
@@ -82,8 +83,11 @@ class SPHAdaptation
     virtual Real SmoothingLengthRatio(size_t particle_index_i) { return 1.0; };
     void resetAdaptationRatios(Real h_spacing_ratio, Real new_system_refinement_ratio = 1.0);
     virtual void initializeAdaptationVariables(BaseParticles &base_particles) {};
+    Real SmoothingLengthByLevel(int level) { return h_ref_ / pow(2.0, level); };
+    DiscreteVariable<Real> *AdaptiveSmoothingLength(BaseParticles &base_particles);
 
     virtual UniquePtr<BaseCellLinkedList> createCellLinkedList(const BoundingBox &domain_bounds, BaseParticles &base_particles);
+    UniquePtr<BaseCellLinkedList> createRefinedCellLinkedList(int level, const BoundingBox &domain_bounds, BaseParticles &base_particles);
     virtual UniquePtr<MultilevelLevelSet> createLevelSet(Shape &shape, Real refinement_ratio);
 
     template <class MeshType, typename... Args>

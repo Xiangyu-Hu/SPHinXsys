@@ -21,81 +21,61 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file general_initial_condition.h
- * @brief tbd.
- * @author Xiangyu Hu
+ * @file    adapt_indication.h
+ * @brief   to indicate the adaptation level
+ * @author	Xiangyu Hu
  */
 
-#ifndef GENERAL_INITIAL_CONDITION_H
-#define GENERAL_INITIAL_CONDITION_H
+#ifndef ADAPT_INDICATION_H
+#define ADAPT_INDICATION_H
 
+#include "adapt_criterion.h"
 #include "base_general_dynamics.h"
 
 namespace SPH
 {
-template <class DynamicsIdentifier, typename InitializeFunctionType>
-class InitialCondition : public BaseLocalDynamics<DynamicsIdentifier>
+template <typename IndicationCriterion>
+class AdaptLevelIndication : public LocalDynamics
 {
-    using DataType = typename InitializeFunctionType::ReturnType;
-    using Initialize = typename InitializeFunctionType::ComputingKernel;
+    using IndicationKernel = typename IndicationCriterion::ComputingKernel;
 
   public:
-    template <typename... Args>
-    InitialCondition(DynamicsIdentifier &identifier, const std::string &variable_name, Args &...args)
-        : BaseLocalDynamics<DynamicsIdentifier>(identifier),
-          dv_pos_(this->particles_->template getVariableByName<Vecd>("Position")),
-          dv_variable_(this->particles_->template registerStateVariableOnly<DataType>(variable_name)),
-          initialize_method_(this->particles_, std::forward<Args>(args)...){};
-    virtual ~InitialCondition() {};
+    explicit AdaptLevelIndication(SPHBody &sph_body)
+        : LocalDynamics(sph_body),
+          indication_method_(sph_adaptation_, particles_),
+          dv_adapt_level_(
+              particles_->registerStateVariableOnly<int>("AdaptLevel"))
+    {
+        if (indication_method_.isFixedIndication())
+        {
+            particles_->addEvolvingVariable<int>(dv_adapt_level_);
+        }
+        particles_->addVariableToWrite<int>(dv_adapt_level_);
+    };
+    virtual ~AdaptLevelIndication() {};
 
     class UpdateKernel
     {
       public:
         template <class ExecutionPolicy, class EncloserType>
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : pos_(encloser.dv_pos_->DelegatedData(ex_policy)),
-              variable_(encloser.dv_variable_->DelegatedData(ex_policy)),
-              initialize_(ex_policy, encloser.initialize_method_){};
+            : indication_(ex_policy, encloser.indication_method_),
+              adapt_level_(
+                  encloser.dv_adapt_level_->DelegatedData(ex_policy)){};
 
         void update(size_t index_i, Real dt = 0.0)
         {
-            variable_[index_i] = initialize_(pos_[index_i]);
+            adapt_level_[index_i] = indication_(index_i);
         };
 
       protected:
-        Vecd *pos_;
-        DataType *variable_;
-        Initialize initialize_;
+        IndicationKernel indication_;
+        int *adapt_level_;
     };
 
   protected:
-    DiscreteVariable<Vecd> *dv_pos_;
-    DiscreteVariable<DataType> *dv_variable_;
-    InitializeFunctionType initialize_method_;
-};
-
-template <typename DataType>
-class UniformDistribution : public ReturnFunction<DataType>
-{
-  public:
-    UniformDistribution(BaseParticles *particles, DataType constant_value)
-        : constant_value_(constant_value) {};
-
-    class ComputingKernel
-    {
-      public:
-        template <class ExecutionPolicy, class EncloserType>
-        ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : constant_value_(encloser.constant_value_){};
-
-        DataType operator()(const Vecd &position) { return constant_value_; };
-
-      protected:
-        DataType constant_value_;
-    };
-
-  protected:
-    DataType constant_value_;
+    IndicationCriterion indication_method_;
+    DiscreteVariable<int> *dv_adapt_level_;
 };
 } // namespace SPH
-#endif // GENERAL_INITIAL_CONDITION_H
+#endif // ADAPT_INDICATION_H

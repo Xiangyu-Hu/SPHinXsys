@@ -38,7 +38,7 @@ DensityRegularization<Base, RelationType<Parameters...>>::InteractKernel::
 //=================================================================================================//
 template <typename RegularizationType, typename ParticleScopeType, typename... Parameters>
 DensityRegularization<Inner<WithUpdate, RegularizationType, ParticleScopeType, Parameters...>>::
-    DensityRegularization(Relation<Inner<Parameters...>> &inner_relation)
+    DensityRegularization(Inner<Parameters...> &inner_relation)
     : DensityRegularization<Base, Inner<Parameters...>>(inner_relation),
       regularization_method_(this->particles_),
       within_scope_method_(this->particles_)
@@ -51,7 +51,7 @@ DensityRegularization<Inner<WithUpdate, RegularizationType, ParticleScopeType, P
     InteractKernel(const ExecutionPolicy &ex_policy,
                    DensityRegularization<Inner<WithUpdate, RegularizationType, ParticleScopeType, Parameters...>> &encloser)
     : DensityRegularization<Base, Inner<Parameters...>>::InteractKernel(ex_policy, encloser),
-      W0_(this->kernel_.W(ZeroData<Vecd>::value)) {}
+      W0_(this->W(ZeroData<Vecd>::value)) {}
 //=================================================================================================//
 template <typename RegularizationType, typename ParticleScopeType, typename... Parameters>
 void DensityRegularization<Inner<WithUpdate, RegularizationType, ParticleScopeType, Parameters...>>::
@@ -85,7 +85,7 @@ void DensityRegularization<Inner<WithUpdate, RegularizationType, ParticleScopeTy
 //=================================================================================================//
 template <typename... Parameters>
 DensityRegularization<Contact<Parameters...>>::
-    DensityRegularization(Relation<Contact<Parameters...>> &contact_relation)
+    DensityRegularization(Contact<Parameters...> &contact_relation)
     : DensityRegularization<Base, Contact<Parameters...>>(contact_relation)
 {
     for (size_t k = 0; k != this->contact_particles_.size(); ++k)

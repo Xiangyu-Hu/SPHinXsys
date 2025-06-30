@@ -139,8 +139,8 @@ int main(int ac, char *av[])
     //	Basically the the range of bodies to build neighbor particle lists.
     //  Generally, we first define all the inner relations, then the contact relations.
     //----------------------------------------------------------------------
-    Relation<Inner<>> diffusion_body_inner(diffusion_body);
-    Relation<Contact<>> observer_contact(temperature_observer, {&diffusion_body});
+    Inner<> diffusion_body_inner(diffusion_body);
+    Contact<> observer_contact(temperature_observer, {&diffusion_body});
     //----------------------------------------------------------------------
     // Define the main execution policy for this case.
     //----------------------------------------------------------------------
@@ -156,13 +156,13 @@ int main(int ac, char *av[])
     // Finally, the auxiliary models such as time step estimator, initial condition,
     // boundary condition and other constraints should be defined.
     //----------------------------------------------------------------------
-    UpdateCellLinkedList<MainExecutionPolicy, CellLinkedList> diffusion_body_cell_linked_list(diffusion_body);
+    UpdateCellLinkedList<MainExecutionPolicy, RealBody> diffusion_body_cell_linked_list(diffusion_body);
     UpdateRelation<MainExecutionPolicy, Inner<>> water_block_update_complex_relation(diffusion_body_inner);
     UpdateRelation<MainExecutionPolicy, Contact<>> observer_update_contact_relation(observer_contact);
 
     InteractionDynamicsCK<MainExecutionPolicy, LinearCorrectionMatrixInner> correct_configuration(diffusion_body_inner);
 
-    StateDynamics<MainExecutionPolicy, InitialCondition<SPHBody, UniformDistribution<Real>>>
+    StateDynamics<MainExecutionPolicy, VariableAssignment<SPHBody, ConstantValue<Real>>>
         diffusion_initial_condition(diffusion_body, diffusion_species_name, initial_temperature);
     GetDiffusionTimeStepSize get_time_step_size(diffusion_body);
     RungeKuttaSequence<InteractionDynamicsCK<

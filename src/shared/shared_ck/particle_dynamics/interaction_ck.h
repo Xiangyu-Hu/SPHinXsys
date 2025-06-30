@@ -31,7 +31,7 @@
 #define INTERACTION_CK_H
 
 #include "base_local_dynamics.h"
-#include "neighborhood_ck.hpp"
+#include "neighborhood_ck.h"
 #include "relation_ck.hpp"
 
 namespace SPH
@@ -44,23 +44,24 @@ class InteractionOnly;
 template <typename... T>
 class Interaction;
 
-template <typename... Parameters>
-class Interaction<Inner<Parameters...>> : public LocalDynamics
+template <class DynamicsIdentifier, typename... Parameters>
+class Interaction<Inner<DynamicsIdentifier, Parameters...>>
+    : public BaseLocalDynamics<DynamicsIdentifier>
 {
-    typedef Relation<Inner<Parameters...>> InnerRelationType;
+    typedef Inner<DynamicsIdentifier, Parameters...> InnerRelationType;
     using NeighborList = typename InnerRelationType::NeighborList;
+    using NeighborMethod = typename InnerRelationType::NeighborMethodType;
+    using Neighborhood = Neighbor<NeighborMethod>;
 
   public:
     explicit Interaction(InnerRelationType &inner_relation);
     virtual ~Interaction() {};
-    SPHAdaptation *getSPHAdaptation() { return sph_adaptation_; };
 
-    class InteractKernel : public NeighborList, public Neighbor<Parameters...>
+    class InteractKernel : public NeighborList, public Neighborhood
     {
       public:
-        template <class ExecutionPolicy>
-        InteractKernel(const ExecutionPolicy &ex_policy,
-                       Interaction<Inner<Parameters...>> &encloser);
+        template <class ExecutionPolicy, class EncloserType>
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
     };
 
     typedef InteractKernel BaseInteractKernel;
@@ -69,27 +70,36 @@ class Interaction<Inner<Parameters...>> : public LocalDynamics
 
   protected:
     InnerRelationType &inner_relation_;
-    RealBody *real_body_;
-    SPHAdaptation *sph_adaptation_;
 };
 
-template <class SourceIdentifier, class TargetIdentifier, typename... Parameters>
-class Interaction<Contact<SourceIdentifier, TargetIdentifier, Parameters...>>
+template <>
+class Interaction<Inner<>> : public Interaction<Inner<RealBody, SmoothingLength<SingleValued>>>
+{
+  public:
+    explicit Interaction(Inner<RealBody, SmoothingLength<SingleValued>> &inner_relation)
+        : Interaction<Inner<RealBody, SmoothingLength<SingleValued>>>(inner_relation) {};
+    virtual ~Interaction() {};
+};
+
+template <class SourceIdentifier, typename... Parameters>
+class Interaction<Contact<SourceIdentifier, Parameters...>>
     : public BaseLocalDynamics<SourceIdentifier>
 {
-    typedef Relation<Contact<SourceIdentifier, TargetIdentifier, Parameters...>> ContactRelationType;
+    typedef Contact<SourceIdentifier, Parameters...> ContactRelationType;
     using NeighborList = typename ContactRelationType::NeighborList;
+    using NeighborMethod = typename ContactRelationType::NeighborMethodType;
+    using Neighborhood = Neighbor<NeighborMethod>;
 
   public:
     explicit Interaction(ContactRelationType &contact_relation);
     virtual ~Interaction() {};
-    SPHAdaptation *getSPHAdaptation() { return sph_adaptation_; };
 
-    class InteractKernel : public NeighborList, public Neighbor<Parameters...>
+    class InteractKernel : public NeighborList, public Neighborhood
     {
       public:
         template <class ExecutionPolicy, class EncloserType>
-        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt contact_index);
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser,
+                       UnsignedInt contact_index);
     };
 
     typedef InteractKernel BaseInteractKernel;
@@ -98,18 +108,17 @@ class Interaction<Contact<SourceIdentifier, TargetIdentifier, Parameters...>>
 
   protected:
     ContactRelationType &contact_relation_;
-    SPHAdaptation *sph_adaptation_;
-    RealBodyVector contact_bodies_;
+    StdVec<SPHBody *> contact_bodies_;
     StdVec<BaseParticles *> contact_particles_;
     StdVec<SPHAdaptation *> contact_adaptations_;
 };
 
 template <>
-class Interaction<Contact<>> : public Interaction<Contact<SPHBody, RealBody>>
+class Interaction<Contact<>> : public Interaction<Contact<SPHBody, RealBody, SmoothingLength<SingleValued>>>
 {
   public:
-    explicit Interaction(Relation<Contact<>> &contact_relation)
-        : Interaction<Contact<SPHBody, RealBody>>(contact_relation) {};
+    explicit Interaction(Contact<> &contact_relation)
+        : Interaction<Contact<SPHBody, RealBody, SmoothingLength<SingleValued>>>(contact_relation) {};
     virtual ~Interaction() {};
 };
 

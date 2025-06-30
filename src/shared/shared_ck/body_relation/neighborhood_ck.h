@@ -31,54 +31,48 @@
 #ifndef NEIGHBORHOOD_CK_H
 #define NEIGHBORHOOD_CK_H
 
-#include "kernel_tabulated_ck.h"
-#include "neighborhood.h"
+#include "neighbor_method.h"
 
 namespace SPH
 {
-template <typename... T>
-class Neighbor;
-
-template <>
-class Neighbor<>
+template <class NeighborMethod>
+class Neighbor
 {
+    using SmoothingKernel = typename NeighborMethod::SmoothingKernel;
+
   public:
     template <class ExecutionPolicy>
-    Neighbor(const ExecutionPolicy &ex_policy,
-             SPHAdaptation *sph_adaptation, SPHAdaptation *contact_adaptation,
-             DiscreteVariable<Vecd> *dv_pos, DiscreteVariable<Vecd> *dv_target_pos);
+    Neighbor(const ExecutionPolicy &ex_policy, NeighborMethod &neighbor_method)
+        : smoothing_kernel_(ex_policy, neighbor_method){};
 
-    KernelTabulatedCK &getKernel() { return kernel_; }
+    inline Vecd vec_r_ij(size_t i, size_t j) const { return smoothing_kernel_.vec_r_ij(i, j); };
+    inline Real W_ij(size_t i, size_t j) const { return smoothing_kernel_.W_ij(i, j); };
+    inline Real dW_ij(size_t i, size_t j) const { return smoothing_kernel_.dW_ij(i, j); };
+    inline Vecd e_ij(size_t i, size_t j) const { return smoothing_kernel_.e_ij(i, j); };
+    inline Real W(const Vecd &displacement) const { return smoothing_kernel_.W(displacement); };
 
-    inline Vecd vec_r_ij(size_t i, size_t j) const { return source_pos_[i] - target_pos_[j]; };
-    inline Real W_ij(size_t i, size_t j) const { return kernel_.W(vec_r_ij(i, j)); }
-    inline Real dW_ij(size_t i, size_t j) const { return kernel_.dW(vec_r_ij(i, j)); }
+  protected:
+    SmoothingKernel smoothing_kernel_;
+};
 
-    inline Vecd e_ij(size_t i, size_t j) const
+template <class NeighborMethod>
+class NeighborCriterion
+{
+    using CriterionKernel = typename NeighborMethod::CriterionKernel;
+
+  public:
+    template <class ExecutionPolicy>
+    NeighborCriterion(const ExecutionPolicy &ex_policy, NeighborMethod &neighbor_method)
+        : criterion_kernel_(ex_policy, neighbor_method){};
+
+    inline bool operator()(UnsignedInt target_index, UnsignedInt source_index) const
     {
-        Vecd displacement = vec_r_ij(i, j);
-        return displacement / (displacement.norm() + TinyReal);
-    }
-
-    class NeighborCriterion
-    {
-      public:
-        NeighborCriterion(Neighbor<> &neighbor);
-        bool operator()(UnsignedInt target_index, UnsignedInt source_index) const
-        {
-            return (source_pos_[source_index] - target_pos_[target_index]).squaredNorm() < cut_radius_square_;
-        };
-
-      protected:
-        Vecd *source_pos_;
-        Vecd *target_pos_;
-        Real cut_radius_square_;
+        return criterion_kernel_(source_index, target_index);
     };
 
   protected:
-    KernelTabulatedCK kernel_;
-    Vecd *source_pos_;
-    Vecd *target_pos_;
+    CriterionKernel criterion_kernel_;
 };
+
 } // namespace SPH
 #endif // NEIGHBORHOOD_CK_H

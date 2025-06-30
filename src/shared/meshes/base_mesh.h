@@ -156,6 +156,7 @@ class BaseMeshField
     virtual ~BaseMeshField() {};
     /** Return the mesh field name. */
     std::string Name() { return name_; };
+    void setName(const std::string &new_name) { name_ = new_name; };
     /** output mesh data for Tecplot visualization */
     virtual void writeMeshFieldToPlt(const std::string &partial_file_name) = 0;
 };

@@ -107,7 +107,7 @@ class BodyStatesRecording : public BaseIO
     virtual void writeToFile(size_t iteration_step) override;
 
     template <typename DataType>
-    void addToWrite(SPHBody &sph_body, const std::string &name)
+    BodyStatesRecording &addToWrite(SPHBody &sph_body, const std::string &name)
     {
         if (isBodyIncluded(bodies_, &sph_body))
         {
@@ -120,11 +120,12 @@ class BodyStatesRecording : public BaseIO
             std::cout << __FILE__ << ':' << __LINE__ << std::endl;
             exit(1);
         }
+        return *this;
     };
 
     template <typename DerivedVariableMethod,
               typename DynamicsIdentifier, typename... Args>
-    void addDerivedVariableRecording(DynamicsIdentifier &identifier, Args &&...args)
+    BodyStatesRecording &addDerivedVariableRecording(DynamicsIdentifier &identifier, Args &&...args)
     {
         SPHBody &sph_body = identifier.getSPHBody();
         if (isBodyIncluded(bodies_, &sph_body))
@@ -140,6 +141,7 @@ class BodyStatesRecording : public BaseIO
             std::cout << __FILE__ << ':' << __LINE__ << std::endl;
             exit(1);
         }
+        return *this;
     };
 
   protected:

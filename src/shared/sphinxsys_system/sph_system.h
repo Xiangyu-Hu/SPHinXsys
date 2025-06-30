@@ -99,6 +99,9 @@ class SPHSystem
     template <typename DataType>
     DataType *getSystemVariableDataByName(const std::string &name);
 
+    template <typename BodyType, typename... Args>
+    BodyType &addBody(Args &&...args);
+
   protected:
     friend class IOEnvironment;
     BoundingBox system_domain_bounds_;       /**< Lower and Upper domain bounds. */

@@ -80,8 +80,8 @@ int main(int ac, char *av[])
     //	Basically the the range of bodies to build neighbor particle lists.
     //  Generally, we first define all the inner relations, then the contact relations.
     //----------------------------------------------------------------------
-    Relation<Inner<>> water_body_inner(water_body);
-    Relation<Contact<>> water_wall_contact(water_body, {&wall});
+    Inner<> water_body_inner(water_body);
+    Contact<> water_wall_contact(water_body, {&wall});
     //----------------------------------------------------------------------
     // Define the main execution policy for this case.
     //----------------------------------------------------------------------
@@ -97,8 +97,8 @@ int main(int ac, char *av[])
     // Finally, the auxiliary models such as time step estimator, initial condition,
     // boundary condition and other constraints should be defined.
     //----------------------------------------------------------------------
-    UpdateCellLinkedList<MainExecutionPolicy, CellLinkedList> water_cell_linked_list(water_body);
-    UpdateCellLinkedList<MainExecutionPolicy, CellLinkedList> wall_cell_linked_list(wall);
+    UpdateCellLinkedList<MainExecutionPolicy, RealBody> water_cell_linked_list(water_body);
+    UpdateCellLinkedList<MainExecutionPolicy, RealBody> wall_cell_linked_list(wall);
     UpdateRelation<MainExecutionPolicy, Inner<>, Contact<>> water_body_update_complex_relation(water_body_inner, water_wall_contact);
     ParticleSortCK<MainExecutionPolicy> particle_sort(water_body);
 
@@ -106,7 +106,7 @@ int main(int ac, char *av[])
     StateDynamics<MainExecutionPolicy, GravityForceCK<Gravity>> constant_gravity(water_body, gravity);
     StateDynamics<execution::ParallelPolicy, NormalFromBodyShapeCK> wall_normal_direction(wall); // run on CPU
     StateDynamics<MainExecutionPolicy, fluid_dynamics::AdvectionStepSetup> water_advection_step_setup(water_body);
-    StateDynamics<MainExecutionPolicy, fluid_dynamics::AdvectionStepClose> water_advection_step_close(water_body);
+    StateDynamics<MainExecutionPolicy, fluid_dynamics::UpdateParticlePosition> water_update_particle_position(water_body);
 
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticStep1stHalfWithWallRiemannCK>
         fluid_acoustic_step_1st_half(water_body_inner, water_wall_contact);
@@ -143,6 +143,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     int number_of_iterations = 0;
     int screen_output_interval = 1000;
+    int observation_interval = screen_output_interval / 20;
     Real end_time = total_physical_time;
     Real output_interval = end_time / 100;
     Real total_time = 0.0;
@@ -181,7 +182,7 @@ int main(int ac, char *av[])
                 if (total_time >= relax_time)
                     sv_physical_time->incrementValue(acoustic_dt);
             }
-            water_advection_step_close.exec();
+            water_update_particle_position.exec();
 
             if (number_of_iterations % screen_output_interval == 0)
             {
@@ -192,7 +193,7 @@ int main(int ac, char *av[])
             }
             number_of_iterations++;
 
-            if (number_of_iterations % 100 == 0 && number_of_iterations != 1)
+            if (number_of_iterations % 100 == 0)
             {
                 particle_sort.exec();
             }
@@ -200,7 +201,7 @@ int main(int ac, char *av[])
             water_cell_linked_list.exec();
             water_body_update_complex_relation.exec();
 
-            if (total_time >= relax_time)
+            if (total_time >= relax_time && number_of_iterations % observation_interval == 0)
             {
                 wave_gauge.writeToFile(number_of_iterations);
             }
