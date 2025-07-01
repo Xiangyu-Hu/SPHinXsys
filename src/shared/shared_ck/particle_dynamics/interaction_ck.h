@@ -44,11 +44,12 @@ class InteractionOnly;
 template <typename... T>
 class Interaction;
 
-template <class DynamicsIdentifier, typename... Parameters>
-class Interaction<Inner<DynamicsIdentifier, Parameters...>>
-    : public BaseLocalDynamics<DynamicsIdentifier>
+template <typename... Parameters>
+class Interaction<Inner<Parameters...>>
+    : public BaseLocalDynamics<typename Inner<Parameters...>::SourceType>
 {
-    typedef Inner<DynamicsIdentifier, Parameters...> InnerRelationType;
+    using BaseLocalDynamicsType = BaseLocalDynamics<typename Inner<Parameters...>::SourceType>;
+    typedef Inner<Parameters...> InnerRelationType;
     using NeighborList = typename InnerRelationType::NeighborList;
     using NeighborMethod = typename InnerRelationType::NeighborMethodType;
     using Neighborhood = Neighbor<NeighborMethod>;
@@ -72,20 +73,12 @@ class Interaction<Inner<DynamicsIdentifier, Parameters...>>
     InnerRelationType &inner_relation_;
 };
 
-template <>
-class Interaction<Inner<>> : public Interaction<Inner<RealBody, SmoothingLength<SingleValued>>>
+template <typename... Parameters>
+class Interaction<Contact<Parameters...>>
+    : public BaseLocalDynamics<typename Contact<Parameters...>::SourceType>
 {
-  public:
-    explicit Interaction(Inner<RealBody, SmoothingLength<SingleValued>> &inner_relation)
-        : Interaction<Inner<RealBody, SmoothingLength<SingleValued>>>(inner_relation) {};
-    virtual ~Interaction() {};
-};
-
-template <class SourceIdentifier, typename... Parameters>
-class Interaction<Contact<SourceIdentifier, Parameters...>>
-    : public BaseLocalDynamics<SourceIdentifier>
-{
-    typedef Contact<SourceIdentifier, Parameters...> ContactRelationType;
+    using BaseLocalDynamicsType = BaseLocalDynamics<typename Contact<Parameters...>::SourceType>;
+    typedef Contact<Parameters...> ContactRelationType;
     using NeighborList = typename ContactRelationType::NeighborList;
     using NeighborMethod = typename ContactRelationType::NeighborMethodType;
     using Neighborhood = Neighbor<NeighborMethod>;
@@ -111,15 +104,6 @@ class Interaction<Contact<SourceIdentifier, Parameters...>>
     StdVec<SPHBody *> contact_bodies_;
     StdVec<BaseParticles *> contact_particles_;
     StdVec<SPHAdaptation *> contact_adaptations_;
-};
-
-template <>
-class Interaction<Contact<>> : public Interaction<Contact<SPHBody, RealBody, SmoothingLength<SingleValued>>>
-{
-  public:
-    explicit Interaction(Contact<> &contact_relation)
-        : Interaction<Contact<SPHBody, RealBody, SmoothingLength<SingleValued>>>(contact_relation) {};
-    virtual ~Interaction() {};
 };
 
 template <>
