@@ -30,7 +30,7 @@
 #define LEVEL_SET_SHAPE_H
 
 #include "base_geometry.h"
-#include "level_set.h"
+#include "level_set.hpp"
 
 #include <string>
 
@@ -52,12 +52,18 @@ class LevelSetShape : public Shape
     /** refinement_ratio is between body reference resolution and level set resolution */
     LevelSetShape(Shape &shape, SharedPtr<SPHAdaptation> sph_adaptation, Real refinement_ratio = 1.0);
     LevelSetShape(SPHBody &sph_body, Shape &shape, Real refinement_ratio = 1.0);
+    LevelSetShape(BoundingBox bounding_box, Shape &shape, SharedPtr<SPHAdaptation> sph_adaptation, Real refinement_ratio = 1.0);
+    LevelSetShape(BoundingBox bounding_box, SPHBody &sph_body, Shape &shape, Real refinement_ratio = 1.0);
+    LevelSetShape(const ParallelDevicePolicy &par_device, Shape &shape, SharedPtr<SPHAdaptation> sph_adaptation, Real refinement_ratio = 1.0);
+    LevelSetShape(const ParallelDevicePolicy &par_device, SPHBody &sph_body, Shape &shape, Real refinement_ratio = 1.0);
 
     virtual ~LevelSetShape(){};
 
     virtual bool checkContain(const Vecd &probe_point, bool BOUNDARY_INCLUDED = true) override;
     virtual Vecd findClosestPoint(const Vecd &probe_point) override;
 
+    template <class ExecutionPolicy>
+    void finishInitialization(const ExecutionPolicy &ex_policy) { level_set_.finishInitialization(ex_policy); };
     Vecd findLevelSetGradient(const Vecd &probe_point);
     Real computeKernelIntegral(const Vecd &probe_point, Real h_ratio = 1.0);
     Vecd computeKernelGradientIntegral(const Vecd &probe_point, Real h_ratio = 1.0);

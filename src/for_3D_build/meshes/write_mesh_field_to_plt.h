@@ -1,5 +1,3 @@
-#include "mesh_local_dynamics.h"
-
 #include "mesh_iterators.h"
 #include <unordered_set>
 

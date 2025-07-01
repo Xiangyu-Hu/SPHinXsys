@@ -33,7 +33,6 @@
 #include "base_data_type.h"
 #include "base_implementation.h"
 #include "execution_policy.h"
-#include "loop_range.h"
 #include "ownership.h"
 
 namespace SPH
