@@ -62,6 +62,8 @@ class SmoothingLength<Base>
               target_pos_(encloser.dv_target_pos_->DelegatedData(ex_policy)){};
 
         inline Vecd vec_r_ij(size_t i, size_t j) const { return source_pos_[i] - target_pos_[j]; };
+        inline Vecd vec_r_i(UnsignedInt i) const { return source_pos_[i]; };
+        inline Vecd vec_r_j(UnsignedInt j) const { return target_pos_[j]; };
 
         inline Vecd e_ij(size_t i, size_t j) const
         {
