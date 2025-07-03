@@ -24,3 +24,8 @@ set_tests_properties(${PROJECT_NAME} PROPERTIES LABELS "pressure boundary")
 
 set_target_properties(${PROJECT_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${EXECUTABLE_OUTPUT_PATH}")
 target_link_libraries(${PROJECT_NAME} extra_sources_2d)
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/restart DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/bin)
+execute_process(
+    COMMAND unzip -o ${CMAKE_CURRENT_BINARY_DIR}/bin/restart/WaterBody_rst_0000004000.zip
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bin/restart
+)

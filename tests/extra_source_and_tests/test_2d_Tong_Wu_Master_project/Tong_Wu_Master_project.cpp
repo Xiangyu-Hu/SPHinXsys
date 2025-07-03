@@ -1,6 +1,6 @@
 /**
  * @file 	Tong_Wu_Naster_project.cpp
- * @details This is the 2D elastic aortic valve FSI 
+ * @details This is the 2D elastic aortic valve FSI
  *  @author Tong Wu
  */
 #include "bidirectional_buffer.h"
@@ -44,6 +44,7 @@ Vec2d bidirectional_buffer_halfsize = Vec2d(2.5 * resolution_ref, 0.5 * H);
 Vec2d left_bidirectional_translation = bidirectional_buffer_halfsize;
 Vec2d right_bidirectional_translation = Vec2d(6 * H, H) - bidirectional_buffer_halfsize;
 Vec2d normal = Vec2d(1.0, 0.0);
+Vec2d tip = Vec2d(0.04845, 0.01155);
 //----------------------------------------------------------------------
 //	Pressure boundary definition.
 //----------------------------------------------------------------------
@@ -248,7 +249,10 @@ int main(int ac, char *av[])
     //	Build up an SPHSystem and IO environment.
     //----------------------------------------------------------------------
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
-    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
+    sph_system.handleCommandlineOptions(ac, av);
+    sph_system.setGenerateRegressionData(false);
+    sph_system.setRestartStep(4000);
+    sph_system.setIOEnvironment();
     //----------------------------------------------------------------------
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
@@ -268,6 +272,10 @@ int main(int ac, char *av[])
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
         ? insert_body.generateParticles<BaseParticles, Reload>(insert_body.getName())
         : insert_body.generateParticles<BaseParticles, Lattice>();
+    ObserverBody beam_observer(sph_system, "BeamObserver");
+    StdVec<Vecd> beam_observation_location = {tip};
+    beam_observer.generateParticles<ObserverParticles>(beam_observation_location);
+
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -279,6 +287,7 @@ int main(int ac, char *av[])
     ContactRelation water_block_contact(water_block, RealBodyVector{&wall_boundary, &insert_body});
 
     ContactRelation insert_body_contact(insert_body, {&water_block});
+    ContactRelation beam_observer_contact(beam_observer, {&insert_body});
     //----------------------------------------------------------------------
     // Combined relations built from basic relations
     // which is only used for update configuration.
@@ -309,7 +318,6 @@ int main(int ac, char *av[])
     Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation(water_block_inner, water_block_contact);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallRiemann> density_relaxation(water_block_inner, water_block_contact);
 
-  
     InteractionWithUpdate<fluid_dynamics::ViscousForceWithWall> viscous_acceleration(water_block_inner, water_block_contact);
     InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionComplex<BulkParticles>> transport_velocity_correction(water_block_inner, water_block_contact);
     ReduceDynamics<fluid_dynamics::AdvectionViscousTimeStep> get_fluid_advection_time_step_size(water_block, U_f);
@@ -339,6 +347,8 @@ int main(int ac, char *av[])
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp body_states_recording(sph_system);
+    RestartIO restart_io(sph_system);
+    RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>> write_beam_tip_displacement("Position", beam_observer_contact);
     body_states_recording.addToWrite<Real>(water_block, "Pressure");
     body_states_recording.addToWrite<int>(water_block, "Indicator");
     body_states_recording.addToWrite<Real>(water_block, "Density");
@@ -361,12 +371,28 @@ int main(int ac, char *av[])
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
     Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
-    size_t number_of_iterations = 0;
-    int screen_output_interval = 100;
+    if (sph_system.RestartStep() != 0)
+    {
 
-    Real end_time = 10.0;    /**< End time. */
-    Real Output_Time = 0.01; /**< Time stamps for output of body states. */
-    Real dt = 0.0;           /**< Default acoustic time step sizes. */
+        physical_time = restart_io.readRestartFiles(sph_system.RestartStep());
+
+        water_block.updateCellLinkedList();
+        water_block_complex.updateConfiguration();
+
+        insert_body.updateCellLinkedList();
+        insert_body_contact.updateConfiguration();
+
+        beam_observer_contact.updateConfiguration();
+
+        boundary_indicator.exec();
+    }
+
+    size_t number_of_iterations = sph_system.RestartStep();
+    int screen_output_interval = 100;
+    int restart_output_interval = screen_output_interval * 10;
+    Real end_time = 0.273;    /**< End time. */
+    Real Output_Time = 0.001; /**< Time stamps for output of body states. */
+    Real dt = 0.0;            /**< Default acoustic time step sizes. */
     //----------------------------------------------------------------------
     //	Statistics for CPU time
     //----------------------------------------------------------------------
@@ -390,7 +416,7 @@ int main(int ac, char *av[])
         /** Integrate time (loop) until the next output time. */
         while (integration_time < Output_Time)
         {
-            time_instance = TickCount::now(); 
+            time_instance = TickCount::now();
             Real Dt = get_fluid_advection_time_step_size.exec();
             update_fluid_density.exec();
 
@@ -441,6 +467,13 @@ int main(int ac, char *av[])
                 std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
                           << physical_time
                           << "	Dt = " << Dt << "	Dt / dt = " << inner_ite_dt << "	dt / dt_s = " << inner_ite_dt_s << "\n";
+
+                if (number_of_iterations != sph_system.RestartStep())
+                {
+                    write_beam_tip_displacement.writeToFile(number_of_iterations);
+                }
+                if (number_of_iterations % restart_output_interval == 0)
+                    restart_io.writeToFile(number_of_iterations);
             }
             number_of_iterations++;
 
@@ -459,7 +492,7 @@ int main(int ac, char *av[])
             }
             water_block.updateCellLinkedList();
             water_block_complex.updateConfiguration();
-            water_block_complex.updateConfiguration();
+
             interval_updating_configuration += TickCount::now() - time_instance;
             boundary_indicator.exec();
             left_bidirection_buffer.tag_buffer_particles.exec();
@@ -485,6 +518,18 @@ int main(int ac, char *av[])
               << interval_computing_pressure_relaxation.seconds() << "\n";
     std::cout << std::fixed << std::setprecision(9) << "interval_updating_configuration = "
               << interval_updating_configuration.seconds() << "\n";
+
+    if (sph_system.GenerateRegressionData())
+    {
+        // The lift force at the cylinder is very small and not important in this case.
+
+        write_beam_tip_displacement.generateDataBase(1.0e-2);
+    }
+    else
+    {
+
+        write_beam_tip_displacement.testResult();
+    }
 
     return 0;
 }
