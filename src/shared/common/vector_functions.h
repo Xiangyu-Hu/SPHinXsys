@@ -183,5 +183,17 @@ Eigen::Matrix<Real, N, M> tensorProduct(const Eigen::Matrix<Real, N, O> &value1,
 {
     return value1 * value2.transpose();
 };
+
+template <int M>
+Eigen::Matrix<Real, M, M> regularizeWithIdentity(
+    const Eigen::Matrix<Real, M, M> &input, Real alpha = 0.0)
+{
+    Real determinant = ABS(input.determinant());
+    Real det_sqr = SMAX(alpha - determinant, Real(0));
+    Matd input_T = input.transpose(); // for Tikhonov regularization
+    Matd inverse = (input_T * input + SqrtEps * Matd::Identity()).inverse() * input_T;
+    Real weight = determinant / (determinant + det_sqr);
+    return weight * inverse + (1.0 - weight) * Matd::Identity();
+}
 } // namespace SPH
 #endif // VECTOR_FUNCTIONS_H

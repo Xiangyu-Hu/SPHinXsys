@@ -59,12 +59,7 @@ template <typename... Parameters>
 void LinearCorrectionMatrix<Inner<WithUpdate, Parameters...>>::
     UpdateKernel::update(size_t index_i, Real dt)
 {
-    Real determinant = this->B_[index_i].determinant();
-    Real det_sqr = SMAX(alpha_ - determinant, Real(0));
-    Matd B_T = this->B_[index_i].transpose(); // for Tikhonov regularization
-    Matd inverse = (B_T * this->B_[index_i] + SqrtEps * Matd::Identity()).inverse() * B_T;
-    Real weight = determinant / (determinant + det_sqr);
-    this->B_[index_i] = weight * inverse + (1.0 - weight) * Matd::Identity();
+    this->B_[index_i] = regularizeWithIdentity(this->B_[index_i], alpha_);
 }
 //=================================================================================================//
 template <typename... Parameters>
