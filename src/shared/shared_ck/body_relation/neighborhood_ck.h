@@ -46,8 +46,8 @@ class Neighbor
         : smoothing_kernel_(ex_policy, neighbor_method){};
 
     inline Vecd vec_r_ij(size_t i, size_t j) const { return smoothing_kernel_.vec_r_ij(i, j); };
-    inline Vecd vec_r_i(UnsignedInt i) const { return smoothing_kernel_.vec_r_i[i]; };
-    inline Vecd vec_r_j(UnsignedInt j) const { return smoothing_kernel_.vec_r_j[j]; };
+    inline Vecd vec_r_i(UnsignedInt i) const { return smoothing_kernel_.vec_r_i(i); };
+    inline Vecd vec_r_j(UnsignedInt j) const { return smoothing_kernel_.vec_r_j(j); };
     inline Real W_ij(size_t i, size_t j) const { return smoothing_kernel_.W_ij(i, j); };
     inline Real dW_ij(size_t i, size_t j) const { return smoothing_kernel_.dW_ij(i, j); };
     inline Vecd e_ij(size_t i, size_t j) const { return smoothing_kernel_.e_ij(i, j); };
