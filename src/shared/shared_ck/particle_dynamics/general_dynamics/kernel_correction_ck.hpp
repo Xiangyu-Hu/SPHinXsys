@@ -59,7 +59,7 @@ template <typename... Parameters>
 void LinearCorrectionMatrix<Inner<WithUpdate, Parameters...>>::
     UpdateKernel::update(size_t index_i, Real dt)
 {
-    this->B_[index_i] = regularizeWithIdentity(this->B_[index_i], alpha_);
+    this->B_[index_i] = inverseRegularizedWithIdentity(this->B_[index_i], alpha_);
 }
 //=================================================================================================//
 template <typename... Parameters>

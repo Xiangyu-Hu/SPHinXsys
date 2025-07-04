@@ -185,7 +185,7 @@ Eigen::Matrix<Real, N, M> tensorProduct(const Eigen::Matrix<Real, N, O> &value1,
 };
 
 template <int M>
-Eigen::Matrix<Real, M, M> regularizeWithIdentity(
+Eigen::Matrix<Real, M, M> inverseRegularizedWithIdentity(
     const Eigen::Matrix<Real, M, M> &input, Real alpha = 0.0)
 {
     Real determinant = ABS(input.determinant());
