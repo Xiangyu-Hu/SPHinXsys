@@ -1,20 +1,18 @@
 # ![SPHinXsys Logo](assets/logo.png) SPHinXsys
 
-## A milestone for the heterogeneous parallelism
+## Heterogeneous parallelism for mesh dynamics
 
-SPHinXsys is undergoing a major transformation,
-moving from traditional CPU parallelism to a new era of heterogeneous parallelism,
-where compute-intensive tasks can harness the power of both CPUs and GPUs.
-This evolution will be driven by SYCL (via Intel's DPC++), enabling us to leverage heterogeneous architectures with standard C++.
-What's unique about this framework is that it allows for the development
-and testing of numerical methods even in environments without GPUs or DPC++ installed.
-If these methods are crafted following our specified guidelines and prove functional,
-they will seamlessly operate in environments equipped with DPC++ and GPU support.
+It is known that SPHinXsys relies on level-set technique to realize
+particle generation and relaxation for later SPH simulations.
+The level-set field is build on a multi-level Cartesian mesh
+with sparse storage and adaptive mesh refinement (AMR).
 
-I am excited to announce that SPHinXsys has achieved a milestone on heterogeneous parallelism.
-Now, SPHinXsys is able to run on both CPUs and GPUs for the major applications
-in fluid and thermal-fluid dynamics and their coupling with multi-body system.
-All test cases following heterogeneous parallelism have been added to the `test/test_sycl` folder,
+Now, the level-set base operations or more generally mesh dynamics,
+such as small-feature cleaning, re-initialization
+and normal direction computing can be carried on either CPU or GPU
+with the same numerical algorithm and the help of SYCL kernels.
+
+The test utilizes heterogeneous parallelism for mesh dynamics have been added to the case `taylor_bar_sycl.cpp` in `test/test_sycl` folder,
 showcasing the capabilities of our specially designed framework.
 
 Your tests, comments and modification of these test cases would be very welcomed!
