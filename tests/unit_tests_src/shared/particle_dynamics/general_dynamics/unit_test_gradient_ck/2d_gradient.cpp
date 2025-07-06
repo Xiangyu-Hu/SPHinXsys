@@ -70,7 +70,7 @@ class ParabolicProfile : public ReturnFunction<Real>
 
   public:
     ParabolicProfile() : first_coefficient_(first_coefficient),
-        second_coefficient_(second_coefficient) {};
+                         second_coefficient_(second_coefficient) {};
 
     Real operator()(const Vec2d &position)
     {
@@ -172,9 +172,9 @@ int main(int ac, char *av[])
     InteractionDynamicsCK<MainExecutionPolicy, HessianCorrectionMatrix<Inner<WithUpdate>, Contact<>>>
         hessian_correction_matrix(DynamicsArgs(water_block_inner, 0.0), water_wall_contact);
 
-    StateDynamics<MainExecutionPolicy, VariableAssignment<SPHBody, SpatialDistribution<ParabolicProfile>>>
+    StateDynamics<MainExecutionPolicy, VariableAssignment<SpatialDistribution<ParabolicProfile>, SPHBody>>
         water_block_initial_condition(water_block, "Phi");
-    StateDynamics<MainExecutionPolicy, VariableAssignment<SPHBody, SpatialDistribution<ParabolicProfile>>>
+    StateDynamics<MainExecutionPolicy, VariableAssignment<SpatialDistribution<ParabolicProfile>, SPHBody>>
         wall_initial_condition(wall, "Phi");
     InteractionDynamicsCK<MainExecutionPolicy, LinearGradient<Inner<Real>, Contact<Real>>>
         variable_linear_gradient(

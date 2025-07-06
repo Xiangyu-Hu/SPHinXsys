@@ -34,7 +34,7 @@
 
 namespace SPH
 {
-template <class DynamicsIdentifier, typename DataType>
+template <typename DataType, class DynamicsIdentifier>
 class ConstantConstraintCK : public BaseLocalDynamics<DynamicsIdentifier>
 {
   public:
@@ -42,8 +42,8 @@ class ConstantConstraintCK : public BaseLocalDynamics<DynamicsIdentifier>
                          const DataType &constrained_value)
         : BaseLocalDynamics<DynamicsIdentifier>(identifier),
           dv_variable_(this->particles_->template getVariableByName<DataType>(variable_name)),
-          constrained_value_(constrained_value){};
-    virtual ~ConstantConstraintCK(){};
+          constrained_value_(constrained_value) {};
+    virtual ~ConstantConstraintCK() {};
 
     class UpdateKernel
     {

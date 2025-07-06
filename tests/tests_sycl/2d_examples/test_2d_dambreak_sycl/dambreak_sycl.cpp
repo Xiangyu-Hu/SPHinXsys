@@ -124,10 +124,10 @@ int main(int ac, char *av[])
     body_state_recorder.addToWrite<Vecd>(wall_boundary, "NormalDirection");
     body_state_recorder.addToWrite<Real>(water_block, "Density");
     auto &restart_io = main_methods.addIODynamics<RestartIOCK>(sph_system);
-    auto &record_water_mechanical_energy = main_methods.addRegressionTest<
-        RegressionTestDynamicTimeWarping, ReducedQuantityRecording, TotalMechanicalEnergyCK>(water_block, gravity);
-    auto &fluid_observer_pressure = main_methods.addRegressionTest<
-        RegressionTestDynamicTimeWarping, ObservedQuantityRecording, Real>("Pressure", fluid_observer_contact);
+    auto &record_water_mechanical_energy = main_methods.addReduceRegression<
+        RegressionTestDynamicTimeWarping, TotalMechanicalEnergyCK>(water_block, gravity);
+    auto &fluid_observer_pressure = main_methods.addObserveRegression<
+        RegressionTestDynamicTimeWarping, Real>("Pressure", fluid_observer_contact);
     //----------------------------------------------------------------------
     //	Define time stepper with end and start time.
     //----------------------------------------------------------------------
