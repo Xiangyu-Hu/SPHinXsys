@@ -57,6 +57,16 @@ class KernelTabulatedCK
                (fraction_0 * fraction_1 * fraction_2) / delta_q_3_ * data[i + 2];
     };
 
+    Real factorW1D(const Real &h_ratio) const { return h_ratio; };
+    Real factorW2D(const Real &h_ratio) const { return h_ratio * h_ratio; };
+    Real factorW3D(const Real &h_ratio) const { return h_ratio * h_ratio * h_ratio; };
+    Real factordW1D(const Real &h_ratio) const { return factorW1D(h_ratio) * h_ratio; };
+    Real factordW2D(const Real &h_ratio) const { return factorW2D(h_ratio) * h_ratio; };
+    Real factordW3D(const Real &h_ratio) const { return factorW3D(h_ratio) * h_ratio; };
+    Real factord2W1D(const Real &h_ratio) const { return factordW1D(h_ratio) * h_ratio; };
+    Real factord2W2D(const Real &h_ratio) const { return factordW2D(h_ratio) * h_ratio; };
+    Real factord2W3D(const Real &h_ratio) const { return factordW3D(h_ratio) * h_ratio; };
+
     Real W(const Real &displacement) const
     {
         Real q = displacement * inv_h_;
@@ -75,6 +85,24 @@ class KernelTabulatedCK
         return factor_W_3D_ * interpolateCubic(w_1d, q);
     };
 
+    Real W(const Real &h_ratio, const Real &r_ij, const Real &displacement) const
+    {
+        Real q = r_ij * inv_h_ * h_ratio;
+        return factor_W_1D_ * interpolateCubic(w_1d, q) * factorW1D(h_ratio);
+    }
+
+    Real W(const Real &h_ratio, const Real &r_ij, const Vec2d &displacement) const
+    {
+        Real q = r_ij * inv_h_ * h_ratio;
+        return factor_W_2D_ * interpolateCubic(w_1d, q) * factorW2D(h_ratio);
+    }
+
+    Real W(const Real &h_ratio, const Real &r_ij, const Vec3d &displacement) const
+    {
+        Real q = r_ij * inv_h_ * h_ratio;
+        return factor_W_3D_ * interpolateCubic(w_1d, q) * factorW3D(h_ratio);
+    }
+
     Real dW(const Real &displacement) const
     {
         Real q = displacement * inv_h_;
@@ -91,9 +119,45 @@ class KernelTabulatedCK
         return factor_dW_3D_ * interpolateCubic(dw_1d, q);
     };
 
+    Real dW(const Real &h_ratio, const Real &r_ij, const Real &displacement) const
+    {
+        Real q = r_ij * inv_h_ * h_ratio;
+        return factor_dW_1D_ * interpolateCubic(dw_1d, q) * factordW1D(h_ratio);
+    };
+    Real dW(const Real &h_ratio, const Real &r_ij, const Vec2d &displacement) const
+    {
+        Real q = r_ij * inv_h_ * h_ratio;
+        return factor_dW_2D_ * interpolateCubic(dw_1d, q) * factordW2D(h_ratio);
+    };
+    Real dW(const Real &h_ratio, const Real &r_ij, const Vec3d &displacement) const
+    {
+        Real q = r_ij * inv_h_ * h_ratio;
+        return factor_dW_3D_ * interpolateCubic(dw_1d, q) * factordW3D(h_ratio);
+    };
+
+    Real d2W(const Real &h_ratio, const Real &r_ij, const Real &displacement) const
+    {
+        Real q = r_ij * inv_h_ * h_ratio;
+        return factor_d2W_1D_ * interpolateCubic(d2w_1d, q) * factord2W1D(h_ratio);
+    }
+
+    Real d2W(const Real &h_ratio, const Real &r_ij, const Vec2d &displacement) const
+    {
+        Real q = r_ij * inv_h_ * h_ratio;
+        return factor_d2W_2D_ * interpolateCubic(d2w_1d, q) * factord2W2D(h_ratio);
+    }
+
+    Real d2W(const Real &h_ratio, const Real &r_ij, const Vec3d &displacement) const
+    {
+        Real q = r_ij * inv_h_ * h_ratio;
+        return factor_d2W_3D_ * interpolateCubic(d2w_1d, q) * factord2W3D(h_ratio);
+    }
+
     Real CutOffRadius() const { return rc_ref_; };
     Real CutOffRadiusSqr() const { return rc_ref_sqr_; };
     Real KernelSize() const { return kernel_size_; };
+
+    Real CutOffRadius(Real h_ratio) const { return rc_ref_ / h_ratio; };
 
     inline Real DimensionFactor(const Real &) const { return dimension_factor_1D_; };
     inline Real DimensionFactor(const Vec2d &) const { return dimension_factor_2D_; };
@@ -116,8 +180,9 @@ class KernelTabulatedCK
     Real inv_h_, rc_ref_, rc_ref_sqr_, kernel_size_;
     Real factor_W_1D_, factor_W_2D_, factor_W_3D_;
     Real factor_dW_1D_, factor_dW_2D_, factor_dW_3D_;
+    Real factor_d2W_1D_, factor_d2W_2D_, factor_d2W_3D_;
     Real dq_, delta_q_0_, delta_q_1_, delta_q_2_, delta_q_3_;
-    Real w_1d[tabulated_array_size_], dw_1d[tabulated_array_size_];
+    Real w_1d[tabulated_array_size_], dw_1d[tabulated_array_size_], d2w_1d[tabulated_array_size_];
 };
 } // namespace SPH
 #endif // KERNEL_TABULATED_CK_H

@@ -159,11 +159,17 @@ class SPHBody
     };
 
     template <typename... Args>
-    LevelSetShape *defineBodyLevelSetShape(Args &&...args)
+    LevelSetShape *defineBodyLevelSetShape(Args &&...args){
+        return defineBodyLevelSetShape(par, args...);
+    }
+
+    template <typename ExecutionPolicy, typename... Args>
+    LevelSetShape *defineBodyLevelSetShape(const ExecutionPolicy &ex_policy, Args &&...args)
     {
         LevelSetShape *level_set_shape =
             shape_ptr_keeper_.resetPtr<LevelSetShape>(*this, *initial_shape_, std::forward<Args>(args)...);
 
+        level_set_shape->finishInitialization(ex_policy);
         initial_shape_ = level_set_shape;
         return level_set_shape;
     };
