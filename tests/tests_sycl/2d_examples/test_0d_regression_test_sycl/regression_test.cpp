@@ -173,8 +173,7 @@ int main(int ac, char *av[])
 
     GetDiffusionTimeStepSize get_time_step_size(diffusion_body);
     auto &diffusion_relaxation_rk2 =
-        main_methods.add2ndRungeKuttaSequence<
-            DiffusionRelaxationCK, DirectionalDiffusion, LinearCorrectionCK>(diffusion_body_inner);
+        main_methods.addRK2Sequence<DiffusionRelaxationCK, DirectionalDiffusion, LinearCorrectionCK>(diffusion_body_inner);
 
     auto &left_boundary_condition =
         main_methods.addStateDynamics<ConstantConstraintCK, Real>(left_boundary, diffusion_species_name, high_temperature);

@@ -129,7 +129,7 @@ class ParticleMethodContainer : public BaseMethodContainer
 
     template <template <typename...> class InteractionType, typename... ControlParameters,
               template <typename...> class RelationType, typename... RelationParameters, typename... Args>
-    auto &add2ndRungeKuttaSequence(
+    auto &addRK2Sequence(
         RelationType<RelationParameters...> &relation, Args &&...args)
     {
         return *particle_dynamics_keeper_.createPtr<
