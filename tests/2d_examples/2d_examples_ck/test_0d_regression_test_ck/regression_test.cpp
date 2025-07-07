@@ -134,6 +134,12 @@ int main(int ac, char *av[])
     ObserverBody temperature_observer(sph_system, "TemperatureObserver");
     temperature_observer.generateParticles<ObserverParticles>(createObservationPoints());
     //----------------------------------------------------------------------
+    //	Creating body parts.
+    //----------------------------------------------------------------------
+    BodyRegionByParticle left_boundary(diffusion_body, makeShared<MultiPolygonShape>(createLeftSideBoundary()));
+    BodyRegionByParticle other_boundary(diffusion_body, makeShared<MultiPolygonShape>(createOtherSideBoundary()));
+    BodyRegionByParticle inner_domain(diffusion_body, makeShared<MultiPolygonShape>(createInnerDomain(), "InnerDomain"));
+    //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
     //	Basically the the range of bodies to build neighbor particle lists.
@@ -142,9 +148,10 @@ int main(int ac, char *av[])
     Inner<> diffusion_body_inner(diffusion_body);
     Contact<> observer_contact(temperature_observer, {&diffusion_body});
     //----------------------------------------------------------------------
-    // Define the main execution policy for this case.
+    // Define SPH solver with particle methods and execution policies.
     //----------------------------------------------------------------------
-    using MainExecutionPolicy = execution::ParallelPolicy;
+    SPHSolver sph_solver(sph_system);
+    auto &main_methods = sph_solver.addParticleMethodContainer(par);
     //----------------------------------------------------------------------
     // Define the numerical methods used in the simulation.
     // Note that there may be data dependence on the sequence of constructions.
@@ -156,37 +163,39 @@ int main(int ac, char *av[])
     // Finally, the auxiliary models such as time step estimator, initial condition,
     // boundary condition and other constraints should be defined.
     //----------------------------------------------------------------------
-    UpdateCellLinkedList<MainExecutionPolicy, RealBody> diffusion_body_cell_linked_list(diffusion_body);
-    UpdateRelation<MainExecutionPolicy, Inner<>> water_block_update_complex_relation(diffusion_body_inner);
-    UpdateRelation<MainExecutionPolicy, Contact<>> observer_update_contact_relation(observer_contact);
+    auto &diffusion_body_cell_linked_list = main_methods.addCellLinkedListDynamics(diffusion_body);
+    auto &water_block_update_complex_relation = main_methods.addRelationDynamics(diffusion_body_inner);
+    auto &observer_update_contact_relation = main_methods.addRelationDynamics(observer_contact);
 
-    InteractionDynamicsCK<MainExecutionPolicy, LinearCorrectionMatrixInner> correct_configuration(diffusion_body_inner);
+    auto &correct_configuration = main_methods.addInteractionDynamics<LinearCorrectionMatrixInner>(diffusion_body_inner);
+    auto &diffusion_initial_condition = main_methods.addStateDynamics<VariableAssignment, ConstantValue<Real>>(
+        diffusion_body, diffusion_species_name, initial_temperature);
 
-    StateDynamics<MainExecutionPolicy, VariableAssignment<SPHBody, ConstantValue<Real>>>
-        diffusion_initial_condition(diffusion_body, diffusion_species_name, initial_temperature);
     GetDiffusionTimeStepSize get_time_step_size(diffusion_body);
-    RungeKuttaSequence<InteractionDynamicsCK<
-        MainExecutionPolicy,
-        DiffusionRelaxationCK<Inner<OneLevel, RungeKutta1stStage, DirectionalDiffusion, LinearCorrectionCK>>,
-        DiffusionRelaxationCK<Inner<OneLevel, RungeKutta2ndStage, DirectionalDiffusion, LinearCorrectionCK>>>>
-        diffusion_relaxation_rk2(diffusion_body_inner);
+    auto &diffusion_relaxation_rk2 =
+        main_methods.addRK2Sequence<DiffusionRelaxationCK, DirectionalDiffusion, LinearCorrectionCK>(diffusion_body_inner);
 
-    BodyRegionByParticle left_boundary(diffusion_body, makeShared<MultiPolygonShape>(createLeftSideBoundary()));
-    StateDynamics<MainExecutionPolicy, ConstantConstraintCK<BodyRegionByParticle, Real>>
-        left_boundary_condition(left_boundary, diffusion_species_name, high_temperature);
-    BodyRegionByParticle other_boundary(diffusion_body, makeShared<MultiPolygonShape>(createOtherSideBoundary()));
-    StateDynamics<MainExecutionPolicy, ConstantConstraintCK<BodyRegionByParticle, Real>>
-        other_boundary_condition(other_boundary, diffusion_species_name, low_temperature);
+    auto &left_boundary_condition =
+        main_methods.addStateDynamics<ConstantConstraintCK, Real>(left_boundary, diffusion_species_name, high_temperature);
+    auto &other_boundary_condition =
+        main_methods.addStateDynamics<ConstantConstraintCK, Real>(other_boundary, diffusion_species_name, low_temperature);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations of the simulation.
     //	Regression tests are also defined here.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtpCK<MainExecutionPolicy> write_states(sph_system);
-    RegressionTestEnsembleAverage<ObservedQuantityRecording<MainExecutionPolicy, Real>>
-        write_solid_temperature(diffusion_species_name, observer_contact);
-    BodyRegionByParticle inner_domain(diffusion_body, makeShared<MultiPolygonShape>(createInnerDomain(), "InnerDomain"));
-    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<MainExecutionPolicy, QuantityAverage<Real, BodyPartByParticle>>>
-        write_solid_average_temperature_part(inner_domain, diffusion_species_name);
+    auto &write_states = main_methods.addBodyStateRecorder<BodyStatesRecordingToVtpCK>(sph_system);
+    auto &write_solid_temperature =
+        main_methods.addObserveRegression<RegressionTestEnsembleAverage, Real>(
+            diffusion_species_name, observer_contact);
+    auto &write_solid_average_temperature_part =
+        main_methods.addReduceRegression<RegressionTestDynamicTimeWarping, QuantityAverage, Real>(
+            inner_domain, diffusion_species_name);
+    //----------------------------------------------------------------------
+    //	Define time stepper with end and start time.
+    //----------------------------------------------------------------------
+    TimeStepper &time_stepper = sph_solver.defineTimeStepper(20.0);
+    size_t iteration_steps = 0;
+    auto &state_recording = time_stepper.addTriggerByInterval(0.2);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
@@ -200,67 +209,38 @@ int main(int ac, char *av[])
     left_boundary_condition.exec();
     other_boundary_condition.exec();
     //----------------------------------------------------------------------
-    //	Setup for time-stepping control
-    //----------------------------------------------------------------------
-    SingularVariable<Real> *sv_physical_time = sph_system.getSystemVariableByName<Real>("PhysicalTime");
-    int ite = 0;
-    Real T0 = 20.0;
-    Real end_time = T0;
-    Real Output_Time = 0.1 * end_time;
-    Real Observe_time = 0.1 * Output_Time;
-    Real dt = 0.0;
-    //----------------------------------------------------------------------
-    //	Statistics for CPU time
-    //----------------------------------------------------------------------
-    TickCount t1 = TickCount::now();
-    TimeInterval interval;
-    //----------------------------------------------------------------------
     //	First output before the main loop.
     //----------------------------------------------------------------------
     write_states.writeToFile();
-    write_solid_temperature.writeToFile(ite);
+    write_solid_temperature.writeToFile(iteration_steps);
     //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------
-    while (sv_physical_time->getValue() < end_time)
+    while (!time_stepper.isEndTime())
     {
-        Real integration_time = 0.0;
-        while (integration_time < Output_Time)
+        Real dt = time_stepper.incrementPhysicalTime(get_time_step_size);
+        diffusion_relaxation_rk2.exec(dt);
+        left_boundary_condition.exec();
+        other_boundary_condition.exec();
+        iteration_steps++;
+
+        if (iteration_steps % 10 == 0)
         {
-            Real relaxation_time = 0.0;
-            while (relaxation_time < Observe_time)
-            {
-                if (ite % 1 == 0)
-                {
-                    std::cout << "N=" << ite << " Time: " << sv_physical_time->getValue() << "	dt: " << dt << "\n";
-                }
-
-                diffusion_relaxation_rk2.exec(dt);
-                left_boundary_condition.exec();
-                other_boundary_condition.exec();
-                ite++;
-                dt = get_time_step_size.exec();
-                relaxation_time += dt;
-                integration_time += dt;
-                sv_physical_time->incrementValue(dt);
-
-                if (ite % 100 == 0)
-                {
-                    write_solid_temperature.writeToFile(ite);
-                    write_solid_average_temperature_part.writeToFile(ite);
-                    write_states.writeToFile();
-                }
-            }
+            std::cout << "N=" << iteration_steps << " Time: " << time_stepper.getPhysicalTime()
+                      << "	dt: " << time_stepper.getGlobalTimeStepSize() << "\n";
         }
 
-        TickCount t2 = TickCount::now();
-        TickCount t3 = TickCount::now();
-        interval += t3 - t2;
+        if (iteration_steps % 100 == 0)
+        {
+            write_solid_temperature.writeToFile(iteration_steps);
+            write_solid_average_temperature_part.writeToFile(iteration_steps);
+        }
+
+        if (state_recording())
+        {
+            write_states.writeToFile();
+        }
     }
-    TickCount t4 = TickCount::now();
-    TimeInterval tt;
-    tt = t4 - t1 - interval;
-    std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
     //----------------------------------------------------------------------
     //	@ensemble_average_method.
     //	The first argument is the threshold of mean value convergence.

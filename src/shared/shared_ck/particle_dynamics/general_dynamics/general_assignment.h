@@ -33,7 +33,7 @@
 
 namespace SPH
 {
-template <class DynamicsIdentifier, typename AssignmentFunctionType>
+template <typename AssignmentFunctionType, class DynamicsIdentifier>
 class VariableAssignment : public BaseLocalDynamics<DynamicsIdentifier>
 {
     using DataType = typename AssignmentFunctionType::ReturnType;

@@ -31,8 +31,10 @@
 #define PARTICLE_METHOD_CONTAINER_H
 
 #include "base_particle_dynamics.h"
+#include "complex_algorithms_ck.h"
 #include "interaction_algorithms_ck.h"
 #include "io_base.h"
+#include "io_observation_ck.h"
 #include "ownership.h"
 #include "particle_sort_ck.h"
 #include "simple_algorithms_ck.h"
@@ -91,6 +93,15 @@ class ParticleMethodContainer : public BaseMethodContainer
             StateDynamics<ExecutionPolicy, UpdateType>>(std::forward<Args>(args)...);
     };
 
+    template <template <typename...> class UpdateType, typename... ControlParameters,
+              class DynamicsIdentifier, typename... Args>
+    auto &addStateDynamics(DynamicsIdentifier &dynamics_identifier, Args &&...args)
+    {
+        return *particle_dynamics_keeper_.createPtr<
+            StateDynamics<ExecutionPolicy, UpdateType<ControlParameters..., DynamicsIdentifier>>>(
+            dynamics_identifier, std::forward<Args>(args)...);
+    };
+
     template <class ReduceType, typename... Args>
     auto &addReduceDynamics(Args &&...args)
     {
@@ -105,8 +116,7 @@ class ParticleMethodContainer : public BaseMethodContainer
             InteractionDynamicsCK<ExecutionPolicy, InteractionType>>(std::forward<Args>(args)...);
     };
 
-    template <template <typename...> class InteractionType,
-              typename... ControlParameters,
+    template <template <typename...> class InteractionType, typename... ControlParameters,
               template <typename...> class RelationType, typename... RelationParameters, typename... Args>
     auto &addInteractionDynamics(
         RelationType<RelationParameters...> &relation, Args &&...args)
@@ -117,18 +127,47 @@ class ParticleMethodContainer : public BaseMethodContainer
             relation, std::forward<Args>(args)...);
     };
 
+    template <template <typename...> class InteractionType, typename... ControlParameters,
+              template <typename...> class RelationType, typename... RelationParameters, typename... Args>
+    auto &addRK2Sequence(
+        RelationType<RelationParameters...> &relation, Args &&...args)
+    {
+        return *particle_dynamics_keeper_.createPtr<
+            RungeKuttaSequence<InteractionDynamicsCK<
+                ExecutionPolicy,
+                InteractionType<RelationType<OneLevel, RungeKutta1stStage, ControlParameters..., RelationParameters...>>,
+                InteractionType<RelationType<OneLevel, RungeKutta2ndStage, ControlParameters..., RelationParameters...>>>>>(
+            relation, std::forward<Args>(args)...);
+    };
+
     template <template <typename...> class RecorderType, typename... Args>
     auto &addBodyStateRecorder(Args &&...args)
     {
         return *state_recorders_keeper_.createPtr<RecorderType<ExecutionPolicy>>(std::forward<Args>(args)...);
     };
 
-    template <template <typename...> class RegressionType,
-              template <typename...> class ObservationType, typename... Parameters, typename... Args>
-    auto &addRegressionTest(Args &&...args)
+    template <template <typename...> class RegressionType, typename... Parameters, typename... Args>
+    auto &addObserveRegression(Args &&...args)
     {
         return *other_io_keeper_.createPtr<
-            RegressionType<ObservationType<ExecutionPolicy, Parameters...>>>(std::forward<Args>(args)...);
+            RegressionType<ObservedQuantityRecording<ExecutionPolicy, Parameters...>>>(std::forward<Args>(args)...);
+    };
+
+    template <template <typename...> class RegressionType, template <typename...> class LocalReduceMethodType,
+              typename DataType, class DynamicsIdentifier, typename... Args>
+    auto &addReduceRegression(DynamicsIdentifier &dynamics_identifier, Args &&...args)
+    {
+        return *other_io_keeper_.createPtr<
+            RegressionType<ReducedQuantityRecording<
+                ExecutionPolicy, LocalReduceMethodType<DataType, DynamicsIdentifier>>>>(
+            dynamics_identifier, std::forward<Args>(args)...);
+    };
+
+    template <template <typename...> class RegressionType, class LocalReduceMethodType, typename... Args>
+    auto &addReduceRegression(Args &&...args)
+    {
+        return *other_io_keeper_.createPtr<
+            RegressionType<ReducedQuantityRecording<ExecutionPolicy, LocalReduceMethodType>>>(std::forward<Args>(args)...);
     };
 
     template <template <typename...> class IOType, typename... Parameters, typename... Args>
