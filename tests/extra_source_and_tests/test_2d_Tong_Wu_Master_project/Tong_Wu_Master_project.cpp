@@ -232,6 +232,7 @@ class Insert : public MultiPolygonShape
     }
 };
 
+
 MultiPolygon createConstrainShape()
 {
     MultiPolygon multi_polygon;
@@ -239,6 +240,7 @@ MultiPolygon createConstrainShape()
 
     return multi_polygon;
 }
+
 
 //----------------------------------------------------------------------
 //	Main program starts here.
