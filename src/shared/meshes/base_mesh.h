@@ -35,14 +35,6 @@
 #define BASE_MESH_H
 
 #include "base_data_package.h"
-#include "my_memory_pool.h"
-#include "sphinxsys_containers.h"
-
-#include <algorithm>
-#include <fstream>
-#include <functional>
-#include <mutex>
-using namespace std::placeholders;
 
 namespace SPH
 {

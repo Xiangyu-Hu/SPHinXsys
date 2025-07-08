@@ -30,9 +30,11 @@
 #define MESH_WITH_DATA_PACKAGES_H
 
 #include "base_mesh.h"
+
+#include "execution_policy.h"
+#include "sphinxsys_containers.h"
 #include "sphinxsys_variable.h"
 #include "tbb/parallel_sort.h"
-#include "execution_policy.h"
 
 #include <algorithm>
 #include <fstream>
@@ -49,7 +51,7 @@ namespace SPH
  * A typical example is a level-set field which only has meaningful values near the interface,
  * while the latter is in the inner region of a mesh.
  * In this class, only some inner mesh cells are filled with data packages.
- * Each data package is again a mesh, but grid based with pkg_size grids on each dimension. 
+ * Each data package is again a mesh, but grid based with pkg_size grids on each dimension.
  * The operation on field data is achieved by mesh dynamics.
  * Note that a data package should be not near the mesh bound, otherwise one will encounter the error "out of range".
  */
@@ -65,26 +67,26 @@ class MeshWithGridDataPackages : public Mesh
           global_mesh_(mesh_lower_bound_ + 0.5 * data_spacing * Vecd::Ones(), data_spacing, all_cells_ * pkg_size),
           cell_package_index_("cell_package_index", all_cells_.prod()),
           data_spacing_(data_spacing),
-          index_handler_("index_handler", IndexHandler{data_spacing_, all_cells_, *static_cast<Mesh*>(this)}){};
-    virtual ~MeshWithGridDataPackages(){};
+          index_handler_("index_handler", IndexHandler{data_spacing_, all_cells_, *static_cast<Mesh *>(this)}){};
+    virtual ~MeshWithGridDataPackages() {};
 
     /** spacing between the data, which is 1/ pkg_size of this grid spacing */
     Real DataSpacing() { return data_spacing_; };
     Real GridSpacing() { return grid_spacing_; };
     size_t BufferWidth() { return buffer_width_; };
     int DataPackageSize() { return pkg_size; };
-    Mesh global_mesh_;                                         /**< the mesh for the locations of all possible data points. */
-    size_t num_grid_pkgs_ = 2;                                 /**< the number of all distinct packages, initially only 2 singular packages. */
-    DiscreteVariable<std::pair<Arrayi, int>> meta_data_cell_{"meta_data_cell", 2};          /**< metadata for each occupied cell: (arrayi)cell index, (int)core1/inner0. */
-    DiscreteVariable<CellNeighborhood> cell_neighborhood_{"mesh_cell_neighborhood", 2};     /**< 3*3(*3) array to store indicies of neighborhood cells. */
-    DiscreteVariable<size_t> cell_package_index_;                  /**< the package index for each cell in a 1-d array. */
-    ConcurrentVec<std::pair<size_t, int>> occupied_data_pkgs_;     /**< (size_t)sort_index, (int)core1/inner0. */
+    Mesh global_mesh_;                                                                  /**< the mesh for the locations of all possible data points. */
+    size_t num_grid_pkgs_ = 2;                                                          /**< the number of all distinct packages, initially only 2 singular packages. */
+    DiscreteVariable<std::pair<Arrayi, int>> meta_data_cell_{"meta_data_cell", 2};      /**< metadata for each occupied cell: (arrayi)cell index, (int)core1/inner0. */
+    DiscreteVariable<CellNeighborhood> cell_neighborhood_{"mesh_cell_neighborhood", 2}; /**< 3*3(*3) array to store indicies of neighborhood cells. */
+    DiscreteVariable<size_t> cell_package_index_;                                       /**< the package index for each cell in a 1-d array. */
+    ConcurrentVec<std::pair<size_t, int>> occupied_data_pkgs_;                          /**< (size_t)sort_index, (int)core1/inner0. */
 
   private:
     DataContainerUniquePtrAssemble<MeshVariable> mesh_variable_ptrs_;
-    MeshVariableAssemble all_mesh_variables_;         /**< all mesh variables on this mesh. */
-    static constexpr int pkg_size = PKG_SIZE;         /**< the size of the data package matrix. */
-    const Real data_spacing_;                         /**< spacing of data in the data packages. */
+    MeshVariableAssemble all_mesh_variables_; /**< all mesh variables on this mesh. */
+    static constexpr int pkg_size = PKG_SIZE; /**< the size of the data package matrix. */
+    const Real data_spacing_;                 /**< spacing of data in the data packages. */
 
     /** resize all mesh variable data field with `num_grid_pkgs_` size(initially only singular data) */
     struct ResizeMeshVariableData
@@ -108,7 +110,7 @@ class MeshWithGridDataPackages : public Mesh
         void operator()(DataContainerAddressKeeper<MeshVariable<DataType>> &all_mesh_variables_,
                         ExecutionPolicy &ex_policy)
         {
-            for(size_t l = 0; l != all_mesh_variables_.size(); l++)
+            for (size_t l = 0; l != all_mesh_variables_.size(); l++)
             {
                 MeshVariable<DataType> *variable = all_mesh_variables_[l];
                 variable->prepareForOutput(ex_policy);
@@ -116,6 +118,7 @@ class MeshWithGridDataPackages : public Mesh
         }
     };
     OperationOnDataAssemble<MeshVariableAssemble, SyncMeshVariableData> sync_mesh_variable_data_{};
+
   public:
     /** wrapper for all index exchange related functions. */
     struct IndexHandler
@@ -159,6 +162,7 @@ class MeshWithGridDataPackages : public Mesh
     };
 
     SingularVariable<IndexHandler> index_handler_;
+
   public:
     void resizeMeshVariableData() { resize_mesh_variable_data_(all_mesh_variables_, num_grid_pkgs_); };
     template <class ExecutionPolicy>
@@ -174,7 +178,7 @@ class MeshWithGridDataPackages : public Mesh
             constexpr int type_index = DataTypeIndex<DataType>::value;
             size_t new_variable_index = std::get<type_index>(all_mesh_variables_).size();
             return addVariableToAssemble<DataType, MeshVariable>(all_mesh_variables_, mesh_variable_ptrs_,
-                                                   variable_name, new_variable_index);
+                                                                 variable_name, new_variable_index);
         }
         return variable;
     }
@@ -194,9 +198,9 @@ class MeshWithGridDataPackages : public Mesh
     void organizeOccupiedPackages()
     {
         parallel_sort(occupied_data_pkgs_.begin(), occupied_data_pkgs_.end(),
-                      [](const std::pair<size_t, int>& a, const std::pair<size_t, int>& b)
+                      [](const std::pair<size_t, int> &a, const std::pair<size_t, int> &b)
                       {
-                          return a.first < b.first; 
+                          return a.first < b.first;
                       });
         num_grid_pkgs_ = occupied_data_pkgs_.size() + 2;
         cell_neighborhood_.reallocateData(par, num_grid_pkgs_);
@@ -236,7 +240,8 @@ class MeshWithGridDataPackages : public Mesh
         size_t index_1d = transferMeshIndexTo1D(all_cells_, cell_index);
         return cell_package_index[index_1d];
     }
-    void assignDataPackageIndex(const Arrayi &cell_index, const size_t package_index){
+    void assignDataPackageIndex(const Arrayi &cell_index, const size_t package_index)
+    {
         size_t index_1d = transferMeshIndexTo1D(all_cells_, cell_index);
         /**
          * NOTE currently the `cell_package_index_` is only assigned in the host;
