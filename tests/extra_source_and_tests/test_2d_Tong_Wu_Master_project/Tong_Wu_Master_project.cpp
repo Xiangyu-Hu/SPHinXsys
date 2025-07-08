@@ -253,6 +253,7 @@ int main(int ac, char *av[])
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
     sph_system.handleCommandlineOptions(ac, av);
     sph_system.setGenerateRegressionData(false);
+
     sph_system.setRestartStep(0);
     sph_system.setIOEnvironment();
     //----------------------------------------------------------------------
@@ -392,7 +393,7 @@ int main(int ac, char *av[])
     size_t number_of_iterations = sph_system.RestartStep();
     int screen_output_interval = 100;
     int restart_output_interval = screen_output_interval * 10;
-    Real end_time = 0.273;    /**< End time. */
+    Real end_time = 0.03;    /**< End time. */
     Real Output_Time = 0.001; /**< Time stamps for output of body states. */
     Real dt = 0.0;            /**< Default acoustic time step sizes. */
     //----------------------------------------------------------------------

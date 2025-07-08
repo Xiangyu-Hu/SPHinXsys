@@ -25,4 +25,9 @@ set_tests_properties(${PROJECT_NAME} PROPERTIES LABELS "pressure boundary")
 set_target_properties(${PROJECT_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${EXECUTABLE_OUTPUT_PATH}")
 target_link_libraries(${PROJECT_NAME} extra_sources_2d)
 
+# 创建目标输入目录
+file(MAKE_DIRECTORY ${BUILD_INPUT_PATH})
+
+# 复制 regression_test_tool 文件夹下的全部内容（py 脚本 + baseline XML 文件）
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/ DESTINATION ${BUILD_INPUT_PATH})
 
