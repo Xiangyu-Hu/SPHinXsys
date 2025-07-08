@@ -24,35 +24,5 @@ set_tests_properties(${PROJECT_NAME} PROPERTIES LABELS "pressure boundary")
 
 set_target_properties(${PROJECT_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${EXECUTABLE_OUTPUT_PATH}")
 target_link_libraries(${PROJECT_NAME} extra_sources_2d)
-# 复制 restart 文件夹到 bin/restart
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/restart DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/bin)
 
-# Windows: 使用项目内置的 7za.exe 解压
-if(WIN32)
-    add_custom_command(
-        TARGET ${PROJECT_NAME} PRE_BUILD
-        COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/7za.exe x WaterBody_rst_0000004000.zip
-        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bin/restart
-        COMMENT "Extracting WaterBody_rst_0000004000.zip using 7za.exe (Windows)"
-    )
-endif()
-
-# Linux 和 macOS: 使用系统自带 unzip 解压
-if(UNIX AND NOT APPLE)
-    # Linux
-    add_custom_command(
-        TARGET ${PROJECT_NAME} PRE_BUILD
-        COMMAND unzip -o WaterBody_rst_0000004000.zip
-        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bin/restart
-        COMMENT "Extracting WaterBody_rst_0000004000.zip using unzip (Linux)"
-    )
-elseif(APPLE)
-    # macOS
-    add_custom_command(
-        TARGET ${PROJECT_NAME} PRE_BUILD
-        COMMAND unzip -o WaterBody_rst_0000004000.zip
-        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bin/restart
-        COMMENT "Extracting WaterBody_rst_0000004000.zip using unzip (macOS)"
-    )
-endif()
 
