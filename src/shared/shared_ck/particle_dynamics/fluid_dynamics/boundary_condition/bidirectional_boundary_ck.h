@@ -150,7 +150,7 @@ class BufferOutflowDeletionCK : public BaseLocalDynamics<AlignedBoxByCell>
             bool operator()(size_t index_i) const
             {
                 return buffer_indicator_[index_i] == part_id_ &&
-                       aligned_box_->checkLowerBound(pos_[index_i]);
+                       aligned_box_->checkUpperBound(pos_[index_i]);
             };
         };
 

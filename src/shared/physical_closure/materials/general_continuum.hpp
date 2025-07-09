@@ -63,5 +63,83 @@ Mat3d PlasticContinuum::PlasticKernel::ReturnMapping(Mat3d &stress_tensor)
     }
     return stress_tensor;
 }
+//=================================================================================================//
+Real PlasticContinuum::PlasticKernel::getFrictionVelocity(Real uz, Real z)
+{
+    const Real nu = 1.0e-6;        // Kinematic viscosity (m^2/s)
+    const Real d50 = d_s_;         // Median grain diameter (m)
+    const Real kappa = 0.41;       // von Kármán constant
+    const Real ks = 2.0 * d50;     // Equivalent roughness height (m)
+    const Real tol = 0.01;         // Relative error tolerance
+
+    // Initial estimate of shear velocity u_star assuming laminar sublayer
+    Real u_star_1 = std::sqrt(uz * nu / z);
+    Real delta_v = 11.6 * nu / u_star_1;
+
+    // Check smooth flow condition
+    if ((ks * u_star_1 / nu < 5.0) && (z < delta_v)) {
+        return u_star_1;
+    }
+
+    // Iterative solution for u_star in rough/turbulent flow
+    Real u_star_old = u_star_1;
+    Real u_star_new = 0.0;
+    int iter = 0;
+
+    while (true) {
+        // Compute roughness length z0 based on u_star
+        Real ksu_nu = ks * u_star_old / nu;
+        Real z0;
+
+        if (ksu_nu < 5.0) {
+            z0 = 0.11 * nu / u_star_old;
+        } else if (ksu_nu > 70.0) {
+            z0 = 0.033 * ks;
+        } else {
+            z0 = 0.11 * nu / u_star_old + 0.033 * ks;
+        }
+
+        // Update u_star using the logarithmic velocity profile
+        u_star_new = (kappa * uz) / std::log(z / z0);
+
+        // Check convergence
+        Real rel_err = std::abs(u_star_new - u_star_old) / u_star_old;
+        if (rel_err < tol || iter > 100) break;
+
+        u_star_old = u_star_new;
+        ++iter;
+    }
+
+    return u_star_new;
+}
+//=================================================================================================//
+Real PlasticContinuum::PlasticKernel::calculateThetaCr(Real u_star)
+{
+    const Real rho_w = 1000;  // 
+    const Real mu_w = 0.001;  // 
+
+    Real Re = rho_w * u_star * d_s_ / mu_w;
+    if (Re <= 500 && Re > 0.0) 
+    {
+        return 0.010595 * log(Re) + 0.110476 / Re + 0.0027197;
+    } else 
+    {
+        return 0.068;
+    } 
+}
+//=================================================================================================//
+Real PlasticContinuum::PlasticKernel::ThetaToFrictionVelcoty(Real theta_cr)
+{
+    const Real rho_w = 1000.0;        // Water density (kg/m³)
+    const Real gravity = 9.8;         // Gravitational acceleration (m/s²)
+    const Real Sn = rho0_ / rho_w;    // Relative density = particle density / water density
+
+    // Compute critical shear velocity using:
+    // u*_cr = sqrt[ θ_cr * ( (ρ_s - ρ_w) * g * d ) / ρ_w ]
+    Real friction_velocity = sqrt(theta_cr * ((Sn - 1.0) * gravity * d_s_) / 1.0);
+
+    return friction_velocity;
+}
+//=================================================================================================//
 }// namespace SPH
 #endif //GENERAL_CONTINUUM_HPP

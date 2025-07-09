@@ -88,11 +88,14 @@ class PlasticAcousticStep2ndHalf<Inner<OneLevel, RiemannSolverType, KernelCorrec
         Real *rho_, *drho_dt_;
         Matd *velocity_gradient_;
         Mat3d *stress_tensor_3D_, *strain_tensor_3D_, *stress_rate_3D_, *strain_rate_3D_;
+        Vecd *shear_vel_;
+        Real particle_spacing_;
     };
 
   protected:
     KernelCorrectionType correction_;
     RiemannSolverType riemann_solver_;
+    Real dv_particle_spacing_;
 };
 
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
@@ -120,6 +123,38 @@ class PlasticAcousticStep2ndHalf<Contact<Wall, RiemannSolverType, KernelCorrecti
         Real *wall_Vol_;
         Vecd *wall_vel_ave_, *wall_n_;
         Matd *velocity_gradient_;
+    };
+
+  protected:
+    KernelCorrectionType correction_;
+    RiemannSolverType riemann_solver_;
+};
+
+template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
+class PlasticAcousticStep2ndHalf<Contact<Fluid, RiemannSolverType, KernelCorrectionType, Parameters...>>
+    : public PlasticAcousticStep<Interaction<Contact<Parameters...>>>, public Interaction<Fluid>
+{
+    using BaseInteraction = PlasticAcousticStep<Interaction<Contact<Parameters...>>>;
+
+  public:
+    explicit PlasticAcousticStep2ndHalf(Contact<Parameters...> &fluid_contact_relation);
+    virtual ~PlasticAcousticStep2ndHalf() {};
+
+    class InteractKernel : public BaseInteraction::InteractKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt contact_index);
+        void interact(size_t index_i, Real dt = 0.0);
+
+      protected:
+        KernelCorrectionType correction_;
+        RiemannSolverType riemann_solver_;
+        Real *Vol_, *rho_, *drho_dt_;
+        Vecd *vel_, *force_;
+        Vecd *shear_vel_; /*For erosion*/
+        Real *fluid_Vol_, *fluid_p_;
+        Vecd *fluid_vel_;
     };
 
   protected:
