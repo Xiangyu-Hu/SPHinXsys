@@ -34,6 +34,8 @@
 
 #include "base_data_package.h"
 
+#include "execution_policy.h"
+
 namespace SPH
 {
 /** iteration with void (non_value_returning) function. 2D case. */

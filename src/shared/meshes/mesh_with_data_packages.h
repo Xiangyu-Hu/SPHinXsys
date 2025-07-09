@@ -31,18 +31,18 @@
 
 #include "base_mesh.h"
 
+#include "base_data_package.h"
 #include "execution_policy.h"
-#include "sphinxsys_containers.h"
 #include "sphinxsys_variable.h"
 #include "tbb/parallel_sort.h"
 
-#include <algorithm>
-#include <fstream>
-#include <functional>
-using namespace std::placeholders;
-
 namespace SPH
 {
+template <typename DataType>
+using MeshVariable = DiscreteVariable<PackageDataMatrix<DataType, 4>>;
+/** Generalized mesh data type */
+typedef DataContainerAddressAssemble<MeshVariable> MeshVariableAssemble;
+
 /**
  * @class MeshWithGridDataPackages
  * @brief Abstract class for mesh with grid-based data packages.

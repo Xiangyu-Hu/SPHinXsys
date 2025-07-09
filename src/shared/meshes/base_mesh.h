@@ -36,6 +36,8 @@
 
 #include "base_data_package.h"
 
+#include <fstream>
+
 namespace SPH
 {
 /**

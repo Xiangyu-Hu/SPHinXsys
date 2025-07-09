@@ -188,9 +188,6 @@ class DiscreteVariable : public Entity
     };
 };
 
-template <typename DataType>
-using MeshVariable = DiscreteVariable<PackageDataMatrix<DataType, 4>>;
-
 template <typename DataType, template <typename VariableDataType> class VariableType>
 VariableType<DataType> *findVariableByName(DataContainerAddressAssemble<VariableType> &assemble,
                                            const std::string &name)

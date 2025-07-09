@@ -34,12 +34,7 @@
 #include "mesh_local_dynamics.hpp"
 #include "mesh_with_data_packages.h"
 #include "mesh_iterators.hpp"
-#include "execution_policy.h"
 #include "implementation.h"
-
-#include <functional>
-
-using namespace std::placeholders;
 
 namespace SPH
 {
