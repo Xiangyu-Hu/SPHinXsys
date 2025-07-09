@@ -148,6 +148,39 @@ class AcousticStep1stHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType,
     FluidType &fluid_;
     RiemannSolverType riemann_solver_;
 };
+template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
+class AcousticStep1stHalf<Contact<Soil, RiemannSolverType, KernelCorrectionType, Parameters...>>
+    : public AcousticStep<Interaction<Contact<Parameters...>>>, public Interaction<Soil>
+{
+    using FluidType = typename RiemannSolverType::SourceFluid;
+    using BaseInteraction = AcousticStep<Interaction<Contact<Parameters...>>>;
+    using CorrectionKernel = typename KernelCorrectionType::ComputingKernel;
+
+  public:
+    explicit AcousticStep1stHalf(Contact<Parameters...> &soil_contact_relation);
+    virtual ~AcousticStep1stHalf() {};
+
+    class InteractKernel : public BaseInteraction::InteractKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt contact_index);
+        void interact(size_t index_i, Real dt = 0.0);
+
+      protected:
+        CorrectionKernel correction_;
+        RiemannSolverType riemann_solver_;
+        Real *Vol_, *rho_, *mass_, *p_, *drho_dt_;
+        Vecd *vel_, *force_, *force_prior_;
+        Real *soil_Vol_, *soil_p_;
+        Vecd *soil_n_,*soil_vel_;
+    };
+
+  protected:
+    KernelCorrectionType kernel_correction_;
+    FluidType &fluid_;
+    RiemannSolverType riemann_solver_;
+};
 
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
 class AcousticStep1stHalf<Contact<RiemannSolverType, KernelCorrectionType, Parameters...>>

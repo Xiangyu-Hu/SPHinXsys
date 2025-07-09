@@ -118,5 +118,31 @@ class Interaction<Wall>
     StdVec<DiscreteVariable<Vecd> *> dv_wall_vel_ave_, dv_wall_acc_ave_, dv_wall_n_;
     StdVec<DiscreteVariable<Real> *> dv_wall_Vol_;
 };
+
+template <>
+class Interaction<Soil>
+{
+  public:
+    template <class SoilContactRelationType>
+    Interaction(SoilContactRelationType &soil_contact_relation);
+    virtual ~Interaction() {};
+
+  protected:
+    StdVec<DiscreteVariable<Vecd> *> dv_soil_n_, dv_soil_vel_;
+    StdVec<DiscreteVariable<Real> *> dv_soil_Vol_, dv_soil_p_;
+};
+
+template <>
+class Interaction<Fluid>
+{
+  public:
+    template <class FluidContactRelationType>
+    Interaction(FluidContactRelationType &fluid_contact_relation);
+    virtual ~Interaction() {};
+
+  protected:
+    StdVec<DiscreteVariable<Vecd> *> dv_fluid_vel_;
+    StdVec<DiscreteVariable<Real> *> dv_fluid_Vol_, dv_fluid_p_;
+};
 } // namespace SPH
 #endif // INTERACTION_CK_H

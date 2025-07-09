@@ -49,9 +49,9 @@ class PlasticAcousticStep : public fluid_dynamics::AcousticStep<BaseInteractionT
 
   protected:
     PlasticContinuum &plastic_continuum_;
-    // DiscreteVariable<Vecd> *dv_pos_;
     DiscreteVariable<Mat3d> *dv_stress_tensor_3D_, *dv_strain_tensor_3D_, *dv_stress_rate_3D_, *dv_strain_rate_3D_;
     DiscreteVariable<Matd> *dv_velocity_gradient_;
+    DiscreteVariable<Vecd> *dv_shear_vel_;    /*For erosion*/
 };
 
 template <typename...>
