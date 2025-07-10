@@ -1,7 +1,7 @@
 #ifndef MESH_ITERATOR_SYCL_HPP
 #define MESH_ITERATOR_SYCL_HPP
 
-#include "mesh_iterator.h"
+#include "mesh_iterators.h"
 
 namespace SPH
 {
