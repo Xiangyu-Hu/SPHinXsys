@@ -98,6 +98,9 @@ if(TARGET Boost::program_options)
     target_link_libraries(sphinxsys_core INTERFACE Boost::program_options)
 endif()
 
+find_package(spdlog CONFIG REQUIRED)
+target_link_libraries(sphinxsys_core INTERFACE spdlog::spdlog_header_only)
+
 if(SPHINXSYS_USE_SYCL)
     set(SPHINXSYS_USE_SYCL ON)
     if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")

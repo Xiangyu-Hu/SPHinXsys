@@ -20,19 +20,26 @@
  * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
  *                                                                           *
  * ------------------------------------------------------------------------- */
-/** @file io_all.h
-This is the header file that user code should include to pick up all
-io class used in SPHinXsys. **/
+/**
+ * @file 	io_log.h
+ * @brief 	base classes for io functions.
+ * @author	Chi Zhang, Shuoguo Zhang, Zhenxi Zhao and Xiangyu Hu
+ */
 
-#ifndef IO_ALL_H
-#define IO_ALL_H
+#ifndef IO_LOG_H
+#define IO_LOG_H
 
 #include "io_base.h"
-#include "io_log.h"
-#include "io_observation.h"
-#include "io_plt.hpp"
-#include "io_simbody.h"
-#include "io_vtk.h"
-#include "io_vtk_mesh.h"
 
-#endif // IO_ALL_H
+#include <memory>
+#include <spdlog/spdlog.h>
+
+namespace SPH
+{
+namespace Log
+{
+void init(IOEnvironment &io_environment); // Call once at startup
+std::shared_ptr<spdlog::logger> get();    // Access logger
+} // namespace Log
+} // namespace SPH
+#endif // IO_LOG_H
