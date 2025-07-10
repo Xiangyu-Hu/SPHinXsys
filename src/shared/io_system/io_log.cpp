@@ -14,7 +14,7 @@ std::shared_ptr<spdlog::logger> logger;
 void init(IOEnvironment &io_environment)
 {
     // Create a logger with a file sink
-    auto logger = spdlog::basic_logger_mt("sphinxsys_logger", io_environment.outputFolder() + "/sphinxsys.log");
+    logger = spdlog::basic_logger_mt("sphinxsys_logger", io_environment.outputFolder() + "/sphinxsys.log");
     logger->flush_on(spdlog::level::info);                          // Flush logs on info level
     spdlog::set_default_logger(logger);                             // Set the default logger to the created logger
     spdlog::set_pattern("[%Y-%m-%d %H:%M:%S] [%l] [thread %t] %v"); // Set the log format

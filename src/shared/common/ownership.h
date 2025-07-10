@@ -42,6 +42,31 @@
 
 #include "base_data_type.h"
 
+#include <string_view>
+
+template <typename T>
+constexpr std::string_view type_name()
+{
+#if defined(__clang__)
+    constexpr std::string_view p = __PRETTY_FUNCTION__;
+    constexpr std::string_view prefix = "std::string_view type_name() [T = ";
+    constexpr std::string_view suffix = "]";
+#elif defined(__GNUC__)
+    constexpr std::string_view p = __PRETTY_FUNCTION__;
+    constexpr std::string_view prefix = "constexpr std::string_view type_name() [with T = ";
+    constexpr std::string_view suffix = "; std::string_view = std::basic_string_view<char>]";
+#elif defined(_MSC_VER)
+    constexpr std::string_view p = __FUNCSIG__;
+    constexpr std::string_view prefix = "class std::basic_string_view<char,struct std::char_traits<char> > __cdecl type_name<";
+    constexpr std::string_view suffix = ">(void)";
+#else
+#error "Unsupported compiler"
+#endif
+    const std::size_t start = p.find(prefix) + prefix.size();
+    const std::size_t end = p.rfind(suffix);
+    return p.substr(start, end - start);
+}
+
 namespace SPH
 {
 template <class CastingType, class OwnerType, class CastedType>
@@ -50,8 +75,8 @@ CastingType *DynamicCast(OwnerType *owner, CastedType *casted)
     CastingType *tmp = dynamic_cast<CastingType *>(casted);
     if (tmp == nullptr)
     {
-        std::cout << "\n Error: pointer DynamicCasting " << typeid(*casted).name() << " leads to nullptr! \n";
-        std::cout << "\n This error locates in " << typeid(*owner).name() << '\n';
+        std::cout << "\n Error: pointer DynamicCasting " << type_name<CastedType>() << " leads to nullptr! \n";
+        std::cout << "\n This error locates in " << type_name<OwnerType>() << '\n';
         exit(1);
     }
     return tmp;
@@ -63,8 +88,8 @@ CastingType &DynamicCast(OwnerType *owner, CastedType &casted)
     CastingType *tmp = dynamic_cast<CastingType *>(&casted);
     if (tmp == nullptr)
     {
-        std::cout << "\n Error: reference DynamicCasting " << typeid(casted).name() << " leads to nullptr! \n";
-        std::cout << "\n This error locates in " << typeid(*owner).name() << '\n';
+        std::cout << "\n Error: reference DynamicCasting " << type_name<CastedType>() << " leads to nullptr! \n";
+        std::cout << "\n This error locates in " << type_name<OwnerType>() << '\n';
         exit(1);
     }
     return *tmp;
@@ -74,7 +99,7 @@ template <class T>
 using UniquePtr = std::unique_ptr<T>;
 
 template <class T, typename... Args>
-UniquePtr<T> makeUnique(Args &&... args)
+UniquePtr<T> makeUnique(Args &&...args)
 {
     return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
 }
@@ -90,7 +115,7 @@ class UniquePtrKeeper
   public:
     /** output the observer as derived pointer */
     template <class DerivedType, typename... Args>
-    DerivedType *createPtr(Args &&... args)
+    DerivedType *createPtr(Args &&...args)
     {
         ptr_member_.reset(new DerivedType(std::forward<Args>(args)...));
         return static_cast<DerivedType *>(ptr_member_.get());
@@ -98,7 +123,7 @@ class UniquePtrKeeper
 
     /** output the observer as derived reference */
     template <class DerivedType, typename... Args>
-    DerivedType &createRef(Args &&... args)
+    DerivedType &createRef(Args &&...args)
     {
         ptr_member_.reset(new DerivedType(std::forward<Args>(args)...));
         return *static_cast<DerivedType *>(ptr_member_.get());
@@ -133,7 +158,7 @@ class UniquePtrsKeeper
     /** used to create a new derived object in the vector
      * and output its pointer as observer */
     template <class DerivedType, typename... Args>
-    DerivedType *createPtr(Args &&... args)
+    DerivedType *createPtr(Args &&...args)
     {
         ptr_keepers_.push_back(UniquePtrKeeper<BaseType>());
         BaseType *observer = ptr_keepers_.back()
@@ -159,7 +184,7 @@ template <class T>
 using SharedPtr = std::shared_ptr<T>;
 
 template <class T, typename... Args>
-SharedPtr<T> makeShared(Args &&... args)
+SharedPtr<T> makeShared(Args &&...args)
 {
     return std::make_shared<T>(std::forward<Args>(args)...);
 }
@@ -175,7 +200,7 @@ class SharedPtrKeeper
   public:
     /** output the observer as pointer */
     template <class DerivedType, typename... Args>
-    DerivedType *resetPtr(Args &&... args)
+    DerivedType *resetPtr(Args &&...args)
     {
         ptr_member_ = makeShared<DerivedType>(std::forward<Args>(args)...);
         return static_cast<DerivedType *>(ptr_member_.get());
@@ -183,7 +208,7 @@ class SharedPtrKeeper
 
     /** output the observer as derived reference */
     template <class DerivedType, typename... Args>
-    DerivedType &resetRef(Args &&... args)
+    DerivedType &resetRef(Args &&...args)
     {
         return *resetPtr<DerivedType>(std::forward<Args>(args)...);
     };
