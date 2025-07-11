@@ -49,7 +49,7 @@ void BodyStatesRecording::writeToFile(size_t iteration_step)
 };
 //=============================================================================================//
 RestartIO::RestartIO(SPHSystem &sph_system)
-    : BaseIO(sph_system), bodies_(sph_system.getRealBodies()),
+    : BaseIO(sph_system), bodies_(sph_system.getSPHBodies()),
       overall_file_path_(io_environment_.restart_folder_ + "/Restart_time_")
 {
     for (size_t i = 0; i < bodies_.size(); ++i)

@@ -81,6 +81,7 @@ class SPHSystem
     Real getSmallestTimeStepAmongSolidBodies(Real CFL = 0.6);
     Real ReferenceResolution() { return resolution_ref_; };
     void setReferenceResolution(Real resolution_ref) { resolution_ref_ = resolution_ref; };
+    SPHBodyVector getSPHBodies() { return sph_bodies_; };
     SPHBodyVector getRealBodies() { return real_bodies_; };
     void addSPHBody(SPHBody *sph_body) { sph_bodies_.push_back(sph_body); };
     void addRealBody(RealBody *real_body);
