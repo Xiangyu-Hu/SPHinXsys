@@ -86,6 +86,9 @@ void UpdateRelation<ExecutionPolicy, Inner<Parameters...>>::exec(Real dt)
                  [=](size_t i)
                  { computing_kernel->incrementNeighborSize(i); });
 
+    this->logger_->debug("UpdateCellLinkedList: incrementNeighborSize done at {} for Relation {}.",
+                         this->sph_body_.getName(), type_name<Inner<Parameters...>>());
+
     auto *dv_neighbor_index = this->inner_relation_.getNeighborIndex();
     auto *dv_particle_offset = this->inner_relation_.getParticleOffset();
     UnsignedInt *neighbor_index = dv_neighbor_index->DelegatedData(ex_policy_);
@@ -106,6 +109,9 @@ void UpdateRelation<ExecutionPolicy, Inner<Parameters...>>::exec(Real dt)
                  IndexRange(0, total_real_particles),
                  [=](size_t i)
                  { computing_kernel->updateNeighborList(i); });
+
+    this->logger_->debug("UpdateCellLinkedList: updateNeighborList done at {} for Relation {}.",
+                         this->sph_body_.getName(), type_name<Inner<Parameters...>>());
 }
 //=================================================================================================//
 template <class ExecutionPolicy, typename... Parameters>
@@ -191,6 +197,9 @@ void UpdateRelation<ExecutionPolicy, Contact<Parameters...>>::exec(Real dt)
                      [=](size_t i)
                      { computing_kernel->incrementNeighborSize(i); });
 
+        this->logger_->debug("UpdateCellLinkedList: incrementNeighborSize done at {} for Relation {}.",
+                             this->sph_body_.getName(), type_name<Contact<Parameters...>>());
+
         auto *dv_neighbor_index = this->contact_relation_.getNeighborIndex(k);
         auto *dv_particle_offset = this->contact_relation_.getParticleOffset(k);
         UnsignedInt *neighbor_index = dv_neighbor_index->DelegatedData(ex_policy_);
@@ -211,6 +220,10 @@ void UpdateRelation<ExecutionPolicy, Contact<Parameters...>>::exec(Real dt)
                      IndexRange(0, total_real_particles),
                      [=](size_t i)
                      { computing_kernel->updateNeighborList(i); });
+
+        this->logger_->debug(
+            "UpdateCellLinkedList: updateNeighborList done at {} for Relation {}.",
+            this->sph_body_.getName(), type_name<Contact<Parameters...>>());
     }
 }
 //=================================================================================================//
