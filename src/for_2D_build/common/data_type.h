@@ -47,11 +47,8 @@ using BoundingBox = BaseBoundingBox<Vec2d>;
 using Transform = BaseTransform<Rotation2d, Vec2d>;
 using CellNeighborhood = std::array<std::array<int, 3>, 3>;
 
-template <class DataType, int array_size>
-using PackageDataMatrix = std::array<std::array<DataType, array_size>, array_size>;
-
-template <class DataType>
-using MeshDataMatrix = DataType **;
+template <class DataType, int ArraySize>
+using PackageDataMatrix = std::array<std::array<DataType, ArraySize>, ArraySize>;
 
 /** only works for smoothing length ratio less or equal than 1.3*/
 constexpr int MaximumNeighborhoodSize = int(M_PI * 9);

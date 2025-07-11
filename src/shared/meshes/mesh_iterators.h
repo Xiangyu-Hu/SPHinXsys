@@ -34,6 +34,8 @@
 
 #include "base_data_package.h"
 
+#include "execution_policy.h"
+
 namespace SPH
 {
 /** iteration with void (non_value_returning) function. 2D case. */
@@ -109,5 +111,44 @@ void mesh_for(const MeshRange &mesh_range, const LocalFunction &local_function, 
 /** Iterator on the mesh by looping index. parallel computing. */
 template <typename LocalFunction, typename... Args>
 void mesh_parallel_for(const MeshRange &mesh_range, const LocalFunction &local_function, Args &&...args);
+
+/** Iterator on the mesh by looping index. parallel computing. */
+template <typename LocalFunction, typename... Args>
+void mesh_for(const execution::SequencedPolicy &seq, const MeshRange &mesh_range,
+              const LocalFunction &local_function, Args &&...args)
+{
+    mesh_for(mesh_range, local_function, std::forward<Args>(args)...);
+};
+
+template <typename LocalFunction, typename... Args>
+void mesh_for(const execution::ParallelPolicy &par, const MeshRange &mesh_range,
+              const LocalFunction &local_function, Args &&...args)
+{
+    mesh_parallel_for(mesh_range, local_function, std::forward<Args>(args)...);
+};
+
+template <typename FunctionOnData>
+void package_parallel_for(const execution::SequencedPolicy &seq,
+                          size_t num_grid_pkgs, const FunctionOnData &function)
+{
+    for (size_t i = 2; i != num_grid_pkgs; ++i)
+        function(i);
+}
+
+template <typename FunctionOnData>
+void package_parallel_for(const execution::ParallelPolicy &par,
+                          size_t num_grid_pkgs, const FunctionOnData &function)
+{
+    parallel_for(IndexRange(2, num_grid_pkgs), [&](const IndexRange &r)
+                 {
+                    for (size_t i = r.begin(); i != r.end(); ++i)
+                    {
+                        function(i);
+                    } }, ap);
+}
+
+template <typename FunctionOnData>
+void package_parallel_for(const execution::ParallelDevicePolicy &par_device,
+                          size_t num_grid_pkgs, const FunctionOnData &function);
 } // namespace SPH
 #endif // MESH_ITERATORS_H

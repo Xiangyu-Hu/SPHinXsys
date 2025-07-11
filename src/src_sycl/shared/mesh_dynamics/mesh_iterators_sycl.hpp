@@ -1,8 +1,7 @@
-#ifndef MESH_DYNAMICS_SYCL_HPP
-#define MESH_DYNAMICS_SYCL_HPP
+#ifndef MESH_ITERATOR_SYCL_HPP
+#define MESH_ITERATOR_SYCL_HPP
 
-#include "mesh_dynamics.h"
-#include "implementation_sycl.h"
+#include "mesh_iterators.h"
 
 namespace SPH
 {

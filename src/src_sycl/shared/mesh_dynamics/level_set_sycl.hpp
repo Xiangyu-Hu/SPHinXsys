@@ -1,7 +1,7 @@
 #ifndef LEVEL_SET_SYCL_HPP
 #define LEVEL_SET_SYCL_HPP
 
-#include "mesh_dynamics_sycl.hpp"
+#include "mesh_iterators_sycl.hpp"
 #include "implementation_sycl.h"
 #include "sphinxsys_variable_sycl.hpp"
 #include "sphinxsys_constant_sycl.hpp"

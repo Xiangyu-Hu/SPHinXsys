@@ -31,46 +31,13 @@
 #ifndef MESH_DYNAMICS_H
 #define MESH_DYNAMICS_H
 
+#include "implementation.h"
+#include "mesh_iterators.hpp"
 #include "mesh_local_dynamics.hpp"
 #include "mesh_with_data_packages.h"
-#include "mesh_iterators.hpp"
-#include "execution_policy.h"
-#include "implementation.h"
-
-#include <functional>
-
-using namespace std::placeholders;
 
 namespace SPH
 {
-
-/***********************************************
- *       Iterators for Only Occupied Cells      *
- ***********************************************/
-template <typename FunctionOnData>
-void package_parallel_for(const execution::SequencedPolicy &seq,
-                          size_t num_grid_pkgs, const FunctionOnData &function)
-{
-    for (size_t i = 2; i != num_grid_pkgs; ++i)
-        function(i);
-}
-template <typename FunctionOnData>
-void package_parallel_for(const execution::ParallelPolicy &par,
-                          size_t num_grid_pkgs, const FunctionOnData &function)
-{
-    parallel_for(IndexRange(2, num_grid_pkgs),
-                [&](const IndexRange &r)
-                {
-                    for (size_t i = r.begin(); i != r.end(); ++i)
-                    {
-                        function(i);
-                    }
-                },
-                ap);
-}
-template <typename FunctionOnData>
-void package_parallel_for(const execution::ParallelDevicePolicy &par_device,
-                          size_t num_grid_pkgs, const FunctionOnData &function);
 /**
  * @class BaseMeshDynamics
  * @brief The base class for all mesh dynamics
@@ -83,35 +50,13 @@ class BaseMeshDynamics
     BaseMeshDynamics(MeshWithGridDataPackagesType &mesh_data)
         : mesh_data_(mesh_data),
           all_cells_(mesh_data.AllCells()),
-          num_grid_pkgs_(mesh_data.num_grid_pkgs_){};
-    virtual ~BaseMeshDynamics(){};
+          num_grid_pkgs_(mesh_data.num_grid_pkgs_) {};
+    virtual ~BaseMeshDynamics() {};
 
   protected:
-  MeshWithGridDataPackagesType &mesh_data_;
+    MeshWithGridDataPackagesType &mesh_data_;
     Arrayi all_cells_;
     size_t &num_grid_pkgs_;
-
-    /***********************************************
-     *         Iterators for All Mesh Cells        *
-     ***********************************************/
-    template <typename FunctionOnData>
-    void grid_parallel_for(const execution::SequencedPolicy &seq, const FunctionOnData &function)
-    {
-        mesh_for(MeshRange(Arrayi::Zero(), all_cells_),
-                          [&](Arrayi cell_index)
-                          {
-                              function(cell_index);
-                          });
-    }
-    template <typename FunctionOnData>
-    void grid_parallel_for(const execution::ParallelPolicy &par, const FunctionOnData &function)
-    {
-        mesh_parallel_for(MeshRange(Arrayi::Zero(), all_cells_),
-                          [&](Arrayi cell_index)
-                          {
-                              function(cell_index);
-                          });
-    }
 };
 
 /**
@@ -124,22 +69,22 @@ class MeshAllDynamics : public LocalDynamicsType, public BaseMeshDynamics
     using UpdateKernel = typename LocalDynamicsType::UpdateKernel;
     using KernelImplementation = Implementation<ExecutionPolicy, LocalDynamicsType, UpdateKernel>;
     KernelImplementation kernel_implementation_;
+
   public:
     template <typename... Args>
     MeshAllDynamics(MeshWithGridDataPackagesType &mesh_data, Args &&...args)
         : LocalDynamicsType(mesh_data, std::forward<Args>(args)...),
           BaseMeshDynamics(mesh_data), kernel_implementation_(*this){};
-    virtual ~MeshAllDynamics(){};
+    virtual ~MeshAllDynamics() {};
 
     void exec()
     {
         UpdateKernel *update_kernel = kernel_implementation_.getComputingKernel();
-        grid_parallel_for(ExecutionPolicy(),
-            [&](Arrayi cell_index)
-            {
-              update_kernel->update(cell_index);
-            }
-        );
+        mesh_for(ExecutionPolicy(), MeshRange(Arrayi::Zero(), all_cells_),
+                 [&](Arrayi cell_index)
+                 {
+                     update_kernel->update(cell_index);
+                 });
     };
 };
 
@@ -153,23 +98,23 @@ class MeshInnerDynamics : public LocalDynamicsType, public BaseMeshDynamics
     using UpdateKernel = typename LocalDynamicsType::UpdateKernel;
     using KernelImplementation = Implementation<ExecutionPolicy, LocalDynamicsType, UpdateKernel>;
     KernelImplementation kernel_implementation_;
+
   public:
     template <typename... Args>
     MeshInnerDynamics(MeshWithGridDataPackagesType &mesh_data, Args &&...args)
         : LocalDynamicsType(mesh_data, std::forward<Args>(args)...),
           BaseMeshDynamics(mesh_data), kernel_implementation_(*this){};
-    virtual ~MeshInnerDynamics(){};
+    virtual ~MeshInnerDynamics() {};
 
     template <typename... Args>
     void exec(Args &&...args)
     {
         UpdateKernel *update_kernel = kernel_implementation_.getComputingKernel();
         package_parallel_for(ExecutionPolicy(), num_grid_pkgs_,
-            [=](size_t package_index)
-            {
-              update_kernel->update(package_index, args...);
-            }
-        );
+                             [=](size_t package_index)
+                             {
+                                 update_kernel->update(package_index, args...);
+                             });
     };
 };
 
@@ -192,23 +137,20 @@ class MeshCoreDynamics : public LocalDynamicsType, public BaseMeshDynamics
           BaseMeshDynamics(mesh_data),
           meta_data_cell_(mesh_data.meta_data_cell_.DelegatedData(ExecutionPolicy())),
           kernel_implementation_(*this){};
-    virtual ~MeshCoreDynamics(){};
+    virtual ~MeshCoreDynamics() {};
 
     void exec()
     {
         UpdateKernel *update_kernel = kernel_implementation_.getComputingKernel();
         std::pair<SPH::Arrayi, int> *meta_data_cell = meta_data_cell_;
         package_parallel_for(ExecutionPolicy(), num_grid_pkgs_,
-            [=](size_t package_index)
-            {
-              if (meta_data_cell[package_index].second == 1)
-                  update_kernel->update(package_index);
-            }
-        );
+                             [=](size_t package_index)
+                             {
+                                 if (meta_data_cell[package_index].second == 1)
+                                     update_kernel->update(package_index);
+                             });
     };
 };
-
-
 
 } // namespace SPH
 #endif // MESH_DYNAMICS_H
