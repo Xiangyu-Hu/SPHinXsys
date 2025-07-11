@@ -70,7 +70,6 @@ int main(int ac, char *av[])
     // handle command line arguments
     sph_system.handleCommandlineOptions(ac, av);
 #endif
-    IOEnvironment io_environment(sph_system);
     //----------------------------------------------------------------------
     //	Creating body, materials and particles
     //----------------------------------------------------------------------

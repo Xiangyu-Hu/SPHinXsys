@@ -14,7 +14,7 @@ int main(int ac, char *av[])
     //	Build up the environment of a SPHSystem with global controls.
     //----------------------------------------------------------------------
     SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
-    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
+    sph_system.handleCommandlineOptions(ac, av);
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
@@ -244,7 +244,7 @@ int main(int ac, char *av[])
             water_block_complex.updateConfiguration();
             structure_contact.updateConfiguration();
 
-            if (total_time >= relax_time)
+            if (total_time >= relax_time && number_of_iterations % 100 == 0)
             {
                 write_str_displacement.writeToFile(number_of_iterations);
                 wave_gauge.writeToFile(number_of_iterations);

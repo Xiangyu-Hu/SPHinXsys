@@ -169,8 +169,6 @@ void poiseuille_flow(const Real resolution_ref, const Real resolution_shell, con
     //  Build up -- a SPHSystem --
     //----------------------------------------------------------------------
     SPHSystem system(system_domain_bounds, resolution_ref);
-    IOEnvironment io_environment(system);
-
     //----------------------------------------------------------------------
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------

@@ -87,7 +87,7 @@ int main(int ac, char *av[])
     /** Tag for starting with relaxed body-fitted particles distribution */
     sph_system.setReloadParticles(true);
     sph_system.setGenerateRegressionData(false);
-    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
+    sph_system.handleCommandlineOptions(ac, av);
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------

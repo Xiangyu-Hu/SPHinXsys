@@ -86,7 +86,6 @@ int main(int ac, char *av[])
     DampingWithRandomChoice<InteractionSplit<DampingProjectionInner<Vec3d, FixedDampingRate>>>
         muscle_damping(0.1, cantilever_body_inner, "Velocity", physical_viscosity);
     /** Output */
-    IOEnvironment io_environment(sph_system);
     BodyStatesRecordingToVtp write_states(sph_system);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
         write_displacement("Position", cantilever_observer_contact);

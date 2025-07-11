@@ -40,7 +40,7 @@ int main(int ac, char *av[])
     //	Build up -- a SPHSystem
     //----------------------------------------------------------------------
     SPHSystem sph_system(system_domain_bounds, dp_0);
-    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
+    sph_system.handleCommandlineOptions(ac, av);
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------

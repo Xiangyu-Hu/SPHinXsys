@@ -131,7 +131,6 @@ int main(int ac, char *av[])
     sph_system.setRunParticleRelaxation(false);
     // Tag for computation start with relaxed body fitted particles distribution.
     sph_system.setReloadParticles(false);
-    IOEnvironment io_environment(sph_system);
     sph_system.handleCommandlineOptions(ac, av);
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
@@ -319,7 +318,7 @@ int main(int ac, char *av[])
                           << "	advection_dt = " << advection_dt << "	acoustic_dt = " << acoustic_dt << "\n";
 
                 if (number_of_iterations % restart_output_interval == 0)
-                    restart_io.writeToFile( number_of_iterations);
+                    restart_io.writeToFile(number_of_iterations);
             }
             number_of_iterations++;
 

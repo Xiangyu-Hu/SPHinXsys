@@ -255,14 +255,13 @@ void run_rigid_elastic_coupling(int res_factor)
 
     // System
     SPHSystem system(bbox, dp);
-    IOEnvironment io_environment(system);
 
     // change output path
     {
         std::string path = "./output_res_x" + std::to_string(res_factor);
         fs::remove_all(path);
         fs::create_directory(path);
-        io_environment.output_folder_ = path;
+        system.getIOEnvironment().resetOutputFolder(path);
     }
 
     // Create objects

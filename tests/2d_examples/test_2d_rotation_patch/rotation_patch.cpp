@@ -61,7 +61,7 @@ class InitialVelocity
         : fluid_dynamics::FluidInitialCondition(sph_body),
           fluid_particles_(dynamic_cast<BaseParticles *>(&sph_body.getBaseParticles())),
           p_(fluid_particles_->getVariableDataByName<Real>("Pressure")),
-          rho_(fluid_particles_->getVariableDataByName<Real>("Density")){};
+          rho_(fluid_particles_->getVariableDataByName<Real>("Density")) {};
 
     void update(size_t index_i, Real dt)
     {
@@ -114,7 +114,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     BoundingBox system_domain_bounds(Vec2d(-LL, -LL), Vec2d(LL + 10 * BW, LH + 10 * BW));
     SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
-    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
+    sph_system.handleCommandlineOptions(ac, av);
     //----------------------------------------------------------------------
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------

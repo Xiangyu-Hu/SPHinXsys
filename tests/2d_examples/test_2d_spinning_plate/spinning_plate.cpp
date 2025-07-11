@@ -52,7 +52,7 @@ class SquareInitialCondition
 {
   public:
     explicit SquareInitialCondition(RealBody &square_column)
-        : fluid_dynamics::FluidInitialCondition(square_column){};
+        : fluid_dynamics::FluidInitialCondition(square_column) {};
 
   protected:
     void update(size_t index_i, Real dt)
@@ -74,7 +74,7 @@ int main(int ac, char *av[])
     //	Build up the environment of a SPHSystem with global controls.
     //----------------------------------------------------------------------
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
-    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
+    sph_system.handleCommandlineOptions(ac, av);
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------

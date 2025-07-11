@@ -53,7 +53,7 @@ class CantileverInitialCondition
 {
   public:
     explicit CantileverInitialCondition(SPHBody &sph_body)
-        : solid_dynamics::ElasticDynamicsInitialCondition(sph_body){};
+        : solid_dynamics::ElasticDynamicsInitialCondition(sph_body) {};
 
     void update(size_t index_i, Real dt)
     {
@@ -101,7 +101,6 @@ int main(int ac, char *av[])
     BodyRegionByParticle holder(cantilever_body, holder_shape);
     SimpleDynamics<FixBodyPartConstraint> constraint_holder(holder);
     /** Output */
-    IOEnvironment io_environment(sph_system);
     BodyStatesRecordingToVtp write_states(sph_system);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
         write_displacement("Position", cantilever_observer_contact);

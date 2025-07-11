@@ -22,7 +22,6 @@ int main(int ac, char *av[])
 #ifdef BOOST_AVAILABLE
     sph_system.handleCommandlineOptions(ac, av);
 #endif
-    IOEnvironment io_environment(sph_system);
 
     /** create a body with corresponding material, particles and reaction model. */
     SolidBody column(sph_system, makeShared<Column>("Column"));

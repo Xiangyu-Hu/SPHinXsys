@@ -18,7 +18,8 @@ std::string BaseIO::convertPhysicalTimeToString(Real convertPhysicalTimeToStream
 bool BaseIO::isBodyIncluded(const SPHBodyVector &bodies, SPHBody *sph_body)
 {
     auto result = std::find_if(bodies.begin(), bodies.end(),
-                               [&](auto &body) -> bool { return body == sph_body; });
+                               [&](auto &body) -> bool
+                               { return body == sph_body; });
     return result != bodies.end() ? true : false;
 }
 //=============================================================================================//
@@ -52,6 +53,11 @@ RestartIO::RestartIO(SPHSystem &sph_system)
     : BaseIO(sph_system), bodies_(sph_system.getSPHBodies()),
       overall_file_path_(io_environment_.restart_folder_ + "/Restart_time_")
 {
+    if (sph_system_.RestartStep() == 0)
+    {
+        io_environment_.resetForRestart();
+    }
+
     for (size_t i = 0; i < bodies_.size(); ++i)
     {
         file_names_.push_back(io_environment_.restart_folder_ + "/" + bodies_[i]->getName() + "_rst_");

@@ -41,7 +41,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
     SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
-    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
+    sph_system.handleCommandlineOptions(ac, av);
     //----------------------------------------------------------------------
     //	Creating bodies with inital shape, materials and particles.
     //----------------------------------------------------------------------

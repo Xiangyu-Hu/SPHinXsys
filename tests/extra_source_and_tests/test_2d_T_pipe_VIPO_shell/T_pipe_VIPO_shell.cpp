@@ -248,7 +248,7 @@ int main(int ac, char *av[])
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
     sph_system.setGenerateRegressionData(false);
 #ifdef BOOST_AVAILABLE
-    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment(); // handle command line arguments
+    sph_system.handleCommandlineOptions(ac, av); // handle command line arguments
 #endif
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.

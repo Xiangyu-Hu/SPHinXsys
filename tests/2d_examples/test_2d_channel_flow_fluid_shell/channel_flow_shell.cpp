@@ -162,7 +162,6 @@ void channel_flow_shell(const Real resolution_ref, const Real wall_thickness)
     //	Build up the environment of a SPHSystem with global controls.
     //----------------------------------------------------------------------
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
-    IOEnvironment io_environment(sph_system);
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------

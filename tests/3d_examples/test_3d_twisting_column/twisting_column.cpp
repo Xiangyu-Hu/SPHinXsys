@@ -48,7 +48,7 @@ class InitialCondition
 {
   public:
     explicit InitialCondition(SPHBody &sph_body)
-        : solid_dynamics::ElasticDynamicsInitialCondition(sph_body){};
+        : solid_dynamics::ElasticDynamicsInitialCondition(sph_body) {};
 
     void update(size_t index_i, Real dt)
     {
@@ -79,7 +79,7 @@ int main(int ac, char *av[])
     Vec3d domain_upper_bound(PL, 0.5 * (PH + BW), 0.5 * (PW + BW));
     BoundingBox system_domain_bounds(domain_lower_bound, domain_upper_bound);
     SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
-    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
+    sph_system.handleCommandlineOptions(ac, av);
     //----------------------------------------------------------------------
     // Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------

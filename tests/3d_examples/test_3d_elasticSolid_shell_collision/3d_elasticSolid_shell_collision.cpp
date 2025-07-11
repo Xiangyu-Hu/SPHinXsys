@@ -36,7 +36,7 @@ template <>
 class ParticleGenerator<SurfaceParticles, Cylinder> : public ParticleGenerator<SurfaceParticles>
 {
   public:
-    explicit ParticleGenerator(SPHBody &sph_body, SurfaceParticles &surface_particles) : ParticleGenerator<SurfaceParticles>(sph_body, surface_particles){};
+    explicit ParticleGenerator(SPHBody &sph_body, SurfaceParticles &surface_particles) : ParticleGenerator<SurfaceParticles>(sph_body, surface_particles) {};
     virtual void prepareGeometricData() override
     {
         // the cylinder and boundary
@@ -70,7 +70,7 @@ int main(int ac, char *av[])
     sph_system.setRunParticleRelaxation(false);
     /** Tag for starting with relaxed body-fitted particles distribution */
     sph_system.setReloadParticles(false);
-    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
+    sph_system.handleCommandlineOptions(ac, av);
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------

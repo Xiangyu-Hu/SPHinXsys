@@ -25,7 +25,7 @@ class ParticleGenerator<SurfaceParticles, Wall> : public ParticleGenerator<Surfa
           center_(center),
           length_(length),
           width_(width),
-          dp_(dp){};
+          dp_(dp) {};
     void prepareGeometricData() override
     {
         Real x = center_.x() - 0.5 * length_;
@@ -106,7 +106,6 @@ void block_sliding(
 
     // System
     SPHSystem system(bb_system, resolution_cube);
-    IOEnvironment io_environment(system);
 
     // Create objects
     SolidBody cube_body(system, mesh_cube);

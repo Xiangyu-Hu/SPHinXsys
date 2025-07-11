@@ -22,12 +22,12 @@ Real BW = particle_spacing_ref * 4;    /**< Extending width for BCs. */
 //----------------------------------------------------------------------
 //	Material parameters.
 //----------------------------------------------------------------------
-Real rho0_f = 1.0;        /**< Reference density of water. */
-Real rho0_a = 0.001;      /**< Reference density of air. */
-Real U_ref = 1.0;         /**< Characteristic velocity. */
-Real c_f = 10.0 * U_ref;  /**< Reference sound speed. */
-Real mu_f = 5.0e-2;       /**< Water viscosity. */
-Real mu_a =5.0e-4;        /**< Air viscosity. */
+Real rho0_f = 1.0;                /**< Reference density of water. */
+Real rho0_a = 0.001;              /**< Reference density of air. */
+Real U_ref = 1.0;                 /**< Characteristic velocity. */
+Real c_f = 10.0 * U_ref;          /**< Reference sound speed. */
+Real mu_f = 5.0e-2;               /**< Water viscosity. */
+Real mu_a = 5.0e-4;               /**< Air viscosity. */
 Real surface_tension_coeff = 1.0; /**< Surface tension coefficient. */
 //----------------------------------------------------------------------
 // Water body shape definition.
@@ -82,9 +82,9 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Build up an SPHSystem.
     //----------------------------------------------------------------------
-    BoundingBox system_domain_bounds(Vecd(-DL/2-BW, -DL/2-BW, -DL/2-BW), Vecd(DL/2 + BW, DH/2 + BW, DW/2 + BW));
+    BoundingBox system_domain_bounds(Vecd(-DL / 2 - BW, -DL / 2 - BW, -DL / 2 - BW), Vecd(DL / 2 + BW, DH / 2 + BW, DW / 2 + BW));
     SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
-    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
+    sph_system.handleCommandlineOptions(ac, av);
     //----------------------------------------------------------------------
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
@@ -277,7 +277,7 @@ int main(int ac, char *av[])
               << interval_computing_pressure_relaxation.seconds() << "\n";
     std::cout << std::fixed << std::setprecision(9) << "interval_updating_configuration = "
               << interval_updating_configuration.seconds() << "\n";
-    
+
     if (sph_system.GenerateRegressionData())
     {
         write_water_kinetic_energy.generateDataBase(5.0e-3);

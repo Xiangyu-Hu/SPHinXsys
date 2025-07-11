@@ -45,7 +45,7 @@ class ShockTubeInitialCondition : public fluid_dynamics::CompressibleFluidInitia
 {
   public:
     explicit ShockTubeInitialCondition(SPHBody &sph_body)
-        : fluid_dynamics::CompressibleFluidInitialCondition(sph_body){};
+        : fluid_dynamics::CompressibleFluidInitialCondition(sph_body) {};
     void update(size_t index_i, Real dt)
     {
         if (pos_[index_i][0] < DL / 10.0)
@@ -84,7 +84,7 @@ int main(int ac, char *av[])
     //	Build up the environment of a SPHSystem with global controls.
     //----------------------------------------------------------------------
     SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
-    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
+    sph_system.handleCommandlineOptions(ac, av);
     //----------------------------------------------------------------------
     //	Create body, materials and particles.
     //----------------------------------------------------------------------

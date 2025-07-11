@@ -4,7 +4,6 @@
  * @author   Mai Ye, Chi Zhang and Xiangyu Hu
  */
 #include "owsc_python.h"
-#include "custom_io_environment.h"
 #include "custom_io_observation.h"
 #include "custom_io_simbody.h"
 #include "sphinxsys.h"
@@ -18,13 +17,15 @@ class SphBasicSystemSetting : public SphBasicGeometrySetting
   protected:
     BoundingBox system_domain_bounds;
     SPHSystem sph_system;
-    CustomIOEnvironment custom_io_environment;
 
   public:
     SphBasicSystemSetting(int parallel_env, int episode_env)
         : system_domain_bounds(Vec2d(-DL_Extra - BW, -BW), Vec2d(DL + BW, DH + BW)),
-          sph_system(system_domain_bounds, particle_spacing_ref),
-          custom_io_environment(sph_system, true, parallel_env, episode_env) {}
+          sph_system(system_domain_bounds, particle_spacing_ref)
+    {
+        sph_system.getIOEnvironment().appendOutputFolder(
+            "env_" + std::to_string(parallel_env) + "_episode_" + std::to_string(episode_env));
+    }
 };
 
 class SphFlapReloadEnvironment : public SphBasicSystemSetting
@@ -239,7 +240,7 @@ class SphOWSC : public SimbodyEnvironment
         wave_probe_1.writeToFile(0);
     }
 
-    virtual ~SphOWSC(){};
+    virtual ~SphOWSC() {};
     //----------------------------------------------------------------------
     //	    For ctest.
     //----------------------------------------------------------------------

@@ -33,6 +33,7 @@
 #include "base_data_package.h"
 #include "base_particle_dynamics.h"
 #include "execution_policy.h"
+#include "io_log.h"
 #include "reduce_functors.h"
 #include "sphinxsys_containers.h"
 
@@ -59,7 +60,8 @@ class BaseLocalDynamics
         : identifier_(identifier), sph_system_(identifier.getSPHSystem()),
           sph_body_(identifier.getSPHBody()),
           sph_adaptation_(&sph_body_.getSPHAdaptation()),
-          particles_(&sph_body_.getBaseParticles()) {};
+          particles_(&sph_body_.getBaseParticles()),
+          logger_(Log::get()) {};
     virtual ~BaseLocalDynamics() {};
     using Identifier = typename DynamicsIdentifier::BaseIdentifier;
     SPHBody &getSPHBody() { return sph_body_; };
@@ -80,6 +82,7 @@ class BaseLocalDynamics
     SPHBody &sph_body_;
     SPHAdaptation *sph_adaptation_;
     BaseParticles *particles_;
+    std::shared_ptr<spdlog::logger> logger_;
 };
 using LocalDynamics = BaseLocalDynamics<SPHBody>;
 

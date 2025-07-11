@@ -15,7 +15,7 @@ int main(int ac, char *av[])
     //	Build up the Structure Relax SPHSystem with global controls.
     //----------------------------------------------------------------------
     SPHSystem system_fit(system_domain_bounds, particle_spacing_structure);
-    system_fit.handleCommandlineOptions(ac, av)->setIOEnvironment();
+    system_fit.handleCommandlineOptions(ac, av);
     SolidBody structure_fit(system_fit, makeShared<FloatingStructure>("Structure_Fit"));
     structure_fit.defineAdaptation<ParticleRefinementNearSurface>(1.3, 0.7, 3);
     structure_fit.defineBodyLevelSetShape()->correctLevelSetSign()->writeLevelSet(system_fit);
@@ -68,7 +68,7 @@ int main(int ac, char *av[])
     //	Build up the Main environment of a SPHSystem with global controls.
     //----------------------------------------------------------------------
     SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
-    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
+    sph_system.handleCommandlineOptions(ac, av);
 
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.

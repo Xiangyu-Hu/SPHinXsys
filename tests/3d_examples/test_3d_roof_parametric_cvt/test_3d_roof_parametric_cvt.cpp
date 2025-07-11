@@ -338,7 +338,6 @@ return_data roof_under_self_weight(Real dp, bool cvt = true, int particle_number
 
     // starting the actual simulation
     SPHSystem system(bb_system, dp);
-    system.setIOEnvironment(false);
     SolidBody shell_body(system, shell_shape);
     shell_body.defineMaterial<LinearElasticSolid>(rho, E, mu);
     if (cvt)

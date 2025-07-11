@@ -205,8 +205,6 @@ int main(int ac, char *av[])
     /** Tag for computation start with relaxed body fitted particles distribution. */
     system.setReloadParticles(true);
     system.handleCommandlineOptions(ac, av);
-    IOEnvironment io_environment(system);
-
     /**
      * @brief   Particles and body creation for water.
      */

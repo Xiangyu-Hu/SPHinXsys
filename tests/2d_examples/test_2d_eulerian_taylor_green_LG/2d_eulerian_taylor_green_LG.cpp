@@ -48,8 +48,8 @@ class TaylorGreenInitialCondition : public fluid_dynamics::CompressibleFluidInit
 {
   public:
     explicit TaylorGreenInitialCondition(SPHBody &sph_body)
-        : fluid_dynamics::CompressibleFluidInitialCondition(sph_body){};
-    virtual ~TaylorGreenInitialCondition(){};
+        : fluid_dynamics::CompressibleFluidInitialCondition(sph_body) {};
+    virtual ~TaylorGreenInitialCondition() {};
 
     void update(size_t index_i, Real dt)
     {
@@ -78,7 +78,7 @@ int main(int ac, char *av[])
     //	Build up the environment of a SPHSystem.
     //----------------------------------------------------------------------
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
-    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
+    sph_system.handleCommandlineOptions(ac, av);
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------

@@ -28,6 +28,7 @@ io class used in SPHinXsys. **/
 #define IO_ALL_H
 
 #include "io_base.h"
+#include "io_log.h"
 #include "io_observation.h"
 #include "io_plt.hpp"
 #include "io_simbody.h"

@@ -120,7 +120,6 @@ int main(int ac, char *av[])
     DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d, FixedDampingRate>>>
         cylinder_rotation_damping(0.2, cylinder_body_inner, "AngularVelocity", physical_viscosity);
     /** Output */
-    IOEnvironment io_environment(sph_system);
     BodyStatesRecordingToVtp write_states(sph_system);
     write_states.addToWrite<Vecd>(cylinder_body, "PseudoNormal");
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>

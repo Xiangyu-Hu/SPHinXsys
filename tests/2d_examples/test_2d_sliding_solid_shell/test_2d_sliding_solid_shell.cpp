@@ -53,7 +53,7 @@ class ParticleGenerator<SurfaceParticles, WallBoundary> : public ParticleGenerat
 {
   public:
     explicit ParticleGenerator(SPHBody &sph_body, SurfaceParticles &surface_particles)
-        : ParticleGenerator<SurfaceParticles>(sph_body, surface_particles){};
+        : ParticleGenerator<SurfaceParticles>(sph_body, surface_particles) {};
     void prepareGeometricData() override
     {
         Real s0 = -BW + 0.5 * resolution_shell;
@@ -79,7 +79,6 @@ void run_simulation()
     //	Build up the environment of a SPHSystem with global controls.
     //----------------------------------------------------------------------
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
-    IOEnvironment io_environment(sph_system);
     //----------------------------------------------------------------------
     //	Creating body, materials and particles
     //----------------------------------------------------------------------

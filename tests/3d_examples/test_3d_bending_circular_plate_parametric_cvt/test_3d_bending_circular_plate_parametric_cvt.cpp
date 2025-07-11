@@ -237,7 +237,6 @@ return_data bending_circular_plate(Real dp_ratio)
 
     // starting the actual simulation
     SPHSystem system(bb_system, dp);
-    system.setIOEnvironment(false);
     SolidBody shell_body(system, shell_shape);
     shell_body.defineMaterial<LinearElasticSolid>(rho, E, mu);
     shell_body.generateParticles<SurfaceParticles, ShellCircle>(obj_vertices, sym_vec, particle_area, thickness);

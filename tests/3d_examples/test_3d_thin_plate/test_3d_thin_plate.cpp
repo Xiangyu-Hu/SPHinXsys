@@ -159,7 +159,6 @@ int main(int ac, char *av[])
     DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d, FixedDampingRate>>>
         plate_rotation_damping(0.5, plate_body_inner, "AngularVelocity", physical_viscosity);
     /** Output */
-    IOEnvironment io_environment(sph_system);
     BodyStatesRecordingToVtp write_states(sph_system);
     ObservedQuantityRecording<Vecd> write_plate_max_displacement("Position", plate_observer_contact);
 

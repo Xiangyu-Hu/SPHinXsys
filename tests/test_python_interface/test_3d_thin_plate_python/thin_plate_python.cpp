@@ -182,7 +182,6 @@ class Environment : public PreSettingCase
     DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d, FixedDampingRate>>>
         plate_rotation_damping;
     /** Output */
-    IOEnvironment io_environment;
     BodyStatesRecordingToVtp write_states;
     ObservedQuantityRecording<Vecd> write_plate_max_displacement;
 
@@ -210,7 +209,6 @@ class Environment : public PreSettingCase
           constrain_holder_y(boundary_geometry_y, 1),
           plate_position_damping(0.5, plate_body_inner, "Velocity", physical_viscosity),
           plate_rotation_damping(0.5, plate_body_inner, "AngularVelocity", physical_viscosity),
-          io_environment(system),
           write_states(system),
           write_plate_max_displacement("Position", plate_observer_contact)
     {

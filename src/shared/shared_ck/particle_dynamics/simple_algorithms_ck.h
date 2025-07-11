@@ -32,6 +32,7 @@
 
 #include "base_local_dynamics.h"
 #include "base_particle_dynamics.h"
+#include "io_log.h"
 #include "particle_iterators_ck.h"
 
 namespace SPH
@@ -62,7 +63,13 @@ class StateDynamics : public UpdateType, public BaseDynamics<void>
         particle_for(LoopRangeCK<ExecutionPolicy, Identifier>(this->identifier_),
                      [=](size_t i)
                      { update_kernel->update(i, dt); });
+
         finish_dynamics_();
+
+        this->logger_->debug(
+            "StateDynamics::exec() for {} at {}",
+            type_name<UpdateType>(),
+            this->sph_body_.getName());
     };
 };
 
@@ -108,6 +115,12 @@ class ReduceDynamicsCK : public ReduceType,
             this->reference_,
             [=](size_t i)
             { return reduce_kernel->reduce(i, dt); });
+
+        this->logger_->debug(
+            "ReduceDynamicsCK::exec() for {} at {}",
+            type_name<ReduceType>(),
+            this->sph_body_.getName());
+
         return finish_dynamics_.Result(temp);
     };
 };

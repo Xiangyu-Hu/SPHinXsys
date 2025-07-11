@@ -95,7 +95,7 @@ class DiffusionBodyInitialCondition : public LocalDynamics
     explicit DiffusionBodyInitialCondition(SPHBody &sph_body)
         : LocalDynamics(sph_body),
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
-          phi_(particles_->registerStateVariable<Real>(diffusion_species_name)){};
+          phi_(particles_->registerStateVariable<Real>(diffusion_species_name)) {};
 
     void update(size_t index_i, Real dt)
     {
@@ -164,7 +164,6 @@ TEST(test_optimization, test_problem4_non_optimization)
     //	Build up the environment of a SPHSystem.
     //----------------------------------------------------------------------
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
-    sph_system.setIOEnvironment();
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
