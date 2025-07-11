@@ -13,8 +13,7 @@ int main(int ac, char *av[])
     /** Tag for computation start with relaxed body fitted particles distribution. */
     sph_system.setReloadParticles(false);
 
-    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
-    IOEnvironment io_environment(sph_system);
+    sph_system.handleCommandlineOptions(ac, av);
     /**
      * @brief Material property, particles and body creation of fluid.
      */

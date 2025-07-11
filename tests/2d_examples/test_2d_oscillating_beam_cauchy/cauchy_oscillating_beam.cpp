@@ -69,7 +69,7 @@ class BeamInitialCondition
   public:
     explicit BeamInitialCondition(SPHBody &sph_body)
         : solid_dynamics::ElasticDynamicsInitialCondition(sph_body),
-          elastic_solid_(DynamicCast<ElasticSolid>(this, sph_body_.getBaseMaterial())){};
+          elastic_solid_(DynamicCast<ElasticSolid>(this, sph_body_.getBaseMaterial())) {};
 
     void update(size_t index_i, Real dt)
     {
@@ -142,7 +142,6 @@ int main(int ac, char *av[])
     //-----------------------------------------------------------------------------
     // outputs
     //-----------------------------------------------------------------------------
-    IOEnvironment io_environment(sph_system);
     BodyStatesRecordingToVtp write_beam_states(sph_system);
     RegressionTestEnsembleAverage<ObservedQuantityRecording<Vecd>> write_beam_tip_displacement("Position", beam_observer_contact);
     //----------------------------------------------------------------------

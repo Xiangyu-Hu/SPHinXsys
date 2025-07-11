@@ -12,9 +12,12 @@ SPHSystem::SPHSystem(BoundingBox system_domain_bounds, Real resolution_ref, size
     : system_domain_bounds_(system_domain_bounds),
       resolution_ref_(resolution_ref),
       tbb_global_control_(tbb::global_control::max_allowed_parallelism, number_of_threads),
-      io_environment_(nullptr), run_particle_relaxation_(false), reload_particles_(false),
+      io_environment_(io_ptr_keeper_.createPtr<IOEnvironment>(*this)),
+      run_particle_relaxation_(false), reload_particles_(false),
       restart_step_(0), generate_regression_data_(false), state_recording_(true)
 {
+    Log::init(*io_environment_);
+    spdlog::set_level(static_cast<spdlog::level::level_enum>(log_level_));
     registerSystemVariable<Real>("PhysicalTime", 0.0);
 }
 //=================================================================================================//
@@ -168,6 +171,7 @@ SPHSystem *SPHSystem::handleCommandlineOptions(int ac, char *av[])
                 exit(1);
             }
             std::cout << "Log level was set to " << log_level_ << ".\n";
+            spdlog::set_level(static_cast<spdlog::level::level_enum>(log_level_));
         }
         else
         {
@@ -187,13 +191,5 @@ SPHSystem *SPHSystem::handleCommandlineOptions(int ac, char *av[])
     return this;
 }
 #endif
-//=================================================================================================//
-SPHSystem *SPHSystem::setIOEnvironment(bool delete_output)
-{
-    io_environment_ = io_ptr_keeper_.createPtr<IOEnvironment>(*this, delete_output);
-    Log::init(*io_environment_); // Initialize logging
-    spdlog::set_level(static_cast<spdlog::level::level_enum>(log_level_));
-    return this;
-}
 //=================================================================================================//
 } // namespace SPH

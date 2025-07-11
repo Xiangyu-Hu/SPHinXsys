@@ -81,7 +81,7 @@ class CouetteFlowInitialCondition
 {
   public:
     explicit CouetteFlowInitialCondition(SPHBody &sph_body)
-        : fluid_dynamics::FluidInitialCondition(sph_body){};
+        : fluid_dynamics::FluidInitialCondition(sph_body) {};
 
     void update(size_t index_i, Real dt)
     {
@@ -116,7 +116,7 @@ int main(int ac, char *av[])
     BoundingBox system_domain_bounds(Vecd(-boundary_width * 2, -boundary_width * 2),
                                      Vecd(width + boundary_width * 2, height + boundary_width * 2));
     SPHSystem sph_system(system_domain_bounds, particle_spacing);
-    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
+    sph_system.handleCommandlineOptions(ac, av);
     //----------------------------------------------------------------------
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------

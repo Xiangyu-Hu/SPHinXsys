@@ -73,7 +73,7 @@ class BodyPartFromMesh : public BodyRegionByParticle
 {
   public:
     BodyPartFromMesh(SPHBody &body, SharedPtr<TriangleMeshShape> triangle_mesh_shape_ptr);
-    ~BodyPartFromMesh(){};
+    ~BodyPartFromMesh() {};
 };
 
 class SolidBodyFromMesh : public SolidBody
@@ -81,7 +81,7 @@ class SolidBodyFromMesh : public SolidBody
   public:
     SolidBodyFromMesh(SPHSystem &system, SharedPtr<TriangleMeshShape> triangle_mesh_shape, Real resolution,
                       SharedPtr<SaintVenantKirchhoffSolid> material_model, Vec3d *pos_0, Real *volume);
-    ~SolidBodyFromMesh(){};
+    ~SolidBodyFromMesh() {};
 };
 
 class SolidBodyForSimulation
@@ -101,7 +101,7 @@ class SolidBodyForSimulation
     SolidBodyForSimulation(
         SPHSystem &system, SharedPtr<TriangleMeshShape> triangle_mesh_shape, Real resolution,
         Real physical_viscosity, SharedPtr<SaintVenantKirchhoffSolid> material_model, Vec3d *pos_0, Real *volume);
-    ~SolidBodyForSimulation(){};
+    ~SolidBodyForSimulation() {};
 
     SolidBodyFromMesh *getSolidBodyFromMesh() { return &solid_body_from_mesh_; };
     BaseParticles *getElasticSolidParticles() { return DynamicCast<BaseParticles>(this, &solid_body_from_mesh_.getBaseParticles()); };
@@ -199,7 +199,6 @@ class StructuralSimulation
     Real system_resolution_;
     SPHSystem system_;
     Real scale_system_boundaries_;
-    IOEnvironment io_environment_;
     Real &physical_time_;
 
     StdVec<SharedPtr<SolidBodyForSimulation>> solid_body_list_;

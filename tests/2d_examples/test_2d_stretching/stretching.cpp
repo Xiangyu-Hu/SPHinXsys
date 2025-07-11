@@ -89,9 +89,9 @@ class LeftStretchSolidBodyRegion : public BodyPartMotionConstraint
     LeftStretchSolidBodyRegion(BodyPartByParticle &body_part)
         : BodyPartMotionConstraint(body_part),
           vel_(particles_->getVariableDataByName<Vecd>("Velocity")),
-          pos_(particles_->getVariableDataByName<Vecd>("Position")){};
+          pos_(particles_->getVariableDataByName<Vecd>("Position")) {};
 
-    virtual ~LeftStretchSolidBodyRegion(){};
+    virtual ~LeftStretchSolidBodyRegion() {};
 
   protected:
     Vecd *vel_;
@@ -109,9 +109,9 @@ class RightStretchSolidBodyRegion : public BodyPartMotionConstraint
     RightStretchSolidBodyRegion(BodyPartByParticle &body_part)
         : BodyPartMotionConstraint(body_part),
           vel_(particles_->getVariableDataByName<Vecd>("Velocity")),
-          pos_(particles_->getVariableDataByName<Vecd>("Position")){};
+          pos_(particles_->getVariableDataByName<Vecd>("Position")) {};
 
-    virtual ~RightStretchSolidBodyRegion(){};
+    virtual ~RightStretchSolidBodyRegion() {};
 
   protected:
     Vecd *vel_;
@@ -151,9 +151,9 @@ class ConstrainXVelocity : public BodyPartMotionConstraint
     // TODO: use only body part as argment since body can be referred from it already
     ConstrainXVelocity(BodyPartByParticle &body_part)
         : BodyPartMotionConstraint(body_part),
-          vel_(particles_->getVariableDataByName<Vecd>("Velocity")), pos_(particles_->getVariableDataByName<Vecd>("Position")){};
+          vel_(particles_->getVariableDataByName<Vecd>("Velocity")), pos_(particles_->getVariableDataByName<Vecd>("Position")) {};
 
-    virtual ~ConstrainXVelocity(){};
+    virtual ~ConstrainXVelocity() {};
 
   protected:
     Vecd *vel_;
@@ -179,8 +179,6 @@ int main(int ac, char *av[])
     system.setReloadParticles(true);
     system.setGenerateRegressionData(false);
     system.handleCommandlineOptions(ac, av);
-    IOEnvironment io_environment(system);
-
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------

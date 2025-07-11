@@ -50,8 +50,6 @@ int main(int ac, char *av[])
     sph_system.setRunParticleRelaxation(true);
     sph_system.setReloadParticles(false);
     sph_system.handleCommandlineOptions(ac, av);
-
-    IOEnvironment io_environment(sph_system);
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------

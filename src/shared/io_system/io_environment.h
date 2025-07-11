@@ -59,9 +59,12 @@ class IOEnvironment
     std::string restart_folder_;
     std::string reload_folder_;
 
-    explicit IOEnvironment(SPHSystem &sph_system, bool delete_output = true);
-    virtual ~IOEnvironment(){};
+    explicit IOEnvironment(SPHSystem &sph_system);
+    virtual ~IOEnvironment() {};
+    void resetForRestart();
     ParameterizationIO *defineParameterizationIO();
+    void appendOutputFolder(const std::string &append_name);
+    void resetOutputFolder(const std::string &new_name);
     std::string inputFolder() const { return input_folder_; }
     std::string outputFolder() const { return output_folder_; }
     std::string restartFolder() const { return restart_folder_; }

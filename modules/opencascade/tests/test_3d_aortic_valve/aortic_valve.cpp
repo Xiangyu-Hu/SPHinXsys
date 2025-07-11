@@ -41,7 +41,7 @@ class BoundaryGeometry : public BodyPartByParticle
         TaggingParticleMethod tagging_particle_method = std::bind(&BoundaryGeometry::tagManually, this, _1);
         tagParticles(tagging_particle_method);
     };
-    virtual ~BoundaryGeometry(){};
+    virtual ~BoundaryGeometry() {};
 
   private:
     bool tagManually(size_t index_i)
@@ -56,7 +56,7 @@ class ParticleGenerator<SurfaceParticles, Leaflet> : public ParticleGenerator<Su
 {
   public:
     explicit ParticleGenerator(SPHBody &sph_body, SurfaceParticles &surface_particles)
-        : ParticleGenerator<SurfaceParticles>(sph_body, surface_particles), sph_body_(sph_body){};
+        : ParticleGenerator<SurfaceParticles>(sph_body, surface_particles), sph_body_(sph_body) {};
     virtual void prepareGeometricData() override
     {
         SurfaceShape *a = DynamicCast<SurfaceShape>(this, &sph_body_.getInitialShape());
@@ -124,7 +124,7 @@ int main(int ac, char *av[])
     //	Build up a SPHSystem.
     //----------------------------------------------------------------------
     SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
-    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
+    sph_system.handleCommandlineOptions(ac, av);
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
