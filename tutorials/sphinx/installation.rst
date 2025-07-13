@@ -3,7 +3,8 @@ How to install SPHinXsys
 ========================
 
 SPHinXsys is an open-source library hosted on Github https://github.com/Xiangyu-Hu/SPHinXsys.
-If you face problems about installation, want to report bugs, or any other difficulties, please report them https://github.com/Xiangyu-Hu/SPHinXsys/issues 
+If you face problems about installation, want to report bugs, or any other difficulties, 
+please report them https://github.com/Xiangyu-Hu/SPHinXsys/issues 
 
 Requirements
 ------------
@@ -67,7 +68,8 @@ The following block will install the direct dependencies required by SPHinXsys i
         boost-geometry                  \
         simbody                         \
         gtest                           \
-        pybind11
+        pybind11                        \
+        spdlog
 
 Note that, some libraries can be installed simply by apt install, such as eigen3, tbb and boost.
 It seems that only the simbody and gtest should be installed by using vcpkg.
@@ -85,7 +87,8 @@ To install the *shared* versions, do the following:
         boost-geometry:x64-linux-dynamic        \
         simbody:x64-linux-dynamic               \
         gtest:x64-linux-dynamic                 \
-        pybind11:x64-linux-dynamic  
+        pybind11:x64-linux-dynamic              \
+        spdlog:x64-linux-dynamic
     cd ..
 
 Otherwise, please refer to the official `vcpkg documentation <https://vcpkg.io/en/docs/examples/overlay-triplets-linux-dynamic.html>`_
@@ -292,7 +295,8 @@ First clone the vcpkg repository to your home directory.
         boost-program-options:x64-windows       \
         boost-geometry:x64-windows              \
         simbody:x64-windows gtest:x64-windows   \
-        pybind11:x64-windows
+        pybind11:x64-windows                    \
+        spdlog:x64-windows
     .\vcpkg integrate install
 
 
@@ -312,7 +316,8 @@ i.e., you need to use the slash :code:`/` instead of the backslash:code:`\`, as 
         boost-geometry:x64-windows                  \
         simbody:x64-windows                         \
         gtest:x64-windows                           \
-        pybind11:x64-windows
+        pybind11:x64-windows                        \
+        spdlog:x64-windows
     ./vcpkg integrate install
 
 Please make sure that the name of the directory for cloning vcpkg has only using plain characters, 
@@ -329,7 +334,8 @@ To install the *static* versions, replace the former install line by the followi
         boost-geometry:x64-windows-static        \
         simbody:x64-windows-static               \
         gtest:x64-windows-static                 \
-        pybind11:x64-windows-static
+        pybind11:x64-windows-static              \
+        spdlog:x64-windows-static
 
 For any other combination, please refer to the official `architecture documentation <https://vcpkg.io/en/docs/users/triplets.html>` .
 Also Note that, if you encounter an error, you may need to check the exact log file to find the detailed error message.
@@ -398,7 +404,8 @@ The following block will install the direct dependencies required by SPHinXsys i
         boost-geometry                          \
         simbody                                 \
         gtest                                   \
-        pybind11
+        pybind11                                \
+        spdlog
 
 Note that, if you are using ARM Mac (M1 or later chips), 
 you should use the triplet :code:`arm64-osx` instead of :code:`x64-osx`.
