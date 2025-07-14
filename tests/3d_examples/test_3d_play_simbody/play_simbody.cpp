@@ -42,15 +42,12 @@ int main(int ac, char *av[])
                                          pendulumBody,
                                          SimTK::Transform(SimTK::Vec3(0, 1, 0)));
     MyMotion motion3(pendulum1c, Pi / 20.0, 10.0, 2.0 * Pi, -0.8 * Pi);
-    /** Visualize with default options; ask for a report every 1/30 of a second
-      to match the Visualizer's default 30 frames per second rate.
-     */
-    // Visualizer not included in dependency-free version
-    /*
-    Visualizer viz(system);
-    system.addEventReporter(new Visualizer::Reporter(viz, Real(1./30)));
-    */
-    /** Initialize the system and state. */
+    
+    /** Visualizer from simbody. */
+    //SimTK::Visualizer viz(multi_body_system);
+    //SimTK::Visualizer::Reporter visualizer_reporter(viz, 0.01);
+    //multi_body_system.addEventReporter(&visualizer_reporter);
+
     multi_body_system.realizeTopology();
     SimTK::State state = multi_body_system.getDefaultState();
     pendulum1.setOneQ(state, 0, 0.0);
@@ -66,9 +63,7 @@ int main(int ac, char *av[])
     }
 
     // Visualizer not included in dependency-free version
-    /*
-    viz.report(state);
-    */
+    //viz.report(state);
     SimTK::RungeKuttaMersonIntegrator integ(multi_body_system);
     SimTK::TimeStepper ts(multi_body_system, integ);
     ts.initialize(state);
@@ -79,6 +74,8 @@ int main(int ac, char *av[])
         step++;
         ts.stepTo(Real(step));
         const SimTK::State &state_for_output = integ.getState();
+        // visualize the motion of rigid body
+        //viz.report(integ.getState());
         state_engine.writeStateInfoToXml(step, state_for_output);
     }
     return 0;
