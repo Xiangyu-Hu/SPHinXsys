@@ -244,8 +244,7 @@ void StateEngine::writeStateInfoToXml(int ite_rst_, const SimTK::State &state_)
     const SimTK::SimbodyMatterSubsystem &matter_ = getMultibodySystem().getMatterSubsystem();
     resizeXmlDocForSimbody(matter_.getNumBodies());
     SimTK::Xml::element_iterator ele_ite = simbody_xml_engine_.root_element_.element_begin();
-    SimTK::MobilizedBodyIndex mbx(0);
-    for (int k = 0; k != matter_.getNumBodies(); ++k)
+    for (SimTK::MobilizedBodyIndex mbx(0); mbx != matter_.getNumBodies(); ++mbx)
     {
         const SimTK::MobilizedBody &mobod = matter_.getMobilizedBody(mbx);
 
