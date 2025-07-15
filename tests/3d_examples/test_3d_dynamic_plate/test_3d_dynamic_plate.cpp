@@ -126,7 +126,6 @@ int main(int ac, char *av[])
     BoundaryGeometry boundary_geometry(plate_body);
     SimpleDynamics<FixBodyPartConstraint> constrain_holder(boundary_geometry);
     /** Output */
-    IOEnvironment io_environment(sph_system);
     BodyStatesRecordingToVtp write_states(sph_system);
     write_states.addToWrite<Vec3d>(plate_body, "ForcePrior");
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>

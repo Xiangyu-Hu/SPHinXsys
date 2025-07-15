@@ -10,7 +10,7 @@ int main(int ac, char *av[])
     SPHSystem system(system_domain_bounds, particle_spacing_ref);
     system.setRunParticleRelaxation(false);
     system.setReloadParticles(true);
-    system.handleCommandlineOptions(ac, av)->setIOEnvironment();
+    system.handleCommandlineOptions(ac, av);
 
     RealBody column(system, makeShared<Column>("Column"));
     column.defineBodyLevelSetShape()->writeLevelSet(system);
@@ -22,7 +22,7 @@ int main(int ac, char *av[])
     SolidBody wall_boundary(system, makeShared<WallBoundary>("Wall"));
     wall_boundary.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     wall_boundary.generateParticles<BaseParticles, Lattice>();
-    
+
     ObserverBody my_observer(system, "MyObserver");
     StdVec<Vecd> observation_location = {Vecd(0.0, 0.0, PW)};
     my_observer.generateParticles<ObserverParticles>(observation_location);

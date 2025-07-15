@@ -63,6 +63,11 @@ void InteractionDynamicsCK<ExecutionPolicy, Base, InteractionType<Inner<Paramete
     particle_for(LoopRangeCK<ExecutionPolicy, Identifier>(this->identifier_),
                  [=](size_t i)
                  { interact_kernel->interact(i, dt); });
+
+    this->logger_->debug(
+        "InteractionDynamicsCK::runInteraction() for {} at {}",
+        type_name<InteractionType<Inner<Parameters...>>>(),
+        this->sph_body_.getName());
 }
 //=================================================================================================//
 template <class ExecutionPolicy, template <typename...> class InteractionType, typename... Parameters>
@@ -92,6 +97,11 @@ void InteractionDynamicsCK<ExecutionPolicy, Base, InteractionType<Contact<Parame
         particle_for(LoopRangeCK<ExecutionPolicy, Identifier>(this->identifier_),
                      [=](size_t i)
                      { interact_kernel->interact(i, dt); });
+
+        this->logger_->debug(
+            "InteractionDynamicsCK::runInteraction() for {} at {}",
+            type_name<InteractionType<Contact<Parameters...>>>(),
+            this->sph_body_.getName());
     }
 }
 //=================================================================================================//
@@ -167,6 +177,11 @@ void InteractionDynamicsCK<ExecutionPolicy, InteractionType<RelationType<WithUpd
     particle_for(LoopRangeCK<ExecutionPolicy, Identifier>(this->identifier_),
                  [=](size_t i)
                  { update_kernel->update(i, dt); });
+
+    this->logger_->debug(
+        "InteractionDynamicsCK::runUpdateStep() for {} at {}",
+        type_name<InteractionType<RelationType<WithUpdate, OtherParameters...>>>(),
+        this->sph_body_.getName());
 }
 //=================================================================================================//
 template <class ExecutionPolicy, template <typename...> class InteractionType,
@@ -217,6 +232,11 @@ void InteractionDynamicsCK<ExecutionPolicy, InteractionType<RelationType<OneLeve
     particle_for(LoopRangeCK<ExecutionPolicy, Identifier>(this->identifier_),
                  [=](size_t i)
                  { initialize_kernel->initialize(i, dt); });
+
+    this->logger_->debug(
+        "InteractionDynamicsCK::runInitializationStep() for {} at {}",
+        type_name<InteractionType<RelationType<OneLevel, OtherParameters...>>>(),
+        this->sph_body_.getName());
 }
 //=================================================================================================//
 template <class ExecutionPolicy, template <typename...> class InteractionType,
@@ -228,6 +248,11 @@ void InteractionDynamicsCK<ExecutionPolicy, InteractionType<RelationType<OneLeve
     particle_for(LoopRangeCK<ExecutionPolicy, Identifier>(this->identifier_),
                  [=](size_t i)
                  { update_kernel->update(i, dt); });
+
+    this->logger_->debug(
+        "InteractionDynamicsCK::runUpdateStep() for {} at {}",
+        type_name<InteractionType<RelationType<OneLevel, OtherParameters...>>>(),
+        this->sph_body_.getName());
 }
 //=================================================================================================//
 template <class ExecutionPolicy, template <typename...> class InteractionType,

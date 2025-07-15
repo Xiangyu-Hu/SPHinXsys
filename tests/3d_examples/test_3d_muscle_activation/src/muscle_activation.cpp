@@ -38,7 +38,7 @@ class MyocardiumActivation
   public:
     explicit MyocardiumActivation(SPHBody &sph_body)
         : active_muscle_dynamics::MuscleActivation(sph_body),
-          physical_time_(sph_system_.getSystemVariableDataByName<Real>("PhysicalTime")){};
+          physical_time_(sph_system_.getSystemVariableDataByName<Real>("PhysicalTime")) {};
 
     void update(size_t index_i, Real dt)
     {
@@ -95,7 +95,6 @@ int main(int ac, char *av[])
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
-    IOEnvironment io_environment(sph_system);
     BodyStatesRecordingToVtp write_states(sph_system);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration

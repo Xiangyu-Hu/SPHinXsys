@@ -84,7 +84,7 @@ class DiffusionBodyInitialCondition : public LocalDynamics
         : LocalDynamics(sph_body),
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
           phi_(particles_->registerStateVariable<Real>(diffusion_species_name)),
-          heat_source_(particles_->registerStateVariable<Real>("HeatSource")){};
+          heat_source_(particles_->registerStateVariable<Real>("HeatSource")) {};
 
     void update(size_t index_i, Real dt)
     {
@@ -102,7 +102,7 @@ class ThermalConductivityRandomInitialization : public LocalDynamics
   public:
     explicit ThermalConductivityRandomInitialization(SPHBody &sph_body)
         : LocalDynamics(sph_body),
-          thermal_conductivity(particles_->getVariableDataByName<Real>("ThermalConductivity")){};
+          thermal_conductivity(particles_->getVariableDataByName<Real>("ThermalConductivity")) {};
     void update(size_t index_i, Real dt)
     {
         thermal_conductivity[index_i] = 0.5 + rand_uniform(0.0, 1.0);
@@ -118,7 +118,7 @@ class WallBoundaryInitialCondition : public LocalDynamics
     explicit WallBoundaryInitialCondition(SPHBody &sph_body)
         : LocalDynamics(sph_body),
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
-          phi_(particles_->registerStateVariable<Real>(diffusion_species_name)){};
+          phi_(particles_->registerStateVariable<Real>(diffusion_species_name)) {};
 
     void update(size_t index_i, Real dt)
     {
@@ -147,7 +147,7 @@ class ImposeObjectiveFunction : public LocalDynamics
         : LocalDynamics(sph_body),
           phi_(particles_->registerStateVariable<Real>(diffusion_species_name)),
           species_modified_(particles_->getVariableDataByName<Real>("SpeciesModified")),
-          species_recovery_(particles_->getVariableDataByName<Real>("SpeciesRecovery")){};
+          species_recovery_(particles_->getVariableDataByName<Real>("SpeciesRecovery")) {};
 
     void update(size_t index_i, Real learning_rate)
     {
@@ -165,7 +165,7 @@ class StoreGlobalPDEResidual : public LocalDynamics
     explicit StoreGlobalPDEResidual(SPHBody &sph_body)
         : LocalDynamics(sph_body),
           residual_T_local_(particles_->getVariableDataByName<Real>("ResidualTLocal")),
-          residual_T_global_(particles_->getVariableDataByName<Real>("ResidualTGlobal")){};
+          residual_T_global_(particles_->getVariableDataByName<Real>("ResidualTGlobal")) {};
 
     void update(size_t index_i, Real learning_rate)
     {
@@ -187,7 +187,6 @@ TEST(test_optimization, test_problem1_optimized)
     //	Build up the environment of a SPHSystem.
     //----------------------------------------------------------------------
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
-    sph_system.setIOEnvironment();
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------

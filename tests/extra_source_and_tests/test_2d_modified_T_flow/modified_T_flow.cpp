@@ -146,7 +146,7 @@ int main(int ac, char *av[])
     BoundingBox system_domain_bounds(Vec2d(-DL_sponge - BW, -DH - BW), Vec2d(DL + BW, 2.0 * DH + BW));
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
     sph_system.setGenerateRegressionData(false);
-    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
+    sph_system.handleCommandlineOptions(ac, av);
     //----------------------------------------------------------------------
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------

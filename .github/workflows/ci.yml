@@ -87,6 +87,7 @@ jobs:
             boost-program-options \
             boost-geometry \
             simbody \
+            spdlog \
             gtest \
             pybind11
 
@@ -204,6 +205,7 @@ jobs:
             boost-program-options \
             boost-geometry \
             simbody \
+            spdlog \
             gtest \
             xsimd \
             pybind11 \
@@ -286,6 +288,7 @@ jobs:
             boost-program-options \
             boost-geometry \
             simbody \
+            spdlog \
             gtest \
             xsimd \
             pybind11 \
@@ -386,6 +389,7 @@ jobs:
             boost-geometry `
             simbody `
             gtest `
+            spdlog `
             xsimd `
             pybind11
 
@@ -463,6 +467,7 @@ jobs:
             boost-program-options `
             boost-geometry `
             simbody `
+            spdlog `
             gtest `
             xsimd `
             pybind11
@@ -558,6 +563,7 @@ jobs:
             boost-geometry \
             gtest \
             simbody \
+            spdlog \
             xsimd \
             pybind11
 
@@ -628,6 +634,7 @@ jobs:
             boost-geometry \
             gtest \
             simbody \
+            spdlog \
             xsimd \
             pybind11
 

@@ -31,7 +31,6 @@ int main(int ac, char *av[])
 #ifdef BOOST_AVAILABLE
     sph_system.handleCommandlineOptions(ac, av);
 #endif
-    IOEnvironment io_environment(sph_system);
 
     Heart triangle_mesh_heart_model("HeartModel");
     SharedPtr<LevelSetShape> level_set_heart_model =

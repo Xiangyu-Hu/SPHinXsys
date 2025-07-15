@@ -49,7 +49,7 @@ int main(int ac, char *av[])
 {
     /** Setup the system. */
     SPHSystem sph_system(system_domain_bounds, dp_0);
-    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
+    sph_system.handleCommandlineOptions(ac, av);
     /** Creat a body, corresponding material and particles. */
     TreeBody tree_on_sphere(sph_system, makeShared<GeometricShapeBall>(Vec3d::Zero(), 1.0, "Sphere"));
     tree_on_sphere.defineBodyLevelSetShape()->writeLevelSet(sph_system);

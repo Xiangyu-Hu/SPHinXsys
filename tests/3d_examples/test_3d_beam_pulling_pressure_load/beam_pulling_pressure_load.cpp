@@ -114,7 +114,6 @@ int main(int ac, char *av[])
     // handle command line arguments
     sph_system.handleCommandlineOptions(ac, av);
 #endif
-    IOEnvironment io_environment(sph_system);
 
     /** Import a beam body, with corresponding material and particles. */
     SolidBody beam_body(sph_system, makeShared<Beam>("beam"));

@@ -189,7 +189,6 @@ return_data beam_multi_resolution(Real dp_factor, bool damping_on, int refinemen
 
     // System
     SPHSystem system(bb_system, dp);
-    IOEnvironment io_environment(system);
 
     // Create objects
     SolidBody beam_body(system, mesh);
