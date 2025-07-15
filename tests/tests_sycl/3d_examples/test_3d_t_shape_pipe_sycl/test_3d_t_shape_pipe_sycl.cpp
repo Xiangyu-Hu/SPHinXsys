@@ -98,7 +98,7 @@ struct PressureBC
 
     PressureBC(FluidBody &fluid_body, const BoundaryParameter &params, ParticleBuffer<Base> &in_outlet_particle_buffer, Real t_ref)
         : normal(params.normal.normalized()),
-          center(params.center),
+          center(params.center + 0.5 * params.L_emitter * normal),
           rot(compute_rotation(normal)),
           buffer_halfsize(params.L_emitter * 0.5,
                           params.diameter * 0.505,
@@ -178,7 +178,7 @@ void run_t_shape_pipe(int ac, char *av[], Parameters &params)
     // --- Section 6: Build SPH System and IO Environment Setup ---
     auto water_block_shape = makeShared<ComplexShape>("WaterBlock");
     water_block_shape->add<TriangleMeshShapeSTL>(params.fluid_file_path.c_str(), Vec3d::Zero(), scale, "OuterBoundary");
-    water_block_shape->subtract<TriangleMeshShapeSTL>(params.wall_file_path.c_str(), Vec3d::Zero(), scale);
+    // water_block_shape->subtract<TriangleMeshShapeSTL>(params.wall_file_path.c_str(), Vec3d::Zero(), scale);
     auto wall_boundary_shape = makeShared<TriangleMeshShapeSTL>(params.wall_file_path.c_str(), Vec3d::Zero(), scale, "WallBoundary");
     auto system_bounds = wall_boundary_shape->getBounds();
     std::cout << "Domain lower bounds: " << system_bounds.first_.transpose() << std::endl;
@@ -188,8 +188,7 @@ void run_t_shape_pipe(int ac, char *av[], Parameters &params)
     sph_system.setIOEnvironment();
     auto &io_env = sph_system.getIOEnvironment();
     std::filesystem::path fluid_file_path(params.fluid_file_path);
-    io_env.output_folder_ += "coronary_FFR_find_Pi_" +
-                             std::to_string(params.number_of_particles) + "_" +
+    io_env.output_folder_ += std::to_string(params.number_of_particles) + "_" +
                              fluid_file_path.parent_path().filename().string();
     if (std::filesystem::exists(io_env.output_folder_))
         std::filesystem::remove_all(io_env.output_folder_);
@@ -331,17 +330,13 @@ void run_t_shape_pipe(int ac, char *av[], Parameters &params)
             water_advection_step_setup.exec();
             transport_correction_ck.exec();
             water_advection_step_close.exec();
-            if (relaxation_fluid_itr % 20 == 0)
+            if (relaxation_fluid_itr % 10 == 0)
             {
                 std::cout << std::fixed << std::setprecision(16)
                           << "N=" << relaxation_fluid_itr << "\n";
             }
             relaxation_fluid_itr++;
             /** Update cell linked list and configuration. */
-            for (auto &bc : bidirectional_pressure_conditions)
-                bc->boundary_condition.injectParticles();
-            for (auto &bc : bidirectional_pressure_conditions)
-                bc->boundary_condition.deleteParticles();
             if (relaxation_fluid_itr % 25 == 0 && relaxation_fluid_itr != 1)
             {
                 particle_sort.exec();
