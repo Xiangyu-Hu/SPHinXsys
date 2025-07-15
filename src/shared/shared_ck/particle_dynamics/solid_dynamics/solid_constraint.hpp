@@ -22,7 +22,9 @@ ConstraintBySimBodyCK<DynamicsIdentifier>::
       dv_acc_(this->particles_->template registerStateVariableOnly<Vecd>("Acceleration")),
       sv_simbody_state_(this->particles_->template addUniqueSingularVariableOnly<SimbodyState>("SimbodyState"))
 {
-    this->particles_->template addVariableToWrite<Vecd>("Velocity");
+    this->particles_->template addEvolvingVariable<Vecd>("Velocity");
+    this->particles_->template addEvolvingVariable<Vecd>("Acceleration");
+    this->particles_->template addEvolvingVariable<Vecd>("NormalDirection");
     const SimTK::State *state = &integ_.getState();
     MBsystem_.realize(*state, SimTK::Stage::Acceleration);
     sim_tk_initial_origin_location_ = mobod_.getBodyOriginLocation(*state);
