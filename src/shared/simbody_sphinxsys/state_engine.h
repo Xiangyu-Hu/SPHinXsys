@@ -271,7 +271,7 @@ class StateEngine
     SimTK::State working_state_;
 
     /** Destructor is virtual to allow concrete StateEngine to cleanup. **/
-    virtual ~StateEngine(){};
+    virtual ~StateEngine() {};
     /** Set up the working state in present engine */
     void InitializeState();
     /**
@@ -322,14 +322,14 @@ class StateEngine
      * the output file
      */
     std::string restart_folder_;
-    void writeStateInfoToXml(int ite_rst_, const SimTK::State &state_);
+    void writeStateToXml(int ite_rst, const SimTK::State &state);
     /**
      * read state info from xml and set it to sate.
      * For all bodies in the matter system, their generalized coordinates,
      * generalized velocities and transformations of the origin points are read from
      * the restart file
      */
-    SimTK::State readAndSetStateInfoFromXml(int ite_rst_, SimTK::MultibodySystem &system_);
+    void readStateFromXml(int ite_rst, SimTK::State &state);
     /**@name  Realize the Simbody System and State to Computational Stage.
             Methods in this section enable advanced and scripting users access to
             realize the Simbody MultibodySystem and the provided state to a desired

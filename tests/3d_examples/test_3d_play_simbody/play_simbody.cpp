@@ -42,41 +42,31 @@ int main(int ac, char *av[])
                                          pendulumBody,
                                          SimTK::Transform(SimTK::Vec3(0, 1, 0)));
     MyMotion motion3(pendulum1c, Pi / 20.0, 10.0, 2.0 * Pi, -0.8 * Pi);
-    
-    /** Visualizer from simbody. */
-    //SimTK::Visualizer viz(multi_body_system);
-    //SimTK::Visualizer::Reporter visualizer_reporter(viz, 0.01);
-    //multi_body_system.addEventReporter(&visualizer_reporter);
 
     multi_body_system.realizeTopology();
     SimTK::State state = multi_body_system.getDefaultState();
     pendulum1.setOneQ(state, 0, 0.0);
     pendulum1b.setOneQ(state, 0, 0.0);
     pendulum1c.setOneQ(state, 0, 0.0);
-    multi_body_system.realize(state);
     /** Restart the system if needed. */
     size_t restart = sph_system.RestartStep();
+    size_t step = restart; // Current step
     if (restart != 0)
     {
-        state = state_engine.readAndSetStateInfoFromXml(restart, multi_body_system);
+        state_engine.readStateFromXml(restart, state);
         state.setTime(Real(restart));
     }
-
-    // Visualizer not included in dependency-free version
-    //viz.report(state);
+    multi_body_system.realize(state);
     SimTK::RungeKuttaMersonIntegrator integ(multi_body_system);
     SimTK::TimeStepper ts(multi_body_system, integ);
     ts.initialize(state);
     size_t num_steps = 10; // Number of steps to simulate
-    size_t step = restart; // Current step
     while (step < num_steps)
     {
         step++;
         ts.stepTo(Real(step));
         const SimTK::State &state_for_output = integ.getState();
-        // visualize the motion of rigid body
-        //viz.report(integ.getState());
-        state_engine.writeStateInfoToXml(step, state_for_output);
+        state_engine.writeStateToXml(step, state_for_output);
     }
     return 0;
 }
