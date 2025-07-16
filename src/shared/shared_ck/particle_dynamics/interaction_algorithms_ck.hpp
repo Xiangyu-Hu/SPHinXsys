@@ -18,6 +18,13 @@ auto &InteractionDynamicsCK<ExecutionPolicy, InteractionType<AlgorithmType>>::
             contact_relation, std::forward<Args>(args)...));
     return *this;
 }
+template <class ExecutionPolicy, typename AlgorithmType, template <typename...> class InteractionType>
+auto &InteractionDynamicsCK<ExecutionPolicy, InteractionType<AlgorithmType>>::
+    addContactInteraction(BaseDynamics<void> &contact_interaction)
+{
+    this->post_processes_.push_back(&contact_interaction);
+    return *this;
+}
 //=================================================================================================//
 template <class ExecutionPolicy, typename AlgorithmType, template <typename...> class InteractionType>
 template <template <typename...> class LocalDynamicsType,

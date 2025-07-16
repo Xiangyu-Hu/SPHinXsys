@@ -72,8 +72,6 @@ class ViscousForceCK<Base, ViscosityType, KernelCorrectionType, RelationType<Par
     };
 
   protected:
-    template <typename...>
-    friend class FSI::ViscousForceFromFluid;
     using ViscosityModel = ViscosityType;
 
     ViscosityType &viscosity_model_;
@@ -130,6 +128,10 @@ class ViscousForceCK<Contact<Wall, ViscosityType, KernelCorrectionType, Paramete
         Real *wall_Vol_;
         Vecd *wall_vel_ave_;
     };
+
+  protected:
+    template <typename...>
+    friend class FSI::ViscousForceFromFluid;
 };
 
 using ViscousForceInnerCK = ViscousForceCK<Inner<WithUpdate, Viscosity, NoKernelCorrectionCK>>;

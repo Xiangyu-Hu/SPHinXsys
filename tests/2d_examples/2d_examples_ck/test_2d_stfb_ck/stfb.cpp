@@ -144,11 +144,13 @@ int main(int ac, char *av[])
     Inner<> water_block_inner(water_block);
     Contact<> water_block_contact(water_block, {&wall_boundary, &structure});
     Contact<> structure_contact(structure, {&water_block});
-    Contact<> observer_contact(observer, {&structure});
+    Contact<> observer_contact(observer, {&structure}, ConfigType::Lagrangian);
     //----------------------------------------------------------------------
-    // Define the main execution policy for this case.
+    // Define SPH solver with particle methods and execution policies.
     //----------------------------------------------------------------------
-    using MainExecutionPolicy = execution::ParallelPolicy;
+    SPHSolver sph_solver(sph_system);
+    auto &main_methods = sph_solver.addParticleMethodContainer(par);
+    auto &host_methods = sph_solver.addParticleMethodContainer(par);
     //----------------------------------------------------------------------
     // Define the numerical methods used in the simulation.
     // Note that there may be data dependence on the sequence of constructions.
@@ -160,40 +162,52 @@ int main(int ac, char *av[])
     // Finally, the auxiliary models such as time step estimator, initial condition,
     // boundary condition and other constraints should be defined.
     //----------------------------------------------------------------------
-    UpdateCellLinkedList<MainExecutionPolicy, RealBody> water_cell_linked_list(water_block);
-    UpdateCellLinkedList<MainExecutionPolicy, RealBody> wall_cell_linked_list(wall_boundary);
-    UpdateCellLinkedList<MainExecutionPolicy, RealBody> structure_cell_linked_list(structure);
+    auto &wall_boundary_normal_direction = host_methods.addStateDynamics<NormalFromBodyShapeCK>(wall_boundary);  // run on CPU
+    auto &structure_boundary_normal_direction = host_methods.addStateDynamics<NormalFromBodyShapeCK>(structure); // run on CPU
 
-    UpdateRelation<MainExecutionPolicy, Inner<>, Contact<>>
-        water_block_update_complex_relation(water_block_inner, water_block_contact);
-    UpdateRelation<MainExecutionPolicy, Contact<>>
-        structure_update_contact_relation(structure_contact);
-    UpdateRelation<MainExecutionPolicy, Contact<>>
-        observer_update_contact_relation(observer_contact);
-    ParticleSortCK<MainExecutionPolicy> particle_sort(water_block);
+    auto &water_cell_linked_list = main_methods.addCellLinkedListDynamics(water_block);
+    auto &wall_cell_linked_list = main_methods.addCellLinkedListDynamics(wall_boundary);
+    auto &structure_cell_linked_list = main_methods.addCellLinkedListDynamics(structure);
+    auto &water_block_update_complex_relation = main_methods.addRelationDynamics(water_block_inner, water_block_contact);
+    auto &structure_update_contact_relation = main_methods.addRelationDynamics(structure_contact);
+    auto &observer_update_contact_relation = main_methods.addRelationDynamics(observer_contact);
+    auto &particle_sort = main_methods.addSortDynamics(water_block);
 
     Gravity gravity(Vecd(0.0, -gravity_g));
-    StateDynamics<MainExecutionPolicy, GravityForceCK<Gravity>> constant_gravity(water_block, gravity);
-    StateDynamics<execution::ParallelPolicy, NormalFromBodyShapeCK> wall_boundary_normal_direction(wall_boundary);
-    StateDynamics<execution::ParallelPolicy, NormalFromBodyShapeCK> structure_boundary_normal_direction(structure);
-    StateDynamics<MainExecutionPolicy, fluid_dynamics::AdvectionStepSetup> water_advection_step_setup(water_block);
-    StateDynamics<MainExecutionPolicy, fluid_dynamics::UpdateParticlePosition> water_update_particle_position(water_block);
+    auto &constant_gravity = main_methods.addStateDynamics<GravityForceCK<Gravity>>(water_block, gravity);
+    auto &water_advection_step_setup = main_methods.addStateDynamics<fluid_dynamics::AdvectionStepSetup>(water_block);
+    auto &water_update_particle_position = main_methods.addStateDynamics<fluid_dynamics::UpdateParticlePosition>(water_block);
 
-    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticStep1stHalfWithWallRiemannCK>
-        fluid_acoustic_step_1st_half(water_block_inner, water_block_contact);
-    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticStep2ndHalfWithWallRiemannCK>
-        fluid_acoustic_step_2nd_half(water_block_inner, water_block_contact);
-    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::DensityRegularizationComplexFreeSurface>
-        fluid_density_regularization(water_block_inner, water_block_contact);
-    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::ViscousForceWithWallCK>
-        fluid_viscous_force(water_block_inner, water_block_contact);
-    InteractionDynamicsCK<MainExecutionPolicy, FSI::ViscousForceOnStructure<decltype(fluid_viscous_force)>>
-        viscous_force_on_structure(structure_contact);
-    InteractionDynamicsCK<MainExecutionPolicy, FSI::PressureForceOnStructure<decltype(fluid_acoustic_step_2nd_half)>>
-        pressure_force_on_structure(structure_contact);
+    auto &fluid_acoustic_step_1st_half =
+        main_methods.addInteractionDynamicsOneLevel<
+                        fluid_dynamics::AcousticStep1stHalf, AcousticRiemannSolverCK, NoKernelCorrectionCK>(water_block_inner)
+            .addContactInteraction<Wall, AcousticRiemannSolverCK, NoKernelCorrectionCK>(water_block_contact);
+    auto &fluid_acoustic_step_2nd_half =
+        main_methods.addInteractionDynamicsOneLevel<
+            fluid_dynamics::AcousticStep2ndHalf, AcousticRiemannSolverCK, NoKernelCorrectionCK>(water_block_inner);
+    auto &fluid_acoustic_step_2nd_half_with_wall =
+        main_methods.addInteractionDynamics<
+            fluid_dynamics::AcousticStep2ndHalf, Wall, AcousticRiemannSolverCK, NoKernelCorrectionCK>(water_block_contact);
+    fluid_acoustic_step_2nd_half.addContactInteraction(fluid_acoustic_step_2nd_half_with_wall);
 
-    ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AdvectionTimeStepCK> fluid_advection_time_step(water_block, U_f);
-    ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticTimeStepCK<>> fluid_acoustic_time_step(water_block);
+    auto &fluid_density_regularization =
+        main_methods.addInteractionDynamicsWithUpdate<
+                        fluid_dynamics::DensityRegularization, FreeSurface, AllParticles>(water_block_inner)
+            .addContactInteraction(water_block_contact);
+
+    auto &fluid_advection_time_step = main_methods.addReduceDynamics<fluid_dynamics::AdvectionTimeStepCK>(water_block, U_f);
+    auto &fluid_acoustic_time_step = main_methods.addReduceDynamics<fluid_dynamics::AcousticTimeStepCK<>>(water_block);
+
+    auto &fluid_viscous_force = main_methods.addInteractionDynamics<
+        fluid_dynamics::ViscousForceCK, WithUpdate, Viscosity, NoKernelCorrectionCK>(water_block_inner);
+    auto &fluid_viscous_force_from_wall =
+        main_methods.addInteractionDynamics<fluid_dynamics::ViscousForceCK, Wall, Viscosity, NoKernelCorrectionCK>(water_block_contact);
+    fluid_viscous_force.addContactInteraction(fluid_viscous_force_from_wall);
+
+    auto &viscous_force_on_structure =
+        main_methods.addInteractionDynamicsWithUpdate<FSI::ViscousForceFromFluid, decltype(fluid_viscous_force_from_wall)>(structure_contact);
+    auto &pressure_force_on_structure =
+        main_methods.addInteractionDynamicsWithUpdate<FSI::PressureForceFromFluid, decltype(fluid_acoustic_step_2nd_half_with_wall)>(structure_contact);
     //----------------------------------------------------------------------
     //	Define the multi-body system
     //----------------------------------------------------------------------
@@ -257,19 +271,20 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Coupling between SimBody and SPH
     //----------------------------------------------------------------------
-    ReduceDynamicsCK<MainExecutionPolicy, solid_dynamics::TotalForceOnBodyPartForSimBodyCK>
-        force_on_structure(structure_multibody, MBsystem, structure_mob, integ);
-    StateDynamics<MainExecutionPolicy, solid_dynamics::ConstraintBodyPartBySimBodyCK>
-        constraint_on_structure(structure_multibody, MBsystem, structure_mob, integ);
+    auto &force_on_structure = main_methods.addReduceDynamics<
+        solid_dynamics::TotalForceOnBodyPartForSimBodyCK>(structure_multibody, MBsystem, structure_mob, integ);
+    auto &constraint_on_structure = main_methods.addStateDynamics<
+        solid_dynamics::ConstraintBodyPartBySimBodyCK>(structure_multibody, MBsystem, structure_mob, integ);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtpCK<MainExecutionPolicy> write_real_body_states(sph_system);
-    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<
-        MainExecutionPolicy, UpperFrontInAxisDirectionCK<BodyRegionByCell>>>
-        wave_gauge(wave_probe_buffer, "FreeSurfaceHeight");
-    RegressionTestDynamicTimeWarping<ObservedQuantityRecording<MainExecutionPolicy, Vecd>>
-        write_structure_position("Position", observer_contact);
+    auto &write_real_body_states = main_methods.addBodyStateRecorder<BodyStatesRecordingToVtpCK>(sph_system);
+
+    auto &wave_gauge = main_methods.addReduceRegression<
+        RegressionTestDynamicTimeWarping, UpperFrontInAxisDirectionCK>(wave_probe_buffer, "FreeSurfaceHeight");
+    auto &write_structure_position = main_methods.addObserveRegression<
+        RegressionTestDynamicTimeWarping, Vecd>("Position", observer_contact);
+
     SingularVariable<SimTK::SpatialVec> sv_action_on_structure("ActionOnStructure", SimTK::SpatialVec(0));
     SingularVariableRecording<SimTK::SpatialVec> action_on_structure_recording(sph_system, &sv_action_on_structure);
     //----------------------------------------------------------------------
