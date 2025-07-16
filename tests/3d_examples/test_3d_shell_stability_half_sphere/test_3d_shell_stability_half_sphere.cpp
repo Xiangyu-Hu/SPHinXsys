@@ -9,8 +9,8 @@
 
 #include "sphinxsys.h"
 
-#include <numeric>
 #include <gtest/gtest.h>
+#include <numeric>
 
 using namespace SPH;
 
@@ -33,7 +33,7 @@ class ParticleGenerator<SurfaceParticles, ShellSphere> : public ParticleGenerato
           pos_0_(pos_0),
           center_(center),
           particle_area_(particle_area),
-          thickness_(thickness){};
+          thickness_(thickness) {};
     virtual void prepareGeometricData() override
     {
         for (const auto &pos : pos_0_)
@@ -141,7 +141,6 @@ void sphere_compression(int dp_ratio, Real pressure, Real gravity_z)
 
     // starting the actual simulation
     SPHSystem system(bb_system, dp);
-    system.setIOEnvironment(false);
     SolidBody shell_body(system, shell_shape);
     shell_body.defineMaterial<SaintVenantKirchhoffSolid>(rho, E, mu);
     shell_body.generateParticles<SurfaceParticles, ShellSphere>(obj_vertices, center, particle_area, thickness);

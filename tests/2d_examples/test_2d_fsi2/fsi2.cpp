@@ -23,8 +23,6 @@ int main(int ac, char *av[])
     sph_system.setRunParticleRelaxation(false);  // Tag for run particle relaxation for body-fitted distribution
     sph_system.setReloadParticles(true);         // Tag for computation with save particles distribution
     sph_system.handleCommandlineOptions(ac, av); // handle command line arguments
-
-    IOEnvironment io_environment(sph_system);
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------

@@ -91,8 +91,8 @@ template <>
 class ParticleGenerator<SurfaceParticles, Plate> : public ParticleGenerator<SurfaceParticles>
 {
   public:
-    explicit ParticleGenerator(SPHBody &sph_body, SurfaceParticles &surface_particles) 
-    : ParticleGenerator<SurfaceParticles>(sph_body, surface_particles){};
+    explicit ParticleGenerator(SPHBody &sph_body, SurfaceParticles &surface_particles)
+        : ParticleGenerator<SurfaceParticles>(sph_body, surface_particles) {};
     void prepareGeometricData() override
     {
         Real y = -BW + 0.5 * resolution_shell;
@@ -134,8 +134,8 @@ class GateMotionConstraint : public MotionConstraint<SPHBody>
   public:
     GateMotionConstraint(SPHBody &body)
         : MotionConstraint<SPHBody>(body),
-          physical_time_(sph_system_.getSystemVariableDataByName<Real>("PhysicalTime")){};
-    virtual ~GateMotionConstraint(){};
+          physical_time_(sph_system_.getSystemVariableDataByName<Real>("PhysicalTime")) {};
+    virtual ~GateMotionConstraint() {};
     void update(size_t index_i, Real dt)
     {
         Real run_time = *physical_time_;
@@ -154,7 +154,7 @@ int main(int ac, char *av[])
     //	Build up an SPHSystem.
     //----------------------------------------------------------------------
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
-    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
+    sph_system.handleCommandlineOptions(ac, av);
     sph_system.setGenerateRegressionData(false);
     //----------------------------------------------------------------------
     //	Creating bodies with corresponding materials and particles.

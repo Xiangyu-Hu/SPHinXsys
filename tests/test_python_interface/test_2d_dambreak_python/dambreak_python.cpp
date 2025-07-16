@@ -59,7 +59,6 @@ class PreSettingCase : public Parameter
   protected:
     BoundingBox system_domain_bounds;
     SPHSystem sph_system;
-    IOEnvironment io_environment;
     FluidBody water_block;
     SolidBody wall_boundary;
     StdVec<Vecd> observation_location;
@@ -69,7 +68,6 @@ class PreSettingCase : public Parameter
     PreSettingCase()
         : system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW)),
           sph_system(system_domain_bounds, particle_spacing_ref),
-          io_environment(sph_system),
           water_block(sph_system, makeShared<GeometricShapeBox>(
                                       Transform(water_block_translation), water_block_halfsize, "WaterBody")),
           wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary")),
@@ -192,7 +190,7 @@ class Environment : public PreSettingCase
         write_recorded_water_pressure.writeToFile(sph_system.RestartStep());
     }
 
-    virtual ~Environment(){};
+    virtual ~Environment() {};
     //----------------------------------------------------------------------
     //	For ctest.
     //----------------------------------------------------------------------

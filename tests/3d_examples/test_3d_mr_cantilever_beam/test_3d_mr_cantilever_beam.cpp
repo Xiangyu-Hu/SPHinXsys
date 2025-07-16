@@ -99,7 +99,7 @@ struct solid_algs
         : corrected_configuration(inner_relation),
           stress_relaxation_first_half(inner_relation),
           stress_relaxation_second_half(inner_relation),
-          normal_direction(inner_relation.getSPHBody()){};
+          normal_direction(inner_relation.getSPHBody()) {};
 
     void corrected_config() { corrected_configuration.exec(); }
     void stress_relaxation_first(Real dt) { stress_relaxation_first_half.exec(dt); }
@@ -180,7 +180,6 @@ return_data beam_multi_resolution(Real dp_factor, bool damping_on, int refinemen
 
     // System
     SPHSystem system(bb_system, dp);
-    IOEnvironment io_environment(system);
 
     // Create objects
     SolidBody beam_body(system, mesh);

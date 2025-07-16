@@ -56,7 +56,7 @@ class SoilInitialCondition : public continuum_dynamics::ContinuumInitialConditio
 {
   public:
     explicit SoilInitialCondition(RealBody &granular_column)
-        : continuum_dynamics::ContinuumInitialCondition(granular_column){};
+        : continuum_dynamics::ContinuumInitialCondition(granular_column) {};
 
   protected:
     void update(size_t index_i, Real dt)
@@ -80,7 +80,7 @@ int main(int ac, char *av[])
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
     sph_system.setRunParticleRelaxation(false);
     sph_system.setReloadParticles(true);
-    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
+    sph_system.handleCommandlineOptions(ac, av);
     //----------------------------------------------------------------------
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------

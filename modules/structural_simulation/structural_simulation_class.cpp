@@ -117,7 +117,6 @@ std::tuple<Vecd *, Real *> generateAndRelaxParticlesFromMesh(
 
     if (particle_relaxation)
     {
-        system.setIOEnvironment();
         InnerRelation inner_relation(model);
         relaxParticlesSingleResolution(write_particle_relaxation_data, model, inner_relation);
     }
@@ -200,7 +199,6 @@ StructuralSimulation::StructuralSimulation(const StructuralSimulationInput &inpu
       system_resolution_(0.0),
       system_(SPHSystem(BoundingBox(Vec3d::Zero(), Vec3d::Zero()), system_resolution_)),
       scale_system_boundaries_(input.scale_system_boundaries_),
-      io_environment_(system_),
       physical_time_(*system_.getSystemVariableDataByName<Real>("PhysicalTime")),
 
       // optional: boundary conditions

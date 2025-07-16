@@ -110,8 +110,8 @@ class SaturationInitialCondition
 {
   public:
     SaturationInitialCondition(BodyPartByParticle &body_part)
-        : multi_species_continuum::PorousMediaSaturationDynamicsInitialCondition(body_part){};
-    virtual ~SaturationInitialCondition(){};
+        : multi_species_continuum::PorousMediaSaturationDynamicsInitialCondition(body_part) {};
+    virtual ~SaturationInitialCondition() {};
 
   protected:
     void update(size_t index_i, Real dt = 0.0)
@@ -186,7 +186,6 @@ int main(int ac, char *av[])
     //-----------------------------------------------------------------------------
     // outputs
     //-----------------------------------------------------------------------------
-    IOEnvironment io_environment(sph_system);
     BodyStatesRecordingToVtp write_beam_states(sph_system);
     // note there is a line observation
 
