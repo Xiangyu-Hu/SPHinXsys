@@ -174,6 +174,10 @@ class DiscreteVariable : public Entity
     void prepareForOutput(const ExecutionPolicy &ex_policy) {};
     void prepareForOutput(const ParallelDevicePolicy &ex_policy) { synchronizeWithDevice(); };
 
+    template <class ExecutionPolicy>
+    void prepareForLoadIn(const ExecutionPolicy &ex_policy) {};
+    void prepareForLoadIn(const ParallelDevicePolicy &ex_policy) { synchronizeToDevice(); };
+
   private:
     size_t data_size_;
     DataType *data_field_;

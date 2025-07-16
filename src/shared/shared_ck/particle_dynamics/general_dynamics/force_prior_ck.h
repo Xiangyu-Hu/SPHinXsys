@@ -43,6 +43,7 @@ class ForcePriorCK
           dv_current_force_(particles->registerStateVariableOnly<Vecd>(force_name)),
           dv_previous_force_(particles->registerStateVariableOnly<Vecd>("Previous" + force_name))
     {
+        particles->addEvolvingVariable<Vecd>(dv_force_prior_);
         particles->addEvolvingVariable<Vecd>("Previous" + force_name);
     };
     virtual ~ForcePriorCK() {};
