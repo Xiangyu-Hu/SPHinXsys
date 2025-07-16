@@ -11,7 +11,7 @@ int main(int ac, char *av[])
 {
     BoundingBox system_domain_bounds(Vec3d(0, 0, 0), Vec3d(1, 1, 1));
     SPHSystem sph_system(system_domain_bounds, 1.0);
-    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
+    sph_system.handleCommandlineOptions(ac, av);
 
     /** Create the multi_body_system, with subsystems for the bodies and some forces. */
     SimTK::MultibodySystem multi_body_system;
