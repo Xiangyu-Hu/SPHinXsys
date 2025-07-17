@@ -90,7 +90,7 @@ class BaseIO
         };
     };
 
-    struct prepareVariablesToRead
+    struct finalizeVariablesAfterRead
     {
         template <class ExecutionPolicy, typename DataType>
         void operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables,
@@ -98,7 +98,7 @@ class BaseIO
         {
             for (size_t i = 0; i != variables.size(); ++i)
             {
-                variables[i]->prepareForLoadIn(ex_policy);
+                variables[i]->finalizeLoadIn(ex_policy);
             }
         };
     };

@@ -175,8 +175,8 @@ class DiscreteVariable : public Entity
     void prepareForOutput(const ParallelDevicePolicy &ex_policy) { synchronizeWithDevice(); };
 
     template <class ExecutionPolicy>
-    void prepareForLoadIn(const ExecutionPolicy &ex_policy) {};
-    void prepareForLoadIn(const ParallelDevicePolicy &ex_policy) { synchronizeToDevice(); };
+    void finalizeLoadIn(const ExecutionPolicy &ex_policy) {};
+    void finalizeLoadIn(const ParallelDevicePolicy &ex_policy) { synchronizeToDevice(); };
 
   private:
     size_t data_size_;

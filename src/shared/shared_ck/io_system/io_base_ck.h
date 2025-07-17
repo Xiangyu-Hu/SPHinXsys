@@ -91,13 +91,13 @@ class RestartIOCK : public RestartIO
         for (size_t i = 0; i < bodies_.size(); ++i)
         {
             BaseParticles &base_particles = bodies_[i]->getBaseParticles();
-            prepare_variable_to_read_(base_particles.EvolvingVariables(), ExecutionPolicy{});
+            finalize_variables_after_read_(base_particles.EvolvingVariables(), ExecutionPolicy{});
         }
     };
 
   protected:
     OperationOnDataAssemble<ParticleVariables, prepareVariablesToWrite> prepare_variable_to_write_;
-    OperationOnDataAssemble<ParticleVariables, prepareVariablesToRead> prepare_variable_to_read_;
+    OperationOnDataAssemble<ParticleVariables, finalizeVariablesAfterRead> finalize_variables_after_read_;
 };
 
 template <class ExecutionPolicy>
