@@ -214,13 +214,11 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Define the multi-body system
     //----------------------------------------------------------------------
-    /** set up the multi body system. */
     SimTK::MultibodySystem MBsystem;
-    /** the bodies or matter of the system. */
-    SimTK::SimbodyMatterSubsystem matter(MBsystem);
-    /** the forces of the system. */
-    SimTK::GeneralForceSubsystem forces(MBsystem);
-    /** mass properties of the fixed spot. */
+    SimTK::SimbodyMatterSubsystem matter(MBsystem);                // the bodies or matter of the system
+    SimTK::GeneralForceSubsystem forces(MBsystem);                 // the forces of the system
+    SimbodyStateEngine simbody_state_engine(sph_system, MBsystem); // the state engine of the system
+
     StructureSystemForSimbody structure_multibody(structure, structure_shape);
     /** Mass properties of the constrained spot.
      * SimTK::MassProperties(mass, center of mass, inertia)
@@ -266,11 +264,8 @@ int main(int ac, char *av[])
     /** discrete forces acting on the bodies. */
     SimTK::Force::DiscreteForces force_on_bodies(forces, matter);
     /** Time stepping method for multibody system.*/
-    SimTK::State state = MBsystem.realizeTopology();
+    SimTK::State simbody_state = MBsystem.realizeTopology();
     SimTK::RungeKuttaMersonIntegrator integ(MBsystem);
-    integ.setAccuracy(1e-3);
-    integ.setAllowInterpolation(false);
-    integ.initialize(state);
     //----------------------------------------------------------------------
     //	Coupling between SimBody and SPH
     //----------------------------------------------------------------------
@@ -281,8 +276,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
+    auto &restart_io = main_methods.addIODynamics<RestartIOCK>(sph_system);
     auto &write_real_body_states = main_methods.addBodyStateRecorder<BodyStatesRecordingToVtpCK>(sph_system);
-
     auto &wave_gauge = main_methods.addReduceRegression<
         RegressionTestDynamicTimeWarping, UpperFrontInAxisDirectionCK>(wave_probe_buffer, "FreeSurfaceHeight");
     auto &write_structure_position = main_methods.addObserveRegression<
@@ -291,30 +286,55 @@ int main(int ac, char *av[])
     SingularVariable<SimTK::SpatialVec> sv_action_on_structure("ActionOnStructure", SimTK::SpatialVec(0));
     SingularVariableRecording<SimTK::SpatialVec> action_on_structure_recording(sph_system, &sv_action_on_structure);
     //----------------------------------------------------------------------
+    //	Prepare the simulation with cell linked list, configuration
+    //	and case specified initial condition if necessary.
+    //----------------------------------------------------------------------
+    wall_boundary_normal_direction.exec();
+    structure_boundary_normal_direction.exec();
+    //----------------------------------------------------------------------
+    //	From here, methods run on device.
+    //----------------------------------------------------------------------
+    constant_gravity.exec();
+    //----------------------------------------------------------------------
+    //	Construct static cell linked list and Lagrangian configurations.
+    //----------------------------------------------------------------------
+    wall_cell_linked_list.exec();
+    structure_cell_linked_list.exec();
+    observer_update_contact_relation.exec();
+    //----------------------------------------------------------------------
+    //	Load restart file if necessary.
+    //----------------------------------------------------------------------
+    Real restart_time = 0.0;
+    size_t restart_step = sph_system.RestartStep();
+    if (restart_step != 0)
+    {
+        restart_time = restart_io.readRestartFiles(restart_step);
+        structure_cell_linked_list.exec();
+
+        simbody_state_engine.readStateFromXml(restart_step, simbody_state);
+        simbody_state.setTime(Real(restart_time));
+    }
+    integ.setAccuracy(1e-3);
+    integ.setAllowInterpolation(false);
+    integ.initialize(simbody_state);
+    //----------------------------------------------------------------------
     //	Define time stepper with end and start time.
     //----------------------------------------------------------------------
-    TimeStepper time_stepper(sph_system, total_physical_time);
+    TimeStepper time_stepper(sph_system, total_physical_time, restart_time);
     auto &advection_step = time_stepper.addTriggerByInterval(fluid_advection_time_step.exec());
     auto &trigger_FSI = time_stepper.addTriggerByPhysicalTime(1.0);
-    size_t advection_steps = 0;
+    size_t advection_steps = restart_step;
     int screening_interval = 100;
+    int restart_interval = 1000;
     int observation_interval = screening_interval / 2;
     auto &state_recording = time_stepper.addTriggerByInterval(total_physical_time / 100.0);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
     //----------------------------------------------------------------------
-    wall_boundary_normal_direction.exec();
-    structure_boundary_normal_direction.exec();
-    constant_gravity.exec();
-
     water_cell_linked_list.exec();
-    wall_cell_linked_list.exec();
-    structure_cell_linked_list.exec();
-
     water_block_update_complex_relation.exec();
     structure_update_contact_relation.exec();
-    observer_update_contact_relation.exec();
 
     fluid_density_regularization.exec();
     water_advection_step_setup.exec();
@@ -382,6 +402,12 @@ int main(int ac, char *av[])
                 action_on_structure_recording.writeToFile(advection_steps);
             }
 
+            if (advection_steps % restart_interval == 0)
+            {
+                restart_io.writeToFile(advection_steps);
+                simbody_state_engine.writeStateToXml(advection_steps, integ);
+            }
+
             if (trigger_FSI() && state_recording())
             {
                 write_real_body_states.writeToFile();
@@ -432,7 +458,7 @@ int main(int ac, char *av[])
         write_structure_position.generateDataBase(0.001);
         wave_gauge.generateDataBase(0.001);
     }
-    else
+    else if (sph_system.RestartStep() == 0)
     {
         write_structure_position.testResult();
         wave_gauge.testResult();

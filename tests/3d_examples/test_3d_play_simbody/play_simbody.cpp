@@ -17,7 +17,7 @@ int main(int ac, char *av[])
     SimTK::MultibodySystem multi_body_system;
     SimTK::SimbodyMatterSubsystem matter(multi_body_system);
     SimTK::GeneralForceSubsystem forces(multi_body_system);
-    StateEngine state_engine(multi_body_system);
+    SimbodyStateEngine state_engine(sph_system, multi_body_system);
 
     // Force::UniformGravity gravity(forces, matter, SimTK::Vec3(10, Real(-9.8), 3));
     /** Create the body and some artwork for it. */
@@ -65,8 +65,7 @@ int main(int ac, char *av[])
     {
         step++;
         ts.stepTo(Real(step));
-        const SimTK::State &state_for_output = integ.getState();
-        state_engine.writeStateToXml(step, state_for_output);
+        state_engine.writeStateToXml(step, integ);
     }
     return 0;
 }
