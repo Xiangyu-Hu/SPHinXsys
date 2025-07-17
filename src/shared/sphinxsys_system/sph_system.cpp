@@ -21,6 +21,18 @@ SPHSystem::SPHSystem(BoundingBox system_domain_bounds, Real resolution_ref, size
     registerSystemVariable<Real>("PhysicalTime", 0.0);
 }
 //=================================================================================================//
+void SPHSystem::setLogLevel(size_t log_level)
+{
+    if (log_level < 0 || log_level > 6)
+    {
+        std::cerr << "Log level must be between 0 and 6.\n";
+        exit(1);
+    }
+
+    log_level_ = log_level;
+    spdlog::set_level(static_cast<spdlog::level::level_enum>(log_level_));
+}
+//=================================================================================================//
 IOEnvironment &SPHSystem::getIOEnvironment()
 {
     if (io_environment_ == nullptr)
