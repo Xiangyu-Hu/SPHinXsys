@@ -182,6 +182,7 @@ int main(int ac, char *av[])
         main_methods.addInteractionDynamicsOneLevel<
                         fluid_dynamics::AcousticStep1stHalf, AcousticRiemannSolverCK, NoKernelCorrectionCK>(water_block_inner)
             .addContactInteraction<Wall, AcousticRiemannSolverCK, NoKernelCorrectionCK>(water_block_contact);
+
     auto &fluid_acoustic_step_2nd_half =
         main_methods.addInteractionDynamicsOneLevel<
             fluid_dynamics::AcousticStep2ndHalf, AcousticRiemannSolverCK, NoKernelCorrectionCK>(water_block_inner);
@@ -198,16 +199,18 @@ int main(int ac, char *av[])
     auto &fluid_advection_time_step = main_methods.addReduceDynamics<fluid_dynamics::AdvectionTimeStepCK>(water_block, U_f);
     auto &fluid_acoustic_time_step = main_methods.addReduceDynamics<fluid_dynamics::AcousticTimeStepCK<>>(water_block);
 
-    auto &fluid_viscous_force = main_methods.addInteractionDynamics<
-        fluid_dynamics::ViscousForceCK, WithUpdate, Viscosity, NoKernelCorrectionCK>(water_block_inner);
+    auto &fluid_viscous_force = main_methods.addInteractionDynamicsWithUpdate<
+        fluid_dynamics::ViscousForceCK, Viscosity, NoKernelCorrectionCK>(water_block_inner);
     auto &fluid_viscous_force_from_wall =
         main_methods.addInteractionDynamics<fluid_dynamics::ViscousForceCK, Wall, Viscosity, NoKernelCorrectionCK>(water_block_contact);
     fluid_viscous_force.addContactInteraction(fluid_viscous_force_from_wall);
 
     auto &viscous_force_on_structure =
-        main_methods.addInteractionDynamicsWithUpdate<FSI::ViscousForceFromFluid, decltype(fluid_viscous_force_from_wall)>(structure_contact);
+        main_methods.addInteractionDynamicsWithUpdate<
+            FSI::ViscousForceFromFluid, std::remove_reference_t<decltype(fluid_viscous_force_from_wall)>>(structure_contact);
     auto &pressure_force_on_structure =
-        main_methods.addInteractionDynamicsWithUpdate<FSI::PressureForceFromFluid, decltype(fluid_acoustic_step_2nd_half_with_wall)>(structure_contact);
+        main_methods.addInteractionDynamicsWithUpdate<
+            FSI::PressureForceFromFluid, std::remove_reference_t<decltype(fluid_acoustic_step_2nd_half_with_wall)>>(structure_contact);
     //----------------------------------------------------------------------
     //	Define the multi-body system
     //----------------------------------------------------------------------
