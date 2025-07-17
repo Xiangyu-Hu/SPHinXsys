@@ -2,7 +2,7 @@
 
 #include "io_environment.h"
 
-#include <spdlog/sinks/basic_file_sink.h>
+#include "spdlog/sinks/rotating_file_sink.h"
 
 namespace SPH
 {
@@ -15,7 +15,10 @@ void init(IOEnvironment &io_environment)
 {
     if (!logger) // Create a logger with a file sink
     {
-        logger = spdlog::basic_logger_mt("sphinxsys_logger", "sphinxsys.log");
+        // Create a file rotating logger with 5 MB size max and 3 rotated files
+        auto max_size = 1048576 * 5;
+        auto max_files = 3;
+        logger = spdlog::rotating_logger_mt("sphinxsys_logger", "sphinxsys.log", max_size, max_files);
         logger->flush_on(spdlog::level::info);                          // Flush logs on info level
         spdlog::set_default_logger(logger);                             // Set the default logger to the created logger
         spdlog::set_pattern("[%Y-%m-%d %H:%M:%S] [%l] [thread %t] %v"); // Set the log format

@@ -22,7 +22,15 @@ IOEnvironment::IOEnvironment(SPHSystem &sph_system)
     }
     else
     {
-        fs::remove_all(output_folder_);
+        std::string backup_name = output_folder_ + "_backup";
+        fs::path output_dir = output_folder_;
+        fs::path backup_path = output_dir.parent_path() / backup_name;
+        if (fs::exists(backup_path))
+        {
+            fs::remove_all(backup_path);
+        }
+        fs::rename(output_dir, backup_path);
+        std::cout << "Moved existing output to: " << backup_path << std::endl;
         fs::create_directory(output_folder_);
     }
 

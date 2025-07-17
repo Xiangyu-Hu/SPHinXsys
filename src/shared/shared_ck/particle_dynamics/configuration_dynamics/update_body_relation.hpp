@@ -100,9 +100,14 @@ void UpdateRelation<ExecutionPolicy, Inner<Parameters...>>::exec(Real dt)
 
     if (current_neighbor_index_size > dv_neighbor_index->getDataSize())
     {
+        UnsignedInt old_size = dv_neighbor_index->getDataSize();
         dv_neighbor_index->reallocateData(ex_policy_, current_neighbor_index_size);
         this->inner_relation_.resetComputingKernelUpdated();
         kernel_implementation_.overwriteComputingKernel();
+
+        this->logger_->info(
+            "UpdateRelation: increase neighbor index size from {} to {} at {} .",
+            old_size, dv_neighbor_index->getDataSize(), this->sph_body_.getName());
     }
 
     particle_for(ex_policy_,
@@ -197,8 +202,9 @@ void UpdateRelation<ExecutionPolicy, Contact<Parameters...>>::exec(Real dt)
                      [=](size_t i)
                      { computing_kernel->incrementNeighborSize(i); });
 
-        this->logger_->debug("UpdateCellLinkedList: incrementNeighborSize done at {} for Relation {}.",
-                             this->sph_body_.getName(), type_name<Contact<Parameters...>>());
+        this->logger_->debug("UpdateRelation: incrementNeighborSize done at {} for Relation {} to {}.",
+                             this->sph_body_.getName(), type_name<Contact<Parameters...>>(),
+                             contact_relation_.getContactIdentifier(k).getName());
 
         auto *dv_neighbor_index = this->contact_relation_.getNeighborIndex(k);
         auto *dv_particle_offset = this->contact_relation_.getParticleOffset(k);
@@ -211,9 +217,14 @@ void UpdateRelation<ExecutionPolicy, Contact<Parameters...>>::exec(Real dt)
 
         if (current_neighbor_index_size > dv_neighbor_index->getDataSize())
         {
+            UnsignedInt old_size = dv_neighbor_index->getDataSize();
             dv_neighbor_index->reallocateData(ex_policy_, current_neighbor_index_size);
             this->contact_relation_.resetComputingKernelUpdated(k);
             contact_kernel_implementation_[k]->overwriteComputingKernel(k);
+
+            this->logger_->info(
+                "UpdateRelation: increase neighbor index size from {} to {} at .",
+                old_size, dv_neighbor_index->getDataSize(), this->sph_body_.getName());
         }
 
         particle_for(ex_policy_,
@@ -222,8 +233,9 @@ void UpdateRelation<ExecutionPolicy, Contact<Parameters...>>::exec(Real dt)
                      { computing_kernel->updateNeighborList(i); });
 
         this->logger_->debug(
-            "UpdateCellLinkedList: updateNeighborList done at {} for Relation {}.",
-            this->sph_body_.getName(), type_name<Contact<Parameters...>>());
+            "UpdateRelation: updateNeighborList done at {} for Relation {} to {}.",
+            this->sph_body_.getName(), type_name<Contact<Parameters...>>(),
+            contact_relation_.getContactIdentifier(k).getName());
     }
 }
 //=================================================================================================//
