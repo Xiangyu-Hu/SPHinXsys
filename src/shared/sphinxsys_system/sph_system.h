@@ -71,6 +71,7 @@ class SPHSystem
     bool StateRecording() { return state_recording_; };
     void setStateRecording(bool state_recording) { state_recording_ = state_recording; };
     void setRestartStep(size_t restart_step) { restart_step_ = restart_step; };
+    void setLogLevel(size_t log_level) { log_level_ = log_level; };
     size_t RestartStep() { return restart_step_; };
     /** Initialize cell linked list for the SPH system. */
     void initializeSystemCellLinkedLists();
