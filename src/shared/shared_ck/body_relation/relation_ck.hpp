@@ -25,10 +25,29 @@ Relation<NeighborMethod>::Relation(
             name + "NeighborIndex", offset_list_size_));
         dv_target_particle_offset_.push_back(addRelationVariable<UnsignedInt>(
             name + "ParticleOffset", offset_list_size_));
-        neighbor_methods_.push_back(NeighborMethod(
-            dv_source_pos_, dv_target_pos_.back(), source_identifier, *contact_identifiers[k]));
+        neighbor_methods_.push_back(
+            neighbor_method_ptrs_.template createPtr<NeighborMethod>(
+                dv_source_pos_, dv_target_pos_.back(), source_identifier, *contact_identifiers[k]));
     }
     registered_computing_kernels_.resize(contact_identifiers.size());
+}
+//=================================================================================================//
+template <typename NeighborMethod>
+Relation<NeighborMethod>::Relation(
+    const Relation<NeighborMethod> &original, StdVec<UnsignedInt> target_indexes)
+    : sph_body_(original.getSPHBody()),
+      particles_(sph_body_.getBaseParticles()),
+      dv_source_pos_(original.getSourcePosition()),
+      offset_list_size_(particles_.ParticlesBound() + 1)
+{
+    for (size_t k = 0; k != target_indexes.size(); ++k)
+    {
+        UnsignedInt target_index = target_indexes[k];
+        dv_target_pos_.push_back(original.getTargetPosition(target_index));
+        dv_target_neighbor_index_.push_back(original.getNeighborIndex(target_index));
+        dv_target_particle_offset_.push_back(original.getParticleOffset(target_index));
+        neighbor_methods_.push_back(&original.getNeighborMethod(target_index));
+    }
 }
 //=================================================================================================//
 template <typename NeighborMethod>
@@ -98,6 +117,23 @@ Contact<SourceIdentifier, TargetIdentifier, NeighborMethod>::Contact(
         contact_bodies_.push_back(contact_body);
         contact_particles_.push_back(&contact_body->getBaseParticles());
         contact_adaptations_.push_back(&contact_body->getSPHAdaptation());
+    }
+}
+//=================================================================================================//
+template <class SourceIdentifier, class TargetIdentifier, typename NeighborMethod>
+Contact<SourceIdentifier, TargetIdentifier, NeighborMethod>::
+    Contact(const Contact<SourceIdentifier, TargetIdentifier, NeighborMethod> &original,
+            StdVec<UnsignedInt> target_indexes)
+    : Relation<NeighborMethod>(original, target_indexes),
+      source_identifier_(original.getSourceIdentifier())
+{
+    for (size_t k = 0; k != target_indexes.size(); ++k)
+    {
+        UnsignedInt target_index = target_indexes[k];
+        contact_identifiers_.push_back(&original.getContactIdentifier(target_index));
+        contact_bodies_.push_back(&original.getContactBody(target_index));
+        contact_particles_.push_back(&original.getContactParticles(target_index));
+        contact_adaptations_.push_back(&original.getContactAdaptation(target_index));
     }
 }
 //=================================================================================================//

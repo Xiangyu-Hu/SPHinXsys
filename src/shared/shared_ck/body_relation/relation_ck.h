@@ -49,6 +49,7 @@ template <typename NeighborMethod>
 class Relation<NeighborMethod>
 {
     UniquePtrsKeeper<Entity> relation_variable_ptrs_;
+    UniquePtrsKeeper<NeighborMethod> neighbor_method_ptrs_;
     DiscreteVariable<Vecd> *assignConfigPosition(BaseParticles &particles, ConfigType config_type);
 
   public:
@@ -58,11 +59,12 @@ class Relation<NeighborMethod>
              ConfigType config_type = ConfigType::Eulerian);
     virtual ~Relation() {};
     SPHBody &getSPHBody() { return sph_body_; };
+    size_t getConcreteSize() { return relation_variable_ptrs_.size(); };
     DiscreteVariable<Vecd> *getSourcePosition() { return dv_source_pos_; };
     DiscreteVariable<Vecd> *getTargetPosition(UnsignedInt target_index = 0) { return dv_target_pos_[target_index]; };
     DiscreteVariable<UnsignedInt> *getNeighborIndex(UnsignedInt target_index = 0) { return dv_target_neighbor_index_[target_index]; };
     DiscreteVariable<UnsignedInt> *getParticleOffset(UnsignedInt target_index = 0) { return dv_target_particle_offset_[target_index]; };
-    NeighborMethod &getNeighborMethod(UnsignedInt target_index = 0) { return neighbor_methods_[target_index]; };
+    NeighborMethod &getNeighborMethod(UnsignedInt target_index = 0) { return *neighbor_methods_[target_index]; };
     void registerComputingKernel(execution::Implementation<Base> *implementation, UnsignedInt target_index = 0);
     void resetComputingKernelUpdated(UnsignedInt target_index = 0);
 
@@ -88,8 +90,9 @@ class Relation<NeighborMethod>
     UnsignedInt offset_list_size_;
     StdVec<DiscreteVariable<UnsignedInt> *> dv_target_neighbor_index_;
     StdVec<DiscreteVariable<UnsignedInt> *> dv_target_particle_offset_;
-    StdVec<NeighborMethod> neighbor_methods_;
+    StdVec<NeighborMethod *> neighbor_methods_;
     StdVec<StdVec<execution::Implementation<Base> *>> registered_computing_kernels_;
+    Relation(const Relation<NeighborMethod> &original, StdVec<UnsignedInt> target_indexes);
     template <class DataType>
     DiscreteVariable<DataType> *addRelationVariable(const std::string &name, size_t data_size);
 };
@@ -119,17 +122,24 @@ class Inner<> : public Inner<RealBody, SmoothingLength<SingleValued>>
 template <typename SourceIdentifier, class TargetIdentifier, typename NeighborMethod>
 class Contact<SourceIdentifier, TargetIdentifier, NeighborMethod> : public Relation<NeighborMethod>
 {
+    using ContactRelationType = Contact<SourceIdentifier, TargetIdentifier, NeighborMethod>;
+
   public:
     typedef SourceIdentifier SourceType;
     typedef TargetIdentifier TargetType;
-    explicit Contact(SourceIdentifier &source_identifier, StdVec<TargetIdentifier *> target_identifiers,
-                     ConfigType config_type = ConfigType::Eulerian);
+    Contact(SourceIdentifier &source_identifier, StdVec<TargetIdentifier *> target_identifiers,
+            ConfigType config_type = ConfigType::Eulerian);
+    Contact(const Contact<SourceIdentifier, TargetIdentifier, NeighborMethod> &original,
+            StdVec<UnsignedInt> target_indexes); // delegate constructor
     virtual ~Contact() {};
     SourceIdentifier &getSourceIdentifier() { return source_identifier_; };
     StdVec<SPHBody *> getContactBodies() { return contact_bodies_; };
     StdVec<BaseParticles *> getContactParticles() { return contact_particles_; };
     StdVec<SPHAdaptation *> getContactAdaptations() { return contact_adaptations_; };
     StdVec<TargetIdentifier *> getContactIdentifiers() { return contact_identifiers_; };
+    SPHBody &getContactBody(UnsignedInt target_index) { return *contact_bodies_[target_index]; };
+    BaseParticles &getContactParticles(UnsignedInt target_index) { return *contact_particles_[target_index]; };
+    SPHAdaptation &getContactAdaptation(UnsignedInt target_index) { return *contact_adaptations_[target_index]; };
     TargetIdentifier &getContactIdentifier(UnsignedInt target_index) { return *contact_identifiers_[target_index]; };
 
   protected:
