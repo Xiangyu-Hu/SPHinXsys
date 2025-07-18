@@ -129,6 +129,28 @@ class ParticleMethodContainer : public BaseMethodContainer
 
     template <template <typename...> class InteractionType, typename... ControlParameters,
               template <typename...> class RelationType, typename... RelationParameters, typename... Args>
+    auto &addInteractionDynamicsOneLevel(
+        RelationType<RelationParameters...> &relation, Args &&...args)
+    {
+        return *particle_dynamics_keeper_.createPtr<
+            InteractionDynamicsCK<
+                ExecutionPolicy, InteractionType<RelationType<OneLevel, ControlParameters..., RelationParameters...>>>>(
+            relation, std::forward<Args>(args)...);
+    };
+
+    template <template <typename...> class InteractionType, typename... ControlParameters,
+              template <typename...> class RelationType, typename... RelationParameters, typename... Args>
+    auto &addInteractionDynamicsWithUpdate(
+        RelationType<RelationParameters...> &relation, Args &&...args)
+    {
+        return *particle_dynamics_keeper_.createPtr<
+            InteractionDynamicsCK<
+                ExecutionPolicy, InteractionType<RelationType<WithUpdate, ControlParameters..., RelationParameters...>>>>(
+            relation, std::forward<Args>(args)...);
+    };
+
+    template <template <typename...> class InteractionType, typename... ControlParameters,
+              template <typename...> class RelationType, typename... RelationParameters, typename... Args>
     auto &addRK2Sequence(
         RelationType<RelationParameters...> &relation, Args &&...args)
     {
@@ -154,12 +176,12 @@ class ParticleMethodContainer : public BaseMethodContainer
     };
 
     template <template <typename...> class RegressionType, template <typename...> class LocalReduceMethodType,
-              typename DataType, class DynamicsIdentifier, typename... Args>
+              typename... Parameters, class DynamicsIdentifier, typename... Args>
     auto &addReduceRegression(DynamicsIdentifier &dynamics_identifier, Args &&...args)
     {
         return *other_io_keeper_.createPtr<
             RegressionType<ReducedQuantityRecording<
-                ExecutionPolicy, LocalReduceMethodType<DataType, DynamicsIdentifier>>>>(
+                ExecutionPolicy, LocalReduceMethodType<Parameters..., DynamicsIdentifier>>>>(
             dynamics_identifier, std::forward<Args>(args)...);
     };
 

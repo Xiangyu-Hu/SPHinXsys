@@ -112,7 +112,9 @@ template <>
 class Inner<> : public Inner<RealBody, SmoothingLength<SingleValued>>
 {
   public:
-    Inner(RealBody &real_body) : Inner<RealBody, SmoothingLength<SingleValued>>(real_body) {}
+    template <typename... Args>
+    Inner(RealBody &real_body, Args &&...args)
+        : Inner<RealBody, SmoothingLength<SingleValued>>(real_body, std::forward<Args>(args)...) {}
     virtual ~Inner() {};
 };
 

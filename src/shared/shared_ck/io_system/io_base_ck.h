@@ -29,9 +29,9 @@
 #ifndef IO_BASE_CK_H
 #define IO_BASE_CK_H
 
+#include "execution_policy.h"
 #include "io_base.h"
 #include "io_vtk.h"
-#include "execution_policy.h"
 
 namespace SPH
 {
@@ -44,7 +44,7 @@ class BodyStatesRecordingToVtpCK : public BodyStatesRecordingToVtp
     template <typename... Args>
     BodyStatesRecordingToVtpCK(Args &&...args) : BodyStatesRecordingToVtp(std::forward<Args>(args)...){};
     virtual ~BodyStatesRecordingToVtpCK() {};
-    
+
     virtual void writeToFile()
     {
         if (state_recording_)
@@ -79,13 +79,25 @@ class RestartIOCK : public RestartIO
         for (size_t i = 0; i < bodies_.size(); ++i)
         {
             BaseParticles &base_particles = bodies_[i]->getBaseParticles();
-            prepare_variable_to_restart_(base_particles.EvolvingVariables(), ExecutionPolicy{});
+            prepare_variable_to_write_(base_particles.EvolvingVariables(), ExecutionPolicy{});
         }
         RestartIO::writeToFile(iteration_step);
     };
 
+    virtual void readFromFile(size_t iteration_step = 0) override
+    {
+        RestartIO::readFromFile(iteration_step);
+
+        for (size_t i = 0; i < bodies_.size(); ++i)
+        {
+            BaseParticles &base_particles = bodies_[i]->getBaseParticles();
+            finalize_variables_after_read_(base_particles.EvolvingVariables(), ExecutionPolicy{});
+        }
+    };
+
   protected:
-    OperationOnDataAssemble<ParticleVariables, prepareVariablesToWrite> prepare_variable_to_restart_;
+    OperationOnDataAssemble<ParticleVariables, prepareVariablesToWrite> prepare_variable_to_write_;
+    OperationOnDataAssemble<ParticleVariables, finalizeVariablesAfterRead> finalize_variables_after_read_;
 };
 
 template <class ExecutionPolicy>

@@ -22,19 +22,20 @@ ConstraintBySimBodyCK<DynamicsIdentifier>::
       dv_acc_(this->particles_->template registerStateVariableOnly<Vecd>("Acceleration")),
       sv_simbody_state_(this->particles_->template addUniqueSingularVariableOnly<SimbodyState>("SimbodyState"))
 {
-    this->particles_->template addVariableToWrite<Vecd>("Velocity");
-    const SimTK::State *state = &integ_.getState();
-    MBsystem_.realize(*state, SimTK::Stage::Acceleration);
-    sim_tk_initial_origin_location_ = mobod_.getBodyOriginLocation(*state);
-    sv_simbody_state_->setValue(SimbodyState(sim_tk_initial_origin_location_, mobod_, *state));
+    this->particles_->template addEvolvingVariable<Vecd>("Velocity");
+    this->particles_->template addEvolvingVariable<Vecd>("Acceleration");
+    this->particles_->template addEvolvingVariable<Vecd>("NormalDirection");
+    const SimTK::State &state = MBsystem.getDefaultState();
+    MBsystem_.realize(state);
+    sim_tk_initial_origin_location_ = mobod_.getBodyOriginLocation(state);
 }
 //=================================================================================================//
 template <class DynamicsIdentifier>
 void ConstraintBySimBodyCK<DynamicsIdentifier>::setupDynamics(Real dt)
 {
-    const SimTK::State *state = &integ_.getState();
-    MBsystem_.realize(*state, SimTK::Stage::Acceleration);
-    sv_simbody_state_->setValue(SimbodyState(sim_tk_initial_origin_location_, mobod_, *state));
+    const SimTK::State &state = integ_.getState();
+    MBsystem_.realize(state);
+    sv_simbody_state_->setValue(SimbodyState(sim_tk_initial_origin_location_, mobod_, state));
 };
 //=================================================================================================//
 template <class DynamicsIdentifier>
@@ -80,9 +81,8 @@ TotalForceForSimBodyCK<DynamicsIdentifier>::
 template <class DynamicsIdentifier>
 void TotalForceForSimBodyCK<DynamicsIdentifier>::setupDynamics(Real dt)
 {
-    const SimTK::State *state = &integ_.getState();
-    MBsystem_.realize(*state, SimTK::Stage::Acceleration);
-    sv_current_origin_location_->setValue(SimTKToEigen(mobod_.getBodyOriginLocation(*state)));
+    const SimTK::State &state = integ_.getState();
+    sv_current_origin_location_->setValue(SimTKToEigen(mobod_.getBodyOriginLocation(state)));
 }
 //=================================================================================================//
 template <class DynamicsIdentifier>
