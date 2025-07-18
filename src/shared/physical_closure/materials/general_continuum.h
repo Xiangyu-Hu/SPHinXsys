@@ -98,11 +98,12 @@ class PlasticContinuum : public GeneralContinuum
     Real psi_;                          /* dilatancy angle  */
     Real alpha_phi_;                    /* Drucker-Prager's constants */
     Real k_c_;                          /* Drucker-Prager's constants */
+    Real d_s_;                          /* Mean particle diameter */
     const Real stress_dimension_ = 3.0; /* plain strain condition */
   public:
     explicit PlasticContinuum(Real rho0, Real c0, Real youngs_modulus, Real poisson_ratio, Real friction_angle, Real cohesion = 0, Real dilatancy = 0)
         : GeneralContinuum(rho0, c0, youngs_modulus, poisson_ratio),
-          c_(cohesion), phi_(friction_angle), psi_(dilatancy), alpha_phi_(0.0), k_c_(0.0)
+          c_(cohesion), phi_(friction_angle), psi_(dilatancy), d_s_(0.002), alpha_phi_(0.0), k_c_(0.0)
     {
         material_type_name_ = "PlasticContinuum";
         alpha_phi_ = getDPConstantsA(friction_angle);
@@ -122,12 +123,17 @@ class PlasticContinuum : public GeneralContinuum
       public:
         PlasticKernel(PlasticContinuum &encloser) : GeneralContinuum::GeneralContinuumKernel(encloser),
                                                     c_(encloser.c_), phi_(encloser.phi_),
-                                                    psi_(encloser.psi_), alpha_phi_(encloser.alpha_phi_), k_c_(encloser.k_c_) {};
+                                                    psi_(encloser.psi_), alpha_phi_(encloser.alpha_phi_), k_c_(encloser.k_c_),
+                                                    d_s_(encloser.d_s_) {};
 
         inline Real getDPConstantsA(Real friction_angle);
         inline Mat3d ConstitutiveRelation(Mat3d &velocity_gradient, Mat3d &stress_tensor);
         inline Mat3d ReturnMapping(Mat3d &stress_tensor);
         inline Real getFrictionAngle() { return phi_; };
+        inline Real gerParicleDiameter() {return d_s_;};
+        inline Real getFrictionVelocity(Real uz, Real z);
+        inline Real calculateThetaCr(Real u_star);
+        inline Real ThetaToFrictionVelcoty(Real theta_cr);
 
       protected:
         Real c_;                                                   /* cohesion  */
@@ -135,6 +141,7 @@ class PlasticContinuum : public GeneralContinuum
         Real psi_;                                                 /* dilatancy angle  */
         Real alpha_phi_;                                           /* Drucker-Prager's constants */
         Real k_c_;                                                 /* Drucker-Prager's constants */
+        Real d_s_;                                                  /* Mean particle diameter */
         Real stress_dimension_ = 3.0; /* plain strain condition */ // Temporarily cancel const --need to check
     };
 };

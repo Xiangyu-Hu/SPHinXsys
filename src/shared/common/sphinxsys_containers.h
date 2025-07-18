@@ -75,6 +75,8 @@ class Contact; /**< Contact interaction: interaction between a body with one or 
 
 class Boundary; /**< Interaction with boundary */
 class Wall;     /**< Interaction with wall boundary */
+class Soil;     /**< Interaction with soil*/
+class Fluid;     /**< Interaction with fluid*/
 class Extended; /**< An extened method of an interaction type */
 
 template <typename...>

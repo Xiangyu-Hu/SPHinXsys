@@ -17,12 +17,15 @@ PlasticAcousticStep<BaseInteractionType>::PlasticAcousticStep(DynamicsIdentifier
       dv_strain_tensor_3D_(this->particles_->template registerStateVariableOnly<Mat3d>("StrainTensor3D")),
       dv_stress_rate_3D_(this->particles_->template registerStateVariableOnly<Mat3d>("StressRate3D")),
       dv_strain_rate_3D_(this->particles_->template registerStateVariableOnly<Mat3d>("StrainRate3D")),
-      dv_velocity_gradient_(this->particles_->template registerStateVariableOnly<Matd>("VelocityGradient"))
+      dv_velocity_gradient_(this->particles_->template registerStateVariableOnly<Matd>("VelocityGradient")),
+      dv_shear_vel_(this->particles_->template registerStateVariableOnly<Vecd>("ShearVelocity")) 
 {
     this->particles_->template addEvolvingVariable<Mat3d>("StressTensor3D");
     this->particles_->template addEvolvingVariable<Mat3d>("StrainTensor3D");
     this->particles_->template addEvolvingVariable<Mat3d>("StressRate3D");
     this->particles_->template addEvolvingVariable<Mat3d>("StrainRate3D");
+    this->particles_->template addEvolvingVariable<Matd>("VelocityGradient");
+    this->particles_->template addEvolvingVariable<Vecd>("ShearVelocity");
 }
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
