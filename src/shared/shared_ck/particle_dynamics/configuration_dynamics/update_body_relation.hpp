@@ -121,14 +121,6 @@ UpdateRelation<ExecutionPolicy, Contact<Parameters...>>::
       BaseDynamics<void>(), ex_policy_(ExecutionPolicy{}),
       contact_relation_(contact_relation)
 {
-    if (contact_relation_.getConcreteSize() == 0)
-    {
-        std::cerr << "Error: Contact relation " << type_name<Contact<Parameters...>>()
-                  << " from " << this->sph_body_.getName()
-                  << " is a delegate relation and has no concrete size." << std::endl;
-        exit(1);
-    }
-    
     for (size_t k = 0; k != contact_relation.getContactBodies().size(); ++k)
     {
         contact_cell_linked_list_.push_back(

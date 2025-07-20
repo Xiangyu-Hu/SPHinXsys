@@ -45,12 +45,21 @@ enum class ConfigType
 template <typename...>
 class Relation;
 
+class RelationBase
+{
+  public:
+    virtual ~RelationBase() {};
+};
+
 template <typename NeighborMethod>
-class Relation<NeighborMethod>
+class Relation<NeighborMethod> : public RelationBase
 {
     UniquePtrsKeeper<Entity> relation_variable_ptrs_;
     UniquePtrsKeeper<NeighborMethod> neighbor_method_ptrs_;
     DiscreteVariable<Vecd> *assignConfigPosition(BaseParticles &particles, ConfigType config_type);
+
+    template <class DataType>
+    DiscreteVariable<DataType> *addRelationVariable(const std::string &name, size_t data_size);
 
   public:
     typedef NeighborMethod NeighborMethodType;
@@ -59,7 +68,6 @@ class Relation<NeighborMethod>
              ConfigType config_type = ConfigType::Eulerian);
     virtual ~Relation() {};
     SPHBody &getSPHBody() { return sph_body_; };
-    size_t getConcreteSize() { return relation_variable_ptrs_.size(); };
     DiscreteVariable<Vecd> *getSourcePosition() { return dv_source_pos_; };
     DiscreteVariable<Vecd> *getTargetPosition(UnsignedInt target_index = 0) { return dv_target_pos_[target_index]; };
     DiscreteVariable<UnsignedInt> *getNeighborIndex(UnsignedInt target_index = 0) { return dv_target_neighbor_index_[target_index]; };
@@ -92,9 +100,6 @@ class Relation<NeighborMethod>
     StdVec<DiscreteVariable<UnsignedInt> *> dv_target_particle_offset_;
     StdVec<NeighborMethod *> neighbor_methods_;
     StdVec<StdVec<execution::Implementation<Base> *>> registered_computing_kernels_;
-    Relation(const Relation<NeighborMethod> &original, StdVec<UnsignedInt> target_indexes);
-    template <class DataType>
-    DiscreteVariable<DataType> *addRelationVariable(const std::string &name, size_t data_size);
 };
 
 template <typename DynamicsIdentifier, typename NeighborMethod>
