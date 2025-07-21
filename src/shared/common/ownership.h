@@ -176,6 +176,11 @@ class UniquePtrsKeeper
         exit(1);
     }
 
+    size_t size() const
+    {
+        return ptr_keepers_.size();
+    }
+
   private:
     std::vector<UniquePtrKeeper<BaseType>> ptr_keepers_;
 };
