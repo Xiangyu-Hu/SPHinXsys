@@ -26,7 +26,7 @@ void InitializeDataForSingularPackage::update(const size_t package_index, Real f
     auto &kernel_weight = kernel_weight_.Data()[package_index];
     auto &kernel_gradient = kernel_gradient_.Data()[package_index];
 
-    BaseMeshLocalDynamics::for_each_cell_data(
+    mesh_for_each3d<0, pkg_size>(
         [&](int i, int j, int k)
         {
             phi[i][j][k] = far_field_level_set;
@@ -69,7 +69,7 @@ void InitializeBasicDataForAPackage::UpdateKernel::update(const size_t &package_
     auto &phi = phi_[package_index];
     auto &near_interface_id = near_interface_id_[package_index];
     Arrayi cell_index = meta_data_cell_[package_index].first;
-    BaseMeshLocalDynamics::for_each_cell_data(
+    mesh_for_each3d<0, pkg_size>(
         [&](int i, int j, int k)
         {
             Vec3d position = index_handler_->DataPositionFromIndex(cell_index, Array3i(i, j, k));

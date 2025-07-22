@@ -1,5 +1,5 @@
-#include "mesh_local_dynamics.hpp"
 #include "mesh_iterators.hpp"
+#include "mesh_local_dynamics.hpp"
 
 namespace SPH
 {
@@ -25,7 +25,7 @@ void InitializeDataForSingularPackage::update(const size_t package_index, Real f
     auto &kernel_weight = kernel_weight_.Data()[package_index];
     auto &kernel_gradient = kernel_gradient_.Data()[package_index];
 
-    BaseMeshLocalDynamics::for_each_cell_data(
+    mesh_for_each2d<0, pkg_size>(
         [&](int i, int j)
         {
             phi[i][j] = far_field_level_set;
@@ -43,18 +43,18 @@ bool TagACellIsInnerPackage::UpdateKernel::isInnerPackage(const Arrayi &cell_ind
         all_cells_.min(cell_index + 2 * Array2i::Ones()),
         [&](int l, int m)
         {
-            return mesh_data_->isInnerDataPackage(Arrayi(l, m));    //actually a core test here, because only core pkgs are assigned
+            return mesh_data_->isInnerDataPackage(Arrayi(l, m)); // actually a core test here, because only core pkgs are assigned
         });
 }
 //=============================================================================================//
 void InitializeCellNeighborhood::UpdateKernel::update(const size_t &package_index)
 {
-    size_t sort_index = mesh_data_->occupied_data_pkgs_[package_index-2].first;
+    size_t sort_index = mesh_data_->occupied_data_pkgs_[package_index - 2].first;
     Arrayi cell_index = base_dynamics->CellIndexFromSortIndex(sort_index);
     CellNeighborhood &current = cell_neighborhood_[package_index];
     std::pair<Arrayi, int> &metadata = meta_data_cell_[package_index];
     metadata.first = cell_index;
-    metadata.second = mesh_data_->occupied_data_pkgs_[package_index-2].second;
+    metadata.second = mesh_data_->occupied_data_pkgs_[package_index - 2].second;
     for (int l = -1; l < 2; l++)
         for (int m = -1; m < 2; m++)
         {
@@ -67,7 +67,7 @@ void InitializeBasicDataForAPackage::UpdateKernel::update(const size_t &package_
     auto &phi = phi_[package_index];
     auto &near_interface_id = near_interface_id_[package_index];
     Arrayi cell_index = meta_data_cell_[package_index].first;
-    BaseMeshLocalDynamics::for_each_cell_data(
+    mesh_for_each2d<0, pkg_size>(
         [&](int i, int j)
         {
             Vec2d position = index_handler_->DataPositionFromIndex(cell_index, Array2i(i, j));

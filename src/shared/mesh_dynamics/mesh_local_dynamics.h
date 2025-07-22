@@ -88,10 +88,6 @@ class BaseMeshLocalDynamics
     size_t SortIndexFromCellIndex(const Arrayi &cell_index);
     Arrayi CellIndexFromSortIndex(const size_t &sort_index);
 
-    /** void (non_value_returning) function iterate on all data points by value. */
-    template <typename FunctionOnData>
-    static void for_each_cell_data(const FunctionOnData &function);
-
     static std::pair<size_t, Arrayi> NeighbourIndexShift(const Arrayi shift_index, const CellNeighborhood &neighbour);
     static void registerComputingKernel(execution::Implementation<Base> *implementation){};
 

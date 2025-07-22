@@ -6,17 +6,6 @@
 namespace SPH
 {
 //=============================================================================================//
-template <typename FunctionOnData>
-void BaseMeshLocalDynamics::for_each_cell_data(const FunctionOnData &function)
-{
-    for (int i = 0; i != pkg_size; ++i)
-        for (int j = 0; j != pkg_size; ++j)
-            for (int k = 0; k != pkg_size; ++k)
-            {
-                function(i, j, k);
-            }
-}
-//=============================================================================================//
 inline std::pair<size_t, Arrayi> BaseMeshLocalDynamics::
     NeighbourIndexShift(const Arrayi shift_index, const CellNeighborhood &neighbour)
 {
@@ -104,19 +93,23 @@ DataType ProbeMesh::probeDataPackage(MeshVariableData<DataType> *mesh_variable_d
         mesh_variable_data[neighbour_index_1.first]
                           [neighbour_index_1.second[0]]
                           [neighbour_index_1.second[1]]
-                          [neighbour_index_1.second[2]] * beta[0] * beta[1] +
+                          [neighbour_index_1.second[2]] *
+            beta[0] * beta[1] +
         mesh_variable_data[neighbour_index_2.first]
                           [neighbour_index_2.second[0]]
                           [neighbour_index_2.second[1]]
-                          [neighbour_index_2.second[2]] * alpha[0] * beta[1] +
+                          [neighbour_index_2.second[2]] *
+            alpha[0] * beta[1] +
         mesh_variable_data[neighbour_index_3.first]
                           [neighbour_index_3.second[0]]
                           [neighbour_index_3.second[1]]
-                          [neighbour_index_3.second[2]] * beta[0] * alpha[1] +
+                          [neighbour_index_3.second[2]] *
+            beta[0] * alpha[1] +
         mesh_variable_data[neighbour_index_4.first]
                           [neighbour_index_4.second[0]]
                           [neighbour_index_4.second[1]]
-                          [neighbour_index_4.second[2]] * alpha[0] * alpha[1];
+                          [neighbour_index_4.second[2]] *
+            alpha[0] * alpha[1];
 
     neighbour_index_1 = BaseMeshLocalDynamics::NeighbourIndexShift(
         data_index + Arrayi(0, 0, 1), neighborhood);
@@ -131,19 +124,23 @@ DataType ProbeMesh::probeDataPackage(MeshVariableData<DataType> *mesh_variable_d
         mesh_variable_data[neighbour_index_1.first]
                           [neighbour_index_1.second[0]]
                           [neighbour_index_1.second[1]]
-                          [neighbour_index_1.second[2]] * beta[0] * beta[1] +
+                          [neighbour_index_1.second[2]] *
+            beta[0] * beta[1] +
         mesh_variable_data[neighbour_index_2.first]
                           [neighbour_index_2.second[0]]
                           [neighbour_index_2.second[1]]
-                          [neighbour_index_2.second[2]] * alpha[0] * beta[1] +
+                          [neighbour_index_2.second[2]] *
+            alpha[0] * beta[1] +
         mesh_variable_data[neighbour_index_3.first]
                           [neighbour_index_3.second[0]]
                           [neighbour_index_3.second[1]]
-                          [neighbour_index_3.second[2]] * beta[0] * alpha[1] +
+                          [neighbour_index_3.second[2]] *
+            beta[0] * alpha[1] +
         mesh_variable_data[neighbour_index_4.first]
                           [neighbour_index_4.second[0]]
                           [neighbour_index_4.second[1]]
-                          [neighbour_index_4.second[2]] * alpha[0] * alpha[1];
+                          [neighbour_index_4.second[2]] *
+            alpha[0] * alpha[1];
 
     return bilinear_1 * beta[2] + bilinear_2 * alpha[2];
 }
@@ -153,7 +150,7 @@ inline void UpdateLevelSetGradient::UpdateKernel::update(const size_t &package_i
     auto &neighborhood = cell_neighborhood_[package_index];
     auto &pkg_data = phi_gradient_[package_index];
 
-    BaseMeshLocalDynamics::for_each_cell_data(
+    mesh_for_each3d<0, pkg_size>(
         [&](int i, int j, int k)
         {
             NeighbourIndex x1 = BaseMeshLocalDynamics::NeighbourIndexShift(
@@ -221,7 +218,7 @@ Real UpdateKernelIntegrals<KernelType>::UpdateKernel::
                                                      [neighbor_meta.second[0]]
                                                      [neighbor_meta.second[1]]
                                                      [neighbor_meta.second[2]];
-                    Vecd displacement = - Arrayi(i, j, k).cast<Real>().matrix() * data_spacing_;
+                    Vecd displacement = -Arrayi(i, j, k).cast<Real>().matrix() * data_spacing_;
                     Real distance = displacement.norm();
                     if (distance < cutoff_radius)
                         integral += kernel_->W(global_h_ratio_, distance, displacement) *
@@ -258,7 +255,7 @@ Vecd UpdateKernelIntegrals<KernelType>::UpdateKernel::
                                                      [neighbor_meta.second[0]]
                                                      [neighbor_meta.second[1]]
                                                      [neighbor_meta.second[2]];
-                    Vecd displacement = - Arrayi(i, j, k).cast<Real>().matrix() * data_spacing_;
+                    Vecd displacement = -Arrayi(i, j, k).cast<Real>().matrix() * data_spacing_;
                     Real distance = displacement.norm();
                     if (distance < cutoff_radius)
                         integral += kernel_->dW(global_h_ratio_, distance, displacement) *
@@ -297,7 +294,7 @@ Matd UpdateKernelIntegrals<KernelType>::UpdateKernel::
                                                      [neighbor_meta.second[0]]
                                                      [neighbor_meta.second[1]]
                                                      [neighbor_meta.second[2]];
-                    Vecd displacement = - Arrayi(i, j, k).cast<Real>().matrix() * data_spacing_;
+                    Vecd displacement = -Arrayi(i, j, k).cast<Real>().matrix() * data_spacing_;
                     Real distance = displacement.norm();
                     if (distance < cutoff_radius)
                         integral += kernel_->d2W(global_h_ratio_, distance, displacement) *
@@ -315,7 +312,7 @@ inline void ReinitializeLevelSet::UpdateKernel::update(const size_t &package_ind
     auto &near_interface_id_addrs = near_interface_id_[package_index];
     auto &neighborhood = cell_neighborhood_[package_index];
 
-    BaseMeshLocalDynamics::for_each_cell_data(
+    mesh_for_each3d<0, pkg_size>(
         [&](int i, int j, int k)
         {
             // only reinitialize non cut cells
@@ -354,7 +351,7 @@ inline void ReinitializeLevelSet::UpdateKernel::update(const size_t &package_ind
 //=============================================================================================//
 inline void MarkNearInterface::UpdateKernel::update(const size_t &package_index, Real small_shift_factor)
 {
-    Real small_shift = data_spacing_ * small_shift_factor; 
+    Real small_shift = data_spacing_ * small_shift_factor;
     auto &phi_addrs = phi_[package_index];
     auto &near_interface_id_addrs = near_interface_id_[package_index];
 
@@ -367,7 +364,7 @@ inline void MarkNearInterface::UpdateKernel::update(const size_t &package_index,
                 phi_, Arrayi(i, j, k), Arrayi(-1, -1, -1), cell_neighborhood_[package_index], (Real)0);
         });
 
-    BaseMeshLocalDynamics::for_each_cell_data(
+    mesh_for_each3d<0, pkg_size>(
         [&](int i, int j, int k)
         {
             // first assume far cells
@@ -403,7 +400,7 @@ inline void MarkNearInterface::UpdateKernel::update(const size_t &package_index,
 //=============================================================================================//
 inline void RedistanceInterface::UpdateKernel::update(const size_t &package_index)
 {
-    BaseMeshLocalDynamics::for_each_cell_data(
+    mesh_for_each3d<0, pkg_size>(
         [&](int i, int j, int k)
         {
             int near_interface_id = near_interface_id_[package_index][i][j][k];
@@ -497,7 +494,7 @@ inline void RedistanceInterface::UpdateKernel::update(const size_t &package_inde
 //=============================================================================================//
 inline void DiffuseLevelSetSign::UpdateKernel::update(const size_t &package_index)
 {
-    BaseMeshLocalDynamics::for_each_cell_data(
+    mesh_for_each3d<0, pkg_size>(
         [&](int i, int j, int k)
         {
             // near interface cells are not considered
@@ -527,4 +524,4 @@ inline void DiffuseLevelSetSign::UpdateKernel::update(const size_t &package_inde
 //=============================================================================================//
 } // namespace SPH
 //=============================================================================================//
-#endif //MESH_LOCAL_DYNAMICS_3D_HPP
+#endif // MESH_LOCAL_DYNAMICS_3D_HPP

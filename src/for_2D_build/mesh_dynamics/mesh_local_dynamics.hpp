@@ -6,16 +6,6 @@
 namespace SPH
 {
 //=============================================================================================//
-template <typename FunctionOnData>
-void BaseMeshLocalDynamics::for_each_cell_data(const FunctionOnData &function)
-{
-    for (int i = 0; i != pkg_size; ++i)
-        for (int j = 0; j != pkg_size; ++j)
-        {
-            function(i, j);
-        }
-}
-//=============================================================================================//
 inline std::pair<size_t, Arrayi> BaseMeshLocalDynamics::
     NeighbourIndexShift(const Arrayi shift_index, const CellNeighborhood &neighbour)
 {
@@ -106,7 +96,7 @@ inline void UpdateLevelSetGradient::UpdateKernel::update(const size_t &package_i
     auto &neighborhood = cell_neighborhood_[package_index];
     auto &pkg_data = phi_gradient_[package_index];
 
-    BaseMeshLocalDynamics::for_each_cell_data(
+    mesh_for_each2d<0, pkg_size>(
         [&](int i, int j)
         {
             NeighbourIndex x1 = BaseMeshLocalDynamics::NeighbourIndexShift(
@@ -160,7 +150,7 @@ Real UpdateKernelIntegrals<KernelType>::UpdateKernel::
                 if (phi_neighbor > -data_spacing_)
                 {
                     Vecd phi_gradient = phi_gradient_[neighbor_meta.first][neighbor_meta.second[0]][neighbor_meta.second[1]];
-                    Vecd displacement = - Arrayi(i, j).cast<Real>().matrix() * data_spacing_;
+                    Vecd displacement = -Arrayi(i, j).cast<Real>().matrix() * data_spacing_;
                     Real distance = displacement.norm();
                     if (distance < cutoff_radius)
                         integral += kernel_->W(global_h_ratio_, distance, displacement) *
@@ -191,7 +181,7 @@ Vecd UpdateKernelIntegrals<KernelType>::UpdateKernel::
                 if (phi_neighbor > -data_spacing_)
                 {
                     Vecd phi_gradient = phi_gradient_[neighbor_meta.first][neighbor_meta.second[0]][neighbor_meta.second[1]];
-                    Vecd displacement = - Arrayi(i, j).cast<Real>().matrix() * data_spacing_;
+                    Vecd displacement = -Arrayi(i, j).cast<Real>().matrix() * data_spacing_;
                     Real distance = displacement.norm();
                     if (distance < cutoff_radius)
                         integral += kernel_->dW(global_h_ratio_, distance, displacement) *
@@ -224,7 +214,7 @@ Matd UpdateKernelIntegrals<KernelType>::UpdateKernel::
                 if (phi_neighbor > -data_spacing_)
                 {
                     Vecd phi_gradient = phi_gradient_[neighbor_meta.first][neighbor_meta.second[0]][neighbor_meta.second[1]];
-                    Vecd displacement = - Arrayi(i, j).cast<Real>().matrix() * data_spacing_;
+                    Vecd displacement = -Arrayi(i, j).cast<Real>().matrix() * data_spacing_;
                     Real distance = displacement.norm();
                     if (distance < cutoff_radius)
                         integral += kernel_->d2W(global_h_ratio_, distance, displacement) *
@@ -242,7 +232,7 @@ inline void ReinitializeLevelSet::UpdateKernel::update(const size_t &package_ind
     auto &near_interface_id_addrs = near_interface_id_[package_index];
     auto &neighborhood = cell_neighborhood_[package_index];
 
-    BaseMeshLocalDynamics::for_each_cell_data(
+    mesh_for_each2d<0, pkg_size>(
         [&](int i, int j)
         {
             // only reinitialize non cut cells
@@ -270,7 +260,7 @@ inline void ReinitializeLevelSet::UpdateKernel::update(const size_t &package_ind
 inline void MarkNearInterface::UpdateKernel::update(const size_t &package_index,
                                                     Real small_shift_factor)
 {
-    Real small_shift = data_spacing_ * small_shift_factor; 
+    Real small_shift = data_spacing_ * small_shift_factor;
     auto &phi_addrs = phi_[package_index];
     auto &near_interface_id_addrs = near_interface_id_[package_index];
 
@@ -283,7 +273,7 @@ inline void MarkNearInterface::UpdateKernel::update(const size_t &package_index,
                 phi_, Arrayi(i, j), Arrayi(-1, -1), cell_neighborhood_[package_index], (Real)0);
         });
 
-    BaseMeshLocalDynamics::for_each_cell_data(
+    mesh_for_each2d<0, pkg_size>(
         [&](int i, int j)
         {
             // first assume far cells
@@ -319,7 +309,7 @@ inline void MarkNearInterface::UpdateKernel::update(const size_t &package_index,
 //=============================================================================================//
 inline void RedistanceInterface::UpdateKernel::update(const size_t &package_index)
 {
-    BaseMeshLocalDynamics::for_each_cell_data(
+    mesh_for_each2d<0, pkg_size>(
         [&](int i, int j)
         {
             int near_interface_id = near_interface_id_[package_index][i][j];
@@ -395,7 +385,7 @@ inline void RedistanceInterface::UpdateKernel::update(const size_t &package_inde
 //=============================================================================================//
 inline void DiffuseLevelSetSign::UpdateKernel::update(const size_t &package_index)
 {
-    BaseMeshLocalDynamics::for_each_cell_data(
+    mesh_for_each2d<0, pkg_size>(
         [&](int i, int j)
         {
             // near interface cells are not considered
@@ -425,4 +415,4 @@ inline void DiffuseLevelSetSign::UpdateKernel::update(const size_t &package_inde
 //=============================================================================================//
 } // namespace SPH
 //=============================================================================================//
-#endif //MESH_LOCAL_DYNAMICS_2D_HPP
+#endif // MESH_LOCAL_DYNAMICS_2D_HPP
