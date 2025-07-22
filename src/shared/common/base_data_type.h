@@ -97,6 +97,9 @@ using VecMatGrad3d = Eigen::Matrix<Real, 6, 3>;
 /** Dynamic matrix*/
 using MatXd = Eigen::Matrix<Real, Eigen::Dynamic, Eigen::Dynamic>;
 
+using CellNeighborhood2d = std::array<std::array<int, 3>, 3>;
+using CellNeighborhood3d = std::array<std::array<std::array<int, 3>, 3>, 3>;
+
 /** Unified initialize to zero for all data type. */
 template <typename DataType>
 struct ZeroData

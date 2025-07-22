@@ -88,7 +88,6 @@ class BaseMeshLocalDynamics
     size_t SortIndexFromCellIndex(const Arrayi &cell_index);
     Arrayi CellIndexFromSortIndex(const size_t &sort_index);
 
-    static std::pair<size_t, Arrayi> NeighbourIndexShift(const Arrayi shift_index, const CellNeighborhood &neighbour);
     static void registerComputingKernel(execution::Implementation<Base> *implementation){};
 
     /** This function find the value of data from its index from global mesh. */
@@ -118,7 +117,8 @@ class ProbeMesh
     template <class DataType>
     DataType probeMesh(MeshVariableData<DataType> *mesh_variable_data, const Vecd &position);
 
-  private:
+  protected:
+    static constexpr int pkg_size = 4;
     MeshWithGridDataPackagesType::IndexHandler *index_handler_;
     size_t *cell_package_index_;
     CellNeighborhood *cell_neighborhood_;

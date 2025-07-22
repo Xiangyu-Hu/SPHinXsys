@@ -45,7 +45,7 @@ using AngularVecd = Real;
 using Rotation = Rotation2d;
 using BoundingBox = BaseBoundingBox<Vec2d>;
 using Transform = BaseTransform<Rotation2d, Vec2d>;
-using CellNeighborhood = std::array<std::array<int, 3>, 3>;
+using CellNeighborhood = CellNeighborhood2d;
 
 template <class DataType, int ArraySize>
 using PackageDataMatrix = std::array<std::array<DataType, ArraySize>, ArraySize>;

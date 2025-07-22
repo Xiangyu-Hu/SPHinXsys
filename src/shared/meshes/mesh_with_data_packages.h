@@ -34,6 +34,8 @@
 #include "base_data_package.h"
 #include "execution_policy.h"
 #include "sphinxsys_variable.h"
+#include "grid_data_package_function.h"
+
 #include "tbb/parallel_sort.h"
 
 namespace SPH
