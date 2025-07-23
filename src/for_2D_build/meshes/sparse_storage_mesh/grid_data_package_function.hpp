@@ -46,5 +46,39 @@ DataType DataValueFromGlobalIndex(PackageDataMatrix<DataType, PKG_SIZE> *pkg_dat
     return pkg_data[package_index][local_index[0]][local_index[1]];
 }
 //=============================================================================================//
+template <typename DataType, size_t PKG_SIZE>
+DataType ProbeMesh<DataType, PKG_SIZE>::operator()(const Vecd &position)
+{
+    Arrayi cell_index = index_handler_->CellIndexFromPosition(position);
+    size_t package_index = index_handler_->PackageIndexFromCellIndex(cell_package_index_, cell_index);
+    return package_index > 1 ? probeDataPackage(package_index, cell_index, position)
+                             : pkg_data_[package_index][0][0];
+}
+//=============================================================================================//
+template <typename DataType, size_t PKG_SIZE>
+DataType ProbeMesh<DataType, PKG_SIZE>::probeDataPackage(
+    size_t package_index, const Arrayi &cell_index, const Vecd &position)
+{
+    Arrayi data_index = index_handler_->DataIndexFromPosition(cell_index, position);
+    Vecd data_position = index_handler_->DataPositionFromIndex(cell_index, data_index);
+    Vecd alpha = (position - data_position) / index_handler_->data_spacing_;
+    Vecd beta = Vecd::Ones() - alpha;
+
+    auto &neighborhood = cell_neighborhood_[package_index];
+    NeighbourIndex neighbour_index_1 =
+        NeighbourIndexShift<PKG_SIZE>(data_index + Arrayi(0, 0), neighborhood);
+    NeighbourIndex neighbour_index_2 =
+        NeighbourIndexShift<PKG_SIZE>(data_index + Arrayi(1, 0), neighborhood);
+    NeighbourIndex neighbour_index_3 =
+        NeighbourIndexShift<PKG_SIZE>(data_index + Arrayi(0, 1), neighborhood);
+    NeighbourIndex neighbour_index_4 =
+        NeighbourIndexShift<PKG_SIZE>(data_index + Arrayi(1, 1), neighborhood);
+
+    return pkg_data_[neighbour_index_1.first][neighbour_index_1.second[0]][neighbour_index_1.second[1]] * beta[0] * beta[1] +
+           pkg_data_[neighbour_index_2.first][neighbour_index_2.second[0]][neighbour_index_2.second[1]] * alpha[0] * beta[1] +
+           pkg_data_[neighbour_index_3.first][neighbour_index_3.second[0]][neighbour_index_3.second[1]] * beta[0] * alpha[1] +
+           pkg_data_[neighbour_index_4.first][neighbour_index_4.second[0]][neighbour_index_4.second[1]] * alpha[0] * alpha[1];
+}
+//=============================================================================================//
 } // namespace SPH
 #endif // GRID_DATA_PACKAGE_FUNCTIONS_2D_HPP

@@ -79,35 +79,6 @@ class FinishDataPackages
     MeshInnerDynamics<execution::ParallelPolicy, InitializeBasicDataForAPackage> initialize_basic_data_for_a_package{mesh_data_, shape_};
 };
 
-class ProbeNormalDirection
-{
-  public:
-    template <class ExecutionPolicy>
-    explicit ProbeNormalDirection(const ExecutionPolicy &ex_policy, MeshWithGridDataPackagesType *mesh_data)
-        : data_spacing_(mesh_data->DataSpacing()),
-          probe_level_set_gradient(ex_policy, mesh_data){};
-    virtual ~ProbeNormalDirection() {};
-
-    Vecd update(const Vecd &position)
-    {
-        Vecd probed_value = probe_level_set_gradient.update(position);
-
-        Real threshold = 1.0e-2 * data_spacing_;
-        while (probed_value.norm() < threshold)
-        {
-            Vecd jittered = position; // jittering
-            for (int l = 0; l != position.size(); ++l)
-                jittered[l] += rand_uniform(-0.5, 0.5) * 0.5 * data_spacing_;
-            probed_value = probe_level_set_gradient.update(jittered);
-        }
-        return probed_value.normalized();
-    }
-
-  private:
-    Real data_spacing_;
-    ProbeLevelSetGradient probe_level_set_gradient;
-};
-
 template <class ExecutionPolicy, class KernelType>
 class CleanInterface : public BaseMeshDynamics, public BaseExecDynamics
 {

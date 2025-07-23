@@ -7,92 +7,6 @@
 namespace SPH
 {
 //=============================================================================================//
-template <class DataType>
-DataType ProbeMesh::probeMesh(MeshVariableData<DataType> *mesh_variable_data, const Vecd &position)
-{
-    Arrayi cell_index = index_handler_->CellIndexFromPosition(position);
-    size_t package_index = index_handler_->PackageIndexFromCellIndex(cell_package_index_, cell_index);
-    return package_index > 1 ? probeDataPackage(mesh_variable_data, package_index, cell_index, position)
-                             : mesh_variable_data[package_index][0][0][0];
-}
-//=============================================================================================//
-template <class DataType>
-DataType ProbeMesh::probeDataPackage(MeshVariableData<DataType> *mesh_variable_data,
-                                     size_t package_index,
-                                     const Arrayi &cell_index,
-                                     const Vecd &position)
-{
-    Arrayi data_index = index_handler_->DataIndexFromPosition(cell_index, position);
-    Vecd data_position = index_handler_->DataPositionFromIndex(cell_index, data_index);
-    Vecd alpha = (position - data_position) / index_handler_->data_spacing_;
-    Vecd beta = Vecd::Ones() - alpha;
-
-    auto &neighborhood = cell_neighborhood_[package_index];
-    NeighbourIndex neighbour_index_1 = NeighbourIndexShift<pkg_size>(
-        data_index + Arrayi(0, 0, 0), neighborhood);
-    NeighbourIndex neighbour_index_2 = NeighbourIndexShift<pkg_size>(
-        data_index + Arrayi(1, 0, 0), neighborhood);
-    NeighbourIndex neighbour_index_3 = NeighbourIndexShift<pkg_size>(
-        data_index + Arrayi(0, 1, 0), neighborhood);
-    NeighbourIndex neighbour_index_4 = NeighbourIndexShift<pkg_size>(
-        data_index + Arrayi(1, 1, 0), neighborhood);
-
-    DataType bilinear_1 =
-        mesh_variable_data[neighbour_index_1.first]
-                          [neighbour_index_1.second[0]]
-                          [neighbour_index_1.second[1]]
-                          [neighbour_index_1.second[2]] *
-            beta[0] * beta[1] +
-        mesh_variable_data[neighbour_index_2.first]
-                          [neighbour_index_2.second[0]]
-                          [neighbour_index_2.second[1]]
-                          [neighbour_index_2.second[2]] *
-            alpha[0] * beta[1] +
-        mesh_variable_data[neighbour_index_3.first]
-                          [neighbour_index_3.second[0]]
-                          [neighbour_index_3.second[1]]
-                          [neighbour_index_3.second[2]] *
-            beta[0] * alpha[1] +
-        mesh_variable_data[neighbour_index_4.first]
-                          [neighbour_index_4.second[0]]
-                          [neighbour_index_4.second[1]]
-                          [neighbour_index_4.second[2]] *
-            alpha[0] * alpha[1];
-
-    neighbour_index_1 = NeighbourIndexShift<pkg_size>(
-        data_index + Arrayi(0, 0, 1), neighborhood);
-    neighbour_index_2 = NeighbourIndexShift<pkg_size>(
-        data_index + Arrayi(1, 0, 1), neighborhood);
-    neighbour_index_3 = NeighbourIndexShift<pkg_size>(
-        data_index + Arrayi(0, 1, 1), neighborhood);
-    neighbour_index_4 = NeighbourIndexShift<pkg_size>(
-        data_index + Arrayi(1, 1, 1), neighborhood);
-
-    DataType bilinear_2 =
-        mesh_variable_data[neighbour_index_1.first]
-                          [neighbour_index_1.second[0]]
-                          [neighbour_index_1.second[1]]
-                          [neighbour_index_1.second[2]] *
-            beta[0] * beta[1] +
-        mesh_variable_data[neighbour_index_2.first]
-                          [neighbour_index_2.second[0]]
-                          [neighbour_index_2.second[1]]
-                          [neighbour_index_2.second[2]] *
-            alpha[0] * beta[1] +
-        mesh_variable_data[neighbour_index_3.first]
-                          [neighbour_index_3.second[0]]
-                          [neighbour_index_3.second[1]]
-                          [neighbour_index_3.second[2]] *
-            beta[0] * alpha[1] +
-        mesh_variable_data[neighbour_index_4.first]
-                          [neighbour_index_4.second[0]]
-                          [neighbour_index_4.second[1]]
-                          [neighbour_index_4.second[2]] *
-            alpha[0] * alpha[1];
-
-    return bilinear_1 * beta[2] + bilinear_2 * alpha[2];
-}
-//=============================================================================================//
 inline void UpdateLevelSetGradient::UpdateKernel::update(const size_t &package_index)
 {
     auto &neighborhood = cell_neighborhood_[package_index];
@@ -144,7 +58,7 @@ template <class KernelType>
 Real UpdateKernelIntegrals<KernelType>::UpdateKernel::
     computeKernelIntegral(const Vecd &position, const size_t &package_index, const Arrayi &grid_index)
 {
-    Real phi = probe_signed_distance_.update(position);
+    Real phi = probe_signed_distance_(position);
     Real cutoff_radius = kernel_->CutOffRadius(global_h_ratio_);
     Real threshold = cutoff_radius + data_spacing_; // consider that interface's half width is the data spacing
 
@@ -181,7 +95,7 @@ template <class KernelType>
 Vecd UpdateKernelIntegrals<KernelType>::UpdateKernel::
     computeKernelGradientIntegral(const Vecd &position, const size_t &package_index, const Arrayi &grid_index)
 {
-    Real phi = probe_signed_distance_.update(position);
+    Real phi = probe_signed_distance_(position);
     Real cutoff_radius = kernel_->CutOffRadius(global_h_ratio_);
     Real threshold = cutoff_radius + data_spacing_;
 
@@ -220,7 +134,7 @@ template <class KernelType>
 Matd UpdateKernelIntegrals<KernelType>::UpdateKernel::
     computeKernelSecondGradientIntegral(const Vecd &position, const size_t &package_index, const Arrayi &grid_index)
 {
-    Real phi = probe_signed_distance_.update(position);
+    Real phi = probe_signed_distance_(position);
     Real cutoff_radius = kernel_->CutOffRadius(global_h_ratio_);
     Real threshold = cutoff_radius + data_spacing_;
 
