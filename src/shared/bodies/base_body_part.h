@@ -81,11 +81,11 @@ class BodyPart
 
   protected:
     SPHBody &sph_body_;
+    BaseParticles &base_particles_;
     int part_id_;
     std::string part_name_;
     std::optional<std::string> alias_;
     SPHAdaptation &sph_adaptation_;
-    BaseParticles &base_particles_;
     SingularVariable<UnsignedInt> *sv_range_size_;
     DiscreteVariable<int> *dv_body_part_id_;
     Vecd *pos_;

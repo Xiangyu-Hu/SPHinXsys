@@ -6,10 +6,11 @@ namespace SPH
 {
 //=================================================================================================//
 BodyPart::BodyPart(SPHBody &sph_body)
-    : sph_body_(sph_body), part_id_(sph_body.getNewBodyPartID()),
+    : sph_body_(sph_body), base_particles_(sph_body.getBaseParticles()),
+      part_id_(base_particles_.getNewBodyPartID()),
       part_name_(sph_body.getName() + "Part" + std::to_string(part_id_)),
       sph_adaptation_(sph_body.getSPHAdaptation()),
-      base_particles_(sph_body.getBaseParticles()), sv_range_size_(nullptr),
+      sv_range_size_(nullptr),
       dv_body_part_id_(base_particles_.registerStateVariableOnly<int>(part_name_ + "ID")),
       pos_(base_particles_.getVariableDataByName<Vecd>("Position")) {}
 //=================================================================================================//
@@ -28,7 +29,7 @@ BodyPartByParticle::BodyPartByParticle(SPHBody &sph_body)
     : BodyPart(sph_body), body_part_bounds_(Vecd::Zero(), Vecd::Zero()),
       body_part_bounds_set_(false)
 {
-    sph_body.addBodyPartByParticle(this);
+    base_particles_.addBodyPartByParticle(this);
     base_particles_.addEvolvingVariable<int>(dv_body_part_id_);
 }
 //=================================================================================================//
