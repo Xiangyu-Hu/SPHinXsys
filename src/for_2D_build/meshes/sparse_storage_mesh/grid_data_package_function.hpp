@@ -34,24 +34,16 @@ DataType CornerAverage(PackageDataMatrix2d<DataType, PKG_SIZE> *pkg_data, Array2
     return average * 0.25;
 }
 //=============================================================================================//
-template <typename DataType>
-DataType DataValueFromGlobalIndex(MeshVariableData<DataType> *mesh_variable_data,
-                                  const Arrayi &global_grid_index,
-                                  MeshWithGridDataPackagesType *data_mesh,
+template <typename DataType, size_t PKG_SIZE>
+DataType DataValueFromGlobalIndex(PackageDataMatrix<DataType, PKG_SIZE> *pkg_data,
+                                  const Array2i &global_grid_index,
+                                  MeshWithGridDataPackages<PKG_SIZE> *data_mesh,
                                   size_t *cell_package_index)
 {
-    constexpr int pkg_size = MeshWithGridDataPackagesType::pkg_size;
-    Arrayi cell_index_on_mesh_ = Arrayi::Zero();
-    Arrayi local_data_index = Arrayi::Zero();
-    for (int n = 0; n != 2; n++)
-    {
-        size_t cell_index_in_this_direction = global_grid_index[n] / pkg_size;
-        cell_index_on_mesh_[n] = cell_index_in_this_direction;
-        local_data_index[n] = global_grid_index[n] - cell_index_in_this_direction * pkg_size;
-    }
+    Array2i cell_index_on_mesh_ = global_grid_index / PKG_SIZE;
+    Array2i local_index = global_grid_index - cell_index_on_mesh_ * PKG_SIZE;
     size_t package_index = data_mesh->PackageIndexFromCellIndex(cell_package_index, cell_index_on_mesh_);
-    auto &data = mesh_variable_data[package_index];
-    return data[local_data_index[0]][local_data_index[1]];
+    return pkg_data[package_index][local_index[0]][local_index[1]];
 }
 //=============================================================================================//
 } // namespace SPH

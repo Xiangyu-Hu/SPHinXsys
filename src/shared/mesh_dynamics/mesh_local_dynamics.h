@@ -40,6 +40,13 @@
 #include "sphinxsys_variable.h"
 namespace SPH
 {
+using MeshWithGridDataPackagesType = MeshWithGridDataPackages<4>;
+
+template <typename DataType>
+using MeshVariableData = MeshWithGridDataPackagesType::MeshVariableData<DataType>;
+
+template <typename DataType>
+using MeshVariable = MeshWithGridDataPackagesType::MeshVariable<DataType>;
 /**
  * @class BaseMeshLocalDynamics
  * @brief The base class for all mesh local particle dynamics.
