@@ -31,20 +31,14 @@
 
 #include "base_mesh.h"
 
-#include "base_data_package.h"
 #include "execution_policy.h"
+#include "grid_data_package_type.hpp"
 #include "sphinxsys_variable.h"
-#include "grid_data_package_function.h"
 
 #include "tbb/parallel_sort.h"
 
 namespace SPH
 {
-template <typename DataType>
-using MeshVariable = DiscreteVariable<PackageDataMatrix<DataType, 4>>;
-/** Generalized mesh data type */
-typedef DataContainerAddressAssemble<MeshVariable> MeshVariableAssemble;
-
 /**
  * @class MeshWithGridDataPackages
  * @brief Abstract class for mesh with grid-based data packages.
@@ -57,10 +51,16 @@ typedef DataContainerAddressAssemble<MeshVariable> MeshVariableAssemble;
  * The operation on field data is achieved by mesh dynamics.
  * Note that a data package should be not near the mesh bound, otherwise one will encounter the error "out of range".
  */
-template <int PKG_SIZE>
+template <size_t PKG_SIZE>
 class MeshWithGridDataPackages : public Mesh
 {
   public:
+    template <class DataType>
+    using MeshVariableData = PackageDataMatrix<DataType, PKG_SIZE>;
+    template <typename DataType>
+    using MeshVariable = DiscreteVariable<MeshVariableData<DataType>>;
+    static constexpr int pkg_size = PKG_SIZE; /**< the size of the data package matrix. */
+
     template <typename... Args>
     explicit MeshWithGridDataPackages(BoundingBox tentative_bounds,
                                       Real data_spacing,
@@ -84,10 +84,11 @@ class MeshWithGridDataPackages : public Mesh
     DiscreteVariable<size_t> cell_package_index_;                                       /**< the package index for each cell in a 1-d array. */
     ConcurrentVec<std::pair<size_t, int>> occupied_data_pkgs_;                          /**< (size_t)sort_index, (int)core1/inner0. */
 
-  private:
+  protected:
+    /** Generalized mesh data type */
+    typedef DataContainerAddressAssemble<MeshVariable> MeshVariableAssemble;
     DataContainerUniquePtrAssemble<MeshVariable> mesh_variable_ptrs_;
     MeshVariableAssemble all_mesh_variables_; /**< all mesh variables on this mesh. */
-    static constexpr int pkg_size = PKG_SIZE; /**< the size of the data package matrix. */
     const Real data_spacing_;                 /**< spacing of data in the data packages. */
 
     /** resize all mesh variable data field with `num_grid_pkgs_` size(initially only singular data) */

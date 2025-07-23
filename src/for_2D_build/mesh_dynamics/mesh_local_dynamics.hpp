@@ -1,47 +1,11 @@
 #ifndef MESH_LOCAL_DYNAMICS_2D_HPP
 #define MESH_LOCAL_DYNAMICS_2D_HPP
 
-#include "mesh_local_dynamics.h"
 #include "grid_data_package_function.hpp"
+#include "mesh_local_dynamics.h"
 
 namespace SPH
 {
-//=============================================================================================//
-template <typename DataType>
-DataType BaseMeshLocalDynamics::DataValueFromGlobalIndex(MeshVariableData<DataType> *mesh_variable_data,
-                                                         const Arrayi &global_grid_index,
-                                                         MeshWithGridDataPackagesType *data_mesh,
-                                                         size_t *cell_package_index)
-{
-    Arrayi cell_index_on_mesh_ = Arrayi::Zero();
-    Arrayi local_data_index = Arrayi::Zero();
-    for (int n = 0; n != 2; n++)
-    {
-        size_t cell_index_in_this_direction = global_grid_index[n] / pkg_size;
-        cell_index_on_mesh_[n] = cell_index_in_this_direction;
-        local_data_index[n] = global_grid_index[n] - cell_index_in_this_direction * pkg_size;
-    }
-    size_t package_index = data_mesh->PackageIndexFromCellIndex(cell_package_index, cell_index_on_mesh_);
-    auto &data = mesh_variable_data[package_index];
-    return data[local_data_index[0]][local_data_index[1]];
-}
-//=============================================================================================//
-template <typename DataType>
-DataType BaseMeshLocalDynamics::CornerAverage(MeshVariableData<DataType> *mesh_variable_data,
-                                              Arrayi addrs_index, Arrayi corner_direction,
-                                              CellNeighborhood &neighborhood, DataType zero)
-{
-    DataType average = ZeroData<DataType>::value;
-    for (int i = 0; i != 2; ++i)
-        for (int j = 0; j != 2; ++j)
-        {
-            int x_index = addrs_index[0] + i * corner_direction[0];
-            int y_index = addrs_index[1] + j * corner_direction[1];
-            std::pair<size_t, Arrayi> neighbour_index = NeighbourIndexShift<pkg_size>(Arrayi(x_index, y_index), neighborhood);
-            average += mesh_variable_data[neighbour_index.first][neighbour_index.second[0]][neighbour_index.second[1]];
-        }
-    return average * 0.25;
-}
 //=============================================================================================//
 template <class DataType>
 DataType ProbeMesh::probeMesh(MeshVariableData<DataType> *mesh_variable_data, const Vecd &position)
@@ -259,8 +223,8 @@ inline void MarkNearInterface::UpdateKernel::update(const size_t &package_index,
     mesh_for_each2d<0, 5>(
         [&](int i, int j)
         {
-            corner_averages[i][j] = BaseMeshLocalDynamics::CornerAverage(
-                phi_, Arrayi(i, j), Arrayi(-1, -1), cell_neighborhood_[package_index], (Real)0);
+            corner_averages[i][j] = CornerAverage(phi_, Arrayi(i, j), Arrayi(-1, -1),
+                                                  cell_neighborhood_[package_index], (Real)0);
         });
 
     mesh_for_each2d<0, pkg_size>(

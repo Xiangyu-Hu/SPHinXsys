@@ -30,22 +30,16 @@
 #ifndef MESH_LOCAL_DYNAMICS_H
 #define MESH_LOCAL_DYNAMICS_H
 
-#include "sphinxsys_variable.h"
-#include "mesh_with_data_packages.h"
 #include "base_geometry.h"
+#include "base_implementation.h"
 #include "base_kernel.h"
 #include "data_type.h"
 #include "execution_policy.h"
-#include "base_implementation.h"
 #include "mesh_iterators.hpp"
+#include "mesh_with_data_packages.h"
+#include "sphinxsys_variable.h"
 namespace SPH
 {
-
-template <class T>
-using MeshVariableData = PackageDataMatrix<T, 4>;
-using MeshWithGridDataPackagesType = MeshWithGridDataPackages<4>;
-using NeighbourIndex = std::pair<size_t, Arrayi>; /**< stores shifted neighbour info: (size_t)package index, (arrayi)local grid index. */
-
 /**
  * @class BaseMeshLocalDynamics
  * @brief The base class for all mesh local particle dynamics.
@@ -70,7 +64,7 @@ class BaseMeshLocalDynamics
     virtual ~BaseMeshLocalDynamics() {};
 
     MeshWithGridDataPackagesType &mesh_data_;
-    static constexpr int pkg_size = 4; 
+    static constexpr int pkg_size = 4;
     Arrayi all_cells_;
     Real grid_spacing_;
     Real data_spacing_;
@@ -88,20 +82,7 @@ class BaseMeshLocalDynamics
     size_t SortIndexFromCellIndex(const Arrayi &cell_index);
     Arrayi CellIndexFromSortIndex(const size_t &sort_index);
 
-    static void registerComputingKernel(execution::Implementation<Base> *implementation){};
-
-    /** This function find the value of data from its index from global mesh. */
-    template <typename DataType>
-    static DataType DataValueFromGlobalIndex(MeshVariableData<DataType> *mesh_variable_data,
-                                             const Arrayi &global_grid_index,
-                                             MeshWithGridDataPackagesType *data_mesh,
-                                             size_t *cell_package_index);
-
-    /** obtain averaged value at a corner of a data cell */
-    template <typename DataType>
-    static DataType CornerAverage(MeshVariableData<DataType> *mesh_variable,
-                                  Arrayi addrs_index, Arrayi corner_direction,
-                                  CellNeighborhood &neighborhood, DataType zero);
+    static void registerComputingKernel(execution::Implementation<Base> *implementation) {};
 };
 
 class ProbeMesh
@@ -137,7 +118,7 @@ class ProbeSignedDistance : public ProbeMesh
     explicit ProbeSignedDistance(const ExecutionPolicy &ex_policy, MeshWithGridDataPackagesType *mesh_data)
         : ProbeMesh(ex_policy, mesh_data),
           phi_(mesh_data->getMeshVariable<Real>("Levelset")->DelegatedData(ex_policy)){};
-    ~ProbeSignedDistance(){};
+    ~ProbeSignedDistance() {};
 
     Real update(const Vecd &position) { return probeMesh(phi_, position); };
 
@@ -152,7 +133,7 @@ class ProbeLevelSetGradient : public ProbeMesh
     explicit ProbeLevelSetGradient(const ExecutionPolicy &ex_policy, MeshWithGridDataPackagesType *mesh_data)
         : ProbeMesh(ex_policy, mesh_data),
           phi_gradient_(mesh_data->getMeshVariable<Vecd>("LevelsetGradient")->DelegatedData(ex_policy)){};
-    ~ProbeLevelSetGradient(){};
+    ~ProbeLevelSetGradient() {};
 
     Vecd update(const Vecd &position) { return probeMesh(phi_gradient_, position); };
 
@@ -167,7 +148,7 @@ class ProbeKernelIntegral : public ProbeMesh
     explicit ProbeKernelIntegral(const ExecutionPolicy &ex_policy, MeshWithGridDataPackagesType *mesh_data)
         : ProbeMesh(ex_policy, mesh_data),
           kernel_weight_(mesh_data->getMeshVariable<Real>("KernelWeight")->DelegatedData(ex_policy)){};
-    ~ProbeKernelIntegral(){};
+    ~ProbeKernelIntegral() {};
 
     Real update(const Vecd &position) { return probeMesh(kernel_weight_, position); };
 
@@ -182,7 +163,7 @@ class ProbeKernelGradientIntegral : public ProbeMesh
     explicit ProbeKernelGradientIntegral(const ExecutionPolicy &ex_policy, MeshWithGridDataPackagesType *mesh_data)
         : ProbeMesh(ex_policy, mesh_data),
           kernel_gradient_(mesh_data->getMeshVariable<Vecd>("KernelGradient")->DelegatedData(ex_policy)){};
-    ~ProbeKernelGradientIntegral(){};
+    ~ProbeKernelGradientIntegral() {};
 
     Vecd update(const Vecd &position) { return probeMesh(kernel_gradient_, position); };
 
@@ -197,7 +178,7 @@ class ProbeKernelSecondGradientIntegral : public ProbeMesh
     explicit ProbeKernelSecondGradientIntegral(const ExecutionPolicy &ex_policy, MeshWithGridDataPackagesType *mesh_data)
         : ProbeMesh(ex_policy, mesh_data),
           kernel_second_gradient_(mesh_data->getMeshVariable<Matd>("KernelSecondGradient")->DelegatedData(ex_policy)){};
-    ~ProbeKernelSecondGradientIntegral(){};
+    ~ProbeKernelSecondGradientIntegral() {};
 
     Matd update(const Vecd &position) { return probeMesh(kernel_second_gradient_, position); };
 
@@ -444,7 +425,7 @@ class UpdateKernelIntegrals : public BaseMeshLocalDynamics
                 kernel_gradient_, cell_index, [&](const Vecd &position, const Arrayi &grid_index) -> Vecd
                 { return computeKernelGradientIntegral(position, package_index, grid_index); });
             assignByPosition(
-                kernel_second_gradient_, cell_index, [&](const Vecd& position, const Arrayi &grid_index) -> Matd
+                kernel_second_gradient_, cell_index, [&](const Vecd &position, const Arrayi &grid_index) -> Matd
                 { return computeKernelSecondGradientIntegral(position, package_index, grid_index); });
         }
 
@@ -484,7 +465,7 @@ class UpdateKernelIntegrals : public BaseMeshLocalDynamics
             for (size_t i = 0; i != Dimensions; ++i)
             {
                 volume_fraction += phi_gradient[i] * phi_gradient[i] * squared_norm_inv *
-                                  Heaviside(phi / (ABS(phi_gradient[i]) + TinyReal), 0.5 * data_spacing);
+                                   Heaviside(phi / (ABS(phi_gradient[i]) + TinyReal), 0.5 * data_spacing);
             }
             return volume_fraction;
         }

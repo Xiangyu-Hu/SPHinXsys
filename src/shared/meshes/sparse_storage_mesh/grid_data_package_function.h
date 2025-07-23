@@ -32,11 +32,28 @@
 #ifndef GRID_DATA_PACKAGE_FUNCTIONS_H
 #define GRID_DATA_PACKAGE_FUNCTIONS_H
 
-#include "base_data_package.h"
+#include "mesh_with_data_packages.h"
 
 namespace SPH
 {
+using MeshWithGridDataPackagesType = MeshWithGridDataPackages<4>;
+
+template <typename DataType>
+using MeshVariableData = MeshWithGridDataPackagesType::MeshVariableData<DataType>;
+
+template <typename DataType>
+using MeshVariable = MeshWithGridDataPackagesType::MeshVariable<DataType>;
+
 template <int PKG_SIZE>
-std::pair<size_t, Arrayi> NeighbourIndexShift(const Arrayi shift_index, const CellNeighborhood &neighbour);
+NeighbourIndex NeighbourIndexShift(const Arrayi shift_index, const CellNeighborhood &neighbour);
+
+template <typename DataType, size_t PKG_SIZE>
+DataType CornerAverage(PackageDataMatrix<DataType, PKG_SIZE> *pkg_data, Arrayi addrs_index,
+                       Arrayi corner_direction, const CellNeighborhood &neighborhood, DataType zero);
+template <typename DataType>
+DataType DataValueFromGlobalIndex(MeshVariableData<DataType> *mesh_variable_data,
+                                  const Arrayi &global_grid_index,
+                                  MeshWithGridDataPackagesType *data_mesh,
+                                  size_t *cell_package_index);
 } // namespace SPH
 #endif // GRID_DATA_PACKAGE_FUNCTIONS_H
