@@ -57,7 +57,7 @@ class LevelSetShape : public Shape
     LevelSetShape(const ParallelDevicePolicy &par_device, Shape &shape, SharedPtr<SPHAdaptation> sph_adaptation, Real refinement_ratio = 1.0);
     LevelSetShape(const ParallelDevicePolicy &par_device, SPHBody &sph_body, Shape &shape, Real refinement_ratio = 1.0);
 
-    virtual ~LevelSetShape(){};
+    virtual ~LevelSetShape() {};
 
     virtual bool checkContain(const Vecd &probe_point, bool BOUNDARY_INCLUDED = true) override;
     virtual Vecd findClosestPoint(const Vecd &probe_point) override;
@@ -67,12 +67,13 @@ class LevelSetShape : public Shape
     Vecd findLevelSetGradient(const Vecd &probe_point);
     Real computeKernelIntegral(const Vecd &probe_point, Real h_ratio = 1.0);
     Vecd computeKernelGradientIntegral(const Vecd &probe_point, Real h_ratio = 1.0);
-    Matd computeKernelSecondGradientIntegral(const Vecd& probe_point, Real h_ratio = 1.0);
+    Matd computeKernelSecondGradientIntegral(const Vecd &probe_point, Real h_ratio = 1.0);
     /** small_shift_factor = 1.0 by default, can be increased for difficult geometries for smoothing */
     LevelSetShape *cleanLevelSet(Real small_shift_factor = 1.0);
     /** required to build level set from triangular mesh in stl file format. */
     LevelSetShape *correctLevelSetSign(Real small_shift_factor = 1.0);
     void writeLevelSet(SPHSystem &sph_system);
+    MultilevelLevelSet &getLevelSet() { return level_set_; }
 
   protected:
     MultilevelLevelSet &level_set_; /**< narrow bounded level set mesh. */

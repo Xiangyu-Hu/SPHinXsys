@@ -53,6 +53,15 @@ class MultilevelLevelSet : public BaseMeshField
     ~MultilevelLevelSet() {};
 
     template <class ExecutionPolicy>
+    ProbeSignedDistance getProbeSignedDistance(const ExecutionPolicy &ex_policy);
+
+    template <class ExecutionPolicy>
+    ProbeNormalDirection getProbeNormalDirection(const ExecutionPolicy &ex_policy);
+
+    template <class ExecutionPolicy>
+    ProbeKernelGradientIntegral getProbeKernelGradientIntegral(const ExecutionPolicy &ex_policy);
+
+    template <class ExecutionPolicy>
     void finishInitialization(const ExecutionPolicy &ex_policy)
     {
         initializeMeshVariables(ex_policy, host_kernel_);

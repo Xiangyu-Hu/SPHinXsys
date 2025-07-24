@@ -10,7 +10,8 @@ template <class ExecutionPolicy, class KernelType>
 void MultilevelLevelSet::configOperationExecutionPolicy(const ExecutionPolicy &ex_policy,
                                                         KernelType *kernel)
 {
-    sync_mesh_variable_data_ = [&](){ this->syncMeshVariableData(ex_policy); };
+    sync_mesh_variable_data_ = [&]()
+    { this->syncMeshVariableData(ex_policy); };
     clean_interface_keeper_ = makeUnique<CleanInterface<ExecutionPolicy, KernelType>>(
         *mesh_data_set_.back(), kernel, global_h_ratio_vec_.back());
     correct_topology_keeper_ = makeUnique<CorrectTopology<ExecutionPolicy, KernelType>>(
@@ -20,20 +21,39 @@ void MultilevelLevelSet::configOperationExecutionPolicy(const ExecutionPolicy &e
 template <class ExecutionPolicy, class KernelType>
 void MultilevelLevelSet::initializeMeshVariables(const ExecutionPolicy &ex_policy, KernelType *kernel)
 {
-    for(size_t level = 0; level < total_levels_; level++){
+    for (size_t level = 0; level < total_levels_; level++)
+    {
         MeshInnerDynamics<ExecutionPolicy, UpdateLevelSetGradient>
-          update_level_set_gradient{*mesh_data_set_[level]};
+            update_level_set_gradient{*mesh_data_set_[level]};
         MeshInnerDynamics<ExecutionPolicy, UpdateKernelIntegrals<KernelType>>
-          update_kernel_integrals{*mesh_data_set_[level], kernel, global_h_ratio_vec_[level]};
+            update_kernel_integrals{*mesh_data_set_[level], kernel, global_h_ratio_vec_[level]};
         update_level_set_gradient.exec();
         update_kernel_integrals.exec();
-    
+
         registerProbes(ex_policy, level);
         cell_package_index_set_.push_back(
-          mesh_data_set_[level]->cell_package_index_.DelegatedData(ex_policy));
+            mesh_data_set_[level]->cell_package_index_.DelegatedData(ex_policy));
         meta_data_cell_set_.push_back(
-          mesh_data_set_[level]->meta_data_cell_.DelegatedData(ex_policy));
+            mesh_data_set_[level]->meta_data_cell_.DelegatedData(ex_policy));
     }
+}
+//=================================================================================================//
+template <class ExecutionPolicy>
+ProbeSignedDistance MultilevelLevelSet::getProbeSignedDistance(const ExecutionPolicy &ex_policy)
+{
+    return ProbeSignedDistance(ex_policy, mesh_data_set_[total_levels_ - 1]);
+}
+//=================================================================================================//
+template <class ExecutionPolicy>
+ProbeNormalDirection MultilevelLevelSet::getProbeNormalDirection(const ExecutionPolicy &ex_policy)
+{
+    return ProbeNormalDirection(ex_policy, mesh_data_set_[total_levels_ - 1]);
+}
+//=================================================================================================//
+template <class ExecutionPolicy>
+ProbeKernelGradientIntegral MultilevelLevelSet::getProbeKernelGradientIntegral(const ExecutionPolicy &ex_policy)
+{
+    return ProbeKernelGradientIntegral(ex_policy, mesh_data_set_[total_levels_ - 1]);
 }
 //=================================================================================================//
 template <class ExecutionPolicy>
@@ -59,6 +79,6 @@ void MultilevelLevelSet::registerProbes(const ExecutionPolicy &ex_policy, size_t
             .template createPtr<ProbeKernelSecondGradientIntegral>(ex_policy, mesh_data_set_[level]));
 }
 //=================================================================================================//
-}
-  
+} // namespace SPH
+
 #endif
