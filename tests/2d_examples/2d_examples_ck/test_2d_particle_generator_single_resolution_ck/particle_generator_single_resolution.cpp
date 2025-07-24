@@ -60,8 +60,8 @@ int main(int ac, char *av[])
     //	Methods used for particle relaxation.
     //----------------------------------------------------------------------
     SPHSolver sph_solver(sph_system);
-    auto &main_methods = sph_solver.addParticleMethodContainer(par);
-    auto &host_methods = sph_solver.addParticleMethodContainer(par);
+    auto &main_methods = sph_solver.addParticleMethodContainer(seq);
+    auto &host_methods = sph_solver.addParticleMethodContainer(seq);
     //----------------------------------------------------------------------
     // Define the numerical methods used in the simulation.
     // Note that there may be data dependence on the sequence of constructions.
@@ -80,6 +80,8 @@ int main(int ac, char *av[])
         main_methods.addInteractionDynamicsWithUpdate<
                         ParticleRelaxation, NoKernelCorrectionCK, TruncatedLinear, AllParticles>(input_body_inner)
             .addPostStateDynamics<LevelsetKernelGradientIntegral>(near_body_surface);
+    auto &update_particle_position =
+        main_methods.addStateDynamics<UpdateParticlePosition>(input_body);
     auto &level_set_bounding = main_methods.addStateDynamics<LevelsetBounding>(near_body_surface);
     //----------------------------------------------------------------------
     //	Define simple file input and outputs functions.
@@ -90,9 +92,10 @@ int main(int ac, char *av[])
     //	and case specified initial condition if necessary.
     //----------------------------------------------------------------------
     random_input_body_particles.exec();
-    level_set_bounding.exec();
-    input_body.updateCellLinkedList();
+    input_body_cell_linked_list.exec();
     input_body_update_inner_relation.exec();
+
+    level_set_bounding.exec();
     //----------------------------------------------------------------------
     //	First output before the simulation.
     //----------------------------------------------------------------------
@@ -104,11 +107,14 @@ int main(int ac, char *av[])
     while (ite_p < 1000)
     {
         particle_relaxation.exec();
+        update_particle_position.exec();
+        level_set_bounding.exec();
+
         input_body_cell_linked_list.exec();
         input_body_update_inner_relation.exec();
 
         ite_p += 1;
-        if (ite_p % 100 == 0)
+        if (ite_p % 1 == 0)
         {
             std::cout << std::fixed << std::setprecision(9) << "Relaxation steps N = " << ite_p << "\n";
             body_state_recorder.writeToFile(ite_p);

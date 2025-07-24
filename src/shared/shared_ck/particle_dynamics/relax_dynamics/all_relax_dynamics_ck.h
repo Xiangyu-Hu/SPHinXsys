@@ -31,10 +31,13 @@
 #define ALL_RELAX_DYNAMICS_CK_H
 
 #include "level_set_correction.hpp"
-#include "transport_velocity_correction_ck.hpp"
+#include "transport_velocity_correction_ck.h"
+#include "fluid_time_step_ck.h"
 namespace SPH
 {
 template <typename... Parameters>
 using ParticleRelaxation = fluid_dynamics::TransportVelocityCorrectionCK<Parameters...>;
+
+using UpdateParticlePosition = fluid_dynamics::UpdateParticlePosition;
 } // namespace SPH
 #endif // ALL_RELAX_DYNAMICS_CK_H
