@@ -39,35 +39,21 @@ namespace SPH
 class BaseExecDynamics
 {
   public:
-    BaseExecDynamics(){};
-    virtual ~BaseExecDynamics(){};
+    BaseExecDynamics() {};
+    virtual ~BaseExecDynamics() {};
 
     virtual void exec(Real small_shift_factor) = 0;
-};
-class RegisterMeshVariable
-{
-  public:
-    explicit RegisterMeshVariable(){};
-    ~RegisterMeshVariable(){};
-
-    void exec(MeshWithGridDataPackagesType *mesh_data){
-        mesh_data->registerMeshVariable<Real>("Levelset");
-        mesh_data->registerMeshVariable<int>("NearInterfaceID");
-        mesh_data->registerMeshVariable<Vecd>("LevelsetGradient");
-        mesh_data->registerMeshVariable<Real>("KernelWeight");
-        mesh_data->registerMeshVariable<Vecd>("KernelGradient");
-        mesh_data->registerMeshVariable<Matd>("KernelSecondGradient");
-    }
 };
 class FinishDataPackages
 {
   public:
     explicit FinishDataPackages(MeshWithGridDataPackagesType &mesh_data, Shape &shape)
         : mesh_data_(mesh_data), shape_(shape),
-          far_field_distance(mesh_data.GridSpacing() * (Real)mesh_data.BufferWidth()){};
-    virtual ~FinishDataPackages(){};
+          far_field_distance(mesh_data.GridSpacing() * (Real)mesh_data.BufferWidth()) {};
+    virtual ~FinishDataPackages() {};
 
-    void exec(){
+    void exec()
+    {
         tag_a_cell_is_inner_package.exec();
 
         mesh_data_.organizeOccupiedPackages();
@@ -93,35 +79,6 @@ class FinishDataPackages
     MeshInnerDynamics<execution::ParallelPolicy, InitializeBasicDataForAPackage> initialize_basic_data_for_a_package{mesh_data_, shape_};
 };
 
-class ProbeNormalDirection
-{
-  public:
-    template <class ExecutionPolicy>
-    explicit ProbeNormalDirection(const ExecutionPolicy &ex_policy, MeshWithGridDataPackagesType *mesh_data)
-        : data_spacing_(mesh_data->DataSpacing()),
-          probe_level_set_gradient(ex_policy, mesh_data){};
-    virtual ~ProbeNormalDirection(){};
-
-    Vecd update(const Vecd &position)
-    {
-        Vecd probed_value = probe_level_set_gradient.update(position);
-
-        Real threshold = 1.0e-2 * data_spacing_;
-        while (probed_value.norm() < threshold)
-        {
-            Vecd jittered = position; // jittering
-            for (int l = 0; l != position.size(); ++l)
-                jittered[l] += rand_uniform(-0.5, 0.5) * 0.5 * data_spacing_;
-            probed_value = probe_level_set_gradient.update(jittered);
-        }
-        return probed_value.normalized();
-    }
-
-  private:
-    Real data_spacing_;
-    ProbeLevelSetGradient probe_level_set_gradient;
-};
-
 template <class ExecutionPolicy, class KernelType>
 class CleanInterface : public BaseMeshDynamics, public BaseExecDynamics
 {
@@ -130,10 +87,11 @@ class CleanInterface : public BaseMeshDynamics, public BaseExecDynamics
         : BaseMeshDynamics(mesh_data),
           BaseExecDynamics(),
           kernel_(kernel),
-          global_h_ratio_(global_h_ratio){};
-    virtual ~CleanInterface(){};
+          global_h_ratio_(global_h_ratio) {};
+    virtual ~CleanInterface() {};
 
-    void exec(Real small_shift_factor) override {
+    void exec(Real small_shift_factor) override
+    {
         mark_near_interface.exec(small_shift_factor);
         redistance_interface.exec();
         reinitialize_level_set.exec();
@@ -159,10 +117,11 @@ class CorrectTopology : public BaseMeshDynamics, public BaseExecDynamics
         : BaseMeshDynamics(mesh_data),
           BaseExecDynamics(),
           kernel_(kernel),
-          global_h_ratio_(global_h_ratio){};
-    virtual ~CorrectTopology(){};
+          global_h_ratio_(global_h_ratio) {};
+    virtual ~CorrectTopology() {};
 
-    void exec(Real small_shift_factor) override {
+    void exec(Real small_shift_factor) override
+    {
         mark_near_interface.exec(small_shift_factor);
         for (size_t i = 0; i != 10; ++i)
             diffuse_level_set_sign.exec();
