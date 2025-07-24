@@ -34,5 +34,17 @@ void SurfaceIndicationFromBodyShape::UpdateKernel::update(size_t index_i, Real d
     Real signed_distance = initial_shape_->findSignedDistance(pos_[index_i]);
     indicator_[index_i] = signed_distance > -spacing_ref_ ? 1 : 0;
 }
+//=============================================================================================//
+RandomizeParticlePositionCK::RandomizeParticlePositionCK(SPHBody &sph_body, Real randomize_factor)
+    : LocalDynamics(sph_body), dv_pos_(particles_->getVariableByName<Vecd>("Position")),
+      randomize_scale_(sph_body.getSPHAdaptation().MinimumSpacing() * randomize_factor) {}
+//=============================================================================================//
+void RandomizeParticlePositionCK::UpdateKernel::update(size_t index_i, Real dt)
+{
+    for (int k = 0; k != Dimensions; ++k)
+    {
+        pos_[index_i][k] += dt * rand_uniform(-1.0, 1.0) * randomize_scale_;
+    }
+}
 //=================================================================================================//
 } // namespace SPH

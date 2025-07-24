@@ -27,5 +27,12 @@ SurfaceIndicationFromBodyShape::UpdateKernel::
       indicator_(encloser.dv_indicator_->DelegatedData(ex_policy)),
       pos_(encloser.dv_pos_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
+template <class ExecutionPolicy, class EncloserType>
+RandomizeParticlePositionCK::UpdateKernel::
+    UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+    : HostKernel(ex_policy, encloser),
+      pos_(encloser.dv_pos_->DelegatedData(ex_policy)),
+      randomize_scale_(encloser.randomize_scale_) {}
+//=================================================================================================//
 } // namespace SPH
 #endif // GEOMETRIC_DYNAMICS_HPP

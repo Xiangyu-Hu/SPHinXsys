@@ -34,9 +34,15 @@
 
 namespace SPH
 {
+
+namespace FSI
+{
+template <typename...>
+class PressureForceFromFluid;
+}
+
 namespace fluid_dynamics
 {
-
 template <typename...>
 class AcousticStep2ndHalf;
 
@@ -125,7 +131,7 @@ class AcousticStep2ndHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType,
   protected:
     template <typename...>
     friend class FSI::PressureForceFromFluid;
-    
+
     KernelCorrectionType kernel_correction_;
     FluidType &fluid_;
     RiemannSolverType riemann_solver_;

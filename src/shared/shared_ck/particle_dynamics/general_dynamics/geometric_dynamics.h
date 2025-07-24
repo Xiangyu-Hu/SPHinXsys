@@ -99,5 +99,28 @@ class SurfaceIndicationFromBodyShape : public LocalDynamics
     DiscreteVariable<int> *dv_indicator_;
     DiscreteVariable<Vecd> *dv_pos_;
 };
+
+class RandomizeParticlePositionCK : public LocalDynamics
+{
+  public:
+    explicit RandomizeParticlePositionCK(SPHBody &sph_body, Real randomize_factor = 0.25);
+    virtual ~RandomizeParticlePositionCK() {};
+
+    class UpdateKernel : public HostKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+        void update(size_t index_i, Real dt = 0.0);
+
+      protected:
+        Vecd *pos_;
+        Real randomize_scale_;
+    };
+
+  protected:
+    DiscreteVariable<Vecd> *dv_pos_;
+    Real randomize_scale_;
+};
 } // namespace SPH
 #endif // GEOMETRIC_DYNAMICS_H
