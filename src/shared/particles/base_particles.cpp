@@ -16,7 +16,8 @@ BaseParticles::BaseParticles(SPHBody &sph_body, BaseMaterial *base_material)
       sph_body_(sph_body), body_name_(sph_body.getName()),
       base_material_(*base_material),
       restart_xml_parser_("xml_restart", "particles"),
-      reload_xml_parser_("xml_particle_reload", "particles")
+      reload_xml_parser_("xml_particle_reload", "particles"),
+      total_body_parts_(0)
 {
     sph_body.assignBaseParticles(this);
     sv_total_real_particles_ = registerSingularVariable<UnsignedInt>("TotalRealParticles");
@@ -122,6 +123,12 @@ UnsignedInt BaseParticles::createRealParticleFrom(UnsignedInt index)
     incrementTotalRealParticles();
     return new_original_id;
 }
+//=================================================================================================//
+int BaseParticles::getNewBodyPartID()
+{
+    total_body_parts_++;
+    return total_body_parts_;
+};
 //=================================================================================================//
 void BaseParticles::resizeXmlDocForParticles(XmlParser &xml_parser)
 {

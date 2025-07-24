@@ -64,7 +64,7 @@ ParticleSortCK<ExecutionPolicy>::ParticleSortCK(RealBody &real_body)
 {
     particles_->addEvolvingVariable<UnsignedInt>("OriginalID");
 
-    body_parts_by_particle_ = real_body.getBodyPartsByParticle();
+    body_parts_by_particle_ = particles_->getBodyPartsByParticle();
     for (size_t i = 0; i != body_parts_by_particle_.size(); ++i)
     {
         DiscreteVariable<UnsignedInt> *dv_particle_list =

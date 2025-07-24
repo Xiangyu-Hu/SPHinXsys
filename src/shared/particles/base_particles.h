@@ -49,6 +49,7 @@ class SPHBody;
 class SPHAdaptation;
 class BaseMaterial;
 class BodySurface;
+class BodyPartByParticle;
 
 /**
  * @class BaseParticles
@@ -244,6 +245,15 @@ class BaseParticles
     ParticleVariables all_discrete_variables_;
     SingularVariables all_singular_variables_;
     ParticleVariables variables_to_write_;
+
+  protected:
+    int total_body_parts_;                                /**< total number of body parts indicated particle groups*/
+    StdVec<BodyPartByParticle *> body_parts_by_particle_; /**< all body parts by particle */
+
+  public:
+    int getNewBodyPartID();
+    void addBodyPartByParticle(BodyPartByParticle *body_part) { body_parts_by_particle_.push_back(body_part); };
+    StdVec<BodyPartByParticle *> getBodyPartsByParticle() { return body_parts_by_particle_; };
 
   protected:
     //----------------------------------------------------------------------
