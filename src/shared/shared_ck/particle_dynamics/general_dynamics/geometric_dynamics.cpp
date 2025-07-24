@@ -43,7 +43,7 @@ void RandomizeParticlePositionCK::UpdateKernel::update(size_t index_i, Real dt)
 {
     for (int k = 0; k != Dimensions; ++k)
     {
-        pos_[index_i][k] += dt * rand_uniform(-1.0, 1.0) * randomize_scale_;
+        pos_[index_i][k] += rand_uniform(-1.0, 1.0) * randomize_scale_;
     }
 }
 //=================================================================================================//
