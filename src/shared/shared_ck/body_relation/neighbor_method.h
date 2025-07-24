@@ -159,6 +159,14 @@ class SmoothingLength<SingleValued> : public SmoothingLength<Base>
         };
     };
 
+    class SmoothingRatio
+    {
+      public:
+        SmoothingRatio(SmoothingLength<SingleValued> &smoothing_length) {};
+
+        Real operator()(UnsignedInt index_i) const { return 1.0; };
+    };
+
   protected:
     Real inv_h_;
 };

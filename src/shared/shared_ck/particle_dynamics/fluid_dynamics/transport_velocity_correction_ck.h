@@ -27,15 +27,15 @@ class TransportVelocityCorrectionCKBase : public BaseInteractionType
 template <typename...>
 class TransportVelocityCorrectionCK;
 
-template <class KernelCorrectionType, class ResolutionType,
-          class LimiterType, class ParticleScopeType, typename... Parameters>
+template <class KernelCorrectionType, class LimiterType, class ParticleScopeType, typename... Parameters>
 class TransportVelocityCorrectionCK<
-    Inner<WithUpdate, KernelCorrectionType, ResolutionType, LimiterType, ParticleScopeType, Parameters...>>
+    Inner<WithUpdate, KernelCorrectionType, LimiterType, ParticleScopeType, Parameters...>>
     : public TransportVelocityCorrectionCKBase<Interaction<Inner<Parameters...>>>
 {
     using BaseInteraction = TransportVelocityCorrectionCKBase<Interaction<Inner<Parameters...>>>;
     using CorrectionKernel = typename KernelCorrectionType::ComputingKernel;
     using ParticleScopeTypeKernel = typename ParticleScopeTypeCK<ParticleScopeType>::ComputingKernel;
+    using SmoothingRatio = typename Inner<Parameters...>::NeighborMethodType::SmoothingRatio;
 
   public:
     explicit TransportVelocityCorrectionCK(Inner<Parameters...> &inner_relation, Real coefficient = 0.2);
@@ -66,7 +66,7 @@ class TransportVelocityCorrectionCK<
       protected:
         CorrectionKernel correction_;
         Real correction_scaling_;
-        ResolutionType h_ratio_;
+        SmoothingRatio h_ratio_;
         LimiterType limiter_;
         Vecd *dpos_;
         Vecd *zero_gradient_residue_;
@@ -77,20 +77,17 @@ class TransportVelocityCorrectionCK<
     KernelCorrectionType kernel_correction_;
     Real h_ref_;              ///< e.g. reference smoothing length
     Real correction_scaling_; ///< typically coefficient * h_ref^2
-    ResolutionType h_ratio_;  ///< e.g. for adaptive resolution
+    SmoothingRatio h_ratio_;  ///< e.g. for adaptive resolution
     LimiterType limiter_;     ///< e.g. a limiter on the final correction step
     ParticleScopeTypeCK<ParticleScopeType> within_scope_method_;
 };
 
-template <class KernelCorrectionType, class ResolutionType,
-          class LimiterType, class ParticleScopeType, typename... Parameters>
-class TransportVelocityCorrectionCK<
-    Contact<Wall, KernelCorrectionType, ResolutionType, LimiterType, ParticleScopeType, Parameters...>>
+template <class KernelCorrectionType, typename... Parameters>
+class TransportVelocityCorrectionCK<Contact<Wall, KernelCorrectionType, Parameters...>>
     : public TransportVelocityCorrectionCKBase<Interaction<Contact<Parameters...>>>, public Interaction<Wall>
 {
     using BaseInteraction = TransportVelocityCorrectionCKBase<Interaction<Contact<Parameters...>>>;
     using CorrectionKernel = typename KernelCorrectionType::ComputingKernel;
-    using ParticleScopeTypeKernel = typename ParticleScopeTypeCK<ParticleScopeType>::ComputingKernel;
 
   public:
     explicit TransportVelocityCorrectionCK(Contact<Parameters...> &contact_relation);
@@ -118,13 +115,13 @@ class TransportVelocityCorrectionCK<
 //--------------------------------------------------------------------------------------
 using TransportVelocityCorrectionWallNoCorrectionBulkParticlesCK =
     TransportVelocityCorrectionCK<
-        Inner<WithUpdate, NoKernelCorrectionCK, SingleResolution, NoLimiter, BulkParticles>,
-        Contact<Wall, NoKernelCorrectionCK, SingleResolution, NoLimiter, BulkParticles>>;
+        Inner<WithUpdate, NoKernelCorrectionCK, NoLimiter, BulkParticles>,
+        Contact<Wall, NoKernelCorrectionCK>>;
 
 using TransportVelocityLimitedCorrectionCorrectedComplexBulkParticlesCK =
     TransportVelocityCorrectionCK<
-        Inner<WithUpdate, LinearCorrectionCK, SingleResolution, TruncatedLinear, BulkParticles>,
-        Contact<Wall, LinearCorrectionCK, SingleResolution, TruncatedLinear, BulkParticles>>;
+        Inner<WithUpdate, LinearCorrectionCK, TruncatedLinear, BulkParticles>,
+        Contact<Wall, LinearCorrectionCK>>;
 } // namespace fluid_dynamics
 } // namespace SPH
 #endif // TRANSPORT_VELOCITY_CORRECTION_CK_H
