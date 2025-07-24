@@ -9,7 +9,7 @@ namespace SPH
 //=================================================================================================//
 SPHBody::SPHBody(SPHSystem &sph_system, Shape &shape, const std::string &name)
     : sph_system_(sph_system), body_name_(name), newly_updated_(true),
-      base_particles_(nullptr), is_bound_set_(false), initial_shape_(&shape), total_body_parts_(0),
+      base_particles_(nullptr), is_bound_set_(false), initial_shape_(&shape),
       sph_adaptation_(sph_adaptation_ptr_keeper_.createPtr<SPHAdaptation>(sph_system.ReferenceResolution())),
       base_material_(base_material_ptr_keeper_.createPtr<BaseMaterial>())
 {
@@ -35,12 +35,6 @@ BoundingBox SPHBody::getSPHSystemBounds()
 {
     return sph_system_.getSystemDomainBounds();
 }
-//=================================================================================================//
-int SPHBody::getNewBodyPartID()
-{
-    total_body_parts_++;
-    return total_body_parts_;
-};
 //=================================================================================================//
 SPHSystem &SPHBody::getSPHSystem()
 {
