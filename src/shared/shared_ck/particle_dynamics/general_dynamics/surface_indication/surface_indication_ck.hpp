@@ -38,7 +38,10 @@ FreeSurfaceIndicationCK<Inner<WithUpdate, Parameters...>>::
     FreeSurfaceIndicationCK(Inner<Parameters...> &inner_relation)
     : FreeSurfaceIndicationCK<Base, Inner<Parameters...>>(inner_relation),
       dv_previous_surface_indicator_(
-          this->particles_->template registerStateVariableOnly<int>("PreviousSurfaceIndicator")) {}
+          this->particles_->template registerStateVariableOnly<int>("PreviousSurfaceIndicator"))
+{
+    this->particles_->template addEvolvingVariable<int>("PreviousSurfaceIndicator");
+}
 //=================================================================================================//
 template <typename... Parameters>
 template <class ExecutionPolicy>
