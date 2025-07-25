@@ -21,17 +21,62 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file    all_relax_dynamics_ck.h
- * @brief   This is the header file that user code should include to pick up all
- *          relax dynamics used in SPHinXsys.
- * @author	Chi Zhang and Xiangyu Hu
+ * @file relaxation_residue_ck.h
+ * @brief TBD.
+ * @author Xiangyu Hu
  */
 
-#ifndef ALL_RELAX_DYNAMICS_CK_H
-#define ALL_RELAX_DYNAMICS_CK_H
+#ifndef RELAXATION_RESIDUE_CK_H
+#define RELAXATION_RESIDUE_CK_H
 
-#include "level_set_correction.hpp"
-#include "relaxation_residue_ck.hpp"
-#include "relaxation_stepping_ck.h"
+#include "base_general_dynamics.h"
 
-#endif // ALL_RELAX_DYNAMICS_CK_H
+namespace SPH
+{
+template <class BaseInteractionType>
+class RelaxationResidueBase : public BaseInteractionType
+{
+  public:
+    template <class DynamicsIdentifier>
+    explicit RelaxationResidueBase(DynamicsIdentifier &identifier);
+    virtual ~RelaxationResidueBase() {}
+
+  protected:
+    DiscreteVariable<Real> *dv_Vol_;
+    DiscreteVariable<Vecd> *dv_pos_;
+    DiscreteVariable<Vecd> *dv_residue_;
+};
+
+template <typename...>
+class RelaxationResidueCK;
+
+template <class KernelCorrectionType, typename... Parameters>
+class RelaxationResidueCK<Inner<KernelCorrectionType, Parameters...>>
+    : public RelaxationResidueBase<Interaction<Inner<Parameters...>>>
+{
+    using BaseInteraction = RelaxationResidueBase<Interaction<Inner<Parameters...>>>;
+    using CorrectionKernel = typename KernelCorrectionType::ComputingKernel;
+
+  public:
+    explicit RelaxationResidueCK(Inner<Parameters...> &inner_relation);
+    virtual ~RelaxationResidueCK() {}
+
+    class InteractKernel : public BaseInteraction::InteractKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+        void interact(size_t index_i, Real dt = 0.0);
+
+      protected:
+        CorrectionKernel correction_;
+        Real *Vol_;
+        Vecd *residue_;
+    };
+
+  protected:
+    KernelCorrectionType kernel_correction_;
+};
+
+} // namespace SPH
+#endif // RELAXATION_RESIDUE_CK_H

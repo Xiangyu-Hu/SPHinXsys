@@ -60,8 +60,8 @@ int main(int ac, char *av[])
     //	Methods used for particle relaxation.
     //----------------------------------------------------------------------
     SPHSolver sph_solver(sph_system);
-    auto &main_methods = sph_solver.addParticleMethodContainer(seq);
-    auto &host_methods = sph_solver.addParticleMethodContainer(seq);
+    auto &main_methods = sph_solver.addParticleMethodContainer(par);
+    auto &host_methods = sph_solver.addParticleMethodContainer(par);
     //----------------------------------------------------------------------
     // Define the numerical methods used in the simulation.
     // Note that there may be data dependence on the sequence of constructions.
@@ -76,12 +76,12 @@ int main(int ac, char *av[])
     auto &input_body_cell_linked_list = main_methods.addCellLinkedListDynamics(input_body);
     auto &input_body_update_inner_relation = main_methods.addRelationDynamics(input_body_inner);
     auto &random_input_body_particles = host_methods.addStateDynamics<RandomizeParticlePositionCK>(input_body);
-    auto &particle_relaxation =
-        main_methods.addInteractionDynamicsWithUpdate<
-                        ParticleRelaxation, NoKernelCorrectionCK, TruncatedLinear, AllParticles>(input_body_inner)
+    auto &relaxation_residue =
+        main_methods.addInteractionDynamics<RelaxationResidueCK, NoKernelCorrectionCK>(input_body_inner)
             .addPostStateDynamics<LevelsetKernelGradientIntegral>(near_body_surface);
+    auto &relaxation_scaling = main_methods.addReduceDynamics<RelaxationScalingCK>(input_body);
     auto &update_particle_position =
-        main_methods.addStateDynamics<UpdateParticlePosition>(input_body);
+        main_methods.addStateDynamics<PositionRelaxationCK>(input_body);
     auto &level_set_bounding = main_methods.addStateDynamics<LevelsetBounding>(near_body_surface);
     //----------------------------------------------------------------------
     //	Define simple file input and outputs functions.
@@ -92,29 +92,27 @@ int main(int ac, char *av[])
     //	and case specified initial condition if necessary.
     //----------------------------------------------------------------------
     random_input_body_particles.exec();
-    input_body_cell_linked_list.exec();
-    input_body_update_inner_relation.exec();
 
-    level_set_bounding.exec();
     //----------------------------------------------------------------------
     //	First output before the simulation.
     //----------------------------------------------------------------------
-    body_state_recorder.writeToFile();
+    body_state_recorder.writeToFile(0);
     //----------------------------------------------------------------------
     //	Particle relaxation time stepping start here.
     //----------------------------------------------------------------------
     int ite_p = 0;
     while (ite_p < 1000)
     {
-        particle_relaxation.exec();
-        update_particle_position.exec();
-        level_set_bounding.exec();
-
         input_body_cell_linked_list.exec();
         input_body_update_inner_relation.exec();
 
+        relaxation_residue.exec();
+        Real relaxation_step = relaxation_scaling.exec();
+        update_particle_position.exec(relaxation_step);
+        level_set_bounding.exec();
+
         ite_p += 1;
-        if (ite_p % 1 == 0)
+        if (ite_p % 100 == 0)
         {
             std::cout << std::fixed << std::setprecision(9) << "Relaxation steps N = " << ite_p << "\n";
             body_state_recorder.writeToFile(ite_p);
