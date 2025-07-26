@@ -22,8 +22,8 @@ BoundingBox system_domain_bounds(Vec3d(-0.3, 0.0, 0.0), Vec3d(0.469846, 0.5, 0.0
 //----------------------------------------------------------------------
 //	Material properties of the fluid.
 //----------------------------------------------------------------------
-Real rho0_f = 1.0;   /**< Density. */
-Real U_f = 1.0;      /**< freestream velocity. */
+Real rho0_f = 1.0; /**< Density. */
+Real U_f = 1.0;    /**< freestream velocity. */
 Real c_f = 10.0 * U_f;
 Real mu_f = 0.0; /**< Dynamics viscosity. */
 
@@ -54,12 +54,12 @@ class InvCFInitialCondition
   public:
     explicit InvCFInitialCondition(SPHBody &sph_body)
         : FluidInitialCondition(sph_body),
-          rho_(particles_->registerStateVariable<Real>("Density")),
-          p_(particles_->registerStateVariable<Real>("Pressure")),
-          vel_(particles_->registerStateVariable<Vecd>("Velocity")),
-          Vol_(this->particles_->template getVariableDataByName<Real>("VolumetricMeasure")), 
+          rho_(particles_->registerStateVariableData<Real>("Density")),
+          p_(particles_->registerStateVariableData<Real>("Pressure")),
+          vel_(particles_->registerStateVariableData<Vecd>("Velocity")),
+          Vol_(this->particles_->template getVariableDataByName<Real>("VolumetricMeasure")),
           mass_(this->particles_->template getVariableDataByName<Real>("Mass")),
-          mom_(this->particles_->template getVariableDataByName<Vecd>("Momentum")){};
+          mom_(this->particles_->template getVariableDataByName<Vecd>("Momentum")) {};
 
   protected:
     Real *rho_, *p_;
@@ -87,8 +87,8 @@ class InvCFBoundaryConditionSetup : public BoundaryConditionSetupInFVM
   public:
     InvCFBoundaryConditionSetup(BaseInnerRelationInFVM &inner_relation, GhostCreationFromMesh &ghost_creation)
         : BoundaryConditionSetupInFVM(inner_relation, ghost_creation),
-          fluid_(DynamicCast<WeaklyCompressibleFluid>(this, particles_->getBaseMaterial())){};
-    virtual ~InvCFBoundaryConditionSetup(){};
+          fluid_(DynamicCast<WeaklyCompressibleFluid>(this, particles_->getBaseMaterial())) {};
+    virtual ~InvCFBoundaryConditionSetup() {};
 
     void applyReflectiveWallBoundary(size_t ghost_index, size_t index_i, Vecd e_ij) override
     {

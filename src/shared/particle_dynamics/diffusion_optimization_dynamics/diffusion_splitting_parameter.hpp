@@ -139,10 +139,10 @@ ParameterSplittingByPDEWithBoundary<DataType>::
     const std::string &species_name = this->diffusion_.DiffusionSpeciesName();
     for (size_t k = 0; k != this->contact_particles_.size(); ++k)
     {
-        boundary_Vol_.push_back(this->contact_particles_[k]->template registerStateVariable<Real>("VolumetricMeasure"));
+        boundary_Vol_.push_back(this->contact_particles_[k]->template registerStateVariableData<Real>("VolumetricMeasure"));
         boundary_normal_vector_.push_back(this->contact_particles_[k]->template getVariableDataByName<Vecd>("NormalDirection"));
-        boundary_species_.push_back(this->contact_particles_[k]->template registerStateVariable<Real>(species_name));
-        boundary_heat_flux_.push_back(this->contact_particles_[k]->template registerStateVariable<Real>("HeatFlux"));
+        boundary_species_.push_back(this->contact_particles_[k]->template registerStateVariableData<Real>(species_name));
+        boundary_heat_flux_.push_back(this->contact_particles_[k]->template registerStateVariableData<Real>("HeatFlux"));
     }
 }
 //=================================================================================================//

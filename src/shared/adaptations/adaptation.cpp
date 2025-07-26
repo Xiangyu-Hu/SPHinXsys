@@ -131,10 +131,10 @@ ParticleWithLocalRefinement::ParticleWithLocalRefinement(
 void ParticleWithLocalRefinement::initializeAdaptationVariables(BaseParticles &base_particles)
 {
     SPHAdaptation::initializeAdaptationVariables(base_particles);
-    h_ratio_ = base_particles.registerStateVariable<Real>(
+    h_ratio_ = base_particles.registerStateVariableData<Real>(
         "SmoothingLengthRatio", [&](size_t i) -> Real
         { return ReferenceSpacing() / base_particles.ParticleSpacing(i); });
-    level_ = base_particles.registerStateVariable<int>("ParticleMeshLevel");
+    level_ = base_particles.registerStateVariableData<int>("ParticleMeshLevel");
     base_particles.addEvolvingVariable<Real>("SmoothingLengthRatio");
 }
 //=================================================================================================//

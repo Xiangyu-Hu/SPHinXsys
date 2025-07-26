@@ -84,7 +84,7 @@ ShellNormalDirectionPrediction::NormalPrediction::NormalPrediction(SPHBody &sph_
       level_set_shape_(DynamicCast<LevelSetShape>(this, &sph_body.getInitialShape())),
       pos_(particles_->getVariableDataByName<Vecd>("Position")),
       n_(particles_->getVariableDataByName<Vecd>("NormalDirection")),
-      n_temp_(particles_->registerStateVariable<Vecd>(
+      n_temp_(particles_->registerStateVariableData<Vecd>(
           "PreviousNormalDirection", [&](size_t i) -> Vecd
           { return n_[i]; })) {}
 //=================================================================================================//
@@ -111,7 +111,7 @@ ShellNormalDirectionPrediction::ConsistencyCorrection::
     : LocalDynamics(inner_relation.getSPHBody()), DataDelegateInner(inner_relation),
       consistency_criterion_(consistency_criterion),
       n_(particles_->getVariableDataByName<Vecd>("NormalDirection")),
-      updated_indicator_(particles_->registerStateVariable<int>(
+      updated_indicator_(particles_->registerStateVariableData<int>(
           "UpdatedIndicator", [&](size_t i) -> int
           { return 0; }))
 {

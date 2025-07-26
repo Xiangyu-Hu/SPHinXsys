@@ -138,43 +138,43 @@ class BaseParticles
     template <typename DataType>
     DataType *getVariableDataByName(const std::string &name);
     template <class DataType, typename... Args>
-    DataType *addUniqueDiscreteVariable(const std::string &name, size_t data_size, Args &&...args);
+    DataType *addUniqueDiscreteVariableData(const std::string &name, size_t data_size, Args &&...args);
     template <typename DataType, typename... Args>
-    DataType *registerDiscreteVariable(const std::string &name, size_t data_size, Args &&...args);
+    DataType *registerDiscreteVariableData(const std::string &name, size_t data_size, Args &&...args);
     template <class DataType, typename... Args>
-    DataType *addUniqueStateVariable(const std::string &name, Args &&...args);
+    DataType *addUniqueStateVariableData(const std::string &name, Args &&...args);
     template <typename DataType, typename... Args>
-    DataType *registerStateVariable(const std::string &name, Args &&...args);
+    DataType *registerStateVariableData(const std::string &name, Args &&...args);
     template <typename DataType>
-    DataType *registerStateVariableFrom(const std::string &new_name, const std::string &old_name);
+    DataType *registerStateVariableDataFrom(const std::string &new_name, const std::string &old_name);
     template <typename DataType>
-    DataType *registerStateVariableFrom(const std::string &name, const StdVec<DataType> &geometric_data);
+    DataType *registerStateVariableDataFrom(const std::string &name, const StdVec<DataType> &geometric_data);
     template <typename DataType>
-    DataType *registerStateVariableFromReload(const std::string &name);
+    DataType *registerStateVariableDataFromReload(const std::string &name);
 
     template <typename DataType>
     DiscreteVariable<DataType> *getVariableByName(const std::string &name);
     template <class DataType, typename... Args>
-    DiscreteVariable<DataType> *addUniqueDiscreteVariableOnly(const std::string &name, size_t data_size, Args &&...args);
+    DiscreteVariable<DataType> *addUniqueDiscreteVariable(const std::string &name, size_t data_size, Args &&...args);
     template <class DataType>
     DiscreteVariable<DataType> *addUniqueDiscreteVariableFrom(const std::string &name, DiscreteVariable<DataType> *old_variable);
     template <typename DataType, typename... Args>
-    DiscreteVariable<DataType> *registerDiscreteVariableOnly(const std::string &name, size_t data_size, Args &&...args);
+    DiscreteVariable<DataType> *registerDiscreteVariable(const std::string &name, size_t data_size, Args &&...args);
     template <typename DataType, typename... Args>
-    DiscreteVariable<DataType> *registerStateVariableOnly(const std::string &name, Args &&...args);
+    DiscreteVariable<DataType> *registerStateVariable(const std::string &name, Args &&...args);
     template <typename DataType>
-    DiscreteVariable<DataType> *registerStateVariableOnlyFrom(const std::string &new_name, const std::string &old_name);
+    DiscreteVariable<DataType> *registerStateVariableFrom(const std::string &new_name, const std::string &old_name);
     template <typename DataType>
-    DiscreteVariable<DataType> *registerStateVariableOnlyFrom(const std::string &name, const StdVec<DataType> &geometric_data);
+    DiscreteVariable<DataType> *registerStateVariableFrom(const std::string &name, const StdVec<DataType> &geometric_data);
     template <typename DataType>
-    DiscreteVariable<DataType> *registerStateVariableOnlyFromReload(const std::string &name);
+    DiscreteVariable<DataType> *registerStateVariableFromReload(const std::string &name);
     template <typename DataType>
     StdVec<DiscreteVariable<DataType> *> registerStateVariables(const StdVec<std::string> &names, const std::string &suffix);
     template <typename DataType>
     StdVec<DiscreteVariable<DataType> *> getVariablesByName(const StdVec<std::string> &names, const std::string &suffix);
 
     template <typename DataType>
-    SingularVariable<DataType> *addUniqueSingularVariableOnly(const std::string &name, DataType initial_value = ZeroData<DataType>::value);
+    SingularVariable<DataType> *addUniqueSingularVariable(const std::string &name, DataType initial_value = ZeroData<DataType>::value);
     template <typename DataType>
     SingularVariable<DataType> *registerSingularVariable(const std::string &name, DataType initial_value = ZeroData<DataType>::value);
     template <typename DataType>

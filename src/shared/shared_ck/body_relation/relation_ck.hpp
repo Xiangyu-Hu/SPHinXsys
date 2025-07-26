@@ -42,7 +42,7 @@ DiscreteVariable<Vecd> *Relation<NeighborMethod>::assignConfigPosition(
     }
     else
     {
-        return particles.registerStateVariableOnlyFrom<Vecd>(
+        return particles.registerStateVariableFrom<Vecd>(
             "InitialPosition", "Position");
     }
 }

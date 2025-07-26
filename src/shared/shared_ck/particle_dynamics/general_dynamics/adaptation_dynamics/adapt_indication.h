@@ -44,7 +44,7 @@ class AdaptLevelIndication : public LocalDynamics
         : LocalDynamics(sph_body),
           indication_method_(sph_adaptation_, particles_),
           dv_adapt_level_(
-              particles_->registerStateVariableOnly<int>("AdaptLevel"))
+              particles_->registerStateVariable<int>("AdaptLevel"))
     {
         if (indication_method_.isFixedIndication())
         {

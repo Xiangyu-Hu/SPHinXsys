@@ -13,11 +13,11 @@ template <class DynamicsIdentifier>
 PlasticAcousticStep<BaseInteractionType>::PlasticAcousticStep(DynamicsIdentifier &identifier)
     : fluid_dynamics::AcousticStep<BaseInteractionType>(identifier),
       plastic_continuum_(DynamicCast<PlasticContinuum>(this, this->sph_body_.getBaseMaterial())),
-      dv_stress_tensor_3D_(this->particles_->template registerStateVariableOnly<Mat3d>("StressTensor3D")),
-      dv_strain_tensor_3D_(this->particles_->template registerStateVariableOnly<Mat3d>("StrainTensor3D")),
-      dv_stress_rate_3D_(this->particles_->template registerStateVariableOnly<Mat3d>("StressRate3D")),
-      dv_strain_rate_3D_(this->particles_->template registerStateVariableOnly<Mat3d>("StrainRate3D")),
-      dv_velocity_gradient_(this->particles_->template registerStateVariableOnly<Matd>("VelocityGradient"))
+      dv_stress_tensor_3D_(this->particles_->template registerStateVariable<Mat3d>("StressTensor3D")),
+      dv_strain_tensor_3D_(this->particles_->template registerStateVariable<Mat3d>("StrainTensor3D")),
+      dv_stress_rate_3D_(this->particles_->template registerStateVariable<Mat3d>("StressRate3D")),
+      dv_strain_rate_3D_(this->particles_->template registerStateVariable<Mat3d>("StrainRate3D")),
+      dv_velocity_gradient_(this->particles_->template registerStateVariable<Matd>("VelocityGradient"))
 {
     this->particles_->template addEvolvingVariable<Mat3d>("StressTensor3D");
     this->particles_->template addEvolvingVariable<Mat3d>("StrainTensor3D");

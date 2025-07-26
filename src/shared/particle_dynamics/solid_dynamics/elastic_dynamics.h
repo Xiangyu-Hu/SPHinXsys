@@ -297,7 +297,7 @@ class Integration1stHalfPK2RightCauchy : public Integration1stHalfPK2
   public:
     explicit Integration1stHalfPK2RightCauchy(BaseInnerRelation &inner_relation)
         : Integration1stHalfPK2(inner_relation),
-          h_ratio_(particles_->registerStateVariable<Real>("SmoothingLengthRatio", Real(1.0))) {};
+          h_ratio_(particles_->registerStateVariableData<Real>("SmoothingLengthRatio", Real(1.0))) {};
     void initialization(size_t index_i, Real dt = 0.0);
     inline void interaction(size_t index_i, Real dt = 0.0)
     {

@@ -178,7 +178,7 @@ class ExcludeRigidNeighbors : public LocalDynamics, public DataDelegateInner
   public:
     explicit ExcludeRigidNeighbors(BaseInnerRelation &inner_relation)
         : LocalDynamics(inner_relation.getSPHBody()), DataDelegateInner(inner_relation),
-          is_rigid_(particles_->registerStateVariable<int>("isRigid")) {}
+          is_rigid_(particles_->registerStateVariableData<int>("isRigid")) {}
 
     void update(size_t index_i, Real dt = 0.0)
     {
@@ -288,8 +288,8 @@ void run_rigid_elastic_coupling(int res_factor)
     SimpleDynamics<FixBodyPartConstraint> fix_elastic_bc(fix_elastic_part);
 
     // record rigid particle id for debug
-    body.getBaseParticles().registerStateVariable<int>("isRigid", [&](size_t i)
-                                                       { return mesh_rigid->checkContain(body.getBaseParticles().ParticlePositions()[i]); });
+    body.getBaseParticles().registerStateVariableData<int>("isRigid", [&](size_t i)
+                                                           { return mesh_rigid->checkContain(body.getBaseParticles().ParticlePositions()[i]); });
 
     // output
     BodyStatesRecordingToVtp vtp_output(system);

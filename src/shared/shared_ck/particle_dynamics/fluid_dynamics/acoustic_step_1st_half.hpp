@@ -15,12 +15,12 @@ AcousticStep<BaseInteractionType>::AcousticStep(DynamicsIdentifier &identifier)
       dv_Vol_(this->particles_->template getVariableByName<Real>("VolumetricMeasure")),
       dv_rho_(this->particles_->template getVariableByName<Real>("Density")),
       dv_mass_(this->particles_->template getVariableByName<Real>("Mass")),
-      dv_p_(this->particles_->template registerStateVariableOnly<Real>("Pressure")),
-      dv_drho_dt_(this->particles_->template registerStateVariableOnly<Real>("DensityChangeRate")),
-      dv_vel_(this->particles_->template registerStateVariableOnly<Vecd>("Velocity")),
+      dv_p_(this->particles_->template registerStateVariable<Real>("Pressure")),
+      dv_drho_dt_(this->particles_->template registerStateVariable<Real>("DensityChangeRate")),
+      dv_vel_(this->particles_->template registerStateVariable<Vecd>("Velocity")),
       dv_dpos_(this->particles_->template getVariableByName<Vecd>("Displacement")),
-      dv_force_(this->particles_->template registerStateVariableOnly<Vecd>("Force")),
-      dv_force_prior_(this->particles_->template registerStateVariableOnly<Vecd>("ForcePrior"))
+      dv_force_(this->particles_->template registerStateVariable<Vecd>("Force")),
+      dv_force_prior_(this->particles_->template registerStateVariable<Vecd>("ForcePrior"))
 {
     //----------------------------------------------------------------------
     //		add evolving variables

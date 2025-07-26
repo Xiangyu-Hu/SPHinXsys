@@ -16,7 +16,7 @@ TransportVelocityCorrectionCKBase<BaseInteractionType>::
       dv_Vol_(this->particles_->template getVariableByName<Real>("VolumetricMeasure")),
       dv_dpos_(this->particles_->template getVariableByName<Vecd>("Displacement")),
       dv_zero_gradient_residue_(
-          this->particles_->template registerStateVariableOnly<Vecd>("ZeroGradientResidue")) {}
+          this->particles_->template registerStateVariable<Vecd>("ZeroGradientResidue")) {}
 //=================================================================================================//
 template <class KernelCorrectionType, class LimiterType, class ParticleScopeType, typename... Parameters>
 TransportVelocityCorrectionCK<

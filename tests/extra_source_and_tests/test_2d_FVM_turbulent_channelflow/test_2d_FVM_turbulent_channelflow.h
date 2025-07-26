@@ -5,19 +5,19 @@
  */
 
 #ifndef FVM_TURBULENT_CHANNEL_FLOW_H
-#define FVM_TURBULENT_CHANNEL_FLOW_H             
+#define FVM_TURBULENT_CHANNEL_FLOW_H
 #include "common_weakly_compressible_FVM_classes.h"
-#include "turbulence_model.hpp"
-#include "rans_turbulence_dynamics.hpp"
 #include "extended_eulerian_riemann_solver.cpp"
+#include "rans_turbulence_dynamics.hpp"
+#include "turbulence_model.hpp"
 
 using namespace SPH;
 using namespace std;
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real DL = 120.0;                   /**< Channel length. */
-Real DH = 2.0;                  /**< Channel height. */
+Real DL = 120.0;                 /**< Channel length. */
+Real DH = 2.0;                   /**< Channel height. */
 Real resolution_ref = 1.0 / 5.0; /**< Initial reference particle spacing. */
 BoundingBox system_domain_bounds(Vec2d(0.0, 0.0), Vec2d(DL, DH));
 //----------------------------------------------------------------------
@@ -26,8 +26,8 @@ BoundingBox system_domain_bounds(Vec2d(0.0, 0.0), Vec2d(DL, DH));
 Real rho0_f = 1.0;
 Real U_f = 1.0;
 Real rey_bulk = 20000.0;
-Real mu_f = (rho0_f * U_f * DH * 0.5) / rey_bulk;       /**< Dynamic Viscosity. */
-Real c_f = 10.0 * U_f;                               /**< Reference sound speed. */
+Real mu_f = (rho0_f * U_f * DH * 0.5) / rey_bulk; /**< Dynamic Viscosity. */
+Real c_f = 10.0 * U_f;                            /**< Reference sound speed. */
 Real C_mu = 0.09;
 
 Real turbulent_intensity = 0.05;
@@ -65,17 +65,16 @@ class WaterBlock : public ComplexShape
 class TurbulentChannelFlowInitialCondition
     : public fluid_dynamics::FluidInitialCondition
 {
-    public:
+  public:
     explicit TurbulentChannelFlowInitialCondition(SPHBody &sph_body)
-          : FluidInitialCondition(sph_body), C_mu_(0.09), Vol_(this->particles_->template getVariableDataByName<Real>("VolumetricMeasure")),
-            K_(this->particles_->template registerStateVariable<Real>("TKE")),
-            Eps_(this->particles_->template registerStateVariable<Real>("Dissipation")),
-            mu_t_(this->particles_->template registerStateVariable<Real>("TurblunetViscosity")),
-            rho_(this->particles_->template getVariableDataByName<Real>("Density")), 
-            p_(this->particles_->template getVariableDataByName<Real>("Pressure")),
-            mass_(this->particles_->template getVariableDataByName<Real>("Mass")),
-            mom_(this->particles_->template getVariableDataByName<Vecd>("Momentum"))
-        {};
+        : FluidInitialCondition(sph_body), C_mu_(0.09), Vol_(this->particles_->template getVariableDataByName<Real>("VolumetricMeasure")),
+          K_(this->particles_->template registerStateVariableData<Real>("TKE")),
+          Eps_(this->particles_->template registerStateVariableData<Real>("Dissipation")),
+          mu_t_(this->particles_->template registerStateVariableData<Real>("TurblunetViscosity")),
+          rho_(this->particles_->template getVariableDataByName<Real>("Density")),
+          p_(this->particles_->template getVariableDataByName<Real>("Pressure")),
+          mass_(this->particles_->template getVariableDataByName<Real>("Mass")),
+          mom_(this->particles_->template getVariableDataByName<Vecd>("Momentum")) {};
 
     void update(size_t index_i, Real dt)
     {
@@ -89,26 +88,26 @@ class TurbulentChannelFlowInitialCondition
         mass_[index_i] = rho_[index_i] * Vol_[index_i];
         mom_[index_i] = mass_[index_i] * vel_[index_i];
     }
-protected:
-  Real C_mu_;
-  Real *Vol_, *K_, *Eps_, *mu_t_, *rho_, *p_, *mass_;
-  Vecd *mom_;
+
+  protected:
+    Real C_mu_;
+    Real *Vol_, *K_, *Eps_, *mu_t_, *rho_, *p_, *mass_;
+    Vecd *mom_;
 };
 //----------------------------------------------------------------------
 //	Case dependent boundary condition
 //----------------------------------------------------------------------
 class TurbulentChannelFlowBoundaryConditionSetup : public BoundaryConditionSetupInFVM
 {
-public:
-
+  public:
     TurbulentChannelFlowBoundaryConditionSetup(BaseInnerRelationInFVM &inner_relation, GhostCreationFromMesh &ghost_creation)
-        :BoundaryConditionSetupInFVM(inner_relation, ghost_creation), 
-        K_(this->particles_->template getVariableDataByName<Real>("TKE")),
-        Eps_(this->particles_->template getVariableDataByName<Real>("Dissipation")),
-        mu_t_(this->particles_->template getVariableDataByName<Real>("TurblunetViscosity")),
-        fluid_(DynamicCast<WeaklyCompressibleFluid>(this, particles_->getBaseMaterial())),
-        C_mu_(0.09){};
-    virtual ~TurbulentChannelFlowBoundaryConditionSetup(){};
+        : BoundaryConditionSetupInFVM(inner_relation, ghost_creation),
+          K_(this->particles_->template getVariableDataByName<Real>("TKE")),
+          Eps_(this->particles_->template getVariableDataByName<Real>("Dissipation")),
+          mu_t_(this->particles_->template getVariableDataByName<Real>("TurblunetViscosity")),
+          fluid_(DynamicCast<WeaklyCompressibleFluid>(this, particles_->getBaseMaterial())),
+          C_mu_(0.09) {};
+    virtual ~TurbulentChannelFlowBoundaryConditionSetup() {};
 
     void applyNonSlipWallBoundary(size_t ghost_index, size_t index_i) override
     {
@@ -119,17 +118,17 @@ public:
         Eps_[ghost_index] = Eps_[index_i];
         mu_t_[ghost_index] = mu_t_[index_i];
     }
-    //Fully Developed Turbulence Profiles
-    std::vector<Real> y_values = {1.95, 1.85, 1.75, 1.65, 
-                                1.55, 1.45, 1.35, 1.25, 
-                                1.15, 1.05, 0.95, 0.85,
-                                0.75, 0.65, 0.55, 0.45, 
-                                0.35, 0.25, 0.15, 0.05};
+    // Fully Developed Turbulence Profiles
+    std::vector<Real> y_values = {1.95, 1.85, 1.75, 1.65,
+                                  1.55, 1.45, 1.35, 1.25,
+                                  1.15, 1.05, 0.95, 0.85,
+                                  0.75, 0.65, 0.55, 0.45,
+                                  0.35, 0.25, 0.15, 0.05};
 
     std::vector<Real> velocity_magnitude_profile = {0.6799317, 0.86330092, 0.9300949, 0.98939854,
                                                     1.0258716, 1.062102, 1.0885813, 1.1088117,
                                                     1.1224763, 1.1285582, 1.1284137, 1.1219281,
-                                                    1.1083114, 1.0883181, 1.0620406, 1.029438, 
+                                                    1.1083114, 1.0883181, 1.0620406, 1.029438,
                                                     0.98861861, 0.9312641, 0.86510468, 0.68170708};
 
     std::vector<Real> turbulent_kinetic_energy_profile = {0.0061183018, 0.0070746327, 0.0054861265, 0.0046617105,
@@ -161,24 +160,24 @@ public:
         return data_values[closest_index];
     }
 
-        void applyVelocityInletFlow(size_t ghost_index, size_t index_i) override
-        {
-            Real y = pos_[ghost_index][1]; // pos_[ghost_index][1] contains the y-coordinate
+    void applyVelocityInletFlow(size_t ghost_index, size_t index_i) override
+    {
+        Real y = pos_[ghost_index][1]; // pos_[ghost_index][1] contains the y-coordinate
 
-            // Find the nearest velocity magnitude and turbulence quantities
-            Real inlet_velocity_magnitude = nearestValue(y, y_values, velocity_magnitude_profile);
-            Real inlet_tke = nearestValue(y, y_values, turbulent_kinetic_energy_profile);
-            Real inlet_eps = nearestValue(y, y_values, turbulent_dissipation_rate_profile);
+        // Find the nearest velocity magnitude and turbulence quantities
+        Real inlet_velocity_magnitude = nearestValue(y, y_values, velocity_magnitude_profile);
+        Real inlet_tke = nearestValue(y, y_values, turbulent_kinetic_energy_profile);
+        Real inlet_eps = nearestValue(y, y_values, turbulent_dissipation_rate_profile);
 
-            //Imposing the inlet profiles
-            Vecd inlet_velocity(inlet_velocity_magnitude, 0.0); 
-            vel_[ghost_index] = inlet_velocity;
-            p_[ghost_index] = p_[index_i];
-            rho_[ghost_index] = rho_[index_i]; 
-            K_[ghost_index] = inlet_tke;
-            Eps_[ghost_index] = inlet_eps;
-            mu_t_[ghost_index] = C_mu_ * rho_[ghost_index] * pow(K_[ghost_index], 2.0) / Eps_[ghost_index];
-        }
+        // Imposing the inlet profiles
+        Vecd inlet_velocity(inlet_velocity_magnitude, 0.0);
+        vel_[ghost_index] = inlet_velocity;
+        p_[ghost_index] = p_[index_i];
+        rho_[ghost_index] = rho_[index_i];
+        K_[ghost_index] = inlet_tke;
+        Eps_[ghost_index] = inlet_eps;
+        mu_t_[ghost_index] = C_mu_ * rho_[ghost_index] * pow(K_[ghost_index], 2.0) / Eps_[ghost_index];
+    }
     void applyPressureOutletBC(size_t ghost_index, size_t index_i) override
     {
         if (vel_[index_i][0] >= 0.0)
@@ -190,7 +189,7 @@ public:
             Eps_[ghost_index] = Eps_[index_i];
             mu_t_[ghost_index] = mu_t_[index_i];
         }
-        else //Incase of reverse flow
+        else // Incase of reverse flow
         {
             vel_[ghost_index] = vel_[index_i];
             p_[ghost_index] = 0.0;
@@ -200,9 +199,10 @@ public:
             mu_t_[ghost_index] = C_mu_ * rho_[ghost_index] * pow(K_[ghost_index], 2.0) / Eps_[ghost_index];
         }
     }
-protected:
+
+  protected:
     Real *K_, *Eps_, *mu_t_;
-    Fluid& fluid_;
+    Fluid &fluid_;
     Real C_mu_;
 };
 #endif // FVM_TURBULENT_CHANNEL_FLOW_H

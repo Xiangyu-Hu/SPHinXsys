@@ -7,7 +7,7 @@ BodyPartition::BodyPartition(SPHBody &sph_body, UnsignedInt partition_adapt_leve
     : sph_body_(sph_body), sph_adaptation_(sph_body.getSPHAdaptation()),
       base_particles_(sph_body.getBaseParticles()),
       cell_linked_list_created_(false), present_adapt_level_(partition_adapt_level),
-      dv_adapt_level_(base_particles_.registerStateVariableOnly<int>("AdaptLevel")) {}
+      dv_adapt_level_(base_particles_.registerStateVariable<int>("AdaptLevel")) {}
 //=================================================================================================//
 std::string BodyPartition::getName()
 {

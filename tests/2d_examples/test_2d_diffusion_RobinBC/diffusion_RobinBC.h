@@ -101,7 +101,7 @@ class DiffusionInitialCondition : public LocalDynamics
   public:
     explicit DiffusionInitialCondition(SPHBody &sph_body)
         : LocalDynamics(sph_body),
-          phi_(particles_->registerStateVariable<Real>(diffusion_species_name)){};
+          phi_(particles_->registerStateVariableData<Real>(diffusion_species_name)) {};
 
     void update(size_t index_i, Real dt)
     {
@@ -118,7 +118,7 @@ class DirichletWallBoundaryInitialCondition : public LocalDynamics
     explicit DirichletWallBoundaryInitialCondition(SPHBody &sph_body)
         : LocalDynamics(sph_body),
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
-          phi_(particles_->registerStateVariable<Real>(diffusion_species_name)){};
+          phi_(particles_->registerStateVariableData<Real>(diffusion_species_name)) {};
 
     void update(size_t index_i, Real dt)
     {
@@ -145,9 +145,9 @@ class RobinBoundaryDefinition : public LocalDynamics
     explicit RobinBoundaryDefinition(SPHBody &sph_body)
         : LocalDynamics(sph_body),
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
-          phi_(particles_->registerStateVariable<Real>(diffusion_species_name)),
+          phi_(particles_->registerStateVariableData<Real>(diffusion_species_name)),
           phi_convection_(particles_->template getVariableDataByName<Real>(diffusion_species_name + "Convection")),
-          phi_infinity_(*(this->particles_->template getSingularVariableByName<Real>(diffusion_species_name + "Infinity")->Data())){};
+          phi_infinity_(*(this->particles_->template getSingularVariableByName<Real>(diffusion_species_name + "Infinity")->Data())) {};
 
     void update(size_t index_i, Real dt)
     {

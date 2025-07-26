@@ -45,7 +45,7 @@ LocalIsotropicDiffusion::LocalIsotropicDiffusion(ConstructArgs<std::string, Real
 //=================================================================================================//
 void LocalIsotropicDiffusion::initializeLocalParameters(BaseParticles *base_particles)
 {
-    local_diffusivity_ = base_particles->registerStateVariable<Real>(
+    local_diffusivity_ = base_particles->registerStateVariableData<Real>(
         "ThermalConductivity", [&](size_t i) -> Real
         { return d_coeff_; });
     base_particles->addVariableToWrite<Real>("ThermalConductivity");
@@ -93,18 +93,18 @@ LocalDirectionalDiffusion::LocalDirectionalDiffusion(const std::string &species_
 //=================================================================================================//
 void LocalDirectionalDiffusion::registerLocalParameters(BaseParticles *base_particles)
 {
-    local_bias_direction_ = base_particles->registerStateVariable<Vecd>("Fiber");
+    local_bias_direction_ = base_particles->registerStateVariableData<Vecd>("Fiber");
 }
 //=================================================================================================//
 void LocalDirectionalDiffusion::registerLocalParametersFromReload(BaseParticles *base_particles)
 {
-    local_bias_direction_ = base_particles->registerStateVariableFromReload<Vecd>("Fiber");
+    local_bias_direction_ = base_particles->registerStateVariableDataFromReload<Vecd>("Fiber");
 }
 //=================================================================================================//
 void LocalDirectionalDiffusion::initializeLocalParameters(BaseParticles *base_particles)
 {
     DirectionalDiffusion::initializeLocalParameters(base_particles);
-    local_transformed_diffusivity_ = base_particles->registerStateVariable<Matd>(
+    local_transformed_diffusivity_ = base_particles->registerStateVariableData<Matd>(
         "LocalTransformedDiffusivity",
         [&](size_t i) -> Matd
         {

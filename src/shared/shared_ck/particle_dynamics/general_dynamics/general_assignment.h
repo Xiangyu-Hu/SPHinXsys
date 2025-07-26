@@ -43,7 +43,7 @@ class VariableAssignment : public BaseLocalDynamics<DynamicsIdentifier>
     template <typename... Args>
     VariableAssignment(DynamicsIdentifier &identifier, const std::string &variable_name, Args &&...args)
         : BaseLocalDynamics<DynamicsIdentifier>(identifier),
-          dv_variable_(this->particles_->template registerStateVariableOnly<DataType>(variable_name)),
+          dv_variable_(this->particles_->template registerStateVariable<DataType>(variable_name)),
           assignment_method_(this->particles_, std::forward<Args>(args)...){};
     virtual ~VariableAssignment() {};
 

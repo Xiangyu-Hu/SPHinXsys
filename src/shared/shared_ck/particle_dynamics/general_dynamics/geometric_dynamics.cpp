@@ -7,10 +7,10 @@ NormalFromBodyShapeCK::NormalFromBodyShapeCK(SPHBody &sph_body)
     : LocalDynamics(sph_body),
       initial_shape_(&sph_body.getInitialShape()),
       dv_pos_(particles_->getVariableByName<Vecd>("Position")),
-      dv_n_(particles_->registerStateVariableOnly<Vecd>("NormalDirection")),
-      dv_n0_(particles_->registerStateVariableOnly<Vecd>("InitialNormalDirection", dv_n_)),
-      dv_phi_(particles_->registerStateVariableOnly<Real>("SignedDistance")),
-      dv_phi0_(particles_->registerStateVariableOnly<Real>("InitialSignedDistance", dv_phi_)) {}
+      dv_n_(particles_->registerStateVariable<Vecd>("NormalDirection")),
+      dv_n0_(particles_->registerStateVariable<Vecd>("InitialNormalDirection", dv_n_)),
+      dv_phi_(particles_->registerStateVariable<Real>("SignedDistance")),
+      dv_phi0_(particles_->registerStateVariable<Real>("InitialSignedDistance", dv_phi_)) {}
 //=============================================================================================//
 void NormalFromBodyShapeCK::UpdateKernel::update(size_t index_i, Real dt)
 {
@@ -26,7 +26,7 @@ SurfaceIndicationFromBodyShape::SurfaceIndicationFromBodyShape(SPHBody &sph_body
     : LocalDynamics(sph_body),
       initial_shape_(&sph_body.getInitialShape()),
       spacing_ref_(sph_body.getSPHAdaptation().ReferenceSpacing()),
-      dv_indicator_(particles_->registerStateVariableOnly<int>("SurfaceIndicator")),
+      dv_indicator_(particles_->registerStateVariable<int>("SurfaceIndicator")),
       dv_pos_(particles_->getVariableByName<Vecd>("Position")) {}
 //=============================================================================================//
 void SurfaceIndicationFromBodyShape::UpdateKernel::update(size_t index_i, Real dt)

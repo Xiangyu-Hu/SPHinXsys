@@ -136,9 +136,9 @@ class AnisotropicCorrectConfiguration : public LocalDynamics, public DataDelegat
         : LocalDynamics(inner_relation.getSPHBody()),
           DataDelegateInner(inner_relation),
           beta_(beta), alpha_(alpha), Vol_(particles_->getVariableDataByName<Real>("VolumetricMeasure")),
-          B_(particles_->registerStateVariable<Matd>("LinearGradientCorrectionMatrix", IdentityMatrix<Matd>::value)),
+          B_(particles_->registerStateVariableData<Matd>("LinearGradientCorrectionMatrix", IdentityMatrix<Matd>::value)),
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
-          show_neighbor_(particles_->registerStateVariable<Real>("ShowingNeighbor", Real(0.0))) {};
+          show_neighbor_(particles_->registerStateVariableData<Real>("ShowingNeighbor", Real(0.0))) {};
     virtual ~AnisotropicCorrectConfiguration() {};
 
   protected:

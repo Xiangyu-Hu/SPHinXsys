@@ -12,11 +12,11 @@ HessianCorrectionMatrix<Base, RelationType<Parameters...>>::
     HessianCorrectionMatrix(DynamicsIdentifier &identifier)
     : Interaction<RelationType<Parameters...>>(identifier),
       dv_Vol_(this->particles_->template getVariableByName<Real>("VolumetricMeasure")),
-      dv_B_(this->particles_->template registerStateVariableOnly<Matd>(
+      dv_B_(this->particles_->template registerStateVariable<Matd>(
           "LinearCorrectionMatrix", IdentityMatrix<Matd>::value)),
-      dv_displacement_matrix_grad_(this->particles_->template registerStateVariableOnly<VecMatGrad>(
+      dv_displacement_matrix_grad_(this->particles_->template registerStateVariable<VecMatGrad>(
           "DisplacementMatrixGradient", ZeroData<VecMatGrad>::value)),
-      dv_M_(this->particles_->template registerStateVariableOnly<MatTend>(
+      dv_M_(this->particles_->template registerStateVariable<MatTend>(
           "HessianCorrectionMatrix", IdentityMatrix<MatTend>::value)) {}
 //=================================================================================================//
 template <template <typename...> class RelationType, typename... Parameters>
