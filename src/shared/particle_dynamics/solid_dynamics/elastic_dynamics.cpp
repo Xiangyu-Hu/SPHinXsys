@@ -30,12 +30,12 @@ Real AcousticTimeStep::reduce(size_t index_i, Real dt)
 ElasticDynamicsInitialCondition::ElasticDynamicsInitialCondition(SPHBody &sph_body)
     : LocalDynamics(sph_body),
       pos_(particles_->getVariableDataByName<Vecd>("Position")),
-      vel_(particles_->registerStateVariable<Vecd>("Velocity")) {}
+      vel_(particles_->registerStateVariableData<Vecd>("Velocity")) {}
 //=================================================================================================//
 UpdateElasticNormalDirection::UpdateElasticNormalDirection(SPHBody &sph_body)
     : LocalDynamics(sph_body),
       n_(particles_->getVariableDataByName<Vecd>("NormalDirection")),
-      n0_(particles_->registerStateVariableFrom<Vecd>("InitialNormalDirection", "NormalDirection")),
+      n0_(particles_->registerStateVariableDataFrom<Vecd>("InitialNormalDirection", "NormalDirection")),
       phi_(particles_->getVariableDataByName<Real>("SignedDistance")),
       phi0_(particles_->getVariableDataByName<Real>("InitialSignedDistance")),
       F_(particles_->getVariableDataByName<Matd>("DeformationGradient")) {}
@@ -55,18 +55,18 @@ DeformationGradientBySummation::
       Vol_(particles_->getVariableDataByName<Real>("VolumetricMeasure")),
       pos_(particles_->getVariableDataByName<Vecd>("Position")),
       B_(particles_->getVariableDataByName<Matd>("LinearGradientCorrectionMatrix")),
-      F_(particles_->registerStateVariable<Matd>("DeformationGradient", IdentityMatrix<Matd>::value)) {}
+      F_(particles_->registerStateVariableData<Matd>("DeformationGradient", IdentityMatrix<Matd>::value)) {}
 //=================================================================================================//
 BaseElasticIntegration::
     BaseElasticIntegration(BaseInnerRelation &inner_relation)
     : LocalDynamics(inner_relation.getSPHBody()), DataDelegateInner(inner_relation),
       Vol_(particles_->getVariableDataByName<Real>("VolumetricMeasure")),
       pos_(particles_->getVariableDataByName<Vecd>("Position")),
-      vel_(particles_->registerStateVariable<Vecd>("Velocity")),
-      force_(particles_->registerStateVariable<Vecd>("Force")),
+      vel_(particles_->registerStateVariableData<Vecd>("Velocity")),
+      force_(particles_->registerStateVariableData<Vecd>("Force")),
       B_(particles_->getVariableDataByName<Matd>("LinearGradientCorrectionMatrix")),
-      F_(particles_->registerStateVariable<Matd>("DeformationGradient", IdentityMatrix<Matd>::value)),
-      dF_dt_(particles_->registerStateVariable<Matd>("DeformationRate")) {}
+      F_(particles_->registerStateVariableData<Matd>("DeformationGradient", IdentityMatrix<Matd>::value)),
+      dF_dt_(particles_->registerStateVariableData<Matd>("DeformationRate")) {}
 //=================================================================================================//
 BaseIntegration1stHalf::
     BaseIntegration1stHalf(BaseInnerRelation &inner_relation)
@@ -75,7 +75,7 @@ BaseIntegration1stHalf::
       rho0_(elastic_solid_.ReferenceDensity()), inv_rho0_(1.0 / rho0_),
       rho_(particles_->getVariableDataByName<Real>("Density")),
       mass_(particles_->getVariableDataByName<Real>("Mass")),
-      force_prior_(particles_->registerStateVariable<Vecd>("ForcePrior")),
+      force_prior_(particles_->registerStateVariableData<Vecd>("ForcePrior")),
       smoothing_length_(sph_body_.getSPHAdaptation().ReferenceSmoothingLength()) {}
 //=================================================================================================//
 void BaseIntegration1stHalf::update(size_t index_i, Real dt)
@@ -85,7 +85,7 @@ void BaseIntegration1stHalf::update(size_t index_i, Real dt)
 //=================================================================================================//
 Integration1stHalf::Integration1stHalf(BaseInnerRelation &inner_relation)
     : BaseIntegration1stHalf(inner_relation),
-      stress_PK1_B_(particles_->registerStateVariable<Matd>("StressPK1OnParticle")),
+      stress_PK1_B_(particles_->registerStateVariableData<Matd>("StressPK1OnParticle")),
       numerical_dissipation_factor_(0.25) {}
 //=================================================================================================//
 Integration1stHalfPK2::Integration1stHalfPK2(BaseInnerRelation &inner_relation)
@@ -146,9 +146,9 @@ void Integration1stHalfCauchy::initialization(size_t index_i, Real dt)
 DecomposedIntegration1stHalf::
     DecomposedIntegration1stHalf(BaseInnerRelation &inner_relation)
     : BaseIntegration1stHalf(inner_relation),
-      J_to_minus_2_over_dimension_(particles_->registerStateVariable<Real>("DeterminantTerm")),
-      stress_on_particle_(particles_->registerStateVariable<Matd>("StressOnParticle")),
-      inverse_F_T_(particles_->registerStateVariable<Matd>("InverseTransposedDeformation")) {}
+      J_to_minus_2_over_dimension_(particles_->registerStateVariableData<Real>("DeterminantTerm")),
+      stress_on_particle_(particles_->registerStateVariableData<Matd>("StressOnParticle")),
+      inverse_F_T_(particles_->registerStateVariableData<Matd>("InverseTransposedDeformation")) {}
 //=================================================================================================//
 void DecomposedIntegration1stHalf::initialization(size_t index_i, Real dt)
 {

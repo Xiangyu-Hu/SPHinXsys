@@ -39,7 +39,7 @@ template <class DataDelegationType>
 template <class BaseRelationType>
 BaseTurbulentModel<Base, DataDelegationType>::BaseTurbulentModel(BaseRelationType &base_relation)
     : LocalDynamics(base_relation.getSPHBody()), DataDelegationType(base_relation),
-      turbu_strain_rate_(this->particles_->template registerStateVariable<Matd>("TurbulentStrainRate")),
+      turbu_strain_rate_(this->particles_->template registerStateVariableData<Matd>("TurbulentStrainRate")),
       viscosity_(DynamicCast<Viscosity>(this, this->particles_->getBaseMaterial())),
       mu_(viscosity_.ReferenceViscosity()),
       smoothing_length_(this->sph_body_.getSPHAdaptation().ReferenceSmoothingLength()),
@@ -55,12 +55,12 @@ template <class BaseRelationType>
 TKEnergyForce<Base, DataDelegationType>::
     TKEnergyForce(BaseRelationType &base_relation)
     : BaseTurbulentModel<Base, DataDelegationType>(base_relation),
-      force_(this->particles_->template registerStateVariable<Vecd>("Force")),
+      force_(this->particles_->template registerStateVariableData<Vecd>("Force")),
       mass_(this->particles_->template getVariableDataByName<Real>("Mass")),
       indicator_(this->particles_->template getVariableDataByName<int>("Indicator")),
       pos_(this->particles_->template getVariableDataByName<Vecd>("Position")),
       turbu_k_(this->particles_->template getVariableDataByName<Real>("TurbulenceKineticEnergy")),
-      test_k_grad_rslt_(this->particles_->template registerStateVariable<Vecd>("TkeGradResult")) {}
+      test_k_grad_rslt_(this->particles_->template registerStateVariableData<Vecd>("TkeGradResult")) {}
 //=================================================================================================//
 template <class DataDelegationType>
 template <class BaseRelationType>
@@ -72,8 +72,8 @@ GetVelocityGradient<DataDelegationType>::
       pos_(this->particles_->template getVariableDataByName<Vecd>("Position")),
       is_near_wall_P1_(this->particles_->template getVariableDataByName<int>("IsNearWallP1")),
       is_near_wall_P2_(this->particles_->template getVariableDataByName<int>("IsNearWallP2")),
-      velocity_gradient_(this->particles_->template registerStateVariable<Matd>("TurbulentVelocityGradient")),
-      velocity_gradient_wall(this->particles_->template registerStateVariable<Matd>("Velocity_Gradient_Wall")) {}
+      velocity_gradient_(this->particles_->template registerStateVariableData<Matd>("TurbulentVelocityGradient")),
+      velocity_gradient_wall(this->particles_->template registerStateVariableData<Matd>("Velocity_Gradient_Wall")) {}
 //=================================================================================================//
 template <class DataDelegationType>
 template <class BaseRelationType>
@@ -96,7 +96,7 @@ TurbulentLinearGradientCorrectionMatrix<DataDelegationType>::
     TurbulentLinearGradientCorrectionMatrix(BaseRelationType &base_relation)
     : LocalDynamics(base_relation.getSPHBody()), DataDelegationType(base_relation),
       Vol_(this->particles_->template getVariableDataByName<Real>("VolumetricMeasure")),
-      turbu_B_(this->particles_->template registerStateVariable<Matd>(
+      turbu_B_(this->particles_->template registerStateVariableData<Matd>(
           "TurbulentLinearGradientCorrectionMatrix", IdentityMatrix<Matd>::value)),
       B_(this->particles_->template getVariableDataByName<Matd>("LinearGradientCorrectionMatrix"))
 {

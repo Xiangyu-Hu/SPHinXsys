@@ -10,7 +10,7 @@ BufferIndicationCK::BufferIndicationCK(AlignedBoxByCell &aligned_box_part)
       part_id_(aligned_box_part.getPartID()),
       sv_aligned_box_(aligned_box_part.svAlignedBox()),
       dv_pos_(particles_->getVariableByName<Vecd>("Position")),
-      dv_buffer_indicator_(particles_->registerStateVariableOnly<int>("BufferIndicator"))
+      dv_buffer_indicator_(particles_->registerStateVariable<int>("BufferIndicator"))
 {
     particles_->addEvolvingVariable<int>("BufferIndicator");
 }
@@ -22,7 +22,7 @@ BufferOutflowDeletionCK::BufferOutflowDeletionCK(AlignedBoxByCell &aligned_box_p
       sv_total_real_particles_(particles_->svTotalRealParticles()),
       remove_real_particle_method_(particles_),
       dv_buffer_indicator_(
-          particles_->registerStateVariableOnly<int>("BufferIndicator")),
+          particles_->registerStateVariable<int>("BufferIndicator")),
       dv_pos_(particles_->getVariableByName<Vecd>("Position")) {}
 //=================================================================================================//
 BufferOutflowDeletionCK::UpdateKernel::

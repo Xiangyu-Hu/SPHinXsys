@@ -12,7 +12,7 @@ SpringDamperConstraintParticleWise::
     SpringDamperConstraintParticleWise(SPHBody &sph_body, Vecd stiffness, Real damping_ratio)
     : LoadingForce(sph_body, "SpringDamperConstraintForce"),
       pos_(particles_->getVariableDataByName<Vecd>("Position")),
-      pos0_(particles_->registerStateVariableFrom<Vecd>("InitialPosition", "Position")),
+      pos0_(particles_->registerStateVariableDataFrom<Vecd>("InitialPosition", "Position")),
       vel_(particles_->getVariableDataByName<Vecd>("Velocity")),
       mass_(particles_->getVariableDataByName<Real>("Mass"))
 {
@@ -54,13 +54,13 @@ SpringNormalOnSurfaceParticles::
                                    Vecd source_point, Real stiffness, Real damping_ratio)
     : LoadingForce(sph_body, "NormalSpringForceOnSurface"),
       pos_(particles_->getVariableDataByName<Vecd>("Position")),
-      pos0_(particles_->registerStateVariableFrom<Vecd>("InitialPosition", "Position")),
+      pos0_(particles_->registerStateVariableDataFrom<Vecd>("InitialPosition", "Position")),
       n_(particles_->getVariableDataByName<Vecd>("NormalDirection")),
-      n0_(particles_->registerStateVariableFrom<Vecd>("InitialNormalDirection", "NormalDirection")),
+      n0_(particles_->registerStateVariableDataFrom<Vecd>("InitialNormalDirection", "NormalDirection")),
       vel_(particles_->getVariableDataByName<Vecd>("Velocity")),
       Vol_(particles_->getVariableDataByName<Real>("VolumetricMeasure")),
       mass_(particles_->getVariableDataByName<Real>("Mass")),
-      is_spring_force_applied_(particles_->addUniqueDiscreteVariable<bool>(
+      is_spring_force_applied_(particles_->addUniqueDiscreteVariableData<bool>(
           "isSpringForceApplied", particles_->ParticlesBound(), false))
 {
     BodySurface surface_layer(sph_body);
@@ -125,11 +125,11 @@ SpringOnSurfaceParticles::
     SpringOnSurfaceParticles(SPHBody &sph_body, Real stiffness, Real damping_ratio)
     : LoadingForce(sph_body, "SpringForceOnSurface"),
       pos_(particles_->getVariableDataByName<Vecd>("Position")),
-      pos0_(particles_->registerStateVariableFrom<Vecd>("InitialPosition", "Position")),
+      pos0_(particles_->registerStateVariableDataFrom<Vecd>("InitialPosition", "Position")),
       vel_(particles_->getVariableDataByName<Vecd>("Velocity")),
       Vol_(particles_->getVariableDataByName<Real>("VolumetricMeasure")),
       mass_(particles_->getVariableDataByName<Real>("Mass")),
-      is_spring_force_applied_(particles_->addUniqueDiscreteVariable<bool>(
+      is_spring_force_applied_(particles_->addUniqueDiscreteVariableData<bool>(
           "isSpringForceApplied", particles_->ParticlesBound(), false))
 {
     BodySurface surface_layer(sph_body);
@@ -182,7 +182,7 @@ ForceInBodyRegion::
     ForceInBodyRegion(BodyPartByParticle &body_part, Vecd force, Real end_time)
     : BaseLoadingForce<BodyPartByParticle>(body_part, "ForceInBodyRegion"),
       mass_(particles_->getVariableDataByName<Real>("Mass")),
-      pos0_(particles_->registerStateVariableFrom<Vecd>("InitialPosition", "Position")),
+      pos0_(particles_->registerStateVariableDataFrom<Vecd>("InitialPosition", "Position")),
       force_vector_(Vecd::Zero()), end_time_(end_time),
       physical_time_(sph_system_.getSystemVariableDataByName<Real>("PhysicalTime"))
 {
@@ -203,12 +203,12 @@ SurfacePressureFromSource::
     SurfacePressureFromSource(BodyPartByParticle &body_part, Vecd source_point,
                               StdVec<std::array<Real, 2>> pressure_over_time)
     : BaseLoadingForce<BodyPartByParticle>(body_part, "SurfacePressureForce"),
-      pos0_(particles_->registerStateVariableFrom<Vecd>("InitialPosition", "Position")),
+      pos0_(particles_->registerStateVariableDataFrom<Vecd>("InitialPosition", "Position")),
       n_(particles_->getVariableDataByName<Vecd>("NormalDirection")),
       Vol_(particles_->getVariableDataByName<Real>("VolumetricMeasure")),
       mass_(particles_->getVariableDataByName<Real>("Mass")),
       pressure_over_time_(pressure_over_time),
-      is_pressure_applied_(particles_->addUniqueDiscreteVariable<bool>(
+      is_pressure_applied_(particles_->addUniqueDiscreteVariableData<bool>(
           "isPressureApplied", particles_->ParticlesBound(), false)),
       physical_time_(sph_system_.getSystemVariableDataByName<Real>("PhysicalTime"))
 {

@@ -102,7 +102,7 @@ DataType interpolate_observer(
 {
     Kernel *kernel_ptr = particles.getSPHBody().getSPHAdaptation().getKernel();
     Real smoothing_length = particles.getSPHBody().getSPHAdaptation().ReferenceSmoothingLength();
-    Vecd *pos0_ = particles.registerStateVariableFrom<Vecd>("InitialPosition", "Position");
+    Vecd *pos0_ = particles.registerStateVariableDataFrom<Vecd>("InitialPosition", "Position");
     DataType variable_sum = DataType::Zero();
     Real kernel_sum = 0;
     for (auto id : neighbor_ids)
@@ -281,7 +281,7 @@ return_data bending_circular_plate(Real dp_ratio)
     ReduceDynamics<VariableNorm<Vecd, ReduceMax>> maximum_displace_norm(shell_body, "Displacement");
     vtp_output.writeToFile(0);
 
-    Vecd *pos0_ = shell_particles->registerStateVariableFrom<Vecd>("InitialPosition", "Position");
+    Vecd *pos0_ = shell_particles->registerStateVariableDataFrom<Vecd>("InitialPosition", "Position");
     // observer point
     point_center.neighbor_ids = [&]() { // full neighborhood
         IndexVector ids;

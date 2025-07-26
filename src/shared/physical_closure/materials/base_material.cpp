@@ -29,22 +29,22 @@ Fluid::EosKernel::EosKernel(Fluid &encloser) : c0_(encloser.c0_), rho0_(encloser
 //=================================================================================================//
 Vecd *Solid::AverageVelocity(BaseParticles *base_particles)
 {
-    return base_particles->registerStateVariable<Vecd>("Velocity");
+    return base_particles->registerStateVariableData<Vecd>("Velocity");
 }
 //=================================================================================================//
 Vecd *Solid::AverageAcceleration(BaseParticles *base_particles)
 {
-    return base_particles->registerStateVariable<Vecd>("Acceleration");
+    return base_particles->registerStateVariableData<Vecd>("Acceleration");
 }
 //=================================================================================================//
 DiscreteVariable<Vecd> *Solid::AverageVelocityVariable(BaseParticles *base_particles)
 {
-    return base_particles->registerStateVariableOnly<Vecd>("Velocity");
+    return base_particles->registerStateVariable<Vecd>("Velocity");
 }
 //=================================================================================================//
 DiscreteVariable<Vecd> *Solid::AverageAccelerationVariable(BaseParticles *base_particles)
 {
-    return base_particles->registerStateVariableOnly<Vecd>("Acceleration");
+    return base_particles->registerStateVariable<Vecd>("Acceleration");
 }
 //=================================================================================================//
 } // namespace SPH

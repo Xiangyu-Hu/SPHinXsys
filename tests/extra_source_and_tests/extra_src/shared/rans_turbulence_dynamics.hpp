@@ -17,7 +17,7 @@ TurbulentViscousForceInFVM<DataDelegationType>::TurbulentViscousForceInFVM(BaseR
       mu_t_(this->particles_->template getVariableDataByName<Real>("TurblunetViscosity")),
       wall_adjacent_cell_flag_(this->particles_->template getVariableDataByName<Real>("FlagForWallAdjacentCells")),
       vel_(this->particles_->template getVariableDataByName<Vecd>("Velocity")),
-      turbulent_viscous_force_(this->particles_->template registerStateVariable<Vecd>("TurbulentViscousForce")),
+      turbulent_viscous_force_(this->particles_->template registerStateVariableData<Vecd>("TurbulentViscousForce")),
       smoothing_length_(this->sph_body_.getSPHAdaptation().ReferenceSmoothingLength()) {}
 //=================================================================================================//
 TurbulentViscousForceInFVM<Inner<>>::TurbulentViscousForceInFVM(BaseInnerRelation &inner_relation)
@@ -52,7 +52,7 @@ TkeGradientForceInFVM<DataDelegationType>::TkeGradientForceInFVM(BaseRelationTyp
       mass_(this->particles_->template getVariableDataByName<Real>("Mass")),
       Vol_(this->particles_->template getVariableDataByName<Real>("VolumetricMeasure")),
       K_(this->particles_->template getVariableDataByName<Real>("TKE")),
-      tke_gradient_force_(this->particles_->template registerStateVariable<Vecd>("TkeGradientForce"))
+      tke_gradient_force_(this->particles_->template registerStateVariableData<Vecd>("TkeGradientForce"))
 {
 }
 //=================================================================================================//

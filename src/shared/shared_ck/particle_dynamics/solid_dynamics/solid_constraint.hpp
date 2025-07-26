@@ -15,12 +15,12 @@ ConstraintBySimBodyCK<DynamicsIdentifier>::
     : BaseLocalDynamics<DynamicsIdentifier>(identifier),
       MBsystem_(MBsystem), mobod_(mobod), integ_(integ),
       dv_pos_(this->particles_->template getVariableByName<Vecd>("Position")),
-      dv_pos0_(this->particles_->template registerStateVariableOnlyFrom<Vecd>("InitialPosition", "Position")),
+      dv_pos0_(this->particles_->template registerStateVariableFrom<Vecd>("InitialPosition", "Position")),
       dv_vel_(this->particles_->template getVariableByName<Vecd>("Velocity")),
       dv_n_(this->particles_->template getVariableByName<Vecd>("NormalDirection")),
-      dv_n0_(this->particles_->template registerStateVariableOnlyFrom<Vecd>("InitialNormalDirection", "NormalDirection")),
-      dv_acc_(this->particles_->template registerStateVariableOnly<Vecd>("Acceleration")),
-      sv_simbody_state_(this->particles_->template addUniqueSingularVariableOnly<SimbodyState>("SimbodyState"))
+      dv_n0_(this->particles_->template registerStateVariableFrom<Vecd>("InitialNormalDirection", "NormalDirection")),
+      dv_acc_(this->particles_->template registerStateVariable<Vecd>("Acceleration")),
+      sv_simbody_state_(this->particles_->template addUniqueSingularVariable<SimbodyState>("SimbodyState"))
 {
     this->particles_->template addEvolvingVariable<Vecd>("Velocity");
     this->particles_->template addEvolvingVariable<Vecd>("Acceleration");
@@ -68,11 +68,11 @@ TotalForceForSimBodyCK<DynamicsIdentifier>::
                            SimTK::MobilizedBody &mobod, SimTK::RungeKuttaMersonIntegrator &integ)
     : BaseLocalDynamicsReduce<ReduceSum<SimTK::SpatialVec>, DynamicsIdentifier>(identifier),
       MBsystem_(MBsystem), mobod_(mobod), integ_(integ),
-      dv_force_(this->particles_->template registerStateVariableOnly<Vecd>("Force")),
+      dv_force_(this->particles_->template registerStateVariable<Vecd>("Force")),
       dv_force_prior_(this->particles_->template getVariableByName<Vecd>("ForcePrior")),
       dv_pos_(this->particles_->template getVariableByName<Vecd>("Position")),
       sv_current_origin_location_(
-          this->particles_->template addUniqueSingularVariableOnly<Vec3d>(
+          this->particles_->template addUniqueSingularVariable<Vec3d>(
               identifier.getName() + "OriginLocation"))
 {
     this->quantity_name_ = "TotalForceForSimBody";

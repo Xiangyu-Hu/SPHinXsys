@@ -8,9 +8,9 @@ namespace fluid_dynamics
 SurfaceTensionStress::
     SurfaceTensionStress(BaseContactRelation &contact_relation, Real surface_tension_coeff)
     : LocalDynamics(contact_relation.getSPHBody()), DataDelegateContact(contact_relation),
-      color_gradient_(particles_->registerStateVariable<Vecd>("ColorGradient")),
-      norm_direction_(particles_->registerStateVariable<Vecd>("NormDirection")),
-      surface_tension_stress_(particles_->registerStateVariable<Matd>("SurfaceTensionStress")),
+      color_gradient_(particles_->registerStateVariableData<Vecd>("ColorGradient")),
+      norm_direction_(particles_->registerStateVariableData<Vecd>("NormDirection")),
+      surface_tension_stress_(particles_->registerStateVariableData<Matd>("SurfaceTensionStress")),
       surface_tension_coeff_(*(particles_->registerSingularVariable<Real>("SurfaceTensionCoef", surface_tension_coeff)->Data()))
 {
     particles_->addEvolvingVariable<Vecd>("ColorGradient");
@@ -110,9 +110,7 @@ void SurfaceStressForce<Contact<>>::interaction(size_t index_i, Real dt)
             Vecd color_gradient_average = 0.5 * (color_gradient_[index_i] + contact_color_gradient_k[index_j]);
             Matd mismatch = Matd::Identity() - color_gradient_average * e_ij.transpose() * r_ij * (color_gradient_average * e_ij.transpose() * r_ij) / ((color_gradient_average * e_ij.transpose() * r_ij).norm() + Eps);
             Matd hourglass_correction = -4 * contact_fraction_k * (1 - contact_fraction_k) * hourglass_control_coeff_ * 0.5 * (norm_direction_[index_i] * norm_direction_[index_i].transpose() + contact_norm_direction_k[index_j] * contact_norm_direction_k[index_j].transpose()) * mismatch * surface_tension_coeff_ / r_ij;
-            summation += mass_[index_i] * (2 * (Real(1) - contact_fraction_k) * surface_tension_stress_[index_i] + 2 * contact_fraction_k *             
-                        contact_surface_tension_stress_k[index_j] + hourglass_correction) 
-                        * contact_neighborhood.dW_ij_[n] * contact_neighborhood.e_ij_[n] * Vol_k[index_j];
+            summation += mass_[index_i] * (2 * (Real(1) - contact_fraction_k) * surface_tension_stress_[index_i] + 2 * contact_fraction_k * contact_surface_tension_stress_k[index_j] + hourglass_correction) * contact_neighborhood.dW_ij_[n] * contact_neighborhood.e_ij_[n] * Vol_k[index_j];
         }
     }
     surface_tension_force_[index_i] += summation / rho_[index_i];

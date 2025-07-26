@@ -50,11 +50,11 @@ class BaseDerivedVariable : public LocalDynamics
     template <class DynamicsIdentifier>
     BaseDerivedVariable(DynamicsIdentifier &identifier, const std::string &variable_name)
         : LocalDynamics(identifier),
-          derived_variable_(this->particles_->template registerStateVariable<DataType>(variable_name))
+          derived_variable_(this->particles_->template registerStateVariableData<DataType>(variable_name))
     {
         this->particles_->template addVariableToWrite<DataType>(variable_name);
     };
-    virtual ~BaseDerivedVariable(){};
+    virtual ~BaseDerivedVariable() {};
 
   protected:
     DataType *derived_variable_;

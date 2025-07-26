@@ -17,7 +17,7 @@ DensityRegularization<Base, RelationType<Parameters...>>::
     : Interaction<RelationType<Parameters...>>(identifier),
       dv_rho_(this->particles_->template getVariableByName<Real>("Density")),
       dv_mass_(this->particles_->template getVariableByName<Real>("Mass")),
-      dv_rho_sum_(this->particles_->template registerStateVariableOnly<Real>("DensitySummation")),
+      dv_rho_sum_(this->particles_->template registerStateVariable<Real>("DensitySummation")),
       dv_Vol_(this->particles_->template getVariableByName<Real>("VolumetricMeasure")),
       rho0_(this->sph_body_.getBaseMaterial().ReferenceDensity()),
       inv_sigma0_(1.0 / this->sph_adaptation_->LatticeNumberDensity()) {}

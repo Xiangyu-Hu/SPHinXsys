@@ -40,29 +40,29 @@ void BaseParticles::initializeBasicParticleVariables()
     //----------------------------------------------------------------------
     //		register non-geometric variables
     //----------------------------------------------------------------------
-    rho_ = registerStateVariable<Real>("Density", base_material_.ReferenceDensity());
-    mass_ = registerStateVariable<Real>("Mass",
-                                        [&](size_t i) -> Real
-                                        { return rho_[i] * ParticleVolume(i); });
+    rho_ = registerStateVariableData<Real>("Density", base_material_.ReferenceDensity());
+    mass_ = registerStateVariableData<Real>("Mass",
+                                            [&](size_t i) -> Real
+                                            { return rho_[i] * ParticleVolume(i); });
     //----------------------------------------------------------------------
     //		unregistered variables and data
     //----------------------------------------------------------------------
-    original_id_ = registerDiscreteVariable<UnsignedInt>("OriginalID", particles_bound_, AssignIndex());
+    original_id_ = registerDiscreteVariableData<UnsignedInt>("OriginalID", particles_bound_, AssignIndex());
     addEvolvingVariable<UnsignedInt>("OriginalID");
     addVariableToWrite<UnsignedInt>("OriginalID");
-    sorted_id_ = registerDiscreteVariable<UnsignedInt>("SortedID", particles_bound_, AssignIndex());
+    sorted_id_ = registerDiscreteVariableData<UnsignedInt>("SortedID", particles_bound_, AssignIndex());
 }
 //=================================================================================================//
 void BaseParticles::registerPositionAndVolumetricMeasure(StdVec<Vecd> &pos, StdVec<Real> &Vol)
 {
-    dv_pos_ = registerStateVariableOnlyFrom<Vecd>("Position", pos);
-    Vol_ = registerStateVariableFrom<Real>("VolumetricMeasure", Vol);
+    dv_pos_ = registerStateVariableFrom<Vecd>("Position", pos);
+    Vol_ = registerStateVariableDataFrom<Real>("VolumetricMeasure", Vol);
 }
 //=================================================================================================//
 void BaseParticles::registerPositionAndVolumetricMeasureFromReload()
 {
-    dv_pos_ = registerStateVariableOnlyFromReload<Vecd>("Position");
-    Vol_ = registerStateVariableFromReload<Real>("VolumetricMeasure");
+    dv_pos_ = registerStateVariableFromReload<Vecd>("Position");
+    Vol_ = registerStateVariableDataFromReload<Real>("VolumetricMeasure");
 }
 //=================================================================================================//
 void BaseParticles::initializeAllParticlesBounds(size_t number_of_particles)

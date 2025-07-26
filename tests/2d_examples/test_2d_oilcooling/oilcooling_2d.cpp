@@ -225,7 +225,7 @@ class ThermoWindingInitialCondition : public LocalDynamics
   public:
     explicit ThermoWindingInitialCondition(SPHBody &sph_body)
         : LocalDynamics(sph_body),
-          phi_(particles_->registerStateVariable<Real>(temperature_species_name)) {};
+          phi_(particles_->registerStateVariableData<Real>(temperature_species_name)) {};
 
     void update(size_t index_i, Real dt)
     {
@@ -243,7 +243,7 @@ class ThermoWindingHeatSource : public LocalDynamics
   public:
     explicit ThermoWindingHeatSource(SPHBody &sph_body)
         : LocalDynamics(sph_body),
-          phi_(particles_->registerStateVariable<Real>(temperature_species_name)) {};
+          phi_(particles_->registerStateVariableData<Real>(temperature_species_name)) {};
 
     void update(size_t index_i, Real dt)
     {
@@ -261,7 +261,7 @@ class ThermofluidBodyInitialCondition : public LocalDynamics
   public:
     explicit ThermofluidBodyInitialCondition(SPHBody &sph_body)
         : LocalDynamics(sph_body),
-          phi_(particles_->registerStateVariable<Real>(temperature_species_name)) {};
+          phi_(particles_->registerStateVariableData<Real>(temperature_species_name)) {};
 
     void update(size_t index_i, Real dt)
     {

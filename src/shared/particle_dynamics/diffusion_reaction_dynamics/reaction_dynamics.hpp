@@ -19,7 +19,7 @@ BaseReactionRelaxation<ReactionModelType>::
     ReactiveSpeciesNames &species_names = reaction_model.getSpeciesNames();
     for (size_t k = 0; k != NumReactiveSpecies; ++k)
     {
-        reactive_species_.push_back(this->particles_->template registerStateVariable<Real>(species_names[k]));
+        reactive_species_.push_back(this->particles_->template registerStateVariableData<Real>(species_names[k]));
     }
 }
 //=================================================================================================//

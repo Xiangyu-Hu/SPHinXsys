@@ -15,9 +15,9 @@ RelaxationResidue<Base, DataDelegationType>::RelaxationResidue(BaseRelationType 
       sph_adaptation_(&this->sph_body_.getSPHAdaptation()),
       kernel_(base_relation.getSPHBody().getSPHAdaptation().getKernel()),
       Vol_(this->particles_->template getVariableDataByName<Real>("VolumetricMeasure")),
-      kinetic_energy_(this->particles_->template registerStateVariable<Real>("ParticleKineticEnergy")),
+      kinetic_energy_(this->particles_->template registerStateVariableData<Real>("ParticleKineticEnergy")),
       pos_(this->particles_->template getVariableDataByName<Vecd>("Position")),
-      residue_(this->particles_->template registerStateVariable<Vecd>("ZeroOrderResidue")){}
+      residue_(this->particles_->template registerStateVariableData<Vecd>("ZeroOrderResidue")) {}
 //=================================================================================================//
 template <typename... Args>
 RelaxationResidue<Inner<LevelSetCorrection>>::RelaxationResidue(Args &&...args)
@@ -27,13 +27,13 @@ RelaxationResidue<Inner<LevelSetCorrection>>::RelaxationResidue(Args &&...args)
 //=================================================================================================//
 template <typename... Args>
 RelaxationResidue<Inner<Implicit>>::RelaxationResidue(Args &&...args)
-    : RelaxationResidue<Inner<>>(std::forward<Args>(args)...) {};
+    : RelaxationResidue<Inner<>>(std::forward<Args>(args)...){};
 //=================================================================================================//
 template <typename... Args>
 RelaxationResidue<Inner<LevelSetCorrection, Implicit>>::RelaxationResidue(Args &&...args)
     : RelaxationResidue<Inner<Implicit>>(std::forward<Args>(args)...),
-    pos_(particles_->getVariableDataByName<Vecd>("Position")),
-    level_set_shape_(DynamicCast<LevelSetShape>(this, this->getRelaxShape())) {};
+      pos_(particles_->getVariableDataByName<Vecd>("Position")),
+      level_set_shape_(DynamicCast<LevelSetShape>(this, this->getRelaxShape())){};
 //=================================================================================================//
 template <class RelaxationResidueType>
 template <typename FirstArg, typename... OtherArgs>
@@ -64,14 +64,15 @@ void RelaxationStep<RelaxationResidueType>::exec(Real dt)
 template <class RelaxationResidueType>
 template <typename FirstArg, typename... OtherArgs>
 RelaxationStepImplicit<RelaxationResidueType>::
-    RelaxationStepImplicit(FirstArg&& first_arg, OtherArgs &&...other_args)
+    RelaxationStepImplicit(FirstArg &&first_arg, OtherArgs &&...other_args)
     : BaseDynamics<void>(),
-    real_body_(DynamicCast<RealBody>(this, first_arg.getSPHBody())),
-    body_relations_(real_body_.getBodyRelations()),
-    relaxation_residue_(first_arg, std::forward<OtherArgs>(other_args)...),
-    relaxation_scaling_(real_body_), position_relaxation_(real_body_),
-    near_shape_surface_(real_body_, DynamicCast<LevelSetShape>(this, relaxation_residue_.getRelaxShape())),
-    surface_bounding_(near_shape_surface_) {
+      real_body_(DynamicCast<RealBody>(this, first_arg.getSPHBody())),
+      body_relations_(real_body_.getBodyRelations()),
+      relaxation_residue_(first_arg, std::forward<OtherArgs>(other_args)...),
+      relaxation_scaling_(real_body_), position_relaxation_(real_body_),
+      near_shape_surface_(real_body_, DynamicCast<LevelSetShape>(this, relaxation_residue_.getRelaxShape())),
+      surface_bounding_(near_shape_surface_)
+{
 }
 //=================================================================================================//
 template <class RelaxationResidueType>

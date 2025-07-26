@@ -11,9 +11,9 @@ template <class DynamicsIdentifier>
 BaseForcePrior<DynamicsIdentifier>::
     BaseForcePrior(DynamicsIdentifier &identifier, const std::string &force_name)
     : BaseLocalDynamics<DynamicsIdentifier>(identifier),
-      force_prior_(this->particles_->template registerStateVariable<Vecd>("ForcePrior")),
-      current_force_(this->particles_->template registerStateVariable<Vecd>(force_name)),
-      previous_force_(this->particles_->template registerStateVariable<Vecd>("Previous" + force_name))
+      force_prior_(this->particles_->template registerStateVariableData<Vecd>("ForcePrior")),
+      current_force_(this->particles_->template registerStateVariableData<Vecd>(force_name)),
+      previous_force_(this->particles_->template registerStateVariableData<Vecd>("Previous" + force_name))
 {
     this->particles_->template addEvolvingVariable<Vecd>("Previous" + force_name);
 }
@@ -29,7 +29,7 @@ template <class GravityType>
 GravityForce<GravityType>::GravityForce(SPHBody &sph_body, const GravityType &gravity)
     : ForcePrior(sph_body, "GravityForce"), gravity_(gravity),
       pos_(particles_->getVariableDataByName<Vecd>("Position")),
-      mass_(particles_->registerStateVariable<Real>("Mass")),
+      mass_(particles_->registerStateVariableData<Real>("Mass")),
       physical_time_(sph_system_.getSystemVariableDataByName<Real>("PhysicalTime")) {}
 //=================================================================================================//
 template <class GravityType>

@@ -49,7 +49,7 @@ class WCAcousticTimeStepSizeInFVM : public fluid_dynamics::AcousticTimeStep
 
   public:
     explicit WCAcousticTimeStepSizeInFVM(SPHBody &sph_body, Real min_distance_between_nodes, Real acousticCFL = 0.6);
-    virtual ~WCAcousticTimeStepSizeInFVM(){};
+    virtual ~WCAcousticTimeStepSizeInFVM() {};
     virtual Real outputResult(Real reduced_value) override;
     Real acousticCFL_;
 };
@@ -63,7 +63,7 @@ class BaseForceFromFluidInFVM : public LocalDynamics, public DataDelegateInner
 {
   public:
     explicit BaseForceFromFluidInFVM(BaseInnerRelation &inner_relation);
-    virtual ~BaseForceFromFluidInFVM(){};
+    virtual ~BaseForceFromFluidInFVM() {};
     Vecd *getForceFromFluid() { return force_from_fluid_; };
 
   protected:
@@ -79,7 +79,7 @@ class ViscousForceFromFluidInFVM : public BaseForceFromFluidInFVM
 {
   public:
     explicit ViscousForceFromFluidInFVM(BaseInnerRelation &inner_relation, StdVec<StdVec<size_t>> each_boundary_type_contact_real_index);
-    virtual ~ViscousForceFromFluidInFVM(){};
+    virtual ~ViscousForceFromFluidInFVM() {};
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
@@ -110,14 +110,14 @@ class PressureForceFromFluidInFVM : public BaseForceFromFluidInFVM
           riemann_solver_(fluid_, fluid_),
           each_boundary_type_contact_real_index_(each_boundary_type_contact_real_index)
     {
-        force_from_fluid_ = particles_->registerStateVariable<Vecd>("PressureForceOnSolid");
+        force_from_fluid_ = particles_->registerStateVariableData<Vecd>("PressureForceOnSolid");
     };
     Fluid &fluid_;
     Vecd *vel_;
     Real *p_, *rho_;
     RiemannSolverType riemann_solver_;
     StdVec<StdVec<size_t>> each_boundary_type_contact_real_index_;
-    virtual ~PressureForceFromFluidInFVM(){};
+    virtual ~PressureForceFromFluidInFVM() {};
 
     void interaction(size_t index_i, Real dt = 0.0)
     {

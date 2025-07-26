@@ -96,12 +96,12 @@ class TransportVelocityCorrection<Inner<ResolutionType, LimiterType>, CommonCont
           h_ref_(this->sph_body_.getSPHAdaptation().ReferenceSmoothingLength()),
           correction_scaling_(coefficient * h_ref_ * h_ref_),
           Vol_(this->particles_->template getVariableDataByName<Real>("VolumetricMeasure")),
-          pos_div_(this->particles_->template registerStateVariable<Real>("PositionDivergence")),
+          pos_div_(this->particles_->template registerStateVariableData<Real>("PositionDivergence")),
           pos_(this->particles_->template getVariableDataByName<Vecd>("Position")),
           h_ratio_(this->particles_), limiter_(h_ref_ * h_ref_),
-          indicator_(this->particles_->template registerStateVariable<int>("Indicator")),
-          corner_indicator_(this->particles_->template registerStateVariable<int>("CornerIndicator")),
-          surface_normal_(this->particles_->template registerStateVariable<Vecd>("SurfaceNormal"))
+          indicator_(this->particles_->template registerStateVariableData<int>("Indicator")),
+          corner_indicator_(this->particles_->template registerStateVariableData<int>("CornerIndicator")),
+          surface_normal_(this->particles_->template registerStateVariableData<Vecd>("SurfaceNormal"))
     {
         static_assert(std::is_base_of<Limiter, LimiterType>::value,
                       "Limiter is not the base of LimiterType!");
@@ -214,10 +214,10 @@ class FreeSurfaceNormal<DataDelegationType>
     template <class BaseRelationType>
     explicit FreeSurfaceNormal(BaseRelationType &base_relation)
         : LocalDynamics(base_relation.getSPHBody()), DataDelegationType(base_relation),
-          surface_normal_(particles_->registerStateVariable<Vecd>("SurfaceNormal")),
-          color_gradient_(particles_->registerStateVariable<Vecd>("ColorGradient")),
+          surface_normal_(particles_->registerStateVariableData<Vecd>("SurfaceNormal")),
+          color_gradient_(particles_->registerStateVariableData<Vecd>("ColorGradient")),
           B_(particles_->getVariableDataByName<Matd>("LinearGradientCorrectionMatrix")),
-          indicator_(particles_->registerStateVariable<int>("Indicator")),
+          indicator_(particles_->registerStateVariableData<int>("Indicator")),
           Vol_(particles_->getVariableDataByName<Real>("VolumetricMeasure"))
     {
         particles_->addEvolvingVariable<Vecd>("SurfaceNormal");

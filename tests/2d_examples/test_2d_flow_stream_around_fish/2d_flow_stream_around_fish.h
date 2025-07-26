@@ -135,7 +135,7 @@ class FishMaterialInitialization : public MaterialIdInitialization
 {
   public:
     explicit FishMaterialInitialization(SolidBody &solid_body)
-        : MaterialIdInitialization(solid_body){};
+        : MaterialIdInitialization(solid_body) {};
 
     void update(size_t index_i, Real dt = 0.0)
     {
@@ -170,9 +170,9 @@ class ImposingActiveStrain : public solid_dynamics::ElasticDynamicsInitialCondit
     explicit ImposingActiveStrain(SolidBody &solid_body)
         : solid_dynamics::ElasticDynamicsInitialCondition(solid_body),
           material_id_(particles_->getVariableDataByName<int>("MaterialID")),
-          pos0_(particles_->registerStateVariableFrom<Vecd>("InitialPosition", "Position")),
+          pos0_(particles_->registerStateVariableDataFrom<Vecd>("InitialPosition", "Position")),
           active_strain_(particles_->getVariableDataByName<Matd>("ActiveStrain")),
-          physical_time_(sph_system_.getSystemVariableDataByName<Real>("PhysicalTime")){};
+          physical_time_(sph_system_.getSystemVariableDataByName<Real>("PhysicalTime")) {};
     virtual void update(size_t index_i, Real dt = 0.0)
     {
         if (material_id_[index_i] == 0)

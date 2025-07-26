@@ -87,7 +87,7 @@ class SmoothingLength<Base>
     {
         Real h_spacing_ratio = identifier.getSPHAdaptation().SmoothingLengthSpacingRatio();
         return identifier.getBaseParticles()
-            .template registerStateVariableOnly<Real>(
+            .template registerStateVariable<Real>(
                 "SmoothingLength",
                 [&](size_t i)
                 { return 0.99 * h_spacing_ratio * identifier.getBaseParticles().ParticleSpacing(i); });

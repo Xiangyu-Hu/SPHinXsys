@@ -62,7 +62,7 @@ class BidirectionalBuffer
               part_id_(aligned_box_part.getPartID()),
               pos_(particles_->getVariableDataByName<Vecd>("Position")),
               aligned_box_(aligned_box_part.getAlignedBox()),
-              buffer_indicator_(particles_->registerStateVariable<int>("BufferIndicator"))
+              buffer_indicator_(particles_->registerStateVariableData<int>("BufferIndicator"))
         {
             particles_->addEvolvingVariable<int>("BufferIndicator");
         };
