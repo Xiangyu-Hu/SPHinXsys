@@ -15,7 +15,7 @@ BufferIndicationCK::BufferIndicationCK(AlignedBoxByCell &aligned_box_part)
     particles_->addEvolvingVariable<int>("BufferIndicator");
 }
 //=================================================================================================//
-BufferOutflowDeletionCK::BufferOutflowDeletionCK(AlignedBoxByCell &aligned_box_part)
+BufferOutflowIndication::BufferOutflowIndication(AlignedBoxByCell &aligned_box_part)
     : BaseLocalDynamics<AlignedBoxByCell>(aligned_box_part),
       part_id_(aligned_box_part.getPartID()),
       sv_aligned_box_(aligned_box_part.svAlignedBox()),
@@ -23,13 +23,19 @@ BufferOutflowDeletionCK::BufferOutflowDeletionCK(AlignedBoxByCell &aligned_box_p
       remove_real_particle_method_(particles_),
       dv_buffer_indicator_(
           particles_->registerStateVariable<int>("BufferIndicator")),
-      dv_pos_(particles_->getVariableByName<Vecd>("Position")) {}
+      dv_pos_(particles_->getVariableByName<Vecd>("Position")),
+      dv_life_status_(particles_->registerStateVariable<int>("LifeStatus", 0)) {}
 //=================================================================================================//
-BufferOutflowDeletionCK::UpdateKernel::
+BufferOutflowIndication::UpdateKernel::
     IsDeletable::IsDeletable(int part_id, AlignedBox *aligned_box,
                              Vecd *pos, int *buffer_particle_indicator)
     : part_id_(part_id), aligned_box_(aligned_box), pos_(pos),
       buffer_indicator_(buffer_particle_indicator) {}
+//=================================================================================================//
+AllBufferParticleDeletion::AllBufferParticleDeletion(SPHBody &sph_body)
+    : LocalDynamics(sph_body),
+      remove_real_particle_method_(particles_),
+      dv_life_status_(particles_->getVariableByName<int>("LifeStatus")) {}
 //=================================================================================================//
 } // namespace fluid_dynamics
 } // namespace SPH

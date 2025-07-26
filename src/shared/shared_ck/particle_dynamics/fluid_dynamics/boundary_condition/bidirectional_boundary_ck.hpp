@@ -80,7 +80,7 @@ void BufferInflowInjectionCK<ConditionType>::UpdateKernel::update(size_t index_i
 }
 //=================================================================================================//
 template <class ExecutionPolicy, class EncloserType>
-BufferOutflowDeletionCK::UpdateKernel::
+BufferOutflowIndication::UpdateKernel::
     UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : aligned_box_(encloser.sv_aligned_box_->DelegatedData(ex_policy)),
       pos_(encloser.dv_pos_->DelegatedData(ex_policy)),
@@ -89,14 +89,28 @@ BufferOutflowDeletionCK::UpdateKernel::
       total_real_particles_(encloser.sv_total_real_particles_->DelegatedData(ex_policy)),
       remove_real_particle_(ex_policy, encloser.remove_real_particle_method_) {}
 //=================================================================================================//
-void BufferOutflowDeletionCK::UpdateKernel::update(size_t index_i, Real dt)
+void BufferOutflowIndication::UpdateKernel::update(size_t index_i, Real dt)
 {
     if (!aligned_box_->checkInBounds(pos_[index_i]))
     {
         if (is_deltable_(index_i) && index_i < *total_real_particles_)
         {
-            remove_real_particle_(index_i, is_deltable_);
+            life_status_[index_i] = 1; // mark as to delete but will not delete immediately
         }
+    }
+}
+//=================================================================================================//
+template <class ExecutionPolicy, class EncloserType>
+AllBufferParticleDeletion::UpdateKernel::
+    UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+    : remove_real_particle_(ex_policy, encloser.remove_real_particle_method_),
+      life_status_(encloser.dv_life_status_->DelegatedData(ex_policy)) {}
+//=================================================================================================//
+void AllBufferParticleDeletion::UpdateKernel::update(UnsignedInt index_i, Real dt)
+{
+    if (life_status_[index_i] == 1) // to delete
+    {
+        remove_real_particle_(index_i, life_status_);
     }
 }
 //=================================================================================================//
@@ -150,7 +164,7 @@ BidirectionalBoundaryCK<ExecutionPolicy, KernelCorrectionType, ConditionType>::
     : tag_buffer_particles_(aligned_box_part),
       boundary_condition_(aligned_box_part, std::forward<Args>(args)...),
       inflow_injection_(aligned_box_part, particle_buffer, std::forward<Args>(args)...),
-      outflow_deletion_(aligned_box_part) {}
+      outflow_indication_(aligned_box_part) {}
 //=================================================================================================//
 } // namespace fluid_dynamics
 } // namespace SPH
