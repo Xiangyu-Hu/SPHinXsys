@@ -103,8 +103,8 @@ class RemoveRealParticle
             UnsignedInt last_real_particle_index = total_real_particles_ref.fetch_sub(1) - 1;
             while (life_status[last_real_particle_index] == 1) // to delete
             {
-                last_real_particle_index = total_real_particles_ref.fetch_sub(1) - 1;
                 life_status[last_real_particle_index] = 0; // reset the life status
+                last_real_particle_index = total_real_particles_ref.fetch_sub(1) - 1;
             }
 
             if (index_i < last_real_particle_index)
