@@ -27,28 +27,24 @@ auto &InteractionDynamicsCK<ExecutionPolicy, InteractionType<AlgorithmType>>::
 }
 //=================================================================================================//
 template <class ExecutionPolicy, typename AlgorithmType, template <typename...> class InteractionType>
-template <template <typename...> class LocalDynamicsType,
-          typename... ControlTypes, class DynamicsIdentifier, typename... Args>
+template <class UpdateType, typename... Args>
 auto &InteractionDynamicsCK<ExecutionPolicy, InteractionType<AlgorithmType>>::
-    addPostStateDynamics(DynamicsIdentifier &identifier, Args &&...args)
+    addPostStateDynamics(Args &&...args)
 {
     this->post_processes_.push_back(
         supplementary_dynamics_keeper_.template createPtr<
-            StateDynamics<ExecutionPolicy, LocalDynamicsType<ControlTypes..., DynamicsIdentifier>>>(
-            identifier, std::forward<Args>(args)...));
+            StateDynamics<ExecutionPolicy, UpdateType>>(std::forward<Args>(args)...));
     return *this;
 }
 //=================================================================================================//
 template <class ExecutionPolicy, typename AlgorithmType, template <typename...> class InteractionType>
-template <template <typename...> class LocalDynamicsType,
-          typename... ControlTypes, class DynamicsIdentifier, typename... Args>
+template <class UpdateType, typename... Args>
 auto &InteractionDynamicsCK<ExecutionPolicy, InteractionType<AlgorithmType>>::
-    addPreStateDynamics(DynamicsIdentifier &identifier, Args &&...args)
+    addPreStateDynamics(Args &&...args)
 {
     this->pre_processes_.push_back(
         supplementary_dynamics_keeper_.template createPtr<
-            StateDynamics<ExecutionPolicy, LocalDynamicsType<ControlTypes..., DynamicsIdentifier>>>(
-            identifier, std::forward<Args>(args)...));
+            StateDynamics<ExecutionPolicy, UpdateType>>(std::forward<Args>(args)...));
     return *this;
 }
 //=================================================================================================//

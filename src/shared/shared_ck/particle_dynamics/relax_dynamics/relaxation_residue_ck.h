@@ -21,28 +21,62 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file    all_shared_physical_dynamics_ck.h
- * @brief   Head file for all shared physics dynamics for both 2- and 3D build.
- *          This is the header file that user code should include to pick up all
-            particle dynamics capabilities.
- * @author	Chi Zhang and Xiangyu Hu
+ * @file relaxation_residue_ck.h
+ * @brief TBD.
+ * @author Xiangyu Hu
  */
 
-#ifndef ALL_SHARED_PHYSICAL_DYNAMICS_CK_H
-#define ALL_SHARED_PHYSICAL_DYNAMICS_CK_H
+#ifndef RELAXATION_RESIDUE_CK_H
+#define RELAXATION_RESIDUE_CK_H
 
-#include "all_continum_dynamics.h"
-#include "all_fluid_structure_interactions.h"
-#include "all_general_dynamics_ck.h"
-#include "all_relax_dynamics_ck.h"
-#include "all_shared_fluid_dynamics_ck.h"
-#include "all_solid_dynamics_ck.h"
-#include "complex_algorithms_ck.h"
-#include "diffusion_dynamics_ck.hpp"
-#include "interaction_algorithms_ck.hpp"
-#include "particle_functors_ck.h"
-#include "particle_sort_ck.hpp"
-#include "simple_algorithms_ck.h"
-#include "sph_solver.h"
+#include "base_general_dynamics.h"
 
-#endif // ALL_SHARED_PHYSICAL_DYNAMICS_CK_H
+namespace SPH
+{
+template <class BaseInteractionType>
+class RelaxationResidueBase : public BaseInteractionType
+{
+  public:
+    template <class DynamicsIdentifier>
+    explicit RelaxationResidueBase(DynamicsIdentifier &identifier);
+    virtual ~RelaxationResidueBase() {}
+
+  protected:
+    DiscreteVariable<Real> *dv_Vol_;
+    DiscreteVariable<Vecd> *dv_pos_;
+    DiscreteVariable<Vecd> *dv_residue_;
+};
+
+template <typename...>
+class RelaxationResidueCK;
+
+template <class KernelCorrectionType, typename... Parameters>
+class RelaxationResidueCK<Inner<KernelCorrectionType, Parameters...>>
+    : public RelaxationResidueBase<Interaction<Inner<Parameters...>>>
+{
+    using BaseInteraction = RelaxationResidueBase<Interaction<Inner<Parameters...>>>;
+    using CorrectionKernel = typename KernelCorrectionType::ComputingKernel;
+
+  public:
+    explicit RelaxationResidueCK(Inner<Parameters...> &inner_relation);
+    virtual ~RelaxationResidueCK() {}
+
+    class InteractKernel : public BaseInteraction::InteractKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+        void interact(size_t index_i, Real dt = 0.0);
+
+      protected:
+        CorrectionKernel correction_;
+        Real *Vol_;
+        Vecd *residue_;
+    };
+
+  protected:
+    KernelCorrectionType kernel_correction_;
+};
+
+} // namespace SPH
+#endif // RELAXATION_RESIDUE_CK_H

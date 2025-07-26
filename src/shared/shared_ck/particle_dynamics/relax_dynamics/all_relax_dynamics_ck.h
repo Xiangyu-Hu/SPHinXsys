@@ -21,28 +21,17 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file    all_shared_physical_dynamics_ck.h
- * @brief   Head file for all shared physics dynamics for both 2- and 3D build.
- *          This is the header file that user code should include to pick up all
-            particle dynamics capabilities.
+ * @file    all_relax_dynamics_ck.h
+ * @brief   This is the header file that user code should include to pick up all
+ *          relax dynamics used in SPHinXsys.
  * @author	Chi Zhang and Xiangyu Hu
  */
 
-#ifndef ALL_SHARED_PHYSICAL_DYNAMICS_CK_H
-#define ALL_SHARED_PHYSICAL_DYNAMICS_CK_H
+#ifndef ALL_RELAX_DYNAMICS_CK_H
+#define ALL_RELAX_DYNAMICS_CK_H
 
-#include "all_continum_dynamics.h"
-#include "all_fluid_structure_interactions.h"
-#include "all_general_dynamics_ck.h"
-#include "all_relax_dynamics_ck.h"
-#include "all_shared_fluid_dynamics_ck.h"
-#include "all_solid_dynamics_ck.h"
-#include "complex_algorithms_ck.h"
-#include "diffusion_dynamics_ck.hpp"
-#include "interaction_algorithms_ck.hpp"
-#include "particle_functors_ck.h"
-#include "particle_sort_ck.hpp"
-#include "simple_algorithms_ck.h"
-#include "sph_solver.h"
+#include "level_set_correction.hpp"
+#include "relaxation_residue_ck.hpp"
+#include "relaxation_stepping_ck.h"
 
-#endif // ALL_SHARED_PHYSICAL_DYNAMICS_CK_H
+#endif // ALL_RELAX_DYNAMICS_CK_H

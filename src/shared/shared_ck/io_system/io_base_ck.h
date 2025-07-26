@@ -39,31 +39,44 @@ namespace SPH
 template <class ExecutionPolicy>
 class BodyStatesRecordingToVtpCK : public BodyStatesRecordingToVtp
 {
+  protected:
+    OperationOnDataAssemble<ParticleVariables, prepareVariablesToWrite> prepare_variable_to_write_;
+
+    void prepareToWrite()
+    {
+        for (size_t i = 0; i < bodies_.size(); ++i)
+        {
+            if (bodies_[i]->checkNewlyUpdated())
+            {
+                BaseParticles &base_particles = bodies_[i]->getBaseParticles();
+                base_particles.dvParticlePosition()->prepareForOutput(ExecutionPolicy{});
+                prepare_variable_to_write_(base_particles.VariablesToWrite(), ExecutionPolicy{});
+            }
+        }
+    }
 
   public:
     template <typename... Args>
     BodyStatesRecordingToVtpCK(Args &&...args) : BodyStatesRecordingToVtp(std::forward<Args>(args)...){};
     virtual ~BodyStatesRecordingToVtpCK() {};
 
-    virtual void writeToFile()
+    virtual void writeToFile() override
     {
         if (state_recording_)
         {
-            for (size_t i = 0; i < bodies_.size(); ++i)
-            {
-                if (bodies_[i]->checkNewlyUpdated())
-                {
-                    BaseParticles &base_particles = bodies_[i]->getBaseParticles();
-                    base_particles.dvParticlePosition()->prepareForOutput(ExecutionPolicy{});
-                    prepare_variable_to_write_(base_particles.VariablesToWrite(), ExecutionPolicy{});
-                }
-            }
+            prepareToWrite();
             BodyStatesRecordingToVtp::writeToFile();
         }
     };
 
-  protected:
-    OperationOnDataAssemble<ParticleVariables, prepareVariablesToWrite> prepare_variable_to_write_;
+    virtual void writeToFile(size_t iteration_step) override
+    {
+        if (state_recording_)
+        {
+            prepareToWrite();
+            BodyStatesRecordingToVtp::writeToFile(iteration_step);
+        }
+    }
 };
 
 template <class ExecutionPolicy>

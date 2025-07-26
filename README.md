@@ -1,18 +1,27 @@
 # ![SPHinXsys Logo](assets/logo.png) SPHinXsys
 
-## Heterogeneous parallelism for mesh dynamics
+## Heterogeneous parallelism for mesh dynamics and particle relaxation
 
 It is known that SPHinXsys relies on level-set technique to realize
 particle generation and relaxation for later SPH simulations.
 The level-set field is build on a multi-level Cartesian mesh
 with sparse storage and adaptive mesh refinement (AMR).
+After the level-set field is constructed,
+the body-fitted initial particle distribution,
+especially for solid bodies,
+is obtained by a physical-driving relaxation process
+using level-set field for body-fitting.  
 
-Now, the level-set base operations or more generally mesh dynamics,
+Now, the level-set based operations or more generally mesh dynamics,
 such as small-feature cleaning, re-initialization
-and normal direction computing can be carried on either CPU or GPU
+and normal direction computing,
+and the particle relaxation process now can be carried on either CPU or GPU
 with the same numerical algorithm and the help of SYCL kernels.
 
-The test utilizes heterogeneous parallelism for mesh dynamics have been added to the case `taylor_bar_sycl.cpp` in `test/test_sycl` folder,
+The test utilizes heterogeneous parallelism for mesh dynamics have been added to the cases
+ `test_2d_particle_generator_single_resolution_sycl`,`test_3d_particle_relaxation_single_resolution_sycl`
+and `taylor_bar_sycl` in `test/test_sycl` folder,
+
 showcasing the capabilities of our specially designed framework.
 
 Your tests, comments and modification of these test cases would be very welcomed!
