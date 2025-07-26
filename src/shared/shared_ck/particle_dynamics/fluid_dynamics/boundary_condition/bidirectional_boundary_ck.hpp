@@ -84,10 +84,10 @@ BufferOutflowIndication::UpdateKernel::
     UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : aligned_box_(encloser.sv_aligned_box_->DelegatedData(ex_policy)),
       pos_(encloser.dv_pos_->DelegatedData(ex_policy)),
+      life_status_(encloser.dv_life_status_->DelegatedData(ex_policy)),
       is_deltable_(encloser.part_id_, aligned_box_, pos_,
                    encloser.dv_buffer_indicator_->DelegatedData(ex_policy)),
-      total_real_particles_(encloser.sv_total_real_particles_->DelegatedData(ex_policy)),
-      remove_real_particle_(ex_policy, encloser.remove_real_particle_method_) {}
+      total_real_particles_(encloser.sv_total_real_particles_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 void BufferOutflowIndication::UpdateKernel::update(size_t index_i, Real dt)
 {
@@ -101,12 +101,12 @@ void BufferOutflowIndication::UpdateKernel::update(size_t index_i, Real dt)
 }
 //=================================================================================================//
 template <class ExecutionPolicy, class EncloserType>
-AllBufferParticleDeletion::UpdateKernel::
+OutflowParticleDeletion::UpdateKernel::
     UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : remove_real_particle_(ex_policy, encloser.remove_real_particle_method_),
       life_status_(encloser.dv_life_status_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
-void AllBufferParticleDeletion::UpdateKernel::update(UnsignedInt index_i, Real dt)
+void OutflowParticleDeletion::UpdateKernel::update(UnsignedInt index_i, Real dt)
 {
     if (life_status_[index_i] == 1) // to delete
     {

@@ -169,18 +169,17 @@ class BufferOutflowIndication : public BaseLocalDynamics<AlignedBoxByCell>
     int part_id_;
     SingularVariable<AlignedBox> *sv_aligned_box_;
     SingularVariable<UnsignedInt> *sv_total_real_particles_;
-    RemoveRealParticle remove_real_particle_method_;
     DiscreteVariable<int> *dv_buffer_indicator_;
     DiscreteVariable<Vecd> *dv_pos_;
-    DiscreteVariable<int> *dv_life_status_;
+    DiscreteVariable<int> *dv_life_status_; // 0: alive, 1: to delete
 };
 
-class AllBufferParticleDeletion : public LocalDynamics
+class OutflowParticleDeletion : public LocalDynamics
 {
     using RemoveRealParticleKernel = typename RemoveRealParticle::ComputingKernel;
 
   public:
-    AllBufferParticleDeletion(SPHBody &sph_body);
+    OutflowParticleDeletion(SPHBody &sph_body);
 
     class UpdateKernel
     {
@@ -190,9 +189,9 @@ class AllBufferParticleDeletion : public LocalDynamics
         void update(UnsignedInt index_i, Real dt = 0.0);
 
       protected:
-        int *life_status_;
         RemoveRealParticleKernel remove_real_particle_;
-    };
+        int *life_status_;
+      };
 
   protected:
     RemoveRealParticle remove_real_particle_method_;
@@ -249,7 +248,7 @@ class BidirectionalBoundaryCK
     void tagBufferParticles() { tag_buffer_particles_.exec(); }
     void applyBoundaryCondition(Real dt) { boundary_condition_.exec(dt); }
     void injectParticles() { inflow_injection_.exec(); }
-    void deleteParticles() { outflow_indication_.exec(); }
+    void indicateOutFlowParticles() { outflow_indication_.exec(); }
 };
 } // namespace fluid_dynamics
 } // namespace SPH

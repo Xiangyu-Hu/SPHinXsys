@@ -104,13 +104,14 @@ class RemoveRealParticle
             while (life_status[last_real_particle_index] == 1) // to delete
             {
                 last_real_particle_index = total_real_particles_ref.fetch_sub(1) - 1;
+                life_status[last_real_particle_index] = 0; // reset the life status
             }
 
             if (index_i < last_real_particle_index)
             {
                 UnsignedInt old_original_id = original_id_[index_i];
                 copy_particle_state_(copyable_state_data_arrays_, index_i, last_real_particle_index);
-                life_status[index_i] = life_status[last_real_particle_index]; // also copy the life status
+                life_status[index_i] = 0;                                     // reset the life status
                 original_id_[last_real_particle_index] = old_original_id;     // swap the original id
             }
         };
