@@ -135,15 +135,12 @@ class BaseParticles
     DataType *initializeVariable(DiscreteVariable<DataType> *variable, DiscreteVariable<DataType> *old_variable);
 
   public:
+    template <typename DataType>
+    DataType *getVariableDataByName(const std::string &name);
     template <class DataType, typename... Args>
     DataType *addUniqueDiscreteVariable(const std::string &name, size_t data_size, Args &&...args);
-    template <class DataType, typename... Args>
-    DiscreteVariable<DataType> *addUniqueDiscreteVariableOnly(const std::string &name, size_t data_size, Args &&...args);
-    template <class DataType>
-    DiscreteVariable<DataType> *addUniqueDiscreteVariableFrom(const std::string &name, DiscreteVariable<DataType> *old_variable);
     template <typename DataType, typename... Args>
     DataType *registerDiscreteVariable(const std::string &name, size_t data_size, Args &&...args);
-
     template <class DataType, typename... Args>
     DataType *addUniqueStateVariable(const std::string &name, Args &&...args);
     template <typename DataType, typename... Args>
@@ -154,11 +151,13 @@ class BaseParticles
     DataType *registerStateVariableFrom(const std::string &name, const StdVec<DataType> &geometric_data);
     template <typename DataType>
     DataType *registerStateVariableFromReload(const std::string &name);
+
     template <typename DataType>
     DiscreteVariable<DataType> *getVariableByName(const std::string &name);
-    template <typename DataType>
-    DataType *getVariableDataByName(const std::string &name);
-
+    template <class DataType, typename... Args>
+    DiscreteVariable<DataType> *addUniqueDiscreteVariableOnly(const std::string &name, size_t data_size, Args &&...args);
+    template <class DataType>
+    DiscreteVariable<DataType> *addUniqueDiscreteVariableFrom(const std::string &name, DiscreteVariable<DataType> *old_variable);
     template <typename DataType, typename... Args>
     DiscreteVariable<DataType> *registerDiscreteVariableOnly(const std::string &name, size_t data_size, Args &&...args);
     template <typename DataType, typename... Args>
