@@ -12,7 +12,7 @@ RelaxationResidueBase<BaseInteractionType>::RelaxationResidueBase(DynamicsIdenti
     : BaseInteractionType(identifier),
       dv_Vol_(this->particles_->template getVariableByName<Real>("VolumetricMeasure")),
       dv_pos_(this->particles_->template getVariableByName<Vecd>("Position")),
-      dv_residue_(this->particles_->template registerStateVariableOnly<Vecd>("ZeroGradientResidue")) {}
+      dv_residue_(this->particles_->template registerStateVariable<Vecd>("ZeroGradientResidue")) {}
 //=================================================================================================//
 template <class KernelCorrectionType, typename... Parameters>
 RelaxationResidueCK<Inner<KernelCorrectionType, Parameters...>>::
