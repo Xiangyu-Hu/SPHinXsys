@@ -26,7 +26,6 @@
  * and operation for all types of particles.
  * Note that there is no class of single particle.
  * TODO: It seems that I need to transfer the IO related functions to the IO classes.
- * TODO: Sorting related functions and data should be transferred to the sorting classes.
  * @author	Chi Zhang, Chenxi Zhao and Xiangyu Hu
  */
 
@@ -39,16 +38,11 @@
 #include "sphinxsys_variable_array.h"
 #include "xml_parser.h"
 
-#include <fstream>
-
 namespace SPH
 {
-
-using namespace execution;
 class SPHBody;
 class SPHAdaptation;
 class BaseMaterial;
-class BodySurface;
 class BodyPartByParticle;
 
 /**
@@ -56,30 +50,26 @@ class BodyPartByParticle;
  * @brief Particles with essential (geometric and matter) data.
  * There are three groups of particles，all particles of a same type are saved with continuous memory segments.
  * The first is for real particles whose states are updated by particle dynamics.
- * One is buffer particles whose state are not updated by particle dynamics.
- * Buffer particles are saved behind real particles.
- * The global value of total_real_particles_ separate the real and buffer particles.
- * They may be switched from real particles or switch to real particles.
- * As the memory for both particles are continuous, such switch is achieved at the memory boundary sequentially.
+ * One is reserved particles allocated after the real particles.
+ * The global value of total_real_particles_ separate the real and reserved particles.
+ * Reserved particles may be switched from real particles or switch to real particles.
+ * As the memory for both particles are continuous, such switch is achieved at the memory boundary applying atomic operations.
  * The basic idea is swap the data of the last real particle with the one will be switched particle,
- * and then switch this swapped last particle as buffer particle by decrease the total_real_particles_ by one.
- * Switch from buffer particle to real particle is easy. One just need to assign expect state to
- * the first buffer particle and increase total_real_particles_ by one.
+ * and then switch this swapped last particle as reserved particle by decrease the total_real_particles_ by one.
+ * Switch from reserved particle to real particle is easy. One just need to assign expect state to
+ * the first reserved particle and increase total_real_particles_ by one.
  * The third group is for ghost particles whose states are updated according to
  * boundary condition if their indices are included in the neighbor particle list.
- * Ghost particles whose states are updated according to
- * boundary condition if their indices are included in the neighbor particle list.
- * The ghost particles are saved behind the buffer particles in the form of one or more ghost bounds.
- * All particles are bounded by particle_bound_, which is the total number of particles in all types.
- * It will be initialized to zero before a time step.
- * In SPHinXsys, the discrete variables (state of each particle) registered in general particle data
- * (ParticleData) belong to a hierarchy of two layers.
+ * The ghost particles are temporarily defined behind the real particles after the latter is determined.
+ * All particles whose states are updated either by particle dynamics or boundary conditions
+ * are separated from the reserved particles by total_particles_.
+ * All real and reserved particles are bounded by particle_bound_, which is the limit of particle in all types.
+ * In SPHinXsys, the discrete variables (state of each particle) registered belong to a hierarchy of two layers.
  * The first is for the basic geometric and matter properties.
- * These variables are created of after particles are generated.
- * The second is for the local, dynamics-method-related variables, which are defined in specific methods,
- * and are only used by the relevant methods. Generally, a discrete variable is defined
- * and the corresponding data can use or redefined (with no change to the data) by other methods
- * using the function getVariableDataByName.
+ * These variables are created after particles are generated.
+ * The second is for the local, dynamics-method-related variables,
+ * which are defined by its data type and a unique name in specific methods,
+ * and are only used by the relevant methods.
  */
 class BaseParticles
 {
@@ -111,18 +101,11 @@ class BaseParticles
     // Generalized particle manipulation
     //----------------------------------------------------------------------
     SingularVariable<UnsignedInt> *svTotalRealParticles() { return sv_total_real_particles_; };
-    UnsignedInt TotalRealParticles() { return *sv_total_real_particles_->Data(); };
-    void incrementTotalRealParticles(UnsignedInt increment = 1) { *sv_total_real_particles_->Data() += increment; };
-    void decrementTotalRealParticles(UnsignedInt decrement = 1) { *sv_total_real_particles_->Data() -= decrement; };
+    UnsignedInt TotalRealParticles() { return sv_total_real_particles_->getValue(); };
     UnsignedInt ParticlesBound() { return particles_bound_; };
     void initializeAllParticlesBounds(size_t total_real_particles);
     void initializeAllParticlesBoundsFromReloadXml();
     void increaseParticlesBounds(size_t extra_size);
-    void copyFromAnotherParticle(size_t index, size_t another_index);
-    size_t allocateGhostParticles(size_t ghost_size);
-    void updateGhostParticle(size_t ghost_index, size_t index);
-    void switchToBufferParticle(size_t index);
-    UnsignedInt createRealParticleFrom(UnsignedInt index);
     //----------------------------------------------------------------------
     // Parameterized management on particle variables and data
     //----------------------------------------------------------------------
@@ -135,23 +118,6 @@ class BaseParticles
     DataType *initializeVariable(DiscreteVariable<DataType> *variable, DiscreteVariable<DataType> *old_variable);
 
   public:
-    template <typename DataType>
-    DataType *getVariableDataByName(const std::string &name);
-    template <class DataType, typename... Args>
-    DataType *addUniqueDiscreteVariableData(const std::string &name, size_t data_size, Args &&...args);
-    template <typename DataType, typename... Args>
-    DataType *registerDiscreteVariableData(const std::string &name, size_t data_size, Args &&...args);
-    template <class DataType, typename... Args>
-    DataType *addUniqueStateVariableData(const std::string &name, Args &&...args);
-    template <typename DataType, typename... Args>
-    DataType *registerStateVariableData(const std::string &name, Args &&...args);
-    template <typename DataType>
-    DataType *registerStateVariableDataFrom(const std::string &new_name, const std::string &old_name);
-    template <typename DataType>
-    DataType *registerStateVariableDataFrom(const std::string &name, const StdVec<DataType> &geometric_data);
-    template <typename DataType>
-    DataType *registerStateVariableDataFromReload(const std::string &name);
-
     template <typename DataType>
     DiscreteVariable<DataType> *getVariableByName(const std::string &name);
     template <class DataType, typename... Args>
@@ -198,16 +164,12 @@ class BaseParticles
     UnsignedInt *original_id_;             /**< the original ids assigned just after particle is generated. */
     UnsignedInt *sorted_id_;               /**< the current sorted particle ids of particles from original ids. */
     ParticleVariables evolving_variables_; // particle variables which evolving during simulation
-    ParticleData evolving_variables_data_;
 
   public:
     template <typename DataType, typename... Args>
     void addEvolvingVariable(Args &&...args);
     template <typename DataType>
     void addEvolvingVariable(DiscreteVariableArray<DataType> *variable_array);
-    UnsignedInt *ParticleOriginalIds() { return original_id_; };
-    UnsignedInt *ParticleSortedIds() { return sorted_id_; };
-    ParticleData &EvolvingVariablesData() { return evolving_variables_data_; };
     ParticleVariables &VariablesToWrite() { return variables_to_write_; };
     ParticleVariables &EvolvingVariables() { return evolving_variables_; };
     //----------------------------------------------------------------------
@@ -224,10 +186,6 @@ class BaseParticles
     void registerPositionAndVolumetricMeasure(StdVec<Vecd> &pos, StdVec<Real> &Vol);
     void registerPositionAndVolumetricMeasureFromReload();
     DiscreteVariable<Vecd> *dvParticlePosition() { return dv_pos_; }
-    Vecd *ParticlePositions() { return dv_pos_->Data(); }
-    Real *VolumetricMeasures() { return Vol_; }
-    virtual Real ParticleVolume(size_t index) { return Vol_[index]; }
-    virtual Real ParticleSpacing(size_t index) { return std::pow(Vol_[index], 1.0 / Real(Dimensions)); }
 
   protected:
     DiscreteVariable<Vecd> *dv_pos_; /**< Discrete variable position */
@@ -240,7 +198,6 @@ class BaseParticles
     BaseMaterial &base_material_;
     XmlParser restart_xml_parser_;
     XmlParser reload_xml_parser_;
-    ParticleData all_state_data_; /**< all discrete variable data except those on particle IDs  */
     ParticleVariables all_discrete_variables_;
     SingularVariables all_singular_variables_;
     ParticleVariables variables_to_write_;
@@ -280,6 +237,47 @@ class BaseParticles
     OperationOnDataAssemble<ParticleData, CopyParticleState> copy_particle_state_;
     OperationOnDataAssemble<ParticleVariables, WriteAParticleVariableToXml> write_restart_variable_to_xml_, write_reload_variable_to_xml_;
     OperationOnDataAssemble<ParticleVariables, ReadAParticleVariableFromXml> read_restart_variable_from_xml_;
+    //----------------------------------------------------------------------
+    // Functions for old CPU code compatibility
+    //----------------------------------------------------------------------
+  public:
+    void copyFromAnotherParticle(size_t index, size_t another_index);
+    size_t allocateGhostParticles(size_t ghost_size);
+    void updateGhostParticle(size_t ghost_index, size_t index);
+    void switchToBufferParticle(size_t index);
+    UnsignedInt createRealParticleFrom(UnsignedInt index);
+
+    template <typename DataType>
+    DataType *getVariableDataByName(const std::string &name);
+    template <class DataType, typename... Args>
+    DataType *addUniqueDiscreteVariableData(const std::string &name, size_t data_size, Args &&...args);
+    template <typename DataType, typename... Args>
+    DataType *registerDiscreteVariableData(const std::string &name, size_t data_size, Args &&...args);
+    template <class DataType, typename... Args>
+    DataType *addUniqueStateVariableData(const std::string &name, Args &&...args);
+    template <typename DataType, typename... Args>
+    DataType *registerStateVariableData(const std::string &name, Args &&...args);
+    template <typename DataType>
+    DataType *registerStateVariableDataFrom(const std::string &new_name, const std::string &old_name);
+    template <typename DataType>
+    DataType *registerStateVariableDataFrom(const std::string &name, const StdVec<DataType> &geometric_data);
+    template <typename DataType>
+    DataType *registerStateVariableDataFromReload(const std::string &name);
+
+    ParticleData evolving_variables_data_;
+    ParticleData all_state_data_; /**< all discrete variable data except those on particle IDs  */
+    ParticleData &EvolvingVariablesData() { return evolving_variables_data_; };
+
+    Vecd *ParticlePositions() { return dv_pos_->Data(); }
+    Real *VolumetricMeasures() { return Vol_; }
+    virtual Real ParticleVolume(size_t index) { return Vol_[index]; }
+    virtual Real ParticleSpacing(size_t index) { return std::pow(Vol_[index], 1.0 / Real(Dimensions)); }
+    UnsignedInt *ParticleOriginalIds() { return original_id_; };
+    UnsignedInt *ParticleSortedIds() { return sorted_id_; };
+
+  protected:
+    void incrementTotalRealParticles(UnsignedInt increment = 1) { sv_total_real_particles_->incrementValue(increment); };
+    void decrementTotalRealParticles(UnsignedInt decrement = 1) { sv_total_real_particles_->incrementValue(-decrement); };
 };
 } // namespace SPH
 #endif // BASE_PARTICLES_H

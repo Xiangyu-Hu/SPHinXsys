@@ -1,10 +1,6 @@
 #include "base_particles.hpp"
 
 #include "base_body.h"
-#include "base_body_part.h"
-#include "base_material.h"
-#include "base_particle_generator.h"
-#include "xml_parser.h"
 
 namespace SPH
 {
