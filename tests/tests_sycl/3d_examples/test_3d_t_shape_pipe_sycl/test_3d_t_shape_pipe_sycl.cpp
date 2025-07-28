@@ -302,6 +302,7 @@ void run_t_shape_pipe(int ac, char *av[], Parameters &params)
         bidirectional_pressure_conditions.emplace_back(
             std::make_unique<PressureBC<MainExecutionPolicy>>(
                 water_block, boundary, in_outlet_particle_buffer, params.t_ref));
+    StateDynamics<MainExecutionPolicy, fluid_dynamics::OutflowParticleDeletion> particle_deletion(water_block);
 
     // --- Section 12: Setup Recording for Body States and Observers ---
     BodyStatesRecordingToVtpCK<MainExecutionPolicy> body_states_recording(sph_system);
@@ -432,7 +433,8 @@ void run_t_shape_pipe(int ac, char *av[], Parameters &params)
                 for (auto &bc : bidirectional_pressure_conditions)
                     bc->boundary_condition.injectParticles();
                 for (auto &bc : bidirectional_pressure_conditions)
-                    bc->boundary_condition.deleteParticles();
+                    bc->boundary_condition.indicateOutFlowParticles();
+                particle_deletion.exec();
                 if (iterations % 100 == 0 && iterations != 1)
                 {
                     particle_sort.exec();
