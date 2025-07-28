@@ -185,7 +185,6 @@ void run_t_shape_pipe(int ac, char *av[], Parameters &params)
     std::cout << "Domain upper bounds: " << system_bounds.second_.transpose() << std::endl;
 
     SPHSystem sph_system(system_bounds, resolution_ref);
-    sph_system.setIOEnvironment();
     auto &io_env = sph_system.getIOEnvironment();
     std::filesystem::path fluid_file_path(params.fluid_file_path);
     io_env.output_folder_ += std::to_string(params.number_of_particles) + "_" +
