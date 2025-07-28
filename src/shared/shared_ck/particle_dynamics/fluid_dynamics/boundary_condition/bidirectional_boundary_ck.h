@@ -129,13 +129,11 @@ class BufferInflowInjectionCK : public BaseLocalDynamics<AlignedBoxByCell>
     Real upper_bound_fringe_;
 };
 
-class BufferOutflowDeletionCK : public BaseLocalDynamics<AlignedBoxByCell>
+class BufferOutflowIndication : public BaseLocalDynamics<AlignedBoxByCell>
 {
-    using RemoveRealParticleKernel = typename RemoveRealParticle::ComputingKernel;
-
   public:
-    BufferOutflowDeletionCK(AlignedBoxByCell &aligned_box_part);
-    virtual ~BufferOutflowDeletionCK() {};
+    BufferOutflowIndication(AlignedBoxByCell &aligned_box_part);
+    virtual ~BufferOutflowIndication() {};
 
     class UpdateKernel
     {
@@ -162,18 +160,42 @@ class BufferOutflowDeletionCK : public BaseLocalDynamics<AlignedBoxByCell>
       protected:
         AlignedBox *aligned_box_;
         Vecd *pos_;
+        int *life_status_;
         IsDeletable is_deltable_;
         UnsignedInt *total_real_particles_;
-        RemoveRealParticleKernel remove_real_particle_;
     };
 
   protected:
     int part_id_;
     SingularVariable<AlignedBox> *sv_aligned_box_;
     SingularVariable<UnsignedInt> *sv_total_real_particles_;
-    RemoveRealParticle remove_real_particle_method_;
     DiscreteVariable<int> *dv_buffer_indicator_;
     DiscreteVariable<Vecd> *dv_pos_;
+    DiscreteVariable<int> *dv_life_status_; // 0: alive, 1: to delete
+};
+
+class OutflowParticleDeletion : public LocalDynamics
+{
+    using RemoveRealParticleKernel = typename RemoveRealParticle::ComputingKernel;
+
+  public:
+    OutflowParticleDeletion(SPHBody &sph_body);
+
+    class UpdateKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+        void update(UnsignedInt index_i, Real dt = 0.0);
+
+      protected:
+        RemoveRealParticleKernel remove_real_particle_;
+        int *life_status_;
+      };
+
+  protected:
+    RemoveRealParticle remove_real_particle_method_;
+    DiscreteVariable<int> *dv_life_status_;
 };
 
 template <class KernelCorrectionType, typename ConditionType>
@@ -217,7 +239,7 @@ class BidirectionalBoundaryCK
     StateDynamics<ExecutionPolicy, BufferIndicationCK> tag_buffer_particles_;
     StateDynamics<ExecutionPolicy, PressureVelocityCondition<KernelCorrectionType, ConditionType>> boundary_condition_;
     StateDynamics<ExecutionPolicy, BufferInflowInjectionCK<ConditionType>> inflow_injection_;
-    StateDynamics<ExecutionPolicy, BufferOutflowDeletionCK> outflow_deletion_;
+    StateDynamics<ExecutionPolicy, BufferOutflowIndication> outflow_indication_;
 
   public:
     template <typename... Args>
@@ -226,7 +248,7 @@ class BidirectionalBoundaryCK
     void tagBufferParticles() { tag_buffer_particles_.exec(); }
     void applyBoundaryCondition(Real dt) { boundary_condition_.exec(dt); }
     void injectParticles() { inflow_injection_.exec(); }
-    void deleteParticles() { outflow_deletion_.exec(); }
+    void indicateOutFlowParticles() { outflow_indication_.exec(); }
 };
 } // namespace fluid_dynamics
 } // namespace SPH
