@@ -90,12 +90,14 @@ class TotalMechanicalEnergyCK : public TotalKineticEnergyCK
     DiscreteVariable<Vecd> *dv_pos_;
 };
 
-template <typename DataType, class DynamicsIdentifier = SPHBody>
-class QuantitySum : public BaseLocalDynamicsReduce<ReduceSum<DataType>, DynamicsIdentifier>
+template <typename ReturnFunctionType, class DynamicsIdentifier = SPHBody>
+class QuantityReduce : public BaseLocalDynamicsReduce<ReturnFunctionType, DynamicsIdentifier>
 {
+    using DataType = typename ReturnFunctionType::DataType;
+
   public:
-    QuantitySum(DynamicsIdentifier &identifier, const std::string &variable_name);
-    virtual ~QuantitySum() {};
+    QuantityReduce(DynamicsIdentifier &identifier, const std::string &variable_name);
+    virtual ~QuantityReduce() {};
 
     class ReduceKernel
     {

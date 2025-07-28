@@ -32,11 +32,10 @@
 #include "adaptation.h"
 #include "all_mesh_dynamics.h"
 #include "base_geometry.h"
-#include "mesh_with_data_packages.h"
+#include "kernel_tabulated_ck.h"
 #include "mesh_dynamics.h"
 #include "mesh_local_dynamics.hpp"
-#include "all_mesh_dynamics.h"
-#include "kernel_tabulated_ck.h"
+#include "mesh_with_data_packages.h"
 #include "sphinxsys_variable.h"
 namespace SPH
 {
@@ -49,9 +48,18 @@ class MultilevelLevelSet : public BaseMeshField
   public:
     MultilevelLevelSet(BoundingBox tentative_bounds, Real reference_data_spacing, size_t total_levels,
                        Shape &shape, SPHAdaptation &sph_adaptation);
-    MultilevelLevelSet(BoundingBox tentative_bounds, MeshWithGridDataPackagesType* coarse_data,
+    MultilevelLevelSet(BoundingBox tentative_bounds, MeshWithGridDataPackagesType *coarse_data,
                        Shape &shape, SPHAdaptation &sph_adaptation);
-    ~MultilevelLevelSet(){};
+    ~MultilevelLevelSet() {};
+
+    template <class ExecutionPolicy>
+    ProbeSignedDistance getProbeSignedDistance(const ExecutionPolicy &ex_policy);
+
+    template <class ExecutionPolicy>
+    ProbeNormalDirection getProbeNormalDirection(const ExecutionPolicy &ex_policy);
+
+    template <class ExecutionPolicy>
+    ProbeKernelGradientIntegral getProbeKernelGradientIntegral(const ExecutionPolicy &ex_policy);
 
     template <class ExecutionPolicy>
     void finishInitialization(const ExecutionPolicy &ex_policy)
@@ -87,11 +95,12 @@ class MultilevelLevelSet : public BaseMeshField
     template <class ExecutionPolicy>
     void syncMeshVariableData(ExecutionPolicy &ex_policy)
     {
-        for(size_t l = 0; l != total_levels_; l++)
+        for (size_t l = 0; l != total_levels_; l++)
             mesh_data_set_[l]->syncMeshVariableData(ex_policy);
     }
 
-    void resetProbes(){
+    void resetProbes()
+    {
         probe_signed_distance_set_.clear();
         probe_normal_direction_set_.clear();
         probe_level_set_gradient_set_.clear();
@@ -100,28 +109,29 @@ class MultilevelLevelSet : public BaseMeshField
         probe_kernel_second_gradient_integral_set_.clear();
         cell_package_index_set_.clear();
         meta_data_cell_set_.clear();
-        for(size_t l = 0; l != total_levels_; l++){
-          registerProbes(execution::par, l);
-          cell_package_index_set_.push_back(
-              mesh_data_set_[l]->cell_package_index_.DelegatedData(execution::par));
-          meta_data_cell_set_.push_back(
-              mesh_data_set_[l]->meta_data_cell_.DelegatedData(execution::par));
+        for (size_t l = 0; l != total_levels_; l++)
+        {
+            registerProbes(execution::par, l);
+            cell_package_index_set_.push_back(
+                mesh_data_set_[l]->cell_package_index_.DelegatedData(execution::par));
+            meta_data_cell_set_.push_back(
+                mesh_data_set_[l]->meta_data_cell_.DelegatedData(execution::par));
         }
     }
-    
+
   protected:
     inline size_t getProbeLevel(const Vecd &position);
     inline size_t getCoarseLevel(Real h_ratio);
 
-    void initializeLevel(size_t level, Real reference_data_spacing, BoundingBox tentative_bounds,
-                         MeshWithGridDataPackagesType* coarse_data = nullptr);
+    void initializeLevel(Real reference_data_spacing, BoundingBox tentative_bounds,
+                         MeshWithGridDataPackagesType *coarse_data = nullptr);
     template <class ExecutionPolicy, class KernelType>
     void initializeMeshVariables(const ExecutionPolicy &ex_policy, KernelType *kernel);
     template <class ExecutionPolicy>
     void registerProbes(const ExecutionPolicy &ex_policy, size_t level);
 
-    Shape &shape_;                           /**< the geometry is described by the level set. */
-    size_t total_levels_;                    /**< level 0 is the coarsest */
+    Shape &shape_;        /**< the geometry is described by the level set. */
+    size_t total_levels_; /**< level 0 is the coarsest */
     StdVec<size_t *> cell_package_index_set_;
     StdVec<std::pair<Arrayi, int> *> meta_data_cell_set_;
     StdVec<Real> global_h_ratio_vec_;

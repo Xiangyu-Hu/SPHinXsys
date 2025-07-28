@@ -44,13 +44,6 @@ using AngularVecd = Vec3d;
 using Rotation = Rotation3d;
 using BoundingBox = BaseBoundingBox<Vec3d>;
 using Transform = BaseTransform<Rotation3d, Vec3d>;
-using CellNeighborhood = std::array<std::array<std::array<int, 3>, 3>, 3>;
-
-template <class DataType, int array_size>
-using PackageDataMatrix = std::array<std::array<std::array<DataType, array_size>, array_size>, array_size>;
-
-template <class DataType>
-using MeshDataMatrix = DataType ***;
 
 /** only works for smoothing length ratio less or equal than 1.3*/
 constexpr int MaximumNeighborhoodSize = int(1.33 * M_PI * 27);

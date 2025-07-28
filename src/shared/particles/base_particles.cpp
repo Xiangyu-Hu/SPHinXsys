@@ -1,10 +1,6 @@
 #include "base_particles.hpp"
 
 #include "base_body.h"
-#include "base_body_part.h"
-#include "base_material.h"
-#include "base_particle_generator.h"
-#include "xml_parser.h"
 
 namespace SPH
 {
@@ -16,7 +12,8 @@ BaseParticles::BaseParticles(SPHBody &sph_body, BaseMaterial *base_material)
       sph_body_(sph_body), body_name_(sph_body.getName()),
       base_material_(*base_material),
       restart_xml_parser_("xml_restart", "particles"),
-      reload_xml_parser_("xml_particle_reload", "particles")
+      reload_xml_parser_("xml_particle_reload", "particles"),
+      total_body_parts_(0)
 {
     sph_body.assignBaseParticles(this);
     sv_total_real_particles_ = registerSingularVariable<UnsignedInt>("TotalRealParticles");
@@ -39,29 +36,29 @@ void BaseParticles::initializeBasicParticleVariables()
     //----------------------------------------------------------------------
     //		register non-geometric variables
     //----------------------------------------------------------------------
-    rho_ = registerStateVariable<Real>("Density", base_material_.ReferenceDensity());
-    mass_ = registerStateVariable<Real>("Mass",
-                                        [&](size_t i) -> Real
-                                        { return rho_[i] * ParticleVolume(i); });
+    rho_ = registerStateVariableData<Real>("Density", base_material_.ReferenceDensity());
+    mass_ = registerStateVariableData<Real>("Mass",
+                                            [&](size_t i) -> Real
+                                            { return rho_[i] * ParticleVolume(i); });
     //----------------------------------------------------------------------
     //		unregistered variables and data
     //----------------------------------------------------------------------
-    original_id_ = registerDiscreteVariable<UnsignedInt>("OriginalID", particles_bound_, AssignIndex());
+    original_id_ = registerDiscreteVariableData<UnsignedInt>("OriginalID", particles_bound_, AssignIndex());
     addEvolvingVariable<UnsignedInt>("OriginalID");
     addVariableToWrite<UnsignedInt>("OriginalID");
-    sorted_id_ = registerDiscreteVariable<UnsignedInt>("SortedID", particles_bound_, AssignIndex());
+    sorted_id_ = registerDiscreteVariableData<UnsignedInt>("SortedID", particles_bound_, AssignIndex());
 }
 //=================================================================================================//
 void BaseParticles::registerPositionAndVolumetricMeasure(StdVec<Vecd> &pos, StdVec<Real> &Vol)
 {
-    dv_pos_ = registerStateVariableOnlyFrom<Vecd>("Position", pos);
-    Vol_ = registerStateVariableFrom<Real>("VolumetricMeasure", Vol);
+    dv_pos_ = registerStateVariableFrom<Vecd>("Position", pos);
+    Vol_ = registerStateVariableDataFrom<Real>("VolumetricMeasure", Vol);
 }
 //=================================================================================================//
 void BaseParticles::registerPositionAndVolumetricMeasureFromReload()
 {
-    dv_pos_ = registerStateVariableOnlyFromReload<Vecd>("Position");
-    Vol_ = registerStateVariableFromReload<Real>("VolumetricMeasure");
+    dv_pos_ = registerStateVariableFromReload<Vecd>("Position");
+    Vol_ = registerStateVariableDataFromReload<Real>("VolumetricMeasure");
 }
 //=================================================================================================//
 void BaseParticles::initializeAllParticlesBounds(size_t number_of_particles)
@@ -122,6 +119,12 @@ UnsignedInt BaseParticles::createRealParticleFrom(UnsignedInt index)
     incrementTotalRealParticles();
     return new_original_id;
 }
+//=================================================================================================//
+int BaseParticles::getNewBodyPartID()
+{
+    total_body_parts_++;
+    return total_body_parts_;
+};
 //=================================================================================================//
 void BaseParticles::resizeXmlDocForParticles(XmlParser &xml_parser)
 {

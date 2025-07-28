@@ -19,18 +19,18 @@ TotalMechanicalEnergyCK::ReduceKernel::
       gravity_(encloser.gravity_),
       pos_(encloser.dv_pos_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
-template <typename DataType, class DynamicsIdentifier>
-QuantitySum<DataType, DynamicsIdentifier>::
-    QuantitySum(DynamicsIdentifier &identifier, const std::string &variable_name)
-    : BaseLocalDynamicsReduce<ReduceSum<DataType>, DynamicsIdentifier>(identifier),
+template <typename ReturnFunctionType, class DynamicsIdentifier>
+QuantityReduce<ReturnFunctionType, DynamicsIdentifier>::
+    QuantityReduce(DynamicsIdentifier &identifier, const std::string &variable_name)
+    : BaseLocalDynamicsReduce<ReturnFunctionType, DynamicsIdentifier>(identifier),
       dv_variable_(this->particles_->template getVariableByName<DataType>(variable_name))
 {
-    this->quantity_name_ = "Total" + variable_name;
+    this->quantity_name_ = type_name<ReturnFunctionType>() + variable_name;
 }
 //=================================================================================================//
-template <typename DataType, class DynamicsIdentifier>
+template <typename ReturnFunctionType, class DynamicsIdentifier>
 template <class ExecutionPolicy, class EncloserType>
-QuantitySum<DataType, DynamicsIdentifier>::ReduceKernel::
+QuantityReduce<ReturnFunctionType, DynamicsIdentifier>::ReduceKernel::
     ReduceKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : variable_(encloser.dv_variable_->DelegatedData(ex_policy)) {}
 //=================================================================================================//

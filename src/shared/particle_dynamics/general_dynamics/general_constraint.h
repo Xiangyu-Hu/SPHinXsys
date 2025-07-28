@@ -43,8 +43,8 @@ class ConstantConstraint : public BaseLocalDynamics<DynamicsIdentifier>
                        DataType constrained_value)
         : BaseLocalDynamics<DynamicsIdentifier>(identifier),
           variable_data_field_(this->particles_->template getVariableDataByName<DataType>(variable_name)),
-          constrained_value_(constrained_value){};
-    virtual ~ConstantConstraint(){};
+          constrained_value_(constrained_value) {};
+    virtual ~ConstantConstraint() {};
     void update(size_t index_i, Real dt = 0.0)
     {
         variable_data_field_[index_i] = constrained_value_;
@@ -67,7 +67,7 @@ class ShapeSurfaceBounding : public BaseLocalDynamics<BodyPartByCell>
 {
   public:
     ShapeSurfaceBounding(NearShapeSurface &body_part);
-    virtual ~ShapeSurfaceBounding(){};
+    virtual ~ShapeSurfaceBounding() {};
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
@@ -91,10 +91,10 @@ class MotionConstraint : public BaseLocalDynamics<DynamicsIdentifier>
     explicit MotionConstraint(DynamicsIdentifier &identifier)
         : BaseLocalDynamics<DynamicsIdentifier>(identifier),
           pos_(this->particles_->template getVariableDataByName<Vecd>("Position")),
-          pos0_(this->particles_->template registerStateVariableFrom<Vecd>("InitialPosition", "Position")),
-          vel_(this->particles_->template registerStateVariable<Vecd>("Velocity")){};
+          pos0_(this->particles_->template registerStateVariableDataFrom<Vecd>("InitialPosition", "Position")),
+          vel_(this->particles_->template registerStateVariableData<Vecd>("Velocity")) {};
 
-    virtual ~MotionConstraint(){};
+    virtual ~MotionConstraint() {};
 
   protected:
     Vecd *pos_, *pos0_, *vel_;
@@ -109,8 +109,8 @@ class FixConstraint : public MotionConstraint<DynamicsIdentifier>
 {
   public:
     explicit FixConstraint(DynamicsIdentifier &identifier)
-        : MotionConstraint<DynamicsIdentifier>(identifier){};
-    virtual ~FixConstraint(){};
+        : MotionConstraint<DynamicsIdentifier>(identifier) {};
+    virtual ~FixConstraint() {};
 
     void update(size_t index_i, Real dt = 0.0)
     {
@@ -134,7 +134,7 @@ class FixedInAxisDirection : public MotionConstraint<BodyPartByParticle>
         for (int k = 0; k != Dimensions; ++k)
             constrain_matrix_(k, k) = constrained_axises[k];
     };
-    virtual ~FixedInAxisDirection(){};
+    virtual ~FixedInAxisDirection() {};
     void update(size_t index_i, Real dt = 0.0)
     {
         this->vel_[index_i] = constrain_matrix_ * this->vel_[index_i];

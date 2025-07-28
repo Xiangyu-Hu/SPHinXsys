@@ -13,7 +13,7 @@ Gradient<Base, DataType, RelationType<Parameters...>>::
     : BaseDynamicsType(identifier), variable_name_(variable_name),
       dv_Vol_(this->particles_->template getVariableByName<Real>("VolumetricMeasure")),
       dv_variable_(this->particles_->template getVariableByName<DataType>(variable_name)),
-      dv_gradient_(this->particles_->template registerStateVariableOnly<Grad<DataType>>(
+      dv_gradient_(this->particles_->template registerStateVariable<Grad<DataType>>(
           variable_name + "Gradient", ZeroData<Grad<DataType>>::value)),
       dv_B_(this->particles_->template getVariableByName<Matd>("LinearCorrectionMatrix")) {}
 //=================================================================================================//
@@ -86,7 +86,7 @@ template <typename... Args>
 Hessian<Base, DataType, RelationType<Parameters...>>::Hessian(Args &&...args)
     : BaseDynamicsType(std::forward<Args>(args)...),
       dv_M_(this->particles_->template getVariableByName<MatTend>("HessianCorrectionMatrix")),
-      dv_hessian_(this->particles_->template registerStateVariableOnly<Hess<DataType>>(
+      dv_hessian_(this->particles_->template registerStateVariable<Hess<DataType>>(
           this->variable_name_ + "Hessian")) {}
 //=================================================================================================//
 template <typename DataType, template <typename...> class RelationType, typename... Parameters>

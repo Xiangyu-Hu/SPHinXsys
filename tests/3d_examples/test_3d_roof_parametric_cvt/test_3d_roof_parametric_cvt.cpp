@@ -152,7 +152,7 @@ DataType interpolate_observer(
 {
     Kernel *kernel_ptr = particles.getSPHBody().getSPHAdaptation().getKernel();
     Real smoothing_length = particles.getSPHBody().getSPHAdaptation().ReferenceSmoothingLength();
-    Vecd *pos0_ = particles.registerStateVariableFrom<Vecd>("InitialPosition", "Position");
+    Vecd *pos0_ = particles.registerStateVariableDataFrom<Vecd>("InitialPosition", "Position");
     DataType variable_sum = DataType::Zero();
     Real kernel_sum = 0;
     for (auto id : neighbor_ids)
@@ -338,7 +338,6 @@ return_data roof_under_self_weight(Real dp, bool cvt = true, int particle_number
 
     // starting the actual simulation
     SPHSystem system(bb_system, dp);
-    system.setIOEnvironment(false);
     SolidBody shell_body(system, shell_shape);
     shell_body.defineMaterial<LinearElasticSolid>(rho, E, mu);
     if (cvt)
@@ -403,7 +402,7 @@ return_data roof_under_self_weight(Real dp, bool cvt = true, int particle_number
     vtp_output.writeToFile(0);
     ReduceDynamics<VariableNorm<Vecd, ReduceMax>> maximum_displace_norm(shell_body, "Displacement");
 
-    Vecd *pos0_ = shell_particles->registerStateVariableFrom<Vecd>("InitialPosition", "Position");
+    Vecd *pos0_ = shell_particles->registerStateVariableDataFrom<Vecd>("InitialPosition", "Position");
     // observer points A & B
     point_A.neighbor_ids = [&]() { // only neighbors on the edges
         IndexVector ids;

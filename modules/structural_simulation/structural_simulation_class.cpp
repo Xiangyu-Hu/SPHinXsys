@@ -117,7 +117,6 @@ std::tuple<Vecd *, Real *> generateAndRelaxParticlesFromMesh(
 
     if (particle_relaxation)
     {
-        system.setIOEnvironment();
         InnerRelation inner_relation(model);
         relaxParticlesSingleResolution(write_particle_relaxation_data, model, inner_relation);
     }
@@ -200,7 +199,6 @@ StructuralSimulation::StructuralSimulation(const StructuralSimulationInput &inpu
       system_resolution_(0.0),
       system_(SPHSystem(BoundingBox(Vec3d::Zero(), Vec3d::Zero()), system_resolution_)),
       scale_system_boundaries_(input.scale_system_boundaries_),
-      io_environment_(system_),
       physical_time_(*system_.getSystemVariableDataByName<Real>("PhysicalTime")),
 
       // optional: boundary conditions
@@ -953,7 +951,7 @@ Real StructuralSimulation::getMaxDisplacement(int body_index)
 {
     BaseParticles *base_particles = solid_body_list_[body_index].get()->getElasticSolidParticles();
     Vecd *pos = base_particles->ParticlePositions();
-    Vecd *pos0 = base_particles->registerStateVariableFrom<Vecd>("InitialPosition", "Position");
+    Vecd *pos0 = base_particles->registerStateVariableDataFrom<Vecd>("InitialPosition", "Position");
     Real displ_max = 0;
     for (size_t i = 0; i < base_particles->TotalRealParticles(); i++)
     {

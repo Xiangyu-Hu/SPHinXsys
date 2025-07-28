@@ -156,7 +156,7 @@ class RelaxationResidue<Contact<>>
     {
         for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
         {
-            contact_Vol_.push_back(this->contact_particles_[k]->template registerStateVariable<Real>("VolumetricMeasure"));
+            contact_Vol_.push_back(this->contact_particles_[k]->template registerStateVariableData<Real>("VolumetricMeasure"));
         }
     };
     virtual ~RelaxationResidue() {};

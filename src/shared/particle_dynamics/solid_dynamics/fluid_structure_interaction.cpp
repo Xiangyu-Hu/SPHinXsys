@@ -62,7 +62,7 @@ InitializeDisplacement::
     InitializeDisplacement(SPHBody &sph_body)
     : LocalDynamics(sph_body),
       pos_(particles_->getVariableDataByName<Vecd>("Position")),
-      pos_temp_(particles_->registerStateVariable<Vecd>("TemporaryPosition")) {}
+      pos_temp_(particles_->registerStateVariableData<Vecd>("TemporaryPosition")) {}
 //=================================================================================================//
 void InitializeDisplacement::update(size_t index_i, Real dt)
 {

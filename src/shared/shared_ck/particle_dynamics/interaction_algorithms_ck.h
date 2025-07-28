@@ -103,13 +103,13 @@ class InteractionDynamicsCK<ExecutionPolicy, InteractionType<AlgorithmType>>
     template <typename... ControlParameters, typename... RelationParameters, typename... Args>
     auto &addContactInteraction(Contact<RelationParameters...> &contact_relation, Args &&...args);
 
-    template <template <typename...> class LocalDynamicsType,
-              typename... ControlTypes, class DynamicsIdentifier, typename... Args>
-    auto &addPostStateDynamics(DynamicsIdentifier &identifier, Args &&...args);
+    auto &addContactInteraction(BaseDynamics<void> &contact_interaction);
 
-    template <template <typename...> class LocalDynamicsType,
-              typename... ControlTypes, class DynamicsIdentifier, typename... Args>
-    auto &addPreStateDynamics(DynamicsIdentifier &identifier, Args &&...args);
+    template <class UpdateType, typename... Args>
+    auto &addPostStateDynamics(Args &&...args);
+
+    template <class UpdateType, typename... Args>
+    auto &addPreStateDynamics(Args &&...args);
 };
 
 template <class ExecutionPolicy, template <typename...> class InteractionType, typename... Parameters>

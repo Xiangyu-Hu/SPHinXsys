@@ -49,9 +49,9 @@ class RepulsionForce<Base, DataDelegationType>
     template <class BaseRelationType>
     RepulsionForce(BaseRelationType &base_relation, const std::string &variable_name)
         : ForcePrior(base_relation.getSPHBody(), variable_name), DataDelegationType(base_relation),
-          repulsion_force_(this->particles_->template registerStateVariable<Vecd>(variable_name)),
+          repulsion_force_(this->particles_->template registerStateVariableData<Vecd>(variable_name)),
           Vol_(this->particles_->template getVariableDataByName<Real>("VolumetricMeasure")){};
-    virtual ~RepulsionForce(){};
+    virtual ~RepulsionForce() {};
 
   protected:
     Vecd *repulsion_force_;
@@ -63,7 +63,7 @@ class RepulsionForce<Contact<Inner<>>> : public RepulsionForce<Base, DataDelegat
 {
   public:
     explicit RepulsionForce(BaseInnerRelation &self_contact_relation);
-    virtual ~RepulsionForce(){};
+    virtual ~RepulsionForce() {};
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
@@ -79,7 +79,7 @@ class RepulsionForce<Contact<>> : public RepulsionForce<Base, DataDelegateContac
 {
   public:
     explicit RepulsionForce(BaseContactRelation &solid_body_contact_relation);
-    virtual ~RepulsionForce(){};
+    virtual ~RepulsionForce() {};
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
@@ -96,7 +96,7 @@ class RepulsionForce<Contact<Wall>> : public RepulsionForce<Base, DataDelegateCo
 {
   public:
     explicit RepulsionForce(BaseContactRelation &solid_body_contact_relation);
-    virtual ~RepulsionForce(){};
+    virtual ~RepulsionForce() {};
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
@@ -111,7 +111,7 @@ class RepulsionForce<Wall, Contact<>> : public RepulsionForce<Base, DataDelegate
 {
   public:
     explicit RepulsionForce(BaseContactRelation &solid_body_contact_relation);
-    virtual ~RepulsionForce(){};
+    virtual ~RepulsionForce() {};
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:

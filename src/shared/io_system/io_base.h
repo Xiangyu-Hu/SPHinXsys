@@ -89,6 +89,19 @@ class BaseIO
             }
         };
     };
+
+    struct finalizeVariablesAfterRead
+    {
+        template <class ExecutionPolicy, typename DataType>
+        void operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables,
+                        const ExecutionPolicy &ex_policy)
+        {
+            for (size_t i = 0; i != variables.size(); ++i)
+            {
+                variables[i]->finalizeLoadIn(ex_policy);
+            }
+        };
+    };
 };
 
 /**

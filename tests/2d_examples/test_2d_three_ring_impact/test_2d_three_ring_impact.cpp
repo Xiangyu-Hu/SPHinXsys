@@ -63,7 +63,7 @@ class ParticleGenerator<SurfaceParticles, ShellRing> : public ParticleGenerator<
           center_(center),
           mid_srf_radius_(mid_srf_radius),
           dp_(dp),
-          thickness_(thickness){};
+          thickness_(thickness) {};
     void prepareGeometricData() override
     {
         const auto number_of_particles = int(2 * Pi * mid_srf_radius_ / dp_);
@@ -87,8 +87,8 @@ class InitialVelocityCondition : public BaseLocalDynamics<SPHBody>
   public:
     InitialVelocityCondition(SPHBody &body, Vec2d initial_velocity)
         : BaseLocalDynamics<SPHBody>(body),
-          vel_(this->particles_->template registerStateVariable<Vec2d>("Velocity")),
-          initial_velocity_(std::move(initial_velocity)){};
+          vel_(this->particles_->template registerStateVariableData<Vec2d>("Velocity")),
+          initial_velocity_(std::move(initial_velocity)) {};
     inline void update(size_t index_i, [[maybe_unused]] Real dt = 0.0)
     {
         vel_[index_i] = initial_velocity_;
@@ -184,7 +184,6 @@ void three_ring_impact(int resolution_factor_l, int resolution_factor_m, int res
 
     // System
     SPHSystem system(bb_system, dp_l);
-    IOEnvironment io_environment(system);
 
     // Body
     SolidBody ring_l_body(system, makeShared<Ring>("RingLarge", center_l, 0.5 * diameter_inner_l, 0.5 * diameter_outer_l));

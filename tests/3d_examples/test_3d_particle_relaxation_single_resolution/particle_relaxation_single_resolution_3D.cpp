@@ -55,24 +55,24 @@ class SolidBodyFromMesh : public ComplexShape
 //	Setting for the second geometry.
 //	To use this, please commenting the setting for the first geometry.
 //----------------------------------------------------------------------
-//std::string full_path_to_file = "./input/fluid.stl";
+// std::string full_path_to_file = "./input/fluid.stl";
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-//Vec3d domain_lower_bound(-0.036, -0.046, -0.011);
-//Vec3d domain_upper_bound(0.036, 0.093, 0.072);
-//Vecd translation(0.0, 0.0, 0.0);
-//Real scaling = 1.0;
+// Vec3d domain_lower_bound(-0.036, -0.046, -0.011);
+// Vec3d domain_upper_bound(0.036, 0.093, 0.072);
+// Vecd translation(0.0, 0.0, 0.0);
+// Real scaling = 1.0;
 
 //----------------------------------------------------------------------
 //	Below are common parts for the two test geometries.
 //----------------------------------------------------------------------
-//BoundingBox system_domain_bounds(domain_lower_bound, domain_upper_bound);
-//Real dp_0 = (domain_upper_bound[0] - domain_lower_bound[0]) / 100.0;
+// BoundingBox system_domain_bounds(domain_lower_bound, domain_upper_bound);
+// Real dp_0 = (domain_upper_bound[0] - domain_lower_bound[0]) / 100.0;
 //----------------------------------------------------------------------
 //	define the imported model.
 //----------------------------------------------------------------------
-//class SolidBodyFromMesh : public ComplexShape
+// class SolidBodyFromMesh : public ComplexShape
 //{
 //  public:
 //    explicit SolidBodyFromMesh(const std::string &shape_name) : ComplexShape(shape_name)
@@ -89,7 +89,7 @@ int main(int ac, char *av[])
     //	Build up -- a SPHSystem
     //----------------------------------------------------------------------
     SPHSystem sph_system(system_domain_bounds, dp_0);
-    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
+    sph_system.handleCommandlineOptions(ac, av);
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------

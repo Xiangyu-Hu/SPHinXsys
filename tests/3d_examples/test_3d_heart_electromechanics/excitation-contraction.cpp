@@ -73,7 +73,7 @@ class DiffusionBCs : public BaseLocalDynamics<BodyPartByParticle>
     explicit DiffusionBCs(BodyPartByParticle &body_part, const std::string &species_name)
         : BaseLocalDynamics<BodyPartByParticle>(body_part),
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
-          phi_(particles_->registerStateVariable<Real>(species_name)) {};
+          phi_(particles_->registerStateVariableData<Real>(species_name)) {};
     virtual ~DiffusionBCs() {};
 
     void update(size_t index_i, Real dt = 0.0)
@@ -113,7 +113,7 @@ class ComputeFiberAndSheetDirections : public LocalDynamics
         : LocalDynamics(sph_body),
           muscle_material_(DynamicCast<LocallyOrthotropicMuscle>(this, sph_body_.getBaseMaterial())),
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
-          phi_(particles_->registerStateVariable<Real>(species_name))
+          phi_(particles_->registerStateVariableData<Real>(species_name))
     {
         center_line_vector_ = Vecd(0.0, 1.0, 0.0);
         beta_epi_ = -(70.0 / 180.0) * M_PI;
@@ -176,7 +176,7 @@ class ApplyStimulusCurrentSI : public LocalDynamics
     explicit ApplyStimulusCurrentSI(SPHBody &sph_body)
         : LocalDynamics(sph_body),
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
-          voltage_(particles_->registerStateVariable<Real>("Voltage")) {};
+          voltage_(particles_->registerStateVariableData<Real>("Voltage")) {};
 
     void update(size_t index_i, Real dt)
     {
@@ -205,7 +205,7 @@ class ApplyStimulusCurrentSII : public LocalDynamics
     explicit ApplyStimulusCurrentSII(SPHBody &sph_body)
         : LocalDynamics(sph_body),
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
-          voltage_(particles_->registerStateVariable<Real>("Voltage")) {};
+          voltage_(particles_->registerStateVariableData<Real>("Voltage")) {};
 
     void update(size_t index_i, Real dt)
     {
@@ -247,9 +247,9 @@ int main(int ac, char *av[])
     //	SPHSystem section
     //----------------------------------------------------------------------
     SPHSystem sph_system(system_domain_bounds, dp_0);
-    sph_system.setRunParticleRelaxation(false);                      // Tag for run particle relaxation for body-fitted distribution
-    sph_system.setReloadParticles(true);                             // Tag for computation with save particles distribution
-    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment(); // handle command line arguments
+    sph_system.setRunParticleRelaxation(false);  // Tag for run particle relaxation for body-fitted distribution
+    sph_system.setReloadParticles(true);         // Tag for computation with save particles distribution
+    sph_system.handleCommandlineOptions(ac, av); // handle command line arguments
     //----------------------------------------------------------------------
     //	SPH Particle relaxation for body fitted particle distribution.
     //----------------------------------------------------------------------

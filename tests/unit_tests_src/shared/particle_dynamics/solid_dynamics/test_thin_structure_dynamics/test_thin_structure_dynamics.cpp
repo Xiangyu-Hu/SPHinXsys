@@ -158,7 +158,6 @@ int main(int ac, char *av[])
     SimpleDynamics<ControlledRotation> controlled_rotation(controlled_geometry);
     SimpleDynamics<thin_structure_dynamics::UpdateShellNormalDirection> update_normal(plate_body);
     /** File and screen outputs */
-    IOEnvironment io_environment(system);
     BodyStatesRecordingToVtp write_states(system);
     write_states.addToWrite<Vecd>(plate_body, "PseudoNormal");
     write_states.addDerivedVariableRecording<SimpleDynamics<VonMisesStrain>>(plate_body);

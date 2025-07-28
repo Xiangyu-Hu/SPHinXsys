@@ -28,7 +28,7 @@ Real angle_increment = 2 * Pi / Wnum;
 Real WD = 0.5 * DRO + AG + 0.5 * WH;     /**< Distance from center point to the center of a winding. */
 Real ZW = 0.5 * DRO + AG;                /**< Distance from center point to the site of a winding. */
 int resolution_circle = 60;              /**<Approximate the circle as the number of sides of the polygon. */
-Real resolution_ref = 0.00075;            /**< Initial reference particle spacing. */
+Real resolution_ref = 0.00075;           /**< Initial reference particle spacing. */
 Real BW = 0.5 * (DMO - DM);              /**< Extending width for wall boundary. */
 Real OH = LH;                            /**< Outflows region height. */
 Real Lnum = 5;                           /**< Inflows number. */
@@ -111,21 +111,21 @@ Real rho0_f = 945;     /**< Reference density of fluid. */
 Real gravity_g = 9.81; /**< Gravity force of fluid. */
 std::string temperature_species_name = "Phi";
 // dynamics informations of oil
-Real flow_rate = 30;                                                      /**< Oil flow rate [L / h] */
-Real v_inlet = (flow_rate * 0.001 / 3600) / (Pi * LL * LL);               /**< Inflow vilocity [m / s]. */
+Real flow_rate = 30;                                        /**< Oil flow rate [L / h] */
+Real v_inlet = (flow_rate * 0.001 / 3600) / (Pi * LL * LL); /**< Inflow vilocity [m / s]. */
 // dynamics informations of rotor
 Real rotor_rotation_velocity = 150;                    /**<Angular velocity rpm. */
 Real Omega = -(rotor_rotation_velocity * 2 * Pi / 60); /**<Angle of rotor. */
-Real U_f = 2 * Pi * RR * rotor_rotation_velocity / 60;      /**< Characteristic velocity. */
-Real c_f = 10.0 * U_f;                                                    /**< Reference sound speed. */
+Real U_f = 2 * Pi * RR * rotor_rotation_velocity / 60; /**< Characteristic velocity. */
+Real c_f = 10.0 * U_f;                                 /**< Reference sound speed. */
 // thermal parameters
 Real mu_f = 0.00874;                                            /**< Dynamics viscosity [Pa * s]. */
 Real phi_winding = 110.0;                                       /**< Temperature of winding at begin. */
 Real phi_fluid_initial = 75.0;                                  /**< Temperature of oil at begin. */
-Real k_oil = 1.0e-8;                                           /**< Diffusion coefficient of oil. */
-Real k_winding = 1.0e-5;                                       /**< Diffusion coefficient of winding. */
+Real k_oil = 1.0e-8;                                            /**< Diffusion coefficient of oil. */
+Real k_winding = 1.0e-5;                                        /**< Diffusion coefficient of winding. */
 Real k_contact = (2 * k_oil * k_winding) / (k_oil + k_winding); /**< Thermal conductivity between winding and oil. */
-Real dq = 2.0;                                                 /**< Heating efficient of internal heat source [°C/s]. */
+Real dq = 2.0;                                                  /**< Heating efficient of internal heat source [°C/s]. */
 //----------------------------------------------------------------------
 //	Geometrie of the othor 4 inlets.
 //----------------------------------------------------------------------
@@ -225,7 +225,7 @@ class ThermoWindingInitialCondition : public LocalDynamics
   public:
     explicit ThermoWindingInitialCondition(SPHBody &sph_body)
         : LocalDynamics(sph_body),
-          phi_(particles_->registerStateVariable<Real>(temperature_species_name)){};
+          phi_(particles_->registerStateVariableData<Real>(temperature_species_name)) {};
 
     void update(size_t index_i, Real dt)
     {
@@ -243,7 +243,7 @@ class ThermoWindingHeatSource : public LocalDynamics
   public:
     explicit ThermoWindingHeatSource(SPHBody &sph_body)
         : LocalDynamics(sph_body),
-          phi_(particles_->registerStateVariable<Real>(temperature_species_name)){};
+          phi_(particles_->registerStateVariableData<Real>(temperature_species_name)) {};
 
     void update(size_t index_i, Real dt)
     {
@@ -261,7 +261,7 @@ class ThermofluidBodyInitialCondition : public LocalDynamics
   public:
     explicit ThermofluidBodyInitialCondition(SPHBody &sph_body)
         : LocalDynamics(sph_body),
-          phi_(particles_->registerStateVariable<Real>(temperature_species_name)){};
+          phi_(particles_->registerStateVariableData<Real>(temperature_species_name)) {};
 
     void update(size_t index_i, Real dt)
     {
@@ -286,8 +286,6 @@ int main(int ac, char *av[])
     sph_system.setRunParticleRelaxation(false); // Tag for run particle relaxation for body-fitted distribution
     sph_system.setReloadParticles(true);        // Tag for computation with save particles distribution
     sph_system.handleCommandlineOptions(ac, av);
-    //sph_system.setGenerateRegressionData(true);
-    IOEnvironment io_environment(sph_system);
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
@@ -457,7 +455,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	File output and regression check.
     //----------------------------------------------------------------------
-    
+
     BodyStatesRecordingToVtp body_states_recording(sph_system);
     body_states_recording.addToWrite<int>(oil_body, "Indicator");
     body_states_recording.addToWrite<Real>(oil_body, "Phi");
@@ -617,7 +615,7 @@ int main(int ac, char *av[])
     std::cout << "Total wall time for computation: " << tt.seconds()
               << " seconds." << std::endl;
 
-    //write_slot_phi.generateDataBase(0.005, 0.005);
+    // write_slot_phi.generateDataBase(0.005, 0.005);
     write_slot_phi.testResult();
 
     return 0;

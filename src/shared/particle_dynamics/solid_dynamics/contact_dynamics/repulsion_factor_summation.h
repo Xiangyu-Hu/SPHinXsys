@@ -48,8 +48,8 @@ class RepulsionFactorSummation<Base, DataDelegationType>
     template <class BaseRelationType>
     RepulsionFactorSummation(BaseRelationType &base_relation, const std::string &variable_name)
         : LocalDynamics(base_relation.getSPHBody()), DataDelegationType(base_relation),
-          repulsion_factor_(this->particles_->template registerStateVariable<Real>(variable_name)){};
-    virtual ~RepulsionFactorSummation(){};
+          repulsion_factor_(this->particles_->template registerStateVariableData<Real>(variable_name)){};
+    virtual ~RepulsionFactorSummation() {};
 
   protected:
     Real *repulsion_factor_;
@@ -60,7 +60,7 @@ class RepulsionFactorSummation<Inner<>> : public RepulsionFactorSummation<Base, 
 {
   public:
     explicit RepulsionFactorSummation(SelfSurfaceContactRelation &self_contact_relation);
-    virtual ~RepulsionFactorSummation(){};
+    virtual ~RepulsionFactorSummation() {};
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
@@ -73,7 +73,7 @@ class RepulsionFactorSummation<Contact<>> : public RepulsionFactorSummation<Base
 {
   public:
     explicit RepulsionFactorSummation(SurfaceContactRelation &solid_body_contact_relation);
-    virtual ~RepulsionFactorSummation(){};
+    virtual ~RepulsionFactorSummation() {};
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
@@ -91,7 +91,7 @@ class ShellContactFactor : public RepulsionFactorSummation<Base, DataDelegateCon
 {
   public:
     explicit ShellContactFactor(ShellSurfaceContactRelation &solid_body_contact_relation);
-    virtual ~ShellContactFactor(){};
+    virtual ~ShellContactFactor() {};
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:

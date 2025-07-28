@@ -14,8 +14,8 @@ template <class BaseRelationType>
 FreeSurfaceIndicationCK<Base, RelationType<Parameters...>>::
     FreeSurfaceIndicationCK(BaseRelationType &base_relation)
     : Interaction<RelationType<Parameters...>>(base_relation),
-      dv_indicator_(this->particles_->template registerStateVariableOnly<int>("Indicator")),
-      dv_pos_div_(this->particles_->template registerStateVariableOnly<Real>("PositionDivergence")),
+      dv_indicator_(this->particles_->template registerStateVariable<int>("Indicator")),
+      dv_pos_div_(this->particles_->template registerStateVariable<Real>("PositionDivergence")),
       dv_Vol_(this->particles_->template getVariableByName<Real>("VolumetricMeasure")),
       dv_threshold_by_dimensions_(0.75 * Dimensions),
       dv_smoothing_length_(this->sph_body_.getSPHAdaptation().ReferenceSmoothingLength()) {}
@@ -38,7 +38,10 @@ FreeSurfaceIndicationCK<Inner<WithUpdate, Parameters...>>::
     FreeSurfaceIndicationCK(Inner<Parameters...> &inner_relation)
     : FreeSurfaceIndicationCK<Base, Inner<Parameters...>>(inner_relation),
       dv_previous_surface_indicator_(
-          this->particles_->template registerStateVariableOnly<int>("PreviousSurfaceIndicator")) {}
+          this->particles_->template registerStateVariable<int>("PreviousSurfaceIndicator"))
+{
+    this->particles_->template addEvolvingVariable<int>("PreviousSurfaceIndicator");
+}
 //=================================================================================================//
 template <typename... Parameters>
 template <class ExecutionPolicy>

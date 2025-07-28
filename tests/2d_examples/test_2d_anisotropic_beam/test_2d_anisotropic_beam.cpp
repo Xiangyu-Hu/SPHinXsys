@@ -74,7 +74,7 @@ class ParticleGenerator<BaseParticles, Beam> : public ParticleGenerator<BasePart
 {
   public:
     ParticleGenerator(SPHBody &sph_body, BaseParticles &base_particles)
-        : ParticleGenerator<BaseParticles>(sph_body, base_particles){};
+        : ParticleGenerator<BaseParticles>(sph_body, base_particles) {};
 
     virtual void prepareGeometricData() override
     {
@@ -99,7 +99,7 @@ class BeamInitialCondition
   public:
     explicit BeamInitialCondition(SPHBody &sph_body)
         : solid_dynamics::ElasticDynamicsInitialCondition(sph_body),
-          elastic_solid_(DynamicCast<ElasticSolid>(this, sph_body_.getBaseMaterial())){};
+          elastic_solid_(DynamicCast<ElasticSolid>(this, sph_body_.getBaseMaterial())) {};
 
     void update(size_t index_i, Real dt)
     {
@@ -136,10 +136,10 @@ class AnisotropicCorrectConfiguration : public LocalDynamics, public DataDelegat
         : LocalDynamics(inner_relation.getSPHBody()),
           DataDelegateInner(inner_relation),
           beta_(beta), alpha_(alpha), Vol_(particles_->getVariableDataByName<Real>("VolumetricMeasure")),
-          B_(particles_->registerStateVariable<Matd>("LinearGradientCorrectionMatrix", IdentityMatrix<Matd>::value)),
+          B_(particles_->registerStateVariableData<Matd>("LinearGradientCorrectionMatrix", IdentityMatrix<Matd>::value)),
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
-          show_neighbor_(particles_->registerStateVariable<Real>("ShowingNeighbor", Real(0.0))){};
-    virtual ~AnisotropicCorrectConfiguration(){};
+          show_neighbor_(particles_->registerStateVariableData<Real>("ShowingNeighbor", Real(0.0))) {};
+    virtual ~AnisotropicCorrectConfiguration() {};
 
   protected:
   protected:
@@ -230,7 +230,6 @@ int main(int ac, char *av[])
     //-----------------------------------------------------------------------------
     // outputs
     //-----------------------------------------------------------------------------
-    IOEnvironment io_environment(system);
     BodyStatesRecordingToVtp write_beam_states(beam_body);
     write_beam_states.addToWrite<Real>(beam_body, "ShowingNeighbor");
     RegressionTestEnsembleAverage<ObservedQuantityRecording<Vecd>>

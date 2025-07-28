@@ -61,7 +61,6 @@ class SPHSystem
 #ifdef BOOST_AVAILABLE
     SPHSystem *handleCommandlineOptions(int ac, char *av[]);
 #endif
-    SPHSystem *setIOEnvironment(bool delete_output = true);
     IOEnvironment &getIOEnvironment();
     void setRunParticleRelaxation(bool run_particle_relaxation) { run_particle_relaxation_ = run_particle_relaxation; };
     bool RunParticleRelaxation() { return run_particle_relaxation_; };
@@ -72,6 +71,7 @@ class SPHSystem
     bool StateRecording() { return state_recording_; };
     void setStateRecording(bool state_recording) { state_recording_ = state_recording; };
     void setRestartStep(size_t restart_step) { restart_step_ = restart_step; };
+    void setLogLevel(size_t log_level);
     size_t RestartStep() { return restart_step_; };
     /** Initialize cell linked list for the SPH system. */
     void initializeSystemCellLinkedLists();
@@ -81,6 +81,7 @@ class SPHSystem
     Real getSmallestTimeStepAmongSolidBodies(Real CFL = 0.6);
     Real ReferenceResolution() { return resolution_ref_; };
     void setReferenceResolution(Real resolution_ref) { resolution_ref_ = resolution_ref; };
+    SPHBodyVector getSPHBodies() { return sph_bodies_; };
     SPHBodyVector getRealBodies() { return real_bodies_; };
     void addSPHBody(SPHBody *sph_body) { sph_bodies_.push_back(sph_body); };
     void addRealBody(RealBody *real_body);
@@ -117,6 +118,7 @@ class SPHSystem
     size_t restart_step_;                    /**< restart step */
     bool generate_regression_data_;          /**< run and generate or enhance the regression test data set. */
     bool state_recording_;                   /**< Record state in output folder. */
+    int log_level_ = 2;                      /**< Log level, 0: trace, 1: debug, 2: info, 3: warning, 4: error, 5: critical, 6: off */
     SingularVariables all_system_variables_;
 };
 } // namespace SPH

@@ -104,20 +104,30 @@ class BinaryShapes : public Shape
     explicit BinaryShapes(const std::string &shape_name) : Shape(shape_name){};
     virtual ~BinaryShapes(){};
 
-    template <class SubShapeType, typename... Args>
-    void add(Args &&... args)
+    void add(Shape *sub_shape)
     {
-        Shape *sub_shape = sub_shape_ptrs_keeper_.createPtr<SubShapeType>(std::forward<Args>(args)...);
         SubShapeAndOp sub_shape_and_op(sub_shape, ShapeBooleanOps::add);
         sub_shapes_and_ops_.push_back(sub_shape_and_op);
     };
 
     template <class SubShapeType, typename... Args>
-    void subtract(Args &&... args)
+    void add(Args &&...args)
     {
         Shape *sub_shape = sub_shape_ptrs_keeper_.createPtr<SubShapeType>(std::forward<Args>(args)...);
+        add(sub_shape);
+    };
+
+    void subtract(Shape *sub_shape)
+    {
         SubShapeAndOp sub_shape_and_op(sub_shape, ShapeBooleanOps::sub);
         sub_shapes_and_ops_.push_back(sub_shape_and_op);
+    };
+
+    template <class SubShapeType, typename... Args>
+    void subtract(Args &&...args)
+    {
+        Shape *sub_shape = sub_shape_ptrs_keeper_.createPtr<SubShapeType>(std::forward<Args>(args)...);
+        subtract(sub_shape);
     };
 
     virtual bool isValid() override;

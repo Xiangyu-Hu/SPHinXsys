@@ -42,7 +42,7 @@ void NearWallDistance::evaluateDistanceAndNormal(size_t index_i, Vecd &distance,
 //=================================================================================================//
 DistanceFromWall::DistanceFromWall(BaseContactRelation &wall_contact_relation)
     : NearWallDistance(wall_contact_relation),
-      distance_from_wall_(particles_->registerStateVariable<Vecd>("DistanceFromWall")) {}
+      distance_from_wall_(particles_->registerStateVariableData<Vecd>("DistanceFromWall")) {}
 //=================================================================================================//
 void DistanceFromWall::interaction(size_t index_i, Real dt)
 {

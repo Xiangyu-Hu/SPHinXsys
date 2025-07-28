@@ -170,7 +170,7 @@ DataType *BaseCellLinkedList::initializeVariable(DiscreteVariable<DataType> *var
 }
 //=================================================================================================//
 template <typename DataType, typename... Args>
-DiscreteVariable<DataType> *BaseCellLinkedList::registerDiscreteVariableOnly(
+DiscreteVariable<DataType> *BaseCellLinkedList::registerDiscreteVariable(
     const std::string &name, size_t data_size, Args &&...args)
 {
     DiscreteVariable<DataType> *variable = findVariableByName<DataType>(all_discrete_variables_, name);

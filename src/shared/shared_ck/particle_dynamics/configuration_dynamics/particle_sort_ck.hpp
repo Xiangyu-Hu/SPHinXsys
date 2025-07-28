@@ -52,9 +52,9 @@ ParticleSortCK<ExecutionPolicy>::ParticleSortCK(RealBody &real_body)
       ex_policy_(ExecutionPolicy{}),
       cell_linked_list_(DynamicCast<CellLinkedList>(this, real_body.getCellLinkedList())),
       dv_pos_(particles_->getVariableByName<Vecd>("Position")),
-      dv_sequence_(particles_->registerDiscreteVariableOnly<UnsignedInt>(
+      dv_sequence_(particles_->registerDiscreteVariable<UnsignedInt>(
           "Sequence", particles_->ParticlesBound())),
-      dv_index_permutation_(particles_->registerDiscreteVariableOnly<UnsignedInt>(
+      dv_index_permutation_(particles_->registerDiscreteVariable<UnsignedInt>(
           "IndexPermutation", particles_->ParticlesBound())),
       dv_original_id_(particles_->getVariableByName<UnsignedInt>("OriginalID")),
       dv_sorted_id_(particles_->getVariableByName<UnsignedInt>("SortedID")),
@@ -64,7 +64,7 @@ ParticleSortCK<ExecutionPolicy>::ParticleSortCK(RealBody &real_body)
 {
     particles_->addEvolvingVariable<UnsignedInt>("OriginalID");
 
-    body_parts_by_particle_ = real_body.getBodyPartsByParticle();
+    body_parts_by_particle_ = particles_->getBodyPartsByParticle();
     for (size_t i = 0; i != body_parts_by_particle_.size(); ++i)
     {
         DiscreteVariable<UnsignedInt> *dv_particle_list =

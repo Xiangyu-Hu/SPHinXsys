@@ -12,7 +12,7 @@ WCAcousticTimeStepSizeInFVM::WCAcousticTimeStepSizeInFVM(SPHBody &sph_body, Real
       p_(particles_->getVariableDataByName<Real>("Pressure")),
       vel_(particles_->getVariableDataByName<Vecd>("Velocity")),
       fluid_(DynamicCast<WeaklyCompressibleFluid>(this, particles_->getBaseMaterial())),
-      min_distance_between_nodes_(min_distance_between_nodes), acousticCFL_(acousticCFL){};
+      min_distance_between_nodes_(min_distance_between_nodes), acousticCFL_(acousticCFL) {};
 //=================================================================================================//
 Real WCAcousticTimeStepSizeInFVM::outputResult(Real reduced_value)
 {
@@ -23,7 +23,7 @@ Real WCAcousticTimeStepSizeInFVM::outputResult(Real reduced_value)
 BaseForceFromFluidInFVM::BaseForceFromFluidInFVM(BaseInnerRelation &inner_relation)
     : LocalDynamics(inner_relation.getSPHBody()), DataDelegateInner(inner_relation),
       Vol_(particles_->getVariableDataByName<Real>("VolumetricMeasure")),
-      force_from_fluid_(nullptr){};
+      force_from_fluid_(nullptr) {};
 //=================================================================================================//
 ViscousForceFromFluidInFVM::
     ViscousForceFromFluidInFVM(BaseInnerRelation &inner_relation,
@@ -34,7 +34,7 @@ ViscousForceFromFluidInFVM::
       mu_(viscosity_.ReferenceViscosity()),
       each_boundary_type_contact_real_index_(each_boundary_type_contact_real_index)
 {
-    force_from_fluid_ = particles_->registerStateVariable<Vecd>("ViscousForceOnSolid");
+    force_from_fluid_ = particles_->registerStateVariableData<Vecd>("ViscousForceOnSolid");
 }
 //=================================================================================================//
 void ViscousForceFromFluidInFVM::interaction(size_t index_i, Real dt)

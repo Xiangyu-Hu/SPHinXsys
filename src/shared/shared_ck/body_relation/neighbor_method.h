@@ -87,7 +87,7 @@ class SmoothingLength<Base>
     {
         Real h_spacing_ratio = identifier.getSPHAdaptation().SmoothingLengthSpacingRatio();
         return identifier.getBaseParticles()
-            .template registerStateVariableOnly<Real>(
+            .template registerStateVariable<Real>(
                 "SmoothingLength",
                 [&](size_t i)
                 { return 0.99 * h_spacing_ratio * identifier.getBaseParticles().ParticleSpacing(i); });
@@ -157,6 +157,14 @@ class SmoothingLength<SingleValued> : public SmoothingLength<Base>
         {
             return (inv_h_ * (source_pos_[i] - target_pos_[j])).squaredNorm() < kernel_size_squared_;
         };
+    };
+
+    class SmoothingRatio
+    {
+      public:
+        SmoothingRatio(SmoothingLength<SingleValued> &smoothing_length) {};
+
+        Real operator()(UnsignedInt index_i) const { return 1.0; };
     };
 
   protected:

@@ -39,10 +39,11 @@ class ForcePriorCK
 {
   public:
     ForcePriorCK(BaseParticles *particles, const std::string &force_name)
-        : dv_force_prior_(particles->registerStateVariableOnly<Vecd>("ForcePrior")),
-          dv_current_force_(particles->registerStateVariableOnly<Vecd>(force_name)),
-          dv_previous_force_(particles->registerStateVariableOnly<Vecd>("Previous" + force_name))
+        : dv_force_prior_(particles->registerStateVariable<Vecd>("ForcePrior")),
+          dv_current_force_(particles->registerStateVariable<Vecd>(force_name)),
+          dv_previous_force_(particles->registerStateVariable<Vecd>("Previous" + force_name))
     {
+        particles->addEvolvingVariable<Vecd>(dv_force_prior_);
         particles->addEvolvingVariable<Vecd>("Previous" + force_name);
     };
     virtual ~ForcePriorCK() {};

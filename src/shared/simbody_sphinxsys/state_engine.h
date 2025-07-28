@@ -22,7 +22,7 @@
  * ------------------------------------------------------------------------- */
 /**
  * @file 	state_engine.h
- * @details The StateEngine class defines the interface used to add computational
+ * @details The SimbodyStateEngine class defines the interface used to add computational
  *          elements to the underlying SimTK::System (MultibodySystem). It specifies
  *          the interface that simbody states must satisfy in order to be part of the system
  *          and provides a series of helper methods for adding variables
@@ -49,10 +49,10 @@
 #include "xml_engine.h"
 namespace SPH
 {
-/**
- * @class StateEngine
- */
-class StateEngine
+
+class SPHSystem; // forward declaration
+
+class SimbodyStateEngine
 {
   protected:
     XmlEngine simbody_xml_engine_;
@@ -74,7 +74,7 @@ class StateEngine
         {
         }
 
-        explicit StateVariable(std::string &name, StateEngine &owner, SimTK::SubsystemIndex subsys, int varindex)
+        explicit StateVariable(std::string &name, SimbodyStateEngine &owner, SimTK::SubsystemIndex subsys, int varindex)
             : name_(name), owner_(&owner), subsysindex_(subsys), varindex_(varindex), sysyindex_(SimTK::InvalidIndex)
         {
         }
@@ -82,7 +82,7 @@ class StateEngine
         virtual ~StateVariable() {}
 
         std::string &getName() { return name_; }
-        StateEngine &getOwner() { return *owner_; }
+        SimbodyStateEngine &getOwner() { return *owner_; }
         /** Get the index of simbody state variable. */
         int &getVarIndex() { return varindex_; }
         /** Return the index of the subsystem used to make resource allocations. */
@@ -105,7 +105,7 @@ class StateEngine
 
       private:
         std::string name_;
-        SimTK::ReferencePtr<StateEngine> owner_;
+        SimTK::ReferencePtr<SimbodyStateEngine> owner_;
         /**
          *  Identify which subsystem this state variable belongs to, which should
          *  be determined and set at creation time
@@ -124,7 +124,7 @@ class StateEngine
     };
     /**
      * @class AddedStateVariable
-     * @brief Class for handling state variable added (allocated) by this StateEngine.
+     * @brief Class for handling state variable added (allocated) by this SimbodyStateEngine.
      */
     class AddedStateVariable : public StateVariable
     {
@@ -132,9 +132,9 @@ class StateEngine
         /** Constructors adn destructors. */
         AddedStateVariable() : StateVariable(), invalidatestage_(SimTK::Stage::Empty) {}
 
-        /** Convenience constructor for defining a StateEngine added state variable */
+        /** Convenience constructor for defining a SimbodyStateEngine added state variable */
         explicit AddedStateVariable(std::string &name, /**< state var name. */
-                                    StateEngine &owner,
+                                    SimbodyStateEngine &owner,
                                     SimTK::Stage invalidatestage) : /**< stage this variable invalidates. */
                                                                     StateVariable(name, owner,
                                                                                   SimTK::SubsystemIndex(SimTK::InvalidIndex),
@@ -165,7 +165,7 @@ class StateEngine
     struct StateVariableInfo
     {
         StateVariableInfo() {}
-        explicit StateVariableInfo(StateEngine::StateVariable *sv, int order) : statevariable_(sv), order(order) {}
+        explicit StateVariableInfo(SimbodyStateEngine::StateVariable *sv, int order) : statevariable_(sv), order(order) {}
 
         /** Need empty copy constructor because default compiler generated
             will fail since it cannot copy a unique_ptr. */
@@ -186,7 +186,7 @@ class StateEngine
         }
 
         // State variable
-        std::unique_ptr<StateEngine::StateVariable> statevariable_;
+        std::unique_ptr<SimbodyStateEngine::StateVariable> statevariable_;
         // order of allocation
         int order;
     };
@@ -222,14 +222,14 @@ class StateEngine
         SimTK::State for this variable.  This interface allows the creator to
         add/expose state variables that are allocated by underlying Simbody
         components and specify how the state variable value is accessed by
-        implementing a concrete StateVariable and adding it to the StateEngine using
+        implementing a concrete StateVariable and adding it to the SimbodyStateEngine using
         this method.
         You may also want to create an Output for this state variable; see
         #OpenSim_DECLARE_OUTPUT_FOR_STATE_VARIABLE for more information. Reporters
         should use such an Output to get the StateVariable's value (instead of
         using getStateVariableValue()).
     */
-    void addStateVariable(StateEngine::StateVariable *statevariable);
+    void addStateVariable(SimbodyStateEngine::StateVariable *statevariable);
 
     SimTK::DefaultSystemSubsystem &getDefaultSubsystem()
     {
@@ -260,7 +260,7 @@ class StateEngine
     mutable SimTK::ReferencePtr<SimTK::System> statesassociatedsystem_;
 
     /** Default constructor **/
-    StateEngine(SimTK::MultibodySystem &system);
+    SimbodyStateEngine(SPHSystem &sph_system, SimTK::MultibodySystem &system);
 
     /** Reference pointer to the system that this engine manage. */
     SimTK::ReferencePtr<SimTK::MultibodySystem> mbsystem_;
@@ -270,14 +270,14 @@ class StateEngine
      */
     SimTK::State working_state_;
 
-    /** Destructor is virtual to allow concrete StateEngine to cleanup. **/
-    virtual ~StateEngine(){};
+    /** Destructor is virtual to allow concrete SimbodyStateEngine to cleanup. **/
+    virtual ~SimbodyStateEngine() {};
     /** Set up the working state in present engine */
     void InitializeState();
     /**
-     * Get the underlying MultibodySystem that this StateEngine is connected to.
+     * Get the underlying MultibodySystem that this SimbodyStateEngine is connected to.
      * Make sure you have called Model::initSystem() prior to accessing the System.
-     * Throws an Exception if the System has not been created or the StateEngine
+     * Throws an Exception if the System has not been created or the SimbodyStateEngine
      * has not added itself to the System.
      * @see hasSystem().  */
     SimTK::MultibodySystem &getMultibodySystem();
@@ -302,7 +302,7 @@ class StateEngine
      */
     StdVec<std::string> getStateVariableNames();
     /**
-     * Get all values of the state variables allocated by this StateEngine.
+     * Get all values of the state variables allocated by this SimbodyStateEngine.
      *
      * @param state   the State for which to get the value
      * @return Vector of state variable values of length getNumStateVariables()
@@ -322,14 +322,14 @@ class StateEngine
      * the output file
      */
     std::string restart_folder_;
-    void writeStateInfoToXml(int ite_rst_, const SimTK::State &state_);
+    void writeStateToXml(int ite_rst, SimTK::RungeKuttaMersonIntegrator &integ);
     /**
      * read state info from xml and set it to sate.
      * For all bodies in the matter system, their generalized coordinates,
      * generalized velocities and transformations of the origin points are read from
      * the restart file
      */
-    SimTK::State readAndSetStateInfoFromXml(int ite_rst_, SimTK::MultibodySystem &system_);
+    void readStateFromXml(int ite_rst, SimTK::State &state);
     /**@name  Realize the Simbody System and State to Computational Stage.
             Methods in this section enable advanced and scripting users access to
             realize the Simbody MultibodySystem and the provided state to a desired

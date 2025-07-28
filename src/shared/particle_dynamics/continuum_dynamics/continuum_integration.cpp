@@ -8,8 +8,8 @@ namespace continuum_dynamics
 ContinuumInitialCondition::ContinuumInitialCondition(SPHBody &sph_body)
     : LocalDynamics(sph_body),
       pos_(particles_->getVariableDataByName<Vecd>("Position")),
-      vel_(particles_->registerStateVariable<Vecd>("Velocity")),
-      stress_tensor_3D_(particles_->registerStateVariable<Mat3d>("StressTensor3D")) {}
+      vel_(particles_->registerStateVariableData<Vecd>("Velocity")),
+      stress_tensor_3D_(particles_->registerStateVariableData<Mat3d>("StressTensor3D")) {}
 //=================================================================================================//
 AcousticTimeStep::AcousticTimeStep(SPHBody &sph_body, Real acousticCFL)
     : LocalDynamicsReduce<ReduceMax>(sph_body),
@@ -64,11 +64,11 @@ ShearStressRelaxationHourglassControl1stHalf ::
     ShearStressRelaxationHourglassControl1stHalf(BaseInnerRelation &inner_relation, Real xi)
     : fluid_dynamics::BaseIntegration<DataDelegateInner>(inner_relation),
       continuum_(DynamicCast<GeneralContinuum>(this, particles_->getBaseMaterial())),
-      shear_stress_(particles_->registerStateVariable<Matd>("ShearStress")),
-      velocity_gradient_(particles_->registerStateVariable<Matd>("VelocityGradient")),
-      strain_tensor_(particles_->registerStateVariable<Matd>("StrainTensor")),
+      shear_stress_(particles_->registerStateVariableData<Matd>("ShearStress")),
+      velocity_gradient_(particles_->registerStateVariableData<Matd>("VelocityGradient")),
+      strain_tensor_(particles_->registerStateVariableData<Matd>("StrainTensor")),
       B_(particles_->getVariableDataByName<Matd>("LinearGradientCorrectionMatrix")),
-      scale_penalty_force_(particles_->registerStateVariable<Real>("ScalePenaltyForce")), xi_(xi)
+      scale_penalty_force_(particles_->registerStateVariableData<Real>("ScalePenaltyForce")), xi_(xi)
 {
     particles_->addEvolvingVariable<Matd>("ShearStress");
     particles_->addEvolvingVariable<Matd>("VelocityGradient");
@@ -107,8 +107,8 @@ ShearStressRelaxationHourglassControl2ndHalf ::
       continuum_(DynamicCast<GeneralContinuum>(this, particles_->getBaseMaterial())),
       shear_stress_(particles_->getVariableDataByName<Matd>("ShearStress")),
       velocity_gradient_(particles_->getVariableDataByName<Matd>("VelocityGradient")),
-      acc_shear_(particles_->registerStateVariable<Vecd>("AccelerationByShear")),
-      acc_hourglass_(particles_->registerStateVariable<Vecd>("AccelerationHourglass")),
+      acc_shear_(particles_->registerStateVariableData<Vecd>("AccelerationByShear")),
+      acc_hourglass_(particles_->registerStateVariableData<Vecd>("AccelerationHourglass")),
       scale_penalty_force_(particles_->getVariableDataByName<Real>("ScalePenaltyForce")),
       G_(continuum_.getShearModulus(continuum_.getYoungsModulus(), continuum_.getPoissonRatio()))
 {
@@ -142,7 +142,7 @@ ShearStressRelaxationHourglassControl1stHalfJ2Plasticity ::
     ShearStressRelaxationHourglassControl1stHalfJ2Plasticity(BaseInnerRelation &inner_relation, Real xi)
     : ShearStressRelaxationHourglassControl1stHalf(inner_relation, xi),
       J2_plasticity_(DynamicCast<J2Plasticity>(this, particles_->getBaseMaterial())),
-      hardening_factor_(particles_->registerStateVariable<Real>("HardeningFactor"))
+      hardening_factor_(particles_->registerStateVariableData<Real>("HardeningFactor"))
 {
     particles_->addEvolvingVariable<Real>("HardeningFactor");
 }

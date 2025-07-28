@@ -89,7 +89,7 @@ class BaseCellLinkedList : public BaseMeshField
     template <typename DataType>
     DataType *initializeVariable(DiscreteVariable<DataType> *variable, DataType initial_value = ZeroData<DataType>::value);
     template <typename DataType, typename... Args>
-    DiscreteVariable<DataType> *registerDiscreteVariableOnly(const std::string &name, size_t data_size, Args &&...args);
+    DiscreteVariable<DataType> *registerDiscreteVariable(const std::string &name, size_t data_size, Args &&...args);
 
   protected:
     Kernel &kernel_;
