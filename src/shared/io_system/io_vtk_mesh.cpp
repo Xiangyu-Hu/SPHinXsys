@@ -15,7 +15,7 @@ void BodyStatesRecordingToMeshVtu::writeWithFileName(const std::string &sequence
     {
         if (body->checkNewlyUpdated() && state_recording_)
         {
-            std::string filefullpath = io_environment_.output_folder_ + "/" + body->getName() + "_" + sequence + ".vtu";
+            std::string filefullpath = io_environment_.OutputFolder() + "/" + body->getName() + "_" + sequence + ".vtu";
             if (fs::exists(filefullpath))
             {
                 fs::remove(filefullpath);

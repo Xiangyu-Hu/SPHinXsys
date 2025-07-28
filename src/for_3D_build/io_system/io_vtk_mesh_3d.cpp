@@ -17,7 +17,7 @@ void BodyStatesRecordingToTriangleMeshVtp::writeWithFileName(const std::string &
     {
         if (body->checkNewlyUpdated() && state_recording_)
         {
-            std::string filefullpath = io_environment_.output_folder_ + "/" + body->getName() + "_" + sequence + ".vtp";
+            std::string filefullpath = io_environment_.OutputFolder() + "/" + body->getName() + "_" + sequence + ".vtp";
             if (fs::exists(filefullpath))
             {
                 fs::remove(filefullpath);

@@ -9,7 +9,7 @@ WriteSimBodyPinData::
     WriteSimBodyPinData(SPHSystem &sph_system, SimTK::RungeKuttaMersonIntegrator &integ,
                         SimTK::MobilizedBody::Pin &pinbody)
     : WriteSimBodyStates<SimTK::MobilizedBody::Pin>(sph_system, integ, pinbody),
-      filefullpath_(io_environment_.output_folder_ + "/mb_pinbody_data.dat")
+      filefullpath_(io_environment_.OutputFolder() + "/mb_pinbody_data.dat")
 {
     std::ofstream out_file(filefullpath_.c_str(), std::ios::app);
 
@@ -42,7 +42,7 @@ WriteSimBodyCableData::
     WriteSimBodyCableData(SPHSystem &sph_system, SimTK::RungeKuttaMersonIntegrator &integ,
                           SimTK::CableSpring &cable1, std::string cable_inf)
     : WriteSimBodyStates<SimTK::CableSpring>(sph_system, integ, cable1),
-      filefullpath_(io_environment_.output_folder_ + "/cable" + cable_inf + ".dat")
+      filefullpath_(io_environment_.OutputFolder() + "/cable" + cable_inf + ".dat")
 {
     std::ofstream out_file(filefullpath_.c_str(), std::ios::app);
 
@@ -93,7 +93,7 @@ WriteSimBodyPlanarData::
     WriteSimBodyPlanarData(SPHSystem &sph_system, SimTK::RungeKuttaMersonIntegrator &integ,
                            SimTK::MobilizedBody::Planar &planar_body)
     : WriteSimBodyStates<SimTK::MobilizedBody::Planar>(sph_system, integ, planar_body),
-      filefullpath_(io_environment_.output_folder_ + "/mb_planar_data.dat")
+      filefullpath_(io_environment_.OutputFolder() + "/mb_planar_data.dat")
 {
     std::ofstream out_file(filefullpath_.c_str(), std::ios::app);
 
@@ -130,7 +130,7 @@ WriteSimBodyFreeRotationMatrix::
     WriteSimBodyFreeRotationMatrix(SPHSystem &sph_system, SimTK::RungeKuttaMersonIntegrator &integ,
                                    SimTK::MobilizedBody::Free &free_body)
     : WriteSimBodyStates<SimTK::MobilizedBody::Free>(sph_system, integ, free_body),
-      filefullpath_(sph_system.getIOEnvironment().output_folder_ + "/RotationMatrix.dat")
+      filefullpath_(sph_system.getIOEnvironment().OutputFolder() + "/RotationMatrix.dat")
 {
     std::ofstream out_file(filefullpath_.c_str(), std::ios::app);
 
@@ -192,7 +192,7 @@ WriteSimBodyVelocity::
     WriteSimBodyVelocity(SPHSystem &sph_system, SimTK::RungeKuttaMersonIntegrator &integ,
                          SimTK::MobilizedBody::Free &free_body)
     : WriteSimBodyStates<SimTK::MobilizedBody::Free>(sph_system, integ, free_body),
-      filefullpath_(sph_system.getIOEnvironment().output_folder_ + "/BodyVelocity.dat")
+      filefullpath_(sph_system.getIOEnvironment().OutputFolder() + "/BodyVelocity.dat")
 {
     std::ofstream out_file(filefullpath_.c_str(), std::ios::app);
 

@@ -324,12 +324,12 @@ TEST(test_optimization, test_problem1_optimized)
     //----------------------------------------------------------------------
     // record the temperature with modified design variable.
     std::string filefullpath_opt_temperature =
-        sph_system.getIOEnvironment().output_folder_ + "/" + "opt_temperature.dat";
+        sph_system.getIOEnvironment().OutputFolder() + "/" + "opt_temperature.dat";
     std::ofstream out_file_opt_temperature(filefullpath_opt_temperature.c_str(), std::ios::app);
 
     // record the temperature without modified design variable.
     std::string filefullpath_nonopt_temperature =
-        sph_system.getIOEnvironment().output_folder_ + "/" + "nonopt_temperature.dat";
+        sph_system.getIOEnvironment().OutputFolder() + "/" + "nonopt_temperature.dat";
     std::ofstream out_file_nonopt_temperature(filefullpath_nonopt_temperature.c_str(), std::ios::app);
     //----------------------------------------------------------------------
     //	Initial States update.

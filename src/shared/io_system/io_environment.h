@@ -53,22 +53,23 @@ class IOEnvironment
     UniquePtrKeeper<ParameterizationIO> parameterization_io_ptr_keeper_;
 
   public:
-    SPHSystem &sph_system_;
-    std::string input_folder_;
-    std::string output_folder_;
-    std::string restart_folder_;
-    std::string reload_folder_;
-
     explicit IOEnvironment(SPHSystem &sph_system);
     virtual ~IOEnvironment() {};
     void resetForRestart();
     ParameterizationIO *defineParameterizationIO();
     void appendOutputFolder(const std::string &append_name);
     void resetOutputFolder(const std::string &new_name);
-    std::string inputFolder() const { return input_folder_; }
-    std::string outputFolder() const { return output_folder_; }
-    std::string restartFolder() const { return restart_folder_; }
-    std::string reloadFolder() const { return reload_folder_; }
+    std::string InputFolder() const { return input_folder_; }
+    std::string OutputFolder() const { return output_folder_; }
+    std::string RestartFolder() const { return restart_folder_; }
+    std::string ReloadFolder() const { return reload_folder_; }
+
+  protected:
+    SPHSystem &sph_system_;
+    std::string input_folder_;
+    std::string output_folder_;
+    std::string restart_folder_;
+    std::string reload_folder_;
 };
 } // namespace SPH
 #endif // IO_ENVIRONMENT_H
