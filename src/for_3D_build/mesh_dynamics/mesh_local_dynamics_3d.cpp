@@ -82,13 +82,16 @@ void InitializeBasicDataForAPackage::UpdateKernel::update(const size_t &package_
 void WriteMeshFieldToPlt::update(std::ofstream &output_file)
 {
     StdVec<Coord3D> active_cells;
-    mesh_for_each(Array3i::Zero(), data_mesh_.AllCells(), [&](const Arrayi &cell_index)
-                  { 
-      if (data_mesh_.isCoreDataPackage(cell_index))
-      {
-        active_cells.push_back({cell_index[0], cell_index[1], cell_index[2]});
-      } });
-
+    auto meta_data = data_mesh_.meta_data_cell_.Data();
+    package_parallel_for(execution::seq, data_mesh_.num_grid_pkgs_,
+                         [&](size_t package_index)
+                         {
+                            if (meta_data[package_index].second == 1)
+                            {
+                              auto cell_index = meta_data[package_index].first;
+                              active_cells.push_back({cell_index[0], cell_index[1], cell_index[2]});
+                            }
+                         });
     StdVec<Block3D> clustered_blocks = clusterActiveCells3D(active_cells);
 
     output_file << "\n";

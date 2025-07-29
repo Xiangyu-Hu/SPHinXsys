@@ -220,16 +220,6 @@ class MeshWithGridDataPackages : public Mesh
         return cell_package_index_.Data()[index_1d] > 1;
     }
 
-    bool isCoreDataPackage(const Arrayi &cell_index)
-    {
-        /**
-         * NOTE currently this func is only used in non-device mode;
-         *      use the `DelegatedData` version when needed.
-         */
-        size_t package_index = PackageIndexFromCellIndex(cell_package_index_.Data(), cell_index);
-        return meta_data_cell_.Data()[package_index].second == 1;
-    }
-
     bool isWithinCorePackage(size_t *cell_package_index,
                              std::pair<Arrayi, int> *meta_data_cell,
                              Vecd position)
