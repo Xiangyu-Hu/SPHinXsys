@@ -91,5 +91,12 @@ class DeviceSharedBufferArray : public Entity
     size_t array_size_;
     DataArray<DataType> *device_shared_data_array_;
 };
+
+template <typename AllocationType>
+using VariableBufferAllocation = std::pair<AllocationType, AllocationType>;
+
+template <typename AllocationType>
+using VariableBufferAllocationPair = std::pair<VariableBufferAllocation<AllocationType>, UnsignedInt>;
+
 } // namespace SPH
 #endif // SPHINXSYS_VARIABLE_ARRAY_H
