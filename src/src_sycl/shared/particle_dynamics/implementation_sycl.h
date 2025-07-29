@@ -109,6 +109,12 @@ inline T *allocateDeviceShared(std::size_t size)
 }
 
 template <class T>
+inline T *allocateHostStaging(std::size_t size)
+{
+    return sycl::malloc_host<T>(size, execution::execution_instance.getQueue());
+}
+
+template <class T>
 inline void freeDeviceData(T *device_mem)
 {
     sycl::free(device_mem, execution::execution_instance.getQueue());
