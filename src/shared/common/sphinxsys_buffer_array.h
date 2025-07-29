@@ -36,13 +36,13 @@
 
 namespace SPH
 {
-
+template <typename DataType>
 class DeviceBufferArray;
 
 template <typename DataType>
 class BufferArray : public Entity
 {
-    UniquePtrKeeper<DeviceBufferArray> device_buffer_array_keeper_;
+    UniquePtrKeeper<DeviceBufferArray<DataType>> device_buffer_array_keeper_;
 
   public:
     BufferArray(StdVec<DiscreteVariable<DataType> *> variables, UnsignedInt buffer_size)
@@ -123,6 +123,7 @@ class DeviceBufferArray : public Entity
 
   protected:
     size_t array_size_;
+    UnsignedInt buffer_size_;
     DataArray<DataType> *device_only_data_array_;
     DataArray<DataType> *host_staging_data_array_;
 };
