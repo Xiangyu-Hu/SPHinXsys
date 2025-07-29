@@ -28,12 +28,13 @@
 #ifndef SPHINXSYS_SYCL_H
 #define SPHINXSYS_SYCL_H
 
+#include "all_mesh_dynamics_sycl.h"
 #include "base_configuration_dynamics_sycl.h"
+#include "device_copyable_variable.h"
 #include "particle_iterators_sycl.h"
 #include "particle_sort_sycl.h"
 #include "particle_sort_sycl.hpp"
-#include "device_copyable_variable.h"
-#include "all_mesh_dynamics_sycl.h"
+#include "sphinxsys_buffer_array_sycl.hpp"
 #include "sphinxsys_ck.h"
 #include "sphinxsys_constant_sycl.hpp"
 #include "sphinxsys_variable_array_sycl.hpp"

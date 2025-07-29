@@ -36,14 +36,12 @@ namespace SPH
 template <typename DataType>
 class BufferArray : public Entity
 {
-    UniquePtrsKeeper<Entity> entity_ptrs_keeper_;
+    UniquePtrKeeper<Entity> device_shared_buffer_array_keeper_;
 
   public:
-    BufferArray(StdVec<DiscreteVariable<DataType> *> variables; UnsignedInt buffer_size)
+    BufferArray(StdVec<DiscreteVariable<DataType> *> variables, UnsignedInt buffer_size)
         : Entity("BufferArray"), variables_(variables),
-          variable_array_(entity_ptrs_keeper_.createPtr<
-                          VariableArray<DataType, DiscreteVariable>>(variables)),
-          data_array_(nullptr), delegated_data_array_(nullptr)
+          buffer_size_(buffer_size), data_array_(nullptr), delegated_data_array_(nullptr)
     {
         data_array_ = new DataArray<DataType>[variables.size()];
         for (size_t i = 0; i != variables.size(); ++i)
@@ -53,9 +51,11 @@ class BufferArray : public Entity
         delegated_data_array_ = data_array_;
     };
     ~BufferArray() { delete[] data_array_; };
-    StdVec<VariableType<DataType> *> getVariables() { return variables_; };
-    VariableArray<DataType, DiscreteVariable> *VariableArray() { return variable_array_; };
+    StdVec<DiscreteVariable<DataType> *> getVariables() { return variables_; };
+    size_t getArraySize() { return variables_.size(); }
+    UnsignedInt getBufferSize() { return buffer_size_; }
     DataArray<DataType> *Data() { return data_array_; };
+    bool isDataArrayDelegated() { return data_array_ != delegated_data_array_; };
 
     template <class ExecutionPolicy>
     DataArray<DataType> *DelegatedDataArray(const ExecutionPolicy &ex_policy)
@@ -64,14 +64,8 @@ class BufferArray : public Entity
     };
 
     template <class PolicyType>
-    DataArray<DataType> *DelegatedOnDevice(const DeviceExecution<PolicyType> &ex_policy);
-
-    template <class PolicyType>
     DataArray<DataType> *DelegatedDataArray(const DeviceExecution<PolicyType> &ex_policy);
 
-    size_t getArraySize() { return variables_.size(); }
-
-    bool isDataArrayDelegated() { return data_array_ != delegated_data_array_; };
     void setDelegateDataArray(DataArray<DataType> *data_array_)
     {
         delegated_data_array_ = data_array_;
@@ -79,21 +73,22 @@ class BufferArray : public Entity
 
   private:
     StdVec<DiscreteVariable<DataType> *> variables_;
-    VariableArray<DataType, DiscreteVariable> *variable_array_;
+    UnsignedInt buffer_size_;
     DataArray<DataType> *data_array_;
     DataArray<DataType> *delegated_data_array_;
 };
 
-template <typename DataType, template <typename> class VariableType>
+template <typename DataType>
 class DeviceSharedBufferArray : public Entity
 {
   public:
     template <class PolicyType>
     DeviceSharedBufferArray(const DeviceExecution<PolicyType> &ex_policy,
-                            BufferArray<DataType, VariableType> *host_variable_array);
+                            BufferArray<DataType> *host_buffer_array);
     ~DeviceSharedBufferArray();
 
   protected:
+    size_t array_size_;
     DataArray<DataType> *device_shared_data_array_;
 };
 } // namespace SPH

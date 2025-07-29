@@ -56,6 +56,8 @@ class VariableArray : public Entity
     ~VariableArray() { delete[] data_array_; };
     StdVec<VariableType<DataType> *> getVariables() { return variables_; };
     DataArray<DataType> *Data() { return data_array_; };
+    size_t getArraySize() { return variables_.size(); }
+    bool isDataArrayDelegated() { return data_array_ != delegated_data_array_; };
 
     template <class ExecutionPolicy>
     DataArray<DataType> *DelegatedDataArray(const ExecutionPolicy &ex_policy)
@@ -64,14 +66,8 @@ class VariableArray : public Entity
     };
 
     template <class PolicyType>
-    DataArray<DataType> *DelegatedOnDevice(const DeviceExecution<PolicyType> &ex_policy);
-
-    template <class PolicyType>
     DataArray<DataType> *DelegatedDataArray(const DeviceExecution<PolicyType> &ex_policy);
 
-    size_t getArraySize() { return variables_.size(); }
-
-    bool isDataArrayDelegated() { return data_array_ != delegated_data_array_; };
     void setDelegateDataArray(DataArray<DataType> *data_array_)
     {
         delegated_data_array_ = data_array_;
