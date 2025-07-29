@@ -92,11 +92,25 @@ class DeviceSharedBufferArray : public Entity
     DataArray<DataType> *device_shared_data_array_;
 };
 
-template <typename AllocationType>
-using VariableBufferAllocation = std::pair<AllocationType, AllocationType>;
+template <typename DataType>
+using AllocationDataArrayPair = std::pair<AllocatedDataArray<DataType>, AllocatedDataArray<DataType>>;
 
-template <typename AllocationType>
-using VariableBufferAllocationPair = std::pair<VariableBufferAllocation<AllocationType>, UnsignedInt>;
+template <typename DataType>
+using AllocationDataArrayPairSet = std::pair<AllocationDataArrayPair<DataType>, UnsignedInt>;
 
+struct CopyAllocationDataArrayPairSet
+{
+    template <typename DataType>
+    void operator()(AllocationDataArrayPairSet<DataType> &allocation_pair_set,
+                    size_t source_data_index, size_t target_data_index)
+    {
+        auto &source_allocation = allocation_pair_set.first.first;
+        auto &target_allocation = allocation_pair_set.first.second;
+        for (size_t i = 0; i < allocation_pair_set.second; ++i)
+        {
+            target_allocation[i][target_data_index] = source_allocation[i][source_data_index];
+        }
+    }
+};
 } // namespace SPH
 #endif // SPHINXSYS_VARIABLE_ARRAY_H
