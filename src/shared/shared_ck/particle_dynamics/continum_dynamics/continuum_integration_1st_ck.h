@@ -33,6 +33,7 @@
 #include "constraint_dynamics.h"
 #include "general_continuum.h"
 #include "general_continuum.hpp"
+#include "erosion_interaction_ck.hpp"
 namespace SPH
 {
 namespace continuum_dynamics
@@ -51,7 +52,6 @@ class PlasticAcousticStep : public fluid_dynamics::AcousticStep<BaseInteractionT
     PlasticContinuum &plastic_continuum_;
     DiscreteVariable<Mat3d> *dv_stress_tensor_3D_, *dv_strain_tensor_3D_, *dv_stress_rate_3D_, *dv_strain_rate_3D_;
     DiscreteVariable<Matd> *dv_velocity_gradient_;
-    DiscreteVariable<Vecd> *dv_shear_vel_;    /*For erosion*/
 };
 
 template <typename...>

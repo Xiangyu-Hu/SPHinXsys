@@ -89,6 +89,7 @@ class PlasticAcousticStep2ndHalf<Inner<OneLevel, RiemannSolverType, KernelCorrec
         Matd *velocity_gradient_;
         Mat3d *stress_tensor_3D_, *strain_tensor_3D_, *stress_rate_3D_, *strain_rate_3D_;
         Vecd *shear_vel_;
+        Real *friction_angle_, *cohesion_, *reduction_para_;
         Real particle_spacing_;
     };
 

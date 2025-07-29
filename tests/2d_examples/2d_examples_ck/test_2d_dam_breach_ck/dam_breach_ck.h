@@ -6,12 +6,12 @@ using namespace SPH; // Namespace cite here.
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real DL = 3.0;					/**< Water tank length. */
+Real DL = 5.0;					/**< Water tank length. */
 Real DH = 1.0;					/**< Water tank height. */
 Real WL = 1.4;					/**< Water column length. */
 Real WH = 0.2;					/**< Water column height. */
 Real SH = 0.2;					/**< Sediment column height. */
-Real particle_spacing_ref = 0.02;	/**< Initial reference particle spacing. */
+Real particle_spacing_ref = 0.01;	/**< Initial reference particle spacing. */
 Real BW = particle_spacing_ref * 4;  /**< Extending width for boundary conditions. */
 Real DL_sponge = particle_spacing_ref * 20.0; /**< Sponge region to impose inflow condition. */
 BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
@@ -55,7 +55,7 @@ Vec2d emitter_buffer_translation = Vec2d(0.5 * 0.66, -0.5 * DL_sponge);
 
 //outflow buffer
 Vec2d disposer_halfsize = Vec2d(0.5 * BW, 0.75 * DH);
-Vec2d disposer_translation = Vec2d(3.0, 0.5 + DH + 0.25 * DH) - disposer_halfsize;
+Vec2d disposer_translation = Vec2d(4.0, 0.5 + DH + 0.25 * DH) - disposer_halfsize;
 //Entire buffer
 Vec2d entire_disposer_halfsize = Vec2d(DL, DH);
 Vec2d entire_disposer_translation = disposer_halfsize;
@@ -68,8 +68,8 @@ std::vector<Vecd> createOuterWallShape()
 	std::vector<Vecd> pnts;
 	pnts.push_back(Vecd(-BW, -BW));
 	pnts.push_back(Vecd(-BW, 1.0 + BW));
-	pnts.push_back(Vecd(3.16 + BW, 1.0 + BW));
-	pnts.push_back(Vecd(3.16 + BW, 0.5 - BW));
+	pnts.push_back(Vecd(4.2 + BW, 1.0 + BW));
+	pnts.push_back(Vecd(4.2 + BW, 0.5 - BW));
 	pnts.push_back(Vecd(0.66 + BW, 0.5 - BW));
 	pnts.push_back(Vecd(0.66 + BW, -BW));
 	pnts.push_back(Vecd(-BW, -BW));
@@ -81,8 +81,8 @@ std::vector<Vecd> createInnerWallShape()
 	std::vector<Vecd> pnts;
 	pnts.push_back(Vecd(0.0, -BW));
 	pnts.push_back(Vecd(0.0, 1.0));
-	pnts.push_back(Vecd(3.16, 1.0));
-	pnts.push_back(Vecd(3.16, 0.5));
+	pnts.push_back(Vecd(4.2, 1.0));
+	pnts.push_back(Vecd(4.2, 0.5));
 	pnts.push_back(Vecd(0.66, 0.5));
 	pnts.push_back(Vecd(0.66, -BW));
 	pnts.push_back(Vecd(0.0, -BW));
@@ -107,8 +107,8 @@ std::vector<Vecd> createWaterBlockShape()
 {
 	std::vector<Vecd> pnts;
 	pnts.push_back(Vecd(0.0, 0.0));
-	pnts.push_back(Vecd(0.0, 0.72));
-	pnts.push_back(Vecd(2.06, 0.72));
+	pnts.push_back(Vecd(0.0, 0.6));
+	pnts.push_back(Vecd(2.06, 0.6));
 	pnts.push_back(Vecd(2.06, 0.5));
 	pnts.push_back(Vecd(0.66, 0.5));
 	pnts.push_back(Vecd(0.66, 0.0));
@@ -167,7 +167,7 @@ class InletInflowCondition : public BaseStateCondition
 
         void operator()(AlignedBox *aligned_box, UnsignedInt index_i, Real /*time*/)
         {
-            vel_[index_i] = Vec2d(0.0, 0.1);
+            vel_[index_i] = Vec2d(0.0, 0.048);
         };
     };
 };

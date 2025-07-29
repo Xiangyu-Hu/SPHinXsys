@@ -6,7 +6,7 @@ int main(int ac, char *av[])
     /**
      * @brief Build up -- a SPHSystem --
      */
-    SPHSystem sph_system(system_domain_bounds, resolution_ref);
+    SPHSystem sph_system(system_domain_bounds, resolution_ref, 16);
 
     /** Tag for run particle relaxation for the initial body fitted distribution. */
     sph_system.setRunParticleRelaxation(false);
@@ -183,7 +183,7 @@ int main(int ac, char *av[])
     int screen_output_interval = 100;
     int observation_sample_interval = screen_output_interval * 2;
     Real end_time = 200.0;             /**< End time. */
-    Real Output_Time = end_time / 4.0; /**< Time stamps for output of body states. */
+    Real Output_Time = end_time / 200.0; /**< Time stamps for output of body states. */
     Real dt = 0.0;
     //----------------------------------------------------------------------
     //	Statistics for CPU time

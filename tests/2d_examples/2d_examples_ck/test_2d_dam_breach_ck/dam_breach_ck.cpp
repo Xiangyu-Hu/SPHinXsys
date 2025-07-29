@@ -30,12 +30,14 @@ int main(int ac, char *av[])
 
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
     wall_boundary.defineMaterial<Solid>();
-    wall_boundary.generateParticles<BaseParticles, Lattice>();
+    ParticleBuffer<ReserveSizeFactor> soil_inlet_buffer(350.0);
+    wall_boundary.generateParticlesWithReserve<BaseParticles, Lattice>(soil_inlet_buffer);
     //----------------------------------------------------------------------
     //	Creating body parts.
     //----------------------------------------------------------------------
     AlignedBoxByParticle emitter(water_block, AlignedBox(yAxis, Transform(emitter_translation), emitter_halfsize));
-    AlignedBoxByCell outflow_disposer(water_block, AlignedBox(xAxis, Transform(disposer_translation), disposer_halfsize));
+    AlignedBoxByCell fluid_outflow_disposer(water_block, AlignedBox(xAxis, Transform(disposer_translation), disposer_halfsize));
+    AlignedBoxByCell soil_outflow_disposer(soil_block, AlignedBox(xAxis, Transform(disposer_translation), disposer_halfsize));
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -88,11 +90,11 @@ int main(int ac, char *av[])
     auto &stress_diffusion = main_methods.addInteractionDynamics<continuum_dynamics::StressDiffusionInnerCK>(soil_block_inner);
     auto &soil_acoustic_step_1st_half =  
         main_methods.addInteractionDynamics<
-                        continuum_dynamics::PlasticAcousticStep1stHalf, OneLevel, AcousticRiemannSolverCK, NoKernelCorrection>(soil_block_inner)
+                        continuum_dynamics::PlasticAcousticStepWithErosion1stHalf, OneLevel, AcousticRiemannSolverCK, NoKernelCorrection>(soil_block_inner)
             .addContactInteraction<Wall, AcousticRiemannSolverCK, NoKernelCorrection>(soil_wall_contact);
     auto &soil_acoustic_step_2nd_half = 
         main_methods.addInteractionDynamics<
-                        continuum_dynamics::PlasticAcousticStep2ndHalf, OneLevel, AcousticRiemannSolverCK, NoKernelCorrection>(soil_block_inner)
+                        continuum_dynamics::PlasticAcousticStepWithErosion2ndHalf, OneLevel, AcousticRiemannSolverCK, NoKernelCorrection>(soil_block_inner)
             .addContactInteraction<Wall, AcousticRiemannSolverCK, NoKernelCorrection>(soil_wall_contact)
             .addContactInteraction<Fluid, AcousticRiemannSolverCK, NoKernelCorrection>(soil_water_contact);
     auto &soil_density_regularization = 
@@ -105,11 +107,14 @@ int main(int ac, char *av[])
     auto &fluid_linear_correction_matrix =
         main_methods.addInteractionDynamics<LinearCorrectionMatrix, WithUpdate>(water_block_inner, 0.5)
             .addContactInteraction(water_wall_contact);
+    auto &soil_linear_correction_matrix =
+        main_methods.addInteractionDynamics<LinearCorrectionMatrix, WithUpdate>(soil_block_inner, 0.5)
+            .addContactInteraction(soil_wall_contact);
     auto &fluid_acoustic_step_1st_half =
         main_methods.addInteractionDynamics<
                         fluid_dynamics::AcousticStep1stHalf, OneLevel, AcousticRiemannSolverCK, LinearCorrectionCK>(water_block_inner)
             .addContactInteraction<Wall, AcousticRiemannSolverCK, LinearCorrectionCK>(water_wall_contact)
-            .addContactInteraction<Soil, AcousticRiemannSolverCK, NoKernelCorrectionCK>(water_soil_contact);
+            .addContactInteraction<AcousticRiemannSolverCK, NoKernelCorrectionCK>(water_soil_contact);
     auto &fluid_acoustic_step_2nd_half =
         main_methods.addInteractionDynamics<
                         fluid_dynamics::AcousticStep2ndHalf, OneLevel, AcousticRiemannSolverCK, LinearCorrectionCK>(water_block_inner)
@@ -124,6 +129,8 @@ int main(int ac, char *av[])
         fluid_boundary_indicator(water_block_inner, water_wall_contact);
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::TransportVelocityCorrectionWallNoCorrectionBulkParticlesCK>
         transport_correction_ck(water_block_inner, water_wall_contact);
+    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::TransportVelocityCorrectionWallNoCorrectionBulkParticlesCK>
+        soil_transport_correction_ck(soil_block_inner, soil_wall_contact);
 
     auto &fluid_advection_time_step = main_methods.addReduceDynamics<fluid_dynamics::AdvectionTimeStepCK>(water_block, U_ref);
     auto &fluid_acoustic_time_step = main_methods.addReduceDynamics<fluid_dynamics::AcousticTimeStepCK<>>(water_block);
@@ -135,16 +142,25 @@ int main(int ac, char *av[])
     body_state_recorder.addToWrite<Vecd>(wall_boundary, "NormalDirection");
     body_state_recorder.addToWrite<Real>(water_block, "Density");
     body_state_recorder.addToWrite<Vecd>(soil_block, "ShearVelocity");
+    StateDynamics<MainExecutionPolicy, continuum_dynamics::VerticalStressCK> vertical_stress(soil_block);
+    body_state_recorder.addToWrite<Real>(soil_block, "VerticalStress");
+    body_state_recorder.addToWrite<Real>(soil_block, "FrictionAngle");
+    body_state_recorder.addToWrite<Real>(soil_block, "Cohesion");
+    body_state_recorder.addToWrite<Real>(soil_block, "Pressure");
+    body_state_recorder.addToWrite<Real>(soil_block, "Density");
+    body_state_recorder.addToWrite<int>(soil_block, "PlasticLabel");
+    body_state_recorder.addToWrite<int>(soil_block, "Indicator");
     auto &restart_io = main_methods.addIODynamics<RestartIOCK>(sph_system);
     /*Inflow condition*/
     auto &inflow_condition = main_methods.addStateDynamics<fluid_dynamics::EmitterInflowConditionCK<AlignedBoxByParticle, InletInflowCondition>>(emitter);
     auto &emitter_injection = main_methods.addStateDynamics<fluid_dynamics::EmitterInflowInjectionCK<AlignedBoxByParticle>>(emitter, inlet_buffer);
     /*Outflow condition*/
-    fluid_dynamics::BidirectionalBoundaryCK<MainExecutionPolicy, LinearCorrectionCK, PressurePrescribed<>> outflow_condition(outflow_disposer, inlet_buffer,0.0);
+    fluid_dynamics::BidirectionalBoundaryCK<MainExecutionPolicy, LinearCorrectionCK, PressurePrescribed<>> fluid_outflow_condition(fluid_outflow_disposer, inlet_buffer,0.0);
+    fluid_dynamics::BidirectionalBoundaryCK<MainExecutionPolicy, LinearCorrectionCK, PressurePrescribed<>> soil_outflow_condition(soil_outflow_disposer, soil_inlet_buffer,0.0);
     //----------------------------------------------------------------------
     //	Define time stepper with end and start time.
     //----------------------------------------------------------------------
-    TimeStepper &time_stepper = sph_solver.defineTimeStepper(20.0);
+    TimeStepper &time_stepper = sph_solver.defineTimeStepper(100.0);
     //----------------------------------------------------------------------
     //	Load restart file if necessary.
     //----------------------------------------------------------------------
@@ -157,9 +173,10 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     auto &advection_step = time_stepper.addTriggerByInterval(fluid_advection_time_step.exec());
     size_t advection_steps = sph_system.RestartStep() + 1;
-    int screening_interval = 100;
+    int screening_interval = 1000;
     int restart_output_interval = screening_interval * 10;
-    auto &state_recording = time_stepper.addTriggerByInterval(0.1);
+    auto &state_recording = time_stepper.addTriggerByInterval(1.0);
+    Real dynamics_relaxation_time = 5.0;  /*For soil dynamics relaxation*/
     //----------------------------------------------------------------------
     //	Prepare for the time integration loop.
     //----------------------------------------------------------------------
@@ -179,7 +196,10 @@ int main(int ac, char *av[])
     water_advection_step_setup.exec();
     soil_advection_step_setup.exec();
     fluid_linear_correction_matrix.exec();
-    outflow_condition.tagBufferParticles();
+    fluid_boundary_indicator.exec();
+    soil_surface_indicator.exec();
+    fluid_outflow_condition.tagBufferParticles();
+    soil_outflow_condition.tagBufferParticles();
     //----------------------------------------------------------------------
     //	First output before the integration loop.
     //----------------------------------------------------------------------
@@ -203,8 +223,10 @@ int main(int ac, char *av[])
         TickCount time_instance = TickCount::now();
         Real acoustic_dt = time_stepper.incrementPhysicalTime(fluid_acoustic_time_step);
         fluid_acoustic_step_1st_half.exec(acoustic_dt);
+        //if(time_stepper.getPhysicalTime() > dynamics_relaxation_time)
         inflow_condition.exec();
-        outflow_condition.applyBoundaryCondition(acoustic_dt);
+        fluid_outflow_condition.applyBoundaryCondition(acoustic_dt);
+        soil_outflow_condition.applyBoundaryCondition(acoustic_dt);
         fluid_acoustic_step_2nd_half.exec(acoustic_dt);
         /*Soil Dynamics*/
         stress_diffusion.exec();
@@ -222,9 +244,10 @@ int main(int ac, char *av[])
             water_update_particle_position.exec();
             soil_update_particle_position.exec();
 
-
+            //if(time_stepper.getPhysicalTime() > dynamics_relaxation_time)
             emitter_injection.exec();
-            outflow_condition.deleteParticles();
+            fluid_outflow_condition.deleteParticles();
+            soil_outflow_condition.deleteParticles();
             /** Output body state during the simulation according output_interval. */
             time_instance = TickCount::now();
             /** screen output, write body observables and restart files  */
@@ -234,6 +257,8 @@ int main(int ac, char *av[])
                           << "	Time = " << time_stepper.getPhysicalTime() << "	"
                           << "	advection_dt = " << advection_step.getInterval()
                           << "	acoustic_dt = " << time_stepper.getGlobalTimeStepSize() << "\n";
+                vertical_stress.exec();
+                body_state_recorder.writeToFile();
             }
 
 
@@ -244,7 +269,8 @@ int main(int ac, char *av[])
 
             if (state_recording())
             {
-                body_state_recorder.writeToFile();
+                // vertical_stress.exec();
+                // body_state_recorder.writeToFile();
             }
             interval_output += TickCount::now() - time_instance;
 
@@ -268,7 +294,10 @@ int main(int ac, char *av[])
             water_advection_step_setup.exec();
             soil_advection_step_setup.exec();
             fluid_linear_correction_matrix.exec();
-            outflow_condition.tagBufferParticles();
+            fluid_boundary_indicator.exec();
+            soil_surface_indicator.exec();
+            fluid_outflow_condition.tagBufferParticles();
+            soil_outflow_condition.tagBufferParticles();
             interval_advection_step += TickCount::now() - time_instance;
         }
     }
