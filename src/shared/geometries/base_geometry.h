@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -65,8 +65,8 @@ class Shape
   public:
     BoundingBox bounding_box_;
 
-    explicit Shape(const std::string &shape_name) : name_(shape_name), is_bounds_found_(false){};
-    virtual ~Shape(){};
+    explicit Shape(const std::string &shape_name) : name_(shape_name), is_bounds_found_(false) {};
+    virtual ~Shape() {};
 
     std::string getName() { return name_; };
     void setName(const std::string &name) { name_ = name; };
@@ -100,9 +100,9 @@ using SubShapeAndOp = std::pair<Shape *, ShapeBooleanOps>;
 class BinaryShapes : public Shape
 {
   public:
-    BinaryShapes() : Shape("BinaryShapes"){};
-    explicit BinaryShapes(const std::string &shape_name) : Shape(shape_name){};
-    virtual ~BinaryShapes(){};
+    BinaryShapes() : Shape("BinaryShapes") {};
+    explicit BinaryShapes(const std::string &shape_name) : Shape(shape_name) {};
+    virtual ~BinaryShapes() {};
 
     void add(Shape *sub_shape)
     {
@@ -163,7 +163,7 @@ class Edge
     template <class EdgeStructureType>
     Edge(InEdgeType in_edge, EdgeStructureType *structure)
         : id_(structure->ContainerSize()), in_edge_(in_edge){};
-    virtual ~Edge(){};
+    virtual ~Edge() {};
 
     size_t id_;            /**< id of this edge */
     InEdgeType in_edge_;   /**< id(s) of parent edge(s) */

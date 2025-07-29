@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -50,7 +50,7 @@ class FreeSurfaceIndication<DataDelegationType>
   public:
     template <class BaseRelationType>
     explicit FreeSurfaceIndication(BaseRelationType &base_relation);
-    virtual ~FreeSurfaceIndication(){};
+    virtual ~FreeSurfaceIndication() {};
 
   protected:
     int *indicator_;
@@ -64,7 +64,7 @@ class FreeSurfaceIndication<Inner<>>
 {
   public:
     explicit FreeSurfaceIndication(BaseInnerRelation &inner_relation);
-    virtual ~FreeSurfaceIndication(){};
+    virtual ~FreeSurfaceIndication() {};
     void interaction(size_t index_i, Real dt = 0.0);
     void update(size_t index_i, Real dt = 0.0);
 
@@ -79,7 +79,7 @@ class FreeSurfaceIndication<Inner<SpatialTemporal>>
 {
   public:
     explicit FreeSurfaceIndication(BaseInnerRelation &inner_relation);
-    virtual ~FreeSurfaceIndication(){};
+    virtual ~FreeSurfaceIndication() {};
     void interaction(size_t index_i, Real dt = 0.0);
     void update(size_t index_i, Real dt = 0.0);
 
@@ -102,7 +102,7 @@ class FreeSurfaceIndication<Contact<>>
             contact_Vol_.push_back(this->contact_particles_[k]->getVariableDataByName<Real>("VolumetricMeasure"));
         }
     };
-    virtual ~FreeSurfaceIndication(){};
+    virtual ~FreeSurfaceIndication() {};
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
@@ -124,7 +124,7 @@ class FreeSurfaceIndication<Contact<NonWetting>>
 {
   public:
     FreeSurfaceIndication(BaseContactRelation &contact_relation);
-    virtual ~FreeSurfaceIndication(){};
+    virtual ~FreeSurfaceIndication() {};
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:

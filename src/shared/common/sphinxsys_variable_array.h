@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -99,12 +99,12 @@ template <typename DataType>
 using AllocatedDataArray = DataArray<DataType> *;
 
 template <typename AllocationType>
-using VariableAllocationPair = std::pair<AllocationType, UnsignedInt>;
+using VariableAllocationSet = std::pair<AllocationType, UnsignedInt>;
 
-typedef DataAssemble<VariableAllocationPair, AllocatedDataArray> VariableDataArrays;
-typedef DataAssemble<UniquePtr, DiscreteVariableArray> DiscreteVariableArrays;
+typedef DataAssemble<VariableAllocationSet, AllocatedDataArray> VariableDataArrayAssemble;
+typedef DataAssemble<UniquePtr, DiscreteVariableArray> DiscreteVariableArrayAssemble;
 
-struct DiscreteVariableArraysInitialization
+struct DiscreteVariableArrayAssembleInitialization
 {
     template <typename DataType>
     void operator()(const StdVec<DiscreteVariable<DataType> *> &variables,
@@ -114,11 +114,11 @@ struct DiscreteVariableArraysInitialization
     }
 };
 
-struct VariableDataArraysInitialization
+struct VariableDataArrayAssembleInitialization
 {
     template <typename DataType, class ExecutionPolicy>
     void operator()(const UniquePtr<DiscreteVariableArray<DataType>> &variable_array_ptr,
-                    VariableAllocationPair<AllocatedDataArray<DataType>> &variable_allocation_size_pair,
+                    VariableAllocationSet<AllocatedDataArray<DataType>> &variable_allocation_size_pair,
                     const ExecutionPolicy &ex_policy)
     {
         variable_allocation_size_pair =

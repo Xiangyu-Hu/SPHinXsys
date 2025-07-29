@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -22,7 +22,10 @@
  * ------------------------------------------------------------------------- */
 /**
  * @file sphinxsys_buffer_array.h
- * @brief tbd
+ * @brief A buffer array defines an device shared array of temporary data corresponding to
+ * a discrete variable array so that the data in the array can be temporarily saved
+ * (at both device or host) in the buffer. I expect that these temporary data
+ * can be manipulated by both host and device as they are device shared.
  * @author Xiangyu Hu
  */
 
@@ -93,20 +96,20 @@ class DeviceSharedBufferArray : public Entity
 };
 
 template <typename DataType>
-using AllocationDataArrayPair = std::pair<AllocatedDataArray<DataType>, AllocatedDataArray<DataType>>;
+using AllocatedDataArrayPair = std::pair<AllocatedDataArray<DataType>, AllocatedDataArray<DataType>>;
 
 template <typename DataType>
-using AllocationDataArrayPairSet = std::pair<AllocationDataArrayPair<DataType>, UnsignedInt>;
+using AllocatedDataArrayPairSet = std::pair<AllocatedDataArrayPair<DataType>, UnsignedInt>;
 
-struct CopyAllocationDataArrayPairSet
+struct CopyAllocatedDataArrayPairSet
 {
     template <typename DataType>
-    void operator()(AllocationDataArrayPairSet<DataType> &allocation_pair_set,
+    void operator()(AllocatedDataArrayPairSet<DataType> &allocated_pair_set,
                     size_t source_data_index, size_t target_data_index)
     {
-        auto &source_allocation = allocation_pair_set.first.first;
-        auto &target_allocation = allocation_pair_set.first.second;
-        for (size_t i = 0; i < allocation_pair_set.second; ++i)
+        auto &source_allocation = allocated_pair_set.first.first;
+        auto &target_allocation = allocated_pair_set.first.second;
+        for (size_t i = 0; i < allocated_pair_set.second; ++i)
         {
             target_allocation[i][target_data_index] = source_allocation[i][source_data_index];
         }

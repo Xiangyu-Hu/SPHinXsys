@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -52,7 +52,7 @@ class ShellMidSurfaceBounding : public BaseLocalDynamics<BodyPartByCell>
 {
   public:
     explicit ShellMidSurfaceBounding(NearShapeSurface &body_part);
-    virtual ~ShellMidSurfaceBounding(){};
+    virtual ~ShellMidSurfaceBounding() {};
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
@@ -77,7 +77,7 @@ class ShellNormalDirectionPrediction : public BaseDynamics<void>
   public:
     explicit ShellNormalDirectionPrediction(BaseInnerRelation &inner_relation,
                                             Real thickness, Real consistency_criterion = cos(Pi / 20.0));
-    virtual ~ShellNormalDirectionPrediction(){};
+    virtual ~ShellNormalDirectionPrediction() {};
     virtual void exec(Real dt = 0.0) override;
 
   protected:
@@ -89,7 +89,7 @@ class ShellNormalDirectionPrediction : public BaseDynamics<void>
 
       public:
         NormalPrediction(SPHBody &sph_body, Real thickness);
-        virtual ~NormalPrediction(){};
+        virtual ~NormalPrediction() {};
         void update(size_t index_i, Real dt = 0.0);
     };
 
@@ -101,7 +101,7 @@ class ShellNormalDirectionPrediction : public BaseDynamics<void>
 
       public:
         PredictionConvergenceCheck(SPHBody &sph_body, Real convergence_criterion);
-        virtual ~PredictionConvergenceCheck(){};
+        virtual ~PredictionConvergenceCheck() {};
 
         bool reduce(size_t index_i, Real dt = 0.0);
     };
@@ -110,7 +110,7 @@ class ShellNormalDirectionPrediction : public BaseDynamics<void>
     {
       public:
         explicit ConsistencyCorrection(BaseInnerRelation &inner_relation, Real consistency_criterion);
-        virtual ~ConsistencyCorrection(){};
+        virtual ~ConsistencyCorrection() {};
 
         void interaction(size_t index_i, Real dt = 0.0);
 
@@ -128,7 +128,7 @@ class ShellNormalDirectionPrediction : public BaseDynamics<void>
 
       public:
         explicit ConsistencyUpdatedCheck(SPHBody &sph_body);
-        virtual ~ConsistencyUpdatedCheck(){};
+        virtual ~ConsistencyUpdatedCheck() {};
 
         bool reduce(size_t index_i, Real dt = 0.0);
     };
@@ -137,7 +137,7 @@ class ShellNormalDirectionPrediction : public BaseDynamics<void>
     {
       public:
         explicit SmoothingNormal(BaseInnerRelation &inner_relation);
-        virtual ~SmoothingNormal(){};
+        virtual ~SmoothingNormal() {};
         void update(size_t index_i, Real dt = 0.0);
 
       protected:
@@ -158,7 +158,7 @@ class ShellRelaxationStep : public BaseDynamics<void>
 {
   public:
     explicit ShellRelaxationStep(BaseInnerRelation &inner_relation);
-    virtual ~ShellRelaxationStep(){};
+    virtual ~ShellRelaxationStep() {};
     virtual void exec(Real dt = 0.0) override;
     SimpleDynamics<ShellMidSurfaceBounding> &MidSurfaceBounding() { return mid_surface_bounding_; };
 

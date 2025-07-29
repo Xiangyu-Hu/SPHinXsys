@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -43,7 +43,7 @@ class ContinuumInitialCondition : public LocalDynamics
 {
   public:
     explicit ContinuumInitialCondition(SPHBody &sph_body);
-    virtual ~ContinuumInitialCondition(){};
+    virtual ~ContinuumInitialCondition() {};
 
   protected:
     Vecd *pos_, *vel_;
@@ -54,7 +54,7 @@ class AcousticTimeStep : public LocalDynamicsReduce<ReduceMax>
 {
   public:
     explicit AcousticTimeStep(SPHBody &sph_body, Real acousticCFL = 0.6);
-    virtual ~AcousticTimeStep(){};
+    virtual ~AcousticTimeStep() {};
     Real reduce(size_t index_i, Real dt = 0.0);
     virtual Real outputResult(Real reduced_value) override;
 
@@ -71,7 +71,7 @@ class BaseIntegration1stHalf : public FluidDynamicsType
 {
   public:
     explicit BaseIntegration1stHalf(BaseInnerRelation &inner_relation);
-    virtual ~BaseIntegration1stHalf(){};
+    virtual ~BaseIntegration1stHalf() {};
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
@@ -86,7 +86,7 @@ class BasePlasticIntegration : public fluid_dynamics::BaseIntegration<DataDelega
   public:
     template <class BaseRelationType>
     explicit BasePlasticIntegration(BaseRelationType &base_relation);
-    virtual ~BasePlasticIntegration(){};
+    virtual ~BasePlasticIntegration() {};
 
   protected:
     PlasticContinuum &plastic_continuum_;
@@ -103,7 +103,7 @@ class PlasticIntegration1stHalf<Inner<>, RiemannSolverType>
 {
   public:
     explicit PlasticIntegration1stHalf(BaseInnerRelation &inner_relation);
-    virtual ~PlasticIntegration1stHalf(){};
+    virtual ~PlasticIntegration1stHalf() {};
     void initialization(size_t index_i, Real dt = 0.0);
     void interaction(size_t index_i, Real dt = 0.0);
     void update(size_t index_i, Real dt = 0.0);
@@ -123,7 +123,7 @@ class PlasticIntegration1stHalf<Contact<Wall>, RiemannSolverType>
 {
   public:
     explicit PlasticIntegration1stHalf(BaseContactRelation &wall_contact_relation);
-    virtual ~PlasticIntegration1stHalf(){};
+    virtual ~PlasticIntegration1stHalf() {};
     inline void interaction(size_t index_i, Real dt = 0.0);
     virtual Vecd computeNonConservativeForce(size_t index_i);
 
@@ -145,7 +145,7 @@ class PlasticIntegration2ndHalf<Inner<>, RiemannSolverType>
 {
   public:
     explicit PlasticIntegration2ndHalf(BaseInnerRelation &inner_relation);
-    virtual ~PlasticIntegration2ndHalf(){};
+    virtual ~PlasticIntegration2ndHalf() {};
     void initialization(size_t index_i, Real dt = 0.0);
     void interaction(size_t index_i, Real dt = 0.0);
     void update(size_t index_i, Real dt = 0.0);
@@ -163,7 +163,7 @@ class PlasticIntegration2ndHalf<Contact<Wall>, RiemannSolverType>
 {
   public:
     explicit PlasticIntegration2ndHalf(BaseContactRelation &wall_contact_relation);
-    virtual ~PlasticIntegration2ndHalf(){};
+    virtual ~PlasticIntegration2ndHalf() {};
     inline void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
@@ -179,7 +179,7 @@ class StressDiffusion : public BasePlasticIntegration<DataDelegateInner>
 {
   public:
     explicit StressDiffusion(BaseInnerRelation &inner_relation);
-    virtual ~StressDiffusion(){};
+    virtual ~StressDiffusion() {};
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
@@ -191,7 +191,7 @@ class ShearStressRelaxationHourglassControl1stHalf : public fluid_dynamics::Base
 {
   public:
     explicit ShearStressRelaxationHourglassControl1stHalf(BaseInnerRelation &inner_relation, Real xi = 4.0);
-    virtual ~ShearStressRelaxationHourglassControl1stHalf(){};
+    virtual ~ShearStressRelaxationHourglassControl1stHalf() {};
     void interaction(size_t index_i, Real dt = 0.0);
     void update(size_t index_i, Real dt = 0.0);
 
@@ -205,7 +205,7 @@ class ShearStressRelaxationHourglassControl2ndHalf : public fluid_dynamics::Base
 {
   public:
     explicit ShearStressRelaxationHourglassControl2ndHalf(BaseInnerRelation &inner_relation);
-    virtual ~ShearStressRelaxationHourglassControl2ndHalf(){};
+    virtual ~ShearStressRelaxationHourglassControl2ndHalf() {};
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
@@ -219,7 +219,7 @@ class ShearStressRelaxationHourglassControl1stHalfJ2Plasticity : public ShearStr
 {
   public:
     explicit ShearStressRelaxationHourglassControl1stHalfJ2Plasticity(BaseInnerRelation &inner_relation, Real xi = 0.2);
-    virtual ~ShearStressRelaxationHourglassControl1stHalfJ2Plasticity(){};
+    virtual ~ShearStressRelaxationHourglassControl1stHalfJ2Plasticity() {};
     void update(size_t index_i, Real dt = 0.0);
 
   protected:

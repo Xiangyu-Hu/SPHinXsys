@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -313,8 +313,9 @@ class LocallyOrthotropicMuscle : public Muscle
 
     LocallyOrthotropicMuscle(Real rho0, Real bulk_modulus, const Vecd &f0, const Vecd &s0,
                              const std::array<Real, 4> &a0, const std::array<Real, 4> &b0);
-    explicit LocallyOrthotropicMuscle(ConstructArgs<Real, Real, Vecd, Vecd, 
-    std::array<Real, 4>, std::array<Real, 4>> args);
+    explicit LocallyOrthotropicMuscle(ConstructArgs<Real, Real, Vecd, Vecd,
+                                                    std::array<Real, 4>, std::array<Real, 4>>
+                                          args);
     virtual ~LocallyOrthotropicMuscle() {};
 
     virtual void registerLocalParameters(BaseParticles *base_particles) override;

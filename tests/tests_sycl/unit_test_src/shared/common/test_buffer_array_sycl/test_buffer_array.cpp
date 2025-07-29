@@ -50,13 +50,13 @@ TEST(buffer_array, test_sycl)
     AllocatedDataArray<SimTKVec3> buffer_data_array =
         buffer_array.DelegatedDataArray(ParallelPolicy{});
 
-    AllocationDataArrayPair<SimTKVec3>
+    AllocatedDataArrayPair<SimTKVec3>
         variable_buffer_allocation_pair(variable_data_array, buffer_data_array);
 
-    AllocationDataArrayPairSet<SimTKVec3>
+    AllocatedDataArrayPairSet<SimTKVec3>
         variable_buffer_allocation_pair_set(variable_buffer_allocation_pair, 2);
 
-    CopyAllocationDataArrayPairSet copy_variable_to_buffer;
+    CopyAllocatedDataArrayPairSet copy_variable_to_buffer;
 
     particle_for(ParallelPolicy{}, IndexRange(5000, 5050),
                  [&](size_t i)
@@ -78,10 +78,10 @@ TEST(buffer_array, test_sycl)
     AllocatedDataArray<SimTKVec3> buffer_data_array_sycl =
         buffer_array.DelegatedDataArray(ParallelDevicePolicy{});
 
-    AllocationDataArrayPair<SimTKVec3>
+    AllocatedDataArrayPair<SimTKVec3>
         variable_buffer_allocation_host(variable_data_array, buffer_data_array_sycl);
 
-    AllocationDataArrayPairSet<SimTKVec3>
+    AllocatedDataArrayPairSet<SimTKVec3>
         variable_buffer_allocation_set_host(variable_buffer_allocation_host, 2);
 
     particle_for(ParallelPolicy{}, IndexRange(5000, 5050), // copy to buffer on host

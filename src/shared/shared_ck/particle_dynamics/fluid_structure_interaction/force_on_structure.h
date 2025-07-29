@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -47,7 +47,7 @@ class ForceFromFluid : public Interaction<Contact<Parameters...>>, public ForceP
   public:
     template <class ContactRelationType>
     explicit ForceFromFluid(ContactRelationType &contact_relation, const std::string &force_name);
-    virtual ~ForceFromFluid(){};
+    virtual ~ForceFromFluid() {};
 
     class InteractKernel
         : public Interaction<Contact<Parameters...>>::InteractKernel
@@ -89,7 +89,7 @@ class ViscousForceFromFluid<Contact<WithUpdate, ViscousForceType, Parameters...>
   public:
     template <class ContactRelationType>
     explicit ViscousForceFromFluid(ContactRelationType &contact_relation);
-    virtual ~ViscousForceFromFluid(){};
+    virtual ~ViscousForceFromFluid() {};
     class InteractKernel : public BaseForceFromFluid::InteractKernel
     {
       public:
@@ -124,7 +124,7 @@ class PressureForceFromFluid<Contact<WithUpdate, AcousticStep2ndHalfType, Parame
   public:
     template <class ContactRelationType>
     explicit PressureForceFromFluid(ContactRelationType &contact_relation);
-    virtual ~PressureForceFromFluid(){};
+    virtual ~PressureForceFromFluid() {};
 
     class InteractKernel : public BaseForceFromFluid::InteractKernel
     {

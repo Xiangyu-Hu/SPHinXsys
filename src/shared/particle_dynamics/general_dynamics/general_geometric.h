@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -41,7 +41,7 @@ class NormalDirectionFromBodyShape : public LocalDynamics
 {
   public:
     explicit NormalDirectionFromBodyShape(SPHBody &sph_body);
-    virtual ~NormalDirectionFromBodyShape(){};
+    virtual ~NormalDirectionFromBodyShape() {};
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
@@ -58,7 +58,7 @@ class NormalDirectionFromSubShapeAndOp : public LocalDynamics
 {
   public:
     explicit NormalDirectionFromSubShapeAndOp(SPHBody &sph_body, const std::string &shape_name);
-    virtual ~NormalDirectionFromSubShapeAndOp(){};
+    virtual ~NormalDirectionFromSubShapeAndOp() {};
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
@@ -73,7 +73,7 @@ class NormalDirectionFromParticles : public LocalDynamics, public DataDelegateIn
 {
   public:
     explicit NormalDirectionFromParticles(BaseInnerRelation &inner_relation);
-    virtual ~NormalDirectionFromParticles(){};
+    virtual ~NormalDirectionFromParticles() {};
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
