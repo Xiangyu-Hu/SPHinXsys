@@ -23,7 +23,7 @@ RegressionTestBase<ObserveMethodType>::RegressionTestBase(Args &&...args)
       converged_("false"), number_of_run_(1), label_for_repeat_(0)
 
 {
-    input_folder_path_ = this->io_environment_.input_folder_;
+    input_folder_path_ = this->io_environment_.InputFolder();
     in_output_filefullpath_ = input_folder_path_ + "/" + this->dynamics_identifier_name_ + "_" + this->quantity_name_ + ".xml";
     result_filefullpath_ = input_folder_path_ + "/" + this->dynamics_identifier_name_ + "_" + this->quantity_name_ + "_result.xml";
     runtimes_filefullpath_ = input_folder_path_ + "/" + this->dynamics_identifier_name_ + "_" + this->quantity_name_ + "_runtimes.dat";
