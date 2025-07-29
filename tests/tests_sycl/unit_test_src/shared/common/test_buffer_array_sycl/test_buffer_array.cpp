@@ -77,7 +77,7 @@ TEST(buffer_array, test_sycl)
     particle_for(LoopRangeCK<ParallelPolicy, SPHBody>(&sv_buffer_particles),
                  [=](size_t i)
                  {
-                     UnsignedInt index = copy_indexes_sycl[i];
+                     UnsignedInt index = copy_indexes[i];
                      (*copy_variable_to_buffer)(*variable_buffer_allocation_pair_set, index, i);
                  });
 
@@ -97,12 +97,12 @@ TEST(buffer_array, test_sycl)
     AllocatedDataArray<SimTKVec3> buffer_data_array_sycl =
         buffer_array.DelegatedDataArray(ParallelDevicePolicy{});
 
-    AllocatedDataArrayPair<SimTKVec3> variable_buffer_allocation_pair(variable_data_array_sycl, buffer_data_array_sycl);
+    AllocatedDataArrayPair<SimTKVec3> variable_buffer_allocation_pair_sycl(variable_data_array_sycl, buffer_data_array_sycl);
 
     SingularVariable<AllocatedDataArrayPairSet<SimTKVec3>>
         sv_variable_buffer_allocation_pair_set_sycl(
             "VariableBufferAllocationPairSet",
-            AllocatedDataArrayPairSet<SimTKVec3>(variable_buffer_allocation_pair, 2));
+            AllocatedDataArrayPairSet<SimTKVec3>(variable_buffer_allocation_pair_sycl, 2));
 
     AllocatedDataArrayPairSet<SimTKVec3> *variable_buffer_allocation_pair_set_sycl =
         sv_variable_buffer_allocation_pair_set_sycl.DelegatedData(ParallelDevicePolicy{});
