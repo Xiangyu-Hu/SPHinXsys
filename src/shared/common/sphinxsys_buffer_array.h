@@ -22,10 +22,10 @@
  * ------------------------------------------------------------------------- */
 /**
  * @file sphinxsys_buffer_array.h
- * @brief A buffer array defines an device shared array of temporary data corresponding to
+ * @brief A buffer array defines temporary data corresponding to
  * a discrete variable array so that the data in the array can be temporarily saved
- * (at both device or host) in the buffer. I expect that these temporary data
- * can be manipulated by both host and device as they are device shared.
+ * at device in the buffer. I expect that these temporary data
+ * can be synchronize to host for future use.
  * @author Xiangyu Hu
  */
 
@@ -47,7 +47,7 @@ class VariableBufferArray : public DiscreteVariableArray<DataType>
   public:
     VariableBufferArray(StdVec<DiscreteVariable<DataType> *> variables, UnsignedInt buffer_size)
         : DiscreteVariableArray<DataType>(variables), buffer_size_(buffer_size),
-          occupied_size_(0), buffer_data_ptr_(new DataType[buffer_size * this->array_size_]),
+          buffer_data_ptr_(new DataType[buffer_size * this->array_size_]),
           buffer_array_(new DataArray<DataType>[this->array_size_]),
           delegated_buffer_array_(nullptr), host_staging_buffer_array_(nullptr)
     {
@@ -102,7 +102,6 @@ class VariableBufferArray : public DiscreteVariableArray<DataType>
 
   protected:
     UnsignedInt buffer_size_;
-    UnsignedInt occupied_size_;
     DataType *buffer_data_ptr_;
     DataArray<DataType> *buffer_array_;
     DataArray<DataType> *delegated_buffer_array_;

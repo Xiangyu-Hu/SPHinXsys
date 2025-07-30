@@ -39,14 +39,15 @@ TEST(variable_buffer_array, test_sycl)
     SimTKVec3 *force = dv_force.DelegatedData(ParallelPolicy{});
     UnsignedInt *copy_indexes = dv_copy_indexes.DelegatedData(ParallelPolicy{});
     SimTK::SpatialVec partial_sum =
-        particle_reduce(ParallelPolicy{}, IndexRange(0, sv_buffer_particles.getValue()),
-                        ZeroData<SimTK::SpatialVec>::value, ReduceSum<SimTK::SpatialVec>(),
-                        [&](size_t i)
-                        {
-                            UnsignedInt index = copy_indexes[i];
-                            SimTKVec3 a = SimTK::cross(torque[index], force[index]);
-                            return SimTK::SpatialVec(a, force[index]);
-                        });
+        particle_reduce<ReduceSum<SimTK::SpatialVec>>(
+            LoopRangeCK<ParallelPolicy, SPHBody>(&sv_buffer_particles),
+            ReduceReference<ReduceSum<SimTK::SpatialVec>>::value,
+            [&](size_t i)
+            {
+                UnsignedInt index = copy_indexes[i];
+                SimTKVec3 a = SimTK::cross(torque[index], force[index]);
+                return SimTK::SpatialVec(a, force[index]);
+            });
 
     StdVec<DiscreteVariable<SimTKVec3> *> variables = {&dv_torque, &dv_force};
     VariableBufferArray<SimTKVec3> variable_buffer_array(variables, 200);
@@ -56,7 +57,7 @@ TEST(variable_buffer_array, test_sycl)
     CopyVariableToBuffer *copy_variable_to_buffer = sv_copy_variable_to_buffer.DelegatedData(ParallelPolicy{});
 
     particle_for(LoopRangeCK<ParallelPolicy, SPHBody>(&sv_buffer_particles),
-                 [=](size_t i)
+                 [&](size_t i)
                  {
                      UnsignedInt index = copy_indexes[i];
                      (*copy_variable_to_buffer)(index, i);
@@ -66,7 +67,7 @@ TEST(variable_buffer_array, test_sycl)
     SimTK::SpatialVec partial_sum_ck = particle_reduce<ReduceSum<SimTK::SpatialVec>>(
         LoopRangeCK<ParallelPolicy, SPHBody>(&sv_buffer_particles),
         ReduceReference<ReduceSum<SimTK::SpatialVec>>::value,
-        [=](size_t i)
+        [&](size_t i)
         {
             SimTKVec3 *buffer_torque = buff_array[0];
             SimTKVec3 *buffer_force = buff_array[1];
@@ -76,7 +77,7 @@ TEST(variable_buffer_array, test_sycl)
 
     CopyVariableToBuffer test(ParallelDevicePolicy{}, variable_buffer_array);
     SingularVariable<CopyVariableToBuffer> sv_copy_variable_to_buffer_sycl(
-        "CopyVariableToBuffer", CopyVariableToBuffer(ParallelDevicePolicy{}, variable_buffer_array));
+        "CopyVariableToBufferSYCL", CopyVariableToBuffer(ParallelDevicePolicy{}, variable_buffer_array));
     CopyVariableToBuffer *copy_variable_to_buffer_sycl = sv_copy_variable_to_buffer_sycl.DelegatedData(ParallelDevicePolicy{});
 
     UnsignedInt *copy_indexes_sycl = dv_copy_indexes.DelegatedData(ParallelDevicePolicy{});
@@ -106,13 +107,14 @@ TEST(variable_buffer_array, test_sycl)
     SimTKVec3 *torque_host_staging = host_staging_buffer_array[0];
     SimTKVec3 *force_host_staging = host_staging_buffer_array[1];
     SimTK::SpatialVec partial_sum_host_staging =
-        particle_reduce(ParallelPolicy{}, IndexRange(0, sv_buffer_particles.getValue()),
-                        ZeroData<SimTK::SpatialVec>::value, ReduceSum<SimTK::SpatialVec>(),
-                        [&](size_t i)
-                        {
-                            SimTKVec3 a = SimTK::cross(torque_host_staging[i], force_host_staging[i]);
-                            return SimTK::SpatialVec(a, force_host_staging[i]);
-                        });
+        particle_reduce<ReduceSum<SimTK::SpatialVec>>(
+            LoopRangeCK<ParallelPolicy, SPHBody>(&sv_buffer_particles),
+            ReduceReference<ReduceSum<SimTK::SpatialVec>>::value,
+            [&](size_t i)
+            {
+                SimTKVec3 a = SimTK::cross(torque_host_staging[i], force_host_staging[i]);
+                return SimTK::SpatialVec(a, force_host_staging[i]);
+            });
 
     EXPECT_EQ(partial_sum, partial_sum_ck);
     EXPECT_EQ(partial_sum, partial_sum_sycl);
