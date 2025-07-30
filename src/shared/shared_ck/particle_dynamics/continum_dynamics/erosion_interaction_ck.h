@@ -21,25 +21,46 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file    all_continum_dynamics.h
+ * @file    interaction_ck.h
+ * @brief 	This is for the base classes of erosion particle dynamics, which describe the
+ * 			erosion dynamics of a particle and it neighbors.
+ * @author	Shuang Li and Xiangyu Hu
  */
 
+#ifndef EROSION_INTERACTION_CK_H
+#define EROSION_INTERACTION_CK_H
 
-#pragma once
+#include "base_local_dynamics.h"
+#include "neighborhood_ck.h"
+#include "relation_ck.hpp"
+#include "interaction_ck.hpp"
 
-#include "continuum_integration_1st_ck.h"
-#include "continuum_integration_1st_ck.hpp"
-#include "continuum_integration_2nd_ck.h"
-#include "continuum_integration_2nd_ck.hpp"
-#include "continuum_dynamics_variable_ck.h"
-#include "continuum_dynamics_variable_ck.hpp"
-#include "stress_diffusion_ck.h"
-#include "stress_diffusion_ck.hpp"
-#include "initilization_dynamics_ck.h"
-#include "initilization_dynamics_ck.hpp"
-#include "erosion_dynamics_1st_ck.h"
-#include "erosion_dynamics_1st_ck.hpp"
-#include "erosion_dynamics_2nd_ck.h"
-#include "erosion_dynamics_2nd_ck.hpp"
-#include "erosion_interaction_ck.h"
-#include "erosion_interaction_ck.hpp"
+namespace SPH
+{
+template <>
+class Interaction<Soil>
+{
+  public:
+    template <class SoilContactRelationType>
+    Interaction(SoilContactRelationType &soil_contact_relation);
+    virtual ~Interaction() {};
+
+  protected:
+    StdVec<DiscreteVariable<Vecd> *> dv_soil_n_, dv_soil_vel_;
+    StdVec<DiscreteVariable<Real> *> dv_soil_Vol_, dv_soil_p_;
+};
+
+template <>
+class Interaction<Fluid>
+{
+  public:
+    template <class FluidContactRelationType>
+    Interaction(FluidContactRelationType &fluid_contact_relation);
+    virtual ~Interaction() {};
+
+  protected:
+    StdVec<DiscreteVariable<Vecd> *> dv_fluid_vel_;
+    StdVec<DiscreteVariable<Real> *> dv_fluid_Vol_, dv_fluid_p_;
+};
+} // namespace SPH
+#endif // EROSION_INTERACTION_CK_H

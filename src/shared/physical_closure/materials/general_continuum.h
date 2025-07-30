@@ -71,7 +71,7 @@ class GeneralContinuum : public WeaklyCompressibleFluid
       public:
         GeneralContinuumKernel(GeneralContinuum &encloser) : E_(encloser.E_), G_(encloser.G_), K_(encloser.K_),
                                                              nu_(encloser.nu_), contact_stiffness_(encloser.contact_stiffness_),
-                                                             rho0_(encloser.rho0_) {};
+                                                             rho0_(encloser.rho0_),p0_(encloser.p0_) {};
 
         inline Real getYoungsModulus() { return E_; };
         inline Real getPoissonRatio() { return nu_; };
@@ -79,6 +79,10 @@ class GeneralContinuum : public WeaklyCompressibleFluid
         inline Real getBulkModulus(Real youngs_modulus, Real poisson_ratio);
         inline Real getShearModulus(Real youngs_modulus, Real poisson_ratio);
         inline Real getLambda(Real youngs_modulus, Real poisson_ratio);
+        Real getPressure(Real rho)
+        {
+            return p0_ * (rho / rho0_ - 1.0);
+        };
 
       protected:
         Real E_;                 /* Youngs or tensile modules  */
@@ -86,7 +90,9 @@ class GeneralContinuum : public WeaklyCompressibleFluid
         Real K_;                 /* bulk modules  */
         Real nu_;                /* Poisson ratio  */
         Real contact_stiffness_; /* contact-force stiffness related to bulk modulus*/
-        Real rho0_;              /* contact-force stiffness related to bulk modulus*/
+        Real rho0_;              /* reference density*/
+        Real p0_;                /* reference Pressure  */
+
     };
 };
 
@@ -98,11 +104,12 @@ class PlasticContinuum : public GeneralContinuum
     Real psi_;                          /* dilatancy angle  */
     Real alpha_phi_;                    /* Drucker-Prager's constants */
     Real k_c_;                          /* Drucker-Prager's constants */
+    Real d_s_;                          /* Mean particle diameter */
     const Real stress_dimension_ = 3.0; /* plain strain condition */
   public:
     explicit PlasticContinuum(Real rho0, Real c0, Real youngs_modulus, Real poisson_ratio, Real friction_angle, Real cohesion = 0, Real dilatancy = 0)
         : GeneralContinuum(rho0, c0, youngs_modulus, poisson_ratio),
-          c_(cohesion), phi_(friction_angle), psi_(dilatancy), alpha_phi_(0.0), k_c_(0.0)
+          c_(cohesion), phi_(friction_angle), psi_(dilatancy), d_s_(0.002), alpha_phi_(0.0), k_c_(0.0)
     {
         material_type_name_ = "PlasticContinuum";
         alpha_phi_ = getDPConstantsA(friction_angle);
@@ -113,6 +120,7 @@ class PlasticContinuum : public GeneralContinuum
     Real getDPConstantsA(Real friction_angle);
     Real getDPConstantsK(Real cohesion, Real friction_angle);
     Real getFrictionAngle() { return phi_; };
+    Real getCohesion() { return c_; };
 
     virtual Mat3d ConstitutiveRelation(Mat3d &velocity_gradient, Mat3d &stress_tensor);
     virtual Mat3d ReturnMapping(Mat3d &stress_tensor);
@@ -122,12 +130,27 @@ class PlasticContinuum : public GeneralContinuum
       public:
         PlasticKernel(PlasticContinuum &encloser) : GeneralContinuum::GeneralContinuumKernel(encloser),
                                                     c_(encloser.c_), phi_(encloser.phi_),
-                                                    psi_(encloser.psi_), alpha_phi_(encloser.alpha_phi_), k_c_(encloser.k_c_) {};
-
+                                                    psi_(encloser.psi_), alpha_phi_(encloser.alpha_phi_), k_c_(encloser.k_c_),
+                                                    d_s_(encloser.d_s_) {};
+        struct ReturnMappingResult
+        {
+            Mat3d stress_tensor;
+            bool has_yielded;
+        };
         inline Real getDPConstantsA(Real friction_angle);
+        inline Real getDPConstantsK(Real cohesion, Real friction_angle);
         inline Mat3d ConstitutiveRelation(Mat3d &velocity_gradient, Mat3d &stress_tensor);
+        inline Mat3d ConstitutiveRelationWithReduction(Mat3d &velocity_gradient, Mat3d &stress_tensor, Real alpha_phi_i, Real k_c_i);
         inline Mat3d ReturnMapping(Mat3d &stress_tensor);
+        inline int ReturnMappingWithReduction(Mat3d &inner_stress_tensor, Real alpha_phi_i, Real k_c_i);
         inline Real getFrictionAngle() { return phi_; };
+        inline Real getCohesion() { return c_; };
+        inline Real gerParicleDiameter() {return d_s_;};
+        inline Real getFrictionVelocity(Real uz, Real z);
+        inline Real calculateThetaCr(Real u_star);
+        inline Real ThetaToFrictionVelcoty(Real theta_cr);
+        inline Mat3d computeBinghamViscousStress(const Mat3d &strain_rate, Real tau_y, Real eta);
+        inline Mat3d computeHBPViscousStress(const Mat3d &strain_rate, Real tau_y, Real eta);
 
       protected:
         Real c_;                                                   /* cohesion  */
@@ -135,6 +158,7 @@ class PlasticContinuum : public GeneralContinuum
         Real psi_;                                                 /* dilatancy angle  */
         Real alpha_phi_;                                           /* Drucker-Prager's constants */
         Real k_c_;                                                 /* Drucker-Prager's constants */
+        Real d_s_;                                                  /* Mean particle diameter */
         Real stress_dimension_ = 3.0; /* plain strain condition */ // Temporarily cancel const --need to check
     };
 };

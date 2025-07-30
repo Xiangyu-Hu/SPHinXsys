@@ -21,51 +21,51 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	continuum_integration_1st_ck.h
- * @brief 	Here, we define the algorithm classes for continuum dynamics within the body.
+ * @file 	erosion_dynamics_1st_ck.h
+ * @brief 	Here, we define the algorithm classes for erosion dynamics.
  * @details CK and SYCL version.
- * @author	Shuang Li,Xiangyu Hu and Shuaihao Zhang
+ * @author	Shuang Li and Xiangyu Hu
  */
-#ifndef CONTINUUM_INTEGRATION_1ST_CK_H
-#define CONTINUUM_INTEGRATION_1ST_CK_H
+#ifndef EROSION_DYNAMICS_1ST_H
+#define EROSION_DYNAMICS_1ST_H
 
-#include "acoustic_step_1st_half.h"
-#include "constraint_dynamics.h"
-#include "general_continuum.h"
-#include "general_continuum.hpp"
-#include "erosion_interaction_ck.hpp"
+#include "continuum_integration_1st_ck.h"
+
 namespace SPH
 {
 namespace continuum_dynamics
 {
-
 template <class BaseInteractionType>
-class PlasticAcousticStep : public fluid_dynamics::AcousticStep<BaseInteractionType>
+class PlasticAcousticStepWithErosion : public PlasticAcousticStep<BaseInteractionType>
 {
-
-  public:
+public:
     template <class DynamicsIdentifier>
-    explicit PlasticAcousticStep(DynamicsIdentifier &identifier);
-    virtual ~PlasticAcousticStep() {};
+    explicit PlasticAcousticStepWithErosion(DynamicsIdentifier &identifier);
+    virtual ~PlasticAcousticStepWithErosion() {};
 
-  protected:
-    PlasticContinuum &plastic_continuum_;
-    DiscreteVariable<Mat3d> *dv_stress_tensor_3D_, *dv_strain_tensor_3D_, *dv_stress_rate_3D_, *dv_strain_rate_3D_;
-    DiscreteVariable<Matd> *dv_velocity_gradient_;
+protected:
+    //Erosion related variables
+    DiscreteVariable<Vecd> *dv_shear_vel_;          /* Fluid shear velocity */
+    DiscreteVariable<Real> *dv_friction_angle_, *dv_cohesion_;     /* DP parameters */
+    DiscreteVariable<Real> *dv_reduction_para_;      /* Strength reduction */
+    DiscreteVariable<int> *dv_plastic_label_;         /* Identify the eroded soil */
+    DiscreteVariable<Mat3d> *dv_total_stress_tensor_3D_, *dv_viscous_stress_tensor_3D_, *dv_shear_stress_tensor_3D_;     
+    DiscreteVariable<int> *dv_indicator_;
 };
 
+
 template <typename...>
-class PlasticAcousticStep1stHalf;
+class PlasticAcousticStepWithErosion1stHalf;
 
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
-class PlasticAcousticStep1stHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType, Parameters...>>
-    : public PlasticAcousticStep<Interaction<Inner<Parameters...>>>
+class PlasticAcousticStepWithErosion1stHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType, Parameters...>>
+    : public PlasticAcousticStepWithErosion<Interaction<Inner<Parameters...>>>
 {
-    using BaseInteraction = PlasticAcousticStep<Interaction<Inner<Parameters...>>>;
+    using BaseInteraction = PlasticAcousticStepWithErosion<Interaction<Inner<Parameters...>>>;
 
   public:
-    explicit PlasticAcousticStep1stHalf(Inner<Parameters...> &inner_relation);
-    virtual ~PlasticAcousticStep1stHalf() {};
+    explicit PlasticAcousticStepWithErosion1stHalf(Inner<Parameters...> &inner_relation);
+    virtual ~PlasticAcousticStepWithErosion1stHalf() {};
 
     class InitializeKernel
     {
@@ -92,7 +92,8 @@ class PlasticAcousticStep1stHalf<Inner<OneLevel, RiemannSolverType, KernelCorrec
         RiemannSolverType riemann_solver_;
         Real *Vol_, *rho_, *p_, *drho_dt_, *mass_;
         Vecd *force_;
-        Mat3d *stress_tensor_3D_;
+        Mat3d *stress_tensor_3D_, *viscous_stress_tensor_3D_, *shear_stress_tensor_3D_;
+        int *plastic_label_;
     };
 
     class UpdateKernel
@@ -113,14 +114,14 @@ class PlasticAcousticStep1stHalf<Inner<OneLevel, RiemannSolverType, KernelCorrec
 };
 
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
-class PlasticAcousticStep1stHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType, Parameters...>>
-    : public PlasticAcousticStep<Interaction<Contact<Parameters...>>>, public Interaction<Wall>
+class PlasticAcousticStepWithErosion1stHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType, Parameters...>>
+    : public PlasticAcousticStepWithErosion<Interaction<Contact<Parameters...>>>, public Interaction<Wall>
 {
-    using BaseInteraction = PlasticAcousticStep<Interaction<Contact<Parameters...>>>;
+    using BaseInteraction = PlasticAcousticStepWithErosion<Interaction<Contact<Parameters...>>>;
 
   public:
-    explicit PlasticAcousticStep1stHalf(Contact<Parameters...> &wall_contact_relation);
-    virtual ~PlasticAcousticStep1stHalf() {};
+    explicit PlasticAcousticStepWithErosion1stHalf(Contact<Parameters...> &wall_contact_relation);
+    virtual ~PlasticAcousticStepWithErosion1stHalf() {};
 
     class InteractKernel : public BaseInteraction::InteractKernel
     {
@@ -134,7 +135,7 @@ class PlasticAcousticStep1stHalf<Contact<Wall, RiemannSolverType, KernelCorrecti
         RiemannSolverType riemann_solver_;
         Real *Vol_, *rho_, *mass_, *p_, *drho_dt_;
         Vecd *force_, *force_prior_;
-        Mat3d *stress_tensor_3D_;
+        Mat3d *stress_tensor_3D_, *viscous_stress_tensor_3D_;
 
         Real *wall_Vol_;
         Vecd *wall_acc_ave_;
@@ -145,9 +146,9 @@ class PlasticAcousticStep1stHalf<Contact<Wall, RiemannSolverType, KernelCorrecti
     RiemannSolverType riemann_solver_;
 };
 
-using PlasticAcousticStep1stHalfWithWallRiemannCK =
-    PlasticAcousticStep1stHalf<Inner<OneLevel, AcousticRiemannSolverCK, NoKernelCorrection>,
+using PlasticAcousticStepWithErosion1stHalfWithWallRiemannCK =
+    PlasticAcousticStepWithErosion1stHalf<Inner<OneLevel, AcousticRiemannSolverCK, NoKernelCorrection>,
                                Contact<Wall, AcousticRiemannSolverCK, NoKernelCorrection>>;
 } // namespace continuum_dynamics
 } // namespace SPH
-#endif // CONTINUUM_INTEGRATION_1ST_CK_H
+#endif // EROSION_DYNAMICS_1ST_H
