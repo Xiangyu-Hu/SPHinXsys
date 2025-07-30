@@ -74,9 +74,10 @@ TEST(variable_buffer_array, test_sycl)
             return SimTK::SpatialVec(a, buffer_force[i]);
         });
 
+    CopyVariableToBuffer test(ParallelDevicePolicy{}, variable_buffer_array);
     SingularVariable<CopyVariableToBuffer> sv_copy_variable_to_buffer_sycl(
         "CopyVariableToBuffer", CopyVariableToBuffer(ParallelDevicePolicy{}, variable_buffer_array));
-    CopyVariableToBuffer *copy_variable_to_buffer_sycl = sv_copy_variable_to_buffer.DelegatedData(ParallelDevicePolicy{});
+    CopyVariableToBuffer *copy_variable_to_buffer_sycl = sv_copy_variable_to_buffer_sycl.DelegatedData(ParallelDevicePolicy{});
 
     UnsignedInt *copy_indexes_sycl = dv_copy_indexes.DelegatedData(ParallelDevicePolicy{});
     particle_for(LoopRangeCK<ParallelDevicePolicy, SPHBody>(&sv_buffer_particles),
@@ -87,7 +88,6 @@ TEST(variable_buffer_array, test_sycl)
                  });
 
     DataArray<SimTKVec3> *buff_array_sycl = variable_buffer_array.DelegatedBufferArray(ParallelDevicePolicy{});
-
     SimTK::SpatialVec partial_sum_sycl =
         particle_reduce<ReduceSum<SimTK::SpatialVec>>( // summation on device
             LoopRangeCK<ParallelDevicePolicy, SPHBody>(&sv_buffer_particles),
@@ -100,8 +100,23 @@ TEST(variable_buffer_array, test_sycl)
                 return SimTK::SpatialVec(a, buffer_force_sycl[i]);
             });
 
+    DataArray<SimTKVec3> *host_staging_buffer_array =
+        variable_buffer_array.synchronizeHostStagingBufferArray(ParallelDevicePolicy{}, sv_buffer_particles.getValue());
+
+    SimTKVec3 *torque_host_staging = host_staging_buffer_array[0];
+    SimTKVec3 *force_host_staging = host_staging_buffer_array[1];
+    SimTK::SpatialVec partial_sum_host_staging =
+        particle_reduce(ParallelPolicy{}, IndexRange(0, sv_buffer_particles.getValue()),
+                        ZeroData<SimTK::SpatialVec>::value, ReduceSum<SimTK::SpatialVec>(),
+                        [&](size_t i)
+                        {
+                            SimTKVec3 a = SimTK::cross(torque_host_staging[i], force_host_staging[i]);
+                            return SimTK::SpatialVec(a, force_host_staging[i]);
+                        });
+
     EXPECT_EQ(partial_sum, partial_sum_ck);
     EXPECT_EQ(partial_sum, partial_sum_sycl);
+    EXPECT_EQ(partial_sum, partial_sum_host_staging);
 }
 
 int main(int argc, char *argv[])

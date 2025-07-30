@@ -47,13 +47,13 @@ class VariableBufferArray : public DiscreteVariableArray<DataType>
   public:
     VariableBufferArray(StdVec<DiscreteVariable<DataType> *> variables, UnsignedInt buffer_size)
         : DiscreteVariableArray<DataType>(variables), buffer_size_(buffer_size),
-          occupied_size_(0), buffer_array_(nullptr),
+          occupied_size_(0), buffer_data_ptr_(new DataType[buffer_size * this->array_size_]),
+          buffer_array_(new DataArray<DataType>[this->array_size_]),
           delegated_buffer_array_(nullptr), host_staging_buffer_array_(nullptr)
     {
-        buffer_array_ = new DataArray<DataType>[variables.size()];
-        for (size_t i = 0; i != variables.size(); ++i)
+        for (size_t i = 0; i != this->array_size_; ++i)
         {
-            buffer_array_[i] = new DataType[buffer_size];
+            buffer_array_[i] = buffer_data_ptr_ + i * buffer_size_;
         }
         delegated_buffer_array_ = buffer_array_;
         host_staging_buffer_array_ = buffer_array_;
@@ -61,10 +61,7 @@ class VariableBufferArray : public DiscreteVariableArray<DataType>
 
     ~VariableBufferArray()
     {
-        for (size_t i = 0; i != this->array_size_; ++i)
-        {
-            delete[] buffer_array_[i];
-        }
+        delete[] buffer_data_ptr_;
         delete[] buffer_array_;
     };
 
@@ -87,22 +84,26 @@ class VariableBufferArray : public DiscreteVariableArray<DataType>
         delegated_buffer_array_ = buffer_array_;
     };
 
-    void setHostStagingBufferArray();
-
     template <class ExecutionPolicy>
-    DataArray<DataType> *getHostStagingBufferArray(
+    DataArray<DataType> *synchronizeHostStagingBufferArray(
         const ExecutionPolicy &ex_policy, UnsignedInt data_size)
     {
         return host_staging_buffer_array_;
     };
 
     template <class PolicyType>
-    DataArray<DataType> *getHostStagingBufferArray(
+    DataArray<DataType> *synchronizeHostStagingBufferArray(
         const DeviceExecution<PolicyType> &ex_policy, UnsignedInt data_size);
+
+    void setHostStagingBufferArray(DataArray<DataType> *buffer_array_)
+    {
+        host_staging_buffer_array_ = buffer_array_;
+    };
 
   protected:
     UnsignedInt buffer_size_;
     UnsignedInt occupied_size_;
+    DataType *buffer_data_ptr_;
     DataArray<DataType> *buffer_array_;
     DataArray<DataType> *delegated_buffer_array_;
     DataArray<DataType> *host_staging_buffer_array_;
@@ -139,10 +140,13 @@ class DeviceVariableBufferArray : public Entity
     DeviceVariableBufferArray(const DeviceExecution<PolicyType> &ex_policy,
                               VariableBufferArray<DataType> *host_buffer_array);
     ~DeviceVariableBufferArray();
-    DataArray<DataType> *allocateHostStagingBufferArray();
+    void allocateHostStagingBufferArray(VariableBufferArray<DataType> *host_buffer_array);
+    void synchronizeHostStagingBufferArray(UnsignedInt data_size);
 
   protected:
     size_t array_size_;
+    DataType *device_only_ptr_;
+    DataType *host_staging_ptr_;
     UnsignedInt buffer_size_;
     DataArray<DataType> *device_only_buffer_array_;
     DataArray<DataType> *host_staging_buffer_array_;
