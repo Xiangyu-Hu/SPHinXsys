@@ -37,116 +37,115 @@
 namespace SPH
 {
 template <typename DataType>
-class DeviceBufferArray;
+class DeviceVariableBufferArray;
 
 template <typename DataType>
-class BufferArray : public Entity
+class VariableBufferArray : public DiscreteVariableArray<DataType>
 {
-    UniquePtrKeeper<DeviceBufferArray<DataType>> device_buffer_array_keeper_;
+    UniquePtrKeeper<DeviceVariableBufferArray<DataType>> device_buffer_array_keeper_;
 
   public:
-    BufferArray(StdVec<DiscreteVariable<DataType> *> variables, UnsignedInt buffer_size)
-        : Entity("BufferArray"), variables_(variables),
-          buffer_size_(buffer_size), data_array_(nullptr),
-          delegated_data_array_(nullptr), host_staging_data_array_(nullptr)
+    VariableBufferArray(StdVec<DiscreteVariable<DataType> *> variables, UnsignedInt buffer_size)
+        : DiscreteVariableArray<DataType>(variables), buffer_size_(buffer_size),
+          occupied_size_(0), buffer_array_(nullptr),
+          delegated_buffer_array_(nullptr), host_staging_buffer_array_(nullptr)
     {
-        data_array_ = new DataArray<DataType>[variables.size()];
+        buffer_array_ = new DataArray<DataType>[variables.size()];
         for (size_t i = 0; i != variables.size(); ++i)
         {
-            data_array_[i] = new DataType[buffer_size];
+            buffer_array_[i] = new DataType[buffer_size];
         }
-        delegated_data_array_ = data_array_;
-        host_staging_data_array_ = data_array_;
+        delegated_buffer_array_ = buffer_array_;
+        host_staging_buffer_array_ = buffer_array_;
     };
 
-    ~BufferArray()
+    ~VariableBufferArray()
     {
-        for (size_t i = 0; i != getArraySize(); ++i)
+        for (size_t i = 0; i != this->array_size_; ++i)
         {
-            delete[] data_array_[i];
+            delete[] buffer_array_[i];
         }
-        delete[] data_array_;
+        delete[] buffer_array_;
     };
 
-    StdVec<DiscreteVariable<DataType> *> getVariables() { return variables_; };
-    size_t getArraySize() { return variables_.size(); }
     UnsignedInt getBufferSize() { return buffer_size_; }
-    DataArray<DataType> *Data() { return data_array_; };
-    bool isDataArrayDelegated() { return data_array_ != delegated_data_array_; };
-    bool isDataArrayHostStaged() { return data_array_ != host_staging_data_array_; };
+    DataArray<DataType> *BufferData() { return buffer_array_; };
+    bool isBufferArrayDelegated() { return buffer_array_ != delegated_buffer_array_; };
+    bool isBufferArrayHostStaged() { return buffer_array_ != host_staging_buffer_array_; };
 
     template <class ExecutionPolicy>
-    DataArray<DataType> *DelegatedDataArray(const ExecutionPolicy &ex_policy)
+    DataArray<DataType> *DelegatedBufferArray(const ExecutionPolicy &ex_policy)
     {
-        return data_array_;
+        return buffer_array_;
     };
 
     template <class PolicyType>
-    DataArray<DataType> *DelegatedDataArray(const DeviceExecution<PolicyType> &ex_policy);
+    DataArray<DataType> *DelegatedBufferArray(const DeviceExecution<PolicyType> &ex_policy);
 
-    void setDelegateDataArray(DataArray<DataType> *data_array_)
+    void setDelegateBufferArray(DataArray<DataType> *buffer_array_)
     {
-        delegated_data_array_ = data_array_;
+        delegated_buffer_array_ = buffer_array_;
     };
 
-    void setHostStagingDataArray();
+    void setHostStagingBufferArray();
 
     template <class ExecutionPolicy>
-    DataArray<DataType> *getHostStagingDataArray(
+    DataArray<DataType> *getHostStagingBufferArray(
         const ExecutionPolicy &ex_policy, UnsignedInt data_size)
     {
-        return host_staging_data_array_;
+        return host_staging_buffer_array_;
     };
 
     template <class PolicyType>
-    DataArray<DataType> *getHostStagingDataArray(
+    DataArray<DataType> *getHostStagingBufferArray(
         const DeviceExecution<PolicyType> &ex_policy, UnsignedInt data_size);
 
-  private:
-    StdVec<DiscreteVariable<DataType> *> variables_;
+  protected:
     UnsignedInt buffer_size_;
-    DataArray<DataType> *data_array_;
-    DataArray<DataType> *delegated_data_array_;
-    DataArray<DataType> *host_staging_data_array_;
+    UnsignedInt occupied_size_;
+    DataArray<DataType> *buffer_array_;
+    DataArray<DataType> *delegated_buffer_array_;
+    DataArray<DataType> *host_staging_buffer_array_;
+
+  public:
+    class CopyVariableToBuffer
+    {
+        UnsignedInt array_size_;
+        DataArray<DataType> *delegated_data_array_;
+        DataArray<DataType> *delegated_buffer_array_;
+
+      public:
+        template <class ExecutionPolicy>
+        CopyVariableToBuffer(const ExecutionPolicy &ex_policy, VariableBufferArray &variable_buffer_array)
+            : array_size_(variable_buffer_array.array_size_),
+              delegated_data_array_(variable_buffer_array.DelegatedDataArray(ex_policy)),
+              delegated_buffer_array_(variable_buffer_array.DelegatedBufferArray(ex_policy)) {}
+        void operator()(UnsignedInt source_data_index, UnsignedInt target_data_index)
+        {
+            for (size_t i = 0; i < array_size_; ++i)
+            {
+                delegated_buffer_array_[i][target_data_index] =
+                    delegated_data_array_[i][source_data_index];
+            }
+        }
+    };
 };
 
 template <typename DataType>
-class DeviceBufferArray : public Entity
+class DeviceVariableBufferArray : public Entity
 {
   public:
     template <class PolicyType>
-    DeviceBufferArray(const DeviceExecution<PolicyType> &ex_policy,
-                      BufferArray<DataType> *host_buffer_array);
-    ~DeviceBufferArray();
-
-    DataArray<DataType> *allocateHostStagingDataArray();
+    DeviceVariableBufferArray(const DeviceExecution<PolicyType> &ex_policy,
+                              VariableBufferArray<DataType> *host_buffer_array);
+    ~DeviceVariableBufferArray();
+    DataArray<DataType> *allocateHostStagingBufferArray();
 
   protected:
     size_t array_size_;
     UnsignedInt buffer_size_;
-    DataArray<DataType> *device_only_data_array_;
-    DataArray<DataType> *host_staging_data_array_;
-};
-
-template <typename DataType>
-using AllocatedDataArrayPair = std::pair<AllocatedDataArray<DataType>, AllocatedDataArray<DataType>>;
-
-template <typename DataType>
-using AllocatedDataArrayPairSet = std::pair<AllocatedDataArrayPair<DataType>, UnsignedInt>;
-
-struct CopyAllocatedDataArrayPairSet
-{
-    template <typename DataType>
-    void operator()(AllocatedDataArrayPairSet<DataType> &allocated_pair_set,
-                    size_t source_data_index, size_t target_data_index)
-    {
-        auto &source_allocation = allocated_pair_set.first.first;
-        auto &target_allocation = allocated_pair_set.first.second;
-        for (size_t i = 0; i < allocated_pair_set.second; ++i)
-        {
-            target_allocation[i][target_data_index] = source_allocation[i][source_data_index];
-        }
-    }
+    DataArray<DataType> *device_only_buffer_array_;
+    DataArray<DataType> *host_staging_buffer_array_;
 };
 } // namespace SPH
 #endif // SPHINXSYS_BUFFER_ARRAY_H

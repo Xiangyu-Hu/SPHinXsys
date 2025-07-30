@@ -44,6 +44,7 @@ class VariableArray : public Entity
   public:
     VariableArray(StdVec<VariableType<DataType> *> variables)
         : Entity("VariableArray"), variables_(variables),
+          array_size_(variables.size()),
           data_array_(nullptr), delegated_data_array_(nullptr)
     {
         data_array_ = new DataArray<DataType>[variables.size()];
@@ -56,7 +57,7 @@ class VariableArray : public Entity
     ~VariableArray() { delete[] data_array_; };
     StdVec<VariableType<DataType> *> getVariables() { return variables_; };
     DataArray<DataType> *Data() { return data_array_; };
-    size_t getArraySize() { return variables_.size(); }
+    size_t getArraySize() { return array_size_; }
     bool isDataArrayDelegated() { return data_array_ != delegated_data_array_; };
 
     template <class ExecutionPolicy>
@@ -73,8 +74,9 @@ class VariableArray : public Entity
         delegated_data_array_ = data_array_;
     };
 
-  private:
+  protected:
     StdVec<VariableType<DataType> *> variables_;
+    UnsignedInt array_size_;
     DataArray<DataType> *data_array_;
     DataArray<DataType> *delegated_data_array_;
 };
