@@ -20,7 +20,7 @@ else:
 path = os.path.join(path_1, path_2)
 sys.path.append(path)
 # change import depending on the project name
-import test_2d_dambreak_python as test_2d
+import test_2d_dambreak_with_jupyter_visualizer as test_2d
 
 
 def run_case():

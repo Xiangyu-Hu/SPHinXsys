@@ -192,7 +192,7 @@ class Environment : public PreSettingCase
         write_recorded_water_pressure.writeToFile(sph_system.RestartStep());
     }
 
-    virtual ~Environment(){};
+    virtual ~Environment() {};
     //----------------------------------------------------------------------
     //	For ctest.
     //----------------------------------------------------------------------
@@ -297,8 +297,8 @@ class Environment : public PreSettingCase
 //----------------------------------------------------------------------
 //	Use pybind11 to expose.
 //----------------------------------------------------------------------
-/** test_2d_dambreak_python should be same with the project name */
-PYBIND11_MODULE(test_2d_dambreak_python, m)
+/** test_2d_dambreak_with_jupyter_visualizer should be same with the project name */
+PYBIND11_MODULE(test_2d_dambreak_with_jupyter_visualizer, m)
 {
     py::class_<Environment>(m, "dambreak_from_sph_cpp")
         .def(py::init<const int &>())
