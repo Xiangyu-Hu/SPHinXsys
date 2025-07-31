@@ -14,14 +14,19 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Build up the environment of a SPHSystem.
     //----------------------------------------------------------------------
-    SPHSystem sph_system(system_domain_bounds, particle_spacing_ref, 16);
+    SPHSystem sph_system(system_domain_bounds, particle_spacing_ref, 32);
+    sph_system.setRunParticleRelaxation(false);  // Tag for run particle relaxation for body-fitted distribution
+    sph_system.setReloadParticles(true);         // Tag for computation with save particles distribution
     sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
     //----------------------------------------------------------------------
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
     SolidBody soil_block(sph_system, makeShared<SoilBlock>("SoilBlock"));
     soil_block.defineMaterial<PlasticContinuum>(rho0_s, c_s, Youngs_modulus, poisson, friction_angle, cohesion);
-    soil_block.generateParticles<BaseParticles, Lattice>();
+    soil_block.defineBodyLevelSetShape()->writeLevelSet(sph_system);
+    (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
+        ? soil_block.generateParticles<BaseParticles, Reload>(soil_block.getName())
+        : soil_block.generateParticles<BaseParticles, Lattice>();
 
     SolidBody water_block(sph_system, makeShared<WaterBlock>("WaterBlock"));
     water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
@@ -32,6 +37,50 @@ int main(int ac, char *av[])
     wall_boundary.defineMaterial<Solid>();
     ParticleBuffer<ReserveSizeFactor> soil_inlet_buffer(350.0);
     wall_boundary.generateParticlesWithReserve<BaseParticles, Lattice>(soil_inlet_buffer);
+
+     //----------------------------------------------------------------------
+    //	Run particle relaxation for body-fitted distribution if chosen.
+    //----------------------------------------------------------------------
+    if (sph_system.RunParticleRelaxation())
+    {
+        //----------------------------------------------------------------------
+        //	Define body relation map used for particle relaxation.
+        //----------------------------------------------------------------------
+        InnerRelation soil_block_inner(soil_block);
+        //----------------------------------------------------------------------
+        //	Methods used for particle relaxation.
+        //----------------------------------------------------------------------
+        using namespace relax_dynamics;
+        SimpleDynamics<RandomizeParticlePosition> random_soil_block_particles(soil_block);
+        //RelaxationStepInner relaxation_step_inner(soil_block_inner);
+        RelaxationStepLevelSetCorrectionInner relaxation_step_inner(soil_block_inner);
+        BodyStatesRecordingToVtp write_soil_block_to_vtp(soil_block);
+        ReloadParticleIO write_particle_reload_files(soil_block);
+        //----------------------------------------------------------------------
+        //	Particle relaxation starts here.
+        //----------------------------------------------------------------------
+        random_soil_block_particles.exec(0.25);
+        relaxation_step_inner.SurfaceBounding().exec();
+        write_soil_block_to_vtp.writeToFile(0);
+        //----------------------------------------------------------------------
+        //	Relax particles of the insert body.
+        //----------------------------------------------------------------------
+        int ite_p = 0;
+        while (ite_p < 1000)
+        {
+            relaxation_step_inner.exec();
+            ite_p += 1;
+            if (ite_p % 200 == 0)
+            {
+                std::cout << std::fixed << std::setprecision(9) << "Relaxation steps for the inserted body N = " << ite_p << "\n";
+                write_soil_block_to_vtp.writeToFile(ite_p);
+            }
+        }
+        std::cout << "The physics relaxation process of inserted body finish !" << std::endl;
+        /** Output results. */
+        write_particle_reload_files.writeToFile(0);
+        return 0;
+    }
     //----------------------------------------------------------------------
     //	Creating body parts.
     //----------------------------------------------------------------------
@@ -82,7 +131,8 @@ int main(int ac, char *av[])
 
     auto &soil_advection_step_setup = main_methods.addStateDynamics<fluid_dynamics::AdvectionStepSetup>(soil_block);
     auto &soil_update_particle_position = main_methods.addStateDynamics<fluid_dynamics::UpdateParticlePosition>(soil_block);
-    auto &soil_normal_direction = host_methods.addStateDynamics<NormalFromBodyShapeCK>(soil_block); // run on CPU
+    //auto &soil_normal_direction = host_methods.addStateDynamics<NormalFromBodyShapeCK>(soil_block); // run on CPU
+    InteractionDynamicsCK<MainExecutionPolicy, NormalDirectionFromParticlesCKInner> soil_normal_direction(soil_block_inner);
     auto &soil_surface_indicator =  
         main_methods.addInteractionDynamics<
                         fluid_dynamics::FreeSurfaceIndicationCK, WithUpdate>(soil_block_inner)
@@ -114,12 +164,12 @@ int main(int ac, char *av[])
         main_methods.addInteractionDynamics<
                         fluid_dynamics::AcousticStep1stHalf, OneLevel, AcousticRiemannSolverCK, LinearCorrectionCK>(water_block_inner)
             .addContactInteraction<Wall, AcousticRiemannSolverCK, LinearCorrectionCK>(water_wall_contact)
-            .addContactInteraction<AcousticRiemannSolverCK, NoKernelCorrectionCK>(water_soil_contact);
+            .addContactInteraction<Soil, AcousticRiemannSolverCK, NoKernelCorrectionCK>(water_soil_contact);
     auto &fluid_acoustic_step_2nd_half =
         main_methods.addInteractionDynamics<
                         fluid_dynamics::AcousticStep2ndHalf, OneLevel, AcousticRiemannSolverCK, LinearCorrectionCK>(water_block_inner)
             .addContactInteraction<Wall, AcousticRiemannSolverCK, NoKernelCorrectionCK>(water_wall_contact)
-            .addContactInteraction<AcousticRiemannSolverCK, NoKernelCorrectionCK>(water_soil_contact);
+            .addContactInteraction<Soil, AcousticRiemannSolverCK, NoKernelCorrectionCK>(water_soil_contact);
     auto &fluid_density_regularization =
         main_methods.addInteractionDynamics<
                         fluid_dynamics::DensityRegularization, WithUpdate, FreeSurface, AllParticles>(water_block_inner)
@@ -143,11 +193,14 @@ int main(int ac, char *av[])
     body_state_recorder.addToWrite<Real>(water_block, "Density");
     body_state_recorder.addToWrite<Vecd>(soil_block, "ShearVelocity");
     StateDynamics<MainExecutionPolicy, continuum_dynamics::VerticalStressCK> vertical_stress(soil_block);
+    body_state_recorder.addToWrite<Vecd>(soil_block, "NormalDirection");
     body_state_recorder.addToWrite<Real>(soil_block, "VerticalStress");
     body_state_recorder.addToWrite<Real>(soil_block, "FrictionAngle");
     body_state_recorder.addToWrite<Real>(soil_block, "Cohesion");
     body_state_recorder.addToWrite<Real>(soil_block, "Pressure");
     body_state_recorder.addToWrite<Real>(soil_block, "Density");
+    body_state_recorder.addToWrite<Real>(soil_block, "Test");
+    body_state_recorder.addToWrite<Real>(soil_block, "ReductionParameter");
     body_state_recorder.addToWrite<int>(soil_block, "PlasticLabel");
     body_state_recorder.addToWrite<int>(soil_block, "Indicator");
     auto &restart_io = main_methods.addIODynamics<RestartIOCK>(sph_system);

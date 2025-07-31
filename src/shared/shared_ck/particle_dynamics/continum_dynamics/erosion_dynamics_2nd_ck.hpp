@@ -87,9 +87,11 @@ PlasticAcousticStepWithErosion2ndHalf<Inner<OneLevel, RiemannSolverType, KernelC
       viscous_stress_tensor_3D_(encloser.dv_viscous_stress_tensor_3D_->DelegatedData(ex_policy)),
       shear_stress_tensor_3D_(encloser.dv_shear_stress_tensor_3D_->DelegatedData(ex_policy)),
       shear_vel_(encloser.dv_shear_vel_->DelegatedData(ex_policy)),
+      n_(encloser.dv_n_->DelegatedData(ex_policy)),
       friction_angle_(encloser.dv_friction_angle_->DelegatedData(ex_policy)),
       cohesion_(encloser.dv_cohesion_->DelegatedData(ex_policy)),
       reduction_para_(encloser.dv_reduction_para_->DelegatedData(ex_policy)),
+      test_(encloser.dv_test_->DelegatedData(ex_policy)),
       plastic_label_(encloser.dv_plastic_label_->DelegatedData(ex_policy)),
       indicator_(encloser.dv_indicator_->DelegatedData(ex_policy)),
       particle_spacing_(encloser.dv_particle_spacing_) {}
@@ -101,7 +103,7 @@ void PlasticAcousticStepWithErosion2ndHalf<Inner<OneLevel, RiemannSolverType, Ke
     /*--------------------------------------Erosion dynamics-------------------------------*/
     /*Fluid shear stress*/
     Vecd u_shear_i = shear_vel_[index_i];
-    Real u_star = plastic_kernel_.getFrictionVelocity(u_shear_i.norm(), 0.5*particle_spacing_);
+    Real u_star = plastic_kernel_.getFrictionVelocity(SMIN(u_shear_i.norm(), 5.0), 0.5*particle_spacing_);
     Real theta_cr = plastic_kernel_.calculateThetaCr(u_star);
     Real u_star_c = plastic_kernel_.ThetaToFrictionVelcoty(theta_cr);
 
@@ -111,15 +113,15 @@ void PlasticAcousticStepWithErosion2ndHalf<Inner<OneLevel, RiemannSolverType, Ke
     Real theta = tau_bi / (2650 - 1000) / 10.0 / d_s_;
     Real theta_diff = SMAX(theta - theta_cr,0.0); 
     Real tau_c = theta_cr *  (2650 - 1000) * 10.0 * d_s_;
-    Real relative_shear_stress = SMAX(tau_bi - tau_c, 0.0);
+    Real relative_shear_stress = SMAX(tau_bi - 0.0, 0.0);
 
 
     /* Declare local material parameters */
     Real friction_angle_i(0.0), cohesion_i(0.0), alpha_phi_i(0.0), k_c_i(0.0);
 
     /* Apply strength reduction */
-    if(indicator_[index_i] == 1)
-        reduction_para_[index_i] += 30.0 * relative_shear_stress * dt;
+    //if(indicator_[index_i] == 1)
+    reduction_para_[index_i] += 20.0 * relative_shear_stress * dt;
 
     friction_angle_i = math::atan(math::tan(plastic_kernel_.getFrictionAngle()) / reduction_para_[index_i]);
     cohesion_i = plastic_kernel_.getCohesion() / reduction_para_[index_i];
@@ -132,17 +134,27 @@ void PlasticAcousticStepWithErosion2ndHalf<Inner<OneLevel, RiemannSolverType, Ke
 
     
     /*Shear stress tensor*/
-    Vecd t_hat = u_shear_i.norm() > TinyReal ? u_shear_i.normalized() : Vecd::Zero();
-    Matd tmp_shear_stress_tensor = tau_bi * (t_hat * t_hat.transpose());
+    //Vecd t_hat = u_shear_i.norm() > TinyReal ? u_shear_i.normalized() : Vecd::Zero();
+    Vecd n = n_[index_i];
+    Vecd t1(-n[1], n[0]); 
+    Vecd t2(n[1], -n[0]); 
+
+    Vecd t_hat = (u_shear_i.dot(t1) > u_shear_i.dot(t2)) ? t1 : t2;
+;
+    Matd tmp_shear_stress_tensor = relative_shear_stress * (t_hat * t_hat.transpose());
     Mat3d shear_stress_tensor_3D = upgradeToMat3d(tmp_shear_stress_tensor);
     shear_stress_tensor_3D_[index_i] = shear_stress_tensor_3D;
+
+    test_[index_i] = t_hat[0];
     /*Soil dynamics*/
     rho_[index_i] += drho_dt_[index_i] * dt * 0.5;
     Mat3d velocity_gradient = upgradeToMat3d(velocity_gradient_[index_i]);
+    //Mat3d stress_tensor_rate_3D_ = plastic_kernel_.ConstitutiveRelation(velocity_gradient, stress_tensor_3D_[index_i]);
     Mat3d stress_tensor_rate_3D_ = plastic_kernel_.ConstitutiveRelationWithReduction(velocity_gradient, stress_tensor_3D_[index_i], alpha_phi_i, k_c_i);
     stress_rate_3D_[index_i] += stress_tensor_rate_3D_; // stress diffusion is on
     stress_tensor_3D_[index_i] += stress_rate_3D_[index_i] * dt;
     /*return mapping*/
+    //stress_tensor_3D_[index_i] =  plastic_kernel_.ReturnMapping(stress_tensor_3D_[index_i]);
     int plastic_label_i =  plastic_kernel_.ReturnMappingWithReduction(stress_tensor_3D_[index_i], alpha_phi_i, k_c_i);
     strain_rate_3D_[index_i] = 0.5 * (velocity_gradient + velocity_gradient.transpose());
     strain_tensor_3D_[index_i] += strain_rate_3D_[index_i] * dt;

@@ -46,8 +46,10 @@ public:
 protected:
     //Erosion related variables
     DiscreteVariable<Vecd> *dv_shear_vel_;          /* Fluid shear velocity */
+    DiscreteVariable<Vecd> *dv_n_;          /* Normal direction */
     DiscreteVariable<Real> *dv_friction_angle_, *dv_cohesion_;     /* DP parameters */
     DiscreteVariable<Real> *dv_reduction_para_;      /* Strength reduction */
+    DiscreteVariable<Real> *dv_test_;      /* Just for test */
     DiscreteVariable<int> *dv_plastic_label_;         /* Identify the eroded soil */
     DiscreteVariable<Mat3d> *dv_total_stress_tensor_3D_, *dv_viscous_stress_tensor_3D_, *dv_shear_stress_tensor_3D_;     
     DiscreteVariable<int> *dv_indicator_;

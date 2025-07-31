@@ -89,8 +89,8 @@ class PlasticAcousticStepWithErosion2ndHalf<Inner<OneLevel, RiemannSolverType, K
         Matd *velocity_gradient_;
         Mat3d *stress_tensor_3D_, *strain_tensor_3D_, *stress_rate_3D_, *strain_rate_3D_;
         Mat3d *total_stress_tensor_3D_, *viscous_stress_tensor_3D_, *shear_stress_tensor_3D_;
-        Vecd *shear_vel_;
-        Real *friction_angle_, *cohesion_, *reduction_para_;
+        Vecd *shear_vel_, *n_;
+        Real *friction_angle_, *cohesion_, *reduction_para_, *test_;
         int *plastic_label_, *indicator_;
         Real particle_spacing_;
     };

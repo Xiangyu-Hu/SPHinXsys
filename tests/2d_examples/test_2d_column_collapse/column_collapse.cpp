@@ -50,10 +50,10 @@ class WallBoundary : public ComplexShape
 std::vector<Vecd> soil_shape{
     Vecd(0, 0), Vecd(0, LH), Vecd(LL, LH), Vecd(LL, 0), Vecd(0, 0)};
 
-class Soil : public MultiPolygonShape
+class SoilBlock : public MultiPolygonShape
 {
   public:
-    explicit Soil(const std::string &shape_name) : MultiPolygonShape(shape_name)
+    explicit SoilBlock(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
         multi_polygon_.addAPolygon(soil_shape, ShapeBooleanOps::add);
     }
@@ -71,7 +71,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
-    RealBody soil_block(sph_system, makeShared<Soil>("GranularBody"));
+    RealBody soil_block(sph_system, makeShared<SoilBlock>("GranularBody"));
     soil_block.defineMaterial<PlasticContinuum>(rho0_s, c_s, Youngs_modulus, poisson, friction_angle);
     soil_block.generateParticles<BaseParticles, Lattice>();
 

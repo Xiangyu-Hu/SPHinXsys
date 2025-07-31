@@ -16,6 +16,7 @@ Interaction<Soil>::Interaction(SoilContactRelationType &soil_contact_relation)
         dv_soil_vel_.push_back(contact_particles[k]->template getVariableByName<Vecd>("Velocity"));
         dv_soil_Vol_.push_back(contact_particles[k]->template getVariableByName<Real>("VolumetricMeasure"));
         dv_soil_p_.push_back(contact_particles[k]->template getVariableByName<Real>("Pressure"));
+        dv_soil_shear_stress_tensor_.push_back(contact_particles[k]->template getVariableByName<Mat3d>("ShearStressTensor"));
     }
 }
 //=================================================================================================//

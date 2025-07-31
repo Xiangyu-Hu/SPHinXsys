@@ -13,9 +13,11 @@ template <class DynamicsIdentifier>
 PlasticAcousticStepWithErosion<BaseInteractionType>::PlasticAcousticStepWithErosion(DynamicsIdentifier &identifier)
     : PlasticAcousticStep<BaseInteractionType>(identifier),
       dv_shear_vel_(this->particles_->template registerStateVariableOnly<Vecd>("ShearVelocity")),
+      dv_n_(this->particles_->template getVariableByName<Vecd>("NormalDirection")),
       dv_friction_angle_(this->particles_->template registerStateVariableOnly<Real>("FrictionAngle",this->plastic_continuum_.getFrictionAngle())), 
       dv_cohesion_(this->particles_->template registerStateVariableOnly<Real>("Cohesion",this->plastic_continuum_.getCohesion())),
       dv_reduction_para_(this->particles_->template registerStateVariableOnly<Real>("ReductionParameter",Real(1.0))),
+      dv_test_(this->particles_->template registerStateVariableOnly<Real>("Test")),
       dv_plastic_label_(this->particles_->template registerStateVariableOnly<int>("PlasticLabel",int(0))),
       dv_total_stress_tensor_3D_(this->particles_->template registerStateVariableOnly<Mat3d>("TotalStressTensor")),
       dv_viscous_stress_tensor_3D_(this->particles_->template registerStateVariableOnly<Mat3d>("ViscousStressTensor")),
@@ -26,6 +28,7 @@ PlasticAcousticStepWithErosion<BaseInteractionType>::PlasticAcousticStepWithEros
     this->particles_->template addEvolvingVariable<Real>("FrictionAngle");
     this->particles_->template addEvolvingVariable<Real>("Cohesion");
     this->particles_->template addEvolvingVariable<Real>("ReductionParameter");
+    this->particles_->template addEvolvingVariable<Real>("Test");
     this->particles_->template addEvolvingVariable<int>("PlasticLabel");
     this->particles_->template addEvolvingVariable<Mat3d>("TotalStressTensor");
     this->particles_->template addEvolvingVariable<Mat3d>("ViscousStressTensor");
@@ -101,11 +104,10 @@ void PlasticAcousticStepWithErosion1stHalf<Inner<OneLevel, RiemannSolverType, Ke
         rho_dissipation += riemann_solver_.DissipativeUJump(p_[index_i] - p_[index_j]) * dW_ijV_j;
         /*Viscous force*/
         Matd viscous_stress_tensor_j = degradeToMatd(viscous_stress_tensor_3D_[index_j]);
-        force += mass_[index_i] * rho_[index_j] * ((viscous_stress_tensor_i + viscous_stress_tensor_j) / (rho_i * rho_[index_j])) * nablaW_ijV_j;
+        //force += mass_[index_i] * rho_[index_j] * ((viscous_stress_tensor_i + viscous_stress_tensor_j) / (rho_i * rho_[index_j])) * nablaW_ijV_j;
         /*Shear force*/
         Matd shear_stress_tensor_j = degradeToMatd(shear_stress_tensor_3D_[index_j]);
-        if(plastic_label_[index_i] == 1)
-            force += mass_[index_i] * rho_[index_j] * ((shear_stress_tensor_i + shear_stress_tensor_j) / (rho_i * rho_[index_j])) * nablaW_ijV_j;
+        force += mass_[index_i] * rho_[index_j] * ((shear_stress_tensor_i + shear_stress_tensor_j) / (rho_i * rho_[index_j])) * nablaW_ijV_j;
     }
     force_[index_i] += force;
     drho_dt_[index_i] = rho_dissipation * rho_[index_i];

@@ -107,8 +107,8 @@ std::vector<Vecd> createWaterBlockShape()
 {
 	std::vector<Vecd> pnts;
 	pnts.push_back(Vecd(0.0, 0.0));
-	pnts.push_back(Vecd(0.0, 0.6));
-	pnts.push_back(Vecd(2.06, 0.6));
+	pnts.push_back(Vecd(0.0, 0.7));
+	pnts.push_back(Vecd(2.06, 0.7));
 	pnts.push_back(Vecd(2.06, 0.5));
 	pnts.push_back(Vecd(0.66, 0.5));
 	pnts.push_back(Vecd(0.66, 0.0));
@@ -167,7 +167,7 @@ class InletInflowCondition : public BaseStateCondition
 
         void operator()(AlignedBox *aligned_box, UnsignedInt index_i, Real /*time*/)
         {
-            vel_[index_i] = Vec2d(0.0, 0.048);
+            vel_[index_i] = Vec2d(0.0, 0.023);
         };
     };
 };

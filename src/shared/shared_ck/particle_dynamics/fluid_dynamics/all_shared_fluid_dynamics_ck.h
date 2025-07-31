@@ -38,5 +38,7 @@
 #include "fluid_time_step_ck.hpp"
 #include "transport_velocity_correction_ck.hpp"
 #include "viscous_force.hpp"
+#include "erosion_acoustic_step_1st_half.hpp"
+#include "erosion_acoustic_step_2nd_half.hpp"
 
 #endif // ALL_SHARED_FLUID_DYNAMICS_CK_H

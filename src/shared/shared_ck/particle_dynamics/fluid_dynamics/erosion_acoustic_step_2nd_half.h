@@ -21,47 +21,56 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file    interaction_ck.h
- * @brief 	This is for the base classes of erosion particle dynamics, which describe the
- * 			erosion dynamics of a particle and it neighbors.
- * @author	Shuang Li and Xiangyu Hu
+ * @file 	acoustic_step_2nd_half.h
+ * @brief 	Here, we define the algorithm classes for erosion fluid dynamics.
+ * @details Erosion dynamics.
+ * @author	Shuang Li & Xiangyu Hu
  */
 
-#ifndef EROSION_INTERACTION_CK_H
-#define EROSION_INTERACTION_CK_H
+#ifndef EROSION_ACOUSTIC_STEP_2ND_HALF_H
+#define EROSION_ACOUSTIC_STEP_2ND_HALF_H
 
-#include "base_local_dynamics.h"
-#include "neighborhood_ck.h"
-#include "relation_ck.hpp"
-#include "interaction_ck.hpp"
+#include "erosion_acoustic_step_1st_half.h"
 
 namespace SPH
 {
-template <>
-class Interaction<Soil>
+namespace fluid_dynamics
 {
+    
+template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
+class AcousticStep2ndHalf<Contact<Soil, RiemannSolverType, KernelCorrectionType, Parameters...>>
+    : public AcousticStep<Interaction<Contact<Parameters...>>>, public Interaction<Soil>
+{
+    using FluidType = typename RiemannSolverType::SourceFluid;
+    using BaseInteraction = AcousticStep<Interaction<Contact<Parameters...>>>;
+    using CorrectionKernel = typename KernelCorrectionType::ComputingKernel;
+
   public:
-    template <class SoilContactRelationType>
-    Interaction(SoilContactRelationType &soil_contact_relation);
-    virtual ~Interaction() {};
+    explicit AcousticStep2ndHalf(Contact<Parameters...> &soil_contact_relation);
+    virtual ~AcousticStep2ndHalf() {};
+
+    class InteractKernel : public BaseInteraction::InteractKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt contact_index);
+        void interact(size_t index_i, Real dt = 0.0);
+
+      protected:
+        CorrectionKernel correction_;
+        RiemannSolverType riemann_solver_;
+        Real *Vol_, *rho_, *drho_dt_;
+        Vecd *vel_, *force_;
+        Real *soil_Vol_, *soil_p_;
+        Vecd *soil_n_,*soil_vel_;
+    };
 
   protected:
-    StdVec<DiscreteVariable<Vecd> *> dv_soil_n_, dv_soil_vel_;
-    StdVec<DiscreteVariable<Real> *> dv_soil_Vol_, dv_soil_p_;
-    StdVec<DiscreteVariable<Mat3d> *> dv_soil_shear_stress_tensor_;
+    KernelCorrectionType kernel_correction_;
+    FluidType &fluid_;
+    RiemannSolverType riemann_solver_;
 };
 
-template <>
-class Interaction<Fluid>
-{
-  public:
-    template <class FluidContactRelationType>
-    Interaction(FluidContactRelationType &fluid_contact_relation);
-    virtual ~Interaction() {};
-
-  protected:
-    StdVec<DiscreteVariable<Vecd> *> dv_fluid_vel_;
-    StdVec<DiscreteVariable<Real> *> dv_fluid_Vol_, dv_fluid_p_;
-};
+} // namespace fluid_dynamics
 } // namespace SPH
-#endif // EROSION_INTERACTION_CK_H
+#endif // EROSION_ACOUSTIC_STEP_2ND_HALF_H

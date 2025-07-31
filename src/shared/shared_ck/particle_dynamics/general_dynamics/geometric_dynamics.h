@@ -30,6 +30,7 @@
 #define GEOMETRIC_DYNAMICS_H
 
 #include "base_general_dynamics.h"
+#include "interaction_ck.hpp"
 
 namespace SPH
 {
@@ -99,5 +100,66 @@ class SurfaceIndicationFromBodyShape : public LocalDynamics
     DiscreteVariable<int> *dv_indicator_;
     DiscreteVariable<Vecd> *dv_pos_;
 };
+
+template <typename... RelationTypes>
+class NormalDirectionFromParticlesCK;
+
+template <template <typename...> class RelationType, typename... Parameters>
+class NormalDirectionFromParticlesCK<Base, RelationType<Parameters...>>
+    : public Interaction<RelationType<Parameters...>>
+{
+
+  public:
+    template <class DynamicsIdentifier>
+    explicit NormalDirectionFromParticlesCK(DynamicsIdentifier &identifier);
+    virtual ~NormalDirectionFromParticlesCK() {};
+
+    class InteractKernel
+        : public Interaction<RelationType<Parameters...>>::InteractKernel
+    {
+      public:
+        template <class ExecutionPolicy, typename... Args>
+        InteractKernel(const ExecutionPolicy &ex_policy,
+                       NormalDirectionFromParticlesCK<Base, RelationType<Parameters...>> &encloser,
+                       Args &&...args);
+
+      protected:
+        SPHBody *sph_body_;
+        Shape *initial_shape_;
+        Vecd *pos_, *n_, *n0_;
+        Real *phi_, *phi0_, *Vol_;
+    };
+
+  protected:
+    SPHBody *sph_body_;
+    Shape *initial_shape_;
+    DiscreteVariable<Vecd> *dv_pos_, *dv_n_, *dv_n0_;
+    DiscreteVariable<Real> *dv_phi_, *dv_phi0_, *dv_Vol_;
+};
+
+template <typename... Parameters>
+class NormalDirectionFromParticlesCK<Inner<Parameters...>>
+    : public NormalDirectionFromParticlesCK<Base, Inner<Parameters...>>
+{
+
+  public:
+    explicit NormalDirectionFromParticlesCK(Inner<Parameters...> &inner_relation)
+        : NormalDirectionFromParticlesCK<Base, Inner<Parameters...>>(inner_relation) {};
+    virtual ~NormalDirectionFromParticlesCK() {};
+
+    class InteractKernel
+        : public NormalDirectionFromParticlesCK<Base, Inner<Parameters...>>::InteractKernel
+    {
+      public:
+        template <class ExecutionPolicy>
+        InteractKernel(const ExecutionPolicy &ex_policy,
+                       NormalDirectionFromParticlesCK<Inner<Parameters...>> &encloser);
+        void interact(size_t index_i, Real dt = 0.0);
+    };
+  protected:
+
+};
+
+using NormalDirectionFromParticlesCKInner = NormalDirectionFromParticlesCK<Inner<>>;
 } // namespace SPH
 #endif // GEOMETRIC_DYNAMICS_H
