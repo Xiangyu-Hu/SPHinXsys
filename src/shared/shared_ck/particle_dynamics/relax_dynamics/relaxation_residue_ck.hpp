@@ -44,5 +44,42 @@ void RelaxationResidueCK<Inner<KernelCorrectionType, Parameters...>>::InteractKe
     residue_[index_i] = residue;
 }
 //=================================================================================================//
+template <class KernelCorrectionType, typename... Parameters>
+RelaxationResidueCK<Contact<Boundary, KernelCorrectionType, Parameters...>>::
+    RelaxationResidueCK(Contact<Parameters...> &contact_relation)
+    : BaseInteraction(contact_relation), kernel_correction_(this->particles_)
+{
+    for (size_t k = 0; k != this->contact_particles_.size(); ++k)
+    {
+        dv_contact_Vol_.push_back(
+            this->contact_particles_[k]->template getVariableByName<Real>("VolumetricMeasure"));
+    }
+}
+//=================================================================================================//
+template <class KernelCorrectionType, typename... Parameters>
+template <class ExecutionPolicy, class EncloserType>
+RelaxationResidueCK<Contact<Boundary, KernelCorrectionType, Parameters...>>::InteractKernel::
+    InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt contact_index)
+    : BaseInteraction::InteractKernel(ex_policy, encloser, contact_index),
+      correction_(ex_policy, encloser.kernel_correction_),
+      contact_Vol_(encloser.dv_contact_Vol_[contact_index]->DelegatedData(ex_policy)),
+      residue_(encloser.dv_residue_->DelegatedData(ex_policy)) {}
+//=================================================================================================//
+template <class KernelCorrectionType, typename... Parameters>
+void RelaxationResidueCK<Contact<Boundary, KernelCorrectionType, Parameters...>>::InteractKernel::
+    interact(size_t index_i, Real dt)
+{
+    Vecd residue = Vecd::Zero();
+    for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
+    {
+        UnsignedInt index_j = this->neighbor_index_[n];
+        const Real dW_ijV_j = this->dW_ij(index_i, index_j) * contact_Vol_[index_j];
+        const Vecd e_ij = this->e_ij(index_i, index_j);
+
+        residue -= 2.0 * this->correction_(index_i) * dW_ijV_j * e_ij;
+    }
+    residue_[index_i] += residue;
+}
+//=================================================================================================//
 } // namespace SPH
 #endif // RELAXATION_RESIDUE_CK_HPP

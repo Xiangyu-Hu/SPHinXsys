@@ -78,5 +78,34 @@ class RelaxationResidueCK<Inner<KernelCorrectionType, Parameters...>>
     KernelCorrectionType kernel_correction_;
 };
 
+template <class KernelCorrectionType, typename... Parameters>
+class RelaxationResidueCK<Contact<Boundary, KernelCorrectionType, Parameters...>>
+    : public RelaxationResidueBase<Interaction<Contact<Parameters...>>>
+{
+    using BaseInteraction = RelaxationResidueBase<Interaction<Contact<Parameters...>>>;
+    using CorrectionKernel = typename KernelCorrectionType::ComputingKernel;
+
+  public:
+    explicit RelaxationResidueCK(Contact<Parameters...> &contact_relation);
+    virtual ~RelaxationResidueCK() {}
+
+    class InteractKernel : public BaseInteraction::InteractKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        InteractKernel(const ExecutionPolicy &ex_policy, 
+          EncloserType &encloser, UnsignedInt contact_index);
+        void interact(size_t index_i, Real dt = 0.0);
+
+      protected:
+        CorrectionKernel correction_;
+        Real *contact_Vol_;
+        Vecd *residue_;
+    };
+
+  protected:
+    KernelCorrectionType kernel_correction_;
+    StdVec<DiscreteVariable<Real> *> dv_contact_Vol_;
+};
 } // namespace SPH
 #endif // RELAXATION_RESIDUE_CK_H
