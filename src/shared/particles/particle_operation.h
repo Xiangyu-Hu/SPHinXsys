@@ -97,13 +97,13 @@ class RemoveRealParticle
         template <class ExecutionPolicy, class EncloserType>
         ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
 
-        template <class IsDeletable>
-        void operator()(UnsignedInt index_i, const IsDeletable &is_deletable)
+        void operator()(UnsignedInt index_i, int *life_status)
         {
             AtomicRef<UnsignedInt> total_real_particles_ref(*total_real_particles_);
             UnsignedInt last_real_particle_index = total_real_particles_ref.fetch_sub(1) - 1;
-            while (is_deletable(last_real_particle_index))
+            while (life_status[last_real_particle_index] == 1) // to delete
             {
+                life_status[last_real_particle_index] = 0; // reset the life status
                 last_real_particle_index = total_real_particles_ref.fetch_sub(1) - 1;
             }
 
@@ -111,7 +111,8 @@ class RemoveRealParticle
             {
                 UnsignedInt old_original_id = original_id_[index_i];
                 copy_particle_state_(copyable_state_data_arrays_, index_i, last_real_particle_index);
-                original_id_[last_real_particle_index] = old_original_id; // swap the original id
+                life_status[index_i] = 0;                                     // reset the life status
+                original_id_[last_real_particle_index] = old_original_id;     // swap the original id
             }
         };
 

@@ -13,7 +13,7 @@ using namespace SPH;
 //----------------------------------------------------------------------
 Real DL = 0.0075;                /**< Channel length. */
 Real DH = 0.001;                 /**< Channel height. */
-Real resolution_ref = DH / 20.0; /**< Reference particle spacing. */
+Real resolution_ref = DH / 15.0; /**< Reference particle spacing. */
 Real error_tolerance = 5 * 0.01; // Less than 3 percent when resolution is DH/20 and DL/DH = 20
 
 Real BW = resolution_ref * 4; /**< Extending width for BCs. */
@@ -191,7 +191,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
-    size_t SimTK_resolution = 20;
+    size_t SimTK_resolution = 15;
     auto water_body_shape = makeShared<ComplexShape>("WaterBody");
     water_body_shape->add<TriangleMeshShapeCylinder>(SimTK::UnitVec3(1., 0., 0.), DH * 0.5,
                                                      DL * 0.5, SimTK_resolution,
@@ -236,10 +236,10 @@ int main(int ac, char *av[])
     // //	Creating body parts.
     // //----------------------------------------------------------------------
     AlignedBoxByCell left_emitter_by_cell(water_body, AlignedBox(xAxis, Transform(left_bidirectional_translation), bidirectional_buffer_halfsize));
-    auto defulat_normal = Vec3d::UnitX();
+    auto default_normal = Vec3d::UnitX();
     auto rotated_normal = -1 * Vec3d::UnitX();
     auto rotation_axis = Vec3d::UnitY();
-    auto rot3d = Rotation3d(std::acos(defulat_normal.dot(rotated_normal)), rotation_axis);
+    auto rot3d = Rotation3d(std::acos(default_normal.dot(rotated_normal)), rotation_axis);
     AlignedBoxByCell right_emitter_by_cell(water_body, AlignedBox(xAxis, Transform(rot3d, right_bidirectional_translation), bidirectional_buffer_halfsize));
     // AlignedBoxByCell right_emitter_by_cell(water_body, AlignedBox(xAxis, Transform(left_bidirectional_translation), bidirectional_buffer_halfsize));
     //----------------------------------------------------------------------
@@ -297,6 +297,7 @@ int main(int ac, char *av[])
         bidirectional_velocity_condition_left(left_emitter_by_cell, particle_buffer, DH, U_f, mu_f);
     fluid_dynamics::BidirectionalBoundaryCK<MainExecutionPolicy, LinearCorrectionCK, PressurePrescribed<>>
         bidirectional_pressure_condition_right(right_emitter_by_cell, particle_buffer, Outlet_pressure);
+    StateDynamics<MainExecutionPolicy, fluid_dynamics::OutflowParticleDeletion> out_flow_particle_deletion(water_body);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
@@ -393,8 +394,9 @@ int main(int ac, char *av[])
             tick_instance = TickCount::now();
             bidirectional_velocity_condition_left.injectParticles();
             bidirectional_pressure_condition_right.injectParticles();
-            bidirectional_velocity_condition_left.deleteParticles();
-            bidirectional_pressure_condition_right.deleteParticles();
+            bidirectional_velocity_condition_left.indicateOutFlowParticles();
+            bidirectional_pressure_condition_right.indicateOutFlowParticles();
+            out_flow_particle_deletion.exec();
             /** Update cell linked list and configuration. */
             if (number_of_iterations % 100 == 0 && number_of_iterations != 1)
             {
