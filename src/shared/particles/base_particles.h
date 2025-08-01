@@ -170,6 +170,8 @@ class BaseParticles
     void addEvolvingVariable(Args &&...args);
     template <typename DataType>
     void addEvolvingVariable(DiscreteVariableArray<DataType> *variable_array);
+    template <typename DataType, typename... Args>
+    void addExtraReloadVariable(Args &&...args);
     ParticleVariables &VariablesToWrite() { return variables_to_write_; };
     ParticleVariables &EvolvingVariables() { return evolving_variables_; };
     //----------------------------------------------------------------------
@@ -201,6 +203,7 @@ class BaseParticles
     ParticleVariables all_discrete_variables_;
     SingularVariables all_singular_variables_;
     ParticleVariables variables_to_write_;
+    ParticleVariables extra_variables_to_reload_;
 
   protected:
     int total_body_parts_;                                /**< total number of body parts indicated particle groups*/
@@ -236,7 +239,7 @@ class BaseParticles
 
     OperationOnDataAssemble<ParticleData, CopyParticleState> copy_particle_state_;
     OperationOnDataAssemble<ParticleVariables, WriteAParticleVariableToXml> write_restart_variable_to_xml_, write_reload_variable_to_xml_;
-    OperationOnDataAssemble<ParticleVariables, ReadAParticleVariableFromXml> read_restart_variable_from_xml_;
+    OperationOnDataAssemble<ParticleVariables, ReadAParticleVariableFromXml> read_restart_variable_from_xml_, read_reload_variable_from_xml_;
     //----------------------------------------------------------------------
     // Functions for old CPU code compatibility
     //----------------------------------------------------------------------

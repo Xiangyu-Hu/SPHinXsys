@@ -160,6 +160,8 @@ void BaseParticles::writeParticlesToXmlForReload(const std::string &filefullpath
 void BaseParticles::readReloadXmlFile(const std::string &filefullpath)
 {
     reload_xml_parser_.loadXmlFile(filefullpath);
+    OperationOnDataAssemble<ParticleVariables, ReadAParticleVariableFromXml> read_extra_reload_variable;
+    read_extra_reload_variable(extra_variables_to_reload_, this, reload_xml_parser_);
 }
 //=================================================================================================//
 } // namespace SPH

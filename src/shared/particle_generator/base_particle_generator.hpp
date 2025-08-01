@@ -42,6 +42,10 @@ template <typename ParticlesType>
 void ParticleGenerator<ParticlesType, Reload>::initializeParticleVariables()
 {
     ParticleGenerator<ParticlesType>::initializeParticleVariablesFromReload();
+    for (const auto &variable_name : this->extra_reload_variable_names_)
+    {
+        this->base_particles_.registerStateVariableFromReload(variable_name);
+    }
 }
 //=================================================================================================//
 } // namespace SPH
