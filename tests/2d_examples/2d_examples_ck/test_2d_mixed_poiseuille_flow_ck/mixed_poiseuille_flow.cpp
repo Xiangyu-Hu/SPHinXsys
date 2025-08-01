@@ -317,6 +317,7 @@ int main(int ac, char *av[])
         bidirectional_velocity_condition_left(left_emitter_by_cell, particle_buffer, DH, U_f, mu_f);
     fluid_dynamics::BidirectionalBoundaryCK<MainExecutionPolicy, LinearCorrectionCK, PressurePrescribed<>>
         bidirectional_pressure_condition_right(right_emitter_by_cell, particle_buffer, Outlet_pressure);
+    StateDynamics<MainExecutionPolicy, fluid_dynamics::OutflowParticleDeletion> out_flow_particle_deletion(water_body);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
@@ -408,8 +409,9 @@ int main(int ac, char *av[])
             /** inflow emitter injection*/
             bidirectional_velocity_condition_left.injectParticles();
             bidirectional_pressure_condition_right.injectParticles();
-            bidirectional_velocity_condition_left.deleteParticles();
-            bidirectional_pressure_condition_right.deleteParticles();
+            bidirectional_velocity_condition_left.indicateOutFlowParticles();
+            bidirectional_pressure_condition_right.indicateOutFlowParticles();
+            out_flow_particle_deletion.exec();
             /** Update cell linked list and configuration. */
             if (number_of_iterations % 100 == 0 && number_of_iterations != 1)
             {
