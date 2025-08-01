@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -28,12 +28,13 @@
 #ifndef SPHINXSYS_SYCL_H
 #define SPHINXSYS_SYCL_H
 
+#include "all_mesh_dynamics_sycl.h"
 #include "base_configuration_dynamics_sycl.h"
+#include "device_copyable_variable.h"
 #include "particle_iterators_sycl.h"
 #include "particle_sort_sycl.h"
 #include "particle_sort_sycl.hpp"
-#include "device_copyable_variable.h"
-#include "all_mesh_dynamics_sycl.h"
+#include "sphinxsys_buffer_array_sycl.hpp"
 #include "sphinxsys_ck.h"
 #include "sphinxsys_constant_sycl.hpp"
 #include "sphinxsys_variable_array_sycl.hpp"

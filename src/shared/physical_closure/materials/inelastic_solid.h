@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -48,7 +48,7 @@ class PlasticSolid : public NeoHookeanSolid
     {
         material_type_name_ = "PlasticSolid";
     };
-    virtual ~PlasticSolid(){};
+    virtual ~PlasticSolid() {};
 
     Real YieldStress() { return yield_stress_; };
     /** compute the elastic part of normalized left Cauchy-Green deformation gradient tensor. */
@@ -75,7 +75,7 @@ class HardeningPlasticSolid : public PlasticSolid
     {
         material_type_name_ = "HardeningPlasticSolid";
     };
-    virtual ~HardeningPlasticSolid(){};
+    virtual ~HardeningPlasticSolid() {};
 
     virtual void initializeLocalParameters(BaseParticles *base_particles) override;
     Real HardeningModulus() { return hardening_modulus_; };
@@ -101,7 +101,7 @@ class NonLinearHardeningPlasticSolid : public HardeningPlasticSolid
     {
         material_type_name_ = "NonLinearHardeningPlasticSolid";
     };
-    virtual ~NonLinearHardeningPlasticSolid(){};
+    virtual ~NonLinearHardeningPlasticSolid() {};
 
     Real NonlinearHardening(Real hardening_parameter_pre)
     {
@@ -135,7 +135,7 @@ class ViscousPlasticSolid : public PlasticSolid
     {
         material_type_name_ = "ViscousPlasticSolid";
     };
-    virtual ~ViscousPlasticSolid(){};
+    virtual ~ViscousPlasticSolid() {};
 
     virtual void initializeLocalParameters(BaseParticles *base_particles) override;
     Real ViscousModulus() { return viscous_modulus_; };

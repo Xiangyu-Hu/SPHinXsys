@@ -29,7 +29,6 @@ DeviceOnlyVariableArray<DataType, VariableType>::
 {
     StdVec<VariableType<DataType> *> host_variables = host_variable_array->getVariables();
     size_t data_size = host_variable_array->getArraySize();
-    DataArray<DataType> *host_data = host_variable_array->Data();
     device_only_data_array_ = allocateDeviceOnly<DataArray<DataType>>(data_size);
     for (size_t i = 0; i != data_size; ++i)
     {

@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -47,7 +47,7 @@ class ParameterSplittingByPDEInner
 {
   public:
     ParameterSplittingByPDEInner(BaseInnerRelation &inner_relation, const std::string &name);
-    virtual ~ParameterSplittingByPDEInner(){};
+    virtual ~ParameterSplittingByPDEInner() {};
 
   protected:
     virtual ErrorAndParameters<DataType> computeErrorAndParameters(size_t index_i, Real dt = 0.0);
@@ -67,7 +67,7 @@ class ParameterSplittingByPDEWithBoundary
   public:
     ParameterSplittingByPDEWithBoundary(BaseInnerRelation &inner_relation,
                                         BaseContactRelation &contact_relation, const std::string &name);
-    virtual ~ParameterSplittingByPDEWithBoundary(){};
+    virtual ~ParameterSplittingByPDEWithBoundary() {};
 
   protected:
     StdVec<Vecd *> boundary_normal_vector_;
@@ -86,7 +86,7 @@ class UpdateParameterPDEResidual : public ParameterSplittingType
   public:
     template <typename... Args>
     UpdateParameterPDEResidual(Args &&...args);
-    virtual ~UpdateParameterPDEResidual(){};
+    virtual ~UpdateParameterPDEResidual() {};
 
   protected:
     virtual void interaction(size_t index_i, Real dt = 0.0) override;

@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -173,10 +173,10 @@ class KernelTabulatedCK
         return interpolateCubic(dw_1d, normalized_distance);
     };
 
-    protected:
+  protected:
     Real dimension_factor_1D_, dimension_factor_2D_, dimension_factor_3D_;
-    
-    private:
+
+  private:
     Real inv_h_, rc_ref_, rc_ref_sqr_, kernel_size_;
     Real factor_W_1D_, factor_W_2D_, factor_W_3D_;
     Real factor_dW_1D_, factor_dW_2D_, factor_dW_3D_;
