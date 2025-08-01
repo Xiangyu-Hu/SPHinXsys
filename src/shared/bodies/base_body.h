@@ -192,7 +192,7 @@ class SPHBody
     // The local material parameters are also initialized.
     //----------------------------------------------------------------------
     template <class ParticleType, class... Parameters, typename... Args>
-    void generateParticles(Args &&...args)
+    ParticleType *generateParticles(Args &&...args)
     {
         ParticleType *particles = base_particles_ptr_keeper_.createPtr<ParticleType>(*this, base_material_);
         ParticleGenerator<ParticleType, Parameters...> particle_generator(*this, *particles, std::forward<Args>(args)...);
@@ -200,13 +200,14 @@ class SPHBody
         particles->initializeBasicParticleVariables();
         sph_adaptation_->initializeAdaptationVariables(*particles);
         base_material_->setLocalParameters(sph_system_, particles);
+        return particles;
     };
 
     // Buffer or ghost particles can be generated together with real particles
     template <class ParticleType, typename... Parameters, class ReserveType, typename... Args>
-    void generateParticlesWithReserve(ReserveType &particle_reserve, Args &&...args)
+    ParticleType *generateParticlesWithReserve(ReserveType &particle_reserve, Args &&...args)
     {
-        generateParticles<ParticleType, ReserveType, Parameters...>(particle_reserve, std::forward<Args>(args)...);
+        return generateParticles<ParticleType, ReserveType, Parameters...>(particle_reserve, std::forward<Args>(args)...);
     };
 };
 

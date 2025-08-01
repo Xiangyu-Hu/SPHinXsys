@@ -27,17 +27,20 @@ int main(int ac, char *av[])
     SolidBody column(sph_system, makeShared<Column>("Column"));
     column.defineAdaptationRatios(1.3, 1.0);
 
+    SolidBody wall(sph_system, makeShared<WallShape>("Wall"));
+
     if (sph_system.RunParticleRelaxation())
     {
-        column.defineBodyLevelSetShape(execution::par_device)->writeLevelSet(sph_system);
+        column.defineBodyLevelSetShape(par_device)->writeLevelSet(sph_system);
         column.generateParticles<BaseParticles, Lattice>();
+        wall.generateParticles<BaseParticles, Lattice>();
         NearShapeSurface near_body_surface(column);
         Inner<> column_inner(column);
         //----------------------------------------------------------------------
         //	Methods used for particle relaxation.
         //----------------------------------------------------------------------
         SPHSolver sph_solver(sph_system);
-        auto &main_methods = sph_solver.addParticleMethodContainer(par);
+        auto &main_methods = sph_solver.addParticleMethodContainer(par_device);
         auto &host_methods = sph_solver.addParticleMethodContainer(par);
 
         auto &input_body_cell_linked_list = main_methods.addCellLinkedListDynamics(column);
@@ -52,13 +55,13 @@ int main(int ac, char *av[])
         //----------------------------------------------------------------------
         //	Run on CPU after relaxation finished and output results.
         //----------------------------------------------------------------------
-        auto &wall_boundary_normal_direction = host_methods.addStateDynamics<NormalFromBodyShapeCK>(column);
+        auto &wall_boundary_normal_direction = host_methods.addStateDynamics<NormalFromBodyShapeCK>(wall);
         //----------------------------------------------------------------------
         //	Define simple file input and outputs functions.
         //----------------------------------------------------------------------
         auto &body_state_recorder = main_methods.addBodyStateRecorder<BodyStatesRecordingToVtpCK>(column);
-        auto &write_particle_reload_files = main_methods.addIODynamics<ReloadParticleIOCK>(column);
-        write_particle_reload_files.addToReload(column, "NormalDirection");
+        auto &write_particle_reload_files = main_methods.addIODynamics<ReloadParticleIOCK>(StdVec<SPHBody *>{&column, &wall});
+        write_particle_reload_files.addToReload<Vecd>(wall, "NormalDirection");
         //----------------------------------------------------------------------
         //	Prepare the simulation with cell linked list, configuration
         //	and case specified initial condition if necessary.
@@ -101,9 +104,9 @@ int main(int ac, char *av[])
         rho0_s, Youngs_modulus, poisson, yield_stress, hardening_modulus);
     column.generateParticles<BaseParticles, Reload>(column.getName());
 
-    SolidBody wall(sph_system, makeShared<WallShape>("Wall"));
     wall.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
-    wall.generateParticles<BaseParticles, Lattice>();
+    wall.generateParticles<BaseParticles, Reload>(wall.getName())
+        ->reloadExtraVariable<Vecd>("NormalDirection");
 
     /** Define Observer. */
     ObserverBody my_observer(sph_system, "MyObserver");
@@ -119,9 +122,8 @@ int main(int ac, char *av[])
     //	All numerical methods will be used in this case.
     //----------------------------------------------------------------------
     SimpleDynamics<::InitialCondition> initial_condition(column);
-    StateDynamics<execution::ParallelPolicy, NormalFromBodyShapeCK> wall_normal_direction(wall); // run on CPU
     InteractionWithUpdate<LinearGradientCorrectionMatrixInner> corrected_configuration(column_inner);
-
+    SimpleDynamics<NormalDirectionFromBodyShape> wall_normal_direction(wall);
     Dynamics1Level<solid_dynamics::DecomposedPlasticIntegration1stHalf> stress_relaxation_first_half(column_inner);
     Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half(column_inner);
     InteractionDynamics<DynamicContactForceWithWall> column_wall_contact_force(column_wall_contact);
