@@ -13,7 +13,8 @@ MultilevelLevelSet::MultilevelLevelSet(
 {
     Real reference_data_spacing = coarse_data->DataSpacing() * 0.5;
     Real global_h_ratio = sph_adaptation.ReferenceSpacing() / reference_data_spacing;
-    host_kernel_ = sph_adaptation.getKernel();
+    kernel_ = makeUnique<SingularVariable<KernelTabulatedCK>>(
+        "levelset_kernel", KernelTabulatedCK(*sph_adaptation.getKernel()));
     global_h_ratio_vec_.push_back(global_h_ratio);
 
     initializeLevel(reference_data_spacing, tentative_bounds, coarse_data);
@@ -26,7 +27,8 @@ MultilevelLevelSet::MultilevelLevelSet(
 {
     Real global_h_ratio = sph_adaptation.ReferenceSpacing() / reference_data_spacing;
     global_h_ratio_vec_.push_back(global_h_ratio);
-    host_kernel_ = sph_adaptation.getKernel();
+    kernel_ = makeUnique<SingularVariable<KernelTabulatedCK>>(
+        "levelset_kernel", KernelTabulatedCK(*sph_adaptation.getKernel()));
 
     initializeLevel(reference_data_spacing, tentative_bounds);
     for (size_t level = 1; level < total_levels_; ++level)
