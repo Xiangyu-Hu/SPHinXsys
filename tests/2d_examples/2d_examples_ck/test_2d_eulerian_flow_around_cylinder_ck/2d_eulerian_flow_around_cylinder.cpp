@@ -96,13 +96,13 @@ int main(int ac, char *av[])
     water_block_shape.add<GeometricShapeBox>(Vec2d(-DL_sponge, -DH_sponge), Vec2d(DL, DH + DH_sponge), "OuterBoundary");
     water_block_shape.subtract<GeometricShapeBall>(cylinder_center, cylinder_radius);
     FluidBody water_block(sph_system, water_block_shape);
-//    water_block.getSPHAdaptation().resetKernel<KernelLaguerreGauss>();
+    water_block.getSPHAdaptation().resetKernel<KernelLaguerreGauss>();
     water_block.defineClosure<WeaklyCompressibleFluid, Viscosity>(ConstructArgs(rho0_f, c_f), mu_f);
 
     GeometricShapeBall cylinder_shape(cylinder_center, cylinder_radius, "Cylinder");
     SolidBody cylinder(sph_system, cylinder_shape);
     cylinder.defineAdaptationRatios(1.3, 2.0);
-//    cylinder.getSPHAdaptation().resetKernel<KernelLaguerreGauss>();
+    cylinder.getSPHAdaptation().resetKernel<KernelLaguerreGauss>();
     cylinder.defineMaterial<Solid>();
     //----------------------------------------------------------------------
     //	Run particle relaxation for body-fitted distribution if chosen.
@@ -210,7 +210,9 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
+    water_block.getSPHAdaptation().resetKernel<KernelTabulated<KernelLaguerreGauss>>(20);
     water_block.generateParticles<BaseParticles, Reload>(water_block.getName());
+    cylinder.getSPHAdaptation().resetKernel<KernelTabulated<KernelLaguerreGauss>>(20);
     cylinder.generateParticles<BaseParticles, Reload>(cylinder.getName());
     //----------------------------------------------------------------------
     //	Define body relation map.
@@ -255,6 +257,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp write_real_body_states(sph_system);
     write_real_body_states.addToWrite<int>(water_block, "Indicator");
+    write_real_body_states.addToWrite<Vecd>(water_block, "Velocity");
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<QuantitySummation<Vecd>>>
         write_total_viscous_force_from_fluid(cylinder, "ViscousForceFromFluid");
     ReducedQuantityRecording<QuantitySummation<Vecd>>

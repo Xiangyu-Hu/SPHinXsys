@@ -68,6 +68,7 @@ class Kernel
     Real factor_dW_1D_, factor_dW_2D_, factor_dW_3D_;
     /** Auxiliary factors for the second order derivative of kernel function  **/
     Real factor_d2W_1D_, factor_d2W_2D_, factor_d2W_3D_;
+    bool truncated_ = false; /**< if the kernel is truncated, i.e. zero value at the cut off radius **/
 
     void setDerivativeParameters();
 
@@ -91,6 +92,7 @@ class Kernel
     Real DimensionFactor1D() const { return factor_W_1D_ * h_; };
     Real DimensionFactor2D() const { return factor_W_2D_ * h_ * h_; };
     Real DimensionFactor3D() const { return factor_W_3D_ * h_ * h_ * h_; };
+    bool isTruncated() const { return truncated_; };
 
     /**
      * unit vector pointing from j to i or inter-particle surface direction
