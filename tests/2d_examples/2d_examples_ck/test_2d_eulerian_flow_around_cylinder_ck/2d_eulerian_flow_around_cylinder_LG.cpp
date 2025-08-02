@@ -4,7 +4,7 @@
  * @details We consider a Eulerian flow passing by a cylinder in 2D.
  * @author 	Zhentong Wang and Xiangyu Hu
  */
-#include "sphinxsys.h"
+#include "sphinxsys_ck.h"
 using namespace SPH;
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
@@ -82,30 +82,120 @@ int main(int ac, char *av[])
     BoundingBox system_domain_bounds(Vec2d(-DL_sponge, -DH_sponge), Vec2d(DL, DH + DH_sponge));
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
     // Tag for run particle relaxation for the initial body fitted distribution.
-    sph_system.setRunParticleRelaxation(false);
-    // Tag for computation start with relaxed body fitted particles distribution.
-    sph_system.setReloadParticles(false);
+    sph_system.setRunParticleRelaxation(true);
     // Handle command line arguments and override the tags for particle relaxation and reload.
     sph_system.handleCommandlineOptions(ac, av);
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBlock"));
+    ComplexShape water_block_shape("WaterBlock");
+    water_block_shape.add<GeometricShapeBox>(Vec2d(-DL_sponge, -DH_sponge), Vec2d(DL, DH + DH_sponge), "OuterBoundary");
+    water_block_shape.subtract<GeometricShapeBall>(cylinder_center, cylinder_radius);
+    FluidBody water_block(sph_system, water_block_shape);
     water_block.getSPHAdaptation().resetKernel<KernelTabulated<KernelLaguerreGauss>>(20);
-    water_block.defineComponentLevelSetShape("OuterBoundary");
     water_block.defineClosure<WeaklyCompressibleFluid, Viscosity>(ConstructArgs(rho0_f, c_f), mu_f);
-    (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? water_block.generateParticles<BaseParticles, Reload>(water_block.getName())
-        : water_block.generateParticles<BaseParticles, Lattice>();
 
-    SolidBody cylinder(sph_system, makeShared<Cylinder>("Cylinder"));
-    cylinder.defineAdaptationRatios(1.3, 2.0);
+    GeometricShapeBall cylinder_shape(cylinder_center, cylinder_radius, "Cylinder");
+    SolidBody cylinder(sph_system, cylinder_shape);
+    //    cylinder.defineAdaptationRatios(1.3, 2.0);
     cylinder.getSPHAdaptation().resetKernel<KernelTabulated<KernelLaguerreGauss>>(20);
-    cylinder.defineBodyLevelSetShape();
     cylinder.defineMaterial<Solid>();
-    (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? cylinder.generateParticles<BaseParticles, Reload>(cylinder.getName())
-        : cylinder.generateParticles<BaseParticles, Lattice>();
+    //----------------------------------------------------------------------
+    //	Run particle relaxation for body-fitted distribution if chosen.
+    //----------------------------------------------------------------------
+    if (sph_system.RunParticleRelaxation())
+    {
+        water_block.defineComponentLevelSetShape("OuterBoundary");
+        water_block.generateParticles<BaseParticles, Lattice>();
+        NearShapeSurface near_water_block_outer_surface(water_block, "OuterBoundary");
+
+        cylinder.defineBodyLevelSetShape();
+        cylinder.generateParticles<BaseParticles, Lattice>();
+        NearShapeSurface near_cylinder_surface(cylinder);
+
+        Inner<> cylinder_inner(cylinder);
+        Inner<> water_block_inner(water_block);
+        Contact<> water_block_contact(water_block, {&cylinder});
+        //----------------------------------------------------------------------
+        //	Methods used for particle relaxation.
+        //----------------------------------------------------------------------
+        SPHSolver sph_solver(sph_system);
+        auto &main_methods = sph_solver.addParticleMethodContainer(par);
+        auto &host_methods = sph_solver.addParticleMethodContainer(par);
+
+        auto &cylinder_cell_linked_list = host_methods.addCellLinkedListDynamics(cylinder);
+        auto &water_block_cell_linked_list = main_methods.addCellLinkedListDynamics(water_block);
+        auto &cylinder_update_inner_relation = host_methods.addRelationDynamics(cylinder_inner);
+        auto &water_block_update_complex_relation = main_methods.addRelationDynamics(water_block_inner, water_block_contact);
+
+        auto &random_cylinder_particles = host_methods.addStateDynamics<RandomizeParticlePositionCK>(cylinder);
+        auto &random_water_body_particles = host_methods.addStateDynamics<RandomizeParticlePositionCK>(water_block);
+
+        auto &cylinder_relaxation_residue =
+            main_methods.addInteractionDynamics<RelaxationResidueCK, NoKernelCorrectionCK>(cylinder_inner)
+                .addPostStateDynamics<LevelsetKernelGradientIntegral>(near_cylinder_surface);
+        auto &cylinder_relaxation_scaling = main_methods.addReduceDynamics<RelaxationScalingCK>(cylinder);
+        auto &cylinder_update_particle_position = main_methods.addStateDynamics<PositionRelaxationCK>(cylinder);
+        auto &cylinder_level_set_bounding = main_methods.addStateDynamics<LevelsetBounding>(near_cylinder_surface);
+
+        auto &water_block_relaxation_residue =
+            main_methods.addInteractionDynamics<RelaxationResidueCK, NoKernelCorrectionCK>(water_block_inner)
+                .addContactInteraction<Boundary, NoKernelCorrectionCK>(water_block_contact)
+                .addPostStateDynamics<LevelsetKernelGradientIntegral>(near_water_block_outer_surface);
+        auto &water_block_relaxation_scaling = main_methods.addReduceDynamics<RelaxationScalingCK>(water_block);
+        auto &water_block_update_particle_position = main_methods.addStateDynamics<PositionRelaxationCK>(water_block);
+        auto &water_block_level_set_bounding = main_methods.addStateDynamics<LevelsetBounding>(near_water_block_outer_surface);
+        //----------------------------------------------------------------------
+        //	Define simple file input and outputs functions.
+        //----------------------------------------------------------------------
+        auto &body_state_recorder = main_methods.addBodyStateRecorder<BodyStatesRecordingToVtpCK>(sph_system);
+        //----------------------------------------------------------------------
+        //	Prepare the simulation with cell linked list, configuration
+        //	and case specified initial condition if necessary.
+        //----------------------------------------------------------------------
+        random_cylinder_particles.exec();
+        random_water_block_particles.exec();
+        //----------------------------------------------------------------------
+        //	First output before the simulation.
+        //----------------------------------------------------------------------
+        body_state_recorder.writeToFile(0);
+        //----------------------------------------------------------------------
+        //	Particle relaxation time stepping start here.
+        //----------------------------------------------------------------------
+        int ite_p = 0;
+        while (ite_p < 1000)
+        {
+            cylinder_cell_linked_list.exec();
+            water_block_cell_linked_list.exec();
+            cylinder_update_inner_relation.exec();
+            water_block_update_complex_relation.exec();
+
+            cylinder_relaxation_residue.exec();
+            Real cylinder_relaxation_step = cylinder_relaxation_scaling.exec();
+            update_particle_position.exec(cylinder_relaxation_step);
+            cylinder_level_set_bounding.exec();
+
+            water_block_relaxation_residue.exec();
+            Real water_block_relaxation_step = water_relaxation_scaling.exec();
+            water_block_update_particle_position.exec(water_block_relaxation_step);
+            water_block_level_set_bounding.exec();
+
+            ite_p += 1;
+            if (ite_p % 100 == 0)
+            {
+                std::cout << std::fixed << std::setprecision(9) << "Relaxation steps N = " << ite_p << "\n";
+                body_state_recorder.writeToFile(ite_p);
+            }
+        }
+        std::cout << "The physics relaxation process finish !" << std::endl;
+
+        return 0;
+    }
+    //----------------------------------------------------------------------
+    //	Continue the simulation with the relaxed body fitted particles distribution.
+    //----------------------------------------------------------------------
+    water_block.generateParticles<BaseParticles, Reload>(water_block.getName());
+    cylinder.generateParticles<BaseParticles, Reload>(cylinder.getName());
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -122,49 +212,6 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     ComplexRelation water_wall_complex(water_block_inner, water_block_contact);
     //----------------------------------------------------------------------
-    //----------------------------------------------------------------------
-    //	Run particle relaxation for body-fitted distribution if chosen.
-    //----------------------------------------------------------------------
-    if (sph_system.RunParticleRelaxation())
-    {
-        //----------------------------------------------------------------------
-        //	Methods used for particle relaxation.
-        //----------------------------------------------------------------------
-        using namespace relax_dynamics;
-        SimpleDynamics<RandomizeParticlePosition> random_inserted_body_particles(cylinder);
-        SimpleDynamics<RandomizeParticlePosition> random_water_body_particles(water_block);
-        BodyStatesRecordingToVtp write_real_body_states(sph_system);
-        ReloadParticleIO write_real_body_particle_reload_files({&cylinder, &water_block});
-        RelaxationStepLevelSetCorrectionInner relaxation_step_inner(cylinder_inner);
-        RelaxationStepLevelSetCorrectionComplex relaxation_step_complex(
-            DynamicsArgs(water_block_inner, std::string("OuterBoundary")), water_block_contact);
-        //----------------------------------------------------------------------
-        //	Particle relaxation starts here.
-        //----------------------------------------------------------------------
-        random_inserted_body_particles.exec(0.25);
-        random_water_body_particles.exec(0.25);
-        relaxation_step_inner.SurfaceBounding().exec();
-        relaxation_step_complex.SurfaceBounding().exec();
-        write_real_body_states.writeToFile(0);
-
-        int ite_p = 0;
-        while (ite_p < 1000)
-        {
-            relaxation_step_inner.exec();
-            relaxation_step_complex.exec();
-            ite_p += 1;
-            if (ite_p % 200 == 0)
-            {
-                std::cout << std::fixed << std::setprecision(9) << "Relaxation steps N = " << ite_p << "\n";
-                write_real_body_states.writeToFile(ite_p);
-            }
-        }
-        std::cout << "The physics relaxation process finish !" << std::endl;
-
-        write_real_body_particle_reload_files.writeToFile(0);
-
-        return 0;
-    }
     //----------------------------------------------------------------------
     //	Define the main numerical methods used in the simulation.
     //	Note that there may be data dependence on the constructors of these methods.
