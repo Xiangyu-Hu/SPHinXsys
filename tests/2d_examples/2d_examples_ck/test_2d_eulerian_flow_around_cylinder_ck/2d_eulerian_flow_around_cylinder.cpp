@@ -25,40 +25,8 @@ Real c_f = 10.0 * U_f;                                   /**< Speed of sound. */
 Real Re = 100.0;                                         /**< Reynolds number. */
 Real mu_f = rho0_f * U_f * (2.0 * cylinder_radius) / Re; /**< Dynamics viscosity. */
 //----------------------------------------------------------------------
-//	Define geometries and body shapes
+//	User defined boundary condition for far field
 //----------------------------------------------------------------------
-std::vector<Vecd> createWaterBlockShape()
-{
-    std::vector<Vecd> water_block_shape;
-    water_block_shape.push_back(Vecd(-DL_sponge, -DH_sponge));
-    water_block_shape.push_back(Vecd(-DL_sponge, DH + DH_sponge));
-    water_block_shape.push_back(Vecd(DL, DH + DH_sponge));
-    water_block_shape.push_back(Vecd(DL, -DH_sponge));
-    water_block_shape.push_back(Vecd(-DL_sponge, -DH_sponge));
-
-    return water_block_shape;
-}
-class WaterBlock : public ComplexShape
-{
-  public:
-    explicit WaterBlock(const std::string &shape_name) : ComplexShape(shape_name)
-    {
-        MultiPolygon outer_boundary(createWaterBlockShape());
-        add<MultiPolygonShape>(outer_boundary, "OuterBoundary");
-        MultiPolygon circle(cylinder_center, cylinder_radius, 100);
-        subtract<MultiPolygonShape>(circle);
-    }
-};
-class Cylinder : public MultiPolygonShape
-{
-  public:
-    explicit Cylinder(const std::string &shape_name) : MultiPolygonShape(shape_name)
-    {
-        /** Geometry definition. */
-        multi_polygon_.addACircle(cylinder_center, cylinder_radius, 100, ShapeBooleanOps::add);
-    }
-};
-
 class FarFieldBoundary : public fluid_dynamics::NonReflectiveBoundaryCorrection
 {
   public:
@@ -129,7 +97,7 @@ int main(int ac, char *av[])
         auto &water_block_update_complex_relation = main_methods.addRelationDynamics(water_block_inner, water_block_contact);
 
         auto &random_cylinder_particles = host_methods.addStateDynamics<RandomizeParticlePositionCK>(cylinder);
-        auto &random_water_body_particles = host_methods.addStateDynamics<RandomizeParticlePositionCK>(water_block);
+        auto &random_water_block_particles = host_methods.addStateDynamics<RandomizeParticlePositionCK>(water_block);
 
         auto &cylinder_relaxation_residue =
             main_methods.addInteractionDynamics<RelaxationResidueCK, NoKernelCorrectionCK>(cylinder_inner)
@@ -172,11 +140,11 @@ int main(int ac, char *av[])
 
             cylinder_relaxation_residue.exec();
             Real cylinder_relaxation_step = cylinder_relaxation_scaling.exec();
-            update_particle_position.exec(cylinder_relaxation_step);
+            cylinder_update_particle_position.exec(cylinder_relaxation_step);
             cylinder_level_set_bounding.exec();
 
             water_block_relaxation_residue.exec();
-            Real water_block_relaxation_step = water_relaxation_scaling.exec();
+            Real water_block_relaxation_step = water_block_relaxation_scaling.exec();
             water_block_update_particle_position.exec(water_block_relaxation_step);
             water_block_level_set_bounding.exec();
 
