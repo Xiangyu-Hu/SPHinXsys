@@ -95,7 +95,9 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     RealBody input_body(sph_system, makeShared<SolidBodyFromMesh>("SolidBodyFromMesh"));
     // level set shape is used for particle relaxation
-    input_body.defineBodyLevelSetShape()->correctLevelSetSign()->writeLevelSet(sph_system);
+    LevelSetShape *level_set_shape = input_body.defineBodyLevelSetShape()
+                                         ->correctLevelSetSign()
+                                         ->writeLevelSet(sph_system);
     input_body.generateParticles<BaseParticles, Lattice>();
     //----------------------------------------------------------------------
     //	Creating body parts.
@@ -132,7 +134,7 @@ int main(int ac, char *av[])
     auto &random_input_body_particles = host_methods.addStateDynamics<RandomizeParticlePositionCK>(input_body);
     auto &relaxation_residue =
         main_methods.addInteractionDynamics<RelaxationResidueCK, NoKernelCorrectionCK>(input_body_inner)
-            .addPostStateDynamics<LevelsetKernelGradientIntegral>(near_body_surface);
+            .addPostStateDynamics<LevelsetKernelGradientIntegral>(input_body, *level_set_shape);
     auto &relaxation_scaling = main_methods.addReduceDynamics<RelaxationScalingCK>(input_body);
     auto &update_particle_position =
         main_methods.addStateDynamics<PositionRelaxationCK>(input_body);
