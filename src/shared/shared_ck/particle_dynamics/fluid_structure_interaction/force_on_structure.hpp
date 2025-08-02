@@ -121,15 +121,17 @@ void PressureForceFromFluid<Contact<WithUpdate, AcousticStep2ndHalfType, Paramet
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
     {
         UnsignedInt index_j = this->neighbor_index_[n];
-        Vecd e_ij = this->e_ij(index_i, index_j);
         Real r_ij = this->vec_r_ij(index_i, index_j).norm();
+        Vecd e_ij = this->e_ij(index_i, index_j);
+        Vecd corrected_e_ij = this->contact_correction_(index_j) * e_ij;
 
         Real face_wall_external_acceleration =
             (contact_force_prior_[index_j] / contact_mass_[index_j] - acc_ave_[index_i]).dot(e_ij);
         Real p_j_in_wall = contact_p_[index_j] + contact_rho_[index_j] * r_ij * SMAX(Real(0), face_wall_external_acceleration);
-        Real u_jump = 2.0 * (this->contact_vel_[index_j] - this->vel_ave_[index_i]).dot(n_[index_i]);
-        force -= (riemann_solver_.DissipativePJump(u_jump) * n_[index_i] +
-                  (p_j_in_wall + contact_p_[index_j]) * this->contact_correction_(index_j) * e_ij) *
+        Vecd face_to_fluid_n = -SGN(corrected_e_ij.dot(n_[index_i])) * n_[index_i];
+        Real u_jump = 2.0 * (this->contact_vel_[index_j] - this->vel_ave_[index_i]).dot(face_to_fluid_n);
+        force -= (riemann_solver_.DissipativePJump(u_jump) * face_to_fluid_n +
+                  (p_j_in_wall + contact_p_[index_j]) * corrected_e_ij) *
                  this->dW_ij(index_i, index_j) * this->contact_Vol_[index_j];
     }
 

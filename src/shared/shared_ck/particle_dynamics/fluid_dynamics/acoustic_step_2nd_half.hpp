@@ -118,10 +118,11 @@ void AcousticStep2ndHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType, 
         Real dW_ijV_j = this->dW_ij(index_i, index_j) * wall_Vol_[index_j];
         Vecd corrected_e_ij = correction_(index_i) * this->e_ij(index_i, index_j);
 
+        Vecd face_to_fluid_n = SGN(corrected_e_ij.dot(wall_n_[index_j])) * wall_n_[index_j];
         Vecd vel_j_in_wall = 2.0 * wall_vel_ave_[index_j] - vel_[index_i];
         density_change_rate += (vel_[index_i] - vel_j_in_wall).dot(corrected_e_ij) * dW_ijV_j;
-        Real u_jump = 2.0 * (vel_[index_i] - wall_vel_ave_[index_j]).dot(wall_n_[index_j]);
-        p_dissipation += riemann_solver_.DissipativePJump(u_jump) * dW_ijV_j * wall_n_[index_j];
+        Real u_jump = 2.0 * (vel_[index_i] - wall_vel_ave_[index_j]).dot(face_to_fluid_n);
+        p_dissipation += riemann_solver_.DissipativePJump(u_jump) * dW_ijV_j * face_to_fluid_n;
     }
     drho_dt_[index_i] += density_change_rate * rho_[index_i];
     force_[index_i] += p_dissipation * Vol_[index_i];
