@@ -126,6 +126,11 @@ SPHSystem *SPHSystem::handleCommandlineOptions(int ac, char *av[])
                       << run_particle_relaxation_ << ").\n";
         }
 
+        if (run_particle_relaxation_)
+        {
+            io_environment_->reinitializeReloadFolder();
+        }
+
         if (vm.count("reload"))
         {
             reload_particles_ = vm["reload"].as<bool>();
