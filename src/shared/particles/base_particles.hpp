@@ -401,6 +401,13 @@ void BaseParticles::addVariableToWrite(DiscreteVariableArray<DataType> *variable
         addVariableToWrite<DataType>(variables[i]);
     }
 }
+//===============================================================================
+template <typename DataType>
+BaseParticles *BaseParticles::reloadExtraVariable(const std::string &name)
+{
+    registerStateVariableFromReload<DataType>(name);
+    return this;
+}
 //=================================================================================================//
 template <typename DataType>
 void BaseParticles::CopyParticleState::
