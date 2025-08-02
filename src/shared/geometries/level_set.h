@@ -64,8 +64,8 @@ class MultilevelLevelSet : public BaseMeshField
     template <class ExecutionPolicy>
     void finishInitialization(const ExecutionPolicy &ex_policy)
     {
-        initializeMeshVariables(ex_policy, host_kernel_);
-        configOperationExecutionPolicy(ex_policy, host_kernel_);
+        initializeMeshVariables(ex_policy, kernel_->Data());
+        configOperationExecutionPolicy(ex_policy, kernel_->Data());
     }
     void finishInitialization(const ParallelDevicePolicy &par_device);
     void cleanInterface(Real small_shift_factor);
@@ -152,8 +152,7 @@ class MultilevelLevelSet : public BaseMeshField
 
     UniquePtr<BaseExecDynamics> correct_topology_keeper_;
     UniquePtr<BaseExecDynamics> clean_interface_keeper_;
-    Kernel *host_kernel_;
-    UniquePtr<SingularVariable<KernelTabulatedCK>> device_kernel_;
+    UniquePtr<SingularVariable<KernelTabulatedCK>> kernel_;
     std::function<void()> sync_mesh_variable_data_;
 
     template <class ExecutionPolicy, class KernelType>
