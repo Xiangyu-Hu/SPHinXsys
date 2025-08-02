@@ -90,32 +90,43 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    ComplexShape water_block_shape("WaterBlock");
-    water_block_shape.add<GeometricShapeBox>(Vec2d(-DL_sponge, -DH_sponge), Vec2d(DL, DH + DH_sponge), "OuterBoundary");
-    water_block_shape.subtract<GeometricShapeBall>(cylinder_center, cylinder_radius);
-    FluidBody water_block(sph_system, water_block_shape);
+    FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBlock"));
     water_block.getSPHAdaptation().resetKernel<KernelTabulated<KernelLaguerreGauss>>(20);
+    water_block.defineComponentLevelSetShape("OuterBoundary");
     water_block.defineClosure<WeaklyCompressibleFluid, Viscosity>(ConstructArgs(rho0_f, c_f), mu_f);
+    (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
+        ? water_block.generateParticles<BaseParticles, Reload>(water_block.getName())
+        : water_block.generateParticles<BaseParticles, Lattice>();
 
-    GeometricShapeBall cylinder_shape(cylinder_center, cylinder_radius, "Cylinder");
-    SolidBody cylinder(sph_system, cylinder_shape);
+    SolidBody cylinder(sph_system, makeShared<Cylinder>("Cylinder"));
     cylinder.defineAdaptationRatios(1.3, 2.0);
     cylinder.getSPHAdaptation().resetKernel<KernelTabulated<KernelLaguerreGauss>>(20);
+    cylinder.defineBodyLevelSetShape();
     cylinder.defineMaterial<Solid>();
+    (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
+        ? cylinder.generateParticles<BaseParticles, Reload>(cylinder.getName())
+        : cylinder.generateParticles<BaseParticles, Lattice>();
+    //----------------------------------------------------------------------
+    //	Define body relation map.
+    //	The contact map gives the topological connections between the bodies.
+    //	Basically the the range of bodies to build neighbor particle lists.
+    //	Note that the same relation should be defined only once.
+    //----------------------------------------------------------------------
+    InnerRelation water_block_inner(water_block);
+    InnerRelation cylinder_inner(cylinder);
+    ContactRelation water_block_contact(water_block, {&cylinder});
+    ContactRelation cylinder_contact(cylinder, {&water_block});
+    //----------------------------------------------------------------------
+    // Combined relations built from basic relations
+    // which is only used for update configuration.
+    //----------------------------------------------------------------------
+    ComplexRelation water_wall_complex(water_block_inner, water_block_contact);
+    //----------------------------------------------------------------------
     //----------------------------------------------------------------------
     //	Run particle relaxation for body-fitted distribution if chosen.
     //----------------------------------------------------------------------
     if (sph_system.RunParticleRelaxation())
     {
-        water_block.defineComponentLevelSetShape("OuterBoundary");
-        water_block.generateParticles<BaseParticles, Lattice>();
-
-        cylinder.defineBodyLevelSetShape();
-        cylinder.generateParticles<BaseParticles, Lattice>();
-
-        Inner<> cylinder_inner(cylinder);
-        Inner<> water_block_inner(water_block);
-        Contact<> water_block_contact(water_block, {&cylinder});
         //----------------------------------------------------------------------
         //	Methods used for particle relaxation.
         //----------------------------------------------------------------------
@@ -154,27 +165,6 @@ int main(int ac, char *av[])
 
         return 0;
     }
-    //----------------------------------------------------------------------
-    //	Continue the simulation with the relaxed body fitted particles distribution.
-    //----------------------------------------------------------------------
-    water_block.generateParticles<BaseParticles, Reload>(water_block.getName());
-    cylinder.generateParticles<BaseParticles, Reload>(cylinder.getName());
-    //----------------------------------------------------------------------
-    //	Define body relation map.
-    //	The contact map gives the topological connections between the bodies.
-    //	Basically the the range of bodies to build neighbor particle lists.
-    //	Note that the same relation should be defined only once.
-    //----------------------------------------------------------------------
-    InnerRelation water_block_inner(water_block);
-    InnerRelation cylinder_inner(cylinder);
-    ContactRelation water_block_contact(water_block, {&cylinder});
-    ContactRelation cylinder_contact(cylinder, {&water_block});
-    //----------------------------------------------------------------------
-    // Combined relations built from basic relations
-    // which is only used for update configuration.
-    //----------------------------------------------------------------------
-    ComplexRelation water_wall_complex(water_block_inner, water_block_contact);
-    //----------------------------------------------------------------------
     //----------------------------------------------------------------------
     //	Define the main numerical methods used in the simulation.
     //	Note that there may be data dependence on the constructors of these methods.
