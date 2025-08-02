@@ -72,7 +72,7 @@ class LevelSetShape : public Shape
     LevelSetShape *cleanLevelSet(Real small_shift_factor = 1.0);
     /** required to build level set from triangular mesh in stl file format. */
     LevelSetShape *correctLevelSetSign(Real small_shift_factor = 1.0);
-    void writeLevelSet(SPHSystem &sph_system);
+    LevelSetShape *writeLevelSet(SPHSystem &sph_system);
     MultilevelLevelSet &getLevelSet() { return level_set_; }
 
   protected:
