@@ -65,7 +65,7 @@ int main(int ac, char *av[])
 
     GeometricShapeBall cylinder_shape(cylinder_center, cylinder_radius, "Cylinder");
     SolidBody cylinder(sph_system, cylinder_shape);
-    //    cylinder.defineAdaptationRatios(1.3, 2.0);
+    cylinder.defineAdaptationRatios(1.3, 2.0);
     cylinder.getSPHAdaptation().resetKernel<KernelTabulated<KernelLaguerreGauss>>(20);
     cylinder.defineMaterial<Solid>();
     //----------------------------------------------------------------------
@@ -114,9 +114,19 @@ int main(int ac, char *av[])
         auto &water_block_update_particle_position = main_methods.addStateDynamics<PositionRelaxationCK>(water_block);
         auto &water_block_level_set_bounding = main_methods.addStateDynamics<LevelsetBounding>(near_water_block_outer_surface);
         //----------------------------------------------------------------------
+        //	Run on CPU after relaxation finished and output results.
+        //----------------------------------------------------------------------
+        auto &cylinder_normal_direction = host_methods.addStateDynamics<NormalFromBodyShapeCK>(cylinder);
+        auto &water_block_normal_direction = main_methods.addStateDynamics<NormalFromBodyShapeCK>(water_block);
+        //----------------------------------------------------------------------
         //	Define simple file input and outputs functions.
         //----------------------------------------------------------------------
         auto &body_state_recorder = main_methods.addBodyStateRecorder<BodyStatesRecordingToVtpCK>(sph_system);
+        body_state_recorder.addToWrite<Vecd>(cylinder, "NormalDirection");
+        body_state_recorder.addToWrite<Vecd>(water_block, "NormalDirection");
+        auto &write_particle_reload_files = main_methods.addIODynamics<ReloadParticleIOCK>(StdVec<SPHBody *>{&cylinder, &water_block});
+        write_particle_reload_files.addToReload<Vecd>(cylinder, "NormalDirection");
+        write_particle_reload_files.addToReload<Vecd>(water_block, "NormalDirection");
         //----------------------------------------------------------------------
         //	Prepare the simulation with cell linked list, configuration
         //	and case specified initial condition if necessary.
@@ -156,14 +166,18 @@ int main(int ac, char *av[])
             }
         }
         std::cout << "The physics relaxation process finish !" << std::endl;
-
+        cylinder_normal_direction.exec();
+        water_block_normal_direction.exec();
+        write_particle_reload_files.writeToFile();
         return 0;
     }
     //----------------------------------------------------------------------
     //	Continue the simulation with the relaxed body fitted particles distribution.
     //----------------------------------------------------------------------
-    water_block.generateParticles<BaseParticles, Reload>(water_block.getName());
-    cylinder.generateParticles<BaseParticles, Reload>(cylinder.getName());
+    water_block.generateParticles<BaseParticles, Reload>(water_block.getName())
+        ->reloadExtraVariable<Vecd>("NormalDirection");
+    cylinder.generateParticles<BaseParticles, Reload>(cylinder.getName())
+        ->reloadExtraVariable<Vecd>("NormalDirection");
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -189,13 +203,11 @@ int main(int ac, char *av[])
     InteractionWithUpdate<LinearGradientCorrectionMatrixComplex> cylinder_kernel_correction_matrix(cylinder_inner, cylinder_contact);
     InteractionWithUpdate<LinearGradientCorrectionMatrixComplex> water_block_kernel_correction_matrix(water_block_inner, water_block_contact);
     InteractionDynamics<KernelGradientCorrectionComplex> kernel_gradient_update(water_block_inner, water_block_contact);
-    SimpleDynamics<NormalDirectionFromBodyShape> cylinder_normal_direction(cylinder);
 
     InteractionWithUpdate<fluid_dynamics::EulerianIntegration1stHalfWithWallRiemann> pressure_relaxation(water_block_inner, water_block_contact);
     InteractionWithUpdate<fluid_dynamics::EulerianIntegration2ndHalfWithWallRiemann> density_relaxation(water_block_inner, water_block_contact);
 
     InteractionWithUpdate<fluid_dynamics::ViscousForceWithWall> viscous_force(water_block_inner, water_block_contact);
-    SimpleDynamics<NormalDirectionFromBodyShape> water_block_normal_direction(water_block);
     ReduceDynamics<fluid_dynamics::AcousticTimeStep> get_fluid_time_step_size(water_block, 0.5);
     InteractionWithUpdate<FarFieldBoundary> variable_reset_in_boundary_condition(water_block_inner);
     //----------------------------------------------------------------------
@@ -219,10 +231,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     sph_system.initializeSystemCellLinkedLists();
     sph_system.initializeSystemConfigurations();
-    cylinder_normal_direction.exec();
     surface_indicator.exec();
     smeared_surface.exec();
-    water_block_normal_direction.exec();
     variable_reset_in_boundary_condition.exec();
     cylinder_kernel_correction_matrix.exec();
     water_block_kernel_correction_matrix.exec();

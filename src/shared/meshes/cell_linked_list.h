@@ -135,7 +135,7 @@ class NeighborSearch : public Mesh
 
     template <typename FunctionOnEach>
     void forEachSearch(UnsignedInt source_index, const Vecd *source_pos,
-                       const FunctionOnEach &function) const;
+                       const FunctionOnEach &function, int depth = 1) const;
 
   protected:
     UnsignedInt *particle_index_;

@@ -101,14 +101,18 @@ class SmoothingLength<SingleValued> : public SmoothingLength<Base>
     template <class DynamicsIdentifier>
     SmoothingLength(DiscreteVariable<Vecd> *dv_configuration_pos, DynamicsIdentifier &identifier)
         : SmoothingLength<Base>(*identifier.getSPHAdaptation().getKernel(), dv_configuration_pos, dv_configuration_pos),
-          inv_h_(1.0 / getSmoothingLength(SingleValued{}, identifier)){};
+          inv_h_(1.0 / getSmoothingLength(SingleValued{}, identifier)), search_depth_(1){};
 
     template <class SourceIdentifier, class TargetIdentifier>
     SmoothingLength(DiscreteVariable<Vecd> *dv_source_pos, DiscreteVariable<Vecd> *dv_target_pos,
                     SourceIdentifier &source_identifier, TargetIdentifier &contact_identifier)
-        : SmoothingLength<Base>(*source_identifier.getSPHAdaptation().getKernel(), dv_source_pos, dv_target_pos),
-          inv_h_(1.0 / SMAX(getSmoothingLength(SingleValued{}, source_identifier),
-                            getSmoothingLength(SingleValued{}, contact_identifier))){};
+        : SmoothingLength<Base>(*source_identifier.getSPHAdaptation().getKernel(), dv_source_pos, dv_target_pos)
+    {
+        Real source_h = getSmoothingLength(SingleValued{}, source_identifier);
+        Real target_h = getSmoothingLength(SingleValued{}, contact_identifier);
+        inv_h_ = 1.0 / SMAX(source_h, target_h);
+        search_depth_ = static_cast<int>(std::ceil((target_h - Eps) / source_h));
+    }
 
     class SmoothingKernel : public SmoothingLength<Base>::SmoothingKernel
     {
@@ -167,8 +171,21 @@ class SmoothingLength<SingleValued> : public SmoothingLength<Base>
         Real operator()(UnsignedInt index_i) const { return 1.0; };
     };
 
+    class SearchDepth
+    {
+      public:
+        SearchDepth(SmoothingLength<SingleValued> &smoothing_length)
+            : search_depth_(smoothing_length.search_depth_) {};
+
+        int operator()(UnsignedInt index_i) const { return search_depth_; };
+
+      private:
+        int search_depth_;
+    };
+
   protected:
     Real inv_h_;
+    int search_depth_; /**< Search depth for neighbor search. */
 };
 
 template <>

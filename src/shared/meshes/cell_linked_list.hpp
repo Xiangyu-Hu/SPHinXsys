@@ -191,12 +191,12 @@ NeighborSearch::NeighborSearch(const ExecutionPolicy &ex_policy, CellLinkedList 
 //=================================================================================================//
 template <typename FunctionOnEach>
 void NeighborSearch::forEachSearch(UnsignedInt source_index, const Vecd *source_pos,
-                                   const FunctionOnEach &function) const
+                                   const FunctionOnEach &function, int depth) const
 {
     const Arrayi target_cell_index = CellIndexFromPosition(source_pos[source_index]);
     mesh_for_each(
-        Arrayi::Zero().max(target_cell_index - Arrayi::Ones()),
-        all_cells_.min(target_cell_index + 2 * Arrayi::Ones()),
+        Arrayi::Zero().max(target_cell_index - depth * Arrayi::Ones()),
+        all_cells_.min(target_cell_index + (depth + 1) * Arrayi::Ones()),
         [&](const Arrayi &cell_index)
         {
             const UnsignedInt linear_index = LinearCellIndexFromCellIndex(cell_index);
