@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -29,12 +29,11 @@
 #ifndef ALL_KERNELS_H
 #define ALL_KERNELS_H
 
+#include "anisotropic_kernel.hpp"
 #include "kernel_cubic_B_spline.h"
 #include "kernel_hyperbolic.h"
 #include "kernel_laguerre_gauss.h"
 #include "kernel_tabulated.h"
 #include "kernel_wendland_c2.h"
-#include "anisotropic_kernel.hpp"
- 
 
 #endif // ALL_KERNELS_H

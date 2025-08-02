@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -38,14 +38,14 @@ struct FluidStateIn
 {
     Vecd &vel_;
     Real &rho_, &p_;
-    FluidStateIn(Real &rho, Vecd &vel, Real &p) : vel_(vel), rho_(rho), p_(p){};
+    FluidStateIn(Real &rho, Vecd &vel, Real &p) : vel_(vel), rho_(rho), p_(p) {};
 };
 
 struct FluidStateOut
 {
     Vecd vel_;
     Real rho_, p_;
-    FluidStateOut(Real rho, Vecd vel, Real p) : vel_(vel), rho_(rho), p_(p){};
+    FluidStateOut(Real rho, Vecd vel, Real p) : vel_(vel), rho_(rho), p_(p) {};
 };
 
 /**

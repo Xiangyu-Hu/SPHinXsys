@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -46,7 +46,7 @@ class Oldroyd_BIntegration1stHalf<Inner<>> : public Integration1stHalfInnerRiema
 {
   public:
     explicit Oldroyd_BIntegration1stHalf(BaseInnerRelation &inner_relation);
-    virtual ~Oldroyd_BIntegration1stHalf(){};
+    virtual ~Oldroyd_BIntegration1stHalf() {};
     void initialization(size_t index_i, Real dt = 0.0);
     void interaction(size_t index_i, Real dt = 0.0);
 
@@ -62,7 +62,7 @@ class Oldroyd_BIntegration1stHalf<Contact<Wall>> : public Integration1stHalfCont
 {
   public:
     explicit Oldroyd_BIntegration1stHalf(BaseContactRelation &wall_contact_relation);
-    virtual ~Oldroyd_BIntegration1stHalf(){};
+    virtual ~Oldroyd_BIntegration1stHalf() {};
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
@@ -77,7 +77,7 @@ class Oldroyd_BIntegration2ndHalf<Inner<>> : public Integration2ndHalfInnerRiema
 {
   public:
     explicit Oldroyd_BIntegration2ndHalf(BaseInnerRelation &inner_relation);
-    virtual ~Oldroyd_BIntegration2ndHalf(){};
+    virtual ~Oldroyd_BIntegration2ndHalf() {};
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
@@ -93,8 +93,8 @@ class Oldroyd_BIntegration2ndHalf<Contact<Wall>> : public Integration2ndHalfCont
 {
   public:
     explicit Oldroyd_BIntegration2ndHalf(BaseContactRelation &wall_contact_relation)
-        : Integration2ndHalfContactWallRiemann(wall_contact_relation){};
-    virtual ~Oldroyd_BIntegration2ndHalf(){};
+        : Integration2ndHalfContactWallRiemann(wall_contact_relation) {};
+    virtual ~Oldroyd_BIntegration2ndHalf() {};
 };
 
 using Oldroyd_BIntegration1stHalfWithWall = ComplexInteraction<Oldroyd_BIntegration1stHalf<Inner<>, Contact<Wall>>>;
@@ -108,7 +108,7 @@ class SRDViscousTimeStepSize : public LocalDynamicsReduce<ReduceMax>
 {
   public:
     explicit SRDViscousTimeStepSize(SPHBody &sph_body, Real diffusionCFL = 0.125);
-    virtual ~SRDViscousTimeStepSize(){};
+    virtual ~SRDViscousTimeStepSize() {};
     Real reduce(size_t index_i, Real dt = 0.0);
     virtual Real outputResult(Real reduced_value) override;
 
@@ -124,7 +124,7 @@ class ShearRateDependentViscosity : public LocalDynamics
 {
   public:
     explicit ShearRateDependentViscosity(SPHBody &sph_body);
-    virtual ~ShearRateDependentViscosity(){};
+    virtual ~ShearRateDependentViscosity() {};
 
     void update(size_t index_i, Real dt = 0.0);
 

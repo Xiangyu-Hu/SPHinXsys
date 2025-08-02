@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -46,7 +46,7 @@ class InnerRelation : public BaseInnerRelation
 
   public:
     explicit InnerRelation(RealBody &real_body);
-    virtual ~InnerRelation(){};
+    virtual ~InnerRelation() {};
 
     CellLinkedList &getCellLinkedList() { return cell_linked_list_; };
     virtual void updateConfiguration() override;
@@ -68,7 +68,7 @@ class AdaptiveInnerRelation : public BaseInnerRelation
 
   public:
     explicit AdaptiveInnerRelation(RealBody &real_body);
-    virtual ~AdaptiveInnerRelation(){};
+    virtual ~AdaptiveInnerRelation() {};
 
     virtual void updateConfiguration() override;
 };
@@ -83,7 +83,7 @@ class SelfSurfaceContactRelation : public BaseInnerRelation
     BodySurfaceLayer body_surface_layer_;
 
     explicit SelfSurfaceContactRelation(RealBody &real_body);
-    virtual ~SelfSurfaceContactRelation(){};
+    virtual ~SelfSurfaceContactRelation() {};
     virtual void updateConfiguration() override;
 
   protected:
@@ -107,7 +107,7 @@ class TreeInnerRelation : public InnerRelation
 
   public:
     explicit TreeInnerRelation(RealBody &real_body);
-    virtual ~TreeInnerRelation(){};
+    virtual ~TreeInnerRelation() {};
 
     virtual void updateConfiguration() override;
 };
@@ -155,7 +155,7 @@ class AdaptiveSplittingInnerRelation : public AdaptiveInnerRelation
   public:
     explicit AdaptiveSplittingInnerRelation(RealBody &real_body)
         : AdaptiveInnerRelation(real_body),
-          get_adaptive_splitting_inner_neighbor_(real_body){};
+          get_adaptive_splitting_inner_neighbor_(real_body) {};
     void updateConfiguration() override;
 
   private:

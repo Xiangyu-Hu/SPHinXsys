@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -50,7 +50,7 @@ class InverseShape : public BaseShapeType
     explicit InverseShape(Args &&...args)
         : BaseShapeType(std::forward<Args>(args)...){};
 
-    virtual ~InverseShape(){};
+    virtual ~InverseShape() {};
 
     /*reverse the value of checkContain function*/
     virtual bool checkContain(const Vecd &probe_point, bool BOUNDARY_INCLUDED = true) override
@@ -79,7 +79,7 @@ class ExtrudeShape : public BaseShapeType
     explicit ExtrudeShape(Real thickness, Args &&...args)
         : BaseShapeType(std::forward<Args>(args)...),
           thickness_(thickness), thickness_sqr_(thickness * thickness){};
-    virtual ~ExtrudeShape(){};
+    virtual ~ExtrudeShape() {};
 
     virtual bool checkContain(const Vecd &probe_point, bool BOUNDARY_INCLUDED = true) override
     {

@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -44,6 +44,7 @@ class VariableArray : public Entity
   public:
     VariableArray(StdVec<VariableType<DataType> *> variables)
         : Entity("VariableArray"), variables_(variables),
+          array_size_(variables.size()),
           data_array_(nullptr), delegated_data_array_(nullptr)
     {
         data_array_ = new DataArray<DataType>[variables.size()];
@@ -56,6 +57,8 @@ class VariableArray : public Entity
     ~VariableArray() { delete[] data_array_; };
     StdVec<VariableType<DataType> *> getVariables() { return variables_; };
     DataArray<DataType> *Data() { return data_array_; };
+    size_t getArraySize() { return array_size_; }
+    bool isDataArrayDelegated() { return data_array_ != delegated_data_array_; };
 
     template <class ExecutionPolicy>
     DataArray<DataType> *DelegatedDataArray(const ExecutionPolicy &ex_policy)
@@ -64,21 +67,16 @@ class VariableArray : public Entity
     };
 
     template <class PolicyType>
-    DataArray<DataType> *DelegatedOnDevice(const DeviceExecution<PolicyType> &ex_policy);
-
-    template <class PolicyType>
     DataArray<DataType> *DelegatedDataArray(const DeviceExecution<PolicyType> &ex_policy);
 
-    size_t getArraySize() { return variables_.size(); }
-
-    bool isDataArrayDelegated() { return data_array_ != delegated_data_array_; };
     void setDelegateDataArray(DataArray<DataType> *data_array_)
     {
         delegated_data_array_ = data_array_;
     };
 
-  private:
+  protected:
     StdVec<VariableType<DataType> *> variables_;
+    UnsignedInt array_size_;
     DataArray<DataType> *data_array_;
     DataArray<DataType> *delegated_data_array_;
 };
@@ -103,12 +101,12 @@ template <typename DataType>
 using AllocatedDataArray = DataArray<DataType> *;
 
 template <typename AllocationType>
-using VariableAllocationPair = std::pair<AllocationType, UnsignedInt>;
+using VariableAllocationSet = std::pair<AllocationType, UnsignedInt>;
 
-typedef DataAssemble<VariableAllocationPair, AllocatedDataArray> VariableDataArrays;
-typedef DataAssemble<UniquePtr, DiscreteVariableArray> DiscreteVariableArrays;
+typedef DataAssemble<VariableAllocationSet, AllocatedDataArray> VariableDataArrayAssemble;
+typedef DataAssemble<UniquePtr, DiscreteVariableArray> DiscreteVariableArrayAssemble;
 
-struct DiscreteVariableArraysInitialization
+struct DiscreteVariableArrayAssembleInitialization
 {
     template <typename DataType>
     void operator()(const StdVec<DiscreteVariable<DataType> *> &variables,
@@ -118,11 +116,11 @@ struct DiscreteVariableArraysInitialization
     }
 };
 
-struct VariableDataArraysInitialization
+struct VariableDataArrayAssembleInitialization
 {
     template <typename DataType, class ExecutionPolicy>
     void operator()(const UniquePtr<DiscreteVariableArray<DataType>> &variable_array_ptr,
-                    VariableAllocationPair<AllocatedDataArray<DataType>> &variable_allocation_size_pair,
+                    VariableAllocationSet<AllocatedDataArray<DataType>> &variable_allocation_size_pair,
                     const ExecutionPolicy &ex_policy)
     {
         variable_allocation_size_pair =

@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -41,7 +41,7 @@ struct ExendedFluidState : FluidStateIn
 {
     Real &K_, &Eps_;
     ExendedFluidState(Real &rho, Vecd &vel, Real &p, Real &K, Real &Eps)
-        : FluidStateIn(rho, vel, p), K_(K), Eps_(Eps){};
+        : FluidStateIn(rho, vel, p), K_(K), Eps_(Eps) {};
 };
 
 struct ExtendedFluidStarState : FluidStateOut
@@ -49,7 +49,7 @@ struct ExtendedFluidStarState : FluidStateOut
     Real K_;
     Real Eps_;
     ExtendedFluidStarState(Real rho, Vecd vel, Real p, Real K, Real Eps)
-        : FluidStateOut(rho, vel, p), K_(K), Eps_(Eps){};
+        : FluidStateOut(rho, vel, p), K_(K), Eps_(Eps) {};
 };
 
 class ExtendedHLLCRiemannSolver : AcousticRiemannSolver

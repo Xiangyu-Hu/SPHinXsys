@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -22,7 +22,7 @@
  * ------------------------------------------------------------------------- */
 /**
  * @file 	initilization_dynamics_ck.h
- * @brief 	Here, we define the ck_version for stress diffusion. 
+ * @brief 	Here, we define the ck_version for stress diffusion.
  * @details Refer to Feng et al(2021).
  * @author	Shuang Li, Xiangyu Hu and Shuaihao Zhang
  */
@@ -43,21 +43,21 @@ class ContinuumInitialConditionCK : public LocalDynamics
 {
   public:
     explicit ContinuumInitialConditionCK(SPHBody &sph_body);
-    virtual ~ContinuumInitialConditionCK(){};
+    virtual ~ContinuumInitialConditionCK() {};
 
     class UpdateKernel
     {
       public:
         template <class ExecutionPolicy, class EncloserType>
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-        void update(UnsignedInt index_i, Real dt = 0.0){};
+        void update(UnsignedInt index_i, Real dt = 0.0) {};
+
       protected:
         Vecd *pos_, *vel_;
         Mat3d *stress_tensor_3D_;
     };
 
   protected:
-
     DiscreteVariable<Vecd> *dv_pos_, *dv_vel_;
     DiscreteVariable<Mat3d> *dv_stress_tensor_3D_;
 };
