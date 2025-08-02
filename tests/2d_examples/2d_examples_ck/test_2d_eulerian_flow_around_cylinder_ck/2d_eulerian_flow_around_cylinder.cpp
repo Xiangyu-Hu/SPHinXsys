@@ -86,7 +86,7 @@ int main(int ac, char *av[])
     BoundingBox system_domain_bounds(Vec2d(-DL_sponge, -DH_sponge), Vec2d(DL, DH + DH_sponge));
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
     // Tag for run particle relaxation for the initial body fitted distribution.
-    sph_system.setRunParticleRelaxation(false);
+    sph_system.setRunParticleRelaxation(true);
     // Handle command line arguments and override the tags for particle relaxation and reload.
     sph_system.handleCommandlineOptions(ac, av);
     //----------------------------------------------------------------------
@@ -96,24 +96,24 @@ int main(int ac, char *av[])
     water_block_shape.add<GeometricShapeBox>(Vec2d(-DL_sponge, -DH_sponge), Vec2d(DL, DH + DH_sponge), "OuterBoundary");
     water_block_shape.subtract<GeometricShapeBall>(cylinder_center, cylinder_radius);
     FluidBody water_block(sph_system, water_block_shape);
-    water_block.getSPHAdaptation().resetKernel<KernelLaguerreGauss>();
+//    water_block.getSPHAdaptation().resetKernel<KernelLaguerreGauss>();
     water_block.defineClosure<WeaklyCompressibleFluid, Viscosity>(ConstructArgs(rho0_f, c_f), mu_f);
 
     GeometricShapeBall cylinder_shape(cylinder_center, cylinder_radius, "Cylinder");
     SolidBody cylinder(sph_system, cylinder_shape);
     cylinder.defineAdaptationRatios(1.3, 2.0);
-    cylinder.getSPHAdaptation().resetKernel<KernelLaguerreGauss>();
+//    cylinder.getSPHAdaptation().resetKernel<KernelLaguerreGauss>();
     cylinder.defineMaterial<Solid>();
     //----------------------------------------------------------------------
     //	Run particle relaxation for body-fitted distribution if chosen.
     //----------------------------------------------------------------------
     if (sph_system.RunParticleRelaxation())
     {
-        water_block.defineComponentLevelSetShape("OuterBoundary");
+        LevelSetShape *outer_level_set_shape = water_block.defineComponentLevelSetShape("OuterBoundary");
         water_block.generateParticles<BaseParticles, Lattice>();
         NearShapeSurface near_water_block_outer_surface(water_block, "OuterBoundary");
 
-        cylinder.defineBodyLevelSetShape();
+        LevelSetShape *cylinder_level_set_shape = cylinder.defineBodyLevelSetShape();
         cylinder.generateParticles<BaseParticles, Lattice>();
         NearShapeSurface near_cylinder_surface(cylinder);
 
@@ -127,17 +127,17 @@ int main(int ac, char *av[])
         auto &main_methods = sph_solver.addParticleMethodContainer(par);
         auto &host_methods = sph_solver.addParticleMethodContainer(seq);
 
-        auto &cylinder_cell_linked_list = host_methods.addCellLinkedListDynamics(cylinder);
+        auto &cylinder_cell_linked_list = main_methods.addCellLinkedListDynamics(cylinder);
         auto &water_block_cell_linked_list = main_methods.addCellLinkedListDynamics(water_block);
-        auto &cylinder_update_inner_relation = host_methods.addRelationDynamics(cylinder_inner);
+        auto &cylinder_update_inner_relation = main_methods.addRelationDynamics(cylinder_inner);
         auto &water_block_update_complex_relation = main_methods.addRelationDynamics(water_block_inner, water_block_contact);
 
-        auto &random_cylinder_particles = host_methods.addStateDynamics<RandomizeParticlePositionCK>(cylinder);
-        auto &random_water_block_particles = host_methods.addStateDynamics<RandomizeParticlePositionCK>(water_block);
+        auto &random_cylinder_particles = main_methods.addStateDynamics<RandomizeParticlePositionCK>(cylinder);
+        auto &random_water_block_particles = main_methods.addStateDynamics<RandomizeParticlePositionCK>(water_block);
 
         auto &cylinder_relaxation_residue =
             main_methods.addInteractionDynamics<RelaxationResidueCK, NoKernelCorrectionCK>(cylinder_inner)
-                .addPostStateDynamics<LevelsetKernelGradientIntegral>(near_cylinder_surface);
+                .addPostStateDynamics<LevelsetKernelGradientIntegral>(cylinder, *cylinder_level_set_shape);
         auto &cylinder_relaxation_scaling = main_methods.addReduceDynamics<RelaxationScalingCK>(cylinder);
         auto &cylinder_update_particle_position = main_methods.addStateDynamics<PositionRelaxationCK>(cylinder);
         auto &cylinder_level_set_bounding = main_methods.addStateDynamics<LevelsetBounding>(near_cylinder_surface);
@@ -145,7 +145,7 @@ int main(int ac, char *av[])
         auto &water_block_relaxation_residue =
             main_methods.addInteractionDynamics<RelaxationResidueCK, NoKernelCorrectionCK>(water_block_inner)
                 .addContactInteraction<Boundary, NoKernelCorrectionCK>(water_block_contact)
-                .addPostStateDynamics<LevelsetKernelGradientIntegral>(near_water_block_outer_surface);
+                .addPostStateDynamics<LevelsetKernelGradientIntegral>(water_block, *outer_level_set_shape);
         auto &water_block_relaxation_scaling = main_methods.addReduceDynamics<RelaxationScalingCK>(water_block);
         auto &water_block_update_particle_position = main_methods.addStateDynamics<PositionRelaxationCK>(water_block);
         auto &water_block_level_set_bounding = main_methods.addStateDynamics<LevelsetBounding>(near_water_block_outer_surface);
@@ -153,7 +153,7 @@ int main(int ac, char *av[])
         //	Run on CPU after relaxation finished and output results.
         //----------------------------------------------------------------------
         auto &cylinder_normal_direction = host_methods.addStateDynamics<NormalFromBodyShapeCK>(cylinder);
-        auto &water_block_normal_direction = main_methods.addStateDynamics<NormalFromBodyShapeCK>(water_block);
+        auto &water_block_normal_direction = host_methods.addStateDynamics<NormalFromBodyShapeCK>(water_block);
         //----------------------------------------------------------------------
         //	Define simple file input and outputs functions.
         //----------------------------------------------------------------------
@@ -177,18 +177,18 @@ int main(int ac, char *av[])
         //	Particle relaxation time stepping start here.
         //----------------------------------------------------------------------
         int ite_p = 0;
-        while (ite_p < 5000)
+        while (ite_p < 1000)
         {
             cylinder_cell_linked_list.exec();
-            water_block_cell_linked_list.exec();
             cylinder_update_inner_relation.exec();
-            water_block_update_complex_relation.exec();
 
             cylinder_relaxation_residue.exec();
             Real cylinder_relaxation_step = cylinder_relaxation_scaling.exec();
             cylinder_update_particle_position.exec(cylinder_relaxation_step);
             cylinder_level_set_bounding.exec();
 
+            water_block_cell_linked_list.exec();
+            water_block_update_complex_relation.exec();
             water_block_relaxation_residue.exec();
             Real water_block_relaxation_step = water_block_relaxation_scaling.exec();
             water_block_update_particle_position.exec(water_block_relaxation_step);
