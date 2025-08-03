@@ -53,17 +53,15 @@ Real UpdateKernelIntegrals<KernelType>::UpdateKernel::
     Real phi = probe_signed_distance_(position);
     Real cutoff_radius = kernel_->CutOffRadius(global_h_ratio_);
     Real threshold = cutoff_radius + data_spacing_; // consider that interface's half width is the data spacing
-    int depth = static_cast<int>(std::ceil((cutoff_radius - Eps) / data_spacing_));
 
     Real integral(0);
     if (fabs(phi) < threshold)
     {
-        mesh_for_each_neighbor2d(
-            depth,
+        mesh_for_each2d<-3, 4>(
             [&](int i, int j)
             {
-                PackageGridPair neighbor_meta = GeneralNeighbourIndexShift<pkg_size>(
-                    package_index, cell_neighborhood_, grid_index + Arrayi(i, j));
+                PackageGridPair neighbor_meta = NeighbourIndexShift<pkg_size>(
+                    grid_index + Arrayi(i, j), cell_neighborhood_[package_index]);
                 Real phi_neighbor = phi_[neighbor_meta.first][neighbor_meta.second[0]][neighbor_meta.second[1]];
                 if (phi_neighbor > -data_spacing_)
                 {
