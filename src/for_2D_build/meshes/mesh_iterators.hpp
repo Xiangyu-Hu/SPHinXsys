@@ -22,6 +22,16 @@ inline void mesh_for_each2d(const FunctionOnEach &function)
         }
 }
 //=================================================================================================//
+template <typename FunctionOnEach>
+inline void mesh_for_each_neighbor2d(int depth, const FunctionOnEach &function)
+{
+    for (int l = -depth; l <= depth; ++l)
+        for (int m = -depth; m <= depth; ++m)
+        {
+            function(l, m);
+        }
+}
+//=================================================================================================//
 template <int lower0, int upper0,
           int lower1, int upper1, typename CheckOnEach>
 inline Array2i mesh_find_if2d(const CheckOnEach &function)

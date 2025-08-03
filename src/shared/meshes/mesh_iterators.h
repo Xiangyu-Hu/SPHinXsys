@@ -48,6 +48,11 @@ inline void mesh_for_each2d(const FunctionOnEach &function)
     mesh_for_each2d<lower, upper, lower, upper, FunctionOnEach>(function);
 };
 
+template <typename FunctionOnEach>
+inline void mesh_for_each_neighbor2d(int depth, const FunctionOnEach &function);
+template <typename FunctionOnEach>
+inline void mesh_for_each_neighbor3d(int depth, const FunctionOnEach &function);
+
 /** iteration with boolean return function. 2D case. */
 template <int lower0, int upper0,
           int lower1, int upper1, typename CheckOnEach>

@@ -36,8 +36,8 @@
 
 namespace SPH
 {
-using CellNeighborhood2d = std::array<std::array<int, 3>, 3>;
-using CellNeighborhood3d = std::array<std::array<std::array<int, 3>, 3>, 3>;
+using CellNeighborhood2d = std::array<std::array<UnsignedInt, 3>, 3>;
+using CellNeighborhood3d = std::array<std::array<std::array<UnsignedInt, 3>, 3>, 3>;
 
 template <class DataType, size_t PKG_SIZE>
 using PackageDataMatrix2d = std::array<std::array<DataType, PKG_SIZE>, PKG_SIZE>;

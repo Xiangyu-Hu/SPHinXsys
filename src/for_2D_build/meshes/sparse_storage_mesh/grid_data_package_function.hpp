@@ -7,14 +7,35 @@ namespace SPH
 {
 //=============================================================================================//
 template <int PKG_SIZE>
-NeighbourIndex NeighbourIndexShift(const Array2i shift_index, const CellNeighborhood2d &neighbour)
+PackageGridPair NeighbourIndexShift(const Array2i &shift_index, const CellNeighborhood2d &neighbour)
 {
-    NeighbourIndex result;
+    PackageGridPair result;
     Array2i neighbour_index = (shift_index + PKG_SIZE * Array2i::Ones()) / PKG_SIZE;
     result.first = neighbour[neighbour_index[0]][neighbour_index[1]];
     result.second = (shift_index + PKG_SIZE * Array2i::Ones()) - neighbour_index * PKG_SIZE;
 
     return result;
+}
+//=============================================================================================//
+template <int PKG_SIZE>
+PackageGridPair GeneralNeighbourIndexShift(
+    UnsignedInt package_index,  CellNeighborhood *neighbour, const Array2i &shift_index)
+{
+    Array2i cell_shift = shift_index / PKG_SIZE;
+    Array2i local_shift = shift_index - cell_shift * PKG_SIZE;
+
+    for (UnsignedInt i = 0; i != Dimensions; ++i)
+    {
+        int n = cell_shift[i];
+        Array2i step = Array2i::Zero();
+        step[i] = n > 0 ? -1 : 1;
+        for (int j = n; j != 0; j += step[i])
+        {
+            package_index = neighbour[package_index][step[0]][step[1]];
+        }
+    }
+
+    return PackageGridPair(package_index, local_shift);
 }
 //=============================================================================================//
 template <typename DataType, size_t PKG_SIZE>
@@ -27,7 +48,7 @@ DataType CornerAverage(PackageDataMatrix2d<DataType, PKG_SIZE> *pkg_data, Array2
         {
             int x_index = addrs_index[0] + i * corner_direction[0];
             int y_index = addrs_index[1] + j * corner_direction[1];
-            NeighbourIndex neighbour_index =
+            PackageGridPair neighbour_index =
                 NeighbourIndexShift<PKG_SIZE>(Array2i(x_index, y_index), neighborhood);
             average += pkg_data[neighbour_index.first][neighbour_index.second[0]][neighbour_index.second[1]];
         }
@@ -65,13 +86,13 @@ DataType ProbeMesh<DataType, PKG_SIZE>::probeDataPackage(
     Vecd beta = Vecd::Ones() - alpha;
 
     auto &neighborhood = cell_neighborhood_[package_index];
-    NeighbourIndex neighbour_index_1 =
+    PackageGridPair neighbour_index_1 =
         NeighbourIndexShift<PKG_SIZE>(data_index + Arrayi(0, 0), neighborhood);
-    NeighbourIndex neighbour_index_2 =
+    PackageGridPair neighbour_index_2 =
         NeighbourIndexShift<PKG_SIZE>(data_index + Arrayi(1, 0), neighborhood);
-    NeighbourIndex neighbour_index_3 =
+    PackageGridPair neighbour_index_3 =
         NeighbourIndexShift<PKG_SIZE>(data_index + Arrayi(0, 1), neighborhood);
-    NeighbourIndex neighbour_index_4 =
+    PackageGridPair neighbour_index_4 =
         NeighbourIndexShift<PKG_SIZE>(data_index + Arrayi(1, 1), neighborhood);
 
     return pkg_data_[neighbour_index_1.first][neighbour_index_1.second[0]][neighbour_index_1.second[1]] * beta[0] * beta[1] +

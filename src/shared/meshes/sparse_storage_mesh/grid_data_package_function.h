@@ -37,7 +37,11 @@
 namespace SPH
 {
 template <int PKG_SIZE>
-NeighbourIndex NeighbourIndexShift(const Arrayi shift_index, const CellNeighborhood &neighbour);
+PackageGridPair NeighbourIndexShift(const Arrayi &shift_index, const CellNeighborhood &neighbour);
+
+template <int PKG_SIZE>
+PackageGridPair GeneralNeighbourIndexShift(
+    UnsignedInt package_index, CellNeighborhood *neighbour, const Arrayi &shift_index);
 
 template <typename DataType, size_t PKG_SIZE>
 DataType CornerAverage(PackageDataMatrix<DataType, PKG_SIZE> *pkg_data, Arrayi addrs_index,
