@@ -24,42 +24,6 @@ Real U_f = 1.0;                                          /**< freestream velocit
 Real c_f = 10.0 * U_f;                                   /**< Speed of sound. */
 Real Re = 100.0;                                         /**< Reynolds number. */
 Real mu_f = rho0_f * U_f * (2.0 * cylinder_radius) / Re; /**< Dynamics viscosity. */
-
-//----------------------------------------------------------------------
-//	Define geometries and body shapes
-//----------------------------------------------------------------------
-std::vector<Vecd> createWaterBlockShape()
-{
-    std::vector<Vecd> water_block_shape;
-    water_block_shape.push_back(Vecd(-DL_sponge, -DH_sponge));
-    water_block_shape.push_back(Vecd(-DL_sponge, DH + DH_sponge));
-    water_block_shape.push_back(Vecd(DL, DH + DH_sponge));
-    water_block_shape.push_back(Vecd(DL, -DH_sponge));
-    water_block_shape.push_back(Vecd(-DL_sponge, -DH_sponge));
-
-    return water_block_shape;
-}
-class WaterBlock : public ComplexShape
-{
-  public:
-    explicit WaterBlock(const std::string &shape_name) : ComplexShape(shape_name)
-    {
-        MultiPolygon outer_boundary(createWaterBlockShape());
-        add<MultiPolygonShape>(outer_boundary, "OuterBoundary");
-        MultiPolygon circle(cylinder_center, cylinder_radius, 100);
-        subtract<MultiPolygonShape>(circle);
-    }
-};
-class Cylinder : public MultiPolygonShape
-{
-  public:
-    explicit Cylinder(const std::string &shape_name) : MultiPolygonShape(shape_name)
-    {
-        /** Geometry definition. */
-        multi_polygon_.addACircle(cylinder_center, cylinder_radius, 100, ShapeBooleanOps::add);
-    }
-};
-
 //----------------------------------------------------------------------
 //	User defined boundary condition for far field
 //----------------------------------------------------------------------
@@ -211,9 +175,11 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     water_block.getSPHAdaptation().resetKernel<KernelTabulated<KernelLaguerreGauss>>(20);
-    water_block.generateParticles<BaseParticles, Reload>(water_block.getName());
+    water_block.generateParticles<BaseParticles, Reload>(water_block.getName())
+        ->reloadExtraVariable<Vecd>("NormalDirection");
     cylinder.getSPHAdaptation().resetKernel<KernelTabulated<KernelLaguerreGauss>>(20);
-    cylinder.generateParticles<BaseParticles, Reload>(cylinder.getName());
+    cylinder.generateParticles<BaseParticles, Reload>(cylinder.getName())
+        ->reloadExtraVariable<Vecd>("NormalDirection");
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -238,13 +204,11 @@ int main(int ac, char *av[])
     InteractionWithUpdate<LinearGradientCorrectionMatrixComplex> cylinder_kernel_correction_matrix(cylinder_inner, cylinder_contact);
     InteractionWithUpdate<LinearGradientCorrectionMatrixComplex> water_block_kernel_correction_matrix(water_block_inner, water_block_contact);
     InteractionDynamics<KernelGradientCorrectionComplex> kernel_gradient_update(water_block_inner, water_block_contact);
-    SimpleDynamics<NormalDirectionFromBodyShape> cylinder_normal_direction(cylinder);
 
     InteractionWithUpdate<fluid_dynamics::EulerianIntegration1stHalfWithWallRiemann> pressure_relaxation(water_block_inner, water_block_contact);
     InteractionWithUpdate<fluid_dynamics::EulerianIntegration2ndHalfWithWallRiemann> density_relaxation(water_block_inner, water_block_contact);
 
     InteractionWithUpdate<fluid_dynamics::ViscousForceWithWall> viscous_force(water_block_inner, water_block_contact);
-    SimpleDynamics<NormalDirectionFromBodyShape> water_block_normal_direction(water_block);
     ReduceDynamics<fluid_dynamics::AcousticTimeStep> get_fluid_time_step_size(water_block, 0.5);
     InteractionWithUpdate<FarFieldBoundary> variable_reset_in_boundary_condition(water_block_inner);
     //----------------------------------------------------------------------
@@ -269,10 +233,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     sph_system.initializeSystemCellLinkedLists();
     sph_system.initializeSystemConfigurations();
-    cylinder_normal_direction.exec();
     surface_indicator.exec();
     smeared_surface.exec();
-    water_block_normal_direction.exec();
     variable_reset_in_boundary_condition.exec();
     cylinder_kernel_correction_matrix.exec();
     water_block_kernel_correction_matrix.exec();
