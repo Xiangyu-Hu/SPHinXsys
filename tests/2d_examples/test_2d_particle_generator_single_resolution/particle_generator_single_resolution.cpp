@@ -51,7 +51,7 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     RealBody input_body(sph_system, makeShared<InputBody>("SPHInXsysLogo"));
-    input_body.defineBodyLevelSetShape()->writeLevelSet(sph_system);
+    input_body.defineBodyLevelSetShape(2.0)->writeLevelSet(sph_system);
     input_body.generateParticles<BaseParticles, Lattice>();
     //----------------------------------------------------------------------
     //	Define body relation map.
