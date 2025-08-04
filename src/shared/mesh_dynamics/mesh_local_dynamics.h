@@ -379,19 +379,22 @@ class UpdateKernelIntegrals : public BaseMeshLocalDynamics
               index_handler_(encloser.data_mesh_.index_handler_.DelegatedData(ex_policy)),
               cell_neighborhood_(encloser.cell_neighborhood_.DelegatedData(ex_policy)),
               cell_package_index_(encloser.cell_package_index_.DelegatedData(ex_policy)),
-              probe_signed_distance_(ex_policy, &encloser.data_mesh_){};
+              probe_signed_distance_(ex_policy, &encloser.data_mesh_),
+              cutoff_radius_(kernel_->CutOffRadius(global_h_ratio_)),
+              threshold_(cutoff_radius_),
+              depth_(static_cast<int>(std::ceil((cutoff_radius_ - Eps) / data_spacing_))){};
         void update(const size_t &package_index)
         {
             Arrayi cell_index = meta_data_cell_[package_index].first;
-            assignByPosition(
-                kernel_weight_, cell_index, [&](const Vecd &position, const Arrayi &grid_index) -> Real
-                { return computeKernelIntegral(position, package_index, grid_index); });
-            assignByPosition(
-                kernel_gradient_, cell_index, [&](const Vecd &position, const Arrayi &grid_index) -> Vecd
-                { return computeKernelGradientIntegral(position, package_index, grid_index); });
-            assignByPosition(
-                kernel_second_gradient_, cell_index, [&](const Vecd &position, const Arrayi &grid_index) -> Matd
-                { return computeKernelSecondGradientIntegral(position, package_index, grid_index); });
+            assignByGrid(
+                kernel_weight_, cell_index, [&](const Arrayi &grid_index) -> Real
+                { return computeKernelIntegral(package_index, grid_index); });
+            assignByGrid(
+                kernel_gradient_, cell_index, [&](const Arrayi &grid_index) -> Vecd
+                { return computeKernelGradientIntegral(package_index, grid_index); });
+            assignByGrid(
+                kernel_second_gradient_, cell_index, [&](const Arrayi &grid_index) -> Matd
+                { return computeKernelSecondGradientIntegral(package_index, grid_index); });
         }
 
       protected:
@@ -410,14 +413,13 @@ class UpdateKernelIntegrals : public BaseMeshLocalDynamics
         size_t *cell_package_index_;
         ProbeSignedDistance probe_signed_distance_;
 
-        Real cutoff_radius_;
-        Real threshold;
-        Real computeKernelIntegral(const Vecd &position, const size_t &package_index, const Arrayi &grid_index);
-        Vecd computeKernelGradientIntegral(const Vecd &position, const size_t &package_index, const Arrayi &grid_index);
-        Matd computeKernelSecondGradientIntegral(const Vecd &position, const size_t &package_index, const Arrayi &grid_index);
-        template <typename DataType, typename FunctionByPosition>
-        void assignByPosition(MeshVariableData<DataType> *mesh_variable, const Arrayi &cell_index,
-                              const FunctionByPosition &function_by_position);
+        Real cutoff_radius_, threshold_, depth_;
+        Real computeKernelIntegral(const size_t &package_index, const Arrayi &grid_index);
+        Vecd computeKernelGradientIntegral(const size_t &package_index, const Arrayi &grid_index);
+        Matd computeKernelSecondGradientIntegral(const size_t &package_index, const Arrayi &grid_index);
+        template <typename DataType, typename FunctionByGrid>
+        void assignByGrid(MeshVariableData<DataType> *mesh_variable, const Arrayi &cell_index,
+                              const FunctionByGrid &function_by_grid);
 
         /** a cut cell is a cut by the level set. */
         /** "Multi-scale modeling of compressible multi-fluid flows with conservative interface method."

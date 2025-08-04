@@ -38,11 +38,11 @@ inline void UpdateLevelSetGradient::UpdateKernel::update(const size_t &package_i
 }
 //=============================================================================================//
 template <class KernelType>
-template <typename DataType, typename FunctionByPosition>
+template <typename DataType, typename FunctionByGrid>
 void UpdateKernelIntegrals<KernelType>::UpdateKernel::
-    assignByPosition(MeshVariableData<DataType> *mesh_variable,
+    assignByGrid(MeshVariableData<DataType> *mesh_variable,
                      const Arrayi &cell_index,
-                     const FunctionByPosition &function_by_position)
+                     const FunctionByGrid &function_by_grid)
 {
     size_t package_index = index_handler_->PackageIndexFromCellIndex(cell_package_index_, cell_index);
     auto &pkg_data = mesh_variable[package_index];
@@ -50,7 +50,7 @@ void UpdateKernelIntegrals<KernelType>::UpdateKernel::
         [&](int i, int j, int k)
         {
             Vec3d position = index_handler_->DataPositionFromIndex(cell_index, Arrayi(i, j, k));
-            pkg_data[i][j][k] = function_by_position(position, Array3i(i, j, k));
+            pkg_data[i][j][k] = function_by_grid(position, Array3i(i, j, k));
         });
 }
 //=============================================================================================//

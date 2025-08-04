@@ -30,36 +30,32 @@ inline void UpdateLevelSetGradient::UpdateKernel::update(const size_t &package_i
 }
 //=============================================================================================//
 template <class KernelType>
-template <typename DataType, typename FunctionByPosition>
+template <typename DataType, typename FunctionByGrid>
 void UpdateKernelIntegrals<KernelType>::UpdateKernel::
-    assignByPosition(MeshVariableData<DataType> *mesh_variable,
+    assignByGrid(MeshVariableData<DataType> *mesh_variable,
                      const Arrayi &cell_index,
-                     const FunctionByPosition &function_by_position)
+                     const FunctionByGrid &function_by_grid)
 {
     size_t package_index = index_handler_->PackageIndexFromCellIndex(cell_package_index_, cell_index);
     auto &pkg_data = mesh_variable[package_index];
     mesh_for_each2d<0, pkg_size>(
         [&](int i, int j)
         {
-            Vec2d position = index_handler_->DataPositionFromIndex(cell_index, Arrayi(i, j));
-            pkg_data[i][j] = function_by_position(position, Array2i(i, j));
+            pkg_data[i][j] = function_by_grid(Array2i(i, j));
         });
 }
 //=============================================================================================//
 template <class KernelType>
 Real UpdateKernelIntegrals<KernelType>::UpdateKernel::
-    computeKernelIntegral(const Vecd &position, const size_t &package_index, const Arrayi &grid_index)
+    computeKernelIntegral(const size_t &package_index, const Arrayi &grid_index)
 {
-    Real phi = probe_signed_distance_(position);
-    Real cutoff_radius = kernel_->CutOffRadius(global_h_ratio_);
-    Real threshold = cutoff_radius + data_spacing_; // consider that interface's half width is the data spacing
-    int depth = static_cast<int>(std::ceil((cutoff_radius - Eps) / data_spacing_));
+    Real phi = phi_[package_index][grid_index[0]][grid_index[1]];
 
     Real integral(0);
-    if (fabs(phi) < threshold)
+    if (fabs(phi) < threshold_)
     {
         mesh_for_each_neighbor2d(
-            depth,
+            depth_,
             [&](int i, int j)
             {
                 PackageGridPair neighbor_meta = GeneralNeighbourIndexShift<pkg_size>(
@@ -70,29 +66,26 @@ Real UpdateKernelIntegrals<KernelType>::UpdateKernel::
                     Vecd phi_gradient = phi_gradient_[neighbor_meta.first][neighbor_meta.second[0]][neighbor_meta.second[1]];
                     Vecd displacement = -Arrayi(i, j).cast<Real>().matrix() * data_spacing_;
                     Real distance = displacement.norm();
-                    if (distance < cutoff_radius)
+                    if (distance < cutoff_radius_)
                         integral += kernel_->W(global_h_ratio_, distance, displacement) *
                                     CutCellVolumeFraction(phi_neighbor, phi_gradient, data_spacing_);
                 }
             });
     }
-    return phi > threshold ? 1.0 : integral * data_spacing_ * data_spacing_;
+    return phi > threshold_ ? 1.0 : integral * data_spacing_ * data_spacing_;
 }
 //=============================================================================================//
 template <class KernelType>
 Vecd UpdateKernelIntegrals<KernelType>::UpdateKernel::
-    computeKernelGradientIntegral(const Vecd &position, const size_t &package_index, const Arrayi &grid_index)
+    computeKernelGradientIntegral(const size_t &package_index, const Arrayi &grid_index)
 {
-    Real phi = probe_signed_distance_(position);
-    Real cutoff_radius = kernel_->CutOffRadius(global_h_ratio_);
-    Real threshold = cutoff_radius + data_spacing_;
-    int depth = static_cast<int>(std::ceil((cutoff_radius - Eps) / data_spacing_));
+    Real phi = phi_[package_index][grid_index[0]][grid_index[1]];
 
     Vecd integral = Vecd::Zero();
-    if (fabs(phi) < threshold)
+    if (fabs(phi) < threshold_)
     {
         mesh_for_each_neighbor2d(
-            depth,
+            depth_,
             [&](int i, int j)
             {
                 PackageGridPair neighbor_meta = GeneralNeighbourIndexShift<pkg_size>(
@@ -103,7 +96,7 @@ Vecd UpdateKernelIntegrals<KernelType>::UpdateKernel::
                     Vecd phi_gradient = phi_gradient_[neighbor_meta.first][neighbor_meta.second[0]][neighbor_meta.second[1]];
                     Vecd displacement = -Arrayi(i, j).cast<Real>().matrix() * data_spacing_;
                     Real distance = displacement.norm();
-                    if (distance < cutoff_radius)
+                    if (distance < cutoff_radius_)
                         integral += kernel_->dW(global_h_ratio_, distance, displacement) *
                                     CutCellVolumeFraction(phi_neighbor, phi_gradient, data_spacing_) *
                                     displacement / (distance + TinyReal);
@@ -116,16 +109,15 @@ Vecd UpdateKernelIntegrals<KernelType>::UpdateKernel::
 //=============================================================================================//
 template <class KernelType>
 Matd UpdateKernelIntegrals<KernelType>::UpdateKernel::
-    computeKernelSecondGradientIntegral(const Vecd &position, const size_t &package_index, const Arrayi &grid_index)
+    computeKernelSecondGradientIntegral(const size_t &package_index, const Arrayi &grid_index)
 {
-    Real phi = probe_signed_distance_(position);
-    Real cutoff_radius = kernel_->CutOffRadius(global_h_ratio_);
-    Real threshold = cutoff_radius + data_spacing_;
+    Real phi = phi_[package_index][grid_index[0]][grid_index[1]];
 
     Matd integral = Matd::Zero();
-    if (fabs(phi) < threshold)
+    if (fabs(phi) < threshold_)
     {
-        mesh_for_each2d<-3, 4>(
+        mesh_for_each_neighbor2d(
+            depth_,
             [&](int i, int j)
             {
                 PackageGridPair neighbor_meta = NeighbourIndexShift<pkg_size>(
@@ -136,7 +128,7 @@ Matd UpdateKernelIntegrals<KernelType>::UpdateKernel::
                     Vecd phi_gradient = phi_gradient_[neighbor_meta.first][neighbor_meta.second[0]][neighbor_meta.second[1]];
                     Vecd displacement = -Arrayi(i, j).cast<Real>().matrix() * data_spacing_;
                     Real distance = displacement.norm();
-                    if (distance < cutoff_radius)
+                    if (distance < cutoff_radius_)
                         integral += kernel_->d2W(global_h_ratio_, distance, displacement) *
                                     CutCellVolumeFraction(phi_neighbor, phi_gradient, data_spacing_) *
                                     displacement * displacement.transpose() / (distance * distance + TinyReal);
