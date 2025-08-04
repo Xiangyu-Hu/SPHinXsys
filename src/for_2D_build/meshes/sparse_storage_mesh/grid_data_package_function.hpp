@@ -30,7 +30,9 @@ PackageGridPair GeneralNeighbourIndexShift(
         Array2i neighbour_index = Array2i::Ones() - step;
         for (int j = n; j != 0; j += step[i])
         {
-            package_index = neighbour[package_index][neighbour_index[0]][neighbour_index[1]];
+            package_index = neighbour[package_index]
+                                     [neighbour_index[0]]
+                                     [neighbour_index[1]];
         }
     }
     Array2i residual = shift_index - cell_shift * PKG_SIZE;
