@@ -381,7 +381,6 @@ class UpdateKernelIntegrals : public BaseMeshLocalDynamics
               cell_package_index_(encloser.cell_package_index_.DelegatedData(ex_policy)),
               probe_signed_distance_(ex_policy, &encloser.data_mesh_),
               cutoff_radius_(kernel_->CutOffRadius(global_h_ratio_)),
-              threshold_(cutoff_radius_),
               depth_(static_cast<int>(std::ceil((cutoff_radius_ - Eps) / data_spacing_))){};
         void update(const size_t &package_index)
         {
@@ -413,7 +412,7 @@ class UpdateKernelIntegrals : public BaseMeshLocalDynamics
         size_t *cell_package_index_;
         ProbeSignedDistance probe_signed_distance_;
 
-        Real cutoff_radius_, threshold_, depth_;
+        Real cutoff_radius_, depth_;
         Real computeKernelIntegral(const size_t &package_index, const Arrayi &grid_index);
         Vecd computeKernelGradientIntegral(const size_t &package_index, const Arrayi &grid_index);
         Matd computeKernelSecondGradientIntegral(const size_t &package_index, const Arrayi &grid_index);

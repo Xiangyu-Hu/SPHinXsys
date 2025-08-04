@@ -52,7 +52,7 @@ Real UpdateKernelIntegrals<KernelType>::UpdateKernel::
     Real phi = phi_[package_index][grid_index[0]][grid_index[1]];
 
     Real integral(0);
-    if (fabs(phi) < threshold_)
+    if (fabs(phi) < cutoff_radius_)
     {
         mesh_for_each_neighbor2d(
             depth_,
@@ -72,7 +72,7 @@ Real UpdateKernelIntegrals<KernelType>::UpdateKernel::
                 }
             });
     }
-    return phi > threshold_ ? 1.0 : integral * data_spacing_ * data_spacing_;
+    return phi > cutoff_radius_ ? 1.0 : integral * data_spacing_ * data_spacing_;
 }
 //=============================================================================================//
 template <class KernelType>
@@ -82,7 +82,7 @@ Vecd UpdateKernelIntegrals<KernelType>::UpdateKernel::
     Real phi = phi_[package_index][grid_index[0]][grid_index[1]];
 
     Vecd integral = Vecd::Zero();
-    if (fabs(phi) < threshold_)
+    if (fabs(phi) < cutoff_radius_)
     {
         mesh_for_each_neighbor2d(
             depth_,
@@ -114,14 +114,14 @@ Matd UpdateKernelIntegrals<KernelType>::UpdateKernel::
     Real phi = phi_[package_index][grid_index[0]][grid_index[1]];
 
     Matd integral = Matd::Zero();
-    if (fabs(phi) < threshold_)
+    if (fabs(phi) < cutoff_radius_)
     {
         mesh_for_each_neighbor2d(
             depth_,
             [&](int i, int j)
             {
-                PackageGridPair neighbor_meta = NeighbourIndexShift<pkg_size>(
-                    grid_index + Arrayi(i, j), cell_neighborhood_[package_index]);
+                PackageGridPair neighbor_meta = GeneralNeighbourIndexShift<pkg_size>(
+                    package_index, cell_neighborhood_, grid_index + Arrayi(i, j));
                 Real phi_neighbor = phi_[neighbor_meta.first][neighbor_meta.second[0]][neighbor_meta.second[1]];
                 if (phi_neighbor > -data_spacing_)
                 {
