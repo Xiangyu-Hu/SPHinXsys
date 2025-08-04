@@ -104,9 +104,10 @@ UniquePtr<MultilevelLevelSet> SPHAdaptation::createLevelSet(Shape &shape, Real r
     int total_levels = (int)log10(MinimumDimension(shape.getBounds()) / ReferenceSpacing()) + 2;
     Real coarsest_spacing = ReferenceSpacing() * pow(2.0, total_levels - 1);
     MultilevelLevelSet coarser_level_sets(shape.getBounds(), coarsest_spacing / refinement_ratio,
-                                          total_levels - 1, shape, *this);
+                                          total_levels - 1, shape, *this, refinement_ratio);
     // return the finest level set only
-    return makeUnique<MultilevelLevelSet>(shape.getBounds(), coarser_level_sets.getMeshLevels().back(), shape, *this);
+    return makeUnique<MultilevelLevelSet>(shape.getBounds(), coarser_level_sets.getMeshLevels().back(),
+                                          shape, *this, refinement_ratio);
 }
 //=================================================================================================//
 ParticleWithLocalRefinement::

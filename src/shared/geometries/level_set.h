@@ -47,9 +47,9 @@ class MultilevelLevelSet : public BaseMeshField
 {
   public:
     MultilevelLevelSet(BoundingBox tentative_bounds, Real reference_data_spacing, size_t total_levels,
-                       Shape &shape, SPHAdaptation &sph_adaptation);
+                       Shape &shape, SPHAdaptation &sph_adaptation, Real refinement_ratio = 1.0);
     MultilevelLevelSet(BoundingBox tentative_bounds, MeshWithGridDataPackagesType *coarse_data,
-                       Shape &shape, SPHAdaptation &sph_adaptation);
+                       Shape &shape, SPHAdaptation &sph_adaptation, Real refinement_ratio = 1.0);
     ~MultilevelLevelSet() {};
 
     template <class ExecutionPolicy>
