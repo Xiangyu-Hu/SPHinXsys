@@ -19,23 +19,22 @@ PackageGridPair NeighbourIndexShift(const Array2i &shift_index, const CellNeighb
 //=============================================================================================//
 template <int PKG_SIZE>
 PackageGridPair GeneralNeighbourIndexShift(
-    UnsignedInt package_index,  CellNeighborhood *neighbour, const Array2i &shift_index)
+    UnsignedInt package_index, CellNeighborhood *neighbour, const Array2i &shift_index)
 {
     Array2i cell_shift = shift_index / PKG_SIZE;
-    Array2i local_shift = shift_index - cell_shift * PKG_SIZE;
-
     for (UnsignedInt i = 0; i != Dimensions; ++i)
     {
         int n = cell_shift[i];
         Array2i step = Array2i::Zero();
         step[i] = n > 0 ? -1 : 1;
+        Array2i neighbour_index = Array2i::Ones() - step;
         for (int j = n; j != 0; j += step[i])
         {
-            package_index = neighbour[package_index][step[0]][step[1]];
+            package_index = neighbour[package_index][neighbour_index[0]][neighbour_index[1]];
         }
     }
-
-    return PackageGridPair(package_index, local_shift);
+    Array2i residual = shift_index - cell_shift * PKG_SIZE;
+    return NeighbourIndexShift<PKG_SIZE>(residual, neighbour[package_index]);
 }
 //=============================================================================================//
 template <typename DataType, size_t PKG_SIZE>

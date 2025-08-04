@@ -12,7 +12,7 @@ MultilevelLevelSet::MultilevelLevelSet(
     : BaseMeshField("LevelSet_" + shape.getName()), shape_(shape), total_levels_(1)
 {
     Real reference_data_spacing = coarse_data->DataSpacing() * 0.5;
-    Real global_h_ratio = sph_adaptation.ReferenceSpacing() / reference_data_spacing;
+    Real global_h_ratio = 0.5 * sph_adaptation.ReferenceSpacing() / reference_data_spacing;
     kernel_ = makeUnique<SingularVariable<KernelTabulatedCK>>(
         "levelset_kernel", KernelTabulatedCK(*sph_adaptation.getKernel()));
     global_h_ratio_vec_.push_back(global_h_ratio);
@@ -25,7 +25,7 @@ MultilevelLevelSet::MultilevelLevelSet(
     size_t total_levels, Shape &shape, SPHAdaptation &sph_adaptation)
     : BaseMeshField("LevelSet_" + shape.getName()), shape_(shape), total_levels_(total_levels)
 {
-    Real global_h_ratio = sph_adaptation.ReferenceSpacing() / reference_data_spacing;
+    Real global_h_ratio = 0.5 * sph_adaptation.ReferenceSpacing() / reference_data_spacing;
     global_h_ratio_vec_.push_back(global_h_ratio);
     kernel_ = makeUnique<SingularVariable<KernelTabulatedCK>>(
         "levelset_kernel", KernelTabulatedCK(*sph_adaptation.getKernel()));
