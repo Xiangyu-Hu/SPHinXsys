@@ -122,6 +122,31 @@ class MeshWithGridDataPackages : public Mesh
     };
     OperationOnDataAssemble<MeshVariableAssemble, SyncMeshVariableData> sync_mesh_variable_data_{};
 
+    void fillFarFieldCellNeighborhood(CellNeighborhood2d *neighbor)
+    {
+        for (size_t i = 0; i != 2; i++)
+        {
+            for (int l = -1; l < 2; l++)
+                for (int m = -1; m < 2; m++)
+                {
+                    neighbor[i][l + 1][m + 1] = i;
+                }
+        }
+    };
+
+    void fillFarFieldCellNeighborhood(CellNeighborhood3d *neighbor)
+    {
+        for (size_t i = 0; i != 2; i++)
+        {
+            for (int l = -1; l < 2; l++)
+                for (int m = -1; m < 2; m++)
+                    for (int n = -1; n < 2; n++)
+                    {
+                        neighbor[i][l + 1][m + 1][n + 1] = i;
+                    }
+        }
+    };
+
   public:
     /** wrapper for all index exchange related functions. */
     struct IndexHandler
@@ -207,6 +232,7 @@ class MeshWithGridDataPackages : public Mesh
                       });
         num_grid_pkgs_ = occupied_data_pkgs_.size() + 2;
         cell_neighborhood_.reallocateData(par, num_grid_pkgs_);
+        fillFarFieldCellNeighborhood(cell_neighborhood_.Data());
         meta_data_cell_.reallocateData(par, num_grid_pkgs_);
     }
 
