@@ -38,6 +38,22 @@ inline void UpdateLevelSetGradient::UpdateKernel::update(const size_t &package_i
 }
 //=============================================================================================//
 template <class KernelType>
+void UpdateKernelIntegrals<KernelType>::initializeSingularPackages(size_t package_index, Real far_field_level_set)
+{
+    auto &kernel_weight = kernel_weight_.Data()[package_index];
+    auto &kernel_gradient = kernel_gradient_.Data()[package_index];
+    auto &kernel_second_gradient = kernel_second_gradient_.Data()[package_index];
+
+    mesh_for_each3d<0, pkg_size>(
+        [&](int i, int j, int k)
+        {
+            kernel_weight[i][j][k] = far_field_level_set < 0.0 ? 0 : 1.0;
+            kernel_gradient[i][j][k] = Vec3d::Zero();
+            kernel_second_gradient[i][j][k] = Mat3d::Zero();
+        });
+}
+//=============================================================================================//
+template <class KernelType>
 template <typename DataType, typename FunctionByGrid>
 void UpdateKernelIntegrals<KernelType>::UpdateKernel::
     assignByGrid(MeshVariableData<DataType> *mesh_variable,

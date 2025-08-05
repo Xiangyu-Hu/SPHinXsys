@@ -36,6 +36,7 @@
 
 namespace SPH
 {
+class IOEnvironment;
 namespace Log
 {
 void init(IOEnvironment &io_environment); // Call once at startup

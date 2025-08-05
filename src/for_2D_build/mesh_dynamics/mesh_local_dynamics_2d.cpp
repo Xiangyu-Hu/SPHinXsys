@@ -22,8 +22,6 @@ void InitializeDataForSingularPackage::update(const size_t package_index, Real f
     auto &phi = phi_.Data()[package_index];
     auto &near_interface_id = near_interface_id_.Data()[package_index];
     auto &phi_gradient = phi_gradient_.Data()[package_index];
-    auto &kernel_weight = kernel_weight_.Data()[package_index];
-    auto &kernel_gradient = kernel_gradient_.Data()[package_index];
 
     mesh_for_each2d<0, pkg_size>(
         [&](int i, int j)
@@ -31,8 +29,6 @@ void InitializeDataForSingularPackage::update(const size_t package_index, Real f
             phi[i][j] = far_field_level_set;
             near_interface_id[i][j] = far_field_level_set < 0.0 ? -2 : 2;
             phi_gradient[i][j] = Vecd::Ones();
-            kernel_weight[i][j] = far_field_level_set < 0.0 ? 0 : 1.0;
-            kernel_gradient[i][j] = Vec2d::Zero();
         });
 }
 //=============================================================================================//
@@ -93,9 +89,6 @@ void WriteMeshFieldToPlt::update(std::ofstream &output_file)
             output_file << DataValueFromGlobalIndex(phi_gradient_.Data(), global_index, &data_mesh_, cell_package_index_.Data())[0] << " ";
             output_file << DataValueFromGlobalIndex(phi_gradient_.Data(), global_index, &data_mesh_, cell_package_index_.Data())[1] << " ";
             output_file << DataValueFromGlobalIndex(near_interface_id_.Data(), global_index, &data_mesh_, cell_package_index_.Data()) << " ";
-            output_file << DataValueFromGlobalIndex(kernel_weight_.Data(), global_index, &data_mesh_, cell_package_index_.Data()) << " ";
-            output_file << DataValueFromGlobalIndex(kernel_gradient_.Data(), global_index, &data_mesh_, cell_package_index_.Data())[0] << " ";
-            output_file << DataValueFromGlobalIndex(kernel_gradient_.Data(), global_index, &data_mesh_, cell_package_index_.Data())[1] << " ";
             output_file << " \n";
         });
     output_file << " \n";

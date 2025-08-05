@@ -24,8 +24,6 @@ void InitializeDataForSingularPackage::update(const size_t package_index, Real f
     auto &phi = phi_.Data()[package_index];
     auto &near_interface_id = near_interface_id_.Data()[package_index];
     auto &phi_gradient = phi_gradient_.Data()[package_index];
-    auto &kernel_weight = kernel_weight_.Data()[package_index];
-    auto &kernel_gradient = kernel_gradient_.Data()[package_index];
 
     mesh_for_each3d<0, pkg_size>(
         [&](int i, int j, int k)
@@ -33,8 +31,6 @@ void InitializeDataForSingularPackage::update(const size_t package_index, Real f
             phi[i][j][k] = far_field_level_set;
             near_interface_id[i][j][k] = far_field_level_set < 0.0 ? -2 : 2;
             phi_gradient[i][j][k] = Vecd::Ones();
-            kernel_weight[i][j][k] = far_field_level_set < 0.0 ? 0 : 1.0;
-            kernel_gradient[i][j][k] = Vec3d::Zero();
         });
 }
 //=============================================================================================//

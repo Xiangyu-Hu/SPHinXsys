@@ -1,7 +1,11 @@
 #include "base_geometry.h"
 
+#include "io_log.h"
 namespace SPH
 {
+//=================================================================================================//
+Shape::Shape(const std::string &shape_name)
+    : name_(shape_name), is_bounds_found_(false), logger_(Log::get()) {}
 //=================================================================================================//
 BoundingBox Shape::getBounds()
 {
