@@ -37,35 +37,11 @@
 namespace SPH
 {
 template <int PKG_SIZE>
-PackageGridPair NeighbourIndexShift(const Arrayi &shift_index, const CellNeighborhood &neighbour)
-{
-    PackageGridPair result;
-    Arrayi neighbour_index = (shift_index + PKG_SIZE * Arrayi::Ones()) / PKG_SIZE;
-    result.first = neighbour(neighbour_index);
-    result.second = (shift_index + PKG_SIZE * Arrayi::Ones()) - neighbour_index * PKG_SIZE;
-    return result;
-};
+PackageGridPair NeighbourIndexShift(const Arrayi &shift_index, const CellNeighborhood &neighbour);
 
 template <int PKG_SIZE>
 PackageGridPair GeneralNeighbourIndexShift(
-    UnsignedInt package_index, CellNeighborhood *neighbour, const Arrayi &shift_index)
-{
-    Arrayi cell_shift = shift_index / PKG_SIZE;
-    Arrayi residual = shift_index - cell_shift * PKG_SIZE;
-    while (!cell_shift.isZero())
-    {
-        for (UnsignedInt i = 0; i != Dimensions; ++i)
-            if (cell_shift[i] != 0)
-            {
-                Arrayi step = Arrayi::Zero();
-                step[i] = cell_shift[i] > 0 ? -1 : 1;
-                Arrayi neighbour_index = Arrayi::Ones() - step;
-                package_index = neighbour[package_index](neighbour_index);
-                cell_shift[i] += step[i];
-            }
-    }
-    return NeighbourIndexShift<PKG_SIZE>(residual, neighbour[package_index]);
-};
+    UnsignedInt package_index, CellNeighborhood *neighbour, const Arrayi &shift_index);
 
 template <typename DataType, size_t PKG_SIZE>
 DataType CornerAverage(PackageDataMatrix<DataType, PKG_SIZE> *pkg_data, Arrayi addrs_index,
@@ -85,12 +61,7 @@ class ProbeMesh
   public:
     template <class ExecutionPolicy>
     ProbeMesh(const ExecutionPolicy &ex_policy, MeshWithGridDataPackages<PKG_SIZE> *data_mesh,
-              const std::string variable_name)
-        : pkg_data_(data_mesh->template getMeshVariable<DataType>(variable_name)->DelegatedData(ex_policy)),
-          index_handler_(data_mesh->index_handler_.DelegatedData(ex_policy)),
-          cell_package_index_(data_mesh->cell_package_index_.DelegatedData(ex_policy)),
-          cell_neighborhood_(data_mesh->cell_neighborhood_.DelegatedData(ex_policy)){};
-
+              const std::string variable_name);
     DataType operator()(const Vecd &position);
 
   protected:
@@ -99,7 +70,8 @@ class ProbeMesh
     size_t *cell_package_index_;
     CellNeighborhood *cell_neighborhood_;
     /** probe by applying bi and tri-linear interpolation within the package. */
-    DataType probeDataPackage(size_t package_index, const Arrayi &cell_index, const Vecd &position);
+    DataType probeDataPackage(size_t package_index, const Array2i &cell_index, const Vec2d &position);
+    DataType probeDataPackage(size_t package_index, const Array3i &cell_index, const Vec3d &position);
 };
 } // namespace SPH
 #endif // GRID_DATA_PACKAGE_FUNCTIONS_H
