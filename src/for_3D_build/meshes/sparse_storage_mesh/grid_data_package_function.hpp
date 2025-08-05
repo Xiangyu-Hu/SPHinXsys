@@ -22,21 +22,22 @@ PackageGridPair GeneralNeighbourIndexShift(
     UnsignedInt package_index, CellNeighborhood *neighbour, const Array3i &shift_index)
 {
     Array3i cell_shift = shift_index / PKG_SIZE;
-    for (UnsignedInt i = 0; i != Dimensions; ++i)
-    {
-        int n = cell_shift[i];
-        Array3i step = Array3i::Zero();
-        step[i] = n > 0 ? -1 : 1;
-        Array3i neighbour_index = Array3i::Ones() - step;
-        for (int j = n; j != 0; j += step[i])
-        {
-            package_index = neighbour[package_index]
-                                     [neighbour_index[0]]
-                                     [neighbour_index[1]]
-                                     [neighbour_index[2]];
-        }
-    }
     Array3i residual = shift_index - cell_shift * PKG_SIZE;
+    while (!cell_shift.isZero())
+    {
+        for (UnsignedInt i = 0; i != Dimensions; ++i)
+            if (cell_shift[i] != 0)
+            {
+                Array3i step = Array3i::Zero();
+                step[i] = cell_shift[i] > 0 ? -1 : 1;
+                Array3i neighbour_index = Array3i::Ones() - step;
+                package_index = neighbour[package_index]
+                                         [neighbour_index[0]]
+                                         [neighbour_index[1]]
+                                         [neighbour_index[2]];
+                cell_shift[i] += step[i];
+            }
+    }
     return NeighbourIndexShift<PKG_SIZE>(residual, neighbour[package_index]);
 }
 //=============================================================================================//
