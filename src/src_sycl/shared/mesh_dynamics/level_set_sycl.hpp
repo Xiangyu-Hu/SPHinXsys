@@ -12,6 +12,10 @@ namespace SPH
 void MultilevelLevelSet::finishInitialization(const ParallelDevicePolicy &par_device)
 {
     initializeMeshVariables(par_device, kernel_->DelegatedData(par_device));
+    if (usage_type_ == UsageType::Volumetric)
+    {
+        initializeKernelIntegralVariables(par_device, kernel_->DelegatedData(par_device));
+    }
     configOperationExecutionPolicy(par_device, kernel_->DelegatedData(par_device));
 }
 //=================================================================================================//

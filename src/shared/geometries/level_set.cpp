@@ -53,9 +53,6 @@ void MultilevelLevelSet::initializeLevel(
     mesh_data->registerMeshVariable<Real>("Levelset");
     mesh_data->registerMeshVariable<int>("NearInterfaceID");
     mesh_data->registerMeshVariable<Vecd>("LevelsetGradient");
-    mesh_data->registerMeshVariable<Real>("KernelWeight");
-    mesh_data->registerMeshVariable<Vecd>("KernelGradient");
-    mesh_data->registerMeshVariable<Matd>("KernelSecondGradient");
 
     if (coarse_data == nullptr)
     {

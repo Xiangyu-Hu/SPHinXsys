@@ -39,6 +39,11 @@
 #include "sphinxsys_variable.h"
 namespace SPH
 {
+enum class UsageType
+{
+    Volumetric,
+    Surface,
+};
 /**
  * @class MultilevelLevelSet
  * @brief Defining a multilevel level set for a complex region.
@@ -62,12 +67,8 @@ class MultilevelLevelSet : public BaseMeshField
     ProbeKernelGradientIntegral getProbeKernelGradientIntegral(const ExecutionPolicy &ex_policy);
 
     template <class ExecutionPolicy>
-    void finishInitialization(const ExecutionPolicy &ex_policy)
-    {
-        initializeMeshVariables(ex_policy, kernel_->Data());
-        configOperationExecutionPolicy(ex_policy, kernel_->Data());
-    }
-    void finishInitialization(const ParallelDevicePolicy &par_device);
+    void finishInitialization(const ExecutionPolicy &ex_policy, UsageType usage_type);
+    void finishInitialization(const ParallelDevicePolicy &par_device, UsageType usage_type);
     void cleanInterface(Real small_shift_factor);
     void correctTopology(Real small_shift_factor);
     bool probeIsWithinMeshBound(const Vecd &position);
@@ -127,6 +128,8 @@ class MultilevelLevelSet : public BaseMeshField
                          MeshWithGridDataPackagesType *coarse_data = nullptr);
     template <class ExecutionPolicy, class KernelType>
     void initializeMeshVariables(const ExecutionPolicy &ex_policy, KernelType *kernel);
+    template <class ExecutionPolicy, class KernelType>
+    void initializeKernelIntegralVariables(const ExecutionPolicy &ex_policy, KernelType *kernel);
     template <class ExecutionPolicy>
     void registerProbes(const ExecutionPolicy &ex_policy, size_t level);
 

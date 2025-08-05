@@ -42,7 +42,8 @@ int main(int ac, char *av[])
     /** Creating body, materials and particles. */
     SolidBody pipe_body(sph_system, makeShared<Pipe>("PipeBody"));
     pipe_body.defineAdaptation<SPHAdaptation>(1.15, 1.0);
-    pipe_body.defineBodyLevelSetShape(level_set_refinement_ratio)->writeLevelSet(sph_system);
+    pipe_body.defineBodyLevelSetShape(level_set_refinement_ratio, UsageType::Surface)
+        ->writeLevelSet(sph_system);
     pipe_body.generateParticles<SurfaceParticles, Lattice>(thickness);
 
     InnerRelation pipe_body_inner(pipe_body);

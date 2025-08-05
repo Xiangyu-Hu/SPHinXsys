@@ -25,16 +25,49 @@ void MultilevelLevelSet::initializeMeshVariables(const ExecutionPolicy &ex_polic
     {
         MeshInnerDynamics<ExecutionPolicy, UpdateLevelSetGradient>
             update_level_set_gradient{*mesh_data_set_[level]};
-        MeshInnerDynamics<ExecutionPolicy, UpdateKernelIntegrals<KernelType>>
-            update_kernel_integrals{*mesh_data_set_[level], kernel, global_h_ratio_vec_[level]};
         update_level_set_gradient.exec();
-        update_kernel_integrals.exec();
 
         registerProbes(ex_policy, level);
         cell_package_index_set_.push_back(
             mesh_data_set_[level]->cell_package_index_.DelegatedData(ex_policy));
         meta_data_cell_set_.push_back(
             mesh_data_set_[level]->meta_data_cell_.DelegatedData(ex_policy));
+    }
+}
+//=================================================================================================//
+template <class ExecutionPolicy>
+void MultilevelLevelSet::finishInitialization(const ExecutionPolicy &ex_policy, UsageType usage_type)
+{
+    initializeMeshVariables(ex_policy, kernel_->Data());
+    if (usage_type == UsageType::Volumetric)
+    {
+        initializeKernelIntegralVariables(ex_policy, kernel_->Data());
+    } 
+    configOperationExecutionPolicy(ex_policy, kernel_->Data());
+}
+//=================================================================================================//
+template <class ExecutionPolicy, class KernelType>
+void MultilevelLevelSet::initializeKernelIntegralVariables(const ExecutionPolicy &ex_policy, KernelType *kernel)
+{
+    for (size_t level = 0; level < total_levels_; level++)
+    {
+        mesh_data_set_[level]->registerMeshVariable<Real>("KernelWeight");
+        mesh_data_set_[level]->registerMeshVariable<Vecd>("KernelGradient");
+        mesh_data_set_[level]->registerMeshVariable<Matd>("KernelSecondGradient");
+
+        MeshInnerDynamics<ExecutionPolicy, UpdateKernelIntegrals<KernelType>>
+            update_kernel_integrals{*mesh_data_set_[level], kernel, global_h_ratio_vec_[level]};
+        update_kernel_integrals.exec();
+
+        probe_kernel_integral_set_.push_back(
+            probe_kernel_integral_vector_keeper_
+                .template createPtr<ProbeKernelIntegral>(ex_policy, mesh_data_set_[level]));
+        probe_kernel_gradient_integral_set_.push_back(
+            probe_kernel_gradient_integral_vector_keeper_
+                .template createPtr<ProbeKernelGradientIntegral>(ex_policy, mesh_data_set_[level]));
+        probe_kernel_second_gradient_integral_set_.push_back(
+            probe_kernel_second_gradient_integral_vector_keeper_
+                .template createPtr<ProbeKernelSecondGradientIntegral>(ex_policy, mesh_data_set_[level]));
     }
 }
 //=================================================================================================//
@@ -68,15 +101,6 @@ void MultilevelLevelSet::registerProbes(const ExecutionPolicy &ex_policy, size_t
     probe_level_set_gradient_set_.push_back(
         probe_level_set_gradient_vector_keeper_
             .template createPtr<ProbeLevelSetGradient>(ex_policy, mesh_data_set_[level]));
-    probe_kernel_integral_set_.push_back(
-        probe_kernel_integral_vector_keeper_
-            .template createPtr<ProbeKernelIntegral>(ex_policy, mesh_data_set_[level]));
-    probe_kernel_gradient_integral_set_.push_back(
-        probe_kernel_gradient_integral_vector_keeper_
-            .template createPtr<ProbeKernelGradientIntegral>(ex_policy, mesh_data_set_[level]));
-    probe_kernel_second_gradient_integral_set_.push_back(
-        probe_kernel_second_gradient_integral_vector_keeper_
-            .template createPtr<ProbeKernelSecondGradientIntegral>(ex_policy, mesh_data_set_[level]));
 }
 //=================================================================================================//
 } // namespace SPH
