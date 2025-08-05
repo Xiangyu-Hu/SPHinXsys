@@ -70,10 +70,7 @@ void WriteMeshFieldToPlt::update(std::ofstream &output_file)
                 << "phi, "
                 << "n_x, "
                 << "n_y "
-                << "near_interface_id ";
-    output_file << "kernel_weight, "
-                << "kernel_gradient_x, "
-                << "kernel_gradient_y "
+                << "near_interface_id "
                 << "\n";
     output_file << "zone i=" << number_of_operation[0] << "  j=" << number_of_operation[1] << "  k=" << 1
                 << "  DATAPACKING=POINT \n";

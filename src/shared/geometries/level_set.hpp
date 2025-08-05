@@ -42,7 +42,7 @@ void MultilevelLevelSet::finishInitialization(const ExecutionPolicy &ex_policy, 
     if (usage_type == UsageType::Volumetric)
     {
         initializeKernelIntegralVariables(ex_policy, kernel_->Data());
-    } 
+    }
     configOperationExecutionPolicy(ex_policy, kernel_->Data());
 }
 //=================================================================================================//
@@ -51,9 +51,9 @@ void MultilevelLevelSet::initializeKernelIntegralVariables(const ExecutionPolicy
 {
     for (size_t level = 0; level < total_levels_; level++)
     {
-        mesh_data_set_[level]->registerMeshVariable<Real>("KernelWeight");
-        mesh_data_set_[level]->registerMeshVariable<Vecd>("KernelGradient");
-        mesh_data_set_[level]->registerMeshVariable<Matd>("KernelSecondGradient");
+        mesh_data_set_[level]->registerMeshVariable<Real>("KernelWeight", mesh_data_set_[level]->NumberOfGridDataPackages());
+        mesh_data_set_[level]->registerMeshVariable<Vecd>("KernelGradient", mesh_data_set_[level]->NumberOfGridDataPackages());
+        mesh_data_set_[level]->registerMeshVariable<Matd>("KernelSecondGradient", mesh_data_set_[level]->NumberOfGridDataPackages());
 
         MeshInnerDynamics<ExecutionPolicy, UpdateKernelIntegrals<KernelType>>
             update_kernel_integrals{*mesh_data_set_[level], kernel, global_h_ratio_vec_[level]};

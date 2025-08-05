@@ -83,6 +83,7 @@ class MeshWithGridDataPackages : public Mesh
     DiscreteVariable<CellNeighborhood> cell_neighborhood_{"mesh_cell_neighborhood", 2}; /**< 3*3(*3) array to store indicies of neighborhood cells. */
     DiscreteVariable<size_t> cell_package_index_;                                       /**< the package index for each cell in a 1-d array. */
     ConcurrentVec<std::pair<size_t, int>> occupied_data_pkgs_;                          /**< (size_t)sort_index, (int)core1/inner0. */
+    UnsignedInt NumberOfGridDataPackages() const { return num_grid_pkgs_; };
 
   protected:
     /** Generalized mesh data type */
@@ -184,17 +185,15 @@ class MeshWithGridDataPackages : public Mesh
     template <class ExecutionPolicy>
     void syncMeshVariableData(ExecutionPolicy &ex_policy) { sync_mesh_variable_data_(all_mesh_variables_, ex_policy); };
 
-    template <typename DataType>
-    MeshVariable<DataType> *registerMeshVariable(const std::string &variable_name)
+    template <typename DataType, typename... Args>
+    MeshVariable<DataType> *registerMeshVariable(const std::string &variable_name, Args &&...args)
     {
         MeshVariable<DataType> *variable =
             findVariableByName<DataType, MeshVariable>(all_mesh_variables_, variable_name);
         if (variable == nullptr)
         {
-            constexpr int type_index = DataTypeIndex<DataType>::value;
-            size_t new_variable_index = std::get<type_index>(all_mesh_variables_).size();
             return addVariableToAssemble<DataType, MeshVariable>(all_mesh_variables_, mesh_variable_ptrs_,
-                                                                 variable_name, new_variable_index);
+                                                                 variable_name, std::forward<Args>(args)...);
         }
         return variable;
     }

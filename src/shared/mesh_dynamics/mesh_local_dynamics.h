@@ -355,7 +355,11 @@ class UpdateKernelIntegrals : public BaseMeshLocalDynamics
           kernel_weight_(*data_mesh.getMeshVariable<Real>("KernelWeight")),
           kernel_gradient_(*data_mesh.getMeshVariable<Vecd>("KernelGradient")),
           kernel_second_gradient_(*data_mesh.getMeshVariable<Matd>("KernelSecondGradient")),
-          far_field_distance(data_mesh.GridSpacing() * (Real)data_mesh.BufferWidth()) {};
+          far_field_distance(data_mesh.GridSpacing() * (Real)data_mesh.BufferWidth()) 
+          {
+            initializeSingularPackages(0, -far_field_distance);
+            initializeSingularPackages(1, far_field_distance);
+          };
     virtual ~UpdateKernelIntegrals() {};
 
     class UpdateKernel
