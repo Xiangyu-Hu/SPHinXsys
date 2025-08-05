@@ -260,7 +260,8 @@ int main(int ac, char *av[])
 
     SolidBody shell_body(sph_system, makeShared<ShellShape>("ShellBody"));
     shell_body.defineAdaptation<SPHAdaptation>(1.15, resolution_ref / resolution_shell);
-    shell_body.defineBodyLevelSetShape(level_set_refinement_ratio)->writeLevelSet(sph_system);
+    shell_body.defineBodyLevelSetShape(level_set_refinement_ratio, UsageType::Surface)
+        ->writeLevelSet(sph_system);
     shell_body.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     shell_body.generateParticles<SurfaceParticles, WallBoundary>(resolution_shell, BW);
 
