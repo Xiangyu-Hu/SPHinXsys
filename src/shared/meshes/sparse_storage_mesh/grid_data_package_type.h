@@ -36,42 +36,25 @@
 
 namespace SPH
 {
-class CellNeighborhood2d
+template <class DataType, size_t PKG_SIZE>
+class PackageDataMatrix2d
+    : public std::array<std::array<DataType, PKG_SIZE>, PKG_SIZE>
 {
-    UnsignedInt neighbor[9];
-
   public:
-    UnsignedInt operator()(const Array2i &index) const
-    {
-        return neighbor[index[0] * 3 + index[1]];
-    }
-
-    UnsignedInt &operator()(const Array2i &index)
-    {
-        return neighbor[index[0] * 3 + index[1]];
-    }
-};
-
-class CellNeighborhood3d
-{
-    UnsignedInt neighbor[27];
-
-  public:
-    UnsignedInt operator()(const Array3i &index) const
-    {
-        return neighbor[index[0] * 9 + index[1] * 3 + index[2]];
-    }
-
-    UnsignedInt &operator()(const Array3i &index)
-    {
-        return neighbor[index[0] * 9 + index[1] * 3 + index[2]];
-    }
+    DataType operator()(const Array2i &index) const { return (*this)[index[0]][index[1]]; }
+    DataType &operator()(const Array2i &index) { return (*this)[index[0]][index[1]]; }
 };
 
 template <class DataType, size_t PKG_SIZE>
-using PackageDataMatrix2d = std::array<std::array<DataType, PKG_SIZE>, PKG_SIZE>;
+class PackageDataMatrix3d
+    : public std::array<std::array<std::array<DataType, PKG_SIZE>, PKG_SIZE>, PKG_SIZE>
+{
+  public:
+    DataType operator()(const Array3i &index) const { return (*this)[index[0]][index[1]][index[2]]; }
+    DataType &operator()(const Array3i &index) { return (*this)[index[0]][index[1]][index[2]]; }
+};
 
-template <class DataType, size_t PKG_SIZE>
-using PackageDataMatrix3d = std::array<std::array<std::array<DataType, PKG_SIZE>, PKG_SIZE>, PKG_SIZE>;
+using CellNeighborhood2d = PackageDataMatrix2d<UnsignedInt, 3>;
+using CellNeighborhood3d = PackageDataMatrix3d<UnsignedInt, 3>;
 } // namespace SPH
 #endif // GRID_DATA_PACKAGE_TYPE_H
