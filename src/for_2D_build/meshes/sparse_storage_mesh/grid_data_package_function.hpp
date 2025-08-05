@@ -6,40 +6,6 @@
 namespace SPH
 {
 //=============================================================================================//
-template <int PKG_SIZE>
-PackageGridPair NeighbourIndexShift(const Array2i &shift_index, const CellNeighborhood2d &neighbour)
-{
-    PackageGridPair result;
-    Array2i neighbour_index = (shift_index + PKG_SIZE * Array2i::Ones()) / PKG_SIZE;
-    result.first = neighbour[neighbour_index[0]][neighbour_index[1]];
-    result.second = (shift_index + PKG_SIZE * Array2i::Ones()) - neighbour_index * PKG_SIZE;
-
-    return result;
-}
-//=============================================================================================//
-template <int PKG_SIZE>
-PackageGridPair GeneralNeighbourIndexShift(
-    UnsignedInt package_index, CellNeighborhood *neighbour, const Array2i &shift_index)
-{
-    Array2i cell_shift = shift_index / PKG_SIZE;
-    Array2i residual = shift_index - cell_shift * PKG_SIZE;
-    while (!cell_shift.isZero())
-    {
-        for (UnsignedInt i = 0; i != Dimensions; ++i)
-            if (cell_shift[i] != 0)
-            {
-                Array2i step = Array2i::Zero();
-                step[i] = cell_shift[i] > 0 ? -1 : 1;
-                Array2i neighbour_index = Array2i::Ones() - step;
-                package_index = neighbour[package_index]
-                                         [neighbour_index[0]]
-                                         [neighbour_index[1]];
-                cell_shift[i] += step[i];
-            }
-    }
-    return NeighbourIndexShift<PKG_SIZE>(residual, neighbour[package_index]);
-}
-//=============================================================================================//
 template <typename DataType, size_t PKG_SIZE>
 DataType CornerAverage(PackageDataMatrix2d<DataType, PKG_SIZE> *pkg_data, Array2i addrs_index,
                        Array2i corner_direction, const CellNeighborhood2d &neighborhood, DataType zero)

@@ -47,21 +47,6 @@ bool TagACellIsInnerPackage::UpdateKernel::isInnerPackage(const Arrayi &cell_ind
         });
 }
 //=============================================================================================//
-void InitializeCellNeighborhood::UpdateKernel::update(const size_t &package_index)
-{
-    size_t sort_index = data_mesh_->occupied_data_pkgs_[package_index - 2].first;
-    Arrayi cell_index = base_dynamics->CellIndexFromSortIndex(sort_index);
-    CellNeighborhood &current = cell_neighborhood_[package_index];
-    std::pair<Arrayi, int> &metadata = meta_data_cell_[package_index];
-    metadata.first = cell_index;
-    metadata.second = data_mesh_->occupied_data_pkgs_[package_index - 2].second;
-    for (int l = -1; l < 2; l++)
-        for (int m = -1; m < 2; m++)
-        {
-            current[l + 1][m + 1] = data_mesh_->PackageIndexFromCellIndex(cell_package_index_, cell_index + Arrayi(l, m));
-        }
-}
-//=============================================================================================//
 void InitializeBasicDataForAPackage::UpdateKernel::update(const size_t &package_index)
 {
     auto &phi = phi_[package_index];

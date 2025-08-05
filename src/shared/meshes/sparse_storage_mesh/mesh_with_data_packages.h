@@ -122,28 +122,16 @@ class MeshWithGridDataPackages : public Mesh
     };
     OperationOnDataAssemble<MeshVariableAssemble, SyncMeshVariableData> sync_mesh_variable_data_{};
 
-    void fillFarFieldCellNeighborhood(CellNeighborhood2d *neighbor)
+    void fillFarFieldCellNeighborhood(CellNeighborhood *neighbor)
     {
         for (size_t i = 0; i != 2; i++)
         {
-            for (int l = -1; l < 2; l++)
-                for (int m = -1; m < 2; m++)
+            mesh_for_each(
+                -Arrayi::Ones(), Arrayi::Ones() * 2,
+                [&](const Arrayi &index)
                 {
-                    neighbor[i][l + 1][m + 1] = i;
-                }
-        }
-    };
-
-    void fillFarFieldCellNeighborhood(CellNeighborhood3d *neighbor)
-    {
-        for (size_t i = 0; i != 2; i++)
-        {
-            for (int l = -1; l < 2; l++)
-                for (int m = -1; m < 2; m++)
-                    for (int n = -1; n < 2; n++)
-                    {
-                        neighbor[i][l + 1][m + 1][n + 1] = i;
-                    }
+                    neighbor[i](index + Arrayi::Ones()) = i;
+                });
         }
     };
 

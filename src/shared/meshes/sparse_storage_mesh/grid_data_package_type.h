@@ -36,8 +36,37 @@
 
 namespace SPH
 {
-using CellNeighborhood2d = std::array<std::array<UnsignedInt, 3>, 3>;
-using CellNeighborhood3d = std::array<std::array<std::array<UnsignedInt, 3>, 3>, 3>;
+class CellNeighborhood2d
+{
+    UnsignedInt neighbor[9];
+
+  public:
+    UnsignedInt operator()(const Array2i &index) const
+    {
+        return neighbor[index[0] * 3 + index[1]];
+    }
+
+    UnsignedInt &operator()(const Array2i &index)
+    {
+        return neighbor[index[0] * 3 + index[1]];
+    }
+};
+
+class CellNeighborhood3d
+{
+    UnsignedInt neighbor[27];
+
+  public:
+    UnsignedInt operator()(const Array3i &index) const
+    {
+        return neighbor[index[0] * 9 + index[1] * 3 + index[2]];
+    }
+
+    UnsignedInt &operator()(const Array3i &index)
+    {
+        return neighbor[index[0] * 9 + index[1] * 3 + index[2]];
+    }
+};
 
 template <class DataType, size_t PKG_SIZE>
 using PackageDataMatrix2d = std::array<std::array<DataType, PKG_SIZE>, PKG_SIZE>;
