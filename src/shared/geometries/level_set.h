@@ -159,7 +159,7 @@ class MultilevelLevelSet : public BaseMeshField
     std::function<void()> sync_mesh_variable_data_;
 
     template <class ExecutionPolicy, class KernelType>
-    void configOperationExecutionPolicy(const ExecutionPolicy &ex_policy, KernelType *kernel);
+    void configLevelSetPostProcesses(const ExecutionPolicy &ex_policy, KernelType *kernel);
 };
 } // namespace SPH
 #endif // LEVEL_SET_H

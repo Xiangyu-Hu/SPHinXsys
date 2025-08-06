@@ -7,11 +7,8 @@ namespace SPH
 {
 //=================================================================================================//
 template <class ExecutionPolicy, class KernelType>
-void MultilevelLevelSet::configOperationExecutionPolicy(const ExecutionPolicy &ex_policy,
-                                                        KernelType *kernel)
+void MultilevelLevelSet::configLevelSetPostProcesses(const ExecutionPolicy &ex_policy, KernelType *kernel)
 {
-    sync_mesh_variable_data_ = [&]()
-    { this->syncMeshVariableData(ex_policy); };
     clean_interface_keeper_ = makeUnique<CleanInterface<ExecutionPolicy, KernelType>>(
         *mesh_data_set_.back(), kernel, global_h_ratio_vec_.back());
     correct_topology_keeper_ = makeUnique<CorrectTopology<ExecutionPolicy, KernelType>>(
@@ -42,8 +39,10 @@ void MultilevelLevelSet::finishInitialization(const ExecutionPolicy &ex_policy, 
     if (usage_type == UsageType::Volumetric)
     {
         initializeKernelIntegralVariables(ex_policy, kernel_->Data());
+        configLevelSetPostProcesses(ex_policy, kernel_->Data());
     }
-    configOperationExecutionPolicy(ex_policy, kernel_->Data());
+    sync_mesh_variable_data_ = [&]()
+    { this->syncMeshVariableData(ex_policy); };
 }
 //=================================================================================================//
 template <class ExecutionPolicy, class KernelType>
@@ -51,10 +50,6 @@ void MultilevelLevelSet::initializeKernelIntegralVariables(const ExecutionPolicy
 {
     for (size_t level = 0; level < total_levels_; level++)
     {
-        mesh_data_set_[level]->registerMeshVariable<Real>("KernelWeight", mesh_data_set_[level]->NumberOfGridDataPackages());
-        mesh_data_set_[level]->registerMeshVariable<Vecd>("KernelGradient", mesh_data_set_[level]->NumberOfGridDataPackages());
-        mesh_data_set_[level]->registerMeshVariable<Matd>("KernelSecondGradient", mesh_data_set_[level]->NumberOfGridDataPackages());
-
         MeshInnerDynamics<ExecutionPolicy, UpdateKernelIntegrals<KernelType>>
             update_kernel_integrals{*mesh_data_set_[level], kernel, global_h_ratio_vec_[level]};
         update_kernel_integrals.exec();
