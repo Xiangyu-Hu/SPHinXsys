@@ -118,7 +118,7 @@ class MeshWithGridDataPackages : public Mesh
         if (listed_variable == nullptr)
         {
             constexpr int type_index = DataTypeIndex<DataType>::value;
-            std::get<type_index>(variable_set).push_back(listed_variable);
+            std::get<type_index>(variable_set).push_back(variable);
         }
     };
 
