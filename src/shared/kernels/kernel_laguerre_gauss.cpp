@@ -11,7 +11,6 @@ KernelLaguerreGauss::KernelLaguerreGauss(Real h)
     factor_W_1D_ = inv_h_ * 8.0 / (5.0 * pow(Pi, 0.5));
     factor_W_2D_ = inv_h_ * inv_h_ * 3.0 / Pi;
     factor_W_3D_ = inv_h_ * inv_h_ * inv_h_ * 8.0 / pow(Pi, 1.5);
-    truncated_ = true; /**< Laguerre Gauss kernel is truncated. */
     setDerivativeParameters();
 }
 //=================================================================================================//

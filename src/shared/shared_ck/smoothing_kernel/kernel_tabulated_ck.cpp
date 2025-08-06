@@ -30,16 +30,6 @@ KernelTabulatedCK::KernelTabulatedCK(Kernel &kernel)
         d2w_1d[i] = kernel.d2W_1D(Real(i - 1) * dq_);
     }
 
-    if (!kernel.isTruncated()) // kernel trailing zeros for non-truncated kernels
-    {
-        for (int i = kernel_resolution_; i < tabulated_array_size_; i++)
-        {
-            w_1d[i] = 0.0;
-            dw_1d[i] = 0.0;
-            d2w_1d[i] = 0.0;
-        }
-    }
-
     delta_q_0_ = (-1.0 * dq_) * (-2.0 * dq_) * (-3.0 * dq_);
     delta_q_1_ = dq_ * (-1.0 * dq_) * (-2.0 * dq_);
     delta_q_2_ = (2.0 * dq_) * dq_ * (-1.0 * dq_);
