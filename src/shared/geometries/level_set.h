@@ -39,6 +39,11 @@
 #include "sphinxsys_variable.h"
 namespace SPH
 {
+enum class UsageType
+{
+    Volumetric,
+    Surface,
+};
 /**
  * @class MultilevelLevelSet
  * @brief Defining a multilevel level set for a complex region.
@@ -47,9 +52,9 @@ class MultilevelLevelSet : public BaseMeshField
 {
   public:
     MultilevelLevelSet(BoundingBox tentative_bounds, Real reference_data_spacing, size_t total_levels,
-                       Shape &shape, SPHAdaptation &sph_adaptation);
+                       Shape &shape, SPHAdaptation &sph_adaptation, Real refinement_ratio = 1.0);
     MultilevelLevelSet(BoundingBox tentative_bounds, MeshWithGridDataPackagesType *coarse_data,
-                       Shape &shape, SPHAdaptation &sph_adaptation);
+                       Shape &shape, SPHAdaptation &sph_adaptation, Real refinement_ratio = 1.0);
     ~MultilevelLevelSet() {};
 
     template <class ExecutionPolicy>
@@ -62,12 +67,8 @@ class MultilevelLevelSet : public BaseMeshField
     ProbeKernelGradientIntegral getProbeKernelGradientIntegral(const ExecutionPolicy &ex_policy);
 
     template <class ExecutionPolicy>
-    void finishInitialization(const ExecutionPolicy &ex_policy)
-    {
-        initializeMeshVariables(ex_policy, kernel_->Data());
-        configOperationExecutionPolicy(ex_policy, kernel_->Data());
-    }
-    void finishInitialization(const ParallelDevicePolicy &par_device);
+    void finishInitialization(const ExecutionPolicy &ex_policy, UsageType usage_type);
+    void finishInitialization(const ParallelDevicePolicy &par_device, UsageType usage_type);
     void cleanInterface(Real small_shift_factor);
     void correctTopology(Real small_shift_factor);
     bool probeIsWithinMeshBound(const Vecd &position);
@@ -125,8 +126,10 @@ class MultilevelLevelSet : public BaseMeshField
 
     void initializeLevel(Real reference_data_spacing, BoundingBox tentative_bounds,
                          MeshWithGridDataPackagesType *coarse_data = nullptr);
-    template <class ExecutionPolicy, class KernelType>
-    void initializeMeshVariables(const ExecutionPolicy &ex_policy, KernelType *kernel);
+    template <class ExecutionPolicy>
+    void initializeMeshVariables(const ExecutionPolicy &ex_policy, KernelTabulatedCK *kernel);
+    template <class ExecutionPolicy>
+    void initializeKernelIntegralVariables(const ExecutionPolicy &ex_policy, KernelTabulatedCK *kernel);
     template <class ExecutionPolicy>
     void registerProbes(const ExecutionPolicy &ex_policy, size_t level);
 
@@ -155,8 +158,8 @@ class MultilevelLevelSet : public BaseMeshField
     UniquePtr<SingularVariable<KernelTabulatedCK>> kernel_;
     std::function<void()> sync_mesh_variable_data_;
 
-    template <class ExecutionPolicy, class KernelType>
-    void configOperationExecutionPolicy(const ExecutionPolicy &ex_policy, KernelType *kernel);
+    template <class ExecutionPolicy>
+    void configLevelSetPostProcesses(const ExecutionPolicy &ex_policy, KernelTabulatedCK *kernel);
 };
 } // namespace SPH
 #endif // LEVEL_SET_H

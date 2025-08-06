@@ -38,8 +38,8 @@ namespace SPH
 {
 namespace Log
 {
-void init(IOEnvironment &io_environment); // Call once at startup
-std::shared_ptr<spdlog::logger> get();    // Access logger
+std::shared_ptr<spdlog::logger> init(); // Call once at startup
+std::shared_ptr<spdlog::logger> get();  // Access logger
 } // namespace Log
 } // namespace SPH
 #endif // IO_LOG_H

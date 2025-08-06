@@ -79,11 +79,11 @@ class FinishDataPackages
     MeshInnerDynamics<execution::ParallelPolicy, InitializeBasicDataForAPackage> initialize_basic_data_for_a_package{mesh_data_, shape_};
 };
 
-template <class ExecutionPolicy, class KernelType>
+template <class ExecutionPolicy>
 class CleanInterface : public BaseMeshDynamics, public BaseExecDynamics
 {
   public:
-    explicit CleanInterface(MeshWithGridDataPackagesType &mesh_data, KernelType *kernel, Real global_h_ratio)
+    explicit CleanInterface(MeshWithGridDataPackagesType &mesh_data, KernelTabulatedCK *kernel, Real global_h_ratio)
         : BaseMeshDynamics(mesh_data),
           BaseExecDynamics(),
           kernel_(kernel),
@@ -100,20 +100,20 @@ class CleanInterface : public BaseMeshDynamics, public BaseExecDynamics
     }
 
   private:
-    KernelType *kernel_;
+    KernelTabulatedCK *kernel_;
     Real global_h_ratio_;
     MeshInnerDynamics<ExecutionPolicy, UpdateLevelSetGradient> update_level_set_gradient{mesh_data_};
-    MeshInnerDynamics<ExecutionPolicy, UpdateKernelIntegrals<KernelType>> update_kernel_integrals{mesh_data_, kernel_, global_h_ratio_};
+    MeshInnerDynamics<ExecutionPolicy, UpdateKernelIntegrals> update_kernel_integrals{mesh_data_, kernel_, global_h_ratio_};
     MeshInnerDynamics<ExecutionPolicy, MarkNearInterface> mark_near_interface{mesh_data_};
     MeshCoreDynamics<ExecutionPolicy, RedistanceInterface> redistance_interface{mesh_data_};
     MeshInnerDynamics<ExecutionPolicy, ReinitializeLevelSet> reinitialize_level_set{mesh_data_};
 };
 
-template <class ExecutionPolicy, class KernelType>
+template <class ExecutionPolicy>
 class CorrectTopology : public BaseMeshDynamics, public BaseExecDynamics
 {
   public:
-    explicit CorrectTopology(MeshWithGridDataPackagesType &mesh_data, KernelType *kernel, Real global_h_ratio)
+    explicit CorrectTopology(MeshWithGridDataPackagesType &mesh_data, KernelTabulatedCK *kernel, Real global_h_ratio)
         : BaseMeshDynamics(mesh_data),
           BaseExecDynamics(),
           kernel_(kernel),
@@ -130,10 +130,10 @@ class CorrectTopology : public BaseMeshDynamics, public BaseExecDynamics
     }
 
   private:
-    KernelType *kernel_;
+    KernelTabulatedCK *kernel_;
     Real global_h_ratio_;
     MeshInnerDynamics<ExecutionPolicy, UpdateLevelSetGradient> update_level_set_gradient{mesh_data_};
-    MeshInnerDynamics<ExecutionPolicy, UpdateKernelIntegrals<KernelType>> update_kernel_integrals{mesh_data_, kernel_, global_h_ratio_};
+    MeshInnerDynamics<ExecutionPolicy, UpdateKernelIntegrals> update_kernel_integrals{mesh_data_, kernel_, global_h_ratio_};
     MeshInnerDynamics<ExecutionPolicy, MarkNearInterface> mark_near_interface{mesh_data_};
     MeshInnerDynamics<ExecutionPolicy, DiffuseLevelSetSign> diffuse_level_set_sign{mesh_data_};
 };

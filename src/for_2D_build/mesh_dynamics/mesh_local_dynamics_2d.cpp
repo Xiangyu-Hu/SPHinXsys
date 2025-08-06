@@ -22,8 +22,6 @@ void InitializeDataForSingularPackage::update(const size_t package_index, Real f
     auto &phi = phi_.Data()[package_index];
     auto &near_interface_id = near_interface_id_.Data()[package_index];
     auto &phi_gradient = phi_gradient_.Data()[package_index];
-    auto &kernel_weight = kernel_weight_.Data()[package_index];
-    auto &kernel_gradient = kernel_gradient_.Data()[package_index];
 
     mesh_for_each2d<0, pkg_size>(
         [&](int i, int j)
@@ -31,8 +29,6 @@ void InitializeDataForSingularPackage::update(const size_t package_index, Real f
             phi[i][j] = far_field_level_set;
             near_interface_id[i][j] = far_field_level_set < 0.0 ? -2 : 2;
             phi_gradient[i][j] = Vecd::Ones();
-            kernel_weight[i][j] = far_field_level_set < 0.0 ? 0 : 1.0;
-            kernel_gradient[i][j] = Vec2d::Zero();
         });
 }
 //=============================================================================================//
@@ -45,21 +41,6 @@ bool TagACellIsInnerPackage::UpdateKernel::isInnerPackage(const Arrayi &cell_ind
         {
             return data_mesh_->isInnerDataPackage(Arrayi(l, m)); // actually a core test here, because only core pkgs are assigned
         });
-}
-//=============================================================================================//
-void InitializeCellNeighborhood::UpdateKernel::update(const size_t &package_index)
-{
-    size_t sort_index = data_mesh_->occupied_data_pkgs_[package_index - 2].first;
-    Arrayi cell_index = base_dynamics->CellIndexFromSortIndex(sort_index);
-    CellNeighborhood &current = cell_neighborhood_[package_index];
-    std::pair<Arrayi, int> &metadata = meta_data_cell_[package_index];
-    metadata.first = cell_index;
-    metadata.second = data_mesh_->occupied_data_pkgs_[package_index - 2].second;
-    for (int l = -1; l < 2; l++)
-        for (int m = -1; m < 2; m++)
-        {
-            current[l + 1][m + 1] = data_mesh_->PackageIndexFromCellIndex(cell_package_index_, cell_index + Arrayi(l, m));
-        }
 }
 //=============================================================================================//
 void InitializeBasicDataForAPackage::UpdateKernel::update(const size_t &package_index)
@@ -89,10 +70,7 @@ void WriteMeshFieldToPlt::update(std::ofstream &output_file)
                 << "phi, "
                 << "n_x, "
                 << "n_y "
-                << "near_interface_id ";
-    output_file << "kernel_weight, "
-                << "kernel_gradient_x, "
-                << "kernel_gradient_y "
+                << "near_interface_id "
                 << "\n";
     output_file << "zone i=" << number_of_operation[0] << "  j=" << number_of_operation[1] << "  k=" << 1
                 << "  DATAPACKING=POINT \n";
@@ -108,9 +86,6 @@ void WriteMeshFieldToPlt::update(std::ofstream &output_file)
             output_file << DataValueFromGlobalIndex(phi_gradient_.Data(), global_index, &data_mesh_, cell_package_index_.Data())[0] << " ";
             output_file << DataValueFromGlobalIndex(phi_gradient_.Data(), global_index, &data_mesh_, cell_package_index_.Data())[1] << " ";
             output_file << DataValueFromGlobalIndex(near_interface_id_.Data(), global_index, &data_mesh_, cell_package_index_.Data()) << " ";
-            output_file << DataValueFromGlobalIndex(kernel_weight_.Data(), global_index, &data_mesh_, cell_package_index_.Data()) << " ";
-            output_file << DataValueFromGlobalIndex(kernel_gradient_.Data(), global_index, &data_mesh_, cell_package_index_.Data())[0] << " ";
-            output_file << DataValueFromGlobalIndex(kernel_gradient_.Data(), global_index, &data_mesh_, cell_package_index_.Data())[1] << " ";
             output_file << " \n";
         });
     output_file << " \n";

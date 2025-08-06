@@ -53,6 +53,12 @@ void IOEnvironment::resetForRestart()
     fs::create_directory(restart_folder_);
 }
 //=================================================================================================//
+void IOEnvironment::reinitializeReloadFolder()
+{
+    fs::remove_all(reload_folder_);
+    fs::create_directory(reload_folder_);
+}
+//=================================================================================================//
 void IOEnvironment::appendOutputFolder(const std::string &append_name)
 {
     output_folder_ += "_" + append_name;

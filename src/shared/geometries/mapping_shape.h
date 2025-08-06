@@ -102,6 +102,13 @@ class ExtrudeShape : public BaseShapeType
         closest_point += BaseShapeType::checkContain(probe_point) ? shift : -shift;
         return closest_point;
     };
+
+  protected:
+    virtual BoundingBox findBounds() override
+    {
+        BoundingBox bounds = BaseShapeType::findBounds();
+        return bounds.expand(thickness_ * Vecd::Ones());
+    };
 };
 } // namespace SPH
 

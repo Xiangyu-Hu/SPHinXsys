@@ -24,8 +24,6 @@ void InitializeDataForSingularPackage::update(const size_t package_index, Real f
     auto &phi = phi_.Data()[package_index];
     auto &near_interface_id = near_interface_id_.Data()[package_index];
     auto &phi_gradient = phi_gradient_.Data()[package_index];
-    auto &kernel_weight = kernel_weight_.Data()[package_index];
-    auto &kernel_gradient = kernel_gradient_.Data()[package_index];
 
     mesh_for_each3d<0, pkg_size>(
         [&](int i, int j, int k)
@@ -33,8 +31,6 @@ void InitializeDataForSingularPackage::update(const size_t package_index, Real f
             phi[i][j][k] = far_field_level_set;
             near_interface_id[i][j][k] = far_field_level_set < 0.0 ? -2 : 2;
             phi_gradient[i][j][k] = Vecd::Ones();
-            kernel_weight[i][j][k] = far_field_level_set < 0.0 ? 0 : 1.0;
-            kernel_gradient[i][j][k] = Vec3d::Zero();
         });
 }
 //=============================================================================================//
@@ -45,24 +41,8 @@ bool TagACellIsInnerPackage::UpdateKernel::isInnerPackage(const Arrayi &cell_ind
         all_cells_.min(cell_index + 2 * Array3i::Ones()),
         [&](int l, int m, int n)
         {
-            return data_mesh_->isInnerDataPackage(Arrayi(l, m, n));    //actually a core test here, because only core pkgs are assigned
+            return data_mesh_->isInnerDataPackage(Arrayi(l, m, n)); // actually a core test here, because only core pkgs are assigned
         });
-}
-//=============================================================================================//
-void InitializeCellNeighborhood::UpdateKernel::update(const size_t &package_index)
-{
-    size_t sort_index = data_mesh_->occupied_data_pkgs_[package_index-2].first;
-    Arrayi cell_index = base_dynamics->CellIndexFromSortIndex(sort_index);
-    CellNeighborhood &current = cell_neighborhood_[package_index];
-    std::pair<Arrayi, int> &metadata = meta_data_cell_[package_index];
-    metadata.first = cell_index;
-    metadata.second = data_mesh_->occupied_data_pkgs_[package_index-2].second;
-    for (int l = -1; l < 2; l++)
-        for (int m = -1; m < 2; m++)
-            for (int n = -1; n < 2; n++)
-            {
-                current[l + 1][m + 1][n + 1] = data_mesh_->PackageIndexFromCellIndex(cell_package_index_, cell_index + Arrayi(l, m, n));
-            }
 }
 //=============================================================================================//
 void InitializeBasicDataForAPackage::UpdateKernel::update(const size_t &package_index)
@@ -86,11 +66,11 @@ void WriteMeshFieldToPlt::update(std::ofstream &output_file)
     package_parallel_for(execution::seq, data_mesh_.num_grid_pkgs_,
                          [&](size_t package_index)
                          {
-                            if (meta_data[package_index].second == 1)
-                            {
-                              auto cell_index = meta_data[package_index].first;
-                              active_cells.push_back({cell_index[0], cell_index[1], cell_index[2]});
-                            }
+                             if (meta_data[package_index].second == 1)
+                             {
+                                 auto cell_index = meta_data[package_index].first;
+                                 active_cells.push_back({cell_index[0], cell_index[1], cell_index[2]});
+                             }
                          });
     StdVec<Block3D> clustered_blocks = clusterActiveCells3D(active_cells);
 

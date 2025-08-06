@@ -50,12 +50,18 @@ class LevelSetShape : public Shape
 
   public:
     /** refinement_ratio is between body reference resolution and level set resolution */
-    LevelSetShape(Shape &shape, SharedPtr<SPHAdaptation> sph_adaptation, Real refinement_ratio = 1.0);
-    LevelSetShape(SPHBody &sph_body, Shape &shape, Real refinement_ratio = 1.0);
-    LevelSetShape(BoundingBox bounding_box, Shape &shape, SharedPtr<SPHAdaptation> sph_adaptation, Real refinement_ratio = 1.0);
-    LevelSetShape(BoundingBox bounding_box, SPHBody &sph_body, Shape &shape, Real refinement_ratio = 1.0);
-    LevelSetShape(const ParallelDevicePolicy &par_device, Shape &shape, SharedPtr<SPHAdaptation> sph_adaptation, Real refinement_ratio = 1.0);
-    LevelSetShape(const ParallelDevicePolicy &par_device, SPHBody &sph_body, Shape &shape, Real refinement_ratio = 1.0);
+    LevelSetShape(Shape &shape, SharedPtr<SPHAdaptation> sph_adaptation,
+                  Real refinement_ratio = 1.0,
+                  UsageType usage_type = UsageType::Volumetric);
+    LevelSetShape(SPHBody &sph_body, Shape &shape,
+                  Real refinement_ratio = 1.0,
+                  UsageType usage_type = UsageType::Volumetric);
+    LevelSetShape(const ParallelDevicePolicy &par_device, Shape &shape, SharedPtr<SPHAdaptation> sph_adaptation,
+                  Real refinement_ratio = 1.0,
+                  UsageType usage_type = UsageType::Volumetric);
+    LevelSetShape(const ParallelDevicePolicy &par_device, SPHBody &sph_body, Shape &shape,
+                  Real refinement_ratio = 1.0,
+                  UsageType usage_type = UsageType::Volumetric);
 
     virtual ~LevelSetShape() {};
 
@@ -63,7 +69,10 @@ class LevelSetShape : public Shape
     virtual Vecd findClosestPoint(const Vecd &probe_point) override;
 
     template <class ExecutionPolicy>
-    void finishInitialization(const ExecutionPolicy &ex_policy) { level_set_.finishInitialization(ex_policy); };
+    void finishInitialization(const ExecutionPolicy &ex_policy, UsageType usage_type)
+    {
+        level_set_.finishInitialization(ex_policy, usage_type);
+    };
     Vecd findLevelSetGradient(const Vecd &probe_point);
     Real computeKernelIntegral(const Vecd &probe_point, Real h_ratio = 1.0);
     Vecd computeKernelGradientIntegral(const Vecd &probe_point, Real h_ratio = 1.0);
@@ -72,12 +81,14 @@ class LevelSetShape : public Shape
     LevelSetShape *cleanLevelSet(Real small_shift_factor = 1.0);
     /** required to build level set from triangular mesh in stl file format. */
     LevelSetShape *correctLevelSetSign(Real small_shift_factor = 1.0);
-    void writeLevelSet(SPHSystem &sph_system);
+    LevelSetShape *writeLevelSet(SPHSystem &sph_system);
     MultilevelLevelSet &getLevelSet() { return level_set_; }
 
   protected:
+    LevelSetShape(BoundingBox bounding_box, Shape &shape,
+                  SharedPtr<SPHAdaptation> sph_adaptation, Real refinement_ratio);
+    LevelSetShape(BoundingBox bounding_box, SPHBody &sph_body, Shape &shape, Real refinement_ratio);
     MultilevelLevelSet &level_set_; /**< narrow bounded level set mesh. */
-
     virtual BoundingBox findBounds() override;
 };
 } // namespace SPH
