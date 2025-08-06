@@ -34,8 +34,8 @@ void MeshWithGridDataPackages<PKG_SIZE>::writeMeshFieldToPltByMesh(std::ofstream
         output_file << ",\"" << variable->Name() << "\"";
     };
 
-    constexpr int type_index_Vecd = DataTypeIndex<Vecd>::value;
-    for (MeshVariable<Vecd> *variable : std::get<type_index_Vecd>(mesh_variable_to_write_))
+    constexpr int type_index_Vecd = DataTypeIndex<Vec3d>::value;
+    for (MeshVariable<Vec3d> *variable : std::get<type_index_Vecd>(mesh_variable_to_write_))
     {
         std::string variable_name = variable->Name();
         output_file << ",\"" << variable_name << "_x\""
@@ -68,10 +68,10 @@ void MeshWithGridDataPackages<PKG_SIZE>::writeMeshFieldToPltByMesh(std::ofstream
 
         mesh_for_column_major(
             global_lower_bound, global_upper_bound,
-            [&](const Array2i &global_index)
+            [&](const Array3i &global_index)
             {
-                Vecd data_position = global_mesh_.GridPositionFromIndex(global_index);
-                output_file << data_position[0] << " " << data_position[1] << " ";
+                Vec3d data_position = global_mesh_.GridPositionFromIndex(global_index);
+                output_file << data_position[0] << " " << data_position[1] << " " << data_position[2] << " ";
 
                 constexpr int type_index_int = DataTypeIndex<int>::value;
                 for (MeshVariable<int> *variable : std::get<type_index_int>(mesh_variable_to_write_))
@@ -80,10 +80,10 @@ void MeshWithGridDataPackages<PKG_SIZE>::writeMeshFieldToPltByMesh(std::ofstream
                     output_file << value << " ";
                 };
 
-                constexpr int type_index_Vecd = DataTypeIndex<Vecd>::value;
-                for (MeshVariable<Vecd> *variable : std::get<type_index_Vecd>(mesh_variable_to_write_))
+                constexpr int type_index_Vecd = DataTypeIndex<Vec3d>::value;
+                for (MeshVariable<Vec3d> *variable : std::get<type_index_Vecd>(mesh_variable_to_write_))
                 {
-                    Vecd value = DataValueFromGlobalIndex(variable->Data(), global_index, this, cell_package_index_.Data());
+                    Vec3d value = DataValueFromGlobalIndex(variable->Data(), global_index, this, cell_package_index_.Data());
                     output_file << value[0] << " " << value[1] << " " << value[2] << " ";
                 };
 
