@@ -84,6 +84,13 @@ class LevelSetShape : public Shape
     LevelSetShape *writeLevelSet(SPHSystem &sph_system);
     MultilevelLevelSet &getLevelSet() { return level_set_; }
 
+    template <typename DataType>
+    LevelSetShape *addVariableToWrite(const std::string &variable_name)
+    {
+        level_set_.addVariableToWrite<DataType>(variable_name);
+        return this;
+    };
+
   protected:
     LevelSetShape(BoundingBox bounding_box, Shape &shape,
                   SharedPtr<SPHAdaptation> sph_adaptation, Real refinement_ratio);

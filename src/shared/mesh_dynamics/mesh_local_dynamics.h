@@ -64,8 +64,8 @@ class BaseMeshLocalDynamics
           meta_data_cell_(data_mesh.meta_data_cell_),
           cell_neighborhood_(data_mesh.cell_neighborhood_),
           cell_package_index_(data_mesh.cell_package_index_),
-          phi_(*data_mesh.getMeshVariable<Real>("Levelset")),
-          phi_gradient_(*data_mesh.getMeshVariable<Vecd>("LevelsetGradient")),
+          phi_(*data_mesh.getMeshVariable<Real>("LevelSet")),
+          phi_gradient_(*data_mesh.getMeshVariable<Vecd>("LevelSetGradient")),
           near_interface_id_(*data_mesh.getMeshVariable<int>("NearInterfaceID")) {};
     virtual ~BaseMeshLocalDynamics() {};
 
@@ -93,7 +93,7 @@ class ProbeSignedDistance : public ProbeMesh<Real, 4>
   public:
     template <class ExecutionPolicy>
     ProbeSignedDistance(const ExecutionPolicy &ex_policy, MeshWithGridDataPackagesType *data_mesh)
-        : ProbeMesh(ex_policy, data_mesh, "Levelset"){};
+        : ProbeMesh(ex_policy, data_mesh, "LevelSet"){};
     ~ProbeSignedDistance() {};
 };
 
@@ -102,7 +102,7 @@ class ProbeLevelSetGradient : public ProbeMesh<Vecd, 4>
   public:
     template <class ExecutionPolicy>
     explicit ProbeLevelSetGradient(const ExecutionPolicy &ex_policy, MeshWithGridDataPackagesType *data_mesh)
-        : ProbeMesh(ex_policy, data_mesh, "LevelsetGradient"){};
+        : ProbeMesh(ex_policy, data_mesh, "LevelSetGradient"){};
     ~ProbeLevelSetGradient() {};
 };
 
@@ -111,7 +111,7 @@ class ProbeNormalDirection : public ProbeMesh<Vecd, 4>
   public:
     template <class ExecutionPolicy>
     explicit ProbeNormalDirection(const ExecutionPolicy &ex_policy, MeshWithGridDataPackagesType *mesh_data)
-        : ProbeMesh<Vecd, 4>(ex_policy, mesh_data, "LevelsetGradient"){};
+        : ProbeMesh<Vecd, 4>(ex_policy, mesh_data, "LevelSetGradient"){};
     virtual ~ProbeNormalDirection() {};
 
     Vecd operator()(const Vecd &position)

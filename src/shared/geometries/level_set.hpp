@@ -98,6 +98,15 @@ void MultilevelLevelSet::registerProbes(const ExecutionPolicy &ex_policy, size_t
             .template createPtr<ProbeLevelSetGradient>(ex_policy, mesh_data_set_[level]));
 }
 //=================================================================================================//
+template <typename DataType>
+void MultilevelLevelSet::addVariableToWrite(const std::string &variable_name)
+{
+    for (size_t level = 0; level < total_levels_; level++)
+    {
+        mesh_data_set_[level]->addVariableToWrite<DataType>(variable_name);
+    }
+}
+//=================================================================================================//
 } // namespace SPH
 
 #endif
