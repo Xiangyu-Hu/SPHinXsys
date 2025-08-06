@@ -11,7 +11,7 @@ namespace Log
 //=================================================================================================//
 std::shared_ptr<spdlog::logger> logger; // Global logger pointer
 //=================================================================================================//
-void init(IOEnvironment &io_environment)
+std::shared_ptr<spdlog::logger> init()
 {
     if (!logger) // Create a logger with a file sink
     {
@@ -24,6 +24,7 @@ void init(IOEnvironment &io_environment)
         spdlog::set_pattern("[%Y-%m-%d %H:%M:%S] [%l] [thread %t] %v"); // Set the log format
         spdlog::flush_every(std::chrono::seconds(1));                   // Flush logs every second
     }
+    return logger;
 }
 //=================================================================================================//
 std::shared_ptr<spdlog::logger> get()

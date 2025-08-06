@@ -5,7 +5,7 @@ namespace SPH
 {
 //=================================================================================================//
 Shape::Shape(const std::string &shape_name)
-    : name_(shape_name), is_bounds_found_(false), logger_(Log::get()) {}
+    : name_(shape_name), is_bounds_found_(false), logger_(Log::init()) {}
 //=================================================================================================//
 BoundingBox Shape::getBounds()
 {
@@ -21,7 +21,7 @@ BoundingBox Shape::getBounds()
         std::cout << __FILE__ << ':' << __LINE__ << std::endl;
         exit(1);
     }
-    
+
     return bounding_box_;
 }
 //=================================================================================================//
