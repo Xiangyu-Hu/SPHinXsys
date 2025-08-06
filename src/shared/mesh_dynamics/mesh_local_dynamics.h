@@ -650,15 +650,5 @@ class ProbeIsWithinMeshBound : public BaseMeshLocalDynamics
         return is_bounded;
     }
 };
-
-class WriteMeshFieldToPlt : public BaseMeshLocalDynamics
-{
-  public:
-    explicit WriteMeshFieldToPlt(MeshWithGridDataPackagesType &data_mesh)
-        : BaseMeshLocalDynamics(data_mesh) {};
-    virtual ~WriteMeshFieldToPlt() {};
-
-    void update(std::ofstream &output_file);
-};
 } // namespace SPH
 #endif // MESH_LOCAL_DYNAMICS_H
