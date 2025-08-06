@@ -37,8 +37,7 @@ inline void UpdateLevelSetGradient::UpdateKernel::update(const size_t &package_i
         });
 }
 //=============================================================================================//
-template <class KernelType>
-void UpdateKernelIntegrals<KernelType>::initializeSingularPackages(size_t package_index, Real far_field_level_set)
+inline void UpdateKernelIntegrals::initializeSingularPackages(size_t package_index, Real far_field_level_set)
 {
     auto &kernel_weight = kernel_weight_.Data()[package_index];
     auto &kernel_gradient = kernel_gradient_.Data()[package_index];
@@ -53,12 +52,9 @@ void UpdateKernelIntegrals<KernelType>::initializeSingularPackages(size_t packag
         });
 }
 //=============================================================================================//
-template <class KernelType>
 template <typename DataType, typename FunctionByGrid>
-void UpdateKernelIntegrals<KernelType>::UpdateKernel::
-    assignByGrid(MeshVariableData<DataType> *mesh_variable,
-                 const Arrayi &cell_index,
-                 const FunctionByGrid &function_by_grid)
+void UpdateKernelIntegrals::UpdateKernel::assignByGrid(
+    MeshVariableData<DataType> *mesh_variable, const Arrayi &cell_index, const FunctionByGrid &function_by_grid)
 {
     size_t package_index = index_handler_->PackageIndexFromCellIndex(cell_package_index_, cell_index);
     auto &pkg_data = mesh_variable[package_index];
@@ -69,8 +65,7 @@ void UpdateKernelIntegrals<KernelType>::UpdateKernel::
         });
 }
 //=============================================================================================//
-template <class KernelType>
-Real UpdateKernelIntegrals<KernelType>::UpdateKernel::
+inline Real UpdateKernelIntegrals::UpdateKernel::
     computeKernelIntegral(const size_t &package_index, const Arrayi &grid_index)
 {
     Real phi = phi_[package_index][grid_index[0]][grid_index[1]][grid_index[2]];
@@ -105,8 +100,7 @@ Real UpdateKernelIntegrals<KernelType>::UpdateKernel::
     return phi > cutoff_radius_ ? 1.0 : integral * data_spacing_ * data_spacing_ * data_spacing_;
 }
 //=============================================================================================//
-template <class KernelType>
-Vecd UpdateKernelIntegrals<KernelType>::UpdateKernel::
+inline Vecd UpdateKernelIntegrals::UpdateKernel::
     computeKernelGradientIntegral(const size_t &package_index, const Arrayi &grid_index)
 {
     Real phi = phi_[package_index][grid_index[0]][grid_index[1]][grid_index[2]];
@@ -143,8 +137,7 @@ Vecd UpdateKernelIntegrals<KernelType>::UpdateKernel::
     return integral * data_spacing_ * data_spacing_ * data_spacing_;
 }
 //=============================================================================================//
-template <class KernelType>
-Matd UpdateKernelIntegrals<KernelType>::UpdateKernel::
+inline Matd UpdateKernelIntegrals::UpdateKernel::
     computeKernelSecondGradientIntegral(const size_t &package_index, const Arrayi &grid_index)
 {
     Real phi = phi_[package_index][grid_index[0]][grid_index[1]][grid_index[2]];

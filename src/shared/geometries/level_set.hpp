@@ -6,17 +6,17 @@
 namespace SPH
 {
 //=================================================================================================//
-template <class ExecutionPolicy, class KernelType>
-void MultilevelLevelSet::configLevelSetPostProcesses(const ExecutionPolicy &ex_policy, KernelType *kernel)
+template <class ExecutionPolicy>
+void MultilevelLevelSet::configLevelSetPostProcesses(const ExecutionPolicy &ex_policy, KernelTabulatedCK *kernel)
 {
-    clean_interface_keeper_ = makeUnique<CleanInterface<ExecutionPolicy, KernelType>>(
+    clean_interface_keeper_ = makeUnique<CleanInterface<ExecutionPolicy>>(
         *mesh_data_set_.back(), kernel, global_h_ratio_vec_.back());
-    correct_topology_keeper_ = makeUnique<CorrectTopology<ExecutionPolicy, KernelType>>(
+    correct_topology_keeper_ = makeUnique<CorrectTopology<ExecutionPolicy>>(
         *mesh_data_set_.back(), kernel, global_h_ratio_vec_.back());
 }
 //=================================================================================================//
-template <class ExecutionPolicy, class KernelType>
-void MultilevelLevelSet::initializeMeshVariables(const ExecutionPolicy &ex_policy, KernelType *kernel)
+template <class ExecutionPolicy>
+void MultilevelLevelSet::initializeMeshVariables(const ExecutionPolicy &ex_policy, KernelTabulatedCK *kernel)
 {
     for (size_t level = 0; level < total_levels_; level++)
     {
@@ -45,12 +45,12 @@ void MultilevelLevelSet::finishInitialization(const ExecutionPolicy &ex_policy, 
     { this->syncMeshVariableData(ex_policy); };
 }
 //=================================================================================================//
-template <class ExecutionPolicy, class KernelType>
-void MultilevelLevelSet::initializeKernelIntegralVariables(const ExecutionPolicy &ex_policy, KernelType *kernel)
+template <class ExecutionPolicy>
+void MultilevelLevelSet::initializeKernelIntegralVariables(const ExecutionPolicy &ex_policy, KernelTabulatedCK *kernel)
 {
     for (size_t level = 0; level < total_levels_; level++)
     {
-        MeshInnerDynamics<ExecutionPolicy, UpdateKernelIntegrals<KernelType>>
+        MeshInnerDynamics<ExecutionPolicy, UpdateKernelIntegrals>
             update_kernel_integrals{*mesh_data_set_[level], kernel, global_h_ratio_vec_[level]};
         update_kernel_integrals.exec();
 

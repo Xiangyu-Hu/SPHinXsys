@@ -126,10 +126,10 @@ class MultilevelLevelSet : public BaseMeshField
 
     void initializeLevel(Real reference_data_spacing, BoundingBox tentative_bounds,
                          MeshWithGridDataPackagesType *coarse_data = nullptr);
-    template <class ExecutionPolicy, class KernelType>
-    void initializeMeshVariables(const ExecutionPolicy &ex_policy, KernelType *kernel);
-    template <class ExecutionPolicy, class KernelType>
-    void initializeKernelIntegralVariables(const ExecutionPolicy &ex_policy, KernelType *kernel);
+    template <class ExecutionPolicy>
+    void initializeMeshVariables(const ExecutionPolicy &ex_policy, KernelTabulatedCK *kernel);
+    template <class ExecutionPolicy>
+    void initializeKernelIntegralVariables(const ExecutionPolicy &ex_policy, KernelTabulatedCK *kernel);
     template <class ExecutionPolicy>
     void registerProbes(const ExecutionPolicy &ex_policy, size_t level);
 
@@ -158,8 +158,8 @@ class MultilevelLevelSet : public BaseMeshField
     UniquePtr<SingularVariable<KernelTabulatedCK>> kernel_;
     std::function<void()> sync_mesh_variable_data_;
 
-    template <class ExecutionPolicy, class KernelType>
-    void configLevelSetPostProcesses(const ExecutionPolicy &ex_policy, KernelType *kernel);
+    template <class ExecutionPolicy>
+    void configLevelSetPostProcesses(const ExecutionPolicy &ex_policy, KernelTabulatedCK *kernel);
 };
 } // namespace SPH
 #endif // LEVEL_SET_H

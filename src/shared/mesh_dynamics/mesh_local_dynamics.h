@@ -35,9 +35,11 @@
 #include "base_kernel.h"
 #include "data_type.h"
 #include "execution_policy.h"
+#include "kernel_tabulated_ck.h"
 #include "mesh_iterators.hpp"
 #include "mesh_with_data_packages.h"
 #include "sphinxsys_variable.h"
+
 namespace SPH
 {
 using MeshWithGridDataPackagesType = MeshWithGridDataPackages<4>;
@@ -346,11 +348,10 @@ class UpdateLevelSetGradient : public BaseMeshLocalDynamics
     };
 };
 
-template <class KernelType>
 class UpdateKernelIntegrals : public BaseMeshLocalDynamics
 {
   public:
-    explicit UpdateKernelIntegrals(MeshWithGridDataPackagesType &data_mesh, KernelType *kernel, Real global_h_ratio)
+    explicit UpdateKernelIntegrals(MeshWithGridDataPackagesType &data_mesh, KernelTabulatedCK *kernel, Real global_h_ratio)
         : BaseMeshLocalDynamics(data_mesh), kernel_(kernel), global_h_ratio_(global_h_ratio),
           kernel_weight_(*data_mesh.registerMeshVariable<Real>("KernelWeight", data_mesh.NumberOfGridDataPackages())),
           kernel_gradient_(*data_mesh.registerMeshVariable<Vecd>("KernelGradient", data_mesh.NumberOfGridDataPackages())),
@@ -406,7 +407,7 @@ class UpdateKernelIntegrals : public BaseMeshLocalDynamics
         MeshVariableData<Matd> *kernel_second_gradient_;
         std::pair<Arrayi, int> *meta_data_cell_;
 
-        KernelType *kernel_;
+        KernelTabulatedCK *kernel_;
         MeshWithGridDataPackagesType::IndexHandler *index_handler_;
         CellNeighborhood *cell_neighborhood_;
         size_t *cell_package_index_;
@@ -438,7 +439,7 @@ class UpdateKernelIntegrals : public BaseMeshLocalDynamics
     };
 
   private:
-    KernelType *kernel_;
+    KernelTabulatedCK *kernel_;
     Real global_h_ratio_;
     MeshVariable<Real> &kernel_weight_;
     MeshVariable<Vecd> &kernel_gradient_;
