@@ -41,7 +41,9 @@ int main(int ac, char *av[])
     input_shape.add<ExtrudeShape<MultiPolygonShape>>(4.0 * resolution_ref, original_logo);
     input_shape.subtract<MultiPolygonShape>(original_logo);
     RealBody input_body(sph_system, input_shape);
-    LevelSetShape *level_set_shape = input_body.defineBodyLevelSetShape(2.0)->writeLevelSet(sph_system);
+    LevelSetShape *level_set_shape = input_body.defineBodyLevelSetShape(2.0)
+                                         ->addVariableToWrite<Real>("KernelWeight")
+                                         ->writeLevelSet(sph_system);
     input_body.generateParticles<BaseParticles, Lattice>();
 
     MultiPolygonShape filler_shape(original_logo, "Filler");
