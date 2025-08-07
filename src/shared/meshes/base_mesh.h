@@ -153,6 +153,8 @@ class BaseMeshField
     void setName(const std::string &new_name) { name_ = new_name; };
     /** output mesh data for Tecplot visualization */
     virtual void writeMeshFieldToPlt(const std::string &partial_file_name) = 0;
+    /** output mesh data for Tecplot visualization */
+    virtual void writeBackgroundMeshToPlt(const std::string &partial_file_name) {};
 };
 } // namespace SPH
 #endif // BASE_MESH_H

@@ -107,6 +107,15 @@ void MultilevelLevelSet::addMeshVariableToWrite(const std::string &variable_name
     }
 }
 //=================================================================================================//
+template <typename DataType>
+void MultilevelLevelSet::addBackgroundMeshVariableToWrite(const std::string &variable_name)
+{
+    for (size_t level = 0; level < total_levels_; level++)
+    {
+        mesh_data_set_[level]->addDiscreteVariableToWrite<DataType>(variable_name);
+    }
+}
+//=================================================================================================//
 } // namespace SPH
 
 #endif

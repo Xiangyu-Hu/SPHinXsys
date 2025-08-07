@@ -43,7 +43,9 @@ int main(int ac, char *av[])
     RealBody input_body(sph_system, input_shape);
     LevelSetShape *level_set_shape = input_body.defineBodyLevelSetShape(2.0)
                                          ->addMeshVariableToWrite<Real>("KernelWeight")
-                                         ->writeLevelSet(sph_system);
+                                         ->writeLevelSet(sph_system)
+                                         ->addBackgroundMeshVariableToWrite<UnsignedInt>("CellPackageIndex")
+                                         ->writeBackgroundMesh(sph_system);
     input_body.generateParticles<BaseParticles, Lattice>();
 
     MultiPolygonShape filler_shape(original_logo, "Filler");

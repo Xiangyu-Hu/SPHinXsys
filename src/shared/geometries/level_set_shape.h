@@ -82,12 +82,20 @@ class LevelSetShape : public Shape
     /** required to build level set from triangular mesh in stl file format. */
     LevelSetShape *correctLevelSetSign(Real small_shift_factor = 1.0);
     LevelSetShape *writeLevelSet(SPHSystem &sph_system);
+    LevelSetShape *writeBackgroundMesh(SPHSystem &sph_system);
     MultilevelLevelSet &getLevelSet() { return level_set_; }
 
     template <typename DataType>
     LevelSetShape *addMeshVariableToWrite(const std::string &variable_name)
     {
         level_set_.addMeshVariableToWrite<DataType>(variable_name);
+        return this;
+    };
+
+    template <typename DataType>
+    LevelSetShape *addBackgroundMeshVariableToWrite(const std::string &variable_name)
+    {
+        level_set_.addBackgroundMeshVariableToWrite<DataType>(variable_name);
         return this;
     };
 

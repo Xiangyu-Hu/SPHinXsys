@@ -61,6 +61,17 @@ class MeshWithGridDataPackages : public Mesh
     using MeshVariable = DiscreteVariable<MeshVariableData<DataType>>;
     static constexpr int pkg_size = PKG_SIZE; /**< the size of the data package matrix. */
 
+  protected:
+    typedef DataContainerAddressAssemble<MeshVariable> MeshVariableAssemble;
+    DataContainerUniquePtrAssemble<MeshVariable> mesh_variable_ptrs_;
+    MeshVariableAssemble all_mesh_variables_;     /**< all mesh variables on this mesh. */
+    MeshVariableAssemble mesh_variable_to_write_; /**< mesh variables to write, which are not empty. */
+    typedef DataContainerAddressAssemble<DiscreteVariable> DiscreteVariableAssemble;
+    DataContainerUniquePtrAssemble<DiscreteVariable> discrete_variable_ptrs_;
+    DiscreteVariableAssemble all_discrete_variables_;     /**< all discrete variables on this mesh. */
+    DiscreteVariableAssemble discrete_variable_to_write_; /**< discrete variables to write, which are not empty. */
+
+  public:
     template <typename... Args>
     explicit MeshWithGridDataPackages(
         BoundingBox tentative_bounds, Real data_spacing, size_t buffer_size, UnsignedInt num_singular_pkgs = 2)
@@ -69,7 +80,7 @@ class MeshWithGridDataPackages : public Mesh
           num_singular_pkgs_(num_singular_pkgs), num_grid_pkgs_(num_singular_pkgs),
           meta_data_cell_("meta_data_cell", num_singular_pkgs_),
           cell_neighborhood_("mesh_cell_neighborhood", num_singular_pkgs_),
-          cell_package_index_("cell_package_index", all_cells_.prod()),
+          cell_package_index_(*registerDiscreteVariable<UnsignedInt>("CellPackageIndex", all_cells_.prod())),
           data_spacing_(data_spacing),
           index_handler_("index_handler", IndexHandler{data_spacing_, all_cells_, *static_cast<Mesh *>(this)}){};
     virtual ~MeshWithGridDataPackages() {};
@@ -84,7 +95,7 @@ class MeshWithGridDataPackages : public Mesh
     UnsignedInt num_grid_pkgs_;                                /**< the number of all packages, initially only with singular packages. */
     DiscreteVariable<std::pair<Arrayi, int>> meta_data_cell_;  /**< metadata for each occupied cell: (arrayi)cell index, (int)core1/inner0. */
     DiscreteVariable<CellNeighborhood> cell_neighborhood_;     /**< 3*3(*3) array to store indicies of neighborhood cells. */
-    DiscreteVariable<size_t> cell_package_index_;              /**< the package index for each cell in a 1-d array. */
+    DiscreteVariable<UnsignedInt> &cell_package_index_;        /**< the package index for each cell in a 1-d array. */
     ConcurrentVec<std::pair<size_t, int>> occupied_data_pkgs_; /**< (size_t)sort_index, (int)core1/inner0. */
 
     UnsignedInt NumberOfGridDataPackages() const { return num_grid_pkgs_; };
@@ -107,15 +118,7 @@ class MeshWithGridDataPackages : public Mesh
 
   protected:
     /** Generalized mesh data type */
-    typedef DataContainerAddressAssemble<MeshVariable> MeshVariableAssemble;
-    DataContainerUniquePtrAssemble<MeshVariable> mesh_variable_ptrs_;
-    MeshVariableAssemble all_mesh_variables_;     /**< all mesh variables on this mesh. */
-    MeshVariableAssemble mesh_variable_to_write_; /**< mesh variables to write, which are not empty. */
-    const Real data_spacing_;                     /**< spacing of data in the data packages. */
-    typedef DataContainerAddressAssemble<DiscreteVariable> DiscreteVariableAssemble;
-    DataContainerUniquePtrAssemble<DiscreteVariable> discrete_variable_ptrs_;
-    DiscreteVariableAssemble all_discrete_variables_;     /**< all discrete variables on this mesh. */
-    DiscreteVariableAssemble discrete_variable_to_write_; /**< discrete variables to write, which are not empty. */
+    const Real data_spacing_; /**< spacing of data in the data packages. */
 
     template <template <typename> typename ContainerType, typename DataType>
     void addVariableToList(DataContainerAddressAssemble<ContainerType> &variable_set,
