@@ -52,6 +52,9 @@ DataType DataValueFromGlobalIndex(PackageDataMatrix<DataType, PKG_SIZE> *pkg_dat
                                   const Arrayi &global_grid_index,
                                   MeshWithGridDataPackages<PKG_SIZE> *data_mesh,
                                   size_t *cell_package_index);
+template <typename CellDataType, typename PackageDataType, size_t PKG_SIZE, typename FunctionByGrid>
+CellDataType assignByGrid(PackageDataMatrix<PackageDataType, PKG_SIZE> &pkg_data,
+                          const FunctionByGrid &function_by_grid, CellDataType inital_value);
 
 template <typename DataType, size_t PKG_SIZE>
 class ProbeMesh

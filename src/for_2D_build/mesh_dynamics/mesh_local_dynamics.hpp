@@ -6,6 +6,66 @@
 
 namespace SPH
 {
+//=================================================================================================//
+inline void NearInterfaceCellTagging::UpdateKernel::update(const size_t &package_index)
+{
+    size_t sort_index = data_mesh_->occupied_data_pkgs_[package_index - num_singular_pkgs_].first;
+    Arrayi cell_index = base_dynamics->CellIndexFromSortIndex(sort_index);
+    UnsignedInt index_1d = data_mesh_->transferMeshIndexTo1D(data_mesh_->AllCells(), cell_index);
+
+    MeshVariableData<Real> &grid_phi = phi_[package_index];
+    Real phi0 = grid_phi[0][0];
+    cell_near_interface_id_[index_1d] = phi0 > 0.0 ? 1 : -1;
+    bool is_sign_changed = mesh_any_of2d<0, pkg_size>(
+        [&](int i, int j) -> bool
+        {
+            return grid_phi[i][j] * phi0 < 0.0;
+        });
+    if (is_sign_changed)
+        cell_near_interface_id_[index_1d] = 0;
+}
+//=================================================================================================//
+inline void SingularPackageCorrection::UpdateKernel::update(const Arrayi &cell_index)
+{
+    UnsignedInt index_1d = data_mesh_->transferMeshIndexTo1D(data_mesh_->AllCells(), cell_index);
+    if (cell_package_index_[index_1d] == 1)
+    {
+        bool is_negative = mesh_any_of(
+            Array2i::Zero().max(cell_index - Array2i::Ones()),
+            data_mesh_->AllCells().min(cell_index + 2 * Array2i::Ones()),
+            [&](int l, int m)
+            {
+                UnsignedInt neighbor_1d = data_mesh_->transferMeshIndexTo1D(data_mesh_->AllCells(), Arrayi(l, m));
+                return cell_near_interface_id_[neighbor_1d] == -1;
+            });
+
+        if (is_negative)
+        {
+            cell_package_index_[index_1d] = 0;
+            AtomicRef<UnsignedInt> count_modified_cells(*count_modified_);
+            ++count_modified_cells;
+        }
+    }
+
+    if (cell_package_index_[index_1d] == 0)
+    {
+        bool is_positive = mesh_any_of(
+            Array2i::Zero().max(cell_index - Array2i::Ones()),
+            data_mesh_->AllCells().min(cell_index + 2 * Array2i::Ones()),
+            [&](int l, int m)
+            {
+                UnsignedInt neighbor_1d = data_mesh_->transferMeshIndexTo1D(data_mesh_->AllCells(), Arrayi(l, m));
+                return cell_near_interface_id_[neighbor_1d] == 1;
+            });
+
+        if (is_positive)
+        {
+            cell_package_index_[index_1d] = 1;
+            AtomicRef<UnsignedInt> count_modified_cells(*count_modified_);
+            ++count_modified_cells;
+        }
+    }
+}
 //=============================================================================================//
 inline void UpdateLevelSetGradient::UpdateKernel::update(const size_t &package_index)
 {

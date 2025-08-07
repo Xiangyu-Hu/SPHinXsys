@@ -9,7 +9,7 @@ namespace SPH
 {
 //=================================================================================================//
 template <size_t PKG_SIZE>
-void MeshWithGridDataPackages<PKG_SIZE>::writeMeshFieldToPltByMesh(std::ofstream &output_file)
+void MeshWithGridDataPackages<PKG_SIZE>::writeMeshVariableToPlt(std::ofstream &output_file)
 {
     StdVec<Coord3D> active_cells;
     auto meta_data = meta_data_cell_.Data();

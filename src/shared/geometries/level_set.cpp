@@ -53,9 +53,9 @@ void MultilevelLevelSet::initializeLevel(
     mesh_data->registerMeshVariable<Real>("LevelSet", mesh_data->NumberOfSingularDataPackages());
     mesh_data->registerMeshVariable<int>("NearInterfaceID", mesh_data->NumberOfSingularDataPackages());
     mesh_data->registerMeshVariable<Vecd>("LevelSetGradient", mesh_data->NumberOfSingularDataPackages());
-    mesh_data->addVariableToWrite<Real>("LevelSet");
-    mesh_data->addVariableToWrite<int>("NearInterfaceID");
-    mesh_data->addVariableToWrite<Vecd>("LevelSetGradient");
+    mesh_data->addMeshVariableToWrite<Real>("LevelSet");
+    mesh_data->addMeshVariableToWrite<int>("NearInterfaceID");
+    mesh_data->addMeshVariableToWrite<Vecd>("LevelSetGradient");
 
     if (coarse_data == nullptr)
     {

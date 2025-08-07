@@ -322,6 +322,70 @@ class InitializeBasicPackageData : public BaseMeshLocalDynamics
     Shape &shape_;
 };
 
+class NearInterfaceCellTagging : public BaseMeshLocalDynamics
+{
+  public:
+    explicit NearInterfaceCellTagging(MeshWithGridDataPackagesType &data_mesh);
+    virtual ~NearInterfaceCellTagging() {};
+
+    class UpdateKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+            : data_mesh_(&encloser.data_mesh_), base_dynamics(&encloser),
+              num_singular_pkgs_(encloser.num_singular_pkgs_),
+              cell_near_interface_id_(
+                  encloser.dv_cell_near_interface_id_.DelegatedData(ex_policy)),
+              phi_(encloser.dv_phi_.DelegatedData(ex_policy)){};
+        void update(const size_t &index);
+
+      protected:
+        MeshWithGridDataPackagesType *data_mesh_;
+        BaseMeshLocalDynamics *base_dynamics;
+        UnsignedInt num_singular_pkgs_;
+        int *cell_near_interface_id_;
+        MeshVariableData<Real> *phi_;
+    };
+
+  protected:
+    DiscreteVariable<int> *dv_cell_near_interface_id_;
+    MeshVariable<Real> *dv_phi_;
+};
+
+class SingularPackageCorrection : public BaseMeshLocalDynamics
+{
+  public:
+    explicit SingularPackageCorrection(MeshWithGridDataPackagesType &data_mesh);
+    virtual ~SingularPackageCorrection() {};
+
+    class UpdateKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+            : data_mesh_(&encloser.data_mesh_), base_dynamics(&encloser),
+              cell_near_interface_id_(encloser.dv_cell_near_interface_id_.DelegatedData(ex_policy)),
+              cell_package_index_(encloser.cell_package_index_.DelegatedData(ex_policy)),
+              count_modified_(encloser.sv_count_modified_.DelegatedData(ex_policy)){};
+        void update(const Arrayi &cell_index);
+
+      protected:
+        MeshWithGridDataPackagesType *data_mesh_;
+        BaseMeshLocalDynamics *base_dynamics;
+        int *cell_near_interface_id_;
+        size_t *cell_package_index_;
+        UnsignedInt *count_modified_;
+    };
+
+  protected:
+    DiscreteVariable<int> *dv_cell_near_interface_id_;
+    SingularVariable<UnsignedInt> sv_count_modified_;
+
+  public:
+    UnsignedInt countModified() { return sv_count_modified_.getValue(); };
+};
+
 /**
  * @class UpdateLevelSetGradient
  * @brief Compute `phi_gradient_` mesh data base on `phi_` state for each occupied cell.

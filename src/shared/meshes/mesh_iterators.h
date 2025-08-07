@@ -65,8 +65,9 @@ inline Array2i mesh_find_if2d(const CheckOnEach &function)
 template <int lower, int upper, typename CheckOnEach>
 inline bool mesh_any_of2d(const CheckOnEach &function)
 {
-    return mesh_find_if2d<lower, upper, lower, upper, CheckOnEach>(
-               function) != Array2i(upper, upper);
+    return (mesh_find_if2d<lower, upper, lower, upper, CheckOnEach>(
+                function) != Array2i(upper, upper))
+        .all();
 };
 
 /** iteration with void (non_value_returning) function. 3D case. */
@@ -93,8 +94,9 @@ inline Array3i mesh_find_if3d(const CheckOnEach &function)
 template <int lower, int upper, typename CheckOnEach>
 inline bool mesh_any_of3d(const CheckOnEach &function)
 {
-    return mesh_find_if3d<lower, upper, lower, upper, lower, upper, CheckOnEach>(
-               function) != Array3i(upper, upper, upper);
+    return (mesh_find_if3d<lower, upper, lower, upper, lower, upper, CheckOnEach>(
+                function) != Array3i(upper, upper, upper))
+        .all();
 };
 
 template <typename FunctionOnEach>

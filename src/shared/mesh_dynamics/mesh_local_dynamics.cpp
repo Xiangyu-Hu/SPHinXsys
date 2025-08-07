@@ -81,5 +81,19 @@ void InitializeCellNeighborhood::UpdateKernel::update(const size_t &package_inde
                 data_mesh_->PackageIndexFromCellIndex(cell_package_index_, cell_index + index);
         });
 }
+//=============================================================================================//
+NearInterfaceCellTagging::NearInterfaceCellTagging(MeshWithGridDataPackagesType &data_mesh)
+    : BaseMeshLocalDynamics(data_mesh),
+      dv_cell_near_interface_id_(
+          data_mesh.registerDiscreteVariable<int>(
+              "CellNearInterfaceID", all_cells_.prod(),
+              [&](UnsignedInt index)
+              { return MaxInt; })),
+      dv_phi_(data_mesh.getMeshVariable<Real>("LevelSet")) {}
+//=============================================================================================//
+SingularPackageCorrection::SingularPackageCorrection(MeshWithGridDataPackagesType &data_mesh)
+    : BaseMeshLocalDynamics(data_mesh),
+      dv_cell_near_interface_id_(data_mesh.getDiscreteVariable<int>("CellNearInterfaceID")),
+      sv_count_modified_("IsModified", 0) {}
 //=================================================================================================//
 } // namespace SPH

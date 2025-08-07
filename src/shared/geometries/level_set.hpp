@@ -99,11 +99,11 @@ void MultilevelLevelSet::registerProbes(const ExecutionPolicy &ex_policy, size_t
 }
 //=================================================================================================//
 template <typename DataType>
-void MultilevelLevelSet::addVariableToWrite(const std::string &variable_name)
+void MultilevelLevelSet::addMeshVariableToWrite(const std::string &variable_name)
 {
     for (size_t level = 0; level < total_levels_; level++)
     {
-        mesh_data_set_[level]->addVariableToWrite<DataType>(variable_name);
+        mesh_data_set_[level]->addMeshVariableToWrite<DataType>(variable_name);
     }
 }
 //=================================================================================================//

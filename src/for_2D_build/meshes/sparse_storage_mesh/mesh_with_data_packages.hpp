@@ -7,7 +7,7 @@ namespace SPH
 {
 //=================================================================================================//
 template <size_t PKG_SIZE>
-void MeshWithGridDataPackages<PKG_SIZE>::writeMeshFieldToPltByMesh(std::ofstream &output_file)
+void MeshWithGridDataPackages<PKG_SIZE>::writeMeshVariableToPlt(std::ofstream &output_file)
 {
     output_file << "\n"
                 << "title='View'" << "\n";

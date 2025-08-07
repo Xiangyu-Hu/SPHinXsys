@@ -6,6 +6,24 @@
 
 namespace SPH
 {
+//=================================================================================================//
+inline void NearInterfaceCellTagging::UpdateKernel::update(const size_t &package_index)
+{
+    size_t sort_index = data_mesh_->occupied_data_pkgs_[package_index - num_singular_pkgs_].first;
+    Arrayi cell_index = base_dynamics->CellIndexFromSortIndex(sort_index);
+    UnsignedInt index_1d = data_mesh_->transferMeshIndexTo1D(data_mesh_->AllCells(), cell_index);
+
+    MeshVariableData<Real> &grid_phi = phi_[package_index];
+    Real phi0 = grid_phi[0][0][0];
+    cell_near_interface_id_[index_1d] = phi0 > 0.0 ? 1 : -1;
+    bool is_sign_changed = mesh_any_of3d<0, pkg_size>(
+        [&](int i, int j, int k)
+        {
+            return grid_phi[i][j][k] * phi0 < 0.0;
+        });
+    if (is_sign_changed)
+        cell_near_interface_id_[index_1d] = 0;
+}
 //=============================================================================================//
 inline void UpdateLevelSetGradient::UpdateKernel::update(const size_t &package_index)
 {

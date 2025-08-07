@@ -86,6 +86,20 @@ DataType ProbeMesh<DataType, PKG_SIZE>::operator()(const Vecd &position)
                              : pkg_data_[package_index](Arrayi::Zero());
 }
 //=============================================================================================//
+template <typename CellDataType, typename PackageDataType, size_t PKG_SIZE, typename FunctionByGrid>
+CellDataType assignByGrid(PackageDataMatrix<PackageDataType, PKG_SIZE> &pkg_data,
+                          const FunctionByGrid &function_by_grid, CellDataType inital_value)
+{
+    CellDataType value = inital_value;
+    mesh_for_each(
+        Arrayi::Zero(), Arrayi::Ones() * PKG_SIZE,
+        [&](const Arrayi &index)
+        {
+            value = function_by_grid(pkg_data(index), index, value);
+        });
+    return value;
+}
+//=============================================================================================//
 template <typename DataType, size_t PKG_SIZE>
 DataType ProbeMesh<DataType, PKG_SIZE>::probeDataPackage(
     size_t package_index, const Array2i &cell_index, const Vec2d &position)

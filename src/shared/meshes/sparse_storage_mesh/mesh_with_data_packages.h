@@ -91,12 +91,19 @@ class MeshWithGridDataPackages : public Mesh
     UnsignedInt NumberOfSingularDataPackages() const { return num_singular_pkgs_; };
 
     template <typename DataType>
-    void addVariableToWrite(const std::string &variable_name)
+    void addMeshVariableToWrite(const std::string &variable_name)
     {
-        addVariableToList<DataType>(mesh_variable_to_write_, variable_name);
+        addVariableToList<MeshVariable, DataType>(mesh_variable_to_write_, all_mesh_variables_, variable_name);
     };
 
-    void writeMeshFieldToPltByMesh(std::ofstream &output_file);
+    template <typename DataType>
+    void addDiscreteVariableToWrite(const std::string &variable_name)
+    {
+        addVariableToList<DiscreteVariable, DataType>(discrete_variable_to_write_, all_discrete_variables_, variable_name);
+    };
+
+    void writeMeshVariableToPlt(std::ofstream &output_file);
+    void writeDiscreteVariableToPlt(std::ofstream &output_file);
 
   protected:
     /** Generalized mesh data type */
@@ -105,12 +112,18 @@ class MeshWithGridDataPackages : public Mesh
     MeshVariableAssemble all_mesh_variables_;     /**< all mesh variables on this mesh. */
     MeshVariableAssemble mesh_variable_to_write_; /**< mesh variables to write, which are not empty. */
     const Real data_spacing_;                     /**< spacing of data in the data packages. */
+    typedef DataContainerAddressAssemble<DiscreteVariable> DiscreteVariableAssemble;
+    DataContainerUniquePtrAssemble<DiscreteVariable> discrete_variable_ptrs_;
+    DiscreteVariableAssemble all_discrete_variables_;     /**< all discrete variables on this mesh. */
+    DiscreteVariableAssemble discrete_variable_to_write_; /**< discrete variables to write, which are not empty. */
 
-    template <typename DataType>
-    void addVariableToList(MeshVariableAssemble &variable_set, const std::string &variable_name)
+    template <template <typename> typename ContainerType, typename DataType>
+    void addVariableToList(DataContainerAddressAssemble<ContainerType> &variable_set,
+                           DataContainerAddressAssemble<ContainerType> &all_variable_set,
+                           const std::string &variable_name)
     {
-        MeshVariable<DataType> *variable =
-            findVariableByName<DataType, MeshVariable>(all_mesh_variables_, variable_name);
+        ContainerType<DataType> *variable =
+            findVariableByName<DataType, ContainerType>(all_variable_set, variable_name);
 
         if (variable == nullptr)
         {
@@ -118,8 +131,8 @@ class MeshWithGridDataPackages : public Mesh
             exit(1);
         }
 
-        MeshVariable<DataType> *listed_variable =
-            findVariableByName<DataType, MeshVariable>(variable_set, variable_name);
+        ContainerType<DataType> *listed_variable =
+            findVariableByName<DataType, ContainerType>(variable_set, variable_name);
         if (listed_variable == nullptr)
         {
             constexpr int type_index = DataTypeIndex<DataType>::value;
@@ -220,17 +233,33 @@ class MeshWithGridDataPackages : public Mesh
     template <class ExecutionPolicy>
     void syncMeshVariableData(ExecutionPolicy &ex_policy) { sync_mesh_variable_data_(all_mesh_variables_, ex_policy); };
 
+    template <template <typename> typename ContainerType, typename DataType, typename... Args>
+    ContainerType<DataType> *registerVariable(DataContainerAddressAssemble<ContainerType> &all_variable_set,
+                                              DataContainerUniquePtrAssemble<ContainerType> &all_variable_ptrs_,
+                                              const std::string &variable_name, Args &&...args)
+    {
+        ContainerType<DataType> *variable =
+            findVariableByName<DataType, ContainerType>(all_variable_set, variable_name);
+        if (variable == nullptr)
+        {
+            return addVariableToAssemble<DataType, ContainerType>(
+                all_variable_set, all_variable_ptrs_, variable_name, std::forward<Args>(args)...);
+        }
+        return variable;
+    }
+
     template <typename DataType, typename... Args>
     MeshVariable<DataType> *registerMeshVariable(const std::string &variable_name, Args &&...args)
     {
-        MeshVariable<DataType> *variable =
-            findVariableByName<DataType, MeshVariable>(all_mesh_variables_, variable_name);
-        if (variable == nullptr)
-        {
-            return addVariableToAssemble<DataType, MeshVariable>(
-                all_mesh_variables_, mesh_variable_ptrs_, variable_name, std::forward<Args>(args)...);
-        }
-        return variable;
+        return registerVariable<MeshVariable, DataType>(
+            all_mesh_variables_, mesh_variable_ptrs_, variable_name, std::forward<Args>(args)...);
+    }
+
+    template <typename DataType, typename... Args>
+    DiscreteVariable<DataType> *registerDiscreteVariable(const std::string &variable_name, Args &&...args)
+    {
+        return registerVariable<DiscreteVariable, DataType>(
+            all_discrete_variables_, discrete_variable_ptrs_, variable_name, std::forward<Args>(args)...);
     }
 
     /** return the mesh variable according to the name registered */
@@ -238,6 +267,12 @@ class MeshWithGridDataPackages : public Mesh
     MeshVariable<DataType> *getMeshVariable(const std::string &variable_name)
     {
         return findVariableByName<DataType, MeshVariable>(all_mesh_variables_, variable_name);
+    }
+
+    template <typename DataType>
+    DiscreteVariable<DataType> *getDiscreteVariable(const std::string &variable_name)
+    {
+        return findVariableByName<DataType, DiscreteVariable>(all_discrete_variables_, variable_name);
     }
 
     void registerOccupied(size_t sort_index, int type)
