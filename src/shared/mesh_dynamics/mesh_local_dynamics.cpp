@@ -28,7 +28,7 @@ void InitialCellTagging::UpdateKernel::update(const Arrayi &cell_index)
     }
 }
 //=================================================================================================//
-void InnerCellITagging::UpdateKernel::update(const Arrayi &cell_index)
+void InnerCellTagging::UpdateKernel::update(const Arrayi &cell_index)
 {
     if (isInnerPackage(cell_index) && !data_mesh_->isInnerDataPackage(cell_index))
     {

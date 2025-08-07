@@ -60,14 +60,14 @@ void MultilevelLevelSet::initializeLevel(
     if (coarse_data == nullptr)
     {
         MeshAllDynamics<execution::ParallelPolicy, InitialCellTagging>
-            initialize_data_in_a_cell(*mesh_data, shape_);
-        initialize_data_in_a_cell.exec();
+            initial_cell_tagging(*mesh_data, shape_);
+        initial_cell_tagging.exec();
     }
     else
     {
         MeshAllDynamics<execution::ParallelPolicy, InitialCellTaggingFromCoarse>
-            initialize_data_in_a_cell_from_coarse(*mesh_data, *coarse_data, shape_);
-        initialize_data_in_a_cell_from_coarse.exec();
+            initial_cell_tagging_from_coarse(*mesh_data, *coarse_data, shape_);
+        initial_cell_tagging_from_coarse.exec();
     }
 
     /* All initializations in `FinishDataPackages` are achieved on CPU. */

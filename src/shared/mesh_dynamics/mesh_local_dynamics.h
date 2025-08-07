@@ -197,15 +197,15 @@ class InitialCellTagging : public BaseMeshLocalDynamics
 };
 
 /**
- * @class InnerCellITagging
+ * @class InnerCellTagging
  * @brief Distinguish and categorize the inner data packages within the level set mesh.
  */
-class InnerCellITagging : public BaseMeshLocalDynamics
+class InnerCellTagging : public BaseMeshLocalDynamics
 {
   public:
-    explicit InnerCellITagging(MeshWithGridDataPackagesType &data_mesh)
+    explicit InnerCellTagging(MeshWithGridDataPackagesType &data_mesh)
         : BaseMeshLocalDynamics(data_mesh) {};
-    virtual ~InnerCellITagging() {};
+    virtual ~InnerCellTagging() {};
 
     class UpdateKernel
     {
