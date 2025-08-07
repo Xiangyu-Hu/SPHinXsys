@@ -10,7 +10,7 @@
 using namespace SPH;
 //----------------------------------------------------------------------
 //	Setting for the first geometry.
-//	To use this, please commenting the setting for the second geometry.
+//	To use this, please commenting the setting for the other geometries.
 //----------------------------------------------------------------------
 // std::string full_path_to_file = "./input/SPHinXsys.stl";
 //----------------------------------------------------------------------
@@ -20,29 +20,24 @@ using namespace SPH;
 Vec3d domain_upper_bound(2.3, 4.5, 0.3);
 Vecd translation(0.0, 0.0, 0.0);
 Real scaling = 1.0; */
-
+// Real dp_0 = (domain_upper_bound[0] - domain_lower_bound[0]) / 100.0;
 //----------------------------------------------------------------------
 //	Setting for the second geometry.
-//	To use this, please commenting the setting for the first geometry.
+//	To use this, please commenting the setting for other geometries.
 //----------------------------------------------------------------------
-std::string full_path_to_file = "./input/triangle_prism.stl";
+// std::string full_path_to_file = "./input/triangle_prism.stl";
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real DL = 0.75; // Domain width.
-Real DH = 1.3;  // Domain height.
-Real DW = 1.2;  // Domain width.
-Vec3d domain_lower_bound(-0.2, -0.2, -0.2);
-Vec3d domain_upper_bound(DL, DH, DW);
-Vecd translation(0.5 * DL, 0.5 * DH, 0.5 * DW);
-Real scaling = 2.5;
-//----------------------------------------------------------------------
-//	Below are common parts for the two test geometries.
-//----------------------------------------------------------------------
-BoundingBox system_domain_bounds(domain_lower_bound, domain_upper_bound);
-Real dp_0 = (domain_upper_bound[0] - domain_lower_bound[0]) / 100.0;
-//--------------------------------------------------------------------
-class SolidBodyFromMesh : public ComplexShape
+// Real DL = 0.75; // Domain width.
+// Real DH = 1.3;  // Domain height.
+// Real DW = 1.2;  // Domain width.
+// Vec3d domain_lower_bound(-0.2, -0.2, -0.2);
+// Vec3d domain_upper_bound(DL, DH, DW);
+// Vecd translation(0.5 * DL, 0.5 * DH, 0.5 * DW);
+// Real scaling = 2.5;
+// Real dp_0 = (domain_upper_bound[0] - domain_lower_bound[0]) / 100.0;
+/* class SolidBodyFromMesh : public ComplexShape
 {
   public:
     explicit SolidBodyFromMesh(const std::string &shape_name) : ComplexShape(shape_name)
@@ -50,9 +45,26 @@ class SolidBodyFromMesh : public ComplexShape
         add<ExtrudeShape<TriangleMeshShapeSTL>>(4.0 * dp_0, full_path_to_file, translation, scaling);
         subtract<TriangleMeshShapeSTL>(full_path_to_file, translation, scaling);
     }
-};
+};*/
 //----------------------------------------------------------------------
-//	Setting for the second geometry.
+//	Setting for the third geometry.
+//	To use this, please commenting the setting for other geometries.
+//----------------------------------------------------------------------
+std::string full_path_to_file = "./input/gear3.2.stl";
+//----------------------------------------------------------------------
+//	Basic geometry parameters and numerical setup.
+//----------------------------------------------------------------------
+Vec3d domain_lower_bound(-0.1, -0.1, -0.1);
+Vec3d domain_upper_bound(0.1, 0.1, 0.1);
+Vecd translation(0.0, 0.0, 0.0);
+Real scaling = 1.0;
+Real dp_0 = 0.002;
+//----------------------------------------------------------------------
+//	Below are common parts for the above geometries.
+//----------------------------------------------------------------------
+BoundingBox system_domain_bounds(domain_lower_bound, domain_upper_bound);
+//--------------------------------------------------------------------
+//	Setting for the fourth geometry.
 //	To use this, please commenting the setting for the first geometry.
 //----------------------------------------------------------------------
 // std::string full_path_to_file = "./input/fluid.stl";
@@ -72,14 +84,14 @@ class SolidBodyFromMesh : public ComplexShape
 //----------------------------------------------------------------------
 //	define the imported model.
 //----------------------------------------------------------------------
-// class SolidBodyFromMesh : public ComplexShape
-//{
-//  public:
-//    explicit SolidBodyFromMesh(const std::string &shape_name) : ComplexShape(shape_name)
-//    {
-//        add<TriangleMeshShapeSTL>(full_path_to_file, translation, scaling);
-//    }
-//};
+class SolidBodyFromMesh : public ComplexShape
+{
+  public:
+    explicit SolidBodyFromMesh(const std::string &shape_name) : ComplexShape(shape_name)
+    {
+        add<TriangleMeshShapeSTL>(full_path_to_file, translation, scaling);
+    }
+};
 //-----------------------------------------------------------------------------------------------------------
 //	Main program starts here.
 //-----------------------------------------------------------------------------------------------------------
