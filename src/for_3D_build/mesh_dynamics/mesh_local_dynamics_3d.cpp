@@ -44,7 +44,7 @@ bool InnerCellTagging::UpdateKernel::isInnerPackage(const Arrayi &cell_index)
         });
 }
 //=============================================================================================//
-void InitializeBasicDataForAPackage::UpdateKernel::update(const size_t &package_index)
+void InitializeBasicPackageData::UpdateKernel::update(const size_t &package_index)
 {
     auto &phi = phi_[package_index];
     auto &near_interface_id = near_interface_id_[package_index];

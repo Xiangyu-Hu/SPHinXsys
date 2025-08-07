@@ -287,16 +287,16 @@ class InitializeCellNeighborhood : public BaseMeshLocalDynamics
 };
 
 /**
- * @class InitializeBasicDataForAPackage
+ * @class InitializeBasicPackageData
  * @brief Initialize the `phi` and `near_interface_id` mesh data for each occupied cell.
  */
-class InitializeBasicDataForAPackage : public BaseMeshLocalDynamics
+class InitializeBasicPackageData : public BaseMeshLocalDynamics
 {
   public:
-    explicit InitializeBasicDataForAPackage(MeshWithGridDataPackagesType &data_mesh, Shape &shape)
+    explicit InitializeBasicPackageData(MeshWithGridDataPackagesType &data_mesh, Shape &shape)
         : BaseMeshLocalDynamics(data_mesh),
           shape_(shape) {};
-    virtual ~InitializeBasicDataForAPackage() {};
+    virtual ~InitializeBasicPackageData() {};
 
     class UpdateKernel
     {

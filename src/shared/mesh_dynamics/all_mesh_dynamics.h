@@ -76,7 +76,7 @@ class FinishDataPackages
     MeshAllDynamics<execution::ParallelPolicy, InnerCellTagging> tag_a_cell_is_inner_package{mesh_data_};
     MeshInnerDynamics<execution::ParallelPolicy, InitializeIndexMesh> initialize_index_mesh{mesh_data_};
     MeshInnerDynamics<execution::ParallelPolicy, InitializeCellNeighborhood> initialize_cell_neighborhood{mesh_data_};
-    MeshInnerDynamics<execution::ParallelPolicy, InitializeBasicDataForAPackage> initialize_basic_data_for_a_package{mesh_data_, shape_};
+    MeshInnerDynamics<execution::ParallelPolicy, InitializeBasicPackageData> initialize_basic_data_for_a_package{mesh_data_, shape_};
 };
 
 template <class ExecutionPolicy>
