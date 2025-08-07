@@ -82,18 +82,26 @@ void InitializeCellNeighborhood::UpdateKernel::update(const size_t &package_inde
         });
 }
 //=============================================================================================//
-NearInterfaceCellTagging::NearInterfaceCellTagging(MeshWithGridDataPackagesType &data_mesh)
+NearSurfaceCellContainTagging::NearSurfaceCellContainTagging(MeshWithGridDataPackagesType &data_mesh)
     : BaseMeshLocalDynamics(data_mesh),
       dv_cell_near_interface_id_(
-          data_mesh.registerDiscreteVariable<int>(
+          *data_mesh.registerDiscreteVariable<int>(
               "CellNearInterfaceID", all_cells_.prod(),
               [&](UnsignedInt index)
-              { return MaxInt; })),
-      dv_phi_(data_mesh.getMeshVariable<Real>("LevelSet")) {}
+              { return 2; })),
+      dv_phi_(*data_mesh.getMeshVariable<Real>("LevelSet"))
+{
+    data_mesh.addDiscreteVariableToWrite<int>("CellNearInterfaceID");
+}
+//=============================================================================================//
+CellContainDiffusion::CellContainDiffusion(
+    MeshWithGridDataPackagesType &data_mesh, SingularVariable<UnsignedInt> &sv_count_modified)
+    : BaseMeshLocalDynamics(data_mesh),
+      dv_cell_near_interface_id_(*data_mesh.getDiscreteVariable<int>("CellNearInterfaceID")),
+      sv_count_modified_(sv_count_modified) {}
 //=============================================================================================//
 SingularPackageCorrection::SingularPackageCorrection(MeshWithGridDataPackagesType &data_mesh)
     : BaseMeshLocalDynamics(data_mesh),
-      dv_cell_near_interface_id_(data_mesh.getDiscreteVariable<int>("CellNearInterfaceID")),
-      sv_count_modified_("IsModified", 0) {}
+      dv_cell_near_interface_id_(*data_mesh.getDiscreteVariable<int>("CellNearInterfaceID")) {}
 //=================================================================================================//
 } // namespace SPH

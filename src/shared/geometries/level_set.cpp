@@ -73,6 +73,12 @@ void MultilevelLevelSet::initializeLevel(
     /* All initializations in `FinishDataPackages` are achieved on CPU. */
     FinishDataPackages finish_data_packages(*mesh_data, shape_);
     finish_data_packages.exec();
+
+    //    if (coarse_data == nullptr)
+    //    {
+    CorrectSingularPackage<execution::ParallelPolicy> correct_singular_package(*mesh_data);
+    correct_singular_package.exec();
+    //    }
 }
 //=================================================================================================//
 size_t MultilevelLevelSet::getCoarseLevel(Real h_ratio)

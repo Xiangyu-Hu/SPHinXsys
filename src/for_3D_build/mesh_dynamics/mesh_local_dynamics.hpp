@@ -7,7 +7,7 @@
 namespace SPH
 {
 //=================================================================================================//
-inline void NearInterfaceCellTagging::UpdateKernel::update(const size_t &package_index)
+inline void NearSurfaceCellContainTagging::UpdateKernel::update(const size_t &package_index)
 {
     size_t sort_index = data_mesh_->occupied_data_pkgs_[package_index - num_singular_pkgs_].first;
     Arrayi cell_index = base_dynamics->CellIndexFromSortIndex(sort_index);
@@ -23,6 +23,49 @@ inline void NearInterfaceCellTagging::UpdateKernel::update(const size_t &package
         });
     if (is_sign_changed)
         cell_near_interface_id_[index_1d] = 0;
+}
+//=================================================================================================//
+inline void CellContainDiffusion::UpdateKernel::update(const Arrayi &cell_index)
+{
+    UnsignedInt index_1d = data_mesh_->transferMeshIndexTo1D(data_mesh_->AllCells(), cell_index);
+    if (cell_near_interface_id_[index_1d] == 2)
+    {
+        if (mesh_any_of(
+                Arrayi::Zero().max(cell_index - Arrayi::Ones()),
+                data_mesh_->AllCells().min(cell_index + 2 * Arrayi::Ones()),
+                [&](int l, int m, int n)
+                {
+                    UnsignedInt neighbor_1d = data_mesh_->transferMeshIndexTo1D(data_mesh_->AllCells(), Arrayi(l, m, n));
+                    return cell_near_interface_id_[neighbor_1d] == -1;
+                }))
+        {
+            cell_near_interface_id_[index_1d] = -1;
+            AtomicRef<UnsignedInt> count_modified_cells(*count_modified_);
+            ++count_modified_cells;
+        }
+        else if (mesh_any_of(
+                     Arrayi::Zero().max(cell_index - Arrayi::Ones()),
+                     data_mesh_->AllCells().min(cell_index + 2 * Arrayi::Ones()),
+                     [&](int l, int m, int n)
+                     {
+                         UnsignedInt neighbor_1d = data_mesh_->transferMeshIndexTo1D(data_mesh_->AllCells(), Arrayi(l, m, n));
+                         return cell_near_interface_id_[neighbor_1d] == 1;
+                     }))
+        {
+            cell_near_interface_id_[index_1d] = 1;
+            AtomicRef<UnsignedInt> count_modified_cells(*count_modified_);
+            ++count_modified_cells;
+        }
+    }
+}
+//=================================================================================================//
+inline void SingularPackageCorrection::UpdateKernel::update(const Arrayi &cell_index)
+{
+    UnsignedInt index_1d = data_mesh_->transferMeshIndexTo1D(data_mesh_->AllCells(), cell_index);
+    if (cell_package_index_[index_1d] == 0 && cell_near_interface_id_[index_1d] == 1)
+        cell_package_index_[index_1d] = 1;
+    if (cell_package_index_[index_1d] == 1 && cell_near_interface_id_[index_1d] == -1)
+        cell_package_index_[index_1d] = 0;
 }
 //=============================================================================================//
 inline void UpdateLevelSetGradient::UpdateKernel::update(const size_t &package_index)

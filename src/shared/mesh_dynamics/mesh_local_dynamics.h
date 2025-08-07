@@ -322,11 +322,11 @@ class InitializeBasicPackageData : public BaseMeshLocalDynamics
     Shape &shape_;
 };
 
-class NearInterfaceCellTagging : public BaseMeshLocalDynamics
+class NearSurfaceCellContainTagging : public BaseMeshLocalDynamics
 {
   public:
-    explicit NearInterfaceCellTagging(MeshWithGridDataPackagesType &data_mesh);
-    virtual ~NearInterfaceCellTagging() {};
+    explicit NearSurfaceCellContainTagging(MeshWithGridDataPackagesType &data_mesh);
+    virtual ~NearSurfaceCellContainTagging() {};
 
     class UpdateKernel
     {
@@ -349,8 +349,37 @@ class NearInterfaceCellTagging : public BaseMeshLocalDynamics
     };
 
   protected:
-    DiscreteVariable<int> *dv_cell_near_interface_id_;
-    MeshVariable<Real> *dv_phi_;
+    DiscreteVariable<int> &dv_cell_near_interface_id_;
+    MeshVariable<Real> &dv_phi_;
+};
+
+class CellContainDiffusion : public BaseMeshLocalDynamics
+{
+  public:
+    explicit CellContainDiffusion(MeshWithGridDataPackagesType &data_mesh,
+                                  SingularVariable<UnsignedInt> &sv_count_modified);
+    virtual ~CellContainDiffusion() {};
+
+    class UpdateKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+            : data_mesh_(&encloser.data_mesh_), base_dynamics(&encloser),
+              cell_near_interface_id_(encloser.dv_cell_near_interface_id_.DelegatedData(ex_policy)),
+              count_modified_(encloser.sv_count_modified_.DelegatedData(ex_policy)){};
+        void update(const Arrayi &cell_index);
+
+      protected:
+        MeshWithGridDataPackagesType *data_mesh_;
+        BaseMeshLocalDynamics *base_dynamics;
+        int *cell_near_interface_id_;
+        UnsignedInt *count_modified_;
+    };
+
+  protected:
+    DiscreteVariable<int> &dv_cell_near_interface_id_;
+    SingularVariable<UnsignedInt> &sv_count_modified_;
 };
 
 class SingularPackageCorrection : public BaseMeshLocalDynamics
@@ -366,8 +395,7 @@ class SingularPackageCorrection : public BaseMeshLocalDynamics
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
             : data_mesh_(&encloser.data_mesh_), base_dynamics(&encloser),
               cell_near_interface_id_(encloser.dv_cell_near_interface_id_.DelegatedData(ex_policy)),
-              cell_package_index_(encloser.cell_package_index_.DelegatedData(ex_policy)),
-              count_modified_(encloser.sv_count_modified_.DelegatedData(ex_policy)){};
+              cell_package_index_(encloser.cell_package_index_.DelegatedData(ex_policy)){};
         void update(const Arrayi &cell_index);
 
       protected:
@@ -375,17 +403,11 @@ class SingularPackageCorrection : public BaseMeshLocalDynamics
         BaseMeshLocalDynamics *base_dynamics;
         int *cell_near_interface_id_;
         size_t *cell_package_index_;
-        UnsignedInt *count_modified_;
     };
 
   protected:
-    DiscreteVariable<int> *dv_cell_near_interface_id_;
-    SingularVariable<UnsignedInt> sv_count_modified_;
-
-  public:
-    UnsignedInt countModified() { return sv_count_modified_.getValue(); };
+    DiscreteVariable<int> &dv_cell_near_interface_id_;
 };
-
 /**
  * @class UpdateLevelSetGradient
  * @brief Compute `phi_gradient_` mesh data base on `phi_` state for each occupied cell.

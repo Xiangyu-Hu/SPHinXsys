@@ -7,7 +7,7 @@
 namespace SPH
 {
 //=================================================================================================//
-inline void NearInterfaceCellTagging::UpdateKernel::update(const size_t &package_index)
+inline void NearSurfaceCellContainTagging::UpdateKernel::update(const size_t &package_index)
 {
     size_t sort_index = data_mesh_->occupied_data_pkgs_[package_index - num_singular_pkgs_].first;
     Arrayi cell_index = base_dynamics->CellIndexFromSortIndex(sort_index);
@@ -25,7 +25,7 @@ inline void NearInterfaceCellTagging::UpdateKernel::update(const size_t &package
         cell_near_interface_id_[index_1d] = 0;
 }
 //=================================================================================================//
-inline void SingularPackageCorrection::UpdateKernel::update(const Arrayi &cell_index)
+inline void CellContainDiffusion::UpdateKernel::update(const Arrayi &cell_index)
 {
     UnsignedInt index_1d = data_mesh_->transferMeshIndexTo1D(data_mesh_->AllCells(), cell_index);
     if (cell_package_index_[index_1d] == 1)

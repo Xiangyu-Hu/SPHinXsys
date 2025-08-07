@@ -107,11 +107,12 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     RealBody input_body(sph_system, makeShared<SolidBodyFromMesh>("SolidBodyFromMesh"));
     // level set shape is used for particle relaxation
-    LevelSetShape *level_set_shape = input_body.defineBodyLevelSetShape(2.0)
-                                         ->correctLevelSetSign()
-                                         ->writeLevelSet(sph_system)
-                                         ->addBackgroundMeshVariableToWrite<UnsignedInt>("CellPackageIndex")
-                                         ->writeBackgroundMesh(sph_system);
+     LevelSetShape *level_set_shape =
+    input_body.defineBodyLevelSetShape(2.0)
+        ->correctLevelSetSign()
+        ->writeLevelSet(sph_system)
+        ->addBackgroundMeshVariableToWrite<UnsignedInt>("CellPackageIndex")
+        ->writeBackgroundMesh(sph_system);
     input_body.generateParticles<BaseParticles, Lattice>();
     //----------------------------------------------------------------------
     //	Creating body parts.

@@ -137,5 +137,35 @@ class CorrectTopology : public BaseMeshDynamics, public BaseExecDynamics
     MeshInnerDynamics<ExecutionPolicy, MarkNearInterface> mark_near_interface{mesh_data_};
     MeshInnerDynamics<ExecutionPolicy, DiffuseLevelSetSign> diffuse_level_set_sign{mesh_data_};
 };
+
+template <class ExecutionPolicy>
+class CorrectSingularPackage : public BaseMeshDynamics, public BaseExecDynamics
+{
+  public:
+    explicit CorrectSingularPackage(MeshWithGridDataPackagesType &mesh_data)
+        : BaseMeshDynamics(mesh_data), BaseExecDynamics(), sv_count_modified_("CountModified", 1),
+          near_interface_cell_tagging(mesh_data),
+          cell_contain_diffusion(mesh_data, sv_count_modified_),
+          singular_package_correction(mesh_data) {};
+    virtual ~CorrectSingularPackage() {};
+
+    void exec(Real dt = 0.0) override
+    {
+        near_interface_cell_tagging.exec();
+        while (sv_count_modified_.getValue() > 0)
+        {
+            sv_count_modified_.setValue(0);
+            cell_contain_diffusion.exec();
+        }
+        singular_package_correction.exec();
+    }
+
+  private:
+    SingularVariable<UnsignedInt> sv_count_modified_;
+    MeshInnerDynamics<execution::ParallelPolicy, NearSurfaceCellContainTagging> near_interface_cell_tagging;
+    MeshAllDynamics<execution::ParallelPolicy, CellContainDiffusion> cell_contain_diffusion;
+    MeshAllDynamics<execution::ParallelPolicy, SingularPackageCorrection> singular_package_correction;
+};
+
 } // namespace SPH
 #endif // ALL_MESH_DYNAMICS_H
