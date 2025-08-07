@@ -85,12 +85,42 @@ class MeshWithGridDataPackages : public Mesh
     ConcurrentVec<std::pair<size_t, int>> occupied_data_pkgs_;                          /**< (size_t)sort_index, (int)core1/inner0. */
     UnsignedInt NumberOfGridDataPackages() const { return num_grid_pkgs_; };
 
+    template <typename DataType>
+    void addVariableToWrite(const std::string &variable_name)
+    {
+        addVariableToList<DataType>(mesh_variable_to_write_, variable_name);
+    };
+
+    void writeMeshFieldToPltByMesh(std::ofstream &output_file);
+
   protected:
     /** Generalized mesh data type */
     typedef DataContainerAddressAssemble<MeshVariable> MeshVariableAssemble;
     DataContainerUniquePtrAssemble<MeshVariable> mesh_variable_ptrs_;
-    MeshVariableAssemble all_mesh_variables_; /**< all mesh variables on this mesh. */
-    const Real data_spacing_;                 /**< spacing of data in the data packages. */
+    MeshVariableAssemble all_mesh_variables_;     /**< all mesh variables on this mesh. */
+    MeshVariableAssemble mesh_variable_to_write_; /**< mesh variables to write, which are not empty. */
+    const Real data_spacing_;                     /**< spacing of data in the data packages. */
+
+    template <typename DataType>
+    void addVariableToList(MeshVariableAssemble &variable_set, const std::string &variable_name)
+    {
+        MeshVariable<DataType> *variable =
+            findVariableByName<DataType, MeshVariable>(all_mesh_variables_, variable_name);
+
+        if (variable == nullptr)
+        {
+            std::cout << "\n Error: the mesh variable '" << variable_name << "' is  not exist!" << std::endl;
+            exit(1);
+        }
+
+        MeshVariable<DataType> *listed_variable =
+            findVariableByName<DataType, MeshVariable>(variable_set, variable_name);
+        if (listed_variable == nullptr)
+        {
+            constexpr int type_index = DataTypeIndex<DataType>::value;
+            std::get<type_index>(variable_set).push_back(variable);
+        }
+    };
 
     /** resize all mesh variable data field with `num_grid_pkgs_` size(initially only singular data) */
     struct ResizeMeshVariableData

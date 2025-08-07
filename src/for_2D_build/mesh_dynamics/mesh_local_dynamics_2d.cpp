@@ -57,38 +57,4 @@ void InitializeBasicDataForAPackage::UpdateKernel::update(const size_t &package_
         });
 }
 //=============================================================================================//
-void WriteMeshFieldToPlt::update(std::ofstream &output_file)
-{
-    Arrayi number_of_operation = data_mesh_.global_mesh_.AllGridPoints();
-
-    output_file << "\n";
-    output_file << "title='View'"
-                << "\n";
-    output_file << "variables= "
-                << "x, "
-                << "y, "
-                << "phi, "
-                << "n_x, "
-                << "n_y "
-                << "near_interface_id "
-                << "\n";
-    output_file << "zone i=" << number_of_operation[0] << "  j=" << number_of_operation[1] << "  k=" << 1
-                << "  DATAPACKING=POINT \n";
-
-    mesh_for_column_major(
-        Arrayi::Zero(), number_of_operation,
-        [&](const Array2i &global_index)
-        {
-            Vecd data_position = data_mesh_.global_mesh_.GridPositionFromIndex(global_index);
-            output_file << data_position[0] << " ";
-            output_file << data_position[1] << " ";
-            output_file << DataValueFromGlobalIndex(phi_.Data(), global_index, &data_mesh_, cell_package_index_.Data()) << " ";
-            output_file << DataValueFromGlobalIndex(phi_gradient_.Data(), global_index, &data_mesh_, cell_package_index_.Data())[0] << " ";
-            output_file << DataValueFromGlobalIndex(phi_gradient_.Data(), global_index, &data_mesh_, cell_package_index_.Data())[1] << " ";
-            output_file << DataValueFromGlobalIndex(near_interface_id_.Data(), global_index, &data_mesh_, cell_package_index_.Data()) << " ";
-            output_file << " \n";
-        });
-    output_file << " \n";
-}
-//=============================================================================================//
 } // namespace SPH

@@ -35,7 +35,7 @@
 #include "kernel_tabulated_ck.h"
 #include "mesh_dynamics.h"
 #include "mesh_local_dynamics.hpp"
-#include "mesh_with_data_packages.h"
+#include "mesh_with_data_packages.hpp"
 #include "sphinxsys_variable.h"
 namespace SPH
 {
@@ -80,6 +80,9 @@ class MultilevelLevelSet : public BaseMeshField
     Matd probeKernelSecondGradientIntegral(const Vecd &position, Real h_ratio = 1.0);
     StdVec<MeshWithGridDataPackagesType *> getMeshLevels() { return mesh_data_set_; };
 
+    template <typename DataType>
+    void addVariableToWrite(const std::string &variable_name);
+
     void writeMeshFieldToPlt(const std::string &partial_file_name) override
     {
         sync_mesh_variable_data_();
@@ -88,7 +91,7 @@ class MultilevelLevelSet : public BaseMeshField
         {
             std::string full_file_name = partial_file_name + "_" + std::to_string(l) + ".dat";
             std::ofstream out_file(full_file_name.c_str(), std::ios::app);
-            WriteMeshFieldToPlt(*mesh_data_set_[l]).update(out_file);
+            mesh_data_set_[l]->writeMeshFieldToPltByMesh(out_file);
             out_file.close();
         }
     }
