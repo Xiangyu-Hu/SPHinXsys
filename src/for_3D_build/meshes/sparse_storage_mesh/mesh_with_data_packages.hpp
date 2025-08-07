@@ -99,5 +99,81 @@ void MeshWithGridDataPackages<PKG_SIZE>::writeMeshVariableToPlt(std::ofstream &o
     }
 }
 //=================================================================================================//
+template <size_t PKG_SIZE>
+void MeshWithGridDataPackages<PKG_SIZE>::writeDiscreteVariableToPlt(std::ofstream &output_file)
+{
+    output_file << "\n"
+                << "title='View'" << "\n";
+    output_file << " VARIABLES = " << "x, " << "y, " << "z";
+
+    constexpr int type_index_unsigned = DataTypeIndex<UnsignedInt>::value;
+    for (DiscreteVariable<UnsignedInt> *variable : std::get<type_index_unsigned>(discrete_variable_to_write_))
+    {
+        output_file << ",\"" << variable->Name() << "\"";
+    };
+
+    constexpr int type_index_int = DataTypeIndex<int>::value;
+    for (DiscreteVariable<int> *variable : std::get<type_index_int>(discrete_variable_to_write_))
+    {
+        output_file << ",\"" << variable->Name() << "\"";
+    };
+
+    constexpr int type_index_Vecd = DataTypeIndex<Vecd>::value;
+    for (DiscreteVariable<Vecd> *variable : std::get<type_index_Vecd>(discrete_variable_to_write_))
+    {
+        std::string variable_name = variable->Name();
+        output_file << ",\"" << variable_name << "_x\""
+                    << ",\"" << variable_name << "_y\""
+                    << ",\"" << variable_name << "_z\"";
+    };
+
+    constexpr int type_index_Real = DataTypeIndex<Real>::value;
+    for (DiscreteVariable<Real> *variable : std::get<type_index_Real>(discrete_variable_to_write_))
+    {
+        output_file << ",\"" << variable->Name() << "\"";
+    };
+
+    output_file << " \n";
+
+    Arrayi number_of_operation = AllCells();
+    output_file << "zone i=" << number_of_operation[0] << "  j=" << number_of_operation[1]
+                << "  k=" << number_of_operation[2] << "  DATAPACKING=POINT \n";
+
+    mesh_for_column_major(
+        Arrayi::Zero(), number_of_operation,
+        [&](const Arrayi &cell_index)
+        {
+            UnsignedInt linear_index = transferMeshIndexTo1D(all_cells_, cell_index);
+            Vecd data_position = CellPositionFromIndex(cell_index);
+            output_file << data_position[0] << " " << data_position[1] << " " << data_position[2] << " ";
+
+            for (DiscreteVariable<UnsignedInt> *variable : std::get<type_index_unsigned>(discrete_variable_to_write_))
+            {
+                UnsignedInt value = variable->Data()[linear_index];
+                output_file << value << " ";
+            };
+
+            for (DiscreteVariable<int> *variable : std::get<type_index_int>(discrete_variable_to_write_))
+            {
+                int value = variable->Data()[linear_index];
+                output_file << value << " ";
+            };
+
+            for (DiscreteVariable<Vecd> *variable : std::get<type_index_Vecd>(discrete_variable_to_write_))
+            {
+                Vecd value = variable->Data()[linear_index];
+                output_file << value[0] << " " << value[1] << " " << value[2] << " ";
+            };
+
+            for (DiscreteVariable<Real> *variable : std::get<type_index_Real>(discrete_variable_to_write_))
+            {
+                Real value = variable->Data()[linear_index];
+                output_file << value << " ";
+            };
+            output_file << " \n";
+        });
+    output_file << " \n";
+}
+//=================================================================================================//
 } // namespace SPH
 #endif // MESH_WITH_DATA_PACKAGES_3D_HPP
