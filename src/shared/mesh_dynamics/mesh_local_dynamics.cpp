@@ -48,9 +48,9 @@ void InitializeDataInACellFromCoarse::UpdateKernel::update(const Arrayi &cell_in
     Vecd cell_position = data_mesh_->CellPositionFromIndex(cell_index);
     size_t package_index = probe_coarse_phi_(cell_position) < 0.0 ? 0 : 1;
     data_mesh_->assignDataPackageIndex(cell_index, package_index);
-    if(coarse_mesh_->isWithinCorePackage(coarse_mesh_->cell_package_index_.Data(),
-                                         coarse_mesh_->meta_data_cell_.Data(),
-                                         cell_position))
+    if (coarse_mesh_->isWithinCorePackage(coarse_mesh_->cell_package_index_.Data(),
+                                          coarse_mesh_->meta_data_cell_.Data(),
+                                          cell_position))
     {
         Real signed_distance = shape_->findSignedDistance(cell_position);
         Vecd normal_direction = shape_->findNormalDirection(cell_position);
@@ -63,6 +63,23 @@ void InitializeDataInACellFromCoarse::UpdateKernel::update(const Arrayi &cell_in
         }
     }
 }
+//=============================================================================================//
+void InitializeCellNeighborhood::UpdateKernel::update(const size_t &package_index)
+{
+    size_t sort_index = data_mesh_->occupied_data_pkgs_[package_index - 2].first;
+    Arrayi cell_index = base_dynamics->CellIndexFromSortIndex(sort_index);
+    CellNeighborhood &current = cell_neighborhood_[package_index];
+    std::pair<Arrayi, int> &metadata = meta_data_cell_[package_index];
+    metadata.first = cell_index;
+    metadata.second = data_mesh_->occupied_data_pkgs_[package_index - 2].second;
+
+    mesh_for_each(
+        -Arrayi::Ones(), Arrayi::Ones() * 2,
+        [&](const Arrayi &index)
+        {
+            current(index + Arrayi::Ones()) =
+                data_mesh_->PackageIndexFromCellIndex(cell_package_index_, cell_index + index);
+        });
+}
 //=================================================================================================//
 } // namespace SPH
-//=================================================================================================//

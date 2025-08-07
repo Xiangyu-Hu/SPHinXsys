@@ -67,6 +67,13 @@ class BaseBoundingBox
     {
         return second_ - first_;
     };
+
+    BaseBoundingBox expand(const VecType &expand_size)
+    {
+        VecType new_first = first_ - expand_size;
+        VecType new_second = second_ + expand_size;
+        return BaseBoundingBox(new_first, new_second);
+    };
 };
 /** Operator define. */
 template <class T>

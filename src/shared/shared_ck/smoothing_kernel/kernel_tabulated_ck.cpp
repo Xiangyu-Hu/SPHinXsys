@@ -23,18 +23,11 @@ KernelTabulatedCK::KernelTabulatedCK(Kernel &kernel)
     kernel_size_ = kernel.KernelSize();
 
     dq_ = kernel_size_ / Real(kernel_resolution_);
-    for (int i = 0; i < kernel_resolution_; i++)
+    for (int i = 0; i < tabulated_array_size_; i++)
     {
         w_1d[i] = kernel.W_1D(Real(i - 1) * dq_);
         dw_1d[i] = kernel.dW_1D(Real(i - 1) * dq_);
         d2w_1d[i] = kernel.d2W_1D(Real(i - 1) * dq_);
-    }
-    // kernel trailing zeros
-    for (int i = kernel_resolution_; i < tabulated_array_size_; i++)
-    {
-        w_1d[i] = 0.0;
-        dw_1d[i] = 0.0;
-        d2w_1d[i] = 0.0;
     }
 
     delta_q_0_ = (-1.0 * dq_) * (-2.0 * dq_) * (-3.0 * dq_);

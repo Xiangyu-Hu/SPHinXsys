@@ -70,10 +70,10 @@ class LevelsetBounding : public BaseLocalDynamics<BodyPartByCell>
     Real constrained_distance_;
 };
 
-class LevelsetKernelGradientIntegral : public BaseLocalDynamics<BodyPartByCell>
+class LevelsetKernelGradientIntegral : public LocalDynamics
 {
   public:
-    LevelsetKernelGradientIntegral(NearShapeSurface &body_part);
+    LevelsetKernelGradientIntegral(SPHBody &sph_body, LevelSetShape &level_set_shape);
     virtual ~LevelsetKernelGradientIntegral() {};
 
     class UpdateKernel

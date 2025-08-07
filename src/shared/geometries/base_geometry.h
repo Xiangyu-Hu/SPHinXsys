@@ -32,6 +32,8 @@
 
 #include "base_data_package.h"
 #include "sphinxsys_containers.h"
+
+#include <spdlog/spdlog.h>
 #include <string>
 
 namespace SPH
@@ -65,7 +67,7 @@ class Shape
   public:
     BoundingBox bounding_box_;
 
-    explicit Shape(const std::string &shape_name) : name_(shape_name), is_bounds_found_(false) {};
+    explicit Shape(const std::string &shape_name);
     virtual ~Shape() {};
 
     std::string getName() { return name_; };
@@ -85,6 +87,7 @@ class Shape
   protected:
     std::string name_;
     bool is_bounds_found_;
+    std::shared_ptr<spdlog::logger> logger_;
 
     virtual BoundingBox findBounds() = 0;
 };

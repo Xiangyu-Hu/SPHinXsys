@@ -93,6 +93,7 @@ class UpdateRelation<ExecutionPolicy, Contact<Parameters...>>
     using ContactRelationType = Contact<Parameters...>;
     using NeighborList = typename ContactRelationType::NeighborList;
     using NeighborMethod = typename ContactRelationType::NeighborMethodType;
+    using SearchDepth = typename NeighborMethod::SearchDepth;
     using Identifier = typename BaseLocalDynamicsType::Identifier;
     using SourceType = typename ContactRelationType::SourceType;
     using TargetType = typename ContactRelationType::TargetType;
@@ -118,6 +119,7 @@ class UpdateRelation<ExecutionPolicy, Contact<Parameters...>>
         MaskedSource masked_source_;
         MaskedCriterion masked_criterion_;
         NeighborSearch neighbor_search_;
+        SearchDepth search_depth_;
     };
 
     typedef UpdateRelation<ExecutionPolicy, Contact<Parameters...>> LocalDynamicsType;

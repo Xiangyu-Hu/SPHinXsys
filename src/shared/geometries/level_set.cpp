@@ -8,11 +8,11 @@ namespace SPH
 //=================================================================================================//
 MultilevelLevelSet::MultilevelLevelSet(
     BoundingBox tentative_bounds, MeshWithGridDataPackagesType *coarse_data,
-    Shape &shape, SPHAdaptation &sph_adaptation)
+    Shape &shape, SPHAdaptation &sph_adaptation, Real refinement_ratio)
     : BaseMeshField("LevelSet_" + shape.getName()), shape_(shape), total_levels_(1)
 {
     Real reference_data_spacing = coarse_data->DataSpacing() * 0.5;
-    Real global_h_ratio = sph_adaptation.ReferenceSpacing() / reference_data_spacing;
+    Real global_h_ratio = sph_adaptation.ReferenceSpacing() / reference_data_spacing / refinement_ratio;
     kernel_ = makeUnique<SingularVariable<KernelTabulatedCK>>(
         "levelset_kernel", KernelTabulatedCK(*sph_adaptation.getKernel()));
     global_h_ratio_vec_.push_back(global_h_ratio);
@@ -22,10 +22,10 @@ MultilevelLevelSet::MultilevelLevelSet(
 //=================================================================================================//
 MultilevelLevelSet::MultilevelLevelSet(
     BoundingBox tentative_bounds, Real reference_data_spacing,
-    size_t total_levels, Shape &shape, SPHAdaptation &sph_adaptation)
+    size_t total_levels, Shape &shape, SPHAdaptation &sph_adaptation, Real refinement_ratio)
     : BaseMeshField("LevelSet_" + shape.getName()), shape_(shape), total_levels_(total_levels)
 {
-    Real global_h_ratio = sph_adaptation.ReferenceSpacing() / reference_data_spacing;
+    Real global_h_ratio = sph_adaptation.ReferenceSpacing() / reference_data_spacing / refinement_ratio;
     global_h_ratio_vec_.push_back(global_h_ratio);
     kernel_ = makeUnique<SingularVariable<KernelTabulatedCK>>(
         "levelset_kernel", KernelTabulatedCK(*sph_adaptation.getKernel()));
@@ -50,12 +50,12 @@ void MultilevelLevelSet::initializeLevel(
                 tentative_bounds, reference_data_spacing, 4);
     mesh_data_set_.push_back(mesh_data);
 
-    mesh_data->registerMeshVariable<Real>("Levelset");
-    mesh_data->registerMeshVariable<int>("NearInterfaceID");
-    mesh_data->registerMeshVariable<Vecd>("LevelsetGradient");
-    mesh_data->registerMeshVariable<Real>("KernelWeight");
-    mesh_data->registerMeshVariable<Vecd>("KernelGradient");
-    mesh_data->registerMeshVariable<Matd>("KernelSecondGradient");
+    mesh_data->registerMeshVariable<Real>("LevelSet", 2);
+    mesh_data->registerMeshVariable<int>("NearInterfaceID", 2);
+    mesh_data->registerMeshVariable<Vecd>("LevelSetGradient", 2);
+    mesh_data->addVariableToWrite<Real>("LevelSet");
+    mesh_data->addVariableToWrite<int>("NearInterfaceID");
+    mesh_data->addVariableToWrite<Vecd>("LevelSetGradient");
 
     if (coarse_data == nullptr)
     {

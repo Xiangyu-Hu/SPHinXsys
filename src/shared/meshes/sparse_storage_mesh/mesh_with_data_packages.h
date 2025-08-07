@@ -83,13 +83,44 @@ class MeshWithGridDataPackages : public Mesh
     DiscreteVariable<CellNeighborhood> cell_neighborhood_{"mesh_cell_neighborhood", 2}; /**< 3*3(*3) array to store indicies of neighborhood cells. */
     DiscreteVariable<size_t> cell_package_index_;                                       /**< the package index for each cell in a 1-d array. */
     ConcurrentVec<std::pair<size_t, int>> occupied_data_pkgs_;                          /**< (size_t)sort_index, (int)core1/inner0. */
+    UnsignedInt NumberOfGridDataPackages() const { return num_grid_pkgs_; };
+
+    template <typename DataType>
+    void addVariableToWrite(const std::string &variable_name)
+    {
+        addVariableToList<DataType>(mesh_variable_to_write_, variable_name);
+    };
+
+    void writeMeshFieldToPltByMesh(std::ofstream &output_file);
 
   protected:
     /** Generalized mesh data type */
     typedef DataContainerAddressAssemble<MeshVariable> MeshVariableAssemble;
     DataContainerUniquePtrAssemble<MeshVariable> mesh_variable_ptrs_;
-    MeshVariableAssemble all_mesh_variables_; /**< all mesh variables on this mesh. */
-    const Real data_spacing_;                 /**< spacing of data in the data packages. */
+    MeshVariableAssemble all_mesh_variables_;     /**< all mesh variables on this mesh. */
+    MeshVariableAssemble mesh_variable_to_write_; /**< mesh variables to write, which are not empty. */
+    const Real data_spacing_;                     /**< spacing of data in the data packages. */
+
+    template <typename DataType>
+    void addVariableToList(MeshVariableAssemble &variable_set, const std::string &variable_name)
+    {
+        MeshVariable<DataType> *variable =
+            findVariableByName<DataType, MeshVariable>(all_mesh_variables_, variable_name);
+
+        if (variable == nullptr)
+        {
+            std::cout << "\n Error: the mesh variable '" << variable_name << "' is  not exist!" << std::endl;
+            exit(1);
+        }
+
+        MeshVariable<DataType> *listed_variable =
+            findVariableByName<DataType, MeshVariable>(variable_set, variable_name);
+        if (listed_variable == nullptr)
+        {
+            constexpr int type_index = DataTypeIndex<DataType>::value;
+            std::get<type_index>(variable_set).push_back(variable);
+        }
+    };
 
     /** resize all mesh variable data field with `num_grid_pkgs_` size(initially only singular data) */
     struct ResizeMeshVariableData
@@ -121,6 +152,19 @@ class MeshWithGridDataPackages : public Mesh
         }
     };
     OperationOnDataAssemble<MeshVariableAssemble, SyncMeshVariableData> sync_mesh_variable_data_{};
+
+    void fillFarFieldCellNeighborhood(CellNeighborhood *neighbor)
+    {
+        for (size_t i = 0; i != 2; i++)
+        {
+            mesh_for_each(
+                -Arrayi::Ones(), Arrayi::Ones() * 2,
+                [&](const Arrayi &index)
+                {
+                    neighbor[i](index + Arrayi::Ones()) = i;
+                });
+        }
+    };
 
   public:
     /** wrapper for all index exchange related functions. */
@@ -171,17 +215,15 @@ class MeshWithGridDataPackages : public Mesh
     template <class ExecutionPolicy>
     void syncMeshVariableData(ExecutionPolicy &ex_policy) { sync_mesh_variable_data_(all_mesh_variables_, ex_policy); };
 
-    template <typename DataType>
-    MeshVariable<DataType> *registerMeshVariable(const std::string &variable_name)
+    template <typename DataType, typename... Args>
+    MeshVariable<DataType> *registerMeshVariable(const std::string &variable_name, Args &&...args)
     {
         MeshVariable<DataType> *variable =
             findVariableByName<DataType, MeshVariable>(all_mesh_variables_, variable_name);
         if (variable == nullptr)
         {
-            constexpr int type_index = DataTypeIndex<DataType>::value;
-            size_t new_variable_index = std::get<type_index>(all_mesh_variables_).size();
             return addVariableToAssemble<DataType, MeshVariable>(all_mesh_variables_, mesh_variable_ptrs_,
-                                                                 variable_name, new_variable_index);
+                                                                 variable_name, std::forward<Args>(args)...);
         }
         return variable;
     }
@@ -207,6 +249,7 @@ class MeshWithGridDataPackages : public Mesh
                       });
         num_grid_pkgs_ = occupied_data_pkgs_.size() + 2;
         cell_neighborhood_.reallocateData(par, num_grid_pkgs_);
+        fillFarFieldCellNeighborhood(cell_neighborhood_.Data());
         meta_data_cell_.reallocateData(par, num_grid_pkgs_);
     }
 
