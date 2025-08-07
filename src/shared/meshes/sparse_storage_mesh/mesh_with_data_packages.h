@@ -62,11 +62,13 @@ class MeshWithGridDataPackages : public Mesh
     static constexpr int pkg_size = PKG_SIZE; /**< the size of the data package matrix. */
 
     template <typename... Args>
-    explicit MeshWithGridDataPackages(BoundingBox tentative_bounds,
-                                      Real data_spacing,
-                                      size_t buffer_size)
+    explicit MeshWithGridDataPackages(
+        BoundingBox tentative_bounds, Real data_spacing, size_t buffer_size, UnsignedInt num_singular_pkgs = 2)
         : Mesh(tentative_bounds, pkg_size * data_spacing, buffer_size),
           global_mesh_(mesh_lower_bound_ + 0.5 * data_spacing * Vecd::Ones(), data_spacing, all_cells_ * pkg_size),
+          num_singular_pkgs_(num_singular_pkgs), num_grid_pkgs_(num_singular_pkgs),
+          meta_data_cell_("meta_data_cell", num_singular_pkgs_),
+          cell_neighborhood_("mesh_cell_neighborhood", num_singular_pkgs_),
           cell_package_index_("cell_package_index", all_cells_.prod()),
           data_spacing_(data_spacing),
           index_handler_("index_handler", IndexHandler{data_spacing_, all_cells_, *static_cast<Mesh *>(this)}){};
@@ -77,13 +79,16 @@ class MeshWithGridDataPackages : public Mesh
     Real GridSpacing() { return grid_spacing_; };
     size_t BufferWidth() { return buffer_width_; };
     int DataPackageSize() { return pkg_size; };
-    Mesh global_mesh_;                                                                  /**< the mesh for the locations of all possible data points. */
-    size_t num_grid_pkgs_ = 2;                                                          /**< the number of all distinct packages, initially only 2 singular packages. */
-    DiscreteVariable<std::pair<Arrayi, int>> meta_data_cell_{"meta_data_cell", 2};      /**< metadata for each occupied cell: (arrayi)cell index, (int)core1/inner0. */
-    DiscreteVariable<CellNeighborhood> cell_neighborhood_{"mesh_cell_neighborhood", 2}; /**< 3*3(*3) array to store indicies of neighborhood cells. */
-    DiscreteVariable<size_t> cell_package_index_;                                       /**< the package index for each cell in a 1-d array. */
-    ConcurrentVec<std::pair<size_t, int>> occupied_data_pkgs_;                          /**< (size_t)sort_index, (int)core1/inner0. */
+    Mesh global_mesh_;                                         /**< singular packages used for far field. */
+    UnsignedInt num_singular_pkgs_;                            /**< the number of all packages, initially only singular packages. */
+    UnsignedInt num_grid_pkgs_;                                /**< the number of all packages, initially only with singular packages. */
+    DiscreteVariable<std::pair<Arrayi, int>> meta_data_cell_;  /**< metadata for each occupied cell: (arrayi)cell index, (int)core1/inner0. */
+    DiscreteVariable<CellNeighborhood> cell_neighborhood_;     /**< 3*3(*3) array to store indicies of neighborhood cells. */
+    DiscreteVariable<size_t> cell_package_index_;              /**< the package index for each cell in a 1-d array. */
+    ConcurrentVec<std::pair<size_t, int>> occupied_data_pkgs_; /**< (size_t)sort_index, (int)core1/inner0. */
+
     UnsignedInt NumberOfGridDataPackages() const { return num_grid_pkgs_; };
+    UnsignedInt NumberOfSingularDataPackages() const { return num_singular_pkgs_; };
 
     template <typename DataType>
     void addVariableToWrite(const std::string &variable_name)
@@ -155,7 +160,7 @@ class MeshWithGridDataPackages : public Mesh
 
     void fillFarFieldCellNeighborhood(CellNeighborhood *neighbor)
     {
-        for (size_t i = 0; i != 2; i++)
+        for (size_t i = 0; i != num_singular_pkgs_; i++)
         {
             mesh_for_each(
                 -Arrayi::Ones(), Arrayi::Ones() * 2,
@@ -222,8 +227,8 @@ class MeshWithGridDataPackages : public Mesh
             findVariableByName<DataType, MeshVariable>(all_mesh_variables_, variable_name);
         if (variable == nullptr)
         {
-            return addVariableToAssemble<DataType, MeshVariable>(all_mesh_variables_, mesh_variable_ptrs_,
-                                                                 variable_name, std::forward<Args>(args)...);
+            return addVariableToAssemble<DataType, MeshVariable>(
+                all_mesh_variables_, mesh_variable_ptrs_, variable_name, std::forward<Args>(args)...);
         }
         return variable;
     }
@@ -242,12 +247,13 @@ class MeshWithGridDataPackages : public Mesh
 
     void organizeOccupiedPackages()
     {
-        parallel_sort(occupied_data_pkgs_.begin(), occupied_data_pkgs_.end(),
-                      [](const std::pair<size_t, int> &a, const std::pair<size_t, int> &b)
-                      {
-                          return a.first < b.first;
-                      });
-        num_grid_pkgs_ = occupied_data_pkgs_.size() + 2;
+        parallel_sort(
+            occupied_data_pkgs_.begin(), occupied_data_pkgs_.end(),
+            [](const std::pair<size_t, int> &a, const std::pair<size_t, int> &b)
+            {
+                return a.first < b.first;
+            });
+        num_grid_pkgs_ = occupied_data_pkgs_.size() + num_singular_pkgs_;
         cell_neighborhood_.reallocateData(par, num_grid_pkgs_);
         fillFarFieldCellNeighborhood(cell_neighborhood_.Data());
         meta_data_cell_.reallocateData(par, num_grid_pkgs_);

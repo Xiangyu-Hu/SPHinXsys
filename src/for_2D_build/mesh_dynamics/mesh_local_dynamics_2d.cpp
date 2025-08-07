@@ -32,7 +32,7 @@ void InitializeDataForSingularPackage::update(const size_t package_index, Real f
         });
 }
 //=============================================================================================//
-bool TagACellIsInnerPackage::UpdateKernel::isInnerPackage(const Arrayi &cell_index)
+bool InnerCellITagging::UpdateKernel::isInnerPackage(const Arrayi &cell_index)
 {
     return mesh_any_of(
         Array2i::Zero().max(cell_index - Array2i::Ones()),

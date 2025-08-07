@@ -61,6 +61,7 @@ class BaseMeshLocalDynamics
           all_cells_(data_mesh.AllCells()),
           grid_spacing_(data_mesh.GridSpacing()),
           data_spacing_(data_mesh.DataSpacing()),
+          num_singular_pkgs_(data_mesh.NumberOfSingularDataPackages()),
           meta_data_cell_(data_mesh.meta_data_cell_),
           cell_neighborhood_(data_mesh.cell_neighborhood_),
           cell_package_index_(data_mesh.cell_package_index_),
@@ -74,6 +75,7 @@ class BaseMeshLocalDynamics
     Arrayi all_cells_;
     Real grid_spacing_;
     Real data_spacing_;
+    UnsignedInt num_singular_pkgs_;
     DiscreteVariable<std::pair<Arrayi, int>> &meta_data_cell_;
     DiscreteVariable<CellNeighborhood> &cell_neighborhood_;
     DiscreteVariable<size_t> &cell_package_index_;
@@ -162,16 +164,16 @@ class InitializeDataForSingularPackage : public BaseMeshLocalDynamics
 };
 
 /**
- * @class InitializeDataInACell
+ * @class InitialCellTagging
  * @brief Distinguish and categorize the core data packages within the level set mesh.
  */
-class InitializeDataInACell : public BaseMeshLocalDynamics
+class InitialCellTagging : public BaseMeshLocalDynamics
 {
   public:
-    explicit InitializeDataInACell(MeshWithGridDataPackagesType &data_mesh, Shape &shape)
+    explicit InitialCellTagging(MeshWithGridDataPackagesType &data_mesh, Shape &shape)
         : BaseMeshLocalDynamics(data_mesh),
           shape_(shape) {};
-    virtual ~InitializeDataInACell() {};
+    virtual ~InitialCellTagging() {};
     class UpdateKernel
     {
       public:
@@ -195,15 +197,15 @@ class InitializeDataInACell : public BaseMeshLocalDynamics
 };
 
 /**
- * @class TagACellIsInnerPackage
+ * @class InnerCellITagging
  * @brief Distinguish and categorize the inner data packages within the level set mesh.
  */
-class TagACellIsInnerPackage : public BaseMeshLocalDynamics
+class InnerCellITagging : public BaseMeshLocalDynamics
 {
   public:
-    explicit TagACellIsInnerPackage(MeshWithGridDataPackagesType &data_mesh)
+    explicit InnerCellITagging(MeshWithGridDataPackagesType &data_mesh)
         : BaseMeshLocalDynamics(data_mesh) {};
-    virtual ~TagACellIsInnerPackage() {};
+    virtual ~InnerCellITagging() {};
 
     class UpdateKernel
     {
@@ -240,13 +242,14 @@ class InitializeIndexMesh : public BaseMeshLocalDynamics
       public:
         template <class ExecutionPolicy, class EncloserType>
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : data_mesh_(&encloser.data_mesh_),
-              base_dynamics(&encloser){};
+            : data_mesh_(&encloser.data_mesh_), base_dynamics(&encloser),
+              num_singular_pkgs_(encloser.num_singular_pkgs_){};
         void update(const size_t &package_index);
 
       protected:
         MeshWithGridDataPackagesType *data_mesh_;
         BaseMeshLocalDynamics *base_dynamics;
+        UnsignedInt num_singular_pkgs_;
     };
 };
 
@@ -269,8 +272,8 @@ class InitializeCellNeighborhood : public BaseMeshLocalDynamics
             : meta_data_cell_(encloser.meta_data_cell_.DelegatedData(ex_policy)),
               cell_neighborhood_(encloser.cell_neighborhood_.DelegatedData(ex_policy)),
               cell_package_index_(encloser.cell_package_index_.DelegatedData(ex_policy)),
-              data_mesh_(&encloser.data_mesh_),
-              base_dynamics(&encloser){};
+              data_mesh_(&encloser.data_mesh_), base_dynamics(&encloser),
+              num_singular_pkgs_(encloser.num_singular_pkgs_){};
         void update(const size_t &package_index);
 
       protected:
@@ -279,6 +282,7 @@ class InitializeCellNeighborhood : public BaseMeshLocalDynamics
         size_t *cell_package_index_;
         MeshWithGridDataPackagesType *data_mesh_;
         BaseMeshLocalDynamics *base_dynamics;
+        UnsignedInt num_singular_pkgs_;
     };
 };
 
@@ -593,14 +597,14 @@ class DiffuseLevelSetSign : public BaseMeshLocalDynamics
     };
 };
 
-class InitializeDataInACellFromCoarse : public BaseMeshLocalDynamics
+class InitialCellTaggingFromCoarse : public BaseMeshLocalDynamics
 {
   public:
-    explicit InitializeDataInACellFromCoarse(MeshWithGridDataPackagesType &data_mesh, MeshWithGridDataPackagesType &coarse_mesh, Shape &shape)
+    explicit InitialCellTaggingFromCoarse(MeshWithGridDataPackagesType &data_mesh, MeshWithGridDataPackagesType &coarse_mesh, Shape &shape)
         : BaseMeshLocalDynamics(data_mesh),
           coarse_mesh_(coarse_mesh),
           shape_(shape) {};
-    virtual ~InitializeDataInACellFromCoarse() {};
+    virtual ~InitialCellTaggingFromCoarse() {};
 
     class UpdateKernel
     {

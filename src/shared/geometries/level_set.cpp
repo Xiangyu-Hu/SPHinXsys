@@ -59,13 +59,13 @@ void MultilevelLevelSet::initializeLevel(
 
     if (coarse_data == nullptr)
     {
-        MeshAllDynamics<execution::ParallelPolicy, InitializeDataInACell>
+        MeshAllDynamics<execution::ParallelPolicy, InitialCellTagging>
             initialize_data_in_a_cell(*mesh_data, shape_);
         initialize_data_in_a_cell.exec();
     }
     else
     {
-        MeshAllDynamics<execution::ParallelPolicy, InitializeDataInACellFromCoarse>
+        MeshAllDynamics<execution::ParallelPolicy, InitialCellTaggingFromCoarse>
             initialize_data_in_a_cell_from_coarse(*mesh_data, *coarse_data, shape_);
         initialize_data_in_a_cell_from_coarse.exec();
     }

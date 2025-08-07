@@ -50,13 +50,13 @@ class BaseMeshDynamics
     BaseMeshDynamics(MeshWithGridDataPackagesType &mesh_data)
         : mesh_data_(mesh_data),
           all_cells_(mesh_data.AllCells()),
-          num_grid_pkgs_(mesh_data.num_grid_pkgs_) {};
+          num_singular_pkgs_(mesh_data.NumberOfSingularDataPackages()) {};
     virtual ~BaseMeshDynamics() {};
 
   protected:
     MeshWithGridDataPackagesType &mesh_data_;
     Arrayi all_cells_;
-    size_t &num_grid_pkgs_;
+    UnsignedInt num_singular_pkgs_;
 };
 
 /**
@@ -109,12 +109,13 @@ class MeshInnerDynamics : public LocalDynamicsType, public BaseMeshDynamics
     template <typename... Args>
     void exec(Args &&...args)
     {
+        UnsignedInt num_grid_pkgs = mesh_data_.NumberOfGridDataPackages();
         UpdateKernel *update_kernel = kernel_implementation_.getComputingKernel();
-        package_parallel_for(ExecutionPolicy(), num_grid_pkgs_,
-                             [=](size_t package_index)
-                             {
-                                 update_kernel->update(package_index, args...);
-                             });
+        package_for(ExecutionPolicy(), num_singular_pkgs_, num_grid_pkgs,
+                    [=](size_t package_index)
+                    {
+                        update_kernel->update(package_index, args...);
+                    });
     };
 };
 
@@ -141,14 +142,15 @@ class MeshCoreDynamics : public LocalDynamicsType, public BaseMeshDynamics
 
     void exec()
     {
+        UnsignedInt num_grid_pkgs = mesh_data_.NumberOfGridDataPackages();
         UpdateKernel *update_kernel = kernel_implementation_.getComputingKernel();
         std::pair<SPH::Arrayi, int> *meta_data_cell = meta_data_cell_;
-        package_parallel_for(ExecutionPolicy(), num_grid_pkgs_,
-                             [=](size_t package_index)
-                             {
-                                 if (meta_data_cell[package_index].second == 1)
-                                     update_kernel->update(package_index);
-                             });
+        package_for(ExecutionPolicy(), num_singular_pkgs_, num_grid_pkgs,
+                    [=](size_t package_index)
+                    {
+                        if (meta_data_cell[package_index].second == 1)
+                            update_kernel->update(package_index);
+                    });
     };
 };
 

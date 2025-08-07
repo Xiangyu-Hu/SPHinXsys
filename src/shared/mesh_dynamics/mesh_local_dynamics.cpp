@@ -9,7 +9,7 @@
 namespace SPH
 {
 //=================================================================================================//
-void InitializeDataInACell::UpdateKernel::update(const Arrayi &cell_index)
+void InitialCellTagging::UpdateKernel::update(const Arrayi &cell_index)
 {
     Vecd cell_position = data_mesh_->CellPositionFromIndex(cell_index);
     Real signed_distance = shape_->findSignedDistance(cell_position);
@@ -22,13 +22,13 @@ void InitializeDataInACell::UpdateKernel::update(const Arrayi &cell_index)
         data_mesh_->registerOccupied(sort_index, 1);
     }
     else
-    {
+    { // this is not reliable for non-water tightening shape, to be corrected later
         size_t package_index = shape_->checkContain(cell_position) ? 0 : 1;
         data_mesh_->assignDataPackageIndex(cell_index, package_index);
     }
 }
 //=================================================================================================//
-void TagACellIsInnerPackage::UpdateKernel::update(const Arrayi &cell_index)
+void InnerCellITagging::UpdateKernel::update(const Arrayi &cell_index)
 {
     if (isInnerPackage(cell_index) && !data_mesh_->isInnerDataPackage(cell_index))
     {
@@ -38,12 +38,12 @@ void TagACellIsInnerPackage::UpdateKernel::update(const Arrayi &cell_index)
 //=================================================================================================//
 void InitializeIndexMesh::UpdateKernel::update(const size_t &package_index)
 {
-    size_t sort_index = data_mesh_->occupied_data_pkgs_[package_index - 2].first;
+    size_t sort_index = data_mesh_->occupied_data_pkgs_[package_index - num_singular_pkgs_].first;
     Arrayi cell_index = base_dynamics->CellIndexFromSortIndex(sort_index);
     data_mesh_->assignDataPackageIndex(cell_index, package_index);
 }
 //=================================================================================================//
-void InitializeDataInACellFromCoarse::UpdateKernel::update(const Arrayi &cell_index)
+void InitialCellTaggingFromCoarse::UpdateKernel::update(const Arrayi &cell_index)
 {
     Vecd cell_position = data_mesh_->CellPositionFromIndex(cell_index);
     size_t package_index = probe_coarse_phi_(cell_position) < 0.0 ? 0 : 1;
@@ -66,12 +66,12 @@ void InitializeDataInACellFromCoarse::UpdateKernel::update(const Arrayi &cell_in
 //=============================================================================================//
 void InitializeCellNeighborhood::UpdateKernel::update(const size_t &package_index)
 {
-    size_t sort_index = data_mesh_->occupied_data_pkgs_[package_index - 2].first;
+    size_t sort_index = data_mesh_->occupied_data_pkgs_[package_index - num_singular_pkgs_].first;
     Arrayi cell_index = base_dynamics->CellIndexFromSortIndex(sort_index);
     CellNeighborhood &current = cell_neighborhood_[package_index];
     std::pair<Arrayi, int> &metadata = meta_data_cell_[package_index];
     metadata.first = cell_index;
-    metadata.second = data_mesh_->occupied_data_pkgs_[package_index - 2].second;
+    metadata.second = data_mesh_->occupied_data_pkgs_[package_index - num_singular_pkgs_].second;
 
     mesh_for_each(
         -Arrayi::Ones(), Arrayi::Ones() * 2,

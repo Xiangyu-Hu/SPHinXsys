@@ -13,15 +13,15 @@ void MeshWithGridDataPackages<PKG_SIZE>::writeMeshFieldToPltByMesh(std::ofstream
 {
     StdVec<Coord3D> active_cells;
     auto meta_data = meta_data_cell_.Data();
-    package_parallel_for(execution::seq, num_grid_pkgs_,
-                         [&](size_t package_index)
-                         {
-                             if (meta_data[package_index].second == 1)
-                             {
-                                 auto cell_index = meta_data[package_index].first;
-                                 active_cells.push_back({cell_index[0], cell_index[1], cell_index[2]});
-                             }
-                         });
+    package_for(execution::seq, num_singular_pkgs_, num_grid_pkgs_,
+                [&](size_t package_index)
+                {
+                    if (meta_data[package_index].second == 1)
+                    {
+                        auto cell_index = meta_data[package_index].first;
+                        active_cells.push_back({cell_index[0], cell_index[1], cell_index[2]});
+                    }
+                });
     StdVec<Block3D> clustered_blocks = clusterActiveCells3D(active_cells);
 
     output_file << "\n"
