@@ -50,17 +50,9 @@ void MultilevelLevelSet::initializeLevel(
                 tentative_bounds, reference_data_spacing, 4);
     mesh_data_set_.push_back(mesh_data);
 
-    mesh_data->registerMeshVariable<Real>("LevelSet", mesh_data->NumberOfSingularDataPackages());
-    mesh_data->registerMeshVariable<int>("NearInterfaceID", mesh_data->NumberOfSingularDataPackages());
-    mesh_data->registerMeshVariable<Vecd>("LevelSetGradient", mesh_data->NumberOfSingularDataPackages());
-    mesh_data->addMeshVariableToWrite<Real>("LevelSet");
-    mesh_data->addMeshVariableToWrite<int>("NearInterfaceID");
-    mesh_data->addMeshVariableToWrite<Vecd>("LevelSetGradient");
-
     if (coarse_data == nullptr)
     {
-        MeshAllDynamics<execution::ParallelPolicy, InitialCellTagging>
-            initial_cell_tagging(*mesh_data, shape_);
+        MeshAllDynamics<execution::ParallelPolicy, InitialCellTagging> initial_cell_tagging(*mesh_data, shape_);
         initial_cell_tagging.exec();
     }
     else
@@ -70,15 +62,20 @@ void MultilevelLevelSet::initializeLevel(
         initial_cell_tagging_from_coarse.exec();
     }
 
+    MeshAllDynamics<execution::ParallelPolicy, InnerCellTagging> tag_a_cell_is_inner_package(*mesh_data);
+    tag_a_cell_is_inner_package.exec();
+    mesh_data->organizeOccupiedPackages();
+
+    mesh_data->registerMeshVariable<Real>("LevelSet");
+    mesh_data->registerMeshVariable<int>("NearInterfaceID");
+    mesh_data->registerMeshVariable<Vecd>("LevelSetGradient");
+    mesh_data->addMeshVariableToWrite<Real>("LevelSet");
+    mesh_data->addMeshVariableToWrite<int>("NearInterfaceID");
+    mesh_data->addMeshVariableToWrite<Vecd>("LevelSetGradient");
+
     /* All initializations in `FinishDataPackages` are achieved on CPU. */
     FinishDataPackages finish_data_packages(*mesh_data, shape_);
     finish_data_packages.exec();
-
-    //    if (coarse_data == nullptr)
-    //    {
-    CorrectSingularPackage<execution::ParallelPolicy> correct_singular_package(*mesh_data);
-    correct_singular_package.exec();
-    //    }
 }
 //=================================================================================================//
 size_t MultilevelLevelSet::getCoarseLevel(Real h_ratio)

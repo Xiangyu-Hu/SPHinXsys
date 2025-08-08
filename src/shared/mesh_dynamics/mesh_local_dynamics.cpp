@@ -22,9 +22,8 @@ void InitialCellTagging::UpdateKernel::update(const Arrayi &cell_index)
         data_mesh_->registerOccupied(sort_index, 1);
     }
     else
-    { // this is not reliable for non-water tightening shape, to be corrected later
-        size_t package_index = shape_->checkContain(cell_position) ? 0 : 1;
-        data_mesh_->assignDataPackageIndex(cell_index, package_index);
+    { // farfield assigned to package 0 by default
+        data_mesh_->assignDataPackageIndex(cell_index, 0);
     }
 }
 //=================================================================================================//
@@ -63,6 +62,29 @@ void InitialCellTaggingFromCoarse::UpdateKernel::update(const Arrayi &cell_index
         }
     }
 }
+//=================================================================================================//
+InitializeBasicPackageData::InitializeBasicPackageData(MeshWithGridDataPackagesType &data_mesh, Shape &shape)
+    : BaseMeshLocalDynamics(data_mesh),
+      shape_(shape), far_field_distance(data_mesh.GridSpacing() * (Real)data_mesh.BufferWidth())
+{
+    initializeSingularPackages(0, -far_field_distance);
+    initializeSingularPackages(1, far_field_distance);
+}
+//=================================================================================================//
+InitializeCellNeighborhood::InitializeCellNeighborhood(MeshWithGridDataPackagesType &data_mesh)
+    : BaseMeshLocalDynamics(data_mesh)
+{
+    CellNeighborhood *neighbor = data_mesh.cell_neighborhood_.Data();
+    for (size_t i = 0; i != num_singular_pkgs_; i++)
+    {
+        mesh_for_each(
+            -Arrayi::Ones(), Arrayi::Ones() * 2,
+            [&](const Arrayi &index)
+            {
+                neighbor[i](index + Arrayi::Ones()) = i;
+            });
+    }
+}
 //=============================================================================================//
 void InitializeCellNeighborhood::UpdateKernel::update(const size_t &package_index)
 {
@@ -82,6 +104,10 @@ void InitializeCellNeighborhood::UpdateKernel::update(const size_t &package_inde
         });
 }
 //=============================================================================================//
+ConsistencyCorrection::ConsistencyCorrection(MeshWithGridDataPackagesType &data_mesh)
+    : BaseMeshLocalDynamics(data_mesh),
+      dv_phi_(*data_mesh.getMeshVariable<Real>("LevelSet")) {}
+//=============================================================================================//
 NearSurfaceCellContainTagging::NearSurfaceCellContainTagging(MeshWithGridDataPackagesType &data_mesh)
     : BaseMeshLocalDynamics(data_mesh),
       dv_cell_near_interface_id_(
@@ -100,8 +126,16 @@ CellContainDiffusion::CellContainDiffusion(
       dv_cell_near_interface_id_(*data_mesh.getDiscreteVariable<int>("CellNearInterfaceID")),
       sv_count_modified_(sv_count_modified) {}
 //=============================================================================================//
-SingularPackageCorrection::SingularPackageCorrection(MeshWithGridDataPackagesType &data_mesh)
-    : BaseMeshLocalDynamics(data_mesh),
-      dv_cell_near_interface_id_(*data_mesh.getDiscreteVariable<int>("CellNearInterfaceID")) {}
+UpdateKernelIntegrals::UpdateKernelIntegrals(
+    MeshWithGridDataPackagesType &data_mesh, KernelTabulatedCK *kernel, Real global_h_ratio)
+    : BaseMeshLocalDynamics(data_mesh), kernel_(kernel), global_h_ratio_(global_h_ratio),
+      kernel_weight_(*data_mesh.registerMeshVariable<Real>("KernelWeight", data_mesh.NumberOfGridDataPackages())),
+      kernel_gradient_(*data_mesh.registerMeshVariable<Vecd>("KernelGradient", data_mesh.NumberOfGridDataPackages())),
+      kernel_second_gradient_(*data_mesh.registerMeshVariable<Matd>("KernelSecondGradient", data_mesh.NumberOfGridDataPackages())),
+      far_field_distance(data_mesh.GridSpacing() * (Real)data_mesh.BufferWidth())
+{
+    initializeSingularPackages(0, -far_field_distance);
+    initializeSingularPackages(1, far_field_distance);
+}
 //=================================================================================================//
 } // namespace SPH

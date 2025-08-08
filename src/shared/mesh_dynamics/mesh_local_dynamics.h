@@ -72,6 +72,7 @@ class BaseMeshLocalDynamics
 
     MeshWithGridDataPackagesType &data_mesh_;
     static constexpr int pkg_size = 4;
+    static constexpr int pkg_size_minus1 = pkg_size - 1;
     Arrayi all_cells_;
     Real grid_spacing_;
     Real data_spacing_;
@@ -260,8 +261,7 @@ class InitializeIndexMesh : public BaseMeshLocalDynamics
 class InitializeCellNeighborhood : public BaseMeshLocalDynamics
 {
   public:
-    explicit InitializeCellNeighborhood(MeshWithGridDataPackagesType &data_mesh)
-        : BaseMeshLocalDynamics(data_mesh) {};
+    explicit InitializeCellNeighborhood(MeshWithGridDataPackagesType &data_mesh);
     virtual ~InitializeCellNeighborhood() {};
 
     class UpdateKernel
@@ -293,9 +293,7 @@ class InitializeCellNeighborhood : public BaseMeshLocalDynamics
 class InitializeBasicPackageData : public BaseMeshLocalDynamics
 {
   public:
-    explicit InitializeBasicPackageData(MeshWithGridDataPackagesType &data_mesh, Shape &shape)
-        : BaseMeshLocalDynamics(data_mesh),
-          shape_(shape) {};
+    explicit InitializeBasicPackageData(MeshWithGridDataPackagesType &data_mesh, Shape &shape);
     virtual ~InitializeBasicPackageData() {};
 
     class UpdateKernel
@@ -320,6 +318,38 @@ class InitializeBasicPackageData : public BaseMeshLocalDynamics
 
   private:
     Shape &shape_;
+    Real far_field_distance;
+
+    void initializeSingularPackages(size_t package_index, Real far_field_level_set);
+};
+
+class ConsistencyCorrection : public BaseMeshLocalDynamics
+{
+  public:
+    explicit ConsistencyCorrection(MeshWithGridDataPackagesType &data_mesh);
+    virtual ~ConsistencyCorrection() {};
+
+    class UpdateKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+            : data_mesh_(&encloser.data_mesh_), base_dynamics(&encloser),
+              num_singular_pkgs_(encloser.num_singular_pkgs_),
+              phi_(encloser.dv_phi_.DelegatedData(ex_policy)),
+              threshold_(2.0 * encloser.data_spacing_){};
+        void update(const size_t &index);
+
+      protected:
+        MeshWithGridDataPackagesType *data_mesh_;
+        BaseMeshLocalDynamics *base_dynamics;
+        UnsignedInt num_singular_pkgs_;
+        MeshVariableData<Real> *phi_;
+        Real threshold_;
+    };
+
+  protected:
+    MeshVariable<Real> &dv_phi_;
 };
 
 class NearSurfaceCellContainTagging : public BaseMeshLocalDynamics
@@ -367,6 +397,7 @@ class CellContainDiffusion : public BaseMeshLocalDynamics
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
             : data_mesh_(&encloser.data_mesh_), base_dynamics(&encloser),
               cell_near_interface_id_(encloser.dv_cell_near_interface_id_.DelegatedData(ex_policy)),
+              cell_package_index_(encloser.cell_package_index_.DelegatedData(ex_policy)),
               count_modified_(encloser.sv_count_modified_.DelegatedData(ex_policy)){};
         void update(const Arrayi &cell_index);
 
@@ -374,6 +405,7 @@ class CellContainDiffusion : public BaseMeshLocalDynamics
         MeshWithGridDataPackagesType *data_mesh_;
         BaseMeshLocalDynamics *base_dynamics;
         int *cell_near_interface_id_;
+        size_t *cell_package_index_;
         UnsignedInt *count_modified_;
     };
 
@@ -382,32 +414,6 @@ class CellContainDiffusion : public BaseMeshLocalDynamics
     SingularVariable<UnsignedInt> &sv_count_modified_;
 };
 
-class SingularPackageCorrection : public BaseMeshLocalDynamics
-{
-  public:
-    explicit SingularPackageCorrection(MeshWithGridDataPackagesType &data_mesh);
-    virtual ~SingularPackageCorrection() {};
-
-    class UpdateKernel
-    {
-      public:
-        template <class ExecutionPolicy, class EncloserType>
-        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : data_mesh_(&encloser.data_mesh_), base_dynamics(&encloser),
-              cell_near_interface_id_(encloser.dv_cell_near_interface_id_.DelegatedData(ex_policy)),
-              cell_package_index_(encloser.cell_package_index_.DelegatedData(ex_policy)){};
-        void update(const Arrayi &cell_index);
-
-      protected:
-        MeshWithGridDataPackagesType *data_mesh_;
-        BaseMeshLocalDynamics *base_dynamics;
-        int *cell_near_interface_id_;
-        size_t *cell_package_index_;
-    };
-
-  protected:
-    DiscreteVariable<int> &dv_cell_near_interface_id_;
-};
 /**
  * @class UpdateLevelSetGradient
  * @brief Compute `phi_gradient_` mesh data base on `phi_` state for each occupied cell.
@@ -441,16 +447,8 @@ class UpdateLevelSetGradient : public BaseMeshLocalDynamics
 class UpdateKernelIntegrals : public BaseMeshLocalDynamics
 {
   public:
-    explicit UpdateKernelIntegrals(MeshWithGridDataPackagesType &data_mesh, KernelTabulatedCK *kernel, Real global_h_ratio)
-        : BaseMeshLocalDynamics(data_mesh), kernel_(kernel), global_h_ratio_(global_h_ratio),
-          kernel_weight_(*data_mesh.registerMeshVariable<Real>("KernelWeight", data_mesh.NumberOfGridDataPackages())),
-          kernel_gradient_(*data_mesh.registerMeshVariable<Vecd>("KernelGradient", data_mesh.NumberOfGridDataPackages())),
-          kernel_second_gradient_(*data_mesh.registerMeshVariable<Matd>("KernelSecondGradient", data_mesh.NumberOfGridDataPackages())),
-          far_field_distance(data_mesh.GridSpacing() * (Real)data_mesh.BufferWidth())
-    {
-        initializeSingularPackages(0, -far_field_distance);
-        initializeSingularPackages(1, far_field_distance);
-    };
+    explicit UpdateKernelIntegrals(
+        MeshWithGridDataPackagesType &data_mesh, KernelTabulatedCK *kernel, Real global_h_ratio);
     virtual ~UpdateKernelIntegrals() {};
 
     class UpdateKernel

@@ -61,9 +61,6 @@ class FinishDataPackages
         initialize_cell_neighborhood.exec();
         mesh_data_.resizeMeshVariableData();
 
-        initialize_data_for_singular_package.update(0, -far_field_distance);
-        initialize_data_for_singular_package.update(1, far_field_distance);
-
         initialize_basic_data_for_a_package.exec();
     };
 
@@ -71,12 +68,15 @@ class FinishDataPackages
     MeshWithGridDataPackagesType &mesh_data_;
     Shape &shape_;
     Real far_field_distance;
+    SingularVariable<UnsignedInt> sv_count_modified_{"CountModified", 1};
 
-    InitializeDataForSingularPackage initialize_data_for_singular_package{mesh_data_};
     MeshAllDynamics<execution::ParallelPolicy, InnerCellTagging> tag_a_cell_is_inner_package{mesh_data_};
     MeshInnerDynamics<execution::ParallelPolicy, InitializeIndexMesh> initialize_index_mesh{mesh_data_};
     MeshInnerDynamics<execution::ParallelPolicy, InitializeCellNeighborhood> initialize_cell_neighborhood{mesh_data_};
     MeshInnerDynamics<execution::ParallelPolicy, InitializeBasicPackageData> initialize_basic_data_for_a_package{mesh_data_, shape_};
+    MeshInnerDynamics<execution::ParallelPolicy, ConsistencyCorrection> consistency_correction{mesh_data_};
+    MeshInnerDynamics<execution::ParallelPolicy, NearSurfaceCellContainTagging> near_interface_cell_tagging{mesh_data_};
+    MeshAllDynamics<execution::ParallelPolicy, CellContainDiffusion> cell_contain_diffusion{mesh_data_, sv_count_modified_};
 };
 
 template <class ExecutionPolicy>
@@ -137,35 +137,5 @@ class CorrectTopology : public BaseMeshDynamics, public BaseExecDynamics
     MeshInnerDynamics<ExecutionPolicy, MarkNearInterface> mark_near_interface{mesh_data_};
     MeshInnerDynamics<ExecutionPolicy, DiffuseLevelSetSign> diffuse_level_set_sign{mesh_data_};
 };
-
-template <class ExecutionPolicy>
-class CorrectSingularPackage : public BaseMeshDynamics, public BaseExecDynamics
-{
-  public:
-    explicit CorrectSingularPackage(MeshWithGridDataPackagesType &mesh_data)
-        : BaseMeshDynamics(mesh_data), BaseExecDynamics(), sv_count_modified_("CountModified", 1),
-          near_interface_cell_tagging(mesh_data),
-          cell_contain_diffusion(mesh_data, sv_count_modified_),
-          singular_package_correction(mesh_data) {};
-    virtual ~CorrectSingularPackage() {};
-
-    void exec(Real dt = 0.0) override
-    {
-        near_interface_cell_tagging.exec();
-        while (sv_count_modified_.getValue() > 0)
-        {
-            sv_count_modified_.setValue(0);
-            cell_contain_diffusion.exec();
-        }
-        singular_package_correction.exec();
-    }
-
-  private:
-    SingularVariable<UnsignedInt> sv_count_modified_;
-    MeshInnerDynamics<execution::ParallelPolicy, NearSurfaceCellContainTagging> near_interface_cell_tagging;
-    MeshAllDynamics<execution::ParallelPolicy, CellContainDiffusion> cell_contain_diffusion;
-    MeshAllDynamics<execution::ParallelPolicy, SingularPackageCorrection> singular_package_correction;
-};
-
 } // namespace SPH
 #endif // ALL_MESH_DYNAMICS_H

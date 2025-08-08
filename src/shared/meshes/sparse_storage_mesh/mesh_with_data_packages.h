@@ -174,19 +174,6 @@ class MeshWithGridDataPackages : public Mesh
     };
     OperationOnDataAssemble<MeshVariableAssemble, SyncMeshVariableData> sync_mesh_variable_data_{};
 
-    void fillFarFieldCellNeighborhood(CellNeighborhood *neighbor)
-    {
-        for (size_t i = 0; i != num_singular_pkgs_; i++)
-        {
-            mesh_for_each(
-                -Arrayi::Ones(), Arrayi::Ones() * 2,
-                [&](const Arrayi &index)
-                {
-                    neighbor[i](index + Arrayi::Ones()) = i;
-                });
-        }
-    };
-
   public:
     /** wrapper for all index exchange related functions. */
     struct IndexHandler
@@ -251,11 +238,11 @@ class MeshWithGridDataPackages : public Mesh
         return variable;
     }
 
-    template <typename DataType, typename... Args>
-    MeshVariable<DataType> *registerMeshVariable(const std::string &variable_name, Args &&...args)
+    template <typename DataType>
+    MeshVariable<DataType> *registerMeshVariable(const std::string &variable_name)
     {
         return registerVariable<MeshVariable, DataType>(
-            all_mesh_variables_, mesh_variable_ptrs_, variable_name, std::forward<Args>(args)...);
+            all_mesh_variables_, mesh_variable_ptrs_, variable_name, num_grid_pkgs_);
     }
 
     template <typename DataType, typename... Args>
@@ -293,7 +280,6 @@ class MeshWithGridDataPackages : public Mesh
             });
         num_grid_pkgs_ = occupied_data_pkgs_.size() + num_singular_pkgs_;
         cell_neighborhood_.reallocateData(par, num_grid_pkgs_);
-        fillFarFieldCellNeighborhood(cell_neighborhood_.Data());
         meta_data_cell_.reallocateData(par, num_grid_pkgs_);
     }
 
