@@ -50,13 +50,6 @@ void MultilevelLevelSet::initializeLevel(
                 tentative_bounds, reference_data_spacing, 4);
     mesh_data_set_.push_back(mesh_data);
 
-    mesh_data->registerMeshVariable<Real>("LevelSet", mesh_data->NumberOfSingularDataPackages());
-    mesh_data->registerMeshVariable<int>("NearInterfaceID", mesh_data->NumberOfSingularDataPackages());
-    mesh_data->registerMeshVariable<Vecd>("LevelSetGradient", mesh_data->NumberOfSingularDataPackages());
-    mesh_data->addMeshVariableToWrite<Real>("LevelSet");
-    mesh_data->addMeshVariableToWrite<int>("NearInterfaceID");
-    mesh_data->addMeshVariableToWrite<Vecd>("LevelSetGradient");
-
     if (coarse_data == nullptr)
     {
         MeshAllDynamics<execution::ParallelPolicy, InitialCellTagging>
@@ -70,6 +63,19 @@ void MultilevelLevelSet::initializeLevel(
         initial_cell_tagging_from_coarse.exec();
     }
 
+    MeshAllDynamics<execution::ParallelPolicy, InnerCellTagging> tag_a_cell_is_inner_package(*mesh_data);
+    tag_a_cell_is_inner_package.exec();
+    mesh_data->organizeOccupiedPackages();
+
+    MeshInnerDynamics<execution::ParallelPolicy, InitializeIndexMesh> initialize_index_mesh(*mesh_data);
+    initialize_index_mesh.exec();
+
+    mesh_data->registerMeshVariable<Real>("LevelSet");
+    mesh_data->registerMeshVariable<int>("NearInterfaceID");
+    mesh_data->registerMeshVariable<Vecd>("LevelSetGradient");
+    mesh_data->addMeshVariableToWrite<Real>("LevelSet");
+    mesh_data->addMeshVariableToWrite<int>("NearInterfaceID");
+    mesh_data->addMeshVariableToWrite<Vecd>("LevelSetGradient");
     /* All initializations in `FinishDataPackages` are achieved on CPU. */
     FinishDataPackages finish_data_packages(*mesh_data, shape_);
     finish_data_packages.exec();

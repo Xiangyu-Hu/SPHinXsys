@@ -86,8 +86,7 @@ NearInterfaceCellTagging::NearInterfaceCellTagging(MeshWithGridDataPackagesType 
     : BaseMeshLocalDynamics(data_mesh),
       dv_cell_near_interface_id_(
           data_mesh.registerBKGMeshVariable<int>(
-              "CellNearInterfaceID", all_cells_.prod(),
-              [&](UnsignedInt index)
+              "CellNearInterfaceID", [&](UnsignedInt index)
               { return MaxInt; })),
       dv_phi_(data_mesh.getMeshVariable<Real>("LevelSet")) {}
 //=============================================================================================//

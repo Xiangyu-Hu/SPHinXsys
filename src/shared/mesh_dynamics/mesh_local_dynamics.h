@@ -421,9 +421,9 @@ class UpdateKernelIntegrals : public BaseMeshLocalDynamics
   public:
     explicit UpdateKernelIntegrals(MeshWithGridDataPackagesType &data_mesh, KernelTabulatedCK *kernel, Real global_h_ratio)
         : BaseMeshLocalDynamics(data_mesh), kernel_(kernel), global_h_ratio_(global_h_ratio),
-          kernel_weight_(*data_mesh.registerMeshVariable<Real>("KernelWeight", data_mesh.NumberOfGridDataPackages())),
-          kernel_gradient_(*data_mesh.registerMeshVariable<Vecd>("KernelGradient", data_mesh.NumberOfGridDataPackages())),
-          kernel_second_gradient_(*data_mesh.registerMeshVariable<Matd>("KernelSecondGradient", data_mesh.NumberOfGridDataPackages())),
+          kernel_weight_(*data_mesh.registerMeshVariable<Real>("KernelWeight")),
+          kernel_gradient_(*data_mesh.registerMeshVariable<Vecd>("KernelGradient")),
+          kernel_second_gradient_(*data_mesh.registerMeshVariable<Matd>("KernelSecondGradient")),
           far_field_distance(data_mesh.GridSpacing() * (Real)data_mesh.BufferWidth())
     {
         initializeSingularPackages(0, -far_field_distance);

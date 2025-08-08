@@ -82,7 +82,7 @@ class MeshWithGridDataPackages : public Mesh
           num_singular_pkgs_(num_singular_pkgs), num_grid_pkgs_(num_singular_pkgs),
           meta_data_cell_("meta_data_cell", num_singular_pkgs_),
           cell_neighborhood_("mesh_cell_neighborhood", num_singular_pkgs_),
-          cell_package_index_(*registerBKGMeshVariable<UnsignedInt>("CellPackageIndex", all_cells_.prod())),
+          cell_package_index_(*registerBKGMeshVariable<UnsignedInt>("CellPackageIndex")),
           data_spacing_(data_spacing),
           index_handler_("index_handler", IndexHandler{data_spacing_, all_cells_, *static_cast<Mesh *>(this)}){};
     virtual ~MeshWithGridDataPackages() {};
@@ -144,22 +144,6 @@ class MeshWithGridDataPackages : public Mesh
             std::get<type_index>(variable_set).push_back(variable);
         }
     };
-
-    /** resize all mesh variable data field with `num_grid_pkgs_` size(initially only singular data) */
-    struct ResizeMeshVariableData
-    {
-        template <typename DataType>
-        void operator()(DataContainerAddressKeeper<MeshVariable<DataType>> &all_mesh_variables_,
-                        const size_t num_grid_pkgs_)
-        {
-            for (size_t l = 0; l != all_mesh_variables_.size(); ++l)
-            {
-                MeshVariable<DataType> *variable = all_mesh_variables_[l];
-                variable->reallocateData(par, num_grid_pkgs_);
-            }
-        }
-    };
-    OperationOnDataAssemble<MeshVariableAssemble, ResizeMeshVariableData> resize_mesh_variable_data_{};
 
     struct SyncMeshVariableData
     {
@@ -253,18 +237,25 @@ class MeshWithGridDataPackages : public Mesh
         return variable;
     }
 
-    template <typename DataType, typename... Args>
-    MeshVariable<DataType> *registerMeshVariable(const std::string &variable_name, Args &&...args)
+    template <typename DataType>
+    MeshVariable<DataType> *registerMeshVariable(const std::string &variable_name)
     {
+        if (num_grid_pkgs_ == num_singular_pkgs_)
+        {
+            std::cout << "\n Error: the mesh variable '" << variable_name
+                      << "' is registered before the data packages are organized!" << std::endl;
+            exit(1);
+        }
         return registerVariable<MeshVariable, DataType>(
-            all_mesh_variables_, mesh_variable_ptrs_, variable_name, std::forward<Args>(args)...);
+            all_mesh_variables_, mesh_variable_ptrs_, variable_name, num_grid_pkgs_);
     }
 
     template <typename DataType, typename... Args>
     BKGMeshVariable<DataType> *registerBKGMeshVariable(const std::string &variable_name, Args &&...args)
     {
         return registerVariable<BKGMeshVariable, DataType>(
-            all_bkg_mesh_variables_, bkg_mesh_variable_ptrs_, variable_name, std::forward<Args>(args)...);
+            all_bkg_mesh_variables_, bkg_mesh_variable_ptrs_, variable_name, AllCells().prod(),
+            std::forward<Args>(args)...);
     }
 
     /** return the mesh variable according to the name registered */

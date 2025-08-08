@@ -54,12 +54,7 @@ class FinishDataPackages
 
     void exec()
     {
-        tag_a_cell_is_inner_package.exec();
-
-        mesh_data_.organizeOccupiedPackages();
-        initialize_index_mesh.exec();
         initialize_cell_neighborhood.exec();
-        mesh_data_.resizeMeshVariableData();
 
         initialize_data_for_singular_package.update(0, -far_field_distance);
         initialize_data_for_singular_package.update(1, far_field_distance);
@@ -73,8 +68,6 @@ class FinishDataPackages
     Real far_field_distance;
 
     InitializeDataForSingularPackage initialize_data_for_singular_package{mesh_data_};
-    MeshAllDynamics<execution::ParallelPolicy, InnerCellTagging> tag_a_cell_is_inner_package{mesh_data_};
-    MeshInnerDynamics<execution::ParallelPolicy, InitializeIndexMesh> initialize_index_mesh{mesh_data_};
     MeshInnerDynamics<execution::ParallelPolicy, InitializeCellNeighborhood> initialize_cell_neighborhood{mesh_data_};
     MeshInnerDynamics<execution::ParallelPolicy, InitializeBasicPackageData> initialize_basic_data_for_a_package{mesh_data_, shape_};
 };
