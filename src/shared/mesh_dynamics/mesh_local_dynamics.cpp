@@ -103,6 +103,7 @@ InitializeBasicPackageData::InitializeBasicPackageData(
       mv_phi_gradient_(*data_mesh.registerMeshVariable<Vecd>("LevelSetGradient")),
       mv_near_interface_id_(*data_mesh.registerMeshVariable<int>("CellNearInterfaceID"))
 {
+    data_mesh.addMeshVariableToWrite<Real>("LevelSet");
     initializeSingularPackages(0, -far_field_distance);
     initializeSingularPackages(1, far_field_distance);
 }
