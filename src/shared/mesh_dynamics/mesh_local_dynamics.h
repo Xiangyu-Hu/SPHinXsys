@@ -211,14 +211,14 @@ class InnerCellTagging : public BaseMeshLocalDynamics
 };
 
 /**
- * @class InitializeIndexMesh
+ * @class InitializeCellPackageInfo
  * @brief Store the 1-D array package index for each occupied cell on the mesh.
  */
-class InitializeIndexMesh : public BaseMeshLocalDynamics
+class InitializeCellPackageInfo : public BaseMeshLocalDynamics
 {
   public:
-    explicit InitializeIndexMesh(MeshWithGridDataPackagesType &data_mesh);
-    virtual ~InitializeIndexMesh() {};
+    explicit InitializeCellPackageInfo(MeshWithGridDataPackagesType &data_mesh);
+    virtual ~InitializeCellPackageInfo() {};
 
     class UpdateKernel
     {

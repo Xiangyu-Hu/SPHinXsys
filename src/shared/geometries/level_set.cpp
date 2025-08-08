@@ -67,8 +67,8 @@ void MultilevelLevelSet::initializeLevel(
     tag_a_cell_is_inner_package.exec();
     mesh_data->organizeOccupiedPackages();
 
-    MeshInnerDynamics<execution::ParallelPolicy, InitializeIndexMesh> initialize_index_mesh(*mesh_data);
-    initialize_index_mesh.exec();
+    MeshInnerDynamics<execution::ParallelPolicy, InitializeCellPackageInfo> initialize_cell_pkg_info(*mesh_data);
+    initialize_cell_pkg_info.exec();
 
     /* All initializations in `FinishDataPackages` are achieved on CPU. */
     FinishDataPackages finish_data_packages(*mesh_data, shape_);

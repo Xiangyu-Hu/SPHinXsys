@@ -43,12 +43,12 @@ void InnerCellTagging::UpdateKernel::update(const Arrayi &cell_index)
     }
 }
 //=================================================================================================//
-InitializeIndexMesh::InitializeIndexMesh(MeshWithGridDataPackagesType &data_mesh)
+InitializeCellPackageInfo::InitializeCellPackageInfo(MeshWithGridDataPackagesType &data_mesh)
     : BaseMeshLocalDynamics(data_mesh),
       dv_pkg_cell_info_(data_mesh.dvPkgCellInfo()),
       bmv_cell_pkg_index_(data_mesh.getCellPackageIndex()) {}
 //=================================================================================================//
-void InitializeIndexMesh::UpdateKernel::update(const size_t &package_index)
+void InitializeCellPackageInfo::UpdateKernel::update(const size_t &package_index)
 {
     ConcurrentVec<std::pair<size_t, int>> &occupied_data_pkgs = data_mesh_->getOccupiedDataPackages();
     size_t sort_index = occupied_data_pkgs[package_index - num_singular_pkgs_].first;
