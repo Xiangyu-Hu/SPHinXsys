@@ -59,6 +59,8 @@ class MeshWithGridDataPackages : public Mesh
     using MeshVariableData = PackageDataMatrix<DataType, PKG_SIZE>;
     template <typename DataType>
     using MeshVariable = DiscreteVariable<MeshVariableData<DataType>>;
+    template <typename DataType>
+    using BKGMeshVariable = DiscreteVariable<DataType>;
     static constexpr int pkg_size = PKG_SIZE; /**< the size of the data package matrix. */
 
   protected:
@@ -66,10 +68,10 @@ class MeshWithGridDataPackages : public Mesh
     DataContainerUniquePtrAssemble<MeshVariable> mesh_variable_ptrs_;
     MeshVariableAssemble all_mesh_variables_;     /**< all mesh variables on this mesh. */
     MeshVariableAssemble mesh_variable_to_write_; /**< mesh variables to write, which are not empty. */
-    typedef DataContainerAddressAssemble<DiscreteVariable> DiscreteVariableAssemble;
-    DataContainerUniquePtrAssemble<DiscreteVariable> discrete_variable_ptrs_;
-    DiscreteVariableAssemble all_discrete_variables_;     /**< all discrete variables on this mesh. */
-    DiscreteVariableAssemble discrete_variable_to_write_; /**< discrete variables to write, which are not empty. */
+    typedef DataContainerAddressAssemble<DiscreteVariable> BKGMeshVariableAssemble;
+    DataContainerUniquePtrAssemble<DiscreteVariable> bkg_mesh_variable_ptrs_;
+    BKGMeshVariableAssemble all_bkg_mesh_variables_;     /**< all discrete variables on this mesh. */
+    BKGMeshVariableAssemble bkg_mesh_variable_to_write_; /**< discrete variables to write, which are not empty. */
 
   public:
     template <typename... Args>
@@ -80,7 +82,7 @@ class MeshWithGridDataPackages : public Mesh
           num_singular_pkgs_(num_singular_pkgs), num_grid_pkgs_(num_singular_pkgs),
           meta_data_cell_("meta_data_cell", num_singular_pkgs_),
           cell_neighborhood_("mesh_cell_neighborhood", num_singular_pkgs_),
-          cell_package_index_(*registerDiscreteVariable<UnsignedInt>("CellPackageIndex", all_cells_.prod())),
+          cell_package_index_(*registerBKGMeshVariable<UnsignedInt>("CellPackageIndex", all_cells_.prod())),
           data_spacing_(data_spacing),
           index_handler_("index_handler", IndexHandler{data_spacing_, all_cells_, *static_cast<Mesh *>(this)}){};
     virtual ~MeshWithGridDataPackages() {};
@@ -95,7 +97,7 @@ class MeshWithGridDataPackages : public Mesh
     UnsignedInt num_grid_pkgs_;                                /**< the number of all packages, initially only with singular packages. */
     DiscreteVariable<std::pair<Arrayi, int>> meta_data_cell_;  /**< metadata for each occupied cell: (arrayi)cell index, (int)core1/inner0. */
     DiscreteVariable<CellNeighborhood> cell_neighborhood_;     /**< 3*3(*3) array to store indicies of neighborhood cells. */
-    DiscreteVariable<UnsignedInt> &cell_package_index_;        /**< the package index for each cell in a 1-d array. */
+    BKGMeshVariable<UnsignedInt> &cell_package_index_;         /**< the package index for each cell in a 1-d array. */
     ConcurrentVec<std::pair<size_t, int>> occupied_data_pkgs_; /**< (size_t)sort_index, (int)core1/inner0. */
 
     UnsignedInt NumberOfGridDataPackages() const { return num_grid_pkgs_; };
@@ -108,13 +110,13 @@ class MeshWithGridDataPackages : public Mesh
     };
 
     template <typename DataType>
-    void addDiscreteVariableToWrite(const std::string &variable_name)
+    void addBKGMeshVariableToWrite(const std::string &variable_name)
     {
-        addVariableToList<DiscreteVariable, DataType>(discrete_variable_to_write_, all_discrete_variables_, variable_name);
+        addVariableToList<DiscreteVariable, DataType>(bkg_mesh_variable_to_write_, all_bkg_mesh_variables_, variable_name);
     };
 
     void writeMeshVariableToPlt(std::ofstream &output_file);
-    void writeDiscreteVariableToPlt(std::ofstream &output_file);
+    void writeBKGMeshVariableToPlt(std::ofstream &output_file);
 
   protected:
     /** Generalized mesh data type */
@@ -259,10 +261,10 @@ class MeshWithGridDataPackages : public Mesh
     }
 
     template <typename DataType, typename... Args>
-    DiscreteVariable<DataType> *registerDiscreteVariable(const std::string &variable_name, Args &&...args)
+    BKGMeshVariable<DataType> *registerBKGMeshVariable(const std::string &variable_name, Args &&...args)
     {
-        return registerVariable<DiscreteVariable, DataType>(
-            all_discrete_variables_, discrete_variable_ptrs_, variable_name, std::forward<Args>(args)...);
+        return registerVariable<BKGMeshVariable, DataType>(
+            all_bkg_mesh_variables_, bkg_mesh_variable_ptrs_, variable_name, std::forward<Args>(args)...);
     }
 
     /** return the mesh variable according to the name registered */
@@ -273,9 +275,9 @@ class MeshWithGridDataPackages : public Mesh
     }
 
     template <typename DataType>
-    DiscreteVariable<DataType> *getDiscreteVariable(const std::string &variable_name)
+    BKGMeshVariable<DataType> *getBKGMeshVariable(const std::string &variable_name)
     {
-        return findVariableByName<DataType, DiscreteVariable>(all_discrete_variables_, variable_name);
+        return findVariableByName<DataType, BKGMeshVariable>(all_bkg_mesh_variables_, variable_name);
     }
 
     void registerOccupied(size_t sort_index, int type)

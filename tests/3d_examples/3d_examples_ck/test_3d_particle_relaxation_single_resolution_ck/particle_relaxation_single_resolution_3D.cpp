@@ -110,8 +110,8 @@ int main(int ac, char *av[])
     LevelSetShape *level_set_shape = input_body.defineBodyLevelSetShape(2.0)
                                          ->correctLevelSetSign()
                                          ->writeLevelSet(sph_system)
-                                         ->addBackgroundMeshVariableToWrite<UnsignedInt>("CellPackageIndex")
-                                         ->writeBackgroundMesh(sph_system);
+                                         ->addBKGMeshVariableToWrite<UnsignedInt>("CellPackageIndex")
+                                         ->writeBKGMesh(sph_system);
     input_body.generateParticles<BaseParticles, Lattice>();
     //----------------------------------------------------------------------
     //	Creating body parts.

@@ -108,11 +108,11 @@ void MultilevelLevelSet::addMeshVariableToWrite(const std::string &variable_name
 }
 //=================================================================================================//
 template <typename DataType>
-void MultilevelLevelSet::addBackgroundMeshVariableToWrite(const std::string &variable_name)
+void MultilevelLevelSet::addBKGMeshVariableToWrite(const std::string &variable_name)
 {
     for (size_t level = 0; level < total_levels_; level++)
     {
-        mesh_data_set_[level]->addDiscreteVariableToWrite<DataType>(variable_name);
+        mesh_data_set_[level]->addBKGMeshVariableToWrite<DataType>(variable_name);
     }
 }
 //=================================================================================================//

@@ -84,8 +84,8 @@ class MultilevelLevelSet : public BaseMeshField
     void addMeshVariableToWrite(const std::string &variable_name);
     void writeMeshFieldToPlt(const std::string &partial_file_name) override;
     template <typename DataType>
-    void addBackgroundMeshVariableToWrite(const std::string &variable_name);
-    void writeBackgroundMeshToPlt(const std::string &partial_file_name) override;
+    void addBKGMeshVariableToWrite(const std::string &variable_name);
+    void writeBKGMeshToPlt(const std::string &partial_file_name) override;
 
     template <class ExecutionPolicy>
     void syncMeshVariableData(ExecutionPolicy &ex_policy)

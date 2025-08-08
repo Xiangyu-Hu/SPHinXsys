@@ -199,13 +199,13 @@ void MultilevelLevelSet::writeMeshFieldToPlt(const std::string &partial_file_nam
     }
 }
 //=================================================================================================//
-void MultilevelLevelSet::writeBackgroundMeshToPlt(const std::string &partial_file_name)
+void MultilevelLevelSet::writeBKGMeshToPlt(const std::string &partial_file_name)
 {
     for (size_t l = 0; l != total_levels_; ++l)
     {
         std::string full_file_name = partial_file_name + "_" + std::to_string(l) + ".dat";
         std::ofstream out_file(full_file_name.c_str(), std::ios::app);
-        mesh_data_set_[l]->writeDiscreteVariableToPlt(out_file);
+        mesh_data_set_[l]->writeBKGMeshVariableToPlt(out_file);
         out_file.close();
     }
 }

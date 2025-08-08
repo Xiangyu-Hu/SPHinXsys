@@ -85,7 +85,7 @@ void InitializeCellNeighborhood::UpdateKernel::update(const size_t &package_inde
 NearInterfaceCellTagging::NearInterfaceCellTagging(MeshWithGridDataPackagesType &data_mesh)
     : BaseMeshLocalDynamics(data_mesh),
       dv_cell_near_interface_id_(
-          data_mesh.registerDiscreteVariable<int>(
+          data_mesh.registerBKGMeshVariable<int>(
               "CellNearInterfaceID", all_cells_.prod(),
               [&](UnsignedInt index)
               { return MaxInt; })),
@@ -93,7 +93,7 @@ NearInterfaceCellTagging::NearInterfaceCellTagging(MeshWithGridDataPackagesType 
 //=============================================================================================//
 SingularPackageCorrection::SingularPackageCorrection(MeshWithGridDataPackagesType &data_mesh)
     : BaseMeshLocalDynamics(data_mesh),
-      dv_cell_near_interface_id_(data_mesh.getDiscreteVariable<int>("CellNearInterfaceID")),
+      dv_cell_near_interface_id_(data_mesh.getBKGMeshVariable<int>("CellNearInterfaceID")),
       sv_count_modified_("IsModified", 0) {}
 //=================================================================================================//
 } // namespace SPH
