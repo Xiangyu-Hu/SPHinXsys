@@ -30,7 +30,7 @@ void InitialCellTagging::UpdateKernel::update(const Arrayi &cell_index)
     }
     else
     {
-        data_mesh_->assignDataPackageIndex(cell_index, 0); // inner far field by default
+        data_mesh_->assignDataPackageIndex(cell_index, 1); // outside far field by default
     }
 }
 //=================================================================================================//
