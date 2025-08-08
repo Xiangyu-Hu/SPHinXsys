@@ -217,8 +217,7 @@ class InnerCellTagging : public BaseMeshLocalDynamics
 class InitializeIndexMesh : public BaseMeshLocalDynamics
 {
   public:
-    explicit InitializeIndexMesh(MeshWithGridDataPackagesType &data_mesh)
-        : BaseMeshLocalDynamics(data_mesh) {};
+    explicit InitializeIndexMesh(MeshWithGridDataPackagesType &data_mesh);
     virtual ~InitializeIndexMesh() {};
 
     class UpdateKernel
@@ -227,14 +226,22 @@ class InitializeIndexMesh : public BaseMeshLocalDynamics
         template <class ExecutionPolicy, class EncloserType>
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
             : data_mesh_(&encloser.data_mesh_), base_dynamics(&encloser),
-              num_singular_pkgs_(encloser.num_singular_pkgs_){};
+              num_singular_pkgs_(encloser.num_singular_pkgs_),
+              pkg_cell_info_(encloser.dv_pkg_cell_info_.DelegatedData(ex_policy)),
+              cell_pkg_index_(encloser.bmv_cell_pkg_index_.DelegatedData(ex_policy)){};
         void update(const size_t &package_index);
 
       protected:
         MeshWithGridDataPackagesType *data_mesh_;
         BaseMeshLocalDynamics *base_dynamics;
         UnsignedInt num_singular_pkgs_;
+        std::pair<Arrayi, int> *pkg_cell_info_;
+        size_t *cell_pkg_index_;
     };
+
+  protected:
+    DiscreteVariable<std::pair<Arrayi, int>> &dv_pkg_cell_info_;
+    BKGMeshVariable<size_t> &bmv_cell_pkg_index_;
 };
 
 /**

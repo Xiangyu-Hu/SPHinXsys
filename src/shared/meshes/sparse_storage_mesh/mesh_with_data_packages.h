@@ -92,8 +92,7 @@ class MeshWithGridDataPackages : public Mesh
     Real GridSpacing() { return grid_spacing_; };
     size_t BufferWidth() { return buffer_width_; };
     int DataPackageSize() { return pkg_size; };
-    Mesh global_mesh_;                                         /**< singular packages used for far field. */
-    ConcurrentVec<std::pair<size_t, int>> occupied_data_pkgs_; /**< (size_t)sort_index, (int)core1/inner0. */
+    Mesh global_mesh_; /**< singular packages used for far field. */
 
     UnsignedInt NumSingularPackages() const { return num_singular_pkgs_; };
 
@@ -117,6 +116,11 @@ class MeshWithGridDataPackages : public Mesh
         return checkOrganized("getCellPackageIndex", bmv_cell_pkg_index_);
     };
 
+    ConcurrentVec<std::pair<size_t, int>> &getOccupiedDataPackages()
+    {
+        return checkOrganized("getOccupiedDataPackages", occupied_data_pkgs_);
+    }
+
     template <typename DataType>
     void addMeshVariableToWrite(const std::string &variable_name)
     {
@@ -138,6 +142,7 @@ class MeshWithGridDataPackages : public Mesh
     DiscreteVariable<std::pair<Arrayi, int>> dv_pkg_cell_info_; /**< metadata for each occupied cell: (arrayi)cell index, (int)core1/inner0. */
     DiscreteVariable<CellNeighborhood> cell_neighborhood_;      /**< 3*3(*3) array to store indicies of neighborhood cells. */
     BKGMeshVariable<UnsignedInt> &bmv_cell_pkg_index_;          /**< the package index for each cell in a 1-d array. */
+    ConcurrentVec<std::pair<size_t, int>> occupied_data_pkgs_;  /**< (size_t)sort_index, (int)core1/inner0. */
     const Real data_spacing_;                                   /**< spacing of data in the data packages. */
     bool is_organized_ = false;                                 /**< whether the data packages are organized. */
 

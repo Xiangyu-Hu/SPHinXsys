@@ -9,7 +9,7 @@ namespace SPH
 //=================================================================================================//
 inline void NearInterfaceCellTagging::UpdateKernel::update(const size_t &package_index)
 {
-    size_t sort_index = data_mesh_->occupied_data_pkgs_[package_index - num_singular_pkgs_].first;
+    size_t sort_index = data_mesh_->getOccupiedDataPackages()[package_index - num_singular_pkgs_].first;
     Arrayi cell_index = base_dynamics->CellIndexFromSortIndex(sort_index);
     UnsignedInt index_1d = data_mesh_->transferMeshIndexTo1D(data_mesh_->AllCells(), cell_index);
 

@@ -43,11 +43,21 @@ void InnerCellTagging::UpdateKernel::update(const Arrayi &cell_index)
     }
 }
 //=================================================================================================//
+InitializeIndexMesh::InitializeIndexMesh(MeshWithGridDataPackagesType &data_mesh)
+    : BaseMeshLocalDynamics(data_mesh),
+      dv_pkg_cell_info_(data_mesh.dvPkgCellInfo()),
+      bmv_cell_pkg_index_(data_mesh.getCellPackageIndex()) {}
+//=================================================================================================//
 void InitializeIndexMesh::UpdateKernel::update(const size_t &package_index)
 {
-    size_t sort_index = data_mesh_->occupied_data_pkgs_[package_index - num_singular_pkgs_].first;
+    ConcurrentVec<std::pair<size_t, int>> &occupied_data_pkgs = data_mesh_->getOccupiedDataPackages();
+    size_t sort_index = occupied_data_pkgs[package_index - num_singular_pkgs_].first;
     Arrayi cell_index = base_dynamics->CellIndexFromSortIndex(sort_index);
-    data_mesh_->assignDataPackageIndex(cell_index, package_index);
+    UnsignedInt linear_index = data_mesh_->LinearCellIndexFromCellIndex(cell_index);
+    cell_pkg_index_[linear_index] = package_index;
+    std::pair<Arrayi, int> &metadata = pkg_cell_info_[package_index];
+    metadata.first = cell_index;
+    metadata.second = occupied_data_pkgs[package_index - num_singular_pkgs_].second;
 }
 //=================================================================================================//
 void InitialCellTaggingFromCoarse::UpdateKernel::update(const Arrayi &cell_index)
@@ -78,13 +88,8 @@ InitializeCellNeighborhood::InitializeCellNeighborhood(MeshWithGridDataPackagesT
 //=============================================================================================//
 void InitializeCellNeighborhood::UpdateKernel::update(const size_t &package_index)
 {
-    size_t sort_index = data_mesh_->occupied_data_pkgs_[package_index - num_singular_pkgs_].first;
-    Arrayi cell_index = base_dynamics->CellIndexFromSortIndex(sort_index);
     CellNeighborhood &current = cell_neighborhood_[package_index];
-    std::pair<Arrayi, int> &metadata = pkg_cell_info_[package_index];
-    metadata.first = cell_index;
-    metadata.second = data_mesh_->occupied_data_pkgs_[package_index - num_singular_pkgs_].second;
-
+    Arrayi cell_index = pkg_cell_info_[package_index].first;
     mesh_for_each(
         -Arrayi::Ones(), Arrayi::Ones() * 2,
         [&](const Arrayi &index)
