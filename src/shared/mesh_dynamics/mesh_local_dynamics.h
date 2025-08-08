@@ -252,26 +252,26 @@ class InitializeCellNeighborhood : public BaseMeshLocalDynamics
       public:
         template <class ExecutionPolicy, class EncloserType>
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : meta_data_cell_(encloser.dv_meta_data_cell_.DelegatedData(ex_policy)),
+            : pkg_cell_info_(encloser.dv_pkg_cell_info_.DelegatedData(ex_policy)),
               cell_neighborhood_(encloser.dv_cell_neighborhood_.DelegatedData(ex_policy)),
-              cell_package_index_(encloser.bmv_cell_package_index_.DelegatedData(ex_policy)),
+              cell_pkg_index_(encloser.bmv_cell_pkg_index_.DelegatedData(ex_policy)),
               data_mesh_(&encloser.data_mesh_), base_dynamics(&encloser),
               num_singular_pkgs_(encloser.num_singular_pkgs_){};
         void update(const size_t &package_index);
 
       protected:
-        std::pair<Arrayi, int> *meta_data_cell_;
+        std::pair<Arrayi, int> *pkg_cell_info_;
         CellNeighborhood *cell_neighborhood_;
-        size_t *cell_package_index_;
+        size_t *cell_pkg_index_;
         MeshWithGridDataPackagesType *data_mesh_;
         BaseMeshLocalDynamics *base_dynamics;
         UnsignedInt num_singular_pkgs_;
     };
 
   protected:
-    DiscreteVariable<std::pair<Arrayi, int>> &dv_meta_data_cell_;
+    DiscreteVariable<std::pair<Arrayi, int>> &dv_pkg_cell_info_;
     DiscreteVariable<CellNeighborhood> &dv_cell_neighborhood_;
-    BKGMeshVariable<size_t> &bmv_cell_package_index_;
+    BKGMeshVariable<size_t> &bmv_cell_pkg_index_;
 };
 
 /**
@@ -290,7 +290,7 @@ class InitializeBasicPackageData : public BaseMeshLocalDynamics
         template <class ExecutionPolicy, class EncloserType>
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
             : index_handler_(encloser.data_mesh_.index_handler_.DelegatedData(ex_policy)),
-              meta_data_cell_(encloser.dv_meta_data_cell_.DelegatedData(ex_policy)),
+              pkg_cell_info_(encloser.dv_pkg_cell_info_.DelegatedData(ex_policy)),
               shape_(&encloser.shape_),
               phi_(encloser.mv_phi_.DelegatedData(ex_policy)),
               near_interface_id_(encloser.mv_near_interface_id_.DelegatedData(ex_policy)){};
@@ -298,7 +298,7 @@ class InitializeBasicPackageData : public BaseMeshLocalDynamics
 
       protected:
         MeshWithGridDataPackagesType::IndexHandler *index_handler_;
-        std::pair<Arrayi, int> *meta_data_cell_;
+        std::pair<Arrayi, int> *pkg_cell_info_;
         Shape *shape_;
         MeshVariableData<Real> *phi_;
         MeshVariableData<int> *near_interface_id_;
@@ -307,7 +307,7 @@ class InitializeBasicPackageData : public BaseMeshLocalDynamics
   private:
     Shape &shape_;
     Real far_field_distance;
-    DiscreteVariable<std::pair<Arrayi, int>> &dv_meta_data_cell_;
+    DiscreteVariable<std::pair<Arrayi, int>> &dv_pkg_cell_info_;
     MeshVariable<Real> &mv_phi_;
     MeshVariable<Vecd> &mv_phi_gradient_;
     MeshVariable<int> &mv_near_interface_id_;
@@ -358,7 +358,7 @@ class SingularPackageCorrection : public BaseMeshLocalDynamics
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
             : data_mesh_(&encloser.data_mesh_), base_dynamics(&encloser),
               cell_near_interface_id_(encloser.dv_cell_near_interface_id_.DelegatedData(ex_policy)),
-              cell_package_index_(encloser.cell_package_index_.DelegatedData(ex_policy)),
+              cell_pkg_index_(encloser.cell_pkg_index_.DelegatedData(ex_policy)),
               count_modified_(encloser.sv_count_modified_.DelegatedData(ex_policy)){};
         void update(const Arrayi &cell_index);
 
@@ -366,7 +366,7 @@ class SingularPackageCorrection : public BaseMeshLocalDynamics
         MeshWithGridDataPackagesType *data_mesh_;
         BaseMeshLocalDynamics *base_dynamics;
         int *cell_near_interface_id_;
-        size_t *cell_package_index_;
+        size_t *cell_pkg_index_;
         UnsignedInt *count_modified_;
     };
 
@@ -431,17 +431,17 @@ class UpdateKernelIntegrals : public BaseMeshLocalDynamics
               kernel_weight_(encloser.mv_kernel_weight_.DelegatedData(ex_policy)),
               kernel_gradient_(encloser.mv_kernel_gradient_.DelegatedData(ex_policy)),
               kernel_second_gradient_(encloser.mv_kernel_second_gradient_.DelegatedData(ex_policy)),
-              meta_data_cell_(encloser.dv_meta_data_cell_.DelegatedData(ex_policy)),
+              pkg_cell_info_(encloser.dv_pkg_cell_info_.DelegatedData(ex_policy)),
               kernel_(encloser.kernel_),
               index_handler_(encloser.data_mesh_.index_handler_.DelegatedData(ex_policy)),
               cell_neighborhood_(encloser.dv_cell_neighborhood_.DelegatedData(ex_policy)),
-              cell_package_index_(encloser.bmv_cell_package_index_.DelegatedData(ex_policy)),
+              cell_pkg_index_(encloser.bmv_cell_pkg_index_.DelegatedData(ex_policy)),
               probe_signed_distance_(ex_policy, &encloser.data_mesh_),
               cutoff_radius_(kernel_->CutOffRadius(global_h_ratio_)),
               depth_(static_cast<int>(std::ceil((cutoff_radius_ - Eps) / data_spacing_))){};
         void update(const size_t &package_index)
         {
-            Arrayi cell_index = meta_data_cell_[package_index].first;
+            Arrayi cell_index = pkg_cell_info_[package_index].first;
             assignByGrid(
                 kernel_weight_, cell_index, [&](const Arrayi &grid_index) -> Real
                 { return computeKernelIntegral(package_index, grid_index); });
@@ -461,12 +461,12 @@ class UpdateKernelIntegrals : public BaseMeshLocalDynamics
         MeshVariableData<Real> *kernel_weight_;
         MeshVariableData<Vecd> *kernel_gradient_;
         MeshVariableData<Matd> *kernel_second_gradient_;
-        std::pair<Arrayi, int> *meta_data_cell_;
+        std::pair<Arrayi, int> *pkg_cell_info_;
 
         KernelTabulatedCK *kernel_;
         MeshWithGridDataPackagesType::IndexHandler *index_handler_;
         CellNeighborhood *cell_neighborhood_;
-        size_t *cell_package_index_;
+        size_t *cell_pkg_index_;
         ProbeSignedDistance probe_signed_distance_;
 
         Real cutoff_radius_, depth_;
@@ -499,9 +499,9 @@ class UpdateKernelIntegrals : public BaseMeshLocalDynamics
     Real global_h_ratio_;
     MeshVariable<Real> &mv_phi_;
     MeshVariable<Vecd> &mv_phi_gradient_;
-    DiscreteVariable<std::pair<Arrayi, int>> &dv_meta_data_cell_;
+    DiscreteVariable<std::pair<Arrayi, int>> &dv_pkg_cell_info_;
     DiscreteVariable<CellNeighborhood> &dv_cell_neighborhood_;
-    BKGMeshVariable<size_t> &bmv_cell_package_index_;
+    BKGMeshVariable<size_t> &bmv_cell_pkg_index_;
     MeshVariable<Real> &mv_kernel_weight_;
     MeshVariable<Vecd> &mv_kernel_gradient_;
     MeshVariable<Matd> &mv_kernel_second_gradient_;

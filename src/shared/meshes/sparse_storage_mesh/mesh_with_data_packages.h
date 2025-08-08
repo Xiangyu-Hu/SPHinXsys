@@ -80,9 +80,9 @@ class MeshWithGridDataPackages : public Mesh
         : Mesh(tentative_bounds, pkg_size * data_spacing, buffer_size),
           global_mesh_(mesh_lower_bound_ + 0.5 * data_spacing * Vecd::Ones(), data_spacing, all_cells_ * pkg_size),
           num_singular_pkgs_(num_singular_pkgs), num_grid_pkgs_(num_singular_pkgs),
-          meta_data_cell_("meta_data_cell", num_singular_pkgs_),
+          pkg_cell_info_("meta_data_cell", num_singular_pkgs_),
           cell_neighborhood_("mesh_cell_neighborhood", num_singular_pkgs_),
-          cell_package_index_(*registerBKGMeshVariable<UnsignedInt>("CellPackageIndex")),
+          cell_pkg_index_(*registerBKGMeshVariable<UnsignedInt>("CellPackageIndex")),
           data_spacing_(data_spacing),
           index_handler_("index_handler", IndexHandler{data_spacing_, all_cells_, *static_cast<Mesh *>(this)}){};
     virtual ~MeshWithGridDataPackages() {};
@@ -95,9 +95,9 @@ class MeshWithGridDataPackages : public Mesh
     Mesh global_mesh_;                                         /**< singular packages used for far field. */
     UnsignedInt num_singular_pkgs_;                            /**< the number of all packages, initially only singular packages. */
     UnsignedInt num_grid_pkgs_;                                /**< the number of all packages, initially only with singular packages. */
-    DiscreteVariable<std::pair<Arrayi, int>> meta_data_cell_;  /**< metadata for each occupied cell: (arrayi)cell index, (int)core1/inner0. */
+    DiscreteVariable<std::pair<Arrayi, int>> pkg_cell_info_;   /**< metadata for each occupied cell: (arrayi)cell index, (int)core1/inner0. */
     DiscreteVariable<CellNeighborhood> cell_neighborhood_;     /**< 3*3(*3) array to store indicies of neighborhood cells. */
-    BKGMeshVariable<UnsignedInt> &cell_package_index_;         /**< the package index for each cell in a 1-d array. */
+    BKGMeshVariable<UnsignedInt> &cell_pkg_index_;             /**< the package index for each cell in a 1-d array. */
     ConcurrentVec<std::pair<size_t, int>> occupied_data_pkgs_; /**< (size_t)sort_index, (int)core1/inner0. */
     UnsignedInt NumSingularPackages() const { return num_singular_pkgs_; };
 
@@ -108,7 +108,7 @@ class MeshWithGridDataPackages : public Mesh
 
     DiscreteVariable<std::pair<Arrayi, int>> &getMetaDataCell()
     {
-        return checkOrganized("getMetaDataCell", meta_data_cell_);
+        return checkOrganized("getMetaDataCell", pkg_cell_info_);
     };
 
     DiscreteVariable<CellNeighborhood> &getCellNeighborhood()
@@ -118,7 +118,7 @@ class MeshWithGridDataPackages : public Mesh
 
     DiscreteVariable<size_t> &getCellPackageIndex()
     {
-        return checkOrganized("getCellPackageIndex", cell_package_index_);
+        return checkOrganized("getCellPackageIndex", cell_pkg_index_);
     };
 
     template <typename DataType>
@@ -316,7 +316,7 @@ class MeshWithGridDataPackages : public Mesh
         num_grid_pkgs_ = occupied_data_pkgs_.size() + num_singular_pkgs_;
         cell_neighborhood_.reallocateData(par, num_grid_pkgs_);
         fillFarFieldCellNeighborhood(cell_neighborhood_.Data());
-        meta_data_cell_.reallocateData(par, num_grid_pkgs_);
+        pkg_cell_info_.reallocateData(par, num_grid_pkgs_);
         is_organized_ = true;
     }
 
@@ -327,7 +327,7 @@ class MeshWithGridDataPackages : public Mesh
          * NOTE currently this func is only used in non-device mode;
          *      use the `DelegatedData` version when needed.
          */
-        return cell_package_index_.Data()[index_1d] > 1;
+        return cell_pkg_index_.Data()[index_1d] > 1;
     }
 
     bool isWithinCorePackage(size_t *cell_package_index,
@@ -349,10 +349,10 @@ class MeshWithGridDataPackages : public Mesh
     {
         size_t index_1d = transferMeshIndexTo1D(all_cells_, cell_index);
         /**
-         * NOTE currently the `cell_package_index_` is only assigned in the host;
+         * NOTE currently the `cell_pkg_index_` is only assigned in the host;
          *      use the `DelegatedData` version when needed.
          */
-        cell_package_index_.Data()[index_1d] = package_index;
+        cell_pkg_index_.Data()[index_1d] = package_index;
     }
 };
 } // namespace SPH

@@ -25,10 +25,10 @@ void MultilevelLevelSet::initializeMeshVariables(const ExecutionPolicy &ex_polic
         update_level_set_gradient.exec();
 
         registerProbes(ex_policy, level);
-        cell_package_index_set_.push_back(
-            mesh_data_set_[level]->cell_package_index_.DelegatedData(ex_policy));
-        meta_data_cell_set_.push_back(
-            mesh_data_set_[level]->meta_data_cell_.DelegatedData(ex_policy));
+        cell_pkg_index_set_.push_back(
+            mesh_data_set_[level]->cell_pkg_index_.DelegatedData(ex_policy));
+        pkg_cell_info_set_.push_back(
+            mesh_data_set_[level]->pkg_cell_info_.DelegatedData(ex_policy));
     }
 }
 //=================================================================================================//

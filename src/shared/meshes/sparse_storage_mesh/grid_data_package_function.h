@@ -70,7 +70,7 @@ class ProbeMesh
   protected:
     PackageDataMatrix<DataType, PKG_SIZE> *pkg_data_;
     IndexHandler *index_handler_;
-    size_t *cell_package_index_;
+    size_t *cell_pkg_index_;
     CellNeighborhood *cell_neighborhood_;
     /** probe by applying bi and tri-linear interpolation within the package. */
     DataType probeDataPackage(size_t package_index, const Array2i &cell_index, const Vec2d &position);

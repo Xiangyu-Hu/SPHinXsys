@@ -55,8 +55,8 @@ void InitialCellTaggingFromCoarse::UpdateKernel::update(const Arrayi &cell_index
     Vecd cell_position = data_mesh_->CellPositionFromIndex(cell_index);
     size_t package_index = probe_coarse_phi_(cell_position) < 0.0 ? 0 : 1;
     data_mesh_->assignDataPackageIndex(cell_index, package_index);
-    if (coarse_mesh_->isWithinCorePackage(coarse_mesh_->cell_package_index_.Data(),
-                                          coarse_mesh_->meta_data_cell_.Data(),
+    if (coarse_mesh_->isWithinCorePackage(coarse_mesh_->cell_pkg_index_.Data(),
+                                          coarse_mesh_->pkg_cell_info_.Data(),
                                           cell_position))
     {
         Real signed_distance = shape_->findSignedDistance(cell_position);
@@ -72,16 +72,16 @@ void InitialCellTaggingFromCoarse::UpdateKernel::update(const Arrayi &cell_index
 }
 //=================================================================================================//
 InitializeCellNeighborhood::InitializeCellNeighborhood(MeshWithGridDataPackagesType &data_mesh)
-    : BaseMeshLocalDynamics(data_mesh), dv_meta_data_cell_(data_mesh.getMetaDataCell()),
+    : BaseMeshLocalDynamics(data_mesh), dv_pkg_cell_info_(data_mesh.getMetaDataCell()),
       dv_cell_neighborhood_(data_mesh.getCellNeighborhood()),
-      bmv_cell_package_index_(data_mesh.getCellPackageIndex()) {}
+      bmv_cell_pkg_index_(data_mesh.getCellPackageIndex()) {}
 //=============================================================================================//
 void InitializeCellNeighborhood::UpdateKernel::update(const size_t &package_index)
 {
     size_t sort_index = data_mesh_->occupied_data_pkgs_[package_index - num_singular_pkgs_].first;
     Arrayi cell_index = base_dynamics->CellIndexFromSortIndex(sort_index);
     CellNeighborhood &current = cell_neighborhood_[package_index];
-    std::pair<Arrayi, int> &metadata = meta_data_cell_[package_index];
+    std::pair<Arrayi, int> &metadata = pkg_cell_info_[package_index];
     metadata.first = cell_index;
     metadata.second = data_mesh_->occupied_data_pkgs_[package_index - num_singular_pkgs_].second;
 
@@ -90,7 +90,7 @@ void InitializeCellNeighborhood::UpdateKernel::update(const size_t &package_inde
         [&](const Arrayi &index)
         {
             current(index + Arrayi::Ones()) =
-                data_mesh_->PackageIndexFromCellIndex(cell_package_index_, cell_index + index);
+                data_mesh_->PackageIndexFromCellIndex(cell_pkg_index_, cell_index + index);
         });
 }
 //=============================================================================================//
@@ -98,7 +98,7 @@ InitializeBasicPackageData::InitializeBasicPackageData(
     MeshWithGridDataPackagesType &data_mesh, Shape &shape)
     : BaseMeshLocalDynamics(data_mesh), shape_(shape),
       far_field_distance(data_mesh.GridSpacing() * (Real)data_mesh.BufferWidth()),
-      dv_meta_data_cell_(data_mesh.getMetaDataCell()),
+      dv_pkg_cell_info_(data_mesh.getMetaDataCell()),
       mv_phi_(*data_mesh.registerMeshVariable<Real>("LevelSet")),
       mv_phi_gradient_(*data_mesh.registerMeshVariable<Vecd>("LevelSetGradient")),
       mv_near_interface_id_(*data_mesh.registerMeshVariable<int>("CellNearInterfaceID"))
@@ -132,9 +132,9 @@ UpdateKernelIntegrals::UpdateKernelIntegrals(
     : BaseMeshLocalDynamics(data_mesh), kernel_(kernel), global_h_ratio_(global_h_ratio),
       mv_phi_(*data_mesh.getMeshVariable<Real>("LevelSet")),
       mv_phi_gradient_(*data_mesh.getMeshVariable<Vecd>("LevelSetGradient")),
-      dv_meta_data_cell_(data_mesh.getMetaDataCell()),
+      dv_pkg_cell_info_(data_mesh.getMetaDataCell()),
       dv_cell_neighborhood_(data_mesh.getCellNeighborhood()),
-      bmv_cell_package_index_(data_mesh.getCellPackageIndex()),
+      bmv_cell_pkg_index_(data_mesh.getCellPackageIndex()),
       mv_kernel_weight_(*data_mesh.registerMeshVariable<Real>("KernelWeight")),
       mv_kernel_gradient_(*data_mesh.registerMeshVariable<Vecd>("KernelGradient")),
       mv_kernel_second_gradient_(*data_mesh.registerMeshVariable<Matd>("KernelSecondGradient")),

@@ -28,7 +28,7 @@ inline void NearInterfaceCellTagging::UpdateKernel::update(const size_t &package
 inline void SingularPackageCorrection::UpdateKernel::update(const Arrayi &cell_index)
 {
     UnsignedInt index_1d = data_mesh_->transferMeshIndexTo1D(data_mesh_->AllCells(), cell_index);
-    if (cell_package_index_[index_1d] == 1)
+    if (cell_pkg_index_[index_1d] == 1)
     {
         bool is_negative = mesh_any_of(
             Array2i::Zero().max(cell_index - Array2i::Ones()),
@@ -41,13 +41,13 @@ inline void SingularPackageCorrection::UpdateKernel::update(const Arrayi &cell_i
 
         if (is_negative)
         {
-            cell_package_index_[index_1d] = 0;
+            cell_pkg_index_[index_1d] = 0;
             AtomicRef<UnsignedInt> count_modified_cells(*count_modified_);
             ++count_modified_cells;
         }
     }
 
-    if (cell_package_index_[index_1d] == 0)
+    if (cell_pkg_index_[index_1d] == 0)
     {
         bool is_positive = mesh_any_of(
             Array2i::Zero().max(cell_index - Array2i::Ones()),
@@ -60,7 +60,7 @@ inline void SingularPackageCorrection::UpdateKernel::update(const Arrayi &cell_i
 
         if (is_positive)
         {
-            cell_package_index_[index_1d] = 1;
+            cell_pkg_index_[index_1d] = 1;
             AtomicRef<UnsignedInt> count_modified_cells(*count_modified_);
             ++count_modified_cells;
         }
@@ -110,7 +110,7 @@ void UpdateKernelIntegrals::UpdateKernel::assignByGrid(MeshVariableData<DataType
                                                        const Arrayi &cell_index,
                                                        const FunctionByGrid &function_by_grid)
 {
-    size_t package_index = index_handler_->PackageIndexFromCellIndex(cell_package_index_, cell_index);
+    size_t package_index = index_handler_->PackageIndexFromCellIndex(cell_pkg_index_, cell_index);
     auto &pkg_data = mesh_variable[package_index];
     mesh_for_each2d<0, pkg_size>(
         [&](int i, int j)
