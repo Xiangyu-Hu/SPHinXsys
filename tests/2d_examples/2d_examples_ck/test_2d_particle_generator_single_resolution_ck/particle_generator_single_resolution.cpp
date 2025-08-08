@@ -45,6 +45,7 @@ int main(int ac, char *av[])
                                          ->addMeshVariableToWrite<Real>("KernelWeight")
                                          ->writeLevelSet(sph_system)
                                          ->addBKGMeshVariableToWrite<UnsignedInt>("CellPackageIndex")
+                                         ->addBKGMeshVariableToWrite<int>("CellContainID")
                                          ->writeBKGMesh(sph_system);
     input_body.generateParticles<BaseParticles, Lattice>();
 

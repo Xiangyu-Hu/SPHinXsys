@@ -283,13 +283,27 @@ class MeshWithGridDataPackages : public Mesh
     template <typename DataType>
     MeshVariable<DataType> *getMeshVariable(const std::string &variable_name)
     {
-        return findVariableByName<DataType, MeshVariable>(all_mesh_variables_, variable_name);
+        MeshVariable<DataType> *variable =
+            findVariableByName<DataType, MeshVariable>(all_mesh_variables_, variable_name);
+        if (variable == nullptr)
+        {
+            std::cout << "\n Error: the mesh variable '" << variable_name << "' is not exist!" << std::endl;
+            exit(1);
+        }
+        return variable;
     }
 
     template <typename DataType>
     BKGMeshVariable<DataType> *getBKGMeshVariable(const std::string &variable_name)
     {
-        return findVariableByName<DataType, BKGMeshVariable>(all_bkg_mesh_variables_, variable_name);
+        BKGMeshVariable<DataType> *variable =
+            findVariableByName<DataType, BKGMeshVariable>(all_bkg_mesh_variables_, variable_name);
+        if (variable == nullptr)
+        {
+            std::cout << "\n Error: the BKG mesh variable '" << variable_name << "' is not exist!" << std::endl;
+            exit(1);
+        }
+        return variable;
     }
 
     void registerOccupied(size_t sort_index, int type)

@@ -29,9 +29,8 @@ void InitialCellTagging::UpdateKernel::update(const Arrayi &cell_index)
         data_mesh_->registerOccupied(sort_index, 1);
     }
     else
-    { // this is not reliable for non-water tightening shape, to be corrected later
-        size_t package_index = shape_->checkContain(cell_position) ? 0 : 1;
-        data_mesh_->assignDataPackageIndex(cell_index, package_index);
+    {
+        data_mesh_->assignDataPackageIndex(cell_index, 0); // inner far field by default
     }
 }
 //=================================================================================================//
@@ -118,25 +117,31 @@ InitializeBasicPackageData::InitializeBasicPackageData(
       dv_pkg_cell_info_(data_mesh.dvPkgCellInfo()),
       mv_phi_(*data_mesh.registerMeshVariable<Real>("LevelSet")),
       mv_phi_gradient_(*data_mesh.registerMeshVariable<Vecd>("LevelSetGradient")),
-      mv_near_interface_id_(*data_mesh.registerMeshVariable<int>("CellNearInterfaceID"))
+      mv_near_interface_id_(*data_mesh.registerMeshVariable<int>("NearInterfaceID"))
 {
     data_mesh.addMeshVariableToWrite<Real>("LevelSet");
     initializeSingularPackages(0, -far_field_distance);
     initializeSingularPackages(1, far_field_distance);
 }
 //=============================================================================================//
+ConsistencyCorrection::ConsistencyCorrection(MeshWithGridDataPackagesType &data_mesh)
+    : BaseMeshLocalDynamics(data_mesh),
+      mv_phi_(*data_mesh.getMeshVariable<Real>("LevelSet")) {}
+//=============================================================================================//
 NearInterfaceCellTagging::NearInterfaceCellTagging(MeshWithGridDataPackagesType &data_mesh)
     : BaseMeshLocalDynamics(data_mesh),
-      dv_cell_near_interface_id_(
-          data_mesh.registerBKGMeshVariable<int>(
-              "CellNearInterfaceID", [&](UnsignedInt index)
-              { return MaxInt; })),
-      dv_phi_(data_mesh.getMeshVariable<Real>("LevelSet")) {}
+      bmv_cell_near_interface_id_(
+          *data_mesh.registerBKGMeshVariable<int>(
+              "CellContainID", [&](UnsignedInt index)
+              { return 2; })), // default value is 2, indicating not near interface
+      mv_phi_(*data_mesh.getMeshVariable<Real>("LevelSet")) {}
 //=============================================================================================//
-SingularPackageCorrection::SingularPackageCorrection(MeshWithGridDataPackagesType &data_mesh)
+CellContainDiffusion::CellContainDiffusion(
+    MeshWithGridDataPackagesType &data_mesh, SingularVariable<UnsignedInt> &sv_count_modified)
     : BaseMeshLocalDynamics(data_mesh),
-      dv_cell_near_interface_id_(data_mesh.getBKGMeshVariable<int>("CellNearInterfaceID")),
-      sv_count_modified_("IsModified", 0) {}
+      bmv_cell_near_interface_id_(*data_mesh.getBKGMeshVariable<int>("CellContainID")),
+      bmv_cell_package_index_(data_mesh.getCellPackageIndex()),
+      sv_count_modified_(sv_count_modified) {}
 //=============================================================================================//
 UpdateLevelSetGradient::UpdateLevelSetGradient(MeshWithGridDataPackagesType &data_mesh)
     : BaseMeshLocalDynamics(data_mesh),
@@ -164,26 +169,26 @@ UpdateKernelIntegrals::UpdateKernelIntegrals(
 MarkNearInterface::MarkNearInterface(MeshWithGridDataPackagesType &data_mesh)
     : BaseMeshLocalDynamics(data_mesh),
       mv_phi_(*data_mesh.getMeshVariable<Real>("LevelSet")),
-      mv_near_interface_id_(*data_mesh.getMeshVariable<int>("CellNearInterfaceID")),
+      mv_near_interface_id_(*data_mesh.getMeshVariable<int>("NearInterfaceID")),
       dv_cell_neighborhood_(data_mesh.getCellNeighborhood()) {}
 //=============================================================================================//
 ReinitializeLevelSet::ReinitializeLevelSet(MeshWithGridDataPackagesType &data_mesh)
     : BaseMeshLocalDynamics(data_mesh),
       mv_phi_(*data_mesh.getMeshVariable<Real>("LevelSet")),
-      mv_near_interface_id_(*data_mesh.getMeshVariable<int>("CellNearInterfaceID")),
+      mv_near_interface_id_(*data_mesh.getMeshVariable<int>("NearInterfaceID")),
       dv_cell_neighborhood_(data_mesh.getCellNeighborhood()) {}
 //=============================================================================================//
 RedistanceInterface::RedistanceInterface(MeshWithGridDataPackagesType &data_mesh)
     : BaseMeshLocalDynamics(data_mesh),
       mv_phi_(*data_mesh.getMeshVariable<Real>("LevelSet")),
       mv_phi_gradient_(*data_mesh.getMeshVariable<Vecd>("LevelSetGradient")),
-      mv_near_interface_id_(*data_mesh.getMeshVariable<int>("CellNearInterfaceID")),
+      mv_near_interface_id_(*data_mesh.getMeshVariable<int>("NearInterfaceID")),
       dv_cell_neighborhood_(data_mesh.getCellNeighborhood()) {}
 //=============================================================================================//
 DiffuseLevelSetSign::DiffuseLevelSetSign(MeshWithGridDataPackagesType &data_mesh)
     : BaseMeshLocalDynamics(data_mesh),
       mv_phi_(*data_mesh.getMeshVariable<Real>("LevelSet")),
-      mv_near_interface_id_(*data_mesh.getMeshVariable<int>("CellNearInterfaceID")),
+      mv_near_interface_id_(*data_mesh.getMeshVariable<int>("NearInterfaceID")),
       dv_cell_neighborhood_(data_mesh.getCellNeighborhood()) {}
 //=================================================================================================//
 } // namespace SPH

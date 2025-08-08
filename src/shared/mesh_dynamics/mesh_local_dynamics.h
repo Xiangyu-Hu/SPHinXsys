@@ -64,6 +64,7 @@ class BaseMeshLocalDynamics
 
     MeshWithGridDataPackagesType &data_mesh_;
     static constexpr int pkg_size = 4;
+    static constexpr int pkg_size_minus1 = pkg_size - 1;
     Arrayi all_cells_;
     Real grid_spacing_;
     Real data_spacing_;
@@ -321,6 +322,35 @@ class InitializeBasicPackageData : public BaseMeshLocalDynamics
     void initializeSingularPackages(size_t package_index, Real far_field_level_set);
 };
 
+class ConsistencyCorrection : public BaseMeshLocalDynamics
+{
+  public:
+    explicit ConsistencyCorrection(MeshWithGridDataPackagesType &data_mesh);
+    virtual ~ConsistencyCorrection() {};
+
+    class UpdateKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+            : data_mesh_(&encloser.data_mesh_), base_dynamics(&encloser),
+              num_singular_pkgs_(encloser.num_singular_pkgs_),
+              phi_(encloser.mv_phi_.DelegatedData(ex_policy)),
+              threshold_(2.0 * encloser.data_spacing_){};
+        void update(const size_t &index);
+
+      protected:
+        MeshWithGridDataPackagesType *data_mesh_;
+        BaseMeshLocalDynamics *base_dynamics;
+        UnsignedInt num_singular_pkgs_;
+        MeshVariableData<Real> *phi_;
+        Real threshold_;
+    };
+
+  protected:
+    MeshVariable<Real> &mv_phi_;
+};
+
 class NearInterfaceCellTagging : public BaseMeshLocalDynamics
 {
   public:
@@ -335,8 +365,8 @@ class NearInterfaceCellTagging : public BaseMeshLocalDynamics
             : data_mesh_(&encloser.data_mesh_), base_dynamics(&encloser),
               num_singular_pkgs_(encloser.num_singular_pkgs_),
               cell_near_interface_id_(
-                  encloser.dv_cell_near_interface_id_.DelegatedData(ex_policy)),
-              phi_(encloser.dv_phi_.DelegatedData(ex_policy)){};
+                  encloser.bmv_cell_near_interface_id_.DelegatedData(ex_policy)),
+              phi_(encloser.mv_phi_.DelegatedData(ex_policy)){};
         void update(const size_t &index);
 
       protected:
@@ -348,15 +378,16 @@ class NearInterfaceCellTagging : public BaseMeshLocalDynamics
     };
 
   protected:
-    DiscreteVariable<int> *dv_cell_near_interface_id_;
-    MeshVariable<Real> *dv_phi_;
+    BKGMeshVariable<int> &bmv_cell_near_interface_id_;
+    MeshVariable<Real> &mv_phi_;
 };
 
-class SingularPackageCorrection : public BaseMeshLocalDynamics
+class CellContainDiffusion : public BaseMeshLocalDynamics
 {
   public:
-    explicit SingularPackageCorrection(MeshWithGridDataPackagesType &data_mesh);
-    virtual ~SingularPackageCorrection() {};
+    explicit CellContainDiffusion(MeshWithGridDataPackagesType &data_mesh,
+                                  SingularVariable<UnsignedInt> &sv_count_modified);
+    virtual ~CellContainDiffusion() {};
 
     class UpdateKernel
     {
@@ -364,8 +395,8 @@ class SingularPackageCorrection : public BaseMeshLocalDynamics
         template <class ExecutionPolicy, class EncloserType>
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
             : data_mesh_(&encloser.data_mesh_), base_dynamics(&encloser),
-              cell_near_interface_id_(encloser.dv_cell_near_interface_id_.DelegatedData(ex_policy)),
-              cell_pkg_index_(encloser.cell_pkg_index_.DelegatedData(ex_policy)),
+              cell_near_interface_id_(encloser.bmv_cell_near_interface_id_.DelegatedData(ex_policy)),
+              cell_package_index_(encloser.bmv_cell_package_index_.DelegatedData(ex_policy)),
               count_modified_(encloser.sv_count_modified_.DelegatedData(ex_policy)){};
         void update(const Arrayi &cell_index);
 
@@ -373,16 +404,14 @@ class SingularPackageCorrection : public BaseMeshLocalDynamics
         MeshWithGridDataPackagesType *data_mesh_;
         BaseMeshLocalDynamics *base_dynamics;
         int *cell_near_interface_id_;
-        size_t *cell_pkg_index_;
+        size_t *cell_package_index_;
         UnsignedInt *count_modified_;
     };
 
   protected:
-    DiscreteVariable<int> *dv_cell_near_interface_id_;
-    SingularVariable<UnsignedInt> sv_count_modified_;
-
-  public:
-    UnsignedInt countModified() { return sv_count_modified_.getValue(); };
+    BKGMeshVariable<int> &bmv_cell_near_interface_id_;
+    BKGMeshVariable<size_t> &bmv_cell_package_index_;
+    SingularVariable<UnsignedInt> &sv_count_modified_;
 };
 
 /**

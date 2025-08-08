@@ -54,15 +54,28 @@ class FinishDataPackages
     void exec()
     {
         initialize_basic_data_for_a_package.exec();
+        consistency_correction.exec();
+        near_interface_cell_tagging.exec();
+
+        while (sv_count_modified_.getValue() > 0)
+        {
+            sv_count_modified_.setValue(0);
+            cell_contain_diffusion.exec();
+        }
+
         initialize_cell_neighborhood.exec();
     };
 
   private:
     MeshWithGridDataPackagesType &mesh_data_;
     Shape &shape_;
+    SingularVariable<UnsignedInt> sv_count_modified_{"CountModified", 1};
 
     MeshInnerDynamics<execution::ParallelPolicy, InitializeCellNeighborhood> initialize_cell_neighborhood{mesh_data_};
     MeshInnerDynamics<execution::ParallelPolicy, InitializeBasicPackageData> initialize_basic_data_for_a_package{mesh_data_, shape_};
+    MeshInnerDynamics<execution::ParallelPolicy, ConsistencyCorrection> consistency_correction{mesh_data_};
+    MeshInnerDynamics<execution::ParallelPolicy, NearInterfaceCellTagging> near_interface_cell_tagging{mesh_data_};
+    MeshAllDynamics<execution::ParallelPolicy, CellContainDiffusion> cell_contain_diffusion{mesh_data_, sv_count_modified_};
 };
 
 template <class ExecutionPolicy>

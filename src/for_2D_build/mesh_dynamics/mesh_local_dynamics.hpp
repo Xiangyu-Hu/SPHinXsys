@@ -7,11 +7,35 @@
 namespace SPH
 {
 //=================================================================================================//
+inline void ConsistencyCorrection::UpdateKernel::update(const size_t &package_index)
+{
+    MeshVariableData<Real> &grid_phi = phi_[package_index];
+    mesh_for_each2d<0, pkg_size_minus1>(
+        [&](int i, int j)
+        {
+            Real phi0 = grid_phi[i][j];
+            Real phi0_abs = ABS(phi0);
+            mesh_for_each2d<0, 2>(
+                [&](int l, int m)
+                {
+                    Real phi1 = grid_phi[i + l][j + m];
+                    Real phi1_abs = ABS(phi1);
+                    if ( // inconsistency criterion: level set must be continuous
+                        phi0 * phi1 < 0.0 && phi0_abs + phi1_abs > threshold_)
+                    {
+                        Real sgn = phi0 < phi1 ? SGN(phi0) : SGN(phi1);
+                        grid_phi[i][j] = sgn * phi0_abs;
+                        grid_phi[i + l][j + m] = sgn * phi1_abs;
+                    }
+                });
+        });
+}
+//=================================================================================================//
 inline void NearInterfaceCellTagging::UpdateKernel::update(const size_t &package_index)
 {
     size_t sort_index = data_mesh_->getOccupiedDataPackages()[package_index - num_singular_pkgs_].first;
     Arrayi cell_index = base_dynamics->CellIndexFromSortIndex(sort_index);
-    UnsignedInt index_1d = data_mesh_->transferMeshIndexTo1D(data_mesh_->AllCells(), cell_index);
+    UnsignedInt index_1d = data_mesh_->LinearCellIndexFromCellIndex(cell_index);
 
     MeshVariableData<Real> &grid_phi = phi_[package_index];
     Real phi0 = grid_phi[0][0];
@@ -25,42 +49,36 @@ inline void NearInterfaceCellTagging::UpdateKernel::update(const size_t &package
         cell_near_interface_id_[index_1d] = 0;
 }
 //=================================================================================================//
-inline void SingularPackageCorrection::UpdateKernel::update(const Arrayi &cell_index)
+inline void CellContainDiffusion::UpdateKernel::update(const Arrayi &cell_index)
 {
-    UnsignedInt index_1d = data_mesh_->transferMeshIndexTo1D(data_mesh_->AllCells(), cell_index);
-    if (cell_pkg_index_[index_1d] == 1)
+    UnsignedInt index_1d = data_mesh_->LinearCellIndexFromCellIndex(cell_index);
+    if (cell_near_interface_id_[index_1d] == 2)
     {
-        bool is_negative = mesh_any_of(
-            Array2i::Zero().max(cell_index - Array2i::Ones()),
-            data_mesh_->AllCells().min(cell_index + 2 * Array2i::Ones()),
-            [&](int l, int m)
-            {
-                UnsignedInt neighbor_1d = data_mesh_->transferMeshIndexTo1D(data_mesh_->AllCells(), Arrayi(l, m));
-                return cell_near_interface_id_[neighbor_1d] == -1;
-            });
-
-        if (is_negative)
+        if (mesh_any_of(
+                Arrayi::Zero().max(cell_index - Arrayi::Ones()),
+                data_mesh_->AllCells().min(cell_index + 2 * Arrayi::Ones()),
+                [&](int l, int m)
+                {
+                    UnsignedInt neighbor_1d = data_mesh_->transferMeshIndexTo1D(data_mesh_->AllCells(), Arrayi(l, m));
+                    return cell_near_interface_id_[neighbor_1d] == -1;
+                }))
         {
-            cell_pkg_index_[index_1d] = 0;
+            cell_near_interface_id_[index_1d] = -1;
+            cell_package_index_[index_1d] = 0; // inside far field package updated
             AtomicRef<UnsignedInt> count_modified_cells(*count_modified_);
             ++count_modified_cells;
         }
-    }
-
-    if (cell_pkg_index_[index_1d] == 0)
-    {
-        bool is_positive = mesh_any_of(
-            Array2i::Zero().max(cell_index - Array2i::Ones()),
-            data_mesh_->AllCells().min(cell_index + 2 * Array2i::Ones()),
-            [&](int l, int m)
-            {
-                UnsignedInt neighbor_1d = data_mesh_->transferMeshIndexTo1D(data_mesh_->AllCells(), Arrayi(l, m));
-                return cell_near_interface_id_[neighbor_1d] == 1;
-            });
-
-        if (is_positive)
+        else if (mesh_any_of(
+                     Arrayi::Zero().max(cell_index - Arrayi::Ones()),
+                     data_mesh_->AllCells().min(cell_index + 2 * Arrayi::Ones()),
+                     [&](int l, int m)
+                     {
+                         UnsignedInt neighbor_1d = data_mesh_->transferMeshIndexTo1D(data_mesh_->AllCells(), Arrayi(l, m));
+                         return cell_near_interface_id_[neighbor_1d] == 1;
+                     }))
         {
-            cell_pkg_index_[index_1d] = 1;
+            cell_near_interface_id_[index_1d] = 1;
+            cell_package_index_[index_1d] = 1; // outside far field package updated
             AtomicRef<UnsignedInt> count_modified_cells(*count_modified_);
             ++count_modified_cells;
         }
