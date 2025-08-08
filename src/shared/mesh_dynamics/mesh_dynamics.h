@@ -50,7 +50,7 @@ class BaseMeshDynamics
     BaseMeshDynamics(MeshWithGridDataPackagesType &mesh_data)
         : mesh_data_(mesh_data),
           all_cells_(mesh_data.AllCells()),
-          num_singular_pkgs_(mesh_data.NumberOfSingularDataPackages()) {};
+          num_singular_pkgs_(mesh_data.NumSingularPackages()) {};
     virtual ~BaseMeshDynamics() {};
 
   protected:
@@ -109,7 +109,7 @@ class MeshInnerDynamics : public LocalDynamicsType, public BaseMeshDynamics
     template <typename... Args>
     void exec(Args &&...args)
     {
-        UnsignedInt num_grid_pkgs = mesh_data_.NumberOfGridDataPackages();
+        UnsignedInt num_grid_pkgs = mesh_data_.NumGridPackages();
         UpdateKernel *update_kernel = kernel_implementation_.getComputingKernel();
         package_for(ExecutionPolicy(), num_singular_pkgs_, num_grid_pkgs,
                     [=](size_t package_index)
@@ -142,7 +142,7 @@ class MeshCoreDynamics : public LocalDynamicsType, public BaseMeshDynamics
 
     void exec()
     {
-        UnsignedInt num_grid_pkgs = mesh_data_.NumberOfGridDataPackages();
+        UnsignedInt num_grid_pkgs = mesh_data_.NumGridPackages();
         UpdateKernel *update_kernel = kernel_implementation_.getComputingKernel();
         std::pair<SPH::Arrayi, int> *meta_data_cell = meta_data_cell_;
         package_for(ExecutionPolicy(), num_singular_pkgs_, num_grid_pkgs,

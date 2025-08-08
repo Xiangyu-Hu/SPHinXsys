@@ -92,9 +92,9 @@ inline void UpdateLevelSetGradient::UpdateKernel::update(const size_t &package_i
 inline void UpdateKernelIntegrals::initializeSingularPackages(
     size_t package_index, Real far_field_level_set)
 {
-    auto &kernel_weight = kernel_weight_.Data()[package_index];
-    auto &kernel_gradient = kernel_gradient_.Data()[package_index];
-    auto &kernel_second_gradient = kernel_second_gradient_.Data()[package_index];
+    auto &kernel_weight = mv_kernel_weight_.Data()[package_index];
+    auto &kernel_gradient = mv_kernel_gradient_.Data()[package_index];
+    auto &kernel_second_gradient = mv_kernel_second_gradient_.Data()[package_index];
 
     mesh_for_each2d<0, pkg_size>(
         [&](int i, int j)

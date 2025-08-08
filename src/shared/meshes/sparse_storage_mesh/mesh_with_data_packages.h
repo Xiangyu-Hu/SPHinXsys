@@ -99,9 +99,47 @@ class MeshWithGridDataPackages : public Mesh
     DiscreteVariable<CellNeighborhood> cell_neighborhood_;     /**< 3*3(*3) array to store indicies of neighborhood cells. */
     BKGMeshVariable<UnsignedInt> &cell_package_index_;         /**< the package index for each cell in a 1-d array. */
     ConcurrentVec<std::pair<size_t, int>> occupied_data_pkgs_; /**< (size_t)sort_index, (int)core1/inner0. */
+    UnsignedInt NumSingularPackages() const { return num_singular_pkgs_; };
 
-    UnsignedInt NumberOfGridDataPackages() const { return num_grid_pkgs_; };
-    UnsignedInt NumberOfSingularDataPackages() const { return num_singular_pkgs_; };
+    UnsignedInt NumGridPackages() const
+    {
+        if (!is_organized_)
+        {
+            std::cout << "\n Error: the mesh is not organized!" << std::endl;
+            exit(1);
+        }
+        return num_grid_pkgs_;
+    };
+
+    DiscreteVariable<std::pair<Arrayi, int>> &getMetaDataCell()
+    {
+        if (!is_organized_)
+        {
+            std::cout << "\n Error: the meta data cell is not organized!" << std::endl;
+            exit(1);
+        }
+        return meta_data_cell_;
+    };
+
+    DiscreteVariable<CellNeighborhood> &getCellNeighborhood()
+    {
+        if (!is_organized_)
+        {
+            std::cout << "\n Error: the cell neighborhood is not organized!" << std::endl;
+            exit(1);
+        }
+        return cell_neighborhood_;
+    };
+
+    DiscreteVariable<size_t> &getCellPackageIndex()
+    {
+        if (!is_organized_)
+        {
+            std::cout << "\n Error: the cell package index is not organized!" << std::endl;
+            exit(1);
+        }
+        return cell_package_index_;
+    };
 
     template <typename DataType>
     void addMeshVariableToWrite(const std::string &variable_name)
@@ -120,7 +158,8 @@ class MeshWithGridDataPackages : public Mesh
 
   protected:
     /** Generalized mesh data type */
-    const Real data_spacing_; /**< spacing of data in the data packages. */
+    const Real data_spacing_;   /**< spacing of data in the data packages. */
+    bool is_organized_ = false; /**< whether the data packages are organized. */
 
     template <template <typename> typename ContainerType, typename DataType>
     void addVariableToList(DataContainerAddressAssemble<ContainerType> &variable_set,
@@ -218,7 +257,6 @@ class MeshWithGridDataPackages : public Mesh
     SingularVariable<IndexHandler> index_handler_;
 
   public:
-    void resizeMeshVariableData() { resize_mesh_variable_data_(all_mesh_variables_, num_grid_pkgs_); };
     template <class ExecutionPolicy>
     void syncMeshVariableData(ExecutionPolicy &ex_policy) { sync_mesh_variable_data_(all_mesh_variables_, ex_policy); };
 
@@ -240,7 +278,7 @@ class MeshWithGridDataPackages : public Mesh
     template <typename DataType>
     MeshVariable<DataType> *registerMeshVariable(const std::string &variable_name)
     {
-        if (num_grid_pkgs_ == num_singular_pkgs_)
+        if (!is_organized_)
         {
             std::cout << "\n Error: the mesh variable '" << variable_name
                       << "' is registered before the data packages are organized!" << std::endl;
@@ -288,6 +326,7 @@ class MeshWithGridDataPackages : public Mesh
         cell_neighborhood_.reallocateData(par, num_grid_pkgs_);
         fillFarFieldCellNeighborhood(cell_neighborhood_.Data());
         meta_data_cell_.reallocateData(par, num_grid_pkgs_);
+        is_organized_ = true;
     }
 
     bool isInnerDataPackage(const Arrayi &cell_index)

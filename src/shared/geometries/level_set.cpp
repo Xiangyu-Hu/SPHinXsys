@@ -70,12 +70,6 @@ void MultilevelLevelSet::initializeLevel(
     MeshInnerDynamics<execution::ParallelPolicy, InitializeIndexMesh> initialize_index_mesh(*mesh_data);
     initialize_index_mesh.exec();
 
-    mesh_data->registerMeshVariable<Real>("LevelSet");
-    mesh_data->registerMeshVariable<int>("NearInterfaceID");
-    mesh_data->registerMeshVariable<Vecd>("LevelSetGradient");
-    mesh_data->addMeshVariableToWrite<Real>("LevelSet");
-    mesh_data->addMeshVariableToWrite<int>("NearInterfaceID");
-    mesh_data->addMeshVariableToWrite<Vecd>("LevelSetGradient");
     /* All initializations in `FinishDataPackages` are achieved on CPU. */
     FinishDataPackages finish_data_packages(*mesh_data, shape_);
     finish_data_packages.exec();

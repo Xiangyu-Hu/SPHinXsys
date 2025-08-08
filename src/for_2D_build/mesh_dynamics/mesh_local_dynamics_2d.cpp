@@ -20,9 +20,9 @@ Arrayi BaseMeshLocalDynamics::CellIndexFromSortIndex(const size_t &sort_index)
 void InitializeBasicPackageData::initializeSingularPackages(
     const size_t package_index, Real far_field_level_set)
 {
-    auto &phi = phi_.Data()[package_index];
-    auto &near_interface_id = near_interface_id_.Data()[package_index];
-    auto &phi_gradient = phi_gradient_.Data()[package_index];
+    auto &phi = mv_phi_.Data()[package_index];
+    auto &near_interface_id = mv_near_interface_id_.Data()[package_index];
+    auto &phi_gradient = mv_phi_gradient_.Data()[package_index];
 
     mesh_for_each2d<0, pkg_size>(
         [&](int i, int j)
