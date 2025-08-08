@@ -195,19 +195,6 @@ class MeshWithGridDataPackages : public Mesh
     };
     OperationOnDataAssemble<MeshVariableAssemble, SyncMeshVariableData> sync_mesh_variable_data_{};
 
-    void fillFarFieldCellNeighborhood(CellNeighborhood *neighbor)
-    {
-        for (size_t i = 0; i != num_singular_pkgs_; i++)
-        {
-            mesh_for_each(
-                -Arrayi::Ones(), Arrayi::Ones() * 2,
-                [&](const Arrayi &index)
-                {
-                    neighbor[i](index + Arrayi::Ones()) = i;
-                });
-        }
-    };
-
   public:
     /** wrapper for all index exchange related functions. */
     struct IndexHandler
@@ -320,7 +307,6 @@ class MeshWithGridDataPackages : public Mesh
             });
         num_grid_pkgs_ = occupied_data_pkgs_.size() + num_singular_pkgs_;
         cell_neighborhood_.reallocateData(par, num_grid_pkgs_);
-        fillFarFieldCellNeighborhood(cell_neighborhood_.Data());
         dv_pkg_cell_info_.reallocateData(par, num_grid_pkgs_);
         is_organized_ = true;
     }

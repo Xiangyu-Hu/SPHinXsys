@@ -84,7 +84,19 @@ void InitialCellTaggingFromCoarse::UpdateKernel::update(const Arrayi &cell_index
 InitializeCellNeighborhood::InitializeCellNeighborhood(MeshWithGridDataPackagesType &data_mesh)
     : BaseMeshLocalDynamics(data_mesh), dv_pkg_cell_info_(data_mesh.dvPkgCellInfo()),
       dv_cell_neighborhood_(data_mesh.getCellNeighborhood()),
-      bmv_cell_pkg_index_(data_mesh.getCellPackageIndex()) {}
+      bmv_cell_pkg_index_(data_mesh.getCellPackageIndex())
+{
+    CellNeighborhood *neighbor = dv_cell_neighborhood_.Data();
+    for (size_t i = 0; i != num_singular_pkgs_; i++)
+    {
+        mesh_for_each(
+            -Arrayi::Ones(), Arrayi::Ones() * 2,
+            [&](const Arrayi &index)
+            {
+                neighbor[i](index + Arrayi::Ones()) = i;
+            });
+    }
+}
 //=============================================================================================//
 void InitializeCellNeighborhood::UpdateKernel::update(const size_t &package_index)
 {

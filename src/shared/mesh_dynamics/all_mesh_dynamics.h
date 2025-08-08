@@ -48,20 +48,18 @@ class FinishDataPackages
 {
   public:
     explicit FinishDataPackages(MeshWithGridDataPackagesType &mesh_data, Shape &shape)
-        : mesh_data_(mesh_data), shape_(shape),
-          far_field_distance(mesh_data.GridSpacing() * (Real)mesh_data.BufferWidth()) {};
+        : mesh_data_(mesh_data), shape_(shape) {};
     virtual ~FinishDataPackages() {};
 
     void exec()
     {
-        initialize_cell_neighborhood.exec();
         initialize_basic_data_for_a_package.exec();
+        initialize_cell_neighborhood.exec();
     };
 
   private:
     MeshWithGridDataPackagesType &mesh_data_;
     Shape &shape_;
-    Real far_field_distance;
 
     MeshInnerDynamics<execution::ParallelPolicy, InitializeCellNeighborhood> initialize_cell_neighborhood{mesh_data_};
     MeshInnerDynamics<execution::ParallelPolicy, InitializeBasicPackageData> initialize_basic_data_for_a_package{mesh_data_, shape_};
