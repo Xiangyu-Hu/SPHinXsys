@@ -28,7 +28,7 @@ void MultilevelLevelSet::initializeMeshVariables(const ExecutionPolicy &ex_polic
         cell_pkg_index_set_.push_back(
             mesh_data_set_[level]->cell_pkg_index_.DelegatedData(ex_policy));
         pkg_cell_info_set_.push_back(
-            mesh_data_set_[level]->pkg_cell_info_.DelegatedData(ex_policy));
+            mesh_data_set_[level]->dvPkgCellInfo().DelegatedData(ex_policy));
     }
 }
 //=================================================================================================//

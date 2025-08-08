@@ -80,8 +80,8 @@ class MeshWithGridDataPackages : public Mesh
         : Mesh(tentative_bounds, pkg_size * data_spacing, buffer_size),
           global_mesh_(mesh_lower_bound_ + 0.5 * data_spacing * Vecd::Ones(), data_spacing, all_cells_ * pkg_size),
           num_singular_pkgs_(num_singular_pkgs), num_grid_pkgs_(num_singular_pkgs),
-          pkg_cell_info_("meta_data_cell", num_singular_pkgs_),
-          cell_neighborhood_("mesh_cell_neighborhood", num_singular_pkgs_),
+          dv_pkg_cell_info_("PackageCellInfo", num_singular_pkgs_),
+          cell_neighborhood_("CellNeighborhood", num_singular_pkgs_),
           cell_pkg_index_(*registerBKGMeshVariable<UnsignedInt>("CellPackageIndex")),
           data_spacing_(data_spacing),
           index_handler_("index_handler", IndexHandler{data_spacing_, all_cells_, *static_cast<Mesh *>(this)}){};
@@ -95,7 +95,7 @@ class MeshWithGridDataPackages : public Mesh
     Mesh global_mesh_;                                         /**< singular packages used for far field. */
     UnsignedInt num_singular_pkgs_;                            /**< the number of all packages, initially only singular packages. */
     UnsignedInt num_grid_pkgs_;                                /**< the number of all packages, initially only with singular packages. */
-    DiscreteVariable<std::pair<Arrayi, int>> pkg_cell_info_;   /**< metadata for each occupied cell: (arrayi)cell index, (int)core1/inner0. */
+    DiscreteVariable<std::pair<Arrayi, int>> dv_pkg_cell_info_;   /**< metadata for each occupied cell: (arrayi)cell index, (int)core1/inner0. */
     DiscreteVariable<CellNeighborhood> cell_neighborhood_;     /**< 3*3(*3) array to store indicies of neighborhood cells. */
     BKGMeshVariable<UnsignedInt> &cell_pkg_index_;             /**< the package index for each cell in a 1-d array. */
     ConcurrentVec<std::pair<size_t, int>> occupied_data_pkgs_; /**< (size_t)sort_index, (int)core1/inner0. */
@@ -106,9 +106,9 @@ class MeshWithGridDataPackages : public Mesh
         return checkOrganized("NumGridPackages", num_grid_pkgs_);
     };
 
-    DiscreteVariable<std::pair<Arrayi, int>> &getMetaDataCell()
+    DiscreteVariable<std::pair<Arrayi, int>> &dvPkgCellInfo()
     {
-        return checkOrganized("getMetaDataCell", pkg_cell_info_);
+        return checkOrganized("dvPkgCellInfo", dv_pkg_cell_info_);
     };
 
     DiscreteVariable<CellNeighborhood> &getCellNeighborhood()
@@ -316,7 +316,7 @@ class MeshWithGridDataPackages : public Mesh
         num_grid_pkgs_ = occupied_data_pkgs_.size() + num_singular_pkgs_;
         cell_neighborhood_.reallocateData(par, num_grid_pkgs_);
         fillFarFieldCellNeighborhood(cell_neighborhood_.Data());
-        pkg_cell_info_.reallocateData(par, num_grid_pkgs_);
+        dv_pkg_cell_info_.reallocateData(par, num_grid_pkgs_);
         is_organized_ = true;
     }
 

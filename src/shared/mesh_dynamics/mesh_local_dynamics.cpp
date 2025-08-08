@@ -56,7 +56,7 @@ void InitialCellTaggingFromCoarse::UpdateKernel::update(const Arrayi &cell_index
     size_t package_index = probe_coarse_phi_(cell_position) < 0.0 ? 0 : 1;
     data_mesh_->assignDataPackageIndex(cell_index, package_index);
     if (coarse_mesh_->isWithinCorePackage(coarse_mesh_->cell_pkg_index_.Data(),
-                                          coarse_mesh_->pkg_cell_info_.Data(),
+                                          coarse_mesh_->dvPkgCellInfo().Data(),
                                           cell_position))
     {
         Real signed_distance = shape_->findSignedDistance(cell_position);
@@ -72,7 +72,7 @@ void InitialCellTaggingFromCoarse::UpdateKernel::update(const Arrayi &cell_index
 }
 //=================================================================================================//
 InitializeCellNeighborhood::InitializeCellNeighborhood(MeshWithGridDataPackagesType &data_mesh)
-    : BaseMeshLocalDynamics(data_mesh), dv_pkg_cell_info_(data_mesh.getMetaDataCell()),
+    : BaseMeshLocalDynamics(data_mesh), dv_pkg_cell_info_(data_mesh.dvPkgCellInfo()),
       dv_cell_neighborhood_(data_mesh.getCellNeighborhood()),
       bmv_cell_pkg_index_(data_mesh.getCellPackageIndex()) {}
 //=============================================================================================//
@@ -98,7 +98,7 @@ InitializeBasicPackageData::InitializeBasicPackageData(
     MeshWithGridDataPackagesType &data_mesh, Shape &shape)
     : BaseMeshLocalDynamics(data_mesh), shape_(shape),
       far_field_distance(data_mesh.GridSpacing() * (Real)data_mesh.BufferWidth()),
-      dv_pkg_cell_info_(data_mesh.getMetaDataCell()),
+      dv_pkg_cell_info_(data_mesh.dvPkgCellInfo()),
       mv_phi_(*data_mesh.registerMeshVariable<Real>("LevelSet")),
       mv_phi_gradient_(*data_mesh.registerMeshVariable<Vecd>("LevelSetGradient")),
       mv_near_interface_id_(*data_mesh.registerMeshVariable<int>("CellNearInterfaceID"))
@@ -132,7 +132,7 @@ UpdateKernelIntegrals::UpdateKernelIntegrals(
     : BaseMeshLocalDynamics(data_mesh), kernel_(kernel), global_h_ratio_(global_h_ratio),
       mv_phi_(*data_mesh.getMeshVariable<Real>("LevelSet")),
       mv_phi_gradient_(*data_mesh.getMeshVariable<Vecd>("LevelSetGradient")),
-      dv_pkg_cell_info_(data_mesh.getMetaDataCell()),
+      dv_pkg_cell_info_(data_mesh.dvPkgCellInfo()),
       dv_cell_neighborhood_(data_mesh.getCellNeighborhood()),
       bmv_cell_pkg_index_(data_mesh.getCellPackageIndex()),
       mv_kernel_weight_(*data_mesh.registerMeshVariable<Real>("KernelWeight")),

@@ -110,7 +110,7 @@ class MultilevelLevelSet : public BaseMeshField
             cell_pkg_index_set_.push_back(
                 mesh_data_set_[l]->cell_pkg_index_.DelegatedData(execution::par));
             pkg_cell_info_set_.push_back(
-                mesh_data_set_[l]->pkg_cell_info_.DelegatedData(execution::par));
+                mesh_data_set_[l]->dvPkgCellInfo().DelegatedData(execution::par));
         }
     }
 

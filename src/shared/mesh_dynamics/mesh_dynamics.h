@@ -136,7 +136,7 @@ class MeshCoreDynamics : public LocalDynamicsType, public BaseMeshDynamics
     MeshCoreDynamics(MeshWithGridDataPackagesType &mesh_data, Args &&...args)
         : LocalDynamicsType(mesh_data, std::forward<Args>(args)...),
           BaseMeshDynamics(mesh_data),
-          pkg_cell_info_(mesh_data.pkg_cell_info_.DelegatedData(ExecutionPolicy())),
+          pkg_cell_info_(mesh_data.dvPkgCellInfo().DelegatedData(ExecutionPolicy())),
           kernel_implementation_(*this){};
     virtual ~MeshCoreDynamics() {};
 
