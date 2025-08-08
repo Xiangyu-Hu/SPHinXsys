@@ -55,10 +55,6 @@ class FinishDataPackages
     void exec()
     {
         initialize_cell_neighborhood.exec();
-
-        initialize_data_for_singular_package.update(0, -far_field_distance);
-        initialize_data_for_singular_package.update(1, far_field_distance);
-
         initialize_basic_data_for_a_package.exec();
     };
 
@@ -67,7 +63,6 @@ class FinishDataPackages
     Shape &shape_;
     Real far_field_distance;
 
-    InitializeDataForSingularPackage initialize_data_for_singular_package{mesh_data_};
     MeshInnerDynamics<execution::ParallelPolicy, InitializeCellNeighborhood> initialize_cell_neighborhood{mesh_data_};
     MeshInnerDynamics<execution::ParallelPolicy, InitializeBasicPackageData> initialize_basic_data_for_a_package{mesh_data_, shape_};
 };

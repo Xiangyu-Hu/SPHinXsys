@@ -82,6 +82,15 @@ void InitializeCellNeighborhood::UpdateKernel::update(const size_t &package_inde
         });
 }
 //=============================================================================================//
+InitializeBasicPackageData::InitializeBasicPackageData(
+    MeshWithGridDataPackagesType &data_mesh, Shape &shape)
+    : BaseMeshLocalDynamics(data_mesh), shape_(shape),
+      far_field_distance(data_mesh.GridSpacing() * (Real)data_mesh.BufferWidth())
+{
+    initializeSingularPackages(0, -far_field_distance);
+    initializeSingularPackages(1, far_field_distance);
+}
+//=============================================================================================//
 NearInterfaceCellTagging::NearInterfaceCellTagging(MeshWithGridDataPackagesType &data_mesh)
     : BaseMeshLocalDynamics(data_mesh),
       dv_cell_near_interface_id_(
@@ -94,5 +103,17 @@ SingularPackageCorrection::SingularPackageCorrection(MeshWithGridDataPackagesTyp
     : BaseMeshLocalDynamics(data_mesh),
       dv_cell_near_interface_id_(data_mesh.getBKGMeshVariable<int>("CellNearInterfaceID")),
       sv_count_modified_("IsModified", 0) {}
+//=============================================================================================//
+UpdateKernelIntegrals::UpdateKernelIntegrals(
+    MeshWithGridDataPackagesType &data_mesh, KernelTabulatedCK *kernel, Real global_h_ratio)
+    : BaseMeshLocalDynamics(data_mesh), kernel_(kernel), global_h_ratio_(global_h_ratio),
+      kernel_weight_(*data_mesh.registerMeshVariable<Real>("KernelWeight")),
+      kernel_gradient_(*data_mesh.registerMeshVariable<Vecd>("KernelGradient")),
+      kernel_second_gradient_(*data_mesh.registerMeshVariable<Matd>("KernelSecondGradient")),
+      far_field_distance(data_mesh.GridSpacing() * (Real)data_mesh.BufferWidth())
+{
+    initializeSingularPackages(0, -far_field_distance);
+    initializeSingularPackages(1, far_field_distance);
+}
 //=================================================================================================//
 } // namespace SPH

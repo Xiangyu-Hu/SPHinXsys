@@ -17,7 +17,8 @@ Arrayi BaseMeshLocalDynamics::CellIndexFromSortIndex(const size_t &sort_index)
     return cell_index;
 }
 //=============================================================================================//
-void InitializeDataForSingularPackage::update(const size_t package_index, Real far_field_level_set)
+void InitializeBasicPackageData::initializeSingularPackages(
+    const size_t package_index, Real far_field_level_set)
 {
     auto &phi = phi_.Data()[package_index];
     auto &near_interface_id = near_interface_id_.Data()[package_index];

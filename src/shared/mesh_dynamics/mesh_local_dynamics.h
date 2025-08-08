@@ -293,9 +293,7 @@ class InitializeCellNeighborhood : public BaseMeshLocalDynamics
 class InitializeBasicPackageData : public BaseMeshLocalDynamics
 {
   public:
-    explicit InitializeBasicPackageData(MeshWithGridDataPackagesType &data_mesh, Shape &shape)
-        : BaseMeshLocalDynamics(data_mesh),
-          shape_(shape) {};
+    explicit InitializeBasicPackageData(MeshWithGridDataPackagesType &data_mesh, Shape &shape);
     virtual ~InitializeBasicPackageData() {};
 
     class UpdateKernel
@@ -320,6 +318,8 @@ class InitializeBasicPackageData : public BaseMeshLocalDynamics
 
   private:
     Shape &shape_;
+    Real far_field_distance;
+    void initializeSingularPackages(size_t package_index, Real far_field_level_set);
 };
 
 class NearInterfaceCellTagging : public BaseMeshLocalDynamics
@@ -419,16 +419,8 @@ class UpdateLevelSetGradient : public BaseMeshLocalDynamics
 class UpdateKernelIntegrals : public BaseMeshLocalDynamics
 {
   public:
-    explicit UpdateKernelIntegrals(MeshWithGridDataPackagesType &data_mesh, KernelTabulatedCK *kernel, Real global_h_ratio)
-        : BaseMeshLocalDynamics(data_mesh), kernel_(kernel), global_h_ratio_(global_h_ratio),
-          kernel_weight_(*data_mesh.registerMeshVariable<Real>("KernelWeight")),
-          kernel_gradient_(*data_mesh.registerMeshVariable<Vecd>("KernelGradient")),
-          kernel_second_gradient_(*data_mesh.registerMeshVariable<Matd>("KernelSecondGradient")),
-          far_field_distance(data_mesh.GridSpacing() * (Real)data_mesh.BufferWidth())
-    {
-        initializeSingularPackages(0, -far_field_distance);
-        initializeSingularPackages(1, far_field_distance);
-    };
+    explicit UpdateKernelIntegrals(
+        MeshWithGridDataPackagesType &data_mesh, KernelTabulatedCK *kernel, Real global_h_ratio);
     virtual ~UpdateKernelIntegrals() {};
 
     class UpdateKernel
