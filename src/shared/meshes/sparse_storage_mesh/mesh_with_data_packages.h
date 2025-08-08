@@ -101,44 +101,24 @@ class MeshWithGridDataPackages : public Mesh
     ConcurrentVec<std::pair<size_t, int>> occupied_data_pkgs_; /**< (size_t)sort_index, (int)core1/inner0. */
     UnsignedInt NumSingularPackages() const { return num_singular_pkgs_; };
 
-    UnsignedInt NumGridPackages() const
+    UnsignedInt NumGridPackages()
     {
-        if (!is_organized_)
-        {
-            std::cout << "\n Error: the mesh is not organized!" << std::endl;
-            exit(1);
-        }
-        return num_grid_pkgs_;
+        return checkOrganized("NumGridPackages", num_grid_pkgs_);
     };
 
     DiscreteVariable<std::pair<Arrayi, int>> &getMetaDataCell()
     {
-        if (!is_organized_)
-        {
-            std::cout << "\n Error: the meta data cell is not organized!" << std::endl;
-            exit(1);
-        }
-        return meta_data_cell_;
+        return checkOrganized("getMetaDataCell", meta_data_cell_);
     };
 
     DiscreteVariable<CellNeighborhood> &getCellNeighborhood()
     {
-        if (!is_organized_)
-        {
-            std::cout << "\n Error: the cell neighborhood is not organized!" << std::endl;
-            exit(1);
-        }
-        return cell_neighborhood_;
+        return checkOrganized("getCellNeighborhood", cell_neighborhood_);
     };
 
     DiscreteVariable<size_t> &getCellPackageIndex()
     {
-        if (!is_organized_)
-        {
-            std::cout << "\n Error: the cell package index is not organized!" << std::endl;
-            exit(1);
-        }
-        return cell_package_index_;
+        return checkOrganized("getCellPackageIndex", cell_package_index_);
     };
 
     template <typename DataType>
@@ -160,6 +140,17 @@ class MeshWithGridDataPackages : public Mesh
     /** Generalized mesh data type */
     const Real data_spacing_;   /**< spacing of data in the data packages. */
     bool is_organized_ = false; /**< whether the data packages are organized. */
+
+    template <typename T>
+    T &checkOrganized(std::string func_name, T &value)
+    {
+        if (!is_organized_)
+        {
+            std::cout << "\n Error: the mesh is not organized! (called from " << func_name << ")" << std::endl;
+            exit(1);
+        }
+        return value;
+    };
 
     template <template <typename> typename ContainerType, typename DataType>
     void addVariableToList(DataContainerAddressAssemble<ContainerType> &variable_set,
