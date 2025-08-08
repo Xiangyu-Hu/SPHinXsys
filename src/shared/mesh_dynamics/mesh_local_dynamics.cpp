@@ -55,7 +55,7 @@ void InitialCellTaggingFromCoarse::UpdateKernel::update(const Arrayi &cell_index
     Vecd cell_position = data_mesh_->CellPositionFromIndex(cell_index);
     size_t package_index = probe_coarse_phi_(cell_position) < 0.0 ? 0 : 1;
     data_mesh_->assignDataPackageIndex(cell_index, package_index);
-    if (coarse_mesh_->isWithinCorePackage(coarse_mesh_->cell_pkg_index_.Data(),
+    if (coarse_mesh_->isWithinCorePackage(coarse_mesh_->getCellPackageIndex().Data(),
                                           coarse_mesh_->dvPkgCellInfo().Data(),
                                           cell_position))
     {

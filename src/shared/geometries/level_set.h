@@ -108,7 +108,7 @@ class MultilevelLevelSet : public BaseMeshField
         {
             registerProbes(execution::par, l);
             cell_pkg_index_set_.push_back(
-                mesh_data_set_[l]->cell_pkg_index_.DelegatedData(execution::par));
+                mesh_data_set_[l]->getCellPackageIndex().DelegatedData(execution::par));
             pkg_cell_info_set_.push_back(
                 mesh_data_set_[l]->dvPkgCellInfo().DelegatedData(execution::par));
         }

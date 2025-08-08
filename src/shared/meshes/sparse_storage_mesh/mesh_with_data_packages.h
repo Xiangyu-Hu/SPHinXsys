@@ -82,7 +82,7 @@ class MeshWithGridDataPackages : public Mesh
           num_singular_pkgs_(num_singular_pkgs), num_grid_pkgs_(num_singular_pkgs),
           dv_pkg_cell_info_("PackageCellInfo", num_singular_pkgs_),
           cell_neighborhood_("CellNeighborhood", num_singular_pkgs_),
-          cell_pkg_index_(*registerBKGMeshVariable<UnsignedInt>("CellPackageIndex")),
+          bmv_cell_pkg_index_(*registerBKGMeshVariable<UnsignedInt>("CellPackageIndex")),
           data_spacing_(data_spacing),
           index_handler_("index_handler", IndexHandler{data_spacing_, all_cells_, *static_cast<Mesh *>(this)}){};
     virtual ~MeshWithGridDataPackages() {};
@@ -93,12 +93,8 @@ class MeshWithGridDataPackages : public Mesh
     size_t BufferWidth() { return buffer_width_; };
     int DataPackageSize() { return pkg_size; };
     Mesh global_mesh_;                                         /**< singular packages used for far field. */
-    UnsignedInt num_singular_pkgs_;                            /**< the number of all packages, initially only singular packages. */
-    UnsignedInt num_grid_pkgs_;                                /**< the number of all packages, initially only with singular packages. */
-    DiscreteVariable<std::pair<Arrayi, int>> dv_pkg_cell_info_;   /**< metadata for each occupied cell: (arrayi)cell index, (int)core1/inner0. */
-    DiscreteVariable<CellNeighborhood> cell_neighborhood_;     /**< 3*3(*3) array to store indicies of neighborhood cells. */
-    BKGMeshVariable<UnsignedInt> &cell_pkg_index_;             /**< the package index for each cell in a 1-d array. */
     ConcurrentVec<std::pair<size_t, int>> occupied_data_pkgs_; /**< (size_t)sort_index, (int)core1/inner0. */
+
     UnsignedInt NumSingularPackages() const { return num_singular_pkgs_; };
 
     UnsignedInt NumGridPackages()
@@ -118,7 +114,7 @@ class MeshWithGridDataPackages : public Mesh
 
     DiscreteVariable<size_t> &getCellPackageIndex()
     {
-        return checkOrganized("getCellPackageIndex", cell_pkg_index_);
+        return checkOrganized("getCellPackageIndex", bmv_cell_pkg_index_);
     };
 
     template <typename DataType>
@@ -137,9 +133,13 @@ class MeshWithGridDataPackages : public Mesh
     void writeBKGMeshVariableToPlt(std::ofstream &output_file);
 
   protected:
-    /** Generalized mesh data type */
-    const Real data_spacing_;   /**< spacing of data in the data packages. */
-    bool is_organized_ = false; /**< whether the data packages are organized. */
+    UnsignedInt num_singular_pkgs_;                             /**< the number of all packages, initially only singular packages. */
+    UnsignedInt num_grid_pkgs_;                                 /**< the number of all packages, initially only with singular packages. */
+    DiscreteVariable<std::pair<Arrayi, int>> dv_pkg_cell_info_; /**< metadata for each occupied cell: (arrayi)cell index, (int)core1/inner0. */
+    DiscreteVariable<CellNeighborhood> cell_neighborhood_;      /**< 3*3(*3) array to store indicies of neighborhood cells. */
+    BKGMeshVariable<UnsignedInt> &bmv_cell_pkg_index_;          /**< the package index for each cell in a 1-d array. */
+    const Real data_spacing_;                                   /**< spacing of data in the data packages. */
+    bool is_organized_ = false;                                 /**< whether the data packages are organized. */
 
     template <typename T>
     T &checkOrganized(std::string func_name, T &value)
@@ -327,7 +327,7 @@ class MeshWithGridDataPackages : public Mesh
          * NOTE currently this func is only used in non-device mode;
          *      use the `DelegatedData` version when needed.
          */
-        return cell_pkg_index_.Data()[index_1d] > 1;
+        return bmv_cell_pkg_index_.Data()[index_1d] > 1;
     }
 
     bool isWithinCorePackage(size_t *cell_package_index,
@@ -349,10 +349,10 @@ class MeshWithGridDataPackages : public Mesh
     {
         size_t index_1d = transferMeshIndexTo1D(all_cells_, cell_index);
         /**
-         * NOTE currently the `cell_pkg_index_` is only assigned in the host;
+         * NOTE currently the `bmv_cell_pkg_index_` is only assigned in the host;
          *      use the `DelegatedData` version when needed.
          */
-        cell_pkg_index_.Data()[index_1d] = package_index;
+        bmv_cell_pkg_index_.Data()[index_1d] = package_index;
     }
 };
 } // namespace SPH

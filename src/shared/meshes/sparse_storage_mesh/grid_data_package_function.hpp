@@ -74,8 +74,8 @@ ProbeMesh<DataType, PKG_SIZE>::ProbeMesh(
     const std::string variable_name)
     : pkg_data_(data_mesh->template getMeshVariable<DataType>(variable_name)->DelegatedData(ex_policy)),
       index_handler_(data_mesh->index_handler_.DelegatedData(ex_policy)),
-      cell_pkg_index_(data_mesh->cell_pkg_index_.DelegatedData(ex_policy)),
-      cell_neighborhood_(data_mesh->cell_neighborhood_.DelegatedData(ex_policy)) {}
+      cell_pkg_index_(data_mesh->getCellPackageIndex().DelegatedData(ex_policy)),
+      cell_neighborhood_(data_mesh->getCellNeighborhood().DelegatedData(ex_policy)) {}
 //=============================================================================================//
 template <typename DataType, size_t PKG_SIZE>
 DataType ProbeMesh<DataType, PKG_SIZE>::operator()(const Vecd &position)
