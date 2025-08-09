@@ -65,8 +65,9 @@ inline Array2i mesh_find_if2d(const CheckOnEach &function)
 template <int lower, int upper, typename CheckOnEach>
 inline bool mesh_any_of2d(const CheckOnEach &function)
 {
-    return mesh_find_if2d<lower, upper, lower, upper, CheckOnEach>(
-               function) != Array2i(upper, upper);
+    return (mesh_find_if2d<lower, upper, lower, upper, CheckOnEach>(
+                function) != Array2i(upper, upper))
+        .all();
 };
 
 /** iteration with void (non_value_returning) function. 3D case. */
@@ -93,8 +94,9 @@ inline Array3i mesh_find_if3d(const CheckOnEach &function)
 template <int lower, int upper, typename CheckOnEach>
 inline bool mesh_any_of3d(const CheckOnEach &function)
 {
-    return mesh_find_if3d<lower, upper, lower, upper, lower, upper, CheckOnEach>(
-               function) != Array3i(upper, upper, upper);
+    return (mesh_find_if3d<lower, upper, lower, upper, lower, upper, CheckOnEach>(
+                function) != Array3i(upper, upper, upper))
+        .all();
 };
 
 template <typename FunctionOnEach>
@@ -133,18 +135,18 @@ void mesh_for(const execution::ParallelPolicy &par, const MeshRange &mesh_range,
 };
 
 template <typename FunctionOnData>
-void package_parallel_for(const execution::SequencedPolicy &seq,
-                          size_t num_grid_pkgs, const FunctionOnData &function)
+void package_for(const execution::SequencedPolicy &seq, UnsignedInt start_index,
+                 UnsignedInt num_grid_pkgs, const FunctionOnData &function)
 {
-    for (size_t i = 2; i != num_grid_pkgs; ++i)
+    for (size_t i = start_index; i != num_grid_pkgs; ++i)
         function(i);
 }
 
 template <typename FunctionOnData>
-void package_parallel_for(const execution::ParallelPolicy &par,
-                          size_t num_grid_pkgs, const FunctionOnData &function)
+void package_for(const execution::ParallelPolicy &par, UnsignedInt start_index,
+                 UnsignedInt num_grid_pkgs, const FunctionOnData &function)
 {
-    parallel_for(IndexRange(2, num_grid_pkgs), [&](const IndexRange &r)
+    parallel_for(IndexRange(start_index, num_grid_pkgs), [&](const IndexRange &r)
                  {
                     for (size_t i = r.begin(); i != r.end(); ++i)
                     {
@@ -153,7 +155,8 @@ void package_parallel_for(const execution::ParallelPolicy &par,
 }
 
 template <typename FunctionOnData>
-void package_parallel_for(const execution::ParallelDevicePolicy &par_device,
-                          size_t num_grid_pkgs, const FunctionOnData &function);
+void package_for(const execution::ParallelDevicePolicy &par_device,
+                 UnsignedInt start_index, UnsignedInt num_grid_pkgs,
+                 const FunctionOnData &function);
 } // namespace SPH
 #endif // MESH_ITERATORS_H

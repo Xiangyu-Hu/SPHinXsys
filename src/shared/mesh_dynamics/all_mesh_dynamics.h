@@ -48,35 +48,32 @@ class FinishDataPackages
 {
   public:
     explicit FinishDataPackages(MeshWithGridDataPackagesType &mesh_data, Shape &shape)
-        : mesh_data_(mesh_data), shape_(shape),
-          far_field_distance(mesh_data.GridSpacing() * (Real)mesh_data.BufferWidth()) {};
+        : mesh_data_(mesh_data), shape_(shape) {};
     virtual ~FinishDataPackages() {};
 
     void exec()
     {
-        tag_a_cell_is_inner_package.exec();
-
-        mesh_data_.organizeOccupiedPackages();
-        initialize_index_mesh.exec();
-        initialize_cell_neighborhood.exec();
-        mesh_data_.resizeMeshVariableData();
-
-        initialize_data_for_singular_package.update(0, -far_field_distance);
-        initialize_data_for_singular_package.update(1, far_field_distance);
-
         initialize_basic_data_for_a_package.exec();
+
+        near_interface_cell_tagging.exec();
+        while (sv_count_modified_.getValue() > 0)
+        {
+            sv_count_modified_.setValue(0);
+            cell_contain_diffusion.exec();
+        }
+
+        initialize_cell_neighborhood.exec();
     };
 
   private:
     MeshWithGridDataPackagesType &mesh_data_;
     Shape &shape_;
-    Real far_field_distance;
+    SingularVariable<UnsignedInt> sv_count_modified_{"CountModified", 1};
 
-    InitializeDataForSingularPackage initialize_data_for_singular_package{mesh_data_};
-    MeshAllDynamics<execution::ParallelPolicy, TagACellIsInnerPackage> tag_a_cell_is_inner_package{mesh_data_};
-    MeshInnerDynamics<execution::ParallelPolicy, InitializeIndexMesh> initialize_index_mesh{mesh_data_};
     MeshInnerDynamics<execution::ParallelPolicy, InitializeCellNeighborhood> initialize_cell_neighborhood{mesh_data_};
-    MeshInnerDynamics<execution::ParallelPolicy, InitializeBasicDataForAPackage> initialize_basic_data_for_a_package{mesh_data_, shape_};
+    MeshInnerDynamics<execution::ParallelPolicy, InitializeBasicPackageData> initialize_basic_data_for_a_package{mesh_data_, shape_};
+    MeshInnerDynamics<execution::ParallelPolicy, NearInterfaceCellTagging> near_interface_cell_tagging{mesh_data_};
+    MeshAllDynamics<execution::ParallelPolicy, CellContainDiffusion> cell_contain_diffusion{mesh_data_, sv_count_modified_};
 };
 
 template <class ExecutionPolicy>
@@ -123,7 +120,7 @@ class CorrectTopology : public BaseMeshDynamics, public BaseExecDynamics
     void exec(Real small_shift_factor) override
     {
         mark_near_interface.exec(small_shift_factor);
-        for (size_t i = 0; i != 10; ++i)
+        for (UnsignedInt i = 0; i != 10; ++i)
             diffuse_level_set_sign.exec();
         update_level_set_gradient.exec();
         update_kernel_integrals.exec();

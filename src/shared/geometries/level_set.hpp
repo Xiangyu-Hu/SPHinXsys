@@ -25,10 +25,10 @@ void MultilevelLevelSet::initializeMeshVariables(const ExecutionPolicy &ex_polic
         update_level_set_gradient.exec();
 
         registerProbes(ex_policy, level);
-        cell_package_index_set_.push_back(
-            mesh_data_set_[level]->cell_package_index_.DelegatedData(ex_policy));
-        meta_data_cell_set_.push_back(
-            mesh_data_set_[level]->meta_data_cell_.DelegatedData(ex_policy));
+        cell_pkg_index_set_.push_back(
+            mesh_data_set_[level]->getCellPackageIndex().DelegatedData(ex_policy));
+        pkg_cell_info_set_.push_back(
+            mesh_data_set_[level]->dvPkgCellInfo().DelegatedData(ex_policy));
     }
 }
 //=================================================================================================//
@@ -99,11 +99,20 @@ void MultilevelLevelSet::registerProbes(const ExecutionPolicy &ex_policy, size_t
 }
 //=================================================================================================//
 template <typename DataType>
-void MultilevelLevelSet::addVariableToWrite(const std::string &variable_name)
+void MultilevelLevelSet::addMeshVariableToWrite(const std::string &variable_name)
 {
     for (size_t level = 0; level < total_levels_; level++)
     {
-        mesh_data_set_[level]->addVariableToWrite<DataType>(variable_name);
+        mesh_data_set_[level]->addMeshVariableToWrite<DataType>(variable_name);
+    }
+}
+//=================================================================================================//
+template <typename DataType>
+void MultilevelLevelSet::addBKGMeshVariableToWrite(const std::string &variable_name)
+{
+    for (size_t level = 0; level < total_levels_; level++)
+    {
+        mesh_data_set_[level]->addBKGMeshVariableToWrite<DataType>(variable_name);
     }
 }
 //=================================================================================================//
