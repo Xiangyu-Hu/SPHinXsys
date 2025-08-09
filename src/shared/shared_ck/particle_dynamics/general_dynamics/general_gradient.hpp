@@ -50,8 +50,6 @@ LinearGradient<Contact<DataType, Parameters...>>::LinearGradient(Args &&...args)
 {
     for (UnsignedInt k = 0; k != this->contact_particles_.size(); ++k)
     {
-        dv_contact_Vol_.push_back(
-            this->contact_particles_[k]->template getVariableByName<Real>("VolumetricMeasure"));
         dv_contact_variable_.push_back(
             this->contact_particles_[k]->template getVariableByName<DataType>(this->variable_name_));
     }
@@ -123,8 +121,6 @@ Hessian<Contact<DataType, Parameters...>>::Hessian(Args &&...args)
 {
     for (UnsignedInt k = 0; k != this->contact_particles_.size(); ++k)
     {
-        dv_contact_Vol_.push_back(
-            this->contact_particles_[k]->template getVariableByName<Real>("VolumetricMeasure"));
         dv_contact_variable_.push_back(
             this->contact_particles_[k]->template getVariableByName<DataType>(this->variable_name_));
     }
@@ -182,8 +178,6 @@ SecondOrderGradient<Contact<DataType, Parameters...>>::SecondOrderGradient(Args 
 {
     for (UnsignedInt k = 0; k != this->contact_particles_.size(); ++k)
     {
-        dv_contact_Vol_.push_back(
-            this->contact_particles_[k]->template getVariableByName<Real>("VolumetricMeasure"));
         dv_contact_variable_.push_back(
             this->contact_particles_[k]->template getVariableByName<DataType>(this->variable_name_));
     }

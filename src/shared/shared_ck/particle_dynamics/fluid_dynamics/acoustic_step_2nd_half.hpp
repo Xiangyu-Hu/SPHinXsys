@@ -102,7 +102,7 @@ AcousticStep2ndHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType, Param
       drho_dt_(encloser.dv_drho_dt_->DelegatedData(ex_policy)),
       vel_(encloser.dv_vel_->DelegatedData(ex_policy)),
       force_(encloser.dv_force_->DelegatedData(ex_policy)),
-      wall_Vol_(encloser.dv_wall_Vol_[contact_index]->DelegatedData(ex_policy)),
+      contact_Vol_(encloser.dv_contact_Vol_[contact_index]->DelegatedData(ex_policy)),
       wall_vel_ave_(encloser.dv_wall_vel_ave_[contact_index]->DelegatedData(ex_policy)),
       wall_n_(encloser.dv_wall_n_[contact_index]->DelegatedData(ex_policy)) {}
 //=================================================================================================//
@@ -115,7 +115,7 @@ void AcousticStep2ndHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType, 
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
     {
         UnsignedInt index_j = this->neighbor_index_[n];
-        Real dW_ijV_j = this->dW_ij(index_i, index_j) * wall_Vol_[index_j];
+        Real dW_ijV_j = this->dW_ij(index_i, index_j) * contact_Vol_[index_j];
         Vecd corrected_e_ij = correction_(index_i) * this->e_ij(index_i, index_j);
 
         Vecd face_to_fluid_n = SGN(corrected_e_ij.dot(wall_n_[index_j])) * wall_n_[index_j];
@@ -140,8 +140,6 @@ AcousticStep2ndHalf<Contact<RiemannSolverType, KernelCorrectionType, Parameters.
         TargetFluidType &target_fluid =
             DynamicCast<TargetFluidType>(this, this->contact_bodies_[k]->getBaseMaterial());
         riemann_solvers_.push_back(RiemannSolverType(source_fluid, target_fluid));
-        dv_contact_Vol_.push_back(
-            this->contact_particles_[k]->template getVariableByName<Real>("VolumetricMeasure"));
         dv_contact_vel_.push_back(
             this->contact_particles_[k]->template getVariableByName<Vecd>("Velocity"));
     }

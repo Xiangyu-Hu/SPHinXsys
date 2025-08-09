@@ -128,14 +128,7 @@ void FreeSurfaceIndicationCK<Inner<WithUpdate, Parameters...>>::UpdateKernel::
 template <typename... Parameters>
 FreeSurfaceIndicationCK<Contact<Parameters...>>::
     FreeSurfaceIndicationCK(Contact<Parameters...> &contact_relation)
-    : FreeSurfaceIndicationCK<Base, Contact<Parameters...>>(contact_relation)
-{
-    for (size_t k = 0; k != this->contact_particles_.size(); ++k)
-    {
-        dv_contact_Vol_.push_back(
-            this->contact_particles_[k]->template getVariableByName<Real>("VolumetricMeasure"));
-    }
-}
+    : FreeSurfaceIndicationCK<Base, Contact<Parameters...>>(contact_relation){}
 //=================================================================================================//
 template <typename... Parameters>
 template <class ExecutionPolicy>

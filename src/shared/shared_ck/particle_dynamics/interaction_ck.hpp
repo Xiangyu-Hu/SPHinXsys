@@ -10,7 +10,8 @@ template <typename... Parameters>
 Interaction<Inner<Parameters...>>::
     Interaction(InnerRelationType &inner_relation)
     : BaseLocalDynamicsType(inner_relation.getDynamicsIdentifier()),
-      inner_relation_(inner_relation) {}
+      inner_relation_(inner_relation),
+      dv_Vol_(this->particles_->template getVariableByName<Real>("VolumetricMeasure")) {}
 //=================================================================================================//
 template <typename... Parameters>
 void Interaction<Inner<Parameters...>>::
@@ -39,7 +40,14 @@ Interaction<Contact<Parameters...>>::
       contact_relation_(contact_relation),
       contact_bodies_(contact_relation.getContactBodies()),
       contact_particles_(contact_relation.getContactParticles()),
-      contact_adaptations_(contact_relation.getContactAdaptations()) {}
+      contact_adaptations_(contact_relation.getContactAdaptations())
+{
+    for (auto &particles : contact_particles_)
+    {
+        dv_contact_Vol_.push_back(
+            particles->template getVariableByName<Real>("VolumetricMeasure"));
+    }
+}
 //=================================================================================================//
 template <typename... Parameters>
 void Interaction<Contact<Parameters...>>::
@@ -72,7 +80,6 @@ Interaction<Wall>::Interaction(WallContactRelationType &wall_contact_relation)
         dv_wall_vel_ave_.push_back(solid_material.AverageVelocityVariable(contact_particles[k]));
         dv_wall_acc_ave_.push_back(solid_material.AverageAccelerationVariable(contact_particles[k]));
         dv_wall_n_.push_back(contact_particles[k]->template getVariableByName<Vecd>("NormalDirection"));
-        dv_wall_Vol_.push_back(contact_particles[k]->template getVariableByName<Real>("VolumetricMeasure"));
     }
 }
 //=================================================================================================//
